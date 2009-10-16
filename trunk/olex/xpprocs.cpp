@@ -4708,9 +4708,9 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     iBorder, wxT("htmlPopupWindow") );
   THtml *html1 = new THtml(dlg, FXApp);
 //  html1->WI.AddWindowStyle(wxTAB_TRAVERSAL);
-  html1->WebFolder( TutorialDir );
+  html1->SetWebFolder( TutorialDir );
   html1->SetHomePage( TutorialDir + Cmds[1] );
-  html1->Movable(false);
+  html1->SetMovable(false);
   dlg->GetClientSize(&width, &height);
   html1->SetSize(width, height);
   wxBoxSizer *TopSizer = new wxBoxSizer( wxVERTICAL );

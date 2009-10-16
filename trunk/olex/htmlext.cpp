@@ -1,27 +1,16 @@
-//---------------------------------------------------------------------------
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "htmlext.h"
-#include "wx/html/htmlcell.h"
-#include "wx/html/m_templ.h"
-
 
 #include "estack.h"
-#include "fsext.h"
-#include "ctrls.h"
+#include "exparse/exptree.h"
+#include "htmlswitch.h"
+#include "imgcellext.h"
 #include "mainform.h"
 
 #include "wx/tooltip.h"
-#include "wx/artprov.h"
 
 #include "xglapp.h"
 #include "obase.h"
 #include "utf8file.h"
-#include "wxzipfs.h"
-#include "exparse/exptree.h"
 
 #define this_InitFunc(funcName, argc) \
   (*THtml::Library).RegisterFunction( new TFunction<THtml>(this, &THtml::fun##funcName, #funcName, argc));\
@@ -29,976 +18,11 @@
 #define this_InitFuncD(funcName, argc, desc) \
   (*THtml::Library).RegisterFunction( new TFunction<THtml>(this, &THtml::fun##funcName, #funcName, argc, desc));\
   (LC->GetLibrary()).RegisterFunction( new TFunction<THtml>(this, &THtml::fun##funcName, #funcName, argc, desc))
-/*
-#define this_InitMacro(macroName, validOptions, argc)\
-  (*THtml::Library).RegisterMacro( new TMacro<THtml>(this, &THtml::mac##macroName, #macroName, #validOptions, argc));\
-  (LC->GetLibrary()).RegisterMacro( new TMacro<THtml>(this, &THtml::mac##macroName, #(html##macroName), #validOptions, argc))
-*/
 
 TLibrary* THtml::Library = NULL;
 olxstr THtml::SwitchSource;
 str_stack THtml::SwitchSources;
 
-//..............................................................................
-//..............................................................................
-//----------------------------------------------------------------------------//
-// implementation of the input tag
-//----------------------------------------------------------------------------//
-
-#ifdef _UNICODE
-  #define _StrFormat_ wxT("%ls")
-#else
-  #define _StrFormat_ wxT("%s")
-#endif
-
-
-TAG_HANDLER_BEGIN(SWITCHINFOS, "SWITCHINFOS")
-TAG_HANDLER_PROC(tag)  {
-  THtml::SwitchSources.Push( THtml::SwitchSource );
-  THtml::SwitchSource = tag.GetParam(wxT("SRC")).c_str();
-  return true;
-}
-TAG_HANDLER_END(SWITCHINFOS)
-
-TAG_HANDLER_BEGIN(SWITCHINFOE, "SWITCHINFOE")
-TAG_HANDLER_PROC(tag)
-{
-  THtml::SwitchSource = THtml::SwitchSources.Pop();
-  return true;
-}
-TAG_HANDLER_END(SWITCHINFOE)
-
-TAG_HANDLER_BEGIN(RECT, "ZRECT")
-TAG_HANDLER_PROC(tag)  {
-  if( tag.HasParam(wxT("COORDS")) )  {
-    if( m_WParser->GetContainer()->GetLastChild() != NULL && 
-      EsdlInstanceOf(*m_WParser->GetContainer()->GetLastChild(), THtmlImageCell) )  
-    {
-      THtmlImageCell* ic = (THtmlImageCell*)m_WParser->GetContainer()->GetLastChild();
-      TStrList toks( tag.GetParam(wxT("COORDS")).c_str(), ',');
-      if( toks.Count() == 4 )
-        ic->AddRect(
-          toks[0].ToInt(), 
-          toks[1].ToInt(),
-          toks[2].ToInt(),
-          toks[3].ToInt(),
-          tag.GetParam(wxT("HREF")),
-          tag.GetParam(wxT("TARGET"))
-        );
-    }
-  }
-  return false;
-}
-TAG_HANDLER_END(RECT)
-
-TAG_HANDLER_BEGIN(CIRCLE, "ZCIRCLE")
-TAG_HANDLER_PROC(tag)  {
-  if( tag.HasParam(wxT("COORDS")) )  {
-    if( m_WParser->GetContainer()->GetLastChild() != NULL && 
-      EsdlInstanceOf(*m_WParser->GetContainer()->GetLastChild(), THtmlImageCell) )  
-    {
-      THtmlImageCell* ic = (THtmlImageCell*)m_WParser->GetContainer()->GetLastChild();
-      TStrList toks( tag.GetParam(wxT("COORDS")).c_str(), ',');
-      if( toks.Count() == 3 )
-        ic->AddCircle(
-          toks[0].ToInt(), 
-          toks[1].ToInt(),
-          (float)toks[2].ToDouble(),
-          tag.GetParam(wxT("HREF")),
-          tag.GetParam(wxT("TARGET"))
-        );
-    }
-  }
-  return false;
-}
-TAG_HANDLER_END(CIRCLE)
-
-TAG_HANDLER_BEGIN(IMAGE, "ZIMG")
-TAG_HANDLER_PROC(tag)  {
-  int ax=-1, ay=-1;
-  bool WidthInPercent = false, HeightInPercent = false;
-  olxch cBf[40];
-  olxstr Tmp;
-  int fl = 0;
-  cBf[0] = '\0';
-  wxString text = tag.GetParam(wxT("TEXT")),
-           mapName = tag.GetParam(wxT("USEMAP"));
-
-  olxstr ObjectName = tag.GetParam(wxT("NAME")).c_str();
-
-  tag.ScanParam(wxT("WIDTH"), _StrFormat_, cBf);
-  Tmp = cBf;
-  if( !Tmp.IsEmpty() )  {
-    if( Tmp.EndsWith('%') )  {
-      ax = Tmp.SubStringTo(Tmp.Length()-1).ToInt();
-      WidthInPercent = true;
-    }
-    else
-      ax = Tmp.ToInt();
-  }
-  cBf[0] = '\0';
-  tag.ScanParam(wxT("HEIGHT"), _StrFormat_, cBf);
-  Tmp = cBf;
-  if( !Tmp.IsEmpty() )  {
-    if( Tmp.EndsWith('%') )  {
-      ay = Tmp.SubStringTo(Tmp.Length()-1).ToInt();
-      HeightInPercent = true;
-    }
-    else
-      ay = Tmp.ToInt();
-  }
-
-  if (tag.HasParam(wxT("FLOAT"))) fl = ax;
-
-  if( text.Len() != 0 )  {
-    int textW = 0, textH = 0;
-    m_WParser->GetDC()->GetTextExtent( text, &textW, &textH );
-    if( textW > ax )  ax = textW;
-    if( textH > ay )  ay = textH;
-  }
-  olxstr src = tag.GetParam(wxT("SRC")).c_str();
-
-  TGlXApp::GetMainForm()->ProcessFunction(src);
-
-  if( TZipWrapper::IsZipFile(THtml::SwitchSource) && !TZipWrapper::IsZipFile(src) )
-    src = TZipWrapper::ComposeFileName(THtml::SwitchSource, src);
-
-  wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( src );
-  if( fsFile == NULL )
-    TBasicApp::GetLog().Error( olxstr("Could not locate image: ") << src );
-
-  if( (mapName.Length() > 0) && mapName.GetChar(0) == '#')
-      mapName = mapName.Mid( 1 );
-
-  THtmlImageCell *cell = new THtmlImageCell( m_WParser->GetWindowInterface()->GetHTMLWindow(),
-                                           fsFile,
-                                           ax, ay,
-                                           m_WParser->GetPixelScale(),
-                                           wxHTML_ALIGN_BOTTOM,
-                                           mapName,
-                                           WidthInPercent,
-                                           HeightInPercent
-                                           );
-
-  cell->SetText( text );
-  cell->SetSource( src );
-  cell->SetLink(m_WParser->GetLink());
-  cell->SetId(tag.GetParam(wxT("id"))); // may be empty
-  m_WParser->GetContainer()->InsertCell(cell);
-  if( !ObjectName.IsEmpty() )  {
-    if( !TGlXApp::GetMainForm()->GetHtml()->AddObject(ObjectName, cell, NULL) )
-      TBasicApp::GetLog().Error(olxstr("THTML: object already exist: ") << ObjectName);
-  }
-  return false;
-}
-TAG_HANDLER_END(IMAGE)
-
-TAG_HANDLER_BEGIN(INPUT, "INPUT")
-
-TAG_HANDLER_PROC(tag)  {
-  olxch Bf[80];
-  tag.ScanParam(wxT("TYPE"), _StrFormat_, Bf);
-  olxstr TagName(Bf), ObjectName, Value, Data, Tmp, Label;
-  ObjectName = tag.GetParam(wxT("NAME")).c_str();
-  int valign = -1, halign = -1, 
-    fl=0,
-    ax=100, ay=20;
-  IEObject* CreatedObject = NULL;
-  wxWindow* CreatedWindow = NULL;
-  Bf[0] = '\0';
-  tag.ScanParam(wxT("WIDTH"), _StrFormat_, Bf);
-  Tmp = Bf;
-  if( !Tmp.IsEmpty() )  {
-    if( Tmp.EndsWith('%') )  {
-      ax = Tmp.SubStringTo(Tmp.Length()-1).ToInt();
-      float w = (float)ax/100;
-      w *= m_WParser->GetWindowInterface()->GetHTMLWindow()->GetSize().GetWidth();
-      ax = (int)w;
-    }
-    else
-      ax = Tmp.ToInt();
-  }
-  Bf[0] = '\0';
-  tag.ScanParam(wxT("HEIGHT"), _StrFormat_, Bf);
-  Tmp = Bf;
-  if( !Tmp.IsEmpty() )  {
-    if( Tmp.EndsWith('%') )  {
-      ay = Tmp.SubStringTo(Tmp.Length()-1).ToInt();
-      float h = (float)ay/100;
-      h *= m_WParser->GetWindowInterface()->GetHTMLWindow()->GetSize().GetHeight();
-      ay = (int)h;
-    }
-    else
-      ay = Tmp.ToInt();
-  }
-
-  if( ax == 0 )  ax = 30;
-  if( ay == 0 )  ay = 20;
- 
-  if( tag.HasParam(wxT("FLOAT")) )  
-    fl = ax;
-
-  {  // parse h alignment
-    wxString ha;
-    if( tag.HasParam(wxT("ALIGN")) )
-      ha = tag.GetParam(wxT("ALIGN"));
-    else if( tag.HasParam(wxT("HALIGN")) )
-      ha = tag.GetParam(wxT("HALIGN"));
-    if( !ha.IsEmpty() )  {
-      if( ha.CmpNoCase(wxT("left")) == 0 )
-        halign = wxHTML_ALIGN_LEFT;
-      else if( ha.CmpNoCase(wxT("center")) == 0 || ha.CmpNoCase(wxT("middle")) == 0 )
-        halign = wxHTML_ALIGN_CENTER;
-      else if( ha.CmpNoCase(wxT("right")) == 0 )
-        halign = wxHTML_ALIGN_RIGHT;
-    }
-  }
-  if( tag.HasParam(wxT("VALIGN")) ){
-    wxString va = tag.GetParam(wxT("VALIGN"));
-    if( va.CmpNoCase(wxT("top")) == 0 )
-      valign = wxHTML_ALIGN_TOP;
-    else if( va.CmpNoCase(wxT("center")) == 0 || va.CmpNoCase(wxT("middle")) == 0 )
-      valign = wxHTML_ALIGN_CENTER;
-    else if( va.CmpNoCase(wxT("bottom")) == 0 )
-      valign = wxHTML_ALIGN_BOTTOM;
-  }
-  Label = tag.GetParam(wxT("LABEL")).c_str();
-
-  wxHtmlLinkInfo* LinkInfo = NULL;
-  if( !Label.IsEmpty() )  {
-    if( Label.StartsFromi("href=") )  {
-      Label = Label.SubStringFrom(5);
-      int tagInd = Label.IndexOfi("&target=");
-      olxstr tag(EmptyString);
-      if( tagInd != -1 )  {
-        tag = Label.SubStringFrom(tagInd+8);
-        Label.SetLength(tagInd);
-      }
-      LinkInfo = new wxHtmlLinkInfo(Label.u_str(), tag.u_str() );
-    }
-  }
-  if( !ObjectName.IsEmpty() )  {
-    wxWindow* wnd = TGlXApp::GetMainForm()->GetHtml()->FindObjectWindow(ObjectName);
-    if( wnd != NULL )  {
-      if( !tag.HasParam(wxT("reuse")) )
-        TBasicApp::GetLog().Error(olxstr("HTML: duplicated object \'") << ObjectName << '\'');
-      else  {
-        if( !Label.IsEmpty() )  {
-          wxHtmlContainerCell* contC = new wxHtmlContainerCell(m_WParser->GetContainer());
-          THtmlWordCell* wc = new THtmlWordCell( Label.u_str(), *m_WParser->GetDC());
-          if( LinkInfo != NULL ) {  
-            wc->SetLink(*LinkInfo);
-            delete LinkInfo;
-          }
-          wc->SetDescent(0);
-          contC->InsertCell( wc );
-          contC->InsertCell(new wxHtmlWidgetCell(wnd, fl));
-          if( valign != -1 )  contC->SetAlignVer(valign);
-          if( halign != -1 )  contC->SetAlignHor(halign);
-        }
-        else
-          m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(wnd, fl));
-      }
-      return false;
-    }
-  }
-
-  Value = tag.GetParam(wxT("VALUE")).c_str();
-  TGlXApp::GetMainForm()->ProcessFunction(Value);
-  Data = tag.GetParam(wxT("DATA")).c_str();
-/******************* TEXT CONTROL *********************************************/
-  if( TagName.Equalsi("text") )  {
-    int flags = 0;
-    if( tag.HasParam( wxT("MULTILINE") ) )  flags |= wxTE_MULTILINE;
-    if( tag.HasParam( wxT("PASSWORD") ) )     flags |= wxTE_PASSWORD;
-    TTextEdit *Text = new TTextEdit(m_WParser->GetWindowInterface()->GetHTMLWindow(), flags);
-    Text->SetFont( m_WParser->GetDC()->GetFont() );
-    CreatedObject = Text;
-    CreatedWindow = Text;
-    Text->SetSize(ax, ay);
-    Text->SetData( Data );
-
-    Text->SetText(Value);
-    if( !Label.IsEmpty() )  {
-      wxHtmlContainerCell* contC = new wxHtmlContainerCell(m_WParser->GetContainer());
-      THtmlWordCell* wc = new THtmlWordCell( uiStr(Label), *m_WParser->GetDC());
-      if( LinkInfo != NULL ) wc->SetLink(*LinkInfo);
-      wc->SetDescent(0);
-      contC->InsertCell( wc );
-      contC->InsertCell(new wxHtmlWidgetCell(Text, fl));
-      if( valign != -1 )  contC->SetAlignVer(valign);
-      if( halign != -1 )  contC->SetAlignHor(halign);
-    }
-    else
-      m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Text, fl));
-
-    if( tag.HasParam(wxT("ONCHANGE")) )  {
-      Text->SetOnChangeStr( tag.GetParam(wxT("ONCHANGE")).c_str() );
-      Text->OnChange->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    if( tag.HasParam(wxT("ONLEAVE")) )  {
-      Text->SetOnLeaveStr( tag.GetParam(wxT("ONLEAVE")).c_str() );
-      Text->OnLeave->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    if( tag.HasParam(wxT("ONENTER")) )  {
-      Text->SetOnEnterStr( tag.GetParam(wxT("ONENTER")).c_str() );
-      Text->OnEnter->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-  }
-/******************* LABEL ***************************************************/
-  else if( TagName.Equalsi("label") )  {
-    TLabel *Text = new TLabel(m_WParser->GetWindowInterface()->GetHTMLWindow());
-    Text->SetFont( m_WParser->GetDC()->GetFont() );
-    CreatedObject = Text;
-    CreatedWindow = Text;
-    Text->WI.SetWidth( ax );
-    Text->WI.SetHeight( ay );
-    Text->SetData( Data );
-
-    Text->SetCaption(Value);
-    m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Text, fl));
-  }
-/******************* BUTTON ***************************************************/
-  else if( TagName.Equalsi("button") )  {
-    AButtonBase *Btn;
-    long flags = 0;
-    if( tag.HasParam(wxT("FIT")) )  flags |= wxBU_EXACTFIT;
-    if( tag.HasParam(wxT("FLAT")) )  flags |= wxNO_BORDER;
-    olxstr buttonImage = tag.GetParam(wxT("IMAGE")).c_str();
-    if( !buttonImage.IsEmpty() )  {
-      Btn = new TBmpButton(  m_WParser->GetWindowInterface()->GetHTMLWindow(), -1, wxNullBitmap, 
-        wxDefaultPosition, wxDefaultSize, flags );
-      ((TBmpButton*)Btn)->SetSource( buttonImage );
-      wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( buttonImage );
-      if( fsFile == NULL )
-        TBasicApp::GetLog().Error(olxstr("THTML: could not locate image for button: ") << ObjectName);
-      else  {
-        wxImage image(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
-        if ( !image.Ok() )
-          TBasicApp::GetLog().Error(olxstr("THTML: could not load image for button: ") << ObjectName);
-        else  {
-          if( (image.GetWidth() > ax || image.GetHeight() > ay) && tag.HasParam(wxT("STRETCH")) )
-            image = image.Scale(ax, ay);
-          else  {
-            ax = image.GetWidth();
-            ay = image.GetHeight();
-          }
-          ((TBmpButton*)Btn)->SetBitmapLabel( image );
-        }
-      }
-      Btn->GetWI().SetWidth(ax);
-      Btn->GetWI().SetHeight(ay);
-      ((TBmpButton*)Btn)->SetFont( m_WParser->GetDC()->GetFont() );
-
-      CreatedWindow = (TBmpButton*)Btn;
-    }
-    else  {
-      Btn = new TButton( m_WParser->GetWindowInterface()->GetHTMLWindow(), -1, wxEmptyString, 
-        wxDefaultPosition, wxDefaultSize, flags );
-      ((TButton*)Btn)->SetCaption(Value);
-      ((TButton*)Btn)->SetFont( m_WParser->GetDC()->GetFont() );
-      if( (flags & wxBU_EXACTFIT) == 0 )  {
-        Btn->GetWI().SetWidth(ax);
-        Btn->GetWI().SetHeight(ay);
-      }
-#ifdef __WXGTK__  // got no idea what happens here, client size does not work?
-      wxFont fnt(m_WParser->GetDC()->GetFont());
-      fnt.SetPointSize( fnt.GetPointSize()-2);
-      ((TButton*)Btn)->SetFont( fnt );
-      wxCoord w=0, h=0, desc=0, exlead=0;
-      wxString wxs(Value.u_str());
-      m_WParser->GetDC()->GetTextExtent(wxs, &w, &h, &desc, &exlead, &fnt);
-      int borderx = 12, bordery = 8;
-      ((TButton*)Btn)->SetClientSize(w+borderx,h+desc+bordery);
-#endif 
-      CreatedWindow = (TButton*)Btn;
-    }
-    CreatedObject = Btn;
-    Btn->SetData(Data);
-    if( tag.HasParam(wxT("ONCLICK")) )  {
-      Btn->SetOnClickStr( tag.GetParam(wxT("ONCLICK")).c_str() );
-      Btn->OnClick->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    if( tag.HasParam(wxT("ONDOWN")) )  {
-      Btn->SetOnUpStr( tag.GetParam(wxT("ONUP")).c_str() );
-      Btn->OnUp->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    if( tag.HasParam(wxT("ONDOWN")) )  {
-      Btn->SetOnDownStr( tag.GetParam(wxT("ONDOWN")).c_str() );
-      Btn->OnDown->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-
-    if( tag.HasParam(wxT("DOWN")) )
-      Btn->SetDown( tag.GetParam(wxT("DOWN")).CmpNoCase(wxT("true")) == 0 );
-
-    if( tag.HasParam(wxT("HINT")) )
-      Btn->SetHint( tag.GetParam(wxT("HINT")).c_str() );
-
-    olxstr modeDependent = tag.GetParam(wxT("MODEDEPENDENT")).c_str();
-    if( !modeDependent.IsEmpty() )  {
-      Btn->ActionQueue( TGlXApp::GetMainForm()->OnModeChange, modeDependent );
-    }
-
-    if( EsdlInstanceOf(*Btn, TButton) )
-      m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell((TButton*)Btn, fl));
-    else  if( EsdlInstanceOf(*Btn, TBmpButton) )
-      m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell((TBmpButton*)Btn, fl));
-  }
-/******************* COMBOBOX *************************************************/
-  else if( TagName.Equalsi("combo") )  {
-    TComboBox *Box = new TComboBox( m_WParser->GetWindowInterface()->GetHTMLWindow(),
-                                    tag.HasParam(wxT("READONLY")),
-                                    wxSize(ax, ay) );
-    Box->SetFont( m_WParser->GetDC()->GetFont() );
-
-    CreatedObject = Box;
-    CreatedWindow = Box;
-    Box->WI.SetWidth(ax);
-#ifdef __MAC__    
-    Box->WI.SetHeight( olx_max(ay, Box->GetCharHeight()+10) );
-#else
-    Box->WI.SetHeight( ay );
-#endif    
-    if( tag.HasParam(wxT("ITEMS")) )  {
-      olxstr Items = tag.GetParam(wxT("ITEMS")).c_str();
-      TGlXApp::GetMainForm()->ProcessFunction(Items);
-      TStrList SL(Items, ';');
-      if( SL.IsEmpty() )
-        Box->AddObject(EmptyString);  // fix the bug in wxWidgets (if Up pressed, crass occurs)
-      else
-        Box->AddItems(SL);
-    }
-    else  {  // need to intialise the items - or wxWidgets will crash (pressing Up button)
-      Box->AddObject(Value);
-      Box->AddObject(EmptyString);  // fix the bug in wxWidgets (if Up pressed, crass occurs)
-    }
-    Box->SetText(Value);
-    Box->SetData(Data);
-    if( tag.HasParam(wxT("ONCHANGE")) )  {
-      Box->SetOnChangeStr( tag.GetParam(wxT("ONCHANGE")).c_str() );
-      Box->OnChange->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    if( tag.HasParam(wxT("ONLEAVE")) )  {
-      Box->SetOnLeaveStr( tag.GetParam(wxT("ONLEAVE")).c_str() );
-      Box->OnLeave->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    if( tag.HasParam(wxT("ONENTER")) )  {
-      Box->SetOnEnterStr( tag.GetParam(wxT("ONENTER")).c_str() );
-      Box->OnEnter->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    if( !Label.IsEmpty() )  {
-      wxHtmlContainerCell* contC = new wxHtmlContainerCell(m_WParser->GetContainer());
-      THtmlWordCell* wc = new THtmlWordCell( uiStr(Label), *m_WParser->GetDC());
-      if( LinkInfo != NULL ) wc->SetLink(*LinkInfo);
-      wc->SetDescent(0);
-      contC->InsertCell( wc );
-      contC->InsertCell(new wxHtmlWidgetCell(Box, fl));
-      if( valign != -1 )  contC->SetAlignVer(valign);
-      if( halign != -1 )  contC->SetAlignHor(halign);
-    }
-    else
-      m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Box, fl));
-  }
-/******************* SPIN CONTROL *********************************************/
-  else if( TagName.Equalsi("spin") )  {
-    TSpinCtrl *Spin = new TSpinCtrl( m_WParser->GetWindowInterface()->GetHTMLWindow() );
-    Spin->SetFont( m_WParser->GetDC()->GetFont() );
-    Spin->SetForegroundColour( m_WParser->GetDC()->GetTextForeground() );
-
-    int min=0, max = 100;
-    if( tag.HasParam( wxT("MIN") ) )
-      tag.ScanParam(wxT("MIN"), wxT("%i"), &min);
-    if( tag.HasParam( wxT("MAX") ) )
-      tag.ScanParam(wxT("MAX"), wxT("%i"), &max);
-    Spin->SetRange(min, max);
-    Spin->SetValue( Value.ToInt() );
-    CreatedObject = Spin;
-    CreatedWindow = Spin;
-    Spin->WI.SetHeight(ay);
-    Spin->WI.SetWidth(ax);
-
-    Spin->SetData(Data);
-    if( tag.HasParam(wxT("ONCHANGE")) )  {
-      Spin->SetOnChangeStr( tag.GetParam(wxT("ONCHANGE")).c_str() );
-      Spin->OnChange->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    if( !Label.IsEmpty() )  {
-      wxHtmlContainerCell* contC = new wxHtmlContainerCell(m_WParser->GetContainer());
-      THtmlWordCell* wc = new THtmlWordCell( uiStr(Label), *m_WParser->GetDC());
-      if( LinkInfo != NULL ) wc->SetLink(*LinkInfo);
-      wc->SetDescent(0);
-      contC->InsertCell( wc );
-      contC->InsertCell(new wxHtmlWidgetCell(Spin, fl));
-      if( valign != -1 )  contC->SetAlignVer(valign);
-      if( halign != -1 )  contC->SetAlignHor(halign);
-    }
-    else
-      m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Spin, fl));
-  }
-/******************* SLIDER ***************************************************/
-  else  if( TagName.Equalsi("slider") )  {
-    TTrackBar *Track = new TTrackBar( m_WParser->GetWindowInterface()->GetHTMLWindow() );
-    Track->SetFont( m_WParser->GetDC()->GetFont() );
-
-    CreatedObject = Track;
-    CreatedWindow = Track;
-    int min=0, max = 100;
-    if( tag.HasParam( wxT("MIN") ) )
-      tag.ScanParam(wxT("MIN"), wxT("%i"), &min);
-    if( tag.HasParam( wxT("MAX") ) )
-      tag.ScanParam(wxT("MAX"), wxT("%i"), &max);
-    Track->WI.SetWidth(ax);
-    Track->WI.SetHeight(ay);
-
-    Track->SetRange(min, max);
-    Track->SetValue( Value.ToInt() );
-
-    Track->SetData(Data);
-    if( tag.HasParam(wxT("ONCHANGE")) )  {
-      Track->SetOnChangeStr(tag.GetParam(wxT("ONCHANGE")).c_str());
-      Track->OnChange->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    if( tag.HasParam(wxT("ONMOUSEUP")) )  {
-      Track->SetOnMouseUpStr(tag.GetParam(wxT("ONMOUSEUP")).c_str());
-      Track->OnMouseUp->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    if( !Label.IsEmpty() )  {
-      wxHtmlContainerCell* contC = new wxHtmlContainerCell(m_WParser->GetContainer());
-      THtmlWordCell* wc = new THtmlWordCell( uiStr(Label), *m_WParser->GetDC());
-      if( LinkInfo != NULL ) wc->SetLink(*LinkInfo);
-      wc->SetDescent(0);
-      contC->InsertCell( wc );
-      contC->InsertCell(new wxHtmlWidgetCell(Track, fl));
-      if( valign != -1 )  contC->SetAlignVer(valign);
-      if( halign != -1 )  contC->SetAlignHor(halign);
-    }
-    else
-      m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Track, fl));
-  }
-/******************* CHECKBOX *************************************************/
-  else if( TagName.Equalsi("checkbox") )  {
-    TCheckBox *Box = new TCheckBox( 
-      m_WParser->GetWindowInterface()->GetHTMLWindow(), tag.HasParam(wxT("RIGHT")) ? wxALIGN_RIGHT : 0);
-    Box->SetFont( m_WParser->GetDC()->GetFont());
-    wxLayoutConstraints* wxa = new wxLayoutConstraints;
-    wxa->centreX.Absolute(0);
-    Box->SetConstraints(wxa);
-    CreatedObject = Box;
-    CreatedWindow = Box;
-    Box->WI.SetWidth(ax);
-    Box->WI.SetHeight(ay);
-
-    Box->SetCaption(Value);
-    if( tag.HasParam(wxT("CHECKED")) )  {
-      Tmp = tag.GetParam(wxT("CHECKED")).c_str();
-      if( Tmp.IsEmpty() )
-        Box->SetChecked( true );
-      else
-        Box->SetChecked( Tmp.ToBool() );
-    }
-
-    Box->SetData(Data);
-    // binding events
-    if( tag.HasParam(wxT("ONCLICK")) )  {
-      Box->SetOnClickStr( tag.GetParam(wxT("ONCLICK")).c_str() );
-      Box->OnClick->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    if( tag.HasParam(wxT("ONCHECK")) )  {
-      Box->SetOnCheckStr( tag.GetParam(wxT("ONCHECK")).c_str() );
-      Box->OnCheck->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    if( tag.HasParam(wxT("ONUNCHECK")) )  {
-      Box->SetOnUncheckStr( tag.GetParam(wxT("ONUNCHECK")).c_str() );
-      Box->OnUncheck->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    if( tag.HasParam(wxT("MODEDEPENDENT")) )  {
-      Box->ActionQueue( TGlXApp::GetMainForm()->OnModeChange, tag.GetParam(wxT("MODEDEPENDENT")).c_str() );
-    }
-    m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Box, fl));
-  }
-/******************* TREE CONTROL *********************************************/
-  else if( TagName.Equalsi("tree") )  {
-    olxstr src = tag.GetParam(wxT("SRC")).c_str();
-    TGlXApp::GetMainForm()->ProcessFunction(src);
-    IInputStream* ios = TFileHandlerManager::GetInputStream(src);
-    TTreeView *Tree = new TTreeView(m_WParser->GetWindowInterface()->GetHTMLWindow());
-    Tree->SetFont( m_WParser->GetDC()->GetFont() );
-
-    CreatedObject = Tree;
-    CreatedWindow = Tree;
-    Tree->WI.SetWidth(ax);
-    Tree->WI.SetHeight(ay);
-
-    Tree->SetData( Data );
-    if( tag.HasParam(wxT("ONSELECT")) )  {
-      Tree->SetOnSelectStr( tag.GetParam(wxT("ONSELECT")).c_str() );
-      Tree->OnSelect->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    if( tag.HasParam(wxT("ONITEM")) )  {
-      Tree->SetOnItemActivateStr( tag.GetParam(wxT("ONITEM")).c_str() );
-      Tree->OnDblClick->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Tree, fl));
-    if( ios == NULL )  {  // create test tree
-      TBasicApp::GetLog().Error(olxstr("THTML: could not locate tree source: \'") << src <<  '\'');
-      wxTreeItemId Root = Tree->AddRoot( wxT("Test data") );
-      wxTreeItemId sc1 = Tree->AppendItem( Tree->AppendItem(Root, wxT("child")), wxT("subchild"));
-         Tree->AppendItem( Tree->AppendItem(sc1, wxT("child1")), wxT("subchild1"));
-      wxTreeItemId sc2 = Tree->AppendItem( Tree->AppendItem(Root, wxT("child1")), wxT("subchild1"));
-        sc2 = Tree->AppendItem( Tree->AppendItem(sc2, wxT("child1")), wxT("subchild1"));
-    }
-    else  {
-      TStrList list;
-#ifdef _UNICODE
-      TUtf8File::ReadLines(*ios, list, false);
-#else
-      list.LoadFromTextStream(*ios);
-#endif
-      Tree->LoadFromStrings(list);
-      delete ios;
-    }
-  }
-/******************* LIST CONTROL *********************************************/
-  else if( TagName.Equalsi("list") )  {
-    bool srcTag   = tag.HasParam(wxT("SRC")),
-         itemsTag = tag.HasParam(wxT("ITEMS"));
-    TStrList itemsList;
-    if( srcTag && itemsTag )
-      TBasicApp::GetLog().Error( "THTML: list can have only src or items");
-    else if( srcTag ) {
-      olxstr src = tag.GetParam(wxT("SRC")).c_str();
-      TGlXApp::GetMainForm()->ProcessFunction(src);
-      IInputStream* ios = TFileHandlerManager::GetInputStream(src);
-      if( ios == NULL )
-        TBasicApp::GetLog().Error(olxstr("THTML: could not locate list source: \'") << src <<  '\'');
-      else  {
-#ifdef _UNICODE
-      TUtf8File::ReadLines(*ios, itemsList, false);
-#else
-        itemsList.LoadFromTextStream( *ios );
-#endif
-        delete ios;
-      }
-    }
-    else if( itemsTag )  {
-      olxstr items = tag.GetParam(wxT("ITEMS")).c_str();
-      TGlXApp::GetMainForm()->ProcessFunction(items);
-      itemsList.Strtok(items, ';');
-    }
-    TListBox *List = new TListBox( m_WParser->GetWindowInterface()->GetHTMLWindow() );
-    List->SetFont( m_WParser->GetDC()->GetFont() );
-
-    CreatedObject = List;
-    CreatedWindow = List;
-    List->WI.SetWidth(ax);
-    List->WI.SetHeight(ay);
-
-    List->SetData( Data );
-    List->AddItems( itemsList );
-    // binding events
-    if( tag.HasParam(wxT("ONSELECT")) )  {
-      List->SetOnSelectStr( tag.GetParam(wxT("ONSELECT")).c_str() );
-      List->OnSelect->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    if( tag.HasParam(wxT("ONDBLCLICK")) )  {
-      List->SetOnDblClickStr( tag.GetParam(wxT("ONDBLCLICK")).c_str() );
-      List->OnDblClick->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
-    }
-    // creating cell
-    m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(List, fl));
-  }
-/******************* END OF CONTROLS ******************************************/
-  if( LinkInfo != NULL )  delete LinkInfo;
-  if( ObjectName.IsEmpty() )  {  }  // create random name?
-  if( CreatedWindow != NULL )  {  // set default colors
-#ifdef __WIN32__
-    if( EsdlInstanceOf(*CreatedWindow, TComboBox) )  {
-      TComboBox* Box = (TComboBox*)CreatedWindow;
-      if( Box->GetTextCtrl() != NULL )  {
-        if( m_WParser->GetContainer()->GetBackgroundColour().IsOk() )
-          Box->GetTextCtrl()->SetBackgroundColour( m_WParser->GetContainer()->GetBackgroundColour() );
-        if( m_WParser->GetActualColor().IsOk() )
-          Box->GetTextCtrl()->SetForegroundColour( m_WParser->GetActualColor() );
-      }
-      if( Box->GetPopupControl() != NULL && Box->GetPopupControl()->GetControl() != NULL )  {
-        if( m_WParser->GetContainer()->GetBackgroundColour().IsOk() )
-          Box->GetPopupControl()->GetControl()->SetBackgroundColour( 
-            m_WParser->GetContainer()->GetBackgroundColour() );
-        if( m_WParser->GetActualColor().IsOk() )  {
-          Box->GetPopupControl()->GetControl()->SetForegroundColour( 
-            m_WParser->GetActualColor() );
-        }
-      }
-    }
-#endif
-    if( m_WParser->GetActualColor().IsOk() )
-      CreatedWindow->SetForegroundColour( m_WParser->GetActualColor() );
-    if( m_WParser->GetContainer()->GetBackgroundColour().IsOk() )
-      CreatedWindow->SetBackgroundColour( m_WParser->GetContainer()->GetBackgroundColour() );
-  }
-  if( CreatedObject != NULL )  {
-    if( !TGlXApp::GetMainForm()->GetHtml()->AddObject(ObjectName, CreatedObject, CreatedWindow, tag.HasParam(wxT("MANAGE")) ) )
-      TBasicApp::GetLog().Error(olxstr("HTML: duplicated object \'") << ObjectName << '\'');
-    if( CreatedWindow != NULL && !ObjectName.IsEmpty() )  {
-      CreatedWindow->Hide();
-      olxstr bgc, fgc;
-      if( tag.HasParam(wxT("BGCOLOR")) )  {
-        bgc = tag.GetParam( wxT("BGCOLOR") ).c_str();
-        TGlXApp::GetMainForm()->ProcessFunction(bgc);
-      }
-      if( tag.HasParam(wxT("FGCOLOR")) )  {
-        fgc = tag.GetParam( wxT("FGCOLOR") ).c_str();
-        TGlXApp::GetMainForm()->ProcessFunction(fgc);
-      }
-
-      if( EsdlInstanceOf(*CreatedWindow, TComboBox) )  {
-        TComboBox* Box = (TComboBox*)CreatedWindow;
-        if( !bgc.IsEmpty() )  {
-          wxColor bgCl = wxColor( uiStr(bgc) );
-          Box->SetBackgroundColour( bgCl );
-#ifdef __WIN32__          
-          if( Box->GetTextCtrl() != NULL )
-            Box->GetTextCtrl()->SetBackgroundColour( bgCl );
-          if( Box->GetPopupControl() != NULL && Box->GetPopupControl()->GetControl() != NULL )
-            Box->GetPopupControl()->GetControl()->SetBackgroundColour( bgCl );
-#endif
-        }
-        if( !fgc.IsEmpty() )  {
-          wxColor fgCl = wxColor( uiStr(bgc) );
-          Box->SetForegroundColour( fgCl );
-#ifdef __WIN32__          
-          if( Box->GetTextCtrl() != NULL )
-            Box->GetTextCtrl()->SetForegroundColour( fgCl );
-          if( Box->GetPopupControl() != NULL && Box->GetPopupControl()->GetControl() != NULL)
-            Box->GetPopupControl()->GetControl()->SetForegroundColour( fgCl );
-#endif
-        }
-      }
-      else  {
-        if( !bgc.IsEmpty() )
-          CreatedWindow->SetBackgroundColour( wxColor( uiStr(bgc) ) );
-        if( !fgc.IsEmpty() )
-          CreatedWindow->SetForegroundColour( wxColor( uiStr(fgc) ) );
-      }
-    }
-  }
-  return false;
-}
-
-TAG_HANDLER_END(INPUT)
-
-TAGS_MODULE_BEGIN(Input)
-    TAGS_MODULE_ADD(INPUT)
-    TAGS_MODULE_ADD(IMAGE)
-    TAGS_MODULE_ADD(RECT)
-    TAGS_MODULE_ADD(CIRCLE)
-    TAGS_MODULE_ADD(SWITCHINFOS)
-    TAGS_MODULE_ADD(SWITCHINFOE)
-TAGS_MODULE_END(Input)
-
-//----------------------------------------------------------------------------//
-// THtmlObject implementation
-//----------------------------------------------------------------------------//
-AHtmlObject::~AHtmlObject(){  return; }
-//----------------------------------------------------------------------------//
-// THtmlSwitch implementation
-//----------------------------------------------------------------------------//
-THtmlSwitch::THtmlSwitch(THtml *ParentHtml, THtmlSwitch *ParentSwitch):AHtmlObject(ParentHtml)
-{
-  FParentHtml = ParentHtml;
-  FParent = ParentSwitch;
-  FUpdateSwitch = true;
-  FFileIndex = 0;
-}
-//..............................................................................
-THtmlSwitch::~THtmlSwitch()  {
-  Clear();
-}
-//..............................................................................
-void THtmlSwitch::Clear()  {
-  FSwitches.Clear();
-  FFuncs.Clear();
-  FLinks.Clear();
-  FStrings.Clear();
-  //FParams.Clear();
-}
-//..............................................................................
-void  THtmlSwitch::FileIndex(short ind)  {
-  FFileIndex = ind;
-  this->FParentHtml->SetSwitchState( *this, FFileIndex );
-}
-//..............................................................................
-void THtmlSwitch::UpdateFileIndex()  {
-  Clear();
-  if( FFileIndex >= FileCount() || FFileIndex < 0 )  return;
-
-  olxstr FN = FFiles[FFileIndex];
-  IInputStream *is = TFileHandlerManager::GetInputStream(FN);
-  if( is == NULL )  {
-    TBasicApp::GetLog().Error( olxstr("THtmlSwitch::File does not exist: ") << FN );
-    return;
-  }
-#ifdef _UNICODE
-  TUtf8File::ReadLines(*is, FStrings, false);
-#else
-  FStrings.LoadFromTextStream(*is);
-#endif
-  delete is;
-  for( int i=0; i < FStrings.Count(); i++ )  {
-    // replace the parameters with their values
-    if( FStrings[i].IndexOf('#') != -1 )  {
-      // "key word parameter"
-      FStrings[i].Replace( "#switch_name", FName );
-      if( FParent != NULL )  {
-        FStrings[i].Replace("#parent_name", FParent->Name()).\
-                    Replace( "#parent_file", FParent->CurrentFile() );
-      }
-
-      for( int j=0; j < FParams.Count(); j++ )
-        FStrings[i].Replace( olxstr('#') << FParams.GetName(j), FParams.GetValue(j) );
-    } // end of parameter replacement
-  }
-  FParentHtml->CheckForSwitches(*this, TZipWrapper::IsZipFile(FN) );
-  for( int i=0; i < SwitchCount(); i++ )
-    FSwitches[i].UpdateFileIndex();
-}
-//..............................................................................
-bool THtmlSwitch::ToFile()  {
-  if( FSwitches.IsEmpty() )  return true;
-  if( CurrentFile().IsEmpty() )  return true;
-  for( int i=0; i < FStrings.Count(); i++ )  {
-    if( FStrings.GetObject(i) )  {
-      AHtmlObject* HO = FStrings.GetObject(i);
-      if( EsdlInstanceOf(*HO, THtmlSwitch) )  {
-        FParentHtml->UpdateSwitchState(*(THtmlSwitch*)HO, FStrings[i]);
-        ((THtmlSwitch*)HO)->ToFile();
-      }
-    }
-  }
-#ifdef _UNICODE
-  TUtf8File::WriteLines(CurrentFile(), FStrings, false);
-#else
-  FStrings.SaveToFile(CurrentFile());
-#endif
-  return true;
-}
-//..............................................................................
-THtmlFunc& THtmlSwitch::NewFunc()  {
-  return FFuncs.AddNew(FParentHtml, this);
-}
-//..............................................................................
-THtmlSwitch& THtmlSwitch::NewSwitch()  {
-  return FSwitches.AddNew(FParentHtml, this);
-}
-//..............................................................................
-THtmlLink& THtmlSwitch::NewLink()  {
-  return FLinks.AddNew(FParentHtml, this);
-}
-//..............................................................................
-int THtmlSwitch::FindSimilar(const olxstr& start, const olxstr& end, TPtrList<THtmlSwitch>& ret)  {
-  int cnt = 0;
-  for( int i=0; i < FSwitches.Count(); i++ )  {
-    THtmlSwitch& I = FSwitches[i];
-    if( end.IsEmpty() )  {
-      if( I.Name().StartsFrom(start) )  {
-        ret.Add( &I );
-        cnt++;
-      }
-    }
-    else if( start.IsEmpty() )  {
-      if( I.Name().EndsWith(end) )  {
-        ret.Add( &I );
-        cnt++;
-      }
-    }
-    else {
-      if( I.Name().StartsFrom(start) &&  I.Name().EndsWith(end) )  {
-        ret.Add( &I );
-        cnt++;
-      }
-    }
-    cnt += I.FindSimilar(start, end, ret);
-  }
-  return cnt;
-}
-//..............................................................................
-void THtmlSwitch::Expand(TPtrList<THtmlSwitch>& ret)  {
-  for( int i=0; i < FSwitches.Count(); i++ )  {
-    ret.Add( &FSwitches[i] );
-    FSwitches[i].Expand(ret);
-  }
-}
-//..............................................................................
-THtmlSwitch*  THtmlSwitch::FindSwitch(const olxstr &IName)  {
-  for( int i=0; i < FSwitches.Count(); i++ )  {
-    if( FSwitches[i].Name().Equalsi(IName) )
-      return &FSwitches[i];
-    else  {
-      THtmlSwitch* Res = FSwitches[i].FindSwitch(IName);
-      if( Res != NULL ) return Res;
-    }
-  }
-  return NULL;
-}
-//..............................................................................
-void THtmlSwitch::ToStrings(TStrList &List)  {
-  if( FFileIndex >= 0 && FFileIndex < FFiles.Count() )
-    List.Add("<SWITCHINFOS SRC=\"")<< FFiles[FFileIndex] << "\">";
-
-  for( int i=0; i < FStrings.Count(); i++ )  {
-    if( FStrings.GetObject(i) != NULL )
-      FStrings.GetObject(i)->ToStrings(List);
-    List.Add( FStrings[i] );
-  }
-
-  if( FFileIndex >= 0 && FFileIndex < FFiles.Count() )
-    List.Add("<SWITCHINFOE>");
-}
-//----------------------------------------------------------------------------//
-// THtmlLink implementation
-//----------------------------------------------------------------------------//
-THtmlLink::THtmlLink(THtml *ParentHtml, THtmlSwitch *ParentSwitch):AHtmlObject(ParentHtml)
-{  FParent = ParentSwitch;  }
-//..............................................................................
-THtmlLink::~THtmlLink()
-{  ;  }
-//..............................................................................
-void THtmlLink::ToStrings(TStrList &List) {
-  if( FileName().IsEmpty() )  return;
-
-  IInputStream *is = TFileHandlerManager::GetInputStream( FileName() );
-  if( is == NULL )  {
-    TBasicApp::GetLog().Error(olxstr("THtmlSwitch::File does not exist: ") << FileName());
-    return;
-  }
-  TStrList SL;
-#ifdef _UNICODE
-  TUtf8File::ReadLines(*is, SL, false);
-#else
-  SL.LoadFromTextStream(*is);
-#endif
-  delete is;
-  List.AddList(SL);
-}
-//----------------------------------------------------------------------------//
-// THtmlFunc implementation
-//----------------------------------------------------------------------------//
-THtmlFunc::THtmlFunc(THtml *ParentHtml, THtmlSwitch *ParentSwitch):AHtmlObject(ParentHtml)
-{  FParent = ParentSwitch;  }
-//..............................................................................
-THtmlFunc::~THtmlFunc()
-{ ; }
-//..............................................................................
-olxstr THtmlFunc::Evaluate()  {
-  olxstr F = Func();
-  FParentHtml->OnCmd->Execute(this, &F);
-  return F;
-}
-//..............................................................................
-void THtmlFunc::ToStrings(TStrList &List){  List.Add(Evaluate()); };
-//----------------------------------------------------------------------------//
-// THtml implementation
-//----------------------------------------------------------------------------//
 BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
   EVT_LEFT_DCLICK(THtml::OnMouseDblClick)
   EVT_LEFT_DOWN(THtml::OnMouseDown)
@@ -1010,45 +34,21 @@ BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
   EVT_CHAR(THtml::OnChar)
 END_EVENT_TABLE()
 //..............................................................................
-void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
-  olxstr Href = link.GetHref().c_str();
-  int val;
-  int ind = Href.FirstIndexOf('%');
-  while( ind >=0 && ((ind+2) < Href.Length()) )  {
-    val = Href.SubString(ind+1, 2).RadInt<int>(16);
-    Href.Delete(ind, 3);
-    Href.Insert(val, ind);
-    ind = Href.FirstIndexOf('%');
-  }
-  if( !OnLink->Execute(this, (IEObject*)&Href) )  {
-    wxHtmlLinkInfo NewLink( uiStr(Href), link.GetTarget());
-    wxHtmlWindow::OnLinkClicked(NewLink);
-  }
-}
-//..............................................................................
-wxHtmlOpeningStatus THtml::OnOpeningURL(wxHtmlURLType type, const wxString& url, wxString *redirect) const
-{
-  olxstr Url = url.c_str();
-  if( !OnURL->Execute(this, &Url) )  return wxHTML_OPEN;
-  return wxHTML_BLOCK;
-}
-//..............................................................................
 THtml::THtml(wxWindow *Parent, ALibraryContainer* LC): 
      wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, 4), WI(this), ObjectsState(*this),
      InFocus(NULL)
 {
-  FActions = new TActionQList;
-  FRoot = new THtmlSwitch(this, NULL);
-  OnLink = &FActions->NewQueue("ONLINK");
-  OnURL = &FActions->NewQueue("ONURL");
-  OnDblClick = &FActions->NewQueue("ONDBLCL");
-  OnKey = &FActions->NewQueue("ONCHAR");
-  OnCmd = &FActions->NewQueue("ONCMD");
-  FMovable = false;
-  FMouseDown = false;
+  Root = new THtmlSwitch(this, NULL);
+  OnLink = &Actions.NewQueue("ONLINK");
+  OnURL = &Actions.NewQueue("ONURL");
+  OnDblClick = &Actions.NewQueue("ONDBLCL");
+  OnKey = &Actions.NewQueue("ONCHAR");
+  OnCmd = &Actions.NewQueue("ONCMD");
+  Movable = false;
+  MouseDown = false;
   ShowTooltips = true;
-  FLockPageLoad = 0;
-  FPageLoadRequested = false;
+  LockPageLoad = 0;
+  PageLoadRequested = false;
   if( LC && ! THtml::Library )  {
     THtml::Library = LC->GetLibrary().AddLibrary("html");
 
@@ -1116,43 +116,61 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC):
 //..............................................................................
 THtml::~THtml()  {
   TFileHandlerManager::Clear();
-  delete FActions;
-  delete FRoot;
+  delete Root;
   ClearSwitchStates();
 }
 //..............................................................................
+void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
+  olxstr Href = link.GetHref().c_str();
+  int val;
+  int ind = Href.FirstIndexOf('%');
+  while( ind >=0 && ((ind+2) < Href.Length()) )  {
+    val = Href.SubString(ind+1, 2).RadInt<int>(16);
+    Href.Delete(ind, 3);
+    Href.Insert(val, ind);
+    ind = Href.FirstIndexOf('%');
+  }
+  if( !OnLink->Execute(this, (IEObject*)&Href) )  {
+    wxHtmlLinkInfo NewLink( uiStr(Href), link.GetTarget());
+    wxHtmlWindow::OnLinkClicked(NewLink);
+  }
+}
+//..............................................................................
+wxHtmlOpeningStatus THtml::OnOpeningURL(wxHtmlURLType type, const wxString& url, wxString *redirect) const
+{
+  olxstr Url = url.c_str();
+  if( !OnURL->Execute(this, &Url) )  return wxHTML_OPEN;
+  return wxHTML_BLOCK;
+}
+//..............................................................................
 void THtml::SetSwitchState(THtmlSwitch& sw, int state)  {
-  int ind = FSwitchStates.IndexOf( sw.Name() );
+  int ind = SwitchStates.IndexOf( sw.GetName() );
   if( ind == -1 )
-    FSwitchStates.Add(sw.Name(), state);
+    SwitchStates.Add(sw.GetName(), state);
   else
-    FSwitchStates.GetObject(ind) = state;
+    SwitchStates.GetObject(ind) = state;
 }
 //..............................................................................
 int THtml::GetSwitchState(const olxstr& switchName)  {
-  int ind = FSwitchStates.IndexOf( switchName );
-  return (ind == -1) ? UnknownSwitchState : FSwitchStates.GetObject(ind);
-}
-//..............................................................................
-void THtml::ClearSwitchStates()  {
-  FSwitchStates.Clear();
+  int ind = SwitchStates.IndexOf( switchName );
+  return (ind == -1) ? UnknownSwitchState : SwitchStates.GetObject(ind);
 }
 //..............................................................................
 void THtml::OnMouseDown(wxMouseEvent& event)  {
   this->SetFocusIgnoringChildren();
-  if( FMovable )  {
-    FMouseX = event.GetX();
-    FMouseY = event.GetY();
+  if( Movable )  {
+    MouseX = event.GetX();
+    MouseY = event.GetY();
     SetCursor( wxCursor(wxCURSOR_SIZING) );
-    FMouseDown = true;
+    MouseDown = true;
   }
   else
     event.Skip();
 }
 //..............................................................................
 void THtml::OnMouseUp(wxMouseEvent& event)  {
-  if( FMovable && FMouseDown )  {
-    FMouseDown = false;
+  if( Movable && MouseDown )  {
+    MouseDown = false;
     SetCursor( wxCursor(wxCURSOR_ARROW) );
   }
   else
@@ -1160,12 +178,12 @@ void THtml::OnMouseUp(wxMouseEvent& event)  {
 }
 //..............................................................................
 void THtml::OnMouseMotion(wxMouseEvent& event)  {
-  if( !FMovable || !FMouseDown )  {
+  if( !Movable || !MouseDown )  {
     event.Skip();
     return;
   }
-  int dx = event.GetX() - FMouseX;
-  int dy = event.GetY() - FMouseY;
+  int dx = event.GetX() - MouseX;
+  int dy = event.GetY() - MouseY;
   if( !dx && !dy )  return;
   wxWindow *parent = GetParent();
   if( parent == NULL || parent->GetParent() == NULL )  return;
@@ -1260,7 +278,7 @@ void THtml::GetTraversibleIndeces(int& current, int& another, bool forward) cons
 }
 //..............................................................................
 void THtml::DoHandleFocusEvent(IEObject* prev, IEObject* next)  {
-  FLockPageLoad = true;  // prevent pae re-loading and object deletion
+  LockPageLoad = true;  // prevent pae re-loading and object deletion
   if( prev != NULL )  {
     if( EsdlInstanceOf(*prev, TTextEdit) )  {
       olxstr s = ((TTextEdit*)prev)->GetOnLeaveStr();
@@ -1283,7 +301,7 @@ void THtml::DoHandleFocusEvent(IEObject* prev, IEObject* next)  {
       ((TComboBox*)next)->SetSelection(-1,-1);
     }
   }
-  FLockPageLoad = false;
+  LockPageLoad = false;
 }
 //..............................................................................
 void THtml::DoNavigate(bool forward)  {
@@ -1337,26 +355,26 @@ void THtml::OnChar(wxKeyEvent& event)  {
 }
 //..............................................................................
 void THtml::UpdateSwitchState(THtmlSwitch &Switch, olxstr &String)  {
-  if( !Switch.UpdateSwitch() )  return;
+  if( !Switch.IsToUpdateSwitch() )  return;
   olxstr Tmp = "<!-- #include ";
-  Tmp << Switch.Name() << ' ';
+  Tmp << Switch.GetName() << ' ';
   for( int i=0; i < Switch.FileCount(); i++ )
-    Tmp << Switch.File(i) << ';';
-  for( int i=0; i < Switch.Params().Count(); i++ )  {
-    Tmp << Switch.Params().GetName(i) << '=';
-    if( Switch.Params().GetValue(i).FirstIndexOf(' ') == -1 )
-      Tmp << Switch.Params().GetValue(i);
+    Tmp << Switch.GetFile(i) << ';';
+  for( int i=0; i < Switch.GetParams().Count(); i++ )  {
+    Tmp << Switch.GetParams().GetName(i) << '=';
+    if( Switch.GetParams().GetValue(i).FirstIndexOf(' ') == -1 )
+      Tmp << Switch.GetParams().GetValue(i);
     else
-      Tmp << '\'' << Switch.Params().GetValue(i) << '\'';
+      Tmp << '\'' << Switch.GetParams().GetValue(i) << '\'';
     Tmp << ';';
   }
 
-  Tmp << Switch.FileIndex()+1 << ';' << " -->";
+  Tmp << Switch.GetFileIndex()+1 << ';' << " -->";
   String = Tmp;
 }
 //..............................................................................
 void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
-  TStrPObjList<olxstr,AHtmlObject*>& Lst = Sender.Strings();
+  TStrPObjList<olxstr,THtmlSwitch*>& Lst = Sender.GetStrings();
   TStrList Toks;
   using namespace exparse::parser_util;
   static const olxstr Tag  = "<!-- #include ",
@@ -1383,7 +401,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
     // TRANSLATION START
     Lst[i] = TGlXApp::GetMainForm()->TranslateString(Lst[i]);
     if( Lst[i].IndexOf("$") >= 0 )
-      TGlXApp::GetMainForm()->ProcessFunction(Lst[i], olxstr(Sender.CurrentFile()) << '#' << (i+1));
+      TGlXApp::GetMainForm()->ProcessFunction(Lst[i], olxstr(Sender.GetCurrentFile()) << '#' << (i+1));
     // TRANSLATION END
     int stm = (Lst[i].StartsFrom(Tag1) ? 1 : 0);
     if( stm == 0 )  stm = (Lst[i].StartsFrom(Tag) ? 2 : 0);
@@ -1406,12 +424,12 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       }
       THtmlSwitch* Sw = &Sender.NewSwitch();
       Lst.GetObject(i) = Sw;
-      Sw->Name(Toks[0]);
+      Sw->SetName(Toks[0]);
       tmp = Toks.Text(' ', 1, Toks.Count()-1);
       Toks.Clear();
       TParamList::StrtokParams(tmp, ';', Toks); // extract arguments
       if( Toks.Count() < 2 )  { // must be at least 2 for filename and status
-        TBasicApp::GetLog().Error( olxstr("Wrong defined switch (not enough data)") << Sw->Name());
+        TBasicApp::GetLog().Error( olxstr("Wrong defined switch (not enough data)") << Sw->GetName());
         continue;
       }
 
@@ -1421,7 +439,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
             if( Toks[j].StartsFrom('\\') || Toks[j].StartsFrom('/') )
               tmp = Toks[j].SubStringFrom(1);
             else
-              tmp = TZipWrapper::ComposeFileName(Sender.File(Sender.FileIndex()), Toks[j]);
+              tmp = TZipWrapper::ComposeFileName(Sender.GetFile(Sender.GetFileIndex()), Toks[j]);
           }
           else
             tmp = Toks[j];
@@ -1434,10 +452,10 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
           if( Toks[j].IndexOf('#') != -1 )  {
             olxstr tmp1;
             tmp = Toks[j];
-            for( int k=0; k < Sender.Params().Count(); k++ )  {
+            for( int k=0; k < Sender.GetParams().Count(); k++ )  {
               tmp1 = '#';  
-              tmp1 << Sender.Params().GetName(k);
-              tmp.Replace(tmp1, Sender.Params().GetValue(k) );
+              tmp1 << Sender.GetParams().GetName(k);
+              tmp.Replace(tmp1, Sender.GetParams().GetValue(k) );
             }
             Sw->AddParam(tmp);
           }
@@ -1446,41 +464,41 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
         }
       }
 
-      int switchState = GetSwitchState(Sw->Name()), index = -1;;
+      int switchState = GetSwitchState(Sw->GetName()), index = -1;;
       if( switchState == UnknownSwitchState )  {
         index = Toks.LastStr().ToInt();
         if( index < 0 )
-          Sw->UpdateSwitch(false);
+          Sw->SetUpdateSwitch(false);
         index = abs(index)-1;
       }
       else
         index = switchState;
-      Sw->FileIndex(index);
+      Sw->SetFileIndex(index);
     }
   }
 }
 //..............................................................................
 bool THtml::ProcessPageLoadRequest()  {
-  if( !FPageLoadRequested || IsPageLocked() )  return false;
-  FPageLoadRequested = false;
+  if( !PageLoadRequested || IsPageLocked() )  return false;
+  PageLoadRequested = false;
   bool res = false;
-  if( !FPageRequested.IsEmpty() )
-    res = LoadPage( uiStr(FPageRequested) );
+  if( !PageRequested.IsEmpty() )
+    res = LoadPage( PageRequested.u_str() );
   else
     res = UpdatePage();
-  FPageRequested  = EmptyString;
+  PageRequested  = EmptyString;
   return res;
 }
 //..............................................................................
 bool THtml::ReloadPage()  {
   if( IsPageLocked() )  {
-    FPageLoadRequested = true;
-    FPageRequested = FFileName;
+    PageLoadRequested = true;
+    PageRequested = FileName;
     return true;
   }
   Objects.Clear();
   Traversables.Clear();
-  return  LoadPage( uiStr(FFileName) );
+  return  LoadPage(FileName.u_str());
 }
 //..............................................................................
 bool THtml::LoadPage(const wxString &file)  {
@@ -1488,8 +506,8 @@ bool THtml::LoadPage(const wxString &file)  {
     return false;
   
   if( IsPageLocked() )  {
-    FPageLoadRequested = true;
-    FPageRequested = file.c_str();
+    PageLoadRequested = true;
+    PageRequested = file.c_str();
     return true;
   }
 
@@ -1498,60 +516,63 @@ bool THtml::LoadPage(const wxString &file)  {
   TestFile = TEFile::ExtractFileName(File);
   if( Path.Length() > 1 )  {
     Path = TEFile::OSPath(Path);
-    if( Path.CharAt(1) == ':' )  FWebFolder = Path;
+    if( TEFile::IsAbsolutePath(Path) )
+      WebFolder = Path;
   }
   else
-    Path = FWebFolder;
-  if( Path == FWebFolder )  TestFile = FWebFolder + TestFile;
-  else                      TestFile = FWebFolder + Path + TestFile;
+    Path = WebFolder;
+  if( Path == WebFolder )
+    TestFile = WebFolder + TestFile;
+  else
+    TestFile = WebFolder + Path + TestFile;
 
   if( !TZipWrapper::IsValidFileName(TestFile) && !TFileHandlerManager::Exists(file.c_str()) )  {
     throw TFileDoesNotExistException(__OlxSourceInfo, file.c_str() );
   }
-  FRoot->Clear();
-  FRoot->ClearFiles();
-  FRoot->AddFile(File);
+  Root->Clear();
+  Root->ClearFiles();
+  Root->AddFile(File);
 
-  FRoot->FileIndex(0);
-  FRoot->UpdateFileIndex();
-  FFileName = File;
+  Root->SetFileIndex(0);
+  Root->UpdateFileIndex();
+  FileName = File;
   return UpdatePage();
 }
 //..............................................................................
 bool THtml::ItemState(const olxstr &ItemName, short State)  {
-  THtmlSwitch * Sw = FRoot->FindSwitch(ItemName);
+  THtmlSwitch * Sw = Root->FindSwitch(ItemName);
   if( Sw == NULL )  {
     TBasicApp::GetLog().Error( olxstr("THtml::ItemState: unresolved: ") << ItemName );
     return false;
   }
-  Sw->FileIndex(State-1);
+  Sw->SetFileIndex(State-1);
   return true;
 }
 //..............................................................................
 bool THtml::UpdatePage()  {
-  if( FLockPageLoad )  {     
-    FPageLoadRequested = true;
-    FPageRequested  = EmptyString;
+  if( LockPageLoad )  {     
+    PageLoadRequested = true;
+    PageRequested  = EmptyString;
     return true;
   }
 
-  olxstr Path( TEFile::ExtractFilePath(FFileName) );
-  if( TEFile::IsAbsolutePath(FFileName) )  {
+  olxstr Path(TEFile::ExtractFilePath(FileName));
+  if( TEFile::IsAbsolutePath(FileName) )  {
     Path = TEFile::OSPath(Path);
-    if( Path.CharAt(1) == ':' )  FWebFolder = Path;
+    WebFolder = Path;
   }
   else
-    Path = FWebFolder;
+    Path = WebFolder;
 
   olxstr oldPath( TEFile::CurrentDir() );
 
-  TEFile::ChangeDir(FWebFolder);
+  TEFile::ChangeDir(WebFolder);
 
-  for( int i=0; i < FRoot->SwitchCount(); i++ )  // reload switches
-    FRoot->Switch(i).UpdateFileIndex();
+  for( int i=0; i < Root->SwitchCount(); i++ )  // reload switches
+    Root->GetSwitch(i).UpdateFileIndex();
 
   TStrList Res;
-  FRoot->ToStrings(Res);
+  Root->ToStrings(Res);
   ObjectsState.SaveState();
   Objects.Clear();
   Traversables.Clear();
@@ -1692,239 +713,6 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
     SetToolTip(NULL);
 }
 //..............................................................................
-//..............................................................................
-//..............................................................................
-THtmlImageCell::THtmlImageCell(wxWindow *window, wxFSFile *input,
-                                 int w, int h, double scale, int align,
-                                 const wxString& mapname, 
-                                 bool width_per, bool height_per) : wxHtmlCell()
-{
-  m_window = window ? wxStaticCast(window, wxScrolledWindow) : NULL;
-  m_scale = scale;
-  m_showFrame = false;
-  m_bitmap = NULL;
-  m_bmpW = w;
-  m_bmpH = h;
-  m_mapName = mapname;
-  SetCanLiveOnPagebreak(false);
-#if wxUSE_GIF && wxUSE_TIMER
-  m_gifDecoder = NULL;
-  m_gifTimer = NULL;
-  File = input;
-  m_physX = m_physY = wxDefaultCoord;
-#endif
-  if( m_bmpW && m_bmpH )  {
-    if( input != NULL )  {
-      wxInputStream *s = input->GetStream();
-      if( s != NULL )  {
-        bool readImg = true;
-
-#if wxUSE_GIF && wxUSE_TIMER && !wxCHECK_VERSION(2,8,0)
-        if( (input->GetLocation().Matches(wxT("*.gif")) ||
-             input->GetLocation().Matches(wxT("*.GIF"))) && m_window )
-        {
-          m_gifDecoder = new wxGIFDecoder(s, true);
-          if( m_gifDecoder->ReadGIF() == wxGIF_OK )  {
-            wxImage img;
-            if( m_gifDecoder->ConvertToImage(&img) )
-              SetImage(img);
-            readImg = false;
-            if( m_gifDecoder->IsAnimation() )  {
-              m_gifTimer = new wxGIFTimer(this);
-              m_gifTimer->Start(m_gifDecoder->GetDelay(), true);
-            }
-            else  {
-              wxDELETE(m_gifDecoder);
-            }
-          }
-          else  {
-            wxDELETE(m_gifDecoder);
-          }
-        }
-        if( readImg )
-#endif // wxUSE_GIF && wxUSE_TIMER
-        {
-          wxImage image(*s, wxBITMAP_TYPE_ANY);
-          if( image.Ok() )
-            SetImage(image);
-          else  {
-            if( mapname.IsEmpty() )
-              TBasicApp::GetLog().Error( olxstr("Invalid image"));
-            else
-              TBasicApp::GetLog().Error( olxstr("Invalid image with map: ") << mapname.c_str());
-          }
-        }
-      }
-    }
-  }
-  else  {  // input==NULL, use "broken image" bitmap
-    if( m_bmpW == wxDefaultCoord && m_bmpH == wxDefaultCoord )  {
-      m_bmpW = 29;
-      m_bmpH = 31;
-    }
-    else  {
-      m_showFrame = true;
-      if( m_bmpW == wxDefaultCoord ) m_bmpW = 31;
-      if( m_bmpH == wxDefaultCoord ) m_bmpH = 33;
-    }
-    m_bitmap = new wxBitmap(wxArtProvider::GetBitmap(wxART_MISSING_IMAGE));
-  }
-    //else: ignore the 0-sized images used sometimes on the Web pages
-
-  m_Width = (int)(scale * (double)m_bmpW);
-  m_Height = (int)(scale * (double)m_bmpH);
-  WidthInPercent = width_per;
-  HeightInPercent = height_per;
-  switch( align )  {
-    case wxHTML_ALIGN_TOP :
-      m_Descent = m_Height;
-      break;
-    case wxHTML_ALIGN_CENTER :
-      m_Descent = m_Height / 2;
-      break;
-    case wxHTML_ALIGN_BOTTOM :
-    default :
-      m_Descent = 0;
-      break;
-  }
-}
-//..............................................................................
-void THtmlImageCell::SetImage(const wxImage& img)  {
-  if( img.Ok() )  {
-    delete m_bitmap;
-    int ww, hh;
-    ww = img.GetWidth();
-    hh = img.GetHeight();
-
-     if( m_bmpW == wxDefaultCoord )  m_bmpW = ww;
-     if( m_bmpH == wxDefaultCoord )  m_bmpH = hh;
-
-     if ((m_bmpW != ww) || (m_bmpH != hh))  {
-         wxImage img2 = img.Scale(m_bmpW, m_bmpH, wxIMAGE_QUALITY_HIGH);
-         m_bitmap = new wxBitmap(img2);
-     }
-     else
-         m_bitmap = new wxBitmap(img);
-  }
-}
-//..............................................................................
-#if wxUSE_GIF && wxUSE_TIMER && !wxCHECK_VERSION(2,8,0)
-void THtmlImageCell::AdvanceAnimation(wxTimer *timer)  {
-  wxImage img;
-  m_gifDecoder->GoNextFrame(true);
-
-  if( m_physX == wxDefaultCoord )  {
-    m_physX = m_physY = 0;
-    for(wxHtmlCell *cell = this; cell; cell = cell->GetParent() )  {
-      m_physX += cell->GetPosX();
-      m_physY += cell->GetPosY();
-    }
-  }
-
-  int x, y;
-  m_window->CalcScrolledPosition(m_physX, m_physY, &x, &y);
-  wxRect rect(x, y, m_Width, m_Height);
-
-  if( m_window->GetClientRect().Intersects(rect) &&
-      m_gifDecoder->ConvertToImage(&img) )
-  {
-    if( (int)m_gifDecoder->GetWidth() != m_Width ||
-         (int)m_gifDecoder->GetHeight() != m_Height ||
-         m_gifDecoder->GetLeft() != 0 || m_gifDecoder->GetTop() != 0 )
-      {
-        wxBitmap bmp(img);
-        wxMemoryDC dc;
-        dc.SelectObject(*m_bitmap);
-        dc.DrawBitmap(bmp, m_gifDecoder->GetLeft(), m_gifDecoder->GetTop(), true /* use mask */);
-      }
-      else
-        SetImage(img);
-      m_window->Refresh(img.HasMask(), &rect);
-  }
-  timer->Start(m_gifDecoder->GetDelay(), true);
-}
-#endif
-//..............................................................................
-void THtmlImageCell::Layout( int w )  {
-  wxHtmlCell::Layout(w);
-  m_physX = m_physY = wxDefaultCoord;
-}
-//..............................................................................
-
-THtmlImageCell::~THtmlImageCell()  {
-    if( File != NULL )
-      delete File;
-    delete m_bitmap;
-#if wxUSE_GIF && wxUSE_TIMER
-    delete m_gifTimer;
-    delete m_gifDecoder;
-#endif
-}
-
-
-void THtmlImageCell::Draw(wxDC& dc, int x, int y,
-                           int WXUNUSED(view_y1), int WXUNUSED(view_y2),
-                           wxHtmlRenderingInfo& WXUNUSED(info))
-{
-  int width = m_bmpW, height = m_bmpH;
-  if( WidthInPercent || HeightInPercent )  {
-    if( WidthInPercent )
-      width = GetParent()->GetWidth() * m_Width / 100;
-    if( HeightInPercent )
-      height = GetParent()->GetHeight() * m_Height / 100;
-  }
-  if ( m_showFrame )  {
-    dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    dc.SetPen(*wxBLACK_PEN);
-    dc.DrawRectangle(x + m_PosX, y + m_PosY, width*m_scale, height*m_scale);
-    x++, y++;
-  }
-  if ( m_bitmap )
-  {
-    // We add in the scaling from the desired bitmap width
-    // and height, so we only do the scaling once.
-    double imageScaleX = 1.0;
-    double imageScaleY = 1.0;
-    if (width != m_bitmap->GetWidth())
-      imageScaleX = (double) width / (double) m_bitmap->GetWidth();
-    if (height != m_bitmap->GetHeight())
-      imageScaleY = (double) height / (double) m_bitmap->GetHeight();
-
-    double us_x, us_y;
-    dc.GetUserScale(&us_x, &us_y);
-    dc.SetUserScale(us_x * m_scale * imageScaleX, us_y * m_scale * imageScaleY);
-    int cx = (int) ((double)(x + m_PosX) / (m_scale*imageScaleX)),
-      cy = (int) ((double)(y + m_PosY) / (m_scale*imageScaleY));
-    //        dc.DrawBitmap(*m_bitmap, cx+1, cy, true);
-    dc.DrawBitmap(*m_bitmap, cx, cy, true);
-    dc.SetUserScale(us_x, us_y);
-    if( Text.Len() )
-    {
-      dc.SetTextForeground( *wxBLACK );
-      //          wxFont fnt = dc.GetFont();
-      //          fnt.SetPointSize(25);
-      //          dc.SetFont( fnt );
-      dc.DrawText(Text, x + m_PosX, y + m_PosY);
-    }
-  }
-}
-
-wxHtmlLinkInfo *THtmlImageCell::GetLink( int x, int y ) const {
-  for( int i=Shapes.Count()-1; i >=0; i-- )  {
-    if( Shapes[i].IsInside(x,y) )
-      return Shapes[i].link;
-  }
-  wxHtmlContainerCell *op = GetParent(), *p = op;
-  while( p != NULL )  {
-    op = p;
-    p = p->GetParent();
-  }
-  p = op;
-  wxHtmlCell *cell = (wxHtmlCell*)p->Find(wxHTML_COND_ISIMAGEMAP,
-    (const void*)(&m_mapName));
-  return (cell == NULL) ? wxHtmlCell::GetLink(x, y) : cell->GetLink(x, y);
-}
-//..............................................................................
 /*
 the format is following intemstate popup_name item_name statea stateb ... item_nameb ...
 if there are more than 1 state for an item the function does the rotation if
@@ -1943,22 +731,22 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   else
     html = this;
 
-  THtmlSwitch *rootSwitch = html->Root();
+  THtmlSwitch& rootSwitch = html->GetRoot();
   TIntList states;
   TPtrList<THtmlSwitch> Switches;
   olxstr itemName( Cmds[0] );
   for( int i=1; i < Cmds.Count(); i++ )  {
     Switches.Clear();
     if( itemName.EndsWith('.') )  {  // special treatment of any particular index
-      THtmlSwitch* sw = rootSwitch->FindSwitch(itemName.SubStringTo(itemName.Length()-1));
+      THtmlSwitch* sw = rootSwitch.FindSwitch(itemName.SubStringTo(itemName.Length()-1));
       if( sw == NULL )
         return;
       for( int j=0; j < sw->SwitchCount(); j++ )
-        Switches.Add( &sw->Switch(j) );
+        Switches.Add(sw->GetSwitch(j));
       //sw->Expand(Switches);
     }
     else if( itemName.FirstIndexOf('*') == -1 )  {
-      THtmlSwitch* sw = rootSwitch->FindSwitch(itemName);
+      THtmlSwitch* sw = rootSwitch.FindSwitch(itemName);
       if( sw == NULL )  {
         Error.ProcessingError(__OlxSrcInfo, "could not locate specified switch: ") << itemName;
         return;
@@ -1967,20 +755,20 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     else  {
       if( itemName == "*" )  {
-        for( int j=0; j < rootSwitch->SwitchCount(); j++ )
-          Switches.Add( &rootSwitch->Switch(j) );
+        for( int j=0; j < rootSwitch.SwitchCount(); j++ )
+          Switches.Add(rootSwitch.GetSwitch(j));
       }
       else  {
         int sindex = itemName.FirstIndexOf('*');
         // *blabla* syntax
         if( sindex == 0 && itemName.Length() > 2 && itemName.CharAt(itemName.Length()-1) == '*')  {
-          rootSwitch->FindSimilar( itemName.SubString(1, itemName.Length()-2), EmptyString, Switches );
+          rootSwitch.FindSimilar( itemName.SubString(1, itemName.Length()-2), EmptyString, Switches );
         }
         else  {  // assuming bla*bla syntax
           olxstr from = itemName.SubStringTo(sindex), with;
           if( (sindex+1) < itemName.Length() )
             with = itemName.SubStringFrom(sindex+1);
-          rootSwitch->FindSimilar( from, with, Switches );
+          rootSwitch.FindSimilar(from, with, Switches);
         }
       }
     }
@@ -1992,17 +780,19 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     if( states.Count() == 1 )  {  // simply change the state to the request
       for( int j=0; j < Switches.Count(); j++ )  {
-        Switches[j]->FileIndex(states[0]-1);
+        Switches[j]->SetFileIndex(states[0]-1);
       }
     }
     else  {
       for( int j=0; j < Switches.Count(); j++ )  {
         THtmlSwitch* sw = Switches[j];
-        int currentState = sw->FileIndex();
+        const int currentState = sw->GetFileIndex();
         for( int k=0; k < states.Count(); k++ )  {
           if( states[k] == (currentState+1) )  {
-            if( (k+1) < states.Count() )  {  sw->FileIndex( states[k+1] -1);  }
-            else  {  sw->FileIndex( states[0]-1 );  }
+            if( (k+1) < states.Count() )
+              sw->SetFileIndex(states[k+1] -1);
+            else
+              sw->SetFileIndex(states[0]-1);
           }
         }
       }
@@ -2020,18 +810,17 @@ void THtml::funGetItemState(const TStrObjList &Params, TMacroError &E)  {
     return;
   }
   olxstr itemName( (Params.Count() == 1) ? Params[0] : Params[1] );
-  THtmlSwitch *rootSwitch = html->Root();
-  THtmlSwitch* sw = rootSwitch->FindSwitch(itemName);
+  THtmlSwitch *sw = html->GetRoot().FindSwitch(itemName);
   if( sw == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified switch: ") << itemName;
     return;
   }
-  E.SetRetVal( sw->FileIndex() );
+  E.SetRetVal(sw->GetFileIndex());
 }
 //..............................................................................
 void THtml::funIsPopup(const TStrObjList& Params, TMacroError &E)  {
   THtml *html = TGlXApp::GetMainForm()->FindHtml(Params[0]);
-  E.SetRetVal( html != NULL && html->GetParent()->IsShown() ); 
+  E.SetRetVal(html != NULL && html->GetParent()->IsShown()); 
 }
 //..............................................................................
 void THtml::funIsItem(const TStrObjList &Params, TMacroError &E)  {
@@ -2041,9 +830,7 @@ void THtml::funIsItem(const TStrObjList &Params, TMacroError &E)  {
     return;
   }
   olxstr itemName( (Params.Count() == 1) ? Params[0] : Params[1] );
-  THtmlSwitch *rootSwitch = html->Root();
-  THtmlSwitch* sw = rootSwitch->FindSwitch(itemName);
-  E.SetRetVal( sw == NULL ? false : true );
+  E.SetRetVal(html->GetRoot().FindSwitch(itemName) != NULL);
 }
 //..............................................................................
 void THtml::SetShowTooltips(bool v, const olxstr& html_name)  {
@@ -2137,7 +924,7 @@ void THtml::macHtmlDump(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   TStrList SL;
-  html->Root()->ToStrings( SL );
+  html->GetRoot().ToStrings(SL);
   TUtf8File::WriteLines(Cmds.Last().String, SL);
 }
 //..............................................................................
