@@ -82,13 +82,9 @@ TdlgUpdateOptions::TdlgUpdateOptions(TMainFrame *ParentFrame) :
   TopSiser->SetSizeHints( this );   // set size hints to honour minimum size
 
   Center();
-
-  FParent->RestorePosition(this);
 }
 //..............................................................................
-TdlgUpdateOptions::~TdlgUpdateOptions() {
-  FParent->SavePosition(this);
-}
+TdlgUpdateOptions::~TdlgUpdateOptions() {}
 //..............................................................................
 void TdlgUpdateOptions::OnOK(wxCommandEvent& event)  {
   uapi.GetSettings().proxy = tcProxy->GetValue().c_str();

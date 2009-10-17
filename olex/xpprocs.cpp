@@ -63,7 +63,7 @@
 #include "xyz.h"
 
 #include "fsext.h"
-#include "htmlext.h"
+#include "html/htmlext.h"
 
 #include <iostream>
 
@@ -149,8 +149,6 @@
 #include "exparse/expbuilder.h"
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
-
-using namespace _xl_Controls;
 
 static const olxstr NAString("n/a");
 static const olxstr StartMatchCBName("startmatch");
@@ -1305,7 +1303,7 @@ void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     FXApp->SetLabelsVisible(true);
   }
   TStateChange sc(prsLabels, FXApp->AreLabelsVisible());
-  OnStateChange->Execute(this, &sc);
+  OnStateChange->Execute((AOlxCtrl*)this, &sc);
 }
 //..............................................................................
 void TMainForm::macSetEnv(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -4840,8 +4838,8 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
           if( itemType == mtSeparator )  menu->InsertSeparator(insindex);
           else {
             TMenuItem* item = new TMenuItem(itemType, accell, menu, toks[i]);
-            if( modeDependent.Length() )  item->ActionQueue( OnModeChange, modeDependent, TMenuItem::ModeDependent );
-            if( stateDependent.Length() )  item->ActionQueue( OnStateChange, stateDependent, TMenuItem::StateDependent );
+            if( !modeDependent.IsEmpty() )  item->SetActionQueue( OnModeChange, modeDependent, TMenuItem::ModeDependent );
+            if( !stateDependent.IsEmpty() )  item->SetActionQueue( OnStateChange, stateDependent, TMenuItem::StateDependent );
             if( Cmds.Count() > 1 )  item->SetCommand( Cmds[1] );
             menu->Insert(insindex, item );
             AccMenus.AddAccell(accell, item );
@@ -4851,8 +4849,8 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
           if( itemType == mtSeparator )  menu->AppendSeparator();
           else {
             TMenuItem* item = new TMenuItem(itemType, accell, menu, toks[i]);
-            if( !modeDependent.IsEmpty() )  item->ActionQueue( OnModeChange, modeDependent, TMenuItem::ModeDependent );
-            if( !stateDependent.IsEmpty() )  item->ActionQueue( OnStateChange, stateDependent, TMenuItem::StateDependent );
+            if( !modeDependent.IsEmpty() )  item->SetActionQueue( OnModeChange, modeDependent, TMenuItem::ModeDependent );
+            if( !stateDependent.IsEmpty() )  item->SetActionQueue( OnStateChange, stateDependent, TMenuItem::StateDependent );
             if( Cmds.Count() > 1 )  item->SetCommand( Cmds[1] );
             menu->Append( item );
             AccMenus.AddAccell(accell, item );
@@ -4899,8 +4897,8 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
         else  {
           TMenuItem* item = new TMenuItem(itemType, accell, menu, menuName);
           if( Cmds.Count() > 1 )  item->SetCommand( Cmds[1] );
-          if( !modeDependent.IsEmpty() )  item->ActionQueue( OnModeChange, modeDependent, TMenuItem::ModeDependent );
-          if( !stateDependent.IsEmpty() )  item->ActionQueue( OnStateChange, stateDependent, TMenuItem::StateDependent );
+          if( !modeDependent.IsEmpty() )  item->SetActionQueue( OnModeChange, modeDependent, TMenuItem::ModeDependent );
+          if( !stateDependent.IsEmpty() )  item->SetActionQueue( OnStateChange, stateDependent, TMenuItem::StateDependent );
           menu->Insert(insindex, item );
           AccMenus.AddAccell(accell, item );  }
         }
@@ -4908,8 +4906,8 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
         if( itemType == mtSeparator )  menu->AppendSeparator();
         else  {
           TMenuItem* item = new TMenuItem(itemType, accell, menu, menuName);
-          if( !modeDependent.IsEmpty() )  item->ActionQueue( OnModeChange, modeDependent, TMenuItem::ModeDependent );
-          if( !stateDependent.IsEmpty() )  item->ActionQueue( OnStateChange, stateDependent, TMenuItem::StateDependent );
+          if( !modeDependent.IsEmpty() )  item->SetActionQueue( OnModeChange, modeDependent, TMenuItem::ModeDependent );
+          if( !stateDependent.IsEmpty() )  item->SetActionQueue( OnStateChange, stateDependent, TMenuItem::StateDependent );
           if( Cmds.Count() > 1 )  item->SetCommand( Cmds[1] );
           menu->Append( item );
           AccMenus.AddAccell(accell, item );
@@ -7646,6 +7644,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  olxstr empty = EmptyString;
   OlxTests tests;
   tests.Add( &TSymmParser::Tests );
   tests.run();

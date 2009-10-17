@@ -863,31 +863,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\olex\htmlext.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\olex\htmlswitch.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\olex\htmltags.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\repository\httpex.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\repository\httpfs.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\olex\imagep.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\olex\imgcellext.cpp"
 				>
 			</File>
 			<File
@@ -1061,14 +1041,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\olex\htmlext.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\olex\htmlswitch.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\olex\imagep.h"
 				>
 			</File>
@@ -1210,6 +1182,142 @@
 				RelativePath="..\..\..\olex\modes\split.h"
 				>
 			</File>
+		</Filter>
+		<Filter
+			Name="ctrl"
+			>
+			<Filter
+				Name="headers"
+				>
+				<File
+					RelativePath="..\..\..\olex\ctrls\btnext.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\checkboxext.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\comboext.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\labelext.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\listboxext.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\menuext.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\olxctrlbase.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\spinctrlext.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\texteditext.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\trackbarext.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\treeviewext.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="sources"
+				>
+				<File
+					RelativePath="..\..\..\olex\ctrls\btnext.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\checkboxext.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\comboext.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\labelext.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\listboext.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\menuext.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\spinctrlext.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\texteditext.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\trackbarext.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\treeviewext.cpp"
+					>
+				</File>
+			</Filter>
+		</Filter>
+		<Filter
+			Name="html"
+			>
+			<Filter
+				Name="headers"
+				>
+				<File
+					RelativePath="..\..\..\olex\html\htmlext.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\html\htmlswitch.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\html\imgcellext.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="sources"
+				>
+				<File
+					RelativePath="..\..\..\olex\html\htmlext.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\html\htmlswitch.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\html\htmltags.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\html\imgcellext.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<File
 			RelativePath=".\ReadMe.txt"

@@ -5,7 +5,7 @@
 
 class TCmdLine : public TTextEdit, public AActionHandler  {
 private:
-  TActionQList* Actions;
+  TActionQList Actions;
 protected:
   olxstr PromptStr;
   TStrList Commands;
@@ -26,7 +26,7 @@ public:
   }
   void SetCommand(const olxstr& cmd);
 
-  TActionQueue *OnCommand;
+  TActionQueue &OnCommand;
 };
 
 #endif

@@ -1,7 +1,7 @@
 #include "htmlext.h"
 #include "imgcellext.h"
-#include "mainform.h"
-#include "xglapp.h"
+#include "../mainform.h"
+#include "../xglapp.h"
 #include "wx/html/htmlcell.h"
 #include "wx/html/m_templ.h"
 
@@ -161,7 +161,7 @@ TAG_HANDLER_PROC(tag)  {
   int valign = -1, halign = -1, 
     fl=0,
     ax=100, ay=20;
-  IEObject* CreatedObject = NULL;
+  AOlxCtrl* CreatedObject = NULL;
   wxWindow* CreatedWindow = NULL;
   Bf[0] = '\0';
   tag.ScanParam(wxT("WIDTH"), _StrFormat_, Bf);
@@ -292,32 +292,30 @@ TAG_HANDLER_PROC(tag)  {
 
     if( tag.HasParam(wxT("ONCHANGE")) )  {
       Text->SetOnChangeStr( tag.GetParam(wxT("ONCHANGE")).c_str() );
-      Text->OnChange->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Text->OnChange.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONLEAVE")) )  {
       Text->SetOnLeaveStr( tag.GetParam(wxT("ONLEAVE")).c_str() );
-      Text->OnLeave->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Text->OnLeave.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONENTER")) )  {
       Text->SetOnEnterStr( tag.GetParam(wxT("ONENTER")).c_str() );
-      Text->OnEnter->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Text->OnEnter.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONRETURN")) )  {
       Text->SetOnReturnStr( tag.GetParam(wxT("ONRETURN")).c_str() );
-      Text->OnReturn->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Text->OnReturn.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
   }
 /******************* LABEL ***************************************************/
   else if( TagName.Equalsi("label") )  {
-    TLabel *Text = new TLabel(m_WParser->GetWindowInterface()->GetHTMLWindow());
+    TLabel *Text = new TLabel(m_WParser->GetWindowInterface()->GetHTMLWindow(), Value);
     Text->SetFont( m_WParser->GetDC()->GetFont() );
     CreatedObject = Text;
     CreatedWindow = Text;
     Text->WI.SetWidth( ax );
     Text->WI.SetHeight( ay );
     Text->SetData( Data );
-
-    Text->SetCaption(Value);
     m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Text, fl));
   }
 /******************* BUTTON ***************************************************/
@@ -348,8 +346,8 @@ TAG_HANDLER_PROC(tag)  {
           ((TBmpButton*)Btn)->SetBitmapLabel( image );
         }
       }
-      Btn->GetWI().SetWidth(ax);
-      Btn->GetWI().SetHeight(ay);
+      Btn->WI.SetWidth(ax);
+      Btn->WI.SetHeight(ay);
       ((TBmpButton*)Btn)->SetFont( m_WParser->GetDC()->GetFont() );
 
       CreatedWindow = (TBmpButton*)Btn;
@@ -360,8 +358,8 @@ TAG_HANDLER_PROC(tag)  {
       ((TButton*)Btn)->SetCaption(Value);
       ((TButton*)Btn)->SetFont( m_WParser->GetDC()->GetFont() );
       if( (flags & wxBU_EXACTFIT) == 0 )  {
-        Btn->GetWI().SetWidth(ax);
-        Btn->GetWI().SetHeight(ay);
+        Btn->WI.SetWidth(ax);
+        Btn->WI.SetHeight(ay);
       }
 #ifdef __WXGTK__  // got no idea what happens here, client size does not work?
       wxFont fnt(m_WParser->GetDC()->GetFont());
@@ -379,15 +377,15 @@ TAG_HANDLER_PROC(tag)  {
     Btn->SetData(Data);
     if( tag.HasParam(wxT("ONCLICK")) )  {
       Btn->SetOnClickStr( tag.GetParam(wxT("ONCLICK")).c_str() );
-      Btn->OnClick->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Btn->OnClick.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONDOWN")) )  {
       Btn->SetOnUpStr( tag.GetParam(wxT("ONUP")).c_str() );
-      Btn->OnUp->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Btn->OnUp.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONDOWN")) )  {
       Btn->SetOnDownStr( tag.GetParam(wxT("ONDOWN")).c_str() );
-      Btn->OnDown->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Btn->OnDown.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
 
     if( tag.HasParam(wxT("DOWN")) )
@@ -398,7 +396,7 @@ TAG_HANDLER_PROC(tag)  {
 
     olxstr modeDependent = tag.GetParam(wxT("MODEDEPENDENT")).c_str();
     if( !modeDependent.IsEmpty() )  {
-      Btn->ActionQueue( TGlXApp::GetMainForm()->OnModeChange, modeDependent );
+      Btn->SetActionQueue( TGlXApp::GetMainForm()->OnModeChange, modeDependent );
     }
 
     if( EsdlInstanceOf(*Btn, TButton) )
@@ -438,19 +436,19 @@ TAG_HANDLER_PROC(tag)  {
     Box->SetData(Data);
     if( tag.HasParam(wxT("ONCHANGE")) )  {
       Box->SetOnChangeStr( tag.GetParam(wxT("ONCHANGE")).c_str() );
-      Box->OnChange->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Box->OnChange.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONLEAVE")) )  {
       Box->SetOnLeaveStr( tag.GetParam(wxT("ONLEAVE")).c_str() );
-      Box->OnLeave->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Box->OnLeave.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONENTER")) )  {
       Box->SetOnEnterStr( tag.GetParam(wxT("ONENTER")).c_str() );
-      Box->OnEnter->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Box->OnEnter.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONRETURN")) )  {
       Box->SetOnReturnStr( tag.GetParam(wxT("ONRETURN")).c_str() );
-      Box->OnReturn->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Box->OnReturn.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( !Label.IsEmpty() )  {
       wxHtmlContainerCell* contC = new wxHtmlContainerCell(m_WParser->GetContainer());
@@ -486,7 +484,7 @@ TAG_HANDLER_PROC(tag)  {
     Spin->SetData(Data);
     if( tag.HasParam(wxT("ONCHANGE")) )  {
       Spin->SetOnChangeStr( tag.GetParam(wxT("ONCHANGE")).c_str() );
-      Spin->OnChange->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Spin->OnChange.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( !Label.IsEmpty() )  {
       wxHtmlContainerCell* contC = new wxHtmlContainerCell(m_WParser->GetContainer());
@@ -522,11 +520,11 @@ TAG_HANDLER_PROC(tag)  {
     Track->SetData(Data);
     if( tag.HasParam(wxT("ONCHANGE")) )  {
       Track->SetOnChangeStr(tag.GetParam(wxT("ONCHANGE")).c_str());
-      Track->OnChange->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Track->OnChange.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONMOUSEUP")) )  {
       Track->SetOnMouseUpStr(tag.GetParam(wxT("ONMOUSEUP")).c_str());
-      Track->OnMouseUp->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Track->OnMouseUp.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( !Label.IsEmpty() )  {
       wxHtmlContainerCell* contC = new wxHtmlContainerCell(m_WParser->GetContainer());
@@ -567,18 +565,18 @@ TAG_HANDLER_PROC(tag)  {
     // binding events
     if( tag.HasParam(wxT("ONCLICK")) )  {
       Box->SetOnClickStr( tag.GetParam(wxT("ONCLICK")).c_str() );
-      Box->OnClick->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Box->OnClick.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONCHECK")) )  {
       Box->SetOnCheckStr( tag.GetParam(wxT("ONCHECK")).c_str() );
-      Box->OnCheck->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Box->OnCheck.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONUNCHECK")) )  {
       Box->SetOnUncheckStr( tag.GetParam(wxT("ONUNCHECK")).c_str() );
-      Box->OnUncheck->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Box->OnUncheck.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("MODEDEPENDENT")) )  {
-      Box->ActionQueue( TGlXApp::GetMainForm()->OnModeChange, tag.GetParam(wxT("MODEDEPENDENT")).c_str() );
+      Box->SetActionQueue( TGlXApp::GetMainForm()->OnModeChange, tag.GetParam(wxT("MODEDEPENDENT")).c_str() );
     }
     m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Box, fl));
   }
@@ -598,11 +596,11 @@ TAG_HANDLER_PROC(tag)  {
     Tree->SetData( Data );
     if( tag.HasParam(wxT("ONSELECT")) )  {
       Tree->SetOnSelectStr( tag.GetParam(wxT("ONSELECT")).c_str() );
-      Tree->OnSelect->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Tree->OnSelect.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONITEM")) )  {
       Tree->SetOnItemActivateStr( tag.GetParam(wxT("ONITEM")).c_str() );
-      Tree->OnDblClick->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      Tree->OnDblClick.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Tree, fl));
     if( ios == NULL )  {  // create test tree
@@ -664,11 +662,11 @@ TAG_HANDLER_PROC(tag)  {
     // binding events
     if( tag.HasParam(wxT("ONSELECT")) )  {
       List->SetOnSelectStr( tag.GetParam(wxT("ONSELECT")).c_str() );
-      List->OnSelect->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      List->OnSelect.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONDBLCLICK")) )  {
       List->SetOnDblClickStr( tag.GetParam(wxT("ONDBLCLICK")).c_str() );
-      List->OnDblClick->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+      List->OnDblClick.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     // creating cell
     m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(List, fl));

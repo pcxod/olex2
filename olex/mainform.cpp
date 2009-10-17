@@ -58,7 +58,7 @@
 
 #include "efile.h"
 
-#include "htmlext.h"
+#include "html/htmlext.h"
 
 //#include "ioext.h"
 #include "pyext.h"
@@ -460,7 +460,7 @@ TMainForm::~TMainForm()  {
     delete ActiveLogFile;
     ActiveLogFile = NULL;
   }
-  FTimer->OnTimer()->Clear();
+  FTimer->OnTimer.Clear();
   delete FTimer;
 //  delete FGlConsole;  // xapplication takes care !
   delete pmGraphics;
@@ -1257,9 +1257,9 @@ separated values of Atom Type and radius, an entry a line" );
   FCmdLine = new TCmdLine(this, wxNO_BORDER );
 //  wxWindowDC wdc(this);
 //  FCmdLine->WI.SetHeight( wdc.GetTextExtent(wxT("W")).GetHeight() );
-  FCmdLine->OnChar->Add(this, ID_CMDLINECHAR);
-  FCmdLine->OnKeyDown->Add(this, ID_CMDLINEKEYDOWN);
-  FCmdLine->OnCommand->Add( this, ID_COMMAND);
+  FCmdLine->OnChar.Add(this, ID_CMDLINECHAR);
+  FCmdLine->OnKeyDown.Add(this, ID_CMDLINEKEYDOWN);
+  FCmdLine->OnCommand.Add( this, ID_COMMAND);
 
   FHelpWindow = new TGlTextBox(FXApp->GetRender(), "HelpWindow");
   FXApp->AddObjectToCreate(FHelpWindow);
@@ -1273,7 +1273,7 @@ separated values of Atom Type and radius, an entry a line" );
   GlTooltip->SetVisible(false);
   GlTooltip->SetZ(4.9);
 
-  FTimer->OnTimer()->Add( TBasicApp::GetInstance().OnTimer );
+  FTimer->OnTimer.Add( TBasicApp::GetInstance().OnTimer );
   TBasicApp::GetInstance().OnTimer->Add(this, ID_TIMER);
   FXApp->XFile().OnFileLoad->Add(this, ID_FileLoad);
   // synchronise if value is different in settings file...
@@ -1506,9 +1506,9 @@ void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))  {
   TdlgGenerate *G = new TdlgGenerate(this);
   if( G->ShowModal() == wxID_OK )  {
     olxstr T("pack ");
-    T << olxstr::FormatFloat(1, G->AFrom()) << ' ' << olxstr::FormatFloat(1, G->ATo()) << ' ';
-    T << olxstr::FormatFloat(1, G->BFrom()) << ' ' << olxstr::FormatFloat(1, G->BTo()) << ' ';
-    T << olxstr::FormatFloat(1, G->CFrom()) << ' ' << olxstr::FormatFloat(1, G->CTo()) << ' ';
+    T << olxstr::FormatFloat(1, G->GetAFrom()) << ' ' << olxstr::FormatFloat(1, G->GetATo()) << ' ';
+    T << olxstr::FormatFloat(1, G->GetBFrom()) << ' ' << olxstr::FormatFloat(1, G->GetBTo()) << ' ';
+    T << olxstr::FormatFloat(1, G->GetCFrom()) << ' ' << olxstr::FormatFloat(1, G->GetCTo()) << ' ';
     ProcessMacro(T);
   }
   G->Destroy();
@@ -2096,7 +2096,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     }
   }
   else if( MsgId == ID_TIMER )  {
-    FTimer->OnTimer()->SetEnabled( false );
+    FTimer->OnTimer.SetEnabled( false );
     // execute tasks ...
     for( int i=0; i < Tasks.Count(); i++ )  {
       if(  (TETime::Now() - Tasks[i].LastCalled) > Tasks[i].Interval )  {
@@ -2113,7 +2113,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     // end tasks ...
     if( GetHtml()->IsPageLoadRequested() && !GetHtml()->IsPageLocked() )
       GetHtml()->ProcessPageLoadRequest();
-    FTimer->OnTimer()->SetEnabled( true );
+    FTimer->OnTimer.SetEnabled( true );
     if( FProcess != NULL )  {
       //FTimer->OnTimer->Enabled = false;
       while( FProcess->StrCount() != 0 )  {
@@ -2236,9 +2236,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( _UpdateThread != NULL && _UpdateThread->GetUpdateSize() != 0 )  {
       TBasicApp::LeaveCriticalSection();
       if( wxApp::IsMainLoopRunning() )  {
-        FTimer->OnTimer()->SetEnabled( false );
+        FTimer->OnTimer.SetEnabled( false );
         DoUpdateFiles();
-        FTimer->OnTimer()->SetEnabled( true );
+        FTimer->OnTimer.SetEnabled( true );
       }
     }
     else
@@ -2305,7 +2305,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       //GetHtml()->LockPageLoad();
       /* the page, if requested, will beloaded on time event. The timer is disabled
       in case if a modal window appears and the timer event can be called */
-      FTimer->OnTimer()->SetEnabled( false );
+      FTimer->OnTimer.SetEnabled( false );
       for( int i=0; i < Toks.Count(); i++ )  {
         if( !ProcessMacro(olxstr::DeleteSequencesOf<char>(Toks[i], ' '), "OnLink") )
           break;
@@ -2329,7 +2329,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       }
       else
         FGlCanvas->SetFocus();
-      FTimer->OnTimer()->SetEnabled( true );
+      FTimer->OnTimer.SetEnabled( true );
     }
   }
   else if( MsgId == ID_HTMLCMD )  {
@@ -3918,6 +3918,7 @@ olxstr TMainForm::TranslateString(const olxstr& str) const {
   }
   return phrase;
 }
+//..............................................................................
 void TMainForm::UseGlTooltip(bool v)  {
   if( v == _UseGlTooltip )
     return;
@@ -3925,7 +3926,7 @@ void TMainForm::UseGlTooltip(bool v)  {
   _UseGlTooltip = v;
   if( v )
     FGlCanvas->SetToolTip(wxT(""));
-  OnStateChange->Execute(this, &sc);
+  OnStateChange->Execute((AOlxCtrl*)this, &sc);
 }
 //..............................................................................
 //..............................................................................

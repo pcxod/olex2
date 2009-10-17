@@ -17,14 +17,12 @@ BEGIN_EVENT_TABLE(TdlgGenerate, TDialog)
 END_EVENT_TABLE()
 
 //..............................................................................
-TdlgGenerate::TdlgGenerate(TMainFrame *ParentFrame)
-:TDialog(ParentFrame, wxT("Generation options"), wxT("dlgGenerate"))
-
+TdlgGenerate::TdlgGenerate(TMainFrame *ParentFrame) :
+  TDialog(ParentFrame, wxT("Generation options"), wxT("dlgGenerate"))
 {
-  FParent = ParentFrame;
   AActionHandler::SetToDelete(false);
-  FAFrom = FBFrom = FCFrom = -1;
-  FATo = FBTo = FCTo = 1;
+  AFrom = BFrom = CFrom = -1;
+  ATo = BTo = CTo = 1;
   short Border = 2, i;
   TStrList EL;
   for( i=1; i < 9; i++ )    EL.Add(i);
@@ -46,9 +44,9 @@ TdlgGenerate::TdlgGenerate(TMainFrame *ParentFrame)
   cbA = new TComboBox(this);  cbA->SetText("2"); cbA->AddItems(EL);
   cbB = new TComboBox(this);  cbB->SetText("2"); cbB->AddItems(EL);
   cbC = new TComboBox(this);  cbC->SetText("2"); cbC->AddItems(EL);
-  cbA->OnChange->Add(this);
-  cbB->OnChange->Add(this);
-  cbC->OnChange->Add(this);
+  cbA->OnChange.Add(this);
+  cbB->OnChange.Add(this);
+  cbC->OnChange.Add(this);
 
   wxBoxSizer *TopSizer = new wxBoxSizer(wxVERTICAL );
 
@@ -87,14 +85,11 @@ TdlgGenerate::TdlgGenerate(TMainFrame *ParentFrame)
   TopSizer->SetSizeHints( this );   // set size hints to honour minimum size
 
   Center();
-  FParent->RestorePosition(this);
 }
-TdlgGenerate::~TdlgGenerate()
-{
-  cbA->OnChange->Clear();
-  cbB->OnChange->Clear();
-  cbC->OnChange->Clear();
-  FParent->SavePosition(this);
+TdlgGenerate::~TdlgGenerate()  {
+  cbA->OnChange.Clear();
+  cbB->OnChange.Clear();
+  cbC->OnChange.Clear();
 }
 bool TdlgGenerate::Execute(const IEObject *Sender, const IEObject *Data)  {
   if( (TComboBox*)Sender == cbA )  OnAChange();
@@ -126,12 +121,12 @@ void TdlgGenerate::OnCChange()
 void TdlgGenerate::OnOK(wxCommandEvent& event)
 {
   double v = 2;
-  tcAFrom->GetValue().ToDouble(&v);  FAFrom = v;
-  tcBFrom->GetValue().ToDouble(&v);  FBFrom = v;
-  tcCFrom->GetValue().ToDouble(&v);  FCFrom = v;
+  tcAFrom->GetValue().ToDouble(&v);  AFrom = v;
+  tcBFrom->GetValue().ToDouble(&v);  BFrom = v;
+  tcCFrom->GetValue().ToDouble(&v);  CFrom = v;
 
-  tcATo->GetValue().ToDouble(&v);  FATo = v;
-  tcBTo->GetValue().ToDouble(&v);  FBTo = v;
-  tcCTo->GetValue().ToDouble(&v);  FCTo = v;
+  tcATo->GetValue().ToDouble(&v);  ATo = v;
+  tcBTo->GetValue().ToDouble(&v);  BTo = v;
+  tcCTo->GetValue().ToDouble(&v);  CTo = v;
   EndModal(wxID_OK);
 }

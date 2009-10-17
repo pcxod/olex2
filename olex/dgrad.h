@@ -16,20 +16,15 @@ private:
 protected:
   void OnOK(wxCommandEvent& event);
   bool Execute(const IEObject *Sender, const IEObject *Data=NULL);
-  int FA, FB, FC, FD;
+  int A, B, C, D;
   void Init();
 public:
   TdlgGradient(TMainForm *ParentFrame);
   virtual ~TdlgGradient();
-//..............................................................................
-
-//..............................................................................
-// interface
-  int LT()  {  return FA;  }
-  int RT()  {  return FB;  }
-  int LB()  {  return FC;  }
-  int RB()  {  return FD;  }
-//..............................................................................
+  DefPropP(int, A)
+  DefPropP(int, B)
+  DefPropP(int, C)
+  DefPropP(int, D)
   DECLARE_EVENT_TABLE()
 };
 #endif

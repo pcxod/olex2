@@ -47,25 +47,25 @@ TdlgMsgBox::TdlgMsgBox(TMainFrame* Parent, const olxstr& msg, const olxstr& titl
   TButton* btn;
   if( (flags & wxOK) != 0 )  {
     btn = new TButton(this, wxID_OK, wxT("OK"));
-    btn->OnClick->Add(this);
+    btn->OnClick.Add(this);
     ButtonsSizer->Add( btn, 0, wxALL, Border);
     buttons.Add(btn);
   }
   if( (flags & wxYES) != 0 )  {
     btn = new TButton(this, wxID_YES, wxT("Yes"));
-    btn->OnClick->Add(this);
+    btn->OnClick.Add(this);
     ButtonsSizer->Add( btn, 0, wxALL, Border);
     buttons.Add(btn);
   }
   if( (flags & wxNO) != 0 )  {
     btn = new TButton(this, wxID_NO, wxT("No"));
-    btn->OnClick->Add(this);
+    btn->OnClick.Add(this);
     ButtonsSizer->Add( btn, 0, wxALL, Border);
     buttons.Add(btn);
   }
   if( (flags & wxCANCEL) != 0 )  {
     btn = new TButton(this, wxID_CANCEL, wxT("Cancel"));
-    btn->OnClick->Add(this);
+    btn->OnClick.Add(this);
     ButtonsSizer->Add( btn, 0, wxALL, Border);
     buttons.Add(btn);
   }
@@ -86,13 +86,12 @@ TdlgMsgBox::TdlgMsgBox(TMainFrame* Parent, const olxstr& msg, const olxstr& titl
 //..............................................................................
 TdlgMsgBox::~TdlgMsgBox()  {
   for( int i=0; i < buttons.Count(); i++ )
-    buttons[i]->OnClick->Clear();
+    buttons[i]->OnClick.Clear();
 }
 //..............................................................................
 bool TdlgMsgBox::Execute(const IEObject *Sender, const IEObject *Data)  {
-  if( EsdlInstanceOf( *Sender, TButton) )  {
-    EndModal( ((TButton*)Sender)->GetId() );
-  }
+  if( EsdlInstanceOf( *Sender, TButton) )
+    EndModal( ((TButton*)(AOlxCtrl*)Sender)->GetId() );
   return true;
 }
 //..............................................................................

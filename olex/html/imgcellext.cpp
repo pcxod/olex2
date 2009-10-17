@@ -7,7 +7,7 @@
 THtmlImageCell::THtmlImageCell(wxWindow *window, wxFSFile *input,
                                  int w, int h, double scale, int align,
                                  const wxString& mapname, 
-                                 bool width_per, bool height_per) : wxHtmlCell()
+                                 bool width_per, bool height_per) : wxHtmlCell(), AOlxCtrl(window)
 {
   m_window = window ? wxStaticCast(window, wxScrolledWindow) : NULL;
   m_scale = scale;

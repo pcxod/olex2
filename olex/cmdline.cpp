@@ -9,9 +9,10 @@
 
   static bool DoCheckPosition = false;
 
-TCmdLine::TCmdLine( wxWindow* parent, int flags )  : TTextEdit( parent, flags )  {
-  Actions = new TActionQList();
-  OnCommand = &Actions->NewQueue("ONCOMMAND");
+TCmdLine::TCmdLine( wxWindow* parent, int flags ) :
+  TTextEdit(parent, flags),
+  OnCommand(Actions.NewQueue("ONCOMMAND"))
+{
   PromptStr = ">>";
   SetText( PromptStr );
   SetInsertionPointEnd();
@@ -22,7 +23,6 @@ TCmdLine::TCmdLine( wxWindow* parent, int flags )  : TTextEdit( parent, flags ) 
 //..............................................................................
 TCmdLine::~TCmdLine()  {
   TBasicApp::GetInstance().OnTimer->Remove( (AActionHandler*)this );
-  delete Actions;
 }
 //..............................................................................
 bool TCmdLine::ProcessKey( wxKeyEvent& evt )  {
@@ -57,7 +57,7 @@ bool TCmdLine::ProcessKey( wxKeyEvent& evt )  {
     else
       Commands.Add( GetCommand()  );
     CmdIndex = Commands.Count();
-    OnCommand->Execute(dynamic_cast<IEObject*>((AActionHandler*)this) );
+    OnCommand.Execute(dynamic_cast<IEObject*>((AActionHandler*)this) );
     return true;
   }
   else if( (evt.GetKeyCode() == WXK_ESCAPE) && evt.GetModifiers() == 0 )  {

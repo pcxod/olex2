@@ -34,16 +34,16 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   short Border = 2;
     
   wxStaticText *stX = new wxStaticText(this, -1, wxT("X"), wxDefaultPosition);
-  tbX = new TTrackBar(this, wxDefaultSize);  tbX->OnChange->Add(this);  tbX->SetRange(-100,100);
+  tbX = new TTrackBar(this, wxDefaultSize);  tbX->OnChange.Add(this);  tbX->SetRange(-100,100);
   teX = new TTextEdit(this);  teX->SetReadOnly(true);
   wxStaticText *stY = new wxStaticText(this, -1, wxT("Y"), wxDefaultPosition);
-  tbY = new TTrackBar(this, wxDefaultSize);  tbY->OnChange->Add(this);  tbY->SetRange(-100,100);
+  tbY = new TTrackBar(this, wxDefaultSize);  tbY->OnChange.Add(this);  tbY->SetRange(-100,100);
   teY = new TTextEdit(this);  teY->SetReadOnly(true);
   wxStaticText *stZ = new wxStaticText(this, -1, wxT("Z"), wxDefaultPosition);
-  tbZ = new TTrackBar(this, wxDefaultSize);  tbZ->OnChange->Add(this);  tbZ->SetRange(-100,100);
+  tbZ = new TTrackBar(this, wxDefaultSize);  tbZ->OnChange.Add(this);  tbZ->SetRange(-100,100);
   teZ = new TTextEdit(this);  teZ->SetReadOnly(true);
   wxStaticText *stR = new wxStaticText(this, -1, wxT("R"), wxDefaultPosition);
-  tbR  = new TTrackBar(this, wxDefaultSize); tbR->OnChange->Add(this);  tbR->SetRange(-3,3);
+  tbR  = new TTrackBar(this, wxDefaultSize); tbR->OnChange.Add(this);  tbR->SetRange(-3,3);
   teR = new TTextEdit(this);  teR->SetReadOnly(true);
     
   //Light Position frame
@@ -74,16 +74,16 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   wxStaticText *sttransparency = new wxStaticText(this, -1, wxT("Transparency"), wxDefaultPosition);
 
   wxStaticText *stAmb = new wxStaticText(this, -1, wxT("Ambient"), wxDefaultPosition);
-  teAmb = new TTextEdit(this); teAmb->SetReadOnly(true);  teAmb->OnClick->Add(this);
+  teAmb = new TTextEdit(this); teAmb->SetReadOnly(true);  teAmb->OnClick.Add(this);
   scAmbA = new TSpinCtrl(this); 
 
   wxStaticText *stDiff = new wxStaticText(this, -1, wxT("Diffuse"), wxDefaultPosition);
-  teDiff = new TTextEdit(this); teDiff->SetReadOnly(true);  teDiff->OnClick->Add(this);
-  //teDiff = new wxColourPickerCtrl(this, -1); //teDiff->OnClick->Add(this);
+  teDiff = new TTextEdit(this); teDiff->SetReadOnly(true);  teDiff->OnClick.Add(this);
+  //teDiff = new wxColourPickerCtrl(this, -1); //teDiff->OnClick.Add(this);
   scDiffA = new TSpinCtrl(this);
 
   wxStaticText *stSpec = new wxStaticText(this, -1, wxT("Specular"), wxDefaultPosition);
-  teSpec  = new TTextEdit(this); teSpec->SetReadOnly(true); teSpec->OnClick->Add(this);
+  teSpec  = new TTextEdit(this); teSpec->SetReadOnly(true); teSpec->OnClick.Add(this);
   scSpecA = new TSpinCtrl(this);
 
   wxStaticText *stSExp = new wxStaticText(this, -1, wxT("Spot exponent"), wxDefaultPosition);
@@ -127,7 +127,7 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   for( int i=0; i < 8; i++ )
     cbLights->AddObject(olxstr("Light ") << (i + 1));
   cbLights->SetValue( uiStr(cbLights->GetItem(0)) );
-  cbLights->OnChange->Add(this);
+  cbLights->OnChange.Add(this);
   //end Light dropdown menu
 
   // checkbox enabled
@@ -142,7 +142,7 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
 
   //spot cut off frame
   cbUniform = new wxCheckBox(this, -1, wxT("Uniform"), wxDefaultPosition);
-  scSCO = new TSpinCtrl(this); scSCO->SetRange(1, 180);  scSCO->OnChange->Add(this);
+  scSCO = new TSpinCtrl(this); scSCO->SetRange(1, 180);  scSCO->OnChange.Add(this);
 
   wxStaticBox *BoxSC = new wxStaticBox(this, -1, wxT("Spot cutoff"));
   wxStaticBoxSizer *SizerSC = new wxStaticBoxSizer(BoxSC, wxHORIZONTAL );
@@ -205,17 +205,17 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   for( int i=0; i < ascene.FontCount(); i++ )
     cbFonts->AddObject( ascene.GetFont(i)->GetName(), ascene.GetFont(i) );
   cbFonts->SetSelection(0);
-  cbFonts->OnChange->Add(this);
-  tbEditFont = new TButton(this);  tbEditFont->SetCaption("Edit Font");  tbEditFont->OnClick->Add(this);
+  cbFonts->OnChange.Add(this);
+  tbEditFont = new TButton(this);  tbEditFont->SetCaption("Edit Font");  tbEditFont->OnClick.Add(this);
 
   cbLocalV = new wxCheckBox(this, -1, wxT("Local viewer"), wxDefaultPosition);
   cbTwoSide = new wxCheckBox(this, -1, wxT("Two side"), wxDefaultPosition);
   cbSmooth = new wxCheckBox(this, -1, wxT("Smooth shade"), wxDefaultPosition);
   tcAmbLM = new TTextEdit(this); tcAmbLM->SetReadOnly(true);  
-    tcAmbLM->OnClick->Add(this);
+    tcAmbLM->OnClick.Add(this);
   wxStaticText *stAmbLM = new wxStaticText(this, -1, wxT("Ambient color"), wxDefaultPosition);
   tcBgClr = new TTextEdit(this); tcBgClr->SetReadOnly(true);  
-    tcBgClr->OnClick->Add(this);
+    tcBgClr->OnClick.Add(this);
   wxStaticText *stBgClr = new wxStaticText(this, -1, wxT("Background color"), wxDefaultPosition);
 
   wxStaticBox *Box2 = new wxStaticBox(this, -1, wxT("Light model"));
@@ -274,24 +274,22 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   FOriginalModel = FXApp->GetRender().LightModel;
   InitLight(FLightModel.Light(0));
   InitLightModel(FLightModel);
-  FParent->RestorePosition(this);
-
 }
 //..............................................................................
 TdlgSceneProps::~TdlgSceneProps()  {
-  tbX->OnChange->Clear();
-  tbY->OnChange->Clear();
-  tbZ->OnChange->Clear();
-  tbR->OnChange->Clear();
-  teAmb->OnClick->Clear();
-  teDiff->OnClick->Clear();
-  teSpec->OnClick->Clear();
-  scSCO->OnChange->Clear();
-  cbLights->OnChange->Clear();
-  tcAmbLM->OnClick->Clear();
-  tcBgClr->OnClick->Clear();
-  cbFonts->OnChange->Clear();
-  tbEditFont->OnClick->Clear();
+  tbX->OnChange.Clear();
+  tbY->OnChange.Clear();
+  tbZ->OnChange.Clear();
+  tbR->OnChange.Clear();
+  teAmb->OnClick.Clear();
+  teDiff->OnClick.Clear();
+  teSpec->OnClick.Clear();
+  scSCO->OnChange.Clear();
+  cbLights->OnChange.Clear();
+  tcAmbLM->OnClick.Clear();
+  tcBgClr->OnClick.Clear();
+  cbFonts->OnChange.Clear();
+  tbEditFont->OnClick.Clear();
 }
 //..............................................................................
 bool TdlgSceneProps::Execute(const IEObject *Sender, const IEObject *Data)  {
@@ -321,7 +319,7 @@ bool TdlgSceneProps::Execute(const IEObject *Sender, const IEObject *Data)  {
     if( scSCO->GetValue() > 90 )  cbUniform->SetValue(true);
     else                       cbUniform->SetValue(false);
   }
-  if( (TButton*)Sender == tbEditFont )  {
+  if( (TButton*)(AOlxCtrl*)Sender == tbEditFont )  {
     int sel = cbFonts->GetSelection();
     if( sel == -1 )  return false;
     FXApp->GetRender().GetScene().ShowFontDialog( (TGlFont*)cbFonts->GetObject(sel) );
@@ -408,7 +406,7 @@ void TdlgSceneProps::UpdateLight( TGlLight &L )  {
   L.SpotDirection()[2] = teSCZ->GetText().ToDouble();
 }
 //..............................................................................
-void TdlgSceneProps::OnApply(wxCommandEvent& event)  {
+void TdlgSceneProps::OnApply(wxCommandEvent &event)  {
   UpdateLight(FLightModel.Light(FCurrentLight));
   UpdateLightModel(FLightModel);
   FXApp->GetRender().LightModel = FLightModel;
@@ -417,56 +415,49 @@ void TdlgSceneProps::OnApply(wxCommandEvent& event)  {
   FXApp->Draw();
 }
 //..............................................................................
-void TdlgSceneProps::OnCancel(wxCommandEvent& event)  {
+void TdlgSceneProps::OnCancel(wxCommandEvent &event)  {
   FXApp->GetRender().LightModel = FOriginalModel;
   FXApp->GetRender().LoadIdentity();
   FXApp->GetRender().InitLights();
   EndModal(wxID_OK);
 }
 //..............................................................................
-void TdlgSceneProps::OnOK(wxCommandEvent& event)
-{
+void TdlgSceneProps::OnOK(wxCommandEvent &event)  {
   OnApply(event);
   EndModal(wxID_OK);
 }
 //..............................................................................
-void TdlgSceneProps::OnOpen(wxCommandEvent& event)
-{
-  olxstr FN = FParent->PickFile("Load scene parameters",
-  "Scene parameters|*.glsp", ((TMainForm*)FParent)->SParamDir, true);
-  if( FN.Length() )
-  {
+void TdlgSceneProps::OnOpen(wxCommandEvent &event)  {
+  olxstr FN = Parent->PickFile("Load scene parameters",
+  "Scene parameters|*.glsp", ((TMainForm*)Parent)->SParamDir, true);
+  if( !FN.IsEmpty() )  {
     LoadFromFile(FLightModel, FN);
-    ((TMainForm*)FParent)->SParamDir = TEFile::ExtractFilePath(FN);
+    ((TMainForm*)Parent)->SParamDir = TEFile::ExtractFilePath(FN);
     InitLight(FLightModel.Light(FCurrentLight));
     InitLightModel(FLightModel);
   }
 }
 //..............................................................................
-void TdlgSceneProps::OnSave(wxCommandEvent& event)
-{
-  olxstr FN = FParent->PickFile("Save scene parameters",
-  "Scene parameters|*.glsp", ((TMainForm*)FParent)->SParamDir, false);
-  if( FN.Length() )
-  {
+void TdlgSceneProps::OnSave(wxCommandEvent& event)  {
+  olxstr FN = Parent->PickFile("Save scene parameters",
+  "Scene parameters|*.glsp", ((TMainForm*)Parent)->SParamDir, false);
+  if( !FN.IsEmpty() )  {
     UpdateLight(FLightModel.Light(FCurrentLight));
-    ((TMainForm*)FParent)->SParamDir = TEFile::ExtractFilePath(FN);
+    ((TMainForm*)Parent)->SParamDir = TEFile::ExtractFilePath(FN);
     UpdateLightModel(FLightModel);
     SaveToFile(FLightModel, FN);
   }
 }
 //..............................................................................
-void TdlgSceneProps::LoadFromFile(TGlLightModel &FLM, const olxstr &FN)
-{
+void TdlgSceneProps::LoadFromFile(TGlLightModel &FLM, const olxstr &FN)  {
   TDataFile F;
   F.LoadFromXLFile(FN, NULL);
-  ((TMainForm*)FParent)->LoadScene(&F.Root(), &FLM);
+  ((TMainForm*)Parent)->LoadScene(&F.Root(), &FLM);
 }
 //..............................................................................
-void TdlgSceneProps::SaveToFile(TGlLightModel &FLM, const olxstr &FN)
-{
+void TdlgSceneProps::SaveToFile(TGlLightModel &FLM, const olxstr &FN)  {
   TDataFile DF;
-  ((TMainForm*)FParent)->SaveScene(&DF.Root(), &FLM);
+  ((TMainForm*)Parent)->SaveScene(&DF.Root(), &FLM);
   try{  DF.SaveToXLFile(FN); }
   catch(...){  TBasicApp::GetLog().Error("Failed to save scene parameters!"); }
 }

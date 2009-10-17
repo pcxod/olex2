@@ -6,8 +6,9 @@
 #include "wx/wxhtml.h"
 #include "wx/gifdecod.h"
 #include "wx/timer.h"
+#include "../ctrls/olxctrlbase.h"
 
-class THtmlImageCell : public wxHtmlCell, public IEObject  {
+class THtmlImageCell : public wxHtmlCell, public AOlxCtrl  {
   struct Rect  {
     short left, top, right, bottom;
     Rect(short l, short t, short r, short b) : left(l), top(t), right(r), bottom(b) {}
