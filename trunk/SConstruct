@@ -77,7 +77,9 @@ env.Append(CPPPATH = ['alglib', 'sdl', 'glib', 'gxlib',
                       'repository', 'xlib'])
 out_dir = 'build/scons/' 
 if sys.platform[:3] == 'win':
-  out_dir += 'msvc-' + env['MSVS_VERSION'] + '/';
+  out_dir += 'msvc-' + env['MSVS_VERSION'] + '/'
+else:
+  out_dir += env['TOOL'] + '/'
 if profiling:
   out_dir += 'profiling'
   

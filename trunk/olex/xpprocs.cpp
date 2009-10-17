@@ -5950,7 +5950,7 @@ void TMainForm::funGetCompilationInfo(const TStrObjList& Params, TMacroError &E)
 #ifdef _MSC_FULL_VER
       rv << " MSC:" << _MSC_FULL_VER;
 #elif __GNUC__
-      rv << "GCC: " << (__GNUC__ * 10000) << '.' << (__GNUC_MINOR__ * 100) << __GNUC_PATCHLEVEL__;
+      rv << " GCC: " << __GNUC__ << '.' << __GNUC_MINOR__ << '.' << __GNUC_PATCHLEVEL__;
 #elif __INTEL_COMPILER
       rv << "Intel: " << __INTEL_COMPILER;
 #endif
@@ -5960,12 +5960,12 @@ void TMainForm::funGetCompilationInfo(const TStrObjList& Params, TMacroError &E)
       rv << " on WIN32";
 #elif __MAC__
       rv << " on MAC";
-#elif _linux
+#elif __linux__
       rv << " on Linux";
 #  ifdef __LP64__
       rv << "64";
 #  else
-      rv << "32"
+      rv << "32";
 #  endif
 #else
       rv << " on other";
