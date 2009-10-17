@@ -10,7 +10,7 @@
 
 namespace ctrl_ext {
 #ifndef __WIN32__
-  class TComboBox: public wxComboBox, public IEObject  {
+  class TComboBox: public wxComboBox, public AOlxCtrl  {
 #else
   class TComboBox: public wxOwnerDrawnComboBox, public AOlxCtrl  {
 #endif

@@ -844,7 +844,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 
   int ScrHeight = (int)(((double)orgHeight/(res*2)-1.0)*res*2),
       ScrWidth  = (int)(((double)orgWidth/(res*2)-1.0)*res*2);
-  int BmpHeight = ScrHeight*res, BmpWidth = ScrWidth*res;
+  int BmpHeight = (int)(ScrHeight*res), BmpWidth = (int)(ScrWidth*res);
   if( BmpHeight < ScrHeight )
     ScrHeight = BmpHeight;
   if( BmpWidth < ScrWidth )
@@ -862,7 +862,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   for( int i=0; i < res; i++ )  {
     for( int j=0; j < res; j++ )  {
-      FXApp->GetRender().LookAt(j, i, res < 1 ? 1 : res);
+      FXApp->GetRender().LookAt(j, i, (int)(res < 1 ? 1 : res));
       FXApp->GetRender().Draw();
       char *PP = FXApp->GetRender().GetPixels(false, 1);
       int mj = j*ScrWidth;
@@ -3137,7 +3137,7 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         v_cnt++;
     if( v_cnt == 0 && wheel < 0 )  return;
     if( v_cnt == xatoms.Count() && wheel > 0 )  return;
-    v_cnt += wheel;
+    v_cnt += (int)(wheel);
     if( v_cnt < 0 )  v_cnt = 0;
     if( v_cnt > xatoms.Count() )  v_cnt = xatoms.Count();
     for( int i=v_cnt; i < xatoms.Count(); i++ )  
