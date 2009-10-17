@@ -88,7 +88,7 @@ struct TScheduledTask  {
   long Interval, LastCalled;
 };
 //............................................................................//
-class TMainForm: public TMainFrame, public AEventsDispatcher, 
+class TMainForm: public TMainFrame, public AEventsDispatcher,
   public olex::IOlexProcessor
 {
   //TFrameMaker FrameMaker;

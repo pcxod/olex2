@@ -31,15 +31,14 @@ END_EVENT_TABLE()
 //..............................................................................
 TGlMaterial TdlgMatProp::MaterialCopy;
 //..............................................................................
-TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XApp)
-:TDialog(ParentFrame, wxT("Material Parameters"), wxT("dlgMatProp"))
+TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XApp) :
+  TDialog(ParentFrame, wxT("Material Parameters"), wxT("dlgMatProp"))
 {
   AActionHandler::SetToDelete(false);
   bEditFont = NULL;
   if( GPC != NULL && GPC->ObjectCount() == 0 )
     throw TFunctionFailedException(__OlxSourceInfo, "empty collection");
   short Border = 3, SpW = 40;
-  FParent = ParentFrame;
   GPCollection = GPC;
   FXApp = XApp;
   if( GPC != NULL )  {
@@ -66,8 +65,8 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
       cbPrimitives->AddObject(GlP.GetName(), &GlP);
       FMaterials[i] = GlP.GetProperties();
     }
-    cbPrimitives->SetValue( uiStr(GPC->GetPrimitive(0).GetName()));
-    cbPrimitives->OnChange->Add(this);
+    cbPrimitives->SetValue(GPC->GetPrimitive(0).GetName().u_str());
+    cbPrimitives->OnChange.Add(this);
     FCurrentMaterial = 0;
   }
   else  {
@@ -104,17 +103,17 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
   SpinCtrls.Add(scSpecF);  SpinCtrls.Add(scSpecB);
 
   cbTrans = new wxCheckBox(this, -1, wxT("Transluent"), wxDefaultPosition, wxDefaultSize);
-  scTrans = new TSpinCtrl(this);  scTrans->SetRange(5, 95);  scTrans->OnChange->Add(this);
+  scTrans = new TSpinCtrl(this);  scTrans->SetRange(5, 95);  scTrans->OnChange.Add(this);
   cbIDraw = new wxCheckBox(this, -1, wxT("Identity Draw"), wxDefaultPosition, wxDefaultSize);
 
-  tcAmbF = new TTextEdit(this);  tcAmbF->SetReadOnly(true);  tcAmbF->OnClick->Add(this);
-  tcAmbB = new TTextEdit(this);  tcAmbB->SetReadOnly(true);  tcAmbB->OnClick->Add(this);
-  tcDiffF = new TTextEdit(this); tcDiffF->SetReadOnly(true); tcDiffF->OnClick->Add(this);
-  tcDiffB = new TTextEdit(this); tcDiffB->SetReadOnly(true); tcDiffB->OnClick->Add(this);
-  tcEmmF = new TTextEdit(this);  tcEmmF->SetReadOnly(true);  tcEmmF->OnClick->Add(this);
-  tcEmmB = new TTextEdit(this);  tcEmmB->SetReadOnly(true);  tcEmmB->OnClick->Add(this);
-  tcSpecF = new TTextEdit(this); tcSpecF->SetReadOnly(true); tcSpecF->OnClick->Add(this);
-  tcSpecB = new TTextEdit(this); tcSpecB->SetReadOnly(true); tcSpecB->OnClick->Add(this);
+  tcAmbF = new TTextEdit(this);  tcAmbF->SetReadOnly(true);  tcAmbF->OnClick.Add(this);
+  tcAmbB = new TTextEdit(this);  tcAmbB->SetReadOnly(true);  tcAmbB->OnClick.Add(this);
+  tcDiffF = new TTextEdit(this); tcDiffF->SetReadOnly(true); tcDiffF->OnClick.Add(this);
+  tcDiffB = new TTextEdit(this); tcDiffB->SetReadOnly(true); tcDiffB->OnClick.Add(this);
+  tcEmmF = new TTextEdit(this);  tcEmmF->SetReadOnly(true);  tcEmmF->OnClick.Add(this);
+  tcEmmB = new TTextEdit(this);  tcEmmB->SetReadOnly(true);  tcEmmB->OnClick.Add(this);
+  tcSpecF = new TTextEdit(this); tcSpecF->SetReadOnly(true); tcSpecF->OnClick.Add(this);
+  tcSpecB = new TTextEdit(this); tcSpecB->SetReadOnly(true); tcSpecB->OnClick.Add(this);
   tcShnF = new TTextEdit(this);  tcShnF->SetReadOnly(false); 
   tcShnB = new TTextEdit(this);  tcShnB->SetReadOnly(false); 
 
@@ -207,22 +206,21 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
   Center();
 
   Init(FMaterials[0]);
-
-  FParent->RestorePosition(this);
 }
 //..............................................................................
 TdlgMatProp::~TdlgMatProp()  {
   delete [] FMaterials;
-  if( cbPrimitives )  cbPrimitives->OnChange->Clear();
-  scTrans->OnChange->Clear();
-  tcAmbF->OnClick->Clear();
-  tcAmbB->OnClick->Clear();
-  tcDiffF->OnClick->Clear();
-  tcDiffB->OnClick->Clear();
-  tcEmmF->OnClick->Clear();
-  tcEmmB->OnClick->Clear();
-  tcSpecF->OnClick->Clear();
-  tcSpecB->OnClick->Clear();
+  if( cbPrimitives != NULL )  
+    cbPrimitives->OnChange.Clear();
+  scTrans->OnChange.Clear();
+  tcAmbF->OnClick.Clear();
+  tcAmbB->OnClick.Clear();
+  tcDiffF->OnClick.Clear();
+  tcDiffB->OnClick.Clear();
+  tcEmmF->OnClick.Clear();
+  tcEmmB->OnClick.Clear();
+  tcSpecF->OnClick.Clear();
+  tcSpecB->OnClick.Clear();
 }
 //..............................................................................
 bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data)  {

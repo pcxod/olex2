@@ -33,6 +33,8 @@ endif (NOT WIN32)
 
 FILE(GLOB unirun_SRCS "${src}/unirun/*.cpp")
 FILE(GLOB olex2_SRCS "${src}/olex/*.cpp")
+FILE(GLOB olex2_html_SRCS "${src}/olex/html/*.cpp")
+FILE(GLOB olex2_ctrls_SRCS "${src}/olex/ctrls/*.cpp")
 
 SET(all_SRCS
 	${alglib_SRCS}
@@ -44,11 +46,15 @@ SET(all_SRCS
 	${glib_SRCS}
 	${gxlib_SRCS}
 	${repo_SRCS})
+	${olex2_html_SRCS})
+	${olex2_ctrls_SRCS})
 
 INCLUDE_DIRECTORIES("${src}/alglib")
 INCLUDE_DIRECTORIES("${src}/glib")
 INCLUDE_DIRECTORIES("${src}/gxlib")
 INCLUDE_DIRECTORIES("${src}/olex")
+INCLUDE_DIRECTORIES("${src}/olex/html")
+INCLUDE_DIRECTORIES("${src}/olex/ctrls")
 INCLUDE_DIRECTORIES("${src}/repository")
 INCLUDE_DIRECTORIES("${src}/sdl")
 INCLUDE_DIRECTORIES("${src}/xlib")

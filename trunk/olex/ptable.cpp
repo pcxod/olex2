@@ -46,7 +46,7 @@ TPTableDlg::TPTableDlg(TMainFrame *Parent, TAtomsInfo *AI)
 }
 TPTableDlg::~TPTableDlg()  {
   for( int i =0; i < ButtonsList.Count(); i++ )  {
-    ButtonsList[i]->OnClick->Clear();
+    ButtonsList[i]->OnClick.Clear();
     ButtonsList[i];
   }
 }
@@ -85,12 +85,12 @@ data:
     ii-=2;
   B->SetCaption( FAI->GetAtomInfo(ii-1).GetSymbol() );
 //  B->Font->Color = A->Color;
-  B->OnClick->Add(this);
+  B->OnClick.Add(this);
   B->SetTag( ii );
 }
 //..............................................................................
 bool TPTableDlg::Execute(const IEObject *Sender, const IEObject *Data)  {
-  TButton *S = (TButton*)Sender;
+  TButton *S = (TButton*)(AOlxCtrl*)Sender;
   FSelected = &FAI->GetAtomInfo( S->GetTag()-1 );
   wxDialog::EndModal(wxID_OK);
   return true;

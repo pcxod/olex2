@@ -20,16 +20,15 @@ TdlgGradient::TdlgGradient(TMainForm *ParentFrame):
 {                 
   AActionHandler::SetToDelete(false);
   short Border = 3;
-  FParent = ParentFrame;
 
   wxStaticText *stcA = new wxStaticText(this, -1, wxT("Bottom left"), wxDefaultPosition);
-  tcA = new TTextEdit(this);  tcA->SetReadOnly(true);  tcA->OnClick->Add(this);
+  tcA = new TTextEdit(this);  tcA->SetReadOnly(true);  tcA->OnClick.Add(this);
   wxStaticText *stcB = new wxStaticText(this, -1, wxT("Bottom right"), wxDefaultPosition);
-  tcB = new TTextEdit(this);  tcB->SetReadOnly(true);  tcB->OnClick->Add(this);
+  tcB = new TTextEdit(this);  tcB->SetReadOnly(true);  tcB->OnClick.Add(this);
   wxStaticText *stcC = new wxStaticText(this, -1, wxT("Top right"), wxDefaultPosition);
-  tcC = new TTextEdit(this);  tcC->SetReadOnly(true);  tcC->OnClick->Add(this);
+  tcC = new TTextEdit(this);  tcC->SetReadOnly(true);  tcC->OnClick.Add(this);
   wxStaticText *stcD = new wxStaticText(this, -1, wxT("Top Left"), wxDefaultPosition);
-  tcD = new TTextEdit(this);  tcD->SetReadOnly(true);  tcD->OnClick->Add(this);
+  tcD = new TTextEdit(this);  tcD->SetReadOnly(true);  tcD->OnClick.Add(this);
 
   wxFlexGridSizer *GridSizer = new wxFlexGridSizer(2, 4, Border, Border);
   GridSizer->Add( stcD, 0, wxALIGN_CENTER_VERTICAL | wxRight, 2 );
@@ -60,14 +59,13 @@ TdlgGradient::TdlgGradient(TMainForm *ParentFrame):
 
   Center();
   Init();
-  FParent->RestorePosition(this);
 }
 //..............................................................................
 TdlgGradient::~TdlgGradient()  {
-  tcA->OnClick->Clear();
-  tcB->OnClick->Clear();
-  tcC->OnClick->Clear();
-  tcD->OnClick->Clear();
+  tcA->OnClick.Clear();
+  tcB->OnClick.Clear();
+  tcC->OnClick.Clear();
+  tcD->OnClick.Clear();
 }
 //..............................................................................
 bool TdlgGradient::Execute(const IEObject *Sender, const IEObject *Data)  {
@@ -85,20 +83,18 @@ bool TdlgGradient::Execute(const IEObject *Sender, const IEObject *Data)  {
 }
 //..............................................................................
 void TdlgGradient::Init()  {
-  tcA->WI.SetColor( ((TMainForm*)FParent)->XApp()->GetRender().Background()->LT().GetRGB());
-  tcB->WI.SetColor( ((TMainForm*)FParent)->XApp()->GetRender().Background()->RT().GetRGB());
-  tcC->WI.SetColor( ((TMainForm*)FParent)->XApp()->GetRender().Background()->RB().GetRGB());
-  tcD->WI.SetColor( ((TMainForm*)FParent)->XApp()->GetRender().Background()->LB().GetRGB());
+  tcA->WI.SetColor( ((TMainForm*)Parent)->XApp()->GetRender().Background()->LT().GetRGB());
+  tcB->WI.SetColor( ((TMainForm*)Parent)->XApp()->GetRender().Background()->RT().GetRGB());
+  tcC->WI.SetColor( ((TMainForm*)Parent)->XApp()->GetRender().Background()->RB().GetRGB());
+  tcD->WI.SetColor( ((TMainForm*)Parent)->XApp()->GetRender().Background()->LB().GetRGB());
 }
 //..............................................................................
-//..............................................................................
-void TdlgGradient::OnOK(wxCommandEvent& event)
-{
+void TdlgGradient::OnOK(wxCommandEvent& event)  {
   TGlOption opt;
-  opt = tcA->WI.GetColor();  ((TMainForm*)FParent)->XApp()->GetRender().Background()->LT(opt);
-  opt = tcB->WI.GetColor();  ((TMainForm*)FParent)->XApp()->GetRender().Background()->RT(opt);
-  opt = tcC->WI.GetColor();  ((TMainForm*)FParent)->XApp()->GetRender().Background()->RB(opt);
-  opt = tcD->WI.GetColor();  ((TMainForm*)FParent)->XApp()->GetRender().Background()->LB(opt);
+  opt = tcA->WI.GetColor();  ((TMainForm*)Parent)->XApp()->GetRender().Background()->LT(opt);
+  opt = tcB->WI.GetColor();  ((TMainForm*)Parent)->XApp()->GetRender().Background()->RT(opt);
+  opt = tcC->WI.GetColor();  ((TMainForm*)Parent)->XApp()->GetRender().Background()->RB(opt);
+  opt = tcD->WI.GetColor();  ((TMainForm*)Parent)->XApp()->GetRender().Background()->LB(opt);
   EndModal(wxID_OK);
 }
 //..............................................................................

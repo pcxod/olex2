@@ -4,12 +4,13 @@
 #include "estrlist.h"
 #include "paramlist.h"
 #include "actions.h"
-#include "wininterface.h"
+#include "../wininterface.h"
 #include "wx/wxhtml.h"
 #include "wx/dynarray.h"
 
 #include "library.h"
 #include "edict.h"
+#include "../ctrls/olxctrlbase.h"
 
 class THtmlSwitch;
 
@@ -32,7 +33,7 @@ protected:
   void OnMouseMotion(wxMouseEvent& event);
   void OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y);
   void OnChildFocus(wxChildFocusEvent& event);
-  void DoHandleFocusEvent(IEObject* prev, IEObject* next);
+  void DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next);
   /* on GTK scrolling makes mess out of the controls so will try to "fix it" here*/
   void OnScroll(wxScrollEvent& evt);
   virtual void ScrollWindow(int dx, int dy, const wxRect* rect = NULL);
@@ -42,8 +43,8 @@ protected:
   bool MouseDown;
 
   THtmlSwitch* Root;
-  olxdict<olxstr, AnAssociation3<IEObject*,wxWindow*,bool>, olxstrComparator<true> > Objects;
-  TTypeList<AnAssociation2<IEObject*,wxWindow*> > Traversables;
+  olxdict<olxstr, AnAssociation3<AOlxCtrl*,wxWindow*,bool>, olxstrComparator<true> > Objects;
+  TTypeList<AnAssociation2<AOlxCtrl*,wxWindow*> > Traversables;
   TSStrPObjList<olxstr,int, true> SwitchStates;
   olxstr FocusedControl;
   class TObjectsState  {
@@ -105,16 +106,16 @@ protected:
     DefFunc(IsItem)
     DefFunc(IsPopup)
 
-  olxstr GetObjectValue(const IEObject *Object);
-  const olxstr& GetObjectData(const IEObject *Object);
-  bool GetObjectState(const IEObject *Object);
-  olxstr GetObjectImage(const IEObject *Object);
-  olxstr GetObjectItems(const IEObject *Object);
-  void SetObjectValue(IEObject *Object, const olxstr& Value);
-  void SetObjectData(IEObject *Object, const olxstr& Data);
-  void SetObjectState(IEObject *Object, bool State);
-  bool SetObjectImage(IEObject *Object, const olxstr& src);
-  bool SetObjectItems(IEObject *Object, const olxstr& src);
+  olxstr GetObjectValue(const AOlxCtrl *Object);
+  const olxstr& GetObjectData(const AOlxCtrl *Object);
+  bool GetObjectState(const AOlxCtrl *Object);
+  olxstr GetObjectImage(const AOlxCtrl *Object);
+  olxstr GetObjectItems(const AOlxCtrl *Object);
+  void SetObjectValue(AOlxCtrl *AOlxCtrl, const olxstr& Value);
+  void SetObjectData(AOlxCtrl *AOlxCtrl, const olxstr& Data);
+  void SetObjectState(AOlxCtrl *AOlxCtrl, bool State);
+  bool SetObjectImage(AOlxCtrl *AOlxCtrl, const olxstr& src);
+  bool SetObjectItems(AOlxCtrl *AOlxCtrl, const olxstr& src);
   void _FindNext(int from, int &dest, bool scroll) const;
   void _FindPrev(int from, int &dest, bool scroll) const;
   void GetTraversibleIndeces(int& current, int& another, bool forward) const;
@@ -164,8 +165,8 @@ public:
   THtmlSwitch& GetRoot() const {  return *Root; }
   bool ItemState(const olxstr &ItemName, short State);
   // object operations
-  bool AddObject(const olxstr& Name, IEObject *Obj, wxWindow* wxObj, bool Manage = false);
-  IEObject *FindObject(const olxstr& Name)  {
+  bool AddObject(const olxstr& Name, AOlxCtrl *Obj, wxWindow* wxObj, bool Manage = false);
+  AOlxCtrl *FindObject(const olxstr& Name)  {
     int ind = Objects.IndexOf(Name);
     return (ind == -1) ? NULL : Objects.GetValue(ind).A();
   }
@@ -174,7 +175,7 @@ public:
     return (ind == -1) ? NULL : Objects.GetValue(ind).B();
   }
   inline int ObjectCount()          const {  return Objects.Count();  }
-  inline IEObject* GetObject(int i)       {  return Objects.GetValue(i).A();  }
+  inline AOlxCtrl* GetObject(int i)       {  return Objects.GetValue(i).A();  }
   inline wxWindow* GetWindow(int i)       {  return Objects.GetValue(i).B();  }
   inline const olxstr& GetObjectName(int i) const {  return Objects.GetKey(i);  }
   inline bool IsObjectManageble(int i) const      {  return Objects.GetValue(i).GetC();  }

@@ -75,6 +75,8 @@ xlib_macro = Glob('./xlib/macro/*.cpp')
 glib = Glob('./glib/*.cpp')
 gxlib = Glob('./gxlib/*.cpp')
 olex2 = Glob('./olex/*.cpp')
+olex2_html = Glob('./olex/html/*.cpp')
+olex2_ctrls = Glob('./olex/ctrls/*.cpp')
 unirun = Glob('./unirun/*.cpp')
 olex2c = Split("""./olex2c/olex2c.cpp""")
 
@@ -217,7 +219,9 @@ olex2c_env = env.Clone()
 
 olex2_files = fileListToStringList('glib', glib) + \
               fileListToStringList('gxlib', gxlib) + \
-              fileListToStringList('olex', olex2)
+              fileListToStringList('olex', olex2) + \
+              fileListToStringList('olex/html', olex2_html) + \
+              fileListToStringList('olex/ctrls', olex2_ctrls)
 olex2_files = processFileNameList(olex2_files, env, out_dir+'olex')  
 #link in the res file...
 if sys.platform[:3] == 'win':

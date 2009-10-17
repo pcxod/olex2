@@ -4,12 +4,12 @@
 #include "exparse/exptree.h"
 #include "htmlswitch.h"
 #include "imgcellext.h"
-#include "mainform.h"
+#include "../mainform.h"
 
 #include "wx/tooltip.h"
 
-#include "xglapp.h"
-#include "obase.h"
+#include "../xglapp.h"
+#include "../obase.h"
 #include "utf8file.h"
 
 #define this_InitFunc(funcName, argc) \
@@ -206,7 +206,7 @@ void THtml::OnChildFocus(wxChildFocusEvent& event)  {
     InFocus->SetFocus();
     return;
   }
-  IEObject* prev = NULL, *next = NULL;
+  AOlxCtrl* prev = NULL, *next = NULL;
   for( int i=0; i < Traversables.Count(); i++ )  {
     if( Traversables[i].GetB() == InFocus )
       prev = Traversables[i].GetA();
@@ -277,27 +277,27 @@ void THtml::GetTraversibleIndeces(int& current, int& another, bool forward) cons
   }
 }
 //..............................................................................
-void THtml::DoHandleFocusEvent(IEObject* prev, IEObject* next)  {
+void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
   LockPageLoad = true;  // prevent pae re-loading and object deletion
   if( prev != NULL )  {
     if( EsdlInstanceOf(*prev, TTextEdit) )  {
       olxstr s = ((TTextEdit*)prev)->GetOnLeaveStr();
-      ((TTextEdit*)prev)->OnLeave->Execute(prev, &s);
+      ((TTextEdit*)prev)->OnLeave.Execute(prev, &s);
     }
     else if( EsdlInstanceOf(*prev, TComboBox) )  {
       olxstr s = ((TComboBox*)prev)->GetOnLeaveStr();
-      ((TComboBox*)prev)->OnLeave->Execute(prev, &s);
+      ((TComboBox*)prev)->OnLeave.Execute(prev, &s);
     }
   }
   if( next != NULL )  {
     if( EsdlInstanceOf(*next, TTextEdit) )  {
       olxstr s = ((TTextEdit*)next)->GetOnEnterStr();
-      ((TTextEdit*)next)->OnEnter->Execute(next, &s);
+      ((TTextEdit*)next)->OnEnter.Execute(next, &s);
       ((TTextEdit*)next)->SetSelection(-1,-1);
     }
     else if( EsdlInstanceOf(*next, TComboBox) )  {
       olxstr s = ((TComboBox*)next)->GetOnEnterStr();
-      ((TComboBox*)next)->OnEnter->Execute(next, &s);
+      ((TComboBox*)next)->OnEnter.Execute(next, &s);
       ((TComboBox*)next)->SetSelection(-1,-1);
     }
   }
@@ -663,7 +663,7 @@ void THtml::ScrollWindow(int dx, int dy, const wxRect* rect)  {
 #endif
 }
 //..............................................................................
-bool THtml::AddObject(const olxstr& Name, IEObject *Object, wxWindow* wxWin, bool Manage)  {
+bool THtml::AddObject(const olxstr& Name, AOlxCtrl *Object, wxWindow* wxWin, bool Manage)  {
 #ifdef __WIN32__
   wxWindow* ew = wxWin;
   if( Object != NULL && EsdlInstanceOf(*Object, TComboBox) )  {
@@ -671,13 +671,13 @@ bool THtml::AddObject(const olxstr& Name, IEObject *Object, wxWindow* wxWin, boo
     if( cb->GetTextCtrl() != NULL )
       ew = cb->GetTextCtrl();
   }
-  Traversables.Add( new AnAssociation2<IEObject*,wxWindow*>(Object, ew) );
+  Traversables.Add( new AnAssociation2<AOlxCtrl*,wxWindow*>(Object, ew) );
 #else
   Traversables.Add( new AnAssociation2<IEObject*,wxWindow*>(Object,wxWin) );
 #endif
   if( Name.IsEmpty() )  return true;  // an anonymous object
   if( Objects.IndexOf(Name) != -1 )  return false;
-  Objects.Add(Name, AnAssociation3<IEObject*, wxWindow*,bool>(Object, wxWin, Manage) );
+  Objects.Add(Name, AnAssociation3<AOlxCtrl*, wxWindow*,bool>(Object, wxWin, Manage) );
   return true;
 }
 //..............................................................................
@@ -977,16 +977,16 @@ void THtml::macDefineControl(TStrObjList &Cmds, const TParamList &Options, TMacr
 }
 //..............................................................................
 //..............................................................................
-olxstr THtml::GetObjectValue(const IEObject *Obj)  {
-  if( EsdlInstanceOf(*Obj, TTextEdit) )  {  return ((_xl_Controls::TTextEdit*)Obj)->GetText();  }
-  if( EsdlInstanceOf(*Obj, TCheckBox) )  {  return ((_xl_Controls::TCheckBox*)Obj)->GetCaption();  }
-  if( EsdlInstanceOf(*Obj, TTrackBar) )  {  return ((_xl_Controls::TTrackBar*)Obj)->GetValue(); }
-  if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {  return ((_xl_Controls::TSpinCtrl*)Obj)->GetValue(); }
-  if( EsdlInstanceOf(*Obj, TButton) )    {  return ((_xl_Controls::TButton*)Obj)->GetCaption();    }
-  if( EsdlInstanceOf(*Obj, TComboBox) )  {  return ((_xl_Controls::TComboBox*)Obj)->GetText();  }
-  if( EsdlInstanceOf(*Obj, TListBox) )   {  return ((_xl_Controls::TListBox*)Obj)->GetValue();  }
+olxstr THtml::GetObjectValue(const AOlxCtrl *Obj)  {
+  if( EsdlInstanceOf(*Obj, TTextEdit) )  {  return ((TTextEdit*)Obj)->GetText();  }
+  if( EsdlInstanceOf(*Obj, TCheckBox) )  {  return ((TCheckBox*)Obj)->GetCaption();  }
+  if( EsdlInstanceOf(*Obj, TTrackBar) )  {  return ((TTrackBar*)Obj)->GetValue(); }
+  if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {  return ((TSpinCtrl*)Obj)->GetValue(); }
+  if( EsdlInstanceOf(*Obj, TButton) )    {  return ((TButton*)Obj)->GetCaption();    }
+  if( EsdlInstanceOf(*Obj, TComboBox) )  {  return ((TComboBox*)Obj)->GetText();  }
+  if( EsdlInstanceOf(*Obj, TListBox) )   {  return ((TListBox*)Obj)->GetValue();  }
   if( EsdlInstanceOf(*Obj, TTreeView) )  {
-    _xl_Controls::TTreeView* T = (_xl_Controls::TTreeView*)Obj;
+    TTreeView* T = (TTreeView*)Obj;
     wxTreeItemId ni = T->GetSelection();
     //T->
     return T->GetItemText(ni).c_str();
@@ -1001,7 +1001,7 @@ void THtml::funGetValue(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
   }
-  const IEObject *Obj = html->FindObject(objName);
+  const AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
     TSStrStrList<olxstr,false>* props = html->ObjectsState.FindProperties(objName);
     if( props == NULL )  {
@@ -1018,30 +1018,30 @@ void THtml::funGetValue(const TStrObjList &Params, TMacroError &E)  {
     E.SetRetVal( GetObjectValue(Obj) );
 }
 //..............................................................................
-void THtml::SetObjectValue(IEObject *Obj, const olxstr& Value)  {
-  if( EsdlInstanceOf(*Obj, TTextEdit) )       ((_xl_Controls::TTextEdit*)Obj)->SetText(Value);
-  else if( EsdlInstanceOf(*Obj, TCheckBox) )  ((_xl_Controls::TCheckBox*)Obj)->SetCaption(Value);
+void THtml::SetObjectValue(AOlxCtrl *Obj, const olxstr& Value)  {
+  if( EsdlInstanceOf(*Obj, TTextEdit) )       ((TTextEdit*)Obj)->SetText(Value);
+  else if( EsdlInstanceOf(*Obj, TCheckBox) )  ((TCheckBox*)Obj)->SetCaption(Value);
   else if( EsdlInstanceOf(*Obj, TTrackBar) )  {
     int si = Value.IndexOf(',');
     if( si == -1 )
-      ((_xl_Controls::TTrackBar*)Obj)->SetValue(Value.ToInt());
+      ((TTrackBar*)Obj)->SetValue(Value.ToInt());
     else
-      ((_xl_Controls::TTrackBar*)Obj)->SetRange( Value.SubStringTo(si).ToInt(), Value.SubStringFrom(si+1).ToInt() );
+      ((TTrackBar*)Obj)->SetRange( Value.SubStringTo(si).ToInt(), Value.SubStringFrom(si+1).ToInt() );
   }
   else if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {
     int si = Value.IndexOf(',');
     if( si == -1 )
-      ((_xl_Controls::TSpinCtrl*)Obj)->SetValue(Value.ToInt());
+      ((TSpinCtrl*)Obj)->SetValue(Value.ToInt());
     else
-      ((_xl_Controls::TSpinCtrl*)Obj)->SetRange( Value.SubStringTo(si).ToInt(), Value.SubStringFrom(si+1).ToInt() );
+      ((TSpinCtrl*)Obj)->SetRange( Value.SubStringTo(si).ToInt(), Value.SubStringFrom(si+1).ToInt() );
   }
-  else if( EsdlInstanceOf(*Obj, TButton) )    ((_xl_Controls::TButton*)Obj)->SetLabel(Value.u_str());
+  else if( EsdlInstanceOf(*Obj, TButton) )    ((TButton*)Obj)->SetLabel(Value.u_str());
   else if( EsdlInstanceOf(*Obj, TComboBox) )  {
-    ((_xl_Controls::TComboBox*)Obj)->SetText(Value);
-    ((_xl_Controls::TComboBox*)Obj)->Update();
+    ((TComboBox*)Obj)->SetText(Value);
+    ((TComboBox*)Obj)->Update();
   }
   else if( EsdlInstanceOf(*Obj, TListBox) )  {
-    _xl_Controls::TListBox *L = (_xl_Controls::TListBox*)Obj;
+    TListBox *L = (TListBox*)Obj;
     int index = L->GetSelection();
     if( index >=0 && index < L->Count() )
       L->SetString(index, uiStr(Value));
@@ -1056,7 +1056,7 @@ void THtml::funSetValue(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
   }
-  IEObject *Obj = html->FindObject(objName);
+  AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
     TSStrStrList<olxstr,false>* props = html->ObjectsState.FindProperties(objName);
     if( props == NULL )  {
@@ -1085,15 +1085,15 @@ void THtml::funSetValue(const TStrObjList &Params, TMacroError &E)  {
   }
 }
 //..............................................................................
-const olxstr& THtml::GetObjectData(const IEObject *Obj)  {
-  if( EsdlInstanceOf(*Obj, TTextEdit) )  {  return ((_xl_Controls::TTextEdit*)Obj)->GetData();  }
-  if( EsdlInstanceOf(*Obj, TCheckBox) )  {  return ((_xl_Controls::TCheckBox*)Obj)->GetData();  }
-  if( EsdlInstanceOf(*Obj, TTrackBar) )  {  return ((_xl_Controls::TTrackBar*)Obj)->GetData(); }
-  if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {  return ((_xl_Controls::TSpinCtrl*)Obj)->GetData(); }
-  if( EsdlInstanceOf(*Obj, TButton) )    {  return ((_xl_Controls::TButton*)Obj)->GetData();    }
-  if( EsdlInstanceOf(*Obj, TComboBox) )  {  return ((_xl_Controls::TComboBox*)Obj)->GetData();  }
-  if( EsdlInstanceOf(*Obj, TListBox) )  {  return ((_xl_Controls::TListBox*)Obj)->GetData();  }
-  if( EsdlInstanceOf(*Obj, TTreeView) )  {  return ((_xl_Controls::TTreeView*)Obj)->GetData();  }
+const olxstr& THtml::GetObjectData(const AOlxCtrl *Obj)  {
+  if( EsdlInstanceOf(*Obj, TTextEdit) )  {  return ((TTextEdit*)Obj)->GetData();  }
+  if( EsdlInstanceOf(*Obj, TCheckBox) )  {  return ((TCheckBox*)Obj)->GetData();  }
+  if( EsdlInstanceOf(*Obj, TTrackBar) )  {  return ((TTrackBar*)Obj)->GetData(); }
+  if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {  return ((TSpinCtrl*)Obj)->GetData(); }
+  if( EsdlInstanceOf(*Obj, TButton) )    {  return ((TButton*)Obj)->GetData();    }
+  if( EsdlInstanceOf(*Obj, TComboBox) )  {  return ((TComboBox*)Obj)->GetData();  }
+  if( EsdlInstanceOf(*Obj, TListBox) )  {  return ((TListBox*)Obj)->GetData();  }
+  if( EsdlInstanceOf(*Obj, TTreeView) )  {  return ((TTreeView*)Obj)->GetData();  }
   return EmptyString;
 }
 void THtml::funGetData(const TStrObjList &Params, TMacroError &E)  {
@@ -1104,7 +1104,7 @@ void THtml::funGetData(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
   }
-  const IEObject *Obj = html->FindObject(objName);
+  const AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
     E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
     return;
@@ -1121,7 +1121,7 @@ void THtml::funGetItems(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
   }
-  const IEObject *Obj = html->FindObject(objName);
+  const AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
     return;
@@ -1129,7 +1129,7 @@ void THtml::funGetItems(const TStrObjList &Params, TMacroError &E)  {
   E.SetRetVal( html->GetObjectItems(Obj) );
 }
 //..............................................................................
-olxstr THtml::GetObjectImage(const IEObject* Obj)  {
+olxstr THtml::GetObjectImage(const AOlxCtrl* Obj)  {
   if( EsdlInstanceOf(*Obj, TBmpButton) )
     return ((TBmpButton*)Obj)->GetSource();
   else if( EsdlInstanceOf(*Obj, THtmlImageCell) )
@@ -1137,7 +1137,7 @@ olxstr THtml::GetObjectImage(const IEObject* Obj)  {
   return EmptyString;
 }
 //..............................................................................
-bool THtml::SetObjectImage(IEObject* Obj, const olxstr& src)  {
+bool THtml::SetObjectImage(AOlxCtrl* Obj, const olxstr& src)  {
   if( src.IsEmpty() )  return false;
 
   wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( src );
@@ -1167,7 +1167,7 @@ bool THtml::SetObjectImage(IEObject* Obj, const olxstr& src)  {
   return true;
 }
 //..............................................................................
-olxstr THtml::GetObjectItems(const IEObject* Obj)  {
+olxstr THtml::GetObjectItems(const AOlxCtrl* Obj)  {
   if( EsdlInstanceOf(*Obj, TComboBox) )  {
     return ((TComboBox*)Obj)->ItemsToString(';');
   }
@@ -1177,7 +1177,7 @@ olxstr THtml::GetObjectItems(const IEObject* Obj)  {
   return EmptyString;
 }
 //..............................................................................
-bool THtml::SetObjectItems(IEObject* Obj, const olxstr& src)  {
+bool THtml::SetObjectItems(AOlxCtrl* Obj, const olxstr& src)  {
   if( src.IsEmpty() )  return false;
 
   if( EsdlInstanceOf(*Obj, TComboBox) )  {
@@ -1197,15 +1197,15 @@ bool THtml::SetObjectItems(IEObject* Obj, const olxstr& src)  {
   return true;
 }
 //..............................................................................
-void THtml::SetObjectData(IEObject *Obj, const olxstr& Data)  {
-  if( EsdlInstanceOf(*Obj, TTextEdit) )  {  ((_xl_Controls::TTextEdit*)Obj)->SetData(Data);  return;  }
-  if( EsdlInstanceOf(*Obj, TCheckBox) )  {  ((_xl_Controls::TCheckBox*)Obj)->SetData(Data);  return;  }
-  if( EsdlInstanceOf(*Obj, TTrackBar) )  {  ((_xl_Controls::TTrackBar*)Obj)->SetData(Data);  return;  }
-  if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {  ((_xl_Controls::TSpinCtrl*)Obj)->SetData(Data);  return;  }
-  if( EsdlInstanceOf(*Obj, TButton) )    {  ((_xl_Controls::TButton*)Obj)->SetData(Data);    return;  }
-  if( EsdlInstanceOf(*Obj, TComboBox) )  {  ((_xl_Controls::TComboBox*)Obj)->SetData(Data);  return;  }
-  if( EsdlInstanceOf(*Obj, TListBox) )  {  ((_xl_Controls::TListBox*)Obj)->SetData(Data);  return;  }
-  if( EsdlInstanceOf(*Obj, TTreeView) )  {  ((_xl_Controls::TTreeView*)Obj)->SetData(Data);  return;  }
+void THtml::SetObjectData(AOlxCtrl *Obj, const olxstr& Data)  {
+  if( EsdlInstanceOf(*Obj, TTextEdit) )  {  ((TTextEdit*)Obj)->SetData(Data);  return;  }
+  if( EsdlInstanceOf(*Obj, TCheckBox) )  {  ((TCheckBox*)Obj)->SetData(Data);  return;  }
+  if( EsdlInstanceOf(*Obj, TTrackBar) )  {  ((TTrackBar*)Obj)->SetData(Data);  return;  }
+  if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {  ((TSpinCtrl*)Obj)->SetData(Data);  return;  }
+  if( EsdlInstanceOf(*Obj, TButton) )    {  ((TButton*)Obj)->SetData(Data);    return;  }
+  if( EsdlInstanceOf(*Obj, TComboBox) )  {  ((TComboBox*)Obj)->SetData(Data);  return;  }
+  if( EsdlInstanceOf(*Obj, TListBox) )  {  ((TListBox*)Obj)->SetData(Data);  return;  }
+  if( EsdlInstanceOf(*Obj, TTreeView) )  {  ((TTreeView*)Obj)->SetData(Data);  return;  }
 }
 void THtml::funSetData(const TStrObjList &Params, TMacroError &E)  {
   const int ind = Params[0].IndexOf('.');
@@ -1215,7 +1215,7 @@ void THtml::funSetData(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
   }
-  IEObject *Obj = html->FindObject(objName);
+  AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
     return;
@@ -1223,11 +1223,11 @@ void THtml::funSetData(const TStrObjList &Params, TMacroError &E)  {
   html->SetObjectData(Obj, Params[1]);
 }
 //..............................................................................
-bool THtml::GetObjectState(const IEObject *Obj)  {
+bool THtml::GetObjectState(const AOlxCtrl *Obj)  {
   if( EsdlInstanceOf(*Obj, TCheckBox) )
-    return ((_xl_Controls::TCheckBox*)Obj)->IsChecked();
+    return ((TCheckBox*)Obj)->IsChecked();
   else if( EsdlInstanceOf(*Obj, TButton) )
-    return ((_xl_Controls::TButton*)Obj)->IsDown();
+    return ((TButton*)Obj)->IsDown();
   else
     return false;
 }
@@ -1239,7 +1239,7 @@ void THtml::funGetState(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
   }
-  const IEObject *Obj = html->FindObject(objName);
+  const AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
     TSStrStrList<olxstr,false>* props = html->ObjectsState.FindProperties(objName);
     if( props == NULL )  {
@@ -1260,15 +1260,15 @@ void THtml::funGetLabel(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
   }
-  const IEObject *Obj = html->FindObject(objName);
+  const AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
     return;
   }
   olxstr rV;
-  if( EsdlInstanceOf(*Obj, TButton) )  rV = ((_xl_Controls::TButton*)Obj)->GetCaption();
-  else if( EsdlInstanceOf(*Obj, TLabel) )   rV = ((_xl_Controls::TLabel*)Obj)->GetCaption();
-  else if( EsdlInstanceOf(*Obj, TCheckBox) )   rV = ((_xl_Controls::TCheckBox*)Obj)->GetCaption();
+  if( EsdlInstanceOf(*Obj, TButton) )  rV = ((TButton*)Obj)->GetCaption();
+  else if( EsdlInstanceOf(*Obj, TLabel) )   rV = ((TLabel*)Obj)->GetCaption();
+  else if( EsdlInstanceOf(*Obj, TCheckBox) )   rV = ((TCheckBox*)Obj)->GetCaption();
   else  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object type: ")  << EsdlObjectName(*Obj);
     return;
@@ -1284,25 +1284,25 @@ void THtml::funSetLabel(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
   }
-  const IEObject *Obj = html->FindObject(objName);
+  const AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
     return;
   }
-  if( EsdlInstanceOf(*Obj, TButton) )       ((_xl_Controls::TButton*)Obj)->SetCaption( Params[1] );
-  else if( EsdlInstanceOf(*Obj, TLabel) )   ((_xl_Controls::TLabel*)Obj)->SetCaption( Params[1] );
-  else if( EsdlInstanceOf(*Obj, TCheckBox) )   ((_xl_Controls::TCheckBox*)Obj)->SetCaption( Params[1] );
+  if( EsdlInstanceOf(*Obj, TButton) )       ((TButton*)Obj)->SetCaption( Params[1] );
+  else if( EsdlInstanceOf(*Obj, TLabel) )   ((TLabel*)Obj)->SetCaption( Params[1] );
+  else if( EsdlInstanceOf(*Obj, TCheckBox) )   ((TCheckBox*)Obj)->SetCaption( Params[1] );
   else  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object type: ")  << EsdlObjectName(*Obj);
     return;
   }
 }
 //..............................................................................
-void THtml::SetObjectState(IEObject *Obj, bool State)  {
+void THtml::SetObjectState(AOlxCtrl *Obj, bool State)  {
   if( EsdlInstanceOf(*Obj, TCheckBox) )
-    ((_xl_Controls::TCheckBox*)Obj)->SetChecked(State);
+    ((TCheckBox*)Obj)->SetChecked(State);
   else if( EsdlInstanceOf(*Obj, TButton) )
-    ((_xl_Controls::TButton*)Obj)->SetDown(State);
+    ((TButton*)Obj)->SetDown(State);
 }
 //..............................................................................
 void THtml::funSetImage(const TStrObjList &Params, TMacroError &E)  {
@@ -1313,7 +1313,7 @@ void THtml::funSetImage(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
   }
-  IEObject *Obj = html->FindObject(objName);
+  AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
     return;
@@ -1331,7 +1331,7 @@ void THtml::funGetImage(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
   }
-  const IEObject *Obj = html->FindObject(objName);
+  const AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
     return;
@@ -1374,7 +1374,7 @@ void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
   }
-  IEObject *Obj = html->FindObject(objName);
+  AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
     TSStrStrList<olxstr,false>* props = html->ObjectsState.FindProperties(Params[0]);
     if( props == NULL )  {
@@ -1399,7 +1399,7 @@ void THtml::funSetItems(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
   }
-  IEObject *Obj = html->FindObject(objName);
+  AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
     return;
@@ -1526,7 +1526,7 @@ void THtml::TObjectsState::SaveState()  {
   for( int i=0; i < html.ObjectCount(); i++ )  {
     if( !html.IsObjectManageble(i) )  continue;
     int ind = Objects.IndexOf( html.GetObjectName(i) );
-    IEObject* obj = html.GetObject(i);
+    AOlxCtrl* obj = html.GetObject(i);
     wxWindow* win = html.GetWindow(i);
     TSStrStrList<olxstr,false>* props;
     if( ind == -1 )  {
@@ -1539,53 +1539,53 @@ void THtml::TObjectsState::SaveState()  {
     }
     props->Add("type", EsdlClassName(*obj));  // type
     if( EsdlInstanceOf(*obj, TTextEdit) )  {  
-      _xl_Controls::TTextEdit* te = (_xl_Controls::TTextEdit*)obj;
+      TTextEdit* te = (TTextEdit*)obj;
       props->Add("val", te->GetText() );
     }
     else if( EsdlInstanceOf(*obj, TCheckBox) )  {  
-      _xl_Controls::TCheckBox* cb = (_xl_Controls::TCheckBox*)obj;   
+      TCheckBox* cb = (TCheckBox*)obj;   
       props->Add("val", cb->GetCaption() );
       props->Add("checked", cb->IsChecked() );
     }
     else if( EsdlInstanceOf(*obj, TTrackBar) )  {  
-      _xl_Controls::TTrackBar* tb = (_xl_Controls::TTrackBar*)obj;  
+      TTrackBar* tb = (TTrackBar*)obj;  
       props->Add("min", tb->GetMin() );
       props->Add("max", tb->GetMax() );
       props->Add("val", tb->GetValue() );
     }
     else if( EsdlInstanceOf(*obj, TSpinCtrl) )  {  
-      _xl_Controls::TSpinCtrl* sc = (_xl_Controls::TSpinCtrl*)obj;  
+      TSpinCtrl* sc = (TSpinCtrl*)obj;  
       props->Add("min", sc->GetMin() );
       props->Add("max", sc->GetMax() );
       props->Add("val", sc->GetValue() );
     }
     else if( EsdlInstanceOf(*obj, TButton) )    {  
-      _xl_Controls::TButton* bt = (_xl_Controls::TButton*)obj;
+      TButton* bt = (TButton*)obj;
       props->Add("val", bt->GetCaption() );
       props->Add("checked", bt->IsDown() );
     }
     else if( EsdlInstanceOf(*obj, TBmpButton) )    {  
-      _xl_Controls::TBmpButton* bt = (_xl_Controls::TBmpButton*)obj;  
+      TBmpButton* bt = (TBmpButton*)obj;  
       props->Add("checked", bt->IsDown() );
       props->Add("val", bt->GetSource() );
     }
     else if( EsdlInstanceOf(*obj, TComboBox) )  {  
-      _xl_Controls::TComboBox* cb = (_xl_Controls::TComboBox*)obj;  
+      TComboBox* cb = (TComboBox*)obj;  
       props->Add("val", cb->GetValue().c_str() );
       props->Add("items", cb->ItemsToString(';') );
     }
     else if( EsdlInstanceOf(*obj, TListBox) )  {  
-      _xl_Controls::TListBox* lb = (_xl_Controls::TListBox*)obj;  
+      TListBox* lb = (TListBox*)obj;  
       props->Add("val", lb->GetValue() );
       props->Add("items", lb->ItemsToString(';') );
     }
     else if( EsdlInstanceOf(*obj, TTreeView) )  {  
-//      _xl_Controls::TTreeView* tv = (_xl_Controls::TTreeView*)obj;  
+//      TTreeView* tv = (TTreeView*)obj;  
 //      props->Add("val", tv->GetValue() );
 //      props->Add("items", tv->GetItems() );
     }
     else if( EsdlInstanceOf(*obj, TLabel) )  {  
-      _xl_Controls::TLabel* lb = (_xl_Controls::TLabel*)obj;  
+      TLabel* lb = (TLabel*)obj;  
       props->Add("val", lb->GetCaption() );
     }
     else //?
@@ -1602,7 +1602,7 @@ void THtml::TObjectsState::RestoreState()  {
   for( int i=0; i < html.ObjectCount(); i++ )  {
     int ind = Objects.IndexOf( html.GetObjectName(i) );
     if( !html.IsObjectManageble(i) )  continue;
-    IEObject* obj = html.GetObject(i);
+    AOlxCtrl* obj = html.GetObject(i);
     wxWindow* win = html.GetWindow(i);
     if( ind == -1 )  continue;
     TSStrStrList<olxstr,false>& props = *Objects.GetObject(ind);
@@ -1611,55 +1611,55 @@ void THtml::TObjectsState::RestoreState()  {
       continue;
     }
     if( EsdlInstanceOf(*obj, TTextEdit) )  {  
-      _xl_Controls::TTextEdit* te = (_xl_Controls::TTextEdit*)obj;
+      TTextEdit* te = (TTextEdit*)obj;
       te->SetText( props["val"] );
     }
     else if( EsdlInstanceOf(*obj, TCheckBox) )  {  
-      _xl_Controls::TCheckBox* cb = (_xl_Controls::TCheckBox*)obj;   
+      TCheckBox* cb = (TCheckBox*)obj;   
       cb->SetCaption( props["val"]);
       cb->SetChecked( props["checked"].ToBool() );
     }
     else if( EsdlInstanceOf(*obj, TTrackBar) )  {  
-      _xl_Controls::TTrackBar* tb = (_xl_Controls::TTrackBar*)obj;  
+      TTrackBar* tb = (TTrackBar*)obj;  
       tb->SetRange( props["min"].ToInt(), props["max"].ToInt() );
       tb->SetValue( props["val"].ToInt() );
     }
     else if( EsdlInstanceOf(*obj, TSpinCtrl) )  {  
-      _xl_Controls::TSpinCtrl* sc = (_xl_Controls::TSpinCtrl*)obj;  
+      TSpinCtrl* sc = (TSpinCtrl*)obj;  
       sc->SetRange( props["min"].ToInt(), props["max"].ToInt() );
       sc->SetValue( props["val"].ToInt() );
     }
     else if( EsdlInstanceOf(*obj, TButton) )    {  
-      _xl_Controls::TButton* bt = (_xl_Controls::TButton*)obj;
+      TButton* bt = (TButton*)obj;
       bt->SetCaption( props["val"] );
-      bt->OnDown->SetEnabled(false);
-      bt->OnUp->SetEnabled(false);
-      bt->OnClick->SetEnabled(false);
+      bt->OnDown.SetEnabled(false);
+      bt->OnUp.SetEnabled(false);
+      bt->OnClick.SetEnabled(false);
       bt->SetDown( props["checked"].ToBool() );
-      bt->OnDown->SetEnabled(true);
-      bt->OnUp->SetEnabled(true);
-      bt->OnClick->SetEnabled(true);
+      bt->OnDown.SetEnabled(true);
+      bt->OnUp.SetEnabled(true);
+      bt->OnClick.SetEnabled(true);
     }
     else if( EsdlInstanceOf(*obj, TBmpButton) )    {  
-      _xl_Controls::TBmpButton* bt = (_xl_Controls::TBmpButton*)obj;  
+      TBmpButton* bt = (TBmpButton*)obj;  
       bt->SetSource( props["val"] );
-      bt->OnDown->SetEnabled(false);
-      bt->OnUp->SetEnabled(false);
-      bt->OnClick->SetEnabled(false);
+      bt->OnDown.SetEnabled(false);
+      bt->OnUp.SetEnabled(false);
+      bt->OnClick.SetEnabled(false);
       bt->SetDown( props["checked"].ToBool() );
-      bt->OnDown->SetEnabled(true);
-      bt->OnUp->SetEnabled(true);
-      bt->OnClick->SetEnabled(true);
+      bt->OnDown.SetEnabled(true);
+      bt->OnUp.SetEnabled(true);
+      bt->OnClick.SetEnabled(true);
     }
     else if( EsdlInstanceOf(*obj, TComboBox) )  {  
-      _xl_Controls::TComboBox* cb = (_xl_Controls::TComboBox*)obj;  
+      TComboBox* cb = (TComboBox*)obj;  
       TStrList toks(props["items"], ';');
       cb->Clear();
       cb->AddItems(toks);
       cb->SetText( props["val"] );
     }
     else if( EsdlInstanceOf(*obj, TListBox) )  {  
-      _xl_Controls::TListBox* lb = (_xl_Controls::TListBox*)obj;  
+      TListBox* lb = (TListBox*)obj;  
       TStrList toks(props["items"], ';');
       lb->Clear();
       lb->AddItems( toks );
@@ -1667,7 +1667,7 @@ void THtml::TObjectsState::RestoreState()  {
     else if( EsdlInstanceOf(*obj, TTreeView) )  {  
     }
     else if( EsdlInstanceOf(*obj, TLabel) )  {  
-      _xl_Controls::TLabel* lb = (_xl_Controls::TLabel*)obj;  
+      TLabel* lb = (TLabel*)obj;  
       lb->SetCaption( props["val"] );
     }
     else //?

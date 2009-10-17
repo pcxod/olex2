@@ -45,6 +45,8 @@ obj_glib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard glib/*.cpp)))
 obj_gxlib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard gxlib/*.cpp)))
 OBJ_UNIRUN := $(addprefix $(OBJ_DIR)unirun/,$(notdir $(wildcard unirun/*.cpp)))
 OBJ_OLEX := $(addprefix $(OBJ_DIR)olex/,$(notdir $(wildcard olex/*.cpp)))
+OBJ_OLEX_HTML := $(addprefix $(OBJ_DIR),$(notdir $(wildcard olex/hml/*.cpp)))
+OBJ_OLEX_CTRLS := $(addprefix $(OBJ_DIR),$(notdir $(wildcard olex/ctrls/*.cpp)))
 #######################################
 .DEFAULT_GOAL := all
 #######################################
