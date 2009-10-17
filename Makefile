@@ -45,8 +45,8 @@ obj_glib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard glib/*.cpp)))
 obj_gxlib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard gxlib/*.cpp)))
 OBJ_UNIRUN := $(addprefix $(OBJ_DIR)unirun/,$(notdir $(wildcard unirun/*.cpp)))
 OBJ_OLEX := $(addprefix $(OBJ_DIR)olex/,$(notdir $(wildcard olex/*.cpp)))
-OBJ_OLEX_HTML := $(addprefix $(OBJ_DIR),$(notdir $(wildcard olex/hml/*.cpp)))
-OBJ_OLEX_CTRLS := $(addprefix $(OBJ_DIR),$(notdir $(wildcard olex/ctrls/*.cpp)))
+OBJ_OLEX_HTML := $(addprefix $(OBJ_DIR)olex/,$(notdir $(wildcard olex/html/*.cpp)))
+OBJ_OLEX_CTRLS := $(addprefix $(OBJ_DIR)olex/,$(notdir $(wildcard olex/ctrls/*.cpp)))
 #######################################
 .DEFAULT_GOAL := all
 #######################################
@@ -159,7 +159,7 @@ $(EXE_DIR)unirun : bin $(OBJ_UNIRUN:.cpp=.s) $(obj_sdl_files:.cpp=.s) $(obj_sdl_
 
 .PHONY : olex
 olex : objs
-	+make obj_olex
+	+make obj_olex obj_olex_html obj_olex_ctrls
 	+make $(EXE_DIR)olex
 
 .PHONY : obj_olex
@@ -168,8 +168,22 @@ obj_olex: olex_obj_dir $(OBJ_OLEX:.cpp=.s)
 $(OBJ_OLEX:.cpp=.s):
 	$(CC) $(SRC_DIR)olex/$(@F:.s=.cpp) -o $(OBJ_DIR)olex/$(@F) $(OPTS) $(CFLAGS)
 
-$(EXE_DIR)olex: bin $(OBJ_OLEX:.cpp=.s)
-	$(CC) $(OBJ_DIR)*.s $(OBJ_OLEX:.cpp=.s) -o $(EXE_DIR)olex2 $(LDFLAGS)
+####### Newly added
+.PHONY : obj_olex_html
+obj_olex_html: olex_obj_dir $(OBJ_OLEX_HTML:.cpp=.s)
+
+$(OBJ_OLEX_HTML:.cpp=.s):
+	$(CC) $(SRC_DIR)olex/html/$(@F:.s=.cpp) -o $(OBJ_DIR)olex/$(@F) $(OPTS) $(CFLAGS)
+
+.PHONY : obj_olex_ctrls
+obj_olex_ctrls: olex_obj_dir $(OBJ_OLEX_CTRLS:.cpp=.s)
+
+$(OBJ_OLEX_CTRLS:.cpp=.s):
+	$(CC) $(SRC_DIR)olex/ctrls/$(@F:.s=.cpp) -o $(OBJ_DIR)olex/$(@F) $(OPTS) $(CFLAGS)
+######
+
+$(EXE_DIR)olex: bin $(OBJ_OLEX:.cpp=.s) $(OBJ_OLEX_CTRLS:.cpp=.s) $(OBJ_OLEX_HTML:.cpp=.s)
+	$(CC) $(OBJ_DIR)*.s $(OBJ_OLEX:.cpp=.s) $(OBJ_OLEX_HTML:.cpp=.s) $(OBJ_OLEX_CTRLS:.cpp=.s) -o $(EXE_DIR)olex2 $(LDFLAGS)
 
 ############################################################################################
 # From here down is to do with installation and cleanup only
