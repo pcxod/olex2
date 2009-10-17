@@ -81,9 +81,4 @@
   #define olx_T(a) (a)
 #endif
 
-#define bool_defined
-// comment above this when you compiler does not support boolean types
-//#define true  1
-//#define false 0
-
 #endif

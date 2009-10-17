@@ -2,20 +2,12 @@
 #define _xl_wxglsceneH
 
 #include "gxbase.h"
-
-//---------------------------------------------------------------------------
-// wxWidgets dependent staff
-//__________________________________________
 #if defined (__WXWIDGETS__)
-//#define wxUSE_EXCEPTIONS
-//#define wxUSE_XML
-//#define wxUSE_XML
+#include "glfont.h"
+#include "glscene.h"
 #include "wx/glcanvas.h"
 #include "wx/wx.h"
 #include "wx/image.h"
-
-#include "glfont.h"
-#include "glscene.h"
 
 BeginGxlNamespace()
 

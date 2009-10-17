@@ -5945,14 +5945,42 @@ void TMainForm::funGetCompilationInfo(const TStrObjList& Params, TMacroError &E)
   if( Params.IsEmpty() )
     E.SetRetVal( olxstr(__DATE__) << ' ' << __TIME__ );
   else  {
-    time_t date, time;
-    try {  
-      date = TETime::ParseDate( __DATE__ );
-      time = TETime::ParseTime( __TIME__ );
-      E.SetRetVal<olxstr>( TETime::FormatDateTime(Params[0], date+time) );
+    if( Params.Count() == 1 && Params[0].Equalsi("full") )  {
+      olxstr rv = (olxstr(__DATE__) << ' ' << __TIME__);
+#ifdef _MSC_FULL_VER
+      rv << " MSC:" << _MSC_FULL_VER;
+#elif __GNUC__
+      rv << "GCC: " << (__GNUC__ * 10000) << '.' << (__GNUC_MINOR__ * 100) << __GNUC_PATCHLEVEL__;
+#elif __INTEL_COMPILER
+      rv << "Intel: " << __INTEL_COMPILER;
+#endif
+#ifdef _WIN64
+      rv << " on WIN64";
+#elif _WIN32
+      rv << " on WIN32";
+#elif __MAC__
+      rv << " on MAC";
+#elif _linux
+      rv << " on Linux";
+#  ifdef __LP64__
+      rv << "64";
+#  else
+      rv << "32"
+#  endif
+#else
+      rv << " on other";
+#endif
+      E.SetRetVal(rv);
     }
-    catch( TExceptionBase& ) {
-      E.SetRetVal( olxstr(__DATE__) << ' ' << __TIME__ );
+    else  {
+      try {  
+        time_t date = TETime::ParseDate( __DATE__ );
+        time_t time = TETime::ParseTime( __TIME__ );
+        E.SetRetVal<olxstr>( TETime::FormatDateTime(Params[0], date+time) );
+      }
+      catch( TExceptionBase& ) {
+        E.SetRetVal( olxstr(__DATE__) << ' ' << __TIME__ );
+      }
     }
   }
 }

@@ -31,7 +31,7 @@ public:
   void Destroy();
 
   void StartSelect(int x, int y, GLuint *Bf);
-  void EndSelect();
+  int EndSelect();
 
   void StartDraw();
   void EndDraw();
