@@ -49,7 +49,35 @@ AddOption('--olx_profile',
           help='Build for profiling')
 profiling = (GetOption('olx_profile').lower() == 'true')
 
+if sys.platform[:3] == 'win':
+  def_tool = 'vc9'
+else:
+  def_tool = 'gnu'
+variables = Variables()
+variables.AddVariables(
+    EnumVariable('TOOL', 'The tool to use', def_tool, allowed_values=('vc8', 'vc9', 'gnu', 'intel'))
+    )
+env = Environment(ENV = os.environ, variables = variables)
+Help(variables.GenerateHelpText(env))
+
+if env['TOOL'] == 'vc8':
+  env["MSVS"] = {'VERSION': '8.0'}
+  env['MSVS_VERSION'] = '8.0'
+  Tool('msvc')(env)
+elif env['TOOL'] == 'vc9':
+  env['MSVS'] = {'VERSION': "9.0"} 
+  env['MSVS_VERSION'] = '9.0'
+  Tool('msvc')(env)
+elif env['TOOL'] == 'gnu':
+  Tool('g++')(env)
+elif env['TOOL'] == 'intel':
+  Tool('intelc')(env)
+env.Append(CCFLAGS = ['-D__WXWIDGETS__', '-D_UNICODE', '-DUNICODE'])
+env.Append(CPPPATH = ['alglib', 'sdl', 'glib', 'gxlib', 
+                      'repository', 'xlib'])
 out_dir = 'build/scons/' 
+if sys.platform[:3] == 'win':
+  out_dir += 'msvc-' + env['MSVS_VERSION'] + '/';
 if profiling:
   out_dir += 'profiling'
   
@@ -58,13 +86,12 @@ if debug:
 else:
   out_dir += 'release'
 out_dir += '-' + architecture
-out_dir += '-py' + sys.version[:3]
+out_dir += '/py' + sys.version[:3]
 if sse:
   out_dir += '-' + sse
 out_dir += '/'
-full_out_dir = os.getcwd() + '/' + out_dir
-  
 print 'Building location: ' + out_dir
+ 
 #get file lists
 alglib = Glob('./alglib/*.cpp')
 sdl = Glob('./sdl/*.cpp')
@@ -110,12 +137,6 @@ for file in gxlib:
     break
   item_index += 1
 
-env = Environment(CCFLAGS = ['-D__WXWIDGETS__', '-D_UNICODE', '-DUNICODE'],
-                  ENV = os.environ )
-#env.Tool('intelc')
-#env.Tool('msvc')
-env.Append(CPPPATH = ['alglib', 'sdl', 'glib', 'gxlib', 
-                      'repository', 'xlib'])
 unirun_env = None
 if sys.platform[:3] == 'win':
   #http://www.scons.org/wiki/EmbedManifestIntoTarget
@@ -139,6 +160,11 @@ if sys.platform[:3] == 'win':
   if wxFolder[-1] != '/' or wxFolder[-1] != '\\':
     wxFolder += '/'
   pyFolder = os.path.split(sys.executable)[0] + '\\'
+  # generic libs
+  env.Append(LIBS = Split("""wxexpat wxjpeg wxpng wxtiff
+                             wxzlib mapi32 glu32 user32 opengl32 gdi32 ole32 
+                             advapi32 comdlg32 comctl32 shell32 rpcrt4 oleaut32
+                             kernel32 wsock32 Iphlpapi.lib"""))
   if not debug:
 #    cc_flags = ['/EHsc', '/O2', '/Ob2', '/Oi', '/GL', '/MD', 
 #                          '/bigobj', '/fp:fast', '/GF']
@@ -150,6 +176,7 @@ if sys.platform[:3] == 'win':
     env.Append(LIBS = Split("""wxbase28u         wxbase28u_net  wxmsw28u_gl   
                                wxmsw28u_richtext wxmsw28u_html wxmsw28u_core 
                                wxmsw28u_adv wxregexu"""))
+    env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswu', pyFolder+'include'])
     #env.Append(LINKFLAGS=['/LTCG'])
   else:
     env.Append(CCFLAGS = ['/EHsc', '/RTC1', '/ZI', '-D_DUBUG', '/Od', '/MDd', 
@@ -158,22 +185,25 @@ if sys.platform[:3] == 'win':
                                wxmsw28ud_richtext wxmsw28ud_html wxmsw28ud_core 
                                wxmsw28ud_adv wxregexud"""))
     env.Append(LINKFLAGS=['/DEBUG', '/ASSEMBLYDEBUG'])
-    #env.Append(LINKFLAGS=['NODEFAULTLIB:'])
-  # generic libs
-  env.Append(LIBS = Split("""wxexpat wxjpeg wxpng wxtiff
-                             wxzlib mapi32 glu32 user32 opengl32 gdi32 ole32 
-                             advapi32 comdlg32 comctl32 shell32 rpcrt4 oleaut32
-                             kernel32 wsock32 Iphlpapi.lib"""))
+    env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswud', pyFolder+'include'])
   if architecture == '64bit':
     env.Append(LINKFLAGS=['/MACHINE:X64'])
+    lib_64 = r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib\x64'
+    if not os.path.exists(lib_64):
+      lib_64 = r'C:\Program Files\Microsoft SDKs\Windows\v6.1\Lib\x64'
+    if os.path.exists(lib_64):
+      env.Append(LIBPATH=[lib_64])  
   else:
     env.Append(LINKFLAGS=['/MACHINE:X86'])
+    lib_32 = r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib'
+    if not os.path.exists(lib_32):
+      lib_32 = r'C:\Program Files\Microsoft SDKs\Windows\v6.1\Lib'
+    if os.path.exists(lib_32):
+      env.Append(LIBPATH=[lib_32])  
   unirun_env = env.Clone()
-  env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswud', pyFolder+'include'])
   env.Append(LIBPATH = [pyFolder+'libs', wxFolder+'lib/vc_lib'])
   unirun_env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswud'])
   unirun_env.Append(LIBPATH = [wxFolder+'lib/vc_lib'])
-
 else:
   env.Append(CCFLAGS = ['-exceptions']) 
   if debug:
@@ -197,6 +227,7 @@ else:
   except:
     print 'Please make sure that wxWidgets and Python config scripts are available'
     Exit(1)
+    
 #sdl
 sdl_files = fileListToStringList('sdl', sdl) + fileListToStringList('sdl/smart', sdl_smart) +\
   fileListToStringList('sdl/exparse', sdl_exp)

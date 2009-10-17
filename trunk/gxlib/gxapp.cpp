@@ -1,13 +1,7 @@
 //----------------------------------------------------------------------------//
-// namespace TEXLib
-// TGXApp - a wraper for basic crystallographic graphic application
-// (c) Oleg V. Dolomanov, 2004
+// TGXApp
+// (c) Oleg V. Dolomanov, 2004-2009
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "dunitcell.h"
 #include "dbasis.h"
 #include "xreflection.h"
@@ -22,7 +16,6 @@
 #include "globj.h"
 #include "gxapp.h"
 #include "log.h"
-//#include "wglscene.h"
 #include "xeval.h"
 
 #include "network.h"

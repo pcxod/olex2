@@ -62,7 +62,7 @@ public:\
 #include "defs.h"
 
 #ifdef __WIN32__
-  #ifndef _WIN32_WINNT
+  #if !defined(_WIN32_WINNT) && _MSC_VER < 1500
     #define _WIN32_WINNT 0x400
   #endif
   #include <windows.h>
