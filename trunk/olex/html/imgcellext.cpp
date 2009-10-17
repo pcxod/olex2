@@ -186,7 +186,7 @@ void THtmlImageCell::Draw(wxDC& dc, int x, int y,
   if ( m_showFrame )  {
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.SetPen(*wxBLACK_PEN);
-    dc.DrawRectangle(x + m_PosX, y + m_PosY, width*m_scale, height*m_scale);
+    dc.DrawRectangle(x + m_PosX, y + m_PosY, (int)(width*m_scale), (int)(height*m_scale));
     x++, y++;
   }
   if ( m_bitmap )

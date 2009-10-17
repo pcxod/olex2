@@ -673,7 +673,7 @@ bool THtml::AddObject(const olxstr& Name, AOlxCtrl *Object, wxWindow* wxWin, boo
   }
   Traversables.Add( new AnAssociation2<AOlxCtrl*,wxWindow*>(Object, ew) );
 #else
-  Traversables.Add( new AnAssociation2<IEObject*,wxWindow*>(Object,wxWin) );
+  Traversables.Add( new AnAssociation2<AOlxCtrl*,wxWindow*>(Object,wxWin) );
 #endif
   if( Name.IsEmpty() )  return true;  // an anonymous object
   if( Objects.IndexOf(Name) != -1 )  return false;
