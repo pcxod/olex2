@@ -31,7 +31,6 @@ C
       n=0
       do 500 i=1,40
       if(name(i:i).eq.' ')goto 500
-      if(name(i:i).eq.'R')goto 500
       if(name(i:i).ge.'A'.and.name(i:i).le.'Z')name(i:i)=
      +char(ichar(name(i:i))+32)
       n=n+1
