@@ -173,7 +173,7 @@ template <class Base>
       RunSignature = GetName();
       RunSignature << '(';
       int argC = Params.Count();
-      if( (ArgStateMask & fpAny) == 0 && (ArgStateMask & (0x0001 << argC)) == 0)  {
+      if( (ArgStateMask & fpAny) != fpAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
         E.WrongArgCount(*this, argC);
         return;
       }
@@ -230,7 +230,7 @@ template <class Base>
       RunSignature = GetName();
       RunSignature << '(';
       int argC = Params.Count();
-      if( (ArgStateMask & fpAny) == 0 && (ArgStateMask & (0x0001 << argC)) == 0)  {
+      if( (ArgStateMask & fpAny) != fpAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
         E.WrongArgCount(*this, argC);
         return;
       }
@@ -293,7 +293,7 @@ template <class Base>
       RunSignature = GetName();
       RunSignature << ' ';
       int argC = Params.Count();
-      if( (ArgStateMask & fpAny) == 0 && (ArgStateMask & (0x0001 << argC)) == 0)  {
+      if( (ArgStateMask & fpAny) != fpAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
         E.WrongArgCount(*this, argC);
         return;
       }
@@ -373,7 +373,7 @@ template <class Base>
       RunSignature = GetName();
       RunSignature << ' ';
       int argC = Params.Count();
-      if( (ArgStateMask & fpAny) == 0 && (ArgStateMask & (0x0001 << argC)) == 0)  {
+      if( (ArgStateMask & fpAny) != fpAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
         E.WrongArgCount(*this, argC);
         return;
       }
