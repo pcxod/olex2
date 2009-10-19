@@ -5,12 +5,12 @@ const olxstr &esdl::NullString = (const olxstr&)(*(olxstr*)NULL);
 const olxstr &esdl::TrueString = olxstr("true");
 const olxstr &esdl::FalseString = olxstr("false");
 
-const CString &esdl::CEmptyString = CString("");
-const CString &esdl::CNullString = (const CString&)(*(CString*)NULL);
-const CString &esdl::CTrueString = CString("true");
-const CString &esdl::CFalseString = CString("false");
+const olxcstr &esdl::CEmptyString = olxcstr("");
+const olxcstr &esdl::CNullString = (const olxcstr&)(*(olxcstr*)NULL);
+const olxcstr &esdl::CTrueString = olxcstr("true");
+const olxcstr &esdl::CFalseString = olxcstr("false");
 
-const WString &esdl::WEmptyString = WString("");
-const WString &esdl::WNullString = (const WString&)(*(WString*)NULL);
-const WString &esdl::WTrueString = WString("true");
-const WString &esdl::WFalseString = WString("false");
+const olxwstr &esdl::WEmptyString = olxwstr("");
+const olxwstr &esdl::WNullString = (const olxwstr&)(*(olxwstr*)NULL);
+const olxwstr &esdl::WTrueString = olxwstr("true");
+const olxwstr &esdl::WFalseString = olxwstr("false");

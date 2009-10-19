@@ -30,10 +30,10 @@ class IDataInputStream: public IInputStream  {
 public:
   virtual ~IDataInputStream() {  ;  }
   virtual void Read(void *Data, size_t size) = 0;
-  virtual inline void Read(CString& whr, size_t size)  {
+  virtual inline void Read(olxcstr& whr, size_t size)  {
     whr.AppendFromStream(*this, size);
   }
-  virtual void Read(WString& whr, size_t size)  {
+  virtual void Read(olxwstr& whr, size_t size)  {
     whr.AppendFromStream(*this, size);
   }
   inline char&                   operator >> ( char& v )                   {  return readType(v);  }
@@ -49,8 +49,8 @@ public:
   inline float&                  operator >> ( float& v )                  {  return readType(v);  }
   inline double&                 operator >> ( double& v )                 {  return readType(v);  }
   inline IDataOutputStream&      operator >> ( IDataOutputStream& v )      {  IInputStream::operator >> (v);  return v;  }
-  inline CString&                operator >> ( CString& v )                {  v.FromBinaryStream(*this);  return v;  }
-  inline WString&                operator >> ( WString& v )                {  v.FromBinaryStream(*this);  return v;  }
+  inline olxcstr&                operator >> ( olxcstr& v )                {  v.FromBinaryStream(*this);  return v;  }
+  inline olxwstr&                operator >> ( olxwstr& v )                {  v.FromBinaryStream(*this);  return v;  }
 };
 
 class IDataOutputStream: public IOutputStream  {
@@ -68,13 +68,13 @@ public:
     return w;
   }
 
-  virtual size_t Write(const WString& str)  {  return Write(str.raw_str(), str.RawLen());  }
-  virtual size_t Write(const CString& str)  {  return Write(str.raw_str(), str.RawLen());  }
+  virtual size_t Write(const olxwstr& str)  {  return Write(str.raw_str(), str.RawLen());  }
+  virtual size_t Write(const olxcstr& str)  {  return Write(str.raw_str(), str.RawLen());  }
   virtual size_t Write(const TTIString<char>& str)  {  return Write(str.raw_str(), str.RawLen());  }
   virtual size_t Write(const TTIString<wchar_t>& str)  {  return Write(str.raw_str(), str.RawLen());  }
 
-  virtual size_t Writenl(const WString& str)  {  return Writenl(str.raw_str(), str.RawLen());  }
-  virtual size_t Writenl(const CString& str)  {  return Writenl(str.raw_str(), str.RawLen());  }
+  virtual size_t Writenl(const olxwstr& str)  {  return Writenl(str.raw_str(), str.RawLen());  }
+  virtual size_t Writenl(const olxcstr& str)  {  return Writenl(str.raw_str(), str.RawLen());  }
   virtual size_t Writenl(const TTIString<char>& str)  {  return Writenl(str.raw_str(), str.RawLen());  }
   virtual size_t Writenl(const TTIString<wchar_t>& str)  {  return Writenl(str.raw_str(), str.RawLen());  }
   virtual void Flush()  { }
@@ -91,8 +91,8 @@ public:
   inline IDataOutputStream& operator << ( float v )                  {  return writeType(v);  }
   inline IDataOutputStream& operator << ( double v )                 {  return writeType(v);  }
   inline IDataOutputStream& operator << ( IInputStream& v )          {  IOutputStream::operator << (v);  return *this;  }
-  inline IDataOutputStream& operator << ( const CString& v )       {  v.ToBinaryStream(*this);  return *this;  }
-  inline IDataOutputStream& operator << ( const WString& v )       {  v.ToBinaryStream(*this);  return *this;  }
+  inline IDataOutputStream& operator << ( const olxcstr& v )       {  v.ToBinaryStream(*this);  return *this;  }
+  inline IDataOutputStream& operator << ( const olxwstr& v )       {  v.ToBinaryStream(*this);  return *this;  }
 
   virtual inline size_t Write(const char* str)       {  return Write(str, olxstr::o_strlen(str));  }
   virtual inline size_t Write(const wchar_t* str)    {  return Write(str, olxstr::o_strlen(str));  }

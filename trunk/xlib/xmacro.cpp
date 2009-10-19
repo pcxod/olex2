@@ -1061,7 +1061,7 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options, TMacro
       const double qsig = sig*sig;
       y += gd[i].GetB()*exp(-(s-gd[i].GetA())*(s-gd[i].GetA())/(2*qsig))/sig;
     }
-    out.Writenl( CString(s, 40) << ',' << y);
+    out.Writenl( olxcstr(s, 40) << ',' << y);
   }
 
 }

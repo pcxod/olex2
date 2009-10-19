@@ -3265,7 +3265,7 @@ bool TMainForm::UpdateRecentFilesTable(bool TableDef)  {
     Table[i/3][i%3] = Tmp;
   }
   Table.CreateHTMLList(Output, EmptyString, false, false, false);
-  CString cst = TUtf8::Encode(Output.Text('\n'));
+  olxcstr cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(RecentFilesFile, cst.c_str(), cst.Length(), plGlobal);
   if( TEFile::Exists(DataDir+RecentFilesFile) )
     TEFile::DelFile(DataDir+RecentFilesFile);
@@ -3322,7 +3322,7 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
     }
   }
   Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
-  CString cst = TUtf8::Encode(Output.Text('\n'));
+  olxcstr cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(QPeakTableFile, cst.c_str(), cst.Length(), plStructure);
   if( TEFile::Exists(QPeakTableFile) )
     TEFile::DelFile(QPeakTableFile);
@@ -3360,7 +3360,7 @@ void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
       Table[i][4] << "<a href='omit " << Ref.H <<  ' ' << Ref.K << ' ' << Ref.L << "\'>" << "omit" << "</a>";
   }
   Table.CreateHTMLList(Output, EmptyString, true, false, TableDef);
-  CString cst = TUtf8::Encode(Output.Text('\n'));
+  olxcstr cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(BadRefsFile, cst.c_str(), cst.Length(), plStructure);
   if( TEFile::Exists(BadRefsFile) )
     TEFile::DelFile(BadRefsFile);
@@ -3428,7 +3428,7 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
   Table[6][0] = "R(sigma)";           Table[6][1] = olxstr::FormatFloat(3,Lst.Rsigma());
 
   Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
-  CString cst = TUtf8::Encode(Output.Text('\n'));
+  olxcstr cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(RefineDataFile, cst.c_str(), cst.Length(), plStructure);
   if( TEFile::Exists(RefineDataFile) )
     TEFile::DelFile(RefineDataFile);

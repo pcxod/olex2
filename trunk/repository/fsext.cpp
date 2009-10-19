@@ -130,7 +130,7 @@ void TFileHandlerManager::_SaveToStream(IDataOutputStream& os, short persistence
       ic++;
   }
   os << ic;
-  CString utfstr;
+  olxcstr utfstr;
   for( int i=0; i < FMemoryBlocks.Count(); i++ )  {
     TMemoryBlock *mb = FMemoryBlocks.GetObject(i);
     if( (mb->PersistenceId & persistenceMask) != 0 )  {
@@ -163,7 +163,7 @@ void TFileHandlerManager::_LoadFromStream(IDataInputStream& is, short persistenc
   uint32_t ic, strl;
   TMemoryBlock* mb;
   olxstr in;
-  CString utfstr;
+  olxcstr utfstr;
 
   is.Read(&ic, sizeof(int) );
   for(uint32_t i=0; i < ic; i++ )  {

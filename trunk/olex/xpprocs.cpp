@@ -6476,7 +6476,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   tree3.Traverser.FullTraverse(tree3, tt);
 #endif  
   if( Cmds.IsEmpty() )  return;
-  const CString atom_s("ATOM");
+  const olxcstr atom_s("ATOM");
   TCStrList lst, toks;
   char bf[256];
   char format[] = "%s";
@@ -7161,7 +7161,7 @@ void TMainForm::macOnRefine(TStrObjList &Cmds, const TParamList &Options, TMacro
 //..............................................................................
 //..............................................................................
 class MTTestTh : public AOlxThread  {
-  CString msg;
+  olxcstr msg;
   compd cd_res;
   compf cf_res;
 public:
@@ -7180,7 +7180,7 @@ public:
     }
 	  return 0;
 	}
-	DefPropC(CString, msg);
+	DefPropC(olxcstr, msg);
 };
 
 void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

@@ -225,7 +225,7 @@ public:
     char * const&bf = new char [fl+1];
     io.Read(bf, fl);
     bf[fl] = '\0';
-    Strtok(CString(bf, fl), '\n', false); // must preserve the new lines on Linux!!! 2008.08.17
+    Strtok(olxcstr(bf, fl), '\n', false); // must preserve the new lines on Linux!!! 2008.08.17
     for(int i=0; i < Count(); i++ )
       if( GetString(i).EndsWith('\r') )  
         GetString(i).SetLength( GetString(i).Length() -1 );
@@ -543,16 +543,16 @@ public:
 
 
 typedef TStrPObjList<olxstr, IEObject*> TStrObjList;
-typedef TStrPObjList<CString, IEObject*> TCStrObjList;
-typedef TStrPObjList<WString, IEObject*> TWStrObjList;
+typedef TStrPObjList<olxcstr, IEObject*> TCStrObjList;
+typedef TStrPObjList<olxwstr, IEObject*> TWStrObjList;
 
 typedef TTOStringList<olxstr, olxstr, TObjectStrListData<olxstr,olxstr> > TStrStrList;
-typedef TTOStringList<CString, CString, TObjectStrListData<CString,CString> > TCStrCStrList;
-typedef TTOStringList<WString, WString, TObjectStrListData<WString,WString> > TWStrWStrList;
+typedef TTOStringList<olxcstr, olxcstr, TObjectStrListData<olxcstr,olxcstr> > TCStrCStrList;
+typedef TTOStringList<olxwstr, olxwstr, TObjectStrListData<olxwstr,olxwstr> > TWStrWStrList;
 
 typedef TTStrList<olxstr, TSingleStringWrapper<olxstr> > TStrList;
-typedef TTStrList<CString, TSingleStringWrapper<CString> > TCStrList;
-typedef TTStrList<WString, TSingleStringWrapper<WString> > TWStrList;
+typedef TTStrList<olxcstr, TSingleStringWrapper<olxcstr> > TCStrList;
+typedef TTStrList<olxwstr, TSingleStringWrapper<olxwstr> > TWStrList;
 
 //template <class T>  class TStrPObj
 

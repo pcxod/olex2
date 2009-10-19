@@ -19,8 +19,8 @@ http://www.codeguru.com/cpp/misc/misc/multi-lingualsupport/article.php/c10451/
 BeginEsdlNamespace()
 
 class TUtf8  {
-  CString (*EncodeFunc)(const void* arr, size_t len);
-  WString (*DecodeFunc)(const char* arr, size_t len);
+  olxcstr (*EncodeFunc)(const void* arr, size_t len);
+  olxwstr (*DecodeFunc)(const char* arr, size_t len);
   static TUtf8 Instance;
 protected:
   TUtf8()  {
@@ -35,36 +35,36 @@ protected:
     }
   }
 public:
-  static inline CString Encode(const WString& str)  {  
+  static inline olxcstr Encode(const olxwstr& str)  {  
     return (*Instance.EncodeFunc)(str.raw_str(), str.Length());  
   }
-  static inline CString Encode(const TTIString<wchar_t>& str)  {  
+  static inline olxcstr Encode(const TTIString<wchar_t>& str)  {  
     return (*Instance.EncodeFunc)(str.raw_str(), str.Length());  
   }
-  static inline CString Encode(const wchar_t* wstr)  {  
+  static inline olxcstr Encode(const wchar_t* wstr)  {  
     return (*Instance.EncodeFunc)(wstr, olxstr::o_strlen(wstr)); 
   }
-  static inline CString Encode(const wchar_t* wstr, size_t len)  {  
+  static inline olxcstr Encode(const wchar_t* wstr, size_t len)  {  
     return (*Instance.EncodeFunc)(wstr, len); 
   }
   
-  static inline WString Decode(const CString& str)  {  
+  static inline olxwstr Decode(const olxcstr& str)  {  
     return (*Instance.DecodeFunc)(str.raw_str(), str.Length());  
   }
-  static inline WString Decode(const TTIString<char>& str)  {  
+  static inline olxwstr Decode(const TTIString<char>& str)  {  
     return (*Instance.DecodeFunc)(str.raw_str(), str.Length());  
   }
-  static inline WString Decode(const char* str)  {  
+  static inline olxwstr Decode(const char* str)  {  
     return (*Instance.DecodeFunc)(str, olxstr::o_strlen(str));  
   }
-  static inline WString Decode(const char* str, size_t len) {  
+  static inline olxwstr Decode(const char* str, size_t len) {  
     return (*Instance.DecodeFunc)(str, len);  
   }
 
   const static uint32_t FileSignature;
 
 protected:  // functions below are unsafe to use if wchar_t size is unknow!!
-  static CString Encode2(const void* vinput, size_t len)  {
+  static olxcstr Encode2(const void* vinput, size_t len)  {
     const uint16_t* input = (const uint16_t*)vinput;
     TDirectionalList<char> bf(len);
     for( size_t i=0; i < len; i++ )  {
@@ -81,11 +81,11 @@ protected:  // functions below are unsafe to use if wchar_t size is unknow!!
         bf.Write((uint8_t)(UTF8_MASKBYTE | input[i] & UTF8_MASKBITS));
       }
     }
-    CString str(CEmptyString, bf.GetLength() );
+    olxcstr str(CEmptyString, bf.GetLength() );
     bf.ToString(str);
     return str;
   }
-  static WString Decode2(const char* input, size_t len)  {
+  static olxwstr Decode2(const char* input, size_t len)  {
     TDirectionalList<wchar_t> bf(len);
     for( size_t i=0; i < len; )  {
       uint16_t ch;
@@ -105,12 +105,12 @@ protected:  // functions below are unsafe to use if wchar_t size is unknow!!
       }
       bf.Write(ch);
     }
-    WString str(WEmptyString, bf.GetLength() );
+    olxwstr str(WEmptyString, bf.GetLength() );
     bf.ToString(str);
     return str;
   }
 
-  static CString Encode4( const void* vinput, size_t len )  {
+  static olxcstr Encode4( const void* vinput, size_t len )  {
     const uint32_t* input = (const uint32_t*)vinput;
     TDirectionalList<char> bf(len);
     for( size_t i=0; i < len; i++ )  {
@@ -147,12 +147,12 @@ protected:  // functions below are unsafe to use if wchar_t size is unknow!!
         bf.Write((uint8_t)(UTF8_MASKBYTE | input[i] & UTF8_MASKBITS));
       }
     }
-    CString str(CEmptyString, bf.GetLength() );
+    olxcstr str(CEmptyString, bf.GetLength() );
     bf.ToString(str);
     return str;
   }
 
-  static WString Decode4(const char* input, size_t len)  {
+  static olxwstr Decode4(const char* input, size_t len)  {
     TDirectionalList<wchar_t> bf(len);
     for( size_t i=0; i < len; )  {
       uint32_t ch;
@@ -192,7 +192,7 @@ protected:  // functions below are unsafe to use if wchar_t size is unknow!!
       }
       bf.Write(ch);
     }
-    WString str(WEmptyString, bf.GetLength() );
+    olxwstr str(WEmptyString, bf.GetLength() );
     bf.ToString(str);
     return str;
 }

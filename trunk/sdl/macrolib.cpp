@@ -143,7 +143,7 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error)  {
       ind = Command.FirstIndexOf('|', ind1);
       continue;
     }
-    CString envn( Command.SubString(ind+1, ind1-ind-1) );
+    olxcstr envn( Command.SubString(ind+1, ind1-ind-1) );
     char* eval = getenv( envn.c_str() );
     if( eval != NULL )  {
       Command.Delete( ind, ind1-ind+1);

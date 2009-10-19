@@ -221,8 +221,8 @@ public:
     return S;
   }
   inline virtual TIString ToString() const {  return StrRepr<olxstr>();  }
-  inline CString ToCStr() const {  return StrRepr<CString>();  }
-  inline WString ToWStr() const {  return StrRepr<WString>();  }
+  inline olxcstr ToCStr() const {  return StrRepr<olxcstr>();  }
+  inline olxwstr ToWStr() const {  return StrRepr<olxwstr>();  }
 };
 
   typedef TEValue<float>  TEValueF;

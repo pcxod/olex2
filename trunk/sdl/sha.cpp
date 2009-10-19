@@ -51,9 +51,9 @@ void SHA1Impl::digest64(const uint32_t* msg)  {
   state[4] += e;
 }
 
-CString SHA1Impl::formatDigest()  {
+olxcstr SHA1Impl::formatDigest()  {
   HashingUtilsBE::hs_copy(state, digest, 5);
-  CString rv;
+  olxcstr rv;
   char ch_bf[16];
   memset(ch_bf, 0, 16);
   for( int i=0; i < 20; i++ )  {
@@ -133,10 +133,10 @@ SHA256Impl::SHA256Impl()  {
   state[7] = 0x5be0cd19;
 }
 
-CString SHA256Impl::formatDigest()  {
+olxcstr SHA256Impl::formatDigest()  {
   //volatile olx_scope_cs _cs( TBasicApp::GetCriticalSection() );
   HashingUtilsBE::hs_copy(state, digest, 8);
-  CString rv;  // (CEmptyString, 256) global data, like EmptyString MUST not be used in threads without semaphores!
+  olxcstr rv;  // (CEmptyString, 256) global data, like EmptyString MUST not be used in threads without semaphores!
   char ch_bf[16];
   memset(ch_bf, 0, 16);
   for( int i=0; i < 32; i++ )  {
@@ -159,9 +159,9 @@ SHA224Impl::SHA224Impl()  {
   state[7] = 0xbefa4fa4;
 }
 
-CString SHA224Impl::formatDigest()  {
+olxcstr SHA224Impl::formatDigest()  {
   HashingUtilsBE::hs_copy(state, digest, 7);
-  CString rv;
+  olxcstr rv;
   char ch_bf[16];
   memset(ch_bf, 0, 16);
   for( int i=0; i < 28; i++ )  {

@@ -285,8 +285,8 @@ public:
     return rv << ", " << data[1] << ", " << data[2];
   }
   inline TIString ToString() const {  return StrRepr<olxstr>();  }
-  inline CString  ToCStr()   const {  return StrRepr<CString>();  }
-  inline WString  ToWStr()   const {  return StrRepr<WString>();  }
+  inline olxcstr  ToCStr()   const {  return StrRepr<olxcstr>();  }
+  inline olxwstr  ToWStr()   const {  return StrRepr<olxwstr>();  }
 };
 
 template <class T> class TMatrix33  {

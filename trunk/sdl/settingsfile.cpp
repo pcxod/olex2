@@ -44,7 +44,7 @@ void TSettingsFile::SaveSettings(const olxstr& fileName)  {
     if( !Lines.GetObject(i) ) 
       f.Writenl( Lines[i].c_str(), Lines[i].Length() );
     else  {
-      CString ln = Lines[i];
+      olxcstr ln = Lines[i];
       ln << '=' << Params[Lines[i]];
       f.Writenl( ln );
     }

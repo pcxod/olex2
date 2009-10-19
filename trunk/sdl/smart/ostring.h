@@ -7,8 +7,8 @@ BeginEsdlNamespace()
 
 #ifdef __BORLANDC__
 
-typedef TTSString<TCString, char> CString;
-typedef TTSString<TWString, wchar_t> WString;
+typedef TTSString<TCString, char> olxcstr;
+typedef TTSString<TWString, wchar_t> olxwstr;
 
 #ifdef _UNICODE
   typedef TTSString<TWString, wchar_t> olxstr;
@@ -21,15 +21,15 @@ extern const olxstr &FalseString;
 extern const olxstr &TrueString;
 extern const olxstr &NullString;
 
-extern const CString &CEmptyString;
-extern const CString &CFalseString;
-extern const CString &CTrueString;
-extern const CString &CNullString;
+extern const olxcstr &CEmptyString;
+extern const olxcstr &CFalseString;
+extern const olxcstr &CTrueString;
+extern const olxcstr &CNullString;
 
-extern const WString &WEmptyString;
-extern const WString &WFalseString;
-extern const WString &WTrueString;
-extern const WString &WNullString;
+extern const olxwstr &WEmptyString;
+extern const olxwstr &WFalseString;
+extern const olxwstr &WTrueString;
+extern const olxwstr &WNullString;
 #endif
 
 template <bool CaseInsensetive>  class olxstrComparator  {

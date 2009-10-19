@@ -99,7 +99,7 @@ int UpdateThread::Run()  {
     if( !Index->IsInterrupted() )  {
       //TBasicApp::GetLog().Info("Done update downloading");
       TEFile f(download_vf, "w+b");
-      CString location(dfs.GetBase());
+      olxcstr location(dfs.GetBase());
       f.Write(location);
     }
     else  {
