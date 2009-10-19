@@ -90,6 +90,7 @@
 #include "hkl_py.h"
 #include "filetree.h"
 #include "md5.h"
+#include "olxth.h"
 
 #ifdef __GNUC__
   #undef Bool
@@ -228,6 +229,56 @@ public:
     else  if( Obj == FParent->FHelpWindow )
       FParent->ProcessMacro("showwindow help false");
     return true;
+  }
+};
+class SplashDlg : public wxDialog  {
+  wxBitmap *bmp;
+public:
+  SplashDlg(wxWindow *parent) :
+      wxDialog(parent, -1, wxT("Initialising"), wxDefaultPosition, wxSize(100, 100), wxNO_BORDER) 
+  {
+    olxstr splash_img = TBasicApp::GetBaseDir() + "splash.jpg";
+    if( TEFile::Exists(splash_img) )  {
+      wxImage img;
+      img.LoadFile(splash_img.u_str());
+      wxStaticText *st = new wxStaticText(this, -1, wxT("Initialising"), wxPoint(0, img.GetHeight()), wxSize(img.GetWidth(), 14));
+      SetSize(img.GetWidth(), img.GetHeight() + st->GetSize().y);
+      bmp = new wxBitmap(img);
+    }
+  }
+  ~SplashDlg()  {
+    if( bmp != NULL )
+      delete bmp;
+  }
+  void DoPaint()  {
+    wxWindowDC dc(this);
+    if( bmp != NULL )
+      dc.DrawBitmap(*bmp, 0, 0);
+  }
+  void on_paint(wxPaintEvent &event)  {
+    if( bmp != NULL )  {
+      wxPaintDC dc(this);
+      dc.DrawBitmap(*bmp, 0, 0);
+    }
+  }
+  DECLARE_EVENT_TABLE()
+};
+
+BEGIN_EVENT_TABLE(SplashDlg, wxDialog)
+  EVT_PAINT(SplashDlg::on_paint)
+END_EVENT_TABLE()
+
+class RefreshTh : public AOlxThread  {
+  SplashDlg& dlg;
+public:
+  RefreshTh(SplashDlg& _dlg) :dlg(_dlg)  {  Detached = false;  }
+  int Run()  {
+    while( true )  {
+      if( Terminate )  return 1;
+      dlg.DoPaint();
+      wxApp::GetInstance()->ProcessPendingEvents();
+      olx_sleep(100);
+    }
   }
 };
 /******************************************************************************/
@@ -1292,6 +1343,12 @@ separated values of Atom Type and radius, an entry a line" );
 //..............................................................................
 void TMainForm::StartupInit()  {
   if( StartupInitialised )  return;
+
+  SplashDlg splash_dlg(this);
+  RefreshTh rth(splash_dlg);
+  splash_dlg.Show();
+  rth.Start();
+
   StartupInitialised = true;
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   // create 4 fonts
@@ -1451,6 +1508,9 @@ void TMainForm::StartupInit()  {
 
   if( FXApp->Arguments.Count() == 1 )
     ProcessMacro(olxstr("reap \'") << FXApp->Arguments[0] << '\'', __OlxSrcInfo);
+
+  rth.SendTerminate();
+  rth.Join();
 }
 //..............................................................................
 void TMainForm::SetProcess( AProcess *Process )  {

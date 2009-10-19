@@ -28,7 +28,6 @@
 #include "wxzipfs.h"
 #include "shellutil.h"
 #include "patchapi.h"
-#include "olxth.h"
 
 #include "efile.h"
 #ifndef __WIN32__
@@ -109,56 +108,6 @@ public:
       Progress->Update((int)A->GetPos(), uiStr(A->GetAction()) );
     }
     return false;
-  }
-};
-class SplashDlg : public wxDialog  {
-  wxBitmap *bmp;
-public:
-  SplashDlg(wxWindow *parent) :
-      wxDialog(parent, -1, wxT("Initialising"), wxDefaultPosition, wxSize(100, 100), wxNO_BORDER) 
-  {
-    olxstr splash_img = TBasicApp::GetBaseDir() + "splash.jpg";
-    if( TEFile::Exists(splash_img) )  {
-      wxImage img;
-      img.LoadFile(splash_img.u_str());
-      wxStaticText *st = new wxStaticText(this, -1, wxT("Initialising"), wxPoint(0, img.GetHeight()), wxSize(img.GetWidth(), 14));
-      SetSize(img.GetWidth(), img.GetHeight() + st->GetSize().y);
-      bmp = new wxBitmap(img);
-    }
-  }
-  ~SplashDlg()  {
-    if( bmp != NULL )
-      delete bmp;
-  }
-  void DoPaint()  {
-    wxWindowDC dc(this);
-    if( bmp != NULL )
-      dc.DrawBitmap(*bmp, 0, 0);
-  }
-  void on_paint(wxPaintEvent &event)  {
-    if( bmp != NULL )  {
-      wxPaintDC dc(this);
-      dc.DrawBitmap(*bmp, 0, 0);
-    }
-  }
-  DECLARE_EVENT_TABLE()
-};
-
-BEGIN_EVENT_TABLE(SplashDlg, wxDialog)
-  EVT_PAINT(SplashDlg::on_paint)
-END_EVENT_TABLE()
-
-class RefreshTh : public AOlxThread  {
-  SplashDlg& dlg;
-public:
-  RefreshTh(SplashDlg& _dlg) :dlg(_dlg)  {  Detached = false;  }
-  int Run()  {
-    while( true )  {
-      if( Terminate )  return 1;
-      dlg.DoPaint();
-      wxApp::GetInstance()->ProcessPendingEvents();
-      olx_sleep(100);
-    }
   }
 };
 //----------------------------------------------------------------------------//
@@ -265,16 +214,7 @@ bool TGlXApp::OnInit()  {
 #ifdef __WIN32__  // on LInux they are multiline by default...
   MainForm->SetToolTip(wxT("\n")); // force multiline ttoltips with (&#10;)
 #endif
-  try  {
-    SplashDlg splash_dlg(MainForm);
-    RefreshTh rth(splash_dlg);
-    splash_dlg.Show();
-    rth.Start();
-    //splash_dlg.DoPaint();
-    MainForm->XApp(XApp);  // his sets XApp for the canvas as well
-    rth.SendTerminate();
-    rth.Join();
-  }
+  try  {  MainForm->XApp(XApp);  }  // his sets XApp for the canvas as well
   catch( TExceptionBase& exc )  {
     TStrList out;
     exc.GetException()->GetStackTrace(out);
