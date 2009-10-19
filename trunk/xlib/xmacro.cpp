@@ -2376,6 +2376,8 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
     }
     if( TD->GetName().Equalsi("footer") || TD->GetName().Equalsi("header") )  {
       olxstr fn = TD->GetFieldValue("source");
+      if( fn.IndexOf("$") != -1 )
+        ProcessExternalFunction(fn);
       if( !TEFile::IsAbsolutePath(fn) )
         fn = xapp.GetCifTemplatesDir() + fn;
       SL1.LoadFromFile( fn );
@@ -2388,7 +2390,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
     if( Cif->CreateTable(TD, DT, SymmList) )  {
       Tmp = "Table "; Tmp << ++tab_count << ' ' << TD->GetFieldValueCI("caption");
       Tmp.Replace("%DATA_NAME%", Cif->GetDataName());
-      if( Tmp.IndexOf("$") >= 0 )
+      if( Tmp.IndexOf("$") != -1 )
         ProcessExternalFunction( Tmp );
       // attributes of the row names ...
       CLA.Clear();
