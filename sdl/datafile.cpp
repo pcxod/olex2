@@ -28,7 +28,7 @@ TDataFile::~TDataFile()  {
 //..............................................................................
 //..............................................................................
 bool TDataFile::LoadFromTextStream(IInputStream& io, TStrList* Log)  {
-  WString in;
+  olxwstr in;
   FRoot->Clear();
   FileName = EmptyString;
   try  {  in = TUtf8File::ReadAsString(io, false);  }

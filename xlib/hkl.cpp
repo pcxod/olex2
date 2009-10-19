@@ -65,7 +65,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
   const int line_cnt = SL.Count();
   Refs.SetCapacity( line_cnt );
   for(int i=0; i < line_cnt; i++ )  {
-    const CString& line = SL[i];
+    const olxcstr& line = SL[i];
     if( !ZeroRead && line.Length() < 28 )  continue;
     if( !FormatInitialised )  {
       if( line.Length() >= 32 && line.SubString(28,4).IsNumber() )

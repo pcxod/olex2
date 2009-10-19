@@ -70,7 +70,7 @@
   #include <dirent.h>
   #include <utime.h>
 
-  #define OLXSTR(A) CString(A).c_str()  //have to make it thread safe
+  #define OLXSTR(A) olxcstr(A).c_str()  //have to make it thread safe
 
   #define makedir(a) mkdir((a), 0755)
   #define UTIME utime
@@ -550,7 +550,7 @@ bool TEFile::ListCurrentDir(TStrList& Out, const olxstr &Mask, const uint16_t sF
 #else
 //..............................................................................
 bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const uint16_t sF)  {
-  DIR *d = opendir( CString(TEFile::CurrentDir()).c_str() );
+  DIR *d = opendir( olxcstr(TEFile::CurrentDir()).c_str() );
   if( d == NULL ) return false;
   MaskList masks;
   BuildMaskList(Mask, masks);
@@ -601,7 +601,7 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const uint16_t
 }
 //..............................................................................
 bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask, const uint16_t sF)  {
-  DIR *d = opendir( CString(TEFile::CurrentDir()).c_str() );
+  DIR *d = opendir( olxcstr(TEFile::CurrentDir()).c_str() );
   if( d == NULL ) return false;
   MaskList masks;
   BuildMaskList(Mask, masks);
@@ -710,7 +710,7 @@ bool TEFile::ChangeDir(const olxstr& To)  {
 #ifdef __WIN32__
   return SetCurrentDirectory(path.u_str()) != 0;
 #else
-  return ( chdir(CString(path).c_str()) == -1 ) ?  false : true;
+  return ( chdir(olxcstr(path).c_str()) == -1 ) ?  false : true;
 #endif
 }
 //..............................................................................

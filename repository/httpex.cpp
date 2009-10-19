@@ -61,7 +61,7 @@ const olxstr& THttp::GetHeader(const olxstr& header) const  {
 void THttp::SetPostBuffer(const olxstr& post_buf)  {  m_post_buf = post_buf;  }
 //............................................................................//
 void THttp::SendHeaders()  {
-  CString buf;
+  olxcstr buf;
   for( int i=0; i < Headers.Count(); i++ )  {
     buf = Headers.GetComparable(i);  
     buf  << ": "  << Headers.GetObject(i) << "\r\n";

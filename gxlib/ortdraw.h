@@ -208,7 +208,7 @@ public:
     LinearScale = olx_min((float)pw.GetWidth()/vp[2], (double)pw.GetHeight()/vp[3]);
 
     if( app.LabelCount() != 0 )  {
-      CString fnt("/Verdana findfont ");
+      olxcstr fnt("/Verdana findfont ");
       fnt << olx_round(app.GetLabel(0).Font()->GetPointSize()/LinearScale) << " scalefont setfont";
       pw.custom(fnt.c_str());
     }

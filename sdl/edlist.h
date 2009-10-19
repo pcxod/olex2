@@ -237,7 +237,7 @@ template <typename T>
     ToString(s);
     return s;
   }
-  void ToString(CString& cstr) const {
+  void ToString(olxcstr& cstr) const {
     cstr.SetCapacity( cstr.Length() + Length);
     TDirectionalListEntry<T>* en = Head;
     if( en == NULL )  return;
@@ -246,7 +246,7 @@ template <typename T>
       en = en->GetNext();
     }
   }
-  void ToString(WString& wstr) const {
+  void ToString(olxwstr& wstr) const {
     wstr.SetCapacity( wstr.Length() + Length);
     TDirectionalListEntry<T>* en = Head;
     if( en == NULL )  return;

@@ -46,7 +46,7 @@ public:
 
 class TGlRenderer : public IEObject  {
   ObjectGroup<TGlMaterial, TGlPrimitive>  Primitives;  // a list of all groups of primitives
-  TSStrPObjList<CString,TGPCollection*, false> FCollections;
+  TSStrPObjList<olxcstr,TGPCollection*, false> FCollections;
 //  TPtrList<class TGPCollection> FCollections; // a named list of collections (TGPCollection)
 //  TSPtrList<TGlMaterial> FTransluentObjects, FIdentityObjects, FTransluentIdentityObjects;
   TPtrList<TGlMaterial> FTransluentObjects, FIdentityObjects, FTransluentIdentityObjects;

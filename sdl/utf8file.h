@@ -46,8 +46,8 @@ public:
     return (header == TUtf8::FileSignature);
   }
 
-  virtual inline size_t Write(const WString &S)    {  return TEFile::Write( TUtf8::Encode(S) );  }
-  virtual inline size_t Writenl(const WString &S)  {  return TEFile::Writenl( TUtf8::Encode(S) );  }
+  virtual inline size_t Write(const olxwstr &S)    {  return TEFile::Write( TUtf8::Encode(S) );  }
+  virtual inline size_t Writenl(const olxwstr &S)  {  return TEFile::Writenl( TUtf8::Encode(S) );  }
 
   virtual inline size_t Write(const TTIString<wchar_t> &S)    {  return TEFile::Write( TUtf8::Encode(S) );  }
   inline size_t Writenl(const TTIString<wchar_t> &S)  {  return TEFile::Writenl( TUtf8::Encode(S) );  }
@@ -61,7 +61,7 @@ public:
   virtual inline size_t Writenl(const void* bf, size_t size) { return TEFile::Writenl(bf, size);  }
 
   template <class T>
-  static void ReadLines(IInputStream& io, TTStrList<WString,T>& list, bool CheckHeader=true)  {
+  static void ReadLines(IInputStream& io, TTStrList<olxwstr,T>& list, bool CheckHeader=true)  {
     if( io.GetSize() >= 3 )  {
       uint32_t header = 0;
       io.Read(&header, 3);
@@ -83,7 +83,7 @@ public:
         list[i].SetLength( list[i].Length() -1 );
   }
   // returns one long string
-  static WString ReadAsString(IInputStream& io, bool CheckHeader=true)  {
+  static olxwstr ReadAsString(IInputStream& io, bool CheckHeader=true)  {
     if( io.GetSize() >= 3 )  {
       uint32_t header = 0;
       io.Read(&header, 3);
@@ -97,12 +97,12 @@ public:
     int fl = io.GetSize() - io.GetPosition();
     char * bf = new char [fl+1];
     io.Read(bf, fl);
-    WString rv = TUtf8::Decode(bf, fl);
+    olxwstr rv = TUtf8::Decode(bf, fl);
     delete [] bf;
     return rv;
   }
   template <class T>
-  static void ReadLines(const olxstr& fn, TTStrList<WString,T>& list, bool CheckHeader=true)  {
+  static void ReadLines(const olxstr& fn, TTStrList<olxwstr,T>& list, bool CheckHeader=true)  {
     TUtf8File file(fn, "rb", CheckHeader);
     int fl = file.Length() - file.GetPosition();
     char * bf = new char [fl+1];
@@ -115,17 +115,17 @@ public:
         list[i].SetLength( list[i].Length() -1 );
   }
   // returns one long string
-  static WString ReadAsString(const olxstr& fn, bool CheckHeader=true)  {
+  static olxwstr ReadAsString(const olxstr& fn, bool CheckHeader=true)  {
     TUtf8File file(fn, "rb", CheckHeader);
     int fl = file.Length() - file.GetPosition();
     char * bf = new char [fl+1];
     file.Read(bf, fl);
-    WString rv = TUtf8::Decode(bf, fl);
+    olxwstr rv = TUtf8::Decode(bf, fl);
     delete [] bf;
     return rv;
   }
   template <class T>
-  static void WriteLines(const olxstr& fn, const TTStrList<WString,T>& list, bool WriteHeader=true)  {
+  static void WriteLines(const olxstr& fn, const TTStrList<olxwstr,T>& list, bool WriteHeader=true)  {
     TUtf8File file(fn, "wb+");
     if( WriteHeader )
       ((TEFile&)file).Write( &TUtf8::FileSignature, 3);
@@ -134,7 +134,7 @@ public:
       else                      file.Write( list[i] );
   }
   template <class T>
-  static void WriteLines(IDataOutputStream& out, const TTStrList<WString,T>& list, bool WriteHeader=true)  {
+  static void WriteLines(IDataOutputStream& out, const TTStrList<olxwstr,T>& list, bool WriteHeader=true)  {
     if( WriteHeader )
       out.Write( &TUtf8::FileSignature, 3);
     for( int i=0; i < list.Count(); i++ )
@@ -142,7 +142,7 @@ public:
       else                      out.Write( list[i] );
   }
   template <class T>
-  static void WriteLines(IDataOutputStream& out, const TTStrList<CString,T>& list, bool WriteHeader=false)  {
+  static void WriteLines(IDataOutputStream& out, const TTStrList<olxcstr,T>& list, bool WriteHeader=false)  {
     if( WriteHeader )
       out.Write( &TUtf8::FileSignature, 3);
     for( int i=0; i < list.Count(); i++ )
@@ -150,7 +150,7 @@ public:
       else                      out.Write( list[i] );
   }
   template <class T>
-  static void WriteLines(const olxstr& fn, const TTStrList<CString,T>& list, bool WriteHeader=false)  {
+  static void WriteLines(const olxstr& fn, const TTStrList<olxcstr,T>& list, bool WriteHeader=false)  {
     TUtf8File file(fn, "wb+");
     if( WriteHeader )
       ((TEFile&)file).Write( &TUtf8::FileSignature, 3);

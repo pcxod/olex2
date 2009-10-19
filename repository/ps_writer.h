@@ -22,7 +22,7 @@ public:
     out.Writenl( "%%Title: Olex2 2D diagram" );
     out.Writenl( "%%Pages: 1" );
     out.Writenl( "%%Page: 1 1" );
-    out.Writenl( CString( "%%CreationDate: ") << TETime::FormatDateTime(TETime::Now()) );
+    out.Writenl( olxcstr( "%%CreationDate: ") << TETime::FormatDateTime(TETime::Now()) );
     out.Writenl( "%%Orientation: Portrait" );
     out.Writenl( "%%DocumentPaperSizes: A4" );
     out.Writenl( "%%EndComments" );

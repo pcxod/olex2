@@ -128,10 +128,10 @@ public:
     return Py_BuildValue("s#", str.raw_str(), str.Length());
 #endif
   }
-  inline static PyObject* BuildCString(const CString& str)  {
+  inline static PyObject* BuildCString(const olxcstr& str)  {
     return Py_BuildValue("s#", str.raw_str(), str.Length());
   }
-  inline static PyObject* BuildWString(const WString& str) {
+  inline static PyObject* BuildWString(const olxwstr& str) {
     return PyUnicode_FromWideChar(str.raw_str(), str.Length());
   }
 // parsing string 

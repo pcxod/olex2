@@ -42,7 +42,7 @@ void TAutoDBFolder::LoadFromStream( IDataInputStream& input )  {
   int32_t fc;
   input >> fc;
   Files.SetCapacity( fc);
-  CString tmp;
+  olxcstr tmp;
   for( long i=0; i < fc; i++ )  {
     input >> tmp;
     Files.Add( TUtf8::Decode(tmp), new TAutoDBIdObject());
@@ -789,7 +789,7 @@ void TAutoDB::LoadFromStream( IDataInputStream& input )  {
   // read file flags
   input >> fileVersion;
   // end of the file validation
-  CString tmp;
+  olxcstr tmp;
   int32_t ind;
   int32_t fileCount = 0, nodeCount = 0;
   input >> ind;

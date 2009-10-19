@@ -3996,9 +3996,9 @@ void TGXApp::SaveModel(const olxstr& fileName) const {
   TEStrBuffer bf(1024*32);
   df.Root().SaveToStrBuffer(bf);
 #ifdef _UNICODE
-  CString model( TUtf8::Encode(bf.ToString()) );
+  olxcstr model( TUtf8::Encode(bf.ToString()) );
 #else
-  CString model( bf.ToString() );
+  olxcstr model( bf.ToString() );
 #endif
   zos.Write(model.raw_str(), model.RawLen());
   zos.CloseEntry();

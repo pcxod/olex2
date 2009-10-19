@@ -181,12 +181,17 @@ if sys.platform[:3] == 'win':
     env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswu', pyFolder+'include'])
     #env.Append(LINKFLAGS=['/LTCG'])
   else:
-    env.Append(CCFLAGS = ['/EHsc', '/RTC1', '/ZI', '-D_DUBUG', '/Od', '/MDd', 
-                          '/bigobj', '/fp:fast']) 
+    cc_flags = ['/EHsc', '/RTC1', '-D_DUBUG', '/Od', '/MDd', '/bigobj', '/fp:fast']
+    if architecture == '64bit':
+      cc_flags.append('/Zi')
+    else:
+      cc_flags.append('/ZI')
+      
+    env.Append(CCFLAGS = cc_flags) 
     env.Append(LIBS = Split("""wxbase28ud         wxbase28ud_net  wxmsw28ud_gl   
                                wxmsw28ud_richtext wxmsw28ud_html wxmsw28ud_core 
                                wxmsw28ud_adv wxregexud"""))
-    env.Append(LINKFLAGS=['/DEBUG', '/ASSEMBLYDEBUG'])
+    env.Append(LINKFLAGS=['/DEBUG', '/ASSEMBLYDEBUG', '/NODEFAULTLIB:msvcrt'])
     env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswud', pyFolder+'include'])
   if architecture == '64bit':
     env.Append(LINKFLAGS=['/MACHINE:X64'])

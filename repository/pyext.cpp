@@ -326,8 +326,8 @@ PyMethodDef Methods[] = {
   {NULL, NULL, 0, NULL}
 };
 //..............................................................................
-CString PyFuncBody(const CString& olexName, const CString& pyName, char sep)  {
-  CString res("def ");
+olxcstr PyFuncBody(const olxcstr& olexName, const olxcstr& pyName, char sep)  {
+  olxcstr res("def ");
   res << pyName << "(*args):\n  ";
   res << "ss=\'" << olexName;
 
@@ -445,8 +445,8 @@ int PythonExt::RunPython( const olxstr& script, bool inThread )  {
 }
 //..............................................................................
 //..............................................................................
-void ExportLib(const CString& fullName, TEFile& file, const TLibrary& Lib)  {
-  CString olxName, pyName;
+void ExportLib(const olxcstr& fullName, TEFile& file, const TLibrary& Lib)  {
+  olxcstr olxName, pyName;
   for( int i=0; i < Lib.FunctionCount(); i++ )  {
     ABasicFunction* fun = Lib.GetFunctionByIndex(i);
     olxName = fun->GetQualifiedName();

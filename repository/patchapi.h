@@ -72,7 +72,7 @@ public:
     TEFile::RemoveTrailingBackslashI(new_shared_dir) << "data/";
 #endif
     return TEFile::AddTrailingBackslashI( 
-      new_shared_dir << MD5::Digest(CString( 
+      new_shared_dir << MD5::Digest(esdl::olxcstr( 
         TEFile::AddTrailingBackslash((base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir)) + ReadRepositoryTag())) );
   }
   static void SaveLocationInfo(const olxstr& shared_dir, const olxstr& base_dir=EmptyString)  {

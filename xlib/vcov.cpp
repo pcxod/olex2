@@ -10,7 +10,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       TBasicApp::GetLog() << "The mat file is possibly out of date\n";
   }
   TCStrList sl, toks;
-  const CString sof("sof");
+  const olxcstr sof("sof");
   sl.LoadFromFile(fileName);
   if( sl.Count() < 10 )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid file content");

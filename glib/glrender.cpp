@@ -86,7 +86,7 @@ void TGlRenderer::Initialise()  {
     Primitives.GetObject(i).Compile();
   FBackground->Create();
   FCeiling->Create();
-  CString vendor( (const char*)glGetString(GL_VENDOR) );
+  olxcstr vendor( (const char*)glGetString(GL_VENDOR) );
   ATI = vendor.StartsFrom("ATI");
 }
 //..............................................................................

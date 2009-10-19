@@ -47,8 +47,8 @@ BeginEsdlNamespace()
 #ifndef __BORLANDC__
 template <class,typename> class TTSString;
 
-typedef TTSString<TCString, char> CString;
-typedef TTSString<TWString, wchar_t> WString;
+typedef TTSString<TCString, char> olxcstr;
+typedef TTSString<TWString, wchar_t> olxwstr;
 
 #ifdef _UNICODE
   typedef TTSString<TWString, wchar_t> olxstr;
@@ -61,15 +61,15 @@ extern const olxstr &FalseString;
 extern const olxstr &TrueString;
 extern const olxstr &NullString;
 
-extern const CString &CEmptyString;
-extern const CString &CFalseString;
-extern const CString &CTrueString;
-extern const CString &CNullString;
+extern const olxcstr &CEmptyString;
+extern const olxcstr &CFalseString;
+extern const olxcstr &CTrueString;
+extern const olxcstr &CNullString;
 
-extern const WString &WEmptyString;
-extern const WString &WFalseString;
-extern const WString &WTrueString;
-extern const WString &WNullString;
+extern const olxwstr &WEmptyString;
+extern const olxwstr &WFalseString;
+extern const olxwstr &WTrueString;
+extern const olxwstr &WNullString;
 #endif
 
 template <class T, typename TC> class TTSString : public T  {
@@ -1379,18 +1379,18 @@ public:
   }
   //............................................................................
 #ifdef __BORLANDC__
-  typedef TTSString<TCString, char> CString;
-  typedef TTSString<TWString, wchar_t> WString;
+  typedef TTSString<TCString, char> olxcstr;
+  typedef TTSString<TWString, wchar_t> olxwstr;
 #endif
   //............................................................................
 
   bool NeedsConverting() const {  return o_needs_converting(T::Data(), T::_Length);  }
   // converts a wide char string into multibyte string properly (using curent locale)
-  static CString WStr2CStr(const wchar_t* wstr, size_t len=~0);
-  static CString WStr2CStr(const WString& str);
+  static olxcstr WStr2CStr(const wchar_t* wstr, size_t len=~0);
+  static olxcstr WStr2CStr(const olxwstr& str);
   // converts a multibyte string into wide char string properly
-  static WString CStr2WStr(const char* mbs, size_t len=~0);
-  static WString CStr2WStr(const CString& str);
+  static olxwstr CStr2WStr(const char* mbs, size_t len=~0);
+  static olxwstr CStr2WStr(const olxcstr& str);
   //............................................................................
   virtual IEObject* Replicate() const {  return new TTSString<T,TC>(*this);  }
   //............................................................................
