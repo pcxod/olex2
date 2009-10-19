@@ -28,6 +28,7 @@
 #include "wxzipfs.h"
 #include "shellutil.h"
 #include "patchapi.h"
+#include "olxth.h"
 
 #include "efile.h"
 #ifndef __WIN32__
@@ -110,7 +111,43 @@ public:
     return false;
   }
 };
+class SplashDlg : public wxDialog  {
+  wxBitmap *bmp;
+public:
+  SplashDlg(wxWindow *parent) :
+      wxDialog(parent, -1, wxT("Initialising"), wxDefaultPosition, wxSize(100, 100), 0) 
+  {
+    bmp = NULL;
+    olxstr splash_img = TBasicApp::GetBaseDir() + "splash.jpg";
+    if( TEFile::Exists(splash_img) )  {
+      wxImage img;
+      img.LoadFile(splash_img.u_str());
+      bmp = new wxBitmap(img);
+      SetSize(img.GetWidth(), img.GetHeight());
+    }
+  }
+  ~SplashDlg()  {
+    if( bmp != NULL )
+      delete bmp;
+  }
+  void DoPaint()  {
+    wxWindowDC dc(this);
+    dc.DrawBitmap(*bmp, 0, 0);
+  }
+  void OnPaint(wxPaintEvent &event)  {
+    wxPaintDC dc(this);
+    dc.DrawBitmap(*bmp, 0, 0);
+  }
+  void OnSize(wxSizeEvent &event)  {
+    Update();
+  }
+  DECLARE_EVENT_TABLE()
+};
 
+BEGIN_EVENT_TABLE(SplashDlg, wxDialog)
+  EVT_PAINT(SplashDlg::OnPaint)
+  EVT_SIZE(SplashDlg::OnSize)
+END_EVENT_TABLE()
 //----------------------------------------------------------------------------//
 // TGlApp function bodies
 //----------------------------------------------------------------------------//
@@ -216,6 +253,9 @@ bool TGlXApp::OnInit()  {
   MainForm->SetToolTip(wxT("\n")); // force multiline ttoltips with (&#10;)
 #endif
   try  {
+    //SplashDlg splash_dlg(MainForm);
+    //splash_dlg.Show();
+    //splash_dlg.DoPaint();
     MainForm->XApp(XApp);  // his sets XApp for the canvas as well
   }
   catch( TExceptionBase& exc )  {
