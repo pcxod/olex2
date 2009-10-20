@@ -156,7 +156,8 @@ no Olex2 folders are opened in browsers";
   dlgSplash->SetOverallProgress(-1);
   Launch();
   dlgSplash->SetFileName("Done. Launching Olex2");
-  HWND olx2_wnd = FindWindow(NULL, _T("Olex2"));
+  const olxch win_name[] = olx_T("Olex2 splash screen");
+  HWND olx2_wnd = FindWindow(NULL, win_name);
   if( olx2_wnd != NULL )  {  // cannot do much here...
     int step = 0;
     while( ++step <= 100 )  {
@@ -170,16 +171,18 @@ no Olex2 folders are opened in browsers";
     }
   }
   else  {
+    int cnt = 0;
     while( olx2_wnd == NULL || !IsWindowVisible(olx2_wnd) )  {
       if( olx2_wnd == NULL )
-        olx2_wnd = FindWindow(NULL, _T("Olex2"));
+        olx2_wnd = FindWindow(NULL, win_name);
       MSG msg;
       if( PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) )  {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
       }
-      SleepEx(40, TRUE);
+      SleepEx(100, TRUE);
       if( !launch_successful )  break;
+	  if( ++cnt > 50 )  break;
     }
   }
   dlg.ShowWindow(SW_HIDE);

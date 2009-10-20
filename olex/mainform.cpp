@@ -27,6 +27,7 @@
 #include "wx/panel.h"
 #include "wx/fontdlg.h"
 #include "wx/tooltip.h"
+#include "wx/splash.h"
 //#include "wx/msw/regconf.h"
 #include "mainform.h"
 #include "xglcanv.h"
@@ -231,29 +232,50 @@ public:
     return true;
   }
 };
+#ifdef __WIN32__
 class SplashDlg : public wxDialog  {
   wxBitmap *bmp;
+  int imgHeight, imgWidth, txtHeight;
 public:
   SplashDlg(wxWindow *parent) :
       wxDialog(parent, -1, wxT("Initialising"), wxDefaultPosition, wxSize(100, 100), wxNO_BORDER) 
   {
+    wxDialog::SetTitle(wxT("Olex2 splash screen"));
+    bmp = NULL;
+    imgHeight = 0;
+    imgWidth = 200;
     olxstr splash_img = TBasicApp::GetBaseDir() + "splash.jpg";
     if( TEFile::Exists(splash_img) )  {
       wxImage img;
       img.LoadFile(splash_img.u_str());
-      wxStaticText *st = new wxStaticText(this, -1, wxT("Initialising"), wxPoint(0, img.GetHeight()), wxSize(img.GetWidth(), 14));
-      SetSize(img.GetWidth(), img.GetHeight() + st->GetSize().y);
       bmp = new wxBitmap(img);
+      imgWidth = img.GetWidth();
+      imgHeight = img.GetHeight();
     }
+    wxWindowDC dc(this);
+    wxSize sz = dc.GetTextExtent(wxT("I"));
+    SetSize(imgWidth, imgHeight + sz.y);
+    txtHeight = sz.y;
   }
   ~SplashDlg()  {
     if( bmp != NULL )
       delete bmp;
   }
   void DoPaint()  {
+    static int generation = 0;
     wxWindowDC dc(this);
     if( bmp != NULL )
       dc.DrawBitmap(*bmp, 0, 0);
+    wxString str(wxT("Olex2 is initialising"));
+    for( int i=0; i < generation; i++ )
+      str += '.';
+    dc.SetBrush(*wxWHITE_BRUSH);
+    dc.SetPen(*wxWHITE_PEN);
+    dc.DrawRectangle(0, imgHeight, imgWidth, txtHeight);
+    dc.DrawText(str, 0, imgHeight);
+    if( ++generation > 20 )
+      generation = 0;
+    //dc.DrawRectangle(x, y, txtHeight, txtHeight);
   }
   void on_paint(wxPaintEvent &event)  {
     if( bmp != NULL )  {
@@ -277,10 +299,11 @@ public:
       if( Terminate )  return 1;
       dlg.DoPaint();
       wxApp::GetInstance()->ProcessPendingEvents();
-      olx_sleep(100);
+      olx_sleep(200);
     }
   }
 };
+#endif // __WIN32__ for splash...
 /******************************************************************************/
 //----------------------------------------------------------------------------//
 // TMainForm function bodies
@@ -1343,11 +1366,24 @@ separated values of Atom Type and radius, an entry a line" );
 //..............................................................................
 void TMainForm::StartupInit()  {
   if( StartupInitialised )  return;
-
+#ifdef __WIN32__
   SplashDlg splash_dlg(this);
   RefreshTh rth(splash_dlg);
   splash_dlg.Show();
   rth.Start();
+#else
+  olxstr splash_fn = TBasicApp::GetBaseDir() + "splash.jpg";
+  wxSplashScreen *spc = NULL;
+  if( TEFile::Exists(splash_fn) )  {
+    wxImage img;
+    if( img.LoadFile(splash_fn.u_str()) )  {
+      spc = new wxSplashScreen(
+        wxBitmap(img), 
+        wxSPLASH_CENTRE_ON_SCREEN|wxSPLASH_NO_TIMEOUT,
+        0, this, -1);
+    }
+  }
+#endif
 
   StartupInitialised = true;
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
@@ -1509,8 +1545,13 @@ void TMainForm::StartupInit()  {
   if( FXApp->Arguments.Count() == 1 )
     ProcessMacro(olxstr("reap \'") << FXApp->Arguments[0] << '\'', __OlxSrcInfo);
 
+#ifdef __WIN32__
   rth.SendTerminate();
   rth.Join();
+#else
+  if( spc != NULL )
+    spc->Destroy();
+#endif
 }
 //..............................................................................
 void TMainForm::SetProcess( AProcess *Process )  {
