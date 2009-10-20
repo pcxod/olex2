@@ -33,12 +33,11 @@ public:
   // copies the content of S to the net
   void Assign(TNetwork& S);
 
-  /* disassembles the list of Atoms into the fragments; does not affect current net
-   
-  */
-  void Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* InterBonds);
-  /* creates bonds and fragments for atoms initialised by Disassemble */
-  void CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags);
+  /* disassembles the list of Atoms into the fragments; does not affect current net */
+  void Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& InterBonds);
+  /* creates bonds and fragments for atoms initialised by Disassemble, all Q-bonds end up 
+  in the bond_sink*/
+  void CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& bond_sink);
   // returns true if the two atoms share a matrix
   static bool HaveSharedMatrix(const TSAtom& sa, const TSAtom& sb)  {
     for( int i=0; i < sa.MatrixCount(); i++ )  {

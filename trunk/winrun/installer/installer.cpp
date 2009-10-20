@@ -34,8 +34,7 @@ BOOL CInstallerApp::InitInstance()  {
 	InitCommonControlsEx(&InitCtrls);
   AfxInitRichEdit();
 	CWinApp::InitInstance();
-
-	CInstallerDlg dlg;
+  CInstallerDlg dlg;
 	m_pMainWnd = &dlg;
   main_dlg = &dlg;
 	INT_PTR nResponse = dlg.DoModal();

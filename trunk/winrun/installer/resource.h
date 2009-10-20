@@ -9,6 +9,7 @@
 #define IDB_UPDATE                      136
 #define IDD_REINSTALL                   137
 #define IDD_LICENCE                     138
+#define IDD_REPOSITORIES                141
 #define IDC_PB_PROGRESS                 1000
 #define IDC_ST_PROGRESS                 1001
 #define IDC_TE_INSTALL_PATH             1002
@@ -37,14 +38,15 @@
 #define IDC_TE_RENAME                   1017
 #define IDC_BTN_CLOSE                   1018
 #define IDC_RE_LICENCE                  1019
+#define IDC_PG_REPOSTORIES              1022
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        141
+#define _APS_NEXT_RESOURCE_VALUE        142
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1021
+#define _APS_NEXT_CONTROL_VALUE         1023
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

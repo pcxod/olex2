@@ -254,7 +254,10 @@ public:
     }
     wxWindowDC dc(this);
     wxSize sz = dc.GetTextExtent(wxT("I"));
-    SetSize(imgWidth, imgHeight + sz.y);
+    int ScreenW = wxSystemSettings::GetMetric(wxSYS_SCREEN_X),
+        ScreenH = wxSystemSettings::GetMetric(wxSYS_SCREEN_Y);
+    const int ch = imgHeight + sz.y; // combined height
+    SetSize((ScreenW-imgWidth)/2, (ScreenH-ch)/2, imgWidth, ch);
     txtHeight = sz.y;
   }
   ~SplashDlg()  {
@@ -1546,8 +1549,7 @@ void TMainForm::StartupInit()  {
     ProcessMacro(olxstr("reap \'") << FXApp->Arguments[0] << '\'', __OlxSrcInfo);
 
 #ifdef __WIN32__
-  rth.SendTerminate();
-  rth.Join();
+  rth.Join(true);
 #else
   if( spc != NULL )
     spc->Destroy();

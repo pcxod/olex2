@@ -1919,9 +1919,10 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
     TDataFile F;
     F.LoadFromXLFile(FN, NULL);
-
+    FXApp->GetRender().ClearSelection();
     FXApp->GetRender().GetStyles().FromDataItem(*F.Root().FindItem("style"));
-    FXApp->CreateObjects( true );
+    FXApp->CreateObjects(true, false);
+    FXApp->CenterView(true);
     FN = FXApp->GetRender().GetStyles().GetLinkFile();
     if( !FN.IsEmpty() )  {
       if( TEFile::Exists(FN) )  {
@@ -5676,8 +5677,6 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     FXApp->CenterView();
     return;
   }
-  // no comments...
-  Macros.ProcessMacro("kill $q", E);
   CallbackFunc(StartMatchCBName, EmptyString);
   // ivertion test
   bool TryInvert = Options.Contains("i");

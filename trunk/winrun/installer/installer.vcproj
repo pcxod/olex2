@@ -395,6 +395,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\RepositoriesDlg.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\repository\shellutil.cpp"
 				>
 			</File>
@@ -470,6 +474,10 @@
 			</File>
 			<File
 				RelativePath=".\reinstallDlg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RepositoriesDlg.h"
 				>
 			</File>
 			<File

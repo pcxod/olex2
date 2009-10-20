@@ -354,10 +354,9 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   TStopWatch sw(__FUNC__);
   sw.start("Initialising");
 
-  vec3d glMax, glMin, glCenter;
-  glMax = FGlRender->MaxDim();
-  glMin = FGlRender->MinDim();
-  glCenter = FGlRender->GetBasis().GetCenter();
+  vec3d glMax = FGlRender->MaxDim();
+  vec3d glMin = FGlRender->MinDim();
+  vec3d glCenter = FGlRender->GetBasis().GetCenter();
   TXAtom::FStaticObjects.Clear();
   TXBond::FStaticObjects.Clear();
   FGlRender->ClearGroups();
@@ -534,11 +533,9 @@ void TGXApp::CenterModel()  {
   Center /= aan;
 
   Center *= -1;
-  FGlRender->GetBasis().SetCenter( Center );
-  vec3d max = FGlRender->MaxDim();
-  vec3d min = FGlRender->MinDim();
-  max -= Center;
-  min -= Center;
+  FGlRender->GetBasis().SetCenter(Center);
+  vec3d max = FGlRender->MaxDim() + Center;
+  vec3d min = FGlRender->MinDim() + Center;
   FGlRender->ClearMinMax();
   FGlRender->UpdateMaxMin(max, min);
 }
@@ -571,8 +568,8 @@ void TGXApp::CenterView(bool calcZoom)  {
   FGlRender->ClearMinMax();
   FGlRender->UpdateMaxMin(maX, miN);
   if( calcZoom )
-    FGlRender->GetBasis().SetZoom( FGlRender->CalcZoom() );
-  FGlRender->GetBasis().SetCenter( Center );
+    FGlRender->GetBasis().SetZoom( FGlRender->CalcZoom()*ExtraZoom );
+  FGlRender->GetBasis().SetCenter(Center);
 }
 //..............................................................................
 void TGXApp::CalcProbFactor(float Prob)  {
@@ -1172,21 +1169,25 @@ void TGXApp::SyncAtomAndBondVisiblity(int atom_type, bool show_a, bool show_b)  
     TXAtom& a = XAtoms[i];
     if( a.Atom().GetAtomInfo() != atom_type )
       continue;
-    bool vis = false;
-    int nc = 0;
-    for( int j=0; j < a.Atom().NodeCount(); j++ )  {
-      if( a.Atom().Node(j).IsDeleted() )
-        continue;
-      nc++;
-      if( XAtoms[a.Atom().Node(j).GetTag()].IsVisible() )  {
-        vis = true;
-        break;
+    if( atom_type == iHydrogenIndex)  {
+      bool vis = false;
+      int nc = 0;
+      for( int j=0; j < a.Atom().NodeCount(); j++ )  {
+        if( a.Atom().Node(j).IsDeleted() )
+          continue;
+        nc++;
+        if( XAtoms[a.Atom().Node(j).GetTag()].IsVisible() )  {
+          vis = true;
+          break;
+        }
       }
+      if( nc > 0 )
+        a.SetVisible(vis ? show_a : false);
+      else
+        a.SetVisible(show_a);
     }
-    if( nc > 0 )
-      a.SetVisible( vis ? show_a : false );
     else
-      a.SetVisible( show_a );
+      a.SetVisible(show_a);
   }
   for( int i=0; i < XBonds.Count(); i++ )  {
     TXBond& b = XBonds[i];
