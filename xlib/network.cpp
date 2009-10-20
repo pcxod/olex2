@@ -110,7 +110,7 @@ void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
   }
 }
 //..............................................................................
-void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* InterBonds)  {
+void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& InterBonds)  {
   if( Atoms.Count() < 2 )  return;
   TStopWatch sw(__FUNC__);
   sw.start("Initialising");
@@ -161,15 +161,14 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
   }
   // get extrac connectivity information
   sw.start("Connectivity analysis");
-  TDisassembleTaskCheckConnectivity searchConTask( Atoms, Distances, Delta);
+  TDisassembleTaskCheckConnectivity searchConTask(Atoms, Distances, Delta);
   TListIteratorManager<TDisassembleTaskCheckConnectivity> searchCon(searchConTask, Atoms.Count(), tQuadraticTask, 100);
   sw.start("Creating bonds");
-  CreateBondsAndFragments(Atoms, Frags);
+  CreateBondsAndFragments(Atoms, Frags, InterBonds);
   sw.start("Searching H-bonds");
   // preallocate 50 Hbonds per fragment
-  if( InterBonds != NULL )  
-    InterBonds->SetCapacity( InterBonds->Count() + Frags.Count()*50); 
-  THBondSearchTask searchHBTask( Atoms, InterBonds, Distances, GetLattice().GetDeltaI());
+  InterBonds.SetCapacity(InterBonds.Count() + Frags.Count()*50); 
+  THBondSearchTask searchHBTask(Atoms, &InterBonds, Distances, GetLattice().GetDeltaI());
   TListIteratorManager<THBondSearchTask> searchHB(searchHBTask, Atoms.Count(), tQuadraticTask, 100);
   sw.start("Finalising");
   delete [] Distances[0];
@@ -182,7 +181,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
     sw.print( TBasicApp::GetLog(), &TLog::Info );
 }
 //..............................................................................
-void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
+void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& bond_sink)  {
   // creating bonds
   const int ac = Atoms.Count();
   // analyse extra connectivity information
@@ -272,9 +271,8 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
   for( int i=0; i < ac; i++ )  {
     TSAtom* A1 = Atoms[i];
     if( A1->GetTag() != 0 )  {
-      TNetwork* Net = new TNetwork(&GetLattice(), this);
+      TNetwork* Net = Frags.Add(new TNetwork(&GetLattice(), this));
       Net->AddNode(*A1);
-      Frags.Add( Net );
       A1->SetNetwork(*Net);
       A1->SetTag(0);
       for( int j=0; j < Net->NodeCount(); j++ )  {
@@ -297,7 +295,7 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
           else if( A3.GetNetId() > j )  {  // the atom is in the list, but has not been processes
             TSBond* B = new TSBond(Net);                  // in this case we need to create a bond
             B->SetType(sotBond);
-            B->SetA(A2); B->SetB(A3);
+            B->SetA(A2);  B->SetB(A3);
             A2.AddBond(*B);  A3.AddBond(*B);
             Net->AddBond(*B);
           }
@@ -332,7 +330,7 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
     if( (Distances[3][ind] - Distances[3][i]) > dcMaxCBLength ||
         (Distances[3][ind] - Distances[3][i]) < -dcMaxCBLength )  continue;
 
-    int aiIndex1 = Atoms[i]->GetAtomInfo().GetIndex();
+    const int aiIndex1 = Atoms[i]->GetAtomInfo().GetIndex();
     if( !((AA != NULL && (aiIndex1 == iNitrogenIndex || aiIndex1 == iOxygenIndex||
                         aiIndex1 == iFluorineIndex || aiIndex1 == iChlorineIndex ||
                         aiIndex1 == iSulphurIndex))  ||

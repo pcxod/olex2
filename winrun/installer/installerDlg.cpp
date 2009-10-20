@@ -12,7 +12,9 @@
 #include "installerDlg.h"
 #include "reinstallDlg.h"
 #include "licenceDlg.h"
+#include "repositoriesDlg.h"
 #include "mfc_ext.h"
+#include "olxth.h"
 
 using namespace updater;
 using namespace patcher;
@@ -53,6 +55,27 @@ public:
   }
 };
 
+class UpdaterTh : public AOlxThread {
+public:
+  UpdaterTh() {  Detached = false;  }
+  int Run()  {
+    CRepositoriesDlg dlg;
+    dlg.Create(IDD_REPOSITORIES);
+    dlg.ShowWindow(SW_SHOW);
+    while( true )  {
+      MSG msg;
+      if( PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) )  {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+      }
+      else  {
+        olx_sleep(50);
+        dlg.GetDlgItem(IDC_PG_REPOSTORIES)->SendMessage(PBM_STEPIT);
+      }
+      if( Terminate )  return 1;
+    }
+  }
+};
 
 CInstallerDlg::CInstallerDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CInstallerDlg::IDD, pParent), bapp(LocateBaseDir())
@@ -85,6 +108,8 @@ BEGIN_MESSAGE_MAP(CInstallerDlg, CDialog)
   ON_BN_CLICKED(IDC_BTN_CLOSE, &CInstallerDlg::OnBnClickedBtnClose)
   ON_BN_CLICKED(IDC_CB_PROXY, &CInstallerDlg::OnBnClickedCbProxy)
   ON_WM_SHOWWINDOW()
+  ON_WM_TIMER()
+  ON_BN_CLICKED(IDC_BTN_PROXY, &CInstallerDlg::OnBnClickedBtnProxy)
 END_MESSAGE_MAP()
 
 
@@ -92,6 +117,7 @@ END_MESSAGE_MAP()
 
 BOOL CInstallerDlg::OnInitDialog()  {
 	CDialog::OnInitDialog();
+  this->SendMessage(WM_SETTEXT, 0, (LPARAM)_T("Olex2 installer"));
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
@@ -112,8 +138,8 @@ BOOL CInstallerDlg::OnInitDialog()  {
     sfile << UpdateAPI::GetSettingsFileName();
     if( TEFile::Exists(sfile) )  {
       const TSettingsFile Settings(sfile);
-      GetDlgItem(IDC_CB_REPOSITORY)->SendMessage(WM_SETTEXT, 0, (LPARAM)Settings["repository"].u_str());
-      GetDlgItem(IDC_TE_PROXY)->SendMessage(WM_SETTEXT, 0, (LPARAM)Settings["proxy"].u_str());
+      wnd::set_text(this, IDC_CB_REPOSITORY, Settings["repository"]);
+      wnd::set_text(this, IDC_TE_PROXY, Settings["proxy"]);
       olxstr update_i = Settings["update"];
       int update_c = -1;
       if( update_i.Equalsi("Always") )  update_c = IDC_R_ALWAYS;
@@ -205,10 +231,17 @@ void CInstallerDlg::OnShowWindow(BOOL bShow, UINT nStatus)  {
   InitRepositories();
 }
 
+void CInstallerDlg::OnTimer(UINT_PTR nIDEvent)  {
+  CDialog::OnTimer(nIDEvent);
+}
+
+void CInstallerDlg::OnBnClickedBtnProxy()  {
+  InitRepositories();
+}
+
+
 
 void CInstallerDlg::OnBnClickedInstall()  {
-//  CReinstallDlg dlg;
-//  dlg.DoModal();
   if( action == actionInstall )  {
     if( DoInstall() )
       SetAction(actionRun);
@@ -669,21 +702,27 @@ Please run currently installed Olex2 to apply the updates and then exit Olex2 an
 }
 
 void CInstallerDlg::InitRepositories()  {
+  UpdaterTh uth;
+  uth.Start();
   try  {
     combo_box::clear_items(this, IDC_CB_REPOSITORY);
     combo_box::set_text(this, IDC_CB_REPOSITORY, EmptyString);
     updater::UpdateAPI api;
+    if( check_box::is_checked(this, IDC_CB_PROXY) )
+      api.GetSettings().proxy = check_box::get_text(this, IDC_TE_PROXY);
     TStrList repos;
     api.GetAvailableRepositories(repos);
-    if( repos.IsEmpty() )  return;
+    if( repos.IsEmpty() )  
+      throw 1; // ust get to the catch...
     combo_box::add_items(this, IDC_CB_REPOSITORY, repos);
     combo_box::set_text(this, IDC_CB_REPOSITORY, repos[0].u_str());
   }
   catch(...)  {
-    //Application->MessageBox( "Could not discover any Olex2 repositories, only offline installation will be available",
-    //  "Error",
-    //  MB_OK|MB_ICONERROR);
+    MessageBox(_T("Could not discover any Olex2 repositories, only offline installation will be available"),
+      _T("Error"),
+      MB_OK|MB_ICONERROR);
   }
+  uth.Join(true);
   olxstr bd(GetCommandLine());
   olxstr zipfn( TEFile::ExtractFilePath(bd) + updater::UpdateAPI::GetInstallationFileName() );
   if( TEFile::Exists(zipfn) )  {
@@ -695,3 +734,4 @@ void CInstallerDlg::InitRepositories()  {
     combo_box::set_text(this, IDC_CB_REPOSITORY, zipfn);
   }
 }
+

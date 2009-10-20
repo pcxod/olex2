@@ -34,6 +34,7 @@ private:
   TSBondPList  Bonds;      // list of all nework nodes; some of them are equal to Atoms
   TNetPList    Fragments;
   TSPlanePList Planes;
+  bool QPeaksSeparate;
 protected:
   TActionQList Actions;
   bool Generated;
@@ -187,12 +188,14 @@ public:
 
   DefPropP(double, Delta)
   DefPropP(double, DeltaI)
+  DefPropBIsSet(QPeaksSeparate)
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);
 
   void LibGetFragmentCount(const TStrObjList& Params, TMacroError& E);
   void LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E);
+  void LibQPeaksSeparate(const TStrObjList& Params, TMacroError& E);
   TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 };
 

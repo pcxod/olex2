@@ -62,4 +62,6 @@ public:
   afx_msg void OnBnClickedBtnClose();
   afx_msg void OnBnClickedCbProxy();
   afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
+  afx_msg void OnTimer(UINT_PTR nIDEvent);
+  afx_msg void OnBnClickedBtnProxy();
 };
