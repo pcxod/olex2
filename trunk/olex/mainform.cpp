@@ -27,8 +27,6 @@
 #include "wx/panel.h"
 #include "wx/fontdlg.h"
 #include "wx/tooltip.h"
-#include "wx/splash.h"
-//#include "wx/msw/regconf.h"
 #include "mainform.h"
 #include "xglcanv.h"
 #include "xglapp.h"
@@ -232,7 +230,6 @@ public:
     return true;
   }
 };
-#ifdef __WIN32__
 class SplashDlg : public wxDialog  {
   wxBitmap *bmp;
   int imgHeight, imgWidth, txtHeight;
@@ -306,7 +303,6 @@ public:
     }
   }
 };
-#endif // __WIN32__ for splash...
 /******************************************************************************/
 //----------------------------------------------------------------------------//
 // TMainForm function bodies
@@ -1369,24 +1365,10 @@ separated values of Atom Type and radius, an entry a line" );
 //..............................................................................
 void TMainForm::StartupInit()  {
   if( StartupInitialised )  return;
-#ifdef __WIN32__
   SplashDlg splash_dlg(this);
   RefreshTh rth(splash_dlg);
   splash_dlg.Show();
   rth.Start();
-#else
-  olxstr splash_fn = TBasicApp::GetBaseDir() + "splash.jpg";
-  wxSplashScreen *spc = NULL;
-  if( TEFile::Exists(splash_fn) )  {
-    wxImage img;
-    if( img.LoadFile(splash_fn.u_str()) )  {
-      spc = new wxSplashScreen(
-        wxBitmap(img), 
-        wxSPLASH_CENTRE_ON_SCREEN|wxSPLASH_NO_TIMEOUT,
-        0, this, -1);
-    }
-  }
-#endif
 
   StartupInitialised = true;
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
@@ -1548,12 +1530,7 @@ void TMainForm::StartupInit()  {
   if( FXApp->Arguments.Count() == 1 )
     ProcessMacro(olxstr("reap \'") << FXApp->Arguments[0] << '\'', __OlxSrcInfo);
 
-#ifdef __WIN32__
   rth.Join(true);
-#else
-  if( spc != NULL )
-    spc->Destroy();
-#endif
 }
 //..............................................................................
 void TMainForm::SetProcess( AProcess *Process )  {
