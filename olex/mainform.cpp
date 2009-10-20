@@ -230,6 +230,7 @@ public:
     return true;
   }
 };
+#ifdef __WIN32__
 class SplashDlg : public wxDialog  {
   wxBitmap *bmp;
   int imgHeight, imgWidth, txtHeight;
@@ -277,19 +278,7 @@ public:
       generation = 0;
     //dc.DrawRectangle(x, y, txtHeight, txtHeight);
   }
-  void on_paint(wxPaintEvent &event)  {
-    if( bmp != NULL )  {
-      wxPaintDC dc(this);
-      dc.DrawBitmap(*bmp, 0, 0);
-    }
-  }
-  DECLARE_EVENT_TABLE()
 };
-
-BEGIN_EVENT_TABLE(SplashDlg, wxDialog)
-  EVT_PAINT(SplashDlg::on_paint)
-END_EVENT_TABLE()
-
 class RefreshTh : public AOlxThread  {
   SplashDlg& dlg;
 public:
@@ -303,6 +292,7 @@ public:
     }
   }
 };
+#endif
 /******************************************************************************/
 //----------------------------------------------------------------------------//
 // TMainForm function bodies
@@ -1365,11 +1355,12 @@ separated values of Atom Type and radius, an entry a line" );
 //..............................................................................
 void TMainForm::StartupInit()  {
   if( StartupInitialised )  return;
+#ifdef __WIN32__  
   SplashDlg splash_dlg(this);
   RefreshTh rth(splash_dlg);
   splash_dlg.Show();
   rth.Start();
-
+#endif
   StartupInitialised = true;
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   // create 4 fonts
@@ -1529,8 +1520,9 @@ void TMainForm::StartupInit()  {
 
   if( FXApp->Arguments.Count() == 1 )
     ProcessMacro(olxstr("reap \'") << FXApp->Arguments[0] << '\'', __OlxSrcInfo);
-
+#ifdef __WIN32__
   rth.Join(true);
+#endif
 }
 //..............................................................................
 void TMainForm::SetProcess( AProcess *Process )  {
