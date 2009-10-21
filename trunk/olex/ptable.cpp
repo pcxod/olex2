@@ -2,16 +2,12 @@
 // DlgGenerate implementation
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
 #include "ptable.h"
 //..............................................................................
-TPTableDlg::TPTableDlg(TMainFrame *Parent, TAtomsInfo *AI)
-:TDialog(Parent, wxT("Periodic table"), uiStrT(EsdlClassNameT(TPTableDlg)) )  {
+TPTableDlg::TPTableDlg(TMainFrame *Parent) :
+  TDialog(Parent, wxT("Periodic table"), EsdlClassName(TPTableDlg).u_str() )  
+{
   AActionHandler::SetToDelete(false);
-  FAI = AI;
   for( int i=0; i < 9; i++ )  {
     for( int j=0; j < 18; j++ )  {
       if( i == 0 )  {
@@ -39,7 +35,7 @@ TPTableDlg::TPTableDlg(TMainFrame *Parent, TAtomsInfo *AI)
   }
   CreateButton(8, 17, 5 );  // q peak
 
-  for( int i=iQPeakIndex+1; i < FAI->Count(); i++ )
+  for( int i=iQPeakIndex+1; i < TAtomsInfo::GetInstance().Count(); i++ )
     CreateButton(9, i-iQPeakIndex-1, 5 );  // q peak
   wxDialog::Fit();
   wxDialog::Center();
@@ -83,7 +79,7 @@ void TPTableDlg::CreateButton(int i, int j, int offset )  {
 data:
   if( ii >= 107 )
     ii-=2;
-  B->SetCaption( FAI->GetAtomInfo(ii-1).GetSymbol() );
+  B->SetCaption( TAtomsInfo::GetInstance().GetAtomInfo(ii-1).GetSymbol() );
 //  B->Font->Color = A->Color;
   B->OnClick.Add(this);
   B->SetTag( ii );
@@ -91,7 +87,7 @@ data:
 //..............................................................................
 bool TPTableDlg::Execute(const IEObject *Sender, const IEObject *Data)  {
   TButton *S = (TButton*)(AOlxCtrl*)Sender;
-  FSelected = &FAI->GetAtomInfo( S->GetTag()-1 );
+  Selected = &TAtomsInfo::GetInstance().GetAtomInfo( S->GetTag()-1 );
   wxDialog::EndModal(wxID_OK);
   return true;
 }

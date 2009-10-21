@@ -117,9 +117,15 @@ protected:
     return !val.IsEmpty();
   }
   void ParseMacro(const TDataItem& macro_def, TEMacro& macro);
+  DefMacro(IF)
+  DefFunc(LastError)
+  DefFunc(Or)
+  DefFunc(And)
+  DefFunc(Not)
 public:
-  TEMacroLib(olex::IOlexProcessor& olexProcessor) : OlexProcessor(olexProcessor) {}
+  TEMacroLib(olex::IOlexProcessor& olexProcessor) : OlexProcessor(olexProcessor)  {}
   ~TEMacroLib() {  Clear();  }
+  void Init();  // extends the Library with functionality
   void Load(const TDataItem& m_root)  {
     Clear();
     for( int i=0; i < m_root.ItemCount(); i++ )  {

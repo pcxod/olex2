@@ -155,6 +155,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   }
 public:
   TOlex(const olxstr& basedir) : XApp(basedir, this), Macros(*this) {
+    Macros.Init();   
     XApp.SetCifTemplatesDir( XApp.GetBaseDir() + "etc/CIF/" );
     OlexInstance = this;
     Silent = true;
@@ -207,7 +208,6 @@ public:
     XApp.XFile().OnFileLoad->Add(this, ID_STRUCTURECHANGED);
 
     this_InitMacroD(Silent, "", fpOne, "Changes silent mode");
-    this_InitMacroD(IF, "", fpAny, "if...");
     this_InitMacroD(Exec, "s&;o&;d&;q", fpAny^fpNone, "exec" );
     this_InitMacroD(Echo, "", fpAny, "echo" );
     this_InitMacroDA(Reap, @reap, "", fpAny^fpNone, "reap" );
@@ -235,9 +235,6 @@ public:
     this_InitFuncD(CurrentLanguageEncoding, fpNone, "" );
     this_InitFuncD(StrCmp, fpTwo, "" );
     this_InitFuncD(Lst, fpOne|psFileLoaded, "" );
-    this_InitFuncD(And, fpAny^(fpNone|fpOne), "" );
-    this_InitFuncD(Or, fpAny^(fpNone|fpOne), "" );
-    this_InitFuncD(Not, fpOne, "" );
     this_InitFuncD(HasGUI, fpNone, "" );
     this_InitFuncD(Sel, fpNone, "" );
     this_InitFuncD(GetMAC, fpNone|fpOne, "" );
@@ -665,35 +662,6 @@ public:
       E.SetRetVal<olxstr>( NAString );
   }
   //..............................................................................
-  void macIF(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-    if( Cmds.Count() < 2 || !Cmds[1].Equalsi("then"))  {
-      E.ProcessingError(__OlxSrcInfo, "incorrect syntax - two commands or a command and \'then\' are expected" );
-      return;
-    }
-    olxstr Condition = Cmds[0];
-    if( !Macros.ProcessFunction(Condition, E, false) )  {
-      return;
-    }
-    if( Condition.ToBool() )  {
-      if( !Cmds[2].Equalsi("none") )
-        Macros.ProcessMacro(Cmds[2], E);
-      return;
-    }
-    else  {
-      if( Cmds.Count() == 5 )  {
-        if( Cmds[3].Equalsi("else") )  {
-          if( !Cmds[4].Equalsi("none") )
-            Macros.ProcessMacro(Cmds[4], E);
-          return;
-        }
-        else  {
-          E.ProcessingError(__OlxSrcInfo, "no keyword 'else' found" );
-          return;
-        }
-      }
-    }
-  }
-  //..............................................................................
   void SetProcess(AProcess *Process)  {
     if( FProcess != NULL && Process == NULL )  {
       while( FProcess->StrCount() != 0 )  {
@@ -814,50 +782,6 @@ public:
     for( int i=0; i < Cmds.Count(); i++ )  {
       TBasicApp::GetLog() << Cmds[i].c_str() << (((i+1) < Cmds.Count()) ? ' ' : '\n');
     }
-  }
-  //..............................................................................
-  void funAnd(const TStrObjList& Params, TMacroError &E) {
-    olxstr tmp;
-    TMacroError ME;
-    for(int i=0; i < Params.Count(); i++ )  {
-      tmp = Params[i];
-      if( !Macros.ProcessFunction(tmp, ME, false) )  {
-        E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
-        return;
-      }
-      if( !tmp.ToBool() )  {
-        E.SetRetVal( false );
-        return;
-      }
-    }
-    E.SetRetVal( true );
-  }
-  //..............................................................................
-  void funOr(const TStrObjList& Params, TMacroError &E) {
-    olxstr tmp;
-    TMacroError ME;
-    for(int i=0; i < Params.Count(); i++ )  {
-      tmp = Params[i];
-      if( !Macros.ProcessFunction(tmp, ME, false) )  {
-        E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
-        return;
-      }
-      if( tmp.ToBool() )  {
-        E.SetRetVal( true );
-        return;
-      }
-    }
-    E.SetRetVal( false );
-  }
-  //..............................................................................
-  void funNot(const TStrObjList& Params, TMacroError &E) {
-    olxstr tmp = Params[0];
-    TMacroError ME;
-    if( !Macros.ProcessFunction(tmp, ME, false) )  {
-      E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
-      return;
-    }
-    E.SetRetVal( !tmp.ToBool() );
   }
   //..............................................................................
   void funIsPluginInstalled(const TStrObjList& Params, TMacroError &E) {

@@ -1,6 +1,20 @@
 #include <stdlib.h>
 #include "macrolib.h"
 
+void TEMacroLib::Init()  {
+  TLibrary &lib = OlexProcessor.GetLibrary();
+  lib.RegisterFunction<TEMacroLib>( new TFunction<TEMacroLib>(this,  &TEMacroLib::funAnd, "And", fpAny^(fpNone|fpOne),
+    "Logical 'and' function"));
+  lib.RegisterFunction<TEMacroLib>( new TFunction<TEMacroLib>(this,  &TEMacroLib::funOr, "Or", fpAny^(fpNone|fpOne),
+    "Logical 'or' function"));
+  lib.RegisterFunction<TEMacroLib>( new TFunction<TEMacroLib>(this,  &TEMacroLib::funNot, "Not", fpOne,
+    "Logical 'not' function"));
+  lib.RegisterFunction<TEMacroLib>( new TFunction<TEMacroLib>(this,  &TEMacroLib::funLastError, "LastError", fpNone,
+    "Returns last error"));
+  lib.RegisterMacro<TEMacroLib>( new TMacro<TEMacroLib>(this,  &TEMacroLib::macIF, "IF", EmptyString, fpAny^fpNone,
+    "'if' construct"));
+}
+//..............................................................................................
 bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
   if( Cmd.IndexOf('(') == -1 )  return true;
   E.GetStack().Push(Cmd);
@@ -269,3 +283,93 @@ void TEMacroLib::ParseMacro(const TDataItem& macro_def, TEMacro& macro)  {
         macro.AddOnAbortCmd( Tmp );
   }
 }
+//...........................................................................................
+void TEMacroLib::macIF(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  if( Cmds.Count() < 2 || !Cmds[1].Equalsi("then"))  {
+    E.ProcessingError(__OlxSrcInfo, "incorrect syntax - two commands or a command and \'then\' are expected" );
+    return;
+  }
+  olxstr Condition = Cmds[0];
+  if( !ProcessFunction(Condition, E, false) )  {
+    E.ProcessingError(__OlxSrcInfo, "error processing condition" );
+    return;
+  }
+  if( Condition.ToBool() )  {
+    if( !Cmds[2].Equalsi("none") )  {
+      if( Cmds[2].IndexOf(">>") != -1 )  {
+        TStrList toks(Cmds[2], ">>");
+        for( int i=0; i < toks.Count(); i++ )  {
+          ProcessMacro(toks[i], E);
+          if( !E.IsSuccessful() )  return;
+        }
+      }
+      else
+        ProcessMacro(Cmds[2], E);
+    }
+  }
+  else  {
+    if( Cmds.Count() == 5 )  {
+      if( Cmds[3].Equalsi("else") )  {
+        if( !Cmds[4].Equalsi("none") )  {
+          if( Cmds[4].IndexOf(">>") != -1 )  {
+            TStrList toks(Cmds[4], ">>");
+            for( int i=0; i < toks.Count(); i++ )  {
+              ProcessMacro(toks[i], E);
+              if( !E.IsSuccessful() )  return;
+            }
+          }
+          else
+            ProcessMacro(Cmds[4], E);
+        }
+      }
+      else  {
+        E.ProcessingError(__OlxSrcInfo, "no keyword 'else' found" );
+        return;
+      }
+    }
+  }
+}
+//...........................................................................................
+void TEMacroLib::funAnd(const TStrObjList& Params, TMacroError &E) {
+  for(int i=0; i < Params.Count(); i++ )  {
+    olxstr tmp = Params[i];
+    if( !ProcessFunction(tmp, E, false) )  {
+      E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
+      return;
+    }
+    if( !tmp.ToBool() )  {
+      E.SetRetVal( false );
+      return;
+    }
+  }
+  E.SetRetVal( true );
+}
+//..............................................................................
+void TEMacroLib::funOr(const TStrObjList& Params, TMacroError &E) {
+  for(int i=0; i < Params.Count(); i++ )  {
+    olxstr tmp = Params[i];
+    if( !ProcessFunction(tmp, E, false) )  {
+      E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
+      return;
+    }
+    if( tmp.ToBool() )  {
+      E.SetRetVal( true );
+      return;
+    }
+  }
+  E.SetRetVal( false );
+}
+//..............................................................................
+void TEMacroLib::funNot(const TStrObjList& Params, TMacroError &E) {
+  olxstr tmp = Params[0];
+  if( !ProcessFunction(tmp, E, false) )  {
+    E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
+    return;
+  }
+  E.SetRetVal( !tmp.ToBool() );
+}
+//..............................................................................
+void TEMacroLib::funLastError(const TStrObjList& Params, TMacroError &E) {
+  E.SetRetVal(E.GetInfo());
+}
+//..............................................................................

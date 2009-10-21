@@ -2,10 +2,6 @@
 // gradient colours properties dialog
 // (c) Oleg V. Dolomanov, 2006
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
 #include "msgbox.h"
 #include "icons/exception.xpm"
 #include "icons/exclamation.xpm"
@@ -15,11 +11,11 @@
 
 TdlgMsgBox::TdlgMsgBox(TMainFrame* Parent, const olxstr& msg, const olxstr& title, 
                        const olxstr& tickBoxMsg, long flags, bool ShowRememberCheckBox) :
-  TDialog(Parent, uiStr(title), uiStr(EsdlClassName(TdlgMsgBox)) )
+  TDialog(Parent, title.u_str(), EsdlClassName(TdlgMsgBox).u_str() )
 {         
   AActionHandler::SetToDelete(false);
   int Border = 5;
-  wxStaticText* text = new wxStaticText(this, -1, uiStr(msg));
+  wxStaticText* text = new wxStaticText(this, -1, msg.u_str());
   wxStaticBitmap* sbmp = NULL;
   cbRemember = (ShowRememberCheckBox ? new wxCheckBox(this, -1, tickBoxMsg.u_str()) : NULL);
   if( (flags & wxICON_EXCLAMATION) != 0 ) 

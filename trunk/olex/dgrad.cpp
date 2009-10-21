@@ -2,21 +2,17 @@
 // gradient colours properties dialog
 // (c) Oleg V. Dolomanov, 2006
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
 #include "dgrad.h"
 #include "wx/colordlg.h"
 #include "glbackground.h"
+#include "gxapp.h"
 
 BEGIN_EVENT_TABLE(TdlgGradient, TDialog)
   EVT_BUTTON(wxID_OK, TdlgGradient::OnOK)
 END_EVENT_TABLE()
 
-TdlgGradient::TdlgGradient(TMainForm *ParentFrame):
-  TDialog(ParentFrame, wxT("Gradient"), uiStr(EsdlClassName(TdlgGradient)) )
-
+TdlgGradient::TdlgGradient(TMainFrame *ParentFrame):
+  TDialog(ParentFrame, wxT("Gradient"), EsdlClassName(TdlgGradient).u_str() )
 {                 
   AActionHandler::SetToDelete(false);
   short Border = 3;
@@ -83,18 +79,18 @@ bool TdlgGradient::Execute(const IEObject *Sender, const IEObject *Data)  {
 }
 //..............................................................................
 void TdlgGradient::Init()  {
-  tcA->WI.SetColor( ((TMainForm*)Parent)->XApp()->GetRender().Background()->LT().GetRGB());
-  tcB->WI.SetColor( ((TMainForm*)Parent)->XApp()->GetRender().Background()->RT().GetRGB());
-  tcC->WI.SetColor( ((TMainForm*)Parent)->XApp()->GetRender().Background()->RB().GetRGB());
-  tcD->WI.SetColor( ((TMainForm*)Parent)->XApp()->GetRender().Background()->LB().GetRGB());
+  tcA->WI.SetColor(TGXApp::GetInstance().GetRender().Background()->LT().GetRGB());
+  tcB->WI.SetColor(TGXApp::GetInstance().GetRender().Background()->RT().GetRGB());
+  tcC->WI.SetColor(TGXApp::GetInstance().GetRender().Background()->RB().GetRGB());
+  tcD->WI.SetColor(TGXApp::GetInstance().GetRender().Background()->LB().GetRGB());
 }
 //..............................................................................
 void TdlgGradient::OnOK(wxCommandEvent& event)  {
   TGlOption opt;
-  opt = tcA->WI.GetColor();  ((TMainForm*)Parent)->XApp()->GetRender().Background()->LT(opt);
-  opt = tcB->WI.GetColor();  ((TMainForm*)Parent)->XApp()->GetRender().Background()->RT(opt);
-  opt = tcC->WI.GetColor();  ((TMainForm*)Parent)->XApp()->GetRender().Background()->RB(opt);
-  opt = tcD->WI.GetColor();  ((TMainForm*)Parent)->XApp()->GetRender().Background()->LB(opt);
+  opt = tcA->WI.GetColor();  TGXApp::GetInstance().GetRender().Background()->LT(opt);
+  opt = tcB->WI.GetColor();  TGXApp::GetInstance().GetRender().Background()->RT(opt);
+  opt = tcC->WI.GetColor();  TGXApp::GetInstance().GetRender().Background()->RB(opt);
+  opt = tcD->WI.GetColor();  TGXApp::GetInstance().GetRender().Background()->LB(opt);
   EndModal(wxID_OK);
 }
 //..............................................................................

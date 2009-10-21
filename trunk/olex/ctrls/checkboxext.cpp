@@ -1,6 +1,5 @@
 #include "checkboxext.h"
-#include "../xglapp.h"
-#include "../mainform.h"
+#include "frameext.h"
 #include "../obase.h"
 #include "olxvar.h"
 

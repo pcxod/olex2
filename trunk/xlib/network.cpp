@@ -111,7 +111,19 @@ void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
 }
 //..............................................................................
 void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& InterBonds)  {
-  if( Atoms.Count() < 2 )  return;
+  if( Atoms.Count() < 2 )  {
+    if( Atoms.Count() == 1 )  {
+      if( !Atoms[0]->IsDeleted() )  {
+        TNetwork* net = Frags.Add(new TNetwork(&GetLattice(), this));
+        Atoms[0]->SetTag(0);
+        Atoms[0]->SetNetwork(*net);
+        net->AddNode(*Atoms[0]);
+      }
+      else
+        Atoms[0]->SetTag(2);
+    }
+    return;
+  }
   TStopWatch sw(__FUNC__);
   sw.start("Initialising");
   //TSAtom *A;
@@ -126,7 +138,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
     Atoms[i]->SetNetId(-1);
   }
   // find & remove symmetrical equivalenrs from AllAtoms
-  TDisassembleTaskRemoveSymmEq searchEqTask( Atoms, Distances);
+  TDisassembleTaskRemoveSymmEq searchEqTask(Atoms, Distances);
   // profiling has shown it gives no benifit and makes the process slow
   //TListIteratorManager<TDisassembleTaskRemoveSymmEq> searchEq(searchEqTask, Atoms.Count(), tQuadraticTask, 100);
   ac = Atoms.Count();
@@ -136,7 +148,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
   //............................................
   for( int i = 0; i < ac; i++ )  {
     if( (Atoms[i]->GetTag() & 0x0002) != 0 )  {
-      delete Atoms[i];
+      Atoms[i]->SetDeleted(true);
       Atoms[i] = NULL;
       continue;
     }

@@ -2,14 +2,10 @@
 // edit text dialog dialog
 // (c) Oleg V. Dolomanov, 2006
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
 #include "edit.h"
 #include <wx/font.h>
 
-TdlgEdit::TdlgEdit(TMainForm *ParentFrame, bool MultiLine):
+TdlgEdit::TdlgEdit(TMainFrame *ParentFrame, bool MultiLine):
   //TDialog(ParentFrame, -1, wxT("Edit"), wxT("dlgEdit"))
   wxDialog(ParentFrame, -1,  wxT("Edit"), wxPoint(0, 0), wxDefaultSize, wxMAXIMIZE_BOX | wxRESIZE_BORDER | wxDEFAULT_DIALOG_STYLE, wxT("dlgEdit")), WI(this)
 {
@@ -52,7 +48,7 @@ TdlgEdit::~TdlgEdit()  {
 }
 //..............................................................................
 void TdlgEdit::SetText(const olxstr& text)  {
-  Text->SetValue( uiStr(text) );
+  Text->SetValue(text.u_str());
 }
 //..............................................................................
 olxstr TdlgEdit::GetText()  {

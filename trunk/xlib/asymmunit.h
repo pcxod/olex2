@@ -154,7 +154,8 @@ public:
   TCAtom* FindCAtomById(int id) const  {
     return (id < 0 || id >= CAtoms.Count()) ? NULL : CAtoms[id];
   }
-
+  // makes specified type detached or attached
+  void DetachAtomType(int type, bool detach);
   /* removes all atoms marked as deleted */
   void PackAtoms();
   inline TCAtom& GetAtom(size_t i)     const {  return *CAtoms[i];  }

@@ -174,10 +174,10 @@ public:
   void ClearIndividualCollections() {  IndividualCollections.Clear();  }
 //..............................................................................
 // GlRender interface
-  void ClearColor(int Color) {  FGlRender->LightModel.ClearColor() = Color; }
-  inline int ClearColor()           {  return FGlRender->LightModel.ClearColor().GetRGB(); }
+  void ClearColor(int Color) {  FGlRender->LightModel.SetClearColor(Color); }
+  inline uint32_t ClearColor() const {  return FGlRender->LightModel.GetClearColor().GetRGB(); }
   inline TGlRenderer& GetRender() const {  return *FGlRender; }
-  inline TXFader& GetFader()        {  return *Fader; }
+  inline TXFader& GetFader() {  return *Fader; }
   void InitFadeMode();
 
   // implementation of BasicApp function - renders the scene

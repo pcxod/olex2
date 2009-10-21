@@ -1,16 +1,6 @@
-//---------------------------------------------------------------------------
-
-#ifndef olx_msgboxH
-#define olx_msgboxH
-//---------------------------------------------------------------------------
-
-#include "wx/wx.h"
-#include "wx/dialog.h"
-#include "wx/textctrl.h"
-#include "wx/checkbox.h"
+#ifndef __olx_dlg_msgbox_H
+#define __olx_dlg_msgbox_H
 #include "ctrls.h"
-#include "tptrlist.h"
-//---------------------------------------------------------------------------
 
 class TdlgMsgBox: public TDialog, public AActionHandler  {
 protected:

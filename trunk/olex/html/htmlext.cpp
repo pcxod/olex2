@@ -131,7 +131,7 @@ void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
     ind = Href.FirstIndexOf('%');
   }
   if( !OnLink->Execute(this, (IEObject*)&Href) )  {
-    wxHtmlLinkInfo NewLink( uiStr(Href), link.GetTarget());
+    wxHtmlLinkInfo NewLink(Href.u_str(), link.GetTarget());
     wxHtmlWindow::OnLinkClicked(NewLink);
   }
 }
@@ -1044,7 +1044,7 @@ void THtml::SetObjectValue(AOlxCtrl *Obj, const olxstr& Value)  {
     TListBox *L = (TListBox*)Obj;
     int index = L->GetSelection();
     if( index >=0 && index < L->Count() )
-      L->SetString(index, uiStr(Value));
+      L->SetString(index, Value.u_str());
   }
   else  return;
 }
@@ -1438,7 +1438,7 @@ void THtml::funSetFG(const TStrObjList &Params, TMacroError &E)  {
   if( wxw != NULL )  {
     if( EsdlInstanceOf(*wxw, TComboBox) )  {
       TComboBox* Box = (TComboBox*)wxw;
-      wxColor fgCl = wxColor( uiStr(Params[1]) );
+      wxColor fgCl = wxColor(Params[1].u_str());
       Box->SetForegroundColour( fgCl );
 #ifdef __WIN32__
       if( Box->GetPopupControl() != NULL )
@@ -1448,7 +1448,7 @@ void THtml::funSetFG(const TStrObjList &Params, TMacroError &E)  {
 #endif				
     }
     else
-      wxw->SetForegroundColour( wxColor( uiStr(Params[1]) ) );
+      wxw->SetForegroundColour( wxColor(Params[1].u_str()) );
     this->Refresh();
   }
 }
@@ -1469,7 +1469,7 @@ void THtml::funSetBG(const TStrObjList &Params, TMacroError &E)  {
   if( wxw != NULL )  {
     if( EsdlInstanceOf(*wxw, TComboBox) )  {
       TComboBox* Box = (TComboBox*)wxw;
-      wxColor fgCl = wxColor( uiStr(Params[1]) );
+      wxColor fgCl = wxColor(Params[1].u_str());
       Box->SetBackgroundColour( fgCl );
 #ifdef __WIN32__
       if( Box->GetPopupControl() != NULL )
@@ -1479,7 +1479,7 @@ void THtml::funSetBG(const TStrObjList &Params, TMacroError &E)  {
 #endif				
     }
     else
-      wxw->SetBackgroundColour( wxColor( uiStr(Params[1]) ) );
+      wxw->SetBackgroundColour( wxColor(Params[1].u_str()) );
     this->Refresh();
   }
 }

@@ -40,6 +40,5 @@ public:
   static int* GetGlAttributes()  {  return &glAttrib[0];  }
   DECLARE_CLASS(wxGLCanvas)
   DECLARE_EVENT_TABLE()
-
 };
 #endif

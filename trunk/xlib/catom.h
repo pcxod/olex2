@@ -35,7 +35,8 @@ const short
   catom_flag_Growable   = 0x0002,
   catom_flag_HAttached  = 0x0004,
   catom_flag_Saved      = 0x0008,
-  catom_flag_Masked     = 0x0010;
+  catom_flag_Masked     = 0x0010,
+  catom_flag_Detached   = 0x0020;
 
 class TEllipsoid;
 class TAfixGroup;
@@ -160,6 +161,7 @@ public:
   DefPropBFIsSet(HAttached, Flags, catom_flag_HAttached)
   DefPropBFIsSet(Growable,  Flags, catom_flag_Growable)
   DefPropBFIsSet(Masked,    Flags, catom_flag_Masked)
+  DefPropBFIsSet(Detached,  Flags, catom_flag_Detached)
 
   TEllipsoid* GetEllipsoid() const;
   void UpdateEllp( const TEllipsoid& NV);

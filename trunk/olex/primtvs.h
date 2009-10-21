@@ -1,16 +1,14 @@
-#ifndef _xl_primtvsH
-#define _xl_primtvsH
+#ifndef __olx_dlg_primtvs_H
+#define __olx_dlg_primtvs_H
 #include "ctrls.h"
-#include "wx/listctrl.h"
 
-class TdlgPrimitive: public TDialog
-{
+class TdlgPrimitive: public TDialog  {
 protected:
   void OnOK(wxCommandEvent& event);
   TPtrList<wxCheckBox> Boxes;
 public:
-  TdlgPrimitive(const TStrList& L, int mask, class TMainForm *P);
-  virtual ~TdlgPrimitive();
+  TdlgPrimitive(TMainFrame *P, const TStrList& L, int mask);
+  virtual ~TdlgPrimitive()  {}
   int Mask;
   DECLARE_EVENT_TABLE()
 };

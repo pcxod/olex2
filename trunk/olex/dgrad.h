@@ -1,13 +1,6 @@
-//---------------------------------------------------------------------------
-
-#ifndef dgradH
-#define dgradH
-//---------------------------------------------------------------------------
-
-#include "wx/wx.h"
+#ifndef __olx_graddlg_H
+#define __olx_graddlg_H
 #include "ctrls.h"
-#include "mainform.h"
-//---------------------------------------------------------------------------
 
 class TdlgGradient: public TDialog, AActionHandler  {
 private:
@@ -19,7 +12,7 @@ protected:
   int A, B, C, D;
   void Init();
 public:
-  TdlgGradient(TMainForm *ParentFrame);
+  TdlgGradient(TMainFrame *ParentFrame);
   virtual ~TdlgGradient();
   DefPropP(int, A)
   DefPropP(int, B)

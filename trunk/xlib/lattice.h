@@ -34,7 +34,7 @@ private:
   TSBondPList  Bonds;      // list of all nework nodes; some of them are equal to Atoms
   TNetPList    Fragments;
   TSPlanePList Planes;
-  bool QPeaksSeparate;
+  void GenerateBondsAndFragments(TArrayList<vec3d> *crd);
 protected:
   TActionQList Actions;
   bool Generated;
@@ -105,6 +105,9 @@ public:
   void GenerateWholeContent(TCAtomPList* Template); // generates content using current matrices
   bool IsExpandable(TSAtom& A) const;
 
+  static int CompareFragmentsBySize(const TNetwork* N, const TNetwork* N1)  {
+    return N1->NodeCount() - N->NodeCount();
+  }
   inline int FragmentCount()                const {  return Fragments.Count(); }
   inline TNetwork& GetFragment(int i)       const {  return *Fragments[i];  }
 
@@ -188,14 +191,12 @@ public:
 
   DefPropP(double, Delta)
   DefPropP(double, DeltaI)
-  DefPropBIsSet(QPeaksSeparate)
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);
 
   void LibGetFragmentCount(const TStrObjList& Params, TMacroError& E);
   void LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E);
-  void LibQPeaksSeparate(const TStrObjList& Params, TMacroError& E);
   TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 };
 

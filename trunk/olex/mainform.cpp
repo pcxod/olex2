@@ -276,7 +276,6 @@ public:
     dc.DrawText(str, 0, imgHeight);
     if( ++generation > 20 )
       generation = 0;
-    //dc.DrawRectangle(x, y, txtHeight, txtHeight);
   }
 };
 class RefreshTh : public AOlxThread  {
@@ -398,7 +397,6 @@ END_EVENT_TABLE()
 TMainForm::TMainForm(TGlXApp *Parent):
   TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm")), Macros(*this)
 {
-//  _crtBreakAlloc = 5892;
   _UpdateThread = NULL;
 	ActionProgress = UpdateProgress = NULL;
   SkipSizing = false;
@@ -553,8 +551,8 @@ void TMainForm::XApp( TGXApp *XA)  {
   FXApp->SetCifTemplatesDir( XA->GetBaseDir() + "etc/CIF/" );
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+  Macros.Init();
   TLibrary &Library = XA->GetLibrary();
-
   this_InitMacroAD(Reap, @reap, "b&;r&;*", fpAny,
 "This macro loads a file if provided as an argument. If no argument is provided, it\
  shows a file open dialog");
@@ -700,7 +698,6 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
 
   this_InitMacro(SyncBC, , fpNone );
 
-  this_InitMacro(IF, , fpAny );
   this_InitMacro(Basis, , fpNone|fpOne );
   this_InitMacro(Lines, , fpOne );
 
@@ -999,10 +996,6 @@ separated values of Atom Type and radius, an entry a line" );
 
   this_InitFunc(SGList, fpNone );
 
-  this_InitFunc(And, fpAny^(fpNone|fpOne) );
-  this_InitFunc(Or, fpAny^(fpNone|fpOne) );
-  this_InitFunc(Not, fpOne );
-
   this_InitFunc(ChooseElement, fpNone );
   this_InitFunc(SfacList, fpNone|psCheckFileTypeIns );
 
@@ -1261,7 +1254,7 @@ separated values of Atom Type and radius, an entry a line" );
       // check if we have full access to all files in the dir...
       bool copy_old = !updater::UpdateAPI::IsNewInstallation();
       if( !TEFile::MakeDirs(new_data_dir) )
-        wxMessageBox( (olxstr("Failed to create: ") << new_data_dir).u_str(), wxT("ERROR"), wxOK|wxICON_ERROR);
+        TMainFrame::ShowAlert(olxstr("Failed to create: ") << new_data_dir, "ERROR", wxOK|wxICON_ERROR);
       else if( copy_old )
         TFileTree::Copy(DataDir, new_data_dir, false);
       if( !copy_old )
@@ -1305,7 +1298,7 @@ separated values of Atom Type and radius, an entry a line" );
   FHtml->OnCmd->Add(this, ID_HTMLCMD);
 
   FXApp->SetLabelsVisible(false);
-  FXApp->GetRender().LightModel.ClearColor() = 0x0f0f0f0f;
+  FXApp->GetRender().LightModel.SetClearColor(0x0f0f0f0f);
 
   FGlConsole = new TGlConsole(FXApp->GetRender(), "Console");
   // the commands are posted from in Dispatch, SkipPosting is controlling the output
@@ -1405,9 +1398,8 @@ void TMainForm::StartupInit()  {
     T << FLastSettingsFile;
   }
   try  {  LoadSettings(T);  }
-  catch( TExceptionBase& exc )  {
-    ::wxMessageBox( uiStr(exc.GetException()->GetError()) += wxT('\n'),
-    uiStrT("Exception: ") += uiStr(EsdlObjectName(exc)), wxOK|wxICON_ERROR);
+  catch(const TExceptionBase &e)  {
+    ShowAlert(e);
     throw;
   }
 
@@ -1515,8 +1507,8 @@ void TMainForm::StartupInit()  {
 
   // load html in last cal - it might call some destructive functions on uninitialised data
 
-  FHtml->LoadPage( uiStr(FHtmlIndexFile));
-  FHtml->SetHomePage( FHtmlIndexFile );
+  FHtml->LoadPage(FHtmlIndexFile.u_str());
+  FHtml->SetHomePage(FHtmlIndexFile);
 
   if( FXApp->Arguments.Count() == 1 )
     ProcessMacro(olxstr("reap \'") << FXApp->Arguments[0] << '\'', __OlxSrcInfo);
@@ -1604,9 +1596,9 @@ void TMainForm::OnDrawStyleChange(wxCommandEvent& event)  {
     case ID_DSWF: ProcessMacro("proj", __OlxSrcInfo);  break;
     case ID_DSST: ProcessMacro("tubes", __OlxSrcInfo);  break;
     case ID_SceneProps:
-      TdlgSceneProps *Dlg = new TdlgSceneProps(this, FXApp);
+      TdlgSceneProps *Dlg = new TdlgSceneProps(this);
       if( Dlg->ShowModal() == wxID_OK )  {
-        FBgColor = FXApp->GetRender().LightModel.ClearColor();
+        FBgColor = FXApp->GetRender().LightModel.GetClearColor();
       }
       TimePerFrame = FXApp->Draw();
       Dlg->Destroy();
@@ -1759,7 +1751,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       return;
     }
     int i = FObjectUnderMouse->GetPrimitives().GetStyle().GetParam(FObjectUnderMouse->GetPrimitiveMaskName(), "0").ToInt();
-    TdlgPrimitive* Primitives = new TdlgPrimitive(Ps, i, this);
+    TdlgPrimitive* Primitives = new TdlgPrimitive(this, Ps, i);
     if( Primitives->ShowModal() == wxID_OK )  {
       if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
         for( int i=0; i < FXApp->AtomCount(); i++ )
@@ -1804,7 +1796,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     FXApp->BangList(XA, SL);
     pmBang->Clear();
     for( int i=0; i < SL.Count(); i++ )
-      pmBang->Append(-1, uiStr(SL[i]));
+      pmBang->Append(-1, SL[i].u_str());
     pmAtom->Enable(ID_MenuBang, SL.Count() != 0 );
     T = XA->Atom().GetLabel();
     T << ':' << ' ' <<  XA->Atom().GetAtomInfo().GetName();
@@ -1813,7 +1805,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     }
     else 
       T << " Occu: " << olxstr::FormatFloat(3, XA->Atom().CAtom().GetOccu());
-    miAtomInfo->SetText( uiStr(T) );
+    miAtomInfo->SetText(T.u_str());
     pmAtom->Enable(ID_AtomGrowShells, FXApp->AtomExpandable(XA));
     pmAtom->Enable(ID_AtomGrowFrags, FXApp->AtomExpandable(XA));
     pmAtom->Enable(ID_Selection, G->IsSelected());
@@ -1840,13 +1832,13 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     FXApp->TangList(XB, SL);
     pmTang->Clear();
     for( int i=0; i < SL.Count(); i++ )
-      pmTang->Append(0, uiStr(SL[i]));
+      pmTang->Append(0, SL[i].u_str());
 
     pmBond->Enable(ID_MenuTang, SL.Count() != 0 );
     T = XB->Bond().A().GetLabel();
     T << '-' << XB->Bond().B().GetLabel() << ':' << ' '
       << olxstr::FormatFloat(3, XB->Bond().Length());
-    miBondInfo->SetText( uiStr(T) );
+    miBondInfo->SetText(T.u_str());
     pmBond->Enable(ID_Selection, G->IsSelected());
     FCurrentPopup = pmBond;
   }
@@ -1925,9 +1917,9 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
   else                  
     Tmp << "#x" << XA->GetXAppId();
   Tmp << ' ';
-  TPTableDlg *Dlg = new TPTableDlg(this, &TAtomsInfo::GetInstance());
+  TPTableDlg *Dlg = new TPTableDlg(this);
   if( Dlg->ShowModal() == wxID_OK )  {
-    Tmp << Dlg->Selected()->GetSymbol();
+    Tmp << Dlg->GetSelected()->GetSymbol();
     Tmp << XA->Atom().GetLabel().SubStringFrom( XA->Atom().GetAtomInfo().GetSymbol().Length() );
     ProcessMacro(Tmp);
   }
@@ -2197,8 +2189,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       //FTimer->OnTimer->Enabled = true;
     }
     if( (FMode & mListen) != 0 && TEFile::Exists(FListenFile) )  {
-      static time_t FileMT = wxFileModificationTime( uiStr(FListenFile));
-      time_t FileT = wxFileModificationTime( uiStr(FListenFile));
+      static time_t FileMT = TEFile::FileAge(FListenFile);
+      time_t FileT = TEFile::FileAge(FListenFile);
       if( FileMT != FileT )  {
         FObjectUnderMouse = NULL;
         ProcessMacro((olxstr("@reap -b -r \'") << FListenFile)+'\'', "OnListen");
@@ -2969,7 +2961,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   TDataFile DF;
   TDataItem* I = &DF.Root().AddItem("Folders");
   I->AddField("Styles", StylesDir);
-  I->AddField("SceneP", SParamDir);
+  I->AddField("SceneP", ScenesDir);
   I->AddField("Current", XLibMacros::CurrentDir);
 
   I = &DF.Root().AddItem("HTML");
@@ -3009,7 +3001,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("SceneP", DefSceneP);
 
   I->AddField("BgColor", FBgColor.ToString());
-  I->AddField("WhiteOn", (FXApp->GetRender().LightModel.ClearColor().GetRGB() == 0xffffffff) );
+  I->AddField("WhiteOn", (FXApp->GetRender().LightModel.GetClearColor().GetRGB() == 0xffffffff) );
   I->AddField("Gradient", FXApp->GetRender().Background()->IsVisible() );
   I->AddField("GradientPicture", GradientPicture );
   I->AddField("language", Dictionary.GetCurrentLanguage() );
@@ -3027,7 +3019,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
     it.AddField("value", StoredParams.GetObject(i) );
   }
 
-  SaveScene(&DF.Root().AddItem("Scene"));
+  SaveScene(DF.Root().AddItem("Scene"), FXApp->GetRender().LightModel);
   FXApp->GetRender().GetStyles().ToDataItem(DF.Root().AddItem("Styles"));
   DF.SaveToXLFile(FN);
 }
@@ -3045,8 +3037,8 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     return;
   StylesDir = I->GetFieldValue("Styles");
     executeFunction(StylesDir, StylesDir);
-  SParamDir = I->GetFieldValue("SceneP");
-    executeFunction(SParamDir, SParamDir);
+  ScenesDir = I->GetFieldValue("SceneP");
+    executeFunction(ScenesDir);
   XLibMacros::CurrentDir = I->GetFieldValue("Current");
     executeFunction(XLibMacros::CurrentDir, XLibMacros::CurrentDir);
 
@@ -3170,10 +3162,10 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   if( TEFile::Exists(DefSceneP) )  {
     TDataFile SDF;
     SDF.LoadFromXLFile(DefSceneP, &Log);
-    LoadScene(&SDF.Root());
+    LoadScene(SDF.Root(), FXApp->GetRender().LightModel);
   }
   else
-    LoadScene(DF.Root().FindItem("Scene"));
+    LoadScene(DF.Root().FindRequiredItem("Scene"), FXApp->GetRender().LightModel);
   // restroring language or setting default
   if( TEFile::Exists( DictionaryFile ) )  {
     Dictionary.SetCurrentLanguage(DictionaryFile, I->GetFieldValue("language", EmptyString) );
@@ -3190,7 +3182,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   olxstr T( I->GetFieldValue("BgColor") );
   if( !T.IsEmpty() )  FBgColor.FromString(T);
   bool whiteOn =  I->GetFieldValue("WhiteOn", FalseString).ToBool();
-  FXApp->GetRender().LightModel.ClearColor() =  whiteOn ? 0xffffffff : FBgColor.GetRGB();
+  FXApp->GetRender().LightModel.SetClearColor(whiteOn ? 0xffffffff : FBgColor.GetRGB());
 
   T = I->GetFieldValue("Gradient", EmptyString);
   GradientPicture = I->GetFieldValue("GradientPicture", EmptyString);
@@ -3208,29 +3200,18 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   }
 }
 //..............................................................................
-void TMainForm::LoadScene(TDataItem *Root, TGlLightModel *FLM)  {
-  if( Root == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "Root=NULL");
+void TMainForm::LoadScene(const TDataItem& Root, TGlLightModel& FLM) {
   TDataFile F;
-  TDataItem *I;
   olxstr FntData;
-  if( FLM == NULL )  
-    FLM = &(FXApp->GetRender().LightModel);
-  I = Root->FindItem("Scene_Properties");
-  if( I == NULL )  {
-    TBasicApp::GetLog().Error("Wrong scene parameters file!");
-    return;
-  }
-  FLM->FromDataItem(*I);
-  FBgColor = FLM->ClearColor();
-
-  I = Root->FindItem("Fonts");
+  FLM.FromDataItem(Root.FindRequiredItem("Scene_Properties"));
+  FBgColor = FLM.GetClearColor();
+  TDataItem *I = Root.FindItem("Fonts");
   if( I == NULL )  return;
   for( int i=0; i < I->ItemCount(); i++ )  {
     TDataItem& fi = I->GetItem(i);
     FXApp->GetRender().GetScene().CreateFont(fi.GetName(), fi.GetFieldValue("id") );
   }
-  I = Root->FindItem("Materials");
+  I = Root.FindItem("Materials");
   if( I != NULL )  {
     TDataItem *ci;
     ci = I->FindItem("Help_txt");
@@ -3249,25 +3230,18 @@ void TMainForm::LoadScene(TDataItem *Root, TGlLightModel *FLM)  {
     ci = I->FindItem("Exception");
     if( ci != NULL ) ExceptionFontColor.FromDataItem(*ci);
   }
-
-//  FXApp->GetRender().LightModel = FLM;
   FXApp->GetRender().LoadIdentity();
   FXApp->GetRender().InitLights();
 }
 //..............................................................................
-void TMainForm::SaveScene(TDataItem *Root, TGlLightModel *FLM)  {
-  TDataItem *I;
-  if( FLM )
-    FLM->ToDataItem(Root->AddItem("Scene_Properties"));
-  else
-    FXApp->GetRender().LightModel.ToDataItem(Root->AddItem("Scene_Properties"));
-  I = &Root->AddItem("Fonts");
+void TMainForm::SaveScene(TDataItem &Root, const TGlLightModel &FLM) const {
+  FLM.ToDataItem(Root.AddItem("Scene_Properties"));
+  TDataItem *I = &Root.AddItem("Fonts");
   for( int i=0; i < FXApp->GetRender().GetScene().FontCount(); i++ )  {
     TDataItem& fi = I->AddItem( FXApp->GetRender().GetScene().GetFont(i)->GetName());
     fi.AddField("id", FXApp->GetRender().GetScene().GetFont(i)->IdString() );
   }
-
-  I = &Root->AddItem("Materials");
+  I = &Root.AddItem("Materials");
   HelpFontColorTxt.ToDataItem(I->AddItem("Help_txt"));
   HelpFontColorCmd.ToDataItem(I->AddItem("Help_cmd"));
   ExecFontColor.ToDataItem(I->AddItem("Exec"));
@@ -3689,10 +3663,8 @@ void TMainForm::OnInternalIdle()  {
 #endif
         }
       }
-      catch( const TExceptionBase& exc )  {
-        TBasicApp::GetLog().Exception( exc.GetException()->GetFullMessage() );
-        ::wxMessageBox( uiStr(exc.GetException()->GetError()) += wxT('\n'),
-          uiStrT("Exception: ") += uiStr(EsdlObjectName(exc)), wxOK|wxICON_ERROR);
+      catch(const TExceptionBase &e)  {
+        ShowAlert(e);
       }
       time_t fa = TEFile::FileAge( rof[i] );
       // Null the file
@@ -3713,36 +3685,36 @@ void TMainForm::SetUserCursor( const olxstr& param, const olxstr& mode )  {
   wxBitmap bmp(32, 32);
   wxMemoryDC memDC;
   wxBrush Brush = memDC.GetBrush();
-  Brush.SetColour( *wxWHITE );
-  memDC.SetBrush( Brush );
+  Brush.SetColour(*wxWHITE);
+  memDC.SetBrush(Brush);
   wxPen Pen = memDC.GetPen();
-  Pen.SetColour( *wxRED );
-  memDC.SetPen( Pen );
+  Pen.SetColour(*wxRED);
+  memDC.SetPen(Pen);
   wxFont Font = memDC.GetFont();
-  Font.SetFamily( wxSWISS );
+  Font.SetFamily(wxSWISS);
 #if defined(__WIN32__)
-  Font.SetPointSize( 10 );
+  Font.SetPointSize(10);
 #else
-  Font.SetPointSize( 10 );
+  Font.SetPointSize(10);
 #endif
 
-  memDC.SetFont( Font );
-  memDC.SelectObject( bmp );
+  memDC.SetFont(Font);
+  memDC.SelectObject(bmp);
   memDC.Clear();
-  Brush.SetColour( *wxGREEN );
-  memDC.SetBrush( Brush );
-  memDC.DrawCircle( 2, 2, 2 );
-  memDC.SetTextForeground( *wxRED );
-  memDC.DrawText( uiStr(param), 0, 4 );
-  memDC.DrawLine( 0, 18, 32, 18 );
-  memDC.SetTextForeground( *wxGREEN );
-  memDC.SetPen( Pen );
-  memDC.DrawText( uiStr(mode), 0, 18 );
-  wxImage img( bmp.ConvertToImage() );
-  img.SetMaskColour( 255, 255, 255 );
-  img.SetMask( true );
+  Brush.SetColour(*wxGREEN);
+  memDC.SetBrush(Brush);
+  memDC.DrawCircle(2, 2, 2);
+  memDC.SetTextForeground(*wxRED);
+  memDC.DrawText(param.u_str(), 0, 4);
+  memDC.DrawLine(0, 18, 32, 18);
+  memDC.SetTextForeground(*wxGREEN);
+  memDC.SetPen(Pen);
+  memDC.DrawText(mode.u_str(), 0, 18);
+  wxImage img(bmp.ConvertToImage());
+  img.SetMaskColour(255, 255, 255);
+  img.SetMask(true);
   wxCursor cr(img);
-  SetCursor( cr );
+  SetCursor(cr);
   FGlCanvas->SetCursor(cr);
 }
 //..............................................................................
@@ -4099,10 +4071,8 @@ void TMainForm::SaveVFS(short persistenceId)  {
     TEFile dbf(dbFN, "wb");
     TFileHandlerManager::SaveToStream(dbf, persistenceId);
   }
-  catch( const TExceptionBase& exc )  {
-    TBasicApp::GetLog().Exception(exc.GetException()->GetFullMessage());
-    ::wxMessageBox( (uiStr(exc.GetException()->GetFullMessage()) += wxT('\n')),
-      wxT("Failed to save VFS"), wxOK|wxICON_ERROR);
+  catch(const TExceptionBase &e)  {
+    ShowAlert(e, "Failed to save VFS");
   }
 }
 //..............................................................................
@@ -4125,15 +4095,13 @@ void TMainForm::LoadVFS(short persistenceId)  {
       TEFile dbf(dbFN, "rb");
       TFileHandlerManager::LoadFromStream(dbf, persistenceId);
     }
-    catch( const TExceptionBase& exc)  {
+    catch(const TExceptionBase &e)  {
       TEFile::DelFile(dbFN);
-      throw TFunctionFailedException(__OlxSourceInfo, exc, "failed to read VFS");
+      throw TFunctionFailedException(__OlxSourceInfo, e, "failed to read VFS");
     }
   }
-  catch( const TExceptionBase& exc )  {
-    TBasicApp::GetLog().Exception(exc.GetException()->GetFullMessage());
-    ::wxMessageBox( uiStr(exc.GetException()->GetFullMessage()) += wxT('\n'),
-      wxT("Failed to save VFS"), wxOK|wxICON_ERROR);
+  catch(const TExceptionBase &e)  {
+    ShowAlert(e, "Failed to save VFS");
   }
 }
 //..............................................................................
@@ -4146,7 +4114,7 @@ const olxstr& TMainForm::GetStructureOlexFolder()  {
         throw TFunctionFailedException(__OlxSourceInfo, "cannot create folder");
       }
 #ifdef __WIN32__
-      SetFileAttributes(uiStr(ofn), FILE_ATTRIBUTE_HIDDEN);
+      SetFileAttributes(ofn.u_str(), FILE_ATTRIBUTE_HIDDEN);
 #endif
     }
     return TEGC::New<olxstr>(ofn);
@@ -4269,8 +4237,8 @@ PyObject* pyGetUserInput(PyObject* self, PyObject* args)  {
   bool MultiLine = (flags != 1);
 
   TdlgEdit *dlg = new TdlgEdit(TGlXApp::GetMainForm(), MultiLine);
-  dlg->SetTitle( uiStr(title) );
-  dlg->SetText( str );
+  dlg->SetTitle(title.u_str());
+  dlg->SetText(str);
 
   PyObject* rv;
   if( dlg->ShowModal() == wxID_OK )
