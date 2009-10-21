@@ -245,9 +245,9 @@ public:
 
 protected:
   TPtrList<AGDrawObject> SelectionCopy;
-  bool FHydrogensVisible,
+  bool FQPeaksVisible,
+       FHydrogensVisible,
        FHBondsVisible,
-       FQPeaksVisible,
        FQPeakBondsVisible,
        FStructureVisible,
        FHklVisible,
@@ -478,7 +478,7 @@ public:     void CalcProbFactor(float Prob);
 // X interface
   void BangList(TXAtom *A, TStrList &L);
   void BangTable(TXAtom *A, TTTable<TStrList>& Table);
-  float Tang( TSBond *B1, TSBond *B2, TSBond *Middle, olxstr *Sequence=NULL);
+  double Tang( TSBond *B1, TSBond *B2, TSBond *Middle, olxstr *Sequence=NULL);
   void TangList(TXBond *Middle, TStrList &L);
 
   TUndoData* DeleteXAtoms(TXAtomPList& L);

@@ -43,15 +43,14 @@ TGlRenderer::TGlRenderer(AGlScene *S, int width, int height) {
   FFogEnd = 10;
   CalculatedZoom = -1;
 
-  FActions = new TActionQList;
   FStyles = new TGraphicsStyles(*this);
 
   FSelection = new TGlGroup(*this, "Selection");
   FSelection->SetSelected(true);
 
-  OnDraw = &FActions->NewQueue("GLDRAW");
-  BeforeDraw = &FActions->NewQueue("BGLDRAW");
-  OnStylesClear  = &FActions->NewQueue("DSCLEAR");
+  OnDraw = &TBasicApp::GetInstance().Actions().NewQueue("GLDRAW");
+  BeforeDraw = &TBasicApp::GetInstance().Actions().NewQueue("BGLDRAW");
+  OnStylesClear  = &TBasicApp::GetInstance().Actions().NewQueue("DSCLEAR");
   //GraphicsStyles = FStyles;
   FBackground = new TGlBackground(*this, "Background", false);
   FBackground->SetVisible(false);
@@ -76,7 +75,6 @@ TGlRenderer::~TGlRenderer()  {
   delete FBasis;
   delete FSelection;
   delete FScene;
-  delete FActions;
   delete TextureManager;
 }
 //..............................................................................
@@ -704,7 +702,7 @@ void TGlRenderer::SelectAll(bool Select)  {
   if( Select )  {
     for( int i=0; i < ObjectCount(); i++ )  {
       AGDrawObject& GDO = GetObject(i);
-      if( !GDO.IsGrouped() && GDO.IsVisible() && GDO.IsGroupable() && !GDO.IsDeleted() )  {
+      if( !GDO.IsGrouped() && GDO.IsVisible() && GDO.IsGroupable() )  {
         if( EsdlInstanceOf(GDO, TGlGroup) )  {
           if( &GDO == FSelection )  continue;
           bool Add = false;
@@ -1043,7 +1041,6 @@ void TGlRenderer::Compile(bool v)  {
         for( int k=0; k < GPC->ObjectCount(); k++ )  {
           AGDrawObject& GDO = GPC->GetObject(k);
           if( !GDO.IsVisible() )  continue;
-          if( GDO.IsDeleted() )  continue;
           if( GDO.IsSelected() ) continue;
           if( GDO.IsGrouped() ) continue;
           glPushMatrix();

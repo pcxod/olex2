@@ -239,16 +239,19 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
         dac++;
     }
   }
-  TSAtomPList datoms(dac), atoms(ac-dac);
+  TSAtomPList atoms(ac-dac);
   dac = 0;
   for( int i=0; i < ac; i++ )  {
-    if( Atoms[i]->CAtom().IsDetached() )
-      datoms[dac++] = Atoms[i];
+    if( Atoms[i]->CAtom().IsDetached() )  {
+      //datoms[dac++] = Atoms[i];
+      dac++;
+      Atoms[i]->SetNetwork(*Network);
+    }
     else
       atoms[i-dac] = Atoms[i];
   }
   Network->Disassemble(atoms, Fragments, Bonds);
-  Network->Disassemble(datoms, Fragments, Bonds);
+  //Network->Disassemble(datoms, Fragments, Bonds);
   dac = 0;
   for( int i=0; i < ac; i++ )  {
     if( Atoms[i]->IsDeleted() )  {
@@ -869,7 +872,8 @@ void TLattice::UpdateAsymmUnit()  {
     AUAtoms.Set(i, new TSAtomPList);
   const int lat_ac = Atoms.Count();
   for( int i=0; i < lat_ac; i++ )  {
-    if( Atoms[i]->IsDeleted() )  continue;
+    if( Atoms[i]->IsDeleted() )
+      continue;
     AUAtoms[Atoms[i]->CAtom().GetId()].Add(Atoms[i]);
   }
   for( int i=0; i < ac; i++ )  {  // create lists to store atom groups

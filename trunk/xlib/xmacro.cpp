@@ -1015,7 +1015,26 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TXApp & xapp = TXApp::GetInstance();
+  TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
+  TEBitArray detached(au.AtomCount());
+  for( int i=0; i < au.AtomCount(); i++ )  {
+    TCAtom &ca = au.GetAtom(i);
+    detached.Set(i, ca.IsDetached());
+    if( ca.GetAtomInfo() == iQPeakIndex )
+      ca.SetDetached(true);
+    else if( ca.GetAtomInfo().GetMr() < 3.5 )
+      ca.SetDetached(false);
+  }
+  // nice hack
+  TActionQueue* q_draw = xapp.ActionQueue("GLDRAW");
+  if( q_draw != NULL )  q_draw->SetEnabled(false);
+  xapp.XFile().GetLattice().UpdateConnectivity();
   delete TXApp::GetInstance().FixHL();
+  for( int i=0; i < au.AtomCount(); i++ )
+    au.GetAtom(i).SetDetached(detached[i]);
+  xapp.XFile().GetLattice().UpdateConnectivity();
+  if( q_draw != NULL )  q_draw->SetEnabled(true);
 }
 //..............................................................................
 // http://www.minsocam.org/ammin/AM78/AM78_1104.pdf
