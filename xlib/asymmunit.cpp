@@ -355,6 +355,22 @@ void TAsymmUnit::InitAtomIds()  {  // initialises atom ids if any were added or 
     GetEllp(i).SetId(i);
 }
 //..............................................................................
+void TAsymmUnit::DetachAtomType(int type, bool detach)  {
+  const int ac = CAtoms.Count();
+  if( type == iHydrogenIndex )  {
+    for( int i =0; i < ac; i++ )  {
+      if( CAtoms[i]->GetAtomInfo() == iHydrogenIndex || CAtoms[i]->GetAtomInfo() == iDeuteriumIndex )
+        CAtoms[i]->SetDetached(detach);
+    }
+  }
+  else  {
+    for( int i =0; i < ac; i++ )  {
+      if( CAtoms[i]->GetAtomInfo() == type )
+        CAtoms[i]->SetDetached(detach);
+    }
+  }
+}
+//..............................................................................
 void TAsymmUnit::PackAtoms()  {
   for( int i=-1; i < Residues.Count(); i++ )  {
     TResidue& resi = GetResidue(i);

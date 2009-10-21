@@ -1,9 +1,8 @@
-//---------------------------------------------------------------------------
-
-#ifndef gloptionH
-#define gloptionH
+#ifndef __olx_gl_option_H
+#define __olx_gl_option_H
 
 #include "glbase.h"
+#include "emath.h"
 
 BeginGlNamespace()
 
@@ -85,7 +84,7 @@ public:
   const float& operator[] (int i) const {  return data[i]; }
   
   bool operator == (const TGlOption& v) const  {
-    return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2] && data[3] == v[3]);
+    return (olx_abs(data[0]-v[0])+olx_abs(data[1]-v[1])+olx_abs(data[2]-v[2])+olx_abs(data[3]-v[3])) < 1e-5;
   }
 
   TIString ToString() const;

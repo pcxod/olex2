@@ -1,6 +1,5 @@
 #include "listboxext.h"
-#include "../xglapp.h"
-#include "../mainform.h"
+#include "frameext.h"
 #include "olxvar.h"
 
 using namespace ctrl_ext;

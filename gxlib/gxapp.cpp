@@ -1343,8 +1343,12 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
     if(  !(SData->From == SData->To) )
       Select(SData->From, SData->To);
   }
+  else if( MsgId == ID_OnDisassemble && MsgSubId == msiEnter ) {
+    //StoreGroups();
+  }
   else if( MsgId == ID_OnDisassemble && MsgSubId == msiExit ) {
     CreateObjects(false, false);
+    //RestoreGroups();
   }
   return false;
 }
@@ -2034,7 +2038,6 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
   //GetSelection().RemoveDeleted();
   GetSelection().Clear();
   XFile().GetLattice().UpdateConnectivity();
-  //CreateObjects(false, false);
   //CenterView();
   return undo;
 }
@@ -2898,13 +2901,19 @@ void TGXApp::HBondsVisible(bool v)  {
 }
 //..............................................................................
 void TGXApp::HydrogensVisible(bool v)  {
+  XFile().GetAsymmUnit().DetachAtomType(iHydrogenIndex, !v);
   FHydrogensVisible = v;
-  SyncAtomAndBondVisiblity(iHydrogenIndex, FHydrogensVisible, FHBondsVisible);
+  GetRender().ClearSelection();
+  XFile().GetLattice().UpdateConnectivity();
+  CenterView(true);
 }
 //..............................................................................
 void TGXApp::QPeaksVisible(bool v)  {
+  XFile().GetAsymmUnit().DetachAtomType(iQPeakIndex, !v);
   FQPeaksVisible = v;
-  SyncAtomAndBondVisiblity(iQPeakIndex, FQPeaksVisible, FQPeakBondsVisible);
+  GetRender().ClearSelection();
+  XFile().GetLattice().UpdateConnectivity();
+  CenterView(true);
 }
 //..............................................................................
 void TGXApp::SyncQVisibility()  {

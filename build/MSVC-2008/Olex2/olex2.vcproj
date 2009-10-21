@@ -1202,6 +1202,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\olex\ctrls\frameext.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\olex\ctrls\labelext.h"
 					>
 				</File>
@@ -1247,6 +1251,10 @@
 				</File>
 				<File
 					RelativePath="..\..\..\olex\ctrls\comboext.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\olex\ctrls\frameext.cpp"
 					>
 				</File>
 				<File

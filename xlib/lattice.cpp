@@ -45,7 +45,6 @@ int TLattice_AtomsSortByDistance(const TSAtom* A1, const TSAtom* A2)  {
 //---------------------------------------------------------------------------
 TLattice::TLattice() : AtomsInfo(TAtomsInfo::GetInstance()) {
   Generated = false;
-  QPeaksSeparate = false;
   AsymmUnit   = new TAsymmUnit(this);
   UnitCell    = new TUnitCell(this);
   Network     = new TNetwork(this, NULL);
@@ -222,8 +221,46 @@ int TLattice::GenerateMatrices(smatd_plist& Result, const vec3d& center, double 
   return Result.Count();
 }
 //..............................................................................
-int CompareNets(const TNetwork* N, const TNetwork* N1)  {
-  return N1->NodeCount() - N->NodeCount();
+void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
+  // treat detached and the rest of atoms separately
+  int dac = 0;
+  const int ac=Atoms.Count();
+  if( ocrd != NULL )  {
+    for( int i=0; i < ac; i++ )  {
+      (*ocrd)[i] = Atoms[i]->crd();
+      GetAsymmUnit().CellToCartesian(Atoms[i]->ccrd(), Atoms[i]->crd());
+      if( Atoms[i]->CAtom().IsDetached() )
+        dac++;
+    }
+  }
+  else  {
+    for( int i=0; i < ac; i++ )  {
+      if( Atoms[i]->CAtom().IsDetached() )
+        dac++;
+    }
+  }
+  TSAtomPList datoms(dac), atoms(ac-dac);
+  dac = 0;
+  for( int i=0; i < ac; i++ )  {
+    if( Atoms[i]->CAtom().IsDetached() )
+      datoms[dac++] = Atoms[i];
+    else
+      atoms[i-dac] = Atoms[i];
+  }
+  Network->Disassemble(atoms, Fragments, Bonds);
+  Network->Disassemble(datoms, Fragments, Bonds);
+  dac = 0;
+  for( int i=0; i < ac; i++ )  {
+    if( Atoms[i]->IsDeleted() )  {
+      delete Atoms[i];
+      Atoms[i] = NULL;
+      dac++;
+    }
+    else if( ocrd != NULL )
+      Atoms[i]->crd() = (*ocrd)[i];
+  }
+  if( dac != NULL )
+    Atoms.Pack();
 }
 //..............................................................................
 void TLattice::InitBody()  {
@@ -233,29 +270,11 @@ void TLattice::InitBody()  {
     ListAsymmUnit(Atoms, NULL, true);
   }
   OnDisassemble->Enter(this);
-  if( QPeaksSeparate)  {
-    int qac = 0;
-    for( int i=0; i < Atoms.Count(); i++ )  {
-      if( Atoms[i]->GetAtomInfo() == iQPeakIndex )
-        qac++;
-    }
-    TSAtomPList qatoms(qac), atoms(Atoms.Count()-qac);
-    qac = 0;
-    for( int i=0; i < Atoms.Count(); i++ )  {
-      if( Atoms[i]->GetAtomInfo() == iQPeakIndex )
-        qatoms[qac++] = Atoms[i];
-      else
-        atoms[i-qac] = Atoms[i];
-    }
-    Network->Disassemble(atoms, Fragments, Bonds);
-    Network->Disassemble(qatoms, Fragments, Bonds);
-  }
-  else
-    Network->Disassemble(Atoms, Fragments, Bonds);
+  GenerateBondsAndFragments(NULL);
   Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
   for( int i=0; i < Atoms.Count(); i++ )
     Atoms[i]->SetLattId(i);
-  TNetPList::QuickSorter.SortSF(Fragments, CompareNets);
+  TNetPList::QuickSorter.SortSF(Fragments, CompareFragmentsBySize);
   // precalculate memory usage
   int bondCnt = Bonds.Count();
   for(int i=0; i < Fragments.Count(); i++ )
@@ -1272,27 +1291,8 @@ void TLattice::Disassemble()  {
   OnDisassemble->Enter(this);
   ClearBonds();
   ClearFragments();
-
-  // find bonds & fragments
-  if( QPeaksSeparate )  {
-    int qac = 0;
-    for( int i=0; i < Atoms.Count(); i++ )  {
-      if( Atoms[i]->GetAtomInfo() == iQPeakIndex )
-        qac++;
-    }
-    TSAtomPList qatoms(qac), atoms(Atoms.Count()-qac);
-    qac = 0;
-    for( int i=0; i < Atoms.Count(); i++ )  {
-      if( Atoms[i]->GetAtomInfo() == iQPeakIndex )
-        qatoms[qac++] = Atoms[i];
-      else
-        atoms[i-qac] = Atoms[i];
-    }
-    Network->Disassemble(atoms, Fragments, Bonds);
-    Network->Disassemble(qatoms, Fragments, Bonds);
-  }
-  else
-    Network->Disassemble(Atoms, Fragments, Bonds);
+  TArrayList<vec3d> ocrd(Atoms.Count());
+  GenerateBondsAndFragments(&ocrd);
   Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
   // restore latId, as some atoms might been removed ny the network
   for( int i=0; i < Atoms.Count(); i++ )
@@ -2095,12 +2095,6 @@ void TLattice::LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E)  {
   }
   E.SetRetVal( rv );
 }
-void TLattice::LibQPeaksSeparate(const TStrObjList& Params, TMacroError& E)  {
-  if( Params.IsEmpty() )
-    E.SetRetVal(QPeaksSeparate);
-  else
-    QPeaksSeparate = Params[0].ToBool();
-}
 //..............................................................................
 
 
@@ -2110,9 +2104,6 @@ TLibrary*  TLattice::ExportLibrary(const olxstr& name)  {
 "Returns number of fragments in the lattice") );
   lib->RegisterFunction<TLattice>( new TFunction<TLattice>(this,  &TLattice::LibGetFragmentAtoms, "GetFragmentAtoms", fpOne,
 "Returns a comma separated list of atoms in specified fragment") );
-  lib->RegisterFunction<TLattice>( new TFunction<TLattice>(this,  &TLattice::LibQPeaksSeparate, 
-    "QPeaksSeparate", fpNone|fpOne,
-"Returns/set if the Q-peaks are treated separately from the rest") );
   return lib;
 }
 

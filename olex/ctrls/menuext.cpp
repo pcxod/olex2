@@ -1,6 +1,5 @@
 #include "menuext.h"
-#include "../xglapp.h"
-#include "../mainform.h"
+#include "frameext.h"
 #include "../obase.h"
 
 using namespace ctrl_ext;

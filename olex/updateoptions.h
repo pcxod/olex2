@@ -1,7 +1,5 @@
-#ifndef updateoptionsH
-#define updateoptionsH
-
-#include "wx/wx.h"
+#ifndef __olx_updateoptions_H
+#define __olx_updateoptions_H
 #include "ctrls.h"
 #include "updateapi.h"
 //---------------------------------------------------------------------------

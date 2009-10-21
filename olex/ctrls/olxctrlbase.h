@@ -1,14 +1,14 @@
 #ifndef __olx_ctrl_base_H
 #define __olx_ctrl_base_H
 
-#define StartEvtProcessing()   TGlXApp::GetMainForm()->LockWindowDestruction( GetParent() );\
+#define StartEvtProcessing()   TMainFrame::GetMainFrameInstance().LockWindowDestruction(GetParent()); \
   try  {
 
 #define EndEvtProcessing()  }  catch( const TExceptionBase& exc )  {\
-    TGlXApp::GetMainForm()->UnlockWindowDestruction( GetParent() );\
+    TMainFrame::GetMainFrameInstance().UnlockWindowDestruction(GetParent());\
     throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate() );\
   }\
-  TGlXApp::GetMainForm()->UnlockWindowDestruction( GetParent() );
+  TMainFrame::GetMainFrameInstance().UnlockWindowDestruction(GetParent());
 
 #include "actions.h"
 #include "../wininterface.h"

@@ -1,6 +1,5 @@
 #include "treeviewext.h"
-#include "../xglapp.h"
-#include "../mainform.h"
+#include "frameext.h"
 
 using namespace ctrl_ext;
 IMPLEMENT_CLASS(TTreeView, wxGenericTreeCtrl)

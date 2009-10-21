@@ -1,14 +1,10 @@
-//---------------------------------------------------------------------------
-#ifndef _xl_scenepH
-#define _xl_scenepH
-#include "wx/wx.h"
+#ifndef __olx_dlg_scenep_H
+#define __olx_dlg_scenep_H
 #include "ctrls.h"
-#include "globj.h"
-#include "xapp.h"
-#include "mainform.h"
+#include "gloption.h"
+#include "gllightmodel.h"
 
-class TdlgSceneProps: public TDialog, public AActionHandler
-{
+class TdlgSceneProps: public TDialog, public AActionHandler  {
 private:
   wxCheckBox *cbEnabled, *cbUniform;
   TSpinCtrl *scSCO, *scAmbA, *scDiffA, *scSpecA, *scSExp;
@@ -28,7 +24,6 @@ protected:
   void OnSave(wxCommandEvent& event);
   void OnApply(wxCommandEvent& event);
   bool Execute(const IEObject *Sender, const IEObject *Data=NULL);
-  TGXApp *FXApp;
   TGlLightModel FLightModel, FOriginalModel;
   int FCurrentLight;
   void InitLight( TGlLight &GlL );
@@ -37,16 +32,10 @@ protected:
   void UpdateLightModel( TGlLightModel &GlLM );
   void Update(){  wxWindow::Update(); };
 public:
-  TdlgSceneProps(TMainForm *ParentForm, TGXApp *XApp);
+  TdlgSceneProps(TMainFrame *ParentForm);
   virtual ~TdlgSceneProps();
   void LoadFromFile(TGlLightModel &FLM, const olxstr &FN);
   void SaveToFile(TGlLightModel &FLM, const olxstr &FN);
-//..............................................................................
-// properties
-
-//..............................................................................
-// interface
-//..............................................................................
   DECLARE_EVENT_TABLE()
 };
 #endif

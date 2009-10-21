@@ -1,7 +1,6 @@
 #include "labelext.h"
-#include "../xglapp.h"
-#include "../mainform.h"
-
+#include "frameext.h"
+#include "egc.h"
 using namespace ctrl_ext;
 IMPLEMENT_CLASS(TLabel, wxStaticText)
 

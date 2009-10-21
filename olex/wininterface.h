@@ -20,11 +20,11 @@ public:
   inline void SetLeft(int l)    { Window->SetSize(l, -1, -1, -1, wxSIZE_USE_EXISTING); };
   inline int GetTop()     const { return Window->GetRect().y; };
   inline void SetTop(int r)     { Window->SetSize(-1, r, -1, -1, wxSIZE_USE_EXISTING); };
-  int GetColor()  const  {
+  uint32_t GetColor()  const  {
     wxColour c = Window->GetBackgroundColour();
     return RGB(c.Red(), c.Green(), c.Blue());
   }
-  inline void SetColor(int c)  {
+  inline void SetColor(uint32_t c)  {
     Window->SetBackgroundColour(wxColour(GetRValue(c), GetGValue(c), GetBValue(c)));
     Window->Refresh();
   }

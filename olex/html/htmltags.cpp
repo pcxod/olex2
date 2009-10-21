@@ -718,7 +718,7 @@ TAG_HANDLER_PROC(tag)  {
       if( EsdlInstanceOf(*CreatedWindow, TComboBox) )  {
         TComboBox* Box = (TComboBox*)CreatedWindow;
         if( !bgc.IsEmpty() )  {
-          wxColor bgCl = wxColor( uiStr(bgc) );
+          wxColor bgCl = wxColor(bgc.u_str());
           Box->SetBackgroundColour( bgCl );
 #ifdef __WIN32__          
           if( Box->GetTextCtrl() != NULL )
@@ -728,7 +728,7 @@ TAG_HANDLER_PROC(tag)  {
 #endif
         }
         if( !fgc.IsEmpty() )  {
-          wxColor fgCl = wxColor( uiStr(bgc) );
+          wxColor fgCl = wxColor(bgc.u_str());
           Box->SetForegroundColour( fgCl );
 #ifdef __WIN32__          
           if( Box->GetTextCtrl() != NULL )
@@ -740,9 +740,9 @@ TAG_HANDLER_PROC(tag)  {
       }
       else  {
         if( !bgc.IsEmpty() )
-          CreatedWindow->SetBackgroundColour( wxColor( uiStr(bgc) ) );
+          CreatedWindow->SetBackgroundColour( wxColor(bgc.u_str()) );
         if( !fgc.IsEmpty() )
-          CreatedWindow->SetForegroundColour( wxColor( uiStr(fgc) ) );
+          CreatedWindow->SetForegroundColour( wxColor(fgc.u_str()) );
       }
     }
   }

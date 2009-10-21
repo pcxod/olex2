@@ -1,10 +1,6 @@
-//---------------------------------------------------------------------------
-
-#ifndef _xl_dgenoptH
-#define _xl_dgenoptH
-#include "wx/wx.h"
+#ifndef __olx_dlg_genoptdlg_H
+#define __olx_dlg_genoptdlg_H
 #include "ctrls.h"
-//---------------------------------------------------------------------------
 
 class TdlgGenerate: public TDialog, AActionHandler  {
 private:

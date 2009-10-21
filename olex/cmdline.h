@@ -12,13 +12,12 @@ protected:
   int CmdIndex;
   virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL);
 public:
-  TCmdLine( wxWindow* parent, int flags );
+  TCmdLine(wxWindow *parent, int flags);
   virtual ~TCmdLine();
 
-  bool ProcessKey( wxKeyEvent& evt );
+  bool ProcessKey(wxKeyEvent& evt);
 
-  void SetPromptStr( const olxstr& str )  {  PromptStr = str;  }
-  const olxstr& GetPromptStr()      const {  return PromptStr;  }
+  DefPropC(olxstr, PromptStr)
 
   olxstr GetCommand()  {
     return GetText().Length() > PromptStr.Length() ? GetText().SubStringFrom( PromptStr.Length() ) :

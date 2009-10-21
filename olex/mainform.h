@@ -307,7 +307,6 @@ private:
   DefMacro(Scene)
   DefMacro(SyncBC)
 
-  DefMacro(IF)
   DefMacro(Basis)
   DefMacro(Lines)
 
@@ -519,10 +518,6 @@ private:
 
   DefFunc(SGList)
 
-  DefFunc(And)
-  DefFunc(Or)
-  DefFunc(Not)
-
   DefFunc(ChooseElement)
   DefFunc(SfacList)
   DefFunc(StrDir)
@@ -550,7 +545,6 @@ public:
   virtual bool IsControl(const olxstr& cname) const;
   virtual void LockWindowDestruction(wxWindow* wnd);
   virtual void UnlockWindowDestruction(wxWindow* wnd);
-public:
 
   void OnKeyUp(wxKeyEvent& event);
   void OnKeyDown(wxKeyEvent& event);
@@ -560,7 +554,7 @@ public:
   virtual bool ProcessEvent( wxEvent& evt );
   void OnResize();
   olxstr StylesDir, // styles folder
-    SParamDir,        // scene parameters folder
+    ScenesDir, 
     DefStyle,         // default style file
     DefSceneP,        // default scene parameters file
     DataDir,
@@ -631,8 +625,10 @@ public:
   void SetProcess( AProcess *Process );
   void LoadSettings(const olxstr &FN);
   void SaveSettings(const olxstr &FN);
-  void LoadScene(TDataItem *Root, TGlLightModel *FLM=NULL);
-  void SaveScene(TDataItem *Root, TGlLightModel *FLM=NULL);
+  virtual const olxstr& GetScenesFolder() const {  return ScenesDir;  }
+  virtual void SetScenesFolder(const olxstr &sf)  {  ScenesDir = sf;  }
+  virtual void LoadScene(const TDataItem& Root, TGlLightModel &FLM);
+  virtual void SaveScene(TDataItem& Root, const TGlLightModel &FLM) const;
 
   // fires the state change as well
   void UseGlTooltip(bool v);

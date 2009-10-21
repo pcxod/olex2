@@ -82,6 +82,5 @@ namespace ctrl_ext  {
     DECLARE_CLASS(TBmpButton)
     DECLARE_EVENT_TABLE()
   };
-
 }; //end namespace ctrl_ext
 #endif

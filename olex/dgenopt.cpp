@@ -2,12 +2,8 @@
 // DlgGenerate implementation
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
 #include "dgenopt.h"
-#include "mainform.h"
+#include "ctrls/frameext.h"
 //----------------------------------------------------------------------------//
 // TdlgGenerate function bodies
 //----------------------------------------------------------------------------//
@@ -97,29 +93,25 @@ bool TdlgGenerate::Execute(const IEObject *Sender, const IEObject *Data)  {
   if( (TComboBox*)Sender == cbC )  OnCChange();
   return true;
 }
-void TdlgGenerate::OnAChange()
-{
+void TdlgGenerate::OnAChange()  {
   double v = 2;
   cbA->GetValue().ToDouble(&v);
-  tcAFrom->SetValue( uiStr(olxstr(-v/2)) );
-  tcATo->SetValue( uiStr(olxstr(v/2)) );
+  tcAFrom->SetValue(olxstr(-v/2).u_str());
+  tcATo->SetValue(olxstr(v/2).u_str());
 }
-void TdlgGenerate::OnBChange()
-{
+void TdlgGenerate::OnBChange()  {
   double v = 2;
   cbB->GetValue().ToDouble(&v);
-  tcBFrom->SetValue( uiStr(olxstr(-v/2)) );
-  tcBTo->SetValue( uiStr(olxstr(v/2)) );
+  tcBFrom->SetValue(olxstr(-v/2).u_str());
+  tcBTo->SetValue(olxstr(v/2).u_str());
 }
-void TdlgGenerate::OnCChange()
-{
+void TdlgGenerate::OnCChange()  {
   double v = 2;
   cbC->GetValue().ToDouble(&v);
-  tcCFrom->SetValue( uiStr(olxstr(-v/2)) );
-  tcCTo->SetValue( uiStr(olxstr(v/2)) );
+  tcCFrom->SetValue(olxstr(-v/2).u_str());
+  tcCTo->SetValue(olxstr(v/2).u_str());
 }
-void TdlgGenerate::OnOK(wxCommandEvent& event)
-{
+void TdlgGenerate::OnOK(wxCommandEvent& event)  {
   double v = 2;
   tcAFrom->GetValue().ToDouble(&v);  AFrom = v;
   tcBFrom->GetValue().ToDouble(&v);  BFrom = v;

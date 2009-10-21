@@ -105,7 +105,7 @@ public:
       if( A->GetPos() > A->GetMax() )
         A->SetPos( A->GetMax() );
 
-      Progress->Update((int)A->GetPos(), uiStr(A->GetAction()) );
+      Progress->Update((int)A->GetPos(), A->GetAction().u_str());
     }
     return false;
   }
@@ -138,14 +138,6 @@ bool TGlXApp::OnInit()  {
   MainForm->SetIcon(wxIcon(mainicon_xpm));
 #endif
 
-  /*
-  glEnable(GL_POINT_SMOOTH);
-  glEnable(GL_LINE_SMOOTH);
-  glEnable(GL_POLYGON_SMOOTH);
-  glHint(GL_POINT_SMOOTH_HINT,GL_NICEST);
-  glHint(GL_LINE_SMOOTH_HINT,GL_NICEST);
-  glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-  */
   // KUBUNTU opengl does not want any parameters :)
   TEGC::Initialise();  // prepare Olex2 API...
   wxString glAttr;
@@ -167,11 +159,8 @@ bool TGlXApp::OnInit()  {
     #endif
     XApp = new TGXApp( TBasicApp::GuessBaseDir(argv[0], "OLEX2_DIR") );
   }
-  catch( TExceptionBase& exc )  {
-    TStrList out;
-    exc.GetException()->GetStackTrace(out);
-    ::wxMessageBox( uiStr(out.Text('\n')) += wxT('\n'),
-      uiStrT("Exception: ") += uiStrT(EsdlObjectNameT(exc)), wxOK|wxICON_ERROR);
+  catch(const TExceptionBase& e)  {
+    TMainFrame::ShowAlert(e);
     throw;
   }
   // write PID file
@@ -215,11 +204,8 @@ bool TGlXApp::OnInit()  {
   MainForm->SetToolTip(wxT("\n")); // force multiline ttoltips with (&#10;)
 #endif
   try  {  MainForm->XApp(XApp);  }  // his sets XApp for the canvas as well
-  catch( TExceptionBase& exc )  {
-    TStrList out;
-    exc.GetException()->GetStackTrace(out);
-    ::wxMessageBox( uiStr(out.Text('\n')) += wxT('\n'),
-      uiStrT("Exception: ") += uiStrT(EsdlObjectNameT(exc)), wxOK|wxICON_ERROR);
+  catch(const TExceptionBase& e)  {
+    TMainForm::ShowAlert(e);
   }
   SetTopWindow(MainForm);
   //MainForm->Maximize(true);

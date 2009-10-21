@@ -6,35 +6,11 @@
 #include "ctrls/olxctrlbase.h"
 #include "wx/wx.h"
 
-#ifndef uiStr  // ansi string to wxString in unicode
-  #define uiStr(v)  (wxString((v).u_str()))
-  #define uiStrT(v) (wxString(v, *wxConvUI))
-#endif
-
-//---------------------------------------------------------------------------
 namespace ctrl_ext  {
-
-  class TMainFrame: public wxFrame, public AOlxCtrl  {
-  protected:
-    struct TWindowInfo  {  int x, y;  };
-    TSStrPObjList<olxstr,TWindowInfo*, false> WindowPos;
-    // extends filter for case sensitive OS
-    olxstr PortableFilter(const olxstr& filter);
-  public:
-    TMainFrame(const wxString& title, const wxPoint& pos, const wxSize& size, const wxString &ClassName);
-    virtual ~TMainFrame();
-    void RestorePosition(wxWindow *Window); // restores previously saved position
-    void SavePosition(wxWindow *Window);    //saves current position of the window on screen
-    olxstr PickFile(const olxstr &Caption, const olxstr &Filter, const olxstr &DefFolder, bool Open);
-    virtual void LockWindowDestruction(wxWindow* wnd) = 0;
-    virtual void UnlockWindowDestruction(wxWindow* wnd) = 0;
-
-    DECLARE_CLASS(TMainFrame)
-  };
 
   class TDialog: public wxDialog, public AOlxCtrl {
   protected:
-    TMainFrame *Parent;
+    class TMainFrame *Parent;
   public:
     TDialog(TMainFrame *Parent, const wxString &Title, const wxString &ClassName);
     virtual ~TDialog();
@@ -54,6 +30,7 @@ namespace ctrl_ext  {
   };
 };  // end of the _xl_Controls namespace
 using namespace ctrl_ext;
+#include "ctrls/frameext.h"
 #include "ctrls/menuext.h"
 #include "ctrls/labelext.h"
 #include "ctrls/comboext.h"

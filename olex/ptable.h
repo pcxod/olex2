@@ -1,26 +1,17 @@
-//---------------------------------------------------------------------------
-
-#ifndef ptableH
-#define ptableH
-#include "eobjects.h"
-#include "actions.h"
-#include "atominfo.h"
-#include "wx/wx.h"
+#ifndef __olx_dlg_ptable_H
+#define __olx_dlg_ptable_H
 #include "ctrls.h"
-//---------------------------------------------------------------------------
-class TPTableDlg: public TDialog, public AActionHandler
-{
+#include "atominfo.h"
+
+class TPTableDlg: public TDialog, public AActionHandler  {
 protected:
   void CreateButton(int i, int j, int offset);
   TPtrList<TButton> ButtonsList;
-  TAtomsInfo *FAI;
-  TBasicAtomInfo *FSelected;
-  class TMainFrame *FParent;
-
+  TBasicAtomInfo *Selected;
 public:
-  TPTableDlg(class TMainFrame *Parent, TAtomsInfo *AI);
+  TPTableDlg(TMainFrame *Parent);
   virtual ~TPTableDlg();
-  TBasicAtomInfo *Selected(){  return FSelected; }
+  TBasicAtomInfo *GetSelected()  {  return Selected; }
   bool Execute(const IEObject *Sender, const IEObject *Data);
 };
 #endif

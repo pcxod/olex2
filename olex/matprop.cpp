@@ -290,8 +290,8 @@ void TdlgMatProp::Init( const TGlMaterial &Glm )  {
   tcSpecF->WI.SetColor(Glm.SpecularF.GetRGB());
   tcSpecB->WI.SetColor(Glm.SpecularB.GetRGB());
 
-  tcShnF->SetValue( uiStr(olxstr(Glm.ShininessF)));
-  tcShnB->SetValue( uiStr(olxstr(Glm.ShininessB)));
+  tcShnF->SetValue(olxstr(Glm.ShininessF).u_str());
+  tcShnB->SetValue(olxstr(Glm.ShininessB).u_str());
 }
 //..............................................................................
 void TdlgMatProp::Update(TGlMaterial &Glm)  {

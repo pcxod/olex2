@@ -1,6 +1,5 @@
-#ifndef _xl_matpropH
-#define _xl_matpropH
-#include "wx/wx.h"
+#ifndef __olx_dlg_matprop_H
+#define __olx_dlg_matprop_H
 #include "ctrls.h"
 #include "globj.h"
 #include "gxapp.h"

@@ -2,19 +2,13 @@
 // primitives dialog
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
 #include "primtvs.h"
-#include "mainform.h"
-
 //..............................................................................
 BEGIN_EVENT_TABLE(TdlgPrimitive, TDialog)
   EVT_BUTTON(wxID_OK, TdlgPrimitive::OnOK)
 END_EVENT_TABLE()
 //..............................................................................
-TdlgPrimitive::TdlgPrimitive(const TStrList& L, int mask, TMainForm *P) :
+TdlgPrimitive::TdlgPrimitive(TMainFrame *P, const TStrList& L, int mask) :
   TDialog(P, wxT("Primitives"), wxT("dlgPrimitives"))
 {
   wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -36,8 +30,6 @@ TdlgPrimitive::TdlgPrimitive(const TStrList& L, int mask, TMainForm *P) :
   SetSizer(TopSizer);
   Center();
 }
-//..............................................................................
-TdlgPrimitive::~TdlgPrimitive()  {  }
 //..............................................................................
 void TdlgPrimitive::OnOK(wxCommandEvent& event)  {
   Mask = 0;
