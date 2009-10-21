@@ -229,11 +229,12 @@ public:
 //----------------------------------------------------------------------------//
 enum  {
   ID_OnSelect = 1,
-  ID_OnDisassemble
+  ID_OnDisassemble,
+  ID_OnFileLoad
 };
 
 TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this)  {
-  FStructureVisible = FQPeaksVisible = FHydrogensVisible =  FHBondsVisible = true;
+  FQPeaksVisible = FHydrogensVisible = FStructureVisible = FHBondsVisible = true;
   XGrowPointsVisible = FXGrowLinesVisible = FQPeakBondsVisible = false;
   FXPolyVisible = true;
   DeltaV = 3;
@@ -273,6 +274,7 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this)  {
   XFile().GetLattice().OnStructureUniq->Add(P);
   XFile().GetLattice().OnStructureUniq->Add( new xappXFileUniq);
   XFile().OnFileLoad->Add(P);
+  XFile().OnFileLoad->Add(this, ID_OnFileLoad);
 
   OnGraphicsVisible = &NewActionQueue("GRVISIBLE");
   OnFragmentVisible = &NewActionQueue("FRVISIBLE");
@@ -392,18 +394,13 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   for( int i=0; i < allAtoms.Count(); i++ )  {
     allAtoms[i]->SetTag(i);
     TXAtom& XA = XAtoms.Add( *(new TXAtom(*FGlRender, EmptyString, *allAtoms[i])) );
-    if( allAtoms[i]->IsDeleted() )  
-      XA.SetDeleted(true);
+    XA.SetDeleted(allAtoms[i]->IsDeleted());
     XA.Create(EmptyString);
     XA.SetXAppId(i);
-    if( !FStructureVisible )  {  
-      XA.SetVisible(FStructureVisible);  
-      continue;  
-    }
-    if( allAtoms[i]->GetAtomInfo() == iHydrogenIndex )    
-      XA.SetVisible(FHydrogensVisible);
-    if( allAtoms[i]->GetAtomInfo() == iQPeakIndex )       
-      XA.SetVisible(FQPeaksVisible);
+    if( !FStructureVisible )
+      XA.SetVisible(false);  
+    else 
+      XA.SetVisible(!allAtoms[i]->CAtom().IsDetached());  
   }
   
   sw.start("Bonds creation");
@@ -415,35 +412,27 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     for( int j=0; j < OverlayedXFiles[i].GetLattice().BondCount(); j++ )
       allBonds.Add( &OverlayedXFiles[i].GetLattice().GetBond(j) );
   }
-  XBonds.SetCapacity( allBonds.Count() );
+  XBonds.SetCapacity(allBonds.Count());
   for( int i=0; i < allBonds.Count(); i++ )  {
     TSBond* B = allBonds[i];
-    //TXAtom& XA = XAtoms[ B->A().GetTag() ];
-    //TXAtom& XA1 = XAtoms[ B->B().GetTag() ];
-    //TXBond& XB = XBonds.Add( *(new TXBond(TXBond::GetLegend( *B, TXAtom::LegendLevel(XA.GetPrimitives().Name()),
-    //            TXAtom::LegendLevel(XA1.GetPrimitives().Name())), *allBonds[i], FGlRender)) );
     TXBond& XB = XBonds.Add( *(new TXBond(*FGlRender, TXBond::GetLegend( *B, 2), *allBonds[i])) );
-    if( B->IsDeleted() || (B->A().IsDeleted() || allBonds[i]->B().IsDeleted()) )
-      XB.SetDeleted(true);
+    XB.SetDeleted(B->IsDeleted() || (B->A().IsDeleted() || allBonds[i]->B().IsDeleted()));
     BondCreationParams bcpar(XAtoms[B->A().GetTag()], XAtoms[B->B().GetTag()]);
     XB.Create(EmptyString, &bcpar);
+    if( !FStructureVisible )  {  
+      XB.SetVisible(FStructureVisible);  
+      continue;  
+    }
+    XB.SetVisible( XAtoms[B->A().GetTag()].IsVisible() && XAtoms[B->B().GetTag()].IsVisible() );
+    if( !XB.IsVisible() )  continue;
     if( (B->A().GetAtomInfo() == iQPeakIndex) ||
         (B->B().GetAtomInfo() == iQPeakIndex)  ) 
     {  
       XB.SetVisible(FQPeakBondsVisible);  
       continue;  
     }
-    if( !FStructureVisible )  {  
-      XB.SetVisible(FStructureVisible);  
-      continue;  
-    }
-    if( (B->A().GetAtomInfo() == iHydrogenIndex) ||
-        (B->B().GetAtomInfo() == iHydrogenIndex)  )
-    {
-      if( B->GetType() == sotHBond )  
-        XB.SetVisible(FHBondsVisible);
-      else                            
-        XB.SetVisible( FHydrogensVisible );
+    if( (B->GetType() == sotHBond) )  {
+      XB.SetVisible(FHBondsVisible);
     }
   }
   sw.start("Other objects creation");
@@ -642,32 +631,25 @@ TUndoData* TGXApp::SetGraphicsVisible( TPtrList<AGDrawObject>& G, bool v )  {
   return NULL;
 }
 //..............................................................................
-void TGXApp::BangTable(TXAtom *XA, TTTable<TStrList>& Table)
-{
-  TSAtom* A = &XA->Atom();
-  float angle;
-  TSBond *B, *B1;
-  vec3d V, V1;
-  Table.Resize(A->BondCount(), A->BondCount());
+void TGXApp::BangTable(TXAtom *XA, TTTable<TStrList>& Table) {
+  const TSAtom &A = XA->Atom();
+  Table.Resize(A.BondCount(), A.BondCount());
+  Table.ColName(0) = A.GetLabel();
+  for( int i=0; i < A.BondCount()-1; i++ )
+    Table.ColName(i+1) = A.Bond(i).Another(A).GetLabel();
 
-  Table.ColName(0) = A->GetLabel();
-  for( int i=0; i < A->BondCount()-1; i++ )
-    Table.ColName(i+1) = A->Bond(i).Another(*A).GetLabel();
-
-  for( int i=0; i < A->BondCount(); i++ )  {
-    B = &A->Bond(i);
-    Table[i][0] = olxstr::FormatFloat(3, B->Length());
-    Table.RowName(i) = B->Another(*A).GetLabel();
-    for( int j=0; j < A->BondCount()-1; j++ )  {
-      B1 = &A->Bond(j);
-
+  for( int i=0; i < A.BondCount(); i++ )  {
+    const TSBond &B = A.Bond(i);
+    Table[i][0] = olxstr::FormatFloat(3, B.Length());
+    Table.RowName(i) = B.Another(A).GetLabel();
+    for( int j=0; j < A.BondCount()-1; j++ )  {
+      const TSBond& B1 = A.Bond(j);
       if( i == j )  { Table[i][j+1] = '-'; continue; }
       if( i <= j )  { Table[i][j+1] = '-'; continue; }
-
-      V = B->Another(*A).crd() - A->crd();
-      V1 = B1->Another(*A).crd() - A->crd();
+      const vec3d V = B.Another(A).crd() - A.crd();
+      const vec3d V1 = B1.Another(A).crd() - A.crd();
       if( V.QLength()*V1.QLength() != 0 )  {
-        angle = V.CAngle(V1);
+        double angle = V.CAngle(V1);
         angle = acos(angle)*180/M_PI;
         Table[i][j+1] = olxstr::FormatFloat(3, angle);
       }
@@ -678,72 +660,60 @@ void TGXApp::BangTable(TXAtom *XA, TTTable<TStrList>& Table)
 }
 //..............................................................................
 void TGXApp::BangList(TXAtom *XA, TStrList &L)  {
-  float angle;
-  TSAtom* A = &XA->Atom();
-  olxstr T;
-  vec3d V, V1;
-  for( int i=0; i < A->BondCount(); i++ )  {
-    TSBond& B = A->Bond(i);
-    T = A->GetLabel();  T << '-'  << B.Another(*A).GetLabel();
+  const TSAtom &A = XA->Atom();
+  for( int i=0; i < A.BondCount(); i++ )  {
+    const TSBond &B = A.Bond(i);
+    olxstr& T = L.Add(A.GetLabel());
+    T << '-'  << B.Another(A).GetLabel();
     T << ": " << olxstr::FormatFloat(3, B.Length());
-    L.Add(T);
   }
-  for( int i=0; i < A->BondCount(); i++ )  {
-    TSBond& B = A->Bond(i);
-    for( int j=i+1; j < A->BondCount(); j++ )  {
-      TSBond& B1 = A->Bond(j);
-
-      T = B.Another(*A).GetLabel();  T << '-' << A->GetLabel() << '-';
-      T << B1.Another(*A).GetLabel() << ": ";
-      V = B.Another(*A).crd() - A->crd();
-      V1 = B1.Another(*A).crd() - A->crd();
-      if( V.Length() && V1.Length() )  {
-        angle = V.CAngle(V1);
+  for( int i=0; i < A.BondCount(); i++ )  {
+    const TSBond &B = A.Bond(i);
+    for( int j=i+1; j < A.BondCount(); j++ )  {
+      const TSBond &B1 = A.Bond(j);
+      olxstr& T = L.Add(B.Another(A).GetLabel());
+      T << '-' << A.GetLabel() << '-';
+      T << B1.Another(A).GetLabel() << ": ";
+      const vec3d V = B.Another(A).crd() - A.crd();
+      const vec3d V1 = B1.Another(A).crd() - A.crd();
+      if( V.QLength()*V1.QLength() != 0 )  {
+        double angle = V.CAngle(V1);
         angle = acos(angle)*180/M_PI;
         T << olxstr::FormatFloat(3, angle);
       }
-      L.Add(T);
     }
   }
 }
-float TGXApp::Tang( TSBond *B1, TSBond *B2, TSBond *Middle, olxstr *Sequence )
-{
+double TGXApp::Tang( TSBond *B1, TSBond *B2, TSBond *Middle, olxstr *Sequence )  {
   // right parameters should be passed, e.g. the bonds should be connecetd like
   // B1-Middle-B2 or B2-Middle->B1, otherwise the result is almost meaningless!
-  TSAtom *A1, *A2, *A3, *A4;
-  TSBond *bt;
   if( Middle->A() == B1->A() || Middle->A() == B1->B() )
     ;
-  else
-  {
-    bt = B1;
-    B1 = B2;
-    B2 = bt; // swap bonds
+  else  {
+    olx_swap(B1, B2);
   }
   // using next scheme : A1-A2-A3-A4
-  A2 = &Middle->A();
-  A3 = &Middle->B();
-  A1 = &B1->Another(*A2);
-  A4 = &B2->Another(*A3);
-  vec3d A, B, C, D, E, F;
-  A = A1->crd() - A2->crd();
-  B = A3->crd() - A2->crd();
-  C = A2->crd() - A3->crd();
-  D = A4->crd() - A3->crd();
+  TSAtom &A2 = Middle->A();
+  TSAtom &A3 = Middle->B();
+  TSAtom &A1 = B1->Another(A2);
+  TSAtom &A4 = B2->Another(A3);
+  const vec3d A = A1.crd() - A2.crd();
+  const vec3d B = A3.crd() - A2.crd();
+  const vec3d C = A2.crd() - A3.crd();
+  const vec3d D = A4.crd() - A3.crd();
 
-  E = A.XProdVec(B);
-  F = C.XProdVec(D);
+  const vec3d E = A.XProdVec(B);
+  const vec3d F = C.XProdVec(D);
 
-  if( !E.Length() || ! F.Length() )  return -1;
+  if( E.QLength()*F.QLength() == 0 )  return -1;
 
-  float ca = E.CAngle(F), angle;
-  angle = acos(ca);
-  if( Sequence )
-  {
-    *Sequence = A1->GetLabel();
-    *Sequence << '-' << A2->GetLabel() <<
-                 '-' << A3->GetLabel() <<
-                 '-' << A4->GetLabel();
+  double ca = E.CAngle(F);
+  double angle = acos(ca);
+  if( Sequence != NULL )  {
+    *Sequence = A1.GetLabel();
+    *Sequence << '-' << A2.GetLabel() <<
+                 '-' << A3.GetLabel() <<
+                 '-' << A4.GetLabel();
   }
   return angle/M_PI*180;
 }
@@ -1234,58 +1204,9 @@ void TGXApp::AllVisible(bool V)  {
     TAsymmUnit& au = XFile().GetAsymmUnit();
     for( int i=0; i < au.AtomCount(); i++ )
       au.GetAtom(i).SetMasked(false);
-    for( int i=0; i < XAtoms.Count(); i++ )  {
-      TXAtom& a = XAtoms[i];
-      a.Atom().SetTag(i);
-      if( !(a.Atom().GetAtomInfo() == iQPeakIndex || a.Atom().GetAtomInfo() == iHydrogenIndex) )
-        a.SetVisible(V);
-    }
-    for( int i=0; i < XAtoms.Count(); i++ )  {
-      TXAtom& a = XAtoms[i];
-      if( !(a.Atom().GetAtomInfo() == iQPeakIndex || a.Atom().GetAtomInfo() == iHydrogenIndex) )
-        continue;
-      bool vis = false;
-      for( int j=0; j < a.Atom().NodeCount(); j++ )  {
-        if( XAtoms[a.Atom().Node(j).GetTag()].IsVisible() )  {
-          vis = true;
-          break;
-        }
-      }
-      if( vis )  {
-        if( a.Atom().GetAtomInfo() == iQPeakIndex )
-          a.SetVisible(FQPeaksVisible);
-        else 
-          a.SetVisible(FHydrogensVisible);
-      }
-      else
-        a.SetVisible(false);
-    }
-
-    for( int i=0; i < XBonds.Count(); i++ )  {
-      TXBond& b = XBonds[i];
-      if( !XAtoms[b.Bond().A().GetTag()].IsVisible() ||
-        !XAtoms[b.Bond().B().GetTag()].IsVisible() )  
-      {
-        b.SetVisible(false);
-        continue;
-      }
-      if( (b.Bond().A().GetAtomInfo() == iQPeakIndex) ||
-        (b.Bond().B().GetAtomInfo() == iQPeakIndex)  )
-        b.SetVisible(FQPeakBondsVisible);
-      else if( XBonds[i].Bond().GetType() == sotHBond )
-        b.SetVisible(FHBondsVisible);
-      else if( ((b.Bond().A().GetAtomInfo() == iHydrogenIndex) ||
-        (b.Bond().B().GetAtomInfo() == iHydrogenIndex)) &&
-        ((b.Bond().A().GetAtomInfo() != iQPeakIndex) &&
-        (b.Bond().B().GetAtomInfo() != iQPeakIndex)) )
-      {
-        b.SetVisible(FHydrogensVisible);
-      }
-      else
-        b.SetVisible(V);
-    }
+    XFile().GetLattice().UpdateConnectivity();
+    CenterView(true);
   }
-  //  }
   OnAllVisible->Exit(dynamic_cast<TBasicApp*>(this), NULL);
   Draw();
 }
@@ -1338,12 +1259,21 @@ void TGXApp::Select(const vec3d& From, const vec3d& To )  {
 }
 //..............................................................................
 bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
+  static bool loading_file = false;
   if( MsgId == ID_OnSelect )  {
     const TSelectionInfo* SData = dynamic_cast<const TSelectionInfo*>(Data);
     if(  !(SData->From == SData->To) )
       Select(SData->From, SData->To);
   }
+  if( MsgId == ID_OnFileLoad && MsgSubId == msiEnter )  {
+    loading_file = true;
+  }
   else if( MsgId == ID_OnDisassemble && MsgSubId == msiEnter ) {
+    if( loading_file )  {
+      loading_file = false;
+      XFile().GetAsymmUnit().DetachAtomType(iQPeakIndex, !FQPeaksVisible);
+      XFile().GetAsymmUnit().DetachAtomType(iHydrogenIndex, !FHydrogensVisible);
+    }
     //StoreGroups();
   }
   else if( MsgId == ID_OnDisassemble && MsgSubId == msiExit ) {
@@ -2901,19 +2831,23 @@ void TGXApp::HBondsVisible(bool v)  {
 }
 //..............................................................................
 void TGXApp::HydrogensVisible(bool v)  {
-  XFile().GetAsymmUnit().DetachAtomType(iHydrogenIndex, !v);
-  FHydrogensVisible = v;
-  GetRender().ClearSelection();
-  XFile().GetLattice().UpdateConnectivity();
-  CenterView(true);
+  if( FHydrogensVisible != v )  {
+    FHydrogensVisible = v;
+    XFile().GetAsymmUnit().DetachAtomType(iHydrogenIndex, !FHydrogensVisible);
+    GetRender().ClearSelection();
+    XFile().GetLattice().UpdateConnectivity();
+    CenterView(true);
+  }
 }
 //..............................................................................
 void TGXApp::QPeaksVisible(bool v)  {
-  XFile().GetAsymmUnit().DetachAtomType(iQPeakIndex, !v);
-  FQPeaksVisible = v;
-  GetRender().ClearSelection();
-  XFile().GetLattice().UpdateConnectivity();
-  CenterView(true);
+  if( FQPeaksVisible != v )  {
+    FQPeaksVisible = v;
+    XFile().GetAsymmUnit().DetachAtomType(iQPeakIndex, !FQPeaksVisible);
+    GetRender().ClearSelection();
+    XFile().GetLattice().UpdateConnectivity();
+    CenterView(true);
+  }
 }
 //..............................................................................
 void TGXApp::SyncQVisibility()  {
@@ -2974,8 +2908,6 @@ void TGXApp::StructureVisible(bool v)  {
   for( int i=0; i < XPlanes.Count(); i++ )       XPlanes[i].SetVisible(v);
   for( int i=0; i < XLabels.Count(); i++ )       XLabels[i].SetVisible(v);
   if( v )  {
-    QPeaksVisible(FQPeaksVisible);
-    HydrogensVisible(FHydrogensVisible);
     if( !FXGrid->IsEmpty() )
       FXGrid->SetVisible(true);
   } 
@@ -2986,70 +2918,41 @@ void TGXApp::StructureVisible(bool v)  {
 void TGXApp::LoadXFile(const olxstr& fn)  {
   FXFile->LoadFromFile(fn);
   if( !FStructureVisible )  
-    (*Log) << "Note: structure is invisible\n";
-  else  {
-    if( !FHydrogensVisible )  
-      (*Log) << "Note: hydrogens are invisible\n";
-    if( !FQPeaksVisible )     
-      (*Log) << "Note: Q-peaks are invisible\n";
+    GetLog() << "Note: structure is invisible\n";
+  else {
+    if( !FQPeaksVisible ) 
+      GetLog() << "Note: Q-peaks are invisible\n";
+    if( !FHydrogensVisible )
+      GetLog() << "Note: H-atoms are invisible\n";
   }
   Draw();  // fixes native loader is not draw after load
 }
 //..............................................................................
 void TGXApp::ShowPart(const TIntList& parts, bool show)  {
-  if( !parts.Count() )  {
+  if( parts.IsEmpty() )  {
     for( int i=0; i < XAtoms.Count(); i++ )  {
       if( XAtoms[i].IsDeleted() )  continue;
-      else if( XAtoms[i].Atom().GetAtomInfo() == iHydrogenIndex )
-        XAtoms[i].SetVisible(FHydrogensVisible);
-      else if( XAtoms[i].Atom().GetAtomInfo() == iQPeakIndex )
-        XAtoms[i].SetVisible(FQPeaksVisible);
-      else
-        XAtoms[i].SetVisible(true);
+      XAtoms[i].SetVisible(true);
     }
     for( int i=0; i < XBonds.Count(); i++ )  {
       if( XBonds[i].IsDeleted() )  continue;
-
-      if( (XBonds[i].Bond().A().GetAtomInfo() == iQPeakIndex) ||
-          (XBonds[i].Bond().B().GetAtomInfo() == iQPeakIndex)  )
-        XBonds[i].SetVisible(FQPeakBondsVisible);
-      else
-        if( (XBonds[i].Bond().A().GetAtomInfo() == iHydrogenIndex) ||
-            (XBonds[i].Bond().B().GetAtomInfo() == iHydrogenIndex)  )
-          XBonds[i].SetVisible(FHydrogensVisible);
-        else
-          XBonds[i].SetVisible(true);
+      XBonds[i].SetVisible(true);
     }
     return;
   }
   for( int i=0; i < XAtoms.Count(); i++ )  {
     if( XAtoms[i].IsDeleted() ) continue;
-    if( parts.IndexOf( XAtoms[i].Atom().CAtom().GetPart() ) != - 1 )  {
-      if( XAtoms[i].Atom().GetAtomInfo() == iHydrogenIndex )
-        XAtoms[i].SetVisible(FHydrogensVisible);
-      else
-        if( XAtoms[i].Atom().GetAtomInfo() == iQPeakIndex )
-          XAtoms[i].SetVisible(FQPeaksVisible);
-        else
-         XAtoms[i].SetVisible(show);
-    }
+    if( parts.IndexOf( XAtoms[i].Atom().CAtom().GetPart() ) != - 1 )
+      XAtoms[i].SetVisible(show);
     else
       XAtoms[i].SetVisible(!show);
   }
   for( int i=0; i < XBonds.Count(); i++ )  {
     if( XBonds[i].IsDeleted() )  continue;
     if( parts.IndexOf(XBonds[i].Bond().A().CAtom().GetPart()) != -1 &&
-        parts.IndexOf(XBonds[i].Bond().B().CAtom().GetPart()) != -1 )  {
-
-      if( (XBonds[i].Bond().A().GetAtomInfo() == iQPeakIndex) ||
-          (XBonds[i].Bond().B().GetAtomInfo() == iQPeakIndex)  )
-        XBonds[i].SetVisible(FQPeakBondsVisible);
-      else
-        if( (XBonds[i].Bond().A().GetAtomInfo() == iHydrogenIndex) ||
-            (XBonds[i].Bond().B().GetAtomInfo() == iHydrogenIndex)  )
-          XBonds[i].SetVisible(FHydrogensVisible);
-        else
-          XBonds[i].SetVisible(show);
+        parts.IndexOf(XBonds[i].Bond().B().CAtom().GetPart()) != -1 )
+    {
+      XBonds[i].SetVisible(show);
     }
     else
       XBonds[i].SetVisible(!show);

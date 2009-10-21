@@ -4559,7 +4559,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       Tmp = TEFile::ExtractFilePath(FN);
       if( !Tmp.IsEmpty() && !(Tmp == XLibMacros::CurrentDir) )  {
         if( !TEFile::ChangeDir(Tmp) )
-          TBasicApp::GetLog() << ("Cannot change current folder...\n");
+          TBasicApp::GetLog() << (olxstr("Cannot change current folder '") << TEFile::CurrentDir() << "'  to '" << Tmp << "'\n");
         else  {
           if( !Blind )  
             XLibMacros::CurrentDir = Tmp;

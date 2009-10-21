@@ -88,7 +88,6 @@ protected:
   bool FGlImageChanged; // true if DrawMethod was used
   char *FGlImage;
   int FGlImageHeight, FGlImageWidth;
-  TActionQList *FActions;
   mutable double CalculatedZoom;
   bool ATI;
 public:
