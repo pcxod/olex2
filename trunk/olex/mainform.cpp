@@ -1966,11 +1966,10 @@ void TMainForm::OnFragmentHide(wxCommandEvent& event)  {
 void TMainForm::OnFragmentShowOnly(wxCommandEvent& event)  {
   if( FObjectUnderMouse == NULL )  return;
   TNetPList L, L1;
-  if( GetFragmentList(L) == 0 )
-    return;
+  if( GetFragmentList(L) == 0 )  return;
   FXApp->InvertFragmentsList(L, L1);
   FXApp->FragmentsVisible(L1, false);
-  //FXApp->CenterView();
+  FXApp->CenterView(true);
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................

@@ -1025,6 +1025,8 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp & xapp = TXApp::GetInstance();
+  // do not print a warning...
+  if( xapp.XFile().GetLattice().IsGenerated() )  return;
   TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
   TEBitArray detached(au.AtomCount());
   for( int i=0; i < au.AtomCount(); i++ )  {

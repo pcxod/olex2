@@ -849,20 +849,25 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
 void TLattice::UpdateAsymmUnit()  {
   if( Atoms.IsEmpty() )  return;
   const int ac = GetAsymmUnit().AtomCount();
-  TTypeList<TSAtomPList> AUAtoms(ac);
-  for( int i=0; i < ac; i++ )  // create lists to store atom groups
-    AUAtoms.Set(i, new TSAtomPList);
+  TArrayList<TSAtomPList> AUAtoms(ac);
+  TIntList del_cnt(ac);
+  for( int i=0; i < ac; i++ )
+    del_cnt[i] = 0;
   const int lat_ac = Atoms.Count();
   for( int i=0; i < lat_ac; i++ )  {
-    if( Atoms[i]->IsDeleted() )
+    if( Atoms[i]->IsDeleted() )  {
+      del_cnt[Atoms[i]->CAtom().GetId()]++;
       continue;
+    }
     AUAtoms[Atoms[i]->CAtom().GetId()].Add(Atoms[i]);
   }
   for( int i=0; i < ac; i++ )  {  // create lists to store atom groups
+    if( del_cnt[i] == 0 )  continue;  // nothing to do
     TSAtomPList& l = AUAtoms[i];
     TCAtom& ca = AsymmUnit->GetAtom(i);
     if( l.IsEmpty() )  {  // all atoms are deleted
-      ca.SetDeleted(true);
+      if( !ca.IsDeleted() )
+        ca.SetDeleted( ca.IsAvailable() );
       //ca.SetDeleted( !ca.IsMasked() || ca.GetAtomInfo() == iQPeakIndex);
       continue;
     }
@@ -2007,10 +2012,11 @@ bool TLattice::ApplyGrowInfo()  {
   }
   Matrices.Assign( _GrowInfo->matrices );
   _GrowInfo->matrices.Clear();
-  Atoms.SetCapacity( au.AtomCount() );
+  Atoms.SetCapacity(au.AtomCount()*Matrices.Count());
   for( int i=0; i < au.AtomCount(); i++ )    {
     TCAtom& ca = GetAsymmUnit().GetAtom(i);
-    if( !ca.IsAvailable() )  continue;
+    // we still need masked and detached atoms here
+    if( ca.IsDeleted() )  continue;
     if( i >= _GrowInfo->info.Count() )  {  // create just with I matrix
       TSAtom* a = Atoms.Add( new TSAtom(Network) );
       a->CAtom(ca);
