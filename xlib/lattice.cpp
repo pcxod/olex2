@@ -616,7 +616,7 @@ void TLattice::GrowAtom(int FragId, const smatd& transform)  {
 
   for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& ca = GetAsymmUnit().GetAtom(i);
-    if( ca.IsAvailable() )  continue;
+    if( !ca.IsAvailable() )  continue;
     if( ca.GetFragmentId() == FragId )  {
       TSAtom* SA = new TSAtom( Network );
       SA->CAtom( ca );

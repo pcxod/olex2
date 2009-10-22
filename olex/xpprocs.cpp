@@ -3106,9 +3106,6 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       qpeaks[i]->SetDetached(i >= d_cnt);
     FXApp->GetSelection().Clear();
     FXApp->XFile().GetLattice().UpdateConnectivity();
-    for( int i=0; i < FXApp->AtomCount(); i++ )
-      FXApp->GetAtom(i).SetVisible( !FXApp->GetAtom(i).Atom().CAtom().IsDetached() );
-    FXApp->SyncQVisibility();
     TimePerFrame = FXApp->Draw();
   }
   else if( Cmds.Count() == 2 )  {
@@ -3153,9 +3150,6 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       qpeaks[i]->SetDetached( i >= num );
     FXApp->GetSelection().Clear();
     FXApp->XFile().GetLattice().UpdateConnectivity();
-    for( int i=0; i < FXApp->AtomCount(); i++ )
-      FXApp->GetAtom(i).SetVisible( !FXApp->GetAtom(i).Atom().CAtom().IsDetached() );
-    FXApp->SyncQVisibility();
     TimePerFrame = FXApp->Draw();
   }
   else  {
