@@ -9,6 +9,12 @@
 
 BeginEsdlNamespace()
 
+// app event registry, these might not be implemented
+static olxstr 
+  olxappevent_GL_DRAW("GLDRAW"),
+  olxappevent_GL_CLEAR_STYLES("GLDSCLEAR"),
+  olxappevent_GL_BEFORE_DRAW("BGLDRAW");
+
 class TBasicApp: public IEObject  {
   olxstr BaseDir, SharedDir, ExeName;
 protected:

@@ -767,7 +767,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TXApp& XApp = TXApp::GetInstance();
+  TXApp &XApp = TXApp::GetInstance();
   if( XApp.XFile().GetLattice().IsGenerated() )  {
     Error.ProcessingError(__OlxSrcInfo, "command is not applicable to grown structure");
     return;
@@ -777,6 +777,16 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     Hfix = Cmds[0].ToInt();
     Cmds.Delete(0);
   }
+  TAsymmUnit &au = XApp.XFile().GetAsymmUnit();
+  for( int i=0; i < au.AtomCount(); i++ )  {
+    TCAtom &ca = au.GetAtom(i);
+    if( ca.GetAtomInfo() == iHydrogenIndex || ca.GetAtomInfo() == iDeuteriumIndex )
+      ca.SetDetached(false);
+  }
+  TActionQueue* q_draw = XApp.ActionQueue(olxappevent_GL_DRAW);
+  if( q_draw != NULL )  q_draw->SetEnabled(false);
+  XApp.XFile().GetLattice().UpdateConnectivity();
+
   TSAtomPList satoms;
   XApp.FindSAtoms( Cmds.Text(' '), satoms, true );
   TXlConGen xlConGen( XApp.XFile().GetRM() );
@@ -789,7 +799,6 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       TDoubleList occu;
       TAtomEnvi AE;
       XApp.XFile().GetUnitCell().GetAtomEnviList(*satoms[aitr], AE);
-
       for( int i=0; i < AE.Count(); i++ )  {
         if( AE.GetCAtom(i).GetPart() != 0 && AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() ) 
           if( parts.IndexOf(AE.GetCAtom(i).GetPart()) == -1 )  {
@@ -856,8 +865,8 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       }
     }
   }
+  if( q_draw != NULL )  q_draw->SetEnabled(true);
   XApp.XFile().GetLattice().Init();
-  //XApp.XFile().EndUpdate();
   delete XApp.FixHL();
 }
 //..............................................................................
@@ -1026,8 +1035,7 @@ void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     else if( ca.GetAtomInfo().GetMr() < 3.5 )
       ca.SetDetached(false);
   }
-  // nice hack
-  TActionQueue* q_draw = xapp.ActionQueue("GLDRAW");
+  TActionQueue* q_draw = xapp.ActionQueue(olxappevent_GL_DRAW);
   if( q_draw != NULL )  q_draw->SetEnabled(false);
   xapp.XFile().GetLattice().UpdateConnectivity();
   delete TXApp::GetInstance().FixHL();

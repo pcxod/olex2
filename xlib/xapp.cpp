@@ -420,7 +420,8 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
         int lat_id = toks[i].SubStringFrom(2).ToInt();
         if( lat_id < 0 || lat_id >= latt.AtomCount() )
           throw TInvalidArgumentException(__OlxSourceInfo, "satom id");
-        res.Add( &latt.GetAtom(lat_id) );
+        if( latt.GetAtom(lat_id).CAtom().IsAvailable() )
+          res.Add(latt.GetAtom(lat_id));
         toks.Delete(i);
         i--;
       }
@@ -446,16 +447,17 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
             continue;
           for( int j=0; j < latt.AtomCount(); j++ )  {
             TSAtom& sa = XFile().GetLattice().GetAtom(j);
+            if( !sa.CAtom().IsAvailable() )  continue;
             if( sa.CAtom().GetTag() != ag[i].GetAtom()->GetTag() )  continue;
             if( ag[i].GetMatrix() == 0 )  {  // get an atom from the asymm unit
               if( sa.GetMatrix(0).GetTag() == 0 && sa.GetMatrix(0).t.QLength() < 1e-10  )
-                atoms.Add( sa );
+                atoms.Add(sa);
             }
             else  {
               if( sa.GetMatrix(0).GetTag() == ag[i].GetMatrix()->GetTag() &&
                 sa.GetMatrix(0).t.QDistanceTo(ag[i].GetMatrix()->t) < 1e-10 )
               {
-                atoms.Add( sa );
+                atoms.Add(sa);
               }
             }
           }
@@ -464,9 +466,11 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
     }
   }
   else if( atoms.IsEmpty() && ReturnAll ) {
-    atoms.SetCapacity( XFile().GetLattice().AtomCount() );
-    for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )
-      atoms.Add( &XFile().GetLattice().GetAtom(i) );
+    TLattice &latt = XFile().GetLattice();
+    atoms.SetCapacity(latt.AtomCount());
+    for( int i=0; i < latt.AtomCount(); i++ )
+      if( latt.GetAtom(i).CAtom().IsAvailable() )
+        atoms.Add(latt.GetAtom(i));
   }
   res.AddList(atoms);
   return !atoms.IsEmpty();

@@ -8639,8 +8639,8 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 		  satoms.Clear();
 			TNetwork& f = latt.GetFragment(i);
 			for( int j=0; j < f.NodeCount(); j++ )  {
-			  if( f.Node(j).IsDeleted() || f.Node(j).CAtom().IsMasked() )  continue;
-				satoms.Add( f.Node(j) );
+			  if( f.Node(j).IsDeleted() )  continue;
+				satoms.Add(f.Node(j));
 			}
 			if( satoms.Count() < 3 )  continue;
   
