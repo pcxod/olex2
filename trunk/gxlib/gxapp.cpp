@@ -179,9 +179,10 @@ public:
         break;
       }
     }
+    FParent->XFile().GetAsymmUnit().DetachAtomType(iQPeakIndex, !FParent->QPeaksVisible());
+    FParent->XFile().GetAsymmUnit().DetachAtomType(iHydrogenIndex, !FParent->HydrogensVisible());
     if( sameAU )  {  // apply masks
       ac = 0;
-      TIntList maskedQ;
       for( int i=0; i < au.AtomCount(); i++ )  {
         TCAtom& ca = au.GetAtom(i);
         if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  continue;
@@ -229,8 +230,7 @@ public:
 //----------------------------------------------------------------------------//
 enum  {
   ID_OnSelect = 1,
-  ID_OnDisassemble,
-  ID_OnFileLoad
+  ID_OnDisassemble
 };
 
 TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this)  {
@@ -274,7 +274,6 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this)  {
   XFile().GetLattice().OnStructureUniq->Add(P);
   XFile().GetLattice().OnStructureUniq->Add( new xappXFileUniq);
   XFile().OnFileLoad->Add(P);
-  XFile().OnFileLoad->Add(this, ID_OnFileLoad);
 
   OnGraphicsVisible = &NewActionQueue("GRVISIBLE");
   OnFragmentVisible = &NewActionQueue("FRVISIBLE");
@@ -400,7 +399,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     if( !FStructureVisible )
       XA.SetVisible(false);  
     else 
-      XA.SetVisible(!allAtoms[i]->CAtom().IsDetached());  
+      XA.SetVisible(allAtoms[i]->CAtom().IsAvailable());  
   }
   
   sw.start("Bonds creation");
@@ -1259,21 +1258,12 @@ void TGXApp::Select(const vec3d& From, const vec3d& To )  {
 }
 //..............................................................................
 bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
-  static bool loading_file = false;
   if( MsgId == ID_OnSelect )  {
     const TSelectionInfo* SData = dynamic_cast<const TSelectionInfo*>(Data);
     if(  !(SData->From == SData->To) )
       Select(SData->From, SData->To);
   }
-  if( MsgId == ID_OnFileLoad && MsgSubId == msiEnter )  {
-    loading_file = true;
-  }
   else if( MsgId == ID_OnDisassemble && MsgSubId == msiEnter ) {
-    if( loading_file )  {
-      loading_file = false;
-      XFile().GetAsymmUnit().DetachAtomType(iQPeakIndex, !FQPeaksVisible);
-      XFile().GetAsymmUnit().DetachAtomType(iHydrogenIndex, !FHydrogensVisible);
-    }
     //StoreGroups();
   }
   else if( MsgId == ID_OnDisassemble && MsgSubId == msiExit ) {

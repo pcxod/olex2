@@ -48,9 +48,9 @@ TGlRenderer::TGlRenderer(AGlScene *S, int width, int height) {
   FSelection = new TGlGroup(*this, "Selection");
   FSelection->SetSelected(true);
 
-  OnDraw = &TBasicApp::GetInstance().Actions().NewQueue("GLDRAW");
-  BeforeDraw = &TBasicApp::GetInstance().Actions().NewQueue("BGLDRAW");
-  OnStylesClear  = &TBasicApp::GetInstance().Actions().NewQueue("DSCLEAR");
+  OnDraw = &TBasicApp::GetInstance().Actions().NewQueue(olxappevent_GL_DRAW);
+  BeforeDraw = &TBasicApp::GetInstance().Actions().NewQueue(olxappevent_GL_BEFORE_DRAW);
+  OnStylesClear  = &TBasicApp::GetInstance().Actions().NewQueue(olxappevent_GL_CLEAR_STYLES);
   //GraphicsStyles = FStyles;
   FBackground = new TGlBackground(*this, "Background", false);
   FBackground->SetVisible(false);

@@ -134,7 +134,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
   int ac = Atoms.Count();
   for( int i = 0; i < ac; i++ )  {
     Distances[0][i] = Atoms[i]->crd().Length();
-    Atoms[i]->SetTag( Atoms[i]->IsDeleted() ? 2 : (Atoms[i]->CAtom().IsMasked() ? 2 : 1) );
+    Atoms[i]->SetTag(Atoms[i]->IsDeleted() ? 2 : 1);
     Atoms[i]->SetNetId(-1);
   }
   // find & remove symmetrical equivalenrs from AllAtoms

@@ -229,21 +229,20 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
     for( int i=0; i < ac; i++ )  {
       (*ocrd)[i] = Atoms[i]->crd();
       GetAsymmUnit().CellToCartesian(Atoms[i]->ccrd(), Atoms[i]->crd());
-      if( Atoms[i]->CAtom().IsDetached() )
+      if( !Atoms[i]->CAtom().IsAvailable() )
         dac++;
     }
   }
   else  {
     for( int i=0; i < ac; i++ )  {
-      if( Atoms[i]->CAtom().IsDetached() )
+      if( !Atoms[i]->CAtom().IsAvailable() )
         dac++;
     }
   }
   TSAtomPList atoms(ac-dac);
   dac = 0;
   for( int i=0; i < ac; i++ )  {
-    if( Atoms[i]->CAtom().IsDetached() )  {
-      //datoms[dac++] = Atoms[i];
+    if( !Atoms[i]->CAtom().IsAvailable() )  {
       dac++;
       Atoms[i]->SetNetwork(*Network);
     }
@@ -251,16 +250,17 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
       atoms[i-dac] = Atoms[i];
   }
   Network->Disassemble(atoms, Fragments, Bonds);
-  //Network->Disassemble(datoms, Fragments, Bonds);
   dac = 0;
   for( int i=0; i < ac; i++ )  {
     if( Atoms[i]->IsDeleted() )  {
       delete Atoms[i];
       Atoms[i] = NULL;
       dac++;
+      continue;
     }
-    else if( ocrd != NULL )
+    if( ocrd != NULL )
       Atoms[i]->crd() = (*ocrd)[i];
+    Atoms[i]->SetLattId(i-dac);
   }
   if( dac != NULL )
     Atoms.Pack();
@@ -275,8 +275,6 @@ void TLattice::InitBody()  {
   OnDisassemble->Enter(this);
   GenerateBondsAndFragments(NULL);
   Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
-  for( int i=0; i < Atoms.Count(); i++ )
-    Atoms[i]->SetLattId(i);
   TNetPList::QuickSorter.SortSF(Fragments, CompareFragmentsBySize);
   // precalculate memory usage
   int bondCnt = Bonds.Count();
@@ -309,9 +307,6 @@ void TLattice::Init()  {
 //..............................................................................
 void  TLattice::Uniq(bool remEqv)  {
   OnStructureUniq->Enter(this);
-
-//  UpdateAsymmUnit();  // need to cal it here, the call in ListAsymmUnit
-  // will not be executed as Atoms->Count() = 0
   Clear(false);
   ClearMatrices();
   GetUnitCell().UpdateEllipsoids();  // if new atoms are created...
@@ -330,8 +325,7 @@ void  TLattice::Uniq(bool remEqv)  {
 //..............................................................................
 void TLattice::GenerateAtoms(const TSAtomPList& atoms, TSAtomPList& result, const smatd_plist& matrices)  {
   if( atoms.IsEmpty() )  return;
-
-//  result->SetCount(mc*ac);
+  result.SetCapacity(result.Count() + matrices.Count()*atoms.Count());
   for(int i=0; i < matrices.Count(); i++ )  {
     smatd* M = matrices[i];
     for(int j=0; j < atoms.Count(); j++ )  {
@@ -349,26 +343,19 @@ void TLattice::GenerateAtoms(const TSAtomPList& atoms, TSAtomPList& result, cons
 //..............................................................................
 void TLattice::GenerateWholeContent(TCAtomPList* Template)  {
   OnStructureGrow->Enter(this);
-//  ClearAtoms();
-//  ListAsymmUnit(*Atoms(), Template);
   Generated = false; // force the procedure
   Generate(Template, false, true);
   OnStructureGrow->Exit(this);
 }
 //..............................................................................
 void  TLattice::Generate(TCAtomPList* Template, bool ClearCont, bool IncludeQ)  {
-/*  if( Generated )
-  {
-    TBasicApp::GetLog()->Error("TLattice: Structure has been already generated");
-    return;
-  }*/
   if( ClearCont && Template)  {
     ClearAtoms();
   }
   else  {
     for(int i=0; i < Atoms.Count(); i++ )  {  // restore atom coordinates
       TSAtom* A = Atoms[i];
-      if( A->IsDeleted() || A->CAtom().IsMasked() )  {
+      if( A->IsDeleted() )  {
         delete A;
         Atoms[i] = NULL;
         continue;
@@ -397,7 +384,7 @@ void TLattice::GenerateCell(bool includeQ)  {
     const smatd& m = uc.GetMatrix(i);
     for( int j=0; j < au.AtomCount(); j++ )  {
       TCAtom& ca = au.GetAtom(j);
-      if( ca.IsDeleted() || ca.IsMasked() )  continue;
+      if( ca.IsDeleted() )  continue;
       TSAtom* sa = new TSAtom(Network);
       sa->CAtom( ca );
       sa->ccrd() = m * ca.ccrd();
@@ -441,12 +428,8 @@ void TLattice::GenerateCell(bool includeQ)  {
 }
 //..............................................................................
 void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
-       bool ClearCont, bool IncludeQ)  {
-//  if( Generated )
-//  {
-//    TBasicApp::GetLog()->Error("TLattice: Structure has been already generated");
-//    return;
-//  }
+       bool ClearCont, bool IncludeQ)  
+{
   if( GetAsymmUnit().DoesContainEquivalents() )  {
     TBasicApp::GetLog().Error("TLattice:: Asymmetric unit contains symmetrical equivalents.");
     return;
@@ -492,7 +475,7 @@ void TLattice::GetGrowMatrices(smatd_list& res) const {
     const TCAtom& ca = Atoms[i]->CAtom();
     for(int j=0; j < ca.AttachedAtomCount(); j++ )  {
       const TCAtom& ca1 = ca.GetAttachedAtom(j);
-      if( ca1.IsDeleted() || ca1.IsMasked() )  
+      if( !ca1.IsAvailable() )  
         continue;
       smatd_list* BindingMatrices = GetUnitCell().GetBinding(ca, ca1, Atoms[i]->ccrd(), ca1.ccrd(), false, false);
       for( int k=0; k < BindingMatrices->Count(); k++ )  {
@@ -518,14 +501,13 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
   // the fragmens to grow by a particular matrix
   TTypeList<TIntList> Fragments2Grow;
   OnStructureGrow->Enter(this);
-  ApplyMasks();
   for( int i=0; i < atoms.Count(); i++ )  {
     TSAtom* SA = atoms[i];
     SA->SetGrown(true);
     const TCAtom& CA = SA->CAtom();
     for(int j=0; j < CA.AttachedAtomCount(); j++ )  {
       const TCAtom& CA1 = CA.GetAttachedAtom(j);
-      if( CA1.IsDeleted() || CA1.IsMasked() )  
+      if( !CA1.IsAvailable() )  
         continue;
       smatd_list* BindingMatrices = GetUnitCell().GetBinding(CA, CA1, SA->ccrd(), CA1.ccrd(), false, false);
       for( int k=0; k < BindingMatrices->Count(); k++ )  {
@@ -559,7 +541,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
     for(int j=0; j < GetAsymmUnit().AtomCount(); j++ )  {
       TCAtom& ca = GetAsymmUnit().GetAtom(j);
       for(int k=0; k < ToGrow.Count(); k++ )  {
-        if( ca.IsDeleted() || ca.IsMasked() )  continue;
+        if( !ca.IsAvailable() )  continue;
         if( ca.GetFragmentId() == ToGrow[k] )  {
           TSAtom* SA = new TSAtom( Network );
           SA->CAtom( ca );
@@ -583,7 +565,7 @@ void TLattice::GrowFragments(bool GrowShells, TCAtomPList* Template)  {
   TSAtomPList TmpAtoms;
   for( int i=0; i < Atoms.Count(); i++ )  {
     TSAtom* A = Atoms[i];
-    if( A->IsDeleted() || A->CAtom().IsMasked() )  
+    if( A->IsDeleted() || !A->CAtom().IsAvailable() )  
       continue;
     for( int j=0; j < A->NodeCount(); j++ )  {
       if( A->Node(j).IsDeleted() )
@@ -631,11 +613,10 @@ void TLattice::GrowAtom(int FragId, const smatd& transform)  {
   }
 
   OnStructureGrow->Enter(this);
-  ApplyMasks();
 
   for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& ca = GetAsymmUnit().GetAtom(i);
-    if( ca.IsDeleted() || ca.IsMasked() )  continue;
+    if( ca.IsAvailable() )  continue;
     if( ca.GetFragmentId() == FragId )  {
       TSAtom* SA = new TSAtom( Network );
       SA->CAtom( ca );
@@ -674,11 +655,10 @@ void TLattice::GrowAtoms(const TSAtomPList& atoms, const smatd_list& matrices)  
   }
 
   OnStructureGrow->Enter(this);
-  ApplyMasks();
   Atoms.SetCapacity( Atoms.Count() + atoms.Count()*addedMatrices.Count() );
   for( int i=0; i < addedMatrices.Count(); i++ )  {
     for( int j=0; j < atoms.Count(); j++ )  {
-      if( atoms[j]->IsDeleted() )  continue;
+      if( atoms[j]->IsDeleted() || !atoms[j]->CAtom().IsAvailable() )  continue;
       TSAtom* SA = new TSAtom( Network );
       SA->CAtom( atoms[j]->CAtom() );
       SA->AddMatrix( addedMatrices[i] );
@@ -712,13 +692,15 @@ void TLattice::Grow(const smatd& transform)  {
   }
 
   OnStructureGrow->Enter(this);
-  ApplyMasks();
-  Atoms.SetCapacity( Atoms.Count() + GetAsymmUnit().AtomCount() );
-  for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
-    if( GetAsymmUnit().GetAtom(i).IsDeleted() )  continue;
-    TSAtom* SA = new TSAtom( Network );
-    SA->CAtom( GetAsymmUnit().GetAtom(i) );
-    SA->AddMatrix( M );
+  TAsymmUnit& au = GetAsymmUnit();
+  const int ac = au.AtomCount();
+  Atoms.SetCapacity(Atoms.Count() + ac);
+  for( int i=0; i < ac; i++ )  {
+    TCAtom& ca = au.GetAtom(i);
+    if( ca.IsAvailable() )  continue;
+    TSAtom* SA = new TSAtom(Network);
+    SA->CAtom(ca);
+    SA->AddMatrix(M);
     SA->ccrd() = (*M) * SA->ccrd();
     SA->SetEllipsoid( &GetUnitCell().GetEllipsoid(M->GetTag(), SA->CAtom().GetId()) );
     AddSAtom(SA);
@@ -880,7 +862,8 @@ void TLattice::UpdateAsymmUnit()  {
     TSAtomPList& l = AUAtoms[i];
     TCAtom& ca = AsymmUnit->GetAtom(i);
     if( l.IsEmpty() )  {  // all atoms are deleted
-      ca.SetDeleted( !ca.IsMasked() || ca.GetAtomInfo() == iQPeakIndex);
+      ca.SetDeleted(true);
+      //ca.SetDeleted( !ca.IsMasked() || ca.GetAtomInfo() == iQPeakIndex);
       continue;
     }
     // find the original atom, or symmetry equivalent if removed
@@ -909,22 +892,12 @@ void TLattice::UpdateAsymmUnit()  {
     AsymmUnit->SetContainsEquivalents( UnitCell->FindSymmEq(0.1, false, false, false) != 0 );
 }
 //..............................................................................
-void TLattice::ApplyMasks()  {
-  for( int i=0; i < Atoms.Count(); i++ )  {
-    if( Atoms[i]->IsDeleted() || Atoms[i]->CAtom().IsMasked() )  {
-      delete Atoms[i];
-      Atoms[i] = NULL;
-    }
-  }
-  Atoms.Pack();
-}
-//..............................................................................
 void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool IncludeQ)  {
   ClearPlanes();
   if( Template != NULL )  {
     L.SetCapacity( L.Count() + Template->Count() );
     for( int i=0; i < Template->Count(); i++ )  {
-      if( (*Template)[i]->IsDeleted() || (*Template)[i]->IsMasked() )  continue;
+      if( (*Template)[i]->IsDeleted() )  continue;
       TSAtom* A = new TSAtom( Network );
       A->CAtom( *Template->Item(i) );
       A->SetEllipsoid( &GetUnitCell().GetEllipsoid(0, Template->Item(i)->GetId()) ); // ellipsoid for the identity matrix
@@ -937,7 +910,7 @@ void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool Include
     L.SetCapacity( L.Count() + GetAsymmUnit().AtomCount() );
     for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )    {
       TCAtom& CA = GetAsymmUnit().GetAtom(i);
-      if( CA.IsDeleted() || CA.IsMasked() )  continue;
+      if( CA.IsDeleted() )  continue;
       if( !IncludeQ && CA.GetAtomInfo() == iQPeakIndex )  continue;
       TSAtom* A = new TSAtom( Network );
       A->CAtom(CA);
@@ -1291,17 +1264,13 @@ void TLattice::UpdateConnectivity()  {
 }
 //..............................................................................
 void TLattice::Disassemble()  {
-  // clear bonds & fargments
   OnDisassemble->Enter(this);
+  // clear bonds & fargments
   ClearBonds();
   ClearFragments();
   TArrayList<vec3d> ocrd(Atoms.Count());
   GenerateBondsAndFragments(&ocrd);
   Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
-  // restore latId, as some atoms might been removed ny the network
-  for( int i=0; i < Atoms.Count(); i++ )
-    Atoms[i]->SetLattId(i);
-
   // precalculate memory usage
   int bondCnt = Bonds.Count();
   for(int i=0; i < Fragments.Count(); i++ )
@@ -1335,15 +1304,6 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
   TBasicAtomInfo& HAI = AtomsInfo.GetAtomInfo(iHydrogenIndex);
   TAtomEnvi AE;
   UnitCell->GetAtomEnviList(atom, AE, false, part);
-  //if( atom.GetAtomInfo() == iCarbonIndex )  { // treat hapta bonds
-  //  for( int i=0; i < AE.Count(); i++ )  {
-  //    vec3d v( AE.GetCrd(i) - atom.crd());
-  //    if( v.Length() > 2.0 )  {
-  //      AE.Delete(i);
-  //      i--;
-  //    }
-  //  }
-  //}
   if( part == DefNoPart )  {  // check for disorder
     TIntList parts;
     TDoubleList occu;
@@ -1746,7 +1706,7 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
   _ProcessRingHAdd(cg, rcont); // Py
 
   for( int i=0; i < atoms.Count(); i++ )  {
-    if( atoms[i]->IsDeleted() )  continue;
+    if( atoms[i]->IsDeleted() || !atoms[i]->CAtom().IsAvailable() )  continue;
 
     bool consider = false;
     for( int j=0; j < CTypes.Count(); j++ )  {
@@ -2050,7 +2010,7 @@ bool TLattice::ApplyGrowInfo()  {
   Atoms.SetCapacity( au.AtomCount() );
   for( int i=0; i < au.AtomCount(); i++ )    {
     TCAtom& ca = GetAsymmUnit().GetAtom(i);
-    if( ca.IsDeleted() ||ca.IsMasked() )  continue;
+    if( !ca.IsAvailable() )  continue;
     if( i >= _GrowInfo->info.Count() )  {  // create just with I matrix
       TSAtom* a = Atoms.Add( new TSAtom(Network) );
       a->CAtom(ca);
