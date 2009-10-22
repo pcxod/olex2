@@ -200,16 +200,10 @@ public:
     return false;
   }
   bool Exit(const IEObject *Sender, const IEObject *Data)  {
-    // let's make Horst HAPPY!
-    //FParent->GetRender().CleanUpStyles();
-    //  FParent->CenterModel();
     FParent->GetRender().SetBasis(B);
-    //FParent->CreateObjects(true);
     FParent->CenterView();
     if( !SameFile || EmptyFile )
       FParent->GetRender().SetZoom( FParent->GetRender().CalcZoom()*FParent->GetExtraZoom() );
-    //FParent->CenterModel();
-    //FParent->GetRender().Compile();
     FParent->Draw();
     return true;
   }

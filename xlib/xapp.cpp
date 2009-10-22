@@ -293,7 +293,7 @@ TUndoData* TXApp::FixHL()  {
   }
   for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )  {
     TSAtom& sa = XFile().GetLattice().GetAtom(i);
-    if( sa.IsDeleted() || (sa.GetAtomInfo() == iQPeakIndex) )  {
+    if( !sa.CAtom().IsAvailable() || (sa.GetAtomInfo() == iQPeakIndex) )  {
       sa.SetTag(-1);
       continue;
     }
