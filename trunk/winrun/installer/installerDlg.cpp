@@ -80,6 +80,7 @@ public:
 CInstallerDlg::CInstallerDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CInstallerDlg::IDD, pParent), bapp(LocateBaseDir())
 {
+  tooltipCtrl = NULL;
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
   mouse_down = false;
   action = rename_status = 0;
@@ -110,6 +111,7 @@ BEGIN_MESSAGE_MAP(CInstallerDlg, CDialog)
   ON_WM_SHOWWINDOW()
   ON_WM_TIMER()
   ON_BN_CLICKED(IDC_BTN_PROXY, &CInstallerDlg::OnBnClickedBtnProxy)
+  ON_BN_CLICKED(IDC_BTN_REPOSITORY, &CInstallerDlg::OnBnClickedBtnRepository)
 END_MESSAGE_MAP()
 
 
@@ -117,6 +119,8 @@ END_MESSAGE_MAP()
 
 BOOL CInstallerDlg::OnInitDialog()  {
 	CDialog::OnInitDialog();
+  tooltipCtrl = new CToolTipCtrl;
+  tooltipCtrl->Create(this);
   this->SendMessage(WM_SETTEXT, 0, (LPARAM)_T("Olex2 installer"));
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
@@ -131,6 +135,8 @@ BOOL CInstallerDlg::OnInitDialog()  {
   CBitmap bmp;
   bmp.LoadBitmap(IDB_UPDATE);
   GetDlgItem(IDC_BTN_PROXY)->SendMessage(BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)bmp.Detach());
+  tooltipCtrl->AddTool( GetDlgItem(IDC_BTN_PROXY), _T("Reload repositories list"));
+  tooltipCtrl->Activate(TRUE);
   if( olex2_installed )  {
     TEFile::AddTrailingBackslash(olex2_install_path);
     //GetDlgItem(IDC_TE_INSTALL_PATH)->SendMessage(WM_SETTEXT, 0, (LPARAM)olex2_install_path.u_str());
@@ -272,7 +278,10 @@ void CInstallerDlg::DisableInterface(bool _v)  {
   GetDlgItem(IDC_BTN_REPOSITORY)->EnableWindow(v);
   GetDlgItem(IDC_BTN_CHOOSE_PATH)->EnableWindow(v);
   GetDlgItem(IDC_TE_INSTALL_PATH)->EnableWindow(v);
-  GetDlgItem(IDC_TE_PROXY)->EnableWindow(v);
+  if( v )
+    GetDlgItem(IDC_TE_PROXY)->EnableWindow( check_box::is_checked(this, IDC_CB_PROXY) );
+  else
+    GetDlgItem(IDC_TE_PROXY)->EnableWindow(v);
   GetDlgItem(IDC_CB_PROXY)->EnableWindow(v);
   GetDlgItem(IDC_R_ALWAYS)->EnableWindow(v);
   GetDlgItem(IDC_R_DAILY)->EnableWindow(v);
@@ -434,7 +443,7 @@ bool CInstallerDlg::DoInstall()  {
       if( !proxyPath.IsEmpty() )
         url.SetProxy(proxyPath);
       THttpFileSystem repos(url);
-      repos.OnProgress->Add( new TProgress );
+      repos.OnProgress.Add( new TProgress );
       TEFile* zipf = repos.OpenFileAsFile( url.GetPath() + updater::UpdateAPI::GetInstallationFileName());
       if( zipf == NULL )  {
         SetAction(_T("Failed..."));
@@ -497,7 +506,7 @@ bool CInstallerDlg::_DoInstall(const olxstr& zipFile, const olxstr& installPath)
   TWinZipFileSystem zfs( zipFile );
   bool res = zfs.Exists("olex2.tag");
   if( res )  {
-    zfs.OnProgress->Add( new TProgress );
+    zfs.OnProgress.Add( new TProgress );
     TEFile* lic_f = NULL;
     try  {  lic_f = zfs.OpenFileAsFile("licence.rtf");  }
     catch(...)  {  res = false;  }
@@ -511,7 +520,11 @@ bool CInstallerDlg::_DoInstall(const olxstr& zipFile, const olxstr& installPath)
       try  {  zfs.ExtractAll(installPath);  }
       catch(...) {  res = false;  }
       if( res )  {
+#ifdef _WIN64_
         olxstr redist_fn = TBasicApp::GetBaseDir() + "vcredist_x86.exe";
+#else
+        olxstr redist_fn = TBasicApp::GetBaseDir() + "vcredist_x64.exe";
+#endif
         SetAction(_T("Installing MSVCRT..."));
         if( !LaunchFile(redist_fn, false) )  {
           MessageBox(_T("Could not install MSVC redistributables."), _T("Installation failed"), MB_OK|MB_ICONERROR);
@@ -648,6 +661,17 @@ Please run currently installed Olex2 to apply the updates and then exit Olex2 an
         olxstr ip = TEFile::AddTrailingBackslash( wnd::get_text(this, IDC_TE_INSTALL_PATH) );
         olxstr rp = TEFile::AddTrailingBackslash(
           TEFile::RemoveTrailingBackslash(bapp.GetBaseDir()) << '-' << dlg.GetRenameToText());
+        // is renaming valid?
+        if( (rename_status & rename_status_BaseDir) == 0 )  {  // has to be done if failed on the second rename
+          if( ip.Equalsi(rp) )  {
+            MessageBox(_T("The renamed and installation paths should differ"), _T("Error"), MB_OK|MB_ICONERROR);
+            return false;
+          }
+          if( TEFile::Exists(rp) )  {
+            MessageBox(_T("The renamed path already exists"), _T("Error"), MB_OK|MB_ICONERROR);
+            return false;
+          }
+        }
         // this has to go first as otherwise the tag gets lost...
         if( (rename_status & rename_status_DataDir) == 0 )  {
           olxstr new_data_dir = patcher::PatchAPI::ComposeNewSharedDir(TShellUtil::GetSpecialFolderLocation(fiAppData), rp);
@@ -661,14 +685,6 @@ Please run currently installed Olex2 to apply the updates and then exit Olex2 an
           rename_status |= rename_status_DataDir;
         }
         if( (rename_status & rename_status_BaseDir) == 0 )  {  // has to be done if failed on the second rename
-          if( ip.Equalsi(rp) )  {
-            MessageBox(_T("The renamed and installation paths should differ"), _T("Error"), MB_OK|MB_ICONERROR);
-            return false;
-          }
-          if( TEFile::Exists(rp) )  {
-            MessageBox(_T("The renamed path already exists"), _T("Error"), MB_OK|MB_ICONERROR);
-            return false;
-          }
           if( !TEFile::Rename(bapp.GetBaseDir(), rp, true) )  {
             MessageBox(_T("Failed to rename previous installation folder"), _T("Error"), MB_OK|MB_ICONERROR);
             return false;
@@ -718,11 +734,13 @@ void CInstallerDlg::InitRepositories()  {
     combo_box::set_text(this, IDC_CB_REPOSITORY, repos[0].u_str());
   }
   catch(...)  {
+    uth.Join(true);
     MessageBox(_T("Could not discover any Olex2 repositories, only offline installation will be available"),
       _T("Error"),
       MB_OK|MB_ICONERROR);
   }
-  uth.Join(true);
+  if( uth.IsRunning() )
+    uth.Join(true);
   olxstr bd(GetCommandLine());
   olxstr zipfn( TEFile::ExtractFilePath(bd) + updater::UpdateAPI::GetInstallationFileName() );
   if( TEFile::Exists(zipfn) )  {
@@ -735,3 +753,19 @@ void CInstallerDlg::InitRepositories()  {
   }
 }
 
+
+BOOL CInstallerDlg::PreTranslateMessage(MSG* pMsg)  {
+  if( tooltipCtrl != NULL )
+    tooltipCtrl->RelayEvent(pMsg);
+  return CDialog::PreTranslateMessage(pMsg);
+}
+
+void CInstallerDlg::OnBnClickedBtnRepository()  {
+  CFileDialog fd(TRUE, NULL, updater::UpdateAPI::GetInstallationFileName().u_str(), OFN_FILEMUSTEXIST, NULL, this);
+  if( fd.DoModal() == IDOK )  {
+    olxstr rv = fd.GetPathName().GetString();
+    if( TEFile::ExtractFileName(rv) == updater::UpdateAPI::GetInstallationFileName() )
+      combo_box::set_text(this, IDC_CB_REPOSITORY, fd.GetPathName().GetString());
+  }
+
+}

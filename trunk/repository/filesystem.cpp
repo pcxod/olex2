@@ -292,7 +292,7 @@ double TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties, TStrList*
     Index.Progress.SetMax( (double)sz );
     if( sz == 0 )  return 0;  // nothing to do then ...
     Index.Progress.SetPos( 0.0 );
-    Index.OnProgress->Enter(this, &Index.Progress);
+    Index.OnProgress.Enter(this, &Index.Progress);
     SetProcessed(false);
   }
   /* check the repository files are at the destination - if not delete them
@@ -302,7 +302,7 @@ double TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties, TStrList*
     if( Index.Break )  // temination signal
       return Index.Progress.GetPos();
     Index.Progress.SetAction( FI.GetFullName() );
-    Index.OnProgress->Execute(this, &Index.Progress);
+    Index.OnProgress.Execute(this, &Index.Progress);
 
     TFSItem* Res = FindByName( FI.GetName() );
     if( Res == NULL )  {
@@ -321,7 +321,7 @@ double TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties, TStrList*
       else if( Dest.Index.ShallAdopt(*Res, FI) )  {
         if( FI.UpdateFile(*Res) != NULL )  {
           Index.Progress.IncPos( (double)FI.GetSize() );
-          Index.OnProgress->Execute(this, &Index.Progress);
+          Index.OnProgress.Execute(this, &Index.Progress);
         }
       }
     }
@@ -334,7 +334,7 @@ double TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties, TStrList*
     if( Index.Break )  // termination signal    
       return Index.Progress.GetPos();
     Index.Progress.SetAction( FI.GetFullName() );
-    Index.OnProgress->Execute(this, &Index.Progress);
+    Index.OnProgress.Execute(this, &Index.Progress);
     if( FI.IsFolder() )  {
       TFSItem* Res = Dest.UpdateFile(FI);
       if( Res != NULL)
@@ -343,12 +343,12 @@ double TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties, TStrList*
     else  {
       if( Dest.UpdateFile(FI) != NULL )  {
         Index.Progress.IncPos( (double)FI.GetSize() );
-        Index.OnProgress->Execute(this, &Index.Progress);
+        Index.OnProgress.Execute(this, &Index.Progress);
       }
     }
   }
   if( this->GetParent() == NULL )  {
-    Index.OnProgress->Exit(NULL, &Index.Progress);
+    Index.OnProgress.Exit(NULL, &Index.Progress);
   }
   return Index.Progress.GetMax();
 }
@@ -558,10 +558,12 @@ void TFSItem::ClearEmptyFolders()  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-TFSIndex::TFSIndex(AFileSystem& fs) : IndexFS(fs)  {
+TFSIndex::TFSIndex(AFileSystem& fs) : 
+  IndexFS(fs),
+  OnProgress(Actions.NewQueue("ON_PROGRESS")),
+  OnAction(Actions.NewQueue("ON_ACTION"))
+{
   Root = new TFSItem(*this, NULL, "ROOT");
-  OnProgress = &Actions.NewQueue("ON_PROGRESS");
-  OnAction = &Actions.NewQueue("ON_ACTION");
   DestFS = NULL;
   IndexLoaded = false;
   Break = false;
@@ -629,7 +631,7 @@ double TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties, const 
     if( To.Exists(DestInd) )
       DestI.LoadIndex(DestInd);
     // proxy events ...
-    DestI.OnAction->Add( new TActionProxy(*OnAction) );
+    DestI.OnAction.Add( new TActionProxy(OnAction) );
     double BytesTransfered = GetRoot().Synchronise(DestI.GetRoot(), properties, cmds);
     if( BytesTransfered != 0 )
       DestI.SaveIndex(DestInd);
@@ -719,7 +721,7 @@ void TFSIndex::ProcessActions(TFSItem& item)  {
 #endif
   if( actions.IndexOfi("extract") != -1 )  {
     ZipFS zp( DestFS->GetBase() + item.GetFullName() );
-    zp.OnProgress->Add( new TActionProxy(*OnAction) );
+    zp.OnProgress.Add( new TActionProxy(OnAction) );
     zp.ExtractAll( DestFS->GetBase() );
   }
   if( actions.IndexOfi("delete") != -1 )

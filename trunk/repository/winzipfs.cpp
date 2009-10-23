@@ -43,7 +43,7 @@ IInputStream* TWinZipFileSystem::_DoOpenFile(const olxstr& Source)  {
   olxstr tmp_fn(TmpFN);
 
   Progress.SetMax( (double)TEFile::FileLength(TmpFN) );
-  OnProgress->Enter(this, &Progress);
+  OnProgress.Enter(this, &Progress);
   Progress.SetAction( olxstr("Extracting ") << Source );
   Progress.SetPos(0);
   Progress.SetMax(1);
@@ -52,10 +52,10 @@ IInputStream* TWinZipFileSystem::_DoOpenFile(const olxstr& Source)  {
   chmod( tmp_fn.c_str(), S_IREAD|S_IWRITE);
 
   Progress.SetMax( (double)TEFile::FileLength(tmp_fn) );
-  OnProgress->Enter(this, &Progress);
+  OnProgress.Enter(this, &Progress);
   Progress.SetAction("Done");
   Progress.SetPos( (double)TEFile::FileLength(tmp_fn) );
-  OnProgress->Exit(this, &Progress);
+  OnProgress.Exit(this, &Progress);
   TmpFiles.Add( TmpFN );
   return new TEFile( TmpFN, "rb" );
 }
@@ -69,17 +69,17 @@ void TWinZipFileSystem::ExtractAll(const olxstr& dest)  {
   TOnProgress Progress;
   Progress.SetAction( olxstr("Unpacking ") << zip_name << "...");
   Progress.SetMax( numitems );
-  OnProgress->Enter( NULL, &Progress );
+  OnProgress.Enter( NULL, &Progress );
   for( int zi=0; zi < numitems; zi++ )  {
     ZIPENTRY ze;
     GetZipItem(zip, zi, &ze); // fetch individual details
     Progress.SetPos( zi );
     Progress.SetAction( ze.name );
-    OnProgress->Execute( this, &Progress );
+    OnProgress.Execute( this, &Progress );
     UnzipItem(zip, zi, (extractPath + ze.name).u_str() );         // e.g. the item's name.
   }
   Progress.SetPos( numitems );
   Progress.SetAction("Done");
-  OnProgress->Exit( this, &Progress );
+  OnProgress.Exit( this, &Progress );
 }
 #endif // __WIN32__

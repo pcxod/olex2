@@ -57,15 +57,15 @@ class TwxZipFileSystem: public AFileSystem, public AActionHandler  {
 protected:
   // proxying functions
   virtual bool Enter(const IEObject *Sender, const IEObject *Data) {  
-    OnProgress->Enter(this, Data);
+    OnProgress.Enter(this, Data);
     return true;
   }
   virtual bool Exit(const IEObject *Sender, const IEObject *Data=NULL)  {  
-    OnProgress->Exit(this, Data);
+    OnProgress.Exit(this, Data);
     return true; 
   }
   virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL) {  
-    OnProgress->Execute(this, Data);
+    OnProgress.Execute(this, Data);
     return false; 
   }
   virtual bool _DoDelFile(const olxstr& f) {  return false;  }

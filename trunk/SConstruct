@@ -21,7 +21,15 @@ AddOption('--olx_sse',
           metavar='OLX_SSE',
           default='SSE2',
           help='Only for optimised version, inserts given SSE, SSE2 or none instructions')
-if debug or sys.platform[:3] != 'win':
+
+architecture = platform.architecture()[0]
+if not architecture:
+  architecture = 'unknown'
+if architecture == '64bit':
+  sse = None
+print 'Build architecture: ' + architecture
+
+if debug or sys.platform[:3] != 'win' or architecture == '64bit':
   sse = None
 else:
   sse = GetOption('olx_sse').upper()
@@ -33,12 +41,6 @@ else:
   else:
     print 'Using ' + sse
 
-architecture = platform.architecture()[0]
-if not architecture:
-  architecture = 'unknown'
-if architecture == '64bit':
-  sse = None
-print 'Build architecture: ' + architecture
 AddOption('--olx_profile',
           dest='olx_profile',
           type='string',
@@ -176,17 +178,14 @@ if sys.platform[:3] == 'win':
       cc_flags.append( '/arch:'+sse)
     env.Append(CCFLAGS = cc_flags) 
     env.Append(LIBS = Split("""wxbase28u         wxbase28u_net  wxmsw28u_gl   
-                               wxmsw28u_richtext wxmsw28u_html wxmsw28u_core 
+                               wxmsw28u_html wxmsw28u_core 
                                wxmsw28u_adv wxregexu"""))
     env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswu', pyFolder+'include'])
     #env.Append(LINKFLAGS=['/LTCG'])
   else:
     cc_flags = ['/EHsc', '/RTC1', '-D_DUBUG', '/Od', '/MDd', '/bigobj', '/fp:fast']
-    if architecture == '64bit':
-      cc_flags.append('/Zi')
-    else:
-      cc_flags.append('/ZI')
-      
+    if architecture == '64bit':  cc_flags.append('/Zi')
+    else:  cc_flags.append('/ZI')
     env.Append(CCFLAGS = cc_flags) 
     env.Append(LIBS = Split("""wxbase28ud         wxbase28ud_net  wxmsw28ud_gl   
                                wxmsw28ud_richtext wxmsw28ud_html wxmsw28ud_core 
@@ -196,17 +195,22 @@ if sys.platform[:3] == 'win':
   if architecture == '64bit':
     env.Append(LINKFLAGS=['/MACHINE:X64'])
     lib_64 = r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib\x64'
-    if not os.path.exists(lib_64):
-      lib_64 = r'C:\Program Files\Microsoft SDKs\Windows\v6.1\Lib\x64'
     if os.path.exists(lib_64):
       env.Append(LIBPATH=[lib_64])  
+    inc_64 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Include',
+              r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include']
+    for p in inc_64:
+      if os.path.exists(p):
+        env.Append(CPPPATH=[p])
+    env['ENV']['PATH'] = r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\bin\x64' +\
+                         os.pathsep + r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\amd64' +\
+                         os.pathsep + env['ENV']['PATH']
   else:
     env.Append(LINKFLAGS=['/MACHINE:X86'])
     lib_32 = r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib'
-    if not os.path.exists(lib_32):
-      lib_32 = r'C:\Program Files\Microsoft SDKs\Windows\v6.1\Lib'
     if os.path.exists(lib_32):
       env.Append(LIBPATH=[lib_32])  
+
   unirun_env = env.Clone()
   env.Append(LIBPATH = [pyFolder+'libs', wxFolder+'lib/vc_lib'])
   unirun_env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswud'])

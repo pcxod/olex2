@@ -7,11 +7,9 @@
 
 
 UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0), PatchDir(patch_dir), 
-    srcFS(NULL), destFS(NULL), Index(NULL), _DoUpdate(false), UpdateSize(0)  
-{ 
-	OnDownload = &Actions.NewQueue("ON_DOWNLOAD");
-	OnAction = &Actions.NewQueue("ON_ACTION");
-}
+  srcFS(NULL), destFS(NULL), Index(NULL), _DoUpdate(false), UpdateSize(0),
+  OnDownload(Actions.NewQueue("ON_DOWNLOAD")),
+  OnAction(Actions.NewQueue("ON_ACTION"))  {}
 //....................................................................................
 void UpdateThread::DoInit()  {
   if( !TBasicApp::HasInstance() || Terminate ) 
@@ -23,8 +21,8 @@ void UpdateThread::DoInit()  {
     Index = new TFSIndex(*srcFS);
     destFS = new TOSFileSystem( TBasicApp::GetBaseDir() );
     uapi.EvaluateProperties(properties);
-    srcFS->OnProgress->Add( new TActionProxy(*OnDownload) );
-    Index->OnAction->Add( new TActionProxy(*OnAction) );
+    srcFS->OnProgress.Add( new TActionProxy(OnDownload) );
+    Index->OnAction.Add( new TActionProxy(OnAction) );
   }
   catch(const TExceptionBase& exc)  {
     if( TBasicApp::HasInstance() )

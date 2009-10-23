@@ -39,15 +39,15 @@ protected:
   virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) = 0;
 public:
   AFileSystem() : 
-      Break(false),
-      Index(NULL),
-      Access(afs_FullAccess) {  
-    OnProgress = &Actions.NewQueue("ON_PROGRESS");
-  }
+    Break(false),
+    Index(NULL),
+    Access(afs_FullAccess),  
+    OnProgress(Actions.NewQueue("ON_PROGRESS"))  {}
+
   virtual ~AFileSystem()  {  ; }
 
   // called on progress
-  TActionQueue* OnProgress;
+  TActionQueue &OnProgress;
 
   // deletes a file
   bool DelFile(const olxstr& f)  {  
@@ -248,9 +248,9 @@ public:
   virtual ~TFSIndex();
   
   // this is to be used for the overal progress monitorring
-  TActionQueue* OnProgress;
+  TActionQueue &OnProgress;
   // this is to be used for when an action is being applied to a file (like extract)
-  TActionQueue* OnAction;
+  TActionQueue &OnAction;
 
   void LoadIndex(const olxstr& IndexFile, const TFSItem::SkipOptions* toSkip=NULL);
   void SaveIndex(const olxstr& IndexFile);

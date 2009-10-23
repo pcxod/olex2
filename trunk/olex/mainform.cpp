@@ -501,7 +501,7 @@ bool TMainForm::Destroy()  {
 //..............................................................................
 TMainForm::~TMainForm()  {
   if( _UpdateThread != NULL )  {
-    _UpdateThread->OnTerminate->Remove(this);
+    _UpdateThread->OnTerminate.Remove(this);
     _UpdateThread->Join(true);
     delete _UpdateThread;
   }
@@ -1339,9 +1339,9 @@ separated values of Atom Type and radius, an entry a line" );
 #endif
   if( FXApp->IsBaseDirWriteable() )  {
     _UpdateThread = new UpdateThread(FXApp->GetSharedDir() + "patch");
-    _UpdateThread->OnTerminate->Add(this, ID_UpdateThreadTerminate);
-    _UpdateThread->OnDownload->Add(this, ID_UpdateThreadDownload);
-    _UpdateThread->OnAction->Add(this, ID_UpdateThreadAction);
+    _UpdateThread->OnTerminate.Add(this, ID_UpdateThreadTerminate);
+    _UpdateThread->OnDownload.Add(this, ID_UpdateThreadDownload);
+    _UpdateThread->OnAction.Add(this, ID_UpdateThreadAction);
     _UpdateThread->Start();
   }
 }
