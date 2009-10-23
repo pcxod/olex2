@@ -86,19 +86,19 @@ struct SettingsFile  {
 class UpdateAPI  {
   mutable TStrList log;
   AActionHandler *f_lsnr, *p_lsnr;
-  void CleanUp(AActionHandler* fl=NULL, AActionHandler* pl=NULL)  {
+  void CleanUp(AActionHandler *fl=NULL, AActionHandler *pl=NULL)  {
     if( f_lsnr != NULL )  delete f_lsnr;
     if( p_lsnr != NULL )  delete p_lsnr;
     p_lsnr = pl;
     f_lsnr = fl;
   }
-  void InitAQueues(TActionQueue* f, TActionQueue* p)  {
+  void InitAQueues(TActionQueue &f, TActionQueue &p)  {
     if( f_lsnr != NULL )  {
-      f->Add(f_lsnr);
+      f.Add(f_lsnr);
       f_lsnr = NULL;
     }
     if( p_lsnr != NULL )  {
-      p->Add( p_lsnr );
+      p.Add( p_lsnr );
       p_lsnr = NULL;
     }
   }

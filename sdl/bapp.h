@@ -59,7 +59,10 @@ public:
   //static printf(const char* format, ...);
 
   TActionQueue& NewActionQueue(const olxstr &Name);
-  inline TActionQueue* ActionQueue(const olxstr &Name){  return FActions->FindQueue(Name); }
+  inline TActionQueue* ActionQueue(const olxstr &Name){  
+    try  {  return FActions->FindQueue(Name);   }
+    catch(...)  {  return NULL;  }
+  }
 
   inline TActionQList& Actions() const {  return *FActions; }
 

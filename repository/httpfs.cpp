@@ -142,7 +142,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
             Progress.SetPos( 0 );
             Progress.SetAction(Source);
             Progress.SetMax( FileLength );
-            OnProgress->Enter(this, &Progress);
+            OnProgress.Enter(this, &Progress);
           }
         }
       }
@@ -150,7 +150,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
     }
     if( FileLength != -1 && FileAttached )  {
       Progress.SetPos(TotalRead > Progress.GetMax() ? Progress.GetMax() : TotalRead);
-      OnProgress->Execute(this, &Progress);
+      OnProgress.Execute(this, &Progress);
     }
   }
   if( (FileLength != -1) && (FileLength <= TotalRead) && FileAttached )  {
@@ -169,13 +169,13 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
     File1->Seek(0, SEEK_SET);
     delete File;
     Progress.SetPos(FileLength);
-    OnProgress->Exit(this, &Progress);
+    OnProgress.Exit(this, &Progress);
     delete [] Buffer;
 		return File1;
   }
   else  {
     Progress.SetPos(0);
-    OnProgress->Exit(this, &Progress);
+    OnProgress.Exit(this, &Progress);
     delete [] Buffer;
     delete File1;
     delete File;

@@ -84,7 +84,7 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
         return updater::uapi_Busy;
       ZipFS zfs(inst_zip_fn, false);
       if( p_lsnr != NULL )  {
-        zfs.OnProgress->Add(p_lsnr);
+        zfs.OnProgress.Add(p_lsnr);
         p_lsnr = NULL;
       }
       if( !zfs.Exists(patcher::PatchAPI::GetTagFileName()) )
@@ -110,7 +110,7 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
     return updater::uapi_NoSource;
   }
   if( f_lsnr != NULL )  {
-    fs->OnProgress->Add(f_lsnr);
+    fs->OnProgress.Add(f_lsnr);
     f_lsnr = NULL;
   }
   IInputStream* src_s = NULL;
@@ -138,7 +138,7 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
     {  // make sure the zipfs goes before deleting the file
       ZipFS zfs(src_fn, false);
       if( p_lsnr != NULL )  {
-        zfs.OnProgress->Add(p_lsnr);
+        zfs.OnProgress.Add(p_lsnr);
         p_lsnr = NULL;
       }
       zfs.ExtractAll(TBasicApp::GetBaseDir());
@@ -175,7 +175,7 @@ short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr, AActionHandler* e_lsnr, c
     return updater::uapi_NoSource;
   }
   if( f_lsnr != NULL )  {
-    fs->OnProgress->Add(f_lsnr);
+    fs->OnProgress.Add(f_lsnr);
     f_lsnr = NULL;
   }
   fs->SetBase( AddTagPart(fs->GetBase(), false) );
@@ -208,7 +208,7 @@ short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr, AActionHandler* e_lsnr, c
       TStrList props;
       props.Add(olxstr("plugin-") << name);
       if( p_lsnr != NULL )  {
-        fsi.OnProgress->Add(p_lsnr);
+        fsi.OnProgress.Add(p_lsnr);
         p_lsnr = NULL;
       }
       fsi.Synchronise(osf, props);
@@ -271,10 +271,10 @@ void UpdateAPI::EvaluateProperties(TStrList& props) const  {
   props.Add("port-win32-sse");
 #    elif _M_IX86_FP == 2  // cannot change it! olex2 does not get upadted and this is it...
 #    endif
+  props.Add("port-win32-portable");  // but can change this ...
 #  else
   props.Add("port-win64");
 #endif
-  props.Add("port-win32-portable");  // but can change this ...
 #else
   if( !settings.olex2_port.IsEmpty() )  {
     props.Add(settings.olex2_port);
