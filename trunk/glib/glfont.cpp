@@ -146,9 +146,9 @@ bool TGlFont::CharFromRGBArray(size_t Char, unsigned char *RGBData, uint16_t wid
 }
 //..............................................................................
 void TGlFont::CreateGlyphsFromRGBArray(bool FW, uint16_t Width, uint16_t Height)  {
-  if( Width < MaxWidth || Width < 0 ||
-      Height < MaxHeight || Height < 0 ||
-      MaxWidth <=0 || MaxHeight <=0 )
+  if( Width < MaxWidth || 
+      Height < MaxHeight ||
+      MaxWidth == 0 || MaxHeight == 0 )
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("font size w:") << Width << "; h:" << Height);
 
   SetBit(FW, Flags, sglfFixedWidth);
@@ -356,9 +356,9 @@ void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, uint16_t w, ui
 //}
 //..............................................................................
 void TGlFont::CreateTextures(uint16_t Width, uint16_t Height)  {
-  if( Width < MaxWidth || Width < 0 ||
-      Height < MaxHeight || Height < 0 ||
-      MaxWidth <=0 || MaxHeight <=0 )
+  if( Width < MaxWidth || 
+      Height < MaxHeight || 
+      MaxWidth == 0 || MaxHeight == 0 )
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("font size w:") << Width << "; h:" << Height);
   if( Textures == NULL )  {
     Textures = new GLuint[256];

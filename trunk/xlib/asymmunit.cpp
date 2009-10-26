@@ -699,8 +699,8 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
   PyDict_SetItemString(cell, "gamma", Py_BuildValue("(dd)", FAngles[2].GetV(), FAngles[2].GetE()));
   PyDict_SetItemString(cell, "z", Py_BuildValue("i", Z));
   PyDict_SetItemString(main, "cell", cell);
-  int resi_cnt = 0;
-  for( size_t i=0; i < Residues.Count(); i++ )  {
+  size_t resi_cnt = 0;
+  for( size_t i=0; i < ResidueCount(); i++ )  {
     TResidue& r = GetResidue(i);
     if( r.IsEmpty() )  continue;
     resi_cnt++;
@@ -708,11 +708,11 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
   PyObject* residues = PyTuple_New(resi_cnt);
   resi_cnt = 0;
 
-  int atom_id = 0;
-  for( size_t i=0; i < Residues.Count(); i++ )  {
+  size_t atom_id = 0;
+  for( size_t i=0; i < ResidueCount(); i++ )  {
     TResidue& r = GetResidue(i);
     if( r.IsEmpty() )  continue;
-    int atom_cnt = 0;
+    size_t atom_cnt = 0;
     for( size_t j=0; j < r.Count(); j++ )  {
       if( r[j].IsDeleted() )  continue;
       r[j].SetTag(atom_id++);
