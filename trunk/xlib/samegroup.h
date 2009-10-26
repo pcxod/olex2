@@ -26,7 +26,7 @@ protected:
   // on release
   void ClearAtomIds()  {
     for( size_t i=0; i < Atoms.Count(); i++ )
-      Atoms[i]->SetSameId(-1);
+      Atoms[i]->SetSameId(~0);
   }
 public:
   TSameGroup(uint16_t id, TSameGroupList& parent) : Id(id), Parent(parent)  { 
@@ -45,7 +45,7 @@ public:
   
   void Clear()  {
     for( size_t i=0; i < Atoms.Count(); i++ )
-      Atoms[i]->SetSameId(-1);
+      Atoms[i]->SetSameId(~0);
     Atoms.Clear();
     Dependent.Clear();
   }

@@ -263,7 +263,7 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
       Atoms[i]->crd() = (*ocrd)[i];
     Atoms[i]->SetLattId(i-dac);
   }
-  if( dac != NULL )
+  if( dac != 0 )
     Atoms.Pack();
 }
 //..............................................................................

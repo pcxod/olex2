@@ -198,7 +198,6 @@ public:
   //............................................................................
   void Expand()  {
     TOnProgress onExp;
-    onExp.SetMax( -1 );
     OnExpand->Enter(NULL, &onExp);
     Root.Expand(onExp);
     OnSynchronise->Exit(NULL, &onExp);
@@ -207,7 +206,6 @@ public:
   // if ContentOnly is true, the top folder is not deleted
   void Delete(bool ContentOnly=false)  {
     TOnProgress onDel;
-    onDel.SetPos(0);
     onDel.SetMax( Root.CalcItemCount() );
     OnDelete->Enter(NULL, &onDel);
     Root.Delete(onDel, ContentOnly);
@@ -223,7 +221,6 @@ public:
   //............................................................................
   uint64_t Compare(const TFileTree& ft) const {
     TOnProgress onCmp;
-    onCmp.SetMax(-1);
     OnCompare->Enter(NULL, &onCmp);
     uint64_t sz = Root.Compare(ft.Root, onCmp);
     OnCompare->Exit(NULL, &onCmp);
@@ -236,7 +233,6 @@ public:
   //............................................................................
   void Synchronise(TFileTree& ft)  {
     TOnProgress onSync;
-    onSync.SetMax(-1);
     OnSynchronise->Enter(NULL, &onSync);
     Root.Synchronise(ft.Root, onSync);
     OnSynchronise->Exit(NULL, &onSync);

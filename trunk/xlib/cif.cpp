@@ -1056,7 +1056,7 @@ int TLLTBondSort::Compare(const TLBond *I, const TLBond *I1)  {
     if( v < 0 ) return -1;
     v = I->Another(Atom).Label.Compare(I1->Another(Atom).Label);
     if( v == 0 )
-      return (int)(Symmetry.IndexOf(I->S2) - Symmetry.IndexOf(I1->S2));
+      return olx_cmp_size_t(Symmetry.IndexOf(I->S2), Symmetry.IndexOf(I1->S2));
   }
   if( SortType & slltName )  {  // Name, length
     v = I->Another(Atom).Label.Compare(I1->Another(Atom).Label);
@@ -1079,8 +1079,8 @@ int TLLTBondSort::Compare(const TLBond *I, const TLBond *I1)  {
     v = I->Value.ToDouble() - I1->Value.ToDouble();
     if( v > 0 ) return 1;
     if( v < 0 ) return -1;
-    if( v == NULL )
-      return (int)(Symmetry.IndexOf(I->S2) - Symmetry.IndexOf(I1->S2));
+    if( v == 0 )
+      return olx_cmp_size_t(Symmetry.IndexOf(I->S2), Symmetry.IndexOf(I1->S2));
   }
   return 0;
 }

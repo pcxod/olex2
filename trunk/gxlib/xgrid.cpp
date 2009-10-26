@@ -198,7 +198,7 @@ void TXGrid::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlP.SetProperties( GS.GetMaterial(GlP.GetName(), GlM));
 
   TextIndex = -1;
-  GlP.SetTextureId( -1 );
+  GlP.SetTextureId(~0);
 
   GlP.Vertices.SetCount(4);
   GlP.TextureCrds.SetCount(4);

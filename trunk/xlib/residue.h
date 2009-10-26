@@ -51,7 +51,7 @@ public:
   TCAtom& operator [] (size_t i) const {  return *Atoms[i]; }
   void Clear()                      {  
     for( size_t i=0; i < Atoms.Count(); i++ )
-      Atoms[i]->SetResiId(-1);
+      Atoms[i]->SetResiId(~0);
     Atoms.Clear();  
   } 
   size_t IndexOf(const TCAtom& ca) const {  return Atoms.IndexOf(ca);  }
