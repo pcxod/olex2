@@ -24,7 +24,7 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   QPeak  = 0;
   SetId(0);
   SetResiId(0);  // default residue is unnamed one
-  SetSameId(-1);
+  SetSameId(~0);
   FParent = Parent;
   EllpId = -1;
   Uiso = caDefIso;
