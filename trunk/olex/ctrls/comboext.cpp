@@ -117,9 +117,9 @@ olxstr TComboBox::ItemsToString(const olxstr &sep)  {
 }
 //..............................................................................
 void TComboBox::AddItems(const TStrList& EL) {
-  for( int i=0; i < EL.Count(); i++ )  {
-    int ind = EL[i].IndexOf( "<-" );
-    if(  ind != -1 )  {
+  for( size_t i=0; i < EL.Count(); i++ )  {
+    size_t ind = EL[i].IndexOf( "<-" );
+    if(  ind != InvalidIndex )  {
       olxstr tmp = EL[i].SubStringFrom(ind + 2);
       _AddObject( EL[i].SubStringTo(ind), tmp.Replicate(), true);
     }

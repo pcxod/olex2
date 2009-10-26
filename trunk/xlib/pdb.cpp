@@ -27,7 +27,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
 
   evecd QE(6);
   TStrList toks;
-  TIntList CrystF;
+  TSizeList CrystF;
   CrystF.Add(6);
   CrystF.Add(9);
   CrystF.Add(9);
@@ -36,7 +36,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
   CrystF.Add(7);
   CrystF.Add(7);
 
-  TIntList AtomF;
+  TSizeList AtomF;
   AtomF.Add(6);  //"ATOM  "
   AtomF.Add(5);  //serial number
   AtomF.Add(1);  //ws
@@ -55,7 +55,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
   AtomF.Add(2);  // element
   AtomF.Add(2);  // charge
 
-  TIntList AnisF;
+  TSizeList AnisF;
   AnisF.Add(6); // record name
   AnisF.Add(5);  // serial
   AnisF.Add(1);  // ws
@@ -77,9 +77,9 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
 
 
   Title = "OLEX: imported from PDB";
-  for(int i=0; i < Strings.Count(); i++ )  {
-    int spi = Strings[i].FirstIndexOf(' ');
-    if( spi <=0 )  continue;
+  for( size_t i=0; i < Strings.Count(); i++ )  {
+    size_t spi = Strings[i].FirstIndexOf(' ');
+    if( spi == InvalidIndex || spi == 0 )  continue;
     olxstr line = Strings[i].SubStringTo(spi).UpperCase();
     if( line == "CRYST1" )  {
       toks.StrtokF( Strings[i], CrystF);

@@ -58,7 +58,7 @@ public:
 
   void ProcessConn(TStrList& ins);
   // eqiv corresponds to a2
-  static int FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv);
+  static size_t FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv);
   void AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv);
   void RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv);
   /* combines all bonds to create and delete for this atom and imposed by others 

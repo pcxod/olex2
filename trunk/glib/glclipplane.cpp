@@ -32,18 +32,18 @@ void TGlClipPlane::Enabled(bool v)  {
 //----------------------------------------------------------------------------//
 TGlClipPlanes::TGlClipPlanes(TGlRenderer *R)  {
   FParent = R;
-  for( int i=0; i < GL_MAX_CLIP_PLANES; i++ )  {
+  for( GLuint i=0; i < GL_MAX_CLIP_PLANES; i++ )  {
     FPlanes.Add( new TGlClipPlane(GL_CLIP_PLANE0 +i, this, 0, 0, 0, 0) );
   }
 }
 //..............................................................................
 TGlClipPlanes::~TGlClipPlanes()  {
-  for( int i=0; i < FPlanes.Count(); i++ )
+  for( size_t i=0; i < FPlanes.Count(); i++ )
     delete FPlanes[i];
 }
 //..............................................................................
 void TGlClipPlanes::Enable(bool v)  {
-  for( int i=0; i < PlaneCount(); i++ )  {
+  for( size_t i=0; i < PlaneCount(); i++ )  {
     if( v )      FParent->EnableClipPlane(FPlanes[i], true);
     else         FParent->EnableClipPlane(FPlanes[i], false);
   }

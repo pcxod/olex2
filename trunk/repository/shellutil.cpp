@@ -230,8 +230,7 @@ void TShellUtil::ListMACAddresses( TShellUtil::MACInfo& rv )  {
   struct ifconf ifc;
   struct ifreq ifs[32];
   int sckt = socket(AF_INET, SOCK_DGRAM, 0);
-  if( sckt == -1 )
-    return;
+  if( sckt == -1 )  return;
   ifc.ifc_len = sizeof(ifs);
   ifc.ifc_req = ifs;
   if( ioctl(sckt, SIOCGIFCONF, &ifc) < 0 )  {

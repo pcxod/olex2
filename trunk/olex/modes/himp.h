@@ -23,7 +23,7 @@ public:
       TXAtom& XA = (TXAtom&)obj;
       if( XA.Atom().GetAtomInfo() == iHydrogenIndex )  {
         TSAtom* aa = NULL;
-        for(int i=0; i < XA.Atom().NodeCount(); i++ )  {
+        for( size_t i=0; i < XA.Atom().NodeCount(); i++ )  {
           if( XA.Atom().Node(i).GetAtomInfo() != iQPeakIndex )  {
             if( aa == NULL )  aa = &XA.Atom().Node(i);
             else  {  // bad connectivity

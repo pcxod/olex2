@@ -51,7 +51,7 @@ void TLst::Clear()  {
 bool TLst::LoadFromFile(const olxstr &FN)  {
   TEFile::CheckFileExists(__OlxSourceInfo, FN);
   TStrList SL;
-  int ind;
+  size_t ind;
   bool TRefC  = false,
        URefC  = false,
        DRef   = false,
@@ -68,11 +68,11 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
   SL.LoadFromFile( FN );
   TLstRef *LstRef;
   TLstSplitAtom *SplitA;
-  for( int i=0; i < SL.Count(); i++ )  {
+  for( size_t i=0; i < SL.Count(); i++ )  {
     Toks.Clear();
     if( !TRefC )  {
       ind = SL[i].FirstIndexOf("Reflections read,");
-      if( ind >= 0 )  {
+      if( ind != InvalidIndex )  {
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 3 )  continue;
         FTotalRefs = Toks[0].ToInt();
@@ -83,7 +83,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     }
     if( !URefC )  {
       ind = SL[i].FirstIndexOf("Unique reflections,");
-      if( ind >= 0 )  {
+      if( ind != InvalidIndex )  {
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 3 )  continue;
         FUniqRefs = Toks[0].ToInt();
@@ -93,12 +93,12 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     }
     if( !DRef )  {
       ind = SL[i].FirstIndexOf("Disagreeable Reflections");
-      if( ind >= 0 )  {
+      if( ind != InvalidIndex )  {
         i += 4;
-        while( i < SL.Count() && (SL[i].FirstIndexOf("Bond") == -1) )  {
+        while( i < SL.Count() && (SL[i].FirstIndexOf("Bond") == InvalidIndex) )  {
           Toks.Strtok(SL[i], ' ');
           if( Toks.Count() < 8 )  break;
-          int inc = 0, requiredCount = 8 ;
+          size_t inc = 0, requiredCount = 8 ;
           if( Toks[0] == '*' )  {  inc ++;  requiredCount++;  }
           if( Toks.Count() >= requiredCount )  {
             LstRef = new TLstRef;
@@ -121,12 +121,12 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     }
     if( !TrefT )  {
       ind = SL[i].FirstIndexOf("Try    Ralpha Nqual Sigma-1 M(abs) CFOM   Seminvariants");
-      if( ind >= 0 )  {
+      if( ind != InvalidIndex )  {
         i += 2;
-        while( i < SL.Count() && (SL[i].FirstIndexOf("CFOM") == -1) )  {
+        while( i < SL.Count() && (SL[i].FirstIndexOf("CFOM") == InvalidIndex) )  {
           Toks.Strtok(SL[i], ' ');
           if( Toks.Count() < 7 )  { i++;  continue;  }
-          int inc = 0, requiredCount = 7;
+          size_t inc = 0, requiredCount = 7;
           if( Toks[0] == '*' )  {  inc ++;  requiredCount++;  }
           if( Toks.Count() >= requiredCount )  {
             TTrefTry& trtry = TrefTries.AddNew();
@@ -137,11 +137,11 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
             trtry.Mabs = Toks[4+inc].ToDouble();
             trtry.CFOM = Toks[5+inc].ToDouble();
 
-            trtry.Semivariants.SetSize( (Toks.Count() - 6 - inc) * Toks[inc+6].Length() );
-            int bitIndex = 0;
-            for( int j= 6 + inc; j < Toks.Count(); j++ )  {
+            trtry.Semivariants.SetSize((uint32_t)((Toks.Count() - 6 - inc) * Toks[inc+6].Length()));
+            size_t bitIndex = 0;
+            for( size_t j= 6 + inc; j < Toks.Count(); j++ )  {
               if( bitIndex >= trtry.Semivariants.Count() )  break;
-              for( int k=0; k < Toks[j].Length(); k++ )  {
+              for( size_t k=0; k < Toks[j].Length(); k++ )  {
                 if( Toks[j][k] == '+' )
                   trtry.Semivariants.Set(bitIndex, true);
                 bitIndex++;
@@ -159,12 +159,12 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     }
     if( !PattS )  {
       ind = SL[i].FirstIndexOf("Solution   1    CFOM =  ");
-      if( ind >= 0 )  {
+      if( ind != InvalidIndex )  {
         i += 7;
         TTypeList<TPattAtom>* sol = new TTypeList<TPattAtom>;
         PattSolutions.Add( sol );
-        while( i < SL.Count() && (SL[i].FirstIndexOf("Patterson") == -1) )  {
-          if( SL[i].FirstIndexOf("Solution") != -1 )  {
+        while( i < SL.Count() && (SL[i].FirstIndexOf("Patterson") == InvalidIndex) )  {
+          if( SL[i].FirstIndexOf("Solution") != InvalidIndex )  {
             i += 7;
             if( i >= SL.Count() )  break;
             sol = new TTypeList<TPattAtom>();
@@ -187,7 +187,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     }
     if( !RIS )  {
       ind = SL[i].FirstIndexOf("R(int) =");
-      if( ind >= 0 )  {
+      if( ind != InvalidIndex )  {
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 6 )  continue;
         FRint = Toks[2].ToDouble();
@@ -198,7 +198,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     }
     if( !HP )  {
       ind = SL[i].FirstIndexOf("Highest peak");
-      if( ind >= 0 )  {
+      if( ind != InvalidIndex )  {
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 4 )  continue;
         FPeak = Toks[2].ToDouble();
@@ -208,7 +208,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     }
     if( !DH )  {
       ind = SL[i].FirstIndexOf("Deepest hole");
-      if( ind >= 0 )  {
+      if( ind != InvalidIndex )  {
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 4 )  continue;
         FHole = Toks[2].ToDouble();
@@ -218,7 +218,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     }
     if( !RF )  {
       ind = SL[i].FirstIndexOf("Final Structure Factor");
-      if( ind >= 0 )  {
+      if( ind != InvalidIndex )  {
         // extract total number of LS parameters
         Toks.Clear();
         i += 2;  if( i >= SL.Count() )  break;
@@ -227,7 +227,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
 
         // extract R1 or 4sigma, R1a for all data and number of refs with Fo > 4sig(Fo)
         Toks.Clear();
-        while( i < SL.Count() && SL[i].IndexOf("R1 = ") == -1  ) i++;
+        while( i < SL.Count() && SL[i].IndexOf("R1 = ") == InvalidIndex ) i++;
         if( i >= SL.Count() )  break;
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() > 8 )  {
@@ -252,12 +252,12 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     }
     if( !SA )  {
       ind = SL[i].FirstIndexOf("square atomic displacements");
-      if( ind >= 0 )  {
+      if( ind != InvalidIndex )  {
         i++;  // skip the line breaks
         while( i < SL.Count() && SL[i].IsEmpty() )  i++;
         /* do the search, the line break is the end of the section */
         while( i < SL.Count() && !SL[i].IsEmpty() )  {
-          if( SL[i].FirstIndexOf("may be split into") >= 0 )  {
+          if( SL[i].FirstIndexOf("may be split into") != InvalidIndex )  {
             Toks.Clear();
             Toks.Strtok(SL[i], ' ');
             if( Toks.Count() < 15 )  {  i++;  continue;  }
@@ -279,7 +279,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     }
     if( !FlackF )  {
       ind = SL[i].FirstIndexOf("Flack x parameter");
-      if( ind >= 0 )  {
+      if( ind != InvalidIndex )  {
         Toks.Clear();
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() == 8 )  {
@@ -292,9 +292,9 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     }
     // errors
     ind = SL[i].FirstIndexOf("**");
-    if( ind >= 0 )  {
+    if( ind != InvalidIndex )  {
       AnAssociation2<olxstr,olxstr>& msg = ErrorMsgs.AddNew(SL[i], EmptyString);
-      if( SL[i].IndexOf(':') != -1 )
+      if( SL[i].IndexOf(':') != InvalidIndex )
         continue;
       if( i >= 2 )  {
         if( i > 2 && SL[i-3].EndsWith('=') )  {
@@ -324,7 +324,7 @@ bool TLst::ExportHTML( const short Param, TStrList &Html, bool TableDef)  {
     Table.ColName(1) = "K";
     Table.ColName(2) = "L";
     Table.ColName(3) = "&Delta;(F<sup>2</sup>)/esd";
-    for( int i=0; i < DRefCount(); i++ )  {
+    for( size_t i=0; i < DRefCount(); i++ )  {
       TLstRef& Ref = DRef(i);
       if( Ref.Deleted )  continue;
       Table[i][0] = Ref.H;
@@ -357,11 +357,11 @@ bool TLst::ExportHTML( const short Param, TStrList &Html, bool TableDef)  {
 }
 //..............................................................................
 void TLst::SynchroniseOmits(RefinementModel& rm)  {
-  for( int i=0; i < FDRefs.Count(); i++ )  
+  for( size_t i=0; i < FDRefs.Count(); i++ )  
     FDRefs[i].Deleted = false;
-  for( int i=0; i < rm.OmittedCount(); i++ )  {
+  for( size_t i=0; i < rm.OmittedCount(); i++ )  {
     const vec3i& r = rm.GetOmitted(i);
-    for( int j=0; j < FDRefs.Count(); j++ )  {
+    for( size_t j=0; j < FDRefs.Count(); j++ )  {
       if( FDRefs[j].H == r[0] && FDRefs[j].K == r[1] && FDRefs[j].L == r[2] )  {
         FDRefs[j].Deleted = true;
         break;

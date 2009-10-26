@@ -21,7 +21,7 @@ namespace ctrl_ext  {
     void SelectionEvent(wxTreeEvent& event);
     void ItemActivateEvent(wxTreeEvent& event);
 
-    int ReadStrings(int& index, const wxTreeItemId* thisCaller, const TStrList& strings);
+    size_t ReadStrings(size_t& index, const wxTreeItemId* thisCaller, const TStrList& strings);
     void ClearData();
   public:
     TTreeView(wxWindow* Parent) :

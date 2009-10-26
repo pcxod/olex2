@@ -6,13 +6,14 @@ BeginXlibNamespace()
 
 class TAfixGroup : public ACollectionItem {
   double D, Sof, U;
-  int Afix, Id;
+  int Afix;
+  size_t Id;
   TCAtom* Pivot;
   TCAtomPList Dependent;
   TAfixGroups& Parent;
 public:
   TAfixGroup(TAfixGroups& parent) : Parent(parent) {}
-  TAfixGroup(TAfixGroups& parent, int id, TCAtom* pivot, int afix, double d = 0, double sof = 0, double u = 0) :
+  TAfixGroup(TAfixGroups& parent, size_t id, TCAtom* pivot, int afix, double d = 0, double sof = 0, double u = 0) :
       Parent(parent), Id(id), Pivot(pivot), D(d), Afix(afix), Sof(sof), U(u)  {  
     if( pivot != NULL )  {
       if( HasExcplicitPivot() || IsUnbound() )
@@ -25,7 +26,7 @@ public:
     Assign(ag);  
   }
   ~TAfixGroup()  {  // note that Clear just removes the item from the parent list, calling this  
-    for( int i=0; i < Dependent.Count(); i++ )
+    for( size_t i=0; i < Dependent.Count(); i++ )
       Dependent[i]->SetParentAfixGroup(NULL);
     Dependent.Clear();
     if( Pivot == NULL )  return;
@@ -37,7 +38,7 @@ public:
   DefPropP(double, D)
   DefPropP(double, Sof)
   DefPropP(double, U)
-  DefPropP(int, Id)
+  DefPropP(size_t, Id)
   void Assign(const TAfixGroup& ag);
   TCAtom& GetPivot() {  return *Pivot;  }
   void SetPivot(TCAtom& ca)  {  
@@ -88,9 +89,9 @@ public:
   void Clear();
   bool IsEmpty()  const {  return (Pivot == NULL || Pivot->IsDeleted() || 
     (!IsUnbound() && Dependent.IsEmpty()));  }
-  int Count() const {  return Dependent.Count();  }
-  TCAtom& operator [] (int i) {  return *Dependent[i];  }
-  const TCAtom& operator [] (int i) const {  return *Dependent[i];  }
+  size_t Count() const {  return Dependent.Count();  }
+  TCAtom& operator [] (size_t i) {  return *Dependent[i];  }
+  const TCAtom& operator [] (size_t i) const {  return *Dependent[i];  }
 
   void ToDataItem(TDataItem& item) const;
 #ifndef _NO_PYTHON
@@ -110,18 +111,18 @@ public:
   TAfixGroup& New(TCAtom* pivot, int Afix, double d = 0, double sof = 0, double u = 0 )  {
     return Groups.Add( new TAfixGroup(*this, Groups.Count(), pivot, Afix, d, sof, u) );
   }
-  int Count() const {  return Groups.Count();  }
-  TAfixGroup& operator [] (int i) {  return Groups[i];  }
-  const TAfixGroup& operator [] (int i) const {  return Groups[i];  }
+  size_t Count() const {  return Groups.Count();  }
+  TAfixGroup& operator [] (size_t i) {  return Groups[i];  }
+  const TAfixGroup& operator [] (size_t i) const {  return Groups[i];  }
   void Clear() {  Groups.Clear();  }
-  void Delete(int i)  {
+  void Delete(size_t i)  {
     Groups.Delete(i);
-    for( int j=i; j < Groups.Count(); j++ )
+    for( size_t j=i; j < Groups.Count(); j++ )
       Groups[j].SetId(j);
   }
   void Assign(const TAfixGroups& ags)  {
     Clear();
-    for( int i=0; i < ags.Count(); i++ )  {
+    for( size_t i=0; i < ags.Count(); i++ )  {
       if( !ags[i].IsEmpty() )  {
         Groups.Add( new TAfixGroup(*this, ags[i]) );
         Groups.Last().SetId( Groups.Count() - 1 );
@@ -129,7 +130,7 @@ public:
     }
   }
   void ValidateAll() {
-    for( int i=0; i < Groups.Count(); i++ )
+    for( size_t i=0; i < Groups.Count(); i++ )
       if( Groups[i].IsEmpty() )
         Groups.NullItem(i);
     Groups.Pack();

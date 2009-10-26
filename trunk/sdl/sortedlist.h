@@ -8,11 +8,11 @@ BeginEsdlNamespace()
 template <class ListClass, class Comparator, typename TypeClass> class TTSortedList {
   ListClass list;
 protected:
-  int FindInsertIndex(const TypeClass& entity) const {
-    int from = 0, to = list.Count()-1;
+  size_t FindInsertIndex(const TypeClass& entity) const {
+    size_t from = 0, to = list.Count()-1;
     while( true )  {
       if( (to-from) == 1 )  return to;
-      const int index = (to+from)/2;
+      const size_t index = (to+from)/2;
       const int cr = Comparator::Compare(list[index], entity);
       if( cr < 0 )  
         from = index;
@@ -24,10 +24,10 @@ protected:
             return index;  
       }
     }
-    return -1;  // shold never happen - infinite loop above!
+    return InvalidIndex;  // shold never happen - infinite loop above!
   }
-  int FindInsertIndexEx(const TypeClass& entity, bool& exists) const {
-    int from = 0, to = list.Count()-1;
+  size_t FindInsertIndexEx(const TypeClass& entity, bool& exists) const {
+    size_t from = 0, to = list.Count()-1;
     while( true )  {
       if( (to-from) == 1 )  {  
         if( Comparator::Compare(list[from], entity) == 0 )  {
@@ -41,7 +41,7 @@ protected:
         else
           return to;
       }
-      const int index = (to+from)/2;
+      const size_t index = (to+from)/2;
       const int cr = Comparator::Compare(list[index], entity);
       if( cr < 0 )  
         from = index;
@@ -55,24 +55,23 @@ protected:
           }
       }
     }
-    return -1;  // shold never happen - infinite loop above!
+    return InvalidIndex;  // shold never happen - infinite loop above!
   }
-  template <class KeyC> int FindIndexOf(const KeyC& entity) const {
-    if( list.IsEmpty() )  
-      return -1;
+  template <class KeyC> size_t FindIndexOf(const KeyC& entity) const {
+    if( list.IsEmpty() )  return InvalidIndex;
     if( list.Count() == 1 )  
-      return Comparator::Compare(list[0],entity) == 0 ? 0 : -1;
-    int from = 0, to = list.Count()-1;
+      return Comparator::Compare(list[0],entity) == 0 ? 0 : InvalidIndex;
+    size_t from = 0, to = list.Count()-1;
     const int from_cr = Comparator::Compare(list[from], entity);
     if( from_cr == 0 )  return from;
-    if( from_cr > 0  )  return -1;
+    if( from_cr > 0  )  return InvalidIndex;
     const int to_cr = Comparator::Compare(list[to], entity);
     if( to_cr == 0 )  return to;
-    if( to_cr < 0  )  return -1;
+    if( to_cr < 0  )  return InvalidIndex;
     while( true ) {
-      const int index = (to+from)/2;
+      const size_t index = (to+from)/2;
       if( index == from || index == to)  
-        return -1;
+        return InvalidIndex;
       const int cr = Comparator::Compare(list[index], entity);
       if( cr < 0 )  
         from = index;
@@ -85,7 +84,7 @@ protected:
         }
       }
     }
-    return -1;
+    return InvalidIndex;
   }
 protected:
   struct Proxy  {
@@ -103,15 +102,15 @@ public:
   TTSortedList() {}
   TTSortedList(const TTSortedList& l) : list(l.list)  {  }
 
-  bool IsEmpty()                const {  return list.IsEmpty();  }
-  int Count()                   const {  return list.Count();  }
-  const TypeClass& operator [] (int i)  const {  return list[i];  }
+  bool IsEmpty() const {  return list.IsEmpty();  }
+  size_t Count() const {  return list.Count();  }
+  const TypeClass& operator [] (size_t i)  const {  return list[i];  }
   TTSortedList& operator = (const TTSortedList& _list)  {
     list = _list.list;
     return *this;
   }
   // adds an item to the list and returns its' index
-  int Add(TypeClass& entry)  {
+  size_t Add(TypeClass& entry)  {
     if( list.IsEmpty() )     {  list.Add(entry);  return 0;  }
     if( list.Count() == 1 )  {
       const int cmp_val = Comparator::Compare(list[0], entry);
@@ -125,11 +124,11 @@ public:
     if( Comparator::Compare(list.Last(), entry) <=0 )  {  list.Add(entry);  return list.Count()-1; }
     // an easy case then with two items
     if( list.Count() == 2 )       {  list.Insert(1, entry);  return 1; }
-    const int pos = FindInsertIndex(entry);
+    const size_t pos = FindInsertIndex(entry);
     list.Insert(pos, entry);
     return pos;
   }
-  int Add(const TypeClass& entry)  {
+  size_t Add(const TypeClass& entry)  {
     if( list.IsEmpty() )     {  list.Add(entry);  return 0;  }
     if( list.Count() == 1 )  {
       const int cmp_val = Comparator::Compare(list[0], entry);
@@ -143,13 +142,13 @@ public:
     if( Comparator::Compare(list.Last(), entry) <=0 )  {  list.Add(entry);  return list.Count()-1; }
     // an easy case then with two items
     if( list.Count() == 2 )       {  list.Insert(1, entry);  return 1; }
-    const int pos = FindInsertIndex(entry);
+    const size_t pos = FindInsertIndex(entry);
     list.Insert(pos, entry);
     return pos;
   }
   /* adds an item only if not already in the list, returns true if the item is added, pos is is 
   initialised with the item index */
-  bool AddUnique(TypeClass& entry, int* pos=NULL)  {
+  bool AddUnique(TypeClass& entry, size_t* pos=NULL)  {
     if( list.IsEmpty() )  {  
       list.Add(entry);  
       if( pos != NULL )  *pos = 0;
@@ -183,13 +182,13 @@ public:
       return true; 
     }
     bool exists = false;
-    int ps = FindInsertIndexEx( entry, exists );
+    size_t ps = FindInsertIndexEx( entry, exists );
     if( pos != NULL )  *pos = ps;
     if( exists )  return false;
     list.Insert(ps, entry);
     return true;
   }
-  bool AddUnique(const TypeClass& entry, int* pos = NULL)  {
+  bool AddUnique(const TypeClass& entry, size_t* pos = NULL)  {
     if( list.IsEmpty() )  {  
       list.Add(entry);  
       if( pos != NULL )  *pos = 0;
@@ -223,25 +222,25 @@ public:
       return true; 
     }
     bool exists = false;
-    int ps = FindInsertIndexEx( entry, exists );
+    size_t ps = FindInsertIndexEx( entry, exists );
     if( pos != NULL )  *pos = ps;
     if( exists )  return false;
     list.Insert(ps, entry);
     return true;
   }
   template <class KeyC>
-  int IndexOf(const KeyC& entity) const {  return FindIndexOf(entity);  }
+  size_t IndexOf(const KeyC& entity) const {  return FindIndexOf(entity);  }
   // removes specified entry from the list and returns true if the entry was in the list
   bool Remove(const TypeClass& entity)  {
-    int ind = FindIndexOf(entity);
-    if( ind == -1 )  return false;
+    size_t ind = FindIndexOf(entity);
+    if( ind == InvalidIndex )  return false;
     list.Delete(ind);
     return true;
   }
-  void Delete(int ind)        {  list.Delete(ind);  }
-  void Clear()                {  list.Clear();  }
-  void SetCapacity( int cap)  {  list.SetCapacity(cap);  }
-  void SetIncrement(int incr) {  list.SetIncrement(incr);  }
+  void Delete(size_t ind)  {  list.Delete(ind);  }
+  void Clear()  {  list.Clear();  }
+  void SetCapacity(size_t cap)  {  list.SetCapacity(cap);  }
+  void SetIncrement(size_t incr)  {  list.SetIncrement(incr);  }
 };
 //............................................................................................
 // a simple object list to use with sorted list
@@ -252,45 +251,45 @@ public:
   TObjectList() {  }
   TObjectList(const TObjectList& li) {  
     SetCapacity(li.Count());
-    for( int i=0; i < li.Count(); i++ )
+    for( size_t i=0; i < li.Count(); i++ )
       Add(li[i]);
   }
   ~TObjectList() {  
     Clear();
   }
-  ObjectClass& operator [] (int i)  {  return *list[i];  }
-  const ObjectClass& operator [] (int i) const {  return *list[i];  }
+  ObjectClass& operator [] (size_t i)  {  return *list[i];  }
+  const ObjectClass& operator [] (size_t i) const {  return *list[i];  }
   ObjectClass& Last()  {  return *list.Last();  }
-  const ObjectClass& Last(int i) const {  return *list.Last();  }
+  const ObjectClass& Last() const {  return *list.Last();  }
 
-  int Count() const {  return list.Count();  }
+  size_t Count() const {  return list.Count();  }
   bool IsEmpty() const {  return list.IsEmpty();  }
   TObjectList<ObjectClass>& operator = (const TObjectList<ObjectClass>& li)  {
     Clear();
     SetCapacity(li.Count());
-    for( int i=0; i < li.Count(); i++ )
+    for( size_t i=0; i < li.Count(); i++ )
       Add(li[i]);
     return *this;
   }
   void Add(const ObjectClass& obj)  {
     list.Add( new ObjectClass(obj) );
   }
-  void Insert(int index, const ObjectClass& obj)  {
+  void Insert(size_t index, const ObjectClass& obj)  {
     list.Insert(index, new ObjectClass(obj) );
   }
 
   void Clear()  {
-    for( int i=0; i < list.Count(); i++ )
+    for( size_t i=0; i < list.Count(); i++ )
       delete list[i];
     list.Clear();
   }
-  void Delete(int ind)  {
+  void Delete(size_t ind)  {
     if( list[ind] != NULL )
       delete list[ind];
     list.Delete(ind);
   }
-  void SetCapacity( int cap)   {  list.SetCapacity(cap);  }
-  void SetIncrement(int incr) {  list.SetIncrement(incr);  }
+  void SetCapacity(size_t cap)   {  list.SetCapacity(cap);  }
+  void SetIncrement(size_t incr) {  list.SetIncrement(incr);  }
 };
 //............................................................................................
 /* A choice of comprators is provided:

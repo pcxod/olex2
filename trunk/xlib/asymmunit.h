@@ -37,8 +37,8 @@ class TAsymmUnit: public IXVarReferencerContainer, public IEObject  {
   TCAtomPList Centroids;
   double MaxQPeak,
          MinQPeak;
-  short  Z,
-         Latt;
+  unsigned short Z;
+  short Latt;
   bool   ContainsEquivalents, 
     /* this flag specifies that _OnAtomTypeChange will do nothing, however whatever called Assign
     must call _UpdateConnInfo */
@@ -68,7 +68,7 @@ public:
   inline const vec3d& GetRAngles() const {  return RAngles;  }
   double CalcCellVolume() const;
   // estimates Z=Z'*sg.multiplicity according to 18.6A rule
-  double EstimateZ(int atomCount) const;
+  double EstimateZ(size_t atomCount) const;
   DefPropP(short, Z)
   DefPropP(short, Latt)
 
@@ -133,8 +133,8 @@ public:
   void Clear();
   //creates a new residue
   TResidue& NewResidue(const olxstr& RClass, int number, const olxstr& alias = EmptyString);
-  inline int ResidueCount()                 const {  return Residues.Count();  }
-  inline TResidue& GetResidue(int i)        const { return (i==-1) ? const_cast<TAsymmUnit*>(this)->MainResidue : Residues[i];  }
+  inline size_t ResidueCount() const {  return Residues.Count()+1;  }
+  inline TResidue& GetResidue(size_t i) const { return (i==0) ? const_cast<TAsymmUnit*>(this)->MainResidue : Residues[i-1];  }
   TResidue* NextResidue(const TResidue& r) const;
   TResidue* PrevResidue(const TResidue& r) const;
   void AssignResidues(const TAsymmUnit& au);
@@ -151,22 +151,22 @@ public:
   //returns an atom by label; if the label is not unique, returns the first found
   TCAtom* FindCAtom(const olxstr &Label, TResidue* resi = NULL) const;
   //returns an atom by LoaderId
-  TCAtom* FindCAtomById(int id) const  {
-    return (id < 0 || id >= CAtoms.Count()) ? NULL : CAtoms[id];
+  TCAtom* FindCAtomById(size_t id) const  {
+    return (id >= CAtoms.Count()) ? NULL : CAtoms[id];
   }
   // makes specified type detached or attached
-  void DetachAtomType(int type, bool detach);
+  void DetachAtomType(short type, bool detach);
   /* removes all atoms marked as deleted */
   void PackAtoms();
-  inline TCAtom& GetAtom(size_t i)     const {  return *CAtoms[i];  }
-  inline int AtomCount()               const { return CAtoms.Count();};
+  inline TCAtom& GetAtom(size_t i) const {  return *CAtoms[i];  }
+  inline size_t AtomCount() const { return CAtoms.Count();};
 
-  inline int MatrixCount()                const {  return Matrices.Count();  }
+  inline size_t MatrixCount() const {  return Matrices.Count();  }
   inline const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
-  void ClearMatrices()                          {  Matrices.Clear();  }
+  void ClearMatrices()  {  Matrices.Clear();  }
   void AddMatrix(const smatd& a);
 
-  inline int EllpCount()               const {  return Ellipsoids.Count(); }
+  inline size_t EllpCount() const {  return Ellipsoids.Count(); }
   inline TEllipsoid& GetEllp(size_t i) const {  return *Ellipsoids[i]; }
   void NullEllp(size_t i);
   void ClearEllps();
@@ -216,18 +216,18 @@ public:
   
   virtual olxstr GetIdName() const {  return IdName;  }
   // note - possibly unsafe, type is not checked
-  virtual int GetReferencerId(const IXVarReferencer& vr) const {  
+  virtual size_t GetReferencerId(const IXVarReferencer& vr) const {  
     if( !EsdlInstanceOf(vr, TCAtom) )
       throw TInvalidArgumentException(__OlxSourceInfo, "referencer");
     return ((TCAtom&)vr).GetId();
   }
   // note - possibly unsafe, range is unchecked
-  virtual IXVarReferencer* GetReferencer(int id) {
-    if( id < 0 || id > CAtoms.Count() )
+  virtual IXVarReferencer* GetReferencer(size_t id) {
+    if( id >= CAtoms.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "id");
     return CAtoms[id];
   }
-  virtual int ReferencerCount() const {  return CAtoms.Count();  }
+  virtual size_t ReferencerCount() const {  return CAtoms.Count();  }
 //
 
   void ToDataItem(TDataItem& item) const;

@@ -19,10 +19,10 @@ namespace exparse  {
       throw TNotImplementedException(__OlxSourceInfo);
     }
     virtual IEvaluable* find_method(const olxstr& name, const EvaluableFactory& ef, const TPtrList<IEvaluable>& args) {
-      int i = functions.index_of(name, args.Count());
-      if( i == -1 )  {
+      size_t i = functions.index_of(name, args.Count());
+      if( i == InvalidIndex )  {
         i = globals.index_of(name, args.Count());
-        return i == -1 ? NULL : globals.create_from_index(ef, i, args);
+        return i == InvalidIndex ? NULL : globals.create_from_index(ef, i, args);
       }
       return functions.create_from_index(*this, ef, &val, i, args);
     }
@@ -43,7 +43,7 @@ namespace exparse  {
     static void init_library()  {
       if( !globals.is_empty() )  return;
       functions.add("sub", &olxstr::SubString);
-      functions.add<int>("len", &olxstr::Length);  // gcc...
+      functions.add<size_t>("len", &olxstr::Length);  // gcc...
       globals.add("+", &StringValue::add);
       globals.add("==", &StringValue::equals);
       globals.add("equals", &StringValue::equals);

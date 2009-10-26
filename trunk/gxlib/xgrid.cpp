@@ -159,7 +159,7 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   IS = NULL;
   MouseDown = false;
   Size = 10;
-  TextIndex = -1;
+  TextIndex = ~0;
   TextData = NULL;
   Scale = 10;
   //for textures, 2^n+2 (for border)...
@@ -169,7 +169,7 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   MaxX = MaxY = MaxZ = 0;
   MaxVal = MinVal = 0;
   MinHole = MaxHole = 0;
-  PListId = NListId = -1;
+  PListId = NListId = ~0;
 }
 //..............................................................................
 TXGrid::~TXGrid()  {
@@ -359,7 +359,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     }
   }
 
-  if( TextIndex == -1 )  {
+  if( !olx_is_valid_index(TextIndex) )  {
     TextIndex = Parent.GetTextureManager().Add2DTexture("Plane", 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
     TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextIndex);
     tex->SetEnvMode( tpeDecal );
@@ -542,7 +542,7 @@ bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
       Scale -= step*(LastMouseX - Data->X);
       Scale += step*(LastMouseY - Data->Y);
       if( olx_abs(Scale) > olx_max(MaxVal,MinVal)  )
-        Scale = Sign(Scale)*olx_max(MaxVal,MinVal);
+        Scale = olx_sign(Scale)*olx_max(MaxVal,MinVal);
     }
     else  {
       Size += (float)(LastMouseX - Data->X)/15;
@@ -564,16 +564,16 @@ bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
 void TXGrid::GlContextChange()  {
   if( ED == NULL )
     return;
-  if( PListId != -1 )  {
+  if( !olx_is_valid_index(PListId)  )  {
     glDeleteLists(PListId, 2);
-    PListId = NListId = -1;
+    PListId = NListId = ~0;
   }
   SetScale(Scale);
 }
 //..............................................................................
 void TXGrid::RescaleSurface()  {
   const TAsymmUnit& au =  XApp->XFile().GetAsymmUnit();
-  if( PListId == -1 )  {
+  if( !olx_is_valid_index(PListId) )  {
     PListId = glGenLists(2);
     NListId = PListId+1;
   }
@@ -589,7 +589,7 @@ void TXGrid::RescaleSurface()  {
       for( int x=-1; x <= 1; x++ )  {
         for( int y=-1; y <= 1; y++ )  {
           for( int z=-1; z <= 1; z++ )  {
-            for( int i=0; i < trians.Count(); i++ )  {
+            for( size_t i=0; i < trians.Count(); i++ )  {
               bool draw = true;
               for( int j=0; j < 3; j++ )  {
                 pts[j] = verts[trians[i].pointID[j]];
@@ -635,7 +635,7 @@ void TXGrid::RescaleSurface()  {
         for( int x=-1; x <= 1; x++ )  {
           for( int y=-1; y <= 1; y++ )  {
             for( int z=-1; z <= 1; z++ )  {
-              for( int i=0; i < trians.Count(); i++ )  {
+              for( size_t i=0; i < trians.Count(); i++ )  {
                 for( int j=0; j < 3; j++ )  {
                   pts[j] = verts[trians[i].pointID[j]];                      // ext drawing
                   pts[j][0] /= MaxX;  pts[j][1] /= MaxY;  pts[j][2] /= MaxZ; // ext drawing
@@ -659,14 +659,14 @@ void TXGrid::RescaleSurface()  {
         TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
         const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
         const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
-        for( int i=0; i < verts.Count(); i++ )  {                           // cell drawing
+        for( size_t i=0; i < verts.Count(); i++ )  {                           // cell drawing
           verts[i][0] /= MaxX;  verts[i][1] /= MaxY;  verts[i][2] /= MaxZ;  // cell drawing
           au.CellToCartesian(verts[i]);                                     // cell drawing
         }
         glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
         glPolygonMode(GL_FRONT_AND_BACK, PolygonMode);
         glBegin(GL_TRIANGLES);
-        for( int i=0; i < trians.Count(); i++ )  {
+        for( size_t i=0; i < trians.Count(); i++ )  {
           for( int j=0; j < 3; j++ )  {
             const vec3f& nr = norms[trians[i].pointID[j]];
             glNormal3f( nr[0], nr[1], nr[2] );

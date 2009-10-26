@@ -5,7 +5,7 @@
 void ConnInfo::ProcessFree(const TStrList& ins)  {
   TAtomReference ar(ins.Text(' '));
   TCAtomGroup ag;
-  int aag;
+  size_t aag;
   try  {  ar.Expand(rm, ag, EmptyString, aag);  }
   catch(TExceptionBase& ex)  {
     throw TFunctionFailedException(__OlxSourceInfo, ex, "Failed to locate atoms");
@@ -30,7 +30,7 @@ void ConnInfo::ProcessFree(const TStrList& ins)  {
 void ConnInfo::ProcessBind(const TStrList& ins)  {
   TAtomReference ar(ins.Text(' '));
   TCAtomGroup ag;
-  int aag;
+  size_t aag;
   try  {  ar.Expand(rm, ag, EmptyString, aag);  }
   catch(TExceptionBase& ex)  {
     throw TFunctionFailedException(__OlxSourceInfo, ex, "Failed to locate atoms");
@@ -55,8 +55,8 @@ void ConnInfo::ProcessBind(const TStrList& ins)  {
 void ConnInfo::ProcessConn(TStrList& ins)  {
   short maxB = def_max_bonds;
   double r = -1;
-  TIntList num_indexes;
-  for( int i=0; i < ins.Count(); i++ )  {
+  TSizeList num_indexes;
+  for( size_t i=0; i < ins.Count(); i++ )  {
     if( ins[i].IsNumber() )
       num_indexes.Add(i);
   }
@@ -65,7 +65,7 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
     r = ins[num_indexes[1]].ToDouble();
   }
   else if( num_indexes.Count() == 1 )  {
-    if( ins[num_indexes[0]].IndexOf('.') != -1 )
+    if( ins[num_indexes[0]].IndexOf('.') != InvalidIndex )
       r = ins[num_indexes[0]].ToDouble();
     else
       maxB = ins[num_indexes[0]].ToInt();
@@ -73,10 +73,10 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
   else  // invalid argument set - reset any existing conn info
     ;
   // remove numbers to leave atom names/types only
-  for( int i=num_indexes.Count()-1; i >=0; i-- )
-    ins.Delete(num_indexes[i]);
+  for( size_t i=num_indexes.Count(); i > 0; i-- )
+    ins.Delete(num_indexes[i-1]);
   // extract and remove atom types
-  for( int i=0; i < ins.Count(); i++ )  {
+  for( size_t i=0; i < ins.Count(); i++ )  {
     if( ins[i].CharAt(0) == '$' )  {
       TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoBySymbol(ins[i].SubStringFrom(1));
       if( bai == NULL )  {
@@ -93,17 +93,17 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
   if( !ins.IsEmpty() )  {
     TAtomReference ar(ins.Text(' '));
     TCAtomGroup ag;
-    int aag;
+    size_t aag;
     try  {  ar.Expand(rm, ag, EmptyString, aag);  }
     catch(const TExceptionBase& )  {  }
     if( ag.IsEmpty() )  {
       TBasicApp::GetLog().Error( olxstr("Undefined atom in CONN: ") << ins.Text(' ') );
       return;
     }
-    for( int i=0; i < ag.Count(); i++ )  {
+    for( size_t i=0; i < ag.Count(); i++ )  {
       if( maxB == 12 && r == -1 )  {  // reset to default?
-        int ai = AtomInfo.IndexOf(ag[i].GetAtom());
-        if( ai != -1 )
+        size_t ai = AtomInfo.IndexOf(ag[i].GetAtom());
+        if( ai != InvalidIndex )
           AtomInfo.Delete(ai);
       }
       else  {
@@ -117,7 +117,7 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
 //........................................................................
 void ConnInfo::ToInsList(TStrList& ins) const {
   // put the type specific info first
-  for( int i=0; i < TypeInfo.Count(); i++ )  {
+  for( size_t i=0; i < TypeInfo.Count(); i++ )  {
     const TypeConnInfo& tci = TypeInfo.GetValue(i);
     if( tci.maxBonds == def_max_bonds && tci.r == -1 )
       continue;
@@ -129,7 +129,7 @@ void ConnInfo::ToInsList(TStrList& ins) const {
     str << '$' << tci.atomInfo->GetSymbol();
   }
   // specialisation for particular atoms to follow the generic type info
-  for( int i=0; i < AtomInfo.Count(); i++ )  {
+  for( size_t i=0; i < AtomInfo.Count(); i++ )  {
     const AtomConnInfo& aci = AtomInfo.GetValue(i);
     if( aci.atom->IsDeleted() )
       continue;
@@ -141,28 +141,28 @@ void ConnInfo::ToInsList(TStrList& ins) const {
         str << aci.r << ' ';
       str << aci.atom->GetLabel();
     }
-    for( int j=0; j < aci.BondsToCreate.Count(); j++ )  {
+    for( size_t j=0; j < aci.BondsToCreate.Count(); j++ )  {
       const CXBondInfo& bi = aci.BondsToCreate[j];
       if( bi.to.IsDeleted() )
         continue;
       olxstr& str = ins.Add("BIND ");
       str << aci.atom->GetLabel() << ' ' << bi.to.GetLabel();
       if( bi.matr != NULL )  {
-        int si = rm.UsedSymmIndex(*bi.matr);
-        if( si == -1 )
+        size_t si = rm.UsedSymmIndex(*bi.matr);
+        if( si == InvalidIndex )
           throw TFunctionFailedException(__OlxSourceInfo, "Undefined EQIV in BIND");
         str << "_$" << (si+1);
       }
     }
-    for( int j=0; j < aci.BondsToRemove.Count(); j++ )  {
+    for( size_t j=0; j < aci.BondsToRemove.Count(); j++ )  {
       const CXBondInfo& bi = aci.BondsToRemove[j];
       if( bi.to.IsDeleted() )
         continue;
       olxstr& str = ins.Add("FREE ");
       str << aci.atom->GetLabel() << ' ' << bi.to.GetLabel();
       if( bi.matr != NULL )  {
-        int si = rm.UsedSymmIndex(*bi.matr);
-        if( si == -1 )
+        size_t si = rm.UsedSymmIndex(*bi.matr);
+        if( si == InvalidIndex )
           throw TFunctionFailedException(__OlxSourceInfo, "Undefined EQIV in BIND");
         str << "_$" << (si+1);
       }
@@ -172,14 +172,14 @@ void ConnInfo::ToInsList(TStrList& ins) const {
 //........................................................................
 CXConnInfo& ConnInfo::GetConnInfo(const TCAtom& ca) const {
   CXConnInfo& ci = *(new CXConnInfo);  
-  int ai_ind, ti_ind;
-  if( (ti_ind = TypeInfo.IndexOf(&ca.GetAtomInfo())) != -1 )  {
+  size_t ai_ind, ti_ind;
+  if( (ti_ind = TypeInfo.IndexOf(&ca.GetAtomInfo())) != InvalidIndex )  {
     const TypeConnInfo& aci = TypeInfo.GetValue(ti_ind);
     ci.r = (aci.r < 0 ? ca.GetAtomInfo().GetRad1() : aci.r);
     ci.maxBonds = aci.maxBonds;
   }
   // specialise the connectivity info...
-  if( (ai_ind = AtomInfo.IndexOf(&ca)) != -1 )  {
+  if( (ai_ind = AtomInfo.IndexOf(&ca)) != InvalidIndex )  {
     const AtomConnInfo& aci = AtomInfo.GetValue(ai_ind);
     ci.r = aci.r < 0 ? ca.GetAtomInfo().GetRad1() : aci.r;
     ci.maxBonds = aci.maxBonds;
@@ -187,7 +187,7 @@ CXConnInfo& ConnInfo::GetConnInfo(const TCAtom& ca) const {
     ci.BondsToRemove.AddListC(aci.BondsToRemove);
   } 
   // use defaults then
-  if( ai_ind == -1 && ti_ind == -1 )  {
+  if( ai_ind == InvalidIndex && ti_ind == InvalidIndex )  {
     ci.r = ca.GetAtomInfo().GetRad1();
     ci.maxBonds = def_max_bonds;
   }
@@ -196,8 +196,8 @@ CXConnInfo& ConnInfo::GetConnInfo(const TCAtom& ca) const {
 //........................................................................
 CXConnInfo& ConnInfo::GetConnInfo(TBasicAtomInfo& bai) const {
   CXConnInfo& ci = *(new CXConnInfo);
-  int ti_ind = TypeInfo.IndexOf(&bai);
-  if( ti_ind != -1 )  {
+  size_t ti_ind = TypeInfo.IndexOf(&bai);
+  if( ti_ind != InvalidIndex )  {
     const TypeConnInfo& aci = TypeInfo.GetValue(ti_ind);
     ci.r = (aci.r < 0 ? bai.GetRad1() : aci.r);
     ci.maxBonds = aci.maxBonds;
@@ -211,7 +211,7 @@ CXConnInfo& ConnInfo::GetConnInfo(TBasicAtomInfo& bai) const {
 //........................................................................
 void ConnInfo::Assign(const ConnInfo& ci)  {
   Clear();
-  for( int i=0; i < ci.AtomInfo.Count(); i++ )  {
+  for( size_t i=0; i < ci.AtomInfo.Count(); i++ )  {
     const AtomConnInfo& _aci = ci.AtomInfo.GetValue(i);
     if( _aci.atom->IsDeleted() )
       continue;
@@ -221,7 +221,7 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
     AtomConnInfo& aci = AtomInfo.Add(ca);
     aci.atom = ca;
     (CXConnInfoBase&)aci = _aci;
-    for( int j=0; j < _aci.BondsToCreate.Count(); j++ )  {
+    for( size_t j=0; j < _aci.BondsToCreate.Count(); j++ )  {
       ca = rm.aunit.FindCAtomById(_aci.BondsToCreate[j].to.GetId());
       if( ca == NULL )
         throw TFunctionFailedException(__OlxSourceInfo, "Asymmetric units mismatch");
@@ -231,7 +231,7 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
                         &rm.AddUsedSymm(*_aci.BondsToCreate[j].matr);
       aci.BondsToCreate.Add( new CXBondInfo(*ca, sm) );
     }
-    for( int j=0; j < _aci.BondsToRemove.Count(); j++ )  {
+    for( size_t j=0; j < _aci.BondsToRemove.Count(); j++ )  {
       ca = rm.aunit.FindCAtomById(_aci.BondsToRemove[j].to.GetId());
       if( ca == NULL )
         throw TFunctionFailedException(__OlxSourceInfo, "Asymmetric units mismatch");
@@ -242,23 +242,23 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
       aci.BondsToRemove.Add( new CXBondInfo(*ca, sm) );
     }
   }
-  for( int i=0; i < ci.TypeInfo.Count(); i++ ) 
+  for( size_t i=0; i < ci.TypeInfo.Count(); i++ ) 
     TypeInfo.Add( ci.TypeInfo.GetKey(i), ci.TypeInfo.GetValue(i) );
 }
 //........................................................................
 void ConnInfo::ToDataItem(TDataItem& item)  {
   TDataItem& ti_item = item.AddItem("TYPE");
-  for( int i=0; i < TypeInfo.Count(); i++ )
+  for( size_t i=0; i < TypeInfo.Count(); i++ )
     TypeInfo.GetValue(i).ToDataItem(ti_item.AddItem(TypeInfo.GetValue(i).atomInfo->GetSymbol()));
   TDataItem& ai_item = item.AddItem("ATOM");
-  for( int i=0; i < AtomInfo.Count(); i++ ) 
+  for( size_t i=0; i < AtomInfo.Count(); i++ ) 
     AtomInfo.GetValue(i).ToDataItem(ai_item.AddItem(AtomInfo.GetValue(i).atom->GetTag()));
 }
 //........................................................................
 void ConnInfo::FromDataItem(TDataItem& item)  {
   TAtomsInfo& ai = TAtomsInfo::GetInstance();
   TDataItem& ti_item = item.FindRequiredItem("TYPE");
-  for( int i=0; i < ti_item.ItemCount(); i++ )  {
+  for( size_t i=0; i < ti_item.ItemCount(); i++ )  {
     TBasicAtomInfo* bai = ai.FindAtomInfoBySymbol(ti_item.GetItem(i).GetName());
     if( bai == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown symbol: ") << ti_item.GetItem(i).GetName());
@@ -266,7 +266,7 @@ void ConnInfo::FromDataItem(TDataItem& item)  {
 
   }
   TDataItem& ai_item = item.FindRequiredItem("ATOM");
-  for( int i=0; i < ai_item.ItemCount(); i++ )  {
+  for( size_t i=0; i < ai_item.ItemCount(); i++ )  {
     TCAtom& ca = rm.aunit.GetAtom(ai_item.GetItem(i).GetName().ToInt());
     AtomInfo.Add(&ca).FromDataItem(ai_item.GetItem(i), rm, ca);
   }
@@ -284,11 +284,11 @@ void ConnInfo::TypeConnInfo::FromDataItem(TDataItem& item, TBasicAtomInfo* bai) 
   maxBonds = item.GetRequiredField("b").ToInt();
 }
 //........................................................................
-int ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv) {
+size_t ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv) {
   if( key != &a1 && key != &a2 || list.IsEmpty() )
     return -1;
   if( key == &a1 )  {
-    for( int i=0; i < list.Count(); i++ )  {
+    for( size_t i=0; i < list.Count(); i++ )  {
       if( list[i].to == a2 )  {
         if( list[i].matr == NULL ) // this is special case - generic bond suppression... && eqiv == NULL )
           return i;
@@ -296,22 +296,22 @@ int ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, T
           return i;
       }
     }
-    return -1;
+    return InvalidIndex;
   }
   else if( eqiv == NULL )  {
-    for( int i=0; i < list.Count(); i++ )  {
+    for( size_t i=0; i < list.Count(); i++ )  {
       if( list[i].to == a1 )
         return i;
     }
-    return -1;
+    return InvalidIndex;
   }
   else  {
     smatd mat( eqiv->Inverse() );
-    for( int i=0; i < list.Count(); i++ )  {
+    for( size_t i=0; i < list.Count(); i++ )  {
       if( list[i].to == a1 && list[i].matr != NULL && *list[i].matr == mat )  
         return i;
     }
-    return -1;
+    return InvalidIndex;
   }
 }
 //........................................................................
@@ -340,24 +340,24 @@ void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* 
     TBasicApp::GetLog().Error( olxstr("Failed to add bond: only one EQIV is expected"));
     return;
   }
-  int ind = -1;
-  for( int i=0; i < AtomInfo.Count(); i++ )  {
+  size_t ind = InvalidIndex;
+  for( size_t i=0; i < AtomInfo.Count(); i++ )  {
     ind = FindBondIndex(AtomInfo.GetValue(i).BondsToCreate, AtomInfo.GetKey(i), a1, a2, eqiv); 
-    if( ind != -1 )
+    if( ind != InvalidIndex )
       break;
   }
-  if( ind == -1 )  {
+  if( ind == InvalidIndex )  {
     // validate the bonds to delete
     bool exists = false;
-    for( int i=0; i < AtomInfo.Count(); i++ )  {
+    for( size_t i=0; i < AtomInfo.Count(); i++ )  {
       ind = FindBondIndex(AtomInfo.GetValue(i).BondsToRemove, AtomInfo.GetKey(i), a1, a2, eqiv);
-      if( ind != -1 )  {
+      if( ind != InvalidIndex )  {
         AtomInfo.GetValue(i).BondsToRemove.Delete(ind);
         exists = true;
         break;
       }
     }
-    if( ! exists )  {  // if was deleted - may be already exists?
+    if( !exists )  {  // if was deleted - may be already exists?
       AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
       if( eqiv == NULL )  // these to be processed first
         ai.BondsToCreate.Insert(0, new CXBondInfo(a2, eqiv) );
@@ -374,18 +374,18 @@ void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* 
     TBasicApp::GetLog().Error( olxstr("Failed to delete bond: only one EQIV is expected"));
     return;
   }
-  int ind = -1;
-  for( int i=0; i < AtomInfo.Count(); i++ )  {
+  size_t ind = InvalidIndex;
+  for( size_t i=0; i < AtomInfo.Count(); i++ )  {
     ind = FindBondIndex(AtomInfo.GetValue(i).BondsToRemove, AtomInfo.GetKey(i), a1, a2, eqiv);
-    if( ind != -1 )
+    if( ind != InvalidIndex )
       break;
   }
-  if( ind == -1 )  {
+  if( ind == InvalidIndex )  {
     // validate the bonds to create
     bool exists = false;
-    for( int i=0; i < AtomInfo.Count(); i++ )  {
+    for( size_t i=0; i < AtomInfo.Count(); i++ )  {
       ind = FindBondIndex(AtomInfo.GetValue(i).BondsToCreate, AtomInfo.GetKey(i), a1, a2, eqiv);
-      if( ind != -1 )  {
+      if( ind != InvalidIndex )  {
         AtomInfo.GetValue(i).BondsToCreate.Delete(ind);
         exists = true;
         break;
@@ -405,19 +405,19 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
                        smatd_list& ml )  
 {
   TAsymmUnit& au = *a.GetParent();
-  for( int i=0; i < au.AtomCount(); i++ )  {
+  for( size_t i=0; i < au.AtomCount(); i++ )  {
     TCAtom& ca = au.GetAtom(i);
     if( ca.IsDeleted() )  continue;
     CXConnInfo& ci = ca.GetConnInfo();
     if( ca != a )  {
-      for( int j=0; j < ci.BondsToRemove.Count(); j++ )  {
+      for( size_t j=0; j < ci.BondsToRemove.Count(); j++ )  {
         if( ci.BondsToRemove[j].to == a )  {
           if( ci.BondsToRemove[j].matr == NULL )
             toDelete.AddCCopy(ci.BondsToRemove[j]);
           else  {
             const smatd matr = ci.BondsToRemove[j].matr->Inverse();
             bool uniq = true;
-            for( int k=0; k < toDelete.Count(); k++ )  {
+            for( size_t k=0; k < toDelete.Count(); k++ )  {
               if( toDelete[k].matr != NULL && toDelete[k].to == a && toDelete[k].matr->EqualExt(matr) )  {
                 uniq = false;
                 break;
@@ -428,14 +428,14 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
           }
         }
       }
-      for( int j=0; j < ci.BondsToCreate.Count(); j++ )  {
+      for( size_t j=0; j < ci.BondsToCreate.Count(); j++ )  {
         if( ci.BondsToCreate[j].to == a )  {
           if( ci.BondsToCreate[j].matr == NULL )
             toCreate.AddCCopy(ci.BondsToRemove[j]);
           else  {
             const smatd matr = ci.BondsToCreate[j].matr->Inverse();
             bool uniq = true;
-            for( int k=0; k < toCreate.Count(); k++ )  {
+            for( size_t k=0; k < toCreate.Count(); k++ )  {
               if( toCreate[k].matr != NULL && toCreate[k].to == a && toCreate[k].matr->EqualExt(matr) )  {
                 uniq = false;
                 break;
@@ -458,7 +458,7 @@ void ConnInfo::AtomConnInfo::ToDataItem(TDataItem& item)  {
   item.AddField("r", r);
   item.AddField("b", maxBonds);
   TDataItem& ab = item.AddItem("ADDBOND");
-  for( int i=0; i < BondsToCreate.Count(); i++ )  {
+  for( size_t i=0; i < BondsToCreate.Count(); i++ )  {
     if( BondsToCreate[i].to.IsDeleted() )
       continue;
     TDataItem& bi = ab.AddItem("bi");
@@ -467,7 +467,7 @@ void ConnInfo::AtomConnInfo::ToDataItem(TDataItem& item)  {
       bi.AddField("eqiv", BondsToCreate[i].matr->GetTag());
   }
   TDataItem& db = item.AddItem("DELBOND");
-  for( int i=0; i < BondsToRemove.Count(); i++ )  {
+  for( size_t i=0; i < BondsToRemove.Count(); i++ )  {
     if( BondsToRemove[i].to.IsDeleted() )
       continue;
     TDataItem& bi = ab.AddItem("bi");
@@ -481,7 +481,7 @@ void ConnInfo::AtomConnInfo::FromDataItem(TDataItem& item, RefinementModel& rm, 
   r = item.GetRequiredField("r").ToDouble();
   maxBonds = item.GetRequiredField("b").ToInt();
   TDataItem& ab = item.FindRequiredItem("ADDBOND");
-  for( int i=0; i < ab.ItemCount(); i++ )  {
+  for( size_t i=0; i < ab.ItemCount(); i++ )  {
     TCAtom& ca = rm.aunit.GetAtom( ab.GetItem(i).GetRequiredField("to").ToInt() );
     const olxstr& eq = ab.GetItem(i).GetFieldValue("eqiv");
     smatd const* eqiv = NULL;
@@ -492,7 +492,7 @@ void ConnInfo::AtomConnInfo::FromDataItem(TDataItem& item, RefinementModel& rm, 
     BondsToCreate.Add( new CXBondInfo(ca, eqiv) );
   }
   TDataItem& db = item.FindRequiredItem("DELBOND");
-  for( int i=0; i < db.ItemCount(); i++ )  {
+  for( size_t i=0; i < db.ItemCount(); i++ )  {
     TCAtom& ca = rm.aunit.GetAtom( db.GetItem(i).GetRequiredField("to").ToInt() );
     const olxstr& eq = db.GetItem(i).GetFieldValue("eqiv");
     smatd const* eqiv = NULL;

@@ -122,10 +122,9 @@ THtml::~THtml()  {
 //..............................................................................
 void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
   olxstr Href = link.GetHref().c_str();
-  int val;
-  int ind = Href.FirstIndexOf('%');
-  while( ind >=0 && ((ind+2) < Href.Length()) )  {
-    val = Href.SubString(ind+1, 2).RadInt<int>(16);
+  size_t ind = Href.FirstIndexOf('%');
+  while( ind != InvalidIndex && ((ind+2) < Href.Length()) )  {
+    int val = Href.SubString(ind+1, 2).RadInt<int>(16);
     Href.Delete(ind, 3);
     Href.Insert(val, ind);
     ind = Href.FirstIndexOf('%');
@@ -143,17 +142,17 @@ wxHtmlOpeningStatus THtml::OnOpeningURL(wxHtmlURLType type, const wxString& url,
   return wxHTML_BLOCK;
 }
 //..............................................................................
-void THtml::SetSwitchState(THtmlSwitch& sw, int state)  {
-  int ind = SwitchStates.IndexOf( sw.GetName() );
-  if( ind == -1 )
+void THtml::SetSwitchState(THtmlSwitch& sw, size_t state)  {
+  const size_t ind = SwitchStates.IndexOf( sw.GetName() );
+  if( ind == InvalidIndex )
     SwitchStates.Add(sw.GetName(), state);
   else
     SwitchStates.GetObject(ind) = state;
 }
 //..............................................................................
-int THtml::GetSwitchState(const olxstr& switchName)  {
-  int ind = SwitchStates.IndexOf( switchName );
-  return (ind == -1) ? UnknownSwitchState : SwitchStates.GetObject(ind);
+size_t THtml::GetSwitchState(const olxstr& switchName)  {
+  const size_t ind = SwitchStates.IndexOf( switchName );
+  return (ind == InvalidIndex) ? UnknownSwitchState : SwitchStates.GetObject(ind);
 }
 //..............................................................................
 void THtml::OnMouseDown(wxMouseEvent& event)  {
@@ -207,7 +206,7 @@ void THtml::OnChildFocus(wxChildFocusEvent& event)  {
     return;
   }
   AOlxCtrl* prev = NULL, *next = NULL;
-  for( int i=0; i < Traversables.Count(); i++ )  {
+  for( size_t i=0; i < Traversables.Count(); i++ )  {
     if( Traversables[i].GetB() == InFocus )
       prev = Traversables[i].GetA();
     if( Traversables[i].GetB() == wx_next )
@@ -226,9 +225,9 @@ void THtml::_FindNext(int from, int& dest, bool scroll) const {
     return;
   }
   int i = from;
-  while( ++i < Traversables.Count() && Traversables[i].GetB() == NULL )
+  while( ++i < (int)Traversables.Count() && Traversables[i].GetB() == NULL )
     ;
-  dest = ((i >= Traversables.Count() || (Traversables[i].GetB() == NULL)) ? -1 : i);
+  dest = ((i >= (int)Traversables.Count() || (Traversables[i].GetB() == NULL)) ? -1 : i);
   if( dest == -1 && scroll )  {
     i = -1;
     while( ++i < from && Traversables[i].GetB() == NULL )
@@ -264,7 +263,7 @@ void THtml::GetTraversibleIndeces(int& current, int& another, bool forward) cons
       _FindPrev(Traversables.Count(), another, false);
   }
   else  {
-    for( int i=0; i < Traversables.Count(); i++ )  {
+    for( size_t i=0; i < Traversables.Count(); i++ )  {
       if( Traversables[i].GetB() == w || Traversables[i].GetB() == w->GetParent() )  {
         current = i;
         break;
@@ -314,7 +313,7 @@ void THtml::DoNavigate(bool forward)  {
     InFocus = Traversables[another].GetB();
     InFocus->SetFocus();
     InFocus = FindFocus();
-    for( int i=0; i < Objects.Count(); i++ )  {
+    for( size_t i=0; i < Objects.Count(); i++ )  {
       if( Objects.GetValue(i).GetB() == NULL )  continue;
       if( Objects.GetValue(i).GetB() == InFocus
 #ifdef __WIN32__
@@ -358,9 +357,9 @@ void THtml::UpdateSwitchState(THtmlSwitch &Switch, olxstr &String)  {
   if( !Switch.IsToUpdateSwitch() )  return;
   olxstr Tmp = "<!-- #include ";
   Tmp << Switch.GetName() << ' ';
-  for( int i=0; i < Switch.FileCount(); i++ )
+  for( size_t i=0; i < Switch.FileCount(); i++ )
     Tmp << Switch.GetFile(i) << ';';
-  for( int i=0; i < Switch.GetParams().Count(); i++ )  {
+  for( size_t i=0; i < Switch.GetParams().Count(); i++ )  {
     Tmp << Switch.GetParams().GetName(i) << '=';
     if( Switch.GetParams().GetValue(i).FirstIndexOf(' ') == -1 )
       Tmp << Switch.GetParams().GetValue(i);
@@ -381,7 +380,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
            Tag1 = "<!-- #includeif ",
            Tag2 = "<!-- #include",
            comment_open = "<!--", comment_close = "-->";
-  for( int i=0; i < Lst.Count(); i++ )  {
+  for( size_t i=0; i < Lst.Count(); i++ )  {
     olxstr tmp = olxstr(Lst[i]).TrimWhiteChars();
     if( tmp.StartsFrom(comment_open) && !tmp.StartsFrom(Tag2) )  {  // skip comments
       //tag_parse_info tpi = skip_tag(Lst, Tag2, Tag3, i, 0);
@@ -400,7 +399,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
 
     // TRANSLATION START
     Lst[i] = TGlXApp::GetMainForm()->TranslateString(Lst[i]);
-    if( Lst[i].IndexOf("$") >= 0 )
+    if( Lst[i].IndexOf("$") != InvalidIndex )
       TGlXApp::GetMainForm()->ProcessFunction(Lst[i], olxstr(Sender.GetCurrentFile()) << '#' << (i+1));
     // TRANSLATION END
     int stm = (Lst[i].StartsFrom(Tag1) ? 1 : 0);
@@ -433,7 +432,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
         continue;
       }
 
-      for( int j=0; j < Toks.Count()-1; j++ )  {
+      for( size_t j=0; j < Toks.Count()-1; j++ )  {
         if( Toks[j].FirstIndexOf('=') == -1 )  {
           if( izZip && !TZipWrapper::IsZipFile(Toks[j]) )  {
             if( Toks[j].StartsFrom('\\') || Toks[j].StartsFrom('/') )
@@ -449,10 +448,10 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
         }
         else  {
           // check for parameters
-          if( Toks[j].IndexOf('#') != -1 )  {
+          if( Toks[j].IndexOf('#') != InvalidIndex )  {
             olxstr tmp1;
             tmp = Toks[j];
-            for( int k=0; k < Sender.GetParams().Count(); k++ )  {
+            for( size_t k=0; k < Sender.GetParams().Count(); k++ )  {
               tmp1 = '#';  
               tmp1 << Sender.GetParams().GetName(k);
               tmp.Replace(tmp1, Sender.GetParams().GetValue(k) );
@@ -464,12 +463,12 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
         }
       }
 
-      int switchState = GetSwitchState(Sw->GetName()), index = -1;;
+      size_t switchState = GetSwitchState(Sw->GetName()), index = InvalidIndex;
       if( switchState == UnknownSwitchState )  {
-        index = Toks.LastStr().ToInt();
-        if( index < 0 )
+        int iv = Toks.LastStr().ToInt();
+        if( iv < 0 )
           Sw->SetUpdateSwitch(false);
-        index = abs(index)-1;
+        index = olx_abs(iv)-1;
       }
       else
         index = switchState;
@@ -568,7 +567,7 @@ bool THtml::UpdatePage()  {
 
   TEFile::ChangeDir(WebFolder);
 
-  for( int i=0; i < Root->SwitchCount(); i++ )  // reload switches
+  for( size_t i=0; i < Root->SwitchCount(); i++ )  // reload switches
     Root->GetSwitch(i).UpdateFileIndex();
 
   TStrList Res;
@@ -594,7 +593,7 @@ bool THtml::UpdatePage()  {
   Refresh();
   Update();
 #endif
-  for( int i=0; i < Objects.Count(); i++ )  {
+  for( size_t i=0; i < Objects.Count(); i++ )  {
     if( Objects.GetValue(i).B() != NULL )  {
 #ifndef __MAC__
       Objects.GetValue(i).B()->Move(16000, 0);
@@ -614,8 +613,8 @@ bool THtml::UpdatePage()  {
       TGlXApp::GetMainForm()->OnResize();
   }
   if( !FocusedControl.IsEmpty() )  {
-    int ind = Objects.IndexOf( FocusedControl );
-    if( ind != -1 )  {
+    size_t ind = Objects.IndexOf( FocusedControl );
+    if( ind != InvalidIndex )  {
       wxWindow* wnd = Objects.GetValue(ind).B();
       if( EsdlInstanceOf(*wnd, TTextEdit) )
         ((TTextEdit*)wnd)->SetSelection(-1,-1);
@@ -676,7 +675,7 @@ bool THtml::AddObject(const olxstr& Name, AOlxCtrl *Object, wxWindow* wxWin, boo
   Traversables.Add( new AnAssociation2<AOlxCtrl*,wxWindow*>(Object,wxWin) );
 #endif
   if( Name.IsEmpty() )  return true;  // an anonymous object
-  if( Objects.IndexOf(Name) != -1 )  return false;
+  if( Objects.IndexOf(Name) != InvalidIndex )  return false;
   Objects.Add(Name, AnAssociation3<AOlxCtrl*, wxWindow*,bool>(Object, wxWin, Manage) );
   return true;
 }
@@ -688,15 +687,14 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
     if( Href.IsEmpty() )
       Href = Link->GetHref().c_str();
 
-    int val;
-    int ind = Href.FirstIndexOf('%');
-    while( ind >=0 && ((ind+2) < Href.Length()) )  {
+    size_t ind = Href.FirstIndexOf('%');
+    while( ind != InvalidIndex && ((ind+2) < Href.Length()) )  {
       if( Href.CharAt(ind+1) == '%' )  {
         Href.Delete(ind, 1);
         ind = Href.FirstIndexOf('%', ind+1);
         continue;
       }
-      val = Href.SubString(ind+1, 2).RadInt<int>(16);
+      int val = Href.SubString(ind+1, 2).RadInt<int>(16);
       Href.Delete(ind, 3);
       Href.Insert((char)val, ind);
       ind = Href.FirstIndexOf('%', ind+1);
@@ -704,7 +702,7 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
     if( ShowTooltips )  {
       wxToolTip *tt = GetToolTip();
       wxString wxs( Href.Replace("#href", Link->GetHref().c_str()).u_str() );
-      if( !tt || tt->GetTip() != wxs )  {
+      if( tt == NULL || tt->GetTip() != wxs )  {
         SetToolTip( wxs );
       }
     }
@@ -735,17 +733,17 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TIntList states;
   TPtrList<THtmlSwitch> Switches;
   olxstr itemName( Cmds[0] );
-  for( int i=1; i < Cmds.Count(); i++ )  {
+  for( size_t i=1; i < Cmds.Count(); i++ )  {
     Switches.Clear();
     if( itemName.EndsWith('.') )  {  // special treatment of any particular index
       THtmlSwitch* sw = rootSwitch.FindSwitch(itemName.SubStringTo(itemName.Length()-1));
       if( sw == NULL )
         return;
-      for( int j=0; j < sw->SwitchCount(); j++ )
+      for( size_t j=0; j < sw->SwitchCount(); j++ )
         Switches.Add(sw->GetSwitch(j));
       //sw->Expand(Switches);
     }
-    else if( itemName.FirstIndexOf('*') == -1 )  {
+    else if( itemName.FirstIndexOf('*') == InvalidIndex )  {
       THtmlSwitch* sw = rootSwitch.FindSwitch(itemName);
       if( sw == NULL )  {
         Error.ProcessingError(__OlxSrcInfo, "could not locate specified switch: ") << itemName;
@@ -755,11 +753,11 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     else  {
       if( itemName == "*" )  {
-        for( int j=0; j < rootSwitch.SwitchCount(); j++ )
+        for( size_t j=0; j < rootSwitch.SwitchCount(); j++ )
           Switches.Add(rootSwitch.GetSwitch(j));
       }
       else  {
-        int sindex = itemName.FirstIndexOf('*');
+        size_t sindex = itemName.FirstIndexOf('*');
         // *blabla* syntax
         if( sindex == 0 && itemName.Length() > 2 && itemName.CharAt(itemName.Length()-1) == '*')  {
           rootSwitch.FindSimilar( itemName.SubString(1, itemName.Length()-2), EmptyString, Switches );
@@ -773,21 +771,21 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       }
     }
     states.Clear();
-    for( int j=i; j < Cmds.Count();  j++,i++ )  {
+    for( size_t j=i; j < Cmds.Count();  j++,i++ )  {
       // is new switch encountered?
       if( !Cmds[j].IsNumber() )  {  itemName = Cmds[j];  break;  }
       states.Add(Cmds[j].ToInt());
     }
     if( states.Count() == 1 )  {  // simply change the state to the request
-      for( int j=0; j < Switches.Count(); j++ )  {
+      for( size_t j=0; j < Switches.Count(); j++ )  {
         Switches[j]->SetFileIndex(states[0]-1);
       }
     }
     else  {
-      for( int j=0; j < Switches.Count(); j++ )  {
+      for( size_t j=0; j < Switches.Count(); j++ )  {
         THtmlSwitch* sw = Switches[j];
         const int currentState = sw->GetFileIndex();
-        for( int k=0; k < states.Count(); k++ )  {
+        for( size_t k=0; k < states.Count(); k++ )  {
           if( states[k] == (currentState+1) )  {
             if( (k+1) < states.Count() )
               sw->SetFileIndex(states[k+1] -1);
@@ -972,7 +970,7 @@ void THtml::macDefineControl(TStrObjList &Cmds, const TParamList &Options, TMacr
   if( props != NULL )
     (*props)["bg"] = Options.FindValue("bg");
     (*props)["fg"] = Options.FindValue("fg");
-    if( props->IndexOfComparable("val") != -1 )
+    if( props->IndexOfComparable("val") != InvalidIndex )
       (*props)["val"] = Options.FindValue("v");
 }
 //..............................................................................
@@ -994,9 +992,9 @@ olxstr THtml::GetObjectValue(const AOlxCtrl *Obj)  {
   return EmptyString;
 }
 void THtml::funGetValue(const TStrObjList &Params, TMacroError &E)  {
-  const int ind = Params[0].IndexOf('.');
-  THtml* html = (ind == -1) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == -1) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
@@ -1008,7 +1006,7 @@ void THtml::funGetValue(const TStrObjList &Params, TMacroError &E)  {
       E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
       return;
     }
-    if( props->IndexOfComparable("val") == -1 )  {
+    if( props->IndexOfComparable("val") == InvalidIndex )  {
       E.ProcessingError(__OlxSrcInfo,  "object definition does not have value for: ") << objName;
       return;
     }
@@ -1022,15 +1020,15 @@ void THtml::SetObjectValue(AOlxCtrl *Obj, const olxstr& Value)  {
   if( EsdlInstanceOf(*Obj, TTextEdit) )       ((TTextEdit*)Obj)->SetText(Value);
   else if( EsdlInstanceOf(*Obj, TCheckBox) )  ((TCheckBox*)Obj)->SetCaption(Value);
   else if( EsdlInstanceOf(*Obj, TTrackBar) )  {
-    int si = Value.IndexOf(',');
-    if( si == -1 )
+    const size_t si = Value.IndexOf(',');
+    if( si == InvalidIndex )
       ((TTrackBar*)Obj)->SetValue(Value.ToInt());
     else
       ((TTrackBar*)Obj)->SetRange( Value.SubStringTo(si).ToInt(), Value.SubStringFrom(si+1).ToInt() );
   }
   else if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {
-    int si = Value.IndexOf(',');
-    if( si == -1 )
+    const size_t si = Value.IndexOf(',');
+    if( si == InvalidIndex )
       ((TSpinCtrl*)Obj)->SetValue(Value.ToInt());
     else
       ((TSpinCtrl*)Obj)->SetRange( Value.SubStringTo(si).ToInt(), Value.SubStringFrom(si+1).ToInt() );
@@ -1049,9 +1047,9 @@ void THtml::SetObjectValue(AOlxCtrl *Obj, const olxstr& Value)  {
   else  return;
 }
 void THtml::funSetValue(const TStrObjList &Params, TMacroError &E)  {
-  const int ind = Params[0].IndexOf('.');
-  THtml* html = (ind == -1) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == -1) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
@@ -1063,13 +1061,13 @@ void THtml::funSetValue(const TStrObjList &Params, TMacroError &E)  {
       E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
       return;
     }
-    if( props->IndexOfComparable("val") == -1 )  {
+    if( props->IndexOfComparable("val") == InvalidIndex )  {
       E.ProcessingError(__OlxSrcInfo,  "object definition does not accept value for: ") << objName;
       return;
     }
     if( (*props)["type"] == EsdlClassName(TTrackBar) || (*props)["type"] == EsdlClassName(TSpinCtrl) )  {
-      int si = Params[1].IndexOf(',');
-      if( si == -1 )
+      const size_t si = Params[1].IndexOf(',');
+      if( si == InvalidIndex )
         (*props)["val"] = Params[1];
       else  {
         (*props)["min"] = Params[1].SubStringTo(si);
@@ -1097,9 +1095,9 @@ const olxstr& THtml::GetObjectData(const AOlxCtrl *Obj)  {
   return EmptyString;
 }
 void THtml::funGetData(const TStrObjList &Params, TMacroError &E)  {
-  const int ind = Params[0].IndexOf('.');
-  THtml* html = (ind == -1) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == -1) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
@@ -1114,9 +1112,9 @@ void THtml::funGetData(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funGetItems(const TStrObjList &Params, TMacroError &E)  {
-  const int ind = Params[0].IndexOf('.');
-  THtml* html = (ind == -1) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == -1) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
@@ -1208,9 +1206,9 @@ void THtml::SetObjectData(AOlxCtrl *Obj, const olxstr& Data)  {
   if( EsdlInstanceOf(*Obj, TTreeView) )  {  ((TTreeView*)Obj)->SetData(Data);  return;  }
 }
 void THtml::funSetData(const TStrObjList &Params, TMacroError &E)  {
-  const int ind = Params[0].IndexOf('.');
-  THtml* html = (ind == -1) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == -1) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
@@ -1232,9 +1230,9 @@ bool THtml::GetObjectState(const AOlxCtrl *Obj)  {
     return false;
 }
 void THtml::funGetState(const TStrObjList &Params, TMacroError &E)  {
-  const int ind = Params[0].IndexOf('.');
-  THtml* html = (ind == -1) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == -1) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
@@ -1253,9 +1251,9 @@ void THtml::funGetState(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funGetLabel(const TStrObjList &Params, TMacroError &E)  {
-  const int ind = Params[0].IndexOf('.');
-  THtml* html = (ind == -1) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == -1) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
@@ -1277,9 +1275,9 @@ void THtml::funGetLabel(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funSetLabel(const TStrObjList &Params, TMacroError &E)  {
-  const int ind = Params[0].IndexOf('.');
-  THtml* html = (ind == -1) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == -1) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
@@ -1306,9 +1304,9 @@ void THtml::SetObjectState(AOlxCtrl *Obj, bool State)  {
 }
 //..............................................................................
 void THtml::funSetImage(const TStrObjList &Params, TMacroError &E)  {
-  const int ind = Params[0].IndexOf('.');
-  THtml* html = (ind == -1) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == -1) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
@@ -1324,9 +1322,9 @@ void THtml::funSetImage(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funGetImage(const TStrObjList &Params, TMacroError &E)  {
-  const int ind = Params[0].IndexOf('.');
-  THtml* html = (ind == -1) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == -1) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
@@ -1340,9 +1338,9 @@ void THtml::funGetImage(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
-  const int ind = Params[0].IndexOf('.');
-  THtml* html = (ind == -1) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == -1) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
@@ -1367,9 +1365,9 @@ void THtml::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {
-  const int ind = Params[0].IndexOf('.');
-  THtml* html = (ind == -1) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == -1) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
@@ -1381,7 +1379,7 @@ void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {
       E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
       return;
     }
-    if( props->IndexOfComparable("checked") == -1 )  {
+    if( props->IndexOfComparable("checked") == InvalidIndex )  {
       E.ProcessingError(__OlxSrcInfo,  "object definition does have state for: ") << objName;
       return;
     }
@@ -1392,9 +1390,9 @@ void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funSetItems(const TStrObjList &Params, TMacroError &E)  {
-  const int ind = Params[0].IndexOf('.');
-  THtml* html = (ind == -1) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == -1) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
@@ -1423,9 +1421,9 @@ void THtml::funLoadData(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funSetFG(const TStrObjList &Params, TMacroError &E)  {
-  const int ind = Params[0].IndexOf('.');
-  THtml* html = (ind == -1) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == -1) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
@@ -1454,9 +1452,9 @@ void THtml::funSetFG(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funSetBG(const TStrObjList &Params, TMacroError &E)  {
-  const int ind = Params[0].IndexOf('.');
-  THtml* html = (ind == -1) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == -1) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
@@ -1518,18 +1516,18 @@ void THtml::funShowModal(const TStrObjList &Params, TMacroError &E)  {
 //..............................................................................
 //..............................................................................
 THtml::TObjectsState::~TObjectsState()  {
-  for( int i=0; i < Objects.Count(); i++ )
+  for( size_t i=0; i < Objects.Count(); i++ )
     delete Objects.GetObject(i);
 }
 //..............................................................................
 void THtml::TObjectsState::SaveState()  {
-  for( int i=0; i < html.ObjectCount(); i++ )  {
+  for( size_t i=0; i < html.ObjectCount(); i++ )  {
     if( !html.IsObjectManageble(i) )  continue;
-    int ind = Objects.IndexOf( html.GetObjectName(i) );
+    size_t ind = Objects.IndexOf( html.GetObjectName(i) );
     AOlxCtrl* obj = html.GetObject(i);
     wxWindow* win = html.GetWindow(i);
     TSStrStrList<olxstr,false>* props;
-    if( ind == -1 )  {
+    if( ind == InvalidIndex )  {
       props = new TSStrStrList<olxstr,false>;
       Objects.Add(html.GetObjectName(i), props);
     }
@@ -1599,12 +1597,12 @@ void THtml::TObjectsState::SaveState()  {
 }
 //..............................................................................
 void THtml::TObjectsState::RestoreState()  {
-  for( int i=0; i < html.ObjectCount(); i++ )  {
-    int ind = Objects.IndexOf( html.GetObjectName(i) );
+  for( size_t i=0; i < html.ObjectCount(); i++ )  {
     if( !html.IsObjectManageble(i) )  continue;
+    size_t ind = Objects.IndexOf( html.GetObjectName(i) );
+    if( ind == InvalidIndex )  continue;
     AOlxCtrl* obj = html.GetObject(i);
     wxWindow* win = html.GetWindow(i);
-    if( ind == -1 )  continue;
     TSStrStrList<olxstr,false>& props = *Objects.GetObject(ind);
     if( props["type"] != EsdlClassName(*obj) )  {
       TBasicApp::GetLog().Error(olxstr("Object type changed for: ") << Objects.GetString(ind) );
@@ -1716,8 +1714,8 @@ bool THtml::TObjectsState::LoadFromFile(const olxstr& fn)  {
 }
 //..............................................................................
 TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(const olxstr& name, const std::type_info& type) {
-  int ind = Objects.IndexOf( name );
-  if( ind != -1 )
+  const size_t ind = Objects.IndexOf( name );
+  if( ind != InvalidIndex )
     throw TFunctionFailedException(__OlxSourceInfo, "object already exists");
   TSStrStrList<olxstr,false>* props = new TSStrStrList<olxstr,false>;
 

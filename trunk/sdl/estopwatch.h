@@ -29,7 +29,7 @@ protected:
     tb.ColName(0) = "Stop name";
     tb.ColName(1) = "Time till stop (ms)";
     tb.ColName(2) = "Time till next (ms)";
-    for( int i=1; i < steps.Count(); i++ )  {
+    for( size_t i=1; i < steps.Count(); i++ )  {
       tb[i-1][0] = steps[i].GetB();
       if( steps[i].GetC() != 0 )
         tb[i-1][1] = steps[i].GetC() - steps[i].GetA();
@@ -47,7 +47,7 @@ public:
   template <class T> void print(T& inst, void (T::*func)(const olxstr& str) )  {
     TStrList lst;
     prepareList(lst);
-    for( int i=0; i < lst.Count(); i++ )
+    for( size_t i=0; i < lst.Count(); i++ )
       (inst.*func)( lst[i] );
   }
 };

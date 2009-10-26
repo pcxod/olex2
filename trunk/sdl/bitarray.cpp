@@ -12,12 +12,12 @@ UseEsdlNamespace()
 
 TEBitArray::TEBitArray()  {  FData = NULL;  FCount = FCharCount = 0;  }
 //..............................................................................
-TEBitArray::TEBitArray(int size)  {
+TEBitArray::TEBitArray(uint32_t size)  {
   FData = NULL;
   SetSize( size );
 }
 //..............................................................................
-TEBitArray::TEBitArray( const TEBitArray& arr)  {
+TEBitArray::TEBitArray(const TEBitArray& arr)  {
   FCount = arr.FCount;
   FCharCount = arr.FCharCount;
   if( arr.FData != NULL )  {
@@ -28,7 +28,7 @@ TEBitArray::TEBitArray( const TEBitArray& arr)  {
     FData = NULL;
 }
 //..............................................................................
-TEBitArray::TEBitArray(unsigned char* data, size_t size, bool own)  {
+TEBitArray::TEBitArray(unsigned char* data, uint32_t size, bool own)  {
   if( own )  {
     FData = data;
     FCharCount = size;
@@ -54,9 +54,8 @@ TEBitArray& TEBitArray::operator = (const TEBitArray& arr )  {
   return *this;
 }
 //..............................................................................
-void TEBitArray::SetSize(int newSize)  {
-  if( FCount == newSize )
-    return;
+void TEBitArray::SetSize(uint32_t newSize)  {
+  if( FCount == newSize )  return;
   if( FData != NULL )  
     delete [] FData;
   FCount = newSize;
@@ -101,23 +100,25 @@ bool TEBitArray::operator == (const TEBitArray& arr )  const  {
   return true;
 }
 //..............................................................................
-int TEBitArray::Compare(const TEBitArray& arr )  const {
+int TEBitArray::Compare(const TEBitArray& arr)  const {
   if( arr.Count() < Count() )  {
+    if( arr.IsEmpty() )  return 1;
     // check for a high bit
-    for( int i=Count()-1; i > arr.Count(); i-- )
+    for( size_t i=Count()-1; i > arr.Count(); i-- )  {
       if( Get(i) )  return 1;
+    }
     // comparison
-    for( int i=arr.Count()-1; i >= 0; i-- )
+    for( size_t i=arr.Count()-1; i != ~0; i-- )  {
       if( Get(i) && !arr.Get(i) )  return 1;
       else if( !Get(i) && arr.Get(i) )  return -1;
-
+    }
     return 0;
   }
   else if( arr.Count() == Count() )  {
-    for( int i=Count()-1; i >= 0; i-- )
+    for( size_t i=Count()-1; i != ~0; i-- )  {
       if( Get(i) && !arr.Get(i) )  return 1;
       else if( !Get(i) && arr.Get(i) )  return -1;
-
+    }
     return 0;
   }
   else  // reverse te order
@@ -159,23 +160,23 @@ TIString TEBitArray::ToString() const  {
   return StrRepr;
 }
 //..............................................................................
-olxstr TEBitArray::FormatString( short bitsInSegment )  {
-  if( bitsInSegment <= 0 )
+olxstr TEBitArray::FormatString(uint16_t bitsInSegment)  {
+  if( bitsInSegment == 0 )
     throw TInvalidArgumentException(__OlxSourceInfo, "bitsInSegment" );
   olxstr StrRepr;
   StrRepr.SetCapacity( Count() + Count()/bitsInSegment + 1);
-//  for( int i=0; i < Count(); i++ )  {
+//  for( size_t i=0; i < Count(); i++ )  {
 //    if( Get(i) )  StrRepr <<  '1';
 //    else          StrRepr <<  '0';
 //    if( !(i%bitsInSegment) && i )  StrRepr << ' ';
 //  }
-  int mask = 0;
-  int strlen=0;
-  for( int i=0; i < bitsInSegment/8+1; i++ )  {
+  uint32_t mask = 0;
+  size_t strlen=0;
+  for( uint16_t i=0; i < bitsInSegment/8+1; i++ )  {
     if( !(i%3) )  strlen += 3;
     else          strlen += 2;
   }
-  for( int i=0; i < Count(); i++ )  {
+  for( size_t i=0; i < Count(); i++ )  {
     if( !(i%bitsInSegment) )  {
       if( i )  {
         olxstr str(mask);

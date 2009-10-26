@@ -106,12 +106,12 @@ public:
   static const olxstr NAString;
   static olxstr CurrentDir;
   // finds numbers and removes them from the list and returns the number of found numbers
-  template <typename nt, class list> static int ParseNumbers(list& Cmds, int cnt, ...)  {
+  template <typename nt, class list> static size_t ParseNumbers(list& Cmds, size_t cnt, ...)  {
     va_list argptr;
     va_start(argptr, cnt);
-    if( cnt <= 0 )  {  va_end(argptr);  return 0;  }
-    int fc=0;
-    for( int i=0; i < Cmds.Count(); i++ )  {
+    if( cnt == 0 )  {  va_end(argptr);  return 0;  }
+    size_t fc=0;
+    for( size_t i=0; i < Cmds.Count(); i++ )  {
       if( Cmds[i].IsNumber() )  {
         *va_arg(argptr, nt*) = (nt)Cmds[i].ToDouble();
         Cmds.Delete(i);
@@ -124,12 +124,12 @@ public:
     return fc;
   }
   // finds numbers in the list and returns the number of found numbers
-  template <typename nt, class list> static int ParseOnlyNumbers(const list& Cmds, int cnt, int from=0, ...)  {
+  template <typename nt, class list> static size_t ParseOnlyNumbers(const list& Cmds, size_t cnt, int from=0, ...)  {
     va_list argptr;
     va_start(argptr, from);
     if( cnt <= 0 )  {  va_end(argptr);  return 0;  }
-    int fc=0;
-    for( int i=from; i < Cmds.Count(); i++ )  {
+    size_t fc=0;
+    for( size_t i=from; i < Cmds.Count(); i++ )  {
       *va_arg(argptr, nt*) = (nt)Cmds[i].ToDouble();
       fc++;
       if( fc >= cnt )  break;
@@ -142,7 +142,7 @@ public:
     va_list argptr;
     va_start(argptr, remove);
     try  {
-      for( int i=0, j=0; i < format.Length(); i++, j++ )  {
+      for( size_t i=0, j=0; i < format.Length(); i++, j++ )  {
         if( format.CharAt(i) == 'v' )  {
           if( format.Length() < (i+1) || Cmds.Count() < (j+3) )
             throw TInvalidArgumentException(__OlxSourceInfo, "invalid format");

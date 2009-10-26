@@ -13,24 +13,24 @@ BeginXlibNamespace()
 class MapUtil  {
 public:
   struct peak  { 
-    int count;  //center
-    vec3i center;
+    uint32_t count;  //center
+    TVector3<uint16_t> center;
     bool process;
     double summ;
     peak() : process(true), summ(0), count(0) {}
-    peak(int _x, int _y, int _z) : process(true),  
+    peak(uint16_t _x, uint16_t _y, uint16_t _z) : process(true),  
       summ(0), count(0), center(_x, _y, _z) {}
   };
 protected:
   template <typename MapT> 
-  static void peak_search(MapT*** const data, int mapX, int mapY, int mapZ,
+  static void peak_search(MapT*** const data, uint16_t mapX, uint16_t mapY, uint16_t mapZ,
     MapT pos_level, const TArray3D<bool>& Mask, TArrayList<peak>& maxima)  
   {
     TStack<vec3i> stack;
-    const vec3i dim(mapX, mapY, mapZ);
+    const TVector3<uint16_t> dim(mapX, mapY, mapZ);
     bool*** const mask = Mask.Data;
     const MapT neg_level = -pos_level; 
-    for( int mc=0; mc < maxima.Count(); mc++ )  {
+    for( size_t mc=0; mc < maxima.Count(); mc++ )  {
       peak& peak = maxima[mc];
       if( mask[peak.center[0]][peak.center[1]][peak.center[2]] )  continue;
       stack.Push( peak.center );
@@ -41,7 +41,7 @@ protected:
         vec3i norm_cent = cent;
         peak.count++;
         new_cent += cent;
-        for( int i=0; i < 3; i++ )  {
+        for( size_t i=0; i < 3; i++ )  {
           while( norm_cent[i] < 0 )  
             norm_cent[i] += dim[i];
           while( norm_cent[i] >= dim[i] ) 
@@ -77,10 +77,8 @@ protected:
         }
       }
       new_cent /= peak.count;
-      peak.center[0] = olx_round(new_cent[0]);
-      peak.center[1] = olx_round(new_cent[1]);
-      peak.center[2] = olx_round(new_cent[2]);
-      for( int i=0; i < 3; i++ )  {
+      peak.center = peak.center.olx_round<uint16_t>();
+      for( size_t i=0; i < 3; i++ )  {
         while( peak.center[i] < 0 )  
           peak.center[i] += dim[i];
         while( peak.center[i] >= dim[i] ) 
@@ -91,14 +89,14 @@ protected:
 
 public:
   // a simple map integration, considering the peaks and holes as spheres
-  template <typename MapT> static void Integrate(MapT*** const map, int mapX, int mapY, int mapZ, 
+  template <typename MapT> static void Integrate(MapT*** const map, uint16_t mapX, uint16_t mapY, uint16_t mapZ, 
     MapT pos_level, TArrayList<MapUtil::peak>& Peaks)  
   {
     TArray3D<bool> Mask(0, mapX-1, 0, mapY-1, 0, mapZ-1);
     const MapT neg_level = -pos_level; 
-    for( int ix=0; ix < mapX; ix++ )  {
-      for( int iy=0; iy < mapY; iy++ )  {
-        for( int iz=0; iz < mapZ; iz++ )  {
+    for( uint16_t ix=0; ix < mapX; ix++ )  {
+      for( uint16_t iy=0; iy < mapY; iy++ )  {
+        for( uint16_t iz=0; iz < mapZ; iz++ )  {
           const MapT& ref_val = map[ix][iy][iz];
           if( ref_val > pos_level || ref_val < neg_level )
             Peaks.Add( peak(ix, iy, iz) );
@@ -111,19 +109,19 @@ public:
   /* Calculates the deepest hole and its fractional coordinates, initialising the map with 'levels'
   expects a map with structure points marked as negative values and the rest - 0
   */
-  template <typename map_type> static map_type AnalyseVoids(map_type*** map, int mapX, int mapY, int mapZ, 
+  template <typename map_type> static map_type AnalyseVoids(map_type*** map, uint16_t mapX, uint16_t mapY, uint16_t mapZ, 
     vec3d& void_center)  {
-      int level = 0, MaxLevel = 0;
+      map_type level = 0, MaxLevel = 0;
       while( true )  {
         bool levelUsed = false;
-        for(int i=0; i < mapX; i++ )  {
-          for(int j=0; j < mapY; j++ )  {
-            for(int k=0; k < mapZ; k++ )  {
+        for( uint16_t i=0; i < mapX; i++ )  {
+          for( uint16_t j=0; j < mapY; j++ )  {
+            for( uint16_t k=0; k < mapZ; k++ )  {
               // neigbouring points analysis
               bool inside = true;
-              for(int ii = -1; ii <= 1; ii++)  {
-                for(int jj = -1; jj <= 1; jj++)  {
-                  for(int kk = -1; kk <= 1; kk++)  {
+              for( int ii = -1; ii <= 1; ii++)  {
+                for( int jj = -1; jj <= 1; jj++)  {
+                  for( int kk = -1; kk <= 1; kk++)  {
                     int iind = i+ii, jind = j+jj, kind = k+kk;
                     // index "rotation" step
                     if( iind < 0 )  iind += mapX;
@@ -179,9 +177,9 @@ protected:
     bool changes = true;
     while( changes )  {
       changes = false;
-      for( int i=0; i < ml.Count(); i++ )  {
+      for( size_t i=0; i < ml.Count(); i++ )  {
         tmp = ml[i]*v;
-        for( int j=0; j < 3; j++ )  {
+        for( size_t j=0; j < 3; j++ )  {
           while( tmp[j] < 0 )  tmp[j] += 1.0;
           while( tmp[j] >= 1.0 )  tmp[j] -= 1.0;
         }
@@ -199,27 +197,27 @@ public:
   static void MergePeaks(const smatd_list& ml, const mat3d& cell2cart, const vec3d& norm, 
     TArrayList<MapUtil::peak>& Peaks, TTypeList<MapUtil::peak>& out)  
   {
-    const int cnt = Peaks.Count();
+    const size_t cnt = Peaks.Count();
     TTypeList<vec3d> crds;
     mat3d cart2cell = cell2cart.Inverse();
     crds.SetCapacity(cnt);
-    for( int i=0; i < cnt; i++ )  {
+    for( size_t i=0; i < cnt; i++ )  {
       crds.AddNew(Peaks[i].center) *= norm;
       Peaks[i].process = true;
     }
     
-    for( int i=0; i < cnt; i++ )  {
+    for( size_t i=0; i < cnt; i++ )  {
       StandardiseVec(crds[i], ml);
       crds[i] *= cell2cart;
     }
     crds.QuickSorter.SyncSortSF(crds, Peaks, SortByDistance);
     TPtrList<MapUtil::peak> toMerge;
-    for( int i=0; i < cnt; i++ )  {
+    for( size_t i=0; i < cnt; i++ )  {
       if( !Peaks[i].process )  continue;
       toMerge.Clear();
       toMerge.Add( Peaks[i] ); 
       vec3d center(crds[i]);
-      for( int j=i+1; j < cnt; j++ )  {
+      for( size_t j=i+1; j < cnt; j++ )  {
         if( !Peaks[j].process )  continue;
         if( crds[i].QDistanceTo(crds[j]) < 0.25 )  {
           toMerge.Add( Peaks[j] );
@@ -228,18 +226,16 @@ public:
         }
       }
       MapUtil::peak& p = out.AddNew();
-      for( int j=0; j < toMerge.Count(); j++ )  {
+      for( size_t j=0; j < toMerge.Count(); j++ )  {
         p.count += toMerge[j]->count;
         p.summ += toMerge[j]->summ;
       }
       center /= toMerge.Count();
       center *= cart2cell;
       center[0] /= norm[0];  center[1] /= norm[1];  center[2] /= norm[2];
-      p.center[0] = olx_round(center[0]);
-      p.center[1] = olx_round(center[1]);
-      p.center[2] = olx_round(center[2]);
+      p.center = p.center.olx_round<uint16_t>();
     }
-    for( int i=0; i < out.Count(); i++ )  {
+    for( size_t i=0; i < out.Count(); i++ )  {
       if( out[i].count == 0 )
         out.NullItem(i);
     }

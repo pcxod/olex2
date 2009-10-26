@@ -55,21 +55,21 @@ public:
       delete Isotopes;
   }
 
-  inline int IsotopeCount()  const {  return (Isotopes==NULL) ? 0 : Isotopes->Count(); }
-  inline TIsotope& GetIsotope(int index)  const  {  return Isotopes->Item(index);  }
+  inline size_t IsotopeCount()  const {  return (Isotopes==NULL) ? 0 : Isotopes->Count(); }
+  inline TIsotope& GetIsotope(size_t index)  const  {  return Isotopes->Item(index);  }
   inline TIsotope& NewIsotope() {  return (Isotopes == NULL ? (Isotopes = new TIsotopeList) : Isotopes)->AddNew();  }
 
-  inline bool operator == (const TBasicAtomInfo& bai )  const {  return Index == bai.Index;  }
+  inline bool operator == (const TBasicAtomInfo& bai)  const {  return Index == bai.Index;  }
   inline bool operator == (const short index)           const {  return Index == index;  }
-  inline bool operator != (const TBasicAtomInfo& bai )  const {  return Index != bai.Index;  }
+  inline bool operator != (const TBasicAtomInfo& bai)  const {  return Index != bai.Index;  }
   inline bool operator != (const short index)           const {  return Index != index;  }
-  inline bool operator < (const TBasicAtomInfo& bai )  const {  return Index < bai.Index;  }
+  inline bool operator < (const TBasicAtomInfo& bai)  const {  return Index < bai.Index;  }
   inline bool operator < (const short index)           const {  return Index < index;  }
-  inline bool operator <= (const TBasicAtomInfo& bai )  const {  return Index <= bai.Index;  }
+  inline bool operator <= (const TBasicAtomInfo& bai)  const {  return Index <= bai.Index;  }
   inline bool operator <= (const short index)           const {  return Index <= index;  }
-  inline bool operator > (const TBasicAtomInfo& bai )  const {  return Index > bai.Index;  }
+  inline bool operator > (const TBasicAtomInfo& bai)  const {  return Index > bai.Index;  }
   inline bool operator > (const short index)           const {  return Index > index;  }
-  inline bool operator >= (const TBasicAtomInfo& bai )  const {  return Index >= bai.Index;  }
+  inline bool operator >= (const TBasicAtomInfo& bai)  const {  return Index >= bai.Index;  }
   inline bool operator >= (const short index)           const {  return Index >= index;  }
 
   DefPropC(olxstr, Symbol)
@@ -101,10 +101,10 @@ public:
   // 21.06.2008, table translated into the code, so the fileName is not used
   TAtomsInfo(const olxstr& filename=EmptyString);
   virtual ~TAtomsInfo();
-  inline int Count()  const  {  return Data.Count();  }
+  size_t Count() const {  return Data.Count();  }
   void SaveToFile(const olxstr& fileName) const;
   // returns correpondinag value of the AtomsInfo list
-  inline TBasicAtomInfo& GetAtomInfo(int index) const {  return Data[index];  }
+  inline TBasicAtomInfo& GetAtomInfo(size_t index) const {  return Data[index];  }
   // returns correpondinag value of the AtomsInfo list
   TBasicAtomInfo* FindAtomInfoBySymbol(const olxstr& Symbol) const;
   // returns correpondinag value of the AtomsInfo list, Str can be "C10a" etc
@@ -155,10 +155,10 @@ public:
     else    // just add whatever is provided
       shc.AddNew(sh, 1);
     
-    for( int i=0; i < shc.Count(); i++ )  {
+    for( size_t i=0; i < shc.Count(); i++ )  {
       shc[i].B() *= cnt;
       bool found = false;
-      for( int j=0; j < res.Count(); j++ )  {
+      for( size_t j=0; j < res.Count(); j++ )  {
         if( res[j].GetA().Equalsi(shc[i].GetA()) )  {
           res[j].B() += shc[i].GetB();
           found = true;

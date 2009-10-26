@@ -8,7 +8,7 @@
 BeginGlNamespace()
 
 struct GlTriangle {
-  vec3i verts;
+  TVector3<size_t> verts;
 };
 
 class GlSphereEx {
@@ -31,9 +31,9 @@ public:
     t_oh[6].verts = vec3i(5, 4, 3);
     t_oh[7].verts = vec3i(5, 1, 4);
   }
-  void Generate(float rad, int ext, TTypeList<vec3f>& vo, TTypeList<GlTriangle>& to, TArrayList<vec3f>& normals) const {
-    int nc = 8;
-    for( int i=0; i < ext; i++ )
+  void Generate(float rad, size_t ext, TTypeList<vec3f>& vo, TTypeList<GlTriangle>& to, TArrayList<vec3f>& normals) const {
+    size_t nc = 8;
+    for( size_t i=0; i < ext; i++ )
       nc += nc*3;
     
     to.SetCapacity( nc+1 );
@@ -42,9 +42,9 @@ public:
       vo.AddNew( v_oh[i] );
     for( int i=0; i < 8; i++ )
       to.AddNew( t_oh[i] );
-    for( int i=0; i < ext; i++ ) {
-      const int t_cnt = to.Count();
-      for( int j=0; j < t_cnt; j++ )  {
+    for( size_t i=0; i < ext; i++ ) {
+      const size_t t_cnt = to.Count();
+      for( size_t j=0; j < t_cnt; j++ )  {
         GlTriangle& t = to[j];
         vo.AddNew( (vo[t.verts[0]]+vo[t.verts[1]])/2 );
         vo.AddNew( (vo[t.verts[0]]+vo[t.verts[2]])/2 );
@@ -70,11 +70,11 @@ public:
       }
     }
     // normalise the vertices
-    for( int i=0; i < vo.Count(); i++ )
+    for( size_t i=0; i < vo.Count(); i++ )
       vo[i].Normalise();
     // initialise normals
     normals.SetCount(vo.Count());
-    for( int i=0; i < vo.Count(); i++ )  {
+    for( size_t i=0; i < vo.Count(); i++ )  {
       normals[i] = vo[i];
       vo[i] *= rad;
     }
@@ -84,11 +84,11 @@ public:
     TTypeList<GlTriangle> triags;
     TArrayList<vec3f> norms;
     Generate(rad, ext, vecs, triags, norms);
-    const int tc = triags.Count();
+    const size_t tc = triags.Count();
     glBegin(GL_TRIANGLES);
-    for( int i = 0; i < tc; i++ )  {
+    for( size_t i = 0; i < tc; i++ )  {
       const GlTriangle& t = triags[i];
-      for( int j=0; j < 3; j++ )  {
+      for( size_t j=0; j < 3; j++ )  {
         glNormal3f( norms[t.verts[j]][0], norms[t.verts[j]][1], norms[t.verts[j]][2]); 
         glVertex3f( vecs[t.verts[j]][0], vecs[t.verts[j]][1], vecs[t.verts[j]][2]); 
       }
@@ -96,11 +96,11 @@ public:
     glEnd();
   }
   void Render(const TTypeList<vec3f>& vecs, const TTypeList<GlTriangle>& triags, const TArrayList<vec3f>& norms) const {
-    const int tc = triags.Count();
+    const size_t tc = triags.Count();
     glBegin(GL_TRIANGLES);
-    for( int i = 0; i < tc; i++ )  {
+    for( size_t i = 0; i < tc; i++ )  {
       const GlTriangle& t = triags[i];
-      for( int j=0; j < 3; j++ )  {
+      for( size_t j=0; j < 3; j++ )  {
         glNormal3f( norms[t.verts[j]][0], norms[t.verts[j]][1], norms[t.verts[j]][2]); 
         glVertex3f( vecs[t.verts[j]][0], vecs[t.verts[j]][1], vecs[t.verts[j]][2]); 
       }
@@ -112,15 +112,15 @@ public:
     TTypeList<GlTriangle> triags;
     TArrayList<vec3f> norms;
     Generate(rad, ext, vecs, triags, norms);
-    const int tc = triags.Count();
+    const size_t tc = triags.Count();
     glBegin(GL_TRIANGLES);
-    for( int i = 0; i < tc; i++ )  {
+    for( size_t i = 0; i < tc; i++ )  {
       const GlTriangle& t = triags[i];
       if( vec3f::IsInRangeInc(vecs[t.verts[0]], f_mask, t_mask) &&
           vec3f::IsInRangeInc(vecs[t.verts[1]], f_mask, t_mask) &&
           vec3f::IsInRangeInc(vecs[t.verts[2]], f_mask, t_mask) )
          continue;
-      for( int j=0; j < 3; j++ )  {
+      for( size_t j=0; j < 3; j++ )  {
         glNormal3f( norms[t.verts[j]][0], norms[t.verts[j]][1], norms[t.verts[j]][2]); 
         glVertex3f( vecs[t.verts[j]][0], vecs[t.verts[j]][1], vecs[t.verts[j]][2]); 
       }
@@ -129,9 +129,9 @@ public:
   }
   void RenderEx(const TTypeList<vec3f>& vecs, const TTypeList<GlTriangle>& triags, const TArrayList<vec3f>& norms, 
       const vec3f& f_mask, const vec3f& t_mask) const {
-    const int tc = triags.Count();
+    const size_t tc = triags.Count();
     glBegin(GL_TRIANGLES);
-    for( int i = 0; i < tc; i++ )  {
+    for( size_t i = 0; i < tc; i++ )  {
       const GlTriangle& t = triags[i];
       if( vec3f::IsInRangeInc(vecs[t.verts[0]], f_mask, t_mask) &&
           vec3f::IsInRangeInc(vecs[t.verts[1]], f_mask, t_mask) &&

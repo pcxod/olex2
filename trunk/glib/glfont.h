@@ -1,9 +1,7 @@
-//---------------------------------------------------------------------------
-#ifndef glfontH
-#define glfontH
+#ifndef __olx_gl_font_H
+#define __olx_gl_font_H
 #include "glbase.h"
 #include "glmaterial.h"
-#include "elist.h"
 #include "datastream.h"
 #include "bitarray.h"
 #include "threex3.h"
@@ -29,52 +27,51 @@ public:
                      fntBold       = 0x0004,
                      fntBmp        = 0x0008,  // create bitmap font
                      fntTexture    = 0x0010;  // create texture font
-  int FFontBase;
+  GLuint FontBase;
   TPtrList<TFontCharSize> CharSizes;
   GLuint* Textures;
-  uint16_t FFlags, PointSize;
-  uint16_t FMaxWidth, FMaxHeight,
-        FLeftmost, FTopmost,
-        FCharOffset, TextureHeight, TextureWidth;
-  TGlMaterial FMaterial;
+  uint16_t Flags, PointSize;
+  uint16_t MaxWidth, MaxHeight,
+        Leftmost, Topmost,
+        CharOffset, TextureHeight, TextureWidth;
+  TGlMaterial Material;
 protected:
-  olxstr FIdString, Name;
-  bool AnalyseBitArray(const TEBitArray& ba, size_t Char, int width, int height);
+  olxstr IdString, Name;
+  bool AnalyseBitArray(const TEBitArray& ba, size_t Char, uint16_t width, uint16_t height);
 public:
   TGlFont(const olxstr& name);
   virtual ~TGlFont();
 
   void ClearData(); // must be called to reset all data
-  inline uint16_t MaxWidth() const {  return FMaxWidth;  }
-  inline uint16_t MaxHeight() const {  return FMaxHeight;  }
+
+  inline uint16_t GetMaxWidth() const {  return MaxWidth;  }
+  inline uint16_t GetMaxHeight() const {  return MaxHeight;  }
+  inline uint16_t GetLeftmost() const {  return Leftmost;  }
+  inline uint16_t GetTopmost() const {  return Topmost;  }
   
   DefPropP(uint16_t, PointSize)
 
-  int TextWidth(const olxstr &Text, int cnt=-1);
-  int MaxTextLength(int width);
-  int TextHeight(const olxstr &Text=EmptyString);
-  inline uint16_t GetLeftmost() const {  return FLeftmost;  }
-  inline uint16_t GetTopmost() const {  return FTopmost;  }
-  bool CharFromRGBArray(size_t Char, unsigned char *RGBData, int width, int height);
+  size_t TextWidth(const olxstr &Text, size_t cnt=InvalidSize);
+  size_t MaxTextLength(size_t width);
+  uint16_t TextHeight(const olxstr &Text=EmptyString);
+  bool CharFromRGBArray(size_t Char, unsigned char *RGBData, uint16_t width, uint16_t height);
 
-  void CreateGlyphsFromRGBArray(bool FixedWidth, short Width, short Height);
+  void CreateGlyphsFromRGBArray(bool FixedWidth, uint16_t Width, uint16_t Height);
   // much faster version
-  void CreateGlyphs(const TEBitArray& ba, bool FixedWidth, short Width, short Height);
+  void CreateGlyphs(const TEBitArray& ba, bool FixedWidth, uint16_t Width, uint16_t Height);
 
-  void CreateTextures(short Width, short Height);
+  void CreateTextures(uint16_t Width, uint16_t Height);
   inline bool HasTextures() const {  return Textures != NULL;  }
   inline TFontCharSize* CharSize(size_t Char)  { return CharSizes[(unsigned)Char];  }
 
-  inline bool FixedWidth()  const {  return  (FFlags & sglfFixedWidth) == sglfFixedWidth; }
-  inline short CharOffset() const {  return FCharOffset; }
-  inline void CharOffset(short v) { FCharOffset = v; }
-  inline int FontBase() const     {  return FFontBase; }
+  inline bool IsFixedWidth() const {  return  (Flags & sglfFixedWidth) == sglfFixedWidth; }
+  DefPropP(uint16_t, CharOffset)
+  inline GLuint GetFontBase() const {  return FontBase; }
   void DrawGlText(const vec3d& from, const olxstr& text, bool FixedWidth);
-  void IdString(const olxstr &Str)              {  FIdString = Str; }
-  inline const olxstr& IdString()         const {  return FIdString; }
-  inline const olxstr& GetName()          const {  return Name; }
-  inline TGlMaterial& Material()                {  return FMaterial;  }
-  inline const TGlMaterial& GetMaterial() const {  return FMaterial;  }
+  DefPropC(olxstr, IdString)
+  inline const olxstr& GetName() const {  return Name; }
+  inline TGlMaterial& GetMaterial()  {  return Material;  }
+  inline const TGlMaterial& GetMaterial() const {  return Material;  }
   void SetMaterial(const TGlMaterial& m);
 };
 

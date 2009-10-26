@@ -21,7 +21,7 @@ TGlPrimitive::TGlPrimitive(TObjectGroup& ParentG, TGlRenderer& ParentR, short ty
   Quadric = NULL;
   Evaluator = NULL;
   Renderer = ParentR;
-  TextureId = ListId = OwnerId = -1;
+  TextureId = ListId = OwnerId = ~0;
   QuadricDrawStyle = GLU_FILL;
   QuadricNormals = GLU_SMOOTH;
   QuadricOrientation = GLU_OUTSIDE;
@@ -48,7 +48,7 @@ void TGlPrimitive::CreateQuadric()  {
   Quadric = gluNewQuadric();
   if( Quadric == NULL )
     throw TOutOfMemoryException(__OlxSourceInfo);
-  if( TextureId != -1 )  {
+  if( olx_is_valid_index(TextureId) )  {
     glBindTexture(GL_TEXTURE_2D, TextureId);
     gluQuadricTexture(Quadric, GL_TRUE);
   }
@@ -201,7 +201,7 @@ void TGlPrimitive::Draw()  {
   if( ClipPlanes != NULL )
     ClipPlanes->Enable(true);
   TGlTexture* currentTexture = NULL;
-  if( TextureId != -1 )  {
+  if( olx_is_valid_index(TextureId) )  {
     TGlTexture* tex = Renderer.GetTextureManager().FindTexture( TextureId );
     currentTexture = new TGlTexture();
     tex->ReadCurrent( *currentTexture );
@@ -210,13 +210,13 @@ void TGlPrimitive::Draw()  {
 
   if( Type == sgloText )  {
     if( String == NULL || Font == NULL || String->IsEmpty() )   return;
-    const int fontbase = Font->FontBase();
+    const GLuint fontbase = Font->GetFontBase();
     /* each character of different colour */
-    const int StrLen = String->Length();
+    const size_t StrLen = String->Length();
     if( Colors.Count() == StrLen )  {
       uint32_t prev_color = Colors[0];
       SetColor(prev_color);
-      for( int i=0; i < StrLen; i++ )  {
+      for( size_t i=0; i < StrLen; i++ )  {
         if( prev_color != Colors[i] )  {
           SetColor( Colors[i] );
           prev_color = Colors[i];
@@ -225,7 +225,7 @@ void TGlPrimitive::Draw()  {
       }
     }
     else  {  /* all characters of the same colour */
-      for( int i=0; i < StrLen; i++ )
+      for( size_t i=0; i < StrLen; i++ )
         glCallList( fontbase + String->CharAt(i) );
     }
   }
@@ -233,13 +233,13 @@ void TGlPrimitive::Draw()  {
     glPointSize( (float)Params[0]);
     if( Colors.IsEmpty() )  {
       glBegin(GL_POINTS);
-      for( int  i=0; i < Vertices.Count(); i++ )
+      for( size_t  i=0; i < Vertices.Count(); i++ )
         DrawVertex( Vertices[i] );
       glEnd();
     }
     else if( Colors.Count() == Vertices.Count() )  {
       PrepareColorRendering(GL_POINTS);
-      for( int i=0; i < Vertices.Count(); i++ )
+      for( size_t i=0; i < Vertices.Count(); i++ )
         DrawVertex(Vertices[i], Colors[i]);
       EndColorRendering();
     }
@@ -252,19 +252,19 @@ void TGlPrimitive::Draw()  {
     }
     if( Colors.IsEmpty() )  {
       glBegin(GL_LINES);
-      for( int i=0; i < Vertices.Count(); i++ )
+      for( size_t i=0; i < Vertices.Count(); i++ )
         DrawVertex(Vertices[i]);
       glEnd();
     }
     else if( Colors.Count() == Vertices.Count() )  {
       PrepareColorRendering(GL_LINES);
-      for( int i=0; i < Vertices.Count(); i++ )
+      for( size_t i=0; i < Vertices.Count(); i++ )
         DrawVertex(Vertices[i], Colors[i]);
       EndColorRendering();
     }
     else if( Colors.Count()*2 == Vertices.Count() )  {
       PrepareColorRendering(GL_LINES);
-      for( int i=0; i < Colors.Count(); i++ )  {
+      for( size_t i=0; i < Colors.Count(); i++ )  {
         SetColor(Colors[i]);
         DrawVertex2(i*2);
       }
@@ -279,7 +279,7 @@ void TGlPrimitive::Draw()  {
       glLineWidth( (float)(Params[0]*LW) );
     }
     glBegin(GL_LINE_STRIP);
-    for( int i=0; i < Vertices.Count(); i++ )
+    for( size_t i=0; i < Vertices.Count(); i++ )
       DrawVertex(Vertices[i]);
     glEnd();
     if( LW != 0 ) 
@@ -293,13 +293,13 @@ void TGlPrimitive::Draw()  {
     }
     if( Colors.IsEmpty() )  {
       glBegin(GL_LINE_LOOP);
-      for( int i=0; i < Vertices.Count(); i++ )
+      for( size_t i=0; i < Vertices.Count(); i++ )
         DrawVertex(Vertices[i]);
       glEnd();
     }
     else if( Colors.Count() == Vertices.Count() )  {
       PrepareColorRendering(GL_LINE_LOOP);
-      for( int i=0; i < Vertices.Count(); i++ )
+      for( size_t i=0; i < Vertices.Count(); i++ )
         DrawVertex(Vertices[i], Colors[i]);
       EndColorRendering();
     }
@@ -308,11 +308,11 @@ void TGlPrimitive::Draw()  {
   else if( Type == sgloTriangles )  {
     glBegin(GL_TRIANGLES);
     if( Normals.IsEmpty() )  {
-      for( int i=0; i < Vertices.Count(); i++ )
+      for( size_t i=0; i < Vertices.Count(); i++ )
         DrawVertex(Vertices[i]);
     }
     else if( Normals.Count()*3 == Vertices.Count() )  {  //+normal
-      for( int i=0; i < Normals.Count(); i++ )  {
+      for( size_t i=0; i < Normals.Count(); i++ )  {
         SetNormal(Normals[i]);
         DrawVertex3(i*3);
       }
@@ -320,17 +320,17 @@ void TGlPrimitive::Draw()  {
     glEnd();
   }
   else if( Type == sgloQuads )  {
-    if( TextureCrds.IsEmpty() || TextureId == -1 )  {
+    if( TextureCrds.IsEmpty() || !olx_is_valid_index(TextureId) )  {
       if( Colors.IsEmpty() )  {
         if( Normals.IsEmpty() )  {
           glBegin(GL_QUADS);
-          for( int i=0; i < Vertices.Count(); i++ )
+          for( size_t i=0; i < Vertices.Count(); i++ )
             DrawVertex(Vertices[i]);
           glEnd();
         }
         else if( Normals.Count()*4 == Vertices.Count() ) {
           glBegin(GL_QUADS);
-          for( int i=0; i < Normals.Count(); i++ )  {
+          for( size_t i=0; i < Normals.Count(); i++ )  {
             SetNormal(Normals[i]);
             DrawVertex4(i*4);
           }
@@ -340,13 +340,13 @@ void TGlPrimitive::Draw()  {
       else if( Colors.Count() == Vertices.Count() )  {
         if( Normals.IsEmpty() )  {
           PrepareColorRendering(GL_QUADS);
-          for( int i=0; i < Vertices.Count(); i++ )
+          for( size_t i=0; i < Vertices.Count(); i++ )
             DrawVertex(Vertices[i], Colors[i]);
           EndColorRendering();
         }
         else if( Normals.Count()*4 == Vertices.Count() )  {
           PrepareColorRendering(GL_QUADS);
-          for( int i=0; i < Normals.Count(); i++ )  {
+          for( size_t i=0; i < Normals.Count(); i++ )  {
             SetNormal(Normals[i]);
             DrawVertex4c(i*4);
           }
@@ -356,7 +356,7 @@ void TGlPrimitive::Draw()  {
       else if( Colors.Count()*4 == Vertices.Count() )  {
         if( Normals.IsEmpty() )  {
           PrepareColorRendering(GL_QUADS);
-          for( int i=0; i < Colors.Count(); i++ )  {
+          for( size_t i=0; i < Colors.Count(); i++ )  {
             SetColor(Colors[i]);
             DrawVertex4(i*4);
           }
@@ -364,7 +364,7 @@ void TGlPrimitive::Draw()  {
         }
         else if( Normals.Count()*4 == Vertices.Count() )  {
           PrepareColorRendering(GL_QUADS);
-          for( int i=0; i < Normals.Count(); i++ )  {
+          for( size_t i=0; i < Normals.Count(); i++ )  {
             SetNormal(Normals[i]);
             SetColor(Colors[i]);
             DrawVertex4(i*4);
@@ -377,13 +377,13 @@ void TGlPrimitive::Draw()  {
       if( Colors.IsEmpty() )  {
         if( Normals.IsEmpty() )  {
           glBegin(GL_QUADS);
-          for( int i=0; i < Vertices.Count(); i++ )
+          for( size_t i=0; i < Vertices.Count(); i++ )
             DrawVertex(Vertices[i], TextureCrds[i]);
           glEnd();
         }
         else if( Normals.Count()*4 == Vertices.Count() ) {
           glBegin(GL_QUADS);
-          for( int i=0; i < Normals.Count(); i++ )  {
+          for( size_t i=0; i < Normals.Count(); i++ )  {
             SetNormal(Normals[i]);
             DrawVertex4t(i*4);
           }
@@ -393,13 +393,13 @@ void TGlPrimitive::Draw()  {
       else if( Colors.Count() == Vertices.Count() )  {
         if( Normals.IsEmpty() )  {
           PrepareColorRendering(GL_QUADS);
-          for( int i=0; i < Vertices.Count(); i++ )
+          for( size_t i=0; i < Vertices.Count(); i++ )
             DrawVertex(Vertices[i], Colors[i], TextureCrds[i]);
           EndColorRendering();
         }
         else if( Normals.Count()*4 == Vertices.Count() )  {
           PrepareColorRendering(GL_QUADS);
-          for( int i=0; i < Normals.Count(); i++ )  {
+          for( size_t i=0; i < Normals.Count(); i++ )  {
             SetNormal(Normals[i]);
             DrawVertex4ct(i*4);
           }
@@ -409,7 +409,7 @@ void TGlPrimitive::Draw()  {
       else if( Colors.Count()*4 == Vertices.Count() )  {
         if( Normals.IsEmpty() )  {
           PrepareColorRendering(GL_QUADS);
-          for( int i=0; i < Colors.Count(); i++ )  {
+          for( size_t i=0; i < Colors.Count(); i++ )  {
             SetColor(Colors[i]);
             DrawVertex4t(i*4);
           }
@@ -417,7 +417,7 @@ void TGlPrimitive::Draw()  {
         }
         else if( Normals.Count()*4 == Vertices.Count() )  {
           PrepareColorRendering(GL_QUADS);
-          for( int i=0; i < Normals.Count(); i++ )  {
+          for( size_t i=0; i < Normals.Count(); i++ )  {
             SetNormal(Normals[i]);
             SetColor(Colors[i]);
             DrawVertex4t(i*4);
@@ -432,13 +432,13 @@ void TGlPrimitive::Draw()  {
     if( v )  glDisable(GL_CULL_FACE);
     if( Colors.IsEmpty() )  {
       glBegin(GL_POLYGON);
-      for( int i=0; i < Vertices.Count(); i++ )
+      for( size_t i=0; i < Vertices.Count(); i++ )
         DrawVertex(Vertices[i]);
       glEnd();
     }
     else if( Colors.Count() == Vertices.Count() )  {
       PrepareColorRendering(GL_POLYGON);
-      for( int i=0; i < Vertices.Count(); i++ )
+      for( size_t i=0; i < Vertices.Count(); i++ )
         DrawVertex(Vertices[i], Colors[i]);
       EndColorRendering();
     }

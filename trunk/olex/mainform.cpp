@@ -263,12 +263,12 @@ public:
       delete bmp;
   }
   void DoPaint()  {
-    static int generation = 0;
+    static size_t generation = 0;
     wxWindowDC dc(this);
     if( bmp != NULL )
       dc.DrawBitmap(*bmp, 0, 0);
     wxString str(wxT("Olex2 is initialising"));
-    for( int i=0; i < generation; i++ )
+    for( size_t i=0; i < generation; i++ )
       str += '.';
     dc.SetBrush(*wxWHITE_BRUSH);
     dc.SetPen(*wxWHITE_PEN);
@@ -508,7 +508,7 @@ TMainForm::~TMainForm()  {
 	if( UpdateProgress != NULL )
 	  delete UpdateProgress;
   delete Modes;
-  for( int i=0; i < CallbackFuncs.Count(); i++ )
+  for( size_t i=0; i < CallbackFuncs.Count(); i++ )
     delete CallbackFuncs.GetObject(i);
   // delete FIOExt;
 
@@ -1248,6 +1248,9 @@ separated values of Atom Type and radius, an entry a line" );
     DataDir = new_data_dir;
     if( !TEFile::MakeDirs(DataDir) )
       TBasicApp::GetLog().Error("Could not create data folder!");
+      if( updater::UpdateAPI::IsNewInstallation() )
+        updater::UpdateAPI::TagInstallationAsOld();
+      patcher::PatchAPI::SaveLocationInfo(new_data_dir);
   }
   else  {
     if( !TEFile::Exists(new_data_dir) )  {  // need to copy the old settings then...
@@ -1358,30 +1361,17 @@ void TMainForm::StartupInit()  {
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   // create 4 fonts
   
-  TGlFont *fnt = FXApp->GetRender().GetScene().CreateFont("Console", Font.GetNativeFontInfoDesc().c_str());
-  fnt->Material().SetFlags(sglmAmbientF|sglmEmissionF|sglmIdentityDraw);
-  fnt->Material().AmbientF = 0x7fff7f;
-  fnt->Material().EmissionF = 0x1f2f1f;
+  TGlMaterial glm;
+  glm.SetFlags(sglmAmbientF|sglmIdentityDraw);
+  glm.AmbientF = 0x7fff7f;
+  glm.EmissionF = 0x1f2f1f;
 
-  fnt = FXApp->GetRender().GetScene().CreateFont("Help", Font.GetNativeFontInfoDesc().c_str());
-  fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
-  fnt->Material().AmbientF = 0x7fff7f;
-
-  fnt = FXApp->GetRender().GetScene().CreateFont("Notes", Font.GetNativeFontInfoDesc().c_str());
-  fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
-  fnt->Material().AmbientF = 0x7fff7f;
-
-  fnt = FXApp->GetRender().GetScene().CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str());
-  fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
-  fnt->Material().AmbientF = 0x7fff7f;
-
-  fnt = FXApp->GetRender().GetScene().CreateFont("Picture_labels", Font.GetNativeFontInfoDesc().c_str());
-  fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
-  fnt->Material().AmbientF = 0x7fff7f;
-
-  fnt = FXApp->GetRender().GetScene().CreateFont("Tooltip", Font.GetNativeFontInfoDesc().c_str());
-  fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
-  fnt->Material().AmbientF = 0x7fff7f;
+  FXApp->GetRender().GetScene().CreateFont("Console", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
+  FXApp->GetRender().GetScene().CreateFont("Help", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
+  FXApp->GetRender().GetScene().CreateFont("Notes", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
+  FXApp->GetRender().GetScene().CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
+  FXApp->GetRender().GetScene().CreateFont("Picture_labels", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
+  FXApp->GetRender().GetScene().CreateFont("Tooltip", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
 
   FXApp->SetLabelsFont( 3 );
 
@@ -1427,7 +1417,7 @@ void TMainForm::StartupInit()  {
     if( sh != NULL )  {
       try  {
         olxstr cmd;
-        for( int i=0; i < sh->ItemCount(); i++ )  {
+        for( size_t i=0; i < sh->ItemCount(); i++ )  {
         TDataItem& item = sh->GetItem(i);
         AccShortcuts.AddAccell( TranslateShortcut( item.GetFieldValue("key")), item.GetFieldValue("macro") );
         // cannot execute it through a macro - functions get evaluated...
@@ -1442,7 +1432,7 @@ void TMainForm::StartupInit()  {
     if( sh != NULL )  {
       try  {
         olxstr cmd;
-        for( int i=0; i < sh->ItemCount(); i++ )  {
+        for( size_t i=0; i < sh->ItemCount(); i++ )  {
           TDataItem& item = sh->GetItem(i);
           cmd = "createmenu \'";
           cmd << item.GetFieldValue("title") << "\' \'" <<
@@ -1481,7 +1471,7 @@ void TMainForm::StartupInit()  {
     FPluginFile.LoadFromXLFile( PluginFile, NULL );
     FPluginItem = FPluginFile.Root().FindItem("Plugin");
     // manually activate the events
-    for( int i=0; i < FPluginItem->ItemCount(); i++ )  {
+    for( size_t i=0; i < FPluginItem->ItemCount(); i++ )  {
       TStateChange sc(prsPluginInstalled, true, FPluginItem->GetItem(i).GetName());
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
     }
@@ -1490,7 +1480,7 @@ void TMainForm::StartupInit()  {
     FPluginItem = &FPluginFile.Root().AddItem("Plugin");
 
   // set the variables
-  for( int i=0; i < StoredParams.Count(); i++ )  {
+  for( size_t i=0; i < StoredParams.Count(); i++ )  {
     ProcessMacro(olxstr("setvar(") << StoredParams.GetComparable(i)
                     << ",\'" << StoredParams.GetObject(i)
                     << "\')");
@@ -1754,9 +1744,9 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     TdlgPrimitive* Primitives = new TdlgPrimitive(this, Ps, i);
     if( Primitives->ShowModal() == wxID_OK )  {
       if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
-        for( int i=0; i < FXApp->AtomCount(); i++ )
+        for( size_t i=0; i < FXApp->AtomCount(); i++ )
           FXApp->GetAtom(i).Atom().SetTag(i);
-        for( int i=0; i < FXApp->GetSelection().Count(); i++ )  {
+        for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
           if( !EsdlInstanceOf(FXApp->GetSelection()[i], TXBond) )
             continue;
           TXBond& xb = (TXBond&)FXApp->GetSelection()[i];
@@ -1795,7 +1785,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     TXAtom *XA = (TXAtom*)G;
     FXApp->BangList(XA, SL);
     pmBang->Clear();
-    for( int i=0; i < SL.Count(); i++ )
+    for( size_t i=0; i < SL.Count(); i++ )
       pmBang->Append(-1, SL[i].u_str());
     pmAtom->Enable(ID_MenuBang, SL.Count() != 0 );
     T = XA->Atom().GetLabel();
@@ -1811,7 +1801,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     pmAtom->Enable(ID_Selection, G->IsSelected());
     pmAtom->Enable(ID_SelGroup, false);
     int bound_cnt = 0;
-    for( int i=0; i < XA->Atom().NodeCount(); i++ )  {
+    for( size_t i=0; i < XA->Atom().NodeCount(); i++ )  {
       if( XA->Atom().Node(i).IsDeleted() || 
         XA->Atom().Node(i).GetAtomInfo() == iHydrogenIndex ||
         XA->Atom().Node(i).GetAtomInfo() == iDeuteriumIndex || 
@@ -1831,7 +1821,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     TXBond *XB = (TXBond*)G;
     FXApp->TangList(XB, SL);
     pmTang->Clear();
-    for( int i=0; i < SL.Count(); i++ )
+    for( size_t i=0; i < SL.Count(); i++ )
       pmTang->Append(0, SL[i].u_str());
 
     pmBond->Enable(ID_MenuTang, SL.Count() != 0 );
@@ -1931,15 +1921,15 @@ int TMainForm::GetFragmentList(TNetPList& res)  {
   if( FObjectUnderMouse == NULL )  return 0;
   if( FObjectUnderMouse->IsSelected() )  {
     TGlGroup& glg = FXApp->GetSelection();
-    for( int i=0; i < glg.Count(); i++ )  {
+    for( size_t i=0; i < glg.Count(); i++ )  {
       if( EsdlInstanceOf(glg[i], TXAtom) )
         res.Add( &((TXAtom&)glg[i]).Atom().GetNetwork() );
       else if( EsdlInstanceOf(glg[i], TXBond) )
         res.Add( &((TXBond&)glg[i]).Bond().GetNetwork() );
     }
-    for( int i=0; i < res.Count(); i++ )
+    for( size_t i=0; i < res.Count(); i++ )
       res[i]->SetTag(i);
-    for( int i=0; i < res.Count(); i++ )
+    for( size_t i=0; i < res.Count(); i++ )
       if( res[i]->GetTag() != i )
         res[i] = NULL;
     res.Pack();
@@ -2161,7 +2151,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   else if( MsgId == ID_TIMER )  {
     FTimer->OnTimer.SetEnabled( false );
     // execute tasks ...
-    for( int i=0; i < Tasks.Count(); i++ )  {
+    for( size_t i=0; i < Tasks.Count(); i++ )  {
       if(  (TETime::Now() - Tasks[i].LastCalled) > Tasks[i].Interval )  {
         olxstr tmp( Tasks[i].Task );
         if( !Tasks[i].Repeatable )  {
@@ -2193,7 +2183,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       if( FileMT != FileT )  {
         FObjectUnderMouse = NULL;
         ProcessMacro((olxstr("@reap -b -r \'") << FListenFile)+'\'', "OnListen");
-        for( int i=0; i < FOnListenCmds.Count(); i++ )  {
+        for( size_t i=0; i < FOnListenCmds.Count(); i++ )  {
           if( ProcessMacro(FOnListenCmds[i], "OnListen") )            
             break;
         }
@@ -2369,7 +2359,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       /* the page, if requested, will beloaded on time event. The timer is disabled
       in case if a modal window appears and the timer event can be called */
       FTimer->OnTimer.SetEnabled( false );
-      for( int i=0; i < Toks.Count(); i++ )  {
+      for( size_t i=0; i < Toks.Count(); i++ )  {
         if( !ProcessMacro(olxstr::DeleteSequencesOf<char>(Toks[i], ' '), "OnLink") )
           break;
       }
@@ -2408,7 +2398,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   }
   else if( MsgId == ID_HTMLDBLCLICK )  {
     TPopupData *pd = NULL;
-    for( int i=0; i < FPopups.Count(); i++ )  {
+    for( size_t i=0; i < FPopups.Count(); i++ )  {
       pd = FPopups.GetObject(i);
       if( dynamic_cast<const THtml*>(Sender) == pd->Html  )  break;
     }
@@ -2503,16 +2493,16 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
       FHelpWindow->SetVisible( HelpWindowVisible );
       FGlConsole->ShowBuffer( !HelpWindowVisible );
       FHelpWindow->SetTop( InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() + 5 : 1 );
-      FHelpWindow->SetMaxStringLength( FHelpWindow->Font()->MaxTextLength(FXApp->GetRender().GetWidth()) );
+      FHelpWindow->SetMaxStringLength( FHelpWindow->GetFont().MaxTextLength(FXApp->GetRender().GetWidth()) );
       FHelpWindow->SetZ( FXApp->GetRender().GetMaxRasterZ()-0.1);
-      for( int i=0; i < macros.Count(); i++ )  {
+      for( size_t i=0; i < macros.Count(); i++ )  {
         FHelpWindow->PostText(macros[i]->GetName(), &HelpFontColorCmd);
         if( !macros[i]->GetDescription().IsEmpty() )  {
           FHelpWindow->PostText(macros[i]->GetDescription(), &HelpFontColorTxt);
           //Cat = Item->FindItem("category");
           //if( Cat != NULL  )  {
           //  olxstr Categories;
-          //  for( int j=0; j < Cat->ItemCount(); j++ )  {
+          //  for( size_t j=0; j < Cat->ItemCount(); j++ )  {
           //    Categories << Cat->GetItem(j).GetName();
           //    if( (j+1) < Cat->ItemCount() )  Categories << ", ";
           //  }
@@ -2890,16 +2880,16 @@ olxstr TMainForm::ExpandCommand(const olxstr &Cmd)  {
   TBasicFunctionPList bins;  // builins
   GetLibrary().FindSimilarMacros(Cmd, bins);
   GetLibrary().FindSimilarFunctions(Cmd, bins);
-  for( int i=0; i < bins.Count(); i++ )
+  for( size_t i=0; i < bins.Count(); i++ )
     all_cmds.Add( bins[i]->GetQualifiedName() );
-  for( int i=0; i < libs.Count(); i++ )
+  for( size_t i=0; i < libs.Count(); i++ )
     all_cmds.Add( libs[i]->GetQualifiedName() );
   if( all_cmds.Count() > 1 )  {
     if( FHelpWindow->IsVisible() )  // console buffer is hidden then...
       FHelpWindow->Clear();
     olxstr cmn_str = all_cmds[0].ToLowerCase();
     olxstr line(all_cmds[0], 80);
-    for( int i=1; i < all_cmds.Count(); i++ )  {
+    for( size_t i=1; i < all_cmds.Count(); i++ )  {
       cmn_str = all_cmds[i].ToLowerCase().CommonString(cmn_str);
       if( line.Length() + all_cmds[i].Length() > 79 )  {  // expects no names longer that 79!
         line << '\n';
@@ -2935,7 +2925,7 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
     FGlConsole->PrintText(olxstr(" Description: ") << MF->GetDescription());
     if( MF->GetOptions().Count() != 0 )  {
       FGlConsole->PrintText(" Switches: ");
-      for(int i=0; i < MF->GetOptions().Count(); i++ )  {
+      for( size_t i=0; i < MF->GetOptions().Count(); i++ )  {
         FGlConsole->PrintText( olxstr("   ") << MF->GetOptions().GetComparable(i) << " - "
           << MF->GetOptions().GetObject(i) );
       }
@@ -3009,11 +2999,11 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("console.blend", FGlConsole->IsBlend());
 
   I = &DF.Root().AddItem("Recent_files");
-  for( int i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++ )
+  for( size_t i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++ )
     I->AddField(olxstr("file") << i, FRecentFiles[i]);
 
   I = &DF.Root().AddItem("Stored_params");
-  for( int i=0; i < StoredParams.Count(); i++ )  {
+  for( size_t i=0; i < StoredParams.Count(); i++ )  {
     TDataItem& it = I->AddItem( StoredParams.GetComparable(i) );
     it.AddField("value", StoredParams.GetObject(i) );
   }
@@ -3115,7 +3105,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
       i++;
       T = I->GetFieldValue(olxstr("file") << i);
     }
-    for( int j=0; j < olx_min(uniqNames.Count(), FRecentFilesToShow); j++ )  {
+    for( size_t j=0; j < olx_min(uniqNames.Count(), FRecentFilesToShow); j++ )  {
       executeFunction(uniqNames[j], uniqNames[j]);
       MenuFile->AppendCheckItem(ID_FILE0+j, uniqNames[j].u_str());
       FRecentFiles.Add(uniqNames[j], MenuFile->FindItemByPosition(MenuFile->GetMenuItemCount()-1));
@@ -3190,7 +3180,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
 
   I = DF.Root().FindItem("Stored_params");
   if( I )  {
-    for( int i=0; i < I->ItemCount(); i++ )  {
+    for( size_t i=0; i < I->ItemCount(); i++ )  {
       TDataItem& pd = I->GetItem(i);
       ProcessMacro( olxstr("storeparam ") << pd.GetName() << ' '
                       << '\'' << pd.GetFieldValue("value") << '\'' << ' '
@@ -3206,7 +3196,7 @@ void TMainForm::LoadScene(const TDataItem& Root, TGlLightModel& FLM) {
   FBgColor = FLM.GetClearColor();
   TDataItem *I = Root.FindItem("Fonts");
   if( I == NULL )  return;
-  for( int i=0; i < I->ItemCount(); i++ )  {
+  for( size_t i=0; i < I->ItemCount(); i++ )  {
     TDataItem& fi = I->GetItem(i);
     FXApp->GetRender().GetScene().CreateFont(fi.GetName(), fi.GetFieldValue("id") );
   }
@@ -3236,9 +3226,9 @@ void TMainForm::LoadScene(const TDataItem& Root, TGlLightModel& FLM) {
 void TMainForm::SaveScene(TDataItem &Root, const TGlLightModel &FLM) const {
   FLM.ToDataItem(Root.AddItem("Scene_Properties"));
   TDataItem *I = &Root.AddItem("Fonts");
-  for( int i=0; i < FXApp->GetRender().GetScene().FontCount(); i++ )  {
+  for( size_t i=0; i < FXApp->GetRender().GetScene().FontCount(); i++ )  {
     TDataItem& fi = I->AddItem( FXApp->GetRender().GetScene().GetFont(i)->GetName());
-    fi.AddField("id", FXApp->GetRender().GetScene().GetFont(i)->IdString() );
+    fi.AddField("id", FXApp->GetRender().GetScene().GetFont(i)->GetIdString() );
   }
   I = &Root.AddItem("Materials");
   HelpFontColorTxt.ToDataItem(I->AddItem("Help_txt"));
@@ -3252,7 +3242,7 @@ void TMainForm::SaveScene(TDataItem &Root, const TGlLightModel &FLM) const {
 //..............................................................................
 void TMainForm::UpdateRecentFile(const olxstr& fn)  {
   if( fn.IsEmpty() )  {
-    for( int i=0; i < FRecentFiles.Count(); i++ )  // change item captions
+    for( size_t i=0; i < FRecentFiles.Count(); i++ )  // change item captions
       FRecentFiles.GetObject(i)->Check(false);
     return;
   }
@@ -3260,16 +3250,16 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
   olxstr FN( (fn.EndsWithi(".ins") || fn.EndsWithi(".res")) ? 
     TEFile::ChangeFileExt(fn, EmptyString) : fn );
   TEFile::OSPathI(FN);
-  int index = FRecentFiles.IndexOf(FN);
+  size_t index = FRecentFiles.IndexOf(FN);
   wxMenuItem* mi=NULL;
-  if( index == -1 )  {
+  if( index == InvalidIndex )  {
     if( (FRecentFiles.Count()+1) < FRecentFilesToShow )  {
       for( size_t i=0; i < MenuFile->GetMenuItemCount(); i++ )  {
         wxMenuItem* item = MenuFile->FindItemByPosition(i);
           if( item->GetId() >= ID_FILE0 && item->GetId() <= (ID_FILE0+FRecentFilesToShow))
             index = i;
       }
-      if( index != -1 )
+      if( index != InvalidIndex )
         mi = MenuFile->InsertCheckItem(index + 1, ID_FILE0+FRecentFiles.Count(), wxT("tmp"));
       else
         mi = MenuFile->AppendCheckItem(ID_FILE0+FRecentFiles.Count(), wxT("tmp"));
@@ -3283,9 +3273,9 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
   else
     FRecentFiles.Move(index, 0);
 
-  for( int i=0; i < FRecentFiles.Count(); i++ )
+  for( size_t i=0; i < FRecentFiles.Count(); i++ )
     Items.Add( FRecentFiles.GetObject(i) ); 
-  for( int i=0; i < FRecentFiles.Count(); i++ )  { // put items in the right position
+  for( size_t i=0; i < FRecentFiles.Count(); i++ )  { // put items in the right position
     FRecentFiles.GetObject(Items[i]->GetId()-ID_FILE0) = Items[i];
     Items[i]->SetText( FRecentFiles[Items[i]->GetId()-ID_FILE0].u_str() ) ;
     Items[i]->Check(false);
@@ -3303,7 +3293,7 @@ bool TMainForm::UpdateRecentFilesTable(bool TableDef)  {
   olxstr Tmp;
   if( FRecentFiles.Count()%3 )  tc++;
   Table.Resize(FRecentFiles.Count()/3+tc, 3);
-  for( int i=0; i < FRecentFiles.Count(); i++ )  {
+  for( size_t i=0; i < FRecentFiles.Count(); i++ )  {
     Tmp = "<a href=\"reap \'";
     Tmp << TEFile::OSPath(FRecentFiles[i]) << "\'\">";
     Tmp << TEFile::ExtractFileName(FRecentFiles[i]) << "</a>";
@@ -3348,8 +3338,8 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
     Atoms.QuickSorter.SortSF(Atoms, SortQPeak);
     Table.Resize( olx_min(10, Atoms.Count()), 3);
     double LQP = olx_max(0.01, Atoms[0]->Atom().CAtom().GetQPeak() );
-    int rowIndex = 0;
-    for( int i=0; i < Atoms.Count(); i++, rowIndex++ )  {
+    size_t rowIndex = 0;
+    for( size_t i=0; i < Atoms.Count(); i++, rowIndex++ )  {
       if( i > 8 )  i = Atoms.Count() -1;
       Table[rowIndex][0] = Atoms[i]->Atom().GetLabel();
       Table[rowIndex][1] = olxstr::FormatFloat(3, Atoms[i]->Atom().CAtom().GetQPeak());
@@ -3389,7 +3379,7 @@ void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
   Table.ColName(1) = "K";
   Table.ColName(2) = "L";
   Table.ColName(3) = "(Fc<sup>2</sup>-Fo<sup>2</sup>)/esd";
-  for( int i=0; i < Lst.DRefCount(); i++ )  {
+  for( size_t i=0; i < Lst.DRefCount(); i++ )  {
     TLstRef& Ref = Lst.DRef(i);
     Table[i][0] = Ref.H;
     Table[i][1] = Ref.K;
@@ -3481,11 +3471,11 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
 }
 //..............................................................................
 void TMainForm::OnMouseWheel(int x, int y, double delta)  {
-  int ind = Bindings.IndexOf("wheel");
-  if( ind == -1 )  return;
+  size_t ind = Bindings.IndexOf("wheel");
+  if( ind == InvalidIndex )  return;
   olxstr cmd( Bindings.GetObject(ind) );
   ind = TOlxVars::VarIndex("core_wheel_step");
-  const olxstr& step( ind == -1 ? EmptyString : TOlxVars::GetVarStr(ind));
+  const olxstr& step( ind == InvalidIndex ? EmptyString : TOlxVars::GetVarStr(ind));
   if( step.IsNumber() )
     delta *= step.ToDouble();
   cmd << delta;
@@ -3586,7 +3576,7 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
 }
 //..............................................................................
 void TMainForm::ClearPopups()  {
-  for( int i=0; i < FPopups.Count(); i++ )  {
+  for( size_t i=0; i < FPopups.Count(); i++ )  {
     delete FPopups.GetObject(i)->Dialog;
     delete FPopups.GetObject(i);
   }
@@ -3650,12 +3640,12 @@ void TMainForm::OnInternalIdle()  {
     TStrList rof;
     TEFile::ListDir(FXApp->GetBaseDir(), rof, "runonce*.*", sefFile);
     TStrList macros;
-    for( int i=0; i < rof.Count(); i++ )  {
+    for( size_t i=0; i < rof.Count(); i++ )  {
       rof[i] = FXApp->GetBaseDir()+rof[i];
       try  {
         macros.LoadFromFile( rof[i] );
         macros.CombineLines('\\');
-        for( int j=0; j < macros.Count(); j++ )  {
+        for( size_t j=0; j < macros.Count(); j++ )  {
           executeMacro( macros[j] );
 #ifdef _DEBUG
           FXApp->GetLog() << TEFile::ExtractFileName(rof[i]) << ": " << macros[j] << '\n';
@@ -3744,8 +3734,8 @@ bool TMainForm::executeFunction(const olxstr& function, olxstr& retVal)  {
 }
 //..............................................................................
 IEObject* TMainForm::executeFunction(const olxstr& function)  {
-  int ind = function.FirstIndexOf('(');
-  if( (ind == -1) || (ind == (function.Length()-1)) || !function.EndsWith(')') )  {
+  size_t ind = function.FirstIndexOf('(');
+  if( (ind == InvalidIndex) || (ind == (function.Length()-1)) || !function.EndsWith(')') )  {
     TBasicApp::GetLog().Error( olxstr("Incorrect function call: ") << function);
     return NULL;
   }
@@ -3808,7 +3798,7 @@ bool TMainForm::ProcessEvent( wxEvent& evt )  {
       TStrList sl;
       bool checked = AccMenus.GetValue(evt.GetId())->IsChecked();
       sl.Strtok( macro, ">>");
-      for( int i=0; i < sl.Count(); i++ )  {
+      for( size_t i=0; i < sl.Count(); i++ )  {
         if( !ProcessMacro(sl[i]) )
           break;
       }
@@ -3829,7 +3819,7 @@ int TMainForm::TranslateShortcut(const olxstr& sk)  {
   TStrList toks(sk, '+');
   if( !toks.Count() )  return -1;
   short Shift=0, Char = 0;
-  for( int i=0; i < toks.Count() - 1; i++ )  {
+  for( size_t i=0; i < toks.Count() - 1; i++ )  {
     if( ((Shift&sssCtrl)==0) && toks[i].Equalsi("Ctrl") )   {  Shift |= sssCtrl;  continue;  }
     if( ((Shift&sssShift)==0) && toks[i].Equalsi("Shift") )  {  Shift |= sssShift;  continue;  }
     if( ((Shift&sssAlt)==0) && toks[i].Equalsi("Alt") )    {  Shift |= sssAlt;  continue;  }
@@ -3893,7 +3883,7 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
     TGlBitmap* glB = (TGlBitmap*)G;
     if( !(glB->GetLeft() > 0) )  {
       int Top = InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() : 1;
-      for( int i=0; i < FXApp->GlBitmapCount(); i++ )  {
+      for( size_t i=0; i < FXApp->GlBitmapCount(); i++ )  {
         TGlBitmap* b = &FXApp->GlBitmap(i);
         if( b == glB )  break;
         Top += (b->GetHeight() + 2);
@@ -3941,20 +3931,19 @@ const olxstr& TMainForm::TranslatePhrase(const olxstr& phrase)  {
 //..............................................................................
 olxstr TMainForm::TranslateString(const olxstr& str) const {
   olxstr phrase(str);
-  int ind = phrase.FirstIndexOf('%');
-  while( ind >= 0 )  {
+  size_t ind = phrase.FirstIndexOf('%');
+  while( ind != InvalidIndex )  {
     if( ind+1 >= phrase.Length() )  return phrase;
-    int ind1 = phrase.FirstIndexOf('%', ind+1);
-    if( ind1 == -1 )  return phrase;
+    size_t ind1 = phrase.FirstIndexOf('%', ind+1);
+    if( ind1 == InvalidIndex )  return phrase;
     if( ind1 == ind+1 )  { // %%
       phrase.Delete(ind1, 1);
       ind = phrase.FirstIndexOf('%', ind1);
       continue;
     }
-
     olxstr tp( Dictionary.Translate( phrase.SubString(ind+1, ind1-ind-1) ) );
-    phrase.Delete( ind, ind1-ind+1);
-    phrase.Insert( tp, ind );
+    phrase.Delete(ind, ind1-ind+1);
+    phrase.Insert(tp, ind);
     ind1 = ind + tp.Length();
     if( ind1+1 >= phrase.Length() )  return phrase;
     ind = phrase.FirstIndexOf('%', ind1+1);
@@ -3980,17 +3969,19 @@ bool TMainForm::registerCallbackFunc(const olxstr& cbEvent, ABasicFunction* fn) 
 }
 //..............................................................................
 void TMainForm::unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& funcName)  {
-  int ind = CallbackFuncs.IndexOfComparable(cbEvent),
+  size_t ind = CallbackFuncs.IndexOfComparable(cbEvent),
       i = ind;
-  if( ind == -1 )  return;
+  if( ind == InvalidIndex )  return;
   // go forward
-  while( i < CallbackFuncs.Count() && (!CallbackFuncs.GetComparable(i).Compare(cbEvent)) )  {
+  while( i < CallbackFuncs.Count() && CallbackFuncs.GetComparable(i).Equals(cbEvent) )  {
     if( CallbackFuncs.GetObject(i)->GetName() == funcName )  {
       delete CallbackFuncs.GetObject(i);
       CallbackFuncs.Remove(i);
       return;
     }
+    i++;
   }
+  if( ind == 0 )  return;
   // go backwards
   i = ind-1;
   while( i >= 0 && (!CallbackFuncs.GetComparable(i).Compare(cbEvent)) )  {
@@ -3999,14 +3990,16 @@ void TMainForm::unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& func
       CallbackFuncs.Remove(i);
       return;
     }
+    if( i == 0 )  return;
+    i--;
   }
 }
 //..............................................................................
 const olxstr& TMainForm::getDataDir() const  {  return DataDir;  }
 //..............................................................................
 const olxstr& TMainForm::getVar(const olxstr &name, const olxstr &defval) const {
-  int i = TOlxVars::VarIndex(name);
-  if( i == -1 )  {
+  const size_t i = TOlxVars::VarIndex(name);
+  if( i == InvalidIndex )  {
     if( &defval == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, "undefined key");
     TOlxVars::SetVar(name, defval);
@@ -4020,12 +4013,11 @@ void TMainForm::setVar(const olxstr &name, const olxstr &val) const {
 }
 //..............................................................................
 void TMainForm::CallbackFunc(const olxstr& cbEvent, TStrObjList& params)  {
-  static TIntList indexes;
+  static TSizeList indexes;
   static TMacroError me;
   indexes.Clear();
-
   CallbackFuncs.GetIndexes(cbEvent, indexes);
-  for(int i=0; i < indexes.Count(); i++ )  {
+  for( size_t i=0; i < indexes.Count(); i++ )  {
     me.Reset();
     CallbackFuncs.GetObject( indexes[i] )->Run(params, me);
     AnalyseError( me );
@@ -4033,7 +4025,7 @@ void TMainForm::CallbackFunc(const olxstr& cbEvent, TStrObjList& params)  {
 }
 //..............................................................................
 void TMainForm::CallbackFunc(const olxstr& cbEvent, const olxstr& param)  {
-  static TIntList indexes;
+  static TSizeList indexes;
   static TMacroError me;
   static TStrObjList sl;
   indexes.Clear();
@@ -4041,7 +4033,7 @@ void TMainForm::CallbackFunc(const olxstr& cbEvent, const olxstr& param)  {
   sl.Add( param );
 
   CallbackFuncs.GetIndexes(cbEvent, indexes);
-  for(int i=0; i < indexes.Count(); i++ )  {
+  for( size_t i=0; i < indexes.Count(); i++ )  {
     me.Reset();
     CallbackFuncs.GetObject( indexes[i] )->Run(sl, me);
     AnalyseError( me );
@@ -4142,7 +4134,7 @@ bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool Ge
   else  {
     FXApp->FindXAtoms(Cmds.Text(' '), xatoms, unselect);
   }
-  for( int i=0; i < xatoms.Count(); i++ )
+  for( size_t i=0; i < xatoms.Count(); i++ )
     if( !xatoms[i]->IsVisible() )
       xatoms[i] = NULL;
   xatoms.Pack();
@@ -4150,8 +4142,8 @@ bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool Ge
 }
 //..............................................................................
 const olxstr& TMainForm::GetSGList() const {
-  int ind = TOlxVars::VarIndex(SGListVarName);
-  return (ind != -1) ? TOlxVars::GetVarStr(ind) : EmptyString;
+  size_t ind = TOlxVars::VarIndex(SGListVarName);
+  return (ind == InvalidIndex) ? EmptyString : TOlxVars::GetVarStr(ind);
 }
 //..............................................................................
 void TMainForm::SetSGList(const olxstr &sglist)  {
@@ -4161,16 +4153,16 @@ void TMainForm::SetSGList(const olxstr &sglist)  {
 TStrList TMainForm::GetPluginList() const {
   TStrList rv;
   if( FPluginItem != NULL )  {
-    for( int i=0; i < FPluginItem->ItemCount(); i++ )
+    for( size_t i=0; i < FPluginItem->ItemCount(); i++ )
       rv.Add(FPluginItem->GetItem(i).GetName());
   }
   return rv;
 }
 //..............................................................................
 bool TMainForm::IsControl(const olxstr& _cname) const {
-  int di = _cname.IndexOf("->");
-  olxstr pname = (di == -1 ? EmptyString : _cname.SubStringTo(di));
-  olxstr cname = (di == -1 ? _cname : _cname.SubStringFrom(di+2));
+  size_t di = _cname.IndexOf("->");
+  olxstr pname = (di == InvalidIndex ? EmptyString : _cname.SubStringTo(di));
+  olxstr cname = (di == InvalidIndex ? _cname : _cname.SubStringFrom(di+2));
   THtml* html = pname.IsEmpty() ? GetHtml() : FindHtml(pname);  
   return html == NULL ? false : (html->FindObject(cname) != NULL);
 }

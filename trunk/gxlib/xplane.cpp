@@ -46,7 +46,7 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   PlaneSort::Sorter sp( *FPlane );
   if( !FPlane->IsRegular() )  {
-    for( int i=0; i < sp.sortedPlane.Count(); i++ )  {
+    for( size_t i=0; i < sp.sortedPlane.Count(); i++ )  {
       const vec3d* crd = sp.sortedPlane.GetObject(i);
       double d = FPlane->DistanceTo(*crd);
       vec3d vec = *crd - FPlane->GetNormal()*d;
@@ -57,7 +57,7 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
   else  {
     vec3d marv;
     double maxr = 0;
-    for( int i=0; i < sp.sortedPlane.Count(); i++ )  {
+    for( size_t i=0; i < sp.sortedPlane.Count(); i++ )  {
       vec3d vec = *sp.sortedPlane.GetObject(i);
       double d = FPlane->DistanceTo(vec);
       vec -= FPlane->GetNormal()*d;

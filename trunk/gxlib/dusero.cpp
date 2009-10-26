@@ -59,7 +59,7 @@ void TDUserObj::Create(const olxstr& cName, const ACreationParams* cpar)  {
 bool TDUserObj::Orient(TGlPrimitive& P)  {
   Parent.GlTranslate( Basis.GetCenter() );
   if( Type == sgloSphere && Vertices != NULL )  {
-    for( int i=0; i < Vertices->Count(); i++ )  {
+    for( size_t i=0; i < Vertices->Count(); i++ )  {
       Parent.Translate( (*Vertices)[i] );
       P.Draw();
     }

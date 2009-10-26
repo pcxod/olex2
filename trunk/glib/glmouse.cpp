@@ -1,21 +1,13 @@
 //----------------------------------------------------------------------------//
-// namespace TGlObj: TGlMouse - basic implementation of mouse behaviour
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "glmouse.h"
-#include "elist.h"
 #include "glrender.h"
 #include "dframe.h"
 #include "glgroup.h"
 
 UseGlNamespace()
 //..............................................................................
-//..............................................................................
-
 TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)  {
   FSX = FSY = 0;
   FDblClick = FButtonDown = false;
@@ -35,7 +27,7 @@ TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)  {
 }
 //..............................................................................
 TGlMouse::~TGlMouse()  {
-  for( int i=0; i < Handlers.Count(); i++ )
+  for( size_t i=0; i < Handlers.Count(); i++ )
     delete Handlers[i];
   delete MData;
 }
@@ -165,7 +157,7 @@ bool TGlMouse::MouseMove(int x, int y, short Shift)  {
     }
   }
   // default handlers...
-  for( int i=0; i < Handlers.Count(); i++ )  {
+  for( size_t i=0; i < Handlers.Count(); i++ )  {
     ME = Handlers[i];
     if( (ME->Button == MData->Button) && (ME->Shift == MData->Shift) )  {
       if( FButtonDown && ME->ButtonDown )  {
@@ -180,7 +172,7 @@ bool TGlMouse::MouseMove(int x, int y, short Shift)  {
 void TGlMouse::SetHandler( const short Button, const short Shift, MMoveHandler MH)  {
   bool found = false;
   TGlMMoveEvent *ME;
-  for( int i=0; i < Handlers.Count(); i++ )  {
+  for( size_t i=0; i < Handlers.Count(); i++ )  {
     ME = Handlers[i];
     if( (ME->Button == Button) && (ME->Shift == Shift) )  {
       ME->Handler = MH;

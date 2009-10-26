@@ -5,7 +5,7 @@
 #include "envilist.h"
 
 void TAtomEnvi::ApplySymm(const smatd& sym)  {
-  for( int i=0; i < Envi.Count(); i++ )  {
+  for( size_t i=0; i < Envi.Count(); i++ )  {
     Envi[i].B() *= sym;
     Envi[i].C() = Envi[i].GetB() * Envi[i].GetA()->ccrd();
   }
@@ -14,7 +14,7 @@ void TAtomEnvi::ApplySymm(const smatd& sym)  {
 #ifndef _NO_PYTHON
 PyObject* TAtomEnvi::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* neighbours = PyTuple_New( Envi.Count() );
-  for( int i=0; i < Envi.Count(); i++ )  {
+  for( size_t i=0; i < Envi.Count(); i++ )  {
     const smatd& mat = Envi[i].GetB();
     const vec3d& crd = Envi[i].GetC();
     if( mat.r.IsI() && mat.t.IsNull() )  {

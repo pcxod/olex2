@@ -1,7 +1,5 @@
-//---------------------------------------------------------------------------
-
-#ifndef glgroupH
-#define glgroupH
+#ifndef __olx_gl_group_H
+#define __olx_gl_group_H
 #include "glbase.h"
 #include "gdrawobject.h"
 #include "tptrlist.h"
@@ -27,10 +25,10 @@ public:
   void Remove(AGDrawObject& G);
   void RemoveDeleted();
 
-  inline bool Contains(AGDrawObject& G) const {  return  (FObjects.IndexOf(G) == -1) ? false : true;  }
-  inline int Count()                    const {  return FObjects.Count(); }
-  inline AGDrawObject& GetObject(int i) const {  return *FObjects[i]; }
-  inline AGDrawObject& operator [] (int i) const {  return *FObjects[i]; }
+  inline bool Contains(AGDrawObject& G) const {  return  (FObjects.IndexOf(G) == InvalidIndex) ? false : true;  }
+  inline size_t Count() const {  return FObjects.Count(); }
+  inline AGDrawObject& GetObject(size_t i) const {  return *FObjects[i]; }
+  inline AGDrawObject& operator [] (size_t i) const {  return *FObjects[i]; }
 
   bool OnMouseDown(const IEObject *Sender, const class TMouseData *Data);
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
@@ -44,7 +42,7 @@ public:
 
   bool IsDefaultColor() const {  return DefaultColor;  }
 
-  inline const TGlMaterial* GlM()    const {  return FGlM; }
+  inline const TGlMaterial* GlM() const {  return FGlM; }
   void GlM(const TGlMaterial &G);
 };
 

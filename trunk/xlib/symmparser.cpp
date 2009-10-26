@@ -131,13 +131,13 @@ olxstr TSymmParser::MatrixToSymmEx(const mat3i& M)  {
     for( int i=0; i < 3; i ++ )  {
       if( i == j )  {
         if( M[j][i] != 0 )  {
-          T1 << CharSign(M[j][i]);
+          T1 << olx_sign_char(M[j][i]);
           T1 << Axis[j];
         }
       }
       else if( M[j][i] != 0 )  {
         T1.Insert(Axis[i], 0);
-        T1.Insert(CharSign(M[j][i]), 0);
+        T1.Insert(olx_sign_char(M[j][i]), 0);
       }
     }
     T << T1;

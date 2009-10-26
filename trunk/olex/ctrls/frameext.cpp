@@ -8,8 +8,8 @@ IMPLEMENT_CLASS(TMainFrame, wxFrame)
 TMainFrame* TMainFrame::MainFrameInstance = NULL;
 
 void TMainFrame::RestorePosition(wxWindow *Window)  {  // restores previously saved position
-  int ind = WindowPos.IndexOf(Window->GetName().c_str());
-  if ( ind == -1 )  return;
+  size_t ind = WindowPos.IndexOf(Window->GetName().c_str());
+  if ( ind == InvalidIndex )  return;
   TWindowInfo &wi = WindowPos[Window->GetName().c_str()];
   Window->Move(wi.x, wi.y);
 }
@@ -32,16 +32,16 @@ olxstr TMainFrame::PortableFilter(const olxstr& filter)  {
       rv << '|';
     rv << fitems[i] << '|';
     TStrList masks(fitems[i+1], ';');
-    for( int j=0; j < masks.Count(); j++ )  {
-      int di = masks[j].LastIndexOf('.');
-      if( di == -1 )  {
+    for( size_t j=0; j < masks.Count(); j++ )  {
+      size_t di = masks[j].LastIndexOf('.');
+      if( di == InvalidIndex )  {
         rv << masks[j];
         if( j+1 < masks.Count() )
           rv << ';';
         continue;
       }
       rv << masks[j].SubStringTo(di+1);
-      for( int k=di+1; k < masks[j].Length(); k++ )
+      for( size_t k=di+1; k < masks[j].Length(); k++ )
         rv << '[' << olxstr::o_tolower(masks[j].CharAt(k)) << olxstr::o_toupper(masks[j].CharAt(k)) << ']';
       if( j+1 < masks.Count() )
         rv << ';';

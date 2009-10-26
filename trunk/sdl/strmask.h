@@ -11,8 +11,8 @@ public:
     if( mask.IsEmpty() || (mask.Length() == 1 && mask.CharAt(0) == '*') )
       matchAll = true;
     else {
-      int si = mask.FirstIndexOf('*');
-      if( si == -1 )  {
+      size_t si = mask.FirstIndexOf('*');
+      if( si == InvalidIndex )  {
         matchAny = true;
       }
       else  {
@@ -37,7 +37,7 @@ public:
     if( matchBoth )  
       return (str.StartsFrom(start) && str.EndsWith(end));
     if( matchAny )
-      return str.IndexOf(mask) != -1;
+      return str.IndexOf(mask) != InvalidIndex;
     if( matchStart )
       return str.StartsFrom(start);
     if( matchEnd )
@@ -49,7 +49,7 @@ public:
     if( matchBoth )  
       return (str.StartFromi(start) && str.EndsWithi(end));
     if( matchAny )
-      return str.IndexOfi(mask) != -1;
+      return str.IndexOfi(mask) != InvalidIndex;
     if( matchStart )
       return str.StartsFromi(start);
     if( matchEnd )

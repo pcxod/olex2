@@ -1,5 +1,4 @@
 //---------------------------------------------------------------------------//
-// get a response
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
 #ifdef __BORLANDC__
@@ -25,7 +24,7 @@ TLog::TLog()  {
 }
 //..............................................................................
 TLog::~TLog()  {
-  for( int i=0; i < Streams.Count(); i++ )
+  for( size_t i=0; i < Streams.Count(); i++ )
     if( Streams[i].GetB() )
       delete Streams[i].GetA();
   delete FActions;

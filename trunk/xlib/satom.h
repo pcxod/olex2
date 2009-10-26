@@ -1,8 +1,6 @@
-#ifndef satomH
-#define satomH
-
+#ifndef __olx_xl_satom_H
+#define __olx_xl_satom_H
 #include "xbase.h"
-#include "elist.h"
 #include "atominfo.h"
 #include "catom.h"
 #include "symmat.h"
@@ -52,21 +50,21 @@ public:
 
   inline operator TCAtom* () const {  return FCAtom;  }
 
-  inline TCAtom& CAtom()     const {  return *FCAtom; }
+  inline TCAtom& CAtom() const {  return *FCAtom; }
   void CAtom(TCAtom& CA);
 
   void AtomInfo(TBasicAtomInfo& AI);
-  inline TBasicAtomInfo& GetAtomInfo()  const {  return FCAtom->GetAtomInfo(); }
+  inline TBasicAtomInfo& GetAtomInfo() const {  return FCAtom->GetAtomInfo(); }
 
-  inline void SetLabel(const olxstr &L)       { FCAtom->SetLabel(L); }
-  inline const olxstr& GetLabel() const       {  return FCAtom->GetLabel(); }
+  inline void SetLabel(const olxstr &L)  { FCAtom->SetLabel(L); }
+  inline const olxstr& GetLabel() const {  return FCAtom->GetLabel(); }
   // returns a label plus (if not identity) first matrix like label_resi.2_556
   olxstr GetGuiLabel() const;
   // returns a label plus (if not identity) first matrix like label_resi(-2/3+X,Y,2-Z)
   olxstr GetGuiLabelEx() const;
 
-  inline int MatrixCount()             const {  return Matrices.Count();  }
-  inline const smatd& GetMatrix(int i) const {  return *Matrices[i];  }
+  inline size_t MatrixCount() const {  return Matrices.Count();  }
+  inline const smatd& GetMatrix(size_t i) const {  return *Matrices[i];  }
   // this also makes sure that the identity releated matrix is coming first in the list
   inline void AddMatrix(smatd* M)            {  
     Matrices.Add(M);  
@@ -74,10 +72,10 @@ public:
       Matrices.Swap(0, Matrices.Count()-1);
   }
   inline void AddMatrices(TSAtom *A)         {  
-    const int cnt = Matrices.Count();
+    const size_t cnt = Matrices.Count();
     Matrices.AddList(A->Matrices); 
     if( cnt != 0 && Matrices.Count() > 1 )  {
-      for( int i=0; i < A->Matrices.Count(); i++ )  {
+      for( size_t i=0; i < A->Matrices.Count(); i++ )  {
         if( A->Matrices[i]->GetTag() == 0 )  {
           Matrices.Swap(0, cnt+i);
           break;
@@ -85,7 +83,7 @@ public:
       }
     }
   }
-  inline void ClearMatrices()                {  Matrices.Clear();  }
+  inline void ClearMatrices()  {  Matrices.Clear();  }
   void ChangeType(const olxstr& Type);
 
   inline const TEllipsoid* GetEllipsoid() const {  return FEllipsoid;  }
@@ -113,15 +111,15 @@ public:
   void RemoveNode(TSAtom& node);
 
   struct Ref  {
-    int catom_id;
+    size_t catom_id;
     smatd::Ref matrix_ref;
     TTypeList<smatd::Ref>* matrices; 
-    Ref(int a_id, const smatd_plist& symm) : catom_id(a_id), 
+    Ref(size_t a_id, const smatd_plist& symm) : catom_id(a_id), 
       matrix_ref(symm[0]->GetRef()), matrices(NULL) 
     {
       if( symm.Count() > 1 )  {
         matrices = new TTypeList<smatd::Ref>(symm.Count()-1);
-        for( int i=1; i < symm.Count(); i++ )
+        for( size_t i=1; i < symm.Count(); i++ )
           matrices->Set(i-1, new smatd::Ref(symm[i]->GetRef()) );
       }
     } 
@@ -143,7 +141,7 @@ public:
 
   bool operator == (const Ref& id) const {
     if( FCAtom->GetId() == id.catom_id )  {
-      for( int i=0; i < Matrices.Count(); i++ )
+      for( size_t i=0; i < Matrices.Count(); i++ )
         if( (*Matrices[i]) == id.matrix_ref )
           return true;
     }

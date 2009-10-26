@@ -45,8 +45,8 @@ public:
     }
     return os;
   }
-  inline int Length() const  {  return GetLength();  }
-  inline olxch& operator [] (int i)  {  return Get(i);  }
+  inline size_t Length() const  {  return GetLength();  }
+  inline olxch& operator [] (size_t i)  {  return Get(i);  }
 
 };
 

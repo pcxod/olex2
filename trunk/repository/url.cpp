@@ -13,11 +13,11 @@ TUrl::TUrl( const olxstr& _url ) : Proxy(NULL)  {
   Port = 80;
   olxstr url(_url);
   // extract proxy user and password, if any
-  int useri = url.IndexOf("@");
-  if( useri != -1 )  {
+  size_t useri = url.IndexOf("@");
+  if( useri != InvalidIndex )  {
     olxstr up = url.SubStringTo(useri);
-    int pwdi = up.IndexOf(':');
-    if( pwdi != -1 )  {
+    size_t pwdi = up.IndexOf(':');
+    if( pwdi != InvalidIndex )  {
       Password = up.SubStringFrom(pwdi+1);
       User = up.SubStringTo(pwdi);
     }
@@ -26,50 +26,52 @@ TUrl::TUrl( const olxstr& _url ) : Proxy(NULL)  {
     url = _url.SubStringFrom(useri+1);
   }
   // prtocol index
-  int pri = url.IndexOf("://");
+  size_t pri = url.IndexOf("://");
   // check if the proxy is used and protocol is defined for the target, not the proxy
-  int doti = url.FirstIndexOf('.');
-  if( doti != -1 && doti < pri )  pri = -1;
+  size_t doti = url.FirstIndexOf('.');
+  if( doti != InvalidIndex && doti < pri )  pri = InvalidIndex;
   // port index
-  int poi;
-  if( pri < 0 )  poi = url.FirstIndexOf(':');
-  else           poi = url.FirstIndexOf(':', pri+3);
+  size_t poi;
+  if( pri == InvalidIndex )
+    poi = url.FirstIndexOf(':');
+  else
+    poi = url.FirstIndexOf(':', pri+3);
   //path index
-  int pai;
-  if( pri < 0 )
+  size_t pai;
+  if( pri == InvalidIndex )
     pai = url.FirstIndexOf('/');
   else
-    if( poi == -1 )
+    if( poi == InvalidIndex )
       pai = url.FirstIndexOf('/', pri+3);
     else
       pai = url.FirstIndexOf('/', poi+1);
 
-  if( pri >= 0 )  {
+  if( pri != InvalidIndex )  {
     SetProtocol( url.SubStringTo(pri) );
-    if( poi >= 0 )
+    if( poi != InvalidIndex )
       SetHost( url.SubString(pri+3, poi-pri-3) );
     else
-      if( pai >=0 )
+      if( pai != InvalidIndex )
         SetHost( url.SubString(pri+3, pai-pri-3) );
       else
         SetHost( url.SubStringFrom(pri+3) );
   }
   else  {
-    if( poi >= 0 )
+    if( poi != InvalidIndex )
       SetHost( url.SubStringTo(poi) );
     else
-      if( pai >=0 )
+      if( pai != InvalidIndex )
         SetHost( url.SubStringTo(pai) );
       else
         SetHost( url );
   }
-  if( poi >= 0 )  {
-    if( pai >= 0 )
+  if( poi != InvalidIndex )  {
+    if( pai != InvalidIndex )
       SetPort( url.SubString(poi+1, pai-poi-1).ToInt() );
     else
       SetPort( url.SubStringFrom(poi+1).ToInt() );
   }
-  if( pai >= 0 )
+  if( pai != InvalidIndex )
     SetPath( url.SubStringFrom(pai+1) );
 }
 //..............................................................................
@@ -138,8 +140,8 @@ olxstr TUrl::GenerateHTTPAuthString(const olxstr& user, const olxstr& pass) {
   olxstr toencode(user);
   toencode << ':' << pass;
 
-  int len = toencode.Length();
-  int from = 0;
+  size_t len = toencode.Length();
+  size_t from = 0;
   while (len >= 3) { // encode full blocks first
     buf << (char)base64[(toencode[from] >> 2) & 0x3f] << 
       (char)base64[((toencode[from] << 4) & 0x30) | ((toencode[from+1] >> 4) & 0xf)];
@@ -152,7 +154,8 @@ olxstr TUrl::GenerateHTTPAuthString(const olxstr& user, const olxstr& pass) {
     buf << (char)base64[(toencode[from] >> 2) & 0x3f];
     if (len == 1) {
       buf << (char)base64[(toencode[from] << 4) & 0x30] << '=';
-    } else {
+    } 
+    else {
       buf << (char)base64[(toencode[from] << 4) & 0x30] + ((toencode[from+1] >> 4) & 0xf) <<
         (char)base64[(toencode[from+1] << 2) & 0x3c];
     }

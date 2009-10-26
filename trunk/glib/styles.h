@@ -57,7 +57,7 @@ class TGraphicsStyle: public ACollectionItem  {
   TGraphicsStyle* ParentStyle;
   TGraphicsStyles& Parent;
   TSStrObjList<olxstr, TGSParam, true> Params;  // a list of parameters
-  int Level;
+  uint16_t Level;
   bool Saveable; // if the style is saveable to dataitems
   bool Persistent; // specifies if RemovesStylesByTag can delete it
 protected:
@@ -67,14 +67,14 @@ protected:
     Styles.Add(style->GetName(), style);
   }
   TGraphicsStyle* FindLocalStyle(const olxstr& name) const {
-    int i = Styles.IndexOf(name);
-    return i == -1 ? NULL : Styles.GetObject(i);
+    size_t i = Styles.IndexOf(name);
+    return i == InvalidIndex ? NULL : Styles.GetObject(i);
   }
   template <class T> 
   TGlMaterial* FindInheritedMaterial(const T& PName, TGlMaterial* def=NULL) const {
     TGraphicsStyle* gs = ParentStyle;
     while( gs != NULL )  {
-      for( int i=0; i < gs->PStyles.Count(); i++ )  {
+      for( size_t i=0; i < gs->PStyles.Count(); i++ )  {
         if( gs->PStyles[i]->GetName() == PName )
           return &gs->PStyles[i]->GetProperties();
       }
@@ -84,7 +84,7 @@ protected:
   }
   template <class T> 
   TGlMaterial* FindLocalMaterial(const T&PName, TGlMaterial* def=NULL) const {
-    for( int i=0; i < PrimitiveStyleCount(); i++ )  {
+    for( size_t i=0; i < PrimitiveStyleCount(); i++ )  {
       if( PStyles[i]->GetName() == PName )
         return &PStyles[i]->GetProperties();
     }
@@ -116,14 +116,14 @@ public:
     return CreatePrimitiveMaterial( PName, glm == NULL ? def : *glm);
   }
   // finds primitive material index (in local primitive styles)
-  template <class T> int IndexOfMaterial(const T& PName) const {
-    for( int i=0; i < PStyles.Count(); i++ ) 
+  template <class T> size_t IndexOfMaterial(const T& PName) const {
+    for( size_t i=0; i < PStyles.Count(); i++ ) 
       if( PStyles[i]->GetName() == PName )
         return i;
-    return -1;
+    return InvalidIndex;
   }
   template <class T> TGlMaterial& SetMaterial(const T& PName, const TGlMaterial& mat) {
-    for( int i=0; i < PStyles.Count(); i++ ) 
+    for( size_t i=0; i < PStyles.Count(); i++ ) 
       if( PStyles[i]->GetName() == PName )
         return (TGlMaterial&)PStyles[i]->SetProperties(mat);
     return CreatePrimitiveMaterial(PName, mat);
@@ -139,18 +139,18 @@ public:
     return FindInheritedMaterial(PName, def);
   }
 
-  inline int PrimitiveStyleCount()              const {  return PStyles.Count(); }
-  inline TPrimitiveStyle& GetPrimitiveStyle(int i) const {  return *PStyles[i];  }
+  inline size_t PrimitiveStyleCount() const {  return PStyles.Count(); }
+  inline TPrimitiveStyle& GetPrimitiveStyle(size_t i) const {  return *PStyles[i];  }
   
-  inline int StyleCount() const {  return Styles.Count();  }
-  inline TGraphicsStyle& GetStyle(int i) const {  return *Styles.GetObject(i);  }
+  inline size_t StyleCount() const {  return Styles.Count();  }
+  inline TGraphicsStyle& GetStyle(size_t i) const {  return *Styles.GetObject(i);  }
 
   /* sets a parameter, if the parameters is creates, saveable is used, otherwise it
   stays as defined when the parameter was firstly created */
   template <class T, class VT>
   void SetParam(const T& name, const VT& val, bool saveable=false) {
-    int ind = Params.IndexOf(name);
-    if( ind >= 0 )  
+    size_t ind = Params.IndexOf(name);
+    if( ind != InvalidIndex )  
       Params.GetObject(ind).val = val;
     else            
       Params.Add(name, TGSParam(val, saveable));
@@ -159,13 +159,13 @@ public:
   using the default value and the saveable flag.  */
   template <class T, class T1>
   olxstr& GetParam(const T& name, const T1& defval, bool saveable=false) {
-    int index = Params.IndexOf(name);
-    if( index == -1 )  {
+    size_t index = Params.IndexOf(name);
+    if( index == InvalidIndex )  {
       olxstr dv(defval);
       TGraphicsStyle* gs = ParentStyle;
       while( gs != NULL )  {
         index = gs->Params.IndexOf(name);
-        if( index != -1 )  {
+        if( index != InvalidIndex )  {
           dv = gs->Params.GetObject(index).val;
           break;
         }
@@ -184,15 +184,15 @@ public:
   TGraphicsStyle* FindStyle(TGraphicsStyle* Style);
   // deletes by the pointer
   void DeleteStyle(TGraphicsStyle& Style)  {
-    const int index = Styles.IndexOfObject(&Style);
-    if( index >= 0 )  {
+    const size_t index = Styles.IndexOfObject(&Style);
+    if( index != InvalidIndex )  {
       delete Styles.GetObject(index);
       Styles.Delete(index);
     }
   }
   TGraphicsStyle& NewStyle(const olxstr& Name, bool Force=false);
   // if force = true, then whole path "a.b.c" will be created
-  inline int GetLevel() const {  return Level; }
+  inline uint16_t GetLevel() const {  return Level; }
 
   inline TGraphicsStyle* GetParentStyle() const {  return ParentStyle; }
 
@@ -202,9 +202,9 @@ public:
   void ToDataItem(TDataItem& Item, bool saveAll=false) const;
   bool FromDataItem(const TDataItem& Item);
   // sets ICollectionItem::Tag of styles to Tag
-  void SetStylesTag(int Tag); 
+  void SetStylesTag(index_t Tag); 
   // removes Styles with Style::Tag == Tag
-  void RemoveStylesByTag( int Tag); 
+  void RemoveStylesByTag(index_t Tag); 
   // removes non-persistens styles
   void RemoveNonPersistent();
   // removes non-saveable styles
@@ -260,7 +260,7 @@ public:
   // sets ICollectionItem::Tag of styles to Tag
   void SetStylesTag(int Tag)  {  Root->SetStylesTag(Tag);  }
   // removes Styles with Style::Tag == Tag
-  void RemoveStylesByTag( int Tag)  {  Root->RemoveStylesByTag(Tag);  }
+  void RemoveStylesByTag(int Tag)  {  Root->RemoveStylesByTag(Tag);  }
   // removes non-persisten styles
   void RemoveNonPersistent()  {  Root->RemoveNonPersistent();  }
   // removes non-saveable styles

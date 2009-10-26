@@ -54,7 +54,7 @@ void TXGlLabels::Clear()  {  Marks.Clear();  }
 bool TXGlLabels::Orient(TGlPrimitive& P)  {
   TGlFont *Fnt = Font();
   TGXApp& app = TGXApp::GetInstance();
-  const int ac = app.AtomCount();
+  const size_t ac = app.AtomCount();
   if( Fnt == NULL || ac == 0 )  return true;
 
   vec3d V;
@@ -63,10 +63,10 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
   TGlMaterial& OGlM = P.GetProperties();
   if( Parent.IsATI() )  {
     glRasterPos3d(0, 0, 0);
-    glCallList(Fnt->FontBase() + ' ');
+    glCallList(Fnt->GetFontBase() + ' ');
   }
   const RefinementModel& rm = app.XFile().GetRM();
-  for( int i=0; i < ac; i++ )  {
+  for( size_t i=0; i < ac; i++ )  {
     const TXAtom& XA = app.GetAtom(i);
     if( XA.IsDeleted() || (!XA.IsVisible()))  continue;
     if( (Mode & lmHydr) == 0 && (XA.Atom().GetAtomInfo() == iHydrogenIndex || XA.Atom().GetAtomInfo() == iDeuteriumIndex) )  
@@ -76,8 +76,8 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     olxstr Tmp(EmptyString, 48);
     if( Mode & lmLabels )  {
       Tmp << XA.Atom().GetLabel();
-      if( XA.Atom().CAtom().GetResiId() != -1 )  {
-        int resi = ca.GetParent()->GetResidue(ca.GetResiId()).GetNumber();
+      if( XA.Atom().CAtom().GetResiId() != 0 )  {
+        size_t resi = ca.GetParent()->GetResidue(ca.GetResiId()).GetNumber();
         Tmp << '_' << resi;
       }
     }
@@ -101,7 +101,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
           if( vr->relation_type == relation_AsVar )
             Tmp << vr->Parent.GetId()+1;
           else
-            Tmp << -(vr->Parent.GetId()+1);
+            Tmp << -(int)(vr->Parent.GetId()+1);
         }
       }
     }
@@ -125,7 +125,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     }
     if( Mode & lmFixed )  {
       olxstr fXyz;
-      for( int j=0; j < 3; j++ )  {
+      for( size_t j=0; j < 3; j++ )  {
         if( ca.GetVarRef(catom_var_name_X+j) != NULL && ca.GetVarRef(catom_var_name_X+j)->relation_type == relation_None )
           fXyz << (olxch)('X'+j);
       }
@@ -139,8 +139,8 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
       }
       if( ca.GetEllipsoid() != NULL )  {
         olxstr eadp((const char*)"Ua:", 40);
-        int ec=0;
-        for( int j=0; j < 6; j++ )  {
+        size_t ec=0;
+        for( size_t j=0; j < 6; j++ )  {
           if( ca.GetVarRef(catom_var_name_U11+j) != NULL && ca.GetVarRef(catom_var_name_U11+j)->relation_type == relation_None )  {
             ec++;
             eadp << (olxch)('A'+j);
@@ -180,7 +180,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
         currentGlM = false;
         if( Parent.IsATI() )  {
           glRasterPos3d(0, 0, 0);
-          glCallList(Fnt->FontBase() + ' ');
+          glCallList(Fnt->GetFontBase() + ' ');
         } 
       }
       else  {
@@ -188,7 +188,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
         currentGlM = true;
         if( Parent.IsATI() )  {
           glRasterPos3d(0, 0, 0);
-          glCallList(Fnt->FontBase() + ' ');
+          glCallList(Fnt->GetFontBase() + ' ');
         } 
       }
       matInited = true;
@@ -200,7 +200,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
           currentGlM = false;
           if( Parent.IsATI() )  {
             glRasterPos3d(0, 0, 0);
-            glCallList(Fnt->FontBase() + ' ');
+            glCallList(Fnt->GetFontBase() + ' ');
           } 
         }
       }
@@ -210,7 +210,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
           currentGlM = true;
           if( Parent.IsATI() )  {
             glRasterPos3d(0, 0, 0);
-            glCallList(Fnt->FontBase() + ' ');
+            glCallList(Fnt->GetFontBase() + ' ');
           } 
         }
       }
@@ -227,7 +227,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
 //..............................................................................
 void TXGlLabels::Init()  {
   TGXApp& app = TGXApp::GetInstance();
-  Marks.SetSize( app.AtomCount() );
+  Marks.SetSize( (uint32_t)app.AtomCount() );
 }
 //..............................................................................
 void TXGlLabels::Selected(bool On) {  
@@ -243,7 +243,7 @@ void TXGlLabels::MarkLabel(const TXAtom& A, bool v)  {
     Marks.Set(A.GetXAppId(), v);
 }
 //..............................................................................
-void TXGlLabels::MarkLabel(int i, bool v)  {
+void TXGlLabels::MarkLabel(size_t i, bool v)  {
   if( i < Marks.Count() )
     Marks.Set(i, v);
 }
@@ -254,7 +254,7 @@ bool TXGlLabels::IsLabelMarked(const TXAtom& atom) const {
   return false;  // should not happen...
 }
 //..............................................................................
-bool TXGlLabels::IsLabelMarked(int i) const {
+bool TXGlLabels::IsLabelMarked(size_t i) const {
   if( i < Marks.Count() )
     return Marks[i];
   return false;  // should not happen...

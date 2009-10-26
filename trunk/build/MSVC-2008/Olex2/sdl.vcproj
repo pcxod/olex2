@@ -1113,10 +1113,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\elist.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\emath.cpp"
 				>
 			</File>
@@ -1319,10 +1315,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\elist.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\ellist.h"
 				>
 			</File>
@@ -1336,10 +1328,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\ememstream.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\eobjects.h"
 				>
 			</File>
 			<File
@@ -1436,10 +1424,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\hashing.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\indexlst.h"
 				>
 			</File>
 			<File

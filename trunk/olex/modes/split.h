@@ -9,7 +9,7 @@ protected:
     if( sel.Count() > 1 )  {
       vec3d c, cr;
       TXAtomPList atoms;
-      for( int i=0; i < sel.Count(); i++ )  {
+      for( size_t i=0; i < sel.Count(); i++ )  {
         if( EsdlInstanceOf(sel[i], TXAtom) )  {
           cr += ((TXAtom&)sel[i]).Basis.GetCenter();
           cr += ((TXAtom&)sel[i]).Atom().crd();
@@ -18,7 +18,7 @@ protected:
       }
       if( atoms.Count() > 1 )  {
         cr /= atoms.Count();
-        for( int i=0; i < atoms.Count(); i++ )  {
+        for( size_t i=0; i < atoms.Count(); i++ )  {
           c = atoms[i]->Atom().crd();
           c += atoms[i]->Basis.GetCenter();
           c -= cr;
@@ -38,7 +38,7 @@ public:
     if( !app.CheckFileType<TIns>() )  return false;
     ReCon = Options.FindValue("r", EmptyString).ToLowerCase();
     TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
-    for( int i=0; i < app.AtomCount(); i++ )  {
+    for( size_t i=0; i < app.AtomCount(); i++ )  {
       //if( Atoms[i]->Atom().GetAtomInfo() != iQPeakIndex )
       app.GetAtom(i).SetMoveable(true);
     }
@@ -51,7 +51,7 @@ public:
     TAsymmUnit& au = app.XFile().GetAsymmUnit();
     RefinementModel& rm = app.XFile().GetRM();
     UpdateSelectionCrds();
-    for( int i=0; i < app.AtomCount(); i++ )  {
+    for( size_t i=0; i < app.AtomCount(); i++ )  {
       TXAtom& xa = app.GetAtom(i);
       xa.SetMoveable(false);
       xa.SetRoteable(false);
@@ -67,7 +67,7 @@ public:
 
     TCAtomPList to_isot;
     XVar& xv = rm.Vars.NewVar(0.5);
-    for( int i=0; i < SplitAtoms.Count(); i++ )  {
+    for( size_t i=0; i < SplitAtoms.Count(); i++ )  {
       to_isot.Add(&SplitAtoms[i].A()->Atom().CAtom());
       rm.Vars.AddVarRef(xv, SplitAtoms[i].A()->Atom().CAtom(), catom_var_name_Sof, relation_AsVar, 1.0);
       rm.Vars.AddVarRef(xv, SplitAtoms[i].B()->Atom().CAtom(), catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
@@ -96,7 +96,7 @@ public:
     if( EsdlInstanceOf( obj, TXAtom) )  {
       TXAtom *XA = &(TXAtom&)obj;
       bool split = true;
-      for( int i=0; i < SplitAtoms.Count(); i++ )
+      for( size_t i=0; i < SplitAtoms.Count(); i++ )
         if( SplitAtoms[i].A() == XA || SplitAtoms[i].B() == XA )  {
           split = false;
           break;

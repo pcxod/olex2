@@ -58,9 +58,9 @@ private:
   bool     LoadQPeaks;// true if Q-peaks should be loaded
   olxstr Sfac, Unit;
 protected:
-  void _SaveSfac(TStrList& list, int pos);
+  void _SaveSfac(TStrList& list, size_t pos);
   TCAtom* _ParseAtom(TStrList& toks, ParseContext& cx, TCAtom* atom = NULL);
-  olxstr _AtomToString(RefinementModel& rm, TCAtom& CA, int SfacIndex);
+  olxstr _AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex);
   olxstr _CellToString();
   olxstr _ZerrToString();
   void _SaveFVar(RefinementModel& rm, TStrList& SL);
@@ -74,7 +74,7 @@ protected:
   void _ProcessAfix0(ParseContext& cx);
   // if atoms is saved, its Tag is added to the index (if not NULL) 
   void _SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix, 
-    TStrPObjList<olxstr,TBasicAtomInfo*>* sfac, TStrList& sl, TIntList* index=NULL, bool checkSame=true);
+    TStrPObjList<olxstr,TBasicAtomInfo*>* sfac, TStrList& sl, TIndexList* index=NULL, bool checkSame=true);
   void _ProcessSame(ParseContext& cx);
   // initialises the unparsed instruction list
   void _FinishParsing(ParseContext& cx);
@@ -110,12 +110,12 @@ public:
    Instructions are initialised with all unrecognised commands
    @retutn error message or an empty string
   */
-  void UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, const TIntList& index, TStrList& SL, TStrList& Instructions);
+  void UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, const TIndexList& index, TStrList& SL, TStrList& Instructions);
   /* saves some atoms to a plain ins format with no headers etc; to be used with
     UpdateAtomsFromStrings. index is initialised with the order in which atoms saved
     this must be passed to UpdateAtomsFromString
   */
-  bool SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms, TIntList& index, TStrList& SL, 
+  bool SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms, TIndexList& index, TStrList& SL, 
     RefinementModel::ReleasedItems* processed);
   void ValidateRestraintsAtomNames(RefinementModel& rm);
   void SaveRestraints(TStrList& SL, const TCAtomPList* atoms, 
@@ -128,7 +128,7 @@ public:
       double* Vals[3];
       bool AcceptsAll; // all atoms
       short AcceptsParams, RequiredParams;
-      for( int i =0; i < SL.Count(); i++ )  {
+      for( size_t i =0; i < SL.Count(); i++ )  {
         Toks.Clear();
         Toks.Strtok( SL[i], ' ');
         if( Toks[0].Equalsi("EQIV") && Toks.Count() >= 3 )  {
@@ -148,8 +148,8 @@ public:
         AcceptsAll = false;
         Esd1Mult = DefVal = DefEsd = DefEsd1 = 0;
         Vals[0] = &DefVal;  Vals[1] = &DefEsd;  Vals[2] = &DefEsd1;
-        int resi_ind = Toks[0].IndexOf('_');
-        if( resi_ind != -1 )  {
+        size_t resi_ind = Toks[0].IndexOf('_');
+        if( resi_ind != InvalidIndex )  {
           resi = Toks[0].SubStringFrom(resi_ind+1);
           Toks[0] = Toks[0].SubStringTo(resi_ind);
         }
@@ -224,7 +224,7 @@ public:
           srl = NULL;
         if( srl != NULL )  {
           TSimpleRestraint& sr = srl->AddNew();
-          int index = 1;
+          size_t index = 1;
           if( Toks.Count() > 1 && Toks[1].IsNumber() )  {
             if( Toks.Count() > 2 && Toks[2].IsNumber() )  {
               if( Toks.Count() > 3 && Toks[3].IsNumber() )  {  // three numerical params
@@ -262,7 +262,7 @@ public:
           else  {
             TAtomReference aref(Toks.Text(' ', index));
             TCAtomGroup agroup;
-            int atomAGroup;
+            size_t atomAGroup;
             try  {  aref.Expand(cx.rm, agroup, resi, atomAGroup);  }
             catch( const TExceptionBase& ex )  {
               TBasicApp::GetLog().Exception( ex.GetException()->GetError() );
@@ -274,8 +274,8 @@ public:
             }
             if( Toks[0].Equalsi("FLAT") )  {  // a special case again...
               TSimpleRestraint* sr1 = &sr;
-              for( int j=0; j < agroup.Count(); j += atomAGroup )  {
-                for( int k=0; k < atomAGroup; k++ )
+              for( size_t j=0; j < agroup.Count(); j += atomAGroup )  {
+                for( size_t k=0; k < atomAGroup; k++ )
                   sr1->AddAtom( *agroup[j+k].GetAtom(), agroup[j+k].GetMatrix() );
                 if( j != 0 )
                   srl->ValidateRestraint(*sr1);
@@ -304,12 +304,12 @@ public:
       else if( Toks[0].Equalsi("WGHT") )  {
         if( rm.used_weight.Count() != 0 )  {
           rm.proposed_weight.SetCount(Toks.Count()-1);
-          for( int j=1; j < Toks.Count(); j++ )
+          for( size_t j=1; j < Toks.Count(); j++ )
             rm.proposed_weight[j-1] = Toks[j].ToDouble();
         }
         else  {
           rm.used_weight.SetCount(Toks.Count()-1);
-          for( int j=1; j < Toks.Count(); j++ )
+          for( size_t j=1; j < Toks.Count(); j++ )
             rm.used_weight[j-1] = Toks[j].ToDouble();
           rm.proposed_weight = rm.used_weight;
         }
@@ -335,12 +335,12 @@ public:
       else if( Toks[0].Equalsi("L.S.") || Toks[0].Equalsi("CGLS") )  {
         rm.SetRefinementMethod(Toks[0]);
         rm.LS.SetCount( Toks.Count() - 1 );
-        for( int i=1; i < Toks.Count(); i++ )
+        for( size_t i=1; i < Toks.Count(); i++ )
           rm.LS[i-1] = Toks[i].ToInt();
       }
       else if( Toks[0].Equalsi("PLAN") )  {
         rm.PLAN.SetCount( Toks.Count() - 1 );
-        for( int i=1; i < Toks.Count(); i++ )
+        for( size_t i=1; i < Toks.Count(); i++ )
           rm.PLAN[i-1] = Toks[i].ToDouble();
       }
       else if( Toks[0].Equalsi("LATT") && (Toks.Count() > 1))
@@ -384,8 +384,8 @@ public:
     return AddIns(lst, rm, CheckUniq);
   }
 protected:
-  // index will be automatically imcremented if more then one line is parsed
-  bool ParseIns(const TStrList& ins, const TStrList& toks, ParseContext& cx, int& index);
+  // index will be automatically incremented if more then one line is parsed
+  bool ParseIns(const TStrList& ins, const TStrList& toks, ParseContext& cx, size_t& index);
 public:
   // spits out all instructions, including CELL, FVAR, etc
   void SaveHeader(TStrList& out, bool ValidateRestraintNames);
@@ -393,10 +393,10 @@ public:
   void ParseHeader(const TStrList& in);
 
   bool InsExists(const olxstr &Name);
-  inline int InsCount()  const              {  return Ins.Count();  }
-  inline const olxstr& InsName(int i) const {  return Ins[i];  }
-  inline const TInsList& InsParams(int i)   {  return *Ins.GetObject(i); }
-  void DelIns(int i);
+  inline size_t InsCount() const {  return Ins.Count();  }
+  inline const olxstr& InsName(size_t i) const {  return Ins[i];  }
+  inline const TInsList& InsParams(size_t i)  {  return *Ins.GetObject(i); }
+  void DelIns(size_t i);
   void DeleteAtom(TCAtom *CA);
 
   virtual IEObject* Replicate()  const {  return new TIns;  }

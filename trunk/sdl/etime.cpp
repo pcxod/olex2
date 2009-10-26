@@ -70,7 +70,7 @@ olxstr TETime::FormatDateTime(const olxstr& format, time_t v )  {
   struct tm * tm = localtime(&v);
   olxstr rv;
 
-  for( int i=0; i < format.Length(); i++ )  {
+  for( size_t i=0; i < format.Length(); i++ )  {
     switch( format[i] )  {
       case 's':
         if( (i+1) < format.Length() && format[i+1] == 's' )  {

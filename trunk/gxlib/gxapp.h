@@ -152,7 +152,7 @@ protected:
   /* intialises SAtom::Tag to XAtom::Id and checks if any atom with AtomInfo == atom_type
   has visible neighbours, if not - it will be hidden, otherwise its visibility will become 'show';
   for bonds makes them visible only if both atoms are visible */
-  void SyncAtomAndBondVisiblity(int atom_type, bool show_a, bool show_b);
+  void SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b);
 public:
   TGXApp(const olxstr & FileName);
   // FileNAme - argv[0]
@@ -201,16 +201,16 @@ public:
   inline TXGrid& XGrid()         {  return *FXGrid;  }
 
   // this function to be used to get all networks, including th overlayed files
-  int GetNetworks(TNetPList& nets);
+  size_t GetNetworks(TNetPList& nets);
   // overlayed files
-  inline int OverlayedXFileCount()  const  {  return OverlayedXFiles.Count();  }
-  TXFile& GetOverlayedXFile(int i)  {  return OverlayedXFiles[i];  }
+  inline size_t OverlayedXFileCount()  const  {  return OverlayedXFiles.Count();  }
+  TXFile& GetOverlayedXFile(size_t i)  {  return OverlayedXFiles[i];  }
   TXFile& NewOverlayedXFile();
   // aligns overlayed structures on a 2D grid
   void AlignOverlayedXFiles();
   // calculates maximum radius and center of given lattice
   void CalcLatticeRandCenter(const TLattice& latt, double& r, vec3d& cnt);
-  void DeleteOverlayedXFile(int index);
+  void DeleteOverlayedXFile(size_t index);
 
   void Select(const vec3d& From, const vec3d& To);
   void SelectAll(bool Select)  {
@@ -235,8 +235,8 @@ public:
     
   TGlBitmap* FindGlBitmap(const olxstr& name);
   void DeleteGlBitmap(const olxstr& name);
-  inline int GlBitmapCount()  const {  return GlBitmaps.Count(); }
-  inline TGlBitmap& GlBitmap(int i) {  return *GlBitmaps[i];  }
+  inline size_t GlBitmapCount()  const {  return GlBitmaps.Count(); }
+  inline TGlBitmap& GlBitmap(size_t i) {  return *GlBitmaps[i];  }
 
   bool ShowGrid(bool v, const olxstr& FN=EmptyString);
   bool GridVisible()  const;
@@ -265,12 +265,12 @@ public:
   void SetLabelsFont(short FontIndex);
   TGlMaterial & LabelsMarkMaterial();
   void MarkLabel(const TXAtom& A, bool mark);
-  void MarkLabel(int index, bool mark);
+  void MarkLabel(size_t index, bool mark);
   bool IsLabelMarked(const TXAtom& A) const;
-  bool IsLabelMarked(int index) const;
+  bool IsLabelMarked(size_t index) const;
   void ClearLabelMarks();
 
-  int GetNextAvailableLabel(const olxstr& AtomType);
+  size_t GetNextAvailableLabel(const olxstr& AtomType);
 
   // moving atom from/to collection
   void Individualise(TXAtom& XA);
@@ -354,13 +354,13 @@ public:
   void FindXAtoms(const olxstr& Atoms, TXAtomPList& List, bool ClearSelection=true, 
     bool FindHidden=false);
 
-  TXAtom& GetAtom(int i) {  return XAtoms[i];  }
-  const TXAtom& GetAtom(int i) const {  return XAtoms[i];  }
-  inline int AtomCount() const {  return XAtoms.Count();  }
+  TXAtom& GetAtom(size_t i) {  return XAtoms[i];  }
+  const TXAtom& GetAtom(size_t i) const {  return XAtoms[i];  }
+  inline size_t AtomCount() const {  return XAtoms.Count();  }
 
-  TXBond& GetBond(int i) {  return XBonds[i];  }
-  const TXBond& GetBond(int i) const {  return XBonds[i];  }
-  inline int BondCount() const {  return XBonds.Count();  }
+  TXBond& GetBond(size_t i) {  return XBonds[i];  }
+  const TXBond& GetBond(size_t i) const {  return XBonds[i];  }
+  inline size_t BondCount() const {  return XBonds.Count();  }
 
 protected:
   /* the function simply checks if there are any invisible bonds connectd to the
@@ -422,10 +422,10 @@ public:     void CalcProbFactor(float Prob);
   void SelectRings(const olxstr& Condition, bool Invert=false);
   void FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings );
   
-  TXGlLabel* CreateLabel(TXAtom *A, int FontIndex);
+  TXGlLabel* CreateLabel(TXAtom *A, uint16_t FontIndex);
   // recreated all labels (if any) in case if font size etc changed
-  int LabelCount() const {  return XLabels.Count();  }
-  const TXGlLabel& GetLabel(int i) const {  return XLabels[i];  }
+  size_t LabelCount() const {  return XLabels.Count();  }
+  const TXGlLabel& GetLabel(size_t i) const {  return XLabels[i];  }
   void UpdateLabels();
 
 //..............................................................................
@@ -460,7 +460,7 @@ public:     void CalcProbFactor(float Prob);
   TUndoData* SetGraphicsVisible( TPtrList<AGDrawObject>& G, bool v );
 
   void FragmentsVisible(const TNetPList& Networks, bool V);
-  int InvertFragmentsList(const TNetPList& SelectedFragments, TNetPList& Result);
+  size_t InvertFragmentsList(const TNetPList& SelectedFragments, TNetPList& Result);
   void SelectFragmentsAtoms(const TNetPList& frags, bool v);
   void SelectFragmentsBonds(const TNetPList& frags, bool v);
   void SelectFragments(const TNetPList& frags, bool v);

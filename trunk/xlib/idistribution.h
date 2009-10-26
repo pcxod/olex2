@@ -1,42 +1,36 @@
-#ifndef idustributionH
-#define idustributionH
-
+#ifndef __olx__cl_idustribution_H
+#define __olx__cl_idustribution_H
 #include "chembase.h"
-#include "elist.h"
 #include "poly.h"
 
 BeginChemNamespace()
 
-struct TIsotopeData    // tree node
-{
-  TEList *Children;
+struct TIsotopeData  {  // tree node
+  TTypeList<TIsotopeData> Children;
   double M, W;
-  TIsotopeData();
-  ~TIsotopeData();
-  void Evail(TEList *S, double &eM, double &eW);
+  TIsotopeData() : M(0), W(1) {}
+  ~TIsotopeData() {}
+  void Evail(TPolySerie& S, double &eM, double &eW);
 };
 //---------------------------------------------------------------------------
 // calculates itsotopic distribution of a given formula; use TIPattern instead
 //---------------------------------------------------------------------------
-class TIDistribution
-{
-  TEList * FPolynomes;
-  TIsotopeData FRoot;
-  double FThreshold;
-  int FMaxPoints;
+class TIDistribution {
+  TTypeList<TPolynom> Polynomes;
+  TIsotopeData Root;
+  double Threshold;
+  size_t MaxPoints;
 protected:
-  void Evail(TPolynomMember *PM, double &M, double &W);
-  TEList* PolynomToSerie(TPolynom *P);
+  void Evail(const TPolynomMember& PM, double& M, double& W) const;
+  TPolySerie* PolynomToSerie(const TPolynom& P);
 public:
   TIDistribution();
-  ~TIDistribution();
-  void AddIsotope(class TBasicAtomInfo *ai, int count);
-  void Calc(TEList *S);
-  void SetThreshold(double v){FThreshold = v;};
-  double GetThreshold(){return FThreshold;};
-  void SetMaxPoints(int v){FMaxPoints = v;};
-  static void CombineSerie(TEList *S, double threshold);
-  static void DeleteSerie(TEList *S);
+  ~TIDistribution() {}
+  void AddIsotope(class TBasicAtomInfo& ai, size_t count);
+  void Calc(TPolySerie& S);
+  DefPropP(double, Threshold)
+  void SetMaxPoints(size_t v)  {  MaxPoints = v;  }
+  static void CombineSerie(TPolySerie& serie, double threshold);
 };
 
 EndChemNamespace()

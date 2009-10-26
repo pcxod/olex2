@@ -132,8 +132,8 @@ current folder will be updated\n";
     for( int i=1; i < argc; i++ )
       Tmp << argv[i] <<  ' ';
     TParamList::StrtokParams(Tmp, ' ', bapp->Arguments);
-    for( int i=0; i < bapp->Arguments.Count(); i++ )  {
-      if( bapp->Arguments[i].FirstIndexOf('=') != -1 )  {
+    for( size_t i=0; i < bapp->Arguments.Count(); i++ )  {
+      if( bapp->Arguments[i].FirstIndexOf('=') != InvalidIndex )  {
         bapp->ParamList.FromString(bapp->Arguments[i], '=');
         bapp->Arguments.Delete(i);
         i--;
@@ -179,7 +179,7 @@ void DoRun()  {
 	  		  return;
 				}  
 				double max_tag = 0;
-				for( int i=0; i < tags.Count(); i++ )  {
+				for( size_t i=0; i < tags.Count(); i++ )  {
 				  if( tags[i].IsNumber() && tags[i].ToDouble() > max_tag )
 					  max_tag = tags[i].ToDouble();
 				}
@@ -208,7 +208,7 @@ void DoRun()  {
       repo = repos[0];
       if( repos.Count() >= 1 )  {
         TBasicApp::GetLog() << "Please choose the installation repository or Cancel:\n";
-        for( int i=0; i < repos.Count(); i++ )
+        for( size_t i=0; i < repos.Count(); i++ )
           TBasicApp::GetLog() << (i+1) << ": " << repos[i].c_str() << '\n';
         TBasicApp::GetLog() << (repos.Count()+1) << ": Cancel\n";
         int repo_ind = 0;

@@ -44,8 +44,8 @@ void TMenu::Clear()  {
 //----------------------------------------------------------------------------//
 //..............................................................................
 void TMenuItem::SetActionQueue(TActionQueue* q, const olxstr &dependMode, short dependentOn)  {
-  const int cmdind = dependMode.FirstIndexOf(';');
-  if( cmdind != -1 )  {
+  const size_t cmdind = dependMode.FirstIndexOf(';');
+  if( cmdind != InvalidIndex )  {
     DependMode = dependMode.SubStringTo(cmdind);
     OnModeChangeCmd = dependMode.SubStringFrom(cmdind+1);
   }

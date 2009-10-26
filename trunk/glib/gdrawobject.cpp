@@ -32,7 +32,7 @@ AGDrawObject::AGDrawObject(TGlRenderer& parent, const olxstr& collectionName) :
 AGDrawObject::~AGDrawObject()  {  ;  }
 //..............................................................................
 void AGDrawObject::Compile()  {
-  for( int i=0; i < Primitives->PrimitiveCount(); i++ )
+  for( size_t i=0; i < Primitives->PrimitiveCount(); i++ )
     Primitives->GetPrimitive(i).Compile();
 }
 //..............................................................................

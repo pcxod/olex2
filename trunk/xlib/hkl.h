@@ -53,9 +53,9 @@ public:
   // function has to be called to sort the list of reflections
   void EndAppend();
 
-  inline TReflection& Reflection(int i)  const {  return *Refs[i];  }
-  inline TReflection& operator [](int i) const {  return *Refs[i];  }
-  inline int RefCount() const                  {  return Refs.Count();  }
+  inline TReflection& Reflection(size_t i)  const {  return *Refs[i];  }
+  inline TReflection& operator [](size_t i) const {  return *Refs[i];  }
+  inline size_t RefCount() const {  return Refs.Count();  }
 
   inline const vec3i& GetMaxHkl()  const {  return MaxHkl;  }
   inline const vec3i& GetMinHkl()  const {  return MinHkl;  }

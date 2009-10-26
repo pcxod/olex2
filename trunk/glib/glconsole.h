@@ -15,7 +15,7 @@ class TGlConsole: public AGDrawObject,
                   public AActionHandler, 
                   public IDataOutputStream  {
   float FLineSpacing;
-  int Width, Height, Top, Left; // to clip the content
+  uint16_t Width, Height, Top, Left; // to clip the content
   double GlLeft, GlTop, LineInc;
   TStrPObjList<olxstr,TGlMaterial*> FBuffer;
   TStrList FCommands;   // the content
@@ -23,19 +23,19 @@ class TGlConsole: public AGDrawObject,
   olxstr FCommand;    // the command
   olxstr InviteStr, PromptStr;   //
   TActionQList *FActions; // actions list
-  int FCmdPos,
-      FTxtPos,
-      FMaxLines,
-      FLinesToShow,
-      FStringPos;
+  size_t FCmdPos,
+         FTxtPos,
+         FMaxLines,
+         FLinesToShow,
+         FStringPos;
   bool FShowBuffer, FScrollDirectionUp, Blend,
     SkipPosting;  // the next pot operation will pass
-  short FontIndex;
+  uint16_t FontIndex;
   bool PromptVisible;
 protected:
   void KeepSize();
-  void StringPosition(int v);
-  inline int  StringPosition()  const {  return FStringPos;  }
+  void StringPosition(size_t v);
+  inline size_t StringPosition()  const {  return FStringPos;  }
   void UpdateCursorPosition(bool InitCmds);
   class TGlCursor *FCursor;
 
@@ -64,20 +64,20 @@ public:
   bool IsPromptVisible()  const  {  return PromptVisible;  }
   void SetPromptVisible(bool v);
 
-  inline int GetCommandCount()  const  {  return FCommands.Count();  }
-  inline const olxstr& GetCommandByIndex(int i)  {  return FCommands[i];  }
-  inline int GetCommandIndex() const  {  return FCmdPos;  }
-  inline void SetCommandIndex( int i) {  FCmdPos = i;  }
+  inline size_t GetCommandCount() const {  return FCommands.Count();  }
+  inline const olxstr& GetCommandByIndex(size_t i)  {  return FCommands[i];  }
+  inline size_t GetCommandIndex() const  {  return FCmdPos;  }
+  inline void SetCommandIndex(size_t i) {  FCmdPos = i;  }
 
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min);
   bool ProcessKey( int Key, short ShiftState );
   bool WillProcessKey( int Key, short ShiftState );
 
-  DefPropP(int, Width)
-  DefPropP(int, Height)
-  DefPropP(int, Top)
-  DefPropP(int, Left)
+  DefPropP(uint16_t, Width)
+  DefPropP(uint16_t, Height)
+  DefPropP(uint16_t, Top)
+  DefPropP(uint16_t, Left)
   DefPropBIsSet(Blend)
   DefPropBIsSet(SkipPosting)
   inline bool ShowBuffer() const                  {  return FShowBuffer; }
@@ -90,13 +90,13 @@ public:
   void PrintText(const olxstr &S, TGlMaterial *M=NULL, bool Hyphenate=true);
   void PrintText(const TStrList &SL, TGlMaterial *M=NULL, bool Hyphenate=true);
   inline void NewLine()           {  FBuffer.Add(EmptyString); }
-  int  MaxLines();
-  inline void SetMaxLines(int V)     {  FMaxLines = V; };
-  inline int  GetLinesToShow() const {  return FLinesToShow;  }
-  void SetLinesToShow(int V);
+  size_t MaxLines();
+  inline void SetMaxLines(size_t V)     {  FMaxLines = V; };
+  inline size_t GetLinesToShow() const {  return FLinesToShow;  }
+  void SetLinesToShow(size_t V);
 
-  class TGlFont* Font()  const;
-  DefPropP(short, FontIndex)
+  class TGlFont& GetFont()  const;
+  DefPropP(uint16_t, FontIndex)
 
   inline TGlCursor* Cursor()const {  return FCursor;  }
   void Visible(bool On);

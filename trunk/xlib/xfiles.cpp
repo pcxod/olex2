@@ -91,22 +91,22 @@ TXFile::TXFile() : RefMod(Lattice.GetAsymmUnit())  {
 //..............................................................................
 TXFile::~TXFile()  {
 // finding uniq objects and deleting them
-  for( int i=0; i < FileFormats.Count(); i++ )
+  for( size_t i=0; i < FileFormats.Count(); i++ )
     FileFormats.GetObject(i)->SetTag(i);
-  for( int i=0; i < FileFormats.Count(); i++ )
+  for( size_t i=0; i < FileFormats.Count(); i++ )
     if( FileFormats.GetObject(i)->GetTag() == i )
       delete FileFormats.GetObject(i);
 }
 //..............................................................................
 void TXFile::RegisterFileFormat(TBasicCFile *F, const olxstr &Ext)  {
-  if( FileFormats.IndexOf(Ext) >=0 )
+  if( FileFormats.IndexOf(Ext) != InvalidIndex )
     throw TInvalidArgumentException(__OlxSourceInfo, "Ext");
   FileFormats.Add(olxstr::LowerCase(Ext), F);
 }
 //..............................................................................
 TBasicCFile *TXFile::FindFormat(const olxstr &Ext)  {
-  int i= FileFormats.IndexOf(olxstr::LowerCase(Ext));
-  if( i == -1 )
+  size_t i= FileFormats.IndexOf(olxstr::LowerCase(Ext));
+  if( i == InvalidIndex )
     throw TInvalidArgumentException(__OlxSourceInfo, "unknown file format");
   return FileFormats.GetObject(i);
 }
@@ -177,7 +177,7 @@ void TXFile::LoadFromFile(const olxstr & FN) {
   }
   FSG = TSymmLib::GetInstance()->FindSG(Loader->GetAsymmUnit());
   if( replicated )  {
-    for( int i=0; i < FileFormats.Count(); i++ )
+    for( size_t i=0; i < FileFormats.Count(); i++ )
       if( FileFormats.GetObject(i) == FLastLoader )
         FileFormats.GetObject(i) = Loader;
     delete FLastLoader;
@@ -192,9 +192,9 @@ void TXFile::UpdateAsymmUnit()  {
     return;
   GetLattice().UpdateAsymmUnit();
   LL->GetAsymmUnit().ClearEllps();
-  for( int i=0; i < GetAsymmUnit().EllpCount(); i++ )
+  for( size_t i=0; i < GetAsymmUnit().EllpCount(); i++ )
     LL->GetAsymmUnit().NewEllp() = GetAsymmUnit().GetEllp(i);
-  for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
+  for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& CA = GetAsymmUnit().GetAtom(i);
     TCAtom& CA1 = LL->GetAsymmUnit().AtomCount() <= i ? 
       LL->GetAsymmUnit().NewAtom() : LL->GetAsymmUnit().GetAtom(i);
@@ -212,10 +212,10 @@ void TXFile::Sort(const TStrList& ins)  {
   if( !FLastLoader->IsNative() )
     UpdateAsymmUnit();
   TStrList labels;
-  TCAtomPList &list = GetAsymmUnit().GetResidue(-1).GetAtomList();
-  int moiety_index = -1, h_cnt=0, del_h_cnt = 0, free_h_cnt = 0;
+  TCAtomPList &list = GetAsymmUnit().GetResidue(0).GetAtomList();
+  size_t moiety_index = InvalidIndex, h_cnt=0, del_h_cnt = 0, free_h_cnt = 0;
   bool keeph = true;
-  for( int i=0; i < list.Count(); i++ )  {
+  for( size_t i=0; i < list.Count(); i++ )  {
     if( list[i]->GetAtomInfo() == iHydrogenIndex || list[i]->GetAtomInfo() == iHydrogenIndex )  {
       if( !list[i]->IsDeleted() )  {
         h_cnt++;
@@ -234,7 +234,7 @@ void TXFile::Sort(const TStrList& ins)  {
   try {
     AtomSorter::CombiSort cs;
     olxstr sort;
-    for( int i=0; i < ins.Count(); i++ )  {
+    for( size_t i=0; i < ins.Count(); i++ )  {
       if( ins[i].CharAt(0) == '+' )
         sort << ins[i].SubStringFrom(i);
       else if( ins[i].Equalsi("moiety") )  {
@@ -244,7 +244,7 @@ void TXFile::Sort(const TStrList& ins)  {
       else
         labels.Add(ins[i]);
     }
-    for( int i=0; i < sort.Length(); i++ )  {
+    for( size_t i=0; i < sort.Length(); i++ )  {
       if( sort.CharAt(i) == 'm' )
         cs.sequence.Add(&AtomSorter::atom_cmp_Mw);
       else if( sort.CharAt(i) == 'l' )
@@ -260,16 +260,16 @@ void TXFile::Sort(const TStrList& ins)  {
       AtomSorter::SortByName(list, labels);
       labels.Clear();
     }
-    if( moiety_index != -1 )  {
+    if( moiety_index != InvalidIndex )  {
       sort = EmptyString;
       if( moiety_index+1 < ins.Count() )  {
-        for( int i=moiety_index+1; i < ins.Count(); i++ )  {
+        for( size_t i=moiety_index+1; i < ins.Count(); i++ )  {
           if( ins[i].CharAt(0) == '+' )
             sort << ins[i].SubStringFrom(1);
           else
             labels.Add(ins[i]);
         }
-        for( int i=0; i < sort.Length(); i++ )  {
+        for( size_t i=0; i < sort.Length(); i++ )  {
           if( sort.CharAt(i) == 's' )
             MoietySorter::SortBySize(list);
           else if( sort.CharAt(i) == 'h' )
@@ -290,18 +290,18 @@ void TXFile::Sort(const TStrList& ins)  {
     TBasicApp::GetLog().Error( exc.GetException()->GetError() );
   }
   if( !FLastLoader->IsNative() )
-    AtomSorter::SyncLists(list, FLastLoader->GetAsymmUnit().GetResidue(-1).GetAtomList());
+    AtomSorter::SyncLists(list, FLastLoader->GetAsymmUnit().GetResidue(0).GetAtomList());
 }
 //..............................................................................
 void TXFile::ValidateTabs()  {
-  for( int i=0; i < RefMod.InfoTabCount(); i++ )  {
+  for( size_t i=0; i < RefMod.InfoTabCount(); i++ )  {
     if( RefMod.GetInfoTab(i).GetType() != infotab_htab )
       continue;
     if( RefMod.GetInfoTab(i).Count() != 2 )  // already invalid
       continue;
     TSAtom* sa = NULL;
     InfoTab& it = RefMod.GetInfoTab(i);
-    for( int j=0; j < Lattice.AtomCount(); j++ )  {
+    for( size_t j=0; j < Lattice.AtomCount(); j++ )  {
       if( Lattice.GetAtom(j).CAtom().GetId() == it.GetAtom(0).GetAtom()->GetId() )  {
         sa = &Lattice.GetAtom(j);
         break;
@@ -312,7 +312,7 @@ void TXFile::ValidateTabs()  {
       continue;
     }
     bool hasH = false;
-    for( int j=0; j < sa->NodeCount(); j++ )  {
+    for( size_t j=0; j < sa->NodeCount(); j++ )  {
       if( !sa->Node(j).IsDeleted() && 
         (sa->Node(j).GetAtomInfo() == iHydrogenIndex || sa->Node(j).GetAtomInfo() == iDeuteriumIndex) )  
       {
@@ -371,7 +371,7 @@ void TXFile::SaveToFile(const olxstr &FN, bool Sort)  {
 //..............................................................................
 IEObject* TXFile::Replicate() const  {
   TXFile* xf = new TXFile;
-  for( int i=0; i < FileFormats.Count(); i++ )  {
+  for( size_t i=0; i < FileFormats.Count(); i++ )  {
     xf->RegisterFileFormat( (TBasicCFile*)FileFormats.GetObject(i)->Replicate(), 
                               FileFormats[i] );
   }
@@ -437,8 +437,8 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
   TCStrList atoms(as, ' '),
            units(us, ' ');
   olxstr rv, tmp;
-  int len = olx_min( atoms.Count(), units.Count() );
-  for( int i=0; i < len; i++) {
+  size_t len = olx_min(atoms.Count(), units.Count());
+  for( size_t i=0; i < len; i++) {
     rv << atoms[i].SubStringTo(1).UpperCase();
     rv << atoms[i].SubStringFrom(1).LowerCase();
     if( list )
@@ -447,7 +447,7 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
     bool subAdded = false;
     double dv = units[i].ToDouble()/GetAsymmUnit().GetZ();
     tmp = (digits > 0) ? olxstr::FormatFloat(digits, dv) : olxstr(dv);
-    if( tmp.IndexOf('.') != -1 )
+    if( tmp.IndexOf('.') != InvalidIndex )
       tmp.TrimFloat();
     if( html )  {
       if( olx_abs(dv-1) > 0.01 && olx_abs(dv) > 0.01 )  {
@@ -491,14 +491,14 @@ void TXFile::LibSetFormula(const TStrObjList& Params, TMacroError& E) {
   TIns* ins = (TIns*)FLastLoader;
   olxstr Sfac, Unit;
   TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
-  if( Params[0].IndexOf(':') == -1 )  {
+  if( Params[0].IndexOf(':') == InvalidIndex )  {
     TTypeList<AnAssociation2<olxstr, int> > res;
     AtomsInfo.ParseElementString( Params[0], res);
     if( res.IsEmpty() )  {
       E.ProcessingError(__OlxSrcInfo, "empty formula is not allowed" );
       return;
     }
-    for( int i=0; i < res.Count(); i++ )  {
+    for( size_t i=0; i < res.Count(); i++ )  {
       Sfac << res[i].GetA();
       Unit << res[i].GetB()*GetAsymmUnit().GetZ();
       if( (i+1) < res.Count() )  {
@@ -509,9 +509,9 @@ void TXFile::LibSetFormula(const TStrObjList& Params, TMacroError& E) {
   }
   else  {
     TCStrList toks(Params[0], ',');
-    for( int i=0; i < toks.Count(); i++ )  {
-      int ind = toks[i].FirstIndexOf(':');
-      if( ind == -1 )  {
+    for( size_t i=0; i < toks.Count(); i++ )  {
+      size_t ind = toks[i].FirstIndexOf(':');
+      if( ind == InvalidIndex )  {
         E.ProcessingError(__OlxSrcInfo, "invalid formula syntax" );
         return;
       }

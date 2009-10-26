@@ -5,7 +5,7 @@ BeginXlibNamespace()
 
 struct MergeStats  {
   double Rint, Rsigma, MeanIOverSigma;
-  int SystematicAbsentcesRemoved,
+  size_t SystematicAbsentcesRemoved,
     InconsistentEquivalents,
     UniqueReflections,
     CentricReflections,
@@ -54,24 +54,24 @@ class RefMerger {
   {
     MergeStats stats;
     // search for the inversion matrix
-    int inverseMatIndex = -1;
+    size_t inverseMatIndex = InvalidIndex;
     mat3d mI;
     mI.I() *= -1;
-    for( int i=0; i < ml.Count(); i++ )  {
+    for( size_t i=0; i < ml.Count(); i++ )  {
       if( ml[i].r == mI )  {
         inverseMatIndex = i;
         break;
       }
     }
-    stats.FriedelOppositesMerged = ((inverseMatIndex != -1) || mergeFP);
+    stats.FriedelOppositesMerged = ((inverseMatIndex != InvalidIndex) || mergeFP);
     // standartise reflection indexes according to provided list of symmetry operators
-    const int ref_cnt = refs.Count();
+    const size_t ref_cnt = refs.Count();
     if( mergeFP )  {
-      for( int i=0; i < ref_cnt; i++ )
+      for( size_t i=0; i < ref_cnt; i++ )
         refs[i]->StandardiseFP(ml);
     }
     else  {
-      for( int i=0; i < ref_cnt; i++ )
+      for( size_t i=0; i < ref_cnt; i++ )
         refs[i]->Standardise(ml);
     }
     // sort the list
@@ -80,13 +80,13 @@ class RefMerger {
     // merge reflections
     double Sdiff = 0, SI = 0, SS = 0, SI_tot = 0;
     TReflection* ref = refs[0];  // reference reflection
-    for( int i=0; i < ref_cnt; )  {
-      const int from = i;
+    for( size_t i=0; i < ref_cnt; )  {
+      const size_t from = i;
       while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) )
         ;
-      const int merged_count = i - from;
+      const size_t merged_count = i - from;
       bool omitted = false;
-      for( int j=0; j < omits.Count(); j++ )  {
+      for( size_t j=0; j < omits.Count(); j++ )  {
         if( ref->GetHkl() == omits[j] )  {
           stats.OmittedByUser += merged_count;
           omitted = true;
@@ -128,7 +128,7 @@ class RefMerger {
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
     stats.UniqueReflections = output.Count();
-    stats.MeanIOverSigma = (stats.UniqueReflections != 0 ? 
+    stats.MeanIOverSigma = (double)(stats.UniqueReflections != 0 ? 
       stats.UniqueReflections/stats.UniqueReflections : 0);
     return stats;
   }
@@ -136,24 +136,24 @@ class RefMerger {
   static MergeStats _DryMerge(const smatd_list& ml, TRefPList& refs, const vec3i_list& omits, bool mergeFP)  {
     MergeStats stats;
     // search for the inversion matrix
-    int inverseMatIndex = -1;
+    size_t inverseMatIndex = InvalidIndex;
     mat3d mI;
     mI.I() *= -1;
-    for( int i=0; i < ml.Count(); i++ )  {
+    for( size_t i=0; i < ml.Count(); i++ )  {
       if( ml[i].r == mI )  {
         inverseMatIndex = i;
         break;
       }
     }
-    stats.FriedelOppositesMerged = ((inverseMatIndex != -1) || mergeFP);
+    stats.FriedelOppositesMerged = ((inverseMatIndex != InvalidIndex) || mergeFP);
     // standartise reflection indexes according to provided list of symmetry operators
-    const int ref_cnt = refs.Count();
+    const size_t ref_cnt = refs.Count();
     if( mergeFP )  {
-      for( int i=0; i < ref_cnt; i++ )
+      for( size_t i=0; i < ref_cnt; i++ )
         refs[i]->StandardiseFP(ml);
     }
     else  {
-      for( int i=0; i < ref_cnt; i++ )
+      for( size_t i=0; i < ref_cnt; i++ )
         refs[i]->Standardise(ml);
     }
     // sort the list
@@ -161,13 +161,13 @@ class RefMerger {
     // merge reflections
     double Sdiff = 0, SI = 0, SS = 0, SI_tot = 0;
     TReflection* ref = refs[0];  // reference reflection
-    for( int i=0; i < ref_cnt; )  {
-      int from = i;
+    for( size_t i=0; i < ref_cnt; )  {
+      size_t from = i;
       while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) )
         ;
       bool omitted = false;
-      const int merged_count = i - from;
-      for( int j=0; j < omits.Count(); j++ )  {
+      const size_t merged_count = i - from;
+      for( size_t j=0; j < omits.Count(); j++ )  {
         if( ref->GetHkl() == omits[j] )  {
           stats.OmittedByUser += merged_count;
           omitted = true;
@@ -206,7 +206,7 @@ class RefMerger {
     }
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
-    stats.MeanIOverSigma = (stats.UniqueReflections != 0 ? 
+    stats.MeanIOverSigma = (double)(stats.UniqueReflections != 0 ? 
       stats.UniqueReflections/stats.UniqueReflections : 0);
     return stats;
   }
@@ -216,19 +216,19 @@ class RefMerger {
   {
     MergeStats stats;
     stats.FriedelOppositesMerged = false;
-    const int ref_cnt = refs.Count();
+    const size_t ref_cnt = refs.Count();
     // sort the list
     TReflection::SortPList(refs);
     output.SetCapacity( ref_cnt ); // better more that none :)
     TReflection* ref = refs[0];  // reference reflection
-    for( int i=0; i < ref_cnt; )  {
+    for( size_t i=0; i < ref_cnt; )  {
       ref->Analyse(ml);
-      const int from = i;
+      const size_t from = i;
       while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) )
         ;
-      const int merged_count = i - from;
+      const size_t merged_count = i - from;
       bool omitted = false;
-      for( int j=0; j < omits.Count(); j++ )  {
+      for( size_t j=0; j < omits.Count(); j++ )  {
         if( ref->GetHkl() == omits[j] )  {
           stats.OmittedByUser += merged_count;
           omitted = true;
@@ -239,7 +239,7 @@ class RefMerger {
         if( merged_count > stats.ReflectionAPotMax )
           stats.ReflectionAPotMax = merged_count;
         if( !ref->IsAbsent() )  {
-          for( int j=from; j < i; j++ )  {
+          for( size_t j=from; j < i; j++ )  {
             TReflection& _r = output.AddCCopy(*refs[j]);
             _r.SetCentric( ref->IsCentric() );
             _r.SetMultiplicity( ref->GetMultiplicity() );
@@ -265,18 +265,18 @@ class RefMerger {
   static MergeStats _DoDrySGFilter(const smatd_list& ml, TRefPList& refs, const vec3i_list& omits)  {
     MergeStats stats;
     stats.FriedelOppositesMerged = false;
-    const int ref_cnt = refs.Count();
+    const size_t ref_cnt = refs.Count();
     // sort the list
     TReflection::SortPList(refs);
     TReflection* ref = refs[0];  // reference reflection
-    for( int i=0; i < ref_cnt; )  {
+    for( size_t i=0; i < ref_cnt; )  {
       ref->Analyse(ml);
-      const int from = i;
+      const size_t from = i;
       while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) )
         ;
-      const int merged_count = i - from;
+      const size_t merged_count = i - from;
       bool omitted = false;
-      for( int j=0; j < omits.Count(); j++ )  {
+      for( size_t j=0; j < omits.Count(); j++ )  {
         if( ref->GetHkl() == omits[j] )  {
           stats.OmittedByUser += merged_count;
           omitted = true;
@@ -287,7 +287,7 @@ class RefMerger {
         if( merged_count > stats.ReflectionAPotMax )
           stats.ReflectionAPotMax = merged_count;
         if( !ref->IsAbsent() )  {
-          for( int j=from; j < i; j++ )  {
+          for( size_t j=from; j < i; j++ )  {
             stats.MeanIOverSigma += refs[j]->GetI()/refs[j]->GetS();
             vec3i::UpdateMinMax(refs[j]->GetHkl(), stats.MinIndexes, stats.MaxIndexes);
           }
@@ -312,18 +312,18 @@ class RefMerger {
     MergeStats stats;
     // sort the list
     TReflection::SortPList(refs);
-    const int ref_cnt = refs.Count();
+    const size_t ref_cnt = refs.Count();
     output.SetCapacity( ref_cnt ); // better more that none :)
     // merge reflections
     double Sdiff = 0, SI_tot = 0, SI = 0, SS = 0;
     const TReflection* ref = refs[0];  // reference reflection
-    for( int i=0; i < ref_cnt; )  {
-      const int from = i;
+    for( size_t i=0; i < ref_cnt; )  {
+      const size_t from = i;
       while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) )
         ;
-      const int merged_count = i - from;
+      const size_t merged_count = i - from;
       bool omitted = false;
-      for( int j=0; j < omits.Count(); j++ )  {
+      for( size_t j=0; j < omits.Count(); j++ )  {
         if( ref->GetHkl() == omits[j] )  {
           stats.OmittedByUser += merged_count;
           omitted = true;
@@ -358,7 +358,7 @@ class RefMerger {
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
     stats.UniqueReflections = output.Count();
-    stats.MeanIOverSigma = (stats.UniqueReflections != 0 ? 
+    stats.MeanIOverSigma = (double)(stats.UniqueReflections != 0 ? 
       stats.UniqueReflections/stats.UniqueReflections : 0);
     return stats;
   }
@@ -368,16 +368,16 @@ class RefMerger {
     // sort the list
     TReflection::SortPList(refs);
     // merge reflections
-    const int ref_cnt = refs.Count();
+    const size_t ref_cnt = refs.Count();
     double Sdiff = 0, SI_tot = 0, SI = 0, SS = 0;
     const TReflection* ref = refs[0];
-    for( int i=0; i < ref_cnt; )  {
-      const int from = i;
+    for( size_t i=0; i < ref_cnt; )  {
+      const size_t from = i;
       while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) )
         ;
-      const int merged_count = i - from;
+      const size_t merged_count = i - from;
       bool omitted = false;
-      for( int j=0; j < omits.Count(); j++ )  {
+      for( size_t j=0; j < omits.Count(); j++ )  {
         if( ref->GetHkl() == omits[j] )  {
           stats.OmittedByUser += merged_count;
           omitted = true;
@@ -420,7 +420,7 @@ public:
     const vec3i_list& omits, bool mergeFP)  
   {
     TRefPList refs( Refs.Count() );  // list of replicated reflections
-    for( int i=0; i < Refs.Count(); i++ )
+    for( size_t i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::RefP(Refs[i]);
     return _DoMerge<RefListMerger>(ml, refs, omits, output, mergeFP);
   }
@@ -428,7 +428,7 @@ public:
   template <class RefListMerger, class RefList> 
   static MergeStats DryMerge(const smatd_list& ml, RefList& Refs, const vec3i_list& omits, bool mergeFP)  {
     TRefPList refs( Refs.Count() );  // list of replicated reflections
-    for( int i=0; i < Refs.Count(); i++ )
+    for( size_t i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::RefP(Refs[i]);
     return _DryMerge<RefListMerger>(ml, refs, omits, mergeFP);
   }
@@ -436,14 +436,14 @@ public:
   template <class RefListMerger, class RefList> 
   static MergeStats MergeInP1(const RefList& Refs, TRefList& output, const vec3i_list& omits)  {
     TPtrList<const TReflection> refs( Refs.Count() );
-    for( int i=0; i < Refs.Count(); i++ )
+    for( size_t i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::GetRefP(Refs[i]);
     return _DoMergeInP1<RefListMerger>(refs, omits, output);
   }
   template <class RefListMerger, class RefList> 
   static MergeStats DryMergeInP1(const RefList& Refs, const vec3i_list& omits)  {
     TPtrList<const TReflection> refs( Refs.Count() );
-    for( int i=0; i < Refs.Count(); i++ )
+    for( size_t i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::GetRefP(Refs[i]);
     return _DryMergeInP1<RefListMerger>(refs, omits);
   }
@@ -451,14 +451,14 @@ public:
   template <class RefList> 
   static MergeStats SGFilter(const smatd_list& ml, RefList& Refs, TRefList& output, const vec3i_list& omits)  {
     TRefPList refs( Refs.Count() );
-    for( int i=0; i < Refs.Count(); i++ )
+    for( size_t i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::RefP(Refs[i]);
     return _DoSGFilter(ml, refs, omits, output);
   }
   template <class RefList> 
   static MergeStats DrySGFilter(const smatd_list& ml, RefList& Refs, const vec3i_list& omits)  {
     TRefPList refs( Refs.Count() );
-    for( int i=0; i < Refs.Count(); i++ )
+    for( size_t i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::RefP(Refs[i]);
     return _DoDrySGFilter(ml, refs, omits);
   }
@@ -511,7 +511,7 @@ public:
    http://www.crystal.chem.uu.nl/distr/mergehklf5/mergehklf5.html
    we cannot use a single pass algorithm like:
       double sum_wght = 0, sum_wght_i_sq = 0, sum_wght_i = 0, sum_i = 0;
-      for( int l=0; l < rl.Count(); l++ )  {
+      for( size_t l=0; l < rl.Count(); l++ )  {
         const double s = rl[l]->GetS() != 0 ? rl[l]->GetS() : 0.001;
         const double w = 1./(s*s);
         sum_wght += w;
@@ -528,11 +528,11 @@ public:
   class StandardMerger  {
   public:
     // returns a newly created reflection do be deleted with delete
-    template <class RefPList> static MergerOut Merge(const RefPList& rl, int from, int to)  {
-      const int cnt = to-from;
+    template <class RefPList> static MergerOut Merge(const RefPList& rl, size_t from, size_t to)  {
+      const size_t cnt = to-from;
       if( cnt == 1 )  return MergerOut(new TReflection(*rl[from]) );
       double sum_wght = 0, sum_wght_i = 0, sum_i = 0;
-      for( int i=from; i < to; i++ )  {
+      for( size_t i=from; i < to; i++ )  {
         const double w = 1./(rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001);
         sum_wght += w;
         sum_wght_i += w*rl[i]->GetI();
@@ -540,7 +540,7 @@ public:
       }
       const double mean = sum_wght_i/sum_wght;
       double sum_diff = 0, summ_i = 0, sig_top = 0;
-      for( int i=from; i < to; i++ )  {
+      for( size_t i=from; i < to; i++ )  {
         const double diff = rl[i]->GetI() - mean;
         sum_diff += (diff < 0 ? -diff : diff);
         summ_i += rl[i]->GetI();
@@ -555,11 +555,11 @@ public:
         );
     }
     // returns just statistics
-    template <class RefPList> static DryMergerOut DryMerge(const RefPList& rl, int from, int to)  {
-      const int cnt = to-from;
+    template <class RefPList> static DryMergerOut DryMerge(const RefPList& rl, size_t from, size_t to)  {
+      const size_t cnt = to-from;
       if( cnt == 1 )  return DryMergerOut(rl[from]->GetI(), rl[from]->GetS() );
       double sum_wght = 0, sum_wght_i = 0, sum_i = 0;
-      for( int i=from; i < to; i++ )  {
+      for( size_t i=from; i < to; i++ )  {
         const double w = 1./(rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001);
         sum_wght += w;
         sum_wght_i += w*rl[i]->GetI();
@@ -567,7 +567,7 @@ public:
       }
       const double mean = sum_wght_i/sum_wght;
       double sum_diff = 0, summ_i = 0, sig_top = 0;
-      for( int i=from; i < to; i++ )  {
+      for( size_t i=from; i < to; i++ )  {
         const double diff = rl[i]->GetI() - mean;
         sum_diff += (diff < 0 ? -diff : diff);
         summ_i += rl[i]->GetI();
@@ -586,17 +586,17 @@ public:
   class UnitMerger  {
   public:
     // returns a newly created reflection do be deleted with delete
-    template <class RefPList> static MergerOut Merge(const RefPList& rl, int from, int to)  {
-      const int cnt = to-from;
+    template <class RefPList> static MergerOut Merge(const RefPList& rl, size_t from, size_t to)  {
+      const size_t cnt = to-from;
       if( cnt == 1 )  return MergerOut(new TReflection(*rl[from]) );
       double sum_sig_sq = 0, sum_i = 0;
-      for( int i=from; i < to; i++ )  {
+      for( size_t i=from; i < to; i++ )  {
         sum_i += rl[i]->GetI();
         sum_sig_sq += rl[i]->GetS()*rl[i]->GetS();
       }
       const double mean = sum_i/cnt;
       double sum_diff = 0, sum_diff_sq = 0;
-      for( int i=from; i < to; i++ )  {
+      for( size_t i=from; i < to; i++ )  {
         const double diff = rl[i]->GetI() - mean;
         sum_diff += (diff < 0 ? -diff : diff);
         sum_diff_sq += diff*diff;
@@ -609,17 +609,17 @@ public:
         );
     }
     // returns just statistic
-    template <class RefPList> static DryMergerOut DryMerge(const RefPList& rl, int from, int to)  {
-      const int cnt = to-from;
+    template <class RefPList> static DryMergerOut DryMerge(const RefPList& rl, size_t from, size_t to)  {
+      const size_t cnt = to-from;
       if( cnt == 1 )  return DryMergerOut(rl[from]->GetI(), rl[from]->GetS() );
       double sum_sig_sq = 0, sum_i = 0;
-      for( int i=from; i < to; i++ )  {
+      for( size_t i=from; i < to; i++ )  {
         sum_i += rl[i]->GetI();
         sum_sig_sq += rl[i]->GetS()*rl[i]->GetS();
       }
       const double mean = sum_i/rl.Count();
       double sum_diff = 0, sum_diff_sq = 0;
-      for( int i=from; i < to; i++ )  {
+      for( size_t i=from; i < to; i++ )  {
         const double diff = rl[i]->GetI() - mean;
         sum_diff += (diff < 0 ? -diff : diff);
         sum_diff_sq += diff*diff;
@@ -639,11 +639,11 @@ public:
   class ShelxMerger  {
   public:
     // returns a newly created reflection do be deleted with delete
-    template <class RefPList> static MergerOut Merge(const RefPList& rl, int from, int to)  {
-      const int cnt = to-from;
+    template <class RefPList> static MergerOut Merge(const RefPList& rl, size_t from, size_t to)  {
+      const size_t cnt = to-from;
       if( cnt == 1 )  return MergerOut(new TReflection(*rl[from]) );
       double sum_wght = 0, sum_wght_i = 0, sum_rec_sig_sq = 0;
-      for( int i=from; i < to; i++ )  {
+      for( size_t i=from; i < to; i++ )  {
         const double s = rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001;
         const double rec_sig_sq = 1./(s*s);
         const double w = (rl[i]->GetI() > 3.0*s) ? rl[i]->GetI()*rec_sig_sq : 3./s;
@@ -653,7 +653,7 @@ public:
       }
       const double mean = sum_wght_i/sum_wght;
       double sum_diff = 0, sum_i = 0;
-      for( int i=from; i < to; i++ )  {
+      for( size_t i=from; i < to; i++ )  {
         const double diff = rl[i]->GetI() - mean;
         sum_diff += (diff < 0 ? -diff : diff);
         sum_i += rl[i]->GetI();
@@ -666,11 +666,11 @@ public:
         );
     }
     // returns a just statistic
-    template <class RefPList> static DryMergerOut DryMerge(const RefPList& rl, int from, int to)  {
-      const int cnt = to - from;
+    template <class RefPList> static DryMergerOut DryMerge(const RefPList& rl, size_t from, size_t to)  {
+      const size_t cnt = to - from;
       if( cnt == 1 )  return DryMergerOut(rl[from]->GetI(), rl[from]->GetS());
       double sum_wght = 0, sum_wght_i = 0, sum_rec_sig_sq = 0;
-      for( int i=from; i < to; i++ )  {
+      for( size_t i=from; i < to; i++ )  {
         const double s = rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001;
         const double rec_sig_sq = 1./(s*s);
         const double w = (rl[i]->GetI() > 3.0*s) ? rl[i]->GetI()*rec_sig_sq : 3./s;
@@ -680,7 +680,7 @@ public:
       }
       const double mean = sum_wght_i/sum_wght;
       double sum_diff = 0, sum_i = 0;
-      for( int i=from; i < to; i++ )  {
+      for( size_t i=from; i < to; i++ )  {
         const double diff = rl[i]->GetI() - mean;
         sum_diff += (diff < 0 ? -diff : diff);
         sum_i += rl[i]->GetI();

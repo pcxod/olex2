@@ -15,7 +15,7 @@ BeginEsdlNamespace()
 class TEMemoryStream: protected TDirectionalList<char>, 
                       public IDataInputStream,
                       public IDataOutputStream  {
-  long Position;
+  size_t Position;
 protected:
   void Clear()  {  TDirectionalList<char>::Clear();  Position = 0;  }
 public:
@@ -83,7 +83,7 @@ class TEMemoryInputStream : public IDataInputStream {
   // borrowed pointed
   unsigned char const* Data;
   size_t Length;
-  long Position;
+  size_t Position;
 public:
   TEMemoryInputStream(const void* data, size_t length) : 
       Data((unsigned char const*)data), 

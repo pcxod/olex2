@@ -250,7 +250,7 @@ public:
       throw TFunctionFailedException(__OlxSourceInfo, "lists mismatch");
     if( sidea.Count() < 2 )
       return;
-    for( int j=1; j < sidea.Count(); j++ )  {
+    for( size_t j=1; j < sidea.Count(); j++ )  {
       newPath();
       quad(sidea[j-1], sideb[j-1], sideb[j], sidea[j]);
       (this->*func)();
@@ -268,7 +268,7 @@ public:
       throw TFunctionFailedException(__OlxSourceInfo, "lists mismatch");
     if( sidea.Count() < 2 )
       return;
-    for( int j=1; j < sidea.Count(); j++ )
+    for( size_t j=1; j < sidea.Count(); j++ )
       stippledQuad(sidea[j-1], sideb[j-1], sideb[j], sidea[j], parts, func);
     stippledQuad(sidea.Last(), sideb.Last(), sideb[0], sidea[0], parts, func);
   }

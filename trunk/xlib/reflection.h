@@ -94,7 +94,7 @@ public:
     bool changes = true;
     while( changes )  {
       changes = false;
-      for(int i=0; i < ml.Count(); i++ )  {
+      for( size_t i=0; i < ml.Count(); i++ )  {
         MulHkl(hklv, ml[i]);
         if( (hklv[2] > hkl[2]) ||        // standardise then ...
           ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
@@ -113,7 +113,7 @@ public:
         }
       }
     }
-    for(int i=0; i < ml.Count(); i++ )  {
+    for( size_t i=0; i < ml.Count(); i++ )  {
       MulHkl(hklv, ml[i]);
       if( EqHkl(hklv) )  {  // only if there is no change
         const double ps = PhaseShift(ml[i]);
@@ -129,7 +129,7 @@ public:
     bool changes = true;
     while( changes )  {
       changes = false;
-      for(int i=0; i < ml.Count(); i++ )  {
+      for( size_t i=0; i < ml.Count(); i++ )  {
         MulHkl(hklv, ml[i]);
         if( (hklv[2] > hkl[2]) ||        // standardise then ...
           ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
@@ -139,7 +139,7 @@ public:
         }
       }
     }
-    for(int i=0; i < ml.Count(); i++ )  {
+    for( size_t i=0; i < ml.Count(); i++ )  {
       MulHkl(hklv, ml[i]);
       if( EqHkl(hklv) )  {  // only if there is no change
         const double ps = PhaseShift(ml[i]);
@@ -160,7 +160,7 @@ public:
     Multiplicity = 1;
     Centric = false;
     Absent = false;
-    for(int i=0; i < ml.Count(); i++ )  {
+    for( size_t i=0; i < ml.Count(); i++ )  {
       MulHkl(hklv, ml[i]);
       if( EqHkl(hklv) )  {  // symmetric reflection
         IncMultiplicity();
@@ -187,7 +187,7 @@ public:
   }
 //..............................................................................
   bool IsAbsent(const smatd_list &ml) const {
-    for( int i=0; i < ml.Count(); i++ )  {
+    for( size_t i=0; i < ml.Count(); i++ )  {
       if( IsSymmetric(ml[i]) )  {
         double l = PhaseShift(ml[i]);
         if( olx_abs( l - olx_round(l) ) > 0.01 )  

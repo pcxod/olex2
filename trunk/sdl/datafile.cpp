@@ -35,7 +35,7 @@ bool TDataFile::LoadFromTextStream(IInputStream& io, TStrList* Log)  {
   catch( ... )  {  return false;  }
   if( in.IsEmpty() )  return false;
   in = in.DeleteCharSet("\n\r").Replace('\t', ' ').DeleteSequencesOf(' ');
-  for( int i=0; i < in.Length(); i++ )  
+  for( size_t i=0; i < in.Length(); i++ )  
     if( in.CharAt(i) == '<' )  {
       FRoot->LoadFromString(i, in, Log);  
       break;

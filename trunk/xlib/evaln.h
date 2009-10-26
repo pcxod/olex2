@@ -1,20 +1,12 @@
-/*
-The open source library.
-www.ccp14.ac.uk/ccp/web-mirors/lcells/opensrc/
-c 2004 Oleg V. Dolomanov
-*/
-//---------------------------------------------------------------------------
-
-#ifndef evailnkH
-#define evailnkH
+/* c 2004 Oleg V. Dolomanov */
+#ifndef __olx_sdl_evailn_H
+#define __olx_sdl_evailn_H
 #include <math.h>
 #include "emath.h"
-#include "eobjects.h"
 #include "estrlist.h"
 #include "talist.h"
 #include "edict.h"
 #include "paramlist.h"
-//---------------------------------------------------------------------------
 /*
 How to use:
 when an expression is passed to LoadFromEpression the lits of variales is being

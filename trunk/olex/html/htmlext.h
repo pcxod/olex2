@@ -45,7 +45,7 @@ protected:
   THtmlSwitch* Root;
   olxdict<olxstr, AnAssociation3<AOlxCtrl*,wxWindow*,bool>, olxstrComparator<true> > Objects;
   TTypeList<AnAssociation2<AOlxCtrl*,wxWindow*> > Traversables;
-  TSStrPObjList<olxstr,int, true> SwitchStates;
+  TSStrPObjList<olxstr,size_t,true> SwitchStates;
   olxstr FocusedControl;
   class TObjectsState  {
     TSStrPObjList<olxstr,TSStrStrList<olxstr,false>*, true> Objects;
@@ -54,8 +54,8 @@ protected:
     TObjectsState(THtml& htm) : html(htm) { }
     ~TObjectsState();
     TSStrStrList<olxstr,false>* FindProperties(const olxstr& cname) {
-      int ind = Objects.IndexOf(cname);
-      return (ind == -1) ? NULL : Objects.GetObject(ind);
+      const size_t ind = Objects.IndexOf(cname);
+      return (ind == InvalidIndex) ? NULL : Objects.GetObject(ind);
     }
     TSStrStrList<olxstr,false>* DefineControl(const olxstr& name, const std::type_info& type);
     void SaveState();
@@ -65,7 +65,7 @@ protected:
   };
   TObjectsState ObjectsState;
 protected:
-  int GetSwitchState(const olxstr& switchName);
+  size_t GetSwitchState(const olxstr& switchName);
   void ClearSwitchStates()  {  SwitchStates.Clear();  }
   // library
   DefMacro(ItemState)
@@ -129,7 +129,7 @@ public:
   void OnChar(wxKeyEvent &event);  
   void OnNavigation(wxNavigationKeyEvent &event);  
 
-  void SetSwitchState(THtmlSwitch &sw, int state);
+  void SetSwitchState(THtmlSwitch &sw, size_t state);
 
   int GetBorders() const {  return wxHtmlWindow::m_Borders;  }
   void SetFonts(const olxstr &normal, const olxstr &fixed )  {
@@ -167,18 +167,18 @@ public:
   // object operations
   bool AddObject(const olxstr& Name, AOlxCtrl *Obj, wxWindow* wxObj, bool Manage = false);
   AOlxCtrl *FindObject(const olxstr& Name)  {
-    int ind = Objects.IndexOf(Name);
-    return (ind == -1) ? NULL : Objects.GetValue(ind).A();
+    const size_t ind = Objects.IndexOf(Name);
+    return (ind == InvalidIndex) ? NULL : Objects.GetValue(ind).A();
   }
   wxWindow *FindObjectWindow(const olxstr& Name)  {
-    int ind = Objects.IndexOf(Name);
-    return (ind == -1) ? NULL : Objects.GetValue(ind).B();
+    const size_t ind = Objects.IndexOf(Name);
+    return (ind == InvalidIndex) ? NULL : Objects.GetValue(ind).B();
   }
-  inline int ObjectCount()          const {  return Objects.Count();  }
-  inline AOlxCtrl* GetObject(int i)       {  return Objects.GetValue(i).A();  }
-  inline wxWindow* GetWindow(int i)       {  return Objects.GetValue(i).B();  }
-  inline const olxstr& GetObjectName(int i) const {  return Objects.GetKey(i);  }
-  inline bool IsObjectManageble(int i) const      {  return Objects.GetValue(i).GetC();  }
+  inline size_t ObjectCount() const {  return Objects.Count();  }
+  inline AOlxCtrl* GetObject(size_t i)  {  return Objects.GetValue(i).A();  }
+  inline wxWindow* GetWindow(size_t i)  {  return Objects.GetValue(i).B();  }
+  inline const olxstr& GetObjectName(size_t i) const {  return Objects.GetKey(i);  }
+  inline bool IsObjectManageble(size_t i) const {  return Objects.GetValue(i).GetC();  }
   //
   DefPropBIsSet(Movable)
 

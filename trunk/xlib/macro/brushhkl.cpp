@@ -27,7 +27,7 @@ struct HklBrushRef  {
   }
   void Standardise(const smatd_list &ml, bool CheckInversion)  {
     vec3i hklv;
-    for(int i=0; i < ml.Count(); i++ )  {
+    for( size_t i=0; i < ml.Count(); i++ )  {
       ref->MulHkl(hklv, ml[i]);
       if( (hklv[2] > L) ||        // sdandardise then ...
           ((hklv[2] == L) && (hklv[1] > K)) ||
@@ -81,22 +81,22 @@ void XLibMacros::macBrushHkl(TStrObjList &Cmds, const TParamList &Options, TMacr
 
   TPtrList< HklBrushRef > refs, eqs;
   refs.SetCapacity( Hkl.RefCount() );
-  for( int i=0; i < Hkl.RefCount(); i++ )  {
+  for( size_t i=0; i < Hkl.RefCount(); i++ )  {
     refs.Add( new HklBrushRef( Hkl[i] ) );
     refs[i]->Standardise(ml, useFriedelLaw);
   }
   refs.QuickSorter.SortSF(refs, HklBrushRef::CompareHkl);
 
   eqs.Add(refs[0]);  // reference reflection
-  for( int i=0; i < refs.Count(); )  {
+  for( size_t i=0; i < refs.Count(); )  {
     while( (++i < refs.Count()) && (eqs[0]->CompareTo(*refs[i]) == 0) )
       eqs.Add( refs[i] );
     // do mergings etc
     if( eqs.Count() > 3)  {
       eqs.QuickSorter.SortSF(eqs, HklBrushRef::CompareSig);
-      int ind = eqs.Count()-1;
+      size_t ind = eqs.Count()-1;
       while( eqs[ind]->ref->GetS() > 2*eqs[0]->ref->GetS() && --ind >= 2 )  {
-        eqs[ ind ]->Deleted = true;
+        eqs[ind]->Deleted = true;
       }
     }
     if( i >= refs.Count() )  break;
@@ -107,7 +107,7 @@ void XLibMacros::macBrushHkl(TStrObjList &Cmds, const TParamList &Options, TMacr
   TRefPList toSave;
   toSave.SetCapacity( refs.Count() );
   int deletedRefs = 0;
-  for( int i=0; i < refs.Count(); i++ )  {
+  for( size_t i=0; i < refs.Count(); i++ )  {
     toSave.Add( refs[i]->ref );
     if( refs[i]->Deleted && refs[i]->ref->GetTag() >= 0 )  {
       refs[i]->ref->SetTag( -refs[i]->ref->GetTag() );

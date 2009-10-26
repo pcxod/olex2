@@ -25,20 +25,20 @@ public:
               OneArgFunc func)  {
     ematd a( dervs.Count(), dervs.Count() );
     evecd r( dervs.Count() ), increments(dervs.Count());
-    for(int j=0; j < dervs.Count(); j++ )  {
-      for( int i=0; i< dervs.Count(); i++ )  {
-        for( int k=0; k < data.Vectors();k++ )
+    for( size_t j=0; j < dervs.Count(); j++ )  {
+      for( size_t i=0; i< dervs.Count(); i++ )  {
+        for( size_t k=0; k < data.Vectors();k++ )
           a[i][j] += dervs[i]( data[k][0] ) * dervs[j]( data[k][0] );
      }
-     for(int k=0; k < data.Vectors(); k++ )
+     for( size_t k=0; k < data.Vectors(); k++ )
        r[j] += dervs[j](data[k][0]) * ( data[k][1]-func(data[k][0]) );
     }
     ematd::GauseSolve(a, r, increments);
-    for( int i=0; i < dervs.Count(); i++ )
+    for( size_t i=0; i < dervs.Count(); i++ )
       solutions += increments[i];
 
     double sdiff = 0, sval = 0;
-    for(int i=0; i < data.Elements(); i++ ) {
+    for( size_t i=0; i < data.Elements(); i++ ) {
       double v = olx_abs(data[i][1] - func( data[i][0] ) );  // |Y - Ycalc|, f depends on colutions
       sdiff += v*v;
       sval += (data[i][1] * data[i][1]);  // Y^2
@@ -55,20 +55,20 @@ public:
               TwoArgFunc func)  {
     ematd a( dervs.Count(), dervs.Count() );
     evecd r( dervs.Count() ), increments(dervs.Count());
-    for(int j=0; j < dervs.Count(); j++ )  {
-      for( int i=0; i< dervs.Count(); i++ )  {
-        for( int k=0; k< data.Vectors();k++ )
+    for( size_t j=0; j < dervs.Count(); j++ )  {
+      for( size_t i=0; i< dervs.Count(); i++ )  {
+        for( size_t k=0; k< data.Vectors();k++ )
           a[i][j] += dervs[i]( data[k][0], data[k][1] ) * dervs[j]( data[k][0], data[k][1] );
      }
-     for(int k=0; k < data.Vectors(); k++ )
+     for( size_t k=0; k < data.Vectors(); k++ )
        r[j] += dervs[j](data[k][0], data[k][1]) * ( data[k][2]-func(data[k][0], data[k][1]) );
     }
     ematd::GauseSolve(a, r, increments);
-    for( int i=0; i < dervs.Count(); i++ )
+    for( size_t i=0; i < dervs.Count(); i++ )
       solutions += increments[i];
 
     double sdiff = 0, sval = 0;
-    for(int i=0; i < data.Vectors(); i++ )  {
+    for( size_t i=0; i < data.Vectors(); i++ )  {
       double v = olx_abs(data[i][2] - func( data[i][0], data[i][1] ) );  // |Y - Ycalc|, f depends on colutions
       sdiff = v*v;
       sval += (data[i][2] * data[i][2]);  // Y^2
@@ -85,21 +85,21 @@ public:
               ThreeArgFunc func)  {
     ematd a( dervs.Count(), dervs.Count() );
     evecd r( dervs.Count() ), increments(dervs.Count());
-    for(int j=0; j < dervs.Count(); j++ )  {
-      for( int i=0; i< dervs.Count(); i++ )  {
-        for( int k=0; k< data.Vectors(); k++ )  {
+    for( size_t j=0; j < dervs.Count(); j++ )  {
+      for( size_t i=0; i< dervs.Count(); i++ )  {
+        for( size_t k=0; k< data.Vectors(); k++ )  {
           a[i][j] += dervs[i]( data[k][0], data[k][1], data[k][2] ) * dervs[j]( data[k][0], data[k][1], data[k][2] );
         }
      }
-     for(int k=0; k < data.Vectors(); k++ )
+     for( size_t k=0; k < data.Vectors(); k++ )
        r[j] += dervs[j](data[k][0], data[k][1], data[k][2]) * ( data[k][3]-func(data[k][0], data[k][1], data[k][2]) );
     }
     ematd::GauseSolve(a, r, increments);
-    for( int i=0; i < dervs.Count(); i++ )
+    for( size_t i=0; i < dervs.Count(); i++ )
       solutions += increments[i];
 
     double sdiff = 0, sval = 0;
-    for(int i=0; i < data.Vectors(); i++ )  {
+    for( size_t i=0; i < data.Vectors(); i++ )  {
       double v = olx_abs(data[i][3] - func( data[i][0], data[i][1], data[i][2] ) );  // |Y - Ycalc|, f depends on colutions
       sdiff += v*v;
       sval += (data[i][3] * data[i][3]);  // Y^2
@@ -116,21 +116,21 @@ public:
               VecArgFunc func)  {
     ematd a( dervs.Count(), dervs.Count() );
     evecd r( dervs.Count() ), increments(dervs.Count());
-    for(int j=0; j < dervs.Count(); j++ )  {
-      for( int i=0; i< dervs.Count(); i++ )  {
-        for( int k=0; k< data.Vectors(); k++ )  {
+    for( size_t j=0; j < dervs.Count(); j++ )  {
+      for( size_t i=0; i< dervs.Count(); i++ )  {
+        for( size_t k=0; k< data.Vectors(); k++ )  {
           a[i][j] += dervs[i]( data[k] ) * dervs[j]( data[k] );
         }
      }
-     for(int k=0; k < data.Vectors(); k++ )
+     for( size_t k=0; k < data.Vectors(); k++ )
        r[j] += dervs[j](data[k]) * ( data[k][data.Elements()-1]-func(data[k]) );
     }
     ematd::GauseSolve(a, r, increments);
-    for( int i=0; i < dervs.Count(); i++ )
+    for( size_t i=0; i < dervs.Count(); i++ )
       solutions[i] = increments[i];
 
     double sdiff = 0, sval = 0;
-    for(int i=0; i < data.Vectors(); i++ )  {
+    for( size_t i=0; i < data.Vectors(); i++ )  {
       double v = olx_abs(data[i][data.Elements()-1] - func( data[i] ) );  // |Y - Ycalc|, f depends on colutions
       sdiff += v*v;
       sval += (data[i][data.Elements()-1] * data[i][data.Elements()-1]);  // Y^2

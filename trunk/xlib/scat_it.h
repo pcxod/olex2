@@ -16,7 +16,8 @@ BeginXlibNamespace()
 class TLibScatterer  {
   double *Data;
   bool BuiltIn;
-  int Id, size;
+  uint16_t Id;
+  uint16_t size;
   double (TLibScatterer::*evalFunc)(double square_val) const;
 protected:
   inline double Calc_sq9(double sqv) const {
@@ -32,12 +33,12 @@ protected:
     to be exported to that files too and presumably deleted, so IsBuiltIn() function
     helpt to resolve the issues with the determination where the scattere came from...
   */
-  inline void SetBuiltIn()  {  BuiltIn = true;  }
-  inline void SetId(int v)  {  Id = v;  }
+  void SetBuiltIn()  {  BuiltIn = true;  }
+  void SetId(uint16_t v)  {  Id = v;  }
 public:
   TLibScatterer(double a1, double a2, double a3, double a4,
                     double b1, double b2, double b3, double b4,
-                    double c )  {
+                    double c)  {
     size = 9;
     Data = new double[size];
     Data[0] = a1;  Data[1] = a2;  Data[2] = a3;  Data[3] = a4;
@@ -62,7 +63,7 @@ public:
   TLibScatterer( const TLibScatterer& it )  {
     size = it.size;
     Data = new double[size];
-    for( int i=0; i < size; i++ )
+    for( uint16_t i=0; i < size; i++ )
       Data[i] = it.Data[i];
     BuiltIn = false;
     Id = it.Id;
@@ -71,15 +72,13 @@ public:
 
   ~TLibScatterer()  {  delete [] Data;  }
 
-  inline double Calc(double Theta, double Lambda)  const {  return Calc(-sqr(sin(Theta)/Lambda));  }
+  inline double Calc(double Theta, double Lambda)  const {  return Calc(-olx_sqr(sin(Theta)/Lambda));  }
   inline double Calc(double val)    const {  return (this->*evalFunc)(-val*val);  }
   inline double Calc_sq(double sqv) const {  return (this->*evalFunc)(-sqv);  }
 
   inline bool IsBuiltIn() const {  return BuiltIn;  }
-  inline int GetId()      const {  return Id;  }
-
-  inline int Size()       const {  return size;  }
-
+  inline uint16_t GetId() const {  return Id;  }
+  inline uint16_t Size() const {  return size;  }
   inline const double* GetData()  const {  return Data;  }
 //  inline const TVectorD& GetData()  const {  return Data;  }
 };
@@ -90,21 +89,22 @@ class TScattererLib  {
   void InitData11();
   void Clear();
 public:
-  TScattererLib(int size)  {
+  TScattererLib(uint16_t size)  {
     if( size == 9 )       InitData9();
     else if( size == 11 ) InitData11();
-    else                  throw TInvalidArgumentException(__OlxSourceInfo, "unknown scatterer size");
+    else
+      throw TInvalidArgumentException(__OlxSourceInfo, "unknown scatterer size");
   }
   virtual ~TScattererLib()  {  Clear();  }
 
   inline TLibScatterer* Find(const olxstr& name)  {
-    int ind = Data.IndexOfComparable( name );
-    return (ind == -1) ? NULL : Data.GetObject(ind);
+    size_t ind = Data.IndexOfComparable( name );
+    return (ind == InvalidIndex) ? NULL : Data.GetObject(ind);
   }
 
-  inline int Count()  const {  return Data.Count();  }
+  inline size_t Count()  const {  return Data.Count();  }
   // Scatterer GetId() can be used to access elements directly ...
-  inline TLibScatterer* operator [] (int index) const {  return Data.GetObject(index);  }
+  inline TLibScatterer* operator [] (size_t index) const {  return Data.GetObject(index);  }
 };
 
 

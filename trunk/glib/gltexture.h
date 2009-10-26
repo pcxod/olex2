@@ -328,7 +328,7 @@ public:
    TTextureManager()  {  }
    // when cloning is implemented - this has to change!
    virtual ~TTextureManager()  {
-     for( int i=0; i < Textures.Count(); i++ )  {
+     for( size_t i=0; i < Textures.Count(); i++ )  {
        TGlTexture* tex = Textures.GetObject(i);
        unsigned int texId = tex->GetId();
        glDeleteTextures(1, (GLuint*)&texId);
@@ -394,7 +394,7 @@ public:
   //int CloneTexture( int )
   //inline int GetTextureIndex( const TGlTexture& tex) const {  return Textures.}
   inline TGlTexture* FindTexture(int textureIndex)  {
-    int index = Textures.IndexOfComparable( textureIndex );
+    size_t index = Textures.IndexOfComparable(textureIndex);
     return Textures.GetObject(index);
   }
 };

@@ -47,12 +47,12 @@ void TMatchMode::FitAtoms()  {
     netB = &AtomsToMatch[1]->Atom().GetNetwork();
     if( netA->GetLattice() != netB->GetLattice() )  {  //match lattices
       atomsB.SetCapacity( netB->GetLattice().AtomCount() );
-      for( int i=0; i < netB->GetLattice().AtomCount(); i++ )
+      for( size_t i=0; i < netB->GetLattice().AtomCount(); i++ )
         atomsB.Add( &netB->GetLattice().GetAtom(i) );
     }
     else  {
       atomsB.SetCapacity( netB->NodeCount() );
-      for( int i=0; i < netB->NodeCount(); i++ )
+      for( size_t i=0; i < netB->NodeCount(); i++ )
         atomsB.Add( &netB->Node(i) );
     }
   }
@@ -63,7 +63,7 @@ void TMatchMode::FitAtoms()  {
     return;
   }
   if( &netA->GetLattice() == &netB->GetLattice() )  {
-    for( int i=2; i < AtomsToMatch.Count(); i+=2 )  {
+    for( size_t i=2; i < AtomsToMatch.Count(); i+=2 )  {
       if( AtomsToMatch[i]->Atom().GetNetwork() != netA ||
           AtomsToMatch[i+1]->Atom().GetNetwork() != netB )  {
 
@@ -80,7 +80,7 @@ void TMatchMode::FitAtoms()  {
     }
   }
   else  {
-    for( int i=2; i < AtomsToMatch.Count(); i+=2 )  {
+    for( size_t i=2; i < AtomsToMatch.Count(); i+=2 )  {
       if( AtomsToMatch[i]->Atom().GetNetwork().GetLattice() != netA->GetLattice() ||
           AtomsToMatch[i+1]->Atom().GetNetwork().GetLattice() != netB->GetLattice() )  {
 
@@ -99,14 +99,14 @@ void TMatchMode::FitAtoms()  {
 
   if( AtomsToMatch.Count() == 2 )  {
     vec3d origin( AtomsToMatch[1]->Atom().crd() );
-    for( int i=0; i < atomsB.Count(); i++ )
+    for( size_t i=0; i < atomsB.Count(); i++ )
       (atomsB[i]->crd() -= origin) += AtomsToMatch[0]->Atom().crd();
     TNetPList na;
     TNetPList nb;
     if( netA->GetLattice() != netB->GetLattice() )  {
-      for(int i=0; i < netA->GetLattice().FragmentCount(); i++ )
+      for( size_t i=0; i < netA->GetLattice().FragmentCount(); i++ )
         na.Add( &netA->GetLattice().GetFragment(i) );
-      for(int i=0; i < netB->GetLattice().FragmentCount(); i++ )
+      for( size_t i=0; i < netB->GetLattice().FragmentCount(); i++ )
         nb.Add( &netB->GetLattice().GetFragment(i) );
     }
     else  {
@@ -136,11 +136,11 @@ void TMatchMode::FitAtoms()  {
     mat3d rm;
     CreateRotationMatrix(rm, rv, ca);
 
-    for( int i=0; i < atomsB.Count(); i++ )
+    for( size_t i=0; i < atomsB.Count(); i++ )
       atomsB[i]->crd() = rm * atomsB[i]->crd();
 
     orgn = AtomsToMatch[1]->Atom().crd();
-    for( int i=0; i < atomsB.Count(); i++ )
+    for( size_t i=0; i < atomsB.Count(); i++ )
       (atomsB[i]->crd() -= orgn) += AtomsToMatch[0]->Atom().crd();
     TGlXApp::GetGXApp()->UpdateBonds();
     TGlXApp::GetGXApp()->CenterView();
@@ -158,11 +158,11 @@ void TMatchMode::FitAtoms()  {
     double ca = v1.CAngle( v2 );
     mat3d rm;
     CreateRotationMatrix(rm, rv, ca);
-    for( int i=0; i < atomsB.Count(); i++ ) 
+    for( size_t i=0; i < atomsB.Count(); i++ ) 
       atomsB[i]->crd() = rm * atomsB[i]->crd();
 
     vec3d orgn = AtomsToMatch[1]->Atom().crd();
-    for( int i=0; i < atomsB.Count(); i++ )
+    for( size_t i=0; i < atomsB.Count(); i++ )
       (atomsB[i]->crd() -= orgn) += AtomsToMatch[0]->Atom().crd();
     TGlXApp::GetGXApp()->UpdateBonds();
     TGlXApp::GetGXApp()->CenterView();

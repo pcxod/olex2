@@ -24,7 +24,7 @@ namespace ctrl_ext  {
     TWindowInterface WI;
   };
 
-  const short UnknownSwitchState   = -2;
+  const size_t UnknownSwitchState = (size_t)(-2);
   static olxstr 
     evt_change_id("ONCHANGE"),
     evt_on_mouse_leave_id("ONLEAVE"),

@@ -10,7 +10,7 @@
 #include "undo.h"
 
 void TUndoStack::Clear()  {
-  for( int i=0; i < UndoList.Count(); i++ )
+  for( size_t i=0; i < UndoList.Count(); i++ )
     delete UndoList[i];
   UndoList.Clear();
 }
@@ -27,7 +27,7 @@ TUndoData* TUndoStack::Pop()  {
 /******************************************************************************/
 /******************************************************************************/
 TUndoData::~TUndoData()  {
-  for( int i=0; i < UndoList.Count(); i++ )
+  for( size_t i=0; i < UndoList.Count(); i++ )
     delete UndoList[i];
 
   delete UndoAction;

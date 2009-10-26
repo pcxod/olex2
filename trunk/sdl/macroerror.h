@@ -35,7 +35,7 @@ public:
   void operator = (const TMacroError& ME);
   olxstr& ProcessingError(const olxstr& location, const olxstr& errMsg);
   void NonexitingMacroError(const olxstr& macroName);
-  void WrongArgCount(const ABasicFunction& caller, unsigned int provided);
+  void WrongArgCount(const ABasicFunction& caller, size_t provided);
   void WrongOption(const ABasicFunction& caller, const olxstr& option);
   void WrongState(const ABasicFunction& caller);
 

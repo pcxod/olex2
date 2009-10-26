@@ -22,8 +22,8 @@ public:
   inline const olxstr& GetSfac()  const  {  return Sfac;  }
   inline const olxstr& GetUnit()  const  {  return Unit;  }
 
-  inline int FacesCount()  const  {  return Faces.Count();  }
-  inline const evecd& GetFace(int i)  const  {  return Faces[i];  }
+  inline size_t FacesCount()  const  {  return Faces.Count();  }
+  inline const evecd& GetFace(size_t i)  const  {  return Faces[i];  }
 
   bool IsSGInitialised() const {  return SGInitialised;  }
 

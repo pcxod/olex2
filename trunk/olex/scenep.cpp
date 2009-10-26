@@ -198,7 +198,7 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   //light model frame
   cbFonts = new TComboBox(this);
   AGlScene& ascene = TGXApp::GetInstance().GetRender().GetScene();
-  for( int i=0; i < ascene.FontCount(); i++ )
+  for( size_t i=0; i < ascene.FontCount(); i++ )
     cbFonts->AddObject( ascene.GetFont(i)->GetName(), ascene.GetFont(i) );
   cbFonts->SetSelection(0);
   cbFonts->OnChange.Add(this);

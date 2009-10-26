@@ -10,10 +10,10 @@
 BeginGlNamespace()
 
 class TGlCursor: public AGDrawObject, AEventsDispatcher  {
-  float FX, FY;
-  bool FTextStyle;
-  short FFontIndex;
-  class TGlPrimitive *FPrimitive;
+  float X, Y;
+  bool TextStyle;
+  uint16_t FontIndex;
+  class TGlPrimitive *Primitive;
   olxch Symbol;
 protected:
   bool Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
@@ -22,16 +22,13 @@ public:
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlCursor() {}
 
-  void SetPosition(float x, float y)  {  FX=x;  FY=y;  }
-  float X() const {  return FX;  }
-  float Y() const {  return FY;  }
-
-  class TGlFont *Font()  const;
-  void FontIndex(short fi) {  FFontIndex = fi; }
-  short FontIndex()  const {  return FFontIndex;  }
-
-  bool IsText()  {  return FTextStyle;  }
-
+  void SetPosition(float x, float y)  {  X = x;  Y = y;  }
+  DefPropP(float, X)
+  DefPropP(float, Y)
+  DefPropP(uint16_t, FontIndex)
+  class TGlFont& GetFont() const;
+  
+  bool IsText()  const {  return TextStyle;  }
   inline olxch GetSymbol() const {  return Symbol;  }
   void SetSymbol(olxch v);
 

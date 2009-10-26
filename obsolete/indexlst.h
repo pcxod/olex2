@@ -23,16 +23,16 @@ public:
       SortedList.Add( il.SortedList.GetComparable(i), en);
     }
   }
-  inline OC& operator [] (int i)             {  return List[i];  }
-  inline const OC& operator [] (int i) const {  return List[i];  }
-  inline int Count()                   const {  return List.Count();  }
-  inline bool IsEmpty()                const {  return List.IsEmpty();  }
-  OC& Last()                                 {  return List.Last();  }
+  inline OC& operator [] (size_t i)  {  return List[i];  }
+  inline const OC& operator [] (size_t i) const {  return List[i];  }
+  inline size_t Count() const {  return List.Count();  }
+  inline bool IsEmpty() const {  return List.IsEmpty();  }
+  OC& Last() {  return List.Last();  }
   OC* FindByKey(const KC& key) {  
-    int i = SortedList.IndexOfComparable(key);
-    return i == -1 ? NULL : SortedList.Object(i).obj;
+    size_t i = SortedList.IndexOfComparable(key);
+    return i == InvalidIndex ? NULL : SortedList.Object(i).obj;
   }
-  inline TIndexList& SetCapacity(int cp)  {
+  inline TIndexList& SetCapacity(size_t cp)  {
     List.SetCapacity(cp);
     SortedList.SetCapacity(cp);
     return *this;
@@ -41,9 +41,9 @@ public:
     Clear();
     List.SetCapacity( il.Count() );
     SortedList.SetCapacity( il.Count() );
-    for( int i=0; i < il.Count(); i++ )
+    for( size_t i=0; i < il.Count(); i++ )
       List.AddCCopy(il[i]);
-    for( int i=0; i < il.Count(); i++ )  {
+    for( size_t i=0; i < il.Count(); i++ )  {
       iEntry en = { &List[il.SortedList.Object(i).ind], il.SortedList.Object(i).ind };
       SortedList.Add( il.SortedList.GetComparable(i), en);
     }

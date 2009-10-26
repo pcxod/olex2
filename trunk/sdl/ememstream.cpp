@@ -38,7 +38,7 @@ IOutputStream& TEMemoryStream::operator << (IInputStream &is)  {
 
   // we are not at the end of the stream ..
   if( (GetLength() - Position) != 0 )  {
-    long size = GetLength() - Position;
+    size_t size = GetLength() - Position;
     char* mem = new char[ size ];
     is.Read( mem, size );
     // debug - remove the assignement after
@@ -78,7 +78,7 @@ IOutputStream& TEMemoryStream::operator << (IInputStream &is)  {
 //..............................................................................
 void TEMemoryStream::SaveToFile(const olxstr& FN)  {
   TEFile file(FN, "w+b");
-  long pos = GetPosition();
+  const size_t pos = GetPosition();
   SetPosition(0);
   file << *this;
   SetPosition(pos);

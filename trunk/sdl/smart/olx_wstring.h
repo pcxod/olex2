@@ -87,18 +87,18 @@ protected:
     if( SData == NULL )  SData = new Buffer(_Length +_Increment, bf, _Length);
     return *this;
   }
-  inline const wchar_t* printFormat(const char v)                   const {  return L"%c";  }
-  inline const wchar_t* printFormat(const short int v)              const {  return L"%hd";  }
-  inline const wchar_t* printFormat(const unsigned short int v)     const {  return L"%hu";  }
-  inline const wchar_t* printFormat(const int v)                    const {  return L"%d";  }
-  inline const wchar_t* printFormat(const unsigned int v)           const {  return L"%u";  }
-  inline const wchar_t* printFormat(const long int v)               const {  return L"%ld";  }
-  inline const wchar_t* printFormat(const unsigned long int v)      const {  return L"%lu";  }
-  inline const wchar_t* printFormat(const long long int v)          const {  return L"%Ld";  }
-  inline const wchar_t* printFormat(const unsigned long long int v) const {  return L"%Lu";  }
-  inline const wchar_t* printFormat(const float v)                  const {  return L"%f";  }
-  inline const wchar_t* printFormat(const double v)                 const {  return L"%lf";  }
-  inline const wchar_t* printFormat(const long double v)            const {  return L"%Lf";  }
+  inline const wchar_t* printFormat(const char)                   const {  return L"%c";  }
+  inline const wchar_t* printFormat(const short int)              const {  return L"%hd";  }
+  inline const wchar_t* printFormat(const unsigned short int)     const {  return L"%hu";  }
+  inline const wchar_t* printFormat(const int)                    const {  return L"%d";  }
+  inline const wchar_t* printFormat(const unsigned int)           const {  return L"%u";  }
+  inline const wchar_t* printFormat(const long int)               const {  return L"%ld";  }
+  inline const wchar_t* printFormat(const unsigned long int)      const {  return L"%lu";  }
+  inline const wchar_t* printFormat(const long long int)          const {  return L"%Ld";  }
+  inline const wchar_t* printFormat(const unsigned long long int) const {  return L"%Lu";  }
+  inline const wchar_t* printFormat(const float)                  const {  return L"%f";  }
+  inline const wchar_t* printFormat(const double)                 const {  return L"%lf";  }
+  inline const wchar_t* printFormat(const long double)            const {  return L"%Lf";  }
 public:
   TWString();
   // simple convertion constructors

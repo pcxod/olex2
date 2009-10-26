@@ -88,10 +88,10 @@ IEvaluable* exp_builder::process_const_func(IEvaluable* func, IEvaluable* left, 
 IEvaluable* exp_builder::evaluator_from_evator(expression_tree* root, IEvaluable* left)  {
   TPtrList<IEvaluable> args;
   bool all_const = true;
-  for( int i=0; i < root->evator->args.Count(); i++ )  {
+  for( size_t i=0; i < root->evator->args.Count(); i++ )  {
     args.Add( create_evaluator(root->evator->args[i]) );
     if( args.Last() == NULL )  {
-      for( int j=0; j < args.Count()-2; j++ )
+      for( size_t j=0; j < args.Count()-2; j++ )
         delete args[j];
       throw TInvalidArgumentException(__OlxSourceInfo, "could not find appropriate evluable");
     }
@@ -194,7 +194,7 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root)  {
       return evaluator_from_evator(root);
     else  {
       if( root->data.IsNumber() )  { // is number?
-        if( root->data.IndexOf('.') != -1 )
+        if( root->data.IndexOf('.') != InvalidIndex )
           return new DoubleValue(root->data.ToDouble());
         else
           return new IntValue(root->data.ToInt());
@@ -206,11 +206,11 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root)  {
         {
           return new StringValue(root->data.Trim(root->data.CharAt(0)));
         }
-        int ind = scope.consts.IndexOf(root->data);
-        if( ind != -1 )
+        size_t ind = scope.consts.IndexOf(root->data);
+        if( ind != InvalidIndex )
           return scope.consts.GetValue(ind);
         ind = scope.vars.IndexOf(root->data);
-        if( ind == -1 )
+        if( ind == InvalidIndex )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("undefined variable: ") << root->data);
         return scope.vars.GetValue(ind);
       }

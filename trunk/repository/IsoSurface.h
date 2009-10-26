@@ -100,9 +100,9 @@ protected:
       return (*(*Data[x])[y])[z].ps[e];
     }
     void Clear()  {
-      for( int i=0; i < Data.Count(); i++ )  {
+      for( size_t i=0; i < Data.Count(); i++ )  {
         IsoPointListY* ly = Data.GetObject(i);
-        for( int j=0; j < ly->Count(); j++ ) 
+        for( size_t j=0; j < ly->Count(); j++ ) 
           delete ly->GetObject(j);
         delete ly;
       }
@@ -112,11 +112,11 @@ protected:
     void GetVertices(TArrayList<vec3f>& v) {  // an upper estimate
       v.SetCount(Count);
       int ind = 0;
-      for( int i=0; i < Data.Count(); i++ )  {
+      for( size_t i=0; i < Data.Count(); i++ )  {
         IsoPointListY* ly = Data.GetObject(i);
-        for( int j=0; j < ly->Count(); j++ )  {
+        for( size_t j=0; j < ly->Count(); j++ )  {
           IsoPointListZ* lz = ly->GetObject(j);
-          for( int k=0; k < lz->Count(); k++ )  {
+          for( size_t k=0; k < lz->Count(); k++ )  {
             Points3& p = lz->GetObject(k);
             for(int l=0; l < 3; l++ )  {
               if( p.ps[l].initialised )  {

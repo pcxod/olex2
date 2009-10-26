@@ -17,7 +17,11 @@
 //  #pragma link "../..lib/psdk/mswsock.lib"
 
 class THttpFileSystem: public AFileSystem, public IEObject  {
+#ifdef __WIN32__
+  SOCKET Socket;
+#else
   int Socket;
+#endif
   bool Connected, Successful;
   TUrl Url;
 protected:

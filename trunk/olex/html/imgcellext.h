@@ -21,7 +21,7 @@ class THtmlImageCell : public wxHtmlCell, public AOlxCtrl  {
     float qr;
     Circle(short _x, short _y, float _r) : x(_x), y(_y), qr(_r*_r) {}
     inline bool IsInside(short _x, short _y) const {
-      return (sqr(_x-x) + sqr(_y-y) <= qr); 
+      return (olx_sqr(_x-x) + olx_sqr(_y-y) <= qr); 
     }
   };
   struct AShapeInfo  {

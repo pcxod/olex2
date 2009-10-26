@@ -18,8 +18,7 @@ class TTTable: public IEObject  {
   TStrList ColNames, RowNames;
 public:
   TTTable()  {  }
-
-  TTTable(int RowCnt, int ColCnt)  {  Resize(RowCnt, ColCnt);  }
+  TTTable(size_t RowCnt, size_t ColCnt)  {  Resize(RowCnt, ColCnt);  }
 
   virtual ~TTTable()  {  Clear();  }
 
@@ -29,27 +28,24 @@ public:
     RowNames.Clear();
   }
 
-  template <class T1>
-    void Assign( const TTTable<T1>& Table)  {
-      Resize(Table.RowCount(), Table.ColCount());
-      ColNames.Assign(Table.GetColNames());
-      RowNames.Assign(Table.GetRowNames());
-      for( int i=0; i < RowCount(); i++ )
-        Rows[i].Assign( Table[i] );
-    }
+  template <class T1> void Assign( const TTTable<T1>& Table)  {
+    Resize(Table.RowCount(), Table.ColCount());
+    ColNames.Assign(Table.GetColNames());
+    RowNames.Assign(Table.GetRowNames());
+    for( size_t i=0; i < RowCount(); i++ )
+      Rows[i].Assign( Table[i] );
+  }
 
-  inline const TStrList& GetColNames() const  {  return ColNames;  }
-  inline const TStrList& GetRowNames() const  {  return RowNames;  }
-  inline int RowCount()               const {  return Rows.Count();  }
-  inline int ColCount()               const {  return ColNames.Count();  }
-  inline olxstr& ColName(int index) const { return ColNames[index];  }
-  inline olxstr& RowName(int index) const {  return RowNames[index];  }
-  inline int ColIndex( const olxstr& N) const  {  return ColNames.IndexOf(N);  }
-  inline int RowIndex( const olxstr& N) const  {  return RowNames.IndexOf(N);  }
+  const TStrList& GetColNames() const  {  return ColNames;  }
+  const TStrList& GetRowNames() const  {  return RowNames;  }
+  size_t RowCount()               const {  return Rows.Count();  }
+  size_t ColCount()               const {  return ColNames.Count();  }
+  olxstr& ColName(size_t index) const { return ColNames[index];  }
+  olxstr& RowName(size_t index) const {  return RowNames[index];  }
+  size_t ColIndex(const olxstr& N) const  {  return ColNames.IndexOf(N);  }
+  size_t RowIndex(const olxstr& N) const  {  return RowNames.IndexOf(N);  }
 
-  void Resize(int  RowCnt, int ColCnt)  {
-    if( RowCnt < 0 || ColCnt < 0 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "size");
+  void Resize(size_t  RowCnt, size_t ColCnt)  {
     if( RowCnt != Rows.Count() )  {
       if( RowCnt < Rows.Count() )  {
         Rows.Shrink(RowCnt);
@@ -70,7 +66,7 @@ public:
       else
         ColNames.SetCount(ColCnt);
     }
-    for( int i=0; i < Rows.Count(); i++ )  {
+    for( size_t i=0; i < Rows.Count(); i++ )  {
       if( Rows[i].Count() < ColCnt )  { 
         while( Rows[i].Count() < ColCnt )
           Rows[i].Add(EmptyString);
@@ -80,81 +76,79 @@ public:
     }
   }
 
-  void SetColCount(int NCC)  {  Resize(RowCount(), NCC);  }
-
-  void SetRowCount(int NRC)  {  Resize(NRC, ColNames.Count() );  }
-  
-  void InsertCol(int index, const olxstr &Caption)  {
-    for( int i=0; i < RowCount(); i++ )
+  void SetColCount(size_t NCC)  {  Resize(RowCount(), NCC);  }
+  void SetRowCount(size_t NRC)  {  Resize(NRC, ColNames.Count() );  }
+  void InsertCol(size_t index, const olxstr &Caption)  {
+    for( size_t i=0; i < RowCount(); i++ )
       Rows[i].Insert(index, EmptyString);
     ColNames.Insert(index, Caption);
   }
 
-  T& InsertRow(int index, const olxstr &Caption)  {
+  T& InsertRow(size_t index, const olxstr &Caption)  {
     T& SL = Rows.InsertNew(index);
-    for( int i=0; i < ColNames.Count(); i++ )
+    for( size_t i=0; i < ColNames.Count(); i++ )
       SL.Add(EmptyString);
     RowNames.Insert(index, Caption);
     return SL;
   }
 
   void AddCol(const olxstr &Caption)  {
-    for( int i=0; i < RowCount(); i++ )
+    for( size_t i=0; i < RowCount(); i++ )
       Rows[i].Add( EmptyString );
     ColNames.Add(Caption);
   }
 
   T& AddRow(const olxstr &Caption)  {
     T& SL = Rows.AddNew();
-    for( int i=0; i < ColNames.Count(); i++ )
+    for( size_t i=0; i < ColNames.Count(); i++ )
       SL.Add(EmptyString);
     RowNames.Add(Caption);
     return SL;
   }
 
   void EmptyContent(bool EmptyCaptions)  {
-    for( int i=0; i < Rows.Count(); i++ )  {
-      for( int j=0; j < Rows[i].Count(); j++ )
+    for( size_t i=0; i < Rows.Count(); i++ )  {
+      for( size_t j=0; j < Rows[i].Count(); j++ )
         Rows[i][j] = EmptyString;
     }
     if( EmptyCaptions )  {
-      for( int j=0; j < ColNames.Count(); j++ )
+      for( size_t j=0; j < ColNames.Count(); j++ )
         ColNames[j] = EmptyString;
-      for( int j=0; j < RowNames.Count(); j++ )
+      for( size_t j=0; j < RowNames.Count(); j++ )
         RowNames[j] = EmptyString;
     }
   }
 
-  void EmptyRow(int index, bool EmptyCaption)  {
-    for( int j=0; j < Rows[index].Count(); j++ )
+  void EmptyRow(size_t index, bool EmptyCaption)  {
+    for( size_t j=0; j < Rows[index].Count(); j++ )
       Rows[index][j] = EmptyString;
     if( EmptyCaption )
       RowNames[index] = EmptyString;
   }
 
-  void EmptyCol(int index, bool EmptyCaption)  {
-    for( int i=0; i < RowCount(); i++ )
+  void EmptyCol(size_t index, bool EmptyCaption)  {
+    for( size_t i=0; i < RowCount(); i++ )
       Rows[i][index] = EmptyString;
     if( EmptyCaption )
       ColNames[index] = EmptyString;
   }
 
-  void DelRow(int index)  {
+  void DelRow(size_t index)  {
     Rows.Delete(index);
     RowNames.Delete(index);
   }
 
-  void DelCol( int index)  {
+  void DelCol(size_t index)  {
     ColNames.Delete(index);
-    for( int i=0; i < RowCount(); i++ )
+    for( size_t i=0; i < RowCount(); i++ )
       Rows[i].Delete(index);
   }
 
 
-  bool Find(const olxstr& What, int& row, int& col ) const  {
-    for( int i=0; i < Rows.Count(); i++ )  {
+  bool Find(const olxstr& What, size_t& row, size_t& col) const  {
+    for( size_t i=0; i < Rows.Count(); i++ )  {
       col = Rows[i].IndexOf(What);
-      if(  col >= 0 )  {  
+      if(  col != InvalidIndex )  {  
         row = i;  
         return true;  
       }
@@ -162,8 +156,8 @@ public:
     return false;
   }
   // finds a row for the column value
-  bool FindCol(const olxstr& What, int& col ) const  {
-    for( int i=0; i < Rows.Count(); i++ )
+  bool FindCol(const olxstr& What, size_t& col) const  {
+    for( size_t i=0; i < Rows.Count(); i++ )
       if( Rows[i][col] == What )  { 
         col = i;  
         return true;  
@@ -171,8 +165,8 @@ public:
     return false;
   }
   // finds a column in the row
-  bool FindRow(const olxstr& What, int& row ) const  {
-    return (Rows[row].IndexOf(What) == -1) ? false : true;
+  bool HasRow(const olxstr& What, size_t row ) const  {
+    return (Rows[row].IndexOf(What) == InvalidIndex) ? false : true;
   }
 
   void CreateHTMLList(TStrList& L, const olxstr& Title,
@@ -185,15 +179,15 @@ public:
     if( colNames )  {
       L.Add("<tr>");
       if( rowNames )  Tmp = "<td></td>";
-      for( int i=0; i < ColNames.Count(); i++ )
+      for( size_t i=0; i < ColNames.Count(); i++ )
         Tmp << "<td>" << ColNames[i] << "</td>";
       L.Add( (Tmp << "</tr>") );
     }
-    for( int i=0; i < Rows.Count(); i++ )  {
+    for( size_t i=0; i < Rows.Count(); i++ )  {
       Tmp = "<tr>";
       if( rowNames )
         Tmp << "<td>" << RowNames[i] << "</td>";
-      for( int j=0; j < ColNames.Count(); j++ )
+      for( size_t j=0; j < ColNames.Count(); j++ )
         Tmp << "<td>" << Rows[i][j] << "</td>";
       L.Add( (Tmp << "</tr>") );
     }
@@ -223,29 +217,29 @@ public:
 
     if( colNames )  {
       if( rowNames )  Tmp << "<th>" << thAttr[0] << "</th>";
-      for( int i=0; i < colCount; i++ )  {
-        for( int j=0; j < ColNames.Count(); j++ )
+      for( size_t i=0; i < colCount; i++ )  {
+        for( size_t j=0; j < ColNames.Count(); j++ )
           Tmp << "<th " << thAttr[j+1] << '>' << ColNames[j] << "</th>";
       }
       L.Add( (Tmp << "</tr>") );
     } //!ColNames
-    int inc = (Rows.Count()%colCount)!=0 ? colCount : 0,
-        l_l = (Rows.Count()+inc)/colCount;
-    for( int i=0; i < l_l; i++ )  {
+    size_t inc = (Rows.Count()%colCount)!=0 ? colCount : 0,
+           l_l = (Rows.Count()+inc)/colCount;
+    for( size_t i=0; i < l_l; i++ )  {
       Tmp = "<tr ";
       Tmp << rowAttr << '>';
-      for( int j=0; j < colCount; j++ )  {
-        int index = i+ j*(Rows.Count()+inc)/colCount;
+      for( size_t j=0; j < colCount; j++ )  {
+        size_t index = i+ j*(Rows.Count()+inc)/colCount;
         if( index >= RowCount() )  {
           if( rowNames )
             Tmp << "<td " << clAttr[0] << ">&nbsp;</td>";
-          for( int k=0; k < ColNames.Count(); k++ )
+          for( size_t k=0; k < ColNames.Count(); k++ )
             Tmp << "<td " << clAttr[k+1] << ">&nbsp;</td>";
           continue;
         }
         if( rowNames )
           Tmp << "<td " << clAttr[0] << '>' << RowNames[index] << "</td>";
-        for( int k=0; k < ColNames.Count(); k++ )
+        for( size_t k=0; k < ColNames.Count(); k++ )
           Tmp << "<td " << clAttr[k+1] << '>' << Rows[index][k] << "</td>";
       }
       L.Add( (Tmp << "</tr>") );
@@ -254,15 +248,15 @@ public:
     if( !footer.IsEmpty() )  L.Add("<p ") << footerPAttr << '>' << footer << "</p>";
   }
   void CreateTXTList(TStrList &L, const olxstr &Title, bool colNames, bool rowNames, const olxstr& Sep) const {
-    TVector<int> rowV(ColCount()+1);
+    TVector<size_t> rowV(ColCount()+1);
     olxstr Tmp;
     L.Add(Title);
-    for( int i=0; i < Rows.Count(); i++ )
+    for( size_t i=0; i < Rows.Count(); i++ )
       if( RowNames[i].Length() > rowV[0] )
         rowV[0] = RowNames[i].Length();
 
-    for( int i=0; i < ColNames.Count(); i++ )  {
-      for( int j=0; j < Rows.Count(); j++ )
+    for( size_t i=0; i < ColNames.Count(); i++ )  {
+      for( size_t j=0; j < Rows.Count(); j++ )
         if( Rows[j][i].Length() > rowV[i+1] )
           rowV[i+1] = Rows[j][i].Length();
       if( ColNames[i].Length() > rowV[i+1] )
@@ -271,7 +265,7 @@ public:
 
     rowV += Sep.Length();
 
-    for( int i=0; i < ColNames.Count(); i++ )  
+    for( size_t i=0; i < ColNames.Count(); i++ )  
       rowV[i+1] += rowV[i];
 
     if( colNames )  {
@@ -279,14 +273,14 @@ public:
       if( rowNames )  
         Tmp.Format(rowV[0], true, ' ');
       Tmp << Sep;
-      for( int i=0; i < ColCount(); i++ )  {
+      for( size_t i=0; i < ColCount(); i++ )  {
         Tmp << ColNames[i];
         Tmp.Format(rowV[i+1], true, ' ');
         if( (i+1) < ColNames.Count() )  Tmp << Sep;
       }
       L.Add(Tmp);
     }
-    for( int i=0; i < RowCount(); i++ )  {
+    for( size_t i=0; i < RowCount(); i++ )  {
       if( rowNames )  {
         Tmp = RowNames[i];
         Tmp.Format(rowV[0], true, ' ');
@@ -295,7 +289,7 @@ public:
       else
         Tmp = EmptyString;
 
-      for( int j=0; j < ColCount(); j++ )  {
+      for( size_t j=0; j < ColCount(); j++ )  {
         Tmp << Rows[i][j];
         Tmp.Format(rowV[j+1], true, ' ');
         if( (j+1) < ColCount() )  Tmp << Sep;
@@ -304,25 +298,22 @@ public:
     }
   }
 
-  inline T& operator [] (int index)  {  return Rows[index];  }
-  inline T const & operator [] (int index) const {  return Rows[index];  }
+  inline T& operator [] (size_t index)  {  return Rows[index];  }
+  inline T const & operator [] (size_t index) const {  return Rows[index];  }
 
   // note that the void* passed to the functions
   // are of the TEStrListData type !! String = Row->Col(col), Data = Row
-  template <class comparator>
-    void SortRows(int col)  {
-      TStrPObjList<olxstr,int> SL;
-
-      for( int i=0; i < RowCount(); i++ )
-        SL.Add(Rows[i][col], i);
-
-      SL.QuickSort<comparator>();
-      TIntList indexes( RowCount() );
-      for( int i=0; i < RowCount(); i++ )
-        indexes[i] = SL.GetObject(i);
-      RowNames.Rearrange( indexes );
-      Rows.Rearrange( indexes );
-    }
+  template <class comparator> void SortRows(size_t col)  {
+    TStrPObjList<olxstr,size_t> SL;
+    for( size_t i=0; i < RowCount(); i++ )
+      SL.Add(Rows[i][col], i);
+    SL.QuickSort<comparator>();
+    TSizeList indexes( RowCount() );
+    for( size_t i=0; i < RowCount(); i++ )
+      indexes[i] = SL.GetObject(i);
+    RowNames.Rearrange( indexes );
+    Rows.Rearrange( indexes );
+  }
   // note that the void* passed to the functions
   // are of the TEStrListData type !! String = Row(row)->Col, Data = Row
   template <class comparator>

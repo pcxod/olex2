@@ -24,25 +24,25 @@ namespace PersUtil {
   }
   template <class lc> static olxstr NumberListToStr(const lc& v)  {
     olxstr rv = v.IsEmpty() ? EmptyString : olxstr(v[0]);
-    for( int i=1; i < v.Count(); i++ )
+    for( size_t i=1; i < v.Count(); i++ )
       rv << ',' << v[i];
     return rv;
   }
   template <class lc> static lc& FloatNumberListFromStr(const olxstr& str, lc& v)  {
     TStrList toks(str, ',');
-    for( int i=0; i < toks.Count(); i++ )
+    for( size_t i=0; i < toks.Count(); i++ )
       v.Add( toks[i].ToDouble() );
     return v;
   }
   template <class lc> static lc& IntNumberListFromStr(const olxstr& str, lc& v)  {
     TStrList toks(str, ',');
-    for( int i=0; i < toks.Count(); i++ )
+    for( size_t i=0; i < toks.Count(); i++ )
       v.Add( toks[i].ToInt() );
     return v;
   }
   template <class vl> static olxstr VecListToStr(const vl& l)  {
     olxstr rv;
-    for( int i=0; i < l.Count(); )  {
+    for( size_t i=0; i < l.Count(); )  {
       rv << VecToStr(l[i]);
       if( ++i < l.Count() )
         rv << ';';
@@ -51,7 +51,7 @@ namespace PersUtil {
   }
   template <class vl> static vl& FloatVecListFromStr(const olxstr& v, vl& l)  {
     TStrList toks(v, ';');
-    for( int i=0; i < toks.Count(); i++ )  {
+    for( size_t i=0; i < toks.Count(); i++ )  {
       vec3d tv = FloatVecFromStr(toks[i]);
       l.AddNew(tv[0], tv[1], tv[2]);
     }
@@ -59,7 +59,7 @@ namespace PersUtil {
   }
   template <class vl> static vl& IntVecListFromStr(const olxstr& v, vl& l)  {
     TStrList toks(v, ';');
-    for( int i=0; i < toks.Count(); i++ )  {
+    for( size_t i=0; i < toks.Count(); i++ )  {
       vec3i tv = IntVecFromStr(toks[i]);
       l.AddNew(tv[0], tv[1], tv[2]);
     }

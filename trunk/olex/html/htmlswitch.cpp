@@ -12,14 +12,14 @@ void THtmlSwitch::Clear()  {
   //Params.Clear();
 }
 //..............................................................................
-void THtmlSwitch::SetFileIndex(short ind)  {
+void THtmlSwitch::SetFileIndex(size_t ind)  {
   FileIndex = ind;
   ParentHtml->SetSwitchState(*this, FileIndex);
 }
 //..............................................................................
 void THtmlSwitch::UpdateFileIndex()  {
   Clear();
-  if( FileIndex >= FileCount() || FileIndex < 0 )  return;
+  if( FileIndex == InvalidIndex || FileIndex >= FileCount() )  return;
   olxstr FN = Files[FileIndex];
   IInputStream *is = TFileHandlerManager::GetInputStream(FN);
   if( is == NULL )  {
@@ -32,29 +32,28 @@ void THtmlSwitch::UpdateFileIndex()  {
   Strings.LoadFromTextStream(*is);
 #endif
   delete is;
-  for( int i=0; i < Strings.Count(); i++ )  {
+  for( size_t i=0; i < Strings.Count(); i++ )  {
     // replace the parameters with their values
-    if( Strings[i].IndexOf('#') != -1 )  {
+    if( Strings[i].IndexOf('#') != InvalidIndex )  {
       // "key word parameter"
       Strings[i].Replace("#switch_name", Name);
       if( ParentSwitch != NULL )  {
         Strings[i].Replace("#parent_name", ParentSwitch->GetName()).\
                    Replace( "#parent_file", ParentSwitch->GetCurrentFile() );
       }
-
-      for( int j=0; j < Params.Count(); j++ )
+      for( size_t j=0; j < Params.Count(); j++ )
         Strings[i].Replace(olxstr('#') << Params.GetName(j), Params.GetValue(j) );
     } // end of parameter replacement
   }
   ParentHtml->CheckForSwitches(*this, TZipWrapper::IsZipFile(FN));
-  for( int i=0; i < Switches.Count(); i++ )
+  for( size_t i=0; i < Switches.Count(); i++ )
     Switches[i].UpdateFileIndex();
 }
 //..............................................................................
 bool THtmlSwitch::ToFile()  {
   if( Switches.IsEmpty() )  return true;
   if( GetCurrentFile().IsEmpty() )  return true;
-  for( int i=0; i < Strings.Count(); i++ )  {
+  for( size_t i=0; i < Strings.Count(); i++ )  {
     if( Strings.GetObject(i) )  {
       THtmlSwitch *HO = Strings.GetObject(i);
       ParentHtml->UpdateSwitchState(*HO, Strings[i]);
@@ -73,9 +72,9 @@ THtmlSwitch& THtmlSwitch::NewSwitch()  {
   return Switches.AddNew(ParentHtml, this);
 }
 //..............................................................................
-int THtmlSwitch::FindSimilar(const olxstr& start, const olxstr& end, TPtrList<THtmlSwitch>& ret)  {
-  int cnt = 0;
-  for( int i=0; i < Switches.Count(); i++ )  {
+size_t THtmlSwitch::FindSimilar(const olxstr& start, const olxstr& end, TPtrList<THtmlSwitch>& ret)  {
+  size_t cnt = 0;
+  for( size_t i=0; i < Switches.Count(); i++ )  {
     if( end.IsEmpty() )  {
       if( Switches[i].GetName().StartsFrom(start) )  {
         ret.Add(Switches[i]);
@@ -100,14 +99,14 @@ int THtmlSwitch::FindSimilar(const olxstr& start, const olxstr& end, TPtrList<TH
 }
 //..............................................................................
 void THtmlSwitch::Expand(TPtrList<THtmlSwitch>& ret)  {
-  for( int i=0; i < Switches.Count(); i++ )  {
+  for( size_t i=0; i < Switches.Count(); i++ )  {
     ret.Add(Switches[i]);
     Switches[i].Expand(ret);
   }
 }
 //..............................................................................
 THtmlSwitch*  THtmlSwitch::FindSwitch(const olxstr &IName)  {
-  for( int i=0; i < Switches.Count(); i++ )  {
+  for( size_t i=0; i < Switches.Count(); i++ )  {
     if( Switches[i].GetName().Equalsi(IName) )
       return &Switches[i];
     else  {
@@ -120,15 +119,15 @@ THtmlSwitch*  THtmlSwitch::FindSwitch(const olxstr &IName)  {
 }
 //..............................................................................
 void THtmlSwitch::ToStrings(TStrList &List)  {
-  if( FileIndex >= 0 && FileIndex < Files.Count() )
+  if( FileIndex != InvalidIndex && FileIndex < Files.Count() )
     List.Add("<SWITCHINFOS SRC=\"")<< Files[FileIndex] << "\">";
 
-  for( int i=0; i < Strings.Count(); i++ )  {
+  for( size_t i=0; i < Strings.Count(); i++ )  {
     if( Strings.GetObject(i) != NULL )
       Strings.GetObject(i)->ToStrings(List);
     List.Add(Strings[i]);
   }
 
-  if( FileIndex >= 0 && FileIndex < Files.Count() )
+  if( FileIndex != InvalidIndex && FileIndex < Files.Count() )
     List.Add("<SWITCHINFOE>");
 }

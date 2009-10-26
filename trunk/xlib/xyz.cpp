@@ -35,7 +35,7 @@ void TXyz::Clear()  {
 void TXyz::SaveToStrings(TStrList& Strings)  {
   olxstr Tmp, Tmp1;
   vec3d V;
-  for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
+  for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& CA = GetAsymmUnit().GetAtom(i);
     if( CA.IsDeleted() )  continue;
     V = CA.ccrd();
@@ -68,7 +68,7 @@ void TXyz::LoadFromStrings(const TStrList& Strings)  {
   GetAsymmUnit().InitMatrices();
   double Ax, Ay, Az;
   TStrList toks;
-  for( int i=0; i < Strings.Count(); i++ )  {
+  for( size_t i=0; i < Strings.Count(); i++ )  {
     Tmp = Strings[i].UpperCase();
     if( Tmp.IsEmpty() )  continue;
     toks.Clear();

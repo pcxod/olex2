@@ -35,13 +35,13 @@ TPTableDlg::TPTableDlg(TMainFrame *Parent) :
   }
   CreateButton(8, 17, 5 );  // q peak
 
-  for( int i=iQPeakIndex+1; i < TAtomsInfo::GetInstance().Count(); i++ )
+  for( size_t i=iQPeakIndex+1; i < TAtomsInfo::GetInstance().Count(); i++ )
     CreateButton(9, i-iQPeakIndex-1, 5 );  // q peak
   wxDialog::Fit();
   wxDialog::Center();
 }
 TPTableDlg::~TPTableDlg()  {
-  for( int i =0; i < ButtonsList.Count(); i++ )  {
+  for( size_t i =0; i < ButtonsList.Count(); i++ )  {
     ButtonsList[i]->OnClick.Clear();
     ButtonsList[i];
   }

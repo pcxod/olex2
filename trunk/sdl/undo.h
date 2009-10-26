@@ -51,7 +51,7 @@ public:
   virtual ~TUndoData();
   virtual void Undo()        {
     UndoAction->Execute(this);
-    for( int i=0; i < UndoList.Count(); i++ )
+    for( size_t i=0; i < UndoList.Count(); i++ )
       UndoList[i]->Undo();
   }
 

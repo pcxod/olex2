@@ -81,7 +81,7 @@ TdlgMsgBox::TdlgMsgBox(TMainFrame* Parent, const olxstr& msg, const olxstr& titl
 }
 //..............................................................................
 TdlgMsgBox::~TdlgMsgBox()  {
-  for( int i=0; i < buttons.Count(); i++ )
+  for( size_t i=0; i < buttons.Count(); i++ )
     buttons[i]->OnClick.Clear();
 }
 //..............................................................................
