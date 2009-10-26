@@ -194,9 +194,11 @@ if sys.platform[:3] == 'win':
     env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswud', pyFolder+'include'])
   if architecture == '64bit':
     env.Append(LINKFLAGS=['/MACHINE:X64'])
-    lib_64 = r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib\x64'
-    if os.path.exists(lib_64):
-      env.Append(LIBPATH=[lib_64])  
+    lib_64 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib\x64',
+              r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\lib\amd64']
+    for p in lib_64:
+      if os.path.exists(p):
+        env.Append(LIBPATH=[p])  
     inc_64 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Include',
               r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include']
     for p in inc_64:
@@ -207,9 +209,14 @@ if sys.platform[:3] == 'win':
                          os.pathsep + env['ENV']['PATH']
   else:
     env.Append(LINKFLAGS=['/MACHINE:X86'])
-    lib_32 = r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib'
-    if os.path.exists(lib_32):
-      env.Append(LIBPATH=[lib_32])  
+    lib_32 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib',
+              r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\lib']
+    for p in lib_32:
+      if os.path.exists(p):
+        env.Append(LIBPATH=[p])  
+    env['ENV']['PATH'] = r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\bin' +\
+                         os.pathsep + r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin' +\
+                         os.pathsep + env['ENV']['PATH']
 
   unirun_env = env.Clone()
   env.Append(LIBPATH = [pyFolder+'libs', wxFolder+'lib/vc_lib'])

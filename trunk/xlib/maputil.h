@@ -14,7 +14,7 @@ class MapUtil  {
 public:
   struct peak  { 
     uint32_t count;  //center
-    TVector3<uint16_t> center;
+    TVector3<int16_t> center;
     bool process;
     double summ;
     peak() : process(true), summ(0), count(0) {}
