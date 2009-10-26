@@ -40,8 +40,8 @@ public:
   void CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& bond_sink);
   // returns true if the two atoms share a matrix
   static bool HaveSharedMatrix(const TSAtom& sa, const TSAtom& sb)  {
-    for( int i=0; i < sa.MatrixCount(); i++ )  {
-      for( int j=0; j < sb.MatrixCount(); j++ )  {
+    for( size_t i=0; i < sa.MatrixCount(); i++ )  {
+      for( size_t j=0; j < sb.MatrixCount(); j++ )  {
         if( sa.GetMatrix(i).GetTag() == sb.GetMatrix(j).GetTag() && 
             sa.GetMatrix(i).t == sb.GetMatrix(j).t )  
         {
@@ -91,8 +91,8 @@ public:
   // returns true if the ring is regular (distances from centroid and angles) 
   static bool IsRingRegular(const TSAtomPList& ring);
   // inverttion must be specified for the permutational graph match
-  bool DoMatch( TNetwork& net, TTypeList< AnAssociation2<int, int> >& res, bool Invert );
-  bool IsSubgraphOf( TNetwork& net, TTypeList< AnAssociation2<int, int> >& res, const TIntList& rootsToSkip);
+  bool DoMatch( TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res, bool Invert );
+  bool IsSubgraphOf( TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res, const TSizeList& rootsToSkip);
 
   void FindRings(const TPtrList<TBasicAtomInfo>& ringContent,
         TTypeList<TSAtomPList>& res);
@@ -100,9 +100,9 @@ public:
   void FindAtomRings(TSAtom& ringAtom, const TPtrList<TBasicAtomInfo>& ringContent,
         TTypeList<TSAtomPList>& res);
   struct RingInfo  {
-    int MaxSubsANode, HeaviestSubsIndex;
+    size_t MaxSubsANode, HeaviestSubsIndex;
     TBasicAtomInfo* HeaviestSubsType;
-    TIntList Ternary, // three bond inside the ring
+    TSizeList Ternary, // three bond inside the ring
       Substituted,    // more than two connections, two belong to the ring
       Alpha;          // susbtituted next to a ternary atom 
     TTypeList<TSAtomPList> Substituents;
@@ -110,7 +110,7 @@ public:
     RingInfo() : HeaviestSubsType(NULL), MaxSubsANode(0), HeaviestSubsIndex(-1), HasAfix(false)  {  }
     RingInfo& Clear()  {
       MaxSubsANode = 0;
-      HeaviestSubsIndex = -1;
+      HeaviestSubsIndex = InvalidIndex;
       HasAfix = false;
       Ternary.Clear();
       Substituted.Clear();
@@ -163,7 +163,7 @@ protected:
     TDisassembleTaskRemoveSymmEq(TSAtomPList& atoms, double** distances) :
       Atoms(atoms)  {  Distances = distances;  }
 
-    void Run(long ind);
+    void Run(size_t ind);
     TDisassembleTaskRemoveSymmEq* Replicate() const  {
       return new TDisassembleTaskRemoveSymmEq(Atoms, Distances);
     }
@@ -179,8 +179,8 @@ protected:
       Distances = distances;
       Delta = delta;
     }
-    void Run(long ind);
-    TDisassembleTaskCheckConnectivity* Replicate() const  {
+    void Run(size_t ind);
+    TDisassembleTaskCheckConnectivity* Replicate() const {
       return new TDisassembleTaskCheckConnectivity(Atoms, Distances, Delta);
     }
   };
@@ -198,8 +198,8 @@ protected:
       Delta = delta;
       Bonds = bonds;
     }
-    void Run(long ind);
-    THBondSearchTask* Replicate() const  {
+    void Run(size_t ind);
+    THBondSearchTask* Replicate() const {
       return new THBondSearchTask(Atoms, Bonds, Distances, Delta);
     }
   };

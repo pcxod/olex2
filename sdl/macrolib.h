@@ -17,20 +17,19 @@ class TEMacro  {
   TStrStrList Args;
 protected:
   void SubstituteArguments(olxstr &Cmd, TStrList& argv)  {
-    int index;
     olxstr args;
-    index = Cmd.FirstIndexOf('%');  // argument by index
-    while( index >= 0 && index < (Cmd.Length()-1) )  {
+    size_t index = Cmd.FirstIndexOf('%');  // argument by index
+    while( index != InvalidIndex && index < (Cmd.Length()-1) )  {
       args = EmptyString;
-      int iindex = index;
+      size_t iindex = index;
       while( olxstr::o_isdigit(Cmd.CharAt(iindex+1)) )  {  // extract argument number
         args << Cmd.CharAt(iindex+1);
-        iindex ++;
+        iindex++;
         if( iindex >= (Cmd.Length()-1) )  break;
       }
       if( !args.IsEmpty() )  {
-        int pindex = args.ToInt()-1;  // index of the parameter
-        if( pindex < argv.Count() && pindex >= 0 )  {  // check if valid argument index
+        size_t pindex = args.ToSizeT()-1;  // index of the parameter
+        if( pindex < argv.Count() )  {  // check if valid argument index
           Cmd.Delete(index, args.Length()+1); // delete %xx value
           Cmd.Insert(argv[pindex], index);  // insert value parameter
         }
@@ -40,7 +39,7 @@ protected:
       if( index++ < Cmd.Length() )
         index = Cmd.FirstIndexOf('%', index);  // next argument by index
       else
-        index = -1;
+        index = InvalidIndex;
     }
   }
 public:
@@ -58,18 +57,18 @@ public:
       return false;
     }
     TStrList argV( Args.Count() );
-    for( int i=0; i < argV.Count(); i++ )  {
-      if( !Args.GetObject(i).IsEmpty() && Args.GetObject(i).IndexOf('(') != -1 )  {
+    for( size_t i=0; i < argV.Count(); i++ )  {
+      if( !Args.GetObject(i).IsEmpty() && Args.GetObject(i).IndexOf('(') != InvalidIndex )  {
         olex_processor.executeFunction(Args.GetObject(i), argV[i]);
       }
       else // set the defaults!!
         argV[i] = Args.GetObject(i);
     }
-    for( int i=0; i < args.Count(); i++ )  {
-      int eqsi = args[i].FirstIndexOf('=');
-      if( eqsi != -1 )  {  // argument with name and value
-        int argi = Args.IndexOf( args[i].SubStringTo(eqsi) );
-        if( argi == -1 )  {
+    for( size_t i=0; i < args.Count(); i++ )  {
+      size_t eqsi = args[i].FirstIndexOf('=');
+      if( eqsi != InvalidIndex )  {  // argument with name and value
+        size_t argi = Args.IndexOf( args[i].SubStringTo(eqsi) );
+        if( argi == InvalidIndex )  {
           TBasicApp::GetLog().Error(olxstr(Name) << ": wrong argument name: " << args[i].SubStringTo(eqsi));
           return false;
         }
@@ -83,20 +82,20 @@ public:
     onAbort.Assign( OnAbort );
     onListen.Assign( OnListen );
     onTerminate.Assign( OnTerminate );
-    for( int i=0; i < cmds.Count(); i++ )
+    for( size_t i=0; i < cmds.Count(); i++ )
       SubstituteArguments(cmds[i], argV);
-    for( int i=0; i < onAbort.Count(); i++ )
+    for( size_t i=0; i < onAbort.Count(); i++ )
       SubstituteArguments(onAbort[i], argV);
-    for( int i=0; i < onListen.Count(); i++ )
+    for( size_t i=0; i < onListen.Count(); i++ )
       SubstituteArguments(onListen[i], argV);
-    for( int i=0; i < onTerminate.Count(); i++ )
+    for( size_t i=0; i < onTerminate.Count(); i++ )
       SubstituteArguments(onTerminate[i], argV);
     return true;
   }
-  void AddCmd(const olxstr& cmd)           {  Commands.Add(cmd);  }
-  void AddOnListenCmd(const olxstr& cmd)    {  OnListen.Add(cmd);  }
-  void AddOnAbortCmd(const olxstr& cmd)     {  OnAbort.Add(cmd);  }
-  void AddOnTerminateCmd(const olxstr& cmd) {  OnTerminate.Add(cmd);  }
+  void AddCmd(const olxstr& cmd)  {  Commands.Add(cmd);  }
+  void AddOnListenCmd(const olxstr& cmd)  {  OnListen.Add(cmd);  }
+  void AddOnAbortCmd(const olxstr& cmd)  {  OnAbort.Add(cmd);  }
+  void AddOnTerminateCmd(const olxstr& cmd)  {  OnTerminate.Add(cmd);  }
   void AddArg(const olxstr& name, const olxstr& val)  {
     Args.Add(name, val);
   }
@@ -128,7 +127,7 @@ public:
   void Init();  // extends the Library with functionality
   void Load(const TDataItem& m_root)  {
     Clear();
-    for( int i=0; i < m_root.ItemCount(); i++ )  {
+    for( size_t i=0; i < m_root.ItemCount(); i++ )  {
       const TDataItem& m_def = m_root.GetItem(i);
       const TDataItem* di = m_def.FindItem("body");
       if( di == NULL )  {
@@ -141,25 +140,25 @@ public:
     }
   }
   void Clear()  {
-    for( int i=0; i < Macros.Count(); i++ )
+    for( size_t i=0; i < Macros.Count(); i++ )
       delete Macros.GetObject(i);
     Macros.Clear();
   }
   
   TEMacro* FindMacro(const olxstr& name )  {  return Macros[name];  }
   
-  int FindSimilar(const olxstr& name, TPtrList<TEMacro>& out) const {
-    int cnt = out.Count();
-    for( int i=0; i < Macros.Count(); i++ )  {
+  size_t FindSimilar(const olxstr& name, TPtrList<TEMacro>& out) const {
+    size_t cnt = out.Count();
+    for( size_t i=0; i < Macros.Count(); i++ )  {
       if( Macros.GetComparable(i).StartsFromi(name) )
         out.Add(Macros.GetObject(i));
     }
     return out.Count() - cnt;
   }
   template <class StrLst>
-  int FindSimilarNames(const olxstr& name, StrLst& out) const {
-    int cnt = out.Count();
-    for( int i=0; i < Macros.Count(); i++ )  {
+  size_t FindSimilarNames(const olxstr& name, StrLst& out) const {
+    size_t cnt = out.Count();
+    for( size_t i=0; i < Macros.Count(); i++ )  {
       if( Macros.GetComparable(i).StartsFromi(name) )
         out.Add(Macros.GetComparable(i));
     }

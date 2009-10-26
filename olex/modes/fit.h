@@ -9,7 +9,7 @@ protected:
     if( sel.Count() > 1 )  {
       vec3d c, cr;
       TXAtomPList atoms;
-      for( int i=0; i < sel.Count(); i++ )  {
+      for( size_t i=0; i < sel.Count(); i++ )  {
         if( EsdlInstanceOf(sel[i], TXAtom) )  {
           cr += ((TXAtom&)sel[i]).Basis.GetCenter();
           cr += ((TXAtom&)sel[i]).Atom().crd();
@@ -18,7 +18,7 @@ protected:
       }
       if( atoms.Count() > 1 )  {
         cr /= atoms.Count();
-        for( int i=0; i < atoms.Count(); i++ )  {
+        for( size_t i=0; i < atoms.Count(); i++ )  {
           c = atoms[i]->Atom().crd();
           c += atoms[i]->Basis.GetCenter();
           c -= cr;
@@ -43,7 +43,7 @@ public:
     TAsymmUnit& au = app.XFile().GetAsymmUnit();
     RefinementModel& rm = app.XFile().GetRM();
     UpdateSelectionCrds();
-    for( int i=0; i < Atoms.Count(); i++ )  {
+    for( size_t i=0; i < Atoms.Count(); i++ )  {
       TXAtom& xa = *Atoms[i];
       xa.SetMoveable(false);
       xa.SetRoteable(false);
@@ -68,7 +68,7 @@ public:
   }
   virtual bool AddAtoms(const TXAtomPList& atoms)  {
     Atoms.AddList(atoms);
-    for( int i=0; i < Atoms.Count(); i++ )  {
+    for( size_t i=0; i < Atoms.Count(); i++ )  {
       Atoms[i]->SetRoteable(true);
       Atoms[i]->SetMoveable(true);
       TGlXApp::GetGXApp()->GetRender().Select(*Atoms[i]);

@@ -66,12 +66,12 @@ TZipWrapper::TZipWrapper(TEFile* file, bool useCache)  {
 //..............................................................................
 TZipWrapper::~TZipWrapper()  {
   TMemoryBlock *mb;
-  for( int i=0; i < FMemoryBlocks.Count(); i++ )  {
+  for( size_t i=0; i < FMemoryBlocks.Count(); i++ )  {
     mb = FMemoryBlocks.GetObject(i);
     delete [] mb->Buffer;
     delete mb;
   }
-  for( int i=0; i < FEntries.Count(); i++ )
+  for( size_t i=0; i < FEntries.Count(); i++ )
     delete FEntries.GetObject(i);
   if( FInputStream != NULL )  delete FInputStream;
   if( wxfile != NULL )   {
@@ -115,7 +115,7 @@ void TZipWrapper::ExtractAll(const olxstr& dest)  {
   OnProgress->Enter( NULL, &Progress );
   const size_t bf_sz = 1024*64;
   char* bf = new char[bf_sz];
-  for( int i=0; i < FEntries.Count(); i++ )  {
+  for( size_t i=0; i < FEntries.Count(); i++ )  {
     if( !FInputStream->OpenEntry( *FEntries.GetObject(i) ) )
       continue;
     if( FEntries.GetString(i).EndsWith('/') )  continue;
@@ -145,7 +145,7 @@ void TZipWrapper::ExtractAll(const olxstr& dest)  {
 //..............................................................................
 bool TZipWrapper::IsValidFileName(const olxstr &FN)  {
   int zi = FN.IndexOf(ZipUrlSignature);
-  if( zi > 0 )  {
+  if( zi != InvalidIndex && zi > 0 )  {
     if( TEFile::Exists( ExtractZipName(FN) ) )  return true;
     return false;
   }
@@ -153,24 +153,27 @@ bool TZipWrapper::IsValidFileName(const olxstr &FN)  {
 }
 //..............................................................................
 bool TZipWrapper::IsZipFile(const olxstr &FN)  {
-  return FN.IndexOf(ZipUrlSignature) > 0;
+  size_t ind = FN.IndexOf(ZipUrlSignature);
+  return ind != InvalidIndex && ind != 0;
 }
 //..............................................................................
 olxstr TZipWrapper::ExtractZipName(const olxstr &FN)  {
-  int zi = FN.IndexOf(ZipUrlSignature);
-  if( zi > 0 )  return FN.SubStringTo(zi);
+  size_t zi = FN.IndexOf(ZipUrlSignature);
+  if( zi != InvalidIndex && zi > 0 )
+    return FN.SubStringTo(zi);
   return EmptyString;
 }
 //..............................................................................
 olxstr TZipWrapper::ExtractZipEntryName(const olxstr &FN)  {
-  int zi = FN.IndexOf(ZipUrlSignature);
-  if( zi > 0 )  return FN.SubStringFrom(zi+ZipUrlSignature.Length());
+  size_t zi = FN.IndexOf(ZipUrlSignature);
+  if( zi != InvalidIndex && zi > 0 )
+    return FN.SubStringFrom(zi+ZipUrlSignature.Length());
   return EmptyString;
 }
 //..............................................................................
 bool TZipWrapper::SplitZipUrl(const olxstr &fullName, TZipEntry &ZE)  {
   int zi = fullName.IndexOf(ZipUrlSignature);
-  if( zi == -1 )  return false;
+  if( zi == InvalidIndex )  return false;
   ZE.ZipName = fullName.SubStringTo(zi);
   ZE.ZipName = TEFile::UnixPath( ZE.ZipName );
   ZE.EntryName = fullName.SubStringFrom( zi + ZipUrlSignature.Length() );
@@ -180,7 +183,7 @@ bool TZipWrapper::SplitZipUrl(const olxstr &fullName, TZipEntry &ZE)  {
 //..............................................................................
 olxstr TZipWrapper::ComposeFileName(const olxstr &ZipFileNameA, const olxstr &FNA)  {
   int zi = ZipFileNameA.IndexOf(ZipUrlSignature);
-  if( zi == -1 )  return FNA;
+  if( zi == InvalidIndex )  return FNA;
   olxstr ZipFileName = TEFile::WinPath(ZipFileNameA),
            FN = TEFile::WinPath(FNA);
   olxstr zipPart = ZipFileName.SubStringTo(zi+ZipUrlSignature.Length());

@@ -20,9 +20,9 @@ const unsigned int   psFileLoaded        = 0x00010000,
 class TNameUndo : public TUndoData  {
 public:
   struct NameRef {
-    int catom_id;
+    size_t catom_id;
     olxstr name;
-    NameRef(int id, const olxstr& n) : catom_id(id), name(n)  {  }
+    NameRef(size_t id, const olxstr& n) : catom_id(id), name(n)  {  }
   };
 
   TNameUndo(IUndoAction* action) : TUndoData(action)  {  }
@@ -32,9 +32,9 @@ public:
   void AddAtom(TCAtom& A, const olxstr& newName)  {
     Data.Add( new NameRef(A.GetId(), newName) );
   }
-  inline int AtomCount() const {  return Data.Count();  }
-  inline const int& GetCAtomId(int i) const {  return  Data[i].catom_id;  }
-  inline const olxstr& GetLabel(int i) const {  return  Data[i].name;  }
+  inline size_t AtomCount() const {  return Data.Count();  }
+  inline size_t GetCAtomId(size_t i) const {  return  Data[i].catom_id;  }
+  inline const olxstr& GetLabel(size_t i) const {  return  Data[i].name;  }
 };
 
                      

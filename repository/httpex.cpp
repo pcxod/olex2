@@ -54,8 +54,8 @@ void THttp::SetHeader(const olxstr& header, const olxstr& h_data)  {
 }
 //............................................................................//
 const olxstr& THttp::GetHeader(const olxstr& header) const  {
-  int ind = Headers.IndexOfComparable( header );
-  return ind == -1 ? EmptyString : Headers.GetObject(ind);
+  size_t ind = Headers.IndexOfComparable( header );
+  return ind == InvalidIndex ? EmptyString : Headers.GetObject(ind);
 }
 //............................................................................//
 void THttp::SetPostBuffer(const olxstr& post_buf)  {  m_post_buf = post_buf;  }

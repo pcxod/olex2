@@ -118,33 +118,33 @@ void TEFile::TFileNameMask::Build(const olxstr& msk )  {
 bool TEFile::TFileNameMask::DoesMatch(const olxstr& _str) const {
   if( mask.IsEmpty() && !_str.IsEmpty() )  return false;
   // this will work for '*' mask
-  if( toks.Count() == 0 )  return true;
+  if( toks.IsEmpty() )  return true;
   // need to check if the mask starts from a '*' or ends with it
   olxstr str = olxstr::LowerCase(_str);
-  int off = 0, start = 0, end = str.Length();
+  size_t off = 0, start = 0, end = str.Length();
   if( mask[0] != '*' )  {
     const olxstr& tmp = toks[0];
     if( tmp.Length() > str.Length() )  return false;
-    for( int i=0; i < tmp.Length(); i++ )
+    for( size_t i=0; i < tmp.Length(); i++ )
      if( tmp[i] != '?' && tmp[i] != str[i] )  return false;
     start = tmp.Length();
     if( toks.Count() == 1 )  
       return tmp.Length() == str.Length() ? true : mask[ mask.Length()-1] == '*';
   }
-  if( mask[ mask.Length()-1] != '*' && toks.Count() > (mask[0]!='*' ? 1 : 0) )  {
+  if( mask.Last() != '*' && toks.Count() > (size_t)(mask.CharAt(0) != '*' ? 1 : 0) )  {
     olxstr& tmp = toks[toks.Count()-1];
     if( tmp.Length() > (str.Length()-start) )  return false;
-    for( int i=0; i < tmp.Length(); i++ )
+    for( size_t i=0; i < tmp.Length(); i++ )
      if( !(tmp[i] == '?' || tmp[i] == str[str.Length()-tmp.Length() + i]) )  return false;
     end = str.Length() - tmp.Length();
 
     if( toks.Count() == 1 )  return true;
   }
 
-  for( int i=toksStart; i < toksEnd; i++ )  {
+  for( size_t i=toksStart; i < toksEnd; i++ )  {
     olxstr& tmp = toks[i];
     bool found = false;
-    for( int j=start; j < end; j++ )  {
+    for( size_t j=start; j < end; j++ )  {
       if( (str.Length() - j) < tmp.Length() )  return false;
       if( tmp[off] == '?' || str[j] == tmp[off] )  {
         while( tmp[off] == '?' || tmp[off] == str[j+off] )  {
@@ -242,14 +242,14 @@ void TEFile::CheckHandle() const  {
 void TEFile::Read(void *Bf, size_t count)  {
   CheckHandle();
   if( count == 0 )  return;
-  int res = fread(Bf, count, 1, FHandle);
+  size_t res = fread(Bf, count, 1, FHandle);
   if( res != 1 )
     throw TFileExceptionBase(__OlxSourceInfo, FName, "fread failed" );
 }
 //..............................................................................
 void TEFile::SetPosition(size_t p)  {
   CheckHandle();
-  if( fseek(FHandle, p, SEEK_SET) != 0 )  
+  if( fseek(FHandle, (long)p, SEEK_SET) != 0 )  
     throw TFileExceptionBase(__OlxSourceInfo, FName, "fseek failed" );
 }
 //..............................................................................
@@ -269,7 +269,7 @@ long TEFile::Length() const  {
   long length = ftell( FHandle );
   if( length == -1 )
     throw TFileExceptionBase(__OlxSourceInfo, FName, "ftell failed" );
-  fseek( FHandle, currentPos, SEEK_SET);
+  fseek(FHandle, (long)currentPos, SEEK_SET);
   return length;
 }
 //..............................................................................
@@ -324,8 +324,9 @@ bool TEFile::Access(const olxstr& F, const short Flags)  {
 olxstr TEFile::ExtractFilePath(const olxstr &F)  {
   olxstr fn = OLX_OS_PATH(F);
   if( TEFile::IsAbsolutePath(fn) )  {
-    int i = fn.LastIndexOf( OLX_PATH_DEL );
-    if( i > 0 ) return fn.SubStringTo(i+1);
+    size_t i = fn.LastIndexOf( OLX_PATH_DEL );
+    if( i > 0 && i != InvalidIndex )
+      return fn.SubStringTo(i+1);
     return EmptyString;
   }
   return EmptyString;
@@ -335,9 +336,10 @@ olxstr TEFile::ParentDir(const olxstr& name) {
   if( name.IsEmpty() )  return name;
   // normalise path
   olxstr np = OLX_OS_PATH(name);
-  int start = (np.Last() == OLX_PATH_DEL ? np.Length()-2 : np.Length()-1);
-  int i = np.LastIndexOf(OLX_PATH_DEL, start);
-  if( i > 0 ) return np.SubStringTo(i+1);
+  size_t start = (np.Last() == OLX_PATH_DEL ? np.Length()-2 : np.Length()-1);
+  size_t i = np.LastIndexOf(OLX_PATH_DEL, start);
+  if( i > 0 && i != InvalidIndex )
+    return np.SubStringTo(i+1);
   return EmptyString;
 }
 //..............................................................................
@@ -345,8 +347,8 @@ olxstr TEFile::ExtractFileExt(const olxstr& F)  {
   //if( F.IsEmpty() || IsDir(F) )  return EmptyString;
   if( F.IsEmpty() )  return EmptyString;
   olxstr fn = OLX_OS_PATH(F);
-  int i = fn.LastIndexOf('.');
-  if( i > 0 )  {
+  size_t i = fn.LastIndexOf('.');
+  if( i > 0 && i != InvalidIndex )  {
     if( fn.LastIndexOf(OLX_PATH_DEL) > i )
       return EmptyString;
     return fn.SubStringFrom(i+1);
@@ -357,8 +359,9 @@ olxstr TEFile::ExtractFileExt(const olxstr& F)  {
 olxstr TEFile::ExtractFileName(const olxstr& F)  {
   if( F.IsEmpty() || IsDir(F) )  return EmptyString;
   olxstr fn = OLX_OS_PATH(F);
-  int i=fn.LastIndexOf(OLX_PATH_DEL);
-  if( i > 0 )  return fn.SubStringFrom(i+1);
+  size_t i = fn.LastIndexOf(OLX_PATH_DEL);
+  if( i > 0 && i != InvalidIndex )
+    return fn.SubStringFrom(i+1);
   return F;
 }
 //..............................................................................
@@ -376,10 +379,10 @@ olxstr TEFile::ChangeFileExt(const olxstr &F, const olxstr &Ext)  {
   //if( F.IsEmpty() || IsDir(F) )  return EmptyString;
   if( F.IsEmpty() )  return EmptyString;
   olxstr fn = OLX_OS_PATH(F);
-  int i = fn.LastIndexOf('.');
-  if( i > 0 && fn.LastIndexOf(OLX_PATH_DEL) < i )  {
+  size_t i = fn.LastIndexOf('.');
+  size_t d_i = fn.LastIndexOf(OLX_PATH_DEL);
+  if( i != InvalidIndex && i > 0 && (d_i == InvalidIndex || d_i < i) )
     fn.SetLength(i);
-  }
   else  {
     if( fn.Last() == '.' )
       fn.SetLength(fn.Length()-1);
@@ -446,7 +449,7 @@ bool TEFile::IsEmptyDir(const olxstr& F)  {
 bool TEFile::DoesMatchMasks(const olxstr& _fn, const MaskList& masks)  {
   olxstr ext = TEFile::ExtractFileExt( _fn );
   olxstr fn = _fn.SubStringTo(_fn.Length() - ext.Length() - (ext.IsEmpty() ? 0 : 1));
-  for( int i=0; i < masks.Count(); i++ )
+  for( size_t i=0; i < masks.Count(); i++ )
     if( masks[i].ExtMask.DoesMatch(ext) && masks[i].NameMask.DoesMatch(fn) )
       return true;
   return false;
@@ -454,7 +457,7 @@ bool TEFile::DoesMatchMasks(const olxstr& _fn, const MaskList& masks)  {
 //..............................................................................
 void TEFile::BuildMaskList(const olxstr& mask, MaskList& masks)  {
   TStrList ml(mask, ';');
-  for( int i=0; i < ml.Count(); i++ )
+  for( size_t i=0; i < ml.Count(); i++ )
     masks.AddNew(ml[i]);
 }
 //..............................................................................
@@ -710,7 +713,7 @@ bool TEFile::ChangeDir(const olxstr& To)  {
 #ifdef __WIN32__
   return SetCurrentDirectory(path.u_str()) != 0;
 #else
-  return ( chdir(olxcstr(path).c_str()) == -1 ) ?  false : true;
+  return chdir(olxcstr(path).c_str()) != -1;
 #endif
 }
 //..............................................................................
@@ -743,7 +746,7 @@ bool TEFile::MakeDirs(const olxstr& Name)  {
       toks.Delete(0);
     }
   }
-  for( int i=0; i < toks.Count(); i++ )  {
+  for( size_t i=0; i < toks.Count(); i++ )  {
     toCreate << toks[i] << OLX_PATH_DEL;
     if( !Exists( toCreate ) )
       if( !MakeDir( toCreate ) )
@@ -881,7 +884,7 @@ void TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite )  {
 olxstr TEFile::AbsolutePathTo(const olxstr &Path, const olxstr &relPath ) {
   TStrList dirToks(OLX_OS_PATH( Path ), OLX_PATH_DEL),
               relPathToks(OLX_OS_PATH( relPath ), OLX_PATH_DEL);
-  for( int i=0; i < relPathToks.Count(); i++ )  {
+  for( size_t i=0; i < relPathToks.Count(); i++ )  {
     if( relPathToks[i] == ".." )
       dirToks.Delete( dirToks.Count()-1 );
     else if( relPathToks[i] == "." )
@@ -910,7 +913,7 @@ olxstr TEFile::Which(const olxstr& filename)  {
   char* path = getenv("PATH");
   if( path == NULL )  return EmptyString;
   TStrList toks(path, OLX_ENVI_PATH_DEL);
-  for( int i=0; i < toks.Count(); i++ )  {
+  for( size_t i=0; i < toks.Count(); i++ )  {
     TEFile::AddTrailingBackslashI(toks[i]) << filename;
     if( Exists(toks[i]) )
       return toks[i];
@@ -1012,7 +1015,7 @@ void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
 #else  // borland dies here...
   output.QSort(false);
 #endif
-  for(int i=0; i < output.Count(); i++ )  {
+  for( size_t i=0; i < output.Count(); i++ )  {
    tmp = EmptyString;
     tmp <<  "<-" << dn << output[i];
     output[i] << tmp;

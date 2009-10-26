@@ -480,7 +480,7 @@ void CIsoSurface<T>::AddSurfacePoint(unsigned int nX, unsigned int nY, unsigned 
 template <class T> void CIsoSurface<T>::RenameVerticesAndTriangles()  {
   IsoPoints.GetVertices( Vertices );
   Triangles.SetCapacity( AllTriangles.Count() );
-  for( int i=0; i < AllTriangles.Count(); i++ )  {
+  for( size_t i=0; i < AllTriangles.Count(); i++ )  {
     IsoTriangle& ta = AllTriangles[i];
     ta.pointID[0] = IsoPoints.Get(ta.pointID[0]).newID;
     ta.pointID[1] = IsoPoints.Get(ta.pointID[1]).newID;
@@ -511,13 +511,13 @@ template <class T> void CIsoSurface<T>::CalculateNormals()  {
   Normals.SetCount( Vertices.Count() );
   // Calculate normals.
   vec3d vec1, vec2, normal;
-  for( int i = 0; i < Triangles.Count(); i++ ) {
+  for( size_t i = 0; i < Triangles.Count(); i++ ) {
     int id0 = Triangles[i].pointID[0];
     int id1 = Triangles[i].pointID[1];
     int id2 = Triangles[i].pointID[2];
     vec1 = Vertices[id1] - Vertices[id0];
     vec2 = Vertices[id2] - Vertices[id0];
-    float S = vec1.QLength()*vec2.QLength()*sin( acos(vec1.CAngle(vec2)) );
+    double S = vec1.QLength()*vec2.QLength()*sin( acos(vec1.CAngle(vec2)) );
     normal = vec1.XProdVec(vec2);
     if( S > 0 )  // weight upda normals of little triangles (hight curvature)
       normal /= S;
@@ -527,7 +527,7 @@ template <class T> void CIsoSurface<T>::CalculateNormals()  {
   }
 
   // Normalize normals.
-  for( int i = 0; i < Normals.Count(); i++ )  {
+  for( size_t i = 0; i < Normals.Count(); i++ )  {
     if( Normals[i].QLength() > 1e-6 )  {
       Normals[i].Normalise();
        //Normals[i] *= -1;

@@ -1,5 +1,5 @@
-#ifndef chnexpH
-#define chnexpH
+#ifndef __olx_cl_chnexp_H
+#define __olx_cl_chnexp_H
 #include "chembase.h"
 #include "estrlist.h"
 
@@ -7,14 +7,13 @@ BeginChemNamespace()
 
 class TCHNExp: public IEObject  {
   TStrPObjList<olxstr,double> Exp; // Objects - double for content
-  TTypeList<TCHNExp>   Dependencies; // TCHNExp list of dependencies
+  TTypeList<TCHNExp> Dependencies; // TCHNExp list of dependencies
   double FMult;
 protected:
   void Clear();
-  class TAtomsInfo *FAtomsInfo;
 public:
-  TCHNExp( TAtomsInfo *AI );
-  virtual ~TCHNExp();
+  TCHNExp() : FMult(1) { }
+  virtual ~TCHNExp() {  Clear();  }
   // return summ formula of the compound with elements seprated by the Seprator
   olxstr SummFormula(const olxstr& Separator);
   double MolWeight();
@@ -28,8 +27,6 @@ public:
   void CalcSummFormula(TStrPObjList<olxstr,double>& Exp);
   void SetMult(const olxstr &S)    {  FMult = S.ToDouble();  }
   inline double GetMult()  const   {  return FMult;  }
-
-  inline TAtomsInfo* AtomsInfo()  const {  return FAtomsInfo;  }
 };
 
 EndChemNamespace()

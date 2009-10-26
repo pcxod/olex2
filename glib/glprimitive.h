@@ -1,7 +1,5 @@
-//---------------------------------------------------------------------------
-
-#ifndef glprimitiveH
-#define glprimitiveH
+#ifndef __olx_gl_primitive_H
+#define __olx_gl_primitive_H
 #include "glmaterial.h"
 #include "glclipplane.h"
 #include "ematrix.h"
@@ -43,15 +41,15 @@ class AEvaluator  { // a prototype for the calculation of expressions
 public:
   virtual void Eval(double X, double Y, double &Z, int &Color) = 0;
 
-  inline int MaxX() const {  return FMaxX;  }
-  inline int MaxY() const {  return FMaxY;  }
-  inline int MinX() const {  return FMinX;  }
-  inline int MinY() const {  return FMinY;  }
+  int MaxX() const {  return FMaxX;  }
+  int MaxY() const {  return FMaxY;  }
+  int MinX() const {  return FMinX;  }
+  int MinY() const {  return FMinY;  }
 
-  inline void MaxX(int v)  {  FMaxX = v;  }
-  inline void MaxY(int v)  {  FMaxY = v;  }
-  inline void MinX(int v)  {  FMinX = v;  }
-  inline void MinY(int v)  {  FMinY = v;  }
+  void MaxX(int v)  {  FMaxX = v;  }
+  void MaxY(int v)  {  FMaxY = v;  }
+  void MinX(int v)  {  FMinX = v;  }
+  void MinY(int v)  {  FMinY = v;  }
 
 };
 
@@ -74,81 +72,82 @@ protected:
   */
   TEBasis* Basis;
   void CreateQuadric();
-  int ListId, 
-      TextureId, 
-      OwnerId, 
-      QuadricDrawStyle, 
-      QuadricNormals, 
-      QuadricOrientation;
+  GLuint ListId, 
+         TextureId, 
+         OwnerId,
+         QuadricDrawStyle, 
+         QuadricNormals, 
+         QuadricOrientation;
+
   void SetType(short T);
 
-  static inline void PrepareColorRendering(uint16_t _begin)  {
+  static void PrepareColorRendering(uint16_t _begin)  {
     glPushAttrib(GL_LIGHTING_BIT);
     glDisable(GL_LIGHTING);
     glEnable(GL_COLOR_MATERIAL);
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     glBegin(_begin);
   }
-  static inline void EndColorRendering()  {
+  static void EndColorRendering()  {
     glEnd();
     glPopAttrib();
   }
   // helper functions
-  inline void DrawVertex2(int i) const {
+  void DrawVertex2(size_t i) const {
     DrawVertex(Vertices[i]);
     DrawVertex(Vertices[i+1]);
   }
-  inline void DrawVertex2c(int i) const {
+  void DrawVertex2c(size_t i) const {
     DrawVertex(Vertices[i], Colors[i]);
     DrawVertex(Vertices[++i], Colors[i]);
   }
-  inline void DrawVertex2t(int i) const {
+  void DrawVertex2t(size_t i) const {
     DrawVertex(Vertices[i], TextureCrds[i]);
     DrawVertex(Vertices[++i], TextureCrds[i]);
   }
-  inline void DrawVertex2ct(int i) const {
+  void DrawVertex2ct(size_t i) const {
     DrawVertex(Vertices[i], Colors[i], TextureCrds[i]);
     DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
   }
-  inline void DrawVertex3(int i) const {
+  void DrawVertex3(size_t i) const {
     DrawVertex(Vertices[i]);
     DrawVertex(Vertices[i+1]);
     DrawVertex(Vertices[i+2]);
   }
-  inline void DrawVertex3c(int i) const {
+  void DrawVertex3c(size_t i) const {
     DrawVertex(Vertices[i], Colors[i]);
     DrawVertex(Vertices[++i], Colors[i]);
     DrawVertex(Vertices[++i], Colors[i]);
   }
-  inline void DrawVertex3t(int i) const {
+  void DrawVertex3t(size_t i) const {
     DrawVertex(Vertices[i], TextureCrds[i]);
     DrawVertex(Vertices[++i], TextureCrds[i]);
     DrawVertex(Vertices[++i], TextureCrds[i]);
   }
-  inline void DrawVertex3ct(int i) const {
+  void DrawVertex3ct(size_t i) const {
     DrawVertex(Vertices[i], Colors[i], TextureCrds[i]);
     DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
     DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
   }
-  inline void DrawVertex4(int i) const {
+  void DrawVertex4(size_t i) const {
     DrawVertex(Vertices[i]);
     DrawVertex(Vertices[i+1]);
     DrawVertex(Vertices[i+2]);
     DrawVertex(Vertices[i+3]);
   }
-  inline void DrawVertex4c(int i) const {
+  void DrawVertex4c(size_t i) const {
     DrawVertex(Vertices[i], Colors[i]);
     DrawVertex(Vertices[++i], Colors[i]);
     DrawVertex(Vertices[++i], Colors[i]);
     DrawVertex(Vertices[++i], Colors[i]);
   }
-  inline void DrawVertex4t(int i) const {
+  void DrawVertex4t(size_t i) const {
     DrawVertex(Vertices[i], TextureCrds[i]);
     DrawVertex(Vertices[++i], TextureCrds[i]);
     DrawVertex(Vertices[++i], TextureCrds[i]);
     DrawVertex(Vertices[++i], TextureCrds[i]);
   }
-  inline void DrawVertex4ct(int i) const {
+  void DrawVertex4ct(size_t i) const {
     DrawVertex(Vertices[i], Colors[i], TextureCrds[i]);
     DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
     DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
@@ -162,20 +161,20 @@ public:
   void Compile();
   void Draw();
 
-  DefPropP(int, ListId)
-  DefPropP(int, TextureId)
-  DefPropP(int, OwnerId) // to be used by the owner of the object
+  DefPropP(GLuint, ListId)
+  DefPropP(GLuint, TextureId)
+  DefPropP(GLuint, OwnerId) // to be used by the owner of the object
 
-  DefPropP(int, QuadricDrawStyle)
-  DefPropP(int, QuadricNormals)
-  DefPropP(int, QuadricOrientation)
+  DefPropP(GLuint, QuadricDrawStyle)
+  DefPropP(GLuint, QuadricNormals)
+  DefPropP(GLuint, QuadricOrientation)
 
 
   /* fills the list woth parameter names */
   virtual void ListParams(TStrList& List);
 
   /* sets the type and expands Params vector*/
-  inline short GetType() const {  return Type;  }
+  short GetType() const {  return Type;  }
 
   DefPropP(TGlClipPlanes*, ClipPlanes)
   DefPropP(olxstr*, String)
@@ -189,21 +188,21 @@ public:
   TGlMaterial& GetProperties() const {  return (TGlMaterial&)AGroupObject::GetProperties();  }
   AGOProperties& SetProperties(const AGOProperties& C);
   
-  inline void CallList(TGlPrimitive* GlP)  {
+  void CallList(TGlPrimitive* GlP)  {
     if( GlP->IsList() )
       glCallList(GlP->GetListId()); 
     else
       GlP->Draw();
   }
-  inline void CallList(int i)  {  glCallList(i); };
-  inline void StartList()  {
-    if( ListId == -1 )
+  static void CallList(GLuint i)  {  glCallList(i); };
+  void StartList()  {
+    if( ListId == ~0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "ListId");
     glNewList(ListId, GL_COMPILE);
   }
-  inline void EndList()  { glEndList();  }
-  inline bool IsCompiled() const {  return Compiled;  }
-  inline bool IsList()     const {  return Type == sgloCommandList;  }
+  static void EndList()  { glEndList();  }
+  bool IsCompiled() const {  return Compiled;  }
+  bool IsList() const {  return Type == sgloCommandList;  }
 
   struct TextureCrd  {
     float s, t, r, q;
@@ -222,29 +221,29 @@ public:
   */
   evecd Params;
 
-  static inline void SetColor(const uint32_t& cl)  {
+  static void SetColor(const uint32_t& cl)  {
     glColor4f( (float)GetRValue(cl)/255, (float)GetGValue(cl)/255, (float)GetBValue(cl)/255, (float)GetAValue(cl)/255 );
   }
-  static inline void SetNormal(const vec3d& v)   {  glNormal3dv(v.GetData());  }
-  static inline void SetNormal(const vec3f& v)   {  glNormal3fv(v.GetData());  }
-  static inline void SetTexCrd(const TextureCrd& c)  {  glTexCoord4d(c.s, c.t, c.r, c.q);  }
+  static void SetNormal(const vec3d& v)   {  glNormal3dv(v.GetData());  }
+  static void SetNormal(const vec3f& v)   {  glNormal3fv(v.GetData());  }
+  static void SetTexCrd(const TextureCrd& c)  {  glTexCoord4d(c.s, c.t, c.r, c.q);  }
 
-  static inline void DrawVertex(const vec3d& v)  {  glVertex3dv(v.GetData());  }
-  static inline void DrawVertex(const vec3f& v)  {  glVertex3fv(v.GetData());  }
+  static void DrawVertex(const vec3d& v)  {  glVertex3dv(v.GetData());  }
+  static void DrawVertex(const vec3f& v)  {  glVertex3fv(v.GetData());  }
 
   template <class vec_class> 
-  static inline void DrawVertex(const vec_class& v, const uint32_t& c)  {  
+  static void DrawVertex(const vec_class& v, const uint32_t& c)  {  
     SetColor(c);
     DrawVertex(v);
   }
   template <class vec_class> 
-  static inline void DrawVertex(const vec_class& v, const uint32_t& c, const TextureCrd& tc)  {  
+  static void DrawVertex(const vec_class& v, const uint32_t& c, const TextureCrd& tc)  {  
     SetColor(c);
     SetTexCrd(tc);
     DrawVertex(v);
   }
   template <class vec_class> 
-  static inline void DrawVertex(const vec_class& v, const TextureCrd& tc)  {  
+  static void DrawVertex(const vec_class& v, const TextureCrd& tc)  {  
     SetTexCrd(tc);
     DrawVertex(v);
   }

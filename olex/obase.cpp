@@ -90,7 +90,7 @@ AMode* TModes::SetMode(const olxstr& name)  {
 }
 //..............................................................................
 TModes::~TModes()  {
-  for( int i=0; i < Modes.Count(); i++ )
+  for( size_t i=0; i < Modes.Count(); i++ )
     delete Modes.GetObject(i);
   if( CurrentMode != NULL )  delete CurrentMode;
   Instance = NULL;

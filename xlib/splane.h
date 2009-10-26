@@ -1,8 +1,6 @@
-#ifndef splaneH
-#define splaneH
-
+#ifndef __olx_xl_splane_H
+#define __olx_xl_splane_H
 #include "xbase.h"
-#include "elist.h"
 #include "typelist.h"
 #include "tptrlist.h"
 #include "satom.h"
@@ -24,7 +22,7 @@ public:
 
   DefPropBIsSet(Deleted)
 
-  inline int CrdCount()              const {  return Crds.Count(); }
+  inline size_t CrdCount() const {  return Crds.Count(); }
   // an association point, weight is provided
   void Init(const TTypeList< AnAssociation2<TSAtom*, double> >& Points);
 
@@ -33,16 +31,16 @@ public:
 
   double DistanceTo(const vec3d &Crd) const;
   double DistanceTo(const TSAtom& A) const;
-  double Angle( const vec3d &A,  const vec3d &B) const;
-  double Angle( const class TSBond& B) const;
-  double Angle( const TSPlane& P) const;
+  double Angle(const vec3d &A,  const vec3d &B) const;
+  double Angle(const class TSBond& B) const;
+  double Angle(const TSPlane& P) const;
   double D() const {  return FDistance; }
   double Z(double X, double Y) const;
   void D(double v) {  FDistance = v; }
-  int Count() const {  return Crds.Count();  }
-  const TSAtom& GetAtom(int i) const {  return *Crds[i].GetA();  }
-  TSAtom& Atom(int i) {  return *Crds[i].A();  }
-  double Weight(int i) const {  return Crds[i].GetB();  }
+  size_t Count() const {  return Crds.Count();  }
+  const TSAtom& GetAtom(size_t i) const {  return *Crds[i].GetA();  }
+  TSAtom& Atom(size_t i) {  return *Crds[i].A();  }
+  double Weight(size_t i) const {  return Crds[i].GetB();  }
 
   // this is justa flag for the owner - is not used by the object itself
   DefPropBIsSet(Regular)

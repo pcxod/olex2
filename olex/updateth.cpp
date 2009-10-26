@@ -105,7 +105,7 @@ int UpdateThread::Run()  {
     }
     patcher::PatchAPI::UnlockUpdater();
   }
-  catch( const TExceptionBase& exc)  { // oups...
+  catch(const TExceptionBase&)  { // oups...
     CleanUp();
     patcher::PatchAPI::UnlockUpdater();
     //TBasicApp::GetLog().Info("Update failed...");

@@ -36,7 +36,7 @@ PyObject* hkl_py::Read(PyObject* self, PyObject* args)  {
     return Py_None;
   }
   PyObject* rv = PyTuple_New( hkl.RefCount() );
-  for( int i=0; i < hkl.RefCount(); i++ )  {
+  for( size_t i=0; i < hkl.RefCount(); i++ )  {
     PyObject* ref = PyTuple_New(7);
     PyTuple_SetItem(rv, i, ref);
     PyTuple_SetItem(ref, 0, Py_BuildValue("i", hkl[i].GetH()) );

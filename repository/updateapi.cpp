@@ -262,19 +262,19 @@ short UpdateAPI::DoSynch(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
 //.............................................................................
 void UpdateAPI::EvaluateProperties(TStrList& props) const  {
   props.Add("olex-update");
-#if defined(__WIN32__) && !defined(_DEBUG)  // disable updates by the debug version 
-  props.Add("port-win32");
-#  ifndef _WIN64
-#    if _M_IX86_FP == 0
-  props.Add("port-win32-nosse");
-#    elif _M_IX86_FP == 1
-  props.Add("port-win32-sse");
-#    elif _M_IX86_FP == 2  // cannot change it! olex2 does not get upadted and this is it...
-#    endif
-  props.Add("port-win32-portable");  // but can change this ...
+#if defined(__WIN32__) //&& !defined(_DEBUG)  // disable updates by the debug version 
+#  ifdef _WIN64
+     props.Add("port-win64");
 #  else
-  props.Add("port-win64");
-#endif
+     props.Add("port-win32-portable");  // but can change this ...
+#    if _M_IX86_FP == 0
+       props.Add("port-win32-nosse");
+#    elif _M_IX86_FP == 1
+       props.Add("port-win32-sse");
+#    elif _M_IX86_FP == 2  // cannot change it! olex2 does not get upadted and this is it...
+       props.Add("port-win32");
+#    endif
+#  endif
 #else
   if( !settings.olex2_port.IsEmpty() )  {
     props.Add(settings.olex2_port);
@@ -288,7 +288,7 @@ void UpdateAPI::EvaluateProperties(TStrList& props) const  {
       df.LoadFromXLFile( pluginFile, NULL );
       TDataItem* PluginItem = df.Root().FindItem("Plugin");
       if( PluginItem != NULL )  {
-        for( int i=0; i < PluginItem->ItemCount(); i++ )
+        for( size_t i=0; i < PluginItem->ItemCount(); i++ )
           props.Add( PluginItem->GetItem(i).GetName() );
       }
     }
@@ -376,15 +376,15 @@ AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name) const  {
   olxstr mirrors_fn = GetMirrorsFileName();
   if( TEFile::Exists(mirrors_fn) )
     repositories.LoadFromFile(mirrors_fn);
-  if( repositories.IndexOf(def_repo) == -1 )
+  if( repositories.IndexOf(def_repo) == InvalidIndex )
     repositories.Insert(0, def_repo);
   if( settings.IsValid() && !settings.repository.IsEmpty() )  {
-    int ind = repositories.IndexOf(settings.repository);
-    if( ind != -1 && ind != 0 )
+    const size_t ind = repositories.IndexOf(settings.repository);
+    if( ind != InvalidIndex && ind != 0 )
       repositories.Delete(ind);
     repositories.Insert(0, settings.repository);
   }
-  for( int i=0; i < repositories.Count(); i++ )  {
+  for( size_t i=0; i < repositories.Count(); i++ )  {
     AFileSystem* fs = FSFromString(repositories[i], settings.proxy);
     if( fs != NULL )  {
       if( repo_name != NULL )
@@ -403,8 +403,8 @@ void UpdateAPI::GetAvailableMirrors(TStrList& res) const  {
   if( res.IndexOf(def_repo) == -1 )
     res.Insert(0, def_repo);
   if( settings.IsValid() && !settings.repository.IsEmpty() )  {
-    int ind = res.IndexOf(settings.repository);
-    if( ind != -1 && ind != 0 )
+    const size_t ind = res.IndexOf(settings.repository);
+    if( ind != InvalidIndex && ind != 0 )
       res.Delete(ind);
     if( ind != 0 )
       res.Insert(0, settings.repository);
@@ -432,7 +432,7 @@ void UpdateAPI::GetAvailableRepositories(TStrList& res) const {
   res.LoadFromTextStream(*is);
   delete is;
   delete fs;
-  for( int i=0; i < res.Count(); i++ )
+  for( size_t i=0; i < res.Count(); i++ )
     res[i] = repo_name + res[i];
   // LoadFromTextStream clears the list...
   if( TEFile::Exists(inst_zip_fn) )  

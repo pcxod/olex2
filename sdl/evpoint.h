@@ -58,7 +58,7 @@ public:
   }
 
   TEVPoint&  Normalise()  {
-    double L = sqrt( sqr(FValues[0].V()) + sqr(FValues[1].V()) + sqr(FValues[2].V()));
+    double L = sqrt( olx_sqr(FValues[0].V()) + olx_sqr(FValues[1].V()) + olx_sqr(FValues[2].V()));
     if( L == 0 )  throw TDivException(__OlxSourceInfo);
     *this /= (EType)L;
     return *this;

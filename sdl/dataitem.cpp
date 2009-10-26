@@ -19,7 +19,7 @@ using namespace exparse::parser_util;
 TDataItem::TDataItem(TDataItem* Prnt, const olxstr& nm, const olxstr& val) : Name(nm), Value(val)  {
   if( Prnt != NULL )  {
     Level = Prnt->GetLevel()+1;
-    Index = Prnt->ItemCount();
+    Index = (int)Prnt->ItemCount();
   }
   else  {
     Level = 0;
@@ -31,7 +31,7 @@ TDataItem::TDataItem(TDataItem* Prnt, const olxstr& nm, const olxstr& val) : Nam
 //..............................................................................
 void TDataItem::Clear()  {
   Fields.Clear();
-  for( int i=0; i < Items.Count(); i++ )  {
+  for( size_t i=0; i < Items.Count(); i++ )  {
     if( Items.GetObject(i)->GetRefCount() < 1 ) 
       delete Items.GetObject(i);
     else  {
@@ -62,8 +62,8 @@ TEStrBuffer& TDataItem::writeFullName(TEStrBuffer& bf) const {
       tmp.Add(P);
       P = P->GetParent();
     }
-    for( int i=tmp.Count()-1; i >= 0; i-- )
-      bf << tmp[i]->GetName() << '.';
+    for( size_t i=tmp.Count(); i > 0; i-- )
+      bf << tmp[i-1]->GetName() << '.';
     bf << Name;
   }
   return bf;
@@ -85,7 +85,7 @@ olxstr TDataItem::GetFullName()  {
 TDataItem *TDataItem::DotItem(const olxstr &DotName, TStrList* Log)  {
   TDataItem* root = &Root();
   TStrList SL(DotName, '.');
-  for( int i=0; i < SL.Count(); i++ )  {
+  for( size_t i=0; i < SL.Count(); i++ )  {
     root = root->FindItem( SL[i] );
     if( root == NULL )  {
       if( Log != NULL )  
@@ -100,7 +100,7 @@ olxstr* TDataItem::DotField(const olxstr& DotName, olxstr& RefFieldName)  {
   TDataItem* root = &Root(), *PrevItem;
   TStrList SL(DotName, '.');
   olxstr *Str=NULL;
-  for( int i=0; i < SL.Count(); i++ )  {
+  for( size_t i=0; i < SL.Count(); i++ )  {
     PrevItem = root;
     root = root->FindItem( SL[i] );
     if( root == NULL )  {
@@ -115,7 +115,7 @@ olxstr* TDataItem::DotField(const olxstr& DotName, olxstr& RefFieldName)  {
 TDataItem *TDataItem::GetAnyItem(const olxstr& Name) const {
   TDataItem *DI = Items.FindObject(Name);
   if( DI == NULL )  {
-    for( int i=0; i < ItemCount(); i++ )  {
+    for( size_t i=0; i < ItemCount(); i++ )  {
       DI = GetItem(i).GetAnyItem(Name);
       if( DI != NULL )  return DI;
     }
@@ -126,7 +126,7 @@ TDataItem *TDataItem::GetAnyItem(const olxstr& Name) const {
 TDataItem *TDataItem::GetAnyItemCI(const olxstr &Name) const {
   TDataItem *DI = Items.FindObjecti(Name);
   if( DI == NULL )  {
-    for( int i=0; i < ItemCount(); i++ )  {
+    for( size_t i=0; i < ItemCount(); i++ )  {
       DI = GetItem(i).GetAnyItemCI(Name);
       if( DI != NULL )  return DI;
     }
@@ -136,10 +136,10 @@ TDataItem *TDataItem::GetAnyItemCI(const olxstr &Name) const {
 //..............................................................................
 void TDataItem::AddContent(TDataItem& DI, bool extend)  {
   if( extend )  {
-    for( int i=0; i < DI.ItemCount(); i++ )  {
+    for( size_t i=0; i < DI.ItemCount(); i++ )  {
       TDataItem *di = FindItem( DI.GetItem(i).GetName() );
       if( di != NULL )  {
-        for( int j=0; j < DI.GetItem(i).ItemCount(); j++ )
+        for( size_t j=0; j < DI.GetItem(i).ItemCount(); j++ )
           di->AddItem(DI.GetItem(i).GetItem(j)).SetParent(di);
       }
       else
@@ -147,7 +147,7 @@ void TDataItem::AddContent(TDataItem& DI, bool extend)  {
     }
   }
   else  {
-    for( int i=0; i < DI.ItemCount(); i++ )  {
+    for( size_t i=0; i < DI.ItemCount(); i++ )  {
       TDataItem *di = FindItem( DI.GetItem(i).GetName() );
       if( di != NULL )
         DeleteItem(di);
@@ -162,8 +162,8 @@ void TDataItem::DeleteItem(TDataItem *Item)  {
       Item->GetParent()->DeleteItem(Item);
     return;
   }
-  int index = Items.IndexOfObject(Item);
-  if( index >= 0 )  Items.Delete(index);
+  size_t index = Items.IndexOfObject(Item);
+  if( index != InvalidIndex )  Items.Delete(index);
   if( Item->GetRefCount() < 1 )
     delete Item;
   else  {
@@ -196,12 +196,12 @@ TDataItem& TDataItem::AddItem(const olxstr& name, const olxstr& val)  {
   return *DI;
 }
 //..............................................................................
-int TDataItem::LoadFromString(int start, const olxstr &Data, TStrList* Log)  {
-  int sl = Data.Length();
-  for( int i=start; i < sl; i++ )  {
+size_t TDataItem::LoadFromString(size_t start, const olxstr &Data, TStrList* Log)  {
+  const size_t sl = Data.Length();
+  for( size_t i=start; i < sl; i++ )  {
     olxch ch = Data.CharAt(i);
     if( ch == '<' )  {
-      const int name_start_i = i+1;
+      const size_t name_start_i = i+1;
       while( ++i < sl )  {
         ch = Data.CharAt(i);
         if( ch == ' ' || ch == '<' || ch == '>' || ch == '\"' )  break;
@@ -233,7 +233,7 @@ int TDataItem::LoadFromString(int start, const olxstr &Data, TStrList* Log)  {
         continue;
       }
       if( (i+1) >= sl ) return sl+1;
-      const int fn_start = i;
+      const size_t fn_start = i;
       while( i < sl )  {  // extract field name
         ch = Data.CharAt(i);
         if( ch == ' ' || ch == '=' || ch == '>' || 
@@ -251,7 +251,7 @@ int TDataItem::LoadFromString(int start, const olxstr &Data, TStrList* Log)  {
         olxch CloseChar = ' ';  // find closing character: space ' or "
         if( Data.CharAt(i) == '\'' )  {  CloseChar = '\''; i++; }
         else if( Data.CharAt(i) == '\"' )  {  CloseChar = '\"'; i++; }
-        const int fv_start = i;
+        const size_t fv_start = i;
         while( i < sl )  {
           if( Data.CharAt(i) == CloseChar || (CloseChar == ' ' && Data.CharAt(i) == '>') )  break;
           i++;
@@ -259,7 +259,7 @@ int TDataItem::LoadFromString(int start, const olxstr &Data, TStrList* Log)  {
         FieldValue = Data.SubString(fv_start, i-fv_start);
       }
       else i--; // the spaces can separate just two field names
-      if( FieldName.IndexOf('.') != -1 )  {  // a reference to an item
+      if( FieldName.IndexOf('.') != InvalidIndex )  {  // a reference to an item
         TDataItem* DI = DotItem(FieldName, Log);
         if( DI != NULL )  
           AddItem(*DI);
@@ -283,9 +283,9 @@ int TDataItem::LoadFromString(int start, const olxstr &Data, TStrList* Log)  {
 }
 //..............................................................................
 void TDataItem::ResolveFields(TStrList* Log)  {  // resolves referenced fields
-  for( int i=0; i < FieldCount(); i++ )  {
+  for( size_t i=0; i < FieldCount(); i++ )  {
     const olxstr& Tmp = Fields[i];
-    if( Tmp.IndexOf('.') >= 0 )  {  // a reference to an item
+    if( Tmp.IndexOf('.') != InvalidIndex )  {  // a reference to an item
       TDataItem *DI = DotItem(Tmp, Log);
       if( DI != NULL )  {
         AddItem(*DI);
@@ -309,7 +309,7 @@ void TDataItem::ResolveFields(TStrList* Log)  {  // resolves referenced fields
       }
     }
   }
-  for( int i=0; i < ItemCount(); i++ )  {
+  for( size_t i=0; i < ItemCount(); i++ )  {
     if( GetItem(i).GetParent() == this )
       GetItem(i).ResolveFields(Log);
   }
@@ -326,18 +326,18 @@ void TDataItem::SaveToStrBuffer(TEStrBuffer &Data) const {
       Data << '\"' << Value << "\" ";
     }
   }
-  const int fc = FieldCount();
-  for( int i=0; i < fc; i++ )  {
+  const size_t fc = FieldCount();
+  for( size_t i=0; i < fc; i++ )  {
     Data << Fields.GetString(i) << '=';
     Data << '\"' << CodeString(Fields.GetObject(i)) << '\"' << ' ';
   }
-  const int ic = ItemCount();
-  for( int i=0; i < ic; i++ )  {
+  const size_t ic = ItemCount();
+  for( size_t i=0; i < ic; i++ )  {
     if( GetItem(i).GetParent() != this && GetItem(i).GetParent() != NULL )  {  // dot operator
       GetItem(i).writeFullName(Data) << ' ';
     }
   }
-  for( int i=0; i < ic; i++ )  {
+  for( size_t i=0; i < ic; i++ )  {
     if( GetItem(i).GetParent() == this || GetItem(i).GetParent() == NULL )  {
       GetItem(i).SaveToStrBuffer(Data);
       if( !itemsadded ) itemsadded = true;
@@ -356,21 +356,21 @@ void TDataItem::SaveToStrBuffer(TEStrBuffer &Data) const {
 }
 //..............................................................................
 void TDataItem::FindSimilarItems(const olxstr &StartsFrom, TPtrList<TDataItem>& List)  {
-  for(int i=0; i < ItemCount(); i++ )  {
+  for( size_t i=0; i < ItemCount(); i++ )  {
     if( Items[i].StartsFromi(StartsFrom) )
       List.Add(Items.GetObject(i));
   }
 }
 //..............................................................................
 olxstr TDataItem::CodeString(const olxstr& Str) const  {
-  if( Str.IndexOf('\"') == -1 )  return Str;
+  if( Str.IndexOf('\"') == InvalidIndex )  return Str;
   olxstr rv(Str);
   rv.Replace('\"', DoubleQuoteCode);
   return rv;
 }
 //..............................................................................
 olxstr TDataItem::DecodeString(const olxstr& Str) const  {
-  if( Str.IndexOf(DoubleQuoteCode) == -1 )  return Str;
+  if( Str.IndexOf(DoubleQuoteCode) == InvalidIndex )  return Str;
   olxstr Res(Str);
   Res.Replace(DoubleQuoteCode, '\"');
   return Res;
@@ -384,7 +384,7 @@ void TDataItem::Sort()  {
 //..............................................................................
 void TDataItem::Validate(TStrList& Log)  {
   olxstr Tmp;
-  for( int i=0; i < ItemCount(); i++ )  {
+  for( size_t i=0; i < ItemCount(); i++ )  {
     if( GetItem(i).GetParent() != NULL && (GetItem(i).GetParent() != this) )  {
       Tmp = "Reffered item from ";
       Tmp << this->GetFullName() << "->" << GetItem(i).GetFullName();

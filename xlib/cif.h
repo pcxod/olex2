@@ -81,9 +81,9 @@ public:
     MatrixIndexes.Add( SymmIndex );
     MatrixTranslations.AddCCopy( Translation );
   }
-  inline int Count()  const                      {  return Atoms.Count();  }
-  inline int GetMatrixIndex(int index)  const    {  return MatrixIndexes[index];  }
-  inline TCAtom& GetAtom(int index)  const       {  return *Atoms[index];  }
+  inline size_t Count() const {  return Atoms.Count();  }
+  inline int GetMatrixIndex(size_t index) const {  return MatrixIndexes[index];  }
+  inline TCAtom& GetAtom(size_t index) const {  return *Atoms[index];  }
   inline const TEValueD& GetValue() const {  return Value;  }
 
   olxstr Format()  const;
@@ -103,8 +103,8 @@ public:
 
   void Clear();
 
-  inline int Count()  const  {  return Items.Count();  }
-  inline const TCifValue& Item(int index)  const {  return Items[index];  }
+  inline size_t Count() const {  return Items.Count();  }
+  inline const TCifValue& Item(size_t index)  const {  return Items[index];  }
 };
 //---------------------------------------------------------------------------
 
@@ -146,11 +146,11 @@ public:
   bool ParamExists(const olxstr &Param);  //Returns true if a specified parameter exists
   bool SetParam(const olxstr &Param, TCifData *Params);
   // returns the number of parameters
-  inline int ParamCount() const {  return Parameters.Count(); };
+  inline size_t ParamCount() const {  return Parameters.Count(); };
   // returns the name of a specified parameter
-  const olxstr& Param(int index) const {  return Parameters[index]; };
+  const olxstr& Param(size_t index) const {  return Parameters[index]; };
   // returns the name of a specified parameter
-  TCifData* ParamValue(int index)        {  return Parameters.GetObject(index); };
+  TCifData* ParamValue(size_t index)  {  return Parameters.GetObject(index); };
   //............................................................................
   //Returns the data name of the file (data_XXX, returns XXX in this case)
   inline const olxstr& GetDataName() const {  return FDataName; }
@@ -169,13 +169,13 @@ public:
   inline const olxstr& GetWeightB()        const {   return FWeightB;  }
   //............................................................................
   //Returns a loop specified by index
-  TCifLoop& Loop(int i);
+  TCifLoop& Loop(size_t i);
   //Returns a loop specified by name
   TCifLoop* FindLoop(const olxstr &L);
   //Returns the name of a loop specified by the index
-  inline const olxstr& GetLoopName(int i)  const {  return Loops[i];  }
+  inline const olxstr& GetLoopName(size_t i)  const {  return Loops[i];  }
   // Returns the number of loops
-  inline int LoopCount()                     const { return Loops.Count(); }
+  inline size_t LoopCount()  const { return Loops.Count(); }
   // Adds a loop to current  file
   TCifLoop& AddLoop(const olxstr &Name);
   /* this is the only loop, which is not automatically created from structure data!
@@ -209,51 +209,51 @@ struct TLAngle;
 class  TLinkedLoop;
 struct TLAtom  {
   olxstr Label;
-  TEList *Bonds;
-  TEList *Angles;
-  TCAtom *CA;
+  TPtrList<TLBond> Bonds;
+  TPtrList<TLAngle> Angles;
+  TCAtom &CA;
+  TLAtom(TCAtom& ca) : CA(ca)  {}
+  bool operator == (const TLAtom& a) const {  return this == &a;  }
 };
 struct TLBond  {
   olxstr Value, S2;
-  TLAtom *A1, *A2;
-  TLAtom *Another(TLAtom *A);
-  bool operator == (TLBond * B);
+  TLAtom &A1, &A2;
+  TLBond(TLAtom& a1, TLAtom& a2) : A1(a1), A2(a2)  {}
+  const TLAtom& Another(TLAtom& A) const;
+  bool operator == (const TLBond &B) const;
 };
 struct TLAngle  {
   olxstr Value, S1, S3;
-  TLAtom *A1, *A2, *A3;
-  bool Contains(TLAtom *A);
-  bool FormedBy(TLBond *B, TLBond *B1 );
+  TLAtom &A1, &A2, &A3;
+  TLAngle(TLAtom& a1, TLAtom& a2, TLAtom& a3) :A1(a1), A2(a2), A3(a3) {}
+  bool Contains(const TLAtom& A) const;
+  bool FormedBy(const TLBond& B, const TLBond& B1) const;
 };
 //---------------------------------------------------------------------------
-  //A class derived from the abstract class TListSort. Use the BondSort property SortType,
-  //to change the way the tables produce with a call to MakeTable look like.
-  //Possible values are:
-  //slltLength: Length, Mr, Atom Label;
-  //slltName: Atom Label, Length;
-  //slltMw: Mr, Length, Atom Label
-  //default value is slltLength. The sorting happens according to the sequence shown above.
-class TLLTBondSort: public TListSort  {
+class TLLTBondSort  {
 public:
   short SortType;
-  TLAtom *Atom; // must be initilaised before the call
-  TStrList *Symmetry;
-  int Compare(void *I, void *I1);
+  TLAtom &Atom; // must be initilaised before the call
+  const TStrList &Symmetry;
+  TLLTBondSort(TLAtom& atom, const TStrList& symm, short sort_type) :
+    Atom(atom), Symmetry(symm), SortType(sort_type)  {}
+  int Compare(const TLBond *I, const TLBond *I1);
 };
 //---------------------------------------------------------------------------
 class TLinkedLoopTable: public IEObject  {
-  TEList *FAtoms, *FBonds, *FAngles;
+  TPtrList<TLAtom> FAtoms;
+  TPtrList<TLBond> FBonds;
+  TPtrList<TLAngle> FAngles;
   TCif *FCif;
 protected:
-  TLAtom *AtomByName(const olxstr &Name);
+  TLAtom& AtomByName(const olxstr &Name);
   TTTable< TStrList > Table;
-  TLLTBondSort BondSort;
 public:
   TLinkedLoopTable(TCif *C);
   virtual ~TLinkedLoopTable();
 
-  inline int AtomCount() const   {  return FAtoms->Count(); }
-  inline TLAtom *Atom(int index) {  return (TLAtom*)FAtoms->Item(index);  };
+  size_t AtomCount() const {  return FAtoms.Count(); }
+  TLAtom *Atom(size_t index) {  return FAtoms[index];  };
   /* Returns a table constructed for Atom. The Atom should represent a valid atom
    label in Cif->AsymmUnit. */
   TTTable<TStrList>* MakeTable(const olxstr &Atom);

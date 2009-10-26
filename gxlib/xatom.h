@@ -49,8 +49,8 @@ class TXAtom: public TGlMouseListener  {
 private:
   TSAtom *FAtom;
   short FDrawStyle, FRadius;
-  int XAppId;
-  static short PolyhedronIndex, 
+  size_t XAppId;
+  static uint8_t PolyhedronIndex, 
     SphereIndex, 
     SmallSphereIndex, 
     RimsIndex, 
@@ -60,7 +60,7 @@ private:
   struct Poly {
     TArrayList<vec3f> vecs;
     TTypeList<vec3f> norms;
-    TTypeList<vec3i> faces;
+    TTypeList<TVector3<size_t> > faces;
   };
   Poly* Polyhedron;
   void CreatePolyhedron(bool v);
@@ -89,14 +89,14 @@ public:
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ACreationParams* GetCreationParams() const;
 
-  DefPropP(int, XAppId)
+  DefPropP(size_t, XAppId)
 
   static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
   void CreateStaticPrimitives();
 
   static olxstr GetLegend(const TSAtom& A, const short Level=2); // returns full legend with symm code
   // returns level of the given legend (number of '.', basically)
-  static short LegendLevel(const olxstr& legend);
+  static uint16_t LegendLevel(const olxstr& legend);
   static olxstr GetLabelLegend(TSAtom *A);
   // returns full legend for the label. e.g. "Q.Q1"
 
@@ -126,7 +126,7 @@ public:
   void ApplyStyle(TGraphicsStyle& S);
   void UpdateStyle(TGraphicsStyle& S);
 
-  void Zoom(float Z);
+  void Zoom(double Z);
   inline double Zoom()  {  return Params()[1]; }
 
   bool Orient(TGlPrimitive& P);

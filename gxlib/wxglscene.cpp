@@ -1,5 +1,3 @@
-//---------------------------------------------------------------------------
-
 #ifdef __BORLANDC__
   #pragma hdrstop
 #endif
@@ -49,7 +47,7 @@ public:
     wxBoxSizer *AASizer = new wxBoxSizer( wxHORIZONTAL );
       AASizer->Add( new wxStaticText(this, -1, wxT("File name")), wxALL, 5);
     cbFileName = new wxComboBox(this, -1, mf.GetFileName().u_str());
-    for( int i=0; i < fntFiles.Count(); i++ )
+    for( size_t i=0; i < fntFiles.Count(); i++ )
       cbFileName->Append( fntFiles[i].u_str() ); 
     AASizer->Add( cbFileName, 0, wxALL, 5);
   
@@ -185,7 +183,7 @@ TGlFont* TwxGlScene::CreateFont(const olxstr& name, const olxstr& fntDesc, short
   if( Font.GetPointSize() <= 1 )
     Font.SetPointSize(6);
     
-  Fnt->IdString(Font.GetNativeFontInfoDesc().c_str());
+  Fnt->SetIdString(Font.GetNativeFontInfoDesc().c_str());
   Fnt->SetPointSize( Font.GetPointSize() );
   TPtrList<wxImage> Images;
   wxImage *Image;
@@ -245,13 +243,13 @@ void TwxGlScene_RipFont(wxFont& fnt, TGlFont& glf, TEBitArray& ba)  {
     Images.Add(Image);
   }
   ba.Clear();
-  int maxw = glf.MaxWidth()+1, maxh = glf.MaxHeight()+1;
+  uint16_t maxw = glf.GetMaxWidth()+1, maxh = glf.GetMaxHeight()+1;
   ba.SetSize( 256*maxw*maxh );
   for( int i=0; i < 256; i++ )  {
     TFontCharSize* cs = glf.CharSize(i);
     if( cs->Data == NULL )  continue;
-    for( int j=0; j < maxw; j++ )  {
-      for( int k=0; k < maxh; k++ )  {
+    for( uint16_t j=0; j < maxw; j++ )  {
+      for( uint16_t k=0; k < maxh; k++ )  {
         int ind = (k*ImageW+j)*3;
         if( (cs->Data[ind] | cs->Data[ind+1] | cs->Data[ind+2]) != cs->Background ) // is black?
           ba.SetTrue( maxw*(i*maxh+k) + j );
@@ -278,9 +276,9 @@ void TwxGlScene_RipFontA(wxFont& fnt, TGlFont& glf, wxZipOutputStream& zos)  {
     fnt.SetPointSize(i);
     TwxGlScene_RipFont(fnt, glf, ba);
     zos.PutNextEntry((olxstr(prefix) << i).u_str());
-    uint16_t s = glf.MaxWidth()+1; 
+    uint16_t s = glf.GetMaxWidth()+1; 
     zos.Write(&s, sizeof(uint16_t));
-    s = glf.MaxHeight()+1; 
+    s = glf.GetMaxHeight()+1; 
     zos.Write(&s, sizeof(uint16_t));
     zos.Write(ba.GetData(), ba.CharCount());
     zos.CloseEntry();
@@ -288,9 +286,9 @@ void TwxGlScene_RipFontA(wxFont& fnt, TGlFont& glf, wxZipOutputStream& zos)  {
   fnt.SetPointSize(TwxGlScene_LastFontSize);
   TwxGlScene_RipFont(fnt, glf, ba);
   zos.PutNextEntry((olxstr(prefix) << TwxGlScene_LastFontSize).u_str());
-  uint16_t s = glf.MaxWidth()+1; 
+  uint16_t s = glf.GetMaxWidth()+1; 
   zos.Write(&s, sizeof(uint16_t));
-  s = glf.MaxHeight()+1; 
+  s = glf.GetMaxHeight()+1; 
   zos.Write(&s, sizeof(uint16_t));
   zos.Write(ba.GetData(), ba.CharCount());
   zos.CloseEntry();
@@ -302,7 +300,7 @@ void TwxGlScene::ExportFont(const olxstr& name, const olxstr& fileName)  {
   wxFileOutputStream fos( fileName.u_str() );
   fos.Write("ofnt", 4);
   wxZipOutputStream zos(fos, 9);
-  for( int i=0; i < toks.Count(); i++ )  {
+  for( size_t i=0; i < toks.Count(); i++ )  {
     Font.SetNativeFontInfo( toks[i].u_str() );
     // regular
     TwxGlScene_RipFontA(Font, Fnt, zos);
@@ -376,7 +374,7 @@ TGlFont* TwxGlScene::ImportFont(const olxstr& Name, const olxstr& fntDesc, short
     Fnt = new TGlFont(Name);
 
   Fnt->SetPointSize( mf.GetSize() );
-  Fnt->IdString( mf.GetIdString() );
+  Fnt->SetIdString( mf.GetIdString() );
   if( Scale )  {
     TPtrList<wxImage> Images;
     int bit_cnt = 0;
@@ -386,8 +384,8 @@ TGlFont* TwxGlScene::ImportFont(const olxstr& Name, const olxstr& fntDesc, short
       wxImage* img = new wxImage(maxw, maxh);
       unsigned char* idata = img->GetData();
       memset(idata, 0, maxw*maxh);
-      for( int j=0; j < maxw; j++ )  {
-        for( int k=0; k < maxh; k++ )  {
+      for( uint16_t j=0; j < maxw; j++ )  {
+        for( uint16_t k=0; k < maxh; k++ )  {
           if( ba.Get(maxw*(i*maxh + k) + j) )
             idata[(k*maxw+j)*3] = 255;
           bit_cnt++;
@@ -415,19 +413,19 @@ void TwxGlScene::ScaleFonts(double scale)  {
   if( !FontSizes.IsEmpty() )
     throw TFunctionFailedException(__OlxSourceInfo, "call RestoreFontScale");
   FontSizes.SetCount( Fonts.Count() );
-  for( int i=0; i < Fonts.Count(); i++ )  // kepp the sizes if scaling fails
+  for( size_t i=0; i < Fonts.Count(); i++ )  // kepp the sizes if scaling fails
     FontSizes[i] = Fonts[i]->GetPointSize();
-  for( int i=0; i < Fonts.Count(); i++ )  {
+  for( size_t i=0; i < Fonts.Count(); i++ )  {
     olxstr fontId;
-    if( MetaFont::IsOlexFont(Fonts[i]->IdString()) )  {
-      MetaFont mf(Fonts[i]->IdString());
+    if( MetaFont::IsOlexFont(Fonts[i]->GetIdString()) )  {
+      MetaFont mf(Fonts[i]->GetIdString());
       int sz = (int)(Fonts[i]->GetPointSize()*scale);
       mf.SetSize( sz < 2 ? 2 : sz );
       fontId << mf.GetIdString();
     }
     else  {
       wxFont font;
-      ((wxFontBase&)font).SetNativeFontInfo( Fonts[i]->IdString().u_str() );
+      ((wxFontBase&)font).SetNativeFontInfo(Fonts[i]->GetIdString().u_str());
       int sz = (int)(font.GetPointSize()*scale);
       font.SetPointSize( sz < 2 ? 2 : sz );
       fontId = font.GetNativeFontInfoDesc().c_str();
@@ -439,16 +437,16 @@ void TwxGlScene::ScaleFonts(double scale)  {
 void TwxGlScene::RestoreFontScale()  {
   if( FontSizes.IsEmpty() || FontSizes.Count() != Fonts.Count() )
     throw TFunctionFailedException(__OlxSourceInfo, "call ScaleFont first");
-  for( int i=0; i < Fonts.Count(); i++ )  {
+  for( size_t i=0; i < Fonts.Count(); i++ )  {
     olxstr fontId;
-    if( MetaFont::IsOlexFont(Fonts[i]->IdString()) )  {
-      MetaFont mf(Fonts[i]->IdString());
+    if( MetaFont::IsOlexFont(Fonts[i]->GetIdString()) )  {
+      MetaFont mf(Fonts[i]->GetIdString());
       mf.SetSize(FontSizes[i]);
       fontId = mf.GetIdString();
     }
     else  {
       wxFont font;
-      ((wxFontBase&)font).SetNativeFontInfo( Fonts[i]->IdString().u_str() );
+      ((wxFontBase&)font).SetNativeFontInfo(Fonts[i]->GetIdString().u_str());
       font.SetPointSize(FontSizes[i]);
       fontId = font.GetNativeFontInfoDesc().c_str();
     }
@@ -459,7 +457,7 @@ void TwxGlScene::RestoreFontScale()  {
 //..............................................................................
 olxstr TwxGlScene::ShowFontDialog(TGlFont* glf, const olxstr& fntDesc)  {
   olxstr rv(EmptyString);
-  olxstr fntId( (glf != NULL) ? glf->IdString() : fntDesc );
+  olxstr fntId( (glf != NULL) ? glf->GetIdString() : fntDesc );
   if( MetaFont::IsOlexFont(fntId) )  {
     if( fntId.CharAt(fntId.Length()-1) == ':' )  // default font
       fntId << MetaFont::BuildOlexFontId(EmptyString, 12, true, false, false);
@@ -518,11 +516,13 @@ olxstr TwxGlScene::MetaFont::BuildOlexFontId(const olxstr& fileName, short size,
 void TwxGlScene::MetaFont::SetIdString(const olxstr& idstr)  {
   OriginalId = idstr;
   if( IsOlexFont(idstr) )  {
-    int ci = idstr.IndexOf(':');
-    if( ci == -1 )  throw TFunctionFailedException(__OlxSourceInfo, "invalid font ID");
+    size_t ci = idstr.IndexOf(':');
+    if( ci == InvalidIndex )
+      throw TFunctionFailedException(__OlxSourceInfo, "invalid font ID");
     FileName = idstr.SubStringFrom(1).SubStringTo(ci-1);
     olxstr fntid( idstr.SubStringFrom(ci+1) );
-    if( fntid.Length() < 5 ) throw TFunctionFailedException(__OlxSourceInfo, "invalid font ID");
+    if( fntid.Length() < 5 )
+      throw TFunctionFailedException(__OlxSourceInfo, "invalid font ID");
     Fixed = (fntid.CharAt(0) == 'f');
     Italic = (fntid.CharAt(1) == 'i');
     Bold = (fntid.CharAt(2) == 'b');

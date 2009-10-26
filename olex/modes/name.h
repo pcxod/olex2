@@ -18,7 +18,7 @@ protected:
     void AddAtom(TXAtom& xa)  {  LabelIndeces.Add( xa.GetXAppId() );  }
     void undo(TUndoData* data)  {
       if( TNameMode::Instance != NULL )  {
-        for( int i=0; i < LabelIndeces.Count(); i++ )  {
+        for( size_t i=0; i < LabelIndeces.Count(); i++ )  {
           TGlXApp::GetGXApp()->MarkLabel(LabelIndeces[i], false);
           TNameMode::Instance->Index--;
         }
@@ -35,11 +35,11 @@ protected:
   }
   void Autocomplete(TXAtom& xa, TNameModeUndo* undo)  {
     TGXApp& app = *TGlXApp::GetGXApp();
-    for( int i=0; i < app.AtomCount(); i++ )
+    for( size_t i=0; i < app.AtomCount(); i++ )
       app.GetAtom(i).Atom().SetTag(i);
     TXAtomPList outgoing;
     const TSAtom& sa = xa.Atom();
-    for( int i=0; i < sa.NodeCount(); i++ )  {
+    for( size_t i=0; i < sa.NodeCount(); i++ )  {
       const TSAtom& nd = sa.Node(i);
       if( nd.IsDeleted() || nd.GetAtomInfo() == iQPeakIndex || nd.GetAtomInfo().GetMr() < 3.5 )
         continue;
@@ -87,13 +87,13 @@ public:
       labels << " -h";
     TGlXApp::GetMainForm()->executeMacro(labels);
     TGXApp& app = *TGlXApp::GetGXApp();
-    for( int i=0; i < app.BondCount(); i++ )
+    for( size_t i=0; i < app.BondCount(); i++ )
       app.GetBond(i).SetGroupable(false);
     return true;
   }
   ~TNameMode() {
     TGXApp& app = *TGlXApp::GetGXApp();
-    for( int i=0; i < app.BondCount(); i++ )
+    for( size_t i=0; i < app.BondCount(); i++ )
       app.GetBond(i).SetGroupable(true);
     Instance = NULL;
     app.XFile().GetLattice().UpdateConnectivity();

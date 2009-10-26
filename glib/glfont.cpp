@@ -1,16 +1,9 @@
 //----------------------------------------------------------------------------//
-// namespace TEXLib
 // TGlFont - a text font 
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "glfont.h"
 #include "exception.h"
-#include "elist.h"
 #include "emath.h"
 #include "egc.h"
 #include <memory.h>
@@ -18,28 +11,28 @@
 UseGlNamespace()
 //..............................................................................
 TGlFont::TGlFont(const olxstr& name) {
-  FFontBase = glGenLists(256);
-  if( FFontBase == -1 )
+  FontBase = glGenLists(256);
+  if( FontBase == (GLuint)~0 )
     throw TOutOfMemoryException(__OlxSourceInfo);
   CharSizes.SetCount(256);
   for( int i=0; i < 256; i++ )
     CharSizes[i] = new TFontCharSize();
-  FCharOffset = 2;
-  FFlags = 0;
+  CharOffset = 2;
+  Flags = 0;
   Textures = NULL;
   ClearData();
   Name = name;
   PointSize = 0;
-  FMaxWidth = FMaxHeight = 0;
-  FLeftmost = 1000; 
-  FTopmost  = 1000;
+  MaxWidth = MaxHeight = 0;
+  Leftmost = 1000; 
+  Topmost  = 1000;
 }
 //..............................................................................
 TGlFont::~TGlFont()  {
   for( int i=0; i < 256; i++ )
     delete CharSizes[i];
-  if( FFontBase != -1 )
-    glDeleteLists(FFontBase, 256);
+  if( FontBase != (GLuint)~0 )
+    glDeleteLists(FontBase, 256);
   if( Textures != NULL )  {
     glDeleteTextures(256, Textures);
     delete [] Textures;
@@ -52,9 +45,9 @@ void TGlFont::ClearData()  {
     cs->Top = -1;     cs->Left = -1;
     cs->Bottom = -1;  cs->Right = -1;
   }
-  FMaxWidth = FMaxHeight = 0;
-  FLeftmost = 1000; // an arbitrary value
-  FTopmost  = 1000;
+  MaxWidth = MaxHeight = 0;
+  Leftmost = 1000; // an arbitrary value
+  Topmost  = 1000;
   //if( Textures != NULL )  {
   //  glDeleteTextures(256, Textures);
   //  delete [] Textures;
@@ -62,30 +55,28 @@ void TGlFont::ClearData()  {
   //}
 }
 //..............................................................................
-int TGlFont::TextWidth(const olxstr &Text, int cnt)  {
-  if( FixedWidth() )  {
-    return (cnt == -1) ? Text.Length()*(FMaxWidth) : cnt*FMaxWidth;
-  }
-  int w = 0, tl = (cnt == -1) ? Text.Length() : olx_min(cnt, Text.Length());
-  for( int i=0; i < tl; i++ )  {
+size_t TGlFont::TextWidth(const olxstr &Text, size_t cnt)  {
+  if( IsFixedWidth() )
+    return (cnt == (size_t)~0) ? Text.Length()*MaxWidth : cnt*MaxWidth;
+  size_t w = 0, tl = (cnt == InvalidSize) ? Text.Length() : olx_min(cnt, Text.Length());
+  for( size_t i=0; i < tl; i++ )  {
     TFontCharSize* cs = CharSize(Text[i]);
-    if( i < (tl-1) )  w += (cs->Right + FCharOffset);
+    if( i < (tl-1) )  w += (cs->Right + CharOffset);
     else              w += cs->Right;
   }
   return w;
 }
 //..............................................................................
-int TGlFont::MaxTextLength(int width)  {
-  return (int)((double)width/(double)(FMaxWidth));
+size_t TGlFont::MaxTextLength(size_t width)  {
+  return width/MaxWidth;
 }
 //..............................................................................
-int TGlFont::TextHeight(const olxstr &Text)  {
-  if( Text.IsEmpty() )  return FMaxHeight;
-
-  int w = 0, w1 = 0, tl = Text.Length();
-  for( int i=0; i < tl; i++ )  {
-    TFontCharSize* cs = CharSize(Text[i]);
-    short df = cs->Bottom - FTopmost; // height from the top
+uint16_t TGlFont::TextHeight(const olxstr &Text)  {
+  if( Text.IsEmpty() )  return MaxHeight;
+  uint16_t w = 0, w1 = 0;
+  for( size_t i=0; i < Text.Length(); i++ )  {
+    TFontCharSize* cs = CharSize(Text.CharAt(i));
+    short df = cs->Bottom - Topmost; // height from the top
     if( df > w )  w = df;
     df = cs->Bottom - cs->Top;  // height itself
     if( df > w1 )  w1 = df;
@@ -93,60 +84,59 @@ int TGlFont::TextHeight(const olxstr &Text)  {
   return 2*w-w1;
 }
 //..............................................................................
-bool TGlFont::CharFromRGBArray(size_t Char, unsigned char *RGBData, int width, int height) {
+bool TGlFont::CharFromRGBArray(size_t Char, unsigned char *RGBData, uint16_t width, uint16_t height) {
   TFontCharSize *cs = CharSizes[Char];
-  int ind;
-  int Leftmost = -1, Rightmost = -1, Bottommost=-1, Topmost = -1;
+  int _Leftmost = -1, _Rightmost = -1, _Bottommost=-1, _Topmost = -1;
   unsigned char background = RGBData[3*width*height-1];
-  for( int i=0; i < width; i++ )  {
-    for( int j=0; j < height; j++ )  {
-      ind = (j*width+i)*3;
+  for( uint16_t i=0; i < width; i++ )  {
+    for( uint16_t j=0; j < height; j++ )  {
+      const size_t ind = (j*width+i)*3;
       if( ( (RGBData[ind] | RGBData[ind+1] | RGBData[ind+2]) != background) )  { 
-        Leftmost = i;  break;
+        _Leftmost = i;  break;
       }
     }
-    if( Leftmost >= 0 )  break;
+    if( _Leftmost >= 0 )  break;
   }
-  for( int i=width-1; i >=0; i-- )  {
-    for( int j=0; j < height; j++ )  {
-      ind = (j*width+i)*3;
+  for( uint16_t i=width-1; i != (uint16_t)~0; i-- )  {
+    for( uint16_t j=0; j < height; j++ )  {
+      const size_t ind = (j*width+i)*3;
       if( ( (RGBData[ind] | RGBData[ind+1] | RGBData[ind+2]) != background) )  {
-        Rightmost = i;  break;
+        _Rightmost = i;  break;
       }
     }
-    if( Rightmost >= 0 )  break;
+    if( _Rightmost >= 0 )  break;
   }
-  for( int i=0; i < height; i++ )  {
-    for( int j=0; j < width; j++ )  {
-      ind = (i*width+j)*3;
+  for( uint16_t i=0; i < height; i++ )  {
+    for( uint16_t j=0; j < width; j++ )  {
+      const size_t ind = (i*width+j)*3;
       if( ( (RGBData[ind] | RGBData[ind+1] | RGBData[ind+2]) != background) )  {
-        Topmost = i;  break;
+        _Topmost = i;  break;
       }
     }
-    if( Topmost >= 0 )  break;
+    if( _Topmost >= 0 )  break;
   }
-  for( int i=height-1; i >=0; i-- )  {
-    for( int j=0; j < width; j++ )  {
-      ind = (i*width+j)*3;
+  for( uint16_t i=height-1; i != (uint16_t)~0; i-- )  {
+    for( uint16_t j=0; j < width; j++ )  {
+      const size_t ind = (i*width+j)*3;
       if( ( (RGBData[ind] | RGBData[ind+1] | RGBData[ind+2]) != background) )  {
-        Bottommost = i;  break;
+        _Bottommost = i;  break;
       }
     }
-    if( Bottommost >= 0 )  break;
+    if( _Bottommost >= 0 )  break;
   }
-  cs->Top = Topmost;
-  cs->Left = Leftmost;
-  cs->Right = Rightmost;
-  cs->Bottom = Bottommost;
+  cs->Top = _Topmost;
+  cs->Left = _Leftmost;
+  cs->Right = _Rightmost;
+  cs->Bottom = _Bottommost;
   cs->Background = background;
-  if( Topmost >=0 && Leftmost >=0 && Rightmost >=0 && Bottommost >=0 )  {
+  if( _Topmost >=0 && _Leftmost >=0 && _Rightmost >=0 && _Bottommost >=0 )  {
     cs->Data  = RGBData;
-    ind = Bottommost;
-    if( ind > FMaxHeight )  FMaxHeight = ind;
-    ind = Rightmost - Leftmost;
-    if( ind > FMaxWidth )   FMaxWidth  = ind;
-    if( Leftmost < FLeftmost )  FLeftmost = Leftmost;
-    if( Topmost < FTopmost )  FTopmost = Topmost;
+    int ind = _Bottommost;
+    if( _Bottommost > MaxHeight )  MaxHeight = ind;
+    ind = _Rightmost - _Leftmost;
+    if( ind > MaxWidth )  MaxWidth  = ind;
+    if( _Leftmost < Leftmost )  Leftmost = _Leftmost;
+    if( _Topmost < Topmost )  Topmost = _Topmost;
     return true;
   }
   else  {
@@ -155,149 +145,146 @@ bool TGlFont::CharFromRGBArray(size_t Char, unsigned char *RGBData, int width, i
   }
 }
 //..............................................................................
-void TGlFont::CreateGlyphsFromRGBArray(bool FW, short Width, short Height)  {
-  if( Width < FMaxWidth || Width < 0 ||
-      Height < FMaxHeight || Height < 0 ||
-      FMaxWidth <=0 || FMaxHeight <=0 )
+void TGlFont::CreateGlyphsFromRGBArray(bool FW, uint16_t Width, uint16_t Height)  {
+  if( Width < MaxWidth || Width < 0 ||
+      Height < MaxHeight || Height < 0 ||
+      MaxWidth <=0 || MaxHeight <=0 )
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("font size w:") << Width << "; h:" << Height);
 
-  SetBit(FW, FFlags, sglfFixedWidth);
-
-  int ind;
-  int NHeight = FMaxHeight;//(FMaxHeight/8+1)*8;
-  int BWidth = (FMaxWidth/8+1);
+  SetBit(FW, Flags, sglfFixedWidth);
+  uint16_t NHeight = MaxHeight;
+  uint16_t BWidth = (MaxWidth/8+1);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);  // byte alignment
   unsigned char *BmpData = new unsigned char [(NHeight+1)*BWidth];
   TFontCharSize* cs = CharSize('W');
-  int maxCharW = cs->Right - cs->Left + FCharOffset;
-  if( FMaxWidth > maxCharW ) // makes a lot of difference on lInux with its crappy fonts...
-    FMaxWidth = maxCharW;
+  uint16_t maxCharW = cs->Right - cs->Left + CharOffset;
+  if( MaxWidth > maxCharW ) // makes a lot of difference on lInux with its crappy fonts...
+    MaxWidth = maxCharW;
   for( int i=0; i < 256; i++ )  {
     cs = CharSize(i);
     memset(BmpData, 0, NHeight*BWidth); // initialise the bits array
-    if( cs->Data )  {  // check if bitmap is not empty
-      for( int j=cs->Left; j <= cs->Right; j++ )  {
-        for( int k=cs->Top; k <= cs->Bottom; k++ )  {
-          ind = (k*Width+j)*3;
+    if( cs->Data != NULL )  {  // check if bitmap is not empty
+      for( int16_t j=cs->Left; j <= cs->Right; j++ )  {
+        for( int16_t k=cs->Top; k <= cs->Bottom; k++ )  {
+          const size_t ind = (k*Width+j)*3;
           if( (cs->Data[ind] | cs->Data[ind+1] | cs->Data[ind+2]) != cs->Background ) // is black?
-            BmpData[(NHeight-k)*BWidth + (j+FLeftmost)/8] |= (0x01 << (7-(j+FLeftmost)%8));
+            BmpData[(NHeight-k)*BWidth + (j+Leftmost)/8] |= (0x01 << (7-(j+Leftmost)%8));
         }
       }
-      glNewList(FFontBase +i, GL_COMPILE_AND_EXECUTE);
-      if( FixedWidth() )
-        glBitmap(BWidth*8, NHeight, 0.0, 0.0, (float)(FMaxWidth), 0.0, BmpData);
+      glNewList(FontBase +i, GL_COMPILE_AND_EXECUTE);
+      if( IsFixedWidth() )
+        glBitmap(BWidth*8, NHeight, 0.0, 0.0, (float)(MaxWidth), 0.0, BmpData);
       else
-        glBitmap(BWidth*8, NHeight, 0.0, 0.0, (float)(cs->Right + FCharOffset), 0.0, BmpData);
+        glBitmap(BWidth*8, NHeight, 0.0, 0.0, (float)(cs->Right + CharOffset), 0.0, BmpData);
 
       glEndList();
       cs->Data = NULL;
     }
     else  {  // an empty character as a space char
-      glNewList(FFontBase +i, GL_COMPILE_AND_EXECUTE);
+      glNewList(FontBase +i, GL_COMPILE_AND_EXECUTE);
 
-      if( FixedWidth() )
-        glBitmap(BWidth, FMaxHeight, 0.0, 0.0, (float)(FMaxWidth), 0.0, BmpData);
+      if( IsFixedWidth() )
+        glBitmap(BWidth, MaxHeight, 0.0, 0.0, (float)(MaxWidth), 0.0, BmpData);
       else
-        glBitmap(olx_min(BWidth*8, FCharOffset*5), FMaxHeight, 0.0, 0.0, 
-           (float)(olx_min(BWidth*8, FCharOffset*5)+FCharOffset), 0.0, BmpData);
+        glBitmap(olx_min(BWidth*8, CharOffset*5), MaxHeight, 0.0, 0.0, 
+           (float)(olx_min(BWidth*8, CharOffset*5)+CharOffset), 0.0, BmpData);
 
       glEndList();
       cs->Top = 0;                 
       cs->Left = 0;
-      cs->Right = olx_min(BWidth*8, FCharOffset*5);   
-      cs->Bottom = FMaxHeight;
+      cs->Right = olx_min(BWidth*8, CharOffset*5);   
+      cs->Bottom = MaxHeight;
     }
   }
   delete [] BmpData;
 }
 //..............................................................................
-bool TGlFont::AnalyseBitArray(const TEBitArray& ba, size_t Char, int width, int height)  {
+bool TGlFont::AnalyseBitArray(const TEBitArray& ba, size_t Char, uint16_t width, uint16_t height)  {
   TFontCharSize *cs = CharSizes[Char];
-  int Leftmost = -1, Rightmost = -1, Bottommost=-1, Topmost = -1;
-  const int off = width*height*Char;
+  int _Leftmost = -1, _Rightmost = -1, _Bottommost=-1, _Topmost = -1;
+  const size_t off = width*height*Char;
   unsigned char background = 0;
-  for( int i=0; i < width; i++ )  {
-    for( int j=0; j < height; j++ )  {
-      if( ba[off+j*width+i] )  {  Leftmost = i;  break;  }
+  for( uint16_t i=0; i < width; i++ )  {
+    for( uint16_t j=0; j < height; j++ )  {
+      if( ba[off+j*width+i] )  {  _Leftmost = i;  break;  }
     }
-    if( Leftmost >= 0 )  break;
+    if( _Leftmost >= 0 )  break;
   }
-  for( int i=width-1; i >=0; i-- )  {
-    for( int j=0; j < height; j++ )  {
-      if( ba[off+j*width+i] )  {  Rightmost = i;  break;  }
+  for( uint16_t i=width-1; i != (uint16_t)~0; i-- )  {
+    for( uint16_t j=0; j < height; j++ )  {
+      if( ba[off+j*width+i] )  {  _Rightmost = i;  break;  }
     }
-    if( Rightmost >= 0 )  break;
+    if( _Rightmost >= 0 )  break;
   }
-  for( int i=0; i < height; i++ )  {
-    for( int j=0; j < width; j++ )  {
-      if( ba[off+i*width+j] )  {  Topmost = i;  break;  }
+  for( uint16_t i=0; i < height; i++ )  {
+    for( uint16_t j=0; j < width; j++ )  {
+      if( ba[off+i*width+j] )  {  _Topmost = i;  break;  }
     }
-    if( Topmost >= 0 )  break;
+    if( _Topmost >= 0 )  break;
   }
-  for( int i=height-1; i >=0; i-- )  {
-    for( int j=0; j < width; j++ )  {
-      if( ba[off+i*width+j] )  {  Bottommost = i;  break;  }
+  for( uint16_t i=height-1; i != (uint16_t)~0; i-- )  {
+    for( uint16_t j=0; j < width; j++ )  {
+      if( ba[off+i*width+j] )  {  _Bottommost = i;  break;  }
     }
-    if( Bottommost >= 0 )  break;
+    if( _Bottommost >= 0 )  break;
   }
-  cs->Top = Topmost;
-  cs->Left = Leftmost;
-  cs->Right = Rightmost;
-  cs->Bottom = Bottommost;
+  cs->Top = _Topmost;
+  cs->Left = _Leftmost;
+  cs->Right = _Rightmost;
+  cs->Bottom = _Bottommost;
   cs->Background = background;
   cs->Data  = NULL;
-  if( Topmost >=0 && Leftmost >=0 && Rightmost >=0 && Bottommost >=0 )  {
-    int ind = Bottommost;
-    if( ind > FMaxHeight )  FMaxHeight = ind;
-    ind = Rightmost - Leftmost;
-    if( ind > FMaxWidth )   FMaxWidth  = ind;
-    if( Leftmost < FLeftmost )  FLeftmost = Leftmost;
-    if( Topmost < FTopmost )  FTopmost = Topmost;
+  if( +Topmost >=0 && _Leftmost >=0 && _Rightmost >=0 && _Bottommost >=0 )  {
+    int ind = _Bottommost;
+    if( ind > MaxHeight )  MaxHeight = ind;
+    ind = _Rightmost - _Leftmost;
+    if( ind > MaxWidth )  MaxWidth  = ind;
+    if( _Leftmost < Leftmost )  Leftmost = _Leftmost;
+    if( _Topmost < Topmost )  Topmost = _Topmost;
     return true;
   }
   return false;
 }
 //..............................................................................
-void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, short w, short h)  {
+void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, uint16_t w, uint16_t h)  {
   for( int i=0; i < 256; i++ )
     AnalyseBitArray(ba, i, w, h);
-  SetBit(fixedWidth, FFlags, sglfFixedWidth);
+  SetBit(fixedWidth, Flags, sglfFixedWidth);
 
-  int BWidth = (FMaxWidth/8+1)*8;
-  int BHeight = FMaxHeight+1;
+  uint16_t BWidth = (MaxWidth/8+1)*8;
+  uint16_t BHeight = MaxHeight+1;
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);  // byte alignment
   unsigned char* bf = new unsigned char[BWidth*BHeight];
   for( int i=0; i < 256; i++ )  {
     TFontCharSize* cs = CharSize(i);
-    const int off = i*w*h;
+    const size_t off = i*w*h;
     memset(bf, 0, BWidth*BHeight);
     if( cs->Left > 0 || cs->Bottom > 0 )  {  // check if bitmap is not empty
       for( int j=cs->Left; j <= cs->Right; j++ )  {
         for( int k=cs->Top; k <= cs->Bottom; k++ )  {
-          int ind = off + k*w + j;
-          if( ba[ind] ) 
-            bf[((BHeight-k)*BWidth + (j+FLeftmost))/8] |= (0x01 << (7-(j+FLeftmost)%8));
+          if( ba[off + k*w + j] ) 
+            bf[((BHeight-k)*BWidth + (j+Leftmost))/8] |= (0x01 << (7-(j+Leftmost)%8));
         }
       }
-      glNewList(FFontBase +i, GL_COMPILE_AND_EXECUTE);
+      glNewList(FontBase +i, GL_COMPILE_AND_EXECUTE);
       if( fixedWidth )
-        glBitmap(BWidth, BHeight, 0.0, 0.0, (float)(FMaxWidth), 0.0, bf);
+        glBitmap(BWidth, BHeight, 0.0, 0.0, (float)(MaxWidth), 0.0, bf);
       else
-        glBitmap(BWidth, BHeight, 0.0, 0.0, (float)(cs->Right + FCharOffset), 0.0, bf);
+        glBitmap(BWidth, BHeight, 0.0, 0.0, (float)(cs->Right + CharOffset), 0.0, bf);
       glEndList();
     }
     else  {  // an empty character as a space char
-      glNewList(FFontBase +i, GL_COMPILE_AND_EXECUTE);
+      glNewList(FontBase +i, GL_COMPILE_AND_EXECUTE);
       if( fixedWidth )
-        glBitmap(BWidth, BHeight, 0.0, 0.0, (float)(FMaxWidth), 0.0, bf);
+        glBitmap(BWidth, BHeight, 0.0, 0.0, (float)(MaxWidth), 0.0, bf);
       else
-        glBitmap(olx_min(BWidth, FCharOffset*3), BHeight, 0.0, 0.0, 
-           (float)(olx_min(BWidth, FCharOffset*3)+FCharOffset), 0.0, bf);
+        glBitmap(olx_min(BWidth, CharOffset*3), BHeight, 0.0, 0.0, 
+           (float)(olx_min(BWidth, CharOffset*3)+CharOffset), 0.0, bf);
       glEndList();
       cs->Top = 0;                 
       cs->Left = 0;
-      cs->Right = olx_min(BWidth, FCharOffset*3);   
-      cs->Bottom = FMaxHeight;
+      cs->Right = olx_min(BWidth, CharOffset*3);   
+      cs->Bottom = MaxHeight;
     }
   }
   delete [] bf;
@@ -368,19 +355,19 @@ void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, short w, short
 //  delete [] BmpData;
 //}
 //..............................................................................
-void TGlFont::CreateTextures(short Width, short Height)  {
-  if( Width < FMaxWidth || Width < 0 ||
-      Height < FMaxHeight || Height < 0 ||
-      FMaxWidth <=0 || FMaxHeight <=0 )
+void TGlFont::CreateTextures(uint16_t Width, uint16_t Height)  {
+  if( Width < MaxWidth || Width < 0 ||
+      Height < MaxHeight || Height < 0 ||
+      MaxWidth <=0 || MaxHeight <=0 )
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("font size w:") << Width << "; h:" << Height);
   if( Textures == NULL )  {
     Textures = new GLuint[256];
     glGenTextures(256, &Textures[0]);
   }
   // calculate the texture size
-  short txt_w = 1, txt_h = 1;
-  while( txt_w < FMaxWidth )  txt_w *= 2;
-  while( txt_h < FMaxHeight )  txt_h *= 2;
+  uint16_t txt_w = 1, txt_h = 1;
+  while( txt_w < MaxWidth )  txt_w *= 2;
+  while( txt_h < MaxHeight )  txt_h *= 2;
   TextureWidth = txt_w;
   TextureHeight = txt_h;
   unsigned char *BmpData = new unsigned char [txt_w*txt_h*4];
@@ -389,15 +376,15 @@ void TGlFont::CreateTextures(short Width, short Height)  {
     TFontCharSize* cs = CharSize(i);
     memset(BmpData, 0, txt_w*txt_h*4); // initialise the bits array
     if( cs->Data != NULL )  {
-      for( int j=cs->Left; j <= cs->Right; j++ )  {
-        for( int k=cs->Top; k <= cs->Bottom; k++ )  {
-          const int ind = (k*Width+j)*3;
-          const int ind1 = (k*txt_w+j-cs->Left)*4;
+      for( int16_t j=cs->Left; j <= cs->Right; j++ )  {
+        for( int16_t k=cs->Top; k <= cs->Bottom; k++ )  {
+          const size_t ind = (k*Width+j)*3;
+          const size_t ind1 = (k*txt_w+j-cs->Left)*4;
           if( cs->Data[ind] != cs->Background && cs->Data[ind+1] != cs->Background && cs->Data[ind+2] != cs->Background )  {
             BmpData[ind1+3] = 255;
-            BmpData[ind1]   = (unsigned char)olx_round(255*FMaterial.AmbientF[0]);
-            BmpData[ind1+1] = (unsigned char)olx_round(255*FMaterial.AmbientF[1]);
-            BmpData[ind1+2] = (unsigned char)olx_round(255*FMaterial.AmbientF[2]);
+            BmpData[ind1]   = (unsigned char)olx_round(255*Material.AmbientF[0]);
+            BmpData[ind1+1] = (unsigned char)olx_round(255*Material.AmbientF[1]);
+            BmpData[ind1+2] = (unsigned char)olx_round(255*Material.AmbientF[2]);
           }
         }
       }
@@ -416,7 +403,7 @@ void TGlFont::CreateTextures(short Width, short Height)  {
       //glDeleteTextures(1, &Textures[i]);
       //Textures[i] = ~0;
       cs->Top = 0;                 cs->Left = 0;
-      cs->Right = FCharOffset*5;   cs->Top = FMaxHeight;
+      cs->Right = CharOffset*5;   cs->Top = MaxHeight;
     }
   }
   delete [] BmpData;
@@ -432,19 +419,19 @@ void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, bool FixedW)  {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
-  double step = 0.2, tx = (double)FMaxWidth*step/TextureWidth, st=0,
+  double step = 0.2, tx = (double)MaxWidth*step/TextureWidth, st=0,
     aspect=step*(double)TextureHeight/TextureWidth;
   //glEnable(GL_COLOR_MATERIAL);
   //glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 //  glColor4d(1, 1, 1, 0.5);
   glTexCoord2d( 0, 0 );
   glNormal3d(0, 0, 1);
-  for( int i=0; i < text.Length(); i++ )  {
+  for( size_t i=0; i < text.Length(); i++ )  {
     const unsigned ch = (unsigned)text.CharAt(i);
     if( ch > 256 )  continue;
     TFontCharSize* cs = CharSizes[ch];
     glBindTexture(GL_TEXTURE_2D, Textures[ch] );
-    if( Textures[ch] == ~0 )  continue;  // empty char
+    if( Textures[ch] == (GLuint)~0 )  continue;  // empty char
     glBegin(GL_QUADS);
     glTexCoord2d( 1, 0 );  //0,1
     glVertex3d(from[0], from[1], from[2]);
@@ -456,7 +443,7 @@ void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, bool FixedW)  {
     glVertex3d(from[0]-step, from[1], from[2]);
     glEnd();
     if( !FixedW )
-      tx = step*(cs->Right-cs->Left+FCharOffset)/TextureWidth;
+      tx = step*(cs->Right-cs->Left+CharOffset)/TextureWidth;
     glTranslated(tx, 0, 0);
     st -= tx;
   }
@@ -468,9 +455,9 @@ void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, bool FixedW)  {
 }
 //..............................................................................
 void TGlFont::SetMaterial(const TGlMaterial& m)  {
-  if( FMaterial == m )  return;
-  bool ModifyTextures = !(FMaterial.AmbientF == m.AmbientF);
-  FMaterial = m;
+  if( Material == m )  return;
+  bool ModifyTextures = !(Material.AmbientF == m.AmbientF);
+  Material = m;
   if( Textures == NULL || !ModifyTextures )  return;
   unsigned char *BmpData = new unsigned char [TextureWidth*TextureHeight*4];
   for( int i=0; i < 256; i++ )  {

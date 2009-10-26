@@ -27,28 +27,27 @@ TCmdLine::~TCmdLine()  {
 //..............................................................................
 bool TCmdLine::ProcessKey( wxKeyEvent& evt )  {
   if( (evt.GetKeyCode() == WXK_LEFT) && evt.GetModifiers() == 0 )  {
-    if( GetInsertionPoint() <= PromptStr.Length() )
+    if( GetInsertionPoint() <= (long)PromptStr.Length() )
       return true;
   }
   else if( (evt.GetKeyCode() == WXK_BACK)  )  {
-    if( GetInsertionPoint() <= PromptStr.Length() )
+    if( GetInsertionPoint() <= (long)PromptStr.Length() )
       return true;
   }
   else if( (evt.GetKeyCode() == WXK_UP) )  {
-      if( --CmdIndex < 0 )  {
-        CmdIndex = 0;
-      }
-      if( CmdIndex < Commands.Count() )
-        SetCommand( Commands[CmdIndex] );
-      return true;
+    if( --CmdIndex < 0 )
+      CmdIndex = 0;
+    if( CmdIndex < (int)Commands.Count() )
+      SetCommand( Commands[CmdIndex] );
+    return true;
   }
   else if( (evt.GetKeyCode() == WXK_DOWN) )  {
-      if( ++CmdIndex >= Commands.Count() )  {
-        CmdIndex = Commands.Count()-1;
-      }
-      if( CmdIndex < Commands.Count() && Commands.Count() != 0 )
-        SetCommand( Commands[CmdIndex] );
-      return true;
+    if( ++CmdIndex >= (int)Commands.Count() )  {
+      CmdIndex = Commands.Count()-1;
+    }
+    if( CmdIndex < (int)Commands.Count() && Commands.Count() != 0 )
+      SetCommand( Commands[CmdIndex] );
+    return true;
   }
   else if( (evt.GetKeyCode() == WXK_RETURN) && evt.GetModifiers() == 0 )  {
     olxstr cmd = GetCommand();
@@ -86,7 +85,7 @@ bool TCmdLine::Execute(const IEObject *Sender, const IEObject *Data)  {
   // ufrotunatelly call to GetInsertionPoint() takes one core of the dialcore processor,
   // so need an extra tag ...
   if( DoCheckPosition )  {
-    if( GetInsertionPoint() < PromptStr.Length() )  {
+    if( GetInsertionPoint() < (long)PromptStr.Length() )  {
       SetInsertionPoint( PromptStr.Length() );
       return false;
     }

@@ -7,40 +7,38 @@
 
 BeginXlibNamespace()
 
-  typedef TTypeList< AnAssociation2<int,int> > TIntPairList;
+  typedef TTypeList< AnAssociation2<size_t,size_t> > TIntPairList;
 
 struct TSymmTestData  {
   vec3d Center;
   TIntPairList Atoms;
-  TSymmTestData(const vec3d& v, int i, int j )  {
+  TSymmTestData(const vec3d& v, size_t i, size_t j )  {
     Center = v;
-    Atoms.AddNew<int, int>(i, j);
+    Atoms.AddNew<size_t, size_t>(i, j);
   }
-  inline int Count() const  {  return Atoms.Count();  }
+  inline size_t Count() const {  return Atoms.Count();  }
 };
 
 class TSymmTest : public IEObject {
-  TTypeList< AnAssociation2<vec3d,TCAtom*> > Atoms;
+  TTypeList<AnAssociation2<vec3d,TCAtom*> > Atoms;
   vec3d GCenter;
-  TTypeList< TSymmTestData > Vecs;
+  TTypeList<TSymmTestData> Vecs;
 
 protected:
   static inline int VecsCmpByCount( const TSymmTestData& a , const TSymmTestData& b )  {
-    return a.Count() - b.Count();
+    return a.Count() < b.Count() ? -1 : (a.Count() > b.Count() ? 1 : 0);
   }
-  static inline int VecsCmpByRadius( const AnAssociation3<vec3d,int,int>& a ,
-                                     const AnAssociation3<vec3d,int,int>& b )  {
-    double v = a.GetA().QLength() - b.GetA().QLength();
-    //double v = a.GetA().QDistanceTo( b.GetA() );
-    if( v < 0 )  return -1;
-    return (v > 0) ? 1 : 0;
+  static inline int VecsCmpByRadius( const AnAssociation3<vec3d,size_t,size_t>& a ,
+                                     const AnAssociation3<vec3d,size_t,size_t>& b )  {
+    const double v = a.GetA().QLength() - b.GetA().QLength();
+    return (v > 0) ? 1 : (v < 0 ? -1 : 0);
   }
 
 public:
   TSymmTest(const TUnitCell& cell)  {
     // get the whole unit cell context (including symmetry eqs)
     cell.GenereteAtomCoordinates( Atoms, false );
-    for( int i=0; i < Atoms.Count(); i++ )
+    for( size_t i=0; i < Atoms.Count(); i++ )
       GCenter += Atoms[i].GetA();
     if( Atoms.Count() != 0 )
       GCenter /= Atoms.Count();
@@ -49,9 +47,9 @@ public:
   inline const vec3d GetGravityCenter()  const  {  return GCenter;  }
   inline const  TTypeList< TSymmTestData >& GetResults() const  {  return Vecs;  }
 
-  inline int AtomCount() const  {  return Atoms.Count();  }
+  inline size_t AtomCount() const  {  return Atoms.Count();  }
   void Push(const vec3d& t)  {
-    for( int i=0; i < Atoms.Count(); i++ )
+    for( size_t i=0; i < Atoms.Count(); i++ )
       Atoms[i].A() += t; 
   }
 
@@ -67,7 +65,7 @@ public:
   //    TMatrixD gs(4,4), lm(Row.Count(), 4), lmt(4, Row.Count());
   //    TVectorD b(Row.Count()), gr(4), sol(4);
   //    vec3d cent;
-  //    for( int i=0; i < Row.Count(); i++ )  {
+  //    for( size_t i=0; i < Row.Count(); i++ )  {
   //      cent = Atoms[Row[i].GetB()].GetA();
   //      cent -= trans;
   //      for( int j=0; j < 3; j++ )  {
@@ -79,7 +77,7 @@ public:
   //      lmt[3][i] = 1;
   //    }
   //    for(int i=0; i < 3; i++ )  {
-  //      for( int j=0; j < Row.Count(); j++ )  {
+  //      for( size_t j=0; j < Row.Count(); j++ )  {
   //        b[j] = Atoms[Row[j].GetA()].GetA()[i] - trans[i];
   //        if( b[j] > 0.5 )  b[j] -= 1;
   //      }
@@ -97,18 +95,18 @@ public:
   //}
 
   void TestMatrix(const smatd& matr, double tol)  {
-    TTypeList< AnAssociation3<vec3d,int,int> > tmpVecs;
+    TTypeList< AnAssociation3<vec3d,size_t,size_t> > tmpVecs;
     Vecs.Clear();
     Vecs.SetCapacity( (Atoms.Count()*Atoms.Count()-1)/2+1 );
     tmpVecs.SetCapacity( (Atoms.Count()*Atoms.Count()-1)/2+1 );
-    for( int i=0; i < Atoms.Count(); i++ )  {
-      for( int j=i; j < Atoms.Count(); j++ )  {
+    for( size_t i=0; i < Atoms.Count(); i++ )  {
+      for( size_t j=i; j < Atoms.Count(); j++ )  {
         vec3d a = matr * Atoms[j].GetA() - Atoms[i].GetA();
         for( int k=0; k < 3; k++ )  {
           a[k] -= olx_round(a[k]);
           if( a[k] < 0 )  a[k] += 1;
         }
-        tmpVecs.AddNew<vec3d,int,int>(a, i, j);
+        tmpVecs.AddNew<vec3d,size_t,size_t>(a, i, j);
       }
     }
 
@@ -118,20 +116,20 @@ public:
     // optimisation technique
     tmpVecs.QuickSorter.SortSF(tmpVecs,VecsCmpByRadius);
     float* radii = new float[ tmpVecs.Count()+1];
-    for( int i=0; i < tmpVecs.Count(); i++ )
+    for( size_t i=0; i < tmpVecs.Count(); i++ )
       radii[i] = (float)tmpVecs[i].GetA().QLength();
 
     // collect the results
-    for(int i=0; i < tmpVecs.Count(); i++ )  {
+    for( size_t i=0; i < tmpVecs.Count(); i++ )  {
       if( tmpVecs.IsNull(i) )  continue;
       TSymmTestData* sd = new TSymmTestData( tmpVecs[i].GetA(), tmpVecs[i].GetB(), tmpVecs[i].GetC());
       Vecs.Add(*sd);
       double qval = radii[i];
       tmpVecs.NullItem(i);
-      for( int j=i+1; j < tmpVecs.Count(); j++ )  {
+      for( size_t j=i+1; j < tmpVecs.Count(); j++ )  {
         if( (radii[j] - qval) > stol )  break;
         if( tmpVecs.IsNull(j) )  continue;
-        sd->Atoms.AddNew<int,int>( tmpVecs[j].GetB(), tmpVecs[j].GetC() );
+        sd->Atoms.AddNew<size_t,size_t>( tmpVecs[j].GetB(), tmpVecs[j].GetC() );
         qval *= 0.75;
         qval += radii[j]*0.25;
         sd->Center += tmpVecs[j].GetA();  // accumulating center
@@ -139,7 +137,7 @@ public:
       }
     }
     // do the averaging
-    for( int i=0; i < Vecs.Count(); i++ )
+    for( size_t i=0; i < Vecs.Count(); i++ )
       Vecs[i].Center /= Vecs[i].Count();
 
     delete [] radii;
@@ -149,13 +147,13 @@ public:
                              const TTypeList< AnAssociation2<vec3d,TCAtom*> >& listb,
                              TTypeList< TSymmTestData >& Vecs,
                              const smatd& matr, double tol)  {
-    TTypeList< AnAssociation3<vec3d,int,int> > tmpVecs;
+    TTypeList< AnAssociation3<vec3d,size_t,size_t> > tmpVecs;
     Vecs.Clear();
     Vecs.SetCapacity( lista.Count()*listb.Count()+1 );
     tmpVecs.SetCapacity( lista.Count()*listb.Count()+1 );
     vec3d a, b;
-    for( int i=0; i < lista.Count(); i++ )  {
-      for( int j=0; j < listb.Count(); j++ )  {
+    for( size_t i=0; i < lista.Count(); i++ )  {
+      for( size_t j=0; j < listb.Count(); j++ )  {
         a = lista[i].GetA();
         b = listb[j].GetA();
         b = matr * b;
@@ -166,7 +164,7 @@ public:
           if( a[k] < tol )  a[k] = 0;
           else if( (1-a[k]) < tol )  a[k] = 0;
         }
-        tmpVecs.AddNew<vec3d,int,int>(a, i, j);
+        tmpVecs.AddNew<vec3d,size_t,size_t>(a, i, j);
       }
     }
 
@@ -176,24 +174,24 @@ public:
     // optimisation technique
     tmpVecs.QuickSorter.SortSF(tmpVecs,VecsCmpByRadius);
     float* radii = new float[ tmpVecs.Count()+1];
-    for( int i=0; i < tmpVecs.Count(); i++ )
+    for( size_t i=0; i < tmpVecs.Count(); i++ )
       radii[i] = (float)tmpVecs[i].GetA().QLength();
 
     // collect the results
-    for(int i=0; i < tmpVecs.Count(); i++ )  {
+    for( size_t i=0; i < tmpVecs.Count(); i++ )  {
       if( tmpVecs.IsNull(i) )  continue;
       TSymmTestData* sd = new TSymmTestData( tmpVecs[i].GetA(), tmpVecs[i].GetB(), tmpVecs[i].GetC());
       Vecs.Add(*sd);
       a = tmpVecs[i].GetA(); // "crawling" center
       qval = radii[i];
       tmpVecs.NullItem(i);
-      for( int j=i+1; j < tmpVecs.Count(); j++ )  {
+      for( size_t j=i+1; j < tmpVecs.Count(); j++ )  {
         if( (radii[j] - qval) > stol )  break;
         if( tmpVecs.IsNull(j) )  continue;
         if( olx_abs(tmpVecs[j].GetA()[0]-a[0])  < tol &&
             olx_abs(tmpVecs[j].GetA()[1]-a[1])  < tol &&
             olx_abs(tmpVecs[j].GetA()[2]-a[2])  < tol  )  {
-          sd->Atoms.AddNew<int,int>( tmpVecs[j].GetB(), tmpVecs[j].GetC() );
+          sd->Atoms.AddNew<size_t,size_t>( tmpVecs[j].GetB(), tmpVecs[j].GetC() );
           a *= 0.75;
           a += tmpVecs[j].GetA()*0.25;  // implement "crawling"
 
@@ -207,7 +205,7 @@ public:
       }
     }
     // do the averaging
-    for( int i=0; i < Vecs.Count(); i++ )
+    for( size_t i=0; i < Vecs.Count(); i++ )
       Vecs[i].Center /= Vecs[i].Count();
 
     delete [] radii;

@@ -10,12 +10,12 @@ BeginGlNamespace()
 
 class TGlTextBox: public TGlMouseListener  {
   float LineSpacing;
-  int Width, Height, Top, Left;
+  uint16_t Width, Height, MaxStringLength;
+  int Top, Left;
   TStrPObjList<olxstr,TGlMaterial*> FBuffer;   // the content
   double Z;
-  short FontIndex;
-  bool FScrollDirectionUp;
-  int MaxStringLength;
+  uint16_t FontIndex;
+  bool ScrollDirectionUp;
 protected:
 public:
   TGlTextBox(TGlRenderer& Render, const olxstr& collectionName);
@@ -28,23 +28,21 @@ public:
   bool GetDimensions(vec3d &Max, vec3d &Min) {  return false;  }
 
   DefPropP(double, Z)
-  DefPropP(int, Width)
-  DefPropP(int, Height)
-  void SetLeft(int w);
-  inline int GetLeft()  const  {  return Left;  }
-  void SetTop(int w);
-  inline int GetTop()    const {  return Top;  }
+  DefPropP(uint16_t, Width)
+  DefPropP(uint16_t, Height)
+  void SetLeft(int left);
+  int GetLeft() const {  return Left;  }
+  void SetTop(int top);
+  int GetTop() const {  return Top;  }
 
-  DefPropP(int, FontIndex)
-  DefPropP(int, MaxStringLength)
+  DefPropP(uint16_t, FontIndex)
+  DefPropP(uint16_t, MaxStringLength)
   DefPropP(float, LineSpacing)
 
   void PostText(const olxstr &S, class TGlMaterial *M=NULL);
   void PostText(const TStrList &SL, TGlMaterial *M=NULL);
   inline void NewLine() {  FBuffer.Add(EmptyString); }
-
-  class TGlFont *Font()  const;
-
+  class TGlFont& GetFont()  const;
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
 };
 

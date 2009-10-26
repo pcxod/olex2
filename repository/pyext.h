@@ -85,7 +85,7 @@ public:
   TPtrList<BasicWrapper> ToDelete;
 //..............................................................................
   void ClearToDelete()  {
-    for( int i=0; i < ToDelete.Count(); i++ )
+    for( size_t i=0; i < ToDelete.Count(); i++ )
       delete ToDelete[i];
   }
 //..............................................................................
@@ -142,7 +142,7 @@ public:
       rv = crv;
     }
     else if( pobj->ob_type == &PyUnicode_Type )  {
-      int sz =  PyUnicode_GetSize(pobj);
+      size_t sz =  PyUnicode_GetSize(pobj);
       TTBuffer<wchar_t> wc_bf(sz+1);      
       sz = PyUnicode_AsWideChar((PyUnicodeObject*)pobj, wc_bf.Data(), sz);
       if( sz > 0 )

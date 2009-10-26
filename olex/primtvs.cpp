@@ -18,7 +18,7 @@ TdlgPrimitive::TdlgPrimitive(TMainFrame *P, const TStrList& L, int mask) :
   ButtonsSizer->Add( new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxALL, 1);
 
   wxSize DefS(150, 21);
-  for( int i=0; i < L.Count(); i++ )  {
+  for( size_t i=0; i < L.Count(); i++ )  {
     wxCheckBox* Box = Boxes.Add( new wxCheckBox(this, -1, L[i].u_str(), wxDefaultPosition, DefS) );
     TopSizer->Add( Box, 0, wxALL, 1);
     Box->SetValue( (mask & (1 << i)) != 0 );  
@@ -33,7 +33,7 @@ TdlgPrimitive::TdlgPrimitive(TMainFrame *P, const TStrList& L, int mask) :
 //..............................................................................
 void TdlgPrimitive::OnOK(wxCommandEvent& event)  {
   Mask = 0;
-  for( int i=0; i < Boxes.Count(); i++ )  {
+  for( size_t i=0; i < Boxes.Count(); i++ )  {
     if( Boxes[i]->GetValue() )
       Mask |= (1 << i);
   }

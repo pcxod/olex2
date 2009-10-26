@@ -33,7 +33,7 @@ public:
         TCAtom& ca = XA->Atom().CAtom();
         if( ca.GetDependentAfixGroup() != NULL )       ca.GetDependentAfixGroup()->Clear();
         else if( ca.DependentHfixGroupCount() != 0 )  {
-          for( int i=0; i < ca.DependentHfixGroupCount(); i++ )
+          for( size_t i=0; i < ca.DependentHfixGroupCount(); i++ )
             ca.GetDependentHfixGroup(i).Clear();
         }
         else if( ca.GetParentAfixGroup() != NULL )     ca.GetParentAfixGroup()->Clear();

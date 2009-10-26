@@ -35,15 +35,15 @@ public:
 
 template <class TaskClass>
   class TArrayIterationItem : public IEObject {
-    long StartIndex, EndIndex, CurrentIndex;
-    short Id;
+    size_t StartIndex, EndIndex, CurrentIndex;
+    uint16_t Id;
     TaskClass& Task;
     TActionQList Actions;
   public:
-    TArrayIterationItem(TaskClass& task, long startIndex, long endIndex) : Task(task)  {
+    TArrayIterationItem(TaskClass& task, size_t startIndex, size_t endIndex) : Task(task)  {
       StartIndex = startIndex;
       EndIndex = endIndex;
-      CurrentIndex = -1;
+      CurrentIndex = InvalidIndex;
       OnCompletion = &Actions.NewQueue("ONCOMPLETION");
     }
 #ifdef __WIN32__
@@ -60,10 +60,10 @@ template <class TaskClass>
       return 0;
     }
 
-    inline long GetCurrentIndex() const  {  return CurrentIndex;  }
-    DefPropP(long, StartIndex)
-    DefPropP(long, EndIndex)
-    DefPropP(short, Id)
+    size_t GetCurrentIndex() const  {  return CurrentIndex;  }
+    DefPropP(size_t, StartIndex)
+    DefPropP(size_t, EndIndex)
+    DefPropP(uint16_t, Id)
     TActionQueue *OnCompletion;
   };
 
@@ -87,34 +87,34 @@ template <class TaskClass>
       return true;
     }                                                
   protected:
-    void CalculateRatios(eveci& res, long ListSize, const short TaskType)  {
+    void CalculateRatios(eveci& res, size_t ListSize, const short TaskType)  {
       const short mt = olx_min(4, TBasicApp::GetInstance().GetMaxThreadCount());
       res.Resize( mt );  // max 4 threads to support
       if( TaskType == tLinearTask )  {
         res[0] = (int)(ListSize/mt);
-        for( int i=1; i < mt-1; i++ ) res[i] = res[0];
+        for( short i=1; i < mt-1; i++ ) res[i] = res[0];
         if( mt > 1 )
-          res[mt-1] = ListSize - (int)((mt-1)*res[0]);
+          res[mt-1] = (int)(ListSize - (int)((mt-1)*res[0]));
       }
       else if( TaskType == tQuadraticTask )  {
         switch( mt )  {
           case 1:
-            res[0] = ListSize;
+            res[0] = (int)ListSize;
             break;
           case 2:
             res[0] = (int)(ListSize*(2-sqrt(2.0))/2);
-            res[1] = ListSize - res[0];
+            res[1] = (int)(ListSize - res[0]);
             break;
           case 3:
             res[0] = (int)(ListSize*(2-sqrt(8.0/3))/2);
             res[1] = (int)(ListSize*(2-sqrt(4.0/3))/2 - res[0]);
-            res[2] = ListSize - (res[0]+res[1]);
+            res[2] = (int)(ListSize - (res[0]+res[1]));
             break;
           case 4:
             res[0] = (int)(ListSize*(2-sqrt(3.0))/2);
             res[1] = (int)(ListSize*(2-sqrt(2.0))/2 - res[0]);
             res[2] = (int)((ListSize - (res[0]+res[1]))*(2-sqrt(2.0))/2);
-            res[3] = ListSize - (res[0]+res[1]+res[2]);
+            res[3] = (int)(ListSize - (res[0]+res[1]+res[2]));
             break;
           default:
             throw TInvalidArgumentException(__OlxSourceInfo, "thread count");
@@ -124,18 +124,18 @@ template <class TaskClass>
         throw TInvalidArgumentException(__OlxSourceInfo, "unknow task complexity");
     }
   public:
-    TListIteratorManager( TaskClass& task, long ListSize, const short TaskType, long minSize)  {
+    TListIteratorManager( TaskClass& task, size_t ListSize, const short TaskType, size_t minSize)  {
       SetToDelete(false);
       if( ListSize < minSize || TBasicApp::GetInstance().GetMaxThreadCount() == 1)  {  // should we create parallel tasks then at all?
-        for( long i=0; i < ListSize; i++ )
+        for( size_t i=0; i < ListSize; i++ )
           task.Run(i);
         return;
       }
       eveci ratios;
       CalculateRatios(ratios, ListSize, TaskType);
-      long startIndex = 0;
+      size_t startIndex = 0;
       TaskClass* taskInstance = &task;
-      for( int i=0; i < ratios.Count(); i++ )  {
+      for( size_t i=0; i < ratios.Count(); i++ )  {
         if( i > 0 )  {
           taskInstance = task.Replicate();
           Tasks.Add( *taskInstance );
@@ -144,7 +144,7 @@ template <class TaskClass>
         TArrayIterationItem<TaskClass>* item = new TArrayIterationItem<TaskClass>( *taskInstance, startIndex, startIndex + ratios[i] );
         startIndex += ratios[i];
         Items.AddACopy( item ) ;
-        item->SetId(Items.Count()-1);
+        item->SetId((short)(Items.Count()-1));
         item->OnCompletion->Add( this );
         start_thread( item );
       }
@@ -158,7 +158,7 @@ template <class TaskClass>
     }
 
     bool IsCompleted()  const {
-      for( int i=0; i < Items.Count(); i++ )  {
+      for( size_t i=0; i < Items.Count(); i++ )  {
         if( !Items.IsNull(i) )  return false;
       }
       return true;

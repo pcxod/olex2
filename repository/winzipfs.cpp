@@ -23,7 +23,7 @@ TWinZipFileSystem::TWinZipFileSystem(const olxstr& _zip_name, bool unused) : zip
 TWinZipFileSystem::~TWinZipFileSystem()  {
   if( zip != NULL )
     CloseZip(zip);
-  for( int i=0; i < TmpFiles.Count(); i++ )
+  for( size_t i=0; i < TmpFiles.Count(); i++ )
     TEFile::DelFile( TmpFiles[i] );
 }
 //..............................................................................
@@ -39,10 +39,10 @@ IInputStream* TWinZipFileSystem::_DoOpenFile(const olxstr& Source)  {
   olxch TmpFN[512];
   GetTempPath(512, TmpFN);
   olxstr Tmp(TmpFN);
-  GetTempFileName(Tmp.u_str(), olx_T("zip"), 0, TmpFN);
+  GetTempFileName(Tmp.u_str(), olxT("zip"), 0, TmpFN);
   olxstr tmp_fn(TmpFN);
 
-  Progress.SetMax( (double)TEFile::FileLength(TmpFN) );
+  Progress.SetMax( TEFile::FileLength(TmpFN) );
   OnProgress.Enter(this, &Progress);
   Progress.SetAction( olxstr("Extracting ") << Source );
   Progress.SetPos(0);
@@ -51,10 +51,10 @@ IInputStream* TWinZipFileSystem::_DoOpenFile(const olxstr& Source)  {
   UnzipItem(zip, zindex, tmp_fn.u_str() );
   chmod( tmp_fn.c_str(), S_IREAD|S_IWRITE);
 
-  Progress.SetMax( (double)TEFile::FileLength(tmp_fn) );
+  Progress.SetMax( TEFile::FileLength(tmp_fn) );
   OnProgress.Enter(this, &Progress);
   Progress.SetAction("Done");
-  Progress.SetPos( (double)TEFile::FileLength(tmp_fn) );
+  Progress.SetPos( TEFile::FileLength(tmp_fn) );
   OnProgress.Exit(this, &Progress);
   TmpFiles.Add( TmpFN );
   return new TEFile( TmpFN, "rb" );

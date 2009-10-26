@@ -8,15 +8,15 @@ public:
 
   void SetVersion(const olxstr &version);
   void SetFileName(const olxstr &fn);
-  void SetFileProgressMax(double v);
-  void SetFileProgress(double v);
-  void SetOverallProgressMax(double v);
-  void SetOverallProgress(double v);
+  void SetFileProgressMax(uint64_t v);
+  void SetFileProgress(uint64_t v);
+  void SetOverallProgressMax(uint64_t v);
+  void SetOverallProgress(uint64_t v);
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
   bool mouse_down;
   CPoint mouse_pos;
-  double max_file, max_overall;
+  uint64_t max_file, max_overall;
   HICON m_hIcon;
 
 	virtual BOOL OnInitDialog();

@@ -127,13 +127,13 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
       File->Write(Buffer, ThisRead);
       if( TotalRead == 0 )  {
         Tmp.SetLength(0);
-        int off = olxstr::o_strposi(Buffer, ThisRead, EndTagId, olxstr::o_strlen(EndTagId));
-        if( off != -1 )  FileAttached = true;
+        size_t off = olxstr::o_strposi(Buffer, ThisRead, EndTagId, olxstr::o_strlen(EndTagId));
+        if( off != InvalidIndex )  FileAttached = true;
         off = olxstr::o_strposi(Buffer, ThisRead, LengthId, olxstr::o_strlen(LengthId));
-        if( off != -1 )  {
+        if( off != InvalidIndex )  {
           off += strlen(LengthId)+1;
-          while( (off < ThisRead) && Buffer[off] == ' ' ) {  off++; }  // skip spaces
-          while( (off < ThisRead) && Buffer[off] >= '0' && Buffer[off] <= '9')  {
+          while( (off < (size_t)ThisRead) && Buffer[off] == ' ' ) {  off++; }  // skip spaces
+          while( (off < (size_t)ThisRead) && Buffer[off] >= '0' && Buffer[off] <= '9')  {
             Tmp << Buffer[off];
             off++;
           }

@@ -3,7 +3,7 @@
 #include "threex3.h"
 
 template <class MC, class VC> class TSymmMat {
-  int Tag;
+  index_t Tag;
 public:
   TSymmMat() : Tag(-1) {  }
   // copy constructor
@@ -96,16 +96,16 @@ public:
   TVector3<VC> t;
   TMatrix33<MC> r;
 
-  DefPropP(int, Tag)
+  DefPropP(index_t, Tag)
 
-  inline int IncTag() {  return ++Tag;  }
-  inline int DecTag() {  return --Tag;  }
+  inline index_t IncTag() {  return ++Tag;  }
+  inline index_t DecTag() {  return --Tag;  }
 
   // Tag dependent reference operations
   struct Ref  {
-    int tag;
+    index_t tag;
     TVector3<VC> t;
-    Ref(int _tag, const TVector3<VC>& _t) : tag(_tag), t(_t) {}
+    Ref(index_t _tag, const TVector3<VC>& _t) : tag(_tag), t(_t) {}
     Ref(const Ref& r) : tag(r.tag), t(r.t) {}
     Ref& operator = (const Ref& r)  {
       tag = r.tag;

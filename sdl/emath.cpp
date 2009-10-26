@@ -12,13 +12,6 @@
 UseEsdlNamespace()
 
 //..............................................................................
-double GlobalEsdlFunction(Factorial)(int a)  {
-  double b=1;
-  for(int i=2; i <= a; i++ )   
-    b*=i;
-  return b;
-}
-//..............................................................................
 double GlobalEsdlFunction(NewtonSolve)( double (*f)(double), double (*df)(double), double point)  {
   double ex1=100,x = point,x1;
   long count=0;

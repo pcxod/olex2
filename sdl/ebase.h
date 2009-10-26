@@ -20,37 +20,37 @@
 // defines a primitive type property
 #define DefPropP(Type, Name) \
 public:\
-  inline Type Get##Name() const {  return Name;  }\
-  inline void Set##Name(Type MaCV) {  Name = MaCV;  }
+  Type Get##Name() const {  return Name;  }\
+  void Set##Name(Type MaCV) {  Name = MaCV;  }
 // defines a boolean type property as Is/Set
 #define DefPropBIsSet(Name) \
 public:\
-  inline bool Is##Name() const {  return Name;  }\
-  inline void Set##Name(bool MaCV) {  Name = MaCV;  }
+  bool Is##Name() const {  return Name;  }\
+  void Set##Name(bool MaCV) {  Name = MaCV;  }
 // defines a boolean type property as Is/Set
 #define DefPropBHasSet(Name) \
 public:\
-  inline bool Has##Name() const {  return Name;  }\
-  inline void Set##Name(bool MaCV) {  Name = MaCV;  }
+  bool Has##Name() const {  return Name;  }\
+  void Set##Name(bool MaCV) {  Name = MaCV;  }
 // defines a boolean type property as a bit mask as Is/Set
 #define DefPropBFIsSet(Name, VarName, BitMask) \
 public:\
-  inline bool Is##Name() const {  return (VarName & BitMask) != 0;  }\
-  inline void Set##Name(bool v)   { \
+  bool Is##Name() const {  return (VarName & BitMask) != 0;  }\
+  void Set##Name(bool v)   { \
       if( v )  VarName |= BitMask; \
       else     VarName &= ~BitMask;  }
 // defines a boolean type property as a bit mask as Has/Set
 #define DefPropBFHasSet(Name, VarName, BitMask) \
 public:\
-  inline bool Has##Name() const {  return (VarName & BitMask) != 0;  }\
-  inline void Set##Name(bool v)   { \
+  bool Has##Name() const {  return (VarName & BitMask) != 0;  }\
+  void Set##Name(bool v)   { \
       if( v )  VarName |= BitMask; \
       else     VarName &= ~BitMask;  }
 // defines a complex (class) type property
 #define DefPropC(Type, Name) \
 public:\
-  inline const Type& Get##Name()    const {  return Name;  }\
-  inline void Set##Name(const Type& MaCV) {  Name = MaCV;  }
+  const Type& Get##Name()    const {  return Name;  }\
+  void Set##Name(const Type& MaCV) {  Name = MaCV;  }
 
 #define BeginEsdlNamespace()  namespace esdl {
 #define EndEsdlNamespace()  };\
@@ -75,13 +75,19 @@ public:\
 #endif
 
 BeginEsdlNamespace()
-// immutable string
+
+static const size_t InvalidIndex = (size_t)(~0);
+static const size_t InvalidSize = (size_t)(~0);
+// validates if unsigned number is valid... since the move to size_t etc...
+template <typename int_t> bool olx_is_valid_index(const int_t& v)  {  return v != (int_t)~0;  }
+template <typename int_t> bool olx_is_valid_size(const int_t& v)  {  return v != (int_t)~0;  }
+// string base
 template <class T> class TTIString {
 public:
   static const unsigned short CharSize;
   struct Buffer  {
     T *Data;
-    unsigned RefCnt;
+    unsigned int RefCnt;
     size_t Length;
     Buffer(size_t len, const T *data=NULL, size_t tocopy=0)  {
       Data = ((len != 0) ? (T*)malloc(len*CharSize) : (T*)NULL);
@@ -90,8 +96,14 @@ public:
       RefCnt = 1;
       Length = len;
     }
+    // creates object from external array, must be created with new
+    Buffer(T *data, size_t len)  {
+      Data = data;
+      RefCnt = 1;
+      Length = len;
+    }
     ~Buffer()  {  if( Data != NULL )  free(Data);  }
-    inline void SetCapacity(size_t newlen)  {
+    void SetCapacity(size_t newlen)  {
       if( newlen > Length )  {
         Data = (T*)realloc(Data, newlen*CharSize);
         Length = newlen;
@@ -100,9 +112,9 @@ public:
   };
 protected:
   mutable Buffer *SData;  // do not have much choice with c_str ...
-  inline void IncLength(size_t len)  {  _Length += len;  }
-  inline void DecLength(size_t len)  {  _Length -= len;  }
-  inline size_t GetCapacity()  const {  return SData->Length;  }
+  void IncLength(size_t len)  {  _Length += len;  }
+  void DecLength(size_t len)  {  _Length -= len;  }
+  size_t GetCapacity()  const {  return SData->Length;  }
   size_t _Increment, _Length;
   mutable size_t _Start;
   TTIString() {}
@@ -136,11 +148,11 @@ public:
       delete SData;
   }
   // might not have '\0' char, to be used with Length or RawLen (char count)
-  inline T * raw_str()                   const { return ((SData == NULL) ? NULL : &SData->Data[_Start]);  }
-  inline int RawLen()                    const { return _Length*CharSize;  }
-  inline int Length()                    const { return _Length;  }
+  T * raw_str() const { return ((SData == NULL) ? NULL : &SData->Data[_Start]);  }
+  size_t RawLen() const { return _Length*CharSize;  }
+  size_t Length() const { return _Length;  }
   // standard api requires terminating '\0'; the use of raw_str and Length() is preferable
-  inline const T * u_str()               const {
+  const T * u_str() const {
     if( SData == NULL ) return NULL;
     if( (SData->Length == (_Start+_Length)) || (SData->Data[_Start+_Length] != '\0') )  {
       checkBufferForModification(_Length + 1);
@@ -148,10 +160,10 @@ public:
     }
     return &SData->Data[_Start];
   }
-  inline T Data(size_t i)                const { return SData->Data[_Start + i];  }
-  inline bool IsEmpty()                  const { return _Length == 0;  }
-  inline T CharAt(size_t i)              const { return SData->Data[_Start + i];  }
-  inline T operator[] (size_t i)         const { return SData->Data[_Start + i];  }
+  T Data(size_t i) const { return SData->Data[_Start + i];  }
+  bool IsEmpty() const { return _Length == 0;  }
+  T CharAt(size_t i) const { return SData->Data[_Start + i];  }
+  T operator[] (size_t i) const { return SData->Data[_Start + i];  }
   /* reads content of the string to external buffer, which must be able to accommodate
    string length + 1 for the end of string char  */
   T *Read(T *v)  {
@@ -163,8 +175,8 @@ public:
   // this does not help in GCC, 
   template <typename,typename> friend class TTSString;
 #ifdef __GNUC__
-  inline Buffer* GetBuffer() const {  return SData;  }  // it is mutable
-  inline size_t Start() const { return _Start; }
+  Buffer* GetBuffer() const {  return SData;  }  // it is mutable
+  size_t Start() const { return _Start; }
 #endif
 };
 
@@ -187,7 +199,7 @@ public:
   virtual TIString ToString() const;
   // throws an exception if not implemented
   virtual IEObject* Replicate() const;
-  inline void SetAtDestruct( void (*fun)(IEObject*) )  {
+  void SetAtDestruct( void (*fun)(IEObject*) )  {
     AtDestruct_Function = fun;
   }
 };
@@ -196,17 +208,16 @@ public:
   extern const char* NewLineSequence;
   extern const short NewLineSequenceLength;
 
-
 // implements data for collection item
 class ACollectionItem : public IEObject  {
-  int CollectionItemTag;
+  index_t CollectionItemTag;
 public:
   ACollectionItem()  {  CollectionItemTag = -1;  }
   virtual ~ACollectionItem()  {  ;  }
-  inline  int GetTag() const {  return CollectionItemTag;  }
-  inline void SetTag(int v) { CollectionItemTag = v;  }
-  inline int IncTag()  {  return ++CollectionItemTag;  }
-  inline int DecTag()  {  return --CollectionItemTag;  }
+  index_t GetTag() const {  return CollectionItemTag;  }
+  void SetTag(index_t v) { CollectionItemTag = v;  }
+  index_t IncTag()  {  return ++CollectionItemTag;  }
+  index_t DecTag()  {  return --CollectionItemTag;  }
 };
 
 // an association template; association of any complexity can be build from this :)
@@ -233,12 +244,12 @@ public:
     return an;
   }
 
-  inline Ac& A()  {  return a;  }
-  inline Bc& B()  {  return b;  }
-  inline const Ac& GetA() const  {  return a;  }
-  inline const Bc& GetB() const {  return b;  }
-  inline void SetA( const Ac& a )  {  this->a = a;  }
-  inline void SetB( const Bc& b )  {  this->b = b;  }
+  Ac& A()  {  return a;  }
+  Bc& B()  {  return b;  }
+  const Ac& GetA() const  {  return a;  }
+  const Bc& GetB() const {  return b;  }
+  void SetA( const Ac& a )  {  this->a = a;  }
+  void SetB( const Bc& b )  {  this->b = b;  }
 };
 template <class Ac, class Bc, class Cc> class AnAssociation3  {
   Ac a;
@@ -270,15 +281,15 @@ public:
     return an;
   }
 
-  inline Ac& A()  {  return a;  }
-  inline Bc& B()  {  return b;  }
-  inline Cc& C()  {  return c;  }
-  inline const Ac& GetA() const {  return a;  }
-  inline const Bc& GetB() const {  return b;  }
-  inline const Cc& GetC() const {  return c;  }
-  inline void SetA( const Ac& a )  {  this->a = a;  }
-  inline void SetB( const Bc& b )  {  this->b = b;  }
-  inline void SetC( const Cc& c )  {  this->c = c;  }
+  Ac& A()  {  return a;  }
+  Bc& B()  {  return b;  }
+  Cc& C()  {  return c;  }
+  const Ac& GetA() const {  return a;  }
+  const Bc& GetB() const {  return b;  }
+  const Cc& GetC() const {  return c;  }
+  void SetA( const Ac& a )  {  this->a = a;  }
+  void SetB( const Bc& b )  {  this->b = b;  }
+  void SetC( const Cc& c )  {  this->c = c;  }
 };
 template <class Ac, class Bc, class Cc, class Dc> class AnAssociation4  {
   Ac a;
@@ -319,18 +330,18 @@ public:
     return an;
   }
 
-  inline Ac& A()  {  return a;  }
-  inline Bc& B()  {  return b;  }
-  inline Cc& C()  {  return c;  }
-  inline Dc& D()  {  return d;  }
-  inline const Ac& GetA() const  {  return a;  }
-  inline const Bc& GetB() const  {  return b;  }
-  inline const Cc& GetC() const  {  return c;  }
-  inline const Dc& GetD() const  {  return d;  }
-  inline void SetA( const Ac& a )  {  this->a = a;  }
-  inline void SetB( const Bc& b )  {  this->b = b;  }
-  inline void SetC( const Cc& c )  {  this->c = c;  }
-  inline void SetD( const Dc& d )  {  this->d = d;  }
+  Ac& A()  {  return a;  }
+  Bc& B()  {  return b;  }
+  Cc& C()  {  return c;  }
+  Dc& D()  {  return d;  }
+  const Ac& GetA() const  {  return a;  }
+  const Bc& GetB() const  {  return b;  }
+  const Cc& GetC() const  {  return c;  }
+  const Dc& GetD() const  {  return d;  }
+  void SetA( const Ac& a )  {  this->a = a;  }
+  void SetB( const Bc& b )  {  this->b = b;  }
+  void SetC( const Cc& c )  {  this->c = c;  }
+  void SetD( const Dc& d )  {  this->d = d;  }
 };
 // class factories
 
@@ -356,9 +367,9 @@ public:
   AReferencible()  {  This_RefCount = 0;  }
   virtual ~AReferencible();
 
-  inline short GetRefCount() const {  return This_RefCount;  }
-  inline short DecRef()            {  return --This_RefCount;  }
-  inline short IncRef()            {  return ++This_RefCount;  }
+  short GetRefCount() const {  return This_RefCount;  }
+  short DecRef()            {  return --This_RefCount;  }
+  short IncRef()            {  return ++This_RefCount;  }
 };
 
 // we need this class to throw exceptions from string with gcc ...
@@ -372,6 +383,12 @@ public:
   // returns recasted this, or throws exception if dynamic_cast fails
   const class TBasicException* GetException() const; 
 };
+
+#ifdef _WIN64
+#  define olx_cmp_size_t(a,b) (a) < (b) ? -1 : ((a) > (b) ? 1 : 0)
+#else
+#  define olx_cmp_size_t(a,b) (a) - (b)
+#endif
 
 EndEsdlNamespace()
 

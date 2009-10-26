@@ -60,7 +60,7 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
   if( GPC != NULL && GPC->PrimitiveCount() )  {
     cbPrimitives = new TComboBox(this);
     FMaterials = new TGlMaterial[GPC->PrimitiveCount()+1];
-    for( int i=0; i < GPC->PrimitiveCount(); i++ )  {
+    for( size_t i=0; i < GPC->PrimitiveCount(); i++ )  {
       TGlPrimitive& GlP = GPC->GetPrimitive(i);
       cbPrimitives->AddObject(GlP.GetName(), &GlP);
       FMaterials[i] = GlP.GetProperties();
@@ -245,7 +245,7 @@ bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data)  {
     }
   }
   if( (TSpinCtrl*)Sender == scTrans )  {
-    for( int i=0; i < SpinCtrls.Count(); i++ ) 
+    for( size_t i=0; i < SpinCtrls.Count(); i++ ) 
       SpinCtrls[i]->SetValue(scTrans->GetValue());
   }
   return true;
@@ -343,13 +343,13 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
     TGlGroup& gl = FXApp->GetSelection();
     TGPCollection* ogpc = &FAtom->GetPrimitives();
     SortedPtrList<TGPCollection, TPointerPtrComparator> uniqCol;
-    for( int i=0; i < gl.Count(); i++ )
+    for( size_t i=0; i < gl.Count(); i++ )
       if( EsdlInstanceOf(gl.GetObject(i), TXAtom) )  {
         uniqCol.AddUnique(&gl.GetObject(i).GetPrimitives());
     }
-    for( int i=0; i < uniqCol.Count(); i++ )  {
+    for( size_t i=0; i < uniqCol.Count(); i++ )  {
       if( uniqCol[i] != ogpc )  {
-        for( int j=0; j < ogpc->PrimitiveCount(); j++ )  {
+        for( size_t j=0; j < ogpc->PrimitiveCount(); j++ )  {
           TGlPrimitive* glp = uniqCol[i]->FindPrimitiveByName(ogpc->GetPrimitive(j).GetName());
           if( glp != NULL )  {
             glp->SetProperties(FMaterials[j]);
@@ -358,7 +358,7 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
         }
       }
       else  {
-        for( int j=0; j < ogpc->PrimitiveCount(); j++ )  {
+        for( size_t j=0; j < ogpc->PrimitiveCount(); j++ )  {
           ogpc->GetPrimitive(j).SetProperties(FMaterials[j]);
           ogpc->GetStyle().SetMaterial(ogpc->GetPrimitive(j).GetName(), FMaterials[j]);
         }
@@ -372,7 +372,7 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
     else  {
       if( GPCollection != NULL )  {
         //TGraphicsStyle* GS = FXApp->GetRender().Styles()->NewStyle( GPCollection->Name(), true);
-        for( int i=0; i < GPCollection->PrimitiveCount(); i++ )  {
+        for( size_t i=0; i < GPCollection->PrimitiveCount(); i++ )  {
           GPCollection->GetPrimitive(i).SetProperties(FMaterials[i]);
           GPCollection->GetStyle().SetMaterial( GPCollection->GetPrimitive(i).GetName(), FMaterials[i]);
         }

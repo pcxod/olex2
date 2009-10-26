@@ -80,8 +80,8 @@ public:
   }
 //..............................................................................
   inline T*& AddUnique(T* pObj)  {
-    int ind = IndexOf(pObj);
-    if( ind >= 0 )  
+    size_t ind = IndexOf(pObj);
+    if( ind != InvalidIndex )  
       return Items[ind];
     if( FCapacity == FCount )  SetCapacity((long)(1.5*FCount + FIncrement));
     Items[FCount] = pObj;
@@ -89,7 +89,7 @@ public:
   }
 //..............................................................................
   inline T*& AddUnique(T& Obj)  {
-    int ind = IndexOf(Obj);
+    index_t ind = IndexOf(Obj);
     if( ind >=0 )  
       return *Items[ind];
     if( FCapacity == FCount )  
@@ -192,25 +192,24 @@ public:
   }
 //..............................................................................
   inline void Remove(T* pObj)  {
-    int i = IndexOf(pObj);
-    if( i == -1 )  
+    size_t i = IndexOf(pObj);
+    if( i == InvalidIndex )  
       throw TFunctionFailedException(__OlxSourceInfo, "could not locate specified object");
     Delete(i);
   }
 //..............................................................................
   inline void Remove(const T& Obj)  {
-    int i = IndexOf(Obj);
-    if( i == -1 )  
+    size_t i = IndexOf(Obj);
+    if( i == InvalidIndex )  
       throw TFunctionFailedException(__OlxSourceInfo, "could not locate specified object");
     Delete(i);
   }
 //..............................................................................
   // cyclic shift to the left
-  void ShiftL(int cnt)  {
+  void ShiftL(size_t cnt)  {
     if( FCount == 0 )  return;
-    int sv = cnt%FCount;
-    if( sv <= 0 )  return;
-
+    size_t sv = cnt%FCount;
+    if( sv == 0 )  return;
     if( sv == 1 )  {  // special case
       T *D = Items[0];
       for( size_t i=1; i <= FCount-1; i++ )
@@ -228,11 +227,10 @@ public:
   }
 //..............................................................................
   // cyclic shift to the right
-  void ShiftR(int cnt)  {
+  void ShiftR(size_t cnt)  {
     if( FCount == 0 )  return;
-    int sv = cnt%FCount;
-    if( sv <= 0 )  return;
-
+    size_t sv = cnt%FCount;
+    if( sv == 0 )  return;
     if( sv == 1 )  {  // special case
       T* D = Items[FCount-1];
       for( size_t i=1; i < FCount; i++ )
@@ -296,7 +294,7 @@ public:
     Allocate();
   }
 //..............................................................................
-  inline int Count() const  {  return FCount;  }
+  inline size_t Count() const  {  return FCount;  }
 //..............................................................................
   inline bool IsEmpty()  const  {  return (FCount == 0);  }
 //..............................................................................
@@ -316,22 +314,22 @@ public:
     }
   }
 //..............................................................................
-  int IndexOf(const T* val) const  {
+  size_t IndexOf(const T* val) const  {
     for( size_t i=0; i < FCount; i++ )
       if( Items[i] == val )  
         return i;
-    return -1;
+    return InvalidIndex;
   }
 //..............................................................................
-  int IndexOf(const T& val) const  {
+  size_t IndexOf(const T& val) const  {
     const T* pv = &val;
     for( size_t i=0; i < FCount; i++ )
       if( Items[i] == pv )  
         return i;
-    return -1;
+    return InvalidIndex;
   }
 
-  void Rearrange(const TIntList& indexes)  {
+  void Rearrange(const TSizeList& indexes)  {
     if( FCount < 2 )  return;
 #ifdef _OLX_DEBUG
     if( Count() != indexes.Count() )
@@ -339,8 +337,8 @@ public:
 #endif
       // allocate the list of NULLs
       T** ni = (T**)malloc(FCount*sizeof(T*));
-      for(size_t i=0; i < FCount; i++ )  {
-        ni[i] = Items[ indexes[i] ];
+      for( size_t i=0; i < FCount; i++ )  {
+        ni[i] = Items[indexes[i]];
       }
       free(Items);
       Items = ni;

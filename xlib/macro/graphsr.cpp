@@ -52,25 +52,25 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   XApp.GetLog() << (olxstr("Processing file ") << TEFile::ExtractFileName(C->GetFileName()) << '\n' );
   short list = -1;
-  int hInd = hklLoop->Table().ColIndex("_refln_index_h");
-  int kInd = hklLoop->Table().ColIndex("_refln_index_k");
-  int lInd = hklLoop->Table().ColIndex("_refln_index_l");
+  size_t hInd = hklLoop->Table().ColIndex("_refln_index_h");
+  size_t kInd = hklLoop->Table().ColIndex("_refln_index_k");
+  size_t lInd = hklLoop->Table().ColIndex("_refln_index_l");
   // list 3, F
-  int mfInd = hklLoop->Table().ColIndex("_refln_F_meas");
-  int sfInd = hklLoop->Table().ColIndex("_refln_F_sigma");
-  int aInd = hklLoop->Table().ColIndex("_refln_A_calc");
-  int bInd = hklLoop->Table().ColIndex("_refln_B_calc");
+  size_t mfInd = hklLoop->Table().ColIndex("_refln_F_meas");
+  size_t sfInd = hklLoop->Table().ColIndex("_refln_F_sigma");
+  size_t aInd = hklLoop->Table().ColIndex("_refln_A_calc");
+  size_t bInd = hklLoop->Table().ColIndex("_refln_B_calc");
   // list 4, F^2
-  int mf2Ind = hklLoop->Table().ColIndex("_refln_F_squared_meas");
-  int sf2Ind = hklLoop->Table().ColIndex("_refln_F_squared_sigma");
-  int cf2Ind = hklLoop->Table().ColIndex("_refln_F_squared_calc");
+  size_t mf2Ind = hklLoop->Table().ColIndex("_refln_F_squared_meas");
+  size_t sf2Ind = hklLoop->Table().ColIndex("_refln_F_squared_sigma");
+  size_t cf2Ind = hklLoop->Table().ColIndex("_refln_F_squared_calc");
 
-  if( mf2Ind != -1 && sf2Ind != -1 && cf2Ind != -1 )
+  if( mf2Ind != InvalidIndex && sf2Ind != InvalidIndex && cf2Ind != InvalidIndex )
     list = 4;
-  else if( mfInd != -1 && sfInd != -1 && aInd != -1 && bInd != -1 )
+  else if( mfInd != InvalidIndex && sfInd != InvalidIndex && aInd != InvalidIndex && bInd != InvalidIndex )
     list = 3;
 
-  if( hInd == -1 || kInd == -1 || lInd == -1 || list == -1 ) {
+  if( hInd == InvalidIndex || kInd == InvalidIndex || lInd == InvalidIndex || list == InvalidIndex ) {
     E.ProcessingError(__OlxSrcInfo, "list 3/4 data is expected");
     return;
   }
@@ -90,7 +90,7 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
   TTypeList<TGraphRSRef> refs;
   refs.SetCapacity(hklLoop->Table().RowCount());
 
-  for( int i=0; i < hklLoop->Table().RowCount(); i++ )  {
+  for( size_t i=0; i < hklLoop->Table().RowCount(); i++ )  {
     TStrPObjList<olxstr,TCifLoopData*>& row = hklLoop->Table()[i];
     hkl[0] = row[hInd].ToInt();
     hkl[1] = row[kInd].ToInt();
@@ -113,21 +113,21 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
     }
   }
   olxstr strBinsCnt( Options.FindValue("b") );
-  int binsCnt = strBinsCnt.IsEmpty() ? 11 : strBinsCnt.ToInt()/2;
+  size_t binsCnt = strBinsCnt.IsEmpty() ? 11 : strBinsCnt.ToSizeT()/2;
   refs.QuickSorter.SortSF(refs, TGraphRSRef::SortByDs);
 
   double minds=refs[0].ds, maxds=refs.Last().ds;
   double step = (maxds-minds)/binsCnt,
          hstep = step/2;
-  for( int i=0; i < binsCnt; i++ )  {
+  for( size_t i=0; i < binsCnt; i++ )  {
     bins.Add( new TGraphRSBin( minds + i*step, minds+(i+1)*step ) );
     if( (i+1) < binsCnt )
       bins.Add( new TGraphRSBin( minds + (i+1)*step - hstep, minds+(i+1)*step + hstep ) );
   }
 
-  for( int i=0; i < refs.Count(); i++ )  {
+  for( size_t i=0; i < refs.Count(); i++ )  {
     TGraphRSRef& ref = refs[i];
-    for( int j=0; j < bins.Count(); j++ )  {
+    for( size_t j=0; j < bins.Count(); j++ )  {
       if( ref.ds < bins[j]->Maxds && ref.ds >= bins[j]->Minds )  {
         bins[j]->Count ++;
         bins[j]->SFo += ref.Fo;
@@ -139,7 +139,7 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
 
   TStrList output, header;
   TTypeList< AnAssociation2<double,double> > binData;
-  for( int i=0; i < bins.Count(); i++ )  {
+  for( size_t i=0; i < bins.Count(); i++ )  {
     if( bins[i]->Count != 0 )  {
       double rt = bins[i]->SFo / bins[i]->SFc;
       double d_s = bins[i]->Sds/bins[i]->Count;
@@ -154,13 +154,13 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
     tab.ColName(1) = "Sum(Fo)/Sum(Fc)";
     ematd points(2, binData.Count() );
     evecd line(5);
-    for(int i=0; i < binData.Count(); i++ )  {
+    for( size_t i=0; i < binData.Count(); i++ )  {
       points[0][i] = binData[i].GetA();
       points[1][i] = binData[i].GetB();
     }
     double rms = ematd::PLSQ(points, line, 3);
     
-    for(int i=0; i < binData.Count(); i++ )  {
+    for( size_t i=0; i < binData.Count(); i++ )  {
       tab[i][0] = olxstr::FormatFloat(3, binData[i].GetA());
       tab[i][1] = olxstr::FormatFloat(3, binData[i].GetB());
       double pv = evecd::PolynomValue(line, binData[i].GetA());
@@ -169,7 +169,7 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
     }
     olxstr eq("y=");
     eq << olxstr::FormatFloat(3, line[0]);
-    for( int i=1; i < line.Count(); i++ )  {
+    for( size_t i=1; i < line.Count(); i++ )  {
       if( line[i] < 0 )
         eq << olxstr::FormatFloat(3, line[i]);
        else

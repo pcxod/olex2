@@ -32,27 +32,27 @@ public:
   virtual bool CheckProgramState(unsigned int state);
   virtual ALibraryContainer* GetOwner() const     {  return LibraryOwner;  }
 
-  inline int FunctionCount()  const  {  return Functions.Count(); }
-  inline ABasicFunction* GetFunctionByIndex(int i)  const {  return Functions.GetObject(i);  }
+  inline size_t FunctionCount()  const  {  return Functions.Count(); }
+  inline ABasicFunction* GetFunctionByIndex(size_t i)  const {  return Functions.GetObject(i);  }
 
-  inline int MacroCount()  const  {  return Macros.Count(); }
-  inline ABasicFunction* GetMacroByIndex(int i)  const {  return Macros.GetObject(i);  }
+  inline size_t MacroCount()  const  {  return Macros.Count(); }
+  inline ABasicFunction* GetMacroByIndex(size_t i)  const {  return Macros.GetObject(i);  }
 
 
   TLibrary* AddLibrary(const olxstr& name, ALibraryContainer* owner = NULL );
   // not that the library will be deleted upon destruction
   void AttachLibrary( TLibrary* lib );
 
-  inline int LibraryCount()  const  {  return Libraries.Count();  }
-  inline TLibrary* GetLibraryByName( const olxstr& name ) const  {  return Libraries[name];  }
-  inline TLibrary* GetLibraryByIndex( int index )           const  {  return Libraries.GetObject( index );  }
+  inline size_t LibraryCount() const {  return Libraries.Count();  }
+  inline TLibrary* GetLibraryByName(const olxstr& name) const  {  return Libraries[name];  }
+  inline TLibrary* GetLibraryByIndex(size_t index) const {  return Libraries.GetObject( index );  }
 
   template <class BaseClass>
     void RegisterFunction( TFunction<BaseClass>* func, bool replace = false )  {
-      TIntList list;
-      Functions.GetIndexes( func->GetName(), list );
-      for(int i=0; i < list.Count(); i++ )  {
-        unsigned int argc = Functions.GetObject(list[i])->GetArgStateMask();
+      TSizeList list;
+      Functions.GetIndexes(func->GetName(), list);
+      for( size_t i=0; i < list.Count(); i++ )  {
+        const unsigned int argc = Functions.GetObject(list[i])->GetArgStateMask();
         if( func->GetArgStateMask() & argc )  {
           if( replace )  {
             delete Functions.GetObject(list[i]);
@@ -71,10 +71,10 @@ public:
 
   template <class BaseClass>
     void RegisterMacro( TMacro<BaseClass>* macro, bool replace = false )  {
-      TIntList list;
-      Macros.GetIndexes( macro->GetName(), list );
-      for(int i=0; i < list.Count(); i++ )  {
-        unsigned int argc = Macros.GetObject(list[i])->GetArgStateMask();
+      TSizeList list;
+      Macros.GetIndexes(macro->GetName(), list);
+      for( size_t i=0; i < list.Count(); i++ )  {
+        const unsigned int argc = Macros.GetObject(list[i])->GetArgStateMask();
         if( macro->GetArgStateMask() & argc )  {
           if( replace )  {
             delete Macros.GetObject(list[i]);

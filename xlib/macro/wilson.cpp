@@ -75,13 +75,13 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TTypeList< AnAssociation2<TLibScatterer*, double> > scatterers;
   TPtrList<const TBasicAtomInfo> bais;
   TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
-  for( int i=0; i < au.AtomCount(); i++ )  {
+  for( size_t i=0; i < au.AtomCount(); i++ )  {
     const TCAtom& ca = au.GetAtom(i);
     if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  continue;
     const TBasicAtomInfo& bai = (ca.GetAtomInfo() == iDeuteriumIndex) ? 
       AtomsInfo.GetAtomInfo(iHydrogenIndex) : ca.GetAtomInfo();
-    int ind = bais.IndexOf( &bai );
-    if( ind == -1 )  {
+    size_t ind = bais.IndexOf( &bai );
+    if( ind == InvalidIndex )  {
       scatterers.AddNew<TLibScatterer*, int>(scat_lib.Find(bai.GetSymbol()), 0);
       ind = scatterers.Count() -1;
       if( scatterers[ind].GetA() == NULL ) {
@@ -97,13 +97,13 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     scatterers.AddNew<TLibScatterer*, int>(scat_lib.Find("C"), atomCount);
   }
   else  {
-    for( int i=0; i < scatterers.Count(); i++ )
+    for( size_t i=0; i < scatterers.Count(); i++ )
       scatterers[i].B() *= XApp.XFile().GetUnitCell().MatrixCount();
   }
 
   double minds=100, maxds=0;
-  const int refs_cnt = Refs.Count();
-  for( int i=0; i < refs_cnt; i++ )  {
+  const size_t refs_cnt = Refs.Count();
+  for( size_t i=0; i < refs_cnt; i++ )  {
     const TReflection& r = Refs[i];
     vec3d hkl = r.ToCart(hkl2c);
     TWilsonRef& ref = refs.AddNew();
@@ -113,14 +113,14 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     ref.Fo2 = Refs[i].GetI(); // * Refs[i].GetDegeneracy(); merged in P-1 now, so no use
 //    if( Refs[i].IsCentric() ) 
 //      ref.Fo2 /= 2;
-    for( int j=0; j < scatterers.Count(); j++ )  {
+    for( size_t j=0; j < scatterers.Count(); j++ )  {
       double v = scatterers[j].GetA()->Calc_sq( ref.ds );
       ref.Fe2 += v*v*scatterers[j].GetB();
     }
   }
 
   // get parameters
-  int binsCnt = Options.FindValue("b", "10").ToInt();
+  size_t binsCnt = Options.FindValue("b", "10").ToSizeT();
   bool picture = Options.Contains("p");
   if( binsCnt <= 0 ) binsCnt = 10;
 
@@ -129,7 +129,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     double Vtot = SphereVol(sqrt(maxds)), Vstep = Vtot/binsCnt, 
       Vstart = SphereVol(sqrt(minds)),
       Vhstep = Vstep/2;
-    for( int i=0; i < binsCnt; i++ )  {
+    for( size_t i=0; i < binsCnt; i++ )  {
       double sds = SphereRad(Vstart);
       sds *= sds;
       double eds = SphereRad(Vstart+Vstep);
@@ -148,23 +148,23 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   else  {
     double step = (maxds-minds)/binsCnt,
       hstep = step/2;
-    for( int i=0; i < binsCnt; i++ )  {
+    for( size_t i=0; i < binsCnt; i++ )  {
       bins.AddNew( minds + i*step, minds+(i+1)*step );
       if( (i+1) < binsCnt )
         bins.AddNew(minds + (i+1)*step - hstep, minds+(i+1)*step + hstep );
     }
   }
   // calculate Fexpected for the bins
-  for( int i=0; i < bins.Count(); i++ )  {
-    for( int j=0; j < scatterers.Count(); j++ )  {
+  for( size_t i=0; i < bins.Count(); i++ )  {
+    for( size_t j=0; j < scatterers.Count(); j++ )  {
       double v = scatterers[j].GetA()->Calc_sq( (bins[i].Maxds+bins[i].Minds)/2 );
       bins[i].Fe2 += v*v*scatterers[j].GetB();
     }
   }
   // fill the bins and assign Fexp to the refelections
-  for( int i=0; i < refs.Count(); i++ )  {
+  for( size_t i=0; i < refs.Count(); i++ )  {
     TWilsonRef& ref = refs[i];
-    for( int j=0; j < bins.Count(); j++ )  {
+    for( size_t j=0; j < bins.Count(); j++ )  {
       if( ref.ds < bins[j].Maxds && ref.ds > bins[j].Minds )  {
         bins[j].Count ++;
         bins[j].SFo2 += ref.Fo2;
@@ -175,7 +175,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
 
   TTypeList< AnAssociation2<double,double> > binData;
   // normalise summs
-  for( int i=0; i < bins.Count(); i++ )  {
+  for( size_t i=0; i < bins.Count(); i++ )  {
     if( bins[i].Count == 0 )  continue;
     bins[i].SFo2 /= bins[i].Count;
     bins[i].Sds /= bins[i].Count;
@@ -189,7 +189,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     tab.ColName(1) = "ln(<Fo2>)/(Fexp2)";
     ematd points(2, binData.Count() );
     evecd line(2);
-    for(int i=0; i < binData.Count(); i++ )  {
+    for( size_t i=0; i < binData.Count(); i++ )  {
       points[0][i] = binData[i].GetB();
       points[1][i] = binData[i].GetA();
       tab[i][0] = olxstr::FormatFloat(3, points[0][i]);
@@ -203,14 +203,14 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     l << line[0];
     header.Add("RMS = ") << olxstr::FormatFloat(3, rms);
     olxstr scat;
-    for( int i=0; i < scatterers.Count(); i++ )
+    for( size_t i=0; i < scatterers.Count(); i++ )
       scat << bais[i]->GetSymbol() << scatterers[i].GetB() << ' ';
     tab.CreateTXTList(header, olxstr("Graph data for ") << scat, false, false, EmptyString);
     XApp.GetLog() << header;
     double K = exp(line[0]), B = -line[1]/2;
     double E2 = 0, SE2 = 0;
     int iE2GT2 = 0;
-    for( int i=0; i < refs.Count(); i++ )  {
+    for( size_t i=0; i < refs.Count(); i++ )  {
       refs[i].Fo2 /= (K*exp(-2*B*refs[i].ds)*refs[i].Fe2);
       //refs[i].Fo2 /= (K*exp(-2*B*refs[i].ds)*Refs[i].GetDegeneracy()*refs[i].Fe2);
       if( refs[i].Fo2 < 0 )  refs[i].Fo2 = 0;
@@ -225,7 +225,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
                                                    << "  [0.736 <- centro  +> 0.968]" << '\n' );
     XApp.GetLog() << ( olxstr("%|E| > 2 = ") << olxstr::FormatFloat(3,(double)iE2GT2*100/refs.Count())
                                                    << "  [1.800 <- centro  +> 4.600]" << '\n' );
-    for(int i=0; i < binData.Count(); i++ )  {
+    for( size_t i=0; i < binData.Count(); i++ )  {
       points[1][i] = binData[i].GetB();
       points[0][i] = binData[i].GetA();
     }
@@ -259,29 +259,29 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     double estep = (maxE-minE)/ebinsCnt,
            ehstep = estep/2;
 
-    for( int i=0; i < ebinsCnt; i++ )  {
+    for( size_t i=0; i < ebinsCnt; i++ )  {
       ebins.Add( new TWilsonEBin( minE + i*estep, minE+(i+1)*estep ) );
       if( (i+1) < ebinsCnt )
         ebins.Add( new TWilsonEBin( minE + (i+1)*estep - ehstep, minE+(i+1)*estep + ehstep ) );
     }
 
-    for( int i=0; i < refs.Count(); i++ )  {
+    for( size_t i=0; i < refs.Count(); i++ )  {
       TWilsonRef& ref = refs[i];
-      for( int j=0; j < ebins.Count(); j++ )  {
+      for( size_t j=0; j < ebins.Count(); j++ )  {
         if( ref.Fo2 < ebins[j]->MaxE && ref.Fo2 >= ebins[j]->MinE )
           ebins[j]->Count ++;
       }
     }
     TTypeList< AnAssociation2<double,double> > ebinData;
 
-    for( int i=0; i < ebins.Count(); i++ )  {
+    for( size_t i=0; i < ebins.Count(); i++ )  {
       if( ebins[i]->Count == 0 )  continue;
       ebinData.AddNew( (ebins[i]->MaxE+ebins[i]->MinE)/2, ebins[i]->Count );
       delete ebins[i];
     }
     if( ebinData.Count() != 0 )  {
       output.Clear();
-      for(int i=0; i < ebinData.Count(); i++ )  {
+      for( size_t i=0; i < ebinData.Count(); i++ )  {
         output.Add( olxstr(ebinData[i].GetA()) << ',' << ebinData[i].GetB());
       }
       output.SaveToFile( "Evalues.csv" ) ;

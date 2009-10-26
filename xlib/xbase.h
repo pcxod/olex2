@@ -34,8 +34,8 @@ template <class Net> class TSObject: public ACollectionItem  {
 protected:
   Net* Network;  // a pointer to parrent Network
   short   Type;    // object type: eg bond, atom, etc
-  int     NetId;    // reference in network container
-  int     LattId;    // reference in lattice container
+  size_t     NetId;    // reference in network container
+  size_t     LattId;    // reference in lattice container
 public:
   TSObject(Net* Parent) : Network(Parent), Type(sotNone) {  }
   virtual ~TSObject() {  }
@@ -50,9 +50,9 @@ public:
   inline Net& GetNetwork()  const  {  return *Network;  }
   inline void SetNetwork(Net& n)   {  Network = &n;  }
 
-  DefPropP(int, NetId)
-  DefPropP(int, LattId)
-  DefPropP(int, Type)
+  DefPropP(size_t, NetId)
+  DefPropP(size_t, LattId)
+  DefPropP(short, Type)
 };
 //---------------------------------------------------------------------------
 // TBasicNode - encapsulate basic bond
@@ -95,38 +95,38 @@ public:
     Bonds.Clear();
   }
 
-  inline int NodeCount()            const {  return Nodes.Count(); }
-  inline NodeType& Node(int i)      const {  return *Nodes[i]; }
+  inline size_t NodeCount() const {  return Nodes.Count(); }
+  inline NodeType& Node(size_t i) const {  return *Nodes[i]; }
   inline NodeType& AddNode(NodeType& N)   {  Nodes.Add(&N);  return N;  }
-  inline bool IsConnectedTo(NodeType &N)  {  return Nodes.IndexOf(&N) != -1;  }
-  inline void NullNode(int i)             {  Nodes[i] = NULL; }
+  inline bool IsConnectedTo(NodeType &N)  {  return Nodes.IndexOf(&N) != InvalidIndex;  }
+  inline void NullNode(size_t i)          {  Nodes[i] = NULL; }
   inline bool NullNode(const NodeType& N) {  
-    int ind = Nodes.IndexOf(&N);
-    if( ind != -1 )  {
+    size_t ind = Nodes.IndexOf(&N);
+    if( ind != InvalidIndex )  {
       Nodes[ind] = NULL; 
       return true;
     }
     return false;
   }
-  inline void PackNodes()                 {  Nodes.Pack();  }
-  inline void ClearNodes()                {  Nodes.Clear();  }
+  inline void PackNodes()  {  Nodes.Pack();  }
+  inline void ClearNodes()  {  Nodes.Clear();  }
 
-  inline int BondCount()            const {  return Bonds.Count(); }
-  inline BondType& Bond(int i)      const {  return *Bonds[i]; }
-  inline BondType& AddBond(BondType& N)   {  Bonds.Add(&N);  return N;  }
-  inline void NullBond(int i)             {  Bonds[i] = NULL;  }
+  inline size_t BondCount() const {  return Bonds.Count(); }
+  inline BondType& Bond(size_t i) const {  return *Bonds[i]; }
+  inline BondType& AddBond(BondType& N)  {  Bonds.Add(&N);  return N;  }
+  inline void NullBond(size_t i)  {  Bonds[i] = NULL;  }
   inline bool NullBond(const BondType& N) {  
-    int ind = Bonds.IndexOf(&N);
-    if( ind != -1 )  {
+    size_t ind = Bonds.IndexOf(&N);
+    if( ind != InvalidIndex )  {
       Bonds[ind] = NULL; 
       return true;
     }
     return false;
   }
-  inline void PackBonds()                 {  Bonds.Pack();  } 
-  inline void ClearBonds()                {  Bonds.Clear();  }
+  inline void PackBonds()  {  Bonds.Pack();  } 
+  inline void ClearBonds()  {  Bonds.Clear();  }
 
-  inline void SetCapacity(int v)          {  
+  inline void SetCapacity(size_t v)  {  
     Nodes.SetCapacity(v);  
     Bonds.SetCapacity(v);  
   }

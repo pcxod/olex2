@@ -29,7 +29,7 @@ struct XVarReference;
 
 struct XVarReference {
 protected:
-  int Id;
+  size_t Id;
 public:
   IXVarReferencer* referencer;
   short var_index;  // one of the var_name
@@ -43,7 +43,7 @@ public:
     var_index(_var_index), 
     relation_type(_relation_type), 
     coefficient(coeff) { }
-  DefPropP(int, Id)
+  DefPropP(size_t, Id)
   // returns the value of the atom parameter associated with this reference
   double GetActualValue() const {  return referencer->GetValue(var_index);  }
   void ToDataItem(TDataItem& item) const;
@@ -58,35 +58,35 @@ class XVar {
   double Value;
   TPtrList<XVarReference> References;  // owed from the Parent
   TPtrList<XLEQ> Equations; // equations using this variable
-  int Id;
+  size_t Id;
 public:
 
   XVarManager& Parent;
 
-  XVar(XVarManager& parent, double val=0.5) : Parent(parent), Value(val), Id(-1) { }
+  XVar(XVarManager& parent, double val=0.5) : Parent(parent), Value(val), Id(InvalidIndex) { }
   // adds a new atom, referencing this variable, for internal use
   XVarReference& _AddRef(XVarReference& vr)  {  return *References.Add(&vr);  }
   // removes a refence, for internal use
   void _RemRef(XVarReference& vr)  {  References.Remove(&vr);  }
-  int _RefCount()  const {  return References.Count();  }
+  size_t _RefCount()  const {  return References.Count();  }
   // calculates the number of atoms (excluding the deleted ones) using this variable
-  int RefCount() const;
-  XVarReference& GetRef(int i) const {  return *References[i];  }
+  size_t RefCount() const;
+  XVarReference& GetRef(size_t i) const {  return *References[i];  }
 
   // adds a new equation, referencing this variable
   void _AddLeq(XLEQ& eq)  {  Equations.Add(&eq);  }
   // removes an equation, referencing this variable
   void _RemLeq(XLEQ& eq)  {  Equations.Remove(&eq);  }
   // returns the number of equations, referencing this variable
-  int LeqCount() const {  return Equations.Count();  }
+  size_t LeqCount() const {  return Equations.Count();  }
   bool IsUsed() const {
-    const int rc = RefCount();
+    const size_t rc = RefCount();
     if( LeqCount() == 0 )  
       return rc > 1;
     return rc > 0;
   }
   DefPropP(double, Value)
-  DefPropP(int, Id)  
+  DefPropP(size_t, Id)  
 
   void ToDataItem(TDataItem& item) const;
 #ifndef _NO_PYTHON
@@ -99,7 +99,7 @@ class XLEQ {
   double Value, Sigma;
   TDoubleList Coefficients;
   TPtrList<XVar> Vars;
-  int Id;
+  size_t Id;
 public:
 
   XVarManager& Parent;
@@ -109,7 +109,7 @@ public:
       Value(val), 
       Sigma(sig) { }
   ~XLEQ() {
-    for( int i=0; i < Vars.Count(); i++ )
+    for( size_t i=0; i < Vars.Count(); i++ )
       Vars[i]->_RemLeq(*this);
   }
   // copies Coefficients and Vars, internal use
@@ -119,14 +119,14 @@ public:
     Coefficients.Add(coefficient);
     var._AddLeq(*this);
   }
-  int Count() const {  return Vars.Count();  }
-  const XVar& operator [] (int i) const {  return *Vars[i];  }
-  XVar& operator [] (int i) {  return *Vars[i];  }
-  double GetCoefficient(int i) const {  return Coefficients[i];  }
+  size_t Count() const {  return Vars.Count();  }
+  const XVar& operator [] (size_t i) const {  return *Vars[i];  }
+  XVar& operator [] (size_t i) {  return *Vars[i];  }
+  double GetCoefficient(size_t i) const {  return Coefficients[i];  }
   // validates that the equation is valid, if not - releases the variables
   bool Validate() {
-    int vc = 0;
-    for( int i=0; i < Vars.Count(); i++ )  {
+    size_t vc = 0;
+    for( size_t i=0; i < Vars.Count(); i++ )  {
       if( Vars[i]->IsUsed() )
         vc++;
       else  {
@@ -136,7 +136,7 @@ public:
       }
     }
     if( vc < 2 )  {
-      for( int i=0; i < Vars.Count(); i++ )
+      for( size_t i=0; i < Vars.Count(); i++ )
         Vars[i]->_RemLeq(*this);
       Vars.Clear();
     }
@@ -144,7 +144,7 @@ public:
   }
   DefPropP(double, Value)
   DefPropP(double, Sigma)
-  DefPropP(int, Id)
+  DefPropP(size_t, Id)
   void ToDataItem(TDataItem& item) const;
 #ifndef _NO_PYTHON
   PyObject* PyExport(TPtrList<PyObject>& vars);
@@ -156,7 +156,7 @@ class XVarManager {
   TTypeList<XVar> Vars;
   TTypeList<XLEQ> Equations;
   TTypeList<XVarReference> References;  
-  int NextVar;  // this controls there variables go in sebsequent calls
+  uint16_t NextVar;  // this controls there variables go in sebsequent calls
 public:
 
   class RefinementModel& RM;
@@ -172,36 +172,36 @@ public:
     return Vars.Add( v );  
   }
   // returns existing variable or creates a new one. Sets a limit of 1024 variables
-  XVar& GetReferencedVar(int ind) {
+  XVar& GetReferencedVar(size_t ind) {
     if( ind < 1 || ind > 1024 )
       throw TInvalidArgumentException(__OlxSourceInfo, "invalid variable reference");
     while( Vars.Count() < ind )
       NewVar();
     return Vars[ind-1];
   }
-  int VarCount()            const {  return Vars.Count();  }
-  const XVar& GetVar(int i) const {  return Vars[i];  }
-  XVar& GetVar(int i)             {  return Vars[i];  }
+  size_t VarCount() const {  return Vars.Count();  }
+  const XVar& GetVar(size_t i) const {  return Vars[i];  }
+  XVar& GetVar(size_t i)  {  return Vars[i];  }
 
   XLEQ& NewEquation(double val=1.0, double sig=0.01)   {  
     XLEQ* leq = new XLEQ(*this, val, sig);
     leq->SetId(Equations.Count());
     return Equations.Add(leq);  
   }
-  int EquationCount()       const {  return Equations.Count();  }
-  const XLEQ& GetEquation(int i) const {  return Equations[i];  }
-  XLEQ& GetEquation(int i)        {  return Equations[i];  }
-  XLEQ& ReleaseEquation(int i)    {  
-    Equations[i].SetId(-1);
+  size_t EquationCount() const {  return Equations.Count();  }
+  const XLEQ& GetEquation(size_t i) const {  return Equations[i];  }
+  XLEQ& GetEquation(size_t i)  {  return Equations[i];  }
+  XLEQ& ReleaseEquation(size_t i)  {  
+    Equations[i].SetId(InvalidIndex);
     XLEQ& eq = Equations.Release(i);
-    for( int i=0; i < Equations.Count(); i++ )
+    for( size_t i=0; i < Equations.Count(); i++ )
       Equations[i].SetId(i);
     return eq;
   }
 
-  int VarRefCount() const {  return References.Count();  }
-  XVarReference& GetVarRef(int i) {  return References[i];  }
-  const XVarReference& GetVarRef(int i) const {  return References[i];  }
+  size_t VarRefCount() const {  return References.Count();  }
+  XVarReference& GetVarRef(size_t i) {  return References[i];  }
+  const XVarReference& GetVarRef(size_t i) const {  return References[i];  }
   // clears all the data and Nulls atoms' varrefs
   void ClearAll();
   void Clear() {  // does not clear the data, just resets the NextVar
@@ -232,7 +232,7 @@ public:
   double GetParam(const IXVarReferencer& r, short param_name, double override_val) const;
   // parses FVAR and assignes variable values
   template <class list> void AddFVAR(const list& fvar) {
-    for( int i=0; i < fvar.Count(); i++, NextVar++ )  {
+    for( size_t i=0; i < fvar.Count(); i++, NextVar++ )  {
       if( Vars.Count() <= NextVar )
         NewVar(fvar[i].ToDouble());
       else 
@@ -241,7 +241,7 @@ public:
   }
   olxstr GetFVARStr() const {
     olxstr rv(Vars.IsEmpty() ? 1.0 : Vars[0].GetValue());
-    for( int i=1; i < Vars.Count(); i++ )
+    for( size_t i=1; i < Vars.Count(); i++ )
       rv << ' ' << Vars[i].GetValue();
     return rv;
   }
@@ -251,17 +251,17 @@ public:
     if( (sump.Count()%2) != 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "even number of arguments is expected for SUMP");
     XLEQ& le = NewEquation(sump[0].ToDouble(), sump[1].ToDouble());
-    for( int i=2; i < sump.Count(); i+=2 )  {
+    for( size_t i=2; i < sump.Count(); i+=2 )  {
       XVar& v = GetReferencedVar(sump[i+1].ToInt());
       le.AddMember(v, sump[i].ToDouble());
     }
   }
   // Validate must be called first to get valid count of equations
-  olxstr GetSUMPStr(int ind) const {
+  olxstr GetSUMPStr(size_t ind) const {
     XLEQ& le = Equations[ind];
     olxstr rv(le.GetValue());
     rv << ' ' << le.GetSigma();
-    for( int i=0; i < le.Count(); i++ ) 
+    for( size_t i=0; i < le.Count(); i++ ) 
       rv << ' ' << le.GetCoefficient(i) << ' ' << le[i].GetId()+1;
     return rv;
   }

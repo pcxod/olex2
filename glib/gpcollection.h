@@ -1,8 +1,6 @@
-//---------------------------------------------------------------------------
-#ifndef gpcollectionH
-#define gpcollectionH
+#ifndef __olx_gl_gpcollection_H
+#define __olx_gl_gpcollection_H
 #include "glbase.h"
-#include "elist.h"
 #include "tptrlist.h"
 #include "estrlist.h"
 
@@ -25,8 +23,8 @@ public:
   // use it to change the content of the collection
   void ClearPrimitives();
 
-  inline int PrimitiveCount() const {  return Primitives.Count();  }
-  inline TGlPrimitive& GetPrimitive(int index) const {  return *Primitives[index];  }
+  inline size_t PrimitiveCount() const {  return Primitives.Count();  }
+  inline TGlPrimitive& GetPrimitive(size_t index) const {  return *Primitives[index];  }
   TGlPrimitive* FindPrimitiveByName(const olxstr& Name) const;
 
   TGlPrimitive& NewPrimitive(const olxstr& Name, short type);
@@ -37,13 +35,13 @@ public:
 
   bool ContainsPrimitive(TGlPrimitive& GlP);
 
-  inline int ObjectCount() const          {  return GObjects.Count();  }
-  class AGDrawObject& GetObject(int index) const {  return *GObjects[index];  }
+  inline size_t ObjectCount() const {  return GObjects.Count();  }
+  class AGDrawObject& GetObject(size_t index) const {  return *GObjects[index];  }
   void AddObject(AGDrawObject& Obj);
 
-  void ClearObjects()                  {  GObjects.Clear();  }
-  void RemoveObject(AGDrawObject& G)   {  GObjects.Remove(G); }
-  void DeleteObject(int i)             {  GObjects.Delete(i); }
+  void ClearObjects()  {  GObjects.Clear();  }
+  void RemoveObject(AGDrawObject& G)  {  GObjects.Remove(G); }
+  void DeleteObject(size_t i)  {  GObjects.Delete(i); }
 
   void Draw();
 

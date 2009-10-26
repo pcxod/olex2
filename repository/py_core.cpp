@@ -20,8 +20,8 @@ PyObject* pyVarValue(PyObject* self, PyObject* args)  {
     Py_INCREF(Py_None);
     return Py_None;
   }
-  int i = TOlxVars::VarIndex(varName);
-  if( i == -1 )  {
+  size_t i = TOlxVars::VarIndex(varName);
+  if( i == InvalidIndex )  {
     if( defVal != NULL )  {
       TOlxVars::SetVar(varName, defVal);
       Py_IncRef( defVal );
@@ -43,8 +43,8 @@ PyObject* pyVarObject(PyObject* self, PyObject* args)  {
     Py_INCREF(Py_None);
     return Py_None;
   }
-  int i = TOlxVars::VarIndex(varName);
-  if( i == -1 )  {
+  size_t i = TOlxVars::VarIndex(varName);
+  if( i == InvalidIndex )  {
     if( defVal != NULL )  {
       TOlxVars::SetVar(varName, defVal);
       Py_IncRef( defVal );
@@ -133,7 +133,7 @@ PyObject* pyUnsetVar(PyObject* self, PyObject* args)  {
 PyObject* pyGetPlugins(PyObject* self, PyObject* args)  {
   TStrList rv(IOlexProcessor::GetInstance()->GetPluginList());
   PyObject* af = PyTuple_New( rv.Count() );
-  for( int i=0; i < rv.Count(); i++ )
+  for( size_t i=0; i < rv.Count(); i++ )
     PyTuple_SetItem(af, i, PythonExt::BuildString(rv[i]) );
   return af;
 }
@@ -142,7 +142,7 @@ PyObject* pyExpFun(PyObject* self, PyObject* args)  {
   TBasicFunctionPList functions;
   IOlexProcessor::GetInstance()->GetLibrary().ListAllFunctions( functions );
   PyObject* af = PyTuple_New( functions.Count() ), *f;
-  for( int i=0; i < functions.Count(); i++ )  {
+  for( size_t i=0; i < functions.Count(); i++ )  {
     ABasicFunction* func = functions[i];
     f = PyTuple_New(3);
     PyTuple_SetItem(af, i, f );
@@ -158,7 +158,7 @@ PyObject* pyExpMac(PyObject* self, PyObject* args)  {
   TBasicFunctionPList functions;
   IOlexProcessor::GetInstance()->GetLibrary().ListAllMacros( functions );
   PyObject* af = PyTuple_New( functions.Count() ), *f, *s;
-  for( int i=0; i < functions.Count(); i++ )  {
+  for( size_t i=0; i < functions.Count(); i++ )  {
     ABasicFunction* func = functions[i];
     f = PyTuple_New(4);
     PyTuple_SetItem(af, i, f );
@@ -167,7 +167,7 @@ PyObject* pyExpMac(PyObject* self, PyObject* args)  {
     PyTuple_SetItem(f, 2, PythonExt::BuildString(func->GetDescription()) );
     s = PyDict_New();
     PyTuple_SetItem(f, 3, s );
-    for(int j=0; j < func->GetOptions().Count(); j++ )  {
+    for( size_t j=0; j < func->GetOptions().Count(); j++ )  {
       PyDict_SetItem(s, PythonExt::BuildString(func->GetOptions().GetComparable(j)),
                         PythonExt::BuildString(func->GetOptions().GetObject(j)) );
     }
@@ -240,11 +240,11 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
     PyDict_SetItemString(latt_out, "Centering", PythonExt::BuildString(latt.GetSymbol()));
     PyDict_SetItemString(latt_out, "InsCode", Py_BuildValue("i", latt.GetLatt()));
     PyObject* latt_vec_out = PyTuple_New(latt.VectorCount());
-    for( int i=0; i < latt.VectorCount(); i++ ) 
+    for( size_t i=0; i < latt.VectorCount(); i++ ) 
       PyTuple_SetItem(latt_vec_out, i, Py_BuildValue("(ddd)", latt.GetVector(i)[0], latt.GetVector(i)[1], latt.GetVector(i)[2]));
     PyDict_SetItemString(latt_out, "Translations", latt_vec_out);
     PyObject* matr_out = PyTuple_New(sg->MatrixCount());
-    for( int i=0; i < sg->MatrixCount(); i++ )  {
+    for( size_t i=0; i < sg->MatrixCount(); i++ )  {
       const smatd& m = sg->GetMatrix(i);
       PyTuple_SetItem(matr_out, i, 
         Py_BuildValue("(iiid)(iiid)(iiid)", 
@@ -257,7 +257,7 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
     smatd_list ml;
     sg->GetMatrices(ml, mattAll);
     matr_out=PyTuple_New(ml.Count());
-    for( int i=0; i < ml.Count(); i++ )  {
+    for( size_t i=0; i < ml.Count(); i++ )  {
       const smatd& m = ml[i];
       PyTuple_SetItem(matr_out, i, 
         Py_BuildValue("(iiid)(iiid)(iiid)", 
@@ -269,13 +269,13 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
     PyDict_SetItemString(out, "MatricesAll", matr_out);
 
     TPtrList<TSymmElement> ref, sg_elm;
-    for( int i=0; i < TSymmLib::GetInstance()->SymmElementCount(); i++ )
+    for( size_t i=0; i < TSymmLib::GetInstance()->SymmElementCount(); i++ )
       ref.Add( & TSymmLib::GetInstance()->GetSymmElement(i) );
     sg->SplitIntoElements(ref, sg_elm);
     PyObject* sysabs_out = PyTuple_New(sg_elm.Count());
-    for( int i=0; i < sg_elm.Count(); i++ )  {
+    for( size_t i=0; i < sg_elm.Count(); i++ )  {
       matr_out = PyTuple_New(sg_elm[i]->MatrixCount());
-      for( int j=0; j < sg_elm[i]->MatrixCount(); j++ )  {
+      for( size_t j=0; j < sg_elm[i]->MatrixCount(); j++ )  {
         const smatd& m = sg_elm[i]->GetMatrix(j);
         PyTuple_SetItem(matr_out, j, 
           Py_BuildValue("((iiid)(iiid)(iiid)))",
@@ -316,7 +316,7 @@ PyObject* pyHklStat(PyObject* self, PyObject* args)  {
 
   const TIntList& redInfo = xapp.XFile().GetRM().GetRedundancyInfo();
   PyObject* red = PyTuple_New(redInfo.Count());
-  for( int i=0; i < redInfo.Count(); i++ )
+  for( size_t i=0; i < redInfo.Count(); i++ )
     PyTuple_SetItem(red, i, Py_BuildValue("i", redInfo[i]));
   PyDict_SetItemString(out, "Redundancy", red);
   return out;
@@ -333,8 +333,8 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
     const TSettingsFile settings(SettingsFile);
     proxy = settings["proxy"];
   }
-  int lsi = index.LastIndexOf('/');
-  if( lsi == -1 )  {
+  size_t lsi = index.LastIndexOf('/');
+  if( lsi == InvalidIndex )  {
     PyErr_SetObject(PyExc_AttributeError, PythonExt::BuildString("Invalid index file") );
     return Py_BuildValue("b", false);
   }

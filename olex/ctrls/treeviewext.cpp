@@ -21,9 +21,9 @@ void TTreeView::SelectionEvent(wxTreeEvent& event) {
   EndEvtProcessing()
 }
 //..............................................................................
-int TTreeView::ReadStrings(int& index, const wxTreeItemId* thisCaller, const TStrList& strings)  {
+size_t TTreeView::ReadStrings(size_t& index, const wxTreeItemId* thisCaller, const TStrList& strings)  {
   while( (index + 2) <= strings.Count() )  {
-    int level = strings[index].LeadingCharCount( '\t' );
+    size_t level = strings[index].LeadingCharCount( '\t' );
     index++;  // now index is on data string
     wxTreeItemId item;
     if( strings[index].Trim('\t').IsEmpty() )
@@ -33,9 +33,9 @@ int TTreeView::ReadStrings(int& index, const wxTreeItemId* thisCaller, const TSt
          new TTreeNodeData(new olxstr(strings[index])) );
     index++;  // and now on the next item
     if( index < strings.Count() )  {
-      int nextlevel = strings[index].LeadingCharCount('\t');
+      size_t nextlevel = strings[index].LeadingCharCount('\t');
       if( nextlevel > level )  {
-        int slevel = ReadStrings(index, &item, strings);
+        size_t slevel = ReadStrings(index, &item, strings);
         if( slevel != level )
           return slevel;
       }
@@ -54,7 +54,7 @@ bool TTreeView::LoadFromStrings(const TStrList &strings)  {
   ClearData();
   DeleteAllItems();
   wxTreeItemId Root = AddRoot(wxT("Root"));
-  int index = 0;
+  size_t index = 0;
   ReadStrings(index, &Root, strings);
   return true;
 }

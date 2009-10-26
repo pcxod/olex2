@@ -21,7 +21,7 @@ using namespace exparse;
 TParamList::TParamList(){  ;  }
 //..............................................................................
 TParamList::TParamList(const TParamList &v)  {
-  for( int i=0; i < v.Count(); i++ )
+  for( size_t i=0; i < v.Count(); i++ )
     AddParam(v.GetName(i), v.GetValue(i), false);
 }
 //..............................................................................
@@ -37,8 +37,8 @@ void TParamList::FromString(const olxstr &S, char Sep) {  // -t=op
 //..............................................................................
 void TParamList::AddParam(const olxstr &Name, const olxstr &Val, bool Check)  {
   if( Check )  {
-    int index = IndexOf(Name);
-    if( index != -1 )  {
+    size_t index = IndexOf(Name);
+    if( index != InvalidIndex )  {
       GetObject(index) = Val;
       return;
     }

@@ -14,7 +14,7 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
   bool CellFound = false, LattFound = false;
   double Q[6];
 
-  for( int i=0; i < Strings.Count(); i++ )  {
+  for( size_t i=0; i < Strings.Count(); i++ )  {
     if( Strings[i].StartFromi("CELLSD") )  {
       toks.Clear();
       toks.Strtok( Strings[i], ' ');
@@ -73,13 +73,13 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
     throw TFunctionFailedException(__OlxSourceInfo, "CELL or LATT are missing");
 
   smatd sm;
-  for( int i=0; i < symm.Count(); i++ )  {
+  for( size_t i=0; i < symm.Count(); i++ )  {
     if( TSymmParser::SymmToMatrix(symm[i], sm) )
       GetAsymmUnit().AddMatrix(sm);
   }
   
-  for( int i=0; i < crds.Count(); i++ )  {
-    if( crds[i].IndexOf('(' ) != -1 )  {
+  for( size_t i=0; i < crds.Count(); i++ )  {
+    if( crds[i].IndexOf('(' ) != InvalidIndex )  {
       toks.Clear();
       toks.Strtok(crds[i], ' ');
       if( toks.Count() == 16 )  {
@@ -91,7 +91,7 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
         atom.ccrd()[0] = toks[12].ToDouble();
         atom.ccrd()[1] = toks[13].ToDouble();
         atom.ccrd()[2] = toks[14].ToDouble();
-        if( (i+1) < crds.Count() && crds[i+1].IndexOf('(') == -1 )  {
+        if( (i+1) < crds.Count() && crds[i+1].IndexOf('(') == InvalidIndex )  {
           toks.Clear();
           toks.Strtok( crds[i+1], ' ');
           if( toks.Count() != 6 )  continue;

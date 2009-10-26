@@ -27,12 +27,12 @@ class TXGrid: public TGlMouseListener  {
   CIsoSurface<float>* IS;
   FractMask* Mask;
   // if mask is specified
-  int PListId, NListId;
+  GLuint PListId, NListId;
   char *TextData;
   //TGlPrimitive *FPrimitive;
   class TGXApp * XApp;
   void DeleteObjects();
-  int TextIndex;
+  GLuint TextIndex;
   static TXGrid* Instance;
   void DrawQuad4(double A[4], double B[4], double C[4], double D[4]);
   void DrawQuad16(double points[4][4]);

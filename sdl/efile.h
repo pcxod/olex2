@@ -62,10 +62,10 @@ public:
   class TFileNameMask  {
     TStrList toks;
     olxstr mask;
-    int toksEnd, toksStart;
+    size_t toksEnd, toksStart;
   public:
     TFileNameMask(const olxstr& msk)  { Build(msk);  }
-    TFileNameMask() : toksEnd(-1), toksStart(-1)  {  }
+    TFileNameMask() : toksEnd(InvalidIndex), toksStart(InvalidIndex)  {  }
     void Build(const olxstr& mask);
     bool DoesMatch(const olxstr& str)  const;
   };

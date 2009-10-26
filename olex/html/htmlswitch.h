@@ -7,7 +7,7 @@ class THtml;
 class THtmlSwitch {
 protected:
   olxstr Name;
-  short FileIndex;  // the file index
+  size_t FileIndex;  // the file index
   TStrList  Files;
   TStrPObjList<olxstr,THtmlSwitch*> Strings;  // represents current content of the switch
   TParamList Params;   // parameters to be replaced with their values param=ll use #param
@@ -27,11 +27,11 @@ public:
 
   DefPropC(olxstr, Name)
 
-  inline short GetFileIndex() const {  return FileIndex; }
-  void  SetFileIndex(short ind);
+  inline size_t GetFileIndex() const {  return FileIndex; }
+  void  SetFileIndex(size_t ind);
   void UpdateFileIndex();
-  inline int FileCount() const {  return Files.Count(); }
-  const olxstr &GetFile(int ind) const {  return Files[ind]; }
+  inline size_t FileCount() const {  return Files.Count(); }
+  const olxstr &GetFile(size_t ind) const {  return Files[ind]; }
   void ClearFiles()  {  Files.Clear(); }
   void AddFile(const olxstr &fn)  {  Files.Add(fn);  }
   const olxstr& GetCurrentFile() const {  return FileIndex == -1 ? EmptyString : Files[FileIndex];  }
@@ -39,10 +39,10 @@ public:
   TStrPObjList<olxstr,THtmlSwitch*>& GetStrings()  {  return Strings; }
   const TStrPObjList<olxstr,THtmlSwitch*>& GetStrings() const {  return Strings; }
 
-  inline int SwitchCount() const {  return Switches.Count(); }
-  inline THtmlSwitch& GetSwitch(int ind)  {  return Switches[ind]; }
+  inline size_t SwitchCount() const {  return Switches.Count(); }
+  inline THtmlSwitch& GetSwitch(size_t ind)  {  return Switches[ind]; }
   THtmlSwitch*  FindSwitch(const olxstr &IName);
-  int FindSimilar(const olxstr &start, const olxstr &end, TPtrList<THtmlSwitch>& ret);
+  size_t FindSimilar(const olxstr &start, const olxstr &end, TPtrList<THtmlSwitch>& ret);
   void Expand(TPtrList<THtmlSwitch>& ret);
   THtmlSwitch& NewSwitch();
 

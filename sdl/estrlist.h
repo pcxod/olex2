@@ -33,51 +33,51 @@ public:
 template <class SC, class T> class TTStrList : public IEObject {
 protected:
   TPtrList<T> Strings;
-  template <class StrClass> int FindIndexOf(const StrClass& Str, bool CI) const  {
+  template <class StrClass> size_t FindIndexOf(const StrClass& Str, bool CI) const  {
     if( CI )  {
-      for( int i=0; i < Count(); i++ )
+      for( size_t i=0; i < Count(); i++ )
         if( Strings[i]->String.Equalsi(Str) )
           return i;
     }
     else  {
-      for( int i=0; i < Count(); i++ )
+      for( size_t i=0; i < Count(); i++ )
         if( Strings[i]->String.Equals(Str) )
           return i;
     }
-    return -1;
+    return InvalidIndex;
   }
 public:
   TTStrList()  { }
 
   template <class SC1, class T1> TTStrList(const TTStrList<SC1,T1>& list)  {
     Strings.SetCapacity( list.Count() );
-    for( int i=0; i < list.Count(); i++ )
-      Add( list[i] );
+    for( size_t i=0; i < list.Count(); i++ )
+      Add(list[i]);
   }
   TTStrList(const TTStrList& list)  {
     Strings.SetCapacity( list.Count() );
-    for( int i=0; i < list.Count(); i++ )
-      Add( list[i] );
+    for( size_t i=0; i < list.Count(); i++ )
+      Add(list[i]);
   }
-  TTStrList(int count)  {
+  TTStrList(size_t count)  {
     Strings.SetCapacity( count );
-    for( int i=0; i < count; i++ )
-      Add( EmptyString );
+    for( size_t i=0; i < count; i++ )
+      Add(EmptyString);
   }
   // creates a list with strtok entries in it
   TTStrList(const SC& string, const SC& sep)  {
     Strtok(string, sep);
   }
 
-  TTStrList(const SC& string, char sep)  {
-    Strtok(string, sep);
+  TTStrList(const SC& string, olxch sep, bool skip_sequences=true)  {
+    Strtok(string, sep, skip_sequences);
   }
   virtual ~TTStrList()  {
      Clear();
   }
-  void SetCount(int nc)  {
+  void SetCount(size_t nc)  {
     if( nc < Strings.Count() )  {
-      for( int i=nc; i < Strings.Count(); i++ )
+      for( size_t i=nc; i < Strings.Count(); i++ )
         delete Strings[i];
       Strings.SetCount(nc);
     }
@@ -87,12 +87,12 @@ public:
     }
   }
 
-  inline void SetCapacity(int cap)      {  Strings.SetCapacity(cap);  }
-  inline SC& operator [] (int i)  const {  return Strings[i]->String;   }
-  inline SC& GetString(int i)     const {  return Strings[i]->String;   }
+  inline void SetCapacity(size_t cap)   {  Strings.SetCapacity(cap);  }
+  inline SC& operator [] (size_t i) const {  return Strings[i]->String;   }
+  inline SC& GetString(size_t i)  const {  return Strings[i]->String;   }
   inline T& Last()                const {  return *Strings.Last();   }
   inline SC& LastStr()            const {  return Strings.Last()->String;   }
-  inline int Count()              const {  return Strings.Count();  }
+  inline size_t Count()           const {  return Strings.Count();  }
   inline bool IsEmpty()           const {  return Strings.IsEmpty();  }
   inline SC& Add(const SC& str)         {  return Strings.Add( new T(str) )->String;  }
   inline SC& Add(const char* str)       {  return Strings.Add( new T(str) )->String;  }
@@ -104,51 +104,51 @@ public:
   template <class SC1, class T1> 
   TTStrList<SC,T>& operator << (const TTStrList<SC1,T1>& list)  {
     Strings.SetCapacity( Count() + list.Count() );
-    for( int i=0; i < list.Count(); i++ )
+    for( size_t i=0; i < list.Count(); i++ )
       Add( list[i] );
     return *this;
   }
 
-  inline SC& Insert(int i, const SC& S)      {  return Strings.Insert(i, new T(S))->String;  }
-  inline SC& Insert(int i, const char* S)    {  return Strings.Insert(i, new T(S))->String;  }
-  inline SC& Insert(int i, const wchar_t* S) {  return Strings.Insert(i, new T(S))->String;  }
+  inline SC& Insert(size_t i, const SC& S)      {  return Strings.Insert(i, new T(S))->String;  }
+  inline SC& Insert(size_t i, const char* S)    {  return Strings.Insert(i, new T(S))->String;  }
+  inline SC& Insert(size_t i, const wchar_t* S) {  return Strings.Insert(i, new T(S))->String;  }
   template <class SC1, class T1> 
-  inline void Insert(int i, const TTStrList<SC1,T1>& list)      {
-    if( list.Count() == 0 )  return;
+  inline void Insert(size_t i, const TTStrList<SC1,T1>& list)      {
+    if( list.IsEmpty() )  return;
     Strings.Insert(i, list.Count() );
-    for( int j=0; j < list.Count(); j++ )
+    for( size_t j=0; j < list.Count(); j++ )
       Strings[i+j] = new T(list[j]);
   }
-  inline void Swap( int i, int j)               {  Strings.Swap(i, j);  }
-  inline void Move( int from, int to)           {  Strings.Move(from, to);  }
-  void Rearrange(const TIntList& indexes)       {  Strings.Rearrange(indexes);  }
-  void Clear()                           {
-    for( int i=0; i < Strings.Count(); i++ )
+  inline void Swap(size_t i, size_t j)  {  Strings.Swap(i, j);  }
+  inline void Move(size_t from, size_t to)  {  Strings.Move(from, to);  }
+  void Rearrange(const TSizeList& indexes)  {  Strings.Rearrange(indexes);  }
+  void Clear()  {
+    for( size_t i=0; i < Strings.Count(); i++ )
       delete Strings[i];
     Strings.Clear();
   }
-  inline void Delete(int i)                     {
+  inline void Delete(size_t i)  {
     delete Strings[i];
     Strings.Delete(i);
   }
-  inline void DeleteRange(int From, int To)     {
-    for( int i=From; i < To; i++ )
+  inline void DeleteRange(size_t From, size_t To)  {
+    for( size_t i=From; i < To; i++ )
       delete Strings[i];
     Strings.DeleteRange(From, To);
   }
 
-  TTStrList& SubList(int offset, int count, TTStrList& SL) const  {
-    for(int i=offset; i < offset+count; i++ )
+  TTStrList& SubList(size_t offset, size_t count, TTStrList& SL) const  {
+    for( size_t i=offset; i < offset+count; i++ )
       SL.Add( GetString(i) );
     return SL;
   }
 
-  TTStrList SubListFrom(int offset) const  {
+  TTStrList SubListFrom(size_t offset) const  {
     TTStrList SL;
     return SubList(offset, Strings.Count()-offset, SL);
   }
 
-  TTStrList SubListTo(int to) const  {
+  TTStrList SubListTo(size_t to) const  {
     TTStrList SL;
     return SubList(0, to, SL);
   }
@@ -156,17 +156,17 @@ public:
   template <class SC1, class T1>
     void Assign(const TTStrList<SC1,T1>& S)  {
       Clear();
-      for( int i=0; i < S.Count(); i++ )
-        Add( S.GetString(i) );
+      for( size_t i=0; i < S.Count(); i++ )
+        Add(S.GetString(i));
     }
 
   void AddList(const TTStrList& S)  {
-    for( int i=0; i < S.Count(); i++ )
+    for( size_t i=0; i < S.Count(); i++ )
       Add( S.GetString(i) );
   }
 
   void CombineLines(const SC& LineContinuationDel)  {
-    for(int i=0; i < Count(); i++ )  {
+    for( size_t i=0; i < Count(); i++ )  {
       if( GetString(i).EndsWith(LineContinuationDel) )  {
         GetString(i).Delete( GetString(i).Length()-LineContinuationDel.Length(), LineContinuationDel.Length());
         if( (i+1) < Count() )  {
@@ -180,7 +180,7 @@ public:
   }
   // this removes empty strings from the list
   void Pack()  {
-    for( int i=0; i < Count(); i++ )  {
+    for( size_t i=0; i < Count(); i++ )  {
       if( Strings[i]->String.IsEmpty() )  {
         delete Strings[i];
         Strings[i] = NULL;
@@ -189,28 +189,28 @@ public:
     Strings.Pack();
   }
   template <class StrClass>
-  inline int IndexOf(const StrClass& C)  const {  return FindIndexOf(C, false);  }
+  inline size_t IndexOf(const StrClass& C)  const {  return FindIndexOf(C, false);  }
   template <class StrClass>
-  inline int IndexOfi(const StrClass& C) const {  return FindIndexOf(C, true);  }
+  inline size_t IndexOfi(const StrClass& C) const {  return FindIndexOf(C, true);  }
   
   template <class StrClass>
-  int FindIndexes(const StrClass& C, TIntList& rv, bool CI) const  {
-    int cc = rv.Count();
-    for( int i=0; i < Count(); i++ )
+  size_t FindIndexes(const StrClass& C, TSizeList& rv, bool CI) const  {
+    size_t cc = rv.Count();
+    for( size_t i=0; i < Count(); i++ )
       if( Strings[i]->String.Compare(C, CI) == 0 )
           rv.Add(i);
     return rv.Count() - cc;
   }
-  SC Text(const SC& Sep, int start=-1, int end = -1) const  {
-    if( start == -1 )  start = 0;
-    if( end == -1 )    end = Strings.Count();
+  SC Text(const SC& Sep, size_t start=InvalidIndex, size_t end = InvalidIndex) const  {
+    if( start == InvalidIndex )  start = 0;
+    if( end == InvalidIndex )    end = Strings.Count();
     size_t tc=1, slen = Sep.Length();
-    for( int i=start; i < end; i++ )  {
+    for( size_t i=start; i < end; i++ )  {
       tc += Strings[i]->String.Length();
       tc += slen;
     }
     SC E(EmptyString, tc);
-    for( int i=start; i < end; i++ )  {
+    for( size_t i=start; i < end; i++ )  {
       E << Strings[i]->String;
       if( i < end-1 ) // skip for the last line
         E << Sep;
@@ -220,13 +220,13 @@ public:
   // convinience method
   void LoadFromTextStream(IInputStream& io)  {
     Clear();
-    int fl = io.GetSize() - io.GetPosition();
-    if( fl <= 0 )  return;
+    size_t fl = io.GetSize() - io.GetPosition();
+    if( fl == 0 )  return;
     char * const&bf = new char [fl+1];
     io.Read(bf, fl);
     bf[fl] = '\0';
     Strtok(olxcstr(bf, fl), '\n', false); // must preserve the new lines on Linux!!! 2008.08.17
-    for(int i=0; i < Count(); i++ )
+    for( size_t i=0; i < Count(); i++ )
       if( GetString(i).EndsWith('\r') )  
         GetString(i).SetLength( GetString(i).Length() -1 );
     delete [] bf;
@@ -239,7 +239,7 @@ public:
 
   void operator >> (IDataOutputStream &Stream) const  {
     Stream << (uint32_t)Count();
-    for( int i=0; i < Count(); i++ )
+    for( size_t i=0; i < Count(); i++ )
       Stream << Strings[i]->String;
   }
   void operator << (IDataInputStream &Stream) {
@@ -247,12 +247,13 @@ public:
     uint32_t size;
     Stream >> size;
     Strings.SetCapacity(size);
-    for( size_t i=0; i < size; i++ )
+    for( uint32_t i=0; i < size; i++ )
       Stream >> Add(EmptyString);
   }
   // convinience method
   void SaveToTextStream(IDataOutputStream& os) const {
-    for( int i=0; i < Count()-1; i++ )
+    if( IsEmpty() )  return;
+    for( size_t i=0; i < Count()-1; i++ )
       os.Writenl( Strings[i]->String.raw_str(), Strings[i]->String.RawLen());
     if( Count() > 0 )
       os.Writenl( Strings.Last()->String.raw_str(), Strings.Last()->String.RawLen());
@@ -297,38 +298,35 @@ public:
     else      TPtrList<T>::QuickSorter.template Sort< TStringWrapperComparator<T,false> >(Strings);
   }
 
-  void StrtokF( const SC& Str, const TIntList& indexes )  {
+  void StrtokF(const SC& Str, const TSizeList& indexes)  {
     if( indexes.Count() < 2 )
       throw TInvalidArgumentException(__OlxSourceInfo, "at least two numbers are required");
-    int fLength = 0;
-    for( int i=0; i < indexes.Count(); i++ )
-      fLength += indexes[i];
-
-    fLength=0; // it wil be recalculated again
-    for( int i=0; i < indexes.Count(); i++ )  {
-      int valid_end = olx_min( Str.Length()-fLength, indexes[i] );
+    size_t fLength = 0;
+    for( size_t i=0; i < indexes.Count(); i++ )  {
+      if( indexes[i] > (Str.Length()-fLength) )
+        throw TInvalidArgumentException(__OlxSourceInfo, "string is too short");
       Add( Str.SubString(fLength, indexes[i]) );
       fLength += indexes[i];
       if( fLength >= Str.Length() )  return;
     }
     if( fLength < Str.Length() )  Add( Str.SubStringFrom(fLength) );
   }
-  void Strtok( const SC& Str, char Sep, bool SkipSequences = true )  {
+  void Strtok(const SC& Str, olxch Sep, bool SkipSequences = true)  {
     SC Tmp(Str);
-    int ind = Tmp.IndexOf(Sep);
-    while( ind != -1 )  {
+    size_t ind = Tmp.IndexOf(Sep);
+    while( ind != InvalidIndex )  {
       if( ind != 0 )  // skip sequences of separators
         Add(Tmp.SubStringTo(ind));
       else if( !SkipSequences )
         Add(EmptyString);
-      if( (ind+1) >= Tmp.Length() )  {
+      if( (size_t)(ind+1) >= Tmp.Length() )  {
         Tmp = EmptyString;
         break;
       }
-      while( ++ind < Tmp.Length() && Tmp.CharAt(ind) == Sep ) 
+      while( (size_t)(++ind) < Tmp.Length() && Tmp.CharAt(ind) == Sep ) 
         if( !SkipSequences )
           Add(EmptyString);
-      if( ind >= Tmp.Length() )  {
+      if( (size_t)ind >= Tmp.Length() )  {
         Tmp = EmptyString;
         break;
       }
@@ -342,8 +340,8 @@ public:
   // takes a string as a separator
   void Strtok( const SC& Str, const SC &Sep )  {
     SC Tmp(Str);
-    int ind = Tmp.IndexOf(Sep);
-    while( ind != -1 )  {
+    size_t ind = Tmp.IndexOf(Sep);
+    while( ind != InvalidIndex )  {
       Add(Tmp.SubStringTo(ind));
       if( (ind+Sep.Length()) >= Tmp.Length() )  {
         Tmp = EmptyString;
@@ -356,13 +354,13 @@ public:
       Add(Tmp);
   }
 
-  void Hyphenate(const SC& String, int Width, bool Force=true)  {
-    if( Width <= 0 )
+  void Hyphenate(const SC& String, size_t Width, bool Force=true)  {
+    if( Width == 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "width");
     SC Str(String);
     while( Str.Length() > Width )  {
-      int spi = Str.LastIndexOf(' ', Width);
-      if( spi > 0 )  {
+      size_t spi = Str.LastIndexOf(' ', Width);
+      if( spi != InvalidIndex && spi > 0 )  {
         Add( Str.SubStringTo(spi) );
         Str.Delete(0, spi+1); // remove the space
       }
@@ -405,25 +403,25 @@ template <class SC, class OC, class GC> class TTOStringList: public TTStrList<SC
 public:
   // creates empty list
   TTOStringList()  {  }
-  TTOStringList(int count) : TTStrList<SC,GC>(count)  {    }
+  TTOStringList(size_t count) : TTStrList<SC,GC>(count)  {    }
   // copy constructor
   template <class SC1, class T1>
     TTOStringList(const TTStrList<SC1,T1>& list)  {
       PList::Strings.SetCapacity( list.Count() );
-      for( int i=0; i < list.Count(); i++ )
+      for( size_t i=0; i < list.Count(); i++ )
         Add( list[i] );
     }
 
   TTOStringList(const TTOStringList& list)  {
     PList::Strings.SetCapacity( list.Count() );
-    for( int i=0; i < list.Count(); i++ )
+    for( size_t i=0; i < list.Count(); i++ )
       Add( list[i], list.GetObject(i) );
   }
   // creates a list with strtok entries in it
   TTOStringList(const SC& string, const SC& sep, TTypeList<OC>* objects = NULL) :
                           TTStrList<SC,GC>(string, sep)  {
     if( objects != NULL )  {
-      for( int i=0; i < objects->Count(); i++ )  {
+      for( size_t i=0; i < objects->Count(); i++ )  {
         if( (i+1) >= PList::Count() )  break;
         GetObject(i) = objects->Item(i);
       }
@@ -433,7 +431,7 @@ public:
   TTOStringList(const SC& string, char sep, TTypeList<OC>* objects = NULL) :
                           TTStrList<SC,GC>(string, sep)  {
     if( objects != NULL )  {
-      for( int i=0; i < objects->Count(); i++ )  {
+      for( size_t i=0; i < objects->Count(); i++ )  {
         if( (i-1) > PList::Count() )  break;
         GetObject(i) = objects->Item(i);
       }
@@ -441,18 +439,18 @@ public:
   }
   virtual ~TTOStringList()  {  }
 
-  TTOStringList& SubList(int offset, int count, TTOStringList& SL) const  {
-    for(int i=offset; i < offset+count; i++ )
+  TTOStringList& SubList(size_t offset, size_t count, TTOStringList& SL) const  {
+    for( size_t i=offset; i < offset+count; i++ )
       SL.Add( PList::GetString(i), GetObject(i));
     return SL;
   }
 
-  TTOStringList SubListFrom(int offset) const  {
+  TTOStringList SubListFrom(size_t offset) const  {
     TTOStringList SL;
     return SubList(offset, PList::Count()-offset, SL);
   }
 
-  TTOStringList SubListTo(int to) const  {
+  TTOStringList SubListTo(size_t to) const  {
     TTOStringList SL;
     return SubList(0, to, SL);
   }
@@ -460,8 +458,8 @@ public:
   template <class SC1, class T1>
     void Assign(const TTStrList<SC1,T1>& S)  {
       PList::Clear();
-      for( int i=0; i < S.Count(); i++ )
-        Add( S[i] );
+      for( size_t i=0; i < S.Count(); i++ )
+        Add(S[i]);
     }
 
   inline void Assign(const TTOStringList& S)  {
@@ -470,41 +468,41 @@ public:
   }
 
   void AddList(const TTOStringList& S)  {
-    for( int i=0; i < S.Count(); i++ )
+    for( size_t i=0; i < S.Count(); i++ )
       Add(S[i], S.GetObject(i));
   }
 
   inline GC& Add(const SC& S)  {  return *PList::Strings.Add( new GC(S) );  }
   inline GC& Add(const SC& S, const OC& Object)  {  return *PList::Strings.Add( new GC(S,Object) );  }
-  inline GC& Insert(int i, const SC& S)  {  return *PList::Strings.Insert(i, new GC(S) );  }
-  inline GC& Insert(int i, const SC& S, const OC& O)  {  return *PList::Strings.Insert(i, new GC(S,O) );  }
+  inline GC& Insert(size_t i, const SC& S)  {  return *PList::Strings.Insert(i, new GC(S) );  }
+  inline GC& Insert(size_t i, const SC& S, const OC& O)  {  return *PList::Strings.Insert(i, new GC(S,O) );  }
 
-  inline OC& GetObject(int i) const { return PList::Strings[i]->Object;  }
+  inline OC& GetObject(size_t i) const { return PList::Strings[i]->Object;  }
 
   const TTOStringList& operator = (const TTOStringList& list)  {
     PList::Clear();
     PList::Strings.SetCapacity( list.Count() );
-    for( int i=0; i < list.Count(); i++ )
+    for( size_t i=0; i < list.Count(); i++ )
       Add( list[i], list.GetObject(i) );
     return list;
   }
 
-  int IndexOfObject(const OC& C ) const  {
-    for( int i=0; i < PList::Count(); i++ )
+  size_t IndexOfObject(const OC& C ) const  {
+    for( size_t i=0; i < PList::Count(); i++ )
       if( PList::Strings[i]->Object == C )
         return i;
-    return -1;
+    return InvalidIndex;
   }
   // the find function with this signature work only for objects; for pointers it
   // causes a lot of trouble
-  template <class StrClass> const OC & FindObject(const StrClass& Name) const  {
-    int in = PList::IndexOf(Name);
-    return (in != -1) ? PList::Strings[in]->Object : *(OC*)NULL;
+  template <class StrClass> const OC & FindObject(const StrClass& Name) const {
+    size_t in = PList::IndexOf(Name);
+    return (in != InvalidIndex) ? PList::Strings[in]->Object : *(OC*)NULL;
   }
 
-  template <class StrClass> OC* FindObjecti(const StrClass& Name) const  {
-    int in = PList::IndexOfi(Name);
-    return (in != -1) ? &PList::Strings[in]->Object : *(OC*)NULL;
+  template <class StrClass> OC* FindObjecti(const StrClass& Name) const {
+    size_t in = PList::IndexOfi(Name);
+    return (in != InvalidIndex) ? &PList::Strings[in]->Object : *(OC*)NULL;
   }
 };
 
@@ -513,8 +511,8 @@ template <class SC, typename OC> class TStrPObjList:
   typedef TTOStringList<SC,OC,TPrimitiveStrListData<SC,OC> > PList;
 public:
   TStrPObjList()  {}
-  TStrPObjList(int count) : PList(count)  { 
-    for( int i=0; i < PList::Count(); i++ )
+  TStrPObjList(size_t count) : PList(count)  { 
+    for( size_t i=0; i < PList::Count(); i++ )
       PList::GetObject(i) = NULL;
   }
 
@@ -531,13 +529,13 @@ public:
     PList(string, sep, objects)  {  }
 
   template <class StrClass> inline OC FindObject(const StrClass& Name) const  {
-    int in = PList::IndexOf(Name);
-    return (in != -1) ? PList::Strings[in]->Object : NULL;
+    size_t in = PList::IndexOf(Name);
+    return (in != InvalidIndex) ? PList::Strings[in]->Object : NULL;
   }
 
   template <class StrClass> OC FindObjecti(const StrClass& Name) const  {
-    int in = PList::IndexOfi(Name);
-    return (in != -1) ? PList::Strings[in]->Object : NULL;
+    size_t in = PList::IndexOfi(Name);
+    return (in != InvalidIndex) ? PList::Strings[in]->Object : NULL;
   }
 };
 

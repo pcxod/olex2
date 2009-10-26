@@ -18,7 +18,7 @@ template <class T> class TStack  {
     item(const T& v, item* _prev) : data(v), prev(_prev)  {}
   };
   item* cur;
-  int _count;
+  size_t _count;
 public:
   TStack() : cur(NULL), _count(0)  {}
   virtual ~TStack()  {  Clear();  }
@@ -48,7 +48,7 @@ public:
     throw TFunctionFailedException(__OlxSourceInfo, "stack is empty");
   }
   inline bool IsEmpty() const {  return cur == NULL;  }
-  inline int Count() const {  return _count;  }
+  inline size_t Count() const {  return _count;  }
   inline T& Current() {  
     if( cur == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "stack is empty");
@@ -61,14 +61,14 @@ public:
   str_stack(const olxstr& exp)  {  LoadFromExpression(exp);  }
   str_stack() {}
 
-  int LoadFromExpression(const olxstr& Exp) {
+  size_t LoadFromExpression(const olxstr& Exp) {
     Clear();
     int argc=0;
     char op;
     olxstr o;
     bool NewOperation = false;
     if( !Exp.IsEmpty() )  {
-      for( int i=0; i < Exp.Length(); i++ )  {
+      for( size_t i=0; i < Exp.Length(); i++ )  {
         switch( Exp.CharAt(i) )  {
             case '-':    NewOperation = true;    op = '-';    break;
             case '+':    NewOperation = true;    op = '+';    break;

@@ -15,7 +15,7 @@ class TEllipsoid: public IEObject  {
   double FQuad[6], FEsd[6];  // quadratic form of the elipsoid and esd
   mat3d Matrix;  // normalised eigen vectors
   double SX, SY, SZ;    // lengths of the vectores
-  int Id; // do not change this value ! it is equal to the position in the AsymmUnit list
+  size_t Id; // do not change this value ! it is equal to the position in the AsymmUnit list
 public:
   TEllipsoid();
   TEllipsoid( const TEllipsoid& e)  {  this->operator = (e);  }
@@ -29,7 +29,7 @@ public:
   inline bool IsNPD()  const   {  return FNPD; };
 
   template <class T> TEllipsoid& Initialise(const T& Q, const T& E)  {
-    for( int i=0; i < 6; i++ )  {
+    for( size_t i=0; i < 6; i++ )  {
       FQuad[i] = Q[i];
       FEsd[i]  = E[i];
     }
@@ -37,7 +37,7 @@ public:
     return *this;
   }
   template <class T> TEllipsoid& Initialise(const T& Q)  {
-    for( int i=0; i < 6; i++ )  {
+    for( size_t i=0; i < 6; i++ )  {
       FQuad[i] = Q[i];
       FEsd[i]  = 0;
     }
@@ -48,24 +48,23 @@ public:
   void Initialise();  // 
   
   template <class T> void GetQuad(T& Q) const  {
-    for( int i=0; i < 6; i++ )
+    for( size_t i=0; i < 6; i++ )
       Q[i] = FQuad[i];
   }
   template <class T> void GetQuad(T& Q, T& E) const  {
-    for( int i=0; i < 6; i++ )  {
+    for( size_t i=0; i < 6; i++ )  {
       Q[i] = FQuad[i];
       E[i] = FEsd[i];
     }
   }
-  const double& GetQuadVal(short ind) const {  return FQuad[ind];  }
-  inline double GetSX()               const {  return SX;  }
-  inline double GetSY()               const {  return SY;  }
-  inline double GetSZ()               const {  return SZ;  }
-  //inline double GetUiso()             const {  return (SX*SX+SY*SY+SZ*SZ)/3;  }
-  inline double GetUiso()             const {  return (FQuad[0]+FQuad[1]+FQuad[2])/3;  }
-  inline const mat3d&  GetMatrix()    const {  return Matrix;  }
+  const double& GetQuadVal(size_t ind) const {  return FQuad[ind];  }
+  inline double GetSX() const {  return SX;  }
+  inline double GetSY() const {  return SY;  }
+  inline double GetSZ() const {  return SZ;  }
+  inline double GetUiso() const {  return (FQuad[0]+FQuad[1]+FQuad[2])/3;  }
+  inline const mat3d& GetMatrix() const {  return Matrix;  }
 
-  DefPropP(int, Id)
+  DefPropP(size_t, Id)
 };
   typedef TTypeList<TEllipsoid>  TEllpList;
   typedef TPtrList<TEllipsoid>  TEllpPList;

@@ -33,7 +33,7 @@ THklFile::~THklFile()  {
 }
 //..............................................................................
 void THklFile::Clear()  {
-  for( int i=0; i < Refs.Count(); i++ )
+  for( size_t i=0; i < Refs.Count(); i++ )
     delete Refs[i];
   Refs.Clear();
   Clear3D();
@@ -62,9 +62,9 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
   int Tag = 1;
   SL.LoadFromFile(FN);
 
-  const int line_cnt = SL.Count();
+  const size_t line_cnt = SL.Count();
   Refs.SetCapacity( line_cnt );
-  for(int i=0; i < line_cnt; i++ )  {
+  for( size_t i=0; i < line_cnt; i++ )  {
     const olxcstr& line = SL[i];
     if( !ZeroRead && line.Length() < 28 )  continue;
     if( !FormatInitialised )  {
@@ -106,7 +106,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
       ins->SetTitle( TEFile::ChangeFileExt(TEFile::ExtractFileName(FN), EmptyString) << " imported from HKL file" );
       bool cell_found = false, sfac_found = false;
       ins->SetSfac(EmptyString);
-      for( int j=i; j < SL.Count(); j++ )  {
+      for( size_t j=i; j < SL.Count(); j++ )  {
         olxstr line = SL[j].Trim(' ');
         if( line.IsEmpty() )  continue;
         Toks.Clear();
@@ -126,7 +126,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
         else if( line.StartFromi("SFAC") )  {
           Toks.Strtok(line, ' ');  // do the validation
           olxstr unit;
-          for( int k=1; k < Toks.Count(); k++ )  {
+          for( size_t k=1; k < Toks.Count(); k++ )  {
             if( !ins->GetAsymmUnit().GetAtomsInfo()->IsAtom(Toks[k]) )
               throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid element ") << Toks[k]);
             unit << "1 ";
@@ -151,8 +151,8 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
       break;
 		}
   }
-  for( int i=0; i < Refs.Count(); i++ )
-    Refs[i]->SetTag( (i+1) * Sign(Refs[i]->GetTag()));
+  for( size_t i=0; i < Refs.Count(); i++ )
+    Refs[i]->SetTag( (i+1) * olx_sign(Refs[i]->GetTag()));
 
   if( Refs.IsEmpty() )
     throw TFunctionFailedException(__OlxSourceInfo, "no reflections found");
@@ -162,8 +162,8 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
 bool THklFile::SaveToFile(const olxstr& FN)  {  return THklFile::SaveToFile(FN, Refs, false);  }
 //..............................................................................
 void THklFile::UpdateRef(const TReflection& R)  {
-  int ind = abs(R.GetTag())-1;
-  if( ind < 0 || ind >= Refs.Count() )
+  size_t ind = olx_abs(R.GetTag())-1;
+  if( ind >= Refs.Count() )
     throw TInvalidArgumentException(__OlxSourceInfo, "reflection tag");
   Refs[ind]->SetTag( R.GetTag() );
 }
@@ -184,7 +184,7 @@ void THklFile::InitHkl3D()  {
                                      MinHkl[1], MaxHkl[1],
                                      MinHkl[2], MaxHkl[2]) );
 
-  for( int i=0; i < Refs.Count(); i++ )  {
+  for( size_t i=0; i < Refs.Count(); i++ )  {
     TReflection *r1 = Refs[i];
     TRefPList *&rl = hkl3D(r1->GetHkl());
 
@@ -198,16 +198,16 @@ void THklFile::InitHkl3D()  {
 void THklFile::AllRefs(const TReflection& R, const smatd_list& ml, TRefPList& Res)  {
   vec3i hklv;
   vec3i_list ri;
-  for( int i=0; i < ml.Count(); i++ )  {
+  for( size_t i=0; i < ml.Count(); i++ )  {
     R.MulHkl(hklv, ml[i]);
     // check if the range of the reflection is valid
-    if( !vec3i::IsInRangeExc(hklv, MinHkl, MaxHkl) )  continue;
-    if( ri.IndexOf(hklv) == -1 )  ri.AddCCopy(hklv);
+    if( !vec3i::IsInRangeExc(hklv, MinHkl, MaxHkl) )
+      continue;
+    if( ri.IndexOf(hklv) == InvalidIndex )
+      ri.AddCCopy(hklv);
   }
-
   InitHkl3D();
-
-  for( int j=0; j < ri.Count(); j++ )  {
+  for( size_t j=0; j < ri.Count(); j++ )  {
     TRefPList* r = Hkl3D->Value(ri[j]);
     if( r != NULL )  
       Res.AddList(*r);
@@ -227,7 +227,7 @@ void THklFile::EndAppend()  {
 void THklFile::Append(const TRefPList& hkls)  {
   if( hkls.IsEmpty() )  return;
 
-  for( int i=0; i < hkls.Count(); i++ )  {
+  for( size_t i=0; i < hkls.Count(); i++ )  {
     // call it before new - in case of exception
     UpdateMinMax( *hkls[i] );
 
@@ -257,14 +257,14 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append) 
     TReflection NullRef(0, 0, 0, 0, 0);
     if( refs[0]->GetFlag() != NoFlagSet )
       NullRef.SetFlag(0);
-    const int ref_str_len = NullRef.ToString().Length();
+    const size_t ref_str_len = NullRef.ToString().Length();
     char* ref_bf = new char[ref_str_len+1];
-    for( int i=0; i < refs.Count(); i++ )  {
+    for( size_t i=0; i < refs.Count(); i++ )  {
       if( refs[i]->GetTag() > 0 )
         out.Writenl( refs[i]->ToCBuffer(ref_bf), ref_str_len );
     }
     out.Writenl( NullRef.ToCBuffer(ref_bf), ref_str_len );
-    for( int i=0; i < refs.Count(); i++ )  {
+    for( size_t i=0; i < refs.Count(); i++ )  {
       if( refs[i]->GetTag() < 0 )
         out.Writenl( refs[i]->ToCBuffer(ref_bf), ref_str_len );
     }
@@ -279,14 +279,14 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefList& refs)  {
   TReflection NullRef(0, 0, 0, 0, 0);
   if( refs[0].GetFlag() != NoFlagSet )
     NullRef.SetFlag(0);
-  const int ref_str_len = NullRef.ToString().Length();
+  const size_t ref_str_len = NullRef.ToString().Length();
   char* ref_bf = new char[ref_str_len+1];
-  for( int i=0; i < refs.Count(); i++ )  {
+  for( size_t i=0; i < refs.Count(); i++ )  {
     if( refs[i].GetTag() > 0 )
       out.Writenl( refs[i].ToCBuffer(ref_bf), ref_str_len );
   }
   out.Writenl( NullRef.ToCBuffer(ref_bf), ref_str_len );
-  for( int i=0; i < refs.Count(); i++ )  {
+  for( size_t i=0; i < refs.Count(); i++ )  {
     if( refs[i].GetTag() < 0 )
       out.Writenl( refs[i].ToCBuffer(ref_bf), ref_str_len );
   }

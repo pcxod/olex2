@@ -34,6 +34,6 @@ olxstr TListBox::ItemsToString(const olxstr &sep)  {
 }
 //..............................................................................
 void TListBox::AddItems(const TStrList &items)  {
-  for( int i=0; i < items.Count(); i++ )
+  for( size_t i=0; i < items.Count(); i++ )
     AddObject(items[i]);
 }

@@ -68,11 +68,11 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   params.Add("CELLSD",   &CellSd);
   params.Add("TITLE",   &Title);
   params.Add("SG",   &SG);
-  for( int i=0; i < Strings.Count(); i++ )  {
+  for( size_t i=0; i < Strings.Count(); i++ )  {
     Tmp = olxstr::DeleteSequencesOf<char>( Strings[i], ' ' );
     if( Tmp.IsEmpty() )  continue;
     TmpUC = Tmp.UpperCase();
-    for( int j=0; j < params.Count(); j++ )  {
+    for( size_t j=0; j < params.Count(); j++ )  {
       if( TmpUC.StartsFrom( params[j] ) ) {
         *params.GetObject(j) = Tmp.SubStringFrom( params[j].Length() ).Trim(' ');
         params.Delete(j);
@@ -109,8 +109,8 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   params.Strtok( Size, ' ');
   if( params.Count() == 5 )  {
     if( !params[4].IsNumber() )  {
-      int bi = params[4].IndexOf('(');
-      if( bi > 0 )
+      size_t bi = params[4].IndexOf('(');
+      if( bi != InvalidIndex && bi > 0 )
         params[4] = params[4].SubStringTo(bi);
     }
     if( params[4].IsNumber() )

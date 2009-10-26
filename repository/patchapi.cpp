@@ -40,7 +40,7 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
     TWStrList _cmds;
     TUtf8File::ReadLines(cmd_file, _cmds);
     TStrList cmds(_cmds);
-    for( int i=0; i < cmds.Count(); i++ )  {
+    for( size_t i=0; i < cmds.Count(); i++ )  {
       if( cmds[i].StartsFrom("rm ") )  {
         olxstr fdn = cmds[i].SubStringFrom(3).Trim('\'');
         if( !TEFile::Exists(fdn) )  {
@@ -105,10 +105,10 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
   return res;
 }
 //.........................................................................
-int PatchAPI::GetNumberOfOlex2Running()  {
+size_t PatchAPI::GetNumberOfOlex2Running()  {
   TStrList pid_files;
   TEFile::ListDir(TBasicApp::GetBaseDir(), pid_files, olxstr("*.") << GetOlex2PIDFileExt(), sefAll);
-  for( int i=0; i < pid_files.Count(); i++ )  {
+  for( size_t i=0; i < pid_files.Count(); i++ )  {
     if( TEFile::DelFile( TBasicApp::GetBaseDir() + pid_files[i]) )
       pid_files[i].SetLength(0);
   }

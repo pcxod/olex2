@@ -32,7 +32,7 @@ TSOperation::~TSOperation()  {
 
 int TSOperation::LoadFromExpression(const olxstr &Exp)  {
   int ob=0, cb=0;
-  for( int i=0; i < Exp.Length(); i++ )  {
+  for( size_t i=0; i < Exp.Length(); i++ )  {
     if( Exp[i] == '(' )  ob++;
     if( Exp[i] == ')' )  cb++;
   }
@@ -47,7 +47,7 @@ int TSOperation::LoadFromExpression(const olxstr &Exp)  {
   if( !Exp.IsEmpty() )  {
     Opr = new TSOperation(this, Variables, Functions, IVariables);
     ToCalc = Opr;
-    for( int i=0; i < Exp.Length(); i++ )  {
+    for( size_t i=0; i < Exp.Length(); i++ )  {
       switch( Exp[i] )  {
         case '-':    NewOperation = true;    op = fMinus;      goto new_Op;
         case '+':    NewOperation = true;    op = fPlus;       goto new_Op;
@@ -138,13 +138,13 @@ new_Op:
       if( Opr->Param.IsNumber() )
         Opr->P1 = Opr->Param.ToDouble();
       else  {
-        int index = Variables->IndexOf(Opr->Param.UpperCase());
-        if( index == -1 )  {
+        size_t index = Variables->IndexOf(Opr->Param.UpperCase());
+        if( index == InvalidIndex )  {
           Variables->Add(Opr->Param, NULL);
-          Opr->VariableIndex = Variables->Count()-1;
+          Opr->VariableIndex = (int)(Variables->Count()-1);
         }
         else
-          Opr->VariableIndex = index;
+          Opr->VariableIndex = (int)index;
       }
     }
     Opr = Opr->Right;

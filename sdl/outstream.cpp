@@ -11,7 +11,7 @@ size_t TOutStream::Write(const olxstr& str)  {
     SkipPost = false;
     return 0;
   }
-  for( int i=0; i < str.Length(); i++ )
+  for( size_t i=0; i < str.Length(); i++ )
     outstream_putc( str[i] );
   return str.Length();
 }

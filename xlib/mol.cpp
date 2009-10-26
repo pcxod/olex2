@@ -75,9 +75,9 @@ void TMol::SaveToStrings(TStrList& Strings)  {
   Tmp << Tmp1;
   Tmp << "  0  0  0  0  0  0  0  0  0 V2000";
   Strings.Add(Tmp);
-  for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )
+  for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )
     Strings.Add( MOLAtom(GetAsymmUnit().GetAtom(i)));
-  for( int i=0; i < BondCount(); i++ )
+  for( size_t i=0; i < BondCount(); i++ )
     Strings.Add( MOLBond(Bond(i)) );
   Strings.Add("M END");
 }
@@ -95,7 +95,7 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
   GetAsymmUnit().InitMatrices();
   bool AtomsCycle = false, BondsCycle = false;
   int AC=0, BC=0;
-  for( int i=0; i < Strings.Count(); i++ )  {
+  for( size_t i=0; i < Strings.Count(); i++ )  {
     olxstr line = Strings[i].UpperCase();
     if( line.IsEmpty() )  continue;
     if( AtomsCycle && (line.Length() > 33) )  {
@@ -104,7 +104,7 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
       if( AtomsInfo.IsAtom(atom_name) )  {
         TCAtom& CA = GetAsymmUnit().NewAtom();
         CA.ccrd() = crd;
-        CA.SetLabel( (atom_name + GetAsymmUnit().AtomCount()+1) );
+        CA.SetLabel( (atom_name << GetAsymmUnit().AtomCount()+1) );
       }
       AC--;
       if( AC <= 0 )  {
@@ -114,8 +114,8 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
       continue;
     }
     if( BondsCycle && line.Length() >= 9)  {
-      const int ai1  =  line.SubString(0, 3).ToInt()-1;
-      const int ai2  =  line.SubString(3, 3).ToInt()-1;
+      const size_t ai1  =  line.SubString(0, 3).ToSizeT()-1;
+      const size_t ai2  =  line.SubString(3, 3).ToSizeT()-1;
       if( (ai1 >= GetAsymmUnit().AtomCount() || ai2 >= GetAsymmUnit().AtomCount()) ||
           ai1 < 0 || ai2 < 0 )  {
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("TMol:: wrong atom indexes: ") << ai1 << ' ' << ai2);
@@ -131,7 +131,7 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
       continue;
     }
     
-    if( (line.FirstIndexOf("V2000") != -1) || (line.FirstIndexOf("V3000") != -1) ) {  // count line
+    if( (line.FirstIndexOf("V2000") != InvalidIndex) || (line.FirstIndexOf("V3000") != InvalidIndex) ) {  // count line
       AC = line.SubString(0, 3).ToInt();
       BC = line.SubString(3, 3).ToInt();
       AtomsCycle = true;

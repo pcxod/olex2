@@ -156,7 +156,7 @@ no Olex2 folders are opened in browsers";
   dlgSplash->SetOverallProgress(-1);
   Launch();
   dlgSplash->SetFileName("Done. Launching Olex2");
-  const olxch win_name[] = olx_T("Olex2 splash screen");
+  const olxch win_name[] = olxT("Olex2 splash screen");
   HWND olx2_wnd = FindWindow(NULL, win_name);
   if( olx2_wnd != NULL )  {  // cannot do much here...
     int step = 0;

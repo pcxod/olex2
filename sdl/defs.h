@@ -71,14 +71,21 @@
   typedef unsigned __int16 uint16_t;
   typedef unsigned __int32 uint32_t;
   typedef unsigned __int64 uint64_t;
+#  ifdef _WIN64
+     typedef __int64 index_t;
+#  else
+     typedef __int32 index_t;
+#  endif
+#else // non Windows
+  typedef int32_t index_t;
 #endif
 
 #ifdef _UNICODE
   typedef wchar_t olxch;
-#define olx_T(a) (L##a)
+#define olxT(a) (L##a)
 #else
   typedef char olxch;
-  #define olx_T(a) (a)
+  #define olxT(a) (a)
 #endif
 
 #endif

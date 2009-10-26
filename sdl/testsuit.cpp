@@ -11,11 +11,11 @@ void IsNumberTest(OlxTests& t)  {
   olxstr valid_str[] = { "0", " 0 ", " 0", "0 ", " 0", " 0", " .0 ", " 0.0 ", " 0.e0 ", 
     "  0.e-1  ", "  0xffa  ", "  0xffa", " 0", " -0. ", " +0. ", "+0e-5", "-.e-5"  };
   olxstr invalid_str[] = { EmptyString, "  0xffx", " 0a", " -.", "0e-a" };
-  for( int i=0; i < sizeof(valid_str)/sizeof(valid_str[0]); i++ )  {
+  for( size_t i=0; i < sizeof(valid_str)/sizeof(valid_str[0]); i++ )  {
     if( !valid_str[i].IsNumber() )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("valid number is not recognised: '") << valid_str[i] << '\'');
   }
-  for( int i=0; i < sizeof(invalid_str)/sizeof(invalid_str[0]); i++ )  {
+  for( size_t i=0; i < sizeof(invalid_str)/sizeof(invalid_str[0]); i++ )  {
     if( invalid_str[i].IsNumber() )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid number is not recognised: '") << invalid_str[i] << '\'');
   }
@@ -167,7 +167,7 @@ OlxTests::OlxTests() {
 //...................................................................................................
 void OlxTests::run()  {
   int failed_cnt = 0;
-  for( int i=0; i < tests.Count(); i++ )  {
+  for( size_t i=0; i < tests.Count(); i++ )  {
     try  { 
       description = EmptyString;
       tests[i].run(*this);  

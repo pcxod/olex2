@@ -18,7 +18,7 @@ AGlScene::AGlScene()  {
 }
 //..............................................................................
 AGlScene::~AGlScene()  {
-  for( int i=0; i < Fonts.Count(); i++ )  {
+  for( size_t i=0; i < Fonts.Count(); i++ )  {
     delete Fonts[i];
   }
 }
@@ -45,7 +45,7 @@ int AGlScene::EndSelect()  {
 void AGlScene::Destroy()    {  return; }
 //..............................................................................
 TGlFont* AGlScene::FindFont(const olxstr& name)  {
-  for( int i=0; i < Fonts.Count(); i++ )
+  for( size_t i=0; i < Fonts.Count(); i++ )
     if( Fonts[i]->GetName().Equalsi(name) )
       return Fonts[i];
   return NULL;

@@ -15,11 +15,11 @@
 UseGlNamespace();
 //..............................................................................
 void TGPCollection::ClearPrimitives()  {
-  for( int i=0; i < Parent.PrimitiveCount(); i++ )
+  for( size_t i=0; i < Parent.PrimitiveCount(); i++ )
     Parent.GetPrimitive(i).SetTag(-1);
-  for( int i=0; i < PrimitiveCount(); i++ )
+  for( size_t i=0; i < PrimitiveCount(); i++ )
     GetPrimitive(i).SetTag(0);
-  Parent.RemovePrimitive(0);
+  Parent.RemovePrimitiveByTag(0);
   Primitives.Clear();
 }
 //..............................................................................
@@ -32,14 +32,14 @@ TGlPrimitive& TGPCollection::NewPrimitive(const olxstr& Name, short type)  {
 };
 //..............................................................................
 TGlPrimitive* TGPCollection::FindPrimitiveByName(const olxstr &Name) const {
-  for( int i = 0; i < Primitives.Count(); i++ )
+  for( size_t i = 0; i < Primitives.Count(); i++ )
     if( Primitives[i]->GetName() == Name )  
       return Primitives[i];
   return NULL;
 }
 //..............................................................................
 void TGPCollection::Draw()  {
-  for( int i = 0; i < Primitives.Count(); i++ )
+  for( size_t i = 0; i < Primitives.Count(); i++ )
     Primitives[i]->Draw();
 }
 //..............................................................................
@@ -54,16 +54,16 @@ void TGPCollection::ListParams(TStrList &List, TGlPrimitive *Primitive)  {
     GetObject(0).ListParams(List, Primitive);
 }
 bool TGPCollection::ContainsPrimitive(TGlPrimitive& GlP)  {
-  return Primitives.IndexOf(&GlP) != -1;
+  return Primitives.IndexOf(&GlP) != InvalidIndex;
 }
 //..............................................................................
 void TGPCollection::SetStyle(TGraphicsStyle *S)  {
   Style = S;
   if( S == NULL )  return;
   // update materials of primitives & filling the style
-  for( int i=0; i < PrimitiveCount(); i++ )  {
+  for( size_t i=0; i < PrimitiveCount(); i++ )  {
     TGlPrimitive& GlP = GetPrimitive(i);
-    if( S->IndexOfMaterial(GlP.GetName()) == -1 )
+    if( S->IndexOfMaterial(GlP.GetName()) == InvalidIndex )
       S->SetMaterial(GlP.GetName(), GlP.GetProperties());
   }
 }

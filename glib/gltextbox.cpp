@@ -35,7 +35,7 @@ TGlTextBox::TGlTextBox(TGlRenderer& Render, const olxstr& collectionName):
   MaxStringLength = 0;
   SetGroupable(false);
   FontIndex = 0;  // previous -1 was very dangerous...
-  FScrollDirectionUp = true;
+  ScrollDirectionUp = true;
   Z = 0;
 }
 //..............................................................................
@@ -63,7 +63,7 @@ void TGlTextBox::Create(const olxstr& cName, const ACreationParams* cpar)  {
   glpPlane.Vertices.SetCount(4);
 
   TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
-  glpText.SetProperties( GS.GetMaterial("Text", Font()->GetMaterial()) );
+  glpText.SetProperties( GS.GetMaterial("Text", GetFont().GetMaterial()) );
   glpText.Params[0] = -1;  //bitmap; TTF by default
 }
 //..............................................................................
@@ -72,28 +72,24 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
   Trans = Parent.Basis().Center();
   Trans *= Parent.Basis().Matrix();
   Parent.GlTranslate(-Trans[0], -Trans[1], -Trans[2] );*/
-
   glNormal3d(0, 0, 1);
-
-  TGlFont *Fnt = Font();
-  if( Fnt == NULL )  return true;
-
+  TGlFont& Fnt = GetFont();
   if( P.GetType() == sgloText )  {
-    P.SetFont(Fnt);
-    int th = Fnt->TextHeight(EmptyString);
+    P.SetFont(&Fnt);
+    uint16_t th = Fnt.TextHeight(EmptyString);
     double Scale = Parent.GetScale();
     double GlLeft = ((double)Left - (double)Parent.GetWidth()/2 + Basis.GetCenter()[0]) + 0.1;
     double GlTop = ((double)Parent.GetHeight()/2 - (Top-Basis.GetCenter()[1])) + 0.1;
     double LineInc = (th*LineSpacing)*Parent.GetViewZoom();
     vec3d T;
-    for(int i=0; i < FBuffer.Count() ; i++ )  {
+    for( size_t i=0; i < FBuffer.Count() ; i++ )  {
       T[0] = GlLeft;
       T[1] = GlTop - (i+1)*LineInc;
       T[2] = Z;  
       TGlMaterial* GlM = FBuffer.GetObject(i);
       if( GlM != NULL ) 
         GlM->Init();
-      Parent.DrawTextSafe(T, FBuffer[i], *Fnt ); 
+      Parent.DrawTextSafe(T, FBuffer[i], Fnt); 
     }
     return true;
   }
@@ -112,7 +108,7 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
 }
 //..............................................................................
 void TGlTextBox::Clear()  {
-  for( int i=0; i < FBuffer.Count(); i++ )
+  for( size_t i=0; i < FBuffer.Count(); i++ )
     if( FBuffer.GetObject(i) != NULL )
       delete FBuffer.GetObject(i);
 
@@ -121,15 +117,15 @@ void TGlTextBox::Clear()  {
 }
 //..............................................................................
 void TGlTextBox::PostText(const olxstr& S, TGlMaterial* M)  {
-  if( S.IndexOf('\n') != -1 )  {
+  if( S.IndexOf('\n') != InvalidIndex )  {
     TStrList toks(S, '\n');
     PostText(toks, M);
     return;
   }
   olxstr Tmp = S;
   Tmp.SetCapacity( S.CharCount('\t')*8 );
-  for(int i=0; i < Tmp.Length(); i++ )  {
-    if( Tmp[i] == '\t' )  {
+  for( size_t i=0; i < Tmp.Length(); i++ )  {
+    if( Tmp.CharAt(i) == '\t' )  {
       Tmp[i] = ' ';
       int count = 4-i%4-1;
       if( count > 0 ) Tmp.Insert(' ', i, count);
@@ -149,17 +145,17 @@ void TGlTextBox::PostText(const olxstr& S, TGlMaterial* M)  {
   else  {
     FBuffer.Add(S);
   }
-  int width = Font()->TextWidth(Tmp);
-  if( width > Width )  Width = width + 3;
+  size_t width = GetFont().TextWidth(Tmp);
+  if( width > Width )  Width = (uint16_t)(width + 3);
   if( FBuffer.Count() > 1 )
-    Height = (int)(Font()->TextHeight()*(LineSpacing)*FBuffer.Count());
+    Height = (int)(GetFont().TextHeight()*(LineSpacing)*FBuffer.Count());
   else
-    Height = Font()->TextHeight(FBuffer[0]);
+    Height = GetFont().TextHeight(FBuffer[0]);
 }
 //..............................................................................
 void TGlTextBox::PostText(const TStrList &SL, TGlMaterial *M)  {
-  int position = FBuffer.Count();
-  for( int i=0; i < SL.Count(); i++ )
+  size_t position = FBuffer.Count();
+  for( size_t i=0; i < SL.Count(); i++ )
     PostText(SL[i], NULL);
   if( M != NULL )  {
     TGlMaterial *GlM = new TGlMaterial;
@@ -188,11 +184,11 @@ bool TGlTextBox::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
   return TGlMouseListener::OnMouseUp(Sender, Data);
 }
 //..............................................................................
-TGlFont *TGlTextBox::Font()  const   {
+TGlFont& TGlTextBox::GetFont() const {
   TGlFont* fnt = Parent.GetScene().GetFont(FontIndex);
   if( fnt == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid font");
-  return fnt;
+  return *fnt;
 }
 //..............................................................................
 

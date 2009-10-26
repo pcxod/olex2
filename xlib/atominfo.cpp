@@ -49,7 +49,7 @@ olxstr TBasicAtomInfo::StrRepr() const  {
   Tmp1 = GetRad1();      Tmp << Tmp1.Format(6, true, ' ');
   Tmp1 = GetRad2();      Tmp << Tmp1.Format(6, true, ' ');
   if( Isotopes != NULL )  {
-    for( int i=0; i < Isotopes->Count(); i++ )  {
+    for( size_t i=0; i < Isotopes->Count(); i++ )  {
       Tmp1 = Isotopes->Item(i).GetMr();
       Tmp << Tmp1.Format(14, true, ' ');
       Tmp1 = Isotopes->Item(i).GetW()*100;
@@ -71,7 +71,7 @@ TAtomsInfo::TAtomsInfo(const olxstr &filename)  {
     List.LoadFromFile(filename);
     if( List.Count() < 100 )
       throw TInvalidArgumentException(__OlxSourceInfo, "unexpected end of the stream");
-    for( int i=1; i< List.Count(); i++ )  {
+    for( size_t i=1; i< List.Count(); i++ )  {
       Toks.Clear();
       Toks.Strtok(List[i], ' ');
       if( Toks.Count() >= 7 )  {
@@ -87,7 +87,7 @@ TAtomsInfo::TAtomsInfo(const olxstr &filename)  {
         I.SetRad2( Toks[6].ToDouble() );
         I.SetIndex( (short)(i-1) );
         if( Toks.Count() > 7 )  {
-          for( int j=7; j < Toks.Count(); j+=2 )  {
+          for( size_t j=7; j < Toks.Count(); j+=2 )  {
             TIsotope& Is = I.NewIsotope();
             Is.SetMr( Toks[j].ToDouble() );
             Is.SetW( Toks[j+1].ToDouble()/100 );
@@ -1932,7 +1932,7 @@ TAtomsInfo::~TAtomsInfo()  {
 void TAtomsInfo::SaveToFile(const olxstr &filename) const  {
   TCStrList L;
   L.Add("XLIB: (c) Oleg V. Dolomanov 2004");
-  for( int i=0; i < Count(); i++ )
+  for( size_t i=0; i < Count(); i++ )
     L.Add( GetAtomInfo(i).StrRepr() );
   L.SaveToFile( filename );
 }
@@ -1941,7 +1941,7 @@ TBasicAtomInfo* TAtomsInfo::FindAtomInfoBySymbol(const olxstr &Symbol) const  {
 //  static bool running = false;
 //  while ( running )  TBasicApp::GetInstance().Sleep(1);
 //  running = true;
-  for( int i=0; i < Data.Count(); i++ )
+  for( size_t i=0; i < Data.Count(); i++ )
     if( Data[i].GetSymbol().Equalsi(Symbol) )  {
 //      running = false;
       return &Data[i];
@@ -1953,30 +1953,30 @@ TBasicAtomInfo* TAtomsInfo::FindAtomInfoBySymbol(const olxstr &Symbol) const  {
 TBasicAtomInfo* TAtomsInfo::FindAtomInfoEx(const olxstr &Str) const {
   if( !Str.Length() )  return NULL;
 
-  int l = Str.Length(), dl = abs('A'-'a');
-  TBasicAtomInfo *I;
+  size_t l = Str.Length();
+  int dl = abs('A'-'a');
   if( l >= 2 &&
     (( (Str[0]>='a' && Str[0]<='z')    ||
        (Str[0]>='A' && Str[0]<='Z') )  &&
     (  (Str[1]>='a' && Str[1]<='z')    ||
        (Str[1]>='A' && Str[1]<='Z') ))   )  {  // searching between two charachter elements
-    for( short j=0; j < Data.Count(); j++ )  {
-      I = &GetAtomInfo(j);
-      if( I->GetSymbol().Length() == 2 )  {
-        short da = abs( I->GetSymbol()[0]- Str[0] ),
-              db = abs( I->GetSymbol()[1]- Str[1] );
+    for( size_t j=0; j < Data.Count(); j++ )  {
+      TBasicAtomInfo &I = GetAtomInfo(j);
+      if( I.GetSymbol().Length() == 2 )  {
+        short da = abs( I.GetSymbol()[0]- Str[0] ),
+              db = abs( I.GetSymbol()[1]- Str[1] );
         if( (!da && !db) || (!da && db==dl) || (da==dl && !db) || (da==dl && db==dl) )
-          return I;
+          return &I;
       }
     }
   }
   if( (Str[0]>='a' && Str[0]<='z') || (Str[0]>='A' && Str[0]<='Z') )  {
-    for( short j=0; j < Data.Count(); j++ )  {
-      I = &GetAtomInfo(j);
-      if( I->GetSymbol().Length() == 1 )  {
-        short da = abs( I->GetSymbol()[0]- Str[0] );
+    for( size_t j=0; j < Data.Count(); j++ )  {
+      TBasicAtomInfo &I = GetAtomInfo(j);
+      if( I.GetSymbol().Length() == 1 )  {
+        short da = abs( I.GetSymbol()[0]- Str[0] );
         if( (!da) || (da == dl) )
-          return I;
+          return &I;
       }
     }
   }
@@ -1985,7 +1985,7 @@ TBasicAtomInfo* TAtomsInfo::FindAtomInfoEx(const olxstr &Str) const {
 //..............................................................................
 void TAtomsInfo::ParseSimpleElementStr(const olxstr& str, TStrList& toks)  const {
   olxstr elm;
-  for( int i=0; i < str.Length(); i++ )  {
+  for( size_t i=0; i < str.Length(); i++ )  {
     if( str[i] >= 'A' && str[i] <= 'Z' )  {
       if( !elm.IsEmpty() )  {
         if( (i+1) < str.Length() )  {
@@ -2021,7 +2021,7 @@ void TAtomsInfo::ParseElementString(const olxstr& su, TTypeList<AnAssociation2<o
   olxstr elm, cnt;
   bool nowCnt = false;
   TStrList toks;
-  for( int i=0; i < su.Length(); i++ )  {
+  for( size_t i=0; i < su.Length(); i++ )  {
     if( su[i] == ' ' )  continue;
     if( nowCnt )  {
       if( (su[i] >='0' && su[i] <= '9') || su[i] == '.' )  {
@@ -2031,7 +2031,7 @@ void TAtomsInfo::ParseElementString(const olxstr& su, TTypeList<AnAssociation2<o
         if( !elm.IsEmpty() && !cnt.IsEmpty() )  {
           toks.Clear();
           ParseSimpleElementStr( elm, toks );
-          for( int i=0; i < toks.Count()-1; i++ )
+          for( size_t i=0; i < toks.Count()-1; i++ )
             ExpandShortcut(toks[i], res);
           ExpandShortcut(toks[toks.Count() -1], res, cnt.ToInt());
           cnt = EmptyString;
@@ -2052,7 +2052,7 @@ void TAtomsInfo::ParseElementString(const olxstr& su, TTypeList<AnAssociation2<o
   if( !elm.IsEmpty() )  {
     toks.Clear();
     ParseSimpleElementStr( elm, toks );
-    for( int i=0; i < toks.Count()-1; i++ )
+    for( size_t i=0; i < toks.Count()-1; i++ )
       ExpandShortcut(toks[i], res);
     ExpandShortcut(toks[toks.Count() -1], res, cnt.IsEmpty() ? 1 : cnt.ToInt());
   }
@@ -2062,7 +2062,7 @@ olxstr& TAtomsInfo::NormaliseAtomString(olxstr& str) const {
   TTypeList<AnAssociation2<olxstr, int> > res;
   ParseElementString(str, res);
   str = EmptyString;
-  for( int i=0; i < res.Count(); i++ )  {
+  for( size_t i=0; i < res.Count(); i++ )  {
     str << res[i].GetA() << res[i].GetB();
     if( (i+1) < res.Count() )
       str << ' ';

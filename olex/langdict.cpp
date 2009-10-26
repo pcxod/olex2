@@ -23,15 +23,15 @@ TLangDict::TLangDict()  {
 TLangDict::~TLangDict()  {  Clear();  }
 //..............................................................................
 void TLangDict::Clear()  {
-  for( int i=0; i < Records.Count(); i++ )
+  for( size_t i=0; i < Records.Count(); i++ )
     delete Records.GetObject(i);
   Records.Clear();
 }
 //..............................................................................
 const olxstr& TLangDict::Translate(const olxstr& Phrase) const  {
   if( CurrentLanguageIndex == 0 )  return Phrase;
-  int ind = Records.IndexOf( Phrase );
-  if( ind == -1 )  return Phrase;
+  size_t ind = Records.IndexOf(Phrase);
+  if( ind == InvalidIndex )  return Phrase;
 //  olxstr debug_str = *Records.GetObject(ind);
 //  int l = debug_str.Length();
   return *Records.GetObject(ind);
@@ -83,7 +83,7 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang)  
 
   Records.SetCapacity( sl.Count() );
 
-  for( int i=2; i < sl.Count(); i++ )  {
+  for( size_t i=2; i < sl.Count(); i++ )  {
     if( sl[i].IsEmpty() )  continue;
     toks.Clear();
     toks.Strtok( sl[i], '\t');

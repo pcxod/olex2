@@ -87,7 +87,7 @@ public:
     return (Instance!=NULL ? Instance : (Instance = new TEGC));
   }
 
-  virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL) {
+  virtual bool Execute(const IEObject*, const IEObject*) {
     ClearASAP();
     return true;
   }

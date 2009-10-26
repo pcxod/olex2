@@ -25,7 +25,7 @@ TIString TGlOption::ToString() const  {
 }
 //..............................................................................
 bool TGlOption::FromString(const olxstr &S)  {
-  if( S.FirstIndexOf(',') != -1 )  {
+  if( S.FirstIndexOf(',') != InvalidIndex )  {
     TStrList SL(S, ',');
     if( SL.Count() != 4 )  return false;
     data[0] = (float)SL[0].ToDouble();

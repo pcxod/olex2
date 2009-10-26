@@ -71,11 +71,11 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
   params.Add("SFAC",    &Sfac);
   params.Add("UNIT",    &Unit);
   params.Add("SPGR",  &Sg);
-  for( int i=0; i < Strings.Count(); i++ )  {
+  for( size_t i=0; i < Strings.Count(); i++ )  {
     Tmp = olxstr::DeleteSequencesOf<char>( Strings[i], ' ' );
     if( Tmp.IsEmpty() )  continue;
     TmpUC = Tmp.UpperCase();
-    for( int j=0; j < params.Count(); j++ )  {
+    for( size_t j=0; j < params.Count(); j++ )  {
       if( TmpUC.StartsFrom( params[j] ) ) {
         *params.GetObject(j) = Tmp.SubStringFrom( params[j].Length() );
         params.Delete(j);

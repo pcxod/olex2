@@ -201,13 +201,13 @@ namespace exparse  {
       }
     }
     ~EvaluableFactory()  {
-      for( int i=0; i < types.Count(); i++ )
+      for( size_t i=0; i < types.Count(); i++ )
         delete types.GetValue(i);
     }
     template <class T> IEvaluable* create(const T& val) const {
       const std::type_info& ti = typeid(T);
-      int i = types.IndexOf(&ti);
-      if( i == -1 )
+      size_t i = types.IndexOf(&ti);
+      if( i == InvalidIndex )
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not locate object factory for ") << ti.name());
       return types.GetValue(i)->create_new(&val);
     };

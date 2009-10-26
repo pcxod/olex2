@@ -32,16 +32,16 @@ public:
     static int CompareFolders(const Folder& i1, const Folder& i2)  {
       return i1.Name.Comparei(i2.Name);
     }
-    template <class T> static int FindSortedIndexOf(const T&list, const olxstr& entity) {
-      if( list.Count() == 0 )  return -1;
-      if( list.Count() == 1 )  return (list[0].GetName().Comparei(entity) == 0) ? 0 : -1;
-      int from = 0, to = list.Count()-1;
+    template <class T> static size_t FindSortedIndexOf(const T&list, const olxstr& entity) {
+      if( list.Count() == 0 )  return InvalidIndex;
+      if( list.Count() == 1 )  return (list[0].GetName().Comparei(entity) == 0) ? 0 : InvalidIndex;
+      size_t from = 0, to = list.Count()-1;
       if( list[from].GetName().Comparei(entity) == 0  )  return from;
-      if( list[from].GetName().Comparei(entity) > 0 )  return -1;
+      if( list[from].GetName().Comparei(entity) > 0 )  return InvalidIndex;
       if( list[to].GetName().Comparei(entity) == 0 )  return to;
-      if( list[to].GetName().Comparei(entity) < 0  )  return -1;
+      if( list[to].GetName().Comparei(entity) < 0  )  return InvalidIndex;
       while( true ) {
-        int index = (to+from)/2;
+        size_t index = (to+from)/2;
         if( index == from || index == to)
           return -1;
         if( list[index].GetName().Comparei(entity) < 0 )  from = index;
@@ -50,7 +50,7 @@ public:
           else
             if( list[index].GetName().Comparei(entity) == 0 )  return index;
       }
-      return -1;
+      return InvalidIndex;
     }
 #else
     static int CompareFiles(const TFileListItem& i1, const TFileListItem& i2)  {
@@ -59,16 +59,16 @@ public:
     static int CompareFolders(const Folder& i1, const Folder& i2)  {
       return i1.Name.Compare(i2.Name);
     }
-    template <class T> static int FindSortedIndexOf(const T&list, const olxstr& entity) {
-      if( list.Count() == 0 )  return -1;
-      if( list.Count() == 1 )  return (list[0].GetName() == entity) ? 0 : -1;
-      int from = 0, to = list.Count()-1;
+    template <class T> static size_t FindSortedIndexOf(const T&list, const olxstr& entity) {
+      if( list.Count() == 0 )  return InvalidIndex;
+      if( list.Count() == 1 )  return (list[0].GetName() == entity) ? 0 : InvalidIndex;
+      size_t from = 0, to = list.Count()-1;
       if( list[from].GetName() == entity )  return from;
-      if( list[from].GetName().Compare(entity) > 0 )  return -1;
+      if( list[from].GetName().Compare(entity) > 0 )  return InvalidIndex;
       if( list[to].GetName() == entity )  return to;
-      if( list[to].GetName().Compare(entity) < 0  )  return -1;
+      if( list[to].GetName().Compare(entity) < 0  )  return InvalidIndex;
       while( true ) {
-        int index = (to+from)/2;
+        size_t index = (to+from)/2;
         if( index == from || index == to)
           return -1;
         if( list[index].GetName().Compare(entity) < 0 )  from = index;
@@ -77,7 +77,7 @@ public:
           else
             if( list[index].GetName() == entity )  return index;
       }
-      return -1;
+      return InvalidIndex;
     }
 #endif
     void _ExpandNewFolder(DiffFolder& df, bool is_src) const;
@@ -87,15 +87,15 @@ public:
     {
       FullPath = TEFile::OSPath(fullPath);
       TEFile::AddTrailingBackslashI(FullPath);
-      int ind = FullPath.LastIndexOf(TEFile::GetPathDelimeter(), FullPath.Length()-1);
-      if( ind != -1 )
+      size_t ind = FullPath.LastIndexOf(TEFile::GetPathDelimeter(), FullPath.Length()-1);
+      if( ind != InvalidIndex )
         Name = FullPath.SubStringFrom(ind+1, 1);
     }
     const olxstr& GetName() const {  return Name;  }
     const olxstr& GetFullPath() const {  return FullPath;  }
-    int FileCount() const {  return Files.Count();  }
-    const TFileListItem& GetFile(int i) const {  return Files[i];  }
-    void NullFileEntry(int i) const {  Files.NullItem(i);  }
+    size_t FileCount() const {  return Files.Count();  }
+    const TFileListItem& GetFile(size_t i) const {  return Files[i];  }
+    void NullFileEntry(size_t i) const {  Files.NullItem(i);  }
     bool IsEmpty() const {  return Files.IsEmpty() && Folders.IsEmpty();  }
     // calculates total size of the tree
     uint64_t CalcSize() const;
@@ -120,7 +120,7 @@ public:
     // syncronises two folders - only updates files, does not delete anything (yet)
     void Synchronise(Folder& f, TOnProgress& onSync);
     // exports the folder index to a file
-    void ExportIndex(const olxstr& fileName, TStrList* list = NULL, int level=0) const;
+    void ExportIndex(const olxstr& fileName, TStrList* list = NULL, size_t level=0) const;
     // the function fills the list with full file names (recursively)
     void ListFilesEx(TStrList& out, const TTypeList<TEFile::TFileNameMask>* _mask=NULL) const;
     void ListFiles(TStrList& out, const olxstr& _mask) const;
@@ -162,7 +162,7 @@ public:
   //............................................................................
   void Merge(const DiffFolder& df, const olxstr& dest=EmptyString ) const {
     TOnProgress onSync;
-    onSync.SetMax( (double)CalcMergeSize(df) );
+    onSync.SetMax( CalcMergeSize(df) );
     OnSynchronise->Enter(NULL, &onSync);
     Root.Merge(df, onSync, dest);
     onSync.SetPos( onSync.GetMax() );
@@ -176,7 +176,7 @@ public:
     bool do_throw=true)  
   {
     TOnProgress OnSync;
-    OnSync.SetMax( (double)Root.CalcSize() );
+    OnSync.SetMax( Root.CalcSize() );
     OnSynchronise->Enter(NULL, &OnSync);
     bool res = Root.CopyTo(_dest, OnSync, do_throw, AfterCopy);
     OnSync.SetMax( OnSync.GetMax() );

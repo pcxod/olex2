@@ -15,23 +15,23 @@ class TObjectGroup;
 class AGOProperties;
 
 class AGOProperties  {
-  int ObjectGroupId;
-  void SetObjectGroupId(int val) {  ObjectGroupId = val;  }
+  size_t ObjectGroupId;
+  void SetObjectGroupId(size_t val) {  ObjectGroupId = val;  }
 protected:
   TPtrList<AGroupObject> Objects;
-  int GetObjectGroupId() const {  return ObjectGroupId;  }
+  size_t GetObjectGroupId() const {  return ObjectGroupId;  }
 public:
-  AGOProperties() : ObjectGroupId(-1) {  }// Objects.SetIncrement(512);  }
+  AGOProperties() : ObjectGroupId(InvalidIndex) {  }// Objects.SetIncrement(512);  }
   virtual ~AGOProperties() {}
   // adds an object (reference or a pointer) to the group and returns it
   template <class AGO> 
   inline AGroupObject& AddObject(AGO& O)  {  return *Objects.Add(O); }
   inline AGroupObject& GetObject(size_t index) const {  return *Objects[index]; }
-  inline int ObjectCount() const { return Objects.Count(); }
+  inline size_t ObjectCount() const { return Objects.Count(); }
   // removes an object reference or a pointer
   template <class AGO> void RemoveObject(const AGO& GO)  {
-    int index = Objects.IndexOf(GO);
-    if( index != -1 )  
+    size_t index = Objects.IndexOf(GO);
+    if( index != InvalidIndex )  
       Objects.Delete(index);
   }
   
@@ -74,20 +74,19 @@ public:
   virtual ~TObjectGroup() { }
   void Clear();
   template <class AGO>
-  AGroupObject& AddObject(AGO const& O)           {  return *Objects.Add(O);  }
+  AGroupObject& AddObject(AGO const& O)  {  return *Objects.Add(O);  }
   inline AGroupObject& GetObject(size_t index) const {  return *Objects[index]; }
-  inline int ObjectCount() const            {  return Objects.Count(); }
-  template <class AGO> 
-  int IndexOfObject(const AGO& G)           {  return Objects.IndexOf(G); }
+  inline size_t ObjectCount() const {  return Objects.Count(); }
+  template <class AGO>  size_t IndexOfObject(const AGO& G)  {  return Objects.IndexOf(G); }
   // used to remove objects form the collection; if an object->Tag ==Tag, it is removed
   void RemoveObjectsByTag(int Tag);
   //void ReplaceObjects(TEList *CurObj, TEList *NewObj );
 
-  AGOProperties& GetProperties(int index) const {  return *Props[index]; }
+  AGOProperties& GetProperties(size_t index) const {  return *Props[index]; }
 
-  inline int PropertiesCount()              const {  return Props.Count(); }
+  inline size_t PropertiesCount() const {  return Props.Count(); }
   template <class AGP>
-  int IndexOfProperties(const AGP& P)     const {  return Props.IndexOf(P); }
+  size_t IndexOfProperties(const AGP& P) const {  return Props.IndexOf(P); }
   // creates new properties if required, alwasy returns a valid pointer
   AGOProperties* NewProps(AGroupObject& Sender, // the sender
     AGOProperties *OldProps, // senders old properties
@@ -102,7 +101,7 @@ public:
   virtual ~ObjectGroup() { }
   template <class AGO> OC& AddObject(AGO const& O)  {  return *(OC*)Objects.Add(O);  }
   inline OC& GetObject(size_t index) const {  return *(OC*)Objects[index]; }
-  inline PC& GetProperties(int index) const {  return *(PC*)Props[index]; }
+  inline PC& GetProperties(size_t index) const {  return *(PC*)Props[index]; }
 };
 EndEsdlNamespace()
 #endif

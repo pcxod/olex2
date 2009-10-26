@@ -18,16 +18,16 @@ namespace exparse  {
       '=', "+=", "-=", "/=", "*=", "&=", "|=", "^=", "<<=" // assignment
     };
     //leaves ind on the last quote or does not change it if there is no string
-    bool skip_string(const olxstr& exp, int& ind);
+    bool skip_string(const olxstr& exp, size_t& ind);
     // leave the ind on the closing bracket char or does not change it if there is none
-    bool skip_brackets(const olxstr& exp, int& ind);
+    bool skip_brackets(const olxstr& exp, size_t& ind);
     // does check if the closing quote is escaped
-    bool parse_string(const olxstr& exp, olxstr& dest, int& ind);
+    bool parse_string(const olxstr& exp, olxstr& dest, size_t& ind);
     // does not check for escaped quotes
-    bool parse_escaped_string(const olxstr& exp, olxstr& dest, int& ind);
-    bool parse_brackets(const olxstr& exp, olxstr& dest, int& ind);
+    bool parse_escaped_string(const olxstr& exp, olxstr& dest, size_t& ind);
+    bool parse_brackets(const olxstr& exp, olxstr& dest, size_t& ind);
     bool is_operator(const olxstr& exp);
-    bool parse_control_chars(const olxstr& exp, olxstr& dest, int& ind);
+    bool parse_control_chars(const olxstr& exp, olxstr& dest, size_t& ind);
     bool is_expandable(const olxstr& exp);
     // checks if the char is a bracket char
     static inline bool is_bracket(olxch ch)  {
@@ -38,15 +38,15 @@ namespace exparse  {
       return ch == '"' || ch == '\'';
     }
     // checks if the char at ch_ind is ascaped (\')
-    static bool is_escaped(const olxstr& exp, int ch_ind)  {
+    static bool is_escaped(const olxstr& exp, size_t ch_ind)  {
       int sc = 0;
       while( --ch_ind >=0 && exp.CharAt(ch_ind) == '\\' ) sc++;
       return (sc%2) != 0;
     }
     // splits expressions like ("",ddd(),"\""), leaves tokens quoted if quoted originally
     template <class StrLst> static void split_args(const olxstr& exp, StrLst& res)  {
-      int start = 0;
-      for( int i=0; i < exp.Length(); i++ )  {
+      size_t start = 0;
+      for( size_t i=0; i < exp.Length(); i++ )  {
         const olxch ch = exp.CharAt(i);
         if( ch == '(' )  {
           int bc = 1;
@@ -90,16 +90,16 @@ namespace exparse  {
       tag_parse_info() : start_char_ind(-1), end_string_ind(-1), end_char_ind(-1) {}
     };
     template <class Lst> static tag_parse_info skip_tag(const Lst& list, const olxstr& open_tag, 
-      const olxstr& close_tag, int str_ind, int char_ind)  
+      const olxstr& close_tag, size_t str_ind, size_t char_ind)  
     {
-      int oti = list[str_ind].FirstIndexOf(open_tag, char_ind);
+      size_t oti = list[str_ind].FirstIndexOf(open_tag, char_ind);
       tag_parse_info rv;
-      if( oti == -1 )  return rv;
+      if( oti == InvalidIndex )  return rv;
       rv.start_char_ind = oti+open_tag.Length();
       int otc = 1;
       while( otc != 0 )  {
         const olxstr& line = list[str_ind]; 
-        for( int i=0; i < line.Length(); i++ )  {
+        for( size_t i=0; i < line.Length(); i++ )  {
           if( line.IsSubStringAt(open_tag, i) )  otc++;
           else if( line.IsSubStringAt(close_tag, i) && --otc == 0)  {
             rv.end_string_ind = str_ind;
@@ -118,7 +118,7 @@ namespace exparse  {
     TPtrList<T> args;
     evaluator(const olxstr& _name) : name(_name) {}
     ~evaluator()  {  
-      for( int i=0; i < args.Count(); i++ )
+      for( size_t i=0; i < args.Count(); i++ )
         delete args[i];
     }
   };

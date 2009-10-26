@@ -84,18 +84,18 @@ protected:
     if( SData == NULL )  SData = new Buffer(_Length +_Increment, bf, _Length);
     return *this;
   }
-  inline const char* printFormat(const char v)                   const {  return "%c";  }
-  inline const char* printFormat(const short int v)              const {  return "%hd";  }
-  inline const char* printFormat(const unsigned short int v)     const {  return "%hu";  }
-  inline const char* printFormat(const int v)                    const {  return "%d";  }
-  inline const char* printFormat(const unsigned int v)           const {  return "%u";  }
-  inline const char* printFormat(const long int v)               const {  return "%ld";  }
-  inline const char* printFormat(const unsigned long int v)      const {  return "%lu";  }
-  inline const char* printFormat(const long long int v)          const {  return "%Ld";  }
-  inline const char* printFormat(const unsigned long long int v) const {  return "%Lu";  }
-  inline const char* printFormat(const float v)                  const {  return "%f";  }
-  inline const char* printFormat(const double v)                 const {  return "%lf";  }
-  inline const char* printFormat(const long double v)            const {  return "%Lf";  }
+  inline const char* printFormat(const char)                   const {  return "%c";  }
+  inline const char* printFormat(const short int)              const {  return "%hd";  }
+  inline const char* printFormat(const unsigned short int)     const {  return "%hu";  }
+  inline const char* printFormat(const int)                    const {  return "%d";  }
+  inline const char* printFormat(const unsigned int)           const {  return "%u";  }
+  inline const char* printFormat(const long int)               const {  return "%ld";  }
+  inline const char* printFormat(const unsigned long int)      const {  return "%lu";  }
+  inline const char* printFormat(const long long int)          const {  return "%Ld";  }
+  inline const char* printFormat(const unsigned long long int) const {  return "%Lu";  }
+  inline const char* printFormat(const float)                  const {  return "%f";  }
+  inline const char* printFormat(const double)                 const {  return "%lf";  }
+  inline const char* printFormat(const long double)            const {  return "%Lf";  }
 public:
   TCString();
   TCString(const wchar_t *wstr );

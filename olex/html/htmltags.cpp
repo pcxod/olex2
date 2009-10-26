@@ -226,9 +226,9 @@ TAG_HANDLER_PROC(tag)  {
   if( !Label.IsEmpty() )  {
     if( Label.StartsFromi("href=") )  {
       Label = Label.SubStringFrom(5);
-      int tagInd = Label.IndexOfi("&target=");
+      const size_t tagInd = Label.IndexOfi("&target=");
       olxstr tag(EmptyString);
-      if( tagInd != -1 )  {
+      if( tagInd != InvalidIndex )  {
         tag = Label.SubStringFrom(tagInd+8);
         Label.SetLength(tagInd);
       }

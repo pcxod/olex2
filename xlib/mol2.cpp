@@ -62,12 +62,12 @@ void TMol2::SaveToStrings(TStrList& Strings)  {
   Strings.Add("NO_CHARGES");
   Strings.Add(EmptyString);
   Strings.Add("@<TRIPOS>ATOM");
-  for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )
+  for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )
     Strings.Add( MOLAtom(GetAsymmUnit().GetAtom(i) ) );
   if( !Bonds.IsEmpty() )  {
     Strings.Add(EmptyString);
     Strings.Add("@<TRIPOS>BOND");
-    for( int i=0; i < Bonds.Count(); i++ )
+    for( size_t i=0; i < Bonds.Count(); i++ )
       Strings.Add( MOLBond(Bonds[i]) );
   }
 }
@@ -85,7 +85,7 @@ void TMol2::LoadFromStrings(const TStrList& Strings)  {
   GetAsymmUnit().InitMatrices();
   bool AtomsCycle = false, BondsCycle = false;
   olxdict<int, TCAtom*, TPrimitiveComparator> atoms;
-  for( int i=0; i < Strings.Count(); i++ )  {
+  for( size_t i=0; i < Strings.Count(); i++ )  {
     olxstr line = Strings[i].UpperCase().Replace('\t', ' ').Trim(' ');
     if( line.IsEmpty() )  continue;
     if( AtomsCycle )  {

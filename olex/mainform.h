@@ -588,7 +588,7 @@ private:
 
   TStrPObjList<olxstr,wxMenuItem*> FRecentFiles;
   TSStrStrList<olxstr,true> Bindings;
-  short FRecentFilesToShow;
+  uint16_t FRecentFilesToShow;
   void UpdateRecentFile(const olxstr& FN);
   TGlOption FBgColor;
   THtml* FHtml;

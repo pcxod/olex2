@@ -26,7 +26,7 @@ TXGlLabel::TXGlLabel(TGlRenderer& R, const olxstr& collectionName) :
   SetZoomable(false);
   SetGroupable(false);
   OffsetX = OffsetY = 0;
-  FFontIndex = -1;
+  FontIndex = ~0;
 };
 TXGlLabel::~TXGlLabel(){}
 
@@ -51,17 +51,15 @@ void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
   glpPlane.Vertices.SetCount(4);
 
   TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
-  glpText.SetProperties( GS.GetMaterial("Text", Font()->GetMaterial()) );
+  glpText.SetProperties( GS.GetMaterial("Text", GetFont().GetMaterial()) );
   glpText.Params[0] = -1;  //bitmap; TTF by default
-  glpText.SetFont(Font());
+  glpText.SetFont(&GetFont());
 }
 //..............................................................................
 void TXGlLabel::SetLabel(const olxstr& L)   {
   FLabel = L;  
-  if( Font() != NULL )  {
-    OffsetX = Font()->TextWidth( FLabel )/2;
-    OffsetY = Font()->TextHeight()/2;
-  }
+  OffsetX = (double)GetFont().TextWidth(FLabel )/2;
+  OffsetY = (double)GetFont().TextHeight()/2;
 }
 //..............................................................................
 vec3d TXGlLabel::GetRasterPosition() const {
@@ -90,7 +88,7 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
     off *= ScaleR;
     T += off;
     T[2] = Parent.GetMaxRasterZ();
-    Parent.DrawTextSafe(T, FLabel, *Font());
+    Parent.DrawTextSafe(T, FLabel, GetFont());
     return true;
   }
   else  {
@@ -111,19 +109,24 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
   return false;
 }
 //..............................................................................
-TGlFont* TXGlLabel::Font() const {  return Parent.GetScene().GetFont(FFontIndex); }
+TGlFont& TXGlLabel::GetFont() const {  
+  TGlFont* fnt = Parent.GetScene().GetFont(FontIndex); 
+  if( fnt == NULL )
+    throw TInvalidArgumentException(__OlxSourceInfo, "font index");
+  return *fnt;
+}
 //..............................................................................
 void TXGlLabel::ToDataItem(TDataItem& item) const {
   item.AddField("text", FLabel);
   item.AddField("visible", IsVisible());
-  item.AddField("font_id", FFontIndex);
+  item.AddField("font_id", FontIndex);
   item.AddField("center", PersUtil::VecToStr(Center));
   Basis.ToDataItem(item.AddItem("Basis"));
 }
 //..............................................................................
 void TXGlLabel::FromDataItem(const TDataItem& item) {
   SetVisible( item.GetRequiredField("visible").ToBool() );
-  FFontIndex = item.GetRequiredField("font_id").ToInt();
+  FontIndex = item.GetRequiredField("font_id").ToInt();
   SetLabel( item.GetRequiredField("text") );
   Center = PersUtil::FloatVecFromStr( item.GetRequiredField("center") );
   Basis.FromDataItem( item.FindRequiredItem("Basis") );

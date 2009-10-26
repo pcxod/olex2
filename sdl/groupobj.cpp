@@ -29,19 +29,19 @@ void TObjectGroup::Clear()  {
 }
 //..............................................................................
 void TObjectGroup::RemoveObjectsByTag(int Tag)  {
-  for( int i=0; i < ObjectCount(); i++ )  {
+  for( size_t i=0; i < ObjectCount(); i++ )  {
     if( Objects[i]->GetTag() == Tag )  {
       AGOProperties& P = Objects[i]->GetProperties();
       if( P.ObjectCount() == 1 )   
-        P.SetObjectGroupId(-1); // mark to remove
+        P.SetObjectGroupId(InvalidIndex); // mark to remove
       P.RemoveObject( Objects[i] );
       delete Objects[i];
       Objects[i] = NULL;
     }
   }
   Objects.Pack();
-  for( int i=0; i < Props.Count(); i++ )  {
-    if( Props[i]->GetObjectGroupId() == -1 )  {
+  for( size_t i=0; i < Props.Count(); i++ )  {
+    if( Props[i]->GetObjectGroupId() == InvalidIndex )  {
       delete Props[i];
       Props[i] = NULL;
     }
@@ -50,7 +50,7 @@ void TObjectGroup::RemoveObjectsByTag(int Tag)  {
 }
 //..............................................................................
 AGOProperties* TObjectGroup::FindProps(const AGOProperties &C)  {
-  for( int i = 0; i < Props.Count(); i++ )
+  for( size_t i = 0; i < Props.Count(); i++ )
     if( C == *Props[i] )
       return Props[i];
   return NULL;
@@ -76,7 +76,7 @@ AGOProperties* TObjectGroup::NewProps(AGroupObject& Sender, AGOProperties* OldPr
         delete OldProps;
       }
     }
-    Prop->SetObjectGroupId( Props.Count()-1 );
+    Prop->SetObjectGroupId(Props.Count()-1);
     return Prop;
   }
   else  {

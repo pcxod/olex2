@@ -126,22 +126,22 @@ void MainDlg::SetVersion(const olxstr &version) {
 }
 
 
-void MainDlg::SetFileProgressMax(double v) {
+void MainDlg::SetFileProgressMax(uint64_t v) {
   max_file = v;
   GetDlgItem(IDC_PB_FILE)->SendMessage(PBM_SETRANGE, 0, MAKELPARAM(0, (int)v));  
 }
 
-void MainDlg::SetFileProgress(double v) {
+void MainDlg::SetFileProgress(uint64_t v) {
   GetDlgItem(IDC_PB_FILE)->SendMessage(PBM_SETPOS, (WPARAM)(int)(v < 0 ? max_file : v), 0);  
   UpdateWindow();
 }
 
-void MainDlg::SetOverallProgressMax(double v) {
+void MainDlg::SetOverallProgressMax(uint64_t v) {
   max_overall = v;
   GetDlgItem(IDC_PB_OVERALL)->SendMessage(PBM_SETRANGE, 0, MAKELPARAM(0, (int)v));  
 }
 
-void MainDlg::SetOverallProgress(double v) {
+void MainDlg::SetOverallProgress(uint64_t v) {
   GetDlgItem(IDC_PB_OVERALL)->SendMessage(PBM_SETPOS, (WPARAM)(int)(v < 0 ? max_overall : v), 0);
 }
 

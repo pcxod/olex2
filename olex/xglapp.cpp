@@ -157,7 +157,11 @@ bool TGlXApp::OnInit()  {
 //      BaseDir = TEFile::ParentDir(BaseDir);
 //      BaseDir << "Resources/";
     #endif
-    XApp = new TGXApp( TBasicApp::GuessBaseDir(argv[0], "OLEX2_DIR") );
+#if defined(_WIN64) && defined(_DEBUG)
+    XApp = new TGXApp(TBasicApp::GuessBaseDir(argv[0], "OLEX2_64_DIR"));
+#else
+    XApp = new TGXApp(TBasicApp::GuessBaseDir(argv[0], "OLEX2_DIR"));
+#endif
   }
   catch(const TExceptionBase& e)  {
     TMainFrame::ShowAlert(e);
@@ -172,11 +176,10 @@ bool TGlXApp::OnInit()  {
   for( int i=1; i < argc; i++ )
     Tmp << argv[i] <<  ' ';
   TParamList::StrtokParams(Tmp, ' ', XApp->Arguments);
-  for( int i=0; i < XApp->Arguments.Count(); i++ )  {
-    if( XApp->Arguments[i].FirstIndexOf('=') != -1 )  {
+  for( size_t i=0; i < XApp->Arguments.Count(); i++ )  {
+    if( XApp->Arguments[i].FirstIndexOf('=') != InvalidIndex )  {
       XApp->ParamList.FromString(XApp->Arguments[i], '=');
-      XApp->Arguments.Delete(i);
-      i--;
+      XApp->Arguments.Delete(i--);
     }
   }
   TProgress *P = new TProgress;
@@ -224,7 +227,7 @@ int TGlXApp::OnExit()  {
     TStrList pid_files;
     olxstr conf_dir = XApp->GetBaseDir(); 
     TEFile::ListDir( conf_dir, pid_files, olxstr("*.") << patcher::PatchAPI::GetOlex2PIDFileExt(), sefAll );
-    for( int i=0; i < pid_files.Count(); i++ )
+    for( size_t i=0; i < pid_files.Count(); i++ )
       TEFile::DelFile(conf_dir+pid_files[i]);
   }
   delete XApp;

@@ -35,7 +35,7 @@ private:
   const vec3f NullVec;
   short ColorMode;
 protected:
-  short ElpDiv, PieDiv, BondDiv;
+  uint16_t ElpDiv, PieDiv, BondDiv;
   TArrayList<vec3f> ElpCrd, PieCrd, Arc, BondCrd, BondProjF, BondProjT;
   TPtrList<const vec3f> FilteredArc;
   float PieLineWidth, 
@@ -43,19 +43,18 @@ protected:
     QuadLineWidth,
     HBondScale;
 
-  int PrepareArc(const TArrayList<vec3f>& in, TPtrList<const vec3f>& out, const vec3f& normal)  {
-    int start=-1, cnt=0;
-    for( int i=0; i < in.Count(); i++ )  {
-      const int next_i = ((i+1) >= in.Count() ? i-in.Count() : i) + 1;
+  size_t PrepareArc(const TArrayList<vec3f>& in, TPtrList<const vec3f>& out, const vec3f& normal)  {
+    size_t start = InvalidIndex, cnt = 0;
+    for( size_t i=0; i < in.Count(); i++ )  {
+      const size_t next_i = ((i+1) >= in.Count() ? i-in.Count() : i) + 1;
       if( in[i].DotProd(normal) < 0 && in[next_i].DotProd(normal) >= 0 )  {
         start = next_i;
         break;
       }
     }
-    if( start == -1 )
-      return 0;
-    for( int i=start; i < start+in.Count(); i++ )  {
-      const int ind = (i >= in.Count() ? i-in.Count() : i);
+    if( start == InvalidIndex )  return 0;
+    for( size_t i=start; i < start+in.Count(); i++ )  {
+      const size_t ind = (i >= in.Count() ? i-in.Count() : i);
       if( cnt+1 >= in.Count() )  break;
       if( in[ind].DotProd(normal) >= 0  )
         out[cnt++] = &in[ind];
@@ -69,7 +68,7 @@ protected:
     const TSAtom& sa = *oa.atom;
     vec3f dir_vec, touch_point, touch_point_proj, off_vec, bproj_cnt;
     mat3f proj_mat, rot_mat;
-    for( int j=0; j < sa.BondCount(); j++ )  {
+    for( size_t j=0; j < sa.BondCount(); j++ )  {
       const TSBond& bn = sa.Bond(j);
       if( app.GetBond( bn.GetTag() ).IsDeleted() || !app.GetBond( bn.GetTag() ).IsVisible() )
         continue;
@@ -77,7 +76,7 @@ protected:
       if( p1[2] <= oa.crd[2] )  // goes into the plane - drawn
         continue; 
       dir_vec = (p1-oa.crd).Normalise();
-      const float pers_scale = 1.0-sqr(dir_vec[2]);
+      const float pers_scale = 1.0-olx_sqr(dir_vec[2]);
       float brad = (bn.A().GetAtomInfo() < 4 || bn.B().GetAtomInfo() < 4) ? 
         BondRad*HBondScale : BondRad;
       if( bn.GetType() == sotHBond )  //even thiner H-bonds
@@ -90,19 +89,19 @@ protected:
       if( sa.GetEllipsoid() != NULL )  {
         bproj_cnt.Null();
         touch_point_proj = dir_vec*(*oa.ielpm);
-        for( int j=0; j < BondDiv; j++ )  {
+        for( uint16_t j=0; j < BondDiv; j++ )  {
           BondProjF[j] = (((BondCrd[j]*rot_mat+touch_point)*ProjMatr).Normalise()*(*oa.ielpm));
           bproj_cnt += BondProjF[j];
         }
         bproj_cnt /= BondDiv;
-        for( int j=0; j < BondDiv; j++ )  {
+        for( uint16_t j=0; j < BondDiv; j++ )  {
           BondProjF[j] = (BondProjF[j]-bproj_cnt).NormaliseTo(brad*(1+pers_scale)*scalex) + bproj_cnt;
           BondProjT[j] = (BondCrd[j]*proj_mat).NormaliseTo(brad*2*scalex) + dir_vec*b_len;
         }
       }
       else  {
         const float off_len = AradScale*sa.GetAtomInfo().GetRad1()/2;
-        for( int j=0; j < BondDiv; j++ )  {
+        for( uint16_t j=0; j < BondDiv; j++ )  {
           BondProjT[j] = BondProjF[j] = (BondCrd[j]*proj_mat).NormaliseTo(brad*(1+pers_scale)*scalex); 
           BondProjT[j].NormaliseTo(brad*2*scalex) += dir_vec*b_len;
           BondProjF[j] += dir_vec*off_len;
@@ -128,19 +127,19 @@ protected:
     vec3f norm_vec = (ElpCrd[0]*ielpm).XProdVec(ElpCrd[1]*ielpm);
     if( norm_vec[2] < 0 )
       norm_vec *= -1;
-    for( int j=0; j < ElpDiv; j++ )
+    for( uint16_t j=0; j < ElpDiv; j++ )
       Arc[j] = ElpCrd[j]*pelpm;
     int pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
     //pw.color(0x0000ff);
     pw.drawLines_vp(FilteredArc, pts_cnt, false);
 
-    for( int j=0; j < ElpDiv; j++ )
+    for( uint16_t j=0; j < ElpDiv; j++ )
       Arc[j] = vec3f(ElpCrd[j][1], 0, ElpCrd[j][0])*pelpm;
     pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
     //pw.color(0x00ff00);
     pw.drawLines_vp(FilteredArc, pts_cnt, false);
 
-    for( int j=0; j < ElpDiv; j++ )
+    for( uint16_t j=0; j < ElpDiv; j++ )
       Arc[j] = vec3f(0, ElpCrd[j][0], ElpCrd[j][1])*pelpm;
     pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
     //pw.color(0xff0000);
@@ -151,11 +150,11 @@ protected:
       pw.drawLine(NullVec, pelpm[0]);
       pw.drawLine(NullVec, pelpm[1]);
       pw.drawLine(NullVec, pelpm[2]);
-      for( int j=0; j < PieDiv; j++ )
+      for( uint16_t j=0; j < PieDiv; j++ )
         pw.drawLine( PieCrd[j]*pelpm, pelpm[0]*((float)(PieDiv-j)/PieDiv));
-      for( int j=0; j < PieDiv; j++ )
+      for( uint16_t j=0; j < PieDiv; j++ )
         pw.drawLine( vec3f(0, PieCrd[j][0], PieCrd[j][1])*pelpm, pelpm[1]*((float)(PieDiv-j)/PieDiv));
-      for( int j=0; j < PieDiv; j++ )
+      for( uint16_t j=0; j < PieDiv; j++ )
         pw.drawLine( vec3f(PieCrd[j][1], 0, PieCrd[j][0])*pelpm, pelpm[2]*((float)(PieDiv-j)/PieDiv));
     }
   }
@@ -181,7 +180,7 @@ public:
     double sin_a, cos_a;
     SinCos(2*M_PI/ElpDiv, &sin_a, &cos_a);
     vec3f ps(cos_a, -sin_a, 0);
-    for( int i=0; i < ElpDiv; i++ )  {
+    for( uint16_t i=0; i < ElpDiv; i++ )  {
       ElpCrd[i] = ps;
       const float x = ps[0];
       ps[0] = (float)(cos_a*x + sin_a*ps[1]);
@@ -189,14 +188,14 @@ public:
     }
     SinCos(2*M_PI/BondDiv, &sin_a, &cos_a);
     ps = vec3f(cos_a/2, -sin_a/2, 0);
-    for( int i=0; i < BondDiv; i++ )  {
+    for( uint16_t i=0; i < BondDiv; i++ )  {
       BondCrd[i] = ps;
       const float x = ps[0];
       ps[0] = (float)(cos_a*x + sin_a*ps[1]);
       ps[1] = (float)(cos_a*ps[1] - sin_a*x);
     }
     ps = vec3f(1, 0, 0);
-    for( int i=0; i < PieDiv; i++ )  {
+    for( uint16_t i=0; i < PieDiv; i++ )  {
       PieCrd[i] = ps;
       ps[0] = (float)(PieDiv-i-1)/PieDiv;
       ps[1] = (float)sqrt(1.0-ps[0]*ps[0]);
@@ -209,7 +208,7 @@ public:
 
     if( app.LabelCount() != 0 )  {
       olxcstr fnt("/Verdana findfont ");
-      fnt << olx_round(app.GetLabel(0).Font()->GetPointSize()/LinearScale) << " scalefont setfont";
+      fnt << olx_round(app.GetLabel(0).GetFont().GetPointSize()/LinearScale) << " scalefont setfont";
       pw.custom(fnt.c_str());
     }
 
@@ -230,7 +229,7 @@ public:
     const TEBasis& basis = app.GetRender().GetBasis();
     TTypeList<OrtDraw::OrtAtom> atoms;
     atoms.SetCapacity(app.AtomCount());
-    for( int i=0; i < app.AtomCount(); i++ )  {
+    for( size_t i=0; i < app.AtomCount(); i++ )  {
       if( app.GetAtom(i).IsDeleted() || !app.GetAtom(i).IsVisible() )
         continue;
       const TSAtom& sa = app.GetAtom(i).Atom();
@@ -247,13 +246,13 @@ public:
       else
         atoms.AddNew(&sa, (sa.crd() + SceneOrigin)*ProjMatr+DrawOrigin);
     }
-    for( int i=0; i < app.BondCount(); i++ )  {
+    for( size_t i=0; i < app.BondCount(); i++ )  {
       app.GetBond(i).SetTag(i);
       app.GetBond(i).Bond().SetTag(i);
     }
     atoms.QuickSorter.SortSF(atoms, OrtAtomZSort);
 
-    for( int i=0; i < atoms.Count(); i++ )  {
+    for( size_t i=0; i < atoms.Count(); i++ )  {
       const TSAtom& sa = *atoms[i].atom;
       const vec3d& p = atoms[i].crd;
       pw.translate(p);
@@ -307,7 +306,7 @@ public:
       pw.translate(-p);
     }
     if( app.LabelCount() != 0 )  {
-      for( int i=0; i < app.LabelCount(); i++ )  {
+      for( size_t i=0; i < app.LabelCount(); i++ )  {
         const TXGlLabel& glxl = app.GetLabel(i);
         vec3d rp = glxl.GetRasterPosition();
         rp[1] += 4;
@@ -317,9 +316,9 @@ public:
     }
   }
 
-  DefPropP(short, ElpDiv)
-  DefPropP(short, PieDiv) 
-  DefPropP(short, BondDiv) 
+  DefPropP(uint16_t, ElpDiv)
+  DefPropP(uint16_t, PieDiv) 
+  DefPropP(uint16_t, BondDiv) 
   DefPropP(short, ColorMode)
   DefPropP(float, HBondScale)
   DefPropP(float, BondRad)

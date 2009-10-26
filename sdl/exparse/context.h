@@ -14,20 +14,20 @@ namespace exparse  {
     context* parent;
     context(context* _parent = NULL) : parent(_parent)  {}
     ~context()  {
-      for( int i=0; i < classes.Count(); i++ )
+      for( size_t i=0; i < classes.Count(); i++ )
         delete classes.GetValue(i);
-      for( int i=0; i < consts.Count(); i++ )
+      for( size_t i=0; i < consts.Count(); i++ )
         if( consts.GetValue(i)->dec_ref() == 0 )
           delete consts.GetValue(i);
-      for( int i=0; i < vars.Count(); i++ )
+      for( size_t i=0; i < vars.Count(); i++ )
         if( vars.GetValue(i)->dec_ref() == 0 )
           delete vars.GetValue(i);
     }
     void add_var(const olxstr& name, IEvaluable* val, bool replace=false)  {
-      int i = vars.IndexOf(name);
+      size_t i = vars.IndexOf(name);
       if( replace )  {
         val->inc_ref();
-        if( i == -1 )
+        if( i == InvalidIndex )
           vars.Add(name, val);
         else  {
           if( vars.GetValue(i)->dec_ref() == 0 )
@@ -36,22 +36,22 @@ namespace exparse  {
         }
       }
       else  {
-        if( i != -1 )
+        if( i != InvalidIndex )
           throw TInvalidArgumentException(__OlxSourceInfo, olxstr("duplicated variable: ") << name);
         val->inc_ref();
         vars.Add(name, val);
       }
     }
     void add_const(const olxstr& name, IEvaluable* val)  {
-      int i = consts.IndexOf(name);
-      if( i != -1 )
+      size_t i = consts.IndexOf(name);
+      if( i != InvalidIndex )
         throw TInvalidArgumentException(__OlxSourceInfo, olxstr("duplicated constant: ") << name);
       val->inc_ref();
       consts.Add(name, val);
     }
     IEvaluable* find_var(const olxstr& name) const  {
-      int ind = vars.IndexOf(name);
-      if( ind != -1 )  return vars.GetValue(ind);
+      size_t ind = vars.IndexOf(name);
+      if( ind != InvalidIndex )  return vars.GetValue(ind);
       context* cx = this->parent;
       while( cx != NULL )  {
         IEvaluable* rv = cx->find_var(name);
@@ -61,8 +61,8 @@ namespace exparse  {
       return NULL;
     }
     IEvaluable* find_const(const olxstr& name) const  {
-      int ind = consts.IndexOf(name);
-      if( ind != -1 )  return consts.GetValue(ind);
+      size_t ind = consts.IndexOf(name);
+      if( ind != InvalidIndex )  return consts.GetValue(ind);
       context* cx = this->parent;
       while( cx != NULL )  {
         IEvaluable* rv = cx->find_const(name);

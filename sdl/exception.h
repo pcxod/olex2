@@ -73,7 +73,7 @@ public:
 };
 
 class TIndexOutOfRangeException: public TBasicException  {
-  long Index, Min, Max;
+  size_t Index, Min, Max;
 public:
   TIndexOutOfRangeException(const TIndexOutOfRangeException& toReplicate) :
       TBasicException(toReplicate)  {
@@ -82,21 +82,21 @@ public:
     this->Max = toReplicate.Max;
   }
 
-  TIndexOutOfRangeException(const olxstr& location, long index, long min, long max):
+  TIndexOutOfRangeException(const olxstr& location, size_t index, size_t min, size_t max):
       TBasicException(location, olxstr("[") << min << ".." << max << "]: " << index )  {
     Index = index;
     Min = min;
     Max = max;
   }
 
-  static inline void ValidateRange(const olxstr& location, long index, long min, long max)  {
+  static inline void ValidateRange(const olxstr& location, size_t index, size_t min, size_t max)  {
     if( index < min || index >= max )
       throw TIndexOutOfRangeException(location, index, min, max);
   }
 
-  inline long GetIndex() const  {  return Index;  }
-  inline long GetMin() const  {  return Min;  }
-  inline long GetMax() const  {  return Max;  }
+  inline size_t GetIndex() const  {  return Index;  }
+  inline size_t GetMin() const  {  return Min;  }
+  inline size_t GetMax() const  {  return Max;  }
 
   virtual IEObject* Replicate()  const    {  return new TIndexOutOfRangeException(*this);  }
 };

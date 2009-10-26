@@ -42,7 +42,7 @@ public:
     PyObject* arglist = NULL;
     if( Params.Count() != 0 )  {
       arglist = PyTuple_New( Params.Count() );
-      for( int i=0; i < Params.Count(); i++ )
+      for( size_t i=0; i < Params.Count(); i++ )
         PyTuple_SetItem(arglist, i, PythonExt::BuildString(Params[i]) );
     }
     PyObject* result = PyObject_CallObject(PyFunction, arglist);
@@ -78,10 +78,10 @@ public:
   void Call(TStrObjList& Params, const TParamList &Options, TMacroError& E)  {
     OnCallEnter();
     PyObject* arglist = PyTuple_New( Params.Count() + 1 );
-    for( int i=0; i < Params.Count(); i++ )
+    for( size_t i=0; i < Params.Count(); i++ )
       PyTuple_SetItem(arglist, i, PyString_FromString(Params[i].c_str()) );
     PyObject* options = PyDict_New();
-    for( int i=0; i < Options.Count(); i++ )
+    for( size_t i=0; i < Options.Count(); i++ )
       PyDict_SetItemString(options,
         Options.GetName(i).c_str(), PythonExt::BuildString(Options.GetValue(i)) );
     PyTuple_SetItem(arglist, Params.Count(), options);
@@ -289,23 +289,9 @@ PyObject* runOlexFunction(PyObject* self, PyObject* args)  {
 //..............................................................................
 PyObject* runPrintText(PyObject* self, PyObject* args)  {
   //char* text;
-  for( int i=0; i < PyTuple_Size(args); i++ )  {
+  for( Py_ssize_t i=0; i < PyTuple_Size(args); i++ )  {
     PyObject* po = PyTuple_GetItem(args, i);
     TBasicApp::GetLog() << PythonExt::ParseStr(po).Trim('\'');
-    //if( PyArg_Parse(, "s", &text) )  {
-    //  int len =  strlen(text);
-    //  if( len >= 2 && (text[0] == '\'' && text[len-1] == '\'') )  {
-    //    text[len-1] = '\0';
-    //    text = ++text;
-    //    len -= 2;
-    //  }
-      //if( len > 0 && text[len-1] == '\n' )  {
-      //  text[len-1] = '\0';
-      //  len --;
-      //}
-      //if( len != 0 )
-      //  TBasicApp::GetLog() << text;
-    //}
   }
   Py_INCREF(Py_None);
   return Py_None;
@@ -369,14 +355,14 @@ void PythonExt::CheckInitialised()  {
   if( !Py_IsInitialized() )  {
     Py_Initialize();
     Py_InitModule( "olex", Methods );
-    for( int i=0; i < ToRegister.Count(); i++ )
+    for( size_t i=0; i < ToRegister.Count(); i++ )
       (*ToRegister[i])();
   }
 }
 //..............................................................................
 PyObject* PythonExt::GetProfileInfo()  {
   int picnt = 0;
-  for(int i=0; i < ToDelete.Count(); i++ )
+  for( size_t i=0; i < ToDelete.Count(); i++ )
     if( ToDelete[i]->ProfileInfo() != NULL && ToDelete[i]->ProfileInfo()->CallCount > 0 )
       picnt++;
 
@@ -387,7 +373,7 @@ PyObject* PythonExt::GetProfileInfo()  {
 
   PyObject *rv = PyTuple_New( picnt );
   picnt = 0;
-  for(int i=0; i < ToDelete.Count(); i++ )  {
+  for( size_t i=0; i < ToDelete.Count(); i++ )  {
     PythonExt::ProfileInfo *pi = ToDelete[i]->ProfileInfo();
     if( pi != NULL && pi->CallCount > 0 )  {
       PyTuple_SetItem(rv, picnt, Py_BuildValue("sil", PyEval_GetFuncName(ToDelete[i]->GetFunction()), pi->CallCount, pi->TotalTimeMs) );
@@ -447,7 +433,7 @@ int PythonExt::RunPython( const olxstr& script, bool inThread )  {
 //..............................................................................
 void ExportLib(const olxcstr& fullName, TEFile& file, const TLibrary& Lib)  {
   olxcstr olxName, pyName;
-  for( int i=0; i < Lib.FunctionCount(); i++ )  {
+  for( size_t i=0; i < Lib.FunctionCount(); i++ )  {
     ABasicFunction* fun = Lib.GetFunctionByIndex(i);
     olxName = fun->GetQualifiedName();
     pyName = fun->GetName();
@@ -455,7 +441,7 @@ void ExportLib(const olxcstr& fullName, TEFile& file, const TLibrary& Lib)  {
     file.Writenl( PyFuncBody(olxName, fullName + pyName, ',') );
   }
 
-  for( int i=0; i < Lib.MacroCount(); i++ )  {
+  for( size_t i=0; i < Lib.MacroCount(); i++ )  {
     ABasicFunction* fun = Lib.GetMacroByIndex(i);
     olxName = fun->GetQualifiedName();
     pyName = fun->GetName();
@@ -463,7 +449,7 @@ void ExportLib(const olxcstr& fullName, TEFile& file, const TLibrary& Lib)  {
     file.Writenl( PyFuncBody(olxName, fullName + pyName, ' ') );
   }
 
-  for( int i=0; i < Lib.LibraryCount(); i++ )  {
+  for( size_t i=0; i < Lib.LibraryCount(); i++ )  {
     ExportLib( (fullName + Lib.GetLibraryByIndex(i)->GetName()) << '_' , file, *Lib.GetLibraryByIndex(i) );
   }
 
@@ -528,10 +514,10 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...)  {
     va_end(argptr);
     return false;
   }
-  int slen = olxstr::o_strlen(format);
-  int tlen = PyTuple_Size(tuple), tind = -1;
+  size_t slen = olxstr::o_strlen(format);
+  size_t tlen = PyTuple_Size(tuple), tind = InvalidIndex;
   bool proceedOptional = false;
-  for( int i=0; i < slen; i++ )  {
+  for( size_t i=0; i < slen; i++ )  {
     if( ++tind >= tlen )  {
       if( !proceedOptional )  {
         va_end(argptr);       

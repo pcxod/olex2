@@ -37,15 +37,15 @@ public:
   template <class A, class ADT, class B, class BDT>
     static TTypeListExt<B, BDT>& TT( const TTypeListExt<A,ADT>& from, TTypeListExt<B, BDT> &to )  {
       to.SetCapacity( to.Count() + from.Count() );
-      for( int i=0; i < from.Count(); i++ )
+      for( size_t i=0; i < from.Count(); i++ )
         to.AddACopy( (B)from[i] );
       return to;
   }
   template <class A, class B>
     static TPtrList<B>& TT( const TPtrList<A>& from, TPtrList<B> &to )  {
-      long sz = to.Count();
+      size_t sz = to.Count();
       to.SetCount( to.Count() + from.Count() );
-      for( long i=0; i < from.Count(); i++ )
+      for( size_t i=0; i < from.Count(); i++ )
         to[sz+i] = (B*)from[i];
       return to;
   }
@@ -53,15 +53,15 @@ public:
   template <class A, class ADT, class B, class BDT>
     static TTypeListExt<B,BDT>& TTP( const TTypeListExt<A,ADT>& from, TTypeListExt<B,BDT> &to )  {
       to.SetCapacity( to.Count() + from.Count() );
-      for( int i=0; i < from.Count(); i++ )
+      for( size_t i=0; i < from.Count(); i++ )
         to.AddACopy( (B)&from[i] );
       return to;
   }
   template <class A, class ADT, class B>
     static TPtrList<B>& TTP( const TTypeListExt<A,ADT>& from, TPtrList<B> &to )  {
-      long sz = to.Count();
+      size_t sz = to.Count();
       to.SetCount( to.Count() + from.Count() );
-      for( long i=0; i < from.Count(); i++ )
+      for( size_t i=0; i < from.Count(); i++ )
         to[sz+i] = (B*)&from[i];
       return to;
   }
@@ -69,7 +69,7 @@ public:
   template <class A, class ADT, class PDT>
     static TTypeListExt<A*, PDT*>& TP( const TTypeListExt<A,ADT>& from, TTypeListExt<A*,PDT*> &to )  {
       to.SetCapacity( to.Count() + from.Count() );
-      for( int i=0; i < from.Count(); i++ )
+      for( size_t i=0; i < from.Count(); i++ )
         to.AddACopy( &from[i] );
       return to;
   }
@@ -77,15 +77,15 @@ public:
   template <class A, class ADT, class B, class BDT>
     static TTypeListExt<B,BDT>& POP( const TTypeListExt<A,ADT>& from, TTypeListExt<B,BDT> &to )  {
       to.SetCapacity( to.Count() + from.Count() );
-      for( int i=0; i < from.Count(); i++ )
+      for( size_t i=0; i < from.Count(); i++ )
         to.AddACopy( (B)(*from[i]) );
       return to;
   }
   template <class A, class B>
     static TPtrList<B>& POP( const TPtrList<A>& from, TPtrList<B> &to )  {
-      long sz = to.Count();
+      size_t sz = to.Count();
       to.SetCount( to.Count() + from.Count() );
-      for( long i=0; i < from.Count(); i++ )
+      for( size_t i=0; i < from.Count(); i++ )
         to[sz+i] = (B*)(*from[i]);
       return to;
   }
@@ -93,15 +93,15 @@ public:
   template <class A, class ADT, class B, class BDT>
     static TTypeListExt<B,BDT>& TOP( const TTypeListExt<A,ADT>& from, TTypeListExt<B,BDT> &to )  {
       to.SetCapacity( to.Count() + from.Count() );
-      for( int i=0; i < from.Count(); i++ )
+      for( size_t i=0; i < from.Count(); i++ )
         to.AddACopy( (B)(from[i]) );
       return to;
   }
   template <class A, class ADT, class B>
     static TPtrList<B>& TOP( const TTypeListExt<A,ADT>& from, TPtrList<B> &to )  {
-      long sz = to.Count();
+      size_t sz = to.Count();
       to.SetCount( to.Count() + from.Count() );
-      for( long i=0; i < from.Count(); i++ )
+      for( size_t i=0; i < from.Count(); i++ )
         to[sz+i] = (B*)from[i];
       return to;
   }
@@ -110,7 +110,7 @@ public:
     static TTypeListExt<B,BDT>& PFCP( const TTypeListExt<A,ADT>& from, TTypeListExt<B,BDT> &to,
       B (AType::*f)() const )  {
       to.SetCapacity( to.Count() + from.Count() );
-      for( int i=0; i < from.Count(); i++ )
+      for( size_t i=0; i < from.Count(); i++ )
         to.AddACopy( (from[i]->*f)() );
       return to;
   }
@@ -119,7 +119,7 @@ public:
     static TTypeListExt<B,BDT>& TFCP( const TTypeListExt<A,ADT>& from, TTypeListExt<B,BDT> &to,
       B (A::*f)() const )  {
       to.SetCapacity( to.Count() + from.Count() );
-      for( int i=0; i < from.Count(); i++ )
+      for( size_t i=0; i < from.Count(); i++ )
         to.AddACopy( (from[i].*f)() );
       return to;
   }
@@ -128,7 +128,7 @@ public:
     static TTypeListExt<B,BDT>& PFP( const TTypeListExt<A,ADT>& from, TTypeListExt<B,BDT> &to,
       B (AType::*f)() )  {
       to.SetCapacity( to.Count() + from.Count() );
-      for( int i=0; i < from.Count(); i++ )
+      for( size_t i=0; i < from.Count(); i++ )
         to.AddACopy( (from[i]->*f)() );
       return to;
   }
@@ -137,7 +137,7 @@ public:
     static TTypeListExt<B,BDT>& TFP( const TTypeListExt<A,ADT>& from, TTypeListExt<B,BDT> &to,
       B (A::*f)() )  {
       to.SetCapacity( to.Count() + from.Count() );
-      for( int i=0; i < from.Count(); i++ )
+      for( size_t i=0; i < from.Count(); i++ )
         to.AddACopy( (from[i].*f)() );
       return to;
   }

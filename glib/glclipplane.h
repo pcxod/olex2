@@ -30,9 +30,9 @@ class TGlClipPlanes  {
 public:
   TGlClipPlanes(TGlRenderer *R);
   ~TGlClipPlanes();
-  inline TGlRenderer *Parent()         {  return FParent;  }
-  inline TGlClipPlane *Plane(int i)  {  return FPlanes[i];  }
-  inline int PlaneCount() const      {  return FPlanes.Count();  }
+  inline TGlRenderer *Parent()  {  return FParent;  }
+  inline TGlClipPlane *Plane(size_t i)  {  return FPlanes[i];  }
+  inline size_t PlaneCount() const {  return FPlanes.Count();  }
   void Enable(bool v);
 };
 

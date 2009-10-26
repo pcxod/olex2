@@ -4,16 +4,16 @@
 BeginXlibNamespace()
 
 class TExyzGroup {
-  int Id;
+  size_t Id;
   TCAtomPList Atoms;
   TExyzGroups& Parent;
 public:
-  TExyzGroup(TExyzGroups& parent, int id) : Parent(parent), Id(id) {  }
+  TExyzGroup(TExyzGroups& parent, size_t id) : Parent(parent), Id(id) {  }
   ~TExyzGroup()  { 
-    for( int i=0; i < Atoms.Count(); i++ )
+    for( size_t i=0; i < Atoms.Count(); i++ )
       Atoms[i]->SetExyzGroup(NULL);
   }
-  DefPropP(int, Id)
+  DefPropP(size_t, Id)
   TCAtom& Add(TCAtom& ca)  {
     if( ca.GetExyzGroup() != NULL )
       ca.GetExyzGroup()->Remove(ca);
@@ -25,12 +25,12 @@ public:
     Atoms.Remove(&ca);
     ca.SetExyzGroup(NULL);
   }
-  TCAtom& operator [] (int i) {  return *Atoms[i];  }
-  const TCAtom& operator [] (int i) const {  return *Atoms[i];  }
-  int Count() const {  return Atoms.Count();  }
+  TCAtom& operator [] (size_t i) {  return *Atoms[i];  }
+  const TCAtom& operator [] (size_t i) const {  return *Atoms[i];  }
+  size_t Count() const {  return Atoms.Count();  }
   bool IsEmpty() const {
-    int ac = 0;
-    for( int i=0; i < Atoms.Count(); i++ )
+    size_t ac = 0;
+    for( size_t i=0; i < Atoms.Count(); i++ )
       if( !Atoms[i]->IsDeleted() && Atoms[i]->GetExyzGroup() == this ) 
         ac++;
     return (ac < 2);
@@ -54,24 +54,24 @@ public:
 
   TExyzGroup& New() {  return Groups.Add( new TExyzGroup(*this, Groups.Count()) );  }
   void Clear() {  Groups.Clear();  }
-  int Count() const {  return Groups.Count();  }
-  TExyzGroup& operator [] (int i) {  return Groups[i];  }
-  const TExyzGroup& operator [] (int i) const {  return Groups[i];  }
-  void Delete(int i)  {
+  size_t Count() const {  return Groups.Count();  }
+  TExyzGroup& operator [] (size_t i) {  return Groups[i];  }
+  const TExyzGroup& operator [] (size_t i) const {  return Groups[i];  }
+  void Delete(size_t i)  {
     Groups.Delete(i);
-    for( int j=i; j < Groups.Count(); j++ )
+    for( size_t j=i; j < Groups.Count(); j++ )
       Groups[j].SetId(j);
   }
 
   void Assign(const TExyzGroups& ags)  {
     Clear();
-    for( int i=0; i < ags.Count(); i++ )  {
+    for( size_t i=0; i < ags.Count(); i++ )  {
       if( ags[i].IsEmpty() )  continue;
       Groups.Add( new TExyzGroup(*this, Groups.Count()) ).Assign(ags[i]);
     }
   }
   void ValidateAll() {
-    for( int i=0; i < Groups.Count(); i++ )
+    for( size_t i=0; i < Groups.Count(); i++ )
       if( Groups[i].IsEmpty() )
         Groups.NullItem(i);
     Groups.Pack();

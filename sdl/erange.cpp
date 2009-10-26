@@ -11,28 +11,27 @@ UseEsdlNamespace()
 // TERange implementation
 //---------------------------------------------------------------------------
 //..............................................................................
-void TERange::ListFromString(const olxstr &Range, TIntList &List)  {
+void TERange::ListFromString(const olxstr &Range, TSizeList &List)  {
   TStrList Toks(Range, ','), Toks1;
   olxstr S1;
-  int pos, start, end;
-  for( int i=0; i < Toks.Count(); i++ )  {
+  for( size_t i=0; i < Toks.Count(); i++ )  {
     const olxstr& S = Toks[i];
-    pos = S.FirstIndexOf('-');
-    if( pos >=0 )  {
+    size_t pos = S.FirstIndexOf('-');
+    if( pos != InvalidIndex )  {
       S1 = S.SubStringTo(pos);
-      start = S1.ToInt();
+      size_t start = S1.ToInt();
       S1 = S.SubStringFrom(pos+1);
-      end = S1.ToInt();
-      for( int j=start; j < end; j++ )
+      size_t end = S1.ToInt();
+      for( size_t j=start; j < end; j++ )
         List.Add(j);
     }
     else
-      List.Add( S.ToInt() );
+      List.Add(S.ToInt());
   }
 }
 //..............................................................................
-void TERange::StringFromList(olxstr &Range, const TIntList &List)  {
-  for( int i=0; i < List.Count(); i++ )  {
+void TERange::StringFromList(olxstr &Range, const TSizeList &List)  {
+  for( size_t i=0; i < List.Count(); i++ )  {
     int j = 0;
     while( List[i] == (List[i+j]-j) )  {
       j++;

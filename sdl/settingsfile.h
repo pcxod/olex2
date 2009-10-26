@@ -25,12 +25,12 @@ public:
   void SaveSettings(const olxstr& fileName);
   virtual ~TSettingsFile() {}
 
-  inline int ParamCount() const {  return Params.Count();  }
+  inline size_t ParamCount() const {  return Params.Count();  }
   // 
   template <class SC>
   inline const olxstr& GetParam(const SC& paramName, const olxstr& defVal=EmptyString ) const {
-    int index = Params.IndexOf(paramName);
-    return index == -1 ? defVal : Params.GetValue(index);
+    size_t index = Params.IndexOf(paramName);
+    return index == InvalidIndex ? defVal : Params.GetValue(index);
   }
   // convinience operator, same as GetParam
   template <class SC>
@@ -38,8 +38,8 @@ public:
   // creates a param if does not exist
   template <class SC>
   inline olxstr& operator [] (const SC& paramName) {
-    int index = Params.IndexOf(paramName);
-    if( index != -1 )
+    size_t index = Params.IndexOf(paramName);
+    if( index != InvalidIndex )
       return Params.GetValue(index);
     else  {
       Lines.Add(paramName, true);
@@ -52,8 +52,8 @@ public:
   // updates or creates new parameter
   template <class SC>
   void SetParam(const SC& paramName, const olxstr& val)  {
-    int index = Params.IndexOf(paramName);
-    if( index != -1 )
+    size_t index = Params.IndexOf(paramName);
+    if( index != InvalidIndex )
       Params.GetValue(index) = val;
     else  {
       Lines.Add(paramName, true);

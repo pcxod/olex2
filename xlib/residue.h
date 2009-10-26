@@ -6,25 +6,26 @@ BeginXlibNamespace()
 
 class TResidue : public IEObject  {
   olxstr ClassName, Alias;
-  int Number, Id;
+  int Number;
+  uint16_t Id;
   TCAtomPList Atoms;
   TAsymmUnit& Parent;
 protected:
   // removes an atom and resets the ResiId, this is used internally from Add
-  inline void Remove(TCAtom& ca)           {
-    int i = Atoms.IndexOf(ca);
-    if( i != -1 )  {
-      ca.SetResiId(-1);
+  void Remove(TCAtom& ca)           {
+    size_t i = Atoms.IndexOf(ca);
+    if( i != InvalidIndex )  {
+      ca.SetResiId(~0);
       Atoms.Delete(i);
     }
   }
   // adds an atom to this residue without trying to remove from the owning residue (if there is any!)
-  inline void _Add(TCAtom& ca) {
+  void _Add(TCAtom& ca) {
     Atoms.Add(ca);
     ca.SetResiId(Id);
   }
 public:
-  TResidue(TAsymmUnit& parent, int id, const olxstr& cl=EmptyString, int number = 0, const olxstr& alias=EmptyString) : 
+  TResidue(TAsymmUnit& parent, uint32_t id, const olxstr& cl=EmptyString, int number = 0, const olxstr& alias=EmptyString) : 
       Parent(parent), 
       Id(id), 
       ClassName(cl), 
@@ -34,40 +35,40 @@ public:
   DefPropC(olxstr, ClassName)
   DefPropC(olxstr, Alias)
   DefPropP(int, Number)
-  inline int GetId()          const {  return Id;  }
-  TCAtomPList& GetAtomList()        {  return Atoms;  }
+  uint32_t GetId() const {  return Id;  }
+  TCAtomPList& GetAtomList()  {  return Atoms;  }
   const TCAtomPList& GetAtomList() const {  return Atoms;  }
-  inline TAsymmUnit& GetParent()    {  return Parent;  }
+  TAsymmUnit& GetParent()  {  return Parent;  }
   virtual TIString ToString() const {
-    if( Id == -1 )  return EmptyString;
+    if( Id == 0 )  return EmptyString;
     olxstr rv("RESI ");
     rv << ClassName;
     if( Number != 0 )  rv << ' ' << Number;
     return (rv << (Alias.IsEmpty() ? EmptyString : (olxstr(' ') << Alias)));
   }
-  inline int Count()                 const {  return Atoms.Count();  }  
-  inline TCAtom& GetAtom(int i)      const {  return *Atoms[i];  }
-  inline TCAtom& operator [] (int i) const {  return *Atoms[i]; }
-  inline void Clear()                      {  
-    for( int i=0; i < Atoms.Count(); i++ )
+  size_t Count() const {  return Atoms.Count();  }  
+  TCAtom& GetAtom(size_t i) const {  return *Atoms[i];  }
+  TCAtom& operator [] (size_t i) const {  return *Atoms[i]; }
+  void Clear()                      {  
+    for( size_t i=0; i < Atoms.Count(); i++ )
       Atoms[i]->SetResiId(-1);
     Atoms.Clear();  
   } 
-  int IndexOf(const TCAtom& ca) const {  return Atoms.IndexOf(ca);  }
+  size_t IndexOf(const TCAtom& ca) const {  return Atoms.IndexOf(ca);  }
   // removes atom from previous residue and puts into current
-  inline void Add(TCAtom& ca) {
+  void Add(TCAtom& ca) {
     Parent.GetResidue(ca.GetResiId()).Remove(ca);
     Atoms.Add(ca);
     ca.SetResiId(Id);
   }
-  inline void SetCapacity(int c)  {  Atoms.SetCapacity(c);  }
+  void SetCapacity(size_t c)  {  Atoms.SetCapacity(c);  }
   bool IsEmpty() const {
-    for( int i=0; i < Atoms.Count(); i++ )
+    for( size_t i=0; i < Atoms.Count(); i++ )
       if( !Atoms[i]->IsDeleted() )  return false;
     return true;
   }
-  inline TResidue* Next() const {  return Parent.NextResidue(*this);  }
-  inline TResidue* Prev() const {  return Parent.PrevResidue(*this);  }
+  TResidue* Next() const {  return Parent.NextResidue(*this);  }
+  TResidue* Prev() const {  return Parent.PrevResidue(*this);  }
   friend class TAsymmUnit;
 };
 

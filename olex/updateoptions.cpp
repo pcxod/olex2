@@ -25,7 +25,7 @@ TdlgUpdateOptions::TdlgUpdateOptions(TMainFrame *ParentFrame) :
   uapi.GetAvailableMirrors(repos);
   tcProxy = new wxTextCtrl(this, -1, uapi.GetSettings().proxy.u_str() , wxDefaultPosition, wxSize(320, 21), 0);
   cbRepository = new wxComboBox(this, -1, wxEmptyString, wxDefaultPosition, wxSize(320, 21), 0, NULL, wxTE_READONLY);
-  for( int i=0; i < repos.Count(); i++ )
+  for( size_t i=0; i < repos.Count(); i++ )
     cbRepository->Append( uapi.AddTagPart(repos[i], true).u_str() );
   cbRepository->SetValue( uapi.AddTagPart(uapi.GetSettings().repository, true).u_str() );
   

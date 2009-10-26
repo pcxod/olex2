@@ -15,32 +15,32 @@ public:
   TParamList();
   TParamList(const TParamList& v);
   virtual ~TParamList();
-  inline void Clear()                            {  TStrStrList::Clear(); }
-  inline int Count()                       const {  return TStrStrList::Count();  };
-  inline bool IsEmpty()                    const {  return TStrStrList::IsEmpty();  }
-  inline const olxstr& GetValue(int index) const {  return GetObject(index);  }
-  inline olxstr& Value(int index)                {  return GetObject(index);  }
-  inline const olxstr& GetName(int index)  const {  return GetString(index);  }
+  inline void Clear()  {  TStrStrList::Clear(); }
+  inline size_t Count() const {  return TStrStrList::Count();  };
+  inline bool IsEmpty() const {  return TStrStrList::IsEmpty();  }
+  inline const olxstr& GetValue(size_t index) const {  return GetObject(index);  }
+  inline olxstr& Value(size_t index)  {  return GetObject(index);  }
+  inline const olxstr& GetName(size_t index) const {  return GetString(index);  }
   void FromString(const olxstr& S, char Sep); // -t=op
   void AddParam(const olxstr& Name, const olxstr& Param, bool Check = true);
   template <class T>
-  inline bool Contains(const T& Name)  const {  return IndexOf(Name) != -1;  }
+  inline bool Contains(const T& Name)  const {  return IndexOf(Name) != InvalidIndex;  }
   template <class T>
   const olxstr& FindValue(const T& Name, const olxstr& defval=EmptyString) const {
-    int i = IndexOf(Name);
-    return (i >= 0) ? GetObject(i) : defval;
+    size_t i = IndexOf(Name);
+    return (i != InvalidIndex) ? GetObject(i) : defval;
    }
   template <class T>
   const olxstr& operator [] (const T& Name) const {  return FindValue(Name);  }
   // these functions considers the folowing situations: '"', '('')' and '\''
   template <class StrLst>
-    static int StrtokParams(const olxstr& exp, olxch sep, StrLst& out, bool do_unquote=true)  {
+    static size_t StrtokParams(const olxstr& exp, olxch sep, StrLst& out, bool do_unquote=true)  {
       using namespace exparse::parser_util;
       if( is_quote(sep) )
         throw TInvalidArgumentException(__OlxSourceInfo, "separator");
-      const int pc = out.Count();
-      int start = 0;
-      for( int i=0; i < exp.Length(); i++ )  {
+      const size_t pc = out.Count();
+      size_t start = 0;
+      for( size_t i=0; i < exp.Length(); i++ )  {
         const olxch ch = exp.CharAt(i);
         if( is_quote(ch) && !is_escaped(exp, i) )  {
           if( !skip_string(exp, i) )  {

@@ -128,9 +128,9 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
  
   void UnifyAtomList(TSAtomPList atoms)  {
     // unify the selection
-    for( int i=0; i < atoms.Count(); i++ )
+    for( size_t i=0; i < atoms.Count(); i++ )
       atoms[i]->CAtom().SetTag(i);
-    for( int i=0; i < atoms.Count(); i++ )
+    for( size_t i=0; i < atoms.Count(); i++ )
       if( atoms[i]->CAtom().GetTag() != i || atoms[i]->CAtom().IsDeleted() )
         atoms[i] = NULL;
     atoms.Pack();
@@ -138,7 +138,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   // slection owner interface
   virtual void ExpandSelection(TCAtomGroup& atoms)  {
     atoms.SetCapacity(atoms.Count() + Selection.Count());
-    for( int i=0; i < Selection.Count(); i++ )
+    for( size_t i=0; i < Selection.Count(); i++ )
       atoms.AddNew( &Selection[i]->CAtom(), &Selection[i]->GetMatrix(0) );
     if( GetDoClearSelection() )
       Selection.Clear();
@@ -264,7 +264,7 @@ public:
   ~TOlex()  {
     TBasicApp::GetInstance().OnTimer->Clear();
     executeMacro("onexit");
-    for( int i=0; i < CallbackFuncs.Count(); i++ )
+    for( size_t i=0; i < CallbackFuncs.Count(); i++ )
       delete CallbackFuncs.GetObject(i);
     if( FProcess )  {
       FProcess->OnTerminate->Clear();
@@ -311,8 +311,8 @@ public:
     return ME.IsSuccessful();
   }
   virtual IEObject* executeFunction(const olxstr& function)  {
-    int ind = function.FirstIndexOf('(');
-    if( (ind == -1) || (ind == (function.Length()-1)) || !function.EndsWith(')') )  {
+    size_t ind = function.FirstIndexOf('(');
+    if( (ind == InvalidIndex) || (ind == (function.Length()-1)) || !function.EndsWith(')') )  {
       TBasicApp::GetLog().Error( olxstr("Incorrect function call: ") << function);
       return NULL;
     }
@@ -345,8 +345,8 @@ public:
     return true;
   }
   virtual void unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& funcName)  {
-    int ind = CallbackFuncs.IndexOfComparable(cbEvent), i = ind;
-    if( ind == -1 )  return;
+    size_t ind = CallbackFuncs.IndexOfComparable(cbEvent), i = ind;
+    if( ind == InvalidIndex )  return;
     // go forward
     while( i < CallbackFuncs.Count() && (!CallbackFuncs.GetComparable(i).Compare(cbEvent)) )  {
       if( CallbackFuncs.GetObject(i)->GetName() == funcName )  {
@@ -371,7 +371,7 @@ public:
   virtual TStrList GetPluginList() const {
     TStrList rv;
     if( Plugins != NULL )  {
-      for( int i=0; i < Plugins->ItemCount(); i++ )
+      for( size_t i=0; i < Plugins->ItemCount(); i++ )
         rv.Add(Plugins->GetItem(i).GetName());
     }
     return rv;
@@ -382,8 +382,8 @@ public:
   virtual bool IsControl(const olxstr& cname) const {  return false;  }
 
   virtual const olxstr& getVar(const olxstr &name, const olxstr &defval=NullString) const  {
-    int i = TOlxVars::VarIndex(name);
-    if( i == -1 )  {
+    size_t i = TOlxVars::VarIndex(name);
+    if( i == InvalidIndex )  {
       if( &defval == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, "undefined key");
       TOlxVars::SetVar(name, defval);
@@ -484,7 +484,7 @@ public:
   //..............................................................................
   void funSel(const TStrObjList& Params, TMacroError &E) {
     olxstr rv;
-    for( int i=0; i < Selection.Count(); i++ )
+    for( size_t i=0; i < Selection.Count(); i++ )
       rv << Selection[i]->GetLabel() << ' ';
     E.SetRetVal( rv );
   }
@@ -495,19 +495,19 @@ public:
       Selection.Clear();
     }
     else if( Options.Contains("-i") )  {
-      for( int i=0; i < latt.AtomCount(); i++ )
+      for( size_t i=0; i < latt.AtomCount(); i++ )
         latt.GetAtom(i).SetTag(0);
-      for( int i=0; i < Selection.Count(); i++ )
+      for( size_t i=0; i < Selection.Count(); i++ )
         Selection[i]->SetTag(1);
       Selection.Clear();
-      for( int i=0; i < latt.AtomCount(); i++ )
+      for( size_t i=0; i < latt.AtomCount(); i++ )
         if( latt.GetAtom(i).GetTag() == 0 && !latt.GetAtom(i).IsDeleted() )
           Selection.Add(&latt.GetAtom(i));
     }
     else if( Options.Contains("-a" ) )  {
       Selection.Clear();
       Selection.SetCapacity( latt.AtomCount() );
-      for( int i=0; i < latt.AtomCount(); i++ )
+      for( size_t i=0; i < latt.AtomCount(); i++ )
         if( !latt.GetAtom(i).IsDeleted() )
           Selection.Add(&latt.GetAtom(i));
     }
@@ -519,7 +519,7 @@ public:
         TTSAtom_EvaluatorFactory *satom = (TTSAtom_EvaluatorFactory*)rf.BindingFactory("satom");
         TSyntaxParser SyntaxParser(&rf, Where);
         if( SyntaxParser.Errors().Count() == 0 )  {
-          for( int i=0; i < latt.AtomCount(); i++ )  {
+          for( size_t i=0; i < latt.AtomCount(); i++ )  {
             if( latt.GetAtom(i).IsDeleted() )  continue;
             satom->SetTSAtom_( &latt.GetAtom(i) );
             if( SyntaxParser.Evaluate() )  Selection.Add( &latt.GetAtom(i) );
@@ -554,7 +554,7 @@ public:
       Ins.DelIns(insIndex);
       return;
     }
-    for( int i=0; i < Ins.InsCount(); i++ )  {
+    for( size_t i=0; i < Ins.InsCount(); i++ )  {
       if(  Ins.InsName(i).Equalsi(Cmds[0]) )  {
         Ins.DelIns(i--);  
         continue;
@@ -709,8 +709,8 @@ public:
 
     olxstr Tmp;
     bool Space;
-    for( int i=0; i < Cmds.Count(); i++ )  {
-      Space =  (Cmds[i].FirstIndexOf(' ') != -1 );
+    for( size_t i=0; i < Cmds.Count(); i++ )  {
+      Space =  (Cmds[i].FirstIndexOf(' ') != InvalidIndex );
       if( Space )  Tmp << '\"';
       Tmp << Cmds[i];
       if( Space ) Tmp << '\"';
@@ -779,7 +779,7 @@ public:
   }
   //..............................................................................
   void macEcho(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    for( int i=0; i < Cmds.Count(); i++ )  {
+    for( size_t i=0; i < Cmds.Count(); i++ )  {
       TBasicApp::GetLog() << Cmds[i].c_str() << (((i+1) < Cmds.Count()) ? ' ' : '\n');
     }
   }
@@ -843,8 +843,8 @@ public:
   }
   //..............................................................................
   void funGetVar(const TStrObjList& Params, TMacroError &E)  {
-    int ind = TOlxVars::VarIndex(Params[0]);
-    if( ind == -1 )  {
+    size_t ind = TOlxVars::VarIndex(Params[0]);
+    if( ind == InvalidIndex )  {
       if( Params.Count() == 2 )
         E.SetRetVal( Params[1] );
       else  
@@ -886,7 +886,7 @@ public:
     Table.ColName(4) = "Z";
     Table.ColName(5) = "Ueq";
     Table.ColName(6) = "Peak";
-    for(int i = 0; i < atoms.Count(); i++ )  {
+    for( size_t i = 0; i < atoms.Count(); i++ )  {
       Table[i][0] = atoms[i]->GetLabel();
       Table[i][1] = atoms[i]->GetAtomInfo().GetSymbol();
       Table[i][2] = olxstr::FormatFloat(3, atoms[i]->ccrd()[0]);
@@ -909,13 +909,13 @@ public:
     if( !LocateAtoms(toks, atoms, false) )  return;
     if( Cmds[Cmds.Count()-1].IsNumber() )  {
       int start = Cmds[1].ToInt();
-      for( int i=0; i < atoms.Count(); i++ ) {
+      for( size_t i=0; i < atoms.Count(); i++ ) {
         atoms[i]->CAtom().Label() = atoms[i]->GetAtomInfo().GetSymbol();
         atoms[i]->CAtom().Label() << start++;
       }
     }
     else  {
-      for( int i=0; i < atoms.Count(); i++ ) 
+      for( size_t i=0; i < atoms.Count(); i++ ) 
         atoms[i]->CAtom().SetLabel(Cmds[1]);
     }
   }
@@ -923,7 +923,7 @@ public:
   void macKill(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
     TSAtomPList atoms;
     if( !LocateAtoms(Cmds, atoms, false) )  return;
-    for( int i=0; i < atoms.Count(); i++ ) 
+    for( size_t i=0; i < atoms.Count(); i++ ) 
       atoms[i]->CAtom().SetDeleted(true);
     XApp.XFile().EndUpdate();
     UnifyAtomList(Selection);
@@ -936,7 +936,7 @@ public:
     char bf[16];
     TShellUtil::MACInfo MACsInfo;
     TShellUtil::ListMACAddresses(MACsInfo);
-    for( int i=0; i < MACsInfo.Count(); i++ )  {
+    for( size_t i=0; i < MACsInfo.Count(); i++ )  {
       if( full )
         rv << MACsInfo[i] << '=';
       for( size_t j=0; j < MACsInfo.GetObject(i).Count(); j++ )  {
@@ -952,12 +952,12 @@ public:
   //..............................................................................
 //////////////////////////////////////////////////////////////////////////////////////////////////
   void CallbackFunc(const olxstr& cbEvent, TStrObjList& params)  {
-    static TIntList indexes;
+    static TSizeList indexes;
     static TMacroError me;
     indexes.Clear();
 
     CallbackFuncs.GetIndexes(cbEvent, indexes);
-    for(int i=0; i < indexes.Count(); i++ )  {
+    for( size_t i=0; i < indexes.Count(); i++ )  {
       me.Reset();
       CallbackFuncs.GetObject( indexes[i] )->Run(params, me);
       AnalyseError( me );
@@ -965,7 +965,7 @@ public:
   }
   //..............................................................................
   void CallbackFunc(const olxstr& cbEvent, const olxstr& param)  {
-    static TIntList indexes;
+    static TSizeList indexes;
     static TMacroError me;
     static TStrObjList sl;
     indexes.Clear();
@@ -973,7 +973,7 @@ public:
     sl.Add( param );
 
     CallbackFuncs.GetIndexes(cbEvent, indexes);
-    for(int i=0; i < indexes.Count(); i++ )  {
+    for( size_t i=0; i < indexes.Count(); i++ )  {
       me.Reset();
       CallbackFuncs.GetObject( indexes[i] )->Run(sl, me);
       AnalyseError( me );
@@ -1025,7 +1025,7 @@ int main(int argc, char* argv[])  {
   olxstr bd( TBasicApp::GuessBaseDir(argv[0], "OLEX2_DIR"));
   TOlex olex(bd);
 #ifdef __WIN32__
-  SetConsoleTitle(olx_T("Olex2 Console"));
+  SetConsoleTitle(olxT("Olex2 Console"));
 #endif	
   TLibrary &Library = olex.GetLibrary();
   cout << "Welcome to Olex2 console\n";

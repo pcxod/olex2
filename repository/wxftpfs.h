@@ -166,16 +166,16 @@ protected:
   }
   virtual bool _DoNewDir(const olxstr& DN)      {  
     olxstr norm_path( NormaliseName(DN) );
-    if( norm_path.FirstIndexOf('/') != -1 )  {
+    if( norm_path.FirstIndexOf('/') != InvalidIndex )  {
       TStrList toks(norm_path, '/');
-      for( int i=0; i < toks.Count(); i++ )  {
+      for( size_t i=0; i < toks.Count(); i++ )  {
         if( !Ftp.FileExists( toks[i].u_str() ) )
           if( !Ftp.MkDir(toks[i].u_str()) )
             return false;
         if( !Ftp.ChDir(toks[i].u_str()) )
           return false;
       }
-      for( int i=0; i < toks.Count(); i++ )  // restore the level
+      for( size_t i=0; i < toks.Count(); i++ )  // restore the level
         if( !Ftp.ChDir(wxT("..")) )
           return false;
       return true;

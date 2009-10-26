@@ -45,9 +45,9 @@ public:
   virtual void StartDraw();
   virtual void EndDraw();
 
-  inline int FontCount() const {  return Fonts.Count(); }
-  inline TGlFont* GetFont(int i)  {
-    return (i < 0 || i >= FontCount())  ? NULL : Fonts[i];
+  inline size_t FontCount() const {  return Fonts.Count(); }
+  inline TGlFont* GetFont(size_t i)  {
+    return (i >= FontCount())  ? NULL : Fonts[i];
   }
   /* be sure it exists */
   inline TGlFont* DefFont() const  {  return Fonts.IsEmpty() ? NULL : Fonts[0]; }

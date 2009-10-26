@@ -50,17 +50,19 @@ private:
   class TAsymmUnit *FParent;
   TBasicAtomInfo*  FAtomInfo;    // a pointer to TBasisAtomInfo object
   olxstr FLabel;    // atom's label
-  int     Id, Tag;       // c_atoms id; this is also used to identify if TSAtoms are the same
-  int     ResiId, SameId, EllpId;   // residue and SADI ID
+  size_t Id, EllpId;  // c_atoms id; this is also used to identify if TSAtoms are the same
+  uint32_t FragmentId, // this is used in asymmetric unit sort and initialised in TLatice::InitBody()
+    ResiId;
+  uint16_t SameId, Flags;
+  int8_t Part;
   double  Occu;     // occupancy and its variable
   double  Uiso, // isotropic thermal parameter; use it when Ellipsoid = NULL
     QPeak,      // if atom is a peak atom - this is not 0
     UisoEsd,    //
     UisoScale;  // for proxied Uiso (depending on the UisoOwner, this defines the scaled value
   TCAtom* UisoOwner;  // the Uiso owner, if any
-  int     FragmentId;   // this is used in asymmetric unit sort and initialised in TLatice::InitBody()
   vec3d Center, Esd;  // fractional coordinates and esds
-  short Part, Degeneracy, Flags;
+  uint8_t Degeneracy;
   TPtrList<TCAtom>* FAttachedAtoms, *FAttachedAtomsI;
   /* Afix group is a fitted group, Hfix group the immediate dependent group */
   TAfixGroup* DependentAfixGroup, *ParentAfixGroup;
@@ -69,30 +71,30 @@ private:
   XVarReference* Vars[12]; //x,y,z,occu,uiso,U
   static olxstr VarNames[];
   CXConnInfo* ConnInfo;
-  inline void SetId(int id) {  Id = id;  }
+  inline void SetId(size_t id) {  Id = id;  }
 public:
   TCAtom(TAsymmUnit *Parent);
   virtual ~TCAtom();
-  inline TAsymmUnit* GetParent()       const {  return FParent; }
+  inline TAsymmUnit* GetParent() const {  return FParent; }
   inline TBasicAtomInfo& GetAtomInfo() const {  return *FAtomInfo; }
   void SetAtomInfo(TBasicAtomInfo& A);
 
-  inline olxstr& Label()                   {  return FLabel; }
+  inline olxstr& Label()  {  return FLabel; }
   // function validates and changes the atom type, use the syntax above just to set the label
   bool SetLabel(const olxstr &L);
   
   // returns just atom label
-  inline const olxstr& GetLabel()  const   {  return FLabel;  }
+  inline const olxstr& GetLabel() const {  return FLabel;  }
   // if ResiId == -1 works the same as GetLabel(), otherwise appends '_' and Residue number
   olxstr GetResiLabel()  const;
 
-  inline int AttachedAtomCount()       const {
+  inline size_t AttachedAtomCount() const {
     return FAttachedAtoms == NULL ? 0 : FAttachedAtoms->Count();
   }
-  inline TCAtom& GetAttachedAtom(int i)       const {  return *FAttachedAtoms->Item(i);  }
+  inline TCAtom& GetAttachedAtom(size_t i) const {  return *FAttachedAtoms->Item(i);  }
   void AttachAtom(TCAtom *CA);
   inline bool IsAttachedTo(TCAtom& CA) const {
-    return FAttachedAtoms == NULL ? false : FAttachedAtoms->IndexOf(&CA) != -1;
+    return FAttachedAtoms == NULL ? false : FAttachedAtoms->IndexOf(&CA) != InvalidIndex;
   }
   inline void ClearAttachedAtoms()  {
     if( FAttachedAtoms != NULL )  {
@@ -105,13 +107,13 @@ public:
     }
   }
 
-  inline int AttachedAtomICount()      const {
+  inline size_t AttachedAtomICount()      const {
     return FAttachedAtomsI == NULL ? 0 : FAttachedAtomsI->Count();
   }
-  inline TCAtom& GetAttachedAtomI(int i)      const {  return *FAttachedAtomsI->Item(i);  }
+  inline TCAtom& GetAttachedAtomI(size_t i)      const {  return *FAttachedAtomsI->Item(i);  }
   void AttachAtomI(TCAtom *CA);
   inline bool IsAttachedToI(TCAtom& CA)const {
-    return FAttachedAtomsI == NULL ? false : FAttachedAtomsI->IndexOf(&CA) != -1;
+    return FAttachedAtomsI == NULL ? false : FAttachedAtomsI->IndexOf(&CA) != InvalidIndex;
   }
   // beware - just the memory addresses compared!
   inline bool operator == (const TCAtom& ca)  const  {  return this == &ca;  }
@@ -122,26 +124,24 @@ public:
 //  TAtomsInfo *AtomsInfo() const;
   void  Assign(const TCAtom& S);
 
-  inline int GetId() const {  return Id;  }
-  DefPropP(int, Tag)
-  DefPropP(int, ResiId)
-  DefPropP(int, SameId)
-  DefPropP(int, EllpId)
-  DefPropP(int, FragmentId)
+  inline size_t GetId() const {  return Id;  }
+  DefPropP(uint32_t, ResiId)
+  DefPropP(uint32_t, FragmentId)
+  DefPropP(uint16_t, SameId)
+  DefPropP(size_t, EllpId)
+  DefPropP(uint8_t, Degeneracy)
+  DefPropP(int8_t, Part)
   DefPropP(TExyzGroup*, ExyzGroup)
   
   CXConnInfo& GetConnInfo() const {  return *ConnInfo;  }
   void SetConnInfo(CXConnInfo& ci);
 
-//  short   Frag;    // fragment index
-  DefPropP(short, Degeneracy)
-  DefPropP(short, Part)
   int GetAfix() const;
   DefPropP(TAfixGroup*, ParentAfixGroup)
   DefPropP(TAfixGroup*, DependentAfixGroup)
-  int DependentHfixGroupCount() const {  return DependentHfixGroups == NULL ? 0 : DependentHfixGroups->Count();  }
-  TAfixGroup& GetDependentHfixGroup(int i) {  return *DependentHfixGroups->Item(i);  }
-  const TAfixGroup& GetDependentHfixGroup(int i) const {  return *DependentHfixGroups->Item(i);  }
+  size_t DependentHfixGroupCount() const {  return DependentHfixGroups == NULL ? 0 : DependentHfixGroups->Count();  }
+  TAfixGroup& GetDependentHfixGroup(size_t i) {  return *DependentHfixGroups->Item(i);  }
+  const TAfixGroup& GetDependentHfixGroup(size_t i) const {  return *DependentHfixGroups->Item(i);  }
   void RemoveDependentHfixGroup(TAfixGroup& hg) {  DependentHfixGroups->Remove(&hg);  }
   void ClearDependentHfixGroups() {  
     if( DependentHfixGroups != NULL ) DependentHfixGroups->Clear();
@@ -165,7 +165,7 @@ public:
   bool IsAvailable() const {  return (Flags&(catom_flag_Detached|catom_flag_Masked|catom_flag_Deleted)) == 0;  }
 
   TEllipsoid* GetEllipsoid() const;
-  void UpdateEllp( const TEllipsoid& NV);
+  void UpdateEllp(const TEllipsoid& NV);
   void AssignEllp(TEllipsoid *NV);
 
   inline vec3d& ccrd()                {  return Center;  }
@@ -173,30 +173,30 @@ public:
   inline vec3d& ccrdEsd()             {  return Esd;  }
   inline vec3d const& ccrdEsd() const {  return Esd;  }
 // IXVarReferencer implementation
-  virtual short VarCount()                          const {  return 12;  }
-  virtual const XVarReference* GetVarRef(short i)   const {  
-    if( i < 0 || i >= VarCount() )
+  virtual size_t VarCount() const {  return 12;  }
+  virtual const XVarReference* GetVarRef(size_t i) const {  
+    if( i >= VarCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return Vars[i];  
   }
-  virtual XVarReference* GetVarRef(short i)               {  
-    if( i < 0 || i >= VarCount() )
+  virtual XVarReference* GetVarRef(size_t i)  {  
+    if( i >= VarCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return Vars[i];  
   }
-  virtual olxstr GetVarName(short i)                const { 
-    if( i < 0 || i >= VarCount() )
+  virtual olxstr GetVarName(size_t i) const { 
+    if( i >= VarCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return VarNames[i];  
   }
-  virtual void SetVarRef(short i, XVarReference* var_ref) {  
-    if( i < 0 || i >= VarCount() )
+  virtual void SetVarRef(size_t i, XVarReference* var_ref) {  
+    if( i >= VarCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     Vars[i] = var_ref;  
   }
   virtual IXVarReferencerContainer& GetParentContainer();
-  virtual double GetValue(short var_index) const;
-  virtual void SetValue(short var_index, const double& val);
+  virtual double GetValue(size_t var_index) const;
+  virtual void SetValue(size_t var_index, const double& val);
   virtual bool IsValid() const {  return !IsDeleted();  }
   virtual olxstr GetIdName() const {  return FLabel;  }
 //
@@ -216,7 +216,7 @@ class TCAtomPComparator  {
 public:
   static int Compare(const TCAtom* a1, const TCAtom* a2)  {
     if( a1->GetFragmentId() != a2->GetFragmentId() )  return a1->GetFragmentId() - a2->GetFragmentId();
-    if( a1->GetResiId() != a2->GetResiId() )          return a1->GetResiId() - a2->GetResiId();
+    if( a1->GetResiId() != a2->GetResiId() )          return olx_cmp_size_t(a1->GetResiId(),a2->GetResiId());
     // asc sort by label
     if( a1->GetAtomInfo().GetIndex() == a2->GetAtomInfo().GetIndex() )
       return TCAtom::CompareAtomLabels( a1->GetLabel(), a2->GetLabel());

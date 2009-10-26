@@ -4,12 +4,10 @@ namespace mfc_ext  {
   struct wnd  {
     static olxstr get_text(CWnd *window, int id)  {
       CWnd *item = window->GetDlgItem(id);
-      int tl = item->SendMessage(WM_GETTEXTLENGTH);
+      int tl = (int)item->SendMessage(WM_GETTEXTLENGTH);
       olxch * bf = new olxch[tl+1];
       item->SendMessage(WM_GETTEXT, tl+1, (LPARAM)bf);
-      olxstr rv(bf, tl);
-      delete []bf;
-      return rv;
+      return olxstr::FromExternal(bf, tl);
     }
     static void set_text(CWnd * window, int id, const olxstr &val)  {
       window->GetDlgItem(id)->SendMessage(WM_SETTEXT, 0, (LPARAM)val.u_str());
@@ -26,7 +24,7 @@ namespace mfc_ext  {
   };
   struct progress_bar  {
     static int get_pos(CWnd *window, int id)  {
-      return window->GetDlgItem(id)->SendMessage(PBM_GETPOS);
+      return (int)window->GetDlgItem(id)->SendMessage(PBM_GETPOS);
     }
     static void set_pos(CWnd *window, int id, int pos)  {
       window->GetDlgItem(id)->SendMessage(PBM_SETPOS, (WPARAM)pos, 0);
@@ -46,9 +44,9 @@ namespace mfc_ext  {
   struct combo_box : public wnd {
     static void clear_items(CWnd *window, int id)  {
       CWnd *cb = window->GetDlgItem(id);
-      int cnt = cb->SendMessage(CB_GETCOUNT);
+      int cnt = (int)cb->SendMessage(CB_GETCOUNT);
       while( cnt != 0 )
-        cnt = cb->SendMessage(CB_DELETESTRING, (WPARAM)0);
+        cnt = (int)cb->SendMessage(CB_DELETESTRING, (WPARAM)0);
     }
     static void add_item(CWnd *window, int id, const olxstr &item)  {
       window->GetDlgItem(id)->SendMessage(CB_ADDSTRING, 0, (LPARAM)item.u_str());

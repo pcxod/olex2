@@ -50,7 +50,7 @@ void TGlGroup::Create(const olxstr& cName, const ACreationParams* cpar)  {
     GlM.AmbientB = 0x7f00ff00;
     GlM.DiffuseB = 0x7f0000ff;
   }
-  DefaultColor = (GS.IndexOfMaterial("mat") != -1);
+  DefaultColor = (GS.IndexOfMaterial("mat") != InvalidIndex);
   FGlM = &GS.GetMaterial("mat", GlM);
 }
 //..............................................................................
@@ -61,7 +61,7 @@ TGlGroup::~TGlGroup()  {
 } 
 //..............................................................................
 void TGlGroup::Clear()  {
-  for( int i=0; i < FObjects.Count(); i++ )  {
+  for( size_t i=0; i < FObjects.Count(); i++ )  {
     FObjects[i]->SetParentGroup(NULL);
     FObjects[i]->SetSelected(false);
   }
@@ -75,7 +75,7 @@ void TGlGroup::Remove(AGDrawObject& G)  {
 }
 //..............................................................................
 void TGlGroup::RemoveDeleted()  {
-  for( int i=0; i < FObjects.Count(); i++ )  {
+  for( size_t i=0; i < FObjects.Count(); i++ )  {
     if( FObjects[i]->IsDeleted() )  {
       FObjects[i]->SetParentGroup(NULL);
       FObjects[i]->SetSelected(false);
@@ -92,8 +92,8 @@ bool TGlGroup::Add(AGDrawObject& GO)  {
   TGlGroup *GlG = Parent.FindObjectGroup(GO);
   if( GlG != NULL )  
     go = GlG;
-  int i = FObjects.IndexOf(go);
-  if( i == -1 )  {
+  size_t i = FObjects.IndexOf(go);
+  if( i == InvalidIndex )  {
     FObjects.Add(go);
     go->SetParentGroup(this);
     return true;
@@ -106,12 +106,12 @@ bool TGlGroup::Add(AGDrawObject& GO)  {
 }
 //..............................................................................
 void TGlGroup::SetVisible(bool On)  {
-  for( int i=0; i < FObjects.Count(); i++ )
+  for( size_t i=0; i < FObjects.Count(); i++ )
     FObjects[i]->SetVisible(On); 
 }
 //..............................................................................
 void TGlGroup::SetSelected(bool On)  {
-  for( int i=0; i < FObjects.Count(); i++ )
+  for( size_t i=0; i < FObjects.Count(); i++ )
     FObjects[i]->SetSelected(On);
   AGDrawObject::SetSelected(On);
 }
@@ -128,16 +128,16 @@ void TGlGroup::Draw(bool SelectPrimitives, bool SelectObjects) const  {
   if( !SelectPrimitives && !SelectObjects )
       InitMaterial();
 
-  for( int i=0; i < FObjects.Count(); i++ )  {
+  for( size_t i=0; i < FObjects.Count(); i++ )  {
     AGDrawObject* G = FObjects[i];
     if( !G->IsVisible() )  continue;
     if( G->IsDeleted() )  continue;
     if( G->IsGroup() )    { G->Draw();  continue; }
-    const int pc = G->GetPrimitives().PrimitiveCount();
-    for( int j=0; j < pc; j++ )  {
+    const size_t pc = G->GetPrimitives().PrimitiveCount();
+    for( size_t j=0; j < pc; j++ )  {
       TGlPrimitive& GlP = G->GetPrimitives().GetPrimitive(j);
-      if( SelectObjects )     glLoadName(G->GetTag());
-      if( SelectPrimitives )  glLoadName(GlP.GetTag());
+      if( SelectObjects )     glLoadName((GLuint)G->GetTag());
+      if( SelectPrimitives )  glLoadName((GLuint)GlP.GetTag());
       glPushMatrix();
       if( G->Orient(GlP) )  {  glPopMatrix();  continue;  }
       GlP.Draw();
@@ -147,19 +147,19 @@ void TGlGroup::Draw(bool SelectPrimitives, bool SelectObjects) const  {
 }
 //..............................................................................
 bool TGlGroup::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
-  for( int i=0; i < FObjects.Count(); i++ )
+  for( size_t i=0; i < FObjects.Count(); i++ )
     FObjects[i]->OnMouseDown(Sender, Data);
   return true;
 }
 //..............................................................................
 bool TGlGroup::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
-  for( int i=0; i < FObjects.Count(); i++ )
+  for( size_t i=0; i < FObjects.Count(); i++ )
     FObjects[i]->OnMouseUp(Sender, Data);
   return true;
 }
 //..............................................................................
 bool TGlGroup::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
-  for( int i=0; i < FObjects.Count(); i++ )
+  for( size_t i=0; i < FObjects.Count(); i++ )
     FObjects[i]->OnMouseMove(Sender, Data);
   return true;
 }

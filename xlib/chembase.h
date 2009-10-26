@@ -1,9 +1,8 @@
 //----------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-#ifndef chembaseH
-#define chembaseH
-//---------------------------------------------------------------------------
+#ifndef __olx_cl_base_H
+#define __olx_cl_base_H
 
 #define BeginChemNamespace()  namespace chemlib {
 #define EndChemNamespace()  };\

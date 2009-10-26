@@ -58,12 +58,12 @@ public:
   void Assign(const TSimpleRestraint& );
   //const TSimpleRestraint& operator = ( const TSimpleRestraint& );
 
-  inline int AtomCount()  const  {  return InvolvedAtoms.Count();  }
-  inline const TGroupCAtom& GetAtom(int i)  const {  return InvolvedAtoms[i];  }
-  inline TGroupCAtom& GetAtom(int i)  {  return InvolvedAtoms[i];  }
+  inline size_t AtomCount()  const  {  return InvolvedAtoms.Count();  }
+  inline const TGroupCAtom& GetAtom(size_t i)  const {  return InvolvedAtoms[i];  }
+  inline TGroupCAtom& GetAtom(size_t i)  {  return InvolvedAtoms[i];  }
   bool ContainsAtom(TCAtom* ca) const;
 
-  inline short GetListType()  const  {  return ListType;  }
+  inline short GetListType() const {  return ListType;  }
 
   DefPropP(double, Value)
   DefPropP(double, Esd)
@@ -73,30 +73,30 @@ public:
   // compares pointer addresses only!
   bool operator == (const TSimpleRestraint& sr) const {  return this == &sr;  }
 // IXVarReferencer implementation
-  virtual short VarCount() const {  return 1;  }
-  virtual const XVarReference* GetVarRef(short var_index) const {  
+  virtual size_t VarCount() const {  return 1;  }
+  virtual const XVarReference* GetVarRef(size_t var_index) const {  
     if( var_index != 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return VarRef;  
   }
-  virtual XVarReference* GetVarRef(short var_index)  {  
+  virtual XVarReference* GetVarRef(size_t var_index)  {  
     if( var_index != 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return VarRef;  
   }
-  virtual olxstr GetVarName(short var_index) const;
-  virtual void SetVarRef(short var_index, XVarReference* var_ref) {  
+  virtual olxstr GetVarName(size_t var_index) const;
+  virtual void SetVarRef(size_t var_index, XVarReference* var_ref) {  
     if( var_index != 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     VarRef = var_ref;  
   }
   virtual IXVarReferencerContainer& GetParentContainer();
-  virtual double GetValue(short var_index) const {  
+  virtual double GetValue(size_t var_index) const {  
     if( var_index != 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return Value;  
   }
-  virtual void SetValue(short var_index, const double& val) {  
+  virtual void SetValue(size_t var_index, const double& val) {  
     if( var_index != 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     Value = val;  
@@ -127,11 +127,11 @@ public:
   // function checks uniquesness of the restraint data - previously defined values are removed
   void ValidateRestraint( TSimpleRestraint& sr);
   void ValidateAll()  {
-    for( int i=0; i < Restraints.Count(); i++ )
+    for( size_t i=0; i < Restraints.Count(); i++ )
       Restraints[i].Validate();
   }
 
-  TSimpleRestraint& Release(int i);
+  TSimpleRestraint& Release(size_t i);
   void Release(TSimpleRestraint& sr);
   void Restore(TSimpleRestraint& sr);
 
@@ -142,24 +142,24 @@ public:
   
   void Assign(const TSRestraintList& rl);
   void Clear();
-  inline int Count() const {  return Restraints.Count();  }
-  inline TSimpleRestraint& operator [] (int i){  return Restraints[i];  }
+  inline size_t Count() const {  return Restraints.Count();  }
+  inline TSimpleRestraint& operator [] (size_t i){  return Restraints[i];  }
   inline short GetRestraintListType()  const  {  return RestraintListType;  }
 
 // IXVarReferencerContainer implementation
   virtual olxstr GetIdName() const {  return IdName;  }
   // note - possibly unsafe, type is not checked
-  virtual int GetReferencerId(const IXVarReferencer& vr) const {
-    int ind = Restraints.IndexOf((TSimpleRestraint&)vr);
-    if( ind == -1 )
+  virtual size_t GetReferencerId(const IXVarReferencer& vr) const {
+    size_t ind = Restraints.IndexOf((TSimpleRestraint&)vr);
+    if( ind == InvalidIndex )
       throw TInvalidArgumentException(__OlxSourceInfo, "var referencer");
     return ind;
   }
   // note - possibly unsafe, range is unchecked
-  virtual IXVarReferencer* GetReferencer(int id) {
+  virtual IXVarReferencer* GetReferencer(size_t id) {
     return &Restraints[id];
   }
-  virtual int ReferencerCount() const {  return Restraints.Count();  }
+  virtual size_t ReferencerCount() const {  return Restraints.Count();  }
 //
 
   void ToDataItem(TDataItem& item) const;

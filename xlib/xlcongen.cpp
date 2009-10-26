@@ -122,10 +122,10 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const TBasicAtomInfo
     }
     if( afix != 0 )  {
       TAfixGroup& ag = RefMod.AfixGroups.New( &envi.GetBase().CAtom(), afix );
-      for( int i=0; i < CreatedAtoms.Count(); i++ )
+      for( size_t i=0; i < CreatedAtoms.Count(); i++ )
         ag.AddDependent(*CreatedAtoms[i]);
     }
-    for( int i=0; i < CreatedAtoms.Count(); i++ )  {
+    for( size_t i=0; i < CreatedAtoms.Count(); i++ )  {
       CreatedAtoms[i]->SetPart( envi.GetBase().CAtom().GetPart() );
       CreatedAtoms[i]->SetUisoOwner( &envi.GetBase().CAtom() );
       if( envi.GetBase().GetAtomInfo() == iOxygenIndex || Group == fgCH3 )

@@ -48,7 +48,7 @@ void MD5Impl::digest64(const uint32_t* msg)  {
       f = c^(b | ~d);
       g = (i*7) % 16;
     }
-    const size_t tmp = d;
+    const uint32_t tmp = d;
     d = c;
     c = b;
     b += HashingUtils::hs_rotl( a+f+consts[i]+ msg[g], rotations[i] );
