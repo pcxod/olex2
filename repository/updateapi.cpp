@@ -400,7 +400,7 @@ void UpdateAPI::GetAvailableMirrors(TStrList& res) const  {
   olxstr mirrors_fn = GetMirrorsFileName();
   if( TEFile::Exists(mirrors_fn) )
     res.LoadFromFile(mirrors_fn);
-  if( res.IndexOf(def_repo) == -1 )
+  if( res.IndexOf(def_repo) == InvalidIndex )
     res.Insert(0, def_repo);
   if( settings.IsValid() && !settings.repository.IsEmpty() )  {
     const size_t ind = res.IndexOf(settings.repository);

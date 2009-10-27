@@ -3099,7 +3099,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
         T = TEFile::ChangeFileExt(T, EmptyString);
       }
       TEFile::OSPathI(T);
-      if( uniqNames.IndexOf(T) == -1 )
+      if( uniqNames.IndexOf(T) == InvalidIndex )
         uniqNames.Add(T);
       i++;
       T = I->GetFieldValue(olxstr("file") << i);
@@ -3980,16 +3980,14 @@ void TMainForm::unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& func
     }
     i++;
   }
-  if( ind == 0 )  return;
   // go backwards
   i = ind-1;
-  while( i >= 0 && (!CallbackFuncs.GetComparable(i).Compare(cbEvent)) )  {
+  while( i !=InvalidIndex && (!CallbackFuncs.GetComparable(i).Compare(cbEvent)) )  {
     if( CallbackFuncs.GetObject(i)->GetName() == funcName )  {
       delete CallbackFuncs.GetObject(i);
       CallbackFuncs.Remove(i);
       return;
     }
-    if( i == 0 )  return;
     i--;
   }
 }

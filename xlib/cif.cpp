@@ -582,7 +582,7 @@ void TCif::Group()  {
       continue;
     tmp = tmp.SubStringTo(ind);
     ind = sections.IndexOfComparable(tmp);
-    if( ind == -1 )  {
+    if( ind == InvalidIndex )  {
       sections.Add( tmp, AnAssociation2<size_t,size_t>(i,i) );
       AnAssociation2<size_t,size_t>& indexes = sections[tmp];
       GroupSection(Lines, i+1, tmp, indexes);
@@ -795,12 +795,12 @@ void TCif::Initialize()  {
     A->ccrd()[1] = EValue.GetV();  A->ccrdEsd()[1] = EValue.GetE();
     EValue = ALoop->Table()[i][ACz];
     A->ccrd()[2] = EValue.GetV();  A->ccrdEsd()[2] = EValue.GetE();
-    if( ACUiso >= 0 )    {
+    if( ACUiso != InvalidIndex )    {
       EValue = ALoop->Table()[i][ACUiso];
       A->SetUisoEsd( EValue.GetE() );
       A->SetUiso( EValue.GetV() );
     }
-    if( APart != -1 && ALoop->Table()[i][APart].IsNumber() )
+    if( APart != InvalidIndex && ALoop->Table()[i][APart].IsNumber() )
       A->SetPart(ALoop->Table()[i][APart].ToInt() );
 
 //    if( !A->Info ) ;
@@ -1298,7 +1298,7 @@ olxstr TLinkedLoopTable::SymmCodeToSymm(TCif *Cif, const olxstr &Code)  {
   }
   if( Toks.Count() != 2 )  return Symm;
   size_t isymm = Toks[0].ToSizeT()-1;
-  if( isymm < 0 || isymm >= LT->RowCount() )  return Symm;
+  if( isymm >= LT->RowCount() )  return Symm;
   if( Toks[1].Length() != 3 )  return Symm;
   TSymmParser::SymmToMatrix((*LT)[isymm][0], mSymm);
   mSymm.t[0] += (int)(Toks[1].CharAt(0)-'5');
@@ -1564,7 +1564,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
       Tmp = DI->GetFieldValue("mustequal", EmptyString);
       Toks.Clear();
       Toks.Strtok(Tmp, ';');
-      if( !Tmp.IsEmpty() && (Toks.IndexOfi(Val)==-1) ) // equal to
+      if( !Tmp.IsEmpty() && (Toks.IndexOfi(Val) == InvalidIndex) ) // equal to
       {  AddRow = false;  break;  }
 
       Tmp = DI->GetFieldValue("atypeequal", EmptyString);
@@ -1589,7 +1589,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
       Tmp = DI->GetFieldValue("mustnotequal", EmptyString);
       Toks.Clear();
       Toks.Strtok(Tmp, ';');
-      if( Tmp.Length() && ( Toks.IndexOfi(Val)!=-1) ) // not equal to
+      if( !Tmp.IsEmpty() && ( Toks.IndexOfi(Val) != InvalidIndex) ) // not equal to
       {  AddRow = false;  break;  }
 
       Tmp = DI->GetFieldValue("multiplier", EmptyString);

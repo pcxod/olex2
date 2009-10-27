@@ -3,11 +3,6 @@
 // TGlConsole - a console
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "glconsole.h"
 #include "glrender.h"
 #include "actions.h"
@@ -52,12 +47,12 @@ TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   FCommand = PromptStr;
   FShowBuffer = true;
   SetGroupable(false);
-  FontIndex = -1;
-  FTxtPos = -1;
+  FontIndex = ~0;
+  FTxtPos = ~0;
   FMaxLines = 1000;
   FScrollDirectionUp = true;
-  FLinesToShow = -1;
-  FCmdPos = -1;
+  FLinesToShow = ~0;
+  FCmdPos = ~0;
   FCursor = new TGlCursor(R, "Cursor");
   //FCursor->Visible(false);
 
@@ -132,7 +127,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
     for( index_t i=FTxtPos; i >= olx_max(0, (index_t)(FTxtPos)-lc); i-- )  {
       if( FBuffer[i].IsEmpty() )  continue;
       size_t ii = (FTxtPos-i);
-      if( FLinesToShow >= 0 && ii > FLinesToShow )  continue;
+      if( olx_is_valid_size(FLinesToShow) && ii > FLinesToShow )  continue;
       if( IsPromptVisible() )  ii += Cmds.Count();
 
       T[0] = GlLeft;  T[1] = GlTop + ii*LineInc;
@@ -179,7 +174,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
     else  {
       for( size_t i=Cmds.Count(); i > 0 ; i-- )  {
         const size_t ii = Cmds.Count()-i-2;
-        if( FLinesToShow >= 0 && ii > FLinesToShow )  continue;
+        if( olx_is_valid_size(FLinesToShow) && ii > FLinesToShow )  continue;
         T[0] = GlLeft;  T[1] = GlTop + ii*LineInc;
         T *= Scale;
         P.SetString(&Cmds[i]);
@@ -208,8 +203,8 @@ bool TGlConsole::WillProcessKey( int Key, short ShiftState )  {
 bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
   if( (Key == WXK_UP) && IsPromptVisible() && ShiftState == 0 )  {
     FCmdPos --;
-    if( FCmdPos < 0 )  FCmdPos = FCommands.Count()-1;
-    if( FCmdPos >= 0 && FCmdPos < FCommands.Count() )  {
+    if( !olx_is_valid_size(FCmdPos) )  FCmdPos = FCommands.Count()-1;
+    if( olx_is_valid_size(FCmdPos) && FCmdPos < FCommands.Count() )  {
       olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
       FCommand = PromptStr;
       FCommand << FCommands[FCmdPos];
@@ -220,7 +215,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
   if( (Key == WXK_DOWN) && IsPromptVisible() && ShiftState == 0 )  {
     FCmdPos ++;
     if( FCmdPos >= FCommands.Count() )  FCmdPos = 0;
-    if( FCmdPos >= 0 && FCmdPos < FCommands.Count() )  {
+    if( olx_is_valid_size(FCmdPos) && FCmdPos < FCommands.Count() )  {
       olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
       FCommand = PromptStr;
       FCommand << FCommands[FCmdPos];
@@ -279,7 +274,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     TGlFont& Fnt = GetFont();
     uint16_t th = Fnt.TextHeight(EmptyString);
     size_t lc;
-    if( FLinesToShow == -1 )
+    if( !olx_is_valid_size(FLinesToShow) )
       lc = (size_t)((float)Height/(th*(1.0+FLineSpacing))*Parent.GetViewZoom()); // calc the number of lines
     else
       lc = FLinesToShow;
@@ -289,9 +284,10 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
         FTxtPos = FBuffer.Count()-1;
     }
     if( Key == WXK_PAGEUP )  {
-      FTxtPos -= lc;
-      if( FTxtPos < 0 )
-        FTxtPos = FBuffer.Count()!=0 ? 0 : -1;
+      if( FTxtPos < lc )
+        FTxtPos = FBuffer.IsEmpty() ? ~0 : 0;
+      else
+        FTxtPos -= lc;
     }
     StringPosition( FCommand.Length() );
     return true;
@@ -459,7 +455,7 @@ void TGlConsole::ClearBuffer()  {
       delete (TGlMaterial*)FBuffer.GetObject(i);
   FBuffer.Clear();
   //FCommand = FInviteString;
-  FTxtPos = -1;
+  FTxtPos = ~0;
 }
 //..............................................................................
 void TGlConsole::KeepSize()  {

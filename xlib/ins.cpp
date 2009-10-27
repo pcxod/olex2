@@ -788,9 +788,9 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   part = a.GetPart();
   index_t spindex;
   if( a.GetAtomInfo() == iQPeakIndex )
-    spindex = (sfac == NULL ? -2 : sfac->IndexOfi('c') );
+    spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOfi('c'));
   else
-    spindex = (sfac == NULL ? -2 : sfac->IndexOfObject( &a.GetAtomInfo() ));
+    spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOfObject(&a.GetAtomInfo()));
   HyphenateIns( _AtomToString(rm, a, spindex+1), sl );
   a.SetSaved(true);
   if( index != NULL )  index->Add(a.GetTag());
@@ -881,7 +881,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
     if( i != 0 && !residue.IsEmpty() )  { 
       SL.Add(EmptyString);
       SL.Add( residue.ToString() );
-      fragmentId = -1;
+      fragmentId = ~0;
     }
     for( size_t j=0; j < residue.Count(); j++ )  {
       TCAtom& ac = residue[j];

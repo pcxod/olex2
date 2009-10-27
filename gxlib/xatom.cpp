@@ -60,7 +60,7 @@ TXAtom::TXAtom(TGlRenderer& Render, const olxstr& collectionName, TSAtom& A) :
   //AGDrawObject(collectionName)
   TGlMouseListener(Render, collectionName)
 {
-  XAppId = -1;
+  XAppId = ~0;
   FAtom = &A;
   Polyhedron = NULL;
   SetMove2D(false);

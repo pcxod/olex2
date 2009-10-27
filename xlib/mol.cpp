@@ -116,8 +116,7 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
     if( BondsCycle && line.Length() >= 9)  {
       const size_t ai1  =  line.SubString(0, 3).ToSizeT()-1;
       const size_t ai2  =  line.SubString(3, 3).ToSizeT()-1;
-      if( (ai1 >= GetAsymmUnit().AtomCount() || ai2 >= GetAsymmUnit().AtomCount()) ||
-          ai1 < 0 || ai2 < 0 )  {
+      if( ai1 >= GetAsymmUnit().AtomCount() || ai2 >= GetAsymmUnit().AtomCount())  {
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("TMol:: wrong atom indexes: ") << ai1 << ' ' << ai2);
       }
       TMolBond* MB = new TMolBond;

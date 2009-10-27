@@ -83,7 +83,7 @@ public:
              k = S.FirstIndexOf('.');
       double po=1;
       if( j != InvalidIndex && j > i )  {
-        if( k >= 0 && k < i )
+        if( k != InvalidIndex && k < i )
           for( size_t l=0; l < i-k-1; l++ )
             po *= 10;
         FE = (EType)(S.SubString(i+1,j-i-1).ToDouble()/po);

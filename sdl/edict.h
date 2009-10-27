@@ -80,7 +80,7 @@ public:
     for( size_t i=0; i < SortedL::Count(); i++ )
       if( SortedL::operator [] (i).val == val )
         return i;
-    return -1;
+    return InvalidIndex;
   }
   template <class T> bool Remove(const T& key)  {
     size_t ind = SortedL::IndexOf(key);

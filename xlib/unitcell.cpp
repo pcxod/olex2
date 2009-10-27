@@ -174,7 +174,7 @@ void TUnitCell::UpdateEllipsoids()  {
     const TCAtom& A1 = au.GetAtom(i);
     Ellipsoids[i].SetCount(mc);
     for( size_t j=0; j < mc; j++ )  {
-      if( A1.GetEllpId() != -1 )  {
+      if( !olx_is_valid_index(A1.GetEllpId()) )  {
         TEllipsoid* E = new TEllipsoid;
         E->SetId( j*ac+A1.GetId() );
         *E = *A1.GetEllipsoid();

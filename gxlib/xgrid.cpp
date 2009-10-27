@@ -197,7 +197,7 @@ void TXGrid::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlM.DiffuseF = 0xD80f0f0f;
   GlP.SetProperties( GS.GetMaterial(GlP.GetName(), GlM));
 
-  TextIndex = -1;
+  TextIndex = ~0;
   GlP.SetTextureId(~0);
 
   GlP.Vertices.SetCount(4);
@@ -429,9 +429,9 @@ void TXGrid::DeleteObjects()  {
     delete Mask;
     Mask = NULL;
   }
-  if( PListId != -1 )  {
+  if( olx_is_valid_index(PListId) )  {
     glDeleteLists(PListId, 2);
-    PListId = NListId = -1;
+    PListId = NListId = ~0;
   }
 }
 //..............................................................................

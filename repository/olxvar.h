@@ -168,7 +168,7 @@ public:
 
   template <class T>
   static inline bool IsVar(const T& name) {
-    return (Instance == NULL) ? false : Instance->Vars.IndexOfComparable(name) != -1;
+    return (Instance == NULL) ? false : Instance->Vars.IndexOfComparable(name) != InvalidIndex;
   }
   template <class T>
   static inline size_t VarIndex(const T& name) {
@@ -223,7 +223,7 @@ public:
   }
   template <class T>
   static inline bool IsVar(const T& name) {
-    return (Instance == NULL) ? false : Instance->Vars.IndexOfComparable(name) != -1;
+    return (Instance == NULL) ? false : Instance->Vars.IndexOfComparable(name) != InvalidIndex;
   }
   template <class T>
   static inline size_t VarIndex(const T& name) {

@@ -70,7 +70,7 @@ public:
       while( true ) {
         size_t index = (to+from)/2;
         if( index == from || index == to)
-          return -1;
+          return InvalidIndex;
         if( list[index].GetName().Compare(entity) < 0 )  from = index;
         else
           if( list[index].GetName().Compare(entity) > 0 )  to  = index;
