@@ -10,11 +10,14 @@ const short
   rename_status_BaseDir = 0x0001,
   rename_status_DataDir = 0x0002;
 
+const unsigned int bgColor = 0xEFEFEF;
+
 class CInstallerDlg : public CDialog  {
 public:
 	CInstallerDlg(CWnd* pParent = NULL);	// standard constructor
   ~CInstallerDlg()  {
     if( tooltipCtrl != NULL )  delete tooltipCtrl;
+    if( ctrlBrush != NULL )  delete ctrlBrush;
   }
 	enum { IDD = IDD_INSTALLER_DIALOG };
 
@@ -24,7 +27,8 @@ public:
   void SetAction(const olxstr &val)  {
     GetDlgItem(IDC_ST_PROGRESS)->SendMessage(WM_SETTEXT, 0, (LPARAM)val.u_str());
   }
-  CToolTipCtrl * tooltipCtrl;
+  CToolTipCtrl *tooltipCtrl;
+  CBrush *ctrlBrush;
   void ProcessMessages();
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
@@ -69,4 +73,6 @@ public:
   afx_msg void OnBnClickedBtnProxy();
   virtual BOOL PreTranslateMessage(MSG* pMsg);
   afx_msg void OnBnClickedBtnRepository();
+  afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+  afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

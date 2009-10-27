@@ -487,6 +487,8 @@ public:     void CalcProbFactor(float Prob);
   void undoDelete(TUndoData *data);
   /* function undoes renaming atoms */
   void undoName(TUndoData *data);
+  /* function undoes hiding of objects */
+  void undoHide(TUndoData *data);
 
   void XAtomDS2XBondDS(const olxstr &Source);  // copies material properties from atoms
   void SynchroniseBonds( TXAtomPList& XAtoms );
