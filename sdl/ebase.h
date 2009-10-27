@@ -195,7 +195,7 @@ class IEObject  {
     }
     virtual ~a_destruction_handler() {}
     virtual void call(IEObject* obj) const = 0;
-    virtual void* get_identifier() const = 0;
+    virtual const void* get_identifier() const = 0;
   };
   struct static_destruction_handler : public a_destruction_handler {
     void (*destruction_handler)(IEObject* obj);
@@ -205,7 +205,7 @@ class IEObject  {
         a_destruction_handler(prev),
         destruction_handler(_destruction_handler) {}
     virtual void call(IEObject* obj) const {  (*destruction_handler)(obj);  }
-    virtual void* get_identifier() const {  return destruction_handler;  }
+    virtual const void* get_identifier() const {  return (const void*)destruction_handler;  }
   };
   template <class base>
   struct member_destruction_handler : public a_destruction_handler {
@@ -219,11 +219,25 @@ class IEObject  {
         instance(base_instance),
         destruction_handler(_destruction_handler) {}
     virtual void call(IEObject* obj) const {  (instance.*destruction_handler)(obj);  }
-    virtual void* get_identifier() const {  return &instance;  }
+    virtual const void* get_identifier() const {  return &instance;  }
   };
   
   a_destruction_handler *dsh_head, *dsh_tail;
   
+  void _RemoveDestructionHandler(const void* identifier)  {
+    a_destruction_handler *cr = dsh_head, *prev=NULL;
+    while( cr != NULL )  {
+      if( cr->get_identifier() == identifier )  {
+        if( prev != NULL )  prev->next = cr->next;
+        if( cr == dsh_tail )  dsh_tail = prev;
+        if( dsh_head == cr )  dsh_head = NULL;
+        delete cr;
+        break;
+      }
+      prev = cr;
+      cr = cr->next;
+    }
+  }
 public:
   IEObject() : dsh_head(NULL), dsh_tail(NULL) {}
   virtual ~IEObject()  {
@@ -251,19 +265,8 @@ public:
     else
       dsh_tail = new member_destruction_handler<base>(dsh_tail, instance, func);
   }
-  void RemoveDestructionHandler(void* identifier)  {
-    a_destruction_handler *cr = dsh_head, *prev=NULL;
-    while( cr != NULL )  {
-      if( cr->get_identifier() == identifier )  {
-        if( prev != NULL )  prev->next = cr->next;
-        if( cr == dsh_tail )  dsh_tail = prev;
-        if( dsh_head == cr )  dsh_head = NULL;
-        delete cr;
-        break;
-      }
-      prev = cr;
-      cr = cr->next;
-    }
+  template <class T> void RemoveDestructionHandler(const T& indetifier)  {
+    _RemoveDestructionHandler((const void*)indetifier);
   }
 };
 
