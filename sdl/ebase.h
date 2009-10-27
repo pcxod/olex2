@@ -180,27 +180,90 @@ public:
 #endif
 };
 
-  template <typename T> const unsigned short TTIString<T>::CharSize = sizeof(T);
+template <typename T> const unsigned short TTIString<T>::CharSize = sizeof(T);
 
 typedef TTIString<olxch> TIString;
+
 // implementation of basic object, providing usefull information about a class
 class IEObject  {
   // this function, if set, will be called from the destructor - useful for garbage collector...
-  void (*AtDestruct_Function)(IEObject* obj);
+  struct a_destruction_handler  {
+    a_destruction_handler *next;
+    a_destruction_handler(a_destruction_handler* _prev) : next(NULL) {
+      if( _prev != NULL )
+        _prev->next = this;
+    }
+    virtual ~a_destruction_handler() {}
+    virtual void call(IEObject* obj) const = 0;
+    virtual void* get_identifier() const = 0;
+  };
+  struct static_destruction_handler : public a_destruction_handler {
+    void (*destruction_handler)(IEObject* obj);
+    static_destruction_handler(
+      a_destruction_handler* prev, 
+      void (*_destruction_handler)(IEObject* obj)) :
+        a_destruction_handler(prev),
+        destruction_handler(_destruction_handler) {}
+    virtual void call(IEObject* obj) const {  (*destruction_handler)(obj);  }
+    virtual void* get_identifier() const {  return destruction_handler;  }
+  };
+  template <class base>
+  struct member_destruction_handler : public a_destruction_handler {
+    void (base::*destruction_handler)(IEObject* obj);
+    base& instance;
+    member_destruction_handler(
+      a_destruction_handler* prev, 
+      base& base_instance,
+      void (base::*_destruction_handler)(IEObject* obj)) :
+        a_destruction_handler(prev),
+        instance(base_instance),
+        destruction_handler(_destruction_handler) {}
+    virtual void call(IEObject* obj) const {  (instance.*destruction_handler)(obj);  }
+    virtual void* get_identifier() const {  return &instance;  }
+  };
+  
+  a_destruction_handler *dsh_head, *dsh_tail;
+  
 public:
-  IEObject()  {
-    AtDestruct_Function = NULL;
-  }
+  IEObject() : dsh_head(NULL), dsh_tail(NULL) {}
   virtual ~IEObject()  {
-    if( AtDestruct_Function != NULL )
-      AtDestruct_Function(this);
+    while( dsh_head != NULL )  {
+      dsh_head->call(this);
+      a_destruction_handler *dsh = dsh_head;
+      dsh_head = dsh_head->next;
+      delete dsh;
+    }
   }
   // throws an exception
   virtual TIString ToString() const;
   // throws an exception if not implemented
   virtual IEObject* Replicate() const;
-  void SetAtDestruct( void (*fun)(IEObject*) )  {
-    AtDestruct_Function = fun;
+  void AddDestructionHandler(void (*func)(IEObject*))  {
+    if( dsh_head == NULL )
+      dsh_head = dsh_tail = new static_destruction_handler(NULL, func);
+    else
+      dsh_tail = new static_destruction_handler(dsh_tail, func);
+  }
+  template <class base>
+  void AddDestructionHandler(base& instance, void (base::*func)(IEObject*))  {
+    if( dsh_head == NULL )
+      dsh_head = dsh_tail = new member_destruction_handler<base>(NULL, instance, func);
+    else
+      dsh_tail = new member_destruction_handler<base>(dsh_tail, instance, func);
+  }
+  void RemoveDestructionHandler(void* identifier)  {
+    a_destruction_handler *cr = dsh_head, *prev=NULL;
+    while( cr != NULL )  {
+      if( cr->get_identifier() == identifier )  {
+        if( prev != NULL )  prev->next = cr->next;
+        if( cr == dsh_tail )  dsh_tail = prev;
+        if( dsh_head == cr )  dsh_head = NULL;
+        delete cr;
+        break;
+      }
+      prev = cr;
+      cr = cr->next;
+    }
   }
 };
 
@@ -343,23 +406,6 @@ public:
   void SetC( const Cc& c )  {  this->c = c;  }
   void SetD( const Dc& d )  {  this->d = d;  }
 };
-// class factories
-
-// a very simple factory
-template <class ObjectClass>
-  class ISObjectFactory  {
-  public:
-    virtual ~ISObjectFactory()  {  ;  }
-    virtual ObjectClass* NewInstance() = 0;
-  };
-// implementation of the simple object factory
-template <class ObjectBase, class ObjectImplementation>
-  class TSFactory: public ISObjectFactory<ObjectBase>
-  {
-  public:
-    virtual ~TSFactory()  {  ;  }
-    virtual ObjectBase *NewInstance()  {  return new ObjectImplementation();  }
-  };
 // an interface for a referencible object
 class AReferencible : public IEObject  {
   short This_RefCount;
@@ -368,8 +414,8 @@ public:
   virtual ~AReferencible();
 
   short GetRefCount() const {  return This_RefCount;  }
-  short DecRef()            {  return --This_RefCount;  }
-  short IncRef()            {  return ++This_RefCount;  }
+  short DecRef()  {  return --This_RefCount;  }
+  short IncRef()  {  return ++This_RefCount;  }
 };
 
 // we need this class to throw exceptions from string with gcc ...

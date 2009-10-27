@@ -10,7 +10,7 @@ BeginEsdlNamespace()
 template <typename> class TVector33;
 template <typename> class TMatrix33;
 
-template <class T>  class TVector3 : public IEObject {
+template <class T>  class TVector3 {
   T data[3];
 public:
   TVector3() {  data[0] = data[1] = data[2] = 0;  }
