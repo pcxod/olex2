@@ -286,7 +286,7 @@ void ConnInfo::TypeConnInfo::FromDataItem(TDataItem& item, TBasicAtomInfo* bai) 
 //........................................................................
 size_t ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv) {
   if( key != &a1 && key != &a2 || list.IsEmpty() )
-    return -1;
+    return InvalidIndex;
   if( key == &a1 )  {
     for( size_t i=0; i < list.Count(); i++ )  {
       if( list[i].to == a2 )  {

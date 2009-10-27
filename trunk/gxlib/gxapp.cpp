@@ -1520,7 +1520,7 @@ void TGXApp::FindXAtoms(const olxstr &Atoms, TXAtomPList& List, bool ClearSelect
       uint16_t mask = 0x0001 << ind;
       for( size_t j=ind+1; j < Tmp.Length(); j++ )  {
         ind = Tmp.FirstIndexOf('?', j);
-        if( ind >=0 )  {
+        if( ind != InvalidIndex )  {
           mask |= 0x0001 << ind;
           j = ind;
          }
@@ -2929,15 +2929,15 @@ void TGXApp::ShowPart(const TIntList& parts, bool show)  {
   }
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
     if( XAtoms[i].IsDeleted() ) continue;
-    if( parts.IndexOf( XAtoms[i].Atom().CAtom().GetPart() ) != - 1 )
+    if( parts.IndexOf( XAtoms[i].Atom().CAtom().GetPart() ) != InvalidIndex )
       XAtoms[i].SetVisible(show);
     else
       XAtoms[i].SetVisible(!show);
   }
   for( size_t i=0; i < XBonds.Count(); i++ )  {
     if( XBonds[i].IsDeleted() )  continue;
-    if( parts.IndexOf(XBonds[i].Bond().A().CAtom().GetPart()) != -1 &&
-        parts.IndexOf(XBonds[i].Bond().B().CAtom().GetPart()) != -1 )
+    if( parts.IndexOf(XBonds[i].Bond().A().CAtom().GetPart()) != InvalidIndex &&
+        parts.IndexOf(XBonds[i].Bond().B().CAtom().GetPart()) != InvalidIndex )
     {
       XBonds[i].SetVisible(show);
     }

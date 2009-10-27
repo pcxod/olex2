@@ -255,7 +255,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       CalculatedLaueClasses[0] == TSymmLib::GetInstance()->FindGroup("P-1") )  {
     PresentElements.Clear();
   }
-  if( PresentElements.Count() >= 0 )  {
+  if( !PresentElements.IsEmpty() )  {
     for( size_t i=0; i < TSymmLib::GetInstance()->SGCount(); i++ )  {
       TSpaceGroup& sg = TSymmLib::GetInstance()->GetGroup(i);
       if( sg.GetNumber() > 230 )  continue;

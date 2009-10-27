@@ -593,7 +593,7 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
       }
       j--;
       olxstr strV;
-      while( j >= 0 && !(tmp[j] >= 'a' && tmp[j] <= 'z' ) )  {
+      while( j != InvalidIndex && !(tmp[j] >= 'a' && tmp[j] <= 'z' ) )  {
         strV.Insert( (olxch)tmp[j], 0 );
         j--;
       }

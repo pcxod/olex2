@@ -354,15 +354,17 @@ public:
         CallbackFuncs.Remove(i);
         return;
       }
+      i++;
     }
     // go backwards
     i = ind-1;
-    while( i >= 0 && (!CallbackFuncs.GetComparable(i).Compare(cbEvent)) )  {
+    while( i != InvalidIndex && (!CallbackFuncs.GetComparable(i).Compare(cbEvent)) )  {
       if( CallbackFuncs.GetObject(i)->GetName() == funcName )  {
         delete CallbackFuncs.GetObject(i);
         CallbackFuncs.Remove(i);
         return;
       }
+      i--;
     }
   }
   virtual const olxstr& getDataDir() const  {

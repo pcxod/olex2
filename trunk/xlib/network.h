@@ -107,7 +107,7 @@ public:
       Alpha;          // susbtituted next to a ternary atom 
     TTypeList<TSAtomPList> Substituents;
     bool HasAfix;
-    RingInfo() : HeaviestSubsType(NULL), MaxSubsANode(0), HeaviestSubsIndex(-1), HasAfix(false)  {  }
+    RingInfo() : HeaviestSubsType(NULL), MaxSubsANode(0), HeaviestSubsIndex(InvalidIndex), HasAfix(false)  {  }
     RingInfo& Clear()  {
       MaxSubsANode = 0;
       HeaviestSubsIndex = InvalidIndex;

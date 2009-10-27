@@ -361,7 +361,7 @@ void THtml::UpdateSwitchState(THtmlSwitch &Switch, olxstr &String)  {
     Tmp << Switch.GetFile(i) << ';';
   for( size_t i=0; i < Switch.GetParams().Count(); i++ )  {
     Tmp << Switch.GetParams().GetName(i) << '=';
-    if( Switch.GetParams().GetValue(i).FirstIndexOf(' ') == -1 )
+    if( Switch.GetParams().GetValue(i).FirstIndexOf(' ') == InvalidIndex )
       Tmp << Switch.GetParams().GetValue(i);
     else
       Tmp << '\'' << Switch.GetParams().GetValue(i) << '\'';
@@ -433,7 +433,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       }
 
       for( size_t j=0; j < Toks.Count()-1; j++ )  {
-        if( Toks[j].FirstIndexOf('=') == -1 )  {
+        if( Toks[j].FirstIndexOf('=') == InvalidIndex )  {
           if( izZip && !TZipWrapper::IsZipFile(Toks[j]) )  {
             if( Toks[j].StartsFrom('\\') || Toks[j].StartsFrom('/') )
               tmp = Toks[j].SubStringFrom(1);

@@ -26,12 +26,12 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   SetResiId(0);  // default residue is unnamed one
   SetSameId(~0);
   FParent = Parent;
-  EllpId = -1;
+  EllpId = ~0;
   Uiso = caDefIso;
   UisoEsd = 0;
   UisoScale = 0;
   UisoOwner = NULL;
-  FragmentId = -1;
+  FragmentId = ~0;
   FAttachedAtoms = NULL;
   FAttachedAtomsI = NULL;
   FAtomInfo = NULL;
@@ -252,7 +252,7 @@ void TCAtom::FromDataItem(TDataItem& item)  {
     Uiso = GetEllipsoid()->GetUiso();
   }
   else  {
-    EllpId = -1;
+    EllpId = ~0;
     Uiso = item.GetRequiredField("Uiso").ToDouble();
   }
   if( *FAtomInfo == iQPeakIndex )

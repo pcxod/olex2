@@ -606,7 +606,7 @@ AGDrawObject* TGlRenderer::SelectObject(int x, int y, int depth)  {
           maxz = selectBuf[i*4+1];
         }
       }
-      if( (in-depth)*4+3 < 0 )  return NULL;
+      if( (int)(in-depth)*4+3 < 0 )  return NULL;
       in = selectBuf[(in-depth)*4+3] - 1;
       if( in < ObjectCount() )  
         Result = &GetObject(in);

@@ -1821,7 +1821,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
 void TLattice::SetAnis( const TCAtomPList& atoms, bool anis )  {
   if( !anis )  {
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      if( atoms[i]->GetEllpId() != -1 )  {
+      if( olx_is_valid_index(atoms[i]->GetEllpId()) )  {
          GetAsymmUnit().NullEllp( atoms[i]->GetEllpId() );
          atoms[i]->AssignEllp( NULL );
       }

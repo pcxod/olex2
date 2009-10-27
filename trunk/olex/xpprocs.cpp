@@ -1699,7 +1699,7 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   olxstr Tmp;
   for( size_t i=0; i < Cmds.Count(); i++ )  {
-    bool Space =  (Cmds[i].FirstIndexOf(' ') != -1 );
+    bool Space =  (Cmds[i].FirstIndexOf(' ') != InvalidIndex);
     if( Space )  Tmp << '\"';
     Tmp << Cmds[i];
     if( Space ) Tmp << '\"';
@@ -2492,7 +2492,7 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   TXAtomPList Atoms;
   FindXAtoms(Cmds,Atoms, true, !Options.Contains("cs") );
-  if( !partCount || partCount < 0 || (Atoms.Count()%partCount) )  {
+  if( partCount == 0 || (Atoms.Count()%partCount) != 0 )  {
     E.ProcessingError(__OlxSrcInfo, "wrong number of parts" );
     return;
   }
@@ -4952,10 +4952,12 @@ void TMainForm::macSetCmd(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 void TMainForm::funCmdList(const TStrObjList &Cmds, TMacroError &E) {
   if( FGlConsole->GetCommandCount() == 0 ) return;
   size_t cc = FGlConsole->GetCommandIndex() + Cmds[0].ToInt();
+  if( FGlConsole->GetCommandCount() == 0 )  {
+    E.SetRetVal(EmptyString);
+    return;
+  }
   if( cc >= FGlConsole->GetCommandCount() )
     cc = 0;
-  if( cc < 0 )
-    cc = FGlConsole->GetCommandCount()-1;
   E.SetRetVal( FGlConsole->GetCommandByIndex(cc) );
 }
 //..............................................................................
@@ -5416,7 +5418,7 @@ void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options, TMac
         TPtrList<TFSItem> FoldersToDelete;
         for( size_t i=0; i < ToDelete.Count(); i++ )
           if( !ToDelete[i]->IsFolder() && ToDelete[i]->GetParent() != NULL )  {
-            if( FoldersToDelete.IndexOf( ToDelete[i]->GetParent() ) == -1 )
+            if( FoldersToDelete.IndexOf( ToDelete[i]->GetParent() ) == InvalidIndex )
               FoldersToDelete.Add( ToDelete[i]->GetParent() );
             ToDelete[i]->GetParent()->Remove( *ToDelete[i] );
             ToDelete.Delete(i);
@@ -5643,7 +5645,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           tmp << '{' << netA.Node( res[i].GetA()).GetLabel() <<
                  ',' << netB.Node( res[i].GetB()).GetLabel() << '}';
 
-          if( atomsToTransform.IndexOf( &netB.Node(res[i].GetB()) ) == -1 )  {
+          if( atomsToTransform.IndexOf( &netB.Node(res[i].GetB()) ) == InvalidIndex )  {
             atomsToTransform.Add( &netB.Node( res[i].GetB()) );
             satomp.AddNew<TSAtom*,TSAtom*>(&netA.Node( res[i].GetA()), &netB.Node( res[i].GetB()));
           }
@@ -5772,7 +5774,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           satomp.Clear();
           atomsToTransform.Clear();
           for( size_t k=0; k < res.Count(); k++ )  {
-            if( atomsToTransform.IndexOf( &nets[j]->Node(res[k].GetB()) ) == -1 )  {
+            if( atomsToTransform.IndexOf( &nets[j]->Node(res[k].GetB()) ) == InvalidIndex )  {
               atomsToTransform.Add( &nets[j]->Node( res[k].GetB()) );
               satomp.AddNew<TSAtom*,TSAtom*>(&nets[i]->Node( res[k].GetA()),
                                              &nets[j]->Node( res[k].GetB()));
@@ -8468,8 +8470,8 @@ void TMainForm::macRESI(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TResidue& main_resi = au.GetResidue(0);
     for( size_t i=0; i < atoms.Count(); i++ )  {
       TCAtom& ca = atoms[i]->Atom().CAtom();
-      if( ca.GetTag() == i && ca.GetResiId() != -1 )  {
-        main_resi.Add( ca );
+      if( ca.GetTag() == i && olx_is_valid_index(ca.GetResiId()) )  {
+        main_resi.Add(ca);
       }
     }
   }

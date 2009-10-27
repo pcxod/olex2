@@ -40,7 +40,7 @@ namespace exparse  {
     // checks if the char at ch_ind is ascaped (\')
     static bool is_escaped(const olxstr& exp, size_t ch_ind)  {
       int sc = 0;
-      while( --ch_ind >=0 && exp.CharAt(ch_ind) == '\\' ) sc++;
+      while( --ch_ind != InvalidIndex && exp.CharAt(ch_ind) == '\\' ) sc++;
       return (sc%2) != 0;
     }
     // splits expressions like ("",ddd(),"\""), leaves tokens quoted if quoted originally

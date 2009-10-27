@@ -34,7 +34,7 @@ public:
   const olxstr &GetFile(size_t ind) const {  return Files[ind]; }
   void ClearFiles()  {  Files.Clear(); }
   void AddFile(const olxstr &fn)  {  Files.Add(fn);  }
-  const olxstr& GetCurrentFile() const {  return FileIndex == -1 ? EmptyString : Files[FileIndex];  }
+  const olxstr& GetCurrentFile() const {  return olx_is_valid_index(FileIndex) ? Files[FileIndex] : EmptyString;  }
 
   TStrPObjList<olxstr,THtmlSwitch*>& GetStrings()  {  return Strings; }
   const TStrPObjList<olxstr,THtmlSwitch*>& GetStrings() const {  return Strings; }

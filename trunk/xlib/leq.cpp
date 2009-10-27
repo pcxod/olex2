@@ -158,7 +158,7 @@ void XVarManager::Assign(const XVarManager& vm) {
 //.................................................................................................
 XVarReference& XVarManager::AddVarRef(XVar& var, IXVarReferencer& a, short var_name, short relation, double coeff)  {
   XVarReference* prf = a.GetVarRef(var_name);
-  if( prf != NULL && prf->GetId() != -1 )  {
+  if( prf != NULL && olx_is_valid_index(prf->GetId()) )  {
     prf->Parent._RemRef(*prf);
     References.Delete(prf->GetId());
   }
@@ -239,7 +239,7 @@ void XVarManager::FixParam(IXVarReferencer& ca, short var_index) {
 //.................................................................................................
 void XVarManager::FreeParam(IXVarReferencer& ca, short var_index) {
   XVarReference* vr = ca.GetVarRef(var_index);
-  if( vr != NULL && vr->GetId() != -1 )  {
+  if( vr != NULL && olx_is_valid_index(vr->GetId()) )  {
     vr->Parent._RemRef( *vr );
     ca.SetVarRef(var_index, NULL);
     References.Delete(vr->GetId());

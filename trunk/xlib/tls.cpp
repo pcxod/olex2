@@ -127,7 +127,7 @@ TLS::TLS(const TSAtomPList &atoms, const double *const cellParameters)
 /************************************************************************/
 
 }
-const void TLS::printTLS(){
+void TLS::printTLS(){
 	// std::cout << "\nT matrix: ";
 	Tmat.Print(); 
 	// std::cout << "\nL matrix: ";

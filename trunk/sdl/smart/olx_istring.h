@@ -742,7 +742,7 @@ public:
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
     if( Rad > 10 )  {
       for( size_t i=sts; i < len; i++ )  {
-        IT pv = -1;
+        IT pv = 0;
         if( data[i] <= '9' && data[i] >= '0' )  // the order is important, chars are rearer
           pv = data[i] - '0';
         else if( data[i] <= 'Z' && data[i] >= 'A' )

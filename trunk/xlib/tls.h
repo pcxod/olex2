@@ -24,7 +24,7 @@ public:
 	const TEllpList& GetElpList() const {return newElps;}
 	const ematd& GetRtoLaxes() const {return RtoLaxes;}
 	const ematd& GetLVcV() const {return LVcV;}
-	const void printTLS();
+	void printTLS();
 	
 	void calcUijEllipse (const TSAtomPList &atoms, TEllpList &Elps);
 	bool calcTLS (const ematd& designM, const evecd& UijC);

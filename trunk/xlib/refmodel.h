@@ -528,7 +528,7 @@ of components 1 ... m
     return BASF_Vars[i];  
   }
   virtual olxstr GetVarName(size_t i) const {  
-    if( i < 0 || i >= BASF_Vars.Count() )
+    if( i >= BASF_Vars.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return olxstr("k") << (i+1);  
   }

@@ -223,7 +223,8 @@ if sys.platform[:3] == 'win':
   unirun_env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswud'])
   unirun_env.Append(LIBPATH = [wxFolder+'lib/vc_lib'])
 else:
-  env.Append(CCFLAGS = ['-exceptions']) 
+  if env['TOOL'] != 'intel':
+    env.Append(CCFLAGS = ['-exceptions']) 
   if debug:
     env.Append(CCFLAGS = ['-g']) 
   else:
