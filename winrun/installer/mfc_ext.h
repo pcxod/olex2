@@ -53,7 +53,7 @@ namespace mfc_ext  {
     }
     static void add_items(CWnd *window, int id, const TStrList &items)  {
       CWnd *cb = window->GetDlgItem(id);
-      for( int i=0; i < items.Count(); i++ )
+      for( size_t i=0; i < items.Count(); i++ )
         cb->SendMessage(CB_ADDSTRING, 0, (LPARAM)items[i].u_str());
     }
   };

@@ -190,7 +190,7 @@
 			ConfigurationType="1"
 			UseOfMFC="1"
 			CharacterSet="1"
-			WholeProgramOptimization="1"
+			WholeProgramOptimization="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -213,15 +213,19 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
-				EnableIntrinsicFunctions="true"
+				EnableIntrinsicFunctions="false"
+				FavorSizeOrSpeed="0"
+				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="..\..\sdl;..\..\repository"
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
+				StringPooling="true"
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="true"
+				EnableFunctionLevelLinking="false"
+				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"

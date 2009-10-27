@@ -2869,8 +2869,7 @@ void TMainForm::OnResize()  {
 }
 //..............................................................................
 olxstr TMainForm::ExpandCommand(const olxstr &Cmd)  {
-  if( Cmd.IsEmpty() )
-    return Cmd;
+  if( Cmd.IsEmpty() )  return Cmd;
   olxstr FullCmd(Cmd.ToLowerCase());
   TStrList all_cmds;
   if( !Cmd.IsEmpty() )

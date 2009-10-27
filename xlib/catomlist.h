@@ -74,9 +74,9 @@ public:
   // may return NULL
   static IAtomRef* NewInstance(RefinementModel& rm, const olxstr& exp, const olxstr& resi, TResidue* _resi)  {
     if( resi.IsEmpty() || _resi != NULL )  {  // a chance to create explicit reference
-      if( exp.IndexOf('+')  == -1 &&
-          exp.IndexOf('-')  == -1 &&
-          exp.IndexOf('*')  == -1 &&
+      if( exp.IndexOf('+')  == InvalidIndex &&
+          exp.IndexOf('-')  == InvalidIndex &&
+          exp.IndexOf('*')  == InvalidIndex &&
           !exp.StartsFrom('$') )
       {
         size_t us_ind = exp.IndexOf('_');

@@ -1629,7 +1629,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     if( !out.IsEmpty()  )  {
       FXApp->GetLog() << "Deleting " << out << '\n';
-      FUndoStack->Push( FXApp->DeleteXObjects( Objects ) );
+      FUndoStack->Push( FXApp->DeleteXObjects(Objects) );
       sel.RemoveDeleted();
     }
   }
@@ -3943,7 +3943,7 @@ void TMainForm::macViewGrid(TStrObjList &Cmds, const TParamList &Options, TMacro
     gname = TEFile::ExtractFilePath(FXApp->XFile().GetFileName());
     TEFile::AddTrailingBackslashI(gname) << "map.txt";
   }
-  else if( Cmds.Count() != 0 )
+  else if( !Cmds.IsEmpty() )
     gname = Cmds[0];
   FXApp->ShowGrid(true, gname);
 }

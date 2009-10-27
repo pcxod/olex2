@@ -112,6 +112,8 @@ BEGIN_MESSAGE_MAP(CInstallerDlg, CDialog)
   ON_WM_TIMER()
   ON_BN_CLICKED(IDC_BTN_PROXY, &CInstallerDlg::OnBnClickedBtnProxy)
   ON_BN_CLICKED(IDC_BTN_REPOSITORY, &CInstallerDlg::OnBnClickedBtnRepository)
+  ON_WM_ERASEBKGND()
+  ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
 
@@ -119,6 +121,7 @@ END_MESSAGE_MAP()
 
 BOOL CInstallerDlg::OnInitDialog()  {
 	CDialog::OnInitDialog();
+  ctrlBrush = new CBrush(bgColor);
   tooltipCtrl = new CToolTipCtrl;
   tooltipCtrl->Create(this);
   this->SendMessage(WM_SETTEXT, 0, (LPARAM)_T("Olex2 installer"));
@@ -235,6 +238,7 @@ void CInstallerDlg::OnBnClickedCbProxy()  {
 void CInstallerDlg::OnShowWindow(BOOL bShow, UINT nStatus)  {
   CDialog::OnShowWindow(bShow, nStatus);
   InitRepositories();
+  BringWindowToTop();
 }
 
 void CInstallerDlg::OnTimer(UINT_PTR nIDEvent)  {
@@ -520,7 +524,7 @@ bool CInstallerDlg::_DoInstall(const olxstr& zipFile, const olxstr& installPath)
       try  {  zfs.ExtractAll(installPath);  }
       catch(...) {  res = false;  }
       if( res )  {
-#ifdef _WIN64_
+#ifndef _WIN64
         olxstr redist_fn = TBasicApp::GetBaseDir() + "vcredist_x86.exe";
 #else
         olxstr redist_fn = TBasicApp::GetBaseDir() + "vcredist_x64.exe";
@@ -768,4 +772,18 @@ void CInstallerDlg::OnBnClickedBtnRepository()  {
       combo_box::set_text(this, IDC_CB_REPOSITORY, fd.GetPathName().GetString());
   }
 
+}
+
+BOOL CInstallerDlg::OnEraseBkgnd(CDC* pDC){
+  CBrush* pOldBrush = pDC->SelectObject(ctrlBrush);
+  CRect rect;
+  pDC->GetClipBox(&rect);
+  pDC->PatBlt(rect.left, rect.top, rect.Width(), rect.Height(), PATCOPY);
+  pDC->SelectObject(pOldBrush);
+  return TRUE;
+}
+
+HBRUSH CInstallerDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)  {
+  pDC->SetBkColor(bgColor);
+  return (HBRUSH)ctrlBrush->GetSafeHandle();
 }

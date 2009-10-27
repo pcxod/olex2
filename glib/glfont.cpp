@@ -97,7 +97,7 @@ bool TGlFont::CharFromRGBArray(size_t Char, unsigned char *RGBData, uint16_t wid
     }
     if( _Leftmost >= 0 )  break;
   }
-  for( uint16_t i=width-1; i != (uint16_t)~0; i-- )  {
+  for( uint16_t i=width-1; olx_is_valid_index(i); i-- )  {
     for( uint16_t j=0; j < height; j++ )  {
       const size_t ind = (j*width+i)*3;
       if( ( (RGBData[ind] | RGBData[ind+1] | RGBData[ind+2]) != background) )  {
@@ -115,7 +115,7 @@ bool TGlFont::CharFromRGBArray(size_t Char, unsigned char *RGBData, uint16_t wid
     }
     if( _Topmost >= 0 )  break;
   }
-  for( uint16_t i=height-1; i != (uint16_t)~0; i-- )  {
+  for( uint16_t i=height-1; olx_is_valid_index(i); i-- )  {
     for( uint16_t j=0; j < width; j++ )  {
       const size_t ind = (i*width+j)*3;
       if( ( (RGBData[ind] | RGBData[ind+1] | RGBData[ind+2]) != background) )  {
@@ -210,7 +210,7 @@ bool TGlFont::AnalyseBitArray(const TEBitArray& ba, size_t Char, uint16_t width,
     }
     if( _Leftmost >= 0 )  break;
   }
-  for( uint16_t i=width-1; i != (uint16_t)~0; i-- )  {
+  for( uint16_t i=width-1; olx_is_valid_index(i); i-- )  {
     for( uint16_t j=0; j < height; j++ )  {
       if( ba[off+j*width+i] )  {  _Rightmost = i;  break;  }
     }
@@ -222,7 +222,7 @@ bool TGlFont::AnalyseBitArray(const TEBitArray& ba, size_t Char, uint16_t width,
     }
     if( _Topmost >= 0 )  break;
   }
-  for( uint16_t i=height-1; i != (uint16_t)~0; i-- )  {
+  for( uint16_t i=height-1; olx_is_valid_index(i); i-- )  {
     for( uint16_t j=0; j < width; j++ )  {
       if( ba[off+i*width+j] )  {  _Bottommost = i;  break;  }
     }

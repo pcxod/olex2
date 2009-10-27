@@ -82,12 +82,16 @@ class TKillUndo: public TUndoData  {
 public:
   TTypeList<TSAtom::Ref> SAtomIds;
   TKillUndo(IUndoAction *action):TUndoData(action)  {  }
-
   virtual ~TKillUndo()  {  }
-
   void AddSAtom(const TSAtom& SA)  {  SAtomIds.AddCCopy( SA.GetRef() );  }
 };
-
+class THideUndo: public TUndoData  {
+public:
+  TPtrList<AGDrawObject> Objects;
+  THideUndo(IUndoAction *action):TUndoData(action)  {  }
+  virtual ~THideUndo()  {  }
+  template <class T>  void AddObject(T& go)  {  Objects.Add(go);  }
+};
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //..............................................................................
@@ -1876,20 +1880,20 @@ TXAtom* TGXApp::AddAtom(TXAtom* templ)  {
 }
 //..............................................................................
 void TGXApp::undoDelete(TUndoData *data)  {
-  TKillUndo *undo = static_cast<TKillUndo*>(data);
+  TKillUndo *undo = dynamic_cast<TKillUndo*>(data);
   TLattice& latt = XFile().GetLattice();
   for( size_t i=0; i < undo->SAtomIds.Count(); i++ )  {  
     TSAtom* sa = latt.FindSAtom( undo->SAtomIds[i] );
     if( sa != NULL )
       sa->SetDeleted(false);
     else
-      latt.RestoreAtom( undo->SAtomIds[i] );
+      latt.RestoreAtom(undo->SAtomIds[i]);
   }
   XFile().GetLattice().UpdateConnectivity();
 }
 //..............................................................................
 void TGXApp::undoName(TUndoData *data)  {
-  TNameUndo *undo = static_cast<TNameUndo*>(data);
+  TNameUndo *undo = dynamic_cast<TNameUndo*>(data);
   TCAtomPList cal;
   TAsymmUnit& au = XFile().GetAsymmUnit();
   for( size_t i=0; i < undo->AtomCount(); i++ )  {
@@ -1906,6 +1910,13 @@ void TGXApp::undoName(TUndoData *data)  {
     CreateObjects(false, false);
 }
 //..............................................................................
+void TGXApp::undoHide(TUndoData *data)  {
+  THideUndo *undo = dynamic_cast<THideUndo*>(data);
+  for( size_t i=0; i < undo->Objects.Count(); i++ )  {
+    undo->Objects[i]->SetVisible(true);
+  }
+}
+//..............................................................................
 TUndoData* TGXApp::DeleteXObjects(TPtrList<AGDrawObject>& L)  {
   TXAtomPList atoms;
   atoms.SetCapacity(L.Count());
@@ -1915,6 +1926,10 @@ TUndoData* TGXApp::DeleteXObjects(TPtrList<AGDrawObject>& L)  {
     else if( EsdlInstanceOf(*L[i], TXPlane) )  {
       TXPlane* xp = (TXPlane*)L[i];
       xp->SetDeleted(true);
+    }
+    else if( EsdlInstanceOf(*L[i], TXBond) )  {
+      TXBond* xb = (TXBond*)L[i];
+      xb->SetVisible(false);
     }
   }
   return DeleteXAtoms(atoms);

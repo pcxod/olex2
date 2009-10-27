@@ -296,8 +296,8 @@ uint64_t TFSItem::CalcTotalItemsSize(const TStrList& props) const {
 //..............................................................................
 uint64_t TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties, TStrList* cmds)  {
   if( Parent == NULL )  {
-    size_t sz = CalcDiffSize(Dest, properties);
-    Index.Progress.SetMax( sz );
+    uint64_t sz = CalcDiffSize(Dest, properties);
+    Index.Progress.SetMax(sz);
     if( sz == 0 )  return 0;  // nothing to do then ...
     Index.Progress.SetPos( 0 );
     Index.OnProgress.Enter(this, &Index.Progress);
