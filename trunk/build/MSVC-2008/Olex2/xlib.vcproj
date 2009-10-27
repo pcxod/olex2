@@ -941,6 +941,9 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						AdditionalOptions="/bigobj"
+						BasicRuntimeChecks="0"
+						BrowseInformation="0"
+						DebugInformationFormat="0"
 					/>
 				</FileConfiguration>
 				<FileConfiguration

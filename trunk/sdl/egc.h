@@ -44,7 +44,7 @@ class TEGC : public AActionHandler  {
   // to be deleted at the end
   OEntry  ATEOHead, *ATEOTail;
 protected:
-  bool RemoveObject( OEntry& head, IEObject* obj );
+  bool RemoveObject(OEntry& head, IEObject* obj);
   static void ManageRemoval();
   volatile bool Destructing;
 protected:

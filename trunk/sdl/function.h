@@ -143,9 +143,9 @@ template <class Base>
     void (Base::*Func)(const TStrObjList& Params, TMacroError& E);
     olxstr RunSignature;
   public:
-    TFunction( Base* baseClassInstance,
-               void (Base::*func)(const TStrObjList& Params, TMacroError& E),
-               const olxstr& funcName, unsigned int argc, const olxstr& desc=EmptyString)
+    TFunction(Base* baseClassInstance,
+              void (Base::*func)(const TStrObjList& Params, TMacroError& E),
+              const olxstr& funcName, unsigned int argc, const olxstr& desc=EmptyString)
     {
       ArgStateMask = argc;
       BaseClassInstance = baseClassInstance;
