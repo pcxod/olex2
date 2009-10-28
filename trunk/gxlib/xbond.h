@@ -53,8 +53,8 @@ public:
   // beware - for objects, having not tdbond underneath this might fail
   inline TSBond& Bond()      const {  return *FBond; }
   
-  void Radius(float V);
-  inline double Radius()        {  return Params()[4]; }
+  void SetRadius(float V);
+  inline double GetRadius() const {  return FParams[4]; }
 
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false; };

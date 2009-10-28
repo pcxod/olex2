@@ -471,7 +471,7 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {
   return L;
 }
 //..............................................................................
-void TXBond::Radius(float V)  {
+void TXBond::SetRadius(float V)  {
   Params()[4] = V;
   GetPrimitives().GetStyle().SetParam("R", V, IsRadiusSaveable());
   // update radius for all members of the collection

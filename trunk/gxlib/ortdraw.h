@@ -13,22 +13,21 @@ private:
     const TSAtom* atom;
     vec3f crd;
     mat3f *elpm, *ielpm;
-    OrtAtom(const TSAtom* a, const vec3f& c, mat3f* em = NULL, mat3f* iem = NULL) :
-      atom(a), crd(c), elpm(em), ielpm(iem) {  }
+    double draw_rad;
+    OrtAtom(const TSAtom* a, const vec3f& c, double _draw_rad, mat3f* em = NULL, mat3f* iem = NULL) :
+      atom(a), draw_rad(_draw_rad), crd(c), elpm(em), ielpm(iem) {}
     OrtAtom(const OrtAtom& a) :
-      atom(a.atom), crd(a.crd), elpm(a.elpm), ielpm(a.ielpm) {  }
+      atom(a.atom), draw_rad(a.draw_rad), crd(a.crd), elpm(a.elpm), ielpm(a.ielpm) {}
     ~OrtAtom()  {
-      if( elpm != NULL )   
-        delete elpm;
-      if( ielpm != NULL )  
-        delete ielpm;
+      if( elpm != NULL )  delete elpm;
+      if( ielpm != NULL )  delete ielpm;
     }
   };
   static int OrtAtomZSort(const OrtAtom& a1, const OrtAtom& a2)  {
     const float diff = a1.crd[2] - a2.crd[2];
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
   }
-  float AradScale, DrawScale, BondRad, LinearScale;
+  float DrawScale, BondRad, LinearScale;
   mat3f ProjMatr, UnProjMatr;
   vec3f DrawOrigin, SceneOrigin;
   TGXApp& app;
@@ -80,7 +79,8 @@ protected:
       float brad = (bn.A().GetAtomInfo() < 4 || bn.B().GetAtomInfo() < 4) ? 
         BondRad*HBondScale : BondRad;
       if( bn.GetType() == sotHBond )  //even thiner H-bonds
-        brad *= HBondScale;
+        brad /= 4;
+      brad *= app.GetBond(bn.GetTag()).GetRadius();
       touch_point = (bn.Another(sa).crd()-oa.atom->crd()).Normalise();
       vec3f rot_vec(-touch_point[1], touch_point[0], 0);
       CreateRotationMatrix(rot_mat, rot_vec.Normalise(), touch_point[2]);
@@ -100,7 +100,7 @@ protected:
         }
       }
       else  {
-        const float off_len = AradScale*sa.GetAtomInfo().GetRad1()/2;
+        const float off_len = oa.draw_rad/2;
         for( uint16_t j=0; j < BondDiv; j++ )  {
           BondProjT[j] = BondProjF[j] = (BondCrd[j]*proj_mat).NormaliseTo(brad*(1+pers_scale)*scalex); 
           BondProjT[j].NormaliseTo(brad*2*scalex) += dir_vec*b_len;
@@ -129,23 +129,19 @@ protected:
       norm_vec *= -1;
     for( uint16_t j=0; j < ElpDiv; j++ )
       Arc[j] = ElpCrd[j]*pelpm;
-    int pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
-    //pw.color(0x0000ff);
+    size_t pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
     pw.drawLines_vp(FilteredArc, pts_cnt, false);
 
     for( uint16_t j=0; j < ElpDiv; j++ )
       Arc[j] = vec3f(ElpCrd[j][1], 0, ElpCrd[j][0])*pelpm;
     pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
-    //pw.color(0x00ff00);
     pw.drawLines_vp(FilteredArc, pts_cnt, false);
 
     for( uint16_t j=0; j < ElpDiv; j++ )
       Arc[j] = vec3f(0, ElpCrd[j][0], ElpCrd[j][1])*pelpm;
     pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
-    //pw.color(0xff0000);
     pw.drawLines_vp(FilteredArc, pts_cnt, false);
 
-    //pw.color(0);
     if( drawQuad )  {
       pw.drawLine(NullVec, pelpm[0]);
       pw.drawLine(NullVec, pelpm[1]);
@@ -214,11 +210,9 @@ public:
 
     pw.scale(LinearScale, LinearScale);
     LinearScale = 1; // reset now
-    DrawScale = LinearScale/app.GetRender().GetScale();
-    AradScale = 0.5*DrawScale;///app.GetRender().GetScale(),
-    BondRad = 0.05*DrawScale;///app.GetRender().GetScale();
+    DrawScale = 1./(LinearScale*app.GetRender().GetScale());
+    BondRad = 0.05*DrawScale;
     SceneOrigin = basis.GetCenter();
-    //DrawOrigin = vec3f(pw.GetWidth()/2, pw.GetHeight()/2, 0);
     DrawOrigin = vec3f(vp[2]/2, vp[3]/2, 0);
     ProjMatr = basis.GetMatrix()*DrawScale;  
     UnProjMatr = ProjMatr.Inverse();
@@ -233,18 +227,20 @@ public:
       if( app.GetAtom(i).IsDeleted() || !app.GetAtom(i).IsVisible() )
         continue;
       const TSAtom& sa = app.GetAtom(i).Atom();
+      app.GetAtom(i).SetTag(i);
+      app.GetAtom(i).Atom().SetTag(i);
       if( sa.GetEllipsoid() != NULL )  {
-        mat3f& elpm = *(new mat3f(sa.GetEllipsoid()->GetMatrix()) );
+        mat3f& elpm = *(new mat3f(sa.GetEllipsoid()->GetMatrix()));
         elpm[0] *= sa.GetEllipsoid()->GetSX();
         elpm[1] *= sa.GetEllipsoid()->GetSY();
         elpm[2] *= sa.GetEllipsoid()->GetSZ();
-        elpm *= TXAtom::TelpProb();
+        elpm *= app.GetAtom(i).GetDrawScale();
         elpm *= ProjMatr;
         mat3f& ielpm = *(new mat3f( (sa.GetEllipsoid()->GetMatrix() * basis.GetMatrix() ).Inverse()) );
-        atoms.AddNew(&sa, (sa.crd() + SceneOrigin)*ProjMatr+DrawOrigin, &elpm, &(ielpm *= elpm));
+        atoms.AddNew(&sa, (sa.crd() + SceneOrigin)*ProjMatr+DrawOrigin, 1.0, &elpm, &(ielpm *= elpm));
       }
       else
-        atoms.AddNew(&sa, (sa.crd() + SceneOrigin)*ProjMatr+DrawOrigin);
+        atoms.AddNew(&sa, (sa.crd() + SceneOrigin)*ProjMatr+DrawOrigin, app.GetAtom(i).GetDrawScale()*DrawScale);
     }
     for( size_t i=0; i < app.BondCount(); i++ )  {
       app.GetBond(i).SetTag(i);
@@ -259,14 +255,14 @@ public:
       pw.lineWidth(0.5);
       pw.color(~0);
       if( sa.GetEllipsoid() == NULL )  {
-        pw.drawCircle(NullVec, AradScale*sa.GetAtomInfo().GetRad1()*1.05, &PSWriter::fill);
+        pw.drawCircle(NullVec, atoms[i].draw_rad*1.05, &PSWriter::fill);
         if( ColorMode == ortep_color_None )  {
           pw.color(0);
-          pw.drawCircle(NullVec, AradScale*sa.GetAtomInfo().GetRad1());
+          pw.drawCircle(NullVec, atoms[i].draw_rad);
         }
         else if( ColorMode == ortep_color_Fill )  {
           pw.newPath();
-          pw.circle(NullVec, AradScale*sa.GetAtomInfo().GetRad1());
+          pw.circle(NullVec, atoms[i].draw_rad);
           pw.gsave();
           pw.color(sa.GetAtomInfo().GetDefColor());
           pw.fill();
@@ -276,7 +272,7 @@ public:
         }
         else if( ColorMode == ortep_color_Lines )  {
           pw.color(  sa.GetAtomInfo().GetDefColor() == 0xffffff ? 0 : sa.GetAtomInfo().GetDefColor() );
-          pw.drawCircle(NullVec, AradScale*sa.GetAtomInfo().GetRad1());
+          pw.drawCircle(NullVec, atoms[i].draw_rad);
         }
       }
       else  {
@@ -310,7 +306,6 @@ public:
         const TXGlLabel& glxl = app.GetLabel(i);
         vec3d rp = glxl.GetRasterPosition();
         rp[1] += 4;
-        rp *= (DrawScale*app.GetRender().GetScale());
         pw.drawText(glxl.GetLabel(), rp+DrawOrigin);
       }
     }

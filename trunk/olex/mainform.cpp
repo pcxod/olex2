@@ -2,11 +2,6 @@
 // main frame of the application
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #define this_InitFunc(funcName, argc) \
   Library.RegisterFunction( new TFunction<TMainForm>(this, &TMainForm::fun##funcName, #funcName, argc))
 #define this_InitMacro(macroName, validOptions, argc)\
