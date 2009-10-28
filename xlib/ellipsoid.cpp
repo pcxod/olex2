@@ -44,12 +44,11 @@ void TEllipsoid::Initialise()  {
   Matrix[2].Normalise();
 }
 //..............................................................................
-void TEllipsoid::operator = ( const TEllipsoid&E )  {
+void TEllipsoid::operator = (const TEllipsoid&E)  {
   Matrix = E.GetMatrix();
   SX = E.GetSX();
   SY = E.GetSY();
   SZ = E.GetSZ();
-  //SetId( E.GetId() );
   for( int i=0; i < 6; i++ )  {
     FQuad[i] = E.FQuad[i];
     FEsd[i] = E.FEsd[i];

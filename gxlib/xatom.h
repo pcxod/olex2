@@ -126,9 +126,17 @@ public:
   void ApplyStyle(TGraphicsStyle& S);
   void UpdateStyle(TGraphicsStyle& S);
 
-  void Zoom(double Z);
-  inline double Zoom()  {  return Params()[1]; }
-
+  void SetZoom(double Z);
+  inline double GetZoom()  {  return Params()[1]; }
+  double GetDrawScale() const {
+    double scale = FParams[1];
+    if( (FRadius & (darIsot|darIsotH)) != 0 )
+      scale *= TelpProb();
+    if( (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) && FAtom->GetEllipsoid() != NULL )
+      return scale;
+    else
+      return FParams[0]*scale;
+  }
   bool Orient(TGlPrimitive& P);
   bool DrawStencil();
   bool GetDimensions(vec3d &Max, vec3d &Min);

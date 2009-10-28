@@ -829,7 +829,7 @@ void TXAtom::ValidateAtomParams() {
   }
 }
 //..............................................................................
-void TXAtom::Zoom(double V)  {
+void TXAtom::SetZoom(double V)  {
   GetPrimitives().GetStyle().SetParam("Z", V);
   Params()[1] = V;
   // update radius for all members of the collection

@@ -2426,7 +2426,7 @@ void TGXApp::AtomZoom(float Zoom, TXAtomPList* Atoms)  {  // takes %
   GetGPCollections(objects, Colls);
   for( size_t i=0; i < Colls.Count(); i++ )  {
     if( Colls[i]->ObjectCount() )  {
-      ((TXAtom&)Colls[i]->GetObject(0)).Zoom(Zoom/100);
+      ((TXAtom&)Colls[i]->GetObject(0)).SetZoom(Zoom/100);
     }
   }
 }
@@ -2462,7 +2462,7 @@ void TGXApp::BondRad(float R, TXBondPList* Bonds)  {
   GetGPCollections(objects, Colls);
   for( size_t i=0; i < Colls.Count(); i++ )  {
     if( Colls[i]->ObjectCount() != 0 )  {
-      ((TXBond&)Colls[i]->GetObject(0)).Radius(R);
+      ((TXBond&)Colls[i]->GetObject(0)).SetRadius(R);
     }
   }
 }
