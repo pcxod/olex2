@@ -104,7 +104,7 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
     P.Vertices[0] = vec3d(-xinc, yinc, -0.1);
     P.Vertices[1] = vec3d(xinc, yinc, -0.1);
     P.Vertices[2] = vec3d(xinc, -yinc, -0.1);
-    P.Vertices[4] = vec3d(-xinc, -yinc, -0.1);
+    P.Vertices[3] = vec3d(-xinc, -yinc, -0.1);
   }
   return false;
 }
