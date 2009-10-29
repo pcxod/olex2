@@ -217,8 +217,8 @@ template <class ListClass, class ItemClass >  class TBubblePtrSorter  {
       while( changes )  {
         changes = false;
         for( size_t i=1; i < lc; i++ )  {
-          if( Cmp.Compare(list.Item(i-1), list.Item(i) ) > 0 )  {
-            list.Swap( i-1, i);
+          if( Cmp.Compare(list.Item(i-1), list.Item(i)) > 0 )  {
+            list.Swap(i-1, i);
             changes = true;
           }
         }
@@ -231,9 +231,9 @@ template <class ListClass, class ItemClass >  class TBubblePtrSorter  {
       while( changes )  {
         changes = false;
         for( size_t i=1; i < lc; i++ )  {
-          if( Cmp.Compare( list.Item(i-1), list.Item(i) ) > 0 )  {
-            list.Swap( i-1, i );
-            list1.Swap( i-1, i );
+          if( Cmp.Compare(list.Item(i-1), list.Item(i)) > 0 )  {
+            list.Swap(i-1, i);
+            list1.Swap(i-1, i);
             changes = true;
           }
         }
@@ -288,42 +288,51 @@ public:
 template <class ListClass, class ItemClass > class TQuickSorter  {
   // static comparator sort
   template <class Comparator>
-    static void QuickSort(const Comparator& Cmp, size_t lo0, size_t hi0, ListClass& list)  {
-      size_t lo = lo0;
-      size_t hi = hi0;
-      if( hi0 > lo0)  {
-        const ItemClass& mid = list.Item( ( lo0 + hi0 ) / 2 );
-        while( lo <= hi )  {
-          while( ( lo < hi0 ) && ( Cmp.Compare(list.Item(lo), mid) < 0) )  lo++;
-          while( ( hi > lo0 ) && ( Cmp.Compare(list.Item(hi), mid) > 0) )  hi--;
-          if( lo <= hi )  {
-            list.Swap(lo++, hi);
-            if( hi == 0 )  break;
-            hi--;
-          }
-        }
-        if( lo0 < hi )  QuickSort(Cmp, lo0, hi, list);
-        if( lo < hi0 )  QuickSort(Cmp, lo, hi0, list);
+    static index_t partition(ListClass& list, const Comparator& Cmp, size_t left, size_t right)  {
+      const size_t pivot_index = (left+right)/2;
+      const ItemClass& pivot = list.Item(pivot_index);
+      list.Swap(pivot_index, right);
+      size_t store_index = left;
+      for( size_t i=left; i < right; i++ )  {
+        if( Cmp.Compare(list.Item(i), pivot) < 0 )
+          list.Swap(store_index++, i);
       }
+      list.Swap(store_index, right);
+      return store_index;
     }
   template <class Comparator, class ListClassA>
-    static void QuickSort(const Comparator& Cmp, size_t lo0, size_t hi0, ListClass& list, ListClassA& list1)  {
-      size_t lo = lo0;
-      size_t hi = hi0;
-      if( hi0 > lo0)  {
-        const ItemClass& mid = list.Item( ( lo0 + hi0 ) / 2 );
-        while( lo <= hi )  {
-          while( ( lo < hi0 ) && ( Cmp.Compare(list.Item(lo), mid) < 0) )  lo++;
-          while( ( hi > lo0 ) && ( Cmp.Compare(list.Item(hi), mid) > 0) )  hi--;
-          if( lo <= hi )  {
-            list.Swap(lo, hi);
-            list1.Swap(lo++, hi);
-            if( hi == 0)  break;
-            hi--;
-          }
+    static index_t partition(ListClass& list, ListClassA& list1, const Comparator& Cmp, size_t left, size_t right)  {
+      const size_t pivot_index = (left+right)/2;
+      const ItemClass& pivot = list.Item(pivot_index);
+      list.Swap(pivot_index, right);
+      size_t store_index = left;
+      for( size_t i=left; i < right; i++ )  {
+        if( Cmp.Compare(list.Item(i), pivot) < 0 )  {
+          list1.Swap(store_index, i);
+          list.Swap(store_index++, i);
         }
-        if( lo0 < hi )  QuickSort(Cmp, lo0, hi, list, list1);
-        if( lo < hi0 )  QuickSort(Cmp, lo, hi0, list, list1);
+      }
+      list.Swap(store_index, right);
+      return store_index;
+    }
+
+  template <class Comparator>
+    static void QuickSort(const Comparator& Cmp, size_t left, size_t right, ListClass& list)  {
+      if( left < right )  {
+        const size_t pivot_index = partition(list, Cmp, left, right);
+        if( pivot_index > 0 )
+          QuickSort(Cmp, left, pivot_index-1, list);
+        QuickSort(Cmp, pivot_index+1, right, list);
+      }
+    }
+
+  template <class Comparator, class ListClassA>
+    static void QuickSort(const Comparator& Cmp, size_t left, size_t right, ListClass& list, ListClassA& list1)  {
+      if( left < right )  {
+        const size_t pivot_index = partition(list, list1, Cmp, left, right);
+        if( pivot_index > 0 )
+          QuickSort(Cmp, left, pivot_index-1, list, list1);
+        QuickSort(Cmp, pivot_index+1, right, list, list1);
       }
     }
 public:
@@ -397,8 +406,8 @@ template <class ListClass, class ItemClass > class TBubbleSorter  {
       while( changes )  {
         changes = false;
         for( size_t i=1; i < lc; i++ )  {
-          if( Cmp.Compare( list.Item(i-1), list.Item(i) ) > 1 )  {
-            list.Swap( i-1, i);
+          if( Cmp.Compare(list.Item(i-1), list.Item(i)) > 0 )  {
+            list.Swap(i-1, i);
             changes = true;
           }
         }
@@ -410,9 +419,9 @@ template <class ListClass, class ItemClass > class TBubbleSorter  {
       while( changes )  {
         changes = false;
         for( size_t i=1; i < list.Count(); i++ )  {
-          if( Cmp.Compare( list.Item(i-1), list.Item(i) ) > 1 )  {
-            list.Swap( i-1, i );
-            list1.Swap( i-1, i );
+          if( Cmp.Compare(list.Item(i-1), list.Item(i)) > 0 )  {
+            list.Swap(i-1, i);
+            list1.Swap(i-1, i);
             changes = true;
           }
         }
@@ -478,42 +487,51 @@ public:
 template <class ListClass, class ItemClass > class TQuickObjectSorter  {
   // static comparator sort
   template <class Comparator>
-    static void QuickSort(const Comparator& Cmp, size_t lo0, size_t hi0, ListClass& list)  {
-      size_t lo = lo0;
-      size_t hi = hi0;
-      if( hi0 > lo0)  {
-        ItemClass mid = list.Item( ( lo0 + hi0 ) / 2 );
-        while( lo <= hi )  {
-          while( ( lo < hi0 ) && ( Cmp.Compare(list.Item(lo), mid) < 0) )  lo++;
-          while( ( hi > lo0 ) && ( Cmp.Compare(list.Item(hi), mid) > 0) )  hi--;
-          if( lo <= hi )  {
-            list.Swap(lo++, hi);
-            if( hi == 0 )  break;
-            hi--;
-          }
-        }
-        if( lo0 < hi )  QuickSort(Cmp, lo0, hi, list);
-        if( lo < hi0 )  QuickSort(Cmp, lo, hi0, list);
+    static index_t partition(ListClass& list, const Comparator& Cmp, size_t left, size_t right)  {
+      const size_t pivot_index = (left+right)/2;
+      ItemClass pivot = list.Item(pivot_index);
+      list.Swap(pivot_index, right);
+      size_t store_index = left;
+      for( size_t i=left; i < right; i++ )  {
+        if( Cmp.Compare(list.Item(i), pivot) < 0 )
+          list.Swap(store_index++, i);
       }
+      list.Swap(store_index, right);
+      return store_index;
     }
   template <class Comparator, class ListClassA>
-    static void QuickSort(const Comparator& Cmp, size_t lo0, size_t hi0, ListClass& list, ListClassA& list1)  {
-      size_t lo = lo0;
-      size_t hi = hi0;
-      if( hi0 > lo0)  {
-        ItemClass mid = list.Item( ( lo0 + hi0 ) / 2 );
-        while( lo <= hi )  {
-          while( ( lo < hi0 ) && ( Cmp.Compare(list.Item(lo), mid) < 0) )  lo++;
-          while( ( hi > lo0 ) && ( Cmp.Compare(list.Item(hi), mid) > 0) )  hi--;
-          if( lo <= hi )  {
-            list.Swap(lo, hi);
-            list1.Swap(lo++, hi);
-            if( hi == 0 )  break;
-            hi--;
-          }
+    static index_t partition(ListClass& list, ListClassA& list1, const Comparator& Cmp, size_t left, size_t right)  {
+      const size_t pivot_index = (left+right)/2;
+      ItemClass pivot = list.Item(pivot_index);
+      list.Swap(pivot_index, right);
+      size_t store_index = left;
+      for( size_t i=left; i < right; i++ )  {
+        if( Cmp.Compare(list.Item(i), pivot) < 0 )  {
+          list1.Swap(store_index, i);
+          list.Swap(store_index++, i);
         }
-        if( lo0 < hi )  QuickSort(Cmp, lo0, hi, list, list1);
-        if( lo < hi0 )  QuickSort(Cmp, lo, hi0, list, list1);
+      }
+      list.Swap(store_index, right);
+      return store_index;
+    }
+
+  template <class Comparator>
+    static void QuickSort(const Comparator& Cmp, size_t left, size_t right, ListClass& list)  {
+      if( left < right )  {
+        const size_t pivot_index = partition(list, Cmp, left, right);
+        if( pivot_index > 0 )
+          QuickSort(Cmp, left, pivot_index-1, list);
+        QuickSort(Cmp, pivot_index+1, right, list);
+      }
+    }
+
+  template <class Comparator, class ListClassA>
+    static void QuickSort(const Comparator& Cmp, size_t left, size_t right, ListClass& list, ListClassA& list1)  {
+      if( left < right )  {
+        const size_t pivot_index = partition(list, list1, Cmp, left, right);
+        if( pivot_index > 0 )
+          QuickSort(Cmp, left, pivot_index-1, list, list1);
+        QuickSort(Cmp, pivot_index+1, right, list, list1);
       }
     }
 public:

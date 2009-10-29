@@ -219,7 +219,7 @@ public:
   //..........................................................................
   template <class vec_t>
   void stippledQuad(const vec_t& p1, const vec_t& p2, 
-    const vec_t& p3, const vec_t& p4, int div, RenderFunc func ) 
+    const vec_t& p3, const vec_t& p4, size_t div, RenderFunc func ) 
   {
     const float x_inc1 = (p2[0]-p1[0])/div;
     const float x_inc2 = (p3[0]-p4[0])/div;
@@ -228,7 +228,7 @@ public:
     float fx1 = p1[0], fy1 = p1[1], fx2 = p4[0], fy2 = p4[1];
     float tx1 = p1[0]+x_inc1, ty1 = p1[1]+y_inc1, 
           tx2 = p4[0]+x_inc2, ty2 = p4[1]+y_inc2;
-    for( int i=0; i < div; i+=2 )  {
+    for( size_t i=0; i < div; i+=2 )  {
       newPath();
       moveto(fx1, fy1);
       lineto(tx1, ty1);
@@ -248,8 +248,7 @@ public:
   void drawQuads(const vec_lt& sidea, const vec_lt& sideb, RenderFunc func)  {
     if( sidea.Count() != sideb.Count() )
       throw TFunctionFailedException(__OlxSourceInfo, "lists mismatch");
-    if( sidea.Count() < 2 )
-      return;
+    if( sidea.Count() < 2 )  return;
     for( size_t j=1; j < sidea.Count(); j++ )  {
       newPath();
       quad(sidea[j-1], sideb[j-1], sideb[j], sidea[j]);
@@ -261,13 +260,37 @@ public:
   }
   //..........................................................................
   template <class vec_lt>
+  void drawQuadsBiColored(const vec_lt& sidea, const vec_lt& sideb, RenderFunc func, uint32_t cl1, uint32_t cl2)  {
+    if( sidea.Count() != sideb.Count() )
+      throw TFunctionFailedException(__OlxSourceInfo, "lists mismatch");
+    if( sidea.Count() < 2 )  return;
+    color(cl1);
+    for( size_t j=1; j < sidea.Count(); j++ )  {
+      newPath();
+      quad(sidea[j-1], (sideb[j-1]+sidea[j-1])/2, (sideb[j]+sidea[j])/2, sidea[j]);
+      (this->*func)();
+    }
+    newPath();
+    quad(sidea.Last(), (sideb.Last()+sidea.Last())/2, (sideb[0]+sidea[0])/2, sidea[0]);
+    (this->*func)();
+    color(cl2);
+    for( size_t j=1; j < sidea.Count(); j++ )  {
+      newPath();
+      quad((sidea[j-1]+sideb[j-1])/2, sideb[j-1], sideb[j], (sidea[j]+sideb[j])/2);
+      (this->*func)();
+    }
+    newPath();
+    quad((sidea.Last()+sideb.Last())/2, sideb.Last(), sideb[0], (sidea[0]+sideb[0])/2);
+    (this->*func)();
+  }
+  //..........................................................................
+  template <class vec_lt>
   void drawQuads(const vec_lt& sidea, const vec_lt& sideb, 
-    int parts, RenderFunc func)  
+    size_t parts, RenderFunc func)  
   {
     if( sidea.Count() != sideb.Count() )
       throw TFunctionFailedException(__OlxSourceInfo, "lists mismatch");
-    if( sidea.Count() < 2 )
-      return;
+    if( sidea.Count() < 2 )  return;
     for( size_t j=1; j < sidea.Count(); j++ )
       stippledQuad(sidea[j-1], sideb[j-1], sideb[j], sidea[j], parts, func);
     stippledQuad(sidea.Last(), sideb.Last(), sideb[0], sidea[0], parts, func);

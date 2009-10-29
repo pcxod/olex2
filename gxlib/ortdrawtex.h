@@ -307,7 +307,7 @@ public:
     PieDiv = 4;
     QuadLineWidth = PieLineWidth = 0.5;
     BondRad = 4;
-    ColorMode = ortep_color_None;
+    ColorMode = 0;
     HBondScale = 0.8;
   }
   // create ellipse and pie coordinates

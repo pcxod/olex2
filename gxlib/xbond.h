@@ -71,11 +71,12 @@ public:
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
 
-  inline bool IsDeleted()  {  return AGDrawObject::IsDeleted(); }
-  void SetDeleted(bool v)   {  AGDrawObject::SetDeleted(v);  FBond->SetDeleted(v); }
+  inline bool IsDeleted() const {  return AGDrawObject::IsDeleted(); }
+  void SetDeleted(bool v)  {  AGDrawObject::SetDeleted(v);  FBond->SetDeleted(v); }
   void ListDrawingStyles(TStrList &List);
 
   void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
+  uint32_t GetPrimitiveMask() const;
   static void DefMask(int V);
   static int  DefMask();
   inline short DrawStyle() const {  return FDrawStyle; }

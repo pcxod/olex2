@@ -73,7 +73,7 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( FStaticObjects.IsEmpty() )  
     CreateStaticPrimitives();
   // find collection
-  TGPCollection* GPC = Parent.FindCollectionX( GetCollectionName(), NewL);
+  TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);
   if( GPC == NULL )
     GPC = &Parent.NewCollection(NewL);
   else if( GPC->PrimitiveCount() != 0 )  {
@@ -477,6 +477,11 @@ void TXBond::SetRadius(float V)  {
   // update radius for all members of the collection
   for( size_t i=0; i < GetPrimitives().ObjectCount(); i++ )
     GetPrimitives().GetObject(i).Params()[4] = V;
+}
+//..............................................................................
+uint32_t TXBond::GetPrimitiveMask() const {
+  return GetPrimitives().GetStyle().GetParam(GetPrimitiveMaskName(),
+    (FBond && (FBond->GetType() == sotHBond)) ? 2048 : DefMask(), IsMaskSaveable()).ToUInt();
 }
 //..............................................................................
 void TXBond::OnPrimitivesCleared()  {
