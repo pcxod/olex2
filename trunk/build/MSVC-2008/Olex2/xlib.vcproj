@@ -328,7 +328,7 @@
 				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(PY_DIR)\include"
 				PreprocessorDefinitions="_UNICODE;_DEBUG;"
 				StringPooling="true"
-				MinimalRebuild="true"
+				MinimalRebuild="false"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				StructMemberAlignment="0"

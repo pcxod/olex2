@@ -1,5 +1,5 @@
-#ifndef pyextH
-#define pyextH
+#ifndef __olx_python_ext_H
+#define __olx_python_ext_H
 
 #include "integration.h"
 #include "typelist.h"

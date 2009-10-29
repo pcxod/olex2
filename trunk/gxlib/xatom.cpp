@@ -837,6 +837,10 @@ void TXAtom::SetZoom(double V)  {
     GetPrimitives().GetObject(i).Params()[1] = V;
 }
 //..............................................................................
+uint32_t TXAtom::GetPrimitiveMask() const {
+  return GetPrimitives().GetStyle().GetParam(GetPrimitiveMaskName(), "0").ToUInt();
+}
+//..............................................................................
 void TXAtom::OnPrimitivesCleared()  {
   if( FStaticObjects.Count() != 0 )
     FStaticObjects.Clear();

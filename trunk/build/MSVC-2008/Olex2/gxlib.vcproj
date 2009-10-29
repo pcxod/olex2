@@ -1335,6 +1335,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\gxlib\ortdraw.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\gxlib\wxglscene.cpp"
 				>
 			</File>

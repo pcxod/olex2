@@ -34,40 +34,10 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
     CleanUp(OnFileCopy, OnOverallCopy);
     return papi_Busy;
   }
-  // clean
+  // clean...
   short res = papi_OK;
   if( TEFile::Exists(cmd_file) )  {
-    TWStrList _cmds;
-    TUtf8File::ReadLines(cmd_file, _cmds);
-    TStrList cmds(_cmds);
-    for( size_t i=0; i < cmds.Count(); i++ )  {
-      if( cmds[i].StartsFrom("rm ") )  {
-        olxstr fdn = cmds[i].SubStringFrom(3).Trim('\'');
-        if( !TEFile::Exists(fdn) )  {
-          cmds[i].SetLength(0);
-          continue;
-        }
-        if( TEFile::IsDir(fdn) )  {
-          if( !TEFile::DeleteDir(fdn) )  {
-            res = papi_DeleteError;
-            break;  // next time then...
-          }
-        }
-        else  {
-          if( !TEFile::DelFile(fdn) )  {
-            res = papi_DeleteError;
-            break; // next time then...
-          }
-        }
-        cmds[i].SetLength(0);
-      }
-    }
-    if( res == papi_OK )
-      TEFile::DelFile(cmd_file);
-    else  {
-      cmds.Pack();
-      TUtf8File::WriteLines(cmd_file, cmds, true);
-    }
+    TEFile::DelFile(cmd_file);
   }
   // copy...
   if( res == papi_OK )  {
