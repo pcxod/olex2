@@ -39,7 +39,6 @@ bool TCheckBox::Execute(const IEObject *Sender, const IEObject *Data)  {
 }
 //..............................................................................
 void TCheckBox::ClickEvent(wxCommandEvent &event)  {
-  if( !Data.IsEmpty() )  TOlxVars::SetVar(Data, IsChecked());
   StartEvtProcessing()
     OnClick.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnClickStr()) );
     if( IsChecked() )

@@ -433,7 +433,7 @@ void TwxGlScene::ScaleFonts(double scale)  {
       fontId << mf.GetIdString();
     }
     else if( MetaFont::IsVectorFont(Fonts[i]->GetIdString()) )
-      continue;
+      fontId << Fonts[i]->GetIdString();
     else  {
       wxFont font;
       ((wxFontBase&)font).SetNativeFontInfo(Fonts[i]->GetIdString().u_str());
@@ -456,7 +456,7 @@ void TwxGlScene::RestoreFontScale()  {
       fontId = mf.GetIdString();
     }
     else if( MetaFont::IsVectorFont(Fonts[i]->GetIdString()) )
-      continue;
+      fontId << Fonts[i]->GetIdString();
     else  {
       wxFont font;
       ((wxFontBase&)font).SetNativeFontInfo(Fonts[i]->GetIdString().u_str());
