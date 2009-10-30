@@ -169,7 +169,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
         Tmp << olxstr::FormatFloat(3, ca.GetOccu() );
     }
 #ifdef _DEBUG
-    if( ca.GetSameId() != -1 )
+    if( olx_is_valid_index(ca.GetSameId()) )
       Tmp << ':' << ca.GetSameId();
 #endif
     if( Tmp.IsEmpty() )  continue;

@@ -51,6 +51,7 @@ public:
     olxstr GetFileIdString() const;
     void SetIdString(const olxstr& idstr);
     static bool IsOlexFont(const olxstr& fntId) {  return fntId.IsEmpty()? false : fntId.CharAt(0) == '#';  }
+    static bool IsVectorFont(const olxstr& fntId) {  return fntId.IsEmpty()? false : fntId.CharAt(0) == '@';  }
     static olxstr BuildOlexFontId(const olxstr& fileName, short size, bool fixed, bool bold, bool italic);
     DefPropC(olxstr, FileName)
     DefPropBIsSet(Bold)

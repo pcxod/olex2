@@ -40,7 +40,17 @@ bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Dat
   bool res = false;
   if( (Data->Button == smbLeft) && (Data->Shift == sssShift) )  {  // move
     if( !IsMoveable() )  {  SX = Data->X;  SY = Data->Y;  return res;}
-    if( !IsMove2D() ) {  // move in 3D
+    if( IsMove2D() )  {
+      Basis.TranslateX(dx);
+      Basis.TranslateY(dy);
+      res = true;
+    }
+    else if( IsMove2DZ() )  {
+      Basis.TranslateX((double)dx/Parent.GetZoom());
+      Basis.TranslateY((double)dy/Parent.GetZoom());
+      res = true;
+    }
+    else  {  // move in 3D
       vec3d T;
       double v = Parent.GetScale();
       if( Data->Shift & sssCtrl )
@@ -50,11 +60,6 @@ bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Dat
       // use V*M not M*V, as the basis is transposed (See TEBasis::Orient for details)
       T = Parent.GetBasis().GetMatrix() * T;
       Basis.Translate(T);
-      res = true;
-    }
-    else  {  // move on screen (2D)
-      Basis.TranslateX( dx );
-      Basis.TranslateY( dy );
       res = true;
     }
   }

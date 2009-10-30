@@ -9,10 +9,12 @@
 BeginGlNamespace()
 
 // TGlMouseListner flags
-const short  glmlMove2d    = 0x0001,
-             glmlMoveable  = 0x0002,
-             glmlRoteable  = 0x0004,
-             glmlZoomable  = 0x0008;
+const uint16_t
+  glmlMove2d    = 0x0001,
+  glmlMoveable  = 0x0002,
+  glmlRoteable  = 0x0004,
+  glmlZoomable  = 0x0008,
+  glmlMove2dz   = 0x0010;  // the translation is devided by current zoom
 
 
 class TGlMouseListener: public AGDrawObject  {
@@ -24,6 +26,7 @@ public:
   virtual ~TGlMouseListener();
   TEBasis Basis;
   // Is/Set
+  DefPropBFIsSet(Move2DZ,  Flags, glmlMove2dz)
   DefPropBFIsSet(Move2D,  Flags, glmlMove2d)
   DefPropBFIsSet(Moveable,  Flags, glmlMoveable)
   DefPropBFIsSet(Roteable,  Flags, glmlRoteable)

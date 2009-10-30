@@ -269,9 +269,26 @@ void OrtDraw::Init(PSWriter& pw)  {
   LinearScale = olx_min((float)pw.GetWidth()/vp[2], (double)pw.GetHeight()/vp[3]);
 
   if( app.LabelCount() != 0 )  {
-    olxcstr fnt("/Verdana findfont ");
-    fnt << olx_round(app.GetLabel(0).GetFont().GetPointSize()/LinearScale) << " scalefont setfont";
-    pw.custom(fnt.c_str());
+    if( app.GetLabel(0).GetFont().IsVectorFont() )  {
+      //olxstr uniq;
+      //for( size_t i=0; i < app.LabelCount(); i++ )  {
+      //  const olxstr& l = app.GetLabel(i).GetLabel();
+      //  for( size_t j=0; j < l.Length(); j++ )
+      //    if( uniq.IndexOf(l.CharAt(j)) == InvalidIndex )
+      //      uniq << l.CharAt(j);
+      //}
+      //TStrList fe = TGlFont::ExportHersheyToPS(uniq);
+      //for( size_t i=0; i < fe.Count(); i++ )
+      //  pw.custom(fe[i].c_str());
+      //olxcstr fnt("/HersheyFont findfont ");
+      //fnt << olx_round(app.GetLabel(0).GetFont().GetPointSize()/sqrt(LinearScale)) << " scalefont setfont";
+      //pw.custom(fnt.c_str());
+    }
+    else  {
+      olxcstr fnt("/Verdana findfont ");
+      fnt << olx_round(app.GetLabel(0).GetFont().GetPointSize()/sqrt(LinearScale)) << " scalefont setfont";
+      pw.custom(fnt.c_str());
+    }
   }
 
   pw.scale(LinearScale, LinearScale);
@@ -287,9 +304,6 @@ void OrtDraw::Init(PSWriter& pw)  {
 void OrtDraw::Render(const olxstr& fileName)  {
   PSWriter pw(fileName);
   Init(pw);
-  TDataFile df;
-  df.LoadFromXLFile( app.GetBaseDir() + "ortep.xld");
-
   TTypeList<a_ort_object> objects;
   objects.SetCapacity(app.AtomCount()+app.BondCount());
   for( size_t i=0; i < app.AtomCount(); i++ )  {
@@ -324,11 +338,26 @@ void OrtDraw::Render(const olxstr& fileName)  {
     objects[i].render(pw);
 
   if( app.LabelCount() != 0 )  {
-    for( size_t i=0; i < app.LabelCount(); i++ )  {
-      const TXGlLabel& glxl = app.GetLabel(i);
-      vec3f rp = glxl.GetRasterPosition();
-      rp[1] += 4;
-      pw.drawText(glxl.GetLabel(), rp+DrawOrigin);
+    TGlFont& glf = app.GetLabel(0).GetFont();
+    if( glf.IsVectorFont() )  {
+      TStrList out;
+      olxdict<size_t, olxstr, TPrimitiveComparator> defs;
+      for( size_t i=0; i < app.LabelCount(); i++ )  {
+        const TXGlLabel& glxl = app.GetLabel(i);
+        vec3d crd = glxl.GetVectorPosition()*DrawScale + DrawOrigin;
+        glf.RenderPSLabel(crd, glxl.GetLabel(), out, DrawScale, defs);
+      }
+      pw.lineWidth(1.0);
+      for( size_t i=0; i < out.Count(); i++ )
+        pw.custom(out[i].c_str());
+    }
+    else  {
+      for( size_t i=0; i < app.LabelCount(); i++ )  {
+        const TXGlLabel& glxl = app.GetLabel(i);
+        vec3f rp = glxl.GetRasterPosition();
+        rp[1] += 4;
+        pw.drawText(glxl.GetLabel(), rp+DrawOrigin);
+      }
     }
   }
 }

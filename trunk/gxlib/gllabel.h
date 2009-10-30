@@ -11,7 +11,7 @@ BeginGxlNamespace()
 class TXGlLabel: public TGlMouseListener  {
   olxstr FLabel;
   uint16_t FontIndex;
-  double OffsetX, OffsetY;
+  TTextRect text_rect;
   vec3d Center;
 public:
   TXGlLabel(TGlRenderer& Render, const olxstr& collectionName);
@@ -23,6 +23,7 @@ public:
   inline const olxstr& GetLabel() const   {  return FLabel;  }
   void SetLabel(const olxstr& L);
   vec3d GetRasterPosition() const;
+  vec3d GetVectorPosition() const;
   DefPropC(vec3d, Center)
 
   TGlFont& GetFont() const;
