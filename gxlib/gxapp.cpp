@@ -2760,8 +2760,8 @@ TXGlLabel* TGXApp::CreateLabel(TXAtom *A, uint16_t FontIndex)  {
   TXGlLabel& L = XLabels.Add( new TXGlLabel(*FGlRender, "PLabels") );
   L.SetFontIndex(FontIndex);
   L.SetLabel(A->Atom().GetLabel());
-  L.SetCenter( A->Atom().crd() );
-  L.Basis.Translate( vec3d(20, -20, 0) );  // in pixels
+  L.SetCenter(A->Atom().crd());
+  L.Basis.Translate(vec3d(1, -1, 0));  // in pixels
   L.Create();
   return &L;
 }

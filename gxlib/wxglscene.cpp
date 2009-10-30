@@ -172,19 +172,28 @@ TGlFont* TwxGlScene::CreateFont(const olxstr& name, const olxstr& fntDesc, short
     return ImportFont(name, fntDesc, Flags);
   }
   TGlFont *Fnt = FindFont(name);
-  wxFont Font( fntDesc.u_str() );
-    
   if( Fnt != NULL ) 
     Fnt->ClearData();
   else
     Fnt = new TGlFont(name);
 
+  if( MetaFont::IsVectorFont(fntDesc) )  {
+    olxdict<size_t, olxstr, TPrimitiveComparator> dummy;
+    Fnt->CreateHershey(dummy, 120);
+    if( FindFont(name) == NULL )
+      Fonts.Add(Fnt);
+    Fnt->SetIdString(fntDesc);
+    return Fnt;
+  }
+
   // LINUZ port - ... native font string is system dependent...
+  wxFont Font( fntDesc.u_str() );
   if( Font.GetPointSize() <= 1 )
     Font.SetPointSize(6);
     
   Fnt->SetIdString(Font.GetNativeFontInfoDesc().c_str());
   Fnt->SetPointSize( Font.GetPointSize() );
+
   TPtrList<wxImage> Images;
   wxImage *Image;
   int ImageW = Font.GetPointSize()*2;
@@ -423,6 +432,8 @@ void TwxGlScene::ScaleFonts(double scale)  {
       mf.SetSize( sz < 2 ? 2 : sz );
       fontId << mf.GetIdString();
     }
+    else if( MetaFont::IsVectorFont(Fonts[i]->GetIdString()) )
+      continue;
     else  {
       wxFont font;
       ((wxFontBase&)font).SetNativeFontInfo(Fonts[i]->GetIdString().u_str());
@@ -444,6 +455,8 @@ void TwxGlScene::RestoreFontScale()  {
       mf.SetSize(FontSizes[i]);
       fontId = mf.GetIdString();
     }
+    else if( MetaFont::IsVectorFont(Fonts[i]->GetIdString()) )
+      continue;
     else  {
       wxFont font;
       ((wxFontBase&)font).SetNativeFontInfo(Fonts[i]->GetIdString().u_str());
@@ -528,6 +541,14 @@ void TwxGlScene::MetaFont::SetIdString(const olxstr& idstr)  {
     Bold = (fntid.CharAt(2) == 'b');
     Size = fntid.SubStringFrom(4).ToInt();
   }
+  else if( IsVectorFont(idstr) )  {
+    Fixed = false;
+    Italic = false;
+    Bold = false;
+    Size = 15;
+    if( idstr.SubStringFrom(0).IsNumber() )
+      Size = idstr.SubStringFrom(0).ToInt();
+  }
   else  {
     wxFont f(idstr.u_str());
     if( !f.IsOk() )
@@ -543,6 +564,8 @@ olxstr TwxGlScene::MetaFont::GetIdString() const {
   if( IsOlexFont(OriginalId) )  {
     return BuildOlexFontId(FileName, Size, Fixed, Bold, Italic);
   }
+  if( IsVectorFont(OriginalId) )
+    return OriginalId;
   wxFont f( OriginalId.u_str() );
   f.SetStyle( Italic ? wxFONTSTYLE_ITALIC: wxFONTSTYLE_NORMAL );
   f.SetWeight( Bold ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL );
