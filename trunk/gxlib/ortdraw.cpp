@@ -35,6 +35,7 @@ draw_style(0)
     TGlMaterial& glm = style.GetPrimitiveStyle(lmi).GetProperties();
     rim_color = glm.AmbientF.GetRGB();
   }
+  mask = atom.GetPrimitiveMask();
 }
 
 void ort_atom::render_elp(PSWriter& pw) const {
@@ -86,15 +87,28 @@ void ort_atom::render_sph(PSWriter& pw) const {
   }
 }
 
+void ort_atom::render_standalone(PSWriter& pw) const {
+  if( (draw_style&ortep_color_lines) != 0 )
+    pw.color(sphere_color);
+  else
+    pw.color(0);
+  pw.drawLine(vec3f(-draw_rad, 0, 0), vec3f(draw_rad, 0, 0));
+  pw.drawLine(vec3f(0, -draw_rad, 0), vec3f(0, draw_rad, 0));
+}
+
 bool ort_atom::IsSpherical() const {
   return !(p_elpm != NULL && (atom.DrawStyle() == adsEllipsoid || atom.DrawStyle() == adsOrtep));
 }
 
 void ort_atom::render(PSWriter& pw) const {
-  if( atom.GetPrimitiveMask() == 0 )  return;
+  if( mask == 0 )  return;
   pw.translate(crd);
   pw.lineWidth(0.5);
-  if( !IsSpherical() )
+  if( mask == 16 && atom.DrawStyle() == adsStandalone )  {
+    if( atom.Atom().IsStandalone() )
+      render_standalone(pw);
+  }
+  else if( !IsSpherical() )
     render_elp(pw);
   else
     render_sph(pw);
@@ -143,6 +157,15 @@ void ort_bond::render(PSWriter& pw) const {
   pw.translate(-atom_a.crd);
 }
 void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
+  if( mask == (1<<12) || mask == (1<<13) || (mask&((1<<6)|(1<<7))) != 0 )  {
+    pw.lineWidth(scalex);
+    if( mask == (1<<13) )
+      pw.custom("[8 8] 0 setdash");
+    pw.drawLine(NullVec, atom_b.crd-atom_a.crd);
+    if( mask == (1<<13) )
+      pw.custom("[] 0 setdash");
+    return;
+  }
   vec3f dir_vec = atom_b.crd-atom_a.crd;
   const float b_len = dir_vec.Length();
   const float brad = parent.GetBondRad(*this, mask)*bond.GetRadius();
@@ -153,7 +176,7 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   vec3f rot_vec(-touch_point[1], touch_point[0], 0);
   CreateRotationMatrix(rot_mat, rot_vec.Normalise(), touch_point[2]);
   mat3f proj_mat = rot_mat*parent.ProjMatr;
-  if( !atom_a.IsSpherical() )  {
+  if( !atom_a.IsSpherical() && atom_a.IsSolid() )  {
     const mat3f& ielpm = *atom_a.p_ielpm;
     vec3f bproj_cnt;
     vec3f touch_point_proj = dir_vec*ielpm;
@@ -168,7 +191,7 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
     }
   }
   else  {
-    const float off_len = atom_a.draw_rad/2;
+    const float off_len = atom_a.IsSolid() ? atom_a.draw_rad/2 : 0;
     for( uint16_t j=0; j < parent.BondDiv; j++ )  {
       parent.BondProjT[j] = parent.BondProjF[j] = (parent.BondCrd[j]*proj_mat).NormaliseTo(brad*(1+pers_scale)*scalex); 
       parent.BondProjT[j].NormaliseTo(brad*2*scalex) += dir_vec*b_len;
@@ -339,11 +362,17 @@ void OrtDraw::Render(const olxstr& fileName)  {
 
   if( app.LabelCount() != 0 )  {
     TGlFont& glf = app.GetLabel(0).GetFont();
+    uint32_t color = 0;
+    TGlMaterial* glm = app.GetLabel(0).GetPrimitives().GetStyle().FindMaterial("Text");
+    if( glm != NULL )
+      color = glm->AmbientF.GetRGB();
+    pw.color(color);
     if( glf.IsVectorFont() )  {
       TStrList out;
       olxdict<size_t, olxstr, TPrimitiveComparator> defs;
       for( size_t i=0; i < app.LabelCount(); i++ )  {
         const TXGlLabel& glxl = app.GetLabel(i);
+        if( glxl.IsDeleted() || !glxl.IsVisible() )  continue;
         vec3d crd = glxl.GetVectorPosition()*DrawScale + DrawOrigin;
         glf.RenderPSLabel(crd, glxl.GetLabel(), out, DrawScale, defs);
       }
@@ -354,6 +383,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
     else  {
       for( size_t i=0; i < app.LabelCount(); i++ )  {
         const TXGlLabel& glxl = app.GetLabel(i);
+        if( glxl.IsDeleted() || !glxl.IsVisible() )  continue;
         vec3f rp = glxl.GetRasterPosition();
         rp[1] += 4;
         pw.drawText(glxl.GetLabel(), rp+DrawOrigin);

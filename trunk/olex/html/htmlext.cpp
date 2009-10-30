@@ -967,11 +967,14 @@ void THtml::macDefineControl(TStrObjList &Cmds, const TParamList &Options, TMacr
     props = ObjectsState.DefineControl(Cmds[0], typeid(TListBox) );
     (*props)["items"] = Options.FindValue("i");
   }
-  if( props != NULL )
+  if( props != NULL )  {
     (*props)["bg"] = Options.FindValue("bg");
     (*props)["fg"] = Options.FindValue("fg");
+    if( props->IndexOfComparable("data") != InvalidIndex )
+      (*props)["data"] = Options.FindValue("data", EmptyString);
     if( props->IndexOfComparable("val") != InvalidIndex )
       (*props)["val"] = Options.FindValue("v");
+  }
 }
 //..............................................................................
 //..............................................................................
@@ -1104,8 +1107,12 @@ void THtml::funGetData(const TStrObjList &Params, TMacroError &E)  {
   }
   const AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
-    E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
-    return;
+    TSStrStrList<olxstr,false>* props = html->ObjectsState.FindProperties(objName);
+    if( props == NULL )  {
+      E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
+      return;
+    }
+    E.SetRetVal( (*props)["data"] );
   }
   else
     E.SetRetVal( html->GetObjectData(Obj) );
@@ -1539,43 +1546,51 @@ void THtml::TObjectsState::SaveState()  {
     if( EsdlInstanceOf(*obj, TTextEdit) )  {  
       TTextEdit* te = (TTextEdit*)obj;
       props->Add("val", te->GetText() );
+      props->Add("data", te->GetData() );
     }
     else if( EsdlInstanceOf(*obj, TCheckBox) )  {  
       TCheckBox* cb = (TCheckBox*)obj;   
       props->Add("val", cb->GetCaption() );
       props->Add("checked", cb->IsChecked() );
+      props->Add("data", cb->GetData() );
     }
     else if( EsdlInstanceOf(*obj, TTrackBar) )  {  
       TTrackBar* tb = (TTrackBar*)obj;  
       props->Add("min", tb->GetMin() );
       props->Add("max", tb->GetMax() );
       props->Add("val", tb->GetValue() );
+      props->Add("data", tb->GetData() );
     }
     else if( EsdlInstanceOf(*obj, TSpinCtrl) )  {  
       TSpinCtrl* sc = (TSpinCtrl*)obj;  
       props->Add("min", sc->GetMin() );
       props->Add("max", sc->GetMax() );
       props->Add("val", sc->GetValue() );
+      props->Add("data", sc->GetData() );
     }
     else if( EsdlInstanceOf(*obj, TButton) )    {  
       TButton* bt = (TButton*)obj;
       props->Add("val", bt->GetCaption() );
       props->Add("checked", bt->IsDown() );
+      props->Add("data", bt->GetData() );
     }
     else if( EsdlInstanceOf(*obj, TBmpButton) )    {  
       TBmpButton* bt = (TBmpButton*)obj;  
       props->Add("checked", bt->IsDown() );
       props->Add("val", bt->GetSource() );
+      props->Add("data", bt->GetData() );
     }
     else if( EsdlInstanceOf(*obj, TComboBox) )  {  
       TComboBox* cb = (TComboBox*)obj;  
       props->Add("val", cb->GetValue().c_str() );
       props->Add("items", cb->ItemsToString(';') );
+      props->Add("data", cb->GetData() );
     }
     else if( EsdlInstanceOf(*obj, TListBox) )  {  
       TListBox* lb = (TListBox*)obj;  
       props->Add("val", lb->GetValue() );
       props->Add("items", lb->ItemsToString(';') );
+      props->Add("data", lb->GetData() );
     }
     else if( EsdlInstanceOf(*obj, TTreeView) )  {  
 //      TTreeView* tv = (TTreeView*)obj;  
@@ -1585,6 +1600,7 @@ void THtml::TObjectsState::SaveState()  {
     else if( EsdlInstanceOf(*obj, TLabel) )  {  
       TLabel* lb = (TLabel*)obj;  
       props->Add("val", lb->GetCaption() );
+      props->Add("data", lb->GetData() );
     }
     else //?
       ;
@@ -1610,25 +1626,30 @@ void THtml::TObjectsState::RestoreState()  {
     }
     if( EsdlInstanceOf(*obj, TTextEdit) )  {  
       TTextEdit* te = (TTextEdit*)obj;
-      te->SetText( props["val"] );
+      te->SetText(props["val"]);
+      te->SetData(props["data"]);
     }
     else if( EsdlInstanceOf(*obj, TCheckBox) )  {  
       TCheckBox* cb = (TCheckBox*)obj;   
       cb->SetCaption( props["val"]);
       cb->SetChecked( props["checked"].ToBool() );
+      cb->SetData(props["data"]);
     }
     else if( EsdlInstanceOf(*obj, TTrackBar) )  {  
       TTrackBar* tb = (TTrackBar*)obj;  
       tb->SetRange( props["min"].ToInt(), props["max"].ToInt() );
       tb->SetValue( props["val"].ToInt() );
+      tb->SetData(props["data"]);
     }
     else if( EsdlInstanceOf(*obj, TSpinCtrl) )  {  
       TSpinCtrl* sc = (TSpinCtrl*)obj;  
       sc->SetRange( props["min"].ToInt(), props["max"].ToInt() );
       sc->SetValue( props["val"].ToInt() );
+      sc->SetData(props["data"]);
     }
     else if( EsdlInstanceOf(*obj, TButton) )    {  
       TButton* bt = (TButton*)obj;
+      bt->SetData(props["data"]);
       bt->SetCaption( props["val"] );
       bt->OnDown.SetEnabled(false);
       bt->OnUp.SetEnabled(false);
@@ -1640,6 +1661,7 @@ void THtml::TObjectsState::RestoreState()  {
     }
     else if( EsdlInstanceOf(*obj, TBmpButton) )    {  
       TBmpButton* bt = (TBmpButton*)obj;  
+      bt->SetData(props["data"]);
       bt->SetSource( props["val"] );
       bt->OnDown.SetEnabled(false);
       bt->OnUp.SetEnabled(false);
@@ -1655,6 +1677,7 @@ void THtml::TObjectsState::RestoreState()  {
       cb->Clear();
       cb->AddItems(toks);
       cb->SetText( props["val"] );
+      cb->SetData(props["data"]);
     }
     else if( EsdlInstanceOf(*obj, TListBox) )  {  
       TListBox* lb = (TListBox*)obj;  
@@ -1720,6 +1743,7 @@ TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(const olxstr& na
   TSStrStrList<olxstr,false>* props = new TSStrStrList<olxstr,false>;
 
   props->Add("type", type.name());  // type
+  props->Add("data");
   if( type == typeid(TTextEdit) )  {  
     props->Add("val");
   }
@@ -1735,6 +1759,7 @@ TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(const olxstr& na
   else if( type == typeid(TButton) )    {  
     props->Add("checked");
     props->Add("val");
+    props->Add("data");
   }
   else if( type == typeid(TBmpButton) )    {  
     props->Add("checked");

@@ -26,7 +26,6 @@ void TSpinCtrl::TextChangeEvent(wxCommandEvent& event)  {
   int val = GetValue();
   if( val == Value ) return;
   Value = val;
-  if( !Data.IsEmpty() )  TOlxVars::SetVar(Data, GetValue());
   StartEvtProcessing()
    OnChange.Execute(this, &TEGC::New<olxstr>(GetOnChangeStr()));
   EndEvtProcessing()

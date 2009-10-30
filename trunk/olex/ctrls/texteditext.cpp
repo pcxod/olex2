@@ -21,16 +21,12 @@ void TTextEdit::ClickEvent(wxMouseEvent& event)  {
 }
 //..............................................................................
 void TTextEdit::ChangeEvent(wxCommandEvent& event)  {
-  if( !Data.IsEmpty() )
-    TOlxVars::SetVar(Data, GetText());
   StartEvtProcessing()
     OnChange.Execute(this);
   EndEvtProcessing()
 }
 //..............................................................................
 void TTextEdit::EnterPressedEvent(wxCommandEvent& event)  {
-  if( !Data.IsEmpty() )
-    TOlxVars::SetVar(Data, GetText());
   StartEvtProcessing()
     OnChange.Execute(this, &TEGC::New<olxstr>(GetOnChangeStr()));
     OnReturn.Execute(this, &TEGC::New<olxstr>(GetOnReturnStr()));

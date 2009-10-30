@@ -29,7 +29,7 @@ struct ort_atom : public a_ort_object {
   mat3f *p_elpm, *p_ielpm;
   double draw_rad;
   uint16_t draw_style;
-  uint32_t sphere_color, rim_color;
+  uint32_t sphere_color, rim_color, mask;
   ort_atom(const OrtDraw& parent, const TXAtom& a);
   ~ort_atom()  {
     if( p_elpm != NULL )  delete p_elpm;
@@ -38,10 +38,12 @@ struct ort_atom : public a_ort_object {
   virtual void render(PSWriter&) const;
   virtual float get_z() const {  return crd[2];  }
   bool IsSpherical() const;
+  bool IsSolid() const {  return mask != 0 && mask != 16;  }
 protected:
   void render_rims(PSWriter&) const;
   void render_elp(PSWriter&) const;
   void render_sph(PSWriter&) const;
+  void render_standalone(PSWriter&) const;
 };
 
 struct ort_bond : public a_ort_object  {

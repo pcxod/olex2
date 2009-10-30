@@ -7100,7 +7100,7 @@ void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds[1].IsEmpty() )  return;
   TwxGlScene& scene = dynamic_cast<TwxGlScene&>(FXApp->GetRender().GetScene());
-  TGlFont* glf = scene.FindFont( Cmds[0] );
+  TGlFont* glf = scene.FindFont(Cmds[0]);
   if( glf == NULL )  {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined font ") << Cmds[0]);
     return;
@@ -7115,7 +7115,9 @@ void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   if( Options.Contains('i') )  mf.SetItalic( true );
   if( Options.Contains('b') )  mf.SetBold( true );
-  scene.CreateFont(glf->GetName(), mf.GetIdString() );
+  scene.CreateFont(glf->GetName(), mf.GetIdString());
+  if( Cmds[0] == "Picture_labels" )
+    FXApp->UpdateLabels();
 }
 
 //..............................................................................
