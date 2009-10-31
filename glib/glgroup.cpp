@@ -18,9 +18,8 @@ UseGlNamespace()
 //..............................................................................
 
 TGlGroup::TGlGroup(TGlRenderer& R, const olxstr& collectionName) :
-  AGDrawObject(R, collectionName)  
+  AGDrawObject(R, collectionName)
 {
-  FGlM = NULL;
   Flags |= sgdoGroup;
   DefaultColor = true;
 }
@@ -31,9 +30,8 @@ void TGlGroup::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
   GPC.AddObject(*this);
-  if( GPC.PrimitiveCount() != 0 )  return;
+  if( GPC.IsEmpty() )  return;
   TGraphicsStyle& GS = GPC.GetStyle();
-  TGlMaterial GlM;
   if( GetParentGroup() != NULL )  {
     GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF );
     GlM.ShininessF = 128;
@@ -51,7 +49,7 @@ void TGlGroup::Create(const olxstr& cName, const ACreationParams* cpar)  {
     GlM.DiffuseB = 0x7f0000ff;
   }
   DefaultColor = (GS.IndexOfMaterial("mat") != InvalidIndex);
-  FGlM = &GS.GetMaterial("mat", GlM);
+  GlM = GS.GetMaterial("mat", GlM);
 }
 //..............................................................................
 TGlGroup::~TGlGroup()  {
@@ -120,7 +118,7 @@ void TGlGroup::InitMaterial() const {
   if( GetParentGroup() != NULL )
     GetParentGroup()->InitMaterial();
   else
-    FGlM->Init();
+    GlM.Init();
 }
 //..............................................................................
 void TGlGroup::Draw(bool SelectPrimitives, bool SelectObjects) const  {
@@ -164,8 +162,3 @@ bool TGlGroup::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
   return true;
 }
 //..............................................................................
-void TGlGroup::GlM(const TGlMaterial& G)  {
-  FGlM = &GetPrimitives().GetStyle().SetMaterial("mat", G);
-}
-//..............................................................................
-

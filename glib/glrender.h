@@ -66,10 +66,10 @@ class TGlRenderer : public IEObject  {
     FProjectionLeft, FProjectionRight, FProjectionTop, FProjectionBottom 
     ;
 //__________________Fog stuff
-  bool FFog;
-  int FFogType;
-  TGlOption FFogColor;
-  float FFogDensity, FFogStart, FFogEnd;
+  bool Fog;
+  int FogType;
+  TGlOption FogColor;
+  float FogDensity, FogStart, FogEnd;
 //__________________
 
   int FWidth, FHeight, FLeft, FTop;
@@ -142,19 +142,12 @@ public:
   void SetPerspectiveAngle(double Angle);
   //fog stuff
   void EnableFog(bool Set);
-  bool IsFogEnabled()            const {  return FFog; }
-  void SetFogStart(float v)            {  FFogStart = v;  }
-  float GetFogStart()            const {  return FFogStart;  }
-  void SetFogEnd(float v)              {  FFogEnd = v;  }
-  float GetFogEnd()              const {  return FFogEnd;  }
-  void SetFogType(int v)               {  FFogType = v;  }
-  int GetFogType()               const {  return FFogType;  }
-  void SetFogDensity(float v)          {  FFogDensity = v;  }
-  float GetFogDensity()          const {  return FFogDensity;  }
-  void SetFogColor(int Cl)             {  FFogColor = Cl;  }
-  void SetFogColor(const TGlOption& Cl){  FFogColor = Cl;  }
-  TGlOption& FogColor()                {  return FFogColor;  }
-  const TGlOption& GetFogColor() const {  return FFogColor;  }
+  bool IsFogEnabled()            const {  return Fog; }
+  DefPropP(float, FogStart)
+  DefPropP(float, FogEnd)
+  DefPropP(int, FogType)
+  DefPropP(float, FogDensity)
+  DefPropC(TGlOption, FogColor)
 
   float GetExtraZoom()           const {  return FZoom;  }
 

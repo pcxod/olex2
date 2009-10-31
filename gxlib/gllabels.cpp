@@ -1,13 +1,6 @@
-
 //---------------------------------------------------------------------------//
-// namespace TEObjects
-// TEList - list of void* pointers
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
 
 #include "gllabels.h"
 #include "glgroup.h"
@@ -27,10 +20,10 @@
 TXGlLabels::TXGlLabels(TGlRenderer& Render, const olxstr& collectionName) :
   AGDrawObject(Render, collectionName)
 {
-  FontIndex = -1;
+  FontIndex = InvalidIndex;
   AGDrawObject::SetGroupable(false);
 
-  FMarkMaterial = *Render.GetSelection().GlM();
+  FMarkMaterial = Render.GetSelection().GetGlM();
   FMarkMaterial.SetFlags(sglmAmbientF|sglmIdentityDraw);
 }
 //..............................................................................
@@ -45,25 +38,25 @@ void TXGlLabels::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( GPC.PrimitiveCount() != 0 )  return;
 
   TGlPrimitive& GlP = GPC.NewPrimitive("Text", sgloText);
-  GlP.SetProperties( GPC.GetStyle().GetMaterial("Text", Font()->GetMaterial()) );
+  GlP.SetProperties(GPC.GetStyle().GetMaterial("Text", GetFont().GetMaterial()));
   GlP.Params[0] = -1;  //bitmap; TTF by default
 }
 //..............................................................................
 void TXGlLabels::Clear()  {  Marks.Clear();  }
 //..............................................................................
 bool TXGlLabels::Orient(TGlPrimitive& P)  {
-  TGlFont *Fnt = Font();
+  TGlFont &Fnt = GetFont();
   TGXApp& app = TGXApp::GetInstance();
   const size_t ac = app.AtomCount();
-  if( Fnt == NULL || ac == 0 )  return true;
+  if( ac == 0 )  return true;
 
   vec3d V;
   bool currentGlM, matInited = false;
-  P.SetFont(Fnt);
+  P.SetFont(&Fnt);
   TGlMaterial& OGlM = P.GetProperties();
   if( Parent.IsATI() )  {
     glRasterPos3d(0, 0, 0);
-    glCallList(Fnt->GetFontBase() + ' ');
+    glCallList(Fnt.GetFontBase() + ' ');
   }
   const RefinementModel& rm = app.XFile().GetRM();
   for( size_t i=0; i < ac; i++ )  {
@@ -180,7 +173,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
         currentGlM = false;
         if( Parent.IsATI() )  {
           glRasterPos3d(0, 0, 0);
-          glCallList(Fnt->GetFontBase() + ' ');
+          glCallList(Fnt.GetFontBase() + ' ');
         } 
       }
       else  {
@@ -188,7 +181,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
         currentGlM = true;
         if( Parent.IsATI() )  {
           glRasterPos3d(0, 0, 0);
-          glCallList(Fnt->GetFontBase() + ' ');
+          glCallList(Fnt.GetFontBase() + ' ');
         } 
       }
       matInited = true;
@@ -200,7 +193,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
           currentGlM = false;
           if( Parent.IsATI() )  {
             glRasterPos3d(0, 0, 0);
-            glCallList(Fnt->GetFontBase() + ' ');
+            glCallList(Fnt.GetFontBase() + ' ');
           } 
         }
       }
@@ -210,7 +203,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
           currentGlM = true;
           if( Parent.IsATI() )  {
             glRasterPos3d(0, 0, 0);
-            glCallList(Fnt->GetFontBase() + ' ');
+            glCallList(Fnt.GetFontBase() + ' ');
           } 
         }
       }
@@ -255,13 +248,15 @@ bool TXGlLabels::IsLabelMarked(const TXAtom& atom) const {
 }
 //..............................................................................
 bool TXGlLabels::IsLabelMarked(size_t i) const {
-  if( i < Marks.Count() )
-    return Marks[i];
+  if( i < Marks.Count() )  return Marks[i];
   return false;  // should not happen...
 }
 //..............................................................................
-TGlFont* TXGlLabels::Font() const {  
-  return Parent.GetScene().GetFont(FontIndex); 
+TGlFont& TXGlLabels::GetFont() const {  
+  TGlFont* glf = Parent.GetScene().GetFont(FontIndex);
+  if( glf == NULL )
+    throw TFunctionFailedException(__OlxSourceInfo, "invalid font index");
+  return *glf; 
 }
 //..............................................................................
 

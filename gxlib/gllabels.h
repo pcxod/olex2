@@ -27,7 +27,7 @@ const short lmLabels   = 0x0001,  // atom label
             lmFixed    = 0x0800,  // fixed values
             lmConRes   = 0x1000;  // restraints, constraints
 class TXGlLabels: public AGDrawObject  {
-  short FontIndex;
+  size_t FontIndex;
   TGlMaterial FMarkMaterial;
   TEBitArray Marks;
   short Mode;
@@ -53,10 +53,9 @@ public:
   bool IsLabelMarked(const TXAtom& atom) const;
   bool IsLabelMarked(size_t index) const;
 
-  TGlFont *Font() const;
-  DefPropP(short, FontIndex)
-
-  TGlMaterial& MarkMaterial()     {  return FMarkMaterial; }
+  TGlFont& GetFont() const;
+  DefPropP(size_t, FontIndex)
+  TGlMaterial& MarkMaterial()  {  return FMarkMaterial; }
 };
 
 EndGxlNamespace()

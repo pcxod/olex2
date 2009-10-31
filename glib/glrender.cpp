@@ -35,12 +35,12 @@ TGlRenderer::TGlRenderer(AGlScene *S, int width, int height) {
   FPAngle = 1;
   LookAt(0,0,1);
 
-  FFog = false;
-  FFogType = GL_EXP;
-  FFogColor = 0x7f7f7f;
-  FFogDensity = 1;
-  FFogStart = 0;
-  FFogEnd = 10;
+  Fog = false;
+  FogType = GL_EXP;
+  FogColor = 0x7f7f7f;
+  FogDensity = 1;
+  FogStart = 0;
+  FogEnd = 10;
   CalculatedZoom = -1;
 
   FStyles = new TGraphicsStyles(*this);
@@ -268,16 +268,16 @@ TGlPrimitive& TGlRenderer::NewPrimitive(short type)  {
 }
 //..............................................................................
 void TGlRenderer::EnableFog(bool Set)  {
-  glFogi( GL_FOG_MODE, FFogType);
-  glFogf( GL_FOG_DENSITY, (float)FFogDensity);
-  glFogfv( GL_FOG_COLOR, FFogColor.Data());
-  glFogf( GL_FOG_START, FFogStart );
-  glFogf( GL_FOG_END, FFogEnd );
-
-  if( Set )          glEnable(GL_FOG);
-  else               glDisable(GL_FOG);
-
-  FFog = Set;
+  glFogi(GL_FOG_MODE, FogType);
+  glFogf(GL_FOG_DENSITY, FogDensity);
+  glFogfv(GL_FOG_COLOR, FogColor.Data());
+  glFogf(GL_FOG_START, FogStart);
+  glFogf(GL_FOG_END, FogEnd);
+  if( Set )
+    glEnable(GL_FOG);
+  else
+    glDisable(GL_FOG);
+  Fog = Set;
 }
 //..............................................................................
 void TGlRenderer::EnablePerspective(bool Set)  {
@@ -450,7 +450,7 @@ void TGlRenderer::Draw()  {
 void TGlRenderer::DrawObjects(int x, int y, bool SelectPrimitives, bool SelectObjects)  {
   const bool Select = SelectPrimitives || SelectObjects;
   const int DrawMask = sgdoVisible|sgdoSelected|sgdoDeleted|sgdoGrouped;
-  if( !FIdentityObjects.IsEmpty() )  {
+  if( !FIdentityObjects.IsEmpty() || FSelection->GetGlM().IsIdentityDraw() )  {
     if( FPerspective )  {
       FPerspective = false;
       SetView(x, y, Select);
@@ -479,13 +479,18 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectPrimitives, bool SelectOb
         }
       }
     }
+    if( FSelection->GetGlM().IsIdentityDraw() )  {
+      glPushAttrib(GL_ALL_ATTRIB_BITS);
+      FSelection->Draw(SelectPrimitives, SelectObjects);
+      glPopAttrib();
+    }
     if( FPerspective )
       SetView(x, y, Select);
     SetBasis();
   }
 
   if( !Select && IsCompiled() )  {
-    glCallList( CompiledListId );
+    glCallList(CompiledListId);
   }
   else  {
     const size_t prim_count = Primitives.PropertiesCount();
@@ -542,9 +547,11 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectPrimitives, bool SelectOb
   for( size_t i=0; i < group_count; i++ )
     FGroups[i]->Draw(SelectPrimitives, SelectObjects);
 
-  glPushAttrib(GL_ALL_ATTRIB_BITS);
-  FSelection->Draw(SelectPrimitives, SelectObjects);
-  glPopAttrib();
+  if( !FSelection->GetGlM().IsIdentityDraw() )  {
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+    FSelection->Draw(SelectPrimitives, SelectObjects);
+    glPopAttrib();
+  }
   if( !FTransluentIdentityObjects.IsEmpty() )  {
     if( FPerspective )  {
       FPerspective = false;
@@ -668,9 +675,16 @@ TGlGroup* TGlRenderer::FindObjectGroup(AGDrawObject& G)  {
 }
 //..............................................................................
 void TGlRenderer::Select(AGDrawObject& G)  {
-  if( !G.IsGroupable() )  
-    return;
-  G.SetSelected( FSelection->Add(G) );
+  if( !G.IsGroupable() )  return;
+  if( FSelection->IsEmpty() )  {
+    if( G.GetPrimitives().GetStyle().PrimitiveStyleCount() != 0 )
+      FSelection->GetGlM().SetIdentityDraw(G.GetPrimitives().GetStyle().GetPrimitiveStyle(0).GetProperties().IsIdentityDraw());
+  }
+  else  {
+    if( FSelection->GetGlM().IsIdentityDraw() != G.GetPrimitives().GetStyle().GetPrimitiveStyle(0).GetProperties().IsIdentityDraw() )
+      return;
+  }
+  G.SetSelected(FSelection->Add(G));
 }
 //..............................................................................
 void TGlRenderer::DeSelect(AGDrawObject& G)  {
@@ -700,6 +714,9 @@ void TGlRenderer::SelectAll(bool Select)  {
     for( size_t i=0; i < ObjectCount(); i++ )  {
       AGDrawObject& GDO = GetObject(i);
       if( !GDO.IsGrouped() && GDO.IsVisible() && GDO.IsGroupable() )  {
+        if( GDO.GetPrimitives().GetStyle().PrimitiveStyleCount() != 0 &&
+          FSelection->GetGlM().IsIdentityDraw() != GDO.GetPrimitives().GetStyle().GetPrimitiveStyle(0).GetProperties().IsIdentityDraw())
+          continue;
         if( EsdlInstanceOf(GDO, TGlGroup) )  {
           if( &GDO == FSelection )  continue;
           bool Add = false;

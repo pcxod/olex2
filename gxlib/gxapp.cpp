@@ -2646,7 +2646,7 @@ void TGXApp::StoreGroups()  {
     GroupData& gd = FOldGroups.AddNew();
     gd.collectionName = glG.GetCollectionName();  //planes
     gd.visible = glG.IsVisible();
-    gd.material = *glG.GlM();
+    gd.material = glG.GetGlM();
     for( size_t j=0; j < glG.Count(); j++ )  {
       AGDrawObject& glO = glG[j];
       if( EsdlInstanceOf(glO, TXAtom) )
@@ -2689,7 +2689,7 @@ void TGXApp::RestoreGroups()  {
       throw TFunctionFailedException(__OlxSourceInfo, "could not recreate groups");
     glG->SetSelected(false);
     FGlRender->GetSelection().Clear();
-    glG->GlM( gd.material );
+    glG->SetGlM( gd.material );
     glG->SetVisible( gd.visible );
   }
 }
