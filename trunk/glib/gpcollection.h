@@ -38,6 +38,7 @@ public:
   inline size_t ObjectCount() const {  return GObjects.Count();  }
   class AGDrawObject& GetObject(size_t index) const {  return *GObjects[index];  }
   void AddObject(AGDrawObject& Obj);
+  bool IsEmpty() const {  return GObjects.IsEmpty();  }
 
   void ClearObjects()  {  GObjects.Clear();  }
   void RemoveObject(AGDrawObject& G)  {  GObjects.Remove(G); }

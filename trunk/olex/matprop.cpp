@@ -73,7 +73,7 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
     cbPrimitives = NULL;
     FMaterials = new TGlMaterial[1];
     if( GPC != NULL && EsdlInstanceOf(GPC->GetObject(0), TGlGroup) )  {
-      FMaterials[0] = *((TGlGroup&)GPC->GetObject(0)).GlM();
+      FMaterials[0] = ((TGlGroup&)GPC->GetObject(0)).GetGlM();
     }
     FCurrentMaterial = 0;
   }
@@ -367,7 +367,7 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
   }
   else  {
     if( GPCollection != NULL && EsdlInstanceOf(GPCollection->GetObject(0), TGlGroup) )  {
-      ((TGlGroup&)GPCollection->GetObject(0)).GlM( FMaterials[0] );
+      ((TGlGroup&)GPCollection->GetObject(0)).SetGlM(FMaterials[0]);
     }
     else  {
       if( GPCollection != NULL )  {

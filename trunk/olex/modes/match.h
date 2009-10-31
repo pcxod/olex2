@@ -110,8 +110,8 @@ void TMatchMode::FitAtoms()  {
         nb.Add( &netB->GetLattice().GetFragment(i) );
     }
     else  {
-      na.Add( netA );
-      nb.Add( netB );
+      na.Add(netA);
+      nb.Add(netB);
     }
     TGlGroup& ga = TGlXApp::GetGXApp()->GroupFragments(na, "FragmentA");
     TGlGroup& gb = TGlXApp::GetGXApp()->GroupFragments(nb, "FragmentB");
@@ -120,10 +120,10 @@ void TMatchMode::FitAtoms()  {
     nm.SetFlags(sglmAmbientF);
     nm.AmbientF = 0x0000ff00;
     if( &ga != NULL && ga.IsDefaultColor() )
-      ga.GlM( nm );
+      ga.SetGlM(nm);
     nm.AmbientF = 0x000000ff;
     if( &gb != NULL && gb.IsDefaultColor() )
-      gb.GlM( nm );
+      gb.SetGlM(nm);
 
     TGlXApp::GetGXApp()->CenterView();
   }

@@ -8,7 +8,7 @@ BeginGlNamespace()
 
 class TGlGroup: public AGDrawObject {
   TPtrList<AGDrawObject> FObjects;   // a list of grouped objects
-  class TGlMaterial *FGlM;
+  class TGlMaterial GlM;
   bool DefaultColor;
 protected:
   void InitMaterial() const;
@@ -27,6 +27,7 @@ public:
 
   inline bool Contains(AGDrawObject& G) const {  return  (FObjects.IndexOf(G) == InvalidIndex) ? false : true;  }
   inline size_t Count() const {  return FObjects.Count(); }
+  bool IsEmpty() const {  return FObjects.IsEmpty();  }
   inline AGDrawObject& GetObject(size_t i) const {  return *FObjects[i]; }
   inline AGDrawObject& operator [] (size_t i) const {  return *FObjects[i]; }
 
@@ -42,8 +43,8 @@ public:
 
   bool IsDefaultColor() const {  return DefaultColor;  }
 
-  inline const TGlMaterial* GlM() const {  return FGlM; }
-  void GlM(const TGlMaterial &G);
+  DefPropC(TGlMaterial, GlM)
+  TGlMaterial& GetGlM() {  return GlM; }
 };
 
 

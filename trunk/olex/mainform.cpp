@@ -1720,7 +1720,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     TGlGroup& Sel = FXApp->GetSelection();
     TdlgMatProp* MatProp = new TdlgMatProp(this, &FObjectUnderMouse->GetPrimitives(), FXApp);
     if( EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
-      MatProp->SetCurrent( *((TGlGroup*)FObjectUnderMouse)->GlM() );
+      MatProp->SetCurrent( ((TGlGroup*)FObjectUnderMouse)->GetGlM() );
     if( MatProp->ShowModal() == wxID_OK )  {
       if( EsdlInstanceOf( *FObjectUnderMouse, TXAtom) )
         FXApp->XAtomDS2XBondDS("Sphere");  
