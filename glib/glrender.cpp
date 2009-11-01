@@ -676,13 +676,14 @@ TGlGroup* TGlRenderer::FindObjectGroup(AGDrawObject& G)  {
 //..............................................................................
 void TGlRenderer::Select(AGDrawObject& G)  {
   if( !G.IsGroupable() )  return;
-  if( FSelection->IsEmpty() )  {
-    if( G.GetPrimitives().GetStyle().PrimitiveStyleCount() != 0 )
-      FSelection->GetGlM().SetIdentityDraw(G.GetPrimitives().GetStyle().GetPrimitiveStyle(0).GetProperties().IsIdentityDraw());
-  }
-  else  {
-    if( FSelection->GetGlM().IsIdentityDraw() != G.GetPrimitives().GetStyle().GetPrimitiveStyle(0).GetProperties().IsIdentityDraw() )
-      return;
+  if( G.GetPrimitives().PrimitiveCount() != 0 )  {
+    if( FSelection->IsEmpty() )  {
+      FSelection->GetGlM().SetIdentityDraw(G.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw());
+    }
+    else  {
+      if( FSelection->GetGlM().IsIdentityDraw() != G.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw() )
+        return;
+    }
   }
   G.SetSelected(FSelection->Add(G));
 }
@@ -697,6 +698,9 @@ void TGlRenderer::InvertSelection()  {
   for( size_t i=0; i < oc; i++ )  {
     AGDrawObject* GDO = FGObjects[i];
     if( !GDO->IsGrouped() && GDO->IsVisible() )  {
+      if( GDO->GetPrimitives().PrimitiveCount() != 0 &&
+        FSelection->GetGlM().IsIdentityDraw() != GDO->GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw())
+          continue;
       if( !GDO->IsSelected() && GDO->IsGroupable() && GDO != FSelection )
         Selected.Add(GDO);
     }
@@ -714,8 +718,8 @@ void TGlRenderer::SelectAll(bool Select)  {
     for( size_t i=0; i < ObjectCount(); i++ )  {
       AGDrawObject& GDO = GetObject(i);
       if( !GDO.IsGrouped() && GDO.IsVisible() && GDO.IsGroupable() )  {
-        if( GDO.GetPrimitives().GetStyle().PrimitiveStyleCount() != 0 &&
-          FSelection->GetGlM().IsIdentityDraw() != GDO.GetPrimitives().GetStyle().GetPrimitiveStyle(0).GetProperties().IsIdentityDraw())
+        if( GDO.GetPrimitives().PrimitiveCount() != 0 &&
+          FSelection->GetGlM().IsIdentityDraw() != GDO.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw())
           continue;
         if( EsdlInstanceOf(GDO, TGlGroup) )  {
           if( &GDO == FSelection )  continue;
