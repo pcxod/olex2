@@ -112,6 +112,7 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
       T += off*(ScaleVR);
       //T[0] -= OffsetX;  T[1] -= OffsetY;
       T *= Parent.GetBasis().GetMatrix();
+      T[2] = Parent.MaxDim()[2];
       //float glw;
       //glGetFloatv(GL_LINE_WIDTH, &glw);
       //glLineWidth((float)(1./Scale)/50);
@@ -125,6 +126,7 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
     T += Center;
     T += off*ScaleVR;
     T *= Parent.GetBasis().GetMatrix();
+    T[2] = Parent.MaxDim()[2];
     Parent.GlTranslate(T);
     if( !glf.IsVectorFont() )  {
       P.Vertices[0] = vec3d(0, 0, -0.1);

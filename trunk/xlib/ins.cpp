@@ -763,7 +763,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   if( a.GetPart() != part )  {
     if( part != 0 && a.GetPart() != 0 )
       sl.Add("PART 0");
-    sl.Add("PART ") << a.GetPart();
+    sl.Add("PART ") << (int)a.GetPart();
   }
   TAfixGroup* ag = a.GetDependentAfixGroup();
   int atom_afix = a.GetAfix();
