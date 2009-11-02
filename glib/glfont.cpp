@@ -6,8 +6,10 @@
 #include "exception.h"
 #include "emath.h"
 #include "egc.h"
+#include "exparse/exptree.h"
 #include <memory.h>
 
+using namespace exparse::parser_util;
 UseGlNamespace()
 //..............................................................................
 TGlFont::TGlFont(const olxstr& name) {
@@ -99,12 +101,32 @@ uint16_t TGlFont::TextHeight(const olxstr &Text)  {
 TTextRect TGlFont::GetTextRect(const olxstr& str)  {
   TTextRect tr;
   tr.top = 100;
+  double scale = 1, y_shift=0;
   for( size_t i=0; i < str.Length(); i++ )  {
     TFontCharSize* cs = CharSize(str.CharAt(i));
-    if( cs->Top < tr.top )  tr.top = cs->Top;
-    short df = cs->Bottom - cs->Top;
-    if( df > tr.height )  tr.height = df;
-    tr.width += cs->Right;  // left is unused in drawing
+    if( str.CharAt(i) == '\\' && ! is_escaped(str, i) && (i+1) < str.Length() )  {
+      if( str.CharAt(i+1) == '+' || str.CharAt(i+1) == '-' )  {
+        scale = 0.45;
+        if( str.CharAt(i+1) == '+' )
+          y_shift = MaxHeight;
+        else
+          y_shift = 0;
+        i++;
+        continue;
+      }
+      else if( str.CharAt(i+1) == '0' )  {
+        scale = 1;
+        y_shift = 0;
+        i++;
+        continue;
+      }
+    }
+    //const double dt = cs->Top+y_shift*scale;
+    const double dt = (cs->Top+y_shift)*scale;
+    if( dt < tr.top )  tr.top = dt;
+    const double dy = (cs->Bottom - cs->Top + y_shift)*scale;
+    if( dy > tr.height )  tr.height = dy;
+    tr.width += cs->Right*scale;  // left is unused in drawing
   }
   const double scalex = (double)PointSize/(15*VectorScale);
   tr.left *= scalex;
@@ -231,7 +253,7 @@ void TGlFont::CreateGlyphsFromRGBArray(bool FW, uint16_t Width, uint16_t Height)
 //..............................................................................
 bool TGlFont::AnalyseBitArray(const TEBitArray& ba, size_t Char, uint16_t width, uint16_t height)  {
   TFontCharSize *cs = CharSizes[Char];
-  int _Leftmost = -1, _Rightmost = -1, _Bottommost=-1, _Topmost = -1;
+  int16_t _Leftmost = -1, _Rightmost = -1, _Bottommost=-1, _Topmost = -1;
   const size_t off = width*height*Char;
   unsigned char background = 0;
   for( uint16_t i=0; i < width; i++ )  {
@@ -264,8 +286,8 @@ bool TGlFont::AnalyseBitArray(const TEBitArray& ba, size_t Char, uint16_t width,
   cs->Bottom = _Bottommost;
   cs->Background = background;
   cs->Data  = NULL;
-  if( +Topmost >=0 && _Leftmost >=0 && _Rightmost >=0 && _Bottommost >=0 )  {
-    int ind = _Bottommost;
+  if( _Topmost >=0 && _Leftmost >=0 && _Rightmost >=0 && _Bottommost >=0 )  {
+    int16_t ind = _Bottommost;
     if( ind > MaxHeight )  MaxHeight = ind;
     ind = _Rightmost - _Leftmost;
     if( ind > MaxWidth )  MaxWidth  = ind;
@@ -1139,11 +1161,8 @@ void TGlFont::CreateHershey(const olxdict<size_t, olxstr, TPrimitiveComparator>&
     TFontCharSize* cs = CharSize(i+32);
     glNewList(FontBase + i + 32, GL_COMPILE_AND_EXECUTE);
     bool loop_started = false;
-    //int vc = 0;
-    //double prev_x, prev_y, prev_px, prev_py;
     for( int j=2; j < 112; j+=2 )  {
       if( gl_font_simplex[i][j] == -1 && gl_font_simplex[i][j] == -1 )  {
-        //vc = 0;
         if( loop_started )  {
           glEnd();
           loop_started = false;
@@ -1153,39 +1172,16 @@ void TGlFont::CreateHershey(const olxdict<size_t, olxstr, TPrimitiveComparator>&
       else  {
         if( !loop_started )  {
           glBegin(GL_LINE_STRIP);
-          //glBegin(GL_QUADS);
           loop_started = true;
         }
-        //double x = (double)gl_font_simplex[i][j]/VectorScale,
-        //  y = (double)gl_font_simplex[i][j+1]/VectorScale;
-        //if( vc != 0 )  {
-        //  double n_x = (y-prev_y), n_y = (prev_x-x);
-        //  double len = sqrt(n_x*n_x+n_y*n_y)*VectorScale/2;
-        //  double px = n_x/len, py = n_y/len;
-        //  if( vc == 1 )  {
-        //    glVertex2d(prev_x+px, prev_y+py);
-        //    glVertex2d(x+px, y+py);
-        //    glVertex2d(x-px, y-py);
-        //    glVertex2d(prev_x-px, prev_y-py);
-        //  }
-        //  else  {
-        //    //if( (px*prev_px + py*prev_y) < 0 )  {
-        //    //  px *= -1;
-        //    //  py *= -1;
-        //    //}
-        //    glVertex2d(prev_x+prev_px, prev_y+prev_py);
-        //    glVertex2d(x+px, y+py);
-        //    glVertex2d(x-px, y-py);
-        //    glVertex2d(prev_x-prev_px, prev_y-prev_py);
-        //  }
-        //  prev_px = px;
-        //  prev_py = py;
-        //}
         glVertex2d((double)gl_font_simplex[i][j]/VectorScale, (double)gl_font_simplex[i][j+1]/VectorScale);
-        //prev_x = x;
-        //prev_y = y;
-        //vc++;
       }
+    }
+    if( i == 0 )  {
+      cs->Left = 0;
+      cs->Right = MaxWidth/2;
+      cs->Bottom = MaxHeight;
+      cs->Top = 0;
     }
     if( loop_started )
       glEnd();
@@ -1199,7 +1195,38 @@ void TGlFont::RenderPSLabel(const vec3d& pos, const olxstr& label, TStrList& out
 {
   out.Add("gsave");
   out.Add(EmptyString) << pos[0] << ' ' << pos[1] << " translate";
+  short cstate = 0;
   for( size_t i=0; i < label.Length(); i++ )  {
+    if( label.CharAt(i) == '\\' && ! is_escaped(label, i) && (i+1) < label.Length() )  {
+      if( label.CharAt(i+1) == '+' )  {
+        if( cstate == 0 )
+          out.Add("0.45 0.45 scale");
+        if( cstate == 0 || cstate == -1 )
+          out.Add("0 ") <<  MaxHeight*drawScale*PointSize/(15*VectorScale) << " translate";
+        cstate = 1;
+        i++;
+        continue;
+      }
+      else if( label.CharAt(i+1) == '-' )  {
+        if( cstate == 0 )
+          out.Add("0.45 0.45 scale");
+        else if( cstate == 1 )
+          out.Add("0 -") <<  MaxHeight*drawScale*PointSize/(15*VectorScale) << " translate";
+        cstate = -1;
+        i++;
+        continue;
+      }
+      else if( label.CharAt(i+1) == '0' )  {
+        if( cstate != 0 )  {          
+          if( cstate == 1 )
+            out.Add("0 -") <<  MaxHeight*drawScale*PointSize/(15*VectorScale) << " translate";
+          out.Add("2.222222 2.222222 scale");
+          i++;
+          cstate = 0;
+          continue;
+        }
+      }
+    }
     size_t di = definitions.IndexOf(label.CharAt(i));
     if( di == InvalidIndex )  {
       TStrList sl = DefinePSChar(label.CharAt(i), drawScale, definitions);
@@ -1220,9 +1247,39 @@ void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, bool FixedW)  {
   if( IsVectorFont() )  {
     glTranslated(from[0], from[1], from[2]);
     glScalef((float)PointSize/15, (float)PointSize/15, 1);
+    short cstate=0;
     for( size_t i = 0; i < text.Length(); i++ )  {
       TFontCharSize* cs = CharSizes[text.CharAt(i)];
-      //glTranslated((double)(cs->Left)/100, 0, 0);
+      if( text.CharAt(i) == '\\' && ! is_escaped(text, i) && (i+1) < text.Length() )  {
+        if( text.CharAt(i+1) == '+' )  {
+          if( cstate == 0 )
+            glScalef(0.45, 0.45, 1);
+          if( cstate == 0 || cstate == -1 )
+            glTranslated(0, +MaxHeight/VectorScale, 0);
+          cstate = 1;
+          i++;
+          continue;
+        }
+        else if( text.CharAt(i+1) == '-' )  {
+          if( cstate == 0 )
+            glScalef(0.45, 0.45, 1);
+          else if( cstate == 1 )
+            glTranslated(0, -MaxHeight/VectorScale, 0);
+          cstate = -1;
+          i++;
+          continue;
+        }
+        else if( text.CharAt(i+1) == '0' )  {
+          if( cstate != 0 )  {          
+            if( cstate == 1 )
+              glTranslated(0, -MaxHeight/VectorScale, 0);
+            glScalef(1./0.45, 1./0.45, 1);
+            i++;
+            cstate = 0;
+            continue;
+          }
+        }
+      }
       glCallList(FontBase+text.CharAt(i));
       glTranslated((double)cs->Right/VectorScale, 0, 0);
     }
