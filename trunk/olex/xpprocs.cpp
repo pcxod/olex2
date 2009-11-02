@@ -861,6 +861,14 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( Options.Contains("color_bond") )
     color_mode |= ortep_color_bond;
   od.SetColorMode(color_mode);
+  od.SetHBondScale(Options.FindValue("scale_hb", "0.5").ToDouble());
+  od.SetPieDiv(Options.FindValue("div_pie", "4").ToInt());
+  od.SetFontLineWidth(Options.FindValue("lw_font", "1").ToDouble());
+  od.SetPieLineWidth(Options.FindValue("lw_pie", "0.5").ToDouble());
+  od.SetElpLineWidth(Options.FindValue("lw_ellipse", "1").ToDouble());
+  od.SetQuadLineWidth(Options.FindValue("lw_octant", "0.5").ToDouble());
+  if( Options.Contains('p') )
+    od.SetPerspective(true);
   od.Render(Cmds[0]);
 }
 //..............................................................................
@@ -2275,8 +2283,25 @@ void TMainForm::macQPeakScale(TStrObjList &Cmds, const TParamList &Options, TMac
 void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXAtomPList atoms;
   FindXAtoms(Cmds, atoms, true, true);
-  for( size_t i=0; i < atoms.Count(); i++ )
-    FXApp->CreateLabel( atoms[i], fntPLabels )->SetVisible(true);
+  short lt = 0;
+  olxstr str_lt = Options.FindValue("type");
+  if( str_lt.Equalsi("brackets") )
+    lt = 1;
+  else if( str_lt.Equalsi("subscript") )
+    lt = 2;
+  for( size_t i=0; i < atoms.Count(); i++ )  {
+    TXGlLabel* gxl = FXApp->CreateLabel(atoms[i], fntPLabels);
+    if( lt != 0 && atoms[i]->Atom().GetLabel().Length() > atoms[i]->Atom().GetAtomInfo().GetSymbol().Length() )  {
+      olxstr bcc = atoms[i]->Atom().GetLabel().SubStringFrom(atoms[i]->Atom().GetAtomInfo().GetSymbol().Length());
+      olxstr lb = atoms[i]->Atom().GetAtomInfo().GetSymbol();
+      if( lt == 1 )
+        lb << '(' << bcc << ')';
+      else if( lt == 2 )
+        lb << "\\-" << bcc;
+      gxl->SetLabel(lb);
+    }
+    gxl->SetVisible(true);
+  }
 }
 //..............................................................................
 void TMainForm::macCalcChn(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

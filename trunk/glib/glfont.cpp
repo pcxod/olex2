@@ -106,7 +106,7 @@ TTextRect TGlFont::GetTextRect(const olxstr& str)  {
     TFontCharSize* cs = CharSize(str.CharAt(i));
     if( str.CharAt(i) == '\\' && ! is_escaped(str, i) && (i+1) < str.Length() )  {
       if( str.CharAt(i+1) == '+' || str.CharAt(i+1) == '-' )  {
-        scale = 0.45;
+        scale = 0.5;
         if( str.CharAt(i+1) == '+' )
           y_shift = MaxHeight;
         else
@@ -129,6 +129,7 @@ TTextRect TGlFont::GetTextRect(const olxstr& str)  {
     tr.width += cs->Right*scale;  // left is unused in drawing
   }
   const double scalex = (double)PointSize/(15*VectorScale);
+  tr.height -= tr.top;
   tr.left *= scalex;
   tr.top *= scalex;
   tr.width *= scalex;
@@ -1200,7 +1201,7 @@ void TGlFont::RenderPSLabel(const vec3d& pos, const olxstr& label, TStrList& out
     if( label.CharAt(i) == '\\' && ! is_escaped(label, i) && (i+1) < label.Length() )  {
       if( label.CharAt(i+1) == '+' )  {
         if( cstate == 0 )
-          out.Add("0.45 0.45 scale");
+          out.Add("0.5 0.5 scale");
         if( cstate == 0 || cstate == -1 )
           out.Add("0 ") <<  MaxHeight*drawScale*PointSize/(15*VectorScale) << " translate";
         cstate = 1;
@@ -1209,7 +1210,7 @@ void TGlFont::RenderPSLabel(const vec3d& pos, const olxstr& label, TStrList& out
       }
       else if( label.CharAt(i+1) == '-' )  {
         if( cstate == 0 )
-          out.Add("0.45 0.45 scale");
+          out.Add("0.5 0.5 scale");
         else if( cstate == 1 )
           out.Add("0 -") <<  MaxHeight*drawScale*PointSize/(15*VectorScale) << " translate";
         cstate = -1;
@@ -1220,7 +1221,7 @@ void TGlFont::RenderPSLabel(const vec3d& pos, const olxstr& label, TStrList& out
         if( cstate != 0 )  {          
           if( cstate == 1 )
             out.Add("0 -") <<  MaxHeight*drawScale*PointSize/(15*VectorScale) << " translate";
-          out.Add("2.222222 2.222222 scale");
+          out.Add("2 2 scale");
           i++;
           cstate = 0;
           continue;
@@ -1253,7 +1254,7 @@ void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, bool FixedW)  {
       if( text.CharAt(i) == '\\' && ! is_escaped(text, i) && (i+1) < text.Length() )  {
         if( text.CharAt(i+1) == '+' )  {
           if( cstate == 0 )
-            glScalef(0.45, 0.45, 1);
+            glScalef(0.5, 0.5, 1);
           if( cstate == 0 || cstate == -1 )
             glTranslated(0, +MaxHeight/VectorScale, 0);
           cstate = 1;
@@ -1262,7 +1263,7 @@ void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, bool FixedW)  {
         }
         else if( text.CharAt(i+1) == '-' )  {
           if( cstate == 0 )
-            glScalef(0.45, 0.45, 1);
+            glScalef(0.5, 0.5, 1);
           else if( cstate == 1 )
             glTranslated(0, -MaxHeight/VectorScale, 0);
           cstate = -1;
@@ -1273,7 +1274,7 @@ void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, bool FixedW)  {
           if( cstate != 0 )  {          
             if( cstate == 1 )
               glTranslated(0, -MaxHeight/VectorScale, 0);
-            glScalef(1./0.45, 1./0.45, 1);
+            glScalef(2, 2, 1);
             i++;
             cstate = 0;
             continue;

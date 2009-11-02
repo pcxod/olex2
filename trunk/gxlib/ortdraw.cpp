@@ -103,7 +103,7 @@ bool ort_atom::IsSpherical() const {
 void ort_atom::render(PSWriter& pw) const {
   if( mask == 0 )  return;
   pw.translate(crd);
-  pw.lineWidth(0.5);
+  pw.lineWidth(parent.ElpLineWidth);
   if( mask == 16 && atom.DrawStyle() == adsStandalone )  {
     if( atom.Atom().IsStandalone() )
       render_standalone(pw);
@@ -129,8 +129,10 @@ void ort_atom::render_rims(PSWriter& pw) const {
   if( norm_vec[2] < 0 )  norm_vec *= -1;
 
   parent.RenderRims(pw, pelpm, norm_vec);
-  if( (draw_style&ortep_atom_quads) != 0 )
+  if( (draw_style&ortep_atom_quads) != 0 )  {
+    pw.lineWidth(parent.PieLineWidth);
     parent.RenderQuads(pw, pelpm);
+  }
 }
 
 ort_bond::ort_bond(const OrtDraw& parent, const TXBond& _bond, const ort_atom& a1, const ort_atom& a2) :
@@ -146,22 +148,35 @@ ort_bond::ort_bond(const OrtDraw& parent, const TXBond& _bond, const ort_atom& a
 void ort_bond::render(PSWriter& pw) const {
   uint32_t mask = bond.GetPrimitiveMask();
   if( mask == 0 )  return;
+  pw.lineWidth(1.0f);
   pw.translate(atom_a.crd);
   pw.color(~0);
   _render(pw, 1.2, mask);
-  if( (draw_style&ortep_color_bond) != 0 )
-    pw.color(atom_a.atom.Atom().GetAtomInfo() > atom_b.atom.Atom().GetAtomInfo() ? atom_a.sphere_color : atom_b.sphere_color);
-  else
+  if( (draw_style&ortep_color_bond) == 0 )
     pw.color(0);
+  else if( (mask&((1<<4)|(1<<5)|(1<<6)|(1<<7)|(1<<9)|(1<<10))) == 0 )
+    pw.color(atom_a.atom.Atom().GetAtomInfo() > atom_b.atom.Atom().GetAtomInfo() ?
+      atom_a.sphere_color : atom_b.sphere_color);
   _render(pw, 1, mask);
   pw.translate(-atom_a.crd);
 }
 void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   if( mask == (1<<12) || mask == (1<<13) || (mask&((1<<6)|(1<<7))) != 0 )  {
     pw.lineWidth(scalex);
+    if( (draw_style&ortep_color_bond) != 0 )  {
+      if( (mask&(1<<6)) !=0 )  {
+        pw.color(atom_a.sphere_color);
+        pw.drawLine(NullVec, (atom_b.crd-atom_a.crd)/2);
+      }
+      if( (mask&(1<<7)) !=0 )  {
+        pw.color(atom_b.sphere_color);
+        pw.drawLine((atom_b.crd-atom_a.crd)/2, (atom_b.crd-atom_a.crd));
+      }
+    }
     if( mask == (1<<13) )
       pw.custom("[8 8] 0 setdash");
-    pw.drawLine(NullVec, atom_b.crd-atom_a.crd);
+    if( (mask&((1<<12)|(1<<13))) != 0 || (draw_style&ortep_color_bond) == 0 )
+      pw.drawLine(NullVec, atom_b.crd-atom_a.crd);
     if( mask == (1<<13) )
       pw.custom("[] 0 setdash");
     return;
@@ -198,10 +213,35 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
       parent.BondProjF[j] += dir_vec*off_len;
     }
   }
-  if( (mask&((1 << 13)|(1<<11)|(1<<10)|(1<<9)|(1<<8))) != 0)
-    pw.drawQuads(parent.BondProjF, parent.BondProjT, 16, &PSWriter::fill);
-  else
-    pw.drawQuads(parent.BondProjF, parent.BondProjT, &PSWriter::fill);
+  if( scalex < 1.1 && (draw_style&ortep_color_bond) != 0 &&
+    (mask&((1<<4)|(1<<5)|(1<<6)|(1<<7)|(1<<9)|(1<<10))) != 0 )
+  {
+    for( uint16_t i=0; i < parent.BondDiv; i++ )  {
+      parent.BondProjM[i][0] = (parent.BondProjT[i][0]+parent.BondProjF[i][0])/2;
+      parent.BondProjM[i][1] = (parent.BondProjT[i][1]+parent.BondProjF[i][1])/2;
+      parent.BondProjM[i][2] = (parent.BondProjT[i][2]+parent.BondProjF[i][2])/2;
+    }
+    if( (mask&((1<<4)|(1<<6)|(1<<9))) != 0 )  {
+      pw.color(atom_a.sphere_color);
+      if( (mask&(1<<9)) != 0 )
+        pw.drawQuads(parent.BondProjF, parent.BondProjM, 8, &PSWriter::fill);
+      else
+        pw.drawQuads(parent.BondProjF, parent.BondProjM, &PSWriter::fill);
+    }
+    if( (mask&((1<<5)|(1<<7)|(1<<10))) != 0 )  {
+      pw.color(atom_b.sphere_color);
+      if( (mask&(1<<10)) != 0 )
+        pw.drawQuads(parent.BondProjM, parent.BondProjT, 8, &PSWriter::fill);
+      else
+        pw.drawQuads(parent.BondProjM, parent.BondProjT, &PSWriter::fill);
+    }
+  }
+  else  {
+    if( (mask&((1 << 13)|(1<<11)|(1<<10)|(1<<9)|(1<<8))) != 0)
+      pw.drawQuads(parent.BondProjF, parent.BondProjT, 16, &PSWriter::fill);
+    else
+      pw.drawQuads(parent.BondProjF, parent.BondProjT, &PSWriter::fill);
+  }
 }
 
 void OrtDraw::RenderRims(PSWriter& pw, const mat3f& pelpm, const vec3f& norm_vec) const {
@@ -261,6 +301,7 @@ void OrtDraw::Init(PSWriter& pw)  {
   FilteredArc.SetCount(ElpDiv);
   BondCrd.SetCount(BondDiv);
   BondProjF.SetCount(BondDiv);
+  BondProjM.SetCount(BondDiv);
   BondProjT.SetCount(BondDiv);
   double sin_a, cos_a;
   SinCos(2*M_PI/ElpDiv, &sin_a, &cos_a);
@@ -292,22 +333,7 @@ void OrtDraw::Init(PSWriter& pw)  {
   LinearScale = olx_min((float)pw.GetWidth()/vp[2], (double)pw.GetHeight()/vp[3]);
 
   if( app.LabelCount() != 0 )  {
-    if( app.GetLabel(0).GetFont().IsVectorFont() )  {
-      //olxstr uniq;
-      //for( size_t i=0; i < app.LabelCount(); i++ )  {
-      //  const olxstr& l = app.GetLabel(i).GetLabel();
-      //  for( size_t j=0; j < l.Length(); j++ )
-      //    if( uniq.IndexOf(l.CharAt(j)) == InvalidIndex )
-      //      uniq << l.CharAt(j);
-      //}
-      //TStrList fe = TGlFont::ExportHersheyToPS(uniq);
-      //for( size_t i=0; i < fe.Count(); i++ )
-      //  pw.custom(fe[i].c_str());
-      //olxcstr fnt("/HersheyFont findfont ");
-      //fnt << olx_round(app.GetLabel(0).GetFont().GetPointSize()/sqrt(LinearScale)) << " scalefont setfont";
-      //pw.custom(fnt.c_str());
-    }
-    else  {
+    if( !app.GetLabel(0).GetFont().IsVectorFont() )  {
       olxcstr fnt("/Verdana findfont ");
       fnt << olx_round(app.GetLabel(0).GetFont().GetPointSize()/sqrt(LinearScale)) << " scalefont setfont";
       pw.custom(fnt.c_str());
@@ -341,8 +367,27 @@ void OrtDraw::Render(const olxstr& fileName)  {
       a->draw_style |= ortep_color_lines;
     if( (ColorMode&ortep_color_fill) )
       a->draw_style |= ortep_color_fill;
-
     objects.Add(a);
+  }
+  if( Perspective && !objects.IsEmpty() )  {
+    float min_z, max_z;
+    min_z  = max_z = objects[0].get_z();
+    vec3f center = ((ort_atom&)objects[0]).crd;
+    for( size_t i=1; i < objects.Count(); i++ )  {
+      const ort_atom& a = (const ort_atom&)objects[i];
+      if( a.crd[2] < min_z )  min_z = a.crd[2];
+      if( a.crd[2] > max_z )  max_z = a.crd[2];
+      center += a.crd;
+    }
+    center /= objects.Count();
+    center[2] = (max_z - min_z)*10;
+    for( size_t i=0; i < objects.Count(); i++ )  {
+      ort_atom& oa = (ort_atom&)objects[i];
+      vec3f v(oa.crd - center);
+      v.NormaliseTo(center[2]);
+      oa.crd[0] = v[0]+center[0];
+      oa.crd[1] = v[1]+center[1];
+    }
   }
   for( size_t i=0; i < app.BondCount(); i++ )  {
     const TXBond& xb = app.GetBond(i);
@@ -376,7 +421,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
         vec3d crd = glxl.GetVectorPosition()*DrawScale + DrawOrigin;
         glf.RenderPSLabel(crd, glxl.GetLabel(), out, DrawScale, defs);
       }
-      pw.lineWidth(1.0);
+      pw.lineWidth(FontLineWidth);
       for( size_t i=0; i < out.Count(); i++ )
         pw.custom(out[i].c_str());
     }

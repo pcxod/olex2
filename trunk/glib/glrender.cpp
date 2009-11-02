@@ -708,7 +708,7 @@ void TGlRenderer::InvertSelection()  {
   FSelection->SetSelected(false);
   FSelection->Clear();
   for( size_t i=0; i < Selected.Count(); i++ )
-    FSelection->Add( *Selected[i] );
+    Selected[i]->SetSelected(FSelection->Add(*Selected[i]));
 }
 //..............................................................................
 void TGlRenderer::SelectAll(bool Select)  {

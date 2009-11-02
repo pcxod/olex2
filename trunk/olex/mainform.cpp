@@ -706,7 +706,8 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacro(HtmlPanelVisible, , fpNone|fpOne|fpTwo );
 
   this_InitMacro(QPeakScale, , fpNone|fpOne );
-  this_InitMacroD(Label, EmptyString, fpAny, "Creates moveable labels for provided atoms (selection)");
+  this_InitMacroD(Label, "type-type of labels to make;\
+  possible options - subscript, brackers, default", fpAny, "Creates moveable labels for provided atoms (selection)");
   this_InitMacroD(CalcChn, EmptyString, fpNone|fpOne, "Calculates CHN composition of curent structure or for provided formula" );
   this_InitMacroD(CalcMass, EmptyString, fpNone|fpOne, "Calculates Mass spectrum of curent structure or for provided formula" );
 
@@ -906,7 +907,10 @@ separated values of Atom Type and radius, an entry a line" );
   this_InitMacroD(ExportFrag, EmptyString, fpNone|psFileLoaded, "Exports selected fragment to an external file" );
   this_InitMacroD(ProjSph, "r-radius of the projection spehere [5]", fpNone|fpOne|psFileLoaded, 
     "Creates a projection of the fragment of the provided atom onto a spehere" );
-  this_InitMacroD(PictPS, "color_line-lines&;color_fill-ellipses are filled&;color_bond-bonds are colored", fpOne|psFileLoaded, 
+  this_InitMacroD(PictPS, "color_line-lines&;color_fill-ellipses are filled&;color_bond-bonds\
+ are colored&;div_pie-number [4] of stripes in the octant&;lw_pie-line width [0.5] of the octant\
+ stripes&;lw_octant-line width [0.5] of the octant arcs&;lw_font-line width [1] for the vector\
+ font&;lw_ellipse-line width [0.5] of the ellipse&;scale_hb-scale for H-bonds [0.5]&;p-perspective", fpOne|psFileLoaded, 
     "Experimental postscript rendering" );
   this_InitMacroD(PictTEX, "color_line-lines&;color_fill-ellipses are filled", fpOne|psFileLoaded, 
     "Experimental tex/pgf rendering" );

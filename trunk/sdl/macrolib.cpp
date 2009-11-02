@@ -1,5 +1,8 @@
 #include <stdlib.h>
 #include "macrolib.h"
+#include "exparse/exptree.h"
+
+using namespace exparse::parser_util;
 
 void TEMacroLib::Init()  {
   TLibrary &lib = OlexProcessor.GetLibrary();
@@ -67,19 +70,12 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
         continue;
       const olxstr func_name = Cmd.SubString(fstart, i-fstart);
       bc++;
-      i++;
-      size_t fend = InvalidIndex;
-      size_t astart = i, aend = i;
-      while( i < Cmd.Length() )  {
-        if( Cmd.CharAt(i) == '(' )  bc++;
-        else if( Cmd.CharAt(i) == ')' && (--bc == 0))  {
-          fend = i+1;  
-          break; 
-        }
-        i++;
-        aend++;
+      size_t aend = i;
+      if( !skip_brackets(Cmd, aend) )  {
+        E.ProcessingError(__OlxSourceInfo, olxstr("Number of brackets does not match: ") << Cmd);
+        return false;
       }
-      olxstr ArgV = Cmd.SubString(astart, aend-astart);
+      olxstr ArgV = Cmd.SubString(i+1, aend-i-1);
       TStrObjList Params;
       if( !ArgV.IsEmpty() )  { // arecursive call to all inner functions
         TParamList::StrtokParams(ArgV, ',', Params);
@@ -90,19 +86,19 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
             if( !ProcessFunction(Params[j], E, true) )  {
               if( func_name.Equalsi("eval") ) // put the function back
                 Params[j] = ArgV;
-              else  return false;
+              else  {
+                TBasicApp::GetLog().Info(olxstr("Possibly incorrect argument: ") << Params[j]);
+                E.GetStack().Pop();  // clear the error
+                E.ClearErrorFlag();
+              }
             }
           }
         }
         if( !Params.IsEmpty() )  
           ArgV = Params[0];
       }
-      if( fend == InvalidIndex )  {
-        E.ProcessingError(__OlxSourceInfo, olxstr("Number of brackets does not match: ") << Cmd);
-        return false;
-      }
       if( func_name.IsEmpty() )  {  // in case arithmetic ()
-        Cmd.Delete(fstart+1, fend-fstart-2);  // have to leave ()
+        Cmd.Delete(fstart+1, aend-fstart-2);  // have to leave ()
         Cmd.Insert(ArgV, fstart+1);
         E.GetStack().Pop();
         return true;
@@ -116,7 +112,7 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
         E.GetStack().Pop();
         return true;
       }
-      Cmd.Delete(fstart, fend-fstart);
+      Cmd.Delete(fstart, aend-fstart+1);
       //TBasicApp::GetLog().Info( Function->GetRuntimeSignature() );
       Function->Run(Params, E);
       if( !E.IsSuccessful() ) //&& E.DoesFunctionExist() )  

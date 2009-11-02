@@ -76,10 +76,12 @@ protected:
   float PieLineWidth, 
     ElpLineWidth, 
     QuadLineWidth,
+    FontLineWidth,
     HBondScale;
   const TEBasis& basis;
+  bool Perspective;
   uint16_t ElpDiv, PieDiv, BondDiv;
-  mutable TArrayList<vec3f> ElpCrd, PieCrd, Arc, BondCrd, BondProjF, BondProjT;
+  mutable TArrayList<vec3f> ElpCrd, PieCrd, Arc, BondCrd, BondProjF, BondProjT, BondProjM;
   mutable TPtrList<const vec3f> FilteredArc;
   size_t PrepareArc(const TArrayList<vec3f>& in, TPtrList<const vec3f>& out, const vec3f& normal) const;
   float GetBondRad(const ort_bond& b, uint32_t mask) const;
@@ -92,9 +94,11 @@ public:
     BondDiv = 12;
     PieDiv = 4;
     QuadLineWidth = PieLineWidth = 0.5;
+    ElpLineWidth = FontLineWidth = 1;
     BondRad = 1;
     ColorMode = 0;
     HBondScale = 0.5;
+    Perspective = false;
   }
   // create ellipse and pie coordinates
   void Init(PSWriter& pw);
@@ -106,7 +110,11 @@ public:
   DefPropP(uint16_t, BondDiv) 
   DefPropP(uint16_t, ColorMode)
   DefPropP(float, HBondScale)
-  DefPropP(float, BondRad)
+  DefPropP(float, FontLineWidth)
+  DefPropP(float, QuadLineWidth)
+  DefPropP(float, PieLineWidth)
+  DefPropP(float, ElpLineWidth)
+  DefPropBIsSet(Perspective)
 
   friend struct ort_bond;
   friend struct ort_atom;
