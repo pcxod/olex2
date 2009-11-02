@@ -110,7 +110,6 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
       vec3d off = Parent.GetBasis().GetMatrix()*(Basis.GetCenter()*Parent.GetBasis().GetZoom());
       T += Center;
       T += off*(ScaleVR);
-      //T[0] -= OffsetX;  T[1] -= OffsetY;
       T *= Parent.GetBasis().GetMatrix();
       T[2] = Parent.MaxDim()[2];
       //float glw;

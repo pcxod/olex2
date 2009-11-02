@@ -106,10 +106,11 @@ TTextRect TGlFont::GetTextRect(const olxstr& str)  {
     if( df > tr.height )  tr.height = df;
     tr.width += cs->Right;  // left is unused in drawing
   }
-  tr.left /= VectorScale;
-  tr.top /= VectorScale;
-  tr.width /= VectorScale;
-  tr.height /= VectorScale;
+  const double scalex = (double)PointSize/(15*VectorScale);
+  tr.left *= scalex;
+  tr.top *= scalex;
+  tr.width *= scalex;
+  tr.height *= scalex;
   return tr;
 }
 //..............................................................................
@@ -1023,14 +1024,15 @@ TStrList TGlFont::DefinePSChar(olxch ch, const double& drawScale,
   definitions(ch, olxstr("char_") << ch_ind); 
   ch_ind -= 32;
   bool path_started = false;
+  double scalex = (double)PointSize/15;
   for( size_t j=2; j < 112; j+=2 )  {
     if( gl_font_simplex[ch_ind][j] == -1 && gl_font_simplex[ch_ind][j] == -1 )  {
       path_started = false;
       continue;
     }
     else  {
-      rv.Add("    ") << (double)gl_font_simplex[ch_ind][j]*drawScale/VectorScale 
-        << ' ' << (double)gl_font_simplex[ch_ind][j+1]*drawScale/VectorScale;
+      rv.Add("    ") << (double)gl_font_simplex[ch_ind][j]*drawScale*scalex/VectorScale 
+        << ' ' << (double)gl_font_simplex[ch_ind][j+1]*drawScale*scalex/VectorScale;
       if( !path_started )  {
         rv.Last().String  << " moveto";
         path_started = true;
@@ -1105,6 +1107,7 @@ void TGlFont::CreateHershey(const olxdict<size_t, olxstr, TPrimitiveComparator>&
   Flags |= sglfVectorFont;
   CharOffset = 0;
   VectorScale = scale;
+  PointSize = 15;
   int top=100, left = 100, right=0, bottom=0;
   for( size_t i=0; i < 95; i++ )  {
     TFontCharSize* cs = CharSize(i+32);
@@ -1207,7 +1210,7 @@ void TGlFont::RenderPSLabel(const vec3d& pos, const olxstr& label, TStrList& out
     out.Add(definitions.GetValue(di));
     if( i+1 < label.Length() )  {
       TFontCharSize* cs = CharSizes[label.CharAt(i)];
-      out.Add(EmptyString) << (double)(cs->Right)*drawScale/VectorScale << " 0 translate";
+      out.Add(EmptyString) << (double)(cs->Right)*drawScale*PointSize/(15*VectorScale) << " 0 translate";
     }
   }
   out.Add("grestore");
@@ -1216,11 +1219,12 @@ void TGlFont::RenderPSLabel(const vec3d& pos, const olxstr& label, TStrList& out
 void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, bool FixedW)  {
   if( IsVectorFont() )  {
     glTranslated(from[0], from[1], from[2]);
+    glScalef((float)PointSize/15, (float)PointSize/15, 1);
     for( size_t i = 0; i < text.Length(); i++ )  {
       TFontCharSize* cs = CharSizes[text.CharAt(i)];
       //glTranslated((double)(cs->Left)/100, 0, 0);
       glCallList(FontBase+text.CharAt(i));
-      glTranslated((double)(cs->Right)/VectorScale, 0, 0);
+      glTranslated((double)cs->Right/VectorScale, 0, 0);
     }
     //glTranslated(-from[0], -(from[1]+text.Length()*inc), -from[2]);
     return;

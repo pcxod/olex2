@@ -205,6 +205,8 @@ public:
   DefPropP(uint64_t, DateTime)
   DefPropP(uint64_t, Size)
   DefPropC(olxstr, Digest)
+  // only updates the digest if current is empty
+  size_t UpdateDigest();
 
   template <class SC> 
   TFSItem* FindByName(const SC& Name) const {
@@ -238,7 +240,7 @@ private:
   bool IndexLoaded;
   mutable bool Break;
 protected:
-  olxstr Source,  Destination;
+  olxstr Source, Destination;
   TStrList Properties;
   TActionQList Actions;
   AFileSystem *DestFS;
@@ -265,8 +267,8 @@ public:
   bool UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force, const olxstr& indexName="index.ind");
   inline TFSItem& GetRoot()  const {  return *Root; }
   /* checks if the file actions specify to delete it, if a delete action is found return false
-  if the timestamps of the items and size match and false in other cases */
-  bool ShallAdopt(const TFSItem& src, const TFSItem& dest) const;
+  if the timestamps of the items and size match and false in other cases; updates the dest digest if empty */
+  bool ShallAdopt(const TFSItem& src, TFSItem& dest) const;
   bool ShouldExist(const TFSItem& src)  const {  return src.GetActions().IndexOfi("delete") == InvalidIndex;  }
   void ProcessActions(TFSItem& item); 
   // stops the syncronisation and updates the index
