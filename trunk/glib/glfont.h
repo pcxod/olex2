@@ -40,8 +40,8 @@ public:
   GLuint* Textures;
   uint16_t Flags, PointSize;
   uint16_t MaxWidth, MaxHeight,
-        Leftmost, Topmost,
         CharOffset, TextureHeight, TextureWidth;
+  int16_t Leftmost, Topmost;
   TGlMaterial Material;
   double VectorScale;
 protected:
@@ -57,8 +57,8 @@ public:
 
   inline uint16_t GetMaxWidth() const {  return MaxWidth;  }
   inline uint16_t GetMaxHeight() const {  return MaxHeight;  }
-  inline uint16_t GetLeftmost() const {  return Leftmost;  }
-  inline uint16_t GetTopmost() const {  return Topmost;  }
+  inline int16_t GetLeftmost() const {  return Leftmost;  }
+  inline int16_t GetTopmost() const {  return Topmost;  }
   inline double GetVectorScale() const {  return VectorScale;  }
   
   DefPropP(uint16_t, PointSize)
