@@ -53,6 +53,10 @@ bool parser_util::skip_brackets(const olxstr& exp, size_t& ind)  {
   const size_t start = ind+1;
   while( ++ind < exp.Length() && bc != 0 )  {
     const olxch ch = exp.CharAt(ind);
+    if( is_quote(ch) && !is_escaped(exp, ind) )  {
+      if( !skip_string(exp, ind) )  return false;
+      continue;
+    }
     if( ch == cc && (--bc == 0) )  return true;
     else if( ch == oc )  bc++;
   }
