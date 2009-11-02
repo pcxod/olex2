@@ -120,6 +120,26 @@ void TFSItem::Clear()  {
   Size = 0;
 }
 //..............................................................................
+size_t TFSItem::UpdateDigest()  {
+  if( !Digest.IsEmpty() )  return 0;
+  if( IsFolder() )  {
+    size_t rv = 0;
+    for( size_t i=0; i < Items.Count(); i++ )
+      rv += Items.GetObject(i)->UpdateDigest();
+    return rv;
+  }
+  try  {
+    olxstr fn = Index.IndexFS.GetBase() + GetFullName();
+    if( !Index.IndexFS.Exists(fn) )  return 0; 
+    IInputStream* is = Index.IndexFS.OpenFile(fn);
+    if( is == NULL )  return 0;
+    Digest = MD5::Digest(*is);
+    delete is;
+    return 1;
+  }
+  catch(...)  {  return 0;  }
+}
+//..............................................................................
 void TFSItem::operator >> (TStrList& S) const  {
   olxstr str = olxstr::CharStr('\t', GetLevel()-1 );
   S.Add( str + GetName() );
@@ -463,15 +483,15 @@ void TFSItem::DelFile() {
     Items.Clear();
     // this will remove ALL files, not only the files in the index
     if( Index.DestFS != NULL )
-      GetDestFS().DelDir( GetDestFS().GetBase() + GetFullName() );
+      GetDestFS().DelDir(GetDestFS().GetBase() + GetFullName());
     else
-      GetIndexFS().DelDir( GetIndexFS().GetBase() + GetFullName() );
+      GetIndexFS().DelDir(GetIndexFS().GetBase() + GetFullName());
   }
   else  {
     if( Index.DestFS != NULL )
-      GetDestFS().DelFile( GetDestFS().GetBase() + GetFullName());
+      GetDestFS().DelFile(GetDestFS().GetBase() + GetFullName());
     else
-      GetIndexFS().DelFile( GetIndexFS().GetBase() + GetFullName());
+      GetIndexFS().DelFile(GetIndexFS().GetBase() + GetFullName());
   }
 }
 //..............................................................................
@@ -598,12 +618,12 @@ void TFSIndex::LoadIndex(const olxstr& IndexFile, const TFSItem::SkipOptions* to
   if( is == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "could not load index file" );
   TStrList strings;
-  strings.LoadFromTextStream( *is );
+  strings.LoadFromTextStream(*is);
   delete is;
   size_t index = 0;
   GetRoot().ReadStrings(index, NULL, strings, toSkip);
   Properties.Clear();
-  GetRoot().ListUniqueProperties( Properties );
+  GetRoot().ListUniqueProperties(Properties);
   GetRoot().ClearNonexisting();
   IndexFS.SetIndex(this);
   IndexLoaded = true;
@@ -659,7 +679,9 @@ uint64_t TFSIndex::CalcDiffSize(AFileSystem& To, const TStrList& properties, con
     LoadIndex(SrcInd, toSkip);
     if( To.Exists(DestInd) )
       DestI.LoadIndex(DestInd);
-    return GetRoot().CalcDiffSize(DestI.GetRoot(), properties);
+    uint64_t rv = GetRoot().CalcDiffSize(DestI.GetRoot(), properties);
+    DestI.SaveIndex(DestInd);
+    return rv;
   }
   catch( const TExceptionBase& exc )  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
@@ -682,10 +704,16 @@ bool TFSIndex::UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force, c
       throw TFileDoesNotExistException( __OlxSourceInfo, fileName );
     TFSItem* dest = DestI.GetRoot().FindByFullName(fileName);
     if( dest != NULL )  {
-      if( Force || (src->GetDigest() != dest->GetDigest()) ||
-        !To.Exists( To.GetBase() + dest->GetFullName()) )  {
-          olxstr test = To.GetBase() + dest->GetFullName();
-        if( To.AdoptFile( *src ) )  {
+      bool update = Force;
+      if( !update  )  {
+        if( !src->GetDigest().IsEmpty() && !dest->GetDigest().IsEmpty() )
+          update = src->GetDigest() != dest->GetDigest();
+        else
+          update = (src->GetDateTime() > dest->GetDateTime()) || (src->GetSize() != dest->GetSize()); 
+      }
+      if( update )  {
+        olxstr test = To.GetBase() + dest->GetFullName();
+        if( To.AdoptFile(*src) )  {
           *dest = *src;
           res = true;
         }
@@ -705,16 +733,29 @@ bool TFSIndex::UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force, c
   return res;
 }
 //..............................................................................
-bool TFSIndex::ShallAdopt(const TFSItem& src, const TFSItem& dest) const  {
-  if( src.GetActions().IndexOfi("delete") != InvalidIndex )
-    return !(dest.GetDigest() == src.GetDigest() && dest.GetSize() == src.GetSize());
-  if( dest.GetDigest() != src.GetDigest() || 
-    !dest.GetIndexFS().Exists(dest.GetIndexFS().GetBase() + dest.GetFullName()) )  
-  {
-    // validate if not already downlaoded
-    if( &dest.GetDestFS() != NULL )
-      return !dest.GetDestFS().Exists(dest.GetDestFS().GetBase() + dest.GetFullName());  
-    return true;
+bool TFSIndex::ShallAdopt(const TFSItem& src, TFSItem& dest) const  {
+  if( !dest.GetDigest().IsEmpty() && !src.GetDigest().IsEmpty() )  {
+    if( src.GetActions().IndexOfi("delete") != InvalidIndex )
+      return !(dest.GetDigest() == src.GetDigest() && dest.GetSize() == src.GetSize());
+    if( dest.GetDigest() != src.GetDigest() || 
+      !dest.GetIndexFS().Exists(dest.GetIndexFS().GetBase() + dest.GetFullName()) )  
+    {
+      if( &dest.GetDestFS() != NULL )  // validate if not already downloaded
+        return !dest.GetDestFS().Exists(dest.GetDestFS().GetBase() + dest.GetFullName());  
+      return true;
+    }
+  }
+  else  {  // do it the old way, based on timestamp then, but update the digest
+    dest.SetDigest(src.GetDigest());
+    if( src.GetActions().IndexOfi("delete") != -1 )
+      return !(dest.GetDateTime() == src.GetDateTime() && dest.GetSize() == src.GetSize());
+    if( dest.GetDateTime() != src.GetDateTime() || 
+      !dest.GetIndexFS().Exists(dest.GetIndexFS().GetBase() + dest.GetFullName()) )  
+    {
+      if( &dest.GetDestFS() != NULL )  // validate if not already downloaded
+        return !dest.GetDestFS().Exists(dest.GetDestFS().GetBase() + dest.GetFullName());  
+      return true;
+    }
   }
   return false;
 }

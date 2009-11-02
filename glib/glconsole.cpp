@@ -97,18 +97,14 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
   //Fnt->DrawGlText( vec3d(0,0,0), "HELLW_O", true);
   P.SetFont(&Fnt);
   if( Parent.GetWidth() < 100 )  return true;
-  const int th = Fnt.TextHeight(EmptyString);
-  double Scale = Parent.GetScale(),
-         MaxY = ((double)Parent.GetHeight()/2-Top-th)*Scale;
-  double MaxZ = -Parent.GetMaxRasterZ();
-  size_t MaxLineWidth = Fnt.MaxTextLength(Parent.GetWidth());
+  const uint16_t th = Fnt.TextHeight(EmptyString);
+  const double Scale = Parent.GetScale(),
+               MaxY = ((double)Parent.GetHeight()/2-Top-th)*Scale;
+  const double MaxZ = -Parent.GetMaxRasterZ() + 0.02;
+  const size_t MaxLineWidth = Fnt.MaxTextLength(Parent.GetWidth());
 
-  MaxZ += 0.02;
-  
   olxstr line;
-
   vec3d T;
-
   TGlMaterial& OGlM = P.GetProperties();
   TGlOption CC, Ambient;
   CC = Parent.LightModel.GetClearColor();
@@ -155,7 +151,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
       }
       else
         OGlM.Init();
-      P.SetString( &line );
+      P.SetString(&line);
       Parent.DrawText(P, T[0], T[1], MaxZ); 
       P.SetString(NULL);
       if( i== 0 )  break;

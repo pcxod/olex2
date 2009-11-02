@@ -183,16 +183,18 @@ TGlFont* TwxGlScene::CreateFont(const olxstr& name, const olxstr& fntDesc, short
     if( FindFont(name) == NULL )
       Fonts.Add(Fnt);
     Fnt->SetIdString(fntDesc);
+    MetaFont mf(fntDesc);
+    Fnt->SetPointSize(mf.GetSize());
     return Fnt;
   }
 
   // LINUZ port - ... native font string is system dependent...
-  wxFont Font( fntDesc.u_str() );
+  wxFont Font(fntDesc.u_str());
   if( Font.GetPointSize() <= 1 )
     Font.SetPointSize(6);
     
   Fnt->SetIdString(Font.GetNativeFontInfoDesc().c_str());
-  Fnt->SetPointSize( Font.GetPointSize() );
+  Fnt->SetPointSize(Font.GetPointSize());
 
   TPtrList<wxImage> Images;
   wxImage *Image;
@@ -546,8 +548,8 @@ void TwxGlScene::MetaFont::SetIdString(const olxstr& idstr)  {
     Italic = false;
     Bold = false;
     Size = 15;
-    if( idstr.SubStringFrom(0).IsNumber() )
-      Size = idstr.SubStringFrom(0).ToInt();
+    if( idstr.SubStringFrom(1).IsNumber() )
+      Size = idstr.SubStringFrom(1).ToInt();
   }
   else  {
     wxFont f(idstr.u_str());
@@ -564,8 +566,9 @@ olxstr TwxGlScene::MetaFont::GetIdString() const {
   if( IsOlexFont(OriginalId) )  {
     return BuildOlexFontId(FileName, Size, Fixed, Bold, Italic);
   }
-  if( IsVectorFont(OriginalId) )
-    return OriginalId;
+  if( IsVectorFont(OriginalId) )  {
+    return olxstr('@') << Size;
+  }
   wxFont f( OriginalId.u_str() );
   f.SetStyle( Italic ? wxFONTSTYLE_ITALIC: wxFONTSTYLE_NORMAL );
   f.SetWeight( Bold ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL );
