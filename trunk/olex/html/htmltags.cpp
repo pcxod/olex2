@@ -154,42 +154,46 @@ TAG_HANDLER_END(IMAGE)
 // input tag
 TAG_HANDLER_BEGIN(INPUT, "INPUT")
 TAG_HANDLER_PROC(tag)  {
-  olxch Bf[80];
-  tag.ScanParam(wxT("TYPE"), _StrFormat_, Bf);
-  olxstr TagName(Bf), ObjectName, Value, Data, Tmp, Label;
+  olxstr TagName = tag.GetParam(wxT("TYPE")).c_str();
+  olxstr ObjectName, Value, Data, Tmp, Label;
   ObjectName = tag.GetParam(wxT("NAME")).c_str();
   int valign = -1, halign = -1, 
     fl=0,
     ax=100, ay=20;
   AOlxCtrl* CreatedObject = NULL;
   wxWindow* CreatedWindow = NULL;
-  Bf[0] = '\0';
-  tag.ScanParam(wxT("WIDTH"), _StrFormat_, Bf);
-  Tmp = Bf;
-  if( !Tmp.IsEmpty() )  {
-    if( Tmp.EndsWith('%') )  {
-      ax = Tmp.SubStringTo(Tmp.Length()-1).ToInt();
-      float w = (float)ax/100;
-      w *= m_WParser->GetWindowInterface()->GetHTMLWindow()->GetSize().GetWidth();
-      ax = (int)w;
+  try  {
+    Tmp = tag.GetParam(wxT("WIDTH")).c_str();
+    TGlXApp::GetMainForm()->ProcessFunction(Tmp);
+    if( !Tmp.IsEmpty() )  {
+      if( Tmp.EndsWith('%') )  {
+        ax = 0;
+        float _ax = Tmp.SubStringTo(Tmp.Length()-1).ToFloat<float>()/100;
+        _ax *= m_WParser->GetWindowInterface()->GetHTMLWindow()->GetSize().GetWidth();
+        ax = (int)_ax;
+      }
+      else
+        ax = (int)Tmp.ToDouble();
     }
-    else
-      ax = Tmp.ToInt();
-  }
-  Bf[0] = '\0';
-  tag.ScanParam(wxT("HEIGHT"), _StrFormat_, Bf);
-  Tmp = Bf;
-  if( !Tmp.IsEmpty() )  {
-    if( Tmp.EndsWith('%') )  {
-      ay = Tmp.SubStringTo(Tmp.Length()-1).ToInt();
-      float h = (float)ay/100;
-      h *= m_WParser->GetWindowInterface()->GetHTMLWindow()->GetSize().GetHeight();
-      ay = (int)h;
+    Tmp = tag.GetParam(wxT("HEIGHT")).c_str();
+    TGlXApp::GetMainForm()->ProcessFunction(Tmp);
+    if( !Tmp.IsEmpty() )  {
+      if( Tmp.EndsWith('%') )  {
+        ay = 0;
+        float _ay = Tmp.SubStringTo(Tmp.Length()-1).ToFloat<float>()/100;
+        _ay *= m_WParser->GetWindowInterface()->GetHTMLWindow()->GetSize().GetHeight();
+        ay = (int)_ay;
+      }
+      else
+        ay = Tmp.ToDouble();
     }
-    else
-      ay = Tmp.ToInt();
   }
-
+  catch(const TExceptionBase& e)  {
+    TBasicApp::GetLog().Exception(e.GetException()->GetFullMessage());
+    TBasicApp::GetLog() << (olxstr("While processing Width/Height HTML tags for ") <<
+      TagName << "::" << ObjectName << '\n');
+    TBasicApp::GetLog() << (olxstr("Offending input: '") << Tmp << "'\n");
+  }
   if( ax == 0 )  ax = 30;
   if( ay == 0 )  ay = 20;
  

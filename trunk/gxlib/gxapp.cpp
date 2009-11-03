@@ -3274,14 +3274,14 @@ void TGXApp::CreateXGrowLines()  {
   if( !AtomsToGrow.IsEmpty() )  {
     TXAtomPList xatoms;
     FindXAtoms(AtomsToGrow, xatoms);
-    TListCaster::POP( xatoms, AtomsToProcess );
+    TListCaster::POP(xatoms, AtomsToProcess);
   }
-  else if( (FGrowMode & gmSInteractions) != 0 ) {
+  else if( (FGrowMode & gmSameAtoms) == 0 ) {
     const size_t ac = FXFile->GetLattice().AtomCount();
     for( size_t i=0; i < ac; i++ )  {
       TSAtom& A = FXFile->GetLattice().GetAtom(i);
       if( A.IsDeleted() )  continue;
-      AtomsToProcess.Add( &A );
+      AtomsToProcess.Add(A);
     }
   }
   TPtrList<TCAtom> AttachedAtoms;
