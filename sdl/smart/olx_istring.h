@@ -834,16 +834,16 @@ public:
   // no '\0' at the end, got to do it ourselves
   template <class FT> static FT o_atof(const TC* data, size_t len) {
     if( len == 0 )  
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
+      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid float number format");
     size_t sts = 0; // string start
     while( o_iswhitechar(data[sts]) && ++sts < len )
     if( sts >= len )
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
+      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid float number format");
     bool negative = false;
     if( data[sts] == '-' )  {  negative = true;  sts++;  }
     else if( data[sts] == '+' )  sts++;
     if( sts == len )
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
+      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid float number format");
     FT bp=0, ap=0, apexp=1;
     size_t exp = 0;
     bool fpfound = false, expfound = false, expneg = false;
@@ -869,10 +869,10 @@ public:
         else if( data[i] >= '0' && data[i] <= '9' )  // anonymous positive exp
          i--;
         else  // invalid dddd.ddddE-/+/ddd format
-          break;
+          TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid digit in exponent");
       }
       else  // invalid char for a number
-        break;
+        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid float number digit");
     }
     bp = (expneg) ? (bp + ap/apexp)/o_pow10<FT>(exp) : (bp + ap/apexp)*o_pow10<FT>(exp);
     return negative ? -bp : bp;

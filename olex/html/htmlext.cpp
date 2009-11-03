@@ -717,9 +717,9 @@ if there are more than 1 state for an item the function does the rotation if
 one of the states correspond to current - the next one is selected
 */
 void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  THtml *html;
+  THtml *html = NULL;
   if( Cmds.Count() > 2 && !Cmds[1].IsNumber() )  {
-    html = TGlXApp::GetMainForm()->FindHtml( Cmds[0] );
+    html = TGlXApp::GetMainForm()->FindHtml(Cmds[0]);
     if( html == NULL )  {
       Error.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
       return;
@@ -730,7 +730,7 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     html = this;
 
   THtmlSwitch& rootSwitch = html->GetRoot();
-  TIntList states;
+  TIndexList states;
   TPtrList<THtmlSwitch> Switches;
   olxstr itemName( Cmds[0] );
   for( size_t i=1; i < Cmds.Count(); i++ )  {
@@ -784,11 +784,11 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     else  {
       for( size_t j=0; j < Switches.Count(); j++ )  {
         THtmlSwitch* sw = Switches[j];
-        const int currentState = sw->GetFileIndex();
+        const index_t currentState = sw->GetFileIndex();
         for( size_t k=0; k < states.Count(); k++ )  {
           if( states[k] == (currentState+1) )  {
             if( (k+1) < states.Count() )
-              sw->SetFileIndex(states[k+1] -1);
+              sw->SetFileIndex(states[k+1]-1);
             else
               sw->SetFileIndex(states[0]-1);
           }
@@ -813,7 +813,12 @@ void THtml::funGetItemState(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified switch: ") << itemName;
     return;
   }
-  E.SetRetVal(sw->GetFileIndex());
+  if( sw->GetFileIndex() == InvalidIndex )
+    E.SetRetVal<olxstr>("-1");
+  else if( sw->GetFileIndex() == UnknownSwitchState )
+    E.SetRetVal<olxstr>("-2");
+  else
+    E.SetRetVal(sw->GetFileIndex());
 }
 //..............................................................................
 void THtml::funIsPopup(const TStrObjList& Params, TMacroError &E)  {
