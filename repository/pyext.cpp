@@ -266,7 +266,7 @@ PyObject* runOlexMacro(PyObject* self, PyObject* args)  {
     Py_INCREF(Py_None);
     return Py_None;
   }
-  bool res = o_r->executeMacro( macroName );
+  bool res = o_r->executeMacro(macroName);
   return Py_BuildValue("b", res);
 }
 //..............................................................................
@@ -279,12 +279,82 @@ PyObject* runOlexFunction(PyObject* self, PyObject* args)  {
     return Py_None;
   }
   olxstr retValue;
-  bool res = o_r->executeFunction( functionName,  retValue);
+  bool res = o_r->executeFunction(functionName,  retValue);
   if( res )
     return PythonExt::BuildString(retValue);
   PyErr_SetObject(PyExc_RuntimeError, PythonExt::BuildString(olxstr("Function '") << functionName << "' failed") );
   Py_INCREF(Py_None);
   return Py_None;
+}
+//..............................................................................
+PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
+  IOlexProcessor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
+  olxstr name;
+  bool macro;
+  PyObject *args_, *kwds_=NULL;
+  if( !PythonExt::ParseTuple(args, "wbO|O", &name, &macro, &args_, &kwds_) )  {
+    Py_INCREF(Py_None);
+    return Py_None;
+  }
+  if( macro )  {
+    if( kwds_ != NULL && PyDict_Size(kwds_) != 0 )  {
+      ABasicFunction* macro = o_r->GetLibrary().FindMacro(name);
+      if( macro == NULL )  {
+        PyErr_SetObject(PyExc_RuntimeError,
+          PythonExt::BuildString(olxstr("Undefined macro '") << name << '\''));
+        Py_INCREF(Py_None);
+        return Py_None;
+      }
+      TStrObjList params;
+      TParamList options;
+      for( Py_ssize_t i=0; i < PyList_Size(args_); i++ )
+        params.Add(PythonExt::ParseStr(PyList_GetItem(args_, i)));
+      PyObject *keys_ = PyDict_Keys(kwds_);
+      for( Py_ssize_t i=0; i < PyList_Size(keys_); i++ )  {
+        PyObject *key_ = PyList_GetItem(keys_, i);
+        options.AddParam(PythonExt::ParseStr(key_), PythonExt::ParseStr(PyDict_GetItem(kwds_, key_)));
+      }
+      TMacroError er;
+      macro->Run(params, options, er);
+      if( er.IsSuccessful() )
+        return Py_BuildValue("b", true);
+      else  {
+        TBasicApp::GetLog() << (olxstr("Macro '") << name << "' failed: " << er.GetInfo() << '\n');
+        return Py_BuildValue("b", false);
+      }
+    }
+    else  {
+      olxstr macro_args;
+      if( PyList_Size(args_) == 1 )
+        macro_args = PythonExt::ParseStr(PyList_GetItem(args_, 0));
+      bool res = o_r->executeMacro(name << ' ' << macro_args);
+      return Py_BuildValue("b", res);
+    }
+  }
+  else  {
+    ABasicFunction* func = o_r->GetLibrary().FindFunction(name);
+    if( func == NULL )  {
+      PyErr_SetObject(PyExc_RuntimeError,
+        PythonExt::BuildString(olxstr("Undefined function '") << name << '\''));
+      Py_INCREF(Py_None);
+      return Py_None;
+    }
+    TStrObjList params;
+    for( Py_ssize_t i=0; i < PyList_Size(args_); i++ )
+      params.Add(PythonExt::ParseStr(PyList_GetItem(args_, i)));
+    TMacroError er;
+    func->Run(params, er);
+    if( er.IsSuccessful() )  {
+      olxstr rv = (er.HasRetVal() ? er.RetObj()->ToString() : EmptyString);
+      return PythonExt::BuildString(rv);
+    }
+    else  {
+      PyErr_SetObject(PyExc_RuntimeError,
+        PythonExt::BuildString(olxstr("Function '") << name << "' failed: " << er.GetInfo()) );
+      Py_INCREF(Py_None);
+      return Py_None;
+    }
+  }
 }
 //..............................................................................
 PyObject* runPrintText(PyObject* self, PyObject* args)  {
@@ -300,6 +370,7 @@ PyObject* runPrintText(PyObject* self, PyObject* args)  {
 PyMethodDef Methods[] = {
   {"m", runOlexMacro, METH_VARARGS, "executes olex macro"},
   {"f", runOlexFunction, METH_VARARGS, "executes olex function"},
+  {"f_ex", runOlexFunctionEx, METH_VARARGS, "executes olex function"},
   {"writeImage", runWriteImage, METH_VARARGS, "adds new image/object to olex2 memory; (name, date, persistence=0).\
  Persistence: 0 - none, 1 - for current structure, 2 - global"},
   {"readImage", runReadImage, METH_VARARGS, "reads an image/object from olex memory"},
@@ -313,28 +384,24 @@ PyMethodDef Methods[] = {
 };
 //..............................................................................
 olxcstr PyFuncBody(const olxcstr& olexName, const olxcstr& pyName, char sep)  {
-  olxcstr res("def ");
-  res << pyName << "(*args):\n  ";
-  res << "ss=\'" << olexName;
-
-  if( sep == ',' )  res << "(\'\n  ";
-  else              res << " \'\n  ";
-
-  res << "for arg in args:\n    ";
-  res << "ss += str(arg)\n    ";
-  res << "ss += \'" << sep << "\'\n  ";
-
-  res << "if( ss[-1] == \'" << sep << "\' ):\n    ";
-  res << "ss = ss[:-1]\n  ";
-
   if( sep == ',' )  {
-    res << "ss += ')'\n  ";
-    res << "return olex.f(ss)"; // retval or pyNone
+    olxcstr res("def ");
+    res << pyName << "(*args):\n  ";
+    res << "al = []\n  ";
+    res << "for arg in args:\n    ";
+    res << "al.append(str(arg))\n  ";
+    res << "return olex.f_ex('" << olexName << "', False, al)";
+    return res;
   }
-  else
-    res << "return olex.m(ss)"; // true or false
-  return res;
-
+  else  {
+    olxcstr res("def ");
+    res << pyName << "(*args, **kwds):\n  ";
+    res << "al = []\n  ";
+    res << "for arg in args:\n    ";
+    res << "al.append(str(arg))\n  ";
+    res << "return olex.f_ex('" << olexName << "', True, al, kwds)";
+    return res;
+  }
 }
 //..............................................................................
 PythonExt::PythonExt(IOlexProcessor* olexProcessor)  {

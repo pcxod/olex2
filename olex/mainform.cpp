@@ -3728,7 +3728,7 @@ void TMainForm::print(const olxstr& output, const short MessageType)  {
 //..............................................................................
 bool TMainForm::executeFunction(const olxstr& function, olxstr& retVal)  {
   retVal = function;
-  return ProcessFunction( retVal );
+  return ProcessFunction(retVal);
 }
 //..............................................................................
 IEObject* TMainForm::executeFunction(const olxstr& function)  {
@@ -3750,13 +3750,13 @@ IEObject* TMainForm::executeFunction(const olxstr& function)  {
   try  {
     Fun->Run(funParams, me);
     if( !me.IsSuccessful() )  {
-      AnalyseError( me );
+      AnalyseError(me);
       return NULL;
     }
   }
   catch( TExceptionBase& exc )  {
     me.ProcessingException(*Fun, exc);
-    AnalyseError( me );
+    AnalyseError(me);
     return NULL;
   }
   return (me.HasRetVal()) ? me.RetObj()->Replicate() : NULL;
