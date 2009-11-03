@@ -48,7 +48,7 @@ TGlCanvas::TGlCanvas(TMainForm *parent, int* gl_attr, wxWindowID id,
   wxGLCanvas(parent, (wxGLCanvas*)NULL, id, pos, size, style|wxFULL_REPAINT_ON_RESIZE, name )  {
   Context = NULL;
 #else
-  wxGLCanvas(parent, id, gl_attr, pos, size, style|wxFULL_REPAINT_ON_RESIZE, name )  {
+  wxGLCanvas(parent, id, gl_attr, pos, size, style, name )  {
   Context = new wxGLContext( this, NULL);
 #ifdef __WIN32__ // on GTK the context initialisation is delayed
   Context->SetCurrent(*this);
@@ -77,11 +77,9 @@ void TGlCanvas::Render()  {
   /* init OpenGL once, but after SetCurrent */
   if( FXApp == NULL )  return;
   FXApp->Draw();
-  glFlush();
-  SwapBuffers();
 }
 //..............................................................................
-void TGlCanvas::OnPaint( wxPaintEvent& event )  {
+void TGlCanvas::OnPaint(wxPaintEvent& event)  {
   wxPaintDC dc(this);
   Render();
 }
@@ -94,8 +92,8 @@ void TGlCanvas::OnSize(wxSizeEvent& event)  {
 //    Context->SetCurrent(*this); 
 }
 //..............................................................................
-void TGlCanvas::OnEraseBackground(wxEraseEvent& event)
-{   } // Do nothing, to avoid flashing.
+void TGlCanvas::OnEraseBackground(wxEraseEvent& event)  {
+}
 //..............................................................................
 void TGlCanvas::InitGL()  {
   if( FXApp != NULL )  
@@ -189,7 +187,11 @@ void TGlCanvas::OnMouseMove(wxMouseEvent& me)  {
   if( !FLeftMouseDown && !FRightMouseDown )  
     FParent->OnMouseMove(me.m_x, me.m_y);
   if( FXApp != NULL && FXApp->MouseMove(me.m_x, me.m_y, Fl) )  // check if a handler for the event is found
+#ifdef __WIN32__
+    wxWindow::Refresh();
+#else
     FXApp->Draw();
+#endif
 }
 //..............................................................................
 void TGlCanvas::OnMouseDblClick(wxMouseEvent& me)  {
