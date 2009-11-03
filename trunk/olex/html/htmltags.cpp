@@ -63,7 +63,7 @@ TAG_HANDLER_PROC(tag)  {
         ic->AddCircle(
           toks[0].ToInt(), 
           toks[1].ToInt(),
-          (float)toks[2].ToDouble(),
+          toks[2].ToFloat<float>(),
           tag.GetParam(wxT("HREF")),
           tag.GetParam(wxT("TARGET"))
         );
@@ -77,44 +77,46 @@ TAG_HANDLER_BEGIN(IMAGE, "ZIMG")
 TAG_HANDLER_PROC(tag)  {
   int ax=-1, ay=-1;
   bool WidthInPercent = false, HeightInPercent = false;
-  olxch cBf[40];
   int fl = 0;
-  cBf[0] = '\0';
   wxString text = tag.GetParam(wxT("TEXT")),
            mapName = tag.GetParam(wxT("USEMAP"));
-
-  olxstr ObjectName = tag.GetParam(wxT("NAME")).c_str();
-
-  tag.ScanParam(wxT("WIDTH"), _StrFormat_, cBf);
-  olxstr Tmp = cBf;
-  if( !Tmp.IsEmpty() )  {
-    if( Tmp.EndsWith('%') )  {
-      ax = Tmp.SubStringTo(Tmp.Length()-1).ToInt();
-      WidthInPercent = true;
+  olxstr ObjectName = tag.GetParam(wxT("NAME")).c_str(),
+    Tmp;
+  try  {
+    Tmp = tag.GetParam(wxT("WIDTH")).c_str();
+    if( !Tmp.IsEmpty() )  {
+      if( Tmp.EndsWith('%') )  {
+        ax = (int)Tmp.SubStringTo(Tmp.Length()-1).ToDouble();
+        WidthInPercent = true;
+      }
+      else
+        ax = (int)Tmp.ToDouble();
     }
-    else
-      ax = Tmp.ToInt();
+    Tmp = tag.GetParam(wxT("HEIGHT")).c_str();
+    if( !Tmp.IsEmpty() )  {
+      if( Tmp.EndsWith('%') )  {
+        ay = (int)Tmp.SubStringTo(Tmp.Length()-1).ToDouble();
+        HeightInPercent = true;
+      }
+      else
+        ay = (int)Tmp.ToDouble();
+    }
   }
-  cBf[0] = '\0';
-  tag.ScanParam(wxT("HEIGHT"), _StrFormat_, cBf);
-  Tmp = cBf;
-  if( !Tmp.IsEmpty() )  {
-    if( Tmp.EndsWith('%') )  {
-      ay = Tmp.SubStringTo(Tmp.Length()-1).ToInt();
-      HeightInPercent = true;
-    }
-    else
-      ay = Tmp.ToInt();
+  catch(const TExceptionBase& e)  {
+    TBasicApp::GetLog().Exception(e.GetException()->GetFullMessage());
+    TBasicApp::GetLog() << (olxstr("While processing Width/Height for zimg::") << ObjectName << '\n');
+    TBasicApp::GetLog() << (olxstr("Offending input: '") << Tmp << "'\n");
   }
 
   if (tag.HasParam(wxT("FLOAT"))) fl = ax;
 
-  if( text.Len() != 0 )  {
+  if( !text.IsEmpty() )  {
     int textW = 0, textH = 0;
     m_WParser->GetDC()->GetTextExtent( text, &textW, &textH );
     if( textW > ax )  ax = textW;
     if( textH > ay )  ay = textH;
   }
+
   olxstr src = tag.GetParam(wxT("SRC")).c_str();
 
   TGlXApp::GetMainForm()->ProcessFunction(src);
@@ -479,7 +481,11 @@ TAG_HANDLER_PROC(tag)  {
     if( tag.HasParam( wxT("MAX") ) )
       tag.ScanParam(wxT("MAX"), wxT("%i"), &max);
     Spin->SetRange(min, max);
-    Spin->SetValue( Value.ToInt() );
+    try  {  Spin->SetValue((int)Value.ToDouble());  }
+    catch(...)  {
+      TBasicApp::GetLog() << (olxstr("Invalid value spin control: \'") << Value << "\'\n");
+    }
+
     CreatedObject = Spin;
     CreatedWindow = Spin;
     Spin->WI.SetHeight(ay);
@@ -519,7 +525,10 @@ TAG_HANDLER_PROC(tag)  {
     Track->WI.SetHeight(ay);
 
     Track->SetRange(min, max);
-    Track->SetValue( Value.ToInt() );
+    try  {  Track->SetValue((int)Value.ToDouble());  }
+    catch(...)  {
+      TBasicApp::GetLog() << (olxstr("Invalid value slider: \'") << Value << "\'\n");
+    }
 
     Track->SetData(Data);
     if( tag.HasParam(wxT("ONCHANGE")) )  {

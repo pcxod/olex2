@@ -130,12 +130,12 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
           if( Toks[0] == '*' )  {  inc ++;  requiredCount++;  }
           if( Toks.Count() >= requiredCount )  {
             TTrefTry& trtry = TrefTries.AddNew();
-            trtry.Try = Toks[0+inc].ToInt();
+            trtry.Try = Toks[0+inc].SubString(0, Toks[0+inc].Length()-1).ToInt();
             trtry.RAlpha = Toks[1+inc].ToDouble();
             trtry.NQual = Toks[2+inc].ToDouble();
             trtry.SigmaM1 = Toks[3+inc].ToDouble();
             trtry.Mabs = Toks[4+inc].ToDouble();
-            trtry.CFOM = Toks[5+inc].ToDouble();
+            trtry.CFOM = Toks[5+inc].Trim('*').ToDouble();
 
             trtry.Semivariants.SetSize((uint32_t)((Toks.Count() - 6 - inc) * Toks[inc+6].Length()));
             size_t bitIndex = 0;
@@ -239,7 +239,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         // extract wR2 && Goof && restrained GooF
         Toks.Clear();
         i ++;  if( i >= SL.Count() )  break;
-        Toks.Strtok(SL[i], ' ');
+        Toks.Strtok(SL[i].Replace(',', EmptyString), ' ');
         if( Toks.Count() > 11 )  {
           FwR2 = Toks[2].ToDouble();
           FS = Toks[7].ToDouble();

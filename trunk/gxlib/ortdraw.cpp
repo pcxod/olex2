@@ -35,7 +35,10 @@ draw_style(0)
     TGlMaterial& glm = style.GetPrimitiveStyle(lmi).GetProperties();
     rim_color = glm.AmbientF.GetRGB();
   }
-  mask = atom.GetPrimitiveMask();
+  if( atom.IsVisible() )
+    mask = atom.GetPrimitiveMask();
+  else
+    mask = 0;
 }
 
 void ort_atom::render_elp(PSWriter& pw) const {
@@ -356,7 +359,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
   TTypeList<a_ort_object> objects;
   objects.SetCapacity(app.AtomCount()+app.BondCount());
   for( size_t i=0; i < app.AtomCount(); i++ )  {
-    if( app.GetAtom(i).IsDeleted() || !app.GetAtom(i).IsVisible() )
+    if( app.GetAtom(i).IsDeleted() ) // have to keep hidden atoms, as those might be used by bonds!
       continue;
     app.GetAtom(i).Atom().SetTag(objects.Count());
     ort_atom *a = new ort_atom(*this, app.GetAtom(i));
