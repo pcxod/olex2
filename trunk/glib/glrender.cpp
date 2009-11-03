@@ -26,7 +26,6 @@ TGlRenderer::TGlRenderer(AGlScene *S, int width, int height) {
   FZoom = 1;
   FViewZoom = 1;
   FScene->Parent(this);
-  FBasis = new TEBasis;
   SetChanged(true);
   FWidth = width;
   FHeight = height;
@@ -72,7 +71,6 @@ TGlRenderer::~TGlRenderer()  {
   delete FStyles;
   delete FBackground;
   delete FCeiling;
-  delete FBasis;
   delete FSelection;
   delete FScene;
   delete TextureManager;
@@ -312,9 +310,9 @@ void TGlRenderer::SetZoom(double V) {
   double MaxZ = olx_max(olx_abs(FMaxV.DistanceTo(FMinV)), 1);
   double dv = V/MaxZ;
   if( dv < 0.01 )  //  need to fix the zoom
-    FBasis->SetZoom( MaxZ*0.01);
+    FBasis.SetZoom(MaxZ*0.01);
   else
-    FBasis->SetZoom(V); 
+    FBasis.SetZoom(V); 
 }
 //..............................................................................
 void TGlRenderer::SetView(int x, int y, bool Select, short Res)  {
@@ -329,8 +327,10 @@ void TGlRenderer::SetView(int x, int y, bool Select, short Res)  {
   if( FPerspective )  {
     double top = FPAngle;
     double right = top*(double)FWidth/(double)FHeight;
+    //double top = 1;
+    //double right = top*(double)FWidth/(double)FHeight;
     glFrustum(right*FProjectionLeft, right*FProjectionRight,
-              top*FProjectionTop, top*FProjectionBottom, 1, 10.0);//MaxZ+0.1);
+              top*FProjectionTop, top*FProjectionBottom, 1.0, 11.0);//MaxZ+0.1);
   }
   else  {
     double top = 1;
@@ -339,6 +339,8 @@ void TGlRenderer::SetView(int x, int y, bool Select, short Res)  {
               top*FProjectionTop, top*FProjectionBottom, 0, 10.0);
   }
   glMatrixMode(GL_MODELVIEW);
+  if( glIsEnabled(GL_FOG) )  
+    glFogf(GL_FOG_END, (float)FBasis.GetZoom());
 }
 //..............................................................................
 void TGlRenderer::SetBasis(bool Identity)  {
@@ -357,14 +359,15 @@ void TGlRenderer::SetBasis(bool Identity)  {
   if( FPerspective )  {
     if( Identity ) // heh? any better?
       Bf[3][2] *= 5;
-    Bf[3][2] -= MaxZ;
+    //Bf[3][3] = MaxZ/2;
   }
-  Bf[3][3] = MaxZ;
+  else
+    Bf[3][3] = MaxZ;
   glLoadMatrixf(&Bf[0][0]);
   float dv = (float)(GetBasis().GetZoom()/MaxZ);
   glScalef(dv, dv, dv);
   if( !Identity )
-    glTranslated(GetBasis().GetCenter()[0], GetBasis().GetCenter()[1], GetBasis().GetCenter()[2] );
+    glTranslated(GetBasis().GetCenter()[0], GetBasis().GetCenter()[1], GetBasis().GetCenter()[2]);
 }
 //..............................................................................
 void TGlRenderer::DrawObject(AGDrawObject *Object, bool DrawImage)  {
@@ -1124,10 +1127,11 @@ void TGlRenderer::LibPerspective(TStrObjList &Cmds, const TParamList &Options, T
 }
 //..............................................................................
 void TGlRenderer::LibFog(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( Cmds.Count() == 2 )  {
-    SetFogType(GL_EXP);
-    SetFogDensity( (float)Cmds[0].ToDouble() );
-    SetFogColor( Cmds[0].ToInt() );
+  if( Cmds.Count() == 1 )  {
+    SetFogType(GL_LINEAR);
+    SetFogStart(0);
+    SetFogEnd((float)FBasis.GetZoom());
+    SetFogColor(Cmds[0].SafeUInt<uint32_t>());
     EnableFog(true);
   }
   else
@@ -1141,7 +1145,7 @@ void TGlRenderer::LibZoom(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   else if( Cmds.Count() == 1 ) {
     double zoom = GetZoom() + Cmds[0].ToDouble();
     if( zoom < 0.001 )  zoom = 0.001;
-    SetZoom( zoom );
+    SetZoom(zoom);
   }
   return;
 }
@@ -1154,7 +1158,7 @@ TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
   lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibPerspective, "Perspective",
     EmptyString, fpNone|fpOne, "Un/Sets perspective view") );
   lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibFog, "Fog",
-    EmptyString, fpNone|fpTwo, "Un/Sets fog") );
+    EmptyString, fpNone|fpOne, "fog color - sets fog, fog without arguments removes fog") );
   lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibZoom, "Zoom",
     EmptyString, fpNone|fpOne, "If no arguments provided - resets zoom to fit to screen, otherwise increments/\
 decrements current zoom by provided value") );

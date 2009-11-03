@@ -80,7 +80,7 @@ protected:
 
   vec3d FMaxV, FMinV;
   bool Changed;
-  TEBasis *FBasis;
+  TEBasis FBasis;
   class AGlScene *FScene; // system dependent staff
 
   static class TGraphicsStyles* FStyles;
@@ -114,20 +114,19 @@ public:
   bool IsSceneComplete()        const {  return FSceneComplete;  }
   void SetSceneComplete(bool v)       {  FSceneComplete = v;  }
   // basis manipulation
-  TEBasis& GetBasis()                 {  return *FBasis; }
-  const TEBasis& GetBasis()     const {  return *FBasis; }
-  void SetBasis( const TEBasis &B)    {  *FBasis = B; }
-  template <class VC>
-    void Translate(const VC& V)       {  FBasis->Translate(V); };
-  void TranslateX(double V)           {  FBasis->TranslateX(V);  }
-  void TranslateY(double V)           {  FBasis->TranslateY(V);  }
-  void TranslateZ(double V)           {  FBasis->TranslateZ(V);  }
-  void RotateX(double V)              {  FBasis->RotateX(V); }
-  void RotateY(double V)              {  FBasis->RotateY(V); }
-  void RotateZ(double V)              {  FBasis->RotateZ(V); }
-  double GetZoom()              const {  return FBasis->GetZoom(); }
+  TEBasis& GetBasis() {  return FBasis; }
+  const TEBasis& GetBasis() const {  return FBasis; }
+  void SetBasis(const TEBasis &B)  {  FBasis = B; }
+  template <class VC> void Translate(const VC& V)  {  FBasis.Translate(V); };
+  void TranslateX(double V)  {  FBasis.TranslateX(V);  }
+  void TranslateY(double V)  {  FBasis.TranslateY(V);  }
+  void TranslateZ(double V)  {  FBasis.TranslateZ(V);  }
+  void RotateX(double V)  {  FBasis.RotateX(V); }
+  void RotateY(double V)  {  FBasis.RotateY(V); }
+  void RotateZ(double V)  {  FBasis.RotateZ(V); }
+  double GetZoom() const {  return FBasis.GetZoom(); }
   void  SetZoom(double V);
-  void ResetBasis()                   {  FBasis->Reset(); }
+  void ResetBasis()  {  FBasis.Reset();  }
   
   TGlLightModel LightModel;
   // register your handler to swap buffers etc
@@ -157,18 +156,18 @@ public:
     return CalculatedZoom < 0 ? (CalculatedZoom=olx_max(FMaxV.DistanceTo(FMinV), 1.0)) : CalculatedZoom;
   }
   double GetScale() const {  // to be used to calculate raster positions (x,y)
-    double df = CalcZoom();
+    const double df = CalcZoom();
     return (df*df)/(GetBasis().GetZoom()*FHeight);
   }
 
   double GetMaxRasterZ() const {  // to be used to calculate raster positions (z)
     double df = CalcZoom();
-    return (df*df)/FBasis->GetZoom()-1;
+    return (df*df)/FBasis.GetZoom()-1;
   }
   /* this function provides extra value for use with rasters, when the scene is zoomed
   using LookAt function
   */
-  double GetViewZoom()  const  {  return FViewZoom;  }
+  double GetViewZoom() const {  return FViewZoom;  }
   // returns a "size of a pixel in currnet viewport"; use it to transform screen coor
   //dinates to internal coordinates of OpenGl Scene like follow: if an object has to
   //follow mouse pointer, then the change in coordinates should be x = x0+MouseX*GetScale()

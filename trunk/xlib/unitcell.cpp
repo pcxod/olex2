@@ -165,8 +165,8 @@ void TUnitCell::UpdateEllipsoids()  {
   const size_t ac = au.AtomCount();
   const size_t mc = Matrices.Count();
 
-  const mat3d abc2xyz( mat3d::Transpose(au.GetCellToCartesian()) ),
-              xyz2abc( mat3d::Transpose(au.GetCartesianToCell()) );
+  const mat3d abc2xyz(mat3d::Transpose(au.GetCellToCartesian())),
+              xyz2abc(mat3d::Transpose(au.GetCartesianToCell()));
 
   ClearEllipsoids();
   Ellipsoids.SetCount(ac);
@@ -178,7 +178,7 @@ void TUnitCell::UpdateEllipsoids()  {
         TEllipsoid* E = new TEllipsoid;
         E->SetId( j*ac+A1.GetId() );
         *E = *A1.GetEllipsoid();
-        E->MultMatrix( abc2xyz*Matrices[j].r*xyz2abc );
+        E->MultMatrix(abc2xyz*Matrices[j].r*xyz2abc);
         Ellipsoids[i][j] = E;
       }
       else
