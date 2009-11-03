@@ -1823,7 +1823,7 @@ void TLattice::SetAnis( const TCAtomPList& atoms, bool anis )  {
     for( size_t i=0; i < atoms.Count(); i++ )  {
       if( olx_is_valid_index(atoms[i]->GetEllpId()) )  {
          GetAsymmUnit().NullEllp( atoms[i]->GetEllpId() );
-         atoms[i]->AssignEllp( NULL );
+         atoms[i]->AssignEllp(NULL);
       }
     }
     GetAsymmUnit().PackEllps();

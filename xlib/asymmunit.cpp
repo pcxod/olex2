@@ -402,8 +402,8 @@ void TAsymmUnit::PackEllps() {
   for( size_t i=0; i < Ellipsoids.Count(); i++ )  {
     if( Ellipsoids[i] == NULL )  {
       for( size_t j=0; j < CAtoms.Count(); j++ )  {
-        if( CAtoms[j]->GetEllpId() > (i-removed) )
-          CAtoms[j]->SetEllpId( CAtoms[j]->GetEllpId() - 1 );
+        if( olx_is_valid_index(CAtoms[j]->GetEllpId()) && CAtoms[j]->GetEllpId() > (i-removed) )
+          CAtoms[j]->SetEllpId(CAtoms[j]->GetEllpId() - 1);
       }
       removed++;
     }

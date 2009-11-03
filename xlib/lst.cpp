@@ -105,8 +105,8 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
             LstRef->H = Toks[0+inc].ToInt();
             LstRef->K = Toks[1+inc].ToInt();
             LstRef->L = Toks[2+inc].ToInt();
-            LstRef->Fo = Toks[3+inc].ToInt();
-            LstRef->Fc = Toks[4+inc].ToInt();
+            LstRef->Fo = Toks[3+inc].ToDouble();
+            LstRef->Fc = Toks[4+inc].ToDouble();
             LstRef->DF = Toks[5+inc].ToDouble();
             LstRef->Res = Toks[7+inc].ToDouble();
             LstRef->Deleted = false;
