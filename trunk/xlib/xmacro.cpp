@@ -1976,7 +1976,7 @@ void XLibMacros::funFileName(const TStrObjList &Params, TMacroError &E)  {
     else
       Tmp = NoneString;
   }
-  E.SetRetVal( TEFile::ChangeFileExt(Tmp, EmptyString) );
+  E.SetRetVal(TEFile::ChangeFileExt(Tmp, EmptyString));
 }
 //..............................................................................
 void XLibMacros::funFileExt(const TStrObjList &Params, TMacroError &E)  {
@@ -1987,7 +1987,7 @@ void XLibMacros::funFileExt(const TStrObjList &Params, TMacroError &E)  {
     if( TXApp::GetInstance().XFile().HasLastLoader() )
       E.SetRetVal( TEFile::ExtractFileExt(TXApp::GetInstance().XFile().GetFileName()) );
     else
-      E.SetRetVal( NoneString );
+      E.SetRetVal(NoneString);
   }
 }
 //..............................................................................
@@ -2003,7 +2003,7 @@ void XLibMacros::funFilePath(const TStrObjList &Params, TMacroError &E)  {
   }
   // see notes in funBaseDir
   TEFile::RemoveTrailingBackslashI(Tmp);
-  E.SetRetVal( Tmp );
+  E.SetRetVal(Tmp);
 }
 //..............................................................................
 void XLibMacros::funFileDrive(const TStrObjList &Params, TMacroError &E)  {
@@ -2014,7 +2014,7 @@ void XLibMacros::funFileDrive(const TStrObjList &Params, TMacroError &E)  {
     if( TXApp::GetInstance().XFile().HasLastLoader() )
       E.SetRetVal( TEFile::ExtractFileDrive(TXApp::GetInstance().XFile().GetFileName()) );
     else
-      E.SetRetVal( NoneString );
+      E.SetRetVal(NoneString);
   }
 }
 //..............................................................................
@@ -2022,7 +2022,7 @@ void XLibMacros::funFileFull(const TStrObjList &Params, TMacroError &E)  {
   if( TXApp::GetInstance().XFile().HasLastLoader() )
     E.SetRetVal( TXApp::GetInstance().XFile().GetFileName() );
   else
-    E.SetRetVal( NoneString );
+    E.SetRetVal(NoneString);
 }
 //..............................................................................
 void XLibMacros::funIsFileLoaded(const TStrObjList& Params, TMacroError &E) {
@@ -2032,9 +2032,9 @@ void XLibMacros::funIsFileLoaded(const TStrObjList& Params, TMacroError &E) {
 void XLibMacros::funTitle(const TStrObjList& Params, TMacroError &E)  {
   if( !TXApp::GetInstance().XFile().HasLastLoader() )  {
     if( Params.IsEmpty() )
-      E.SetRetVal( olxstr("File is not loaded") );
+      E.SetRetVal(olxstr("File is not loaded"));
     else
-      E.SetRetVal( Params[0] );
+      E.SetRetVal(Params[0]);
   }
   else
     E.SetRetVal( TXApp::GetInstance().XFile().LastLoader()->GetTitle() );
@@ -2111,7 +2111,7 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
       tmp << rm.used_weight[j];
       if( (j+1) < rm.used_weight.Count() )  tmp << ' ';
     }
-    E.SetRetVal( tmp );
+    E.SetRetVal(tmp);
   }
   else if( Params[0].Equalsi("weight1") )  {
     for( size_t j=0; j < rm.proposed_weight.Count(); j++ )  {
@@ -2129,7 +2129,7 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
   }
   else if( Params[0].Equalsi("ls") )  {
     olxstr rv = rm.LS.Count() == 0 ? NAString : olxstr(rm.LS[0]) ;
-    E.SetRetVal( rv );
+    E.SetRetVal(rv);
   }
   else if( Params[0].Equalsi("plan") )  {
     for( size_t i=0; i < rm.PLAN.Count(); i++ )  {
@@ -2140,7 +2140,7 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
   }
   else if( Params[0].Equalsi("qnum") )  {
     tmp = rm.PLAN.Count() == 0 ? NAString : olxstr(rm.PLAN[0]);
-    E.SetRetVal( tmp );
+    E.SetRetVal(tmp);
   }
   else  {
     TIns& I = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
@@ -2149,7 +2149,7 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
       E.SetRetVal( rv );
     }
     if( !I.InsExists(Params[0]) )  {
-      E.SetRetVal( NAString );
+      E.SetRetVal(NAString);
       return;
     }
     //  FXApp->XFile().UpdateAsymmUnit();
@@ -2157,9 +2157,9 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
 
     TInsList* insv = I.FindIns( Params[0] );
     if( insv != 0 )
-      E.SetRetVal( insv->Text(' ') );
+      E.SetRetVal(insv->Text(' '));
     else
-      E.SetRetVal( EmptyString );
+      E.SetRetVal(EmptyString);
   }
 }
 //..............................................................................
@@ -2168,7 +2168,7 @@ void XLibMacros::funSSM(const TStrObjList& Params, TMacroError &E) {
   if( rm.GetSolutionMethod().IsEmpty() && Params.Count() == 1 )
     E.SetRetVal( Params[0] );
   else
-    E.SetRetVal( rm.GetSolutionMethod() );
+    E.SetRetVal(rm.GetSolutionMethod());
 }
 //..............................................................................
 bool XLibMacros_funSGNameIsNextSub(const olxstr& name, size_t i)  {
