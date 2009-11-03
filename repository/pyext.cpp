@@ -345,7 +345,7 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
     TMacroError er;
     func->Run(params, er);
     if( er.IsSuccessful() )  {
-      olxstr rv = (er.HasRetVal() ? er.RetObj()->ToString() : EmptyString);
+      olxstr rv = (er.HasRetVal() ? olxstr(er.RetObj()->ToString()) : EmptyString);
       return PythonExt::BuildString(rv);
     }
     else  {
