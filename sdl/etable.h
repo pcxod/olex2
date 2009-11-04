@@ -310,7 +310,8 @@ public:
     TTypeList<TableSort> sl;
     for( size_t i=0; i < Rows.Count(); i++ )
       sl.AddNew(Rows[i], i);
-    sl.QuickSorter.Sort<comparator>(sl);
+//    sl.QuickSorter.Sort<comparator>(sl);
+    sl.QuickSorter.SortSF(sl, comparator::Compare);
     TSizeList indexes(Rows.Count());
     for( size_t i=0; i < Rows.Count(); i++ )
       indexes[i] = sl[i].index;
