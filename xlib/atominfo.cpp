@@ -2,7 +2,6 @@
 // TBasicAtomsInfo  - basic atom data
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
 #ifdef __BORLANDC__
 #pragma hdrstop
 #endif
@@ -12,9 +11,10 @@
 #include "estrlist.h"
 #include "exception.h"
 #include "bapp.h"
+#include "emath.h"
 #include <stdlib.h>
-// RGBA
 
+// RGBA
 int Colors[]={
           0xffffff, // white
           0x008000,
@@ -2024,16 +2024,15 @@ void TAtomsInfo::ParseElementString(const olxstr& su, TTypeList<AnAssociation2<o
   for( size_t i=0; i < su.Length(); i++ )  {
     if( su[i] == ' ' )  continue;
     if( nowCnt )  {
-      if( (su[i] >='0' && su[i] <= '9') || su[i] == '.' )  {
+      if( olxstr::o_isdigit(su[i]) || su[i] == '.' )
         cnt << su[i];
-      }
       else  {
         if( !elm.IsEmpty() && !cnt.IsEmpty() )  {
           toks.Clear();
           ParseSimpleElementStr( elm, toks );
           for( size_t i=0; i < toks.Count()-1; i++ )
             ExpandShortcut(toks[i], res);
-          ExpandShortcut(toks[toks.Count() -1], res, cnt.ToInt());
+          ExpandShortcut(toks[toks.Count() -1], res, olx_round(cnt.ToDouble()));
           cnt = EmptyString;
         }
         nowCnt = false;
@@ -2054,7 +2053,7 @@ void TAtomsInfo::ParseElementString(const olxstr& su, TTypeList<AnAssociation2<o
     ParseSimpleElementStr( elm, toks );
     for( size_t i=0; i < toks.Count()-1; i++ )
       ExpandShortcut(toks[i], res);
-    ExpandShortcut(toks[toks.Count() -1], res, cnt.IsEmpty() ? 1 : cnt.ToInt());
+    ExpandShortcut(toks[toks.Count() -1], res, cnt.IsEmpty() ? 1 : olx_round(cnt.ToDouble()));
   }
 }
 //..............................................................................

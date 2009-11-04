@@ -2515,7 +2515,7 @@ void XLibMacros::MergePublTableData(TCifLoopTable& to, TCifLoopTable& from)  {
   for( size_t i=0; i < from.RowCount(); i++ )  {
     size_t ri = InvalidIndex;
     for( size_t j=0; j < to.RowCount(); j++ )  {
-      if( to[j][ authCA.GetB() ].Equalsi( from[i][ authCA.GetA() ]) )  {
+      if( to[j][ authCA.GetB() ].Equalsi(from[i][authCA.GetA()]) )  {
         ri = j;
         break;
       }
@@ -2581,7 +2581,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     // update publication info loop
     MergePublTableData( publ_info.Table(), pil.Table() );
   }
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG( Cif->GetAsymmUnit() );
+  TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(Cif->GetAsymmUnit());
   if( sg != NULL )  {
     if( !Cif->ParamExists("_symmetry_cell_setting") )
       Cif->AddParam("_symmetry_cell_setting", sg->GetBravaisLattice().GetName(), true);
@@ -2630,9 +2630,7 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMa
       return;
     }
   }
-
   TCif In,  Out, *Cif, Cif1;
-
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
@@ -2644,17 +2642,13 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMa
       throw TFunctionFailedException(__OlxSourceInfo, "existing cif is expected");
     Cif = &Cif1;
   }
-
+  // dictionary does not have cell etc - so it should fail to initialise
   try  {  In.LoadFromFile(Dictionary);  }
-  catch( TExceptionBase& )  {
-    Error.ProcessingError(__OlxSrcInfo, "could not load dictionary file" );
-    return;
-  }
+  catch( TExceptionBase& )  {}
 
-  TCifData *CifData;
   for( size_t i=0; i < In.ParamCount(); i++ )  {
-    CifData = Cif->FindParam(In.Param(i));
-    if( CifData )
+    TCifData* CifData = Cif->FindParam(In.Param(i));
+    if( CifData != NULL )
       Out.AddParam(In.Param(i), CifData);
   }
   try  {  Out.SaveToFile(Cmds[1]);  }

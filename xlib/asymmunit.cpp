@@ -93,14 +93,14 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
 
   for( size_t i=0; i < C.Residues.Count(); i++ )  {
     TResidue& resi = C.Residues[i];
-    NewResidue( resi.GetClassName(), resi.GetNumber(), resi.GetAlias() ); 
+    NewResidue(resi.GetClassName(), resi.GetNumber(), resi.GetAlias()); 
   }
   for( size_t i = 0; i < C.AtomCount(); i++ )
     NewAtom( &GetResidue(C.GetAtom(i).GetResiId()) ).SetId(i);
   
   for( size_t i = 0; i < C.AtomCount(); i++ )  {
     TCAtom& ca = GetAtom(i);
-    ca.Assign( C.GetAtom(i) );
+    ca.Assign(C.GetAtom(i));
     ca.SetId(i);
     //ca.SetConnInfo( RefMod->Conn.GetConnInfo(ca) );
   }
@@ -117,6 +117,23 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   MaxQPeak = C.GetMaxQPeak();
   MinQPeak = C.GetMinQPeak();
   Assigning = false;
+}
+//..............................................................................
+void TAsymmUnit::ComplyToResidues()  {
+  for( size_t i=0; i < CAtoms.Count(); i++ )
+    CAtoms[i]->SetTag(-1);
+  size_t ac = 0;
+  for( size_t i=0; i < MainResidue.Count(); i++ )
+    MainResidue[i].SetTag(ac++);
+  for( size_t i=0; i < Residues.Count(); i++ )  {
+    TResidue& resi = Residues[i];
+    for( size_t j=0; j < resi.Count(); j++ )
+      resi[j].SetTag(ac++);
+  }
+  CAtoms.QuickSorter.Sort<TCAtomTagComparator>(CAtoms);
+  for( size_t i=0; i < CAtoms.Count(); i++ )
+    CAtoms[i]->SetId(i);
+
 }
 //..............................................................................
 void TAsymmUnit::_UpdateConnInfo()  {

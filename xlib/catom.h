@@ -228,10 +228,16 @@ public:
 //..............................................................................
 class TCAtomPCenterComparator  {
 public:
-  static int Compare(TCAtom* a1, TCAtom* a2)  {
-    double p = a1->ccrd().QLength() - a2->ccrd().QLength();
-    if( p < 0 )  return -1;
-    return (p > 0) ? 1 : 0;
+  static int Compare(const TCAtom* a1, const TCAtom* a2)  {
+    const double p = a1->ccrd().QLength() - a2->ccrd().QLength();
+    return (p < 0 ? -1 :(p > 0 ? 1 : 0));
+  }
+};
+//..............................................................................
+class TCAtomTagComparator  {
+public:
+  static int Compare(const TCAtom* a1, const TCAtom* a2)  {
+    return (a1->GetTag() < a2->GetTag() ? -1 : (a1->GetTag() > a2->GetTag() ? 1 : 0));
   }
 };
 //..............................................................................

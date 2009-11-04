@@ -465,7 +465,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
 
       size_t switchState = GetSwitchState(Sw->GetName()), index = InvalidIndex;
       if( switchState == UnknownSwitchState )  {
-        int iv = Toks.LastStr().ToInt();
+        index_t iv = Toks.LastStr().RadInt<index_t>();
         if( iv < 0 )
           Sw->SetUpdateSwitch(false);
         index = olx_abs(iv)-1;
@@ -694,9 +694,15 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
         ind = Href.FirstIndexOf('%', ind+1);
         continue;
       }
-      int val = Href.SubString(ind+1, 2).RadInt<int>(16);
-      Href.Delete(ind, 3);
-      Href.Insert((char)val, ind);
+      olxstr nm = Href.SubString(ind+1, 2); 
+      if( nm.IsNumber() )  {
+        try  {
+          int val = nm.RadInt<int>(16);
+          Href.Delete(ind, 3);
+          Href.Insert((char)val, ind);
+        }
+        catch(...)  {}
+      }
       ind = Href.FirstIndexOf('%', ind+1);
     }
     if( ShowTooltips )  {
@@ -881,7 +887,7 @@ void THtml::macSetBorders(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
   }
-  html->SetBorders( Cmds.Last().String.ToInt() );
+  html->SetBorders(Cmds.Last().String.ToInt());
 }
 //..............................................................................
 void THtml::macHtmlHome(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -1030,18 +1036,21 @@ void THtml::SetObjectValue(AOlxCtrl *Obj, const olxstr& Value)  {
   else if( EsdlInstanceOf(*Obj, TTrackBar) )  {
     const size_t si = Value.IndexOf(',');
     if( si == InvalidIndex )
-      ((TTrackBar*)Obj)->SetValue(Value.ToInt());
+      ((TTrackBar*)Obj)->SetValue(olx_round(Value.ToDouble()));
     else
-      ((TTrackBar*)Obj)->SetRange( Value.SubStringTo(si).ToInt(), Value.SubStringFrom(si+1).ToInt() );
+      ((TTrackBar*)Obj)->SetRange(olx_round(Value.SubStringTo(si).ToDouble()),
+      olx_round(Value.SubStringFrom(si+1).ToDouble()));
   }
   else if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {
     const size_t si = Value.IndexOf(',');
     if( si == InvalidIndex )
-      ((TSpinCtrl*)Obj)->SetValue(Value.ToInt());
+      ((TSpinCtrl*)Obj)->SetValue(olx_round(Value.ToDouble()));
     else
-      ((TSpinCtrl*)Obj)->SetRange( Value.SubStringTo(si).ToInt(), Value.SubStringFrom(si+1).ToInt() );
+      ((TSpinCtrl*)Obj)->SetRange(olx_round(Value.SubStringTo(si).ToDouble()),
+      olx_round(Value.SubStringFrom(si+1).ToDouble()));
   }
-  else if( EsdlInstanceOf(*Obj, TButton) )    ((TButton*)Obj)->SetLabel(Value.u_str());
+  else if( EsdlInstanceOf(*Obj, TButton) )
+    ((TButton*)Obj)->SetLabel(Value.u_str());
   else if( EsdlInstanceOf(*Obj, TComboBox) )  {
     ((TComboBox*)Obj)->SetText(Value);
     ((TComboBox*)Obj)->Update();
@@ -1512,7 +1521,7 @@ void THtml::funEndModal(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "non-modal html window");
     return;
   }
-  pd->Dialog->EndModal( Params[1].ToInt() );
+  pd->Dialog->EndModal(Params[1].ToInt());
 }
 //..............................................................................
 void THtml::funShowModal(const TStrObjList &Params, TMacroError &E)  {
@@ -1636,30 +1645,30 @@ void THtml::TObjectsState::RestoreState()  {
     }
     else if( EsdlInstanceOf(*obj, TCheckBox) )  {  
       TCheckBox* cb = (TCheckBox*)obj;   
-      cb->SetCaption( props["val"]);
-      cb->SetChecked( props["checked"].ToBool() );
+      cb->SetCaption(props["val"]);
+      cb->SetChecked(props["checked"].ToBool());
       cb->SetData(props["data"]);
     }
     else if( EsdlInstanceOf(*obj, TTrackBar) )  {  
       TTrackBar* tb = (TTrackBar*)obj;  
-      tb->SetRange( props["min"].ToInt(), props["max"].ToInt() );
-      tb->SetValue( props["val"].ToInt() );
+      tb->SetRange(olx_round(props["min"].ToDouble()), olx_round(props["max"].ToDouble()) );
+      tb->SetValue(olx_round(props["val"].ToDouble()));
       tb->SetData(props["data"]);
     }
     else if( EsdlInstanceOf(*obj, TSpinCtrl) )  {  
       TSpinCtrl* sc = (TSpinCtrl*)obj;  
-      sc->SetRange( props["min"].ToInt(), props["max"].ToInt() );
-      sc->SetValue( props["val"].ToInt() );
+      sc->SetRange(olx_round(props["min"].ToDouble()), olx_round(props["max"].ToDouble()));
+      sc->SetValue(olx_round(props["val"].ToDouble()));
       sc->SetData(props["data"]);
     }
     else if( EsdlInstanceOf(*obj, TButton) )    {  
       TButton* bt = (TButton*)obj;
       bt->SetData(props["data"]);
-      bt->SetCaption( props["val"] );
+      bt->SetCaption(props["val"] );
       bt->OnDown.SetEnabled(false);
       bt->OnUp.SetEnabled(false);
       bt->OnClick.SetEnabled(false);
-      bt->SetDown( props["checked"].ToBool() );
+      bt->SetDown(props["checked"].ToBool());
       bt->OnDown.SetEnabled(true);
       bt->OnUp.SetEnabled(true);
       bt->OnClick.SetEnabled(true);
@@ -1667,11 +1676,11 @@ void THtml::TObjectsState::RestoreState()  {
     else if( EsdlInstanceOf(*obj, TBmpButton) )    {  
       TBmpButton* bt = (TBmpButton*)obj;  
       bt->SetData(props["data"]);
-      bt->SetSource( props["val"] );
+      bt->SetSource(props["val"] );
       bt->OnDown.SetEnabled(false);
       bt->OnUp.SetEnabled(false);
       bt->OnClick.SetEnabled(false);
-      bt->SetDown( props["checked"].ToBool() );
+      bt->SetDown(props["checked"].ToBool());
       bt->OnDown.SetEnabled(true);
       bt->OnUp.SetEnabled(true);
       bt->OnClick.SetEnabled(true);
@@ -1681,20 +1690,20 @@ void THtml::TObjectsState::RestoreState()  {
       TStrList toks(props["items"], ';');
       cb->Clear();
       cb->AddItems(toks);
-      cb->SetText( props["val"] );
+      cb->SetText(props["val"] );
       cb->SetData(props["data"]);
     }
     else if( EsdlInstanceOf(*obj, TListBox) )  {  
       TListBox* lb = (TListBox*)obj;  
       TStrList toks(props["items"], ';');
       lb->Clear();
-      lb->AddItems( toks );
+      lb->AddItems(toks);
     }
     else if( EsdlInstanceOf(*obj, TTreeView) )  {  
     }
     else if( EsdlInstanceOf(*obj, TLabel) )  {  
       TLabel* lb = (TLabel*)obj;  
-      lb->SetCaption( props["val"] );
+      lb->SetCaption(props["val"]);
     }
     else //?
       ;
@@ -1706,29 +1715,29 @@ void THtml::TObjectsState::RestoreState()  {
       if( EsdlInstanceOf(*win, TComboBox) )  {
         TComboBox* Box = (TComboBox*)win;
         if( !fg.IsEmpty() )  {
-          wxColor fgCl = wxColor( fg.u_str() );
-          Box->SetForegroundColour( fgCl );
+          wxColor fgCl = wxColor(fg.u_str());
+          Box->SetForegroundColour(fgCl);
 #ifdef __WIN32__
           if( Box->GetPopupControl() != NULL )
-            Box->GetPopupControl()->GetControl()->SetForegroundColour( fgCl );
+            Box->GetPopupControl()->GetControl()->SetForegroundColour(fgCl);
           if( Box->GetTextCtrl() != NULL )
-            Box->GetTextCtrl()->SetForegroundColour( fgCl );
+            Box->GetTextCtrl()->SetForegroundColour(fgCl);
 #endif						
         }
         if( !bg.IsEmpty() )  {
-          wxColor bgCl = wxColor( bg.u_str() );
-          Box->SetBackgroundColour( bgCl );
+          wxColor bgCl = wxColor(bg.u_str());
+          Box->SetBackgroundColour(bgCl);
 #ifdef __WIN32__					
           if( Box->GetPopupControl() != NULL )
-            Box->GetPopupControl()->GetControl()->SetBackgroundColour( bgCl );
+            Box->GetPopupControl()->GetControl()->SetBackgroundColour(bgCl);
           if( Box->GetTextCtrl() != NULL )
-            Box->GetTextCtrl()->SetBackgroundColour( bgCl );
+            Box->GetTextCtrl()->SetBackgroundColour(bgCl);
 #endif						
         }
       }  
       else  {
-        if( !fg.IsEmpty() )  win->SetForegroundColour( wxColor( fg.u_str() ) );
-        if( !bg.IsEmpty() )  win->SetBackgroundColour( wxColor( bg.u_str() ) );
+        if( !fg.IsEmpty() )  win->SetForegroundColour( wxColor(fg.u_str()) );
+        if( !bg.IsEmpty() )  win->SetBackgroundColour( wxColor(bg.u_str()) );
       }
     }
   }
