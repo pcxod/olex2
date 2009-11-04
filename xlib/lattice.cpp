@@ -732,6 +732,7 @@ void TLattice::RestoreAtom(const TSAtom::Ref& id)  {
   }
   TSAtom* sa = new TSAtom(Network);
   sa->CAtom( GetAsymmUnit().GetAtom(id.catom_id) );
+  sa->CAtom().SetDeleted(false);
   sa->ccrd() = (*matr) * sa->ccrd();
   sa->AddMatrix(matr);
   GetAsymmUnit().CellToCartesian(sa->ccrd(), sa->crd() );

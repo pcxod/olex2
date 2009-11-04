@@ -1336,6 +1336,12 @@ separated values of Atom Type and radius, an entry a line" );
   FXApp->XFile().OnFileLoad->Add(this, ID_FileLoad);
   // synchronise if value is different in settings file...
   miHtmlPanel->Check( !FHtmlMinimized );
+#ifdef __WIN32__  
+  SplashDlg splash_dlg(this);
+  RefreshTh rth(splash_dlg);
+  splash_dlg.Show();
+  rth.Start();
+#endif
 #if defined(__WIN32__) || defined(__MAC__)
   StartupInit();
 #endif
@@ -1346,16 +1352,13 @@ separated values of Atom Type and radius, an entry a line" );
     _UpdateThread->OnAction.Add(this, ID_UpdateThreadAction);
     _UpdateThread->Start();
   }
+#ifdef __WIN32__
+  rth.Join(true);
+#endif
 }
 //..............................................................................
 void TMainForm::StartupInit()  {
   if( StartupInitialised )  return;
-#ifdef __WIN32__  
-  SplashDlg splash_dlg(this);
-  RefreshTh rth(splash_dlg);
-  splash_dlg.Show();
-  rth.Start();
-#endif
   StartupInitialised = true;
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   // create 4 fonts
@@ -1501,9 +1504,6 @@ void TMainForm::StartupInit()  {
 
   if( FXApp->Arguments.Count() == 1 )
     ProcessMacro(olxstr("reap \'") << FXApp->Arguments[0] << '\'', __OlxSrcInfo);
-#ifdef __WIN32__
-  rth.Join(true);
-#endif
 }
 //..............................................................................
 void TMainForm::SetProcess( AProcess *Process )  {
