@@ -79,7 +79,7 @@ protected:
   static TXAtomStylesClear *FXAtomStylesClear;
   static int OrtepSpheres;  // 8 glLists
 protected:
-  static float FTelpProb, FQPeakScale;
+  static float FTelpProb, FQPeakScale, FQPeakSizeScale;
   static short FDefRad, FDefDS;
   static TGraphicsStyle *FAtomParams;
   static olxstr PolyTypeName;
@@ -115,8 +115,10 @@ public:
   static float TelpProb();    // to use with ellipsoids
   static float DefZoom();    // to use with ellipsoids
 
-  static float QPeakScale();    // to use with q-peaks
-  static void QPeakScale(float V);    // to use with q-peaks
+  static float GetQPeakScale();    // to use with q-peaks
+  static void SetQPeakScale(float V);    // to use with q-peaks
+  static float GetQPeakSizeScale();    // to use with q-peaks
+  static void SetQPeakSizeScale(float V);    // to use with q-peaks
 
   void CalcRad(short DefAtomR);
 
@@ -133,7 +135,11 @@ public:
     if( (FRadius & (darIsot|darIsotH)) != 0 )
       scale *= TelpProb();
     if( (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) && FAtom->GetEllipsoid() != NULL )
+    {
+      if( FAtom->GetEllipsoid()->IsNPD() )
+        return (caDefIso*2*scale);
       return scale;
+    }
     else
       return FParams[0]*scale;
   }

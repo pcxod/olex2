@@ -705,7 +705,10 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacro(HtmlPanelWidth, , fpNone|fpOne );
   this_InitMacro(HtmlPanelVisible, , fpNone|fpOne|fpTwo );
 
-  this_InitMacro(QPeakScale, , fpNone|fpOne );
+  this_InitMacroD(QPeakScale, EmptyString, fpNone|fpOne,
+    "Prints/sets the scale of dependency of the Q-peak transparency vs height");
+  this_InitMacroD(QPeakSizeScale, EmptyString, fpNone|fpOne,
+    "Prints/sets the scale the Q-peak size relative to other atoms, default is 1");
   this_InitMacroD(Label, "type-type of labels to make;\
   possible options - subscript, brackers, default", fpAny, "Creates moveable labels for provided atoms (selection)");
   this_InitMacroD(CalcChn, EmptyString, fpNone|fpOne, "Calculates CHN composition of curent structure or for provided formula" );

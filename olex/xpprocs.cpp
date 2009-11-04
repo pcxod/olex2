@@ -2263,21 +2263,23 @@ void TMainForm::macHtmlPanelWidth(TStrObjList &Cmds, const TParamList &Options, 
 }
 //..............................................................................
 void TMainForm::macQPeakScale(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( Cmds.IsEmpty() )  {
-    TBasicApp::GetLog().Info( olxstr("Current Q-Peak scale: ") << FXApp->QPeakScale() );
+  if( Cmds.IsEmpty() )
+    TBasicApp::GetLog() << (olxstr("Current Q-Peak scale: ") << FXApp->GetQPeakScale() << '\n');
+  else  {
+    float scale = Cmds[0].ToFloat<float>();
+    FXApp->SetQPeakScale(scale);
     return;
   }
-  if( Cmds.Count() == 1 )  {
-    if( !FXApp->XFile().HasLastLoader() )  {
-      E.ProcessingError(__OlxSrcInfo, "file is not loaded" );
-      return;
-    }
-    double scale = Cmds[0].ToDouble();
-    FXApp->QPeakScale(scale);
+}
+//..............................................................................
+void TMainForm::macQPeakSizeScale(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  if( Cmds.IsEmpty() )
+    TBasicApp::GetLog() << (olxstr("Current Q-Peak size scale: ") << FXApp->GetQPeakSizeScale() << '\n');
+  else  {
+    float scale = Cmds[0].ToFloat<float>();
+    FXApp->SetQPeakSizeScale(scale);
     return;
   }
-  E.ProcessingError(__OlxSrcInfo, "wrong number of arguments" );
-  return;
 }
 //..............................................................................
 void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

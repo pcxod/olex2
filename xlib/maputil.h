@@ -219,7 +219,7 @@ public:
       vec3d center(crds[i]);
       for( size_t j=i+1; j < cnt; j++ )  {
         if( !Peaks[j].process )  continue;
-        if( crds[i].QDistanceTo(crds[j]) < 0.25 )  {
+        if( crds[i].QDistanceTo(crds[j]) < 0.5 )  {
           toMerge.Add( Peaks[j] );
           center += crds[j];
           Peaks[j].process = false;
@@ -232,7 +232,7 @@ public:
       }
       center /= toMerge.Count();
       center *= cart2cell;
-      center[0] /= norm[0];  center[1] /= norm[1];  center[2] /= norm[2];
+      center /= norm;
       p.center = center.olx_round<int16_t>();
     }
     for( size_t i=0; i < out.Count(); i++ )  {

@@ -100,7 +100,10 @@ void ort_atom::render_standalone(PSWriter& pw) const {
 }
 
 bool ort_atom::IsSpherical() const {
-  return !(p_elpm != NULL && (atom.DrawStyle() == adsEllipsoid || atom.DrawStyle() == adsOrtep));
+  bool res = !(p_elpm != NULL && (atom.DrawStyle() == adsEllipsoid || atom.DrawStyle() == adsOrtep));
+  if( !res && atom.Atom().GetEllipsoid()->IsNPD() )
+    return true;
+  return res;
 }
 
 void ort_atom::render(PSWriter& pw) const {

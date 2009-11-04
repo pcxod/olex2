@@ -2426,13 +2426,13 @@ void TGXApp::AtomZoom(float Zoom, TXAtomPList* Atoms)  {  // takes %
   }
 }
 //..............................................................................
-void TGXApp::QPeakScale(float V)  {
-  if( !XAtoms.Count() )  return;
-  TXAtom::QPeakScale(V);
+void TGXApp::SetQPeakScale(float V)  {
+  TXAtom::SetQPeakScale(V);
+  if( XAtoms.IsEmpty() )  return;
   TPtrList<TGPCollection> Colls;
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
     if( XAtoms[i].Atom().GetAtomInfo() == iQPeakIndex )
-      Colls.Add( &XAtoms[i].GetPrimitives() );
+      Colls.Add(XAtoms[i].GetPrimitives());
   }
   FGlRender->RemoveCollections(Colls);
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
@@ -2442,8 +2442,28 @@ void TGXApp::QPeakScale(float V)  {
 
 }
 //..............................................................................
-float TGXApp::QPeakScale()  {
-  return TXAtom::QPeakScale();
+float TGXApp::GetQPeakScale()  {
+  return TXAtom::GetQPeakScale();
+}
+//..............................................................................
+void TGXApp::SetQPeakSizeScale(float V)  {
+  TXAtom::SetQPeakSizeScale(V);
+  if( XAtoms.IsEmpty() )  return;
+  TPtrList<TGPCollection> Colls;
+  for( size_t i=0; i < XAtoms.Count(); i++ )  {
+    if( XAtoms[i].Atom().GetAtomInfo() == iQPeakIndex )
+      Colls.Add(XAtoms[i].GetPrimitives());
+  }
+  FGlRender->RemoveCollections(Colls);
+  for( size_t i=0; i < XAtoms.Count(); i++ )  {
+    if( XAtoms[i].Atom().GetAtomInfo() == iQPeakIndex )
+      XAtoms[i].Create();
+  }
+
+}
+//..............................................................................
+float TGXApp::GetQPeakSizeScale()  {
+  return TXAtom::GetQPeakSizeScale();
 }
 //..............................................................................
 void TGXApp::BondRad(float R, TXBondPList* Bonds)  {
