@@ -1882,13 +1882,8 @@ TXAtom* TGXApp::AddAtom(TXAtom* templ)  {
 void TGXApp::undoDelete(TUndoData *data)  {
   TKillUndo *undo = dynamic_cast<TKillUndo*>(data);
   TLattice& latt = XFile().GetLattice();
-  for( size_t i=0; i < undo->SAtomIds.Count(); i++ )  {  
-    TSAtom* sa = latt.FindSAtom( undo->SAtomIds[i] );
-    if( sa != NULL )
-      sa->SetDeleted(false);
-    else
-      latt.RestoreAtom(undo->SAtomIds[i]);
-  }
+  for( size_t i=0; i < undo->SAtomIds.Count(); i++ )
+    latt.RestoreAtom(undo->SAtomIds[i]);
   XFile().GetLattice().UpdateConnectivity();
 }
 //..............................................................................
@@ -1936,7 +1931,7 @@ TUndoData* TGXApp::DeleteXObjects(TPtrList<AGDrawObject>& L)  {
 }
 //..............................................................................
 TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
-  TKillUndo *undo = new TKillUndo( new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoDelete)));
+  TKillUndo *undo = new TKillUndo(new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoDelete)));
   if( L.IsEmpty() )
     return undo;
   TSAtomPList SAL;
