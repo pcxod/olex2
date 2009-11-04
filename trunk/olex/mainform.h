@@ -318,6 +318,7 @@ private:
   DefMacro(HtmlPanelWidth)
   DefMacro(HtmlPanelVisible)
   DefMacro(QPeakScale)
+  DefMacro(QPeakSizeScale)
 
   DefMacro(CalcChn)
   DefMacro(CalcMass)

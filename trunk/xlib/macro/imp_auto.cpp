@@ -711,7 +711,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
       vec3d cnt((double)peak.center[0]/mapX, (double)peak.center[1]/mapY, (double)peak.center[2]/mapZ); 
       double pv = (double)peak.count*vol/PointCount;
       double ed = peak.summ/(pv*218);
-      TCAtom* oa = uc.FindOverlappingAtom(cnt, 0.3);
+      TCAtom* oa = uc.FindOverlappingAtom(cnt, 0.5);
       if( oa != NULL && oa->GetAtomInfo() != iQPeakIndex )  {
         atoms[oa->GetTag()].B() += ed;
         atoms[oa->GetTag()].C()++;

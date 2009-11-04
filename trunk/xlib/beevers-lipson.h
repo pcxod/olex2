@@ -42,7 +42,7 @@ public:
     for( size_t i=0; i < mapX; i++ )  {
       sin_cosX[i] = new compd[iLen];
       for( int j=minInd; j <= maxInd; j++ )  {
-        double rv = (double)(i*j)/mapX, ca, sa;
+        double rv = (double)i*j/(double)mapX, ca, sa;
         rv *= T_PI;
         SinCos(-rv, &sa, &ca);
         sin_cosX[i][j-minInd].SetRe(ca);
@@ -57,7 +57,7 @@ public:
       for( size_t i=0; i < mapY; i++ )  {
         sin_cosY[i] = new compd[iLen];
         for( int j=minInd; j <= maxInd; j++ )  {
-          double rv = (double)(i*j)/mapY, ca, sa;
+          double rv = (double)i*j/(double)mapY, ca, sa;
           rv *= T_PI;
           SinCos(-rv, &sa, &ca);
           sin_cosY[i][j-minInd].SetRe(ca);
@@ -76,7 +76,7 @@ public:
       for( size_t i=0; i < mapZ; i++ )  {
         sin_cosZ[i] = new compd[iLen];
         for( int j=minInd; j <= maxInd; j++ )  {
-          double rv = (double)(i*j)/mapZ, ca, sa;
+          double rv = (double)i*j/(double)mapZ, ca, sa;
           rv *= T_PI;
           SinCos(-rv, &sa, &ca);
           sin_cosZ[i][j-minInd].SetRe(ca);

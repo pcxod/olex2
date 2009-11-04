@@ -42,6 +42,7 @@ TStrPObjList<olxstr,TGlPrimitive*> TXAtom::FStaticObjects;
 TTypeList<TGlPrimitiveParams> TXAtom::FPrimitiveParams;
 float TXAtom::FTelpProb = 0;
 float TXAtom::FQPeakScale = 0;
+float TXAtom::FQPeakSizeScale = 0;
 short TXAtom::FDefRad = 0;
 short TXAtom::FDefDS = 0;
 int TXAtom::OrtepSpheres = -1;
@@ -180,7 +181,9 @@ void TXAtom::CalcRad(short DefRadius)  {
     if( FAtom->GetAtomInfo() == iHydrogenIndex ) 
       FParams[0] = 2*caDefIso;
     else  {
-      if( FAtom->CAtom().GetUiso() > 0 )
+      if( FAtom->GetAtomInfo() == iQPeakIndex )
+        FParams[0] = sqrt(FAtom->CAtom().GetUiso())*GetQPeakSizeScale();
+      else if( FAtom->CAtom().GetUiso() > 0 )
         FParams[0] = sqrt(FAtom->CAtom().GetUiso());
       else
         FParams[0] = 2*caDefIso; //sqrt(caDefIso);
@@ -526,7 +529,7 @@ void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M)  {
         M.AmbientF = 0x007f7f;
         M.SpecularF = 0xffffff;
         M.ShininessF = 36;
-        M.AmbientF[3] = (float)(atan(QPeakScale()*peak/Atom.CAtom().GetParent()->GetMaxQPeak())*2/M_PI);
+        M.AmbientF[3] = (float)(atan(GetQPeakScale()*peak/Atom.CAtom().GetParent()->GetMaxQPeak())*2/M_PI);
         M.DiffuseF[3] = M.AmbientF[3];
       }
       else  {
@@ -536,9 +539,9 @@ void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M)  {
         M.SpecularF = 0xffffff;
         M.ShininessF = 36;
         if( Atom.CAtom().GetParent()->GetMaxQPeak() < 0 )
-          M.AmbientF[3] = (float)(atan(QPeakScale()*peak/Atom.CAtom().GetParent()->GetMinQPeak())*2/M_PI);
+          M.AmbientF[3] = (float)(atan(GetQPeakScale()*peak/Atom.CAtom().GetParent()->GetMinQPeak())*2/M_PI);
         else
-          M.AmbientF[3] = (float)(atan(-QPeakScale()*peak/Atom.CAtom().GetParent()->GetMaxQPeak())*2/M_PI);
+          M.AmbientF[3] = (float)(atan(-GetQPeakScale()*peak/Atom.CAtom().GetParent()->GetMaxQPeak())*2/M_PI);
         M.DiffuseF[3] = M.AmbientF[3];
       }
     }
@@ -908,18 +911,30 @@ float TXAtom::DefZoom()  {
   return (float)FAtomParams->GetParam("DefZ", "1", true).ToDouble();
 }
 //..............................................................................
-float TXAtom::QPeakScale()  {
-  if( FQPeakScale )  return FQPeakScale;
+float TXAtom::GetQPeakScale()  {
+  if( FQPeakScale != 0 )  return FQPeakScale;
   ValidateAtomParams();
   return (float)FAtomParams->GetParam("QPeakScale", "3", true).ToDouble();
 }
 //..............................................................................
-void TXAtom::QPeakScale(float V)  {
+void TXAtom::SetQPeakScale(float V)  {
   ValidateAtomParams();
-  if( V < 1 )  
-    V = 3;
+  if( V < 1 )  V = 3;
   FAtomParams->SetParam("QPeakScale", V, true);
   FQPeakScale = V;
+}
+//..............................................................................
+float TXAtom::GetQPeakSizeScale()  {
+  if( FQPeakSizeScale != 0 )  return FQPeakSizeScale;
+  ValidateAtomParams();
+  return (float)FAtomParams->GetParam("QPeakSizeScale", "1", true).ToDouble();
+}
+//..............................................................................
+void TXAtom::SetQPeakSizeScale(float V)  {
+  ValidateAtomParams();
+  if( V < 0 )  V = 1;
+  FAtomParams->SetParam("QPeakSizeScale", V, true);
+  FQPeakSizeScale = V;
 }
 //..............................................................................
 bool TXAtom::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {

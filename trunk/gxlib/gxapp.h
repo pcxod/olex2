@@ -429,8 +429,10 @@ public:     void CalcProbFactor(float Prob);
   void UpdateLabels();
 
 //..............................................................................
-  void QPeakScale(float V);
-  float QPeakScale();
+  void SetQPeakScale(float V);
+  float GetQPeakScale();
+  void SetQPeakSizeScale(float V);
+  float GetQPeakSizeScale();
 //..............................................................................
 // GlMouse interface
   bool MouseDown(int x, int y, short Shift, short Button)  {
