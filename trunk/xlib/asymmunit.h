@@ -121,7 +121,7 @@ public:
     return v;
   }
   // copies the atoms from another AU, _UpdateConnInfo must be called after this
-  void Assign( const TAsymmUnit& C);
+  void Assign(const TAsymmUnit& C);
   void ChangeSpaceGroup(const class TSpaceGroup& sg);
   // executed from the above function, Data is the new space group
   TActionQueue* OnSGChange;
@@ -138,6 +138,8 @@ public:
   TResidue* NextResidue(const TResidue& r) const;
   TResidue* PrevResidue(const TResidue& r) const;
   void AssignResidues(const TAsymmUnit& au);
+  // changes the atom order as in residues
+  void ComplyToResidues();
   // if a number is provided, seraches by Number otherwise - by ClassName
   void FindResidues(const olxstr& resi, TPtrList<TResidue>& list);
   // this is called internally by the TCAtom, to sync connectivity info

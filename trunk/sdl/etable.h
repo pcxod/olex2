@@ -14,10 +14,10 @@ BeginEsdlNamespace()
 //template argumets must be TTStrList or TTStringLists
 template <class T>
 class TTTable: public IEObject  {
-  TTypeList< T > Rows;
+  TTypeList<T> Rows;
   TStrList ColNames, RowNames;
 public:
-  TTTable()  {  }
+  TTTable()  {}
   TTTable(size_t RowCnt, size_t ColCnt)  {  Resize(RowCnt, ColCnt);  }
 
   virtual ~TTTable()  {  Clear();  }
@@ -38,8 +38,8 @@ public:
 
   const TStrList& GetColNames() const  {  return ColNames;  }
   const TStrList& GetRowNames() const  {  return RowNames;  }
-  size_t RowCount()               const {  return Rows.Count();  }
-  size_t ColCount()               const {  return ColNames.Count();  }
+  size_t RowCount() const {  return Rows.Count();  }
+  size_t ColCount() const {  return ColNames.Count();  }
   olxstr& ColName(size_t index) const { return ColNames[index];  }
   olxstr& RowName(size_t index) const {  return RowNames[index];  }
   size_t ColIndex(const olxstr& N) const  {  return ColNames.IndexOf(N);  }
@@ -301,18 +301,25 @@ public:
   inline T& operator [] (size_t index)  {  return Rows[index];  }
   inline T const & operator [] (size_t index) const {  return Rows[index];  }
 
-  // note that the void* passed to the functions
-  // are of the TEStrListData type !! String = Row->Col(col), Data = Row
-  template <class comparator> void SortRows(size_t col)  {
-    TStrPObjList<olxstr,size_t> SL;
-    for( size_t i=0; i < RowCount(); i++ )
-      SL.Add(Rows[i][col], i);
-    SL.QuickSort<comparator>();
-    TSizeList indexes( RowCount() );
-    for( size_t i=0; i < RowCount(); i++ )
-      indexes[i] = SL.GetObject(i);
-    RowNames.Rearrange( indexes );
-    Rows.Rearrange( indexes );
+  struct TableSort  {
+    const T& data;
+    size_t index;
+    TableSort(const T& _data, size_t i) : data(_data), index(i)  {}
+  };
+  template <class comparator> void SortRows()  {
+    TTypeList<TableSort> sl;
+    for( size_t i=0; i < Rows.Count(); i++ )
+      sl.AddNew(Rows[i], i);
+    sl.QuickSorter.Sort<comparator>(sl);
+    TSizeList indexes(Rows.Count());
+    for( size_t i=0; i < Rows.Count(); i++ )
+      indexes[i] = sl[i].index;
+    RowNames.Rearrange(indexes);
+    Rows.Rearrange(indexes);
+  }
+  void SwapRows(size_t r1, size_t r2)  {
+    Rows.Swap(r1, r2);
+    RowNames.Swap(r1, r2);
   }
   // note that the void* passed to the functions
   // are of the TEStrListData type !! String = Row(row)->Col, Data = Row

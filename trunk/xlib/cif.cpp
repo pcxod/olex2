@@ -39,7 +39,7 @@ void  TCifLoop::Clear()  {
   FComments = EmptyString;
 }
 //..............................................................................
-void TCifLoop::DeleteAtom( TCAtom *A )  {
+void TCifLoop::DeleteAtom(TCAtom *A)  {
   TCifLoopData *CD;
   for( size_t i=0; i < FTable.RowCount(); i++ )  {
     for( size_t j=0; j < FTable.ColCount(); j++ )  {
@@ -67,12 +67,10 @@ void TCifLoop::Format(TStrList& Data)  {
       Data[i] = EmptyString;
     }
   }
-  olxstr D = Data.Text(" \\n ");
+  olxstr D = Data.Text(" \\n ").DeleteSequencesOf(' ');
   TStrPObjList<olxstr,TCifLoopData*> Params;
   TCifLoopData *CData=NULL;
-  D.DeleteSequencesOf(' ');
-  //olxch Char, SepChar;
-  size_t DL = D.Length();
+  const size_t DL = D.Length();
   for( size_t i=0; i < DL; i++ )  {
     Param = EmptyString;
     olxch Char = D.CharAt(i);
@@ -124,29 +122,29 @@ end_cyc:;
   }
 }
 //..............................................................................
-void TCifLoop::SaveToStrings( TStrList& Strings )  {
-  olxstr Tmp, str;
+void TCifLoop::SaveToStrings(TStrList& Strings)  {
   TStrList toks, htoks;
-  TCifLoopData *CLD;
   for( size_t i=0; i < FTable.ColCount(); i++ )  // loop header
-    Strings.Add( olxstr("  ") << olxstr(FTable.ColName(i)) );
+    Strings.Add("  ") << FTable.ColName(i);
 
   for( size_t i=0; i < FTable.RowCount(); i++ ) {  // loop content
-    Tmp = EmptyString;
+    olxstr Tmp;
     for( size_t j=0; j < FTable.ColCount(); j++ )  {
-      CLD = FTable[i].GetObject(j);
-      if( CLD->CA )  {
+      TCifLoopData* CLD = FTable[i].GetObject(j);
+      if( CLD->CA != NULL )  {
         if( CLD->CA->IsDeleted() )  {  // skip deleted atom
-          Tmp = EmptyString;  break;
+          Tmp = EmptyString;
+          break;
         }
       }
       // according to the cif rules, the strings cannot be hyphenated ...
-      str = FTable[i][j];
-      if( str.EndsWith("\\n") )  str.SetLength( str.Length()-2 );
+      olxstr str = FTable[i][j];
+      if( str.EndsWith("\\n") )
+        str.SetLength(str.Length()-2);
       if( CLD->String )  {
         if( str.IndexOf("\\n") != InvalidIndex )  {
           if( !Tmp.IsEmpty() )  {
-            Strings.Add( Tmp );
+            Strings.Add(Tmp);
             Tmp = EmptyString;
           }
           toks.Clear();
@@ -164,7 +162,7 @@ void TCifLoop::SaveToStrings( TStrList& Strings )  {
         }
         else  {
           if( Tmp.Length() + 3 + str.Length() > 80 )  {
-            Strings.Add( Tmp );
+            Strings.Add(Tmp);
             Tmp = EmptyString;
           }
           Tmp << ' ' << '\'' << str << '\'';
@@ -204,15 +202,14 @@ void TCifLoop::SaveToStrings( TStrList& Strings )  {
 }
 //..............................................................................
 olxstr TCifLoop::GetLoopName()  {
-  olxstr C;
-  if( FTable.ColCount() == 0 )  return C;
+  if( FTable.ColCount() == 0 )  return EmptyString;
   if( FTable.ColCount() == 1 )  return FTable.ColName(0);
-  C = olxstr::CommonString(FTable.ColName(0), FTable.ColName(1));
-
+  
+  olxstr C = olxstr::CommonString(FTable.ColName(0), FTable.ColName(1));
   for( size_t i=2; i < FTable.ColCount(); i++ )
     C = olxstr::CommonString(FTable.ColName(i), C);
 
-  if( C[C.Length()-1] == '_' )
+  if( C.Last() == '_' )
     C.SetLength(C.Length()-1);
   return C;
 }
@@ -221,13 +218,33 @@ olxstr TCifLoop::ShortColumnName(int in)  {
   return FTable.ColName(in).SubStringFrom( GetLoopName().Length() );
 }
 //..............................................................................
+int TCifLoop::CifLoopSorter::Compare(const TCifLoopTable::TableSort& r1,
+                                     const TCifLoopTable::TableSort& r2)
+{
+  uint64_t id1 = 0, id2 = 0;
+  int ac = 0;
+  for( size_t i=r1.data.Count(); i > 0; i-- )  {
+    bool atom = false;
+    if( r1.data.GetObject(i-1)->CA != 0 )  {
+      id1 |= ((uint64_t)(r1.data.GetObject(i-1)->CA->GetId()) << ac*16);
+      atom = true;
+    }
+    if( r2.data.GetObject(i-1)->CA != 0 )  {
+      id2 |= ((uint64_t)(r2.data.GetObject(i-1)->CA->GetId()) << ac*16);
+      atom = true;
+    }
+    if( atom )  ac++;
+  }
+  return (id1 < id2 ? -1 : (id1 > id2 ? 1 : 0)); 
+}
 void TCifLoop::UpdateTable()  {
   for( size_t i=0; i < FTable.RowCount(); i++ )  {
     for( size_t j=0; j < FTable.ColCount(); j++ )  {
-      if( FTable[i].GetObject(j)->CA )
+      if( FTable[i].GetObject(j)->CA != NULL )
         FTable[i][j] = FTable[i].GetObject(j)->CA->Label();                                      
     }
   }
+  FTable.SortRows<CifLoopSorter>();
 }
 //----------------------------------------------------------------------------//
 // TCifValue function bodies
@@ -606,6 +623,7 @@ void TCif::Group()  {
 }
 //..............................................................................
 void TCif::SaveToStrings(TStrList& Strings)  {
+  GetAsymmUnit().ComplyToResidues();
   size_t loopc=0;
   //Lines.Sort();
   for( size_t i=0; i < Lines.Count(); i++ )  {
@@ -730,14 +748,16 @@ void TCif::Initialize()  {
   TCAtom *A;
   double Q[6], E[6]; // quadratic form of ellipsoid
   TEValueD EValue;
-  GetAsymmUnit().Axes()[0] = GetSParam("_cell_length_a");
-  GetAsymmUnit().Axes()[1] = GetSParam("_cell_length_b");
-  GetAsymmUnit().Axes()[2] = GetSParam("_cell_length_c");
+  try  {
+    GetAsymmUnit().Axes()[0] = GetSParam("_cell_length_a");
+    GetAsymmUnit().Axes()[1] = GetSParam("_cell_length_b");
+    GetAsymmUnit().Axes()[2] = GetSParam("_cell_length_c");
 
-  GetAsymmUnit().Angles()[0] = GetSParam("_cell_angle_alpha");
-  GetAsymmUnit().Angles()[1] = GetSParam("_cell_angle_beta");
-  GetAsymmUnit().Angles()[2] = GetSParam("_cell_angle_gamma");
-
+    GetAsymmUnit().Angles()[0] = GetSParam("_cell_angle_alpha");
+    GetAsymmUnit().Angles()[1] = GetSParam("_cell_angle_beta");
+    GetAsymmUnit().Angles()[2] = GetSParam("_cell_angle_gamma");
+  }
+  catch(...) {  return;  }
   // check if the ci file contains valid parameters
   double fv =  GetAsymmUnit().Axes()[0].GetV() * GetAsymmUnit().Axes()[1].GetV() * GetAsymmUnit().Axes()[2].GetV() *
         GetAsymmUnit().Angles()[0].GetV() * GetAsymmUnit().Angles()[1].GetV() * GetAsymmUnit().Angles()[2].GetV();

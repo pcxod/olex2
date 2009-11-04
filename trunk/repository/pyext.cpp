@@ -325,8 +325,11 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
     }
     else  {
       olxstr macro_args;
-      if( PyList_Size(args_) == 1 )
-        macro_args = PythonExt::ParseStr(PyList_GetItem(args_, 0));
+      for( Py_ssize_t i=0; i < PyList_Size(args_); i++ )  {
+        olxstr tmp = PythonExt::ParseStr(PyList_GetItem(args_, i));
+        if( tmp.IsEmpty() )  continue;
+        macro_args << tmp << ' ';
+      }
       bool res = o_r->executeMacro(name << ' ' << macro_args);
       return Py_BuildValue("b", res);
     }

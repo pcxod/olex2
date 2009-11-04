@@ -46,7 +46,7 @@ public:
    corresponding data object (TCifLoopData). If labels have changed, call to the UpdateTable
    to update labels in the table. */
   void Format(TStrList& Data);
-  void SaveToStrings( TStrList& Strings ); // Saves the loop to a stringlist
+  void SaveToStrings(TStrList& Strings); // Saves the loop to a stringlist
 
   /* Returns a string, which is common for all columns. For example for the following loop:
    loop_
@@ -60,7 +60,12 @@ public:
   void UpdateTable();
   //Returns the table representing the loop data. Use it to make tables or iterate through data.
   TCifLoopTable& Table()  {  return FTable; }
-  void DeleteAtom( TCAtom *A );
+  void DeleteAtom(TCAtom *A);
+  // row sorter struct
+  struct CifLoopSorter  {
+  public:
+    static int Compare(const TCifLoopTable::TableSort& r1, const TCifLoopTable::TableSort& r2);
+  };
 };
 //---------------------------------------------------------------------------
 
