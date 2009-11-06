@@ -1,5 +1,5 @@
-#ifndef symmparserH
-#define symmparserH
+#ifndef olx_xlib_symmparser_H
+#define olx_xlib_symmparser_H
 
 #include "xbase.h"
 #include "symmat.h"
@@ -106,9 +106,21 @@ class TSymmParser  {
     if( isymm >= au.MatrixCount() )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
     mSymm = au.GetMatrix(isymm);
-    if( index != NULL )
-      *index = isymm;
+    if( index != NULL )  *index = isymm;
     ExtractTranslation(Toks[1], mSymm.t);
+    return mSymm;
+  }
+  template <class MC>
+  static smatd _SymmIdToMatrix(const MC& au, uint32_t id, index_t* index=NULL)  {
+    smatd mSymm;
+    uint32_t isymm = ((id&0xff000000) >> 24);
+    if( isymm >= au.MatrixCount() )
+      throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
+    mSymm = au.GetMatrix(isymm);
+    if( index != NULL )  *index = isymm;
+    mSymm.t[0] += (((id&0x00ff0000) >> 16) - 127);
+    mSymm.t[1] += (((id&0x0000ff00) >> 8) - 127);
+    mSymm.t[2] += ((id&0x000000ff) - 127);
     return mSymm;
   }
 
@@ -137,10 +149,23 @@ public:
     rv.SetTag(index);
     return rv;
   }
+  static smatd SymmIdToMatrixU(const TUnitCell& UC, uint32_t id);
+  // return a matrix representation of 1_555 or 1_555555 code for the asymmetric unit
+  static smatd SymmIdToMatrixA(const TAsymmUnit& AU, uint32_t id);
+  // return a matrix representation of 1_555 or 1_555555 code for the the list of matrices
+  static smatd SymmIdToMatrix(const smatd_list& ml, uint32_t id)  {
+    index_t index = -1;
+    smatd rv = _SymmIdToMatrix(sml_converter(ml), id, &index);
+    rv.SetTag(index);
+    return rv;
+  }
   // return a string representation of a matrix like 1_555 or 1_555555 code in dependence on
   // the length of translations; Matrix->Tag must be set to the index of the matrix in the Unit cell!!!
   static olxstr MatrixToSymmCode(const TUnitCell& UC, const smatd& M);
   static olxstr MatrixToSymmCode(const smatd_list& ml, const smatd& M);
+  // returns a 4 byte number as for 1.127.127.127
+  static uint32_t MatrixToSymmId(const TUnitCell& UC, const smatd& M);
+  static uint32_t MatrixToSymmId(const smatd_list& ml, const smatd& M);
   // runs various tests...
   static void Tests(OlxTests& t);
 };

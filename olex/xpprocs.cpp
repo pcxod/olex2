@@ -3410,7 +3410,7 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     TCAtom* CA = Atoms[i];
     if( CA->GetEllipsoid() == NULL )  continue;
     vec3d direction;
-    float Length = 0;
+    double Length = 0;
     lbl = CA->Label();
     if( CA->GetEllipsoid()->GetSX() > CA->GetEllipsoid()->GetSY() )  {
       if( CA->GetEllipsoid()->GetSX() > CA->GetEllipsoid()->GetSZ() )  {
