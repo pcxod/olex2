@@ -194,7 +194,7 @@ void TSimpleRestraint::ToDataItem(TDataItem& item) const {
     if( InvolvedAtoms[i].GetAtom()->IsDeleted() )  continue;
     TDataItem& atom = atoms.AddItem(atom_id++);
     atom.AddField("atom_id", InvolvedAtoms[i].GetAtom()->GetTag());
-    atom.AddField("eqiv_id", InvolvedAtoms[i].GetMatrix() == NULL ? -1 : InvolvedAtoms[i].GetMatrix()->GetTag());
+    atom.AddField("eqiv_id", InvolvedAtoms[i].GetMatrix() == NULL ? ~0 : InvolvedAtoms[i].GetMatrix()->GetId());
   }
 }
 //..............................................................................
@@ -220,7 +220,7 @@ PyObject* TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObjec
     if( InvolvedAtoms[i].GetMatrix() == NULL )
       eq = Py_None;
     else
-      eq = equiv[InvolvedAtoms[i].GetMatrix()->GetTag()];
+      eq = equiv[InvolvedAtoms[i].GetMatrix()->GetId()];
     Py_IncRef(eq);
     PyTuple_SetItem(involved, atom_cnt++, 
       Py_BuildValue("OO", Py_BuildValue("i", InvolvedAtoms[i].GetAtom()->GetTag()), eq));
@@ -238,8 +238,8 @@ void TSimpleRestraint::FromDataItem(TDataItem& item) {
   for( size_t i=0; i < atoms.ItemCount(); i++ )  {
     TDataItem& ai = atoms.GetItem(i);
     size_t aid = ai.GetRequiredField("atom_id").ToSizeT();
-    int eid = ai.GetRequiredField("eqiv_id").ToInt();
-    AddAtom( Parent.GetRM().aunit.GetAtom(aid), eid == -1  ? NULL : &Parent.GetRM().GetUsedSymm(eid));
+    uint32_t eid = ai.GetRequiredField("eqiv_id").ToUInt();
+    AddAtom(Parent.GetRM().aunit.GetAtom(aid), olx_is_valid_index(eid) ? &Parent.GetRM().GetUsedSymm(eid) : NULL);
   }
 }
 //..............................................................................

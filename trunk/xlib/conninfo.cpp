@@ -464,7 +464,7 @@ void ConnInfo::AtomConnInfo::ToDataItem(TDataItem& item)  {
     TDataItem& bi = ab.AddItem("bi");
     bi.AddField("to", BondsToCreate[i].to.GetTag());
     if( BondsToCreate[i].matr != NULL )
-      bi.AddField("eqiv", BondsToCreate[i].matr->GetTag());
+      bi.AddField("eqiv", BondsToCreate[i].matr->GetId());
   }
   TDataItem& db = item.AddItem("DELBOND");
   for( size_t i=0; i < BondsToRemove.Count(); i++ )  {
@@ -473,7 +473,7 @@ void ConnInfo::AtomConnInfo::ToDataItem(TDataItem& item)  {
     TDataItem& bi = ab.AddItem("bi");
     bi.AddField("to", BondsToRemove[i].to.GetTag());
     if( BondsToCreate[i].matr != NULL )
-      bi.AddField("eqiv", BondsToRemove[i].matr->GetTag());
+      bi.AddField("eqiv", BondsToRemove[i].matr->GetId());
   }
 }
 void ConnInfo::AtomConnInfo::FromDataItem(TDataItem& item, RefinementModel& rm, TCAtom& a)  {

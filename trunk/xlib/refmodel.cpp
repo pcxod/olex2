@@ -109,14 +109,14 @@ const smatd& RefinementModel::AddUsedSymm(const smatd& matr, const olxstr& id) {
   smatd* rv = NULL;
   if( ind == InvalidIndex )  {
     if( id.IsEmpty() ) 
-      rv = &UsedSymm.Add( olxstr("$") << (UsedSymm.Count()+1), matr );
+      rv = &UsedSymm.Add(olxstr("$") << (UsedSymm.Count()+1), matr);
     else
-      rv = &UsedSymm.Add( id, matr );
-    rv->SetTag(0); // do not lock it
+      rv = &UsedSymm.Add(id, matr);
+    rv->SetRawId(0); // do not lock it
   }
   else  {
     rv = &UsedSymm.GetValue(ind);
-    rv->IncTag();
+    rv->SetRawId(rv->GetId()+1);
   }
   return *rv;
 }
@@ -125,7 +125,8 @@ void RefinementModel::RemUsedSymm(const smatd& matr)  {
   size_t ind = UsedSymm.IndexOfValue(matr);
   if( ind == InvalidIndex )
     throw TInvalidArgumentException(__OlxSourceInfo, "matrix is not in the list");
-  UsedSymm.GetValue(ind).DecTag();
+  UsedSymm.GetValue(ind).SetRawId(
+    UsedSymm.GetValue(ind).GetId() == 0 ? 0 : UsedSymm.GetValue(ind).GetId()-1);
   //if( UsedSymm.GetValue(ind).GetTag() == 0 )
   //  UsedSymm.Delete(ind);
 }
@@ -199,7 +200,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
     SfacData(rm.SfacData.GetKey(i), new XScatterer( *rm.SfacData.GetValue(i)) );
   // check if all EQIV are used
   for( size_t i=0; i < UsedSymm.Count(); i++ )  {
-    if( UsedSymm.GetValue(i).GetTag() <= 0 )
+    if( UsedSymm.GetValue(i).GetId() == 0 )
       UsedSymm.Delete(i--);
   }
   
@@ -783,12 +784,12 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   item.AddField("RefInArg", PersUtil::NumberListToStr(LS));
 
   // save used equivalent positions
-  TIndexList mat_tags(UsedSymm.Count());
+  TArrayList<uint32_t> mat_tags(UsedSymm.Count());
   TDataItem& eqiv = item.AddItem("EQIV");
   for( size_t i=0; i < UsedSymm.Count(); i++ )  {
     eqiv.AddItem(UsedSymm.GetKey(i), TSymmParser::MatrixToSymmEx(UsedSymm.GetValue(i)));
-    mat_tags[i] = UsedSymm.GetValue(i).GetTag();
-    UsedSymm.GetValue(i).SetTag(i);
+    mat_tags[i] = UsedSymm.GetValue(i).GetId();
+    UsedSymm.GetValue(i).SetRawId(i);
   }
   
   Vars.ToDataItem(item.AddItem("LEQS"));
@@ -823,7 +824,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   Conn.ToDataItem( item.AddItem("CONN") );
   // restore matrix tags
   for( size_t i=0; i < UsedSymm.Count(); i++ )
-    UsedSymm.GetValue(i).SetTag( mat_tags[i] );
+    UsedSymm.GetValue(i).SetRawId(mat_tags[i]);
 }
 //....................................................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {
@@ -906,7 +907,7 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
     *eq = PyTuple_New(UsedSymm.Count());
   TPtrList<PyObject> atoms, equivs;
   PyDict_SetItemString(main, "aunit", aunit.PyExport(atoms) );
-  TIndexList mat_tags(UsedSymm.Count());
+  TArrayList<uint32_t> mat_tags(UsedSymm.Count());
   for( size_t i=0; i < UsedSymm.Count(); i++ )  {
     smatd& m = UsedSymm.GetValue(i);
     PyTuple_SetItem(eq, i, 
@@ -916,8 +917,8 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
           m.r[2][0], m.r[2][1], m.r[2][2],
           m.t[0], m.t[1], m.t[2]
       )) );
-    mat_tags[i] = m.GetTag();
-    m.SetTag(i);
+    mat_tags[i] = m.GetId();
+    m.SetRawId(i);
   }
   PyDict_SetItemString(main, "equivalents", eq);
 
@@ -997,8 +998,7 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
       TSAtom& sa = lat.GetAtom(i);
       if( sa.IsDeleted() || sa.GetAtomInfo() == iQPeakIndex )  continue;
       // make sure that only AU atoms go to 
-      if( sa.GetMatrix(0).GetTag() != 0 || sa.GetMatrix(0).t.QLength() > 1e-6 )
-        continue;
+      if( !sa.GetMatrix(0).IsFirst() )  continue;
       uc.GetAtomEnviList(sa, ae);
       if( PyDict_GetItemString(atoms[sa.CAtom().GetTag()], "neighbours") != NULL )
         continue;
@@ -1009,7 +1009,7 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
   //
   // restore matrix tags
   for( size_t i=0; i < UsedSymm.Count(); i++ )
-    UsedSymm.GetValue(i).SetTag( mat_tags[i] );
+    UsedSymm.GetValue(i).SetRawId(mat_tags[i]);
   return main;
 }
 #endif

@@ -123,7 +123,7 @@ void TSAtom::ToDataItem(TDataItem& item) const {
   item.AddField("atom_id", FCAtom->GetTag());
   TDataItem& matrices = item.AddItem("Matrices");
   for( size_t i=0; i < Matrices.Count(); i++ )
-    matrices.AddField("matr_id", Matrices[i]->GetTag());
+    matrices.AddField("matr_id", Matrices[i]->GetId());
 }
 //..............................................................................
 void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
@@ -144,7 +144,7 @@ void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
   Matrices.SetCapacity( matrices.FieldCount() );
   for( size_t i=0; i < matrices.FieldCount(); i++ )  {
     const size_t mi = matrices.GetField(i).ToSizeT();
-    Matrices.Add( &latt.GetMatrix(mi) );
+    Matrices.Add(latt.GetMatrix(mi));
   }
   FCCenter = *Matrices[0] * FCCenter;
   FCenter = PersUtil::FloatVecFromStr(item.GetRequiredField("crd"));
