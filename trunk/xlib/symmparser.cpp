@@ -115,12 +115,20 @@ next_oper:
   return true;
 }
 //..............................................................................
-smatd TSymmParser::SymmCodeToMatrixU(const class TUnitCell& UC, const olxstr& Code)  {
+smatd TSymmParser::SymmCodeToMatrixU(const TUnitCell& UC, const olxstr& Code)  {
   return _SymmCodeToMatrix(UC, Code);
 }
 //..............................................................................
-smatd TSymmParser::SymmCodeToMatrixA(const class TAsymmUnit& AU, const olxstr& Code)  {
+smatd TSymmParser::SymmCodeToMatrixA(const TAsymmUnit& AU, const olxstr& Code)  {
   return _SymmCodeToMatrix(AU, Code);
+}
+//..............................................................................
+smatd TSymmParser::SymmIdToMatrixU(const TUnitCell& UC, uint32_t id)  {
+  return _SymmIdToMatrix(UC, id);
+}
+//..............................................................................
+smatd TSymmParser::SymmIdToMatrixA(const TAsymmUnit& AU, uint32_t id)  {
+  return _SymmIdToMatrix(AU, id);
 }
 //..............................................................................
 olxstr TSymmParser::MatrixToSymmEx(const mat3i& M)  {
@@ -149,7 +157,7 @@ olxstr TSymmParser::MatrixToSymmEx(const mat3i& M)  {
 // this needs to be of very high performance
 olxstr TSymmParser::MatrixToSymmCode(const TUnitCell& UC, const smatd& M)  {
   const smatd& m = UC.GetMatrix( M.GetTag() );
-  vec3i Trans( m.t - M.t);
+  vec3i Trans(m.t - M.t);
   int baseVal = 5;
   if( (abs(Trans[0]) > 4) || (abs(Trans[1]) > 4) || (abs(Trans[1]) > 4) )
     baseVal = 55;
@@ -176,6 +184,25 @@ olxstr TSymmParser::MatrixToSymmCode(const smatd_list& ml, const smatd& M)  {
   sprintf(bf, "%i_%i%i%i", M.GetTag()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
 #endif
   return olxstr(bf);
+}
+//..............................................................................
+uint32_t TSymmParser::MatrixToSymmId(const TUnitCell& UC, const smatd& M)  {
+  const smatd& m = UC.GetMatrix( M.GetTag() );
+  vec3i t(m.t - M.t);
+  uint32_t rv = M.GetTag() << 24;
+  rv |= ((uint32_t)(127-t[0]) << 16);
+  rv |= ((uint32_t)(127-t[1]) << 8);
+  rv |= (uint32_t)(127-t[2]);
+  return rv;
+}
+//..............................................................................
+uint32_t TSymmParser::MatrixToSymmId(const smatd_list& ml, const smatd& M)  {
+  vec3i t(ml[M.GetTag()].t - M.t);
+  uint32_t rv = M.GetTag() << 24;
+  rv |= ((uint32_t)(127-t[0]) << 16);
+  rv |= ((uint32_t)(127-t[1]) << 8);
+  rv |= (uint32_t)(127-t[2]);
+  return rv;
 }
 //..............................................................................
 void TSymmParser::Tests(OlxTests& t)  {
