@@ -24,8 +24,7 @@ class TSymmParser  {
     return -1;
   }
   
-  template <typename vc> 
-  static vc& ExtractTranslation(const olxstr& str, vc& t)  {
+  template <typename vc>  static vc& ExtractTranslation(const olxstr& str, vc& t)  {
     if( str.Length() == 3 )  {
       t[0] += (int)(str.CharAt(0)-'5');
       t[1] += (int)(str.CharAt(1)-'5');
@@ -42,8 +41,7 @@ class TSymmParser  {
   }
   static olxstr FormatFloatEx(double f)  {
     olxstr rv;
-    if( f < 0 )
-      rv << '-';
+    if( f < 0 )  rv << '-';
     int v = olx_abs(olx_round(f*12)), base = 12;
     int denom = esdl::gcd(v, base);
     if( denom != 1 )  {
@@ -53,8 +51,7 @@ class TSymmParser  {
     if( base == 1 )  return rv << v;
     else             return rv << v << '/' << base;
   }
-  template <class SM>
-  static olxstr _MatrixToSymm(const SM& M, bool fraction)  {
+  template <class SM> static olxstr _MatrixToSymm(const SM& M, bool fraction)  {
     olxstr T, T1;
     for( int j=0; j < 3; j ++ )  {
       if( j != 0 )
@@ -110,20 +107,6 @@ class TSymmParser  {
     ExtractTranslation(Toks[1], mSymm.t);
     return mSymm;
   }
-  template <class MC>
-  static smatd _SymmIdToMatrix(const MC& au, uint32_t id, index_t* index=NULL)  {
-    smatd mSymm;
-    uint32_t isymm = ((id&0xff000000) >> 24);
-    if( isymm >= au.MatrixCount() )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
-    mSymm = au.GetMatrix(isymm);
-    if( index != NULL )  *index = isymm;
-    mSymm.t[0] += (((id&0x00ff0000) >> 16) - 127);
-    mSymm.t[1] += (((id&0x0000ff00) >> 8) - 127);
-    mSymm.t[2] += ((id&0x000000ff) - 127);
-    return mSymm;
-  }
-
   static const char Axis[];
 public:
     // Transforms matrix to standard SYMM operation (INS, CIF files)
@@ -146,26 +129,14 @@ public:
   static smatd SymmCodeToMatrix(const smatd_list& ml, const olxstr& Code)  {
     index_t index = -1;
     smatd rv = _SymmCodeToMatrix(sml_converter(ml), Code, &index);
-    rv.SetTag(index);
-    return rv;
-  }
-  static smatd SymmIdToMatrixU(const TUnitCell& UC, uint32_t id);
-  // return a matrix representation of 1_555 or 1_555555 code for the asymmetric unit
-  static smatd SymmIdToMatrixA(const TAsymmUnit& AU, uint32_t id);
-  // return a matrix representation of 1_555 or 1_555555 code for the the list of matrices
-  static smatd SymmIdToMatrix(const smatd_list& ml, uint32_t id)  {
-    index_t index = -1;
-    smatd rv = _SymmIdToMatrix(sml_converter(ml), id, &index);
-    rv.SetTag(index);
+    if( index != -1 )
+      rv.SetId(smatd::GenerateId((uint8_t)index, rv, ml[index]));
     return rv;
   }
   // return a string representation of a matrix like 1_555 or 1_555555 code in dependence on
   // the length of translations; Matrix->Tag must be set to the index of the matrix in the Unit cell!!!
   static olxstr MatrixToSymmCode(const TUnitCell& UC, const smatd& M);
   static olxstr MatrixToSymmCode(const smatd_list& ml, const smatd& M);
-  // returns a 4 byte number as for 1.127.127.127
-  static uint32_t MatrixToSymmId(const TUnitCell& UC, const smatd& M);
-  static uint32_t MatrixToSymmId(const smatd_list& ml, const smatd& M);
   // runs various tests...
   static void Tests(OlxTests& t);
 };

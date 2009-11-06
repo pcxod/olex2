@@ -109,7 +109,7 @@ void  TUnitCell::InitMatrices()  {
   GenerateMatrices(Matrices, GetLattice().GetAsymmUnit(), GetLattice().GetAsymmUnit().GetLatt() );
   const size_t mc = Matrices.Count();
   for( size_t i=0; i < mc; i++ )
-    Matrices[i].SetTag(i);
+    Matrices[i].SetId(i);
   UpdateEllipsoids();
 }
 //..............................................................................
@@ -342,6 +342,7 @@ smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOr
     retVal->t[0] -= minix;
     retVal->t[1] -= miniy;
     retVal->t[2] -= miniz;
+    retVal->SetId(minMatr->GetContainerId(), -minix, -miniy, -miniz);
     if( dist != NULL )
       *dist = minD;
     return retVal;
@@ -372,7 +373,7 @@ smatd_list* TUnitCell::GetBinding(const TCAtom& toA, const TCAtom& fromA,
     const vec3d& to, const vec3d& from, bool IncludeI, bool IncludeHBonds) const  {
   smatd_list* retVal = new smatd_list;
   smatd Im;
-  Im.I().SetTag(0);
+  Im.I().SetId(0);
 
   for( size_t i=0; i < MatrixCount(); i++ )  {
     const smatd& matr = GetMatrix(i);
@@ -389,6 +390,7 @@ smatd_list* TUnitCell::GetBinding(const TCAtom& toA, const TCAtom& fromA,
       newMatr.t[0] -= ix;
       newMatr.t[1] -= iy;
       newMatr.t[2] -= iz;
+      newMatr.SetId(matr.GetContainerId(), -ix, -iy, -iz);
     }
     else if( IncludeHBonds )  {
       if( GetLattice().GetNetwork().HBondExistsQ(toA, fromA, matr, qD) )  {
@@ -396,6 +398,7 @@ smatd_list* TUnitCell::GetBinding(const TCAtom& toA, const TCAtom& fromA,
         newMatr.t[0] -= ix;
         newMatr.t[1] -= iy;
         newMatr.t[2] -= iz;
+        newMatr.SetId(matr.GetContainerId(), -ix, -iy, -iz);
       }
     }
   }
@@ -412,7 +415,7 @@ smatd_list* TUnitCell::GetBinding(const TCAtom& toA, const TCAtom& fromA,
           retMatr.t[0] += i;
           retMatr.t[1] += j;
           retMatr.t[2] += k;
-          retMatr.SetTag(0);
+          retMatr.SetId(0, i, j, k);
         }
         else if( IncludeHBonds )  {
           if( GetLattice().GetNetwork().HBondExistsQ(toA, fromA, Im, qD) )  {
@@ -420,7 +423,7 @@ smatd_list* TUnitCell::GetBinding(const TCAtom& toA, const TCAtom& fromA,
             retMatr.t[0] += i;
             retMatr.t[1] += j;
             retMatr.t[2] += k;
-            retMatr.SetTag(0);
+            retMatr.SetId(0, i, j, k);
           }
         }
       }
@@ -447,6 +450,7 @@ smatd_list* TUnitCell::GetInRange(const vec3d& to, const vec3d& from, double R, 
       retMatr.t[0] -= ix;
       retMatr.t[1] -= iy;
       retMatr.t[2] -= iz;
+      retMatr.SetId(matr.GetContainerId(), -ix, -iy, -iz);
     }
   }
   for( int i=-1; i <= 1; i++ )  {
@@ -460,7 +464,7 @@ smatd_list* TUnitCell::GetInRange(const vec3d& to, const vec3d& from, double R, 
           retMatr.t[0] += i;
           retMatr.t[1] += j;
           retMatr.t[2] += k;
-          retMatr.SetTag(0);
+          retMatr.SetId(0, i, j, k);
         }
       }
     }
@@ -496,7 +500,8 @@ smatd_list* TUnitCell::GetInRangeEx(const vec3d& to, const vec3d& from,
               delete retMatr;
               continue;
             }
-            retVal->Add(*retMatr);
+            retMatr->SetId(matr.GetContainerId(), ii-ix, ij-iy, ik-iz);
+            retVal->Add(retMatr);
           }
         }
       }
@@ -528,6 +533,7 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
         m.t[0] -= ix;
         m.t[1] -= iy;
         m.t[2] -= iz;
+        m.SetId(matr.GetContainerId(), -ix, -iy, -iz);
       }
     }
     for( int ii=-1; ii <= 1; ii++ )  {
@@ -541,11 +547,11 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
           au.CellToCartesian(V1);
           const double D = V1.QLength();
           if( D < R && D > 0.0001 )  {
-            smatd& m = res.AddNew( &a ).B().I();
+            smatd& m = res.AddNew(&a).B().I();
             m.t[0] += ii;
             m.t[1] += ij;
             m.t[2] += ik;
-            m.SetTag(0);
+            m.SetId(0, ii, ik, ik);
             res.Last().C() = V1;
           }
         }
@@ -559,7 +565,7 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
   envi.SetBase( atom );
 
   smatd I;
-  I.I().SetTag(0);
+  I.I().SetId(0);
 
   for( size_t i=0; i < atom.NodeCount(); i++ )  {
     TSAtom& a = atom.Node(i);
@@ -576,7 +582,7 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
     if( A.GetPart() < 0 || atom.CAtom().GetPart() < 0 )
       continue;
 
-    smatd* m = GetClosest( atom.ccrd(), A.ccrd(), false );
+    smatd* m = GetClosest(atom.ccrd(), A.ccrd(), false);
     if( m == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "Could not find symmetry generated atom");
     vec3d v = *m * A.ccrd();
@@ -591,7 +597,7 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
     }
     if( Add )  {
       if( part == DefNoPart || (A.GetPart() == 0 || A.GetPart() == part) )
-        envi.Add( A, *m, v );
+        envi.Add(A, *m, v);
     }
     delete m;
   }
@@ -653,7 +659,7 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
   if( envi.Count() > maxb )  {
     envi.SortByDistance();
     while( envi.Count() > maxb )
-      envi.Delete( envi.Count()-1 );
+      envi.Delete(envi.Count()-1);
   }
 }
 //..............................................................................
@@ -662,21 +668,20 @@ void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
     throw TFunctionFailedException(__OlxSourceInfo, "Not implementd for grown structre");
 
   envi.SetBase( atom );
-
   smatd I;
-  I.I().SetTag(0);
+  I.I().SetId(0);
 
   for( size_t i=0; i < atom.NodeCount(); i++ )  {
     TSAtom& A = atom.Node(i);
     if( A.IsDeleted() ) continue;
     if( A.GetAtomInfo() == iQPeakIndex && TNetwork::HaveSharedMatrix(A, atom) )
-      envi.Add( A.CAtom(), I, A.crd() );
+      envi.Add(A.CAtom(), I, A.crd());
   }
   for( size_t i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
     TCAtom& A = atom.CAtom().GetAttachedAtom(i);
     if( A.IsDeleted() || A.GetAtomInfo() != iQPeakIndex )  continue;
 
-    smatd* m = GetClosest( atom.ccrd(), A.ccrd(), false );
+    smatd* m = GetClosest(atom.ccrd(), A.ccrd(), false);
     if( m == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "Could not find symmetry generated atom");
     vec3d v = *m * A.ccrd();

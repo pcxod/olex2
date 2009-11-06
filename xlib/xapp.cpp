@@ -297,7 +297,7 @@ TUndoData* TXApp::FixHL()  {
       sa.SetTag(-1);
       continue;
     }
-    bool au_atom = (sa.GetMatrix(0).GetTag() == 0 && sa.GetMatrix(0).t.QLength() < 1e-6);
+    const bool au_atom = sa.GetMatrix(0).IsFirst();
     if( sa.GetAtomInfo() == iHydrogenIndex || sa.GetAtomInfo() == iDeuteriumIndex )  {
       sa.SetTag(au_atom ? -2 : -1);  // mark as unpocessed or to skip
       if( au_atom )  {
@@ -450,13 +450,11 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
             if( !sa.CAtom().IsAvailable() )  continue;
             if( sa.CAtom().GetTag() != ag[i].GetAtom()->GetTag() )  continue;
             if( ag[i].GetMatrix() == 0 )  {  // get an atom from the asymm unit
-              if( sa.GetMatrix(0).GetTag() == 0 && sa.GetMatrix(0).t.QLength() < 1e-10  )
+              if( sa.GetMatrix(0).IsFirst() )
                 atoms.Add(sa);
             }
             else  {
-              if( sa.GetMatrix(0).GetTag() == ag[i].GetMatrix()->GetTag() &&
-                sa.GetMatrix(0).t.QDistanceTo(ag[i].GetMatrix()->t) < 1e-10 )
-              {
+              if( sa.GetMatrix(0).GetId() == ag[i].GetMatrix()->GetId() )  {
                 atoms.Add(sa);
               }
             }

@@ -42,11 +42,8 @@ public:
   static bool HaveSharedMatrix(const TSAtom& sa, const TSAtom& sb)  {
     for( size_t i=0; i < sa.MatrixCount(); i++ )  {
       for( size_t j=0; j < sb.MatrixCount(); j++ )  {
-        if( sa.GetMatrix(i).GetTag() == sb.GetMatrix(j).GetTag() && 
-            sa.GetMatrix(i).t == sb.GetMatrix(j).t )  
-        {
+        if( sa.GetMatrix(i).GetId() == sb.GetMatrix(j).GetId() )  
           return true;
-        }
       }
     }
     return false;
@@ -62,7 +59,7 @@ public:
 
   static inline bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb, const smatd& sm)  {
     if( (ca.GetPart() | cb.GetPart()) < 0 )
-      return sm.GetTag() == 0 && sm.t.IsNull();  // is identity and no translation
+      return sm.IsFirst();  // is identity and no translation
     else if( ca.GetPart() == 0 || cb.GetPart() == 0 || 
              (ca.GetPart() == cb.GetPart()) )
       return true;

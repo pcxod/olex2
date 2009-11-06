@@ -8329,9 +8329,9 @@ void TMainForm::macAddBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   for( size_t i=0; i < atoms.Count(); i += 2 )  {
     TSAtom* a1 = NULL, *a2 = NULL;
-    if( atoms[i]->Atom().GetMatrix(0).GetTag() == 0 && atoms[i]->Atom().GetMatrix(0).t.IsNull() )
+    if( atoms[i]->Atom().GetMatrix(0).IsFirst() )
       a1 = &atoms[i]->Atom();
-    else if( atoms[i+1]->Atom().GetMatrix(0).GetTag() == 0 && atoms[i+1]->Atom().GetMatrix(0).t.IsNull() )
+    else if( atoms[i+1]->Atom().GetMatrix(0).IsFirst() )
       a1 = &atoms[i+1]->Atom();
     else  {
       FXApp->GetLog() << (olxstr("At maximum one symmetry equivalent atom is allowed, skipping: ") <<
@@ -8367,9 +8367,9 @@ void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
   if( !pairs.IsEmpty()  )  {
     for( size_t i=0; i < pairs.Count(); i+=2 )  {
       TSAtom* a1 = NULL, *a2 = NULL;
-      if( pairs[i]->GetMatrix(0).GetTag() == 0 && pairs[i]->GetMatrix(0).t.IsNull() )
+      if( pairs[i]->GetMatrix(0).IsFirst() )
         a1 = pairs[i];
-      else if( pairs[i+1]->GetMatrix(0).GetTag() == 0 && pairs[i+1]->GetMatrix(0).t.IsNull() )
+      else if( pairs[i+1]->GetMatrix(0).IsFirst() )
         a1 = pairs[i+1];
       else  {
         FXApp->GetLog() << (olxstr("At maximum one symmetry equivalent atom is allowed, skipping: ") <<

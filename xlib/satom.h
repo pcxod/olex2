@@ -66,17 +66,17 @@ public:
   inline size_t MatrixCount() const {  return Matrices.Count();  }
   inline const smatd& GetMatrix(size_t i) const {  return *Matrices[i];  }
   // this also makes sure that the identity releated matrix is coming first in the list
-  inline void AddMatrix(smatd* M)            {  
+  inline void AddMatrix(smatd* M) {  
     Matrices.Add(M);  
-    if( M->GetTag() == 0 && Matrices.Count() > 1 )
+    if( M->IsFirst() && Matrices.Count() > 1 )
       Matrices.Swap(0, Matrices.Count()-1);
   }
-  inline void AddMatrices(TSAtom *A)         {  
+  inline void AddMatrices(TSAtom *A)  {  
     const size_t cnt = Matrices.Count();
     Matrices.AddList(A->Matrices); 
     if( cnt != 0 && Matrices.Count() > 1 )  {
       for( size_t i=0; i < A->Matrices.Count(); i++ )  {
-        if( A->Matrices[i]->GetTag() == 0 )  {
+        if( A->Matrices[i]->IsFirst() )  {
           Matrices.Swap(0, cnt+i);
           break;
         }
@@ -88,8 +88,8 @@ public:
 
   inline const TEllipsoid* GetEllipsoid() const {  return FEllipsoid;  }
   inline void SetEllipsoid(const TEllipsoid* v) {  FEllipsoid = v;  }
-  inline vec3d&  ccrd()             {  return FCCenter;  }
-  inline vec3d&  crd()              {  return FCenter;  }
+  inline vec3d&  ccrd()  {  return FCCenter;  }
+  inline vec3d&  crd()  {  return FCenter;  }
   inline vec3d const&  ccrd() const {  return FCCenter;  }
   inline vec3d const&  crd()  const {  return FCenter;  }
 
@@ -112,25 +112,25 @@ public:
 
   struct Ref  {
     size_t catom_id;
-    smatd::Ref matrix_ref;
-    TTypeList<smatd::Ref>* matrices; 
+    uint32_t matrix_id;
+    TArrayList<uint32_t>* matrices; 
     Ref(size_t a_id, const smatd_plist& symm) : catom_id(a_id), 
-      matrix_ref(symm[0]->GetRef()), matrices(NULL) 
+      matrix_id(symm[0]->GetId()), matrices(NULL) 
     {
       if( symm.Count() > 1 )  {
-        matrices = new TTypeList<smatd::Ref>(symm.Count()-1);
+        matrices = new TArrayList<uint32_t>(symm.Count()-1);
         for( size_t i=1; i < symm.Count(); i++ )
-          matrices->Set(i-1, new smatd::Ref(symm[i]->GetRef()) );
+          (*matrices)[i-1] = symm[i]->GetId();
       }
     } 
     Ref(const Ref& r) : catom_id(r.catom_id), 
-      matrix_ref(r.matrix_ref), 
-      matrices( r.matrices == NULL ? NULL : new TTypeList<smatd::Ref>(*r.matrices) )  
+      matrix_id(r.matrix_id), 
+      matrices(r.matrices == NULL ? NULL : new TArrayList<uint32_t>(*r.matrices) )  
     {}
     Ref& operator = (const Ref& r)  {
       catom_id = r.catom_id;
-      matrix_ref = r.matrix_ref;
-      matrices = ( r.matrices == NULL ? NULL : new TTypeList<smatd::Ref>(*r.matrices));
+      matrix_id = r.matrix_id;
+      matrices = (r.matrices == NULL ? NULL : new TArrayList<uint32_t>(*r.matrices));
       return *this;
     }
     ~Ref()  {
@@ -142,7 +142,7 @@ public:
   bool operator == (const Ref& id) const {
     if( FCAtom->GetId() == id.catom_id )  {
       for( size_t i=0; i < Matrices.Count(); i++ )
-        if( (*Matrices[i]) == id.matrix_ref )
+        if( Matrices[i]->GetId() == id.matrix_id )
           return true;
     }
     return false;
