@@ -1,4 +1,4 @@
-#ifndef __olx_symmat
+	#ifndef __olx_symmat
 #define __olx_symmat
 #include "threex3.h"
 
@@ -109,7 +109,7 @@ public:
   uint8_t GetContainerId() const {  return (uint8_t)(Id >> 24);  }
   static uint8_t GetContainerId(uint32_t id) {  return (uint8_t)(id >> 24);  }
   static TSymmMat<MC,VC> FromId(uint32_t id, const TSymmMat<MC,VC>& ref)  {
-    smatd rv(ref);
+    TSymmMat<MC,VC> rv(ref);
     rv.t[0] += (((id&0x00FF0000) >> 16) - 0x80);
     rv.t[1] += (((id&0x0000FF00) >> 8) - 0x80);
     rv.t[2] += ((id&0x000000FF) - 0x80);
