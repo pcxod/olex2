@@ -158,7 +158,7 @@ olxstr TSymmParser::MatrixToSymmCode(const TUnitCell& UC, const smatd& M)  {
 #ifdef _MSC_VER
   sprintf_s(bf, 64, "%i_%i%i%i", M.GetContainerId()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
 #else
-  sprintf(bf, "%i_%i%i%i", M.GetTag()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
+  sprintf(bf, "%i_%i%i%i", M.GetContainerId()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
 #endif
   return olxstr(bf);
 }
@@ -173,7 +173,7 @@ olxstr TSymmParser::MatrixToSymmCode(const smatd_list& ml, const smatd& M)  {
 #ifdef _MSC_VER
   sprintf_s(bf, 64, "%i_%i%i%i", M.GetContainerId()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
 #else
-  sprintf(bf, "%i_%i%i%i", M.GetTag()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
+  sprintf(bf, "%i_%i%i%i", M.GetContainerId()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
 #endif
   return olxstr(bf);
 }
