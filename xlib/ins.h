@@ -349,7 +349,7 @@ public:
         Unit = Toks.Text(' ', 1);
       else if( Toks[0].Equalsi("ZERR") )  {
         if( Toks.Count() == 8 )  {
-          rm.aunit.SetZ( (short)Toks[1].ToInt() );
+          rm.aunit.SetZ( (short)Toks[1].ToDouble() );
           rm.aunit.Axes()[0].E() = Toks[2].ToDouble();
           rm.aunit.Axes()[1].E() = Toks[3].ToDouble();
           rm.aunit.Axes()[2].E() = Toks[4].ToDouble();

@@ -83,8 +83,16 @@ int UpdateThread::Run()  {
     }
     Index->Synchronise(*destFS, properties, skip ? NULL : &toSkip, &dfs, &cmds);
     // try to update the updater, should check the name of executable though!
-    if( dfs.Exists(updater_file) )
-      TEFile::Rename(updater_file, TBasicApp::GetBaseDir() + TEFile::ExtractFileName(updater_file) );
+    if( dfs.Exists(updater_file) )  {
+      try  {
+        olxstr dest = TBasicApp::GetBaseDir() + TEFile::ExtractFileName(updater_file);
+        if( !TEFile::Rename(updater_file, dest) )  {  // are on different disks?
+          if( TEFile::Copy(updater_file, dest) )
+            TEFile::DelFile(updater_file);
+        }
+      }
+      catch(...) {}
+    }
     
     olxstr cmd_fn( TEFile::ParentDir(dfs.GetBase()) + patcher::PatchAPI::GetUpdaterCmdFileName());
     if( TEFile::Exists(cmd_fn) )  {

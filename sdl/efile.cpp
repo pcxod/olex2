@@ -321,6 +321,10 @@ bool TEFile::Access(const olxstr& F, const short Flags)  {
   return (access(OLXSTR(OLX_OS_PATH(F)), Flags) != -1);
 }
 //..............................................................................
+bool TEFile::Chmod(const olxstr& F, const short Flags)  {
+  return (chmod(OLXSTR(OLX_OS_PATH(F)), Flags) != -1);
+}
+//..............................................................................
 olxstr TEFile::ExtractFilePath(const olxstr &F)  {
   olxstr fn = OLX_OS_PATH(F);
   if( TEFile::IsAbsolutePath(fn) )  {
@@ -665,7 +669,7 @@ bool TEFile::SetFileTimes(const olxstr& fileName, uint64_t AccTime, uint64_t Mod
   struct UTIMBUF tb;
   tb.actime = AccTime;
   tb.modtime = ModTime;
-  return UTIME(OLXSTR(fileName), &tb) == 0 ? true : false;
+  return UTIME(OLXSTR(OLX_OS_PATH(fileName)), &tb) == 0;
 }
 //..............................................................................
 // thanx to Luc - I have completely forgotten about stat!
@@ -873,12 +877,24 @@ bool TEFile::Rename(const olxstr& from, const olxstr& to, bool overwrite)  {
   return rename( OLXSTR(from), OLXSTR(to) ) != -1;
 }
 //..............................................................................
-void TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite )  {
-  if( Exists(To) && !overwrite )  return;
+bool TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite)  {
+  if( Exists(To) && !overwrite )  return false;
   // need to check that the files are not the same though...
-  TEFile in( From, "rb" );
-  TEFile out( To, "w+b" );
-  out << in;
+  try  {
+    struct STAT_STR the_stat;
+    olxstr from = OLX_OS_PATH(From);
+    olxstr to = OLX_OS_PATH(To);
+    if( STAT(OLXSTR(from), &the_stat) != 0 )
+      return false;
+    TEFile in(from, "rb");
+    TEFile out(to, "w+b");
+    out << in;
+    out.Close();
+    chmod(OLXSTR(to), the_stat.st_mode);
+    SetFileTimes(to, the_stat.st_atime, the_stat.st_mtime);
+    return true;
+  }
+  catch(...)  {  return false;  }
 }
 //..............................................................................
 olxstr TEFile::AbsolutePathTo(const olxstr &Path, const olxstr &relPath ) {
