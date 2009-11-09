@@ -54,25 +54,29 @@ public:
     SetTag(-1);
   }
 
-  template <class AType> TMatrix(const TMatrix<AType>& M)  {
-    FData = NULL;
-    Fn = Fm = 0;
-    *this = M;
+  template <class AType> TMatrix(const TMatrix<AType>& M) : Fn(M.Fn), Fm(M.Fm)  {
+    if( (Fn == 0) || (Fm == 0) )   {  FData = NULL;  return;  }
+    FData = new TVector<MatType>[Fn];
+    for( size_t i=0; i < Fn; i++ )  
+      FData[i] = M[i];
   }
 
-  TMatrix(const TMatrix& M)  {
-    FData = NULL;
-    Fn = Fm = 0;
-    *this = M;
+  TMatrix(const TMatrix& M) : Fn(M.Fn), Fm(M.Fm)  {
+    if( (Fn == 0) || (Fm == 0) )   {  FData = NULL;  return;  }
+    FData = new TVector<MatType>[Fn];
+    for( size_t i=0; i < Fn; i++ )  
+      FData[i] = M[i];
   }
 
   virtual ~TMatrix()  {  Clear();  }
 
-  size_t Vectors() const  {  return Fn;  }
+  size_t Vectors() const {  return Fn;  }
   size_t Elements() const {  return Fm;  } 
 
-  TVector<MatType>& operator [](size_t index) const {  return FData[index];  }
-  TVector<MatType>& Data(size_t index) const {  return FData[index];  }
+  const TVector<MatType>& operator [](size_t index) const {  return FData[index];  }
+  TVector<MatType>& operator [](size_t index) {  return FData[index];  }
+  const TVector<MatType>& GetVector(size_t index) const {  return FData[index];  }
+  TVector<MatType>& GetVector(size_t index) {  return FData[index];  }
 
   /* the function multiplies a matrix by a column vector. Only the number of vector
    elements is taken from the matrix - no error will be generated if the matrix dimensions
@@ -177,7 +181,7 @@ public:
     return *this;
   }
 
-  TMatrix& operator  = ( const TMatrix& C )  {
+  TMatrix& operator  = (const TMatrix& C)  {
     Resize(C.Vectors(), C.Elements());
     for( size_t i = 0; i < Fn; i++ )
       FData[i] = C[i];
@@ -299,21 +303,23 @@ public:
   }
 
   TMatrix& Transpose()  {
-    MatType P;
     if( Fn != Fm )
       throw TFunctionFailedException(__OlxSourceInfo, "incompatible matrix dimensions");
     for( size_t i=0; i < Fm; i++ )  {
       for( size_t j=i+1; j < Fn; j++ )  {  // need to go around a half of matrix
         if( i == j )  continue;
-        P = FData[j][i];
-        FData[j][i] = FData[i][j];
-        FData[i][j] = P;
+        olx_swap(FData[j][i], FData[i][j]);
       }
     }
     return *this;
   }
   static TMatrix Transpose(const TMatrix& matr)  {
-    return TMatrix(matr).Transpose();
+    TMatrix rv(matr.Elements(), matr.Vectors());
+    for( size_t i = 0; i < matr.Vectors(); i++ )  {
+      for( size_t j = 0; j < matr.Elements(); j++ )
+        rv[j][i] = matr[i][j];
+    }
+    return rv;
   }
 
   MatType Trace() const  {

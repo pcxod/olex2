@@ -40,7 +40,28 @@ double TCHNExp::MolWeight()  {
   return w;
 }
 //..............................................................................
-void TCHNExp::CHN(double &C, double &H, double &N, double &Mr)  {
+double TCHNExp::CHN(olxdict<short, double, TPrimitiveComparator>& rv) const {
+  TStrPObjList<olxstr,double> E1;
+  CalcSummFormula(E1);
+  TPtrList<TBasicAtomInfo> bais(E1.Count());
+  double w = 0;
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
+  for( size_t i=0; i < E1.Count(); i++ )  {
+    bais[i] = AtomsInfo.FindAtomInfoBySymbol(E1[i]);
+    w += (E1.GetObject(i) * bais[i]->GetMr());
+  }
+  if( w == 0 )  w = 1;  // if w == 0 then all components are zero, so ... why not?
+  for( size_t i=0; i < rv.Count(); i++ )
+    rv.GetValue(i) = 0.0;
+  for( size_t i=0; i < E1.Count(); i++ )  {
+    size_t ei = rv.IndexOf(bais[i]->GetIndex());
+    if( ei == InvalidIndex )  continue;
+    rv.GetValue(ei) = E1.GetObject(i)*bais[i]->GetMr();
+  }
+  return w;
+}
+//..............................................................................
+void TCHNExp::CHN(double &C, double &H, double &N, double &Mr) const {
   TStrPObjList<olxstr,double> E1;
   CalcSummFormula(E1);
   double w = 0;
@@ -65,25 +86,29 @@ void TCHNExp::CHN(double &C, double &H, double &N, double &Mr)  {
 olxstr TCHNExp::Composition()  {
   TStrPObjList<olxstr,double> E1;
   CalcSummFormula(E1);
-  double w = 0, v;
+  TPtrList<TBasicAtomInfo> bais(E1.Count());
+  double w = 0;
   olxstr Res("Calculated ("), SF;
   TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   for( size_t i=0; i < E1.Count(); i++ )  {
-    TBasicAtomInfo* I = AtomsInfo.FindAtomInfoBySymbol( E1[i] );
-    SF << E1[i] << E1.GetObject(i) <<  ' ';
-    w += (E1.GetObject(i) * I->GetMr() );
+    bais[i] = AtomsInfo.FindAtomInfoBySymbol(E1[i]);
+    SF << E1[i] << E1.GetObject(i);
+    if( (i+1) < E1.Count() )
+      SF <<  ' ';
+    w += (E1.GetObject(i) * bais[i]->GetMr());
   }
   Res << SF << "): ";
   if( w == 0 )  w = 1;  // if w == 0 then all components are zero, so ... why not?
   for( size_t i=0; i < E1.Count(); i++ )  {
-    TBasicAtomInfo* I = AtomsInfo.FindAtomInfoBySymbol( E1[i] );
-    v = (E1.GetObject(i) * I->GetMr());
-    Res << E1[i] <<  ": " << olxstr::FormatFloat(2, v/w*100) << "; ";
+    const double v = (E1.GetObject(i) * bais[i]->GetMr());
+    Res << E1[i] <<  ": " << olxstr::FormatFloat(3, v/w*100);
+    if( (i+1) < E1.Count() )
+      Res << "; ";
   }
   return Res;
 }
 //..............................................................................
-void TCHNExp::CalcSummFormula(TStrPObjList<olxstr,double>& E)  {
+void TCHNExp::CalcSummFormula(TStrPObjList<olxstr,double>& E) const {
   bool Added;
   TStrPObjList<olxstr,double> E1;
   for( size_t i=0; i < Exp.Count(); i++ )  {
