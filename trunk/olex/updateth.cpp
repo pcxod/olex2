@@ -90,6 +90,7 @@ int UpdateThread::Run()  {
           if( TEFile::Copy(updater_file, dest) )
             TEFile::DelFile(updater_file);
         }
+        TEFile::Chmod(dest, S_IEXEC);
       }
       catch(...) {}
     }
