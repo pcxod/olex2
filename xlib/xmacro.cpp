@@ -3341,11 +3341,18 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroE
   olxstr names[4] = {chne.SummFormula(EmptyString), EmptyString, EmptyString, EmptyString};
   ematd m(obs.Count(), 3), chn(4, obs.Count()+1);
   evecd p(obs.Count());
+  olxstr fit_info_from = "Fitting ", fit_info_to;
   for( size_t i=0; i < obs.Count(); i++ )  {
     p[i] = calc.GetValue(i) - obs.GetValue(i)*Mw;
     chn[0][i] = calc.GetValue(i);
-    TBasicApp::GetLog() << calc.GetKey(i) << "->" << obs.GetKey(i) << '\n';
+    fit_info_from << ai.GetAtomInfo(calc.GetKey(i)).GetSymbol() << ':' << olxstr::FormatFloat(2, calc.GetValue(i)*100/Mw);
+    fit_info_to << ai.GetAtomInfo(obs.GetKey(i)).GetSymbol() << ':' << olxstr::FormatFloat(2, obs.GetValue(i)*100);
+    if( (i+1) < calc.Count() )  {
+       fit_info_to << ' ';
+       fit_info_from << ' ';
+    }
   }
+  TBasicApp::GetLog() << (fit_info_from << " to " << fit_info_to << '\n');
   chn[0][obs.Count()] = Mw;
   for( size_t i=0; i < solvents.Count(); i++ )  {
     chne.LoadFromExpression(solvents[i]);
