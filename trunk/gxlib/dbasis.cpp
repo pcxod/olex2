@@ -39,7 +39,7 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   ematd M, M2;
   M.Assign(FAU->GetCellToCartesian(), 3, 3);
-  const ematd M1(M);
+  ematd M1(M);
   for( int i=0; i < 3; i++ )  {
     if( M1[i].Length() == 0 )  
       M1[i][i] = 1;

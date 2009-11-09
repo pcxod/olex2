@@ -672,7 +672,6 @@ bool TEFile::SetFileTimes(const olxstr& fileName, uint64_t AccTime, uint64_t Mod
   return UTIME(OLXSTR(OLX_OS_PATH(fileName)), &tb) == 0;
 }
 //..............................................................................
-// thanx to Luc - I have completely forgotten about stat!
 time_t TEFile::FileAge(const olxstr& fileName)  {
   struct STAT_STR the_stat;
   if( STAT(OLXSTR(OLX_OS_PATH(fileName)), &the_stat) != 0 )

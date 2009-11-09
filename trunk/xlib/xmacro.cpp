@@ -27,6 +27,9 @@
 #include "sgset.h"
 #include "sfutil.h"
 #include "infotab.h"
+#include "idistribution.h"
+#include "ipattern.h"
+#include "chnexp.h"
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
@@ -162,6 +165,12 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(Push, EmptyString, (fpAny^(fpNone|fpOne|fpTwo))|psFileLoaded, "Shifts the sctructure (or provided fragments) by the provided translation");
   xlib_InitMacro(Transform, EmptyString, fpAny|psFileLoaded, "Transforms the structure or provided fragments according to the given matrix\
  (a11, a12, a13, a21, a22, a23, a31, a32, a33, t1, t2, t3)");
+  xlib_InitMacro(FitCHN, EmptyString, (fpAny^(fpNone|fpOne)),
+    "Fits CHN analysis for given formula and observed data given a lits of possible solvents. A mixture of up to 3 solvents only considered,\
+ however any number of observed elements can be provided.\
+ Example: FitCHN C12H22O11 C:40.1 H:6 N:0 H2O CCl3H" );
+  xlib_InitMacro(CalcCHN, EmptyString, fpNone|fpOne, "Calculates CHN composition of current structure or for provided formula" );
+  xlib_InitMacro(CalcMass, EmptyString, fpNone|fpOne, "Calculates Mass spectrum of current structure or for provided formula" );
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -3161,5 +3170,242 @@ void XLibMacros::macDescribe(TStrObjList &Cmds, const TParamList &Options, TMacr
   for( size_t i=0; i < lst.Count(); i++ )
     out.Hyphenate(lst[i], 80, true);
   xapp.GetLog() << out << '\n'; 
+}
+//..............................................................................
+void XLibMacros::macCalcCHN(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TXApp& xapp = TXApp::GetInstance();
+  if( !xapp.XFile().HasLastLoader() && Cmds.IsEmpty() )  {
+    Error.ProcessingError(__OlxSrcInfo, "Nor file is loaded neither formula is provided" );
+    return;
+  }
+  TCHNExp chn;
+  double C=0, H=0, N=0, Mr=0;
+  if( Cmds.Count() == 1 )  {
+    chn.LoadFromExpression(Cmds[0]);
+    chn.CHN(C, H, N, Mr);
+    TBasicApp::GetLog() << (olxstr("Molecular weight: ") << Mr << '\n');
+    olxstr Msg("C: ");
+    Msg << olxstr::FormatFloat(3, C*100./Mr) <<
+      " H: " << olxstr::FormatFloat(3, H*100./Mr) <<
+      " N: " << olxstr::FormatFloat(3, N*100./Mr);
+    TBasicApp::GetLog() << (Msg << '\n' << '\n');
+    TBasicApp::GetLog() << (olxstr("Full composition:\n") << chn.Composition() << '\n');
+    return;
+  }
+  chn.LoadFromExpression(xapp.XFile().GetAsymmUnit().SummFormula(EmptyString));
+  chn.CHN(C, H, N, Mr);
+  TBasicApp::GetLog() << (olxstr("Molecular weight: ") << Mr << '\n');
+  olxstr Msg("C: ");
+  Msg << olxstr::FormatFloat(3, C*100./Mr) << 
+    " H: " << olxstr::FormatFloat(3, H*100./Mr) <<
+    " N: " << olxstr::FormatFloat(3, N*100./Mr);
+  TBasicApp::GetLog() << (Msg << '\n' << '\n');
+  TBasicApp::GetLog() << (olxstr("Full composition:\n") << chn.Composition() << '\n');
+}
+//..............................................................................
+void XLibMacros::macCalcMass(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TXApp& xapp = TXApp::GetInstance();
+  if( !xapp.XFile().HasLastLoader() && Cmds.IsEmpty() )  {
+    Error.ProcessingError(__OlxSrcInfo, "Nor file is loaded neither formula is provided" );
+    return;
+  }
+  TIPattern ip;
+  if( Cmds.Count() == 1 )  {
+    olxstr err;
+    if( !ip.Calc(Cmds[0], err, true, 0.5) )  {
+      Error.ProcessingError(__OlxSrcInfo, "could not parse the given expression: ") << err;
+      return;
+    }
+  }
+  else  {
+    olxstr err;
+    if( !ip.Calc(xapp.XFile().GetAsymmUnit().SummFormula(EmptyString), err, true, 0.5) )  {
+      Error.ProcessingError(__OlxSrcInfo, "could not parse the given expression: ") << err;
+      return;
+    }
+  }
+  for( size_t i=0; i < ip.PointCount(); i++ )  {
+    const TSPoint& point = ip.Point(i);
+    if( point.Y < 0.001 )  break;
+    olxstr Msg = point.X;
+    Msg.Format(11, true, ' ');
+    Msg << ": " << point.Y;
+    xapp.GetLog() << (Msg << '\n');
+  }
+  TBasicApp::GetLog() << ("    -- NOTE THAT NATURAL DISTRIBUTION OF ISOTOPES IS ASSUMED --    \n");
+  TBasicApp::GetLog() << ("******* ******* SPECTRUM ******* ********\n");
+  ip.SortDataByMolWeight();
+  for( size_t i=0; i < ip.PointCount(); i++ )  {
+    const TSPoint& point = ip.Point(i);
+    if( point.Y < 1 )  continue;
+    olxstr Msg = point.X;
+    Msg.Format(11, true, ' ');
+    Msg << "|";
+    long yVal = olx_round(point.Y/2);
+    for( long j=0; j < yVal; j++ )
+      Msg << '-';
+    xapp.GetLog() << (Msg << '\n');
+  }
+}
+//..............................................................................
+evecd XLibMacros_fit_chn_calc(const ematd& m, const evecd& p, size_t cnt)  {
+  ematd _m(m.Vectors(), cnt), _mt(cnt, m.Vectors());
+  evecd _v(m.Vectors()), res(cnt);
+  for( size_t i=0; i < m.Vectors(); i++ )  {
+    for( size_t j=0; j < cnt; j++ )  {
+      _m[i][j] = m[i][j];
+      _mt[j][i] = m[i][j];
+    }
+    _v[i] = p[i];
+  }
+  ematd nm = _mt*_m;
+  evecd nv = _mt*_v;
+  if( cnt == 1 )  {
+    if( nm[0][0] == 0 )
+      res[0] = -1;
+    else
+      res[0] = nv[0]/nm[0][0];
+  }
+  else  {  
+    try  {  ematd::GauseSolve(nm, nv, res);  }
+    catch(...)  {
+      for( size_t i=0; i < res.Count(); i++ )
+        res[i] = -1.0;
+    }
+  }
+  return res;
+}
+struct XLibMacros_ChnFitData  {
+  double dev;
+  olxstr formula;
+  int Compare(const XLibMacros_ChnFitData& v) const {
+    const double df = dev - v.dev;
+    return df < 0 ? -1 : (df > 0 ? 1 : 0);
+  }
+};
+void XLibMacros_fit_chn_process(TTypeList<XLibMacros_ChnFitData>& list, const ematd& chn,
+                                const evecd& p,
+                                const olxstr names[4],
+                                const olxdict<short, double, TPrimitiveComparator>& obs,
+                                size_t cnt)
+{
+  for( size_t i=0; i < cnt; i++ )  {
+    if( p[i] < 0 || fabs(p[i]) < 0.05 || p[i] > 5 )  return;
+  }
+  double mw = chn[0][obs.Count()];
+  evecd e(obs.Count());
+  for( size_t i=0; i < obs.Count(); i++ )
+    e[i] = chn[0][i];
+  olxstr name = names[0];
+  for( size_t i=0; i < cnt; i++ )  {
+    mw += p[i]*chn[i+1][obs.Count()];
+    for( size_t j=0; j < obs.Count(); j++ )
+      e[j] += p[i]*chn[i+1][j];
+    name << " (" << names[i+1] << ')';
+    name << olxstr::FormatFloat(2, p[i]);
+  }
+  XLibMacros_ChnFitData& cfd = list.AddNew();
+  cfd.formula = name;
+  double dev = 0;
+  for( size_t i=0; i < obs.Count(); i++ )  {
+    dev += olx_sqr(obs.GetValue(i)-e[i]/mw);
+  }
+  cfd.dev = sqrt(dev);
+}
+void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TCHNExp chne;
+  chne.LoadFromExpression(Cmds[0]);
+  TStrList solvents;
+  olxdict<short, double, TPrimitiveComparator> obs, calc;
+  TAtomsInfo& ai = TAtomsInfo::GetInstance();
+  for( size_t i=1; i < Cmds.Count(); i++ )  {
+    size_t si = Cmds[i].IndexOf(':');
+    if( si == InvalidIndex )
+      solvents.Add(Cmds[i]);
+    else  {
+      TBasicAtomInfo* bai = ai.FindAtomInfoBySymbol(Cmds[i].SubStringTo(si));
+      if( bai == NULL )  {
+        Error.ProcessingError(__OlxSrcInfo, olxstr("Invalid element: ") << Cmds[i]);
+        return;
+      }
+      obs(bai->GetIndex(), Cmds[i].SubStringFrom(si+1).ToDouble()/100);
+      calc(bai->GetIndex(), 0);
+    }
+  }
+  if( solvents.IsEmpty() )  {
+    Error.ProcessingError(__OlxSrcInfo, "a space separated list of solvents is expected");
+    return;
+  }
+  TTypeList<XLibMacros_ChnFitData> list;
+  const double Mw = chne.CHN(calc);
+  olxstr names[4] = {chne.SummFormula(EmptyString), EmptyString, EmptyString, EmptyString};
+  ematd m(obs.Count(), 3), chn(4, obs.Count()+1);
+  evecd p(obs.Count());
+  for( size_t i=0; i < obs.Count(); i++ )  {
+    p[i] = calc.GetValue(i) - obs.GetValue(i)*Mw;
+    chn[0][i] = calc.GetValue(i);
+    TBasicApp::GetLog() << calc.GetKey(i) << "->" << obs.GetKey(i) << '\n';
+  }
+  chn[0][obs.Count()] = Mw;
+  for( size_t i=0; i < solvents.Count(); i++ )  {
+    chne.LoadFromExpression(solvents[i]);
+    const double mw = chne.CHN(calc);
+    names[1] = chne.SummFormula(EmptyString);
+    for( size_t i1=0; i1 < obs.Count(); i1++ )  {
+      m[i1][0] = obs.GetValue(i1)*mw - calc.GetValue(i1);
+      chn[1][i1] = calc.GetValue(i1);
+    }
+    chn[1][obs.Count()] = mw;
+    evecd res = XLibMacros_fit_chn_calc(m, p, 1);
+    XLibMacros_fit_chn_process(list, chn, res, names, obs, 1);
+    for( size_t j = i+1; j < solvents.Count(); j++ )  {
+      chne.LoadFromExpression(solvents[j]);
+      const double mw1 = chne.CHN(calc);
+      names[2] = chne.SummFormula(EmptyString);
+      for( size_t i1=0; i1 < obs.Count(); i1++ )  {
+        m[i1][1] = obs.GetValue(i1)*mw1 - calc.GetValue(i1);
+        chn[2][i1] = calc.GetValue(i1);
+      }
+      chn[2][obs.Count()] = mw1;
+      evecd res = XLibMacros_fit_chn_calc(m, p, 2);
+      XLibMacros_fit_chn_process(list, chn, res, names, obs, 2);
+      for( size_t k=j+1; k < solvents.Count(); k++ )  {
+        chne.LoadFromExpression(solvents[k]);
+        const double mw2 = chne.CHN(calc);
+        names[3] = chne.SummFormula(EmptyString);
+        for( size_t i1=0; i1 < obs.Count(); i1++ )  {
+          m[i1][2] = obs.GetValue(i1)*mw2 - calc.GetValue(i1);
+          chn[3][i1] = calc.GetValue(i1);
+        }
+        chn[3][obs.Count()] = mw2;
+        evecd res = XLibMacros_fit_chn_calc(m, p, 3);
+        XLibMacros_fit_chn_process(list, chn, res, names, obs, 3);
+      }
+    }
+  }
+  if( list.IsEmpty() )
+    TBasicApp::GetLog() << "Could not fit provided data\n";
+  else  {
+    list.QuickSorter.Sort<TComparableComparator>(list);
+    TETable tab(list.Count(), 3);
+    tab.ColName(0) = "Formula";
+    tab.ColName(1) = "CHN";
+    tab.ColName(2) = "Deviation";
+    TAtomsInfo& ai = TAtomsInfo::GetInstance();
+    for( size_t i=0; i < list.Count(); i++ )  {
+      tab[i][0] = list[i].formula;
+      chne.LoadFromExpression(list[i].formula);
+      const double M = chne.CHN(calc);
+      for( size_t j=0; j < calc.Count(); j++ )  {
+        tab[i][1] << ai.GetAtomInfo(calc.GetKey(j)).GetSymbol() << ':' << olxstr::FormatFloat(2, calc.GetValue(j)*100/M);
+        if( (j+1) < calc.Count() )
+          tab[i][1] << ' ';
+      }
+      tab[i][2] = olxstr::FormatFloat(2, list[i].dev*100);
+    }
+    TStrList sl;
+    tab.CreateTXTList(sl, "Summary", true, false, ' ');
+    TBasicApp::GetLog() << sl << '\n';
+  }
 }
 //..............................................................................

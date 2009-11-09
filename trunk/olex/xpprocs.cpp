@@ -30,10 +30,6 @@
 #include "glgroup.h"
 #include "gpcollection.h"
 
-#include "idistribution.h"
-#include "ipattern.h"
-#include "chnexp.h"
-
 #include "xatom.h"
 #include "xbond.h"
 #include "xplane.h"
@@ -2303,74 +2299,6 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       gxl->SetLabel(lb);
     }
     gxl->SetVisible(true);
-  }
-}
-//..............................................................................
-void TMainForm::macCalcChn(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( !FXApp->XFile().HasLastLoader() && Cmds.IsEmpty() )  {
-    Error.ProcessingError(__OlxSrcInfo, "nor file is loaded neither formula is provided" );
-    return;
-  }
-  TCHNExp chn;
-  double C=0, H=0, N=0, Mr=0;
-  if( Cmds.Count() == 1 )  {
-    chn.LoadFromExpression(Cmds[0]);
-    chn.CHN(C, H, N, Mr);
-    TBasicApp::GetLog() << (olxstr("Molecular weight: ") << Mr << '\n');
-    olxstr Msg("C: ");   Msg << C*100./Mr  << " H: " << H*100./Mr << " N: " << N*100./Mr;
-    TBasicApp::GetLog() << (Msg << '\n' << '\n');
-    TBasicApp::GetLog() << (olxstr("Full composition:\n") << chn.Composition() << '\n');
-    return;
-  }
-  chn.LoadFromExpression(FXApp->XFile().GetAsymmUnit().SummFormula(EmptyString));
-  chn.CHN(C, H, N, Mr);
-  TBasicApp::GetLog() << (olxstr("Molecular weight: ") << Mr << '\n');
-  olxstr Msg("C: ");   Msg << C*100./Mr << " H: " << H*100./Mr << " N: " << N*100./Mr;
-  TBasicApp::GetLog() << (Msg << '\n' << '\n');
-  TBasicApp::GetLog() << (olxstr("Full composition:\n") << chn.Composition() << '\n');
-}
-//..............................................................................
-void TMainForm::macCalcMass(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( !FXApp->XFile().HasLastLoader() && Cmds.IsEmpty() )  {
-    Error.ProcessingError(__OlxSrcInfo, "nor file is loaded neither formula is provided" );
-    return;
-  }
-  TIPattern ip;
-  if( Cmds.Count() == 1 )  {
-    olxstr err;
-    if( !ip.Calc(Cmds[0], err, true, 0.5) )  {
-      Error.ProcessingError(__OlxSrcInfo, "could not parse the given expression: ") << err;
-      return;
-    }
-  }
-  else  {
-    olxstr err;
-    if( !ip.Calc(FXApp->XFile().GetAsymmUnit().SummFormula(EmptyString), err, true, 0.5) )  {
-      Error.ProcessingError(__OlxSrcInfo, "could not parse the given expression: ") << err;
-      return;
-    }
-  }
-  for( size_t i=0; i < ip.PointCount(); i++ )  {
-    const TSPoint& point = ip.Point(i);
-    if( point.Y < 0.001 )  break;
-    olxstr Msg = point.X;
-    Msg.Format(11, true, ' ');
-    Msg << ": " << point.Y;
-    TBasicApp::GetLog() << (Msg << '\n');
-  }
-  TBasicApp::GetLog() << ("    -- NOTE THAT NATURAL DISTRIBUTION OF ISOTOPES IS ASSUMED --    \n");
-  TBasicApp::GetLog() << ("******* ******* SPECTRUM ******* ********\n");
-  ip.SortDataByMolWeight();
-  for( size_t i=0; i < ip.PointCount(); i++ )  {
-    const TSPoint& point = ip.Point(i);
-    if( point.Y < 1 )  continue;
-    olxstr Msg = point.X;
-    Msg.Format(11, true, ' ');
-    Msg << "|";
-    long yVal = olx_round(point.Y/2);
-    for( long j=0; j < yVal; j++ )
-      Msg << '-';
-    TBasicApp::GetLog() << (Msg << '\n');
   }
 }
 //..............................................................................

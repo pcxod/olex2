@@ -711,8 +711,6 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
     "Prints/sets the scale the Q-peak size relative to other atoms, default is 1");
   this_InitMacroD(Label, "type-type of labels to make;\
   possible options - subscript, brackers, default", fpAny, "Creates moveable labels for provided atoms (selection)");
-  this_InitMacroD(CalcChn, EmptyString, fpNone|fpOne, "Calculates CHN composition of curent structure or for provided formula" );
-  this_InitMacroD(CalcMass, EmptyString, fpNone|fpOne, "Calculates Mass spectrum of curent structure or for provided formula" );
 
   this_InitMacroD(Focus, EmptyString, fpNone, "Sets input focus to the console" );
   this_InitMacroD(Refresh, EmptyString, fpNone, "Refreshes the GUI" );

@@ -320,9 +320,6 @@ private:
   DefMacro(QPeakScale)
   DefMacro(QPeakSizeScale)
 
-  DefMacro(CalcChn)
-  DefMacro(CalcMass)
-
   DefMacro(Label)
 
   DefMacro(Focus)

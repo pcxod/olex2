@@ -74,6 +74,10 @@ class XLibMacros  {
   static DefMacro(Cif2Tab)
   static DefMacro(Cif2Doc)
 
+  static DefMacro(CalcCHN)
+  static DefMacro(CalcMass)
+  static DefMacro(FitCHN)
+
   static DefFunc(FileName)
   static DefFunc(FileExt)
   static DefFunc(FilePath)
@@ -231,7 +235,6 @@ protected:
         return (res > 0) ? 1 : 0;
     }
   };
-
 };
 //---------------------------------------------------------------------------
 #endif
