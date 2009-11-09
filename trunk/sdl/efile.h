@@ -152,14 +152,14 @@ public:
     w += Write(NewLineSequence, NewLineSequenceLength);
     return w;
   }
-  template <class T> inline size_t Write(const T& data)    {  return IDataOutputStream::Write(data);  }
+  template <class T> inline size_t Write(const T& data)  {  return IDataOutputStream::Write(data);  }
   template <class T> inline size_t Writenl(const T& data)  {  return IDataOutputStream::Writenl(data);  }
 
   virtual inline size_t GetSize() const {  return Length();  }
   virtual void SetPosition(size_t p);
   virtual size_t GetPosition() const;
 
-  inline const olxstr& GetName()  const  {  return FName; }
+  inline const olxstr& GetName() const {  return FName; }
   // closes the file handle and deletes the file
   bool Delete();
   // temporary file will be deleted on close, if fails - exception will be thrown
@@ -168,6 +168,8 @@ public:
   static bool Access(const olxstr& F, const short Flags);
   // uses access, so is case sensitive, works for both dirs and files
   static bool Exists(const olxstr &F);
+  // just a wrapper for chmod...
+  static bool Chmod(const olxstr& f, const short Flags);
   /* a case insensitive alternative (for windows - same as above) 
     the case sensitive name is stored in res (the first one if there
     are several file names matching
@@ -219,8 +221,9 @@ public:
     return '/';
 #endif
   }
-  // copies a file, use overwrite option to modify the behaviour
-  static void Copy(const olxstr& From, const olxstr& to, bool overwrite = true);
+  /* copies a file, use overwrite option to modify the behaviour, if overwrite is false 
+  and file exists the return value is false */
+  static bool Copy(const olxstr& From, const olxstr& to, bool overwrite = true);
   // renames a file, if the file with 'to' name exists, behaves according to the overwrite flag
   static bool Rename(const olxstr& from, const olxstr& to, bool overwrite = true);
   /*works for windows only, for other operation systems return LocalFN*/
