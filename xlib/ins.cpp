@@ -95,7 +95,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       cx.AfixGroups.Clear();
       cx.Part = 0;
     }
-    else if( Toks.Count() < 6 )  // atom sgould have at least 7 parameters
+    else if( Toks.Count() < 6 || Toks.Count() > 12 )  // atom sgould have at least 7 parameters
       Ins.Add(InsFile[i]);
     else {
       bool qpeak = olxstr::o_toupper(Toks[0].CharAt(0)) == 'Q';
@@ -104,7 +104,12 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       // is a valid atom
       //if( !atomsInfo.IsAtom(Toks[0]))  {  Ins.Add(InsFile[i]);  continue;  }
       if( !Toks[1].IsNumber() )         {  Ins.Add(InsFile[i]);  continue;  }
-      uint32_t index  = Toks[1].ToUInt();
+      uint32_t index = 0;
+      try { index = Toks[1].ToUInt();  }
+      catch(...)  {
+        Ins.Add(InsFile[i]);
+        continue;
+      }
       if( index < 1 || index > cx.BasicAtoms.Count() )  {  // wrong index in SFAC
         Ins.Add(InsFile[i]);
         continue;
