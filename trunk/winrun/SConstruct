@@ -76,7 +76,7 @@ env.Append(LINKFLAGS=['/ENTRY:wWinMainCRTStartup',
                       #'/NODEFAULTLIB:uafxcw', 
                       '/NXCOMPAT', 
                       '/DELAYLOAD:OleAcc.dll',
-                      #'/DYNAMICBASE',
+                      '/MANIFESTUAC:"level=\'highestAvailable\'"',
                       '/OPT:REF',
                       '/OPT:ICF'])
 if architecture == '64bit':

@@ -80,6 +80,7 @@
 
 #include "filesystem.h"
 #include "httpfs.h"
+#include "wxzipfs.h"
 
 #include "ecast.h"
 #include "sls.h"

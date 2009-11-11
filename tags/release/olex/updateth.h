@@ -2,9 +2,8 @@
 #define __olx_update_thread_H
 #include "olxth.h"
 #include "settingsfile.h"
-#include "wxhttpfs.h"
-#include "wxzipfs.h"
 #include "utf8file.h"
+#include "filesystem.h"
 
 class UpdateThread : public AOlxThread  {
   size_t time_out;

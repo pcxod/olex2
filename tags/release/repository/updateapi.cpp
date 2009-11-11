@@ -12,7 +12,6 @@
 #include "dataitem.h"
 #include "patchapi.h"
 
-//#define __WXWIDGETS__
 #include "httpfs.h"
 typedef THttpFileSystem HttpFS;
 
@@ -20,7 +19,6 @@ typedef THttpFileSystem HttpFS;
   #include "winzipfs.h"
   typedef TWinZipFileSystem ZipFS;
 #else
-  #include "wxhttpfs.h"
   #include "wxzipfs.h"
   typedef TwxZipFileSystem ZipFS;
 #endif

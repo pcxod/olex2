@@ -2,7 +2,7 @@
 //
 
 #include <iostream>
-
+#include "ebase.h"
 #ifndef __WIN32__
   #include "wx/app.h"
 #endif

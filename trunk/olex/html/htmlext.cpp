@@ -11,6 +11,7 @@
 #include "../xglapp.h"
 #include "../obase.h"
 #include "utf8file.h"
+#include "wxzipfs.h"
 
 #define this_InitFunc(funcName, argc) \
   (*THtml::Library).RegisterFunction( new TFunction<THtml>(this, &THtml::fun##funcName, #funcName, argc));\
