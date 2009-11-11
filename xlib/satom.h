@@ -125,17 +125,29 @@ public:
     } 
     Ref(const Ref& r) : catom_id(r.catom_id), 
       matrix_id(r.matrix_id), 
-      matrices(r.matrices == NULL ? NULL : new TArrayList<uint32_t>(*r.matrices) )  
+      matrices(r.matrices == NULL ? NULL : new TArrayList<uint32_t>(*r.matrices))  
     {}
+    ~Ref()  {
+      if( matrices != NULL )
+        delete matrices;
+    }
     Ref& operator = (const Ref& r)  {
       catom_id = r.catom_id;
       matrix_id = r.matrix_id;
       matrices = (r.matrices == NULL ? NULL : new TArrayList<uint32_t>(*r.matrices));
       return *this;
     }
-    ~Ref()  {
-      if( matrices != NULL )
-        delete matrices;
+    bool operator == (const Ref& r) const {
+      if( catom_id == r.catom_id )  {
+        if( matrix_id != r.matrix_id )  {
+          if( matrices == NULL || r.matrices == NULL )
+            return false;
+          for( size_t i=0; i < r.matrices->Count(); i++ )
+            if( matrix_id == (*r.matrices)[i] )
+              return true;
+        }
+      }
+      return false;
     }
   };
 
@@ -147,15 +159,14 @@ public:
     }
     return false;
   }
-  Ref GetRef() const  {
-    return Ref(FCAtom->GetId(), Matrices);
-  }
+  Ref GetRef() const {  return Ref(FCAtom->GetId(), Matrices);  }
 
   virtual void ToDataItem(TDataItem& item) const;
   virtual void FromDataItem(const TDataItem& item, class TLattice& parent);
 };
-  typedef TTypeList<TSAtom> TSAtomList;
-  typedef TPtrList<TSAtom> TSAtomPList;
+
+typedef TTypeList<TSAtom> TSAtomList;
+typedef TPtrList<TSAtom> TSAtomPList;
 
 EndXlibNamespace()
 #endif
