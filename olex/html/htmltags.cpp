@@ -4,6 +4,7 @@
 #include "../xglapp.h"
 #include "wx/html/htmlcell.h"
 #include "wx/html/m_templ.h"
+#include "wxzipfs.h"
 
 #ifdef _UNICODE
   #define _StrFormat_ wxT("%ls")

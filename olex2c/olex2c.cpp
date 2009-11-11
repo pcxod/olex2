@@ -1,8 +1,6 @@
 // olex2c.cpp : Defines the entry point for the console application.
-//
-
 #include <iostream>
-
+#include "ebase.h"
 #ifndef __WIN32__
   #include "wx/app.h"
 #endif

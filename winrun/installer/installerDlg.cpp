@@ -680,7 +680,8 @@ Please run currently installed Olex2 to apply the updates and then exit Olex2 an
         if( (rename_status & rename_status_DataDir) == 0 )  {
           olxstr new_data_dir = patcher::PatchAPI::ComposeNewSharedDir(TShellUtil::GetSpecialFolderLocation(fiAppData), rp);
           if( TEFile::Exists(olex2_data_dir) )  {
-            if( !TEFile::Rename(olex2_data_dir, new_data_dir, true) )  {
+            // ignore if already exists
+            if( !TEFile::Exists(new_data_dir) && !TEFile::Rename(olex2_data_dir, new_data_dir, true) )  {
               MessageBox(_T("Failed to rename previous data folder"), _T("Error"), MB_OK|MB_ICONERROR);
               return false;
             }
@@ -755,6 +756,7 @@ void CInstallerDlg::InitRepositories()  {
     combo_box::add_item(this, IDC_CB_REPOSITORY, zipfn);
     combo_box::set_text(this, IDC_CB_REPOSITORY, zipfn);
   }
+  BringWindowToTop();
 }
 
 

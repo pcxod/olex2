@@ -110,9 +110,12 @@ public:
   // returns correpondinag value of the AtomsInfo list, Str can be "C10a" etc
   TBasicAtomInfo* FindAtomInfoEx(const olxstr& Str) const;
   // a simple check exact match is expected (case insesitive)
-  inline bool IsElement(const olxstr& S) const  {  return (FindAtomInfoBySymbol(S) != NULL);  }
+  bool IsElement(const olxstr& S) const {  return (FindAtomInfoBySymbol(S) != NULL);  }
   // checks if p is an element symbol, will correctly distinguis "C " and "Cd"
-  inline bool IsAtom(const olxstr &C)     const {  return (FindAtomInfoEx(C) != NULL);  }
+  bool IsAtom(const olxstr &C) const {  return (FindAtomInfoEx(C) != NULL);  }
+  static bool IsHAtom(const TBasicAtomInfo& bai)  {
+    return bai == iHydrogenIndex || bai == iDeuteriumIndex;
+  }
   // checks if p is an element symbol, will correctly distinguis "C " and "Cd"
   static bool IsShortcut(const olxstr &c) {  
     return c.Equalsi("Ph") || c.Equalsi("Cp") || c.Equalsi("Me") ||

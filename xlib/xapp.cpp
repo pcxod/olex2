@@ -221,12 +221,12 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
     :
       EmptyString
   );
-  // trim chars
-//  while( Name.Length() > 0 && olxstr::o_isalpabetic(Name.Last()) ) 
-//    Name.SetLength(Name.Length()-1);
+  // is H atom under consideration?
+  if( TAtomsInfo::IsHAtom(SA.GetAtomInfo()) && SA.GetTag() == -2 )
+    parts.Add(SA.CAtom().GetPart()).Add(&SA);
   for( size_t i=0; i < SA.NodeCount(); i++ )  {
     TSAtom& sa = SA.Node(i);
-    if( (sa.GetAtomInfo() == iHydrogenIndex || sa.GetAtomInfo() == iDeuteriumIndex) && sa.GetTag() == -2 )
+    if( TAtomsInfo::IsHAtom(sa.GetAtomInfo()) && sa.GetTag() == -2 )
       parts.Add(sa.CAtom().GetPart()).Add(&sa);
   }
   for( size_t i=0; i < parts.Count(); i++ )  {
@@ -257,7 +257,7 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
       }
       if( al[j]->GetLabel() != Labl )  {
         if( nu != NULL )  
-          nu->AddAtom(al[j]->CAtom(), al[j]->GetLabel() );
+          nu->AddAtom(al[j]->CAtom(), al[j]->GetLabel());
         al[j]->CAtom().Label() = Labl;
       }
       al[j]->CAtom().SetTag(0);
@@ -291,14 +291,15 @@ TUndoData* TXApp::FixHL()  {
       if( frag_id.IndexOf(satoms[i]->CAtom().GetFragmentId()) == InvalidIndex )
         frag_id.Add(satoms[i]->CAtom().GetFragmentId());
   }
-  for( size_t i=0; i < XFile().GetLattice().AtomCount(); i++ )  {
+  const size_t ac = XFile().GetLattice().AtomCount();
+  for( size_t i=0; i < ac; i++ )  {
     TSAtom& sa = XFile().GetLattice().GetAtom(i);
     if( !sa.CAtom().IsAvailable() || (sa.GetAtomInfo() == iQPeakIndex) )  {
       sa.SetTag(-1);
       continue;
     }
     const bool au_atom = sa.GetMatrix(0).IsFirst();
-    if( sa.GetAtomInfo() == iHydrogenIndex || sa.GetAtomInfo() == iDeuteriumIndex )  {
+    if( TAtomsInfo::IsHAtom(sa.GetAtomInfo()) )  {
       sa.SetTag(au_atom ? -2 : -1);  // mark as unpocessed or to skip
       if( au_atom )  {
         sa.CAtom().SetTag(-2);  // mark as unpocessed or to skip
@@ -322,6 +323,13 @@ TUndoData* TXApp::FixHL()  {
       for( size_t j=0; j < al.Count(); j++ )
         NameHydrogens(*al[j], undo, true);
     }
+  }
+  // check if there are any standalone h atoms left...
+  for( size_t i=0; i < ac; i++ )  {
+    TSAtom& sa = XFile().GetLattice().GetAtom(i);
+    if( !sa.CAtom().IsAvailable() )  continue;
+    if( TAtomsInfo::IsHAtom(sa.GetAtomInfo()) && sa.CAtom().GetTag() == -2 )
+      NameHydrogens(sa, undo, true);
   }
   return undo;
 }
