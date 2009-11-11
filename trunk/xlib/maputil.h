@@ -172,20 +172,25 @@ protected:
     const double d = a.QLength() - b.QLength();
     return d < 0 ? -1 : (d > 0 ? 1 : 0);
   }
+public:
   static void StandardiseVec(vec3d& v, const smatd_list& ml)  {
-    vec3d tmp;
+    // make sure we start from the right point...
+    for( size_t j=0; j < 3; j++ )  {
+      while( v[j] < 0 )  v[j] += 1.0;
+      while( v[j] >= 1.0 )  v[j] -= 1.0;
+    }
     bool changes = true;
     while( changes )  {
       changes = false;
       for( size_t i=0; i < ml.Count(); i++ )  {
-        tmp = ml[i]*v;
+        vec3d tmp = ml[i]*v;
         for( size_t j=0; j < 3; j++ )  {
           while( tmp[j] < 0 )  tmp[j] += 1.0;
           while( tmp[j] >= 1.0 )  tmp[j] -= 1.0;
         }
-        if( (tmp[0] < v[0]) ||        // sdandardise then ...
-          ( olx_abs(tmp[0]-v[0]) < 1e-5 && (tmp[1] < v[1])) ||
-          (olx_abs(tmp[0]-v[0]) < 1e-5 && olx_abs(tmp[1]-v[1]) < 1e-5 && (tmp[2] < v[2])) )    
+        if( (tmp[0] < v[0]) ||        // standardise then ...
+            (olx_abs(tmp[0]-v[0]) < 1e-5 && (tmp[1] < v[1])) ||
+            (olx_abs(tmp[0]-v[0]) < 1e-5 && olx_abs(tmp[1]-v[1]) < 1e-5 && (tmp[2] < v[2])) )    
         {
           v = tmp;
           changes = true;
@@ -193,7 +198,7 @@ protected:
       }
     }
   }
-public:
+  //
   static void MergePeaks(const smatd_list& ml, const mat3d& cell2cart, const vec3d& norm, 
     TArrayList<MapUtil::peak>& Peaks, TTypeList<MapUtil::peak>& out)  
   {
