@@ -7,20 +7,27 @@
 
 BeginXlibNamespace()
 
-const short plane_best = 1,
-            plane_worst = 2;
+const uint16_t
+  plane_best = 1,
+  plane_worst = 2;
+const uint16_t
+  plane_flag_deleted = 0x0001,
+  plane_flag_regular = 0x0002;
 
 class TSPlane : public TSObject<TNetwork>  {
 private:
   TTypeList< AnAssociation2<TSAtom*, double> > Crds;
   vec3d FNormal, FCenter;
   double FDistance;
-  bool  Deleted, Regular;
+  uint16_t Flags;
 public:
-  TSPlane(TNetwork* Parent);
-  virtual ~TSPlane();
+  TSPlane(TNetwork* Parent) : TSObject<TNetwork>(Parent), 
+    FDistance(0), Flags(0)  {}
+  virtual ~TSPlane()  {}
 
-  DefPropBIsSet(Deleted)
+  DefPropBFIsSet(Deleted, Flags, plane_flag_deleted)
+  // this is just a flag for the owner - is not used by the object itself
+  DefPropBFIsSet(Regular, Flags, plane_flag_regular)
 
   inline size_t CrdCount() const {  return Crds.Count(); }
   // an association point, weight is provided
@@ -29,21 +36,21 @@ public:
   inline const vec3d& GetNormal() const {  return FNormal; }
   inline const vec3d& GetCenter() const {  return FCenter; }
 
-  double DistanceTo(const vec3d &Crd) const;
-  double DistanceTo(const TSAtom& A) const;
-  double Angle(const vec3d &A,  const vec3d &B) const;
+  double DistanceTo(const vec3d& Crd) const {  return Crd.DotProd(FNormal) - FDistance;  }
+  double DistanceTo(const TSAtom& a) const {  return DistanceTo(a.crd());  }
+  double Angle(const vec3d& A, const vec3d& B) const {  return acos(FNormal.CAngle(B-A))*180/M_PI;  }
+  double Angle(const vec3d& v) const {  return acos(FNormal.CAngle(v))*180/M_PI;  }
   double Angle(const class TSBond& B) const;
-  double Angle(const TSPlane& P) const;
-  double D() const {  return FDistance; }
-  double Z(double X, double Y) const;
+  double Angle(const TSPlane& P) const {  return Angle(P.GetNormal());  }
+  double GetD() const {  return FDistance; }
+  double Z(const double& X, const double& Y) const {
+    return (FNormal[2] == 0) ? 0.0 : (FNormal[0]*X + FNormal[1]*Y + FDistance)/FNormal[2];
+  }
   void D(double v) {  FDistance = v; }
   size_t Count() const {  return Crds.Count();  }
   const TSAtom& GetAtom(size_t i) const {  return *Crds[i].GetA();  }
   TSAtom& Atom(size_t i) {  return *Crds[i].A();  }
   double Weight(size_t i) const {  return Crds[i].GetB();  }
-
-  // this is justa flag for the owner - is not used by the object itself
-  DefPropBIsSet(Regular)
 
 // static members
   /* calculates all three planes - best, worst and the complimentary, 

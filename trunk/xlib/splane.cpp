@@ -1,5 +1,4 @@
 //---------------------------------------------------------------------------//
-// namespace TXClasses: crystallographic core
 // TSPlane implementation
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
@@ -15,13 +14,6 @@
 #include "lattice.h"
 #include "pers_util.h"
 
-//..............................................................................
-TSPlane::TSPlane(TNetwork* Parent):TSObject<TNetwork>(Parent)  {
-  FDistance = 0;
-  Regular = Deleted = false;
-}
-//..............................................................................
-TSPlane::~TSPlane()  {  }
 //..............................................................................
 double TSPlane::CalcRMS(const TSAtomPList& atoms)  {
   if( atoms.Count() < 3 )  return -1;
@@ -133,44 +125,19 @@ double TSPlane::CalcPlane(const TSAtomPList& atoms,
   return CalcPlane(Points, Params, center, type);
 }
 //..............................................................................
-double TSPlane::DistanceTo(const vec3d& Crd) const {
-  return Crd.DotProd(FNormal) - FDistance;
-}
-//..............................................................................
-double TSPlane::DistanceTo(const TSAtom& A) const  {
-  return DistanceTo(A.crd());
-}
-//..............................................................................
-double TSPlane::Angle( const vec3d &A,  const vec3d &B) const  {
-  vec3d V(B-A);
-  double ca = FNormal.CAngle(V), angle;
-  angle = acos(ca)*180/M_PI;
-  return angle;
-}
-//..............................................................................
-double TSPlane::Angle(const TSBond& Bd) const  {
+double TSPlane::Angle(const TSBond& Bd) const {
   return Angle(Bd.A().crd(), Bd.B().crd());
 }
 //..............................................................................
-double TSPlane::Angle(const TSPlane& P) const  {
-  vec3d A;
-  return Angle(A, P.GetNormal());
-}
-//..............................................................................
-double TSPlane::Z(double X, double Y) const  {
-  if( !FNormal[2] )  return 0;
-  return (FNormal[0]*X + FNormal[1]*Y + FDistance)/FNormal[2];
-}
-//..............................................................................
 void TSPlane::ToDataItem(TDataItem& item) const {
-  int cnt = 0;
+  size_t cnt = 0;
   for( size_t i=0; i < Crds.Count(); i++ )  {
     if( Crds[i].GetA()->IsDeleted() )  continue;
     item.AddItem(cnt++, Crds[i].GetB()).AddField("atom_id", Crds[i].GetA()->GetTag()); 
   }
 }
 //..............................................................................
-void TSPlane::FromDataItem(TDataItem& item) {
+void TSPlane::FromDataItem(TDataItem& item)  {
   Crds.Clear();
   for( size_t i=0; i < item.ItemCount(); i++ )  {
     Crds.AddNew( &Network->GetLattice().GetAtom(item.GetItem(i).GetRequiredField("atom_id").ToInt()), 
