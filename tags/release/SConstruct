@@ -230,6 +230,7 @@ else:
       env.ParseConfig("wx-config --cxxflags --unicode --toolkit=gtk2 --libs gl,core,html,net,aui")
 #!!!
     unirun_env = env.Clone()
+    env.Append(CCFLAGS = ['-D__WXWIDGETS__'])
     env.ParseConfig("python-config --includes")
     env.ParseConfig("python-config --ldflags")
   except:
