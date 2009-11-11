@@ -30,6 +30,7 @@
 #include "idistribution.h"
 #include "ipattern.h"
 #include "chnexp.h"
+#include "maputil.h"
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
@@ -165,6 +166,8 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(Push, EmptyString, (fpAny^(fpNone|fpOne|fpTwo))|psFileLoaded, "Shifts the sctructure (or provided fragments) by the provided translation");
   xlib_InitMacro(Transform, EmptyString, fpAny|psFileLoaded, "Transforms the structure or provided fragments according to the given matrix\
  (a11, a12, a13, a21, a22, a23, a31, a32, a33, t1, t2, t3)");
+  xlib_InitMacro(Standardise, EmptyString, fpNone|fpOne|psFileLoaded, "Standardises atom coordinates (similar to HKL standardisation procedure). If '0' is provided as\
+ argument, the asymmetric unit content is arranged as close to (0,0,0), while being inside the unit cell as possible");
   xlib_InitMacro(FitCHN, EmptyString, (fpAny^(fpNone|fpOne)),
     "Fits CHN analysis for given formula and observed data given a lits of possible solvents. A mixture of up to 3 solvents only considered,\
  however any number of observed elements can be provided.\
@@ -3414,5 +3417,43 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroE
     tab.CreateTXTList(sl, "Summary", true, false, ' ');
     TBasicApp::GetLog() << sl << '\n';
   }
+}
+//..............................................................................
+void XLibMacros::macStandardise(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TXApp& xapp = TXApp::GetInstance();
+  TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
+  TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
+  smatd_list sm;
+  sg.GetMatrices(sm, mattAll^mattIdentity);
+  if( Cmds.IsEmpty() )  {
+    for( size_t i=0; i < au.AtomCount(); i++ )
+      MapUtil::StandardiseVec(au.GetAtom(i).ccrd(), sm);
+  }
+  else  {
+    for( size_t i=0; i < au.AtomCount(); i++ )  {
+      TCAtom& ca = au.GetAtom(i);
+      vec3d &v = ca.ccrd(), cart;
+      for( int j=0; j < 3; j++ )  {
+        while( v[j] < 0 )  v[j] += 1.0;
+        while( v[j] >= 1.0 )  v[j] -= 1.0;
+      }
+      double d = au.CellToCartesian(v, cart).QLength();
+      for( size_t j=0; j < sm.Count(); j++ )  {
+        vec3d tmp = sm[j]*v;
+        for( int k=0; k < 3; k++ )  {
+          while( tmp[k] < 0 )  tmp[k] += 1.0;
+          while( tmp[k] >= 1.0 )  tmp[k] -= 1.0;
+        }
+        const double _d = au.CellToCartesian(tmp, cart).QLength();
+        if( _d < d )  {
+          d = _d;
+          v = tmp;
+        }
+      }
+      //MapUtil::StandardiseVec(ca.ccrd(), sm);
+    }
+  }
+  xapp.XFile().GetLattice().Init();
+  xapp.XFile().GetLattice().Uniq();
 }
 //..............................................................................
