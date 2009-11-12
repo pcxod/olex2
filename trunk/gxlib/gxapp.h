@@ -124,9 +124,6 @@ protected:
 
   void FragmentVisible( TNetwork *N, bool V);
   bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
-  void SBonds2XBonds(TSBondPList& L, TXBondPList& Res);
-  void SAtoms2XAtoms(TSAtomPList& L, TXAtomPList& Res);
-  void SPlanes2XPlanes(TSPlanePList& L, TXPlanePList& Res);
   void GetGPCollections(TPtrList<AGDrawObject>& GDObjects, TPtrList<TGPCollection>& Result);
   // visibility is stored in a bitarray
   TEBitArray FVisibility;
@@ -162,6 +159,9 @@ public:
   void AddObjectToCreate(AGDrawObject* obj)  {  ObjectsToCreate.Add(obj);  }
   void Clear();
   void ClearXGrowPoints();
+  void SBonds2XBonds(TSBondPList& L, TXBondPList& Res);
+  void SAtoms2XAtoms(TSAtomPList& L, TXAtomPList& Res);
+  void SPlanes2XPlanes(TSPlanePList& L, TXPlanePList& Res);
 
 // drawing data and functions
 private:
