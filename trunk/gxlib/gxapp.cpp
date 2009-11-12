@@ -358,7 +358,6 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   vec3d glCenter = FGlRender->GetBasis().GetCenter();
   TXAtom::FStaticObjects.Clear();
   TXBond::FStaticObjects.Clear();
-  FGlRender->ClearGroups();
   FGlRender->ClearPrimitives();
   FLabels->Clear();
   ClearXObjects();
@@ -2656,8 +2655,8 @@ double TGXApp::CalcVolume(const TSStrPObjList<olxstr,double, true>* volumes, olx
 //..............................................................................
 void TGXApp::StoreGroups()  {
   ClearGroups();
-  for( size_t i=0; i < FGlRender->GroupCount(); i++ )  {
-    TGlGroup& glG = FGlRender->GetGroup(i);
+  for( size_t i=0; i <= FGlRender->GroupCount(); i++ )  {
+    TGlGroup& glG = (i < FGlRender->GroupCount() ? FGlRender->GetGroup(i) : FGlRender->GetSelection());
     GroupData& gd = FOldGroups.AddNew();
     gd.collectionName = glG.GetCollectionName();  //planes
     gd.visible = glG.IsVisible();
@@ -2679,34 +2678,38 @@ void TGXApp::RestoreGroups()  {
   TXBondPList xbonds;
   TXPlanePList xplanes;
   olxstr className;
-  for( size_t i=0; i < FOldGroups.Count(); i++ )  {
+  for( size_t i=0; i < FOldGroups.Count()-1; i++ )  {
     GroupData& gd = FOldGroups[i];
-
-    xatoms.Clear();
-    SAtoms2XAtoms(gd.atoms, xatoms);
-
-    xbonds.Clear();
-    SBonds2XBonds(gd.bonds, xbonds);
-
-    xplanes.Clear();
-    SPlanes2XPlanes(gd.planes, xplanes);
-
+    xatoms.Clear();   SAtoms2XAtoms(gd.atoms, xatoms);
+    xbonds.Clear();   SBonds2XBonds(gd.bonds, xbonds);
+    xplanes.Clear();  SPlanes2XPlanes(gd.planes, xplanes);
     FGlRender->GetSelection().Clear();
     for( size_t j=0; j < xatoms.Count(); j++ )
-      FGlRender->GetSelection().Add( *xatoms[j] );
+      FGlRender->GetSelection().Add(*xatoms[j]);
     for( size_t j=0; j < xbonds.Count(); j++ )
-      FGlRender->GetSelection().Add( *xbonds[j] );
+      FGlRender->GetSelection().Add(*xbonds[j]);
     for( size_t j=0; j < xplanes.Count(); j++ )
-      FGlRender->GetSelection().Add( *xplanes[j] );
-
-    TGlGroup* glG = FGlRender->GroupSelection( gd.collectionName );
+      FGlRender->GetSelection().Add(*xplanes[j]);
+    TGlGroup* glG = FGlRender->GroupSelection(gd.collectionName);
     if( glG == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "could not recreate groups");
     glG->SetSelected(false);
     FGlRender->GetSelection().Clear();
-    glG->SetGlM( gd.material );
-    glG->SetVisible( gd.visible );
+    glG->SetGlM(gd.material);
+    glG->SetVisible(gd.visible);
   }
+  GroupData& gd = FOldGroups.Last(); // the selection
+  xatoms.Clear();   SAtoms2XAtoms(gd.atoms, xatoms);
+  xbonds.Clear();   SBonds2XBonds(gd.bonds, xbonds);
+  xplanes.Clear();  SPlanes2XPlanes(gd.planes, xplanes);
+  FGlRender->GetSelection().Clear();
+  for( size_t j=0; j < xatoms.Count(); j++ )
+    FGlRender->Select(*xatoms[j]);
+  for( size_t j=0; j < xbonds.Count(); j++ )
+    FGlRender->Select(*xbonds[j]);
+  for( size_t j=0; j < xplanes.Count(); j++ )
+    FGlRender->Select(*xplanes[j]);
+
 }
 //..............................................................................
 void TGXApp::StoreVisibility()  {
@@ -2733,21 +2736,17 @@ void TGXApp::RestoreVisibility()  {
     XBonds[i].SetVisible(FVisibility.Get(XAtoms.Count() + i));
   // planes
   for( size_t i=0; i < XPlanes.Count(); i++ )
-      XPlanes[i].SetVisible( FVisibility.Get( XAtoms.Count() + XBonds.Count() + i) );
+      XPlanes[i].SetVisible( FVisibility.Get(XAtoms.Count() + XBonds.Count() + i) );
 }
 //..............................................................................
 void TGXApp::BeginDrawBitmap(double resolution)  {
   FPictureResolution = resolution;
   FLabels->Clear();
   GetRender().GetScene().ScaleFonts(resolution);
-  // store groups && visibility
   StoreGroups();
   StoreVisibility();
-  /* end */
-
-  CreateObjects( false, false );
+  CreateObjects(false, false);
   FXGrid->GlContextChange();
-  // restore the visiblity && groups
   RestoreGroups();
   RestoreVisibility();
 }
@@ -2755,15 +2754,12 @@ void TGXApp::BeginDrawBitmap(double resolution)  {
 void TGXApp::FinishDrawBitmap()  {
   FLabels->Clear();
   GetRender().GetScene().RestoreFontScale();
-  CreateObjects( false, false );
+  CreateObjects(false, false);
   FXGrid->GlContextChange();
-  // recreate groups && clean up the memory
   RestoreGroups();
   ClearGroups();
-  // restore visibility && clean up the memory
   RestoreVisibility();
   FVisibility.Clear();
-  //CenterView();
 }
 //..............................................................................
 void TGXApp::UpdateLabels()  {

@@ -686,9 +686,14 @@ Please run currently installed Olex2 to apply the updates and then exit Olex2 an
     // this has to go first as otherwise the tag gets lost...
     if( (rename_status & rename_status_DataDir) == 0 )  {
       olxstr new_data_dir = patcher::PatchAPI::ComposeNewSharedDir(TShellUtil::GetSpecialFolderLocation(fiAppData), rp);
+      if( TEFile::Exists(new_data_dir) )  {  // for different versions it may cause a problem, so delete
+        if( TEFile::DeleteDir(new_data_dir) )  {
+          MessageBox(_T("Failed to delete existing data folder"), _T("Error"), MB_OK|MB_ICONERROR);
+          return false;
+        }
+      }
       if( TEFile::Exists(olex2_data_dir) )  {
-        // ignore if already exists
-        if( !TEFile::Exists(new_data_dir) && !TEFile::Rename(olex2_data_dir, new_data_dir, true) )  {
+        if( !TEFile::Rename(olex2_data_dir, new_data_dir, true) )  {
           MessageBox(_T("Failed to rename previous data folder"), _T("Error"), MB_OK|MB_ICONERROR);
           return false;
         }

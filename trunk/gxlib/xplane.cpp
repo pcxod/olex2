@@ -1,18 +1,13 @@
 //---------------------------------------------------------------------------//
-// namespace TEXLib:
 // TXPlane
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "xplane.h"
 #include "gpcollection.h"
 #include "estlist.h"
 #include "planesort.h"
 #include "glprimitive.h"
+#include "styles.h"
 
 //..............................................................................
 TXPlane::TXPlane(TGlRenderer& r, const olxstr& collectionName, TSPlane *Plane) :
@@ -24,21 +19,21 @@ TXPlane::TXPlane(TGlRenderer& r, const olxstr& collectionName, TSPlane *Plane) :
 void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;
 
-  TGlMaterial GlM, GlM1;
-  GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmAmbientB|sglmDiffuseB|sglmTransparent);
-  GlM1.SetFlags( sglmAmbientF );
-  GlM1.AmbientF = 0;
+  TGraphicsStyle& GS = GPC.GetStyle();
+  GS.SetPersistent(true);
 
-  TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloPolygon);
+  TGlMaterial GlM;
+  GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmAmbientB|sglmDiffuseB|sglmTransparent);
   GlM.AmbientF = 0x7f00007f;
   GlM.DiffuseF = 0x7f3f3f3f;
   GlM.AmbientB = 0x7f00007f;
   GlM.DiffuseB = 0x7f3f3f3f;
-  GlP.SetProperties(GlM);
+  TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloPolygon);
+  GlP.SetProperties(GS.GetMaterial("Plane", GlM));
   if( !FPlane->IsRegular() )  
     GlP.Vertices.SetCount(FPlane->CrdCount());
   else                 
@@ -75,8 +70,11 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
       marv *= rm;
     }
   }
+  TGlMaterial GlM1;
+  GlM1.SetFlags(sglmAmbientF);
+  GlM1.AmbientF = 0;
   TGlPrimitive& glpC = GPC.NewPrimitive("Centroid", sgloSphere);
-  glpC.SetProperties(GlM1);
+  glpC.SetProperties(GS.GetMaterial("Centroid", GlM1));
   glpC.Params[0] = 0.25;  glpC.Params[1] = 6;  glpC.Params[2] = 6;
   glpC.Compile();
 }
