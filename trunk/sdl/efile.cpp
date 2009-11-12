@@ -828,6 +828,29 @@ bool TEFile::IsAbsolutePath(const olxstr& Path)  {
 #endif
 }
 //..............................................................................
+bool TEFile::IsSameFolder(const olxstr& _f1, const olxstr& _f2)  {
+  olxstr f1 = OLX_OS_PATH(_f1);
+  olxstr f2 = OLX_OS_PATH(_f2);
+  bool e1 = Exists(f1),
+       e2 = Exists(f2);
+  if( e1 != e2 || !e1 )  return false;
+  static olxstr dn("_OLX_TEST_SAME_DIR.TMP");
+  AddTrailingBackslashI(f1) << dn;
+  AddTrailingBackslashI(f2) << dn;
+  if( makedir(OLXSTR(f1)) != -1 )  {
+    bool res = TEFile::Exists(f2);
+    rmdir(OLXSTR(f1));
+    return res;
+  }
+  return false;
+}
+//..............................................................................
+bool TEFile::IsSubFolder(const olxstr& _f1, const olxstr& _f2)  {
+  olxstr f1 = OLX_OS_PATH(_f1);
+  olxstr f2 = OLX_OS_PATH(_f2);
+  return f2.IsSubStringAt(f2, 0);
+}
+//..............................................................................
 olxstr TEFile::UNCFileName(const olxstr &LocalFN)  {
 #ifdef __WIN32__  //this function does not work on winxp anymore ...
 //  char buffer[512];
@@ -943,75 +966,75 @@ olxstr TEFile::Which(const olxstr& filename)  {
 ////////////////////////////////////////////////////////////////////////////////
 
 void FileExists(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::Exists( Params[0] ) );
+  E.SetRetVal(TEFile::Exists(Params[0]));
 }
 
 void FileName(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ExtractFileName( Params[0] ) );
+  E.SetRetVal(TEFile::ExtractFileName(Params[0]));
 }
 
 void FilePath(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ExtractFilePath( Params[0] ) );
+  E.SetRetVal(TEFile::ExtractFilePath(Params[0]));
 }
 
 void FileDrive(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ExtractFileDrive( Params[0] ) );
+  E.SetRetVal(TEFile::ExtractFileDrive(Params[0]));
 }
 
 void FileExt(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ExtractFileExt( Params[0] ) );
+  E.SetRetVal(TEFile::ExtractFileExt(Params[0]));
 }
 
 void ChangeFileExt(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ChangeFileExt( Params[0], Params[1] ) );
+  E.SetRetVal(TEFile::ChangeFileExt(Params[0], Params[1]));
 }
 
 void Copy(const TStrObjList& Params, TMacroError& E)  {
-  TEFile::Copy( Params[0], Params[1] );
-  E.SetRetVal( Params[1] );
+  TEFile::Copy(Params[0], Params[1]);
+  E.SetRetVal(Params[1]);
 }
 
 void Rename(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::Rename( Params[0], Params[1] ) );
+  E.SetRetVal(TEFile::Rename(Params[0], Params[1]));
 }
 
 void Delete(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::DelFile(Params[0]) );
+  E.SetRetVal(TEFile::DelFile(Params[0]));
 }
 
 void CurDir(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::CurrentDir() );
+  E.SetRetVal(TEFile::CurrentDir());
 }
 
 void ChDir(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ChangeDir(Params[0]) );
+  E.SetRetVal(TEFile::ChangeDir(Params[0]));
 }
 
 void MkDir(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::MakeDir(Params[0]) );
+  E.SetRetVal(TEFile::MakeDir(Params[0]));
 }
 
 void OSPath(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::OSPath(Params[0]) );
+  E.SetRetVal(TEFile::OSPath(Params[0]));
 }
 
 void Which(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::Which(Params[0]) );
+  E.SetRetVal(TEFile::Which(Params[0]));
 }
 
 void Age(const TStrObjList& Params, TMacroError& E)  {
   TEFile::CheckFileExists(__OlxSourceInfo, Params[0]);
-  time_t v = TEFile::FileAge( Params[0] );
+  time_t v = TEFile::FileAge(Params[0]);
   if( Params.Count() == 1 )
-    E.SetRetVal( TETime::FormatDateTime(v) );
+    E.SetRetVal(TETime::FormatDateTime(v));
   else
-    E.SetRetVal( TETime::FormatDateTime(Params[1], v) );
+    E.SetRetVal(TETime::FormatDateTime(Params[1], v));
 }
 
 void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
   TEFile::CheckFileExists(__OlxSourceInfo, Params[0]);
   olxstr cd( TEFile::CurrentDir() );
-  olxstr dn( Params[0] );
+  olxstr dn(Params[0]);
   TEFile::AddTrailingBackslashI(dn);
   TEFile::ChangeDir( Params[0] );
   short attrib = sefFile;
@@ -1023,8 +1046,8 @@ void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
   }
   TStrList output;
   olxstr tmp;
-  TEFile::ListCurrentDir( output, Params[1], attrib );
-  TEFile::ChangeDir( cd );
+  TEFile::ListCurrentDir(output, Params[1], attrib);
+  TEFile::ChangeDir(cd);
 #ifdef __BORLANDC__
   output.QuickSort< TStringWrapperComparator<TSingleStringWrapper<olxstr>,true> >();
 #else  // borland dies here...

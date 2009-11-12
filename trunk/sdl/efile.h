@@ -226,6 +226,11 @@ public:
   static bool Copy(const olxstr& From, const olxstr& to, bool overwrite = true);
   // renames a file, if the file with 'to' name exists, behaves according to the overwrite flag
   static bool Rename(const olxstr& from, const olxstr& to, bool overwrite = true);
+  /* works by creating a 'random' directory inside one folder and checking if it is in the other... 
+  If the function fails to create the test folder it returns false */
+  static bool IsSameFolder(const olxstr& f1, const olxstr& f2);
+  // a weak function - makes the decision only on the name...
+  static bool IsSubFolder(const olxstr& which, const olxstr& in_what);
   /*works for windows only, for other operation systems return LocalFN*/
   static olxstr UNCFileName(const olxstr &LocalFN);
   /* return absolute path as a relative to another path

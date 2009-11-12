@@ -56,5 +56,11 @@ namespace mfc_ext  {
       for( size_t i=0; i < items.Count(); i++ )
         cb->SendMessage(CB_ADDSTRING, 0, (LPARAM)items[i].u_str());
     }
+    static void sel_item(CWnd *window, int id, int pos)  {
+      window->GetDlgItem(id)->SendMessage(CB_SETCURSEL, id);
+    }
+    static void sel_item(CWnd *window, int id, const olxstr& item)  {
+      window->GetDlgItem(id)->SendMessage(CB_SELECTSTRING, -1, (LPARAM)item.u_str());
+    }
   };
 };
