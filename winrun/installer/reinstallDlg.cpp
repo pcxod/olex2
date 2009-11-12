@@ -17,14 +17,15 @@ END_MESSAGE_MAP()
 CReinstallDlg::CReinstallDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CReinstallDlg::IDD, pParent)
 {
-//  SetIcon
-//  m_hIcon = AfxGetApp()->LoadIcon(IDI_ICON);
+  is_install = is_remove = is_rename = is_remove_data = false;
+  do_nothing_enabled = true;
 }
 
 BOOL CReinstallDlg::OnInitDialog()  {
 	CDialog::OnInitDialog();
   check_box::set_checked(this, IDC_CB_REINSTALL, true);
   check_box::set_checked(this, IDC_RG_UNINSTALL, true);
+  check_box::set_enabled(this, IDC_RG_NOTHING, do_nothing_enabled);
   wnd::set_enabled(this, IDC_TE_RENAME, false);
   wnd::set_text(this, IDC_TE_RENAME, rename_to);
   return TRUE;
@@ -44,6 +45,7 @@ void CReinstallDlg::OnBnClickedRgUninstall()  {
 void CReinstallDlg::OnBnClickedOk()  {
   is_install = check_box::is_checked(this, IDC_CB_REINSTALL);
   is_remove = check_box::is_checked(this, IDC_RG_UNINSTALL);
+  is_rename = check_box::is_checked(this, IDC_RG_RENAME);
   is_remove_data = check_box::is_checked(this, IDC_CB_REMOVE_USER_DATA);
   rename_to = wnd::get_text(this, IDC_TE_RENAME);
   OnOK();

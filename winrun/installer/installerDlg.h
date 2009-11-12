@@ -35,11 +35,13 @@ protected:
   bool mouse_down;
   CPoint mouse_pos;
   bool run_as_admin, olex2_installed;
-  olxstr olex2_install_path, olex2_data_dir, olex2_tag;
+  olxstr olex2_installed_path, olex2_data_dir, olex2_tag, 
+    olex2_install_path, olex2_install_tag;
   int action;
   short rename_status;
   // initialises (if olex2 is installed) olex2_install_path and returns it or CmdLine
   olxstr LocateBaseDir();
+  olxstr ReadTag(const olxstr& zip_fn) const;
   void InitRepositories();
   void DisableInterface(bool v);
   void SetAction(int a);
@@ -75,4 +77,5 @@ public:
   afx_msg void OnBnClickedBtnRepository();
   afx_msg BOOL OnEraseBkgnd(CDC* pDC);
   afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+  afx_msg void OnCbnSelendokCbRepository();
 };
