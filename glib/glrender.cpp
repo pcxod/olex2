@@ -97,6 +97,7 @@ void TGlRenderer::InitLights()  {
 //..............................................................................
 void TGlRenderer::ClearPrimitives()  {
   ClearGroups();
+  FSelection->Clear();
   FListManager.ClearLists();
   if( CompiledListId != -1 )  {
     glDeleteLists(CompiledListId, 1);

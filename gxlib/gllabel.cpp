@@ -40,13 +40,13 @@ void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGraphicsStyle& GS = GPC.GetStyle();
   GS.SetPersistent(true);
   TGlMaterial GlM;
-  GlM.SetFlags( sglmAmbientF|sglmIdentityDraw|sglmTransparent  );
+  GlM.SetFlags(sglmAmbientF|sglmIdentityDraw|sglmTransparent);
   GlM.AmbientF = 0x800f0f0f;
   GlM.DiffuseF = 0x800f0f0f;
   GlM.ShininessF = 128;
 
   TGlPrimitive& glpPlane = GPC.NewPrimitive("Plane", sgloQuads);  // a sphere at the basis of the object {0,0,0}
-  glpPlane.SetProperties( GS.GetMaterial("Plane", GlM) );
+  glpPlane.SetProperties(GS.GetMaterial("Plane", GlM));
   glpPlane.Vertices.SetCount(4);
 
   TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
