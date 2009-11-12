@@ -143,6 +143,7 @@ enum
   ID_AtomTypePTable,
   ID_AtomGrowShells,
   ID_AtomGrowFrags,
+  ID_AtomSelRings,
   
   ID_PlaneActivate,
 
@@ -348,6 +349,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomTypePTable, TMainForm::OnAtomTypePTable)
   EVT_MENU(ID_AtomGrowShells, TMainForm::OnAtom)
   EVT_MENU(ID_AtomGrowFrags, TMainForm::OnAtom)
+  EVT_MENU(ID_AtomSelRings, TMainForm::OnAtom)
 
   EVT_MENU(ID_PlaneActivate, TMainForm::OnPlane)
 
@@ -1181,6 +1183,7 @@ separated values of Atom Type and radius, an entry a line" );
     miAtomGrowShell = pmAtom->FindItemByPosition(pmAtom->GetMenuItemCount()-1);
   pmAtom->Append(ID_AtomGrowFrags, wxT("Grow Fragments"));
     miAtomGrowFrag = pmAtom->FindItemByPosition(pmAtom->GetMenuItemCount()-1);
+  pmAtom->Append(ID_AtomSelRings, wxT("Select ring(s)"));
   pmAtom->AppendSeparator();
   pmAtom->Append(ID_GraphicsKill, wxT("Delete"));
   pmAtom->AppendSeparator();
@@ -2458,18 +2461,25 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
 }
 //..............................................................................
 void TMainForm::OnAtom(wxCommandEvent& event)  {
+  if( FObjectUnderMouse == NULL )  return;
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
-  if( XA == NULL )  return;
-  olxstr Tmp;
-  switch( event.GetId() )  {
-    case ID_AtomGrowShells:
-      Tmp = "grow -s #x"; Tmp << XA->GetXAppId();
-      ProcessMacro(Tmp);
-      break;
-    case ID_AtomGrowFrags:
-      Tmp = "grow #x";   Tmp << XA->GetXAppId();
-      ProcessMacro(Tmp);
-      break;
+  if( event.GetId() == ID_AtomGrowShells )
+    ProcessMacro(olxstr("grow -s #x") << XA->GetXAppId());
+  else if( event.GetId() == ID_AtomGrowFrags )
+    ProcessMacro(olxstr("grow #x") << XA->GetXAppId());
+  else if( event.GetId() == ID_AtomSelRings )  {
+    TTypeList<TSAtomPList> rings;
+    XA->Atom().GetNetwork().FindAtomRings(XA->Atom(), rings);
+    if( !rings.IsEmpty() )  {
+      TXAtomPList xatoms;
+      for( size_t i=0; i < rings.Count(); i++ )
+        FXApp->SAtoms2XAtoms(rings[i], xatoms);
+      for( size_t i=0; i < xatoms.Count(); i++ )  {
+        if( !xatoms[i]->IsSelected() )
+          FXApp->GetRender().Select(*xatoms[i]);
+      }
+      TimePerFrame = FXApp->Draw();
+    }
   }
 }
 //..............................................................................

@@ -91,11 +91,25 @@ public:
   bool DoMatch( TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res, bool Invert );
   bool IsSubgraphOf( TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res, const TSizeList& rootsToSkip);
 
-  void FindRings(const TPtrList<TBasicAtomInfo>& ringContent,
-        TTypeList<TSAtomPList>& res);
+protected:
+  static int TNetwork_SortRingAtoms(const TSAtom* a, const TSAtom* b)  {
+    return (int)(a->GetTag()-b->GetTag());
+  }
+  static bool TryRing(TSAtom& sa, TSAtomPList& ring, const TPtrList<TBasicAtomInfo>& ringContent, size_t level=1);
+  static bool TryRing(TSAtom& sa, TSAtomPList& ring, size_t level=1);
+// tries to find the ring in given direction
+  static bool TryRing(TSAtom& sa, size_t node, TSAtomPList& ring, const TPtrList<TBasicAtomInfo>& ringContent);
+  static bool TryRing(TSAtom& sa, size_t node, TSAtomPList& ring);
+  void UnifyRings(TTypeList<TSAtomPList>& rings);
+
+public:
+  // finds only primitive rings
+  void FindRings(const TPtrList<TBasicAtomInfo>& ringContent, TTypeList<TSAtomPList>& res);
 
   void FindAtomRings(TSAtom& ringAtom, const TPtrList<TBasicAtomInfo>& ringContent,
         TTypeList<TSAtomPList>& res);
+  // finds all rings
+  void FindAtomRings(TSAtom& ringAtom, TTypeList<TSAtomPList>& res);
   struct RingInfo  {
     size_t MaxSubsANode, HeaviestSubsIndex;
     TBasicAtomInfo* HeaviestSubsType;
@@ -117,8 +131,7 @@ public:
     }
     bool IsSingleCSubstituted() const;  // returns true if all substituents are single CHn groups
   };
-  static RingInfo& AnalyseRing( const TSAtomPList& ring, RingInfo& ri );
-
+  static RingInfo& AnalyseRing(const TSAtomPList& ring, RingInfo& ri);
   /* quaternion method, Acta A45 (1989), 208
     This function finds the best match between atom pairs and returns the summ of
     distance deltas between corresponding atoms. If try inversion is specified,
