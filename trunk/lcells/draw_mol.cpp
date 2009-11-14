@@ -131,7 +131,7 @@ void _fastcall TOrganiser::Draw()  {
   mat3d m( mat3d::Transpose(Basis.GetMatrix()) );
   TTypeList<TDrawSort> DrawSort;
 
-  for( int i=0; i < XFile->GetLattice().AtomCount(); i++ )  {
+  for( size_t i=0; i < XFile->GetLattice().AtomCount(); i++ )  {
     TDrawSort& DS = DrawSort.AddNew();
     DS.A = &XFile->GetLattice().GetAtom(i);
     DS.P = DS.A->crd();
@@ -143,10 +143,10 @@ void _fastcall TOrganiser::Draw()  {
   }
   DrawSort.QuickSorter.SortSF(DrawSort, DrawPointsSortZ);
 
-  for( int i=0; i < DrawSort.Count(); i++ )
+  for( size_t i=0; i < DrawSort.Count(); i++ )
     DrawSort[i].A->SetTag(i);
 
-  for( int i=0; i < XFile->GetLattice().BondCount(); i++ )  {
+  for( size_t i=0; i < XFile->GetLattice().BondCount(); i++ )  {
     TSBond* B = &XFile->GetLattice().GetBond(i);
     if( B->A().GetAtomInfo().GetMr() > B->B().GetAtomInfo().GetMr() )
       C->Pen->Color = (TColor)B->A().GetAtomInfo().GetDefColor();
@@ -161,7 +161,7 @@ void _fastcall TOrganiser::Draw()  {
   C->Pen->Color = clBlack;
 
 //  DrawSort->Sort(DrawPointsSortZ);
-  for( int i=0; i < DrawSort.Count(); i++ )  {
+  for( size_t i=0; i < DrawSort.Count(); i++ )  {
     TDrawSort& DS = DrawSort[i];
     C->Brush->Color = (TColor)DS.A->GetAtomInfo().GetDefColor();
     double rad = DS.A->GetAtomInfo().GetRad() * Basis.GetZoom();

@@ -30,7 +30,8 @@ struct TCifLoopData  {
     String = false;
   }
 };
-  typedef TTTable< TStrPObjList<olxstr,TCifLoopData*> > TCifLoopTable;
+typedef TStrPObjList<olxstr,TCifLoopData*> TCifRow;
+typedef TTTable<TCifRow> TCifLoopTable;
 //---------------------------------------------------------------------------
 class TCifLoop: public IEObject  {
   TCifLoopTable FTable;
@@ -99,17 +100,14 @@ public:
 class TCifDataManager  {
   TTypeList<TCifValue> Items;
 public:
-  TCifDataManager()  {  ;  }
-  virtual ~TCifDataManager()  {  Clear();  }
-  inline TCifValue& NewValue()  {  return Items.AddNew();  }
-
+  TCifDataManager()  {}
+  virtual ~TCifDataManager()  {}
+  TCifValue& NewValue()  {  return Items.AddNew();  }
   // finds a cif value for a list of TSATOMS(!)
   TCifValue* Match( const TSAtomPList& Atoms );
-
-  void Clear();
-
-  inline size_t Count() const {  return Items.Count();  }
-  inline const TCifValue& Item(size_t index)  const {  return Items[index];  }
+  void Clear()  {  Items.Clear();  }
+  size_t Count() const {  return Items.Count();  }
+  const TCifValue& Item(size_t index) const {  return Items[index];  }
 };
 //---------------------------------------------------------------------------
 
@@ -131,7 +129,7 @@ public:
 
   void Clear();  // Empties the content of current file
   //............................................................................
-  //Load the object from a file. If the operation is successful, returns true and false otherwise
+  //Load the object from a file.
   virtual void LoadFromStrings(const TStrList& Strings);
   //Saves the data to a file and returns true if successful and false in the case of failure
   virtual void SaveToStrings(TStrList& Strings);
@@ -165,22 +163,22 @@ public:
   void SetDataName(const olxstr &D);
   /*Shows if the data name will appear in upper case or in a default case when
     current object is loaded from a file  */
-  inline bool IsDataNameUpperCase()          const { return FDataNameUpperCase;  }
+  inline bool IsDataNameUpperCase() const { return FDataNameUpperCase;  }
   /*Allows changing the case of the data name. The change takes place only when a
     file is being loaded. Use SetDataName function to change the data name  */
-  inline void SetDataNameUpperCase(bool v)         { FDataNameUpperCase = v; }
+  inline void SetDataNameUpperCase(bool v)  { FDataNameUpperCase = v; }
   //............................................................................
-  inline const olxstr& GetWeightA()        const {   return FWeightA;  }
-  inline const olxstr& GetWeightB()        const {   return FWeightB;  }
+  inline const olxstr& GetWeightA() const {  return FWeightA;  }
+  inline const olxstr& GetWeightB() const {  return FWeightB;  }
   //............................................................................
   //Returns a loop specified by index
   TCifLoop& Loop(size_t i);
   //Returns a loop specified by name
   TCifLoop* FindLoop(const olxstr &L);
   //Returns the name of a loop specified by the index
-  inline const olxstr& GetLoopName(size_t i)  const {  return Loops[i];  }
+  inline const olxstr& GetLoopName(size_t i) const {  return Loops[i];  }
   // Returns the number of loops
-  inline size_t LoopCount()  const { return Loops.Count(); }
+  inline size_t LoopCount() const { return Loops.Count(); }
   // Adds a loop to current  file
   TCifLoop& AddLoop(const olxstr &Name);
   /* this is the only loop, which is not automatically created from structure data!
@@ -200,9 +198,40 @@ public:
     bool DoubleTheta = true);
   bool CreateTable(TDataItem *TableDefinitions, TTTable<TStrList>& Table, smatd_list& SymmList);
   void Group();
-  const TCifDataManager& GetDataManager()  const  {  return DataManager;  }
+  const TCifDataManager& GetDataManager() const {  return DataManager;  }
 
-  virtual IEObject* Replicate()  const {  return new TCif;  }
+  virtual IEObject* Replicate() const {  return new TCif;  }
+
+};
+//---------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------
+class TMultiCifManager  {
+  struct cif_content  {
+    olxstr name;
+    TStrList content;
+  };
+  olxstr FileName;
+  TTypeList<cif_content> data;
+public:
+  TMultiCifManager()  {}
+  void LoadFromFile(const olxstr& file_name);
+  void Save();
+
+  size_t Count() const {  return data.Count();  }
+  const TStrList& GetContent(size_t i) const {  return data[i].content;  }
+  const olxstr& GetName(size_t i) const {  return data[i].name;  }
+  void Update(size_t i, TCif& cif)  {
+    data[i].content.Clear();
+    cif.SaveToStrings(data[i].content);
+    data[i].name = cif.GetDataName();
+  }
+  size_t IndexOf(const olxstr& data_name) const {
+    for( size_t i=0; i < data.Count(); i++ )
+      if( data[i].name.Equalsi(data_name) )
+        return i;
+    return InvalidIndex;
+  }
 
 };
 //---------------------------------------------------------------------------

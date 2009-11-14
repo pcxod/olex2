@@ -31,6 +31,7 @@
 #include "ipattern.h"
 #include "chnexp.h"
 #include "maputil.h"
+#include "vcov.h"
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
@@ -55,7 +56,7 @@ void XLibMacros::Export(TLibrary& lib)  {
  data sets, removes equivalents with high sigma");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(SG, "a", fpNone|fpOne, "suggest space group");
-  xlib_InitMacro(SGE, "", fpNone|fpOne|psFileLoaded, "Extended spacegroup determination. Internal use" );
+  xlib_InitMacro(SGE, EmptyString, fpNone|fpOne|psFileLoaded, "Extended spacegroup determination. Internal use" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(GraphSR, "b-number of bins", fpNone|fpOne|psFileLoaded,
 "Prints a scale vs resolution graph for current file (fcf file must exist in current folder)");
@@ -76,7 +77,7 @@ void XLibMacros::Export(TLibrary& lib)  {
 &;at-disables lonely atom types assignment to O and Cl", fpNone,
 "Tidies up current model" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(AtomInfo, "", fpAny|psFileLoaded,
+  xlib_InitMacro(AtomInfo, EmptyString, fpAny|psFileLoaded,
 "Searches information for given atoms in the database" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Compaq, "a-assembles broken fragments&;c-similar as with no options, but considers atom-to-atom distances", 
@@ -88,7 +89,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpNone|fpOne|fpTwo,
 "This macro prints environment of any particular atom. Default search radius is 2.7A."  );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(AddSE, "", (fpAny^fpNone)|psFileLoaded,
+  xlib_InitMacro(AddSE, EmptyString, (fpAny^fpNone)|psFileLoaded,
 "Tries to add a new symmetry element to current space group to form a new one. [-1] is for center of symmetry" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Fuse, "f-removes symmetrical equivalents", fpNone|fpOne|psFileLoaded,
@@ -101,51 +102,49 @@ void XLibMacros::Export(TLibrary& lib)  {
 "Adds a new element to the give site. Takes the site as selected atom and element types\
  as any subsequent argument" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(EADP, "", fpAny|psCheckFileTypeIns,
+  xlib_InitMacro(EADP, EmptyString, fpAny|psCheckFileTypeIns,
 "Forces EADP/Uiso of provided atoms to be constrained the same" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Cif2Doc, "n-output file name", fpNone|fpOne|psFileLoaded, "converts cif to a document" );
-//_________________________________________________________________________________________________________________________
   xlib_InitMacro(Cif2Tab, "n-output file name", fpAny|psFileLoaded, "creates a table from a cif" );
-//_________________________________________________________________________________________________________________________
-  xlib_InitMacro(CifMerge, "", (fpAny^fpNone)|psFileLoaded,
+  xlib_InitMacro(CifMerge, EmptyString, (fpAny^fpNone)|psFileLoaded,
   "Merges loaded or provided as first argument cif with other cif(s)" );
+  xlib_InitMacro(CifExtract, EmptyString, fpTwo|psFileLoaded, "extract a list of items from one cif to another" );
+  xlib_InitMacro(CifCreate, EmptyString, fpNone|psFileLoaded, "Creates cif from current file, variance-covariance matrix should be available" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(CifExtract, "", fpTwo|psFileLoaded, "extract a list of items from one cif to another" );
+  xlib_InitMacro(VoidE, EmptyString, fpNone|psFileLoaded, "calculates number of electrons in the voids area" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(VoidE, "", fpNone|psFileLoaded, "calculates number of electrons in the voids area" );
-//_________________________________________________________________________________________________________________________
-  xlib_InitMacro(ChangeSG, "", fpOne|fpFour|psFileLoaded, "[shift] SG Changes space group of current structure" );
+  xlib_InitMacro(ChangeSG, EmptyString, fpOne|fpFour|psFileLoaded, "[shift] SG Changes space group of current structure" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Htab, "t-adds extra elements (comma separated -t=Br,I) to the donor list. Defaults are [N,O,F,Cl,S]", fpNone|fpOne|fpTwo|psCheckFileTypeIns, 
     "Adds HTAB instructions to the ins file, maximum bond length [2.9] and minimal angle [150] might be provided" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(HAdd, "", fpAny|psCheckFileTypeIns, "Adds hydrogen atoms to all or provided atoms, however\
+  xlib_InitMacro(HAdd, EmptyString, fpAny|psCheckFileTypeIns, "Adds hydrogen atoms to all or provided atoms, however\
  the ring atoms are treated separately and added all the time" );
-  xlib_InitMacro(HImp, "", (fpAny^fpNone)|psFileLoaded, "Increases, decreases length of H-bonds.\
+  xlib_InitMacro(HImp, EmptyString, (fpAny^fpNone)|psFileLoaded, "Increases, decreases length of H-bonds.\
  Arguments: value [H atoms]. Value might be +/- to specify to increase/decrease current value" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(FixUnit,"", fpNone|fpOne|psCheckFileTypeIns, " Sets SFAc and UNIT to current content of the asymmetric unit.\
+  xlib_InitMacro(FixUnit,EmptyString, fpNone|fpOne|psCheckFileTypeIns, " Sets SFAc and UNIT to current content of the asymmetric unit.\
  Takes Z', with default value of 1.");
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(AddIns,"", (fpAny^fpNone)|psCheckFileTypeIns, "Adds an instruction to the INS file" );
-  xlib_InitMacro(DelIns, "", fpOne|psCheckFileTypeIns, "A number or the name (will remove all accurances) can be provided" );
-  xlib_InitMacro(LstIns, "", fpNone|psCheckFileTypeIns, "Lists all instructions of currently loaded Ins file" );
-  xlib_InitMacro(FixHL, "", fpNone|psFileLoaded, "Fixes hydrogen atom labels" );
-  xlib_InitMacro(Fix, "", (fpAny^fpNone)|psCheckFileTypeIns, "Fixes specified parameters of atoms: XYZ, Uiso, Occu" );
-  xlib_InitMacro(Free, "", (fpAny^fpNone)|psCheckFileTypeIns, "Frees specified parameters of atoms: XYZ, Uiso, Occu" );
-  xlib_InitMacro(Isot,"" , fpAny|psFileLoaded,
+  xlib_InitMacro(AddIns,EmptyString, (fpAny^fpNone)|psCheckFileTypeIns, "Adds an instruction to the INS file" );
+  xlib_InitMacro(DelIns, EmptyString, fpOne|psCheckFileTypeIns, "A number or the name (will remove all accurances) can be provided" );
+  xlib_InitMacro(LstIns, EmptyString, fpNone|psCheckFileTypeIns, "Lists all instructions of currently loaded Ins file" );
+  xlib_InitMacro(FixHL, EmptyString, fpNone|psFileLoaded, "Fixes hydrogen atom labels" );
+  xlib_InitMacro(Fix, EmptyString, (fpAny^fpNone)|psCheckFileTypeIns, "Fixes specified parameters of atoms: XYZ, Uiso, Occu" );
+  xlib_InitMacro(Free, EmptyString, (fpAny^fpNone)|psCheckFileTypeIns, "Frees specified parameters of atoms: XYZ, Uiso, Occu" );
+  xlib_InitMacro(Isot,EmptyString , fpAny|psFileLoaded,
 "makes provided atoms isotropic, if no arguments provided, current selection or all atoms become isotropic");
   xlib_InitMacro(Anis,"h-adds hydrogen atoms" , (fpAny) | psFileLoaded, 
 "makes provided atoms anisotropic if no arguments provided current selection or all atoms are considered" );
 xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fpOne|psFileLoaded, 
     "Saves current model to a file. By default an ins file is saved and loaded" );
-  xlib_InitMacro(LS, "", fpOne|fpTwo|psCheckFileTypeIns, "Sets refinement method and/or the number of iterations.");
-  xlib_InitMacro(Plan, "", fpOne|psCheckFileTypeIns, "Sets the number of Fourier peaks to be found from the difference map");
-  xlib_InitMacro(UpdateWght, "", fpAny|psCheckFileTypeIns, "Copies proposed weight to current");
-  xlib_InitMacro(User, "", fpNone|fpOne, "Changes current folder");
-  xlib_InitMacro(Dir, "", fpNone|fpOne, "Lists current folder. A file name mask may be provided");
-  xlib_InitMacro(LstVar, "", fpAny, "Lists all defined variables. Accepts * based masks" );
+  xlib_InitMacro(LS, EmptyString, fpOne|fpTwo|psCheckFileTypeIns, "Sets refinement method and/or the number of iterations.");
+  xlib_InitMacro(Plan, EmptyString, fpOne|psCheckFileTypeIns, "Sets the number of Fourier peaks to be found from the difference map");
+  xlib_InitMacro(UpdateWght, EmptyString, fpAny|psCheckFileTypeIns, "Copies proposed weight to current");
+  xlib_InitMacro(User, EmptyString, fpNone|fpOne, "Changes current folder");
+  xlib_InitMacro(Dir, EmptyString, fpNone|fpOne, "Lists current folder. A file name mask may be provided");
+  xlib_InitMacro(LstVar, EmptyString, fpAny, "Lists all defined variables. Accepts * based masks" );
   xlib_InitMacro(LstMac, "h-Shows help", fpAny, "Lists all defined macros. Accepts * based masks" );
   xlib_InitMacro(LstFun, "h-Shows help", fpAny, "Lists all defined functions. Accepts * based masks" );
   xlib_InitMacro(LstFS, EmptyString, fpAny, "Prints out detailed content of virtual file system. Accepts * based masks");
@@ -2668,6 +2667,182 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMa
     Error.ProcessingError(__OlxSrcInfo, "could not save file: ") << Cmds[1];
     return;
   }
+}
+//..............................................................................
+void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TXApp& xapp = TXApp::GetInstance();
+  VcoVContainer vcovc;
+  vcovc.ReadShelxMat(TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "mat"), xapp.XFile().GetAsymmUnit());
+  TAsymmUnit& _au = xapp.XFile().GetAsymmUnit();
+  for( size_t i=0; i < _au.AtomCount(); i++ )  {
+    TCAtom& a = _au.GetAtom(i);
+    if( a.GetEllipsoid() != NULL )  {
+      TEllipsoid& elp = *a.GetEllipsoid();
+      a.SetUiso(elp.GetUiso());
+      double esd = 0;
+      for( int j=0; j < 3; j++ )
+        esd += olx_sqr(elp.GetEsd(j));
+      a.SetUisoEsd(sqrt(esd)/4.);
+    }
+    else if( TAtomsInfo::IsHAtom(a.GetAtomInfo()) )  {
+      long val = olx_round(a.GetUiso()*1000);
+      a.SetUiso((double)val/1000);
+    }
+  }
+  TCif cif;
+  cif.Adopt(&xapp.XFile());
+  TAsymmUnit& au = cif.GetAsymmUnit();
+  for( size_t i=0; i < au.AtomCount(); i++ )  {
+    if( au.GetAtom(i).GetAtomInfo() == iQPeakIndex )
+      au.GetAtom(i).SetDeleted(true);
+  }
+  TLattice& latt = xapp.XFile().GetLattice();
+  TCifLoop& bonds = cif.AddLoop("_geom_bond");
+  bonds.Table().AddCol("_geom_bond_atom_site_label_1");
+  bonds.Table().AddCol("_geom_bond_atom_site_label_2");
+  bonds.Table().AddCol("_geom_bond_distance");
+  bonds.Table().AddCol("_geom_bond_site_symmetry_2");
+  bonds.Table().AddCol("_geom_bond_publ_flag");
+  for( size_t i=0; i < latt.BondCount(); i++ )  {
+    TSBond& b = latt.GetBond(i);
+    if( TAtomsInfo::IsHAtom(b.A().GetAtomInfo()) || b.A().GetAtomInfo() == iQPeakIndex || b.A().IsDeleted() )  {
+      b.SetTag(0);
+      continue;
+    }
+    if( TAtomsInfo::IsHAtom(b.B().GetAtomInfo()) || b.B().GetAtomInfo() == iQPeakIndex || b.B().IsDeleted() )  {
+      b.SetTag(0);
+      continue;
+    }
+    b.SetTag(-1);
+  }
+  for( size_t i=0; i < latt.AtomCount(); i++ )  {
+    TSAtom& a = latt.GetAtom(i);
+    if( TAtomsInfo::IsHAtom(a.GetAtomInfo()) || a.GetAtomInfo() == iQPeakIndex || 
+      a.IsDeleted() || !a.GetMatrix(0).IsFirst() )  continue;
+    for( size_t j=0; j < a.BondCount(); j++ )  {
+      TSBond& b = a.Bond(j);
+      if( b.GetTag() == 0 )  continue;
+      b.SetTag(0);
+      TCifRow& row = bonds.Table().AddRow(EmptyString);
+      row[0] = b.A().GetLabel();  row.GetObject(0) = new TCifLoopData(&b.A().CAtom());
+      row[1] = b.B().GetLabel();  row.GetObject(1) = new TCifLoopData(&b.B().CAtom());
+      row[2] = vcovc.CalcDistance(b.A(), b.B()).ToString();
+      if( !b.B().GetMatrix(0).IsFirst() )
+        row[3] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell(), b.B().GetMatrix(0));
+      else
+        row[3] = '.';
+      row[4] = '?';
+      for( int k=2; k < 5; k++ )
+        row.GetObject(k) = new TCifLoopData;
+    }
+  }
+  TCifLoop& angles = cif.AddLoop("_geom_angle");
+  angles.Table().AddCol("_geom_angle_atom_site_label_1");
+  angles.Table().AddCol("_geom_angle_atom_site_label_2");
+  angles.Table().AddCol("_geom_angle_atom_site_label_3");
+  angles.Table().AddCol("_geom_angle");
+  angles.Table().AddCol("_geom_angle_site_symmetry_1");
+  angles.Table().AddCol("_geom_angle_site_symmetry_3");
+  angles.Table().AddCol("_geom_angle_publ_flag");
+  for( size_t i=0; i < latt.AtomCount(); i++ )  {
+    TSAtom& a = latt.GetAtom(i);
+    if( TAtomsInfo::IsHAtom(a.GetAtomInfo()) || a.GetAtomInfo() == iQPeakIndex || 
+      a.IsDeleted() || !a.GetMatrix(0).IsFirst() )  continue;
+    for( size_t j=0; j < a.NodeCount(); j++ )  {
+      TSAtom& b = a.Node(j);
+      if( b.IsDeleted() || TAtomsInfo::IsHAtom(b.GetAtomInfo()) || b.GetAtomInfo() == iQPeakIndex )
+        continue;
+      for( size_t k=j+1; k < a.NodeCount(); k++ )  {
+        TSAtom& c = a.Node(k);      
+        if( c.IsDeleted() || TAtomsInfo::IsHAtom(c.GetAtomInfo()) || c.GetAtomInfo() == iQPeakIndex )
+          continue;
+        TCifRow& row = angles.Table().AddRow(EmptyString);
+        row[0] = b.GetLabel();  row.GetObject(0) = new TCifLoopData(&b.CAtom());
+        row[1] = a.GetLabel();  row.GetObject(1) = new TCifLoopData(&a.CAtom());
+        row[2] = c.GetLabel();  row.GetObject(2) = new TCifLoopData(&c.CAtom());
+        row[3] = vcovc.CalcAngle(b, a, c).ToString();
+        if( !b.GetMatrix(0).IsFirst() )
+          row[4] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell(), b.GetMatrix(0));
+        else
+          row[4] = '.';
+        if( !c.GetMatrix(0).IsFirst() )
+          row[5] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell(), c.GetMatrix(0));
+        else
+          row[5] = '.';
+        row[6] = '?';
+        for( int l=3; l < 7; l++ )
+          row.GetObject(l) = new TCifLoopData;
+      }
+    }
+  }
+  RefinementModel& rm = xapp.XFile().GetRM();
+  if( rm.InfoTabCount() != 0 )  {
+    TCifLoop& hbonds = cif.AddLoop("_geom_hbond");
+    hbonds.Table().AddCol("_geom_hbond_atom_site_label_D");
+    hbonds.Table().AddCol("_geom_hbond_atom_site_label_H");
+    hbonds.Table().AddCol("_geom_hbond_atom_site_label_A");
+    hbonds.Table().AddCol("_geom_hbond_distance_DH");
+    hbonds.Table().AddCol("_geom_hbond_distance_HA");
+    hbonds.Table().AddCol("_geom_hbond_distance_DA");
+    hbonds.Table().AddCol("_geom_hbond_angle_DHA");
+    hbonds.Table().AddCol("_geom_hbond_site_symmetry_A");
+    smatd I;
+    I.I().SetId(0);
+    TAtomEnvi envi;
+    for( size_t i=0; i < rm.InfoTabCount(); i++ )  {
+      InfoTab& it = rm.GetInfoTab(i);
+      if( it.GetType() != infotab_htab || !it.IsValid() )  continue;
+      TGroupCAtom *d = NULL, *a = NULL;
+      for( size_t j=0; j < it.Count(); j++ )  {
+        if( it.GetAtom(j).GetAtom()->IsDeleted() )  continue;
+        if( d == NULL )
+          d = &it.GetAtom(j);
+        else  {
+          a = &it.GetAtom(j);
+          break;
+        }
+      }
+      TSAtom* dsa = xapp.XFile().GetLattice().FindSAtom(*d->GetAtom());
+      if( dsa == NULL )  continue;  //eh?
+      envi.Clear();
+      xapp.XFile().GetUnitCell().GetAtomEnviList(*dsa, envi);
+      for( size_t j=0; j < envi.Count(); j++ )  {
+        if( !TAtomsInfo::IsHAtom(envi.GetBAI(j)) )  continue;
+        TCifRow& row = hbonds.Table().AddRow(EmptyString);
+        row[0] = d->GetAtom()->GetLabel();  row.GetObject(0) = new TCifLoopData(d->GetAtom());
+        row[1] = envi.GetCAtom(j).GetLabel();  row.GetObject(1) = new TCifLoopData(&envi.GetCAtom(j));
+        row[2] = a->GetAtom()->GetLabel();  row.GetObject(2) = new TCifLoopData(a->GetAtom());
+        TSAtom da(NULL), aa(NULL);
+        da.CAtom(*d->GetAtom());
+        da.AddMatrix(&I);
+        au.CellToCartesian(da.ccrd(), da.crd());
+        aa.CAtom(*a->GetAtom());
+        smatd am;
+        if( a->GetMatrix() == 0 )  {
+          am.I();
+          am.SetId(0);
+        }
+        else  {
+          am = *a->GetMatrix();
+          xapp.XFile().GetUnitCell().InitMatrixId(am);
+        }
+        aa.AddMatrix(&am);
+        aa.ccrd() = am*aa.ccrd();
+        au.CellToCartesian(aa.ccrd(), aa.crd());
+        row[3] = olxstr::FormatFloat(2, envi.GetCrd(j).DistanceTo(da.crd()));
+        row[4] = olxstr::FormatFloat(2, envi.GetCrd(j).DistanceTo(aa.crd()));
+        row[5] = vcovc.CalcDistance(da, aa).ToString();
+        row[6] = olxstr::FormatFloat(1, Angle(da.crd(), envi.GetCrd(j), aa.crd()));
+        if( a->GetMatrix() == NULL )
+          row[7] = '.';
+        else
+          row[7] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell(), aa.GetMatrix(0));
+        for( int l=3; l < 8; l++ )
+          row.GetObject(l) = new TCifLoopData;
+      }
+    }
+  }
+  cif.SaveToFile("e:\\1.cif");
 }
 //..............................................................................
 struct XLibMacros_StrF  {

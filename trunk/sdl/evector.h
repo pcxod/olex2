@@ -1,7 +1,5 @@
-//---------------------------------------------------------------------------
-
-#ifndef evectorH
-#define evectorH
+#ifndef __olx_evector_H
+#define __olx_evector_H
 
 #include <math.h>
 #include "ebase.h"
@@ -15,8 +13,7 @@ BeginEsdlNamespace()
 // using forward reference
 template <typename> class TMatrix;
 
-template <class VecType>
-  class TVector: public IEObject  {
+template <class VecType> class TVector {
 protected:
   size_t Fn;
   VecType *FData;

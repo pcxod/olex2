@@ -618,7 +618,7 @@ public:
 #ifdef __BORLANDC__
   size_t IndexOf(const TC* wht) const {  return o_strpos( T::Data(), T::_Length, wht, o_strlen(wht));  }
   size_t IndexOfi(const TC* wht) const {  return o_strposi( T::Data(), T::_Length, wht, o_strlen(wht));  }
-  sie_t IndexOf(TC wht) const { return o_chrpos( T::Data(), T::_Length, wht);  }
+  size_t IndexOf(TC wht) const { return o_chrpos( T::Data(), T::_Length, wht);  }
   size_t IndexOfi(TC wht) const { return o_chrposi( T::Data(), T::_Length, wht);  }
   size_t FirstIndexOf(const TC* wht, size_t from = 0) const {
     size_t i = o_strpos(&T::Data()[from], T::_Length-from, wht, o_strlen(wht));
@@ -648,7 +648,7 @@ public:
   size_t LastIndexOfi(const TC* wht, size_t from = InvalidIndex) const {
     return o_strposri(T::Data(), olx_min(from, T::_Length), wht, o_strlen(wht));
   }
-  size_t LastIndexOf(TC wht, size_t from = InvalidIndex0) const {
+  size_t LastIndexOf(TC wht, size_t from = InvalidIndex) const {
     return o_chrposr(T::Data(), olx_min(from, T::_Length), wht);
   }
   size_t LastIndexOfi(TC wht, size_t from = InvalidIndex) const {

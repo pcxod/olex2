@@ -286,8 +286,6 @@ TCifValue* TCifDataManager::Match( const TSAtomPList& Atoms )  {
   return NULL;
 }
 //..............................................................................
-void TCifDataManager::Clear()  {  Items.Clear();  }
-//----------------------------------------------------------------------------//
 // TCif function bodies
 //----------------------------------------------------------------------------//
 TCif::TCif() : FDataNameUpperCase(true)  {  }
@@ -959,7 +957,7 @@ bool TCif::Adopt(TXFile *XF)  {
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
   bool AddUTable=false;
 
-  GetAsymmUnit().Assign( XF->GetAsymmUnit() );
+  GetAsymmUnit().Assign(XF->GetAsymmUnit());
   GetAsymmUnit().SetZ( (short)XF->GetLattice().GetUnitCell().MatrixCount());
   Title = "OLEX2_EXP";
 
@@ -1005,6 +1003,7 @@ bool TCif::Adopt(TXFile *XF)  {
   Table->AddCol("_atom_site_fract_x");
   Table->AddCol("_atom_site_fract_y");
   Table->AddCol("_atom_site_fract_z");
+  Table->AddCol("_atom_site_U_iso_or_equiv");
   Table->AddCol("_atom_site_disorder_group");
 
   for( size_t i = 0; i < GetAsymmUnit().AtomCount(); i++ )  {
@@ -1036,12 +1035,15 @@ bool TCif::Adopt(TXFile *XF)  {
       Row[j+2] = EValue.ToCStr();
       Row.GetObject(j+2) = new TCifLoopData;
     }
+    EValue.V() = A->GetUiso();  EValue.E() = A->GetUisoEsd();
+    Row[5] = EValue.ToString();
+    Row.GetObject(5) = new TCifLoopData;
     // process part as well
     if( A->GetPart() != -1 )
-      Row[5] = A->GetPart();
+      Row[6] = A->GetPart();
     else
-      Row[5] = '.';
-    Row.GetObject(5) = new TCifLoopData;
+      Row[6] = '.';
+    Row.GetObject(6) = new TCifLoopData;
 
     if( A->GetEllipsoid() != NULL )  {
       A->GetEllipsoid()->GetQuad(Q, E);

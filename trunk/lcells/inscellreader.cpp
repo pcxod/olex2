@@ -23,7 +23,7 @@ bool _fastcall TInsCellReader::LoadFromInsFile(const olxstr& FN)  {
   catch( const TExceptionBase& exc)  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  for( int i=0; i < S.Count(); i++ )  {
+  for( size_t i=0; i < S.Count(); i++ )  {
     if( S[i].Length() == 0 )
       continue;
     toks.Clear();
@@ -64,7 +64,7 @@ bool _fastcall TInsCellReader::LoadFromCifFile(const olxstr& FN)  {
   catch( const TExceptionBase& exc)  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  for( int i=0; i < S.Count(); i++ )  {
+  for( size_t i=0; i < S.Count(); i++ )  {
     if( S[i].IsEmpty() || S[i][0] != '_' )  continue;
     toks.Clear();
     S[i].Replace('\t', ' ');
@@ -84,7 +84,7 @@ bool _fastcall TInsCellReader::LoadFromCifFile(const olxstr& FN)  {
     if( toks[0] == "_cell_angle_gamma" )
       Fac = toks[1].ToDouble();
     if( toks[0] == "_symmetry_space_group_name_h-m" )  {
-      for( int j=0; j < toks[1].Length(); j++ )  {
+      for( size_t j=0; j < toks[1].Length(); j++ )  {
         switch( toks[1].CharAt(j) )  {
           case 'p':  FLattice = 1;    break;
           case 'i':  FLattice = 2;    break;

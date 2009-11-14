@@ -39,15 +39,15 @@ TreeNode TheTreeRoot;
 
 void AddNode( TTreeNodes* tree, const olxstr& path )  {
   TStrList toks(path, '\\');
-  int i=0, ind;
+  size_t i=0, ind;
   TTreeNode* nd = NULL;
   TreeNode* theNode = &TheTreeRoot;
-  while( i < toks.Count() && (ind = theNode->IndexOf(toks[i])) >= 0 )  {
+  while( i < toks.Count() && (ind = theNode->IndexOf(toks[i])) != InvalidIndex )  {
     i++;
     nd = theNode->GetObject(ind);
     theNode = ((TreeNode*)nd->Data);
   }
-  for(int j=i; j < toks.Count(); j++ )  {
+  for( size_t j=i; j < toks.Count(); j++ )  {
     nd = tree->AddChild(nd, toks[j].c_str() );
     theNode->Add(toks[j],nd);
     if( (j+1) < toks.Count() )  {
@@ -179,7 +179,7 @@ exit:
     if( Tmp == "/update" )  {
       if( TEFile::Exists(IndexFile) )
         Index->LoadFromFile(IndexFile, false);
-      for( int i=0; i < UpdatePaths.Count(); i++ )  {
+      for( size_t i=0; i < UpdatePaths.Count(); i++ )  {
         if( TEFile::Exists(UpdatePaths[i]) )
           res = Index->Update(false, UpdatePaths[i], 50*1024*1024, this);
       }
@@ -319,7 +319,7 @@ void __fastcall TdlgMain::bbSearchClick(TObject *Sender)  {
   C.Lattice = i;
   ReduceCell(C);
   Index->Clear();
-  for( int i=0; i < IndexFiles.Count(); i++ )  {
+  for( size_t i=0; i < IndexFiles.Count(); i++ )  {
     if( TEFile::Exists(IndexFiles[i]) )  {
       Index->LoadFromFile(IndexFiles[i], true);
       Index->Search(C, Dev, Cifs, false);
@@ -332,7 +332,7 @@ void __fastcall TdlgMain::bbSearchClick(TObject *Sender)  {
   }
   lvList->Items->BeginUpdate();
   lvList->Items->Clear();
-  for( int i=0; i < Cifs.Count(); i++ )
+  for( size_t i=0; i < Cifs.Count(); i++ )
     AddResult(Cifs[i]);
 
   lvList->Items->EndUpdate();
@@ -426,7 +426,7 @@ void _fastcall TdlgMain::AddMessage(const olxstr& A)  {
 }
 //---------------------------------------------------------------------------
 void _fastcall TdlgMain::AddMessage(const TStrList& sl)  {
-  for( int i=0; i < sl.Count(); i++ )
+  for( size_t i=0; i < sl.Count(); i++ )
     mMemo->Lines->Add( sl[i].c_str() );
 }
 //---------------------------------------------------------------------------
@@ -595,7 +595,7 @@ bool _fastcall TdlgMain::ReduceCell(TCell &C)  {
   Rd[5] = 2*C.na*C.nb*cos(C.nac*M_PI/180);
 
   for( int i=0; i < 6; i++ )
-    R[i] = Round(Rd[i]);
+    R[i] = olx_round(Rd[i]);
 
   Used = true;
   Cycles = 0;
@@ -642,39 +642,39 @@ bool _fastcall TdlgMain::ReduceCell(TCell &C)  {
     if( (fabs(R[3]) > R[1]) || ( (R[3] == R[1])&& (2*R[4]<R[5]) ) || //5
       ( (R[3]==-R[1])&&(R[5]<0)) )
     {
-      R[2] = R[1]+R[2] - R[3]*Sign(R[3]);
-      R[4] = R[4]-R[5]*Sign(R[3]);
-      R[3] = R[3]-2*R[1]*Sign(R[3]);
+      R[2] = R[1]+R[2] - R[3]*olx_sign(R[3]);
+      R[4] = R[4]-R[5]*olx_sign(R[3]);
+      R[3] = R[3]-2*R[1]*olx_sign(R[3]);
 
-      Rd[2] = Rd[1]+Rd[2] - Rd[3]*Sign(Rd[3]);
-      Rd[4] = Rd[4]-Rd[5]*Sign(Rd[3]);
-      Rd[3] = Rd[3]-2*Rd[1]*Sign(Rd[3]);
+      Rd[2] = Rd[1]+Rd[2] - Rd[3]*olx_sign(Rd[3]);
+      Rd[4] = Rd[4]-Rd[5]*olx_sign(Rd[3]);
+      Rd[3] = Rd[3]-2*Rd[1]*olx_sign(Rd[3]);
       Used = true;
       continue;
     }
     if( (fabs(R[4]) > R[0]) || ( (R[4] == R[0])&& (2*R[3]<R[5]) ) ||  //6
       ( (R[4]==-R[0])&&(R[5]<0)) )
     {
-      R[2] = R[0]+R[2] - R[4]*Sign(R[4]);
-      R[3] = R[3]-R[5]*Sign(R[4]);
-      R[4] = R[4]-2*R[0]*Sign(R[4]);
+      R[2] = R[0]+R[2] - R[4]*olx_sign(R[4]);
+      R[3] = R[3]-R[5]*olx_sign(R[4]);
+      R[4] = R[4]-2*R[0]*olx_sign(R[4]);
 
-      Rd[2] = Rd[0]+Rd[2] - Rd[4]*Sign(Rd[4]);
-      Rd[3] = Rd[3]-Rd[5]*Sign(Rd[4]);
-      Rd[4] = Rd[4]-2*Rd[0]*Sign(Rd[4]);
+      Rd[2] = Rd[0]+Rd[2] - Rd[4]*olx_sign(Rd[4]);
+      Rd[3] = Rd[3]-Rd[5]*olx_sign(Rd[4]);
+      Rd[4] = Rd[4]-2*Rd[0]*olx_sign(Rd[4]);
       Used = true;
       continue;
     }
     if( (fabs(R[5]) > R[0]) || ( (R[5] == R[0])&& (2*R[3]<R[4]) ) ||  //7
       ( (R[5]==-R[0])&&(R[4]<0)) )
     {
-      R[1] = R[0]+R[1] - R[5]*Sign(R[5]);
-      R[3] = R[3]-R[4]*Sign(R[5]);
-      R[5] = R[5]-2*R[0]*Sign(R[5]);
+      R[1] = R[0]+R[1] - R[5]*olx_sign(R[5]);
+      R[3] = R[3]-R[4]*olx_sign(R[5]);
+      R[5] = R[5]-2*R[0]*olx_sign(R[5]);
 
-      Rd[1] = Rd[0]+Rd[1] - Rd[5]*Sign(Rd[5]);
-      Rd[3] = Rd[3]-Rd[4]*Sign(Rd[5]);
-      Rd[5] = Rd[5]-2*Rd[0]*Sign(Rd[5]);
+      Rd[1] = Rd[0]+Rd[1] - Rd[5]*olx_sign(Rd[5]);
+      Rd[3] = Rd[3]-Rd[4]*olx_sign(Rd[5]);
+      Rd[5] = Rd[5]-2*Rd[0]*olx_sign(Rd[5]);
       Used = true;
       continue;
     }
@@ -768,11 +768,11 @@ void __fastcall TdlgMain::miPreferencesClick(TObject *Sender)
   dlgPref = new TdlgPref(this);
   TListItem *I;
 
-  for(int i=0; i < UpdatePaths.Count(); i++ )  {
+  for( size_t i=0; i < UpdatePaths.Count(); i++ )  {
      I = dlgPref->lvPaths->Items->Add();
      I->Caption = UpdatePaths[i].c_str();
   }
-  for(int i=0; i < IndexFiles.Count(); i++ )  {
+  for( size_t i=0; i < IndexFiles.Count(); i++ )  {
      I = dlgPref->lvFiles->Items->Add();
      I->Caption = IndexFiles[i].c_str();
   }
@@ -807,7 +807,7 @@ void __fastcall TdlgMain::miExitClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 void _fastcall TdlgMain::PostMsg(HWND H, const olxstr& Msg)  {
-  for( int i=0; i < Msg.Length(); i++ )
+  for( size_t i=0; i < Msg.Length(); i++ )
     PostMessage(H, WM_CHAR, Msg[i], 0);
   }
 void __fastcall TdlgMain::sbViewClick(TObject *Sender)  {
@@ -933,12 +933,12 @@ void TdlgMain::InitTree()  {
   olxstr tmp;
   if( TEFile::Exists(IndexFile) )  {
     Index->LoadFromFile(IndexFile, false);
-    for( int i=0; i < Index->IFiles.Count(); i++)  {
+    for( size_t i=0; i < Index->IFiles.Count(); i++)  {
       //tvTree->Items->Add( NULL, Index->IFiles[i]->Name.c_str());
       AddNode( tvTree->Items, Index->IFiles[i]->Name);
     }
-    for( int i=0; i < Index->ZFiles.Count(); i++)  {
-      for( int j=0; j < Index->ZFiles[i]->Index->IFiles.Count(); j++ )  {
+    for( size_t i=0; i < Index->ZFiles.Count(); i++)  {
+      for( size_t j=0; j < Index->ZFiles[i]->Index->IFiles.Count(); j++ )  {
         tmp = Index->ZFiles[i]->FileName;
         tmp << '@' << Index->ZFiles[i]->Index->IFiles[j]->Name;
         AddNode( tvTree->Items, TEFile::WinPath(tmp));

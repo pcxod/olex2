@@ -32,7 +32,8 @@ public:
   inline size_t MatrixCount() const {  return Matrices.Count();  }
   // the identity matrix is always the first
   inline const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
-
+  // initialises the matrix container id, throws an excpetion if matrix is not found
+  void InitMatrixId(smatd& m) const;
   // gets an ellipsoid for an atom by asymmetric unit Id and a matrix associated with it
   const TEllipsoid& GetEllipsoid(size_t MatrixId, size_t AUId) const;
   void AddEllipsoid(); // adds a new row to ellipsoids, intialised with NULLs
@@ -101,7 +102,7 @@ public:
   }
 
   /* returns a list of all matrices which lead to covalent/hydrogen bonds, 
-  the return value is alwas an object to be deleted with delete 
+  the return value is always an object to be deleted with delete 
   */
   smatd_list* GetBinding(const TCAtom& toA, const TCAtom& fromA,
     const vec3d& to, const vec3d& from, bool IncludeI, bool IncludeHBonds) const;
@@ -145,7 +146,7 @@ protected:
       return (d < 0 ? -1 : ((d > 0 ) ? 1 : 0));
     }
 public:
-  // creates the array of matrices for a given aunit and lattice tyoe
+  // creates an array of matrices for a given aunit and lattice type
   static void GenerateMatrices(smatd_list& out, const TAsymmUnit& au, short lat);
   // association should be AnAssociation2+<vec3d,TCAtom*,+>, generates all atoms of the aunit
   template <class Association> void GenereteAtomCoordinates(TTypeList<Association>& list, bool IncludeH, 
@@ -199,7 +200,7 @@ public:
       delete &atoms;
   }
   /* expands atom coordinates with +/-1 if one of the fractional coordinates is less the lim or greater than 1-lim
-  This function is used in the BuildStructure map function to take ito account atoms which are near the cell sides
+  This function is used in the BuildStructure map function to take into account atoms which are near the cell sides
   */
   template <class Association> void ExpandAtomCoordinates(TTypeList<Association>& list, const double lim)  {
     list.SetCapacity( list.Count()*7 );

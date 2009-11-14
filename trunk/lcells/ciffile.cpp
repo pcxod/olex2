@@ -190,7 +190,7 @@ void _fastcall TZipFile::operator << (IDataInputStream &S)  {
   S >> FFileName;
   *FIndex << S;
   TCifFile *C;
-  for( int i=0; i < FIndex->IFiles.Count(); i++ )
+  for( size_t i=0; i < FIndex->IFiles.Count(); i++ )
     FIndex->IFiles[i]->Parent = this;
 }
 olxstr TZipFile::GetCif(const olxstr& Name)  {
@@ -225,7 +225,7 @@ bool _fastcall TZipFile::LoadFromZip(const olxstr& FN)  {
   FZip->Extract();
   Files.Assign(FZip->Files);
   FZip->MaskFiles("ins");
-  for( int i=0; i < FZip->Files.Count(); i++ )  {
+  for( size_t i=0; i < FZip->Files.Count(); i++ )  {
     Tmp = FZip->Files[i];
     Tmp1 = dlgMain->TmpDir;
     Tmp1 << Tmp;
@@ -242,7 +242,7 @@ bool _fastcall TZipFile::LoadFromZip(const olxstr& FN)  {
   }
   FZip->Files.Assign(Files);
   FZip->MaskFiles("cif");
-  for( int i=0; i < FZip->Files.Count(); i++ )  {
+  for( size_t i=0; i < FZip->Files.Count(); i++ )  {
     Tmp = FZip->Files[i];
     Tmp1 = dlgMain->TmpDir;
     Tmp1 << Tmp;
@@ -275,9 +275,9 @@ TCifIndex::~TCifIndex()  {
   Clear();
 }
 void _fastcall TCifIndex::Clear()  {
-  for( int i=0; i < FInsFiles.Count(); i++ )
+  for( size_t i=0; i < FInsFiles.Count(); i++ )
     delete FInsFiles[i];
-  for( int i=0; i < FZipFiles.Count(); i++ )
+  for( size_t i=0; i < FZipFiles.Count(); i++ )
     delete FZipFiles[i];
   FInsFiles.Clear();
   FZipFiles.Clear();
@@ -324,7 +324,7 @@ bool _fastcall TCifIndex::Update(bool Total, const olxstr& Dir, int MaxSize, TFo
   dlgProgress->Caption = "Processing Ins files...";
   dlgProgress->pbBar->Position = 0;
   dlgProgress->pbBar->Max = InsFiles.Count();
-  for( int i=0; i < InsFiles.Count(); i++ )  {
+  for( size_t i=0; i < InsFiles.Count(); i++ )  {
     FFN = InsFiles[i];
     FN = TEFile::UNCFileName(FFN);
     dlgProgress->SetAction(FFN);
@@ -335,7 +335,7 @@ bool _fastcall TCifIndex::Update(bool Total, const olxstr& Dir, int MaxSize, TFo
         goto exit;
     }
     update = found = 0;
-    for( int j=0; j < FInsFiles.Count(); j++ )  {
+    for( size_t j=0; j < FInsFiles.Count(); j++ )  {
       C = FInsFiles[j];
       if( !C->Name.Comparei(FN) )  {
         found = true;
@@ -377,7 +377,7 @@ bool _fastcall TCifIndex::Update(bool Total, const olxstr& Dir, int MaxSize, TFo
   dlgProgress->Caption = "Processing Cif files...";
   dlgProgress->pbBar->Position = 0;
   dlgProgress->pbBar->Max = InsFiles.Count();
-  for( int i=0; i < CifFiles.Count(); i++ )  {
+  for( size_t i=0; i < CifFiles.Count(); i++ )  {
     FFN = CifFiles[i];
     FN = TEFile::UNCFileName(FFN);
     dlgProgress->SetAction(FFN);
@@ -388,7 +388,7 @@ bool _fastcall TCifIndex::Update(bool Total, const olxstr& Dir, int MaxSize, TFo
         goto exit;
     }
     update = found = 0;
-    for( int j=0; j < FInsFiles.Count(); j++ ) {
+    for( size_t j=0; j < FInsFiles.Count(); j++ ) {
       C = FInsFiles[j];
       if( !C->Name.Comparei(FN) )  {
         found = true;
@@ -437,7 +437,7 @@ bool _fastcall TCifIndex::Update(bool Total, const olxstr& Dir, int MaxSize, TFo
   dlgProgress->Caption = "Processing Zip files...";
   dlgProgress->pbBar->Position = 0;
   dlgProgress->pbBar->Max = ZipFiles.Count();
-  for( int i=0; i < ZipFiles.Count(); i++ )  {
+  for( size_t i=0; i < ZipFiles.Count(); i++ )  {
     FFN = ZipFiles[i];
     FN = TEFile::UNCFileName(FFN);
     dlgProgress->SetAction(FFN);
@@ -446,7 +446,7 @@ bool _fastcall TCifIndex::Update(bool Total, const olxstr& Dir, int MaxSize, TFo
     if( Cancel )
       goto exit;
     update = found = false;
-    for( int j=0; j < FZipFiles.Count(); j++ )  {
+    for( size_t j=0; j < FZipFiles.Count(); j++ )  {
       Zip = FZipFiles[j];
       if( !Zip->FileName.Comparei(FN) )  {
         found = true;
@@ -504,7 +504,7 @@ void _fastcall TCifIndex::Search(const TCell &C, double Dev, TTypeList<TCifFile*
     dlgProgress->Caption = "Searching in CIF/INS Files...";
     dlgProgress->pbBar->Max = FInsFiles.Count() + FZipFiles.Count();
   }
-  for( int i=0; i < FInsFiles.Count(); i++ )  {
+  for( size_t i=0; i < FInsFiles.Count(); i++ )  {
     Cf = FInsFiles[i];
     if( Cf->Cell.InRange(C, Dev) )
       Files.AddACopy(Cf);
@@ -519,7 +519,7 @@ void _fastcall TCifIndex::Search(const TCell &C, double Dev, TTypeList<TCifFile*
     }
   }
   dlgProgress->Caption = "Searching in ZIP Files...";
-  for( int i=0; i < FZipFiles.Count(); i++ )  {
+  for( size_t i=0; i < FZipFiles.Count(); i++ )  {
     Zp = FZipFiles[i];
     Zp->Index->Search(C, Dev, Files, true);
     if( !Silent )   {
@@ -539,11 +539,11 @@ exit:
 void _fastcall TCifIndex::operator >> (IDataOutputStream &S)  {
   S << FUpdated;
   S << FInsFiles.Count();
-  for( int i=0; i < FInsFiles.Count(); i++ )
+  for( size_t i=0; i < FInsFiles.Count(); i++ )
     *FInsFiles[i] >> S;
 
   S << FZipFiles.Count();
-  for( int i=0; i < FZipFiles.Count(); i++ )
+  for( size_t i=0; i < FZipFiles.Count(); i++ )
     *FZipFiles[i] >> S;
 }
 void _fastcall TCifIndex::operator << (IDataInputStream &S)  {
@@ -669,7 +669,7 @@ void _fastcall TCifIndex::Clean(TForm *Parent)  {
   dlgProgress->AddForm(Parent);
   dlgProgress->Show();
   dlgProgress->pbBar->Max = FInsFiles.Count();
-  for( int i=0; i < FInsFiles.Count(); i++ )  {
+  for( size_t i=0; i < FInsFiles.Count(); i++ )  {
     if( FInsFiles.IsNull(i) )  continue;
     C = FInsFiles[i];
     dlgProgress->SetAction(C->Name);
@@ -679,7 +679,7 @@ void _fastcall TCifIndex::Clean(TForm *Parent)  {
       if( Cancel )
         goto exit;
     }
-    for( int j=i+1; j < FInsFiles.Count(); j++ )  {
+    for( size_t j=i+1; j < FInsFiles.Count(); j++ )  {
       if( FInsFiles.IsNull(j) )  continue;
       C1 = FInsFiles[j];
       if( C->Cell == C1->Cell )  {
@@ -696,7 +696,7 @@ exit:
 
 int _fastcall TCifIndex::GetCount()  {
   int C = FInsFiles.Count();
-  for( int i=0; i < FZipFiles.Count(); i++ )
+  for( size_t i=0; i < FZipFiles.Count(); i++ )
     C += FZipFiles[i]->Index->GetCount();
   return C;
 }
@@ -711,7 +711,7 @@ void _fastcall TCifIndex::CleanDead(TForm *Parent)  {
   dlgProgress->pbBar->Max = FInsFiles.Count();
   dlgProgress->AddForm(Parent);
   dlgProgress->Show();
-  for( int i=0; i < FInsFiles.Count(); i++ )  {
+  for( size_t i=0; i < FInsFiles.Count(); i++ )  {
     C = FInsFiles[i];
     dlgProgress->SetAction(C->Name);
     if( !(i%10) )  {
@@ -729,7 +729,7 @@ void _fastcall TCifIndex::CleanDead(TForm *Parent)  {
   FInsFiles.Pack();
   dlgProgress->Caption = "2. Cleaning dead links in ZIPS...";
   dlgProgress->pbBar->Max = FZipFiles.Count();
-  for( int i=0; i < FZipFiles.Count(); i++ )  {
+  for( size_t i=0; i < FZipFiles.Count(); i++ )  {
     Z = FZipFiles[i];
     dlgProgress->SetAction(Z->FileName);
     if( !(i%10) )  {
@@ -759,7 +759,7 @@ void _fastcall TCifIndex::Exclusive()
   dlgProg->Caption = "1. Creating Exclusive Index for CIFs";
   dlgProg->Show();
   dlgProg->pbBar->Max = FInsFiles.Count() + FZipFiles.Count();
-  for( int i=0; i < FInsFiles.Count(); i++ )  {
+  for( size_t i=0; i < FInsFiles.Count(); i++ )  {
     if( FInsFiles.IsNull(i) )  continue;
     C = FInsFiles[i];
     if( !(i%10) )  {
@@ -769,7 +769,7 @@ void _fastcall TCifIndex::Exclusive()
       if( Cancel )
         goto exit;
     }
-    for( int j=i+1; j < FInsFiles.Count(); j++ )  {
+    for( size_t j=i+1; j < FInsFiles.Count(); j++ )  {
       if( FInsFiles.IsNull(j) )  continue;
       C1 = FInsFiles[j];
       if( C->Name == C1->Name )  {
@@ -786,7 +786,7 @@ void _fastcall TCifIndex::Exclusive()
     }
   }
   dlgProg->Caption = "2. Creating Exclusive Index for ZIPs";
-  for( int i=0; i < FZipFiles.Count(); i++ )  {
+  for( size_t i=0; i < FZipFiles.Count(); i++ )  {
     if( FZipFiles.IsNull(i) )  continue;
     Z = FZipFiles[i];
     if( Z == NULL )    continue;
@@ -797,7 +797,7 @@ void _fastcall TCifIndex::Exclusive()
       if( Cancel )
         goto exit;
     }
-    for( int j=i+1; j < FZipFiles.Count(); j++ )  {
+    for( size_t j=i+1; j < FZipFiles.Count(); j++ )  {
       if( FZipFiles.IsNull(j) )  continue;
       Z1 = FZipFiles[j];
       if( Z1 == NULL )    continue;
