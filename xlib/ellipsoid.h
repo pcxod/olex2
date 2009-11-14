@@ -57,6 +57,8 @@ public:
       E[i] = FEsd[i];
     }
   }
+  void SetEsd(size_t i, double v)  {  FEsd[i] = v;  } 
+  const double& GetEsd(size_t i) const {  return FEsd[i];  } 
   const double& GetQuadVal(size_t ind) const {  return FQuad[ind];  }
   inline double GetSX() const {  return SX;  }
   inline double GetSY() const {  return SY;  }

@@ -771,14 +771,14 @@ void TLattice::RestoreAtom(const TSAtom::Ref& id)  {
 }
 //..............................................................................
 TSAtom* TLattice::FindSAtom(const olxstr& Label) const {
-  for( size_t i =0; i < Atoms.Count(); i++ )
+  for( size_t i=0; i < Atoms.Count(); i++ )
     if( Label.Equalsi( Atoms[i]->GetLabel()) )  
       return Atoms[i];
   return NULL;
 }
 //..............................................................................
 TSAtom* TLattice::FindSAtom(const TCAtom& ca) const {
-  for( size_t i =0; i < Atoms.Count(); i++ )
+  for( size_t i=0; i < Atoms.Count(); i++ )
     if( ca.GetId() == Atoms[i]->CAtom().GetId() )  
       return Atoms[i];
   return NULL;

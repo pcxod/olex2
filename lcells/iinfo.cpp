@@ -47,7 +47,7 @@ void __fastcall TdlgIndexInfo::bbUpdateClick(TObject *Sender)  {
       dlgMain->Index->Update(false, eDir->Text.c_str(), atoi(eLimit->Text.c_str())*1024*1024, this);
   }
   if( rbList->Checked )  {
-    for( int i=0; i < dlgMain->Paths.Count(); i++ )  {
+    for( size_t i=0; i < dlgMain->Paths.Count(); i++ )  {
       if( TEFile::Exists(dlgMain->Paths[i]) )
         dlgMain->Index->Update(false, dlgMain->Paths[i], atoi(eLimit->Text.c_str())*1024*1024, this);
     }

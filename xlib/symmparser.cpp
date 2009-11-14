@@ -148,7 +148,7 @@ olxstr TSymmParser::MatrixToSymmEx(const mat3i& M)  {
 //..............................................................................
 // this needs to be of very high performance
 olxstr TSymmParser::MatrixToSymmCode(const TUnitCell& UC, const smatd& M)  {
-  const smatd& m = UC.GetMatrix( M.GetContainerId() );
+  const smatd& m = UC.GetMatrix(M.GetContainerId());
   vec3i Trans(m.t - M.t);
   int baseVal = 5;
   if( (abs(Trans[0]) > 4) || (abs(Trans[1]) > 4) || (abs(Trans[1]) > 4) )

@@ -56,6 +56,22 @@ void TUnitCell::Clear()  {
   ClearEllipsoids();
 }
 //..............................................................................
+void TUnitCell::InitMatrixId(smatd& m) const {
+  for( size_t i=0; i < Matrices.Count(); i++ )  {
+    if( Matrices[i].r == m.r )  {
+      const vec3d dt = m.t-Matrices[i].t;
+      const int ta = (int)(m.t[0]-Matrices[i].t[0]);
+      const int tb = (int)(m.t[1]-Matrices[i].t[1]);
+      const int tc = (int)(m.t[2]-Matrices[i].t[2]);
+      if( olx_abs(dt[0]-ta) < 1e-6 && olx_abs(dt[1]-tb) < 1e-6 && olx_abs(dt[2]-tc) < 1e-6 )  {
+        m.SetId(i, ta, tb, tc);
+        return;
+      }
+    }
+  }
+  throw TInvalidArgumentException(__OlxSourceInfo, "could not locate matrix");
+}
+//..............................................................................
 double TUnitCell::CalcVolume()  const  {
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
   static const double k = M_PI/180;
@@ -562,7 +578,7 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
 //..............................................................................
 void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, int part)  const {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  envi.SetBase( atom );
+  envi.SetBase(atom);
 
   smatd I;
   I.I().SetId(0);

@@ -62,7 +62,7 @@ public:
   // reads the shelxl VcoV matrix and initliases atom loader Ids'
   void ReadShelxMat(const olxstr& fileName, TAsymmUnit& au);
   // fills creates three matrices AA, AB, ... AX, BA, BB, ... BX, ...
-  template <class list> void FindVcoV(const list& atoms, mat3d_list& m ) const {
+  template <class list> void FindVcoV(const list& atoms, mat3d_list& m) const {
     TSizeList a_indexes;
     TTypeList<TVector3<size_t> > indexes;
     for( size_t i=0; i < atoms.Count(); i++ )  {
@@ -399,7 +399,7 @@ protected:
   template <class atom_list> void GetVcoV(const atom_list& as, mat3d_list& m)  {
     vcov.FindVcoV(as, m);
     ProcessSymmetry(as, m);
-    mat3d c2f( as[0]->CAtom().GetParent()->GetCellToCartesian() );
+    mat3d c2f(as[0]->CAtom().GetParent()->GetCellToCartesian());
     mat3d c2f_t( mat3d::Transpose(as[0]->CAtom().GetParent()->GetCellToCartesian()) );
     for( size_t i=0; i < m.Count(); i++ )
       m[i] = c2f_t*m[i]*c2f;

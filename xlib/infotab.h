@@ -61,7 +61,7 @@ public:
     return *this;
   }
 
-  void AssignAtoms( const TCAtomGroup& ag )  {
+  void AssignAtoms(const TCAtomGroup& ag)  {
     atoms.Clear();
     for( size_t i=0; i < ag.Count(); i++ )
       AddAtom(ag[i].GetAtom(), ag[i].GetMatrix() );

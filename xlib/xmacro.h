@@ -74,6 +74,7 @@ class XLibMacros  {
   static DefMacro(CifMerge)
   static DefMacro(Cif2Tab)
   static DefMacro(Cif2Doc)
+  static DefMacro(CifCreate)
 
   static DefMacro(CalcCHN)
   static DefMacro(CalcMass)

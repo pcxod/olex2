@@ -543,7 +543,7 @@ struct GraphAnalyser  {
       matchedAtoms[i].A()->SetTag(i);
     if( CalcRMSForH )  {
       for( size_t i=0; i < matchedAtoms.Count(); i++ )
-        if( matchedAtoms[i].A()->GetTag() != i )
+        if( (size_t)matchedAtoms[i].A()->GetTag() != i )
           matchedAtoms.NullItem(i);
     }
     else  {
