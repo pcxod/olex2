@@ -417,7 +417,7 @@ protected:
   }
   template <class List, class Evaluator> 
   void CalcDiff(const List& points, TDoubleList& df, Evaluator e)  {
-    const double delta=1.0e-10;
+    static const double delta=sqrt(2.2e-16);
     for( size_t i=0; i < points.Count(); i++ )  {
       for( short j=0; j < 3; j++ )  {
         points[i][j] += 2*delta;
@@ -435,7 +435,7 @@ protected:
   }
   template <class List, typename Evaluator, class extraParam> 
   void CalcDiff(const List& points, TDoubleList& df, Evaluator e, const extraParam& ep)  {
-    const double delta=1.0e-10;
+    static const double delta=sqrt(2.2e-16);
     for( size_t i=0; i < points.Count(); i++ )  {
       for( short j=0; j < 3; j++ )  {
         points[i][j] += 2*delta;

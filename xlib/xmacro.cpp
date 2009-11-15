@@ -2842,7 +2842,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       }
     }
   }
-  cif.SaveToFile("e:\\1.cif");
+  cif.SaveToFile(TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif"));
 }
 //..............................................................................
 struct XLibMacros_StrF  {

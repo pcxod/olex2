@@ -26,7 +26,7 @@ public:
   // processes a symmetry matrix and updates object's data
   void MultMatrix(const mat3d& M);
   // return true if the ellipsoid is not positively defined
-  inline bool IsNPD()  const   {  return FNPD; };
+  inline bool IsNPD() const {  return FNPD;  }
 
   template <class T> TEllipsoid& Initialise(const T& Q, const T& E)  {
     for( size_t i=0; i < 6; i++ )  {
@@ -47,11 +47,11 @@ public:
   // calculates eigen values and vectors; FQuad must be initialised
   void Initialise();  // 
   
-  template <class T> void GetQuad(T& Q) const  {
+  template <class T> void GetQuad(T& Q) const {
     for( size_t i=0; i < 6; i++ )
       Q[i] = FQuad[i];
   }
-  template <class T> void GetQuad(T& Q, T& E) const  {
+  template <class T> void GetQuad(T& Q, T& E) const {
     for( size_t i=0; i < 6; i++ )  {
       Q[i] = FQuad[i];
       E[i] = FEsd[i];

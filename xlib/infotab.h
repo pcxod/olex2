@@ -88,7 +88,7 @@ public:
       if( !atoms[i].GetAtom()->IsDeleted() )
         ac++;
     if( Type == infotab_htab && ac == 2 )  return true;
-    if( Type == infotab_rtab && ac >= 2 && ac <= 4 && !ParamName.IsEmpty() )  return true;
+    if( Type == infotab_rtab && ac >= 1 && ac <= 4 && !ParamName.IsEmpty() )  return true;
     return false;
   }
 

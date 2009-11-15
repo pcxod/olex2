@@ -1039,8 +1039,8 @@ bool TCif::Adopt(TXFile *XF)  {
     Row[5] = EValue.ToString();
     Row.GetObject(5) = new TCifLoopData;
     // process part as well
-    if( A->GetPart() != -1 )
-      Row[6] = A->GetPart();
+    if( A->GetPart() != 0 )
+      Row[6] = (int)A->GetPart();
     else
       Row[6] = '.';
     Row.GetObject(6) = new TCifLoopData;
