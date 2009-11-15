@@ -662,8 +662,9 @@ void TLattice::GrowAtoms(const TSAtomPList& atoms, const smatd_list& matrices)  
     }
     if( !found )  {
       M = new smatd(matrices[i]);
-      Matrices.Add(M); //->SetId(~0);
+      Matrices.Add(M);
       addedMatrices.Add(M);
+      this->GetUnitCell().InitMatrixId(*M);
     }
   }
 

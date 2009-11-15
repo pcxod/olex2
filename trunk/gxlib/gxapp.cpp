@@ -1374,7 +1374,7 @@ void TGXApp::GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template)  {
 void TGXApp::Grow(const TXAtomPList& atoms, const smatd_list& matrices)  {
   TSAtomPList satoms;
   TListCaster::POP(atoms, satoms);
-  FXFile->GetLattice().GrowAtoms( satoms, matrices);
+  FXFile->GetLattice().GrowAtoms(satoms, matrices);
 }
 //..............................................................................
 bool TGXApp::AtomExpandable(TXAtom *XA)  {
