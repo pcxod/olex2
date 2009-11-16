@@ -282,6 +282,8 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
     InfoTables.Add( new InfoTab(*this, infotab_htab, EmptyString, resi_name) );
   else if( tab_name.Equalsi("RTAB") )
     InfoTables.Add( new InfoTab(*this, infotab_rtab, l[atom_start++], resi_name) );
+  else if( tab_name.Equalsi("MPLA") )
+    InfoTables.Add( new InfoTab(*this, infotab_mpla, l[atom_start++], resi_name) );
   else
     throw TInvalidArgumentException(__OlxSourceInfo, "unknown information table name");
 
@@ -295,7 +297,7 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
     InfoTables.Delete( InfoTables.Count()-1 );
     return;
   }
-  InfoTables.Last().AssignAtoms( ag );
+  InfoTables.Last().AssignAtoms(ag);
   if( !InfoTables.Last().IsValid() )  {
     TBasicApp::GetLog().Error(olxstr("Invalid info table: ") << l.Text(' '));
     InfoTables.Delete( InfoTables.Count()-1 );

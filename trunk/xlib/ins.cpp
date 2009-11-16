@@ -154,7 +154,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   }
 
   Ins.Pack();
-  ParseRestraints(Ins, cx);
+  ParseRestraints(cx.rm, Ins);
   Ins.Pack();
   _ProcessSame(cx);
   _FinishParsing(cx);
@@ -570,7 +570,7 @@ bool TIns::InsExists(const olxstr &Name)  {
 //..............................................................................
 bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
   // special instructions
-  if( _ParseIns(rm, toks) )  return true;
+  if( _ParseIns(rm, toks) || ParseRestraint(rm, toks) )  return true;
   // check for uniqueness
   if( CheckUniq )  {
     for( size_t i=0; i < Ins.Count(); i++ )  {
@@ -1043,7 +1043,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
     }
   }
   _ProcessSame(cx);
-  ParseRestraints(Instructions, cx);
+  ParseRestraints(cx.rm, Instructions);
   Instructions.Pack();
 }
 //..............................................................................
@@ -1690,9 +1690,171 @@ void TIns::ParseHeader(const TStrList& in)  {
       GetAsymmUnit().AddMatrix(sm);
   }
   Ins.Pack();
-  ParseRestraints(Ins, cx);
+  ParseRestraints(cx.rm, Ins);
   Ins.Pack();
   _FinishParsing(cx);
 }
 //..............................................................................
+bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& toks)  {
+  if( toks[0].Equalsi("EQIV") && toks.Count() >= 3 )  {
+    smatd SymM;
+    TSymmParser::SymmToMatrix(toks.Text(EmptyString, 2), SymM);
+    rm.AddUsedSymm(SymM, toks[1]);
+    return true;
+  }
+  if( (toks[0].StartsFromi("HTAB") || toks[0].StartsFromi("RTAB") || toks[0].StartsFromi("MPLA")) && 
+    toks.Count() > 2 )
+  {
+    rm.AddInfoTab(toks);
+    return true;
+  }
+  TSRestraintList* srl = NULL;
+  short RequiredParams = 1, AcceptsParams = 1;
+  bool AcceptsAll = false;
+  double Esd1Mult = 0, DefVal = 0, DefEsd = 0, DefEsd1 = 0;
+  double *Vals[] = {&DefVal, &DefEsd, &DefEsd1};
+  // extract residue
+  olxstr resi, ins_name = toks[0];
+  size_t resi_ind = toks[0].IndexOf('_');
+  if( resi_ind != InvalidIndex )  {
+    resi = toks[0].SubStringFrom(resi_ind+1);
+    ins_name = toks[0].SubStringTo(resi_ind);
+  }
+
+  if( ins_name.Equalsi("EXYZ") )  {
+    rm.AddEXYZ(toks.SubListFrom(1));
+    return true;
+  }
+  else if( ins_name.Equalsi("DFIX") )  {
+    srl = &rm.rDFIX;
+    RequiredParams = 1;  AcceptsParams = 2;
+    DefEsd = 0.02;
+    Vals[0] = &DefVal;  Vals[1] = &DefEsd;
+  }
+  else if( ins_name.Equalsi("DANG") )  {
+    srl = &rm.rDANG;
+    RequiredParams = 1;  AcceptsParams = 2;
+    DefEsd = 0.04;
+    Vals[0] = &DefVal;  Vals[1] = &DefEsd;
+  }
+  else if( ins_name.Equalsi("SADI") )  {
+    srl = &rm.rSADI;
+    RequiredParams = 0;  AcceptsParams = 1;
+    DefEsd = 0.02;
+    Vals[0] = &DefEsd;
+  }
+  else if( ins_name.Equalsi("CHIV") )  {
+    srl = &rm.rCHIV;
+    RequiredParams = 1;  AcceptsParams = 2;
+    DefEsd = 0.1;
+    Vals[0] = &DefEsd;  Vals[1] = &DefVal;
+  }
+  else if( ins_name.Equalsi("FLAT") )  {
+    srl = &rm.rFLAT;
+    DefEsd = 0.1;
+    RequiredParams = 0;  AcceptsParams = 1;
+    Vals[0] = &DefEsd; ;
+  }
+  else if( ins_name.Equalsi("DELU") )  {
+    srl = &rm.rDELU;
+    DefEsd = 0.01;  DefEsd1 = 0.01;
+    Esd1Mult = 1;
+    RequiredParams = 0;  AcceptsParams = 2;
+    Vals[0] = &DefEsd;  Vals[1] = &DefEsd1;
+    AcceptsAll = true;
+  }
+  else if( ins_name.Equalsi("SIMU") )  {
+    srl = &rm.rSIMU;
+    DefEsd = 0.04;  DefEsd1 = 0.08;
+    Esd1Mult = 2;
+    DefVal = 1.7;
+    RequiredParams = 0;  AcceptsParams = 3;
+    Vals[0] = &DefEsd;  Vals[1] = &DefEsd1;  Vals[2] = &DefVal;
+    AcceptsAll = true;
+  }
+  else if( ins_name.Equalsi("ISOR") )  {
+    srl = &rm.rISOR;
+    DefEsd = 0.1;  DefEsd1 = 0.2;
+    Esd1Mult = 2;
+    RequiredParams = 0;  AcceptsParams = 2;
+    Vals[0] = &DefEsd;  Vals[1] = &DefEsd1;
+    AcceptsAll = true;
+  }
+  else if( ins_name.Equalsi("EADP") )  {
+    srl = &rm.rEADP;
+    RequiredParams = 0;  AcceptsParams = 0;
+  }
+  else
+    srl = NULL;
+  if( srl != NULL )  {
+    TSimpleRestraint& sr = srl->AddNew();
+    size_t index = 1;
+    if( toks.Count() > 1 && toks[1].IsNumber() )  {
+      if( toks.Count() > 2 && toks[2].IsNumber() )  {
+        if( toks.Count() > 3 && toks[3].IsNumber() )  {  // three numerical params
+          if( AcceptsParams < 3 )  
+            throw TInvalidArgumentException(__OlxSourceInfo, "too many numerical parameters");
+          *Vals[0] = toks[1].ToDouble();
+          *Vals[1] = toks[2].ToDouble();
+          *Vals[2] = toks[3].ToDouble();
+          index = 4; 
+        }
+        else  {  // two numerical params
+          if( AcceptsParams < 2 )  
+            throw TInvalidArgumentException(__OlxSourceInfo, "too many numerical parameters");
+          *Vals[0] = toks[1].ToDouble();
+          *Vals[1] = toks[2].ToDouble();
+          index = 3; 
+        }
+      }
+      else  {
+        if( AcceptsParams < 1 )  
+          throw TInvalidArgumentException(__OlxSourceInfo, "too many numerical parameters");
+        *Vals[0] = toks[1].ToDouble();
+        index = 2; 
+      }
+    }
+    rm.Vars.SetParam(sr, 0, DefVal);
+    sr.SetEsd(DefEsd);
+    if( Vals[0] == &DefEsd )
+      sr.SetEsd1( (index <= 2) ? DefEsd*Esd1Mult : DefEsd1 );
+    else
+      sr.SetEsd1(DefEsd1);
+    if( AcceptsAll && toks.Count() <= index )  {
+      sr.SetAllNonHAtoms(true);
+    }
+    else  {
+      TAtomReference aref(toks.Text(' ', index));
+      TCAtomGroup agroup;
+      size_t atomAGroup;
+      try  {  aref.Expand(rm, agroup, resi, atomAGroup);  }
+      catch( const TExceptionBase& ex )  {
+        TBasicApp::GetLog().Exception(ex.GetException()->GetError());
+        return false;
+      }
+      if( sr.GetListType() == rltBonds && (agroup.Count() == 0 || (agroup.Count()%2)!=0 ) )  {
+        TBasicApp::GetLog().Error( olxstr("Wrong restraint parameters list: ") << toks.Text(' ') );
+        return false;
+      }
+      if( ins_name.Equalsi("FLAT") )  {  // a special case again...
+        TSimpleRestraint* sr1 = &sr;
+        for( size_t j=0; j < agroup.Count(); j += atomAGroup )  {
+          for( size_t k=0; k < atomAGroup; k++ )
+            sr1->AddAtom(*agroup[j+k].GetAtom(), agroup[j+k].GetMatrix());
+          if( j != 0 )
+            srl->ValidateRestraint(*sr1);
+          sr1 = &srl->AddNew();
+          sr1->SetEsd( sr.GetEsd() );
+          sr1->SetEsd1( sr.GetEsd1() );
+          sr1->SetValue( sr.GetValue() );
+        }
+      }
+      else
+        sr.AddAtoms(agroup);
+    }
+    srl->ValidateRestraint(sr);
+    return true;
+  }
+  return false;
+}
 
