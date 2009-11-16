@@ -3187,31 +3187,34 @@ void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 
   Ins->SaveForSolution(FN, Cmds.Text(' '), newSg, Options.Contains("rem"));
   if( TEFile::Exists(lstFN) )  {
-    olxstr lstTmpFN( lstFN );
+    olxstr lstTmpFN(lstFN);
     lstTmpFN << ".tmp";
     TEFile::Rename(lstFN, lstTmpFN);
   }
-  Macros.ProcessMacro( olxstr("@reap \'") << FN << '\'', E);
+  Macros.ProcessMacro(olxstr("@reap \'") << FN << '\'', E);
   Macros.ProcessMacro("htmlreload", E);
 }
 //..............................................................................
 void TMainForm::macText(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   olxstr FN = DataDir + "output.txt";
-  TUtf8File::WriteLines( FN, FGlConsole->Buffer());
-  Macros.ProcessMacro( olxstr("exec getvar('defeditor') -o \"") << FN << '\"' , E);
+  TUtf8File::WriteLines(FN, FGlConsole->Buffer());
+  Macros.ProcessMacro(olxstr("exec getvar('defeditor') -o \"") << FN << '\"' , E);
 }
 //..............................................................................
 void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.IsEmpty() )  {  //S+C -> C -> S -> S+C
     if( FXApp->StructureVisible() )  {
       if( FGlConsole->ShowBuffer() )
-        FXApp->StructureVisible( false );
-      else
+        FXApp->StructureVisible(false);
+      else  {
+        if( FGlConsole->GetLinesToShow() != InvalidSize )
+          FGlConsole->SetLinesToShow(InvalidSize);
         FGlConsole->ShowBuffer(true);
+      }
     }
     else {
       if( FGlConsole->ShowBuffer() )  {
-        FXApp->StructureVisible( true );
+        FXApp->StructureVisible(true);
         FGlConsole->ShowBuffer(false);
       }
       else
@@ -3219,7 +3222,7 @@ void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options, TMacroE
     }
   }
   else
-    FXApp->StructureVisible( Cmds[0].ToBool() );
+    FXApp->StructureVisible(Cmds[0].ToBool());
   FXApp->CenterView();
   TStateChange sc(prsStrVis, FXApp->StructureVisible());
   OnStateChange->Execute((AEventsDispatcher*)this, &sc);
@@ -7126,8 +7129,8 @@ void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TM
 }
 //..............................................................................
 void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TGlMaterial* mat = NULL, *smat = NULL;
-  TGPCollection* gpc = NULL;
+  TGlMaterial* mat = NULL;
+  TGlMaterial glm(Cmds[1]);
   if( Cmds[0] == "helpcmd" )
     mat = &HelpFontColorCmd;
   else if( Cmds[0] == "helptxt" )
@@ -7139,25 +7142,27 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
   else if( Cmds[0] == "exception" )
     mat = &ExceptionFontColor;
   else {
-    int di = Cmds[0].IndexOf('.');
-    if( di != -1 )  {
-      gpc = FXApp->GetRender().FindCollection(Cmds[0].SubStringTo(di));
+    size_t di = Cmds[0].IndexOf('.');
+    bool found = false;
+    if( di != InvalidIndex )  {
+      TGPCollection* gpc = FXApp->GetRender().FindCollection(Cmds[0].SubStringTo(di));
       if( gpc != NULL )  {
         TGlPrimitive* glp = gpc->FindPrimitiveByName(Cmds[0].SubStringFrom(di+1));
         if( glp != NULL )  {
-          mat = &glp->GetProperties();
-          smat = &gpc->GetStyle().GetMaterial(Cmds[0].SubStringFrom(di+1), *mat);
+          glp->SetProperties(glm);
+          gpc->GetStyle().SetMaterial(Cmds[0].SubStringFrom(di+1), glm);
+          found = true;
         }
       }
     }
-  }
-  if( mat == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, olxstr("undefined material ") << Cmds[0]);
+    if( !found )
+      E.ProcessingError(__OlxSrcInfo, olxstr("Undefined object ") << Cmds[0]);
     return;
   }
-  mat->FromString( Cmds[1] );
-  if( smat != NULL )
-    *smat = *mat;
+  if( mat == NULL )
+    E.ProcessingError(__OlxSrcInfo, olxstr("Undefined material ") << Cmds[0]);
+  else
+    *mat = glm;
 }
 //..............................................................................
 void TMainForm::funChooseMaterial(const TStrObjList &Params, TMacroError &E)  {

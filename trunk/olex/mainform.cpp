@@ -35,6 +35,7 @@
 #include "gpcollection.h"
 #include "glgroup.h"
 #include "glbackground.h"
+#include "glcursor.h"
 
 #include "dbasis.h"
 #include "dunitcell.h"
@@ -1224,7 +1225,7 @@ separated values of Atom Type and radius, an entry a line" );
   Menus.Add("Structure", MenuStructure);
   Menus.Add("Help", MenuHelp);
 
-  SetMenuBar( MenuBar );
+  SetMenuBar(MenuBar);
 //////////////////////////////////////////////////////////////
   FXApp->GetRender().OnDraw->Add(this, ID_GLDRAW);
   TObjectVisibilityChange* VC = new TObjectVisibilityChange(this);
@@ -1308,9 +1309,9 @@ separated values of Atom Type and radius, an entry a line" );
 
   FGlConsole = new TGlConsole(FXApp->GetRender(), "Console");
   // the commands are posted from in Dispatch, SkipPosting is controlling the output
-  FXApp->GetLog().AddStream( FGlConsole, false );
-  FGlConsole->OnCommand->Add( this, ID_COMMAND);
-  FGlConsole->OnPost->Add( this, ID_TEXTPOST);
+  FXApp->GetLog().AddStream(FGlConsole, false);
+  FGlConsole->OnCommand->Add(this, ID_COMMAND);
+  FGlConsole->OnPost->Add(this, ID_TEXTPOST);
   FXApp->AddObjectToCreate(FGlConsole);
 ////////////////////////////////////////////////////////////////////////////////
   Library.AttachLibrary( FGlConsole->ExportLibrary() );
@@ -1328,7 +1329,7 @@ separated values of Atom Type and radius, an entry a line" );
   FHelpWindow->SetVisible(false);
 
   FInfoBox = new TGlTextBox(FXApp->GetRender(), "InfoBox");
-  FXApp->AddObjectToCreate( FInfoBox );
+  FXApp->AddObjectToCreate(FInfoBox);
 
   GlTooltip = new TGlTextBox(FXApp->GetRender(), "Tooltip");
   FXApp->AddObjectToCreate( GlTooltip );
@@ -1367,11 +1368,7 @@ void TMainForm::StartupInit()  {
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   // create 4 fonts
   
-  TGlMaterial glm;
-  glm.SetFlags(sglmAmbientF|sglmIdentityDraw);
-  glm.AmbientF = 0x7fff7f;
-  glm.EmissionF = 0x1f2f1f;
-
+  TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
   FXApp->GetRender().GetScene().CreateFont("Console", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
   FXApp->GetRender().GetScene().CreateFont("Help", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
   FXApp->GetRender().GetScene().CreateFont("Notes", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
@@ -1379,12 +1376,13 @@ void TMainForm::StartupInit()  {
   FXApp->GetRender().GetScene().CreateFont("Picture_labels", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
   FXApp->GetRender().GetScene().CreateFont("Tooltip", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
 
-  FXApp->SetLabelsFont( 3 );
+  FXApp->SetLabelsFont(3);
 
   FGlConsole->SetFontIndex(0);
+  FGlConsole->Cursor()->SetFontIndex(0);
   FHelpWindow->SetFontIndex(1);
-  FInfoBox->SetFontIndex( 2 );
-  GlTooltip->SetFontIndex( 5 );
+  FInfoBox->SetFontIndex(2);
+  GlTooltip->SetFontIndex(5);
 
   olxstr T(DataDir);  
   T << FLastSettingsFile;
