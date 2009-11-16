@@ -161,8 +161,11 @@ void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
 //..............................................................................
 bool TDUnitCell::GetDimensions(vec3d &Max, vec3d &Min)  {
   if( FGlP == NULL )  return false;
-  Min = FGlP->Vertices[0] + Center;  
-  Max = FGlP->Vertices[23] + Center;  
+  vec3f _min(100,100,100), _max(-100, -100, -100);
+  for( int i=0; i < 8; i++ )
+    vec3f::UpdateMinMax(GetVertex(i), _min, _max);
+  Min = vec3d(_min) + Center;  
+  Max = vec3d(_max) + Center;  
   return true;
 }
 //..............................................................................

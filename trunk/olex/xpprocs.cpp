@@ -1005,6 +1005,7 @@ void TMainForm::macCell(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FXApp->SetCellVisible( !FXApp->IsCellVisible() );
   else
     FXApp->SetCellVisible( Cmds[0].ToBool() );
+  FXApp->CenterView();
 }
 //..............................................................................
 void TMainForm::macRota(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -1519,7 +1520,7 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macCent(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXAtomPList Atoms;
-  FXApp->FindXAtoms(Cmds.Text(' '), Atoms);
+  FindXAtoms(Cmds, Atoms, true, true);
   FXApp->AddCentroid(Atoms);
 }
 //..............................................................................
@@ -1543,10 +1544,10 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   else  {
     int Mask = Cmds.Last().String.ToInt();
     Cmds.Delete( Cmds.Count() - 1 );
-    TGPCollection *GPC = FXApp->GetRender().FindCollection( Cmds.Text(' ') );
+    TGPCollection *GPC = FXApp->GetRender().FindCollection(Cmds.Text(' '));
     if( GPC != NULL )  {
       if( GPC->ObjectCount() != 0 )
-        GPC->GetObject(0).UpdatePrimitives( Mask );
+        GPC->GetObject(0).UpdatePrimitives(Mask);
       //TimePerFrame = FXApp->Draw();
     }
     else  {
@@ -1557,7 +1558,7 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macARad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  olxstr arad( Cmds[0] );
+  olxstr arad(Cmds[0]);
   Cmds.Delete(0);
   TXAtomPList xatoms;
   FindXAtoms(Cmds, xatoms, false, false);
