@@ -410,9 +410,9 @@ TMainForm::TMainForm(TGlXApp *Parent):
   /* a singleton - will be deleted in destructor, we cannot use GC as the Py_DecRef
    would be called after finalising python
   */
-  PythonExt::Init(this).Register( &TMainForm::PyInit );
-  PythonExt::GetInstance()->Register( &OlexPyCore::PyInit );
-  PythonExt::GetInstance()->Register( &hkl_py::PyInit );
+  PythonExt::Init(this).Register( &TMainForm::PyInit);
+  PythonExt::GetInstance()->Register( &OlexPyCore::PyInit);
+  PythonExt::GetInstance()->Register( &hkl_py::PyInit);
   //TOlxVars::Init().OnVarChange->Add(this, ID_VarChange);
   FGlCanvas = NULL;
   FXApp = NULL;
@@ -488,7 +488,7 @@ bool TMainForm::Destroy()  {
     SaveVFS(plGlobal);  // save virtual db to file
     SaveVFS(plStructure);  
 
-    FXApp->OnObjectsDestroy->Remove( this );
+    FXApp->OnObjectsDestroy->Remove(this);
     ProcessMacro("onexit");
     SaveSettings(DataDir + FLastSettingsFile);
     ClearPopups();
@@ -546,7 +546,7 @@ TMainForm::~TMainForm()  {
 //..............................................................................
 void TMainForm::XApp( TGXApp *XA)  {
   FXApp = XA;
-  FXApp->SetCifTemplatesDir( XA->GetBaseDir() + "etc/CIF/" );
+  FXApp->SetCifTemplatesDir(XA->GetBaseDir() + "etc/CIF/");
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
   Macros.Init();
@@ -666,47 +666,47 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
   this_InitMacro(AddLabel, , fpThree|fpFive);
   this_InitMacroD(Mpln, "n-just orient, do not create plane&;r-create regular plane;we-use weights proportional to the (atomic weight)^we", 
     fpAny, "Sets current view along the normal of the best plane");
-  this_InitMacroD(Cent, EmptyString, fpAny^fpNone, "creates a centroid for given atoms");
+  this_InitMacroD(Cent, EmptyString, fpAny, "creates a centroid for given/selected/all atoms");
   this_InitMacroD(Mask, EmptyString, fpAny^fpNone, 
 "Sets primitives for atoms or bonds according to provided mask.\
-Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 2048' - this resets hydrogen bond style to default" );
+Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 2048' - this resets hydrogen bond style to default");
 
   this_InitMacroD(ARad, EmptyString, fpAny^fpNone, 
 "Changes how the atoms are drawn [sfil - sphere packing, pers - static radii, isot - radii proportional to Ueq,\
- isoth - as isot, but applied to H atoms as well]" );
-  this_InitMacroD(ADS, EmptyString, fpAny^(fpNone), "Changes atom draw style [sph,elp,std]" );
+ isoth - as isot, but applied to H atoms as well]");
+  this_InitMacroD(ADS, EmptyString, fpAny^(fpNone), "Changes atom draw style [sph,elp,std]");
   this_InitMacroD(AZoom, EmptyString, fpAny^fpNone, "Modifies given atoms [all] radius. The first argument is the new radius in %");
-  this_InitMacroD(BRad, EmptyString, fpAny^fpNone, "Sets provided [all] bonds radius to given number (first argument)" );
+  this_InitMacroD(BRad, EmptyString, fpAny^fpNone, "Sets provided [all] bonds radius to given number (first argument)");
 
-  this_InitMacroD(Hide, EmptyString, fpAny, "Hides selected objects or provided atom names (no atom related objects as bonds are hidden automatically)" );
-  this_InitMacroD(Kill, "h-kill hidden atoms", fpAny^fpNone, "deletes provided [selected] atoms" );
+  this_InitMacroD(Hide, EmptyString, fpAny, "Hides selected objects or provided atom names (no atom related objects as bonds are hidden automatically)");
+  this_InitMacroD(Kill, "h-kill hidden atoms", fpAny^fpNone, "deletes provided [selected] atoms");
   this_InitMacroD(Omit, EmptyString, fpOne|fpThree|psCheckFileTypeIns, 
     "removes any particular reflection from the refinement list. If a single number is provided,\
  all reflections with delta(F^2)/esd greater than given number are omitted");
 
-  this_InitMacroD(Exec, "s-synchronise&;o-detached&;d-output dub file name&;q-do not post output to console", fpAny^fpNone, "Executes external command" );
+  this_InitMacroD(Exec, "s-synchronise&;o-detached&;d-output dub file name&;q-do not post output to console", fpAny^fpNone, "Executes external command");
   this_InitMacroD(Shell, "", fpNone|fpOne, "if no arguments launches a new interactive shell,\
   otherwise runs provided file in the interactive shell (on windows ShellExecute is\
-  used to avoid flickering console)" );
-  this_InitMacro(Save, , fpAny^fpNone );
-  this_InitMacro(Load, , fpAny^fpNone );
-  this_InitMacro(Link, , fpNone|fpOne );
-  this_InitMacroD(Style, "s-shows a file open dialog", fpNone|fpOne, "Prints default style or sets it (none resets)" );
-  this_InitMacroD(Scene, "s-shows a file open dialog", fpNone|fpOne, "Prints default scene parameters or sets it (none resets)" );
+  used to avoid flickering console)");
+  this_InitMacro(Save, , fpAny^fpNone);
+  this_InitMacro(Load, , fpAny^fpNone);
+  this_InitMacro(Link, , fpNone|fpOne);
+  this_InitMacroD(Style, "s-shows a file open dialog", fpNone|fpOne, "Prints default style or sets it (none resets)");
+  this_InitMacroD(Scene, "s-shows a file open dialog", fpNone|fpOne, "Prints default scene parameters or sets it (none resets)");
 
-  this_InitMacro(SyncBC, , fpNone );
+  this_InitMacro(SyncBC, , fpNone);
 
-  this_InitMacro(Basis, , fpNone|fpOne );
-  this_InitMacro(Lines, , fpOne );
+  this_InitMacro(Basis, , fpNone|fpOne);
+  this_InitMacro(Lines, , fpOne);
 
-  this_InitMacro(Ceiling, , fpOne );
-  this_InitMacro(Fade, , fpThree );
+  this_InitMacro(Ceiling, , fpOne);
+  this_InitMacro(Fade, , fpThree);
 
-  this_InitMacro(WaitFor, , fpOne );
+  this_InitMacro(WaitFor, , fpOne);
 
-  this_InitMacro(HtmlPanelSwap, , fpNone|fpOne );
-  this_InitMacro(HtmlPanelWidth, , fpNone|fpOne );
-  this_InitMacro(HtmlPanelVisible, , fpNone|fpOne|fpTwo );
+  this_InitMacro(HtmlPanelSwap, , fpNone|fpOne);
+  this_InitMacro(HtmlPanelWidth, , fpNone|fpOne);
+  this_InitMacro(HtmlPanelVisible, , fpNone|fpOne|fpTwo);
 
   this_InitMacroD(QPeakScale, EmptyString, fpNone|fpOne,
     "Prints/sets the scale of dependency of the Q-peak transparency vs height");
@@ -715,20 +715,20 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacroD(Label, "type-type of labels to make;\
   possible options - subscript, brackers, default", fpAny, "Creates moveable labels for provided atoms (selection)");
 
-  this_InitMacroD(Focus, EmptyString, fpNone, "Sets input focus to the console" );
-  this_InitMacroD(Refresh, EmptyString, fpNone, "Refreshes the GUI" );
+  this_InitMacroD(Focus, EmptyString, fpNone, "Sets input focus to the console");
+  this_InitMacroD(Refresh, EmptyString, fpNone, "Refreshes the GUI");
   this_InitMacroD(Move,"cs-leaves selection unchanged&;c-copy moved atom", fpNone|fpTwo,
   "moves two atoms as close to each other as possible; if no atoms given, moves all fragments\
-  as close to the cell center as possible" );
+  as close to the cell center as possible");
 
-  this_InitMacro(ShowH, , fpNone|fpTwo|psFileLoaded );
-  this_InitMacro(Fvar, , (fpAny)|psCheckFileTypeIns );
-  this_InitMacro(Sump, , (fpAny^fpNone)|psCheckFileTypeIns );
-  this_InitMacro(Part, p&;lo, (fpAny^fpNone)|psFileLoaded );
+  this_InitMacro(ShowH, , fpNone|fpTwo|psFileLoaded);
+  this_InitMacro(Fvar, , (fpAny)|psCheckFileTypeIns);
+  this_InitMacro(Sump, , (fpAny^fpNone)|psCheckFileTypeIns);
+  this_InitMacro(Part, p&;lo, (fpAny^fpNone)|psFileLoaded);
   this_InitMacroD(Afix,"n-to accept N atoms in the rings for afix 66" , 
     (fpAny^fpNone)|psCheckFileTypeIns,
     "sets atoms afix, special cases are 56,69,66,69,76,79,106,109,116 and 119");
-  this_InitMacro(Dfix, cs-do not clear selection&;e, fpAny|psCheckFileTypeIns );
+  this_InitMacro(Dfix, cs-do not clear selection&;e, fpAny|psCheckFileTypeIns);
   this_InitMacroD(Tria, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
 "Adds a distance restraint for bonds and 'angle' restraint for the angle");
   this_InitMacroD(Dang, "cs-do not clear selection", fpAny|psCheckFileTypeIns, 
@@ -738,25 +738,25 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacroD(RRings,"s-esd&;cs-do not clear selection" , fpAny^fpNone,
 "Makes all provided rings [like C6 or NC5] regular (flat and all distances similar)");
   this_InitMacroD(Flat, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
-"Forces flat group restraint for at least 4 provided atoms" );
+"Forces flat group restraint for at least 4 provided atoms");
   this_InitMacroD(Chiv, "cs- do not clear selection", fpAny|psCheckFileTypeIns,
-"Forces chiral volume of atom(s) to '0' or provided value" );
+"Forces chiral volume of atom(s) to '0' or provided value");
   this_InitMacroD(DELU, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
-"Rigid bond constraint. If no atoms provided, all non-H atoms considered" );
+"Rigid bond constraint. If no atoms provided, all non-H atoms considered");
   this_InitMacroD(SIMU, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
-"Forces similarity restraint for Uij of provided atoms. If no atoms provided, all non-H atoms considered" );
+"Forces similarity restraint for Uij of provided atoms. If no atoms provided, all non-H atoms considered");
   this_InitMacroD(ISOR, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
-"Forses Uij of provided atoms to behave in isotropic manner. If no atoms provided, all non-H atoms considered" );
+"Forses Uij of provided atoms to behave in isotropic manner. If no atoms provided, all non-H atoms considered");
 
-  this_InitMacroD(Degen, "cs-clear selection", fpAny|psFileLoaded, "Prints how many symmetry operators put given atom to the same site" );
+  this_InitMacroD(Degen, "cs-clear selection", fpAny|psFileLoaded, "Prints how many symmetry operators put given atom to the same site");
   // not implemented
-  this_InitMacro(SwapExyz, , fpAny );
+  this_InitMacro(SwapExyz, , fpAny);
   // not implemented
-  this_InitMacro(AddExyz, , fpAny );
+  this_InitMacro(AddExyz, , fpAny);
 
   this_InitMacroD(Reset, "s-space group&;c-content&;f-alternative file name&;rem-exclude remarks", 
     fpAny|psFileLoaded, "Resets current structure for the solution with ShelX");
-  this_InitMacro(ShowQ, wheel, fpNone|fpOne|fpTwo|psFileLoaded );
+  this_InitMacro(ShowQ, wheel, fpNone|fpOne|fpTwo|psFileLoaded);
 
   this_InitMacroD(Mode, 
 "a-[name] autocomplete&;\
@@ -769,162 +769,165 @@ v-[grow] use user provided delta for connectivity analysis, default 2A",
 (fpAny^fpNone)|psFileLoaded, 
     "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move, name, occu, pack, part, split");
 
-  this_InitMacroD(Text, EmptyString, fpNone, "shows the console buffer in an external editor, defined by defeditor variable" );
-  this_InitMacroD(ShowStr, EmptyString, fpNone|fpOne|psFileLoaded, "shows/hides structure and console buffer" );
+  this_InitMacroD(Text, EmptyString, fpNone, "shows the console buffer in an external editor, defined by defeditor variable");
+  this_InitMacroD(ShowStr, EmptyString, fpNone|fpOne|psFileLoaded, "shows/hides structure and console buffer");
   // not implemented
-  this_InitMacro(Bind, , fpTwo );
+  this_InitMacro(Bind, , fpTwo);
 
-  this_InitMacro(Grad, i&;p, fpNone|fpOne|fpFour );
+  this_InitMacro(Grad, i&;p, fpNone|fpOne|fpFour);
   this_InitMacroD(Split, "r-EADP,ISOR or SIMU to be placed for the split atoms", 
-    fpAny|psCheckFileTypeIns, "splits provided atoms along the longest axis of the ADP" );
-  this_InitMacro(ShowP, m-do not modify the display view, fpAny );
+    fpAny|psCheckFileTypeIns, "splits provided atoms along the longest axis of the ADP");
+  this_InitMacro(ShowP, m-do not modify the display view, fpAny);
 
-  this_InitMacro(EditAtom, cs-do not clear the selection,fpAny|psCheckFileTypeIns );
-  this_InitMacro(EditIns, , fpNone|psCheckFileTypeIns );
-  this_InitMacro(EditHkl, , fpNone|fpOne|fpThree );
-  this_InitMacro(ViewHkl, , fpNone|fpOne );
-  this_InitMacro(ExtractHkl, , fpOne|psFileLoaded );
-  this_InitMacro(MergeHkl, , fpNone|fpOne|psFileLoaded );
+  this_InitMacro(EditAtom, cs-do not clear the selection,fpAny|psCheckFileTypeIns);
+  this_InitMacro(EditIns, , fpNone|psCheckFileTypeIns);
+  this_InitMacro(EditHkl, , fpNone|fpOne|fpThree);
+  this_InitMacro(ViewHkl, , fpNone|fpOne);
+  this_InitMacro(ExtractHkl, , fpOne|psFileLoaded);
+  this_InitMacro(MergeHkl, , fpNone|fpOne|psFileLoaded);
   // not implemented
   this_InitMacroD(AppendHkl, "h&;k&;l&;c", fpAny, "moves reflection back into the refinement list\
- See excludeHkl for more details" );
+ See excludeHkl for more details");
   // not implemented
   this_InitMacroD(ExcludeHkl, "h-semicolon separated list of indexes&;k&;l&;c-true/false to use provided\
  indexes in any reflection. The default is in any one reflection" , fpAny, "excludes reflections with give indexes\
- from the hkl file -h=1;2 : all reflections where h=1 or 2. " );
+ from the hkl file -h=1;2 : all reflections where h=1 or 2. ");
 
   this_InitMacroD(Direction, EmptyString, fpNone, "prints current orientation of the model in factional coordinates");
 
-  this_InitMacro(ViewGrid, , fpNone|fpOne );
-  this_InitMacro(Undo, , fpNone );
+  this_InitMacro(ViewGrid, , fpNone|fpOne);
+  this_InitMacro(Undo, , fpNone);
 
   this_InitMacroD(Individualise, EmptyString, fpAny, "Moves provided atoms to individual collections, so that the atom properties,\
  such as draw style and appearance can be changed separately of the group. The first call to this macro creates a group\
- unique to the asymmetric unit, the second call makes the atom unique to the lattice" );
+ unique to the asymmetric unit, the second call makes the atom unique to the lattice");
   this_InitMacroD(Collectivise, EmptyString, fpAny, "Does the opposite to the Individialise. If provided atoms are unique to the lattice\
  a call to this function makes them uniq to the asymmetric unit, the following call makes the uniq to the element type");
 
-  this_InitMacro(Popup, w&;h&;t&;b&;x&;y&;d&;s, fpTwo );
+  this_InitMacroD(Popup,"w-width&;h-height&;t-title&;b-border[trscaip],t-caption bar, r-sizeable border, s-system menu, c-close box,\
+ a-maximise box, i-minimise box, p-window should stay on the top of others&;x-left position&;y-top position&;d-a macro or commands to\
+ execute when window is double clicked&;s-do show the window after the creation",
+    fpTwo, "Creates a popup HTML window. Usage: popup popup_name html_source");
 
-  this_InitMacro(Delta, , fpNone|fpOne );
-  this_InitMacro(DeltaI, , fpNone|fpOne );
+  this_InitMacroD(Delta, EmptyString, fpNone|fpOne, "Prints/sets current delta fir the covalent bonds");
+  this_InitMacroD(DeltaI, EmptyString, fpNone|fpOne, "Prints/sets current delta for short interactions");
 
   this_InitMacroAD(Python, @py, "i-shows a text input box&;l-loads a file into a text input box", fpAny,
     "Runs provided python lines '\n' is used as new line separator or shows a text input window");
 
-  this_InitMacro(CreateMenu, c&;s&;r&;m, fpOne|fpTwo|fpThree );
-  this_InitMacro(DeleteMenu, , fpOne );
-  this_InitMacro(EnableMenu, , fpOne );
-  this_InitMacro(DisableMenu, , fpOne );
-  this_InitMacro(CheckMenu, , fpOne );
-  this_InitMacro(UncheckMenu, , fpOne );
+  this_InitMacro(CreateMenu, c&;s&;r&;m, fpOne|fpTwo|fpThree);
+  this_InitMacro(DeleteMenu, , fpOne);
+  this_InitMacro(EnableMenu, , fpOne);
+  this_InitMacro(DisableMenu, , fpOne);
+  this_InitMacro(CheckMenu, , fpOne);
+  this_InitMacro(UncheckMenu, , fpOne);
 
-  this_InitMacro(CreateShortcut, , fpTwo );
+  this_InitMacro(CreateShortcut, , fpTwo);
 
-  this_InitMacro(SetCmd, , fpAny );
+  this_InitMacro(SetCmd, , fpAny);
 
-  this_InitMacro(UpdateOptions, , fpNone );
-  this_InitMacro(Reload, , fpOne );
-  this_InitMacro(StoreParam, , fpTwo|fpThree );
-  this_InitMacro(SelBack, a&;o&;x, fpNone );
+  this_InitMacro(UpdateOptions, , fpNone);
+  this_InitMacro(Reload, , fpOne);
+  this_InitMacro(StoreParam, , fpTwo|fpThree);
+  this_InitMacro(SelBack, a&;o&;x, fpNone);
 
-  this_InitMacro(CreateBitmap, r, fpTwo );
-  this_InitMacro(DeleteBitmap, , fpOne );
-  this_InitMacro(Tref, ,fpOne|fpTwo|psCheckFileTypeIns );
-  this_InitMacro(Patt, ,fpNone|psCheckFileTypeIns );
-  this_InitMacro(Export, ,fpNone|fpOne|psCheckFileTypeCif );
+  this_InitMacro(CreateBitmap, r, fpTwo);
+  this_InitMacro(DeleteBitmap, , fpOne);
+  this_InitMacro(Tref, ,fpOne|fpTwo|psCheckFileTypeIns);
+  this_InitMacro(Patt, ,fpNone|psCheckFileTypeIns);
+  this_InitMacro(Export, ,fpNone|fpOne|psCheckFileTypeCif);
 
-  this_InitMacro(InstallPlugin,"l-local installation from a zip file, which must contains index.ind" ,fpOne );
-  this_InitMacro(SignPlugin, ,fpAny^(fpOne|fpNone) );
-  this_InitMacro(UninstallPlugin, ,fpOne );
-  this_InitMacro(UpdateFile, f,fpOne );
-  this_InitMacro(NextSolution, ,fpNone );
+  this_InitMacro(InstallPlugin,"l-local installation from a zip file, which must contains index.ind" ,fpOne);
+  this_InitMacro(SignPlugin, ,fpAny^(fpOne|fpNone));
+  this_InitMacro(UninstallPlugin, ,fpOne);
+  this_InitMacro(UpdateFile, f,fpOne);
+  this_InitMacro(NextSolution, ,fpNone);
 
   this_InitMacroD(Match, "s-subgraph match&;n-naming. If the value a symbol [or set of]\
  this is appended to the label, '$xx' replaces the symbols after the atom type symbol with xx,\
  leving the ending, '-xx' - changes the ending of the label with xx&;a-align&;\
-i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fpOne|fpTwo, "Fragment matching, alignment and label transfer routine" );
-  this_InitMacroD(Conn, EmptyString, fpAny^fpNone, "Changes provided atom(s) connectivity (only until next connectivity modifying operation for now). First parameter is the new connectivity" );
-  this_InitMacroD(AddBond, EmptyString, fpAny, "Adds specified bond to the connectivity table" );
-  this_InitMacroD(DelBond, EmptyString, fpAny, "Removes specified bond from the connectivity table" );
-  this_InitMacro(ShowWindow, ,fpOne|fpTwo );
+i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fpOne|fpTwo, "Fragment matching, alignment and label transfer routine");
+  this_InitMacroD(Conn, EmptyString, fpAny^fpNone, "Changes provided atom(s) connectivity (only until next connectivity modifying operation for now). First parameter is the new connectivity");
+  this_InitMacroD(AddBond, EmptyString, fpAny, "Adds specified bond to the connectivity table");
+  this_InitMacroD(DelBond, EmptyString, fpAny, "Removes specified bond from the connectivity table");
+  this_InitMacro(ShowWindow, ,fpOne|fpTwo);
   
-  this_InitMacro(DelOFile, ,fpOne );
-  this_InitMacro(CalcVol, cs, fpOne );
+  this_InitMacro(DelOFile, ,fpOne);
+  this_InitMacro(CalcVol, cs, fpOne);
 
   this_InitMacroD(Schedule, "r-repeatable", fpAny^(fpNone|fpOne),
 "Schedules a particular macro (second argument) to be executed within provided\
- interval (first argument)" );
+ interval (first argument)");
 
-  this_InitMacroD(Tls, "", fpAny^(fpNone)|psFileLoaded, "James Haestier TLS test procedure" );
+  this_InitMacroD(Tls, "", fpAny^(fpNone)|psFileLoaded, "James Haestier TLS test procedure");
 
-  this_InitMacro(Test, , fpAny );
+  this_InitMacro(Test, , fpAny);
 
   this_InitMacroD(LstRes, EmptyString, fpNone|psFileLoaded,
-"Prints all interpreted restrains for current structure" );
+"Prints all interpreted restrains for current structure");
   this_InitMacroD(CalcVoid, "d-distance from Van-der-Waalse surface&;i-invert&;r-resolution[0.1]", fpNone|fpOne|psFileLoaded,
 "Calculates solvent accessible void and packing parameters; optionally accepts a file with space \
-separated values of Atom Type and radius, an entry a line" );
+separated values of Atom Type and radius, an entry a line");
   this_InitMacroD(Sgen, EmptyString, (fpAny^fpNone)|psFileLoaded,
-"Grows the structure using provided atoms (all if none provided) and symmetry code" );
+"Grows the structure using provided atoms (all if none provided) and symmetry code");
   this_InitMacroD(LstSymm, EmptyString, fpNone|psFileLoaded,
-"Prints symmetry codes of current unit cell" );
+"Prints symmetry codes of current unit cell");
   this_InitMacroD(IT, "o-orients basis according to principle axes of inertia", fpAny,
-"Calculates tensor of inertia" );
+"Calculates tensor of inertia");
 
   this_InitMacroD(StartLogging, "c-empties the file if exists", fpOne,
-"Creates/opens for appending a log file, where all screen output is saved" );
+"Creates/opens for appending a log file, where all screen output is saved");
   this_InitMacroD(ViewLattice, EmptyString, fpOne,
-"Loads cell information from provided file and displays it on screen as lattice points/grid" );
+"Loads cell information from provided file and displays it on screen as lattice points/grid");
   this_InitMacroD(AddObject, EmptyString, fpAny^(fpNone|fpOne),
-"Adds a new user defined object to the graphical scene" );
+"Adds a new user defined object to the graphical scene");
   this_InitMacroD(DelObject, EmptyString, fpOne,
-"Deletes graphical object by name" );
+"Deletes graphical object by name");
 
   this_InitMacroD(OnRefine, EmptyString, fpAny,
-"Internal procedure" );
+"Internal procedure");
   this_InitMacroD(TestMT, EmptyString, fpAny,
-"Testing multithreading" );
+"Testing multithreading");
   this_InitMacroD(SetFont, "ps-point size&;b-bold&;i-italic", fpAny^(fpNone|fpOne),
-"Sets font for specified control" );
+"Sets font for specified control");
   this_InitMacroD(EditMaterial, EmptyString, fpOne,
-"Brings up material properties dialog for specified object" );
+"Brings up material properties dialog for specified object");
   this_InitMacroD(SetMaterial, EmptyString, fpTwo | fpThree,
-"Assigns provided value to specified material" );
+"Assigns provided value to specified material");
   this_InitMacroD(LstGO, EmptyString, fpNone,
-"List current graphical objects" );
+"List current graphical objects");
   this_InitMacroD(CalcPatt, EmptyString, fpNone|psFileLoaded,
-"Calculates patterson map" );
+"Calculates patterson map");
   this_InitMacroD(CalcFourier, "fcf-reads structure factors from a fcf file&;diff-calculates\
   difference map&;abs-calculates modulus of the electron density&;tomc-calculates 2Fo-Fc\
   map&;obs-calculates observer emap&;calc-calculates calculated emap&;scale-scale to use\
   for difference maps, currently available simple(s) sum(Fo^2)/sum(Fc^2) for Fo^2/sigme > 3)\
   and regression(r)&;r-resolution in Angstrems&;i-integrates the map&;m-mask the structure", fpNone|psFileLoaded,
-"Calculates fourier map" );
-  this_InitMacroD(TestBinding, EmptyString, fpAny, "Internal tests" );
-  this_InitMacroD(ShowSymm, EmptyString, fpNone|fpOne, "Shows symmetry elements of the unitcell" );
-  this_InitMacroD(Textm, EmptyString, fpOne, "Runs subsequent commands stored in a text file" );
-  this_InitMacroD(TestStat, EmptyString, fpOne, "Test: runs statistical tests on structures in current folder. Expects a file name" );
-  this_InitMacroD(ExportFont, EmptyString, fpTwo, "" );
-  this_InitMacroD(ImportFont, EmptyString, fpTwo, "" );
-  this_InitMacroD(ImportFrag, "p-part to assign", fpNone|psFileLoaded, "Import a fragment to current structure" );
-  this_InitMacroD(ExportFrag, EmptyString, fpNone|psFileLoaded, "Exports selected fragment to an external file" );
+"Calculates fourier map");
+  this_InitMacroD(TestBinding, EmptyString, fpAny, "Internal tests");
+  this_InitMacroD(ShowSymm, EmptyString, fpNone|fpOne, "Shows symmetry elements of the unitcell");
+  this_InitMacroD(Textm, EmptyString, fpOne, "Runs subsequent commands stored in a text file");
+  this_InitMacroD(TestStat, EmptyString, fpOne, "Test: runs statistical tests on structures in current folder. Expects a file name");
+  this_InitMacroD(ExportFont, EmptyString, fpTwo, "");
+  this_InitMacroD(ImportFont, EmptyString, fpTwo, "");
+  this_InitMacroD(ImportFrag, "p-part to assign", fpNone|psFileLoaded, "Import a fragment to current structure");
+  this_InitMacroD(ExportFrag, EmptyString, fpNone|psFileLoaded, "Exports selected fragment to an external file");
   this_InitMacroD(ProjSph, "r-radius of the projection spehere [5]", fpNone|fpOne|psFileLoaded, 
-    "Creates a projection of the fragment of the provided atom onto a spehere" );
+    "Creates a projection of the fragment of the provided atom onto a spehere");
   this_InitMacroD(PictPS, "color_line-lines&;color_fill-ellipses are filled&;color_bond-bonds\
  are colored&;div_pie-number [4] of stripes in the octant&;lw_pie-line width [0.5] of the octant\
  stripes&;lw_octant-line width [0.5] of the octant arcs&;lw_font-line width [1] for the vector\
  font&;lw_ellipse-line width [0.5] of the ellipse&;scale_hb-scale for H-bonds [0.5]&;p-perspective", fpOne|psFileLoaded, 
-    "Experimental postscript rendering" );
+    "Experimental postscript rendering");
   this_InitMacroD(PictTEX, "color_line-lines&;color_fill-ellipses are filled", fpOne|psFileLoaded, 
-    "Experimental tex/pgf rendering" );
-  this_InitMacroD(UpdateQPeakTable, EmptyString, fpNone|psFileLoaded, "Internal routine for synchronisation" );
+    "Experimental tex/pgf rendering");
+  this_InitMacroD(UpdateQPeakTable, EmptyString, fpNone|psFileLoaded, "Internal routine for synchronisation");
   this_InitMacroD(SAME, "i-invert the graphs", fpAny|psFileLoaded, "Creates SAME for two fragments (two selected atoms or two\
- atoms provided) or number_of_groups and groups following each another (or selection)" );
+ atoms provided) or number_of_groups and groups following each another (or selection)");
   this_InitMacroD(RESI, "a-alias", (fpAny^fpNone)|psFileLoaded, "Creates residue with given class name and optionally number and adds selected\
- or provided atoms into the residue. If provided residue class name is 'none', provided atoms are removed from their residues" );
+ or provided atoms into the residue. If provided residue class name is 'none', provided atoms are removed from their residues");
   this_InitMacroD(WBox, "w-use atomic weights instead of unit weights for atoms&;s-create separate boxes for fragments", 
-	(fpAny)|psFileLoaded, "Calculates wrapping box around provided box using the set of best, intermidiate and worst planes" );
+	(fpAny)|psFileLoaded, "Calculates wrapping box around provided box using the set of best, intermidiate and worst planes");
   // FUNCTIONS _________________________________________________________________
 
   this_InitFunc(FileLast, fpNone|fpOne);
@@ -993,48 +996,48 @@ separated values of Atom Type and radius, an entry a line" );
   this_InitFuncD(TranslatePhrase, fpOne,
 "Translates provided phrase into current language");
   this_InitFuncD(IsCurrentLanguage, fpOne,
-"Checks current language" );
+"Checks current language");
   this_InitFuncD(CurrentLanguageEncoding, fpNone,
-"Returns current language encoding, like: ISO8859-1" );
+"Returns current language encoding, like: ISO8859-1");
 
-  this_InitFunc(SGList, fpNone );
+  this_InitFunc(SGList, fpNone);
 
-  this_InitFunc(ChooseElement, fpNone );
-  this_InitFunc(SfacList, fpNone|psCheckFileTypeIns );
+  this_InitFunc(ChooseElement, fpNone);
+  this_InitFunc(SfacList, fpNone|psCheckFileTypeIns);
 
   this_InitFuncD(StrDir, fpNone|psFileLoaded, "Returns location of the folder, where\
-  Olex2 stores structure related data" );
+  Olex2 stores structure related data");
 
   this_InitFuncD(ChooseFont, fpNone|fpOne, "Brings up a font dialog. If font\
-  information provided, initialises the dialog with that font" );
-  this_InitFuncD(GetFont, fpOne, "Returns specified font" );
-  this_InitFuncD(GetMaterial, fpOne, "Returns specified material" );
+  information provided, initialises the dialog with that font");
+  this_InitFuncD(GetFont, fpOne, "Returns specified font");
+  this_InitFuncD(GetMaterial, fpOne, "Returns specified material");
   this_InitFuncD(ChooseMaterial, fpNone|fpOne, "Brings up a dialog to edit\
-  default or provided material" );
+  default or provided material");
 
-  this_InitFuncD(GetMouseX, fpNone, "Returns current mouse X position" );
-  this_InitFuncD(GetMouseY, fpNone, "Returns current mouse Y position" );
-  this_InitFuncD(GetWindowSize, fpNone|fpOne|fpThree, "Returns size of the requested window, main window by default" );
-  this_InitFuncD(IsOS, fpOne, "Returns true if current system Windows [win], Linux/GTK [linux], Mac [mac]" );
-  this_InitFuncD(ExtraZoom, fpNone|fpOne, "Sets/reads current extra zoom (default zoom correction)" );
-  this_InitFuncD(HasGUI, fpNone, "Returns if true if Olex2 is built with GUI" );
-  this_InitFuncD(CheckState, fpOne|fpTwo, "Returns if true if given program state is active" );
+  this_InitFuncD(GetMouseX, fpNone, "Returns current mouse X position");
+  this_InitFuncD(GetMouseY, fpNone, "Returns current mouse Y position");
+  this_InitFuncD(GetWindowSize, fpNone|fpOne|fpThree, "Returns size of the requested window, main window by default");
+  this_InitFuncD(IsOS, fpOne, "Returns true if current system Windows [win], Linux/GTK [linux], Mac [mac]");
+  this_InitFuncD(ExtraZoom, fpNone|fpOne, "Sets/reads current extra zoom (default zoom correction)");
+  this_InitFuncD(HasGUI, fpNone, "Returns if true if Olex2 is built with GUI");
+  this_InitFuncD(CheckState, fpOne|fpTwo, "Returns if true if given program state is active");
   this_InitFuncD(GlTooltip, fpNone|fpOne, "Returns state of/sets OpenGL tooltip implementation for the main window\
-                                          (some old platforms do not have proper implementation of tooltips)" );
-  this_InitFuncD(CurrentLanguage, fpNone|fpOne, "Returns/sets current language" );
+                                          (some old platforms do not have proper implementation of tooltips)");
+  this_InitFuncD(CurrentLanguage, fpNone|fpOne, "Returns/sets current language");
   this_InitFuncD(GetMAC, fpNone|fpOne, "Returns simicolon separated list of computer MAC addresses.\
- If 'full' is provided as argument, the adoptor names are also returned as adapter=MAC;.." );
+ If 'full' is provided as argument, the adoptor names are also returned as adapter=MAC;..");
 
-  Library.AttachLibrary( TEFile::ExportLibrary() );
-  //Library.AttachLibrary( olxstr::ExportLibrary("str") );
-  Library.AttachLibrary( PythonExt::GetInstance()->ExportLibrary() );
-  Library.AttachLibrary( TETime::ExportLibrary() );
+  Library.AttachLibrary(TEFile::ExportLibrary());
+  //Library.AttachLibrary(olxstr::ExportLibrary("str"));
+  Library.AttachLibrary(PythonExt::GetInstance()->ExportLibrary());
+  Library.AttachLibrary(TETime::ExportLibrary());
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-  Library.AttachLibrary( XA->XFile().ExportLibrary() );
-  Library.AttachLibrary( XA->GetFader().ExportLibrary() );
-  Library.AttachLibrary( XA->XGrid().ExportLibrary() );
-  Library.AttachLibrary( TFileHandlerManager::ExportLibrary() );
+  Library.AttachLibrary(XA->XFile().ExportLibrary());
+  Library.AttachLibrary(XA->GetFader().ExportLibrary());
+  Library.AttachLibrary(XA->XGrid().ExportLibrary());
+  Library.AttachLibrary(TFileHandlerManager::ExportLibrary());
 
   // menu initialisation
   MenuBar = new wxMenuBar;
@@ -1062,29 +1065,29 @@ separated values of Atom Type and radius, an entry a line" );
     pmTang = new TMenu();
   pmPlane = new TMenu();
 
-  MenuBar->Append(MenuFile, wxT("&File") );
-  MenuBar->Append(MenuView, wxT("&View") );
-  MenuBar->Append(MenuStructure, wxT("&Structure") );
-  MenuBar->Append(MenuHelp, wxT("&Help") );
+  MenuBar->Append(MenuFile, wxT("&File"));
+  MenuBar->Append(MenuView, wxT("&View"));
+  MenuBar->Append(MenuStructure, wxT("&Structure"));
+  MenuBar->Append(MenuHelp, wxT("&Help"));
 
   miHtmlPanel = new wxMenuItem(MenuView, ID_HtmlPanel, wxT("&Html panel"),
     wxT("Show/hide html panel"), wxITEM_CHECK, NULL);
   MenuView->Append(miHtmlPanel);
 
   MenuStructure->Append(ID_StrGenerate, wxT("&Generate..."));
-  MenuStructure->Append(ID_PictureExport, wxT("&Export picture (experimental)") );
+  MenuStructure->Append(ID_PictureExport, wxT("&Export picture (experimental)"));
 
-  MenuHelp->Append(ID_About, wxT("&About...") );
+  MenuHelp->Append(ID_About, wxT("&About..."));
 
 // statusbar initialisation
   StatusBar = CreateStatusBar();
-  SetStatusText( wxT("Welcome to OLEX2!") );
+  SetStatusText( wxT("Welcome to OLEX2!"));
 // toolbar initialisation
   ToolBar = NULL;
 //  ToolBar = CreateToolBar(wxTB_FLAT | wxTB_HORIZONTAL | wxTB_TEXT  , -1, "MainToolBar");
 //  olxstr S = TEFile::ExtractFilePath(wxGetApp().argv[0]);
 //  S += "toolbar\\copy.bmp";
-//  wxBitmap Bmp( wxBITMAP(COPY) );
+//  wxBitmap Bmp( wxBITMAP(COPY));
 //  int w = Bmp.GetWidth(), h = Bmp.GetHeight();
 
 //  ToolBar->SetToolBitmapSize(wxSize(w, h));
@@ -1145,7 +1148,7 @@ separated values of Atom Type and radius, an entry a line" );
   pmLattice->Append(ID_FixLattice, wxT("Fix"));
   pmLattice->Append(ID_FreeLattice, wxT("Free"));
 // setting atom menu
-  pmAtom->Append(ID_MenuItemAtomInfo, wxT("?") );
+  pmAtom->Append(ID_MenuItemAtomInfo, wxT("?"));
   miAtomInfo = pmAtom->FindItemByPosition(0);
   pmAtom->AppendSeparator();
   pmAtom->Append(ID_MenuBang, wxT("BANG"), pmBang);
@@ -1192,7 +1195,7 @@ separated values of Atom Type and radius, an entry a line" );
   pmAtom->Append(ID_MenuGraphics, wxT("Graphics"), pmGraphics->Clone());
   pmAtom->Append(ID_Selection, wxT("Selection"), pmSelection->Clone());
 // setting bond menu
-  pmBond->Append(ID_MenuItemBondInfo, wxT("?") );
+  pmBond->Append(ID_MenuItemBondInfo, wxT("?"));
   pmBond->AppendSeparator();
   miBondInfo = pmBond->FindItemByPosition(0);
   pmBond->Append(ID_MenuTang, wxT("TANG"), pmTang);
@@ -1203,7 +1206,7 @@ separated values of Atom Type and radius, an entry a line" );
   pmBond->Append(ID_MenuGraphics, wxT("Graphics"), pmGraphics->Clone());
   pmBond->Append(ID_Selection, wxT("Selection"), pmSelection->Clone());
 // setting plane menu
-  pmPlane->Append(ID_PlaneActivate, wxT("Activate") );
+  pmPlane->Append(ID_PlaneActivate, wxT("Activate"));
   pmPlane->Append(ID_GraphicsKill, wxT("Delete"));
   pmPlane->Append(1, wxT("Graphics"), pmGraphics->Clone());
   pmPlane->Append(ID_Selection, wxT("Selection"), pmSelection->Clone());
@@ -1275,14 +1278,14 @@ separated values of Atom Type and radius, an entry a line" );
   PluginFile =  XA->GetBaseDir() + "plugins.xld";
   FHtmlIndexFile = TutorialDir+"index.htm";
 
-  TFileHandlerManager::AddBaseDir( TutorialDir );
-  TFileHandlerManager::AddBaseDir( DataDir );
+  TFileHandlerManager::AddBaseDir(TutorialDir);
+  TFileHandlerManager::AddBaseDir(DataDir);
 
-  SetStatusText( XA->GetBaseDir().u_str() );
+  SetStatusText(XA->GetBaseDir().u_str());
 
   // put log file to the user data folder
   try  {
-    TBasicApp::GetLog().AddStream( TUtf8File::Create(DataDir + "olex2.log"), true );
+    TBasicApp::GetLog().AddStream(TUtf8File::Create(DataDir + "olex2.log"), true);
   }
   catch( TExceptionBase& )  {
     TBasicApp::GetLog().Error("Could not create log file!");
@@ -1314,12 +1317,12 @@ separated values of Atom Type and radius, an entry a line" );
   FGlConsole->OnPost->Add(this, ID_TEXTPOST);
   FXApp->AddObjectToCreate(FGlConsole);
 ////////////////////////////////////////////////////////////////////////////////
-  Library.AttachLibrary( FGlConsole->ExportLibrary() );
-  Library.AttachLibrary( FXApp->GetRender().ExportLibrary() );
+  Library.AttachLibrary(FGlConsole->ExportLibrary());
+  Library.AttachLibrary(FXApp->GetRender().ExportLibrary());
 ////////////////////////////////////////////////////////////////////////////////
-  FCmdLine = new TCmdLine(this, wxNO_BORDER );
+  FCmdLine = new TCmdLine(this, wxNO_BORDER);
 //  wxWindowDC wdc(this);
-//  FCmdLine->WI.SetHeight( wdc.GetTextExtent(wxT("W")).GetHeight() );
+//  FCmdLine->WI.SetHeight(wdc.GetTextExtent(wxT("W")).GetHeight());
   FCmdLine->OnChar.Add(this, ID_CMDLINECHAR);
   FCmdLine->OnKeyDown.Add(this, ID_CMDLINEKEYDOWN);
   FCmdLine->OnCommand.Add( this, ID_COMMAND);
@@ -1332,15 +1335,15 @@ separated values of Atom Type and radius, an entry a line" );
   FXApp->AddObjectToCreate(FInfoBox);
 
   GlTooltip = new TGlTextBox(FXApp->GetRender(), "Tooltip");
-  FXApp->AddObjectToCreate( GlTooltip );
+  FXApp->AddObjectToCreate(GlTooltip);
   GlTooltip->SetVisible(false);
   GlTooltip->SetZ(4.9);
 
-  FTimer->OnTimer.Add( TBasicApp::GetInstance().OnTimer );
+  FTimer->OnTimer.Add(TBasicApp::GetInstance().OnTimer);
   TBasicApp::GetInstance().OnTimer->Add(this, ID_TIMER);
   FXApp->XFile().OnFileLoad->Add(this, ID_FileLoad);
   // synchronise if value is different in settings file...
-  miHtmlPanel->Check( !FHtmlMinimized );
+  miHtmlPanel->Check(!FHtmlMinimized);
 #ifdef __WIN32__  
   SplashDlg splash_dlg(this);
   RefreshTh rth(splash_dlg);
@@ -1406,7 +1409,7 @@ void TMainForm::StartupInit()  {
   ProcessMacro(olxstr("showwindow help ") << HelpWindowVisible);
   ProcessMacro(olxstr("showwindow info ") << InfoWindowVisible);
   ProcessMacro(olxstr("showwindow cmdline ") << CmdLineVisible);
-  FGlConsole->ShowBuffer( true );  // this should be on :)
+  FGlConsole->ShowBuffer(true);  // this should be on :)
   ProcessMacro("reload macro", __OlxSrcInfo);
   ProcessMacro("reload help", __OlxSrcInfo);
 
@@ -1415,7 +1418,7 @@ void TMainForm::StartupInit()  {
 
   if( TEFile::Exists(FXApp->GetBaseDir() + "settings.xld") )  {
     TDataFile settings;
-    settings.LoadFromXLFile( FXApp->GetBaseDir() + "settings.xld", NULL );
+    settings.LoadFromXLFile(FXApp->GetBaseDir() + "settings.xld", NULL);
     settings.Include(NULL);
     TDataItem* sh = settings.Root().FindItemi("shortcuts");
     if( sh != NULL )  {
@@ -1423,13 +1426,13 @@ void TMainForm::StartupInit()  {
         olxstr cmd;
         for( size_t i=0; i < sh->ItemCount(); i++ )  {
         TDataItem& item = sh->GetItem(i);
-        AccShortcuts.AddAccell( TranslateShortcut( item.GetFieldValue("key")), item.GetFieldValue("macro") );
+        AccShortcuts.AddAccell(TranslateShortcut(item.GetFieldValue("key")), item.GetFieldValue("macro"));
         // cannot execute it through a macro - functions get evaluated...
         //Macros.ProcessMacro(cmd, MacroError);
         }
       }
       catch( TExceptionBase& exc )  {
-        TBasicApp::GetLog().Exception( exc.GetException()->GetFullMessage() );
+        TBasicApp::GetLog().Exception(exc.GetException()->GetFullMessage());
       }
     }
     sh = settings.Root().FindItemi("menus");
@@ -1465,14 +1468,14 @@ void TMainForm::StartupInit()  {
         }
       }
       catch( TExceptionBase& exc )  {
-        TBasicApp::GetLog().Exception( exc.GetException()->GetFullMessage() );
+        TBasicApp::GetLog().Exception(exc.GetException()->GetFullMessage());
       }
     }
   }
 
   FPluginItem = NULL;
   if( TEFile::Exists( PluginFile ) )  {
-    FPluginFile.LoadFromXLFile( PluginFile, NULL );
+    FPluginFile.LoadFromXLFile(PluginFile, NULL);
     FPluginItem = FPluginFile.Root().FindItem("Plugin");
     // manually activate the events
     for( size_t i=0; i < FPluginItem->ItemCount(); i++ )  {
@@ -1545,7 +1548,7 @@ void TMainForm::SetProcess( AProcess *Process )  {
   }
   FProcess = Process;
   if( FProcess == NULL )  {
-  TBasicApp::GetLog().Info( "The process has been terminated..." );
+  TBasicApp::GetLog().Info("The process has been terminated...");
     TimePerFrame = FXApp->Draw();
   }
 }
@@ -1671,23 +1674,23 @@ void TMainForm::OnDrawQChange(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TMainForm::CellVChange()  {
-  TStateChange sc(prsCellVis, FXApp->IsCellVisible() );
-  pmModel->SetLabel(ID_CellVisible, (!FXApp->IsCellVisible() ? wxT("Show cell") : wxT("Hide cell")) );
+  TStateChange sc(prsCellVis, FXApp->IsCellVisible());
+  pmModel->SetLabel(ID_CellVisible, (!FXApp->IsCellVisible() ? wxT("Show cell") : wxT("Hide cell")));
   OnStateChange->Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
 void TMainForm::BasisVChange()  {
-  TStateChange sc(prsBasisVis, FXApp->IsBasisVisible() );
-  pmModel->SetLabel(ID_BasisVisible, (FXApp->IsBasisVisible() ? wxT("Hide basis") : wxT("Show basis")) );
+  TStateChange sc(prsBasisVis, FXApp->IsBasisVisible());
+  pmModel->SetLabel(ID_BasisVisible, (FXApp->IsBasisVisible() ? wxT("Hide basis") : wxT("Show basis")));
   OnStateChange->Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
 void TMainForm::OnCellVisible(wxCommandEvent& event)  {
-  FXApp->SetCellVisible( !FXApp->IsCellVisible() );
+  FXApp->SetCellVisible(!FXApp->IsCellVisible());
 }
 //..............................................................................
 void TMainForm::OnBasisVisible(wxCommandEvent& event)  {
-  FXApp->SetBasisVisible( !FXApp->IsBasisVisible() );
+  FXApp->SetBasisVisible(!FXApp->IsBasisVisible());
 }
 //..............................................................................
 void TMainForm::OnGraphics(wxCommandEvent& event)  {
@@ -1697,7 +1700,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     if( FObjectUnderMouse->IsSelected() )
       ProcessMacro("hide sel");
     else
-      FUndoStack->Push( FXApp->SetGraphicsVisible(FObjectUnderMouse, false) );
+      FUndoStack->Push(FXApp->SetGraphicsVisible(FObjectUnderMouse, false));
     TimePerFrame = FXApp->Draw();
   }
   else if( event.GetId() == ID_GraphicsKill )  {
@@ -1706,7 +1709,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     else  {
       TPtrList<AGDrawObject> l;
       l.Add(FObjectUnderMouse);
-      FUndoStack->Push( FXApp->DeleteXObjects(l) );
+      FUndoStack->Push(FXApp->DeleteXObjects(l));
     }
     TimePerFrame = FXApp->Draw();
   }
@@ -1726,7 +1729,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     TGlGroup& Sel = FXApp->GetSelection();
     TdlgMatProp* MatProp = new TdlgMatProp(this, &FObjectUnderMouse->GetPrimitives(), FXApp);
     if( EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
-      MatProp->SetCurrent( ((TGlGroup*)FObjectUnderMouse)->GetGlM() );
+      MatProp->SetCurrent(((TGlGroup*)FObjectUnderMouse)->GetGlM());
     if( MatProp->ShowModal() == wxID_OK )  {
       if( EsdlInstanceOf( *FObjectUnderMouse, TXAtom) )
         FXApp->XAtomDS2XBondDS("Sphere");  
@@ -1788,7 +1791,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     pmBang->Clear();
     for( size_t i=0; i < SL.Count(); i++ )
       pmBang->Append(-1, SL[i].u_str());
-    pmAtom->Enable(ID_MenuBang, SL.Count() != 0 );
+    pmAtom->Enable(ID_MenuBang, SL.Count() != 0);
     T = XA->Atom().GetLabel();
     T << ':' << ' ' <<  XA->Atom().GetAtomInfo().GetName();
     if( XA->Atom().GetAtomInfo().GetIndex() == iQPeakIndex )  {
@@ -1825,7 +1828,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     for( size_t i=0; i < SL.Count(); i++ )
       pmTang->Append(0, SL[i].u_str());
 
-    pmBond->Enable(ID_MenuTang, SL.Count() != 0 );
+    pmBond->Enable(ID_MenuTang, SL.Count() != 0);
     T = XB->Bond().A().GetLabel();
     T << '-' << XB->Bond().B().GetLabel() << ':' << ' '
       << olxstr::FormatFloat(3, XB->Bond().Length());
@@ -1894,7 +1897,7 @@ void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
       Tmp << 'S';
       break;
   }
-  Tmp << XA->Atom().GetLabel().SubStringFrom( XA->Atom().GetAtomInfo().GetSymbol().Length() );
+  Tmp << XA->Atom().GetLabel().SubStringFrom(XA->Atom().GetAtomInfo().GetSymbol().Length());
   ProcessMacro(Tmp);
   TimePerFrame = FXApp->Draw();
 }
@@ -1911,7 +1914,7 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
   TPTableDlg *Dlg = new TPTableDlg(this);
   if( Dlg->ShowModal() == wxID_OK )  {
     Tmp << Dlg->GetSelected()->GetSymbol();
-    Tmp << XA->Atom().GetLabel().SubStringFrom( XA->Atom().GetAtomInfo().GetSymbol().Length() );
+    Tmp << XA->Atom().GetLabel().SubStringFrom(XA->Atom().GetAtomInfo().GetSymbol().Length());
     ProcessMacro(Tmp);
   }
   Dlg->Destroy();
@@ -1924,9 +1927,9 @@ int TMainForm::GetFragmentList(TNetPList& res)  {
     TGlGroup& glg = FXApp->GetSelection();
     for( size_t i=0; i < glg.Count(); i++ )  {
       if( EsdlInstanceOf(glg[i], TXAtom) )
-        res.Add( &((TXAtom&)glg[i]).Atom().GetNetwork() );
+        res.Add(((TXAtom&)glg[i]).Atom().GetNetwork());
       else if( EsdlInstanceOf(glg[i], TXBond) )
-        res.Add( &((TXBond&)glg[i]).Bond().GetNetwork() );
+        res.Add(((TXBond&)glg[i]).Bond().GetNetwork());
     }
     for( size_t i=0; i < res.Count(); i++ )
       res[i]->SetTag(i);
@@ -1937,9 +1940,9 @@ int TMainForm::GetFragmentList(TNetPList& res)  {
   }
   else  {
     if( EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )
-      res.Add( &((TXAtom*)FObjectUnderMouse)->Atom().GetNetwork() );
+      res.Add(((TXAtom*)FObjectUnderMouse)->Atom().GetNetwork());
     else if( EsdlInstanceOf(*FObjectUnderMouse, TXBond) )
-      res.Add( &((TXBond*)FObjectUnderMouse)->Bond().GetNetwork() );
+      res.Add(((TXBond*)FObjectUnderMouse)->Bond().GetNetwork());
   }
   return res.Count();
 }
@@ -2035,7 +2038,7 @@ void TMainForm::AquireTooltipValue()  {
           << TSymmParser::MatrixToSymmEx(((TXGrowLine*)G)->GetTransform()) << ')';
     }
     else if( EsdlInstanceOf( *G, TXGrowPoint) )  {
-      Tooltip = TSymmParser::MatrixToSymmEx( ((TXGrowPoint*)G)->GetTransform() );
+      Tooltip = TSymmParser::MatrixToSymmEx(((TXGrowPoint*)G)->GetTransform());
     }
     else
       Tooltip = EmptyString;
@@ -2097,7 +2100,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   //    TOlxVarChangeData& vcd = *(TOlxVarChangeData*)Data;
   //    if( GlConsoleBlendVarName.Comparei(vcd.var_name) == 0 )  {
   //      if( !vcd.str_val.IsEmpty() )
-  //        FGlConsole->SetBlend( vcd.str_val.ToBool() );
+  //        FGlConsole->SetBlend(vcd.str_val.ToBool());
   //    }
   //  }
   //}
@@ -2150,11 +2153,11 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     }
   }
   else if( MsgId == ID_TIMER )  {
-    FTimer->OnTimer.SetEnabled( false );
+    FTimer->OnTimer.SetEnabled(false);
     // execute tasks ...
     for( size_t i=0; i < Tasks.Count(); i++ )  {
       if(  (TETime::Now() - Tasks[i].LastCalled) > Tasks[i].Interval )  {
-        olxstr tmp( Tasks[i].Task );
+        olxstr tmp(Tasks[i].Task);
         if( !Tasks[i].Repeatable )  {
           Tasks.Delete(i);
           i--;
@@ -2167,7 +2170,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     // end tasks ...
     if( GetHtml()->IsPageLoadRequested() && !GetHtml()->IsPageLocked() )
       GetHtml()->ProcessPageLoadRequest();
-    FTimer->OnTimer.SetEnabled( true );
+    FTimer->OnTimer.SetEnabled(true);
     if( FProcess != NULL )  {
       //FTimer->OnTimer->Enabled = false;
       while( FProcess->StrCount() != 0 )  {
@@ -2259,7 +2262,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         }
         else  {
           GlTooltip->Clear();
-          GlTooltip->PostText( Tooltip );
+          GlTooltip->PostText(Tooltip);
           int x = MousePositionX-GlTooltip->GetWidth()/2,
             y = MousePositionY-GlTooltip->GetHeight()-4;
           if( x < 0 )  x = 0;
@@ -2269,7 +2272,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
             y  = 0;
           GlTooltip->SetLeft(x); // put it off the mouse
           GlTooltip->SetTop(y);
-          GlTooltip->SetZ( FXApp->GetRender().GetMaxRasterZ() -0.05 );
+          GlTooltip->SetZ(FXApp->GetRender().GetMaxRasterZ() - 0.05);
           GlTooltip->SetVisible(true);
           Draw = true;
         }
@@ -2290,9 +2293,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( _UpdateThread != NULL && _UpdateThread->GetUpdateSize() != 0 )  {
       TBasicApp::LeaveCriticalSection();
       if( wxApp::IsMainLoopRunning() )  {
-        FTimer->OnTimer.SetEnabled( false );
+        FTimer->OnTimer.SetEnabled(false);
         DoUpdateFiles();
-        FTimer->OnTimer.SetEnabled( true );
+        FTimer->OnTimer.SetEnabled(true);
       }
     }
     else
@@ -2314,7 +2317,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         );
       }
       if( UpdateExecuted && _UpdateThread == NULL )  {
-        StatusBar->SetStatusText( TBasicApp::GetBaseDir().u_str() );
+        StatusBar->SetStatusText(TBasicApp::GetBaseDir().u_str());
         UpdateExecuted = false;
       }
     }
@@ -2328,11 +2331,11 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   }
   else if( MsgId == ID_CMDLINECHAR )  {
     if( Data != NULL && EsdlInstanceOf(*Data, TKeyEvent) )
-      this->OnChar( ((TKeyEvent*)Data)->GetEvent() );
+      this->OnChar(((TKeyEvent*)Data)->GetEvent());
   }
   else if( MsgId == ID_CMDLINEKEYDOWN )  {
     if( Data != NULL && EsdlInstanceOf(*Data, TKeyEvent) )
-      this->OnKeyDown( ((TKeyEvent*)Data)->GetEvent() );
+      this->OnKeyDown(((TKeyEvent*)Data)->GetEvent());
   }
   else if( MsgId == ID_INFO || MsgId == ID_WARNING || MsgId == ID_ERROR || MsgId == ID_EXCEPTION && (MsgSubId == msiEnter))  {
     if( Data != NULL )  {
@@ -2344,8 +2347,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       if( !( (FMode&mSilent) != 0 &&  (MsgId == ID_INFO || MsgId == ID_WARNING))
             || (MsgId == ID_ERROR || MsgId == ID_EXCEPTION) )  {
         FGlConsole->OnPost->SetEnabled(false); // the proporgation will happen after we return false
-        FGlConsole->PrintText( Data->ToString(), glm, true);
-        FGlConsole->PrintText( EmptyString );
+        FGlConsole->PrintText(Data->ToString(), glm, true);
+        FGlConsole->PrintText(EmptyString);
         FGlConsole->OnPost->SetEnabled(true);
         TimePerFrame = FXApp->Draw();
       }
@@ -2355,11 +2358,11 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   }
   else if( MsgId == ID_ONLINK )  {
     if( Data != NULL )  {
-      TStrList Toks( *(olxstr*)Data, ">>" );
+      TStrList Toks(*(olxstr*)Data, ">>");
       //GetHtml()->LockPageLoad();
       /* the page, if requested, will beloaded on time event. The timer is disabled
       in case if a modal window appears and the timer event can be called */
-      FTimer->OnTimer.SetEnabled( false );
+      FTimer->OnTimer.SetEnabled(false);
       for( size_t i=0; i < Toks.Count(); i++ )  {
         if( !ProcessMacro(olxstr::DeleteSequencesOf<char>(Toks[i], ' '), "OnLink") )
           break;
@@ -2383,7 +2386,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       }
       else
         FGlCanvas->SetFocus();
-      FTimer->OnTimer.SetEnabled( true );
+      FTimer->OnTimer.SetEnabled(true);
     }
   }
   else if( MsgId == ID_HTMLCMD )  {
@@ -2395,7 +2398,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   }
   else if( MsgId == ID_HTMLKEY )  {
     FGlCanvas->SetFocus();
-    OnChar( ((TKeyEvent*)Data)->GetEvent() );
+    OnChar(((TKeyEvent*)Data)->GetEvent());
   }
   else if( MsgId == ID_HTMLDBLCLICK )  {
     TPopupData *pd = NULL;
@@ -2418,7 +2421,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       TBasicApp::GetLog() << (olxstr(Data->ToString()) << '\n');
       FGlConsole->SetSkipPosting(false);
       if( ActiveLogFile != NULL )
-        ActiveLogFile->Writenl( Data->ToString() );
+        ActiveLogFile->Writenl(Data->ToString());
     }
   }
   else if( MsgId == ID_COMMAND )  {
@@ -2443,7 +2446,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
           if( FGlConsole->GetCommand() == tmp )
              FGlConsole->SetCommand(EmptyString);
           else
-            FCmdLine->SetCommand( EmptyString );
+            FCmdLine->SetCommand(EmptyString);
       }
     }
   }
@@ -2498,8 +2501,8 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
     Macros.FindSimilar(Cmd, macros);
     if( !macros.IsEmpty() )  {
       FHelpWindow->Clear();
-      FHelpWindow->SetVisible( HelpWindowVisible );
-      FGlConsole->ShowBuffer( !HelpWindowVisible );
+      FHelpWindow->SetVisible(HelpWindowVisible);
+      FGlConsole->ShowBuffer(!HelpWindowVisible);
       FHelpWindow->SetTop( InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() + 5 : 1 );
       FHelpWindow->SetMaxStringLength( FHelpWindow->GetFont().MaxTextLength(FXApp->GetRender().GetWidth()) );
       FHelpWindow->SetZ( FXApp->GetRender().GetMaxRasterZ()-0.1);
@@ -2565,7 +2568,7 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
     }
     if( m.m_keyCode == WXK_END )  {
       if( FXApp->GetRender().GetZoom()+inc/3 < 400 )  {
-        FXApp->GetRender().SetZoom( FXApp->GetRender().GetZoom()+inc/3 );
+        FXApp->GetRender().SetZoom(FXApp->GetRender().GetZoom()+inc/3);
         TimePerFrame = FXApp->Draw();
         return;
       }
@@ -2581,11 +2584,11 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
   // Ctrl + Up, Down - browse solutions
   if( (Fl & sssCtrl) != 0  )  {
     if( m.m_keyCode == WXK_UP && ((FMode&mSolve) == mSolve) )  {
-      ChangeSolution( CurrentSolution - 1 );
+      ChangeSolution(CurrentSolution - 1);
       return;
     }
     if( m.m_keyCode == WXK_DOWN  && ((FMode&mSolve) == mSolve) )  {
-      ChangeSolution( CurrentSolution + 1 );
+      ChangeSolution(CurrentSolution + 1);
       return;
     }
   }
@@ -2593,9 +2596,9 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
     if( wxTheClipboard->Open() )  {
       if (wxTheClipboard->IsSupported(wxDF_TEXT) )  {
         wxTextDataObject data;
-        wxTheClipboard->GetData( data );
+        wxTheClipboard->GetData(data);
         olxstr Tmp = FGlConsole->GetCommand();
-        FGlConsole->SetCommand(Tmp + data.GetText().c_str());
+        FGlConsole->SetCommand(Tmp << data.GetText().c_str());
         TimePerFrame = FXApp->Draw();
       }
       wxTheClipboard->Close();
@@ -2658,7 +2661,7 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
 
   if( FGlConsole->ProcessKey(m.GetKeyCode(), Fl) )  {
     m.Skip(false);
-    PreviewHelp( FGlConsole->GetCommand() );
+    PreviewHelp(FGlConsole->GetCommand());
     TimePerFrame = FXApp->Draw();
     return;
   }
@@ -2672,11 +2675,11 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
   if( !CmdLineVisible )
     Cmd = FGlConsole->GetCommand();
   else  {
-    m.Skip( !FCmdLine->ProcessKey(m) );
+    m.Skip(!FCmdLine->ProcessKey(m));
     Cmd = FCmdLine->GetCommand();
     Cmd << (char)m.GetKeyCode();
   }
-  //PreviewHelp( Cmd );
+  //PreviewHelp(Cmd);
 
   // if we preview the help - the drawing should happen, which makes the external command line
   // much less usefull ... 
@@ -2732,7 +2735,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   if( CmdLineVisible )  {
     if( this->FindFocus() != (wxWindow*)FCmdLine )  {
       m.Skip(false);
-      FCmdLine->EmulateKeyPress( m );
+      FCmdLine->EmulateKeyPress(m);
     }
   }
   short Fl = 0;
@@ -2751,7 +2754,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
     m.Skip();
     return;
   }
-  olxstr Cmd = AccShortcuts.GetValue( Fl<<16 | m.m_keyCode );
+  olxstr Cmd = AccShortcuts.GetValue(Fl<<16 | m.m_keyCode);
   if( !Cmd.IsEmpty() )  {
     ProcessMacro(Cmd, __OlxSrcInfo);
     TimePerFrame = FXApp->Draw();
@@ -2859,9 +2862,9 @@ void TMainForm::OnResize()  {
     FHtml->Thaw();
   }
   if( CmdLineVisible )  {
-    FCmdLine->WI.SetWidth( w );
-    FCmdLine->WI.SetLeft( l );
-    FCmdLine->WI.SetTop( h - FCmdLine->WI.GetHeight() );
+    FCmdLine->WI.SetWidth(w);
+    FCmdLine->WI.SetLeft(l);
+    FCmdLine->WI.SetTop(h - FCmdLine->WI.GetHeight());
   }
   if( w <= 0 )  w = 5;
   if( h <= 0 )  h = 5;
@@ -2871,7 +2874,7 @@ void TMainForm::OnResize()  {
   FXApp->GetRender().Resize(0, 0, w, h, 1);
   FGlConsole->SetLeft(0);
   FGlConsole->SetWidth(w);
-  FGlConsole->SetHeight(h - dheight );
+  FGlConsole->SetHeight(h - dheight);
   FInfoBox->SetWidth(w);
   FInfoBox->SetLeft(0);
 }
@@ -2888,9 +2891,9 @@ olxstr TMainForm::ExpandCommand(const olxstr &Cmd)  {
   GetLibrary().FindSimilarMacros(Cmd, bins);
   GetLibrary().FindSimilarFunctions(Cmd, bins);
   for( size_t i=0; i < bins.Count(); i++ )
-    all_cmds.Add( bins[i]->GetQualifiedName() );
+    all_cmds.Add(bins[i]->GetQualifiedName());
   for( size_t i=0; i < libs.Count(); i++ )
-    all_cmds.Add( libs[i]->GetQualifiedName() );
+    all_cmds.Add(libs[i]->GetQualifiedName());
   if( all_cmds.Count() > 1 )  {
     if( FHelpWindow->IsVisible() )  // console buffer is hidden then...
       FHelpWindow->Clear();
@@ -2967,13 +2970,13 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
     I->AddField("Width", olxstr(FHtmlPanelWidth) << '%');
   else
     I->AddField("Width", FHtmlPanelWidth);
-  I->AddField("Tooltips", FHtml->GetShowTooltips() );
-  I->AddField("Borders", FHtml->GetBorders() );
+  I->AddField("Tooltips", FHtml->GetShowTooltips());
+  I->AddField("Borders", FHtml->GetBorders());
   {
     olxstr normal, fixed;
     FHtml->GetFonts(normal, fixed);
-    I->AddField("NormalFont", normal );
-    I->AddField("FixedFont", fixed );
+    I->AddField("NormalFont", normal);
+    I->AddField("FixedFont", fixed);
   }
   if( !IsIconized() )  {  // otherwise left and top are -32000 causing all sort of problems...
     I = &DF.Root().AddItem("Window");
@@ -2997,11 +3000,11 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("SceneP", DefSceneP);
 
   I->AddField("BgColor", FBgColor.ToString());
-  I->AddField("WhiteOn", (FXApp->GetRender().LightModel.GetClearColor().GetRGB() == 0xffffffff) );
-  I->AddField("Gradient", FXApp->GetRender().Background()->IsVisible() );
-  I->AddField("GradientPicture", GradientPicture );
-  I->AddField("language", Dictionary.GetCurrentLanguage() );
-  I->AddField("ExtraZoom", FXApp->GetExtraZoom() );
+  I->AddField("WhiteOn", (FXApp->GetRender().LightModel.GetClearColor().GetRGB() == 0xffffffff));
+  I->AddField("Gradient", FXApp->GetRender().Background()->IsVisible());
+  I->AddField("GradientPicture", GradientPicture);
+  I->AddField("language", Dictionary.GetCurrentLanguage());
+  I->AddField("ExtraZoom", FXApp->GetExtraZoom());
   I->AddField("GlTooltip", _UseGlTooltip);
   I->AddField("console.blend", FGlConsole->IsBlend());
 
@@ -3011,8 +3014,8 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 
   I = &DF.Root().AddItem("Stored_params");
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
-    TDataItem& it = I->AddItem( StoredParams.GetComparable(i) );
-    it.AddField("value", StoredParams.GetObject(i) );
+    TDataItem& it = I->AddItem(StoredParams.GetComparable(i));
+    it.AddField("value", StoredParams.GetObject(i));
   }
 
   SaveScene(DF.Root().AddItem("Scene"), FXApp->GetRender().LightModel);
@@ -3057,10 +3060,11 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
 
     Tmp = I->GetFieldValue("Tooltips", EmptyString);
     if( !Tmp.IsEmpty() )
-      FHtml->SetShowTooltips( Tmp.ToBool() );
+      FHtml->SetShowTooltips(Tmp.ToBool());
 
     Tmp = I->GetFieldValue("Borders");
-    if( !Tmp.IsEmpty() && Tmp.IsNumber() )  FHtml->SetBorders( Tmp.ToInt() );
+    if( !Tmp.IsEmpty() && Tmp.IsNumber() )
+      FHtml->SetBorders(Tmp.ToInt());
 
     olxstr nf( I->GetFieldValue("NormalFont", EmptyString) );
     olxstr ff( I->GetFieldValue("FixedFont", EmptyString) );
@@ -3073,7 +3077,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     if( I->GetFieldValue("Maximized", FalseString).ToBool() )  {
       int l = I->GetFieldValue("X", "0").ToInt(), 
           t = I->GetFieldValue("Y", "0").ToInt();
-        Move( l, t );
+        Move(l, t);
       Maximize();
     }
     else  {
@@ -3164,9 +3168,9 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     LoadScene(DF.Root().FindRequiredItem("Scene"), FXApp->GetRender().LightModel);
   // restroring language or setting default
   if( TEFile::Exists( DictionaryFile ) )  {
-    Dictionary.SetCurrentLanguage(DictionaryFile, I->GetFieldValue("language", EmptyString) );
+    Dictionary.SetCurrentLanguage(DictionaryFile, I->GetFieldValue("language", EmptyString));
   }
-  FXApp->SetExtraZoom( I->GetFieldValue("ExtraZoom", "1.25").ToDouble() );
+  FXApp->SetExtraZoom(I->GetFieldValue("ExtraZoom", "1.25").ToDouble());
 #ifdef __WIN32__
   const olxstr& defGlTVal = FalseString;
 #else
