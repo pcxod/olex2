@@ -8,7 +8,8 @@ BeginXlibNamespace()
 
 const short 
   infotab_htab = 1,
-  infotab_rtab = 2;
+  infotab_rtab = 2,
+  infotab_mpla = 3;
 
 class InfoTab : public IEObject {  // need to cast to delete
   olxstr ResiName, ParamName;
@@ -30,8 +31,10 @@ public:
   }
       
   bool operator == (const InfoTab& it) const {
-    if( ResiName != it.ResiName )  return false;
     if( Type != it.Type )  return false;
+    // planes...
+    if( Type == infotab_mpla )  return false;
+    if( ResiName != it.ResiName )  return false;
     if( atoms.Count() != it.atoms.Count() )  return false;
     for( size_t i=0; i < atoms.Count(); i++ )  {
       if( atoms[i].GetAtom()->GetId() != it.atoms[i].GetAtom()->GetId() )
@@ -89,11 +92,12 @@ public:
         ac++;
     if( Type == infotab_htab && ac == 2 )  return true;
     if( Type == infotab_rtab && ac >= 1 && ac <= 4 && !ParamName.IsEmpty() )  return true;
+    if( Type == infotab_mpla && ac >= 3 )  return true;
     return false;
   }
 
   olxstr InsStr() const {
-    olxstr rv = (Type == infotab_htab ? "HTAB" : "RTAB");
+    olxstr rv = (Type == infotab_htab ? "HTAB" : (Type == infotab_rtab ? "RTAB" : "MPLA"));
     if( !ResiName.IsEmpty() )  {
       rv << '_' << ResiName;
       rv << ' ' << ParamName;
