@@ -42,12 +42,8 @@ void TGlCursor::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   TGraphicsStyle& GS = GPC.GetStyle();
   Symbol = GS.GetParam("Char", '|', true).CharAt(0);
-  TGlMaterial GlM;
-  GlM.SetFlags(sglmAmbientF|sglmIdentityDraw);
-  GlM.AmbientF  = 0x00ffff;
-  
   Primitive = &GPC.NewPrimitive("Text", sgloText);
-  Primitive->SetProperties( GS.GetMaterial("On", GlM) );
+  Primitive->SetProperties(GS.GetMaterial("Text", GetFont().GetMaterial()));
   Primitive->Params[0] = -1;  //bitmap; TTF by default
 }
 //..............................................................................
@@ -56,9 +52,8 @@ bool TGlCursor::Orient(TGlPrimitive& P)  {
   Char[0] = Symbol;
   if( Primitive == NULL )  return true;
   Primitive->SetFont(&GetFont());
-  Primitive->SetString( &Char );
-  glRasterPos3d(X, Y, 0);
-  Primitive->Draw();
+  Primitive->SetString(&Char);
+  Parent.DrawText(P, X, Y, 0);
   return true;
 }
 //..............................................................................

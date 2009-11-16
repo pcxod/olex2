@@ -82,14 +82,14 @@ void TGlConsole::Create(const olxstr& cName, const ACreationParams* cpar)  {
   InviteStr = GS.GetParam("Prompt", ">>", true);
 
   TGlPrimitive& GlP = GPC.NewPrimitive("Text", sgloText);
-  GlP.SetProperties( GS.GetMaterial("Text", GetFont().GetMaterial()) );
+  GlP.SetProperties(GS.GetMaterial("Text", GetFont().GetMaterial()));
   GlP.Params[0] = -1;  //bitmap; TTF by default
   FCursor->Create();
   olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
   FCommand = PromptStr;
   FStringPos = FCommand.Length();
   Cmds.Clear();
-  Cmds.Add( FCommand );
+  Cmds.Add(FCommand);
 }
 //..............................................................................
 bool TGlConsole::Orient(TGlPrimitive& P)  {
@@ -105,12 +105,11 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
 
   olxstr line;
   vec3d T;
-  TGlMaterial& OGlM = P.GetProperties();
-  TGlOption CC, Ambient;
-  CC = Parent.LightModel.GetClearColor();
-  TGlMaterial GlM = P.GetProperties();  // copy properties
+  const TGlMaterial& OGlM = P.GetProperties();
+  TGlOption CC = Parent.LightModel.GetClearColor();
+  TGlMaterial GlM = OGlM;  // copy properties
 //  GlM.AmbientF[0] = 1-CC[0];  GlM.AmbientF[1] = 1-CC[1];  GlM.AmbientF[2] = 1-CC[2];
-  Ambient = GlM.AmbientF;
+  TGlOption Ambient = GlM.AmbientF;
   if( ShowBuffer() && FLinesToShow != 0 )  {
     float Rk=1, Gk=1, Bk=1;
     index_t lc = (index_t)(((float)Height-0.1)/(th*(FLineSpacing+1))); // calc the number of lines
