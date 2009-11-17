@@ -132,8 +132,8 @@ public:
 #ifndef _NO_PYTHON
   static void PyInit();
 #endif  
-  void ToDataItem(TDataItem& item, wxOutputStream& zos) const;
-  void FromDataItem(const TDataItem& item, wxInputStream& zis);
+  void ToDataItem(TDataItem& item, IOutputStream& zos) const;
+  void FromDataItem(const TDataItem& item, IInputStream& zis);
 };
 
 EndGxlNamespace()

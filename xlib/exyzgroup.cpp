@@ -5,7 +5,7 @@ void TExyzGroup::Clear()  {  Parent.Delete(Id);  }
 //..............................................................................
 void TExyzGroup::Assign(const TExyzGroup& ag)  {
   for( size_t i=0; i < ag.Atoms.Count(); i++ )  {
-    Atoms.Add( Parent.RM.aunit.FindCAtomById( ag.Atoms[i]->GetId()) );
+    Atoms.Add( Parent.RM.aunit.FindCAtomById(ag.Atoms[i]->GetId()) );
     if( Atoms.Last() == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
     Atoms.Last()->SetExyzGroup(this);
@@ -38,9 +38,8 @@ PyObject* TExyzGroup::PyExport(TPtrList<PyObject>& atoms)  {
 #endif
 //..............................................................................
 void TExyzGroup::FromDataItem(TDataItem& item) {
-  Clear();
   for( size_t i=0; i < item.FieldCount(); i++ )
-    Atoms.Add( &Parent.RM.aunit.GetAtom( item.GetField(i).ToInt()) );
+    Atoms.Add( Parent.RM.aunit.GetAtom(item.GetField(i).ToInt()) );
 }
 //..............................................................................
 //..............................................................................
@@ -86,7 +85,7 @@ void TExyzGroups::FromDataItem(TDataItem& item) {
   if( n != item.ItemCount() )
     throw TFunctionFailedException(__OlxSourceInfo, "number of items mismatch");
   for( size_t i=0; i < n; i++ )  {
-    New().FromDataItem( item.GetItem(i) );
+    New().FromDataItem(item.GetItem(i));
   }
 }
 //..............................................................................

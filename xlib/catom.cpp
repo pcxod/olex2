@@ -180,7 +180,7 @@ void TCAtom::ToDataItem(TDataItem& item) const  {
   item.AddField("y", TEValue<double>(Center[1], Esd[1]).ToString());
   item.AddField("z", TEValue<double>(Center[2], Esd[2]).ToString());
   if( !olx_is_valid_index(EllpId) )
-    item.AddField("Uiso", Uiso);
+    item.AddField("Uiso", TEValue<double>(Uiso, UisoEsd).ToString());
   else {
     double Q[6], E[6];
     GetEllipsoid()->GetQuad(Q, E);
@@ -252,8 +252,10 @@ void TCAtom::FromDataItem(TDataItem& item)  {
     Uiso = GetEllipsoid()->GetUiso();
   }
   else  {
-    EllpId = ~0;
-    Uiso = item.GetRequiredField("Uiso").ToDouble();
+    EllpId = InvalidIndex;
+    ev = item.GetRequiredField("Uiso");
+    Uiso = ev.V();
+    UisoEsd = ev.E();
   }
   if( *FAtomInfo == iQPeakIndex )
     QPeak = item.GetRequiredField("peak").ToDouble();

@@ -39,6 +39,9 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
           E.GetStack().Pop();
           return true;
         }
+        i = specialFunctionIndex;
+        funcStarted = false;
+        continue;
       }
       if( bc == 0 && funcStarted )  {
         olxstr spFunction = Cmd.SubString(specialFunctionIndex+1, i-specialFunctionIndex);

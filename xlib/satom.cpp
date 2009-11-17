@@ -120,7 +120,7 @@ void TSAtom::ToDataItem(TDataItem& item) const {
     bonds.AddField("bond_id", Bonds[i]->GetTag());
   }
 
-  item.AddField("atom_id", FCAtom->GetTag());
+  item.AddField("atom_id", FCAtom->GetId());
   TDataItem& matrices = item.AddItem("Matrices");
   for( size_t i=0; i < Matrices.Count(); i++ )
     matrices.AddField("matr_id", Matrices[i]->GetId());

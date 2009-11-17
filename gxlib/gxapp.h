@@ -496,8 +496,8 @@ public:     void CalcProbFactor(float Prob);
   void SynchroniseBonds( TXAtomPList& XAtoms );
   double CalcVolume(const TSStrPObjList<olxstr,double, true> *volumes, olxstr &report);
 
-  void ToDataItem(TDataItem& item, wxOutputStream& zos) const;
-  void FromDataItem(TDataItem& item, wxInputStream& zis);
+  void ToDataItem(TDataItem& item, IOutputStream& zos) const;
+  void FromDataItem(TDataItem& item, IInputStream& zis);
 
   void SaveModel(const olxstr& file_name) const;
   void LoadModel(const olxstr& file_name);

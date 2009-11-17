@@ -30,7 +30,7 @@ void TAfixGroup::ToDataItem(TDataItem& item) const {
   int dep_id = 0;
   for( size_t i=0; i < Dependent.Count(); i++ )  {
     if( Dependent[i]->IsDeleted() )  continue;
-    dep.AddField(olxstr("atom_id_") << dep_id++, Dependent[i]->GetTag());
+    dep.AddField(olxstr("atom_id_") << dep_id++, Dependent[i]->GetId());
   }
 }
 //..............................................................................

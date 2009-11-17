@@ -90,5 +90,29 @@ public:
   virtual bool ChangeDir(const olxstr& DN)   {  throw TNotImplementedException(__OlxSourceInfo);  }
 };
 
+class TwxInputStreamWrapper : public IInputStream {
+  wxInputStream& is;
+public:
+  TwxInputStreamWrapper(wxInputStream& _is) : is(_is) {}
+  virtual void Read(void* data, size_t sz)  {
+    is.Read(data, sz);
+  }
+  virtual void SetPosition(size_t i) {  is.SeekI(i);  }
+  virtual size_t GetPosition() const {  return is.TellI();  }
+  virtual size_t GetSize() const {  return is.GetSize();  }
+};
+
+class TwxOutputStreamWrapper : public IOutputStream {
+  wxOutputStream& os;
+public:
+  TwxOutputStreamWrapper(wxOutputStream& _os) : os(_os) {}
+  virtual size_t Write(const void* data, size_t sz)  {
+    return os.Write(data, sz).LastWrite();
+  }
+  virtual void SetPosition(size_t i) {  os.SeekO(i);  }
+  virtual size_t GetPosition() const {  return os.TellO();  }
+  virtual size_t GetSize() const {  return os.GetSize();  }
+};
+
 #endif  // __WXWIDGETS__
 #endif  
