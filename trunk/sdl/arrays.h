@@ -1,5 +1,5 @@
-#ifndef arraysH
-#define arraysH
+#ifndef __olx_arrays_H
+#define __olx_arrays_H
 
 #ifdef __BORLANDC__
   #include <mem.h>
@@ -24,7 +24,7 @@ public:
     Data = NULL;
     if( minIndex >= maxIndex )  throw TInvalidArgumentException(__OlxSourceInfo, "size");
     Data = new AE[_Length];
-    memset( Data, 0, _Length*sizeof(AE) );
+    memset(Data, 0, _Length*sizeof(AE));
   }
 
   virtual ~TArray1D()  {  if( Data != NULL )  delete [] Data;  }
@@ -39,10 +39,11 @@ public:
   // direct access to private member
   AE* Data;
 
-  inline size_t Length()  const  {  return _Length;  }
+  inline size_t Length() const {  return _Length;  }
+  index_t GetMin() const {  return MinIndex;  }
   inline bool IsInRange(index_t ind) const {  return ind >= MinIndex && ((ind-MinIndex) < _Length);  }
-  inline AE& operator [] (index_t index)  const {  return Data[index-MinIndex];  }
-  inline AE& Value(index_t index)  const {  return Data[index-MinIndex];  }
+  inline AE& operator [] (index_t index) const {  return Data[index-MinIndex];  }
+  inline AE& Value(index_t index) const {  return Data[index-MinIndex];  }
 };
 
 // we do not use TArray1D< TArray1D > for performance reasons...
@@ -60,7 +61,7 @@ public:
     Data = new AE*[Width];
     for( size_t i=0; i < Width; i++ )  {
       Data[i] = new AE[Height];
-      memset( Data[i], 0, Height*sizeof(AE) );
+      memset(Data[i], 0, Height*sizeof(AE));
     }
   }
 
@@ -86,11 +87,12 @@ public:
     return (x >= MinWidth && ((x-MinWidth) < Width)) &&
            (y >= MinHeight && ((y-MinHeight) < Height));  
   }
-  inline size_t GetWidth()  const  {  return Width;  }
-  inline size_t Length1()   const  {  return Width;  }
-  inline size_t GetHeight() const  {  return Height;  }
-  inline size_t Length2()   const  {  return Height;  }
-  
+  inline size_t GetWidth() const {  return Width;  }
+  inline size_t Length1() const {  return Width;  }
+  index_t GetMin1() const {  return MinWidth;  }
+  inline size_t GetHeight() const {  return Height;  }
+  inline size_t Length2() const {  return Height;  }
+  index_t GetMin2() const {  return MinHeight;  }
   // direct access to private member
   AE** Data;
 
@@ -123,7 +125,7 @@ public:
       Data[i] = new AE*[Height];
       for( size_t j=0; j < Height; j++ )  {
         Data[i][j] = new AE[Depth];
-        memset( Data[i][j], 0, Depth*sizeof(AE) );
+        memset(Data[i][j], 0, Depth*sizeof(AE));
       }
     }
   }
@@ -160,12 +162,15 @@ public:
            (ind[1] >= MinHeight && ((ind[1]-MinHeight) < Height)) &&
            (ind[2] >= MinDepth && ((ind[2]-MinDepth) < Depth));  
   }
-  inline size_t GetWidth()  const  {  return Width;  }
-  inline size_t Length1()   const  {  return Width;  }
-  inline size_t GetHeight() const  {  return Height;  }
-  inline size_t Length2()   const  {  return Height;  }
-  inline size_t GetDepth()  const  {  return Depth;  }
-  inline size_t Length3()   const  {  return Depth;  }
+  inline size_t GetWidth() const {  return Width;  }
+  inline size_t Length1() const {  return Width;  }
+  index_t GetMin1() const {  return MinWidth;  }
+  inline size_t GetHeight() const {  return Height;  }
+  inline size_t Length2() const {  return Height;  }
+  index_t GetMin2() const {  return MinHeight;  }
+  inline size_t GetDepth() const {  return Depth;  }
+  inline size_t Length3() const {  return Depth;  }
+  index_t GetMin3() const {  return MinDepth;  }
 
   // direct access to private member
   AE*** Data;

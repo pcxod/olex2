@@ -3,6 +3,8 @@
 #endif
 
 #include "url.h"
+#include "encodings.h"
+#include "eutf8.h"
 
 // default constructor, sets Port to 80
 TUrl::TUrl() : Proxy(NULL)  {
@@ -134,34 +136,10 @@ void TUrl::SetProtocol( const olxstr& protocol )  {
 }
 //..............................................................................
 olxstr TUrl::GenerateHTTPAuthString(const olxstr& user, const olxstr& pass) {
-  static const char *base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
   olxstr buf("Basic ");
   olxstr toencode(user);
   toencode << ':' << pass;
-
-  size_t len = toencode.Length();
-  size_t from = 0;
-  while (len >= 3) { // encode full blocks first
-    buf << (char)base64[(toencode[from] >> 2) & 0x3f] << 
-      (char)base64[((toencode[from] << 4) & 0x30) | ((toencode[from+1] >> 4) & 0xf)];
-    buf << (char)base64[((toencode[from+1] << 2) & 0x3c) | ((toencode[from+2] >> 6) & 0x3)] <<
-      (char) base64[toencode[from+2] & 0x3f];
-    from += 3;
-    len -= 3;
-  }
-  if (len > 0) { // pad the remaining characters
-    buf << (char)base64[(toencode[from] >> 2) & 0x3f];
-    if (len == 1) {
-      buf << (char)base64[(toencode[from] << 4) & 0x30] << '=';
-    } 
-    else {
-      buf << (char)base64[(toencode[from] << 4) & 0x30] + ((toencode[from+1] >> 4) & 0xf) <<
-        (char)base64[(toencode[from+1] << 2) & 0x3c];
-    }
-    buf << '=';
-  }
-  return buf;
+  return (buf << encoding::base64::encode(TUtf8::Encode(toencode)));
 }
 //............................................................................//
 

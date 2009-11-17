@@ -40,6 +40,7 @@
   #include "wx/string.h"
   #include "wx/fontutil.h"
   #include "wx/wfstream.h"
+  #include "wxzipfs.h"
 #endif
 #define ConeStipple  6.0
 #define LineStipple  0xf0f0
@@ -779,40 +780,46 @@ olxstr TGXApp::GetSelectionInfo()  {
     TGlGroup& Sel = FGlRender->GetSelection();
     if( Sel.Count() == 2 )  {
       if( EsdlInstanceOf(Sel[0], TXAtom) &&
-        EsdlInstanceOf(Sel[1], TXAtom) )  {
-          Tmp = "Distance (";
-          Tmp << macSel_GetName2(((TXAtom&)Sel[0]).Atom(), ((TXAtom&)Sel[1]).Atom());
-          v = ((TXAtom&)Sel[0]).Atom().crd().DistanceTo( ((TXAtom&)Sel[1]).Atom().crd() );
-          Tmp << "): " << olxstr::FormatFloat(3, v);
+        EsdlInstanceOf(Sel[1], TXAtom) )
+      {
+        Tmp = "Distance (";
+        Tmp << macSel_GetName2(((TXAtom&)Sel[0]).Atom(), ((TXAtom&)Sel[1]).Atom());
+        v = ((TXAtom&)Sel[0]).Atom().crd().DistanceTo( ((TXAtom&)Sel[1]).Atom().crd() );
+        Tmp << "): " << olxstr::FormatFloat(3, v);
       }
-      else if( EsdlInstanceOf(Sel[0], TXBond) &&
-        EsdlInstanceOf(Sel[1], TXBond) )  {
-          TXBond& A = (TXBond&)Sel[0], &B =(TXBond&)Sel[1];
-          Tmp = "Angle (";
-          Tmp << macSel_GetName4a(A.Bond().A(), A.Bond().B(), B.Bond().A(), B.Bond().B()) <<
+      else if( EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXBond) )  {
+        TXBond& A = (TXBond&)Sel[0], &B =(TXBond&)Sel[1];
+        Tmp = "Angle (";
+        Tmp << macSel_GetName4a(A.Bond().A(), A.Bond().B(), B.Bond().A(), B.Bond().B()) <<
+          "): ";
+        v = Angle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
+        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')' <<
+          "\nAngle (" <<
+          macSel_GetName4a(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) <<
+          "): ";
+        v = Angle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
+        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
+        // check for ajusten bonds
+        if( !(&A.Bond().A() == &B.Bond().A() || &A.Bond().A() == &B.Bond().B() ||
+          &A.Bond().B() == &B.Bond().A() || &A.Bond().B() == &B.Bond().B()) )
+        {
+          Tmp << "\nTorsion angle (" <<
+            macSel_GetName4(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) <<
             "): ";
-          v = Angle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
+          v = TorsionAngle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().B().crd(), B.Bond().A().crd());
           Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')' <<
-            "\nAngle (" <<
-            macSel_GetName4a(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) <<
+            "\nTorsion angle (" <<
+            macSel_GetName4(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) << 
             "): ";
-          v = Angle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
+          v = TorsionAngle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
           Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
-          // check for ajusten bonds
-          if( !(&A.Bond().A() == &B.Bond().A() || &A.Bond().A() == &B.Bond().B() ||
-            &A.Bond().B() == &B.Bond().A() || &A.Bond().B() == &B.Bond().B()) )
-          {
-            Tmp << "\nTorsion angle (" <<
-              macSel_GetName4(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) <<
-              "): ";
-            v = TorsionAngle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().B().crd(), B.Bond().A().crd());
-            Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')' <<
-              "\nTorsion angle (" <<
-              macSel_GetName4(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) << 
-              "): ";
-            v = TorsionAngle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
-            Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
-          }
+        }
+      }
+      else if( EsdlInstanceOf(Sel[0], TXLine) && EsdlInstanceOf(Sel[1], TXLine) )  {
+        TXLine& A = (TXLine&)Sel[0], &B =(TXLine&)Sel[1];
+        Tmp = "Angle: ";
+        v = Angle(A.Edge(), A.Base(), B.Edge(), B.Base());
+        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ")";
       }
       else if( EsdlInstanceOf(Sel[0], TXPlane) && EsdlInstanceOf(Sel[1], TXAtom) )  {
         Tmp = "Distance (plane-atom): ";
@@ -1760,8 +1767,8 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
 TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T)  {
   TXGlLabel* gl = new TXGlLabel(*FGlRender, Name);
   gl->SetFontIndex(FLabels->GetFontIndex());
-  gl->SetLabel( T );
-  gl->SetCenter( center );
+  gl->SetLabel(T);
+  gl->SetCenter(center);
   gl->Create();
   LooseObjects.Add(gl);
   return gl;
@@ -1770,7 +1777,7 @@ TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxst
 TXLine& TGXApp::AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge)  {
   TXLine *XL = new TXLine(*FGlRender, Name, base, edge);
   XL->Create();
-  LooseObjects.Add( XL );
+  LooseObjects.Add(XL);
   return *XL;
 }
 //..............................................................................
@@ -3715,7 +3722,7 @@ void TGXApp::BuildSceneMask(FractMask& mask, double inc)  {
   }
 }
 //..............................................................................
-void TGXApp::ToDataItem(TDataItem& item, wxOutputStream& zos) const  {
+void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
   FXFile->ToDataItem(item.AddItem("XFile"));
   TPtrList<TGraphicsStyle> styles;
   for( size_t i=0; i < FGlRender->ObjectCount(); i++ )  {
@@ -3756,7 +3763,7 @@ void TGXApp::ToDataItem(TDataItem& item, wxOutputStream& zos) const  {
     if( !XAtoms[i].Atom().IsDeleted() )
       vis.Set(a_cnt++, XAtoms[i].IsVisible());
   }
-  visibility.AddField("atoms", vis.ToHexString());
+  visibility.AddField("atoms", vis.ToBase64String());
   size_t b_cnt = 0;
   for( size_t i=0; i < XBonds.Count(); i++ )
     if( !XBonds[i].Bond().IsDeleted() )
@@ -3767,7 +3774,7 @@ void TGXApp::ToDataItem(TDataItem& item, wxOutputStream& zos) const  {
     if( !XBonds[i].Bond().IsDeleted() )
       vis.Set(b_cnt++, XBonds[i].IsVisible() );
   }
-  visibility.AddField("bonds", vis.ToHexString());
+  visibility.AddField("bonds", vis.ToBase64String());
   size_t p_cnt = 0;
   for( size_t i=0; i < XPlanes.Count(); i++ )
     if( !XPlanes[i].Plane().IsDeleted() )
@@ -3778,9 +3785,9 @@ void TGXApp::ToDataItem(TDataItem& item, wxOutputStream& zos) const  {
     if( !XPlanes[i].Plane().IsDeleted() )
       vis.Set(p_cnt++, XPlanes[i].IsVisible() );
   }
-  visibility.AddField("planes", vis.ToHexString());
+  visibility.AddField("planes", vis.ToBase64String());
   
-  FXGrid->ToDataItem( item.AddItem("Grid"), zos);
+  FXGrid->ToDataItem(item.AddItem("Grid"), zos);
 
   TDataItem& labels = item.AddItem("Labels");
   for( size_t i=0; i < XLabels.Count(); i++ )
@@ -3815,7 +3822,7 @@ void TGXApp::ToDataItem(TDataItem& item, wxOutputStream& zos) const  {
   renderer.AddField("max", PersUtil::VecToStr( FGlRender->MaxDim() ) );
 }
 //..............................................................................
-void TGXApp::FromDataItem(TDataItem& item, wxInputStream& zis)  {
+void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   FGlRender->Clear();
   ClearXObjects();
   FXFile->FromDataItem(item.FindRequiredItem("XFile"));
@@ -3846,17 +3853,17 @@ void TGXApp::FromDataItem(TDataItem& item, wxInputStream& zis)  {
   FDUnitCell->SetVisible( visibility.GetRequiredField("cell").ToBool() );
 
   TEBitArray vis;
-  vis.FromHexString( visibility.GetRequiredField("atoms") );
+  vis.FromBase64String( visibility.GetRequiredField("atoms") );
   if( vis.Count() != XAtoms.Count() )
     throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
   for( size_t i=0; i < vis.Count(); i++ )
     XAtoms[i].SetVisible( vis[i] );
-  vis.FromHexString( visibility.GetRequiredField("bonds") );
+  vis.FromBase64String( visibility.GetRequiredField("bonds") );
   if( vis.Count() != XBonds.Count() )
     throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
   for( size_t i=0; i < vis.Count(); i++ )
     XBonds[i].SetVisible( vis[i] );
-  vis.FromHexString( visibility.GetRequiredField("planes") );
+  vis.FromBase64String( visibility.GetRequiredField("planes") );
   if( vis.Count() != XPlanes.Count() )
     throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
   for( size_t i=0; i < vis.Count(); i++ )
@@ -3905,7 +3912,10 @@ void TGXApp::SaveModel(const olxstr& fileName) const {
   wxZipOutputStream zos(fos, 9);
   TDataItem& mi = df.Root().AddItem("olex_model");
   zos.PutNextEntry( wxT("grid") );
-  ToDataItem(mi, zos);
+  XFile().GetAsymmUnit().InitialisePersistentIds();
+  TwxOutputStreamWrapper os(zos);
+  ToDataItem(mi, os);
+  XFile().GetAsymmUnit().RestoreWorkingIds();
   zos.CloseEntry();
   zos.PutNextEntry( wxT("model") );
   TEStrBuffer bf(1024*32);
@@ -3922,7 +3932,8 @@ void TGXApp::SaveModel(const olxstr& fileName) const {
 }
 //..............................................................................
 void TGXApp::LoadModel(const olxstr& fileName) {
-  wxFileInputStream fis( fileName.u_str() );
+  TEFile::CheckFileExists(__OlxSourceInfo, fileName);
+  wxFileInputStream fis(fileName.u_str());
   char sig[3];
   wxZipInputStream* zin = new wxZipInputStream(fis);
   fis.Read(sig, 3);
@@ -3956,7 +3967,8 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   df.LoadFromTextStream(ms);
   delete [] bf;
   zin->OpenEntry(*grid);
-  try  {  FromDataItem( df.Root().FindRequiredItem("olex_model"), *zin );  }
+  TwxInputStreamWrapper in(*zin);
+  try  {  FromDataItem( df.Root().FindRequiredItem("olex_model"), in );  }
   catch( const TExceptionBase& exc )  {
     GetLog().Exception( olxstr("Failed to load model: ") << exc.GetException()->GetError() );
     FXFile->SetLastLoader(NULL);

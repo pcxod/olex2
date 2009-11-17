@@ -365,7 +365,13 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
   return NULL;
 }
 //..............................................................................
-void TAsymmUnit::InitAtomIds()  {  // initialises atom ids if any were added or removed
+void TAsymmUnit::InitialisePersistentIds()  {
+  size_t id = 0;
+  for( size_t i=0; i < CAtoms.Count(); i++ )
+    CAtoms[i]->SetId( CAtoms[i]->IsDeleted() ? InvalidIndex : id++);
+}
+//..............................................................................
+void TAsymmUnit::RestoreWorkingIds()  {
   for( size_t i=0; i < AtomCount(); i++ )    
     GetAtom(i).SetId(i);
   for( size_t i=0; i < EllpCount(); i++ )    
@@ -681,7 +687,7 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
     symm.AddItem(i, TSymmParser::MatrixToSymmEx(Matrices[i]) );
   TDataItem& resi = item.AddItem("residues");
   int atom_id = 0;
-  for( size_t i=0; i < Residues.Count(); i++ )  {
+  for( size_t i=0; i < ResidueCount(); i++ )  {
     TResidue& r = GetResidue(i);
     if( r.IsEmpty() )  continue;
     TDataItem* ri;
@@ -695,12 +701,9 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
     for( size_t j=0; j < r.Count(); j++ )  {
       if( r[j].IsDeleted() )  continue;
       r[j].SetTag(atom_id);
-      r[j].SetId(atom_id);
       r[j].ToDataItem(ri->AddItem(atom_id++));
     }
   }
-  for( size_t i=0; i < CAtoms.Count(); i++ )
-    CAtoms[i]->SetId(i);
 }
 //..............................................................................
 #ifndef _NO_PYTHON

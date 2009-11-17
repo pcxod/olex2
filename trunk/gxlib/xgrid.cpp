@@ -779,7 +779,7 @@ void TXGrid::LibPolygonMode(const TStrObjList& Params, TMacroError& E)  {
     SetScale(Scale);
 }
 //..............................................................................
-void TXGrid::ToDataItem(TDataItem& item, wxOutputStream& zos) const {
+void TXGrid::ToDataItem(TDataItem& item, IOutputStream& zos) const {
   item.AddField("empty", IsEmpty() );
   if( !IsEmpty() )  {
     //item.AddField("visible", Visible());
@@ -799,10 +799,12 @@ void TXGrid::ToDataItem(TDataItem& item, wxOutputStream& zos) const {
         zos.Write( ED->Data[x][y], sizeof(float)*MaxZ );
       }
     }
+    if( Mask != NULL && Mask->GetMask() != NULL )
+      Mask->ToDataItem(item.AddItem("mask"), zos);
   }
 }
 //..............................................................................
-void TXGrid::FromDataItem(const TDataItem& item, wxInputStream& zis) {
+void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
   Clear();
   bool empty = item.GetRequiredField("empty").ToBool();
   if( empty )  return;
@@ -822,6 +824,11 @@ void TXGrid::FromDataItem(const TDataItem& item, wxInputStream& zis) {
   for( int x=0; x < MaxX; x++ )
     for( int y=0; y < MaxY; y++ )
       zis.Read( ED->Data[x][y], sizeof(float)*MaxZ );
+  TDataItem* maski = item.FindItem("mask");
+  if( maski != NULL )  {
+    Mask = new FractMask;
+    Mask->FromDataItem(*maski, zis);
+  }
   InitIso(Mode3D);
 }
 //..............................................................................

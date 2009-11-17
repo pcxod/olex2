@@ -137,6 +137,7 @@
 #include "md5.h"
 #include "sha.h"
 #include "exparse/expbuilder.h"
+#include "encodings.h"
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
@@ -7523,7 +7524,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   olxstr empty = EmptyString;
   OlxTests tests;
-  tests.Add( &TSymmParser::Tests );
+  tests.Add(&TSymmParser::Tests);
   tests.run();
   AtomRefList arl(FXApp->XFile().GetRM(), Cmds.Text(' '), "suc");
   TTypeList<TAtomRefList> res;
@@ -7553,6 +7554,9 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
     TBasicApp::GetLog() << "SHA256: " << SHA256::Digest(f) << '\n';
     TBasicApp::GetLog() << olxstr::FormatFloat(3, ((double)f.Length()/(((TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s\n";
   }
+  olxcstr rv = encoding::base64::encode("Don't forget to check out out online Base 64 Decoder.");
+  olxcstr rv1 = encoding::base64::decode("RG9uJ3QgZm9yZ2V0IHRvIGNoZWNrIG91dCBvdXQgb25saW5lIEJhc2UgNjQgRGVjb2Rlci4=");
+  rv = encoding::base64::decode(rv);
   using namespace esdl::exparse;
   EvaluableFactory evf;
   context cx;
