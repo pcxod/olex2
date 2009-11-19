@@ -493,17 +493,17 @@ void BreadthFirstTag(TSAtomPList& all, TSAtom* node)  {
   for( size_t i=0; i < node->NodeCount(); i++ )  {
     TSAtom& sa = node->Node(i);
     if( sa.GetTag() != 0 )  continue;
-    all.Add( &sa )->SetTag( node->GetTag() + 1);
+    all.Add(sa)->SetTag(node->GetTag() + 1);
   }
 }
 void BreadthFirstTags(TSAtom* sa)  {
   TSAtomPList all;
-  all.SetCapacity( sa->GetNetwork().NodeCount() );
-  all.Add( sa );
+  all.SetCapacity(sa->GetNetwork().NodeCount());
+  all.Add(sa);
   sa->SetTag(1);
   BreadthFirstTag(all, sa);
   for( size_t i=0; i < all.Count(); i++ )  {
-    BreadthFirstTag( all, all[i] );
+    BreadthFirstTag(all, all[i]);
     //all[i]->CAtom()->Label() = all[i]->GetTag();
   }
 }
@@ -512,7 +512,7 @@ void ExpandGraphNode(TEGraphNode<size_t,TSAtom*>& graphNode)  {
   for( size_t i=0; i < graphNode.GetObject()->NodeCount(); i++ )  {
     TSAtom& sa = graphNode.GetObject()->Node(i);
     if( sa.GetTag() <= graphNode.GetObject()->GetTag() )  continue;
-    ExpandGraphNode( graphNode.NewNode( sa.GetAtomInfo().GetIndex(), &sa ) );
+    ExpandGraphNode(graphNode.NewNode(sa.GetAtomInfo().GetIndex(), &sa) );
   }
 }
 
@@ -538,7 +538,7 @@ struct GraphAnalyser  {
   double CalcRMS()  {
     TTypeList< AnAssociation2<TSAtom*,TSAtom*> > matchedAtoms;
     matchedAtoms.SetCapacity(1024);
-    ResultCollector( RootA, RootB, matchedAtoms);
+    ResultCollector(RootA, RootB, matchedAtoms);
     for( size_t i=0; i < matchedAtoms.Count(); i++ )
       matchedAtoms[i].A()->SetTag(i);
     if( CalcRMSForH )  {
@@ -585,9 +585,9 @@ struct GraphAnalyser  {
       vec3d v = dest[i].GetObject()->ccrd();
       if( Invert )
         v *= -1;
-      v = bestMatrix*(au.CellToCartesian(v) - bCent );
+      v = bestMatrix*(au.CellToCartesian(v) - bCent);
       vec3d v1 = src[i].GetObject()->ccrd();
-      rsum += v.QDistanceTo( au.CellToCartesian(v1) );
+      rsum += v.QDistanceTo( au.CellToCartesian(v1));
     }
     return rsum + minRms;
   }
@@ -596,62 +596,63 @@ struct GraphAnalyser  {
     HValidator(RootA, RootB);
   }
   // since the H-atoms are given a smaller weights...
-  void HValidator( TEGraphNode<size_t,TSAtom*>& n1, TEGraphNode<size_t,TSAtom*>& n2)  {
-    if( !n1.IsShallowEqual(n2) )
-      return;
+  void HValidator(const TEGraphNode<size_t,TSAtom*>& n1, TEGraphNode<size_t,TSAtom*>& n2)  {
+    if( !n1.IsShallowEqual(n2) )  return;
     TSizeList hpos;
     for( size_t i=0; i < n1.Count(); i++ )  {
       if( n1[i].GetData() == iHydrogenIndex )
         hpos.Add(i);
-      HValidator( n1[i], n2[i] );
+      HValidator(n1[i], n2[i]);
     }
     if( hpos.Count() < 2 )  return;
-    const TAsymmUnit& au = *n1[0].GetObject()->CAtom().GetParent();
-    TSizeList new_pos(hpos.Count()), Used;
+    const TAsymmUnit& au = *n2[0].GetObject()->CAtom().GetParent();
+    TSizeList permutation, null_permutation(hpos.Count());
+    const size_t perm_cnt = olx_factorial_t<size_t, size_t>(hpos.Count());
+    TPSTypeList<double, size_t> hits;
+    TArrayList<vec3d> crds(hpos.Count());
     for( size_t i=0; i < hpos.Count(); i++ )  {
       vec3d v = n2[hpos[i]].GetObject()->ccrd(); 
-      if( Invert )
-        v*= -1;
-      v = bestMatrix*(au.CellToCartesian(v) - bCent );
-      double minQD = 1000;
-      size_t best_pos = 0;
-      for( size_t j=0; j < hpos.Count(); j++ )  {
-        if( Used.IndexOf(j) != InvalidIndex )  continue;
-        const double qd = v.QDistanceTo(n1[hpos[j]].GetObject()->crd());
-        if( qd < minQD )  {
-          minQD = qd;
-          best_pos = j;
-        }
-      }
-      Used.Add(best_pos);
-      new_pos[i] = hpos[best_pos];
+      if( Invert )  v*= -1;
+      crds[i] = bestMatrix*(au.CellToCartesian(v) - bCent);
+      null_permutation[i] = i;
     }
-    TPtrList< TEGraphNode<size_t,TSAtom*> > nodes( n2.GetNodes() );
+    for( size_t i=0; i < perm_cnt; i++ )  {
+      permutation = null_permutation;
+      if( i != 0 )  GeneratePermutation(permutation, i);
+      double sqd = 0;
+      for( size_t j=0; j < hpos.Count(); j++ )
+        sqd += crds[permutation[j]].QDistanceTo(n1[hpos[j]].GetObject()->crd());
+      hits.Add(sqd, i);
+    }
+    permutation = null_permutation;
+    if( hits.GetObject(0) != 0 )
+      GeneratePermutation(permutation, hits.GetObject(0));
+    TPtrList<TEGraphNode<size_t,TSAtom*> > nodes(n2.GetNodes());
     for( size_t i=0; i < hpos.Count(); i++ )
-      n2.GetNodes()[new_pos[i]] = nodes[hpos[i]];
+      n2.GetNodes()[hpos[permutation[i]]] = nodes[hpos[i]];
   } 
 };
 
 //..............................................................................
-bool TNetwork::DoMatch( TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res, bool Invert)  {
+bool TNetwork::DoMatch(TNetwork& net, TTypeList<AnAssociation2<size_t,size_t> >& res, bool Invert)  {
   if( NodeCount() != net.NodeCount() )  return false;
   TSAtom* thisSa = NULL;
   size_t maxbc = 0;
   double maxMw = 0;
   vec3d centb, centa;
   double centa_wght = 0, centb_wght = 0;
-  const TAsymmUnit& au = this->GetLattice().GetAsymmUnit();
+  const TAsymmUnit& au_b = net.GetLattice().GetAsymmUnit();
   size_t HCount = 0;
   for( size_t i=0; i < net.NodeCount(); i++ )  {
     vec3d v = net.Node(i).ccrd();
-    if( Invert )
-      v *= -1;
-    au.CellToCartesian(v);
+    if( Invert )  v *= -1;
+    au_b.CellToCartesian(v);
     centb += v*net.Node(i).CAtom().GetOccu()*net.Node(i).GetAtomInfo().GetMr();
     centb_wght += net.Node(i).CAtom().GetOccu()*net.Node(i).GetAtomInfo().GetMr();
   }
   centb /= centb_wght;
 
+  const TAsymmUnit& au_a = this->GetLattice().GetAsymmUnit();
   for( size_t i=0; i < NodeCount(); i++ )  {
     Node(i).SetTag(0);
     if( Node(i).NodeCount() > maxbc )  {
@@ -667,48 +668,47 @@ bool TNetwork::DoMatch( TNetwork& net, TTypeList< AnAssociation2<size_t, size_t>
     }
     if( Node(i).GetAtomInfo() == iHydrogenIndex || Node(i).GetAtomInfo() == iDeuteriumIndex )
       HCount++;
-    vec3d v = Node(i).crd();
-    au.CellToCartesian(v);
+    vec3d v = Node(i).ccrd();
+    au_a.CellToCartesian(v);
     centa += v*Node(i).CAtom().GetOccu()*Node(i).GetAtomInfo().GetMr();
     centa_wght += Node(i).CAtom().GetOccu()*Node(i).GetAtomInfo().GetMr();
   }
   centa /= centa_wght;
 
   if( thisSa == NULL )  return false;
-  TEGraph<size_t, TSAtom*> thisGraph( thisSa->GetAtomInfo().GetIndex(), thisSa );
+  TEGraph<size_t, TSAtom*> thisGraph(thisSa->GetAtomInfo().GetIndex(), thisSa);
 //  TEGraph<int, TSAtom*> thisGraph( 0, thisSa );
-  BuildGraph( thisGraph.GetRoot(), thisSa );
+  BuildGraph(thisGraph.GetRoot(), thisSa);
   TNetTraverser trav;
-  trav.OnItem( thisGraph.GetRoot() );
+  trav.OnItem(thisGraph.GetRoot());
   thisGraph.GetRoot().Traverser.LevelTraverse(thisGraph.GetRoot(), trav);
-  TBasicApp::GetLog().Info( trav.GetData() );
+  TBasicApp::GetLog().Info(trav.GetData());
   for( size_t i=0; i < net.NodeCount(); i++ )  {
-    TSAtom* thatSa = &net.Node(i);
-    if( thisSa->NodeCount() != thatSa->NodeCount() )  continue;
-    if( thisSa->GetAtomInfo().GetIndex() != thatSa->GetAtomInfo().GetIndex() )  continue;
+    TSAtom& thatSa = net.Node(i);
+    if( thisSa->NodeCount() != thatSa.NodeCount() )  continue;
+    if( thisSa->GetAtomInfo() != thatSa.GetAtomInfo() )  continue;
     for( size_t j=0; j < net.NodeCount(); j++ )
       net.Node(j).SetTag(0);
-    TEGraph<size_t, TSAtom*> thatGraph( thatSa->GetAtomInfo().GetIndex(), thatSa );
-    BuildGraph(thatGraph.GetRoot(), thatSa);
+    TEGraph<size_t, TSAtom*> thatGraph(thatSa.GetAtomInfo().GetIndex(), &thatSa);
+    BuildGraph(thatGraph.GetRoot(), &thatSa);
 
     trav.ClearData();
-    trav.OnItem( thatGraph.GetRoot() );
+    trav.OnItem(thatGraph.GetRoot());
     thatGraph.GetRoot().Traverser.LevelTraverse(thatGraph.GetRoot(), trav);
-    TBasicApp::GetLog().Info( trav.GetData() );
-    if( thisGraph.GetRoot().DoMatch( thatGraph.GetRoot()) )  {  // match 
+    TBasicApp::GetLog().Info(trav.GetData());
+    if( thisGraph.GetRoot().DoMatch(thatGraph.GetRoot()) )  {  // match 
       GraphAnalyser ga(thisGraph.GetRoot(), thatGraph.GetRoot());
       ga.Invert = Invert;
       ga.atomsToMatch = NodeCount();
       ga.CalcRMSForH = ((NodeCount() - HCount) < 4); 
-      if( !thisGraph.GetRoot().FullMatchEx( thatGraph.GetRoot(), ga) ) // weird, roll back
-        thisGraph.GetRoot().DoMatch( thatGraph.GetRoot());
-    
+      if( !thisGraph.GetRoot().FullMatchEx(thatGraph.GetRoot(), ga) ) // weird, roll back
+        thisGraph.GetRoot().DoMatch(thatGraph.GetRoot());
       trav.ClearData();
       trav.OnItem( thatGraph.GetRoot() );
       thatGraph.GetRoot().Traverser.LevelTraverse(thatGraph.GetRoot(), trav);
       TBasicApp::GetLog().Info( trav.GetData() );
       TBasicApp::GetLog().Info( olxstr("Number of permutations: ") << ga.CallsCount );
-      ResultCollector( thisGraph.GetRoot(), thatGraph.GetRoot(), res);
+      ResultCollector(thisGraph.GetRoot(), thatGraph.GetRoot(), res);
       return true;
     }
   }
