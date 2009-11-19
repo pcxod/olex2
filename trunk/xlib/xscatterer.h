@@ -3,38 +3,33 @@
 #include "chemdata.h"
 
 BeginXlibNamespace()
-/* scatterer wrapping to allow user defined values */
+struct XDispersion  {
+  olxstr label;
+  compd fpfdp;
+  double mu;
+  XDispersion() : mu(-1)  {  }
+  XDispersion(const olxstr& _label, const compd& _fpfdp, double _mu=-1) :
+    label(_label), fpfdp(_fpfdp), mu(_mu)  {  }
+  XDispersion(const olxstr& _label, double _fp, double _fdp, double _mu=-1) :
+    label(_label), fpfdp(_fp, _fdp), mu(_mu)  {  }
+  XDispersion(const XDispersion& d) :
+    label(d.label), fpfdp(d.fpfdp), mu(d.mu)  {  }
+  olxstr ToInsString() const {
+    olxstr rv(label, 50);
+    rv << ' ' << fpfdp.GetRe() << ' ' << fpfdp.GetIm();
+    if( mu >= 0 )
+      rv << ' ' << mu;
+    return rv;
+  }
+};
+/* scatterer wrapping to allow user defined values. */
 class XScatterer {
-public:
-  struct ConnInfo  {
-    int maxBonds;
-    double r;
-    bool builtIn;
-    ConnInfo(): maxBonds(12), r(0), builtIn(false) {}
-    ConnInfo(const ConnInfo& ci): 
-      maxBonds(ci.maxBonds),
-      r(ci.r),
-      builtIn(ci.builtIn)  {  }
-    ConnInfo(const cm_Element& elm) : maxBonds(12), r(elm.r_bonding), builtIn(true)  {}
-    void SetR(const double& r)  {
-      if( r != this->r )
-        builtIn = false;
-      this->r = r;
-    }
-    ConnInfo& operator = (const cm_Element& elm)  {
-      maxBonds = 12;
-      r = elm.r_bonding;
-      builtIn = true;
-      return *this;
-    }
-  };
 private:
   cm_Gaussians gaussians;
-  double mu, wt;
+  double mu, wt, r;
   compd fpfdp;
   cm_Element* source;
   olxstr Label;
-  ConnInfo connInfo;
   bool builtIn;
 public:
   // creates a dummy scatterer
@@ -56,18 +51,18 @@ public:
     gaussians(sc.gaussians), 
     mu(sc.mu),
     wt(sc.wt),
+    r(sc.r),
     Label(sc.Label),
     source(sc.source),
-    builtIn(sc.builtIn),
-    connInfo(sc.connInfo)  {  }
+    builtIn(sc.builtIn)  {  }
   // initialises data from the provided library element
   void SetSource(cm_Element& src, double energy)  {
     if( src.gaussians == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, "given scatterer is only partially initialised");
     gaussians = *src.gaussians;
     Label = src.symbol;
-    connInfo = src;
     wt = src.CalcMr();
+    r = src.r_bonding;
     fpfdp = src.CalcFpFdp(energy);
     source = &src;
     builtIn = true;
@@ -79,13 +74,15 @@ public:
       builtIn = false;
     }
   }
-  compd GetFpFdp() const {  return fpfdp;  }
+  const compd& GetFpFdp() const {  return fpfdp;  }
   // sets custom bonding radius
-  void SetBondingR(double v)  {
-    connInfo.SetR(v);
+  void SetR(double v)  {
+    if( r != v )  {
+      r = v;
+      builtIn = false;
+    }
   }
-  double GetBondingR() const {  return connInfo.r;  }
-  const ConnInfo& GetConnInfo() const {  return connInfo;  }
+  double GetR() const {  return r;  }
   // sets custom molecular weight
   void SetWeight(double v)  {
     if( v != wt )  {
@@ -122,7 +119,7 @@ public:
     rv << ' ' << gaussians.a1 << ' ' << gaussians.a2 << ' ' << gaussians.a3 << ' ' << gaussians.a4 <<
           ' ' << -gaussians.b1 << ' ' << -gaussians.b2 << ' ' << -gaussians.b3 << ' ' << -gaussians.b4 <<
           ' ' << gaussians.c << 
-          ' ' << fpfdp.GetRe() << ' ' << fpfdp.GetIm() << ' ' << mu << ' ' << connInfo.r << ' ' << wt;
+          ' ' << fpfdp.GetRe() << ' ' << fpfdp.GetIm() << ' ' << mu << ' ' << r << ' ' << wt;
     return rv;
   }
   inline double calc_sq(double sqv) const {

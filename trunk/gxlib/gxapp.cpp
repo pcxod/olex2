@@ -584,7 +584,11 @@ float TGXApp::ProbFactor(float Prob)  {
 }
 //..............................................................................
 void TGXApp::Init()  {
-  CreateObjects(true);
+  try  {  CreateObjects(true);  }
+  catch(...)  {
+    GetRender().GetStyles().Clear();
+    CreateObjects(true);
+  }
 }
 //..............................................................................
 void TGXApp::Quality(const short V)  {
@@ -3737,8 +3741,8 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
     if( styles.IndexOf(gs) == InvalidIndex )
       styles.Add( gs );
   }
-  styles.Add( TXAtom::GetParamStyle() );
-  styles.Add( TXBond::GetParamStyle() );
+  styles.Add(TXAtom::GetParamStyle());
+  styles.Add(TXBond::GetParamStyle());
   FGlRender->GetStyles().ToDataItem(item.AddItem("Style"), styles);
   TDataItem& ind_col = item.AddItem("ICollections");
   for( size_t i=0; i < IndividualCollections.Count(); i++ )
@@ -3757,7 +3761,7 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
   for( size_t i=0; i < XAtoms.Count(); i++ )
     if( !XAtoms[i].Atom().IsDeleted() )
       a_cnt++;
-  TEBitArray vis( (uint32_t)a_cnt );
+  TEBitArray vis(a_cnt);
   a_cnt = 0;
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
     if( !XAtoms[i].Atom().IsDeleted() )
@@ -3768,7 +3772,7 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
   for( size_t i=0; i < XBonds.Count(); i++ )
     if( !XBonds[i].Bond().IsDeleted() )
       b_cnt++;
-  vis.SetSize( (uint32_t)b_cnt );
+  vis.SetSize(b_cnt);
   b_cnt = 0;
   for( size_t i=0; i < XBonds.Count(); i++ )  {
     if( !XBonds[i].Bond().IsDeleted() )
@@ -3779,11 +3783,11 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
   for( size_t i=0; i < XPlanes.Count(); i++ )
     if( !XPlanes[i].Plane().IsDeleted() )
       p_cnt++;
-  vis.SetSize( (uint32_t)p_cnt );
+  vis.SetSize(p_cnt);
   p_cnt = 0;
   for( size_t i=0; i < XPlanes.Count(); i++ )  {
     if( !XPlanes[i].Plane().IsDeleted() )
-      vis.Set(p_cnt++, XPlanes[i].IsVisible() );
+      vis.Set(p_cnt++, XPlanes[i].IsVisible());
   }
   visibility.AddField("planes", vis.ToBase64String());
   

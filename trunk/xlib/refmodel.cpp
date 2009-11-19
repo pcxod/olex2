@@ -58,7 +58,10 @@ void RefinementModel::Clear() {
   for( size_t i=0; i < SfacData.Count(); i++ )
     delete SfacData.GetValue(i);
   SfacData.Clear();
-
+  for( size_t i=0; i < DispData.Count(); i++ )
+    delete DispData.GetValue(i);
+  DispData.Clear();
+  UserContent.Clear();
   for( size_t i=0; i < Frags.Count(); i++ )
     delete Frags.GetValue(i);
   Frags.Clear();
@@ -97,9 +100,9 @@ void RefinementModel::ClearVarRefs() {
   for( size_t i=0; i < RefContainers.Count(); i++ )  {
     IXVarReferencerContainer* rc = RefContainers.GetValue(i);
     for( size_t j=0; j < rc->ReferencerCount(); j++ )  {
-      IXVarReferencer* vr = rc->GetReferencer(j);
-      for( size_t k=0; k < vr->VarCount(); k++ )
-        vr->SetVarRef(k, NULL);
+      IXVarReferencer& vr = rc->GetReferencer(j);
+      for( size_t k=0; k < vr.VarCount(); k++ )
+        vr.SetVarRef(k, NULL);
     }
   }
 }
@@ -197,7 +200,10 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   }
 
   for( size_t i=0; i < rm.SfacData.Count(); i++ )
-    SfacData(rm.SfacData.GetKey(i), new XScatterer( *rm.SfacData.GetValue(i)) );
+    SfacData(rm.SfacData.GetKey(i), new XScatterer(*rm.SfacData.GetValue(i)));
+  for( size_t i=0; i < rm.DispData.Count(); i++ )
+    DispData(rm.DispData.GetKey(i), new XDispersion(*rm.DispData.GetValue(i)));
+  UserContent = rm.UserContent;
   // check if all EQIV are used
   for( size_t i=0; i < UsedSymm.Count(); i++ )  {
     if( UsedSymm.GetValue(i).GetId() == 0 )
@@ -207,11 +213,47 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   return *this;
 }
 //....................................................................................................
-void RefinementModel::AddNewSfac(const olxstr& label,
+olxstr RefinementModel::GetBASFStr() const {
+  olxstr rv;
+  for( size_t i=0; i < BASF.Count(); i++ )  {
+    rv << Vars.GetParam(*this, (short)i);
+    if( (i+1) < BASF.Count() )
+      rv << ' ';
+  }
+  return rv;
+}
+//....................................................................................................
+olxstr RefinementModel::GetTWINStr() const {
+  olxstr rv;
+  for( size_t i=0; i < 9; i++ )  {
+    if( TWIN_mat[i/3][i%3] == 0 )
+      rv << "0 ";
+    else
+      rv << TWIN_mat[i/3][i%3] << ' ';
+  }
+  return rv << TWIN_n;
+}
+//....................................................................................................
+void RefinementModel::SetIterations(int v)  {  
+  if( LS.IsEmpty() ) 
+    LS.Add(v);
+  else
+    LS[0] = v;  
+}
+//....................................................................................................
+void RefinementModel::SetPlan(int v)  {  
+  if( PLAN.IsEmpty() )  
+    PLAN.Add(v);
+  else
+    PLAN[0] = v;  
+}
+//....................................................................................................
+void RefinementModel::AddNewSfac(const olxstr& _label,
                   double a1, double a2, double a3, double a4,
                   double b1, double b2, double b3, double b4,
-                  double c, double fp, double fdp, double mu, double r, double wt)  {
-  olxstr lb(label.CharAt(0) == '$' ? label.SubStringFrom(1) : label);
+                  double c, double fp, double fdp, double mu, double r, double wt)
+{
+  const olxstr lb(_label.CharAt(0) == '$' ? _label.SubStringFrom(1) : _label);
   cm_Element* src = XElementLib::FindBySymbolEx(lb);
   XScatterer* sc;
   if( src != NULL )
@@ -221,10 +263,28 @@ void RefinementModel::AddNewSfac(const olxstr& label,
   sc->SetLabel(lb);
   sc->SetGaussians(a1, a2, a3, a4, b1, b2, b3, b4, c);
   sc->SetAdsorptionCoefficient(mu);
-  sc->SetBondingR(r);
+  sc->SetR(r);
   sc->SetWeight(wt);
-  sc->SetFpFdp( compd(fp, fdp) );
-  SfacData.Add(label, sc);
+  sc->SetFpFdp(compd(fp, fdp));
+  size_t i = SfacData.IndexOf(lb);
+  if( i != InvalidIndex )  {
+    delete SfacData.GetValue(i);
+    SfacData.GetEntry(i).val = sc;
+  }
+  else
+    SfacData.Add(lb, sc);
+}
+//....................................................................................................
+void RefinementModel::AddDisp(const olxstr& _label, double fp, double fdp, double mu)  {
+  olxstr lb(_label.CharAt(0) == '$' ? _label.SubStringFrom(1) : _label);
+  XDispersion* xd = new XDispersion(lb, fp, fdp, mu);
+  size_t i = DispData.IndexOf(lb);
+  if( i != InvalidIndex )  {
+    delete DispData.GetValue(i);
+    DispData.GetEntry(i).val = xd;
+  }
+  else
+    DispData.Add(lb, xd);
 }
 //....................................................................................................
 InfoTab& RefinementModel::AddHTAB() {

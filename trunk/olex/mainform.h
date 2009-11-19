@@ -517,7 +517,6 @@ private:
   DefFunc(SGList)
 
   DefFunc(ChooseElement)
-  DefFunc(SfacList)
   DefFunc(StrDir)
   DefFunc(ChooseFont)
   DefFunc(GetFont)

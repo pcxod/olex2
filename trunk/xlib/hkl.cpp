@@ -105,7 +105,6 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
       ins->Clear();
       ins->SetTitle( TEFile::ChangeFileExt(TEFile::ExtractFileName(FN), EmptyString) << " imported from HKL file" );
       bool cell_found = false, sfac_found = false;
-      ins->SetSfac(EmptyString);
       for( size_t j=i; j < SL.Count(); j++ )  {
         olxstr line = SL[j].Trim(' ');
         if( line.IsEmpty() )  continue;
@@ -125,14 +124,14 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
         }
         else if( line.StartFromi("SFAC") )  {
           Toks.Strtok(line, ' ');  // do the validation
-          olxstr unit;
+          TStrList unit;
           for( size_t k=1; k < Toks.Count(); k++ )  {
-            if( !ins->GetAsymmUnit().GetAtomsInfo()->IsAtom(Toks[k]) )
+            if( !TAtomsInfo::GetInstance().IsAtom(Toks[k]) )
               throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid element ") << Toks[k]);
-            unit << "1 ";
+            unit.Add('1');
           }
-          ins->SetSfac( line.SubStringFrom(5) );
-          ins->SetUnit( unit );
+          ins->GetRM().SetUserContentType(Toks.SubListFrom(1));
+          ins->GetRM().SetUserContentSize(unit);
           sfac_found = true;
         }
         else if( line.StartFromi("TEMP") )
@@ -142,7 +141,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
         else if( line.StartFromi("REM") )
           ins->AddIns(line, ins->GetRM());
         else if( line.StartFromi("UNIT") )
-          ins->SetUnit( line.SubStringFrom(5) );
+          ins->GetRM().SetUserContentSize(TStrList(line.SubStringFrom(5), ' '));
       }
       if( !cell_found || !sfac_found )
         throw TFunctionFailedException(__OlxSourceInfo, "could no locate valid CELL/SFAC instructions");
@@ -152,7 +151,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
 		}
   }
   for( size_t i=0; i < Refs.Count(); i++ )
-    Refs[i]->SetTag( (i+1) * olx_sign(Refs[i]->GetTag()));
+    Refs[i]->SetTag((i+1) * olx_sign(Refs[i]->GetTag()));
 
   if( Refs.IsEmpty() )
     throw TFunctionFailedException(__OlxSourceInfo, "no reflections found");

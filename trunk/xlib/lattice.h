@@ -106,7 +106,7 @@ public:
     return N1->NodeCount() < N->NodeCount() ? -1 : (N1->NodeCount() > N->NodeCount() ? -1 : 0);
   }
   inline size_t FragmentCount() const {  return Fragments.Count(); }
-  inline TNetwork& GetFragment(size_t i) const {  return *Fragments[i];  }
+  inline TNetwork& GetFragment(size_t i) const {  return olx_is_valid_index(i) ? *Fragments[i] : *Network;  }
 
   inline size_t MatrixCount() const {  return Matrices.Count();  }
   const smatd& GetMatrix(size_t i) const {  return *Matrices[i];  }

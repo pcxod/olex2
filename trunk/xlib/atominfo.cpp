@@ -2017,7 +2017,7 @@ void TAtomsInfo::ParseSimpleElementStr(const olxstr& str, TStrList& toks)  const
   }
 }
 //..............................................................................
-void TAtomsInfo::ParseElementString(const olxstr& su, TTypeList<AnAssociation2<olxstr, int> >& res) const {
+void TAtomsInfo::ParseElementString(const olxstr& su, ContentList& res) const {
   olxstr elm, cnt;
   bool nowCnt = false;
   TStrList toks;
@@ -2029,10 +2029,10 @@ void TAtomsInfo::ParseElementString(const olxstr& su, TTypeList<AnAssociation2<o
       else  {
         if( !elm.IsEmpty() && !cnt.IsEmpty() )  {
           toks.Clear();
-          ParseSimpleElementStr( elm, toks );
+          ParseSimpleElementStr(elm, toks);
           for( size_t i=0; i < toks.Count()-1; i++ )
             ExpandShortcut(toks[i], res);
-          ExpandShortcut(toks[toks.Count() -1], res, olx_round(cnt.ToDouble()));
+          ExpandShortcut(toks[toks.Count() -1], res, cnt.ToDouble());
           cnt = EmptyString;
         }
         nowCnt = false;
@@ -2050,15 +2050,15 @@ void TAtomsInfo::ParseElementString(const olxstr& su, TTypeList<AnAssociation2<o
   }
   if( !elm.IsEmpty() )  {
     toks.Clear();
-    ParseSimpleElementStr( elm, toks );
+    ParseSimpleElementStr(elm, toks);
     for( size_t i=0; i < toks.Count()-1; i++ )
       ExpandShortcut(toks[i], res);
-    ExpandShortcut(toks[toks.Count() -1], res, cnt.IsEmpty() ? 1 : olx_round(cnt.ToDouble()));
+    ExpandShortcut(toks[toks.Count() -1], res, cnt.IsEmpty() ? 1 : cnt.ToDouble());
   }
 }
 //..............................................................................
 olxstr& TAtomsInfo::NormaliseAtomString(olxstr& str) const {
-  TTypeList<AnAssociation2<olxstr, int> > res;
+  ContentList res;
   ParseElementString(str, res);
   str = EmptyString;
   for( size_t i=0; i < res.Count(); i++ )  {

@@ -31,12 +31,12 @@ struct XVarReference {
 protected:
   size_t Id;
 public:
-  IXVarReferencer* referencer;
+  IXVarReferencer& referencer;
   short var_index;  // one of the var_name
   short relation_type; // relationAsVar or relation_AsOneMinusVar
   double coefficient; // like 0.25 in 20.25
   XVar& Parent;
-  XVarReference(XVar& parent, IXVarReferencer* r, short _var_index, 
+  XVarReference(XVar& parent, IXVarReferencer& r, short _var_index, 
     short _relation_type, double coeff=1.0) : 
     Parent(parent),
     referencer(r), 
@@ -45,7 +45,7 @@ public:
     coefficient(coeff) { }
   DefPropP(size_t, Id)
   // returns the value of the atom parameter associated with this reference
-  double GetActualValue() const {  return referencer->GetValue(var_index);  }
+  double GetActualValue() const {  return referencer.GetValue(var_index);  }
   void ToDataItem(TDataItem& item) const;
 #ifndef _NO_PYTHON
   PyObject* PyExport(TPtrList<PyObject>& referrers);

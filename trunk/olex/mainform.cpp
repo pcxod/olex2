@@ -1003,7 +1003,6 @@ separated values of Atom Type and radius, an entry a line");
   this_InitFunc(SGList, fpNone);
 
   this_InitFunc(ChooseElement, fpNone);
-  this_InitFunc(SfacList, fpNone|psCheckFileTypeIns);
 
   this_InitFuncD(StrDir, fpNone|psFileLoaded, "Returns location of the folder, where\
   Olex2 stores structure related data");

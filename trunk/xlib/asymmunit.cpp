@@ -41,7 +41,6 @@ const olxstr TAsymmUnit::IdName("catom");
 // TAsymmetricUnit function bodies
 //----------------------------------------------------------------------------//
 TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*(new TResidue(*this, 0)))  {
-  AtomsInfo = &TAtomsInfo::GetInstance();
   Lattice   = L;
   Latt = -1;
   Assigning = false;
@@ -616,7 +615,7 @@ olxstr TAsymmUnit::ValidateLabel(const olxstr &Label) const  {
 }
 //..............................................................................
 size_t TAsymmUnit::CountElements(const olxstr &Symbol) const  {
-  TBasicAtomInfo *BAI = GetAtomsInfo()->FindAtomInfoBySymbol(Symbol);
+  TBasicAtomInfo *BAI = TAtomsInfo::GetInstance().FindAtomInfoBySymbol(Symbol);
   if( BAI == NULL )
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("unknown atom: '") << Symbol << '\'');
   int cnt = 0;
@@ -652,10 +651,6 @@ void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg)  {
   Matrices.Clear();
   for( size_t i=0; i < sg.MatrixCount(); i++ )
     Matrices.AddCCopy( sg.GetMatrix(i) );
-}
-//..............................................................................
-void TAsymmUnit::OnCAtomCrdChange( TCAtom* ca, const smatd& matr )  {
-  throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
 double TAsymmUnit::CalcCellVolume()  const  {
@@ -900,7 +895,7 @@ void TAsymmUnit::LibSetAtomLabel(const TStrObjList& Params, TMacroError& E)  {
     int inc = Params[1].ToInt();
     int v = GetAtom(index).GetAtomInfo().GetIndex() + inc;
     if( v >= 0 && v <= iQPeakIndex )  {
-      newLabel << GetAtomsInfo()->GetAtomInfo(v).GetSymbol()
+      newLabel << TAtomsInfo::GetInstance().GetAtomInfo(v).GetSymbol()
                << GetAtom(index).Label().SubStringFrom(
                     GetAtom(index).GetAtomInfo().GetSymbol().Length() );
     }
@@ -923,7 +918,7 @@ void TAsymmUnit::LibGetAtomLabel(const TStrObjList& Params, TMacroError& E)  {
     int inc = Params[1].ToInt();
     int v = GetAtom(index).GetAtomInfo().GetIndex() + inc;
     if( v >= 0 && v <= iQPeakIndex )  {
-      E.SetRetVal( GetAtomsInfo()->GetAtomInfo(v).GetSymbol() );
+      E.SetRetVal(TAtomsInfo::GetInstance().GetAtomInfo(v).GetSymbol());
       return;
     }
   }
@@ -1027,7 +1022,7 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
   TCAtom& ca = this->NewAtom();
   if( QPeakIndex != InvalidIndex )  {
     ca.Label() = qLabel << olxstr(QPeakIndex);
-    ca.SetAtomInfo( AtomsInfo->GetAtomInfo(iQPeakIndex) );
+    ca.SetAtomInfo(TAtomsInfo::GetInstance().GetAtomInfo(iQPeakIndex));
     ca.SetQPeak( qPeak );
     GetRefMod()->Vars.SetParam(ca, catom_var_name_Sof, 11.0);
     GetRefMod()->Vars.SetParam(ca, catom_var_name_Uiso, 0.5);
@@ -1035,13 +1030,13 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
       GetRefMod()->Vars.SetParam(ca, catom_var_name_X+i, crd[i]);
   }
   else
-    ca.SetLabel( Params[0] );
+    ca.SetLabel(Params[0]);
   E.SetRetVal( AtomCount() -1 );
-  ca.AssignEllp( NULL );
+  ca.AssignEllp(NULL);
 }
 //..............................................................................
 void TAsymmUnit::LibGetZ(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( Z );
+  E.SetRetVal(Z);
 }
 //..............................................................................
 void TAsymmUnit::LibSetZ(const TStrObjList& Params, TMacroError& E)  {
@@ -1050,7 +1045,7 @@ void TAsymmUnit::LibSetZ(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( 1 );
+  E.SetRetVal(1);
 }
 //..............................................................................
 void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
@@ -1060,8 +1055,7 @@ void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 
-TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name) {
-
+TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("au") : name );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibNewAtom, "NewAtom", fpFour,
 "Adds a new atom to the asymmetric unit and return its ID, by which it can be reffered.\

@@ -89,6 +89,7 @@ public:
   olxstr StrRepr() const;
 };
 typedef TPtrList<TBasicAtomInfo> TBAIPList;
+typedef TTypeList<AnAssociation2<olxstr, double> > ContentList;
 //---------------------------------------------------------------------------
 class TAtomsInfo: public IEObject  {
 private:
@@ -122,8 +123,8 @@ public:
       c.Equalsi("Et") || c.Equalsi("Bu") || 
       c.Equalsi("Py") || c.Equalsi("Tf");  
   }
-  static void ExpandShortcut(const olxstr& sh, TTypeList<AnAssociation2<olxstr, int> >& res, int cnt=1)  {
-    TTypeList<AnAssociation2<olxstr, int> > shc;
+  static void ExpandShortcut(const olxstr& sh, ContentList& res, double cnt=1.0)  {
+    TTypeList<AnAssociation2<olxstr, double> > shc;
     if( sh.Equalsi("Ph") )  {
       shc.AddNew("C", 6);
       shc.AddNew("H", 5);
@@ -169,13 +170,13 @@ public:
         }
       }
       if( !found )
-        res.AddCCopy( shc[i] );
+        res.AddCCopy(shc[i]);
     }
   }
   /* parses a string like C37H41P2BRhClO into a list of element names and theur
     count
   */
-  void ParseElementString(const olxstr& su, TTypeList<AnAssociation2<olxstr, int> >& res) const;
+  void ParseElementString(const olxstr& su, ContentList& res) const;
   inline static TAtomsInfo& GetInstance() {
     if( Instance == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "object is not initialised");

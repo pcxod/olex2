@@ -1,7 +1,5 @@
-//---------------------------------------------------------------------------//
-#ifndef xfilesH
-#define xfilesH
-
+#ifndef __olx_xl_xfiles_H
+#define __olx_xl_xfiles_H
 #include "xbase.h"
 #include "symmlib.h"
 
@@ -64,14 +62,14 @@ public:
   TActionQueue* OnFileLoad, *OnFileSave;
 
   inline const TLattice& GetLattice() const {  return Lattice;  }
-  inline TLattice& GetLattice()             {  return Lattice;  }
-  inline TUnitCell& GetUnitCell()     const {  return Lattice.GetUnitCell(); }
-  const RefinementModel& GetRM()   const {  return RefMod;  }
-  RefinementModel& GetRM()               {  return RefMod;  }
-  inline TAsymmUnit& GetAsymmUnit()          const {  return Lattice.GetAsymmUnit(); }
+  inline TLattice& GetLattice()  {  return Lattice;  }
+  inline TUnitCell& GetUnitCell() const {  return Lattice.GetUnitCell(); }
+  const RefinementModel& GetRM() const {  return RefMod;  }
+  RefinementModel& GetRM()  {  return RefMod;  }
+  inline TAsymmUnit& GetAsymmUnit() const {  return Lattice.GetAsymmUnit(); }
   /* a propper pointer, created with new should be passed
    the object will be deleted in the destructor !! */
-  void RegisterFileFormat(TBasicCFile *F, const olxstr &Ext);
+  void RegisterFileFormat(TBasicCFile* F, const olxstr& Ext);
 
   virtual IEObject* Replicate() const;
   /* the space group is initialised upon file loading
@@ -86,25 +84,25 @@ public:
   TBasicCFile* FindFormat(const olxstr& Ext);
   // returns a reference to the last loader (type safe)
   template <class LoaderClass>
-  inline LoaderClass& GetLastLoader()        const {  
+  inline LoaderClass& GetLastLoader() const {  
     if( FLastLoader == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "no last loader");
     if( !EsdlInstanceOf(*FLastLoader, LoaderClass) )
       throw TInvalidArgumentException(__OlxSourceInfo, "wrong last loader type");
     return *(LoaderClass*)FLastLoader; 
   }
-  inline void SetLastLoader(TBasicCFile* ll)       {  FLastLoader = ll; }
+  inline void SetLastLoader(TBasicCFile* ll)  {  FLastLoader = ll; }
   // returns true if a file is loaded
-  inline bool HasLastLoader()                const {  return FLastLoader != NULL; }
+  inline bool HasLastLoader() const {  return FLastLoader != NULL; }
   // returns lat loader object to access properties of the base class if type is not required
-  TBasicCFile* LastLoader()                  const {  return FLastLoader;  }
+  TBasicCFile* LastLoader() const {  return FLastLoader;  }
   void UpdateAsymmUnit();
   /* Generic sort procedure, taking string instructions...
     instructions: Mw, Label, Label1, moiety size, weight, heaviest 
   */
   void Sort(const TStrList& instructions);
-  void LoadFromFile(const olxstr & FN);
-  void SaveToFile(const olxstr & FN, bool Sort);
+  void LoadFromFile(const olxstr& FN);
+  void SaveToFile(const olxstr& FN, bool Sort);
   // return 
   inline const olxstr& GetFileName() const {  return FLastLoader != NULL ? FLastLoader->GetFileName() : EmptyString; }
 

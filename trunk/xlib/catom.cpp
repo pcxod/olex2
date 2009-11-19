@@ -68,17 +68,17 @@ bool TCAtom::SetLabel(const olxstr &L)  {
   if( L.Length() >= 2 )  {
     Tmp = L.SubString(0, 2);
     if( AI.IsElement(Tmp) )
-      BAI = AI.FindAtomInfoBySymbol( Tmp );
+      BAI = AI.FindAtomInfoBySymbol(Tmp);
     else  {
       Tmp = L.SubString(0, 1);
       if( AI.IsElement(Tmp) )
-        BAI = AI.FindAtomInfoBySymbol( Tmp );
+        BAI = AI.FindAtomInfoBySymbol(Tmp);
     }
   }
   else  {
     Tmp = L.SubString(0, 1);
     if( AI.IsElement(Tmp) )
-      BAI = AI.FindAtomInfoBySymbol( Tmp );
+      BAI = AI.FindAtomInfoBySymbol(Tmp);
   }
   if( BAI == NULL )
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: '") << L << '\'' );
@@ -176,6 +176,7 @@ void TCAtom::ToDataItem(TDataItem& item) const  {
   item.AddField("type", FAtomInfo->GetSymbol() );
   item.AddField("part", (int)Part);
   item.AddField("sof", Occu);
+  item.AddField("flags", Flags);
   item.AddField("x", TEValue<double>(Center[0], Esd[0]).ToString());
   item.AddField("y", TEValue<double>(Center[1], Esd[1]).ToString());
   item.AddField("z", TEValue<double>(Center[2], Esd[2]).ToString());
@@ -230,6 +231,7 @@ void TCAtom::FromDataItem(TDataItem& item)  {
   FLabel = item.GetRequiredField("label");
   Part = item.GetRequiredField("part").ToInt();
   Occu = item.GetRequiredField("sof").ToDouble();
+  Flags = item.GetRequiredField("flags").ToInt();
   TEValue<double> ev;
   ev = item.GetRequiredField("x");
   Center[0] = ev.GetV();  Esd[0] = ev.GetE();
@@ -391,7 +393,7 @@ olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm, const olxstr& resiName) co
   return name;
 }
 //..............................................................................
-IXVarReferencerContainer& TCAtom::GetParentContainer()  {  return *FParent;  }
+IXVarReferencerContainer& TCAtom::GetParentContainer() const {  return *FParent;  }
 //..............................................................................
 double TCAtom::GetValue(size_t var_index) const {
   switch( var_index)  {

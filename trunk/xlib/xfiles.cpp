@@ -3,10 +3,6 @@
 // TXFile - format independent crsytallographic file
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "xfiles.h"
 #include "efile.h"
 #include "xapp.h"
@@ -403,26 +399,6 @@ void TXFile::FromDataItem(TDataItem& item) {
 //..............................................................................
 //..............................................................................
 void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
-  if( FLastLoader == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "no file is loaded");
-    E.SetRetVal( E.GetInfo() );
-    return;
-  }
-  olxstr as, us;
-  if( EsdlInstanceOf( *FLastLoader, TIns) )  {
-    TIns* ins = (TIns*)FLastLoader;
-    as = ins->GetSfac();
-    us = ins->GetUnit();
-  }
-  else if( EsdlInstanceOf( *FLastLoader, TCRSFile) )  {
-    TCRSFile* crs = (TCRSFile*)FLastLoader;
-    as = crs->GetSfac();
-    us = crs->GetUnit();
-  }
-  else  {
-    TStrPObjList<olxstr,TBasicAtomInfo*> sl;
-    GetAsymmUnit().SummFormula(sl, as, us, false);
-  }
   bool list = false, html = false;
   int digits = -1;
   if( Params.Count() > 0 )  {
@@ -434,19 +410,15 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
   if( Params.Count() == 2 )
     digits = Params[1].ToInt();
 
-  TCStrList atoms(as, ' '),
-           units(us, ' ');
-  olxstr rv, tmp;
-  size_t len = olx_min(atoms.Count(), units.Count());
-  for( size_t i=0; i < len; i++) {
-    rv << atoms[i].SubStringTo(1).UpperCase();
-    rv << atoms[i].SubStringFrom(1).LowerCase();
-    if( list )
-      rv << ':';
-
+  const ContentList& content = GetRM().GetUserContent();
+  olxstr rv;
+  for( size_t i=0; i < content.Count(); i++) {
+    rv << content[i].GetA().SubStringTo(1).UpperCase();
+    rv << content[i].GetA().SubStringFrom(1).LowerCase();
+    if( list )  rv << ':';
     bool subAdded = false;
-    double dv = units[i].ToDouble()/GetAsymmUnit().GetZ();
-    tmp = (digits > 0) ? olxstr::FormatFloat(digits, dv) : olxstr(dv);
+    const double dv = content[i].GetB()/GetAsymmUnit().GetZ();
+    olxstr tmp = (digits > 0) ? olxstr::FormatFloat(digits, dv) : olxstr(dv);
     if( tmp.IndexOf('.') != InvalidIndex )
       tmp.TrimFloat();
     if( html )  {
@@ -458,7 +430,7 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
     else
       rv << tmp;
 
-    if( (i+1) < len )  {
+    if( (i+1) <  content.Count() )  {
       if( list )
         rv << ',';
       else
@@ -474,61 +446,30 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
         rv << "</sub>";
 
   }
-  E.SetRetVal( rv );
+  E.SetRetVal(rv);
 }
 //..............................................................................
 void TXFile::LibSetFormula(const TStrObjList& Params, TMacroError& E) {
-  if( FLastLoader == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "no file is loaded");
-    E.SetRetVal( E.GetInfo() );
-    return;
-  }
-  if( !EsdlInstanceOf( *FLastLoader, TIns) )  {
-    E.ProcessingError(__OlxSrcInfo, "operation only valid for ins files");
-    E.SetRetVal( E.GetInfo() );
-    return;
-  }
-  TIns* ins = (TIns*)FLastLoader;
-  olxstr Sfac, Unit;
   TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
-  if( Params[0].IndexOf(':') == InvalidIndex )  {
-    TTypeList<AnAssociation2<olxstr, int> > res;
-    AtomsInfo.ParseElementString( Params[0], res);
-    if( res.IsEmpty() )  {
-      E.ProcessingError(__OlxSrcInfo, "empty formula is not allowed" );
-      return;
-    }
-    for( size_t i=0; i < res.Count(); i++ )  {
-      Sfac << res[i].GetA();
-      Unit << res[i].GetB()*GetAsymmUnit().GetZ();
-      if( (i+1) < res.Count() )  {
-        Sfac << ' ';
-        Unit << ' ';
-      }
-    }
-  }
+  if( Params[0].IndexOf(':') == InvalidIndex )
+    GetRM().SetUserFormula(Params[0]);
   else  {
-    TCStrList toks(Params[0], ',');
+    ContentList content;
+    TStrList toks(Params[0], ',');
     for( size_t i=0; i < toks.Count(); i++ )  {
       size_t ind = toks[i].FirstIndexOf(':');
       if( ind == InvalidIndex )  {
         E.ProcessingError(__OlxSrcInfo, "invalid formula syntax" );
         return;
       }
-      Sfac << toks[i].SubStringTo(ind);
-      Unit << toks[i].SubStringFrom(ind+1).ToDouble()*GetAsymmUnit().GetZ();
-      if( (i+1) < toks.Count() )  {
-        Sfac << ' ';
-        Unit << ' ';
-      }
+      content.AddNew(toks[i].SubStringTo(ind), toks[i].SubStringFrom(ind+1).ToDouble()*GetAsymmUnit().GetZ());
     }
-    if( !Sfac.Length() )  {
+    if( content.IsEmpty() )  {
       E.ProcessingError(__OlxSrcInfo, "empty SFAC - check formula syntax");
       return;
     }
+    GetRM().SetUserContent(content);
   }
-  ins->SetSfac( Sfac );
-  ins->SetUnit( Unit );
 }
 //..............................................................................
 void TXFile::LibEndUpdate(const TStrObjList& Params, TMacroError& E)  {
@@ -544,31 +485,30 @@ void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroError& E)  {
   ins.GetRM().SetRefinementMethod("L.S.");
   ins.GetRM().SetIterations(4);
   ins.GetRM().SetPlan(20);
-  ins.SetSfac( oins->GetSfac());
-  ins.SetUnit( oins->GetUnit() );
-  ins.SaveToFile( Params[0] );
+  ins.GetRM().SetUserContent(oins->GetRM().GetUserContent());
+  ins.SaveToFile(Params[0]);
 }
 //..............................................................................
 TLibrary*  TXFile::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xf") : name );
   lib->RegisterFunction<TXFile>(
-    new TFunction<TXFile>(this,  &TXFile::LibGetFormula, "GetFormula", fpNone|fpOne|fpTwo,
+    new TFunction<TXFile>(this,  &TXFile::LibGetFormula, "GetFormula", fpNone|fpOne|fpTwo|psCheckFileTypeIns,
 "Returns a string for content of the asymmetric unit. Takes single or none parameters.\
  If parameter equals 'html' and html formatted string is returned, for 'list' parameter\
  a string like 'C:26,N:45' is returned. If no parameter is specified, just formula is returned") );
 
-  lib->RegisterFunction<TXFile>( new TFunction<TXFile>(this,  &TXFile::LibSetFormula, "SetFormula", fpOne,
+  lib->RegisterFunction<TXFile>( new TFunction<TXFile>(this,  &TXFile::LibSetFormula, "SetFormula", fpOne|psCheckFileTypeIns,
 "Sets formula for current file, takes a string of the following form 'C:25,N:4'") );
 
-  lib->RegisterFunction<TXFile>( new TFunction<TXFile>(this,  &TXFile::LibEndUpdate, "EndUpdate", fpNone,
+  lib->RegisterFunction<TXFile>( new TFunction<TXFile>(this,  &TXFile::LibEndUpdate, "EndUpdate", fpNone|psCheckFileTypeIns,
 "Must be called after the content of the asymmetric unit has changed - this function will\
  update the program state") );
   lib->RegisterFunction<TXFile>( new TFunction<TXFile>(this,  &TXFile::LibSaveSolution, "SaveSolution", fpOne|psCheckFileTypeIns,
 "Saves current Q-peak model to provided file (res-file)") );
-  lib->AttachLibrary( Lattice.GetAsymmUnit().ExportLibrary() );
-  lib->AttachLibrary( Lattice.GetUnitCell().ExportLibrary() );
-  lib->AttachLibrary( Lattice.ExportLibrary() );
-  lib->AttachLibrary( RefMod.expl.ExportLibrary() );
+  lib->AttachLibrary(Lattice.GetAsymmUnit().ExportLibrary());
+  lib->AttachLibrary(Lattice.GetUnitCell().ExportLibrary());
+  lib->AttachLibrary(Lattice.ExportLibrary());
+  lib->AttachLibrary(RefMod.expl.ExportLibrary());
   return lib;
 }
 //..............................................................................

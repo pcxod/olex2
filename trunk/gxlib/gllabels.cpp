@@ -77,7 +77,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     if( Mode & lmPart )  {
       if( ca.GetPart() != 0)  {
         if( Tmp.Length() )  Tmp << ", ";
-        Tmp << ca.GetPart();
+        Tmp << (int)ca.GetPart();
       }
     }
     if( Mode & lmAfix )  {

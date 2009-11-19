@@ -574,7 +574,7 @@ public:
     TIns *Ins = (TIns*)XApp.XFile().FindFormat("ins");
     if( XApp.CheckFileType<TP4PFile>() )  {
       if( newSg.IsEmpty() )  {
-        E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch" );
+        E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch");
         return;
       }
       Ins->Adopt( &XApp.XFile() );
@@ -583,7 +583,7 @@ public:
       TSpaceGroup* sg = XApp.XFile().GetLastLoader<TCRSFile>().GetSG();
       if( newSg.IsEmpty() )  {
         if( sg == NULL )  {
-          E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch" );
+          E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch");
           return;
         }
         else 
@@ -591,18 +591,19 @@ public:
       }
       Ins->Adopt( &XApp.XFile() );
     }
-    if( !content.IsEmpty() )  Ins->SetSfacUnit( content );
-    if( Ins->GetSfac().IsEmpty() )  {
-      E.ProcessingError(__OlxSrcInfo, "empty SFAC instruction, please use -c=Content to specify" );
+    if( !content.IsEmpty() )
+      Ins->GetRM().SetUserFormula(content);
+    if( Ins->GetRM().GetUserContent().IsEmpty() )  {
+      E.ProcessingError(__OlxSrcInfo, "empty SFAC instruction, please use -c=Content to specify");
       return;
     }
     if( !newSg.IsEmpty() )  {
-      TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup( newSg );
+      TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup(newSg);
       if( sg == NULL )  {
         E.ProcessingError(__OlxSrcInfo, "could not find space group: ") << newSg;
         return;
       }
-      Ins->GetAsymmUnit().ChangeSpaceGroup( *sg );
+      Ins->GetAsymmUnit().ChangeSpaceGroup(*sg);
       newSg = EmptyString;
       newSg <<  " reset to " << sg->GetName() << " #" << sg->GetNumber();
       olxstr titl( TEFile::ChangeFileExt(TEFile::ExtractFileName(XApp.XFile().GetFileName()), EmptyString) );

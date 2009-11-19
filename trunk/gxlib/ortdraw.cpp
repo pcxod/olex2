@@ -195,7 +195,7 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   mat3f rot_mat;
   vec3f touch_point = (atom_b.atom.Atom().crd() - atom_a.atom.Atom().crd()).Normalise();
   vec3f rot_vec(-touch_point[1], touch_point[0], 0);
-  CreateRotationMatrix(rot_mat, rot_vec.Normalise(), touch_point[2]);
+  CreateRotationMatrixEx<float,mat3f,vec3f>(rot_mat, rot_vec.Normalise(), touch_point[2]);
   mat3f proj_mat = rot_mat*parent.ProjMatr;
   if( !atom_a.IsSpherical() && atom_a.IsSolid() )  {
     const mat3f& ielpm = *atom_a.p_ielpm;
