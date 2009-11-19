@@ -2347,24 +2347,24 @@ void TMainForm::macShowH(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     if( Cmds[0] == "a" )  {
       if( v && !FXApp->HydrogensVisible() )  {
         TStateChange sc(prsHVis, true);
-        FXApp->HydrogensVisible( true );
+        FXApp->HydrogensVisible(true);
         OnStateChange->Execute((AEventsDispatcher*)this, &sc);
       }
       else if( !v && FXApp->HydrogensVisible() )  {
         TStateChange sc(prsHVis, false);
-        FXApp->HydrogensVisible( false );
+        FXApp->HydrogensVisible(false);
         OnStateChange->Execute((AEventsDispatcher*)this, &sc);
       }
     }
     else if( Cmds[0] == "b" )  {
       if( v && !FXApp->HBondsVisible() )  {
         TStateChange sc(prsHBVis, true);
-        FXApp->HBondsVisible( true );
+        FXApp->HBondsVisible(true);
         OnStateChange->Execute((AEventsDispatcher*)this, &sc);
       }
       else if( !v && FXApp->HBondsVisible() )  {
         TStateChange sc(prsHBVis, false);
-        FXApp->HBondsVisible( false );
+        FXApp->HBondsVisible(false);
         OnStateChange->Execute((AEventsDispatcher*)this, &sc);
       }
     }
@@ -2372,18 +2372,18 @@ void TMainForm::macShowH(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   else  {
     if( FXApp->HydrogensVisible() && !FXApp->HBondsVisible() )  {
       TStateChange sc(prsHBVis, true);
-      FXApp->HBondsVisible( true );
+      FXApp->HBondsVisible(true);
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
     }
     else if( FXApp->HydrogensVisible() && FXApp->HBondsVisible() )  {
       TStateChange sc(prsHBVis|prsHVis, false);
-      FXApp->HBondsVisible( false );
-      FXApp->HydrogensVisible( false );
+      FXApp->HBondsVisible(false);
+      FXApp->HydrogensVisible(false);
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
     }
     else if( !FXApp->HydrogensVisible() && !FXApp->HBondsVisible() )  {
       TStateChange sc(prsHVis, true);
-      FXApp->HydrogensVisible( true );
+      FXApp->HydrogensVisible(true);
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
     }
   }

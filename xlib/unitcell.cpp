@@ -237,7 +237,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind)  {
       }
 
       AU->CellToCartesian(v);
-      double Dis = v.Length();
+      const double Dis = v.Length();
       if( (j != 0) && (Dis < tolerance) )  {
         if( i == ind )  {
           if( Initialise )  

@@ -2848,8 +2848,12 @@ void TGXApp::HBondsVisible(bool v)  {
 void TGXApp::HydrogensVisible(bool v)  {
   if( FHydrogensVisible != v )  {
     FHydrogensVisible = v;
-    XFile().GetAsymmUnit().DetachAtomType(iHydrogenIndex, !FHydrogensVisible);
     GetRender().ClearSelection();
+    XFile().GetAsymmUnit().DetachAtomType(iHydrogenIndex, !FHydrogensVisible);
+    for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )  {
+      OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iHydrogenIndex, !FHydrogensVisible);
+      OverlayedXFiles[i].GetLattice().UpdateConnectivity();
+    }
     XFile().GetLattice().UpdateConnectivity();
     CenterView(true);
   }
@@ -2858,8 +2862,12 @@ void TGXApp::HydrogensVisible(bool v)  {
 void TGXApp::QPeaksVisible(bool v)  {
   if( FQPeaksVisible != v )  {
     FQPeaksVisible = v;
-    XFile().GetAsymmUnit().DetachAtomType(iQPeakIndex, !FQPeaksVisible);
     GetRender().ClearSelection();
+    XFile().GetAsymmUnit().DetachAtomType(iQPeakIndex, !FQPeaksVisible);
+    for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )  {
+      OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iQPeakIndex, !FQPeaksVisible);
+      OverlayedXFiles[i].GetLattice().UpdateConnectivity();
+    }
     XFile().GetLattice().UpdateConnectivity();
     CenterView(true);
   }
