@@ -579,15 +579,15 @@ struct GraphAnalyser  {
       CalcRMS();
     //alignmentMatrix.t = aCent;
     CallsCount++;
-    const TAsymmUnit& au = *dest[0].GetObject()->CAtom().GetParent();
+    const TAsymmUnit& au_a = *src[0].GetObject()->CAtom().GetParent();
+    const TAsymmUnit& au_b = *dest[0].GetObject()->CAtom().GetParent();
     double rsum = 0;
     for( size_t i=0; i < src.Count(); i++ )  {
       vec3d v = dest[i].GetObject()->ccrd();
-      if( Invert )
-        v *= -1;
-      v = bestMatrix*(au.CellToCartesian(v) - bCent);
+      if( Invert )  v *= -1;
+      v = bestMatrix*(au_b.CellToCartesian(v) - bCent);
       vec3d v1 = src[i].GetObject()->ccrd();
-      rsum += v.QDistanceTo( au.CellToCartesian(v1));
+      rsum += v.QDistanceTo(au_a.CellToCartesian(v1));
     }
     return rsum + minRms;
   }
