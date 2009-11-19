@@ -353,7 +353,8 @@ olxstr TEFile::ExtractFileExt(const olxstr& F)  {
   olxstr fn = OLX_OS_PATH(F);
   size_t i = fn.LastIndexOf('.');
   if( i > 0 && i != InvalidIndex )  {
-    if( fn.LastIndexOf(OLX_PATH_DEL) > i )
+    size_t del_ind = fn.LastIndexOf(OLX_PATH_DEL); 
+    if( del_ind != InvalidIndex && del_ind > i )
       return EmptyString;
     return fn.SubStringFrom(i+1);
   }

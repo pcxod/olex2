@@ -100,7 +100,7 @@ public:
     for( size_t i=0; i < Nodes.Count(); i++ )
       delete Nodes[i];
   }
-
+  
   inline bool IsRingNode()  const  {  return RingNode;  }
   inline void SetRIngNode()  {  RingNode = true;  }
   inline TEGraphNode& NewNode(const IC& Data, const AssociatedOC& obj )  {
@@ -126,7 +126,7 @@ public:
     if( node.Count() != Count() )  return false;
     return true;
   }
-  bool DoMatch( TEGraphNode& node )  const {
+  bool DoMatch(TEGraphNode& node)  const {
     if( node.GetData() != GetData() )  return false;
     //if( IsRingNode() )  return true;
     if( node.Count() != Count() )  return false;
@@ -202,14 +202,14 @@ public:
         return true;
       }
       for( size_t i=0; i < node_cnt; i++ )
-        node[i].SetPassed( false );
+        node[i].SetPassed(false);
       TSizeList matches(node_cnt);
       for( size_t i=0; i < node_cnt; i++ )  {
         bool Matched = false;
         for( size_t j=0; j < node_cnt; j++ )  {  // Count equals for both nodes
           if( node[j].IsPassed() )  continue;
           if( Nodes[i]->DoMatch(node[j]) )  {
-            node[j].SetPassed( true );
+            node[j].SetPassed(true);
             matches[i] = j;
             Matched = true;
             break;
@@ -241,7 +241,6 @@ public:
     const size_t perm_cnt = permutations.Count();
     size_t best_perm = 0;
     double minRms = -1;
-
 
     for( size_t i=0; i < permutations.Count(); i++ )  {
       const TSizeList& permutation = permutations[i];
@@ -309,7 +308,7 @@ public:
   //  return true;
   //}
 
-  bool IsSubgraphOf( TEGraphNode& node ) const {
+  bool IsSubgraphOf(TEGraphNode& node) const {
     if( node.GetData() != GetData() )  return false;
     if( node.Count() < Count() )  return false;
     for( size_t i=0; i < node.Count(); i++ )
