@@ -32,6 +32,7 @@ class XLibMacros  {
   static DefMacro(VoidE)
   static DefMacro(ChangeSG)
   static DefMacro(FixUnit)
+  static DefMacro(GenDisp)
   static DefMacro(LstIns)
   static DefMacro(DelIns)
   static DefMacro(AddIns)

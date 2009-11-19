@@ -108,7 +108,8 @@ olxstr TSAtom::GetGuiLabelEx() const  {
 void TSAtom::ToDataItem(TDataItem& item) const {
   item.AddField("net_id", Network->GetTag());
   // need to save it for overlayed images etc
-  item.AddField("crd", PersUtil::VecToStr(FCenter) );
+  item.AddField("crd", PersUtil::VecToStr(FCenter));
+  item.AddField("flags", Flags);
   TDataItem& nodes = item.AddItem("Nodes");
   for( size_t i=0; i < Nodes.Count(); i++ )  {
     if( Nodes[i]->IsDeleted() )  continue;
@@ -127,7 +128,7 @@ void TSAtom::ToDataItem(TDataItem& item) const {
 }
 //..............................................................................
 void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
-  Network = &parent.GetFragment( item.GetRequiredField("net_id").ToSizeT() );
+  Network = &parent.GetFragment(item.GetRequiredField("net_id").ToInt());
   const TDataItem& nodes = item.FindRequiredItem("Nodes");
   Nodes.SetCapacity( nodes.FieldCount() );
   for( size_t i=0; i < nodes.FieldCount(); i++ )
@@ -148,6 +149,7 @@ void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
   }
   FCCenter = *Matrices[0] * FCCenter;
   FCenter = PersUtil::FloatVecFromStr(item.GetRequiredField("crd"));
+  Flags = item.GetRequiredField("flags").ToInt();
   //latt.GetAsymmUnit().CellToCartesian(FCCenter, FCenter);
 }
 //..............................................................................

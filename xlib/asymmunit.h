@@ -28,7 +28,6 @@ class TAsymmUnit: public IXVarReferencerContainer, public IEObject  {
   TCAtomPList CAtoms;      // list of TCAtoms
   smatd_list  Matrices;  // list of matrices (excluding ones after centering)
   TEllpPList Ellipsoids;
-  TAtomsInfo *AtomsInfo;
   mat3d Cell2Cartesian,  // transformation from cell crd to cartesian
         Cartesian2Cell;  // transformation from cartesian crd to cell
   mat3d UcifToUxyz,  UxyzToUcif,
@@ -60,10 +59,10 @@ public:
   TAsymmUnit(TLattice *L);
   virtual ~TAsymmUnit();
 
-  inline TLattice& GetLattice()       const {  return *Lattice;  }
-  inline TEVPointD&  Axes()                 {  return FAxes;  }
-  inline TEVPointD&  Angles()               {  return FAngles;  }
-  inline const vec3d& GetRAxes()   const {  return RAxes;  }
+  inline TLattice& GetLattice() const {  return *Lattice;  }
+  inline TEVPointD&  Axes()  {  return FAxes;  }
+  inline TEVPointD&  Angles()  {  return FAngles;  }
+  inline const vec3d& GetRAxes() const {  return RAxes;  }
   inline const vec3d& GetRAngles() const {  return RAngles;  }
   double CalcCellVolume() const;
   // estimates Z=Z'*sg.multiplicity according to 18.6A rule
@@ -73,7 +72,7 @@ public:
 
   const mat3d& GetCellToCartesian() const {  return Cell2Cartesian; }
   const mat3d& GetCartesianToCell() const {  return Cartesian2Cell; }
-  const mat3d& GetHklToCartesian()  const {  return Hkl2Cartesian; }
+  const mat3d& GetHklToCartesian() const {  return Hkl2Cartesian; }
   template <class VC> inline VC& CellToCartesian(const VC& cell, VC& crt) const  {
     crt[0] = cell[0]*Cell2Cartesian[0][0] + cell[1]*Cell2Cartesian[1][0] + cell[2]*Cell2Cartesian[2][0];
     crt[1] = cell[1]*Cell2Cartesian[1][1] + cell[2]*Cell2Cartesian[2][1];
@@ -187,7 +186,6 @@ public:
   /* returns molecular weight of the asymmetric unit */
   double MolWeight() const;
   size_t CountElements(const olxstr& Symbol) const;
-  TAtomsInfo* GetAtomsInfo()  const {  return AtomsInfo; }
 
   // sorts the content of the asymmetric unit or the list if provided
   void Sort(TCAtomPList* list = NULL);
@@ -196,17 +194,11 @@ public:
   // checks of no maore than one atom has this label, if more than one - returns CheckLabel
   olxstr ValidateLabel(const olxstr &Label) const;
 
-  bool DoesContainEquivalents() const  {  return ContainsEquivalents; }
+  bool DoesContainEquivalents() const {  return ContainsEquivalents; }
   void SetContainsEquivalents(bool v)  {  ContainsEquivalents = v; }
 
-  inline double GetMaxQPeak()    const {  return MaxQPeak;  }
-  inline double GetMinQPeak()    const {  return MinQPeak;  }
-
-  /*this is to be called by TLattice when compaq or other procedurs, changing
-    coordinates of atoms are called. This is to handle restraints in a correct
-    way
-  */
-  void OnCAtomCrdChange( TCAtom* ca, const smatd& matr );
+  inline double GetMaxQPeak() const {  return MaxQPeak;  }
+  inline double GetMinQPeak() const {  return MinQPeak;  }
 
   // returns next available part istruction in atoms
   int GetNextPart() const;
@@ -217,16 +209,21 @@ public:
   
   virtual olxstr GetIdName() const {  return IdName;  }
   // note - possibly unsafe, type is not checked
-  virtual size_t GetReferencerId(const IXVarReferencer& vr) const {  
+  virtual size_t GetIdOf(const IXVarReferencer& vr) const {  
     if( !EsdlInstanceOf(vr, TCAtom) )
       throw TInvalidArgumentException(__OlxSourceInfo, "referencer");
     return ((TCAtom&)vr).GetId();
   }
+  virtual size_t GetPersistentIdOf(const IXVarReferencer& vr) const {  
+    if( !EsdlInstanceOf(vr, TCAtom) )
+      throw TInvalidArgumentException(__OlxSourceInfo, "referencer");
+    return ((TCAtom&)vr).GetTag();
+  }
   // note - possibly unsafe, range is unchecked
-  virtual IXVarReferencer* GetReferencer(size_t id) {
+  virtual IXVarReferencer& GetReferencer(size_t id) const {
     if( id >= CAtoms.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "id");
-    return CAtoms[id];
+    return *CAtoms[id];
   }
   virtual size_t ReferencerCount() const {  return CAtoms.Count();  }
 //

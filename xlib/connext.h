@@ -28,10 +28,8 @@ struct CXConnInfoBase  {
 };
 
 struct CXConnInfo : public CXConnInfoBase {
-  BondInfoList BondsToCreate, 
-    BondsToRemove;
+  BondInfoList BondsToCreate, BondsToRemove;
 };
-
 
 EndXlibNamespace()
 #endif

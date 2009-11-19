@@ -117,10 +117,11 @@ inline double SphereVol(double r)  {  return 4.*M_PI/3.0*r*r*r;  }
 //returns radius of a sphere of volume v
 inline double SphereRad(double v)   {  return pow(v*3.0/(4.0*M_PI), 1./3.);  }
 // creates a 3D rotation matrix aroung rv vector, providin cosine of the rotation angle
-template <typename MC, typename VC>
-void CreateRotationMatrix(MC& rm, const VC& rv, double ca)  {
-  const double sa = (olx_abs(ca) > 1e-15) ? sqrt(1-ca*ca) : 0;
-  const double t = 1-ca;
+
+template <typename FloatType, typename MC, typename VC>
+MC& CreateRotationMatrixEx(MC& rm, const VC& rv, double ca)  {
+  const FloatType sa = (olx_abs(ca) > 1e-15) ? sqrt(1-ca*ca) : 0;
+  const FloatType t = 1-ca;
   rm[0][0] = t*rv[0]*rv[0] + ca;
   rm[0][1] = t*rv[0]*rv[1] + sa*rv[2];
   rm[0][2] = t*rv[0]*rv[2] - sa*rv[1];
@@ -132,21 +133,32 @@ void CreateRotationMatrix(MC& rm, const VC& rv, double ca)  {
   rm[2][0] = t*rv[0]*rv[2] + sa*rv[1];
   rm[2][1] = t*rv[1]*rv[2] - sa*rv[0];
   rm[2][2] = t*rv[2]*rv[2] + ca;
+  return rm;
+}
+template <typename FloatType, typename MC, typename VC>
+MC& CreateRotationMatrixEx(MC& rm, const VC& rv, FloatType ca, FloatType sa)  {
+  const FloatType t = 1-ca;
+  rm[0][0] = t*rv[0]*rv[0] + ca;
+  rm[0][1] = t*rv[0]*rv[1] + sa*rv[2];
+  rm[0][2] = t*rv[0]*rv[2] - sa*rv[1];
+
+  rm[1][0] = t*rv[0]*rv[1] - sa*rv[2];
+  rm[1][1] = t*rv[1]*rv[1] + ca;
+  rm[1][2] = t*rv[1]*rv[2] + sa*rv[0];
+
+  rm[2][0] = t*rv[0]*rv[2] + sa*rv[1];
+  rm[2][1] = t*rv[1]*rv[2] - sa*rv[0];
+  rm[2][2] = t*rv[2]*rv[2] + ca;
+  return rm;
+}
+
+template <typename MC, typename VC>
+MC& CreateRotationMatrix(MC& rm, const VC& rv, double ca)  {
+  return CreateRotationMatrixEx<double, MC, VC>(rm, rv, ca);
 }
 template <typename MC, typename VC>
-void CreateRotationMatrix(MC& rm, const VC& rv, double ca, double sa)  {
-  const double t = 1-ca;
-  rm[0][0] = t*rv[0]*rv[0] + ca;
-  rm[0][1] = t*rv[0]*rv[1] + sa*rv[2];
-  rm[0][2] = t*rv[0]*rv[2] - sa*rv[1];
-
-  rm[1][0] = t*rv[0]*rv[1] - sa*rv[2];
-  rm[1][1] = t*rv[1]*rv[1] + ca;
-  rm[1][2] = t*rv[1]*rv[2] + sa*rv[0];
-
-  rm[2][0] = t*rv[0]*rv[2] + sa*rv[1];
-  rm[2][1] = t*rv[1]*rv[2] - sa*rv[0];
-  rm[2][2] = t*rv[2]*rv[2] + ca;
+MC& CreateRotationMatrix(MC& rm, const VC& rv, double ca, double sa)  {
+  return CreateRotationMatrixEx<double, MC, VC>(rm, rv, ca, sa);
 }
 template <class MC, class VC> MC& QuaternionToMatrix(const VC& qt, MC& matr)  {
   matr[0][0] = qt[0]*qt[0] + qt[1]*qt[1] - qt[2]*qt[2] - qt[3]*qt[3];

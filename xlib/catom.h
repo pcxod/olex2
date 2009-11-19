@@ -174,12 +174,7 @@ public:
   inline vec3d const& ccrdEsd() const {  return Esd;  }
 // IXVarReferencer implementation
   virtual size_t VarCount() const {  return 12;  }
-  virtual const XVarReference* GetVarRef(size_t i) const {  
-    if( i >= VarCount() )
-      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    return Vars[i];  
-  }
-  virtual XVarReference* GetVarRef(size_t i)  {  
+  virtual XVarReference* GetVarRef(size_t i) const {  
     if( i >= VarCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return Vars[i];  
@@ -194,7 +189,7 @@ public:
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     Vars[i] = var_ref;  
   }
-  virtual IXVarReferencerContainer& GetParentContainer();
+  virtual IXVarReferencerContainer& GetParentContainer() const;
   virtual double GetValue(size_t var_index) const;
   virtual void SetValue(size_t var_index, const double& val);
   virtual bool IsValid() const {  return !IsDeleted();  }

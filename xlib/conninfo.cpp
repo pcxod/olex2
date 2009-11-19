@@ -246,7 +246,7 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
     TypeInfo.Add( ci.TypeInfo.GetKey(i), ci.TypeInfo.GetValue(i) );
 }
 //........................................................................
-void ConnInfo::ToDataItem(TDataItem& item)  {
+void ConnInfo::ToDataItem(TDataItem& item) const {
   TDataItem& ti_item = item.AddItem("TYPE");
   for( size_t i=0; i < TypeInfo.Count(); i++ )
     TypeInfo.GetValue(i).ToDataItem(ti_item.AddItem(TypeInfo.GetValue(i).atomInfo->GetSymbol()));
@@ -255,7 +255,7 @@ void ConnInfo::ToDataItem(TDataItem& item)  {
     AtomInfo.GetValue(i).ToDataItem(ai_item.AddItem(AtomInfo.GetValue(i).atom->GetTag()));
 }
 //........................................................................
-void ConnInfo::FromDataItem(TDataItem& item)  {
+void ConnInfo::FromDataItem(const TDataItem& item)  {
   TAtomsInfo& ai = TAtomsInfo::GetInstance();
   TDataItem& ti_item = item.FindRequiredItem("TYPE");
   for( size_t i=0; i < ti_item.ItemCount(); i++ )  {
@@ -274,11 +274,11 @@ void ConnInfo::FromDataItem(TDataItem& item)  {
 //........................................................................
 //........................................................................
 //........................................................................
-void ConnInfo::TypeConnInfo::ToDataItem(TDataItem& item)  {
+void ConnInfo::TypeConnInfo::ToDataItem(TDataItem& item) const {
   item.AddField("r", r);
   item.AddField("b", maxBonds);
 }
-void ConnInfo::TypeConnInfo::FromDataItem(TDataItem& item, TBasicAtomInfo* bai)  {
+void ConnInfo::TypeConnInfo::FromDataItem(const TDataItem& item, TBasicAtomInfo* bai)  {
   atomInfo = bai;
   r = item.GetRequiredField("r").ToDouble();
   maxBonds = item.GetRequiredField("b").ToInt();
@@ -431,7 +431,7 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
       for( size_t j=0; j < ci.BondsToCreate.Count(); j++ )  {
         if( ci.BondsToCreate[j].to == a )  {
           if( ci.BondsToCreate[j].matr == NULL )
-            toCreate.AddCCopy(ci.BondsToRemove[j]);
+            toCreate.AddCCopy(ci.BondsToCreate[j]);
           else  {
             const smatd matr = ci.BondsToCreate[j].matr->Inverse();
             bool uniq = true;
@@ -454,7 +454,7 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
   }
 }
 //........................................................................
-void ConnInfo::AtomConnInfo::ToDataItem(TDataItem& item)  {
+void ConnInfo::AtomConnInfo::ToDataItem(TDataItem& item) const {
   item.AddField("r", r);
   item.AddField("b", maxBonds);
   TDataItem& ab = item.AddItem("ADDBOND");
@@ -476,7 +476,7 @@ void ConnInfo::AtomConnInfo::ToDataItem(TDataItem& item)  {
       bi.AddField("eqiv", BondsToRemove[i].matr->GetId());
   }
 }
-void ConnInfo::AtomConnInfo::FromDataItem(TDataItem& item, RefinementModel& rm, TCAtom& a)  {
+void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item, RefinementModel& rm, TCAtom& a)  {
   atom = &a;
   r = item.GetRequiredField("r").ToDouble();
   maxBonds = item.GetRequiredField("b").ToInt();

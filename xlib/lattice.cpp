@@ -881,8 +881,7 @@ void TLattice::UpdateAsymmUnit()  {
     TCAtom& ca = AsymmUnit->GetAtom(i);
     if( l.IsEmpty() )  {  // all atoms are deleted
       if( !ca.IsDeleted() )
-        ca.SetDeleted( ca.IsAvailable() );
-      //ca.SetDeleted( !ca.IsMasked() || ca.GetAtomInfo() == iQPeakIndex);
+        ca.SetDeleted(ca.IsAvailable());
       continue;
     }
     // find the original atom, or symmetry equivalent if removed
@@ -917,26 +916,24 @@ void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool Include
     L.SetCapacity( L.Count() + Template->Count() );
     for( size_t i=0; i < Template->Count(); i++ )  {
       if( (*Template)[i]->IsDeleted() )  continue;
-      TSAtom* A = new TSAtom( Network );
+      TSAtom* A = L.Add(new TSAtom(Network));
       A->CAtom( *Template->Item(i) );
-      A->SetEllipsoid( &GetUnitCell().GetEllipsoid(0, Template->Item(i)->GetId()) ); // ellipsoid for the identity matrix
-      A->AddMatrix( Matrices[0] );
-      A->SetLattId( L.Count() );
-      L.Add(A);
+      A->SetEllipsoid(&GetUnitCell().GetEllipsoid(0, Template->Item(i)->GetId())); // ellipsoid for the identity matrix
+      A->AddMatrix(Matrices[0]);
+      A->SetLattId(L.Count()-1);
     }
   }
   else  {
-    L.SetCapacity( L.Count() + GetAsymmUnit().AtomCount() );
+    L.SetCapacity(L.Count() + GetAsymmUnit().AtomCount());
     for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )    {
       TCAtom& CA = GetAsymmUnit().GetAtom(i);
       if( CA.IsDeleted() )  continue;
       if( !IncludeQ && CA.GetAtomInfo() == iQPeakIndex )  continue;
-      TSAtom* A = new TSAtom( Network );
+      TSAtom* A = L.Add(new TSAtom(Network));
       A->CAtom(CA);
-      A->SetEllipsoid( &GetUnitCell().GetEllipsoid(0, CA.GetId()) ); // ellipsoid for the identity matrix
-      A->AddMatrix( Matrices[0] );
-      A->SetLattId( L.Count() );
-      L.Add(A);
+      A->SetEllipsoid(&GetUnitCell().GetEllipsoid(0, CA.GetId())); // ellipsoid for the identity matrix
+      A->AddMatrix(Matrices[0]);
+      A->SetLattId(L.Count()-1);
     }
   }
 }
@@ -1891,19 +1888,19 @@ void TLattice::ToDataItem(TDataItem& item) const  {
   TDataItem& atoms = item.AddItem("Atoms");
   for( size_t i=0; i < Atoms.Count(); i++ )  {
     if( Atoms[i]->IsDeleted() )  continue;
-    Atoms[i]->ToDataItem( atoms.AddItem("Atom") );
+    Atoms[i]->ToDataItem(atoms.AddItem("Atom"));
   }
   // save bonds
   TDataItem& bonds = item.AddItem("Bonds");
   for( size_t i=0; i < Bonds.Count(); i++ )  {
     if( Bonds[i]->IsDeleted() )  continue;
-    Bonds[i]->ToDataItem( bonds.AddItem("Bond") );
+    Bonds[i]->ToDataItem(bonds.AddItem("Bond"));
   }
   // save fragments
   TDataItem& frags = item.AddItem("Fragments");
   for( size_t i=0; i < Fragments.Count(); i++ )  {
     //if( Fragments[i]->NodeCount() == 0 )  continue;
-    Fragments[i]->ToDataItem( frags.AddItem("Fragment") );
+    Fragments[i]->ToDataItem(frags.AddItem("Fragment"));
   }
   // restore original matrix tags 
   for( size_t i=0; i < mat_c; i++ )
@@ -1914,10 +1911,10 @@ void TLattice::ToDataItem(TDataItem& item) const  {
     if( Planes[i]->IsDeleted() ) continue;
     size_t p_ac = 0;  
     for( size_t j=0; j < Planes[i]->Count(); j++ ) 
-      if( !Planes[i]->Atom(j).IsDeleted() )
+      if( Planes[i]->Atom(j).IsAvailable() )
         p_ac++;
     if( p_ac >= 3 ) // a plane must contain at least three atoms
-      valid_planes.Add( Planes[i] );
+      valid_planes.Add(Planes[i]);
     else
       Planes[i]->SetDeleted(true);
   }
@@ -1945,15 +1942,15 @@ void TLattice::FromDataItem(TDataItem& item)  {
   const TDataItem& frags = item.FindRequiredItem("Fragments");
   Fragments.SetCapacity( frags.ItemCount() );
   for( size_t i=0; i < frags.ItemCount(); i++ )
-    Fragments.Add( new TNetwork(this, NULL) );
+    Fragments.Add(new TNetwork(this, NULL));
   // precreate bonds
   const TDataItem& bonds = item.FindRequiredItem("Bonds");
   Bonds.SetCapacity(bonds.ItemCount());
   for( size_t i=0; i < bonds.ItemCount(); i++ )
-    Bonds.Add( new TSBond(NULL) )->SetLattId(i);
+    Bonds.Add(new TSBond(NULL))->SetLattId(i);
   // precreate and load atoms
   const TDataItem& atoms = item.FindRequiredItem("Atoms");
-  Atoms.SetCapacity( atoms.ItemCount() );
+  Atoms.SetCapacity(atoms.ItemCount());
   for( size_t i=0; i < atoms.ItemCount(); i++ )
     Atoms.Add( new TSAtom(NULL) )->SetLattId(i);
   for( size_t i=0; i < atoms.ItemCount(); i++ )
@@ -1963,14 +1960,14 @@ void TLattice::FromDataItem(TDataItem& item)  {
     Bonds[i]->FromDataItem(bonds.GetItem(i), Fragments);
   // load fragments
   for( size_t i=0; i < frags.ItemCount(); i++ )
-    Fragments[i]->FromDataItem( frags.GetItem(i) );
+    Fragments[i]->FromDataItem(frags.GetItem(i));
   GetUnitCell().InitMatrices();
   //int eqc = GetUnitCell().FindSymmEq(0.1, true, false, false); // find and not remove
   //GetAsymmUnit().SetContainsEquivalents( eqc != 0 );
   //Disassemble();
   TDataItem& planes = item.FindRequiredItem("Planes");
   for( size_t i=0; i < planes.ItemCount(); i++ )
-    Planes.Add( new TSPlane(Network) )->FromDataItem(planes.GetItem(i));
+    Planes.Add(new TSPlane(Network))->FromDataItem(planes.GetItem(i));
 }
 //..............................................................................
 void TLattice::SetGrowInfo(GrowInfo* grow_info)  {

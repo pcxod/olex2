@@ -1,6 +1,5 @@
-//---------------------------------------------------------------------------//
-#ifndef insH
-#define insH
+#ifndef __olx_xl_ins_H
+#define __olx_xl_ins_H
 
 #include "xbase.h"
 #include "estrlist.h"
@@ -39,6 +38,7 @@ class TIns: public TBasicCFile  {
     TResidue* Resi;
     TAsymmUnit& au;
     RefinementModel& rm;
+    TIns* ins;
     // SAME instructions and the first atom after it/them
     TTypeList< AnAssociation2<TStrList,TCAtom*> > Same;
     ParseContext(RefinementModel& _rm) : rm(_rm), au(_rm.aunit), 
@@ -46,36 +46,37 @@ class TIns: public TBasicCFile  {
       End = SetNextPivot = CellFound = false;
       PartOccu = 0;
       Part = 0;
+      ins = NULL;
     }
   };
 private:
-  TStrPObjList< olxstr, TInsList* > Ins;  // instructions
-  TStrList Skipped,
-           Disp;  // this should be treated specially as their position is after SFAC and between UNIT
-  void HyphenateIns(const olxstr &InsName, const olxstr &Ins, TStrList &Res);
-  void HyphenateIns(const olxstr &Ins, TStrList &Res);
+  TStrPObjList<olxstr, TInsList*> Ins;  // instructions
+  TStrList Skipped;
+  static void HyphenateIns(const olxstr &InsName, const olxstr &Ins, TStrList &Res);
+  static void HyphenateIns(const olxstr &Ins, TStrList &Res);
   double   R1;    // mean error of cell parameters. Can be used for estimation of other lengths
   bool     LoadQPeaks;// true if Q-peaks should be loaded
-  olxstr Sfac, Unit;
+  //olxstr Sfac, Unit;
 protected:
-  void _SaveSfac(TStrList& list, size_t pos);
-  TCAtom* _ParseAtom(TStrList& toks, ParseContext& cx, TCAtom* atom = NULL);
-  olxstr _AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex);
+  static void _SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
+    TStrList& list, size_t sfac_pos);
+  static TCAtom* _ParseAtom(TStrList& toks, ParseContext& cx, TCAtom* atom = NULL);
+  static olxstr _AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex);
   olxstr _CellToString();
   olxstr _ZerrToString();
-  void _SaveFVar(RefinementModel& rm, TStrList& SL);
+  static void _SaveFVar(RefinementModel& rm, TStrList& SL);
   void _SaveSymm(TStrList& SL);
   void _SaveSizeTemp(TStrList& SL);
   // if solution specified, only OMIT's and HKLSrc are saved 
   void _SaveHklInfo(TStrList& SL, bool solution);
   void _SaveRefMethod(TStrList& SL);
-  void _ProcessAfix(TCAtom& a, ParseContext& cx);
+  static void _ProcessAfix(TCAtom& a, ParseContext& cx);
   // validates existing AFIX'es and clears the stack
-  void _ProcessAfix0(ParseContext& cx);
+  static void _ProcessAfix0(ParseContext& cx);
   // if atoms is saved, its Tag is added to the index (if not NULL) 
-  void _SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix, 
+  static void _SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix, 
     TStrPObjList<olxstr,TBasicAtomInfo*>* sfac, TStrList& sl, TIndexList* index=NULL, bool checkSame=true);
-  void _ProcessSame(ParseContext& cx);
+  static void _ProcessSame(ParseContext& cx);
   // initialises the unparsed instruction list
   void _FinishParsing(ParseContext& cx);
   // processes CONN, FREE and BIND, called from _FinishParsing
@@ -91,14 +92,6 @@ public:
   // this is -1 if not in the file like REM R1 = ...
   inline double GetR1() const {  return R1;  }
 
-  /* olex does not use this - they are just for a record, however they can be changed
-    using fixunit command to take the actual values from the asymmetric unit
-  */
-  DefPropC(olxstr, Sfac)
-  DefPropC(olxstr, Unit)
-  // created sfac/unit form a string like C37H41P2BRhClO
-  void SetSfacUnit(const olxstr& su);
-
   /* updates all instructions */
   void UpdateParams();
   void SaveForSolution(const olxstr& FileName, const olxstr& Method, const olxstr& comments, bool rems=true);
@@ -110,18 +103,18 @@ public:
    Instructions are initialised with all unrecognised commands
    @retutn error message or an empty string
   */
-  void UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, const TIndexList& index, TStrList& SL, TStrList& Instructions);
+  static void UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, const TIndexList& index, TStrList& SL, TStrList& Instructions);
   /* saves some atoms to a plain ins format with no headers etc; to be used with
     UpdateAtomsFromStrings. index is initialised with the order in which atoms saved
     this must be passed to UpdateAtomsFromString
   */
-  bool SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms, TIndexList& index, TStrList& SL, 
+  static bool SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms, TIndexList& index, TStrList& SL, 
     RefinementModel::ReleasedItems* processed);
   void ValidateRestraintsAtomNames(RefinementModel& rm);
-  bool ParseRestraint(RefinementModel& rm, const TStrList& toks);
-  void SaveRestraints(TStrList& SL, const TCAtomPList* atoms, 
+  static bool ParseRestraint(RefinementModel& rm, const TStrList& toks);
+  static void SaveRestraints(TStrList& SL, const TCAtomPList* atoms, 
     RefinementModel::ReleasedItems* processed, RefinementModel& rm);
-  template <class StrLst> void ParseRestraints(RefinementModel& rm, StrLst& SL)  {
+  template <class StrLst> static void ParseRestraints(RefinementModel& rm, StrLst& SL)  {
       TStrList Toks;
       for( size_t i =0; i < SL.Count(); i++ )  {
         Toks.Clear();
@@ -133,7 +126,7 @@ public:
 //..............................................................................
   /* parses a single line instruction, which does not depend on context (as SYMM) 
     this is used internally by ParseIns and AddIns    */
-    template <class StrLst> bool _ParseIns(RefinementModel& rm, const StrLst& Toks)  {
+    template <class StrLst> static bool _ParseIns(RefinementModel& rm, const StrLst& Toks)  {
       if( Toks[0].Equalsi("FVAR") )
         rm.Vars.AddFVAR( Toks.SubListFrom(1) );
       else if( Toks[0].Equalsi("SUMP") )
@@ -151,39 +144,37 @@ public:
           rm.proposed_weight = rm.used_weight;
         }
       }
-      else if( Toks[0].Equalsi("TITL") )
-        Title = Toks.Text(' ', 1);
       else if( Toks[0].Equalsi("MERG") && Toks.Count() == 2 )
-        rm.SetMERG( Toks[1].ToInt() );
+        rm.SetMERG(Toks[1].ToInt());
       else if( Toks[0].Equalsi("SIZE") && (Toks.Count() == 4) )
-        rm.expl.SetCrystalSize(Toks[1].ToDouble(), Toks[2].ToDouble(), Toks[3].ToDouble() );
+        rm.expl.SetCrystalSize(Toks[1].ToDouble(), Toks[2].ToDouble(), Toks[3].ToDouble());
       else if( Toks[0].Equalsi("BASF") && (Toks.Count() > 1) )
-        rm.SetBASF( Toks.SubListFrom(1) );
+        rm.SetBASF(Toks.SubListFrom(1));
       else if( Toks[0].Equalsi("OMIT") )
-        rm.AddOMIT( Toks.SubListFrom(1) );
+        rm.AddOMIT(Toks.SubListFrom(1));
       else if( Toks[0].Equalsi("SHEL") )
-        rm.SetSHEL( Toks.SubListFrom(1) );
+        rm.SetSHEL(Toks.SubListFrom(1));
       else if( Toks[0].Equalsi("TWIN") )
-        rm.SetTWIN( Toks.SubListFrom(1) );
+        rm.SetTWIN(Toks.SubListFrom(1));
       else if( Toks[0].Equalsi("TEMP") && Toks.Count() == 2 )
-        rm.expl.SetTemperature( Toks[1].ToDouble() );
+        rm.expl.SetTemperature(Toks[1].ToDouble());
       else if( Toks[0].Equalsi("HKLF") && (Toks.Count() > 1) )
-        rm.SetHKLF( Toks.SubListFrom(1) );
+        rm.SetHKLF(Toks.SubListFrom(1));
       else if( Toks[0].Equalsi("L.S.") || Toks[0].Equalsi("CGLS") )  {
         rm.SetRefinementMethod(Toks[0]);
-        rm.LS.SetCount( Toks.Count() - 1 );
+        rm.LS.SetCount(Toks.Count() - 1);
         for( size_t i=1; i < Toks.Count(); i++ )
           rm.LS[i-1] = Toks[i].ToInt();
       }
       else if( Toks[0].Equalsi("PLAN") )  {
-        rm.PLAN.SetCount( Toks.Count() - 1 );
+        rm.PLAN.SetCount(Toks.Count() - 1);
         for( size_t i=1; i < Toks.Count(); i++ )
           rm.PLAN[i-1] = Toks[i].ToDouble();
       }
       else if( Toks[0].Equalsi("LATT") && (Toks.Count() > 1))
         rm.aunit.SetLatt( (short)Toks[1].ToInt() );
       else if( Toks[0].Equalsi("UNIT") )
-        Unit = Toks.Text(' ', 1);
+        rm.SetUserContentSize(Toks.SubListFrom(1));
       else if( Toks[0].Equalsi("ZERR") )  {
         if( Toks.Count() == 8 )  {
           rm.aunit.SetZ( (short)Toks[1].ToDouble() );
@@ -222,7 +213,7 @@ public:
   }
 protected:
   // index will be automatically incremented if more then one line is parsed
-  bool ParseIns(const TStrList& ins, const TStrList& toks, ParseContext& cx, size_t& index);
+  static bool ParseIns(const TStrList& ins, const TStrList& toks, ParseContext& cx, size_t& index);
 public:
   // spits out all instructions, including CELL, FVAR, etc
   void SaveHeader(TStrList& out, bool ValidateRestraintNames);

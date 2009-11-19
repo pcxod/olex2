@@ -26,8 +26,8 @@ protected:
       BondsToRemove = ci.BondsToRemove;
       return *this;
     }
-    void ToDataItem(TDataItem& item);
-    void FromDataItem(TDataItem& item, RefinementModel& rm, TCAtom& atom);
+    void ToDataItem(TDataItem& item) const;
+    void FromDataItem(const TDataItem& item, RefinementModel& rm, TCAtom& atom);
   };
   struct TypeConnInfo : public CXConnInfoBase  {
     TBasicAtomInfo* atomInfo;
@@ -39,8 +39,8 @@ protected:
       atomInfo = ti.atomInfo;
       return *this;
     }
-    void ToDataItem(TDataItem& item);
-    void FromDataItem(TDataItem& item, TBasicAtomInfo* bai);
+    void ToDataItem(TDataItem& item) const;
+    void FromDataItem(const TDataItem& item, TBasicAtomInfo* bai);
   };
   olxdict<TCAtom*, AtomConnInfo, TPointerPtrComparator> AtomInfo;
   olxdict<TBasicAtomInfo*, TypeConnInfo, TPointerPtrComparator> TypeInfo;
@@ -80,9 +80,8 @@ public:
 
   void Assign(const ConnInfo& ci);
 
-  void ToDataItem(TDataItem& item);
-  void FromDataItem(TDataItem& item);
-
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(const TDataItem& item);
 };
 
 EndXlibNamespace()

@@ -1,5 +1,5 @@
-#ifndef sbondH
-#define sbondH
+#ifndef __olx_xl_sbond_H
+#define __olx_xl_sbond_H
 
 #include "satom.h"
 #include "typelist.h"
@@ -10,7 +10,6 @@ BeginXlibNamespace()
 
 class TSBond: public TBasicBond<class TNetwork, TSAtom>  {
 private:
-//  int FTag;
   virtual void OnAtomSet();
 protected:
   bool Deleted;
@@ -19,7 +18,7 @@ public:
   virtual ~TSBond() { }
 
   DefPropBIsSet(Deleted)
-
+  bool IsAvailable() const {  return (!IsDeleted() && FA->IsAvailable() && FB->IsAvailable()); }
   double Length() const {  return FA->crd().DistanceTo(FB->crd()); }
   double QLength() const {  return FA->crd().QDistanceTo(FB->crd()); }
 

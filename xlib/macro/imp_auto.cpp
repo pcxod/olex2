@@ -90,9 +90,9 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   if( arg == 1 )  {
     if( xapp.CheckFileType<TIns>() )  {
       TIns& ins = xapp.XFile().GetLastLoader<TIns>();
-      TStrList sl(ins.GetSfac(), ' ');
-      for( size_t i=0; i < sl.Count(); i++ ) 
-        bai_l.Add( atomsInfo.FindAtomInfoBySymbol(sl[i]) );
+      const ContentList& cl = ins.GetRM().GetUserContent();
+      for( size_t i=0; i < cl.Count(); i++ ) 
+        bai_l.Add( atomsInfo.FindAtomInfoBySymbol(cl[i].GetA()) );
     }    
   }
   TAutoDB::AnalysisStat stat;
@@ -158,10 +158,14 @@ void helper_CleanBaiList(TStrPObjList<olxstr,TBasicAtomInfo*>& list, SortedBAILi
   if( xapp.CheckFileType<TIns>() )  {
     TIns& ins = xapp.XFile().GetLastLoader<TIns>();
     list.Clear();   
-    list.Strtok(ins.GetSfac(), ' ');
-    TAtomsInfo& bai = TAtomsInfo::GetInstance();
-    for( size_t i=0; i < list.Count(); i++ )
-      au_bais.Add( (list.GetObject(i) = bai.FindAtomInfoBySymbol(list[i])) );
+    const ContentList& cl = ins.GetRM().GetUserContent();
+    TAtomsInfo& ai = TAtomsInfo::GetInstance();
+    for( size_t i=0; i < cl.Count(); i++ )  {
+      TBasicAtomInfo* bai = ai.FindAtomInfoBySymbol(cl[i].GetA()); 
+      if( bai == NULL )  continue;      
+      au_bais.Add(bai);
+      list.Add(cl[i].GetA(), bai);
+    }
     list.QuickSort<Main_BaiComparator>();
   }
 }
@@ -495,15 +499,13 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
   if( use_formula && xapp.CheckFileType<TIns>() )  {
     TIns& ins = xapp.XFile().GetLastLoader<TIns>();
     TTypeList< AnAssociation2<int,TBasicAtomInfo*> > sl;
-    TStrList sfac(ins.GetSfac(), ' ');
-    TStrList unit(ins.GetUnit(), ' ');
     size_t ac = 0;
-    for( size_t i=0; i < sfac.Count(); i++ )  {
-      int cnt = unit[i].ToInt();
-      TBasicAtomInfo* bai = au.GetAtomsInfo()->FindAtomInfoBySymbol(sfac[i]);
+    const ContentList& cl = ins.GetRM().GetUserContent();
+    for( size_t i=0; i < cl.Count(); i++ )  {
+      TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoBySymbol(cl[i].GetA());
       if( *bai == iHydrogenIndex )  continue;
-      sl.AddNew( cnt, bai );
-      ac += cnt;
+      sl.AddNew((int)cl[i].GetB(), bai);
+      ac += (int)cl[i].GetB();
     }
     sl.QuickSorter.Sort<Main_SfacComparator>(sl);  // sorts ascending
     double auv = latt.GetUnitCell().CalcVolume()/latt.GetUnitCell().MatrixCount();

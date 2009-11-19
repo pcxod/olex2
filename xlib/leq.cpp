@@ -4,16 +4,10 @@
 olxstr XVarManager::RelationNames[] = {"None", "var", "one_minus_var"};
 
 //.................................................................................................
-
-size_t IXVarReferencer::GetReferencerId() const {  
-  return const_cast<IXVarReferencer*>(this)->GetParentContainer().GetReferencerId(*this);  
-}
-
-//.................................................................................................
 void XVarReference::ToDataItem(TDataItem& item) const {
   item.AddField("var_index", var_index);
-  item.AddField("id_name", referencer->GetParentContainer().GetIdName());
-  item.AddField("owner_id", referencer->GetParentContainer().GetReferencerId(*referencer));
+  item.AddField("id_name", referencer.GetParentContainer().GetIdName());
+  item.AddField("owner_id", referencer.GetPersistentId());
   item.AddField("k", coefficient);
   item.AddField("rel", XVarManager::RelationNames[relation_type]);
 }
@@ -21,8 +15,8 @@ void XVarReference::ToDataItem(TDataItem& item) const {
 #ifndef _NO_PYTHON
 PyObject* XVarReference::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* main = PyDict_New();
-  PyDict_SetItemString(main, "name", PythonExt::BuildString(referencer->GetParentContainer().GetIdName()) );
-  PyDict_SetItemString(main, "id", Py_BuildValue("i", referencer->GetParentContainer().GetReferencerId(*referencer)) );
+  PyDict_SetItemString(main, "name", PythonExt::BuildString(referencer.GetParentContainer().GetIdName()) );
+  PyDict_SetItemString(main, "id", Py_BuildValue("i", referencer.GetPersistentId()) );
   PyDict_SetItemString(main, "index", Py_BuildValue("i", var_index) );
   PyDict_SetItemString(main, "relation", PythonExt::BuildString(XVarManager::RelationNames[relation_type]) );
   PyDict_SetItemString(main, "k", Py_BuildValue("d", coefficient) );
@@ -31,8 +25,8 @@ PyObject* XVarReference::PyExport(TPtrList<PyObject>& atoms)  {
 #endif
 //.................................................................................................
 XVarReference& XVarReference::FromDataItem(const TDataItem& item, XVar& parent) {
-  IXVarReferencerContainer& rc = parent.Parent.RM.GetRefContainer( item.GetRequiredField("id_name"));
-  IXVarReferencer* ref = rc.GetReferencer(item.GetRequiredField("owner_id").ToInt());
+  IXVarReferencerContainer& rc = parent.Parent.RM.GetRefContainer(item.GetRequiredField("id_name"));
+  IXVarReferencer& ref = rc.GetReferencer(item.GetRequiredField("owner_id").ToSizeT());
   return *(new XVarReference(parent, ref, 
     item.GetRequiredField("var_index").ToInt(), 
     XVarManager::RelationIndex(item.GetRequiredField("rel")),
@@ -44,7 +38,7 @@ XVarReference& XVarReference::FromDataItem(const TDataItem& item, XVar& parent) 
 size_t XVar::RefCount() const {
   size_t rv = 0;
   for( size_t i=0; i < References.Count(); i++ )  
-    if( References[i]->referencer->IsValid() )
+    if( References[i]->referencer.IsValid() )
       rv++;
   return rv;
 }
@@ -52,7 +46,7 @@ size_t XVar::RefCount() const {
 void XVar::ToDataItem(TDataItem& item) const {
   item.AddField("val", Value);
   for( size_t i=0; i < References.Count(); i++ ) 
-    if( References[i]->referencer->IsValid() )
+    if( References[i]->referencer.IsValid() )
       References[i]->ToDataItem(item.AddItem(i));
 }
 //..............................................................................
@@ -143,12 +137,9 @@ void XVarManager::Assign(const XVarManager& vm) {
     NewVar( vm.Vars[i].GetValue() );
   for( size_t i=0; i < vm.References.Count(); i++ )  {
     XVarReference& vr = vm.References[i];
-    IXVarReferencerContainer& rc = RM.GetRefContainer( vr.referencer->GetParentContainer().GetIdName());
-    //vr.referencer->GetParentContainer()
-    IXVarReferencer* xvr = rc.GetReferencer( vr.referencer->GetReferencerId() );
-    if( xvr == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "referencer containers mismatch");
-    AddVarRef(Vars[vr.Parent.GetId()], *xvr, vr.var_index, vr.relation_type, vr.coefficient);
+    IXVarReferencerContainer& rc = RM.GetRefContainer(vr.referencer.GetParentContainer().GetIdName());
+    IXVarReferencer& xvr = rc.GetReferencer(vr.referencer.GetReferencerId());
+    AddVarRef(Vars[vr.Parent.GetId()], xvr, vr.var_index, vr.relation_type, vr.coefficient);
   }
   for( size_t i=0; i < vm.Equations.Count(); i++ )
     NewEquation()._Assign(vm.Equations[i]);
@@ -162,7 +153,7 @@ XVarReference& XVarManager::AddVarRef(XVar& var, IXVarReferencer& a, short var_n
     prf->Parent._RemRef(*prf);
     References.Delete(prf->GetId());
   }
-  XVarReference& rf = References.Add( new XVarReference(var, &a, var_name, relation, coeff) );
+  XVarReference& rf = References.Add( new XVarReference(var, a, var_name, relation, coeff) );
   for( size_t i=0; i < References.Count(); i++ )
     References[i].SetId(i);
   var._AddRef(rf);
@@ -278,7 +269,7 @@ void XVarManager::Validate() {
     if( !v.IsUsed() ) {
       for( size_t j=0; j < v._RefCount(); j++ )  {
         XVarReference& vr = v.GetRef(j);
-        vr.referencer->SetVarRef(vr.var_index, NULL);
+        vr.referencer.SetVarRef(vr.var_index, NULL);
         References.NullItem( vr.GetId() );
       }
       Vars.NullItem(i);
@@ -316,7 +307,7 @@ void XVarManager::Describe(TStrList& lst)  {
         XVarReference& vr = Equations[i][j].GetRef(k);
         if( ref_added++ != 0 )
           eq_des << '+';
-        eq_des << vr.referencer->GetVarName(vr.var_index) << '(' << vr.referencer->GetIdName() << ')';
+        eq_des << vr.referencer.GetVarName(vr.var_index) << '(' << vr.referencer.GetIdName() << ')';
       }
       eq_des << ']';
     }
@@ -330,15 +321,15 @@ void XVarManager::Describe(TStrList& lst)  {
            Vars[i].GetRef(0).relation_type == relation_AsOneMinusVar) )  
       {
         if( Vars[i].GetRef(0).relation_type == relation_AsVar )
-          lst.Add( Vars[i].GetRef(0).referencer->GetVarName(Vars[i].GetRef(0).var_index) ) << '(' 
-            << Vars[i].GetRef(0).referencer->GetIdName() 
-            << ")=1-" << Vars[i].GetRef(1).referencer->GetVarName(Vars[i].GetRef(1).var_index) << '(' 
-            << Vars[i].GetRef(1).referencer->GetIdName() << ')';
+          lst.Add( Vars[i].GetRef(0).referencer.GetVarName(Vars[i].GetRef(0).var_index) ) << '(' 
+            << Vars[i].GetRef(0).referencer.GetIdName() 
+            << ")=1-" << Vars[i].GetRef(1).referencer.GetVarName(Vars[i].GetRef(1).var_index) << '(' 
+            << Vars[i].GetRef(1).referencer.GetIdName() << ')';
         else
-          lst.Add( Vars[i].GetRef(1).referencer->GetVarName(Vars[i].GetRef(1).var_index) ) << '(' 
-            << Vars[i].GetRef(1).referencer->GetIdName() 
-            << ")=1-" << Vars[i].GetRef(0).referencer->GetVarName(Vars[i].GetRef(0).var_index) << '(' 
-            << Vars[i].GetRef(0).referencer->GetIdName() << ')';
+          lst.Add( Vars[i].GetRef(1).referencer.GetVarName(Vars[i].GetRef(1).var_index) ) << '(' 
+            << Vars[i].GetRef(1).referencer.GetIdName() 
+            << ")=1-" << Vars[i].GetRef(0).referencer.GetVarName(Vars[i].GetRef(0).var_index) << '(' 
+            << Vars[i].GetRef(0).referencer.GetIdName() << ')';
         continue;
       }
     }
@@ -347,12 +338,12 @@ void XVarManager::Describe(TStrList& lst)  {
   olxdict<olxstr,olxstr,olxstrComparator<false> > fixed;
   for( size_t i=0; i < Vars[0]._RefCount(); i++ )  {
     //if( Vars[0].GetRef(i).atom->GetAtomInfo() == iQPeakIndex )  continue;
-    size_t ind = fixed.IndexOf(Vars[0].GetRef(i).referencer->GetVarName(Vars[0].GetRef(i).var_index));
+    size_t ind = fixed.IndexOf(Vars[0].GetRef(i).referencer.GetVarName(Vars[0].GetRef(i).var_index));
     if( ind == InvalidIndex )
-      fixed.Add(Vars[0].GetRef(i).referencer->GetVarName(Vars[0].GetRef(i).var_index), 
-      olxstr(Vars[0].GetRef(i).referencer->GetIdName()) << '(' << Vars[0].GetRef(i).GetActualValue() << ')');
+      fixed.Add(Vars[0].GetRef(i).referencer.GetVarName(Vars[0].GetRef(i).var_index), 
+      olxstr(Vars[0].GetRef(i).referencer.GetIdName()) << '(' << Vars[0].GetRef(i).GetActualValue() << ')');
     else
-      fixed.GetValue(ind) << ' ' << Vars[0].GetRef(i).referencer->GetIdName() << '(' 
+      fixed.GetValue(ind) << ' ' << Vars[0].GetRef(i).referencer.GetIdName() << '(' 
         << Vars[0].GetRef(i).GetActualValue() << ')';
   }
   for( size_t i=0; i < fixed.Count(); i++ )
@@ -396,7 +387,7 @@ void XVarManager::FromDataItem(const TDataItem& item) {
   for( size_t i=0; i < eqs.ItemCount(); i++ )
     Equations.Add( XLEQ::FromDataItem(eqs.GetItem(i), *this)).SetId(Vars.Count());
   for( size_t i=0; i < References.Count(); i++ )
-    References[i].referencer->SetVarRef( References[i].var_index, &References[i] );
+    References[i].referencer.SetVarRef( References[i].var_index, &References[i] );
 }
 //.................................................................................................
 

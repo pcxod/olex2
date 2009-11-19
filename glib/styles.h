@@ -215,7 +215,6 @@ public:
 };
 
 class TGraphicsStyles: public IEObject  {
-//  TEList *FStyles; // styles for indivisual objects, top level
   olxstr Name;
   olxstr LinkFile;
   short Version;
@@ -223,12 +222,11 @@ class TGraphicsStyles: public IEObject  {
   mutable TPtrList<TDataItem> DataItems;
   TGraphicsStyle* Root;
   class TGlRenderer& Renderer;
-protected:
-  void Clear();
 public:
   TGraphicsStyles(TGlRenderer& R);
   virtual ~TGraphicsStyles();
 
+  void Clear();
   bool LoadFromFile(const olxstr &FN);
   void SaveToFile(const olxstr &FN);
 

@@ -1874,8 +1874,13 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TDataFile F;
     F.LoadFromXLFile(FN, NULL);
     FXApp->GetRender().ClearSelection();
-    FXApp->GetRender().GetStyles().FromDataItem(*F.Root().FindItem("style"));
-    FXApp->CreateObjects(true, false);
+    // this forces the object creation, so if there is anything wrong...
+    try  {  FXApp->GetRender().GetStyles().FromDataItem(*F.Root().FindItem("style"));  }
+    catch(...)  {
+      FXApp->GetRender().GetStyles().Clear();
+      TBasicApp::GetLog().Error("Failed to load given style");
+    }
+    FXApp->CreateObjects(true, true);
     FXApp->CenterView(true);
     FN = FXApp->GetRender().GetStyles().GetLinkFile();
     if( !FN.IsEmpty() )  {
@@ -3159,24 +3164,25 @@ void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     Ins->Adopt( &FXApp->XFile() );
   }
-  if( !content.IsEmpty() )  Ins->SetSfacUnit( content );
-  if( Ins->GetSfac().Length() == 0)  {
+  if( !content.IsEmpty() )
+    Ins->GetRM().SetUserFormula(content);
+  if( Ins->GetRM().GetUserContent().IsEmpty() )  {
     content = "getuserinput(1, \'Please, enter structure composition\', \'C1\')";
     ProcessFunction(content);
-    Ins->SetSfacUnit( content );
-    if( Ins->GetSfac().Length() == 0 )  {
+    Ins->GetRM().SetUserFormula(content);
+    if( Ins->GetRM().GetUserContent().IsEmpty() )  {
       E.ProcessingError(__OlxSrcInfo, "empty SFAC instruction, please use -c=Content to specify" );
       return;
     }
   }
 
   if( !newSg.IsEmpty() )  {
-    TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup( newSg );
+    TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup(newSg);
     if( !sg )  {
       E.ProcessingError(__OlxSrcInfo, "could not find space group: ") << newSg;
       return;
     }
-    Ins->GetAsymmUnit().ChangeSpaceGroup( *sg );
+    Ins->GetAsymmUnit().ChangeSpaceGroup(*sg);
     newSg = EmptyString;
     newSg <<  " reset to " << sg->GetName() << " #" << sg->GetNumber();
     olxstr titl( TEFile::ChangeFileExt(TEFile::ExtractFileName(FXApp->XFile().GetFileName()), EmptyString) );
@@ -3184,8 +3190,8 @@ void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   if( fileName.IsEmpty() )
     fileName = FXApp->XFile().GetFileName();
-  olxstr FN( TEFile::ChangeFileExt(fileName, "ins") );
-  olxstr lstFN( TEFile::ChangeFileExt(fileName, "lst") );
+  olxstr FN(TEFile::ChangeFileExt(fileName, "ins"));
+  olxstr lstFN(TEFile::ChangeFileExt(fileName, "lst"));
 
   Ins->SaveForSolution(FN, Cmds.Text(' '), newSg, Options.Contains("rem"));
   if( TEFile::Exists(lstFN) )  {
@@ -3419,7 +3425,9 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   TCAtomPList CAtoms;
   TXAtomPList Atoms;
-  TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
+  TIns* Ins = NULL;
+  try {  Ins = &FXApp->XFile().GetLastLoader<TIns>();  }
+  catch(...)  {}  // must be native then...
   
   if( !FindXAtoms(Cmds, Atoms, true, !Options.Contains("cs")) )  {
     E.ProcessingError(__OlxSrcInfo, "wrong atom names" );
@@ -3429,7 +3437,8 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   RefinementModel& rm = FXApp->XFile().GetRM();
   FXApp->XFile().UpdateAsymmUnit();
-  Ins.UpdateParams();
+  if( Ins != NULL )
+    Ins->UpdateParams();
   // get CAtoms and EXYZ equivalents
   for( size_t i=0; i < Atoms.Count(); i++ )  {
     TCAtom* ca = &Atoms[i]->Atom().CAtom();
@@ -3490,42 +3499,43 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   // make sure that the list is unique
   TXApp::UnifyPAtomList(CAtoms);
   FXApp->XFile().GetAsymmUnit().Sort( &CAtoms );
-  TStrList SL, *InsParamsCopy, NewIns;
+  TStrList SL;
   TStrPObjList<olxstr, TStrList* > RemovedIns;
-  const TInsList* InsParams;
   SL.Add("REM please do not modify atom names inside the instructions - they will be updated ");
   SL.Add("REM by Olex2 automatically, though you can change any parameters");
   SL.Add("REM Also do not change the atoms order");
   // go through instructions
-  for( size_t i=0; i < Ins.InsCount(); i++ )  {
-    // do not process remarks
-    if( !Ins.InsName(i).Equalsi("rem") )  {
-      InsParams = &Ins.InsParams(i);
-      bool found = false;
-      for( size_t j=0; j < InsParams->Count(); j++ )  {
-        TCAtom* CA1 = InsParams->GetObject(j);
-        if( CA1 == NULL )  continue;
-        for( size_t k=0; k < CAtoms.Count(); k++ )  {
-          TCAtom* CA = CAtoms[k];
-          if( CA->Label().Equalsi(CA1->Label()) )  {
-            found = true;  break;
+  if( Ins != NULL )  {
+    for( size_t i=0; i < Ins->InsCount(); i++ )  {
+      // do not process remarks
+      if( !Ins->InsName(i).Equalsi("rem") )  {
+        const TInsList* InsParams = &Ins->InsParams(i);
+        bool found = false;
+        for( size_t j=0; j < InsParams->Count(); j++ )  {
+          TCAtom* CA1 = InsParams->GetObject(j);
+          if( CA1 == NULL )  continue;
+          for( size_t k=0; k < CAtoms.Count(); k++ )  {
+            TCAtom* CA = CAtoms[k];
+            if( CA->Label().Equalsi(CA1->Label()) )  {
+              found = true;  break;
+            }
           }
+          if( found )  break;
         }
-        if( found )  break;
-      }
-      if( found )  {
-        SL.Add(Ins.InsName(i)) << ' ' << InsParams->Text(' ');
-        InsParamsCopy = new TStrList();
-        InsParamsCopy->Assign(*InsParams);
-        RemovedIns.Add(Ins.InsName(i), InsParamsCopy);
-        Ins.DelIns(i);
-        i--;
+        if( found )  {
+          SL.Add(Ins->InsName(i)) << ' ' << InsParams->Text(' ');
+          TStrList* InsParamsCopy = new TStrList(*InsParams);
+          //InsParamsCopy->Assign(*InsParams);
+          RemovedIns.Add(Ins->InsName(i), InsParamsCopy);
+          Ins->DelIns(i);
+          i--;
+        }
       }
     }
+    SL.Add(EmptyString);
   }
-  SL.Add(EmptyString);
   TIndexList atomIndex;
-  Ins.SaveAtomsToStrings(FXApp->XFile().GetRM(), CAtoms, atomIndex, SL, &released);
+  TIns::SaveAtomsToStrings(FXApp->XFile().GetRM(), CAtoms, atomIndex, SL, &released);
   for( size_t i=0; i < released.restraints.Count(); i++ )
     released.restraints[i]->GetParent().Release(*released.restraints[i]);
   for( size_t i=0; i < released.sameList.Count(); i++ )
@@ -3537,19 +3547,24 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
       SL.Clear();
       FXApp->XFile().GetRM().Vars.Clear();
       SL.Strtok(dlg->GetText(), '\n');
-      Ins.UpdateAtomsFromStrings(FXApp->XFile().GetRM(), CAtoms, atomIndex, SL, NewIns);
+      TStrList NewIns;
+      TIns::UpdateAtomsFromStrings(FXApp->XFile().GetRM(), CAtoms, atomIndex, SL, NewIns);
       // add new instructions
-      for( size_t i=0; i < NewIns.Count(); i++ )  {
-        NewIns[i] = NewIns[i].Trim(' ');
-        if( NewIns[i].IsEmpty() )  continue;
-        Ins.AddIns(NewIns[i], FXApp->XFile().GetRM());
+      if( Ins != NULL )  {
+        for( size_t i=0; i < NewIns.Count(); i++ )  {
+          NewIns[i] = NewIns[i].Trim(' ');
+          if( NewIns[i].IsEmpty() )  continue;
+          Ins->AddIns(NewIns[i], FXApp->XFile().GetRM());
+        }
       }
       // emulate loading a new file
       FXApp->XFile().EndUpdate();
     }
     else  {
-      for( size_t i=0; i < RemovedIns.Count(); i++ )
-        Ins.AddIns(RemovedIns[i], *RemovedIns.GetObject(i), FXApp->XFile().GetRM());
+      if( Ins != NULL )  {
+        for( size_t i=0; i < RemovedIns.Count(); i++ )
+          Ins->AddIns(RemovedIns[i], *RemovedIns.GetObject(i), FXApp->XFile().GetRM(), false);
+      }
       for( size_t i=0; i < released.restraints.Count(); i++ )
         released.restraints[i]->GetParent().Restore(*released.restraints[i]);
       for( size_t i=0; i < released.sameList.Count(); i++ )
@@ -3559,9 +3574,11 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
     }
   }
   catch(const TExceptionBase& exc )  {
-    TBasicApp::GetLog().Exception( exc.GetException()->GetError() );
-    for( size_t i=0; i < RemovedIns.Count(); i++ )
-      Ins.AddIns(RemovedIns[i], *RemovedIns.GetObject(i), FXApp->XFile().GetRM());
+    TBasicApp::GetLog().Exception(exc.GetException()->GetError());
+    if( Ins != NULL )  {
+      for( size_t i=0; i < RemovedIns.Count(); i++ )
+        Ins->AddIns(RemovedIns[i], *RemovedIns.GetObject(i), FXApp->XFile().GetRM(), false);
+    }
     for( size_t i=0; i < released.restraints.Count(); i++ )
       released.restraints[i]->GetParent().Restore(*released.restraints[i]);
     for( size_t i=0; i < released.sameList.Count(); i++ )
@@ -4373,17 +4390,17 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
               s_sg = s_inp;
             }
             ins->GetAsymmUnit().ChangeSpaceGroup(*sg);
-            if( ins->GetSfac().IsEmpty() )  {
+            if( ins->GetRM().GetUserContent().IsEmpty() )  {
               s_inp = "getuserinput(1, \'Please, enter cell content\', \'C1')";
               ProcessFunction(s_inp);
-              ins->SetSfacUnit(s_inp);
+              ins->GetRM().SetUserFormula(s_inp);
             }
             else  {
-              size_t sfac_count = ins->GetSfac().CharCount(' ');
-              olxstr unit;
+              size_t sfac_count = ins->GetRM().GetUserContent().Count();
+              TStrList unit;
               for( size_t i=0; i < sfac_count; i++ )  
-                unit << (sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1) << ' ';
-              ins->SetUnit(unit);
+                unit.Add( (sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1));
+              ins->GetRM().SetUserContentSize(unit);
               ins->GetAsymmUnit().SetZ( (sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1));
             }
             ins->SaveForSolution(TEFile::ChangeFileExt(FN, "ins"), EmptyString, EmptyString, false);
@@ -6067,12 +6084,6 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
   TStrList output;
   tab.CreateTXTList(output, ttitle, false, false, ' ');
   TBasicApp::GetLog() << ( output );
-}
-//..............................................................................
-void TMainForm::funSfacList(const TStrObjList& Params, TMacroError &E) {
-  olxstr tmp( FXApp->XFile().GetLastLoader<TIns>().GetSfac() );
-  tmp.Replace(' ', ';');
-  E.SetRetVal( tmp );
 }
 //..............................................................................
 void TMainForm::funChooseElement(const TStrObjList& Params, TMacroError &E) {

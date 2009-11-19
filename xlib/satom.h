@@ -44,7 +44,7 @@ public:
   DefPropBFIsSet(Deleted, Flags, satom_Deleted)
   DefPropBFIsSet(Standalone, Flags, satom_Standalone)
 
-  bool IsAvaialable() const {  return !(IsDeleted() || FCAtom->IsDetached());  }
+  bool IsAvailable() const {  return !(IsDeleted() || FCAtom->IsDetached());  }
   bool IsGrown() const;
   inline void SetGrown(bool v)  {  SetBit(v, Flags, satom_Grown);  }
 

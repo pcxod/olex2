@@ -124,8 +124,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(HImp, EmptyString, (fpAny^fpNone)|psFileLoaded, "Increases, decreases length of H-bonds.\
  Arguments: value [H atoms]. Value might be +/- to specify to increase/decrease current value" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(FixUnit,EmptyString, fpNone|fpOne|psCheckFileTypeIns, " Sets SFAc and UNIT to current content of the asymmetric unit.\
+  xlib_InitMacro(FixUnit, EmptyString, fpNone|fpOne|psFileLoaded, "Sets SFAc and UNIT to current content of the asymmetric unit.\
  Takes Z', with default value of 1.");
+  xlib_InitMacro(GenDisp, EmptyString, fpNone|fpOne|psFileLoaded, "Generates anisotropic dispertion parameters for current radiation wavelength");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(AddIns,EmptyString, (fpAny^fpNone)|psCheckFileTypeIns, "Adds an instruction to the INS file" );
   xlib_InitMacro(DelIns, EmptyString, fpOne|psCheckFileTypeIns, "A number or the name (will remove all accurances) can be provided" );
@@ -1629,20 +1630,32 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
     content.Swap(0, content.IndexOf(cBai) );
   if( hBai != NULL && content.Count() > 2 )
     content.Swap(1, content.IndexOf(hBai) );
-
+  ContentList new_content;
   for( size_t i=0; i < content.Count(); i++ )  {
-    sfac << content[i]->GetSymbol();
-    unit << (content[i]->GetSumm()*Z_est);
+    new_content.AddNew(content[i]->GetSymbol(), content[i]->GetSumm()*Z_est);
     n_c << content[i]->GetSymbol() << olxstr::FormatFloat(3,(double)content[i]->GetSumm()/Zp).TrimFloat();
-    if( (i+1) < content.Count() )  {
-      sfac << ' ';
-      unit << ' ';
+    if( (i+1) < content.Count() )
       n_c << ' ';
-    }
   }
   TBasicApp::GetLog() << "New content is: " << n_c << '\n';
-  Ins.SetSfac(sfac);
-  Ins.SetUnit(unit);
+  TXApp::GetInstance().XFile().GetRM().SetUserContent(new_content);
+}
+//..............................................................................
+void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
+  const ContentList& content = rm.GetUserContent();
+  const double en = rm.expl.GetRadiationEnergy();
+  for( size_t i=0; i < content.Count(); i++ )  {
+    XDispersion* xd = rm.FindDispData(content[i].GetA());
+    cm_Element* ce = XElementLib::FindBySymbol(content[i].GetA());
+    if( ce == NULL )  continue;
+    if( xd == NULL )  {
+      compd fpfdp = ce->CalcFpFdp(en) - ce->z;
+      rm.AddDisp(content[i].GetA(), fpfdp.GetRe(), fpfdp.GetIm());
+    }
+    else
+      ;//xd->fpfdp =  ce->CalcFpFdp(en);
+  }
 }
 //..............................................................................
 void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {

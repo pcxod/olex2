@@ -154,7 +154,7 @@ public:
     }
     if( Expression.CharAt(0) == '$' )  {  // sfac type
       olxstr sfac = ((resi_ind == InvalidIndex) ? Expression.SubStringFrom(1) : Expression.SubString(1, resi_ind-1));
-      TBasicAtomInfo* bai = rm.aunit.GetAtomsInfo()->FindAtomInfoBySymbol(sfac);
+      TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoBySymbol(sfac);
       if( bai == NULL )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("sfac=") << sfac);
       for( size_t i=0; i < residues.Count(); i++ )  {
         for( size_t j=0; j < residues[i]->Count(); j++ )  {

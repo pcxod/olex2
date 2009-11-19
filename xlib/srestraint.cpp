@@ -5,26 +5,21 @@
 #include "srestraint.h"
 #include "refmodel.h"
 
-TSimpleRestraint::TSimpleRestraint(TSRestraintList& parent, const short listType) : Parent(parent)  {
+TSimpleRestraint::TSimpleRestraint(TSRestraintList& parent, size_t id, const short listType) : 
+  Parent(parent), Id(id), ListType(listType)
+{
   Value = 0;
   Esd = Esd1 = 0;
-  ListType = listType;
   AllNonHAtoms = false;
   VarRef = NULL;
 }
 //..............................................................................
-TSimpleRestraint::~TSimpleRestraint()  {
-  Clear();
-}
-//..............................................................................
-void TSimpleRestraint::Clear()  {
-  InvolvedAtoms.Clear();
-}
+void TSimpleRestraint::Clear()  {  InvolvedAtoms.Clear();  }
 //..............................................................................
 void TSimpleRestraint::AddAtoms(const TCAtomGroup& atoms)  {
-  InvolvedAtoms.SetCapacity( InvolvedAtoms.Count() + atoms.Count() );
+  InvolvedAtoms.SetCapacity(InvolvedAtoms.Count() + atoms.Count());
   for( size_t i=0; i < atoms.Count(); i++ )
-    InvolvedAtoms.AddNew( atoms[i].GetAtom(), atoms[i].GetMatrix() );
+    InvolvedAtoms.AddNew(atoms[i].GetAtom(), atoms[i].GetMatrix());
 }
 //..............................................................................
 void TSimpleRestraint::AddAtom(TCAtom& aa, const smatd* ma)  {
@@ -88,11 +83,11 @@ void TSimpleRestraint::Validate()  {
   InvolvedAtoms.Pack();
 }
 //..............................................................................
-void TSimpleRestraint::RemoveAtom(int i)  {
-  if( InvolvedAtoms[i].GetMatrix() != NULL )
-    Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i].GetMatrix() );
-  InvolvedAtoms.Delete(i);
-}
+//void TSimpleRestraint::RemoveAtom(int i)  {
+//  if( InvolvedAtoms[i].GetMatrix() != NULL )
+//    Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i].GetMatrix() );
+//  InvolvedAtoms.Delete(i);
+//}
 //..............................................................................
 void TSimpleRestraint::Delete()  {
   for( size_t i=0; i < InvolvedAtoms.Count(); i++ )  {
@@ -176,9 +171,9 @@ void TSimpleRestraint::OnCAtomCrdChange( TCAtom* ca, const smatd& matr )  {
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
-bool TSimpleRestraint::ContainsAtom(TCAtom* ca) const {
+bool TSimpleRestraint::ContainsAtom(TCAtom& ca) const {
   for( size_t i=0; i < InvolvedAtoms.Count(); i++ )
-    if( InvolvedAtoms[i].GetAtom() == ca )
+    if( InvolvedAtoms[i].GetAtom() == &ca )
       return true;
   return false;
 }
@@ -243,7 +238,7 @@ void TSimpleRestraint::FromDataItem(TDataItem& item) {
   }
 }
 //..............................................................................
-IXVarReferencerContainer& TSimpleRestraint::GetParentContainer() {  return Parent;  }
+IXVarReferencerContainer& TSimpleRestraint::GetParentContainer() const {  return Parent;  }
 //..............................................................................
 olxstr TSimpleRestraint::GetIdName() const {  return Parent.GetIdName();  }
 //..............................................................................
@@ -291,10 +286,6 @@ void TSRestraintList::ValidateRestraint( TSimpleRestraint& sr )  {
   }
 }
 //..............................................................................
-void TSRestraintList::OnCAtomCrdChange( TCAtom* ca, const smatd& matr )  {
-  throw TNotImplementedException(__OlxSourceInfo);
-}
-//..............................................................................
 void TSRestraintList::Clear()  {  
   for( size_t i=0; i < Restraints.Count(); i++ )  {
     if( Restraints[i].GetVarRef(0) != NULL )
@@ -328,7 +319,7 @@ void TSRestraintList::ToDataItem(TDataItem& item) const {
   size_t rs_id = 0;
   for( size_t i=0; i < Restraints.Count(); i++ )  {
     if( !Restraints[i].IsAllNonHAtoms() && Restraints[i].AtomCount() == 0 )  continue;
-    Restraints[i].ToDataItem( item.AddItem(rs_id++) );
+    Restraints[i].ToDataItem(item.AddItem(rs_id++));
   }
 }
 //..............................................................................
@@ -354,9 +345,3 @@ void TSRestraintList::FromDataItem(TDataItem& item) {
     AddNew().FromDataItem( item.GetItem(i) );
 }
 //..............................................................................
-
-
-
-#ifdef __BORLANDC__
-  #pragma package(smart_init)
-#endif
