@@ -791,90 +791,94 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TAsymmUnit &au = XApp.XFile().GetAsymmUnit();
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     TCAtom &ca = au.GetAtom(i);
-    if( ca.GetAtomInfo() == iHydrogenIndex || ca.GetAtomInfo() == iDeuteriumIndex )
+    if( TAtomsInfo::IsHAtom(ca.GetAtomInfo()) )
       ca.SetDetached(false);
   }
   TActionQueue* q_draw = XApp.ActionQueue(olxappevent_GL_DRAW);
   if( q_draw != NULL )  q_draw->SetEnabled(false);
   XApp.XFile().GetLattice().UpdateConnectivity();
-
-  TSAtomPList satoms;
-  XApp.FindSAtoms( Cmds.Text(' '), satoms, true );
-  TXlConGen xlConGen( XApp.XFile().GetRM() );
-  if( Hfix == 0 ) 
-    XApp.XFile().GetLattice().AnalyseHAdd( xlConGen, satoms );
-  else  {
-    RefinementModel& rm = XApp.XFile().GetRM();
-    for( size_t aitr=0; aitr < satoms.Count(); aitr++ )  {
-      TIntList parts;
-      TDoubleList occu;
-      TAtomEnvi AE;
-      XApp.XFile().GetUnitCell().GetAtomEnviList(*satoms[aitr], AE);
-      for( size_t i=0; i < AE.Count(); i++ )  {
-        if( AE.GetCAtom(i).GetPart() != 0 && AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() ) 
-          if( parts.IndexOf(AE.GetCAtom(i).GetPart()) == InvalidIndex )  {
-            parts.Add( AE.GetCAtom(i).GetPart() );
-            occu.Add( rm.Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof) );
-          }
-      }
-      if( parts.Count() < 2 )  {
-        int afix = TXlConGen::ShelxToOlex(Hfix, AE);
-        if( afix != -1 )  {
-          TCAtomPList generated;
-          xlConGen.FixAtom(AE, afix, TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex), NULL, &generated);
-          if( !generated.IsEmpty() && generated[0]->GetParentAfixGroup() != NULL ) // hack to get desired Hfix...
-            generated[0]->GetParentAfixGroup()->SetAfix(Hfix);
-        }
-        else  {
-          XApp.GetLog() << (olxstr("Failed to translate HFIX code for ") << satoms[aitr]->GetLabel() << 
-            " with " << AE.Count() << " bonds\n");
-        }
-      }
-      else  {
-        TCAtomPList generated;
-        XApp.GetLog() << (olxstr("Processing ") << parts.Count() << " parts\n");
-        for( size_t i=0; i < parts.Count(); i++ )  {
-          AE.Clear();
-          XApp.XFile().GetUnitCell().GetAtomEnviList(*satoms[aitr], AE, false, parts[i]);
-          //consider special case where the atom is bound to itself but very long bond > 1.6 A
-          smatd* eqiv = NULL;
-          for( size_t j=0; j < AE.Count(); j++ )  {
-            if( &AE.GetCAtom(j) == &AE.GetBase().CAtom() )  {
-              const double d = AE.GetCrd(j).DistanceTo(AE.GetBase().crd() );
-              if( d > 1.6 )  {
-                eqiv = new smatd(AE.GetMatrix(j));
-                AE.Delete(j);
-                break;
-              }
+  try  {
+    TSAtomPList satoms;
+    XApp.FindSAtoms( Cmds.Text(' '), satoms, true );
+    TXlConGen xlConGen( XApp.XFile().GetRM() );
+    if( Hfix == 0 ) 
+      XApp.XFile().GetLattice().AnalyseHAdd(xlConGen, satoms);
+    else  {
+      RefinementModel& rm = XApp.XFile().GetRM();
+      for( size_t aitr=0; aitr < satoms.Count(); aitr++ )  {
+        TIntList parts;
+        TDoubleList occu;
+        TAtomEnvi AE;
+        XApp.XFile().GetUnitCell().GetAtomEnviList(*satoms[aitr], AE);
+        for( size_t i=0; i < AE.Count(); i++ )  {
+          if( AE.GetCAtom(i).GetPart() != 0 && AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() ) 
+            if( parts.IndexOf(AE.GetCAtom(i).GetPart()) == InvalidIndex )  {
+              parts.Add( AE.GetCAtom(i).GetPart() );
+              occu.Add( rm.Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof) );
             }
-          }
-          if( eqiv != NULL )  {
-            TIns& ins = XApp.XFile().GetLastLoader<TIns>();
-            const smatd& e = rm.AddUsedSymm(*eqiv);
-            rm.Conn.RemBond(satoms[aitr]->CAtom(), satoms[aitr]->CAtom(), NULL, &e, true);
-            XApp.GetLog() << (olxstr("The atom" ) << satoms[aitr]->GetLabel() << 
-              " is connected to itself through symmetry, removing the symmetry generated bond\n");
-            delete eqiv;
-          }
-          //
+        }
+        if( parts.Count() < 2 )  {
           int afix = TXlConGen::ShelxToOlex(Hfix, AE);
           if( afix != -1 )  {
+            TCAtomPList generated;
             xlConGen.FixAtom(AE, afix, TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex), NULL, &generated);
-            for( size_t j=0; j < generated.Count(); j++ )  {
-              generated[j]->SetPart( parts[i] );
-              rm.Vars.SetParam(*generated[j], catom_var_name_Sof, occu[i]);
-            }
-            if( !generated.IsEmpty() && generated[0]->GetParentAfixGroup() != NULL )
-              generated[0]->GetParentAfixGroup()->SetAfix(Hfix); // a hack again
-            generated.Clear();
+            if( !generated.IsEmpty() && generated[0]->GetParentAfixGroup() != NULL ) // hack to get desired Hfix...
+              generated[0]->GetParentAfixGroup()->SetAfix(Hfix);
           }
           else  {
             XApp.GetLog() << (olxstr("Failed to translate HFIX code for ") << satoms[aitr]->GetLabel() << 
               " with " << AE.Count() << " bonds\n");
           }
         }
+        else  {
+          TCAtomPList generated;
+          XApp.GetLog() << (olxstr("Processing ") << parts.Count() << " parts\n");
+          for( size_t i=0; i < parts.Count(); i++ )  {
+            AE.Clear();
+            XApp.XFile().GetUnitCell().GetAtomEnviList(*satoms[aitr], AE, false, parts[i]);
+            //consider special case where the atom is bound to itself but very long bond > 1.6 A
+            smatd* eqiv = NULL;
+            for( size_t j=0; j < AE.Count(); j++ )  {
+              if( &AE.GetCAtom(j) == &AE.GetBase().CAtom() )  {
+                const double d = AE.GetCrd(j).DistanceTo(AE.GetBase().crd() );
+                if( d > 1.6 )  {
+                  eqiv = new smatd(AE.GetMatrix(j));
+                  AE.Delete(j);
+                  break;
+                }
+              }
+            }
+            if( eqiv != NULL )  {
+              TIns& ins = XApp.XFile().GetLastLoader<TIns>();
+              const smatd& e = rm.AddUsedSymm(*eqiv);
+              rm.Conn.RemBond(satoms[aitr]->CAtom(), satoms[aitr]->CAtom(), NULL, &e, true);
+              XApp.GetLog() << (olxstr("The atom" ) << satoms[aitr]->GetLabel() << 
+                " is connected to itself through symmetry, removing the symmetry generated bond\n");
+              delete eqiv;
+            }
+            //
+            int afix = TXlConGen::ShelxToOlex(Hfix, AE);
+            if( afix != -1 )  {
+              xlConGen.FixAtom(AE, afix, TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex), NULL, &generated);
+              for( size_t j=0; j < generated.Count(); j++ )  {
+                generated[j]->SetPart( parts[i] );
+                rm.Vars.SetParam(*generated[j], catom_var_name_Sof, occu[i]);
+              }
+              if( !generated.IsEmpty() && generated[0]->GetParentAfixGroup() != NULL )
+                generated[0]->GetParentAfixGroup()->SetAfix(Hfix); // a hack again
+              generated.Clear();
+            }
+            else  {
+              XApp.GetLog() << (olxstr("Failed to translate HFIX code for ") << satoms[aitr]->GetLabel() << 
+                " with " << AE.Count() << " bonds\n");
+            }
+          }
+        }
       }
     }
+  }
+  catch(const TExceptionBase& e)  {
+    Error.ProcessingError(__OlxSrcInfo, e.GetException()->GetError());
   }
   if( q_draw != NULL )  q_draw->SetEnabled(true);
   XApp.XFile().GetLattice().Init();
@@ -3199,11 +3203,11 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
     return;
   }
   smatd_list ml;
-  sg->GetMatrices(ml, mattAll );
-  TTypeList< AnAssociation3<vec3d,TCAtom*, int> > list;
-  uc.GenereteAtomCoordinates(list, false);
+  sg->GetMatrices(ml, mattAll);
+  TTypeList<AnAssociation3<vec3d,TCAtom*, int> > list;
+  uc.GenereteAtomCoordinates(list, true);
   if( Cmds.Count() == 4 )  {
-    vec3d trans( Cmds[0].ToDouble(), Cmds[1].ToDouble(), Cmds[2].ToDouble());
+    vec3d trans(Cmds[0].ToDouble(), Cmds[1].ToDouble(), Cmds[2].ToDouble());
     for( size_t i=0; i < list.Count(); i++ )  {
       list[i].A() += trans;
       list[i].SetC(1);
@@ -3239,11 +3243,11 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
     TCAtom* ca;
     if( list[i].GetB()->GetTag() > 0 )  {
       ca = &au.NewAtom();
-      ca->Assign( *list[i].GetB() );
+      ca->Assign(*list[i].GetB());
     }
     else  {
       ca = list[i].GetB();
-      ca->SetTag( ca->GetTag() + 1 );
+      ca->SetTag(ca->GetTag() + 1);
     }
     ca->ccrd() = list[i].GetA();
     ca->AssignEllp(NULL);

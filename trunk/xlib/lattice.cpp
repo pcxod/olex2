@@ -1091,8 +1091,9 @@ void TLattice::MoveToCenter()  {
     delete m;
   }
   if( !Generated )  {  
-    GetUnitCell().UpdateEllipsoids();
-    Uniq();
+    OnStructureUniq->Enter(this);
+    Init();
+    OnStructureUniq->Exit(this);
   }
   else  {
     RestoreCoordinates();
@@ -1150,38 +1151,45 @@ void TLattice::Compaq()  {
       delete m;
     }
   }
-  GetUnitCell().UpdateEllipsoids();
-  Uniq();
+  OnStructureUniq->Enter(this);
+  Init();
+  OnStructureUniq->Exit(this);
 }
 //..............................................................................
 void TLattice::CompaqAll()  {
   if( Generated || Fragments.Count() < 2 )  return;
-  for( size_t i=0; i < Fragments.Count(); i++ )  {
-    for( size_t j=i+1; j < Fragments.Count(); j++ )  {
-      smatd* m = NULL;
-      for( size_t k=0; k < Fragments[i]->NodeCount(); k++ )  {
-        TSAtom& fa = Fragments[i]->Node(k);
-        for( size_t l=0; l < Fragments[j]->NodeCount(); l++ )  {
-          if( Fragments[j]->Node(l).CAtom().IsAttachedTo( fa.CAtom() ) )  {
-            m = GetUnitCell().GetClosest(fa.CAtom().ccrd(), Fragments[j]->Node(l).CAtom().ccrd(), true);
-            if( m != NULL )  break;
+  OnStructureUniq->Enter(this);
+  bool changes = true;
+  while( changes )  {
+    changes = false;
+    for( size_t i=0; i < Fragments.Count(); i++ )  {
+      for( size_t j=i+1; j < Fragments.Count(); j++ )  {
+        smatd* m = NULL;
+        for( size_t k=0; k < Fragments[i]->NodeCount(); k++ )  {
+          TSAtom& fa = Fragments[i]->Node(k);
+          for( size_t l=0; l < Fragments[j]->NodeCount(); l++ )  {
+            if( Fragments[j]->Node(l).CAtom().IsAttachedTo(fa.CAtom()) )  {
+              m = GetUnitCell().GetClosest(fa.CAtom().ccrd(), Fragments[j]->Node(l).CAtom().ccrd(), true);
+              if( m != NULL )  break;
+            }
           }
+          if( m != NULL )  break;
         }
-        if( m != NULL )  break;
+        if( m == NULL )  continue;
+        changes = true;
+        for( size_t k=0; k < Fragments[j]->NodeCount(); k++ )  {
+          TSAtom& SA = Fragments[j]->Node(k);
+          if( SA.IsDeleted() )  continue;
+          SA.CAtom().ccrd() = *m * SA.CAtom().ccrd();
+          if( SA.CAtom().GetEllipsoid() != NULL )
+            *SA.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(m->GetContainerId(), SA.CAtom().GetId());
+        }
+        delete m;
       }
-      if( m == NULL )  continue;
-      for( size_t k=0; k < Fragments[j]->NodeCount(); k++ )  {
-        TSAtom& SA = Fragments[j]->Node(k);
-        if( SA.IsDeleted() )  continue;
-        SA.CAtom().ccrd() = *m * SA.CAtom().ccrd();
-        if( SA.CAtom().GetEllipsoid() != NULL )
-          *SA.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(m->GetContainerId(), SA.CAtom().GetId());
-      }
-      delete m;
     }
+    Init();
   }
-  GetUnitCell().UpdateEllipsoids();
-  Uniq();
+  OnStructureUniq->Exit(this);
 }
 //..............................................................................
 void TLattice::CompaqClosest()  {
@@ -1244,8 +1252,9 @@ void TLattice::CompaqClosest()  {
       delete transform;
     }
   }
-  GetUnitCell().UpdateEllipsoids();
-  Uniq();
+  OnStructureUniq->Enter(this);
+  Init();
+  OnStructureUniq->Exit(this);
 }
 //..............................................................................
 void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform)  {
@@ -1270,8 +1279,9 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& tra
       }
     }
   }
-  GetUnitCell().UpdateEllipsoids();
-  Uniq();
+  OnStructureUniq->Enter(this);
+  Init();
+  OnStructureUniq->Exit(this);
 }
 //..............................................................................
 void TLattice::UpdateConnectivity()  {
