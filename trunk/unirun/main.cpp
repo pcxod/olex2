@@ -211,14 +211,14 @@ void DoRun()  {
         for( size_t i=0; i < repos.Count(); i++ )
           TBasicApp::GetLog() << (i+1) << ": " << repos[i].c_str() << '\n';
         TBasicApp::GetLog() << (repos.Count()+1) << ": Cancel\n";
-        int repo_ind = 0;
+        size_t repo_ind = 0;
         while( true )  {
           TBasicApp::GetLog() << "Your choice: ";
           cin >> repo_ind;
           if( cin.fail() )  continue;
           if( repo_ind == repos.Count()+1 )
             return;
-          if( repo_ind > 0 && repo_ind <= repos.Count() )
+          if( repo_ind <= repos.Count() )
             break;
         }
         repo = repos[repo_ind-1];

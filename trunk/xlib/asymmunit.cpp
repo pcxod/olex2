@@ -45,7 +45,6 @@ TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*(new TResidue(*this, 0)))  {
   Latt = -1;
   Assigning = false;
   Z = 1;
-  ContainsEquivalents = false;
   OnSGChange = &Actions.NewQueue("AU_SG_CHANGE");
   RefMod = NULL;
 }
@@ -71,7 +70,6 @@ void  TAsymmUnit::Clear()  {
   Ellipsoids.Clear();
   Latt = -1;
   Z = 1;
-  ContainsEquivalents = false;
 }
 //..............................................................................
 void TAsymmUnit::Assign(const TAsymmUnit& C)  {
@@ -112,7 +110,6 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   UcifToUxyzT    = C.UcifToUxyzT;
   UxyzToUcifT    = C.UxyzToUcifT;
 
-  SetContainsEquivalents( C.DoesContainEquivalents() );
   MaxQPeak = C.GetMaxQPeak();
   MinQPeak = C.GetMinQPeak();
   Assigning = false;
