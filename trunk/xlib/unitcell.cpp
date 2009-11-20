@@ -208,30 +208,34 @@ const TEllipsoid& TUnitCell::GetEllipsoid(size_t MatrixId, size_t AUId) const  {
 }
 //..............................................................................
 TUnitCell::TSearchSymmEqTask::TSearchSymmEqTask(TPtrList<TCAtom>& atoms,
-  const smatd_list& matrices, TStrList& report, double tol, bool initialise) :
-                  Atoms(atoms), Matrices(matrices), Report(report), tolerance(tol)  {
-  Initialise = initialise;
+  const smatd_list& matrices, double tol) :
+  Atoms(atoms), Matrices(matrices), tolerance(tol)
+{
   AU = atoms[0]->GetParent();
   Latt = &AU->GetLattice();
 }
 //..............................................................................
-void TUnitCell::TSearchSymmEqTask::Run(size_t ind)  {
+void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
   const size_t ac = Atoms.Count();
+  const size_t mc = Matrices.Count();
   for( size_t i=ind; i < ac; i++ )  {
-    if( Atoms[i]->GetTag() == -1 )  continue;
-    for( size_t j=0; j < Matrices.Count(); j++ )  {
+    if( Atoms[i]->IsDeleted() )  continue;
+    for( size_t j=0; j < mc; j++ )  {
       vec3d v = Atoms[ind]->ccrd() - Matrices[j] * Atoms[i]->ccrd();
-      int iLx = olx_round(v[0]);  v[0] -= iLx;
-      int iLy = olx_round(v[1]);  v[1] -= iLy;
-      int iLz = olx_round(v[2]);  v[2] -= iLz;
-      // skip I
-      if( j == 0 && (iLx|iLy|iLz) == 0 )  {
-        if( !Initialise || ind == i )  continue;
-        if( Atoms[i]->GetFragmentId() == Atoms[ind]->GetFragmentId() )  continue;
+      const int iLx = olx_round(v[0]);  v[0] -= iLx;
+      const int iLy = olx_round(v[1]);  v[1] -= iLy;
+      const int iLz = olx_round(v[2]);  v[2] -= iLz;
+      if( j == 0 && (iLx|iLy|iLz) == 0 )  {  // I
+        if( ind == i || Atoms[i]->GetFragmentId() == Atoms[ind]->GetFragmentId() )  continue;
         AU->CellToCartesian(v);
+        const double d = v.Length();
+        if( d < tolerance )  {
+          Atoms[i]->SetDeleted(true);
+          continue;
+        }
         if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Matrices[j], v.Length()) )  {
-          Atoms[ind]->AttachAtomI( Atoms[i] );
-          Atoms[i]->AttachAtomI( Atoms[ind] );
+          Atoms[ind]->AttachAtomI(Atoms[i]);
+          Atoms[i]->AttachAtomI(Atoms[ind]);
         }
         continue;
       }
@@ -240,42 +244,37 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind)  {
       const double Dis = v.Length();
       if( (j != 0) && (Dis < tolerance) )  {
         if( i == ind )  {
-          if( Initialise )  
-            Atoms[ind]->SetDegeneracy( Atoms[ind]->GetDegeneracy() + 1 );
+          Atoms[ind]->SetDegeneracy(Atoms[ind]->GetDegeneracy() + 1);
           continue;
         }
-        //keep atoms of different type (EXYZ)
-        if( Atoms[i]->GetAtomInfo() != Atoms[ind]->GetAtomInfo() ) 
+        if( Atoms[i]->GetExyzGroup() != NULL && Atoms[i]->GetExyzGroup() == Atoms[ind]->GetExyzGroup() ) 
           continue;  
-        Report.Add( olxstr(Atoms[ind]->Label(), 10) << '-' << Atoms[i]->GetLabel() );
-        Atoms[i]->SetTag(-1);
-        break;
+        Atoms[i]->SetDeleted(true);
       }
       else  {
-        if( !Initialise )  continue;
         if( Latt->GetNetwork().CBondExists(*Atoms[ind], *Atoms[i], Matrices[j], Dis) )  {
           Atoms[ind]->SetGrowable(true);
-          if( Atoms[ind]->IsAttachedTo( *Atoms[i] ) )  
+          if( Atoms[ind]->IsAttachedTo(*Atoms[i]) )  
             continue;
-          Atoms[ind]->AttachAtom( Atoms[i] );
+          Atoms[ind]->AttachAtom(Atoms[i]);
           if( i != ind )  {
             Atoms[i]->SetGrowable(true);
             Atoms[i]->AttachAtom(Atoms[ind]);
           }
         }
         else if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Matrices[j], Dis) )  {
-          if( Atoms[ind]->IsAttachedToI( *Atoms[i] ) )
+          if( Atoms[ind]->IsAttachedToI(*Atoms[i]) )
             continue;
-          Atoms[ind]->AttachAtomI( Atoms[i] );
+          Atoms[ind]->AttachAtomI(Atoms[i]);
           if( i != ind )
-            Atoms[i]->AttachAtomI( Atoms[ind] );
+            Atoms[i]->AttachAtomI(Atoms[ind]);
         }
       }
     }
   }
 }
 //..............................................................................
-size_t TUnitCell::FindSymmEq(double tol, bool Initialise, bool remove, bool markDeleted, TEStrBuffer* Msg) const  {
+void TUnitCell::FindSymmEq(double tol) const  {
   TStrList report;
   TCAtomPList ACA;
   // sorting the content of the asymmetric unit in order to improve the algorithm
@@ -286,37 +285,17 @@ size_t TUnitCell::FindSymmEq(double tol, bool Initialise, bool remove, bool mark
   for( size_t i=0; i < GetLattice().GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& A1 = GetLattice().GetAsymmUnit().GetAtom(i);
     if( A1.IsDeleted() )  continue;
-    ACA.Add( &A1 );
-    A1.SetTag(0);
-    if( Initialise )
-      A1.ClearAttachedAtoms();
+    ACA.Add(A1)->SetTag(0);  
+    A1.ClearAttachedAtoms();
+    A1.SetDegeneracy(1);
   }
   // searching for symmetrical equivalents; the search could be optimised by
   // removing the translational equivalents in the firts order; however the task is not
   // very common, so it should be OK. (An identity (E) matrix is in the list
   // so translational equivalents will be removed too
-  if( ACA.IsEmpty() )  return 0;
-  TSearchSymmEqTask searchTask(ACA, Matrices, report, tol, Initialise);
-
+  if( ACA.IsEmpty() )  return;
+  TSearchSymmEqTask searchTask(ACA, Matrices, tol);
   TListIteratorManager<TSearchSymmEqTask> searchm(searchTask, ACA.Count(), tQuadraticTask, 1000);
-
-  //if( remove )  {
-  //  for( int i=0; i < ACA.Count(); i++ )
-  //    if( ACA[i]->GetTag() == -1 )
-  //      GetLattice().GetAsymmUnit().NullAtom( ACA[i]->GetId() );
-  //  GetLattice().GetAsymmUnit().PackAtoms(); // remove the NULL pointers
-  //}
-  //else if( markDeleted )  {
-  //  for( int i=0; i < ACA.Count(); i++ )
-  //    if( ACA[i]->GetTag() == -1 )
-  //      GetLattice().GetAsymmUnit().NullAtom( ACA[i]->GetId() );
-  //  GetLattice().GetAsymmUnit().PackAtoms(); // remove the NULL pointers
-  //}
-  if( !report.IsEmpty() && Msg != NULL )  {
-    (*Msg) << "Symmetrical equivalents: ";
-    (*Msg) << report.Text(';');
-  }
-  return report.Count();
 }
 //..............................................................................
 smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal, double* dist) const  {
@@ -332,8 +311,7 @@ smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOr
   }
   for( size_t i=0; i < Matrices.Count(); i++ )  {
     const smatd& matr = Matrices[i];
-    V1 = matr * from;
-    V1 -= to;
+    V1 = matr * from - to;
     const int ix = olx_round(V1[0]);  V1[0] -= (ix);  // find closest distance
     const int iy = olx_round(V1[1]);  V1[1] -= (iy);
     const int iz = olx_round(V1[2]);  V1[2] -= (iz);
@@ -344,12 +322,12 @@ smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOr
     if( D < minD )  {
       minD = D;
       minMatr = &matr;
-      minix = ix;  miniy = iy; miniz = iz;
+      minix = ix;  miniy = iy;  miniz = iz;
     }
     else  {
       if( D == minD && minMatr == NULL )  {
         minMatr = &matr;
-        minix = ix;  miniy = iy; miniz = iz;
+        minix = ix;  miniy = iy;  miniz = iz;
       }
     }
   }

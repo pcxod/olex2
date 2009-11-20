@@ -245,6 +245,12 @@ void TCifLoop::UpdateTable()  {
     }
   }
   FTable.SortRows<CifLoopSorter>();
+  size_t pi = FTable.ColIndex("_atom_site_disorder_group");
+  if( pi != InvalidIndex )  {
+    for( size_t i=0; i < FTable.RowCount(); i++ )
+      if( FTable[i].GetObject(0)->CA != NULL && FTable[i].GetObject(0)->CA->GetPart() != 0 )
+        FTable[i][pi] = (int)FTable[i].GetObject(0)->CA->GetPart();
+  }
 }
 //----------------------------------------------------------------------------//
 // TCifValue function bodies
@@ -435,7 +441,8 @@ next_loop:
           goto exit;
         }
         Tmp = Lines[i];
-        if( Tmp == "loop_" )  goto finalize_loop;   // a new loop started
+        if( Tmp == "loop_" || Tmp.StartsFrom("data_") )
+          goto finalize_loop;   // a new loop or dataset started
         if( Tmp.IsEmpty() )   continue;
         else  
           Char = Tmp.CharAt(0);
@@ -496,16 +503,14 @@ finalize_loop:
       D->String = String;
     }
     else  {
-      if( !FDataName.Length() )  {
-        olxstr tmp = Tmp.SubStringTo(4);
-        if( tmp == "data" )  {
-          if( FDataNameUpperCase )
-            FDataName = Tmp.SubStringFrom(5).UpperCase();
-          else
-            FDataName = Tmp.SubStringFrom(5);
-          FDataName.DeleteSequencesOf(' ');
-          Lines[i] = (tmp << '_' << FDataName);
-        }
+      if( Tmp.StartsFrom("data_") )  {
+        if( FDataNameUpperCase )
+          FDataName = Tmp.SubStringFrom(5).UpperCase();
+        else
+          FDataName = Tmp.SubStringFrom(5);
+        FDataName.DeleteSequencesOf(' ');
+        Lines[i] = "data_";
+        Lines[i] << FDataName;
       }
     }
   }

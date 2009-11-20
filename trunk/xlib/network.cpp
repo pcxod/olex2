@@ -79,7 +79,7 @@ void TNetwork::TDisassembleTaskRemoveSymmEq::Run(size_t index)  {
   const size_t ac = Atoms.Count();
   for( size_t i=index+1; i < ac; i++ )  {
     if( olx_abs(Distances[0][index] - Distances[0][i]) > 0.01 )  return;
-    if( Atoms[index]->crd().QDistanceTo( Atoms[i]->crd() ) < 0.0001 )  {
+    if( Atoms[index]->crd().QDistanceTo(Atoms[i]->crd()) < 0.0001 )  {
      // treat EXYZ atoms - only combine if both atoms refer to the same one in the AU
       if( Atoms[index]->CAtom().GetExyzGroup() != NULL && 
         Atoms[index]->CAtom().GetId() != Atoms[i]->CAtom().GetId() )  
@@ -99,7 +99,7 @@ void TNetwork::TDisassembleTaskCheckConnectivity::Run(size_t index)  {
     if( olx_abs(Distances[2][i] - Distances[2][index]) > dcMaxCBLength )  continue;
     if( olx_abs(Distances[3][i] - Distances[3][index]) > dcMaxCBLength  )  continue;
 
-    const double D = Atoms[index]->crd().QDistanceTo( Atoms[i]->crd());
+    const double D = Atoms[index]->crd().QDistanceTo(Atoms[i]->crd());
     const double D1 = olx_sqr(Atoms[index]->CAtom().GetConnInfo().r + Atoms[i]->CAtom().GetConnInfo().r + Delta);
     if(  D < D1 && IsBondAllowed(*Atoms[index], *Atoms[i]) )  {
       if( D < 1e-5 )  // EXYZ?

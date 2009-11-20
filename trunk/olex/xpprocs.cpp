@@ -2472,7 +2472,8 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   for( size_t i=0; i < partCount; i++ )  {
     for( size_t j=(Atoms.Count()/partCount)*i; j < (Atoms.Count()/partCount)*(i+1); j++ )  {
-      Atoms[j]->Atom().CAtom().SetPart( part );
+      Atoms[j]->Atom().CAtom().SetPart(part);
+      if( TAtomsInfo::IsHAtom(Atoms[j]->Atom().GetAtomInfo()) ) continue;
       for( size_t k=0; k <  Atoms[j]->Atom().NodeCount(); k++ )  {
         TSAtom& SA = Atoms[j]->Atom().Node(k);
         if( SA.GetAtomInfo() == iHydrogenIndex )

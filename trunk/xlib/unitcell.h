@@ -43,11 +43,8 @@ public:
   // expands the lattice centering and '-1' and caches ellipsoids for all symmetry operators
   void InitMatrices();
 
-  /* returns the number of symmetrical equivalents present within the atoms
-   Optional Msg parameter might be provided for logging 
-   use 'remove' controls if equivalent atoms will be removed or left
-  */
-  size_t FindSymmEq(double tol, bool Initialize, bool remove, bool markDeleted, TEStrBuffer* Msg=NULL) const;
+  /* Removes symm eqivs and initialises symmetry induced connectivity */
+  void FindSymmEq(double tol) const;
 
   /* the funciton searches a matrix which moves "atom" to "to" so that the
    distance between them is shortest and return the matrix, which if not NULL
@@ -238,17 +235,14 @@ protected:
   class TSearchSymmEqTask  {
     TPtrList<TCAtom>& Atoms;
     const smatd_list& Matrices;
-    TStrList& Report;
-    bool Initialise;
     double tolerance;
     TAsymmUnit* AU;
     TLattice* Latt;
   public:
-    TSearchSymmEqTask(TPtrList<TCAtom>& atoms, const smatd_list& matrices, TStrList& report,
-                      double tol, bool initialise);
-    void Run(size_t ind);
+    TSearchSymmEqTask(TPtrList<TCAtom>& atoms, const smatd_list& matrices, double tol);
+    void Run(size_t ind) const;
     TSearchSymmEqTask* Replicate() const  {
-      return new TSearchSymmEqTask(Atoms, Matrices, Report, tolerance, Initialise);
+      return new TSearchSymmEqTask(Atoms, Matrices, tolerance);
     }
   };
 public:
