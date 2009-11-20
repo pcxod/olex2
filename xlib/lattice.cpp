@@ -1232,6 +1232,8 @@ void TLattice::CompaqClosest()  {
         if( fb.CAtom().GetEllipsoid() != NULL )
           *fb.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(transform->GetContainerId(), fb.CAtom().GetId());
       }
+      // this needs to be done if any one fragment is transformed multiple times...
+      GetUnitCell().UpdateEllipsoids();
       delete transform;
     }
   }

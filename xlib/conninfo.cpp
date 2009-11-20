@@ -7,24 +7,34 @@ void ConnInfo::ProcessFree(const TStrList& ins)  {
   TCAtomGroup ag;
   size_t aag;
   try  {  ar.Expand(rm, ag, EmptyString, aag);  }
-  catch(TExceptionBase& ex)  {
-    throw TFunctionFailedException(__OlxSourceInfo, ex, "Failed to locate atoms");
+  catch(const TExceptionBase&)  {
+    TBasicApp::GetLog().Error(olxstr("Could not locate atoms for FREE ") << ar.GetExpression());
+    return;
   }
-  if( ag.Count() != 2 )
-    throw TFunctionFailedException(__OlxSourceInfo, "Two atoms are expected for FREE");
-  if( ag[0].GetMatrix() != NULL && ag[1].GetMatrix() != NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "At maximum one equivalent position is expectd for FREE");
-  // validate
-  if( ag[0].GetAtom()->GetId() == ag[1].GetAtom()->GetId() )  {
-    if( (ag[0].GetMatrix() != NULL && ag[0].GetMatrix()->r.IsI() && ag[0].GetMatrix()->t.IsNull()) || 
-        (ag[1].GetMatrix() != NULL && ag[1].GetMatrix()->r.IsI() && ag[1].GetMatrix()->t.IsNull()) || 
-        ag[0].GetMatrix() == NULL && ag[1].GetMatrix() == NULL )  
-    {
-      TBasicApp::GetLog().Error(  olxstr("Skipping: FREE ") << ar.GetExpression() );
-      return;
+  if( ag.Count() == 0 || (ag.Count()%2) != 0 )  {
+    TBasicApp::GetLog().Error(olxstr("Even number of atoms is expected for FREE ") <<
+      ar.GetExpression() << ' ' << ag.Count() << " is provided");
+    return;
+  }
+  for( size_t i=0; i < ag.Count(); i += 2 )  {
+    if( ag[i].GetMatrix() != NULL && ag[i+1].GetMatrix() != NULL )  {
+      TBasicApp::GetLog().Error(olxstr("Only one eqivalent is expected in FREE, skipping ") << 
+        ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm) );
+      continue;
     }
+    // validate
+    if( ag[i].GetAtom()->GetId() == ag[i+1].GetAtom()->GetId() )  {
+      if( (ag[i].GetMatrix() != NULL && ag[i].GetMatrix()->r.IsI() && ag[i].GetMatrix()->t.IsNull()) || 
+        (ag[i+1].GetMatrix() != NULL && ag[i+1].GetMatrix()->r.IsI() && ag[i+1].GetMatrix()->t.IsNull()) || 
+        ag[i].GetMatrix() == NULL && ag[i+1].GetMatrix() == NULL )  
+      {
+        TBasicApp::GetLog().Error(olxstr("Dummy  FREE, skipping ") <<
+          ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm) );
+        continue;
+      }
+    }
+    RemBond(*ag[i].GetAtom(), *ag[i+1].GetAtom(), ag[i].GetMatrix(), ag[i+1].GetMatrix(), true );
   }
-  RemBond( *ag[0].GetAtom(), *ag[1].GetAtom(), ag[0].GetMatrix(), ag[1].GetMatrix(), true );
 }
 //........................................................................
 void ConnInfo::ProcessBind(const TStrList& ins)  {
@@ -32,24 +42,34 @@ void ConnInfo::ProcessBind(const TStrList& ins)  {
   TCAtomGroup ag;
   size_t aag;
   try  {  ar.Expand(rm, ag, EmptyString, aag);  }
-  catch(TExceptionBase& ex)  {
-    throw TFunctionFailedException(__OlxSourceInfo, ex, "Failed to locate atoms");
+  catch(const TExceptionBase&)  {
+    TBasicApp::GetLog().Error(olxstr("Could not locate atoms for BIND ") << ar.GetExpression());
+    return;
   }
-  if( ag.Count() != 2 )
-    throw TFunctionFailedException(__OlxSourceInfo, "Two atoms are expected for BIND");
-  if( ag[0].GetMatrix() != NULL && ag[1].GetMatrix() != NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "At maximum one equivalent position is expectd for BIND");
-  // validate
-  if( ag[0].GetAtom()->GetId() == ag[1].GetAtom()->GetId() )  {
-    if( (ag[0].GetMatrix() != NULL && ag[0].GetMatrix()->r.IsI() && ag[0].GetMatrix()->t.IsNull()) || 
-        (ag[1].GetMatrix() != NULL && ag[1].GetMatrix()->r.IsI() && ag[1].GetMatrix()->t.IsNull()) || 
-        ag[0].GetMatrix() == NULL && ag[1].GetMatrix() == NULL )  
-    {
-      TBasicApp::GetLog().Error(  olxstr("Skipping: BIND ") << ar.GetExpression() );
-      return;
+  if( ag.Count() == 0 || (ag.Count()%2) != 0 )  {
+    TBasicApp::GetLog().Error(olxstr("Even number of atoms is expected for FREE ") <<
+      ar.GetExpression() << ' ' << ag.Count() << " is provided");
+    return;
+  }
+  for( size_t i=0; i < ag.Count(); i += 2 )  {
+    if( ag[i].GetMatrix() != NULL && ag[i+1].GetMatrix() != NULL )  {
+      TBasicApp::GetLog().Error(olxstr("Only one eqivalent is expected in BIND, skipping ") << 
+        ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm) );
+      continue;
     }
+    // validate
+    if( ag[i].GetAtom()->GetId() == ag[i+1].GetAtom()->GetId() )  {
+      if( (ag[i].GetMatrix() != NULL && ag[i].GetMatrix()->r.IsI() && ag[i].GetMatrix()->t.IsNull()) || 
+        (ag[i+1].GetMatrix() != NULL && ag[i+1].GetMatrix()->r.IsI() && ag[i+1].GetMatrix()->t.IsNull()) || 
+        ag[i].GetMatrix() == NULL && ag[i+1].GetMatrix() == NULL )  
+      {
+        TBasicApp::GetLog().Error(olxstr("Dummy  BIND, skipping ") <<
+          ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm) );
+        continue;
+      }
+    }
+    AddBond(*ag[i].GetAtom(), *ag[i+1].GetAtom(), ag[i].GetMatrix(), ag[i+1].GetMatrix(), true );
   }
-  AddBond( *ag[0].GetAtom(), *ag[1].GetAtom(), ag[0].GetMatrix(), ag[1].GetMatrix(), true );
 }
 //........................................................................
 void ConnInfo::ProcessConn(TStrList& ins)  {

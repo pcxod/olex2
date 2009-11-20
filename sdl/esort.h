@@ -288,7 +288,7 @@ public:
 template <class ListClass, class ItemClass > class TQuickSorter  {
   // static comparator sort
   template <class Comparator>
-    static index_t partition(ListClass& list, const Comparator& Cmp, size_t left, size_t right)  {
+    static size_t partition(ListClass& list, const Comparator& Cmp, size_t left, size_t right)  {
       const size_t pivot_index = (left+right)/2;
       const ItemClass& pivot = list.Item(pivot_index);
       list.Swap(pivot_index, right);
@@ -301,7 +301,7 @@ template <class ListClass, class ItemClass > class TQuickSorter  {
       return store_index;
     }
   template <class Comparator, class ListClassA>
-    static index_t partition(ListClass& list, ListClassA& list1, const Comparator& Cmp, size_t left, size_t right)  {
+    static size_t partition(ListClass& list, ListClassA& list1, const Comparator& Cmp, size_t left, size_t right)  {
       const size_t pivot_index = (left+right)/2;
       const ItemClass& pivot = list.Item(pivot_index);
       list.Swap(pivot_index, right);
@@ -487,7 +487,7 @@ public:
 template <class ListClass, class ItemClass > class TQuickObjectSorter  {
   // static comparator sort
   template <class Comparator>
-    static index_t partition(ListClass& list, const Comparator& Cmp, size_t left, size_t right)  {
+    static size_t partition(ListClass& list, const Comparator& Cmp, size_t left, size_t right)  {
       const size_t pivot_index = (left+right)/2;
       ItemClass pivot = list.Item(pivot_index);
       list.Swap(pivot_index, right);
@@ -500,7 +500,7 @@ template <class ListClass, class ItemClass > class TQuickObjectSorter  {
       return store_index;
     }
   template <class Comparator, class ListClassA>
-    static index_t partition(ListClass& list, ListClassA& list1, const Comparator& Cmp, size_t left, size_t right)  {
+    static size_t partition(ListClass& list, ListClassA& list1, const Comparator& Cmp, size_t left, size_t right)  {
       const size_t pivot_index = (left+right)/2;
       ItemClass pivot = list.Item(pivot_index);
       list.Swap(pivot_index, right);

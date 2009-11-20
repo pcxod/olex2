@@ -82,7 +82,7 @@ class TSymmParser  {
   }
   // can tace both TAsymmUnit or TUnitCell
   template <class MC>
-  static smatd _SymmCodeToMatrix(const MC& au, const olxstr& Code, index_t* index=NULL)  {
+  static smatd _SymmCodeToMatrix(const MC& au, const olxstr& Code, size_t* index=NULL)  {
     TStrList Toks(Code, '_');
     smatd mSymm;
     if( Toks.Count() == 1 )  {  // standard XP symm code like 3444
@@ -127,9 +127,9 @@ public:
   static smatd SymmCodeToMatrixA(const class TAsymmUnit& AU, const olxstr& Code);
   // return a matrix representation of 1_555 or 1_555555 code for the the list of matrices
   static smatd SymmCodeToMatrix(const smatd_list& ml, const olxstr& Code)  {
-    index_t index = -1;
+    size_t index = InvalidIndex;
     smatd rv = _SymmCodeToMatrix(sml_converter(ml), Code, &index);
-    if( index != -1 )
+    if( index != InvalidIndex )
       rv.SetId(smatd::GenerateId((uint8_t)index, rv, ml[index]));
     return rv;
   }

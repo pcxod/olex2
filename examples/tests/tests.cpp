@@ -58,7 +58,7 @@ int main(int argc, char* argv[])  {
     if( macSG == NULL || macWilson == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "could not locate library function");
     uint64_t time_start = TETime::msNow();
-    for( int i=0; i < files.Count(); i++ )  {
+    for( size_t i=0; i < files.Count(); i++ )  {
       olxstr hkl( TEFile::ChangeFileExt(files[i], "hkl") );
       if( TEFile::Exists(hkl) )  {
         XApp.GetLog() << files[i] << '\n';
@@ -93,7 +93,7 @@ int main(int argc, char* argv[])  {
           }
           else  {
             logf.Writenl("Possible space groups: ");
-            for( int sgc=0; sgc < sgs.Count(); sgc++ )
+            for( size_t sgc=0; sgc < sgs.Count(); sgc++ )
               logf.Write( olxstr(' ') << sgs[sgc]->GetName() );
             logf << '\n';
             // run wilson
@@ -114,7 +114,7 @@ int main(int argc, char* argv[])  {
                   WilsonAgreedCount++;
               }
               
-              for( int sgc=0; sgc < sgs.Count(); sgc++ )  {
+              for( size_t sgc=0; sgc < sgs.Count(); sgc++ )  {
                 if( sgs[sgc]->IsCentrosymmetric() == centro )  {
                   found_sg = sgs[sgc];
                   break;
