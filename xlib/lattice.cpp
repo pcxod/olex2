@@ -280,7 +280,7 @@ void TLattice::InitBody()  {
   size_t bondCnt = Bonds.Count();
   for( size_t i=0; i < Fragments.Count(); i++ )
     bondCnt += Fragments[i]->BondCount();
-  Bonds.SetCapacity( bondCnt + 1);
+  Bonds.SetCapacity(bondCnt + 1);
   // end
   for( size_t i=0; i < Fragments.Count(); i++ )  {
     TNetwork* Frag = Fragments[i];
@@ -301,8 +301,7 @@ void TLattice::Init()  {
   GetUnitCell().InitMatrices();
   Generated = false;
   InitBody();
-  size_t eqc = GetUnitCell().FindSymmEq(0.1, true, false, false); // find and not remove
-  GetAsymmUnit().SetContainsEquivalents(eqc != 0);
+  GetUnitCell().FindSymmEq(0.1); // find and not remove
 }
 //..............................................................................
 void  TLattice::Uniq(bool remEqv)  {
@@ -310,15 +309,7 @@ void  TLattice::Uniq(bool remEqv)  {
   Clear(false);
   ClearMatrices();
   GetUnitCell().UpdateEllipsoids();  // if new atoms are created...
-  if( GetAsymmUnit().DoesContainEquivalents() && remEqv )  {
-    GetUnitCell().FindSymmEq(0.1, true, false, true);
-    //TBasicApp::GetLog()->CriticalInfo(olxstr("Symmetrical counterparts were removed for: ") << Msg.ToString() );
-    GetAsymmUnit().SetContainsEquivalents(false);
-    Init();
-  }
-  else  {
-    InitBody();
-  }
+  InitBody();
   Generated = false;
   OnStructureUniq->Exit(this);
 }
@@ -448,15 +439,8 @@ void TLattice::GenerateCell(bool includeQ)  {
 void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
        bool ClearCont, bool IncludeQ)  
 {
-  if( GetAsymmUnit().DoesContainEquivalents() )  {
-    TBasicApp::GetLog().Error("TLattice:: Asymmetric unit contains symmetrical equivalents.");
-    return;
-  }
-  vec3d VFrom, VTo;
-
-  VTo[0] = olx_round(MTo[0]+1);     VTo[1] = olx_round(MTo[1]+1);     VTo[2] = olx_round(MTo[2]+1);
-  VFrom[0] = olx_round(MFrom[0]-1); VFrom[1] = olx_round(MFrom[1]-1); VFrom[2] = olx_round(MFrom[2]-1);
-
+  vec3d VTo(olx_round(MTo[0]+1), olx_round(MTo[1]+1), olx_round(MTo[2]+1));
+  vec3d VFrom(olx_round(MFrom[0]-1), olx_round(MFrom[1]-1), olx_round(MFrom[2]-1));
   if( ClearCont )  {
     ClearAtoms();
     ClearMatrices();
@@ -468,11 +452,8 @@ void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Templ
 }
 //..............................................................................
 void TLattice::Generate(const vec3d& center, double rad, TCAtomPList* Template,
-       bool ClearCont, bool IncludeQ)  {
-  if( GetAsymmUnit().DoesContainEquivalents() )  {
-    TBasicApp::GetLog().Error("TLattice:: Asymmetric unit contains symmetrical equivalents.");
-    return;
-  }
+       bool ClearCont, bool IncludeQ)
+{
   if( ClearCont )  {
     ClearAtoms();
     ClearMatrices();
@@ -906,8 +887,6 @@ void TLattice::UpdateAsymmUnit()  {
       ca.UpdateEllp(*OA->GetEllipsoid());
     ca.ccrd() = OA->ccrd();
   }
-  if( GetAsymmUnit().DoesContainEquivalents() )
-    AsymmUnit->SetContainsEquivalents( UnitCell->FindSymmEq(0.1, false, false, false) != 0 );
 }
 //..............................................................................
 void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool IncludeQ)  {
@@ -1159,6 +1138,7 @@ void TLattice::Compaq()  {
 void TLattice::CompaqAll()  {
   if( Generated || Fragments.Count() < 2 )  return;
   OnStructureUniq->Enter(this);
+  OnDisassemble->SetEnabled(false);
   bool changes = true;
   while( changes )  {
     changes = false;
@@ -1166,10 +1146,10 @@ void TLattice::CompaqAll()  {
       for( size_t j=i+1; j < Fragments.Count(); j++ )  {
         smatd* m = NULL;
         for( size_t k=0; k < Fragments[i]->NodeCount(); k++ )  {
-          TSAtom& fa = Fragments[i]->Node(k);
+          const TSAtom& fa = Fragments[i]->Node(k);
           for( size_t l=0; l < Fragments[j]->NodeCount(); l++ )  {
             if( Fragments[j]->Node(l).CAtom().IsAttachedTo(fa.CAtom()) )  {
-              m = GetUnitCell().GetClosest(fa.CAtom().ccrd(), Fragments[j]->Node(l).CAtom().ccrd(), true);
+              m = GetUnitCell().GetClosest(fa.CAtom(), Fragments[j]->Node(l).CAtom(), false);
               if( m != NULL )  break;
             }
           }
@@ -1187,8 +1167,11 @@ void TLattice::CompaqAll()  {
         delete m;
       }
     }
-    Init();
+    if( changes )
+      Init();
   }
+  OnDisassemble->SetEnabled(true);
+  Init();
   OnStructureUniq->Exit(this);
 }
 //..............................................................................

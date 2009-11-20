@@ -38,10 +38,9 @@ class TAsymmUnit: public IXVarReferencerContainer, public IEObject  {
          MinQPeak;
   unsigned short Z;
   short Latt;
-  bool   ContainsEquivalents, 
-    /* this flag specifies that _OnAtomTypeChange will do nothing, however whatever called Assign
+  /* this flag specifies that _OnAtomTypeChange will do nothing, however whatever called Assign
     must call _UpdateConnInfo */
-         Assigning;
+  bool Assigning;
   class TLattice*   Lattice;    // parent lattice
   TEVPointD  FAxes;    // axes with errors
   TEVPointD  FAngles;    // angles + errors
@@ -193,9 +192,6 @@ public:
   olxstr CheckLabel(const TCAtom* ca, const olxstr &Label, char a='0', char b='a', char c='a') const;
   // checks of no maore than one atom has this label, if more than one - returns CheckLabel
   olxstr ValidateLabel(const olxstr &Label) const;
-
-  bool DoesContainEquivalents() const {  return ContainsEquivalents; }
-  void SetContainsEquivalents(bool v)  {  ContainsEquivalents = v; }
 
   inline double GetMaxQPeak() const {  return MaxQPeak;  }
   inline double GetMinQPeak() const {  return MinQPeak;  }

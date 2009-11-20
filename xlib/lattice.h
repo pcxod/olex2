@@ -45,9 +45,9 @@ protected:
   void ClearBonds();
   void ClearPlanes();
 
-  void AddSBond( TSBond *B );
-  void AddSAtom( TSAtom *A );
-  void AddSPlane( TSPlane *P );
+  void AddSBond(TSBond* B);
+  void AddSAtom(TSAtom* A);
+  void AddSPlane(TSPlane* P);
 
   class TUnitCell*  UnitCell;
   class TAsymmUnit* AsymmUnit;
@@ -116,7 +116,7 @@ public:
   inline TSAtom& GetAtom(size_t i) const {  return *Atoms[i];  }
   TSAtom* FindSAtom(const olxstr &Label) const;
   TSAtom* FindSAtom(const TCAtom& ca) const;
-  TSAtom* FindSAtom(const TSAtom::Ref& id) const  {
+  TSAtom* FindSAtom(const TSAtom::Ref& id) const {
     for( size_t i=0; i < Atoms.Count(); i++ )
       if( (*Atoms[i]) == id )
         return Atoms[i];
@@ -137,8 +137,8 @@ public:
 
   void SetAnis( const TCAtomPList& atoms, bool anis );
 
-  inline TUnitCell& GetUnitCell()           const {  return *UnitCell; }
-  inline TAsymmUnit& GetAsymmUnit()         const {  return *AsymmUnit; }
+  inline TUnitCell& GetUnitCell() const {  return *UnitCell; }
+  inline TAsymmUnit& GetAsymmUnit() const {  return *AsymmUnit; }
   void UpdateAsymmUnit();
 
   void MoveFragment(const vec3d& to, TSAtom& fragAtom);
@@ -156,10 +156,10 @@ public:
   void TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform);
 
   // beware - only pointers are compared
-  inline bool operator == (const TLattice& l)  const  {  return this == &l;  }
-  inline bool operator == (const TLattice* l)  const  {  return this == l;  }
-  inline bool operator != (const TLattice& l)  const  {  return this != &l;  }
-  inline bool operator != (const TLattice* l)  const  {  return this != l;  }
+  inline bool operator == (const TLattice& l) const {  return this == &l;  }
+  inline bool operator == (const TLattice* l) const {  return this == l;  }
+  inline bool operator != (const TLattice& l) const {  return this != &l;  }
+  inline bool operator != (const TLattice* l) const {  return this != l;  }
   struct GrowInfo  {
     smatd_plist matrices;  // the list of all matrices
     TArrayList<TIndexList> info;  // TCAtomId -> list of used matrices;
