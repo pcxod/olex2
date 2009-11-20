@@ -192,7 +192,7 @@ void TUnitCell::UpdateEllipsoids()  {
     for( size_t j=0; j < mc; j++ )  {
       if( olx_is_valid_index(A1.GetEllpId()) )  {
         TEllipsoid* E = new TEllipsoid;
-        E->SetId( j*ac+A1.GetId() );
+        E->SetId(j*ac+A1.GetId());
         *E = *A1.GetEllipsoid();
         E->MultMatrix(abc2xyz*Matrices[j].r*xyz2abc);
         Ellipsoids[i][j] = E;

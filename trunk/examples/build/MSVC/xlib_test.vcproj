@@ -369,10 +369,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\repository\integration.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\repository\olxvar.cpp"
 				>
 			</File>

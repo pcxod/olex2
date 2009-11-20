@@ -256,8 +256,12 @@ void RefinementModel::AddNewSfac(const olxstr& _label,
   const olxstr lb(_label.CharAt(0) == '$' ? _label.SubStringFrom(1) : _label);
   cm_Element* src = XElementLib::FindBySymbolEx(lb);
   XScatterer* sc;
-  if( src != NULL )
-    sc = new XScatterer(*src, expl.GetRadiationEnergy());
+  if( src != NULL )  {
+    try  {  sc = new XScatterer(*src, expl.GetRadiationEnergy());  }
+    catch(...)  {  // may fail if radiation energy is too high
+      sc = new XScatterer;
+    }
+  }
   else
     throw TFunctionFailedException(__OlxSourceInfo, "could not locate reference chemical element");
   sc->SetLabel(lb);

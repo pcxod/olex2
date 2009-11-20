@@ -33,7 +33,7 @@ private:
   bool builtIn;
 public:
   // creates a dummy scatterer
-  //XScatterer() : mu(0), r(0), wt(0), source(NULL), gaussians(0,0,0,0,0,0,0,0,0), builtIn(false) {  }
+  XScatterer() : mu(0), r(0), wt(0), source(NULL), gaussians(0,0,0,0,0,0,0,0,0), builtIn(false) {  }
   
   // creates scatterer from the library
   XScatterer(cm_Element& src, double energy) : mu(0), builtIn(true), gaussians(0,0,0,0,0,0,0,0,0)  {  
@@ -63,7 +63,7 @@ public:
     Label = src.symbol;
     wt = src.CalcMr();
     r = src.r_bonding;
-    fpfdp = src.CalcFpFdp(energy);
+    fpfdp = src.CalcFpFdp(energy) - src.z;
     source = &src;
     builtIn = true;
   }
