@@ -590,15 +590,7 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
           TBasicApp::GetLog().Info( olxstr("Skipped GOF=") << gof );
           continue;
         }
-
-        if( XFile.GetAsymmUnit().DoesContainEquivalents() )  {
-          XFile.GetLattice().Uniq(true);
-          XFile.GetLattice().CompaqAll();
-          XFile.GetLattice().Compaq();
-          XFile.SaveToFile(files[i].GetName(), false);
-          XFile.LoadFromFile( files[i].GetName() );
-        }
-        XFile.GetLattice().Compaq();
+        XFile.GetLattice().CompaqAll();
         TAutoDBIdObject& adf = dbfolder->Add( files[i].GetName() );
         for( size_t j=0; j < XFile.GetLattice().FragmentCount(); j++ )
           ProcessNodes( &adf, XFile.GetLattice().GetFragment(j) );
@@ -1366,12 +1358,8 @@ void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt, TStrL
     return;
   }
   try  {
-    XFile.LoadFromFile( cifFN );
-    if( XFile.GetAsymmUnit().DoesContainEquivalents() )  {
-      XFile.GetLattice().Uniq(true);
-      XFile.GetLattice().CompaqAll();
-      XFile.GetLattice().Compaq();
-    }
+    XFile.LoadFromFile(cifFN);
+    XFile.GetLattice().CompaqAll();
   }
   catch( const TExceptionBase& exc )  {
     report.Add( olxstr("Failed to load due to ") << exc.GetException()->GetError() );

@@ -1001,10 +1001,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\repository\httpex.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\repository\httpfs.cpp"
 				>
 			</File>
