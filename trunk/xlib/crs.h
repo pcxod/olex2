@@ -1,5 +1,5 @@
-#ifndef crsFileH
-#define crsFileH
+#ifndef __olx_xl_crs_H
+#define __olx_xl_crs_H
 
 #include "xfiles.h"
 
@@ -8,32 +8,21 @@ BeginXlibNamespace()
 
 class TCRSFile : public TBasicCFile  {
   evecd_list Faces;
-  double Radiation;
-  olxstr Sfac, Unit;
   bool SGInitialised;
 public:
   TCRSFile();
-  virtual ~TCRSFile();
-
-  const double& GetRadiation()  const  {  return Radiation;  }
-
+  virtual ~TCRSFile()  {  }
   class TSpaceGroup* GetSG();
-
-  inline const olxstr& GetSfac()  const  {  return Sfac;  }
-  inline const olxstr& GetUnit()  const  {  return Unit;  }
 
   inline size_t FacesCount()  const  {  return Faces.Count();  }
   inline const evecd& GetFace(size_t i)  const  {  return Faces[i];  }
 
-  bool IsSGInitialised() const {  return SGInitialised;  }
+  bool HasSG() const {  return SGInitialised;  }
 
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
-  virtual bool Adopt(TXFile *);
+  virtual bool Adopt(TXFile&);
   virtual IEObject* Replicate() const {  return new TCRSFile();  }
-  virtual void DeleteAtom(TCAtom *A)  {
-    throw TNotImplementedException(__OlxSourceInfo);
-  }
 };
 
 EndXlibNamespace()

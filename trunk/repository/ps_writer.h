@@ -128,8 +128,8 @@ public:
   }
   //..........................................................................
   template <typename list_t> 
-  void lines(const list_t& list, int cnt = -1, bool close_path=false)  {
-    if( cnt == -1 )  cnt = list.Count();
+  void lines(const list_t& list, size_t cnt = InvalidSize, bool close_path=false)  {
+    if( cnt == InvalidSize )  cnt = list.Count();
     if( cnt < 2 )  return;
     moveto(list[0]);
     for( int i=1; i < cnt; i++ )
@@ -138,15 +138,15 @@ public:
       lineto(list[0]);
   }
   template <typename list_t> 
-  void drawLines(const list_t& list, int cnt = -1, bool join=false, RenderFunc rf = &PSWriter::stroke)  {
+  void drawLines(const list_t& list, size_t cnt = InvalidSize, bool join=false, RenderFunc rf = &PSWriter::stroke)  {
     newPath();
     lines(list, cnt, join);
     (this->*rf)();
   }
   //..........................................................................
   template <typename list_t> 
-  void lines_vp(const list_t& list, int cnt = -1, bool close_path=false)  {
-    if( cnt == -1 )  cnt = list.Count();
+  void lines_vp(const list_t& list, size_t cnt = InvalidSize, bool close_path=false)  {
+    if( cnt == InvalidSize )  cnt = list.Count();
     if( cnt < 2 )  return;
     moveto(*list[0]);
     for( int i=1; i < cnt; i++ )
@@ -155,7 +155,7 @@ public:
       lineto(*list[0]);
   }
   template <typename list_t> 
-  void drawLines_vp(const list_t& list, int cnt = -1, bool join=false, RenderFunc rf = &PSWriter::stroke)  {
+  void drawLines_vp(const list_t& list, size_t cnt = InvalidSize, bool join=false, RenderFunc rf = &PSWriter::stroke)  {
     newPath();
     lines_vp(list, cnt, join);
     (this->*rf)();

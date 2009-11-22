@@ -43,7 +43,7 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
       GetAsymmUnit().InitMatrices();
     }
     else if( Strings[i].StartFromi("WAVE") )  {
-      SetRadiation( Strings[i].SubStringFrom(4).Trim(' ').ToDouble() );
+      GetRM().expl.SetRadiation(Strings[i].SubStringFrom(4).Trim(' ').ToDouble());
     }
     else if( Strings[i].StartFromi("SYMM") )  {
       symm.Add( Strings[i] );
@@ -87,7 +87,7 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
         atom.SetUiso( 4*caDefIso*caDefIso );
         toks[0].DeleteChars(')');
         toks[0].DeleteChars('(');
-        atom.SetLabel( toks[0].Length() > 4 ? toks[0].SubStringTo(4) : toks[0] );
+        atom.SetLabel(toks[0].Length() > 4 ? toks[0].SubStringTo(4) : toks[0]);
         atom.ccrd()[0] = toks[12].ToDouble();
         atom.ccrd()[1] = toks[13].ToDouble();
         atom.ccrd()[2] = toks[14].ToDouble();
@@ -109,10 +109,10 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
             atom.AssignEllp(& GetAsymmUnit().NewEllp().Initialise(Q) );
             if( atom.GetEllipsoid()->IsNPD() )  {
               TBasicApp::GetLog().Info(olxstr("Not positevely defined: ") << atom.GetLabel());
-              atom.SetUiso( 0 );
+              atom.SetUiso(0);
             }
             else
-              atom.SetUiso( (Q[0] +  Q[1] + Q[2])/3);
+              atom.SetUiso((Q[0] +  Q[1] + Q[2])/3);
           }
           i++;
         }

@@ -52,18 +52,18 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   XApp.GetLog() << (olxstr("Processing file ") << TEFile::ExtractFileName(C->GetFileName()) << '\n' );
   short list = -1;
-  size_t hInd = hklLoop->Table().ColIndex("_refln_index_h");
-  size_t kInd = hklLoop->Table().ColIndex("_refln_index_k");
-  size_t lInd = hklLoop->Table().ColIndex("_refln_index_l");
+  size_t hInd = hklLoop->GetTable().ColIndex("_refln_index_h");
+  size_t kInd = hklLoop->GetTable().ColIndex("_refln_index_k");
+  size_t lInd = hklLoop->GetTable().ColIndex("_refln_index_l");
   // list 3, F
-  size_t mfInd = hklLoop->Table().ColIndex("_refln_F_meas");
-  size_t sfInd = hklLoop->Table().ColIndex("_refln_F_sigma");
-  size_t aInd = hklLoop->Table().ColIndex("_refln_A_calc");
-  size_t bInd = hklLoop->Table().ColIndex("_refln_B_calc");
+  size_t mfInd = hklLoop->GetTable().ColIndex("_refln_F_meas");
+  size_t sfInd = hklLoop->GetTable().ColIndex("_refln_F_sigma");
+  size_t aInd = hklLoop->GetTable().ColIndex("_refln_A_calc");
+  size_t bInd = hklLoop->GetTable().ColIndex("_refln_B_calc");
   // list 4, F^2
-  size_t mf2Ind = hklLoop->Table().ColIndex("_refln_F_squared_meas");
-  size_t sf2Ind = hklLoop->Table().ColIndex("_refln_F_squared_sigma");
-  size_t cf2Ind = hklLoop->Table().ColIndex("_refln_F_squared_calc");
+  size_t mf2Ind = hklLoop->GetTable().ColIndex("_refln_F_squared_meas");
+  size_t sf2Ind = hklLoop->GetTable().ColIndex("_refln_F_squared_sigma");
+  size_t cf2Ind = hklLoop->GetTable().ColIndex("_refln_F_squared_calc");
 
   if( mf2Ind != InvalidIndex && sf2Ind != InvalidIndex && cf2Ind != InvalidIndex )
     list = 4;
@@ -88,10 +88,10 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
   TPtrList<TGraphRSBin> bins;
 
   TTypeList<TGraphRSRef> refs;
-  refs.SetCapacity(hklLoop->Table().RowCount());
+  refs.SetCapacity(hklLoop->GetTable().RowCount());
 
-  for( size_t i=0; i < hklLoop->Table().RowCount(); i++ )  {
-    TStrPObjList<olxstr,TCifLoopData*>& row = hklLoop->Table()[i];
+  for( size_t i=0; i < hklLoop->GetTable().RowCount(); i++ )  {
+    TStrPObjList<olxstr,TCifLoopData*>& row = hklLoop->GetTable()[i];
     hkl[0] = row[hInd].ToInt();
     hkl[1] = row[kInd].ToInt();
     hkl[2] = row[lInd].ToInt();

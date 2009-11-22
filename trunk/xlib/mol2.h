@@ -1,5 +1,5 @@
-#ifndef olx_mol_2_H
-#define olx_mol_2_H
+#ifndef olx_mol2_H
+#define olx_mol2_H
 
 #include "xfiles.h"
 
@@ -43,9 +43,7 @@ public:
   inline TMol2Bond& Bond(size_t index) {  return Bonds[index];  }
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
-  virtual bool Adopt(TXFile *XF);
-  void DeleteAtom(TCAtom *CA);
-
+  virtual bool Adopt(TXFile& XF);
   virtual IEObject* Replicate()  const {  return new TMol2;  }
 };
 

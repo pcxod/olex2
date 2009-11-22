@@ -58,8 +58,6 @@ private:
   bool     LoadQPeaks;// true if Q-peaks should be loaded
   //olxstr Sfac, Unit;
 protected:
-  static void _SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
-    TStrList& list, size_t sfac_pos);
   static TCAtom* _ParseAtom(TStrList& toks, ParseContext& cx, TCAtom* atom = NULL);
   static olxstr _AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex);
   olxstr _CellToString();
@@ -195,9 +193,9 @@ public:
 
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
-  virtual bool Adopt(TXFile *XF);
+  virtual bool Adopt(TXFile& XF);
 
-  TInsList* FindIns(const olxstr &Name);
+  TInsList* FindIns(const olxstr& name);
   void ClearIns();
   /* AddIns require refinement model as if the instruction is parsed, the result goes to that RM,
     otherwise an un-parsed instruction will be added to this file
@@ -215,6 +213,9 @@ protected:
   // index will be automatically incremented if more then one line is parsed
   static bool ParseIns(const TStrList& ins, const TStrList& toks, ParseContext& cx, size_t& index);
 public:
+  // helper function...
+  static void SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
+    TStrList& list, size_t sfac_pos);
   // spits out all instructions, including CELL, FVAR, etc
   void SaveHeader(TStrList& out, bool ValidateRestraintNames);
   // Parses all instructions, exclusing atoms, throws if fails
@@ -225,9 +226,7 @@ public:
   inline const olxstr& InsName(size_t i) const {  return Ins[i];  }
   inline const TInsList& InsParams(size_t i)  {  return *Ins.GetObject(i); }
   void DelIns(size_t i);
-  void DeleteAtom(TCAtom *CA);
-
-  virtual IEObject* Replicate()  const {  return new TIns;  }
+  virtual IEObject* Replicate() const {  return new TIns;  }
 };
 
 EndXlibNamespace()

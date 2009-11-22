@@ -345,7 +345,7 @@ void TXFile::SaveToFile(const olxstr &FN, bool Sort)  {
   TBasicCFile *LL = FLastLoader;
   if( !Loader->IsNative() )  {
     if( LL != Loader ) {
-      if( !Loader->Adopt(this) )
+      if( !Loader->Adopt(*this) )
         throw TFunctionFailedException(__OlxSourceInfo, "could not adopt specified file format");
     }
     else

@@ -1,6 +1,5 @@
-//---------------------------------------------------------------------------//
-#ifndef cifH
-#define cifH
+#ifndef __olx_xl_cif_H
+#define __olx_xl_cif_H
 
 #include "xfiles.h"
 #include "etable.h"
@@ -47,21 +46,22 @@ public:
    corresponding data object (TCifLoopData). If labels have changed, call to the UpdateTable
    to update labels in the table. */
   void Format(TStrList& Data);
-  void SaveToStrings(TStrList& Strings); // Saves the loop to a stringlist
-
+  void SaveToStrings(TStrList& Strings) const; // Saves the loop to a stringlist
   /* Returns a string, which is common for all columns. For example for the following loop:
    loop_
    _atom_site_label
    _atom_site_type_symbol,  ... the function returns "_atom_site". */
-  olxstr GetLoopName();
+  olxstr GetLoopName() const;
   /* Returns the column name minus the the loop name (see above). Thus for "_atom_site_label",
     the name is "label". */
-  olxstr ShortColumnName(int in);
+  olxstr ShortColumnName(size_t col_i) const;
+  // removes rows havibng reference to the given atom
+  void DeleteAtom(TCAtom* atom);
   // Updates the content of the table; changes labels of the atoms
   void UpdateTable();
   //Returns the table representing the loop data. Use it to make tables or iterate through data.
-  TCifLoopTable& Table()  {  return FTable; }
-  void DeleteAtom(TCAtom *A);
+  TCifLoopTable& GetTable()  {  return FTable; }
+  const TCifLoopTable& GetTable() const {  return FTable; }
   // row sorter struct
   struct CifLoopSorter  {
   public:
@@ -79,8 +79,8 @@ class TCifValue : public IEObject  {
 protected:
   olxstr FormatTranslation(const vec3d& v);
 public:
-  TCifValue()  {  ;  }
-  virtual ~TCifValue()  { ;  }
+  TCifValue()  {  }
+  virtual ~TCifValue()  {  }
 
   void AddAtom(TCAtom& A, const vec3d& Translation, int SymmIndex = 0 )  {
     Atoms.Add(&A);
@@ -119,7 +119,7 @@ private:
   void Format();
   olxstr FDataName, FWeightA, FWeightB;
   TStrPObjList<olxstr,TCifLoop*> Loops; // LoopName + CifLoop
-//  void SetDataName(const olxstr &S);
+//  void SetDataName(const olxstr& S);
   bool FDataNameUpperCase;
   void Initialize();
   TCifDataManager DataManager;
@@ -134,20 +134,20 @@ public:
   //Saves the data to a file and returns true if successful and false in the case of failure
   virtual void SaveToStrings(TStrList& Strings);
   //Adopts the content of a file (asymmetric unit, loops, etc) to a specified source file
-  virtual bool Adopt(TXFile *XF);
+  virtual bool Adopt(TXFile& XF);
   /*Adds a new parameter to the CIF. The Params is copied to a new object, so it
     should be deleted within the main body of a program  */
-  bool AddParam(const olxstr &Param, TCifData *Params);
+  bool AddParam(const olxstr& Param, TCifData* Params);
   /*Adds a new parameter to the CIF. If the parameter is a string object, then set
     the String parameter to true.  */
-  bool AddParam(const olxstr &Param, const olxstr &Params, bool String);
-  TCifData *FindParam(const olxstr &Param); //Returns full value of a parameter
+  bool AddParam(const olxstr& Param, const olxstr& Params, bool String);
+  TCifData *FindParam(const olxstr& Param); //Returns full value of a parameter
  /*Returns the first string of the TCifData objects associated with a given parameter.
    Note that the data is stores in a olxstrList, which may contain more than one string.
    To get full information, use GetParam function instead.  */
-  const olxstr& GetSParam(const olxstr &Param) const;
-  bool ParamExists(const olxstr &Param);  //Returns true if a specified parameter exists
-  bool SetParam(const olxstr &Param, TCifData *Params);
+  const olxstr& GetSParam(const olxstr& Param) const;
+  bool ParamExists(const olxstr& Param);  //Returns true if a specified parameter exists
+  bool SetParam(const olxstr& Param, TCifData* Params);
   // returns the number of parameters
   inline size_t ParamCount() const {  return Parameters.Count(); };
   // returns the name of a specified parameter
@@ -160,7 +160,7 @@ public:
   /*Set the data name. You should specify only the data name, not data_DATANAME.
     The function is not affected by DataNameUpperCase function, and, hence, specify
     the character's case manually, if necessary. */
-  void SetDataName(const olxstr &D);
+  void SetDataName(const olxstr& D);
   /*Shows if the data name will appear in upper case or in a default case when
     current object is loaded from a file  */
   inline bool IsDataNameUpperCase() const { return FDataNameUpperCase;  }
@@ -174,29 +174,27 @@ public:
   //Returns a loop specified by index
   TCifLoop& Loop(size_t i);
   //Returns a loop specified by name
-  TCifLoop* FindLoop(const olxstr &L);
+  TCifLoop* FindLoop(const olxstr& L);
   //Returns the name of a loop specified by the index
   inline const olxstr& GetLoopName(size_t i) const {  return Loops[i];  }
   // Returns the number of loops
   inline size_t LoopCount() const { return Loops.Count(); }
   // Adds a loop to current  file
-  TCifLoop& AddLoop(const olxstr &Name);
+  TCifLoop& AddLoop(const olxstr& Name);
   /* this is the only loop, which is not automatically created from structure data!
    If the loop does not exist it is automatically created
   */
-  TCifLoop& PublicationInfoLoop();
-
-  void DeleteAtom(TCAtom *A);
+  TCifLoop& GetPublicationInfoLoop();
 protected:
-  void MultValue(olxstr &Val, const olxstr &N);
+  void MultValue(olxstr& Val, const olxstr& N);
 public:
   bool ResolveParamsFromDictionary(
     TStrList &Dic,   // the dictionary containing the cif fields
-    olxstr &String,    // the string in which the parameters are stores
+    olxstr& String,    // the string in which the parameters are stores
     olxch Quote,           // %10%, #10#, ...
     olxstr (*ResolveExternal)(const olxstr& valueName) = NULL,
     bool DoubleTheta = true);
-  bool CreateTable(TDataItem *TableDefinitions, TTTable<TStrList>& Table, smatd_list& SymmList);
+  bool CreateTable(TDataItem* TableDefinitions, TTTable<TStrList>& Table, smatd_list& SymmList);
   void Group();
   const TCifDataManager& GetDataManager() const {  return DataManager;  }
 
@@ -280,7 +278,7 @@ class TLinkedLoopTable: public IEObject  {
   TPtrList<TLAngle> FAngles;
   TCif *FCif;
 protected:
-  TLAtom& AtomByName(const olxstr &Name);
+  TLAtom& AtomByName(const olxstr& Name);
   TTTable< TStrList > Table;
 public:
   TLinkedLoopTable(TCif *C);
@@ -290,10 +288,10 @@ public:
   TLAtom *Atom(size_t index) {  return FAtoms[index];  };
   /* Returns a table constructed for Atom. The Atom should represent a valid atom
    label in Cif->AsymmUnit. */
-  TTTable<TStrList>* MakeTable(const olxstr &Atom);
+  TTTable<TStrList>* MakeTable(const olxstr& Atom);
   /*Transforms a symmetry code written like "22_565" to the symmetry operation
    corresponding to the code in a SYMM like view "x, 1+y, z" */
-  static olxstr SymmCodeToSymm(TCif *Cif, const olxstr &Code);
+  static olxstr SymmCodeToSymm(TCif *Cif, const olxstr& Code);
 };
 EndXlibNamespace()
 

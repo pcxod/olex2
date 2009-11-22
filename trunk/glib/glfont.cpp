@@ -1160,7 +1160,7 @@ void TGlFont::CreateHershey(const olxdict<size_t, olxstr, TPrimitiveComparator>&
   }
   for( size_t i=0; i < 95; i++ )  {
     TFontCharSize* cs = CharSize(i+32);
-    glNewList(FontBase + i + 32, GL_COMPILE_AND_EXECUTE);
+    glNewList((GLuint)(FontBase + i + 32), GL_COMPILE_AND_EXECUTE);
     bool loop_started = false;
     for( int j=2; j < 112; j+=2 )  {
       if( gl_font_simplex[i][j] == -1 && gl_font_simplex[i][j] == -1 )  {

@@ -119,7 +119,7 @@ inline double SphereRad(double v)   {  return pow(v*3.0/(4.0*M_PI), 1./3.);  }
 // creates a 3D rotation matrix aroung rv vector, providin cosine of the rotation angle
 
 template <typename FloatType, typename MC, typename VC>
-MC& CreateRotationMatrixEx(MC& rm, const VC& rv, double ca)  {
+MC& CreateRotationMatrixEx(MC& rm, const VC& rv, FloatType ca)  {
   const FloatType sa = (olx_abs(ca) > 1e-15) ? sqrt(1-ca*ca) : 0;
   const FloatType t = 1-ca;
   rm[0][0] = t*rv[0]*rv[0] + ca;

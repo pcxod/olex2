@@ -669,7 +669,7 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod, const 
   SL.Add( _ZerrToString() );
   _SaveSymm(SL);
   SL.Add(EmptyString);
-  _SaveSfacUnit(RefMod, RefMod.GetUserContent(), SL, SL.Count()-1);
+  SaveSfacUnit(RefMod, RefMod.GetUserContent(), SL, SL.Count()-1);
 
   _SaveSizeTemp(SL);
   if( rems )
@@ -687,7 +687,7 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod, const 
 #endif
 }
 //..............................................................................
-void TIns::_SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
+void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
                      TStrList& list, size_t pos)
 {
   if( rm.SfacCount() == 0 )  {
@@ -879,53 +879,18 @@ void TIns::SaveToStrings(TStrList& SL)  {
   SL.Add(EmptyString);
 }
 //..............................................................................
-bool TIns::Adopt(TXFile *XF)  {
+bool TIns::Adopt(TXFile& XF)  {
   Clear();
-  GetRM().Assign(XF->GetRM(), true);
+  GetRM().Assign(XF.GetRM(), true);
   try  {
-    TSpaceGroup& sg = XF->GetLastLoaderSG();
-    Title << "in" << sg.GetFullName();
+    TSpaceGroup& sg = XF.GetLastLoaderSG();
+    Title << " in " << sg.GetFullName();
   }
   catch( ... )  {}
-  if( XF->HasLastLoader() )  {
-    Title = XF->LastLoader()->GetTitle();
-    if( EsdlInstanceOf(*XF->LastLoader(), TP4PFile) )  {
-      TP4PFile& p4p = XF->GetLastLoader<TP4PFile>();
-      TStrList lst;
-      if( p4p.GetChem() != "?" )  {
-        try  {  GetRM().SetUserFormula(p4p.GetChem());  }
-        catch(...)  {  }
-      }
-    }
-    else if( EsdlInstanceOf(*XF->LastLoader(), TCRSFile) )  {
-      TCRSFile& crs = XF->GetLastLoader<TCRSFile>();
-      GetRM().SetUserContentType(TStrList(crs.GetSfac(), ' '));
-      try  {  GetRM().SetUserContentSize(TStrList(crs.GetUnit(), ' '));  }
-      catch(...)  {  }
-      RefMod.expl.SetRadiation(crs.GetRadiation());
-    }
-    else if( EsdlInstanceOf(*XF->LastLoader(), TCif) )  {
-      TCif& cif = XF->GetLastLoader<TCif>();
-      olxstr chem = olxstr::DeleteChars( cif.GetSParam("_chemical_formula_sum"), ' ');
-      olxstr strSg = cif.GetSParam("_symmetry_space_group_name_H-M");
-      try  {  GetRM().SetUserFormula(chem);  }
-      catch(...)  {  }
-      TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup( strSg );
-      if( sg != NULL )
-        GetAsymmUnit().ChangeSpaceGroup(*sg);
-    }
-  }
+  Title = XF.LastLoader()->GetTitle();
   if( RefMod.GetRefinementMethod().IsEmpty() )
     RefMod.SetRefinementMethod("L.S.");
   return true;
-}
-//..............................................................................
-void TIns::DeleteAtom(TCAtom *CA)  {
-  for( size_t i =0; i < Ins.Count(); i++ )  {
-    for( size_t j=0; j < Ins.GetObject(i)->Count(); j++ ) 
-      if( Ins.GetObject(i)->GetObject(j) == CA )  
-        Ins.GetObject(i)->GetObject(j) = NULL;
-  }
 }
 //..............................................................................
 void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, const TIndexList& index, TStrList& SL, TStrList& Instructions) {
@@ -1054,7 +1019,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
   SL.Add(_ZerrToString());
   _SaveSymm(SL);
   SL.Add(EmptyString);
-  _SaveSfacUnit(GetRM(), content, SL, SL.Count()-1);
+  SaveSfacUnit(GetRM(), content, SL, SL.Count()-1);
 
   _SaveRefMethod(SL);
   _SaveSizeTemp(SL);
@@ -1541,7 +1506,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {
   _SaveSymm(SL);
   SL.Add(EmptyString);
   SL.Add(EmptyString);
-  _SaveSfacUnit(GetRM(), GetRM().GetUserContent(), SL, SL.Count()-1);
+  SaveSfacUnit(GetRM(), GetRM().GetUserContent(), SL, SL.Count()-1);
   if( ValidateRestraintNames )
     ValidateRestraintsAtomNames(GetRM());
   SaveRestraints(SL, NULL, NULL, GetRM());

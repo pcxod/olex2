@@ -76,7 +76,7 @@ void RefinementModel::Clear() {
   rISOR.Clear();
   rEADP.Clear();
   rSAME.Clear();
-  ExyzGroups.Clear();
+  //ExyzGroups.Clear();
   //AfixGroups.Clear();
   InfoTables.Clear();
   UsedSymm.Clear();
@@ -855,7 +855,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   for( size_t i=0; i < UsedSymm.Count(); i++ )  {
     eqiv.AddItem(UsedSymm.GetKey(i), TSymmParser::MatrixToSymmEx(UsedSymm.GetValue(i)));
     mat_tags[i] = UsedSymm.GetValue(i).GetId();
-    UsedSymm.GetValue(i).SetRawId(i);
+    UsedSymm.GetValue(i).SetRawId((uint32_t)i);
   }
   
   Vars.ToDataItem(item.AddItem("LEQS"));
@@ -984,7 +984,7 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
           m.t[0], m.t[1], m.t[2]
       )) );
     mat_tags[i] = m.GetId();
-    m.SetRawId(i);
+    m.SetRawId((uint32_t)i);
   }
   PyDict_SetItemString(main, "equivalents", eq);
 

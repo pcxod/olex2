@@ -362,8 +362,14 @@ of components 1 ... m
     size_t ind = DispData.IndexOf(label);
     return ind == InvalidIndex ? NULL : DispData.GetValue(ind);
   }
-
+  // user content management
   const ContentList& GetUserContent() const {  return UserContent;  }
+  const olxstr GetUserContentStr() const {  
+    olxstr rv;
+    for( size_t i=0; i < UserContent.Count(); i++ )
+      rv << UserContent[i].GetA() << UserContent[i].GetB();
+    return rv;
+  }
   template <class StrLst> void SetUserContentType(const StrLst& sfac)  {
     UserContent.Clear();
     for( size_t i=0; i < sfac.Count(); i++ )
@@ -375,6 +381,9 @@ of components 1 ... m
     UserContent.Clear();
     for( size_t i=0; i < sfac.Count(); i++ )
       UserContent.AddNew(sfac[i], unit[i].ToDouble());
+  }
+  void SetUserContent(const olxstr& sfac, const olxstr& unit)  {
+    SetUserContent(TStrList(sfac, ' '), TStrList(unit, ' '));
   }
   void SetUserContent(const ContentList& cnt)  {
     UserContent = cnt;

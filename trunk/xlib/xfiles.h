@@ -25,12 +25,12 @@ public:
   virtual ~TBasicCFile();
 
   const TAsymmUnit& GetAsymmUnit() const {  return AsymmUnit; }
-  TAsymmUnit& GetAsymmUnit()             {  return AsymmUnit; }
-  const RefinementModel& GetRM()   const {  return RefMod;  }
-  RefinementModel& GetRM()               {  return RefMod;  }
+  TAsymmUnit& GetAsymmUnit()  {  return AsymmUnit; }
+  const RefinementModel& GetRM() const {  return RefMod;  }
+  RefinementModel& GetRM()  {  return RefMod;  }
   DefPropC(olxstr, Title)
-  const olxstr& GetFileName()  const {  return FileName; }
-
+  const olxstr& GetFileName() const {  return FileName; }
+  // this function could be constm but many file handlers might do some preprocessing of chanegs before flushing...
   virtual void SaveToStrings(TStrList& Strings) = 0;
   virtual void LoadFromStrings(const TStrList& Strings) = 0;
   virtual void SaveToFile(const olxstr &A);
@@ -38,8 +38,7 @@ public:
   // only oxm loader is native
   virtual bool IsNative() const {  return false;  }
   // adopts the content of the AsemmUnit to the virtual format
-  virtual bool Adopt(class TXFile *) = 0;
-  virtual void DeleteAtom(TCAtom *A) = 0;
+  virtual bool Adopt(class TXFile&) = 0;
 };
 //---------------------------------------------------------------------------
 

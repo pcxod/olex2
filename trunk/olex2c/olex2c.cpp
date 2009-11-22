@@ -577,7 +577,7 @@ public:
         E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch");
         return;
       }
-      Ins->Adopt( &XApp.XFile() );
+      Ins->Adopt(XApp.XFile());
     }
     else if( XApp.CheckFileType<TCRSFile>() )  {
       TSpaceGroup* sg = XApp.XFile().GetLastLoader<TCRSFile>().GetSG();
@@ -589,7 +589,7 @@ public:
         else 
           TBasicApp::GetLog() << ( olxstr("The CRS file format space group is: ") << sg->GetName() << '\n');
       }
-      Ins->Adopt( &XApp.XFile() );
+      Ins->Adopt(XApp.XFile());
     }
     if( !content.IsEmpty() )
       Ins->GetRM().SetUserFormula(content);
