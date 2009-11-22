@@ -2584,7 +2584,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     Cif = &Cif2;
   }
 
-  TCifLoop& publ_info = Cif->PublicationInfoLoop();
+  TCifLoop& publ_info = Cif->GetPublicationInfoLoop();
 
   for( size_t i=0; i < Cmds.Count(); i++ )  {
     try {
@@ -2599,7 +2599,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
       Cif1.LoadFromStrings(sl);
     }
     catch( ... )  {    }  // most like the cif does not have cell, so pass it
-    TCifLoop& pil = Cif1.PublicationInfoLoop();
+    TCifLoop& pil = Cif1.GetPublicationInfoLoop();
     for( size_t j=0; j < Cif1.ParamCount(); j++ )  {
       if( !Cif->ParamExists(Cif1.Param(j)) )
         Cif->AddParam(Cif1.Param(j), Cif1.ParamValue(j));
@@ -2607,7 +2607,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
         Cif->SetParam(Cif1.Param(j), Cif1.ParamValue(j));
     }
     // update publication info loop
-    MergePublTableData( publ_info.Table(), pil.Table() );
+    MergePublTableData(publ_info.GetTable(), pil.GetTable());
   }
   TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(Cif->GetAsymmUnit());
   if( sg != NULL )  {
@@ -2707,7 +2707,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
     }
   }
   TCif cif;
-  cif.Adopt(&xapp.XFile());
+  cif.Adopt(xapp.XFile());
   TAsymmUnit& au = cif.GetAsymmUnit();
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).GetAtomInfo() == iQPeakIndex )
@@ -2715,11 +2715,11 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
   }
   TLattice& latt = xapp.XFile().GetLattice();
   TCifLoop& bonds = cif.AddLoop("_geom_bond");
-  bonds.Table().AddCol("_geom_bond_atom_site_label_1");
-  bonds.Table().AddCol("_geom_bond_atom_site_label_2");
-  bonds.Table().AddCol("_geom_bond_distance");
-  bonds.Table().AddCol("_geom_bond_site_symmetry_2");
-  bonds.Table().AddCol("_geom_bond_publ_flag");
+  bonds.GetTable().AddCol("_geom_bond_atom_site_label_1");
+  bonds.GetTable().AddCol("_geom_bond_atom_site_label_2");
+  bonds.GetTable().AddCol("_geom_bond_distance");
+  bonds.GetTable().AddCol("_geom_bond_site_symmetry_2");
+  bonds.GetTable().AddCol("_geom_bond_publ_flag");
   for( size_t i=0; i < latt.BondCount(); i++ )  {
     TSBond& b = latt.GetBond(i);
     if( TAtomsInfo::IsHAtom(b.A().GetAtomInfo()) || b.A().GetAtomInfo() == iQPeakIndex || b.A().IsDeleted() )  {
@@ -2740,7 +2740,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       TSBond& b = a.Bond(j);
       if( b.GetTag() == 0 )  continue;
       b.SetTag(0);
-      TCifRow& row = bonds.Table().AddRow(EmptyString);
+      TCifRow& row = bonds.GetTable().AddRow(EmptyString);
       row[0] = b.A().GetLabel();  row.GetObject(0) = new TCifLoopData(&b.A().CAtom());
       row[1] = b.B().GetLabel();  row.GetObject(1) = new TCifLoopData(&b.B().CAtom());
       row[2] = vcovc.CalcDistance(b.A(), b.B()).ToString();
@@ -2754,13 +2754,13 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
     }
   }
   TCifLoop& angles = cif.AddLoop("_geom_angle");
-  angles.Table().AddCol("_geom_angle_atom_site_label_1");
-  angles.Table().AddCol("_geom_angle_atom_site_label_2");
-  angles.Table().AddCol("_geom_angle_atom_site_label_3");
-  angles.Table().AddCol("_geom_angle");
-  angles.Table().AddCol("_geom_angle_site_symmetry_1");
-  angles.Table().AddCol("_geom_angle_site_symmetry_3");
-  angles.Table().AddCol("_geom_angle_publ_flag");
+  angles.GetTable().AddCol("_geom_angle_atom_site_label_1");
+  angles.GetTable().AddCol("_geom_angle_atom_site_label_2");
+  angles.GetTable().AddCol("_geom_angle_atom_site_label_3");
+  angles.GetTable().AddCol("_geom_angle");
+  angles.GetTable().AddCol("_geom_angle_site_symmetry_1");
+  angles.GetTable().AddCol("_geom_angle_site_symmetry_3");
+  angles.GetTable().AddCol("_geom_angle_publ_flag");
   for( size_t i=0; i < latt.AtomCount(); i++ )  {
     TSAtom& a = latt.GetAtom(i);
     if( TAtomsInfo::IsHAtom(a.GetAtomInfo()) || a.GetAtomInfo() == iQPeakIndex || 
@@ -2773,7 +2773,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         TSAtom& c = a.Node(k);      
         if( c.IsDeleted() || TAtomsInfo::IsHAtom(c.GetAtomInfo()) || c.GetAtomInfo() == iQPeakIndex )
           continue;
-        TCifRow& row = angles.Table().AddRow(EmptyString);
+        TCifRow& row = angles.GetTable().AddRow(EmptyString);
         row[0] = b.GetLabel();  row.GetObject(0) = new TCifLoopData(&b.CAtom());
         row[1] = a.GetLabel();  row.GetObject(1) = new TCifLoopData(&a.CAtom());
         row[2] = c.GetLabel();  row.GetObject(2) = new TCifLoopData(&c.CAtom());
@@ -2795,14 +2795,14 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
   RefinementModel& rm = xapp.XFile().GetRM();
   if( rm.InfoTabCount() != 0 )  {
     TCifLoop& hbonds = cif.AddLoop("_geom_hbond");
-    hbonds.Table().AddCol("_geom_hbond_atom_site_label_D");
-    hbonds.Table().AddCol("_geom_hbond_atom_site_label_H");
-    hbonds.Table().AddCol("_geom_hbond_atom_site_label_A");
-    hbonds.Table().AddCol("_geom_hbond_distance_DH");
-    hbonds.Table().AddCol("_geom_hbond_distance_HA");
-    hbonds.Table().AddCol("_geom_hbond_distance_DA");
-    hbonds.Table().AddCol("_geom_hbond_angle_DHA");
-    hbonds.Table().AddCol("_geom_hbond_site_symmetry_A");
+    hbonds.GetTable().AddCol("_geom_hbond_atom_site_label_D");
+    hbonds.GetTable().AddCol("_geom_hbond_atom_site_label_H");
+    hbonds.GetTable().AddCol("_geom_hbond_atom_site_label_A");
+    hbonds.GetTable().AddCol("_geom_hbond_distance_DH");
+    hbonds.GetTable().AddCol("_geom_hbond_distance_HA");
+    hbonds.GetTable().AddCol("_geom_hbond_distance_DA");
+    hbonds.GetTable().AddCol("_geom_hbond_angle_DHA");
+    hbonds.GetTable().AddCol("_geom_hbond_site_symmetry_A");
     smatd I;
     I.I().SetId(0);
     TAtomEnvi envi;
@@ -2825,7 +2825,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       xapp.XFile().GetUnitCell().GetAtomEnviList(*dsa, envi);
       for( size_t j=0; j < envi.Count(); j++ )  {
         if( !TAtomsInfo::IsHAtom(envi.GetBAI(j)) )  continue;
-        TCifRow& row = hbonds.Table().AddRow(EmptyString);
+        TCifRow& row = hbonds.GetTable().AddRow(EmptyString);
         row[0] = d->GetAtom()->GetLabel();  row.GetObject(0) = new TCifLoopData(d->GetAtom());
         row[1] = envi.GetCAtom(j).GetLabel();  row.GetObject(1) = new TCifLoopData(&envi.GetCAtom(j));
         row[2] = a->GetAtom()->GetLabel();  row.GetObject(2) = new TCifLoopData(a->GetAtom());
@@ -2907,23 +2907,23 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     E.ProcessingError(__OlxSrcInfo, "no hkl loop found");
     return;
   }
-  size_t hInd = hklLoop->Table().ColIndex("_refln_index_h");
-  size_t kInd = hklLoop->Table().ColIndex("_refln_index_k");
-  size_t lInd = hklLoop->Table().ColIndex("_refln_index_l");
+  size_t hInd = hklLoop->GetTable().ColIndex("_refln_index_h");
+  size_t kInd = hklLoop->GetTable().ColIndex("_refln_index_k");
+  size_t lInd = hklLoop->GetTable().ColIndex("_refln_index_l");
   // list 3, F
-  size_t mfInd = hklLoop->Table().ColIndex("_refln_F_meas");
-  size_t sfInd = hklLoop->Table().ColIndex("_refln_F_sigma");
-  size_t aInd = hklLoop->Table().ColIndex("_refln_A_calc");
-  size_t bInd = hklLoop->Table().ColIndex("_refln_B_calc");
+  size_t mfInd = hklLoop->GetTable().ColIndex("_refln_F_meas");
+  size_t sfInd = hklLoop->GetTable().ColIndex("_refln_F_sigma");
+  size_t aInd = hklLoop->GetTable().ColIndex("_refln_A_calc");
+  size_t bInd = hklLoop->GetTable().ColIndex("_refln_B_calc");
 
   if( (hInd|kInd|lInd|mfInd|sfInd|aInd|bInd) == InvalidIndex ) {
       E.ProcessingError(__OlxSrcInfo, "list 3 fcf file is expected");
       return;
   }
-  refs.SetCapacity( hklLoop->Table().RowCount() );
-  F.SetCount( hklLoop->Table().RowCount() );
-  for( size_t i=0; i < hklLoop->Table().RowCount(); i++ )  {
-    TStrPObjList<olxstr,TCifLoopData*>& row = hklLoop->Table()[i];
+  refs.SetCapacity( hklLoop->GetTable().RowCount() );
+  F.SetCount( hklLoop->GetTable().RowCount() );
+  for( size_t i=0; i < hklLoop->GetTable().RowCount(); i++ )  {
+    TStrPObjList<olxstr,TCifLoopData*>& row = hklLoop->GetTable()[i];
     TReflection& ref = refs.AddNew(row[hInd].ToInt(), row[kInd].ToInt(), 
       row[lInd].ToInt(), row[mfInd].ToDouble(), row[sfInd].ToDouble());
     if( ref.GetH() < 0 )
@@ -3274,7 +3274,7 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     throw TFunctionFailedException(__OlxSourceInfo, "this function requires Olex2 processor implementation");
   TSpaceGroup* sg = NULL;
   if( EsdlInstanceOf(*xapp.XFile().LastLoader(), TCRSFile) && 
-    ((TCRSFile*)xapp.XFile().LastLoader())->IsSGInitialised() )  
+    ((TCRSFile*)xapp.XFile().LastLoader())->HasSG() )  
   {
     sg = &xapp.XFile().GetLastLoaderSG();
     TBasicApp::GetLog() << "Choosing CRS file space group: " << sg->GetName() << '\n';

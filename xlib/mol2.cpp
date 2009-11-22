@@ -1,11 +1,7 @@
 //---------------------------------------------------------------------------//
-// namespace TXFiles: TMol2 - basic procedures for loading Tripos MOL2 files
+// TMol2 - basic procedures for loading Tripos MOL2 files
 // (c) Oleg V. Dolomanov, 2009
 //---------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "mol2.h"
 
 #include "catom.h"
@@ -14,8 +10,6 @@
 #include "exception.h"
 
 const olxstr TMol2::BondNames[] = {"1", "2", "3", "am", "ar", "du", "un", "nc"};
-//----------------------------------------------------------------------------//
-// TMol2 function bodies
 //----------------------------------------------------------------------------//
 void TMol2::Clear()  {
   GetAsymmUnit().Clear();
@@ -74,7 +68,7 @@ void TMol2::SaveToStrings(TStrList& Strings)  {
 //..............................................................................
 void TMol2::LoadFromStrings(const TStrList& Strings)  {
   Clear();
-  Title = "OLEX: imported from MDL MOL";
+  Title = "OLEX: imported from TRIPOS MOL2";
   TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   GetAsymmUnit().Axes()[0] = 1;
   GetAsymmUnit().Axes()[1] = 1;
@@ -113,11 +107,10 @@ void TMol2::LoadFromStrings(const TStrList& Strings)  {
       TStrList toks(line, ' ');
       if( toks.Count() < 4 )
         continue;
-      TMol2Bond* MB = new TMol2Bond(Bonds.Count());
-      MB->a1 = atoms[toks[1].ToInt()];
-      MB->a2 = atoms[toks[2].ToInt()];
-      MB->BondType = DecodeBondType(toks[3]);   // bond type
-      Bonds.Add(*MB);
+      TMol2Bond& MB = Bonds.Add(new TMol2Bond(Bonds.Count()));
+      MB.a1 = atoms[toks[1].ToInt()];
+      MB.a2 = atoms[toks[2].ToInt()];
+      MB.BondType = DecodeBondType(toks[3]);   // bond type
       continue;
     }
     if( line.Equals("@<TRIPOS>ATOM") )  {
@@ -128,14 +121,28 @@ void TMol2::LoadFromStrings(const TStrList& Strings)  {
 }
 
 //..............................................................................
-bool TMol2::Adopt(TXFile *XF)  {
+bool TMol2::Adopt(TXFile& XF)  {
   Clear();
-  GetAsymmUnit().Assign(XF->GetAsymmUnit());
-  GetAsymmUnit().SetZ( (short)XF->GetLattice().GetUnitCell().MatrixCount() );
+ TLattice& latt = XF.GetLattice();
+  for( size_t i=0; i < latt.AtomCount(); i++ )  {
+    TSAtom& sa = latt.GetAtom(i);
+    if( !sa.IsAvailable() )  continue;
+    TCAtom& a = GetAsymmUnit().NewAtom();
+    a.Label() = sa.GetLabel();
+    a.ccrd() = sa.crd();
+    a.SetAtomInfo(sa.GetAtomInfo());
+    sa.SetTag(i);
+  }
+  for( size_t i=0; i < latt.BondCount(); i++ )  {
+    TSBond& sb = latt.GetBond(i);
+    if( !sb.IsAvailable() )  continue;
+    TMol2Bond& mb = Bonds.AddNew(Bonds.Count());
+    mb.a1 = &GetAsymmUnit().GetAtom(sb.A().GetTag());
+    mb.a2 = &GetAsymmUnit().GetAtom(sb.B().GetTag());
+    mb.BondType = 1; // singlel bond, a proper encoding is required...
+  }
+  GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
   return true;
 }
 //..............................................................................
-void TMol2::DeleteAtom(TCAtom *CA)  {  return;  }
-//..............................................................................
-
  

@@ -60,11 +60,11 @@ void TUnitCell::InitMatrixId(smatd& m) const {
   for( size_t i=0; i < Matrices.Count(); i++ )  {
     if( Matrices[i].r == m.r )  {
       const vec3d dt = m.t-Matrices[i].t;
-      const int ta = (int)(m.t[0]-Matrices[i].t[0]);
-      const int tb = (int)(m.t[1]-Matrices[i].t[1]);
-      const int tc = (int)(m.t[2]-Matrices[i].t[2]);
+      const int8_t ta = (int8_t)(m.t[0]-Matrices[i].t[0]);
+      const int8_t tb = (int8_t)(m.t[1]-Matrices[i].t[1]);
+      const int8_t tc = (int8_t)(m.t[2]-Matrices[i].t[2]);
       if( olx_abs(dt[0]-ta) < 1e-6 && olx_abs(dt[1]-tb) < 1e-6 && olx_abs(dt[2]-tc) < 1e-6 )  {
-        m.SetId(i, ta, tb, tc);
+        m.SetId((uint8_t)i, ta, tb, tc);
         return;
       }
     }
@@ -125,7 +125,7 @@ void  TUnitCell::InitMatrices()  {
   GenerateMatrices(Matrices, GetLattice().GetAsymmUnit(), GetLattice().GetAsymmUnit().GetLatt() );
   const size_t mc = Matrices.Count();
   for( size_t i=0; i < mc; i++ )
-    Matrices[i].SetId(i);
+    Matrices[i].SetId((uint8_t)i);
   UpdateEllipsoids();
 }
 //..............................................................................

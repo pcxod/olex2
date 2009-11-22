@@ -3150,7 +3150,7 @@ void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch" );
       return;
     }
-    Ins->Adopt( &FXApp->XFile() );
+    Ins->Adopt(FXApp->XFile());
   }
   else if( FXApp->CheckFileType<TCRSFile>() )  {
     TSpaceGroup* sg = FXApp->XFile().GetLastLoader<TCRSFile>().GetSG();
@@ -3163,7 +3163,7 @@ void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         TBasicApp::GetLog() << ( olxstr("The CRS file format space group is: ") << sg->GetName() << '\n');
       }
     }
-    Ins->Adopt( &FXApp->XFile() );
+    Ins->Adopt(FXApp->XFile());
   }
   if( !content.IsEmpty() )
     Ins->GetRM().SetUserFormula(content);
@@ -4473,7 +4473,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
             if( !er.IsProcessingError() )  {
               if( !TEFile::Exists(insFileName) )  {
                 TIns ins;
-                ins.Adopt( &FXApp->XFile() );
+                ins.Adopt(FXApp->XFile());
                 ins.GetRM().SetHKLSource(hklFileName);
                 ins.SaveToFile( insFileName );
                 Macros.ProcessMacro( olxstr("@reap \'") << insFileName << '\'', er);
@@ -5173,11 +5173,11 @@ void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     E.ProcessingError(__OlxSrcInfo, "no hkl loop found");
     return;
   }
-  size_t hInd = hklLoop->Table().ColIndex("_refln_index_h");
-  size_t kInd = hklLoop->Table().ColIndex("_refln_index_k");
-  size_t lInd = hklLoop->Table().ColIndex("_refln_index_l");
-  size_t mInd = hklLoop->Table().ColIndex("_refln_F_squared_meas");
-  size_t sInd = hklLoop->Table().ColIndex("_refln_F_squared_sigma");
+  size_t hInd = hklLoop->GetTable().ColIndex("_refln_index_h");
+  size_t kInd = hklLoop->GetTable().ColIndex("_refln_index_k");
+  size_t lInd = hklLoop->GetTable().ColIndex("_refln_index_l");
+  size_t mInd = hklLoop->GetTable().ColIndex("_refln_F_squared_meas");
+  size_t sInd = hklLoop->GetTable().ColIndex("_refln_F_squared_sigma");
 
   if( (hInd|kInd|lInd|mInd|sInd) == InvalidIndex ) {
     E.ProcessingError(__OlxSrcInfo, "could not locate <h k l meas sigma> data");
@@ -5185,12 +5185,12 @@ void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
 
   THklFile file;
-  for( size_t i=0; i < hklLoop->Table().RowCount(); i++ )  {
-    TReflection* r = new TReflection( hklLoop->Table()[i][hInd].ToInt(),
-                                      hklLoop->Table()[i][kInd].ToInt(),
-                                      hklLoop->Table()[i][lInd].ToInt(),
-                                      hklLoop->Table()[i][mInd].ToDouble(),
-                                      hklLoop->Table()[i][sInd].ToDouble() );
+  for( size_t i=0; i < hklLoop->GetTable().RowCount(); i++ )  {
+    TReflection* r = new TReflection( hklLoop->GetTable()[i][hInd].ToInt(),
+                                      hklLoop->GetTable()[i][kInd].ToInt(),
+                                      hklLoop->GetTable()[i][lInd].ToInt(),
+                                      hklLoop->GetTable()[i][mInd].ToDouble(),
+                                      hklLoop->GetTable()[i][sInd].ToDouble() );
     file.Append( *r );
   }
   file.SaveToFile( exName );

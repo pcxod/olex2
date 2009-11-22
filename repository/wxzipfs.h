@@ -38,10 +38,10 @@ public:
   IDataInputStream* OpenEntry(const olxstr& EN);
   wxInputStream* OpenWxEntry(const olxstr& EN);
   void ExtractAll(const olxstr& dest);
-  inline int Count()               const {  return FEntries.Count();  }
-  inline const olxstr& Name(int i) const {  return FEntries.GetString(i);  }
-  inline time_t Timestamp(int i)   const {  return FEntries.GetObject(i)->GetDateTime().GetTicks();  } 
-  inline size_t Size(int i)        const {  return FEntries.GetObject(i)->GetSize();  } 
+  inline size_t Count() const {  return FEntries.Count();  }
+  inline const olxstr& Name(size_t i) const {  return FEntries.GetString(i);  }
+  inline time_t Timestamp(size_t i) const {  return FEntries.GetObject(i)->GetDateTime().GetTicks();  } 
+  inline size_t Size(size_t i) const {  return FEntries.GetObject(i)->GetSize();  } 
   inline bool FileExists(const olxstr& fn) const {  return FEntries[TEFile::UnixPath(fn)] != NULL;  }
 
   static bool IsValidFileName(const olxstr &FN);

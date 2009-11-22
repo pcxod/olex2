@@ -1,19 +1,8 @@
-#ifdef __BORLANC__
-  #pragma hdrstop
-#endif
-
 #include "pdb.h"
 #include "unitcell.h"
 #include "bapp.h"
 #include "log.h"
 
-//----------------------------------------------------------------------------//
-// TMol function bodies
-//----------------------------------------------------------------------------//
-TPdb::TPdb()  {   }
-//..............................................................................
-TPdb::~TPdb()  {  Clear();    }
-//..............................................................................
 void TPdb::Clear()  {
   GetAsymmUnit().Clear();
 }
@@ -116,7 +105,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
     }
     else if( line == "ANISOU" )  {
       toks.Clear();
-      toks.StrtokF( Strings[i], AnisF);
+      toks.StrtokF(Strings[i], AnisF);
       if( toks.Count() < 16 )  
         throw TFunctionFailedException(__OlxSourceInfo, "parsing failed");
       QE[0] = toks[10].ToDouble();
@@ -131,20 +120,18 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
         ca->UpdateEllp(QE);
         if( ca->GetEllipsoid()->IsNPD() )
           TBasicApp::GetLog().Error(olxstr("Not positevely defined: ") + ca->Label());
-        ca->SetUiso( (QE[0] +  QE[1] + QE[2])/3);
+        ca->SetUiso((QE[0] +  QE[1] + QE[2])/3);
       }
     }
   }
 }
 //..............................................................................
-bool TPdb::Adopt(TXFile *XF)  {
+bool TPdb::Adopt(TXFile& XF)  {
   Clear();
-  GetAsymmUnit().Assign(XF->GetAsymmUnit());
-  GetAsymmUnit().SetZ( (short)XF->GetLattice().GetUnitCell().MatrixCount() );
+  GetAsymmUnit().Assign(XF.GetAsymmUnit());
+  GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
   return true;
 }
-//..............................................................................
-void TPdb::DeleteAtom(TCAtom *CA)  {  return;  }
 //..............................................................................
 
 

@@ -150,7 +150,7 @@ size_t TLattice::GenerateMatrices(smatd_plist& Result,
         tmp_mat.t[0] += j;  tmp_mat.t[1] += k;  tmp_mat.t[2] += l;
         if( !vec3d::IsInRangeInc(tmp_mat * Center, MFrom, MTo) )
           continue;
-        Result.Add(new smatd(tmp_mat))->SetId(i, j, k, l);  // set Tag to identify the matrix (and ellipsoids) in the UnitCell
+        Result.Add(new smatd(tmp_mat))->SetId((uint8_t)i, j, k, l);  // set Tag to identify the matrix (and ellipsoids) in the UnitCell
       }
   }
 
@@ -198,7 +198,7 @@ size_t TLattice::GenerateMatrices(smatd_plist& Result, const vec3d& center, doub
           vec3d rs = m * cnt;
           au.CellToCartesian(rs);
           if( center.QDistanceTo(rs) > qrad )  continue;
-          Result.Add(new smatd(m))->SetId(i, j, k, l);  // set Tag to identify the matrix (and ellipsoids) in the UnitCell
+          Result.Add(new smatd(m))->SetId((uint8_t)i, j, k, l);  // set Tag to identify the matrix (and ellipsoids) in the UnitCell
         }
   }
   const size_t res_cnt = Result.Count();
@@ -390,7 +390,7 @@ void TLattice::GenerateCell(bool includeQ)  {
           t[k] -= 1;
         }
       }
-      const uint32_t m_id = smatd::GenerateId(i, t);
+      const uint32_t m_id = smatd::GenerateId((uint8_t)i, t);
       smatd* lm = NULL;
       for( size_t k=0; k < Matrices.Count(); k++ )  {
         if( Matrices[k]->GetId() == m_id )  {
@@ -1859,7 +1859,7 @@ void TLattice::ToDataItem(TDataItem& item) const  {
   for( size_t i=0; i < mat_c; i++ )  {
     mat.AddItem(i, TSymmParser::MatrixToSymmEx(*Matrices[i])).AddField("id", Matrices[i]->GetId());
     m_tags[i] = Matrices[i]->GetId();
-    Matrices[i]->SetRawId(i);
+    Matrices[i]->SetRawId((uint32_t)i);
   }
   // initialise bond tags
   size_t sbond_tag = 0;
@@ -1983,7 +1983,7 @@ TLattice::GrowInfo* TLattice::GetGrowInfo() const  {
   for( size_t i=0; i < Matrices.Count(); i++ )  {
     mtags[i] = Matrices[i]->GetId();
     (gi.matrices[i] = new smatd(*Matrices[i]))->SetRawId(mtags[i]);
-    Matrices[i]->SetRawId(i);
+    Matrices[i]->SetRawId((uint32_t)i);
   }
 
   gi.info.SetCount( au.AtomCount() );

@@ -26,21 +26,11 @@ void TMol::Clear()  {
 }
 //..............................................................................
 olxstr TMol::MOLAtom(TCAtom& A)  {
-  olxstr Tmp, Tmp1;
-  vec3d V = A.ccrd();
-  GetAsymmUnit().CellToCartesian(V);
-  Tmp1 = olxstr::FormatFloat(4, V[0] );
-  Tmp1.Format(10, false, ' ');
-  Tmp = Tmp1;
-  Tmp1 = olxstr::FormatFloat(4, V[1] );
-  Tmp1.Format(10, false, ' ');
-  Tmp << Tmp1;
-  Tmp1 = olxstr::FormatFloat(4, V[2] );
-  Tmp1.Format(10, false, ' ');
-  Tmp << Tmp1;
-  Tmp1 = " ";    Tmp1 << A.GetAtomInfo().GetSymbol();
-  Tmp1.Format(3, true, ' ');
-  Tmp << Tmp1;
+  olxstr Tmp;
+  const vec3d& v = A.ccrd();
+  for( int i=0; i < 3; i++ )
+    Tmp << olxstr::FormatFloat(4, v[i]).Format(10, false, ' ');
+  Tmp << ' ' << olxstr(A.GetAtomInfo().GetSymbol()).Format(3, true, ' ');
   for( int j=0; j < 12; j ++ )
     Tmp << "  0";
   return Tmp;
@@ -76,7 +66,7 @@ void TMol::SaveToStrings(TStrList& Strings)  {
   Tmp << "  0  0  0  0  0  0  0  0  0 V2000";
   Strings.Add(Tmp);
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )
-    Strings.Add( MOLAtom(GetAsymmUnit().GetAtom(i)));
+    Strings.Add(MOLAtom(GetAsymmUnit().GetAtom(i)));
   for( size_t i=0; i < BondCount(); i++ )
     Strings.Add( MOLBond(Bond(i)) );
   Strings.Add("M END");
@@ -119,11 +109,10 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
       if( ai1 >= GetAsymmUnit().AtomCount() || ai2 >= GetAsymmUnit().AtomCount())  {
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("TMol:: wrong atom indexes: ") << ai1 << ' ' << ai2);
       }
-      TMolBond* MB = new TMolBond;
-      MB->AtomA = ai1;
-      MB->AtomB = ai2;
-      MB->BondType = line.SubString(6, 3).ToInt();   // bond type
-      Bonds.Add(*MB);
+      TMolBond& MB = Bonds.Add(new TMolBond);
+      MB.AtomA = ai1;
+      MB.AtomB = ai2;
+      MB.BondType = line.SubString(6, 3).ToInt();   // bond type
       BC--;
       if( BC <= 0 )
         BondsCycle = false;
@@ -140,14 +129,28 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
 }
 
 //..............................................................................
-bool TMol::Adopt(TXFile *XF)  {
+bool TMol::Adopt(TXFile& XF)  {
   Clear();
-  GetAsymmUnit().Assign(XF->GetAsymmUnit());
-  GetAsymmUnit().SetZ( (short)XF->GetLattice().GetUnitCell().MatrixCount() );
+  TLattice& latt = XF.GetLattice();
+  for( size_t i=0; i < latt.AtomCount(); i++ )  {
+    TSAtom& sa = latt.GetAtom(i);
+    if( !sa.IsAvailable() )  continue;
+    TCAtom& a = GetAsymmUnit().NewAtom();
+    a.Label() = sa.GetLabel();
+    a.ccrd() = sa.crd();
+    a.SetAtomInfo(sa.GetAtomInfo());
+    sa.SetTag(i);
+  }
+  for( size_t i=0; i < latt.BondCount(); i++ )  {
+    TSBond& sb = latt.GetBond(i);
+    if( !sb.IsAvailable() )  continue;
+    TMolBond& mb = Bonds.AddNew();
+    mb.AtomA = sb.A().GetTag();
+    mb.AtomB = sb.B().GetTag();
+    mb.BondType = 1; // singlel bond, a proper encoding is required...
+  }
+  GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
   return true;
 }
 //..............................................................................
-void TMol::DeleteAtom(TCAtom *CA)  {  return;  }
-//..............................................................................
-
  

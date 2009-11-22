@@ -1,6 +1,5 @@
-#ifndef p4pH
-#define p4pH
-
+#ifndef __olx_xl_p4p_H
+#define __olx_xl_p4p_H
 #include "xfiles.h"
 
 BeginXlibNamespace()
@@ -9,31 +8,23 @@ class TP4PFile : public TBasicCFile  {
   olxstr   Color,
            SiteId,
            Morph,
-           Chem,
            Mosaic,
            Symm,
            Bravais,
-           SG;
+           SGString;
 public:
   TP4PFile();
   virtual ~TP4PFile();
 
-  const olxstr& GetColor()   const {  return Color;  }
-  const olxstr& GetSiteId()  const {  return SiteId;  }
-  const olxstr& GetMorph()   const {  return Morph;  }
-  const olxstr& GetChem()    const {  return Chem;  }
-  void SetChem(const olxstr& c)    {  Chem = c;  }
+  const olxstr& GetColor() const {  return Color;  }
+  const olxstr& GetSiteId() const {  return SiteId;  }
+  const olxstr& GetMorph() const {  return Morph;  }
   // this is set when the file is manually exported ...
-  const olxstr& GetSG()     const {  return SG;  }
-  void SetSG(const olxstr& c)     {  SG = c;  }
-
+  DefPropC(olxstr, SGString)
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
-  virtual bool Adopt(TXFile *);
+  virtual bool Adopt(TXFile&);
   virtual IEObject* Replicate() const {  return new TP4PFile();  }
-  virtual void DeleteAtom(TCAtom *A)  {
-    throw TNotImplementedException(__OlxSourceInfo);
-  }
 };
 
 EndXlibNamespace()

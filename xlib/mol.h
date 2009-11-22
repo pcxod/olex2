@@ -1,10 +1,8 @@
-#ifndef molH
-#define molH
-
+#ifndef __olx_xl_mol_H
+#define __olx_xl_mol_H
 #include "xfiles.h"
 
 BeginXlibNamespace()
-
 
 struct TMolBond  {
   size_t AtomA, AtomB, BondType;
@@ -25,9 +23,7 @@ public:
   inline TMolBond& Bond(size_t index) {  return Bonds[index];  }
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
-  virtual bool Adopt(TXFile *XF);
-  void DeleteAtom(TCAtom *CA);
-
+  virtual bool Adopt(TXFile& XF);
   virtual IEObject* Replicate()  const {  return new TMol;  }
 };
 

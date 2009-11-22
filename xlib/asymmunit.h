@@ -1,6 +1,5 @@
-#ifndef asymmunitH
-#define asymmunitH
-
+#ifndef __olx_xl_asymmunit_H
+#define __olx_xl_asymmunit_H
 #include "xbase.h"
 #include "atominfo.h"
 #include "ematrix.h"
@@ -193,6 +192,7 @@ public:
   // checks of no maore than one atom has this label, if more than one - returns CheckLabel
   olxstr ValidateLabel(const olxstr &Label) const;
 
+  bool IsQPeakMinMaxInitialised() const {  return MaxQPeak != -1000;  }
   inline double GetMaxQPeak() const {  return MaxQPeak;  }
   inline double GetMinQPeak() const {  return MinQPeak;  }
 

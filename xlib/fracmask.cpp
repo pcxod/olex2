@@ -25,9 +25,9 @@ void FractMask::Init(const vec3d& _min, const vec3d& _max, const vec3f& norms, f
 void FractMask::ToDataItem(TDataItem& di, IOutputStream& os) const {
   TEBitArray ba(Mask->Length1()*Mask->Length2()*Mask->Length3());
   di.AddField("norm", PersUtil::VecToStr(Norm));
-  di.AddField("min", PersUtil::VecToStr(vec3i(Mask->GetMin1(), Mask->GetMin2(), Mask->GetMin3())));
+  di.AddField("min", PersUtil::VecToStr(TVector3<index_t>(Mask->GetMin1(), Mask->GetMin2(), Mask->GetMin3())));
   di.AddField("max", 
-    PersUtil::VecToStr(vec3i(Mask->Length1()+Mask->GetMin1()-1, 
+    PersUtil::VecToStr(TVector3<index_t>(Mask->Length1()+Mask->GetMin1()-1, 
       Mask->Length2()+Mask->GetMin2()-1, Mask->Length3()+Mask->GetMin3()-1))
   );
   di.AddField("char_count", ba.CharCount());

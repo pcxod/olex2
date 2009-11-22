@@ -9,7 +9,7 @@ BeginGxlNamespace()
 class TOXMFile : public TBasicCFile  {
   TGXApp& gxapp;
 public:
-  TOXMFile( TGXApp& app ) : gxapp(app) {  }
+  TOXMFile(TGXApp& app) : gxapp(app) {  }
   virtual ~TOXMFile() {  }
 
   virtual void SaveToStrings(TStrList& Strings)  {
@@ -19,9 +19,7 @@ public:
     throw TNotImplementedException(__OlxSourceInfo);
   }
   virtual bool IsNative() const {  return true;  }
-  virtual bool Adopt(TXFile *)  {
-    throw TNotImplementedException(__OlxSourceInfo);
-  }
+  virtual bool Adopt(TXFile&)  {  throw TNotImplementedException(__OlxSourceInfo);  }
   virtual void LoadFromFile(const olxstr& fn)  {
     gxapp.LoadModel(fn);
     RefMod.Assign( gxapp.XFile().GetRM(), true);
@@ -31,9 +29,6 @@ public:
     gxapp.SaveModel(fn);
   }
   virtual IEObject* Replicate() const {  return new TOXMFile(gxapp);  }
-  virtual void DeleteAtom(TCAtom *A)  {
-    throw TNotImplementedException(__OlxSourceInfo);
-  }
 };
 
 EndGxlNamespace()
