@@ -1,8 +1,9 @@
 #include "ortdraw.h"
 #include "xatom.h"
 #include "xbond.h"
-#include "gllabel.h"
 #include "styles.h"
+#include "gllabel.h"
+#include "dunitcell.h"
 
 ort_atom::ort_atom(const OrtDraw& parent, const TXAtom& a) :
 a_ort_object(parent), atom(a), p_elpm(NULL), p_ielpm(NULL),
@@ -250,6 +251,12 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   }
 }
 
+void ort_line::render(PSWriter& pw) const {
+  pw.lineWidth(1);
+  pw.color(0);
+  pw.drawLine(from, to);
+}
+
 void OrtDraw::RenderRims(PSWriter& pw, const mat3f& pelpm, const vec3f& norm_vec) const {
   for( uint16_t j=0; j < ElpDiv; j++ )
     Arc[j] = ElpCrd[j]*pelpm;
@@ -393,6 +400,28 @@ void OrtDraw::Render(const olxstr& fileName)  {
       v.NormaliseTo(center[2]);
       oa.crd[0] = v[0]+center[0];
       oa.crd[1] = v[1]+center[1];
+    }
+    if( app.DUnitCell().IsVisible() )  {
+      const TDUnitCell& uc = app.DUnitCell();
+      for( size_t i=0; i < uc.EdgeCount(); i+=2 )  {
+        vec3f f = (ProjectPoint(uc.GetEdge(i)) - center);
+        f.NormaliseTo(center[2]);
+        f += center;
+        vec3f t = (ProjectPoint(uc.GetEdge(i+1)) - center);
+        t.NormaliseTo(center[2]);
+        t += center;
+        objects.Add(new ort_line(*this, f, t));
+      }
+    }
+  }
+  else  {
+    if( app.DUnitCell().IsVisible() )  {
+      const TDUnitCell& uc = app.DUnitCell();
+      for( size_t i=0; i < uc.EdgeCount(); i+=2 )  {
+        objects.Add(new ort_line(*this, 
+          ProjectPoint(uc.GetEdge(i)),
+          ProjectPoint(uc.GetEdge(i+1))));
+      }
     }
   }
   for( size_t i=0; i < app.BondCount(); i++ )  {

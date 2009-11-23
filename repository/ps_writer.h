@@ -26,6 +26,8 @@ public:
     out.Writenl( "%%Orientation: Portrait" );
     out.Writenl( "%%DocumentPaperSizes: A4" );
     out.Writenl( "%%EndComments" );
+    //out.Writenl( "0 0 0 setrgbcolor" );
+    //out.Writenl( "1 setlinewidth" );
   }
   //..........................................................................
   void color(uint32_t rgb)  {

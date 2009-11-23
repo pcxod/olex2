@@ -1942,6 +1942,8 @@ TUndoData* TGXApp::DeleteXObjects(TPtrList<AGDrawObject>& L)  {
       TXBond* xb = (TXBond*)L[i];
       xb->SetVisible(false);
     }
+    else
+      L[i]->SetDeleted(true);
   }
   return DeleteXAtoms(atoms);
 }

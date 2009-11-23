@@ -496,11 +496,10 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
   int ValidatedAtomCount = 0, AtomCount=0;
   bool trim = Cmds[0].ToBool();
   bool use_formula = Cmds[0].ToBool();
-  if( use_formula && xapp.CheckFileType<TIns>() )  {
-    TIns& ins = xapp.XFile().GetLastLoader<TIns>();
+  if( use_formula )  {
     TTypeList< AnAssociation2<int,TBasicAtomInfo*> > sl;
     size_t ac = 0;
-    const ContentList& cl = ins.GetRM().GetUserContent();
+    const ContentList& cl = xapp.XFile().GetRM().GetUserContent();
     for( size_t i=0; i < cl.Count(); i++ )  {
       TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoBySymbol(cl[i].GetA());
       if( *bai == iHydrogenIndex )  continue;

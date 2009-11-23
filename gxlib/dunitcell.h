@@ -36,6 +36,8 @@ public:
         throw TInvalidArgumentException(__OlxSourceInfo, "vertex index");
     }
   }
+  size_t EdgeCount() const {  return FGlP == NULL ? 0 : 24;  }
+  const vec3f& GetEdge(size_t i) const {  return FGlP->Vertices[i];  }
   inline bool IsReciprocal()  const {  return Reciprocal;  }
   void SetReciprocal(bool v);
   DefPropC(vec3d, Center)
