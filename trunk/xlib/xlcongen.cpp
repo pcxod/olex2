@@ -15,7 +15,7 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const TBasicAtomInfo
     TSimpleRestraint* sr;
     TCAtomPList CreatedAtoms;
     TAtomEnvi NEnvi;
-    GenerateAtom( CreatedAtoms, envi, Group, atomType, pivoting);
+    GenerateAtom(CreatedAtoms, envi, Group, atomType, pivoting);
     short afix = 0;
     switch( Group )  {
       case fgNH3:
@@ -36,7 +36,6 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const TBasicAtomInfo
           afix = 93;
         break;
       case fgCH1:
-        GenerateAtom( CreatedAtoms, envi, Group, atomType);
         if( envi.Count() == 3 )
           afix = 13;
         else if( envi.Count() == 2 )

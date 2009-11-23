@@ -300,8 +300,8 @@ void TLattice::Init()  {
   GetUnitCell().ClearEllipsoids();
   GetUnitCell().InitMatrices();
   Generated = false;
+  GetUnitCell().FindSymmEq(0.1); // find and remove
   InitBody();
-  GetUnitCell().FindSymmEq(0.1); // find and not remove
 }
 //..............................................................................
 void  TLattice::Uniq(bool remEqv)  {
@@ -309,9 +309,9 @@ void  TLattice::Uniq(bool remEqv)  {
   Clear(false);
   ClearMatrices();
   GetUnitCell().UpdateEllipsoids();  // if new atoms are created...
+  GetUnitCell().FindSymmEq(0.1); // find and remove
   InitBody();
   Generated = false;
-  OnStructureUniq->Exit(this);
 }
 //..............................................................................
 void TLattice::GenerateAtoms(const TSAtomPList& atoms, TSAtomPList& result, const smatd_plist& matrices)  {
@@ -1305,9 +1305,9 @@ void TLattice::RestoreCoordinates()  {
 }
 //..............................................................................
 bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPList& ProcessingAtoms, int part, TCAtomPList* generated)  {
-  if( ProcessingAtoms.IndexOf(&atom) != InvalidIndex || (atom.CAtom().IsHAttached() && part == DefNoPart) )
+  if( ProcessingAtoms.IndexOf(atom) != InvalidIndex || (atom.CAtom().IsHAttached() && part == DefNoPart) )
     return false;
-  ProcessingAtoms.Add( &atom );
+  ProcessingAtoms.Add(atom);
 
   TBasicAtomInfo& HAI = AtomsInfo.GetAtomInfo(iHydrogenIndex);
   TAtomEnvi AE;
@@ -1340,8 +1340,8 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
   if( atom.GetAtomInfo() == iCarbonIndex )  {
     if( AE.Count() == 1 )  {
       // check acetilene
-      double d = AE.GetCrd(0).DistanceTo( atom.crd() );
-      TSAtom* A = FindSAtom( AE.GetLabel(0) );
+      double d = AE.GetCrd(0).DistanceTo(atom.crd());
+      TSAtom* A = FindSAtom(AE.GetCAtom(0));
       TAtomEnvi NAE;
       if( A == 0 )
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not locate atom ") << AE.GetLabel(0) );
@@ -1419,7 +1419,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       else  {
         if( d > 1.2 )  {  //else nitrile
           // have to check if double bond
-          TSAtom* A = FindSAtom( AE.GetLabel(0) );
+          TSAtom* A = FindSAtom(AE.GetCAtom(0));
           TAtomEnvi NAE;
           if( A == 0 )
             throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not locate atom ") << AE.GetLabel(0) );
@@ -1648,7 +1648,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
 }
 //..............................................................................
 void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const TPtrList<TBasicAtomInfo>& rcont) {
-  TTypeList< TSAtomPList > rings;
+  TTypeList<TSAtomPList> rings;
   TBasicAtomInfo& HAI = AtomsInfo.GetAtomInfo(iHydrogenIndex);
   for( size_t i=0; i < FragmentCount(); i++ )
     GetFragment(i).FindRings(rcont, rings);
@@ -1666,18 +1666,15 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const TPtrList<TBasicA
             (AE.GetCrd(0)-cnt).Normalise() + cnt, 
             (AE.GetCrd(1)-cnt).Normalise() + cnt, 
             (AE.GetCrd(2)-cnt).Normalise() + cnt);
-          if( v < 0.1 )  continue;  // coordination
+          if( v < 0.1 )  continue;  // coordination or substituted
         }
         for( size_t k=0; k < AE.Count(); k++ )  {
-          vec3d v( AE.GetCrd(k) - rings[i][j]->crd());
-          if( v.Length() > 2.0 )  {
-            AE.Delete(k);
-            k--;
-          }
+          if( (AE.GetCrd(k) - rings[i][j]->crd()).QLength() > 4.0 )
+            AE.Delete(k--);
         }
         if( AE.Count() == 2 && rings[i][j]->GetAtomInfo() == iCarbonIndex)  {
-          TBasicApp::GetLog().Info( olxstr(rings[i][j]->GetLabel()) << ": X(Y=C)H" );
-          cg.FixAtom( AE, fgCH1, HAI);
+          TBasicApp::GetLog().Info( olxstr(rings[i][j]->GetLabel()) << ": X(Y=C)H (ring)" );
+          cg.FixAtom(AE, fgCH1, HAI);
           rings[i][j]->CAtom().SetHAttached(true);
         }
       }
@@ -1691,12 +1688,12 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
     return;
   }
   TPtrList<TBasicAtomInfo> CTypes;
-  CTypes.Add( &AtomsInfo.GetAtomInfo(iCarbonIndex) );
-  CTypes.Add( &AtomsInfo.GetAtomInfo(iNitrogenIndex) );
-  CTypes.Add( &AtomsInfo.GetAtomInfo(iOxygenIndex) );
-  CTypes.Add( &AtomsInfo.GetAtomInfo(iBoronIndex) );
-  CTypes.Add( &AtomsInfo.GetAtomInfo(iSiliconIndex) );
-  CTypes.Add( &AtomsInfo.GetAtomInfo(iSulphurIndex) );
+  CTypes.Add(AtomsInfo.GetAtomInfo(iCarbonIndex));
+  CTypes.Add(AtomsInfo.GetAtomInfo(iNitrogenIndex));
+  CTypes.Add(AtomsInfo.GetAtomInfo(iOxygenIndex));
+  CTypes.Add(AtomsInfo.GetAtomInfo(iBoronIndex));
+  CTypes.Add(AtomsInfo.GetAtomInfo(iSiliconIndex));
+  CTypes.Add(AtomsInfo.GetAtomInfo(iSulphurIndex));
   TSAtomPList ProcessingAtoms;
 
   for( size_t i=0; i < atoms.Count(); i++ )
@@ -1704,11 +1701,11 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
 
   // treat rings
   TPtrList<TBasicAtomInfo> rcont;
-  rcont.Add( &AtomsInfo.GetAtomInfo(iCarbonIndex) );
+  rcont.Add(AtomsInfo.GetAtomInfo(iCarbonIndex));
   for( size_t i=0; i < 4; i++ )  
-    rcont.Add( rcont[0] );
+    rcont.Add(rcont[0]);
   _ProcessRingHAdd(cg, rcont); // Cp
-  rcont.Add( rcont[0] );
+  rcont.Add(rcont[0]);
   _ProcessRingHAdd(cg, rcont); // Ph
   rcont.Last() = &AtomsInfo.GetAtomInfo(iNitrogenIndex);
   _ProcessRingHAdd(cg, rcont); // Py
@@ -1727,13 +1724,13 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
     for( size_t j=0; j < atoms[i]->NodeCount(); j++ )  {
       TSAtom& A = atoms[i]->Node(j);
       if( A.IsDeleted() )  continue;
-      if( A.GetAtomInfo() == iHydrogenIndex ) {
+      if( TAtomsInfo::IsHAtom(A.GetAtomInfo()) ) {
         consider = false;
         break;
       }
     }
     for( size_t j=0; j < atoms[i]->CAtom().AttachedAtomCount(); j++ )  {
-      if( atoms[i]->CAtom().GetAttachedAtom(j).GetAtomInfo() == iHydrogenIndex &&
+      if( TAtomsInfo::IsHAtom(atoms[i]->CAtom().GetAttachedAtom(j).GetAtomInfo()) &&
         !atoms[i]->CAtom().GetAttachedAtom(j).IsDeleted() )  {
         consider = false;
         break;
@@ -1747,7 +1744,7 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
 void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
   TAtomEnvi AE;
   for( size_t i=0; i < Envi.Count(); i++ )  {
-    TSAtom* SA = FindSAtom( Envi.GetLabel(i) );
+    TSAtom* SA = FindSAtom(Envi.GetCAtom(i));
     AE.Clear();
     UnitCell->GetAtomEnviList(*SA, AE);
     if( SA->GetAtomInfo() == AtomsInfo.GetAtomInfo(iOxygenIndex) )  {
