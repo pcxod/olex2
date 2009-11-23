@@ -57,6 +57,14 @@ protected:
   void _render(PSWriter&, float scalex, uint32_t mask) const;
 };
 
+struct ort_line : public a_ort_object  {
+  vec3f from, to;
+  ort_line(const OrtDraw& parent, const vec3f& _from, const vec3f& _to) :
+    a_ort_object(parent), from(_from), to(_to)  {  }
+  virtual void render(PSWriter&) const;
+  virtual float get_z() const {  return (from[2]+to[2])/2;  }
+};
+
 class OrtDraw  {
 private:
   static int OrtObjectsZSort(const a_ort_object& a1, const a_ort_object& a2)  {

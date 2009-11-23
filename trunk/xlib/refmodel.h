@@ -400,6 +400,8 @@ of components 1 ... m
   void SetUserFormula(const olxstr& frm)  {
     UserContent.Clear();
     TAtomsInfo::GetInstance().ParseElementString(frm, UserContent);
+    for( size_t i=0; i < UserContent.Count(); i++ )
+      UserContent[i].B() *= aunit.GetZ();
   }
   // returns the restrained distance or -1
   double FindRestrainedDistance(const TCAtom& a1, const TCAtom& a2);
