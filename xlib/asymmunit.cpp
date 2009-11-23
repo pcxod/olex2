@@ -361,19 +361,6 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
   return NULL;
 }
 //..............................................................................
-void TAsymmUnit::InitialisePersistentIds()  {
-  size_t id = 0;
-  for( size_t i=0; i < CAtoms.Count(); i++ )
-    CAtoms[i]->SetId( CAtoms[i]->IsDeleted() ? InvalidIndex : id++);
-}
-//..............................................................................
-void TAsymmUnit::RestoreWorkingIds()  {
-  for( size_t i=0; i < AtomCount(); i++ )    
-    GetAtom(i).SetId(i);
-  for( size_t i=0; i < EllpCount(); i++ )    
-    GetEllp(i).SetId(i);
-}
-//..............................................................................
 void TAsymmUnit::DetachAtomType(short type, bool detach)  {
   const size_t ac = CAtoms.Count();
   if( type == iHydrogenIndex )  {

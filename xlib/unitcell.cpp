@@ -216,6 +216,7 @@ TUnitCell::TSearchSymmEqTask::TSearchSymmEqTask(TPtrList<TCAtom>& atoms,
 }
 //..............................................................................
 void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
+  if( Atoms[ind]->IsDeleted() )  return;
   const size_t ac = Atoms.Count();
   const size_t mc = Matrices.Count();
   for( size_t i=ind; i < ac; i++ )  {
@@ -230,6 +231,10 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
         AU->CellToCartesian(v);
         const double d = v.Length();
         if( d < tolerance )  {
+          if( Atoms[ind]->GetAtomInfo() == iQPeakIndex )  {
+            Atoms[ind]->SetDeleted(true);
+            break;
+          }
           Atoms[i]->SetDeleted(true);
           continue;
         }
@@ -249,6 +254,10 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
         }
         if( Atoms[i]->GetExyzGroup() != NULL && Atoms[i]->GetExyzGroup() == Atoms[ind]->GetExyzGroup() ) 
           continue;  
+        if( Atoms[ind]->GetAtomInfo() == iQPeakIndex )  {
+          Atoms[ind]->SetDeleted(true);
+          break;
+        }
         Atoms[i]->SetDeleted(true);
       }
       else  {

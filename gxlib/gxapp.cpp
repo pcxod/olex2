@@ -3924,10 +3924,8 @@ void TGXApp::SaveModel(const olxstr& fileName) const {
   wxZipOutputStream zos(fos, 9);
   TDataItem& mi = df.Root().AddItem("olex_model");
   zos.PutNextEntry( wxT("grid") );
-  XFile().GetAsymmUnit().InitialisePersistentIds();
   TwxOutputStreamWrapper os(zos);
   ToDataItem(mi, os);
-  XFile().GetAsymmUnit().RestoreWorkingIds();
   zos.CloseEntry();
   zos.PutNextEntry( wxT("model") );
   TEStrBuffer bf(1024*32);

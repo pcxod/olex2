@@ -223,11 +223,6 @@ public:
   }
   virtual size_t ReferencerCount() const {  return CAtoms.Count();  }
 //
-  // must be called before the model is saved
-  void InitialisePersistentIds();
-  // must be called after saving is completed
-  void RestoreWorkingIds();
-
   void ToDataItem(TDataItem& item) const;
 #ifndef _NO_PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms);
