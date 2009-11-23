@@ -74,13 +74,13 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
     TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ) );
     if( TEFile::Exists( autodbf ) )  {
       TEFile dbf(autodbf, "rb");
-      TAutoDB::GetInstance()->LoadFromStream( dbf );
+      TAutoDB::GetInstance()->LoadFromStream(dbf);
     }
   }
   if( !folder.IsEmpty() )  {
-    TAutoDB::GetInstance()->ProcessFolder( folder );
+    TAutoDB::GetInstance()->ProcessFolder(folder);
     TEFile dbf(autodbf, "w+b");
-    TAutoDB::GetInstance()->SaveToStream( dbf );
+    TAutoDB::GetInstance()->SaveToStream(dbf);
   }
 
   TLattice& latt = xapp.XFile().GetLattice();

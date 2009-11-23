@@ -312,6 +312,7 @@ void  TLattice::Uniq(bool remEqv)  {
   GetUnitCell().FindSymmEq(0.1); // find and remove
   InitBody();
   Generated = false;
+  OnStructureUniq->Exit(this);
 }
 //..............................................................................
 void TLattice::GenerateAtoms(const TSAtomPList& atoms, TSAtomPList& result, const smatd_plist& matrices)  {
