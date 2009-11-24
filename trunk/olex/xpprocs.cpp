@@ -7112,7 +7112,7 @@ void TMainForm::funGetFont(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TGlMaterial* mat = NULL;
+  TGlMaterial* mat = NULL, *smat = NULL;
   TGPCollection* gpc = NULL;
   if( Cmds[0] == "helpcmd" )
     mat = &HelpFontColorCmd;
@@ -7125,7 +7125,24 @@ void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TM
   else if( Cmds[0] == "exception" )
     mat = &ExceptionFontColor;
   else  {
-    gpc = FXApp->GetRender().FindCollection( Cmds[0] );
+    size_t di = Cmds[0].IndexOf('.');
+    if( di != InvalidIndex )  {
+      TGPCollection* _gpc = FXApp->GetRender().FindCollection(Cmds[0].SubStringTo(di));
+      if( _gpc != NULL )  {
+        TGlPrimitive* glp = _gpc->FindPrimitiveByName(Cmds[0].SubStringFrom(di+1));
+        if( glp != NULL )  {
+          mat = &glp->GetProperties();
+          smat = &_gpc->GetStyle().GetMaterial(Cmds[0].SubStringFrom(di+1), *mat);
+        }
+      }
+      else  {  // modify the style if exists
+        TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(Cmds[0].SubStringTo(di));
+        if( gs != NULL )
+          mat = gs->FindMaterial(Cmds[0].SubStringFrom(di+1));
+      }
+    }
+    else
+      gpc = FXApp->GetRender().FindCollection(Cmds[0]);
   }
   if( mat == NULL && gpc == NULL )  {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined material/control ") << Cmds[0]);
@@ -7133,11 +7150,13 @@ void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TM
   }
   TdlgMatProp* MatProp = new TdlgMatProp(this, gpc, FXApp);
   if( mat != NULL )
-    MatProp->SetCurrent( *mat );
+    MatProp->SetCurrent(*mat);
 
   if( MatProp->ShowModal() == wxID_OK )  {
     if( mat != NULL )
       *mat = MatProp->GetCurrent();
+    if( smat != NULL )
+      *smat = MatProp->GetCurrent();
   }
   MatProp->Destroy();
 }
@@ -7166,6 +7185,16 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
           glp->SetProperties(glm);
           gpc->GetStyle().SetMaterial(Cmds[0].SubStringFrom(di+1), glm);
           found = true;
+        }
+      }
+      else  {  // modify the style if exists
+        TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(Cmds[0].SubStringTo(di));
+        if( gs != NULL )  {
+          mat = gs->FindMaterial(Cmds[0].SubStringFrom(di+1));
+          if( mat != NULL )  {
+            *mat = glm;
+            found = true;
+          }
         }
       }
     }
@@ -7206,13 +7235,18 @@ void TMainForm::funGetMaterial(const TStrObjList &Params, TMacroError &E)  {
   else if( Params[0] == "exception" )
     mat = &ExceptionFontColor;
   else  {
-    int di = Params[0].IndexOf('.');
-    if( di != -1 )  {
+    size_t di = Params[0].IndexOf('.');
+    if( di != InvalidIndex )  {
       TGPCollection* gpc = FXApp->GetRender().FindCollection(Params[0].SubStringTo(di));
       if( gpc != NULL )  {
         TGlPrimitive* glp = gpc->FindPrimitiveByName(Params[0].SubStringFrom(di+1));
         if( glp != NULL )
           mat = &glp->GetProperties();
+      }
+      else  {  // check if the style exists
+        TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(Params[0].SubStringTo(di));
+        if( gs != NULL )
+          mat = gs->FindMaterial(Params[0].SubStringFrom(di+1));
       }
     }
   }
@@ -7221,7 +7255,7 @@ void TMainForm::funGetMaterial(const TStrObjList &Params, TMacroError &E)  {
     return;
   }
   else
-    E.SetRetVal( mat->ToString() );
+    E.SetRetVal(mat->ToString());
 }
 //..............................................................................
 void TMainForm::macLstGO(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

@@ -202,7 +202,7 @@ bool TGlMaterial::FromDataItem(const TDataItem& Item)  {
   return true;
 }
 //..............................................................................
-TIString TGlMaterial::ToString() const  {
+TIString TGlMaterial::ToString() const {
   olxstr str(EmptyString, 256);
   str << Flags;
   if( (Flags & sglmAmbientF) != 0 )
@@ -224,7 +224,9 @@ TIString TGlMaterial::ToString() const  {
   return str;
 }
 //..............................................................................
-void TGlMaterial::FromString( const olxstr& str )  {
+void TGlMaterial::FromString(const olxstr& str)  {
+  if( str.IsEmpty() )
+    throw TInvalidArgumentException(__OlxSourceInfo, "representation");
   TStrList toks( str, ';');
   Flags = toks[0].ToInt();
   int ind = 1;

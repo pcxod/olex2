@@ -15,8 +15,7 @@
 #include "glgroup.h"
 #include "xatom.h"
 //..............................................................................
-enum
-{
+enum  {
   ID_COPY = 1,
   ID_PASTE,
   ID_EDITFONT
@@ -119,52 +118,52 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
 
   wxBoxSizer *Sizer0 = NULL;
   if( cbPrimitives )  {
-    Sizer0 = new wxBoxSizer( wxHORIZONTAL );
-    Sizer0->Add( cbPrimitives, 0, wxEXPAND | wxALL, Border );
+    Sizer0 = new wxBoxSizer(wxHORIZONTAL);
+    Sizer0->Add(cbPrimitives, 0, wxEXPAND | wxALL, Border);
     if( cbApplyToGroup )
-      Sizer0->Add( cbApplyToGroup, 0, wxEXPAND | wxALL, Border );
-    Sizer0->Add( new wxButton( this, ID_COPY, wxT("Copy  Mat.") ), 1, wxEXPAND | wxALL, Border );
-    Sizer0->Add( new wxButton( this, ID_PASTE, wxT("Paste Mat.") ), 1, wxEXPAND | wxALL, Border );
-    bEditFont = new wxButton( this, ID_EDITFONT, wxT("Edit Font") );
-    bEditFont->Enable( GPC->GetPrimitive(0).GetFont() != NULL );
-    Sizer0->Add( bEditFont, 1, wxEXPAND | wxALL, Border );
+      Sizer0->Add(cbApplyToGroup, 0, wxEXPAND | wxALL, Border);
+    Sizer0->Add(new wxButton(this, ID_COPY, wxT("Copy  Mat.")), 1, wxEXPAND | wxALL, Border);
+    Sizer0->Add(new wxButton(this, ID_PASTE, wxT("Paste Mat.")), 1, wxEXPAND | wxALL, Border);
+    bEditFont = new wxButton(this, ID_EDITFONT, wxT("Edit Font"));
+    bEditFont->Enable(GPC->GetPrimitive(0).GetFont() != NULL);
+    Sizer0->Add(bEditFont, 1, wxEXPAND | wxALL, Border);
   }
 
-  wxFlexGridSizer *grid = new wxFlexGridSizer( 6, 8 );
+  wxFlexGridSizer *grid = new wxFlexGridSizer( 6, 8);
   grid->Add(-1,10);
-  grid->Add( new wxStaticText(this, -1, wxT("Colour"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border );
-  grid->Add( new wxStaticText(this, -1, wxT("Transparency"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border );
+  grid->Add(new wxStaticText(this, -1, wxT("Colour"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
+  grid->Add(new wxStaticText(this, -1, wxT("Transparency"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
   grid->Add(-1,10);
-  grid->Add( new wxStaticText(this, -1, wxT("Colour"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border );
-  grid->Add( new wxStaticText(this, -1, wxT("Transparency"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border );
+  grid->Add(new wxStaticText(this, -1, wxT("Colour"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
+  grid->Add(new wxStaticText(this, -1, wxT("Transparency"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
 
-  grid->Add( cbAmbF, 0, wxALL, Border );
-  grid->Add( tcAmbF, 0, wxEXPAND | wxALL, Border );
-  grid->Add( scAmbF, 0, wxEXPAND | wxALL, Border );
-  grid->Add( cbAmbB, 0, wxALL, Border );
-  grid->Add( tcAmbB, 0, wxEXPAND | wxALL, Border );
-  grid->Add( scAmbB, 0, wxEXPAND | wxALL, Border );
+  grid->Add(cbAmbF, 0, wxALL, Border);
+  grid->Add(tcAmbF, 0, wxEXPAND | wxALL, Border);
+  grid->Add(scAmbF, 0, wxEXPAND | wxALL, Border);
+  grid->Add(cbAmbB, 0, wxALL, Border);
+  grid->Add(tcAmbB, 0, wxEXPAND | wxALL, Border);
+  grid->Add(scAmbB, 0, wxEXPAND | wxALL, Border);
 
-  grid->Add( cbDiffF, 0, wxALL, Border );
-  grid->Add( tcDiffF, 0, wxEXPAND | wxALL, Border );
-  grid->Add( scDiffF, 0, wxEXPAND | wxALL, Border );
-  grid->Add( cbDiffB, 0, wxALL, Border );
-  grid->Add( tcDiffB, 0, wxEXPAND | wxALL, Border );
-  grid->Add( scDiffB, 0, wxEXPAND | wxALL, Border );
+  grid->Add(cbDiffF, 0, wxALL, Border);
+  grid->Add(tcDiffF, 0, wxEXPAND | wxALL, Border);
+  grid->Add(scDiffF, 0, wxEXPAND | wxALL, Border);
+  grid->Add(cbDiffB, 0, wxALL, Border);
+  grid->Add(tcDiffB, 0, wxEXPAND | wxALL, Border);
+  grid->Add(scDiffB, 0, wxEXPAND | wxALL, Border);
 
-  grid->Add( cbEmmF, 0, wxALL, Border );
-  grid->Add( tcEmmF, 0, wxEXPAND | wxALL, Border );
-  grid->Add( scEmmF, 0, wxEXPAND | wxALL, Border );
-  grid->Add( cbEmmB, 0, wxALL, Border );
-  grid->Add( tcEmmB, 0, wxEXPAND | wxALL, Border );
-  grid->Add( scEmmB, 0, wxEXPAND | wxALL, Border );
+  grid->Add(cbEmmF, 0, wxALL, Border);
+  grid->Add(tcEmmF, 0, wxEXPAND | wxALL, Border);
+  grid->Add(scEmmF, 0, wxEXPAND | wxALL, Border);
+  grid->Add(cbEmmB, 0, wxALL, Border);
+  grid->Add(tcEmmB, 0, wxEXPAND | wxALL, Border);
+  grid->Add(scEmmB, 0, wxEXPAND | wxALL, Border);
 
-  grid->Add( cbSpecF, 0, wxALL, Border );
-  grid->Add( tcSpecF, 0, wxEXPAND | wxALL, Border );
-  grid->Add( scSpecF, 0, wxEXPAND | wxALL, Border );
-  grid->Add( cbSpecB, 0, wxALL, Border );
-  grid->Add( tcSpecB, 0, wxEXPAND | wxALL, Border );
-  grid->Add( scSpecB, 0, wxEXPAND | wxALL, Border );
+  grid->Add(cbSpecF, 0, wxALL, Border);
+  grid->Add(tcSpecF, 0, wxEXPAND | wxALL, Border);
+  grid->Add(scSpecF, 0, wxEXPAND | wxALL, Border);
+  grid->Add(cbSpecB, 0, wxALL, Border);
+  grid->Add(tcSpecB, 0, wxEXPAND | wxALL, Border);
+  grid->Add(scSpecB, 0, wxEXPAND | wxALL, Border);
 
   grid->Add(-1,10);
   grid->Add(-1,10);
@@ -173,35 +172,35 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
   grid->Add(-1,10);
   grid->Add(-1,10);
 
-  grid->Add( cbShnF, 0, wxALL, Border );
-  grid->Add( tcShnF, 0, wxEXPAND | wxALL, Border );
+  grid->Add(cbShnF, 0, wxALL, Border);
+  grid->Add(tcShnF, 0, wxEXPAND | wxALL, Border);
   grid->Add(-1,10);
-  grid->Add( cbShnB, 0, wxALL, Border );
-  grid->Add( tcShnB, 0, wxEXPAND | wxALL, Border );
+  grid->Add(cbShnB, 0, wxALL, Border);
+  grid->Add(tcShnB, 0, wxEXPAND | wxALL, Border);
   grid->Add(-1,10);
   
-  grid->Add( cbTrans, 0, wxALL, Border );
-  grid->Add( scTrans, 0, wxEXPAND | wxALL, Border );
+  grid->Add(cbTrans, 0, wxALL, Border);
+  grid->Add(scTrans, 0, wxEXPAND | wxALL, Border);
   grid->Add(-1,10);
-  grid->Add( cbIDraw, 0, wxALL, Border );
+  grid->Add(cbIDraw, 0, wxALL, Border);
   grid->AddGrowableCol(1);
   grid->AddGrowableCol(2);
   grid->AddGrowableCol(4);
   grid->AddGrowableCol(5);
   
-  wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxHORIZONTAL );
-  ButtonsSizer->Add( new wxButton( this, wxID_OK, wxT("OK") ), 0, wxEXPAND | wxALL, Border);
-  ButtonsSizer->Add( new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxEXPAND | wxALL, Border);
-  ButtonsSizer->Add( new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxEXPAND | wxALL, Border );
+  wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxHORIZONTAL);
+  ButtonsSizer->Add(new wxButton( this, wxID_OK, wxT("OK") ), 0, wxEXPAND | wxALL, Border);
+  ButtonsSizer->Add(new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxEXPAND | wxALL, Border);
+  ButtonsSizer->Add(new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxEXPAND | wxALL, Border);
 
-  wxBoxSizer *TopSiser = new wxBoxSizer( wxVERTICAL );
+  wxBoxSizer *TopSiser = new wxBoxSizer( wxVERTICAL);
   if( Sizer0 )  TopSiser->Add(Sizer0, 0, wxEXPAND | wxALL, 5);
   TopSiser->Add(grid, 0, wxEXPAND | wxALL, 5);
   TopSiser->Add(ButtonsSizer, 0, wxALL, 10);
 
-  SetSizer( TopSiser );      // use the sizer for layout
+  SetSizer(TopSiser);      // use the sizer for layout
 
-  TopSiser->SetSizeHints( this );   // set size hints to honour minimum size
+  TopSiser->SetSizeHints(this);   // set size hints to honour minimum size
 
   Center();
 
@@ -230,7 +229,7 @@ bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data)  {
     CD->GetColourData().SetColour(wc);
     if( CD->ShowModal() == wxID_OK )  {
       wc = CD->GetColourData().GetColour();
-      ((TTextEdit*)Sender)->WI.SetColor(RGB(wc.Red(), wc.Green(), wc.Blue()) );
+      ((TTextEdit*)Sender)->WI.SetColor(RGB(wc.Red(), wc.Green(), wc.Blue()));
     }
     delete CD;
   }
@@ -241,7 +240,7 @@ bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data)  {
       FCurrentMaterial = i;
       Init(FMaterials[FCurrentMaterial]);
       const TGlPrimitive* glp = (const TGlPrimitive*)cbPrimitives->GetObject(i);
-      bEditFont->Enable( glp->GetFont() != NULL );
+      bEditFont->Enable( glp->GetFont() != NULL);
     }
   }
   if( (TSpinCtrl*)Sender == scTrans )  {
@@ -374,7 +373,7 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
         //TGraphicsStyle* GS = FXApp->GetRender().Styles()->NewStyle( GPCollection->Name(), true);
         for( size_t i=0; i < GPCollection->PrimitiveCount(); i++ )  {
           GPCollection->GetPrimitive(i).SetProperties(FMaterials[i]);
-          GPCollection->GetStyle().SetMaterial( GPCollection->GetPrimitive(i).GetName(), FMaterials[i]);
+          GPCollection->GetStyle().SetMaterial(GPCollection->GetPrimitive(i).GetName(), FMaterials[i]);
         }
       }
     }
@@ -394,7 +393,7 @@ void TdlgMatProp::OnPaste(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TdlgMatProp::OnEditFont(wxCommandEvent& event)  {
-  FXApp->GetRender().GetScene().ShowFontDialog( GPCollection->GetPrimitive(FCurrentMaterial).GetFont() );
+  FXApp->GetRender().GetScene().ShowFontDialog( GPCollection->GetPrimitive(FCurrentMaterial).GetFont());
 }
 //..............................................................................
 
