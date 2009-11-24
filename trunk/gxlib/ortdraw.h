@@ -57,12 +57,39 @@ protected:
   void _render(PSWriter&, float scalex, uint32_t mask) const;
 };
 
-struct ort_line : public a_ort_object  {
-  vec3f from, to;
-  ort_line(const OrtDraw& parent, const vec3f& _from, const vec3f& _to) :
-    a_ort_object(parent), from(_from), to(_to)  {  }
+struct ort_poly : public a_ort_object  {
+  vec3f_list points;
+  bool fill;
+  float line_width;
+  uint32_t color;
+  ort_poly(const OrtDraw& parent, bool _fill) :
+    a_ort_object(parent),
+    fill(_fill),
+    line_width(1.0f),
+    color(0x0) {  }
   virtual void render(PSWriter&) const;
-  virtual float get_z() const {  return (from[2]+to[2])/2;  }
+  virtual float get_z() const {
+    float z = 0;
+    for( size_t i=0; i < points.Count(); i++ )
+      z += points[i][2];
+    return points.IsEmpty() ? 0 : z/points.Count();
+  }
+};
+
+struct ort_circle : public a_ort_object  {
+  bool fill;
+  float line_width, r;
+  uint32_t color;
+  vec3f center;
+  ort_circle(const OrtDraw& parent, const vec3f& _center, float _r, bool _fill) :
+    a_ort_object(parent),
+    center(_center),
+    r(_r),
+    fill(_fill),
+    line_width(1.0f),
+    color(0x0) {  }
+  virtual void render(PSWriter&) const;
+  virtual float get_z() const {  return center[2];  }
 };
 
 class OrtDraw  {
@@ -96,6 +123,10 @@ protected:
   vec3f ProjectPoint(const vec3f& p) const {  return (p + SceneOrigin)*ProjMatr+DrawOrigin;  }
   void RenderRims(PSWriter& pw, const mat3f& pm, const vec3f& normal) const;
   void RenderQuads(PSWriter& pw, const mat3f& pm) const;
+  void _process_points(TPtrList<vec3f>& points, ort_poly& otp)  {
+    for( size_t i=0; i < otp.points.Count(); i++ )
+      points.Add( otp.points[i] );
+  }
 public:
   OrtDraw() : app(TGXApp::GetInstance()), basis(app.GetRender().GetBasis()) {  
     ElpDiv = 36;
@@ -126,6 +157,7 @@ public:
 
   friend struct ort_bond;
   friend struct ort_atom;
+  friend struct ort_poly;
 };
 
 

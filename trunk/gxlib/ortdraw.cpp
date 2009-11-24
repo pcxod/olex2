@@ -4,6 +4,7 @@
 #include "styles.h"
 #include "gllabel.h"
 #include "dunitcell.h"
+#include "dbasis.h"
 
 ort_atom::ort_atom(const OrtDraw& parent, const TXAtom& a) :
 a_ort_object(parent), atom(a), p_elpm(NULL), p_ielpm(NULL),
@@ -251,10 +252,32 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   }
 }
 
-void ort_line::render(PSWriter& pw) const {
-  pw.lineWidth(1);
-  pw.color(0);
-  pw.drawLine(from, to);
+void ort_poly::render(PSWriter& pw) const {
+  if( fill && points.Count() > 2 )  {
+    pw.color(color);
+    pw.drawLines(points, InvalidSize, true, &PSWriter::fill);
+  }
+  else  {
+    if( color != 0xffffffff )  {
+      pw.lineWidth(line_width*1.2);
+      pw.color(0xffffffff);
+      pw.drawLines(points, InvalidSize, true);
+    }
+    pw.lineWidth(line_width);
+    pw.color(color);
+    pw.drawLines(points, InvalidSize, true);
+  }
+}
+
+void ort_circle::render(PSWriter& pw) const {
+  pw.color(color);
+  if( fill )  {
+    pw.drawCircle(center, r, fill ? &PSWriter::fill : &PSWriter::stroke);
+    pw.color(0x0);
+    pw.drawCircle(center, r, &PSWriter::stroke);
+  }
+  else
+    pw.drawCircle(center, r, &PSWriter::stroke);
 }
 
 void OrtDraw::RenderRims(PSWriter& pw, const mat3f& pelpm, const vec3f& norm_vec) const {
@@ -367,6 +390,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
   PSWriter pw(fileName);
   Init(pw);
   TTypeList<a_ort_object> objects;
+  TPtrList<vec3f> all_points;
   objects.SetCapacity(app.AtomCount()+app.BondCount());
   for( size_t i=0; i < app.AtomCount(); i++ )  {
     if( app.GetAtom(i).IsDeleted() ) // have to keep hidden atoms, as those might be used by bonds!
@@ -381,49 +405,72 @@ void OrtDraw::Render(const olxstr& fileName)  {
     if( (ColorMode&ortep_color_fill) )
       a->draw_style |= ortep_color_fill;
     objects.Add(a);
+    all_points.Add(&a->crd);
   }
-  if( Perspective && !objects.IsEmpty() )  {
-    float min_z, max_z;
-    min_z  = max_z = objects[0].get_z();
-    vec3f center = ((ort_atom&)objects[0]).crd;
-    for( size_t i=1; i < objects.Count(); i++ )  {
-      const ort_atom& a = (const ort_atom&)objects[i];
-      if( a.crd[2] < min_z )  min_z = a.crd[2];
-      if( a.crd[2] > max_z )  max_z = a.crd[2];
-      center += a.crd;
+  if( app.DUnitCell().IsVisible() )  {
+    const TDUnitCell& uc = app.DUnitCell();
+    for( size_t i=0; i < uc.EdgeCount(); i+=2 )  {
+      ort_poly* l = new ort_poly(*this, false);
+      l->points.AddNew(ProjectPoint(uc.GetEdge(i)));
+      l->points.AddNew(ProjectPoint(uc.GetEdge(i+1)));
+      objects.Add(l);
+      _process_points(all_points, *l);
     }
-    center /= objects.Count();
-    center[2] = (max_z - min_z)*10;
-    for( size_t i=0; i < objects.Count(); i++ )  {
-      ort_atom& oa = (ort_atom&)objects[i];
-      vec3f v(oa.crd - center);
+  }
+  if( app.DBasis().IsVisible() )  {
+    const TDBasis& b = app.DBasis();
+    vec3d T = b.Basis.GetCenter();
+    mat3f cm = app.XFile().GetAsymmUnit().GetCellToCartesian();
+    vec3f len(cm[0].Length(), cm[1].Length(), cm[2].Length());
+    cm[0].Normalise();  cm[1].Normalise();  cm[2].Normalise();
+    cm *= ProjMatr;
+    T *= app.GetRender().GetScale();
+    T = app.GetRender().GetBasis().GetMatrix() * T;
+    T -= app.GetRender().GetBasis().GetCenter();
+    vec3f cnt = ProjectPoint(T);
+    ort_circle* center = new ort_circle(*this, cnt, 10*b.Basis.GetZoom(), true);
+    all_points.Add(center->center);
+    center->color = 0xffffffff;
+    objects.Add(center);
+    for( int i=0; i < 3; i++ )  {
+      vec3f mp = cm[i]*(0.2*len[i]*b.Basis.GetZoom()), 
+        ep = cm[i]*((0.2*len[i]+0.8)*b.Basis.GetZoom());
+      vec3f mpn = (ep-mp).XProdVec(vec3f(0,0,1));
+      if( mpn.QLength() > 1e-6 )
+        mpn.NormaliseTo(0.2*DrawScale*b.Basis.GetZoom());
+      float z = cm[i][2]/cm[i].Length();
+      vec3f _mpn = mpn*0.25, _mpnp = _mpn*(1+olx_sign(z)*sqrt(olx_abs(z))/2);
+      ort_poly* axis = new ort_poly(*this, true);
+      axis->points.AddNew(cnt+NullVec-_mpn);
+      axis->points.AddNew(cnt+NullVec+_mpn);
+      axis->points.AddNew(cnt+mp+_mpnp);
+      axis->points.AddNew(cnt+mp-_mpnp);
+      _process_points(all_points, *axis);
+      objects.Add(axis);
+      ort_poly* arrow = new ort_poly(*this, true);
+      arrow->points.AddNew(cnt+mp-mpn);
+      arrow->points.AddNew(cnt+ep);
+      arrow->points.AddNew(cnt+mp+mpn);
+      _process_points(all_points, *arrow);
+      objects.Add(arrow);
+    }
+  }
+  if( Perspective && !all_points.IsEmpty() )  {
+    vec3f _min, _max;
+    _min  = _max = (*all_points[0]);
+    for( size_t i=1; i < all_points.Count(); i++ )
+      vec3f::UpdateMinMax(*all_points[i], _min, _max);
+    vec3f center((_min+_max)/2);
+    center[2] = (_max[2] - _min[2])*10;
+    for( size_t i=0; i < all_points.Count(); i++ )  {
+      vec3f& crd = *all_points[i];
+      vec3f v(crd - center);
       v.NormaliseTo(center[2]);
-      oa.crd[0] = v[0]+center[0];
-      oa.crd[1] = v[1]+center[1];
-    }
-    if( app.DUnitCell().IsVisible() )  {
-      const TDUnitCell& uc = app.DUnitCell();
-      for( size_t i=0; i < uc.EdgeCount(); i+=2 )  {
-        vec3f f = (ProjectPoint(uc.GetEdge(i)) - center);
-        f.NormaliseTo(center[2]);
-        f += center;
-        vec3f t = (ProjectPoint(uc.GetEdge(i+1)) - center);
-        t.NormaliseTo(center[2]);
-        t += center;
-        objects.Add(new ort_line(*this, f, t));
-      }
+      crd[0] = v[0] + center[0];
+      crd[1] = v[1] + center[1];
     }
   }
-  else  {
-    if( app.DUnitCell().IsVisible() )  {
-      const TDUnitCell& uc = app.DUnitCell();
-      for( size_t i=0; i < uc.EdgeCount(); i+=2 )  {
-        objects.Add(new ort_line(*this, 
-          ProjectPoint(uc.GetEdge(i)),
-          ProjectPoint(uc.GetEdge(i+1))));
-      }
-    }
-  }
+
   for( size_t i=0; i < app.BondCount(); i++ )  {
     const TXBond& xb = app.GetBond(i);
     if( xb.IsDeleted() || !xb.IsVisible() )

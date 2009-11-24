@@ -505,23 +505,19 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
 void TGXApp::CenterModel()  {
   const size_t ac = FXFile->GetLattice().AtomCount();
   if( ac == 0 )  return;
-  double aan = 0;
-  vec3d Center;
+  vec3d maX(-100, -100, -100), miN(100, 100, 100);
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& A = FXFile->GetLattice().GetAtom(i);
-    if( !A.IsDeleted() )  {
-      Center += A.crd()*A.CAtom().GetOccu();
-      aan += A.CAtom().GetOccu();
-    }
+    if( !A.IsDeleted() )
+      vec3d::UpdateMinMax(A.crd(), miN, maX);
   }
   if( FDUnitCell->IsVisible() )  {
-    size_t vc = FDUnitCell->VertexCount();
-    for( size_t i=0; i < vc; i++ )
-      Center += FDUnitCell->GetVertex(i)*50;
-    aan += 50*vc;
+    vec3d cell_min, cell_max;
+    FDUnitCell->GetDimensions(cell_max, cell_min);
+    vec3d::UpdateMinMax(cell_min, miN, maX);
+    vec3d::UpdateMinMax(cell_max, miN, maX);
   }
-  if( aan == 0 )  return;
-  Center /= aan;
+  vec3d Center((miN+maX)/2);
   Center *= -1;
   FGlRender->GetBasis().SetCenter(Center);
   vec3d max = FGlRender->MaxDim() + Center;
@@ -531,29 +527,20 @@ void TGXApp::CenterModel()  {
 }
 //..............................................................................
 void TGXApp::CenterView(bool calcZoom)  {
-  double aan = 0;
-  vec3d Center, maX(-100, -100, -100), miN(100, 100, 100);
+  vec3d maX(-100, -100, -100), miN(100, 100, 100);
   if( FXFile->GetLattice().AtomCount() == 0 )  return;
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
     TXAtom& XA = XAtoms[i];
-    if( !XA.IsDeleted() && XA.IsVisible() )  {
+    if( !XA.IsDeleted() && XA.IsVisible() )
       vec3d::UpdateMinMax(XA.Atom().crd(), miN, maX);
-      Center += XA.Atom().crd()*XA.Atom().CAtom().GetOccu();
-      aan += XA.Atom().CAtom().GetOccu();
-    }
   }
   if( FDUnitCell->IsVisible() )  {
-    size_t vc = FDUnitCell->VertexCount();
-    for( size_t i=0; i < vc; i++ )
-      Center += FDUnitCell->GetVertex(i)*50;
-    aan += 50*vc;
     vec3d cell_min, cell_max;
     FDUnitCell->GetDimensions(cell_max, cell_min);
     vec3d::UpdateMinMax(cell_min, miN, maX);
     vec3d::UpdateMinMax(cell_max, miN, maX);
   }
-  if( aan == 0 )  return;
-  Center /= aan;
+  vec3d Center((miN+maX)/2);
   Center *= -1;
   maX += Center;
   miN += Center;
