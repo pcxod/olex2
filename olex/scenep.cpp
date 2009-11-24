@@ -288,7 +288,7 @@ TdlgSceneProps::~TdlgSceneProps()  {
   tbEditFont->OnClick.Clear();
 }
 //..............................................................................
-bool TdlgSceneProps::Execute(const IEObject *Sender, const IEObject *Data)  {
+bool TdlgSceneProps::Execute(const IEObject* Sender, const IEObject* Data)  {
   if( (TTrackBar*)Sender == tbX )    teX->SetText(tbX->GetValue());
   if( (TTrackBar*)Sender == tbY )    teY->SetText(tbY->GetValue());
   if( (TTrackBar*)Sender == tbZ )    teZ->SetText(tbZ->GetValue());
@@ -324,7 +324,7 @@ bool TdlgSceneProps::Execute(const IEObject *Sender, const IEObject *Data)  {
   return true;
 }
 //..............................................................................
-void TdlgSceneProps::InitLightModel( TGlLightModel &GlLM )  {
+void TdlgSceneProps::InitLightModel(TGlLightModel& GlLM)  {
   cbLocalV->SetValue(GlLM.IsLocalViewer());
   cbTwoSide->SetValue(GlLM.IsTwoSides());
   cbSmooth->SetValue(GlLM.IsSmoothShade());
@@ -332,7 +332,7 @@ void TdlgSceneProps::InitLightModel( TGlLightModel &GlLM )  {
   tcBgClr->WI.SetColor(GlLM.GetClearColor().GetRGB());
 }
 //..............................................................................
-void TdlgSceneProps::UpdateLightModel( TGlLightModel &GlLM )  {
+void TdlgSceneProps::UpdateLightModel(TGlLightModel& GlLM)  {
   GlLM.SetLocalViewer(cbLocalV->GetValue());
   GlLM.SetTwoSides(cbTwoSide->GetValue());
   GlLM.SetSmoothShade(cbSmooth->GetValue());
@@ -340,7 +340,7 @@ void TdlgSceneProps::UpdateLightModel( TGlLightModel &GlLM )  {
   GlLM.SetClearColor(tcBgClr->WI.GetColor());
 }
 //..............................................................................
-void TdlgSceneProps::InitLight( TGlLight &L )  {
+void TdlgSceneProps::InitLight(TGlLight& L)  {
   tbX->SetValue((int)L.GetPosition()[0]);  teX->SetText((int)L.GetPosition()[0]);
   tbY->SetValue((int)L.GetPosition()[1]);  teY->SetText((int)L.GetPosition()[1]);
   tbZ->SetValue((int)L.GetPosition()[2]);  teZ->SetText((int)L.GetPosition()[2]);
@@ -367,7 +367,7 @@ void TdlgSceneProps::InitLight( TGlLight &L )  {
   teSCZ->SetText( L.GetSpotDirection()[2] );
 }
 //..............................................................................
-void TdlgSceneProps::UpdateLight( TGlLight &L )  {
+void TdlgSceneProps::UpdateLight(TGlLight& L)  {
   L.SetPosition(TGlOption(tbX->GetValue(), tbY->GetValue(), tbZ->GetValue(), tbR->GetValue()));
   L.SetAmbient(teAmb->WI.GetColor() | (uint32_t)((256*scAmbA->GetValue()/100) << 24));
   L.SetDiffuse(teDiff->WI.GetColor() | (uint32_t)((256*scDiffA->GetValue()/100) << 24));
@@ -379,7 +379,7 @@ void TdlgSceneProps::UpdateLight( TGlLight &L )  {
   L.SetSpotDirection(TGlOption(teSCX->GetText().ToDouble(), teSCY->GetText().ToDouble(), teSCZ->GetText().ToDouble()));
 }
 //..............................................................................
-void TdlgSceneProps::OnApply(wxCommandEvent &event)  {
+void TdlgSceneProps::OnApply(wxCommandEvent& event)  {
   UpdateLight(FLightModel.GetLight(FCurrentLight));
   UpdateLightModel(FLightModel);
   TGXApp::GetInstance().GetRender().LightModel = FLightModel;
@@ -388,19 +388,19 @@ void TdlgSceneProps::OnApply(wxCommandEvent &event)  {
   TGXApp::GetInstance().Draw();
 }
 //..............................................................................
-void TdlgSceneProps::OnCancel(wxCommandEvent &event)  {
+void TdlgSceneProps::OnCancel(wxCommandEvent& event)  {
   TGXApp::GetInstance().GetRender().LightModel = FOriginalModel;
   TGXApp::GetInstance().GetRender().LoadIdentity();
   TGXApp::GetInstance().GetRender().InitLights();
   EndModal(wxID_OK);
 }
 //..............................................................................
-void TdlgSceneProps::OnOK(wxCommandEvent &event)  {
+void TdlgSceneProps::OnOK(wxCommandEvent& event)  {
   OnApply(event);
   EndModal(wxID_OK);
 }
 //..............................................................................
-void TdlgSceneProps::OnOpen(wxCommandEvent &event)  {
+void TdlgSceneProps::OnOpen(wxCommandEvent& event)  {
   olxstr FN = Parent->PickFile("Load scene parameters",
     "Scene parameters|*.glsp", Parent->GetScenesFolder(), true);
   if( !FN.IsEmpty() )  {
