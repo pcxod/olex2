@@ -77,7 +77,7 @@ protected:
         }
       }
       new_cent /= peak.count;
-      peak.center = new_cent.olx_round<int16_t>();
+      peak.center = new_cent.Round<int16_t>();
       for( size_t i=0; i < 3; i++ )  {
         while( peak.center[i] < 0 )  
           peak.center[i] += dim[i];
@@ -238,7 +238,7 @@ public:
       center /= toMerge.Count();
       center *= cart2cell;
       center /= norm;
-      p.center = center.olx_round<int16_t>();
+      p.center = center.Round<int16_t>();
     }
     for( size_t i=0; i < out.Count(); i++ )  {
       if( out[i].count == 0 )

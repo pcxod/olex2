@@ -78,7 +78,7 @@ double TUnitCell::CalcVolume()  const  {
   vec3d ang(au.Angles()[0].GetV()*k, au.Angles()[1].GetV()*k, au.Angles()[2].GetV()*k);
   vec3d ax(au.Axes()[0].GetV(), au.Axes()[1].GetV(), au.Axes()[2].GetV());
   vec3d cs(cos(ang[0]), cos(ang[1]), cos(ang[2]) );
-  return ax.Mul()*sqrt(1-cs.QLength() + 2*cs.Mul());
+  return ax.Prod()*sqrt(1-cs.QLength() + 2*cs.Prod());
 }
 //..............................................................................
 TEValue<double> TUnitCell::CalcVolumeEx()  const  {
@@ -90,8 +90,8 @@ TEValue<double> TUnitCell::CalcVolumeEx()  const  {
   vec3d axe(au.Axes()[0].GetE(), au.Axes()[1].GetE(), au.Axes()[2].GetE());
   vec3d cs(cos(ang[0]), cos(ang[1]), cos(ang[2]) );
   vec3d ss(sin(ang[0]), sin(ang[1]), sin(ang[2]) );
-  double t = sqrt(1-cs.QLength() + 2*cs.Mul());
-  double r = ax.Mul();
+  double t = sqrt(1-cs.QLength() + 2*cs.Prod());
+  double r = ax.Prod();
   double v = r*t;
   double esd = sqrt( olx_sqr(ax[1]*ax[2]*t*axe[0]) +  
     olx_sqr(ax[0]*ax[2]*t*axe[1]) +

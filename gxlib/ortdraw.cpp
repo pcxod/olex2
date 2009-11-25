@@ -455,7 +455,8 @@ void OrtDraw::Render(const olxstr& fileName)  {
     T = app.GetRender().GetBasis().GetMatrix() * T;
     T -= app.GetRender().GetBasis().GetCenter();
     vec3f cnt = ProjectPoint(T);
-    ort_circle* center = new ort_circle(*this, cnt, 0.2*DrawScale*b.Basis.GetZoom(), true);
+    float sph_rad = 0.2*DrawScale*b.Basis.GetZoom();
+    ort_circle* center = new ort_circle(*this, cnt, sph_rad, true);
     all_points.Add(center->center);
     center->color = 0xffffffff;
     objects.Add(center);
@@ -471,7 +472,9 @@ void OrtDraw::Render(const olxstr& fileName)  {
       float z = cm[i][2]/cm[i].Length();
       float pscale = 1+olx_sign(z)*sqrt(olx_abs(z))/2;
       float base_r = 0.075*DrawScale*b.Basis.GetZoom();
-      ort_cone* axis_cone = new ort_cone(*this, cnt, cnt+mp, 
+      ort_cone* axis_cone = new ort_cone(*this,
+        cnt+cm[i]*sph_rad, // extra 3D effect for the central sphere
+        cnt+mp, 
         base_r, 
         base_r*pscale,
         0); 
