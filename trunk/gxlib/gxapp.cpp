@@ -449,7 +449,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     XFile().GetAsymmUnit().Angles()[2].GetV()
   };
   DUnitCell().Init( cell );
-  DBasis().AsymmUnit( &XFile().GetAsymmUnit() );
+  DBasis().SetAsymmUnit(&XFile().GetAsymmUnit());
 
   for( size_t i=0; i < ObjectsToCreate.Count(); i++ )
     ObjectsToCreate[i]->Create();
@@ -3744,7 +3744,7 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
   TDataItem& ind_col = item.AddItem("ICollections");
   for( size_t i=0; i < IndividualCollections.Count(); i++ )
     ind_col.AddField( olxstr("col_") << i, IndividualCollections[i]);
-  FGlRender->GetBasis().ToDataItem( item.AddItem("Basis"));
+  FGlRender->GetBasis().ToDataItem(item.AddItem("Basis"));
 
   TDataItem& visibility = item.AddItem("Visibility");
   visibility.AddField("h_atoms", FHydrogensVisible);
@@ -3789,6 +3789,7 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
   visibility.AddField("planes", vis.ToBase64String());
   
   FXGrid->ToDataItem(item.AddItem("Grid"), zos);
+  FDBasis->ToDataItem(item.AddItem("DBasis"));
 
   TDataItem& labels = item.AddItem("Labels");
   for( size_t i=0; i < XLabels.Count(); i++ )
@@ -3836,9 +3837,11 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
 
   const TDataItem& labels = item.FindRequiredItem("Labels");
   for( size_t i=0; i < labels.ItemCount(); i++ )
-    XLabels.Add( new TXGlLabel(*FGlRender,"PLabels") ).FromDataItem(labels.GetItem(i));
+    XLabels.Add(new TXGlLabel(*FGlRender,"PLabels") ).FromDataItem(labels.GetItem(i));
 
   FXGrid->FromDataItem(item.FindRequiredItem("Grid"), zis);
+  FDBasis->FromDataItem(item.FindRequiredItem("DBasis"));
+
   CreateObjects(true, true);
 
   TDataItem& visibility = item.FindRequiredItem("Visibility");

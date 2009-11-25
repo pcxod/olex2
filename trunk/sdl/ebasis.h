@@ -26,8 +26,11 @@ public:
     FMDataT[13] = FMData[13] = (float)V[1];
     FMDataT[14] = FMData[14] = (float)V[2];
   }
-  inline const vec3d& GetCenter() const {  return FCenter; }
-  inline void NullCenter()  {  FCenter.Null(); }
+  const vec3d& GetCenter() const {  return FCenter; }
+  void NullCenter()  {
+    FCenter.Null();
+    FMDataT[12] = FMData[12] = FMDataT[13] = FMData[13] = FMDataT[14] = FMData[14] = 0;
+  }
 
   // orientation matrix in 4x4 opengl format
   inline const float* GetMData() const {  return FMData; }  
