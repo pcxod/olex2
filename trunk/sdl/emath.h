@@ -116,7 +116,7 @@ extern unsigned int gcd(unsigned int u, unsigned int v);
 inline double SphereVol(double r)  {  return 4.*M_PI/3.0*r*r*r;  }
 //returns radius of a sphere of volume v
 inline double SphereRad(double v)   {  return pow(v*3.0/(4.0*M_PI), 1./3.);  }
-// creates a 3D rotation matrix aroung rv vector, providin cosine of the rotation angle
+// creates a 3D rotation matrix aroung rv vector, provided cosine of the rotation angle
 
 template <typename FloatType, typename MC, typename VC>
 MC& CreateRotationMatrixEx(MC& rm, const VC& rv, FloatType ca)  {

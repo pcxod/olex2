@@ -1,5 +1,5 @@
-#ifndef olx_i_string
-#define olx_i_string
+#ifndef olx_sdl_i_string_H
+#define olx_sdl_i_string_H
 #include <string.h>
 #include <wctype.h>
 #include <math.h>
@@ -722,6 +722,26 @@ public:
     return o_atoi_s<IT>(&data[sts], len-sts, negative, Rad);
   }
   //............................................................................
+  // function checks for preceding radix encoding
+  static bool o_isints(const TC* data, size_t len, bool& negative) {
+    if( len == 0 )  return false;
+    size_t sts = 0; // string start, end
+    while( o_iswhitechar(data[sts]) && ++sts < len )
+    if( sts >= len )
+      return false;
+    // test for any particluar format specifier, here just '0x', for hexadecimal
+    unsigned short Rad=10;
+    if( len > sts+1 && data[sts] == '0' && (data[sts+1] == 'x' || data[sts+1] == 'X') )  {
+      Rad = 16;
+      sts += 2;
+    }
+    else if( data[sts] == 'o' || data[sts] == 'O' )  {
+      Rad = 8;
+      sts++;
+    }
+    return o_isint_s(&data[sts], len-sts, negative, Rad);
+  }
+  //............................................................................
   template <typename IT> static IT o_atoi_safe(const TC* data, size_t len, unsigned short Rad=10) {
     bool negative;
     IT val = o_atois<IT>(data, len, negative, Rad);
@@ -750,10 +770,11 @@ public:
   template <typename IT> static IT o_atoi_s(const TC* data, size_t len, bool& negative, unsigned short Rad=10) {
     if( len == 0 )    
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
-    size_t sts = 0; // string start, end
-    while( o_iswhitechar(data[sts]) && ++sts < len )
-      if( sts >= len )  
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
+    size_t sts = 0, ste = len; // string start, end
+    while( o_iswhitechar(data[sts]) && ++sts < len ) ;
+    while( --ste > sts && o_iswhitechar(data[ste]) ) ;
+    if( ++ste <= sts )
+      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
     IT val=0;
     negative = false;
     if( data[sts] == '-' )  {  
@@ -762,10 +783,10 @@ public:
     }
     else if( data[sts] == '+' )
       sts++;
-    if( sts == len )  
+    if( sts == ste )  
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
     if( Rad > 10 )  {
-      for( size_t i=sts; i < len; i++ )  {
+      for( size_t i=sts; i < ste; i++ )  {
         short pv = 0;
         if( data[i] <= '9' && data[i] >= '0' )  // the order is important, chars are rearer
           pv = data[i] - '0';
@@ -795,10 +816,43 @@ public:
      return val;
   }
   //............................................................................
+  // no '\0' at the end, got to do it ourselves, returns the value without applying chsig
+  static bool o_isint_s(const TC* data, size_t len, bool& negative, unsigned short Rad=10) {
+    if( len == 0 )  return false;
+    size_t sts = 0, ste = len; // string start, end
+    while( o_iswhitechar(data[sts]) && ++sts < len ) ;
+    while( --ste > sts && o_iswhitechar(data[ste]) ) ;
+    if( ++ste <= sts )
+      return false;
+    negative = false;
+    if( data[sts] == '-' )  {  
+      negative = true;  
+      sts++;  
+    }
+    else if( data[sts] == '+' )
+      sts++;
+    if( sts == ste )  return false;
+    for( size_t i=sts; i < ste; i++ )  {
+      short pv = 0;
+      if( data[i] <= '9' && data[i] >= '0' )  pv = data[i] - '0';
+      else if( data[i] <= 'Z' && data[i] >= 'A' )  pv = data[i] - 'A' + 10;
+      else if( data[i] <= 'z' && data[i] >= 'a' )  pv = data[i] - 'a' + 10;
+      else  return false;
+      if( pv >= Rad )
+        return false;
+    }
+    return true;
+  }
+  //............................................................................
   template <typename IT> static IT o_atoi(const TC* data, size_t len, unsigned short Rad=10) {
     bool negative;
     IT val = o_atoi_s<IT>(data, len, negative, Rad);
     return negative ? -val : val;
+  }
+  //............................................................................
+  static bool o_isint(const TC* data, size_t len) {
+    bool negative;
+    return o_isints(data, len, negative);
   }
   //............................................................................
   template <typename IT> static IT o_atoui(const TC* data, size_t len, unsigned short Rad=10) {
@@ -809,6 +863,12 @@ public:
     return val;
   }
   //............................................................................
+  static bool o_isuint(const TC* data, size_t len) {
+    bool negative;
+    bool v = o_isints(data, len, negative);
+    return v && !negative;
+  }
+  //............................................................................
   template <typename IT> IT RadInt(unsigned short Rad=10) const  {
      return o_atoi<IT>(T::Data(), T::_Length, Rad);
   }
@@ -817,9 +877,11 @@ public:
      return o_atoui<IT>(T::Data(), T::_Length, Rad);
   }
   //............................................................................
-  int ToInt() const {  return o_atoi<int>( T::Data(), T::_Length, 10);  }
+  int ToInt() const {  return o_atoi<int>(T::Data(), T::_Length, 10);  }
+  bool IsInt() const {  return o_isint(T::Data(), T::_Length);  }
   //............................................................................
   unsigned int ToUInt() const {  return o_atoui<unsigned int>( T::Data(), T::_Length, 10);  }
+  bool IsUInt() const {  return o_isuint(T::Data(), T::_Length);  }
   //............................................................................
   size_t ToSizeT() const {  return o_atoui<size_t>( T::Data(), T::_Length, 10);  }
   //............................................................................
@@ -835,19 +897,20 @@ public:
   template <class FT> static FT o_atof(const TC* data, size_t len) {
     if( len == 0 )  
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid float number format");
-    size_t sts = 0; // string start
-    while( o_iswhitechar(data[sts]) && ++sts < len )
-    if( sts >= len )
+    size_t sts = 0, ste = len; // string start, end
+    while( o_iswhitechar(data[sts]) && ++sts < len ) ;
+    while( --ste > sts && o_iswhitechar(data[ste]) ) ;
+    if( ++ste <= sts )
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid float number format");
     bool negative = false;
     if( data[sts] == '-' )  {  negative = true;  sts++;  }
     else if( data[sts] == '+' )  sts++;
-    if( sts == len )
+    if( sts == ste )
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid float number format");
     FT bp=0, ap=0, apexp=1;
     size_t exp = 0;
     bool fpfound = false, expfound = false, expneg = false;
-    for( size_t i=sts; i < len; i++ )  {
+    for( size_t i=sts; i < ste; i++ )  {
       if( data[i] <= '9' && data[i] >= '0' )
         if( expfound )
           exp = exp*10 + (data[i] - '0');
@@ -1329,6 +1392,13 @@ public:
     if( (ste-sts) >= 3 && data[sts] == '0' && data[sts+1] == 'x' )  {
       for( size_t i=sts+2; i < ste; i++ )  {
         if( !o_ishexdigit(data[i]) )
+          return false;
+      }
+      return true;
+    }
+    if( (ste-sts) >= 2 && (data[sts] == 'o' || data[sts] == 'O') )  {
+      for( size_t i=sts+1; i < ste; i++ )  {
+        if( data[i] < '0' || data[i] > '7' )
           return false;
       }
       return true;

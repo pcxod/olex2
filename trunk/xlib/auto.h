@@ -83,12 +83,12 @@ public:
     BasicAtomInfo = NULL;
   }
   void SaveToStream( IDataOutputStream& output ) const;
-  inline void SetAtomInfo(TBasicAtomInfo* ai)      {  BasicAtomInfo = ai;  }
-  inline void SetCenter(const vec3d& c)            {  FCenter = c;  }
+  inline void SetAtomInfo(TBasicAtomInfo* ai)  {  BasicAtomInfo = ai;  }
+  inline void SetCenter(const vec3d& c)  {  FCenter = c;  }
   inline const TBasicAtomInfo& GetAtomInfo() const {  return *BasicAtomInfo;  }
-  inline TBasicAtomInfo* BAI()               const {  return BasicAtomInfo;  }
-  inline const vec3d& GetCenter()         const {  return FCenter;  }
-  inline vec3d& Center()                        {  return FCenter;  }
+  inline TBasicAtomInfo* BAI() const {  return BasicAtomInfo;  }
+  inline const vec3d& GetCenter() const {  return FCenter;  }
+  inline vec3d& Center()  {  return FCenter;  }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -103,12 +103,12 @@ class TAutoDBNode  {
   TTypeList<AnAssociation2<TAutoDBNet*,uint32_t> > Parents;
   evecd Params; // pre-calculated parameters
   void _PreCalc();
-  inline double CalcDistance(size_t i)  const {  return AttachedNodes[i].GetCenter().DistanceTo(Center);  }
-  double CalcAngle(size_t i, size_t j)  const;
+  inline double CalcDistance(size_t i) const {  return AttachedNodes[i].GetCenter().DistanceTo(Center);  }
+  double CalcAngle(size_t i, size_t j) const;
 protected:
-  static int SortMetricsFunc(const TAttachedNode& a, const TAttachedNode& b );
+  static int SortMetricsFunc(const TAttachedNode& a, const TAttachedNode& b);
   static int SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d>& a,
-                            const AnAssociation2<TCAtom*, vec3d>& b );
+                            const AnAssociation2<TCAtom*, vec3d>& b);
   static vec3d SortCenter;
 public:
   TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >* atoms);
@@ -116,8 +116,8 @@ public:
 
   const olxstr& ToString() const;
 
-  void SaveToStream( IDataOutputStream& output ) const;
-  void LoadFromStream( IDataInputStream& input );
+  void SaveToStream(IDataOutputStream& output) const;
+  void LoadFromStream(IDataInputStream& input);
 
   inline void AddParent(TAutoDBNet* net, uint32_t index) {  Parents.AddNew<TAutoDBNet*,uint32_t>(net,index);  }
   inline size_t ParentCount() const {  return Parents.Count();  }

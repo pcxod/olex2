@@ -1,6 +1,5 @@
-//---------------------------------------------------------------------------
-#ifndef tarraylistH
-#define tarraylistH
+#ifndef __olx_sdl_array_list_H
+#define __olx_sdl_array_list_H
 #include "ebase.h"
 #include "esort.h"
 #include "etraverse.h"
