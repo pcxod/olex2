@@ -1167,9 +1167,8 @@ void TLattice::CompaqAll()  {
         }
         delete m;
       }
-    }
-    if( changes )
       Init();
+    }
   }
   OnDisassemble->SetEnabled(true);
   Init();

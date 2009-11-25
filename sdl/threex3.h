@@ -75,19 +75,15 @@ public:
     return TVector3<T>(olx_abs(v[0]), olx_abs(v[1]), olx_abs(v[2]));
   }
   // returns sum of vector elements
-  inline T Sum() const {
-    return data[0]+data[1]+data[2];
-  }
+  inline T Sum() const {  return data[0]+data[1]+data[2];  }
   // returns product of vector elements
-  inline T Mul() const {
-    return data[0]*data[1]*data[2];
-  }
+  inline T Prod() const {  return data[0]*data[1]*data[2];  }
   // returns sum of absolute values of vector elements
   inline T AbsSum()  {
     return olx_abs(data[0])+olx_abs(data[1])+olx_abs(data[2]);
   }
   // rounds the vector elements
-  template <class AT> inline TVector3<AT> olx_round() const {
+  template <class AT> inline TVector3<AT> Round() const {
     return TVector3<AT>(olx_round_t<AT,T>(data[0]), olx_round_t<AT,T>(data[1]), olx_round_t<AT,T>(data[2]));
   }
   template <class AT> inline T DotProd(const TVector3<AT>& v) const {
@@ -95,18 +91,18 @@ public:
   }
   // ax(bxc) = b(a.c) - c(a.b)
   static inline TVector3<T> TripleProd(const TVector3<T>& a, const TVector3<T>& b, const TVector3<T>& c)  {
-    double p1 = a.DotProd(c), p2 = a.DotProd(b);
-    return TVector3<T>( b[0]*p1 - c[0]*p2, b[1]*p1 - c[1]*p2, b[2]*p1 - c[2]*p2);
+    const double p1 = a.DotProd(c), p2 = a.DotProd(b);
+    return TVector3<T>(b[0]*p1 - c[0]*p2, b[1]*p1 - c[1]*p2, b[2]*p1 - c[2]*p2);
   }
   // a*b*sin = a*b*(1-cos^2) = a*b - DotProd^2
-  template <class AT> inline T XProdVal (const TVector3<AT>& v) const {
-    T dp = DotProd(v); 
+  template <class AT> inline T XProdVal(const TVector3<AT>& v) const {
+    const T dp = DotProd(v); 
     return sqrt(QLength()*v.QLength()) - dp*dp;
   }
   template <class AT> inline TVector3<T> XProdVec(const TVector3<AT>& v) const  {
-    return TVector3<T>( data[1]*v[2] - data[2]*v[1], 
-                        data[2]*v[0] - data[0]*v[2], 
-                        data[0]*v[1] - data[1]*v[0] );
+    return TVector3<T>(data[1]*v[2] - data[2]*v[1], 
+                       data[2]*v[0] - data[0]*v[2], 
+                       data[0]*v[1] - data[1]*v[0]);
   }
   /* returns a normal to vector through a point (vector with same origin as this vector)
   N = this*cos(this,point)*point.length/this.length = this*DotProd(this, point)/this.QLength
@@ -122,16 +118,16 @@ public:
   }
   // returns a reflection of this vector from a plane represented by normal
   template <class AT> inline TVector3<T> Reflect(const TVector3<AT>& normal) const {
-    T m = DotProd(normal)*2;
+    const T m = DotProd(normal)*2;
     return TVector3<T>(data[0] - normal[0]*m, data[1] - normal[1]*m, data[2] - normal[2]*m);  
   }
   inline TVector3<T>& Normalise()  {
-    T l = Length();
+    const T l = Length();
     if( l == 0 )  throw TDivException(__OlxSourceInfo);
     return (*this /= l);
   }
   inline TVector3<T>& NormaliseTo(T val)  {
-    T l = Length();
+    const T l = Length();
     if( l == 0 )  throw TDivException(__OlxSourceInfo);
     return (*this *= (val/l));
   }

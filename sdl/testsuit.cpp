@@ -8,16 +8,36 @@
 //...................................................................................................
 void IsNumberTest(OlxTests& t)  {
   t.description = __FUNC__;
-  olxstr valid_str[] = { "0", " 0 ", " 0", "0 ", " 0", " 0", " .0 ", " 0.0 ", " 0.e0 ", 
-    "  0.e-1  ", "  0xffa  ", "  0xffa", " 0", " -0. ", " +0. ", "+0e-5", "-.e-5"  };
-  olxstr invalid_str[] = { EmptyString, "  0xffx", " 0a", " -.", "0e-a" };
-  for( size_t i=0; i < sizeof(valid_str)/sizeof(valid_str[0]); i++ )  {
-    if( !valid_str[i].IsNumber() )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("valid number is not recognised: '") << valid_str[i] << '\'');
+  olxstr valid_num_str[] = { "0", " 0 ", " 0", "0 ", " 0", " 0", " .0 ", " 0.0 ", " 0.e0 ", 
+    "  0.e-1  ", "  0xffa  ", "  0xffa", " 0", " -0. ", " +0. ", "+0e-5", "-.e-5", "o7777"  };
+  olxstr invalid_num_str[] = { EmptyString, "  0xffx", " 0a", " -.", "0e-a", "o8" };
+  olxstr valid_int_str[] = {"  0xff ", "0xa", "o777", "-3", " +3 " };
+  olxstr invalid_int_str[] = {"  0xffx", " 0xa.", " o778", "-3.", " +3. " };
+  olxstr valid_uint_str[] = {"  0xff", " 0xa", " o777", "3", " +3 " };
+  olxstr invalid_uint_str[] = {"-3", " -0" };
+  for( size_t i=0; i < sizeof(valid_num_str)/sizeof(valid_num_str[0]); i++ )  {
+    if( !valid_num_str[i].IsNumber() )
+      throw TFunctionFailedException(__OlxSourceInfo, olxstr("valid number is not recognised: '") << valid_num_str[i] << '\'');
   }
-  for( size_t i=0; i < sizeof(invalid_str)/sizeof(invalid_str[0]); i++ )  {
-    if( invalid_str[i].IsNumber() )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid number is not recognised: '") << invalid_str[i] << '\'');
+  for( size_t i=0; i < sizeof(invalid_num_str)/sizeof(invalid_num_str[0]); i++ )  {
+    if( invalid_num_str[i].IsNumber() )
+      throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid number is not recognised: '") << invalid_num_str[i] << '\'');
+  }
+  for( size_t i=0; i < sizeof(valid_int_str)/sizeof(valid_int_str[0]); i++ )  {
+    if( !valid_int_str[i].IsInt() )
+      throw TFunctionFailedException(__OlxSourceInfo, olxstr("valid number is not recognised: '") << valid_int_str[i] << '\'');
+  }
+  for( size_t i=0; i < sizeof(invalid_int_str)/sizeof(invalid_int_str[0]); i++ )  {
+    if( invalid_int_str[i].IsInt() )
+      throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid number is not recognised: '") << invalid_int_str[i] << '\'');
+  }
+  for( size_t i=0; i < sizeof(valid_uint_str)/sizeof(valid_uint_str[0]); i++ )  {
+    if( !valid_uint_str[i].IsUInt() )
+      throw TFunctionFailedException(__OlxSourceInfo, olxstr("valid number is not recognised: '") << valid_uint_str[i] << '\'');
+  }
+  for( size_t i=0; i < sizeof(invalid_uint_str)/sizeof(invalid_uint_str[0]); i++ )  {
+    if( invalid_int_str[i].IsUInt() )
+      throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid number is not recognised: '") << invalid_uint_str[i] << '\'');
   }
 }
 //...................................................................................................

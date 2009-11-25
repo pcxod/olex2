@@ -111,25 +111,22 @@ TAutoDBNode::TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >*
   Center = sa.crd();
   for( size_t i=0; i < sa.NodeCount(); i++ )  {
     if( sa.Node(i).IsDeleted() )  continue;
-    if( sa.Node(i).GetAtomInfo() != iHydrogenIndex && sa.Node(i).GetAtomInfo() != iDeuteriumIndex )  {
-      AttachedNodes.Add( *(new TAttachedNode(&sa.Node(i).GetAtomInfo(), sa.Node(i).crd())) );
-      if( atoms != NULL )  {
-        atoms->AddNew<TCAtom*, vec3d>(&sa.Node(i).CAtom(), sa.Node(i).crd());
-      }
-    }
+    if( TAtomsInfo::IsHAtom(sa.Node(i).GetAtomInfo()) )  continue;
+    AttachedNodes.Add(new TAttachedNode(&sa.Node(i).GetAtomInfo(), sa.Node(i).crd()));
+    if( atoms != NULL )
+      atoms->AddNew<TCAtom*, vec3d>(&sa.Node(i).CAtom(), sa.Node(i).crd());
   }
-  vec3d a, b;
   vec3d_list TransformedCrds;
   TLattice& latt = sa.GetNetwork().GetLattice();
   for( size_t i=0; i < sa.CAtom().AttachedAtomCount(); i++ )  {
     if( sa.CAtom().GetAttachedAtom(i).GetAtomInfo() == iHydrogenIndex ||
         sa.CAtom().GetAttachedAtom(i).GetAtomInfo() == iDeuteriumIndex )  continue;
-    a = sa.CAtom().GetAttachedAtom(i).ccrd();
-    smatd_list* transforms = latt.GetUnitCell().GetInRange(sa.ccrd(), a,
+    smatd_list* transforms = latt.GetUnitCell().GetInRange(sa.ccrd(),
+                               sa.CAtom().GetAttachedAtom(i).ccrd(),
                                sa.GetAtomInfo().GetRad1() +
                                sa.CAtom().GetAttachedAtom(i).GetAtomInfo().GetRad1() +
                                latt.GetDelta(),
-                                false );
+                                false);
     if( transforms->IsEmpty() )  {
       delete transforms;
       continue;
@@ -137,20 +134,19 @@ TAutoDBNode::TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >*
     TransformedCrds.Clear();
     for( size_t j=0; j < transforms->Count(); j++ )  {
       smatd& transform = transforms->Item(j);
-      a = transform * a;
+      vec3d a = transform * sa.CAtom().GetAttachedAtom(i).ccrd();
       latt.GetAsymmUnit().CellToCartesian(a);
-      if( a.QDistanceTo( sa.crd() ) > 0.01 )  {
+      if( a.QDistanceTo(sa.crd()) > 0.01 )  {
         bool found = false;
         for( size_t k=0; k < sa.NodeCount(); k++ )  {
-          if( a.QDistanceTo( sa.Node(k).crd() ) < 0.01 )  {
+          if( a.QDistanceTo(sa.Node(k).crd()) < 0.01 )  {
             found = true;
             break;
           }
         }
         if( !found )
-          TransformedCrds.AddCCopy( a );
+          TransformedCrds.AddCCopy(a);
       }
-      a = sa.CAtom().GetAttachedAtom(i).ccrd();
     }
     for( size_t j=0; j < TransformedCrds.Count(); j++ )  {
       if( TransformedCrds.IsNull(j) )  continue;
@@ -164,7 +160,7 @@ TAutoDBNode::TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >*
     }
     TransformedCrds.Pack();
     for( size_t j=0; j < TransformedCrds.Count(); j++ )  {
-      AttachedNodes.Add( *(new TAttachedNode(&sa.CAtom().GetAttachedAtom(i).GetAtomInfo(), TransformedCrds[j])) );
+      AttachedNodes.Add(new TAttachedNode(&sa.CAtom().GetAttachedAtom(i).GetAtomInfo(), TransformedCrds[j]));
       if( atoms != NULL )  {
         atoms->AddNew<TCAtom*, vec3d>(&sa.CAtom().GetAttachedAtom(i), TransformedCrds[j]);
       }

@@ -271,13 +271,40 @@ void ort_poly::render(PSWriter& pw) const {
 
 void ort_circle::render(PSWriter& pw) const {
   pw.color(color);
-  if( fill )  {
-    pw.drawCircle(center, r, fill ? &PSWriter::fill : &PSWriter::stroke);
-    pw.color(0x0);
-    pw.drawCircle(center, r, &PSWriter::stroke);
+  if( basis != NULL )  {
+    if( fill )  {
+      pw.drawEllipse(center, *basis*r, &PSWriter::fill);
+      pw.color(0x0);
+      pw.drawEllipse(center, *basis*r, &PSWriter::stroke);
+    }
+    else
+      pw.drawEllipse(center, *basis*r, &PSWriter::stroke);
   }
-  else
-    pw.drawCircle(center, r, &PSWriter::stroke);
+  else  {
+    if( fill )  {
+      pw.drawCircle(center, r, &PSWriter::fill);
+      pw.color(0x0);
+      pw.drawCircle(center, r, &PSWriter::stroke);
+    }
+    else
+      pw.drawCircle(center, r, &PSWriter::stroke);
+  }
+}
+
+void ort_cone::render(PSWriter& pw) const {
+  vec3f n = (top-bottom).Normalise();
+  mat3f rm, basis = TEBasis::CalcBasis<vec3f,mat3f>(n);
+  CreateRotationMatrixEx<float, mat3f, vec3f>(rm, n, (float)cos(M_PI*2/divs));
+  TArrayList<vec3f> t_crd(divs), b_crd(divs);
+  vec3f ps = basis[1];
+  for( uint16_t i=0; i < divs; i++ )  {
+    t_crd[i] = b_crd[i] = ps;
+    t_crd[i].NormaliseTo(top_r) += top;
+    b_crd[i].NormaliseTo(bottom_r) += bottom;
+    ps *= rm;
+  }
+  pw.color(color);
+  pw.drawQuads(b_crd, t_crd, &PSWriter::fill);
 }
 
 void OrtDraw::RenderRims(PSWriter& pw, const mat3f& pelpm, const vec3f& norm_vec) const {
@@ -428,31 +455,29 @@ void OrtDraw::Render(const olxstr& fileName)  {
     T = app.GetRender().GetBasis().GetMatrix() * T;
     T -= app.GetRender().GetBasis().GetCenter();
     vec3f cnt = ProjectPoint(T);
-    ort_circle* center = new ort_circle(*this, cnt, 10*b.Basis.GetZoom(), true);
+    ort_circle* center = new ort_circle(*this, cnt, 0.2*DrawScale*b.Basis.GetZoom(), true);
     all_points.Add(center->center);
     center->color = 0xffffffff;
     objects.Add(center);
     for( int i=0; i < 3; i++ )  {
       vec3f mp = cm[i]*(0.2*len[i]*b.Basis.GetZoom()), 
         ep = cm[i]*((0.2*len[i]+0.8)*b.Basis.GetZoom());
-      vec3f mpn = (ep-mp).XProdVec(vec3f(0,0,1));
-      if( mpn.QLength() > 1e-6 )
-        mpn.NormaliseTo(0.2*DrawScale*b.Basis.GetZoom());
+      
+      ort_cone* arrow_cone = new ort_cone(*this, cnt+mp, cnt+ep, 0.2*DrawScale*b.Basis.GetZoom(), 0, 0); 
+      objects.Add(arrow_cone);
+      all_points.Add(arrow_cone->bottom);
+      all_points.Add(arrow_cone->top);
+
       float z = cm[i][2]/cm[i].Length();
-      vec3f _mpn = mpn*0.25, _mpnp = _mpn*(1+olx_sign(z)*sqrt(olx_abs(z))/2);
-      ort_poly* axis = new ort_poly(*this, true);
-      axis->points.AddNew(cnt+NullVec-_mpn);
-      axis->points.AddNew(cnt+NullVec+_mpn);
-      axis->points.AddNew(cnt+mp+_mpnp);
-      axis->points.AddNew(cnt+mp-_mpnp);
-      _process_points(all_points, *axis);
-      objects.Add(axis);
-      ort_poly* arrow = new ort_poly(*this, true);
-      arrow->points.AddNew(cnt+mp-mpn);
-      arrow->points.AddNew(cnt+ep);
-      arrow->points.AddNew(cnt+mp+mpn);
-      _process_points(all_points, *arrow);
-      objects.Add(arrow);
+      float pscale = 1+olx_sign(z)*sqrt(olx_abs(z))/2;
+      float base_r = 0.075*DrawScale*b.Basis.GetZoom();
+      ort_cone* axis_cone = new ort_cone(*this, cnt, cnt+mp, 
+        base_r, 
+        base_r*pscale,
+        0); 
+      objects.Add(axis_cone);
+      all_points.Add(axis_cone->bottom);
+      all_points.Add(axis_cone->top);
     }
   }
   if( Perspective && !all_points.IsEmpty() )  {

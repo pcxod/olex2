@@ -95,13 +95,11 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       if( cx.End && !qpeak )  continue;
       // is a valid atom
       //if( !atomsInfo.IsAtom(Toks[0]))  {  Ins.Add(InsFile[i]);  continue;  }
-      if( !Toks[1].IsNumber() )         {  Ins.Add(InsFile[i]);  continue;  }
-      uint32_t index = 0;
-      try { index = Toks[1].ToUInt();  }
-      catch(...)  {
+      if( !Toks[1].IsUInt() )  {
         Ins.Add(InsFile[i]);
         continue;
       }
+      uint32_t index = Toks[1].ToUInt();
       if( index < 1 || index > cx.BasicAtoms.Count() )  {  // wrong index in SFAC
         Ins.Add(InsFile[i]);
         continue;
@@ -121,7 +119,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       if( qpeak ) 
         atom->SetAtomInfo(baiQPeak);
       else
-        atom->SetAtomInfo( *cx.BasicAtoms.GetObject(Toks[1].ToInt()-1) );
+        atom->SetAtomInfo(*cx.BasicAtoms.GetObject(Toks[1].ToInt()-1));
       if( atom->GetAtomInfo().GetMr() > 3.5 )
         cx.LastNonH = atom;
       _ProcessAfix(*atom, cx);

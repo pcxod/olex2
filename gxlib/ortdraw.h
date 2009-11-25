@@ -81,15 +81,37 @@ struct ort_circle : public a_ort_object  {
   float line_width, r;
   uint32_t color;
   vec3f center;
+  mat3f* basis;
   ort_circle(const OrtDraw& parent, const vec3f& _center, float _r, bool _fill) :
     a_ort_object(parent),
     center(_center),
     r(_r),
     fill(_fill),
     line_width(1.0f),
+    basis(NULL),
     color(0x0) {  }
+  ~ort_circle()  {
+    if( basis != NULL )  delete basis;
+  }
   virtual void render(PSWriter&) const;
   virtual float get_z() const {  return center[2];  }
+};
+
+struct ort_cone : public a_ort_object  {
+  vec3f bottom, top;
+  float bottom_r, top_r;
+  uint32_t color;
+  uint16_t divs;
+  ort_cone(const OrtDraw& parent, const vec3f& _b, const vec3f _t, float br, float tr, uint32_t cl) :
+    a_ort_object(parent),
+    bottom(_b),
+    top(_t),
+    bottom_r(br),
+    top_r(tr),
+    color(cl),
+    divs(5)  {  }
+  virtual void render(PSWriter&) const;
+  virtual float get_z() const {  return (bottom[2]+top[2])/2;  }
 };
 
 class OrtDraw  {

@@ -177,20 +177,20 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   SortedBAIList AvailableTypes;
   static TPtrList<TBasicAtomInfo> StandAlone;
   if( StandAlone.IsEmpty() )  {
-    StandAlone.Add( &AtomsInfo.GetAtomInfo(iOxygenIndex) );
-    StandAlone.Add( &AtomsInfo.GetAtomInfo(iSodiumIndex) );
-    StandAlone.Add( &AtomsInfo.GetAtomInfo(iMagnesiumIndex) );
-    StandAlone.Add( &AtomsInfo.GetAtomInfo(iChlorineIndex) );
-    StandAlone.Add( &AtomsInfo.GetAtomInfo(iPotassiumIndex) );
-    StandAlone.Add( &AtomsInfo.GetAtomInfo(iCalciumIndex) );
+    StandAlone.Add(AtomsInfo.GetAtomInfo(iOxygenIndex));
+    StandAlone.Add(AtomsInfo.GetAtomInfo(iSodiumIndex));
+    StandAlone.Add(AtomsInfo.GetAtomInfo(iMagnesiumIndex));
+    StandAlone.Add(AtomsInfo.GetAtomInfo(iChlorineIndex));
+    StandAlone.Add(AtomsInfo.GetAtomInfo(iPotassiumIndex));
+    StandAlone.Add(AtomsInfo.GetAtomInfo(iCalciumIndex));
   }
   helper_CleanBaiList(sfac, AvailableTypes);
   if( TAutoDB::GetInstance() == NULL )  {
     olxstr autodbf( xapp.GetBaseDir() + "acidb.db");
-    TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ) );
+    TEGC::AddP(new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ));
     if( TEFile::Exists( autodbf ) )  {
       TEFile dbf(autodbf, "rb");
-      TAutoDB::GetInstance()->LoadFromStream( dbf );
+      TAutoDB::GetInstance()->LoadFromStream(dbf);
     }
   }
 
@@ -245,7 +245,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       TBasicApp::GetLog().Info( olxstr("Average QPeak: ") << avQPeak);
       TBasicApp::GetLog().Info("QPeak steps:");
       for( size_t i=0; i < vals.Count(); i++ )
-        TBasicApp::GetLog().Info( vals[i].GetA() );
+        TBasicApp::GetLog().Info(vals[i].GetA());
 
       //    double thVal = 2;
       double thVal = (avQPeak  < 2 ) ? 2 : avQPeak*0.75;
@@ -281,14 +281,14 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     TSAtom& sa = latt.GetAtom(i);
     if( sa.IsDeleted() || sa.CAtom().IsDeleted() )  continue;
     if( sa.GetAtomInfo() == iQPeakIndex )
-      QPeaks.Add( &sa );
+      QPeaks.Add(sa);
   }
   for( size_t i=0; i < QPeaks.Count(); i++ )  {
     if( QPeaks[i]->IsDeleted() || QPeaks[i]->CAtom().IsDeleted() )  continue;
     neighbours.Clear();
     TAutoDBNode nd(*QPeaks[i], &neighbours);
     for( size_t j=0; j < nd.DistanceCount(); j++ )  {
-      if( nd.GetDistance(j) < (neighbours[j].GetA()->GetAtomInfo().GetRad1()+aqV) )  {  // at leats H-bond
+      if( nd.GetDistance(j) < (neighbours[j].GetA()->GetAtomInfo().GetRad1()+aqV) )  {  // at least an H-bond
         if( neighbours[j].GetA()->GetAtomInfo() == iQPeakIndex )  {
           if( nd.GetDistance(j) < 1 )  {
             if( neighbours[j].GetA()->GetQPeak() < QPeaks[i]->CAtom().GetQPeak() )  {
@@ -333,11 +333,11 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 
   TDoubleList Uisos;
   if( xapp.XFile().GetFileName() == TAutoDB::GetInstance()->GetLastFileName() )
-    Uisos.Assign( TAutoDB::GetInstance()->GetUisos() );
+    Uisos.Assign(TAutoDB::GetInstance()->GetUisos());
   for( size_t i=0; i < latt.FragmentCount(); i++ )  {
     if( latt.GetFragment(i).NodeCount() > 7 )   { // skip up to PF6 or so for Uiso analysis
       if( Uisos.Count() <= i )  Uisos.Add(0.0);
-      if( Uisos[i] == 0 )  {
+      if( olx_abs(Uisos[i]) < 1e-6 )  {
         size_t ac = 0;
         for( size_t j=0;  j < latt.GetFragment(i).NodeCount(); j++ )  {
           TSAtom& sa = latt.GetFragment(i).Node(j);
@@ -348,7 +348,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
         }
         if( ac != 0 )  Uisos[i] /= ac;
       }
-      if( Uisos[i] > 0 )  {
+      if( Uisos[i] > 1e-6 )  {
         for( size_t j=0;  j < latt.GetFragment(i).NodeCount(); j++ )  {
           TSAtom& sa = latt.GetFragment(i).Node(j);
           if( sa.IsDeleted() || sa.GetAtomInfo() == iHydrogenIndex )  continue;
