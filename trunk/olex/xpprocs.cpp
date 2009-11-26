@@ -1368,32 +1368,24 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else  {
     if( Cmds.Count() == 1 )  {
-      mat3d M;
-      if( FXApp->HklVisible() )  M = FXApp->XFile().GetAsymmUnit().GetHklToCartesian();
-      else                       M = FXApp->XFile().GetAsymmUnit().GetCellToCartesian();
-      if( Cmds[0] == "100"      || Cmds[0] == "1" )  FXApp->GetRender().GetBasis().OrientNormal( M[0] );
-      else if( Cmds[0] == "010" || Cmds[0] == "2" )  FXApp->GetRender().GetBasis().OrientNormal( M[1] );
-      else if( Cmds[0] == "001" || Cmds[0] == "3" )  FXApp->GetRender().GetBasis().OrientNormal( M[2] );
-      else if( Cmds[0] == "110" )                    FXApp->GetRender().GetBasis().OrientNormal( M[0] + M[1] );
-      else if( Cmds[0] == "101" )                    FXApp->GetRender().GetBasis().OrientNormal( M[0] + M[2] );
-      else if( Cmds[0] == "011" )                    FXApp->GetRender().GetBasis().OrientNormal( M[1] + M[2] );
-      else if( Cmds[0] == "111" )                    FXApp->GetRender().GetBasis().OrientNormal( M[0] + M[1] + M[2] );
+      mat3d M = FXApp->HklVisible() ? FXApp->XFile().GetAsymmUnit().GetHklToCartesian() :
+        FXApp->XFile().GetAsymmUnit().GetCellToCartesian();
+      if( Cmds[0] == "100" || Cmds[0] == "1" )  FXApp->GetRender().GetBasis().OrientNormal(M[0]);
+      else if( Cmds[0] == "010" || Cmds[0] == "2" )  FXApp->GetRender().GetBasis().OrientNormal(M[1]);
+      else if( Cmds[0] == "001" || Cmds[0] == "3" )  FXApp->GetRender().GetBasis().OrientNormal(M[2]);
+      else if( Cmds[0] == "110" )  FXApp->GetRender().GetBasis().OrientNormal(M[0] + M[1]);
+      else if( Cmds[0] == "101" )  FXApp->GetRender().GetBasis().OrientNormal(M[0] + M[2]);
+      else if( Cmds[0] == "011" )  FXApp->GetRender().GetBasis().OrientNormal(M[1] + M[2]);
+      else if( Cmds[0] == "111" )  FXApp->GetRender().GetBasis().OrientNormal(M[0] + M[1] + M[2]);
       else  {
         Error.ProcessingError(__OlxSrcInfo, "undefined arguments" );
         return;
       }
     }
     else if( Cmds.Count() == 9 )  {
-      mat3d M;
-      M[0][0] = Cmds[0].ToDouble();
-      M[0][1] = Cmds[1].ToDouble();
-      M[0][2] = Cmds[2].ToDouble();
-      M[1][0] = Cmds[3].ToDouble();
-      M[1][1] = Cmds[4].ToDouble();
-      M[1][2] = Cmds[5].ToDouble();
-      M[2][0] = Cmds[6].ToDouble();
-      M[2][1] = Cmds[7].ToDouble();
-      M[2][2] = Cmds[8].ToDouble();
+      mat3d M(Cmds[0].ToDouble(), Cmds[1].ToDouble(), Cmds[2].ToDouble(),
+      Cmds[3].ToDouble(), Cmds[4].ToDouble(), Cmds[5].ToDouble(),
+      Cmds[6].ToDouble(), Cmds[7].ToDouble(), Cmds[8].ToDouble());
       M.Transpose();
       M[0].Normalise();
       M[1].Normalise();
@@ -1404,6 +1396,7 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       Error.ProcessingError(__OlxSrcInfo, "wrong arguments" );
       return;
     }
+    FXApp->CenterView();
     FXApp->Draw();
   }
 }
