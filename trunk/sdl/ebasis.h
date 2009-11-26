@@ -4,6 +4,10 @@
 #include "threex3.h"
 #include "dataitem.h"
 
+#ifdef __GNUC__
+  #undef QLength
+#endif
+
 BeginEsdlNamespace()
 
 class TEBasis: public IEObject  {
