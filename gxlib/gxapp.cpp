@@ -2770,11 +2770,11 @@ void TGXApp::FinishDrawBitmap()  {
 //..............................................................................
 void TGXApp::UpdateLabels()  {
   for( size_t i=0; i < XLabels.Count(); i++ )
-    XLabels[i].SetLabel( XLabels[i].GetLabel() ); 
+    XLabels[i].SetLabel(XLabels[i].GetLabel()); 
 }
 //..............................................................................
 TXGlLabel* TGXApp::CreateLabel(TXAtom *A, uint16_t FontIndex)  {
-  TXGlLabel& L = XLabels.Add( new TXGlLabel(*FGlRender, "PLabels") );
+  TXGlLabel& L = XLabels.Add(new TXGlLabel(*FGlRender, "PLabels"));
   L.SetFontIndex(FontIndex);
   L.SetLabel(A->Atom().GetLabel());
   L.SetCenter(A->Atom().crd());
