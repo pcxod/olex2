@@ -52,25 +52,25 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
       toks.Clear();
       toks.Strtok( Strings[i], ' ');
       if( toks.Count() < 3 )  
-        throw TFunctionFailedException(__OlxSourceInfo, "inlvaid LATT instruction");
+        throw TFunctionFailedException(__OlxSourceInfo, "invalid LATT instruction");
       olxch centroflag = olxstr::o_toupper(toks[1][0]); 
       olxch centering = olxstr::o_toupper(toks[2][0]); 
       TCLattice* latt = TSymmLib::GetInstance()->FindLattice(centering);
       if( latt == NULL )  
-        throw TFunctionFailedException(__OlxSourceInfo, olxstr("inlvaid lattice symbol '") << centering << '\'');
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid lattice symbol '") << centering << '\'');
       int ilatt = latt->GetLatt();
       if( centroflag == 'A' ) 
         ilatt *= -1;
       else if( centroflag == 'C' ) 
         ;
       else
-        throw TFunctionFailedException(__OlxSourceInfo, olxstr("inlvaid centering symbol '") << centroflag << '\'');
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid centering symbol '") << centroflag << '\'');
       GetAsymmUnit().SetLatt( ilatt );
       LattFound = true;
     }
   }
   if( !CellFound || !LattFound )
-    throw TFunctionFailedException(__OlxSourceInfo, "CELL or LATT are missing");
+    throw TFunctionFailedException(__OlxSourceInfo, "CELL or LATT is missing");
 
   smatd sm;
   for( size_t i=0; i < symm.Count(); i++ )  {

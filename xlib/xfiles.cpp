@@ -42,7 +42,7 @@ void TBasicCFile::SaveToFile(const olxstr& fn)  {
 void TBasicCFile::LoadFromFile(const olxstr& fn)  {
   TEFile::CheckFileExists(__OlxSourceInfo, fn);
   TStrList L;
-  L.LoadFromFile( fn );
+  L.LoadFromFile(fn);
   if( L.IsEmpty() )
     throw TEmptyFileException(__OlxSourceInfo, fn);
   FileName = fn;

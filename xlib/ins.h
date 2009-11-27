@@ -15,6 +15,7 @@
 #include "atomref.h"
 #include "residue.h"
 #include "estack.h"
+#include "lst.h"
 
 #ifdef AdAtom
   #undef AddAtom
@@ -54,9 +55,9 @@ private:
   TStrList Skipped;
   static void HyphenateIns(const olxstr &InsName, const olxstr &Ins, TStrList &Res);
   static void HyphenateIns(const olxstr &Ins, TStrList &Res);
-  double   R1;    // mean error of cell parameters. Can be used for estimation of other lengths
-  bool     LoadQPeaks;// true if Q-peaks should be loaded
-  //olxstr Sfac, Unit;
+  double R1;    // mean error of cell parameters. Can be used for estimation of other lengths
+  bool LoadQPeaks;// true if Q-peaks should be loaded
+  TLst Lst;
 protected:
   static TCAtom* _ParseAtom(TStrList& toks, ParseContext& cx, TCAtom* atom = NULL);
   static olxstr _AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex);
@@ -89,7 +90,8 @@ public:
   
   // this is -1 if not in the file like REM R1 = ...
   inline double GetR1() const {  return R1;  }
-
+  TLst& GetLst()  {  return Lst;  }
+  const TLst& GetLst() const {  return Lst;  }
   /* updates all instructions */
   void UpdateParams();
   void SaveForSolution(const olxstr& FileName, const olxstr& Method, const olxstr& comments, bool rems=true);
@@ -191,6 +193,7 @@ public:
       return true;
     }
 
+  virtual void LoadFromFile(const olxstr& fileName);
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
   virtual bool Adopt(TXFile& XF);

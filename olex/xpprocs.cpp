@@ -496,46 +496,6 @@ void TMainForm::funColor(const TStrObjList& Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, EmptyString);
 }
 //..............................................................................
-void TMainForm::funLst(const TStrObjList &Cmds, TMacroError &E)  {
-  if( !Lst.IsLoaded() )  {
-    E.SetRetVal( NAString );
-  }
-  else if( Cmds[0].Equalsi("rint") )
-    E.SetRetVal( Lst.Rint() );
-  else if( Cmds[0].Equalsi("rsig") )
-    E.SetRetVal( Lst.Rsigma() );
-  else if( Cmds[0].Equalsi("r1") )
-    E.SetRetVal( Lst.R1() );
-  else if( Cmds[0].Equalsi("r1a") )
-    E.SetRetVal( Lst.R1a() );
-  else if( Cmds[0].Equalsi("wr2") )
-    E.SetRetVal( Lst.wR2() );
-  else if( Cmds[0].Equalsi("s") )
-    E.SetRetVal( Lst.S() );
-  else if( Cmds[0].Equalsi("rs") )
-    E.SetRetVal( Lst.RS() );
-  else if( Cmds[0].Equalsi("params") )
-    E.SetRetVal( Lst.Params() );
-  else if( Cmds[0].Equalsi("rtotal") )
-    E.SetRetVal( Lst.TotalRefs() );
-  else if( Cmds[0].Equalsi("runiq") )
-    E.SetRetVal( Lst.UniqRefs() );
-  else if( Cmds[0].Equalsi("r4sig") )
-    E.SetRetVal( Lst.Refs4sig() );
-  else if( Cmds[0].Equalsi("peak") )
-    E.SetRetVal( Lst.Peak() );
-  else if( Cmds[0].Equalsi("hole") )
-    E.SetRetVal( Lst.Hole() );
-  else if( Cmds[0].Equalsi("flack") )  {
-    if( Lst.HasFlack() )
-      E.SetRetVal( Lst.Flack().ToString() );
-    else
-      E.SetRetVal( NAString );
-  }
-  else
-    E.SetRetVal( NAString );
-}
-//..............................................................................
 void TMainForm::funZoom(const TStrObjList &Cmds, TMacroError &E)  {
   if( Cmds.IsEmpty() )
     E.SetRetVal( FXApp->GetRender().GetZoom() );
@@ -1685,26 +1645,6 @@ void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TListCaster::TT(Atoms, go);
     FUndoStack->Push( FXApp->SetGraphicsVisible(go, false) );
   }
-}
-//..............................................................................
-void TMainForm::macOmit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TIns& IF = FXApp->XFile().GetLastLoader<TIns>();
-  if( Cmds.Count() == 1 )  {
-    if( Cmds[0].IsNumber() )  {
-      double th = Cmds[0].ToDouble();
-      for( size_t i=0; i < Lst.DRefCount(); i++ )  {
-        TLstRef& r = Lst.DRef(i);
-        if( !r.Deleted && r.DF >= th )  {
-          FXApp->XFile().GetRM().Omit( vec3i(r.H, r.K, r.L) );
-        }
-      }
-    }
-  }
-  else 
-    FXApp->XFile().GetRM().AddOMIT(Cmds);
-
-  BadReflectionsTable(false);
-  executeMacro("html.updatehtml");
 }
 //..............................................................................
 void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -3681,15 +3621,15 @@ void TMainForm::macEditHkl(TStrObjList &Cmds, const TParamList &Options, TMacroE
   THklFile Hkl;
   Hkl.LoadFromFile(HklFN);
   TRefPList Hkls;
-  olxstr Tmp;
   TStrList SL;
   SL.Add("REM Please put \'-\' char in the front of reflections you wish to omit");
   SL.Add("REM and remove '-' char if you want the reflection to be used in the refinement");
   SL.Add(EmptyString);
-  if( Cmds.Count() != 3 )  {
+  if( Cmds.Count() != 3 && FXApp->CheckFileType<TIns>() )  {
+    const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
     if( Lst.IsLoaded() )  {
       for( size_t i=0; i < Lst.DRefCount(); i++ )  {
-        Tmp = "REM    ";
+        olxstr Tmp = "REM    ";
         Tmp << Lst.DRef(i).H << ' ';
         Tmp << Lst.DRef(i).K << ' ';
         Tmp << Lst.DRef(i).L << ' ';
@@ -3717,7 +3657,7 @@ void TMainForm::macEditHkl(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText(SL.Text('\n'));
   if( dlg->ShowModal() == wxID_OK )  {
-    Tmp = dlg->GetText();
+    olxstr Tmp = dlg->GetText();
     SL.Clear();
     SL.Strtok(Tmp, '\n');
     TReflection R(0, 0, 0);
@@ -4439,24 +4379,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       RefineDataTable(false, false);
       LoadVFS(plStructure);  // load virtual fs file
     }
-    catch(TEmptyFileException)  {
-      olxstr lstFileName = TEFile::ChangeFileExt(FN, "lst");
-      if( TEFile::Exists(lstFileName)  )  {
-        try  {  Lst.LoadFromFile(lstFileName);  }
-        catch( ... )  {  throw;  }
-
-        for( size_t i=0; i < Lst.ErrMsgCount(); i++ )  {
-          TBasicApp::GetLog().Error( olxstr("Failure instruction: ") << Lst.GetCause(i) );
-          TBasicApp::GetLog().Error( olxstr("Failure message: ") << Lst.GetError(i) );
-          Tmp = Lst.GetCause(i);
-          Tmp.Replace( "TO", EmptyString );
-          if( !Tmp.IsEmpty() )
-            FXApp->SelectAtoms( Tmp );
-          Tmp = Lst.GetError(i);
-          Tmp.Replace( "TO", EmptyString );
-          FXApp->SelectAtoms( Tmp );
-        }
-      }
+    catch(TEmptyFileException)  {  
+      Error.ProcessingError(__OlxSrcInfo, "empty file");
       return;
     }
     catch(const TExceptionBase& exc)  { 
@@ -4531,15 +4455,14 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
       QPeakTable(false, true);
       UpdateRecentFilesTable(false);
-      olxstr lstFileName = TEFile::ChangeFileExt(FN, "lst");
-      if( TEFile::Exists(lstFileName)  )  {
-        Lst.LoadFromFile(lstFileName);
+      if( FXApp->CheckFileType<TIns>() )  {
         BadReflectionsTable(false, true);
         RefineDataTable(false, true);
+        const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
         if( Lst.SplitAtomCount() )  {
           TBasicApp::GetLog() << ("The following atom(s) may be split: \n");
           for( size_t i=0; i < Lst.SplitAtomCount(); i++ )  {
-            TLstSplitAtom& SpA = Lst.SplitAtom(i);
+            const TLstSplitAtom& SpA = Lst.SplitAtom(i);
             Tmp = SpA.AtomName;  Tmp.Format(5, true, ' ');
             Tmp << olxstr::FormatFloat(3, SpA.PositionA[0]);  Tmp.Format(12, true, ' ');
             Tmp << olxstr::FormatFloat(3, SpA.PositionA[1]);  Tmp.Format(19, true, ' ');
@@ -4572,7 +4495,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
             Tmp1 = Tmp;
             Tmp = Lst.TrefTry(i).NQual;  Tmp1 << Tmp.Format(10, true, ' ');
             Tmp = Lst.TrefTry(i).Try;    Tmp1 << Tmp.Format(10, true, ' ');
-            Tmp1 << Lst.TrefTry(i).Semivariants.FormatString( 31 );
+            Tmp1 << Lst.TrefTry(i).Semivariants.FormatString(31);
             //Tmp1 += Lst.TrefTry(i).Semivariants.FormatString( Lst.TrefTry(i).Semivariants.Count() );
             TBasicApp::GetLog() << (Tmp1 << '\n');
             tcount ++;
@@ -4623,17 +4546,22 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( iBorder == 0 )
     iBorder = wxNO_BORDER;
   // check if the popup already exists
-  TPopupData *pd = GetPopup( Cmds[0] );
+  TPopupData *pd = GetPopup(Cmds[0]);
   if( pd != NULL )  {
     //pd->Dialog->SetWindowStyle( iBorder );
     //pd->Dialog->SetSize(x, y, width, height, wxSIZE_USE_EXISTING);
     //pd->Dialog->SetTitle( title );
     THtml* ph = FHtml;
     FHtml = pd->Html;
-    try  {  pd->Html->LoadPage( Cmds[1].u_str() );  }
+    try  {  pd->Html->LoadPage(Cmds[1].u_str());  }
     catch( ... )  {}
     FHtml = ph;
     pd->Html->SetHomePage(TutorialDir + Cmds[1]);
+    if( Options.Contains('w') && Options.Contains('h') )  {
+      pd->Dialog->SetSize(width, height);
+      pd->Dialog->GetClientSize(&width, &height);
+      pd->Html->SetSize(width, height);
+    }
     if( !pd->Dialog->IsShown() && !Options.Contains('s'))  
       pd->Dialog->Show();
     return;
@@ -4644,13 +4572,13 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   THtml *html1 = new THtml(dlg, FXApp);
 //  html1->WI.AddWindowStyle(wxTAB_TRAVERSAL);
   html1->SetWebFolder( TutorialDir );
-  html1->SetHomePage( TutorialDir + Cmds[1] );
+  html1->SetHomePage(TutorialDir + Cmds[1]);
   html1->SetMovable(false);
   dlg->GetClientSize(&width, &height);
   html1->SetSize(width, height);
-  wxBoxSizer *TopSizer = new wxBoxSizer( wxVERTICAL );
+  wxBoxSizer *TopSizer = new wxBoxSizer(wxVERTICAL);
   TopSizer->Add(html1, 0, wxALL, 1);
-  TopSizer->SetSizeHints( dlg );   // set size hints to honour minimum size
+  TopSizer->SetSizeHints(dlg);   // set size hints to honour minimum size
   dlg->SetSizer(TopSizer);
   dlg->Fit();
   pd = new TPopupData;
@@ -5074,9 +5002,10 @@ void TMainForm::macDeleteBitmap(TStrObjList &Cmds, const TParamList &Options, TM
 }
 //..............................................................................
 void TMainForm::ChangeSolution(int sol)  {
+  if( !FXApp->CheckFileType<TIns>() )  return;
+  const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
   if( Lst.PattSolutionCount() == 0 )  {
     if( Solutions.IsEmpty() )  return;
-
     if( sol < 0 )  
       sol = Solutions.Count()-1;
     else if( (size_t)sol >= Solutions.Count() )  
@@ -5087,7 +5016,7 @@ void TMainForm::ChangeSolution(int sol)  {
                   TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "lst"), true);
     FXApp->LoadXFile( TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "res") );
     CurrentSolution = sol;
-    TBasicApp::GetLog() << ( olxstr("Current solution with try #") << Solutions[sol] << '\n' );
+    TBasicApp::GetLog() << (olxstr("Current solution with try #") << Solutions[sol] << '\n');
     FXApp->Draw();
   }
   else  {
@@ -5100,7 +5029,7 @@ void TMainForm::ChangeSolution(int sol)  {
     Ins.SavePattSolution( TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "res"),
       Lst.PattSolution(sol), olxstr("Solution #") << (sol+1) );
 
-    FXApp->LoadXFile( TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "res") );
+    FXApp->LoadXFile(TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "res"));
     CurrentSolution = sol;
     TBasicApp::GetLog() << ( olxstr("Current patt solution #") << (sol+1) << '\n' );
     FXApp->Draw();
@@ -5108,6 +5037,7 @@ void TMainForm::ChangeSolution(int sol)  {
 }
 //..............................................................................
 void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
   if( !Lst.TrefTryCount() )  {
     E.ProcessingError(__OlxSrcInfo, "lst file does not contain tries");
     return;
@@ -5155,6 +5085,7 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macPatt(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
   if( Lst.PattSolutionCount() == 0 )  {
     E.ProcessingError(__OlxSrcInfo, "lst file does not contain Patterson solutions");
     return;

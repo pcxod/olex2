@@ -16,8 +16,6 @@
 #include "datafile.h"
 #include "gltextbox.h"
 
-#include "lst.h"
-
 #include "integration.h"
 #include "macroerror.h"
 
@@ -100,8 +98,8 @@ public:
   virtual bool registerCallbackFunc(const olxstr& cbEvent, ABasicFunction* fn);
   virtual void unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& funcName);
   virtual const olxstr& getDataDir() const;
-  virtual const olxstr& getVar(const olxstr &name, const olxstr &defval=NullString) const;
-  virtual void setVar(const olxstr &name, const olxstr &val) const;
+  virtual const olxstr& getVar(const olxstr& name, const olxstr& defval=NullString) const;
+  virtual void setVar(const olxstr& name, const olxstr& val) const;
   virtual TStrList GetPluginList() const;
 
   void CallbackFunc(const olxstr& cbEvent, const olxstr& param);
@@ -160,8 +158,6 @@ protected:
 
   // helper functions ...
   void CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS);
-
-  TLst Lst;
 public:
   bool ProcessFunction(olxstr &cmd, const olxstr& location=EmptyString) {  
     TMacroError err;
@@ -297,7 +293,6 @@ private:
   DefMacro(Hide)
   DefMacro(Kill)
   DefMacro(UpdateWght)
-  DefMacro(Omit)
   DefMacro(Exec)
   DefMacro(Shell)
   DefMacro(Save)
@@ -496,7 +491,6 @@ private:
   DefFunc(RGB)
   DefFunc(Color)
 
-  DefFunc(Lst)
   DefFunc(Zoom)
   DefFunc(HtmlPanelWidth)
   #ifdef __WIN32__

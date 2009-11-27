@@ -77,7 +77,7 @@ public:
   void FromBase64String(const olxstr& str);
 
   virtual TIString ToString() const;
-  olxstr FormatString(uint16_t bitsInSegment);
+  olxstr FormatString(uint16_t bitsInSegment) const;
 };
 
 EndEsdlNamespace()
