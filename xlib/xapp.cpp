@@ -30,11 +30,11 @@ TXApp::TXApp(const olxstr &basedir, ASelectionOwner* selOwner) :
   }
   FXFile = new TXFile;
 
-  DefineState( psFileLoaded, "Loaded file is expected");
-  DefineState( psCheckFileTypeIns, "INS file is expected");
-  DefineState( psCheckFileTypeCif, "CIF file is expected");
-  DefineState( psCheckFileTypeP4P, "P4P file is expected");
-  DefineState( psCheckFileTypeCRS, "CRS file is expected");
+  DefineState(psFileLoaded, "Loaded file is expected");
+  DefineState(psCheckFileTypeIns, "INS file is expected");
+  DefineState(psCheckFileTypeCif, "CIF file is expected");
+  DefineState(psCheckFileTypeP4P, "P4P file is expected");
+  DefineState(psCheckFileTypeCRS, "CRS file is expected");
   
   CifTemplatesDir = GetBaseDir() + "etc/CIF/";
 

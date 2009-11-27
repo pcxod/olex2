@@ -1356,31 +1356,56 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( Cmds.IsEmpty() )  {
     const mat3d& Matr = FXApp->GetRender().GetBasis().GetMatrix();
-    olxstr Tmp;
     for( size_t i=0; i < 3; i++ )  {
-      Tmp = EmptyString;
+      olxstr Tmp;
       Tmp << olxstr::FormatFloat(3, Matr[0][i]);  Tmp.Format(7, true, ' ');
       Tmp << olxstr::FormatFloat(3, Matr[1][i]);  Tmp.Format(14, true, ' ');
       Tmp << olxstr::FormatFloat(3, Matr[2][i]);  Tmp.Format(21, true, ' ');
       TBasicApp::GetLog() << (Tmp << '\n');
     }
-    return;
   }
   else  {
     if( Cmds.Count() == 1 )  {
-      mat3d M = FXApp->HklVisible() ? FXApp->XFile().GetAsymmUnit().GetHklToCartesian() :
+      const mat3d& M = FXApp->HklVisible() ? FXApp->XFile().GetAsymmUnit().GetHklToCartesian() :
         FXApp->XFile().GetAsymmUnit().GetCellToCartesian();
-      if( Cmds[0] == "100" || Cmds[0] == "1" )  FXApp->GetRender().GetBasis().OrientNormal(M[0]);
-      else if( Cmds[0] == "010" || Cmds[0] == "2" )  FXApp->GetRender().GetBasis().OrientNormal(M[1]);
-      else if( Cmds[0] == "001" || Cmds[0] == "3" )  FXApp->GetRender().GetBasis().OrientNormal(M[2]);
-      else if( Cmds[0] == "110" )  FXApp->GetRender().GetBasis().OrientNormal(M[0] + M[1]);
-      else if( Cmds[0] == "101" )  FXApp->GetRender().GetBasis().OrientNormal(M[0] + M[2]);
-      else if( Cmds[0] == "011" )  FXApp->GetRender().GetBasis().OrientNormal(M[1] + M[2]);
-      else if( Cmds[0] == "111" )  FXApp->GetRender().GetBasis().OrientNormal(M[0] + M[1] + M[2]);
-      else  {
-        Error.ProcessingError(__OlxSrcInfo, "undefined arguments" );
+      olxstr arg;
+      if( Cmds[0] == '1' )  arg = "100";
+      else if( Cmds[0] == '2' )  arg = "010";
+      else if( Cmds[0] == '3' )  arg = "001";
+      else
+        arg = Cmds[0];
+      if( (arg.Length()%3) != 0 )  {
+        Error.ProcessingError(__OlxSrcInfo, "invalid argument, an arguments like 010, 001000, +0-1+1 etc is expected");
         return;
       }
+      vec3d n;
+      const size_t s = arg.Length()/3;
+      for( int i=0; i < 3; i++ )
+        n += M[i]*arg.SubString(s*i, s).ToInt();
+      if( n.QLength() < 1e-3 )  {
+        Error.ProcessingError(__OlxSrcInfo, "non zero expression is expected");
+        return;
+      }
+      FXApp->GetRender().GetBasis().OrientNormal(n);
+    }
+    else if( Cmds.Count() == 2 )  {  // from to view
+      if( (Cmds[0].Length()%3) != 0 || (Cmds[1].Length()%3) != 0 )  {
+        Error.ProcessingError(__OlxSrcInfo, "invalid arguments, a klm, two arguments like 010, 001000, +0-1+1 etc are expected");
+        return;
+      }
+      const mat3d& M = FXApp->XFile().GetAsymmUnit().GetCellToCartesian();
+      vec3d from, to;
+      const size_t fs = Cmds[0].Length()/3, ts = Cmds[1].Length()/3;
+      for( int i=0; i < 3; i++ )  {
+        from += M[i]*Cmds[0].SubString(fs*i, fs).ToInt();
+        to += M[i]*Cmds[1].SubString(ts*i, ts).ToInt();
+      }
+      vec3d n = from-to;
+      if( n.QLength() < 1e-3 )  {
+        Error.ProcessingError(__OlxSrcInfo, "from and to arguments must be different");
+        return;
+      }
+      FXApp->GetRender().GetBasis().OrientNormal(n);
     }
     else if( Cmds.Count() == 9 )  {
       mat3d M(Cmds[0].ToDouble(), Cmds[1].ToDouble(), Cmds[2].ToDouble(),
@@ -1392,11 +1417,6 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       M[2].Normalise();
       FXApp->GetRender().GetBasis().SetMatrix(M);
     }
-    else  {
-      Error.ProcessingError(__OlxSrcInfo, "wrong arguments" );
-      return;
-    }
-    FXApp->CenterView();
     FXApp->Draw();
   }
 }
@@ -4332,8 +4352,10 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     if( OverlayXFile )  {
       TXFile& xf = FXApp->NewOverlayedXFile();
-      xf.LoadFromFile( FN );
-      Macros.ProcessMacro("fuse", Error);
+      xf.LoadFromFile(FN);
+      FXApp->CreateObjects(true, false);
+      FXApp->CenterView(true);
+      FXApp->AlignOverlayedXFiles();
       return;
     }
     if( Modes->GetCurrent() != NULL )
@@ -5889,10 +5911,17 @@ void TMainForm::macDelOFile(TStrObjList &Cmds, const TParamList &Options, TMacro
     Macros.ProcessMacro("fuse", Error);
     return;
   }
-  size_t ind = Cmds[0].ToSizeT();
-  if( ind >= FXApp->OverlayedXFileCount() )
-    throw TInvalidArgumentException(__OlxSourceInfo, olxstr("index=") << ind );
-  FXApp->DeleteOverlayedXFile(ind);
+  int ind = Cmds[0].ToInt();
+  if( ind <= -1 )  {
+    if( FXApp->OverlayedXFileCount() > 0 )
+      FXApp->DeleteOverlayedXFile(FXApp->OverlayedXFileCount()-1);
+  }
+  else  {
+    if( (size_t)ind < FXApp->OverlayedXFileCount() )
+      FXApp->DeleteOverlayedXFile(ind);
+    else
+      Error.ProcessingError(__OlxSrcInfo, "no overlayed files at given position");
+  }
 }
 //..............................................................................
 

@@ -887,7 +887,8 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   item.AddItem("TWIN", TWIN_set).AddField("mat", TSymmParser::MatrixToSymmEx(TWIN_mat)).AddField("n", TWIN_n);
   item.AddItem("MERG", MERG_set).AddField("val", MERG);
   item.AddItem("SHEL", SHEL_set).AddField("high", SHEL_hr).AddField("low", SHEL_lr);
-  Conn.ToDataItem( item.AddItem("CONN") );
+  Conn.ToDataItem(item.AddItem("CONN"));
+  item.AddField("UserContent", GetUserContentStr());
   // restore matrix tags
   for( size_t i=0; i < UsedSymm.Count(); i++ )
     UsedSymm.GetValue(i).SetRawId(mat_tags[i]);
@@ -895,7 +896,6 @@ void RefinementModel::ToDataItem(TDataItem& item) {
 //....................................................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {
   ClearAll();
-
   PersUtil::FloatNumberListFromStr(item.GetRequiredField("RefOutArg"), PLAN);
   PersUtil::FloatNumberListFromStr(item.GetRequiredField("Weight"), used_weight);
   PersUtil::FloatNumberListFromStr(item.GetRequiredField("ProposedWeight"), proposed_weight);
@@ -961,8 +961,8 @@ void RefinementModel::FromDataItem(TDataItem& item) {
 
   // restraints and BASF may use some of the vars...  
   Vars.FromDataItem( item.FindRequiredItem("LEQS") );
-
   Conn.FromDataItem( item.FindRequiredItem("CONN") );
+  SetUserFormula(item.GetFieldValue("UserContent"), false);
   aunit._UpdateConnInfo();
 }
 //....................................................................................................

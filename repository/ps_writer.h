@@ -6,6 +6,12 @@
 #include "efile.h"
 #include "glbase.h"
 #include "threex3.h"
+// mind to change the length of the buffer if changes!!!
+#ifdef _MSC_VER
+#  define psw_sprintf(bf, format, ...)  sprintf_s(bf, 80, format, __VA_ARGS__)
+#else
+#  define psw_sprintf sprintf
+#endif
 
 class PSWriter  {
   TEFile out;
@@ -33,7 +39,7 @@ public:
   void color(uint32_t rgb)  {
     if( CurrentColor == rgb )  return;
       CurrentColor = rgb;
-    sprintf(bf, "%f %f %f setrgbcolor", (float)GetRValue(rgb)/255, 
+    psw_sprintf(bf, "%f %f %f setrgbcolor", (float)GetRValue(rgb)/255, 
       (float)GetGValue(rgb)/255,
       (float)GetBValue(rgb)/255
     );
@@ -42,33 +48,33 @@ public:
   //..........................................................................
   template <typename vec_t> 
   void translate(const vec_t& origin)  {
-    sprintf(bf, "%f %f translate", (float)origin[0], (float)origin[1]);
+    psw_sprintf(bf, "%f %f translate", (float)origin[0], (float)origin[1]);
     out.Writenl( bf );
   }
   //..........................................................................
   template <typename float_t> 
   void translate(const float_t& x, const float_t& y)  {
-    sprintf(bf, "%f %f translate", (float)x, (float)y);
+    psw_sprintf(bf, "%f %f translate", (float)x, (float)y);
     out.Writenl( bf );
   }
   //..........................................................................
   template <typename float_t> 
   void lineWidth(const float_t& lw)  {
     if( lw == CurrentLineWidth )  return;
-    sprintf(bf, "%f setlinewidth", (float)lw);
+    psw_sprintf(bf, "%f setlinewidth", (float)lw);
     out.Writenl( bf );
     CurrentLineWidth = (float)lw;
   }
   //..........................................................................
   template <typename vec_t> 
   void scale(const vec_t& origin)  {
-    sprintf(bf, "%f %f scale", (float)origin[0], (float)origin[1]);
+    psw_sprintf(bf, "%f %f scale", (float)origin[0], (float)origin[1]);
     out.Writenl( bf );
   }
   //..........................................................................
   template <typename float_t> 
   void scale(const float_t& x_scale, const float_t& y_scale)  {
-    sprintf(bf, "%f %f scale", (float)x_scale, (float)y_scale);
+    psw_sprintf(bf, "%f %f scale", (float)x_scale, (float)y_scale);
     out.Writenl( bf );
   }
   //..........................................................................
@@ -102,23 +108,23 @@ public:
   //..........................................................................
   template <typename vec_t> 
   void moveto(const vec_t& to)  {
-    sprintf(bf, "%f %f moveto", (float)to[0], (float)to[1]);
+    psw_sprintf(bf, "%f %f moveto", (float)to[0], (float)to[1]);
     out.Writenl( bf );
   }
   template <typename float_t> 
   void moveto(const float_t& x, const float_t& y)  {
-    sprintf(bf, "%f %f moveto", (float)x, (float)y);
+    psw_sprintf(bf, "%f %f moveto", (float)x, (float)y);
     out.Writenl( bf );
   }
   //..........................................................................
   template <typename vec_t> 
   void lineto(const vec_t& to)  {
-    sprintf(bf, "%f %f lineto", (float)to[0], (float)to[1]);
+    psw_sprintf(bf, "%f %f lineto", (float)to[0], (float)to[1]);
     out.Writenl( bf );
   }
   template <typename float_t> 
   void lineto(const float_t& x, const float_t& y)  {
-    sprintf(bf, "%f %f lineto", (float)x, (float)y);
+    psw_sprintf(bf, "%f %f lineto", (float)x, (float)y);
     out.Writenl( bf );
   }
   //..........................................................................
@@ -134,7 +140,7 @@ public:
     if( cnt == InvalidSize )  cnt = list.Count();
     if( cnt < 2 )  return;
     moveto(list[0]);
-    for( int i=1; i < cnt; i++ )
+    for( size_t i=1; i < cnt; i++ )
       lineto(list[i]);
     if( close_path )
       lineto(list[0]);
@@ -151,7 +157,7 @@ public:
     if( cnt == InvalidSize )  cnt = list.Count();
     if( cnt < 2 )  return;
     moveto(*list[0]);
-    for( int i=1; i < cnt; i++ )
+    for( size_t i=1; i < cnt; i++ )
       lineto(*list[i]);
     if( close_path )  
       lineto(*list[0]);
@@ -170,7 +176,7 @@ public:
     //c d 0
     //tx ty 1
     //[a b c d tx ty]
-    sprintf(bf, "[%f %f %f %f %f %f] concat", (float)basis[0][0], 
+    psw_sprintf(bf, "[%f %f %f %f %f %f] concat", (float)basis[0][0], 
       (float)basis[0][1], 
       (float)basis[1][0],
       (float)basis[1][1],
@@ -190,7 +196,7 @@ public:
   //..........................................................................
   template <typename vec_t, typename float_t> 
   void circle(const vec_t& center, const float_t& rad)  {
-    sprintf(bf, "%f %f %f 0 360 arc", (float)center[0], 
+    psw_sprintf(bf, "%f %f %f 0 360 arc", (float)center[0], 
       (float)center[1], 
       (float)rad 
     );
@@ -206,7 +212,7 @@ public:
   template <class vec_t>
   void drawText(const olxstr& text, const vec_t& pos)  {
     moveto(pos);
-    sprintf(bf, "(%s) show", text.c_str());
+    psw_sprintf(bf, "(%s) show", text.c_str());
     out.Writenl( bf );
   }
   //..........................................................................
@@ -301,7 +307,7 @@ public:
   //..........................................................................
   template <typename vec_t, typename float_t>
   void arc(const vec_t& center, const float_t& rad, const float_t startAngle, const float_t& endAngle)  {
-    sprintf(bf, "%f %f %f %f %f arc", (float)center[0], (float)center[1], (float)rad, (float)startAngle, (float)endAngle);
+    psw_sprintf(bf, "%f %f %f %f %f arc", (float)center[0], (float)center[1], (float)rad, (float)startAngle, (float)endAngle);
     out.Writenl( bf );
   }
 };

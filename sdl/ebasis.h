@@ -94,7 +94,7 @@ public:
   void Reset();
   void ResetAngles()  {  FRX = FRY = FRZ = 0;  };
   template <class VC> void OrientNormal(const VC& normal)  {
-    Orient(CalcBasis<VC, mat3d>(normal), false);  
+    SetMatrix(CalcBasis<VC, mat3d>(normal).Transpose());  
   }
   // give a normal calculates two other vectors to form orthogonal basis...
   template <typename VecType, typename MatType> static MatType CalcBasis(const VecType& normal)  {

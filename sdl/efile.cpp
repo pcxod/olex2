@@ -830,14 +830,16 @@ bool TEFile::IsAbsolutePath(const olxstr& Path)  {
 }
 //..............................................................................
 bool TEFile::IsSameFolder(const olxstr& _f1, const olxstr& _f2)  {
-  olxstr f1 = OLX_OS_PATH(_f1);
-  olxstr f2 = OLX_OS_PATH(_f2);
+  olxstr f1 = AddTrailingBackslash(_f1);
+  olxstr f2 = AddTrailingBackslash(_f2);
   bool e1 = Exists(f1),
        e2 = Exists(f2);
+  // if one or both of the folders does not exist - we cannot test their equality...
   if( e1 != e2 || !e1 )  return false;
+  if( f1 == f2 )  return true;
   static olxstr dn("_OLX_TEST_SAME_DIR.TMP");
-  AddTrailingBackslashI(f1) << dn;
-  AddTrailingBackslashI(f2) << dn;
+  f1 << dn;
+  f2 << dn;
   if( makedir(OLXSTR(f1)) != -1 )  {
     bool res = TEFile::Exists(f2);
     rmdir(OLXSTR(f1));

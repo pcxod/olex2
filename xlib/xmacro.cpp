@@ -1601,7 +1601,6 @@ public:
 void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   double Zp = Cmds.IsEmpty() ? 1 : Cmds[0].ToDouble();
   if( Zp <= 0 )  Zp = 1;
-  TIns& Ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
   TXApp::GetInstance().XFile().UpdateAsymmUnit();
   TPtrList<TBasicAtomInfo> content;
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();

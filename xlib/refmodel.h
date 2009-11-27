@@ -397,11 +397,11 @@ of components 1 ... m
   void AddUserContent(const olxstr& type, double amount=0)  {
     UserContent.AddNew(type, amount);
   }
-  void SetUserFormula(const olxstr& frm)  {
+  void SetUserFormula(const olxstr& frm, bool mult_z=true)  {
     UserContent.Clear();
     TAtomsInfo::GetInstance().ParseElementString(frm, UserContent);
     for( size_t i=0; i < UserContent.Count(); i++ )
-      UserContent[i].B() *= aunit.GetZ();
+      UserContent[i].B() *= (mult_z ? aunit.GetZ() : 1.0);
   }
   // returns the restrained distance or -1
   double FindRestrainedDistance(const TCAtom& a1, const TCAtom& a2);
