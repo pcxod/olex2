@@ -33,8 +33,8 @@ public:
   // this function could be constm but many file handlers might do some preprocessing of chanegs before flushing...
   virtual void SaveToStrings(TStrList& Strings) = 0;
   virtual void LoadFromStrings(const TStrList& Strings) = 0;
-  virtual void SaveToFile(const olxstr &A);
-  virtual void LoadFromFile(const olxstr &A);
+  virtual void SaveToFile(const olxstr& fileName);
+  virtual void LoadFromFile(const olxstr& fileName);
   // only oxm loader is native
   virtual bool IsNative() const {  return false;  }
   // adopts the content of the AsemmUnit to the virtual format

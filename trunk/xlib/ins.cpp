@@ -48,6 +48,17 @@ void TIns::Clear()  {
   R1 = -1;
 }
 //..............................................................................
+void TIns::LoadFromFile(const olxstr& fileName)  {
+  Lst.Clear();
+  // load Lst first, as it may have the error indicator
+  olxstr lst_fn = TEFile::ChangeFileExt(fileName, "lst");
+  if( TEFile::Exists(lst_fn) )  {
+    try  {  Lst.LoadFromFile(lst_fn);  }
+    catch(...)  {}
+  }
+  TBasicCFile::LoadFromFile(fileName);
+}
+//..............................................................................
 void TIns::LoadFromStrings(const TStrList& FileContent)  {
   Clear();
   ParseContext cx(GetRM());

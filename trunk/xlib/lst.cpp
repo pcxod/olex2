@@ -325,7 +325,7 @@ bool TLst::ExportHTML( const short Param, TStrList &Html, bool TableDef)  {
     Table.ColName(2) = "L";
     Table.ColName(3) = "&Delta;(F<sup>2</sup>)/esd";
     for( size_t i=0; i < DRefCount(); i++ )  {
-      TLstRef& Ref = DRef(i);
+      const TLstRef& Ref = DRef(i);
       if( Ref.Deleted )  continue;
       Table[i][0] = Ref.H;
       Table[i][1] = Ref.K;

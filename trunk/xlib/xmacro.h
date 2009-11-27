@@ -81,6 +81,9 @@ class XLibMacros  {
   static DefMacro(CalcMass)
   static DefMacro(FitCHN)
 
+  static DefMacro(Omit)
+  static DefFunc(Lst)
+
   static DefFunc(FileName)
   static DefFunc(FileExt)
   static DefFunc(FilePath)
@@ -226,7 +229,7 @@ public:
     return true;
   }
   static void Export(class TLibrary& lib);
-  static TActionQueue* OnDelIns;
+  static TActionQueue &OnDelIns, &OnAddIns;
 
 protected:
   class TEnviComparator  {

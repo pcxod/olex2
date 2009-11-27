@@ -28,7 +28,6 @@ using namespace std;
 #include "crs.h"
 #include "pdb.h"
 #include "xdmas.h"
-#include "lst.h"
 #include "macrolib.h"
 #include "symmlib.h"
 #include "xlcongen.h"
@@ -100,7 +99,6 @@ enum  {
 
 class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASelectionOwner  {
   TXApp XApp;
-  TLst Lst;
   olxstr DataDir;
   TCSTypeList<olxstr, ABasicFunction*> CallbackFuncs;
   TStrList FOnTerminateMacroCmds; // a list of commands called when a process is terminated
@@ -232,7 +230,6 @@ public:
     this_InitFuncD(IsPluginInstalled, fpOne, "" );
     this_InitFuncD(CurrentLanguageEncoding, fpNone, "" );
     this_InitFuncD(StrCmp, fpTwo, "" );
-    this_InitFuncD(Lst, fpOne|psFileLoaded, "" );
     this_InitFuncD(HasGUI, fpNone, "" );
     this_InitFuncD(Sel, fpNone, "" );
     this_InitFuncD(GetMAC, fpNone|fpOne, "" );
@@ -623,46 +620,6 @@ public:
     executeMacro(olxstr("@reap \'") << FN << '\'');
   }
   //..............................................................................
-  void funLst(const TStrObjList &Cmds, TMacroError &E)  {
-    if( !Lst.IsLoaded() )  {
-      E.SetRetVal<olxstr>( NAString );
-    }
-    else if( Cmds[0].Equalsi("rint") )
-      E.SetRetVal( Lst.Rint() );
-    else if( Cmds[0].Equalsi("rsig") )
-      E.SetRetVal( Lst.Rsigma() );
-    else if( Cmds[0].Equalsi("r1") )
-      E.SetRetVal( Lst.R1() );
-    else if( Cmds[0].Equalsi("r1a") )
-      E.SetRetVal( Lst.R1a() );
-    else if( Cmds[0].Equalsi("wr2") )
-      E.SetRetVal( Lst.wR2() );
-    else if( Cmds[0].Equalsi("s") )
-      E.SetRetVal( Lst.S() );
-    else if( Cmds[0].Equalsi("rs") )
-      E.SetRetVal( Lst.RS() );
-    else if( Cmds[0].Equalsi("params") )
-      E.SetRetVal( Lst.Params() );
-    else if( Cmds[0].Equalsi("rtotal") )
-      E.SetRetVal( Lst.TotalRefs() );
-    else if( Cmds[0].Equalsi("runiq") )
-      E.SetRetVal( Lst.UniqRefs() );
-    else if( Cmds[0].Equalsi("r4sig") )
-      E.SetRetVal( Lst.Refs4sig() );
-    else if( Cmds[0].Equalsi("peak") )
-      E.SetRetVal( Lst.Peak() );
-    else if( Cmds[0].Equalsi("hole") )
-      E.SetRetVal( Lst.Hole() );
-    else if( Cmds[0].Equalsi("flack") )  {
-      if( Lst.HasFlack() )
-        E.SetRetVal( Lst.Flack().ToString() );
-      else
-        E.SetRetVal( NAString );
-    }
-    else
-      E.SetRetVal<olxstr>( NAString );
-  }
-  //..............................................................................
   void SetProcess(AProcess *Process)  {
     if( FProcess != NULL && Process == NULL )  {
       while( FProcess->StrCount() != 0 )  {
@@ -860,11 +817,7 @@ public:
   }
   //..............................................................................
   void macReap(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    Lst.Clear();
-    XApp.XFile().LoadFromFile( Cmds.Text(' ') );
-    olxstr lstfn( TEFile::ChangeFileExt(Cmds[0], "lst") );
-    if( TEFile::Exists(lstfn) )
-      Lst.LoadFromFile(lstfn);
+    XApp.XFile().LoadFromFile(Cmds.Text(' '));
   }
   //..............................................................................
   void funUser(const TStrObjList &Cmds, TMacroError &Error)  {

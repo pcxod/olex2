@@ -42,7 +42,8 @@ const olxstr XLibMacros::NoneString("none");
 const olxstr XLibMacros::NAString("n/a");
 olxstr XLibMacros::CurrentDir;
 TActionQList XLibMacros::Actions;
-TActionQueue* XLibMacros::OnDelIns = &XLibMacros::Actions.NewQueue("OnDelIns");
+TActionQueue& XLibMacros::OnDelIns = XLibMacros::Actions.NewQueue("OnDelIns");
+TActionQueue& XLibMacros::OnAddIns = XLibMacros::Actions.NewQueue("OnAddIns");
 
 void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Run, EmptyString, fpAny^fpNone, "Runs provided macros (combined by '>>')");
@@ -174,6 +175,9 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
  Example: FitCHN C12H22O11 C:40.1 H:6 N:0 H2O CCl3H" );
   xlib_InitMacro(CalcCHN, EmptyString, fpNone|fpOne, "Calculates CHN composition of current structure or for provided formula" );
   xlib_InitMacro(CalcMass, EmptyString, fpNone|fpOne, "Calculates Mass spectrum of current structure or for provided formula" );
+  xlib_InitMacro(Omit, EmptyString, fpOne|fpTwo|fpThree|psCheckFileTypeIns, 
+    "removes any particular reflection from the refinement list. If a single number is provided,\
+ all reflections with delta(F^2)/esd greater than given number are omitted");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -217,6 +221,7 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(Run, fpOne, "Same as the macro, executes provided commands (separated by >>) returns true if succeded");
 //_________________________________________________________________________________________________________________________
+  xlib_InitFunc(Lst, fpOne|psCheckFileTypeIns, "returns a value from the Lst file");
 }
 //..............................................................................
 void XLibMacros::macTransform(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -1250,7 +1255,7 @@ void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
       }
     }
   }
-  OnDelIns->Exit(NULL, &Cmds[0]);
+  OnDelIns.Exit(NULL, &Cmds[0]);
 }
 //..............................................................................
 void XLibMacros::macLS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -3646,5 +3651,72 @@ void XLibMacros::macStandardise(TStrObjList &Cmds, const TParamList &Options, TM
   }
   xapp.XFile().GetLattice().Init();
   xapp.XFile().GetLattice().Uniq();
+}
+//..............................................................................
+void XLibMacros::macOmit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  static olxstr sig("OMIT");
+  const TIns& ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
+  RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
+  const TLst& Lst = ins.GetLst();
+  if( !Lst.IsLoaded() )  {  return;  }
+  if( Cmds.Count() == 1 )  {
+    if( Cmds[0].IsNumber() )  {
+      const double th = Cmds[0].ToDouble();
+      for( size_t i=0; i < Lst.DRefCount(); i++ )  {
+        const TLstRef& r = Lst.DRef(i);
+        if( !r.Deleted && r.DF >= th )
+          rm.Omit(vec3i(r.H, r.K, r.L));
+      }
+    }
+  }
+  else if( Cmds.Count() == 2 )  {
+    rm.SetOMIT_s(Cmds[0].ToDouble());
+    rm.SetOMIT_2t(Cmds[1].ToDouble());
+  }
+  else 
+    rm.AddOMIT(Cmds);
+  OnAddIns.Exit(NULL, &sig);
+}
+//..............................................................................
+void XLibMacros::funLst(const TStrObjList &Cmds, TMacroError &E)  {
+  const TIns& ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
+  const TLst& Lst = ins.GetLst();
+  if( !Lst.IsLoaded() )  {
+    E.SetRetVal(NAString);
+  }
+  else if( Cmds[0].Equalsi("rint") )
+    E.SetRetVal( Lst.Rint() );
+  else if( Cmds[0].Equalsi("rsig") )
+    E.SetRetVal( Lst.Rsigma() );
+  else if( Cmds[0].Equalsi("r1") )
+    E.SetRetVal( Lst.R1() );
+  else if( Cmds[0].Equalsi("r1a") )
+    E.SetRetVal( Lst.R1a() );
+  else if( Cmds[0].Equalsi("wr2") )
+    E.SetRetVal( Lst.wR2() );
+  else if( Cmds[0].Equalsi("s") )
+    E.SetRetVal( Lst.S() );
+  else if( Cmds[0].Equalsi("rs") )
+    E.SetRetVal( Lst.RS() );
+  else if( Cmds[0].Equalsi("params") )
+    E.SetRetVal( Lst.Params() );
+  else if( Cmds[0].Equalsi("rtotal") )
+    E.SetRetVal( Lst.TotalRefs() );
+  else if( Cmds[0].Equalsi("runiq") )
+    E.SetRetVal( Lst.UniqRefs() );
+  else if( Cmds[0].Equalsi("r4sig") )
+    E.SetRetVal( Lst.Refs4sig() );
+  else if( Cmds[0].Equalsi("peak") )
+    E.SetRetVal( Lst.Peak() );
+  else if( Cmds[0].Equalsi("hole") )
+    E.SetRetVal( Lst.Hole() );
+  else if( Cmds[0].Equalsi("flack") )  {
+    if( Lst.HasFlack() )
+      E.SetRetVal( Lst.Flack().ToString() );
+    else
+      E.SetRetVal( NAString );
+  }
+  else
+    E.SetRetVal( NAString );
 }
 //..............................................................................

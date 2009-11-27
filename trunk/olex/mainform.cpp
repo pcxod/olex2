@@ -199,6 +199,7 @@ enum
   ID_FixLattice,
   ID_FreeLattice,
   ID_DELINS,
+  ID_ADDINS,
   ID_VarChange,
 
   ID_gl2ps,
@@ -681,9 +682,6 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
 
   this_InitMacroD(Hide, EmptyString, fpAny, "Hides selected objects or provided atom names (no atom related objects as bonds are hidden automatically)");
   this_InitMacroD(Kill, "h-kill hidden atoms", fpAny^fpNone, "deletes provided [selected] atoms");
-  this_InitMacroD(Omit, EmptyString, fpOne|fpThree|psCheckFileTypeIns, 
-    "removes any particular reflection from the refinement list. If a single number is provided,\
- all reflections with delta(F^2)/esd greater than given number are omitted");
 
   this_InitMacroD(Exec, "s-synchronise&;o-detached&;d-output dub file name&;q-do not post output to console", fpAny^fpNone, "Executes external command");
   this_InitMacroD(Shell, "", fpNone|fpOne, "if no arguments launches a new interactive shell,\
@@ -975,7 +973,6 @@ separated values of Atom Type and radius, an entry a line");
   this_InitFunc(RGB, fpThree|fpFour);
   this_InitFunc(Color, fpNone|fpOne|fpTwo);
 
-  this_InitFunc(Lst, fpOne|psFileLoaded);
   this_InitFunc(Zoom, fpNone|fpOne);
   this_InitFunc(HtmlPanelWidth, fpNone|fpOne);
 
@@ -1296,7 +1293,8 @@ separated values of Atom Type and radius, an entry a line");
   TBasicApp::GetLog().OnError->Add(this, ID_ERROR, msiEnter);
   TBasicApp::GetLog().OnException->Add(this, ID_EXCEPTION, msiEnter);
   FXApp->OnObjectsDestroy->Add(this, ID_XOBJECTSDESTROY, msiEnter);
-  XLibMacros::OnDelIns->Add(this, ID_DELINS, msiExit);
+  XLibMacros::OnDelIns.Add(this, ID_DELINS, msiExit);
+  XLibMacros::OnAddIns.Add(this, ID_ADDINS, msiExit);
   LoadVFS(plGlobal);
 
   FHtml = new THtml(this, FXApp);
@@ -2458,6 +2456,14 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       }
     }
   }
+  else if( MsgId == ID_ADDINS )  {
+    if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
+      if( ((olxstr*)Data)->Equalsi("OMIT") )  {
+        BadReflectionsTable(false);
+        executeMacro("html.updatehtml");
+      }
+    }
+  }
   return res;
 }
 //..............................................................................
@@ -3377,12 +3383,12 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
 //..............................................................................
 void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
   static const olxstr BadRefsFile("badrefs.htm");
-  if( !Create )  {
+  if( !Create || !FXApp->CheckFileType<TIns>() )  {
     TFileHandlerManager::AddMemoryBlock(BadRefsFile, NULL, 0, plStructure);
     return;
   }
-  if( FXApp->CheckFileType<TIns>() )
-    Lst.SynchroniseOmits( FXApp->XFile().GetRM() );
+  TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
+  Lst.SynchroniseOmits( FXApp->XFile().GetRM() );
   TTTable<TStrList> Table;
   TStrList Output;
   Table.Resize(Lst.DRefCount(), 5);
@@ -3391,7 +3397,7 @@ void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
   Table.ColName(2) = "L";
   Table.ColName(3) = "(Fc<sup>2</sup>-Fo<sup>2</sup>)/esd";
   for( size_t i=0; i < Lst.DRefCount(); i++ )  {
-    TLstRef& Ref = Lst.DRef(i);
+    const TLstRef& Ref = Lst.DRef(i);
     Table[i][0] = Ref.H;
     Table[i][1] = Ref.K;
     Table[i][2] = Ref.L;
@@ -3415,15 +3421,16 @@ void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
 //..............................................................................
 void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
   static const olxstr RefineDataFile("refinedata.htm");
-  if( !Create )  {
+  if( !Create || !FXApp->CheckFileType<TIns>() )  {
     TFileHandlerManager::AddMemoryBlock(RefineDataFile, NULL, 0, plStructure);
     return;
   }
   TTTable<TStrList> Table;
   TStrList Output;
-
   Table.Resize(13, 4);
 
+  const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
+  
   Table[0][0] = "R1(Fo > 4sig(Fo))";
   if( Lst.R1() > 0.1 )
     Table[0][1] << "<font color=\'red\'>" << olxstr::FormatFloat(4,Lst.R1()) << "</font>";

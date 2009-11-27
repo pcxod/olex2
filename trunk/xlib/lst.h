@@ -1,6 +1,5 @@
-#ifndef lstH
-#define lstH
-
+#ifndef __olx_xl_lst_H
+#define __olx_xl_lst_H
 #include "xbase.h"
 #include "symmat.h"
 #include "bitarray.h"
@@ -75,16 +74,16 @@ public:
   void SynchroniseOmits(class RefinementModel& rm);
   bool ExportHTML( const short Param, TStrList &Html, bool TableDef=true);
   inline size_t DRefCount() const {  return FDRefs.Count(); }
-  inline TLstRef& DRef(size_t i)  {  return FDRefs[i]; }
+  inline const TLstRef& DRef(size_t i) const {  return FDRefs[i]; }
   inline void DelRef(size_t i)  {  FDRefs.Delete(i);  }
   inline size_t SplitAtomCount() const {  return FSplitAtoms.Count();  }
-  inline TLstSplitAtom& SplitAtom(size_t i)  {  return FSplitAtoms[i]; }
+  inline const TLstSplitAtom& SplitAtom(size_t i) const {  return FSplitAtoms[i]; }
 
   inline size_t TrefTryCount() const {  return TrefTries.Count(); }
-  inline TTrefTry& TrefTry(size_t i)  {  return TrefTries[i]; }
+  inline const TTrefTry& TrefTry(size_t i) const {  return TrefTries[i]; }
 
   inline size_t PattSolutionCount() const {  return PattSolutions.Count(); }
-  inline TTypeList<TPattAtom>& PattSolution(size_t i) {  return PattSolutions[i];  }
+  inline const TTypeList<TPattAtom>& PattSolution(size_t i) const {  return PattSolutions[i];  }
 
   inline bool IsLoaded() const {  return FLoaded;  }
   inline size_t ErrMsgCount() const {  return ErrorMsgs.Count();  }

@@ -142,7 +142,7 @@ TIString TEBitArray::ToString() const  {
   return StrRepr;
 }
 //..............................................................................
-olxstr TEBitArray::FormatString(uint16_t bitsInSegment)  {
+olxstr TEBitArray::FormatString(uint16_t bitsInSegment) const {
   if( bitsInSegment == 0 )
     throw TInvalidArgumentException(__OlxSourceInfo, "bitsInSegment" );
   olxstr StrRepr;
