@@ -195,28 +195,28 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   dir_vec.Normalise();
   const float pers_scale = 1.0-olx_sqr(dir_vec[2]);
   mat3f rot_mat;
-  vec3f touch_point = (atom_b.atom.Atom().crd() - atom_a.atom.Atom().crd()).Normalise();
-  vec3f rot_vec(-touch_point[1], touch_point[0], 0);
-  CreateRotationMatrixEx<float,mat3f,vec3f>(rot_mat, rot_vec.Normalise(), touch_point[2]);
-  mat3f proj_mat = rot_mat*parent.ProjMatr;
+  const vec3f touch_point = (atom_b.atom.Atom().crd() - atom_a.atom.Atom().crd()).Normalise();
+  CreateRotationMatrixEx<float,mat3f,vec3f>(rot_mat, vec3f(-touch_point[1], touch_point[0], 0).Normalise(), touch_point[2]);
+  const mat3f proj_mat = rot_mat*parent.ProjMatr;
+  const float _brad = brad*(1+pers_scale)*scalex;
   if( !atom_a.IsSpherical() && atom_a.IsSolid() )  {
     const mat3f& ielpm = *atom_a.p_ielpm;
     vec3f bproj_cnt;
-    vec3f touch_point_proj = dir_vec*ielpm;
     for( uint16_t j=0; j < parent.BondDiv; j++ )  {
       parent.BondProjF[j] = (((parent.BondCrd[j]*rot_mat+touch_point)*parent.ProjMatr).Normalise()*ielpm);
       bproj_cnt += parent.BondProjF[j];
     }
     bproj_cnt /= parent.BondDiv;
     for( uint16_t j=0; j < parent.BondDiv; j++ )  {
-      parent.BondProjF[j] = (parent.BondProjF[j]-bproj_cnt).NormaliseTo(brad*(1+pers_scale)*scalex) + bproj_cnt;
+      parent.BondProjF[j] = (parent.BondProjF[j]-bproj_cnt).NormaliseTo(_brad) + bproj_cnt;
       parent.BondProjT[j] = (parent.BondCrd[j]*proj_mat).NormaliseTo(brad*2*scalex) + dir_vec*b_len;
     }
   }
   else  {
-    const float off_len = atom_a.IsSolid() ? atom_a.draw_rad/2 : 0;
+    const float off_len = !atom_a.IsSolid() ? 0 : 
+      (atom_a.draw_rad > _brad ? sqrt(olx_sqr(atom_a.draw_rad)-olx_sqr(_brad)) : atom_a.draw_rad);
     for( uint16_t j=0; j < parent.BondDiv; j++ )  {
-      parent.BondProjT[j] = parent.BondProjF[j] = (parent.BondCrd[j]*proj_mat).NormaliseTo(brad*(1+pers_scale)*scalex); 
+      parent.BondProjT[j] = parent.BondProjF[j] = (parent.BondCrd[j]*proj_mat).NormaliseTo(_brad); 
       parent.BondProjT[j].NormaliseTo(brad*2*scalex) += dir_vec*b_len;
       parent.BondProjF[j] += dir_vec*off_len;
     }
@@ -461,8 +461,8 @@ void OrtDraw::Render(const olxstr& fileName)  {
     center->color = 0xffffffff;
     objects.Add(center);
     for( int i=0; i < 3; i++ )  {
-      vec3f mp = cm[i]*(0.2*len[i]*b.Basis.GetZoom()), 
-        ep = cm[i]*((0.2*len[i]+0.8)*b.Basis.GetZoom());
+      vec3f mp = cm[i]*((float)(0.2*len[i]*b.Basis.GetZoom())), 
+        ep = cm[i]*((float)((0.2*len[i]+0.8)*b.Basis.GetZoom()));
       
       ort_cone* arrow_cone = new ort_cone(*this, cnt+mp, cnt+ep, 0.2*DrawScale*b.Basis.GetZoom(), 0, 0); 
       objects.Add(arrow_cone);
@@ -473,7 +473,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
       float pscale = 1+olx_sign(z)*sqrt(olx_abs(z))/2;
       float base_r = 0.075*DrawScale*b.Basis.GetZoom();
       ort_cone* axis_cone = new ort_cone(*this,
-        cnt+cm[i]*sph_rad, // extra 3D effect for the central sphere
+        cnt+vec3f(cm[i]).NormaliseTo(sqrt(olx_sqr(sph_rad)-olx_sqr(base_r))), // extra 3D effect for the central sphere
         cnt+mp, 
         base_r, 
         base_r*pscale,

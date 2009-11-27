@@ -657,9 +657,10 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
   this_InitMacroD(Info, "s-sorts the atom list", fpAny, "Prints out information for provided [all] atoms");
   this_InitMacroD(Help, "c-specifies commands category", fpAny,
 "Prints available information. If no arguments provided prints available commands");
-  this_InitMacroD(Matr, EmptyString, fpNone|fpOne|fpNine,
+  this_InitMacroD(Matr, EmptyString, fpNone|fpOne|fpTwo|fpNine,
 "Displays or sets current orientation matrix. For single argument, 1,2,3 001, 111, etc\
- values are acceptable, nine values provide a full matrix ");
+ values are acceptable, two values taken are of the klm form, which specify a vew from k1*a+l1*b+m1*c to k2*a+l2*b+m2*c,\
+ nine values provide a full matrix ");
   this_InitMacroD(Qual, "h-High&;m-Medium&;l-Low", fpNone, "Sets drawings quality");
 
   this_InitMacroD(Line, EmptyString, fpAny, "Creates a line or best line for provided atoms");

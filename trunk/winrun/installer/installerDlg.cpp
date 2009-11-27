@@ -204,7 +204,7 @@ void CInstallerDlg::OnBnClickedBtnChoosePath()  {
     TShellUtil::GetSpecialFolderLocation(fiProgramFiles), EmptyString) );
   if( !dir.IsEmpty() )  {
     olex2_install_path = dir;
-    wnd::set_text(this, IDC_TE_INSTALL_PATH, dir << '-' << olex2_install_tag);
+    SetInstallationPath(dir << '-' << olex2_install_tag);
   }
 }
 
@@ -348,7 +348,7 @@ void CInstallerDlg::SetAction(int a)  {
 
 bool CInstallerDlg::DoRun()  {
   TEFile::ChangeDir(olex2_installed_path);
-  return LaunchFile(olex2_installed_path + "olex2.exe", true);
+  return LaunchFile(olex2_installed_path + "olex2.exe", false, true);
 }
 
 void CInstallerDlg::ProcessMessages()  {
@@ -359,7 +359,7 @@ void CInstallerDlg::ProcessMessages()  {
   }
 }
 
-bool CInstallerDlg::LaunchFile(const olxstr &fileName, bool do_exit)  {
+bool CInstallerDlg::LaunchFile(const olxstr &fileName, bool quiet, bool do_exit)  {
   STARTUPINFO si;
   PROCESS_INFORMATION ProcessInfo;
   olxstr Tmp(fileName);
@@ -368,7 +368,7 @@ bool CInstallerDlg::LaunchFile(const olxstr &fileName, bool do_exit)  {
   si.wShowWindow = SW_SHOW;
   si.dwFlags = STARTF_USESHOWWINDOW;
   olxch* cmdl = NULL;
-  if( !do_exit )  {
+  if( quiet )  {
     olxstr cmd = Tmp;
     cmd << " /q";
     cmdl = new olxch[cmd.Length() + 1];
@@ -529,15 +529,28 @@ bool CInstallerDlg::_DoInstall(const olxstr& zipFile, const olxstr& installPath)
       catch(...) {  res = false;  }
       if( res )  {
 #ifndef _WIN64
-        olxstr redist_fn = TBasicApp::GetBaseDir() + "vcredist_x86.exe";
+        olxstr redist_fn = TBasicApp::GetBaseDir() + "vcredist_x86.exe", redist_tag = "x86";
 #else
-        olxstr redist_fn = TBasicApp::GetBaseDir() + "vcredist_x64.exe";
+        olxstr redist_fn = TBasicApp::GetBaseDir() + "vcredist_x64.exe", redist_tag = "x64";
 #endif
         SetAction(_T("Installing MSVCRT..."));
-        if( !LaunchFile(redist_fn, false) )  {
-          MessageBox(_T("Could not install MSVC redistributables."), _T("Installation failed"), MB_OK|MB_ICONERROR);
-          SetAction(_T("Failed to install MSVCRT..."));
-          return false;
+        if( !LaunchFile(redist_fn, true, false) )  {
+          if( MessageBox(_T("Could not install MSVC redistributables."), _T("Installation failed"), MB_RETRYCANCEL|MB_ICONERROR) == IDRETRY )  {
+            if( !LaunchFile(redist_fn, false, false) )  {
+              TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiDesktop) <<
+                    "MSVCRT-" << redist_tag << ".lnk",
+                    redist_fn, "MSVCRT installer", run_as_admin);
+              MessageBox(_T("Olex2 installation will now be completed, however the MSVCRT\n\
+installation has failed and you will need to install it manually.\n\
+The installer has create a shortcut for MSVCRT installer on your desktop."), _T("Warning"), MB_OK|MB_ICONERROR);
+              SetAction(_T("MSVCRT installation is required..."));
+              return true;
+             }
+          }
+          else  {
+            SetAction(_T("Failed to install MSVCRT..."));
+            return false;
+          }
         }
         TEFile::DelFile(redist_fn);
       }
@@ -633,9 +646,6 @@ bool CInstallerDlg::DoUninstall()  {
     return false;
   }
   CReinstallDlg dlg(this);
-  if( TEFile::IsSameFolder(wnd::get_text(this, IDC_TE_INSTALL_PATH), olex2_installed_path) || 
-    TEFile::IsSubFolder(wnd::get_text(this, IDC_TE_INSTALL_PATH), olex2_installed_path) )
-    dlg.DisableDoNothing();
   // init the append string
   if( rename_status == 0 )  {
     olxstr tag = olex2_tag;
@@ -761,7 +771,7 @@ void CInstallerDlg::InitRepositories()  {
     combo_box::sel_item(this, IDC_CB_REPOSITORY, zipfn);
   }
   olex2_install_tag = ReadTag(wnd::get_text(this, IDC_CB_REPOSITORY));
-  wnd::set_text(this, IDC_TE_INSTALL_PATH, olxstr(olex2_install_path) << '-'  << olex2_install_tag);
+  SetInstallationPath(olxstr(olex2_install_path) << '-'  << olex2_install_tag);
 }
 
 
@@ -803,6 +813,14 @@ HBRUSH CInstallerDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)  {
   return (HBRUSH)ctrlBrush->GetSafeHandle();
 }
 
+void CInstallerDlg::SetInstallationPath(const olxstr& path)  {
+  wnd::set_text(this, IDC_TE_INSTALL_PATH, path);
+  if( TEFile::IsSameFolder(path, olex2_installed_path) )
+    SetAction(actionReinstall);
+  else
+    SetAction(actionInstall);
+}
+
 olxstr CInstallerDlg::ReadTag(const olxstr& repo) const {
   if( TEFile::Exists(repo) )  {
     try  {
@@ -826,5 +844,5 @@ olxstr CInstallerDlg::ReadTag(const olxstr& repo) const {
 
 void CInstallerDlg::OnCbnSelendokCbRepository()  {
   olex2_install_tag = ReadTag(wnd::get_text(this, IDC_CB_REPOSITORY));
-  wnd::set_text(this, IDC_TE_INSTALL_PATH, olxstr(olex2_install_path) << '-' << olex2_install_tag);
+  SetInstallationPath(olxstr(olex2_install_path) << '-' << olex2_install_tag);
 }

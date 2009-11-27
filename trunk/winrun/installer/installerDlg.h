@@ -52,7 +52,8 @@ protected:
   bool CleanRegistry();
   bool CleanRegistryAndShortcuts(bool sc);
   bool DoRun();
-  bool LaunchFile(const olxstr &fileName, bool do_exit);
+  bool LaunchFile(const olxstr &fileName, bool quiet, bool do_exit);
+  void SetInstallationPath(const olxstr& path);
   TBasicApp bapp;
 protected:
 	HICON m_hIcon;

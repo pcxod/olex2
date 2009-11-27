@@ -216,7 +216,7 @@ public:
 //..............................................................................
 class xappXFileUniq : public AActionHandler  {
 public:
-  virtual bool Enter(const IEObject *Sender, const IEObject *Data)  {
+  virtual bool Exit(const IEObject *Sender, const IEObject *Data)  {
     TGXApp& app = TGXApp::GetInstance();
     if( app.OverlayedXFileCount() != 0 )
       app.AlignOverlayedXFiles();
@@ -256,10 +256,10 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this)  {
   ExtraZoom = 1.25;
 
   FLabels = new TXGlLabels(*FGlRender, "Labels");
-  ObjectsToCreate.Add( FDBasis );
-  ObjectsToCreate.Add( FDUnitCell );
-  ObjectsToCreate.Add( FDFrame );
-  ObjectsToCreate.Add( Fader );
+  ObjectsToCreate.Add(FDBasis);
+  ObjectsToCreate.Add(FDUnitCell);
+  ObjectsToCreate.Add(FDFrame);
+  ObjectsToCreate.Add(Fader);
 
   FHklFile = new THklFile();
   FHklVisible = false;
@@ -270,8 +270,9 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this)  {
 
   xappXFileLoad *P = &TEGC::NewG<xappXFileLoad>(this);
   XFile().GetLattice().OnStructureGrow->Add(P);
+  XFile().GetLattice().OnStructureGrow->Add(new xappXFileUniq);
   XFile().GetLattice().OnStructureUniq->Add(P);
-  XFile().GetLattice().OnStructureUniq->Add( new xappXFileUniq);
+  XFile().GetLattice().OnStructureUniq->Add(new xappXFileUniq);
   XFile().OnFileLoad->Add(P);
 
   OnGraphicsVisible = &NewActionQueue("GRVISIBLE");
@@ -812,6 +813,20 @@ olxstr TGXApp::GetSelectionInfo()  {
         v = Angle(A.Edge(), A.Base(), B.Edge(), B.Base());
         Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ")";
       }
+      else if( EsdlInstanceOf(Sel[0], TXLine) && EsdlInstanceOf(Sel[1], TXBond) )  {
+        TXLine& A = (TXLine&)Sel[0];
+        TXBond& B =(TXBond&)Sel[1];
+        Tmp = "Angle: ";
+        v = Angle(A.Edge(), A.Base(), B.Bond().A().crd(), B.Bond().B().crd());
+        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ")";
+      }
+      else if( EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXLine) )  {
+        TXLine& A = (TXLine&)Sel[1];
+        TXBond& B =(TXBond&)Sel[0];
+        Tmp = "Angle: ";
+        v = Angle(A.Edge(), A.Base(), B.Bond().A().crd(), B.Bond().B().crd());
+        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ")";
+      }
       else if( EsdlInstanceOf(Sel[0], TXPlane) && EsdlInstanceOf(Sel[1], TXAtom) )  {
         Tmp = "Distance (plane-atom): ";
         v = ((TXPlane&)Sel[0]).Plane().DistanceTo(((TXAtom&)Sel[1]).Atom());
@@ -836,6 +851,18 @@ olxstr TGXApp::GetSelectionInfo()  {
       else if( EsdlInstanceOf(Sel[1], TXBond) && EsdlInstanceOf(Sel[0], TXPlane) )  {
         Tmp = "Angle (plane-bond): ";
         v = ((TXPlane&)Sel[0]).Plane().Angle(((TXBond&)Sel[1]).Bond());
+        Tmp << olxstr::FormatFloat(3, v);
+      }
+      else if( EsdlInstanceOf(Sel[0], TXLine) && EsdlInstanceOf(Sel[1], TXPlane) )  {
+        TXLine& xl = (TXLine&)Sel[0];
+        Tmp = "Angle (plane-line): ";
+        v = ((TXPlane&)Sel[1]).Plane().Angle(xl.Edge()-xl.Base());
+        Tmp << olxstr::FormatFloat(3, v);
+      }
+      else if( EsdlInstanceOf(Sel[1], TXLine) && EsdlInstanceOf(Sel[0], TXPlane) )  {
+        TXLine& xl = (TXLine&)Sel[1];
+        Tmp = "Angle (plane-line): ";
+        v = ((TXPlane&)Sel[0]).Plane().Angle(xl.Edge()-xl.Base());
         Tmp << olxstr::FormatFloat(3, v);
       }
       if( EsdlInstanceOf(Sel[1], TXPlane) && EsdlInstanceOf(Sel[0], TXPlane) )  {
@@ -3564,7 +3591,7 @@ void TGXApp::DeleteGlBitmap(const olxstr& name)  {
 }
 //..............................................................................
 TXFile& TGXApp::NewOverlayedXFile() {
-  TXFile& f = OverlayedXFiles.Add( (TXFile*)FXFile->Replicate() );
+  TXFile& f = OverlayedXFiles.Add((TXFile*)FXFile->Replicate());
   return f;
 }
 //..............................................................................
@@ -3577,7 +3604,7 @@ void TGXApp::CalcLatticeRandCenter(const TLattice& latt, double& maxR, vec3d& cn
   if( latt.AtomCount() != 0 )
     cnt /= latt.AtomCount();
   for( size_t i=0; i < latt.AtomCount(); i++ )  {
-    const double r = cnt.QDistanceTo( latt.GetAtom(i).crd() );
+    const double r = cnt.QDistanceTo(latt.GetAtom(i).crd());
     if( r > maxR )
       maxR = r;
   }

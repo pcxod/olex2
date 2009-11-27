@@ -143,7 +143,7 @@ bool TDBasis::Orient(TGlPrimitive& P) {
     for( int i=0; i < 3; i++ )  {
       vec3d T = AU->GetCellToCartesian()[i];
       T /= 5;
-      T[i] += 0.8;
+      T += vec3d(T).NormaliseTo(0.8);
       T *= Basis.GetZoom();
       T += Center;
       T *= Parent.GetBasis().GetMatrix();
