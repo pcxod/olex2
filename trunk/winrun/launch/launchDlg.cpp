@@ -41,7 +41,7 @@ BOOL MainDlg::OnInitDialog()  {
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
   CImage img;
-  img.Load( _T("splash.jpg") );
+  img.Load((olxstr(TBasicApp::GetBaseDir()) << "splash.jpg").u_str());
   const int width = img.GetWidth(),
     height = img.GetHeight();
   HBITMAP bmp = img.Detach();

@@ -1,5 +1,6 @@
 #include "launch.h"
 #include "launchDlg.h"
+#include <atlbase.h>
 
 #include "egc.h"
 #include "efile.h"
@@ -58,8 +59,10 @@ public:
   }
 };
 
-LaunchApp::LaunchApp() : Bapp(TBasicApp::GuessBaseDir(GetCommandLine(), NULL)) {
+LaunchApp::LaunchApp() : Bapp(TBasicApp::GuessBaseDir(GetCommandLine(), "")) {
   launch_successful = true;
+  TParamList::StrtokParams(GetCommandLine(), ' ', Bapp.Arguments);
+  MessageBox(NULL, GetCommandLine(), _T(""), MB_OK);
 }
 
 
@@ -91,7 +94,30 @@ BOOL LaunchApp::InitInstance()  {
 	// TODO: You should modify this string to be something appropriate
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Olex2 launcher"));
-	MainDlg dlg;
+  TEGC::Initialise();
+
+  MessageBox(NULL, TBasicApp::GetBaseDir().u_str(), _T(""), MB_OK);
+
+  olxstr OlexFN(TBasicApp::GetBaseDir()+ "olex2.dll");
+  if( !TEFile::Exists(OlexFN) )  { // weird eh, but might happen if 'Open with...' is used?
+    try  {
+      CRegKey rc;
+      if( rc.Open(HKEY_CLASSES_ROOT, _T("Applications\\olex2.dll\\shell\\open\\command"), KEY_READ) == ERROR_SUCCESS )  {
+        olxch rv[MAX_PATH];
+        ULONG sz_rv = MAX_PATH;
+        if( rc.QueryStringValue(_T(""), rv, &sz_rv) == ERROR_SUCCESS )  {
+          rc.Close();
+          olxstr olex2_installed_path = rv;
+          olex2_installed_path = TEFile::ExtractFilePath(olex2_installed_path.Trim('"'));
+          TBasicApp::SetBaseDir(olex2_installed_path + "dummy.exe");
+          OlexFN = TBasicApp::GetBaseDir()+ "olex2.dll";
+        }
+      }
+    }
+    catch( ... )  {    }
+  }
+
+  MainDlg dlg;
 	m_pMainWnd = &dlg;
   dlgSplash = &dlg;
   
@@ -99,11 +125,10 @@ BOOL LaunchApp::InitInstance()  {
   dlg.ShowWindow(SW_SHOW);
   dlg.SetFileProgressMax(100);
   dlg.SetOverallProgressMax(100);
-  olxstr BaseDir;
-  TEGC::Initialise();
+
   olxstr vfn = (TBasicApp::GetBaseDir()+ "version.txt");
   olxstr tfn = (TBasicApp::GetBaseDir()+ patcher::PatchAPI::GetTagFileName());
-  olxstr OlexFN( (TBasicApp::GetBaseDir()+ "olex2.dll") );
+
   if( TEFile::Exists(OlexFN) )  {
     DWORD len = GetFileVersionInfoSize(OlexFN.u_str(), &len);
     if( len > 0 )  {
@@ -216,11 +241,31 @@ void LaunchApp::Launch()  {
   si.cb = sizeof(STARTUPINFO);
   si.wShowWindow = SW_SHOW;
   si.dwFlags = STARTF_USESHOWWINDOW;
-
+  olxch* cmdl = NULL;
+  const TStrList& args = TBasicApp::GetInstance().Arguments;
+  if( args.Count() > 1 )  {
+    olxstr s_cmdl;
+    if( Tmp.IndexOf(' ') != InvalidIndex )
+      s_cmdl << '"' << Tmp << '"';
+    else
+      s_cmdl = Tmp;
+    for( size_t i=1; i < args.Count(); i++ )  {
+      s_cmdl << ' ';
+      if( args[i].IndexOf(' ') != InvalidIndex )
+        s_cmdl << '"' << args[i] << '"';
+      else
+        s_cmdl << args[i];
+    }
+    cmdl = new olxch[s_cmdl.Length()+1];
+    memcpy(cmdl, s_cmdl.raw_str(), s_cmdl.RawLen());
+    cmdl[s_cmdl.Length()] = L'\0';
+  }
+  olxstr cwd = TEFile::CurrentDir();
+  TEFile::ChangeDir(TBasicApp::GetBaseDir());
   // Launch the child process.
   if( !CreateProcess(
         Tmp.u_str(),
-        NULL,
+        cmdl,
         NULL, NULL,   true,
         0, NULL,
         NULL,
@@ -231,4 +276,7 @@ void LaunchApp::Launch()  {
   }
   else
     launch_successful = true;
+  TEFile::ChangeDir(cwd);
+  if( cmdl != NULL )
+    delete [] cmdl;
 }

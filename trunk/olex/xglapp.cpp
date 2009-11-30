@@ -147,20 +147,19 @@ bool TGlXApp::OnInit()  {
     gl_attr = TGlCanvas::GetGlAttributes();
   MainForm->GlCanvas(new TGlCanvas(MainForm, gl_attr, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, wxT("GL_CANVAS") ) );
   // cratea an instance of the XApplication
-  olxstr BaseDir(argv[0]), Tmp;
+  olxstr BaseDir(argv[0]);
   // 2008.09.29
-  // see if the system variable OLEX2_DIR is define to override the default basedir
+  // see if the system variable OLEX2_DIR is defined to override the default basedir
   try  {
-   //asm{  int 3 }
     #if defined __APPLE__ && defined __MACH__
 //      BaseDir = TEFile::ExtractFilePath(BaseDir);
 //      BaseDir = TEFile::ParentDir(BaseDir);
 //      BaseDir << "Resources/";
     #endif
 #if defined(_WIN64) && defined(_DEBUG)
-    XApp = new TGXApp(TBasicApp::GuessBaseDir(argv[0], "OLEX2_64_DIR"));
+    XApp = new TGXApp(TBasicApp::GuessBaseDir(BaseDir, "OLEX2_64_DIR"));
 #else
-    XApp = new TGXApp(TBasicApp::GuessBaseDir(argv[0], "OLEX2_DIR"));
+    XApp = new TGXApp(TBasicApp::GuessBaseDir(BaseDir, "OLEX2_DIR"));
 #endif
   }
   catch(const TExceptionBase& e)  {
@@ -170,15 +169,13 @@ bool TGlXApp::OnInit()  {
   // write PID file
   if( XApp->IsBaseDirWriteable() )  {
     int pid = getpid();
-    pid_file = new TEFile( olxstr(XApp->GetBaseDir()) << pid << '.' << patcher::PatchAPI::GetOlex2PIDFileExt(), "w+b" );
+    pid_file = new TEFile(olxstr(XApp->GetBaseDir()) << pid << '.' << patcher::PatchAPI::GetOlex2PIDFileExt(), "w+b");
   }
-  // assemble whole command line
-  for( int i=1; i < argc; i++ )
-    Tmp << argv[i] <<  ' ';
-  TParamList::StrtokParams(Tmp, ' ', XApp->Arguments);
+  for( int i=0; i < argc; i++ )
+    XApp->Arguments.Add(argv[i]);
   for( size_t i=0; i < XApp->Arguments.Count(); i++ )  {
     if( XApp->Arguments[i].FirstIndexOf('=') != InvalidIndex )  {
-      XApp->ParamList.FromString(XApp->Arguments[i], '=');
+      XApp->Options.FromString(XApp->Arguments[i], '=');
       XApp->Arguments.Delete(i--);
     }
   }

@@ -58,8 +58,11 @@ TBasicApp::~TBasicApp()  {
 }
 //..............................................................................
 olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
-  olxstr path = olxstr(_path).Trim(' ').Trim('"').Trim('\'');
-  olxstr bd;
+  olxstr bd, path;
+  TStrList toks;
+  TParamList::StrtokParams(_path, ' ', toks);
+  if( !toks.IsEmpty() )
+    path = toks[0];
   if( !var_name.IsEmpty() )  {
     OLX_CHAR* var_val = OLX_GETENV(OLX_STR(var_name));
     if( var_val != NULL )
@@ -67,7 +70,7 @@ olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
   }
   else  {
 	  if( !TEFile::IsDir(path) )
-      bd = TEFile::ExtractFilePath( path );
+      bd = TEFile::ExtractFilePath(path);
 		else
 		  bd = path;
     if( bd.EndsWith('.') || bd.EndsWith("..") )

@@ -55,6 +55,8 @@ protected:
   bool LaunchFile(const olxstr &fileName, bool quiet, bool do_exit);
   void SetInstallationPath(const olxstr& path);
   TBasicApp bapp;
+  const static olxstr exts[];
+  const static size_t exts_sz;
 protected:
 	HICON m_hIcon;
 

@@ -106,7 +106,7 @@ int main(int argc, char** argv)  {
   TEGC::Initialise();
   try  {
     if( argc == 1 )  // no folder to update provided
-      bapp = new TBasicApp( TBasicApp::GuessBaseDir(argv[0], "OLEX2_DIR") );
+      bapp = new TBasicApp(TBasicApp::GuessBaseDir(argv[0], "OLEX2_DIR"));
     else  {
       olxstr arg(argv[1]);
 #ifdef _WIN32
@@ -114,7 +114,7 @@ int main(int argc, char** argv)  {
 #else
       if( arg == "--help" )  {
 #endif     
-        TBasicApp _bapp( TBasicApp::GuessBaseDir(argv[0]) );
+        TBasicApp _bapp(TBasicApp::GuessBaseDir(argv[0], "") );
         TLog& log = _bapp.GetLog();
         log.AddStream( new TOutStream, true);
         log << "\nUnirun, Olex2 update/install program\n";
@@ -125,21 +125,18 @@ current folder will be updated\n";
         log << "(c) Oleg V. Dolomanov 2007-2009\n\n";
         return 0;
       }
-      bapp = new TBasicApp(TBasicApp::GuessBaseDir(argv[1]) );
+      bapp = new TBasicApp(TBasicApp::GuessBaseDir(argv[1], ""));
     }
 		// parse out options
-		olxstr Tmp;
-    for( int i=1; i < argc; i++ )
-      Tmp << argv[i] <<  ' ';
-    TParamList::StrtokParams(Tmp, ' ', bapp->Arguments);
+    for( int i=0; i < argc; i++ )
+      bapp->Arguments.Add(argv[i]);
     for( size_t i=0; i < bapp->Arguments.Count(); i++ )  {
       if( bapp->Arguments[i].FirstIndexOf('=') != InvalidIndex )  {
-        bapp->ParamList.FromString(bapp->Arguments[i], '=');
-        bapp->Arguments.Delete(i);
-        i--;
+        bapp->Options.FromString(bapp->Arguments[i], '=');
+        bapp->Arguments.Delete(i--);
       }
     }
-    bapp->GetLog().AddStream( new TOutStream, true);
+    bapp->GetLog().AddStream(new TOutStream, true);
     DoRun();
   }
   catch(const TExceptionBase& exc)  {
@@ -169,8 +166,8 @@ void DoRun()  {
     updater::UpdateAPI api;
 		olxstr repo;
     TBasicApp::GetLog() << "Installation folder: "  << TBasicApp::GetBaseDir() << '\n';
-		if( TBasicApp::GetInstance().ParamList.Contains("-tag") )  {
-		  olxstr tag = TBasicApp::GetInstance().ParamList["-tag"];
+		if( TBasicApp::GetInstance().Options.Contains("-tag") )  {
+		  olxstr tag = TBasicApp::GetInstance().Options["-tag"];
 			if( tag.Equalsi("max") )  {
 			  TStrList tags;
 				api.GetAvailableTags(tags, repo);
