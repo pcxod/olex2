@@ -79,6 +79,9 @@ public:
   }
 };
 
+const olxstr CInstallerDlg::exts[] = {".ins", ".res", ".mol", ".cif", ".xyz" };
+const size_t CInstallerDlg::exts_sz = sizeof(exts)/sizeof(exts[0]);
+
 CInstallerDlg::CInstallerDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CInstallerDlg::IDD, pParent), bapp(LocateBaseDir())
 {
@@ -203,7 +206,7 @@ void CInstallerDlg::OnBnClickedBtnChoosePath()  {
   olxstr dir( TShellUtil::PickFolder("Please select installation folder",
     TShellUtil::GetSpecialFolderLocation(fiProgramFiles), EmptyString) );
   if( !dir.IsEmpty() )  {
-    olex2_install_path = dir;
+    olex2_install_path = dir << "\\Olex2";
     SetInstallationPath(dir << '-' << olex2_install_tag);
   }
 }
@@ -239,8 +242,8 @@ void CInstallerDlg::OnBnClickedCbProxy()  {
 }
 
 void CInstallerDlg::OnShowWindow(BOOL bShow, UINT nStatus)  {
-  CDialog::OnShowWindow(bShow, nStatus);
   InitRepositories();
+  CDialog::OnShowWindow(bShow, nStatus);
   SetActiveWindow();
 }
 
@@ -492,11 +495,11 @@ bool CInstallerDlg::DoInstall()  {
     InitRegistry(installPath);
     // create shortcuts
     if( check_box::is_checked(this, IDC_CB_SHORTCUT) )
-      TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiCommonStartMenu) << 
+      TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiStartMenu) << 
                                  "Olex2-" << olex2_install_tag << ".lnk",
                                  installPath + "olex2.exe", "Olex2 launcher", run_as_admin);
     if( check_box::is_checked(this, IDC_CB_DESKTOP) )
-      TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiCommonDesktop) << 
+      TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiDesktop) << 
                                  "Olex2-" << olex2_install_tag << ".lnk",
                                  installPath + "olex2.exe", "Olex2 launcher", run_as_admin);
     olex2_installed_path = installPath;
@@ -569,28 +572,13 @@ bool CInstallerDlg::InitRegistry(const olxstr &installPath)  {
   try  {
     if( (res = (reg.Create(HKEY_CLASSES_ROOT, _T("Applications\\olex2.dll\\shell\\open\\command")) == ERROR_SUCCESS)) )  {
       olxstr val('\"');
-      val << installPath << "olex2.dll" << "\" '%1'";
+      val << installPath << "olex2.exe" << "\" '%1'";
       reg.SetKeyValue(_T(""), val.u_str());
       reg.Close();
     }
-    if( res )  {
-      res = (reg.Create(HKEY_CLASSES_ROOT, _T(".ins\\OpenWithList\\olex2.dll")) == ERROR_SUCCESS);
-      reg.Close();
-    }
-    if( res )  {
-      res = (reg.Create(HKEY_CLASSES_ROOT, _T(".mol\\OpenWithList\\olex2.dll")) == ERROR_SUCCESS);
-      reg.Close();
-    }
-    if( res )  {
-      res = (reg.Create(HKEY_CLASSES_ROOT, _T(".res\\OpenWithList\\olex2.dll")) == ERROR_SUCCESS);
-      reg.Close();
-    }
-    if( res )  {
-      res = (reg.Create(HKEY_CLASSES_ROOT, _T(".cif\\OpenWithList\\olex2.dll")) == ERROR_SUCCESS);
-      reg.Close();
-    }
-    if( res )  {
-      res = (reg.Create(HKEY_CLASSES_ROOT, _T(".xyz\\OpenWithList\\olex2.dll")) == ERROR_SUCCESS);
+    for( size_t i=0; i < exts_sz; i++ )  {
+      if( !res )  break;
+      res = (reg.Create(HKEY_CLASSES_ROOT, (olxstr(exts[i]) << "\\OpenWithList\\olex2.exe").u_str()) == ERROR_SUCCESS);
       reg.Close();
     }
   }
@@ -603,12 +591,14 @@ bool CInstallerDlg::CleanRegistry()  {
   bool res = false;
   try  {
     res = (reg.Open(HKEY_CLASSES_ROOT, NULL) == ERROR_SUCCESS);
-    if( res )  res = (reg.RecurseDeleteKey(_T("Applications\\olex2.dll\\shell\\open\\command")) == ERROR_SUCCESS);
-    if( res )  res = (reg.DeleteSubKey(_T(".ins\\OpenWithList\\olex2.dll")) == ERROR_SUCCESS);
-    if( res )  res = (reg.DeleteSubKey(_T(".mol\\OpenWithList\\olex2.dll")) == ERROR_SUCCESS);
-    if( res )  res = (reg.DeleteSubKey(_T(".res\\OpenWithList\\olex2.dll")) == ERROR_SUCCESS);
-    if( res )  res = (reg.DeleteSubKey(_T(".cif\\OpenWithList\\olex2.dll")) == ERROR_SUCCESS);
-    if( res )  res = (reg.DeleteSubKey(_T(".xyz\\OpenWithList\\olex2.dll")) == ERROR_SUCCESS);
+    if( res )
+      res = (reg.RecurseDeleteKey(_T("Applications\\olex2.dll\\shell\\open\\command")) == ERROR_SUCCESS);
+    for( size_t i=0; i < exts_sz; i++ )  {
+      if( !res )  break;
+      res = (reg.DeleteSubKey((olxstr(exts[i])<< "\\OpenWithList\\olex2.exe").u_str()) == ERROR_SUCCESS);
+      // the old key, have to take care of as well...
+      reg.DeleteSubKey((olxstr(exts[i])<< "\\OpenWithList\\olex2.dll").u_str());
+    }
   }
   catch( ... )  {    }
   return res;
@@ -623,10 +613,10 @@ bool CInstallerDlg::CleanRegistryAndShortcuts(bool sc)  {
     // find and delete shortcuts
     try  {
       TStrList scs;
-      scs.Add(TShellUtil::GetSpecialFolderLocation(fiCommonStartMenu)) << "Olex2.lnk";
-      scs.Add(TShellUtil::GetSpecialFolderLocation(fiCommonStartMenu)) << "Olex2-" << olex2_tag <<".lnk";
-      scs.Add(TShellUtil::GetSpecialFolderLocation(fiCommonDesktop)) <<  "Olex2.lnk";
-      scs.Add(TShellUtil::GetSpecialFolderLocation(fiCommonDesktop)) <<  "Olex2" << olex2_tag << ".lnk";
+      scs.Add(TShellUtil::GetSpecialFolderLocation(fiStartMenu)) << "Olex2.lnk";
+      scs.Add(TShellUtil::GetSpecialFolderLocation(fiStartMenu)) << "Olex2-" << olex2_tag <<".lnk";
+      scs.Add(TShellUtil::GetSpecialFolderLocation(fiDesktop)) <<  "Olex2.lnk";
+      scs.Add(TShellUtil::GetSpecialFolderLocation(fiDesktop)) <<  "Olex2" << olex2_tag << ".lnk";
       for( size_t i = 0; i < scs.Count(); i++ )
         TEFile::DelFile(scs[i]);
     }
@@ -718,17 +708,17 @@ Please run currently installed Olex2 to apply the updates and then exit Olex2 an
       }
       rename_status |= rename_status_BaseDir;
     }
-    olxstr m_sc_fn = TShellUtil::GetSpecialFolderLocation(fiCommonStartMenu) << "Olex2-" << olex2_tag << ".lnk";
-    olxstr m_sc_fn1 = TShellUtil::GetSpecialFolderLocation(fiCommonStartMenu) << "Olex2.lnk";
+    olxstr m_sc_fn = TShellUtil::GetSpecialFolderLocation(fiStartMenu) << "Olex2-" << olex2_tag << ".lnk";
+    olxstr m_sc_fn1 = TShellUtil::GetSpecialFolderLocation(fiStartMenu) << "Olex2.lnk";
     if( TEFile::Exists(m_sc_fn) || TEFile::Exists(m_sc_fn1) )  {
-      TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiCommonStartMenu) <<
+      TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiStartMenu) <<
         "Olex2-" << dlg.GetRenameToText() << ".lnk",
         rp + "olex2.exe", "Olex2 launcher", run_as_admin);
     }
-    olxstr d_sc_fn = TShellUtil::GetSpecialFolderLocation(fiCommonDesktop) << "Olex2-" << olex2_tag << ".lnk";
-    olxstr d_sc_fn1 = TShellUtil::GetSpecialFolderLocation(fiCommonDesktop) << "Olex2.lnk";
+    olxstr d_sc_fn = TShellUtil::GetSpecialFolderLocation(fiDesktop) << "Olex2-" << olex2_tag << ".lnk";
+    olxstr d_sc_fn1 = TShellUtil::GetSpecialFolderLocation(fiDesktop) << "Olex2.lnk";
     if( TEFile::Exists(d_sc_fn) || TEFile::Exists(d_sc_fn1) )  {
-      TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiCommonDesktop) <<
+      TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiDesktop) <<
         "Olex2-" << dlg.GetRenameToText() << ".lnk",
         rp + "olex2.exe", "Olex2 launcher", run_as_admin);
     }

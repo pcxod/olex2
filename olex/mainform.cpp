@@ -1505,8 +1505,8 @@ void TMainForm::StartupInit()  {
   FHtml->LoadPage(FHtmlIndexFile.u_str());
   FHtml->SetHomePage(FHtmlIndexFile);
 
-  if( FXApp->Arguments.Count() == 1 )
-    ProcessMacro(olxstr("reap \'") << FXApp->Arguments[0] << '\'', __OlxSrcInfo);
+  if( FXApp->Arguments.Count() == 2 )
+    ProcessMacro(olxstr("reap \'") << FXApp->Arguments[1] << '\'', __OlxSrcInfo);
 }
 //..............................................................................
 void TMainForm::SetProcess( AProcess *Process )  {

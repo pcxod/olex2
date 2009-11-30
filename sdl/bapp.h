@@ -25,8 +25,8 @@ protected:
   bool MainFormVisible, Profiling, BaseDirWriteable;
   static olx_critical_section app_cs;
 public:
-  TParamList ParamList;
-  TStrObjList Arguments;
+  TParamList Options;
+  TStrList Arguments;
 
   TBasicApp(const olxstr& AppName); // the file name of the application with full path
   virtual ~TBasicApp();
