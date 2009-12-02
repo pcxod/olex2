@@ -71,7 +71,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="uafxcwd.lib sdl.lib mapi32.lib glu32.lib user32.lib opengl32.lib gdi32.lib ole32.lib advapi32.lib comdlg32.lib comctl32.lib shell32.lib rpcrt4.lib oleaut32.lib kernel32.lib Iphlpapi.lib"
+				AdditionalDependencies="uafxcwd.lib sdl.lib mapi32.lib glu32.lib user32.lib opengl32.lib gdi32.lib ole32.lib advapi32.lib comdlg32.lib comctl32.lib shell32.lib rpcrt4.lib oleaut32.lib kernel32.lib Iphlpapi.lib version.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(SolutionDir)\lib_usd"
 				IgnoreDefaultLibraryNames="uafxcwd"

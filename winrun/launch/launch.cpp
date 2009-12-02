@@ -62,7 +62,6 @@ public:
 LaunchApp::LaunchApp() : Bapp(TBasicApp::GuessBaseDir(GetCommandLine(), "")) {
   launch_successful = true;
   TParamList::StrtokParams(GetCommandLine(), ' ', Bapp.Arguments);
-  MessageBox(NULL, GetCommandLine(), _T(""), MB_OK);
 }
 
 
@@ -95,9 +94,6 @@ BOOL LaunchApp::InitInstance()  {
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Olex2 launcher"));
   TEGC::Initialise();
-
-  MessageBox(NULL, TBasicApp::GetBaseDir().u_str(), _T(""), MB_OK);
-
   olxstr OlexFN(TBasicApp::GetBaseDir()+ "olex2.dll");
   if( !TEFile::Exists(OlexFN) )  { // weird eh, but might happen if 'Open with...' is used?
     try  {

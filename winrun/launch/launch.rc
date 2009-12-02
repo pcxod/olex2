@@ -68,7 +68,7 @@ BEGIN
             VALUE "FileDescription", "Olex2 Launcher"
             VALUE "FileVersion", "1.0.0.1"
             VALUE "InternalName", "launch.exe"
-            VALUE "LegalCopyright", "(c) Oleg Dolomanov, 2009.  All rights reserved."
+            VALUE "LegalCopyright", "(c) Oleg Dolomanov, 2009."
             VALUE "OriginalFilename", "launch.exe"
             VALUE "ProductName", "Olex2 Launcher"
             VALUE "ProductVersion", "1.0.0.1"

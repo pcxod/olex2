@@ -35,7 +35,7 @@ protected:
   bool mouse_down;
   CPoint mouse_pos;
   bool run_as_admin, olex2_installed;
-  olxstr olex2_installed_path, olex2_data_dir, olex2_tag, 
+  olxstr olex2_installed_path, olex2_data_dir, 
     olex2_install_path, olex2_install_tag;
   int action;
   short rename_status;
