@@ -116,21 +116,17 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
 // Dialog
 //
 
-IDD_REINSTALL DIALOGEX 0, 0, 189, 113
+IDD_REINSTALL DIALOGEX 0, 0, 189, 90
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Olex2 re-instllation"
+CAPTION "Olex2 uninstallation"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,39,92,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,116,92,50,14
-    GROUPBOX        "Uninstall options",IDC_STATIC,6,5,176,69
-    CONTROL         "Uninstall",IDC_RG_UNINSTALL,"Button",BS_AUTORADIOBUTTON,13,18,43,10
-    CONTROL         "Rename folders and shortcuts by appending",IDC_RG_RENAME,
-                    "Button",BS_AUTORADIOBUTTON,13,42,157,10
-    CONTROL         "Remove user data",IDC_CB_REMOVE_USER_DATA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,25,28,75,10
-    EDITTEXT        IDC_TE_RENAME,25,54,89,14,ES_AUTOHSCROLL
-    CONTROL         "Install Olex2 after uninstallation",IDC_CB_REINSTALL,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,77,118,10
+    DEFPUSHBUTTON   "OK",IDOK,39,65,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,116,65,50,14
+    GROUPBOX        "Uninstall options",IDC_STATIC,6,5,176,32
+    CONTROL         "Remove user data",IDC_CB_REMOVE_USER_DATA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,19,75,10
+    CONTROL         "Reinstall Olex2 after uninstallation",IDC_CB_REINSTALL,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,50,125,10
 END
 
 IDD_LICENCE DIALOGEX 0, 0, 316, 185
@@ -223,7 +219,7 @@ BEGIN
         LEFTMARGIN, 6
         RIGHTMARGIN, 182
         TOPMARGIN, 5
-        BOTTOMMARGIN, 106
+        BOTTOMMARGIN, 83
     END
 
     IDD_LICENCE, DIALOG
