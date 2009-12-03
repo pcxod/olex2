@@ -1,7 +1,4 @@
-#ifdef __BORLANC__
-#pragma hdrstop
-#endif
-#include <windows.h>
+#include "ebase.h"
 #include <GL/gl.h>
 #include <GL/glu.h>
 
@@ -45,10 +42,11 @@ TOlexViewer::TOlexViewer(int w, int h) {
   wxFont Font(*wxNORMAL_FONT);//|wxFONTFLAG_ANTIALIASED);
 //  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   // create 4 fonts
-  TGlFont *fnt = GXApp->GetRender().GetScene().CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str());
-  fnt->Material().SetFlags(sglmAmbientF|sglmEmissionF|sglmIdentityDraw);
-  fnt->Material().AmbientF = 0x7fff7f;
-  fnt->Material().EmissionF = 0x1f2f1f;
+  TGlMaterial glm;
+  glm.SetFlags(sglmAmbientF|sglmEmissionF|sglmIdentityDraw);
+  glm.AmbientF = 0x7fff7f;
+  glm.EmissionF = 0x1f2f1f;
+  GXApp->GetRender().GetScene().CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
   
   GXApp->SetLabelsFont(0);
   
@@ -281,7 +279,7 @@ JNIEXPORT void JNICALL Java_olex2j_GlWindow_paint(JNIEnv* env, jobject this_obje
     DrawContext::Instance->ReadPixels();
   }
   if( empty )  {
-    const float* cc = TGXApp::GetInstance().GetRender().LightModel.ClearColor().Data();
+    const float* cc = TGXApp::GetInstance().GetRender().LightModel.GetClearColor().Data();
     char clrs[4] = {cc[0]*255, cc[1]*255, cc[2]*255, cc[4]*255};
     int sz = DrawContext::Instance->Height * DrawContext::Instance->Width * 4;
     for( int i = 0; i < sz; i +=4 )  {
@@ -315,8 +313,8 @@ JNIEXPORT jbyteArray JNICALL Java_olex2j_GlWindow_getStatus(JNIEnv* env, jobject
   return rv;
 }
 JNIEXPORT void JNICALL Java_olex2j_GlWindow_finalise(JNIEnv *, jobject this_object, jint o_id)  {
-  int i = TOlexViewer::Instances.IndexOfComparable(o_id);
-  if( i == -1 )  return;
+  size_t i = TOlexViewer::Instances.IndexOfComparable(o_id);
+  if( i == InvalidIndex )  return;
   delete TOlexViewer::Instances.GetObject(i);
   TOlexViewer::Instances.Remove(i);
   if( TOlexViewer::Instances.IsEmpty() )
@@ -343,7 +341,7 @@ JNIEXPORT jbyteArray JNICALL Java_olex2j_GlWindow_getObjectLabelAt(JNIEnv* env, 
 JNIEXPORT void JNICALL Java_olex2j_GlWindow_showLabels(JNIEnv* env, jobject this_object, jint o_id, jboolean show)  {
   TOlexViewer* ov = TOlexViewer::Locate(o_id);
   if( ov == NULL  || !ov->IsInitialised() )  return;
-  ov->ShowLabels(show);
+  ov->ShowLabels(show != 0);
 }
 
 BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)  {

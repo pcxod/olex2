@@ -18,7 +18,7 @@ TTXBond_EvaluatorFactory::TTXBond_EvaluatorFactory(IEvaluatorFactory *factoryReg
   TXBond_AEvaluator *tXBondAEvaluator = new TXBond_AEvaluator(this);
   DataProviders.Add("TXBond_AEvaluator", tXBondAEvaluator);
   IEvaluatorFactory *tXBondAEvaluatorFactory = FactoryRegister->Factory("TTSAtom_EvaluatorFactory");
-  for( int i=0; i < tXBondAEvaluatorFactory->EvaluatorCount(); i++ )
+  for( size_t i=0; i < tXBondAEvaluatorFactory->EvaluatorCount(); i++ )
   {
     Evaluators.Add(olxstr("A.") << tXBondAEvaluatorFactory->EvaluatorName(i), tXBondAEvaluatorFactory->Evaluator(i)->NewInstance(tXBondAEvaluator));
   }
@@ -26,7 +26,7 @@ TTXBond_EvaluatorFactory::TTXBond_EvaluatorFactory(IEvaluatorFactory *factoryReg
   TXBond_BEvaluator *tXBondBEvaluator = new TXBond_BEvaluator(this);
   DataProviders.Add("TXBond_BEvaluator", tXBondBEvaluator);
   IEvaluatorFactory *tXBondBEvaluatorFactory = FactoryRegister->Factory("TTSAtom_EvaluatorFactory");
-  for( int i=0; i < tXBondBEvaluatorFactory->EvaluatorCount(); i++ )
+  for( size_t i=0; i < tXBondBEvaluatorFactory->EvaluatorCount(); i++ )
   {
     Evaluators.Add(olxstr("B.") << tXBondBEvaluatorFactory->EvaluatorName(i), tXBondBEvaluatorFactory->Evaluator(i)->NewInstance(tXBondBEvaluator));
   }
@@ -54,7 +54,7 @@ TTXAtom_EvaluatorFactory::TTXAtom_EvaluatorFactory(IEvaluatorFactory *factoryReg
   TXAtom_AtomEvaluator *tXAtomAtomEvaluator = new TXAtom_AtomEvaluator(this);
   DataProviders.Add("TXAtomAtomEvaluator", tXAtomAtomEvaluator);
   IEvaluatorFactory *tXAtomAtomEvaluatorFactory = FactoryRegister->Factory("TTSAtom_EvaluatorFactory");
-  for( int i=0; i < tXAtomAtomEvaluatorFactory->EvaluatorCount(); i++ )
+  for( size_t i=0; i < tXAtomAtomEvaluatorFactory->EvaluatorCount(); i++ )
   {
     Evaluators.Add(olxstr("atom.") << tXAtomAtomEvaluatorFactory->EvaluatorName(i), tXAtomAtomEvaluatorFactory->Evaluator(i)->NewInstance(tXAtomAtomEvaluator));
   }
@@ -62,7 +62,7 @@ TTXAtom_EvaluatorFactory::TTXAtom_EvaluatorFactory(IEvaluatorFactory *factoryReg
   TXAtom_BaiEvaluator *tXAtomBaiEvaluator = new TXAtom_BaiEvaluator(this);
   DataProviders.Add("TXAtomBaiEvaluator", tXAtomBaiEvaluator);
   IEvaluatorFactory *tXAtomBaiEvaluatorFactory = FactoryRegister->Factory("TTBasicAtomInfoEvaluatorFactory");
-  for( int i=0; i < tXAtomBaiEvaluatorFactory->EvaluatorCount(); i++ )
+  for( size_t i=0; i < tXAtomBaiEvaluatorFactory->EvaluatorCount(); i++ )
   {
     Evaluators.Add(olxstr("bai.") << tXAtomBaiEvaluatorFactory->EvaluatorName(i), tXAtomBaiEvaluatorFactory->Evaluator(i)->NewInstance(tXAtomBaiEvaluator));
   }
@@ -75,7 +75,7 @@ TTGlGroupEvaluatorFactory::TTGlGroupEvaluatorFactory(IEvaluatorFactory *factoryR
   TSelAEvaluator *tSelAEvaluator = new TSelAEvaluator(this);
   DataProviders.Add("TSelAEvaluator", tSelAEvaluator);
   IEvaluatorFactory *tSelAEvaluatorFactory = FactoryRegister->Factory("TTXAtomEvaluatorFactory");
-  for( int i=0; i < tSelAEvaluatorFactory->EvaluatorCount(); i++ )
+  for( size_t i=0; i < tSelAEvaluatorFactory->EvaluatorCount(); i++ )
   {
     Evaluators.Add(olxstr("a.") << tSelAEvaluatorFactory->EvaluatorName(i), tSelAEvaluatorFactory->Evaluator(i)->NewInstance(tSelAEvaluator));
   }
@@ -83,7 +83,7 @@ TTGlGroupEvaluatorFactory::TTGlGroupEvaluatorFactory(IEvaluatorFactory *factoryR
   TSelBEvaluator *tSelBEvaluator = new TSelBEvaluator(this);
   DataProviders.Add("TSelBEvaluator", tSelBEvaluator);
   IEvaluatorFactory *tSelBEvaluatorFactory = FactoryRegister->Factory("TTXBond_EvaluatorFactory");
-  for( int i=0; i < tSelBEvaluatorFactory->EvaluatorCount(); i++ )
+  for( size_t i=0; i < tSelBEvaluatorFactory->EvaluatorCount(); i++ )
   {
     Evaluators.Add(olxstr("b.") << tSelBEvaluatorFactory->EvaluatorName(i), tSelBEvaluatorFactory->Evaluator(i)->NewInstance(tSelBEvaluator));
   }

@@ -1,6 +1,5 @@
 #ifndef sparesrH
 #define sparesrH
-#include "elist.h"
 #include "tptrlist.h"
 #include "estlist.h"
 #include "estrlist.h"
@@ -22,8 +21,8 @@ const short aofAdd  = 1,
 template <class IC>
   class TObjectFactory  {
   public:
-    virtual ~TObjectFactory()  {  ;  }
-    virtual IC *NewInstance(TEList *Arguments) = 0;
+    virtual ~TObjectFactory()  {}
+    virtual IC *NewInstance(TPtrList<IEObject>* Arguments) = 0;
   };
 
 class TOperatorSignature  {
@@ -37,12 +36,12 @@ public:
 
 class IDataProvider  {
 public:
-  virtual ~IDataProvider()  {  ;  }
+  virtual ~IDataProvider()  {}
 };
 
-class IEvaluable  {
+class IEvaluable : public IEObject {
 public:
-  virtual ~IEvaluable() {  }
+  virtual ~IEvaluable() {}
   virtual bool Evaluate() = 0;
 };
 
@@ -436,10 +435,10 @@ protected:
 class IEvaluatorFactory  {
 public:
   IEvaluatorFactory()  {  }
-  virtual int EvaluatorCount() = 0;
-  virtual IEvaluator *Evaluator(int index) = 0;
+  virtual size_t EvaluatorCount() = 0;
+  virtual IEvaluator *Evaluator(size_t index) = 0;
   virtual IEvaluatorFactory* Factory(const olxstr& factoryName) {  return NULL;  }
-  virtual const olxstr& EvaluatorName(int index) = 0;
+  virtual const olxstr& EvaluatorName(size_t index) = 0;
   virtual ~IEvaluatorFactory() {  ;  }
   virtual IEvaluator* Evaluator(const olxstr &Val) = 0;
 //  virtual ICollection* Collection(const olxstr &Name) = 0;
@@ -582,7 +581,7 @@ template <class OC, class IC, class AC>
   class TsaFactory: public TObjectFactory<OC>  {
   public:
     ~TsaFactory()  {  }
-    OC *NewInstance(TEList* Args)  {
+    OC *NewInstance(TPtrList<IEObject>* Args)  {
       if( Args->Count() != 1 )  return NULL;  //TODO: throw exception
       return new IC( (AC*)Args->Item(0) );
     }
@@ -592,7 +591,7 @@ template <class OC, class IC, class AC>
   class TtaFactory: public TObjectFactory<OC>  {
   public:
     ~TtaFactory()  {  }
-    OC *NewInstance(TEList* Args)  {
+    OC *NewInstance(TPtrList<IEObject>* Args)  {
       if( Args->Count() != 2 )  return NULL;  //TODO: throw exception
       return new IC( (AC*)Args->Item(0), (AC*)Args->Item(1) );
     }

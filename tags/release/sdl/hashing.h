@@ -64,7 +64,7 @@ class HashingBase : public Impl  {
 protected:
   uint32_t bf[16];
   unsigned char cbf[64];
-  CString DoDigest(const void* msg, size_t len)  {
+  olxcstr DoDigest(const void* msg, size_t len)  {
     const size_t blocks = len/64;
     for( size_t i=0; i < blocks; i++ )  {
       Tools::hs_copy( &((const unsigned char*)msg)[i*64], bf, 64);
@@ -88,7 +88,7 @@ protected:
     return Impl::formatDigest();
   }
 
-  CString DoDigest(IInputStream& stream)  {
+  olxcstr DoDigest(IInputStream& stream)  {
     unsigned char cbf[64];
     const size_t blocks = stream.GetSize()/64;
     for( size_t i=0; i < blocks; i++ )  {
@@ -115,11 +115,11 @@ protected:
   }
   HashingBase() : Impl() {}
 public:
-  static CString Digest(const CString& str)  {  return HashingBase<Impl,Tools>().DoDigest(str.raw_str(), str.RawLen());  }
-  static CString Digest(const WString& str)  {  return HashingBase<Impl,Tools>().DoDigest(str.raw_str(), str.RawLen());  }
-  static CString Digest(const char* str)     {  return HashingBase<Impl,Tools>().DoDigest(str, olxstr::o_strlen(str));  }
-  static CString Digest(const wchar_t* str)  {  return HashingBase<Impl,Tools>().DoDigest(str, olxstr::o_strlen(str)*sizeof(wchar_t));  }
-  static CString Digest(IInputStream& stream){  return HashingBase<Impl,Tools>().DoDigest(stream);  }
+  static olxcstr Digest(const olxcstr& str)  {  return HashingBase<Impl,Tools>().DoDigest(str.raw_str(), str.RawLen());  }
+  static olxcstr Digest(const olxwstr& str)  {  return HashingBase<Impl,Tools>().DoDigest(str.raw_str(), str.RawLen());  }
+  static olxcstr Digest(const char* str)     {  return HashingBase<Impl,Tools>().DoDigest(str, olxstr::o_strlen(str));  }
+  static olxcstr Digest(const wchar_t* str)  {  return HashingBase<Impl,Tools>().DoDigest(str, olxstr::o_strlen(str)*sizeof(wchar_t));  }
+  static olxcstr Digest(IInputStream& stream){  return HashingBase<Impl,Tools>().DoDigest(stream);  }
 };
 
 EndEsdlNamespace()

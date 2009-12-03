@@ -1,6 +1,5 @@
-#ifndef asymmunitH
-#define asymmunitH
-
+#ifndef __olx_xl_asymmunit_H
+#define __olx_xl_asymmunit_H
 #include "xbase.h"
 #include "atominfo.h"
 #include "ematrix.h"
@@ -28,7 +27,6 @@ class TAsymmUnit: public IXVarReferencerContainer, public IEObject  {
   TCAtomPList CAtoms;      // list of TCAtoms
   smatd_list  Matrices;  // list of matrices (excluding ones after centering)
   TEllpPList Ellipsoids;
-  TAtomsInfo *AtomsInfo;
   mat3d Cell2Cartesian,  // transformation from cell crd to cartesian
         Cartesian2Cell;  // transformation from cartesian crd to cell
   mat3d UcifToUxyz,  UxyzToUcif,
@@ -37,12 +35,11 @@ class TAsymmUnit: public IXVarReferencerContainer, public IEObject  {
   TCAtomPList Centroids;
   double MaxQPeak,
          MinQPeak;
-  short  Z,
-         Latt;
-  bool   ContainsEquivalents, 
+  unsigned short Z;
+  short Latt;
     /* this flag specifies that _OnAtomTypeChange will do nothing, however whatever called Assign
     must call _UpdateConnInfo */
-         Assigning;
+  bool Assigning;
   class TLattice*   Lattice;    // parent lattice
   TEVPointD  FAxes;    // axes with errors
   TEVPointD  FAngles;    // angles + errors
@@ -54,7 +51,6 @@ protected:
   TTypeListExt<TResidue, IEObject> Residues;
   TResidue& MainResidue;
   class RefinementModel* RefMod;
-  void InitAtomIds(); // initialises atom ids if any were added or removed
   static const olxstr IdName;
 public:
 
@@ -68,7 +64,7 @@ public:
   inline const vec3d& GetRAngles() const {  return RAngles;  }
   double CalcCellVolume() const;
   // estimates Z=Z'*sg.multiplicity according to 18.6A rule
-  double EstimateZ(int atomCount) const;
+  double EstimateZ(size_t atomCount) const;
   DefPropP(short, Z)
   DefPropP(short, Latt)
 
@@ -121,7 +117,7 @@ public:
     return v;
   }
   // copies the atoms from another AU, _UpdateConnInfo must be called after this
-  void Assign( const TAsymmUnit& C);
+  void Assign(const TAsymmUnit& C);
   void ChangeSpaceGroup(const class TSpaceGroup& sg);
   // executed from the above function, Data is the new space group
   TActionQueue* OnSGChange;
@@ -133,11 +129,13 @@ public:
   void Clear();
   //creates a new residue
   TResidue& NewResidue(const olxstr& RClass, int number, const olxstr& alias = EmptyString);
-  inline int ResidueCount()                 const {  return Residues.Count();  }
-  inline TResidue& GetResidue(int i)        const { return (i==-1) ? const_cast<TAsymmUnit*>(this)->MainResidue : Residues[i];  }
+  inline size_t ResidueCount() const {  return Residues.Count()+1;  }
+  inline TResidue& GetResidue(size_t i) const { return (i==0) ? const_cast<TAsymmUnit*>(this)->MainResidue : Residues[i-1];  }
   TResidue* NextResidue(const TResidue& r) const;
   TResidue* PrevResidue(const TResidue& r) const;
   void AssignResidues(const TAsymmUnit& au);
+  // changes the atom order as in residues
+  void ComplyToResidues();
   // if a number is provided, seraches by Number otherwise - by ClassName
   void FindResidues(const olxstr& resi, TPtrList<TResidue>& list);
   // this is called internally by the TCAtom, to sync connectivity info
@@ -151,21 +149,22 @@ public:
   //returns an atom by label; if the label is not unique, returns the first found
   TCAtom* FindCAtom(const olxstr &Label, TResidue* resi = NULL) const;
   //returns an atom by LoaderId
-  TCAtom* FindCAtomById(int id) const  {
-    return (id < 0 || id >= CAtoms.Count()) ? NULL : CAtoms[id];
+  TCAtom* FindCAtomById(size_t id) const  {
+    return (id >= CAtoms.Count()) ? NULL : CAtoms[id];
   }
-
+  // makes specified type detached or attached
+  void DetachAtomType(short type, bool detach);
   /* removes all atoms marked as deleted */
   void PackAtoms();
   inline TCAtom& GetAtom(size_t i)     const {  return *CAtoms[i];  }
-  inline int AtomCount()               const { return CAtoms.Count();};
+  inline size_t AtomCount() const { return CAtoms.Count();};
 
-  inline int MatrixCount()                const {  return Matrices.Count();  }
+  inline size_t MatrixCount() const {  return Matrices.Count();  }
   inline const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
   void ClearMatrices()                          {  Matrices.Clear();  }
   void AddMatrix(const smatd& a);
 
-  inline int EllpCount()               const {  return Ellipsoids.Count(); }
+  inline size_t EllpCount() const {  return Ellipsoids.Count(); }
   inline TEllipsoid& GetEllp(size_t i) const {  return *Ellipsoids[i]; }
   void NullEllp(size_t i);
   void ClearEllps();
@@ -185,7 +184,6 @@ public:
   /* returns molecular weight of the asymmetric unit */
   double MolWeight() const;
   size_t CountElements(const olxstr& Symbol) const;
-  TAtomsInfo* GetAtomsInfo()  const {  return AtomsInfo; }
 
   // sorts the content of the asymmetric unit or the list if provided
   void Sort(TCAtomPList* list = NULL);
@@ -194,17 +192,9 @@ public:
   // checks of no maore than one atom has this label, if more than one - returns CheckLabel
   olxstr ValidateLabel(const olxstr &Label) const;
 
-  bool DoesContainEquivalents() const  {  return ContainsEquivalents; }
-  void SetContainsEquivalents(bool v)  {  ContainsEquivalents = v; }
-
+  bool IsQPeakMinMaxInitialised() const {  return MaxQPeak != -1000;  }
   inline double GetMaxQPeak()    const {  return MaxQPeak;  }
   inline double GetMinQPeak()    const {  return MinQPeak;  }
-
-  /*this is to be called by TLattice when compaq or other procedurs, changing
-    coordinates of atoms are called. This is to handle restraints in a correct
-    way
-  */
-  void OnCAtomCrdChange( TCAtom* ca, const smatd& matr );
 
   // returns next available part istruction in atoms
   int GetNextPart() const;
@@ -215,20 +205,24 @@ public:
   
   virtual olxstr GetIdName() const {  return IdName;  }
   // note - possibly unsafe, type is not checked
-  virtual int GetReferencerId(const IXVarReferencer& vr) const {  
+  virtual size_t GetIdOf(const IXVarReferencer& vr) const {  
     if( !EsdlInstanceOf(vr, TCAtom) )
       throw TInvalidArgumentException(__OlxSourceInfo, "referencer");
     return ((TCAtom&)vr).GetId();
   }
-  // note - possibly unsafe, range is unchecked
-  virtual IXVarReferencer* GetReferencer(int id) {
-    if( id < 0 || id > CAtoms.Count() )
-      throw TInvalidArgumentException(__OlxSourceInfo, "id");
-    return CAtoms[id];
+  virtual size_t GetPersistentIdOf(const IXVarReferencer& vr) const {  
+    if( !EsdlInstanceOf(vr, TCAtom) )
+      throw TInvalidArgumentException(__OlxSourceInfo, "referencer");
+    return ((TCAtom&)vr).GetTag();
   }
-  virtual int ReferencerCount() const {  return CAtoms.Count();  }
+  // note - possibly unsafe, range is unchecked
+  virtual IXVarReferencer& GetReferencer(size_t id) const {
+    if( id >= CAtoms.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "id");
+    return *CAtoms[id];
+  }
+  virtual size_t ReferencerCount() const {  return CAtoms.Count();  }
 //
-
   void ToDataItem(TDataItem& item) const;
 #ifndef _NO_PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms);

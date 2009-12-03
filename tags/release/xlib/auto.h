@@ -42,28 +42,28 @@ public:
   TAutoDBFolder()  {  ;  }
   TAutoDBFolder(const TAutoDBFolder& dbf)  {  *this = dbf;  }
   ~TAutoDBFolder()  {
-    for( int i=0; i < Files.Count(); i++ )
+    for( size_t i=0; i < Files.Count(); i++ )
       delete Files.GetObject(i);
   }
   inline const TAutoDBFolder& operator = (const TAutoDBFolder& dbf)  {
     Files.SetCapacity( dbf.Files.Count() );
-    for( int i=0; i < dbf.Files.Count(); i++ )
+    for( size_t i=0; i < dbf.Files.Count(); i++ )
       Files.Add( dbf.Files.GetComparable(i), dbf.Files.GetObject(i) );
     return dbf;
   }
   TAutoDBFolder(IDataInputStream& in)     {  LoadFromStream(in);  }
-  inline bool Contains(const olxstr& fileName )  {  return Files.IndexOfComparable(fileName) != -1;  }
+  inline bool Contains(const olxstr& fileName )  {  return Files.IndexOfComparable(fileName) != InvalidIndex;  }
   TAutoDBIdObject& Add(const olxstr& fileName)  {
     TAutoDBIdObject* df = new TAutoDBIdObject();
     Files.Add(fileName, df );
     return *df;
   }
-  inline long Count() const  {  return Files.Count();  }
-  inline TAutoDBIdObject& GetIdObject(int ind) const {  return *Files.GetObject(ind);  }
-  inline const olxstr& GetObjectName(int ind) {  return Files.GetComparable(ind);  }
-  void AssignIds( long base )  {
-    for( int i=0; i < Files.Count(); i++ )
-      Files.GetObject(i)->SetId( base + i );
+  inline size_t Count() const {  return Files.Count();  }
+  inline TAutoDBIdObject& GetIdObject(size_t ind) const {  return *Files.GetObject(ind);  }
+  inline const olxstr& GetObjectName(size_t ind) {  return Files.GetComparable(ind);  }
+  void AssignIds(uint32_t base)  {
+    for( size_t i=0; i < Files.Count(); i++ )
+      Files.GetObject(i)->SetId((uint32_t)(base + i));
   }
   void SaveToStream( IDataOutputStream& output ) const;
   void LoadFromStream( IDataInputStream& input );
@@ -100,15 +100,15 @@ class TAutoDBNode  {
   int32_t Id;
   // runtime information
   // this is the "index"
-  TTypeList< AnAssociation2<TAutoDBNet*,int> > Parents;
+  TTypeList<AnAssociation2<TAutoDBNet*,uint32_t> > Parents;
   evecd Params; // pre-calculated parameters
   void _PreCalc();
-  inline double CalcDistance(int i)  const {  return AttachedNodes[i].GetCenter().DistanceTo(Center);  }
-  double CalcAngle(int i, int j)  const;
+  inline double CalcDistance(size_t i) const {  return AttachedNodes[i].GetCenter().DistanceTo(Center);  }
+  double CalcAngle(size_t i, size_t j) const;
 protected:
-  static int SortMetricsFunc(const TAttachedNode& a, const TAttachedNode& b );
+  static int SortMetricsFunc(const TAttachedNode& a, const TAttachedNode& b);
   static int SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d>& a,
-                            const AnAssociation2<TCAtom*, vec3d>& b );
+                            const AnAssociation2<TCAtom*, vec3d>& b);
   static vec3d SortCenter;
 public:
   TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >* atoms);
@@ -116,24 +116,24 @@ public:
 
   const olxstr& ToString() const;
 
-  void SaveToStream( IDataOutputStream& output ) const;
-  void LoadFromStream( IDataInputStream& input );
+  void SaveToStream(IDataOutputStream& output) const;
+  void LoadFromStream(IDataInputStream& input);
 
-  inline void AddParent(TAutoDBNet* net, int index) {  Parents.AddNew<TAutoDBNet*,int>(net,index);  }
-  inline int ParentCount()                    const {  return Parents.Count();  }
-  inline TAutoDBNet* GetParent(int i)         const {  return Parents[i].GetA();  }
-  inline int GetParentIndex(int i)            const {  return Parents[i].GetB();  }
+  inline void AddParent(TAutoDBNet* net, uint32_t index) {  Parents.AddNew<TAutoDBNet*,uint32_t>(net,index);  }
+  inline size_t ParentCount() const {  return Parents.Count();  }
+  inline TAutoDBNet* GetParent(size_t i) const {  return Parents[i].GetA();  }
+  inline int GetParentIndex(size_t i) const {  return Parents[i].GetB();  }
 
-  inline int NodeCount()                     const {  return AttachedNodes.Count();  }
-  inline const TAttachedNode& GetNode(int i) const {  return AttachedNodes[i];  }
+  inline size_t NodeCount() const {  return AttachedNodes.Count();  }
+  inline const TAttachedNode& GetNode(size_t i) const {  return AttachedNodes[i];  }
   inline TBasicAtomInfo& GetAtomInfo()       const {  return *BasicAtomInfo;  }
   inline TBasicAtomInfo* BAI()               const {  return BasicAtomInfo;  }
-  inline int DistanceCount()                 const {  return AttachedNodes.Count();  }
-  inline double GetDistance(int i)           const {  return Params[i];  }
-  inline double GetAngle(int i)              const {  return Params[AttachedNodes.Count()+i];  }
+  inline size_t DistanceCount() const {  return AttachedNodes.Count();  }
+  inline double GetDistance(size_t i) const {  return Params[i];  }
+  inline double GetAngle(size_t i) const {  return Params[AttachedNodes.Count()+i];  }
 
-  void DecodeAngle(int index, int& nodea, int& nodeb)  {
-    int cnt = AttachedNodes.Count(), itr = 0;
+  void DecodeAngle(size_t index, size_t& nodea, size_t& nodeb)  {
+    size_t cnt = AttachedNodes.Count(), itr = 0;
     while( index > cnt )  {
       index -= cnt;
       cnt --;
@@ -165,12 +165,12 @@ public:
   TAutoDBNetNode( TAutoDBNode* node )     {  FCenter = node;  }
   TAutoDBNetNode( IDataInputStream& input )  {  LoadFromStream(input);  }
   void AttachNode( TAutoDBNetNode* node ) {  AttachedNodes.Add(node);  }
-  inline int Count()                const {  return AttachedNodes.Count();  }
-  TAutoDBNetNode* Node(int i)       const {  return AttachedNodes[i];  }
+  inline size_t Count() const {  return AttachedNodes.Count();  }
+  TAutoDBNetNode* Node(size_t i) const {  return AttachedNodes[i];  }
   TAutoDBNode* Center()             const {  return FCenter;  }
 
   bool IsSameType(const TAutoDBNetNode& dbn, bool ExtraLevel) const;
-  bool IsMetricSimilar(const TAutoDBNetNode& nd, double& cfom, int* cindexes, bool ExtraLevel)  const;
+  bool IsMetricSimilar(const TAutoDBNetNode& nd, double& cfom, uint16_t* cindexes, bool ExtraLevel)  const;
 
   void SaveToStream( IDataOutputStream& output ) const;
   void LoadFromStream( IDataInputStream& input );
@@ -192,19 +192,19 @@ public:
   TAutoDBNetNode& NewNode(TAutoDBNode* node)          {  return Nodes.AddNew(node);  }
   inline const TAutoDBIdObject& GetReference()  const {  return *FReference;  }
   inline TAutoDBIdObject* Reference()           const {  return FReference;  }
-  inline int Count()                            const {  return Nodes.Count();  }
-  inline TAutoDBNetNode& Node(int i)                  {  return Nodes[i];  }
-  void SaveToStream( IDataOutputStream& output ) const;
-  void LoadFromStream( IDataInputStream& input );
+  inline size_t Count() const {  return Nodes.Count();  }
+  inline TAutoDBNetNode& Node(size_t i)  {  return Nodes[i];  }
+  void SaveToStream(IDataOutputStream& output) const;
+  void LoadFromStream(IDataInputStream& input);
   bool Contains(TAutoDBNode* nd )  const {
-    for( int i=0; i < Nodes.Count(); i++ )
+    for( size_t i=0; i < Nodes.Count(); i++ )
       if( Nodes[i].Center() == nd )  return true;
     return false;
   }
-  int IndexOf(TAutoDBNode* nd, int start=0 )  const {
-    for( int i=start; i < Nodes.Count(); i++ )
+  size_t IndexOf(TAutoDBNode* nd, int start=0 )  const {
+    for( size_t i=start; i < Nodes.Count(); i++ )
       if( Nodes[i].Center() == nd )  return i;
-    return -1;
+    return InvalidIndex;
   }
   static inline TAutoDBNet& GetCurrentlyLoading()  {  return *CurrentlyLoading;  }
 };
@@ -230,49 +230,40 @@ protected:
   void ProcessNodes( TAutoDBIdObject* currentFile, TNetwork& net );
   TAutoDBNet* BuildSearchNet( TNetwork& net, TSAtomPList& cas );
   //............................................................................
-  TAutoDBNode* LocateNode(int index) {
-    for( int i=0; i < Nodes.Count(); i++ )  {
+  TAutoDBNode* LocateNode(size_t index) {
+    for( size_t i=0; i < Nodes.Count(); i++ )  {
+      if( index < Nodes[i].Count() )
+        return Nodes[i][index];
       index -= Nodes[i].Count();
-      if( index < 0 )  {
-        TPtrList<TAutoDBNode>& ndl = Nodes[i];
-        int ind = ndl.Count() + index;
-        return ndl[ind];
       }
-    }
     throw TInvalidArgumentException(__OlxSourceInfo, "index");
   }
   //............................................................................
-  TAutoDBIdObject& LocateFile(int index) {
-    for( int i=0; i < Folders.Count(); i++ )  {
+  TAutoDBIdObject& LocateFile(size_t index) {
+    for( size_t i=0; i < Folders.Count(); i++ )  {
+      if( index < Folders.GetObject(i)->Count() )
+        return Folders.GetObject(i)->GetIdObject(index);
       index -= Folders.GetObject(i)->Count();
-      if( index < 0 )  {
-        TAutoDBFolder* fld = Folders.GetObject(i);
-        int ind = fld->Count() + index;
-        return fld->GetIdObject( ind );
       }
-    }
     throw TInvalidArgumentException(__OlxSourceInfo, "index");
   }
   //............................................................................
   const olxstr& LocateFileName(const TAutoDBIdObject& file) {
-    int32_t index = file.GetId();
-    for( int i=0; i < Folders.Count(); i++ )  {
+    size_t index = file.GetId();
+    for( size_t i=0; i < Folders.Count(); i++ )  {
+      if( index < Folders.GetObject(i)->Count() )
+        return Folders.GetObject(i)->GetObjectName(index);
       index -= Folders.GetObject(i)->Count();
-      if( index < 0 )  {
-        TAutoDBFolder* fld = Folders.GetObject(i);
-        int ind = fld->Count() + index;
-        return fld->GetObjectName( ind );
       }
-    }
     throw TInvalidArgumentException(__OlxSourceInfo, "index");
   }
   //............................................................................
   TAutoDBFolder& LocateFileFolder(const TAutoDBIdObject& file) {
-    int32_t index = file.GetId();
-    for( int i=0; i < Folders.Count(); i++ )  {
-      index -= Folders.GetObject(i)->Count();
-      if( index < 0 )  
+    size_t index = file.GetId();
+    for( size_t i=0; i < Folders.Count(); i++ )  {
+      if( index < Folders.GetObject(i)->Count() )  
         return *Folders.GetObject(i);
+      index -= Folders.GetObject(i)->Count();
     }
     throw TInvalidArgumentException(__OlxSourceInfo, "index");
   }
@@ -319,9 +310,8 @@ public:
   void AnalyseNode(TSAtom& sa, TStrList& report);
   inline static TAutoDB* GetInstance()     {  return Instance;  }
   inline static TAtomsInfo& GetAtomsInfo() {  return Instance->AtomsInfo;  }
-  inline TAutoDBIdObject& Reference(int i) {  return LocateFile(i);  }
-//  inline TAutoDBFolder& Folder(int i)      {  return Folders.Object(i);  }
-  inline TAutoDBNode* Node(int i)          {  return LocateNode(i);  }
+  inline TAutoDBIdObject& Reference(size_t i)  {  return LocateFile(i);  }
+  inline TAutoDBNode* Node(size_t i)  {  return LocateNode(i);  }
   DefPropP(int, BAIDelta)
   DefPropP(double, URatio)
 
@@ -348,10 +338,10 @@ public:
       double meanFom;
       static int SortByFOMFunc( const THitList<NodeClass>& a,
                                 const THitList<NodeClass>& b )  {
-        int nc = olx_min( a.hits.Count(), b.hits.Count() );
+        const size_t nc = olx_min( a.hits.Count(), b.hits.Count() );
         //nc = olx_min(1, nc);
         double foma = 0, fomb = 0;
-        for( int i=0; i < nc; i++ )  {
+        for( size_t i=0; i < nc; i++ )  {
           foma += a.hits[i].Fom;
           fomb += b.hits[i].Fom;
         }
@@ -362,7 +352,7 @@ public:
       }
       static int SortByCountFunc( const THitList<NodeClass>& a,
                                 const THitList<NodeClass>& b )  {
-        return b.hits.Count() - a.hits.Count();
+        return olx_cmp_size_t(b.hits.Count(), a.hits.Count());
       }
       THitList( TBasicAtomInfo* bai, NodeClass* node, double fom )  {
         BAI = bai;
@@ -371,13 +361,13 @@ public:
       }
       double MeanFom()  {
         if( meanFom != 0 )  return meanFom;
-        for( int i=0; i < hits.Count(); i++ )
+        for( size_t i=0; i < hits.Count(); i++ )
           meanFom += hits[i].Fom;
         return meanFom /= hits.Count();
       }
-      double MeanFomN(int cnt)  {
+      double MeanFomN(size_t cnt)  {
         double mf = 0;
-        for( int i=0; i < cnt; i++ )
+        for( size_t i=0; i < cnt; i++ )
           mf += hits[i].Fom;
         return mf /= cnt;
       }
@@ -399,14 +389,14 @@ protected:
     TTypeList< TPtrList<TAutoDBNode> >& Nodes;
     TTypeList<TGuessCount>& Guesses;
     TAutoDBNet& Network;
-    long LocateDBNodeIndex(const TPtrList<TAutoDBNode>& segment, TAutoDBNode* nd,
-      long from=-1, long to=-1);
+    size_t LocateDBNodeIndex(const TPtrList<TAutoDBNode>& segment, TAutoDBNode* nd,
+      size_t from=InvalidIndex, size_t to=InvalidIndex);
   public:
     TAnalyseNetNodeTask(TTypeList< TPtrList<TAutoDBNode> >& nodes,
                         TAutoDBNet& network, TTypeList<TGuessCount>& guesses) :
       Nodes(nodes), Network(network), Guesses(guesses)  { }
-    void Run( long index );
-    inline TAnalyseNetNodeTask* Replicate()  const  {
+    void Run(size_t index);
+    TAnalyseNetNodeTask* Replicate()  const  {
       return new TAnalyseNetNodeTask(Nodes, Network, Guesses);
     }
   };
@@ -423,10 +413,10 @@ template <class NodeType>  bool AnalyseUiso(TCAtom& ca, const TTypeList< THitLis
   TBasicAtomInfo* type = &ca.GetAtomInfo();
   if( heavier )  {
     TBasicApp::GetLog().Info( olxstr("Searching element heavier for ") << ca.GetLabel() );
-    for( int j=0; j < list.Count(); j++ )  {
+    for( size_t j=0; j < list.Count(); j++ )  {
       if( list[j].BAI->GetIndex() > type->GetIndex() )  {
         if( proposed_atoms != NULL )  {
-          if( proposed_atoms->IndexOf( list[j].BAI ) != -1 )  {
+          if( proposed_atoms->IndexOf( list[j].BAI ) != InvalidIndex )  {
             type = list[j].BAI;
             break;
           }
@@ -444,10 +434,10 @@ template <class NodeType>  bool AnalyseUiso(TCAtom& ca, const TTypeList< THitLis
   }
   else if( lighter )  {
     TBasicApp::GetLog().Info( olxstr("Searching element lighter for ") << ca.GetLabel() );
-    for( int j=0; j < list.Count(); j++ )  {
+    for( size_t j=0; j < list.Count(); j++ )  {
       if( list[j].BAI->GetIndex() < type->GetIndex() )  {
         if( proposed_atoms != NULL )  {
-          if( proposed_atoms->IndexOf( list[j].BAI ) != -1 )  {
+          if( proposed_atoms->IndexOf( list[j].BAI ) != InvalidIndex )  {
             type = list[j].BAI;
             break;
           }
@@ -463,7 +453,7 @@ template <class NodeType>  bool AnalyseUiso(TCAtom& ca, const TTypeList< THitLis
       }
     }
   }
-  for( int j=0; j < list.Count(); j++ )  {
+  for( size_t j=0; j < list.Count(); j++ )  {
     tmp << list[j].BAI->GetSymbol() << '(' <<
       olxstr::FormatFloat(3,1.0/(list[j].MeanFom()+0.001)) << ")" << list[j].hits[0].Fom;
     if( (j+1) < list.Count() )  tmp << ',';
@@ -471,7 +461,7 @@ template <class NodeType>  bool AnalyseUiso(TCAtom& ca, const TTypeList< THitLis
   if( type == NULL || *type == ca.GetAtomInfo() )  return false;
   int atc = stat.AtomTypeChanges;
   if( proposed_atoms != NULL )  {
-    if( proposed_atoms->IndexOf( type ) != -1 )  {
+    if( proposed_atoms->IndexOf( type ) != InvalidIndex )  {
       stat.AtomTypeChanges++;
       ca.Label() =  type->GetSymbol();
       ca.SetAtomInfo( *type );

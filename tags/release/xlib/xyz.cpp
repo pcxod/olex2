@@ -1,20 +1,12 @@
 //---------------------------------------------------------------------------//
-// namespace TXFiles: TXyz - basic procedures for loading XYZ files
+// TXyz - basic class for loading XYZ files
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "xyz.h"
 
 #include "catom.h"
 #include "unitcell.h"
-#include "estrlist.h"
 
-//----------------------------------------------------------------------------//
-// TMol function bodies
-//----------------------------------------------------------------------------//
 TXyz::TXyz() { 
   TAsymmUnit& au = GetAsymmUnit();
   au.Axes()[0].V() = 1;
@@ -33,21 +25,14 @@ void TXyz::Clear()  {
 }
 //..............................................................................
 void TXyz::SaveToStrings(TStrList& Strings)  {
-  olxstr Tmp, Tmp1;
-  vec3d V;
-  for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
+  for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& CA = GetAsymmUnit().GetAtom(i);
     if( CA.IsDeleted() )  continue;
-    V = CA.ccrd();
-    GetAsymmUnit().CellToCartesian(V);
-    Tmp = CA.GetAtomInfo().GetSymbol();
+    olxstr Tmp = CA.GetAtomInfo().GetSymbol();
     Tmp << ' ';
-    Tmp1 = olxstr::FormatFloat(4, V[0] );
-    Tmp <<  Tmp1.Format(10, false, ' ');
-    Tmp1 = olxstr::FormatFloat(4, V[1] );
-    Tmp << Tmp1.Format(10, false, ' ');
-    Tmp1 = olxstr::FormatFloat(4, V[2] );
-    Tmp << Tmp1.Format(10, false, ' ');
+    const vec3d& v = CA.ccrd();
+    for( int j=0; j < 3; j++ )
+      Tmp << olxstr::FormatFloat(4, v[j]).Format(10, false, ' ');
     Strings.Add(Tmp);
   }
 }
@@ -55,10 +40,7 @@ void TXyz::SaveToStrings(TStrList& Strings)  {
 void TXyz::LoadFromStrings(const TStrList& Strings)  {
   Clear();
   TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
-  olxstr Tmp;
-  vec3d StrCenter;
-  Title = "OLEX: imported from XYZ";
-
+  Title = "OLEX2: imported from XYZ";
   GetAsymmUnit().Axes()[0] = 1;
   GetAsymmUnit().Axes()[1] = 1;
   GetAsymmUnit().Axes()[1] = 1;
@@ -66,44 +48,38 @@ void TXyz::LoadFromStrings(const TStrList& Strings)  {
   GetAsymmUnit().Angles()[1] = 90;
   GetAsymmUnit().Angles()[2] = 90;
   GetAsymmUnit().InitMatrices();
-  double Ax, Ay, Az;
-  TStrList toks;
-  for( int i=0; i < Strings.Count(); i++ )  {
-    Tmp = Strings[i].UpperCase();
-    if( Tmp.IsEmpty() )  continue;
-    toks.Clear();
-    toks.Strtok(Tmp, ' ');
+  for( size_t i=0; i < Strings.Count(); i++ )  {
+    olxstr line = Strings[i];
+    if( line.IsEmpty() )  continue;
+    TStrList toks(line, ' ');
     if( toks.Count() != 4 )  continue;
-    Ax = toks[1].ToDouble();
-    Ay = toks[2].ToDouble();
-    Az = toks[3].ToDouble();
     if( AtomsInfo.IsAtom(toks[0]) )  {
       TCAtom& CA = GetAsymmUnit().NewAtom();
-      CA.ccrd()[0] = Ax;
-      CA.ccrd()[1] = Ay;
-      CA.ccrd()[2] = Az;
-      CA.SetLabel( toks[0] << (GetAsymmUnit().AtomCount()+1) );
+      CA.ccrd()[0] = toks[1].ToDouble();
+      CA.ccrd()[1] = toks[2].ToDouble();
+      CA.ccrd()[2] = toks[3].ToDouble();
+      CA.SetLabel(toks[0] << (GetAsymmUnit().AtomCount()+1));
     }
   }
 }
 
 //..............................................................................
-bool TXyz::Adopt(TXFile *XF)  {
+bool TXyz::Adopt(TXFile& XF)  {
   Clear();
-  if( XF->HasLastLoader() )  {
-    Title = XF->LastLoader()->GetTitle();
-    GetRM().SetHKLSource( XF->LastLoader()->GetRM().GetHKLSource() );
+  Title = XF.LastLoader()->GetTitle();
+  GetRM().SetHKLSource(XF.LastLoader()->GetRM().GetHKLSource());
+  TLattice& latt = XF.GetLattice();
+  for( size_t i=0; i < latt.AtomCount(); i++ )  {
+    TSAtom& sa = latt.GetAtom(i);
+    if( !sa.IsAvailable() )  continue;
+    TCAtom& a = GetAsymmUnit().NewAtom();
+    a.Label() = sa.GetLabel();
+    a.ccrd() = sa.crd();
+    a.SetAtomInfo(sa.GetAtomInfo());
   }
-  else  {
-    GetRM().SetHKLSource(EmptyString);
-    Title = "?";
-  }
-  GetAsymmUnit().Assign(XF->GetAsymmUnit());
-  GetAsymmUnit().SetZ( (short)XF->GetLattice().GetUnitCell().MatrixCount() );
+  GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
   return true;
 }
-//..............................................................................
-void TXyz::DeleteAtom(TCAtom *CA)  {  return;  }
 //..............................................................................
 
 

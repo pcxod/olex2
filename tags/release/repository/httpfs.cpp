@@ -2,13 +2,11 @@
   #pragma hdrstop
 #endif
 
-#include <errno.h>
-
 #include "httpfs.h"
-
 #include "efile.h"
 #include "bapp.h"
 #include "log.h"
+#include <errno.h>
 
 THttpFileSystem::THttpFileSystem(const TUrl& url): Url(url){
   Access = afs_ReadOnlyAccess;
@@ -40,7 +38,7 @@ void THttpFileSystem::GetAddress(struct sockaddr* Result)  {
   memset(&Address, 0, sizeof(Address));
 
   olxstr HostAdd = Url.HasProxy() ? Url.GetProxy().GetHost() : Url.GetHost();
-  Host = gethostbyname( CString(HostAdd).c_str() );  // c_str() on unicode is not thread safe!
+  Host = gethostbyname( olxcstr(HostAdd).c_str() );  // c_str() on unicode is not thread safe!
   if( Host != NULL )  {
     Address.sin_family  = AF_INET;
     Address.sin_port    = htons( (unsigned short)(Url.HasProxy() ? Url.GetProxy().GetPort() : Url.GetPort()) );
@@ -113,13 +111,12 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
 
   bool FileAttached = false;
 
-  CString Tmp = Url.GetFullHost();
+  olxcstr Tmp = Url.GetFullHost();
   Tmp << '/' << FileName;
 
-  Tmp.Replace(' ', "%20");
-  sprintf(Request, "GET %s HTTP/1.0\n\n", Tmp.c_str());
+  sprintf(Request, "GET %s HTTP/1.0\n\n", Tmp.Replace(' ', "%20").c_str());
   if( Url.HasProxy() && !Url.GetProxy().GetUser().IsEmpty() && !Url.GetProxy().GetPassword().IsEmpty() )
-    sprintf(Request, "Authorization: %s\n\n", CString(Url.GenerateHTTPAuthString()).c_str());
+    sprintf(Request, "Authorization: %s\n\n", olxcstr(Url.GenerateHTTPAuthString()).c_str());
 
   send(Socket, Request, strlen(Request), 0);
   while( ThisRead )  {
@@ -130,13 +127,13 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
       File->Write(Buffer, ThisRead);
       if( TotalRead == 0 )  {
         Tmp.SetLength(0);
-        int off = olxstr::o_strposi(Buffer, ThisRead, EndTagId, olxstr::o_strlen(EndTagId));
-        if( off != -1 )  FileAttached = true;
+        size_t off = olxstr::o_strposi(Buffer, ThisRead, EndTagId, olxstr::o_strlen(EndTagId));
+        if( off != InvalidIndex )  FileAttached = true;
         off = olxstr::o_strposi(Buffer, ThisRead, LengthId, olxstr::o_strlen(LengthId));
-        if( off != -1 )  {
+        if( off != InvalidIndex )  {
           off += strlen(LengthId)+1;
-          while( (off < ThisRead) && Buffer[off] == ' ' ) {  off++; }  // skip spaces
-          while( (off < ThisRead) && Buffer[off] >= '0' && Buffer[off] <= '9')  {
+          while( (off < (size_t)ThisRead) && Buffer[off] == ' ' ) {  off++; }  // skip spaces
+          while( (off < (size_t)ThisRead) && Buffer[off] >= '0' && Buffer[off] <= '9')  {
             Tmp << Buffer[off];
             off++;
           }
@@ -145,7 +142,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
             Progress.SetPos( 0 );
             Progress.SetAction(Source);
             Progress.SetMax( FileLength );
-            OnProgress->Enter(this, &Progress);
+            OnProgress.Enter(this, &Progress);
           }
         }
       }
@@ -153,7 +150,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
     }
     if( FileLength != -1 && FileAttached )  {
       Progress.SetPos(TotalRead > Progress.GetMax() ? Progress.GetMax() : TotalRead);
-      OnProgress->Execute(this, &Progress);
+      OnProgress.Execute(this, &Progress);
     }
   }
   if( (FileLength != -1) && (FileLength <= TotalRead) && FileAttached )  {
@@ -172,13 +169,13 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
     File1->Seek(0, SEEK_SET);
     delete File;
     Progress.SetPos(FileLength);
-    OnProgress->Exit(this, &Progress);
+    OnProgress.Exit(this, &Progress);
     delete [] Buffer;
 		return File1;
   }
   else  {
     Progress.SetPos(0);
-    OnProgress->Exit(this, &Progress);
+    OnProgress.Exit(this, &Progress);
     delete [] Buffer;
     delete File1;
     delete File;

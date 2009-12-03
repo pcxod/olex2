@@ -21,21 +21,13 @@ TSBond::TSBond(TNetwork *P) : TBasicBond<TNetwork,TSAtom>(P)  {
 //..............................................................................
 void TSBond::OnAtomSet()  {
   if( FA && FB )  {
-    if( FA->GetAtomInfo().GetMr() < FB->GetAtomInfo().GetMr() )  {
-      TSAtom *Tmp = FB;
-      FB = FA;
-      FA = Tmp;
-      return;
+    if( FA->GetAtomInfo().GetMr() < FB->GetAtomInfo().GetMr() )
+      olx_swap(FA, FB);
+    else if( FA->GetAtomInfo().GetMr() == FB->GetAtomInfo().GetMr() )  {
+      if( FA->GetLabel().Compare( FB->GetLabel() ) < 0 )
+        olx_swap(FA, FB);
     }
-    if( FA->GetAtomInfo().GetMr() == FB->GetAtomInfo().GetMr() )  {
-      if( FA->GetLabel().Compare( FB->GetLabel() ) < 0 )  {
-        TSAtom *Tmp = FB;
-        FB = FA;
-        FA = Tmp;
-        return;
       }
-    }
-  }
 }
 //..............................................................................
 void TSBond::ToDataItem(TDataItem& item) const {

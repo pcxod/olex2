@@ -1,8 +1,5 @@
-//---------------------------------------------------------------------------
-
-#ifndef emathH
-#define emathH
-
+#ifndef __olx_emath_H
+#define __olx_emath_H
 #include <math.h>
 #include "exception.h"
 // Linux stuff....
@@ -11,18 +8,31 @@
 BeginEsdlNamespace()
 //---------------------------------------------------------------------------
 // returns corresponding character for sign
-inline char CharSign(double p )  {  return (p<0) ? '-' : '+';  }
+template <typename T> inline olxch olx_sign_char(const T& p)  {  return (p<0) ? olxT('-') : olxT('+');  }
 // determines the sign of a number
-inline int Sign(double a)  {  return (a<0) ? -1 : 1;  }
+template <typename T> inline T olx_sign(const T& a)  {  return (T)((a < 0 ) ? -1 : 1);  }
 
 // solves an equation by the Newton method
 // f - function, df - first derivative, point - starting point
 extern double NewtonSolve( double (*f)(double), double (*df)(double), double point);
-  // calculates factorila of a number
-double Factorial(int a);
+// calculates factorial of a number
+template <typename arg_t> double olx_factorial(const arg_t& a)  {
+  double b=1;
+  for( arg_t i=2; i <= a; i++ )  b *= i;
+  return b;
+}
+template <typename ret_t, typename arg_t> ret_t olx_factorial_t(const arg_t& a)  {
+  arg_t b=1;
+  for( arg_t i=2; i <= a; i++ )  b *= i;
+  return b;
+}
 // rounds a floating point number
 template <typename float_t> inline long olx_round(const float_t a)  {
   long b = (long)a;  // |b| is always smaller than a
+  return ((a < 0) ? (((b-a) >= .5) ? --b : b) : (((a-b) >= .5) ? ++b : b));
+}
+template <typename int_t, typename float_t> inline int_t olx_round_t(const float_t a)  {
+  int_t b = (int_t)a;  // |b| is always smaller than a
   return ((a < 0) ? (((b-a) >= .5) ? --b : b) : (((a-b) >= .5) ? ++b : b));
 }
 // returns absolute value of a number
@@ -37,7 +47,7 @@ template <typename obj> inline void olx_swap(obj& o1, obj& o2)  {
   o2 = tmp;
 }
 // return pow2
-template <typename num> inline num sqr(num n) {  return n*n;  } 
+template <typename num> inline num olx_sqr(num n) {  return n*n;  } 
 
 template <typename A, typename B>
   inline void SetBit( const bool Set, A &V, const B Bit )  {
@@ -106,11 +116,12 @@ extern unsigned int gcd(unsigned int u, unsigned int v);
 inline double SphereVol(double r)  {  return 4.*M_PI/3.0*r*r*r;  }
 //returns radius of a sphere of volume v
 inline double SphereRad(double v)   {  return pow(v*3.0/(4.0*M_PI), 1./3.);  }
-// creates a 3D rotation matrix aroung rv vector, providin cosine of the rotation angle
-template <typename MC, typename VC>
-void CreateRotationMatrix(MC& rm, const VC& rv, double ca)  {
-  const double sa = (olx_abs(ca) > 1e-15) ? sqrt(1-ca*ca) : 0;
-  const double t = 1-ca;
+// creates a 3D rotation matrix aroung rv vector, provided cosine of the rotation angle
+
+template <typename FloatType, typename MC, typename VC>
+MC& CreateRotationMatrixEx(MC& rm, const VC& rv, FloatType ca)  {
+  const FloatType sa = (olx_abs(ca) > 1e-15) ? sqrt(1-ca*ca) : 0;
+  const FloatType t = 1-ca;
   rm[0][0] = t*rv[0]*rv[0] + ca;
   rm[0][1] = t*rv[0]*rv[1] + sa*rv[2];
   rm[0][2] = t*rv[0]*rv[2] - sa*rv[1];
@@ -122,21 +133,32 @@ void CreateRotationMatrix(MC& rm, const VC& rv, double ca)  {
   rm[2][0] = t*rv[0]*rv[2] + sa*rv[1];
   rm[2][1] = t*rv[1]*rv[2] - sa*rv[0];
   rm[2][2] = t*rv[2]*rv[2] + ca;
+  return rm;
+}
+template <typename FloatType, typename MC, typename VC>
+MC& CreateRotationMatrixEx(MC& rm, const VC& rv, FloatType ca, FloatType sa)  {
+  const FloatType t = 1-ca;
+  rm[0][0] = t*rv[0]*rv[0] + ca;
+  rm[0][1] = t*rv[0]*rv[1] + sa*rv[2];
+  rm[0][2] = t*rv[0]*rv[2] - sa*rv[1];
+
+  rm[1][0] = t*rv[0]*rv[1] - sa*rv[2];
+  rm[1][1] = t*rv[1]*rv[1] + ca;
+  rm[1][2] = t*rv[1]*rv[2] + sa*rv[0];
+
+  rm[2][0] = t*rv[0]*rv[2] + sa*rv[1];
+  rm[2][1] = t*rv[1]*rv[2] - sa*rv[0];
+  rm[2][2] = t*rv[2]*rv[2] + ca;
+  return rm;
+}
+
+template <typename MC, typename VC>
+MC& CreateRotationMatrix(MC& rm, const VC& rv, double ca)  {
+  return CreateRotationMatrixEx<double, MC, VC>(rm, rv, ca);
 }
 template <typename MC, typename VC>
-void CreateRotationMatrix(MC& rm, const VC& rv, double ca, double sa)  {
-  const double t = 1-ca;
-  rm[0][0] = t*rv[0]*rv[0] + ca;
-  rm[0][1] = t*rv[0]*rv[1] + sa*rv[2];
-  rm[0][2] = t*rv[0]*rv[2] - sa*rv[1];
-
-  rm[1][0] = t*rv[0]*rv[1] - sa*rv[2];
-  rm[1][1] = t*rv[1]*rv[1] + ca;
-  rm[1][2] = t*rv[1]*rv[2] + sa*rv[0];
-
-  rm[2][0] = t*rv[0]*rv[2] + sa*rv[1];
-  rm[2][1] = t*rv[1]*rv[2] - sa*rv[0];
-  rm[2][2] = t*rv[2]*rv[2] + ca;
+MC& CreateRotationMatrix(MC& rm, const VC& rv, double ca, double sa)  {
+  return CreateRotationMatrixEx<double, MC, VC>(rm, rv, ca, sa);
 }
 template <class MC, class VC> MC& QuaternionToMatrix(const VC& qt, MC& matr)  {
   matr[0][0] = qt[0]*qt[0] + qt[1]*qt[1] - qt[2]*qt[2] - qt[3]*qt[3];
@@ -156,13 +178,13 @@ template <class MC, class VC> MC& QuaternionToMatrix(const VC& qt, MC& matr)  {
 generates a new permutation from the original list 
 http://en.wikipedia.org/wiki/Permutation
 */
-template <class List> void GeneratePermutation(List& out, int perm)  {
-  const int cnt = out.Count();
-  int fc = (int)Factorial(cnt-1);
-  for( int i=0; i < cnt-1; i++ )  {
-    int ti = (perm/fc) % (cnt - i);
-    int tv = out[i+ti];
-    for( int j = i+ti; j > i; j-- )
+template <class List> void GeneratePermutation(List& out, size_t perm)  {
+  const size_t cnt = out.Count();
+  size_t fc = olx_factorial_t<size_t, size_t>(cnt-1);
+  for( size_t i=0; i < cnt-1; i++ )  {
+    size_t ti = (perm/fc) % (cnt - i);
+    size_t tv = out[i+ti];
+    for( size_t j = i+ti; j > i; j-- )
       out[j] = out[j-1];
     out[i] = tv;
     fc /= (cnt-i-1);
@@ -170,7 +192,7 @@ template <class List> void GeneratePermutation(List& out, int perm)  {
 }
 
 static void SinCos(const double ang, double *sina, double *cosa)  {
-#ifdef __WIN32__
+#if defined(__WIN32__) && !defined(_WIN64)
   _asm  {
     FLD  ang
     FSINCOS

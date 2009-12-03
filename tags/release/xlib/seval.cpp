@@ -6,7 +6,7 @@
 
 /* automaticaly generated code  */
 TSFactoryRegister::~TSFactoryRegister()  {
-  for( int i=0; i < Factories.Count(); i++ )
+  for( size_t i=0; i < Factories.Count(); i++ )
     delete Factories.GetObject(i);
 }
 IEvaluator *TSFactoryRegister::Evaluator(const olxstr& name)  {

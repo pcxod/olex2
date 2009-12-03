@@ -1,9 +1,6 @@
-//---------------------------------------------------------------------------
-#ifndef eprocessH
-#define eprocessH
-//---------------------------------------------------------------------------
+#ifndef __olx_process_H
+#define __olx_process_H
 #include "actions.h"
-#include "eobjects.h"
 #include "evtypes.h"
 #include "emath.h"
 
@@ -12,7 +9,6 @@
 #endif
 
 #ifdef __WIN32__
-  #include <windows.h>
   #include <winuser.h>
 #endif
 

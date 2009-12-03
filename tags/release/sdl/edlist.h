@@ -152,11 +152,11 @@ template <typename T>
     return entry;
   }
 
-  inline int GetLength()  const {  return Length;  }
+  inline size_t GetLength() const {  return Length;  }
 
   inline bool IsEmpty()    const {  return (Length == 0);  }
 
-  T& Get( size_t index )  {
+  T& Get(size_t index)  {
 #ifdef _OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, index, 0, Length+1);
 #endif
@@ -237,7 +237,7 @@ template <typename T>
     ToString(s);
     return s;
   }
-  void ToString(CString& cstr) const {
+  void ToString(olxcstr& cstr) const {
     cstr.SetCapacity( cstr.Length() + Length);
     TDirectionalListEntry<T>* en = Head;
     if( en == NULL )  return;
@@ -246,7 +246,7 @@ template <typename T>
       en = en->GetNext();
     }
   }
-  void ToString(WString& wstr) const {
+  void ToString(olxwstr& wstr) const {
     wstr.SetCapacity( wstr.Length() + Length);
     TDirectionalListEntry<T>* en = Head;
     if( en == NULL )  return;

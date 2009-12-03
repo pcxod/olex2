@@ -1,10 +1,10 @@
 #include "ap.h"
 using namespace ap;
 
-const bool operator==(const complex& lhs, const complex& rhs)
+bool operator==(const complex& lhs, const complex& rhs)
 { return lhs.x==rhs.x && lhs.y==rhs.y; }
 
-const bool operator!=(const complex& lhs, const complex& rhs)
+bool operator!=(const complex& lhs, const complex& rhs)
 { return lhs.x!=rhs.x || lhs.y!=rhs.y; }
 
 const complex operator+(const complex& lhs)
@@ -87,7 +87,7 @@ const complex operator/(const double& lhs, const complex& rhs)
 const complex operator/(const complex& lhs, const double& rhs)
 { return complex(lhs.x/rhs, lhs.y/rhs); }
 
-const double abscomplex(const complex &z)
+double abscomplex(const complex &z)
 {
     double w;
     double xabs;

@@ -1,7 +1,9 @@
 #ifndef __olx_console_interface_H
 #define __olx_console_interface_H
+
+#include "estack.h"
+
 #ifdef __WIN32__ 
-#include <windows.h>
 const int 
   fgcReset  = 0,
   fgcRed   = FOREGROUND_RED,
@@ -27,7 +29,6 @@ const int
   bgcIntensity = 1;
 #endif
 
-#include "estack.h"
 /*
 class IConsoleInterface  {
 public:
@@ -42,8 +43,8 @@ class ConsoleInterface  { // : public IConsoleInterface {
   TStack<CONSOLE_SCREEN_BUFFER_INFO> TextAttrib;
 public:
   ConsoleInterface()  {
-    conin = CreateFile(olx_T("CONIN$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
-    conout  = CreateFile(olx_T("CONOUT$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    conin = CreateFile(olxT("CONIN$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
+    conout  = CreateFile(olxT("CONOUT$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     CONSOLE_SCREEN_BUFFER_INFO pi;
     GetConsoleScreenBufferInfo(conout, &pi); 
     TextAttrib.Push(pi);

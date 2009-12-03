@@ -11,7 +11,6 @@ TMacroError::TMacroError()  {
   DeleteObject = false;
   ProcessError = 0;
   RetValue = NULL;
-  Stack = NULL;
 }
 //..............................................................................
 void TMacroError::operator = (const TMacroError& ME)  {
@@ -34,7 +33,7 @@ void TMacroError::NonexitingMacroError(const olxstr& macroName)  {
   ProcessError |= peNonexistingFunction;
 }
 //..............................................................................
-void TMacroError::WrongArgCount(const ABasicFunction& func, unsigned int ArgC)  {
+void TMacroError::WrongArgCount(const ABasicFunction& func, size_t ArgC)  {
   ErrorInfo = "Macro/function '";
   ErrorInfo << func.GetSignature() << "' is provided with " << (int)ArgC << " arguments";
   ProcessError |= peInvalidArgCount;

@@ -20,7 +20,7 @@ class MD5Impl  {
 protected:
   MD5Impl();
   void digest64(const uint32_t* msg);
-  CString formatDigest(); 
+  olxcstr formatDigest(); 
 };
 
 typedef HashingBase<MD5Impl, HashingUtilsLE> MD5;

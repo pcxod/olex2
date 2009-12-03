@@ -11,13 +11,9 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "efile.h"
-#ifdef __WIN32__
-#include <windows.h>
-#endif
 #include "filetree.h"
 
 #ifdef __WIN32__
-
   #include <malloc.h>
   #include <io.h>
   #include <direct.h>
@@ -62,7 +58,6 @@
     #define UTIMBUF utimbuf
   #endif
   //this is only for UNC file names under windows
-  #include <windows.h>
   #include <mapiutil.h>
 
   #define OLX_PATH_DEL '\\'
@@ -75,7 +70,7 @@
   #include <dirent.h>
   #include <utime.h>
 
-  #define OLXSTR(A) CString(A).c_str()  //have to make it thread safe
+  #define OLXSTR(A) olxcstr(A).c_str()  //have to make it thread safe
 
   #define makedir(a) mkdir((a), 0755)
   #define UTIME utime
@@ -123,33 +118,33 @@ void TEFile::TFileNameMask::Build(const olxstr& msk )  {
 bool TEFile::TFileNameMask::DoesMatch(const olxstr& _str) const {
   if( mask.IsEmpty() && !_str.IsEmpty() )  return false;
   // this will work for '*' mask
-  if( toks.Count() == 0 )  return true;
+  if( toks.IsEmpty() )  return true;
   // need to check if the mask starts from a '*' or ends with it
   olxstr str = olxstr::LowerCase(_str);
-  int off = 0, start = 0, end = str.Length();
+  size_t off = 0, start = 0, end = str.Length();
   if( mask[0] != '*' )  {
     const olxstr& tmp = toks[0];
     if( tmp.Length() > str.Length() )  return false;
-    for( int i=0; i < tmp.Length(); i++ )
+    for( size_t i=0; i < tmp.Length(); i++ )
      if( tmp[i] != '?' && tmp[i] != str[i] )  return false;
     start = tmp.Length();
     if( toks.Count() == 1 )  
       return tmp.Length() == str.Length() ? true : mask[ mask.Length()-1] == '*';
   }
-  if( mask[ mask.Length()-1] != '*' && toks.Count() > (mask[0]!='*' ? 1 : 0) )  {
+  if( mask.Last() != '*' && toks.Count() > (size_t)(mask.CharAt(0) != '*' ? 1 : 0) )  {
     olxstr& tmp = toks[toks.Count()-1];
     if( tmp.Length() > (str.Length()-start) )  return false;
-    for( int i=0; i < tmp.Length(); i++ )
+    for( size_t i=0; i < tmp.Length(); i++ )
      if( !(tmp[i] == '?' || tmp[i] == str[str.Length()-tmp.Length() + i]) )  return false;
     end = str.Length() - tmp.Length();
 
     if( toks.Count() == 1 )  return true;
   }
 
-  for( int i=toksStart; i < toksEnd; i++ )  {
+  for( size_t i=toksStart; i < toksEnd; i++ )  {
     olxstr& tmp = toks[i];
     bool found = false;
-    for( int j=start; j < end; j++ )  {
+    for( size_t j=start; j < end; j++ )  {
       if( (str.Length() - j) < tmp.Length() )  return false;
       if( tmp[off] == '?' || str[j] == tmp[off] )  {
         while( tmp[off] == '?' || tmp[off] == str[j+off] )  {
@@ -247,14 +242,14 @@ void TEFile::CheckHandle() const  {
 void TEFile::Read(void *Bf, size_t count)  {
   CheckHandle();
   if( count == 0 )  return;
-  int res = fread(Bf, count, 1, FHandle);
+  size_t res = fread(Bf, count, 1, FHandle);
   if( res != 1 )
     throw TFileExceptionBase(__OlxSourceInfo, FName, "fread failed" );
 }
 //..............................................................................
 void TEFile::SetPosition(size_t p)  {
   CheckHandle();
-  if( fseek(FHandle, p, SEEK_SET) != 0 )  
+  if( fseek(FHandle, (long)p, SEEK_SET) != 0 )  
     throw TFileExceptionBase(__OlxSourceInfo, FName, "fseek failed" );
 }
 //..............................................................................
@@ -274,7 +269,7 @@ long TEFile::Length() const  {
   long length = ftell( FHandle );
   if( length == -1 )
     throw TFileExceptionBase(__OlxSourceInfo, FName, "ftell failed" );
-  fseek( FHandle, currentPos, SEEK_SET);
+  fseek(FHandle, (long)currentPos, SEEK_SET);
   return length;
 }
 //..............................................................................
@@ -326,11 +321,16 @@ bool TEFile::Access(const olxstr& F, const short Flags)  {
   return (access(OLXSTR(OLX_OS_PATH(F)), Flags) != -1);
 }
 //..............................................................................
+bool TEFile::Chmod(const olxstr& F, const short Flags)  {
+  return (chmod(OLXSTR(OLX_OS_PATH(F)), Flags) != -1);
+}
+//..............................................................................
 olxstr TEFile::ExtractFilePath(const olxstr &F)  {
   olxstr fn = OLX_OS_PATH(F);
-  if( TEFile::IsAbsolutePath( F ) )  {
-    int i = fn.LastIndexOf( OLX_PATH_DEL );
-    if( i > 0 ) return fn.SubStringTo(i+1);
+  if( TEFile::IsAbsolutePath(fn) )  {
+    size_t i = fn.LastIndexOf( OLX_PATH_DEL );
+    if( i > 0 && i != InvalidIndex )
+      return fn.SubStringTo(i+1);
     return EmptyString;
   }
   return EmptyString;
@@ -340,18 +340,21 @@ olxstr TEFile::ParentDir(const olxstr& name) {
   if( name.IsEmpty() )  return name;
   // normalise path
   olxstr np = OLX_OS_PATH(name);
-  int start = (np.Last() == OLX_PATH_DEL ? np.Length()-2 : np.Length()-1);
-  int i = np.LastIndexOf(OLX_PATH_DEL, start);
-  if( i > 0 ) return np.SubStringTo(i+1);
+  size_t start = (np.Last() == OLX_PATH_DEL ? np.Length()-2 : np.Length()-1);
+  size_t i = np.LastIndexOf(OLX_PATH_DEL, start);
+  if( i > 0 && i != InvalidIndex )
+    return np.SubStringTo(i+1);
   return EmptyString;
 }
 //..............................................................................
 olxstr TEFile::ExtractFileExt(const olxstr& F)  {
-  if( F.IsEmpty() || IsDir(F) )  return EmptyString;
+  //if( F.IsEmpty() || IsDir(F) )  return EmptyString;
+  if( F.IsEmpty() )  return EmptyString;
   olxstr fn = OLX_OS_PATH(F);
-  int i = fn.LastIndexOf('.');
-  if( i > 0 )  {
-    if( fn.LastIndexOf(OLX_PATH_DEL) > i )
+  size_t i = fn.LastIndexOf('.');
+  if( i > 0 && i != InvalidIndex )  {
+    size_t del_ind = fn.LastIndexOf(OLX_PATH_DEL); 
+    if( del_ind != InvalidIndex && del_ind > i )
       return EmptyString;
     return fn.SubStringFrom(i+1);
   }
@@ -361,8 +364,9 @@ olxstr TEFile::ExtractFileExt(const olxstr& F)  {
 olxstr TEFile::ExtractFileName(const olxstr& F)  {
   if( F.IsEmpty() || IsDir(F) )  return EmptyString;
   olxstr fn = OLX_OS_PATH(F);
-  int i=fn.LastIndexOf(OLX_PATH_DEL);
-  if( i > 0 )  return fn.SubStringFrom(i+1);
+  size_t i = fn.LastIndexOf(OLX_PATH_DEL);
+  if( i > 0 && i != InvalidIndex )
+    return fn.SubStringFrom(i+1);
   return F;
 }
 //..............................................................................
@@ -377,12 +381,13 @@ olxstr TEFile::ExtractFileDrive(const olxstr& F)  {
 }
 //..............................................................................
 olxstr TEFile::ChangeFileExt(const olxstr &F, const olxstr &Ext)  {
-  if( F.IsEmpty() || IsDir(F) )  return EmptyString;
+  //if( F.IsEmpty() || IsDir(F) )  return EmptyString;
+  if( F.IsEmpty() )  return EmptyString;
   olxstr fn = OLX_OS_PATH(F);
-  int i = fn.LastIndexOf('.');
-  if( i > 0 && fn.LastIndexOf(OLX_PATH_DEL) < i )  {
+  size_t i = fn.LastIndexOf('.');
+  size_t d_i = fn.LastIndexOf(OLX_PATH_DEL);
+  if( i != InvalidIndex && i > 0 && (d_i == InvalidIndex || d_i < i) )
     fn.SetLength(i);
-  }
   else  {
     if( fn.Last() == '.' )
       fn.SetLength(fn.Length()-1);
@@ -449,7 +454,7 @@ bool TEFile::IsEmptyDir(const olxstr& F)  {
 bool TEFile::DoesMatchMasks(const olxstr& _fn, const MaskList& masks)  {
   olxstr ext = TEFile::ExtractFileExt( _fn );
   olxstr fn = _fn.SubStringTo(_fn.Length() - ext.Length() - (ext.IsEmpty() ? 0 : 1));
-  for( int i=0; i < masks.Count(); i++ )
+  for( size_t i=0; i < masks.Count(); i++ )
     if( masks[i].ExtMask.DoesMatch(ext) && masks[i].NameMask.DoesMatch(fn) )
       return true;
   return false;
@@ -457,7 +462,7 @@ bool TEFile::DoesMatchMasks(const olxstr& _fn, const MaskList& masks)  {
 //..............................................................................
 void TEFile::BuildMaskList(const olxstr& mask, MaskList& masks)  {
   TStrList ml(mask, ';');
-  for( int i=0; i < ml.Count(); i++ )
+  for( size_t i=0; i < ml.Count(); i++ )
     masks.AddNew(ml[i]);
 }
 //..............................................................................
@@ -553,7 +558,7 @@ bool TEFile::ListCurrentDir(TStrList& Out, const olxstr &Mask, const uint16_t sF
 #else
 //..............................................................................
 bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const uint16_t sF)  {
-  DIR *d = opendir( CString(TEFile::CurrentDir()).c_str() );
+  DIR *d = opendir( olxcstr(TEFile::CurrentDir()).c_str() );
   if( d == NULL ) return false;
   MaskList masks;
   BuildMaskList(Mask, masks);
@@ -604,7 +609,7 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const uint16_t
 }
 //..............................................................................
 bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask, const uint16_t sF)  {
-  DIR *d = opendir( CString(TEFile::CurrentDir()).c_str() );
+  DIR *d = opendir( olxcstr(TEFile::CurrentDir()).c_str() );
   if( d == NULL ) return false;
   MaskList masks;
   BuildMaskList(Mask, masks);
@@ -665,10 +670,9 @@ bool TEFile::SetFileTimes(const olxstr& fileName, uint64_t AccTime, uint64_t Mod
   struct UTIMBUF tb;
   tb.actime = AccTime;
   tb.modtime = ModTime;
-  return UTIME(OLXSTR(fileName), &tb) == 0 ? true : false;
+  return UTIME(OLXSTR(OLX_OS_PATH(fileName)), &tb) == 0;
 }
 //..............................................................................
-// thanx to Luc - I have completely forgotten about stat!
 time_t TEFile::FileAge(const olxstr& fileName)  {
   struct STAT_STR the_stat;
   if( STAT(OLXSTR(OLX_OS_PATH(fileName)), &the_stat) != 0 )
@@ -713,7 +717,7 @@ bool TEFile::ChangeDir(const olxstr& To)  {
 #ifdef __WIN32__
   return SetCurrentDirectory(path.u_str()) != 0;
 #else
-  return ( chdir(CString(path).c_str()) == -1 ) ?  false : true;
+  return chdir(olxcstr(path).c_str()) != -1;
 #endif
 }
 //..............................................................................
@@ -732,14 +736,21 @@ olxstr TEFile::CurrentDir()  {
 }
 //..............................................................................
 bool TEFile::MakeDirs(const olxstr& Name)  {
-  TStrList toks(OLX_OS_PATH(Name), OLX_PATH_DEL);
+  const olxstr dn = OLX_OS_PATH(Name);
+  if( Exists(dn) )  return true;
+  TStrList toks(dn, OLX_PATH_DEL);
   olxstr toCreate;
   toCreate.SetCapacity( Name.Length() + 5 );
   if( Name.StartsFrom('/') ) // !!!! linux
     toCreate << '/';
-  else if( Name.StartsFrom("\\\\") ) // server name
+  else if( Name.StartsFrom("\\\\") ) {  // server name
     toCreate << "\\\\";
-  for( int i=0; i < toks.Count(); i++ )  {
+    if( !toks.IsEmpty() )  {  // put the server name back
+      toCreate << toks[0] << OLX_PATH_DEL;
+      toks.Delete(0);
+    }
+  }
+  for( size_t i=0; i < toks.Count(); i++ )  {
     toCreate << toks[i] << OLX_PATH_DEL;
     if( !Exists( toCreate ) )
       if( !MakeDir( toCreate ) )
@@ -761,25 +772,19 @@ olxstr& TEFile::OSPathI(olxstr &F)  {
 }
 //..............................................................................
 olxstr TEFile::WinPath(const olxstr &F)  {
-  olxstr T(F);
-  T.Replace('/', '\\');
-  return T;
+  return olxstr(F).Replace('/', '\\');
 }
 //..............................................................................
 olxstr TEFile::UnixPath(const olxstr& F) {
-  olxstr T(F);
-  T.Replace('\\', '/');
-  return T;
+  return olxstr(F).Replace('\\', '/');
 }
 //..............................................................................
 olxstr& TEFile::WinPathI( olxstr& F )  {
-  F.Replace('/', '\\');
-  return F;
+  return F.Replace('/', '\\');
 }
 //..............................................................................
 olxstr& TEFile::UnixPathI( olxstr& F )  {
-  F.Replace('\\', '/');
-  return F;
+  return F.Replace('\\', '/');
 }
 //..............................................................................
 olxstr TEFile::AddTrailingBackslash( const olxstr& Path )  {
@@ -822,6 +827,31 @@ bool TEFile::IsAbsolutePath(const olxstr& Path)  {
 #else
   return (Path[0] == '/') ? true : false;
 #endif
+}
+//..............................................................................
+bool TEFile::IsSameFolder(const olxstr& _f1, const olxstr& _f2)  {
+  olxstr f1 = AddTrailingBackslash(_f1);
+  olxstr f2 = AddTrailingBackslash(_f2);
+  bool e1 = Exists(f1),
+       e2 = Exists(f2);
+  // if one or both of the folders does not exist - we cannot test their equality...
+  if( e1 != e2 || !e1 )  return false;
+  if( f1 == f2 )  return true;
+  static olxstr dn("_OLX_TEST_SAME_DIR.TMP");
+  f1 << dn;
+  f2 << dn;
+  if( makedir(OLXSTR(f1)) != -1 )  {
+    bool res = TEFile::Exists(f2);
+    rmdir(OLXSTR(f1));
+    return res;
+  }
+  return false;
+}
+//..............................................................................
+bool TEFile::IsSubFolder(const olxstr& _f1, const olxstr& _f2)  {
+  olxstr f1 = OLX_OS_PATH(_f1);
+  olxstr f2 = OLX_OS_PATH(_f2);
+  return f2.IsSubStringAt(f2, 0);
 }
 //..............................................................................
 olxstr TEFile::UNCFileName(const olxstr &LocalFN)  {
@@ -872,18 +902,30 @@ bool TEFile::Rename(const olxstr& from, const olxstr& to, bool overwrite)  {
   return rename( OLXSTR(from), OLXSTR(to) ) != -1;
 }
 //..............................................................................
-void TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite )  {
-  if( Exists(To) && !overwrite )  return;
+bool TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite)  {
+  if( Exists(To) && !overwrite )  return false;
   // need to check that the files are not the same though...
-  TEFile in( From, "rb" );
-  TEFile out( To, "w+b" );
+  try  {
+    struct STAT_STR the_stat;
+    olxstr from = OLX_OS_PATH(From);
+    olxstr to = OLX_OS_PATH(To);
+    if( STAT(OLXSTR(from), &the_stat) != 0 )
+      return false;
+    TEFile in(from, "rb");
+    TEFile out(to, "w+b");
   out << in;
+    out.Close();
+    chmod(OLXSTR(to), the_stat.st_mode);
+    SetFileTimes(to, the_stat.st_atime, the_stat.st_mtime);
+    return true;
+  }
+  catch(...)  {  return false;  }
 }
 //..............................................................................
 olxstr TEFile::AbsolutePathTo(const olxstr &Path, const olxstr &relPath ) {
   TStrList dirToks(OLX_OS_PATH( Path ), OLX_PATH_DEL),
               relPathToks(OLX_OS_PATH( relPath ), OLX_PATH_DEL);
-  for( int i=0; i < relPathToks.Count(); i++ )  {
+  for( size_t i=0; i < relPathToks.Count(); i++ )  {
     if( relPathToks[i] == ".." )
       dirToks.Delete( dirToks.Count()-1 );
     else if( relPathToks[i] == "." )
@@ -912,7 +954,7 @@ olxstr TEFile::Which(const olxstr& filename)  {
   char* path = getenv("PATH");
   if( path == NULL )  return EmptyString;
   TStrList toks(path, OLX_ENVI_PATH_DEL);
-  for( int i=0; i < toks.Count(); i++ )  {
+  for( size_t i=0; i < toks.Count(); i++ )  {
     TEFile::AddTrailingBackslashI(toks[i]) << filename;
     if( Exists(toks[i]) )
       return toks[i];
@@ -927,75 +969,75 @@ olxstr TEFile::Which(const olxstr& filename)  {
 ////////////////////////////////////////////////////////////////////////////////
 
 void FileExists(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::Exists( Params[0] ) );
+  E.SetRetVal(TEFile::Exists(Params[0]));
 }
 
 void FileName(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ExtractFileName( Params[0] ) );
+  E.SetRetVal(TEFile::ExtractFileName(Params[0]));
 }
 
 void FilePath(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ExtractFilePath( Params[0] ) );
+  E.SetRetVal(TEFile::ExtractFilePath(Params[0]));
 }
 
 void FileDrive(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ExtractFileDrive( Params[0] ) );
+  E.SetRetVal(TEFile::ExtractFileDrive(Params[0]));
 }
 
 void FileExt(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ExtractFileExt( Params[0] ) );
+  E.SetRetVal(TEFile::ExtractFileExt(Params[0]));
 }
 
 void ChangeFileExt(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ChangeFileExt( Params[0], Params[1] ) );
+  E.SetRetVal(TEFile::ChangeFileExt(Params[0], Params[1]));
 }
 
 void Copy(const TStrObjList& Params, TMacroError& E)  {
-  TEFile::Copy( Params[0], Params[1] );
-  E.SetRetVal( Params[1] );
+  TEFile::Copy(Params[0], Params[1]);
+  E.SetRetVal(Params[1]);
 }
 
 void Rename(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::Rename( Params[0], Params[1] ) );
+  E.SetRetVal(TEFile::Rename(Params[0], Params[1]));
 }
 
 void Delete(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::DelFile(Params[0]) );
+  E.SetRetVal(TEFile::DelFile(Params[0]));
 }
 
 void CurDir(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::CurrentDir() );
+  E.SetRetVal(TEFile::CurrentDir());
 }
 
 void ChDir(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ChangeDir(Params[0]) );
+  E.SetRetVal(TEFile::ChangeDir(Params[0]));
 }
 
 void MkDir(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::MakeDir(Params[0]) );
+  E.SetRetVal(TEFile::MakeDir(Params[0]));
 }
 
 void OSPath(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::OSPath(Params[0]) );
+  E.SetRetVal(TEFile::OSPath(Params[0]));
 }
 
 void Which(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::Which(Params[0]) );
+  E.SetRetVal(TEFile::Which(Params[0]));
 }
 
 void Age(const TStrObjList& Params, TMacroError& E)  {
   TEFile::CheckFileExists(__OlxSourceInfo, Params[0]);
-  time_t v = TEFile::FileAge( Params[0] );
+  time_t v = TEFile::FileAge(Params[0]);
   if( Params.Count() == 1 )
-    E.SetRetVal( TETime::FormatDateTime(v) );
+    E.SetRetVal(TETime::FormatDateTime(v));
   else
-    E.SetRetVal( TETime::FormatDateTime(Params[1], v) );
+    E.SetRetVal(TETime::FormatDateTime(Params[1], v));
 }
 
 void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
   TEFile::CheckFileExists(__OlxSourceInfo, Params[0]);
   olxstr cd( TEFile::CurrentDir() );
-  olxstr dn( Params[0] );
+  olxstr dn(Params[0]);
   TEFile::AddTrailingBackslashI(dn);
   TEFile::ChangeDir( Params[0] );
   short attrib = sefFile;
@@ -1007,14 +1049,14 @@ void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
   }
   TStrList output;
   olxstr tmp;
-  TEFile::ListCurrentDir( output, Params[1], attrib );
-  TEFile::ChangeDir( cd );
+  TEFile::ListCurrentDir(output, Params[1], attrib);
+  TEFile::ChangeDir(cd);
 #ifdef __BORLANDC__
   output.QuickSort< TStringWrapperComparator<TSingleStringWrapper<olxstr>,true> >();
 #else  // borland dies here...
   output.QSort(false);
 #endif
-  for(int i=0; i < output.Count(); i++ )  {
+  for( size_t i=0; i < output.Count(); i++ )  {
    tmp = EmptyString;
     tmp <<  "<-" << dn << output[i];
     output[i] << tmp;

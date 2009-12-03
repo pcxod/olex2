@@ -29,15 +29,15 @@ bool NormalisevectorView(vec3d& v ) {
 void ElimateSGFromList(TPtrList<TSpaceGroup>& sglist, smatd& symm, vec3d_list& trans, bool present)  {
   smatd_list sgm;
   vec3d diff, nm;
-  for( int i=0; i < sglist.Count(); i++ )  {
+  for( size_t i=0; i < sglist.Count(); i++ )  {
     bool found = false;
     sgm.Clear();
     sglist[i]->GetMatrices(sgm, mattAll);
-    for( int j=0; j < sgm.Count(); j++ )  {
+    for( size_t j=0; j < sgm.Count(); j++ )  {
       smatd& m = sgm[j];
       if( m.r == symm.r )  {
         if( trans.Count() == 0 )  {  found = true;  break;  }
-        for( int k=0; k < trans.Count(); k++ )  {
+        for( size_t k=0; k < trans.Count(); k++ )  {
           for( int l=0; l < 3; l++ )  {
             if( trans[k][l] > 0.51 )  trans[k][l] = 1.0 - trans[k][l];
             while( m.t[l] < 0 )  m.t[l] += 1;
@@ -81,9 +81,9 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
   TTypeList<TBravaisLatticeRef> bravtypes;
   sglist.SetCapacity( TSymmLib::GetInstance()->SGCount() );
   TSymmLib::GetInstance()->FindBravaisLattices(au, bravtypes);
-  for( int i=0; i < TSymmLib::GetInstance()->SGCount(); i++ )  {
+  for( size_t i=0; i < TSymmLib::GetInstance()->SGCount(); i++ )  {
     bool found = false;
-    for( int j=0; j < bravtypes.Count(); j++ )  {
+    for( size_t j=0; j < bravtypes.Count(); j++ )  {
       if( bravtypes[j].GetA() == &TSymmLib::GetInstance()->GetGroup(i).GetBravaisLattice() )  {
         found = true;
         break;
@@ -122,7 +122,7 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
   toTest.Add( "-3-", r3);
   toTest.Add( "-4-", r4);
   toTest.Add( "-6-", r6);
-  for( int i=0; i < toTest.Count(); i++ )  {
+  for( size_t i=0; i < toTest.Count(); i++ )  {
     XApp.GetLog() << ( olxstr("Testing ") << toTest[i] << "...\n");
     XApp.Update();
     try  {  st.TestMatrix( toTest.GetObject(i), tol );  }
@@ -131,8 +131,8 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
       continue;
     }
     if( st.GetResults().Count() > 0 )  {
-      int ind = st.GetResults().Count()-1;
-      double match = st.GetResults()[ind].Count()*400/((st.AtomCount()-2)*st.AtomCount());
+      size_t ind = st.GetResults().Count()-1;
+      double match = (double)(st.GetResults()[ind].Count()*400/((st.AtomCount()-2)*st.AtomCount()));
       trans = st.GetResults()[ind].Center;
       NormalisevectorView(trans);
       if( i == 0 )  {
@@ -147,8 +147,8 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
       res *= -1;  // special treatment of inversion
       translations.Clear();
       if( match >= confth )  {
-        int cutoff = (int)(st.GetResults()[st.GetResults().Count()-1].Count()*0.75);
-        for( int j=olx_max(0,st.GetResults().Count()-8); j < st.GetResults().Count(); j++ )  {
+        const size_t cutoff = (size_t)(st.GetResults()[st.GetResults().Count()-1].Count()*0.75);
+        for( size_t j=olx_max(0,st.GetResults().Count()-8); j < st.GetResults().Count(); j++ )  {
           if( st.GetResults()[j].Count() < cutoff )
             continue;
           trans = st.GetResults()[j].Center;
@@ -175,7 +175,7 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
     }
   }
   olxstr line;
-  for( int i=0; i < sglist.Count(); i++ )  {
+  for( size_t i=0; i < sglist.Count(); i++ )  {
     line << sglist[i]->GetName();
     if( (i+1) < sglist.Count() )
       line << ", ";

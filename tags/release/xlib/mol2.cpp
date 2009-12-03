@@ -1,11 +1,7 @@
 //---------------------------------------------------------------------------//
-// namespace TXFiles: TMol2 - basic procedures for loading Tripos MOL2 files
+// TMol2 - basic procedures for loading Tripos MOL2 files
 // (c) Oleg V. Dolomanov, 2009
 //---------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "mol2.h"
 
 #include "catom.h"
@@ -14,8 +10,6 @@
 #include "exception.h"
 
 const olxstr TMol2::BondNames[] = {"1", "2", "3", "am", "ar", "du", "un", "nc"};
-//----------------------------------------------------------------------------//
-// TMol2 function bodies
 //----------------------------------------------------------------------------//
 void TMol2::Clear()  {
   GetAsymmUnit().Clear();
@@ -62,22 +56,19 @@ void TMol2::SaveToStrings(TStrList& Strings)  {
   Strings.Add("NO_CHARGES");
   Strings.Add(EmptyString);
   Strings.Add("@<TRIPOS>ATOM");
-  for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )
+  for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )
     Strings.Add( MOLAtom(GetAsymmUnit().GetAtom(i) ) );
   if( !Bonds.IsEmpty() )  {
     Strings.Add(EmptyString);
     Strings.Add("@<TRIPOS>BOND");
-    for( int i=0; i < Bonds.Count(); i++ )
+    for( size_t i=0; i < Bonds.Count(); i++ )
       Strings.Add( MOLBond(Bonds[i]) );
   }
 }
 //..............................................................................
 void TMol2::LoadFromStrings(const TStrList& Strings)  {
   Clear();
-
-  olxstr Tmp1, Tmp, Msg;
-  vec3d StrCenter;
-  Title = "OLEX: imported from MDL MOL";
+  Title = "OLEX: imported from TRIPOS MOL2";
   TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   GetAsymmUnit().Axes()[0] = 1;
   GetAsymmUnit().Axes()[1] = 1;
@@ -88,49 +79,41 @@ void TMol2::LoadFromStrings(const TStrList& Strings)  {
   GetAsymmUnit().InitMatrices();
   bool AtomsCycle = false, BondsCycle = false;
   olxdict<int, TCAtom*, TPrimitiveComparator> atoms;
-  for( int i=0; i < Strings.Count(); i++ )  {
-    Tmp = Strings[i].UpperCase();
-    Tmp.Replace('\t', ' ');
-    Tmp = Tmp.Trim(' ');
-    if( Tmp.IsEmpty() )  continue;
+  for( size_t i=0; i < Strings.Count(); i++ )  {
+    olxstr line = Strings[i].UpperCase().Replace('\t', ' ').Trim(' ');
+    if( line.IsEmpty() )  continue;
     if( AtomsCycle )  {
-      if( Tmp.Compare("@<TRIPOS>BOND") == 0 )  {
+      if( line.Compare("@<TRIPOS>BOND") == 0 )  {
         BondsCycle = true;
         AtomsCycle = false;
         continue;
       }
-      TStrList toks(Tmp, ' ');
-      if( toks.Count() < 6 )
-        continue;
-      double Ax = toks[2].ToDouble();
-      double Ay = toks[3].ToDouble();
-      double Az = toks[4].ToDouble();
+      TStrList toks(line, ' ');
+      if( toks.Count() < 6 )  continue;
+      vec3d crd(toks[2].ToDouble(), toks[3].ToDouble(), toks[4].ToDouble());
       if( AtomsInfo.IsElement(toks[5]) )  {
         TCAtom& CA = GetAsymmUnit().NewAtom();
-        CA.ccrd()[0] = Ax;
-        CA.ccrd()[1] = Ay;
-        CA.ccrd()[2] = Az;
+        CA.ccrd() = crd;
         CA.SetLabel( (toks[5] << GetAsymmUnit().AtomCount()+1) );
         atoms(toks[0].ToInt(), &CA); 
       }
       continue;
     }
     if( BondsCycle )  {
-      if( Tmp.CharAt(0) == '@' )  {
+      if( line.CharAt(0) == '@' )  {
         BondsCycle = false;
         break;
       }
-      TStrList toks( Tmp, ' ');
+      TStrList toks(line, ' ');
       if( toks.Count() < 4 )
         continue;
-      TMol2Bond* MB = new TMol2Bond(Bonds.Count());
-      MB->a1 = atoms[toks[1].ToInt()];
-      MB->a2 = atoms[toks[2].ToInt()];
-      MB->BondType = DecodeBondType(toks[3]);   // bond type
-      Bonds.Add(*MB);
+      TMol2Bond& MB = Bonds.Add(new TMol2Bond(Bonds.Count()));
+      MB.a1 = atoms[toks[1].ToInt()];
+      MB.a2 = atoms[toks[2].ToInt()];
+      MB.BondType = DecodeBondType(toks[3]);   // bond type
       continue;
     }
-    if( Tmp.Compare("@<TRIPOS>ATOM") == 0 )  {
+    if( line.Equals("@<TRIPOS>ATOM") )  {
       AtomsCycle = true;
       continue;
     }
@@ -138,14 +121,28 @@ void TMol2::LoadFromStrings(const TStrList& Strings)  {
 }
 
 //..............................................................................
-bool TMol2::Adopt(TXFile *XF)  {
+bool TMol2::Adopt(TXFile& XF)  {
   Clear();
-  GetAsymmUnit().Assign(XF->GetAsymmUnit());
-  GetAsymmUnit().SetZ( (short)XF->GetLattice().GetUnitCell().MatrixCount() );
+ TLattice& latt = XF.GetLattice();
+  for( size_t i=0; i < latt.AtomCount(); i++ )  {
+    TSAtom& sa = latt.GetAtom(i);
+    if( !sa.IsAvailable() )  continue;
+    TCAtom& a = GetAsymmUnit().NewAtom();
+    a.Label() = sa.GetLabel();
+    a.ccrd() = sa.crd();
+    a.SetAtomInfo(sa.GetAtomInfo());
+    sa.SetTag(i);
+  }
+  for( size_t i=0; i < latt.BondCount(); i++ )  {
+    TSBond& sb = latt.GetBond(i);
+    if( !sb.IsAvailable() )  continue;
+    TMol2Bond& mb = Bonds.AddNew(Bonds.Count());
+    mb.a1 = &GetAsymmUnit().GetAtom(sb.A().GetTag());
+    mb.a2 = &GetAsymmUnit().GetAtom(sb.B().GetTag());
+    mb.BondType = 1; // singlel bond, a proper encoding is required...
+  }
+  GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
   return true;
 }
 //..............................................................................
-void TMol2::DeleteAtom(TCAtom *CA)  {  return;  }
-//..............................................................................
-
  

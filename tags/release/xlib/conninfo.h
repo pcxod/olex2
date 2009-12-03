@@ -26,8 +26,8 @@ protected:
       BondsToRemove = ci.BondsToRemove;
       return *this;
     }
-    void ToDataItem(TDataItem& item);
-    void FromDataItem(TDataItem& item, RefinementModel& rm, TCAtom& atom);
+    void ToDataItem(TDataItem& item) const;
+    void FromDataItem(const TDataItem& item, RefinementModel& rm, TCAtom& atom);
   };
   struct TypeConnInfo : public CXConnInfoBase  {
     TBasicAtomInfo* atomInfo;
@@ -39,8 +39,8 @@ protected:
       atomInfo = ti.atomInfo;
       return *this;
     }
-    void ToDataItem(TDataItem& item);
-    void FromDataItem(TDataItem& item, TBasicAtomInfo* bai);
+    void ToDataItem(TDataItem& item) const;
+    void FromDataItem(const TDataItem& item, TBasicAtomInfo* bai);
   };
   olxdict<TCAtom*, AtomConnInfo, TPointerPtrComparator> AtomInfo;
   olxdict<TBasicAtomInfo*, TypeConnInfo, TPointerPtrComparator> TypeInfo;
@@ -58,7 +58,7 @@ public:
 
   void ProcessConn(TStrList& ins);
   // eqiv corresponds to a2
-  static int FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv);
+  static size_t FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv);
   void AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv);
   void RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv);
   /* combines all bonds to create and delete for this atom and imposed by others 
@@ -80,9 +80,8 @@ public:
 
   void Assign(const ConnInfo& ci);
 
-  void ToDataItem(TDataItem& item);
-  void FromDataItem(TDataItem& item);
-
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(const TDataItem& item);
 };
 
 EndXlibNamespace()

@@ -44,7 +44,7 @@ void TEGC::ClearASAP()  {
   if( ASAPOHead.Next == NULL )  return;
   OEntry* entry = ASAPOHead.Next;
   while( entry != NULL )  {
-    entry->Object->SetAtDestruct( NULL );
+    entry->Object->RemoveDestructionHandler(&TEGC::AtObjectDestruct);
     delete entry->Object;
     OEntry* en = entry;
     entry = entry->Next;
@@ -58,7 +58,7 @@ void TEGC::ClearATE()  {
   if( ATEOHead.Next == NULL )  return;
   OEntry* entry = ATEOHead.Next;
   while( entry != NULL )  {
-    entry->Object->SetAtDestruct( NULL );
+    entry->Object->RemoveDestructionHandler(&TEGC::AtObjectDestruct);
     delete entry->Object;
     OEntry* en = entry;
     entry = entry->Next;
@@ -68,17 +68,16 @@ void TEGC::ClearATE()  {
   ATEOHead.Next = NULL;
 }
 //..............................................................................
-void TEGC::_AddASAP( IEObject* object )  {
-  if( ASAPOTail == NULL )  {
+void TEGC::_AddASAP(IEObject* object)  {
+  if( ASAPOTail == NULL )
     ASAPOTail = ASAPOHead.Next = new OEntry;
-  }
   else  {
     ASAPOTail->Next = new OEntry;
     ASAPOTail = ASAPOTail->Next;
   }
   ASAPOTail->Next = NULL;
   ASAPOTail->Object = object;
-  object->SetAtDestruct( &AtObjectDestruct );
+  object->AddDestructionHandler(&TEGC::AtObjectDestruct);
   // check if the object was already placed to the ATE store ...
   RemoveObject( ATEOHead, object );
 }
@@ -93,26 +92,23 @@ void TEGC::_AddATE( IEObject* object )  {
   }
   ATEOTail->Next = NULL;
   ATEOTail->Object = object;
-  object->SetAtDestruct( &AtObjectDestruct );
+  object->AddDestructionHandler(&TEGC::AtObjectDestruct);
 }
 //..............................................................................
 void TEGC::_AtObjectDestruct(IEObject* obj)  {
-  if( Destructing )
-    return;
+  if( Destructing )  return;
   if( !RemoveObject(ASAPOHead, obj) )  {
-    if( !RemoveObject(ATEOHead, obj) )  {
+    if( !RemoveObject(ATEOHead, obj) )
       throw TInvalidArgumentException(__OlxSourceInfo, "could not locate the object");
+    else if( ATEOHead.Next == NULL )
+        ATEOTail = NULL;
     }
-    else  {
-      if( ATEOHead.Next == NULL )  ATEOTail = NULL;
-    }
-  }
-  else  {
-    if( ASAPOHead.Next == NULL )  ASAPOTail = NULL;
-  }
+  else
+    if( ASAPOHead.Next == NULL )
+      ASAPOTail = NULL;
 }
 //..............................................................................
-bool TEGC::RemoveObject( OEntry& head, IEObject* obj )  {
+bool TEGC::RemoveObject(OEntry& head, IEObject* obj)  {
   if( head.Next == NULL )  return false;
   OEntry* entry = &head;
   while( entry&& entry->Next != NULL )  {

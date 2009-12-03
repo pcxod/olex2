@@ -45,52 +45,52 @@ public:
     return *this;
   }
   template <class T> VType& operator [] (const T& key) const {
-    int ind = SortedL::IndexOf(key);
-    if( ind == -1 )
+    size_t ind = SortedL::IndexOf(key);
+    if( ind == InvalidIndex )
       throw TInvalidArgumentException(__OlxSourceInfo, "key");
     return SortedL::operator[] (ind).val;
   }
   inline void Clear()                         {  SortedL::Clear();  }
-  inline int Count()                    const {  return SortedL::Count();  }
+  inline size_t Count()                 const {  return SortedL::Count();  }
   inline bool IsEmpty()                 const {  return SortedL::IsEmpty();  }
-  inline VType& GetValue(int ind)             {  return SortedL::operator[] (ind).val;  }
-  inline const VType& GetValue(int ind) const {  return SortedL::operator[] (ind).val;  }
-  inline const KType& GetKey(int ind)   const {  return SortedL::operator[] (ind).key;  }
-  inline const EntryType& GetEntry(int ind) const {  return SortedL::operator[] (ind);  }
+  inline VType& GetValue(size_t ind)          {  return SortedL::operator[] (ind).val;  }
+  inline const VType& GetValue(size_t ind) const {  return SortedL::operator[] (ind).val;  }
+  inline const KType& GetKey(size_t ind)   const {  return SortedL::operator[] (ind).key;  }
+  inline const EntryType& GetEntry(size_t ind) const {  return SortedL::operator[] (ind);  }
   template <class T> inline bool HasKey(const T& key) const {
-    return SortedL::IndexOf(key) != -1;
+    return SortedL::IndexOf(key) != InvalidIndex;
   }
 
   template <typename T> VType& operator () (const T& key, const VType& def) {
     return Add(key, def);
   }
   template <typename T> VType& Add(const T& key, const VType& def) {
-    int ind = -1;
+    size_t ind = InvalidIndex;
     if( SortedL::AddUnique(key, &ind) ) // new entry?
       SortedL::operator[] (ind).val = def;
     return SortedL::operator[] (ind).val;
   }
   template <typename T> VType& Add(const T& key) {
-    int ind = -1;
+    size_t ind = InvalidIndex;
     SortedL::AddUnique(key, &ind);
     return SortedL::operator[] (ind).val;
   }
-  template <class T> int IndexOf(const T& key) const {  return SortedL::IndexOf(key);  }
-  template <class T> int IndexOfValue(const T& val) const {  
-    for( int i=0; i < SortedL::Count(); i++ )
+  template <class T> size_t IndexOf(const T& key) const {  return SortedL::IndexOf(key);  }
+  template <class T> size_t IndexOfValue(const T& val) const {  
+    for( size_t i=0; i < SortedL::Count(); i++ )
       if( SortedL::operator [] (i).val == val )
         return i;
-    return -1;
+    return InvalidIndex;
   }
   template <class T> bool Remove(const T& key)  {
-    int ind = SortedL::IndexOf(key);
-    if( key != -1 )  {
+    size_t ind = SortedL::IndexOf(key);
+    if( key != InvalidIndex )  {
       SortedL::Delete(ind);
       return true;
     }
     return false;
   }
-  void Delete(int ind)  {  SortedL::Delete(ind);  }
+  void Delete(size_t ind)  {  SortedL::Delete(ind);  }
 
 };
 

@@ -56,7 +56,7 @@ void TSAtom::Assign(const TSAtom& S)  {
 bool TSAtom::IsGrown() const {
   if( (Flags & satom_Grown) == 0 )  return false;
   int subs = 0;
-  for( int i=0; i < Nodes.Count(); i++ )
+  for( size_t i=0; i < Nodes.Count(); i++ )
     if( Nodes[i]->IsDeleted() )
       subs--;
   if( subs < 0 )
@@ -66,7 +66,7 @@ bool TSAtom::IsGrown() const {
 //..............................................................................
 olxstr TSAtom::GetGuiLabel() const  {  
   olxstr rv(FCAtom->GetLabel());
-  if( FCAtom->GetResiId() != -1 )  {
+  if( FCAtom->GetResiId() != 0 )  {
     rv << '_' <<
       FCAtom->GetParent()->GetResidue(FCAtom->GetResiId()).GetNumber();
   }
@@ -79,7 +79,7 @@ olxstr TSAtom::GetGuiLabel() const  {
 void TSAtom::SetNodeCount(size_t cnt)  {
   if( cnt >= (size_t)Nodes.Count() )
     return;
-  for( int i=cnt; i < Nodes.Count(); i++ )  {
+  for( size_t i=cnt; i < Nodes.Count(); i++ )  {
     Nodes[i]->Nodes.Remove(this);
     Nodes[i] = NULL;
   }
@@ -87,16 +87,15 @@ void TSAtom::SetNodeCount(size_t cnt)  {
 }
 //..............................................................................
 void TSAtom::RemoveNode(TSAtom& node)  {
-  int ind = Nodes.IndexOf(&node);
-  if( ind == -1 )
-    return;
+  size_t ind = Nodes.IndexOf(&node);
+  if( ind == InvalidIndex )  return;
   node.Nodes.Remove(this);
   Nodes.Delete(ind);
 }
 //..............................................................................
 olxstr TSAtom::GetGuiLabelEx() const  {  
   olxstr rv(FCAtom->GetLabel());
-  if( FCAtom->GetResiId() != -1 )  {
+  if( FCAtom->GetResiId() != 0 )  {
     rv << '_' <<
       FCAtom->GetParent()->GetResidue(FCAtom->GetResiId()).GetNumber();
   }
@@ -109,46 +108,48 @@ olxstr TSAtom::GetGuiLabelEx() const  {
 void TSAtom::ToDataItem(TDataItem& item) const {
   item.AddField("net_id", Network->GetTag());
   // need to save it for overlayed images etc
-  item.AddField("crd", PersUtil::VecToStr(FCenter) );
+  item.AddField("crd", PersUtil::VecToStr(FCenter));
+  item.AddField("flags", Flags);
   TDataItem& nodes = item.AddItem("Nodes");
-  for( int i=0; i < Nodes.Count(); i++ )  {
+  for( size_t i=0; i < Nodes.Count(); i++ )  {
     if( Nodes[i]->IsDeleted() )  continue;
     nodes.AddField("node_id", Nodes[i]->GetTag());
   }
   TDataItem& bonds = item.AddItem("Bonds");
-  for( int i=0; i < Bonds.Count(); i++ )  {
+  for( size_t i=0; i < Bonds.Count(); i++ )  {
     if( Bonds[i]->IsDeleted() )  continue;
     bonds.AddField("bond_id", Bonds[i]->GetTag());
   }
 
-  item.AddField("atom_id", FCAtom->GetTag());
+  item.AddField("atom_id", FCAtom->GetId());
   TDataItem& matrices = item.AddItem("Matrices");
-  for( int i=0; i < Matrices.Count(); i++ )
-    matrices.AddField("matr_id", Matrices[i]->GetTag());
+  for( size_t i=0; i < Matrices.Count(); i++ )
+    matrices.AddField("matr_id", Matrices[i]->GetId());
 }
 //..............................................................................
 void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
-  Network = &parent.GetFragment( item.GetRequiredField("net_id").ToInt() );
+  Network = &parent.GetFragment(item.GetRequiredField("net_id").ToInt());
   const TDataItem& nodes = item.FindRequiredItem("Nodes");
   Nodes.SetCapacity( nodes.FieldCount() );
-  for( int i=0; i < nodes.FieldCount(); i++ )
-    Nodes.Add(&parent.GetAtom(nodes.GetField(i).ToInt()));
+  for( size_t i=0; i < nodes.FieldCount(); i++ )
+    Nodes.Add(&parent.GetAtom(nodes.GetField(i).ToSizeT()));
   const TDataItem& bonds = item.FindRequiredItem("Bonds");
   Bonds.SetCapacity( bonds.FieldCount() );
-  for( int i=0; i < bonds.FieldCount(); i++ )
-    Bonds.Add(&parent.GetBond(bonds.GetField(i).ToInt()));
+  for( size_t i=0; i < bonds.FieldCount(); i++ )
+    Bonds.Add(&parent.GetBond(bonds.GetField(i).ToSizeT()));
 
   TLattice& latt = Network->GetLattice();
-  int ca_id = item.GetRequiredField("atom_id").ToInt();
+  size_t ca_id = item.GetRequiredField("atom_id").ToSizeT();
   CAtom( latt.GetAsymmUnit().GetAtom(ca_id) );
   const TDataItem& matrices = item.FindRequiredItem("Matrices");
   Matrices.SetCapacity( matrices.FieldCount() );
-  for( int i=0; i < matrices.FieldCount(); i++ )  {
-    const int mi = matrices.GetField(i).ToInt();
-    Matrices.Add( &latt.GetMatrix(mi) );
+  for( size_t i=0; i < matrices.FieldCount(); i++ )  {
+    const size_t mi = matrices.GetField(i).ToSizeT();
+    Matrices.Add(latt.GetMatrix(mi));
   }
   FCCenter = *Matrices[0] * FCCenter;
   FCenter = PersUtil::FloatVecFromStr(item.GetRequiredField("crd"));
+  Flags = item.GetRequiredField("flags").ToInt();
   //latt.GetAsymmUnit().CellToCartesian(FCCenter, FCenter);
 }
 //..............................................................................

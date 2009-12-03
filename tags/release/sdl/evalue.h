@@ -76,15 +76,15 @@ public:
     }
 
   const olxstr& operator = (const olxstr& S)  {
-    int i = S.LastIndexOf('(');
-    if( i > 0 )  {
+    size_t i = S.LastIndexOf('(');
+    if( i != InvalidIndex && i > 0 )  {
       FV = (EType)S.SubStringTo(i).ToDouble();
-      int j = S.LastIndexOf(')'),
+      size_t j = S.LastIndexOf(')'),
           k = S.FirstIndexOf('.');
       double po=1;
-      if( j > i )  {
-        if( k >= 0 && k < i )
-          for( int l=0; l < i-k-1; l++ )
+      if( j != InvalidIndex && j > i )  {
+        if( k != InvalidIndex && k < i )
+          for( size_t l=0; l < i-k-1; l++ )
             po *= 10;
         FE = (EType)(S.SubString(i+1,j-i-1).ToDouble()/po);
       }
@@ -108,7 +108,7 @@ public:
       if( FV == 0 || S.FV == 0 )
         throw TDivException(__OlxSourceInfo);
       if( FE != 0 || S.FE != 0 )
-        FE = (EType)(sqr(S.FE/S.FV) + sqr(FE/FV));
+        FE = (EType)(sqr(S.FE/S.FV) + olx_sqr(FE/FV));
       FV *= S.FV;
       return *this;
     }
@@ -118,7 +118,7 @@ public:
       if( FV == 0 || S.FV == 0 )
         throw TDivException(__OlxSourceInfo);
       if( FE != 0 || S.FE != 0 )
-        FE = (EType)(sqr(S.FE/S.FV) + sqr(FE/FV));
+        FE = (EType)(sqr(S.FE/S.FV) + olx_sqr(FE/FV));
       FV /= S.FV;
       return *this;
     }
@@ -221,8 +221,8 @@ public:
     return S;
   }
   inline virtual TIString ToString() const {  return StrRepr<olxstr>();  }
-  inline CString ToCStr() const {  return StrRepr<CString>();  }
-  inline WString ToWStr() const {  return StrRepr<WString>();  }
+  inline olxcstr ToCStr() const {  return StrRepr<olxcstr>();  }
+  inline olxwstr ToWStr() const {  return StrRepr<olxwstr>();  }
 };
 
   typedef TEValue<float>  TEValueF;

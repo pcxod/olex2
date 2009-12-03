@@ -1,7 +1,5 @@
-//---------------------------------------------------------------------------
-#ifndef etBufferH
-#define etBufferH
-#include "elist.h"
+#ifndef __olx_ttbuffer_H
+#define __olx_ttbuffer_H
 #include "exception.h"
 
 #ifdef __BORLANDC__

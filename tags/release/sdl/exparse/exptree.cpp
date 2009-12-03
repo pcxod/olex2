@@ -3,13 +3,23 @@
 using namespace esdl::exparse;
 
 //...........................................................................
-bool parser_util::parse_string(const olxstr& exp, olxstr& dest, int& ind)  {
+bool parser_util::skip_string(const olxstr& exp, size_t& ind)  {
   const olxch qc = exp.CharAt(ind);
-  dest << qc;
-  bool end_found = false;
-  const int start = ind;
+  const size_t start = ind;
   while( ++ind < exp.Length() )  {
-    if( exp.CharAt(ind) == qc && exp.CharAt(ind-1) != '\\' )  {
+    if( exp.CharAt(ind) == qc && !is_escaped(exp, ind) )
+      return true;
+  }
+  ind = start;
+  return false;
+}
+//...........................................................................
+bool parser_util::parse_string(const olxstr& exp, olxstr& dest, size_t& ind)  {
+  const olxch qc = exp.CharAt(ind);
+  bool end_found = false;
+  const size_t start = ind+1;
+  while( ++ind < exp.Length() )  {
+    if( exp.CharAt(ind) == qc && !is_escaped(exp, ind) )  {
       end_found = true;
       break;
     }
@@ -19,13 +29,48 @@ bool parser_util::parse_string(const olxstr& exp, olxstr& dest, int& ind)  {
   return end_found;
 }
 //...........................................................................
-bool parser_util::parse_brackets(const olxstr& exp, olxstr& dest, int& ind)  {
+bool parser_util::parse_escaped_string(const olxstr& exp, olxstr& dest, size_t& ind)  {
+  const olxch qc = exp.CharAt(ind);
+  bool end_found = false;
+  const size_t start = ind+1;
+  while( ++ind < exp.Length() )  {
+    if( exp.CharAt(ind) == qc )  {
+      end_found = true;
+      break;
+    }
+  }
+  if( end_found )
+    dest = exp.SubString(start, ind - start);
+  return end_found;
+}
+//...........................................................................
+bool parser_util::skip_brackets(const olxstr& exp, size_t& ind)  {
   const olxch oc = exp.CharAt(ind), 
     cc = (oc == '(' ? ')' : (oc == '[' ? ']' : (oc == '{' ? '}' : (oc == '<' ? '>' : '#'))));
   if( cc == '#' )
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid bracket char: ") << oc );
   int bc = 1;
-  const int start = ind+1;
+  const size_t start = ind+1;
+  while( ++ind < exp.Length() && bc != 0 )  {
+    const olxch ch = exp.CharAt(ind);
+    if( is_quote(ch) && !is_escaped(exp, ind) )  {
+      if( !skip_string(exp, ind) )  return false;
+      continue;
+    }
+    if( ch == cc && (--bc == 0) )  return true;
+    else if( ch == oc )  bc++;
+  }
+  ind = start;
+  return false;
+}
+//...........................................................................
+bool parser_util::parse_brackets(const olxstr& exp, olxstr& dest, size_t& ind)  {
+  const olxch oc = exp.CharAt(ind), 
+    cc = (oc == '(' ? ')' : (oc == '[' ? ']' : (oc == '{' ? '}' : (oc == '<' ? '>' : '#'))));
+  if( cc == '#' )
+    throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid bracket char: ") << oc );
+  int bc = 1;
+  const size_t start = ind+1;
   while( ++ind < exp.Length() && bc != 0 )  {
     const olxch ch = exp.CharAt(ind);
     if( ch == cc )       bc--;
@@ -48,8 +93,8 @@ bool parser_util::is_operator(const olxstr& exp)  {
   return false;
 }
 //...........................................................................
-bool parser_util::parse_control_chars(const olxstr& exp, olxstr& dest, int& ind)  {
-  while( ind < exp.Length() && control_chars.IndexOf(exp.CharAt(ind)) != -1 )  {
+bool parser_util::parse_control_chars(const olxstr& exp, olxstr& dest, size_t& ind)  {
+  while( ind < exp.Length() && control_chars.IndexOf(exp.CharAt(ind)) != InvalidIndex )  {
     dest << exp.CharAt(ind++);
     if( !is_operator(dest) )  {
       dest.SetLength(dest.Length()-1);
@@ -61,62 +106,58 @@ bool parser_util::parse_control_chars(const olxstr& exp, olxstr& dest, int& ind)
 }
 //...........................................................................
 bool parser_util::is_expandable(const olxstr& exp)  {
-  for( int i=0; i < exp.Length(); i++ )  {
+  for( size_t i=0; i < exp.Length(); i++ )  {
     const olxch ch = exp.CharAt(i);
     if( ch == '(' )
       return true;
-    if( ch == '"' || ch == '\'' )  {  // skip strings
+    if( is_quote(ch) && !is_escaped(exp, i) )  {  // skip strings
       while( ++i < exp.Length() && exp.CharAt(i) != ch && exp.CharAt(i-1) != '\\' )
         ;
       continue;
     }
-    if( control_chars.IndexOf(ch) != -1 )
+    if( control_chars.IndexOf(ch) != InvalidIndex )
       return true;
   }
   return false;
 }
 //...........................................................................
-void parser_util::split_args(const olxstr& exp, TStrList& res)  {
-  int start = 0;
-  for( int i=0; i < exp.Length(); i++ )  {
-    const olxch ch = exp.CharAt(i);
-    if( ch == '(' )  {
-      int bc = 1;
-      while( ++i < exp.Length() && bc != 0 )  {
-        if( exp.CharAt(i) == '(' )  bc++;
-        else if( exp.CharAt(i) == ')' )  bc--;
+olxstr parser_util::unescape(const olxstr& exp)  {
+  //return exp;
+  olxstr out( EmptyString, exp.Length());
+  for( size_t i=0; i < exp.Length(); i++ )  {
+    if( exp.CharAt(i) == '\\' )  {
+      if( ++i >= exp.Length() )  break;
+      switch( exp.CharAt(i) )  {
+        case 'r':   out << '\r';  break;
+        case 'n':   out << '\n';  break;
+        case 't':   out << '\t';  break;
+        case '\\':  out << '\\';  break;
+        case '\'':  out << '\'';  break;
+        case '"':   out << '"';  break;
+        default:    out << '\\' << exp.CharAt(i);  break;
       }
-      i--;
     }
-    else if( ch == '"' || ch == '\'' )  {  // skip strings
-      while( ++i < exp.Length() && exp.CharAt(i) != ch && exp.CharAt(i-1) != '\\' )
-        ;
+    else
+      out << exp.CharAt(i);
     }
-    else if( ch == ',' )  {
-      res.Add( exp.SubString(start, i-start) ).TrimWhiteChars();
-      start = i+1;
-    }
-  }
-  if( start < exp.Length() )
-    res.Add( exp.SubStringFrom(start) ).TrimWhiteChars();
+  return out;
 }
 //...........................................................................
 //...........................................................................
 //...........................................................................
 void expression_tree::expand()  {
-  data = data.TrimWhiteChars();
+  data.TrimWhiteChars();
   if( !parser_util::is_expandable(data) )  return;
   olxstr dt;
-  for( int i=0; i < data.Length(); i++ )  {
+  for( size_t i=0; i < data.Length(); i++ )  {
     olxch ch = data.CharAt(i);
-    if( olxstr::o_iswhitechar(ch) )
-      continue;
+    if( olxstr::o_iswhitechar(ch) )  continue;
     else if( ch == '(' )  {  // parse out brackets
       olxstr arg;
       if( !parser_util::parse_brackets(data, arg, i) ) 
         throw TInvalidArgumentException(__OlxSourceInfo, "problem with brackets");
-      arg = arg.TrimWhiteChars();
-      dt = dt.TrimWhiteChars();
+      arg.TrimWhiteChars();
+      dt.TrimWhiteChars();
       if( arg.IsEmpty() ) // empty arg list
         evator = new evaluator<expression_tree>(dt);
       else  {
@@ -144,13 +185,13 @@ void expression_tree::expand()  {
         }
         else  {
           evator = new evaluator<expression_tree>(dt);
-          for( int ai=0; ai < args.Count(); ai++ )
+          for( size_t ai=0; ai < args.Count(); ai++ )
             evator->args.Add(new expression_tree(this, args[ai]))->expand();
         }
       }
       dt.SetLength(0);
     }
-    else if( ch == '"' || ch == '\'' )  { // parse out the strings
+    else if( parser_util::is_quote(ch) && !parser_util::is_escaped(data, i) )  { // parse out the strings
       if( !parser_util::parse_string(data, dt, i) ) 
         throw TInvalidArgumentException(__OlxSourceInfo, "problem with quotations");
     }
@@ -158,15 +199,17 @@ void expression_tree::expand()  {
       olxstr opr;
       if( parser_util::parse_control_chars(data, opr, i) )  {
         if( opr == '.' )  {  // treat floating point values...
-          if( i == 1 || (i+1) >= data.Length() )  {  // .1 or 1.
+          bool number = false;
+          if( i == 1 || (i+1) >= data.Length() )  // .1 or 1.
+            number = true;
+          else if( (i > 1 && olxstr::o_isdigit(data.CharAt(i-2))) ||
+              (i < data.Length() && olxstr::o_isdigit(data.CharAt(i))) )
+            number = true;
+          if( number )  {
             dt << '.';
             i--;
-            continue;
-          }
-          if( (i > 1 && olxstr::o_isdigit(data.CharAt(i-2))) ||
-              (i < data.Length() && olxstr::o_isdigit(data.CharAt(i))) )
-          {
-            dt << '.';
+            while( ++i < data.Length() && olxstr::o_isdigit(data.CharAt(i)) )
+              dt << data.CharAt(i);
             i--;
             continue;
           }

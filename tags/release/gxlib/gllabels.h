@@ -1,5 +1,5 @@
-#ifndef gllabelsH
-#define gllabelsH
+#ifndef __olx_glx_labels_H
+#define __olx_glx_labels_H
 
 #include "gxbase.h"
 #include "bitarray.h"
@@ -27,7 +27,7 @@ const short lmLabels   = 0x0001,  // atom label
             lmFixed    = 0x0800,  // fixed values
             lmConRes   = 0x1000;  // restraints, constraints
 class TXGlLabels: public AGDrawObject  {
-  short  FontIndex;
+  size_t FontIndex;
   TGlMaterial FMarkMaterial;
   TEBitArray Marks;
   short Mode;
@@ -49,13 +49,12 @@ public:
   void Init();
 
   void MarkLabel(const TXAtom& atom, bool v);
-  void MarkLabel(int index, bool v);
+  void MarkLabel(size_t index, bool v);
   bool IsLabelMarked(const TXAtom& atom) const;
-  bool IsLabelMarked(int index) const;
+  bool IsLabelMarked(size_t index) const;
 
-  TGlFont *Font() const;
-  DefPropP(short, FontIndex)
-
+  TGlFont& GetFont() const;
+  DefPropP(size_t, FontIndex)
   TGlMaterial& MarkMaterial()     {  return FMarkMaterial; }
 };
 

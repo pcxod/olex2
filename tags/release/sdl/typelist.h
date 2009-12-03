@@ -19,19 +19,19 @@ public:
   // creates a new empty objects
   TTypeListExt() {  }
   // allocates size elements (can be accessed diretly)
-  TTypeListExt(int size) : List(size)  {  }
+  TTypeListExt(size_t size) : List(size)  {  }
 //..............................................................................
   /* copy constuctor - creates new copies of the objest, be careful as the copy
    constructor must exist for nonpointer objects */
   TTypeListExt( const TTypeListExt& list ) : List(list.Count())  {
-    for( int i=0; i < list.Count(); i++ )
+    for( size_t i=0; i < list.Count(); i++ )
       List[i] =  new T(list[i]);
   }
 //..............................................................................
   /* copy constuctor - creates new copies of the objest, be careful as the copy
    constructor must exist for nonpointer objects */
   template <class alist> TTypeListExt(const alist& list ) : List(list.Count())  {
-    for( int i=0; i < list.Count(); i++ )
+    for( size_t i=0; i < list.Count(); i++ )
       List[i] =  new T(list[i]);
   }
 //..............................................................................
@@ -48,7 +48,7 @@ public:
 //..............................................................................
   //deletes the objects and clears the list
   TTypeListExt& Clear()  {
-    for( int i=0; i < List.Count(); i++ )
+    for( size_t i=0; i < List.Count(); i++ )
       delete (DestructCast*)List[i];
     List.Clear();
     return *this;
@@ -65,7 +65,7 @@ public:
   /* creates new copies of the objest, be careful as the assignement operator must exist  */
   template <class alist> void AddListA(const alist& list)  {
     List.SetCapacity( list.Count() + List.Count() );
-    for( int i=0; i < list.Count(); i++ )  {
+    for( size_t i=0; i < list.Count(); i++ )  {
       T* o = new T();
       *o = list[i];
       List.Add(o);
@@ -75,7 +75,7 @@ public:
   /* creates new copies of the objest, be careful as the copy constructor must exist  */
   template <class alist> void AddListC(const alist& list)  {
     List.SetCapacity( list.Count() + List.Count() );
-    for( int i=0; i < list.Count(); i++ )
+    for( size_t i=0; i < list.Count(); i++ )
       List.Add(new T(list[i]));
   }
 //..............................................................................
@@ -232,10 +232,10 @@ public:
   /* copy - creates new copies of the objest, be careful as the copy constructor
    must exist  */
   TTypeListExt& operator = (const TTypeListExt& list)  {
-    for( int i=0; i < List.Count(); i++ )
+    for( size_t i=0; i < List.Count(); i++ )
       delete (DestructCast*)List[i];
     List.SetCount( list.Count() );
-    for( int i=0; i < list.Count(); i++ ) 
+    for( size_t i=0; i < list.Count(); i++ ) 
       List[i] =  new T(list[i]);
     return *this;
   }
@@ -243,10 +243,10 @@ public:
   /* copy - creates new copies of the objest, be careful as the copy constructor
    must exist  */
   template <class alist> TTypeListExt& operator = (const alist& list )  {
-    for( int i=0; i < List.Count(); i++ )
+    for( size_t i=0; i < List.Count(); i++ )
       delete (DestructCast*)List[i];
     List.SetCount( list.Count() );
-    for( int i=0; i < list.Count(); i++ ) 
+    for( size_t i=0; i < list.Count(); i++ ) 
       List[i] =  new T(list[i]);
     return *this;
   }
@@ -263,7 +263,7 @@ public:
   }
 //..............................................................................
   void DeleteRange(size_t from, size_t to)  {
-    for( int i=from; i < to; i++ )  {
+    for( size_t i=from; i < to; i++ )  {
       if( List[i] != NULL )  {  // check if not deleted yet
         delete (DestructCast*)List[i];
         List[i] = NULL;
@@ -274,7 +274,7 @@ public:
 //..............................................................................
   void Shrink(size_t newSize)  {
     if( newSize >= (size_t)List.Count() )  return;
-    for( int i=newSize; i < List.Count(); i++ )
+    for( size_t i=newSize; i < List.Count(); i++ )
       if( List[i] != NULL )
         delete (DestructCast*)List[i];
     List.SetCount( newSize );
@@ -294,16 +294,16 @@ public:
   void ReleaseAll()  {  List.Clear();  }
 //..............................................................................
   void Remove(const T& Obj)  {
-    int ind = IndexOf(Obj);
-    if( ind == -1 )
+    size_t ind = IndexOf(Obj);
+    if( ind == InvalidIndex )
       throw TInvalidArgumentException(__OlxSourceInfo, "object is not in the list");
-    Delete( ind );
+    Delete(ind);
   }
 //..............................................................................
   /* rearranges the list according to provided indexes. Indexes must be unique unless
     objects are pointers
   */
-  void Rearrange(const TIntList& indexes)  {
+  void Rearrange(const TSizeList& indexes)  {
 #ifdef _OLX_DEBUG
     if( Count() != indexes.Count() )
       throw TFunctionFailedException(__OlxSourceInfo, "size mismatch");
@@ -312,10 +312,10 @@ public:
   }
 //..............................................................................
   // cyclic shift to the left
-  inline void ShiftL(int cnt)  {  List.ShiftL(cnt);  }
+  inline void ShiftL(size_t cnt)  {  List.ShiftL(cnt);  }
 //..............................................................................
   // cyclic shift to the right
-  inline void ShiftR(int cnt)  {  List.ShiftR(cnt);  }
+  inline void ShiftR(size_t cnt)  {  List.ShiftR(cnt);  }
 //..............................................................................
   inline void Swap(size_t i, size_t j)  {  List.Swap(i, j);  }
 //..............................................................................
@@ -323,15 +323,15 @@ public:
 //..............................................................................
   inline void Pack()  {  List.Pack();  }
 //..............................................................................
-  inline int Count()    const {  return List.Count();  }
+  inline size_t Count() const {  return List.Count();  }
 //..............................................................................
   inline bool IsEmpty() const {  return List.IsEmpty();  }
 //..............................................................................
   // the comparison operator is used
-  int IndexOf(const T& val) const  {
-    for( int i=0; i < List.Count(); i++ )
+  size_t IndexOf(const T& val) const  {
+    for( size_t i=0; i < List.Count(); i++ )
       if( *List[i] == val )  return i;
-    return -1;
+    return InvalidIndex;
   }
 
   static TQuickSorter<TTypeListExt<T,DestructCast>,T> QuickSorter;

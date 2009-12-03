@@ -40,7 +40,7 @@ namespace exparse  {
     virtual olxstr get_signature() const {
       olxstr retval = get_RV_type().name();
       retval << ' ' << get_name() << '(';
-      for( int i=0; i < arg_types.Count(); i++ )  {
+      for( size_t i=0; i < arg_types.Count(); i++ )  {
         retval << arg_types[i]->name();
         if( (i+1) < arg_types.Count() )
           retval << ", ";
@@ -227,7 +227,7 @@ namespace exparse  {
   class LibraryRegistry  {
     olxdict<olxstr, IStaticFunction*, olxstrComparator<false> > funcs;
     void _add(const olxstr& name, IStaticFunction* f)  {
-      if( funcs.IndexOf(name) != -1 )  {
+      if( funcs.IndexOf(name) != InvalidIndex )  {
         delete f;
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("Dulicate function instance: ") << name);
       }
@@ -235,14 +235,15 @@ namespace exparse  {
     }
   public:
     ~LibraryRegistry()  {
-      for( int i=0; i < funcs.Count(); i++ )
+      for( size_t i=0; i < funcs.Count(); i++ )
         delete funcs.GetValue(i);
     }
+    inline bool is_empty() const {  return funcs.IsEmpty();  }
     inline IStaticFunction* find(const olxstr& name, size_t argc) const {
-      int ind = funcs.IndexOf( olxstr(name) << '#' << argc);
-      return ind == -1 ? NULL : funcs.GetValue(ind);
+      size_t ind = funcs.IndexOf( olxstr(name) << '#' << argc);
+      return ind == InvalidIndex ? NULL : funcs.GetValue(ind);
     }
-    inline int index_of(const olxstr& name, size_t argc)  const  {
+    inline size_t index_of(const olxstr& name, size_t argc)  const  {
       return funcs.IndexOf( olxstr(name) << '#' << argc);
     }
     void add(const olxstr& name, void (*f)(void))  {
@@ -274,11 +275,11 @@ namespace exparse  {
       TPtrList<IEvaluable> args;
       const EvaluableFactory& factory;
       FuncEvaluator(const EvaluableFactory& fc, IStaticFunction* f, const TPtrList<IEvaluable>& a) : factory(fc), func(f), args(a) {
-        for( int i=0; i < args.Count(); i++ )
+        for( size_t i=0; i < args.Count(); i++ )
           args[i]->inc_ref();
       }
       ~FuncEvaluator()  {
-        for( int i=0; i < args.Count(); i++ )
+        for( size_t i=0; i < args.Count(); i++ )
           if( args[i]->dec_ref() == 0 )
             delete args[i];
       }
@@ -308,11 +309,12 @@ namespace exparse  {
       void* self, const olxstr& name, const TPtrList<IEvaluable>& args) const = 0;
     virtual IEvaluable* create_from_index(const IEvaluable& owner, const EvaluableFactory& factory, 
       void* self, size_t index, const TPtrList<IEvaluable>& args) const = 0;
+    virtual bool is_empty() const = 0;
   };
   template <class base_class> class ClassRegistry : public IClassRegistry  {
     olxdict<olxstr, IMemberFunction*, olxstrComparator<false> > funcs;
     void _add(const olxstr& name, IMemberFunction* f)  {
-      if( funcs.IndexOf(name) != -1 )  {
+      if( funcs.IndexOf(name) != InvalidIndex )  {
         delete f;
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("Dulicate function instance: ") << name);
       }
@@ -320,14 +322,15 @@ namespace exparse  {
     }
   public:
     ~ClassRegistry()  {
-      for( int i=0; i < funcs.Count(); i++ )
+      for( size_t i=0; i < funcs.Count(); i++ )
         delete funcs.GetValue(i);
     }
+    virtual inline bool is_empty() const {  return funcs.IsEmpty();  }
     inline IMemberFunction* find(const olxstr& name, size_t argc) const {
-      int ind = funcs.IndexOf( olxstr(name) << '#' << argc);
-      return ind == -1 ? NULL : funcs.GetValue(ind);
+      size_t ind = funcs.IndexOf( olxstr(name) << '#' << argc);
+      return ind == InvalidIndex ? NULL : funcs.GetValue(ind);
     }
-    inline int index_of(const olxstr& name, size_t argc) const {
+    inline size_t index_of(const olxstr& name, size_t argc) const {
       return funcs.IndexOf( olxstr(name) << '#' << argc);
     }
     void add(const olxstr& name, void (base_class::*f)())  {
@@ -386,12 +389,12 @@ namespace exparse  {
       FuncEvaluator(const IEvaluable& ow, const EvaluableFactory& fc, base_class& s, IMemberFunction* f, 
         const TPtrList<IEvaluable>& a) : owner(ow.inc_ref()), factory(fc), self(s), func(f), args(a) 
       {
-        for( int i=0; i < args.Count(); i++ )
+        for( size_t i=0; i < args.Count(); i++ )
           args[i]->inc_ref();
       }
       ~FuncEvaluator()  {  
         owner.dec_ref();  
-        for( int i=0; i < args.Count(); i++ )
+        for( size_t i=0; i < args.Count(); i++ )
           if( args[i]->dec_ref() == 0 )
             delete args[i];
       }

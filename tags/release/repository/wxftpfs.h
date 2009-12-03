@@ -28,7 +28,7 @@ protected:
     Progress.SetMax(1);
     Progress.SetPos(0);
     Progress.SetAction(olxstr("Downloading ") << o_src );
-    OnProgress->Enter(this, &Progress);
+    OnProgress.Enter(this, &Progress);
     wxInputStream* is = NULL;
     try  {
       olxstr src( o_src );
@@ -36,7 +36,7 @@ protected:
       is = wxOpenFile( src );
       if( is != NULL )  {
         Progress.SetMax( is->GetLength() );
-        OnProgress->Execute(this, &Progress);
+        OnProgress.Execute(this, &Progress);
       }
     }
     catch( ... )  {   return NULL;  }
@@ -53,7 +53,7 @@ protected:
         ms->Write( bf, is->LastRead() );
         if( Progress.GetMax() > 0 )  {
           Progress.SetPos( ms->GetPosition() );
-          OnProgress->Execute(this, &Progress);
+          OnProgress.Execute(this, &Progress);
         }
         if( Break )  {
           delete is;
@@ -66,13 +66,13 @@ protected:
       ms->SetPosition(0);
       Progress.SetAction("Download complete");
       Progress.SetPos( 0 );
-      OnProgress->Exit(this, &Progress);
+      OnProgress.Exit(this, &Progress);
     }
     catch(...)  {
       Progress.SetAction("Download failed");
       Progress.SetPos( 0 );
-      OnProgress->Execute(this, &Progress);
-      OnProgress->Exit(this, &Progress);
+      OnProgress.Execute(this, &Progress);
+      OnProgress.Exit(this, &Progress);
     }
     delete is;
     delete [] bf;
@@ -114,7 +114,7 @@ protected:
     Progress.SetMax(1);
     Progress.SetPos(0);
     Progress.SetAction(olxstr("Uploading ") << rel_path );
-    OnProgress->Enter(this, &Progress);
+    OnProgress.Enter(this, &Progress);
 
     Progress.SetMax( in.GetSize() );
     try {
@@ -144,17 +144,17 @@ protected:
           }
           out->Write(bf, read);
           Progress.SetPos( in.GetPosition() );
-          OnProgress->Execute(this, &Progress);
+          OnProgress.Execute(this, &Progress);
         }
         Progress.SetAction("Upload complete");
         Progress.SetPos( 0 );
-        OnProgress->Exit(this, &Progress);
+        OnProgress.Exit(this, &Progress);
       }
       catch(...)  {
         Progress.SetAction("Upload failed");
         Progress.SetPos( 0 );
-        OnProgress->Execute(this, &Progress);
-        OnProgress->Exit(this, &Progress);
+        OnProgress.Execute(this, &Progress);
+        OnProgress.Exit(this, &Progress);
       }
       delete out;
       delete [] bf;
@@ -166,16 +166,16 @@ protected:
   }
   virtual bool _DoNewDir(const olxstr& DN)      {  
     olxstr norm_path( NormaliseName(DN) );
-    if( norm_path.FirstIndexOf('/') != -1 )  {
+    if( norm_path.FirstIndexOf('/') != InvalidIndex )  {
       TStrList toks(norm_path, '/');
-      for( int i=0; i < toks.Count(); i++ )  {
+      for( size_t i=0; i < toks.Count(); i++ )  {
         if( !Ftp.FileExists( toks[i].u_str() ) )
           if( !Ftp.MkDir(toks[i].u_str()) )
             return false;
         if( !Ftp.ChDir(toks[i].u_str()) )
           return false;
       }
-      for( int i=0; i < toks.Count(); i++ )  // restore the level
+      for( size_t i=0; i < toks.Count(); i++ )  // restore the level
         if( !Ftp.ChDir(wxT("..")) )
           return false;
       return true;

@@ -21,20 +21,17 @@ class TBaiTypeEvaluator;
 class TBaiNameEvaluator;
 class TBaiMwEvaluator;
 // data provider interface
-class ITBasicAtomInfoDataProvider: public IDataProvider
-{
+class ITBasicAtomInfoDataProvider: public IDataProvider  {
 public:
   virtual TBasicAtomInfo *GetTBasicAtomInfo() = 0;
 };
 // data provider interface
-class ITSAtom_DataProvider: public IDataProvider
-{
+class ITSAtom_DataProvider: public IDataProvider  {
 public:
   virtual TSAtom* GetTSAtom() = 0;
 };
 // evaluator implementation for scalar part
-class TSAtom_PartEvaluator: public IDoubleEvaluator
-{
+class TSAtom_PartEvaluator: public IDoubleEvaluator  {
   ITSAtom_DataProvider *Parent;
 public:
   // constructor
@@ -84,19 +81,18 @@ class TTSAtom_EvaluatorFactory: public IEvaluatorFactory, ITSAtom_DataProvider
   IEvaluatorFactory *FactoryRegister;
 public:
   IEvaluator *Evaluator(const olxstr & propertyName)  {  return Evaluators[propertyName];  }
-  IEvaluator *Evaluator(int index)  {  return Evaluators.GetObject(index);  }
-  const olxstr& EvaluatorName(int index)  {  return Evaluators.GetComparable(index);  }
-  int EvaluatorCount() {  return Evaluators.Count();  }
+  IEvaluator *Evaluator(size_t index)  {  return Evaluators.GetObject(index);  }
+  const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetComparable(index);  }
+  size_t EvaluatorCount() {  return Evaluators.Count();  }
   // variable getter, to be used by evaluators
   TSAtom* GetTSAtom(){  return SAtom;  }
   // variable setter
   void SetTSAtom_(TSAtom* val)  {  SAtom = val;  }
   // destructor
-  ~TTSAtom_EvaluatorFactory()
-  {
-    for( int i=0; i < Evaluators.Count(); i++ )
+  ~TTSAtom_EvaluatorFactory()  {
+    for( size_t i=0; i < Evaluators.Count(); i++ )
       delete Evaluators.GetObject(i);
-    for( int i=0; i < DataProviders.Count(); i++ )
+    for( size_t i=0; i < DataProviders.Count(); i++ )
       delete DataProviders.GetObject(i);
   }
   // constructor to create instaces of registered evaluators
@@ -112,19 +108,18 @@ class TTBasicAtomInfoEvaluatorFactory: public IEvaluatorFactory, ITBasicAtomInfo
   IEvaluatorFactory *FactoryRegister;
 public:
   IEvaluator *Evaluator(const olxstr & propertyName)  {  return Evaluators[propertyName];  }
-  IEvaluator *Evaluator(int index)  {  return Evaluators.GetObject(index);  }
-  const olxstr& EvaluatorName(int index)  {  return Evaluators.GetComparable(index);  }
-  int EvaluatorCount()  {  return Evaluators.Count();  }
+  IEvaluator *Evaluator(size_t index)  {  return Evaluators.GetObject(index);  }
+  const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetComparable(index);  }
+  size_t EvaluatorCount()  {  return Evaluators.Count();  }
   // variable getter, to be used by evaluators
   TBasicAtomInfo *GetTBasicAtomInfo(){  return bai;  }
   // variable setter
   void SetTBasicAtomInfo(TBasicAtomInfo *val)  {  bai = val;  }
   // destructor
-  ~TTBasicAtomInfoEvaluatorFactory()
-  {
-    for( int i=0; i < Evaluators.Count(); i++ )
+  ~TTBasicAtomInfoEvaluatorFactory()  {
+    for( size_t i=0; i < Evaluators.Count(); i++ )
       delete Evaluators.GetObject(i);
-    for( int i=0; i < DataProviders.Count(); i++ )
+    for( size_t i=0; i < DataProviders.Count(); i++ )
       delete DataProviders.GetObject(i);
   }
   // constructor to create instaces of registered evaluators
@@ -226,7 +221,7 @@ public:
   // destructor
   TSAtom_BcEvaluator()  {  ;  }
   // evaluator function
-  double EvaluateDouble() const {  return Parent->GetTSAtom()->BondCount();  }
+  double EvaluateDouble() const {  return (double)Parent->GetTSAtom()->BondCount();  }
 };
 
 class TSFactoryRegister: public IEvaluatorFactory  {
@@ -245,9 +240,9 @@ public:
   ~TSFactoryRegister();
   IEvaluatorFactory *Factory(const olxstr &name) {  return Factories[name];  }
   IEvaluatorFactory *BindingFactory(const olxstr &name) {  return FactoryMap[name];  }
-  int EvaluatorCount()  {  return 0;  }
-  IEvaluator *Evaluator(int index)  {  return NULL;  }
-  const olxstr& EvaluatorName(int index)  {  static olxstr rubbish;  return rubbish;  }
+  size_t EvaluatorCount()  {  return 0;  }
+  IEvaluator *Evaluator(size_t index)  {  return NULL;  }
+  const olxstr& EvaluatorName(size_t index)  {  static olxstr rubbish;  return rubbish;  }
   IEvaluator *Evaluator(const olxstr& name);
 };
 

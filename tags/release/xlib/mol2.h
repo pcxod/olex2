@@ -1,5 +1,5 @@
-#ifndef olx_mol_2_H
-#define olx_mol_2_H
+#ifndef olx_mol2_H
+#define olx_mol2_H
 
 #include "xfiles.h"
 
@@ -17,12 +17,12 @@ const short
 
 struct TMol2Bond  {
 private:
-  int Id;
+  size_t Id;
 public:
-  TMol2Bond(int id) : Id(id) { }
+  TMol2Bond(size_t id) : Id(id) { }
   short BondType;
   TCAtom* a1, *a2;
-  int GetId() const {  return Id;  }
+  size_t GetId() const {  return Id;  }
 };
 
 class TMol2: public TBasicCFile  {
@@ -39,13 +39,11 @@ public:
   TMol2() { }
   virtual ~TMol2() {  Clear();  }
 
-  inline int BondCount() const     {  return Bonds.Count();  }
-  inline TMol2Bond& Bond(int index) {  return Bonds[index];  }
+  inline size_t BondCount() const {  return Bonds.Count();  }
+  inline TMol2Bond& Bond(size_t index) {  return Bonds[index];  }
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
-  virtual bool Adopt(TXFile *XF);
-  void DeleteAtom(TCAtom *CA);
-
+  virtual bool Adopt(TXFile& XF);
   virtual IEObject* Replicate()  const {  return new TMol2;  }
 };
 

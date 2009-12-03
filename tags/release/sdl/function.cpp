@@ -75,9 +75,9 @@ olxstr ABasicFunction::GetQualifiedName() const  {
 void ABasicFunction::ParseOptions(const olxstr& Options, TCSTypeList<olxstr,olxstr>& list)  {
   if( Options.IsEmpty() )  return;
   TStrList toks(Options, "&;");
-  for( int i=0; i < toks.Count(); i++ )  {
-    int mi = toks[i].IndexOf('-');
-    if( mi != -1 )
+  for( size_t i=0; i < toks.Count(); i++ )  {
+    size_t mi = toks[i].IndexOf('-');
+    if( mi != InvalidIndex )
       list.Add( toks[i].SubStringTo(mi), olxstr(toks[i].SubStringFrom(mi+1)));
     else
       list.Add( toks[i], EmptyString);
@@ -86,7 +86,7 @@ void ABasicFunction::ParseOptions(const olxstr& Options, TCSTypeList<olxstr,olxs
 //..............................................................................
 olxstr ABasicFunction::OptionsToString(const TCSTypeList<olxstr,olxstr>& list) const {
   olxstr rv;
-  for( int i=0; i < list.Count(); i++ )  {
+  for( size_t i=0; i < list.Count(); i++ )  {
     rv << list.GetComparable(i);
     if( !list.GetObject(i).IsEmpty() )
       rv << '-' << list.GetObject(i);

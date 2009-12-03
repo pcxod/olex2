@@ -58,18 +58,18 @@ class TTXBond_EvaluatorFactory: public IEvaluatorFactory, ITXBond_DataProvider
   IEvaluatorFactory *FactoryRegister;
 public:
   IEvaluator *Evaluator(const olxstr & propertyName)  {  return Evaluators[propertyName];  }
-  IEvaluator *Evaluator(int index)  {  return Evaluators.GetObject(index);  }
-  const olxstr& EvaluatorName(int index)  {  return Evaluators.GetComparable(index);  }
-  int EvaluatorCount()  {  return Evaluators.Count();  }
+  IEvaluator *Evaluator(size_t index)  {  return Evaluators.GetObject(index);  }
+  const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetComparable(index);  }
+  size_t EvaluatorCount()  {  return Evaluators.Count();  }
   // variable getter, to be used by evaluators
   TXBond *GetTXBond(){  return XBond;  }
   // variable setter
   void SetTXBond_(TXBond *val)  {  XBond = val;  }
   // destructor
   ~TTXBond_EvaluatorFactory()  {
-    for( int i=0; i < Evaluators.Count(); i++ )
+    for( size_t i=0; i < Evaluators.Count(); i++ )
       delete Evaluators.GetObject(i);
-    for( int i=0; i < DataProviders.Count(); i++ )
+    for( size_t i=0; i < DataProviders.Count(); i++ )
       delete DataProviders.GetObject(i);
   }
   // constructor to create instaces of registered evaluators
@@ -85,19 +85,18 @@ class TTXAtom_EvaluatorFactory: public IEvaluatorFactory, ITXAtom_DataProvider
   IEvaluatorFactory *FactoryRegister;
 public:
   IEvaluator *Evaluator(const olxstr & propertyName)  {  return Evaluators[propertyName];  }
-  IEvaluator *Evaluator(int index)  {  return Evaluators.GetObject(index);  }
-  const olxstr& EvaluatorName(int index)  {  return Evaluators.GetComparable(index);  }
-  int EvaluatorCount()  {  return Evaluators.Count();  }
+  IEvaluator *Evaluator(size_t index)  {  return Evaluators.GetObject(index);  }
+  const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetComparable(index);  }
+  size_t EvaluatorCount()  {  return Evaluators.Count();  }
   // variable getter, to be used by evaluators
   TXAtom *GetTXAtom(){  return XAtom;  }
   // variable setter
   void SetTXAtom(TXAtom *val)  {  XAtom = val;  }
   // destructor
-  ~TTXAtom_EvaluatorFactory()
-  {
-    for( int i=0; i < Evaluators.Count(); i++ )
+  ~TTXAtom_EvaluatorFactory()  {
+    for( size_t i=0; i < Evaluators.Count(); i++ )
       delete Evaluators.GetObject(i);
-    for( int i=0; i < DataProviders.Count(); i++ )
+    for( size_t i=0; i < DataProviders.Count(); i++ )
       delete DataProviders.GetObject(i);
   }
   // constructor to create instaces of registered evaluators
@@ -181,7 +180,7 @@ public:
   // destructor
   TXAtom_BcEvaluator()  {  ;  }
   // evaluator function
-  double EvaluateDouble() const {  return Parent->GetTXAtom()->Atom().BondCount();  }
+  double EvaluateDouble() const {  return (double)Parent->GetTXAtom()->Atom().BondCount();  }
 };
 // evaluator implementation for complex bai
 class TXAtom_BaiEvaluator: public ITBasicAtomInfoDataProvider
@@ -287,19 +286,18 @@ class TTGlGroupEvaluatorFactory: public IEvaluatorFactory, ITGlGroupDataProvider
   IEvaluatorFactory *FactoryRegister;
 public:
   IEvaluator *Evaluator(const olxstr & propertyName)  {  return Evaluators[propertyName];  }
-  IEvaluator *Evaluator(int index)  {  return Evaluators.GetObject(index);  }
-  const olxstr& EvaluatorName(int index)  {  return Evaluators.GetComparable(index);  }
-  int EvaluatorCount()  {  return Evaluators.Count();  }
+  IEvaluator *Evaluator(size_t index)  {  return Evaluators.GetObject(index);  }
+  const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetComparable(index);  }
+  size_t EvaluatorCount()  {  return Evaluators.Count();  }
   // variable getter, to be used by evaluators
   TGlGroup *GetTGlGroup(){  return sel;  }
   // variable setter
   void SetTGlGroup(TGlGroup *val)  {  sel = val;  }
   // destructor
-  ~TTGlGroupEvaluatorFactory()
-  {
-    for( int i=0; i < Evaluators.Count(); i++ )
+  ~TTGlGroupEvaluatorFactory()  {
+    for( size_t i=0; i < Evaluators.Count(); i++ )
       delete Evaluators.GetObject(i);
-    for( int i=0; i < DataProviders.Count(); i++ )
+    for( size_t i=0; i < DataProviders.Count(); i++ )
       delete DataProviders.GetObject(i);
   }
   // constructor to create instaces of registered evaluators

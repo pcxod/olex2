@@ -1,5 +1,4 @@
 //---------------------------------------------------------------------------//
-// namespace TXClasses: crystallographic core
 // TSPlane implementation
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
@@ -16,19 +15,12 @@
 #include "pers_util.h"
 
 //..............................................................................
-TSPlane::TSPlane(TNetwork* Parent):TSObject<TNetwork>(Parent)  {
-  FDistance = 0;
-  Regular = Deleted = false;
-}
-//..............................................................................
-TSPlane::~TSPlane()  {  }
-//..............................................................................
 double TSPlane::CalcRMS(const TSAtomPList& atoms)  {
   if( atoms.Count() < 3 )  return -1;
   vec3d p, c;
   TTypeList< AnAssociation2<vec3d, double> > Points;
   Points.SetCapacity( atoms.Count() );
-  for( int i=0; i < atoms.Count(); i++ )
+  for( size_t i=0; i < atoms.Count(); i++ )
     Points.AddNew( atoms[i]->crd(), 1);
   return CalcPlane(Points, p, c);
 }
@@ -36,7 +28,7 @@ double TSPlane::CalcRMS(const TSAtomPList& atoms)  {
 void TSPlane::Init(const TTypeList< AnAssociation2<TSAtom*, double> >& atoms)  {
   TTypeList< AnAssociation2<vec3d, double> > points;
   points.SetCapacity(atoms.Count());
-  for( int i=0; i < atoms.Count(); i++ )
+  for( size_t i=0; i < atoms.Count(); i++ )
     points.AddNew( atoms[i].GetA()->crd(), atoms[i].GetB());
   CalcPlane(points, FNormal, FCenter);
   FDistance = FNormal.DotProd(FCenter)/FNormal.Length();
@@ -53,13 +45,13 @@ bool TSPlane::CalcPlanes(const TTypeList< AnAssociation2<vec3d, double> >& Point
   mat3d m;
   double mass = 0;
   center.Null();
-  for( int i=0; i < Points.Count(); i++ )  {
+  for( size_t i=0; i < Points.Count(); i++ )  {
     center += Points[i].GetA()*Points[i].GetB();
     mass += Points[i].GetB();
   }
   center /= mass;
 
-  for( int i=0; i < Points.Count(); i++ )  {
+  for( size_t i=0; i < Points.Count(); i++ )  {
     vec3d t = Points[i].GetA() - center;
     double wght = Points[i].GetB()*Points[i].GetB();
     m[0][0] += (t[0]*t[0]*wght);
@@ -98,7 +90,7 @@ bool TSPlane::CalcPlanes(const TTypeList< AnAssociation2<vec3d, double> >& Point
 bool TSPlane::CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms, vec3d& center) {
   TTypeList< AnAssociation2<vec3d, double> > Points;
   Points.SetCapacity(atoms.Count());
-  for( int i=0; i < atoms.Count(); i++ )
+  for( size_t i=0; i < atoms.Count(); i++ )
     Points.AddNew( atoms[i]->crd(), 1.0 );
   return CalcPlanes(Points, params, rms, center);
 }
@@ -128,43 +120,18 @@ double TSPlane::CalcPlane(const TSAtomPList& atoms,
 {
   TTypeList< AnAssociation2<vec3d, double> > Points;
   Points.SetCapacity(atoms.Count());
-  for( int i=0; i < atoms.Count(); i++ )
+  for( size_t i=0; i < atoms.Count(); i++ )
     Points.AddNew( atoms[i]->crd(), 1.0 );
   return CalcPlane(Points, Params, center, type);
-}
-//..............................................................................
-double TSPlane::DistanceTo(const vec3d& Crd) const {
-  return Crd.DotProd(FNormal) - FDistance;
-}
-//..............................................................................
-double TSPlane::DistanceTo(const TSAtom& A) const  {
-  return DistanceTo(A.crd());
-}
-//..............................................................................
-double TSPlane::Angle( const vec3d &A,  const vec3d &B) const  {
-  vec3d V(B-A);
-  double ca = FNormal.CAngle(V), angle;
-  angle = acos(ca)*180/M_PI;
-  return angle;
 }
 //..............................................................................
 double TSPlane::Angle(const TSBond& Bd) const  {
   return Angle(Bd.A().crd(), Bd.B().crd());
 }
 //..............................................................................
-double TSPlane::Angle(const TSPlane& P) const  {
-  vec3d A;
-  return Angle(A, P.GetNormal());
-}
-//..............................................................................
-double TSPlane::Z(double X, double Y) const  {
-  if( !FNormal[2] )  return 0;
-  return (FNormal[0]*X + FNormal[1]*Y + FDistance)/FNormal[2];
-}
-//..............................................................................
 void TSPlane::ToDataItem(TDataItem& item) const {
-  int cnt = 0;
-  for( int i=0; i < Crds.Count(); i++ )  {
+  size_t cnt = 0;
+  for( size_t i=0; i < Crds.Count(); i++ )  {
     if( Crds[i].GetA()->IsDeleted() )  continue;
     item.AddItem(cnt++, Crds[i].GetB()).AddField("atom_id", Crds[i].GetA()->GetTag()); 
   }
@@ -172,13 +139,13 @@ void TSPlane::ToDataItem(TDataItem& item) const {
 //..............................................................................
 void TSPlane::FromDataItem(TDataItem& item) {
   Crds.Clear();
-  for( int i=0; i < item.ItemCount(); i++ )  {
+  for( size_t i=0; i < item.ItemCount(); i++ )  {
     Crds.AddNew( &Network->GetLattice().GetAtom(item.GetItem(i).GetRequiredField("atom_id").ToInt()), 
       item.GetItem(i).GetValue().ToDouble());
   }
   TTypeList< AnAssociation2<vec3d, double> > points;
   points.SetCapacity(Crds.Count());
-  for( int i=0; i < Crds.Count(); i++ )
+  for( size_t i=0; i < Crds.Count(); i++ )
     points.AddNew( Crds[i].GetA()->crd(), Crds[i].GetB());
   CalcPlane(points, FNormal, FCenter);
   FDistance = FNormal.DotProd(FCenter)/FNormal.Length();

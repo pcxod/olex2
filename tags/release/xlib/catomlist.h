@@ -25,7 +25,7 @@ public:
   // returns either an atom label or a string of C1_tol kind  or $C
   virtual olxstr GetExpression() const = 0;
   virtual bool IsExplicit() const = 0;
-  virtual int Expand(RefinementModel& rm, TAtomRefList& res, TResidue& resi) const = 0;
+  virtual size_t Expand(RefinementModel& rm, TAtomRefList& res, TResidue& resi) const = 0;
 };
 
 // C1, C1_$2, C1_2 expressions handling
@@ -39,7 +39,7 @@ public:
     atom(_atom), matrix(_matrix) {}
   virtual olxstr GetExpression() const {  return atom.GetLabel();  }
   virtual bool IsExplicit() const {  return true;  }
-  virtual int Expand(RefinementModel& rm, TAtomRefList& res, TResidue& resi) const {
+  virtual size_t Expand(RefinementModel& rm, TAtomRefList& res, TResidue& resi) const {
     res.Add( new ExplicitCAtomRef(*this) );
     return 1;
   }
@@ -70,17 +70,17 @@ public:
   // * is special char
   virtual olxstr GetExpression() const {  return Name == '*' ? EmptyString : Name;  }
   virtual bool IsExplicit() const {  return false;  }
-  virtual int Expand(RefinementModel& rm, TAtomRefList& res, TResidue& resi) const;
+  virtual size_t Expand(RefinementModel& rm, TAtomRefList& res, TResidue& resi) const;
   // may return NULL
   static IAtomRef* NewInstance(RefinementModel& rm, const olxstr& exp, const olxstr& resi, TResidue* _resi)  {
     if( resi.IsEmpty() || _resi != NULL )  {  // a chance to create explicit reference
-      if( exp.IndexOf('+')  == -1 &&
-          exp.IndexOf('-')  == -1 &&
-          exp.IndexOf('*')  == -1 &&
+      if( exp.IndexOf('+')  == InvalidIndex &&
+          exp.IndexOf('-')  == InvalidIndex &&
+          exp.IndexOf('*')  == InvalidIndex &&
           !exp.StartsFrom('$') )
       {
-        int us_ind = exp.IndexOf('_');
-        if( us_ind != -1 )  {
+        size_t us_ind = exp.IndexOf('_');
+        if( us_ind != InvalidIndex )  {
           if( us_ind+1 == exp.Length() )  // invalid reference
             return NULL;
           if( exp.CharAt(us_ind) != '$' )  { // is symm reference?
@@ -110,7 +110,7 @@ public:
   virtual bool IsExplicit() const {  return false;  }
   // * is special char
   virtual olxstr GetExpression() const {  return olxstr(start.GetExpression() << ' ' << op << ' ' << end.GetExpression());  }
-  virtual int Expand(RefinementModel& rm, TAtomRefList& res, TResidue& resi) const;
+  virtual size_t Expand(RefinementModel& rm, TAtomRefList& res, TResidue& resi) const;
 };
 
 class AtomRefList  {
@@ -121,7 +121,7 @@ class AtomRefList  {
   bool Valid, ContainsImplicitAtoms;
   olxstr BuildExpression() const  {
     olxstr rv;
-    for( int i=0; i < refs.Count(); i++ )  {
+    for( size_t i=0; i < refs.Count(); i++ )  {
       rv << refs[i].GetExpression();
       if( (i+1) < refs.Count() )
         rv << ' ';

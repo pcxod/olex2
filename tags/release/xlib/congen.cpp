@@ -15,19 +15,19 @@ void AConstraintGenerator::DoGenerateAtom( TCAtomPList& created, TAsymmUnit& au,
     vec3d_list& Crds, const olxstr& StartingName)  {
   vec3d v;
   bool IncLabel = (Crds.Count() != 1);
-  for( int i=0; i < Crds.Count(); i++ )  {
+  for( size_t i=0; i < Crds.Count(); i++ )  {
     v = Crds[i];
     au.CartesianToCell(v);
 
     TCAtom* CA = &au.NewAtom();
     if( IncLabel )  {
-      int j = i;
+      size_t j = i;
       olxstr lbl = (StartingName + (char)('a' + j));
       CA->Label() = au.CheckLabel(CA, lbl);
     }
     else
       CA->Label() = au.CheckLabel(CA, StartingName);
-    CA->SetAtomInfo( au.GetAtomsInfo()->GetAtomInfo(iHydrogenIndex) );
+    CA->SetAtomInfo(TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex) );
     CA->ccrd() = v;
     created.Add( CA );
   }
@@ -63,7 +63,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
         // best approximation, though not really required (one atom in plane of the subs and two - out)...
         if( NEnvi.Count() >= 2 )  {
           RotVec = (NEnvi.GetBase().crd() - envi.GetBase().crd()).Normalise();
-          CreateRotationMatrix(M, RotVec, -0.5 );
+          CreateRotationMatrix(M, RotVec, -0.5);
 
           Vec1 = NEnvi.GetCrd(0)  - NEnvi.GetBase().crd();
           Vec1 = M * Vec1;
@@ -91,7 +91,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
         crds.AddNew(M*crds[0]);
         crds.AddNew(M*crds[1]);
     
-        for( int i=0; i < crds.Count(); i++ )  {
+        for( size_t i=0; i < crds.Count(); i++ )  {
           crds[i] *= 0.96;
           crds[i] += envi.GetBase().crd();
         }
@@ -135,7 +135,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
     case fgCH1:
       AnglesEqual = (envi.Count() == 3);  // proposed by Luc, see Afix 1 in shelxl
       if( envi.Count() == 3 )  {
-        for( int i=0; i < envi.Count(); i++ )  {
+        for( size_t i=0; i < envi.Count(); i++ )  {
           if( envi.GetCrd(i).DistanceTo( envi.GetBase().crd() ) > 1.95 &&
             envi.GetBAI(i) != 34 )  {  // bromine
             AnglesEqual = false;
@@ -156,7 +156,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
       }
       if( !AnglesEqual )  {
         int c = 0;
-        for( int i=0; i < envi.Count(); i++ )  {
+        for( size_t i=0; i < envi.Count(); i++ )  {
 //          if( envi.GetCrd(i).DistanceTo( envi.GetBase().crd() ) > 1.95 &&
 //            envi.GetBAI(i) != 34 ) // bromine
 //            continue;
@@ -280,7 +280,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
         crds.AddNew(M*crds[0]);
         crds.AddNew(M*crds[1]);
     
-        for( int i=0; i < crds.Count(); i++ )  {
+        for( size_t i=0; i < crds.Count(); i++ )  {
           crds[i] *= 0.89;
           crds[i] += envi.GetBase().crd();
         }
@@ -338,7 +338,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
       break;
     case fgNH1:
       if( envi.Count() >= 2 )  {
-        for( int i=0; i < envi.Count(); i++ )
+        for( size_t i=0; i < envi.Count(); i++ )
           Vec1 += (envi.GetCrd(i)-envi.GetBase().crd()).Normalise();
         crds.AddNew(Vec1.NormaliseTo(-0.90) + envi.GetBase().crd());
       }
@@ -357,7 +357,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
       }
       else if( envi.Count() == 4 ||  envi.Count() == 5 )  {
         bool create = true;
-        for( int i=0; i < envi.Count(); i++ )  {
+        for( size_t i=0; i < envi.Count(); i++ )  {
           Vec1 += (envi.GetCrd(i)-envi.GetBase().crd()).Normalise();
 //          if( !(envi.GetBAI(i).GetIndex() == iCarbonIndex ||
 //                envi.GetBAI(i).GetIndex() == iBoronIndex) )  {

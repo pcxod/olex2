@@ -28,7 +28,7 @@ template <class ListToTraverseClass> class TListTraverser  {
 public:
   template <class Traverser>
     static bool Traverse(const ListToTraverseClass& list, Traverser& traverser ) {
-      for( int i=0; i < list.Count(); i++ )  {
+      for( size_t i=0; i < list.Count(); i++ )  {
         if( !traverser.OnItem( list.Item(i) ) )  return false;
       }
       return true;
@@ -42,7 +42,7 @@ template <class GraphToTraverseClass> class TGraphTraverser  {
 public:
   template <class Traverser>
     static bool Traverse(const GraphToTraverseClass& graph, Traverser& traverser ) {
-      for( int i=0; i < graph.Count(); i++ )  {
+      for( size_t i=0; i < graph.Count(); i++ )  {
         if( !traverser.OnItem( graph.Item(i) ) )  return false;
         if( !Traverse(graph.Item(i), traverser) )  return false;
       }
@@ -50,10 +50,10 @@ public:
     }
   template <class Traverser>
     static bool LevelTraverse(const GraphToTraverseClass& graph, Traverser& traverser ) {
-      for( int i=0; i < graph.Count(); i++ )  {
+      for( size_t i=0; i < graph.Count(); i++ )  {
         if( !traverser.OnItem( graph.Item(i) ) )  return false;
       }
-      for( int i=0; i < graph.Count(); i++ )  {
+      for( size_t i=0; i < graph.Count(); i++ )  {
         if( !LevelTraverse(graph.Item(i), traverser) )  return false;
       }
       return true;

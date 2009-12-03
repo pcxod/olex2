@@ -1,8 +1,6 @@
-#ifndef satomH
-#define satomH
-
+#ifndef __olx_xl_satom_H
+#define __olx_xl_satom_H
 #include "xbase.h"
-#include "elist.h"
 #include "atominfo.h"
 #include "catom.h"
 #include "symmat.h"
@@ -46,6 +44,7 @@ public:
   DefPropBFIsSet(Deleted, Flags, satom_Deleted)
   DefPropBFIsSet(Standalone, Flags, satom_Standalone)
 
+  bool IsAvailable() const {  return !(IsDeleted() || FCAtom->IsDetached());  }
   bool IsGrown() const;
   inline void SetGrown(bool v)  {  SetBit(v, Flags, satom_Grown);  }
 
@@ -64,20 +63,20 @@ public:
   // returns a label plus (if not identity) first matrix like label_resi(-2/3+X,Y,2-Z)
   olxstr GetGuiLabelEx() const;
 
-  inline int MatrixCount()             const {  return Matrices.Count();  }
-  inline const smatd& GetMatrix(int i) const {  return *Matrices[i];  }
+  inline size_t MatrixCount() const {  return Matrices.Count();  }
+  inline const smatd& GetMatrix(size_t i) const {  return *Matrices[i];  }
   // this also makes sure that the identity releated matrix is coming first in the list
   inline void AddMatrix(smatd* M)            {  
     Matrices.Add(M);  
-    if( M->GetTag() == 0 && Matrices.Count() > 1 )
+    if( M->IsFirst() && Matrices.Count() > 1 )
       Matrices.Swap(0, Matrices.Count()-1);
   }
   inline void AddMatrices(TSAtom *A)         {  
-    const int cnt = Matrices.Count();
+    const size_t cnt = Matrices.Count();
     Matrices.AddList(A->Matrices); 
     if( cnt != 0 && Matrices.Count() > 1 )  {
-      for( int i=0; i < A->Matrices.Count(); i++ )  {
-        if( A->Matrices[i]->GetTag() == 0 )  {
+      for( size_t i=0; i < A->Matrices.Count(); i++ )  {
+        if( A->Matrices[i]->IsFirst() )  {
           Matrices.Swap(0, cnt+i);
           break;
         }
@@ -112,51 +111,62 @@ public:
   void RemoveNode(TSAtom& node);
 
   struct Ref  {
-    int catom_id;
-    smatd::Ref matrix_ref;
-    TTypeList<smatd::Ref>* matrices; 
-    Ref(int a_id, const smatd_plist& symm) : catom_id(a_id), 
-      matrix_ref(symm[0]->GetRef()), matrices(NULL) 
+    size_t catom_id;
+    uint32_t matrix_id;
+    TArrayList<uint32_t>* matrices; 
+    Ref(size_t a_id, const smatd_plist& symm) : catom_id(a_id), 
+      matrix_id(symm[0]->GetId()), matrices(NULL) 
     {
       if( symm.Count() > 1 )  {
-        matrices = new TTypeList<smatd::Ref>(symm.Count()-1);
-        for( int i=1; i < symm.Count(); i++ )
-          matrices->Set(i-1, new smatd::Ref(symm[i]->GetRef()) );
+        matrices = new TArrayList<uint32_t>(symm.Count()-1);
+        for( size_t i=1; i < symm.Count(); i++ )
+          (*matrices)[i-1] = symm[i]->GetId();
       }
     } 
     Ref(const Ref& r) : catom_id(r.catom_id), 
-      matrix_ref(r.matrix_ref), 
-      matrices( r.matrices == NULL ? NULL : new TTypeList<smatd::Ref>(*r.matrices) )  
+      matrix_id(r.matrix_id), 
+      matrices(r.matrices == NULL ? NULL : new TArrayList<uint32_t>(*r.matrices))  
     {}
-    Ref& operator = (const Ref& r)  {
-      catom_id = r.catom_id;
-      matrix_ref = r.matrix_ref;
-      matrices = ( r.matrices == NULL ? NULL : new TTypeList<smatd::Ref>(*r.matrices));
-      return *this;
-    }
     ~Ref()  {
       if( matrices != NULL )
         delete matrices;
+    }
+    Ref& operator = (const Ref& r)  {
+      catom_id = r.catom_id;
+      matrix_id = r.matrix_id;
+      matrices = (r.matrices == NULL ? NULL : new TArrayList<uint32_t>(*r.matrices));
+      return *this;
+    }
+    bool operator == (const Ref& r) const {
+      if( catom_id == r.catom_id )  {
+        if( matrix_id != r.matrix_id )  {
+          if( matrices == NULL || r.matrices == NULL )
+            return false;
+          for( size_t i=0; i < r.matrices->Count(); i++ )
+            if( matrix_id == (*r.matrices)[i] )
+              return true;
+    }
+      }
+      return false;
     }
   };
 
   bool operator == (const Ref& id) const {
     if( FCAtom->GetId() == id.catom_id )  {
-      for( int i=0; i < Matrices.Count(); i++ )
-        if( (*Matrices[i]) == id.matrix_ref )
+      for( size_t i=0; i < Matrices.Count(); i++ )
+        if( Matrices[i]->GetId() == id.matrix_id )
           return true;
     }
     return false;
   }
-  Ref GetRef() const  {
-    return Ref(FCAtom->GetId(), Matrices);
-  }
+  Ref GetRef() const {  return Ref(FCAtom->GetId(), Matrices);  }
 
   virtual void ToDataItem(TDataItem& item) const;
   virtual void FromDataItem(const TDataItem& item, class TLattice& parent);
 };
-  typedef TTypeList<TSAtom> TSAtomList;
-  typedef TPtrList<TSAtom> TSAtomPList;
+
+typedef TTypeList<TSAtom> TSAtomList;
+typedef TPtrList<TSAtom> TSAtomPList;
 
 EndXlibNamespace()
 #endif

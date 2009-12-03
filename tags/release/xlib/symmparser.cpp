@@ -115,11 +115,11 @@ next_oper:
   return true;
 }
 //..............................................................................
-smatd TSymmParser::SymmCodeToMatrixU(const class TUnitCell& UC, const olxstr& Code)  {
+smatd TSymmParser::SymmCodeToMatrixU(const TUnitCell& UC, const olxstr& Code)  {
   return _SymmCodeToMatrix(UC, Code);
 }
 //..............................................................................
-smatd TSymmParser::SymmCodeToMatrixA(const class TAsymmUnit& AU, const olxstr& Code)  {
+smatd TSymmParser::SymmCodeToMatrixA(const TAsymmUnit& AU, const olxstr& Code)  {
   return _SymmCodeToMatrix(AU, Code);
 }
 //..............................................................................
@@ -131,13 +131,13 @@ olxstr TSymmParser::MatrixToSymmEx(const mat3i& M)  {
     for( int i=0; i < 3; i ++ )  {
       if( i == j )  {
         if( M[j][i] != 0 )  {
-          T1 << CharSign(M[j][i]);
+          T1 << olx_sign_char(M[j][i]);
           T1 << Axis[j];
         }
       }
       else if( M[j][i] != 0 )  {
         T1.Insert(Axis[i], 0);
-        T1.Insert(CharSign(M[j][i]), 0);
+        T1.Insert(olx_sign_char(M[j][i]), 0);
       }
     }
     T << T1;
@@ -148,32 +148,32 @@ olxstr TSymmParser::MatrixToSymmEx(const mat3i& M)  {
 //..............................................................................
 // this needs to be of very high performance
 olxstr TSymmParser::MatrixToSymmCode(const TUnitCell& UC, const smatd& M)  {
-  const smatd& m = UC.GetMatrix( M.GetTag() );
-  vec3i Trans( m.t - M.t);
+  const smatd& m = UC.GetMatrix(M.GetContainerId());
+  vec3i Trans(m.t - M.t);
   int baseVal = 5;
   if( (abs(Trans[0]) > 4) || (abs(Trans[1]) > 4) || (abs(Trans[1]) > 4) )
     baseVal = 55;
 
   static char bf[64];
 #ifdef _MSC_VER
-  sprintf_s(bf, 64, "%i_%i%i%i", M.GetTag()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
+  sprintf_s(bf, 64, "%i_%i%i%i", M.GetContainerId()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
 #else
-  sprintf(bf, "%i_%i%i%i", M.GetTag()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
+  sprintf(bf, "%i_%i%i%i", M.GetContainerId()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
 #endif
   return olxstr(bf);
 }
 //..............................................................................
 olxstr TSymmParser::MatrixToSymmCode(const smatd_list& ml, const smatd& M)  {
-  vec3i Trans( ml[M.GetTag()].t - M.t );
+  vec3i Trans(ml[M.GetContainerId()].t - M.t);
   int baseVal = 5;
   if( (abs(Trans[0]) > 4) || (abs(Trans[1]) > 4) || (abs(Trans[1]) > 4) )
     baseVal = 55;
 
   static char bf[64];
 #ifdef _MSC_VER
-  sprintf_s(bf, 64, "%i_%i%i%i", M.GetTag()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
+  sprintf_s(bf, 64, "%i_%i%i%i", M.GetContainerId()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
 #else
-  sprintf(bf, "%i_%i%i%i", M.GetTag()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
+  sprintf(bf, "%i_%i%i%i", M.GetContainerId()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
 #endif
   return olxstr(bf);
 }

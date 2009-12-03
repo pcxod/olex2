@@ -23,32 +23,32 @@ class TCLattice  {
   TTypeList<vec3d> Vectors;
   TPtrList<TBravaisLattice> BravaisLattices;
   olxstr Name, Symbol;
-  int Latt;
+  short Latt;
 public:
   TCLattice(int Latt);
   virtual ~TCLattice()  {  }
-  inline int VectorCount()  const          {  return Vectors.Count();  }
-  inline vec3d&  GetVector(int i) const {  return Vectors[i];  }
-  inline const olxstr& GetName() const   {  return Name; }
-  inline const olxstr& GetSymbol() const {  return Symbol; }
+  size_t VectorCount() const {  return Vectors.Count();  }
+  vec3d&  GetVector(size_t i) const {  return Vectors[i];  }
+  const olxstr& GetName() const {  return Name; }
+  const olxstr& GetSymbol() const {  return Symbol; }
 
-  inline int GetLatt()  const              {  return Latt;  }
+  short GetLatt() const {  return Latt;  }
 
-  inline TCLattice& AddBravaiseLattice(TBravaisLattice* bl)  {
-    BravaisLattices.Add( bl );
+  TCLattice& AddBravaiseLattice(TBravaisLattice* bl)  {
+    BravaisLattices.Add(bl);
     return *this;
   }
-  inline int BravaisLatticeCount()   const                {  return BravaisLattices.Count();  }
-  inline TBravaisLattice& GetBravaisLattice(int i) const  {  return *BravaisLattices[i];  }
+  size_t BravaisLatticeCount() const {  return BravaisLattices.Count();  }
+  TBravaisLattice& GetBravaisLattice(size_t i) const {  return *BravaisLattices[i];  }
   
   class TIncorrectLattExc: public TBasicException  {
-    int Latt;
+    short Latt;
     public:
       TIncorrectLattExc(const olxstr& location, int latt) :
         TBasicException(location, olxstr("Incorrect Latt instruction: ") << latt) {
           Latt = latt;  
         }
-      inline int GetLatt() const  {  return Latt;  }
+      short GetLatt() const  {  return Latt;  }
       virtual IEObject* Replicate()  const  {  return new TIncorrectLattExc(*this);  }
   };
 };
@@ -93,28 +93,28 @@ public:
                  int yx, int yy, int yz, 
                  int zx, int zy, int zz,
                  double tx, double ty, double tz);
-  inline int MatrixCount()             const {  return Matrices.Count();  };
-  inline smatd& GetMatrix(int i)       const {  return Matrices[i];  }
-  inline int GetNumber()               const {  return Number;  }
-  inline const olxstr& GetName()       const {  return Name;  }
-  inline olxstr GetBareName()          const {  return Name.SubStringFrom(1);  }
-  inline const olxstr& GetFullName()   const {  return FullName;  }
-  inline const olxstr& GetAxis()       const {  return Axis;  }
-  inline const olxstr& GetHallSymbol() const {  return HallSymbol;  }
+  size_t MatrixCount() const {  return Matrices.Count();  };
+  smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
+  int GetNumber() const {  return Number;  }
+  const olxstr& GetName() const {  return Name;  }
+  olxstr GetBareName() const {  return Name.SubStringFrom(1);  }
+  const olxstr& GetFullName() const {  return FullName;  }
+  const olxstr& GetAxis() const {  return Axis;  }
+  const olxstr& GetHallSymbol() const {  return HallSymbol;  }
 
-  inline TCLattice& GetLattice()         const {  return *Latt;  }
-  inline bool IsCentrosymmetric()        const {  return CentroSymmetric;  }
+  TCLattice& GetLattice()         const {  return *Latt;  }
+  bool IsCentrosymmetric()        const {  return CentroSymmetric;  }
   // retruns true if any matrix of the SG has a nonzero translation
-  inline bool HasTranslations()          const {  return Translations;  }
+  bool HasTranslations()          const {  return Translations;  }
   /* it is NOT (0,0,0) for Fdd2, I41, I4122, I4132, I41md, I41cd, I-42d! 
   http://xrayweb.chem.ou.edu/notes/symmetry.html
   */
-  inline const vec3d& GetInversionCenter() const {  return InversionCenter;  }
+  const vec3d& GetInversionCenter() const {  return InversionCenter;  }
 
   void GetMatrices(smatd_list& matrices, short Flags) const;
   // fills a list of uniq transformations (3,3) without translation and returns
   // the number of added matrices; the list is created from a call to GetMatrices(list, flag)
-  int GetUniqMatrices(smatd_list& matrices, short Flags) const;
+  size_t GetUniqMatrices(smatd_list& matrices, short Flags) const;
 
   // this function finds a symmetry element in a list of matrices
   static bool ContainsElement( const smatd_list& matrices, TSymmElement* symme);
@@ -133,11 +133,11 @@ public:
   TSymmElement(const olxstr& name) : Name(name), SuperElement(NULL)  {  }
   virtual ~TSymmElement()  {  }
 
-  inline TSymmElement& AddMatrix(const smatd& m)  {  Matrices.AddCCopy(m);  return *this;  }
-  inline int  MatrixCount()  const  {  return Matrices.Count();  }
-  smatd&  GetMatrix(int i) const  {  return Matrices[i];  }
+  TSymmElement& AddMatrix(const smatd& m)  {  Matrices.AddCCopy(m);  return *this;  }
+  size_t  MatrixCount() const {  return Matrices.Count();  }
+  smatd&  GetMatrix(size_t i) const {  return Matrices[i];  }
   const olxstr& GetName()  const   {  return Name;  }
-  inline TSymmElement* GetSuperElement() const {  return SuperElement;  }
+  TSymmElement* GetSuperElement() const {  return SuperElement;  }
   friend class TSymmLib;
 };
 
@@ -155,18 +155,18 @@ public:
     Lattices.Add(latt);
     return *this;
   }
-  inline TCLattice& GetLattice(int i)  const  {  return *Lattices[i];  }
-  inline int LatticeCount()  const            {  return Lattices.Count();  }
+  TCLattice& GetLattice(size_t i) const {  return *Lattices[i];  }
+  size_t LatticeCount() const {  return Lattices.Count();  }
 
   TBravaisLattice& AddSymmetry(TSpaceGroup* sg)  {
     Symmetries.Add( sg );
     return *this;
   }
-  inline TSpaceGroup& GetSymmetry(int i)  const  {  return *Symmetries[i];  }
-  inline int SymmetryCount()  const              {  return Symmetries.Count();  }
+  TSpaceGroup& GetSymmetry(size_t i) const {  return *Symmetries[i];  }
+  size_t SymmetryCount() const {  return Symmetries.Count();  }
 
   // finds all space groups with this bravais lattice and returns the number of added to the list
-  int FindSpaceGroups(TPtrList<TSpaceGroup>& SpaceGroups) const;
+  size_t FindSpaceGroups(TPtrList<TSpaceGroup>& SpaceGroups) const;
 
 };
 // this types is used to specify found bravais latteces: int < 0 - symmetry is lower
@@ -189,35 +189,35 @@ public:
   TSpaceGroup* FindSG(const TAsymmUnit& AU) const;
   TSpaceGroup* FindSG(const smatd_list& expanded_matrices) const;
   TSpaceGroup* FindExpandedSG(const TAsymmUnit& AU) const;
-  int FindBravaisLattices(TAsymmUnit& AU, TTypeList<TBravaisLatticeRef>& res) const;
+  size_t FindBravaisLattices(TAsymmUnit& AU, TTypeList<TBravaisLatticeRef>& res) const;
   // finds all space groups of specified point group
-  int FindPointGroupGroups(const TSpaceGroup& PointGroup, TPtrList<TSpaceGroup>& res) const;
+  size_t FindPointGroupGroups(const TSpaceGroup& PointGroup, TPtrList<TSpaceGroup>& res) const;
   // finds all space groups of specified Laue class
-  int FindLaueClassGroups(const TSpaceGroup& LaueClass, TPtrList<TSpaceGroup>& res) const;
+  size_t FindLaueClassGroups(const TSpaceGroup& LaueClass, TPtrList<TSpaceGroup>& res) const;
 
-  inline int SGCount() const                {  return SpaceGroups.Count();  }
-  inline TSpaceGroup& GetGroup(int i) const {  return *SpaceGroups.GetObject(i);  }
+  size_t SGCount() const {  return SpaceGroups.Count();  }
+  TSpaceGroup& GetGroup(size_t i) const {  return *SpaceGroups.GetObject(i);  }
   void GetGroupByNumber(int N, TPtrList<TSpaceGroup>& res) const;
-  inline TSpaceGroup* FindGroup(const olxstr& Name)  const  {
+  TSpaceGroup* FindGroup(const olxstr& Name)  const  {
     return SpaceGroups[Name];
   }
 
-  inline int SymmElementCount()  const  {  return SymmetryElements.Count();  }
-  inline TSymmElement&  GetSymmElement(int i)  const  {  return SymmetryElements[i];  }
+  size_t SymmElementCount()  const  {  return SymmetryElements.Count();  }
+  TSymmElement&  GetSymmElement(size_t i)  const  {  return SymmetryElements[i];  }
   TSymmElement*  FindSymmElement(const olxstr& name)  const;
 
-  inline int LatticeCount() const           {  return Lattices.Count();  }
-  inline TCLattice& GetLattice(int i) const {  return *Lattices.GetObject(i);  }
-  inline TCLattice* FindLattice(const olxstr& Symbol) const {
+  size_t LatticeCount() const {  return Lattices.Count();  }
+  TCLattice& GetLattice(size_t i) const {  return *Lattices.GetObject(i);  }
+  TCLattice* FindLattice(const olxstr& Symbol) const {
     return Lattices.FindObjecti(Symbol);
   }
 
-  inline int PointGroupCount() const             {  return PointGroups.Count();  }
-  inline TSpaceGroup& GetPointGroup(int i) const {  return *PointGroups[i];  }
+  size_t PointGroupCount() const {  return PointGroups.Count();  }
+  TSpaceGroup& GetPointGroup(size_t i) const {  return *PointGroups[i];  }
 
-  inline int BravaisLatticeCount() const    {  return BravaisLattices.Count();  }
-  inline TBravaisLattice&  GetBravaisLattice(int i) const {  return *BravaisLattices.GetObject(i);  }
-  inline TBravaisLattice *  FindBravaisLattice(const olxstr& Name)  const {
+  size_t BravaisLatticeCount() const {  return BravaisLattices.Count();  }
+  TBravaisLattice&  GetBravaisLattice(size_t i) const {  return *BravaisLattices.GetObject(i);  }
+  TBravaisLattice *  FindBravaisLattice(const olxstr& Name)  const {
     return BravaisLattices.FindObjecti(Name);
   }
 

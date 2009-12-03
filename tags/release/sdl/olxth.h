@@ -63,10 +63,8 @@ protected:  // do not allow to create externally
     Terminate(false),
     Running(false),
     Handle(0), 
-    RetVal(0) 
-  {  
-    OnTerminate = &Actions.NewQueue("ON_TERMINATE");  
-  }
+    RetVal(0),
+    OnTerminate(Actions.NewQueue("ON_TERMINATE")) {}
   //..................................................................................................
   /* thread can do some extras here, as it will be called from SendTerminate 
   before the Terimate flag is set */
@@ -74,7 +72,7 @@ protected:  // do not allow to create externally
 public:
   //..................................................................................................
   virtual ~AOlxThread()  {
-    OnTerminate->Execute(this, NULL);
+    OnTerminate.Execute(this, NULL);
     if( Running )  {  // prevent deleting
       Detached = false;
       Terminate = true;
@@ -90,7 +88,7 @@ public:
 #endif
   }
   //..................................................................................................
-  TActionQueue* OnTerminate;
+  TActionQueue &OnTerminate;
   //..................................................................................................
   /* It is crutial to check if the terminate flag is set. In that case the function should
   return a value, or a deadlock situation may arise. */
@@ -135,9 +133,10 @@ public:
     OnSendTerminate(); 
     Terminate = true;  
   }
+  bool IsRunning() const {  return Running;  }
   //..................................................................................................
   /* executes a simplest function thread, the function should not take any arguments
-  the return value will be ignored. To be used for global detached threads such timers etc.
+  the return value will be ignored. To be used for global detached threads such as timers etc.
   Simplest example:
     void TestTh()  {  your code here...  }
     AOlxThread::RunThread(&TestTh);

@@ -24,13 +24,13 @@ protected:
   virtual void SetPosition(size_t newPos) {    }
 
   void Add(const olxstr &str)  {
-    for( int i=0; i < Streams.Count(); i++ )
+    for( size_t i=0; i < Streams.Count(); i++ )
       Streams[i].A()->Writenl(str);
   }
   template <class SC, class T>
     void Add(const TTStrList<SC,T> &lst)  {
-      for( int i=0; i < lst.Count(); i++ )
-        for( int j=0; j < Streams.Count(); j++ )
+      for( size_t i=0; i < lst.Count(); i++ )
+        for( size_t j=0; j < Streams.Count(); j++ )
           Streams[j].A()->Writenl( lst[i] );
     }
 public:
@@ -41,7 +41,7 @@ public:
     Streams.Add(AnAssociation2<IDataOutputStream*, bool>(stream, own));
   }
   void RemoveStream( IDataOutputStream* stream )  {
-    for( int i=0; i < Streams.Count(); i++ )
+    for( size_t i=0; i < Streams.Count(); i++ )
       if( Streams[i].GetA() == stream )  {
         Streams.Delete(i);
         return;
@@ -49,17 +49,17 @@ public:
   }
   // use this operators for unconditional 'printing'
   inline TLog& operator << (const olxstr &str)  {
-    int ind = str.IndexOf('\n');
+    size_t ind = str.IndexOf('\n');
     olxstr tmp(str);
-    while( ind >= 0 )  {
-      for( int i=0; i < Streams.Count(); i++ )
+    while( ind != InvalidIndex )  {
+      for( size_t i=0; i < Streams.Count(); i++ )
         Streams[i].A()->Writenl(tmp.SubStringTo(ind));
-      if( ind >= tmp.Length() )  break;
+      if( (size_t)ind >= tmp.Length() )  break;
       tmp = tmp.SubStringFrom(ind+1);
       ind = tmp.IndexOf('\n');
     }
     if( !tmp.IsEmpty() )
-      for( int i=0; i < Streams.Count(); i++ )
+      for( size_t i=0; i < Streams.Count(); i++ )
         Streams[i].A()->Write(tmp);
     return *this;
   }
@@ -94,7 +94,7 @@ public:
   }
 //..............................................................................
   virtual void Flush()  {
-    for( int i=0; i < Streams.Count(); i++ )
+    for( size_t i=0; i < Streams.Count(); i++ )
       Streams[i].GetA()->Flush();
   }
 

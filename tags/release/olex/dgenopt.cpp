@@ -2,12 +2,8 @@
 // DlgGenerate implementation
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
 #include "dgenopt.h"
-#include "mainform.h"
+#include "ctrls/frameext.h"
 //----------------------------------------------------------------------------//
 // TdlgGenerate function bodies
 //----------------------------------------------------------------------------//
@@ -17,14 +13,12 @@ BEGIN_EVENT_TABLE(TdlgGenerate, TDialog)
 END_EVENT_TABLE()
 
 //..............................................................................
-TdlgGenerate::TdlgGenerate(TMainFrame *ParentFrame)
-:TDialog(ParentFrame, wxT("Generation options"), wxT("dlgGenerate"))
-
+TdlgGenerate::TdlgGenerate(TMainFrame *ParentFrame) :
+  TDialog(ParentFrame, wxT("Generation options"), wxT("dlgGenerate"))
 {
-  FParent = ParentFrame;
   AActionHandler::SetToDelete(false);
-  FAFrom = FBFrom = FCFrom = -1;
-  FATo = FBTo = FCTo = 1;
+  AFrom = BFrom = CFrom = -1;
+  ATo = BTo = CTo = 1;
   short Border = 2, i;
   TStrList EL;
   for( i=1; i < 9; i++ )    EL.Add(i);
@@ -46,9 +40,9 @@ TdlgGenerate::TdlgGenerate(TMainFrame *ParentFrame)
   cbA = new TComboBox(this);  cbA->SetText("2"); cbA->AddItems(EL);
   cbB = new TComboBox(this);  cbB->SetText("2"); cbB->AddItems(EL);
   cbC = new TComboBox(this);  cbC->SetText("2"); cbC->AddItems(EL);
-  cbA->OnChange->Add(this);
-  cbB->OnChange->Add(this);
-  cbC->OnChange->Add(this);
+  cbA->OnChange.Add(this);
+  cbB->OnChange.Add(this);
+  cbC->OnChange.Add(this);
 
   wxBoxSizer *TopSizer = new wxBoxSizer(wxVERTICAL );
 
@@ -87,14 +81,11 @@ TdlgGenerate::TdlgGenerate(TMainFrame *ParentFrame)
   TopSizer->SetSizeHints( this );   // set size hints to honour minimum size
 
   Center();
-  FParent->RestorePosition(this);
 }
-TdlgGenerate::~TdlgGenerate()
-{
-  cbA->OnChange->Clear();
-  cbB->OnChange->Clear();
-  cbC->OnChange->Clear();
-  FParent->SavePosition(this);
+TdlgGenerate::~TdlgGenerate()  {
+  cbA->OnChange.Clear();
+  cbB->OnChange.Clear();
+  cbC->OnChange.Clear();
 }
 bool TdlgGenerate::Execute(const IEObject *Sender, const IEObject *Data)  {
   if( (TComboBox*)Sender == cbA )  OnAChange();
@@ -102,36 +93,32 @@ bool TdlgGenerate::Execute(const IEObject *Sender, const IEObject *Data)  {
   if( (TComboBox*)Sender == cbC )  OnCChange();
   return true;
 }
-void TdlgGenerate::OnAChange()
-{
+void TdlgGenerate::OnAChange()  {
   double v = 2;
   cbA->GetValue().ToDouble(&v);
-  tcAFrom->SetValue( uiStr(olxstr(-v/2)) );
-  tcATo->SetValue( uiStr(olxstr(v/2)) );
+  tcAFrom->SetValue(olxstr(-v/2).u_str());
+  tcATo->SetValue(olxstr(v/2).u_str());
 }
-void TdlgGenerate::OnBChange()
-{
+void TdlgGenerate::OnBChange()  {
   double v = 2;
   cbB->GetValue().ToDouble(&v);
-  tcBFrom->SetValue( uiStr(olxstr(-v/2)) );
-  tcBTo->SetValue( uiStr(olxstr(v/2)) );
+  tcBFrom->SetValue(olxstr(-v/2).u_str());
+  tcBTo->SetValue(olxstr(v/2).u_str());
 }
-void TdlgGenerate::OnCChange()
-{
+void TdlgGenerate::OnCChange()  {
   double v = 2;
   cbC->GetValue().ToDouble(&v);
-  tcCFrom->SetValue( uiStr(olxstr(-v/2)) );
-  tcCTo->SetValue( uiStr(olxstr(v/2)) );
+  tcCFrom->SetValue(olxstr(-v/2).u_str());
+  tcCTo->SetValue(olxstr(v/2).u_str());
 }
-void TdlgGenerate::OnOK(wxCommandEvent& event)
-{
+void TdlgGenerate::OnOK(wxCommandEvent& event)  {
   double v = 2;
-  tcAFrom->GetValue().ToDouble(&v);  FAFrom = v;
-  tcBFrom->GetValue().ToDouble(&v);  FBFrom = v;
-  tcCFrom->GetValue().ToDouble(&v);  FCFrom = v;
+  tcAFrom->GetValue().ToDouble(&v);  AFrom = v;
+  tcBFrom->GetValue().ToDouble(&v);  BFrom = v;
+  tcCFrom->GetValue().ToDouble(&v);  CFrom = v;
 
-  tcATo->GetValue().ToDouble(&v);  FATo = v;
-  tcBTo->GetValue().ToDouble(&v);  FBTo = v;
-  tcCTo->GetValue().ToDouble(&v);  FCTo = v;
+  tcATo->GetValue().ToDouble(&v);  ATo = v;
+  tcBTo->GetValue().ToDouble(&v);  BTo = v;
+  tcCTo->GetValue().ToDouble(&v);  CTo = v;
   EndModal(wxID_OK);
 }

@@ -10,17 +10,20 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       TBasicApp::GetLog() << "The mat file is possibly out of date\n";
   }
   TCStrList sl, toks;
-  const CString sof("sof");
+  static const olxcstr sof("sof"), 
+    u11("U11"), u22("U22"), u33("U33"), u23("U23"), u13("U13"), u12("U12");
   sl.LoadFromFile(fileName);
   if( sl.Count() < 10 )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid file content");
   toks.Strtok(sl[3], ' ');
-  int cnt = toks[0].ToInt();
-  TIntList indexes;
+  size_t cnt = toks[0].ToSizeT();
+  TSizeList indexes;
   TDoubleList diag;
-  if( cnt <= 0 || sl.Count() < cnt+11 )  
+  if( cnt == 0 || sl.Count() < cnt+11 )  
     throw TFunctionFailedException(__OlxSourceInfo, "empty/invalid matrix file");
-  for( int i=1; i < cnt; i++ )  { // skipp OSF
+  olxstr last_atom_name;
+  TCAtom* atom;
+  for( size_t i=1; i < cnt; i++ )  { // skipp OSF
     toks.Clear();
     toks.Strtok(sl[i+7], ' ');
     if( toks[0].ToInt() != i+1 || toks.Count() != 6 )  {
@@ -28,63 +31,88 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
         continue;
       throw TFunctionFailedException(__OlxSourceInfo, "invalid matrix file");
     }
+    if( last_atom_name != toks[5] )  {
+      atom = au.FindCAtom(toks[5]);
+      last_atom_name = toks[5];
+    }
+    if( atom == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "mismatching matrix file");
     if( toks[4].CharAt(0) == 'x' )  {
       diag.Add(toks[2].ToDouble());
-      Index.AddNew( toks[5], vcoviX, -1 );
+      atom->ccrdEsd()[0] = diag.Last();
+      Index.AddNew(toks[5], vcoviX, -1);
       indexes.Add(i);
     }
     else if( toks[4].CharAt(0) == 'y' )  {
       diag.Add(toks[2].ToDouble());
-      Index.AddNew( toks[5], vcoviY, -1 );
+      atom->ccrdEsd()[1] = diag.Last();
+      Index.AddNew(toks[5], vcoviY, -1);
       indexes.Add(i);
     }
     else if( toks[4].CharAt(0) == 'z' )  {
       diag.Add(toks[2].ToDouble());
-      Index.AddNew( toks[5], vcoviZ, -1 );
+      atom->ccrdEsd()[2] = diag.Last();
+      Index.AddNew(toks[5], vcoviZ, -1);
       indexes.Add(i);
     }
     else if( toks[4] == sof )  {
       diag.Add(toks[2].ToDouble());
-      Index.AddNew( toks[5], vcoviO , -1);
+      Index.AddNew(toks[5], vcoviO , -1);
       indexes.Add(i);
     }
+    else if( toks[4] == u11 )  {
+      if( atom->GetEllipsoid() != NULL )
+        atom->GetEllipsoid()->SetEsd(0, toks[2].ToDouble());
+      else
+        atom->SetUisoEsd(toks[2].ToDouble());
+  }
+    else if( toks[4] == u22 )
+      atom->GetEllipsoid()->SetEsd(1, toks[2].ToDouble());
+    else if( toks[4] == u33 )
+      atom->GetEllipsoid()->SetEsd(2, toks[2].ToDouble());
+    else if( toks[4] == u23 )
+      atom->GetEllipsoid()->SetEsd(3, toks[2].ToDouble());
+    else if( toks[4] == u13 )
+      atom->GetEllipsoid()->SetEsd(4, toks[2].ToDouble());
+    else if( toks[4] == u12 )
+      atom->GetEllipsoid()->SetEsd(5, toks[2].ToDouble());
   }
   TDoubleList all_vcov( (cnt+1)*cnt/2);
-  int vcov_cnt = 0;
-  for( int i=0; i < sl.Count(); i++ )  {
-    const int ind = i+cnt+10;
+  size_t vcov_cnt = 0;
+  for( size_t i=0; i < sl.Count(); i++ )  {
+    const size_t ind = i+cnt+10;
     if( sl[ind].IsEmpty() )  break;
-    const int ll = sl[ind].Length();
-    int s_ind = 0;
+    const size_t ll = sl[ind].Length();
+    size_t s_ind = 0;
     while( s_ind < ll )  {
       all_vcov[vcov_cnt++] = sl[ind].SubString(s_ind, 8).ToDouble();
       s_ind += 8;
     }
   }
-  TIntList x_ind(cnt);
+  TSizeList x_ind(cnt);
   x_ind[0] = 0;
-  for( int i=1; i < cnt ; i++ )
+  for( size_t i=1; i < cnt ; i++ )
     x_ind[i] = cnt + 1 - i + x_ind[i-1];
 
   Allocate(diag.Count());
 
-  for( int i=0; i < indexes.Count(); i++ )  {
-    for( int j=0; j <= i; j++ )  {
+  for( size_t i=0; i < indexes.Count(); i++ )  {
+    for( size_t j=0; j <= i; j++ )  {
       if( i == j )  
         data[i][j] = diag[i]*diag[i];
       else  {  // top diagonal to bottom diagonal
-        const int ind = indexes[i] <= indexes[j] ? x_ind[indexes[i]] + indexes[j]-indexes[i] :
+        const size_t ind = indexes[i] <= indexes[j] ? x_ind[indexes[i]] + indexes[j]-indexes[i] :
           x_ind[indexes[j]]  + indexes[i]-indexes[j];
         data[i][j] = all_vcov[ind]*diag[i]*diag[j];  
       }
     }
   }
-  for( int i=0; i < Index.Count(); i++ )  {
+  for( size_t i=0; i < Index.Count(); i++ )  {
     TCAtom* ca = au.FindCAtom(Index[i].GetA());
     if( ca == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "matrix is not upto date");
     Index[i].C() = ca->GetId();
-    int j = i;
+    size_t j = i;
     while( ++j < Index.Count() && Index[i].GetA().Equalsi(Index[j].GetA()) )
       Index[j].C() = ca->GetId();
     i = j-1;
@@ -92,14 +120,15 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
 }
 
 double VcoVMatrix::Find(const olxstr& atom, const short va, const short vb) const {
-  for( int i=0; i < Index.Count(); i++ )  {
+  for( size_t i=0; i < Index.Count(); i++ )  {
     if( Index[i].GetA() == atom )  {
-      int i1 = -1, i2 = -1;
-      for( int j=i; j < Index.Count() && Index[j].GetA() == atom; j++ )  {
+      size_t i1 = InvalidIndex, i2 = InvalidIndex;
+      for( size_t j=i; j < Index.Count() && Index[j].GetA() == atom; j++ )  {
         if( Index[j].GetB() == va )  i1 = j;
         if( Index[j].GetB() == vb )  i2 = j;
       }
-      if( i1 == -1 || i2 == -1 )  return 0;
+      if( i1 == InvalidIndex || i2 == InvalidIndex )
+        return 0;
       return (i1 <= i2 ) ? data[i2][i1] : data[i1][i2]; 
     }
   }

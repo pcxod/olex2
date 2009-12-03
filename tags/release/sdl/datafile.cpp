@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------//
 // TDataFile
-// (c) Oleg V. Dolomanov, 2004
+// (c) Oleg V. Dolomanov, 2004-2009
 //---------------------------------------------------------------------------//
 #ifdef __BORLANDC__
 #pragma hdrstop
@@ -11,8 +11,10 @@
 #include "efile.h"
 #include "estrbuffer.h"
 #include "utf8file.h"
+#include "exparse/exptree.h"
 
 UseEsdlNamespace()
+using namespace exparse::parser_util;
 //..............................................................................
 //..............................................................................
 
@@ -26,61 +28,33 @@ TDataFile::~TDataFile()  {
 //..............................................................................
 //..............................................................................
 bool TDataFile::LoadFromTextStream(IInputStream& io, TStrList* Log)  {
-  TWStrList File;
-  olxstr Data;
+  olxwstr in;
   FRoot->Clear();
   FileName = EmptyString;
-  try  {  TUtf8File::ReadLines(io, File, false);  }
+  try  {  in = TUtf8File::ReadAsString(io, false);  }
   catch( ... )  {  return false;  }
-  if( File.IsEmpty() )  return false;
-
-  olxstr OData( File.Text(' ') );
-  OData.DeleteSequencesOf(' ');
-  OData.Replace('\t', ' ');
-  Data.SetCapacity( OData.Length() );
-  int dl = OData.Length();
-  for( int i=0; i < dl; i++ )  {
-    if( OData.CharAt(i) == '<' )  {
-      while( (i+1) < dl && OData.CharAt(i+1) == ' ')  // skip spaces
-        i++;
+  if( in.IsEmpty() )  return false;
+  in = in.DeleteCharSet("\n\r").Replace('\t', ' ').DeleteSequencesOf(' ');
+  for( size_t i=0; i < in.Length(); i++ )  
+    if( in.CharAt(i) == '<' )  {
+      FRoot->LoadFromString(i, in, Log);  
+      break;
     }
-    Data << OData.CharAt(i);
-  }
-  FRoot->LoadFromString(0, Data, Log);  
   return true;
 }
 //..............................................................................
 bool TDataFile::LoadFromXLFile(const olxstr &DataFile, TStrList* Log)  {
-  TWStrList File;
-  olxstr Data;
-  FRoot->Clear();
-  FileName = EmptyString;
-  TEFile::CheckFileExists(__OlxSourceInfo, DataFile);
-  try  {  TUtf8File::ReadLines(DataFile, File, false);  }
-  catch( ... )  {  return false;  }
-  if( File.IsEmpty() )  return false;
-
+  try  {
+    TEFile in(DataFile, "rb");
+    bool res = LoadFromTextStream(in, Log);
   FileName = DataFile;
-
-  olxstr OData( File.Text(' ') );
-  OData.DeleteSequencesOf(' ');
-  OData.Replace('\t', ' ');
-  Data.SetCapacity( OData.Length() );
-  int dl = OData.Length();
-  for( int i=0; i < dl; i++ )  {
-    if( OData.CharAt(i) == '<' )  {
-      while( (i+1) < dl && OData.CharAt(i+1) == ' ')  // skip spaces
-        i++;
+    return res;
     }
-    Data << OData.CharAt(i);
-  }
-  FRoot->LoadFromString(0, Data, Log);  
-  return true;
+  catch(const TExceptionBase& e)  {  throw TFunctionFailedException(__OlxSourceInfo, e);  }
 }
 //..............................................................................
 void TDataFile::Include(TStrList* Log)  {
   TDataItem *Inc;
-  TDataFile DF;
   olxstr Tmp;
   Inc = FRoot->GetAnyItem("#include");
   while( Inc != NULL )  {
@@ -99,9 +73,12 @@ void TDataFile::Include(TStrList* Log)  {
       Inc = FRoot->GetAnyItem("#include");
       continue;
     }
+    TDataFile DF;
     DF.LoadFromXLFile(Tmp, Log);
     DF.Include(Log);
-    Inc->GetParent()->AddContent( DF.Root() );
+    const olxstr& extend_str = Inc->GetFieldValue("extend");
+    bool extend = extend_str.IsEmpty() ? false : extend_str.ToBool();
+    Inc->GetParent()->AddContent(DF.Root(), extend);
 
     FRoot->DeleteItem(Inc);
     Inc = FRoot->GetAnyItem("#include");

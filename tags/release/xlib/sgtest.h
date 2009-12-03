@@ -19,10 +19,10 @@ public:
   TSGStats(TSpaceGroup* sg, const TwoDoublesInt& stats) : Stats(stats)  {
     SpaceGroup = sg;
   }
-  inline TSpaceGroup& GetSpaceGroup()  const  {  return *SpaceGroup;  }
-  inline double GetSummI()  const     {  return Stats.GetA();  }
-  inline double GetSummSI()  const    {  return Stats.GetB();  }
-  inline int    GetCount()  const     {  return Stats.GetC();  }
+  TSpaceGroup& GetSpaceGroup()  const  {  return *SpaceGroup;  }
+  double GetSummI()  const     {  return Stats.GetA();  }
+  double GetSummSI()  const    {  return Stats.GetB();  }
+  int    GetCount()  const     {  return Stats.GetC();  }
 };
 
 template <class OC>  class TElementStats  {
@@ -34,13 +34,13 @@ public:
                                  SummStrong(strong), SummWeak(weak) {
     LattOrSG = obj;
   }
-  inline OC& GetObject()                {  return LattOrSG;  }
-  inline double GetSummStrongI()  const {  return SummStrong.GetA();  }
-  inline double GetSummStrongSI() const {  return SummStrong.GetB();  }
-  inline int GetStrongCount() const     {  return  SummStrong.GetC();  }
-  inline double GetSummWeakI()    const {  return SummWeak.GetA();  }
-  inline double GetSummWeakSI()   const {  return SummWeak.GetB();  }
-  inline int GetWeakCount()   const     {  return SummWeak.GetC();  }
+  OC& GetObject()                {  return LattOrSG;  }
+  double GetSummStrongI()  const {  return SummStrong.GetA();  }
+  double GetSummStrongSI() const {  return SummStrong.GetB();  }
+  int GetStrongCount() const     {  return  SummStrong.GetC();  }
+  double GetSummWeakI()    const {  return SummWeak.GetA();  }
+  double GetSummWeakSI()   const {  return SummWeak.GetB();  }
+  int GetWeakCount()   const     {  return SummWeak.GetC();  }
 };
 
 class TSAStats  {
@@ -52,14 +52,14 @@ public:
     Present = Excluded = false;
     SymmElement = se;
   }
-  inline TSymmElement& GetSymmElement()  const  {  return *SymmElement;  }
-  inline double GetSummI()  const     {  return Stats.GetA();  }
-  inline double GetSummSI()  const    {  return Stats.GetB();  }
-  inline int    GetCount()  const     {  return Stats.GetC();  }
-  inline bool IsExcluded()  const          {  return Excluded;  }
-  inline bool IsPresent()  const           {  return Present;  }
-  inline void SetPresent()                 {  Present = true;  }
-  inline void Exclude()                    {  Excluded = true;  }
+  TSymmElement& GetSymmElement()  const  {  return *SymmElement;  }
+  double GetSummI() const {  return Stats.GetA();  }
+  double GetSummSI() const {  return Stats.GetB();  }
+  int    GetCount() const {  return Stats.GetC();  }
+  bool IsExcluded() const {  return Excluded;  }
+  bool IsPresent() const {  return Present;  }
+  void SetPresent()  {  Present = true;  }
+  void Exclude()  {  Excluded = true;  }
 };
 
 class TSGTest  {
@@ -77,16 +77,16 @@ public:
   void LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TTypeList<TSAStats>& saRes );
   void WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElementStats<TSpaceGroup*> >& res);
 
-  inline int GetP1RefCount()    const {  return Refs.Count();  }
+  size_t GetP1RefCount() const {  return Refs.Count();  }
 
-  inline double GetAverageI()   const  {  return AverageI;  }
-  inline double GetAverageIS()  const  {  return AverageIS;  }
-  inline double GetTotalI()     const  {  return TotalI;  }
-  inline double GetTotalIS()    const  {  return TotalIS;  }
-  inline double GetMaxI()       const  {  return MaxI;  }
-  inline double GetMaxIS()      const  {  return MaxIS;  }
-  inline double GetMinI()       const  {  return MinI;  }
-  inline double GetMinIS()      const  {  return MinIS;  }
+  double GetAverageI() const {  return AverageI;  }
+  double GetAverageIS() const {  return AverageIS;  }
+  double GetTotalI() const {  return TotalI;  }
+  double GetTotalIS() const {  return TotalIS;  }
+  double GetMaxI() const {  return MaxI;  }
+  double GetMaxIS() const {  return MaxIS;  }
+  double GetMinI() const {  return MinI;  }
+  double GetMinIS() const {  return MinIS;  }
 };
 
 EndXlibNamespace()

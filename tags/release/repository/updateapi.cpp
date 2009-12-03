@@ -1,7 +1,3 @@
-#ifdef __BORLANC__
-  #pragma hdrstop
-#endif
-
 #include "updateapi.h"
 #include "log.h"
 #include "efile.h"
@@ -82,7 +78,7 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
         return updater::uapi_Busy;
       ZipFS zfs(inst_zip_fn, false);
       if( p_lsnr != NULL )  {
-        zfs.OnProgress->Add(p_lsnr);
+        zfs.OnProgress.Add(p_lsnr);
         p_lsnr = NULL;
       }
       if( !zfs.Exists(patcher::PatchAPI::GetTagFileName()) )
@@ -108,7 +104,7 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
     return updater::uapi_NoSource;
   }
   if( f_lsnr != NULL )  {
-    fs->OnProgress->Add(f_lsnr);
+    fs->OnProgress.Add(f_lsnr);
     f_lsnr = NULL;
   }
   IInputStream* src_s = NULL;
@@ -136,7 +132,7 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
     {  // make sure the zipfs goes before deleting the file
       ZipFS zfs(src_fn, false);
       if( p_lsnr != NULL )  {
-        zfs.OnProgress->Add(p_lsnr);
+        zfs.OnProgress.Add(p_lsnr);
         p_lsnr = NULL;
       }
       zfs.ExtractAll(TBasicApp::GetBaseDir());
@@ -173,7 +169,7 @@ short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr, AActionHandler* e_lsnr, c
     return updater::uapi_NoSource;
   }
   if( f_lsnr != NULL )  {
-    fs->OnProgress->Add(f_lsnr);
+    fs->OnProgress.Add(f_lsnr);
     f_lsnr = NULL;
   }
   fs->SetBase( AddTagPart(fs->GetBase(), false) );
@@ -206,7 +202,7 @@ short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr, AActionHandler* e_lsnr, c
       TStrList props;
       props.Add(olxstr("plugin-") << name);
       if( p_lsnr != NULL )  {
-        fsi.OnProgress->Add(p_lsnr);
+        fsi.OnProgress.Add(p_lsnr);
         p_lsnr = NULL;
       }
       fsi.Synchronise(osf, props);
@@ -260,8 +256,19 @@ short UpdateAPI::DoSynch(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
 //.............................................................................
 void UpdateAPI::EvaluateProperties(TStrList& props) const  {
   props.Add("olex-update");
-#ifdef __WIN32__
+#if defined(__WIN32__) //&& !defined(_DEBUG)  // disable updates by the debug version 
+#  ifdef _WIN64
+     props.Add("port-win64");
+#  else
+     props.Add("port-win32-portable");  // but can change this ...
+#    if _M_IX86_FP == 0
+       props.Add("port-win32-nosse");
+#    elif _M_IX86_FP == 1
+       props.Add("port-win32-sse");
+#    elif _M_IX86_FP == 2  // cannot change it! olex2 does not get upadted and this is it...
   props.Add("port-win32");
+#    endif
+#  endif
 #else
   if( !settings.olex2_port.IsEmpty() )  {
     props.Add(settings.olex2_port);
@@ -275,7 +282,7 @@ void UpdateAPI::EvaluateProperties(TStrList& props) const  {
       df.LoadFromXLFile( pluginFile, NULL );
       TDataItem* PluginItem = df.Root().FindItem("Plugin");
       if( PluginItem != NULL )  {
-        for( int i=0; i < PluginItem->ItemCount(); i++ )
+        for( size_t i=0; i < PluginItem->ItemCount(); i++ )
           props.Add( PluginItem->GetItem(i).GetName() );
       }
     }
@@ -363,15 +370,15 @@ AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name) const  {
   olxstr mirrors_fn = GetMirrorsFileName();
   if( TEFile::Exists(mirrors_fn) )
     repositories.LoadFromFile(mirrors_fn);
-  if( repositories.IndexOf(def_repo) == -1 )
+  if( repositories.IndexOf(def_repo) == InvalidIndex )
     repositories.Insert(0, def_repo);
   if( settings.IsValid() && !settings.repository.IsEmpty() )  {
-    int ind = repositories.IndexOf(settings.repository);
-    if( ind != -1 && ind != 0 )
+    const size_t ind = repositories.IndexOf(settings.repository);
+    if( ind != InvalidIndex && ind != 0 )
       repositories.Delete(ind);
     repositories.Insert(0, settings.repository);
   }
-  for( int i=0; i < repositories.Count(); i++ )  {
+  for( size_t i=0; i < repositories.Count(); i++ )  {
     AFileSystem* fs = FSFromString(repositories[i], settings.proxy);
     if( fs != NULL )  {
       if( repo_name != NULL )
@@ -387,11 +394,11 @@ void UpdateAPI::GetAvailableMirrors(TStrList& res) const  {
   olxstr mirrors_fn = GetMirrorsFileName();
   if( TEFile::Exists(mirrors_fn) )
     res.LoadFromFile(mirrors_fn);
-  if( res.IndexOf(def_repo) == -1 )
+  if( res.IndexOf(def_repo) == InvalidIndex )
     res.Insert(0, def_repo);
   if( settings.IsValid() && !settings.repository.IsEmpty() )  {
-    int ind = res.IndexOf(settings.repository);
-    if( ind != -1 && ind != 0 )
+    const size_t ind = res.IndexOf(settings.repository);
+    if( ind != InvalidIndex && ind != 0 )
       res.Delete(ind);
     if( ind != 0 )
       res.Insert(0, settings.repository);
@@ -419,7 +426,7 @@ void UpdateAPI::GetAvailableRepositories(TStrList& res) const {
   res.LoadFromTextStream(*is);
   delete is;
   delete fs;
-  for( int i=0; i < res.Count(); i++ )
+  for( size_t i=0; i < res.Count(); i++ )
     res[i] = repo_name + res[i];
   // LoadFromTextStream clears the list...
   if( TEFile::Exists(inst_zip_fn) )  
@@ -465,3 +472,34 @@ olxstr UpdateAPI::AddTagPart(const olxstr& path, bool Update) const {
   return rv;
 }
 //.............................................................................
+//http://www.jorgon.freeserve.co.uk/TestbugHelp/XMMfpins2.htm
+olxstr UpdateAPI::GetInstallationFileName()  {
+#ifdef __WIN32__
+#ifndef _WIN64
+  unsigned int cpu_features = 0;
+  _asm  {
+    push EAX
+    push EBX
+    push ECX
+    push EDX
+      mov EAX, 1
+      cpuid
+      mov [cpu_features], EDX
+    pop EDX
+    pop ECX
+    pop EBX
+    pop EAX
+  }
+  bool has_sse2 = (cpu_features & (0x1 << 26)) != 0;
+  bool has_sse = (cpu_features & (0x1 << 25)) != 0;
+  if( has_sse2 ) return "olex2.zip";
+  else if( has_sse )  return "olex2-sse.zip";
+  else  return "olex2-nosse.zip";
+#else
+  return "olex2-x64.zip";
+#endif
+#else
+  return "portable-gui.zip";
+#endif
+}
+

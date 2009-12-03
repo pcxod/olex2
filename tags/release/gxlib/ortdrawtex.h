@@ -45,17 +45,16 @@ protected:
     HBondScale;
 
   int PrepareArc(const TArrayList<vec3f>& in, TPtrList<const vec3f>& out, const vec3f& normal)  {
-    int start=-1, cnt=0;
-    for( int i=0; i < in.Count(); i++ )  {
+    size_t start = InvalidIndex, cnt=0;
+    for( size_t i=0; i < in.Count(); i++ )  {
       const int next_i = ((i+1) >= in.Count() ? i-in.Count() : i) + 1;
       if( in[i].DotProd(normal) < 0 && in[next_i].DotProd(normal) >= 0 )  {
         start = next_i;
         break;
       }
     }
-    if( start == -1 )
-      return 0;
-    for( int i=start; i < start+in.Count(); i++ )  {
+    if( start == InvalidIndex )  return 0;
+    for( size_t i=start; i < start+in.Count(); i++ )  {
       const int ind = (i >= in.Count() ? i-in.Count() : i);
       if( cnt+1 >= in.Count() )  break;
       if( in[ind].DotProd(normal) >= 0  )
@@ -73,7 +72,7 @@ protected:
     vec3f dir_vec, touch_point, touch_point_proj, off_vec, bproj_cnt;
     mat3f proj_mat, rot_mat;
       
-    for( int j=0; j < sa.BondCount(); j++ )  {
+    for( size_t j=0; j < sa.BondCount(); j++ )  {
       const TSBond& bn = sa.Bond(j);
       if( app.GetBond( bn.GetTag() ).IsDeleted() || !app.GetBond( bn.GetTag() ).IsVisible() )
         continue;
@@ -81,7 +80,7 @@ protected:
       if( p1[2] <= oa.crd[2] )  // goes into the plane - drawn
         continue; 
       dir_vec = (p1-oa.crd).Normalise();
-      const float pers_scale = 1.0-sqr(dir_vec[2]);
+      const float pers_scale = 1.0-olx_sqr(dir_vec[2]);
       float brad = (bn.A().GetAtomInfo() < 4 || bn.B().GetAtomInfo() < 4) ? 
         BondRad*HBondScale : BondRad;
       if( bn.GetType() == sotHBond )  //even thiner H-bonds
@@ -261,7 +260,6 @@ protected:
   void DrawRimsAndQuad(TEXWriter& pw, const OrtAtom& oa, bool drawQuad)  {
     const mat3f& elpm = *oa.elpm;
     const mat3f& ielpm = *oa.ielpm;
-    char bf[200];
     //pelpm - projection ellipsoid matrix
     mat3f pelpm(elpm[0][2] < 0 ? -elpm[0] : elpm[0],
       elpm[1][2] < 0 ? -elpm[1] : elpm[1],
@@ -309,7 +307,7 @@ public:
     PieDiv = 4;
     QuadLineWidth = PieLineWidth = 0.5;
     BondRad = 4;
-    ColorMode = ortep_color_None;
+    ColorMode = 0;
     HBondScale = 0.8;
   }
   // create ellipse and pie coordinates
@@ -482,7 +480,7 @@ public:
     0.12*0.1*DrawScale);
     pw.Writenl(bf);
       
-    for( int i=0; i < app.AtomCount(); i++ )  {
+    for( size_t i=0; i < app.AtomCount(); i++ )  {
       if( app.GetAtom(i).IsDeleted() || !app.GetAtom(i).IsVisible() )
         continue;
       const TSAtom& sa = app.GetAtom(i).Atom();
@@ -490,7 +488,7 @@ public:
       //write latex colors atoms commands and shading
       CurrentAtom=false;
       //We check first if a similar atom already get processed.
-      for( int j=0; j < atoms.Count(); j++ )  {
+      for( size_t j=0; j < atoms.Count(); j++ )  {
         const TSAtom& sa2 = *atoms[j].atom;
         if(sa.GetAtomInfo().GetSymbol() == sa2.GetAtomInfo().GetSymbol())
             CurrentAtom=true;
@@ -533,13 +531,13 @@ public:
     pw.Writenl("\\begin{document}");
     pw.Writenl("\\begin{tikzpicture}");
     
-    for( int i=0; i < app.BondCount(); i++ )  {
+    for( size_t i=0; i < app.BondCount(); i++ )  {
       app.GetBond(i).SetTag(i);
       app.GetBond(i).Bond().SetTag(i);
     }
     atoms.QuickSorter.SortSF(atoms, OrtAtomZSort);
 
-    for( int i=0; i < atoms.Count(); i++ )  {
+    for( size_t i=0; i < atoms.Count(); i++ )  {
       const TSAtom& sa = *atoms[i].atom;
       const vec3d& p = atoms[i].crd;
       if( sa.GetEllipsoid() == NULL )  {
@@ -597,7 +595,7 @@ public:
     }
     //write labels
     if( app.LabelCount() != 0 )  {
-      for( int i=0; i < app.LabelCount(); i++ )  {
+      for( size_t i=0; i < app.LabelCount(); i++ )  {
         const TXGlLabel& glxl = app.GetLabel(i);
         vec3d rp = glxl.GetRasterPosition();
         rp[1] += 4;

@@ -62,10 +62,10 @@ public:
   class TFileNameMask  {
     TStrList toks;
     olxstr mask;
-    int toksEnd, toksStart;
+    size_t toksEnd, toksStart;
   public:
     TFileNameMask(const olxstr& msk)  { Build(msk);  }
-    TFileNameMask() : toksEnd(-1), toksStart(-1)  {  }
+    TFileNameMask() : toksEnd(InvalidIndex), toksStart(InvalidIndex)  {  }
     void Build(const olxstr& mask);
     bool DoesMatch(const olxstr& str)  const;
   };
@@ -168,6 +168,8 @@ public:
   static bool Access(const olxstr& F, const short Flags);
   // uses access, so is case sensitive, works for both dirs and files
   static bool Exists(const olxstr &F);
+  // just a wrapper for chmod...
+  static bool Chmod(const olxstr& f, const short Flags);
   /* a case insensitive alternative (for windows - same as above) 
     the case sensitive name is stored in res (the first one if there
     are several file names matching
@@ -219,10 +221,16 @@ public:
     return '/';
 #endif
   }
-  // copies a file, use overwrite option to modify the behaviour
-  static void Copy(const olxstr& From, const olxstr& to, bool overwrite = true);
+  /* copies a file, use overwrite option to modify the behaviour, if overwrite is false 
+  and file exists the return value is false */
+  static bool Copy(const olxstr& From, const olxstr& to, bool overwrite = true);
   // renames a file, if the file with 'to' name exists, behaves according to the overwrite flag
   static bool Rename(const olxstr& from, const olxstr& to, bool overwrite = true);
+  /* works by creating a 'random' directory inside one folder and checking if it is in the other... 
+  If the function fails to create the test folder it returns false */
+  static bool IsSameFolder(const olxstr& f1, const olxstr& f2);
+  // a weak function - makes the decision only on the name...
+  static bool IsSubFolder(const olxstr& which, const olxstr& in_what);
   /*works for windows only, for other operation systems return LocalFN*/
   static olxstr UNCFileName(const olxstr &LocalFN);
   /* return absolute path as a relative to another path

@@ -1,7 +1,5 @@
-//---------------------------------------------------------------------------//
-#ifndef xfilesH
-#define xfilesH
-
+#ifndef __olx_xl_xfiles_H
+#define __olx_xl_xfiles_H
 #include "xbase.h"
 #include "symmlib.h"
 
@@ -32,16 +30,15 @@ public:
   RefinementModel& GetRM()               {  return RefMod;  }
   DefPropC(olxstr, Title)
   const olxstr& GetFileName()  const {  return FileName; }
-
+  // this function could be constm but many file handlers might do some preprocessing of chanegs before flushing...
   virtual void SaveToStrings(TStrList& Strings) = 0;
   virtual void LoadFromStrings(const TStrList& Strings) = 0;
-  virtual void SaveToFile(const olxstr &A);
-  virtual void LoadFromFile(const olxstr &A);
+  virtual void SaveToFile(const olxstr& fileName);
+  virtual void LoadFromFile(const olxstr& fileName);
   // only oxm loader is native
   virtual bool IsNative() const {  return false;  }
   // adopts the content of the AsemmUnit to the virtual format
-  virtual bool Adopt(class TXFile *) = 0;
-  virtual void DeleteAtom(TCAtom *A) = 0;
+  virtual bool Adopt(class TXFile&) = 0;
 };
 //---------------------------------------------------------------------------
 
@@ -71,7 +68,7 @@ public:
   inline TAsymmUnit& GetAsymmUnit()          const {  return Lattice.GetAsymmUnit(); }
   /* a propper pointer, created with new should be passed
    the object will be deleted in the destructor !! */
-  void RegisterFileFormat(TBasicCFile *F, const olxstr &Ext);
+  void RegisterFileFormat(TBasicCFile* F, const olxstr& Ext);
 
   virtual IEObject* Replicate() const;
   /* the space group is initialised upon file loading
@@ -103,8 +100,8 @@ public:
     instructions: Mw, Label, Label1, moiety size, weight, heaviest 
   */
   void Sort(const TStrList& instructions);
-  void LoadFromFile(const olxstr & FN);
-  void SaveToFile(const olxstr & FN, bool Sort);
+  void LoadFromFile(const olxstr& FN);
+  void SaveToFile(const olxstr& FN, bool Sort);
   // return 
   inline const olxstr& GetFileName() const {  return FLastLoader != NULL ? FLastLoader->GetFileName() : EmptyString; }
 

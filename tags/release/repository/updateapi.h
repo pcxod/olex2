@@ -86,19 +86,19 @@ struct SettingsFile  {
 class UpdateAPI  {
   mutable TStrList log;
   AActionHandler *f_lsnr, *p_lsnr;
-  void CleanUp(AActionHandler* fl=NULL, AActionHandler* pl=NULL)  {
+  void CleanUp(AActionHandler *fl=NULL, AActionHandler *pl=NULL)  {
     if( f_lsnr != NULL )  delete f_lsnr;
     if( p_lsnr != NULL )  delete p_lsnr;
     p_lsnr = pl;
     f_lsnr = fl;
   }
-  void InitAQueues(TActionQueue* f, TActionQueue* p)  {
+  void InitAQueues(TActionQueue &f, TActionQueue &p)  {
     if( f_lsnr != NULL )  {
-      f->Add(f_lsnr);
+      f.Add(f_lsnr);
       f_lsnr = NULL;
     }
     if( p_lsnr != NULL )  {
-      p->Add( p_lsnr );
+      p.Add( p_lsnr );
       p_lsnr = NULL;
     }
   }
@@ -197,14 +197,7 @@ public:
   // fills list with available tags and initialises the chosen repository URL
   void GetAvailableTags(TStrList& res, olxstr& repo_URL) const;
   // returns platform-dependen instalaltion file name
-  static olxstr GetInstallationFileName()  {
-#ifdef __WIN32__
-    return "olex2.zip";
-#else
-    return "portable-gui.zip";
-#endif
-  }
-  //static 
+  static olxstr GetInstallationFileName();
 };
 
 };

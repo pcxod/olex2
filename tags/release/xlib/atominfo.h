@@ -55,21 +55,21 @@ public:
       delete Isotopes;
   }
 
-  inline int IsotopeCount()  const {  return (Isotopes==NULL) ? 0 : Isotopes->Count(); }
-  inline TIsotope& GetIsotope(int index)  const  {  return Isotopes->Item(index);  }
+  inline size_t IsotopeCount()  const {  return (Isotopes==NULL) ? 0 : Isotopes->Count(); }
+  inline TIsotope& GetIsotope(size_t index)  const  {  return Isotopes->Item(index);  }
   inline TIsotope& NewIsotope() {  return (Isotopes == NULL ? (Isotopes = new TIsotopeList) : Isotopes)->AddNew();  }
 
-  inline bool operator == (const TBasicAtomInfo& bai )  const {  return Index == bai.Index;  }
+  inline bool operator == (const TBasicAtomInfo& bai)  const {  return Index == bai.Index;  }
   inline bool operator == (const short index)           const {  return Index == index;  }
-  inline bool operator != (const TBasicAtomInfo& bai )  const {  return Index != bai.Index;  }
+  inline bool operator != (const TBasicAtomInfo& bai)  const {  return Index != bai.Index;  }
   inline bool operator != (const short index)           const {  return Index != index;  }
-  inline bool operator < (const TBasicAtomInfo& bai )  const {  return Index < bai.Index;  }
+  inline bool operator < (const TBasicAtomInfo& bai)  const {  return Index < bai.Index;  }
   inline bool operator < (const short index)           const {  return Index < index;  }
-  inline bool operator <= (const TBasicAtomInfo& bai )  const {  return Index <= bai.Index;  }
+  inline bool operator <= (const TBasicAtomInfo& bai)  const {  return Index <= bai.Index;  }
   inline bool operator <= (const short index)           const {  return Index <= index;  }
-  inline bool operator > (const TBasicAtomInfo& bai )  const {  return Index > bai.Index;  }
+  inline bool operator > (const TBasicAtomInfo& bai)  const {  return Index > bai.Index;  }
   inline bool operator > (const short index)           const {  return Index > index;  }
-  inline bool operator >= (const TBasicAtomInfo& bai )  const {  return Index >= bai.Index;  }
+  inline bool operator >= (const TBasicAtomInfo& bai)  const {  return Index >= bai.Index;  }
   inline bool operator >= (const short index)           const {  return Index >= index;  }
 
   DefPropC(olxstr, Symbol)
@@ -89,6 +89,7 @@ public:
   olxstr StrRepr() const;
 };
 typedef TPtrList<TBasicAtomInfo> TBAIPList;
+typedef TTypeList<AnAssociation2<olxstr, double> > ContentList;
 //---------------------------------------------------------------------------
 class TAtomsInfo: public IEObject  {
 private:
@@ -101,26 +102,29 @@ public:
   // 21.06.2008, table translated into the code, so the fileName is not used
   TAtomsInfo(const olxstr& filename=EmptyString);
   virtual ~TAtomsInfo();
-  inline int Count()  const  {  return Data.Count();  }
+  size_t Count() const {  return Data.Count();  }
   void SaveToFile(const olxstr& fileName) const;
   // returns correpondinag value of the AtomsInfo list
-  inline TBasicAtomInfo& GetAtomInfo(int index) const {  return Data[index];  }
+  inline TBasicAtomInfo& GetAtomInfo(size_t index) const {  return Data[index];  }
   // returns correpondinag value of the AtomsInfo list
   TBasicAtomInfo* FindAtomInfoBySymbol(const olxstr& Symbol) const;
   // returns correpondinag value of the AtomsInfo list, Str can be "C10a" etc
   TBasicAtomInfo* FindAtomInfoEx(const olxstr& Str) const;
   // a simple check exact match is expected (case insesitive)
-  inline bool IsElement(const olxstr& S) const  {  return (FindAtomInfoBySymbol(S) != NULL);  }
+  bool IsElement(const olxstr& S) const {  return (FindAtomInfoBySymbol(S) != NULL);  }
   // checks if p is an element symbol, will correctly distinguis "C " and "Cd"
-  inline bool IsAtom(const olxstr &C)     const {  return (FindAtomInfoEx(C) != NULL);  }
+  bool IsAtom(const olxstr &C) const {  return (FindAtomInfoEx(C) != NULL);  }
+  static bool IsHAtom(const TBasicAtomInfo& bai)  {
+    return bai == iHydrogenIndex || bai == iDeuteriumIndex;
+  }
   // checks if p is an element symbol, will correctly distinguis "C " and "Cd"
   static bool IsShortcut(const olxstr &c) {  
     return c.Equalsi("Ph") || c.Equalsi("Cp") || c.Equalsi("Me") ||
       c.Equalsi("Et") || c.Equalsi("Bu") || 
       c.Equalsi("Py") || c.Equalsi("Tf");  
   }
-  static void ExpandShortcut(const olxstr& sh, TTypeList<AnAssociation2<olxstr, int> >& res, int cnt=1)  {
-    TTypeList<AnAssociation2<olxstr, int> > shc;
+  static void ExpandShortcut(const olxstr& sh, ContentList& res, double cnt=1.0)  {
+    TTypeList<AnAssociation2<olxstr, double> > shc;
     if( sh.Equalsi("Ph") )  {
       shc.AddNew("C", 6);
       shc.AddNew("H", 5);
@@ -155,10 +159,10 @@ public:
     else    // just add whatever is provided
       shc.AddNew(sh, 1);
     
-    for( int i=0; i < shc.Count(); i++ )  {
+    for( size_t i=0; i < shc.Count(); i++ )  {
       shc[i].B() *= cnt;
       bool found = false;
-      for( int j=0; j < res.Count(); j++ )  {
+      for( size_t j=0; j < res.Count(); j++ )  {
         if( res[j].GetA().Equalsi(shc[i].GetA()) )  {
           res[j].B() += shc[i].GetB();
           found = true;
@@ -166,13 +170,13 @@ public:
         }
       }
       if( !found )
-        res.AddCCopy( shc[i] );
+        res.AddCCopy(shc[i]);
     }
   }
   /* parses a string like C37H41P2BRhClO into a list of element names and theur
     count
   */
-  void ParseElementString(const olxstr& su, TTypeList<AnAssociation2<olxstr, int> >& res) const;
+  void ParseElementString(const olxstr& su, ContentList& res) const;
   inline static TAtomsInfo& GetInstance() {
     if( Instance == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "object is not initialised");

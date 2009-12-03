@@ -11,7 +11,7 @@ namespace PlaneSort {
     void DoSort(const TSPlane& sp)  {
       sortedPlane.Add( 0, &sp.GetAtom(0).crd() );
       vec3d org(sp.GetAtom(0).crd()-sp.GetCenter());
-      for( int i=1; i < sp.CrdCount(); i++ )  {
+      for( size_t i=1; i < sp.CrdCount(); i++ )  {
         vec3d vec = sp.GetAtom(i).crd() - sp.GetCenter();
         double ca = org.CAngle(vec);
         vec = org.XProdVec(vec);
@@ -36,7 +36,7 @@ namespace PlaneSort {
     }
     
     static void DoSort(const TSAtomPList& atoms, 
-      const olxdict<int, vec3d, TPrimitiveComparator>& transforms, // tag dependent translations
+      const olxdict<index_t, vec3d, TPrimitiveComparator>& transforms, // tag dependent translations
       vec3d& center, const vec3d& normal, TSAtomPList& output)  
     {
       if( atoms.IsEmpty() )
@@ -44,7 +44,7 @@ namespace PlaneSort {
       TPSTypeList<double, TSAtom*> sortedPlane;
       sortedPlane.Add(0, atoms[0]);
       vec3d org(atoms[0]->crd()+transforms[atoms[0]->GetTag()]-center);
-      for( int i=1; i < atoms.Count(); i++ )  {
+      for( size_t i=1; i < atoms.Count(); i++ )  {
         vec3d vec = atoms[i]->crd() + transforms[atoms[i]->GetTag()] - center;
         double ca = org.CAngle(vec);
         vec = org.XProdVec(vec);
@@ -67,7 +67,7 @@ namespace PlaneSort {
         }
       }
       output.SetCapacity(atoms.Count());
-      for( int i=0; i < atoms.Count(); i++ )
+      for( size_t i=0; i < atoms.Count(); i++ )
         output.Add(sortedPlane.GetObject(i));
     }
   };

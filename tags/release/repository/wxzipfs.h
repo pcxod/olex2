@@ -38,10 +38,10 @@ public:
   IDataInputStream* OpenEntry(const olxstr& EN);
   wxInputStream* OpenWxEntry(const olxstr& EN);
   void ExtractAll(const olxstr& dest);
-  inline int Count()               const {  return FEntries.Count();  }
-  inline const olxstr& Name(int i) const {  return FEntries.GetString(i);  }
-  inline time_t Timestamp(int i)   const {  return FEntries.GetObject(i)->GetDateTime().GetTicks();  } 
-  inline size_t Size(int i)        const {  return FEntries.GetObject(i)->GetSize();  } 
+  inline size_t Count() const {  return FEntries.Count();  }
+  inline const olxstr& Name(size_t i) const {  return FEntries.GetString(i);  }
+  inline time_t Timestamp(size_t i) const {  return FEntries.GetObject(i)->GetDateTime().GetTicks();  } 
+  inline size_t Size(size_t i) const {  return FEntries.GetObject(i)->GetSize();  } 
   inline bool FileExists(const olxstr& fn) const {  return FEntries[TEFile::UnixPath(fn)] != NULL;  }
 
   static bool IsValidFileName(const olxstr &FN);
@@ -57,15 +57,15 @@ class TwxZipFileSystem: public AFileSystem, public AActionHandler  {
 protected:
   // proxying functions
   virtual bool Enter(const IEObject *Sender, const IEObject *Data) {  
-    OnProgress->Enter(this, Data);
+    OnProgress.Enter(this, Data);
     return true;
   }
   virtual bool Exit(const IEObject *Sender, const IEObject *Data=NULL)  {  
-    OnProgress->Exit(this, Data);
+    OnProgress.Exit(this, Data);
     return true; 
   }
   virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL) {  
-    OnProgress->Execute(this, Data);
+    OnProgress.Execute(this, Data);
     return false; 
   }
   virtual bool _DoDelFile(const olxstr& f) {  return false;  }
@@ -88,6 +88,30 @@ public:
   virtual bool AdoptStream(IInputStream& in, const olxstr& as){  throw TNotImplementedException(__OlxSourceInfo);  }
   virtual bool NewDir(const olxstr& DN)      {  throw TNotImplementedException(__OlxSourceInfo);     }
   virtual bool ChangeDir(const olxstr& DN)   {  throw TNotImplementedException(__OlxSourceInfo);  }
+};
+
+class TwxInputStreamWrapper : public IInputStream {
+  wxInputStream& is;
+public:
+  TwxInputStreamWrapper(wxInputStream& _is) : is(_is) {}
+  virtual void Read(void* data, size_t sz)  {
+    is.Read(data, sz);
+  }
+  virtual void SetPosition(size_t i) {  is.SeekI(i);  }
+  virtual size_t GetPosition() const {  return is.TellI();  }
+  virtual size_t GetSize() const {  return is.GetSize();  }
+};
+
+class TwxOutputStreamWrapper : public IOutputStream {
+  wxOutputStream& os;
+public:
+  TwxOutputStreamWrapper(wxOutputStream& _os) : os(_os) {}
+  virtual size_t Write(const void* data, size_t sz)  {
+    return os.Write(data, sz).LastWrite();
+  }
+  virtual void SetPosition(size_t i) {  os.SeekO(i);  }
+  virtual size_t GetPosition() const {  return os.TellO();  }
+  virtual size_t GetSize() const {  return os.GetSize();  }
 };
 
 #endif  // __WXWIDGETS__

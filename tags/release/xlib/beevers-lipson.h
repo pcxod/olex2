@@ -17,15 +17,15 @@ public:
     double sigma, minVal, maxVal;
   };
   template <class FloatT> static MapInfo CalcEDM(const TArrayList<SFUtil::StructureFactor>& F, 
-      FloatT*** map, int mapX, int mapY, int mapZ, double vol)  {
+      FloatT*** map, size_t mapX, size_t mapY, size_t mapZ, double vol)  {
     vec3i min, max;
     SFUtil::FindMinMax(F, min, max); 
     compd ** S, *T;
-    int kLen = max[1]-min[1]+1, 
+    size_t kLen = max[1]-min[1]+1, 
         hLen = max[0]-min[0]+1, 
         lLen = max[2]-min[2]+1;
     S = new compd*[kLen];
-    for( int i=0; i < kLen; i++ )
+    for( size_t i=0; i < kLen; i++ )
       S[i] = new compd[lLen];
     T = new compd[lLen];
     const double T_PI = 2*M_PI;
@@ -34,15 +34,15 @@ public:
     if( min[2] < minInd )  minInd = min[2];
     int maxInd = olx_max(max[0], max[1]);
     if( max[2] > maxInd )  maxInd = max[2];
-    int iLen = maxInd - minInd + 1;
-    int mapMax = olx_max(mapX, mapY);
+    size_t iLen = maxInd - minInd + 1;
+    size_t mapMax = olx_max(mapX, mapY);
     if( mapZ > mapMax )  mapMax = mapZ;
     compd** sin_cosX = new compd*[mapX],
       **sin_cosY, **sin_cosZ;
-    for( int i=0; i < mapX; i++ )  {
+    for( size_t i=0; i < mapX; i++ )  {
       sin_cosX[i] = new compd[iLen];
       for( int j=minInd; j <= maxInd; j++ )  {
-        double rv = (double)(i*j)/mapX, ca, sa;
+        double rv = (double)i*j/(double)mapX, ca, sa;
         rv *= T_PI;
         SinCos(-rv, &sa, &ca);
         sin_cosX[i][j-minInd].SetRe(ca);
@@ -54,10 +54,10 @@ public:
     }
     else  {
       sin_cosY = new compd*[mapY];
-      for( int i=0; i < mapY; i++ )  {
+      for( size_t i=0; i < mapY; i++ )  {
         sin_cosY[i] = new compd[iLen];
         for( int j=minInd; j <= maxInd; j++ )  {
-          double rv = (double)(i*j)/mapY, ca, sa;
+          double rv = (double)i*j/(double)mapY, ca, sa;
           rv *= T_PI;
           SinCos(-rv, &sa, &ca);
           sin_cosY[i][j-minInd].SetRe(ca);
@@ -73,10 +73,10 @@ public:
     }
     else  {
       sin_cosZ = new compd*[mapZ];
-      for( int i=0; i < mapZ; i++ )  {
+      for( size_t i=0; i < mapZ; i++ )  {
         sin_cosZ[i] = new compd[iLen];
         for( int j=minInd; j <= maxInd; j++ )  {
-          double rv = (double)(i*j)/mapZ, ca, sa;
+          double rv = (double)i*j/(double)mapZ, ca, sa;
           rv *= T_PI;
           SinCos(-rv, &sa, &ca);
           sin_cosZ[i][j-minInd].SetRe(ca);
@@ -90,19 +90,19 @@ public:
     */
     MapInfo mi = {0, 1000, -1000};
     double sum = 0, sq_sum = 0;
-    const int f_count = F.Count();
-    for( int ix=0; ix < mapX; ix++ )  {
-      for( int i=0; i < f_count; i++ )  {
+    const size_t f_count = F.Count();
+    for( size_t ix=0; ix < mapX; ix++ )  {
+      for( size_t i=0; i < f_count; i++ )  {
         const SFUtil::StructureFactor& sf = F[i];
         S[sf.hkl[1]-min[1]][sf.hkl[2]-min[2]] += sf.val*sin_cosX[ix][sf.hkl[0]-minInd];
       }
-      for( int iy=0; iy < mapY; iy++ )  {
+      for( size_t iy=0; iy < mapY; iy++ )  {
         for( int i=min[1]; i <= max[1]; i++ )  {
           for( int j=min[2]; j <= max[2]; j++ )  {
             T[j-min[2]] += S[i-min[1]][j-min[2]]*sin_cosY[iy][i-minInd];
           }
         }
-        for( int iz=0; iz < mapZ; iz++ )  {
+        for( size_t iz=0; iz < mapZ; iz++ )  {
           R.Null();
           for( int i=min[2]; i <= max[2]; i++ )  {
             R += T[i-min[2]]*sin_cosZ[iz][i-minInd];
@@ -117,32 +117,32 @@ public:
           if( val < mi.minVal )  mi.minVal = val;
           map[ix][iy][iz] = (FloatT)val;
         }
-        for( int i=0; i < lLen; i++ )  
+        for( size_t i=0; i < lLen; i++ )  
           T[i].Null();
       }
-      for( int i=0; i < kLen; i++ )  
-        for( int j=0; j < lLen; j++ )  
+      for( size_t i=0; i < kLen; i++ )  
+        for( size_t j=0; j < lLen; j++ )  
           S[i][j].Null();
     }
     double map_mean = sum/(mapX*mapY*mapZ);
     mi.sigma = sqrt(sq_sum/(mapX*mapY*mapZ) - map_mean*map_mean);
     // clean up of allocated data
-    for( int i=0; i < kLen; i++ )
+    for( size_t i=0; i < kLen; i++ )
       delete [] S[i];
     delete [] S;
     delete [] T;
     if( sin_cosY == sin_cosX )  sin_cosY = NULL;
     if( sin_cosZ == sin_cosX || sin_cosZ == sin_cosY )  sin_cosZ = NULL;
-    for( int i=0; i < mapX; i++ )
+    for( size_t i=0; i < mapX; i++ )
       delete [] sin_cosX[i];
     delete [] sin_cosX;
     if( sin_cosY != NULL )  {
-      for( int i=0; i < mapY; i++ )
+      for( size_t i=0; i < mapY; i++ )
         delete [] sin_cosY[i];
       delete [] sin_cosY;
     }
     if( sin_cosZ != NULL )  {
-      for( int i=0; i < mapZ; i++ )
+      for( size_t i=0; i < mapZ; i++ )
         delete [] sin_cosZ[i];
       delete [] sin_cosZ;
     }

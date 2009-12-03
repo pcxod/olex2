@@ -1,7 +1,5 @@
-//---------------------------------------------------------------------------
-
-#ifndef evectorH
-#define evectorH
+#ifndef __olx_evector_H
+#define __olx_evector_H
 
 #include <math.h>
 #include "ebase.h"
@@ -15,10 +13,9 @@ BeginEsdlNamespace()
 // using forward reference
 template <typename> class TMatrix;
 
-template <class VecType>
-  class TVector: public IEObject  {
+template <class VecType> class TVector {
 protected:
-  int Fn;
+  size_t Fn;
   VecType *FData;
 public:
   TVector()  {  Fn = 0;  FData = NULL;  }
@@ -26,25 +23,25 @@ public:
   template <class AType> TVector(const TVector<AType>& V)  {
     Fn = V.Count();
     FData = new VecType[Fn];
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       FData[i] = V[i];
   }
 
-  template <class AType> TVector(int size, AType* V)  {
+  template <class AType> TVector(size_t size, AType* V)  {
     Fn = size;
     FData = new VecType[Fn];
-    for(int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       FData[i] = V[i];
   }
 
   TVector(const TVector& V)  {
     Fn = V.Count();
     FData = new VecType[Fn];
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       FData[i] = V[i];
   }
 
-  TVector(int ddim)  {
+  TVector(size_t ddim)  {
     Fn = ddim;
     FData = new VecType[Fn];
     Null();
@@ -55,11 +52,11 @@ public:
       delete [] FData;
   }
 
-  inline int Count() const {  return Fn;  }
-  inline int Size()  const {  return Fn;  }
+  inline size_t Count() const {  return Fn;  }
+  inline size_t Size()  const {  return Fn;  }
 
   TVector& Null()  {  
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       FData[i] = 0;
     return *this;
   }
@@ -68,7 +65,7 @@ public:
     if( Fn == 0 )  
       throw TFunctionFailedException(__OlxSourceInfo, "empty vector");
     VecType l = 0;
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       l += FData[i]*FData[i];
     return (VecType)sqrt(l);
   }
@@ -76,24 +73,24 @@ public:
   VecType QLength() const {
     if( Fn == 0 )  throw TFunctionFailedException(__OlxSourceInfo, "empty vector");
     VecType l = 0;
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       l += FData[i]*FData[i];
     return l;
   }
 
   int Compare(const TVector& v) const {
-    const int l = olx_min(this->Count(), v.Count() );
-    for( int i=0; i < l; i++ )  {
+    const size_t l = olx_min(this->Count(), v.Count() );
+    for( size_t i=0; i < l; i++ )  {
       if( FData[i] < v[i] )  return -1;
       if( FData[i] > v[i] )  return 1;
     }
-    return this->Count() - v.Count();
+    return olx_cmp_size_t(Count(), v.Count());
   }
 
   TVector& Normalise() {
     VecType l = Length();
     if( l == 0 )  throw TDivException(__OlxSourceInfo);
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       FData[i] /= l;
     return *this;
   }
@@ -104,7 +101,7 @@ public:
     double l = Length(), v=0;
     l *= V.Length();
     if( l == 0 )  throw TDivException(__OlxSourceInfo);
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       v += FData[i]*V.FData[i];
     return (VecType)(v/l);
   }
@@ -113,40 +110,40 @@ public:
     if( Fn != V.Fn )  
       throw TFunctionFailedException(__OlxSourceInfo, "vectors of different size");
     double v = 0;
-    for( int i=0; i < Fn; i++ )
-      v += sqr(FData[i]-V.FData[i]);
+    for( size_t i=0; i < Fn; i++ )
+      v += olx_sqr(FData[i]-V.FData[i]);
     return (VecType)sqrt(v);
   }
 
   template <class AType> TVector& operator = (const TVector<AType>& a)  {
     Resize( a.Count() );
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       FData[i] = a[i];
     return *this;
   }
 
   TVector& operator = (const TVector& a)  {
     Resize( a.Count() );
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       FData[i] = a[i];
     return *this;
   }
 
-  template <class VC> TVector& Assign(const VC& v, int size)  {
+  template <class VC> TVector& Assign(const VC& v, size_t size)  {
     Resize(size);
-    for( int i=0; i < size; i++ )
+    for( size_t i=0; i < size; i++ )
       FData[i] = v[i];
     return *this;
   }
 
-  inline VecType& operator  [](int offset) const  {
+  inline VecType& operator  [](size_t offset) const  {
 #ifdef _OLX_DEBUG // index cheking is on
     TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, offset, 0, Fn);
 #endif
     return   FData[offset];
   }
 
-  VecType& Data(int offset) const  {
+  VecType& Data(size_t offset) const  {
 #ifdef _OLX_DEBUG // index cheking is on
     TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, offset, 0, Fn);
 #endif
@@ -177,26 +174,26 @@ public:
   }
 
   TVector& operator  += (VecType v)  {
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       FData[i] += v;
     return *this;
   }
 
   TVector& operator  -= (VecType v)  {
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       FData[i] -= v;
     return *this;
   }
 
   TVector& operator  *= (VecType v)  {
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       FData[i] *= v;
     return *this;
   }
 
   TVector& operator  /= (VecType v )  {
     if( v == 0 )  throw TDivException(__OlxSourceInfo);
-    for( int i=0; i < Fn; i++ )    
+    for( size_t i=0; i < Fn; i++ )    
       FData[i] /= v;
     return *this;
   }
@@ -210,25 +207,25 @@ public:
   template <class AType> TVector operator  / (const TVector<AType>& a ) const {    return TVector<VecType>(*this) /= a;  }
 
   template <class AType> TVector& operator  += (const TVector<AType>& a )  {
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       FData[i] += a[i];
     return *this;
   }
 
   template <class AType> TVector& operator  -= (const TVector<AType>& a )  {
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       FData[i] -= a[i];
     return *this;
   }
 
   template <class AType> TVector& operator  *= (const TVector<AType>& a )  {
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       FData[i] *=a[i];
     return *this;
   }
 
   template <class AType> TVector& operator  /= (const TVector<AType>& a )  {
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       FData[i] /= a[i];
     return *this;
   }
@@ -241,8 +238,8 @@ public:
     if( a.Elements() < Fn || a.Vectors() == 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "dimension");
     TVector V( a.Vectors() );
-    for( int i=0; i < a.Vectors(); i++ )
-      for( int j=0; j < Fn; j++ )
+    for( size_t i=0; i < a.Vectors(); i++ )
+      for( size_t j=0; j < Fn; j++ )
         V[i] += (VecType)(FData[j]*a[j][i]);
     return V;
   }
@@ -257,38 +254,38 @@ public:
 
   template <class AType> bool operator == (const TVector<AType>& a ) const {
     if( Fn != a.Count() )  return false;
-    for( int i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )
       if( FData[i] != a[i] )  
         return false;
     return true;
   }
 
   void Print() const {
-    for( int i = 0; i < Fn; i ++ )
+    for( size_t i = 0; i < Fn; i ++ )
       printf("%05.4e\t", FData[i] );
   }
   template <class SC> SC StrRepr() const  {
     SC rv;
-    for( int i=0; i < Fn; i++ )  {
+    for( size_t i=0; i < Fn; i++ )  {
       rv << FData[i];
       if( (i+1) < Fn )  rv << ',' << ' ';
     }
     return rv;
   }
   inline TIString ToString() const {  return StrRepr<olxstr>();  }
-  inline CString  ToCStr()   const {  return StrRepr<CString>();  }
-  inline WString  ToWStr()   const {  return StrRepr<WString>();  }
+  inline olxcstr  ToCStr()   const {  return StrRepr<olxcstr>();  }
+  inline olxwstr  ToWStr()   const {  return StrRepr<olxwstr>();  }
 
-  TVector& Resize(int newsize)  {
+  TVector& Resize(size_t newsize)  {
     if( newsize <= Fn )
       Fn = newsize;
     else if( newsize == 0 )
       Fn = 0;  
     else if( FData != NULL )  {
       VecType* ND = new VecType[newsize];
-      for( int i=0; i < Fn; i++ )
+      for( size_t i=0; i < Fn; i++ )
         ND[i] = FData[i];
-      for( int i=Fn; i < newsize; i++ )
+      for( size_t i=Fn; i < newsize; i++ )
         ND[i] = 0;
       Fn = newsize;
       delete [] FData;
@@ -305,21 +302,21 @@ public:
 //------------------------------------------------------------------------------
 //static members
     // searches maximum of an array
-  static VecType  ArrayMax( VecType* a, int& n, int sz )  {
+  static VecType ArrayMax(const VecType* a, size_t& n, size_t sz)  {
     VecType b;
     b = a[0];
     n = 0;
-    for( int i = 1; i < sz; i++)
+    for( size_t i = 1; i < sz; i++)
       if( a[i] > b )  {
         b = a[i];  n = i;  }
     return b;
   }
     // searches maximum of an array
-  static VecType  ArrayMin( VecType* a, int& n, int sz )  {
+  static VecType  ArrayMin(const VecType* a, size_t& n, size_t sz)  {
     VecType b;
     b = a[0];
     n = 0;
-    for( int i = 1; i < sz; i++)
+    for( size_t i = 1; i < sz; i++)
       if( a[i] < b )  {
         b = a[i];  n = i;
       }
@@ -330,8 +327,8 @@ public:
     if( coeff.Count() == 2 )
       return coeff[0] + coeff[1]*arg;
     double c = coeff[0];
-    for( int i = 1; i < coeff.Count(); i++)
-      c += coeff[i]*pow(arg,i);
+    for( size_t i = 1; i < coeff.Count(); i++)
+      c += coeff[i]*pow(arg,(double)i);
     return c;
   }
 };

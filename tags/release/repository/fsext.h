@@ -64,11 +64,11 @@ public:
   static void LoadFromStream(IDataInputStream& is, short persistenceId);
   
   static const TMemoryBlock* FindMemoryBlock(const olxstr& bn);
-  static int Count();
-  static const olxstr& GetBlockName(int i);
-  static long GetBlockSize(int i);
-  static const olxstr& GetBlockDateTime(int i);
-  static short GetPersistenceId(int i);
+  static size_t Count();
+  static const olxstr& GetBlockName(size_t i);
+  static size_t GetBlockSize(size_t i);
+  static const olxstr& GetBlockDateTime(size_t i);
+  static short GetPersistenceId(size_t i);
   static bool Exists(const olxstr& fn);
 
   void LibExists(const TStrObjList& Params, TMacroError& E);

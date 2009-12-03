@@ -1,8 +1,6 @@
-#ifndef latticekH
-#define latticekH
-
+#ifndef __olx_xl_lattice_H
+#define __olx_xl_lattice_H
 #include "xbase.h"
-#include "elist.h"
 #include "symmat.h"
 #include "atominfo.h"
 #include "catom.h"
@@ -25,15 +23,16 @@ private:
   transform the center of gravity of the asymmertic unit within {MFrom, MTo} volume
   useually VFrom = olx_round(MFrom), VTo = olx_round(VFrom)
   */
-  int GenerateMatrices(const vec3d& VFrom, const vec3d& VTo,
+  size_t GenerateMatrices(const vec3d& VFrom, const vec3d& VTo,
         const vec3d& MFrom, const vec3d& MTo);
   // generates matrices from -4 to 4 which generate aunit within the rad sphere
-  int GenerateMatrices(smatd_plist& Result, const vec3d& center, double rad);
+  size_t GenerateMatrices(smatd_plist& Result, const vec3d& center, double rad);
   smatd_plist Matrices;    // list of all matrices
   TSAtomPList  Atoms;      // list of all atoms
   TSBondPList  Bonds;      // list of all nework nodes; some of them are equal to Atoms
   TNetPList    Fragments;
   TSPlanePList Planes;
+  void GenerateBondsAndFragments(TArrayList<vec3d> *crd);
 protected:
   TActionQList Actions;
   bool Generated;
@@ -46,9 +45,9 @@ protected:
   void ClearBonds();
   void ClearPlanes();
 
-  void AddSBond( TSBond *B );
-  void AddSAtom( TSAtom *A );
-  void AddSPlane( TSPlane *P );
+  void AddSBond(TSBond* B);
+  void AddSAtom(TSAtom* A);
+  void AddSPlane(TSPlane* P);
 
   class TUnitCell*  UnitCell;
   class TAsymmUnit* AsymmUnit;
@@ -59,7 +58,6 @@ protected:
   // the atoms have to be deleted with a call to delete
   void ListAsymmUnit(TSAtomPList& res, TCAtomPList* Template, bool IncludeQ);
   // removes existing TSAtoms with TCAtom's masked
-  void ApplyMasks();
   void InitBody();
   void Disassemble();
   void RestoreCoordinates();
@@ -89,7 +87,7 @@ public:
   inline bool IsGenerated() const  {  return Generated;  }
 
   // generates matrices so that the center of asymmetric unit is inisde the specified volume
-  int GenerateMatrices(smatd_plist& Result, const vec3d& VFrom, const vec3d& VTo,
+  size_t GenerateMatrices(smatd_plist& Result, const vec3d& VFrom, const vec3d& VTo,
         const vec3d& MFrom, const vec3d& MTo);
   // finds matrices to be used for the next grow operation 
   void GetGrowMatrices(smatd_list& res) const;
@@ -99,35 +97,38 @@ public:
   void GrowAtoms(const TSAtomPList& Atoms, const smatd_list& matrices);
   void GrowAtom(TSAtom& A, bool GrowShells, TCAtomPList* Template);
   /* grow a fragment using particular matrix */
-  void GrowAtom(int FragId, const smatd& transform);
+  void GrowAtom(uint32_t FragId, const smatd& transform);
   void Grow(const smatd& transform);
   void GenerateWholeContent(TCAtomPList* Template); // generates content using current matrices
   bool IsExpandable(TSAtom& A) const;
 
-  inline int FragmentCount()                const {  return Fragments.Count(); }
-  inline TNetwork& GetFragment(int i)       const {  return *Fragments[i];  }
+  static int CompareFragmentsBySize(const TNetwork* N, const TNetwork* N1)  {
+    return N1->NodeCount() < N->NodeCount() ? -1 : (N1->NodeCount() > N->NodeCount() ? -1 : 0);
+  }
+  inline size_t FragmentCount() const {  return Fragments.Count(); }
+  inline TNetwork& GetFragment(size_t i) const {  return olx_is_valid_index(i) ? *Fragments[i] : *Network;  }
 
-  inline int MatrixCount()                  const {  return Matrices.Count();  }
-  const smatd& GetMatrix(int i)             const {  return *Matrices[i];  }
-  smatd& GetMatrix(int i)                         {  return *Matrices[i];  }
+  inline size_t MatrixCount() const {  return Matrices.Count();  }
+  const smatd& GetMatrix(size_t i) const {  return *Matrices[i];  }
+  smatd& GetMatrix(size_t i)  {  return *Matrices[i];  }
 
-  inline int AtomCount()                    const {  return Atoms.Count();  }
-  inline TSAtom& GetAtom(int i)             const {  return *Atoms[i];  }
+  inline size_t AtomCount() const {  return Atoms.Count();  }
+  inline TSAtom& GetAtom(size_t i) const {  return *Atoms[i];  }
   TSAtom* FindSAtom(const olxstr &Label) const;
   TSAtom* FindSAtom(const TCAtom& ca) const;
   TSAtom* FindSAtom(const TSAtom::Ref& id) const  {
-    for( int i=0; i < Atoms.Count(); i++ )
+    for( size_t i=0; i < Atoms.Count(); i++ )
       if( (*Atoms[i]) == id )
         return Atoms[i];
     return NULL;
   }
   void RestoreAtom(const TSAtom::Ref& id);
 
-  inline int BondCount()                    const {  return Bonds.Count();  }
-  inline TSBond& GetBond(int i)             const {  return *Bonds[i]; }
+  inline size_t BondCount() const {  return Bonds.Count();  }
+  inline TSBond& GetBond(size_t i) const {  return *Bonds[i]; }
 
-  inline int PlaneCount()                   const {  return Planes.Count(); }
-  inline TSPlane& GetPlane(int i)           const {  return *Planes[i];  }
+  inline size_t PlaneCount() const {  return Planes.Count(); }
+  inline TSPlane& GetPlane(size_t i) const {  return *Planes[i];  }
   TSPlane* NewPlane(const TSAtomPList& Atoms, int weightExtent=0);
 
   TSPlane* TmpPlane(const TSAtomPList& Atoms, int weightExtent=0); //the plane must be deleted by the caller !
@@ -161,10 +162,10 @@ public:
   inline bool operator != (const TLattice* l)  const  {  return this != l;  }
   struct GrowInfo  {
     smatd_plist matrices;  // the list of all matrices
-    TArrayList<TIntList> info;  // TCAtomId -> list of used matrices;
-    int unc_matrix_count;
+    TArrayList<TIndexList> info;  // TCAtomId -> list of used matrices;
+    size_t unc_matrix_count;
     ~GrowInfo() {
-      for( int i=0; i < matrices.Count(); i++ )
+      for( size_t i=0; i < matrices.Count(); i++ )
         delete matrices[i];
     }
   };

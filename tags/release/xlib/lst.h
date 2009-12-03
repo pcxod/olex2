@@ -1,6 +1,5 @@
-#ifndef lstH
-#define lstH
-
+#ifndef __olx_xl_lst_H
+#define __olx_xl_lst_H
 #include "xbase.h"
 #include "symmat.h"
 #include "bitarray.h"
@@ -74,22 +73,22 @@ public:
   bool LoadFromFile(const olxstr &FN);
   void SynchroniseOmits(class RefinementModel& rm);
   bool ExportHTML( const short Param, TStrList &Html, bool TableDef=true);
-  inline int DRefCount() const {  return FDRefs.Count(); }
-  inline TLstRef& DRef(int i)  {  return FDRefs[i]; }
-  inline void DelRef(int i)    {  FDRefs.Delete(i);  }
-  inline int SplitAtomCount() const       {  return FSplitAtoms.Count();  }
-  inline TLstSplitAtom& SplitAtom(int i)  {  return FSplitAtoms[i]; }
+  inline size_t DRefCount() const {  return FDRefs.Count(); }
+  inline const TLstRef& DRef(size_t i) const {  return FDRefs[i]; }
+  inline void DelRef(size_t i)  {  FDRefs.Delete(i);  }
+  inline size_t SplitAtomCount() const {  return FSplitAtoms.Count();  }
+  inline const TLstSplitAtom& SplitAtom(size_t i) const {  return FSplitAtoms[i]; }
 
-  inline int TrefTryCount()  const {  return TrefTries.Count(); }
-  inline TTrefTry& TrefTry(int i)  {  return TrefTries[i]; }
+  inline size_t TrefTryCount() const {  return TrefTries.Count(); }
+  inline const TTrefTry& TrefTry(size_t i) const {  return TrefTries[i]; }
 
-  inline int PattSolutionCount()  const {  return PattSolutions.Count(); }
-  inline TTypeList<TPattAtom>& PattSolution(int i) {  return PattSolutions[i];  }
+  inline size_t PattSolutionCount() const {  return PattSolutions.Count(); }
+  inline const TTypeList<TPattAtom>& PattSolution(size_t i) const {  return PattSolutions[i];  }
 
   inline bool IsLoaded()     const {  return FLoaded;  }
-  inline int ErrMsgCount()   const {  return ErrorMsgs.Count();  }
-  inline const olxstr& GetError(int i) const  {  return ErrorMsgs[i].GetA();  }
-  inline const olxstr& GetCause(int i) const  {  return ErrorMsgs[i].GetB();  }
+  inline size_t ErrMsgCount() const {  return ErrorMsgs.Count();  }
+  inline const olxstr& GetError(size_t i) const {  return ErrorMsgs[i].GetA();  }
+  inline const olxstr& GetCause(size_t i) const {  return ErrorMsgs[i].GetB();  }
 
   inline double Rint() const   {  return FRint; }
   inline double Rsigma() const {  return FRsig; }
@@ -98,10 +97,10 @@ public:
   inline double wR2() const    {  return FwR2; }
   inline double S() const      {  return FS; }
   inline double RS() const     {  return FRS; }
-  inline int Params() const   {  return FParams; }
-  inline int TotalRefs()const {  return FTotalRefs; }
-  inline int UniqRefs() const {  return FUniqRefs; }
-  inline int Refs4sig() const {  return FRefs4sig; }
+  inline size_t Params() const   {  return FParams; }
+  inline size_t TotalRefs()const {  return FTotalRefs; }
+  inline size_t UniqRefs() const {  return FUniqRefs; }
+  inline size_t Refs4sig() const {  return FRefs4sig; }
   inline double Peak() const   {  return FPeak; }
   inline double Hole() const   {  return FHole; }
   inline bool HasFlack() const {  return _HasFlack; }

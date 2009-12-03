@@ -56,7 +56,7 @@ public:
   static const char* GetUpdaterCmdFileName()  {  return "__cmds.update";  }
   static const char* GetOlex2PIDFileExt()  {  return "olex2_pid";  }
   static bool IsOlex2Running() {  return GetNumberOfOlex2Running() != 0;  }
-  static int GetNumberOfOlex2Running();
+  static size_t GetNumberOfOlex2Running();
   static bool LockUpdater();
   static bool UnlockUpdater();
 
@@ -72,7 +72,7 @@ public:
     TEFile::RemoveTrailingBackslashI(new_shared_dir) << "data/";
 #endif
     return TEFile::AddTrailingBackslashI( 
-      new_shared_dir << MD5::Digest(CString( 
+      new_shared_dir << MD5::Digest(esdl::olxcstr( 
         TEFile::AddTrailingBackslash((base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir)) + ReadRepositoryTag())) );
   }
   static void SaveLocationInfo(const olxstr& shared_dir, const olxstr& base_dir=EmptyString)  {

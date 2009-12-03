@@ -2,10 +2,9 @@
 #define __olx_win_httpfs_H
 /* POSIX HTTP file fetching utility,
 (c) O Dolomanov, 2004-2009 */
-#include "defs.h"
+#include "ebase.h"
 #ifdef __WIN32__
   #include <winsock.h>
-  #include <windows.h>
 #else
   #include <sys/socket.h>
   #include <netinet/in.h>
@@ -18,7 +17,11 @@
 //  #pragma link "../..lib/psdk/mswsock.lib"
 
 class THttpFileSystem: public AFileSystem, public IEObject  {
+#ifdef __WIN32__
+  SOCKET Socket;
+#else
   int Socket;
+#endif
   bool Connected, Successful;
   TUrl Url;
 protected:

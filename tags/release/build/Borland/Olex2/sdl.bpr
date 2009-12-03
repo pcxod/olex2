@@ -36,8 +36,8 @@
     <OTHERFILES value=""/>
   </MACROS>
   <OPTIONS>
-    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k- -vi- 
-      -c -tW -tWM"/>
+    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Q -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k- 
+      -vi- -c -tW -tWM"/>
     <PFLAGS value="-N2build -N0build -$Y+ -$W -$O- -$A8 -v -JPHNE -M"/>
     <AFLAGS value="/mx /w2 /zi"/>
     <LFLAGS value="/P256 /C"/>
@@ -124,16 +124,18 @@ ProductVersion=1.0.0.0
 Comments=
 
 [HistoryLists\hlIncludePath]
-Count=3
-Item0=..\..\..\sdl\smart;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
-Item1=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
-Item2=..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+Count=4
+Item0=..\..\..\repository;..\..\..\sdl\smart;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+Item1=..\..\..\sdl\smart;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+Item2=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+Item3=..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
 
 [HistoryLists\hlLibraryPath]
-Count=3
-Item0=..\..\..\sdl\smart;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;$(BCB)\lib\obj;$(BCB)\lib
-Item1=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;$(BCB)\lib\obj;$(BCB)\lib
-Item2=..\..\..\sdl;$(BCB)\lib\obj;$(BCB)\lib
+Count=4
+Item0=..\..\..\repository;..\..\..\sdl\smart;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;$(BCB)\lib\obj;$(BCB)\lib
+Item1=..\..\..\sdl\smart;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;$(BCB)\lib\obj;$(BCB)\lib
+Item2=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;$(BCB)\lib\obj;$(BCB)\lib
+Item3=..\..\..\sdl;$(BCB)\lib\obj;$(BCB)\lib
 
 [HistoryLists\hlDebugSourcePath]
 Count=1

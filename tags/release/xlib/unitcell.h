@@ -1,8 +1,6 @@
-#ifndef unitcellH
-#define unitcellH
-
+#ifndef __olx_xl_unitcell_H
+#define __olx_xl_unitcell_H
 #include "xbase.h"
-#include "elist.h"
 #include "symmat.h"
 #include "envilist.h"
 #include "ellipsoid.h"
@@ -31,12 +29,13 @@ public:
   inline TLattice& GetLattice()    const {  return *Lattice;  }
   void Clear();
 
-  inline int MatrixCount()             const {  return Matrices.Count();  }
+  inline size_t MatrixCount() const {  return Matrices.Count();  }
   // the identity matrix is always the first
-  inline const smatd& GetMatrix(int i) const {  return Matrices[i];  }
-
+  inline const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
+  // initialises the matrix container id, throws an excpetion if matrix is not found
+  void InitMatrixId(smatd& m) const;
   // gets an ellipsoid for an atom by asymmetric unit Id and a matrix associated with it
-  const TEllipsoid& GetEllipsoid(int MatrixId, int AUId) const;
+  const TEllipsoid& GetEllipsoid(size_t MatrixId, size_t AUId) const;
   void AddEllipsoid(); // adds a new row to ellipsoids, intialised with NULLs
   void ClearEllipsoids();
   // (r-)caches the ellipsoids from the aunit
@@ -44,11 +43,8 @@ public:
   // expands the lattice centering and '-1' and caches ellipsoids for all symmetry operators
   void InitMatrices();
 
-  /* returns the number of symmetrical equivalents present within the atoms
-   Optional Msg parameter might be provided for logging 
-   use 'remove' controls if equivalent atoms will be removed or left
-  */
-  int FindSymmEq(double tol, bool Initialize, bool remove, bool markDeleted, TEStrBuffer* Msg=NULL) const;
+  /* Removes symm eqivs and initialises symmetry induced connectivity */
+  void FindSymmEq(double tol) const;
 
   /* the funciton searches a matrix which moves "atom" to "to" so that the
    distance between them is shortest and return the matrix, which if not NULL
@@ -83,7 +79,7 @@ public:
     TTypeList< AnAssociation3<TCAtom const*,smatd,vec3d> > res;
     _FindInRange(center, R, res);
     out.SetCount( res.Count() );
-    for( int i=0; i < res.Count(); i++ )  {
+    for( size_t i=0; i < res.Count(); i++ )  {
       out[i].A() = res[i].A();
       out[i].B() = res[i].GetB(); 
     }
@@ -96,14 +92,14 @@ public:
     TTypeList< AnAssociation3<TCAtom const*,smatd,vec3d> > res;
     _FindInRange(center, R, res);
     out.SetCount( res.Count() );
-    for( int i=0; i < res.Count(); i++ )  {
+    for( size_t i=0; i < res.Count(); i++ )  {
       out[i].A() = res[i].A();
       out[i].B() = res[i].GetC(); 
     }
   }
 
   /* returns a list of all matrices which lead to covalent/hydrogen bonds, 
-  the return value is alwas an object to be deleted with delete 
+  the return value is always an object to be deleted with delete 
   */
   smatd_list* GetBinding(const TCAtom& toA, const TCAtom& fromA,
     const vec3d& to, const vec3d& from, bool IncludeI, bool IncludeHBonds) const;
@@ -127,7 +123,7 @@ public:
   /* returns a multiplier for the number of matrices in the asymmetruc unit for
     specified LATT instruction
   */
-  static int GetMatrixMultiplier(short Latt);
+  static size_t GetMatrixMultiplier(short Latt);
   /* This function creates a map of the unit cell with provided partioning.
   It uses Van-der-Waals atomic radii by defualt and adds delta to it. The grid points
   belonging to atoms have value 'value', the others - '0'
@@ -147,7 +143,7 @@ protected:
       return (d < 0 ? -1 : ((d > 0 ) ? 1 : 0));
     }
 public:
-  // creates the array of matrices for a given aunit and lattice tyoe
+  // creates an array of matrices for a given aunit and lattice type
   static void GenerateMatrices(smatd_list& out, const TAsymmUnit& au, short lat);
   // association should be AnAssociation2+<vec3d,TCAtom*,+>, generates all atoms of the aunit
   template <class Association> void GenereteAtomCoordinates(TTypeList<Association>& list, bool IncludeH, 
@@ -155,7 +151,7 @@ public:
     TCAtomPList& atoms = (_template == NULL ? *(new TCAtomPList) : *const_cast<TCAtomPList*>(_template));
     if( _template == NULL )  {
       list.SetCapacity(Lattice->GetAsymmUnit().AtomCount()*Matrices.Count());
-      for( int i=0; i < Lattice->GetAsymmUnit().AtomCount(); i++ )  {
+      for( size_t i=0; i < Lattice->GetAsymmUnit().AtomCount(); i++ )  {
         TCAtom& ca = Lattice->GetAsymmUnit().GetAtom(i);
         if( ca.GetAtomInfo() == iQPeakIndex || ca.IsDeleted() )  continue;
         if( !IncludeH && ca.GetAtomInfo() == iHydrogenIndex )    continue;
@@ -163,11 +159,11 @@ public:
       }
     }
     list.SetCapacity(atoms.Count()*Matrices.Count());
-    const int atom_cnt = atoms.Count();
-    for( int i=0; i < atom_cnt; i++ )  {
+    const size_t atom_cnt = atoms.Count();
+    for( size_t i=0; i < atom_cnt; i++ )  {
       TCAtom* ca = atoms[i];
       if( ca->GetAtomInfo() == iQPeakIndex || ca->IsDeleted() )  continue;
-      for( int j=0; j < Matrices.Count(); j++ )  {
+      for( size_t j=0; j < Matrices.Count(); j++ )  {
         vec3d center = Matrices[j] * ca->ccrd();
         for( int k=0; k < 3; k++ )  {
           while( center[k] < 0 )  center[k] += 1;
@@ -179,16 +175,16 @@ public:
     // create a list of unique atoms
     float* distances = new float[ list.Count()+1 ];
     list.QuickSorter.SortSF( list, AtomsSortByDistance);
-    const int lc = list.Count();
-    for( int i=0; i < lc; i++ )
+    const size_t lc = list.Count();
+    for( size_t i=0; i < lc; i++ )
       distances[i] = (float)list[i].GetA().QLength();
 
-    for( int i=0; i < lc; i++ )  {
+    for( size_t i=0; i < lc; i++ )  {
       if( list.IsNull(i) )  continue;
-      for( int j=i+1; j < lc; j++ )  {
+      for( size_t j=i+1; j < lc; j++ )  {
         if( list.IsNull(j) )  continue;
         if( (distances[j] - distances[i]) > 0.1 )  break;
-        double d = list[i].GetA().QDistanceTo( list[j].GetA() );
+        const double d = list[i].GetA().QDistanceTo( list[j].GetA() );
         if( d < 0.00001 )  {
           list.NullItem(j);
           continue;
@@ -201,13 +197,13 @@ public:
       delete &atoms;
   }
   /* expands atom coordinates with +/-1 if one of the fractional coordinates is less the lim or greater than 1-lim
-  This function is used in the BuildStructure map function to take ito account atoms which are near the cell sides
+  This function is used in the BuildStructure map function to take into account atoms which are near the cell sides
   */
   template <class Association> void ExpandAtomCoordinates(TTypeList<Association>& list, const double lim)  {
     list.SetCapacity( list.Count()*7 );
     const double c_min = lim, c_max = 1.0 -lim;
-    const int all_ac = list.Count();
-    for( int i=0; i < all_ac; i++ )  {
+    const size_t all_ac = list.Count();
+    for( size_t i=0; i < all_ac; i++ )  {
       const vec3d& v = list[i].GetA();
       const double xi = v[0] < c_min ? 1 : (v[0] > c_max ? -1 : 0);
       const double yi = v[1] < c_min ? 1 : (v[1] > c_max ? -1 : 0);
@@ -239,17 +235,14 @@ protected:
   class TSearchSymmEqTask  {
     TPtrList<TCAtom>& Atoms;
     const smatd_list& Matrices;
-    TStrList& Report;
-    bool Initialise;
     double tolerance;
     TAsymmUnit* AU;
     TLattice* Latt;
   public:
-    TSearchSymmEqTask(TPtrList<TCAtom>& atoms, const smatd_list& matrices, TStrList& report,
-                      double tol, bool initialise);
-    void Run(long ind);
+    TSearchSymmEqTask(TPtrList<TCAtom>& atoms, const smatd_list& matrices, double tol);
+    void Run(size_t ind) const;
     TSearchSymmEqTask* Replicate() const  {
-      return new TSearchSymmEqTask(Atoms, Matrices, Report, tolerance, Initialise);
+      return new TSearchSymmEqTask(Atoms, Matrices, tolerance);
     }
   };
 public:

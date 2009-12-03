@@ -26,21 +26,11 @@ void TMol::Clear()  {
 }
 //..............................................................................
 olxstr TMol::MOLAtom(TCAtom& A)  {
-  olxstr Tmp, Tmp1;
-  vec3d V = A.ccrd();
-  GetAsymmUnit().CellToCartesian(V);
-  Tmp1 = olxstr::FormatFloat(4, V[0] );
-  Tmp1.Format(10, false, ' ');
-  Tmp = Tmp1;
-  Tmp1 = olxstr::FormatFloat(4, V[1] );
-  Tmp1.Format(10, false, ' ');
-  Tmp << Tmp1;
-  Tmp1 = olxstr::FormatFloat(4, V[2] );
-  Tmp1.Format(10, false, ' ');
-  Tmp << Tmp1;
-  Tmp1 = " ";    Tmp1 << A.GetAtomInfo().GetSymbol();
-  Tmp1.Format(3, true, ' ');
-  Tmp << Tmp1;
+  olxstr Tmp;
+  const vec3d& v = A.ccrd();
+  for( int i=0; i < 3; i++ )
+    Tmp << olxstr::FormatFloat(4, v[i]).Format(10, false, ' ');
+  Tmp << ' ' << olxstr(A.GetAtomInfo().GetSymbol()).Format(3, true, ' ');
   for( int j=0; j < 12; j ++ )
     Tmp << "  0";
   return Tmp;
@@ -75,18 +65,15 @@ void TMol::SaveToStrings(TStrList& Strings)  {
   Tmp << Tmp1;
   Tmp << "  0  0  0  0  0  0  0  0  0 V2000";
   Strings.Add(Tmp);
-  for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )
-    Strings.Add( MOLAtom(GetAsymmUnit().GetAtom(i)));
-  for( int i=0; i < BondCount(); i++ )
+  for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )
+    Strings.Add(MOLAtom(GetAsymmUnit().GetAtom(i)));
+  for( size_t i=0; i < BondCount(); i++ )
     Strings.Add( MOLBond(Bond(i)) );
   Strings.Add("M END");
 }
 //..............................................................................
 void TMol::LoadFromStrings(const TStrList& Strings)  {
   Clear();
-
-  olxstr Tmp1, Tmp, Msg;
-  vec3d StrCenter;
   Title = "OLEX: imported from MDL MOL";
   TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   GetAsymmUnit().Axes()[0] = 1;
@@ -97,23 +84,17 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
   GetAsymmUnit().Angles()[2] = 90;
   GetAsymmUnit().InitMatrices();
   bool AtomsCycle = false, BondsCycle = false;
-  int AC=0, BC=0, ai1, ai2;
-  TMolBond *MB;
-  double Ax, Ay, Az;
-  for( int i=0; i < Strings.Count(); i++ )  {
-    Tmp = Strings[i].UpperCase();
-    if( !Tmp.Length() )  continue;
-    if( AtomsCycle && (Tmp.Length() > 33) )  {
-      Ax = Tmp.SubString(0, 9).ToDouble();
-      Ay = Tmp.SubString(10, 10).ToDouble();
-      Az = Tmp.SubString(20, 10).ToDouble();
-      Tmp1 = Tmp.SubString(31, 3).Trim(' ');
-      if( AtomsInfo.IsAtom(Tmp1) )  {
+  int AC=0, BC=0;
+  for( size_t i=0; i < Strings.Count(); i++ )  {
+    olxstr line = Strings[i].UpperCase();
+    if( line.IsEmpty() )  continue;
+    if( AtomsCycle && (line.Length() > 33) )  {
+      vec3d crd(line.SubString(0, 9).ToDouble(), line.SubString(10, 10).ToDouble(), line.SubString(20, 10).ToDouble());
+      olxstr atom_name = line.SubString(31, 3).Trim(' ');
+      if( AtomsInfo.IsAtom(atom_name) )  {
         TCAtom& CA = GetAsymmUnit().NewAtom();
-        CA.ccrd()[0] = Ax;
-        CA.ccrd()[1] = Ay;
-        CA.ccrd()[2] = Az;
-        CA.SetLabel( (Tmp1 + GetAsymmUnit().AtomCount()+1) );
+        CA.ccrd() = crd;
+        CA.SetLabel( (atom_name << GetAsymmUnit().AtomCount()+1) );
       }
       AC--;
       if( AC <= 0 )  {
@@ -122,28 +103,25 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
       }
       continue;
     }
-    if( BondsCycle && Tmp.Length() >= 9)  {
-      ai1  =  Tmp.SubString(0, 3).ToInt()-1;
-      ai2  =  Tmp.SubString(3, 3).ToInt()-1;
-      if( (ai1 >= GetAsymmUnit().AtomCount() || ai2 >= GetAsymmUnit().AtomCount()) ||
-          ai1 < 0 || ai2 < 0 )  {
+    if( BondsCycle && line.Length() >= 9)  {
+      const size_t ai1  =  line.SubString(0, 3).ToSizeT()-1;
+      const size_t ai2  =  line.SubString(3, 3).ToSizeT()-1;
+      if( ai1 >= GetAsymmUnit().AtomCount() || ai2 >= GetAsymmUnit().AtomCount())  {
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("TMol:: wrong atom indexes: ") << ai1 << ' ' << ai2);
       }
-      MB = new TMolBond;
-      MB->AtomA = ai1;
-      MB->AtomB = ai2;
-      MB->BondType = Tmp.SubString(6, 3).ToInt();   // bond type
-      Bonds.Add(*MB);
+      TMolBond& MB = Bonds.Add(new TMolBond);
+      MB.AtomA = ai1;
+      MB.AtomB = ai2;
+      MB.BondType = line.SubString(6, 3).ToInt();   // bond type
       BC--;
       if( BC <= 0 )
         BondsCycle = false;
       continue;
     }
     
-    if( (Tmp.FirstIndexOf("V2000") != -1) || (Tmp.FirstIndexOf("V3000") != -1) ) // count line
-    {
-      AC = Tmp.SubString(0, 3).ToInt();
-      BC = Tmp.SubString(3, 3).ToInt();
+    if( (line.FirstIndexOf("V2000") != InvalidIndex) || (line.FirstIndexOf("V3000") != InvalidIndex) ) {  // count line
+      AC = line.SubString(0, 3).ToInt();
+      BC = line.SubString(3, 3).ToInt();
       AtomsCycle = true;
       continue;
     }
@@ -151,14 +129,28 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
 }
 
 //..............................................................................
-bool TMol::Adopt(TXFile *XF)  {
+bool TMol::Adopt(TXFile& XF)  {
   Clear();
-  GetAsymmUnit().Assign(XF->GetAsymmUnit());
-  GetAsymmUnit().SetZ( (short)XF->GetLattice().GetUnitCell().MatrixCount() );
+  TLattice& latt = XF.GetLattice();
+  for( size_t i=0; i < latt.AtomCount(); i++ )  {
+    TSAtom& sa = latt.GetAtom(i);
+    if( !sa.IsAvailable() )  continue;
+    TCAtom& a = GetAsymmUnit().NewAtom();
+    a.Label() = sa.GetLabel();
+    a.ccrd() = sa.crd();
+    a.SetAtomInfo(sa.GetAtomInfo());
+    sa.SetTag(i);
+  }
+  for( size_t i=0; i < latt.BondCount(); i++ )  {
+    TSBond& sb = latt.GetBond(i);
+    if( !sb.IsAvailable() )  continue;
+    TMolBond& mb = Bonds.AddNew();
+    mb.AtomA = sb.A().GetTag();
+    mb.AtomB = sb.B().GetTag();
+    mb.BondType = 1; // singlel bond, a proper encoding is required...
+  }
+  GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
   return true;
 }
 //..............................................................................
-void TMol::DeleteAtom(TCAtom *CA)  {  return;  }
-//..............................................................................
-
  

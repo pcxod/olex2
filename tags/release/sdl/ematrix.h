@@ -1,10 +1,8 @@
 //---------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-
-#ifndef tmatrixH
-#define tmatrixH
-
+#ifndef __olx_matrix_H
+#define __olx_matrix_H
 #include <cmath>
 #include <stdio.h>
 #include "emath.h"
@@ -32,13 +30,12 @@ template <typename> class TVector;
 
 //------------------------------------------------------------------------------
 template <class MatType> class TMatrix: public ACollectionItem  {
-  int Fn, Fm;
+  size_t Fn, Fm;
   void  Clear()  {
     if( FData == NULL )  return;
     delete [] FData;
     FData = NULL;  
   }
-
   TVector <MatType>* FData;
 public:
   TMatrix()  {
@@ -47,53 +44,40 @@ public:
     SetTag(-1);
   }
 
-  TMatrix(int VectorsNumber, int ElementsNumber)  {
+  TMatrix(size_t VectorsNumber, size_t ElementsNumber)  {
     Fn = VectorsNumber;
     Fm = ElementsNumber;
     if( (Fn == 0) || (Fm == 0) )   {  FData = NULL;  return;  }
     FData = new TVector<MatType>[Fn];
-    for( int i=0; i < Fn; i++ )  
+    for( size_t i=0; i < Fn; i++ )  
       FData[i].Resize(Fm);
     SetTag(-1);
   }
 
-  template <class AType> TMatrix( const TMatrix<AType>& M )  {
-    FData = NULL;
-    Fn = Fm = 0;
-    *this = M;
+  template <class AType> TMatrix(const TMatrix<AType>& M) : Fn(M.Fn), Fm(M.Fm)  {
+    if( (Fn == 0) || (Fm == 0) )   {  FData = NULL;  return;  }
+    FData = new TVector<MatType>[Fn];
+    for( size_t i=0; i < Fn; i++ )  
+      FData[i] = M[i];
   }
 
-  TMatrix( const TMatrix& M )  {
-    FData = NULL;
-    Fn = Fm = 0;
-    *this = M;
+  TMatrix(const TMatrix& M) : Fn(M.Fn), Fm(M.Fm)  {
+    if( (Fn == 0) || (Fm == 0) )   {  FData = NULL;  return;  }
+    FData = new TVector<MatType>[Fn];
+    for( size_t i=0; i < Fn; i++ )  
+      FData[i] = M[i];
   }
 
   virtual ~TMatrix()  {  Clear();  }
 
-  //  void GetData(VType *Data[]) const;
-  // the function is used to obtain a copy of the matrix in an array
-  // be sure that the dimensions of the array are greater or equal to
-  // the dimensions of the matrix !
+  size_t Vectors() const {  return Fn;  }
+  size_t Elements() const {  return Fm;  } 
 
-  inline int Vectors() const  {  return Fn;  }
-  inline int Elements() const {  return Fm;  } 
+  const TVector<MatType>& operator [](size_t index) const {  return FData[index];  }
+  TVector<MatType>& operator [](size_t index) {  return FData[index];  }
+  const TVector<MatType>& GetVector(size_t index) const {  return FData[index];  }
+  TVector<MatType>& GetVector(size_t index) {  return FData[index];  }
 
-#ifndef _OLX_DEBUG
-  inline TVector<MatType>& operator []( int index ) const  {    return FData[index];  }
-  inline TVector<MatType>& Data(int index) const  {    return FData[index];  }
-#else // index checking is enabled
-  TVector<MatType>& operator []( int index ) const  {
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, index, 0, Fn);
-    return FData[index];
-  }
-
-  TVector<MatType>& Data(int index) const {
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, index, 0, Fn);
-    return FData[index];
-  }
-
-#endif
   /* the function multiplies a matrix by a column vector. Only the number of vector
    elements is taken from the matrix - no error will be generated if the matrix dimensions
    (number of elements) are larger than the vector dimentions!!!
@@ -102,20 +86,20 @@ public:
     if( (Fm < C.Count()) || (Fn == 0) )
       throw TFunctionFailedException(__OlxSourceInfo, "incompatible matrix dimensions");
     TVector<MatType> R(Fn);
-    for( int i = 0; i < Fn; i++ )
-      for( int j =0; j < C.Count(); j++ )
+    for( size_t i = 0; i < Fn; i++ )
+      for( size_t j =0; j < C.Count(); j++ )
         R[i] += C[j]*FData[i][j];
     return R;
   }
 
   template <class AType> TMatrix operator  * ( const TMatrix<AType>& C) const {
-    const int X = Vectors();
-    const int Y = Elements();
-    const int Z = C.Elements();
+    const size_t X = Vectors();
+    const size_t Y = Elements();
+    const size_t Z = C.Elements();
     TMatrix<MatType> Result(X, Z);
-    for( int i = 0; i < X; i ++ )
-      for( int j = 0; j < Z; j ++ )
-        for( int k = 0; k < Y; k ++ )
+    for( size_t i = 0; i < X; i++ )
+      for( size_t j = 0; j < Z; j++ )
+        for( size_t k = 0; k < Y; k++ )
           Result[i][j] += FData[i][k]*C[k][j];
     return Result;
   }
@@ -134,7 +118,7 @@ public:
 
   template <class AType> TMatrix& operator +=(const TMatrix<AType>& c)  {
     if( (Fm ==c.Elements()) && (Fn == c.Vectors()) )
-      for( int i=0; i < Fn; i ++ )  
+      for( size_t i=0; i < Fn; i++ )  
         FData[i] += c[i];
     else
       throw TFunctionFailedException(__OlxSourceInfo, "incompatible matrix dimensions");
@@ -143,90 +127,79 @@ public:
 
   template <class AType> TMatrix& operator -=(const TMatrix<AType>& c)  {
     if( (Fm ==c.Elements()) && (Fn == c.Vectors()) )
-      for( int i=0; i < Fn; i ++ )  
+      for( size_t i=0; i < Fn; i++ )  
         FData[i] -= c[i];
     else
       throw TFunctionFailedException(__OlxSourceInfo, "incompatible matrix dimensions");
     return *this;
   }
 
-
-  TMatrix operator   + (MatType V)  {
-    return TMatrix<MatType>(*this) += V;
-  }
-
-  TMatrix operator   - (MatType V)  {
-    return TMatrix<MatType>(*this) -= V;
-  }
-
-  TMatrix operator   * (MatType V)  {
-    return TMatrix<MatType>(*this) *= V;
-  }
-
-  TMatrix operator   / (MatType V)  {
-    return TMatrix<MatType>(*this) /= V;
-  }
+  TMatrix operator + (MatType V)  {  return TMatrix<MatType>(*this) += V;  }
+  TMatrix operator - (MatType V)  {  return TMatrix<MatType>(*this) -= V;  }
+  TMatrix operator * (MatType V)  {  return TMatrix<MatType>(*this) *= V;  }
+  TMatrix operator / (MatType V)  {  return TMatrix<MatType>(*this) /= V;  }
 
   TMatrix& operator += (MatType V)  {
-    for( int i = 0; i < Fn; i ++ )  
+    for( size_t i = 0; i < Fn; i++ )  
       FData[i] += V;
     return *this;
   }
 
   TMatrix& operator -= (MatType V)  {
-    for( int i = 0; i < Fn; i ++ )  
+    for( size_t i = 0; i < Fn; i++ )  
       FData[i] -= V;
     return *this;
   }
 
   TMatrix& operator *= (MatType V)  {
-    for( int i = 0; i < Fn; i ++ )  
+    for( size_t i = 0; i < Fn; i++ )  
       FData[i] *= V;
     return *this;
   }
     
   TMatrix& operator /= (MatType V)  {
-    for( int i = 0; i < Fn; i ++ )  
+    for( size_t i = 0; i < Fn; i++ )  
       FData[i] /= V;
     return *this;
   }
 
   template <class AType> bool  operator == (const TMatrix<AType>& C) const  {
     if( (Fm == C.Elements()) && (Fn == C.Vectors() ) )  {
-      for( int i = 0; i < Fn; i ++ )
-        if( !(FData[i] == C[i]) )  return false;
+      for( size_t i = 0; i < Fn; i++ )
+        if( !(FData[i] == C[i]) )
+          return false;
       return true;
     }
     return false;
   }
 
   template <class AType> TMatrix& operator  = (const TMatrix<AType>& C)  {
-    this->Resize( C.Vectors(), C.Elements() );
-    for( int i = 0; i < Fn; i++)
-      FData[i] = C[i];
-    Tag( C.Tag() );
-    return *this;
-  }
-
-  TMatrix& operator  = ( const TMatrix& C )  {
-    this->Resize( C.Vectors(), C.Elements() );
-    for( int i = 0; i < Fn; i++)
+    this->Resize(C.Vectors(), C.Elements());
+    for( size_t i = 0; i < Fn; i++)
       FData[i] = C[i];
     SetTag( C.GetTag() );
     return *this;
   }
 
-  template <class MC> TMatrix& Assign(const MC& M, int width, int height)  {
+  TMatrix& operator  = (const TMatrix& C)  {
+    Resize(C.Vectors(), C.Elements());
+    for( size_t i = 0; i < Fn; i++ )
+      FData[i] = C[i];
+    SetTag( C.GetTag() );
+    return *this;
+  }
+
+  template <class MC> TMatrix& Assign(const MC& M, size_t width, size_t height)  {
     Resize(width, height);
-    for( int i=0; i < width; i++ )
-      for(int j=0; j < height; j++ )
+    for( size_t i=0; i < width; i++ )
+      for(size_t j=0; j < height; j++ )
         FData[j][i] = M[j][i];
     return *this;
   }
 
   TMatrix& I() {
-    for( int i=0; i < Fn; i++ )  {
-      for( int j=0; j < Fm; j++ )  {
+    for( size_t i=0; i < Fn; i++ )  {
+      for( size_t j=0; j < Fm; j++ )  {
         if( i == j )  
           FData[i][j]=(MatType)1.0;
         else      
@@ -237,13 +210,13 @@ public:
   }
 
   void Null()  {
-    for(int i=0; i < Fn; i++)  
+    for( size_t i=0; i < Fn; i++ )  
       FData[i].Null();
   }
 
   bool IsI() const  {
-    for( int i=0; i < Fn; i++ )  {
-      for( int j=0; j < Fm; j++ )  {
+    for( size_t i=0; i < Fn; i++ )  {
+      for( size_t j=0; j < Fm; j++ )  {
         if( i == j )  {  
           if( FData[i][j] != 1.0 ) 
             return false; 
@@ -257,20 +230,20 @@ public:
     return true;
   }
 
-  TMatrix& Resize(int n, int m)  {
+  TMatrix& Resize(size_t n, size_t m)  {
     if( n == 0 || m == 0 )  {
       Clear();
     }
     else if( Fn == n )  {
       if( Fm != m )  {
-        for( int i=0; i < n; i++ )  
+        for( size_t i=0; i < n; i++ )  
           FData[i].Resize(m);
         Fm = m;
       }
     }
     else if( n < Fn )  {  // do not shrink - just change the size indicator
       if( Fm != m )  {
-        for( int i=0; i < n; i++ )  
+        for( size_t i=0; i < n; i++ )  
           FData[i].Resize(m);
         Fm = m;
       }
@@ -278,94 +251,89 @@ public:
     }
     else if( n > Fn )  {
       TVector<MatType>* nd = new TVector<MatType>[n];
-      for( int i=0; i < Fn; i++ )
+      for( size_t i=0; i < Fn; i++ )
         nd[i] = FData[i];
       delete [] FData;
       FData = nd;
       Fn = n;  
       Fm = m;
-      for( int i=0; i < Fn; i++ )
+      for( size_t i=0; i < Fn; i++ )
         FData[i].Resize(Fm);
     }
     return *this;
   }
 
-  void SwapRows(int s, int to )  {
-    for( int i=0; i < Fm; i++ )  {
-      MatType a = FData[s][i];
-      FData[s][i] = FData[to][i];
-      FData[to][i] = a;
+  void SwapRows(size_t s, size_t to)  {
+    for( size_t i=0; i < Fm; i++ )
+      olx_swap(FData[s][i], FData[to][i]);
     }
-  }
 
-  void SwapCols(int s,int to )  {
-    for( int i = 0; i < Fm; i++)  {
-      MatType a = FData[i][to];
-      FData[i][to] = FData[i][s];
-      FData[i][s] = a;
+  void SwapCols(size_t s,size_t to)  {
+    for( size_t i = 0; i < Fm; i++ )
+      olx_swap(FData[i][s], FData[i][to]);
     }
-  }
 
-  inline void AddRows(int to,int which )  {  FData[to] += FData[which];  }
+  void AddRows(size_t to, size_t which )  {  FData[to] += FData[which];  }
   
-  void AddCols(int to, int which )    {  
-    for( int i=0; i < Fn; i ++ )  
+  void AddCols(size_t to, size_t which )    {  
+    for( size_t i=0; i < Fn; i++ )  
       FData[i][to] += FData[i][which];  
   }
 
-  inline void SubRows(int from,int which )  {  FData[from] -= FData[which];  }
+  void SubRows(size_t from, size_t which )  {  FData[from] -= FData[which];  }
   
-  void SubCols(int from, int which )  {  
-    for( int i=0; i < Fn; i ++ )  
+  void SubCols(size_t from, size_t which)  {  
+    for( size_t i=0; i < Fn; i++ )  
       FData[i][from] -= FData[i][which];  
   }
   
-  inline void MulRow( int which, MatType v)  {  FData[which] *= v;  }
+  void MulRow(size_t which, MatType v)  {  FData[which] *= v;  }
+  void DivRow(size_t which, MatType v)  {  FData[which] /= v;  }
 
-  void DivRow( int which, MatType v)  {  
-    FData[which] /= v;  
-  }
-
-  void MulCol( int which, MatType v)  {    
-    for( int i=0; i < Fn; i ++ )  
+  void MulCol(size_t which, MatType v)  {    
+    for( size_t i=0; i < Fn; i++ )  
       FData[i][which] *= v;  
   }
 
-  void DivCol( int which, MatType v)  {
-    if( v == 0 )  throw TDivException(*this, "DivCol");
-    for( int i=0; i < Fn; i ++ )    FData[i][which] /= v;
+  void DivCol(size_t which, MatType v)  {
+    if( v == 0 )
+      throw TDivException(*this, "DivCol");
+    for( size_t i=0; i < Fn; i++ )
+      FData[i][which] /= v;
   }
 
   TMatrix& Transpose()  {
-    MatType P;
     if( Fn != Fm )
       throw TFunctionFailedException(__OlxSourceInfo, "incompatible matrix dimensions");
-    for( int i=0; i < Fm; i++ )  {
-      for( int j=i+1; j < Fn; j++ )  {  // need to go around a half of matrix
+    for( size_t i=0; i < Fm; i++ )  {
+      for( size_t j=i+1; j < Fn; j++ )  {  // need to go around a half of matrix
         if( i == j )  continue;
-        P = FData[j][i];
-        FData[j][i] = FData[i][j];
-        FData[i][j] = P;
+        olx_swap(FData[j][i], FData[i][j]);
       }
     }
     return *this;
   }
   static TMatrix Transpose(const TMatrix& matr)  {
-    return TMatrix(matr).Transpose();
+    TMatrix rv(matr.Elements(), matr.Vectors());
+    for( size_t i = 0; i < matr.Vectors(); i++ )  {
+      for( size_t j = 0; j < matr.Elements(); j++ )
+        rv[j][i] = matr[i][j];
+  }
+    return rv;
   }
 
   MatType Trace() const  {
     if( Fn != Fm )
       throw TFunctionFailedException(__OlxSourceInfo, "incompatible matrix dimensions");
     MatType a = 0;
-    for( int i = 0; i < Fn; i++ )  
+    for( size_t i = 0; i < Fn; i++ )  
       a += FData[i][i];
     return a;
   }
 
   void Print() const  {
     printf("\n");
-    for( int i = 0; i < Fn; i ++ )  {
+    for( size_t i = 0; i < Fn; i++ )  {
       FData[i].Print();
       printf("\n");   }
     printf("\n");
@@ -373,52 +341,46 @@ public:
 
 
   bool LoadFromFile(const olxstr& FN)  {
-    int dim;
-    TStrList S, Toks;
+    TStrList S;
     S.LoadFromFile( FN );
-    if( S.Count() == 0 )  return false;
-
-    for( int i=0; i < S.Count(); i++ )
-      S[i].Replace('\t', ' ');
-    for( int i=0; i < S.Count(); i++ )  {
-      Toks.Strtok(S[i], ' ');
+    if( S.IsEmpty() )  return false;
+    for( size_t i=0; i < S.Count(); i++ )  {
+      TStrList Toks(S[i].Replace('\t', ' '), ' ');
       if( i == 0 )  {
-        dim = Toks.Count();
-        if( !dim )  return false;
-        this->Resize(S.Count(), dim);
+        size_t dim = Toks.Count();
+        if( dim == 0 )  return false;
+        Resize(S.Count(), dim);
       }
-      if( Toks.Count() != dim )  
+      if( Toks.Count() != Fm )  
         throw TFunctionFailedException(__OlxSourceInfo, "file rows not even");
-        
-      for( int j=0; j < dim; j++ )  FData[i][j] = (MatType)Toks[j].ToDouble();
+      for( size_t j=0; j < Fm; j++ )
+        FData[i][j] = (MatType)Toks[j].ToDouble();
     }
     return true;
   }
 
   void SaveToFile(const olxstr& FN)  {
     TCStrList S;
-    olxstr T(EmptyString, Fm*10);
-    for( int i=0; i < Fn; i++ )  {
-      T = EmptyString;
-      for( int j=0; j < Fm; j++ )
-        T <<olxstr::FormatFloat(5, FData[i][j], true) << '\t';
-      S.Add(T);
+    for( size_t i=0; i < Fn; i++ )  {
+      olxstr& T = S.Add(EmptyString);
+      for( size_t j=0; j < Fm; j++ )
+        T << olxstr::FormatFloat(5, FData[i][j], true) << '\t';
     }
-    S.SaveToFile( FN );
+    S.SaveToFile(FN);
   }
 
 //------------------------------------------------------------------------------
   // static methods
   // searches for maximum element in matrix
-  static MatType MatMax(TMatrix& A,   int& i, int& j )  {
-    MatType c = (MatType)olx_abs(  MSVCC(A[0][0]) );
-    for( int a = 0; a < A.Vectors(); a ++ )  {
-      for( int b = 0; b < A.Elements(); b ++ )  {
-        if( !a && !b )  continue;
-        if( olx_abs( MSVCC(A[a][b]) ) > c )  {
+  static MatType MatMax(const TMatrix& A, size_t& i, size_t& j)  {
+    MatType c = olx_abs(A[0][0]);
+    for( size_t a = 0; a < A.Vectors(); a++ )  {
+      for( size_t b = 0; b < A.Elements(); b++ )  {
+        if( a == 0 && b == 0 )  continue;
+        if( olx_abs(A[a][b]) > c )  {
           i = a;
           j = b;
-          c = (MatType)olx_abs( MSVCC(A[a][b]) );
+          c = olx_abs(A[a][b]);
         }
       }
     }
@@ -428,8 +390,8 @@ public:
 
   // searches for maximum element in matrix dialgonal matrix
   // without consideration of the main diagonal
-  static MatType MatMaxX(TMatrix& A,   int& i, int& j )  {
-    MatType c = (MatType)olx_abs( MSVCC(A[0][1]) );
+  static MatType MatMaxX(const TMatrix& A, size_t& i, size_t& j)  {
+    MatType c = olx_abs(A[0][1]);
     i = 0;
     j = 1;
     if( A.Elements() == 2 )  {
@@ -437,12 +399,12 @@ public:
       j = 1;
       return c;
     }
-    for( int a = 0; a < A.Elements(); a ++ )  {
-      for( int b = a+1; b < A.Elements(); b ++ )  {
-        if( olx_abs( MSVCC(A[a][b]) ) > c ) {
+    for( size_t a = 0; a < A.Elements(); a++ )  {
+      for( size_t b = a+1; b < A.Elements(); b++ )  {
+        if( olx_abs(A[a][b]) > c ) {
           i = a;
           j = b;
-          c = (MatType)olx_abs( MSVCC(A[a][b]) );
+          c = olx_abs(A[a][b]);
         }
       }
     }
@@ -451,23 +413,23 @@ public:
 
 
   // searches for maximum element in a matrix row
-  static MatType RowMax(TMatrix& A,   int i, int& j )  {
-    MatType c = (MatType)olx_abs( MSVCC(A[i][0]) );
-    j=0;
-    for( int a = 1; a < A.Elements(); a ++ )  {
-      if( olx_abs( MSVCC(A[i][a]) ) > c )  {
+  static MatType RowMax(const TMatrix& A, size_t i, size_t& j)  {
+    MatType c = olx_abs(A[i][0]);
+    j = 0;
+    for( size_t a = 1; a < A.Elements(); a++ )  {
+      if( olx_abs(A[i][a]) > c )  {
         j = a;
-        c = (MatType)olx_abs( MSVCC(A[i][a]) );
+        c = olx_abs(A[i][a]);
       }
     }
     return c;
   }
 
   // searches for minimum element in a matrix row
-  static MatType  RowMin(TMatrix& A,   int row, int& j )  {
+  static MatType RowMin(const TMatrix& A, size_t row, size_t& j)  {
     MatType a = A[row][0];
     j = 0;
-    for(int i=1; i < A.Elements(); i++ )
+    for( size_t i=1; i < A.Elements(); i++ )
       if( A[row][i] < a )  {
         a = A[row][i];
         j = i;
@@ -477,13 +439,13 @@ public:
 
 
   // searches for maximum element in a matrix column
-  static MatType ColMax(TMatrix&  A, int i, int& j )  {
-    MatType c = (MatType)olx_abs( MSVCC(A[0][i]) );
-    j=0;
-    for( int a = 1; a < A.Vectors(); a ++ )  {
-      if( olx_abs( MSVCC(A[a][i]) ) > c )  {
+  static MatType ColMax(const TMatrix&  A, size_t i, size_t& j )  {
+    MatType c = olx_abs(A[0][i]);
+    j = 0;
+    for( size_t a = 1; a < A.Vectors(); a++ )  {
+      if( olx_abs(A[a][i]) > c )  {
         j = a;
-        c = (MatType)olx_abs( MSVCC(A[a][i]) );
+        c = olx_abs(A[a][i]);
       }
     }
    return c;
@@ -491,10 +453,10 @@ public:
 
   // solves a set of equations by the Gauss method {equation arr.b = c }
   static void GauseSolve(TMatrix<MatType>& arr, TVector<MatType>& b, TVector<MatType>& c) {
-    int sz = arr.Elements();
+    const size_t sz = arr.Elements();
     MatrixElementsSort(arr, b );
-    for ( int j = 1; j < sz; j++ )
-      for( int i = j; i < sz; i++ )  {
+    for ( size_t j = 1; j < sz; j++ )
+      for( size_t i = j; i < sz; i++ )  {
         if( arr[i][j-1] ==0 )  continue;
         b[i]  *= -(arr[j-1][j-1]/arr[i][j-1]);
         arr.MulRow(i, -(arr[j-1][j-1]/arr[i][j-1]));
@@ -505,10 +467,11 @@ public:
       throw TFunctionFailedException(__OlxSourceInfo, "dependent set of equations");
 
     c[sz-1] = b[sz-1]/arr[sz-1][sz-1];
-    for(int j = sz-2; j >=0; j--)  {
-      for(int k1=1; k1 < sz-j+1; k1++)  {
+    for( size_t j = sz-2; j != ~0; j-- )  {
+      for( size_t k1=1; k1 < sz-j+1; k1++ )  {
         if( k1 == (sz-j) )
-          for( int i=sz-1; i > sz-k1; i-- )  b[j]-=arr[j][i]*c[i];
+          for( size_t i=sz-1; i > sz-k1; i-- )
+            b[j]-=arr[j][i]*c[i];
       }
       c[j]= b[j]/arr[j][j];
      }
@@ -516,18 +479,16 @@ public:
 
       // used in GauseSolve to sort the matrix
   static void MatrixElementsSort(TMatrix<MatType>& arr, TVector<MatType>& b)  {
-    MatType *bf, c;
-    int n, dim = arr.Elements();
-    bf = new MatType[dim];
-    for( int i = 0; i < dim; i++ )  {
-      for(int j = 0; j < dim; j++ )  {
-        bf[j] = (MatType)olx_abs( MSVCC(arr[j][i]) );
-      }
-      TVector<MatType>::ArrayMax( bf, n, dim );
+    const size_t dim = arr.Elements();
+    MatType *bf = new MatType[dim];
+    for( size_t i = 0; i < dim; i++ )  {
+      for( size_t j = 0; j < dim; j++ )
+        bf[j] = olx_abs(arr[j][i]);
+      size_t n;
+      TVector<MatType>::ArrayMax(bf, n, dim);
       if( n != i )  {
         arr.SwapRows(i,n);
-        // changing b[i] and b[n]
-        c = b[i];     b[i] = b[n];     b[n] = c;
+        olx_swap(b[i], b[n]);
       }
     }
     delete [] bf;
@@ -538,7 +499,7 @@ public:
    params will contain the fitting parameters
    the return value is the RMS - root mean square of the fit
   */
-  static MatType PLSQ(TMatrix<MatType>& xy, TVector<MatType>& param, int extent)  {
+  static MatType PLSQ(TMatrix<MatType>& xy, TVector<MatType>& param, size_t extent)  {
     extent ++;
     if( xy.Elements() < extent )
       throw TInvalidArgumentException(__OlxSourceInfo, "not enough data");
@@ -546,10 +507,10 @@ public:
     TVector<MatType> r(extent);
     param.Resize(extent);
 
-    for(int i = 0; i < extent; i++)  {
-      for(int j = i; j < extent; j++)  {
+    for( size_t i = 0; i < extent; i++ )  {
+      for( size_t j = i; j < extent; j++ )  {
         MatType b = 0;
-        for(int k = 0; k < xy.Elements(); k++)  {
+        for( size_t k = 0; k < xy.Elements(); k++ )  {
           if( xy[0][k] == 0 )    continue;
           MatType i_a, j_a;
           if( i == 0 )       i_a = 1;
@@ -565,21 +526,21 @@ public:
         s[i][j] = b;
       }
       MatType a = 0;
-      for(int j=0; j < xy.Elements(); j++)  {
+      for( size_t j=0; j < xy.Elements(); j++ )  {
         if( xy[0][j] == 0 )  continue;
         a += (MatType)(xy[1][j]*pow( MSVCC(xy[0][j]), MSVCC(i) ) );
       }
       r[i] = a;
     }
     // fill the bottom off diagonal part
-    for(int i = 0; i < extent; i++)
-      for(int j = i+1; j < extent; j++)
+    for( size_t i = 0; i < extent; i++ )
+      for( size_t j = i+1; j < extent; j++ )
         s[j][i] = s[i][j];
 
-    GauseSolve(s,r,param);
+    GauseSolve(s, r, param);
     double rms = 0;
-    for(int i=0; i < xy.Elements(); i++ )
-      rms += sqr( xy[1][i]-TVector<MatType>::PolynomValue(param, xy[0][i]) );
+    for( size_t i=0; i < xy.Elements(); i++ )
+      rms += olx_sqr( xy[1][i]-TVector<MatType>::PolynomValue(param, xy[0][i]) );
     return (rms > 0) ? sqrt(rms)/xy.Elements() : 0;
   }
 
@@ -599,58 +560,49 @@ public:
     }
     return p1;
   }
-  static inline double Lagrang(TMatrix& xy, double point )  {
+  static double Lagrang(TMatrix& xy, double point)  {
     return Lagrange(xy[0], xy[1]);
   }
 
     // calculates eigen values of symmetric matrix
   static void  EigenValues(TMatrix& A, TMatrix& E)  {
-    int i, j;
+    size_t i, j;
     MatType a = 2;
-    while( olx_abs( MSVCC(a) ) > 1e-15 )  {
-      MatMaxX( A, i, j );
-      multMatrix( A, E, i, j );
-      a = MatMaxX(A, i, j );
+    while( olx_abs(a) > 1e-15 )  {
+      MatMaxX(A, i, j);
+      multMatrix(A, E, i, j);
+      a = MatMaxX(A, i, j);
     }
   }
 
       // used in the Jacoby eigenvalues search procedure
-  protected: static void multMatrix( TMatrix<MatType>& D, TMatrix<MatType>& E, int i, int j )  {
+  protected: static void multMatrix(TMatrix<MatType>& D, TMatrix<MatType>& E, size_t i, size_t j)  {
     MatType cf, sf, cdf, sdf;
     if( D[i][i] == D[j][j] )  {
       cdf = 0;
       cf  = (MatType)sqrt( MSVCC(2.0) )/2;
-      sf  = (MatType)Sign(D[i][j])*cf;
-      sdf = (MatType)Sign(D[i][j]);
+      sf  = (MatType)olx_sign(D[i][j])*cf;
+      sdf = (MatType)olx_sign(D[i][j]);
     }
     else  {
-      MatType tdf = 2*D[i][j]/(D[j][j] - D[i][i]);
-      MatType r = (MatType)(tdf*tdf);
-
+      const MatType tdf = 2*D[i][j]/(D[j][j] - D[i][i]);
+      const MatType r = (MatType)(tdf*tdf);
       cdf = (MatType)sqrt( MSVCC(1.0/(1+r)) );
       cf  = (MatType)sqrt( (1+cdf)/2.0);
-      sdf = (MatType)(sqrt( MSVCC(r/(1+r)) ) * Sign(tdf));
-      sf  = (MatType)(sqrt((1-cdf)/2.0)*Sign(tdf));
+      sdf = (MatType)(sqrt( MSVCC(r/(1+r)))*olx_sign(tdf));
+      sf  = (MatType)(sqrt((1-cdf)/2.0)*olx_sign(tdf));
     }
-    MatType ji, jj,ij,ii,ja,ia;
-    ij = D[i][j];
-    ii = D[i][i];
-    jj = D[j][j];
+    const MatType ij = D[i][j], ii = D[i][i], jj = D[j][j];
     D[i][j] = D[j][i] = 0;
     D[i][i] = (MatType)(ii*cf*cf + jj*sf*sf - ij*sdf);
     D[j][j] = (MatType)(ii*sf*sf + jj*cf*cf + ij*sdf);
 
-    for( int a = 0; a < D.Vectors(); a++ )  {
-      ij = E[i][a];
-      ji = E[j][a];
-
-      E[i][a] = ij*cf - ji*sf; //i
-      E[j][a] = ij*sf + ji*cf;   //j
-    }
-    for( int a = 0; a < D.Vectors(); a++ )  {
+    for( size_t a = 0; a < D.Vectors(); a++ )  {
+      const MatType ij = E[i][a], ji = E[j][a];
+      E[i][a] = ij*cf - ji*sf;
+      E[j][a] = ij*sf + ji*cf;
       if((a != i) && (a != j ) )  {
-        ia = D[i][a];
-        ja = D[j][a];
+        const double ia = D[i][a], ja = D[j][a];
         D[i][a] = D[a][i] = ia*cf - ja*sf;
         D[j][a] = D[a][j] = ia*sf + ja*cf;
       }

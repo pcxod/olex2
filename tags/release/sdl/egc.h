@@ -44,7 +44,7 @@ class TEGC : public AActionHandler  {
   // to be deleted at the end
   OEntry  ATEOHead, *ATEOTail;
 protected:
-  bool RemoveObject( OEntry& head, IEObject* obj );
+  bool RemoveObject(OEntry& head, IEObject* obj);
   static void ManageRemoval();
   volatile bool Destructing;
 protected:
@@ -87,7 +87,7 @@ public:
     return (Instance!=NULL ? Instance : (Instance = new TEGC));
   }
 
-  virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL) {
+  virtual bool Execute(const IEObject*, const IEObject*) {
     ClearASAP();
     return true;
   }

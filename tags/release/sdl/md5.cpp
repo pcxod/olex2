@@ -48,7 +48,7 @@ void MD5Impl::digest64(const uint32_t* msg)  {
       f = c^(b | ~d);
       g = (i*7) % 16;
     }
-    const size_t tmp = d;
+    const uint32_t tmp = d;
     d = c;
     c = b;
     b += HashingUtils::hs_rotl( a+f+consts[i]+ msg[g], rotations[i] );
@@ -60,9 +60,9 @@ void MD5Impl::digest64(const uint32_t* msg)  {
   state[3] += d;
 }
 
-CString MD5Impl::formatDigest()  {
+olxcstr MD5Impl::formatDigest()  {
   HashingUtilsLE::hs_copy(state, digest, 4);
-  CString rv;
+  olxcstr rv;
   char ch_bf[16];
   memset(ch_bf, 0, 16);
   for( int i=0; i < 16; i++ )  {

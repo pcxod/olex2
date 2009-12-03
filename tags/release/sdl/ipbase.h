@@ -98,9 +98,9 @@ public:
   virtual olxstr GetRunTimeSignature() const = 0;
   // note that a new instance is returned - must be deleted if called explicetely!
   virtual IEObject* Run(TPtrList<IEObject const>& params) = 0;
-  virtual int GetArgc()  const  = 0;
+  virtual size_t GetArgc()  const  = 0;
   virtual void DoDebug() = 0;
-  virtual const std::type_info& GetArgType(int i) const = 0;
+  virtual const std::type_info& GetArgType(size_t i) const = 0;
   virtual const std::type_info& GetRetValType() const = 0;
 };
 
@@ -114,7 +114,7 @@ protected:
   void CollectDebugInfo(const TPtrList<IEObject const>& params)  {
   RTSignature = GetName();
     RTSignature << '(';
-    for( int i=0; i < params.Count(); i++ )  {
+    for( size_t i=0; i < params.Count(); i++ )  {
       if( params[i] != NULL )  {
         RTSignature << typeid( *params[i] ).name();
         RTSignature << '[' << params[i]->ToString() << ']';
@@ -136,7 +136,7 @@ public:
   virtual olxstr GetSignature() const {
     olxstr rv = GetRetValType().name();
     rv << ' ' << GetName() << '(';
-    for( int i=0; i < ArgTypes.Count(); i++ )  {
+    for( size_t i=0; i < ArgTypes.Count(); i++ )  {
       rv << ArgTypes[i]->name();
       if( (i+1) < ArgTypes.Count() )
         rv << ", ";
@@ -146,8 +146,8 @@ public:
   }
   virtual olxstr GetRunTimeSignature() const {  return RTSignature;  }
 
-  virtual int GetArgc() const  {  return ArgTypes.Count();  }
-  virtual const std::type_info& GetArgType(int i) const  {  return *ArgTypes[i];  }
+  virtual size_t GetArgc() const  {  return ArgTypes.Count();  }
+  virtual const std::type_info& GetArgType(size_t i) const  {  return *ArgTypes[i];  }
   virtual const std::type_info& GetRetValType() const {  return typeid(RV);  }
   void ValidateParameters(TPtrList<IEObject const>& params)  {
     if( Debug )
@@ -155,7 +155,7 @@ public:
     try  {
       if( params.Count() != ArgTypes.Count() ) 
         throw 10;
-      for( int i=0; i < ArgTypes.Count(); i++ )  {
+      for( size_t i=0; i < ArgTypes.Count(); i++ )  {
         if( typeid(*params[i]) != *ArgTypes[i] ) 
           throw 20;
       }
@@ -577,13 +577,13 @@ class TFuncRegistry  {
   TCSTypeList<olxstr, IFunc*> funcs;
 public:
   ~TFuncRegistry()  {
-    for( int i=0; i < funcs.Count(); i++ )
+    for( size_t i=0; i < funcs.Count(); i++ )
       delete funcs.GetObject(i);
   }
   template <class T>
   IFunc* FindFunction(const T& name)  const  {
-    int ind = funcs.IndexOfComparable(name);
-    return ind == -1 ? NULL : funcs.GetObject(ind);
+    size_t ind = funcs.IndexOfComparable(name);
+    return ind == InvalidIndex ? NULL : funcs.GetObject(ind);
   }
   //void (*F)(void)
   void Reg(const olxstr& name, void (*F)(void) )  {

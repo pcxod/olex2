@@ -29,8 +29,10 @@ static const short
 class RefinementModel : public IXVarReferencerContainer, public IXVarReferencer {
   // in INS file is EQUV command
   olxdict<olxstr,smatd,olxstrComparator<false> > UsedSymm;
-  olxdict<olxstr,XScatterer*, olxstrComparator<false> > SfacData;  // label + params
+  olxdict<olxstr,XScatterer*, olxstrComparator<false> > SfacData;
+  olxdict<olxstr,XDispersion*, olxstrComparator<false> > DispData;
   olxdict<int, Fragment*, TPrimitiveComparator> Frags;
+  ContentList UserContent;
 protected:
   olxstr HKLSource;
   olxstr RefinementMethod,  // L.S. or CGLS
@@ -57,7 +59,7 @@ public:
       OMIT_s, OMIT_2t, SHEL_lr, SHEL_hr, MaxI, MinI;
     int MERG;
     //vec3i maxInd, minInd;
-    int FilteredOff, // by LimD, OMIT_2t, SHEL_hr, SHEL_lr
+    size_t FilteredOff, // by LimD, OMIT_2t, SHEL_hr, SHEL_lr
       OmittedReflections, // refs after 0 0 0
       TotalReflections, // reflections read = OmittedRefs + TotalRefs
       IntensityTransformed;  // by OMIT_s
@@ -97,7 +99,7 @@ public:
       SHEL_lr = def_SHEL_lr;
       SHEL_hr = def_SHEL_hr;
     }
-    int GetReadReflections() const {  return TotalReflections+OmittedReflections;  }
+    size_t GetReadReflections() const {  return TotalReflections+OmittedReflections;  }
   };
 protected:
   HklStat _HklStat;
@@ -212,8 +214,8 @@ public:
   double GetOMIT_2t()            const {  return OMIT_2t;  }
   void SetOMIT_2t(double v)            {  OMIT_2t = v;  OMIT_set = true;}
   bool HasOMIT()                 const {  return OMIT_set;  }
-  int OmittedCount()             const {  return Omits.Count();  }
-  const vec3i& GetOmitted(int i) const {  return Omits[i];  }
+  size_t OmittedCount() const {  return Omits.Count();  }
+  const vec3i& GetOmitted(size_t i) const {  return Omits[i];  }
   void Omit(const vec3i& r)            {  Omits.AddCCopy(r);  OMITs_Modified = true;  }
   void ClearOmits()                    {  Omits.Clear();  OMITs_Modified = true;  }
   const vec3i_list& GetOmits()   const {  return Omits;  }
@@ -234,7 +236,7 @@ public:
     return olxstr(OMIT_s) << ' ' << OMIT_2t;
   }
   // processed user omits (hkl) and returns the number of removed reflections
-  int ProcessOmits(TRefList& refs);
+  size_t ProcessOmits(TRefList& refs);
 
   // SHEL reflection resolution filter low/high
   double GetSHEL_lr()     const {  return SHEL_lr;  }
@@ -250,40 +252,21 @@ public:
       SHEL_set = true;
     }
   }
-  olxstr GetSHELStr() const {
-    return olxstr(SHEL_lr) << ' ' << SHEL_hr;
-  }
+  olxstr GetSHELStr() const {  return olxstr(SHEL_lr) << ' ' << SHEL_hr;  }
 
   const TDoubleList& GetBASF() const {  return BASF;  }
-  olxstr GetBASFStr() const {
-    olxstr rv;
-    for( int i=0; i < BASF.Count(); i++ )  {
-      rv << Vars.GetParam(*this, i);
-      if( (i+1) < BASF.Count() )
-        rv << ' ';
-    }
-    return rv;
-  }
+  olxstr GetBASFStr() const;
   
   template <class list> void SetTWIN(const list& twin) {
     if( twin.Count() > 8 )  {
-      for( int i=0; i < 9; i++ )
+      for( size_t i=0; i < 9; i++ )
         TWIN_mat[i/3][i%3] = twin[i].ToDouble();
     }
     if( twin.Count() > 9 )
       TWIN_n = twin[9].ToInt();
     TWIN_set = true;
   }
-  olxstr GetTWINStr() const {
-    olxstr rv;
-    for( int i=0; i < 9; i++ )  {
-      if( TWIN_mat[i/3][i%3] == 0 )
-        rv << "0 ";
-      else
-        rv << TWIN_mat[i/3][i%3] << ' ';
-    }
-    return rv << TWIN_n;
-  }
+  olxstr GetTWINStr() const;
   const mat3d& GetTWIN_mat()  const {  return TWIN_mat;  }
   void SetTWIN_mat(const mat3d& m)  {  TWIN_mat = m;  TWIN_set = true;  }
   /* ShelXL manual:
@@ -307,33 +290,17 @@ of components 1 ... m
   template <class list> void SetBASF(const list& bs) {
     BASF.SetCount(bs.Count());
     BASF_Vars.SetCount(bs.Count());
-    for( int i=0; i < bs.Count(); i++ )  {
+    for( uint16_t i=0; i < bs.Count(); i++ )  {
       BASF_Vars[i] = NULL;
       BASF[i] = Vars.SetParam(*this, i, bs[i].ToDouble());
     }
   }
-  const olxstr& GetRefinementMethod() const {  return RefinementMethod;  }
-  void SetRefinementMethod(const olxstr& rm) {
-    RefinementMethod = rm;
-  }
 
-  const olxstr& GetSolutionMethod() const {  return SolutionMethod;  }
-  void SetSolutionMethod(const olxstr& sm)  {
-    SolutionMethod = sm;
-  }
+  DefPropC(olxstr, RefinementMethod)
+  DefPropC(olxstr, SolutionMethod)
   
-  void SetIterations( int v ) {  
-    if( LS.IsEmpty() ) 
-      LS.Add(v);
-    else
-      LS[0] = v;  
-  }
-  void SetPlan(int v)        {  
-    if( PLAN.IsEmpty() )  
-      PLAN.Add(v);
-    else
-      PLAN[0] = v;  
-  }
+  void SetIterations(int v);
+  void SetPlan(int v);
 
   // clears restraints, SFAC and used symm but not AfixGroups, Exyzroups and Vars
   void Clear();
@@ -347,10 +314,10 @@ of components 1 ... m
   }
 
   void AddInfoTab(const TStrList& l);
-  int InfoTabCount()                const {  return InfoTables.Count();  }
-  const InfoTab& GetInfoTab(int i)  const {  return InfoTables[i];  }
-  InfoTab& GetInfoTab(int i)              {  return InfoTables[i];  }
-  void DeleteInfoTab(int i)               {  InfoTables.Delete(i);  }
+  size_t InfoTabCount() const {  return InfoTables.Count();  }
+  const InfoTab& GetInfoTab(size_t i) const {  return InfoTables[i];  }
+  InfoTab& GetInfoTab(size_t i)  {  return InfoTables[i];  }
+  void DeleteInfoTab(size_t i)  {  InfoTables.Delete(i);  }
   InfoTab& AddHTAB();
   InfoTab& AddRTAB(const olxstr& codename, const olxstr& resi=EmptyString);
   bool ValidateInfoTab(const InfoTab& it);
@@ -359,16 +326,16 @@ of components 1 ... m
   //removes the matrix or decriments the reference count
   void RemUsedSymm(const smatd& matr);
   // returns the number of the used symmetry matrices
-  inline int UsedSymmCount()     const {  return UsedSymm.Count();  }
+  inline size_t UsedSymmCount() const {  return UsedSymm.Count();  }
   // returns used symmetry matric at specified index
   inline const smatd& GetUsedSymm(size_t ind) const {  return UsedSymm.GetValue(ind);  }
   // return index of given symmetry matrix in the list or -1, if it is not in the list
-  inline int UsedSymmIndex(const smatd& matr)  const {  return UsedSymm.IndexOfValue(matr);  }
+  inline size_t UsedSymmIndex(const smatd& matr) const {  return UsedSymm.IndexOfValue(matr);  }
   // deletes all used symmetry matrices
   inline void ClearUsedSymm()          {  UsedSymm.Clear();  }
   inline const smatd* FindUsedSymm(const olxstr& name)  {
-    int i = UsedSymm.IndexOf(name);
-    return i == -1 ? NULL : &UsedSymm.GetValue(i);
+    size_t i = UsedSymm.IndexOf(name);
+    return (i == InvalidIndex ? NULL : &UsedSymm.GetValue(i));
   }
   
   // adds new custom scatterer
@@ -378,19 +345,63 @@ of components 1 ... m
                   double c, double fp, double fdp, double mu, 
                   double r, double wt);
   // returns number of custom scatterers
-  inline int SfacCount()  const  {  return SfacData.Count();  }
-  // returns scatterer label at specified index
-  inline const olxstr& GetSfacLabel(size_t index) const  {
-    return SfacData.GetKey(index);
-  }
+  inline size_t SfacCount() const {  return SfacData.Count();  }
   // returns scatterer at specified index
-  inline XScatterer& GetSfacData(size_t index) const  {
-    return *SfacData.GetValue(index);
-  }
+  inline XScatterer& GetSfacData(size_t i) const {  return *SfacData.GetValue(i);  }
   // finds scatterer by label, returns NULL if nothing found
   inline XScatterer* FindSfacData(const olxstr& label) const  {
-    int ind = SfacData.IndexOf(label);
-    return ind == -1 ? NULL : SfacData.GetValue(ind);
+    size_t ind = SfacData.IndexOf(label);
+    return ind == InvalidIndex ? NULL : SfacData.GetValue(ind);
+  }
+
+  size_t DispCount() const {  return DispData.Count();  }
+  XDispersion& GetDispData(size_t i) const {  return *DispData.GetValue(i);  }
+  void AddDisp(const olxstr& label, double fp, double fdp, double mu = -1);
+  // finds scatterer by label, returns NULL if nothing found
+  inline XDispersion* FindDispData(const olxstr& label) const {
+    size_t ind = DispData.IndexOf(label);
+    return ind == InvalidIndex ? NULL : DispData.GetValue(ind);
+  }
+  // user content management
+  const ContentList& GetUserContent() const {  return UserContent;  }
+  const olxstr GetUserContentStr() const {  
+    olxstr rv;
+    for( size_t i=0; i < UserContent.Count(); i++ )
+      rv << UserContent[i].GetA() << UserContent[i].GetB();
+    return rv;
+  }
+  template <class StrLst> void SetUserContentType(const StrLst& sfac)  {
+    UserContent.Clear();
+    for( size_t i=0; i < sfac.Count(); i++ )
+      UserContent.AddNew(sfac[i], 0);
+  }
+  template <class StrLst> void SetUserContent(const StrLst& sfac, const StrLst& unit)  {
+    if( sfac.Count() != unit.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "UNIT/SFAC lists mismatch");
+    UserContent.Clear();
+    for( size_t i=0; i < sfac.Count(); i++ )
+      UserContent.AddNew(sfac[i], unit[i].ToDouble());
+  }
+  void SetUserContent(const olxstr& sfac, const olxstr& unit)  {
+    SetUserContent(TStrList(sfac, ' '), TStrList(unit, ' '));
+  }
+  void SetUserContent(const ContentList& cnt)  {
+    UserContent = cnt;
+  }
+  template <class StrLst> void SetUserContentSize(const StrLst& unit)  {
+    if( UserContent.Count() != unit.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "UNIT/SFAC lists mismatch");
+    for( size_t i=0; i < UserContent.Count(); i++ )
+      UserContent[i].SetB(unit[i].ToDouble());
+  }
+  void AddUserContent(const olxstr& type, double amount=0)  {
+    UserContent.AddNew(type, amount);
+  }
+  void SetUserFormula(const olxstr& frm, bool mult_z=true)  {
+    UserContent.Clear();
+    TAtomsInfo::GetInstance().ParseElementString(frm, UserContent);
+    for( size_t i=0; i < UserContent.Count(); i++ )
+      UserContent[i].B() *= (mult_z ? aunit.GetZ() : 1.0);
   }
   // returns the restrained distance or -1
   double FindRestrainedDistance(const TCAtom& a1, const TCAtom& a2);
@@ -399,11 +410,11 @@ of components 1 ... m
     if( exyz.Count() < 2 )
       throw TFunctionFailedException(__OlxSourceInfo, "incomplete EXYZ group");
     TExyzGroup& gr = ExyzGroups.New();
-    for( int i=0; i < exyz.Count(); i++ )  {
+    for( size_t i=0; i < exyz.Count(); i++ )  {
       TCAtom* ca = aunit.FindCAtom(exyz[i]);
       if( ca == NULL )  {
         gr.Clear();
-        throw TFunctionFailedException(__OlxSourceInfo, olxstr("unknown atom: ") << exyz[i] );
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("unknown atom: ") << exyz[i]);
       }
       gr.Add(*ca);
     }
@@ -411,16 +422,16 @@ of components 1 ... m
 
   RefinementModel& Assign(const RefinementModel& rm, bool AssignAUnit);
 
-  int FragCount()                const {  return Frags.Count();  }
-  Fragment& GetFrag(int i)             {  return *Frags.GetValue(i);  }
-  const Fragment& GetFrag(int i) const {  return *Frags.GetValue(i);  }
+  size_t FragCount() const {  return Frags.Count();  }
+  Fragment& GetFrag(size_t i)  {  return *Frags.GetValue(i);  }
+  const Fragment& GetFrag(size_t i) const {  return *Frags.GetValue(i);  }
   Fragment* FindFragByCode(int code) {
-    int ind = Frags.IndexOf(code);
-    return ind == -1 ? NULL : Frags.GetValue(ind);
+    size_t ind = Frags.IndexOf(code);
+    return ind == InvalidIndex ? NULL : Frags.GetValue(ind);
   }
   Fragment& AddFrag(int code, double a=1, double b=1, double c=1, double al=90, double be=90, double ga=90) {
-    int ind = Frags.IndexOf(code);
-    if( ind != -1 )
+    size_t ind = Frags.IndexOf(code);
+    if( ind != InvalidIndex )
       throw TFunctionFailedException(__OlxSourceInfo, "dublicated FRAG instruction");
     return *Frags.Add(code, new Fragment(code, a, b, c, al, be, ga));
   }
@@ -504,9 +515,9 @@ of components 1 ... m
   // applies the HKLF matrix trnsformation
   void ApplyMatrix(TRefList& refs, const mat3d& m)  {
     if( m.IsI() )  return;
-    const int rc = refs.Count();
+    const size_t rc = refs.Count();
     int hkl[3];
-    for( int i=0; i < rc; i++ )  {
+    for( size_t i=0; i < rc; i++ )  {
       TReflection& ref = refs[i];
       ref.MulHklR(hkl, HKLF_mat);  // indexe rounded
       ref.SetH(hkl[0]);
@@ -521,51 +532,43 @@ of components 1 ... m
     }
   }
 // IXVarReferencer implementation
-  virtual short VarCount()                           const {  return BASF.Count();  }
-  virtual const XVarReference* GetVarRef(short i)    const {  
-    if( i < 0 || i >= BASF_Vars.Count() )
-      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    return BASF_Vars[i];  
-  }
-  virtual olxstr GetVarName(short i)                 const {  
-    if( i < 0 || i >= BASF_Vars.Count() )
+  virtual size_t VarCount() const {  return BASF.Count();  }
+  virtual olxstr GetVarName(size_t i) const {  
+    if( i >= BASF_Vars.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return olxstr("k") << (i+1);  
   }
-  virtual XVarReference* GetVarRef(short i)                {  
-    if( i < 0 || i >= BASF_Vars.Count() )
+  virtual XVarReference* GetVarRef(size_t i) const {  
+    if( i >= BASF_Vars.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return BASF_Vars[i];  
   }
-  virtual void SetVarRef(short i, XVarReference* var_ref)  {  
-    if( i < 0 || i >= BASF_Vars.Count() )
+  virtual void SetVarRef(size_t i, XVarReference* var_ref)  {  
+    if( i >= BASF_Vars.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     BASF_Vars[i] = var_ref;  
   }
-  virtual IXVarReferencerContainer& GetParentContainer() {  return *this;  }
-  virtual double GetValue(short var_index) const {  
-    if( var_index < 0 || var_index > BASF.Count() )
+  virtual const IXVarReferencerContainer& GetParentContainer() const {  return *this;  }
+  virtual double GetValue(size_t var_index) const {  
+    if( var_index >= BASF.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var_index");
     return BASF[var_index];  
   }
-  virtual void SetValue(short var_index, const double& val) {  
-    if( var_index < 0 || var_index > BASF.Count() )
+  virtual void SetValue(size_t var_index, const double& val) {  
+    if( var_index >= BASF.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var_index");
     BASF[var_index] = val;  
   }
   virtual bool IsValid() const {  return true;  }
 //
 // IXVarReferencerContainer implementation
-  virtual olxstr GetIdName() const { 
-    return VarRefrencerId;
+  virtual olxstr GetIdName() const {  return VarRefrencerId;  }
+  virtual size_t GetIdOf(const IXVarReferencer& vr) const {  return 0;  }
+  virtual size_t GetPersistentIdOf(const IXVarReferencer& vr) const {  return 0;  }
+  virtual IXVarReferencer& GetReferencer(size_t id) const {
+    return const_cast<RefinementModel&>(*this);
   }
-  virtual int GetReferencerId(const IXVarReferencer& vr) const {
-    return 0;
-  }
-  virtual IXVarReferencer* GetReferencer(int id) {
-    return this;
-  }
-  virtual int ReferencerCount() const {  return 1;  }
+  virtual size_t ReferencerCount() const {  return 1;  }
 //
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);

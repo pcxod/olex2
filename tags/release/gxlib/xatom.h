@@ -49,8 +49,8 @@ class TXAtom: public TGlMouseListener  {
 private:
   TSAtom *FAtom;
   short FDrawStyle, FRadius;
-  int XAppId;
-  static short PolyhedronIndex, 
+  size_t XAppId;
+  static uint8_t PolyhedronIndex, 
     SphereIndex, 
     SmallSphereIndex, 
     RimsIndex, 
@@ -60,7 +60,7 @@ private:
   struct Poly {
     TArrayList<vec3f> vecs;
     TTypeList<vec3f> norms;
-    TTypeList<vec3i> faces;
+    TTypeList<TVector3<size_t> > faces;
   };
   Poly* Polyhedron;
   void CreatePolyhedron(bool v);
@@ -79,7 +79,7 @@ protected:
   static TXAtomStylesClear *FXAtomStylesClear;
   static int OrtepSpheres;  // 8 glLists
 protected:
-  static float FTelpProb, FQPeakScale;
+  static float FTelpProb, FQPeakScale, FQPeakSizeScale;
   static short FDefRad, FDefDS;
   static TGraphicsStyle *FAtomParams;
   static olxstr PolyTypeName;
@@ -89,14 +89,14 @@ public:
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ACreationParams* GetCreationParams() const;
 
-  DefPropP(int, XAppId)
+  DefPropP(size_t, XAppId)
 
   static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
   void CreateStaticPrimitives();
 
   static olxstr GetLegend(const TSAtom& A, const short Level=2); // returns full legend with symm code
   // returns level of the given legend (number of '.', basically)
-  static short LegendLevel(const olxstr& legend);
+  static uint16_t LegendLevel(const olxstr& legend);
   static olxstr GetLabelLegend(TSAtom *A);
   // returns full legend for the label. e.g. "Q.Q1"
 
@@ -115,8 +115,10 @@ public:
   static float TelpProb();    // to use with ellipsoids
   static float DefZoom();    // to use with ellipsoids
 
-  static float QPeakScale();    // to use with q-peaks
-  static void QPeakScale(float V);    // to use with q-peaks
+  static float GetQPeakScale();    // to use with q-peaks
+  static void SetQPeakScale(float V);    // to use with q-peaks
+  static float GetQPeakSizeScale();    // to use with q-peaks
+  static void SetQPeakSizeScale(float V);    // to use with q-peaks
 
   void CalcRad(short DefAtomR);
 
@@ -126,9 +128,21 @@ public:
   void ApplyStyle(TGraphicsStyle& S);
   void UpdateStyle(TGraphicsStyle& S);
 
-  void Zoom(float Z);
-  inline double Zoom()  {  return Params()[1]; }
-
+  void SetZoom(double Z);
+  inline double GetZoom()  {  return Params()[1]; }
+  double GetDrawScale() const {
+    double scale = FParams[1];
+    if( (FRadius & (darIsot|darIsotH)) != 0 )
+      scale *= TelpProb();
+    if( (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) && FAtom->GetEllipsoid() != NULL )
+    {
+      if( FAtom->GetEllipsoid()->IsNPD() )
+        return (caDefIso*2*scale);
+      return scale;
+    }
+    else
+      return FParams[0]*scale;
+  }
   bool Orient(TGlPrimitive& P);
   bool DrawStencil();
   bool GetDimensions(vec3d &Max, vec3d &Min);
@@ -140,6 +154,7 @@ public:
   void ListPrimitives(TStrList &List) const;
   TGraphicsStyle& Style();
   void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
+  uint32_t GetPrimitiveMask() const;
 
   bool OnMouseDown(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);

@@ -219,14 +219,13 @@ void TScattererLib::InitData9()  {
   Data.Add("Bk",    new TLibScatterer(36.788100,24.773600,17.891900,4.232840,0.451018,3.046190,12.894600,86.003000,13.275400));
   Data.Add("Cf",    new TLibScatterer(36.918500,25.199500,18.331700,4.243910,0.437533,3.007750,12.404400,83.788100,13.267400));
 
-  for( int i=0; i < Data.Count(); i++ )  {
+  for( size_t i=0; i < Data.Count(); i++ )  {
     Data.GetObject(i)->SetBuiltIn();
-    Data.GetObject(i)->SetId(i);
+    Data.GetObject(i)->SetId((uint16_t)i);
   }
 }
 //..............................................................................
 void TScattererLib::InitData11()  {
-
   Data.Add("H",    new TLibScatterer(0.413048,0.294953,0.187491,0.080701,0.023736,15.569946,32.398468,5.711404,61.889874,1.334118,4.9E-5));
   Data.Add("He",   new TLibScatterer(0.732354,0.753896,0.283819,0.190003,0.039139,11.553918,4.595831,1.546299,26.463964,0.377523,0.000487));
   Data.Add("Li",   new TLibScatterer(0.974637,0.158472,0.811855,0.262416,0.790108,4.334946,0.342451,97.102966,201.363831,1.409234,0.002542));
@@ -440,14 +439,14 @@ void TScattererLib::InitData11()  {
   Data.Add("Pu4+", new TLibScatterer(15.416219,32.610569,22.256662,0.719495,15.518152,0.061456,0.607938,3.411848,37.628792,14.46436,3.480408));
   Data.Add("Pu6+", new TLibScatterer(15.436506,32.289719,14.726737,15.012391,7.024677,0.061815,0.606541,3.245363,13.616438,3.245364,3.502325));
 
-  for( int i=0; i < Data.Count(); i++ )  {
+  for( size_t i=0; i < Data.Count(); i++ )  {
     Data.GetObject(i)->SetBuiltIn();
-    Data.GetObject(i)->SetId(i);
+    Data.GetObject(i)->SetId((uint16_t)i);
   }
 }
 //..............................................................................
 void TScattererLib::Clear()  {
-  for( int i=0; i < Data.Count(); i++ )
+  for( size_t i=0; i < Data.Count(); i++ )
     delete Data.GetObject(i);
 }
 //..............................................................................

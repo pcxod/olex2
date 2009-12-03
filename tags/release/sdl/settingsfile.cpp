@@ -12,10 +12,10 @@ void TSettingsFile::LoadSettings(const olxstr& fileName)  {
   TEFile::CheckFileExists(__OlxSourceInfo, fileName);
   Lines.LoadFromFile(fileName);
 
-  for( int i=0; i < Lines.Count(); i++ )  {
+  for( size_t i=0; i < Lines.Count(); i++ )  {
     olxstr ln = Lines[i].Trim(' ');
-    int ind = ln.FirstIndexOf('=');
-    if( ind == -1 || ln.StartsFrom('#') || ln.IsEmpty() )  {
+    size_t ind = ln.FirstIndexOf('=');
+    if( ind == InvalidIndex || ln.StartsFrom('#') || ln.IsEmpty() )  {
       Lines.GetObject(i) = false;
       continue;
     }
@@ -24,7 +24,7 @@ void TSettingsFile::LoadSettings(const olxstr& fileName)  {
       olxstr pv = ln.SubStringFrom(ind+1).Trim(' ');
       ind = Params.IndexOf(pn);
       // in case of duplicate params - keep the latest value
-      if( ind == -1 )  {
+      if( ind == InvalidIndex )  {
         Params.Add(pn, pv);
         Lines.GetObject(i) = true;
         Lines[i] = pn;
@@ -40,11 +40,11 @@ void TSettingsFile::LoadSettings(const olxstr& fileName)  {
 //..............................................................................
 void TSettingsFile::SaveSettings(const olxstr& fileName)  {
   TEFile f( fileName, "w+b" );
-  for( int i=0; i < Lines.Count(); i++ )  {
+  for( size_t i=0; i < Lines.Count(); i++ )  {
     if( !Lines.GetObject(i) ) 
       f.Writenl( Lines[i].c_str(), Lines[i].Length() );
     else  {
-      CString ln = Lines[i];
+      olxcstr ln = Lines[i];
       ln << '=' << Params[Lines[i]];
       f.Writenl( ln );
     }

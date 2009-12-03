@@ -8,28 +8,28 @@ BeginXlibNamespace()
 class TSameGroup : public ACollectionItem {
   TPtrList<TSameGroup> Dependent;  // pointers borrowed from Parent
   TCAtomPList Atoms;
-  int Id;
+  uint16_t Id;
   class TSameGroupList& Parent;
   TSameGroup* ParentGroup;
 protected:
-  void SetId(int id)  {
-    for( int i=0; i < Atoms.Count(); i++ )
+  void SetId(uint16_t id)  {
+    for( size_t i=0; i < Atoms.Count(); i++ )
       Atoms[i]->SetSameId(id);
     Id = id;
   }
   // it does not clear the ParentGroup, to make Restore work...
   void RemoveDependent(TSameGroup& sg)  {
-    int ind = Dependent.IndexOf(&sg);
-    if( ind != -1 )
+    size_t ind = Dependent.IndexOf(&sg);
+    if( ind != InvalidIndex )
       Dependent.Delete(ind);
   }
   // on release
   void ClearAtomIds()  {
-    for( int i=0; i < Atoms.Count(); i++ )
-      Atoms[i]->SetSameId(-1);
+    for( size_t i=0; i < Atoms.Count(); i++ )
+      Atoms[i]->SetSameId(~0);
   }
 public:
-  TSameGroup(int id, TSameGroupList& parent) : Id(id), Parent(parent)  { 
+  TSameGroup(uint16_t id, TSameGroupList& parent) : Id(id), Parent(parent)  { 
     Esd12 = 0.02;
     Esd13 = 0.04;
     ParentGroup = NULL;
@@ -39,13 +39,13 @@ public:
   inline const TSameGroupList& GetParent() const {  return Parent;  }
   inline TSameGroupList& GetParent()             {  return Parent;  }
   inline TSameGroup* GetParentGroup()      const {  return ParentGroup;  }
-  int GetId() const {  return Id;  }
+  int16_t GetId() const {  return Id;  }
 
   void Assign(class TAsymmUnit& tau, const TSameGroup& sg);
   
   void Clear()  {
-    for( int i=0; i < Atoms.Count(); i++ )
-      Atoms[i]->SetSameId(-1);
+    for( size_t i=0; i < Atoms.Count(); i++ )
+      Atoms[i]->SetSameId(~0);
     Atoms.Clear();
     Dependent.Clear();
   }
@@ -68,24 +68,24 @@ public:
   // compares pointer addresses only!
   bool operator == (const TSameGroup& sr) const {  return this == &sr;  }
 
-  int Count() const {  return Atoms.Count();  }
-  TCAtom& operator [] (int i) {  return *Atoms[i];  }
-  const TCAtom& operator [] (int i) const {  return *Atoms[i];  }
+  size_t Count() const {  return Atoms.Count();  }
+  TCAtom& operator [] (size_t i) {  return *Atoms[i];  }
+  const TCAtom& operator [] (size_t i) const {  return *Atoms[i];  }
 
-  int DependentCount() const {  return Dependent.Count();  }
-  TSameGroup& GetDependent(int i) {  return *Dependent[i];  }
-  const TSameGroup& GetDependent(int i) const {  return *Dependent[i];  }
+  size_t DependentCount() const {  return Dependent.Count();  }
+  TSameGroup& GetDependent(size_t i) {  return *Dependent[i];  }
+  const TSameGroup& GetDependent(size_t i) const {  return *Dependent[i];  }
   
   bool IsValidForSave() const {
     if( Atoms.IsEmpty() )  
       return false;
-    for( int i=0; i < Atoms.Count(); i++ )
+    for( size_t i=0; i < Atoms.Count(); i++ )
       if( Atoms[i]->IsDeleted() )
         return false;
     if( Dependent.IsEmpty() )
       return true;
     int dep_cnt = 0;
-    for( int i=0; i < Dependent.Count(); i++ )
+    for( size_t i=0; i < Dependent.Count(); i++ )
       if( Dependent[i]->IsValidForSave() )
         dep_cnt++;
     return dep_cnt != 0;
@@ -109,24 +109,24 @@ public:
   class RefinementModel& RM;
 
   TSameGroupList(RefinementModel& parent) : RM(parent) {} 
-  TSameGroup& New() {  return Groups.Add(new TSameGroup(Groups.Count(), *this));  }
+  TSameGroup& New() {  return Groups.Add(new TSameGroup((uint16_t)Groups.Count(), *this));  }
   TSameGroup& NewDependent(TSameGroup& on) {  
-    TSameGroup& rv = Groups.Add( new TSameGroup(Groups.Count(), *this) ); 
+    TSameGroup& rv = Groups.Add( new TSameGroup((uint16_t)Groups.Count(), *this) ); 
     on.AddDependent(rv);
     return rv;
   }
-  TSameGroup& operator [] (int i)  {  return Groups[i];  }
-  const TSameGroup& operator [] (int i) const {  return Groups[i];  }
-  int Count() const {  return Groups.Count();  }
+  TSameGroup& operator [] (size_t i)  {  return Groups[i];  }
+  const TSameGroup& operator [] (size_t i) const {  return Groups[i];  }
+  size_t Count() const {  return Groups.Count();  }
   void Clear()  {  Groups.Clear();  }
   void Assign(TAsymmUnit& tau, const TSameGroupList& sl)  {
     Clear();
-    for( int i=0; i < sl.Groups.Count(); i++ )
+    for( size_t i=0; i < sl.Groups.Count(); i++ )
         New().SetTag(0);
-    for( int i=0; i < sl.Groups.Count(); i++ )  {
+    for( size_t i=0; i < sl.Groups.Count(); i++ )  {
       // dependent first, to override shared atoms SameId
-      for( int j=0; j < sl.Groups[i].DependentCount(); j++ )  {
-        int id = sl.Groups[i].GetDependent(j).GetId();
+      for( size_t j=0; j < sl.Groups[i].DependentCount(); j++ )  {
+        size_t id = sl.Groups[i].GetDependent(j).GetId();
         if( Groups[id].GetTag() != 0 )  continue;
         Groups[id].Assign(tau, sl.Groups[i].GetDependent(j));
         Groups[id].SetTag(1);

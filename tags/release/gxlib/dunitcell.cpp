@@ -135,15 +135,13 @@ void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGPCollection* GPC = Parent.FindCollectionX( GetCollectionName(), NewL);
   if( GPC == NULL )
     GPC = &Parent.NewCollection(NewL);
-  GPC->AddObject(*this);
-  if( GPC->PrimitiveCount() != 0 )  return;
-
+  if( GPC->PrimitiveCount() == 0 )  {
   TGraphicsStyle& GS = GPC->GetStyle();
   FGlP = &GPC->NewPrimitive("Lines", sgloLines);
   TGlMaterial GlM;
   GlM.SetFlags(sglmAmbientF);
   GlM.AmbientF = 0;
-  
+
   FGlP->SetProperties( GS.GetMaterial("Lines", GlM));
   FGlP->Vertices.SetCount(24);
   SetReciprocal(Reciprocal);
@@ -157,16 +155,18 @@ void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
   glpLabel.SetProperties( GS.GetMaterial("Label", lMat) );
 
   glpLabel.SetFont( Parent.GetScene().DefFont() );
+  }
+  GPC->AddObject(*this);
 }
 //..............................................................................
 bool TDUnitCell::GetDimensions(vec3d &Max, vec3d &Min)  {
-  //Min[0] = FGlP->Data[0][1];  
-  //Min[1] = FGlP->Data[1][1];  
-  //Min[2] = FGlP->Data[2][1];
-  //Max[0] = FGlP->Data[0][23];  
-  //Max[1] = FGlP->Data[1][23];  
-  //Max[2] = FGlP->Data[2][23];
-  return false;
+  if( FGlP == NULL )  return false;
+  vec3f _min(100,100,100), _max(-100, -100, -100);
+  for( int i=0; i < 8; i++ )
+    vec3f::UpdateMinMax(GetVertex(i), _min, _max);
+  Min = vec3d(_min) + Center;  
+  Max = vec3d(_max) + Center;  
+  return true;
 }
 //..............................................................................
 bool TDUnitCell::Orient(TGlPrimitive& P)  {
@@ -177,8 +177,6 @@ bool TDUnitCell::Orient(TGlPrimitive& P)  {
     const double tr = 0.3, 
       scale = 1./Parent.GetScale(),
       maxZ = Parent.GetMaxRasterZ();
-
-
     vec3d cnt( Parent.GetBasis().GetCenter() );
     cnt += Center;
     T += tr;

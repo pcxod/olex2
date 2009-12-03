@@ -23,20 +23,20 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   Occu   = 1;
   QPeak  = 0;
   SetId(0);
-  SetResiId(-1);  // default residue is unnamed one
-  SetSameId(-1);
+  SetResiId(0);  // default residue is unnamed one
+  SetSameId(~0);
   FParent = Parent;
-  EllpId = -1;
+  EllpId = ~0;
   Uiso = caDefIso;
   UisoEsd = 0;
   UisoScale = 0;
   UisoOwner = NULL;
-  FragmentId = -1;
+  FragmentId = ~0;
   FAttachedAtoms = NULL;
   FAttachedAtomsI = NULL;
   FAtomInfo = NULL;
   Degeneracy = 1;
-  Tag = -1;
+  SetTag(-1);
   DependentAfixGroup = ParentAfixGroup = NULL;
   DependentHfixGroups = NULL;
   ExyzGroup = NULL;
@@ -68,17 +68,17 @@ bool TCAtom::SetLabel(const olxstr &L)  {
   if( L.Length() >= 2 )  {
     Tmp = L.SubString(0, 2);
     if( AI.IsElement(Tmp) )
-      BAI = AI.FindAtomInfoBySymbol( Tmp );
+      BAI = AI.FindAtomInfoBySymbol(Tmp);
     else  {
       Tmp = L.SubString(0, 1);
       if( AI.IsElement(Tmp) )
-        BAI = AI.FindAtomInfoBySymbol( Tmp );
+        BAI = AI.FindAtomInfoBySymbol(Tmp);
     }
   }
   else  {
     Tmp = L.SubString(0, 1);
     if( AI.IsElement(Tmp) )
-      BAI = AI.FindAtomInfoBySymbol( Tmp );
+      BAI = AI.FindAtomInfoBySymbol(Tmp);
   }
   if( BAI == NULL )
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: '") << L << '\'' );
@@ -155,14 +155,14 @@ int TCAtom::GetAfix() const {
     return ParentAfixGroup->GetAfix();
 }
 //..............................................................................
-TEllipsoid* TCAtom::GetEllipsoid() const {  return EllpId == -1 ? NULL : &FParent->GetEllp(EllpId);  }
+TEllipsoid* TCAtom::GetEllipsoid() const {  return EllpId == InvalidIndex ? NULL : &FParent->GetEllp(EllpId);  }
 //..............................................................................
-void TCAtom::AssignEllp(TEllipsoid* NV) {  NV == NULL ? EllpId = -1 : EllpId = NV->GetId();  }
+void TCAtom::AssignEllp(TEllipsoid* NV) {  NV == NULL ? EllpId = InvalidIndex : EllpId = NV->GetId();  }
 //..............................................................................
 void TCAtom::UpdateEllp(const TEllipsoid &NV ) {
   double Q[6], E[6];
   NV.GetQuad(Q, E);
-  if( EllpId == -1 )  {
+  if( EllpId == InvalidIndex )  {
     TEllipsoid& elp = FParent->NewEllp();
     elp.Initialise(Q, E);
     EllpId = elp.GetId();
@@ -174,13 +174,14 @@ void TCAtom::UpdateEllp(const TEllipsoid &NV ) {
 void TCAtom::ToDataItem(TDataItem& item) const  {
   item.AddField("label", FLabel );
   item.AddField("type", FAtomInfo->GetSymbol() );
-  item.AddField("part", Part);
+  item.AddField("part", (int)Part);
   item.AddField("sof", Occu);
+  item.AddField("flags", Flags);
   item.AddField("x", TEValue<double>(Center[0], Esd[0]).ToString());
   item.AddField("y", TEValue<double>(Center[1], Esd[1]).ToString());
   item.AddField("z", TEValue<double>(Center[2], Esd[2]).ToString());
-  if( EllpId == -1 )
-    item.AddField("Uiso", Uiso);
+  if( !olx_is_valid_index(EllpId) )
+    item.AddField("Uiso", TEValue<double>(Uiso, UisoEsd).ToString());
   else {
     double Q[6], E[6];
     GetEllipsoid()->GetQuad(Q, E);
@@ -207,7 +208,7 @@ PyObject* TCAtom::PyExport()  {
   PyDict_SetItemString(main, "tag", Py_BuildValue("i", GetTag()) );
   PyDict_SetItemString(main, "crd", 
     Py_BuildValue("(ddd)(ddd)", Center[0], Center[1], Center[2], Esd[0], Esd[1], Esd[2]) );
-  if( EllpId == -1 )
+  if( !olx_is_valid_index(EllpId) )
     PyDict_SetItemString(main, "uiso", Py_BuildValue("(dd)", Uiso, UisoEsd) );
   else  {
     double Q[6], E[6];
@@ -230,6 +231,7 @@ void TCAtom::FromDataItem(TDataItem& item)  {
   FLabel = item.GetRequiredField("label");
   Part = item.GetRequiredField("part").ToInt();
   Occu = item.GetRequiredField("sof").ToDouble();
+  Flags = item.GetRequiredField("flags").ToInt();
   TEValue<double> ev;
   ev = item.GetRequiredField("x");
   Center[0] = ev.GetV();  Esd[0] = ev.GetE();
@@ -252,8 +254,10 @@ void TCAtom::FromDataItem(TDataItem& item)  {
     Uiso = GetEllipsoid()->GetUiso();
   }
   else  {
-    EllpId = -1;
-    Uiso = item.GetRequiredField("Uiso").ToDouble();
+    EllpId = InvalidIndex;
+    ev = item.GetRequiredField("Uiso");
+    Uiso = ev.V();
+    UisoEsd = ev.E();
   }
   if( *FAtomInfo == iQPeakIndex )
     QPeak = item.GetRequiredField("peak").ToDouble();
@@ -261,7 +265,7 @@ void TCAtom::FromDataItem(TDataItem& item)  {
 //..............................................................................
 void DigitStrtok(const olxstr &str, TStrPObjList<olxstr,bool>& chars)  {
   olxstr Dig, Char;
-  for(int i=0; i < str.Length(); i++ )  {
+  for( size_t i=0; i < str.Length(); i++ )  {
     if( str[i] <= '9' && str[i] >= '0' )  {
       if( !Char.IsEmpty() )      {
         chars.Add(Char, true);
@@ -286,7 +290,7 @@ int TCAtom::CompareAtomLabels(const olxstr& S, const olxstr& S1)  {
 
   DigitStrtok(S, Chars1);
   DigitStrtok(S1, Chars2);
-  for( int i=0; i < olx_min(Chars1.Count(), Chars2.Count()); i++ )  {
+  for( size_t i=0; i < olx_min(Chars1.Count(), Chars2.Count()); i++ )  {
     if( Chars1.GetObject(i) && Chars2.GetObject(i) )  {
       int res = Chars1[i].Comparei(Chars2[i]);
       if( res != 0 )  return res;
@@ -304,7 +308,7 @@ int TCAtom::CompareAtomLabels(const olxstr& S, const olxstr& S1)  {
     if( !Chars1.GetObject(i) && Chars2.GetObject(i) )  return 1;
     if( Chars1.GetObject(i) && !Chars2.GetObject(i) )  return -1;
   }
-  return Chars1.Count() - Chars2.Count();
+  return olx_cmp_size_t(Chars1.Count(), Chars2.Count());
 }
 //..............................................................................
 void TCAtom::AttachAtom(TCAtom *CA)  {
@@ -318,7 +322,7 @@ void TCAtom::AttachAtomI(TCAtom *CA)  {
 }
 //..............................................................................
 olxstr TCAtom::GetResiLabel() const {
-  if( GetResiId() == -1 )
+  if( GetResiId() == 0 )
     return GetLabel();
   return (olxstr(GetLabel()) << '_' << GetParent()->GetResidue(GetResiId()).GetNumber());
 }
@@ -327,7 +331,7 @@ olxstr TCAtom::GetResiLabel() const {
 //..............................................................................
 olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm) const  {
   olxstr name(Atom->GetLabel());
-  if( Atom->GetResiId() == -1 )  {
+  if( Atom->GetResiId() == 0 )  {
     if( Matrix != NULL )
       name << "_$" << (rm.UsedSymmIndex(*Matrix) + 1);
   }
@@ -341,7 +345,7 @@ olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm) const  {
 //..............................................................................
 olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm, const int resiId) const  {
   olxstr name(Atom->GetLabel());
-  if( Atom->GetResiId() == -1 || 
+  if( Atom->GetResiId() == 0 || 
     Atom->GetParent()->GetResidue(Atom->GetResiId()).GetNumber() == resiId )  
   {
     if( Matrix != NULL )
@@ -361,7 +365,7 @@ olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm, const olxstr& resiName) co
 
   olxstr name(Atom->GetLabel());
   if( resiName.IsNumber() )  {
-    if( Atom->GetResiId() == -1 || 
+    if( Atom->GetResiId() == 0 || 
       (Atom->GetParent()->GetResidue(Atom->GetResiId()).GetNumber() == resiName.ToInt()) )  
     {
       if( Matrix != NULL )
@@ -374,7 +378,7 @@ olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm, const olxstr& resiName) co
     }
   }
   else  {
-    if( Atom->GetResiId() == -1 || 
+    if( !olx_is_valid_index(Atom->GetResiId()) || 
       (!resiName.IsEmpty() && Atom->GetParent()->GetResidue(Atom->GetResiId()).GetClassName().Equalsi(resiName)) )  
     {
       if( Matrix != NULL )
@@ -389,9 +393,9 @@ olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm, const olxstr& resiName) co
   return name;
 }
 //..............................................................................
-IXVarReferencerContainer& TCAtom::GetParentContainer()  {  return *FParent;  }
+IXVarReferencerContainer& TCAtom::GetParentContainer() const {  return *FParent;  }
 //..............................................................................
-double TCAtom::GetValue(short var_index) const {
+double TCAtom::GetValue(size_t var_index) const {
   switch( var_index)  {
     case catom_var_name_X:     return Center[0];
     case catom_var_name_Y:     return Center[1];
@@ -404,7 +408,7 @@ double TCAtom::GetValue(short var_index) const {
     case catom_var_name_U23:
     case catom_var_name_U13:
     case catom_var_name_U12:
-      if( EllpId == -1 )
+      if( !olx_is_valid_index(EllpId) )
         throw TInvalidArgumentException(__OlxSourceInfo, "Uanis is not defined");
       return FParent->GetEllp(EllpId).GetQuadVal(var_index-catom_var_name_U11);
     default:
@@ -412,7 +416,7 @@ double TCAtom::GetValue(short var_index) const {
   }
 }
 //..............................................................................
-void TCAtom::SetValue(short var_index, const double& val) {
+void TCAtom::SetValue(size_t var_index, const double& val) {
   switch( var_index)  {
     case catom_var_name_X:     Center[0] = val;  break;
     case catom_var_name_Y:     Center[1] = val;  break;

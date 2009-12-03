@@ -14,7 +14,6 @@
 #include "egc.h"
 
 #ifdef __WIN32__
-  #include <windows.h>
   #define OLX_STR(a) (a).u_str()
   #define OLX_CHAR olxch
   #ifdef _UNICODE
@@ -59,8 +58,11 @@ TBasicApp::~TBasicApp()  {
 }
 //..............................................................................
 olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
-  olxstr path = _path.Trim(' ').Trim('"').Trim('\'');
-  olxstr bd;
+  olxstr bd, path;
+  TStrList toks;
+  TParamList::StrtokParams(_path, ' ', toks);
+  if( !toks.IsEmpty() )
+    path = toks[0];
   if( !var_name.IsEmpty() )  {
     OLX_CHAR* var_val = OLX_GETENV(OLX_STR(var_name));
     if( var_val != NULL )
@@ -68,7 +70,7 @@ olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
   }
   else  {
 	  if( !TEFile::IsDir(path) )
-      bd = TEFile::ExtractFilePath( path );
+      bd = TEFile::ExtractFilePath(path);
 		else
 		  bd = path;
     if( bd.EndsWith('.') || bd.EndsWith("..") )
@@ -84,7 +86,7 @@ olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
 }
 //..............................................................................
 const olxstr& TBasicApp::SetBaseDir(const olxstr& _bd)  {
-  olxstr bd = TEFile::ExtractFilePath(_bd);
+  olxstr bd = TEFile::ExtractFilePath(olxstr(_bd).Trim('"').Trim('\''));
   if( !TEFile::Exists(bd) || !TEFile::IsDir(bd) )
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("Invalid basedir: ") << bd);
   TBasicApp& inst = GetInstance();

@@ -1,7 +1,8 @@
-#ifndef chnexpH
-#define chnexpH
+#ifndef __olx_cl_chnexp_H
+#define __olx_cl_chnexp_H
 #include "chembase.h"
 #include "estrlist.h"
+#include "edict.h"
 
 BeginChemNamespace()
 
@@ -11,25 +12,23 @@ class TCHNExp: public IEObject  {
   double FMult;
 protected:
   void Clear();
-  class TAtomsInfo *FAtomsInfo;
 public:
-  TCHNExp( TAtomsInfo *AI );
-  virtual ~TCHNExp();
-  // return summ formula of the compound with elements seprated by the Seprator
+  TCHNExp() : FMult(1) { }
+  virtual ~TCHNExp() {  Clear();  }
+  // return summ formula of the compound with elements seprated by the Separator
   olxstr SummFormula(const olxstr& Separator);
   double MolWeight();
   olxstr Composition();
   // calculates C, H and N and mol weight contents of  compound
   // to get %: %(c) = C*100/Mr
-  void CHN(double &C, double &H, double &N, double &Mr);
-  // a valid array with at least for elements is expected!
-  void CHN(double *Bf)  {  CHN(Bf[0], Bf[1], Bf[2], Bf[4]);  }
+  void CHN(double& C, double& H, double& N, double& Mr) const;
+  // expects a distrionary with keys of TBasicAtomInfo::GetIndex()
+  double CHN(olxdict<short, double, TPrimitiveComparator>& rv) const;
   void LoadFromExpression(const olxstr &E);
-  void CalcSummFormula(TStrPObjList<olxstr,double>& Exp);
-  void SetMult(const olxstr &S)    {  FMult = S.ToDouble();  }
+  void CalcSummFormula(TStrPObjList<olxstr,double>& Exp) const;
+  void SetMult(const olxstr& S)  {  FMult = S.ToDouble();  }
+  void SetMult(double v)  {  FMult = v;  }
   inline double GetMult()  const   {  return FMult;  }
-
-  inline TAtomsInfo* AtomsInfo()  const {  return FAtomsInfo;  }
 };
 
 EndChemNamespace()

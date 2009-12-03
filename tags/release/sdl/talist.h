@@ -1,6 +1,5 @@
-//---------------------------------------------------------------------------
-#ifndef tarraylistH
-#define tarraylistH
+#ifndef __olx_sdl_array_list_H
+#define __olx_sdl_array_list_H
 #include "ebase.h"
 #include "esort.h"
 #include "etraverse.h"
@@ -13,36 +12,32 @@ private:
   size_t FCount, FCapacity;
   size_t FIncrement;
   T *Items;
-  void init(int size)  {
-    if( size >= 0 )  {
+  void init(size_t size, bool exact)  {
       FCount = size;
       FIncrement = 5;
+    if( !exact )
       FCapacity = FCount + FIncrement;
-    }
-    else  {  // negative size - exact memory allocation
-      FCount = -size;
-      FIncrement = 5;
+    else
       FCapacity = FCount;
-    }
     Items = new T[FCapacity];
   }
 public:
   // creates a new empty objects
-  TArrayList()  {  init(0);  }
+  TArrayList()  {  init(0, true);  }
   // allocates size elements (can be accessed diretly)
-  TArrayList(int size)  {  init(-size);  }
+  TArrayList(size_t size, bool exact=true)  {  init(size, exact);  }
 //..............................................................................
   /* copy constuctor - creates new copies of the objest, be careful as the assignement
    operator must exist for nonpointer objects */
-  TArrayList( const TArrayList& list )  {
-    init( -list.Count() );
+  TArrayList(const TArrayList& list)  {
+    init(list.Count(), true);
     for( size_t i=0; i < FCount; i++ )
       Items[i] = list.Items[i];
   }
 //..............................................................................
   /* copies values from an array of size elements  */
-  TArrayList( int size, const T* array )  {
-   init( -size );
+  TArrayList(size_t size, const T* array)  {
+   init(size, true);
    for( size_t i=0; i < FCount; i++ )
      Items[i] = array[i];
   }
@@ -74,14 +69,14 @@ public:
   }
 //..............................................................................
   const T& Add(const T& Obj)  {
-    if( FCapacity == FCount )  SetCapacity((long)(1.5*FCount + FIncrement));
+    if( FCapacity == FCount )  SetCapacity((size_t)(1.5*FCount + FIncrement));
     Items[FCount] = Obj;
     FCount ++;
     return Obj;
   }
 //..............................................................................
   const T& Insert(size_t index, const T& Obj)  {
-    if( FCapacity == FCount )  SetCapacity((long)(1.5*FCount + FIncrement));
+    if( FCapacity == FCount )  SetCapacity((size_t)(1.5*FCount + FIncrement));
     const size_t diff = FCount - index;
     for( size_t i=0; i < diff; i++ )  {
       const size_t ind = FCount -i;
@@ -156,8 +151,8 @@ public:
   }
 //..............................................................................
   void Remove(const T& pObj)  {
-    int i = IndexOf(pObj);
-    if( i != -1 )  Delete(i);
+    index_t i = IndexOf(pObj);
+    if( i != InvalidIndex )  Delete(i);
     else
       throw TFunctionFailedException(__OlxSourceInfo, "could not locate specified object");
   }
@@ -239,7 +234,7 @@ public:
     Items[to] = D;
   }
 //..............................................................................
-  inline int Count()    const {  return FCount;  }
+  inline size_t Count()    const {  return FCount;  }
 //..............................................................................
   inline bool IsEmpty()  const {  return FCount == 0;  }
 //..............................................................................
@@ -263,10 +258,10 @@ public:
     FCount = v;
   }
 //..............................................................................
-  int IndexOf(const T& val) const  {
+  size_t IndexOf(const T& val) const  {
     for( size_t i=0; i < FCount; i++ )
       if( Items[i] == val )  return i;
-    return -1;
+    return InvalidIndex;
   }
 
   static TQuickObjectSorter<TArrayList<T>,T> QuickSorter;
@@ -275,10 +270,10 @@ public:
 };
 
   typedef TArrayList<int> TIntList;
+  typedef TArrayList<unsigned int> TUIntList;
+  typedef TArrayList<size_t> TSizeList;
+  typedef TArrayList<index_t> TIndexList;
   typedef TArrayList<double> TDoubleList;
 
 EndEsdlNamespace()
 #endif
-
-
-

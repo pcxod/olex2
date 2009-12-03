@@ -1,15 +1,14 @@
 //---------------------------------------------------------------------------
-#ifdef __BORLANDC__
-#pragma hdrstop
-#include <windows.h>
-#include <winbase.h>
-#endif
-
 #include "fsext.h"
 #include "ememstream.h"
 #include "etime.h"
 #include "egc.h"
 #include "eutf8.h"
+
+#ifdef __BORLANDC__
+  #pragma hdrstop
+  #include <winbase.h>
+#endif
 
 #ifndef _NO_PYTHON
 #include "pyext.h"
@@ -63,13 +62,13 @@ TFileHandlerManager::TFileHandlerManager()  {
 TFileHandlerManager::~TFileHandlerManager()  {  _Clear();  }
 //..............................................................................
 void TFileHandlerManager::_Clear()  {
-  for( int i=0; i < FMemoryBlocks.Count(); i++ )  {
+  for( size_t i=0; i < FMemoryBlocks.Count(); i++ )  {
     delete [] FMemoryBlocks.GetObject(i)->Buffer;
     delete FMemoryBlocks.GetObject(i);
   }
   FMemoryBlocks.Clear();
 #ifdef __WXWIDGETS__
-  for( int i=0; i < FZipFiles.Count(); i++ )
+  for( size_t i=0; i < FZipFiles.Count(); i++ )
     delete FZipFiles.GetObject(i);
   FZipFiles.Clear();
 #endif
@@ -126,13 +125,13 @@ void TFileHandlerManager::_SaveToStream(IDataOutputStream& os, short persistence
   os << FVersion;
 
   uint32_t ic = 0, strl;
-  for( int i=0; i < FMemoryBlocks.Count(); i++ )  {
+  for( size_t i=0; i < FMemoryBlocks.Count(); i++ )  {
     if( (FMemoryBlocks.GetObject(i)->PersistenceId & persistenceMask) != 0  )
       ic++;
   }
   os << ic;
-  CString utfstr;
-  for( int i=0; i < FMemoryBlocks.Count(); i++ )  {
+  olxcstr utfstr;
+  for( size_t i=0; i < FMemoryBlocks.Count(); i++ )  {
     TMemoryBlock *mb = FMemoryBlocks.GetObject(i);
     if( (mb->PersistenceId & persistenceMask) != 0 )  {
       utfstr = TUtf8::Encode(FMemoryBlocks.GetString(i));
@@ -164,7 +163,7 @@ void TFileHandlerManager::_LoadFromStream(IDataInputStream& is, short persistenc
   uint32_t ic, strl;
   TMemoryBlock* mb;
   olxstr in;
-  CString utfstr;
+  olxcstr utfstr;
 
   is.Read(&ic, sizeof(int) );
   for(uint32_t i=0; i < ic; i++ )  {
@@ -225,7 +224,7 @@ void TFileHandlerManager::Clear(short persistenceMask)  {
       FHandler = NULL;
     }
     else  {
-      for( int i=0; i < FHandler->FMemoryBlocks.Count(); i++ )  {
+      for( size_t i=0; i < FHandler->FMemoryBlocks.Count(); i++ )  {
         if( (FHandler->FMemoryBlocks.GetObject(i)->PersistenceId & persistenceMask) != 0 )  {
           delete [] FHandler->FMemoryBlocks.GetObject(i)->Buffer;
           delete FHandler->FMemoryBlocks.GetObject(i);
@@ -242,7 +241,7 @@ olxstr TFileHandlerManager::LocateFile( const olxstr& fn )  {
   if( !TEFile::IsAbsolutePath(fn) )  {
     olxstr f = TEFile::AddTrailingBackslash( TEFile::CurrentDir() );
     if( TEFile::Exists( f + fn ) )  return f + fn;
-    for( int i=0; i < BaseDirs.Count(); i++ )  {
+    for( size_t i=0; i < BaseDirs.Count(); i++ )  {
       if( TEFile::Exists( BaseDirs[i] + fn ) )
         return BaseDirs[i] + fn;
     }
@@ -283,29 +282,29 @@ void TFileHandlerManager::AddMemoryBlock(const olxstr& name, const char *bf,
   return FHandler->_AddMemoryBlock(name, bf, length, persistenceId );
 }
 //..............................................................................
-int TFileHandlerManager::Count()  {
+size_t TFileHandlerManager::Count()  {
   if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
   return FHandler->FMemoryBlocks.Count();
 }
 //..............................................................................
-const olxstr& TFileHandlerManager::GetBlockName(int i)  {
+const olxstr& TFileHandlerManager::GetBlockName(size_t i)  {
   if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
   return FHandler->FMemoryBlocks.GetString(i);
 }
 //..............................................................................
-long TFileHandlerManager::GetBlockSize(int i)  {
+size_t TFileHandlerManager::GetBlockSize(size_t i)  {
   if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
   return FHandler->FMemoryBlocks.GetObject(i)->Length;
 }
 //..............................................................................
-const olxstr& TFileHandlerManager::GetBlockDateTime(int i)  {
+const olxstr& TFileHandlerManager::GetBlockDateTime(size_t i)  {
   if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
   return TEGC::New<olxstr>( 
     TETime::FormatDateTime( FHandler->FMemoryBlocks.GetObject(i)->DateTime ) 
   );
 }
 //..............................................................................
-short TFileHandlerManager::GetPersistenceId(int i)  {
+short TFileHandlerManager::GetPersistenceId(size_t i)  {
   if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
   return FHandler->FMemoryBlocks.GetObject(i)->PersistenceId;
 }

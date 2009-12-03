@@ -10,7 +10,7 @@ BeginEsdlNamespace()
 template <typename> class TVector33;
 template <typename> class TMatrix33;
 
-template <class T>  class TVector3 : public IEObject {
+template <class T>  class TVector3 {
   T data[3];
 public:
   TVector3()                  {  data[0] = data[1] = data[2] = 0;  }
@@ -19,8 +19,8 @@ public:
   TVector3(const TVector3<T>& v) {  data[0] = v[0];  data[1] = v[1];  data[2] = v[2];  }
   template <class AT> TVector3(const TVector3<AT>& v) {  data[0] = (T)v[0];  data[1] = (T)v[1];  data[2] = (T)v[2];  }
 
-  inline T& operator [] (int i) {  return data[i];  }
-  inline T const& operator [] (int i) const {  return data[i];  }
+  inline T& operator [] (size_t i)  {  return data[i];  }
+  inline T const& operator [] (size_t i) const {  return data[i];  }
   inline T* GetData() {  return &data[0];  }
   inline const T* GetData() const {  return &data[0];  }
   inline T QLength()    const {  return (data[0]*data[0]+data[1]*data[1]+data[2]*data[2]);  }
@@ -75,38 +75,34 @@ public:
     return TVector3<T>(olx_abs(v[0]), olx_abs(v[1]), olx_abs(v[2]));
   }
   // returns sum of vector elements
-  inline T Sum() const {
-    return data[0]+data[1]+data[2];
-  }
+  inline T Sum() const {  return data[0]+data[1]+data[2];  }
   // returns product of vector elements
-  inline T Mul() const {
-    return data[0]*data[1]*data[2];
-  }
+  inline T Prod() const {  return data[0]*data[1]*data[2];  }
   // returns sum of absolute values of vector elements
   inline T AbsSum()  {
     return olx_abs(data[0])+olx_abs(data[1])+olx_abs(data[2]);
   }
   // rounds the vector elements
-  template <class AT> inline TVector3<AT> olx_round() const {
-    return TVector3<AT>(olx_round(data[0]), olx_round(data[1]), olx_round(data[2]));
+  template <class AT> inline TVector3<AT> Round() const {
+    return TVector3<AT>(olx_round_t<AT,T>(data[0]), olx_round_t<AT,T>(data[1]), olx_round_t<AT,T>(data[2]));
   }
   template <class AT> inline T DotProd(const TVector3<AT>& v) const {
     return data[0]*v[0] + data[1]*v[1] + data[2]*v[2];
   }
   // ax(bxc) = b(a.c) - c(a.b)
   static inline TVector3<T> TripleProd(const TVector3<T>& a, const TVector3<T>& b, const TVector3<T>& c)  {
-    double p1 = a.DotProd(c), p2 = a.DotProd(b);
-    return TVector3<T>( b[0]*p1 - c[0]*p2, b[1]*p1 - c[1]*p2, b[2]*p1 - c[2]*p2);
+    const double p1 = a.DotProd(c), p2 = a.DotProd(b);
+    return TVector3<T>(b[0]*p1 - c[0]*p2, b[1]*p1 - c[1]*p2, b[2]*p1 - c[2]*p2);
   }
   // a*b*sin = a*b*(1-cos^2) = a*b - DotProd^2
-  template <class AT> inline T XProdVal (const TVector3<AT>& v) const {
-    T dp = DotProd(v); 
+  template <class AT> inline T XProdVal(const TVector3<AT>& v) const {
+    const T dp = DotProd(v); 
     return sqrt(QLength()*v.QLength()) - dp*dp;
   }
   template <class AT> inline TVector3<T> XProdVec(const TVector3<AT>& v) const  {
-    return TVector3<T>( data[1]*v[2] - data[2]*v[1], 
+    return TVector3<T>(data[1]*v[2] - data[2]*v[1], 
                         data[2]*v[0] - data[0]*v[2], 
-                        data[0]*v[1] - data[1]*v[0] );
+                       data[0]*v[1] - data[1]*v[0]);
   }
   /* returns a normal to vector through a point (vector with same origin as this vector)
   N = this*cos(this,point)*point.length/this.length = this*DotProd(this, point)/this.QLength
@@ -122,16 +118,16 @@ public:
   }
   // returns a reflection of this vector from a plane represented by normal
   template <class AT> inline TVector3<T> Reflect(const TVector3<AT>& normal) const {
-    T m = DotProd(normal)*2;
+    const T m = DotProd(normal)*2;
     return TVector3<T>(data[0] - normal[0]*m, data[1] - normal[1]*m, data[2] - normal[2]*m);  
   }
   inline TVector3<T>& Normalise()  {
-    T l = Length();
+    const T l = Length();
     if( l == 0 )  throw TDivException(__OlxSourceInfo);
     return (*this /= l);
   }
   inline TVector3<T>& NormaliseTo(T val)  {
-    T l = Length();
+    const T l = Length();
     if( l == 0 )  throw TDivException(__OlxSourceInfo);
     return (*this *= (val/l));
   }
@@ -285,8 +281,8 @@ public:
     return rv << ", " << data[1] << ", " << data[2];
   }
   inline TIString ToString() const {  return StrRepr<olxstr>();  }
-  inline CString  ToCStr()   const {  return StrRepr<CString>();  }
-  inline WString  ToWStr()   const {  return StrRepr<WString>();  }
+  inline olxcstr  ToCStr()   const {  return StrRepr<olxcstr>();  }
+  inline olxwstr  ToWStr()   const {  return StrRepr<olxwstr>();  }
 };
 
 template <class T> class TMatrix33  {
@@ -325,8 +321,8 @@ public:
     data[2][0] = (T)v[2][0];  data[2][1] = (T)v[2][1];  data[2][2] = (T)v[2][2];
   }
   
-  inline TVector3<T> const& operator [] (int i)  const {  return data[i];  } 
-  inline TVector3<T>& operator [] (int i) {  return data[i];  } 
+  inline TVector3<T> const& operator [] (size_t i) const {  return data[i];  } 
+  inline TVector3<T>& operator [] (size_t i)  {  return data[i];  } 
   
   template <class AT> TMatrix33<T> operator * (const TMatrix33<AT>& v) const {
     return TMatrix33<T>( data[0][0]*v[0][0] + data[0][1]*v[1][0] + data[0][2]*v[2][0],
@@ -495,18 +491,18 @@ public:
                          a[0]*data[2][0] + a[1]*data[2][1] + a[2]*data[2][2]);
   }
   static void  EigenValues(TMatrix33& A, TMatrix33& I)  {
-    int i, j;
+    size_t i, j;
     double a = 2;
     while( olx_abs(a) > 1e-15 )  {
-      MatMaxX( A, i, j );
-      multMatrix( A, I, i, j );
-      a = MatMaxX(A, i, j );
+      MatMaxX(A, i, j);
+      multMatrix(A, I, i, j);
+      a = MatMaxX(A, i, j);
     }
   }
 
       // used in the Jacoby eigenvalues search procedure
 protected: 
-  static inline T MatMaxX(const TMatrix33& m, int &i, int &j )  {
+  static inline T MatMaxX(const TMatrix33& m, size_t &i, size_t &j )  {
     double c = olx_abs(m[0][1]);
     i = 0;  j = 1;
     if( olx_abs(m[0][2]) > c )  {
@@ -519,59 +515,39 @@ protected:
     }
     return c;
   }
-  static inline void multMatrix(TMatrix33& D, TMatrix33& E, int i, int j)  {
+  static inline void multMatrix(TMatrix33& D, TMatrix33& E, size_t i, size_t j)  {
     double cf, sf, cdf, sdf;
     static const double sqr2 = sqrt(2.0)/2;
     if( D[i][i] == D[j][j] )  {
       cdf = 0;
       cf  = sqr2;
-      sf  = Sign(D[i][j])*sqr2;
-      sdf = Sign(D[i][j]);
+      sf  = olx_sign(D[i][j])*sqr2;
+      sdf = olx_sign(D[i][j]);
     }
     else  {
       double tdf = 2*D[i][j]/(D[j][j] - D[i][i]);
       double r = tdf*tdf;
       cdf = sqrt( 1.0/(1+r) );
       cf  = sqrt( (1+cdf)/2.0);
-      sdf = (sqrt( r/(1+r) ) * Sign(tdf));
-      sf  = (sqrt((1-cdf)/2.0)*Sign(tdf));
+      sdf = (sqrt( r/(1+r) ) * olx_sign(tdf));
+      sf  = (sqrt((1-cdf)/2.0)*olx_sign(tdf));
     }
-    double ji, jj,ij,ii,ja,ia;
-    ij = D[i][j];
-    ii = D[i][i];
-    jj = D[j][j];
+    const double ij = D[i][j], ii = D[i][i], jj = D[j][j];
     D[i][j] = D[j][i] = 0;
     D[i][i] = (ii*cf*cf + jj*sf*sf - ij*sdf);
     D[j][j] = (ii*sf*sf + jj*cf*cf + ij*sdf);
     
-    ij = E[i][0];  ji = E[j][0];
-    E[i][0] = ij*cf - ji*sf; //i
-    E[j][0] = ij*sf + ji*cf;   //j
-
-    ij = E[i][1];  ji = E[j][1];
-    E[i][1] = ij*cf - ji*sf; //i
-    E[j][1] = ij*sf + ji*cf;   //j
-
-    ij = E[i][2];  ji = E[j][2];
-    E[i][2] = ij*cf - ji*sf; //i
-    E[j][2] = ij*sf + ji*cf;   //j
-
-    if( i != 0 && j != 0 )  {
-      ia = D[i][0];  ja = D[j][0];
-      D[i][0] = D[0][i] = ia*cf - ja*sf;
-      D[j][0] = D[0][j] = ia*sf + ja*cf;
+    for( size_t t=0; t < 3; t++ )  {
+      const double eit = E[i][t], ejt = E[j][t];
+      E[i][t] = eit*cf - ejt*sf; //i
+      E[j][t] = eit*sf + ejt*cf;   //j
+      if((t != i) && (t != j ) )  {
+        const double dit = D[i][t], djt = D[j][t];
+        D[i][t] = D[t][i] = dit*cf - djt*sf;
+        D[j][t] = D[t][j] = dit*sf + djt*cf;
     }
-    if( i != 1 && j != 1 )  {
-      ia = D[i][1];  ja = D[j][1];
-      D[i][1] = D[1][i] = ia*cf - ja*sf;
-      D[j][1] = D[1][j] = ia*sf + ja*cf;
     }
-    if( i != 2 && j != 2 )  {
-      ia = D[i][2];  ja = D[j][2];
-      D[i][2] = D[2][i] = ia*cf - ja*sf;
-      D[j][2] = D[2][j] = ia*sf + ja*cf;
     }
-  }
 public:
   // solves a set of equations by the Cramer rule {equation arr.c = b }, returns c
   static TVector3<T> CramerSolve(const TMatrix33<T>& arr, const TVector3<T>& b) {
@@ -593,9 +569,9 @@ public:
   // solves a set of equations by the Gauss method {equation arr.c = b ?c }
   static void GaussSolve(TMatrix33<T>& arr, TVector3<T>& b, TVector3<T>& c) {
     MatrixElementsSort(arr, b );
-    for ( int j = 1; j < 3; j++ )
-      for( int i = j; i < 3; i++ )  {
-        if( arr[i][j-1] ==0 )  continue;
+    for ( size_t j = 1; j < 3; j++ )
+      for( size_t i = j; i < 3; i++ )  {
+        if( arr[i][j-1] == 0 )  continue;
         b[i]  *= -(arr[j-1][j-1]/arr[i][j-1]);
         arr[i] *= -(arr[j-1][j-1]/arr[i][j-1]);
         arr[i][0] += arr[j-1][0];
@@ -607,10 +583,10 @@ public:
       throw TFunctionFailedException(__OlxSourceInfo, "dependent set of equations");
 
     c[2] = b[2]/arr[2][2];
-    for(int j = 1; j >=0; j--)  {
-      for(int k1=1; k1 < 4-j; k1++)  {
+    for( size_t j = 1; j != ~0; j-- )  {
+      for( size_t k1=1; k1 < 4-j; k1++ )  {
         if( k1 == (3-j) )
-          for( int i=2; i > 3-k1; i-- )  
+          for( size_t i=2; i > 3-k1; i-- )  
             b[j] -= arr[j][i]*c[i];
       }
       c[j]= b[j]/arr[j][j];
@@ -620,19 +596,16 @@ public:
 protected:  // used in GauseSolve to sort the matrix
   static void MatrixElementsSort(TMatrix33<T>& arr, TVector3<T>& b)  {
     T bf[3];
-    for( int i = 0; i < 3; i++ )  {
+    for( size_t i = 0; i < 3; i++ )  {
       bf[0] = (arr[0][i] < 0) ? -arr[0][i] : arr[0][i];
       bf[1] = (arr[1][i] < 0) ? -arr[1][i] : arr[1][i];
       bf[2] = (arr[2][i] < 0) ? -arr[2][i] : arr[2][i];
-      int n = 0;
+      size_t n = 0;
       if( bf[1] > bf[n] )  n = 1;
       if( bf[2] > bf[n] )  n = 2;
       if( n != i )  {
-        T c = arr[i][0];  arr[i][0] = arr[n][0];  arr[n][0] = c;
-          c = arr[i][1];  arr[i][1] = arr[n][1];  arr[n][1] = c;
-          c = arr[i][2];  arr[i][2] = arr[n][2];  arr[n][2] = c;
-        // changing b[i] and b[n]
-        c = b[i];     b[i] = b[n];     b[n] = c;
+        olx_swap(arr[i], arr[n]);
+        olx_swap(b[i], b[n]);
       }
     }
   }

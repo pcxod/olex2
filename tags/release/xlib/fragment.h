@@ -76,13 +76,13 @@ public:
   int GetCode() const {  return Code;  }
 
   bool IsEmpty()                    const {  return Atoms.IsEmpty();  }
-  inline int Count()                const {  return Atoms.Count();  }
-  FragAtom& operator [] (int i)              {  return Atoms[i];  }
-  const FragAtom& operator [] (int i)  const {  return Atoms[i];  }
+  inline size_t Count() const {  return Atoms.Count();  }
+  FragAtom& operator [] (size_t i)  {  return Atoms[i];  }
+  const FragAtom& operator [] (size_t i) const {  return Atoms[i];  }
 
   template <class slist> void ToStrings(slist& lst) const {
     lst.Add("FRAG ") << Code;
-    for( int i=0; i < Atoms.Count(); i++ )
+    for( size_t i=0; i < Atoms.Count(); i++ )
       lst.Add( Atoms[i].ToString() ); 
     lst.Add("FEND");
   }

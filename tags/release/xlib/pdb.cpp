@@ -1,19 +1,8 @@
-#ifdef __BORLANC__
-  #pragma hdrstop
-#endif
-
 #include "pdb.h"
 #include "unitcell.h"
 #include "bapp.h"
 #include "log.h"
 
-//----------------------------------------------------------------------------//
-// TMol function bodies
-//----------------------------------------------------------------------------//
-TPdb::TPdb()  {   }
-//..............................................................................
-TPdb::~TPdb()  {  Clear();    }
-//..............................................................................
 void TPdb::Clear()  {
   GetAsymmUnit().Clear();
 }
@@ -26,12 +15,8 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
   Clear();
 
   evecd QE(6);
-  vec3d crd;
-
-  olxstr Tmp1, Tmp, Msg;
-  vec3d StrCenter;
   TStrList toks;
-  TIntList CrystF;
+  TSizeList CrystF;
   CrystF.Add(6);
   CrystF.Add(9);
   CrystF.Add(9);
@@ -40,7 +25,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
   CrystF.Add(7);
   CrystF.Add(7);
 
-  TIntList AtomF;
+  TSizeList AtomF;
   AtomF.Add(6);  //"ATOM  "
   AtomF.Add(5);  //serial number
   AtomF.Add(1);  //ws
@@ -59,7 +44,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
   AtomF.Add(2);  // element
   AtomF.Add(2);  // charge
 
-  TIntList AnisF;
+  TSizeList AnisF;
   AnisF.Add(6); // record name
   AnisF.Add(5);  // serial
   AnisF.Add(1);  // ws
@@ -81,12 +66,11 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
 
 
   Title = "OLEX: imported from PDB";
-  for(int i=0; i < Strings.Count(); i++ )  {
-    int spi = Strings[i].FirstIndexOf(' ');
-    if( spi <=0 )  continue;
-    Tmp = Strings[i].SubStringTo(spi).UpperCase();
-    if( Tmp == "CRYST1" )  {
-      toks.Clear();
+  for( size_t i=0; i < Strings.Count(); i++ )  {
+    size_t spi = Strings[i].FirstIndexOf(' ');
+    if( spi == InvalidIndex || spi == 0 )  continue;
+    olxstr line = Strings[i].SubStringTo(spi).UpperCase();
+    if( line == "CRYST1" )  {
       toks.StrtokF( Strings[i], CrystF);
       if( toks.Count() < 7 )  
         throw TFunctionFailedException(__OlxSourceInfo, "parsing failed");
@@ -98,19 +82,16 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
       GetAsymmUnit().Angles()[2] = toks[6].ToDouble();
       GetAsymmUnit().InitMatrices();
     }
-    else if( Tmp == "ATOM" )  {
+    else if( line == "ATOM" )  {
       toks.Clear();
       toks.StrtokF( Strings[i], AtomF);
       if( toks.Count() < 13 )  
         throw TFunctionFailedException(__OlxSourceInfo, "parsing failed");
       TCAtom& CA = GetAsymmUnit().NewAtom();
-      crd[0] = toks[10].ToDouble();
-      crd[1] = toks[11].ToDouble();
-      crd[2] = toks[12].ToDouble();
-
+      vec3d crd(toks[10].ToDouble(), toks[11].ToDouble(), toks[12].ToDouble());
       GetAsymmUnit().CartesianToCell(crd);
       CA.ccrd() = crd;
-      Tmp = toks[3].Trim(' ');
+      olxstr Tmp = toks[3].Trim(' ');
       if( Tmp == "CA" )
         Tmp = "C";
       else  if( Tmp == "CD" )
@@ -119,13 +100,12 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
         Tmp = "C";
       else  if( Tmp == "W" )
         Tmp = "O";
-
       Tmp << '_' << toks[5].Trim(' ') << '_' << toks[8].Trim(' ');
       CA.SetLabel( Tmp );
     }
-    else if( Tmp == "ANISOU" )  {
+    else if( line == "ANISOU" )  {
       toks.Clear();
-      toks.StrtokF( Strings[i], AnisF);
+      toks.StrtokF(Strings[i], AnisF);
       if( toks.Count() < 16 )  
         throw TFunctionFailedException(__OlxSourceInfo, "parsing failed");
       QE[0] = toks[10].ToDouble();
@@ -140,20 +120,18 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
         ca->UpdateEllp(QE);
         if( ca->GetEllipsoid()->IsNPD() )
           TBasicApp::GetLog().Error(olxstr("Not positevely defined: ") + ca->Label());
-        ca->SetUiso( (QE[0] +  QE[1] + QE[2])/3);
+        ca->SetUiso((QE[0] +  QE[1] + QE[2])/3);
       }
     }
   }
 }
 //..............................................................................
-bool TPdb::Adopt(TXFile *XF)  {
+bool TPdb::Adopt(TXFile& XF)  {
   Clear();
-  GetAsymmUnit().Assign(XF->GetAsymmUnit());
-  GetAsymmUnit().SetZ( (short)XF->GetLattice().GetUnitCell().MatrixCount() );
+  GetAsymmUnit().Assign(XF.GetAsymmUnit());
+  GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
   return true;
 }
-//..............................................................................
-void TPdb::DeleteAtom(TCAtom *CA)  {  return;  }
 //..............................................................................
 
 

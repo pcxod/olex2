@@ -127,7 +127,7 @@ TLS::TLS(const TSAtomPList &atoms, const double *const cellParameters)
 /************************************************************************/
 
 }
-const void TLS::printTLS(){
+void TLS::printTLS(){
 	// std::cout << "\nT matrix: ";
 	Tmat.Print(); 
 	// std::cout << "\nL matrix: ";
@@ -138,8 +138,8 @@ const void TLS::printTLS(){
 void TLS::UijErrors(const TSAtomPList &atoms){
 // Unit weights  - should be replaced by VcV matrix when available
 	ematd temp (6*atoms.Count(), 6*atoms.Count() );
-	for( int i= 0; i< (6*atoms.Count() ) ; i++)
-		for(short j=0; j<(6*atoms.Count() ); j++)
+	for( size_t i= 0; i< (6*atoms.Count() ) ; i++)
+		for( size_t j=0; j<(6*atoms.Count() ); j++)
 			temp[i][j] = 10000.0; //weight = 1/sigma^2, sigma =0.01 Ang. 
 
 	UijWeight = temp; //Diagonal weight matrix
@@ -171,7 +171,7 @@ void TLS::createDM(ematd &designM, evecd &UijC , const TSAtomPList &atoms )
 	ematd dm( 6*atoms.Count(),TLSfreeParameters );	//TLS (6n x 21) design matrix
 	evecd UijColumn(6*atoms.Count());	//6n vector of 'observed' Uij
 
-	for( int i=0; i < atoms.Count(); i++ )  {  
+	for( size_t i=0; i < atoms.Count(); i++ )  {  
 		// for each atom calculate design matrix (dm) and UijColumn 'observed' (Uobs)
 		// Append result to the existing dm / Uobs
 
@@ -291,8 +291,8 @@ bool TLS::calcTLS (const ematd &designM, const evecd &UijC)
 
 	*/
 
-	const int nColumns	= designM.Elements();	//No. of columns
-	const int mRows		= designM.Vectors();	//No. of Rows
+	const int nColumns	= (int)designM.Elements();	//No. of columns
+	const int mRows		= (int)designM.Vectors();	//No. of Rows
 
 	if (TLSfreeParameters!= nColumns)
 		throw TFunctionFailedException(__OlxSourceInfo, 
@@ -376,14 +376,14 @@ bool TLS::calcTLS (const ematd &designM, const evecd &UijC)
     inverseDM.setbounds(1, nColumns,1, mRows);
 
 	for ( int i=1; i <= nColumns; i++){
-		for ( short j = 1; j <= mRows; j++) {
+		for ( int j = 1; j <= mRows; j++) {
 			inverseDM(i,j) = 0 ;
 		}
 	}
 	
 	for ( int k=1; k <= mRows; k++){
-		for ( short i = 1; i <= nColumns; i++) {	
-			for ( short j = 1; j <= nColumns; j++) {
+		for ( int i = 1; i <= nColumns; i++) {	
+			for ( int j = 1; j <= nColumns; j++) {
 				inverseDM(i,k) = inverseDM(i,k) + vInvw(i,j)*uOutput(k,j);
 			}
 		}
@@ -392,7 +392,7 @@ bool TLS::calcTLS (const ematd &designM, const evecd &UijC)
 
 	//tls = v* 1/w * u^transpose . UijColumn(vector)
 	for(int k = 0; k< nColumns; k++){
-		for(short i = 0; i < mRows ; i++) {	 
+		for(int i = 0; i < mRows ; i++) {	 
 			tlsElements[k] = tlsElements[k] + inverseDM(k+1,i+1)* UijCol[i];
 		}
 	}
@@ -529,7 +529,7 @@ void TLS::calcL_VcV(){
 void TLS::calcUijEllipse (const TSAtomPList &atoms, TEllpList &Ellipsoids) {
 	/* For each atom, calc U_ij from current TLS matrices */
 	TEllpList Elps;
-	for( int i=0; i < atoms.Count(); i++ )  {  
+	for( size_t i=0; i < atoms.Count(); i++ )  {  
 		// for each atom, calculate Utls in Cart
 		
 		TSAtom* theAtom = atoms[i];
@@ -674,7 +674,7 @@ void TLS::FigOfMerit(const TSAtomPList &atoms, const TEllpList Elps){
 	evecd quad(6);
 	ematd UijCart(3,3);
 	evecd diff (6* atoms.Count() ) ;
-	for (short i =0; i < atoms.Count(); i++){
+	for (size_t i =0; i < atoms.Count(); i++){
 			Elps[i].GetQuad(quad);
 			quadToCart(quad, UijCart);
 
@@ -689,7 +689,7 @@ void TLS::FigOfMerit(const TSAtomPList &atoms, const TEllpList Elps){
 	//R1
 	double sumUobs=0;
 	double R1 = 0;
-	for (int i =0; i<6*atoms.Count(); i++){
+	for (size_t i=0; i<6*atoms.Count(); i++){
 		if ( diff[i]>0 )
 			R1 = R1 + diff[i];
 		else
@@ -705,7 +705,7 @@ void TLS::FigOfMerit(const TSAtomPList &atoms, const TEllpList Elps){
 	//R2
 	double R2=0;
 	double sumUobsSq = 0;
-	for (int i =0; i<6*atoms.Count(); i++){
+	for (size_t i =0; i<6*atoms.Count(); i++){
 		R2 =  R2 + UijWeight[i][i]* diff[i]*diff[i];
 		sumUobsSq = sumUobsSq + UijWeight[i][i]*UijCol[i]*UijCol[i];
 	}

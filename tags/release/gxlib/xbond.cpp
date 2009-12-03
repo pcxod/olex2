@@ -73,7 +73,7 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( FStaticObjects.IsEmpty() )  
     CreateStaticPrimitives();
   // find collection
-  TGPCollection* GPC = Parent.FindCollectionX( GetCollectionName(), NewL);
+  TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);
   if( GPC == NULL )
     GPC = &Parent.NewCollection(NewL);
   else if( GPC->PrimitiveCount() != 0 )  {
@@ -94,7 +94,7 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   Params()[4]= GS.GetParam("R", Params()[4]).ToDouble();
 
-  for( int i=0; i < FStaticObjects.Count(); i++ )  {
+  for( size_t i=0; i < FStaticObjects.Count(); i++ )  {
     const int off = (1 << i);
     if( PrimitiveMask & off )    {
       TGlPrimitive* SGlP = FStaticObjects.GetObject(i);
@@ -115,8 +115,8 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
           if( cpar == NULL )
             TXAtom::GetDefSphereMaterial(FBond->A(), RGlM);
           else  {
-            int mi = ((BondCreationParams*)cpar)->a1.Style().IndexOfMaterial("Sphere");
-            if( mi != -1 )
+            size_t mi = ((BondCreationParams*)cpar)->a1.Style().IndexOfMaterial("Sphere");
+            if( mi != InvalidIndex )
               RGlM = ((BondCreationParams*)cpar)->a1.Style().GetPrimitiveStyle(mi).GetProperties();
             else
               TXAtom::GetDefSphereMaterial(FBond->A(), RGlM);
@@ -126,8 +126,8 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
           if( cpar == NULL )
             TXAtom::GetDefSphereMaterial(FBond->B(), RGlM);
           else  {
-            int mi = ((BondCreationParams*)cpar)->a2.Style().IndexOfMaterial("Sphere");
-            if( mi != -1 )
+            size_t mi = ((BondCreationParams*)cpar)->a2.Style().IndexOfMaterial("Sphere");
+            if( mi != InvalidIndex )
               RGlM = ((BondCreationParams*)cpar)->a2.Style().GetPrimitiveStyle(mi).GetProperties();
             else
               TXAtom::GetDefSphereMaterial(FBond->B(), RGlM);
@@ -471,12 +471,17 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {
   return L;
 }
 //..............................................................................
-void TXBond::Radius(float V)  {
+void TXBond::SetRadius(float V)  {
   Params()[4] = V;
   GetPrimitives().GetStyle().SetParam("R", V, IsRadiusSaveable());
   // update radius for all members of the collection
-  for( int i=0; i < GetPrimitives().ObjectCount(); i++ )
+  for( size_t i=0; i < GetPrimitives().ObjectCount(); i++ )
     GetPrimitives().GetObject(i).Params()[4] = V;
+}
+//..............................................................................
+uint32_t TXBond::GetPrimitiveMask() const {
+  return GetPrimitives().GetStyle().GetParam(GetPrimitiveMaskName(),
+    (FBond && (FBond->GetType() == sotHBond)) ? 2048 : DefMask(), IsMaskSaveable()).ToUInt();
 }
 //..............................................................................
 void TXBond::OnPrimitivesCleared()  {

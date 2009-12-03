@@ -6,14 +6,6 @@
 #include "atominfo.h"
 
 //---------------------------------------------------------------------------
-TCHNExp::TCHNExp(TAtomsInfo *AI)  {
-  FMult = 1;
-  FAtomsInfo = AI;
-}
-//..............................................................................
-TCHNExp::~TCHNExp()  {
-  Clear();
-}
 //..............................................................................
 void TCHNExp::Clear()  {
   Exp.Clear();
@@ -26,7 +18,7 @@ olxstr TCHNExp::SummFormula(const olxstr &Separator)  {
   CalcSummFormula(E1);
   olxstr Res;
   double v;
-  for( int i=0; i < E1.Count(); i++ )  {
+  for( size_t i=0; i < E1.Count(); i++ )  {
     Res << E1[i];
     v = E1.GetObject(i);
     if( v != 1 )
@@ -40,26 +32,47 @@ double TCHNExp::MolWeight()  {
   TStrPObjList<olxstr,double> E1;
   CalcSummFormula(E1);
   double w = 0;
-  TBasicAtomInfo *I;
-  for( int i=0; i < E1.Count(); i++ )  {
-    I = AtomsInfo()->FindAtomInfoBySymbol( E1[i] );
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
+  for( size_t i=0; i < E1.Count(); i++ )  {
+    TBasicAtomInfo* I = AtomsInfo.FindAtomInfoBySymbol( E1[i] );
     w += (E1.GetObject(i) * I->GetMr());
   }
   return w;
 }
 //..............................................................................
-void TCHNExp::CHN(double &C, double &H, double &N, double &Mr)  {
+double TCHNExp::CHN(olxdict<short, double, TPrimitiveComparator>& rv) const {
+  TStrPObjList<olxstr,double> E1;
+  CalcSummFormula(E1);
+  TPtrList<TBasicAtomInfo> bais(E1.Count());
+  double w = 0;
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
+  for( size_t i=0; i < E1.Count(); i++ )  {
+    bais[i] = AtomsInfo.FindAtomInfoBySymbol(E1[i]);
+    w += (E1.GetObject(i) * bais[i]->GetMr());
+  }
+  if( w == 0 )  w = 1;  // if w == 0 then all components are zero, so ... why not?
+  for( size_t i=0; i < rv.Count(); i++ )
+    rv.GetValue(i) = 0.0;
+  for( size_t i=0; i < E1.Count(); i++ )  {
+    size_t ei = rv.IndexOf(bais[i]->GetIndex());
+    if( ei == InvalidIndex )  continue;
+    rv.GetValue(ei) = E1.GetObject(i)*bais[i]->GetMr();
+  }
+  return w;
+}
+//..............................................................................
+void TCHNExp::CHN(double &C, double &H, double &N, double &Mr) const {
   TStrPObjList<olxstr,double> E1;
   CalcSummFormula(E1);
   double w = 0;
-  TBasicAtomInfo *I;
-  for( int i=0; i < E1.Count(); i++ )  {
-    I = AtomsInfo()->FindAtomInfoBySymbol( E1[i] );
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
+  for( size_t i=0; i < E1.Count(); i++ )  {
+    TBasicAtomInfo* I = AtomsInfo.FindAtomInfoBySymbol( E1[i] );
     w += (E1.GetObject(i) * I->GetMr() );
   }
   if( w == 0 )  w = 1;  // if w == 0 then all components are zero, so ... why not?
-  for( int i=0; i < E1.Count(); i++ )  {
-    I = AtomsInfo()->FindAtomInfoBySymbol(E1[i]);
+  for( size_t i=0; i < E1.Count(); i++ )  {
+    TBasicAtomInfo* I = AtomsInfo.FindAtomInfoBySymbol(E1[i]);
     if( I->GetIndex() == iCarbonIndex )
       C = E1.GetObject(i) * I->GetMr();
     else if( I->GetIndex() == iHydrogenIndex )
@@ -73,30 +86,34 @@ void TCHNExp::CHN(double &C, double &H, double &N, double &Mr)  {
 olxstr TCHNExp::Composition()  {
   TStrPObjList<olxstr,double> E1;
   CalcSummFormula(E1);
-  double w = 0, v;
+  TPtrList<TBasicAtomInfo> bais(E1.Count());
+  double w = 0;
   olxstr Res("Calculated ("), SF;
-  TBasicAtomInfo *I;
-  for( int i=0; i < E1.Count(); i++ )  {
-    I = AtomsInfo()->FindAtomInfoBySymbol( E1[i] );
-    SF << E1[i] << E1.GetObject(i) <<  ' ';
-    w += (E1.GetObject(i) * I->GetMr() );
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
+  for( size_t i=0; i < E1.Count(); i++ )  {
+    bais[i] = AtomsInfo.FindAtomInfoBySymbol(E1[i]);
+    SF << E1[i] << E1.GetObject(i);
+    if( (i+1) < E1.Count() )
+      SF <<  ' ';
+    w += (E1.GetObject(i) * bais[i]->GetMr());
   }
   Res << SF << "): ";
   if( w == 0 )  w = 1;  // if w == 0 then all components are zero, so ... why not?
-  for( int i=0; i < E1.Count(); i++ )  {
-    I = AtomsInfo()->FindAtomInfoBySymbol( E1[i] );
-    v = (E1.GetObject(i) * I->GetMr());
-    Res << E1[i] <<  ": " << olxstr::FormatFloat(2, v/w*100) << "; ";
+  for( size_t i=0; i < E1.Count(); i++ )  {
+    const double v = (E1.GetObject(i) * bais[i]->GetMr());
+    Res << E1[i] <<  ": " << olxstr::FormatFloat(3, v/w*100);
+    if( (i+1) < E1.Count() )
+      Res << "; ";
   }
   return Res;
 }
 //..............................................................................
-void TCHNExp::CalcSummFormula(TStrPObjList<olxstr,double>& E)  {
+void TCHNExp::CalcSummFormula(TStrPObjList<olxstr,double>& E) const {
   bool Added;
   TStrPObjList<olxstr,double> E1;
-  for( int i=0; i < Exp.Count(); i++ )  {
+  for( size_t i=0; i < Exp.Count(); i++ )  {
     Added = false;
-    for( int j=0; j < E1.Count(); j++ )  {
+    for( size_t j=0; j < E1.Count(); j++ )  {
       if( E1[j] == Exp[i] )  {
         E1.GetObject(j) += Exp.GetObject(i);
         Added = true;
@@ -105,11 +122,11 @@ void TCHNExp::CalcSummFormula(TStrPObjList<olxstr,double>& E)  {
     if( !Added )
       E1.Add(Exp[i], Exp.GetObject(i));
   }
-  for( int i=0; i < Dependencies.Count(); i++ )
+  for( size_t i=0; i < Dependencies.Count(); i++ )
     Dependencies[i].CalcSummFormula(E1);
-  for( int i=0; i < E1.Count(); i++ )  {
+  for( size_t i=0; i < E1.Count(); i++ )  {
     Added = false;
-    for( int j=0; j < E.Count(); j++ )  {
+    for( size_t j=0; j < E.Count(); j++ )  {
       if( E[j] == E1[i] )  {
         Added = true;
         E.GetObject(j) += (E1.GetObject(i)*FMult);
@@ -127,7 +144,8 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
   bool ElementDefined = false;
   short ob, cb; // open and close brackets
   Clear();
-  for( int i=0; i < E.Length(); i++ )  {
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
+  for( size_t i=0; i < E.Length(); i++ )  {
     if( E[i] == '(' )   {
       NExp = EmptyString;
       SMult = EmptyString;
@@ -154,9 +172,10 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
       }
 
       if( !NExp.IsEmpty() )  {
-        TCHNExp& Exp = Dependencies.AddNew(AtomsInfo());
+        TCHNExp& Exp = Dependencies.AddNew();
         Exp.LoadFromExpression(NExp);
-        if( !SMult.IsEmpty() )  Exp.SetMult(SMult);
+        if( !SMult.IsEmpty() )  
+          Exp.SetMult(SMult);
       }
       continue;
     }
@@ -169,7 +188,7 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
     else  {
       if( ElementDefined )  {
         if( Element.IsEmpty() )  return;
-        if( !AtomsInfo()->IsElement(Element) )
+        if( !AtomsInfo.IsElement(Element) )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: '") << Element << '\'');
         if( ECount.Length() != 0 )
           Exp.Add(Element, ECount.ToDouble());
@@ -181,7 +200,7 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
         Element << E[i];
         i++;
         if( Element.Length() == 2 )  {  // CD
-          if( !AtomsInfo()->IsElement(Element) )  {  // CC-D
+          if( !AtomsInfo.IsElement(Element) )  {  // CC-D
             Element.SetLength(1);
             i--;
             break;  // the firts letter should be an element labels
@@ -189,7 +208,7 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
           break;
         }
         if( i >= E.Length() )  {
-          if( !AtomsInfo()->IsElement(Element) )
+          if( !AtomsInfo.IsElement(Element) )
             throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: '") << Element << '\'');
           Exp.Add(Element, 1);
           return;
@@ -201,7 +220,7 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
     }
   }
   if( ElementDefined && !Element.IsEmpty() )  { // add lst element
-    if( !AtomsInfo()->IsElement(Element) )
+    if( !AtomsInfo.IsElement(Element) )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: '") << Element << '\'');
     if( !ECount.IsEmpty() )
       Exp.Add(Element, ECount.ToDouble());

@@ -262,7 +262,7 @@ bool TWinWinCmd::SendWindowCmd(const olxstr WndName, const olxstr Cmd)  {
     if( --TO < 0 )
       return false;
   }
-  for( int i=0; i < Cmd.Length(); i++ )
+  for( size_t i=0; i < Cmd.Length(); i++ )
     PostMessage(Window, WM_CHAR, Cmd[i], 0);
   return true;
 }
@@ -336,8 +336,8 @@ bool TWxProcess::Execute(const olxstr & Cmd, short Flags)  {
 #endif
     olxstr cmd( TEFile::Which(TEFile::ExtractFileName(toks[0])) );
     if( toks.Count() > 1 )  {
-      for( int i=1; i < toks.Count(); i++ )  {
-        if( toks[i].IndexOf(' ') == -1 )
+      for( size_t i=1; i < toks.Count(); i++ )  {
+        if( toks[i].IndexOf(' ') == InvalidIndex )
           cmd << ' '  << toks[i];
         else
           cmd << " \'" << toks[i] << '\'';

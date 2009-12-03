@@ -2,8 +2,6 @@
 #ifndef __olx_os_util_H
 #define __olx_os_util_H
 #include "ebase.h"
-#ifdef __WIN32__
-  #include <windows.h>
 #ifdef __BORLANDC__  // time_t definition...
   #include <time.h>
 #endif
@@ -11,7 +9,7 @@
 #undef GetAtom
 #undef AddAtom
 #undef GetObject
-#else
+#ifndef __WIN32__
   #include <pthread.h>
   #include <time.h>
   #include <errno.h>

@@ -1,18 +1,12 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "crs.h"
+#include "ins.h"
 #include "asymmunit.h"
 
 #include "symmlib.h"
 
 TCRSFile::TCRSFile()  {
-  Radiation = 0.71;
   SGInitialised = false;
 }
-//..............................................................................
-TCRSFile::~TCRSFile()  {  }
 //..............................................................................
 TSpaceGroup* TCRSFile::GetSG()  {
   return SGInitialised ? TSymmLib::GetInstance()->FindSG( GetAsymmUnit() ) : NULL;
@@ -24,7 +18,7 @@ void TCRSFile::SaveToStrings(TStrList& SL)  {
   SL.Add(olxstr("TITLE   ") << GetTitle() );
 
   Tmp = "CELL ";
-  Tmp << Radiation << ' ' <<
+  Tmp << GetRM().expl.GetRadiation() << ' ' <<
   GetAsymmUnit().Axes()[0].GetV() << ' ' <<
   GetAsymmUnit().Axes()[1].GetV()  << ' ' <<
   GetAsymmUnit().Axes()[2].GetV() << ' ' <<
@@ -55,27 +49,26 @@ void TCRSFile::SaveToStrings(TStrList& SL)  {
   }
   else
     throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
-
-  SL.Add( olxstr("SFAC ") << Sfac );
-  SL.Add( olxstr("UNIT ") << Unit );
+  SL.Add(EmptyString);
+  TIns::SaveSfacUnit(GetRM(), GetRM().GetUserContent(), SL, SL.Count()-1);
 }
 //..............................................................................
 void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
   SGInitialised = false;
-  olxstr Tmp, TmpUC, Cell, Zerr, Sg, fcId("FACE");
+  olxstr Tmp, TmpUC, Cell, Zerr, Sg, fcId("FACE"), sfac, unit;
   TStrList toks;
   TStrPObjList<olxstr, olxstr*> params;
   params.Add("TITL",  &Title);
   params.Add("CELL",   &Cell);
   params.Add("ZERR",  &Zerr);
-  params.Add("SFAC",    &Sfac);
-  params.Add("UNIT",    &Unit);
+  params.Add("SFAC", &sfac);
+  params.Add("UNIT", &unit);
   params.Add("SPGR",  &Sg);
-  for( int i=0; i < Strings.Count(); i++ )  {
+  for( size_t i=0; i < Strings.Count(); i++ )  {
     Tmp = olxstr::DeleteSequencesOf<char>( Strings[i], ' ' );
     if( Tmp.IsEmpty() )  continue;
     TmpUC = Tmp.UpperCase();
-    for( int j=0; j < params.Count(); j++ )  {
+    for( size_t j=0; j < params.Count(); j++ )  {
       if( TmpUC.StartsFrom( params[j] ) ) {
         *params.GetObject(j) = Tmp.SubStringFrom( params[j].Length() );
         params.Delete(j);
@@ -100,7 +93,7 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
   toks.Clear();
   toks.Strtok( Cell, ' ');
   if( toks.Count() >= 7 )  {
-    Radiation = toks[0].ToDouble();
+    GetRM().expl.SetRadiation(toks[0].ToDouble());
     GetAsymmUnit().Axes()[0].V() = toks[1].ToDouble();
     GetAsymmUnit().Axes()[1].V() = toks[2].ToDouble();
     GetAsymmUnit().Axes()[2].V() = toks[3].ToDouble();
@@ -126,33 +119,17 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
     GetAsymmUnit().ChangeSpaceGroup( *sg );
     SGInitialised = true;
   }
+  GetRM().SetUserContent(sfac, unit);
 }
 //..............................................................................
-bool TCRSFile::Adopt(TXFile* f)  {
-  GetAsymmUnit().Angles() = f->GetAsymmUnit().Angles();
-  GetAsymmUnit().Axes()   = f->GetAsymmUnit().Axes();
-
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG( f->GetAsymmUnit() );
-  if( sg == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "undefined space group");
-  GetAsymmUnit().ChangeSpaceGroup( *sg );
+bool TCRSFile::Adopt(TXFile& f)  {
+  GetAsymmUnit().Angles() = f.GetAsymmUnit().Angles();
+  GetAsymmUnit().Axes() = f.GetAsymmUnit().Axes();
+  GetAsymmUnit().ChangeSpaceGroup(f.GetLastLoaderSG());
   SGInitialised = true;
-
-
   TStrPObjList<olxstr, TBasicAtomInfo*> BasicAtoms;
-  Unit = EmptyString;
-  Sfac = EmptyString;
-  f->GetAsymmUnit().SummFormula(BasicAtoms, Sfac, Unit);
-
-  if( f->HasLastLoader() )  {
-    Title = f->LastLoader()->GetTitle();
-    GetRM().SetHKLSource( f->LastLoader()->GetRM().GetHKLSource() );
-  }
-  else  {
-    GetRM().SetHKLSource(EmptyString);
-    Title = "?";
-  }
-
+  Title = f.LastLoader()->GetTitle();
+  GetRM().SetHKLSource(f.LastLoader()->GetRM().GetHKLSource());
   return true;
 }
 //..............................................................................

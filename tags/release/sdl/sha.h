@@ -17,7 +17,7 @@ class SHA1Impl  {
 protected:
   SHA1Impl();
   void digest64(const uint32_t* msg);
-  CString formatDigest(); 
+  olxcstr formatDigest(); 
 };
 
 template <class Impl>
@@ -34,13 +34,13 @@ protected:
 class SHA256Impl : public SHA2<SHA256Impl> {
 protected:
   SHA256Impl();
-  CString formatDigest(); 
+  olxcstr formatDigest(); 
 };
 
 class SHA224Impl : public SHA2<SHA224Impl> {
 protected:
   SHA224Impl();
-  CString formatDigest(); 
+  olxcstr formatDigest(); 
 };
 
 typedef HashingBase<SHA1Impl, HashingUtilsBE> SHA1;

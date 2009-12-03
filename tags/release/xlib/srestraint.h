@@ -22,7 +22,7 @@ class TSimpleRestraint : public IEObject, public IXVarReferencer  {
   bool AllNonHAtoms;
   short ListType;
   TCAtomGroup InvolvedAtoms;
-  inline bool AtomsEqual(TCAtom* a1, const smatd* m1, TCAtom* a2, const smatd* m2)  {
+  bool AtomsEqual(TCAtom* a1, const smatd* m1, TCAtom* a2, const smatd* m2)  {
     if( a1 == a2 )  {
       if( (m1 == NULL && m2 == NULL) || ((m1 != NULL && m2 != NULL)  &&
         (*m1 == *m2) ) )  {
@@ -32,19 +32,21 @@ class TSimpleRestraint : public IEObject, public IXVarReferencer  {
     return false;
   }
   TSRestraintList& Parent;
+  size_t Id;
+protected:
+  void SetId(size_t id)  {  Id = id;  }
 public:
-  TSimpleRestraint(TSRestraintList& parent, const short listType);
+  TSimpleRestraint(TSRestraintList& parent, size_t id, const short listType);
 
-  virtual ~TSimpleRestraint();
+  virtual ~TSimpleRestraint()  {  Clear();  }
   void AddAtoms(const TCAtomGroup& atoms);
   void AddAtom(TCAtom& aa, const smatd* ma);
   void AddAtomPair(TCAtom& aa, const smatd* ma,
                    TCAtom& ab, const smatd* mb);
 
-  inline const TSRestraintList& GetParent() const {  return Parent;  }
-  inline TSRestraintList& GetParent()             {  return Parent;  }
+  const TSRestraintList& GetParent() const {  return Parent;  }
+  TSRestraintList& GetParent()  {  return Parent;  }
 
-  void RemoveAtom(int i);
   void Delete();
   void Validate();
   void Clear();
@@ -52,19 +54,19 @@ public:
   void OnCAtomCrdChange( TCAtom* ca, const smatd& matr );
 
   // removes dublicated information depending on the list type
-  void Substruct( TSimpleRestraint& sr);
+  void Substruct(TSimpleRestraint& sr);
 
   // copies data from a restraon, but with atoms from the thisAU
-  void Assign(const TSimpleRestraint& );
+  void Assign(const TSimpleRestraint&);
   //const TSimpleRestraint& operator = ( const TSimpleRestraint& );
 
-  inline int AtomCount()  const  {  return InvolvedAtoms.Count();  }
-  inline const TGroupCAtom& GetAtom(int i)  const {  return InvolvedAtoms[i];  }
-  inline TGroupCAtom& GetAtom(int i)  {  return InvolvedAtoms[i];  }
-  bool ContainsAtom(TCAtom* ca) const;
+  size_t AtomCount() const {  return InvolvedAtoms.Count();  }
+  TGroupCAtom& GetAtom(size_t i) const {  return InvolvedAtoms[i];  }
+  bool ContainsAtom(TCAtom& ca) const;
 
-  inline short GetListType()  const  {  return ListType;  }
+  short GetListType() const {  return ListType;  }
 
+  size_t GetId() const {  return Id;  }
   DefPropP(double, Value)
   DefPropP(double, Esd)
   DefPropP(double, Esd1)
@@ -73,30 +75,29 @@ public:
   // compares pointer addresses only!
   bool operator == (const TSimpleRestraint& sr) const {  return this == &sr;  }
 // IXVarReferencer implementation
-  virtual short VarCount() const {  return 1;  }
-  virtual const XVarReference* GetVarRef(short var_index) const {  
+  virtual size_t VarCount() const {  return 1;  }
+  virtual XVarReference* GetVarRef(size_t var_index) const {  
     if( var_index != 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return VarRef;  
   }
-  virtual XVarReference* GetVarRef(short var_index)  {  
-    if( var_index != 0 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    return VarRef;  
-  }
-  virtual olxstr GetVarName(short var_index) const;
-  virtual void SetVarRef(short var_index, XVarReference* var_ref) {  
+
+  virtual olxstr GetVarName(size_t var_index) const;
+  
+  virtual void SetVarRef(size_t var_index, XVarReference* var_ref) {  
     if( var_index != 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     VarRef = var_ref;  
   }
-  virtual IXVarReferencerContainer& GetParentContainer();
-  virtual double GetValue(short var_index) const {  
+
+  virtual IXVarReferencerContainer& GetParentContainer() const;
+  
+  virtual double GetValue(size_t var_index) const {  
     if( var_index != 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return Value;  
   }
-  virtual void SetValue(short var_index, const double& val) {  
+  virtual void SetValue(size_t var_index, const double& val) {  
     if( var_index != 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     Value = val;  
@@ -110,6 +111,7 @@ public:
   PyObject* PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);
 #endif
   void FromDataItem(TDataItem& item);
+  friend class TSRestraintList;
 };
 
 class TSRestraintList : public IEObject, public IXVarReferencerContainer  {
@@ -123,15 +125,15 @@ public:
     RestraintListType = restraintListType;  
   }
   virtual ~TSRestraintList()  {}
-  TSimpleRestraint& AddNew()  {  return Restraints.Add( new TSimpleRestraint(*this, RestraintListType));  }
+  TSimpleRestraint& AddNew()  {  return Restraints.Add(new TSimpleRestraint(*this, Restraints.Count(), RestraintListType));  }
   // function checks uniquesness of the restraint data - previously defined values are removed
   void ValidateRestraint( TSimpleRestraint& sr);
   void ValidateAll()  {
-    for( int i=0; i < Restraints.Count(); i++ )
+    for( size_t i=0; i < Restraints.Count(); i++ )
       Restraints[i].Validate();
   }
 
-  TSimpleRestraint& Release(int i);
+  TSimpleRestraint& Release(size_t i);
   void Release(TSimpleRestraint& sr);
   void Restore(TSimpleRestraint& sr);
 
@@ -142,26 +144,23 @@ public:
   
   void Assign(const TSRestraintList& rl);
   void Clear();
-  inline int Count() const {  return Restraints.Count();  }
-  inline TSimpleRestraint& operator [] (int i){  return Restraints[i];  }
-  inline short GetRestraintListType()  const  {  return RestraintListType;  }
+  size_t Count() const {  return Restraints.Count();  }
+  TSimpleRestraint& operator [] (size_t i) const {  return Restraints[i];  }
+  short GetRestraintListType() const {  return RestraintListType;  }
 
 // IXVarReferencerContainer implementation
   virtual olxstr GetIdName() const {  return IdName;  }
-  // note - possibly unsafe, type is not checked
-  virtual int GetReferencerId(const IXVarReferencer& vr) const {
-    int ind = Restraints.IndexOf((TSimpleRestraint&)vr);
-    if( ind == -1 )
+  virtual size_t GetIdOf(const IXVarReferencer& vr) const {
+    if( !EsdlInstanceOf(vr, TSimpleRestraint) )
       throw TInvalidArgumentException(__OlxSourceInfo, "var referencer");
-    return ind;
+    return ((TSimpleRestraint&)vr).GetId();
   }
-  // note - possibly unsafe, range is unchecked
-  virtual IXVarReferencer* GetReferencer(int id) {
-    return &Restraints[id];
+  virtual size_t GetPersistentIdOf(const IXVarReferencer& vr) const {
+    return GetIdOf(vr);
   }
-  virtual int ReferencerCount() const {  return Restraints.Count();  }
+  virtual IXVarReferencer& GetReferencer(size_t id) const {  return Restraints[id];  }
+  virtual size_t ReferencerCount() const {  return Restraints.Count();  }
 //
-
   void ToDataItem(TDataItem& item) const;
   #ifndef _NO_PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);

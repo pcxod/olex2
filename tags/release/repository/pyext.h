@@ -1,5 +1,5 @@
-#ifndef pyextH
-#define pyextH
+#ifndef __olx_python_ext_H
+#define __olx_python_ext_H
 
 #include "integration.h"
 #include "typelist.h"
@@ -85,7 +85,7 @@ public:
   TPtrList<BasicWrapper> ToDelete;
 //..............................................................................
   void ClearToDelete()  {
-    for( int i=0; i < ToDelete.Count(); i++ )
+    for( size_t i=0; i < ToDelete.Count(); i++ )
       delete ToDelete[i];
   }
 //..............................................................................
@@ -128,10 +128,10 @@ public:
     return Py_BuildValue("s#", str.raw_str(), str.Length());
 #endif
   }
-  inline static PyObject* BuildCString(const CString& str)  {
+  inline static PyObject* BuildCString(const olxcstr& str)  {
     return Py_BuildValue("s#", str.raw_str(), str.Length());
   }
-  inline static PyObject* BuildWString(const WString& str) {
+  inline static PyObject* BuildWString(const olxwstr& str) {
     return PyUnicode_FromWideChar(str.raw_str(), str.Length());
   }
 // parsing string 
@@ -142,7 +142,7 @@ public:
       rv = crv;
     }
     else if( pobj->ob_type == &PyUnicode_Type )  {
-      int sz =  PyUnicode_GetSize(pobj);
+      size_t sz =  PyUnicode_GetSize(pobj);
       TTBuffer<wchar_t> wc_bf(sz+1);      
       sz = PyUnicode_AsWideChar((PyUnicodeObject*)pobj, wc_bf.Data(), sz);
       if( sz > 0 )

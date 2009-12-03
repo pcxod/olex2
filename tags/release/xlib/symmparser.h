@@ -1,5 +1,5 @@
-#ifndef symmparserH
-#define symmparserH
+#ifndef olx_xlib_symmparser_H
+#define olx_xlib_symmparser_H
 
 #include "xbase.h"
 #include "symmat.h"
@@ -12,8 +12,8 @@ class TSymmParser  {
   struct sml_converter {  // adaptor to provide AsymmUnit or UnitCell interface for a list
     const smatd_list& ml;
     sml_converter(const smatd_list& _ml) : ml(_ml) {}
-    int MatrixCount() const {  return ml.Count();  }
-    const smatd& GetMatrix(int i) const {  return ml[i];  }
+    size_t MatrixCount() const {  return ml.Count();  }
+    const smatd& GetMatrix(size_t i) const {  return ml[i];  }
   };
   // compares p with values in array axes. Used in SymmToMatrix function
   static short IsAxis(const olxstr& p) {
@@ -24,8 +24,7 @@ class TSymmParser  {
     return -1;
   }
   
-  template <typename vc> 
-  static vc& ExtractTranslation(const olxstr& str, vc& t)  {
+  template <typename vc>  static vc& ExtractTranslation(const olxstr& str, vc& t)  {
     if( str.Length() == 3 )  {
       t[0] += (int)(str.CharAt(0)-'5');
       t[1] += (int)(str.CharAt(1)-'5');
@@ -42,8 +41,7 @@ class TSymmParser  {
   }
   static olxstr FormatFloatEx(double f)  {
     olxstr rv;
-    if( f < 0 )
-      rv << '-';
+    if( f < 0 )  rv << '-';
     int v = olx_abs(olx_round(f*12)), base = 12;
     int denom = esdl::gcd(v, base);
     if( denom != 1 )  {
@@ -53,8 +51,7 @@ class TSymmParser  {
     if( base == 1 )  return rv << v;
     else             return rv << v << '/' << base;
   }
-  template <class SM>
-  static olxstr _MatrixToSymm(const SM& M, bool fraction)  {
+  template <class SM> static olxstr _MatrixToSymm(const SM& M, bool fraction)  {
     olxstr T, T1;
     for( int j=0; j < 3; j ++ )  {
       if( j != 0 )
@@ -62,14 +59,14 @@ class TSymmParser  {
       for( int i=0; i < 3; i ++ )  {
         if( i == j )  {
           if( M.r[j][i] != 0 )  {
-            T1 << CharSign(M.r[j][i]);
+            T1 << olx_sign_char(M.r[j][i]);
             T1 << Axis[j];
           }
           continue;
         }
         if( M.r[j][i] != 0 )  {
           T1.Insert(Axis[i], 0);
-          T1.Insert(CharSign(M.r[j][i]), 0);
+          T1.Insert(olx_sign_char(M.r[j][i]), 0);
         }
       }
       if( M.t[j] != 0 )  {
@@ -85,7 +82,7 @@ class TSymmParser  {
   }
   // can tace both TAsymmUnit or TUnitCell
   template <class MC>
-  static smatd _SymmCodeToMatrix(const MC& au, const olxstr& Code, int* index=NULL)  {
+  static smatd _SymmCodeToMatrix(const MC& au, const olxstr& Code, size_t* index=NULL)  {
     TStrList Toks(Code, '_');
     smatd mSymm;
     if( Toks.Count() == 1 )  {  // standard XP symm code like 3444
@@ -94,24 +91,22 @@ class TSymmParser  {
         Toks[0].SetLength(Toks[0].Length()-3);
       }
       else  {
-        int isymm = Toks[0].ToInt()-1;
-        if( isymm < 0 || isymm >= au.MatrixCount() )
+        size_t isymm = Toks[0].ToSizeT()-1;
+        if( isymm >= au.MatrixCount() )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
         return au.GetMatrix(isymm);
       }
     }
     if( Toks.Count() != 2 )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong code: ") << Code);
-    int isymm = Toks[0].ToInt()-1;
-    if( isymm < 0 || isymm >= au.MatrixCount() )
+    size_t isymm = Toks[0].ToSizeT()-1;
+    if( isymm >= au.MatrixCount() )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
     mSymm = au.GetMatrix(isymm);
-    if( index != NULL )
-      *index = isymm;
+    if( index != NULL )  *index = isymm;
     ExtractTranslation(Toks[1], mSymm.t);
     return mSymm;
   }
-
   static const char Axis[];
 public:
     // Transforms matrix to standard SYMM operation (INS, CIF files)
@@ -132,9 +127,10 @@ public:
   static smatd SymmCodeToMatrixA(const class TAsymmUnit& AU, const olxstr& Code);
   // return a matrix representation of 1_555 or 1_555555 code for the the list of matrices
   static smatd SymmCodeToMatrix(const smatd_list& ml, const olxstr& Code)  {
-    int index = -1;
+    size_t index = InvalidIndex;
     smatd rv = _SymmCodeToMatrix(sml_converter(ml), Code, &index);
-    rv.SetTag(index);
+    if( index != InvalidIndex )
+      rv.SetId(smatd::GenerateId((uint8_t)index, rv, ml[index]));
     return rv;
   }
   // return a string representation of a matrix like 1_555 or 1_555555 code in dependence on

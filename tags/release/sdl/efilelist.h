@@ -34,9 +34,8 @@ BeginEsdlNamespace()
 
     template <short field> class TFileListItemSorter  {
       static olxstr ExtractFileExt(const olxstr& fn)  {
-        int ind = fn.LastIndexOf('.');
-        if( ind >=0 )  return fn.SubStringFrom(ind+1);
-        return EmptyString;
+        size_t ind = fn.LastIndexOf('.');
+        return (ind != InvalidIndex) ?  fn.SubStringFrom(ind+1) : EmptyString;
       }
     public:
       static int Compare( const TFileListItem& i1, const TFileListItem& i2 )  {

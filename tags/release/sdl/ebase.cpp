@@ -36,5 +36,5 @@ const TBasicException* TExceptionBase::GetException() const {
   const TBasicException* exc = dynamic_cast<const TBasicException*>(this);
   if( exc == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid exception type");
-  return exc;;
+  return exc;
 }

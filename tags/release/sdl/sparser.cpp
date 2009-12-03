@@ -44,47 +44,23 @@ TSyntaxParser::TSyntaxParser(IEvaluatorFactory* FactoryInstance, const olxstr& E
   Root = SimpleParse( olxstr::DeleteChars(Expression, ' ') );
 }
 TSyntaxParser::~TSyntaxParser()  {
-  for( int i=0; i < Evaluables.Count(); i++ )
+  for( size_t i=0; i < Evaluables.Count(); i++ )
     delete Evaluables[i];
-  for( int i=0; i < Evaluators.Count(); i++ )
+  for( size_t i=0; i < Evaluators.Count(); i++ )
     delete Evaluators[i];
-  for( int i=0; i < LogicalOperators.Count(); i++ )
+  for( size_t i=0; i < LogicalOperators.Count(); i++ )
     delete LogicalOperators.GetObject(i);
-  for( int i=0; i < ComparisonOperators.Count(); i++ )
+  for( size_t i=0; i < ComparisonOperators.Count(); i++ )
     delete ComparisonOperators.GetObject(i);
 }
-/*
-olxstr Anlalyse(const olxstr& Expression)
-{
-  olxstr Exp = olxstr::RemoveChars(Expression, ' ');
-  if( Exp.FirstIndexOf('(') == -1 )  return Exp;
 
-  TIntList OpenBracketPos;
-  short bc = 0;
-  for( int i=0; i < Exp.Length(); i++ )
-  {
-    if( Exp[i] == '(' )
-    {
-      OpenBracketPos.AddCopy(i);
-      continue;
-    }
-    if( Exp[i] == ')' )
-    {
-
-      continue;
-    }
-
-  }
-
-}
-*/
 IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
   olxstr LeftExp, RightExp, LeftStr, RightStr;
   IEvaluable *LeftCondition = NULL, *RightCondition = NULL;
   IEvaluable *LogicalOperator = NULL;
   TObjectFactory<IEvaluable> *loFactory = NULL, *coFactory=NULL;
   olxstr ComplexExp;
-  for( int i=0; i < Exp.Length(); i++ )  {
+  for( size_t i=0; i < Exp.Length(); i++ )  {
     olxch Char = Exp.CharAt(i);
     if( Char == '(' )  {
       if( ++i >= Exp.Length() )  {
@@ -201,7 +177,7 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
         Evaluators.Add( RightEvaluator );
       }
       //RightEvaluator = EvaluatorFactory->NewEvaluator( RightExp.Length() ? RightExp : RightStr );
-      TEList Args;
+      TPtrList<IEObject> Args;
       Args.Add( LeftEvaluator );
       Args.Add( RightEvaluator );
       if( loFactory != NULL )  {
@@ -225,7 +201,7 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
     // if there is a logical operator on the left (on the right it can be only
     // in the case of brackets)
     if( loFactory && RightCondition )  {
-      TEList Args;
+      TPtrList<IEObject> Args;
       if( LogicalOperator != NULL )  {
         Args.Add( LogicalOperator );
         Args.Add( RightCondition );
@@ -243,13 +219,14 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
     }
 
     if( coFactory == NULL && (i < Exp.Length()) )  {
-      for( int j=0; j < ComparisonOperators.Count(); j++ )  {
-        int index = -1;
-        while( (++index < ComparisonOperators.GetString(j).Length()) &&
+      for( size_t j=0; j < ComparisonOperators.Count(); j++ )  {
+        size_t index = 0;
+        while( (index < ComparisonOperators.GetString(j).Length()) &&
                (ComparisonOperators.GetString(j).CharAt(index) == Char)  )
         {
           if( (i+index+1) >= Exp.Length() )  break;
           Char = Exp[i+index+1];
+          index++;
         }
         if( index == ComparisonOperators.GetString(j).Length() )  {
           i += (index-1);
@@ -261,13 +238,14 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
     }
 
     if( loFactory == NULL && (i < Exp.Length()) )  {
-      for( int j=0; j < LogicalOperators.Count(); j++ )  {
-        int index = -1;
-        while( (++index < LogicalOperators.GetString(j).Length()) &&
+      for( size_t j=0; j < LogicalOperators.Count(); j++ )  {
+        size_t index = 0;
+        while( (index < LogicalOperators.GetString(j).Length()) &&
                (LogicalOperators.GetString(j).CharAt(index) == Char)  )
         {
           if( (i+index+1) >= Exp.Length() )  break;
           Char = Exp[i+index+1];
+          index++;
         }
         if( index == LogicalOperators.GetString(j).Length() )  {
           i+= (index-1);

@@ -44,12 +44,11 @@ void TEllipsoid::Initialise()  {
   Matrix[2].Normalise();
 }
 //..............................................................................
-void TEllipsoid::operator = ( const TEllipsoid&E )  {
+void TEllipsoid::operator = (const TEllipsoid&E)  {
   Matrix = E.GetMatrix();
   SX = E.GetSX();
   SY = E.GetSY();
   SZ = E.GetSZ();
-  //SetId( E.GetId() );
   for( int i=0; i < 6; i++ )  {
     FQuad[i] = E.FQuad[i];
     FEsd[i] = E.FEsd[i];
@@ -61,7 +60,7 @@ void TEllipsoid::operator = ( const TEllipsoid&E )  {
 void TEllipsoid::MultMatrix(const mat3d& Matr)  {
   if( FNPD )  return;
   mat3d N(FQuad[0], FQuad[5], FQuad[4], FQuad[1], FQuad[3], FQuad[2]), 
-        M( mat3d::Transpose(Matr) ), 
+        M(mat3d::Transpose(Matr)), 
         E(FEsd[0], FEsd[5], FEsd[4], FEsd[1], FEsd[3], FEsd[2]);
   // do trasformation of the eigen vectors
   N = Matr*N*M;
@@ -72,9 +71,8 @@ void TEllipsoid::MultMatrix(const mat3d& Matr)  {
   // strore new Esd's
   FEsd[0]  = E[0][0];  FEsd[1]  = E[1][1];  FEsd[2]  = E[2][2];
   FEsd[3]  = E[1][2];  FEsd[4]  = E[0][2];  FEsd[5]  = E[0][1];
-  // get eigne values/vectors
-  M.I();  // identity matrix
-  mat3d::EigenValues(N, M);
+  // get eigen values/vectors
+  mat3d::EigenValues(N, M.I());
   // assign new eigen values
 
   if( (N[0][0] <= 0) || (N[1][1] <= 0) || (N[2][2] <= 0) )  {

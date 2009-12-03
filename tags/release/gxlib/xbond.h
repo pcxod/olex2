@@ -53,8 +53,8 @@ public:
   // beware - for objects, having not tdbond underneath this might fail
   inline TSBond& Bond()      const {  return *FBond; }
   
-  void Radius(float V);
-  inline double Radius()        {  return Params()[4]; }
+  void SetRadius(float V);
+  inline double GetRadius() const {  return FParams[4]; }
 
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false; };
@@ -71,11 +71,12 @@ public:
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
 
-  inline bool IsDeleted()  {  return AGDrawObject::IsDeleted(); }
+  inline bool IsDeleted() const {  return AGDrawObject::IsDeleted(); }
   void SetDeleted(bool v)   {  AGDrawObject::SetDeleted(v);  FBond->SetDeleted(v); }
   void ListDrawingStyles(TStrList &List);
 
   void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
+  uint32_t GetPrimitiveMask() const;
   static void DefMask(int V);
   static int  DefMask();
   inline short DrawStyle() const {  return FDrawStyle; }

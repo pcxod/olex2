@@ -1,9 +1,3 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-  #include <windows.h>
-  #include <winbase.h>
-#endif
-
 #ifdef __WXWIDGETS__
   #include "wx/wx.h"
   #include "wx/thread.h"
@@ -46,9 +40,9 @@ public:
   void Call(const TStrObjList& Params, TMacroError& E)  {
     OnCallEnter();
     PyObject* arglist = NULL;
-    if( Params.Count() != 0 )  {
+    if( !Params.IsEmpty() )  {
       arglist = PyTuple_New( Params.Count() );
-      for( int i=0; i < Params.Count(); i++ )
+      for( size_t i=0; i < Params.Count(); i++ )
         PyTuple_SetItem(arglist, i, PythonExt::BuildString(Params[i]) );
     }
     PyObject* result = PyObject_CallObject(PyFunction, arglist);
@@ -84,10 +78,10 @@ public:
   void Call(TStrObjList& Params, const TParamList &Options, TMacroError& E)  {
     OnCallEnter();
     PyObject* arglist = PyTuple_New( Params.Count() + 1 );
-    for( int i=0; i < Params.Count(); i++ )
+    for( size_t i=0; i < Params.Count(); i++ )
       PyTuple_SetItem(arglist, i, PyString_FromString(Params[i].c_str()) );
     PyObject* options = PyDict_New();
-    for( int i=0; i < Options.Count(); i++ )
+    for( size_t i=0; i < Options.Count(); i++ )
       PyDict_SetItemString(options,
         Options.GetName(i).c_str(), PythonExt::BuildString(Options.GetValue(i)) );
     PyTuple_SetItem(arglist, Params.Count(), options);
@@ -272,7 +266,7 @@ PyObject* runOlexMacro(PyObject* self, PyObject* args)  {
     Py_INCREF(Py_None);
     return Py_None;
   }
-  bool res = o_r->executeMacro( macroName );
+  bool res = o_r->executeMacro(macroName);
   return Py_BuildValue("b", res);
 }
 //..............................................................................
@@ -285,7 +279,7 @@ PyObject* runOlexFunction(PyObject* self, PyObject* args)  {
     return Py_None;
   }
   olxstr retValue;
-  bool res = o_r->executeFunction( functionName,  retValue);
+  bool res = o_r->executeFunction(functionName,  retValue);
   if( res )
     return PythonExt::BuildString(retValue);
   PyErr_SetObject(PyExc_RuntimeError, PythonExt::BuildString(olxstr("Function '") << functionName << "' failed") );
@@ -293,25 +287,84 @@ PyObject* runOlexFunction(PyObject* self, PyObject* args)  {
   return Py_None;
 }
 //..............................................................................
+PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
+  IOlexProcessor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
+  olxstr name;
+  bool macro;
+  PyObject *args_, *kwds_=NULL;
+  if( !PythonExt::ParseTuple(args, "wbO|O", &name, &macro, &args_, &kwds_) )  {
+    Py_INCREF(Py_None);
+    return Py_None;
+  }
+  if( macro )  {
+    if( kwds_ != NULL && PyDict_Size(kwds_) != 0 )  {
+      ABasicFunction* macro = o_r->GetLibrary().FindMacro(name);
+      if( macro == NULL )  {
+        PyErr_SetObject(PyExc_RuntimeError,
+          PythonExt::BuildString(olxstr("Undefined macro '") << name << '\''));
+        Py_INCREF(Py_None);
+        return Py_None;
+      }
+      TStrObjList params;
+      TParamList options;
+      for( Py_ssize_t i=0; i < PyList_Size(args_); i++ )
+        params.Add(PythonExt::ParseStr(PyList_GetItem(args_, i)));
+      PyObject *keys_ = PyDict_Keys(kwds_);
+      for( Py_ssize_t i=0; i < PyList_Size(keys_); i++ )  {
+        PyObject *key_ = PyList_GetItem(keys_, i);
+        options.AddParam(PythonExt::ParseStr(key_), PythonExt::ParseStr(PyDict_GetItem(kwds_, key_)));
+      }
+      TMacroError er;
+      macro->Run(params, options, er);
+      if( er.IsSuccessful() )
+        return Py_BuildValue("b", true);
+      else  {
+        TBasicApp::GetLog() << (olxstr("Macro '") << name << "' failed: " << er.GetInfo() << '\n');
+        return Py_BuildValue("b", false);
+      }
+    }
+    else  {
+      olxstr macro_args;
+      for( Py_ssize_t i=0; i < PyList_Size(args_); i++ )  {
+        olxstr tmp = PythonExt::ParseStr(PyList_GetItem(args_, i));
+        if( tmp.IsEmpty() )  continue;
+        macro_args << tmp << ' ';
+      }
+      bool res = o_r->executeMacro(name << ' ' << macro_args);
+      return Py_BuildValue("b", res);
+    }
+  }
+  else  {
+    ABasicFunction* func = o_r->GetLibrary().FindFunction(name);
+    if( func == NULL )  {
+      PyErr_SetObject(PyExc_RuntimeError,
+        PythonExt::BuildString(olxstr("Undefined function '") << name << '\''));
+      Py_INCREF(Py_None);
+      return Py_None;
+    }
+    TStrObjList params;
+    for( Py_ssize_t i=0; i < PyList_Size(args_); i++ )
+      params.Add(PythonExt::ParseStr(PyList_GetItem(args_, i)));
+    TMacroError er;
+    func->Run(params, er);
+    if( er.IsSuccessful() )  {
+      olxstr rv = (er.HasRetVal() ? olxstr(er.RetObj()->ToString()) : EmptyString);
+      return PythonExt::BuildString(rv);
+    }
+    else  {
+      PyErr_SetObject(PyExc_RuntimeError,
+        PythonExt::BuildString(olxstr("Function '") << name << "' failed: " << er.GetInfo()) );
+      Py_INCREF(Py_None);
+      return Py_None;
+    }
+  }
+}
+//..............................................................................
 PyObject* runPrintText(PyObject* self, PyObject* args)  {
   //char* text;
-  for( int i=0; i < PyTuple_Size(args); i++ )  {
+  for( Py_ssize_t i=0; i < PyTuple_Size(args); i++ )  {
     PyObject* po = PyTuple_GetItem(args, i);
     TBasicApp::GetLog() << PythonExt::ParseStr(po).Trim('\'');
-    //if( PyArg_Parse(, "s", &text) )  {
-    //  int len =  strlen(text);
-    //  if( len >= 2 && (text[0] == '\'' && text[len-1] == '\'') )  {
-    //    text[len-1] = '\0';
-    //    text = ++text;
-    //    len -= 2;
-    //  }
-      //if( len > 0 && text[len-1] == '\n' )  {
-      //  text[len-1] = '\0';
-      //  len --;
-      //}
-      //if( len != 0 )
-      //  TBasicApp::GetLog() << text;
-    //}
   }
   Py_INCREF(Py_None);
   return Py_None;
@@ -320,6 +373,7 @@ PyObject* runPrintText(PyObject* self, PyObject* args)  {
 PyMethodDef Methods[] = {
   {"m", runOlexMacro, METH_VARARGS, "executes olex macro"},
   {"f", runOlexFunction, METH_VARARGS, "executes olex function"},
+  {"f_ex", runOlexFunctionEx, METH_VARARGS, "executes olex function"},
   {"writeImage", runWriteImage, METH_VARARGS, "adds new image/object to olex2 memory; (name, date, persistence=0).\
  Persistence: 0 - none, 1 - for current structure, 2 - global"},
   {"readImage", runReadImage, METH_VARARGS, "reads an image/object from olex memory"},
@@ -332,29 +386,25 @@ PyMethodDef Methods[] = {
   {NULL, NULL, 0, NULL}
 };
 //..............................................................................
-CString PyFuncBody(const CString& olexName, const CString& pyName, char sep)  {
-  CString res("def ");
-  res << pyName << "(*args):\n  ";
-  res << "ss=\'" << olexName;
-
-  if( sep == ',' )  res << "(\'\n  ";
-  else              res << " \'\n  ";
-
-  res << "for arg in args:\n    ";
-  res << "ss += str(arg)\n    ";
-  res << "ss += \'" << sep << "\'\n  ";
-
-  res << "if( ss[-1] == \'" << sep << "\' ):\n    ";
-  res << "ss = ss[:-1]\n  ";
-
+olxcstr PyFuncBody(const olxcstr& olexName, const olxcstr& pyName, char sep)  {
   if( sep == ',' )  {
-    res << "ss += ')'\n  ";
-    res << "return olex.f(ss)"; // retval or pyNone
+    olxcstr res("def ");
+  res << pyName << "(*args):\n  ";
+    res << "al = []\n  ";
+  res << "for arg in args:\n    ";
+    res << "al.append(str(arg))\n  ";
+    res << "return olex.f_ex('" << olexName << "', False, al)";
+    return res;
   }
-  else
-    res << "return olex.m(ss)"; // true or false
+  else  {
+    olxcstr res("def ");
+    res << pyName << "(*args, **kwds):\n  ";
+    res << "al = []\n  ";
+    res << "for arg in args:\n    ";
+    res << "al.append(str(arg))\n  ";
+    res << "return olex.f_ex('" << olexName << "', True, al, kwds)";
   return res;
-
+  }
 }
 //..............................................................................
 PythonExt::PythonExt(IOlexProcessor* olexProcessor)  {
@@ -375,14 +425,14 @@ void PythonExt::CheckInitialised()  {
   if( !Py_IsInitialized() )  {
     Py_Initialize();
     Py_InitModule( "olex", Methods );
-    for( int i=0; i < ToRegister.Count(); i++ )
+    for( size_t i=0; i < ToRegister.Count(); i++ )
       (*ToRegister[i])();
   }
 }
 //..............................................................................
 PyObject* PythonExt::GetProfileInfo()  {
   int picnt = 0;
-  for(int i=0; i < ToDelete.Count(); i++ )
+  for( size_t i=0; i < ToDelete.Count(); i++ )
     if( ToDelete[i]->ProfileInfo() != NULL && ToDelete[i]->ProfileInfo()->CallCount > 0 )
       picnt++;
 
@@ -393,7 +443,7 @@ PyObject* PythonExt::GetProfileInfo()  {
 
   PyObject *rv = PyTuple_New( picnt );
   picnt = 0;
-  for(int i=0; i < ToDelete.Count(); i++ )  {
+  for( size_t i=0; i < ToDelete.Count(); i++ )  {
     PythonExt::ProfileInfo *pi = ToDelete[i]->ProfileInfo();
     if( pi != NULL && pi->CallCount > 0 )  {
       PyTuple_SetItem(rv, picnt, Py_BuildValue("sil", PyEval_GetFuncName(ToDelete[i]->GetFunction()), pi->CallCount, pi->TotalTimeMs) );
@@ -451,27 +501,25 @@ int PythonExt::RunPython( const olxstr& script, bool inThread )  {
 }
 //..............................................................................
 //..............................................................................
-void ExportLib(const CString& fullName, TEFile& file, const TLibrary& Lib)  {
-  CString olxName, pyName;
-  for( int i=0; i < Lib.FunctionCount(); i++ )  {
+void ExportLib(const olxcstr& fullName, TEFile& file, const TLibrary& Lib)  {
+  olxcstr olxName, pyName;
+  for( size_t i=0; i < Lib.FunctionCount(); i++ )  {
     ABasicFunction* fun = Lib.GetFunctionByIndex(i);
     olxName = fun->GetQualifiedName();
     pyName = fun->GetName();
-    pyName.Replace('.', "");
-    pyName.Replace('@', "At");
+    pyName.Replace('.', "").Replace('@', "At");
     file.Writenl( PyFuncBody(olxName, fullName + pyName, ',') );
   }
 
-  for( int i=0; i < Lib.MacroCount(); i++ )  {
+  for( size_t i=0; i < Lib.MacroCount(); i++ )  {
     ABasicFunction* fun = Lib.GetMacroByIndex(i);
     olxName = fun->GetQualifiedName();
     pyName = fun->GetName();
-    pyName.Replace('.', "");
-    pyName.Replace('@', "At");
+    pyName.Replace('.', "").Replace('@', "At");
     file.Writenl( PyFuncBody(olxName, fullName + pyName, ' ') );
   }
 
-  for( int i=0; i < Lib.LibraryCount(); i++ )  {
+  for( size_t i=0; i < Lib.LibraryCount(); i++ )  {
     ExportLib( (fullName + Lib.GetLibraryByIndex(i)->GetName()) << '_' , file, *Lib.GetLibraryByIndex(i) );
   }
 
@@ -536,10 +584,10 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...)  {
     va_end(argptr);
     return false;
   }
-  int slen = olxstr::o_strlen(format);
-  int tlen = PyTuple_Size(tuple), tind = -1;
+  size_t slen = olxstr::o_strlen(format);
+  size_t tlen = PyTuple_Size(tuple), tind = InvalidIndex;
   bool proceedOptional = false;
-  for( int i=0; i < slen; i++ )  {
+  for( size_t i=0; i < slen; i++ )  {
     if( ++tind >= tlen )  {
       if( !proceedOptional )  {
         va_end(argptr);       

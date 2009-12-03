@@ -85,11 +85,11 @@ public:
   TActionQueue(TActionQList *Parent, const olxstr & Name);
   virtual ~TActionQueue();
 
-  inline int HandlerCount()             const {  return Handlers.Count(); };
-  inline AActionHandler* Handler(int i)       {  return Handlers[i]; }
+  inline size_t HandlerCount() const {  return Handlers.Count(); };
+  inline AActionHandler* Handler(size_t i)  {  return Handlers[i]; }
 
-  inline int DispatcherCount()          const {  return Dispatchers.Count(); };
-  inline AEventsDispatcher* Dispatcher(int i) {  return Dispatchers[i].Dispatcher; }
+  inline size_t DispatcherCount() const {  return Dispatchers.Count(); };
+  inline AEventsDispatcher* Dispatcher(size_t i)  {  return Dispatchers[i].Dispatcher; }
   // adds new handler
   void Add( AActionHandler* handler );
   /*
@@ -134,13 +134,13 @@ public:
   // executes a named queue
   bool Execute(const olxstr &Name, const IEObject *Sender, const IEObject *Data=NULL);
 
-  inline bool QueueExists(const olxstr &Name) const {  return Queues.IndexOfComparable(Name) != -1;  }
+  inline bool QueueExists(const olxstr &Name) const {  return Queues.IndexOfComparable(Name) != InvalidIndex;  }
   /* throws exception if the queue does not exist */
   inline TActionQueue* FindQueue(const olxstr &Name)  const {  return Queues[Name];  }
   // queue by index
-  inline TActionQueue& GetQueue(int index) const {  return *Queues.GetObject(index);  }
+  inline TActionQueue& GetQueue(size_t index) const {  return *Queues.GetObject(index);  }
   // returns the number of queues
-  inline int Count()                       const {  return Queues.Count();  }
+  inline size_t Count()                      const {  return Queues.Count();  }
   // empties the list
   void Clear();
 };
@@ -165,15 +165,15 @@ public:
 };
 
 class TOnProgress: public IEObject {  // generic on progress data
-  double Max, Pos;
+  uint64_t Max, Pos;
   olxstr Action;
 public:
   TOnProgress() : Max(0), Pos(0)  {}
   virtual ~TOnProgress()  {}
   // set Max to a valid number before OnProgress is executed!
-  DefPropP(double, Max)
-  DefPropP(double, Pos)
-  inline void IncPos(double v=1.0)   {  Pos += v;  }
+  DefPropP(uint64_t, Max)
+  DefPropP(uint64_t, Pos)
+  inline void IncPos(uint64_t v=1)   {  Pos += v;  }
   DefPropC(olxstr, Action)
 	
 	TOnProgress& operator = (const TOnProgress& pg)  {

@@ -47,7 +47,7 @@ bool TDBlob::Orient(TGlPrimitive& P)  {
   Parent.GlTranslate( Basis.GetCenter() );
   glPolygonMode(GL_FRONT_AND_BACK, PolygonMode);
   glBegin(GL_TRIANGLES);
-  for( int i=0; i < triangles.Count(); i++ )  {
+  for( size_t i=0; i < triangles.Count(); i++ )  {
     for( int j=0; j < 3; j++ )  {
       const vec3f& nr = normals[triangles[i].pointID[j]];
       glNormal3f( nr[0], nr[1], nr[2] );

@@ -36,9 +36,9 @@ void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F
   //sg.GetMatrices(ml, mattAll);
   //const int ml_cnt = ml.Count();
   //out.SetCount( ml_cnt* hkl.Count() );
-  //for( int i=0; i < hkl.Count(); i++ )  {
+  //for( size_t i=0; i < hkl.Count(); i++ )  {
   //  const int off = i*ml_cnt;
-  //  for( int j=0; j < ml_cnt; j++ )  {
+  //  for( size_t j=0; j < ml_cnt; j++ )  {
   //    const int ind = off+j;
   //    out[ind].hkl = hkl[i]*ml[j].r;
   //    out[ind].ps = ml[j].t.DotProd(hkl[i]);
@@ -57,7 +57,7 @@ void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F
 void SFUtil::FindMinMax(const TArrayList<StructureFactor>& F, vec3i& min, vec3i& max)  {
   min = vec3i(100, 100, 100);
   max = vec3i(-100, -100, -100);
-  for( int i=0; i < F.Count(); i++ )  {
+  for( size_t i=0; i < F.Count(); i++ )  {
     if( F[i].hkl[0] > max[0] )  max[0] = F[i].hkl[0];
     if( F[i].hkl[0] < min[0] )  min[0] = F[i].hkl[0];
 
@@ -89,23 +89,22 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       return "no hkl loop found";
     }
     sw.start("Extracting CIF data");
-    int hInd = hklLoop->Table().ColIndex("_refln_index_h");
-    int kInd = hklLoop->Table().ColIndex("_refln_index_k");
-    int lInd = hklLoop->Table().ColIndex("_refln_index_l");
+    size_t hInd = hklLoop->GetTable().ColIndex("_refln_index_h");
+    size_t kInd = hklLoop->GetTable().ColIndex("_refln_index_k");
+    size_t lInd = hklLoop->GetTable().ColIndex("_refln_index_l");
     // list 3, F
-    int mfInd = hklLoop->Table().ColIndex("_refln_F_meas");
-    int sfInd = hklLoop->Table().ColIndex("_refln_F_sigma");
-    int aInd = hklLoop->Table().ColIndex("_refln_A_calc");
-    int bInd = hklLoop->Table().ColIndex("_refln_B_calc");
+    size_t mfInd = hklLoop->GetTable().ColIndex("_refln_F_meas");
+    size_t sfInd = hklLoop->GetTable().ColIndex("_refln_F_sigma");
+    size_t aInd = hklLoop->GetTable().ColIndex("_refln_A_calc");
+    size_t bInd = hklLoop->GetTable().ColIndex("_refln_B_calc");
 
-    if( hInd == -1 || kInd == -1 || lInd == -1 || 
-      mfInd == -1 || sfInd == -1 || aInd == -1 || bInd == -1  ) {
+    if( (hInd|kInd|lInd|mfInd|sfInd|aInd|bInd) == InvalidIndex  ) {
         return "list 3 fcf file is expected";
     }
-    refs.SetCapacity( hklLoop->Table().RowCount() );
-    F.SetCount( hklLoop->Table().RowCount() );
-    for( int i=0; i < hklLoop->Table().RowCount(); i++ )  {
-      TStrPObjList<olxstr,TCifLoopData*>& row = hklLoop->Table()[i];
+    refs.SetCapacity( hklLoop->GetTable().RowCount() );
+    F.SetCount( hklLoop->GetTable().RowCount() );
+    for( size_t i=0; i < hklLoop->GetTable().RowCount(); i++ )  {
+      TStrPObjList<olxstr,TCifLoopData*>& row = hklLoop->GetTable()[i];
       TReflection& ref = refs.AddNew(row[hInd].ToInt(), row[kInd].ToInt(), 
         row[lInd].ToInt(), row[mfInd].ToDouble(), row[sfInd].ToDouble());
       if( mapType == mapTypeDiff )  {
@@ -156,8 +155,8 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         k = CalcFScale(F, refs);
         TBasicApp::GetLog().Info(olxstr("Fc^2 = ") << k << "*Fo^2");
       }
-      const int f_cnt = F.Count();
-      for( int i=0; i < f_cnt; i++ )  {
+      const size_t f_cnt = F.Count();
+      for( size_t i=0; i < f_cnt; i++ )  {
         double dI = refs[i].GetI() < 0 ? 0 : sqrt(refs[i].GetI());
         dI *= k;
         if( scaleType == scaleRegression )
@@ -194,11 +193,11 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, TPtrList<cm_Element>
   BM[2] *= BM[2];
   
   TPtrList<TBasicAtomInfo> bais;
-  for( int i=0; i < au.AtomCount(); i++ )  {
+  for( size_t i=0; i < au.AtomCount(); i++ )  {
     TCAtom& ca = au.GetAtom(i);
     if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  continue;
-    int ind = bais.IndexOf( &ca.GetAtomInfo() );
-    if( ind == -1 )  {
+    size_t ind = bais.IndexOf( &ca.GetAtomInfo() );
+    if( ind == InvalidIndex )  {
       cm_Element* elm;
       if( ca.GetAtomInfo() == iDeuteriumIndex ) // treat D as H
         elm = XElementLib::FindBySymbol("H");

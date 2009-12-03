@@ -9,6 +9,12 @@
 
 BeginEsdlNamespace()
 
+// app event registry, these might not be implemented
+static olxstr 
+  olxappevent_GL_DRAW("GLDRAW"),
+  olxappevent_GL_CLEAR_STYLES("GLDSCLEAR"),
+  olxappevent_GL_BEFORE_DRAW("BGLDRAW");
+
 class TBasicApp: public IEObject  {
   olxstr BaseDir, SharedDir, ExeName;
 protected:
@@ -19,8 +25,8 @@ protected:
   bool MainFormVisible, Profiling, BaseDirWriteable;
   static olx_critical_section app_cs;
 public:
-  TParamList ParamList;
-  TStrObjList Arguments;
+  TParamList Options;
+  TStrList Arguments;
 
   TBasicApp(const olxstr& AppName); // the file name of the application with full path
   virtual ~TBasicApp();
@@ -53,7 +59,10 @@ public:
   //static printf(const char* format, ...);
 
   TActionQueue& NewActionQueue(const olxstr &Name);
-  inline TActionQueue* ActionQueue(const olxstr &Name){  return FActions->FindQueue(Name); }
+  inline TActionQueue* ActionQueue(const olxstr &Name){  
+    try  {  return FActions->FindQueue(Name);   }
+    catch(...)  {  return NULL;  }
+  }
 
   inline TActionQList& Actions() const {  return *FActions; }
 

@@ -1,13 +1,12 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
-
-#ifndef ebasisH
-#define ebasisH
-
+#ifndef __olx_sdl_basis_H
+#define __olx_sdl_basis_H
 #include "ebase.h"
 #include "threex3.h"
 #include "dataitem.h"
+
+#ifdef __GNUC__
+  #undef QLength
+#endif
 
 BeginEsdlNamespace()
 
@@ -25,14 +24,17 @@ public:
   virtual ~TEBasis();
 
   const TEBasis& operator  = (const TEBasis &B);
-  template <class VC> void SetCenter( const VC& V )  {
+  template <class VC> void SetCenter(const VC& V)  {
     FCenter[0] = V[0];  FCenter[1] = V[1];  FCenter[2] = V[2];
     FMDataT[12] = FMData[12] = (float)V[0];
     FMDataT[13] = FMData[13] = (float)V[1];
     FMDataT[14] = FMData[14] = (float)V[2];
   }
-  inline const vec3d& GetCenter() const {  return FCenter; }
-  inline void NullCenter()  {  FCenter.Null(); }
+  const vec3d& GetCenter() const {  return FCenter; }
+  void NullCenter()  {
+    FCenter.Null();
+    FMDataT[12] = FMData[12] = FMDataT[13] = FMData[13] = FMDataT[14] = FMData[14] = 0;
+  }
 
   // orientation matrix in 4x4 opengl format
   inline const float* GetMData()     const {  return FMData; }  
@@ -41,7 +43,6 @@ public:
   inline const mat3d& GetMatrix() const {  return FMatrix; }
 
   inline double GetZoom()   const {  return FZoom; }
-//  inline void SetZoom(double v)   {  FZoom = v; }
   void SetZoom(double v);
 
   template <class MC> void SetMatrix(const MC& M)  {
@@ -52,11 +53,11 @@ public:
   }
 
 //  void  Rotate( double A, double B, double C);
-  void  RotateX( double A);
+  void  RotateX(double A);
   inline double GetRX()     const {  return FRX; }
-  void  RotateY( double A);
+  void  RotateY(double A);
   inline double GetRY()     const {  return FRY; }
-  void  RotateZ ( double A);
+  void  RotateZ(double A);
   inline double GetRZ()     const {  return FRZ; }
   // rotation using a matrix
   template <class T> void  Rotate(const T& M)  {
@@ -80,41 +81,46 @@ public:
     CopyMatrix();  
   }
 
-  template <class VC> void Translate( const VC& V)  {
+  template <class VC> void Translate(const VC& V)  {
     FCenter[0] += V[0];  FCenter[1] += V[1];  FCenter[2] += V[2];
     FMDataT[12] += (float)V[0];  FMData[12] += (float)V[0];
     FMDataT[13] += (float)V[1];  FMData[13] += (float)V[1];
     FMDataT[14] += (float)V[2];  FMData[14] += (float)V[2];
   }
 
-  void  TranslateX( double x);
-  void  TranslateY( double y);
-  void  TranslateZ( double z);
+  void TranslateX(double x);
+  void TranslateY(double y);
+  void TranslateZ(double z);
   void  Reset();
   void  ResetAngles()  {  FRX = FRY = FRZ = 0;  };
   template <class VC> void OrientNormal(const VC& normal)  {
-    vec3d X, Y, Z(normal), CX;
-    X[0] = Z[1];
-    X[1] = -Z[0];
-    if( olx_abs(X.Length()) < 1e-10 )  {
-      X[0] = 0;
-      X[1] = Z[2];
-      X[2] = -Z[1];
-      if( olx_abs(X.Length()) < 1e-10 )  {
-        X[0] = Z[2];
-        X[1] = 0;
-        X[2] = -Z[0];
-        if( olx_abs(X.Length()) < 1e-10 )
-          throw TFunctionFailedException(__OlxSourceInfo, "cannot set orientation");
+    SetMatrix(CalcBasis<VC, mat3d>(normal).Transpose());  
       }
+  // give a normal calculates two other vectors to form orthogonal basis...
+  template <typename VecType, typename MatType> static MatType CalcBasis(const VecType& normal)  {
+    MatType m;
+    m[2] = normal;
+    m[0][0] = m[2][1];
+    m[0][1] = -m[2][0];
+    if( m[0].QLength() < 1e-10 )  {
+      m[0][0] = 0;
+      m[0][1] = m[2][2];
+      m[0][2] = -m[2][1];
+      if( m[0].QLength() < 1e-10 )  {
+        m[0][0] = m[2][2];
+        m[0][1] = 0;
+        m[0][2] = -m[2][0];
+        if( m[0].QLength() < 1e-10 )
+          throw TFunctionFailedException(__OlxSourceInfo, "cannot evaluate basis");
     }
-    Y[0] = Z[1]*X[2] - Z[2]*X[1];
-    Y[1] = -(Z[0]*X[2] - Z[2]*X[0]);
-    Y[2] = Z[0]*X[1] - Z[1]*X[0];
-    X.Normalise();
-    Y.Normalise();
-    Z.Normalise();
-    Orient(X,Y,Z);  
+  }
+    m[1][0] = m[2][1]*m[0][2] - m[2][2]*m[0][1];
+    m[1][1] = m[2][2]*m[0][0] - m[2][0]*m[0][2];
+    m[1][2] = m[2][0]*m[0][1] - m[2][1]*m[0][0];
+    m[0].Normalise();
+    m[1].Normalise();
+    m[2].Normalise();
+    return m;
   }
 
   /* the matrix is being transposed by default to emulate normal rotation in OpneGl

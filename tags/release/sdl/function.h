@@ -65,7 +65,7 @@ private:
   };
   TPtrList<TProgramStateDescriptor> ProgramStates;
   TProgramStateDescriptor* FindState(unsigned int stateBit)  {
-    for( int i=0; i < ProgramStates.Count(); i++ )
+    for( size_t i=0; i < ProgramStates.Count(); i++ )
       if( ProgramStates[i]->StateBit == stateBit )
         return ProgramStates[i];
     return NULL;
@@ -79,7 +79,7 @@ protected:
   }
 public:
   virtual ~ALibraryContainer()  {
-    for( int i=0; i < ProgramStates.Count(); i++ )
+    for( size_t i=0; i < ProgramStates.Count(); i++ )
       delete ProgramStates[i];
   }
   olxstr GetStateName(unsigned int specialCheck)  {
@@ -143,9 +143,9 @@ template <class Base>
     void (Base::*Func)(const TStrObjList& Params, TMacroError& E);
     olxstr RunSignature;
   public:
-    TFunction( Base* baseClassInstance,
+    TFunction(Base* baseClassInstance,
                void (Base::*func)(const TStrObjList& Params, TMacroError& E),
-               const olxstr& funcName, int argc, const olxstr& desc=EmptyString)
+              const olxstr& funcName, unsigned int argc, const olxstr& desc=EmptyString)
     {
       ArgStateMask = argc;
       BaseClassInstance = baseClassInstance;
@@ -172,18 +172,18 @@ template <class Base>
     virtual void Run(const TStrObjList &Params, class TMacroError& E)  {
       RunSignature = GetName();
       RunSignature << '(';
-      int argC = Params.Count();
-      if( !(ArgStateMask & (0x0001 << argC) ) )  {
+      const size_t argC = Params.Count();
+      if( (ArgStateMask & fpAny) != fpAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
         E.WrongArgCount(*this, argC);
         return;
       }
-      // the special checks are in the high dword
+      // the special checks are in the high word
       if( (ArgStateMask&0xFFFF0000) && !GetParentLibrary()->CheckProgramState( ArgStateMask ) )  {
         E.WrongState( *this );
         return;
       }
       try  {
-         for(int i=0; i < argC; i++ )  {
+         for( size_t i=0; i < argC; i++ )  {
            RunSignature << '[' << Params[i] << ']';
            if( i < (argC-1) )  RunSignature << ", ";
          }
@@ -229,17 +229,17 @@ template <class Base>
     virtual void Run(const TStrObjList &Params, class TMacroError& E)  {
       RunSignature = GetName();
       RunSignature << '(';
-      int argC = Params.Count();
-      if( !(ArgStateMask & (0x0001 << argC) ) )  {
+      size_t argC = Params.Count();
+      if( (ArgStateMask & fpAny) != fpAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
         E.WrongArgCount(*this, argC);
         return;
       }
-      if( (ArgStateMask&0xFFFF0000) && !GetParentLibrary()->CheckProgramState( ArgStateMask ) )  {
+      if( (ArgStateMask&0xFFFF0000) != 0 && !GetParentLibrary()->CheckProgramState(ArgStateMask) )  {
         E.WrongState( *this );
         return;
       }
       try  {
-         for(int i=0; i < argC; i++ )  {
+         for( size_t i=0; i < argC; i++ )  {
            RunSignature << '['  << Params[i] << ']';
            if( i < (argC-1) )  RunSignature << ", ";
          }
@@ -292,28 +292,28 @@ template <class Base>
     virtual void Run(TStrObjList &Params, const TParamList &Options, class TMacroError& E)  {
       RunSignature = GetName();
       RunSignature << ' ';
-      int argC = Params.Count();
-      if( !(ArgStateMask & (0x0001 << argC) ) )  {
+      const size_t argC = Params.Count();
+      if( (ArgStateMask & fpAny) != fpAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
         E.WrongArgCount(*this, argC);
         return;
       }
-      for( int i=0; i < Options.Count(); i++ )  {
-        if( ValidOptions.IndexOfComparable(Options.GetName(i)) == -1 )  {
+      for( size_t i=0; i < Options.Count(); i++ )  {
+        if( ValidOptions.IndexOfComparable(Options.GetName(i)) == InvalidIndex )  {
           E.WrongOption(*this, Options.GetName(i) );
           return;
         }
       }
-      if( (ArgStateMask&0xFFFF0000) && !GetParentLibrary()->CheckProgramState( ArgStateMask ) )  {
+      if( (ArgStateMask & 0xFFFF0000) != 0 && !GetParentLibrary()->CheckProgramState(ArgStateMask) )  {
         E.WrongState( *this );
         return;
       }
       try  {
-         for(int i=0; i < argC; i++ )  {
+         for( size_t i=0; i < argC; i++ )  {
            RunSignature << '[' << Params[i] << ']';
            if( i < (argC-1) )  RunSignature << ", ";
          }
          RunSignature << ' ';
-         for( int i=0; i < Options.Count(); i++ )  {
+         for( size_t i=0; i < Options.Count(); i++ )  {
            RunSignature << '{' << Options.GetName(i) << '=' << Options.GetValue(i) << '}';
          }
         (BaseClassInstance->*Macro)(Params, Options, E);
@@ -327,7 +327,7 @@ template <class Base>
       if( ValidOptions.Count() )  {
         olxstr res = ABasicFunction::GetSignature();
         res << "; valid options - ";
-        for( int i=0; i < ValidOptions.Count(); i++ )  {
+        for( size_t i=0; i < ValidOptions.Count(); i++ )  {
           res << ValidOptions.GetComparable(i)  << ';';
         }
         return res;
@@ -372,28 +372,28 @@ template <class Base>
     virtual void Run(TStrObjList &Params, const TParamList &Options, class TMacroError& E)  {
       RunSignature = GetName();
       RunSignature << ' ';
-      int argC = Params.Count();
-      if( !(ArgStateMask & (0x0001 << argC) ) )  {
+      const size_t argC = Params.Count();
+      if( (ArgStateMask & fpAny) != fpAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
         E.WrongArgCount(*this, argC);
         return;
       }
-      for( int i=0; i < Options.Count(); i++ )  {
-        if( ValidOptions.IndexOfComparable(Options.GetName(i)) == -1 )  {
+      for( size_t i=0; i < Options.Count(); i++ )  {
+        if( ValidOptions.IndexOfComparable(Options.GetName(i)) == InvalidIndex )  {
           E.WrongOption(*this, Options.GetName(i) );
           return;
         }
       }
-      if( (ArgStateMask&0xFFFF0000) && !GetParentLibrary()->CheckProgramState( ArgStateMask ) )  {
+      if( (ArgStateMask & 0xFFFF0000) != 0 && !GetParentLibrary()->CheckProgramState(ArgStateMask) )  {
         E.WrongState( *this );
         return;
       }
       try  {
-         for(int i=0; i < argC; i++ )  {
+         for( size_t i=0; i < argC; i++ )  {
            RunSignature << '[' << Params[i] <<  ']';
            if( i < (argC-1) )  RunSignature << ", ";
          }
          RunSignature << ' ';
-         for( int i=0; i < Options.Count(); i++ )  {
+         for( size_t i=0; i < Options.Count(); i++ )  {
            RunSignature << '{' << Options.GetName(i) << '=' << Options.GetValue(i) << '}';
          }
         (*Macro)(Params, Options, E);
@@ -407,7 +407,7 @@ template <class Base>
       if( ValidOptions.Count() )  {
         olxstr res = ABasicFunction::GetSignature();
         res << "; valid options - ";
-        for( int i=0; i < ValidOptions.Count(); i++ )  {
+        for( size_t i=0; i < ValidOptions.Count(); i++ )  {
           res << ValidOptions.GetComparable(i) << ';';
         }
         return res;

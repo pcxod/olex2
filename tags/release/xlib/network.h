@@ -33,23 +33,19 @@ public:
   // copies the content of S to the net
   void Assign(TNetwork& S);
 
-  /* disassembles the list of Atoms into the fragments; does not affect current net
-   
-  */
-  void Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* InterBonds);
-  /* creates bonds and fragments for atoms initialised by Disassemble */
-  void CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags);
+  /* disassembles the list of Atoms into the fragments; does not affect current net */
+  void Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& InterBonds);
+  /* creates bonds and fragments for atoms initialised by Disassemble, all Q-bonds end up 
+  in the bond_sink*/
+  void CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& bond_sink);
   // returns true if the two atoms share a matrix
   static bool HaveSharedMatrix(const TSAtom& sa, const TSAtom& sb)  {
-    for( int i=0; i < sa.MatrixCount(); i++ )  {
-      for( int j=0; j < sb.MatrixCount(); j++ )  {
-        if( sa.GetMatrix(i).GetTag() == sb.GetMatrix(j).GetTag() && 
-            sa.GetMatrix(i).t == sb.GetMatrix(j).t )  
-        {
+    for( size_t i=0; i < sa.MatrixCount(); i++ )  {
+      for( size_t j=0; j < sb.MatrixCount(); j++ )  {
+        if( sa.GetMatrix(i).GetId() == sb.GetMatrix(j).GetId() )  
           return true;
         }
       }
-    }
     return false;
   }
   static inline bool IsBondAllowed(const TSAtom& sa, const TSAtom& sb)  {
@@ -63,7 +59,7 @@ public:
 
   static inline bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb, const smatd& sm)  {
     if( (ca.GetPart() | cb.GetPart()) < 0 )
-      return sm.GetTag() == 0 && sm.t.IsNull();  // is identity and no translation
+      return sm.IsFirst();  // is identity and no translation
     else if( ca.GetPart() == 0 || cb.GetPart() == 0 || 
              (ca.GetPart() == cb.GetPart()) )
       return true;
@@ -92,26 +88,40 @@ public:
   // returns true if the ring is regular (distances from centroid and angles) 
   static bool IsRingRegular(const TSAtomPList& ring);
   // inverttion must be specified for the permutational graph match
-  bool DoMatch( TNetwork& net, TTypeList< AnAssociation2<int, int> >& res, bool Invert );
-  bool IsSubgraphOf( TNetwork& net, TTypeList< AnAssociation2<int, int> >& res, const TIntList& rootsToSkip);
+  bool DoMatch( TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res, bool Invert );
+  bool IsSubgraphOf( TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res, const TSizeList& rootsToSkip);
 
-  void FindRings(const TPtrList<TBasicAtomInfo>& ringContent,
-        TTypeList<TSAtomPList>& res);
+protected:
+  static int TNetwork_SortRingAtoms(const TSAtom* a, const TSAtom* b)  {
+    return (int)(a->GetTag()-b->GetTag());
+  }
+  static bool TryRing(TSAtom& sa, TSAtomPList& ring, const TPtrList<TBasicAtomInfo>& ringContent, size_t level=1);
+  static bool TryRing(TSAtom& sa, TSAtomPList& ring, size_t level=1);
+// tries to find the ring in given direction
+  static bool TryRing(TSAtom& sa, size_t node, TSAtomPList& ring, const TPtrList<TBasicAtomInfo>& ringContent);
+  static bool TryRing(TSAtom& sa, size_t node, TSAtomPList& ring);
+  void UnifyRings(TTypeList<TSAtomPList>& rings);
+
+public:
+  // finds only primitive rings
+  void FindRings(const TPtrList<TBasicAtomInfo>& ringContent, TTypeList<TSAtomPList>& res);
 
   void FindAtomRings(TSAtom& ringAtom, const TPtrList<TBasicAtomInfo>& ringContent,
         TTypeList<TSAtomPList>& res);
+  // finds all rings
+  void FindAtomRings(TSAtom& ringAtom, TTypeList<TSAtomPList>& res);
   struct RingInfo  {
-    int MaxSubsANode, HeaviestSubsIndex;
+    size_t MaxSubsANode, HeaviestSubsIndex;
     TBasicAtomInfo* HeaviestSubsType;
-    TIntList Ternary, // three bond inside the ring
+    TSizeList Ternary, // three bond inside the ring
       Substituted,    // more than two connections, two belong to the ring
       Alpha;          // susbtituted next to a ternary atom 
     TTypeList<TSAtomPList> Substituents;
     bool HasAfix;
-    RingInfo() : HeaviestSubsType(NULL), MaxSubsANode(0), HeaviestSubsIndex(-1), HasAfix(false)  {  }
+    RingInfo() : HeaviestSubsType(NULL), MaxSubsANode(0), HeaviestSubsIndex(InvalidIndex), HasAfix(false)  {  }
     RingInfo& Clear()  {
       MaxSubsANode = 0;
-      HeaviestSubsIndex = -1;
+      HeaviestSubsIndex = InvalidIndex;
       HasAfix = false;
       Ternary.Clear();
       Substituted.Clear();
@@ -121,8 +131,7 @@ public:
     }
     bool IsSingleCSubstituted() const;  // returns true if all substituents are single CHn groups
   };
-  static RingInfo& AnalyseRing( const TSAtomPList& ring, RingInfo& ri );
-
+  static RingInfo& AnalyseRing(const TSAtomPList& ring, RingInfo& ri);
   /* quaternion method, Acta A45 (1989), 208
     This function finds the best match between atom pairs and returns the summ of
     distance deltas between corresponding atoms. If try inversion is specified,
@@ -164,7 +173,7 @@ protected:
     TDisassembleTaskRemoveSymmEq(TSAtomPList& atoms, double** distances) :
       Atoms(atoms)  {  Distances = distances;  }
 
-    void Run(long ind);
+    void Run(size_t ind);
     TDisassembleTaskRemoveSymmEq* Replicate() const  {
       return new TDisassembleTaskRemoveSymmEq(Atoms, Distances);
     }
@@ -180,7 +189,7 @@ protected:
       Distances = distances;
       Delta = delta;
     }
-    void Run(long ind);
+    void Run(size_t ind);
     TDisassembleTaskCheckConnectivity* Replicate() const  {
       return new TDisassembleTaskCheckConnectivity(Atoms, Distances, Delta);
     }
@@ -199,7 +208,7 @@ protected:
       Delta = delta;
       Bonds = bonds;
     }
-    void Run(long ind);
+    void Run(size_t ind);
     THBondSearchTask* Replicate() const  {
       return new THBondSearchTask(Atoms, Bonds, Distances, Delta);
     }

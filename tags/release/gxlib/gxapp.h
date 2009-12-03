@@ -124,9 +124,6 @@ protected:
 
   void FragmentVisible( TNetwork *N, bool V);
   bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
-  void SBonds2XBonds(TSBondPList& L, TXBondPList& Res);
-  void SAtoms2XAtoms(TSAtomPList& L, TXAtomPList& Res);
-  void SPlanes2XPlanes(TSPlanePList& L, TXPlanePList& Res);
   void GetGPCollections(TPtrList<AGDrawObject>& GDObjects, TPtrList<TGPCollection>& Result);
   // visibility is stored in a bitarray
   TEBitArray FVisibility;
@@ -152,7 +149,7 @@ protected:
   /* intialises SAtom::Tag to XAtom::Id and checks if any atom with AtomInfo == atom_type
   has visible neighbours, if not - it will be hidden, otherwise its visibility will become 'show';
   for bonds makes them visible only if both atoms are visible */
-  void SyncAtomAndBondVisiblity(int atom_type, bool show_a, bool show_b);
+  void SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b);
 public:
   TGXApp(const olxstr & FileName);
   // FileNAme - argv[0]
@@ -162,6 +159,9 @@ public:
   void AddObjectToCreate(AGDrawObject* obj)  {  ObjectsToCreate.Add(obj);  }
   void Clear();
   void ClearXGrowPoints();
+  void SBonds2XBonds(TSBondPList& L, TXBondPList& Res);
+  void SAtoms2XAtoms(TSAtomPList& L, TXAtomPList& Res);
+  void SPlanes2XPlanes(TSPlanePList& L, TXPlanePList& Res);
 
 // drawing data and functions
 private:
@@ -174,8 +174,8 @@ public:
   void ClearIndividualCollections() {  IndividualCollections.Clear();  }
 //..............................................................................
 // GlRender interface
-  void ClearColor(int Color) {  FGlRender->LightModel.ClearColor() = Color; }
-  inline int ClearColor()           {  return FGlRender->LightModel.ClearColor().GetRGB(); }
+  void ClearColor(int Color) {  FGlRender->LightModel.SetClearColor(Color); }
+  inline uint32_t ClearColor() const {  return FGlRender->LightModel.GetClearColor().GetRGB(); }
   inline TGlRenderer& GetRender() const {  return *FGlRender; }
   inline TXFader& GetFader()        {  return *Fader; }
   void InitFadeMode();
@@ -201,16 +201,16 @@ public:
   inline TXGrid& XGrid()         {  return *FXGrid;  }
 
   // this function to be used to get all networks, including th overlayed files
-  int GetNetworks(TNetPList& nets);
+  size_t GetNetworks(TNetPList& nets);
   // overlayed files
-  inline int OverlayedXFileCount()  const  {  return OverlayedXFiles.Count();  }
-  TXFile& GetOverlayedXFile(int i)  {  return OverlayedXFiles[i];  }
+  inline size_t OverlayedXFileCount()  const  {  return OverlayedXFiles.Count();  }
+  TXFile& GetOverlayedXFile(size_t i)  {  return OverlayedXFiles[i];  }
   TXFile& NewOverlayedXFile();
   // aligns overlayed structures on a 2D grid
   void AlignOverlayedXFiles();
   // calculates maximum radius and center of given lattice
   void CalcLatticeRandCenter(const TLattice& latt, double& r, vec3d& cnt);
-  void DeleteOverlayedXFile(int index);
+  void DeleteOverlayedXFile(size_t index);
 
   void Select(const vec3d& From, const vec3d& To);
   void SelectAll(bool Select)  {
@@ -235,8 +235,8 @@ public:
     
   TGlBitmap* FindGlBitmap(const olxstr& name);
   void DeleteGlBitmap(const olxstr& name);
-  inline int GlBitmapCount()  const {  return GlBitmaps.Count(); }
-  inline TGlBitmap& GlBitmap(int i) {  return *GlBitmaps[i];  }
+  inline size_t GlBitmapCount()  const {  return GlBitmaps.Count(); }
+  inline TGlBitmap& GlBitmap(size_t i) {  return *GlBitmaps[i];  }
 
   bool ShowGrid(bool v, const olxstr& FN=EmptyString);
   bool GridVisible()  const;
@@ -245,9 +245,9 @@ public:
 
 protected:
   TPtrList<AGDrawObject> SelectionCopy;
-  bool FHydrogensVisible,
+  bool FQPeaksVisible,
+       FHydrogensVisible,
        FHBondsVisible,
-       FQPeaksVisible,
        FQPeakBondsVisible,
        FStructureVisible,
        FHklVisible,
@@ -265,12 +265,12 @@ public:
   void SetLabelsFont(short FontIndex);
   TGlMaterial & LabelsMarkMaterial();
   void MarkLabel(const TXAtom& A, bool mark);
-  void MarkLabel(int index, bool mark);
+  void MarkLabel(size_t index, bool mark);
   bool IsLabelMarked(const TXAtom& A) const;
-  bool IsLabelMarked(int index) const;
+  bool IsLabelMarked(size_t index) const;
   void ClearLabelMarks();
 
-  int GetNextAvailableLabel(const olxstr& AtomType);
+  size_t GetNextAvailableLabel(const olxstr& AtomType);
 
   // moving atom from/to collection
   void Individualise(TXAtom& XA);
@@ -354,13 +354,13 @@ public:
   void FindXAtoms(const olxstr& Atoms, TXAtomPList& List, bool ClearSelection=true, 
     bool FindHidden=false);
 
-  TXAtom& GetAtom(int i) {  return XAtoms[i];  }
-  const TXAtom& GetAtom(int i) const {  return XAtoms[i];  }
-  inline int AtomCount() const {  return XAtoms.Count();  }
+  TXAtom& GetAtom(size_t i) {  return XAtoms[i];  }
+  const TXAtom& GetAtom(size_t i) const {  return XAtoms[i];  }
+  inline size_t AtomCount() const {  return XAtoms.Count();  }
 
-  TXBond& GetBond(int i) {  return XBonds[i];  }
-  const TXBond& GetBond(int i) const {  return XBonds[i];  }
-  inline int BondCount() const {  return XBonds.Count();  }
+  TXBond& GetBond(size_t i) {  return XBonds[i];  }
+  const TXBond& GetBond(size_t i) const {  return XBonds[i];  }
+  inline size_t BondCount() const {  return XBonds.Count();  }
 
 protected:
   /* the function simply checks if there are any invisible bonds connectd to the
@@ -422,15 +422,17 @@ public:     void CalcProbFactor(float Prob);
   void SelectRings(const olxstr& Condition, bool Invert=false);
   void FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings );
   
-  TXGlLabel* CreateLabel(TXAtom *A, int FontIndex);
+  TXGlLabel* CreateLabel(TXAtom *A, uint16_t FontIndex);
   // recreated all labels (if any) in case if font size etc changed
-  int LabelCount() const {  return XLabels.Count();  }
-  const TXGlLabel& GetLabel(int i) const {  return XLabels[i];  }
+  size_t LabelCount() const {  return XLabels.Count();  }
+  const TXGlLabel& GetLabel(size_t i) const {  return XLabels[i];  }
   void UpdateLabels();
 
 //..............................................................................
-  void QPeakScale(float V);
-  float QPeakScale();
+  void SetQPeakScale(float V);
+  float GetQPeakScale();
+  void SetQPeakSizeScale(float V);
+  float GetQPeakSizeScale();
 //..............................................................................
 // GlMouse interface
   bool MouseDown(int x, int y, short Shift, short Button)  {
@@ -460,7 +462,7 @@ public:     void CalcProbFactor(float Prob);
   TUndoData* SetGraphicsVisible( TPtrList<AGDrawObject>& G, bool v );
 
   void FragmentsVisible(const TNetPList& Networks, bool V);
-  int InvertFragmentsList(const TNetPList& SelectedFragments, TNetPList& Result);
+  size_t InvertFragmentsList(const TNetPList& SelectedFragments, TNetPList& Result);
   void SelectFragmentsAtoms(const TNetPList& frags, bool v);
   void SelectFragmentsBonds(const TNetPList& frags, bool v);
   void SelectFragments(const TNetPList& frags, bool v);
@@ -478,7 +480,7 @@ public:     void CalcProbFactor(float Prob);
 // X interface
   void BangList(TXAtom *A, TStrList &L);
   void BangTable(TXAtom *A, TTTable<TStrList>& Table);
-  float Tang( TSBond *B1, TSBond *B2, TSBond *Middle, olxstr *Sequence=NULL);
+  double Tang( TSBond *B1, TSBond *B2, TSBond *Middle, olxstr *Sequence=NULL);
   void TangList(TXBond *Middle, TStrList &L);
 
   TUndoData* DeleteXAtoms(TXAtomPList& L);
@@ -487,13 +489,15 @@ public:     void CalcProbFactor(float Prob);
   void undoDelete(TUndoData *data);
   /* function undoes renaming atoms */
   void undoName(TUndoData *data);
+  /* function undoes hiding of objects */
+  void undoHide(TUndoData *data);
 
   void XAtomDS2XBondDS(const olxstr &Source);  // copies material properties from atoms
   void SynchroniseBonds( TXAtomPList& XAtoms );
   double CalcVolume(const TSStrPObjList<olxstr,double, true> *volumes, olxstr &report);
 
-  void ToDataItem(TDataItem& item, wxOutputStream& zos) const;
-  void FromDataItem(TDataItem& item, wxInputStream& zis);
+  void ToDataItem(TDataItem& item, IOutputStream& zos) const;
+  void FromDataItem(TDataItem& item, IInputStream& zis);
 
   void SaveModel(const olxstr& file_name) const;
   void LoadModel(const olxstr& file_name);
