@@ -554,7 +554,7 @@ void TMainForm::macBasis(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void TMainForm::macLines(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  FGlConsole->SetLinesToShow( Cmds[0].ToInt() );
+  FGlConsole->SetLinesToShow(Cmds[0].ToInt());
 }
 //..............................................................................
 void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -2528,28 +2528,6 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 }
 //..............................................................................
-void TMainForm::macDegen(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TXAtomPList atoms;
-  FindXAtoms(Cmds, atoms, true, !Options.Contains("cs"));
-  for( size_t i=0; i < atoms.Count(); i++ ) 
-    atoms[i]->Atom().CAtom().SetTag(i);
-  
-  for( size_t i=0; i < atoms.Count(); i++ )  {
-    if( atoms[i]->Atom().CAtom().GetTag() != i )
-      continue;
-    olxstr str(atoms[i]->Atom().CAtom().GetLabel());
-    TBasicApp::GetLog() << (str.Format(6, true, ' ') <<  atoms[i]->Atom().CAtom().GetDegeneracy() << '\n');
-  }
-}
-//..............................................................................
-void TMainForm::macSwapExyz(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  throw TNotImplementedException(__OlxSourceInfo);
-}
-//..............................................................................
-void TMainForm::macAddExyz(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  throw TNotImplementedException(__OlxSourceInfo);
-}
-//..............................................................................
 void TMainForm::macRRings(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TTypeList< TSAtomPList > rings;
   try  {  FXApp->FindRings(Cmds[0], rings);  }
@@ -3086,75 +3064,6 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     CallbackFunc(OnModeChangeCBName, tmp);
   }
   ChangingMode = false;
-}
-//..............................................................................
-void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  if( !(FXApp->CheckFileType<TIns>() ||
-        FXApp->CheckFileType<TP4PFile>() ||
-        FXApp->CheckFileType<TCRSFile>()  )  )  return;
-
-  olxstr newSg(Options.FindValue('s')), 
-         content( olxstr::DeleteChars(Options.FindValue('c'), ' ')),
-         fileName(Options.FindValue('f') );
-  FXApp->XFile().UpdateAsymmUnit();
-  TIns *Ins = (TIns*)FXApp->XFile().FindFormat("ins");
-  if( FXApp->CheckFileType<TP4PFile>() )  {
-    if( !newSg.Length() )  {
-      E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch" );
-      return;
-    }
-    Ins->Adopt(FXApp->XFile());
-  }
-  else if( FXApp->CheckFileType<TCRSFile>() )  {
-    TSpaceGroup* sg = FXApp->XFile().GetLastLoader<TCRSFile>().GetSG();
-    if( newSg.IsEmpty() )  {
-      if( sg == NULL )  {
-        E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch" );
-        return;
-      }
-      else  {
-        TBasicApp::GetLog() << ( olxstr("The CRS file format space group is: ") << sg->GetName() << '\n');
-      }
-    }
-    Ins->Adopt(FXApp->XFile());
-  }
-  if( !content.IsEmpty() )
-    Ins->GetRM().SetUserFormula(content);
-  if( Ins->GetRM().GetUserContent().IsEmpty() )  {
-    content = "getuserinput(1, \'Please, enter structure composition\', \'C1\')";
-    ProcessFunction(content);
-    Ins->GetRM().SetUserFormula(content);
-    if( Ins->GetRM().GetUserContent().IsEmpty() )  {
-      E.ProcessingError(__OlxSrcInfo, "empty SFAC instruction, please use -c=Content to specify" );
-      return;
-    }
-  }
-
-  if( !newSg.IsEmpty() )  {
-    TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup(newSg);
-    if( !sg )  {
-      E.ProcessingError(__OlxSrcInfo, "could not find space group: ") << newSg;
-      return;
-    }
-    Ins->GetAsymmUnit().ChangeSpaceGroup(*sg);
-    newSg = EmptyString;
-    newSg <<  " reset to " << sg->GetName() << " #" << sg->GetNumber();
-    olxstr titl( TEFile::ChangeFileExt(TEFile::ExtractFileName(FXApp->XFile().GetFileName()), EmptyString) );
-    Ins->SetTitle( titl << " in " << sg->GetName() << " #" << sg->GetNumber());
-  }
-  if( fileName.IsEmpty() )
-    fileName = FXApp->XFile().GetFileName();
-  olxstr FN(TEFile::ChangeFileExt(fileName, "ins"));
-  olxstr lstFN(TEFile::ChangeFileExt(fileName, "lst"));
-
-  Ins->SaveForSolution(FN, Cmds.Text(' '), newSg, Options.Contains("rem"));
-  if( TEFile::Exists(lstFN) )  {
-    olxstr lstTmpFN(lstFN);
-    lstTmpFN << ".tmp";
-    TEFile::Rename(lstFN, lstTmpFN);
-  }
-  Macros.ProcessMacro(olxstr("@reap \'") << FN << '\'', E);
-  Macros.ProcessMacro("htmlreload", E);
 }
 //..............................................................................
 void TMainForm::macText(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -6092,6 +6001,21 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TAsymmUnit& _au = FXApp->XFile().GetAsymmUnit();
+  TUnitCell& uc = FXApp->XFile().GetUnitCell();
+  size_t ac = (size_t)olx_round((uc.CalcVolume()/18.6)/uc.MatrixCount());
+  TPSTypeList<double, TCAtom*> atoms;
+  for( size_t i=0; i < _au.AtomCount(); i++ )
+    atoms.Add(_au.GetAtom(i).GetUiso(), &_au.GetAtom(i));
+  if( ac < _au.AtomCount() )  {
+    size_t df = _au.AtomCount() - ac;
+    for( size_t i=0; i < df; i++ )  {
+      atoms.GetObject(atoms.Count()-i-1)->SetDeleted(true);
+    }
+    FXApp->XFile().EndUpdate();
+  }
+  return;
+  
   //wxImage img;
   //img.LoadFile(wxT("c:/tmp/tex2d.jpg"));
   //int tex_id = FXApp->GetRender().GetTextureManager().Add2DTexture("shared_site", 1, img.GetWidth(), img.GetHeight(), 0, GL_RGB, img.GetData());

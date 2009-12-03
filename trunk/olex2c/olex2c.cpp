@@ -213,7 +213,6 @@ public:
     this_InitMacroD(Clear, "", fpNone, "" );
     this_InitMacroD(Stop, "", fpOne, "" );
     this_InitMacroD(Reload, "", fpOne, "" );
-    this_InitMacroD(Reset, "s&;c&;f", fpAny|psFileLoaded, "" );
     this_InitMacroD(WaitFor, "", fpOne, "" );
     this_InitMacroD(Kill, "", (fpAny^fpNone)|psFileLoaded, "" );
     this_InitMacroD(Sel, "i&;a&;u", fpAny|psFileLoaded, "" );
@@ -557,67 +556,6 @@ public:
         continue;
       }
     }
-  }
-  //..............................................................................
-  void macReset(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-    if( !(XApp.CheckFileType<TIns>() ||
-      XApp.CheckFileType<TP4PFile>() ||
-      XApp.CheckFileType<TCRSFile>()  )  )  return;
-
-    olxstr newSg(Options.FindValue('s')), 
-      content( olxstr::DeleteChars(Options.FindValue('c'), ' ')),
-      fileName(Options.FindValue('f') );
-
-    TIns *Ins = (TIns*)XApp.XFile().FindFormat("ins");
-    if( XApp.CheckFileType<TP4PFile>() )  {
-      if( newSg.IsEmpty() )  {
-        E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch");
-        return;
-      }
-      Ins->Adopt(XApp.XFile());
-    }
-    else if( XApp.CheckFileType<TCRSFile>() )  {
-      TSpaceGroup* sg = XApp.XFile().GetLastLoader<TCRSFile>().GetSG();
-      if( newSg.IsEmpty() )  {
-        if( sg == NULL )  {
-          E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch");
-          return;
-        }
-        else 
-          TBasicApp::GetLog() << ( olxstr("The CRS file format space group is: ") << sg->GetName() << '\n');
-      }
-      Ins->Adopt(XApp.XFile());
-    }
-    if( !content.IsEmpty() )
-      Ins->GetRM().SetUserFormula(content);
-    if( Ins->GetRM().GetUserContent().IsEmpty() )  {
-      E.ProcessingError(__OlxSrcInfo, "empty SFAC instruction, please use -c=Content to specify");
-      return;
-    }
-    if( !newSg.IsEmpty() )  {
-      TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup(newSg);
-      if( sg == NULL )  {
-        E.ProcessingError(__OlxSrcInfo, "could not find space group: ") << newSg;
-        return;
-      }
-      Ins->GetAsymmUnit().ChangeSpaceGroup(*sg);
-      newSg = EmptyString;
-      newSg <<  " reset to " << sg->GetName() << " #" << sg->GetNumber();
-      olxstr titl( TEFile::ChangeFileExt(TEFile::ExtractFileName(XApp.XFile().GetFileName()), EmptyString) );
-      Ins->SetTitle( titl << " in " << sg->GetName() << " #" << sg->GetNumber());
-    }
-    if( fileName.IsEmpty() )
-      fileName = XApp.XFile().GetFileName();
-    olxstr FN( TEFile::ChangeFileExt(fileName, "ins") );
-    olxstr lstFN( TEFile::ChangeFileExt(fileName, "lst") );
-
-    Ins->SaveForSolution(FN, Cmds.Text(' '), newSg, false);
-    if( TEFile::Exists(lstFN) )  {
-      olxstr lstTmpFN( lstFN );
-      lstTmpFN << ".tmp";
-      TEFile::Rename( lstFN, lstTmpFN );
-    }
-    executeMacro(olxstr("@reap \'") << FN << '\'');
   }
   //..............................................................................
   void SetProcess(AProcess *Process)  {

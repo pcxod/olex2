@@ -48,6 +48,8 @@ class XLibMacros  {
   static DefMacro(Fix)
   static DefMacro(Free)
   static DefMacro(File)
+  static DefMacro(Reset)
+  static DefMacro(Degen)
   static DefMacro(User)
   static DefMacro(Dir)
   static DefMacro(LstMac)

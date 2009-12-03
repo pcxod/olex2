@@ -2855,7 +2855,7 @@ void TGXApp::HBondsVisible(bool v)  {
     for( size_t i=0; i < XBonds.Count(); i++ )  {
       const TSBond& b = XBonds[i].Bond(); 
       if( b.GetType() == sotHBond )  {
-        XBonds[i].SetVisible( XAtoms[b.A().GetTag()].IsVisible() && XAtoms[b.B().GetTag()].IsVisible() );
+        XBonds[i].SetVisible(XAtoms[b.A().GetTag()].IsVisible() && XAtoms[b.B().GetTag()].IsVisible());
       }
     }
   }
@@ -2941,8 +2941,34 @@ void TGXApp::QPeakBondsVisible(bool v)  {
 //..............................................................................
 void TGXApp::StructureVisible(bool v)  {
   FStructureVisible = v;
-  for( size_t i=0; i < XAtoms.Count(); i++ )        XAtoms[i].SetVisible(v);
-  for( size_t i=0; i < XBonds.Count(); i++ )        XBonds[i].SetVisible(v);
+  for( size_t i=0; i < XAtoms.Count(); i++ )  {
+    if( !v )
+      XAtoms[i].SetVisible(v);
+    else
+      XAtoms[i].SetVisible(XAtoms[i].Atom().IsAvailable());  
+    XAtoms[i].Atom().SetTag(i);
+  }
+  for( size_t i=0; i < XBonds.Count(); i++ )  {
+    const TSBond& b = XBonds[i].Bond();
+    if( !v )
+      XBonds[i].SetVisible(v);
+    else  {
+      if( b.A().GetAtomInfo().GetIndex() == iQPeakIndex || b.B().GetAtomInfo().GetIndex() == iQPeakIndex )  {
+        if( FQPeakBondsVisible )
+          XBonds[i].SetVisible(XAtoms[XBonds[i].Bond().A().GetTag()].IsVisible() && XAtoms[XBonds[i].Bond().B().GetTag()].IsVisible());
+        else
+          XBonds[i].SetVisible(false);
+      }
+      else if( b.GetType() == sotHBond )  {
+        if( FHBondsVisible )
+          XBonds[i].SetVisible(XAtoms[XBonds[i].Bond().A().GetTag()].IsVisible() && XAtoms[XBonds[i].Bond().B().GetTag()].IsVisible());
+        else
+          XBonds[i].SetVisible(false);
+      }
+      else
+        XBonds[i].SetVisible(XAtoms[XBonds[i].Bond().A().GetTag()].IsVisible() && XAtoms[XBonds[i].Bond().B().GetTag()].IsVisible());
+    }
+  }
   for( size_t i=0; i < LooseObjects.Count(); i++ )  LooseObjects[i]->SetVisible(v);
   for( size_t i=0; i < XPlanes.Count(); i++ )       XPlanes[i].SetVisible(v);
   for( size_t i=0; i < XLabels.Count(); i++ )       XLabels[i].SetVisible(v);
@@ -2952,6 +2978,7 @@ void TGXApp::StructureVisible(bool v)  {
   } 
   else
     FXGrid->SetVisible(false);
+  SyncQVisibility();
 }
 //..............................................................................
 void TGXApp::LoadXFile(const olxstr& fn)  {
