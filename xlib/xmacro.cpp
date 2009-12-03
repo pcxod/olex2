@@ -178,6 +178,9 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(Omit, EmptyString, fpOne|fpTwo|fpThree|psCheckFileTypeIns, 
     "removes any particular reflection from the refinement list. If a single number is provided,\
  all reflections with delta(F^2)/esd greater than given number are omitted");
+  xlib_InitMacro(Reset, "s-space group&;c-content&;f-alternative file name&;rem-exclude remarks", 
+    fpAny|psFileLoaded, "Resets current structure for the solution with ShelX");
+  xlib_InitMacro(Degen, "cs-clear selection", fpAny|psFileLoaded, "Prints how many symmetry operators put given atom to the same site");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -1135,19 +1138,21 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TEBitArray removedSAtoms, removedCAtoms;
   if( TEFile::ExtractFileExt(Tmp).Equalsi("ins"))  {  // kill Q peak in the ins file
     TLattice& latt = XApp.XFile().GetLattice();
-    removedSAtoms.SetSize( (uint32_t)latt.AtomCount() );
-    removedCAtoms.SetSize( (uint32_t)latt.AtomCount() );
+    removedSAtoms.SetSize(latt.AtomCount());
     for( size_t i=0; i < latt.AtomCount(); i++ )  {
       TSAtom& sa = latt.GetAtom(i);
-      if( sa.GetAtomInfo() == iQPeakIndex )  {
-        if( !sa.IsDeleted() )  {
-          sa.SetDeleted(true);
-          removedSAtoms.SetTrue(i);
-        }
-        if( !sa.CAtom().IsDeleted() )  {
-          sa.CAtom().SetDeleted(true);
-          removedCAtoms.SetTrue(i);
-        }
+      if( sa.GetAtomInfo() == iQPeakIndex && !sa.IsDeleted() )  {
+        sa.SetDeleted(true);
+        removedSAtoms.SetTrue(i);
+      }
+    }
+    TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
+    removedCAtoms.SetSize(au.AtomCount());
+    for( size_t i=0; i < au.AtomCount(); i++ )  {
+      TCAtom& ca = au.GetAtom(i);
+      if( ca.GetAtomInfo() == iQPeakIndex && !ca.IsDeleted() )  {
+        ca.SetDeleted(true);
+        removedCAtoms.SetTrue(i);
       }
     }
   }
@@ -1165,12 +1170,16 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   else  if( !Sort )  {
     Sort = true;  // forse reading the file
   }
-  if( !removedSAtoms.IsEmpty() )  {  // need to restore, abit of mess here...
+  if( !removedSAtoms.IsEmpty() )  {  // need to restore, a bit of mess here...
     TLattice& latt = XApp.XFile().GetLattice();
     for( size_t i=0; i < latt.AtomCount(); i++ )  {
-      TSAtom& sa = latt.GetAtom(i);
-      if( removedSAtoms.Get(i) )  sa.SetDeleted(false);
-      if( removedCAtoms.Get(i) )  sa.CAtom().SetDeleted(false);
+      if( removedSAtoms.Get(i) )
+        latt.GetAtom(i).SetDeleted(false);
+    }
+    TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
+    for( size_t i=0; i < au.AtomCount(); i++ )  {
+      if( removedCAtoms[i] )
+          au.GetAtom(i).SetDeleted(false);
     }
   }
   if( Sort )  {
@@ -2184,7 +2193,7 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
       E.SetRetVal(NAString);
       return;
     }
-    //  FXApp->XFile().UpdateAsymmUnit();
+    //  xapp.XFile().UpdateAsymmUnit();
     //  I->UpdateParams();
 
     TInsList* insv = I.FindIns( Params[0] );
@@ -3718,5 +3727,92 @@ void XLibMacros::funLst(const TStrObjList &Cmds, TMacroError &E)  {
   }
   else
     E.SetRetVal( NAString );
+}
+//..............................................................................
+void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
+  TXApp& xapp = TXApp::GetInstance();
+  if( !(xapp.CheckFileType<TIns>() ||
+        xapp.CheckFileType<TP4PFile>() ||
+        xapp.CheckFileType<TCRSFile>()  )  )  return;
+
+  IOlexProcessor* op = IOlexProcessor::GetInstance();
+  olxstr newSg(Options.FindValue('s')), 
+         content( olxstr::DeleteChars(Options.FindValue('c'), ' ')),
+         fileName(Options.FindValue('f') );
+  xapp.XFile().UpdateAsymmUnit();
+  TIns *Ins = (TIns*)xapp.XFile().FindFormat("ins");
+  if( xapp.CheckFileType<TP4PFile>() )  {
+    if( !newSg.Length() )  {
+      E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch" );
+      return;
+    }
+    Ins->Adopt(xapp.XFile());
+  }
+  else if( xapp.CheckFileType<TCRSFile>() )  {
+    TSpaceGroup* sg = xapp.XFile().GetLastLoader<TCRSFile>().GetSG();
+    if( newSg.IsEmpty() )  {
+      if( sg == NULL )  {
+        E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch" );
+        return;
+      }
+      else  {
+        TBasicApp::GetLog() << ( olxstr("The CRS file format space group is: ") << sg->GetName() << '\n');
+      }
+    }
+    Ins->Adopt(xapp.XFile());
+  }
+  if( !content.IsEmpty() )
+    Ins->GetRM().SetUserFormula(content);
+  if( Ins->GetRM().GetUserContent().IsEmpty() )  {
+    if( op != NULL )  {
+      content = "getuserinput(1, \'Please, enter structure composition\', \'C1\')";
+      op->executeFunction(content, content);
+      Ins->GetRM().SetUserFormula(content);
+      if( Ins->GetRM().GetUserContent().IsEmpty() )  {
+        E.ProcessingError(__OlxSrcInfo, "empty SFAC instruction, please use -c=Content to specify" );
+        return;
+      }
+    }
+  }
+
+  if( !newSg.IsEmpty() )  {
+    TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup(newSg);
+    if( !sg )  {
+      E.ProcessingError(__OlxSrcInfo, "could not find space group: ") << newSg;
+      return;
+    }
+    Ins->GetAsymmUnit().ChangeSpaceGroup(*sg);
+    newSg = EmptyString;
+    newSg <<  " reset to " << sg->GetName() << " #" << sg->GetNumber();
+    olxstr titl( TEFile::ChangeFileExt(TEFile::ExtractFileName(xapp.XFile().GetFileName()), EmptyString) );
+    Ins->SetTitle( titl << " in " << sg->GetName() << " #" << sg->GetNumber());
+  }
+  if( fileName.IsEmpty() )
+    fileName = xapp.XFile().GetFileName();
+  olxstr FN(TEFile::ChangeFileExt(fileName, "ins"));
+  olxstr lstFN(TEFile::ChangeFileExt(fileName, "lst"));
+
+  Ins->SaveForSolution(FN, Cmds.Text(' '), newSg, !Options.Contains("rem"));
+  if( TEFile::Exists(lstFN) )  {
+    olxstr lstTmpFN(lstFN);
+    lstTmpFN << ".tmp";
+    TEFile::Rename(lstFN, lstTmpFN);
+  }
+  if( op != NULL )  {
+    op->executeMacroEx(olxstr("@reap \'") << FN << '\'', E);
+    op->executeMacroEx("htmlreload", E);
+  }
+}
+//..............................................................................
+void XLibMacros::macDegen(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TSAtomPList atoms;
+  TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true, !Options.Contains("cs"));
+  for( size_t i=0; i < atoms.Count(); i++ ) 
+    atoms[i]->CAtom().SetTag(i);
+  for( size_t i=0; i < atoms.Count(); i++ )  {
+    if( atoms[i]->CAtom().GetTag() != i || atoms[i]->CAtom().GetDegeneracy() == 1)  continue;
+    olxstr str(atoms[i]->CAtom().GetLabel());
+    TBasicApp::GetLog() << (str.Format(6, true, ' ') <<  atoms[i]->CAtom().GetDegeneracy() << '\n');
+  }
 }
 //..............................................................................

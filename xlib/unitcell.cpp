@@ -940,7 +940,7 @@ void TUnitCell::BuildStructureMapEx( TArray3D<short>& map, double resolution, do
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
 void TUnitCell::LibVolumeEx(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( CalcVolumeEx().ToString() );
+  E.SetRetVal(CalcVolumeEx().ToString());
 }
 //..............................................................................
 void TUnitCell::LibCellEx(const TStrObjList& Params, TMacroError& E)  {
@@ -960,12 +960,18 @@ void TUnitCell::LibCellEx(const TStrObjList& Params, TMacroError& E)  {
     E.ProcessingError(__OlxSrcInfo, "invalid argument");
 }
 //..............................................................................
-class TLibrary*  TUnitCell::ExportLibrary(const olxstr& name)  {
+void TUnitCell::LibMatrixCount(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal(Matrices.Count());
+}
+//..............................................................................
+class TLibrary* TUnitCell::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("uc") : name );
   lib->RegisterFunction<TUnitCell>( new TFunction<TUnitCell>(this,  &TUnitCell::LibVolumeEx, "VolumeEx", fpNone,
 "Returns unit cell volume with esd") );
   lib->RegisterFunction<TUnitCell>( new TFunction<TUnitCell>(this,  &TUnitCell::LibCellEx, "CellEx", fpOne,
 "Returns unit cell side/angle with esd") );
+  lib->RegisterFunction<TUnitCell>( new TFunction<TUnitCell>(this,  &TUnitCell::LibMatrixCount, "MatrixCount", fpNone,
+"Returns the number of matrices in the unit cell") );
   return lib;
 }
 //..............................................................................

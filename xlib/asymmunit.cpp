@@ -1029,12 +1029,12 @@ void TAsymmUnit::LibSetZ(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal(1);
+  E.SetRetVal(Z/(TUnitCell::GetMatrixMultiplier(Latt)*(MatrixCount()+1)));
 }
 //..............................................................................
 void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
   double zp = Params[0].ToDouble();
-  Z = (short)olx_round(TUnitCell::GetMatrixMultiplier(Latt)*MatrixCount()*zp);
+  Z = (short)olx_round(TUnitCell::GetMatrixMultiplier(Latt)*(MatrixCount()+1)*zp);
   if( Z <= 0 ) Z = 1;
 }
 //..............................................................................

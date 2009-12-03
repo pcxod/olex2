@@ -329,10 +329,6 @@ private:
   DefMacro(Part)
   DefMacro(Afix)
 
-  DefMacro(Degen)
-  DefMacro(SwapExyz)
-  DefMacro(AddExyz)
-
   DefMacro(Dfix)
   DefMacro(Dang)
   DefMacro(Tria)
@@ -346,7 +342,6 @@ private:
 
   DefMacro(ShowQ)
   DefMacro(Mode)
-  DefMacro(Reset)
 
   DefMacro(Text)
   DefMacro(ShowStr)

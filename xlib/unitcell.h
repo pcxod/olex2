@@ -248,6 +248,7 @@ protected:
 public:
   void LibVolumeEx(const TStrObjList& Params, TMacroError& E);
   void LibCellEx(const TStrObjList& Params, TMacroError& E);
+  void LibMatrixCount(const TStrObjList& Params, TMacroError& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 };
 

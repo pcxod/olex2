@@ -23,10 +23,12 @@ AddOption('--olx_sse',
           help='Only for optimised version, inserts given SSE, SSE2 or none instructions')
 
 architecture = platform.architecture()[0]
+env_arch = 'x86'
 if not architecture:
   architecture = 'unknown'
-if architecture == '64bit':
+elif architecture == '64bit':
   sse = None
+  env_arch = 'x86_64'
 print 'Build architecture: ' + architecture
 
 if debug or sys.platform[:3] != 'win' or architecture == '64bit':
@@ -59,7 +61,7 @@ variables = Variables()
 variables.AddVariables(
     EnumVariable('TOOL', 'The tool to use', def_tool, allowed_values=('vc8', 'vc9', 'gnu', 'intel'))
     )
-env = Environment(ENV = os.environ, variables = variables)
+env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch)
 Help(variables.GenerateHelpText(env))
 
 if env['TOOL'] == 'vc8':
@@ -159,7 +161,10 @@ if sys.platform[:3] == 'win':
             help='Locaton of the wxWidgets library')
   wxFolder = GetOption('wxFolder')
   if not wxFolder:
-    wxFolder = os.environ.get('WX_DIR')
+    if architecture == '64bit':
+      wxFolder = os.environ.get('WX64_DIR')
+    else:
+      wxFolder = os.environ.get('WX_DIR')
   if not wxFolder:
     print 'Please provide --wxdir=wxWidgets_root_folder or set WX_DIR system variable to point to wxWidgets root folder'
     Exit(0)
@@ -183,29 +188,31 @@ if sys.platform[:3] == 'win':
     env.Append(CPPPATH=[pyFolder+'include'])
   if architecture == '64bit':
     env.Append(LINKFLAGS=['/MACHINE:X64'])
-    lib_64 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib\x64',
-              r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\lib\amd64']
-    for p in lib_64:
-      if os.path.exists(p):
-        env.Append(LIBPATH=[p])  
-    inc_64 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Include',
-              r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include']
-    for p in inc_64:
-      if os.path.exists(p):
-        env.Append(CPPPATH=[p])
-    env['ENV']['PATH'] = r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\bin\x64' +\
-                         os.pathsep + r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\amd64' +\
-                         os.pathsep + env['ENV']['PATH']
+    env['TARGET_ARCH'] = 'x86_64'
+    #lib_64 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib\x64',
+              #r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\lib\amd64']
+    #for p in lib_64:
+      #if os.path.exists(p):
+        #env.Append(LIBPATH=[p])  
+    #inc_64 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Include',
+              #r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include']
+    #for p in inc_64:
+      #if os.path.exists(p):
+        #env.Append(CPPPATH=[p])
+    #env['ENV']['PATH'] = r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\bin\x64' +\
+                         #os.pathsep + r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\amd64' +\
+                         #os.pathsep + env['ENV']['PATH']
   else:
     env.Append(LINKFLAGS=['/MACHINE:X86'])
-    lib_32 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib',
-              r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\lib']
-    for p in lib_32:
-      if os.path.exists(p):
-        env.Append(LIBPATH=[p])  
-    env['ENV']['PATH'] = r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\bin' +\
-                         os.pathsep + r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin' +\
-                         os.pathsep + env['ENV']['PATH']
+    env['TARGET_ARCH'] = 'x86'
+    #lib_32 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib',
+              #r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\lib']
+    #for p in lib_32:
+      #if os.path.exists(p):
+        #env.Append(LIBPATH=[p])  
+    #env['ENV']['PATH'] = r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\bin' +\
+                         #os.pathsep + r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin' +\
+                         #os.pathsep + env['ENV']['PATH']
   # generic libs
   env.Append(LIBS = Split(""" mapi32 glu32 user32 opengl32 gdi32 ole32 
                              advapi32 comdlg32 comctl32 shell32 rpcrt4 oleaut32
