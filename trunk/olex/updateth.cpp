@@ -98,10 +98,18 @@ int UpdateThread::Run()  {
     olxstr cmd_fn( TEFile::ParentDir(dfs.GetBase()) + patcher::PatchAPI::GetUpdaterCmdFileName());
     if( TEFile::Exists(cmd_fn) )  {
       TStrList pc;
+#ifdef _UNICODE
       TUtf8File::ReadLines(cmd_fn, pc);
+#else
+      pc.LoadFromFile(cmd_fn);
+#endif
       cmds.Insert(0, pc);
     }
+#ifdef _UNICODE
     TUtf8File::WriteLines(cmd_fn, cmds);
+#else
+    cmds.SaveToFile(cmd_fn);
+#endif
     // mark download as complete
     if( !Index->IsInterrupted() )  {
       //TBasicApp::GetLog().Info("Done update downloading");
