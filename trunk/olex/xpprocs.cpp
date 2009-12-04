@@ -470,7 +470,7 @@ void TMainForm::funHtmlPanelWidth(const TStrObjList &Cmds, TMacroError &E)  {
   if( FHtml == NULL || FHtmlMinimized )
     E.SetRetVal( olxstr("-1") );
   else
-    E.SetRetVal( GetHtml()->WI.GetWidth() );
+    E.SetRetVal(GetHtml()->WI.GetWidth());
 }
 void TMainForm::funColor(const TStrObjList& Params, TMacroError &E)  {
   wxColourDialog CD(this);
@@ -487,9 +487,8 @@ void TMainForm::funColor(const TStrObjList& Params, TMacroError &E)  {
     }
     else if( Params[0].Equalsi("hex") )  {
       char* bf = new char [35];
-      sprintf( bf, "#%.2x%.2x%.2x", wc.Red(), wc.Green(), wc.Blue() );
-      E.SetRetVal( olxstr(bf) );
-      delete [] bf;
+      sprintf( bf, "#%.2x%.2x%.2x", wc.Red(), wc.Green(), wc.Blue());
+      E.SetRetVal(olxcstr::FromExternal(bf, olxstr::o_strlen(bf)));
     }
   }
   else
@@ -502,7 +501,7 @@ void TMainForm::funZoom(const TStrObjList &Cmds, TMacroError &E)  {
   else  {
     double zoom = FXApp->GetRender().GetZoom() + Cmds[0].ToDouble();
     if( zoom < 0.001 )  zoom = 0.001;
-    FXApp->GetRender().SetZoom( zoom );
+    FXApp->GetRender().SetZoom(zoom);
   }
 }
 #ifdef __WIN32__
@@ -540,17 +539,7 @@ void TMainForm::funLoadDll(const TStrObjList &Cmds, TMacroError &E)  {
 //..............................................................................
 void TMainForm::macBasis(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
 // the events are handled in void TMainForm::CellVChange()
-  if( Cmds.IsEmpty() )  {
-//    TStateChange sc(prsBasisVis, !FXApp->BasisVisible());
-    FXApp->SetBasisVisible( !FXApp->IsBasisVisible() );
-//    OnStateChange->Execute((AEventsDispatcher*)this, &sc);
-  }
-  else  {
-    bool status = Cmds[0].ToBool();
-//    TStateChange sc(prsBasisVis, status );
-    FXApp->SetBasisVisible( status );
-//    OnStateChange->Execute((AEventsDispatcher*)this, &sc);
-  }
+  FXApp->SetBasisVisible(Cmds.IsEmpty() ? !FXApp->IsBasisVisible() : Cmds[0].ToBool());
 }
 //..............................................................................
 void TMainForm::macLines(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -635,30 +624,6 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     int PixelFormat = ChoosePixelFormat(dDC, &pfd);
     SetPixelFormat(dDC, PixelFormat, &pfd);
   HGLRC dglc = wglCreateContext(dDC);
-  // gl2ps test
-  //int vp[] = {0,0,BmpWidth,BmpHeight};
-  //TEFile pdfout("c:/olex2.pdf", "w+b");
-  //int state = GL2PS_OVERFLOW, buffersize = 0;
-
-  //while( state == GL2PS_OVERFLOW )  {
-  //  buffersize += 1024*1024;
-  //  state = gl2psBeginPage( "Olex2 output", "Olex2",
-  //                  vp,
-  //                  GL2PS_PDF,
-  //                  GL2PS_SIMPLE_SORT,
-  //                  GL2PS_USE_CURRENT_VIEWPORT | GL2PS_DRAW_BACKGROUND,
-  //                  GL_RGBA, 0,
-  //                  NULL,
-  //                  0, 0, 0,
-  //                  buffersize,
-  //                  pdfout.Handle(),
-  //                  "pdfout"
-  //                  );
-  //  FXApp->Draw();
-  //  GdiFlush();
-  //  state = gl2psEndPage();
-  //}
-  // end gl2ps test
   FXApp->GetRender().Resize(0, 0, BmpWidth, BmpHeight, res);
   wglMakeCurrent(dDC, dglc);
   FBitmapDraw = true;
@@ -716,13 +681,13 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( TEFile::ExtractFileExt(outFN).Equalsi("bmp") )
     return;
   wxImage image;
-  image.LoadFile( bmpFN.u_str(), wxBITMAP_TYPE_BMP);
+  image.LoadFile(bmpFN.u_str(), wxBITMAP_TYPE_BMP);
   if( !image.Ok() )  {
     Error.ProcessingError(__OlxSrcInfo, "could not process image conversion" );
     return;
   }
   image.SetOption(wxT("quality"), 85);
-  image.SaveFile( outFN.u_str() );
+  image.SaveFile(outFN.u_str() );
   image.Destroy();
   TEFile::DelFile(bmpFN);
 #else
@@ -862,7 +827,7 @@ void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       wxTheClipboard->SetData( new wxTextDataObject(clipbrd.u_str()) );
     wxTheClipboard->Close();
   }
-  TBasicApp::GetLog() << ("The environment list was placed to clipboard\n");
+  TBasicApp::GetLog() << "The environment list was placed to theclipboard\n";
 }
 //..............................................................................
 void TMainForm::macGrow(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
@@ -918,10 +883,9 @@ void TMainForm::macUniq(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Error.ProcessingError(__OlxSrcInfo, "no atoms provided");
     return;
   }
-
   TNetPList L, L1;
   for( size_t i=0; i < Atoms.Count(); i++ )
-    L.Add( &Atoms[i]->Atom().GetNetwork());
+    L.Add(Atoms[i]->Atom().GetNetwork());
   FXApp->InvertFragmentsList(L, L1);
   FXApp->FragmentsVisible(L1, false);
   FXApp->CenterView(true);
@@ -4512,26 +4476,27 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void TMainForm::macDelta(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.Count() == 1 )  {
-    float delta = Cmds[0].ToDouble();
-    if( delta < 0.1 || delta > 0.9 )  delta = 0.5;
-    FXApp->XFile().GetLattice().SetDelta( delta );
+    double delta = Cmds[0].ToDouble();
+    if( delta < 0.1 || delta > 0.9 )
+      delta = 0.5;
+    FXApp->XFile().GetLattice().SetDelta(delta );
     Macros.ProcessMacro("fuse", E);
-    return;
   }
-  TBasicApp::GetLog() << ( olxstr("Current delta (covalent bonds) is: ") << FXApp->XFile().GetLattice().GetDelta() << '\n' );
+  else
+    TBasicApp::GetLog() << ( olxstr("Current delta (covalent bonds) is: ") << FXApp->XFile().GetLattice().GetDelta() << '\n' );
 }
 //..............................................................................
 void TMainForm::macDeltaI(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.Count() == 1 )  {
-    float deltai = Cmds[0].ToDouble();
+    double deltai = Cmds[0].ToDouble();
     if( deltai < 0.9 )
       deltai = 0.9;
     else if( deltai > 3 )  
       deltai = 3;
-    FXApp->XFile().GetLattice().SetDeltaI( deltai );
-    return;
+    FXApp->XFile().GetLattice().SetDeltaI(deltai);
   }
-  TBasicApp::GetLog() << ( olxstr("Current delta (short interactions bonds) is: ") << FXApp->XFile().GetLattice().GetDeltaI() << '\n' );
+  else
+    TBasicApp::GetLog() << ( olxstr("Current delta (short interactions bonds) is: ") << FXApp->XFile().GetLattice().GetDeltaI() << '\n' );
 }
 //..............................................................................
 void TMainForm::macPython(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -4567,7 +4532,7 @@ void TMainForm::funEval(const TStrObjList& Params, TMacroError &E)  {
   TStrPObjList<olxstr,TSOperation*> Funcs;
   TSOperation S(NULL, &Funcs, &Vars, NULL);
   if( S.LoadFromExpression(Params[0]) == 0 )
-  {  E.SetRetVal( S.Evaluate() );  }
+    E.SetRetVal(S.Evaluate());
 }
 //..............................................................................
 void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -4596,16 +4561,14 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
       
       if( menu )  break;
     }
-
-    if( ! menu )  mi = 0;
-    else          mi = toks.Count() - 1 - mi;
-
+    mi = (menu == NULL ? 0 : toks.Count() - 1 - mi);
     for( size_t i=mi; i < toks.Count(); i++ )  {
       if( (i+1) == toks.Count() )  {
         int accell = AccMenus.GetLastId();
-        if( !accell ) accell = 1000;
-        else          accell++;
-
+        if( accell == 0 )
+          accell = 1000;
+        else
+          accell++;
         if( Cmds.Count() == 3 )  {
           size_t insindex = menu->FindItem( Cmds[2].u_str() );
           if( insindex == InvalidIndex )  insindex = 0;
@@ -4626,7 +4589,7 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
             TMenuItem* item = new TMenuItem(itemType, accell, menu, toks[i]);
             if( !modeDependent.IsEmpty() )  item->SetActionQueue( OnModeChange, modeDependent, TMenuItem::ModeDependent );
             if( !stateDependent.IsEmpty() )  item->SetActionQueue( OnStateChange, stateDependent, TMenuItem::StateDependent );
-            if( Cmds.Count() > 1 )  item->SetCommand( Cmds[1] );
+            if( Cmds.Count() > 1 )  item->SetCommand(Cmds[1]);
             menu->Append( item );
             AccMenus.AddAccell(accell, item );
           }
@@ -4636,15 +4599,15 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
         TMenu* smenu = new TMenu();
         if( !menu )  {
           if( Cmds.Count() == 3 )  {
-            size_t insindex = MenuBar->FindMenu( Cmds[2].u_str() );
+            size_t insindex = MenuBar->FindMenu(Cmds[2].u_str());
             if( insindex == InvalidIndex )  insindex = 0;
-            MenuBar->Insert( insindex, smenu, toks[i].u_str() );
+            MenuBar->Insert(insindex, smenu, toks[i].u_str());
           }
           else
-            MenuBar->Append( smenu, toks[i].u_str() );
+            MenuBar->Append(smenu, toks[i].u_str());
         }
         else
-          menu->Append( -1, toks[i].u_str(), (wxMenu*)smenu );
+          menu->Append(-1, toks[i].u_str(), (wxMenu*)smenu);
         olxstr addedMenuName;
         for( size_t j=0; j <= i; j++ )  {
           addedMenuName << toks[j];
@@ -4657,8 +4620,10 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
   }
   else  {
     int accell = AccMenus.GetLastId();
-    if( !accell ) accell = 1000;
-    else          accell++;
+    if( accell == 0 )
+      accell = 1000;
+    else
+      accell++;
     menuName = Cmds[0].SubStringFrom(ind+1);
     if( menuName == '#' )  menu->AppendSeparator();
     else  {
@@ -4674,15 +4639,16 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
           if( !modeDependent.IsEmpty() )  item->SetActionQueue( OnModeChange, modeDependent, TMenuItem::ModeDependent );
           if( !stateDependent.IsEmpty() )  item->SetActionQueue( OnStateChange, stateDependent, TMenuItem::StateDependent );
           menu->Insert(insindex, item );
-          AccMenus.AddAccell(accell, item );  }
+          AccMenus.AddAccell(accell, item );
         }
+      }
       else  {
         if( itemType == mtSeparator )  menu->AppendSeparator();
         else  {
           TMenuItem* item = new TMenuItem(itemType, accell, menu, menuName);
           if( !modeDependent.IsEmpty() )  item->SetActionQueue( OnModeChange, modeDependent, TMenuItem::ModeDependent );
           if( !stateDependent.IsEmpty() )  item->SetActionQueue( OnStateChange, stateDependent, TMenuItem::StateDependent );
-          if( Cmds.Count() > 1 )  item->SetCommand( Cmds[1] );
+          if( Cmds.Count() > 1 )  item->SetCommand(Cmds[1]);
           menu->Append(item);
           AccMenus.AddAccell(accell, item);
         }
@@ -4696,13 +4662,13 @@ void TMainForm::macDeleteMenu(TStrObjList &Cmds, const TParamList &Options, TMac
   if( menu == NULL )  {
     size_t ind = Cmds[0].LastIndexOf(';');
     if( ind == InvalidIndex )  return;
-    olxstr menuName = Cmds[0].SubStringTo( ind );
-    olxstr itemName =  Cmds[0].SubStringFrom( ind+1 );
+    olxstr menuName = Cmds[0].SubStringTo(ind);
+    olxstr itemName =  Cmds[0].SubStringFrom(ind+1);
     menu = Menus[menuName];
     if( menu == NULL )  return;
     ind = menu->FindItem(itemName.u_str());
     if( ind == InvalidIndex )  return;
-    menu->Destroy( ind );
+    menu->Destroy(ind);
   }
   else
   {   /*
@@ -7477,9 +7443,6 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
     TBasicApp::GetLog() << "SHA256: " << SHA256::Digest(f) << '\n';
     TBasicApp::GetLog() << olxstr::FormatFloat(3, ((double)f.Length()/(((TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s\n";
   }
-  olxcstr rv = encoding::base64::encode("Don't forget to check out out online Base 64 Decoder.");
-  olxcstr rv1 = encoding::base64::decode("RG9uJ3QgZm9yZ2V0IHRvIGNoZWNrIG91dCBvdXQgb25saW5lIEJhc2UgNjQgRGVjb2Rlci4=");
-  rv = encoding::base64::decode(rv);
   using namespace esdl::exparse;
   EvaluableFactory evf;
   context cx;
@@ -7496,7 +7459,7 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   iv = _exp.build("c = a.sub(0,3) == b.sub(0,3)");
   iv = _exp.build("c = b.sub(0,3) + 'dfg'");
   iv = _exp.build("c = 1.2 + 1.1 - .05");
-  iv = _exp.build("return 1.2 + 1.1 - .05");
+  iv = _exp.build("1.2 + 1.1 - abs(-.05)*cos(PI/2)");
   //iv = _exp.build("if(a){ a = a.sub(0,3); }else{ a = a.sub(0,4); }");
   if( !iv->is_final() )  {
     IEvaluable* iv1 = iv->_evaluate();

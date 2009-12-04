@@ -84,7 +84,7 @@ template <class VC>
 template <class VC>
   double TorsionAngle(const VC& v1, const VC& v2, const VC& v3, const VC& v4)  {
     const VC a( (v1-v2).XProdVec(v3-v2) ), 
-             b( (v4-v3).XProdVec(v2-v3) ); 
+             b( (v2-v3).XProdVec(v4-v3) ); 
     if( a.QLength()*b.QLength() < 1e-15 )
       throw TDivException(__OlxSourceInfo);
     return acos(a.CAngle(b))*180/M_PI;
