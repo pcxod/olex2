@@ -6,25 +6,23 @@
 BeginEsdlNamespace()
 
 namespace exparse  {
-
   struct StringValue : public IEvaluable  {
     olxstr val;
-    static ClassRegistry<olxstr> functions;
-    static LibraryRegistry globals;
+    static ClassInfo<olxstr> info;
     StringValue(const olxstr& v) : val(v) {}
-    virtual IEvaluable* _evaluate() const {
-      throw 1;
-    }
+    virtual IEvaluable* _evaluate() const {  throw 1;  }
     virtual IEvaluable* find_property(const olxstr& name) {
       throw TNotImplementedException(__OlxSourceInfo);
     }
-    virtual IEvaluable* find_method(const olxstr& name, const EvaluableFactory& ef, const TPtrList<IEvaluable>& args) {
-      size_t i = functions.index_of(name, args.Count());
+    virtual IEvaluable* find_method(const olxstr& name, const EvaluableFactory& ef, 
+      const TPtrList<IEvaluable>& args, IEvaluable* proxy=NULL)
+    {
+      size_t i = info.functions.index_of(name, args.Count());
       if( i == InvalidIndex )  {
-        i = globals.index_of(name, args.Count());
-        return i == InvalidIndex ? NULL : globals.create_from_index(ef, i, args);
+        i = info.globals.index_of(name, args.Count());
+        return i == InvalidIndex ? NULL : info.globals.create_from_index(ef, i, args);
       }
-      return functions.create_from_index(*this, ef, &val, i, args);
+      return info.functions.create_from_index(proxy == NULL ? *this : *proxy, ef, i, args);
     }
     static cast_result str_cast(const IEvaluable* i)  {  
       return cast_result(&(IEvaluable::cast_helper<StringValue>(i))->val, false);  
@@ -41,13 +39,13 @@ namespace exparse  {
     static bool equals(const olxstr& a, const olxstr& b)  {  return a.Equals(b); }
     static bool equalsi(const olxstr& a, const olxstr& b)  {  return a.Equalsi(b); }
     static void init_library()  {
-      if( !globals.is_empty() )  return;
-      functions.add("sub", &olxstr::SubString);
-      functions.add<size_t>("len", &olxstr::Length);  // gcc...
-      globals.add("+", &StringValue::add);
-      globals.add("==", &StringValue::equals);
-      globals.add("equals", &StringValue::equals);
-      globals.add("equalsi", &StringValue::equals);
+      if( !info.is_empty() )  return;
+      info.functions.add("sub", &olxstr::SubString);
+      info.functions.add<size_t>("len", &olxstr::Length);  // gcc...
+      info.globals.add("+", &StringValue::add);
+      info.globals.add("==", &StringValue::equals);
+      info.globals.add("equals", &StringValue::equals);
+      info.globals.add("equalsi", &StringValue::equals);
     }
   };
 };  // namespace exparse

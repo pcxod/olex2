@@ -1620,6 +1620,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\sdl\exparse\expvalue.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\sdl\exparse\funcwrap.h"
 					>
 				</File>

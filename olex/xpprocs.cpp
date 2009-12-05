@@ -7448,25 +7448,36 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   context cx;
   context::init_global(cx);
   evf.types.Add(&typeid(olxstr), new StringValue(""));
+  evf.classes.Add(&typeid(olxstr), &StringValue::info);
   StringValue::init_library();
 
   exp_builder _exp(evf, cx);
   IEvaluable* iv = _exp.build("a = 'ab c, de\\';()'");
   iv = _exp.build("b = 'ab c'");
   //_exp.scope.add_var("a", new StringValue("abcdef"));
-  //iv = _exp.build("a.sub(0,4).sub(1,3).len()");
-  iv = _exp.build("x = a.sub (0,4).len() + b.len()");
-  iv = _exp.build("c = a.sub(0,3) == b.sub(0,3)");
-  iv = _exp.build("c = b.sub(0,3) + 'dfg'");
-  iv = _exp.build("c = 1.2 + 1.1 - .05");
-  iv = _exp.build("1.2 + 1.1 - abs(-.05)*cos(PI/2)");
-  //iv = _exp.build("if(a){ a = a.sub(0,3); }else{ a = a.sub(0,4); }");
+  iv = _exp.build("a.sub(0,4).sub(1,3).len()");
   if( !iv->is_final() )  {
     IEvaluable* iv1 = iv->_evaluate();
     delete iv1;
   }
-  if( iv->ref_cnt == 0 )
-    delete iv;
+  if( iv->ref_cnt == 0 )  delete iv;
+  iv = _exp.build("x = a.sub (0,4).len() + b.len()");
+  iv = _exp.build("c = a.sub(0,3) == b.sub(0,3)");
+  iv = _exp.build("c = b.sub(0,3) + 'dfg'");
+  iv = _exp.build("c = 1.2 + 1.1 - .05");
+  iv = _exp.build("a.len() + 1.2 + 1.1 - abs(-.05)*cos(PI/2)");
+  //iv = _exp.build("if(a){ a = a.sub(0,3); }else{ a = a.sub(0,4); }");
+  if( !iv->is_final() )  {
+    IEvaluable* iv1 = iv->_evaluate();
+    delete iv1;
+    iv1 = _exp.build("a = 'cos(a)'");
+    iv1 = iv->_evaluate();
+    delete iv1;
+    iv1 = _exp.build("a = cos(c)");
+    iv1 = iv->_evaluate();
+    delete iv1;
+  }
+  if( iv->ref_cnt == 0 )  delete iv;
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {

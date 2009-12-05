@@ -2,7 +2,7 @@
 #define __olx_evaluable_H
 #include "../ebase.h"
 #include "../edict.h"
-
+#include "expvalue.h"
 BeginEsdlNamespace()
 
 namespace exparse  {
@@ -23,12 +23,6 @@ namespace exparse  {
       if( ref_cnt != 0 )
         throw 1;
     }
-    struct cast_result  {
-      const void* value;
-      bool temporary;  // the value must be deleted
-      cast_result(const cast_result& cr) : value(cr.value), temporary(cr.temporary)  {}
-      cast_result(const void* val, bool tmp) : value(val), temporary(tmp) {} 
-    };
     virtual IEvaluable* _evaluate() const = 0;
     typedef cast_result (*cast_operator)(const IEvaluable*);
     typedef olxdict<std::type_info const*, cast_operator, TPointerPtrComparator> operator_dict;
@@ -41,35 +35,19 @@ namespace exparse  {
     virtual IEvaluable* find_property(const olxstr& name) {
       throw TNotImplementedException(__OlxSourceInfo);
     }
-    virtual IEvaluable* find_method(const olxstr& name, const struct EvaluableFactory&, const TPtrList<IEvaluable>& args) {
+    virtual IEvaluable* find_method(const olxstr& name, const struct EvaluableFactory&, 
+      const TPtrList<IEvaluable>& args, IEvaluable* proxy=NULL)
+    {
       return NULL;
     }
     virtual bool is_final() const {  return false;  }
-    inline const IEvaluable& inc_ref() const {  ref_cnt++;  return *this;  }
-    inline int dec_ref() const {  return --ref_cnt;  }
+    inline int inc_ref() const {  return ++ref_cnt;  }
+    inline int dec_ref() const {
+      if( --ref_cnt < 0 )
+        throw 1;
+      return ref_cnt;
+    }
 
-    template <class T> struct val_wrapper  {
-      T* val;
-      mutable bool do_delete;
-      val_wrapper(const val_wrapper& v) : val(v.val), do_delete(v.do_delete)  {  v.do_delete = false;  }  
-      val_wrapper(const cast_result& cr) : val((T*)cr.value), do_delete(cr.temporary)  {}
-      ~val_wrapper()  {  
-        if( do_delete )
-          delete val;  
-      }
-      operator const T& ()  {  return *val;  }
-    };
-    template <class T> struct val_wrapper<const T&>  {
-      T* val;
-      mutable bool do_delete;
-      val_wrapper(const val_wrapper& v) : val(v.val), do_delete(v.do_delete)  {  v.do_delete = false;  }  
-      val_wrapper(const cast_result& cr) : val((T*)cr.value), do_delete(cr.temporary)  {}
-      ~val_wrapper()  {  
-        if( do_delete )
-          delete val;  
-      }
-      operator const T& ()  {  return *val;  }
-    };
     template <class T> struct caster  {
       cast_operator co;
       caster(cast_operator _co) : co(_co){}
@@ -82,6 +60,11 @@ namespace exparse  {
     };
 
     template <typename T> val_wrapper<T> cast() const {
+      if( !is_final() )  {
+        IEvaluable* tmp = _evaluate();
+        val_wrapper<T> rv(tmp->cast<T>(), tmp);
+        return rv;
+      }
       const std::type_info& ti = typeid(T);
       try  {  
         cast_operator co = get_cast_operator(ti);
@@ -114,7 +97,7 @@ namespace exparse  {
     static cast_result str_cast(const IEvaluable* i)  {  
       return cast_result(new olxstr(IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate()), true);
     }
-    template<class T> static IEvaluable::cast_result primitive_cast(const IEvaluable* i)  {  
+    template<class T> static cast_result primitive_cast(const IEvaluable* i)  {  
       return cast_result(new T((T)IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate()), true);  
     }
     template<class T> static void register_cast()  {  cast_operators.Add(&typeid(T), &ANumberEvaluator::primitive_cast<T>);  }
@@ -179,6 +162,7 @@ namespace exparse  {
 
   struct EvaluableFactory  {
     olxdict<std::type_info const*, IEvaluable*, TPointerPtrComparator> types;
+    olxdict<std::type_info const*, struct IClassInfo*, TPointerPtrComparator> classes;
     template <class T> void add_ptype()  {
       types.Add(&typeid(T), new TPrimitiveEvaluator<TPrimitiveInstance<T>,T>(0));
     }

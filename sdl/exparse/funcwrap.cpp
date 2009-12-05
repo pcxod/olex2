@@ -1,5 +1,12 @@
 #include "funcwrap.h"
 
+using namespace exparse;
+//IEvaluable* IBasicFunction::find_method(const olxstr& name, const EvaluableFactory& f, const TPtrList<IEvaluable>& args) {
+//  size_t i = f.classes.IndexOf(&get_RV_type());
+//  if( i == InvalidIndex )  return NULL;
+//  return f.classes.GetValue(i)->find(name, args.Count());
+//}
+
 void vtest_0() {}
 void vtest_1(bool v)  {}
 void vtest_2(bool v1, bool v2)  {}
@@ -18,7 +25,7 @@ struct test_struct  {
   bool test_2(bool v1, bool v2)  {  return v1 && v2;  }
 };
 
-void exparse::LibraryRegistry::CompileTest()  {
+void LibraryRegistry::CompileTest()  {
   LibraryRegistry lr;
   lr.add("vtest", &vtest_0);
   lr.add("vtest", &vtest_1);

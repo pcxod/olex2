@@ -2,8 +2,7 @@
 
 using namespace esdl::exparse;
 
-ClassRegistry<olxstr> StringValue::functions;
-LibraryRegistry StringValue::globals;
+ClassInfo<olxstr> StringValue::info;
 
 //......................................................................................................
 bool exp_builder::needs_sorting(expression_tree* root)  {
@@ -142,10 +141,16 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root)  {
       throw TFunctionFailedException(__OlxSourceInfo, "invalid indirection");
     while( root->right != NULL && root->right->evator != NULL )  {
       rv = evaluator_from_evator(root->right, left);
-      IEvaluable* eval = rv->_evaluate();
-      if( rv->ref_cnt == 0 )  delete rv;
-      if( left->ref_cnt == 0 )  delete left;
-      left = rv = eval;
+      if( rv->is_final() )  {
+        IEvaluable* eval = rv->_evaluate();
+        if( rv->ref_cnt == 0 )  delete rv;
+        if( left->ref_cnt == 0 )  delete left;
+        left = rv = eval;
+      }
+      else  {
+        if( left->ref_cnt == 0 )  delete left;
+        left = rv;
+      }
       root = root->right;
     }
     if( root->right != NULL )  {  // anything more left?
@@ -206,13 +211,13 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root)  {
         {
           return new StringValue(root->data.Trim(root->data.CharAt(0)));
         }
-        size_t ind = scope.consts.IndexOf(root->data);
-        if( ind != InvalidIndex )
-          return scope.consts.GetValue(ind);
-        ind = scope.vars.IndexOf(root->data);
-        if( ind == InvalidIndex )
+        IEvaluable* rv = scope.find_const(root->data);
+        if( rv != NULL )
+          return rv;
+        rv = scope.find_var(root->data);
+        if( rv == NULL )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("undefined variable: ") << root->data);
-        return scope.vars.GetValue(ind);
+        return rv;
       }
     }
   }
