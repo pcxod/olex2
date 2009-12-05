@@ -176,6 +176,8 @@ void expression_tree::expand()  {
             left = eta->left;
             right = eta->right;
             evator = eta->evator;
+            if( left != NULL )  left->parent = this;
+            if( right != NULL )  right->parent = this;
             data = eta->data;
             eta->left = eta->right = NULL;
             eta->evator = NULL;
