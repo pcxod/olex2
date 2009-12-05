@@ -51,18 +51,18 @@ namespace exparse  {
     template <class T> struct caster  {
       cast_operator co;
       caster(cast_operator _co) : co(_co){}
-      val_wrapper<T> cast(const IEvaluable* i) const {  return val_wrapper<T>((*co)(i));  }
+      val_wrapper<T,IEvaluable> cast(const IEvaluable* i) const {  return val_wrapper<T,IEvaluable>((*co)(i));  }
     };
     template <class T> struct caster<const T&>  {
       cast_operator co;
       caster(cast_operator _co) : co(_co){}
-      val_wrapper<const T&> cast(const IEvaluable* i) const {  return val_wrapper<const T&>((*co)(i));  }
+      val_wrapper<const T&,IEvaluable> cast(const IEvaluable* i) const {  return val_wrapper<const T&,IEvaluable>((*co)(i));  }
     };
 
-    template <typename T> val_wrapper<T> cast() const {
+    template <typename T> val_wrapper<T,IEvaluable> cast() const {
       if( !is_final() )  {
         IEvaluable* tmp = _evaluate();
-        val_wrapper<T> rv(tmp->cast<T>(), tmp);
+        val_wrapper<T,IEvaluable> rv(tmp->cast<T>(), tmp);
         return rv;
       }
       const std::type_info& ti = typeid(T);
