@@ -7463,6 +7463,9 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   if( iv->ref_cnt == 0 )  delete iv;
   iv = _exp.build("x = a.sub (0,4).len() + b.len()");
   iv = _exp.build("c = a.sub(0,3) == b.sub(0,3)");
+  iv = _exp.build("c = a.sub(0,3) != b.sub(0,3)");
+  iv = _exp.build("c = !(a.sub(0,3) == b.sub(0,3))");
+  iv = _exp.build("c = !(a.sub(0,4) == b.sub(0,3))");
   iv = _exp.build("c = b.sub(0,3) + 'dfg'");
   iv = _exp.build("c = 1.2 + 1.1 - .05");
   iv = _exp.build("a.len() + 1.2 + 1.1 - abs(-.05)*cos(PI/2)");

@@ -37,6 +37,7 @@ namespace exparse  {
     // globals section
     static olxstr add(const olxstr& a, const olxstr& b)  {  return a+b; }
     static bool equals(const olxstr& a, const olxstr& b)  {  return a.Equals(b); }
+    static bool nequals(const olxstr& a, const olxstr& b)  {  return !a.Equals(b); }
     static bool equalsi(const olxstr& a, const olxstr& b)  {  return a.Equalsi(b); }
     static void init_library()  {
       if( !info.is_empty() )  return;
@@ -44,6 +45,7 @@ namespace exparse  {
       info.functions.add<size_t>("len", &olxstr::Length);  // gcc...
       info.globals.add("+", &StringValue::add);
       info.globals.add("==", &StringValue::equals);
+      info.globals.add("!=", &StringValue::nequals);
       info.globals.add("equals", &StringValue::equals);
       info.globals.add("equalsi", &StringValue::equals);
     }
