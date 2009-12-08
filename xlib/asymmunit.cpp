@@ -1,5 +1,4 @@
 //----------------------------------------------------------------------------//
-// namespace: crystallographic core
 // TAsymmUnit: a collection of symmetry independent atoms
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
@@ -1026,7 +1025,7 @@ void TAsymmUnit::LibSetZ(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal(Z/(TUnitCell::GetMatrixMultiplier(Latt)*(MatrixCount()+1)));
+  E.SetRetVal(olxstr::FormatFloat(3,(double)Z/(TUnitCell::GetMatrixMultiplier(Latt)*(MatrixCount()+1))));
 }
 //..............................................................................
 void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
