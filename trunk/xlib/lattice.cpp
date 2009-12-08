@@ -1462,23 +1462,23 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
           TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": RN->M" );
         else if( (d1 < 1.5 && d1 > 1.35) || (d2 < 1.5 && d2 > 1.35) )  {
           TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": RNH(2)M" );
-          cg.FixAtom( AE, fgNH2, HAI, NULL, generated);
+          cg.FixAtom(AE, fgNH2, HAI, NULL, generated);
         }
         else if( d1 > 1.72 && d2 > 1.72 )  {
           TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": XX'NH" );
-          cg.FixAtom( AE, fgNH1, HAI, NULL, generated);
+          cg.FixAtom(AE, fgNH1, HAI, NULL, generated);
         }
       }
       else if( v < 120 && d1 > 1.45 && d2 > 1.45 )  {
         TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": R2NH2+" );
-        cg.FixAtom( AE, fgNH2, HAI, NULL, generated);
+        cg.FixAtom(AE, fgNH2, HAI, NULL, generated);
       }
-      else if( v < 120 || d1 < 1.3 || d2 < 1.3 )
+      else if( v < 120 && (d1 < 1.3 || d2 < 1.3) )
         ;
       else  {
         if( (d1+d2) > 2.70 )  {
           TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": XYNH" );
-          cg.FixAtom( AE, fgNH1, HAI, NULL, generated);
+          cg.FixAtom(AE, fgNH1, HAI, NULL, generated);
         }
       }
     }
@@ -1574,6 +1574,18 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
               if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetCAtom(0)), ProcessingAtoms) )
                 pivoting.Clear();
             cg.FixAtom( AE, fgOH1, HAI, &pivoting, generated);
+          }
+        }
+        else  if( AE.GetBAI(0) == iNitrogenIndex )  {
+          if( d > 1.37 )  {
+            TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": NOH" );
+            TAtomEnvi pivoting;
+            UnitCell->GetAtomPossibleHBonds(AE, pivoting);
+            RemoveNonHBonding(pivoting);
+            if( pivoting.Count() > 0 )
+              if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetCAtom(0)), ProcessingAtoms) )
+                pivoting.Clear();
+            cg.FixAtom(AE, fgOH1, HAI, &pivoting, generated);
           }
         }
         else if( d > 1.8 )  {  // coordination bond?
