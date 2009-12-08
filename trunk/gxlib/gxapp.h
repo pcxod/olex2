@@ -198,8 +198,10 @@ public:
   // this function to be used to get all networks, including th overlayed files
   size_t GetNetworks(TNetPList& nets);
   // overlayed files
-  inline size_t OverlayedXFileCount()  const  {  return OverlayedXFiles.Count();  }
+  inline size_t OverlayedXFileCount() const {  return OverlayedXFiles.Count();  }
   TXFile& GetOverlayedXFile(size_t i)  {  return OverlayedXFiles[i];  }
+  // sets current active XFile...
+  void SetActiveXFile(size_t i);
   TXFile& NewOverlayedXFile();
   // aligns overlayed structures on a 2D grid
   void AlignOverlayedXFiles();

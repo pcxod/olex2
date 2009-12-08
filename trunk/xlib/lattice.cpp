@@ -1613,12 +1613,12 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       }
       if( sumAng*180/M_PI > 700 )  {   //!! not sure it works, lol
         TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": X4BH" );
-        cg.FixAtom( AE, fgBH1, HAI, NULL, generated);
+        cg.FixAtom(AE, fgBH1, HAI, NULL, generated);
       }
     }
     else if( AE.Count() == 5 )  {
       TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": X5BH" );
-      cg.FixAtom( AE, fgBH1, HAI, NULL, generated);
+      cg.FixAtom(AE, fgBH1, HAI, NULL, generated);
     }
   }
   else if( atom.GetAtomInfo() == iSiliconIndex )  {
@@ -1631,8 +1631,12 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
         (AE.GetCrd(2)-cnt).Normalise() + cnt);
       if( v > 0.1 )  {
         TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": XYZSiH" );
-        cg.FixAtom( AE, fgSiH1, HAI, NULL, generated);
+        cg.FixAtom(AE, fgSiH1, HAI, NULL, generated);
       }
+    }
+    else if( AE.Count() == 2 )  {  // no validation yet...
+      TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": XYSiH2" );
+      cg.FixAtom(AE, fgSiH2, HAI, NULL, generated);
     }
   }
   else if( atom.GetAtomInfo() == iSulphurIndex )  {

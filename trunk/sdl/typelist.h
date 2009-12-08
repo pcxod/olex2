@@ -107,7 +107,7 @@ public:
     return rv;
   }
   //replaces a list item with given value and returns a pointer to previous object (might be NULL)
-  inline T& Replace(size_t index, T* Obj)  {
+  inline T* Replace(size_t index, T* Obj)  {
     T* rv = List[index];
     List[index] = Obj;
     return rv;
