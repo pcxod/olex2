@@ -3622,6 +3622,17 @@ TXFile& TGXApp::NewOverlayedXFile() {
   return f;
 }
 //..............................................................................
+void TGXApp::SetActiveXFile(size_t i)  {
+  if( i >= OverlayedXFiles.Count() )  return;
+  FXFile = OverlayedXFiles.Replace(i, FXFile);
+  FXFile->OnFileLoad.TakeOver(OverlayedXFiles[i].OnFileLoad);
+  FXFile->OnFileSave.TakeOver(OverlayedXFiles[i].OnFileSave);
+  FXFile->GetLattice().OnDisassemble.TakeOver(OverlayedXFiles[i].GetLattice().OnDisassemble);
+  FXFile->GetLattice().OnStructureGrow.TakeOver(OverlayedXFiles[i].GetLattice().OnStructureGrow);
+  FXFile->GetLattice().OnStructureUniq.TakeOver(OverlayedXFiles[i].GetLattice().OnStructureUniq);
+  //CreateObjects(
+}
+//..............................................................................
 void TGXApp::CalcLatticeRandCenter(const TLattice& latt, double& maxR, vec3d& cnt)  {
   maxR = 0;
   cnt.Null();

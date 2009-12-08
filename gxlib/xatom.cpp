@@ -954,7 +954,7 @@ bool TXAtom::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
 //..............................................................................
 void TXAtom::CreateNormals(TXAtom::Poly& pl, const vec3f& cnt)  {
   const size_t off = pl.norms.Count();
-  pl.norms.SetCapacity( pl.faces.Count() );
+  pl.norms.SetCapacity(pl.faces.Count());
   for( size_t i=off; i < pl.faces.Count(); i++ )  {
     const vec3f& v1 = pl.vecs[pl.faces[i][0]];
     const vec3f& v2 = pl.vecs[pl.faces[i][1]];

@@ -5967,20 +5967,21 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TAsymmUnit& _au = FXApp->XFile().GetAsymmUnit();
-  TUnitCell& uc = FXApp->XFile().GetUnitCell();
-  size_t ac = (size_t)olx_round((uc.CalcVolume()/18.6)/uc.MatrixCount());
-  TPSTypeList<double, TCAtom*> atoms;
-  for( size_t i=0; i < _au.AtomCount(); i++ )
-    atoms.Add(_au.GetAtom(i).GetUiso(), &_au.GetAtom(i));
-  if( ac < _au.AtomCount() )  {
-    size_t df = _au.AtomCount() - ac;
-    for( size_t i=0; i < df; i++ )  {
-      atoms.GetObject(atoms.Count()-i-1)->SetDeleted(true);
-    }
-    FXApp->XFile().EndUpdate();
-  }
-  return;
+  FXApp->SetActiveXFile(0);
+  //TAsymmUnit& _au = FXApp->XFile().GetAsymmUnit();
+  //TUnitCell& uc = FXApp->XFile().GetUnitCell();
+  //size_t ac = (size_t)olx_round((uc.CalcVolume()/18.6)/uc.MatrixCount());
+  //TPSTypeList<double, TCAtom*> atoms;
+  //for( size_t i=0; i < _au.AtomCount(); i++ )
+  //  atoms.Add(_au.GetAtom(i).GetUiso(), &_au.GetAtom(i));
+  //if( ac < _au.AtomCount() )  {
+  //  size_t df = _au.AtomCount() - ac;
+  //  for( size_t i=0; i < df; i++ )  {
+  //    atoms.GetObject(atoms.Count()-i-1)->SetDeleted(true);
+  //  }
+  //  FXApp->XFile().EndUpdate();
+  //}
+  //return;
   
   //wxImage img;
   //img.LoadFile(wxT("c:/tmp/tex2d.jpg"));
@@ -8429,15 +8430,21 @@ void main_CreateWBox(TGXApp& app, const TSAtomPList& atoms, const TTypeList< AnA
 
   TArrayList<vec3f>& poly_d = *(new TArrayList<vec3f>(24));
   TArrayList<vec3f>& poly_n = *(new TArrayList<vec3f>(6));
-  poly_n[0] = normals[0];  poly_n[1] = -normals[0];
-  poly_n[2] = normals[1];  poly_n[3] = -normals[1];
-  poly_n[4] = normals[2];  poly_n[5] = -normals[2];
+  for( int i=0; i < 6; i++ )  {
+    const vec3d cnt((faces[i*4]+faces[i*4+1]+faces[i*4+2]+faces[i*4+3])/4);
+    const vec3f norm = (faces[i*4+1]-faces[i*4]).XProdVec(faces[i*4+3]-faces[i*4]);
+    if( norm.DotProd(cnt) < 0 )  {  // does normal look inside?
+      poly_n[i] = -norm;
+      olx_swap(faces[i*4+1], faces[i*4+3]);
+    }
+    else
+      poly_n[i] = norm;
+  }
   for( int i=0; i < 24; i++ )
 		poly_d[i] = center + faces[i];
-  
   TDUserObj* uo = new TDUserObj(app.GetRender(), sgloQuads, olxstr("wbox") << obj_cnt++);
   uo->SetVertices(&poly_d);
-  uo->SetNormals( &poly_n );
+  uo->SetNormals(&poly_n);
   app.AddObjectToCreate( uo );
   uo->SetMaterial("1029;2566914048;2574743415");
   uo->Create();
