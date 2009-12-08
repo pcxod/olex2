@@ -1,21 +1,16 @@
-//---------------------------------------------------------------------------//
-// get a response
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
-
-#ifndef elogH
-#define elogH
-
+#ifndef __olx_log_H
+#define __olx_log_H
 #include "tptrlist.h"
 #include "egc.h"
 #include "datastream.h"
+#include "actions.h"
 
 BeginEsdlNamespace()
 
 class TLog: public IEObject, public IDataOutputStream  {
   // stream, to delete at the end
   TArrayList<AnAssociation2<IDataOutputStream*, bool> > Streams;
-  class TActionQList *FActions;
+  TActionQList Actions;
 protected:
   virtual size_t Write(const void *Data, size_t size);
   virtual size_t Writenl(const void *Data, size_t size);
@@ -37,10 +32,10 @@ public:
   TLog();
   virtual ~TLog();
   // if own is true, the object will be deleted in the end
-  inline void AddStream( IDataOutputStream* stream, bool own )  {
+  void AddStream(IDataOutputStream* stream, bool own)  {
     Streams.Add(AnAssociation2<IDataOutputStream*, bool>(stream, own));
   }
-  void RemoveStream( IDataOutputStream* stream )  {
+  void RemoveStream(IDataOutputStream* stream)  {
     for( size_t i=0; i < Streams.Count(); i++ )
       if( Streams[i].GetA() == stream )  {
         Streams.Delete(i);
@@ -48,7 +43,7 @@ public:
       }
   }
   // use this operators for unconditional 'printing'
-  inline TLog& operator << (const olxstr &str)  {
+  TLog& operator << (const olxstr &str)  {
     size_t ind = str.IndexOf('\n');
     olxstr tmp(str);
     while( ind != InvalidIndex )  {
@@ -63,34 +58,33 @@ public:
         Streams[i].A()->Write(tmp);
     return *this;
   }
-  template <class SC, class T>
-  inline TLog& operator << (const TTStrList<SC,T> &lst)  {
+  template <class SC, class T> TLog& operator << (const TTStrList<SC,T> &lst)  {
     Add(lst);
     return *this;
   }
 //..............................................................................
-  void Info(const olxstr &msg)  {
-    if( !OnInfo->Enter(this, &TEGC::New<olxstr>(msg)) )
+  void Info(const olxstr& msg)  {
+    if( !OnInfo.Enter(this, &TEGC::New<olxstr>(msg)) )
       Add(msg);
-    OnInfo->Exit(this, NULL);
+    OnInfo.Exit(this, NULL);
   }
 //..............................................................................
-  void Warning(const olxstr &msg)  {
-    if( !OnWarning->Enter(this, &TEGC::New<olxstr>(msg)) )
+  void Warning(const olxstr& msg)  {
+    if( !OnWarning.Enter(this, &TEGC::New<olxstr>(msg)) )
       Add(msg);
-    OnWarning->Exit(this, NULL);
+    OnWarning.Exit(this, NULL);
   }
 //..............................................................................
-  void Error(const olxstr &msg)  {
-    if( !OnError->Enter(this, &TEGC::New<olxstr>(msg)) )
+  void Error(const olxstr& msg)  {
+    if( !OnError.Enter(this, &TEGC::New<olxstr>(msg)) )
       Add(msg);
-    OnError->Exit(this, NULL);
+    OnError.Exit(this, NULL);
   }
 //..............................................................................
-  void Exception(const olxstr &msg)  {
-    if( !OnException->Enter(this, &TEGC::New<olxstr>(msg)) )
+  void Exception(const olxstr& msg)  {
+    if( !OnException.Enter(this, &TEGC::New<olxstr>(msg)) )
       Add(msg);
-    OnException->Exit(this, NULL);
+    OnException.Exit(this, NULL);
   }
 //..............................................................................
   virtual void Flush()  {
@@ -98,10 +92,10 @@ public:
       Streams[i].GetA()->Flush();
   }
 
-  class TActionQueue *OnInfo;
-  class TActionQueue *OnWarning;
-  class TActionQueue *OnError;
-  class TActionQueue *OnException;
+  TActionQueue& OnInfo;
+  TActionQueue& OnWarning;
+  TActionQueue& OnError;
+  TActionQueue& OnException;
 };
 
 EndEsdlNamespace()

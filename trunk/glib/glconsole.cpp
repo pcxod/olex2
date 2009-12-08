@@ -1,5 +1,4 @@
 //----------------------------------------------------------------------------//
-// namespace TEXLib
 // TGlConsole - a console
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
@@ -18,11 +17,10 @@
 #include "integration.h"
 #include "bapp.h"
 
-// keyboard constanst
+// keyboard constanst, silly to include here, but...
 #include "wx/defs.h"
 
-/*
-  There is a slight problem with cursor - depending on object properties it might
+/* There is a slight problem with cursor - depending on object properties it might
   be drawn before the console, and then its position is validated after it is drawn
   in previous position!  ...
 */
@@ -32,7 +30,9 @@ UseGlNamespace()
 //..............................................................................
 
 TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
-  AGDrawObject(R, collectionName)  
+  AGDrawObject(R, collectionName),
+  OnCommand(Actions.New("ONCOMMAND")),
+  OnPost(Actions.New("ONPOST"))
 {
   FLineSpacing = 0;
   Left = Top = 0;
@@ -40,9 +40,6 @@ TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   PromptVisible = true;
   SkipPosting = false;
   Blend = true;
-  FActions = new TActionQList;
-  OnCommand = &FActions->NewQueue("ONCOMMAND");
-  OnPost = &FActions->NewQueue("ONPOST");
   olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
   FCommand = PromptStr;
   FShowBuffer = true;
@@ -63,7 +60,6 @@ TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
 TGlConsole::~TGlConsole()  {
   Parent.BeforeDraw->Remove(this);
   ClearBuffer();
-  delete FActions;
   delete FCursor;
 }
 //..............................................................................
@@ -307,7 +303,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
       }
       FCmdPos = FCommands.Count();
     }
-    OnCommand->Execute(dynamic_cast<IEObject*>((AActionHandler*)this) );
+    OnCommand.Execute(dynamic_cast<IEObject*>((AActionHandler*)this) );
     if( FCommand.IsEmpty() )  {
       olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
       FCommand = PromptStr;
@@ -372,7 +368,7 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hyphenate)  {
     }
     else
       FBuffer.Add(Tmp, GlM);
-    OnPost->Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &Tmp );
+    OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &Tmp );
   }
 
   KeepSize();
@@ -410,7 +406,7 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  
         }
         else
           FBuffer.Add(Txt[j], GlM);
-        OnPost->Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &Txt[j] );
+        OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &Txt[j] );
       }
     }
     else  {
@@ -422,7 +418,7 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  
       }
       else
         FBuffer.Add(Tmp, GlM);
-      OnPost->Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &Tmp );
+      OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &Tmp );
     }
   }
   KeepSize();

@@ -8,8 +8,8 @@
 
 UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0), PatchDir(patch_dir), 
   srcFS(NULL), destFS(NULL), Index(NULL), _DoUpdate(false), UpdateSize(0),
-  OnDownload(Actions.NewQueue("ON_DOWNLOAD")),
-  OnAction(Actions.NewQueue("ON_ACTION"))  {}
+  OnDownload(Actions.New("ON_DOWNLOAD")),
+  OnAction(Actions.New("ON_ACTION"))  {}
 //....................................................................................
 void UpdateThread::DoInit()  {
   if( !TBasicApp::HasInstance() || Terminate ) 

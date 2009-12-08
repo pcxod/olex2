@@ -65,7 +65,7 @@ public:
   TLattice();
   virtual ~TLattice();
 
-  TActionQueue* OnStructureGrow, *OnStructureUniq, *OnDisassemble;
+  TActionQueue &OnStructureGrow, &OnStructureUniq, &OnDisassemble;
 
   // this is does not have any usefull data - just for functions call!!!
   inline TNetwork& GetNetwork()  const  {  return *Network; }

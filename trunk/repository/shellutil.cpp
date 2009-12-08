@@ -114,7 +114,7 @@ olxstr TShellUtil::GetSpecialFolderLocation( short folderId )  {
     LPMALLOC shellMalloc;
     if( SHGetMalloc(& shellMalloc ) == NOERROR )
       shellMalloc->Free( items );
-    return TEFile::AddTrailingBackslashI( retVal );
+    return TEFile::AddPathDelimeterI( retVal );
   }
   return EmptyString;
 #else
@@ -130,7 +130,7 @@ olxstr TShellUtil::GetSpecialFolderLocation( short folderId )  {
       default:
         throw TInvalidArgumentException(__OlxSourceInfo, "unknown identifier");
     }
-    return TEFile::AddTrailingBackslashI( retVal );
+    return TEFile::AddPathDelimeterI( retVal );
   #endif
   throw TNotImplementedException(__OlxSourceInfo);
 #endif

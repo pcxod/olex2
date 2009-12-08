@@ -32,7 +32,7 @@ public:
   TZipWrapper(const olxstr &zipName, bool useCache);
   TZipWrapper(TEFile* zipName, bool useCache);
   
-  TActionQueue* OnProgress;
+  TActionQueue& OnProgress;
 
   ~TZipWrapper();
   IDataInputStream* OpenEntry(const olxstr& EN);

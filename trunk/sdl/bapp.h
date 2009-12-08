@@ -1,9 +1,5 @@
-//---------------------------------------------------------------------------//
-// TXApplication - a wraper for basic crystallographic graphic application
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
-#ifndef bappH
-#define bappH
+#ifndef __olx_bapp_H
+#define __olx_bapp_H
 #include "paramlist.h"
 #include "os_util.h"
 
@@ -18,7 +14,7 @@ static olxstr
 class TBasicApp: public IEObject  {
   olxstr BaseDir, SharedDir, ExeName;
 protected:
-  class TActionQList* FActions;
+  class TActionQList Actions;
   static TBasicApp* Instance;
   class TLog* Log;
   short MaxThreadCount;
@@ -56,15 +52,14 @@ public:
   }
 
   static bool HasInstance()  {  return Instance != NULL;  }
-  //static printf(const char* format, ...);
 
-  TActionQueue& NewActionQueue(const olxstr &Name);
-  inline TActionQueue* ActionQueue(const olxstr &Name){  
-    try  {  return FActions->FindQueue(Name);   }
+  TActionQueue& NewActionQueue(const olxstr& Name);
+  inline TActionQueue* ActionQueue(const olxstr& Name){  
+    try  {  return Actions.Find(Name);   }
     catch(...)  {  return NULL;  }
   }
 
-  inline TActionQList& Actions() const {  return *FActions; }
+  const TActionQList& GetActions() const {  return Actions; }
 
   DefPropBIsSet(MainFormVisible)
   DefPropBIsSet(Profiling)
@@ -77,9 +72,9 @@ public:
   inline static void LeaveCriticalSection()  {  app_cs.leave();  }
   inline static olx_critical_section& GetCriticalSection() {  return app_cs;  }
   DefPropP(short, MaxThreadCount)
-  TActionQueue *OnProgress;
-  TActionQueue *OnTimer;
-  TActionQueue *OnIdle;
+  TActionQueue& OnProgress;
+  TActionQueue& OnTimer;
+  TActionQueue& OnIdle;
 };
 
 EndEsdlNamespace()

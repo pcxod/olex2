@@ -33,7 +33,9 @@ olx_critical_section TBasicApp::app_cs;
 //----------------------------------------------------------------------------//
 //TBasicApp function bodies
 //----------------------------------------------------------------------------//
-TBasicApp::TBasicApp(const olxstr& FileName)  {
+TBasicApp::TBasicApp(const olxstr& FileName) : OnProgress(Actions.New("PROGRESS")),
+  OnTimer(Actions.New("TIMER")), OnIdle(Actions.New("IDLE"))
+{
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "an application instance already exists");
   Instance = this;
@@ -41,10 +43,6 @@ TBasicApp::TBasicApp(const olxstr& FileName)  {
   MaxThreadCount = 1;
   Log = new TLog;
 
-  FActions = new TActionQList;
-  OnProgress = &FActions->NewQueue("PROGRESS");
-  OnTimer    = &FActions->NewQueue("TIMER");
-  OnIdle     = &FActions->NewQueue("IDLE");
   Profiling = MainFormVisible = false;
   // attach GC to the instance, if detached...
   TEGC::Initialise();
@@ -53,7 +51,6 @@ TBasicApp::TBasicApp(const olxstr& FileName)  {
 //..............................................................................
 TBasicApp::~TBasicApp()  {
   Instance = NULL;
-  delete FActions;
   delete Log;
 }
 //..............................................................................
@@ -78,7 +75,7 @@ olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
   }
   if( bd.IsEmpty() || !TEFile::Exists(bd) )
     bd = TEFile::CurrentDir();
-  TEFile::AddTrailingBackslashI(bd);
+  TEFile::AddPathDelimeterI(bd);
   olxstr en = TEFile::ExtractFileName(path);
   if( en.IsEmpty() )
     en = "unknown.exe";
@@ -92,7 +89,7 @@ const olxstr& TBasicApp::SetBaseDir(const olxstr& _bd)  {
   TBasicApp& inst = GetInstance();
   inst.BaseDir = bd;
   inst.ExeName = TEFile::ExtractFileName(_bd);
-  TEFile::AddTrailingBackslashI(inst.BaseDir);  // just in case!
+  TEFile::AddPathDelimeterI(inst.BaseDir);  // just in case!
   inst.BaseDirWriteable = false;
   // and test it now
   const olxstr tmp_dir = inst.BaseDir + "_t__m___p____DIR";
@@ -116,7 +113,7 @@ const olxstr& TBasicApp::SetSharedDir(const olxstr& cd) {
   }
   else if( !TEFile::IsDir(cd) )  
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("Invalid config dir:") << cd);
-  return (inst.SharedDir = TEFile::AddTrailingBackslash(cd));
+  return (inst.SharedDir = TEFile::AddPathDelimeter(cd));
 }
 //..............................................................................
 const olxstr& TBasicApp::GetSharedDir() {  
@@ -125,11 +122,11 @@ const olxstr& TBasicApp::GetSharedDir() {
   return GetInstance().SharedDir; 
 }
 //..............................................................................
-TActionQueue& TBasicApp::NewActionQueue(const olxstr &Name) {
-  if( FActions->QueueExists(Name) )
-    return *FActions->FindQueue(Name);
+TActionQueue& TBasicApp::NewActionQueue(const olxstr& Name) {
+  if( Actions.Exists(Name) )
+    return *Actions.Find(Name);
   else
-    return FActions->NewQueue(Name);
+    return Actions.New(Name);
 
   //TActionQueue* q = FActions->FindQueue(Name);
   //return (q!=NULL) ? *q : FActions->NewQueue(Name);

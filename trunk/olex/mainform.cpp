@@ -394,7 +394,10 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
 END_EVENT_TABLE()
 //..............................................................................
 TMainForm::TMainForm(TGlXApp *Parent):
-  TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm")), Macros(*this)
+  TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm")),
+  Macros(*this),
+  OnModeChange(Actions.New("ONMODECHANGE")),
+  OnStateChange(Actions.New("ONSTATECHANGE"))
 {
   _UpdateThread = NULL;
 	ActionProgress = UpdateProgress = NULL;
@@ -411,9 +414,9 @@ TMainForm::TMainForm(TGlXApp *Parent):
   /* a singleton - will be deleted in destructor, we cannot use GC as the Py_DecRef
    would be called after finalising python
   */
-  PythonExt::Init(this).Register( &TMainForm::PyInit);
-  PythonExt::GetInstance()->Register( &OlexPyCore::PyInit);
-  PythonExt::GetInstance()->Register( &hkl_py::PyInit);
+  PythonExt::Init(this).Register(&TMainForm::PyInit);
+  PythonExt::GetInstance()->Register(&OlexPyCore::PyInit);
+  PythonExt::GetInstance()->Register(&hkl_py::PyInit);
   //TOlxVars::Init().OnVarChange->Add(this, ID_VarChange);
   FGlCanvas = NULL;
   FXApp = NULL;
@@ -445,8 +448,6 @@ TMainForm::TMainForm(TGlXApp *Parent):
 
   ProgramState = prsQVis|prsHVis|prsHBVis;
 
-  OnModeChange = &FActionList.NewQueue("ONMODECHANGE");
-  OnStateChange = &FActionList.NewQueue("ONSTATECHANGE");
   Modes = new TModes();
 
   FUndoStack = new TUndoStack();
@@ -488,8 +489,7 @@ bool TMainForm::Destroy()  {
   if( FXApp != NULL )  {
     SaveVFS(plGlobal);  // save virtual db to file
     SaveVFS(plStructure);  
-
-    FXApp->OnObjectsDestroy->Remove(this);
+    FXApp->OnObjectsDestroy.Remove(this);
     ProcessMacro("onexit");
     SaveSettings(DataDir + FLastSettingsFile);
     ClearPopups();
@@ -536,7 +536,7 @@ TMainForm::~TMainForm()  {
   delete FUndoStack;
   // leave it fo last
   if( FProcess )  {
-    FProcess->OnTerminate->Clear();
+    FProcess->OnTerminate.Clear();
     FProcess->Terminate();
     delete FProcess;
   }
@@ -1221,7 +1221,7 @@ separated values of Atom Type and radius, an entry a line");
 //////////////////////////////////////////////////////////////
   FXApp->GetRender().OnDraw->Add(this, ID_GLDRAW);
   TObjectVisibilityChange* VC = new TObjectVisibilityChange(this);
-  XA->OnGraphicsVisible->Add(VC);
+  XA->OnGraphicsVisible.Add(VC);
   // put correct captions to the menu
   if( FXApp->IsCellVisible() )   pmModel->SetLabel(ID_CellVisible, wxT("Hide cell"));
   else                           pmModel->SetLabel(ID_CellVisible, wxT("Show cell"));
@@ -1233,7 +1233,7 @@ separated values of Atom Type and radius, an entry a line");
   wxString data_dir; // we cannot use any TEFile functions, working eith c_str, as the TEGC is not initialised yet...
   if( wxGetEnv( wxT("OLEX2_DATADIR"), &data_dir) )  {
     if( wxDirExists(data_dir) )
-      DataDir = TEFile::AddTrailingBackslash(data_dir.c_str());
+      DataDir = TEFile::AddPathDelimeter(data_dir.c_str());
   }
   if( DataDir.IsEmpty() )
     DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
@@ -1280,22 +1280,22 @@ separated values of Atom Type and radius, an entry a line");
     TBasicApp::GetLog().Error("Could not create log file!");
   }
 
-  TBasicApp::GetLog().OnInfo->Add(this, ID_INFO, msiEnter);
-  TBasicApp::GetLog().OnWarning->Add(this, ID_WARNING, msiEnter);
-  TBasicApp::GetLog().OnError->Add(this, ID_ERROR, msiEnter);
-  TBasicApp::GetLog().OnException->Add(this, ID_EXCEPTION, msiEnter);
-  FXApp->OnObjectsDestroy->Add(this, ID_XOBJECTSDESTROY, msiEnter);
+  TBasicApp::GetLog().OnInfo.Add(this, ID_INFO, msiEnter);
+  TBasicApp::GetLog().OnWarning.Add(this, ID_WARNING, msiEnter);
+  TBasicApp::GetLog().OnError.Add(this, ID_ERROR, msiEnter);
+  TBasicApp::GetLog().OnException.Add(this, ID_EXCEPTION, msiEnter);
+  FXApp->OnObjectsDestroy.Add(this, ID_XOBJECTSDESTROY, msiEnter);
   XLibMacros::OnDelIns.Add(this, ID_DELINS, msiExit);
   XLibMacros::OnAddIns.Add(this, ID_ADDINS, msiExit);
   LoadVFS(plGlobal);
 
   FHtml = new THtml(this, FXApp);
 
-  FHtml->OnLink->Add(this, ID_ONLINK);
-  FHtml->OnKey->Add(this, ID_HTMLKEY);
+  FHtml->OnLink.Add(this, ID_ONLINK);
+  FHtml->OnKey.Add(this, ID_HTMLKEY);
   /*  people do not like it very much ....*/
 //  FHtml->OnDblClick->Add(this, ID_HTMLDBLCLICK);
-  FHtml->OnCmd->Add(this, ID_HTMLCMD);
+  FHtml->OnCmd.Add(this, ID_HTMLCMD);
 
   FXApp->SetLabelsVisible(false);
   FXApp->GetRender().LightModel.SetClearColor(0x0f0f0f0f);
@@ -1303,8 +1303,8 @@ separated values of Atom Type and radius, an entry a line");
   FGlConsole = new TGlConsole(FXApp->GetRender(), "Console");
   // the commands are posted from in Dispatch, SkipPosting is controlling the output
   FXApp->GetLog().AddStream(FGlConsole, false);
-  FGlConsole->OnCommand->Add(this, ID_COMMAND);
-  FGlConsole->OnPost->Add(this, ID_TEXTPOST);
+  FGlConsole->OnCommand.Add(this, ID_COMMAND);
+  FGlConsole->OnPost.Add(this, ID_TEXTPOST);
   FXApp->AddObjectToCreate(FGlConsole);
 ////////////////////////////////////////////////////////////////////////////////
   Library.AttachLibrary(FGlConsole->ExportLibrary());
@@ -1329,9 +1329,9 @@ separated values of Atom Type and radius, an entry a line");
   GlTooltip->SetVisible(false);
   GlTooltip->SetZ(4.9);
 
-  FTimer->OnTimer.Add(TBasicApp::GetInstance().OnTimer);
-  TBasicApp::GetInstance().OnTimer->Add(this, ID_TIMER);
-  FXApp->XFile().OnFileLoad->Add(this, ID_FileLoad);
+  FTimer->OnTimer.Add(&TBasicApp::GetInstance().OnTimer);
+  TBasicApp::GetInstance().OnTimer.Add(this, ID_TIMER);
+  FXApp->XFile().OnFileLoad.Add(this, ID_FileLoad);
   // synchronise if value is different in settings file...
   miHtmlPanel->Check(!FHtmlMinimized);
 #ifdef __WIN32__  
@@ -1381,7 +1381,7 @@ void TMainForm::StartupInit()  {
   T << FLastSettingsFile;
   if( !TEFile::Exists(T) )  {
     T = TBasicApp::GetBaseDir();
-    TEFile::AddTrailingBackslashI(T);
+    TEFile::AddPathDelimeterI(T);
     T << FLastSettingsFile;
   }
   try  {  LoadSettings(T);  }
@@ -1470,7 +1470,7 @@ void TMainForm::StartupInit()  {
     // manually activate the events
     for( size_t i=0; i < FPluginItem->ItemCount(); i++ )  {
       TStateChange sc(prsPluginInstalled, true, FPluginItem->GetItem(i).GetName());
-      OnStateChange->Execute((AEventsDispatcher*)this, &sc);
+      OnStateChange.Execute((AEventsDispatcher*)this, &sc);
     }
   }
   else
@@ -1527,11 +1527,11 @@ void TMainForm::SetProcess( AProcess *Process )  {
     }
     TimePerFrame = FXApp->Draw();
   }
-  if( Process )
-    Process->OnTerminate->Add(this, ID_PROCESSTERMINATE);
+  if( Process != NULL )
+    Process->OnTerminate.Add(this, ID_PROCESSTERMINATE);
 
   if( FProcess )  {  
-    FProcess->OnTerminate->Clear();  
+    FProcess->OnTerminate.Clear();  
     FProcess->Detach();
     // will be deleted anyway :), detach puts it to the TEGC
     //delete FProcess;
@@ -1666,13 +1666,13 @@ void TMainForm::OnDrawQChange(wxCommandEvent& event)  {
 void TMainForm::CellVChange()  {
   TStateChange sc(prsCellVis, FXApp->IsCellVisible());
   pmModel->SetLabel(ID_CellVisible, (!FXApp->IsCellVisible() ? wxT("Show cell") : wxT("Hide cell")));
-  OnStateChange->Execute((AEventsDispatcher*)this, &sc);
+  OnStateChange.Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
 void TMainForm::BasisVChange()  {
   TStateChange sc(prsBasisVis, FXApp->IsBasisVisible());
   pmModel->SetLabel(ID_BasisVisible, (FXApp->IsBasisVisible() ? wxT("Hide basis") : wxT("Show basis")));
-  OnStateChange->Execute((AEventsDispatcher*)this, &sc);
+  OnStateChange.Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
 void TMainForm::OnCellVisible(wxCommandEvent& event)  {
@@ -2336,10 +2336,10 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       else if( MsgId == ID_EXCEPTION ) glm = &ExceptionFontColor;
       if( !( (FMode&mSilent) != 0 &&  (MsgId == ID_INFO || MsgId == ID_WARNING))
             || (MsgId == ID_ERROR || MsgId == ID_EXCEPTION) )  {
-        FGlConsole->OnPost->SetEnabled(false); // the proporgation will happen after we return false
+        FGlConsole->OnPost.SetEnabled(false); // the proporgation will happen after we return false
         FGlConsole->PrintText(Data->ToString(), glm, true);
         FGlConsole->PrintText(EmptyString);
-        FGlConsole->OnPost->SetEnabled(true);
+        FGlConsole->OnPost.SetEnabled(true);
         TimePerFrame = FXApp->Draw();
       }
       FGlConsole->SetSkipPosting(true);
@@ -2610,7 +2610,7 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
   }
   if( (Fl&sssCtrl) && m.GetKeyCode() == 'c'-'a'+1 )  {  // Ctrl+C
     if( FProcess )  {
-      FProcess->OnTerminate->Clear();
+      FProcess->OnTerminate.Clear();
       if( FProcess->Terminate() )
         TBasicApp::GetLog().Info("Process has been successfully terminated...");
       else
@@ -3643,7 +3643,7 @@ void TMainForm::OnInternalIdle()  {
   if( !StartupInitialised )
     StartupInit();
 #endif
-  TBasicApp::GetInstance().OnIdle->Execute((AEventsDispatcher*)this, NULL);
+  TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
   if( !RunOnceProcessed )  {
     RunOnceProcessed = true;
@@ -3968,7 +3968,7 @@ void TMainForm::UseGlTooltip(bool v)  {
   _UseGlTooltip = v;
   if( v )
     FGlCanvas->SetToolTip(wxT(""));
-  OnStateChange->Execute((AOlxCtrl*)this, &sc);
+  OnStateChange.Execute((AOlxCtrl*)this, &sc);
 }
 //..............................................................................
 //..............................................................................
@@ -4107,7 +4107,7 @@ void TMainForm::LoadVFS(short persistenceId)  {
 const olxstr& TMainForm::GetStructureOlexFolder()  {
   if( FXApp->XFile().HasLastLoader() )  {
     olxstr ofn = TEFile::ExtractFilePath(FXApp->XFile().GetFileName());
-    TEFile::AddTrailingBackslashI(ofn) << ".olex/";
+    TEFile::AddPathDelimeterI(ofn) << ".olex/";
     if( !TEFile::Exists(ofn) )  {
       if( !TEFile::MakeDir(ofn) )  {
         throw TFunctionFailedException(__OlxSourceInfo, "cannot create folder");

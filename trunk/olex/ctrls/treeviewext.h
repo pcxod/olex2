@@ -27,8 +27,8 @@ namespace ctrl_ext  {
     TTreeView(wxWindow* Parent) :
       wxGenericTreeCtrl(Parent), 
       AOlxCtrl(this),
-      OnSelect(Actions.NewQueue(evt_on_select_id)),
-      OnDblClick(Actions.NewQueue(evt_on_dbl_click_id)),
+      OnSelect(Actions.New(evt_on_select_id)),
+      OnDblClick(Actions.New(evt_on_dbl_click_id)),
       Data(EmptyString),
       OnItemActivateStr(EmptyString),
       OnSelectStr(EmptyString)  {}

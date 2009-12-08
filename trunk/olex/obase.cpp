@@ -37,12 +37,12 @@
 
 AMode::AMode(int id) : Id(id)  {
   TModeChange mc(Id, true);
-  TGlXApp::GetMainForm()->OnModeChange->Execute(NULL, &mc);
+  TGlXApp::GetMainForm()->OnModeChange.Execute(NULL, &mc);
 }
 //..............................................................................
 AMode::~AMode() {
   TModeChange mc(Id, false);
-  TGlXApp::GetMainForm()->OnModeChange->Execute(NULL, &mc);
+  TGlXApp::GetMainForm()->OnModeChange.Execute(NULL, &mc);
   TGlXApp::GetMainForm()->executeFunction("cursor()");  //r eset the screen cursor
   TGlXApp::GetGXApp()->ClearLabelMarks();  // hide atom marks if any
 }

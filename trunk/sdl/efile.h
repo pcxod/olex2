@@ -1,9 +1,5 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
-
-#ifndef efileH
-#define efileH
+#ifndef __olx_sdl_file_H
+#define __olx_sdl_file_H
 #include <stdio.h>
 #include "estrlist.h"
 #include "efilelist.h"
@@ -120,10 +116,10 @@ protected:
   static void BuildMaskList(const olxstr& mask, MaskList& out);
 public:
   TEFile();
-  TEFile(const olxstr &F, const olxstr &Attribs);
-  TEFile(const olxstr &F, short Attribs);
+  TEFile(const olxstr& F, const olxstr& Attribs);
+  TEFile(const olxstr& F, short Attribs);
   virtual ~TEFile();
-  bool Open(const olxstr &F, const olxstr &Attribs);
+  bool Open(const olxstr& F, const olxstr& Attribs);
   // closes the file, if was open - returns true, might throw an exception if fclose failed
   bool Close();
   long Length() const;
@@ -167,53 +163,53 @@ public:
   // tests one or several of the accessXXXX flags
   static bool Access(const olxstr& F, const short Flags);
   // uses access, so is case sensitive, works for both dirs and files
-  static bool Exists(const olxstr &F);
+  static bool Exists(const olxstr& F);
   // just a wrapper for chmod...
   static bool Chmod(const olxstr& f, const short Flags);
   /* a case insensitive alternative (for windows - same as above) 
     the case sensitive name is stored in res (the first one if there
     are several file names matching
   */
-  static bool Existsi(const olxstr &F, olxstr& res);
+  static bool Existsi(const olxstr& F, olxstr& res);
   // deletes the file and returns true on success
-  static bool DelFile(const olxstr &F);
+  static bool DelFile(const olxstr& F);
   // returns true if the name refers to a folder
   static bool IsDir(const olxstr& F);
   // deletes the folder if empty and returns true on succsess
-  static bool RmDir(const olxstr &F);
+  static bool RmDir(const olxstr& F);
   /* deletes the folder recursively, returns true on success, false if the name is a file or
   the deletion was not successful. If ContentOnly is provided - the top dir is not deleted.
   Returns true on success and false if an error has occured */
-  static bool DeleteDir(const olxstr &F, bool ContentOnly=false);
+  static bool DeleteDir(const olxstr& F, bool ContentOnly=false);
   // checks if the folder is empty, in case of error (non existing dir etc) returns false
-  static bool IsEmptyDir(const olxstr &F);
+  static bool IsEmptyDir(const olxstr& F);
   // returns file drive on windows ans empty string for other platforms
-  static olxstr ExtractFileDrive(const olxstr &F);
-  static olxstr ExtractFilePath(const olxstr &F);
+  static olxstr ExtractFileDrive(const olxstr& F);
+  static olxstr ExtractFilePath(const olxstr& F);
   static olxstr ParentDir(const olxstr& F);
-  static olxstr ExtractFileExt(const olxstr &F);
-  static olxstr ExtractFileName(const olxstr &F);
-  static olxstr ChangeFileExt(const olxstr &F, const olxstr &Extension);
-  static bool ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const uint16_t searchFlags);
-  static bool ListDirEx(const olxstr& dir, TFileList &Out, const olxstr &Mask, const uint16_t searchFlags);
-  static bool ListCurrentDir(TStrList& Out, const olxstr &Mask, const uint16_t searchFlags);
-  static bool ListDir(const olxstr& dir, TStrList& Out, const olxstr &Mask, const uint16_t searchFlags);
-  static bool ChangeDir(const olxstr &To);
-  static bool MakeDir(const olxstr &Name);
+  static olxstr ExtractFileExt(const olxstr& F);
+  static olxstr ExtractFileName(const olxstr& F);
+  static olxstr ChangeFileExt(const olxstr& F, const olxstr& Extension);
+  static bool ListCurrentDirEx(TFileList& Out, const olxstr& Mask, const uint16_t searchFlags);
+  static bool ListDirEx(const olxstr& dir, TFileList& Out, const olxstr& Mask, const uint16_t searchFlags);
+  static bool ListCurrentDir(TStrList& Out, const olxstr& Mask, const uint16_t searchFlags);
+  static bool ListDir(const olxstr& dir, TStrList& Out, const olxstr& Mask, const uint16_t searchFlags);
+  static bool ChangeDir(const olxstr& To);
+  static bool MakeDir(const olxstr& Name);
   // the function forces the creation of all dirs upto the last one
-  static bool MakeDirs(const olxstr &Name);
+  static bool MakeDirs(const olxstr& Name);
   static olxstr CurrentDir();
-  static olxstr OSPath(const olxstr &F);
-  static olxstr& OSPathI(olxstr &F);
-  static olxstr WinPath(const olxstr &F);
-  static olxstr UnixPath(const olxstr &F);
-  static olxstr& WinPathI(olxstr &F);
-  static olxstr& UnixPathI(olxstr &F);
-  static olxstr AddTrailingBackslash(const olxstr &Path);
-  static olxstr& AddTrailingBackslashI(olxstr &Path);
-  static olxstr RemoveTrailingBackslash(const olxstr &Path);
-  static olxstr& RemoveTrailingBackslashI(olxstr &Path);
-  static bool IsAbsolutePath(const olxstr &Path);
+  static olxstr OSPath(const olxstr& F);
+  static olxstr& OSPathI(olxstr& F);
+  static olxstr WinPath(const olxstr& F);
+  static olxstr UnixPath(const olxstr& F);
+  static olxstr& WinPathI(olxstr& F);
+  static olxstr& UnixPathI(olxstr& F);
+  static olxstr AddPathDelimeter(const olxstr& Path);
+  static olxstr& AddPathDelimeterI(olxstr& Path);
+  static olxstr TrimPathDelimeter(const olxstr& Path);
+  static olxstr& TrimPathDelimeterI(olxstr& Path);
+  static bool IsAbsolutePath(const olxstr& Path);
   static char GetPathDelimeter()  {
 #ifdef __WIN32__
     return '\\';
@@ -232,12 +228,12 @@ public:
   // a weak function - makes the decision only on the name...
   static bool IsSubFolder(const olxstr& which, const olxstr& in_what);
   /*works for windows only, for other operation systems return LocalFN*/
-  static olxstr UNCFileName(const olxstr &LocalFN);
+  static olxstr UNCFileName(const olxstr& LocalFN);
   /* return absolute path as a relative to another path
     so for "c:/windows/win32" and ".." return "c:/windows"
     if the resulting path does not exist - throws an exception
     */
-  static olxstr AbsolutePathTo(const olxstr &Path, const olxstr &relPath );
+  static olxstr AbsolutePathTo(const olxstr& Path, const olxstr& relPath);
   /* searches given file name in current folder and in path, if found returns full
     path to the file inclusive the file name, otherwise returns empty string.
     if the filename is absolute returns it straight away

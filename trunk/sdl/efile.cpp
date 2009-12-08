@@ -312,7 +312,7 @@ bool TEFile::Existsi(const olxstr& F, olxstr& res)  {
     TEFile::ListDir(path, files, name, sefAll);
   if( files.IsEmpty() )
     return false;
-  res = TEFile::AddTrailingBackslashI(path) << files[0];
+  res = TEFile::AddPathDelimeterI(path) << files[0];
   return true;
 #endif
 }
@@ -787,7 +787,7 @@ olxstr& TEFile::UnixPathI( olxstr& F )  {
   return F.Replace('\\', '/');
 }
 //..............................................................................
-olxstr TEFile::AddTrailingBackslash( const olxstr& Path )  {
+olxstr TEFile::AddPathDelimeter( const olxstr& Path )  {
   if( Path.IsEmpty() )  
     return olxstr(OLX_PATH_DEL);
   olxstr T = OLX_OS_PATH(Path);
@@ -796,7 +796,7 @@ olxstr TEFile::AddTrailingBackslash( const olxstr& Path )  {
   return T;
 }
 //..............................................................................
-olxstr& TEFile::AddTrailingBackslashI(olxstr &Path)  {
+olxstr& TEFile::AddPathDelimeterI(olxstr &Path)  {
   if( Path.IsEmpty() )  return Path;
   OLX_OS_PATHI(Path);
   if( Path[Path.Length()-1] != OLX_PATH_DEL )  
@@ -804,13 +804,13 @@ olxstr& TEFile::AddTrailingBackslashI(olxstr &Path)  {
   return Path;
 }
 //..............................................................................
-olxstr TEFile::RemoveTrailingBackslash(const olxstr &Path)  {
+olxstr TEFile::TrimPathDelimeter(const olxstr &Path)  {
   if( Path.IsEmpty() )  return Path;
   olxstr T = OLX_OS_PATH(Path);
   return (T[T.Length()-1] == OLX_PATH_DEL ) ? T.SubStringTo(T.Length()-1) : T;
 }
 //..............................................................................
-olxstr& TEFile::RemoveTrailingBackslashI(olxstr &Path)  {
+olxstr& TEFile::TrimPathDelimeterI(olxstr &Path)  {
   if( Path.IsEmpty() )  return Path;
   OLX_OS_PATHI(Path);
   if( Path[Path.Length()-1] == OLX_PATH_DEL )
@@ -830,8 +830,8 @@ bool TEFile::IsAbsolutePath(const olxstr& Path)  {
 }
 //..............................................................................
 bool TEFile::IsSameFolder(const olxstr& _f1, const olxstr& _f2)  {
-  olxstr f1 = AddTrailingBackslash(_f1);
-  olxstr f2 = AddTrailingBackslash(_f2);
+  olxstr f1 = AddPathDelimeter(_f1);
+  olxstr f2 = AddPathDelimeter(_f2);
   bool e1 = Exists(f1),
        e2 = Exists(f2);
   // if one or both of the folders does not exist - we cannot test their equality...
@@ -943,7 +943,7 @@ olxstr TEFile::Which(const olxstr& filename)  {
   if( TEFile::IsAbsolutePath(filename) )
     return filename;
   olxstr fn = TEFile::CurrentDir();
-  TEFile::AddTrailingBackslashI(fn) << filename;
+  TEFile::AddPathDelimeterI(fn) << filename;
   // check current folder
   if( Exists(fn) )  return fn;
   // check program folder
@@ -955,7 +955,7 @@ olxstr TEFile::Which(const olxstr& filename)  {
   if( path == NULL )  return EmptyString;
   TStrList toks(path, OLX_ENVI_PATH_DEL);
   for( size_t i=0; i < toks.Count(); i++ )  {
-    TEFile::AddTrailingBackslashI(toks[i]) << filename;
+    TEFile::AddPathDelimeterI(toks[i]) << filename;
     if( Exists(toks[i]) )
       return toks[i];
 //    TBasicApp::GetLog() << toks[i] << '\n';
@@ -1038,7 +1038,7 @@ void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
   TEFile::CheckFileExists(__OlxSourceInfo, Params[0]);
   olxstr cd( TEFile::CurrentDir() );
   olxstr dn(Params[0]);
-  TEFile::AddTrailingBackslashI(dn);
+  TEFile::AddPathDelimeterI(dn);
   TEFile::ChangeDir( Params[0] );
   short attrib = sefFile;
   if( Params.Count() == 3 )  {

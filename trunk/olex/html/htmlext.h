@@ -142,17 +142,17 @@ public:
     fixed = this->FixedFont;
   }
 
-  bool GetShowTooltips()  const {  return ShowTooltips;  }
+  bool GetShowTooltips() const {  return ShowTooltips;  }
   void SetShowTooltips(bool v, const olxstr &html_name=EmptyString);
 
   bool IsPageLoadRequested() const {  return PageLoadRequested;  }
-  inline void IncLockPageLoad()    {  LockPageLoad++;  }
-  inline void DecLockPageLoad()    {  LockPageLoad--;  }
+  inline void IncLockPageLoad()  {  LockPageLoad++;  }
+  inline void DecLockPageLoad()  {  LockPageLoad--;  }
   inline bool IsPageLocked() const {  return LockPageLoad != 0;  }
 
   bool ProcessPageLoadRequest();
 
-  const olxstr& GetHomePage() const   {  return HomePage;  }
+  const olxstr& GetHomePage() const  {  return HomePage;  }
   void SetHomePage(const olxstr& hp)  {  HomePage = hp;  }
 
   bool LoadPage(const wxString &File);
@@ -160,10 +160,10 @@ public:
   bool UpdatePage();
   DefPropC(olxstr, WebFolder)
 
-  void CheckForSwitches(THtmlSwitch &Sender, bool IsZip);
-  void UpdateSwitchState(THtmlSwitch &Switch, olxstr &String);
+  void CheckForSwitches(THtmlSwitch& Sender, bool IsZip);
+  void UpdateSwitchState(THtmlSwitch& Switch, olxstr& String);
   THtmlSwitch& GetRoot() const {  return *Root; }
-  bool ItemState(const olxstr &ItemName, short State);
+  bool ItemState(const olxstr& ItemName, short State);
   // object operations
   bool AddObject(const olxstr& Name, AOlxCtrl *Obj, wxWindow* wxObj, bool Manage = false);
   AOlxCtrl *FindObject(const olxstr& Name)  {
@@ -182,12 +182,12 @@ public:
   //
   DefPropBIsSet(Movable)
 
-  TActionQueue *OnURL;
-  TActionQueue *OnLink;
+  TActionQueue& OnURL;
+  TActionQueue& OnLink;
 
-  TActionQueue *OnDblClick;
-  TActionQueue *OnKey;
-  TActionQueue *OnCmd;
+  TActionQueue& OnDblClick;
+  TActionQueue& OnKey;
+  TActionQueue& OnCmd;
 
   TWindowInterface WI;
   // global data for the HTML parsing....

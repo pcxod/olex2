@@ -111,8 +111,8 @@ protected:
 	TOnProgress* UpdateProgress, *ActionProgress;
   TEFile* ActiveLogFile;
   static void PyInit();
-  TActionQList FActionList;
-  TGlXApp *FParent;
+  TActionQList Action;
+  TGlXApp* FParent;
   TArrayList< AnAssociation2<TDUnitCell*, TSpaceGroup*> > UserCells;
   TCSTypeList<olxstr, olxstr> StoredParams;
 
@@ -120,7 +120,7 @@ protected:
 
   TSStrPObjList<olxstr,TPopupData*, true> FPopups;
   class TGlCanvas *FGlCanvas;
-  TGXApp *FXApp;
+  TGXApp* FXApp;
   TDataFile FHelpFile, FMacroFile, FPluginFile;
   TDataItem *FHelpItem, *FPluginItem;
   
@@ -179,9 +179,9 @@ public:
   bool OnMouseUp(int x, int y, short Flags, short Buttons);
   bool OnMouseDblClick(int x, int y, short Flags, short Buttons);
   virtual bool Show( bool v );
-  TActionQueue *OnModeChange, *OnStateChange;
+  TActionQueue &OnModeChange, &OnStateChange;
 
-  void SetUserCursor( const olxstr& param, const olxstr& mode );
+  void SetUserCursor(const olxstr& param, const olxstr& mode);
 
   inline TUndoStack* GetUndoStack()  {  return FUndoStack;  }
 

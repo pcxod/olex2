@@ -13,9 +13,9 @@
 const int ID_Timer = 1;
 
 //..............................................................................
-AProcess::AProcess()  {
-  FActions = new TActionQList;
-  OnTerminate = &FActions->NewQueue("ONTERMINATE");
+AProcess::AProcess() :
+  OnTerminate(Actions.New("ONTERMINATE"))
+{
   ProcessId = -1;
   Flags = 0;
   DubOutput = NULL;
@@ -24,7 +24,6 @@ AProcess::AProcess()  {
 AProcess::~AProcess()  {
   if( DubOutput != NULL )
     delete DubOutput; 
-  delete FActions;
 }
 //..............................................................................
 
@@ -41,11 +40,11 @@ TWinProcess::TWinProcess()  {
 TWinProcess::~TWinProcess()  {
   if( IsTerminateOnDelete() )
     Terminate();
-  TBasicApp::GetInstance().OnTimer->Remove(this);
+  TBasicApp::GetInstance().OnTimer.Remove(this);
   CloseThreadStreams();
   CloseStreams();
   if( ProcessInfo.hProcess != NULL )
-    CloseHandle( ProcessInfo.hProcess );
+    CloseHandle(ProcessInfo.hProcess);
 }
 //..............................................................................
 bool TWinProcess::InitStreams()  {
@@ -145,7 +144,7 @@ bool TWinProcess::Execute(const olxstr & Cmd, short Flags)  {
   // close when the child process exits and ReadFile will hang.
   CloseThreadStreams();
   if( !IsSynchronised() && IsRedirected() ) // Launch a thread to receive output from the child process.
-    TBasicApp::GetInstance().OnTimer->Add(this, ID_Timer);
+    TBasicApp::GetInstance().OnTimer.Add(this, ID_Timer);
 
   if( IsSynchronised() )  {
     DWORD Status;
@@ -159,9 +158,9 @@ bool TWinProcess::Execute(const olxstr & Cmd, short Flags)  {
 }
 //..............................................................................
 bool TWinProcess::Terminate()  {
-  TBasicApp::GetInstance().OnTimer->Remove(this);
+  TBasicApp::GetInstance().OnTimer.Remove(this);
   CloseStreams();
-  OnTerminate->Execute( (AEventsDispatcher*)this, NULL );
+  OnTerminate.Execute((AEventsDispatcher*)this, NULL);
   if( ProcessInfo.hProcess )  {
     bool res = TerminateProcess(ProcessInfo.hProcess, 0) != 0;
     CloseHandle(ProcessInfo.hProcess);
@@ -239,7 +238,7 @@ bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, co
         GetDubStream()->Writenl( Str.c_str(), Str.Length() );
       Str  = EmptyString;
     }
-    CloseHandle( ProcessInfo.hProcess );
+    CloseHandle(ProcessInfo.hProcess);
     ProcessInfo.hProcess = NULL;
     Terminate();
     wasted = 0;
@@ -253,7 +252,7 @@ void TWinProcess::Detach()  {
 //---------------------------------------------------------------------------//
 // TWinWinCmd implementation
 //---------------------------------------------------------------------------//
-bool TWinWinCmd::SendWindowCmd(const olxstr WndName, const olxstr Cmd)  {
+bool TWinWinCmd::SendWindowCmd(const olxstr& WndName, const olxstr& Cmd)  {
   HWND Window = FindWindow(WndName.u_str(), NULL);
   int TO=50;
   if( Window == NULL )  {
@@ -314,13 +313,13 @@ void TWxProcess::OnTerminate(int pid, int status)  {
     delete FStream;
     FStream = NULL;
   }
-  AProcess::OnTerminate->Execute(this);
+  AProcess::OnTerminate.Execute(this);
 }
 //..............................................................................
 void TWxProcess::Detach()  {  
-  AProcess::OnTerminate->Clear();
+  AProcess::OnTerminate.Clear();
   wxProcess::Detach();  
-  TEGC::AddP( this ); // according to docs, we should not delete the object 
+  TEGC::AddP(this); // according to docs, we should not delete the object 
 }
 //..............................................................................
 bool TWxProcess::Execute(const olxstr & Cmd, short Flags)  {

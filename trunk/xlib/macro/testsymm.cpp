@@ -79,18 +79,18 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
   double confth = 75; // %
   TPtrList<TSpaceGroup> sglist;
   TTypeList<TBravaisLatticeRef> bravtypes;
-  sglist.SetCapacity( TSymmLib::GetInstance()->SGCount() );
-  TSymmLib::GetInstance()->FindBravaisLattices(au, bravtypes);
-  for( size_t i=0; i < TSymmLib::GetInstance()->SGCount(); i++ )  {
+  sglist.SetCapacity(TSymmLib::GetInstance().SGCount());
+  TSymmLib::GetInstance().FindBravaisLattices(au, bravtypes);
+  for( size_t i=0; i < TSymmLib::GetInstance().SGCount(); i++ )  {
     bool found = false;
     for( size_t j=0; j < bravtypes.Count(); j++ )  {
-      if( bravtypes[j].GetA() == &TSymmLib::GetInstance()->GetGroup(i).GetBravaisLattice() )  {
+      if( bravtypes[j].GetA() == &TSymmLib::GetInstance().GetGroup(i).GetBravaisLattice() )  {
         found = true;
         break;
       }
     }
     if( found )
-      sglist.Add( &TSymmLib::GetInstance()->GetGroup(i) );
+      sglist.Add(TSymmLib::GetInstance().GetGroup(i));
   }
 
   smatd_list presentSymm;

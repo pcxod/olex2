@@ -216,7 +216,7 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
       Py_INCREF(Py_None);
       return Py_None;
     }
-    sg = TSymmLib::GetInstance()->FindGroup(sg_name);
+    sg = TSymmLib::GetInstance().FindGroup(sg_name);
     if( sg == NULL )  {
       Py_INCREF(Py_None);
       return Py_None;
@@ -269,8 +269,8 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
     PyDict_SetItemString(out, "MatricesAll", matr_out);
 
     TPtrList<TSymmElement> ref, sg_elm;
-    for( size_t i=0; i < TSymmLib::GetInstance()->SymmElementCount(); i++ )
-      ref.Add( & TSymmLib::GetInstance()->GetSymmElement(i) );
+    for( size_t i=0; i < TSymmLib::GetInstance().SymmElementCount(); i++ )
+      ref.Add(TSymmLib::GetInstance().GetSymmElement(i));
     sg->SplitIntoElements(ref, sg_elm);
     PyObject* sysabs_out = PyTuple_New(sg_elm.Count());
     for( size_t i=0; i < sg_elm.Count(); i++ )  {

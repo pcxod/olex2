@@ -86,7 +86,7 @@ public:
       Parent(parent), FileTree(fileTree)  
     {
       FullPath = TEFile::OSPath(fullPath);
-      TEFile::AddTrailingBackslashI(FullPath);
+      TEFile::AddPathDelimeterI(FullPath);
       size_t ind = FullPath.LastIndexOf(TEFile::GetPathDelimeter(), FullPath.Length()-1);
       if( ind != InvalidIndex )
         Name = FullPath.SubStringFrom(ind+1, 1);
@@ -142,12 +142,12 @@ public:
     *OnDelete;  // called when recursive folder deletion is executed
 
   TFileTree(const olxstr& root) : Root(*this, root)  {
-    OnExpand = &Actions.NewQueue("ON_EXPAND");
-    OnSynchronise = &Actions.NewQueue("ON_SYNC");
-    OnFileCopy = &Actions.NewQueue("ON_FCOPY");
-    OnFileCompare = &Actions.NewQueue("ON_FCCOMPARE");
-    OnCompare = &Actions.NewQueue("ON_COMPARE");
-    OnDelete = &Actions.NewQueue("ON_DELETE");
+    OnExpand = &Actions.New("ON_EXPAND");
+    OnSynchronise = &Actions.New("ON_SYNC");
+    OnFileCopy = &Actions.New("ON_FCOPY");
+    OnFileCompare = &Actions.New("ON_FCCOMPARE");
+    OnCompare = &Actions.New("ON_COMPARE");
+    OnDelete = &Actions.New("ON_DELETE");
     Break = false;
   }
   inline const Folder& GetRoot() const {  return Root;  }

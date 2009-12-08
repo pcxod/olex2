@@ -14,9 +14,9 @@ namespace ctrl_ext  {
   public:
     AButtonBase(wxWindow* this_wnd) :
       AOlxCtrl(this_wnd),
-      OnClick(Actions.NewQueue(evt_on_click_id)),
-      OnUp(Actions.NewQueue(evt_on_uncheck_id)),
-      OnDown(Actions.NewQueue(evt_on_check_id)),
+      OnClick(Actions.New(evt_on_click_id)),
+      OnUp(Actions.New(evt_on_uncheck_id)),
+      OnDown(Actions.New(evt_on_check_id)),
       Down(false),
       ActionQueue(NULL),
       OnClickStr(EmptyString),
@@ -27,7 +27,7 @@ namespace ctrl_ext  {
       Data(EmptyString)  {  SetToDelete(false); }
     virtual ~AButtonBase() {  if( ActionQueue != NULL )  ActionQueue->Remove(this);  }
 
-    void SetActionQueue(TActionQueue *q, const olxstr &dependMode);
+    void SetActionQueue(TActionQueue& q, const olxstr& dependMode);
     bool Execute(const IEObject *Sender, const IEObject *Data);
     void OnRemove()  {  ActionQueue = NULL;  }
 

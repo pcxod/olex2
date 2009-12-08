@@ -1,7 +1,5 @@
-//---------------------------------------------------------------------------
-
-#ifndef glconsoleH
-#define glconsoleH
+#ifndef __olx_gl_console_H
+#define __olx_gl_console_H
 #include "glbase.h"
 #include "gdrawobject.h"
 #include "glmaterial.h"
@@ -22,7 +20,7 @@ class TGlConsole: public AGDrawObject,
   TStrList Cmds;        // hyphenated commands
   olxstr FCommand;    // the command
   olxstr InviteStr, PromptStr;   //
-  TActionQList *FActions; // actions list
+  TActionQList Actions; // actions list
   size_t FCmdPos,
          FTxtPos,
          FMaxLines,
@@ -35,7 +33,7 @@ class TGlConsole: public AGDrawObject,
 protected:
   void KeepSize();
   void StringPosition(size_t v);
-  inline size_t StringPosition()  const {  return FStringPos;  }
+  inline size_t StringPosition() const {  return FStringPos;  }
   void UpdateCursorPosition(bool InitCmds);
   class TGlCursor *FCursor;
 
@@ -104,7 +102,7 @@ public:
   inline bool ScrollDirectionUp() const {  return FScrollDirectionUp; }
   inline void ScrollDirectionUp( bool v){  FScrollDirectionUp = v; }
 
-  TActionQueue *OnCommand, *OnPost;
+  TActionQueue &OnCommand, &OnPost;
 
   void LibClear(const TStrObjList& Params, TMacroError& E);
   void LibLines(const TStrObjList& Params, TMacroError& E);

@@ -1,7 +1,5 @@
-//---------------------------------------------------------------------------
-
-#ifndef _xl_ctrlsH
-#define _xl_ctrlsH
+#ifndef __olx_ctrl_H
+#define __olx_ctrl_H
 #include "actions.h"
 #include "ctrls/olxctrlbase.h"
 #include "wx/wx.h"
@@ -22,7 +20,7 @@ namespace ctrl_ext  {
     void Notify()  {  OnTimer.Execute(this, NULL);  }
     TActionQList Actions;
   public:
-    TTimer() : OnTimer(Actions.NewQueue("ONTIMER"))  {}
+    TTimer() : OnTimer(Actions.New("ONTIMER"))  {}
     virtual ~TTimer()  {}
 
     TActionQueue &OnTimer;

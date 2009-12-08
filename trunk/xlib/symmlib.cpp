@@ -1158,10 +1158,11 @@ void TSpaceGroup::GetMatrices(smatd_list& matrices, short Flags) const {
 //..............................................................................
 size_t TBravaisLattice::FindSpaceGroups(TPtrList<TSpaceGroup>& SpaceGroups) const  {
   size_t rc = 0;
-  for( size_t i=0; i < TSymmLib::GetInstance()->SGCount(); i++ )  {
-    if( &TSymmLib::GetInstance()->GetGroup(i).GetBravaisLattice() == this )  {
+  const TSymmLib& sl = TSymmLib::GetInstance();
+  for( size_t i=0; i < sl.SGCount(); i++ )  {
+    if( &sl.GetGroup(i).GetBravaisLattice() == this )  {
       rc++;
-      SpaceGroups.Add( &TSymmLib::GetInstance()->GetGroup(i) );
+      SpaceGroups.Add(sl.GetGroup(i));
     }
   }
   return rc;

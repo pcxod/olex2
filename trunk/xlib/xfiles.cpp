@@ -75,12 +75,13 @@ void TBasicCFile::LoadFromFile(const olxstr& fn)  {
 //----------------------------------------------------------------------------//
 // TXFile function bodies
 //----------------------------------------------------------------------------//
-TXFile::TXFile() : RefMod(Lattice.GetAsymmUnit())  {
+TXFile::TXFile() : RefMod(Lattice.GetAsymmUnit()),
+  OnFileLoad(Actions.New("XFILELOAD")),
+  OnFileSave(Actions.New("XFILESAVE"))
+{
   Lattice.GetAsymmUnit().SetRefMod(&RefMod);
-  Lattice.GetAsymmUnit().OnSGChange->Add(this, XFILE_SG_Change); 
-  OnFileLoad = &Actions.NewQueue("XFILELOAD");
-  OnFileSave = &Actions.NewQueue("XFILESAVE");
-  Lattice.OnStructureUniq->Add(this, XFILE_UNIQ);
+  Lattice.GetAsymmUnit().OnSGChange.Add(this, XFILE_SG_Change); 
+  Lattice.OnStructureUniq.Add(this, XFILE_UNIQ);
   FLastLoader = NULL;
   FSG = NULL;
 }
@@ -113,14 +114,14 @@ void TXFile::LastLoaderChanged() {
     GetLattice().Clear(true);
     return;
   }
-  FSG = TSymmLib::GetInstance()->FindSG(FLastLoader->GetAsymmUnit());
-  OnFileLoad->Enter(this, &FLastLoader->GetFileName());
+  FSG = TSymmLib::GetInstance().FindSG(FLastLoader->GetAsymmUnit());
+  OnFileLoad.Enter(this, &FLastLoader->GetFileName());
   GetRM().ClearAll();
   GetLattice().Clear(true);
   GetRM().Assign(FLastLoader->GetRM(), true);
-  OnFileLoad->Execute(this);
+  OnFileLoad.Execute(this);
   GetLattice().Init();
-  OnFileLoad->Exit(this, &FLastLoader->GetFileName());
+  OnFileLoad.Exit(this, &FLastLoader->GetFileName());
 }
 //..............................................................................
 bool TXFile::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender, const IEObject* Data) {
@@ -160,18 +161,18 @@ void TXFile::LoadFromFile(const olxstr & FN) {
   }
 
   if( !Loader->IsNative() )  {
-    OnFileLoad->Enter(this, &FN);
+    OnFileLoad.Enter(this, &FN);
     try  {  GetRM().ClearAll();  }
-    catch( const TExceptionBase& exc )  {
+    catch(const TExceptionBase& exc)  {
       TBasicApp::GetLog() << (olxstr("An error occured: ") << exc.GetException()->GetError());
     }
     GetLattice().Clear(true);
     GetRM().Assign(Loader->GetRM(), true);
-    OnFileLoad->Execute(this);
+    OnFileLoad.Execute(this);
     GetLattice().Init();
-    OnFileLoad->Exit(this);
+    OnFileLoad.Exit(this);
   }
-  FSG = TSymmLib::GetInstance()->FindSG(Loader->GetAsymmUnit());
+  FSG = TSymmLib::GetInstance().FindSG(Loader->GetAsymmUnit());
   if( replicated )  {
     for( size_t i=0; i < FileFormats.Count(); i++ )
       if( FileFormats.GetObject(i) == FLastLoader )
@@ -353,13 +354,13 @@ void TXFile::SaveToFile(const olxstr &FN, bool Sort)  {
     if( Sort )  
       Loader->GetAsymmUnit().Sort();
   }
-  OnFileSave->Enter(this);
+  OnFileSave.Enter(this);
   IEObject* Cause = NULL;
   try  {  Loader->SaveToFile(FN);  }
-  catch( const TExceptionBase &exc )  {
+  catch(const TExceptionBase& exc)  {
     Cause = exc.Replicate();
   }
-  OnFileSave->Exit(this);
+  OnFileSave.Exit(this);
   if( Cause != NULL )  {
     throw TFunctionFailedException(__OlxSourceInfo, Cause);
   }
@@ -375,11 +376,11 @@ IEObject* TXFile::Replicate() const  {
 }
 //..............................................................................
 void TXFile::EndUpdate()  {
-  OnFileLoad->Enter(this, &GetFileName());
-  OnFileLoad->Execute(this);
+  OnFileLoad.Enter(this, &GetFileName());
+  OnFileLoad.Execute(this);
   // we keep the asymmunit but clear the unitcell
   GetLattice().Init();
-  OnFileLoad->Exit(this);
+  OnFileLoad.Exit(this);
 }
 //..............................................................................
 void TXFile::ToDataItem(TDataItem& item) {

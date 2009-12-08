@@ -187,7 +187,7 @@ bool TFileTree::Folder::CopyTo(const olxstr& _dest,
             ) const
 {
   if( FileTree.Break )  return false;
-  olxstr dest = TEFile::AddTrailingBackslash(_dest + (Parent == NULL ? EmptyString : Name));
+  olxstr dest = TEFile::AddPathDelimeter(_dest + (Parent == NULL ? EmptyString : Name));
   if( !TEFile::Exists(dest) )  {
     if( !TEFile::MakeDir(dest) || !TEFile::MakeDirs(dest) )  {
       if( do_throw )

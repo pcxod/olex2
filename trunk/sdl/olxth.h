@@ -64,7 +64,7 @@ protected:  // do not allow to create externally
     Running(false),
     Handle(0), 
     RetVal(0),
-    OnTerminate(Actions.NewQueue("ON_TERMINATE")) {}
+    OnTerminate(Actions.New("ON_TERMINATE")) {}
   //..................................................................................................
   /* thread can do some extras here, as it will be called from SendTerminate 
   before the Terimate flag is set */

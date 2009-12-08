@@ -40,11 +40,12 @@ template <class TaskClass>
     TaskClass& Task;
     TActionQList Actions;
   public:
-    TArrayIterationItem(TaskClass& task, size_t startIndex, size_t endIndex) : Task(task)  {
+    TArrayIterationItem(TaskClass& task, size_t startIndex, size_t endIndex) : Task(task),
+      OnCompletion(Actions.New("ONCOMPLETION"))
+    {
       StartIndex = startIndex;
       EndIndex = endIndex;
       CurrentIndex = InvalidIndex;
-      OnCompletion = &Actions.NewQueue("ONCOMPLETION");
     }
 #ifdef __WIN32__
     static unsigned long _stdcall Run(void* _instance) {
@@ -55,7 +56,7 @@ template <class TaskClass>
       TArrayIterationItem<TaskClass>& inst = *(TArrayIterationItem<TaskClass>*)_instance;
       for( inst.CurrentIndex = inst.StartIndex; inst.CurrentIndex < inst.EndIndex; inst.CurrentIndex++ )
         inst.Task.Run( inst.CurrentIndex );
-      inst.OnCompletion->Execute(&inst, NULL);
+      inst.OnCompletion.Execute(&inst, NULL);
       delete &inst;
       return 0;
     }
@@ -64,7 +65,7 @@ template <class TaskClass>
     DefPropP(size_t, StartIndex)
     DefPropP(size_t, EndIndex)
     DefPropP(uint16_t, Id)
-    TActionQueue *OnCompletion;
+    TActionQueue& OnCompletion;
   };
 
 
@@ -124,7 +125,7 @@ template <class TaskClass>
         throw TInvalidArgumentException(__OlxSourceInfo, "unknow task complexity");
     }
   public:
-    TListIteratorManager( TaskClass& task, size_t ListSize, const short TaskType, size_t minSize)  {
+    TListIteratorManager(TaskClass& task, size_t ListSize, const short TaskType, size_t minSize)  {
       SetToDelete(false);
       if( ListSize < minSize || TBasicApp::GetInstance().GetMaxThreadCount() == 1)  {  // should we create parallel tasks then at all?
         for( size_t i=0; i < ListSize; i++ )
@@ -138,21 +139,21 @@ template <class TaskClass>
       for( size_t i=0; i < ratios.Count(); i++ )  {
         if( i > 0 )  {
           taskInstance = task.Replicate();
-          Tasks.Add( *taskInstance );
+          Tasks.Add(*taskInstance);
         }
 
         TArrayIterationItem<TaskClass>* item = new TArrayIterationItem<TaskClass>( *taskInstance, startIndex, startIndex + ratios[i] );
         startIndex += ratios[i];
-        Items.AddACopy( item ) ;
+        Items.AddACopy(item) ;
         item->SetId((short)(Items.Count()-1));
-        item->OnCompletion->Add( this );
-        start_thread( item );
+        item->OnCompletion.Add(this);
+        start_thread(item);
       }
       while( !IsCompleted() )
         olx_sleep(25);
     }
     virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL) {
-      ((TArrayIterationItem<TaskClass>*)Sender)->OnCompletion->Remove(this);
+      ((TArrayIterationItem<TaskClass>*)Sender)->OnCompletion.Remove(this);
       Items.NullItem( ((TArrayIterationItem<TaskClass>*)Sender)->GetId() );
       return true;
     }

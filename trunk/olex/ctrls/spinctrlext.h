@@ -18,7 +18,7 @@ namespace ctrl_ext  {
     TSpinCtrl(wxWindow *Parent, const wxSize& sz=wxDefaultSize): 
       wxSpinCtrl(Parent, -1, wxEmptyString, wxDefaultPosition, sz),
       AOlxCtrl(this),  
-      OnChange(Actions.NewQueue(evt_change_id)),
+      OnChange(Actions.New(evt_change_id)),
       Data(EmptyString),
       OnChangeStr(EmptyString)  {}
     virtual ~TSpinCtrl()  {}

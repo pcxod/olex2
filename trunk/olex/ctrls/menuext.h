@@ -31,11 +31,11 @@ namespace ctrl_ext {
   public:
     TMenuItem(const short type, int id, TMenu* parent=NULL, const olxstr &Name=EmptyString) :
       wxMenuItem(parent, id, Name.u_str(), wxString(), static_cast<wxItemKind>(type)),
-      OnModeChange(Actions.NewQueue(evt_on_mode_change_id)),
+      OnModeChange(Actions.New(evt_on_mode_change_id)),
       ActionQueue(NULL),
       DependentOn(0)  {  SetToDelete(false);  }
     virtual ~TMenuItem()  {}
-    void SetActionQueue(TActionQueue* q, const olxstr& dependMode, short dependentOn);
+    void SetActionQueue(TActionQueue& q, const olxstr& dependMode, short dependentOn);
     bool Execute(const IEObject *Sender, const IEObject *Data);
     // updates checked status
     void ValidateState(); 

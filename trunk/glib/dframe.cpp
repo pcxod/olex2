@@ -1,13 +1,7 @@
 //----------------------------------------------------------------------------//
-// namespace TGlObj
 // TDFrame - a drawing object for selection frame
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "dframe.h"
 #include "glmaterial.h"
 #include "glrender.h"
@@ -17,20 +11,13 @@
 
 UseGlNamespace()
 //..............................................................................
-//..............................................................................
-
 TDFrame::TDFrame(TGlRenderer& Render, const olxstr& collectionName) :
-  AGDrawObject(Render, collectionName)
+  AGDrawObject(Render, collectionName),
+  OnSelect(Actions.New("ONSELECT"))
 {
   FPrimitive = NULL;
   SetGroupable(false);
-  FActions = new TActionQList;
-  OnSelect = &FActions->NewQueue("ONSELECT");
 };
-//..............................................................................
-TDFrame::~TDFrame()  {
-  delete FActions;
-}
 //..............................................................................
 void TDFrame::Create(const olxstr& cName, const ACreationParams* cpar) {
   if( !cName.IsEmpty() )  
@@ -53,8 +40,7 @@ void TDFrame::Create(const olxstr& cName, const ACreationParams* cpar) {
 }
 //..............................................................................
 bool TDFrame::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
-  if( FPrimitive == NULL ) 
-    return false;
+  if( FPrimitive == NULL )  return false;
   float Scale = (float)Parent.GetScale();
   int hW = Parent.GetWidth()/2 + Parent.GetLeft(),
       hH = Parent.GetHeight()/2 - Parent.GetTop();
@@ -73,14 +59,13 @@ bool TDFrame::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
   FPrimitive->Vertices[3][1] = (hH - Data->Y)*Scale - Translation[1];
   FPrimitive->Vertices[3][0] = (-hW + Data->X)*Scale - Translation[0];
 
-  SetVisible( true );
+  SetVisible(true);
   return true;
 }
 //..............................................................................
 bool TDFrame::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
-  if( FPrimitive == NULL ) 
-    return false;
-  SetVisible( false );
+  if( FPrimitive == NULL )  return false;
+  SetVisible(false);
   Parent.Draw();
   TSelectionInfo SI;
   SI.From[0] = olx_min(FPrimitive->Vertices[0][0], FPrimitive->Vertices[2][0]);
@@ -89,13 +74,12 @@ bool TDFrame::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
   SI.To[0] = olx_max(FPrimitive->Vertices[0][0], FPrimitive->Vertices[2][0]);
   SI.To[1] = olx_max(FPrimitive->Vertices[0][1], FPrimitive->Vertices[2][1]);
 
-  OnSelect->Execute(this, &SI);
+  OnSelect.Execute(this, &SI);
   return true;
 }
 //..............................................................................
 bool TDFrame::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
-  if( FPrimitive == NULL ) 
-    return false;
+  if( FPrimitive == NULL )  return false;
   float Scale = (float)Parent.GetScale();
   int hW = Parent.GetWidth()/2 + Parent.GetLeft(),
       hH = Parent.GetHeight()/2 - Parent.GetTop();

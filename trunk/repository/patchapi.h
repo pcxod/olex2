@@ -69,15 +69,15 @@ public:
 #ifdef __WIN32__
     new_shared_dir << "Olex2Data/";
 #else
-    TEFile::RemoveTrailingBackslashI(new_shared_dir) << "data/";
+    TEFile::TrimPathDelimeterI(new_shared_dir) << "data/";
 #endif
-    return TEFile::AddTrailingBackslashI( 
+    return TEFile::AddPathDelimeterI( 
       new_shared_dir << MD5::Digest(esdl::olxcstr( 
-        TEFile::AddTrailingBackslash((base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir)) + ReadRepositoryTag())) );
+        TEFile::AddPathDelimeter((base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir)) + ReadRepositoryTag())) );
   }
   static void SaveLocationInfo(const olxstr& shared_dir, const olxstr& base_dir=EmptyString)  {
     TCStrList location_file_content;
-    location_file_content.Add(TEFile::AddTrailingBackslash((base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir))) 
+    location_file_content.Add(TEFile::AddPathDelimeter((base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir))) 
       << patcher::PatchAPI::ReadRepositoryTag();
     location_file_content.SaveToFile( shared_dir + "folder.info" );
   }
@@ -90,7 +90,7 @@ public:
     new_shared_dir << "Olex2";
   #endif
 #endif
-    return TEFile::AddTrailingBackslashI(new_shared_dir);
+    return TEFile::AddPathDelimeterI(new_shared_dir);
   }
 
 };

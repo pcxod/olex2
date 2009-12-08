@@ -1,10 +1,5 @@
-//---------------------------------------------------------------------------//
-// namespace TEXLib
-// TGXApp - a wraper for basic crystallographic graphic application
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
-#ifndef _xl_gxappH
-#define _xl_gxappH
+#ifndef __olx_gxl_gxapp_H
+#define __olx_gxl_gxapp_H
 #include "gxbase.h"
 
 #include "xapp.h"
@@ -110,17 +105,17 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   void CreateXGrowPoints();
   double DeltaV;
 protected:
-  TGlRenderer *FGlRender;
-  TXFader *Fader;
+  TGlRenderer* FGlRender;
+  TXFader* Fader;
   TTypeList<TXFile> OverlayedXFiles;
 
-  THklFile *FHklFile;
-  TGlMouse*   FGlMouse;
+  THklFile* FHklFile;
+  TGlMouse* FGlMouse;
   TDUnitCell* FDUnitCell;
   TDBasis* FDBasis;
   TDFrame* FDFrame;
 
-  TXGrid *FXGrid;
+  TXGrid* FXGrid;
 
   void FragmentVisible( TNetwork *N, bool V);
   bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
@@ -449,10 +444,10 @@ public:     void CalcProbFactor(float Prob);
   void EnableSelection( bool v)  {  FGlMouse->SelectionEnabled = v;  }
 //..............................................................................
 // actions
-  TActionQueue  *OnGraphicsVisible;
-  TActionQueue  *OnFragmentVisible;
-  TActionQueue  *OnAllVisible;
-  TActionQueue  *OnObjectsDestroy;
+  TActionQueue &OnGraphicsVisible,
+    &OnFragmentVisible,
+    &OnAllVisible,
+    &OnObjectsDestroy;
   bool IsCellVisible()  const;
   void SetCellVisible( bool v);
   bool IsBasisVisible() const;

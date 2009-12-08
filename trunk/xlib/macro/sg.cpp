@@ -23,9 +23,10 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   if( olx_inst != NULL )
     olx_inst->setVar( IOlexProcessor::SGListVarName, EmptyString );
 
+  const TSymmLib& SymmLib = TSymmLib::GetInstance();
   TTypeList<TBravaisLatticeRef> BravaisLattices;
   if( XApp.XFile().HasLastLoader() )  {
-    TSymmLib::GetInstance()->FindBravaisLattices( XApp.XFile().GetAsymmUnit(), BravaisLattices );
+    SymmLib.FindBravaisLattices(XApp.XFile().GetAsymmUnit(), BravaisLattices);
     size_t MatchCount = 0;
     if( BravaisLattices.Count() )  {
       XApp.GetLog() << "\nPossible crystal systems from cell parameters\n";
@@ -58,10 +59,10 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
 
   TPtrList<TSpaceGroup> LaueClasses;
   TTypeList<TSGStats> LaueClassStats;
-  for( size_t i=0; i < TSymmLib::GetInstance()->BravaisLatticeCount(); i++ )  {
-    for( size_t j=0; j < TSymmLib::GetInstance()->GetBravaisLattice(i).SymmetryCount(); j++ )
-      if( LaueClasses.IndexOf( &(TSymmLib::GetInstance()->GetBravaisLattice(i).GetSymmetry(j)) ) == InvalidIndex )
-        LaueClasses.Add( &(TSymmLib::GetInstance()->GetBravaisLattice(i).GetSymmetry(j)) );
+  for( size_t i=0; i < SymmLib.BravaisLatticeCount(); i++ )  {
+    for( size_t j=0; j < SymmLib.GetBravaisLattice(i).SymmetryCount(); j++ )
+      if( LaueClasses.IndexOf(SymmLib.GetBravaisLattice(i).GetSymmetry(j)) == InvalidIndex )
+        LaueClasses.Add(SymmLib.GetBravaisLattice(i).GetSymmetry(j));
   }
 //  for( size_t i=0; i < TSymmLib::GetInstance()->PointGroupCount(); i++ )  {
 //    LaueClasses.AddACopy( &(TSymmLib::GetInstance()->GetPointGroup(i)) );
@@ -201,7 +202,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
     }
   }
   if( SortedLatticeHits.GetComparable(0) > threshold || SortedLatticeHits.GetComparable(0) == -1 )
-    ChosenLats.Add( TSymmLib::GetInstance()->FindLattice("P") );
+    ChosenLats.Add(SymmLib.FindLattice("P"));
   for( size_t i=0; i < SortedLatticeHits.Count(); i++ )  {
     if( SortedLatticeHits.GetComparable(i) == -1 || SortedLatticeHits.GetComparable(i) < threshold )
       ChosenLats.Add( SortedLatticeHits.GetObject(i) );
@@ -252,12 +253,12 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   }
   // nor systematic absences in P-1!
   if( CalculatedLaueClasses.Count() == 1 &&
-      CalculatedLaueClasses[0] == TSymmLib::GetInstance()->FindGroup("P-1") )  {
+      CalculatedLaueClasses[0] == SymmLib.FindGroup("P-1") )  {
     PresentElements.Clear();
   }
   if( !PresentElements.IsEmpty() )  {
-    for( size_t i=0; i < TSymmLib::GetInstance()->SGCount(); i++ )  {
-      TSpaceGroup& sg = TSymmLib::GetInstance()->GetGroup(i);
+    for( size_t i=0; i < SymmLib.SGCount(); i++ )  {
+      TSpaceGroup& sg = SymmLib.GetGroup(i);
       if( sg.GetNumber() > 230 )  continue;
       bool matchLaueClass = false;
       for( size_t j=0; j < CalculatedLaueClasses.Count(); j++ )  {
@@ -482,11 +483,11 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       TPtrList<TSpaceGroup> laueClassGroups, possibleGroups;
       for( size_t i=CalculatedLaueClasses.Count()-1; i != InvalidIndex ; i-- )  {
         laueClassGroups.Clear();
-        TSymmLib::GetInstance()->FindLaueClassGroups( *CalculatedLaueClasses[i], laueClassGroups);
+        SymmLib.FindLaueClassGroups(*CalculatedLaueClasses[i], laueClassGroups);
         for( size_t j=0; j < laueClassGroups.Count(); j++ )  {
-          if( ChosenLats.IndexOf( &laueClassGroups[j]->GetLattice() ) == InvalidIndex )  continue;
+          if( ChosenLats.IndexOf(laueClassGroups[j]->GetLattice()) == InvalidIndex )  continue;
           if( !laueClassGroups[j]->HasTranslations() )
-            FoundSpaceGroups.Add( laueClassGroups[j] );
+            FoundSpaceGroups.Add(laueClassGroups[j]);
         }
       }
     }

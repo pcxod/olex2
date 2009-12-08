@@ -7,10 +7,10 @@ IMPLEMENT_CLASS(TButton, wxButton)
 IMPLEMENT_CLASS(TBmpButton, wxBitmapButton)
 
 //..............................................................................
-void AButtonBase::SetActionQueue(TActionQueue* q, const olxstr& dependMode)  {
-  ActionQueue = q;
+void AButtonBase::SetActionQueue(TActionQueue& q, const olxstr& dependMode)  {
+  ActionQueue = &q;
   DependMode = dependMode;
-  ActionQueue->Add( this );
+  ActionQueue->Add(this);
 }
 bool AButtonBase::Execute(const IEObject *Sender, const IEObject *Data)  {
   if( Data && EsdlInstanceOf(*Data, TModeChange) )  {
