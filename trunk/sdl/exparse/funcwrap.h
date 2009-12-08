@@ -303,6 +303,11 @@ namespace exparse  {
     static void CompileTest();
   };
 
+  struct IClassInfo  {
+    virtual IStaticFunction* find_static_function(const olxstr& name, size_t argc) const = 0;
+    virtual IMemberFunction* find_member_function(const olxstr& name, size_t argc) const = 0;
+  };
+
   struct IClassRegistry  {
     virtual ~IClassRegistry() {}
     virtual IEvaluable* create_from_name(IEvaluable& self, const EvaluableFactory& factory, 
@@ -433,10 +438,6 @@ namespace exparse  {
     static void CompileTest();
   };
 
-  struct IClassInfo  {
-    virtual IStaticFunction* find_static_function(const olxstr& name, size_t argc) const = 0;
-    virtual IMemberFunction* find_member_function(const olxstr& name, size_t argc) const = 0;
-  };
   template <class base_class> struct ClassInfo : public IClassInfo {
     ClassRegistry<base_class> functions;
     LibraryRegistry globals;
@@ -444,7 +445,6 @@ namespace exparse  {
     virtual IMemberFunction* find_member_function(const olxstr& name, size_t argc) const {  return functions.find(name, argc);  }
     bool is_empty() const {  return functions.is_empty() && globals.is_empty();  }
   };
-
 };  // end exparse namespace
 EndEsdlNamespace()
 
