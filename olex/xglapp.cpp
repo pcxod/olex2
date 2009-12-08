@@ -180,7 +180,7 @@ bool TGlXApp::OnInit()  {
     }
   }
   TProgress *P = new TProgress;
-  XApp->OnProgress->Add(P);
+  XApp->OnProgress.Add(P);
 
   TCif *Cif = new TCif;  // the objects will be automatically removed by the XApp
   XApp->RegisterXFileFormat(Cif, "cif");

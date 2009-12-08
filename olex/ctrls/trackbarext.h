@@ -15,8 +15,8 @@ namespace ctrl_ext  {
     TTrackBar(wxWindow *Parent, const wxSize& sz=wxDefaultSize) : 
       wxSlider(Parent, -1, 0, 0, 100, wxDefaultPosition, sz, wxSL_HORIZONTAL|wxSL_AUTOTICKS),
       AOlxCtrl(this),
-      OnChange(Actions.NewQueue(evt_change_id)),
-      OnMouseUp(Actions.NewQueue(evt_on_mouse_up_id)),
+      OnChange(Actions.New(evt_change_id)),
+      OnMouseUp(Actions.New(evt_on_mouse_up_id)),
       this_Val(0),
       Data(EmptyString),
       OnChangeStr(EmptyString),

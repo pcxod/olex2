@@ -86,7 +86,7 @@ TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
 }
 TOlexViewer::~TOlexViewer()  {
   Instance = NULL;
-  GXApp->OnIdle->Execute(NULL, NULL);
+  GXApp->OnIdle.Execute(NULL, NULL);
   delete GXApp;
   if( GlContext != NULL )  {
     wglMakeCurrent(WindowDC, NULL); 
@@ -98,7 +98,7 @@ TOlexViewer::~TOlexViewer()  {
 }
 void TOlexViewer::OnPaint()  {
 //  OnSize(Width, Height);
-  GXApp->OnIdle->Execute(NULL, NULL);
+  GXApp->OnIdle.Execute(NULL, NULL);
   GXApp->Draw();
   GdiFlush();
   glFlush();
@@ -111,7 +111,7 @@ void TOlexViewer::OnSize(int w, int h)  {
 }
 //.......................................................................................
 bool TOlexViewer::OnMouse(int x, int y, short MouseEvent, short MouseButton, short ShiftState)  {
-  GXApp->OnIdle->Execute(NULL, NULL);
+  GXApp->OnIdle.Execute(NULL, NULL);
   bool res = false;
   short btn = 0, shift = 0;
   if( MouseButton & olxv_MouseLeft )   btn |= smbLeft;
@@ -136,7 +136,7 @@ bool TOlexViewer::OnMouse(int x, int y, short MouseEvent, short MouseButton, sho
 //.......................................................................................
 bool TOlexViewer::OnFileChanged(const char* fileName)  {
   try  {
-    GXApp->OnIdle->Execute(NULL, NULL);
+    GXApp->OnIdle.Execute(NULL, NULL);
     GXApp->LoadXFile(fileName);
     GXApp->SetAtomDrawingStyle(adsEllipsoid);
     GXApp->Uniq();

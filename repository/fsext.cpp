@@ -239,7 +239,7 @@ void TFileHandlerManager::Clear(short persistenceMask)  {
 olxstr TFileHandlerManager::LocateFile( const olxstr& fn )  {
   if( FHandler->IsMemoryBlock(fn) )  return fn;
   if( !TEFile::IsAbsolutePath(fn) )  {
-    olxstr f = TEFile::AddTrailingBackslash( TEFile::CurrentDir() );
+    olxstr f = TEFile::AddPathDelimeter( TEFile::CurrentDir() );
     if( TEFile::Exists( f + fn ) )  return f + fn;
     for( size_t i=0; i < BaseDirs.Count(); i++ )  {
       if( TEFile::Exists( BaseDirs[i] + fn ) )
@@ -250,7 +250,7 @@ olxstr TFileHandlerManager::LocateFile( const olxstr& fn )  {
 }
 //..............................................................................
 void TFileHandlerManager::AddBaseDir(const olxstr& bd)  {
-  BaseDirs.Add( TEFile::AddTrailingBackslash( bd )  );
+  BaseDirs.Add( TEFile::AddPathDelimeter( bd )  );
 }
 //..............................................................................
 void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, const char *bf,

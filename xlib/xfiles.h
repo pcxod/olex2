@@ -58,7 +58,7 @@ public:
   TXFile();
   virtual ~TXFile();
 
-  TActionQueue* OnFileLoad, *OnFileSave;
+  TActionQueue &OnFileLoad, &OnFileSave;
 
   inline const TLattice& GetLattice() const {  return Lattice;  }
   inline TLattice& GetLattice()  {  return Lattice;  }

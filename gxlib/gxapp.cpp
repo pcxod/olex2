@@ -232,7 +232,12 @@ enum  {
   ID_OnDisassemble
 };
 
-TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this)  {
+TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
+  OnGraphicsVisible(NewActionQueue("GRVISIBLE")),
+  OnFragmentVisible(NewActionQueue("FRVISIBLE")),
+  OnAllVisible(NewActionQueue("ALLVISIBLE")),
+  OnObjectsDestroy(NewActionQueue("OBJECTSDESTROY"))
+{
   FQPeaksVisible = FHydrogensVisible = FStructureVisible = FHBondsVisible = true;
   XGrowPointsVisible = FXGrowLinesVisible = FQPeakBondsVisible = false;
   FXPolyVisible = true;
@@ -244,7 +249,7 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this)  {
   FGlRender = new TGlRenderer(GlScene, 1,1);
   FDFrame = new TDFrame(*FGlRender, "DFrame");
   Fader = new TXFader(*FGlRender, "Fader");
-  FDFrame->OnSelect->Add(this, ID_OnSelect);
+  FDFrame->OnSelect.Add(this, ID_OnSelect);
   FGlMouse = new TGlMouse(FGlRender, FDFrame);
   FDUnitCell = new TDUnitCell(*FGlRender, "DUnitCell");
   FDUnitCell->SetVisible(false);
@@ -266,19 +271,14 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this)  {
 
   FXGrid = new TXGrid("XGrid", this);
 
-  XFile().GetLattice().OnDisassemble->Add(this, ID_OnDisassemble);
+  XFile().GetLattice().OnDisassemble.Add(this, ID_OnDisassemble);
 
   xappXFileLoad *P = &TEGC::NewG<xappXFileLoad>(this);
-  XFile().GetLattice().OnStructureGrow->Add(P);
-  XFile().GetLattice().OnStructureGrow->Add(new xappXFileUniq);
-  XFile().GetLattice().OnStructureUniq->Add(P);
-  XFile().GetLattice().OnStructureUniq->Add(new xappXFileUniq);
-  XFile().OnFileLoad->Add(P);
-
-  OnGraphicsVisible = &NewActionQueue("GRVISIBLE");
-  OnFragmentVisible = &NewActionQueue("FRVISIBLE");
-  OnAllVisible = &NewActionQueue("ALLVISIBLE");
-  OnObjectsDestroy = &NewActionQueue("OBJECTSDESTROY");
+  XFile().GetLattice().OnStructureGrow.Add(P);
+  XFile().GetLattice().OnStructureGrow.Add(new xappXFileUniq);
+  XFile().GetLattice().OnStructureUniq.Add(P);
+  XFile().GetLattice().OnStructureUniq.Add(new xappXFileUniq);
+  XFile().OnFileLoad.Add(P);
 }
 //..............................................................................
 TGXApp::~TGXApp()  {
@@ -291,7 +291,7 @@ TGXApp::~TGXApp()  {
 }
 //..............................................................................
 void TGXApp::ClearXObjects()  {
-  OnObjectsDestroy->Execute( dynamic_cast<TBasicApp*>(this), NULL);
+  OnObjectsDestroy.Execute(dynamic_cast<TBasicApp*>(this), NULL);
   XAtoms.Clear();
   XBonds.Clear();
   XGrowLines.Clear();
@@ -610,7 +610,7 @@ void TGXApp::SetBasisVisible( bool v)  {
 TUndoData* TGXApp::SetGraphicsVisible( AGDrawObject *G, bool v )  {
   if( v != IsGraphicsVisible(G) )  {
     G->SetVisible(v);
-    OnGraphicsVisible->Execute(dynamic_cast<TBasicApp*>(this), G);
+    OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), G);
     Draw();
   }
   return NULL;
@@ -620,7 +620,7 @@ TUndoData* TGXApp::SetGraphicsVisible( TPtrList<AGDrawObject>& G, bool v )  {
   for( size_t i=0; i < G.Count(); i++ )  {
     if( v == G[i]->IsVisible() )  continue;
     G[i]->SetVisible(v);
-    OnGraphicsVisible->Execute(dynamic_cast<TBasicApp*>(this), G[i]);
+    OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), G[i]);
   }
   Draw();
   return NULL;
@@ -1220,7 +1220,7 @@ void TGXApp::SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b)
 }
 //..............................................................................
 void TGXApp::AllVisible(bool V)  {
-  OnAllVisible->Enter(dynamic_cast<TBasicApp*>(this), NULL);
+  OnAllVisible.Enter(dynamic_cast<TBasicApp*>(this), NULL);
   if( !V )  {
     for( size_t i=0; i < XAtoms.Count(); i++ )
       XAtoms[i].SetVisible(false);
@@ -1234,7 +1234,7 @@ void TGXApp::AllVisible(bool V)  {
     XFile().GetLattice().UpdateConnectivity();
     CenterView(true);
   }
-  OnAllVisible->Exit(dynamic_cast<TBasicApp*>(this), NULL);
+  OnAllVisible.Exit(dynamic_cast<TBasicApp*>(this), NULL);
   Draw();
 }
 //..............................................................................

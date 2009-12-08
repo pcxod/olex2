@@ -42,7 +42,7 @@ public:
     Break(false),
     Index(NULL),
     Access(afs_FullAccess),  
-    OnProgress(Actions.NewQueue("ON_PROGRESS"))  {}
+    OnProgress(Actions.New("ON_PROGRESS"))  {}
 
   virtual ~AFileSystem()  {  ; }
 
@@ -97,7 +97,7 @@ public:
   DefPropP(TFSIndex*, Index)
   // returns a base at which the file system is initalised
   inline const olxstr& GetBase() const  {  return FBase; }
-  inline void SetBase(const olxstr& b)  {  FBase = TEFile::AddTrailingBackslash(b); }
+  inline void SetBase(const olxstr& b)  {  FBase = TEFile::AddPathDelimeter(b); }
 
   // depends on the file system implementation
   void DoBreak() {  Break = true;  }
@@ -119,11 +119,11 @@ public:
   TOSFileSystem(const olxstr& base);
   virtual ~TOSFileSystem()  {}
 
-  TActionQueue* OnRmFile;
-  TActionQueue* OnRmDir;
-  TActionQueue* OnMkDir;
-  TActionQueue* OnAdoptFile;
-  TActionQueue* OnOpenFile;
+  TActionQueue& OnRmFile;
+  TActionQueue& OnRmDir;
+  TActionQueue& OnMkDir;
+  TActionQueue& OnAdoptFile;
+  TActionQueue& OnOpenFile;
 };
 //.............................................................................//
 //.............................................................................//

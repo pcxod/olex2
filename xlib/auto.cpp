@@ -544,7 +544,7 @@ void TAutoDB::PrepareForSearch()  {
 void TAutoDB::ProcessFolder(const olxstr& folder)  {
   if( !TEFile::Exists(folder) )  return;
   olxstr currentDir = TEFile::CurrentDir();
-  olxstr uf = TEFile::RemoveTrailingBackslash(folder);
+  olxstr uf = TEFile::TrimPathDelimeter(folder);
   TEFile::ChangeDir( uf );
   TFileList files;
   TEFile::ListCurrentDirEx(files, "*.cif", sefFile|sefDir);
@@ -1361,8 +1361,8 @@ void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt, TStrL
     report.Add( olxstr("Failed to load due to ") << exc.GetException()->GetError() );
     return;
   }
-  TSpaceGroup* sga = TSymmLib::GetInstance()->FindSG( latt.GetAsymmUnit() );
-  TSpaceGroup* sgb = TSymmLib::GetInstance()->FindSG( XFile.GetAsymmUnit() );
+  TSpaceGroup* sga = TSymmLib::GetInstance().FindSG(latt.GetAsymmUnit());
+  TSpaceGroup* sgb = TSymmLib::GetInstance().FindSG(XFile.GetAsymmUnit());
   if( sga == NULL || sgb == NULL )  {
     report.Add( olxstr("Could not evaluate space group") );
     return;

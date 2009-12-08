@@ -62,7 +62,7 @@ IInputStream* TWinZipFileSystem::_DoOpenFile(const olxstr& Source)  {
 //..............................................................................
 void TWinZipFileSystem::ExtractAll(const olxstr& dest)  {
   ZIPENTRY ze;
-  olxstr extractPath( TEFile::AddTrailingBackslash(dest) );
+  olxstr extractPath( TEFile::AddPathDelimeter(dest) );
   // -1 gives overall information about the zipfile
   GetZipItem(zip, -1, &ze);
   int numitems = ze.index;

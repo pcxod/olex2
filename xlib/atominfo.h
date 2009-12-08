@@ -177,7 +177,10 @@ public:
     count
   */
   void ParseElementString(const olxstr& su, ContentList& res) const;
-  inline static TAtomsInfo& GetInstance() {
+
+  static bool IsInitialised()  {  return Instance != NULL;  }
+
+  static TAtomsInfo& GetInstance()  {
     if( Instance == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "object is not initialised");
     return *Instance;

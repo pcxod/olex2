@@ -1,6 +1,5 @@
-#ifndef dfameH
-#define dfameH
-
+#ifndef __olx_gl_dfame_H
+#define __olx_gl_dfame_H
 #include "glbase.h"
 #include "gdrawobject.h"
 #include "actions.h"
@@ -15,12 +14,12 @@ public:
 
 class TDFrame: public AGDrawObject  {
 protected:
-  class TGlPrimitive *FPrimitive;
+  class TGlPrimitive* FPrimitive;
   vec3f Translation;
-  TActionQList *FActions;
+  TActionQList Actions;
 public:
   TDFrame(TGlRenderer& Render, const olxstr& collectionName);
-  virtual ~TDFrame();
+  virtual ~TDFrame()  {}
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min){  return false;};
@@ -28,7 +27,8 @@ public:
   bool OnMouseDown(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
-  TActionQueue *OnSelect;
+  
+  TActionQueue& OnSelect;
 };
 
 EndGlNamespace()

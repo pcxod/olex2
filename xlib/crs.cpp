@@ -9,7 +9,7 @@ TCRSFile::TCRSFile()  {
 }
 //..............................................................................
 TSpaceGroup* TCRSFile::GetSG()  {
-  return SGInitialised ? TSymmLib::GetInstance()->FindSG( GetAsymmUnit() ) : NULL;
+  return SGInitialised ? TSymmLib::GetInstance().FindSG(GetAsymmUnit()) : NULL;
 }
 //..............................................................................
 void TCRSFile::SaveToStrings(TStrList& SL)  {
@@ -114,9 +114,9 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
   }
 
   Sg.DeleteChars(' ');
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup( Sg );
+  TSpaceGroup* sg = TSymmLib::GetInstance().FindGroup(Sg);
   if( sg != NULL )  {
-    GetAsymmUnit().ChangeSpaceGroup( *sg );
+    GetAsymmUnit().ChangeSpaceGroup(*sg);
     SGInitialised = true;
   }
   GetRM().SetUserContent(sfac, unit);

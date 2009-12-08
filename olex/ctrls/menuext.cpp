@@ -43,7 +43,7 @@ void TMenu::Clear()  {
 // TMenuItem implementation
 //----------------------------------------------------------------------------//
 //..............................................................................
-void TMenuItem::SetActionQueue(TActionQueue* q, const olxstr &dependMode, short dependentOn)  {
+void TMenuItem::SetActionQueue(TActionQueue& q, const olxstr& dependMode, short dependentOn)  {
   const size_t cmdind = dependMode.FirstIndexOf(';');
   if( cmdind != InvalidIndex )  {
     DependMode = dependMode.SubStringTo(cmdind);
@@ -52,7 +52,7 @@ void TMenuItem::SetActionQueue(TActionQueue* q, const olxstr &dependMode, short 
   else
     DependMode = dependMode;
   DependentOn = dependentOn;
-  ActionQueue = q;
+  ActionQueue = &q;
   ActionQueue->Add(this);
 }
 //..............................................................................

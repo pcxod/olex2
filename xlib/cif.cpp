@@ -782,9 +782,9 @@ void TCif::Initialize()  {
           throw TFunctionFailedException(__OlxSourceInfo, "could not process symmetry matrix");
       }
     }
-    TSpaceGroup* sg = TSymmLib::GetInstance()->FindExpandedSG(GetAsymmUnit());
+    TSpaceGroup* sg = TSymmLib::GetInstance().FindExpandedSG(GetAsymmUnit());
     if( sg != NULL )
-      GetAsymmUnit().ChangeSpaceGroup( *sg );
+      GetAsymmUnit().ChangeSpaceGroup(*sg);
     else 
       throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
   }
@@ -1426,7 +1426,7 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
               String.Insert(Tmp, start);
             }
             else if( SVal.Equalsi("sg_number") )  {
-              TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG( GetAsymmUnit() );
+              TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(GetAsymmUnit());
               if( sg != NULL )
                 Tmp = sg->GetNumber();
               else

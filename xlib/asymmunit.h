@@ -54,7 +54,7 @@ protected:
   static const olxstr IdName;
 public:
 
-  TAsymmUnit(TLattice *L);
+  TAsymmUnit(TLattice* L);
   virtual ~TAsymmUnit();
 
   inline TLattice& GetLattice() const {  return *Lattice;  }
@@ -120,7 +120,7 @@ public:
   void Assign(const TAsymmUnit& C);
   void ChangeSpaceGroup(const class TSpaceGroup& sg);
   // executed from the above function, Data is the new space group
-  TActionQueue* OnSGChange;
+  TActionQueue& OnSGChange;
   // initialises transofrmation matrices, called after axis and angles initialised
   void InitMatrices();
   // initialises data such as Q-peak heights, called after all atoms initialised :)

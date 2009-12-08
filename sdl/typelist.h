@@ -100,6 +100,19 @@ public:
     return *(T*)(List[index] = Obj);
   }
 //..............................................................................
+  //replaces a list item with given value and returns a pointer to previous object (might be NULL)
+  inline T* Replace(size_t index, T& Obj)  {
+    T* rv = List[index];
+    List[index] = &Obj;
+    return rv;
+  }
+  //replaces a list item with given value and returns a pointer to previous object (might be NULL)
+  inline T& Replace(size_t index, T* Obj)  {
+    T* rv = List[index];
+    List[index] = Obj;
+    return rv;
+  }
+//..............................................................................
   // adds a copy of the object with default constructor and assign operator "assigned copy"
   inline T& AddACopy(const T& Obj)  {  
     T& rv = AddNew();
@@ -273,11 +286,11 @@ public:
   }
 //..............................................................................
   void Shrink(size_t newSize)  {
-    if( newSize >= (size_t)List.Count() )  return;
+    if( newSize >= List.Count() )  return;
     for( size_t i=newSize; i < List.Count(); i++ )
       if( List[i] != NULL )
         delete (DestructCast*)List[i];
-    List.SetCount( newSize );
+    List.SetCount(newSize);
   }
 //..............................................................................
   // the memory has to be delalocated by calling process
@@ -328,7 +341,7 @@ public:
   inline bool IsEmpty() const {  return List.IsEmpty();  }
 //..............................................................................
   // the comparison operator is used
-  size_t IndexOf(const T& val) const  {
+  size_t IndexOf(const T& val) const {
     for( size_t i=0; i < List.Count(); i++ )
       if( *List[i] == val )  return i;
     return InvalidIndex;

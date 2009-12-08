@@ -43,17 +43,18 @@ int TLattice_AtomsSortByDistance(const TSAtom* A1, const TSAtom* A2)  {
 //---------------------------------------------------------------------------
 // TLattice function bodies
 //---------------------------------------------------------------------------
-TLattice::TLattice() : AtomsInfo(TAtomsInfo::GetInstance()) {
+TLattice::TLattice() : AtomsInfo(TAtomsInfo::GetInstance()),
+  OnStructureGrow(Actions.New("STRGEN")),
+  OnStructureUniq(Actions.New("STRUNIQ")),
+  OnDisassemble(Actions.New("DISASSEBLE"))
+{
   Generated = false;
-  AsymmUnit   = new TAsymmUnit(this);
-  UnitCell    = new TUnitCell(this);
-  Network     = new TNetwork(this, NULL);
-  Delta    = 0.5f;
-  DeltaI    = 1.2f;
+  AsymmUnit = new TAsymmUnit(this);
+  UnitCell = new TUnitCell(this);
+  Network = new TNetwork(this, NULL);
+  Delta = 0.5f;
+  DeltaI = 1.2f;
   _GrowInfo = NULL;
-  OnStructureGrow = &Actions.NewQueue("STRGEN");
-  OnStructureUniq = &Actions.NewQueue("STRUNIQ");
-  OnDisassemble= &Actions.NewQueue("DISASSEBLE");
 }
 //..............................................................................
 TLattice::~TLattice()  {
@@ -272,7 +273,7 @@ void TLattice::InitBody()  {
     Matrices.Add(new smatd(GetUnitCell().GetMatrix(0)))->SetId(0);
     ListAsymmUnit(Atoms, NULL, true);
   }
-  OnDisassemble->Enter(this);
+  OnDisassemble.Enter(this);
   GenerateBondsAndFragments(NULL);
   Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
   TNetPList::QuickSorter.SortSF(Fragments, CompareFragmentsBySize);
@@ -293,7 +294,7 @@ void TLattice::InitBody()  {
     }
   }
   TSAtomPList::QuickSorter.SortSF(Atoms, TLattice_SortAtomsById);
-  OnDisassemble->Exit(this);
+  OnDisassemble.Exit(this);
 }
 void TLattice::Init()  {
   Clear(false);
@@ -305,14 +306,14 @@ void TLattice::Init()  {
 }
 //..............................................................................
 void  TLattice::Uniq(bool remEqv)  {
-  OnStructureUniq->Enter(this);
+  OnStructureUniq.Enter(this);
   Clear(false);
   ClearMatrices();
   GetUnitCell().UpdateEllipsoids();  // if new atoms are created...
   GetUnitCell().FindSymmEq(0.1); // find and remove
   InitBody();
   Generated = false;
-  OnStructureUniq->Exit(this);
+  OnStructureUniq.Exit(this);
 }
 //..............................................................................
 void TLattice::GenerateAtoms(const TSAtomPList& atoms, TSAtomPList& result, const smatd_plist& matrices)  {
@@ -334,10 +335,10 @@ void TLattice::GenerateAtoms(const TSAtomPList& atoms, TSAtomPList& result, cons
 }
 //..............................................................................
 void TLattice::GenerateWholeContent(TCAtomPList* Template)  {
-  OnStructureGrow->Enter(this);
+  OnStructureGrow.Enter(this);
   Generated = false; // force the procedure
   Generate(Template, false, true);
-  OnStructureGrow->Exit(this);
+  OnStructureGrow.Exit(this);
 }
 //..............................................................................
 void  TLattice::Generate(TCAtomPList* Template, bool ClearCont, bool IncludeQ)  {
@@ -369,7 +370,7 @@ void  TLattice::Generate(TCAtomPList* Template, bool ClearCont, bool IncludeQ)  
 void TLattice::GenerateCell(bool includeQ)  {
   ClearAtoms();
   ClearMatrices();
-  OnStructureGrow->Enter(this);
+  OnStructureGrow.Enter(this);
   const TUnitCell& uc = GetUnitCell();
   TAsymmUnit& au = GetAsymmUnit();
   for( size_t i=0; i < uc.MatrixCount(); i++ )  {
@@ -434,7 +435,7 @@ void TLattice::GenerateCell(bool includeQ)  {
 
   Disassemble();
   Generated = true;
-  OnStructureGrow->Exit(this);
+  OnStructureGrow.Exit(this);
 }
 //..............................................................................
 void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
@@ -447,9 +448,9 @@ void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Templ
     ClearMatrices();
   }
   GenerateMatrices(VFrom, VTo, MFrom, MTo);
-  OnStructureGrow->Enter(this);
+  OnStructureGrow.Enter(this);
   Generate(Template, ClearCont, IncludeQ);
-  OnStructureGrow->Exit(this);
+  OnStructureGrow.Exit(this);
 }
 //..............................................................................
 void TLattice::Generate(const vec3d& center, double rad, TCAtomPList* Template,
@@ -460,9 +461,9 @@ void TLattice::Generate(const vec3d& center, double rad, TCAtomPList* Template,
     ClearMatrices();
   }
   GenerateMatrices(Matrices, center, rad);
-  OnStructureGrow->Enter(this);
+  OnStructureGrow.Enter(this);
   Generate(Template, ClearCont, IncludeQ);
-  OnStructureGrow->Exit(this);
+  OnStructureGrow.Exit(this);
 }
 //..............................................................................
 bool TLattice::IsExpandable(TSAtom& A) const {
@@ -500,7 +501,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
   size_t currentCount = MatrixCount();
   // the fragmens to grow by a particular matrix
   TTypeList<TIntList> Fragments2Grow;
-  OnStructureGrow->Enter(this);
+  OnStructureGrow.Enter(this);
   for( size_t i=0; i < atoms.Count(); i++ )  {
     TSAtom* SA = atoms[i];
     SA->SetGrown(true);
@@ -558,7 +559,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
   Disassemble();
 
   Generated = true;
-  OnStructureGrow->Exit(this);
+  OnStructureGrow.Exit(this);
 }
 //..............................................................................
 void TLattice::GrowFragments(bool GrowShells, TCAtomPList* Template)  {
@@ -609,7 +610,7 @@ void TLattice::GrowAtom(uint32_t FragId, const smatd& transform)  {
   if( !found )
     M = Matrices.Add(new smatd(transform));
 
-  OnStructureGrow->Enter(this);
+  OnStructureGrow.Enter(this);
 
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& ca = GetAsymmUnit().GetAtom(i);
@@ -627,7 +628,7 @@ void TLattice::GrowAtom(uint32_t FragId, const smatd& transform)  {
   Disassemble();
 
   Generated = true;
-  OnStructureGrow->Exit(this);
+  OnStructureGrow.Exit(this);
 }
 //..............................................................................
 void TLattice::GrowAtoms(const TSAtomPList& atoms, const smatd_list& matrices)  {
@@ -650,7 +651,7 @@ void TLattice::GrowAtoms(const TSAtomPList& atoms, const smatd_list& matrices)  
     }
   }
 
-  OnStructureGrow->Enter(this);
+  OnStructureGrow.Enter(this);
   Atoms.SetCapacity( Atoms.Count() + atoms.Count()*addedMatrices.Count() );
   for( size_t i=0; i < addedMatrices.Count(); i++ )  {
     for( size_t j=0; j < atoms.Count(); j++ )  {
@@ -667,7 +668,7 @@ void TLattice::GrowAtoms(const TSAtomPList& atoms, const smatd_list& matrices)  
   Disassemble();
 
   Generated = true;
-  OnStructureGrow->Exit(this);
+  OnStructureGrow.Exit(this);
 }
 //..............................................................................
 void TLattice::Grow(const smatd& transform)  {
@@ -686,7 +687,7 @@ void TLattice::Grow(const smatd& transform)  {
     Matrices.Add(M);
   }
 
-  OnStructureGrow->Enter(this);
+  OnStructureGrow.Enter(this);
   TAsymmUnit& au = GetAsymmUnit();
   const size_t ac = au.AtomCount();
   Atoms.SetCapacity(Atoms.Count() + ac);
@@ -704,7 +705,7 @@ void TLattice::Grow(const smatd& transform)  {
   Disassemble();
 
   Generated = true;
-  OnStructureGrow->Exit(this);
+  OnStructureGrow.Exit(this);
 }
 //..............................................................................
 void TLattice::RestoreAtom(const TSAtom::Ref& id)  {
@@ -980,7 +981,7 @@ void TLattice::MoveFragmentG(const vec3d& to, TSAtom& fragAtom)  {
 /* restore atom centres if were changed by some other procedure */
     RestoreCoordinates();
     Generated = true;
-    OnStructureGrow->Enter(this);
+    OnStructureGrow.Enter(this);
     Matrices.Add(m);
     for( size_t i=0; i < fragAtom.GetNetwork().NodeCount(); i++ )  {
       TSAtom& SA = fragAtom.GetNetwork().Node(i);
@@ -995,7 +996,7 @@ void TLattice::MoveFragmentG(const vec3d& to, TSAtom& fragAtom)  {
       AddSAtom(atom);
     }
     Disassemble();
-    OnStructureGrow->Exit(this);
+    OnStructureGrow.Exit(this);
   }
   else
     TBasicApp::GetLog().Info("Could not find closest matrix");
@@ -1007,7 +1008,7 @@ void TLattice::MoveFragmentG(TSAtom& to, TSAtom& fragAtom)  {
 /* restore atom centres if were changed by some other procedure */
     RestoreCoordinates();
     Generated = true;
-    OnStructureGrow->Enter(this);
+    OnStructureGrow.Enter(this);
     Matrices.Add(m);
     TSAtomPList atoms;
     if( to.CAtom().GetFragmentId() == fragAtom.CAtom().GetFragmentId() )
@@ -1029,7 +1030,7 @@ void TLattice::MoveFragmentG(TSAtom& to, TSAtom& fragAtom)  {
       AddSAtom(atom);
     }
     Disassemble();
-    OnStructureGrow->Exit(this);
+    OnStructureGrow.Exit(this);
   }
   else
     TBasicApp::GetLog().Info("Could not find closest matrix");
@@ -1038,7 +1039,7 @@ void TLattice::MoveFragmentG(TSAtom& to, TSAtom& fragAtom)  {
 void TLattice::MoveToCenter()  {
   if( Generated )  {
     TBasicApp::GetLog().Error("Please note that asymetric unit will not be updated: the structure is grown");
-    OnStructureGrow->Enter(this);
+    OnStructureGrow.Enter(this);
   }
   for( size_t i=0; i < Fragments.Count(); i++ )  {
     TNetwork* frag = Fragments[i];
@@ -1071,14 +1072,14 @@ void TLattice::MoveToCenter()  {
     delete m;
   }
   if( !Generated )  {  
-    OnStructureUniq->Enter(this);
+    OnStructureUniq.Enter(this);
     Init();
-    OnStructureUniq->Exit(this);
+    OnStructureUniq.Exit(this);
   }
   else  {
     RestoreCoordinates();
     Disassemble();
-    OnStructureGrow->Exit(this);
+    OnStructureGrow.Exit(this);
   }
 }
 //..............................................................................
@@ -1131,15 +1132,15 @@ void TLattice::Compaq()  {
       delete m;
     }
   }
-  OnStructureUniq->Enter(this);
+  OnStructureUniq.Enter(this);
   Init();
-  OnStructureUniq->Exit(this);
+  OnStructureUniq.Exit(this);
 }
 //..............................................................................
 void TLattice::CompaqAll()  {
   if( Generated || Fragments.Count() < 2 )  return;
-  OnStructureUniq->Enter(this);
-  OnDisassemble->SetEnabled(false);
+  OnStructureUniq.Enter(this);
+  OnDisassemble.SetEnabled(false);
   bool changes = true;
   while( changes )  {
     changes = false;
@@ -1170,9 +1171,9 @@ void TLattice::CompaqAll()  {
       Init();
     }
   }
-  OnDisassemble->SetEnabled(true);
+  OnDisassemble.SetEnabled(true);
   Init();
-  OnStructureUniq->Exit(this);
+  OnStructureUniq.Exit(this);
 }
 //..............................................................................
 void TLattice::CompaqClosest()  {
@@ -1237,9 +1238,9 @@ void TLattice::CompaqClosest()  {
       delete transform;
     }
   }
-  OnStructureUniq->Enter(this);
+  OnStructureUniq.Enter(this);
   Init();
-  OnStructureUniq->Exit(this);
+  OnStructureUniq.Exit(this);
 }
 //..............................................................................
 void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform)  {
@@ -1264,9 +1265,9 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& tra
       }
     }
   }
-  OnStructureUniq->Enter(this);
+  OnStructureUniq.Enter(this);
   Init();
-  OnStructureUniq->Exit(this);
+  OnStructureUniq.Exit(this);
 }
 //..............................................................................
 void TLattice::UpdateConnectivity()  {
@@ -1275,7 +1276,7 @@ void TLattice::UpdateConnectivity()  {
 }
 //..............................................................................
 void TLattice::Disassemble()  {
-  OnDisassemble->Enter(this);
+  OnDisassemble.Enter(this);
   // clear bonds & fargments
   ClearBonds();
   ClearFragments();
@@ -1295,7 +1296,7 @@ void TLattice::Disassemble()  {
       AddSBond( &Frag->Bond(j) );
   }
   //TSAtomPList::QuickSorter.SortSF(Atoms, TLattice_SortAtomsById);
-  OnDisassemble->Exit(this);
+  OnDisassemble.Exit(this);
 }
 //..............................................................................
 void TLattice::RestoreCoordinates()  {
@@ -1839,9 +1840,9 @@ void TLattice::SetAnis( const TCAtomPList& atoms, bool anis )  {
       }
     }
   }
-  OnStructureUniq->Enter(this);
+  OnStructureUniq.Enter(this);
   Init();
-  OnStructureUniq->Exit(this);
+  OnStructureUniq.Exit(this);
 }
 //..............................................................................
 void TLattice::ToDataItem(TDataItem& item) const  {

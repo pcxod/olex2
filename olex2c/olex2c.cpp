@@ -116,7 +116,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   static void* TimerThreadFunction() {
     while( true )  {
       if( !TBasicApp::HasInstance() )  return 0;
-      TBasicApp::GetInstance().OnTimer->Execute(NULL);
+      TBasicApp::GetInstance().OnTimer.Execute(NULL);
       olx_sleep(50);
     }
     return 0;
@@ -157,18 +157,18 @@ public:
     Silent = true;
     OutStream = new TOutStream();
     XApp.GetLog().AddStream(OutStream , false );
-    XApp.GetLog().OnInfo->Add(this, ID_INFO);
-    XApp.GetLog().OnWarning->Add(this, ID_WARNING);
-    XApp.GetLog().OnError->Add(this, ID_ERROR);
-    XApp.GetLog().OnException->Add(this, ID_EXCEPTION);
+    XApp.GetLog().OnInfo.Add(this, ID_INFO);
+    XApp.GetLog().OnWarning.Add(this, ID_WARNING);
+    XApp.GetLog().OnError.Add(this, ID_ERROR);
+    XApp.GetLog().OnException.Add(this, ID_EXCEPTION);
 
     TLibrary &Library = XApp.GetLibrary();
     PythonExt::Init(this).Register(&OlexPyCore::PyInit);
-    Library.AttachLibrary( TEFile::ExportLibrary() );
-    Library.AttachLibrary( PythonExt::GetInstance()->ExportLibrary() );
-    Library.AttachLibrary( TETime::ExportLibrary() );
-    Library.AttachLibrary( XApp.XFile().ExportLibrary() );
-    Library.AttachLibrary( TFileHandlerManager::ExportLibrary() );
+    Library.AttachLibrary(TEFile::ExportLibrary());
+    Library.AttachLibrary(PythonExt::GetInstance()->ExportLibrary());
+    Library.AttachLibrary(TETime::ExportLibrary());
+    Library.AttachLibrary(XApp.XFile().ExportLibrary());
+    Library.AttachLibrary(TFileHandlerManager::ExportLibrary());
 
     DataDir = patcher::PatchAPI::ComposeNewSharedDir(TShellUtil::GetSpecialFolderLocation(fiAppData));
     if( !TEFile::Exists(DataDir) )  {
@@ -199,9 +199,9 @@ public:
     XApp.XFile().RegisterFileFormat(new TCRSFile, "crs");
     XApp.XFile().RegisterFileFormat(new TPdb, "pdb");
     XApp.XFile().RegisterFileFormat(new TXDMas, "mas");
-    XApp.XFile().GetLattice().OnStructureUniq->Add(this, ID_STRUCTURECHANGED);
-    XApp.XFile().GetLattice().OnStructureGrow->Add(this, ID_STRUCTURECHANGED);
-    XApp.XFile().OnFileLoad->Add(this, ID_STRUCTURECHANGED);
+    XApp.XFile().GetLattice().OnStructureUniq.Add(this, ID_STRUCTURECHANGED);
+    XApp.XFile().GetLattice().OnStructureGrow.Add(this, ID_STRUCTURECHANGED);
+    XApp.XFile().OnFileLoad.Add(this, ID_STRUCTURECHANGED);
 
     this_InitMacroD(Silent, "", fpOne, "Changes silent mode");
     this_InitMacroD(Exec, "s&;o&;d&;q", fpAny^fpNone, "exec" );
@@ -253,15 +253,15 @@ public:
         Macros.Load( *di );
     }
     executeMacro("onstartup");
-    TBasicApp::GetInstance().OnTimer->Add(this, ID_TIMER);
+    TBasicApp::GetInstance().OnTimer.Add(this, ID_TIMER);
   }
   ~TOlex()  {
-    TBasicApp::GetInstance().OnTimer->Clear();
+    TBasicApp::GetInstance().OnTimer.Clear();
     executeMacro("onexit");
     for( size_t i=0; i < CallbackFuncs.Count(); i++ )
       delete CallbackFuncs.GetObject(i);
     if( FProcess )  {
-      FProcess->OnTerminate->Clear();
+      FProcess->OnTerminate.Clear();
       FProcess->Terminate();
       delete FProcess;
     }
@@ -405,7 +405,7 @@ public:
 //          exit(0);
         }
       }
-      TBasicApp::GetInstance().OnTimer->SetEnabled( false );
+      TBasicApp::GetInstance().OnTimer.SetEnabled(false);
       // execute tasks ...
       // end tasks ...
       if( FProcess != NULL )  {
@@ -418,7 +418,7 @@ public:
         }
       }
       //    if( (FMode & mListen) != 0 )  {
-      TBasicApp::GetInstance().OnTimer->SetEnabled( true );
+      TBasicApp::GetInstance().OnTimer.SetEnabled(true);
     }
     else if( MsgId == ID_PROCESSTERMINATE )  SetProcess(NULL);
     else if( MsgId == ID_INFO || MsgId == ID_WARNING || MsgId == ID_ERROR || MsgId == ID_EXCEPTION )  {
@@ -585,10 +585,10 @@ public:
       }
     }
     if( Process )
-      Process->OnTerminate->Add(this, ID_PROCESSTERMINATE);
+      Process->OnTerminate.Add(this, ID_PROCESSTERMINATE);
 
     if( FProcess )  {  
-      FProcess->OnTerminate->Clear();  
+      FProcess->OnTerminate.Clear();  
       FProcess->Detach();
     }
     FProcess = Process;
@@ -694,7 +694,7 @@ public:
   //..............................................................................
   void funStrDir(const TStrObjList& Params, TMacroError &E) {
     olxstr ofn( TEFile::ExtractFilePath(XApp.XFile().GetFileName()) );
-    TEFile::AddTrailingBackslashI(ofn) << ".olex";
+    TEFile::AddPathDelimeterI(ofn) << ".olex";
     if( !TEFile::Exists(ofn) )  {
       if( !TEFile::MakeDir(ofn) )  {
         throw TFunctionFailedException(__OlxSourceInfo, "cannot create folder");
@@ -941,7 +941,7 @@ int main(int argc, char* argv[])  {
     olxstr cmd;
     //TBasicApp::GetInstance().OnTimer->Add( new TTerminationListener );
     while( true )  {
-      TBasicApp::GetInstance().OnIdle->Execute(NULL);
+      TBasicApp::GetInstance().OnIdle.Execute(NULL);
 #ifdef __WIN32__
       cin.getline(_cmd, 512);
       cmd = _cmd;
@@ -987,7 +987,7 @@ int main(int argc, char* argv[])  {
 #endif			
     }
   }
-  TBasicApp::GetInstance().OnIdle->Execute(NULL);
+  TBasicApp::GetInstance().OnIdle.Execute(NULL);
   return 0;
 }
 

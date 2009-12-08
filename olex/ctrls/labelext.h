@@ -10,7 +10,7 @@ namespace ctrl_ext  {
   public:
     TLabel(wxWindow *Parent, const olxstr &label) : 
       AOlxCtrl(this), 
-      OnClick(Actions.NewQueue(evt_on_click_id)),
+      OnClick(Actions.New(evt_on_click_id)),
       wxStaticText(Parent, wxID_ANY, label.u_str()),
       Data(EmptyString),
       OnClickStr(EmptyString)  {}

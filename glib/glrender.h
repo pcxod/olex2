@@ -1,8 +1,5 @@
-//---------------------------------------------------------------------------
-
-#ifndef glrenderH
-#define glrenderH
-
+#ifndef __olx_gl_render_H
+#define __olx_gl_render_H
 #include "glbase.h"
 #include "groupobj.h"
 #include "typelist.h"

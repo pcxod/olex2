@@ -13,9 +13,9 @@ namespace ctrl_ext  {
     TCheckBox(wxWindow *Parent, long style=0) :
       wxCheckBox(Parent, -1, wxString(), wxDefaultPosition, wxDefaultSize, style),
       AOlxCtrl(this),
-      OnClick(Actions.NewQueue(evt_on_click_id)),
-      OnCheck(Actions.NewQueue(evt_on_check_id)),
-      OnUncheck(Actions.NewQueue(evt_on_uncheck_id)),
+      OnClick(Actions.New(evt_on_click_id)),
+      OnCheck(Actions.New(evt_on_check_id)),
+      OnUncheck(Actions.New(evt_on_uncheck_id)),
       ActionQueue(NULL),
       Data(EmptyString),
       OnCheckStr(EmptyString),
@@ -24,7 +24,7 @@ namespace ctrl_ext  {
       DependMode(EmptyString)  {  SetToDelete(false);  }
     virtual ~TCheckBox()  {  if( ActionQueue != NULL )  ActionQueue->Remove(this);  }
 
-    void SetActionQueue(TActionQueue *q, const olxstr &dependMode);
+    void SetActionQueue(TActionQueue& q, const olxstr& dependMode);
     bool Execute(const IEObject *Sender, const IEObject *Data);
     void OnRemove()  {  ActionQueue = NULL;  }
 

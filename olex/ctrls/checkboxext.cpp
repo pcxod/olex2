@@ -17,10 +17,10 @@ void TCheckBox::MouseEnterEvent(wxMouseEvent& event)  {
   SetCursor( wxCursor(wxCURSOR_HAND) );
 }
 //..............................................................................
-void TCheckBox::SetActionQueue(TActionQueue *q, const olxstr &dependMode)  {
-  ActionQueue = q;
+void TCheckBox::SetActionQueue(TActionQueue& q, const olxstr& dependMode)  {
+  ActionQueue = &q;
   DependMode = dependMode;
-  ActionQueue->Add( this );
+  ActionQueue->Add(this);
 }
 bool TCheckBox::Execute(const IEObject *Sender, const IEObject *Data)  {
   if( Data && EsdlInstanceOf(*Data, TModeChange) )  {

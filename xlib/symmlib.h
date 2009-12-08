@@ -221,7 +221,13 @@ public:
     return BravaisLattices.FindObjecti(Name);
   }
 
-  static TSymmLib*  GetInstance()  {  return Instance;  }
+  static bool IsInitialised()  {  return Instance != NULL;  }
+
+  static TSymmLib& GetInstance()  {
+    if( Instance == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "object is not initialised");
+    return *Instance;
+  }
 };
 
 EndXlibNamespace()

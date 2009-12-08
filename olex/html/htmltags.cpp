@@ -403,7 +403,7 @@ TAG_HANDLER_PROC(tag)  {
 
     olxstr modeDependent = tag.GetParam(wxT("MODEDEPENDENT")).c_str();
     if( !modeDependent.IsEmpty() )  {
-      Btn->SetActionQueue( TGlXApp::GetMainForm()->OnModeChange, modeDependent );
+      Btn->SetActionQueue(TGlXApp::GetMainForm()->OnModeChange, modeDependent);
     }
 
     if( EsdlInstanceOf(*Btn, TButton) )
@@ -590,7 +590,7 @@ TAG_HANDLER_PROC(tag)  {
       Box->OnUncheck.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("MODEDEPENDENT")) )  {
-      Box->SetActionQueue( TGlXApp::GetMainForm()->OnModeChange, tag.GetParam(wxT("MODEDEPENDENT")).c_str() );
+      Box->SetActionQueue(TGlXApp::GetMainForm()->OnModeChange, tag.GetParam(wxT("MODEDEPENDENT")).c_str());
     }
     m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Box, fl));
   }

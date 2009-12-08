@@ -479,7 +479,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       HklStatFileID = HklFileID;
       _HklStat.SetDefaults();
       // cannot use XFile, as we do not know which loader owns this object
-      TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(aunit);
+      TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(aunit);
       if( sg == NULL )  // will not be seen outside though
         throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
       TRefList refs;

@@ -19,27 +19,28 @@
 
 #undef GetObject
 
-TOSFileSystem::TOSFileSystem(const olxstr& base) {
+TOSFileSystem::TOSFileSystem(const olxstr& base) :
+  OnRmFile(Events.New("rmf")),
+  OnRmDir(Events.New("rmd")),
+  OnMkDir(Events.New("mkd")),
+  OnAdoptFile(Events.New("af")),
+  OnOpenFile(Events.New("of"))
+{
   SetBase(base);
-  OnRmFile   = &Events.NewQueue("rmf");
-  OnRmDir    = &Events.NewQueue("rmd");
-  OnMkDir    = &Events.NewQueue("mkd");
-  OnAdoptFile = &Events.NewQueue("af");
-  OnOpenFile  = &Events.NewQueue("of");
 }
 //..............................................................................
 bool TOSFileSystem::_DoDelFile(const olxstr& FN)  {
-  OnRmFile->Execute( this, &FN);
+  OnRmFile.Execute(this, &FN);
   return TEFile::DelFile(FN);
 }
 //..............................................................................
 bool TOSFileSystem::_DoDelDir(const olxstr& DN)  {
-  OnRmDir->Execute( this, &DN);
+  OnRmDir.Execute(this, &DN);
   return TEFile::DeleteDir(DN);
 }
 //..............................................................................
 bool TOSFileSystem::_DoAdoptStream(IInputStream& f, const olxstr& name)  {
-  OnAdoptFile->Execute( this, &name);
+  OnAdoptFile.Execute(this, &name);
   try {
     olxstr path = TEFile::ExtractFilePath( name );
     if( !TEFile::Exists(path) )
@@ -57,7 +58,7 @@ bool TOSFileSystem::_DoAdoptStream(IInputStream& f, const olxstr& name)  {
 //..............................................................................
 bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src)  {
   const olxstr _fn = GetBase() + Src.GetFullName();
-  OnAdoptFile->Execute( this, &_fn);
+  OnAdoptFile.Execute(this, &_fn);
 
   olxstr DFN = GetBase() + Src.GetFullName();
   // vlidate if already on the disk and with the same size and timestamp
@@ -92,7 +93,7 @@ bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src)  {
 }
 //..............................................................................
 bool TOSFileSystem::_DoNewDir(const olxstr& DN)  {
-  OnMkDir->Execute(this, &DN);
+  OnMkDir.Execute(this, &DN);
   return TEFile::MakeDir(DN);
 }
 //..............................................................................
@@ -100,8 +101,8 @@ bool TOSFileSystem::_DoesExist(const olxstr& FN)  {
   return TEFile::Exists(FN);
 }
 IInputStream* TOSFileSystem::_DoOpenFile(const olxstr& fileName)  {
-  OnOpenFile->Execute(this, &fileName);
-  return new TEFile( fileName, "rb");
+  OnOpenFile.Execute(this, &fileName);
+  return new TEFile(fileName, "rb");
 }
 //..............................................................................
 //..............................................................................
@@ -589,8 +590,8 @@ void TFSItem::ClearEmptyFolders()  {
 //..............................................................................
 TFSIndex::TFSIndex(AFileSystem& fs) : 
   IndexFS(fs),
-  OnProgress(Actions.NewQueue("ON_PROGRESS")),
-  OnAction(Actions.NewQueue("ON_ACTION"))
+  OnProgress(Actions.New("ON_PROGRESS")),
+  OnAction(Actions.New("ON_ACTION"))
 {
   Root = new TFSItem(*this, NULL, "ROOT");
   DestFS = NULL;

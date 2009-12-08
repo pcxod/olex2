@@ -65,7 +65,7 @@ void XLibMacros::macBrushHkl(TStrObjList &Cmds, const TParamList &Options, TMacr
   Hkl.LoadFromFile(HklFN);
 
   TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(au);
+  TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(au);
   if( sg == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "Undefined space group" );
     return;

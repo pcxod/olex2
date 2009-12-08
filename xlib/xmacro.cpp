@@ -42,8 +42,8 @@ const olxstr XLibMacros::NoneString("none");
 const olxstr XLibMacros::NAString("n/a");
 olxstr XLibMacros::CurrentDir;
 TActionQList XLibMacros::Actions;
-TActionQueue& XLibMacros::OnDelIns = XLibMacros::Actions.NewQueue("OnDelIns");
-TActionQueue& XLibMacros::OnAddIns = XLibMacros::Actions.NewQueue("OnAddIns");
+TActionQueue& XLibMacros::OnDelIns = XLibMacros::Actions.New("OnDelIns");
+TActionQueue& XLibMacros::OnAddIns = XLibMacros::Actions.New("OnAddIns");
 
 void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Run, EmptyString, fpAny^fpNone, "Runs provided macros (combined by '>>')");
@@ -278,7 +278,7 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  const TSymmLib& sl = *TSymmLib::GetInstance();
+  const TSymmLib& sl = TSymmLib::GetInstance();
   TLog& log = TBasicApp::GetLog();
   TPtrList<TSymmElement> ref, sg_elm;
   if( Cmds.IsEmpty() )  {
@@ -376,8 +376,9 @@ void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
 void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.IsEmpty() )  {
     TPtrList<TSpaceGroup> sgList;
-    for( size_t i=0; i < TSymmLib::GetInstance()->BravaisLatticeCount(); i++ )  {
-      TBravaisLattice& bl = TSymmLib::GetInstance()->GetBravaisLattice(i);
+    TSymmLib& symlib = TSymmLib::GetInstance();
+    for( size_t i=0; i < symlib.BravaisLatticeCount(); i++ )  {
+      TBravaisLattice& bl = symlib.GetBravaisLattice(i);
       bl.FindSpaceGroups( sgList );
       TBasicApp::GetLog() << (olxstr("------------------- ") << bl.GetName() << " --- "  << sgList.Count() << '\n' );
       olxstr tmp, tmp1;
@@ -400,10 +401,10 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   bool Identity = Options.Contains("i"), 
        Centering = Options.Contains("c");
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup( Cmds[0] );
+  TSpaceGroup* sg = TSymmLib::GetInstance().FindGroup(Cmds[0]);
   bool LaueClassPG = false;
   if( sg == NULL )  {
-    sg = TSymmLib::GetInstance()->FindGroup( olxstr("P") << Cmds[0] );
+    sg = TSymmLib::GetInstance().FindGroup(olxstr("P") << Cmds[0]);
     if( !sg )  {
       E.ProcessingError(__OlxSrcInfo, "Could not find specified space group/Laue class/Point group: ") << Cmds[0];
       return;
@@ -415,9 +416,9 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
     TPSTypeList<int, TSpaceGroup*> SortedSG;
     if( &sg->GetLaueClass() == sg )  {
       TBasicApp::GetLog() << ( olxstr("Space groups of the Laue class ") << sg->GetBareName() << '\n');
-      TSymmLib::GetInstance()->FindLaueClassGroups( *sg, sgList);
+      TSymmLib::GetInstance().FindLaueClassGroups( *sg, sgList);
       for( size_t j=0; j < sgList.Count(); j++ )
-        SortedSG.Add( sgList[j]->GetNumber(), sgList[j] );
+        SortedSG.Add(sgList[j]->GetNumber(), sgList[j]);
       olxstr tmp, tmp1;
       for( size_t j=0; j < SortedSG.Count(); j++ )  {
         tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetComparable(j) << ')';
@@ -435,7 +436,7 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
       SortedSG.Clear();
       olxstr tmp, tmp1;
       TBasicApp::GetLog() << ( olxstr("Space groups of the point group ") << sg->GetBareName() << '\n');
-      TSymmLib::GetInstance()->FindPointGroupGroups( *sg, sgList);
+      TSymmLib::GetInstance().FindPointGroupGroups(*sg, sgList);
       TPSTypeList<int, TSpaceGroup*> SortedSG;
       for( size_t j=0; j < sgList.Count(); j++ )
         SortedSG.Add( sgList[j]->GetNumber(), sgList[j] );
@@ -458,7 +459,7 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TBasicApp::GetLog() << ( sg->IsCentrosymmetric() ? "Centrosymmetric" : "Non centrosymmetric") << '\n';
   TBasicApp::GetLog() << ( olxstr("Hall symbol: ") << sg->GetHallSymbol() << '\n');
 
-  TSymmLib::GetInstance()->GetGroupByNumber( sg->GetNumber(), AllGroups );
+  TSymmLib::GetInstance().GetGroupByNumber( sg->GetNumber(), AllGroups );
   if( AllGroups.Count() > 1 )  {
     TBasicApp::GetLog() << ("Alternative settings:\n");
     olxstr tmp;
@@ -477,10 +478,10 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
   if( !Identity )  Flags ^= mattIdentity;
   sg->GetMatrices( SGMatrices, Flags );
 
-  TTTable<TStrList> tab( SGMatrices.Count(), 2 );
+  TTTable<TStrList> tab(SGMatrices.Count(), 2);
 
   for( size_t i=0; i < SGMatrices.Count(); i++ )
-    tab[i][0] = TSymmParser::MatrixToSymmEx( SGMatrices[i] );
+    tab[i][0] = TSymmParser::MatrixToSymmEx(SGMatrices[i]);
 
   TStrList Output;
   tab.CreateTXTList(Output, "Symmetry operators", true, true, ' ');
@@ -492,8 +493,8 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
   // possible systematic absences
   Output.Add("Elements causing systematic absences: ");
   TPtrList<TSymmElement> ref, sg_elm;
-  for( size_t i=0; i < TSymmLib::GetInstance()->SymmElementCount(); i++ )
-    ref.Add( & TSymmLib::GetInstance()->GetSymmElement(i) );
+  for( size_t i=0; i < TSymmLib::GetInstance().SymmElementCount(); i++ )
+    ref.Add(TSymmLib::GetInstance().GetSymmElement(i));
   sg->SplitIntoElements(ref, sg_elm);
   if( sg_elm.IsEmpty() )
     Output.Last().String << "none";
@@ -502,7 +503,7 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
       Output.Last().String << sg_elm[i]->GetName() << ' ';
   }
   Output.Add(EmptyString);
-  TBasicApp::GetLog() << ( Output );
+  TBasicApp::GetLog() << Output;
 }
 //..............................................................................
 void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -1134,7 +1135,7 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   bool Sort = Options.Contains('s');
 
   if( TEFile::ExtractFilePath(Tmp).IsEmpty() )
-    Tmp = TEFile::AddTrailingBackslash(CurrentDir) + Tmp;
+    Tmp = TEFile::AddPathDelimeter(CurrentDir) + Tmp;
   TEBitArray removedSAtoms, removedCAtoms;
   if( TEFile::ExtractFileExt(Tmp).Equalsi("ins"))  {  // kill Q peak in the ins file
     TLattice& latt = XApp.XFile().GetLattice();
@@ -1445,7 +1446,7 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg)  {
       hklf[i].SetL(olx_round(hkl[2]));
     }
     olxstr new_hkl_fn( TEFile::ExtractFilePath(hkl_fn) );
-    TEFile::AddTrailingBackslashI(new_hkl_fn) << "test.hkl";
+    TEFile::AddPathDelimeterI(new_hkl_fn) << "test.hkl";
     hklf.SaveToFile( new_hkl_fn );
     xapp.XFile().GetRM().SetHKLSource(new_hkl_fn);
   }
@@ -1476,7 +1477,7 @@ olxstr XLibMacros_macSGS_SgInfo(const olxstr& caxis)  {
 }
 void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
-  TSpaceGroup& sg = Cmds.Count() == 1 ? xapp.XFile().GetLastLoaderSG() : *TSymmLib::GetInstance()->FindGroup(Cmds[1]);
+  TSpaceGroup& sg = Cmds.Count() == 1 ? xapp.XFile().GetLastLoaderSG() : *TSymmLib::GetInstance().FindGroup(Cmds[1]);
   SGSettings sg_set(sg);
   olxstr axis = sg_set.axisInfo.GetAxis();
   TBasicApp::GetLog() << (olxstr("Current setting: ") << XLibMacros_macSGS_SgInfo(axis) << '\n');
@@ -1484,7 +1485,7 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TBasicApp::GetLog() << "Nothing to do\n";
     return;
   }
-  TSymmLib& sl = *TSymmLib::GetInstance();
+  const TSymmLib& sl = TSymmLib::GetInstance();
   TPtrList<TSpaceGroup> sgs;
   sl.GetGroupByNumber(sg.GetNumber(), sgs);
   for( size_t i=0; i < sgs.Count(); i++ )  {
@@ -1802,10 +1803,10 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       ml.AddCCopy(ml[i]);
       ml[i+mc] *= -1;
     }
-    for( size_t i=0; i < TSymmLib::GetInstance()->SGCount(); i++ )  {
-      if( TSymmLib::GetInstance()->GetGroup(i) == ml )  {
-        xapp.GetLog() << "found " << TSymmLib::GetInstance()->GetGroup(i).GetName() << '\n';
-        sg = &TSymmLib::GetInstance()->GetGroup(i);
+    for( size_t i=0; i < TSymmLib::GetInstance().SGCount(); i++ )  {
+      if( TSymmLib::GetInstance().GetGroup(i) == ml )  {
+        xapp.GetLog() << "found " << TSymmLib::GetInstance().GetGroup(i).GetName() << '\n';
+        sg = &TSymmLib::GetInstance().GetGroup(i);
       }
     }
   }
@@ -1998,10 +1999,10 @@ void XLibMacros::funRemoveSE(const TStrObjList &Params, TMacroError &E)  {
     smatd_list ml;
     sg->GetMatrices(ml, mattAll^mattInversion);
     TPSTypeList<double, TSpaceGroup*> sglist;
-    for( size_t i=0; i < TSymmLib::GetInstance()->SGCount(); i++ )  {
+    for( size_t i=0; i < TSymmLib::GetInstance().SGCount(); i++ )  {
       double st=0;
-      if( TSymmLib::GetInstance()->GetGroup(i).Compare(ml, st) )
-        sglist.Add(st, &TSymmLib::GetInstance()->GetGroup(i) );
+      if( TSymmLib::GetInstance().GetGroup(i).Compare(ml, st) )
+        sglist.Add(st, &TSymmLib::GetInstance().GetGroup(i) );
     }
     E.SetRetVal( sglist.IsEmpty() ? sg->GetName() : sglist.GetObject(0)->GetName() );
   }
@@ -2043,7 +2044,7 @@ void XLibMacros::funFilePath(const TStrObjList &Params, TMacroError &E)  {
       Tmp = NoneString;
   }
   // see notes in funBaseDir
-  TEFile::RemoveTrailingBackslashI(Tmp);
+  TEFile::TrimPathDelimeterI(Tmp);
   E.SetRetVal(Tmp);
 }
 //..............................................................................
@@ -2622,7 +2623,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     // update publication info loop
     MergePublTableData(publ_info.GetTable(), pil.GetTable());
   }
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(Cif->GetAsymmUnit());
+  TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(Cif->GetAsymmUnit());
   if( sg != NULL )  {
     if( !Cif->ParamExists("_symmetry_cell_setting") )
       Cif->AddParam("_symmetry_cell_setting", sg->GetBravaisLattice().GetName(), true);
@@ -3171,7 +3172,7 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
     return;
   }
   TSpaceGroup& from_sg = xapp.XFile().GetLastLoaderSG();
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup(Cmds.Last().String);
+  TSpaceGroup* sg = TSymmLib::GetInstance().FindGroup(Cmds.Last().String);
   if( sg == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "Could not identify given space group");
     return;
@@ -3690,43 +3691,42 @@ void XLibMacros::macOmit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 void XLibMacros::funLst(const TStrObjList &Cmds, TMacroError &E)  {
   const TIns& ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
   const TLst& Lst = ins.GetLst();
-  if( !Lst.IsLoaded() )  {
+  if( !Lst.IsLoaded() )
     E.SetRetVal(NAString);
-  }
   else if( Cmds[0].Equalsi("rint") )
-    E.SetRetVal( Lst.Rint() );
+    E.SetRetVal(Lst.Rint());
   else if( Cmds[0].Equalsi("rsig") )
-    E.SetRetVal( Lst.Rsigma() );
+    E.SetRetVal(Lst.Rsigma());
   else if( Cmds[0].Equalsi("r1") )
-    E.SetRetVal( Lst.R1() );
+    E.SetRetVal(Lst.R1());
   else if( Cmds[0].Equalsi("r1a") )
-    E.SetRetVal( Lst.R1a() );
+    E.SetRetVal(Lst.R1a());
   else if( Cmds[0].Equalsi("wr2") )
-    E.SetRetVal( Lst.wR2() );
+    E.SetRetVal(Lst.wR2());
   else if( Cmds[0].Equalsi("s") )
-    E.SetRetVal( Lst.S() );
+    E.SetRetVal(Lst.S());
   else if( Cmds[0].Equalsi("rs") )
-    E.SetRetVal( Lst.RS() );
+    E.SetRetVal(Lst.RS());
   else if( Cmds[0].Equalsi("params") )
-    E.SetRetVal( Lst.Params() );
+    E.SetRetVal(Lst.Params());
   else if( Cmds[0].Equalsi("rtotal") )
-    E.SetRetVal( Lst.TotalRefs() );
+    E.SetRetVal(Lst.TotalRefs());
   else if( Cmds[0].Equalsi("runiq") )
-    E.SetRetVal( Lst.UniqRefs() );
+    E.SetRetVal(Lst.UniqRefs());
   else if( Cmds[0].Equalsi("r4sig") )
-    E.SetRetVal( Lst.Refs4sig() );
+    E.SetRetVal(Lst.Refs4sig());
   else if( Cmds[0].Equalsi("peak") )
-    E.SetRetVal( Lst.Peak() );
+    E.SetRetVal(Lst.Peak());
   else if( Cmds[0].Equalsi("hole") )
-    E.SetRetVal( Lst.Hole() );
+    E.SetRetVal(Lst.Hole());
   else if( Cmds[0].Equalsi("flack") )  {
     if( Lst.HasFlack() )
-      E.SetRetVal( Lst.Flack().ToString() );
+      E.SetRetVal(Lst.Flack().ToString());
     else
-      E.SetRetVal( NAString );
+      E.SetRetVal(NAString);
   }
   else
-    E.SetRetVal( NAString );
+    E.SetRetVal(NAString);
 }
 //..............................................................................
 void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
@@ -3734,7 +3734,7 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( !(xapp.CheckFileType<TIns>() ||
         xapp.CheckFileType<TP4PFile>() ||
         xapp.CheckFileType<TCRSFile>()  )  )  return;
-
+  using namespace olex;
   IOlexProcessor* op = IOlexProcessor::GetInstance();
   olxstr newSg(Options.FindValue('s')), 
          content( olxstr::DeleteChars(Options.FindValue('c'), ' ')),
@@ -3776,7 +3776,7 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
 
   if( !newSg.IsEmpty() )  {
-    TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup(newSg);
+    TSpaceGroup* sg = TSymmLib::GetInstance().FindGroup(newSg);
     if( !sg )  {
       E.ProcessingError(__OlxSrcInfo, "could not find space group: ") << newSg;
       return;

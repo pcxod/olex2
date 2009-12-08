@@ -1,7 +1,5 @@
-//---------------------------------------------------------------------------
-
-#ifndef glcursorH
-#define glcursorH
+#ifndef __olx_gl_cursor_H
+#define __olx_gl_cursor_H
 #include "glbase.h"
 #include "gdrawobject.h"
 #include "actions.h"

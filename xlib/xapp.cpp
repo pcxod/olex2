@@ -21,9 +21,10 @@
 TXApp::TXApp(const olxstr &basedir, ASelectionOwner* selOwner) : 
     SelectionOwner(selOwner), TBasicApp(basedir), Library(EmptyString, this)  {
   try  {
-    FAtomsInfo = new TAtomsInfo( GetBaseDir() + "ptablex.dat" );
-    if( TSymmLib::GetInstance() == NULL )
-      TEGC::AddP( new TSymmLib(GetBaseDir() + "symmlib.xld") );
+    if( !TAtomsInfo::IsInitialised() )
+      TEGC::AddP(new TAtomsInfo(GetBaseDir() + "ptablex.dat"));
+    if( !TSymmLib::IsInitialised() )
+      TEGC::AddP(new TSymmLib(GetBaseDir() + "symmlib.xld"));
   }
   catch( const TIOExceptionBase &exc )  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
@@ -43,7 +44,6 @@ TXApp::TXApp(const olxstr &basedir, ASelectionOwner* selOwner) :
 //..............................................................................
 TXApp::~TXApp()  {
   delete FXFile;
-  delete FAtomsInfo;
 }
 //..............................................................................
 olxstr TXApp::LocateHklFile()  {

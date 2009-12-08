@@ -35,16 +35,16 @@ BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
   EVT_CHAR(THtml::OnChar)
 END_EVENT_TABLE()
 //..............................................................................
-THtml::THtml(wxWindow *Parent, ALibraryContainer* LC): 
-     wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, 4), WI(this), ObjectsState(*this),
-     InFocus(NULL)
+THtml::THtml(wxWindow *Parent, ALibraryContainer* LC) :
+  wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, 4), WI(this), ObjectsState(*this),
+  InFocus(NULL),
+  OnLink(Actions.New("ONLINK")),
+  OnURL(Actions.New("ONURL")),
+  OnDblClick(Actions.New("ONDBLCL")),
+  OnKey(Actions.New("ONCHAR")),
+  OnCmd(Actions.New("ONCMD"))
 {
   Root = new THtmlSwitch(this, NULL);
-  OnLink = &Actions.NewQueue("ONLINK");
-  OnURL = &Actions.NewQueue("ONURL");
-  OnDblClick = &Actions.NewQueue("ONDBLCL");
-  OnKey = &Actions.NewQueue("ONCHAR");
-  OnCmd = &Actions.NewQueue("ONCMD");
   Movable = false;
   MouseDown = false;
   ShowTooltips = true;
@@ -130,7 +130,7 @@ void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
     Href.Insert(val, ind);
     ind = Href.FirstIndexOf('%');
   }
-  if( !OnLink->Execute(this, (IEObject*)&Href) )  {
+  if( !OnLink.Execute(this, (IEObject*)&Href) )  {
     wxHtmlLinkInfo NewLink(Href.u_str(), link.GetTarget());
     wxHtmlWindow::OnLinkClicked(NewLink);
   }
@@ -139,7 +139,7 @@ void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
 wxHtmlOpeningStatus THtml::OnOpeningURL(wxHtmlURLType type, const wxString& url, wxString *redirect) const
 {
   olxstr Url = url.c_str();
-  if( !OnURL->Execute(this, &Url) )  return wxHTML_OPEN;
+  if( !OnURL.Execute(this, &Url) )  return wxHTML_OPEN;
   return wxHTML_BLOCK;
 }
 //..............................................................................
@@ -195,7 +195,7 @@ void THtml::OnMouseMotion(wxMouseEvent& event)  {
 //..............................................................................
 void THtml::OnMouseDblClick(wxMouseEvent& event)  {
   event.Skip();
-  OnDblClick->Execute(this, NULL);
+  OnDblClick.Execute(this, NULL);
 }
 //..............................................................................
 void THtml::OnChildFocus(wxChildFocusEvent& event)  {
@@ -351,7 +351,7 @@ void THtml::OnChar(wxKeyEvent& event)  {
       return;
   }
   TKeyEvent KE(event);
-  OnKey->Execute(this, &KE);
+  OnKey.Execute(this, &KE);
 }
 //..............................................................................
 void THtml::UpdateSwitchState(THtmlSwitch &Switch, olxstr &String)  {
@@ -846,7 +846,7 @@ void THtml::funIsItem(const TStrObjList &Params, TMacroError &E)  {
 void THtml::SetShowTooltips(bool v, const olxstr& html_name)  {
   ShowTooltips = v;
   TStateChange sc(prsHtmlTTVis, v, html_name);
-  TGlXApp::GetMainForm()->OnStateChange->Execute((AEventsDispatcher*)this, &sc);
+  TGlXApp::GetMainForm()->OnStateChange.Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
 void THtml::macTooltips(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

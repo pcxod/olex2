@@ -19,14 +19,14 @@ const short   spfRedirected        = 0x0001,
 class AProcess : public IEObject {
 private:
   TStrList Output;
-  TActionQList *FActions;
+  TActionQList Actions;
   TStrList FOnTerminateCmds;
   IOutputStream* DubOutput;
 protected:
   int ProcessId; // must be initialised for async execution in the execute method
   int Flags;
   olxstr CmdLine;
-  bool IsTerminateOnDelete()  const  {  return (Flags & spfTerminateOnDelete) != 0;  }
+  bool IsTerminateOnDelete() const {  return (Flags & spfTerminateOnDelete) != 0;  }
   void InitData(const olxstr& cmdl, int flags)  {
     CmdLine = cmdl;
     Flags = flags;
@@ -35,34 +35,34 @@ public:
   AProcess();
   virtual ~AProcess();
 
-  bool IsSynchronised()            const  {  return (Flags & spfSynchronised) != 0;  }
-  bool IsRedirected()              const  {  return (Flags & spfRedirected) != 0;  }
-  bool IsOutputDub()               const  {  return (Flags & spfRedirected) != 0;  }
-  bool IsQuite()                   const  {  return (Flags & spfQuite) != 0;  }
+  bool IsSynchronised() const {  return (Flags & spfSynchronised) != 0;  }
+  bool IsRedirected() const {  return (Flags & spfRedirected) != 0;  }
+  bool IsOutputDub() const {  return (Flags & spfRedirected) != 0;  }
+  bool IsQuite() const {  return (Flags & spfQuite) != 0;  }
 
-  inline int StrCount()           const {  return Output.Count();  }
-  const olxstr& GetString(int i)  const {  return Output[i];  }
-  TStrList& GetOutput()           {  return Output;  }
-  void DeleteStr(int i)           {  Output.Delete(i);  }
-  void AddString(const olxstr& S) {  
+  size_t StrCount() const {  return Output.Count();  }
+  const olxstr& GetString(size_t i) const {  return Output[i];  }
+  TStrList& GetOutput()  {  return Output;  }
+  void DeleteStr(size_t i)  {  Output.Delete(i);  }
+  void AddString(const olxstr& S)  {  
     if( !IsQuite() )  
       Output.Add(S);  
   }
 
-  TStrList& OnTerminateCmds()         {  return FOnTerminateCmds;  }
-  inline int GetProcessId()     const {  return ProcessId;  }
-  const olxstr&  GetCmdLine()   const {  return CmdLine;  }
+  TStrList& OnTerminateCmds()  {  return FOnTerminateCmds;  }
+  inline int GetProcessId() const {  return ProcessId;  }
+  const olxstr&  GetCmdLine() const {  return CmdLine;  }
   IOutputStream* GetDubStream() const {  return DubOutput;  }
   // sets stream to dublicate process output, will be deleted
   void SetDubStream(IOutputStream* v) {  DubOutput = v;  }
 
-  virtual void Write(const olxstr &Cmd)=0; // writes to the process output
+  virtual void Write(const olxstr& Cmd)=0; // writes to the process output
   virtual void Writenl() = 0; // writes to the process output
   virtual bool Terminate() = 0;
   virtual bool Execute(const olxstr & Cmd, short Flags) = 0;
   virtual void Detach() = 0;
 
-  TActionQueue *OnTerminate;
+  TActionQueue& OnTerminate;
 };
 
 #ifdef __WXWIDGETS__
@@ -93,7 +93,7 @@ public:
 
   virtual void Write(const olxstr &Cmd);
   virtual void Writenl();
-  virtual bool Execute(const olxstr & Cmd, short Flags);
+  virtual bool Execute(const olxstr& Cmd, short Flags);
   virtual bool Terminate();
   virtual void Detach();
 };
@@ -115,8 +115,8 @@ public:
   TWinProcess();
   virtual ~TWinProcess();
 
-  virtual bool Execute(const olxstr & Cmd, short Flags);
-  virtual void Write(const olxstr &Str);
+  virtual bool Execute(const olxstr& Cmd, short Flags);
+  virtual void Write(const olxstr& Str);
   virtual void Writenl();
   virtual bool Terminate();
   virtual void Detach();
@@ -124,7 +124,7 @@ public:
 
 class TWinWinCmd  {
 public:
-  static bool SendWindowCmd(const olxstr WndName, const olxstr Cmd);
+  static bool SendWindowCmd(const olxstr& WndName, const olxstr& Cmd);
 };
 #endif // !__WIN32__
 

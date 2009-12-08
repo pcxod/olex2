@@ -40,12 +40,13 @@ const olxstr TAsymmUnit::IdName("catom");
 //----------------------------------------------------------------------------//
 // TAsymmetricUnit function bodies
 //----------------------------------------------------------------------------//
-TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*(new TResidue(*this, 0)))  {
+TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*(new TResidue(*this, 0))),
+  OnSGChange(Actions.New("AU_SG_CHANGE"))
+{
   Lattice   = L;
   Latt = -1;
   Assigning = false;
   Z = 1;
-  OnSGChange = &Actions.NewQueue("AU_SG_CHANGE");
   RefMod = NULL;
 }
 //..............................................................................
@@ -628,13 +629,13 @@ int TAsymmUnit::GetNextPart() const {
 }
 //..............................................................................
 void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg)  {
-  OnSGChange->Execute(this, &sg);
+  OnSGChange.Execute(this, &sg);
   Latt = sg.GetLattice().GetLatt();
   if( !sg.IsCentrosymmetric() && Latt > 0 )  Latt = -Latt;
 
   Matrices.Clear();
   for( size_t i=0; i < sg.MatrixCount(); i++ )
-    Matrices.AddCCopy( sg.GetMatrix(i) );
+    Matrices.AddCCopy(sg.GetMatrix(i));
 }
 //..............................................................................
 double TAsymmUnit::CalcCellVolume()  const  {
@@ -850,11 +851,7 @@ void TAsymmUnit::LibGetCellVolume(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibGetSymm(const TStrObjList& Params, TMacroError& E)  {
-  if( TSymmLib::GetInstance() == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "Symmetry librray is not initialised" );
-    return;
-  }
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG( *this );
+  TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(*this);
   if( sg == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "Could not locate spacegroup" );
     return;

@@ -12,53 +12,49 @@ UseEsdlNamespace()
 //------------------------------------------------------------------------------
 //TActionQueue function bodies
 //------------------------------------------------------------------------------
-TActionQueue::TActionQueue(TActionQList *Parent, const olxstr & Nm)  {
-  if( Parent == NULL )
+TActionQueue::TActionQueue(TActionQList* parent, const olxstr& name) : Name(name)  {
+  if( parent == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "Please, use TActionQList to create actions");
-  FName = Nm;
-  FExecuteOnce = false;
-  FParent = Parent;
+  ExecuteOnce = false;
+  Parent = parent;
 }
 //..............................................................................
-TActionQueue::~TActionQueue()  {
-}
-//..............................................................................
-void TActionQueue::Add(AActionHandler *A)  {
+void TActionQueue::Add(AActionHandler* A)  {
   if( Handlers.IndexOf(A) != InvalidIndex )
     throw TFunctionFailedException(__OlxSourceInfo, "the handler is already in the list");
   Handlers.Add(A);
 }
 //..............................................................................
-void TActionQueue::AddFirst(AActionHandler *A)  {
+void TActionQueue::AddFirst(AActionHandler* A)  {
   if( Handlers.IndexOf(A) != InvalidIndex )
     throw TFunctionFailedException(__OlxSourceInfo, "the handler is already in the list");
   Handlers.Insert(0, A);
 }
 //..............................................................................
-void TActionQueue::Add(AEventsDispatcher *D, int MsgId, short MsgSubId)  {
+void TActionQueue::Add(AEventsDispatcher* D, int MsgId, short MsgSubId)  {
   if( Contains(D) )
     throw TFunctionFailedException(__OlxSourceInfo, "the dispatcher is already in the list");
   Dispatchers.AddNew(MsgId, MsgSubId, D);
 }
 //..............................................................................
-bool TActionQueue::Enter(const IEObject *Sender, const IEObject *Data)  {
+bool TActionQueue::Enter(const IEObject* Sender, const IEObject* Data)  {
   if( !IsEnabled() ) return false;
   for( size_t i=0; i < Handlers.Count(); i++ )  {
     if( Handlers[i]->IsEnabled() )
-      if( Handlers[i]->Enter(Sender, Data) && FExecuteOnce )
+      if( Handlers[i]->Enter(Sender, Data) && ExecuteOnce )
         return true;
   }
   for( size_t i=0; i < Dispatchers.Count(); i++ )  {
     if( Dispatchers[i].Dispatcher->IsEnabled() )  {
       if( Dispatchers[i].MsgSubId & msiEnter )
-        if( Dispatchers[i].Dispatcher->Dispatch(Dispatchers[i].MsgId, msiEnter, Sender, Data) && FExecuteOnce )
+        if( Dispatchers[i].Dispatcher->Dispatch(Dispatchers[i].MsgId, msiEnter, Sender, Data) && ExecuteOnce )
           return true;
     }
   }
   return false;
 }
 //..............................................................................
-void TActionQueue::UpdateData(const IEObject *Sender, const IEObject *Data)  {
+void TActionQueue::UpdateData(const IEObject* Sender, const IEObject* Data)  {
   if( !IsEnabled() ) return;
   for( size_t i=0; i < Handlers.Count(); i++ )  {
     if( Handlers[i]->IsEnabled() )
@@ -72,24 +68,24 @@ void TActionQueue::UpdateData(const IEObject *Sender, const IEObject *Data)  {
   }
 }
 //..............................................................................
-bool TActionQueue::Exit(const IEObject *Sender, const IEObject *Data)  {
+bool TActionQueue::Exit(const IEObject* Sender, const IEObject* Data)  {
   if( !IsEnabled() ) return false;
   for( size_t i=0; i < Handlers.Count(); i++ )  {
     if( Handlers[i]->IsEnabled() )
-      if( Handlers[i]->Exit(Sender, Data) && FExecuteOnce )
+      if( Handlers[i]->Exit(Sender, Data) && ExecuteOnce )
         return true;
   }
   for( size_t i=0; i < DispatcherCount(); i++ )  {
     if( Dispatchers[i].Dispatcher->IsEnabled() )  {
       if( Dispatchers[i].MsgSubId & msiExit )
-        if( Dispatchers[i].Dispatcher->Dispatch(Dispatchers[i].MsgId, msiExit, Sender, Data) && FExecuteOnce )
+        if( Dispatchers[i].Dispatcher->Dispatch(Dispatchers[i].MsgId, msiExit, Sender, Data) && ExecuteOnce )
           return true;
     }
   }
   return false;
 }
 //..............................................................................
-bool TActionQueue::Execute(const IEObject *Sender, const IEObject *Data)  {
+bool TActionQueue::Execute(const IEObject* Sender, const IEObject* Data)  {
   if( !IsEnabled() ) return false;
   bool res = false;
   for( size_t i=0; i < Handlers.Count(); i++ )  {
@@ -102,7 +98,7 @@ bool TActionQueue::Execute(const IEObject *Sender, const IEObject *Data)  {
     if( Dispatchers[i].Dispatcher->IsEnabled() )  {
       if( Dispatchers[i].MsgSubId & msiExecute )  {
         bool lres = Dispatchers[i].Dispatcher->Dispatch(Dispatchers[i].MsgId, msiExecute, Sender, Data);
-        if( FExecuteOnce ) return true;
+        if( ExecuteOnce ) return true;
         if( lres )  res = lres;
       }
     }
@@ -115,18 +111,18 @@ void TActionQueue::Clear()  {
   Dispatchers.Clear();
 }
 //..............................................................................
-void TActionQueue::Remove(AActionHandler *A)  {
+void TActionQueue::Remove(AActionHandler* A)  {
   Handlers.Remove(A);
   A->OnRemove();
 }
 //..............................................................................
-bool TActionQueue::Contains(AActionHandler *A)  {
+bool TActionQueue::Contains(AActionHandler* A)  {
   if( Handlers.IndexOf(A) != InvalidIndex )
     return true;
   return false;
 }
 //..............................................................................
-void TActionQueue::Remove(AEventsDispatcher *D)  {
+void TActionQueue::Remove(AEventsDispatcher* D)  {
   for( size_t i=0; i < DispatcherCount(); i++ )  {
     if( Dispatchers[i].Dispatcher == D )  {
       Dispatchers.Delete(i);
@@ -135,26 +131,34 @@ void TActionQueue::Remove(AEventsDispatcher *D)  {
   }
 }
 //..............................................................................
-bool TActionQueue::Contains(AEventsDispatcher *D)  {
+bool TActionQueue::Contains(AEventsDispatcher* D)  {
   for( size_t i=0; i < DispatcherCount(); i++ )
     if( Dispatchers[i].Dispatcher == D )  return true;
   return false;
+}
+//..............................................................................
+void TActionQueue::TakeOver(TActionQueue& aq)  {
+  Handlers = aq.Handlers;
+  Dispatchers = aq.Dispatchers;
+  aq.Handlers.Clear();
+  aq.Dispatchers.Clear();
+  ExecuteOnce = aq.ExecuteOnce;
 }
 //..............................................................................
 //------------------------------------------------------------------------------
 //TActionQueue function bodies
 //------------------------------------------------------------------------------
 //..............................................................................
-TActionQueue& TActionQList::NewQueue(const olxstr &Name)  {
-  if( Queues.IndexOfComparable(Name) != InvalidIndex )
+TActionQueue& TActionQList::New(const olxstr& name)  {
+  if( Queues.IndexOfComparable(name) != InvalidIndex )
     throw TFunctionFailedException(__OlxSourceInfo, "the queue already exists");
-  TActionQueue *Q = new TActionQueue(this, Name);
-  Queues.Add(Name, Q);
+  TActionQueue* Q = new TActionQueue(this, name);
+  Queues.Add(name, Q);
   return *Q;
 }
 //..............................................................................
-bool TActionQList::Execute(const olxstr &Name, const IEObject *Sender, const IEObject *Data)  {
-  TActionQueue *Q = Queues[Name];
+bool TActionQList::Execute(const olxstr& Name, const IEObject* Sender, const IEObject* Data)  {
+  TActionQueue* Q = Queues[Name];
   if( Q == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "undefined action queue");
   return Q->Execute(Sender, Data);
@@ -162,17 +166,16 @@ bool TActionQList::Execute(const olxstr &Name, const IEObject *Sender, const IEO
 //..............................................................................
 void TActionQList::Clear()  {
   size_t ac=0;
-  TPtrList<AActionHandler> hands;;
-  TActionQueue* Q;
+  TPtrList<AActionHandler> hands;
   for( size_t i = 0; i < Queues.Count(); i++ )
     ac += Queues.GetObject(i)->HandlerCount();
 
   hands.SetCapacity(ac);
   ac = 0;
   for( size_t i = 0; i < Queues.Count(); i++ )  {
-    Q = Queues.GetObject(i);
+    TActionQueue* Q = Queues.GetObject(i);
     for( size_t j = 0; j < Q->HandlerCount(); j++ )  {
-      hands.Add( Q->Handler(j) );
+      hands.Add(Q->GetHandler(j));
       ac++;
     }
     delete Q; // do not need them anymore
