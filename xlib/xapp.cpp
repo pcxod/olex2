@@ -273,7 +273,7 @@ void TXApp::undoName(TUndoData *data)  {
     if( undo->GetCAtomId(i) >= au.AtomCount() )  // would definetely be an error
       continue;
     TCAtom& ca = au.GetAtom(undo->GetCAtomId(i));
-    TBasicAtomInfo* bai = FAtomsInfo->FindAtomInfoEx( undo->GetLabel(i) );
+    TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoEx(undo->GetLabel(i));
     ca.Label() = undo->GetLabel(i);
     if( ca.GetAtomInfo() != *bai )
       ca.SetAtomInfo(*bai);
@@ -386,7 +386,7 @@ void TXApp::RingContentFromStr(const olxstr& Condition, TPtrList<TBasicAtomInfo>
   if( toks.Count() < 3 )  return;
 
   for( size_t i=0; i < toks.Count(); i++ )  {
-    TBasicAtomInfo* bai = FAtomsInfo->FindAtomInfoBySymbol( toks[i] );
+    TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoBySymbol( toks[i] );
     if( bai == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: ") << toks[i] );
     ringDesc.Add( bai );

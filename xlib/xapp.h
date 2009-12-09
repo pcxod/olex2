@@ -41,7 +41,6 @@ public:
 class TXApp : public TBasicApp, public ALibraryContainer  {
 protected:
   TXFile *FXFile;
-  TAtomsInfo* FAtomsInfo;
   TLibrary Library;
   olxstr CifTemplatesDir;  // the folder with CIF templates/data
   ASelectionOwner* SelectionOwner;
