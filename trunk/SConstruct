@@ -2,6 +2,7 @@ import sys
 import os
 import string
 import platform
+import time
 
 AddOption('--olx_debug',
           dest='olx_debug',
@@ -97,7 +98,39 @@ if sse:
   out_dir += '-' + sse
 out_dir += '/'
 print 'Building location: ' + out_dir
- 
+################################################################################################
+#if possible create a revision version file...
+try:
+  import pysvn
+  client = pysvn.Client()
+  stat = client.status('.')
+  has_modified = False
+  revision = 0
+  for f in stat:
+    if f.text_status == pysvn.wc_status_kind.modified:
+      print 'Modified: ' + f.path
+      has_modified = True
+    elif f.text_status == pysvn.wc_status_kind.deleted:
+      print 'Deleted: ' + f.path
+      has_modified = True
+    elif f.text_status == pysvn.wc_status_kind.added:
+      print 'Added: ' + f.path
+      has_modified = True
+    if revision == 0 and f.entry and f.entry.revision:
+      revision = f.entry.revision.number
+  if has_modified:
+    print '!Warning the svn has local modifications, the revisision number mignt be not valid'
+  if revision != 0:
+    env.Append(CCFLAGS = ['-D_SVN_REVISION_AVAILABLE'])
+    srvf = file('svn_revision.h', 'wb')
+    print >> srvf, 'const int svn_revision_number = ' + str(revision) + ';'
+    #print >> srvf, 'const char* compile_timestamp="' + time.asctime() + '";'
+    # a date is enough - overwise the files includinf this wil be always recompiled...
+    print >> srvf, 'const char* compile_timestamp="' + time.strftime("%Y.%m.%d", time.gmtime()) + '";'
+    srvf.close()
+except:
+  print 'Unfortunately could not update the revision information'
+################################################################################################
 #get file lists
 alglib = Glob('./alglib/*.cpp')
 sdl = Glob('./sdl/*.cpp')
@@ -172,7 +205,7 @@ if sys.platform[:3] == 'win':
     wxFolder += '/'
   pyFolder = os.path.split(sys.executable)[0] + '\\'
   if not debug:
-#    cc_flags = ['/EHsc', '/O2', '/Ob2', '/Oi', '/GL', '/MD', '/bigobj', '/fp:fast', '/GF']
+    #cc_flags = ['/EHsc', '/O2', '/Ob2', '/Oi', '/GL', '/MD', '/bigobj', '/fp:fast', '/GF']
     cc_flags = ['/EHsc', '/O2', '/Ob2', '/Oi', '/MD', '/bigobj', '/fp:fast', '/GF']
     if sse:
       cc_flags.append( '/arch:'+sse)
