@@ -311,7 +311,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib wsock32.lib Iphlpapi.lib $(NOINHERIT)"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(PY_DIR)\libs;&quot;$(SolutionDir)$(ConfigurationName)\lib&quot;;&quot;$(SolutionDir)\lib_ud&quot;"
+				AdditionalLibraryDirectories="$(PY64_DIR)\libs;&quot;$(SolutionDir)$(ConfigurationName)\lib&quot;;&quot;$(SolutionDir)\lib_ud&quot;"
 				GenerateDebugInformation="true"
 				AssemblyDebug="1"
 				SubSystem="1"

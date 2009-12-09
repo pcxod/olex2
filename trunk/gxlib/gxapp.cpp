@@ -1603,14 +1603,14 @@ TUndoData* TGXApp::ChangeSuffix(const TXAtomPList& xatoms, const olxstr &To, boo
 //..............................................................................
 TUndoData* TGXApp::Name(TXAtom& XA, const olxstr &Name, bool CheckLabel)  {
   bool checkBonds = (XA.Atom().GetAtomInfo() == iQPeakIndex);
-  TBasicAtomInfo *bai = FAtomsInfo->FindAtomInfoEx(Name);
+  TBasicAtomInfo *bai = TAtomsInfo::GetInstance().FindAtomInfoEx(Name);
 
   TNameUndo *undo = new TNameUndo( new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
   olxstr oldL = XA.Atom().GetLabel();
 
   bool recreate = ((bai == NULL) ? true : XA.Atom().GetAtomInfo() != *bai);
 
-  XA.Atom().SetLabel( CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA.Atom().CAtom(), Name) : Name);
+  XA.Atom().SetLabel(CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA.Atom().CAtom(), Name) : Name);
 
   if( oldL != XA.Atom().GetLabel() )
     undo->AddAtom( XA.Atom().CAtom(), oldL );
@@ -1648,7 +1648,7 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
         Tmp = XA->Atom().GetLabel();
         NL = XA->Atom().GetAtomInfo().GetSymbol();
         NL << j;  j++;
-        TBasicAtomInfo* bai = FAtomsInfo->FindAtomInfoEx(NL);
+        TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoEx(NL);
         bool recreate = XA->Atom().GetAtomInfo() != *bai;
         oldL = XA->Atom().GetLabel();
         XA->Atom().SetLabel( CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->Atom().CAtom(), NL) : NL );
@@ -1668,7 +1668,7 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
         NL  = EmptyString;
         NL << To.SubStringFrom(1);
         NL << Tmp.SubStringFrom( From.Length()-1 );
-        TBasicAtomInfo* bai = FAtomsInfo->FindAtomInfoEx(NL);
+        TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoEx(NL);
         bool recreate = XA->Atom().GetAtomInfo() != *bai;
         oldL = XA->Atom().GetLabel();
         XA->Atom().SetLabel( CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->Atom().CAtom(), NL) : NL );
@@ -1698,7 +1698,7 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
               NL[j] = '_';
           }
         }
-        TBasicAtomInfo* bai = FAtomsInfo->FindAtomInfoEx(NL);
+        TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoEx(NL);
         if( bai == NULL )
           throw TFunctionFailedException(__OlxSourceInfo, "wrong syntax");
         bool recreate = XA->Atom().GetAtomInfo() != *bai;
@@ -1925,7 +1925,7 @@ void TGXApp::undoName(TUndoData *data)  {
     if( undo->GetCAtomId(i) >= au.AtomCount() )  //could happen?
       continue;
     TCAtom& ca = au.GetAtom( undo->GetCAtomId(i));
-    TBasicAtomInfo* bai = FAtomsInfo->FindAtomInfoEx( undo->GetLabel(i) );
+    TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoEx(undo->GetLabel(i));
     ca.Label() = undo->GetLabel(i);
     if( ca.GetAtomInfo() != *bai )
       cal.Add(ca)->SetAtomInfo(*bai);
@@ -3188,7 +3188,7 @@ void TGXApp::Collectivise(TXAtom& XA)  {
 //..............................................................................
 size_t TGXApp::GetNextAvailableLabel(const olxstr& AtomType) {
   size_t nextLabel = 0, currentLabel;
-  TBasicAtomInfo *bai = FAtomsInfo->FindAtomInfoBySymbol(AtomType);
+  TBasicAtomInfo *bai = TAtomsInfo::GetInstance().FindAtomInfoBySymbol(AtomType);
   if( bai == NULL )  return nextLabel;
   olxstr label, nLabel;
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
