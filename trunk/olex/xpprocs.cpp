@@ -1672,16 +1672,18 @@ void TMainForm::macShell(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( Cmds.Count() == 0 )
     wxShell();
   else  {
-#ifdef __WIN32__
+#ifdef WIN32_
     ShellExecute((HWND)this->GetHWND(), wxT("open"), Cmds[0].u_str(), NULL, TEFile::CurrentDir().u_str(), SW_SHOWNORMAL);
-    else
-      Macros.ProcessMacro( olxstr("exec -o getvar(defexplorer) '") << Cmds[0] << '\'', Error);
 #else
-    wxString dskpAttr;
-    wxGetEnv(wxT("DESKTOP_SESSION"), &dskpAttr);
-    if( Cmds[0].StartsFrom("http") || Cmds[0].StartsFrom("https") || Cmds[0].EndsWith(".htm") || Cmds[0].EndsWith(".html") || Cmds[0].EndsWith(".php") || Cmds[0].EndsWith(".asp") )
+    if( Cmds[0].StartsFrom("http") || Cmds[0].StartsFrom("https") || Cmds[0].EndsWith(".htm") || 
+        Cmds[0].EndsWith(".html") || Cmds[0].EndsWith(".php") || Cmds[0].EndsWith(".asp") )
+    {
       Macros.ProcessMacro( olxstr("exec -o getvar(defbrowser) '") << Cmds[0] << '\'', Error);
-    else if( Cmds[0].EndsWith(".pdf") )
+    }
+# ifdef __linux__
+    else if( Cmds[0].EndsWith(".pdf") )  {
+      wxString dskpAttr;
+      wxGetEnv(wxT("DESKTOP_SESSION"), &dskpAttr);
       if (dskpAttr.Contains(wxT("gnome")))
         Macros.ProcessMacro( olxstr("exec -o gnome-open '") << Cmds[0] << '\'', Error);
       else if (dskpAttr.Contains(wxT("kde")))
@@ -1690,9 +1692,10 @@ void TMainForm::macShell(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         Macros.ProcessMacro( olxstr("exec -o thunar '") << Cmds[0] << '\'', Error);
       else
         Macros.ProcessMacro( olxstr("exec -o getvar(defbrowser) '") << Cmds[0] << '\'', Error);
+    }
+# endif
     else
       Macros.ProcessMacro( olxstr("exec -o getvar(defexplorer) '") << Cmds[0] << '\'', Error);
-    //wxShell( Cmds[0].u_str() );
 #endif
   }
 }
