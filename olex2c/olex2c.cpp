@@ -40,6 +40,10 @@ using namespace std;
 #include "egc.h"
 #include "patchapi.h"
 
+#ifdef _SVN_REVISION_AVAILABLE
+#  include "../svn_revision.h"
+#endif
+
 #ifndef __WIN32__
   #include <readline/readline.h>
   #include <readline/history.h>
@@ -715,17 +719,26 @@ public:
   }
   //..............................................................................
   void funGetCompilationInfo(const TStrObjList& Params, TMacroError &E)  {
-    if( Params.IsEmpty() )
-      E.SetRetVal( olxstr(__DATE__) << ' ' << __TIME__ );
+    olxstr timestamp(olxstr(__DATE__) << ' ' << __TIME__), revision;
+#ifdef _SVN_REVISION_AVAILABLE
+    timestamp = compile_timestamp;
+    revision = svn_revision_number;
+#endif
+    if( Params.IsEmpty() )  {
+      if( revision.IsEmpty() )
+        E.SetRetVal(timestamp);
+      else
+        E.SetRetVal(timestamp << " svn.r" << revision);
+    }
     else  {
       time_t date, time;
       try {  
-        date = TETime::ParseDate( __DATE__ );
-        time = TETime::ParseTime( __TIME__ );
-        E.SetRetVal<olxstr>( TETime::FormatDateTime(Params[0], date+time) );
+        date = TETime::ParseDate(__DATE__);
+        time = TETime::ParseTime(__TIME__);
+        E.SetRetVal<olxstr>(TETime::FormatDateTime(Params[0], date+time));
       }
       catch( TExceptionBase& ) {
-        E.SetRetVal( olxstr(__DATE__) << ' ' << __TIME__ );
+        E.SetRetVal(timestamp);
       }
     }
   }
