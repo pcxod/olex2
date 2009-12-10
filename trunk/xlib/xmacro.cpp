@@ -81,7 +81,8 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(AtomInfo, EmptyString, fpAny|psFileLoaded,
 "Searches information for given atoms in the database" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Compaq, "a-assembles broken fragments&;c-similar as with no options, but considers atom-to-atom distances", 
+  xlib_InitMacro(Compaq, "a-assembles broken fragments&;c-similar as with no options, but considers atom-to-atom distances\
+&;q-moves Q-peaks to the atoms, atoms are not affected", 
     fpNone|psFileLoaded,
 "Moves all atoms or fragments of the asymmetric unit as close to each other as possible. If no options provided, all fragments\
  are assembled around the largest one." );
@@ -1883,10 +1884,12 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 //..............................................................................
 void XLibMacros::macCompaq(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  if( Options.Contains("a") )  
+  if( Options.Contains('a') )  
     TXApp::GetInstance().XFile().GetLattice().CompaqAll();
-  else if( Options.Contains("c") )  
+  else if( Options.Contains('c') )  
     TXApp::GetInstance().XFile().GetLattice().CompaqClosest();
+  else if( Options.Contains('q') )  
+    TXApp::GetInstance().XFile().GetLattice().CompaqQ();
   else
     TXApp::GetInstance().XFile().GetLattice().Compaq();
 }

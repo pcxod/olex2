@@ -153,6 +153,9 @@ public:
   void CompaqAll();
   // similar to Compaq, but considers atom to atom distances, not fragment centres
   void CompaqClosest();
+  // moves Q-peaks into the positions closest to real atoms, does not affect the other atoms
+  void CompaqQ();
+  // transforms fragments using a given smat
   void TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform);
 
   // beware - only pointers are compared

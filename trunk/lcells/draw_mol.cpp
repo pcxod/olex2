@@ -52,26 +52,23 @@ __fastcall TOrganiser::~TOrganiser()  {
 //..............................................................................
 void _fastcall TOrganiser::CalcZoom()  {
   if( XFile->LastLoader() == NULL )  return;
-
-  int AC = XFile->GetLattice().AtomCount();
-  if( AC == 0  )  {
-    Basis.SetZoom(1);
-    return;
-  }
-  TDrawSort *DS;
   TTypeList<TDrawSort*> DrawSort;
   vec3d Min, Max, Center;
   double w = FBitmap->Width, h = FBitmap->Height;
-  for( int i=0; i < AC; i++ )  {
-    DS = new TDrawSort;
-    DS->A = &XFile->GetLattice().GetAtom(i);
+  size_t ac = 0;
+  for( size_t i=0; i < XFile->GetLattice().AtomCount(); i++ )  {
+    TSAtom& sa = XFile->GetLattice().GetAtom(i);
+    if( !sa.IsAvailable() )  continue;
+    ac++;
+    TDrawSort* DS = new TDrawSort;
+    DS->A = &sa;
     DS->P = DS->A->crd();
     DS->P *= Basis.GetMatrix();
     DrawSort.AddACopy(DS);
     Center += DS->A->crd();
   }
-  if( AC )  Center /= AC;
-  Basis.SetCenter( Center );
+  if( ac != 0 )  Center /= ac;
+  Basis.SetCenter(Center);
 ///////////////////////////////////////////////////////////////////////////////
 // zoom calculation
   DrawSort.QuickSorter.SortSF( DrawSort, DrawPointsSortX);
@@ -95,19 +92,19 @@ void _fastcall TOrganiser::CalcZoom()  {
   Basis.SetZoom( Basis.GetZoom() / 1.5 );
   if( Basis.GetZoom() < 0 )        Basis.SetZoom(10);
   if( Basis.GetZoom() > 100 )      Basis.SetZoom(100);
-  for( int i=0; i < AC; i++ )
+  for( size_t i=0; i < DrawSort.Count(); i++ )
     delete DrawSort[i];
 }
 //..............................................................................
 void _fastcall TOrganiser::Update()  {
   if( FBitmap == NULL )  return;
   vec3d Z(0,0,1);
-  int AC = XFile->GetLattice().AtomCount();
   vec3d_list Crd;
-  for( int i=0; i < AC; i++ )
-    Crd.AddNew( XFile->GetLattice().GetAtom(i).crd() );
-
-  if( AC > 3 )  {
+  for( size_t i=0; i < XFile->GetLattice().AtomCount(); i++ )  {
+    if( !XFile->GetLattice().GetAtom(i).IsAvailable() ) continue;
+    Crd.AddNew(XFile->GetLattice().GetAtom(i).crd());
+  }
+  if( Crd.Count() > 3 )  {
     GetPlane(Crd, Z);
     Basis.OrientNormal(Z);
   }
@@ -132,6 +129,7 @@ void _fastcall TOrganiser::Draw()  {
   TTypeList<TDrawSort> DrawSort;
 
   for( size_t i=0; i < XFile->GetLattice().AtomCount(); i++ )  {
+    if( !XFile->GetLattice().GetAtom(i).IsAvailable() )  continue;
     TDrawSort& DS = DrawSort.AddNew();
     DS.A = &XFile->GetLattice().GetAtom(i);
     DS.P = DS.A->crd();

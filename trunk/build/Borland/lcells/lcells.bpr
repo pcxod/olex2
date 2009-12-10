@@ -8,14 +8,20 @@
       build\cplanes.obj build\draw_mol.obj build\iinfo.obj 
       build\inscellreader.obj build\Main.obj build\moldraw.obj build\msearch.obj 
       build\preferences.obj build\progress.obj build\zips.obj build\unzip.obj 
-      build\shellutil.obj"/>
+      build\shellutil.obj build\asymmunit.obj build\atominfo.obj build\catom.obj 
+      build\ellipsoid.obj build\refmodel.obj build\unitcell.obj build\xbase.obj 
+      build\lattice.obj build\xfiles.obj build\network.obj build\satom.obj 
+      build\sbond.obj build\cif.obj build\lst.obj build\rm_base.obj 
+      build\splane.obj build\leq.obj build\srestraint.obj build\exyzgroup.obj 
+      build\ins.obj build\samegroup.obj build\chemdata.obj build\symmlib.obj 
+      build\symmparser.obj build\afixgroup.obj build\conninfo.obj build\mol.obj"/>
     <RESFILES value="lcells.res"/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) ..\..\..\lcells\about.dfm ..\..\..\lcells\iinfo.dfm 
       ..\..\..\lcells\Main.dfm ..\..\..\lcells\moldraw.dfm 
       ..\..\..\lcells\msearch.dfm ..\..\..\lcells\preferences.dfm 
       ..\..\..\lcells\progress.dfm"/>
-    <LIBFILES value="..\Olex2\lib\sdl.lib ..\Olex2\lib\xlib.lib &quot;C:\Program Files\Borland\CBuilder6\Lib\Debug\vclx.lib&quot;"/>
+    <LIBFILES value="..\Olex2\lib\sdl.lib &quot;C:\Program Files\Borland\CBuilder6\Lib\Debug\vclx.lib&quot;"/>
     <LIBRARIES value="rtl.lib vcl.lib"/>
     <SPARELIBS value="vcl.lib rtl.lib"/>
     <PACKAGES value="vcl.bpi rtl.bpi vclx.bpi bcbsmp.bpi dbrtl.bpi adortl.bpi vcldb.bpi 
@@ -24,7 +30,7 @@
       vclie.bpi xmlrtl.bpi inet.bpi inetdbbde.bpi inetdbxpress.bpi inetdb.bpi 
       nmfast.bpi bcbie.bpi soaprtl.bpi dclocx.bpi dbexpress.bpi dbxcds.bpi 
       indy.bpi bcb2kaxserver.bpi"/>
-    <PATHCPP value=".;..\..\..\lcells;..\..\..\repository"/>
+    <PATHCPP value=".;..\..\..\lcells;..\..\..\repository;..\..\..\xlib"/>
     <PATHPAS value=".;"/>
     <PATHRC value=".;"/>
     <PATHASM value=".;"/>
@@ -35,17 +41,17 @@
     <SYSDEFINES value="NO_STRICT"/>
     <MAINSOURCE value="lcells.cpp"/>
     <INCLUDEPATH value="..\..\..\sdl;$(BCB)\include;..\..\..\repository;..\..\..\lcells;..\..\..\..;$(BCB)\include\vcl;..\..\..\xlib"/>
-    <LIBPATH value="..\..\..\repository;..\..\..\lcells;..\..\..\..;SVN\repository;$(BCB)\Projects\Lib;SVN\lcells;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <LIBPATH value="..\..\..\xlib;..\..\..\repository;..\..\..\lcells;..\..\..\..;SVN\repository;$(BCB)\Projects\Lib;SVN\lcells;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
     <OTHERFILES value=""/>
   </MACROS>
   <OPTIONS>
-    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k -y -v 
-      -vi- -c -tW -tWM"/>
+    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k- -vi- 
+      -c -tW -tWM"/>
     <PFLAGS value="-N2build -N0build -$YD -$W -$O- -$A8 -v -JPHNE -M"/>
     <RFLAGS value=""/>
     <AFLAGS value="/mx /w2 /zi"/>
-    <LFLAGS value="-Ibuild -D&quot;&quot; -Gz -aa -Tpe -x -Gn -v"/>
+    <LFLAGS value="-Ibuild -D&quot;&quot; -Gz -aa -Tpe -x -Gn"/>
     <OTHERFILES value=""/>
   </OPTIONS>
   <LINKER>
@@ -71,10 +77,36 @@
       <FILE FILENAME="..\..\..\lcells\progress.cpp" FORMNAME="dlgProgress" UNITNAME="progress" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\lcells\zips.cpp" FORMNAME="" UNITNAME="zips.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\Olex2\lib\sdl.lib" FORMNAME="" UNITNAME="sdl.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\Olex2\lib\xlib.lib" FORMNAME="" UNITNAME="xlib.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\unzip.cpp" FORMNAME="" UNITNAME="unzip" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\shellutil.cpp" FORMNAME="" UNITNAME="shellutil" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="C:\Program Files\Borland\CBuilder6\Lib\Debug\vclx.lib" FORMNAME="" UNITNAME="vclx.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\asymmunit.cpp" FORMNAME="" UNITNAME="asymmunit.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\atominfo.cpp" FORMNAME="" UNITNAME="atominfo.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\catom.cpp" FORMNAME="" UNITNAME="catom.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\ellipsoid.cpp" FORMNAME="" UNITNAME="ellipsoid.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\refmodel.cpp" FORMNAME="" UNITNAME="refmodel.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\unitcell.cpp" FORMNAME="" UNITNAME="unitcell.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\xbase.cpp" FORMNAME="" UNITNAME="xbase.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\lattice.cpp" FORMNAME="" UNITNAME="lattice" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\xfiles.cpp" FORMNAME="" UNITNAME="xfiles" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\network.cpp" FORMNAME="" UNITNAME="network" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\satom.cpp" FORMNAME="" UNITNAME="satom" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\sbond.cpp" FORMNAME="" UNITNAME="sbond" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\cif.cpp" FORMNAME="" UNITNAME="cif.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\lst.cpp" FORMNAME="" UNITNAME="lst.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\rm_base.cpp" FORMNAME="" UNITNAME="rm_base.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\splane.cpp" FORMNAME="" UNITNAME="splane.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\leq.cpp" FORMNAME="" UNITNAME="leq.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\srestraint.cpp" FORMNAME="" UNITNAME="srestraint.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\exyzgroup.cpp" FORMNAME="" UNITNAME="exyzgroup.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\ins.cpp" FORMNAME="" UNITNAME="ins.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\samegroup.cpp" FORMNAME="" UNITNAME="samegroup.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\chemdata.cpp" FORMNAME="" UNITNAME="chemdata.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\symmlib.cpp" FORMNAME="" UNITNAME="symmlib.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\symmparser.cpp" FORMNAME="" UNITNAME="symmparser.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\afixgroup.cpp" FORMNAME="" UNITNAME="afixgroup.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\conninfo.cpp" FORMNAME="" UNITNAME="conninfo.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\mol.cpp" FORMNAME="" UNITNAME="mol.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>
@@ -114,8 +146,9 @@ Item1=..\..\..\repository;..\..\..\lcells;..\..\..\..;$(BCB)\include;$(BCB)\incl
 Item2=..\..\..\repository;..\..\..\lcells;..\..\..\..;SVN\repository;SVN\lcells;$(BCB)\include;$(BCB)\include\vcl
 
 [HistoryLists\hlLibraryPath]
-Count=1
-Item0=..\..\..\repository;..\..\..\lcells;..\..\..\..;SVN\repository;$(BCB)\Projects\Lib;SVN\lcells;$(BCB)\lib\obj;$(BCB)\lib
+Count=2
+Item0=..\..\..\xlib;..\..\..\repository;..\..\..\lcells;..\..\..\..;SVN\repository;$(BCB)\Projects\Lib;SVN\lcells;$(BCB)\lib\obj;$(BCB)\lib
+Item1=..\..\..\repository;..\..\..\lcells;..\..\..\..;SVN\repository;$(BCB)\Projects\Lib;SVN\lcells;$(BCB)\lib\obj;$(BCB)\lib
 
 [HistoryLists\hlDebugSourcePath]
 Count=1

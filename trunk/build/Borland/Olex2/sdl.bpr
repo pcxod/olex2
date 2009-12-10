@@ -6,9 +6,9 @@
     <PROJECT value="lib\sdl.lib"/>
     <OBJFILES value="build\actions.obj build\arrays.obj build\bapp.obj build\bitarray.obj 
       build\datafile.obj build\dataitem.obj build\ebase.obj build\ebasis.obj 
-      build\ecast.obj build\efile.obj build\egraph.obj build\elist.obj 
-      build\emath.obj build\ememstream.obj build\erange.obj build\estrlist.obj 
-      build\etime.obj build\exception.obj build\function.obj build\groupobj.obj 
+      build\ecast.obj build\efile.obj build\egraph.obj build\emath.obj 
+      build\ememstream.obj build\erange.obj build\estrlist.obj build\etime.obj 
+      build\exception.obj build\function.obj build\groupobj.obj 
       build\library.obj build\log.obj build\macro.obj build\macroerror.obj 
       build\paramlist.obj build\poly.obj build\settingsfile.obj build\undo.obj 
       build\egc.obj build\ipbase.obj build\outstream.obj build\olx_cstring.obj 
@@ -36,8 +36,8 @@
     <OTHERFILES value=""/>
   </MACROS>
   <OPTIONS>
-    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Q -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k- 
-      -vi- -c -tW -tWM"/>
+    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k- -vi- 
+      -c -tW -tWM"/>
     <PFLAGS value="-N2build -N0build -$Y+ -$W -$O- -$A8 -v -JPHNE -M"/>
     <AFLAGS value="/mx /w2 /zi"/>
     <LFLAGS value="/P256 /C"/>
@@ -61,7 +61,6 @@
       <FILE FILENAME="..\..\..\sdl\ecast.cpp" FORMNAME="" UNITNAME="ecast.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\efile.cpp" FORMNAME="" UNITNAME="efile.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\egraph.cpp" FORMNAME="" UNITNAME="egraph.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\sdl\elist.cpp" FORMNAME="" UNITNAME="elist.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\emath.cpp" FORMNAME="" UNITNAME="emath.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\ememstream.cpp" FORMNAME="" UNITNAME="ememstream.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\erange.cpp" FORMNAME="" UNITNAME="erange.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>

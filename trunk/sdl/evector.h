@@ -13,21 +13,21 @@ BeginEsdlNamespace()
 // using forward reference
 template <typename> class TMatrix;
 
-template <class VecType> class TVector {
+template <typename VecType> class TVector {
 protected:
   size_t Fn;
   VecType *FData;
 public:
   TVector()  {  Fn = 0;  FData = NULL;  }
 
-  template <class AType> TVector(const TVector<AType>& V)  {
+  template <typename AType> TVector(const TVector<AType>& V)  {
     Fn = V.Count();
     FData = new VecType[Fn];
     for( size_t i=0; i < Fn; i++ )
       FData[i] = V[i];
   }
 
-  template <class AType> TVector(size_t size, AType* V)  {
+  template <typename AType> TVector(size_t size, AType* V)  {
     Fn = size;
     FData = new VecType[Fn];
     for( size_t i=0; i < Fn; i++ )
@@ -115,7 +115,7 @@ public:
     return (VecType)sqrt(v);
   }
 
-  template <class AType> TVector& operator = (const TVector<AType>& a)  {
+  template <typename AType> TVector& operator = (const TVector<AType>& a)  {
     Resize( a.Count() );
     for( size_t i=0; i < Fn; i++ )
       FData[i] = a[i];
@@ -129,7 +129,7 @@ public:
     return *this;
   }
 
-  template <class VC> TVector& Assign(const VC& v, size_t size)  {
+  template <typename VC> TVector& Assign(const VC& v, size_t size)  {
     Resize(size);
     for( size_t i=0; i < size; i++ )
       FData[i] = v[i];
@@ -198,33 +198,33 @@ public:
     return *this;
   }
 
-  template <class AType> TVector operator  + (const TVector<AType>& a ) const {    return TVector<VecType>(*this) += a;  }
+  template <typename AType> TVector operator  + (const TVector<AType>& a ) const {    return TVector<VecType>(*this) += a;  }
 
-  template <class AType> TVector operator  - (const TVector<AType>& a ) const {    return TVector<VecType>(*this) -= a;  }
+  template <typename AType> TVector operator  - (const TVector<AType>& a ) const {    return TVector<VecType>(*this) -= a;  }
 
-  template <class AType> TVector operator  * (const TVector<AType>& a ) const {    return TVector<VecType>(*this) *= a;  }
+  template <typename AType> TVector operator  * (const TVector<AType>& a ) const {    return TVector<VecType>(*this) *= a;  }
 
-  template <class AType> TVector operator  / (const TVector<AType>& a ) const {    return TVector<VecType>(*this) /= a;  }
+  template <typename AType> TVector operator  / (const TVector<AType>& a ) const {    return TVector<VecType>(*this) /= a;  }
 
-  template <class AType> TVector& operator  += (const TVector<AType>& a )  {
+  template <typename AType> TVector& operator  += (const TVector<AType>& a )  {
     for( size_t i=0; i < Fn; i++ )
       FData[i] += a[i];
     return *this;
   }
 
-  template <class AType> TVector& operator  -= (const TVector<AType>& a )  {
+  template <typename AType> TVector& operator  -= (const TVector<AType>& a )  {
     for( size_t i=0; i < Fn; i++ )
       FData[i] -= a[i];
     return *this;
   }
 
-  template <class AType> TVector& operator  *= (const TVector<AType>& a )  {
+  template <typename AType> TVector& operator  *= (const TVector<AType>& a )  {
     for( size_t i=0; i < Fn; i++ )
       FData[i] *=a[i];
     return *this;
   }
 
-  template <class AType> TVector& operator  /= (const TVector<AType>& a )  {
+  template <typename AType> TVector& operator  /= (const TVector<AType>& a )  {
     for( size_t i=0; i < Fn; i++ )
       FData[i] /= a[i];
     return *this;
@@ -234,7 +234,7 @@ public:
     if matrix has more elements (in vectors) than given vector - only
     number of vector elements is used
   */
-  template <class AType> TVector  operator * (const TMatrix<AType>& a ) const  {
+  template <typename AType> TVector  operator * (const TMatrix<AType>& a ) const  {
     if( a.Elements() < Fn || a.Vectors() == 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "dimension");
     TVector V( a.Vectors() );
@@ -248,11 +248,11 @@ public:
     if matrix has more elements (in vectors) than given vector - only
     number of vector elements is used
   */
-  template <class AType> TVector& operator *= (const TMatrix<AType>& a )  {
+  template <typename AType> TVector& operator *= (const TMatrix<AType>& a )  {
     return (*this = (*this*a));
   }
 
-  template <class AType> bool operator == (const TVector<AType>& a ) const {
+  template <typename AType> bool operator == (const TVector<AType>& a ) const {
     if( Fn != a.Count() )  return false;
     for( size_t i=0; i < Fn; i++ )
       if( FData[i] != a[i] )  
@@ -264,7 +264,7 @@ public:
     for( size_t i = 0; i < Fn; i ++ )
       printf("%05.4e\t", FData[i] );
   }
-  template <class SC> SC StrRepr() const  {
+  template <typename SC> SC StrRepr() const  {
     SC rv;
     for( size_t i=0; i < Fn; i++ )  {
       rv << FData[i];
@@ -338,6 +338,7 @@ public:
   typedef TVector<float> evecf;
   typedef TVector<double> evecd;
   typedef TVector<int> eveci;
+  typedef TVector<size_t> evecsz;
 
   typedef TTypeList<eveci> eveci_list;
   typedef TTypeList<evecf> evecf_list;

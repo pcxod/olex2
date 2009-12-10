@@ -591,7 +591,7 @@ bool _fastcall TCifIndex::ListFiles(TdlgProgress *P, const olxstr& Dir,
   TStrList& CifFiles, int MaxSize )  {
 
   olxstr Tmp = Dir, Tmp1;
-  TEFile::AddTrailingBackslashI(Tmp);
+  TEFile::AddPathDelimeterI(Tmp);
   if( Tmp == dlgMain->TmpDir )
     return true;
   if( !TEFile::ChangeDir(Dir) )

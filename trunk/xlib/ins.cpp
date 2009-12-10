@@ -845,13 +845,13 @@ void TIns::SaveToStrings(TStrList& SL)  {
         }
       }
       if( residue[j].GetLabel().Length() > 4 ) 
-        residue[j].Label() = GetAsymmUnit().CheckLabel(&residue[j], residue[j].GetLabel() );
+        residue[j].Label() = GetAsymmUnit().CheckLabel(&residue[j], residue[j].GetLabel());
       for( size_t k=j+1; k < residue.Count(); k++ )  {
         if( residue[k].IsDeleted() )  continue;
         if( residue[j].GetPart() != residue[k].GetPart() && 
             residue[j].GetPart() != 0 && residue[k].GetPart() != 0 )  continue;
         if( residue[j].GetLabel().Equalsi(residue[k].GetLabel()) ) 
-          residue[k].Label() = GetAsymmUnit().CheckLabel(&residue[k], residue[k].GetLabel() );
+          residue[k].Label() = GetAsymmUnit().CheckLabel(&residue[k], residue[k].GetLabel());
       }
     }
   }

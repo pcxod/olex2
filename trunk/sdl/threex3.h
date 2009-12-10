@@ -178,6 +178,10 @@ public:
     data[0] *= (T)v;  data[1] *= (T)v;  data[2] *= (T)v;
     return *this;
   }
+  template <class AT> inline TVector3<T>& operator /= (AT v)  {
+    data[0] /= v;  data[1] /= v;  data[2] /= v;
+    return *this;
+  }
 #else
   inline TVector3<T>& operator *= (double v)  {
     data[0] *= v;  data[1] *= v;  data[2] *= v;
@@ -191,11 +195,11 @@ public:
     data[0] -= v;  data[1] -= v;  data[2] -= v;
     return *this;
   }
-#endif
-  template <class AT> inline TVector3<T>& operator /= (AT v)  {
+  template <class AT> inline TVector3<T>& operator /= (double v)  {
     data[0] /= v;  data[1] /= v;  data[2] /= v;
     return *this;
   }
+#endif
 
   template <class AT> inline TVector3<T> operator + (const TVector3<AT>& v) const {
     return TVector3<T>(data[0]+v[0], data[1]+v[1], data[2]+v[2]);
@@ -475,20 +479,20 @@ public:
            data[0][2]*(data[1][0]*data[2][1] - data[1][1]*data[2][0]);
   }
   inline TMatrix33<T> Inverse()  const {
-	return TMatrix33<T>( data[2][2]*data[1][1] - data[2][1]*data[1][2],
-			          data[2][1]*data[0][2] - data[2][2]*data[0][1],
-			          data[1][2]*data[0][1] - data[1][1]*data[0][2],
-			          data[2][0]*data[1][2] - data[2][2]*data[1][0],
-					  data[2][2]*data[0][0] - data[2][0]*data[0][2],
-					  data[1][0]*data[0][2] - data[1][2]*data[0][0],
-					  data[2][1]*data[1][0] - data[2][0]*data[1][1],
-					  data[2][0]*data[0][1] - data[2][1]*data[0][0],
-					  data[1][1]*data[0][0] - data[1][0]*data[0][1])/=Determinant();
+    return TMatrix33<T>( data[2][2]*data[1][1] - data[2][1]*data[1][2],
+             data[2][1]*data[0][2] - data[2][2]*data[0][1],
+             data[1][2]*data[0][1] - data[1][1]*data[0][2],
+             data[2][0]*data[1][2] - data[2][2]*data[1][0],
+             data[2][2]*data[0][0] - data[2][0]*data[0][2],
+             data[1][0]*data[0][2] - data[1][2]*data[0][0],
+             data[2][1]*data[1][0] - data[2][0]*data[1][1],
+             data[2][0]*data[0][1] - data[2][1]*data[0][0],
+             data[1][1]*data[0][0] - data[1][0]*data[0][1])/=Determinant();
   }
   template <class AT> TVector3<AT>  operator * (const TVector3<AT>& a) const  {
-    return TVector3<AT>( a[0]*data[0][0] + a[1]*data[0][1] + a[2]*data[0][2],
-                         a[0]*data[1][0] + a[1]*data[1][1] + a[2]*data[1][2],
-                         a[0]*data[2][0] + a[1]*data[2][1] + a[2]*data[2][2]);
+    return TVector3<AT>(a[0]*data[0][0] + a[1]*data[0][1] + a[2]*data[0][2],
+                        a[0]*data[1][0] + a[1]*data[1][1] + a[2]*data[1][2],
+                        a[0]*data[2][0] + a[1]*data[2][1] + a[2]*data[2][2]);
   }
   static void  EigenValues(TMatrix33& A, TMatrix33& I)  {
     size_t i, j;
