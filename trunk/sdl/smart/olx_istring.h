@@ -42,9 +42,17 @@
 
 #include "olx_wstring.h"
 #include "olx_cstring.h"
-#include "../emath.h"
 
 BeginEsdlNamespace()
+
+// returns 10^val, cannot put it to emath due to dependencies...
+template <typename FT> FT olx_pow10(size_t val)  {
+  if( val == 0 )  return 1;
+  FT rv = 10;
+  while( --val > 0 ) rv *=10;
+  return rv;
+}
+
 #ifndef __BORLANDC__
 template <class,typename> class TTSString;
 

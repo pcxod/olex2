@@ -748,7 +748,7 @@ bool TFSIndex::ShallAdopt(const TFSItem& src, TFSItem& dest) const  {
   }
   else  {  // do it the old way, based on timestamp then, but update the digest
     dest.SetDigest(src.GetDigest());
-    if( src.GetActions().IndexOfi("delete") != -1 )
+    if( src.GetActions().IndexOfi("delete") != InvalidIndex )
       return !(dest.GetDateTime() == src.GetDateTime() && dest.GetSize() == src.GetSize());
     if( dest.GetDateTime() != src.GetDateTime() || 
       !dest.GetIndexFS().Exists(dest.GetIndexFS().GetBase() + dest.GetFullName()) )  
