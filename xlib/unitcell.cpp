@@ -228,6 +228,8 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
       const int iLz = olx_round(v[2]);  v[2] -= iLz;
       if( j == 0 && (iLx|iLy|iLz) == 0 )  {  // I
         if( ind == i || Atoms[i]->GetFragmentId() == Atoms[ind]->GetFragmentId() )  continue;
+        if( Atoms[i]->GetExyzGroup() != NULL && Atoms[i]->GetExyzGroup() == Atoms[ind]->GetExyzGroup() ) 
+          continue;  
         AU->CellToCartesian(v);
         const double d = v.Length();
         if( d < tolerance )  {

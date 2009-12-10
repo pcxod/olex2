@@ -248,7 +248,7 @@ public:
     if( !footer.IsEmpty() )  L.Add("<p ") << footerPAttr << '>' << footer << "</p>";
   }
   void CreateTXTList(TStrList &L, const olxstr &Title, bool colNames, bool rowNames, const olxstr& Sep) const {
-    TVector<size_t> rowV(ColCount()+1);
+    evecsz rowV(ColCount()+1);
     olxstr Tmp;
     L.Add(Title);
     for( size_t i=0; i < Rows.Count(); i++ )

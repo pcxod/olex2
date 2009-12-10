@@ -1243,6 +1243,35 @@ void TLattice::CompaqClosest()  {
   OnStructureUniq.Exit(this);
 }
 //..............................................................................
+void TLattice::CompaqQ()  {
+  if( Generated )  return;
+  OnStructureUniq.Enter(this);
+  const size_t ac = Atoms.Count();
+  for( size_t i=0; i < ac; i++ )  {
+    if( Atoms[i]->GetAtomInfo() != iQPeakIndex )  continue;
+    const vec3d& crda = Atoms[i]->ccrd();
+    smatd* transform = NULL;
+    double minQD = 1000;
+    for( size_t j=0; j < ac; j++ )  {
+      if( Atoms[j]->GetAtomInfo() == iQPeakIndex )  continue;
+      double qd = 0;
+      smatd* m = GetUnitCell().GetClosest(Atoms[j]->ccrd(), crda, true, &qd);
+      if( qd < minQD )  {
+        if( transform != NULL )  delete transform;
+        transform = m;
+        minQD = qd;
+      }
+      else if( m != NULL )
+        delete m;
+    }
+    if( transform == NULL )  continue;
+    Atoms[i]->CAtom().ccrd() = *transform * Atoms[i]->CAtom().ccrd();
+    delete transform;
+  }
+  Init();
+  OnStructureUniq.Exit(this);
+}
+//..............................................................................
 void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform)  {
   if( Generated )  {
     TBasicApp::GetLog().Error("Cannot perform this operation on grown structure");

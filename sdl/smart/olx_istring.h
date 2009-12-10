@@ -42,6 +42,7 @@
 
 #include "olx_wstring.h"
 #include "olx_cstring.h"
+#include "../emath.h"
 
 BeginEsdlNamespace()
 #ifndef __BORLANDC__
@@ -731,13 +732,18 @@ public:
       return false;
     // test for any particluar format specifier, here just '0x', for hexadecimal
     unsigned short Rad=10;
-    if( len > sts+1 && data[sts] == '0' && (data[sts+1] == 'x' || data[sts+1] == 'X') )  {
-      Rad = 16;
-      sts += 2;
-    }
-    else if( data[sts] == 'o' || data[sts] == 'O' )  {
-      Rad = 8;
-      sts++;
+    if( data[sts] == '0' )  {
+      negative = false;
+      if( len == 1 )  return true;
+      if( data[sts+1] == 'x' || data[sts+1] == 'X' )  {
+        if( len == 2 )  return false;
+        Rad = 16;
+        sts += 2;
+      }
+      else if( data[sts] == '0' )  {
+        Rad = 8;
+        sts++;
+      }
     }
     return o_isint_s(&data[sts], len-sts, negative, Rad);
   }
@@ -756,12 +762,12 @@ public:
     return val;
   }
   //............................................................................
-  // preceding encoding like 0x ir O are treated correctly
+  // preceding encoding like 0x ir 0 are treated correctly
   template <typename IT> IT SafeInt(unsigned short Rad=10) const {
     return o_atoi_safe<IT>(T::Data(), T::_Length, Rad);
   }
   //............................................................................
-  // preceding encoding like 0x ir O are treated correctly
+  // preceding encoding like 0x ir 0 are treated correctly
   template <typename IT> IT SafeUInt(unsigned short Rad=10) const {
     return o_atoui_safe<IT>(T::Data(), T::_Length, Rad);
   }
@@ -859,7 +865,7 @@ public:
     bool negative;
     IT val = o_atoi_s<IT>(data, len, negative, Rad);
     if( negative )
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid usigned integer format");
+      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid unsigned integer format");
     return val;
   }
   //............................................................................
@@ -887,12 +893,6 @@ public:
   //............................................................................
   bool ToBool() const {  return (Comparei(TrueString) == 0);  }
   //............................................................................
-  template <typename FT> static FT o_pow10(size_t val)  {
-    if( val == 0 )  return 1;
-    FT rv = 10;
-    while( --val > 0 ) rv *=10;
-    return rv;
-  }
   // no '\0' at the end, got to do it ourselves
   template <class FT> static FT o_atof(const TC* data, size_t len) {
     if( len == 0 )  
@@ -937,7 +937,7 @@ public:
       else  // invalid char for a number
         TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid float number digit");
     }
-    bp = (expneg) ? (bp + ap/apexp)/o_pow10<FT>(exp) : (bp + ap/apexp)*o_pow10<FT>(exp);
+    bp = (expneg) ? (bp + ap/apexp)/olx_pow10<FT>(exp) : (bp + ap/apexp)*olx_pow10<FT>(exp);
     return negative ? -bp : bp;
   }
   //............................................................................
@@ -1379,29 +1379,34 @@ public:
     return rv;
   }
   //............................................................................
-  // checks if provided string represent an integer or float point number (inc exponental form)
+  /* checks if provided string represent an integer or float point number (inc exponental form) */
   static bool o_isnumber(const TC* data, size_t len) {
-    if( len == 0 )
-      return false;
+    if( len == 0 )  return false;
     size_t sts = 0, ste = len; // string start
     while( o_iswhitechar(data[sts]) && ++sts < len ) ;
     while( --ste > sts && o_iswhitechar(data[ste]) ) ;
     if( ++ste <= sts )
       return false;
+    if( data[sts] == '0' )  {
+      len = ste-sts;
+      if( len == 1 )  return true;
     // hex notation
-    if( (ste-sts) >= 3 && data[sts] == '0' && data[sts+1] == 'x' )  {
-      for( size_t i=sts+2; i < ste; i++ )  {
-        if( !o_ishexdigit(data[i]) )
-          return false;
+      if( data[sts+1] == 'x' || data[sts+1] == 'X' )  {
+        if( len == 2 )  return false;
+        for( size_t i=sts+2; i < ste; i++ )  {
+          if( !o_ishexdigit(data[i]) )
+            return false;
+        }
+        return true;
       }
-      return true;
-    }
-    if( (ste-sts) >= 2 && (data[sts] == 'o' || data[sts] == 'O') )  {
-      for( size_t i=sts+1; i < ste; i++ )  {
-        if( data[i] < '0' || data[i] > '7' )
-          return false;
+      // octal or float (0e-5 0.nnn) then...
+      if( data[sts+1] != '.' && !(data[sts+1] == 'e' || data[sts+1] == 'E') )  {
+        for( size_t i=sts+1; i < ste; i++ )  {
+          if( data[i] < '0' || data[i] > '7' )
+            return false;
+        }
+        return true;
       }
-      return true;
     }
     bool expfound = false, fpfound = false;
     short digit_cnt = 0;
@@ -1441,10 +1446,8 @@ public:
     }
     return (digit_cnt != 0);
   }
-  // checks if the string represent and integer or float point number (inc exponental form)
-  bool IsNumber() const  {  return o_isnumber(T::Data(), T::_Length);  }
-  //............................................................................
-  //TTIString<TC> toIstr() const {  return TTIString<TC>(Data());  }
+  /* checks if the string represent and integer (ocatal, decimal or hex) or float point number  (inc exponental form) */
+  bool IsNumber() const {  return o_isnumber(T::Data(), T::_Length);  }
   //............................................................................
   void SetIncrement(size_t ni)  {  T::_Increment = ni;  }
   void SetCapacity(size_t newc)  {

@@ -1,6 +1,3 @@
-//---------------------------------------------------------------------------
-
-
 #pragma hdrstop
 
 #include "main.h"
@@ -17,7 +14,6 @@
 #include "ememstream.h"
 
 const int MaxPaths = 400;
-//---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 TConInfo::TConInfo()  {
   GraphRadius = 0;
@@ -216,7 +212,7 @@ void TNet::Assign(TLattice& latt)  {
     for( size_t j=0; j < sa.BondCount(); j++ )    {
       if( sa.Bond(j).Another(sa).GetAtomInfo() == iQPeakIndex )
         continue;
-      Nodes[ni].Nodes.Add( &Nodes[sa.Bond(j).Another(sa).GetTag()] );
+      Nodes[ni].Nodes.Add(Nodes[sa.Bond(j).Another(sa).GetTag()]);
     }
     ni++;
   }
@@ -343,6 +339,7 @@ exit:
 void TNet::operator >> (IDataOutputStream& S)  {
   S << (int32_t)Nodes.Count();
   for( size_t i = 0; i < Nodes.Count(); i++ )  {
+    Nodes[i].Id = i;
     S << Nodes[i].Id;
     S.Write(&Nodes[i].AtomType, 1);
   }
@@ -365,7 +362,6 @@ void TNet::operator << (IDataInputStream& S)  {
     TConNode& N = Nodes.AddNew();
     S >> N.Id;
     S.Read(&N.AtomType, 1);
-//    Mr += N->AtomType;
   }
   for( size_t i = 0; i < Nodes.Count(); i++ )  {
     TConNode& N = Nodes[i];
@@ -374,7 +370,7 @@ void TNet::operator << (IDataInputStream& S)  {
     N.Nodes.SetCapacity( count );
     for( int j=0; j < count; j++ )  {
       S >> Id;
-      N.Nodes.Add( &Nodes[Id] );
+      N.Nodes.Add(Nodes[Id]);
     }
   }
 }
@@ -466,7 +462,7 @@ void TConZip::Assign(TZipFile *ZF, TXFile& xf)  {
     CF->Title = xf.LastLoader()->GetTitle();
     CF->FileName = FN;
     CF->FileAge = 0; // CifF->FileAge;
-    TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG( xf.GetAsymmUnit() );
+    TSpaceGroup* sg = TSymmLib::GetInstance().FindSG( xf.GetAsymmUnit() );
     if( sg != NULL )
       CF->SpaceGroup = sg->GetName();
     else
@@ -556,7 +552,7 @@ void TConIndex::Update(const TStrList& IndexFiles, TXFile& xf)  {
       ConF->FileName = CifF->Name;
       ConF->FileAge = CifF->FileAge;
 
-      TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG( xf.GetAsymmUnit() );
+      TSpaceGroup* sg = TSymmLib::GetInstance().FindSG( xf.GetAsymmUnit() );
       if( sg != NULL )
         ConF->SpaceGroup = sg->GetName();
       else
@@ -771,16 +767,16 @@ exit:
   if( !Silent )  delete dlgProg;
 }
 void TConIndex::operator >> (IDataOutputStream& S)  {
-  S << ConFiles.Count();
+  S << (int32_t)ConFiles.Count();
   for( size_t i=0; i < ConFiles.Count(); i++)
     ConFiles[i] >> S;
 
-  S << ZipFiles.Count();
+  S << (int32_t)ZipFiles.Count();
   for( size_t i=0; i < ZipFiles.Count(); i++)
     ZipFiles[i] >> S;
 }
 void TConIndex::operator << (IDataInputStream& S)  {
-  int count;
+  int32_t count;
   Clear();
   TConZip *CZ;
   S >> count;

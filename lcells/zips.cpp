@@ -11,7 +11,7 @@
 TZipShell::TZipShell()  {  }
 TZipShell::~TZipShell()  {  }
 void _fastcall TZipShell::SetTmpPath(const olxstr& S)  {
-  FTmpPath = TEFile::AddTrailingBackslash(S);
+  FTmpPath = TEFile::AddPathDelimeter(S);
 }
 bool _fastcall TZipShell::Initialize(const olxstr& Arch)  {
   if( !TEFile::Exists(Arch) )

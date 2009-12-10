@@ -79,8 +79,8 @@ BeginEsdlNamespace()
 static const size_t InvalidIndex = (size_t)(~0);
 static const size_t InvalidSize = (size_t)(~0);
 // validates if unsigned number is valid... since the move to size_t etc...
-template <typename int_t> bool olx_is_valid_index(const int_t& v)  {  return v != (int_t)~0;  }
-template <typename int_t> bool olx_is_valid_size(const int_t& v)  {  return v != (int_t)~0;  }
+template <typename int_t> static bool olx_is_valid_index(const int_t& v)  {  return v != (int_t)~0;  }
+template <typename int_t> static bool olx_is_valid_size(const int_t& v)  {  return v != (int_t)~0;  }
 // string base
 template <class T> class TTIString {
 public:

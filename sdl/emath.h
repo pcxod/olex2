@@ -1,7 +1,7 @@
 #ifndef __olx_emath_H
 #define __olx_emath_H
 #include <math.h>
-#include "exception.h"
+#include "ebase.h"
 // Linux stuff....
 #undef QLength
 
@@ -25,6 +25,13 @@ template <typename ret_t, typename arg_t> ret_t olx_factorial_t(const arg_t& a) 
   arg_t b=1;
   for( arg_t i=2; i <= a; i++ )  b *= i;
   return b;
+}
+// returns 10^val
+template <typename FT> FT olx_pow10(size_t val)  {
+  if( val == 0 )  return 1;
+  FT rv = 10;
+  while( --val > 0 ) rv *=10;
+  return rv;
 }
 // rounds a floating point number
 template <typename float_t> inline long olx_round(const float_t a)  {

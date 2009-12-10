@@ -132,9 +132,7 @@ public:
   }
 };
 
-
 EndXlibNamespace()
-
 
 #endif
 

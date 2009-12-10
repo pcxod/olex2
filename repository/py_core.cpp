@@ -198,6 +198,23 @@ PyObject* pyRefModel(PyObject* self, PyObject* args)  {
       return Py_None;
     }
   }
+  // make the labels unique...
+  TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
+  for( size_t i=0; i < au.ResidueCount(); i++ )  {
+    TResidue& residue = au.GetResidue(i);
+    for( size_t j=0; j < residue.Count(); j++ )  {
+      if( residue[j].IsDeleted() )  continue;
+      if( residue[j].GetLabel().Length() > 4 ) 
+        residue[j].Label() = au.CheckLabel(&residue[j], residue[j].GetLabel());
+      for( size_t k=j+1; k < residue.Count(); k++ )  {
+        if( residue[k].IsDeleted() )  continue;
+        if( residue[j].GetPart() != residue[k].GetPart() && 
+            residue[j].GetPart() != 0 && residue[k].GetPart() != 0 )  continue;
+        if( residue[j].GetLabel().Equalsi(residue[k].GetLabel()) ) 
+          residue[k].Label() = au.CheckLabel(&residue[k], residue[k].GetLabel());
+      }
+    }
+  }
   return TXApp::GetInstance().XFile().GetRM().PyExport(calc_connectivity);
 }
 //..............................................................................

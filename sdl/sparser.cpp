@@ -136,7 +136,7 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
       if( ++i < Exp.Length() )  Char = Exp.CharAt(i);
       else                      Char = '\0';
     }
-
+ 
     // processing comparison operators
     if( coFactory != NULL && (!LeftExp.IsEmpty() || !LeftStr.IsEmpty()) && (!RightExp.IsEmpty() || !RightStr.IsEmpty()) )  {
       IEvaluator *LeftEvaluator = NULL, *RightEvaluator = NULL;

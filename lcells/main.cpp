@@ -86,8 +86,8 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
   new TBasicApp( TEFile::ExtractFilePath(ParamStr(0).c_str()));
   TEGC::NewG<TSymmLib>( TBasicApp::GetBaseDir() + "symmlib.xld" );
   LogListener& logListener = TEGC::NewG<LogListener>( this );
-  TBasicApp::GetLog().OnException->Add(&logListener, ID_EXCEPTION);
-  TBasicApp::GetLog().OnError->Add(&logListener, ID_ERROR);
+  TBasicApp::GetLog().OnException.Add(&logListener, ID_EXCEPTION);
+  TBasicApp::GetLog().OnError.Add(&logListener, ID_ERROR);
 
 
   DecimalSeparator = '.';
@@ -108,7 +108,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
         int lind = Olex2Path.LastIndexOf('"');
         if( lind > 0 )  {
           Olex2Path = TEFile::ExtractFilePath(Olex2Path.SubString(1, lind-1));
-          TEFile::AddTrailingBackslashI(Olex2Path);
+          TEFile::AddPathDelimeterI(Olex2Path);
         }
       }
       sbOlex2->Visible = TEFile::Exists(Olex2Path+"olex2.dll");
@@ -142,7 +142,7 @@ exit:
   }
   
   CurrentDir = TEFile::ExtractFilePath(ParamStr(0).c_str() );
-  TEFile:: AddTrailingBackslashI(CurrentDir);
+  TEFile::AddPathDelimeterI(CurrentDir);
 
   TmpDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
   TmpDir << "lcells/";
@@ -876,7 +876,7 @@ void __fastcall TdlgMain::sbViewClick(TObject *Sender)  {
 //---------------------------------------------------------------------------
 void _fastcall TdlgMain::AddPath(const olxstr& T)  {
   olxstr Dir, Tmp;
-  Dir = TEFile::RemoveTrailingBackslash(T).UpperCase();
+  Dir = TEFile::TrimPathDelimeter(T).UpperCase();
 
   TStrList toks(getenv("PATH"), ';');
   if( toks.IndexOf(Dir) == -1 )  {
@@ -956,7 +956,9 @@ void TdlgMain::LoadCurrentFile()  {
       sbView->Enabled = true;
       sbOlex2->Enabled = true;
       Organiser->XFile->LoadFromFile(CurrentFile);
-      Organiser->XFile->GetLattice().Compaq();
+      Organiser->XFile->GetAsymmUnit().DetachAtomType(iQPeakIndex, true);
+      Organiser->XFile->GetLattice().UpdateConnectivity();
+      Organiser->XFile->GetLattice().CompaqAll();
       //for( int i=0; i < Organiser->XFile->GetLattice().AtomCount(); i++ )
       //  if( Organiser->XFile->GetLattice().IsExpandable( Organiser->XFile->GetLattice().GetAtom(i)) )
       //    toGrow.AddACopy( &Organiser->XFile->GetLattice().GetAtom(i) );

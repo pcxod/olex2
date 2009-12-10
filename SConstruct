@@ -125,9 +125,10 @@ try:
     srvf = file('svn_revision.h', 'wb')
     print >> srvf, 'const int svn_revision_number = ' + str(revision) + ';'
     #print >> srvf, 'const char* compile_timestamp="' + time.asctime() + '";'
-    # a date is enough - overwise the files includinf this wil be always recompiled...
+    # a date is enough - otherwise files including this will be always recompiled...
     print >> srvf, 'const char* compile_timestamp="' + time.strftime("%Y.%m.%d", time.gmtime()) + '";'
     srvf.close()
+    print 'Current repository revision: ' + str(revision)
 except:
   print 'Unfortunately could not update the revision information'
 ################################################################################################
