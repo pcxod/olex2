@@ -5697,10 +5697,10 @@ void TMainForm::funGetCompilationInfo(const TStrObjList& Params, TMacroError &E)
       if( !revision.IsEmpty() )  rv << " svn.r" << revision;
 #ifdef _MSC_FULL_VER
       rv << " MSC:" << _MSC_FULL_VER;
-#elif __GNUC__
-      rv << " GCC: " << __GNUC__ << '.' << __GNUC_MINOR__ << '.' << __GNUC_PATCHLEVEL__;
 #elif __INTEL_COMPILER
-      rv << "Intel: " << __INTEL_COMPILER;
+      rv << " Intel:" << __INTEL_COMPILER;
+#elif __GNUC__
+      rv << " GCC:" << __GNUC__ << '.' << __GNUC_MINOR__ << '.' << __GNUC_PATCHLEVEL__;
 #endif
 #ifdef _WIN64
       rv << " on WIN64";
