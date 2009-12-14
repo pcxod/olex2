@@ -59,7 +59,7 @@ public:
       if( it.atoms[i].GetMatrix() != NULL )
         atoms.Add( new TGroupCAtom(&RM.aunit.GetAtom(it.atoms[i].GetAtom()->GetId()), &RM.AddUsedSymm(*it.atoms[i].GetMatrix()) ) );
       else
-        atoms.Add( new TGroupCAtom(&RM.aunit.GetAtom( it.atoms[i].GetAtom()->GetId()) ) );
+        atoms.Add(new TGroupCAtom(&RM.aunit.GetAtom(it.atoms[i].GetAtom()->GetId())));
     }
     return *this;
   }
@@ -67,10 +67,10 @@ public:
   void AssignAtoms(const TCAtomGroup& ag)  {
     atoms.Clear();
     for( size_t i=0; i < ag.Count(); i++ )
-      AddAtom(ag[i].GetAtom(), ag[i].GetMatrix() );
+      AddAtom(ag[i].GetAtom(), ag[i].GetMatrix());
   }
   void AddAtom(TCAtom* ca, const smatd* sm)  {
-    atoms.Add( new TGroupCAtom(ca, (sm == NULL ? NULL : &RM.AddUsedSymm(*sm))) );
+    atoms.Add(new TGroupCAtom(ca, (sm == NULL ? NULL : &RM.AddUsedSymm(*sm))));
   }
 
   size_t Count() const {  return atoms.Count();  }

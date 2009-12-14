@@ -346,12 +346,16 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
     InfoTables.Add( new InfoTab(*this, infotab_htab, EmptyString, resi_name) );
   else if( tab_name.Equalsi("RTAB") )
     InfoTables.Add( new InfoTab(*this, infotab_rtab, l[atom_start++], resi_name) );
-  else if( tab_name.Equalsi("MPLA") )
-    InfoTables.Add( new InfoTab(*this, infotab_mpla, l[atom_start], resi_name) );
+  else if( tab_name.Equalsi("MPLA") )  {
+    if( l[atom_start].IsNumber() )
+      InfoTables.Add(new InfoTab(*this, infotab_mpla, l[atom_start++], resi_name));
+    else
+      InfoTables.Add(new InfoTab(*this, infotab_mpla, EmptyString, resi_name));
+  }
   else
     throw TInvalidArgumentException(__OlxSourceInfo, "unknown information table name");
 
-  TAtomReference ar( l.Text(' ', atom_start) );
+  TAtomReference ar(l.Text(' ', atom_start));
   TCAtomGroup ag;
   size_t atomAGroup;
   try  {  ar.Expand( *this, ag, resi_name, atomAGroup);  }
