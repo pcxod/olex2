@@ -147,7 +147,7 @@ BOOL CInstallerDlg::OnInitDialog()  {
   tooltipCtrl->AddTool( GetDlgItem(IDC_BTN_PROXY), _T("Reload repositories list"));
   tooltipCtrl->Activate(TRUE);
   if( olex2_installed )  {
-    TEFile::AddTrailingBackslash(olex2_installed_path);
+    TEFile::AddPathDelimeter(olex2_installed_path);
     olxstr sfile = olex2_installed_path;
     sfile << UpdateAPI::GetSettingsFileName();
     if( TEFile::Exists(sfile) )  {
@@ -515,7 +515,7 @@ your computers is online."), _T("Installation failed"), MB_OK|MB_ICONERROR);
 }
 
 bool CInstallerDlg::_DoInstall(const olxstr& zipFile, const olxstr& installPath)  {
-  TBasicApp::SetBaseDir(TEFile::AddTrailingBackslash(installPath) << "installer.exe");
+  TBasicApp::SetBaseDir(TEFile::AddPathDelimeter(installPath) << "installer.exe");
   TWinZipFileSystem zfs(zipFile);
   bool res = zfs.Exists("olex2.tag");
   if( res )  {

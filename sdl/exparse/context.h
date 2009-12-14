@@ -22,6 +22,7 @@ namespace exparse  {
       value = _value;
       _value->inc_ref();
     }
+    virtual const std::type_info& get_type_info() const {  return typeid(*value);  }
     virtual IEvaluable* _evaluate() const {  return value;  }
     virtual IEvaluable* find_property(const olxstr& name) {  return value->find_property(name);  }
     virtual IEvaluable* find_method(const olxstr& name, const struct EvaluableFactory& f,

@@ -111,7 +111,7 @@ bool parser_util::is_expandable(const olxstr& exp)  {
     if( ch == '(' )
       return true;
     if( is_quote(ch) && !is_escaped(exp, i) )  {  // skip strings
-      while( ++i < exp.Length() && exp.CharAt(i) != ch && exp.CharAt(i-1) != '\\' )
+      while( ++i < exp.Length() && exp.CharAt(i) != ch && !is_escaped(exp, i) )
         ;
       continue;
     }
@@ -149,6 +149,7 @@ void expression_tree::expand()  {
   data.TrimWhiteChars();
   if( !parser_util::is_expandable(data) )  return;
   olxstr dt;
+  olxch q_ch = ' ';
   for( size_t i=0; i < data.Length(); i++ )  {
     olxch ch = data.CharAt(i);
     if( olxstr::o_iswhitechar(ch) )  continue;
@@ -193,7 +194,15 @@ void expression_tree::expand()  {
       }
       dt.SetLength(0);
     }
+    else if( ch == '[' || ch == '{' )  {
+      size_t ind = i;
+      if( !parser_util::skip_brackets(data, ind) )
+        throw TInvalidArgumentException(__OlxSourceInfo, "problem with brackets");
+      dt << data.SubString(i, ind-i+1);
+      i = ind;
+    }
     else if( parser_util::is_quote(ch) && !parser_util::is_escaped(data, i) )  { // parse out the strings
+      if( dt.IsEmpty() )  q_ch = ch;
       if( !parser_util::parse_string(data, dt, i) ) 
         throw TInvalidArgumentException(__OlxSourceInfo, "problem with quotations");
     }
@@ -220,12 +229,16 @@ void expression_tree::expand()  {
         if( !dt.IsEmpty() )  {
           if( left != NULL )
             throw TInvalidArgumentException(__OlxSourceInfo, "invalid expression");
-          left = new expression_tree(this, dt);
+          if( q_ch != ' ' )
+            left = new expression_tree(this, olxstr(q_ch) << dt << q_ch);
+          else
+            left = new expression_tree(this, dt);
           left->expand();
         }
         right = new expression_tree(this, data.SubStringFrom(i));
         right->expand();
         data = opr;
+        break;
       }
       else
         dt << ch;

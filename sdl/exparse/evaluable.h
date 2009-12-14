@@ -26,6 +26,8 @@ namespace exparse  {
     virtual IEvaluable* _evaluate() const = 0;
     typedef cast_result (*cast_operator)(const IEvaluable*);
     typedef olxdict<std::type_info const*, cast_operator, TPointerPtrComparator> operator_dict;
+    // self casting...
+    static cast_result self_cast(const IEvaluable* i)  {  return cast_result(i, false);  }
     virtual cast_operator get_cast_operator(const std::type_info&) const {
       throw TNotImplementedException(__OlxSourceInfo);
     }
@@ -59,6 +61,8 @@ namespace exparse  {
       val_wrapper<const T&,IEvaluable> cast(const IEvaluable* i) const {  return val_wrapper<const T&,IEvaluable>((*co)(i));  }
     };
 
+    virtual const std::type_info& get_type_info() const {  return typeid(*this);  }
+
     template <typename T> val_wrapper<T,IEvaluable> cast() const {
       if( !is_final() )  {
         IEvaluable* tmp = _evaluate();
@@ -66,15 +70,13 @@ namespace exparse  {
         return rv;
       }
       const std::type_info& ti = typeid(T);
+      // a simple case...
+      if( ti == get_type_info() )
+        return caster<T>(&IEvaluable::self_cast).cast(this);
       try  {  
         cast_operator co = get_cast_operator(ti);
-        if( co != NULL )  {
+        if( co != NULL )
           return caster<T>(co).cast(this);
-          //T* cast_result = (T*)(*co)(this);
-          //T result(*cast_result);
-          //delete cast_result;
-          //return result;
-        }
       }
       catch(...)  {}
       throw TCastException(__OlxSourceInfo, ti);
