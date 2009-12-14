@@ -8,7 +8,7 @@ BeginEsdlNamespace()
 namespace exparse  {
   struct StringValue : public IEvaluable  {
     olxstr val;
-    static ClassInfo<olxstr> info;
+    static ClassInfo<StringValue, olxstr> info;
     StringValue(const olxstr& v) : val(v) {}
     virtual IEvaluable* _evaluate() const {  throw 1;  }
     virtual IEvaluable* find_property(const olxstr& name) {
@@ -19,8 +19,12 @@ namespace exparse  {
     {
       size_t i = info.functions.index_of(name, args.Count());
       if( i == InvalidIndex )  {
-        i = info.globals.index_of(name, args.Count());
-        return i == InvalidIndex ? NULL : info.globals.create_from_index(ef, i, args);
+        i = info.wrap_functions.index_of(name, args.Count());
+        if( i == InvalidIndex )  {
+          i = info.globals.index_of(name, args.Count());
+          return i == InvalidIndex ? NULL : info.globals.create_from_index(ef, i, args);
+        }
+        return info.wrap_functions.create_from_index(proxy == NULL ? *this : *proxy, ef, i, args);
       }
       return info.functions.create_from_index(proxy == NULL ? *this : *proxy, ef, i, args);
     }
@@ -34,6 +38,8 @@ namespace exparse  {
     } 
     virtual IEvaluable* create_new(const void* data) const {  return new StringValue(*(olxstr*)data);  }
     virtual bool is_final() const {  return true;  }
+    // wrapper functions
+    int atoi() const {  return val.SafeInt<int>(); }
     // globals section
     static olxstr add(const olxstr& a, const olxstr& b)  {  return a+b; }
     static bool equals(const olxstr& a, const olxstr& b)  {  return a.Equals(b); }
@@ -43,6 +49,12 @@ namespace exparse  {
       if( !info.is_empty() )  return;
       info.functions.add("sub", &olxstr::SubString);
       info.functions.add<size_t>("len", &olxstr::Length);  // gcc...
+      info.functions.add("charAt", &olxstr::CharAt);
+      info.functions.add("toUpper", &olxstr::ToUpperCase);
+      info.functions.add("toLower", &olxstr::ToLowerCase);
+
+      info.wrap_functions.add("atoi", &StringValue::atoi);
+
       info.globals.add("+", &StringValue::add);
       info.globals.add("==", &StringValue::equals);
       info.globals.add("!=", &StringValue::nequals);

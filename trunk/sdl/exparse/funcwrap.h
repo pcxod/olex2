@@ -174,7 +174,7 @@ namespace exparse  {
       AFunction<IStaticFunction,rvt>::arg_types.Add(typeid(argt_1));
     }
     virtual IEvaluable* run(const EvaluableFactory& factory, const TPtrList<IEvaluable>&params)  {
-      return factory.create<argt_1>(this->func(params[0]->cast<argt_1>()));
+      return factory.create<rvt>(this->func(params[0]->cast<argt_1>()));
     }
   };
   //class member function
@@ -333,7 +333,7 @@ namespace exparse  {
     }
     virtual inline bool is_empty() const {  return funcs.IsEmpty();  }
     inline IMemberFunction* find(const olxstr& name, size_t argc) const {
-      size_t ind = funcs.IndexOf( olxstr(name) << '#' << argc);
+      size_t ind = funcs.IndexOf(olxstr(name) << '#' << argc);
       return ind == InvalidIndex ? NULL : funcs.GetValue(ind);
     }
     inline size_t index_of(const olxstr& name, size_t argc) const {
@@ -391,8 +391,9 @@ namespace exparse  {
       IEvaluable& self;
       const EvaluableFactory& factory;
       TPtrList<IEvaluable> args;
+      const std::type_info& self_rtti;
       FuncEvaluator(const EvaluableFactory& fc, IEvaluable& s, IMemberFunction* f, 
-        const TPtrList<IEvaluable>& a) : factory(fc), self(s), func(f), args(a) 
+        const TPtrList<IEvaluable>& a) : factory(fc), self(s), self_rtti(s.get_type_info()), func(f), args(a) 
       {
         s.inc_ref();
         for( size_t i=0; i < args.Count(); i++ )
@@ -418,7 +419,11 @@ namespace exparse  {
         else
           return new FuncEvaluator(f, *this, mf, args);
       }
-      virtual IEvaluable* _evaluate() const {  return func->run(self.cast<base_class>().val, factory, args);  }
+      virtual IEvaluable* _evaluate() const {
+        if( self_rtti != self.get_type_info() )
+          throw TInvalidArgumentException(__OlxSourceInfo, "the underlying object type has changed");
+        return func->run(self.cast<base_class>().val, factory, args);
+      }
     };
     virtual IEvaluable* create_from_name(IEvaluable& self, const EvaluableFactory& factory, const olxstr& name, const TPtrList<IEvaluable>& args) const {
       IMemberFunction* gf = find(name, args.Count());
@@ -438,12 +443,17 @@ namespace exparse  {
     static void CompileTest();
   };
 
-  template <class base_class> struct ClassInfo : public IClassInfo {
+  template <class wrapper_class, class base_class> struct ClassInfo : public IClassInfo {
     ClassRegistry<base_class> functions;
+    ClassRegistry<wrapper_class> wrap_functions;
     LibraryRegistry globals;
     virtual IStaticFunction* find_static_function(const olxstr& name, size_t argc) const {  return globals.find(name, argc);  }
-    virtual IMemberFunction* find_member_function(const olxstr& name, size_t argc) const {  return functions.find(name, argc);  }
-    bool is_empty() const {  return functions.is_empty() && globals.is_empty();  }
+    virtual IMemberFunction* find_member_function(const olxstr& name, size_t argc) const {
+      IMemberFunction* mf = functions.find(name, argc);
+      if( mf != NULL )  return mf;
+      return wrap_functions.find(name, argc);
+    }
+    bool is_empty() const {  return functions.is_empty() && globals.is_empty() && wrap_functions.is_empty();  }
   };
 };  // end exparse namespace
 EndEsdlNamespace()

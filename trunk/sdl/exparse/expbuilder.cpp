@@ -2,7 +2,7 @@
 
 using namespace esdl::exparse;
 
-ClassInfo<olxstr> StringValue::info;
+ClassInfo<StringValue,olxstr> StringValue::info;
 
 //......................................................................................................
 bool exp_builder::needs_sorting(expression_tree* root)  {
@@ -88,7 +88,7 @@ IEvaluable* exp_builder::evaluator_from_evator(expression_tree* root, IEvaluable
   TPtrList<IEvaluable> args;
   bool all_const = true;
   for( size_t i=0; i < root->evator->args.Count(); i++ )  {
-    args.Add( create_evaluator(root->evator->args[i]) );
+    args.Add(create_evaluator(root->evator->args[i]));
     if( args.Last() == NULL )  {
       for( size_t j=0; j < args.Count()-2; j++ )
         delete args[j];
@@ -134,7 +134,7 @@ IEvaluable* exp_builder::locate_function(const olxstr& name, IEvaluable* left, I
   return rv;
 }
 //......................................................................................................
-IEvaluable* exp_builder::create_evaluator(expression_tree* root)  {
+IEvaluable* exp_builder::create_evaluator(expression_tree* root, bool finaliseAssignment)  {
   if( root->data == '.' )  {
     IEvaluable* left = NULL, *rv=NULL;
     if( root->left == NULL || (left=create_evaluator(root->left)) == NULL )
@@ -163,7 +163,7 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root)  {
     if( root->right == NULL || root->left == NULL || root->evator != NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "invalid assignment operator");
     IEvaluable* val = create_evaluator(root->right);
-    if ( !val->is_final() )  {
+    if ( !val->is_final() && finaliseAssignment )  {
       IEvaluable* res = val->_evaluate();
       if( val->ref_cnt == 0 )
         delete val;
