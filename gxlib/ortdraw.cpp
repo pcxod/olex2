@@ -196,7 +196,10 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   const float pers_scale = 1.0-olx_sqr(dir_vec[2]);
   mat3f rot_mat;
   const vec3f touch_point = (atom_b.atom.Atom().crd() - atom_a.atom.Atom().crd()).Normalise();
-  CreateRotationMatrixEx<float,mat3f,vec3f>(rot_mat, vec3f(-touch_point[1], touch_point[0], 0).Normalise(), touch_point[2]);
+  if( olx_abs(1.0f-olx_abs(touch_point[2])) < 1e-3 )  // degenerated case...
+    CreateRotationMatrixEx<float,mat3f,vec3f>(rot_mat, vec3f(0, 1, 0).Normalise(), touch_point[2]);
+  else
+    CreateRotationMatrixEx<float,mat3f,vec3f>(rot_mat, vec3f(-touch_point[1], touch_point[0], 0).Normalise(), touch_point[2]);
   const mat3f proj_mat = rot_mat*parent.ProjMatr;
   const float _brad = brad*(1+pers_scale)*scalex;
   if( !atom_a.IsSpherical() && atom_a.IsSolid() )  {

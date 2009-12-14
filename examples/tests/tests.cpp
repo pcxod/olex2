@@ -30,23 +30,23 @@ int main(int argc, char* argv[])  {
     if( bd.IsEmpty() )
       bd = TEFile::CurrentDir();
 
-    TEFile::AddTrailingBackslashI( bd );
+    TEFile::AddPathDelimeterI(bd);
 
     TXApp XApp(bd);
-    XApp.XFile().RegisterFileFormat(new TIns, "ins");
+    XApp.XFile().RegisterFileFormat(new TIns, "res");
     XApp.GetLog().AddStream( new TOutStream(), true );
     XApp.GetLog().AddStream( new TEFile( bd + "tests.log", "w+b"), true );
     TEFile logf(bd + "test.out", "w+b");
     TOnProgress pg;
     Listener listener;
-    //TFileTree ft("E:/My Documents/Data");
-    TFileTree ft("E:/Data");
+    TFileTree ft("C:/Documents and Settings/oleg/My Documents/DS/Data");
+    //TFileTree ft("E:/Data");
     ft.OnExpand->Add(&listener);
     ft.Expand();
     ft.OnExpand->Remove(&listener);
     XApp.GetLog() << '\n';
     TStrList files;
-    ft.GetRoot().ListFiles(files, "*.ins");
+    ft.GetRoot().ListFiles(files, "*.res");
     TMacroError me;
     TStrObjList cmds;
     TParamList params;
@@ -59,6 +59,25 @@ int main(int argc, char* argv[])  {
       throw TFunctionFailedException(__OlxSourceInfo, "could not locate library function");
     uint64_t time_start = TETime::msNow();
     for( size_t i=0; i < files.Count(); i++ )  {
+      try  {
+        //if( files[i].IndexOf(".olex") != InvalidIndex )  continue;
+        XApp.XFile().LoadFromFile(files[i]);
+        TCAtomPList atoms;
+        TSpaceGroup& file_sg = XApp.XFile().GetLastLoaderSG();
+        const TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
+        for( size_t j=0; j < au.AtomCount(); j++ )  {
+          if( au.GetAtom(j).GetDegeneracy() != 1 )  {
+            atoms.Add(au.GetAtom(j));
+          }
+        }
+        if( atoms.IsEmpty() )  continue;
+        TBasicApp::GetLog() << files[i] << '\n';
+        for( size_t j=0; j < atoms.Count(); j++ )
+          TBasicApp::GetLog() << (olxstr('\t') << atoms[j]->GetLabel() << '\t' << atoms[j]->GetDegeneracy() << '\n');
+      }
+      catch(...)  {  continue;  }
+      continue;
+
       olxstr hkl( TEFile::ChangeFileExt(files[i], "hkl") );
       if( TEFile::Exists(hkl) )  {
         XApp.GetLog() << files[i] << '\n';

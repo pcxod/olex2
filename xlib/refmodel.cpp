@@ -347,7 +347,7 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
   else if( tab_name.Equalsi("RTAB") )
     InfoTables.Add( new InfoTab(*this, infotab_rtab, l[atom_start++], resi_name) );
   else if( tab_name.Equalsi("MPLA") )
-    InfoTables.Add( new InfoTab(*this, infotab_mpla, l[atom_start++], resi_name) );
+    InfoTables.Add( new InfoTab(*this, infotab_mpla, l[atom_start], resi_name) );
   else
     throw TInvalidArgumentException(__OlxSourceInfo, "unknown information table name");
 

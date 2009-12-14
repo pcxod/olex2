@@ -472,12 +472,11 @@ bool TLattice::IsExpandable(TSAtom& A) const {
 //..............................................................................
 void TLattice::GetGrowMatrices(smatd_list& res) const {
   for( size_t i=0; i < Atoms.Count(); i++ )  {
-    if( Atoms[i]->IsGrown() )  continue;
+    if( Atoms[i]->IsGrown() || !Atoms[i]->IsAvailable() )  continue;
     const TCAtom& ca = Atoms[i]->CAtom();
     for( size_t j=0; j < ca.AttachedAtomCount(); j++ )  {
       const TCAtom& ca1 = ca.GetAttachedAtom(j);
-      if( !ca1.IsAvailable() )  
-        continue;
+      if( !ca1.IsAvailable() )  continue;
       smatd_list* BindingMatrices = GetUnitCell().GetBinding(ca, ca1, Atoms[i]->ccrd(), ca1.ccrd(), false, false);
       for( size_t k=0; k < BindingMatrices->Count(); k++ )  {
         const smatd& M = BindingMatrices->Item(k);
@@ -489,7 +488,7 @@ void TLattice::GetGrowMatrices(smatd_list& res) const {
           }
         }
         if( !found && res.IndexOf(M) == InvalidIndex )
-          res.AddCCopy( M );
+          res.AddCCopy(M);
       }
       delete BindingMatrices;
     }
