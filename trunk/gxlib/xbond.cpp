@@ -45,14 +45,14 @@ TXBond::TXBond(TGlRenderer& R, const olxstr& collectionName, TSBond& B) :
 }
 //..............................................................................
 void TXBond::BondUpdated()  {
-  vec3d C( FBond->B().crd() - FBond->A().crd() );
+  vec3d C(FBond->B().crd() - FBond->A().crd());
   if( C.IsNull() )  
     Params().Null();
   else  {
     Params()[3] = C.Length();
     C.Normalise();
     Params()[0] = (float)(acos(C[2])*180/M_PI);
-    if( olx_abs(Params()[0]-180) < 0.001 )  { // degenerate case with Pi rotation
+    if( olx_abs(Params()[0]-180) < 1e-3 )  { // degenerate case with Pi rotation
       Params()[1] = 0;
       Params()[2] = 1;
     }
@@ -146,7 +146,7 @@ ACreationParams* TXBond::GetACreationParams() const {
 TXBond::~TXBond()  {  }
 //..............................................................................
 bool TXBond::Orient(TGlPrimitive& GlP)  {
-  Parent.GlTranslate( FBond->A().crd() );
+  Parent.GlTranslate(FBond->A().crd());
   Parent.GlRotate((float)Params()[0], (float)Params()[1], (float)Params()[2], 0.0);
   Parent.GlScale((float)Params()[4], (float)Params()[4], (float)Params()[3]);
   return false;
