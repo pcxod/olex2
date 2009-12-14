@@ -49,7 +49,7 @@ namespace exparse  {
       if( !info.is_empty() )  return;
       info.functions.add("sub", &olxstr::SubString);
       info.functions.add<size_t>("len", &olxstr::Length);  // gcc...
-      info.functions.add("charAt", &olxstr::CharAt);
+      info.functions.add<olxch,size_t>("charAt", &olxstr::CharAt);
       info.functions.add("toUpper", &olxstr::ToUpperCase);
       info.functions.add("toLower", &olxstr::ToLowerCase);
 
