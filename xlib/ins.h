@@ -156,8 +156,12 @@ public:
         rm.SetSHEL(Toks.SubListFrom(1));
       else if( Toks[0].Equalsi("TWIN") )
         rm.SetTWIN(Toks.SubListFrom(1));
-      else if( Toks[0].Equalsi("TEMP") && Toks.Count() == 2 )
-        rm.expl.SetTemperature(Toks[1].ToDouble());
+      else if( Toks[0].Equalsi("TEMP") && Toks.Count() == 2 )  {
+        if( Toks[1].EndsWith('K') )
+          rm.expl.SetTemperature(Toks[1].SubStringTo(Toks[1].Length()-1).ToDouble()-273.15);
+        else
+          rm.expl.SetTemperature(Toks[1].ToDouble());
+      }
       else if( Toks[0].Equalsi("HKLF") && (Toks.Count() > 1) )
         rm.SetHKLF(Toks.SubListFrom(1));
       else if( Toks[0].Equalsi("L.S.") || Toks[0].Equalsi("CGLS") )  {
