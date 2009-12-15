@@ -533,7 +533,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
         SortedQPeaks.Last().Object->Label() = (olxstr(sl[i].GetB()->GetSymbol()) << i);
         SortedQPeaks.Last().Object->SetAtomInfo( *sl[i].B() );
         SortedQPeaks.Last().Object->SetQPeak(0);
-        SortedQPeaks.Remove( SortedQPeaks.Count()-1);
+        SortedQPeaks.Remove(SortedQPeaks.Count()-1);
       }
       if( SortedQPeaks.IsEmpty() ) break;
     }
@@ -542,10 +542,10 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
       if( au.GetAtom(i).GetAtomInfo() == iQPeakIndex ) 
         au.GetAtom(i).SetDeleted(true);
     }
-    TArrayList< AnAssociation2<TCAtom const*, vec3d> > res;
+    TArrayList<AnAssociation2<TCAtom const*, vec3d> > res;
     for( size_t i=0; i < au.AtomCount(); i++ )  {
       if( au.GetAtom(i).IsDeleted() )  continue;
-      uc.FindInRangeAC( au.GetAtom(i).ccrd(), au.GetAtom(i).GetAtomInfo().GetRad1()+1.3, res);
+      uc.FindInRangeAC(au.GetAtom(i).ccrd(), au.GetAtom(i).GetAtomInfo().GetRad1()+1.3, res);
       for( size_t j=0; j < res.Count(); j++ )  {
         if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() )  {
           res.Delete(j);
@@ -555,14 +555,17 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
       AtomCount++;
       double wght = 1;
       if( res.Count() > 1 )  {
+        vec3d center = au.GetAtom(i).ccrd();
+        au.CellToCartesian(center);
         double awght = 1./(res.Count()*(res.Count()-1));
         for( size_t j=0; j < res.Count(); j++ )  {
-          if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() )
-            continue;
-          if( res[j].GetB().QLength() < 1 )  
+          if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() )  continue;
+          if( res[j].GetB().QLength() < 1 )
             wght -= 0.5/res.Count();
           for( size_t k=j+1; k < res.Count(); k++ )  {
-            double cang = res[j].GetB().CAngle(res[k].GetB());
+            vec3d va = res[j].GetB()-center;
+            vec3d vb = res[k].GetB()-center;
+            double cang = (res[j].GetB()-center).CAngle(res[k].GetB()-center);
             if( cang > 0.588 )  { // 56 degrees
               wght -= awght;
             }

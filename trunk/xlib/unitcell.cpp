@@ -478,9 +478,9 @@ smatd_list* TUnitCell::GetInRange(const vec3d& to, const vec3d& from, double R, 
 }
 //..............................................................................
 smatd_list* TUnitCell::GetInRangeEx(const vec3d& to, const vec3d& from, 
-                                       double R, bool IncludeI, const smatd_list& ToSkip) const  {
+  double R, bool IncludeI, const smatd_list& ToSkip) const
+{
   smatd_list* retVal = new smatd_list;
-  vec3d V2;
   R *= R;
   for( size_t i=0; i < MatrixCount(); i++ )  {
     const smatd& matr = GetMatrix(i);
@@ -493,8 +493,7 @@ smatd_list* TUnitCell::GetInRangeEx(const vec3d& to, const vec3d& from,
         for( int ik=-1; ik <= 1; ik++ )  {
           if( !IncludeI && i == 0 && ((ix-ii)|(iy-ij)|(iz-ik)) == 0 )
             continue;
-          V2 = V1;
-          V2[0] += ii;  V2[1] += ij;  V2[2] += ik;
+          vec3d V2(V1[0]+ii, V1[1]+ij, V1[2]+ik);
           GetLattice().GetAsymmUnit().CellToCartesian(V2);
           if( V2.QLength() < R )  {
             smatd* retMatr = new smatd(matr);
@@ -518,46 +517,39 @@ smatd_list* TUnitCell::GetInRangeEx(const vec3d& to, const vec3d& from,
 void TUnitCell::_FindInRange(const vec3d& to, double R, 
                             TTypeList< AnAssociation3<TCAtom const*,smatd, vec3d> >& res) const {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  vec3d V1;
   R *= R;
   const size_t ac = au.AtomCount();
+  const size_t mc = Matrices.Count();
   for( size_t i=0; i < ac; i++ )  {
     const TCAtom& a = au.GetAtom(i);
     if( a.IsDeleted() )  continue;
-    for( size_t j=0; j < MatrixCount(); j++ )  {
-      const smatd& matr = GetMatrix(j);
-      V1 = matr * a.ccrd() - to;
-      const int ix = olx_round(V1[0]);  V1[0] -= ix;  // find closest distance
-      const int iy = olx_round(V1[1]);  V1[1] -= iy;
-      const int iz = olx_round(V1[2]);  V1[2] -= iz;
+    for( size_t j=0; j < mc; j++ )  {
+      vec3d vec = Matrices[j] * a.ccrd();
+      vec3d V1(vec-to);
+      const vec3i shift = -V1.Round<int>();
+      V1 += shift;
       au.CellToCartesian(V1);
       const double D = V1.QLength();
       //if( D < R && D != 0 )  {
       if( D < R )  {
-        smatd& m = res.AddNew(&a, matr, V1).B();
-        m.t[0] -= ix;
-        m.t[1] -= iy;
-        m.t[2] -= iz;
-        m.SetId(matr.GetContainerId(), -ix, -iy, -iz);
+        smatd& m = res.AddNew(&a, Matrices[j], au.CellToCartesian(vec += shift)).B();
+        m.t += shift;
+        m.SetId(Matrices[j].GetContainerId(), shift[0], shift[1], shift[2]);
       }
     }
     for( int ii=-1; ii <= 1; ii++ )  {
       for( int ij=-1; ij <= 1; ij++ ) {
         for( int ik=-1; ik <= 1; ik++ )  {
           if( (ii|ij|ik) == 0 )  continue;
-          V1[0] = a.ccrd()[0] + ii;
-          V1[1] = a.ccrd()[1] + ij;
-          V1[2] = a.ccrd()[2] + ik;
-          V1 -= to;
-          au.CellToCartesian(V1);
-          const double D = V1.QLength();
+          const vec3i shift(ii, ij, ik);
+          vec3d vec(a.ccrd() + shift - to);
+          au.CellToCartesian(vec);
+          const double D = vec.QLength();
           if( D < R && D > 0.0001 )  {
             smatd& m = res.AddNew(&a).B().I();
-            m.t[0] += ii;
-            m.t[1] += ij;
-            m.t[2] += ik;
+            m.t += shift;
             m.SetId(0, ii, ik, ik);
-            res.Last().C() = V1;
+            res.Last().C() = vec;
           }
         }
       }
