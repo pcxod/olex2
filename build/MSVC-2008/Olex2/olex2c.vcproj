@@ -1012,7 +1012,7 @@
 				PreprocessorDefinitions="__WIN32__;_CONSOLE;_UNICODE"
 				StringPooling="true"
 				RuntimeLibrary="2"
-				EnableEnhancedInstructionSet="2"
+				EnableEnhancedInstructionSet="0"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"

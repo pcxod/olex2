@@ -7,7 +7,7 @@
 
 class FractMask {
   TArray3D<bool>* Mask;
-  vec3f Norm;
+  vec3d Norm;
 public:
   FractMask() : Mask(NULL)  {  }
   ~FractMask()  {
@@ -16,7 +16,7 @@ public:
   }
   /* min and max - fractional coordinates, norm - length of the sides,
   resolution - the mask resolution in anstrems */
-  void Init(const vec3d& _min, const vec3d& _max, const vec3f& norms, float resolution=1.0);
+  void Init(const vec3d& _min, const vec3d& _max, const vec3d& norms, double resolution=1.0);
   // takes fractional coordinates
   inline void Set(const vec3d& fc, bool v)  {
     const vec3d ind = fc * Norm;

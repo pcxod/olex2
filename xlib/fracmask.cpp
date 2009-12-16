@@ -2,22 +2,20 @@
 #include "bitarray.h"
 #include "pers_util.h"
 
-void FractMask::Init(const vec3d& _min, const vec3d& _max, const vec3f& norms, float resolution)  {
+void FractMask::Init(const vec3d& _min, const vec3d& _max, const vec3d& norms, double resolution)  {
   if( Mask != NULL )  {
     delete Mask;
     Mask = NULL; // in case of the exception
   }
   Norm = norms/resolution;
-  vec3d min = _min*Norm,
-    max = _max*Norm;
-  if( min[0] >= max[0] ||
-    min[1] >= max[1] ||
-    min[2] >= max[2] )
+  const TVector3<index_t> min_((_min*Norm).Round<index_t>()), max_((_max*Norm).Round<index_t>());
+  if( min_[0] >= max_[0] || min_[1] >= max_[1] || min_[2] >= max_[2] )
     throw TInvalidArgumentException(__OlxSourceInfo, "mask size");
+
   Mask = new TArray3D<bool>(
-    (int)min[0], (int)max[0], 
-    (int)min[1], (int)max[1], 
-    (int)min[2], (int)max[2]
+    min_[0], max_[0], 
+    min_[1], max_[1], 
+    min_[2], max_[2]
   );
   Mask->FastInitWith(0);
 }

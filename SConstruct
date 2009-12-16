@@ -221,6 +221,7 @@ if sys.platform[:3] == 'win':
     env.Append(LINKFLAGS=['/DEBUG', '/ASSEMBLYDEBUG', '/NODEFAULTLIB:msvcrt'])
     env.Append(CPPPATH=[pyFolder+'include'])
   if architecture == '64bit':
+    #env.Append(LINKFLAGS=['/MACHINE:X64', '/DEBUG']) #this emits debug info...
     env.Append(LINKFLAGS=['/MACHINE:X64'])
     env['TARGET_ARCH'] = 'x86_64'
     #lib_64 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib\x64',

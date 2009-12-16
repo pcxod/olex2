@@ -2943,7 +2943,7 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       if( au.GetAtom(i).GetAtomInfo() == iQPeakIndex )
         qpeaks.Add(au.GetAtom(i));
     qpeaks.QuickSorter.SortSF(qpeaks, TMainForm_macShowQ_QPeakSortA);
-    int d_cnt = 0;
+    index_t d_cnt = 0;
     for( size_t i=0; i < qpeaks.Count(); i++ )
       if( !qpeaks[i]->IsDetached() )
         d_cnt++;
@@ -2987,9 +2987,9 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
   }
   else if( Cmds.Count() == 1 && Cmds[0].IsNumber() )  {
-    int num = Cmds[0].ToInt();
+    index_t num = Cmds[0].ToInt();
     const bool negative = num < 0;
-    if( num < 0 )  num = abs(num);
+    if( num < 0 )  num = olx_abs(num);
     TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
     TCAtomPList qpeaks;
     for( size_t i=0; i < au.AtomCount(); i++ )
@@ -3084,8 +3084,8 @@ void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void TMainForm::macBind(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   if( Cmds[0].Equalsi("wheel") )  {
-    int ind = Bindings.IndexOf("wheel");
-    if( ind == -1 )
+    size_t ind = Bindings.IndexOf("wheel");
+    if( ind == InvalidIndex )
       Bindings.Add("wheel", Cmds[1]);
     else
       Bindings.GetObject(ind) = Cmds[1];
@@ -4814,8 +4814,8 @@ void TMainForm::macSelBack(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macStoreParam(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  int ind = StoredParams.IndexOfComparable(Cmds[0]);
-  if( ind == -1 )
+  size_t ind = StoredParams.IndexOfComparable(Cmds[0]);
+  if( ind == InvalidIndex )
     StoredParams.Add( Cmds[0], Cmds[1] );
   else
     StoredParams.GetObject(ind) = Cmds[1];
@@ -6939,8 +6939,7 @@ void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 		}
 	}
   TBasicApp::GetLog() << ( olxstr("Maximum number of threads is set to ") << max_th << '\n' );
-  FXApp->SetMaxThreadCount( max_th );
-
+  FXApp->SetMaxThreadCount(max_th);
 }
 //..............................................................................
 void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -7473,6 +7472,7 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
     TBasicApp::GetLog() << "SHA256: " << SHA256::Digest(f) << '\n';
     TBasicApp::GetLog() << olxstr::FormatFloat(3, ((double)f.Length()/(((TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s\n";
   }
+#ifndef _WIN64
   using namespace esdl::exparse;
   EvaluableFactory evf;
   context cx;
@@ -7515,6 +7515,7 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
     delete iv1;
   }
   if( iv->ref_cnt == 0 )  delete iv;
+#endif
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {
