@@ -1293,7 +1293,7 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else  {
     if( Cmds.Count() == 1 )  {
-      const mat3d& M = FXApp->HklVisible() ? FXApp->XFile().GetAsymmUnit().GetHklToCartesian() :
+      const mat3d& M = FXApp->IsHklVisible() ? FXApp->XFile().GetAsymmUnit().GetHklToCartesian() :
         FXApp->XFile().GetAsymmUnit().GetCellToCartesian();
       olxstr arg;
       if( Cmds[0] == '1' )  arg = "100";
@@ -2281,45 +2281,45 @@ void TMainForm::macShowH(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( Cmds.Count() == 2 )  {
     bool v = Cmds[1].ToBool();
     if( Cmds[0] == "a" )  {
-      if( v && !FXApp->HydrogensVisible() )  {
+      if( v && !FXApp->AreHydrogensVisible() )  {
         TStateChange sc(prsHVis, true);
-        FXApp->HydrogensVisible(true);
+        FXApp->SetHydrogensVisible(true);
         OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       }
-      else if( !v && FXApp->HydrogensVisible() )  {
+      else if( !v && FXApp->AreHydrogensVisible() )  {
         TStateChange sc(prsHVis, false);
-        FXApp->HydrogensVisible(false);
+        FXApp->SetHydrogensVisible(false);
         OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       }
     }
     else if( Cmds[0] == "b" )  {
-      if( v && !FXApp->HBondsVisible() )  {
+      if( v && !FXApp->AreHBondsVisible() )  {
         TStateChange sc(prsHBVis, true);
-        FXApp->HBondsVisible(true);
+        FXApp->SetHBondsVisible(true);
         OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       }
-      else if( !v && FXApp->HBondsVisible() )  {
+      else if( !v && FXApp->AreHBondsVisible() )  {
         TStateChange sc(prsHBVis, false);
-        FXApp->HBondsVisible(false);
+        FXApp->SetHBondsVisible(false);
         OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       }
     }
   }
   else  {
-    if( FXApp->HydrogensVisible() && !FXApp->HBondsVisible() )  {
+    if( FXApp->AreHydrogensVisible() && !FXApp->AreHBondsVisible() )  {
       TStateChange sc(prsHBVis, true);
-      FXApp->HBondsVisible(true);
+      FXApp->SetHBondsVisible(true);
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
     }
-    else if( FXApp->HydrogensVisible() && FXApp->HBondsVisible() )  {
+    else if( FXApp->AreHydrogensVisible() && FXApp->AreHBondsVisible() )  {
       TStateChange sc(prsHBVis|prsHVis, false);
-      FXApp->HBondsVisible(false);
-      FXApp->HydrogensVisible(false);
+      FXApp->SetHBondsVisible(false);
+      FXApp->SetHydrogensVisible(false);
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
     }
-    else if( !FXApp->HydrogensVisible() && !FXApp->HBondsVisible() )  {
+    else if( !FXApp->AreHydrogensVisible() && !FXApp->AreHBondsVisible() )  {
       TStateChange sc(prsHVis, true);
-      FXApp->HydrogensVisible(true);
+      FXApp->SetHydrogensVisible(true);
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
     }
   }
@@ -2962,26 +2962,26 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   else if( Cmds.Count() == 2 )  {
     bool v = Cmds[1].ToBool();
     if( Cmds[0] == "a" )  {
-      if( v && !FXApp->QPeaksVisible() )  {
+      if( v && !FXApp->AreQPeaksVisible() )  {
         TStateChange sc(prsQVis, true);
-        FXApp->QPeaksVisible(true);
+        FXApp->SetQPeaksVisible(true);
         OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       }
-      else if( !v && FXApp->QPeaksVisible() )  {
+      else if( !v && FXApp->AreQPeaksVisible() )  {
         TStateChange sc(prsQVis, false);
-        FXApp->QPeaksVisible(false);
+        FXApp->SetQPeaksVisible(false);
         OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       }
     }
     else if( Cmds[0] == "b" )  {
-      if( v && !FXApp->QPeakBondsVisible() )  {
+      if( v && !FXApp->AreQPeakBondsVisible() )  {
         TStateChange sc(prsQBVis, true);
-        FXApp->QPeakBondsVisible( true );
+        FXApp->SetQPeakBondsVisible( true );
         OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       }
-      else if( !v && FXApp->QPeakBondsVisible() )  {
+      else if( !v && FXApp->AreQPeakBondsVisible() )  {
         TStateChange sc(prsQBVis, false);
-        FXApp->QPeakBondsVisible( false );
+        FXApp->SetQPeakBondsVisible( false );
         OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       }
     }
@@ -3004,22 +3004,22 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     TimePerFrame = FXApp->Draw();
   }
   else  {
-    if( (!FXApp->QPeaksVisible() && !FXApp->QPeakBondsVisible()) )  {
+    if( (!FXApp->AreQPeaksVisible() && !FXApp->AreQPeakBondsVisible()) )  {
       TStateChange sc(prsQVis, true);
-      FXApp->QPeaksVisible(true);
+      FXApp->SetQPeaksVisible(true);
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       return;
     }
-    if( FXApp->QPeaksVisible() && !FXApp->QPeakBondsVisible())  {
+    if( FXApp->AreQPeaksVisible() && !FXApp->AreQPeakBondsVisible())  {
       TStateChange sc(prsQBVis, true);
-      FXApp->QPeakBondsVisible(true);
+      FXApp->SetQPeakBondsVisible(true);
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       return;
     }
-    if( FXApp->QPeaksVisible() && FXApp->QPeakBondsVisible() )  {
+    if( FXApp->AreQPeaksVisible() && FXApp->AreQPeakBondsVisible() )  {
       TStateChange sc(prsQBVis|prsQVis, false);
-      FXApp->QPeaksVisible(false);
-      FXApp->QPeakBondsVisible(false);
+      FXApp->SetQPeaksVisible(false);
+      FXApp->SetQPeakBondsVisible(false);
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       return;
     }
@@ -3057,9 +3057,9 @@ void TMainForm::macText(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.IsEmpty() )  {  //S+C -> C -> S -> S+C
-    if( FXApp->StructureVisible() )  {
+    if( FXApp->IsStructureVisible() )  {
       if( FGlConsole->ShowBuffer() )
-        FXApp->StructureVisible(false);
+        FXApp->SetStructureVisible(false);
       else  {
         if( FGlConsole->GetLinesToShow() != InvalidSize )
           FGlConsole->SetLinesToShow(InvalidSize);
@@ -3068,7 +3068,7 @@ void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options, TMacroE
     }
     else {
       if( FGlConsole->ShowBuffer() )  {
-        FXApp->StructureVisible(true);
+        FXApp->SetStructureVisible(true);
         FGlConsole->ShowBuffer(false);
       }
       else
@@ -3076,9 +3076,9 @@ void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options, TMacroE
     }
   }
   else
-    FXApp->StructureVisible(Cmds[0].ToBool());
+    FXApp->SetStructureVisible(Cmds[0].ToBool());
   FXApp->CenterView();
-  TStateChange sc(prsStrVis, FXApp->StructureVisible());
+  TStateChange sc(prsStrVis, FXApp->IsStructureVisible());
   OnStateChange.Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
@@ -3565,9 +3565,9 @@ void TMainForm::macEditHkl(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void TMainForm::macViewHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( !Cmds.Count() )
-    FXApp->HklVisible( !FXApp->HklVisible() );
+    FXApp->SetHklVisible(!FXApp->IsHklVisible());
   else
-    FXApp->HklVisible( Cmds[0].ToBool() );
+    FXApp->SetHklVisible(Cmds[0].ToBool());
 }
 //..............................................................................
 struct Main_3DIndex  {
@@ -3910,15 +3910,11 @@ void TMainForm::macDirection(TStrObjList &Cmds, const TParamList &Options, TMacr
   mat3d Basis( FXApp->GetRender().GetBasis().GetMatrix() );
   olxstr Tmp;
   if( FXApp->XFile().HasLastLoader() )  {
-    mat3d cellM;
     TAsymmUnit &au = FXApp->XFile().GetAsymmUnit();
-    if( FXApp->HklVisible() ) cellM = au.GetHklToCartesian();
-    else                      cellM = au.GetCellToCartesian();
-
+    mat3d cellM = FXApp->IsHklVisible() ? au.GetHklToCartesian() : au.GetCellToCartesian();
     cellM *= Basis;
-
     Z = mat3d::CramerSolve(mat3d::Transpose(cellM), vec3d(0, 0, 1)).Normalise();
-    if( FXApp->HklVisible() )  {
+    if( FXApp->IsHklVisible() )  {
       Tmp =  "Direction: (";
       Tmp << olxstr::FormatFloat(3, Z[0]) << "*H, " <<
              olxstr::FormatFloat(3, Z[1]) << "*K, " <<

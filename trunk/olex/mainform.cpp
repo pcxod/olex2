@@ -3528,7 +3528,7 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
     }
   }
   // HKL "grid snap on mouse release
-  if( FXApp->XFile().HasLastLoader() && FXApp->HklVisible() && false )  {
+  if( FXApp->XFile().HasLastLoader() && FXApp->IsHklVisible() && false )  {
     mat3d cellM, M;
     vec3d N(0, 0, 1), Z;
     TAsymmUnit *au = &FXApp->XFile().GetAsymmUnit();

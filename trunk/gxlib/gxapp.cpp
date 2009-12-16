@@ -184,8 +184,8 @@ public:
         break;
       }
     }
-    FParent->XFile().GetAsymmUnit().DetachAtomType(iQPeakIndex, !FParent->QPeaksVisible());
-    FParent->XFile().GetAsymmUnit().DetachAtomType(iHydrogenIndex, !FParent->HydrogensVisible());
+    FParent->XFile().GetAsymmUnit().DetachAtomType(iQPeakIndex, !FParent->AreQPeaksVisible());
+    FParent->XFile().GetAsymmUnit().DetachAtomType(iHydrogenIndex, !FParent->AreHydrogensVisible());
     if( sameAU )  {  // apply masks
       ac = 0;
       for( size_t i=0; i < au.AtomCount(); i++ )  {
@@ -481,7 +481,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   FXGrid->Create();
 
   // create hkls
-  if( FHklVisible )  HklVisible(true);
+  if( FHklVisible )  SetHklVisible(true);
 
   if( SyncBonds )  XAtomDS2XBondDS("Sphere");
 
@@ -1114,7 +1114,7 @@ void TGXApp::FragmentsVisible(const TNetPList& Frags, bool V)  {
   for( size_t i=0; i < Frags.Count(); i++ )
     FragmentVisible(Frags[i], V);
   // synchronise the intermolecular bonds
-  HBondsVisible( FHBondsVisible );
+  SetHBondsVisible(FHBondsVisible);
   TAsymmUnit& au = XFile().GetAsymmUnit();
   TEBitArray vis( (uint32_t)au.AtomCount() );
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
@@ -2840,7 +2840,7 @@ void TGXApp::Compaq(bool All)  {
   else       FXFile->GetLattice().Compaq();
 }
 //..............................................................................
-void TGXApp::HBondsVisible(bool v)  {
+void TGXApp::SetHBondsVisible(bool v)  {
   FHBondsVisible = v;
   if( !v )  {
     for( size_t i=0; i < XBonds.Count(); i++ )  {
@@ -2861,7 +2861,7 @@ void TGXApp::HBondsVisible(bool v)  {
   }
 }
 //..............................................................................
-void TGXApp::HydrogensVisible(bool v)  {
+void TGXApp::SetHydrogensVisible(bool v)  {
   if( FHydrogensVisible != v )  {
     FHydrogensVisible = v;
     GetRender().ClearSelection();
@@ -2875,7 +2875,7 @@ void TGXApp::HydrogensVisible(bool v)  {
   }
 }
 //..............................................................................
-void TGXApp::QPeaksVisible(bool v)  {
+void TGXApp::SetQPeaksVisible(bool v)  {
   if( FQPeaksVisible != v )  {
     FQPeaksVisible = v;
     GetRender().ClearSelection();
@@ -2905,12 +2905,12 @@ void TGXApp::SyncQVisibility()  {
   if( FXGrowLinesVisible )  {
     for( size_t i=0; i < XGrowLines.Count(); i++ )  {
       if( XGrowLines[i].SAtom()->GetAtomInfo() == iQPeakIndex )
-        XGrowLines[i].SetVisible( XAtoms[XGrowLines[i].SAtom()->GetTag()].IsVisible() );
+        XGrowLines[i].SetVisible(XAtoms[XGrowLines[i].SAtom()->GetTag()].IsVisible());
     }
   }
 }
 //..............................................................................
-void TGXApp::QPeakBondsVisible(bool v)  {
+void TGXApp::SetQPeakBondsVisible(bool v)  {
   FQPeakBondsVisible = v;
   if( !v )  {
     for( size_t i=0; i < XBonds.Count(); i++ )  {
@@ -2939,7 +2939,25 @@ void TGXApp::QPeakBondsVisible(bool v)  {
   }
 }
 //..............................................................................
-void TGXApp::StructureVisible(bool v)  {
+void TGXApp::_syncBondsVisibility()  {
+  for( size_t i=0; i < XBonds.Count(); i++ )  {
+    const TSBond& b = XBonds[i].Bond();
+    if( !FQPeakBondsVisible && (b.A().GetAtomInfo().GetIndex() == iQPeakIndex || b.B().GetAtomInfo().GetIndex() == iQPeakIndex) )
+      XBonds[i].SetVisible(false);
+    else if( !FHBondsVisible && b.GetType() == sotHBond )
+      XBonds[i].SetVisible(false);
+    else
+      XBonds[i].SetVisible(XAtoms[XBonds[i].Bond().A().GetTag()].IsVisible() && XAtoms[XBonds[i].Bond().B().GetTag()].IsVisible());
+  }
+  if( FXGrowLinesVisible )  {
+    for( size_t i=0; i < XGrowLines.Count(); i++ )  {
+      if( XGrowLines[i].SAtom()->GetAtomInfo() == iQPeakIndex )
+        XGrowLines[i].SetVisible(XAtoms[XGrowLines[i].SAtom()->GetTag()].IsVisible());
+    }
+  }
+}
+//..............................................................................
+void TGXApp::SetStructureVisible(bool v)  {
   FStructureVisible = v;
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
     if( !v )
@@ -2947,27 +2965,6 @@ void TGXApp::StructureVisible(bool v)  {
     else
       XAtoms[i].SetVisible(XAtoms[i].Atom().IsAvailable());  
     XAtoms[i].Atom().SetTag(i);
-  }
-  for( size_t i=0; i < XBonds.Count(); i++ )  {
-    const TSBond& b = XBonds[i].Bond();
-    if( !v )
-      XBonds[i].SetVisible(v);
-    else  {
-      if( b.A().GetAtomInfo().GetIndex() == iQPeakIndex || b.B().GetAtomInfo().GetIndex() == iQPeakIndex )  {
-        if( FQPeakBondsVisible )
-          XBonds[i].SetVisible(XAtoms[XBonds[i].Bond().A().GetTag()].IsVisible() && XAtoms[XBonds[i].Bond().B().GetTag()].IsVisible());
-        else
-          XBonds[i].SetVisible(false);
-      }
-      else if( b.GetType() == sotHBond )  {
-        if( FHBondsVisible )
-          XBonds[i].SetVisible(XAtoms[XBonds[i].Bond().A().GetTag()].IsVisible() && XAtoms[XBonds[i].Bond().B().GetTag()].IsVisible());
-        else
-          XBonds[i].SetVisible(false);
-      }
-      else
-        XBonds[i].SetVisible(XAtoms[XBonds[i].Bond().A().GetTag()].IsVisible() && XAtoms[XBonds[i].Bond().B().GetTag()].IsVisible());
-    }
   }
   for( size_t i=0; i < LooseObjects.Count(); i++ )  LooseObjects[i]->SetVisible(v);
   for( size_t i=0; i < XPlanes.Count(); i++ )       XPlanes[i].SetVisible(v);
@@ -2978,7 +2975,7 @@ void TGXApp::StructureVisible(bool v)  {
   } 
   else
     FXGrid->SetVisible(false);
-  SyncQVisibility();
+  _syncBondsVisibility();
 }
 //..............................................................................
 void TGXApp::LoadXFile(const olxstr& fn)  {
@@ -2996,36 +2993,21 @@ void TGXApp::LoadXFile(const olxstr& fn)  {
 //..............................................................................
 void TGXApp::ShowPart(const TIntList& parts, bool show)  {
   if( parts.IsEmpty() )  {
-    for( size_t i=0; i < XAtoms.Count(); i++ )  {
-      if( XAtoms[i].IsDeleted() )  continue;
-      XAtoms[i].SetVisible(true);
-    }
-    for( size_t i=0; i < XBonds.Count(); i++ )  {
-      if( XBonds[i].IsDeleted() )  continue;
-      XBonds[i].SetVisible(true);
-    }
+    SetStructureVisible(true);
     return;
   }
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
-    if( XAtoms[i].IsDeleted() ) continue;
-    if( parts.IndexOf( XAtoms[i].Atom().CAtom().GetPart() ) != InvalidIndex )
+    if( parts.IndexOf(XAtoms[i].Atom().CAtom().GetPart()) != InvalidIndex )
       XAtoms[i].SetVisible(show);
     else
       XAtoms[i].SetVisible(!show);
+    if( XAtoms[i].IsVisible() )
+      XAtoms[i].SetVisible(XAtoms[i].Atom().IsAvailable());
   }
-  for( size_t i=0; i < XBonds.Count(); i++ )  {
-    if( XBonds[i].IsDeleted() )  continue;
-    if( parts.IndexOf(XBonds[i].Bond().A().CAtom().GetPart()) != InvalidIndex &&
-        parts.IndexOf(XBonds[i].Bond().B().CAtom().GetPart()) != InvalidIndex )
-    {
-      XBonds[i].SetVisible(show);
-    }
-    else
-      XBonds[i].SetVisible(!show);
-  }
+  _syncBondsVisibility();
 }
 //..............................................................................
-void TGXApp::HklVisible(bool v)  {
+void TGXApp::SetHklVisible(bool v)  {
   if( v )  {
     // default if could not load the hkl ...
     FDUnitCell->SetReciprocal(false);
@@ -3046,13 +3028,9 @@ void TGXApp::HklVisible(bool v)  {
   FDUnitCell->SetReciprocal(v);
 }
 //..............................................................................
-void TGXApp::SetGridDepth(const vec3d& crd)  {
-  FXGrid->SetDepth( crd );
-}
+void TGXApp::SetGridDepth(const vec3d& crd)  {  FXGrid->SetDepth(crd);  }
 //..............................................................................
-bool TGXApp::GridVisible()  const {  
-  return FXGrid->IsVisible();  
-}
+bool TGXApp::IsGridVisible() const {  return FXGrid->IsVisible();  }
 //..............................................................................
 bool TGXApp::ShowGrid(bool v, const olxstr& FN)  {
   if( v )  {
@@ -3446,10 +3424,10 @@ void TGXApp::CreateXGrowLines()  {
     TGXApp_Transform1& nt = tr_list[i];
     TXGrowLine& gl = XGrowLines.Add( new TXGrowLine(*FGlRender, EmptyString, nt.from, nt.to, nt.transform) );
 
-    if( !QPeakBondsVisible() &&
+    if( !AreQPeakBondsVisible() &&
       (nt.from->GetAtomInfo() == iQPeakIndex || nt.to->GetAtomInfo() == iQPeakIndex ) )
       gl.SetVisible(false);
-    if( !HBondsVisible() && 
+    if( !AreHBondsVisible() && 
       (nt.from->GetAtomInfo() == iHydrogenIndex || nt.to->GetAtomInfo() == iHydrogenIndex) )
       gl.SetVisible(false);
       gl.Create("GrowBonds");
@@ -3551,10 +3529,10 @@ void TGXApp::_CreateXGrowVLines()  {
       TGXApp_Transform& nt = ntl[j];
       TXGrowLine& gl = XGrowLines.Add( new TXGrowLine(*FGlRender, EmptyString, nt.from, nt.to, nt.transform) );
 
-      if( !QPeakBondsVisible() &&
+      if( !AreQPeakBondsVisible() &&
         (nt.from->GetAtomInfo() == iQPeakIndex || nt.to->GetAtomInfo() == iQPeakIndex ) )
         gl.SetVisible(false);
-      if( !HBondsVisible() && 
+      if( !AreHBondsVisible() && 
         (nt.from->GetAtomInfo() == iHydrogenIndex || nt.to->GetAtomInfo() == iHydrogenIndex) )
         gl.SetVisible(false);
         gl.Create("GrowBonds");
@@ -3759,7 +3737,7 @@ void TGXApp::BuildSceneMask(FractMask& mask, double inc)  {
   }
   mn -= 1./4;
   mx += 1./4;
-  float res = 0.5;
+  double res = 0.5;
   mask.Init(mn, mx, norms, res);
   norms /= res;
   TArray3D<bool>* mdata = mask.GetMask();
@@ -3911,13 +3889,13 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
 
   TDataItem& visibility = item.FindRequiredItem("Visibility");
   bool v = visibility.GetRequiredField("h_atoms").ToBool();
-  if( v != FHydrogensVisible )  HydrogensVisible(v);
+  if( v != FHydrogensVisible )  SetHydrogensVisible(v);
   v = visibility.GetRequiredField("h_bonds").ToBool();
-  if( v != FHBondsVisible )  HBondsVisible(v);
+  if( v != FHBondsVisible )  SetHBondsVisible(v);
   v = visibility.GetRequiredField("q_atoms").ToBool();
-  if( v != FQPeaksVisible )  QPeaksVisible(v);
+  if( v != FQPeaksVisible )  SetQPeaksVisible(v);
   v = visibility.GetRequiredField("q_bonds").ToBool();
-  if( v != FQPeakBondsVisible )  QPeakBondsVisible(v);
+  if( v != FQPeakBondsVisible )  SetQPeakBondsVisible(v);
   FDBasis->SetVisible(visibility.GetRequiredField("basis").ToBool());
   FDUnitCell->SetVisible( visibility.GetRequiredField("cell").ToBool() );
 
