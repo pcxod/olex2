@@ -104,6 +104,12 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   void _CreateXGrowVLines();
   void CreateXGrowPoints();
   double DeltaV;
+// drawing data and functions
+  double FPictureResolution;
+  TStrList IndividualCollections;
+  /* makes sure that only bonds (and grow mode lines) with both atoms visible are visible,
+ also considers H, and Q bonds special handling */
+  void _syncBondsVisibility();
 protected:
   TGlRenderer* FGlRender;
   TXFader* Fader;
@@ -146,8 +152,8 @@ protected:
   for bonds makes them visible only if both atoms are visible */
   void SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b);
 public:
-  TGXApp(const olxstr & FileName);
-  // FileNAme - argv[0]
+  // FileName - argv[0]
+  TGXApp(const olxstr& FileName);
   virtual ~TGXApp();
   void CreateObjects(bool SyncBonds, bool CenterModel=true);
   void UpdateBonds();
@@ -157,12 +163,7 @@ public:
   void SBonds2XBonds(TSBondPList& L, TXBondPList& Res);
   void SAtoms2XAtoms(TSAtomPList& L, TXAtomPList& Res);
   void SPlanes2XPlanes(TSPlanePList& L, TXPlanePList& Res);
-
-// drawing data and functions
-private:
-  double FPictureResolution;
-  TStrList IndividualCollections;
-public:
+  // changes the graphics quality
   void Quality(const short v);
   void Init();
 //..............................................................................
@@ -177,23 +178,25 @@ public:
 
   // implementation of BasicApp function - renders the scene
   virtual void Update()  {  Draw();  }
-
+  // renders the scene and returns used time in ms
   uint64_t Draw();
+  // prepares drawing on a bitmap, recreates graphics with different parameters, scales fonts
   void BeginDrawBitmap(double res);
+  // restores the on-screen rendering
   void FinishDrawBitmap();
-  void Resize(int new_w, int new_h)            {  FGlRender->Resize(new_w, new_h); }
-  AGDrawObject *SelectObject(int x, int y, int depth=0)  {
+  void Resize(int new_w, int new_h)  {  FGlRender->Resize(new_w, new_h); }
+  AGDrawObject* SelectObject(int x, int y, int depth=0)  {
     return FGlRender->SelectObject(x, y, depth);
   }
   TGlPrimitive *SelectPrimitive(int x, int y)  {  return FGlRender->SelectPrimitive(x, y); }
   DefPropP(double, ExtraZoom)
 //..............................................................................
 // TXApp interface
-  inline TDUnitCell& DUnitCell() {  return *FDUnitCell; }
-  inline TDBasis& DBasis()       {  return *FDBasis; }
-  inline THklFile& HklFile()     {  return *FHklFile; }
-  inline TDFrame& DFrame()       {  return *FDFrame; }
-  inline TXGrid& XGrid()         {  return *FXGrid;  }
+  inline TDUnitCell& DUnitCell()  {  return *FDUnitCell; }
+  inline TDBasis& DBasis()  {  return *FDBasis; }
+  inline THklFile& HklFile()  {  return *FHklFile; }
+  inline TDFrame& DFrame()  {  return *FDFrame; }
+  inline TXGrid& XGrid()  {  return *FXGrid;  }
 
   // this function to be used to get all networks, including th overlayed files
   size_t GetNetworks(TNetPList& nets);
@@ -215,13 +218,13 @@ public:
     GetRender().SelectAll(Select);
     Draw();
   }
-  void InvertSelection()                    {  GetRender().InvertSelection(); Draw(); }
-  inline TGlGroup* FindObjectGroup(AGDrawObject& G)   {  return GetRender().FindObjectGroup(G); }
-  inline TGlGroup* FindGroup(const olxstr& colName) {  return GetRender().FindGroupByName(colName); }
-  inline TGlGroup& GetSelection() const  {  return GetRender().GetSelection(); }
-  void GroupSelection(const olxstr& name) {  GetRender().GroupSelection(name);  Draw(); }
-  void UnGroupSelection()                   {  GetRender().UnGroupSelection(); Draw(); }
-  void UnGroup(TGlGroup& G)                 {  GetRender().UnGroup(G); Draw(); }
+  void InvertSelection()  {  GetRender().InvertSelection(); Draw(); }
+  inline TGlGroup* FindObjectGroup(AGDrawObject& G)  {  return GetRender().FindObjectGroup(G); }
+  inline TGlGroup* FindGroup(const olxstr& colName)  {  return GetRender().FindGroupByName(colName); }
+  inline TGlGroup& GetSelection() const {  return GetRender().GetSelection(); }
+  void GroupSelection(const olxstr& name)  {  GetRender().GroupSelection(name);  Draw(); }
+  void UnGroupSelection()  {  GetRender().UnGroupSelection(); Draw(); }
+  void UnGroup(TGlGroup& G)  {  GetRender().UnGroup(G); Draw(); }
   olxstr GetSelectionInfo();
   // ASelection Owner interface
   virtual void ExpandSelection(TCAtomGroup& atoms);
@@ -232,13 +235,12 @@ public:
     
   TGlBitmap* FindGlBitmap(const olxstr& name);
   void DeleteGlBitmap(const olxstr& name);
-  inline size_t GlBitmapCount()  const {  return GlBitmaps.Count(); }
-  inline TGlBitmap& GlBitmap(size_t i) {  return *GlBitmaps[i];  }
+  inline size_t GlBitmapCount() const {  return GlBitmaps.Count(); }
+  inline TGlBitmap& GlBitmap(size_t i)  {  return *GlBitmaps[i];  }
 
   bool ShowGrid(bool v, const olxstr& FN=EmptyString);
-  bool GridVisible()  const;
+  bool IsGridVisible() const;
   void SetGridDepth(const vec3d& crd);
-
 
 protected:
   TPtrList<AGDrawObject> SelectionCopy;
@@ -260,7 +262,7 @@ public:
   void SetLabelsMode(short lmode);
   short GetLabelsMode() const;
   void SetLabelsFont(short FontIndex);
-  TGlMaterial & LabelsMarkMaterial();
+  TGlMaterial& LabelsMarkMaterial();
   void MarkLabel(const TXAtom& A, bool mark);
   void MarkLabel(size_t index, bool mark);
   bool IsLabelMarked(const TXAtom& A) const;
@@ -276,17 +278,15 @@ public:
   // should not be used externaly
   void ClearLabels();
 
-  void Link(TXAtom *A, TXAtom *B);
-  void Free(TXAtom *A, TXAtom *B);
   DefPropP(double, DeltaV)
   //
 //..............................................................................
 // XFile interface
-  void RegisterXFileFormat(TBasicCFile *Parser, const olxstr &ext)
+  void RegisterXFileFormat(TBasicCFile *Parser, const olxstr& ext)
   {  FXFile->RegisterFileFormat(Parser, ext); }
-  void LoadXFile(const olxstr &fn);
-  void SaveXFile(const olxstr &fn, bool Sort)  {  FXFile->SaveToFile(fn, Sort); }
-  void Generate( const vec3d &From, const vec3d &To,
+  void LoadXFile(const olxstr& fn);
+  void SaveXFile(const olxstr& fn, bool Sort)  {  FXFile->SaveToFile(fn, Sort); }
+  void Generate( const vec3d& From, const vec3d& To,
     TCAtomPList* Template, bool ClearPrevCont, bool IncludeQ)
   {    FXFile->GetLattice().Generate(From, To, Template, ClearPrevCont, IncludeQ);  }
   void Generate( const vec3d& center, double rad,
@@ -296,11 +296,11 @@ public:
   void GrowFragments(bool Shell, TCAtomPList* Template=NULL)  {
     FXFile->GetLattice().GrowFragments(Shell, Template);  
   }
-  void GrowAtoms(const olxstr &Atoms, bool Shell, TCAtomPList* Template=NULL);
+  void GrowAtoms(const olxstr& Atoms, bool Shell, TCAtomPList* Template=NULL);
   void GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template=NULL);
   void Grow(const TXGrowLine& growLine);
   void Grow(const TXGrowPoint& growPoint);
-  void ChangeAtomType( TXAtom *A, const olxstr &Element);
+  void ChangeAtomType( TXAtom *A, const olxstr& Element);
   bool AtomExpandable(TXAtom *XA);
   void GrowWhole(TCAtomPList* Template=NULL){  FXFile->GetLattice().GenerateWholeContent(Template); }
   void Grow(const TXAtomPList& atoms, const smatd_list& matrices);
@@ -309,26 +309,26 @@ public:
   void MoveFragment(const vec3d& to, TXAtom* fragAtom, bool copy);
   void MoveToCenter();
   void Compaq(bool AtomicLevel);
-  void HydrogensVisible(bool v);
-  bool HydrogensVisible()    {  return FHydrogensVisible;  }
-  void HBondsVisible(bool v);
-  bool HBondsVisible()       {  return FHBondsVisible;  }
-  void QPeaksVisible(bool v);
-  bool QPeaksVisible()       {  return FQPeaksVisible;  }
-  void QPeakBondsVisible(bool v);
-  bool QPeakBondsVisible()   {  return FQPeakBondsVisible;  }
+  void SetHydrogensVisible(bool v);
+  bool AreHydrogensVisible()  {  return FHydrogensVisible;  }
+  void SetHBondsVisible(bool v);
+  bool AreHBondsVisible()  {  return FHBondsVisible;  }
+  void SetQPeaksVisible(bool v);
+  bool AreQPeaksVisible()  {  return FQPeaksVisible;  }
+  void SetQPeakBondsVisible(bool v);
+  bool AreQPeakBondsVisible()  {  return FQPeakBondsVisible;  }
 
   // hides all bonds for all hidden q-peaks
   void SyncQVisibility();
-  void StructureVisible(bool v);
-  void HklVisible(bool v);
-  bool HklVisible()          {  return FHklVisible;  }
-  bool StructureVisible()    {  return FStructureVisible;  }
+  void SetStructureVisible(bool v);
+  void SetHklVisible(bool v);
+  bool IsHklVisible()  {  return FHklVisible;  }
+  bool IsStructureVisible() {  return FStructureVisible;  }
   void ShowPart(const TIntList& parts, bool show);
 
   void SetXGrowLinesVisible(bool v);
-  bool GetXGrowLinesVisible()   {  return FXGrowLinesVisible;  }
-  inline short GetGrowMode()  const {  return FGrowMode;  }
+  bool GetXGrowLinesVisible()  {  return FXGrowLinesVisible;  }
+  short GetGrowMode() const {  return FGrowMode;  }
   void SetGrowMode(short v, const olxstr& atoms);
   //
   void SetXGrowPointsVisible(bool v);
@@ -364,29 +364,27 @@ protected:
    atom. Normally this happens when a Q-peak is renamed
   */
   void CheckQBonds(TXAtom& Atom);
+  void BackupSelection();
+  // helper functions
+  void FillXAtomList(TXAtomPList& res, TXAtomPList* providedAtoms);
+  void FillXBondList(TXBondPList& res, TXBondPList* providedBonds);
 public:
   void ClearSelectionCopy();
   void RestoreSelection();
-protected:
-  void BackupSelection();
-  // helper functions
-  void FillXAtomList( TXAtomPList& res, TXAtomPList* providedAtoms);
-  void FillXBondList( TXBondPList& res, TXBondPList* providedBonds);
-public:
-  TUndoData* Name(const olxstr &From, const olxstr &To, bool CheckLabels, bool ClearSelection);
-  TUndoData* Name(TXAtom& Atom, const olxstr &Name, bool CheckLabels);
-  TUndoData* ChangeSuffix(const TXAtomPList& xatoms, const olxstr &To, bool CheckLabels);
+  TUndoData* Name(const olxstr& From, const olxstr& To, bool CheckLabels, bool ClearSelection);
+  TUndoData* Name(TXAtom& Atom, const olxstr& Name, bool CheckLabels);
+  TUndoData* ChangeSuffix(const TXAtomPList& xatoms, const olxstr& To, bool CheckLabels);
 
-  void InfoList(const olxstr &Atoms, TStrList &Info, bool Sort);
+  void InfoList(const olxstr& Atoms, TStrList& Info, bool Sort);
 
   void UpdateAtomPrimitives(int Mask, TXAtomPList* Atoms=NULL);
   void UpdateBondPrimitives(int Mask, TXBondPList* Bonds=NULL, bool HBondsOnly=false);
 
   void SetAtomDrawingStyle(short ADS, TXAtomPList* Atoms=NULL);
 
-  void GetBonds(const olxstr &Bonds, TXBondPList& List);
+  void GetBonds(const olxstr& Bonds, TXBondPList& List);
 
-  void AtomRad(const olxstr &Rad, TXAtomPList* Atoms=NULL); // pers, sfil
+  void AtomRad(const olxstr& Rad, TXAtomPList* Atoms=NULL); // pers, sfil
   void AtomZoom(float Zoom, TXAtomPList* Atoms=NULL);  // takes %
 
   void BondRad(float R, TXBondPList* Bonds=NULL);
@@ -397,10 +395,10 @@ public:     void CalcProbFactor(float Prob);
   TSPlane *TmpPlane(TXAtomPList* Atoms=NULL, int weightExtent=0); 
   void DeletePlane(TXPlane* plane);
   void ClearPlanes();
-  TXPlane *XPlane(const olxstr &PlaneName);
+  TXPlane *XPlane(const olxstr& PlaneName);
 
   TXLine& AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge);
-  TXGlLabel *AddLabel(const olxstr& Name, const vec3d& center, const olxstr &T);
+  TXGlLabel *AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T);
   AGDrawObject* FindLooseObject(const olxstr& Name);
 
   TXLattice& AddLattice(const olxstr& Name, const mat3d& basis);
@@ -409,9 +407,9 @@ public:     void CalcProbFactor(float Prob);
   TXAtom* AddAtom(TXAtom* templ=NULL);
   // adopts atoms of the auinit and returns newly created atoms
   void AdoptAtoms(const TAsymmUnit& au, TXAtomPList& xatom);
-  void SelectAtoms(const olxstr &Names, bool Invert=false);
-  void SelectAtomsWhere(const olxstr &Where, bool Invert=false);
-  void SelectBondsWhere(const olxstr &Where, bool Invert=false);
+  void SelectAtoms(const olxstr& Names, bool Invert=false);
+  void SelectAtomsWhere(const olxstr& Where, bool Invert=false);
+  void SelectBondsWhere(const olxstr& Where, bool Invert=false);
   /* allows selcting rings: Condition describes the rings to select:
     C5N - content and 1-4, substitutions..
     SelectRing( "C6 1-4") selects all 1,4 substituted benzene rings 
@@ -475,10 +473,10 @@ public:     void CalcProbFactor(float Prob);
   void BuildSceneMask(FractMask& mask, double Inc);
 //..............................................................................
 // X interface
-  void BangList(TXAtom *A, TStrList &L);
+  void BangList(TXAtom *A, TStrList& L);
   void BangTable(TXAtom *A, TTTable<TStrList>& Table);
   double Tang( TSBond *B1, TSBond *B2, TSBond *Middle, olxstr *Sequence=NULL);
-  void TangList(TXBond *Middle, TStrList &L);
+  void TangList(TXBond *Middle, TStrList& L);
 
   TUndoData* DeleteXAtoms(TXAtomPList& L);
   TUndoData* DeleteXObjects(TPtrList<AGDrawObject>& L);
@@ -489,9 +487,9 @@ public:     void CalcProbFactor(float Prob);
   /* function undoes hiding of objects */
   void undoHide(TUndoData *data);
 
-  void XAtomDS2XBondDS(const olxstr &Source);  // copies material properties from atoms
+  void XAtomDS2XBondDS(const olxstr& Source);  // copies material properties from atoms
   void SynchroniseBonds( TXAtomPList& XAtoms );
-  double CalcVolume(const TSStrPObjList<olxstr,double, true> *volumes, olxstr &report);
+  double CalcVolume(const TSStrPObjList<olxstr,double, true> *volumes, olxstr& report);
 
   void ToDataItem(TDataItem& item, IOutputStream& zos) const;
   void FromDataItem(TDataItem& item, IInputStream& zis);
