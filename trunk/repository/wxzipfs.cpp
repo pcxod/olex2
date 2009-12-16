@@ -147,9 +147,9 @@ void TZipWrapper::ExtractAll(const olxstr& dest)  {
 }
 //..............................................................................
 bool TZipWrapper::IsValidFileName(const olxstr &FN)  {
-  int zi = FN.IndexOf(ZipUrlSignature);
-  if( zi != InvalidIndex && zi > 0 )  {
-    if( TEFile::Exists( ExtractZipName(FN) ) )  return true;
+  size_t zi = FN.IndexOf(ZipUrlSignature);
+  if( zi != InvalidIndex )  {
+    if( TEFile::Exists(ExtractZipName(FN)) )  return true;
     return false;
   }
   return TEFile::Exists(FN);
@@ -175,17 +175,17 @@ olxstr TZipWrapper::ExtractZipEntryName(const olxstr &FN)  {
 }
 //..............................................................................
 bool TZipWrapper::SplitZipUrl(const olxstr &fullName, TZipEntry &ZE)  {
-  int zi = fullName.IndexOf(ZipUrlSignature);
+  size_t zi = fullName.IndexOf(ZipUrlSignature);
   if( zi == InvalidIndex )  return false;
   ZE.ZipName = fullName.SubStringTo(zi);
   ZE.ZipName = TEFile::UnixPath( ZE.ZipName );
-  ZE.EntryName = fullName.SubStringFrom( zi + ZipUrlSignature.Length() );
+  ZE.EntryName = fullName.SubStringFrom(zi + ZipUrlSignature.Length());
   ZE.EntryName = TEFile::UnixPath( ZE.EntryName );
   return true;
 }
 //..............................................................................
 olxstr TZipWrapper::ComposeFileName(const olxstr &ZipFileNameA, const olxstr &FNA)  {
-  int zi = ZipFileNameA.IndexOf(ZipUrlSignature);
+  size_t zi = ZipFileNameA.IndexOf(ZipUrlSignature);
   if( zi == InvalidIndex )  return FNA;
   olxstr ZipFileName = TEFile::WinPath(ZipFileNameA),
            FN = TEFile::WinPath(FNA);
@@ -193,7 +193,7 @@ olxstr TZipWrapper::ComposeFileName(const olxstr &ZipFileNameA, const olxstr &FN
   olxstr zipPath = TEFile::ExtractFilePath(zipPart);
   TEFile::AddPathDelimeterI(zipPath);
   if( FN.StartsFrom(zipPath) )
-    return zipPart + TEFile::UnixPath( FN.SubStringFrom(zipPath.Length()) );
+    return zipPart + TEFile::UnixPath(FN.SubStringFrom(zipPath.Length()));
   return FNA;
 }
 /*____________________________________________________________________________*/

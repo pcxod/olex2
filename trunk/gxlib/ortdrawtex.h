@@ -44,10 +44,10 @@ protected:
     QuadLineWidth,
     HBondScale;
 
-  int PrepareArc(const TArrayList<vec3f>& in, TPtrList<const vec3f>& out, const vec3f& normal)  {
+  size_t PrepareArc(const TArrayList<vec3f>& in, TPtrList<const vec3f>& out, const vec3f& normal)  {
     size_t start = InvalidIndex, cnt=0;
     for( size_t i=0; i < in.Count(); i++ )  {
-      const int next_i = ((i+1) >= in.Count() ? i-in.Count() : i) + 1;
+      const size_t next_i = ((i+1) >= in.Count() ? i-in.Count() : i) + 1;
       if( in[i].DotProd(normal) < 0 && in[next_i].DotProd(normal) >= 0 )  {
         start = next_i;
         break;
@@ -55,7 +55,7 @@ protected:
     }
     if( start == InvalidIndex )  return 0;
     for( size_t i=start; i < start+in.Count(); i++ )  {
-      const int ind = (i >= in.Count() ? i-in.Count() : i);
+      const size_t ind = (i >= in.Count() ? i-in.Count() : i);
       if( cnt+1 >= in.Count() )  break;
       if( in[ind].DotProd(normal) >= 0  )
         out[cnt++] = &in[ind];
@@ -270,7 +270,7 @@ protected:
       norm_vec *= -1;
     for( int j=0; j < ElpDiv; j++ )
       Arc[j] = ElpCrd[j]*pelpm;
-    int pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
+    size_t pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
     //pw.color(0x0000ff);
     //pw.drawLines_vp(FilteredArc, pts_cnt, false);
     
