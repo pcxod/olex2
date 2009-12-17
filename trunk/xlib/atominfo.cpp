@@ -2029,6 +2029,8 @@ void TAtomsInfo::ParseElementString(const olxstr& su, ContentList& res) const {
       else  {
         if( !elm.IsEmpty() && !cnt.IsEmpty() )  {
           toks.Clear();
+          if( elm.Length() == 2 )
+            elm[1] = olxstr::o_tolower(elm.CharAt(1));
           ParseSimpleElementStr(elm, toks);
           for( size_t i=0; i < toks.Count()-1; i++ )
             ExpandShortcut(toks[i], res);
@@ -2050,6 +2052,8 @@ void TAtomsInfo::ParseElementString(const olxstr& su, ContentList& res) const {
   }
   if( !elm.IsEmpty() )  {
     toks.Clear();
+    if( elm.Length() == 2 )
+      elm[1] = olxstr::o_tolower(elm.CharAt(1));
     ParseSimpleElementStr(elm, toks);
     for( size_t i=0; i < toks.Count()-1; i++ )
       ExpandShortcut(toks[i], res);
