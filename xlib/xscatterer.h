@@ -54,7 +54,8 @@ public:
     r(sc.r),
     Label(sc.Label),
     source(sc.source),
-    builtIn(sc.builtIn)  {  }
+    builtIn(sc.builtIn),
+    fpfdp(sc.fpfdp)  {  }
   // initialises data from the provided library element
   void SetSource(cm_Element& src, double energy)  {
     if( src.gaussians == NULL )

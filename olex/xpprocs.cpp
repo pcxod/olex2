@@ -1672,7 +1672,7 @@ void TMainForm::macShell(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( Cmds.Count() == 0 )
     wxShell();
   else  {
-#ifdef WIN32_
+#ifdef __WIN32__
     ShellExecute((HWND)this->GetHWND(), wxT("open"), Cmds[0].u_str(), NULL, TEFile::CurrentDir().u_str(), SW_SHOWNORMAL);
 #else
     if( Cmds[0].StartsFrom("http") || Cmds[0].StartsFrom("https") || Cmds[0].EndsWith(".htm") || 
