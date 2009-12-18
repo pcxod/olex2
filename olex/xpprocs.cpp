@@ -5366,7 +5366,8 @@ bool MatchConsiderNet(const TNetwork& net)  {
 }
 //..............................................................................
 double MatchAtomPairsQTEsd(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-                        smatdd& res, bool TryInversion)  {
+                        smatdd& res, bool TryInversion)
+{
   if( atoms.Count() < 3 )  return -1;
   VcoVContainer vcovc;
   TXApp& xapp = TXApp::GetInstance();
@@ -5405,36 +5406,32 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( Options.Contains("u") )  {
     TLattice& latt = FXApp->XFile().GetLattice();
     const TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
+    TUnitCell& uc = FXApp->XFile().GetUnitCell();
+    uc.UpdateEllipsoids();
     for( size_t i=0; i < latt.AtomCount(); i++ )  {
       TSAtom& sa = latt.GetAtom(i);
       au.CellToCartesian(sa.ccrd(), sa.crd());
+      if( sa.CAtom().GetEllipsoid() != NULL ) 
+        sa.SetEllipsoid(&uc.GetEllipsoid(sa.GetMatrix(0).GetContainerId(), sa.CAtom().GetId()));
     }
     FXApp->UpdateBonds();
     FXApp->CenterView();
     return;
   }
   CallbackFunc(StartMatchCBName, EmptyString);
-  // ivertion test
-  bool TryInvert = Options.Contains("i");
-/*
-  if( TryInvert )  {
-    TSpaceGroup* sg = TSymmLib::GetInstance().FindSG( FXApp->XFile().GetLastLoader()->GetAsymmUnit() );
-    if( sg == NULL )  {
-      TBasicApp::GetLog() << ("No space group information is provided");
-      TryInvert = false;
-    }
-    else  {
-      TryInvert = sg->IsCentrosymmetric();
-    }
-  }
-*/  
-  // end invertion test
+  const bool TryInvert = Options.Contains("i");
   TXAtomPList atoms;
-  bool subgraph = Options.Contains("s");
+  const bool subgraph = Options.Contains("s");
   olxstr suffix = Options.FindValue("n");
-  bool name = Options.Contains("n");
-  bool align = Options.Contains("a");
+  const bool name = Options.Contains("n");
+  const bool align = Options.Contains("a");
   FindXAtoms(Cmds, atoms, false, true);
+  TUnitCell& uc = FXApp->XFile().GetUnitCell();
+  for( size_t i=0; i < uc.EllpCount(); i++ )  {
+    TEllipsoid* elp = uc.GetEllp(i);
+    if( elp != NULL )  
+      elp->SetTag(0);
+  }
   if( !atoms.IsEmpty() )  {
     if( atoms.Count() == 2 )  {
       TTypeList< AnAssociation2<size_t, size_t> > res;

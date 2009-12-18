@@ -83,6 +83,7 @@ class XLibMacros  {
   static DefMacro(CalcMass)
   static DefMacro(FitCHN)
 
+  static DefMacro(Close)
   static DefMacro(Omit)
   static DefFunc(Lst)
 

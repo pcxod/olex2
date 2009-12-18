@@ -203,10 +203,6 @@ void TUnitCell::UpdateEllipsoids()  {
   }
 }
 //..............................................................................
-const TEllipsoid& TUnitCell::GetEllipsoid(size_t MatrixId, size_t AUId) const  {
-  return *Ellipsoids[AUId][MatrixId];
-}
-//..............................................................................
 TUnitCell::TSearchSymmEqTask::TSearchSymmEqTask(TPtrList<TCAtom>& atoms,
   const smatd_list& matrices, double tol) :
   Atoms(atoms), Matrices(matrices), tolerance(tol)

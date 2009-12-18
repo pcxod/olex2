@@ -182,6 +182,7 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(Reset, "s-space group&;c-content&;f-alternative file name&;rem-exclude remarks", 
     fpAny|psFileLoaded, "Resets current structure for the solution with ShelX");
   xlib_InitMacro(Degen, "cs-clear selection", fpAny|psFileLoaded, "Prints how many symmetry operators put given atom to the same site");
+  xlib_InitMacro(Close, EmptyString, fpNone|psFileLoaded, "Closes currently loaded file");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -3818,5 +3819,9 @@ void XLibMacros::macDegen(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     olxstr str(atoms[i]->CAtom().GetLabel());
     TBasicApp::GetLog() << (str.Format(6, true, ' ') <<  atoms[i]->CAtom().GetDegeneracy() << '\n');
   }
+}
+//..............................................................................
+void XLibMacros::macClose(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TXApp::GetInstance().XFile().Close();
 }
 //..............................................................................

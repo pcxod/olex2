@@ -1880,7 +1880,7 @@ void TLattice::SetAnis( const TCAtomPList& atoms, bool anis )  {
     for( size_t i=0; i < atoms.Count(); i++ )  {
       if( atoms[i]->GetEllipsoid() == NULL )  {
         ee[0] = ee[1] = ee[2] = atoms[i]->GetUiso();
-        atoms[i]->UpdateEllp( ee );
+        atoms[i]->UpdateEllp(ee);
       }
     }
   }
