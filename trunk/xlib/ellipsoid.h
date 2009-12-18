@@ -1,6 +1,5 @@
-#ifndef ellipsoidH
-#define ellipsoidH
-
+#ifndef __olx_xl_ellipsoid_H
+#define __olx_xl_ellipsoid_H
 #include "xbase.h"
 #include "evector.h"
 #include "threex3.h"
@@ -10,7 +9,7 @@ BeginXlibNamespace()
 
 /* Ellipsoid always must be in the cartesian frame */
 
-class TEllipsoid: public IEObject  {
+class TEllipsoid: public ACollectionItem  {
   bool FNPD;  // not positive defined
   double FQuad[6], FEsd[6];  // quadratic form of the elipsoid and esd
   mat3d Matrix;  // normalised eigen vectors

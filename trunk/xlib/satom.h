@@ -20,7 +20,7 @@ private:
   // a list of pointers to matrices used for generation of atom
   TCAtom*  FCAtom;       // basic crystallographic information
 //  int FTag; // override TCollectioItem and TGDrawObject tags
-  const class TEllipsoid*  FEllipsoid;   // a pointer to TEllipse object
+  class TEllipsoid*  FEllipsoid;   // a pointer to TEllipsoid object
   vec3d  FCCenter;     // atom center in cell coordinates
   vec3d  FCenter;          // atom center in cartesian coordinates
 protected:
@@ -46,32 +46,32 @@ public:
 
   bool IsAvailable() const {  return !(IsDeleted() || FCAtom->IsDetached());  }
   bool IsGrown() const;
-  inline void SetGrown(bool v)  {  SetBit(v, Flags, satom_Grown);  }
+  void SetGrown(bool v)  {  SetBit(v, Flags, satom_Grown);  }
 
-  inline operator TCAtom* () const {  return FCAtom;  }
+  operator TCAtom* () const {  return FCAtom;  }
 
-  inline TCAtom& CAtom() const {  return *FCAtom; }
+  TCAtom& CAtom() const {  return *FCAtom; }
   void CAtom(TCAtom& CA);
 
   void AtomInfo(TBasicAtomInfo& AI);
-  inline TBasicAtomInfo& GetAtomInfo() const {  return FCAtom->GetAtomInfo(); }
+  TBasicAtomInfo& GetAtomInfo() const {  return FCAtom->GetAtomInfo(); }
 
-  inline void SetLabel(const olxstr &L)  { FCAtom->SetLabel(L); }
-  inline const olxstr& GetLabel() const {  return FCAtom->GetLabel(); }
+  void SetLabel(const olxstr& L)  { FCAtom->SetLabel(L); }
+  const olxstr& GetLabel() const {  return FCAtom->GetLabel(); }
   // returns a label plus (if not identity) first matrix like label_resi.2_556
   olxstr GetGuiLabel() const;
   // returns a label plus (if not identity) first matrix like label_resi(-2/3+X,Y,2-Z)
   olxstr GetGuiLabelEx() const;
 
-  inline size_t MatrixCount() const {  return Matrices.Count();  }
-  inline const smatd& GetMatrix(size_t i) const {  return *Matrices[i];  }
+  size_t MatrixCount() const {  return Matrices.Count();  }
+  const smatd& GetMatrix(size_t i) const {  return *Matrices[i];  }
   // this also makes sure that the identity releated matrix is coming first in the list
-  inline void AddMatrix(smatd* M) {  
+  void AddMatrix(smatd* M) {  
     Matrices.Add(M);  
     if( M->IsFirst() && Matrices.Count() > 1 )
       Matrices.Swap(0, Matrices.Count()-1);
   }
-  inline void AddMatrices(TSAtom *A)  {  
+  void AddMatrices(TSAtom* A)  {  
     const size_t cnt = Matrices.Count();
     Matrices.AddList(A->Matrices); 
     if( cnt != 0 && Matrices.Count() > 1 )  {
@@ -83,15 +83,15 @@ public:
       }
     }
   }
-  inline void ClearMatrices()  {  Matrices.Clear();  }
+  void ClearMatrices()  {  Matrices.Clear();  }
   void ChangeType(const olxstr& Type);
-
-  inline const TEllipsoid* GetEllipsoid() const {  return FEllipsoid;  }
-  inline void SetEllipsoid(const TEllipsoid* v) {  FEllipsoid = v;  }
-  inline vec3d&  ccrd()  {  return FCCenter;  }
-  inline vec3d&  crd()  {  return FCenter;  }
-  inline vec3d const&  ccrd() const {  return FCCenter;  }
-  inline vec3d const&  crd()  const {  return FCenter;  }
+  // beware that underlying objkect might be shared by several atoms!
+  TEllipsoid* GetEllipsoid() const {  return FEllipsoid;  }
+  void SetEllipsoid(TEllipsoid* v) {  FEllipsoid = v;  }
+  vec3d& ccrd()  {  return FCCenter;  }
+  vec3d& crd()  {  return FCenter;  }
+  vec3d const& ccrd() const {  return FCCenter;  }
+  vec3d const& crd() const {  return FCenter;  }
 
   void SortNodesByDistanceAsc()  {
     Nodes.QuickSorter.SortMF(Nodes, *this, &TSAtom::_SortNodesByDistanceAsc);

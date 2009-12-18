@@ -296,22 +296,24 @@ void TGlRenderer::Resize(int w, int h)  {
 }
 //..............................................................................
 void TGlRenderer::Resize(int l, int t, int w, int h, float Zoom)  {
-  FLeft = l;    FTop = t;
-  FWidth = w;  FHeight = h;
+  FLeft = l;
+  FTop = t;
+  FWidth = w;
+  FHeight = h;
   FZoom = Zoom;
   FGlImageChanged = true;
   SetChanged(true);
 }
 //..............................................................................
-void TGlRenderer::SetView(short Res)  {
-  SetView(0, 0, false, Res);
-}
+void TGlRenderer::SetView(short Res)  {  SetView(0, 0, false, Res);  }
 //..............................................................................
 void TGlRenderer::SetZoom(double V) {  
-  double MaxZ = olx_max(olx_abs(FMaxV.DistanceTo(FMinV)), 1);
+  double MaxZ = olx_max(FMaxV.DistanceTo(FMinV), 1);
   double dv = V/MaxZ;
   if( dv < 0.01 )  //  need to fix the zoom
     FBasis.SetZoom(MaxZ*0.01);
+  else if( dv > MaxZ )
+    FBasis.SetZoom(MaxZ);
   else
     FBasis.SetZoom(V); 
 }
@@ -346,7 +348,8 @@ void TGlRenderer::SetView(int x, int y, bool Select, short Res)  {
 //..............................................................................
 void TGlRenderer::SetBasis(bool Identity)  {
   static float Bf[4][4];
-  float MaxZ = (float)olx_max(olx_abs(FMaxV.DistanceTo(FMinV)), 1);
+  double scale = GetScale();
+  float MaxZ = (float)olx_max(FMaxV.DistanceTo(FMinV), 1);
   if( !Identity )  {
     memcpy( &Bf[0][0], GetBasis().GetMData(), 12*sizeof(float));
     Bf[3][0] = Bf[3][1] = 0;
@@ -884,7 +887,7 @@ void TGlRenderer::AddObject(AGDrawObject& G)  {
   vec3d MaxV, MinV;
   if( G.GetDimensions(MaxV, MinV) )  {
     UpdateMaxMin(MaxV, MinV);
-    SetChanged( true );
+    SetChanged(true);
   }
 }
 //..............................................................................

@@ -77,7 +77,8 @@ void TBasicCFile::LoadFromFile(const olxstr& fn)  {
 //----------------------------------------------------------------------------//
 TXFile::TXFile() : RefMod(Lattice.GetAsymmUnit()),
   OnFileLoad(Actions.New("XFILELOAD")),
-  OnFileSave(Actions.New("XFILESAVE"))
+  OnFileSave(Actions.New("XFILESAVE")),
+  OnFileClose(Actions.New("XFILECLOSE"))
 {
   Lattice.GetAsymmUnit().SetRefMod(&RefMod);
   Lattice.GetAsymmUnit().OnSGChange.Add(this, XFILE_SG_Change); 
@@ -339,7 +340,7 @@ void TXFile::ValidateTabs()  {
   }
 }
 //..............................................................................
-void TXFile::SaveToFile(const olxstr &FN, bool Sort)  {
+void TXFile::SaveToFile(const olxstr& FN, bool Sort)  {
   olxstr Ext = TEFile::ExtractFileExt(FN);
   TBasicCFile *Loader = FindFormat(Ext);
 
@@ -364,6 +365,14 @@ void TXFile::SaveToFile(const olxstr &FN, bool Sort)  {
   if( Cause != NULL )  {
     throw TFunctionFailedException(__OlxSourceInfo, Cause);
   }
+}
+//..............................................................................
+void TXFile::Close()  {
+  OnFileClose.Enter(this, FLastLoader);
+  FLastLoader = NULL;
+  RefMod.ClearAll();
+  Lattice.Clear(true);
+  OnFileClose.Exit(this, NULL);
 }
 //..............................................................................
 IEObject* TXFile::Replicate() const  {

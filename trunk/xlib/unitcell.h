@@ -34,8 +34,12 @@ public:
   inline const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
   // initialises the matrix container id, throws an excpetion if matrix is not found
   void InitMatrixId(smatd& m) const;
+  size_t EllpCount() const {  return Ellipsoids.Count()*Matrices.Count();  }
+  const TEllipsoid* GetEllp(size_t i) const {  return Ellipsoids[i/Matrices.Count()][i%Matrices.Count()];  }
+  TEllipsoid* GetEllp(size_t i)  {  return Ellipsoids[i/Matrices.Count()][i%Matrices.Count()];  }
   // gets an ellipsoid for an atom by asymmetric unit Id and a matrix associated with it
-  const TEllipsoid& GetEllipsoid(size_t MatrixId, size_t AUId) const;
+  const TEllipsoid& GetEllipsoid(size_t MatrixId, size_t AUId) const {  return *Ellipsoids[AUId][MatrixId];  }
+  TEllipsoid& GetEllipsoid(size_t MatrixId, size_t AUId)  {  return *Ellipsoids[AUId][MatrixId];  }
   void AddEllipsoid(); // adds a new row to ellipsoids, intialised with NULLs
   void ClearEllipsoids();
   // (r-)caches the ellipsoids from the aunit

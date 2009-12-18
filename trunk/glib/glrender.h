@@ -134,18 +134,18 @@ public:
   void Resize(int Left, int Top, int h, int w, float Zoom);
 // perspective stuff
   void EnablePerspective(bool Set);
-  bool IsPerspectiveEnabled()           const {  return FPerspective; }
+  bool IsPerspectiveEnabled() const {  return FPerspective; }
   void SetPerspectiveAngle(double Angle);
   //fog stuff
   void EnableFog(bool Set);
-  bool IsFogEnabled()            const {  return Fog; }
+  bool IsFogEnabled() const {  return Fog; }
   DefPropP(float, FogStart)
   DefPropP(float, FogEnd)
   DefPropP(int, FogType)
   DefPropP(float, FogDensity)
   DefPropC(TGlOption, FogColor)
 
-  float GetExtraZoom()           const {  return FZoom;  }
+  float GetExtraZoom() const {  return FZoom;  }
 
   void Initialise();
   void InitLights();

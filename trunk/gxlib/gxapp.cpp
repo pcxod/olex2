@@ -224,6 +224,16 @@ public:
   }
 };
 //..............................................................................
+class xappXFileClose: public AActionHandler  {
+public:
+  virtual bool Exit(const IEObject *Sender, const IEObject *Data)  {
+    TGXApp& app = TGXApp::GetInstance();
+    app.CreateObjects(false);
+    app.GetRender().SetZoom(app.GetRender().CalcZoom());
+    return true;
+  }
+};
+//..............................................................................
 //----------------------------------------------------------------------------//
 //TGXApp function bodies
 //----------------------------------------------------------------------------//
@@ -279,6 +289,7 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
   XFile().GetLattice().OnStructureUniq.Add(P);
   XFile().GetLattice().OnStructureUniq.Add(new xappXFileUniq);
   XFile().OnFileLoad.Add(P);
+  XFile().OnFileClose.Add(new xappXFileClose);
 }
 //..............................................................................
 TGXApp::~TGXApp()  {

@@ -8,6 +8,7 @@
 #include "actions.h"
 
 #include "lattice.h"
+#include "unitcell.h"
 #include "asymmunit.h"
 
 #include "bapp.h"
@@ -1121,17 +1122,16 @@ void TNetwork::PrepareESDCalc(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >
 void TNetwork::DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& satomp,
                             const TSAtomPList& atomsToTransform, const smatdd& S, bool Inverted)  
 {
-  if( atomsToTransform.IsEmpty() )
-    return;
+  if( atomsToTransform.IsEmpty() )  return;
   vec3d mcent;
   const TAsymmUnit& au1 = atomsToTransform[0]->GetNetwork().GetLattice().GetAsymmUnit();
   const TAsymmUnit& au2 = satomp[0].GetB()->GetNetwork().GetLattice().GetAsymmUnit();
   double sum  = 0;
   if( Inverted )  {
     for( size_t i=0; i < atomsToTransform.Count(); i++ )
-      au1.CellToCartesian(atomsToTransform[i]->ccrd() * -1, atomsToTransform[i]->crd());
+      au1.CellToCartesian(-atomsToTransform[i]->ccrd(), atomsToTransform[i]->crd());
     for( size_t i=0; i < satomp.Count(); i++ )  {
-      vec3d v = satomp[i].GetB()->ccrd() * -1;
+      vec3d v = -satomp[i].GetB()->ccrd();
       au2.CellToCartesian(v);
       mcent += v*satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
       sum += satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
@@ -1147,8 +1147,19 @@ void TNetwork::DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& 
   }
   mcent /= sum;
 
-  for( size_t i=0; i < atomsToTransform.Count(); i++ )
+  TUnitCell& uc = atomsToTransform[0]->GetNetwork().GetLattice().GetUnitCell();
+  for( size_t i=0; i < atomsToTransform.Count(); i++ )  {
     atomsToTransform[i]->crd() = S*(atomsToTransform[i]->crd() - mcent);
+    if( atomsToTransform[i]->GetEllipsoid() != NULL )  {
+      if( atomsToTransform[i]->GetEllipsoid()->GetTag() != 0 )  {
+        TBasicApp::GetLog().Error( olxstr("Ellipsoid has already been rotated for: ") << atomsToTransform[i]->GetLabel());
+        continue;
+      }
+      uc.GetEllp(atomsToTransform[i]->GetEllipsoid()->GetId());
+      atomsToTransform[i]->GetEllipsoid()->SetTag(1);
+      atomsToTransform[i]->GetEllipsoid()->MultMatrix(S.r);
+    }
+  }
 }
 //..............................................................................
 bool TNetwork::RingInfo::IsSingleCSubstituted() const  {

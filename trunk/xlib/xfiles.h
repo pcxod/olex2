@@ -58,7 +58,9 @@ public:
   TXFile();
   virtual ~TXFile();
 
-  TActionQueue &OnFileLoad, &OnFileSave;
+  TActionQueue &OnFileLoad,
+    &OnFileSave,
+    &OnFileClose; // OnEnter, LastLoader is passed as Data
 
   inline const TLattice& GetLattice() const {  return Lattice;  }
   inline TLattice& GetLattice()  {  return Lattice;  }
@@ -102,8 +104,10 @@ public:
   void Sort(const TStrList& instructions);
   void LoadFromFile(const olxstr& FN);
   void SaveToFile(const olxstr& FN, bool Sort);
-  // return 
-  inline const olxstr& GetFileName() const {  return FLastLoader != NULL ? FLastLoader->GetFileName() : EmptyString; }
+  // clears the last loader amd the model
+  void Close();
+  // returns last loaded file name (if any) or empty string 
+  const olxstr& GetFileName() const {  return FLastLoader != NULL ? FLastLoader->GetFileName() : EmptyString; }
 
   void EndUpdate();
   void LastLoaderChanged();  // performs complete reinitialisation
