@@ -31,7 +31,7 @@ protected:
     }
   }
 public:
-  TFitMode(int id) : AMode(id)  {}
+  TFitMode(size_t id) : AMode(id)  {}
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     TGXApp& app = *TGlXApp::GetGXApp();
     TGlXApp::GetMainForm()->executeMacro("cursor(hand)");

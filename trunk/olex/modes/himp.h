@@ -5,7 +5,7 @@ class THimpMode : public AMode  {
   double BondLength;
 protected:
 public:
-  THimpMode(int id) : AMode(id)  {}
+  THimpMode(size_t id) : AMode(id)  {}
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     BondLength = Cmds.IsEmpty() ? 0 : Cmds[0].ToDouble();
     if( BondLength <= 0.5 )  {

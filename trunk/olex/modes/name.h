@@ -2,14 +2,14 @@
 #define __OLX_NAME_MODE_H
 
 class TNameMode : public AModeWithLabels  {
-  int Index;
+  size_t Index;
   olxstr Prefix, Suffix, Symbol;
   TUndoData* FirstUndo;
   bool AutoComplete;
 protected:
   static TNameMode* Instance;
   class TNameModeUndo : public TUndoData {
-    TIntList LabelIndeces;
+    TSizeList LabelIndeces;
   public:
     TNameModeUndo() : TUndoData(new TUndoActionImplMF<TNameModeUndo>(this, &TNameModeUndo::undo))  {  }
     TNameModeUndo(TXAtom& xa) : TUndoData(new TUndoActionImplMF<TNameModeUndo>(this, &TNameModeUndo::undo))  {  
@@ -65,9 +65,7 @@ protected:
     }
   }
 public:
-  TNameMode(int id) : AModeWithLabels(id)  {
-    Instance = this;
-  }
+  TNameMode(size_t id) : AModeWithLabels(id)  {  Instance = this;  }
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     Index = Cmds.IsEmpty() ? 1 : Cmds[0].ToInt();
     Prefix = Options.FindValue('p');

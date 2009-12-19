@@ -6,7 +6,7 @@
 // mouse modes
 const unsigned short mmNone   = 0;
 // program states
-const uint32_t 
+const size_t 
   prsNone            = 0x00000000, // modes
   prsStrVis          = 0x00000001, // Structure visible/invisible
   prsHVis            = 0x00000002, // hydroges visible invisible
@@ -29,9 +29,9 @@ const uint32_t
 //---------------------------------------------------------------------------
 class AMode : public IEObject  {
 protected:
-  int Id;
+  size_t Id;
 public:
-  AMode(int id);
+  AMode(size_t id);
   virtual ~AMode();
   // mode initialisation
   virtual bool Init(TStrObjList &Cmds, const TParamList &Options) = 0;
@@ -43,23 +43,23 @@ public:
   virtual bool OnKey(int keyId, short shiftState)  {  return false;  }
   // if the function supported - returns true
   virtual bool AddAtoms(const TPtrList<TXAtom>& atoms) {  return false;  }
-  inline int GetId()  const  {  return Id;  }
+  inline size_t GetId() const {  return Id;  }
 };
 //..............................................................................
 class AModeWithLabels : public AMode  {
   short LabelsMode;
   bool LabelsVisible;
 public:
-  AModeWithLabels(int id);
+  AModeWithLabels(size_t id);
   ~AModeWithLabels();
 };
 //..............................................................................
 
 class AModeFactory  {
 protected:
-  int modeId;
+  size_t modeId;
 public:
-  AModeFactory(int id) : modeId(id)  {}
+  AModeFactory(size_t id) : modeId(id)  {}
   virtual ~AModeFactory()  {}
   virtual AMode* New() = 0;
 };
@@ -67,7 +67,7 @@ public:
 template <class ModeClass>
   class TModeFactory : public AModeFactory  {
   public:
-    TModeFactory(int id) : AModeFactory(id) {}
+    TModeFactory(size_t id) : AModeFactory(id) {}
     virtual AMode* New()  {  return new ModeClass(modeId);  }
   };
 
@@ -80,19 +80,19 @@ public:
   ~TModes();
   // NULL is returned of no mode foind
   AMode* SetMode(const olxstr& name);
-  static unsigned short DecodeMode( const olxstr& mode );
+  static size_t DecodeMode( const olxstr& mode );
   AMode* GetCurrent()  {  return CurrentMode;  }
 };
 
 class TModeChange: public IEObject  {
   bool FStatus;
-  unsigned short Mode;
+  size_t Mode;
 public:
-  TModeChange(const unsigned short mode, bool status) : FStatus(status), Mode(mode) {}
+  TModeChange(size_t mode, bool status) : FStatus(status), Mode(mode) {}
   ~TModeChange()  {  }
   bool GetStatus() const {  return FStatus;  }
-  static bool CheckStatus( const olxstr& mode, const olxstr& modeData=EmptyString );
-  static bool CheckStatus( unsigned short mode, const olxstr& modeData=EmptyString );
+  static bool CheckStatus(const olxstr& mode, const olxstr& modeData=EmptyString);
+  static bool CheckStatus(size_t mode, const olxstr& modeData=EmptyString );
 };
 //..............................................................................
 class TStateChange: public IEObject  {

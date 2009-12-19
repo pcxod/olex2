@@ -1911,7 +1911,7 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
-int TMainForm::GetFragmentList(TNetPList& res)  {
+size_t TMainForm::GetFragmentList(TNetPList& res)  {
   if( FObjectUnderMouse == NULL )  return 0;
   if( FObjectUnderMouse->IsSelected() )  {
     TGlGroup& glg = FXApp->GetSelection();
@@ -2501,8 +2501,8 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
       FHelpWindow->Clear();
       FHelpWindow->SetVisible(HelpWindowVisible);
       FGlConsole->ShowBuffer(!HelpWindowVisible);
-      FHelpWindow->SetTop( InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() + 5 : 1 );
-      FHelpWindow->SetMaxStringLength( FHelpWindow->GetFont().MaxTextLength(FXApp->GetRender().GetWidth()) );
+      FHelpWindow->SetTop(InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() + 5 : 1);
+      FHelpWindow->SetMaxStringLength((uint16_t)(FHelpWindow->GetFont().MaxTextLength(FXApp->GetRender().GetWidth())));
       FHelpWindow->SetZ( FXApp->GetRender().GetMaxRasterZ()-0.1);
       for( size_t i=0; i < macros.Count(); i++ )  {
         FHelpWindow->PostText(macros[i]->GetName(), &HelpFontColorCmd);
@@ -2641,8 +2641,8 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
   }
   if( m.GetKeyCode() == WXK_TAB )  {  // tab
     Cmd = FGlConsole->GetCommand();
-    int spi = Cmd.LastIndexOf(' ');
-    if( spi != -1 )  {
+    size_t spi = Cmd.LastIndexOf(' ');
+    if( spi != InvalidIndex )  {
       FullCmd = ExpandCommand(Cmd.SubStringFrom(spi+1));
       if( FullCmd != Cmd.SubStringFrom(spi+1) )
         FullCmd = Cmd.SubStringTo(spi+1) << FullCmd;
@@ -3116,7 +3116,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     }
     for( size_t j=0; j < olx_min(uniqNames.Count(), FRecentFilesToShow); j++ )  {
       executeFunction(uniqNames[j], uniqNames[j]);
-      MenuFile->AppendCheckItem(ID_FILE0+j, uniqNames[j].u_str());
+      MenuFile->AppendCheckItem((int)(ID_FILE0+j), uniqNames[j].u_str());
       FRecentFiles.Add(uniqNames[j], MenuFile->FindItemByPosition(MenuFile->GetMenuItemCount()-1));
     }
   }
@@ -3269,9 +3269,9 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
             index = i;
       }
       if( index != InvalidIndex )
-        mi = MenuFile->InsertCheckItem(index + 1, ID_FILE0+FRecentFiles.Count(), wxT("tmp"));
+        mi = MenuFile->InsertCheckItem(index + 1, (int)(ID_FILE0+FRecentFiles.Count()), wxT("tmp"));
       else
-        mi = MenuFile->AppendCheckItem(ID_FILE0+FRecentFiles.Count(), wxT("tmp"));
+        mi = MenuFile->AppendCheckItem((int)(ID_FILE0+FRecentFiles.Count()), wxT("tmp"));
       FRecentFiles.Insert(0, FN, mi);
     }  
     else  {
@@ -3597,7 +3597,7 @@ TPopupData* TMainForm::GetPopup(const olxstr& name)  {
   return FPopups[name];
 }
 //..............................................................................
-bool TMainForm::CheckMode(const unsigned short mode, const olxstr& modeData)  {
+bool TMainForm::CheckMode(size_t mode, const olxstr& modeData)  {
   if( Modes->GetCurrent() == NULL )  return false;
   return mode == Modes->GetCurrent()->GetId();
 }
@@ -4133,15 +4133,14 @@ void TMainForm::UnlockWindowDestruction(wxWindow* wnd)  {
 }
 //..............................................................................
 bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool GetAll, bool unselect)  {
-  int cnt = xatoms.Count();
+  size_t cnt = xatoms.Count();
   if( Cmds.IsEmpty() )  {
     FXApp->FindXAtoms("sel", xatoms, unselect);
     if( GetAll && xatoms.IsEmpty() )
       FXApp->FindXAtoms(EmptyString, xatoms, unselect);
   }
-  else  {
+  else
     FXApp->FindXAtoms(Cmds.Text(' '), xatoms, unselect);
-  }
   for( size_t i=0; i < xatoms.Count(); i++ )
     if( !xatoms[i]->IsVisible() )
       xatoms[i] = NULL;

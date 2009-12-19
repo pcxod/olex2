@@ -41,8 +41,8 @@ namespace ctrl_ext  {
     inline int Count()         const {  return wxListBox::GetCount();  }
 
     olxstr GetValue() const  {
-      size_t index = GetSelection();
-      return (index == InvalidIndex) ? EmptyString : olxstr(wxListBox::GetString(index).c_str());
+      int index = GetSelection();
+      return (index == -1) ? EmptyString : olxstr(wxListBox::GetString(index).c_str());
     }
 
     TActionQueue &OnDblClick, &OnSelect;

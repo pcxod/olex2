@@ -120,19 +120,19 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const TBasicAtomInfo
         break;
     }
     if( afix != 0 )  {
-      TAfixGroup& ag = RefMod.AfixGroups.New( &envi.GetBase().CAtom(), afix );
+      TAfixGroup& ag = RefMod.AfixGroups.New(&envi.GetBase().CAtom(), afix);
       for( size_t i=0; i < CreatedAtoms.Count(); i++ )
         ag.AddDependent(*CreatedAtoms[i]);
     }
     for( size_t i=0; i < CreatedAtoms.Count(); i++ )  {
-      CreatedAtoms[i]->SetPart( envi.GetBase().CAtom().GetPart() );
-      CreatedAtoms[i]->SetUisoOwner( &envi.GetBase().CAtom() );
+      CreatedAtoms[i]->SetPart(envi.GetBase().CAtom().GetPart());
+      CreatedAtoms[i]->SetUisoOwner(&envi.GetBase().CAtom());
       if( envi.GetBase().GetAtomInfo() == iOxygenIndex || Group == fgCH3 )
-        CreatedAtoms[i]->SetUisoScale( 1.5 );
+        CreatedAtoms[i]->SetUisoScale(1.5);
       else
-        CreatedAtoms[i]->SetUisoScale( 1.2 );
-      CreatedAtoms[i]->SetUiso( 4*caDefIso*caDefIso );
-      RefMod.Vars.SetParam( *CreatedAtoms[i], catom_var_name_Sof, 
+        CreatedAtoms[i]->SetUisoScale(1.2);
+      CreatedAtoms[i]->SetUiso(4*caDefIso*caDefIso);
+      RefMod.Vars.SetParam(*CreatedAtoms[i], catom_var_name_Sof, 
         RefMod.Vars.GetParam(envi.GetBase().CAtom(), catom_var_name_Sof));
       if( generated != NULL )
         generated->Add(CreatedAtoms[i]);

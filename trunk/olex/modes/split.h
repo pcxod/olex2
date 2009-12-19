@@ -32,7 +32,7 @@ protected:
   }
   olxstr ReCon; // restraint or constraint to use for split atoms
 public:
-  TSplitMode(int id) : AMode(id)  {}
+  TSplitMode(size_t id) : AMode(id)  {}
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     TGXApp& app = *TGlXApp::GetGXApp();
     if( !app.CheckFileType<TIns>() )  return false;

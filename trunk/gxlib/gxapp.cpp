@@ -1795,7 +1795,7 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
 //..............................................................................
 TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T)  {
   TXGlLabel* gl = new TXGlLabel(*FGlRender, Name);
-  gl->SetFontIndex(FLabels->GetFontIndex());
+  gl->SetFontIndex((uint16_t)FLabels->GetFontIndex());
   gl->SetLabel(T);
   gl->SetCenter(center);
   gl->Create();

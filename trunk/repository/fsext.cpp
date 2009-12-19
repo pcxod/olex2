@@ -42,11 +42,11 @@ TMemoryBlock *TFileHandlerManager::GetMemoryBlock( const olxstr &FN )  {
   else  {
     if( mb->DateTime != 0 && TEFile::Exists(fileName) )  {
       if( TEFile::FileAge( fileName ) != mb->DateTime )  {
-        int ind = FMemoryBlocks.IndexOf( fileName );
-        FMemoryBlocks.Delete( ind );
+        size_t ind = FMemoryBlocks.IndexOf(fileName);
+        FMemoryBlocks.Delete(ind);
         delete [] mb->Buffer;
         delete mb;
-        return GetMemoryBlock( fileName );
+        return GetMemoryBlock(fileName);
       }
     }
   }
@@ -254,7 +254,8 @@ void TFileHandlerManager::AddBaseDir(const olxstr& bd)  {
 }
 //..............................................................................
 void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, const char *bf,
-                                                int length, short persistenceId)  {
+  size_t length, short persistenceId)
+{
   olxstr fileName = TEFile::UnixPath(name);
   TMemoryBlock *mb = FMemoryBlocks[fileName];
   if( mb == NULL )  {
@@ -262,12 +263,10 @@ void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, const char *bf,
     mb->PersistenceId = persistenceId;
     FMemoryBlocks.Add( fileName, mb );
   }
-  else  {
+  else
     delete [] mb->Buffer;
-  }
-
   mb->Buffer = new char [ length + 1];
-  mb->Length = length;
+  mb->Length = (uint32_t)length;
   mb->DateTime = TETime::Now();
   mb->PersistenceId = persistenceId;
   if( length != 0 )
@@ -275,7 +274,7 @@ void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, const char *bf,
 }
 //..............................................................................
 void TFileHandlerManager::AddMemoryBlock(const olxstr& name, const char *bf,
-                                               int length, short persistenceId)  {
+                                               size_t length, short persistenceId)  {
   //if( length <= 0 )  return;
 
   if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();

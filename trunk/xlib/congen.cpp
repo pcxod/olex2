@@ -41,8 +41,9 @@ AConstraintGenerator::AConstraintGenerator(RefinementModel& rm) : RefMod(rm) {
   }
 }
 
-void AConstraintGenerator::DoGenerateAtom( TCAtomPList& created, TAsymmUnit& au,
-    vec3d_list& Crds, const olxstr& StartingName)  {
+void AConstraintGenerator::DoGenerateAtom(TCAtomPList& created, TAsymmUnit& au,
+    vec3d_list& Crds, const olxstr& StartingName)
+{
   vec3d v;
   bool IncLabel = (Crds.Count() != 1);
   for( size_t i=0; i < Crds.Count(); i++ )  {

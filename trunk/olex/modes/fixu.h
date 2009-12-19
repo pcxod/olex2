@@ -8,7 +8,7 @@ protected:
   class TFixUModeUndo : public TUndoData {
     TCAtom& Atom;
     XVarReference* Uiso, *Vars[6];
-    int LabelIndex;
+    size_t LabelIndex;
   public:
     TFixUModeUndo(TXAtom* XA) : TUndoData(new TUndoActionImplMF<TFixUModeUndo>(this, &TFixUModeUndo::undo)),
       Atom(XA->Atom().CAtom()), LabelIndex(XA->GetXAppId())
@@ -41,7 +41,7 @@ protected:
   friend class TFixUModeUndo;
 #endif
 public:
-  TFixUMode(int id) : AModeWithLabels(id)  {  HasInstance = true;  }
+  TFixUMode(size_t id) : AModeWithLabels(id)  {  HasInstance = true;  }
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     Val = Cmds.IsEmpty() ? 1 : Cmds[0].ToDouble();
     TGlXApp::GetMainForm()->executeMacro("labels -f -r -h");

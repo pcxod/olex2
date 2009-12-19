@@ -116,9 +116,9 @@ protected:
   void SetObjectState(AOlxCtrl *AOlxCtrl, bool State);
   bool SetObjectImage(AOlxCtrl *AOlxCtrl, const olxstr& src);
   bool SetObjectItems(AOlxCtrl *AOlxCtrl, const olxstr& src);
-  void _FindNext(int from, int &dest, bool scroll) const;
-  void _FindPrev(int from, int &dest, bool scroll) const;
-  void GetTraversibleIndeces(int& current, int& another, bool forward) const;
+  void _FindNext(index_t from, index_t &dest, bool scroll) const;
+  void _FindPrev(index_t from, index_t &dest, bool scroll) const;
+  void GetTraversibleIndeces(index_t& current, index_t& another, bool forward) const;
   void DoNavigate(bool forward);
   static TLibrary* Library;
 public:

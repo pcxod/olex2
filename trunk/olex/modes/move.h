@@ -6,7 +6,7 @@ class TMoveMode : public AMode  {
   vec3d Center;
 protected:
 public:
-  TMoveMode(int id) : AMode(id)  {}
+  TMoveMode(size_t id) : AMode(id)  {}
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     Center.Null();
     Copy = Options.Contains('c');

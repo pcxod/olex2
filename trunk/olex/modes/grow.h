@@ -4,7 +4,7 @@
 class TGrowMode : public AMode  {
 protected:
 public:
-  TGrowMode(int id) : AMode(id)  {  }
+  TGrowMode(size_t id) : AMode(id)  {}
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     bool SI = Options.Contains('s'),
          Cov = Options.Contains('c'),
