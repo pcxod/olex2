@@ -25,7 +25,7 @@ void TListBox::ItemSelectEvent(wxCommandEvent& event)  {
 //..............................................................................
 olxstr TListBox::ItemsToString(const olxstr &sep)  {
   olxstr rv;
-  for( size_t i=0; i < GetCount(); i++ )  {
+  for( unsigned int i=0; i < GetCount(); i++ )  {
     rv << GetString(i).c_str();
     if( (i+1) < GetCount() )
       rv << sep;

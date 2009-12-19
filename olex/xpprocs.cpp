@@ -3577,9 +3577,9 @@ struct Main_3DIndex  {
 };
 typedef TTypeList< Main_3DIndex > T3DIndexList;
 bool InvestigateVoid(short x, short y, short z, TArray3D<short>& map, T3DIndexList& points)  {
-  const int mapX = map.Length1(),
-            mapY = map.Length2(),
-            mapZ = map.Length3();
+const index_t mapX = map.Length1(),
+              mapY = map.Length2(),
+              mapZ = map.Length3();
   short*** D = map.Data;
   const short refVal = D[x][y][z]-1;
   // skip the surface points
@@ -3627,9 +3627,9 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
           continue;
         }
         TBasicApp::GetLog() << ' ' << toks[0] << '\t' << toks[1] << '\n';
-        int b_i = radii.IndexOfComparable( bai );
-        if( b_i == -1 )
-          radii.Add( bai, toks[1].ToDouble() );
+        size_t b_i = radii.IndexOfComparable( bai );
+        if( b_i == InvalidIndex )
+          radii.Add(bai, toks[1].ToDouble());
         else
           radii.GetObject(b_i) = toks[1].ToDouble();
       }
@@ -4016,8 +4016,8 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       const TSimpleRestraint& res = *b_res[i];
       for( size_t j=0; j < res.AtomCount(); j+=2 )  {
         if( res.GetAtom(j).GetMatrix() != NULL || res.GetAtom(j+1).GetMatrix() != NULL )  continue;
-        const int id1 = res.GetAtom(j).GetAtom()->GetId();
-        const int id2 = res.GetAtom(j+1).GetAtom()->GetId();
+        const size_t id1 = res.GetAtom(j).GetAtom()->GetId();
+        const size_t id2 = res.GetAtom(j+1).GetAtom()->GetId();
         for( size_t k=0; k < FXApp->BondCount(); k++ )  {
           TXBond& xb = FXApp->GetBond(k);
           if( xb.IsSelected() )  continue;
@@ -4026,7 +4026,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
           if( (ca1.GetId() == id1 && ca2.GetId() == id2) ||
               (ca1.GetId() == id2 && ca2.GetId() == id1) )  
           {
-            FXApp->GetRender().Select( xb );
+            FXApp->GetRender().Select(xb);
             break;
           }
         }
@@ -4072,8 +4072,8 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TBasicApp::GetLog() << (Tmp << '\n');
     }
     if( !Cmds.IsEmpty() )  {
-      int whereIndex = Cmds.IndexOf(olxstr("where"));
-      if( whereIndex >= 1 )  {
+      size_t whereIndex = Cmds.IndexOf(olxstr("where"));
+      if( whereIndex >= 1 && whereIndex != InvalidIndex)  {
         Tmp = Cmds[whereIndex-1];
         while( whereIndex >= 0  )  {  Cmds.Delete(whereIndex);  whereIndex --;  }
         if( Tmp.Equalsi("atoms") )
@@ -4085,8 +4085,8 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         return;
       }
       else  {
-        int ringsIndex = Cmds.IndexOf(olxstr("rings"));
-        if( ringsIndex != -1 )  {
+        size_t ringsIndex = Cmds.IndexOf(olxstr("rings"));
+        if( ringsIndex != InvalidIndex )  {
           Cmds.Delete( ringsIndex );
           FXApp->SelectRings(Cmds.Text(' '));
         }
@@ -4243,9 +4243,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
               size_t sfac_count = ins->GetRM().GetUserContent().Count();
               TStrList unit;
               for( size_t i=0; i < sfac_count; i++ )  
-                unit.Add( (sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1));
+                unit.Add((sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1));
               ins->GetRM().SetUserContentSize(unit);
-              ins->GetAsymmUnit().SetZ( (sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1));
+              ins->GetAsymmUnit().SetZ((sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1));
             }
             ins->SaveForSolution(TEFile::ChangeFileExt(FN, "ins"), EmptyString, EmptyString, false);
             Macros.ProcessMacro( olxstr("reap '") << TEFile::ChangeFileExt(FN, "ins") << '\'', Error);
@@ -4683,7 +4683,7 @@ void TMainForm::macDeleteMenu(TStrObjList &Cmds, const TParamList &Options, TMac
     if( menu == NULL )  return;
     ind = menu->FindItem(itemName.u_str());
     if( ind == InvalidIndex )  return;
-    menu->Destroy(ind);
+    menu->Destroy((int)ind);
   }
   else
   {   /*
@@ -4711,7 +4711,7 @@ void TMainForm::macEnableMenu(TStrObjList &Cmds, const TParamList &Options, TMac
   if( menu == NULL )  return;
   ind = menu->FindItem(itemName.u_str());
   if( ind == InvalidIndex )  return;
-  menu->Enable(ind, true);
+  menu->Enable((int)ind, true);
 }
 //..............................................................................
 void TMainForm::macDisableMenu(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -4723,7 +4723,7 @@ void TMainForm::macDisableMenu(TStrObjList &Cmds, const TParamList &Options, TMa
   if( menu == NULL )  return;
   ind = menu->FindItem(itemName.u_str());
   if( ind == InvalidIndex )  return;
-  menu->Enable( ind, false );
+  menu->Enable((int)ind, false);
 }
 //..............................................................................
 void TMainForm::macCheckMenu(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -4735,7 +4735,7 @@ void TMainForm::macCheckMenu(TStrObjList &Cmds, const TParamList &Options, TMacr
   if( menu == NULL )  return;
   ind = menu->FindItem(itemName.u_str());
   if( ind == InvalidIndex )  return;
-  menu->Check( ind, true );
+  menu->Check((int)ind, true);
 }
 //..............................................................................
 void TMainForm::macUncheckMenu(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
@@ -4747,7 +4747,7 @@ void TMainForm::macUncheckMenu(TStrObjList &Cmds, const TParamList &Options, TMa
   if( menu == NULL )  return;
   ind = menu->FindItem(itemName.u_str());
   if( ind == InvalidIndex )  return;
-  menu->Check( ind, false );
+  menu->Check((int)ind, false);
 }
 //..............................................................................
 void TMainForm::macCreateShortcut(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {

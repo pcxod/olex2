@@ -7,7 +7,7 @@ class TMatchMode : public AMode  {
 protected:
   void FitAtoms();
 public:
-  TMatchMode(int id) : AMode(id)  {}
+  TMatchMode(size_t id) : AMode(id)  {}
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     AtomsToMatch.Clear();
     TGlXApp::GetMainForm()->SetUserCursor( '0', "<M>");

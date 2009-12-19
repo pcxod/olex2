@@ -8,7 +8,7 @@ protected:
   class TOccuModeUndo : public TUndoData {
     TCAtom& Atom;
     double Occu;
-    int LabelIndex;
+    size_t LabelIndex;
   public:
     TOccuModeUndo(TXAtom* XA) : TUndoData(new TUndoActionImplMF<TOccuModeUndo>(this, &TOccuModeUndo::undo)),
       Atom(XA->Atom().CAtom()), LabelIndex(XA->GetXAppId())
@@ -25,7 +25,7 @@ protected:
   friend class TOccuModeUndo;
 #endif
 public:
-  TOccuMode(int id) : AModeWithLabels(id)  {  HasInstance = true;  }
+  TOccuMode(size_t id) : AModeWithLabels(id)  {  HasInstance = true;  }
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     Occu = Cmds.IsEmpty() ? 0 : Cmds[0].ToDouble();
     TGlXApp::GetMainForm()->SetUserCursor( Occu, "occu");

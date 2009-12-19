@@ -35,7 +35,7 @@
  bool TFixCMode::HasInstance = false;
  TNameMode* TNameMode::Instance = NULL;
 
-AMode::AMode(int id) : Id(id)  {
+AMode::AMode(size_t id) : Id(id)  {
   TModeChange mc(Id, true);
   TGlXApp::GetMainForm()->OnModeChange.Execute(NULL, &mc);
 }
@@ -49,7 +49,7 @@ AMode::~AMode() {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-AModeWithLabels::AModeWithLabels(int id) : AMode(id)  {
+AModeWithLabels::AModeWithLabels(size_t id) : AMode(id)  {
   LabelsVisible = TGlXApp::GetGXApp()->AreLabelsVisible();
   LabelsMode = TGlXApp::GetGXApp()->GetLabelsMode();
 }
@@ -96,17 +96,17 @@ TModes::~TModes()  {
   Instance = NULL;
 }
 //..............................................................................
-unsigned short TModes::DecodeMode( const olxstr& mode )  {
+size_t TModes::DecodeMode(const olxstr& mode)  {
   if( Instance == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "uninitialised instance");
   return Instance->Modes.IndexOfComparable(mode) + 1;  // -1 +1 = 0 = mmNone
 }
 //..............................................................................
-bool TModeChange::CheckStatus( const olxstr& mode, const olxstr& modeData )  {
+bool TModeChange::CheckStatus(const olxstr& mode, const olxstr& modeData)  {
   return CheckStatus(TModes::DecodeMode(mode), modeData);
 }
-bool TModeChange::CheckStatus( unsigned short mode, const olxstr& modeData ) {
-  return TGlXApp::GetMainForm()->CheckMode( mode, modeData );
+bool TModeChange::CheckStatus(size_t mode, const olxstr& modeData) {
+  return TGlXApp::GetMainForm()->CheckMode(mode, modeData);
 }
 
 //..............................................................................

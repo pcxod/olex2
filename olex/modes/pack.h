@@ -2,9 +2,8 @@
 #define __OLX_PACK_MODE_H
 
 class TPackMode : public AMode  {
-protected:
 public:
-  TPackMode(int id) : AMode(id)  {}
+  TPackMode(size_t id) : AMode(id)  {}
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
 
     olxstr AtomsToGrow( Cmds.Text(' ') );
@@ -20,7 +19,7 @@ public:
   }
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf( obj, TXGrowPoint) )  {
-      TGlXApp::GetGXApp()->Grow( (TXGrowPoint&)obj );
+      TGlXApp::GetGXApp()->Grow((TXGrowPoint&)obj);
       return true;
     }
     return false;

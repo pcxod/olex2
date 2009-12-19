@@ -220,7 +220,7 @@ void THtml::OnChildFocus(wxChildFocusEvent& event)  {
   event.Skip();
 }
 //..............................................................................
-void THtml::_FindNext(int from, int& dest, bool scroll) const {
+void THtml::_FindNext(index_t from, index_t& dest, bool scroll) const {
   if( Traversables.IsEmpty() )  {
     dest = -1;
     return;
@@ -237,13 +237,13 @@ void THtml::_FindNext(int from, int& dest, bool scroll) const {
   }
 }
 //..............................................................................
-void THtml::_FindPrev(int from, int& dest, bool scroll) const {
+void THtml::_FindPrev(index_t from, index_t& dest, bool scroll) const {
   if( Traversables.IsEmpty() )  {
     dest = -1;
     return;
   }
   if( from < 0 )  from = Traversables.Count();
-  int i = from;
+  index_t i = from;
   while( --i >= 0 && Traversables[i].GetB() == NULL )
     ;
   dest = ((i < 0 || (Traversables[i].GetB() == NULL)) ? -1 : i);
@@ -255,7 +255,7 @@ void THtml::_FindPrev(int from, int& dest, bool scroll) const {
   }
 }
 //..............................................................................
-void THtml::GetTraversibleIndeces(int& current, int& another, bool forward) const {
+void THtml::GetTraversibleIndeces(index_t& current, index_t& another, bool forward) const {
   wxWindow* w = FindFocus();
   if( w == NULL || w == static_cast<const wxWindow*>(this) )  {  // no focus? find the one at the edge
     if( forward )
@@ -305,7 +305,7 @@ void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
 }
 //..............................................................................
 void THtml::DoNavigate(bool forward)  {
-  int current=-1, another=-1;
+  index_t current=-1, another=-1;
   GetTraversibleIndeces(current, another, forward);
   DoHandleFocusEvent( 
     current == -1 ? NULL : Traversables[current].GetA(),
@@ -632,7 +632,7 @@ bool THtml::UpdatePage()  {
       else if( EsdlInstanceOf(*wnd, TSpinCtrl) )  {
         TSpinCtrl* sc = (TSpinCtrl*)wnd;
         olxstr sv(sc->GetValue());
-        sc->SetSelection(sv.Length(),-1);
+        sc->SetSelection((long)sv.Length(), -1);
       }
       wnd->SetFocus();
       InFocus = wnd;

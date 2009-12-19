@@ -7,7 +7,8 @@ protected:
   static bool HasInstance;
   class TPartModeUndo : public TUndoData {
     TCAtom& Atom;
-    int Part, LabelIndex;
+    int Part;
+    size_t LabelIndex;
   public:
     TPartModeUndo(TXAtom* XA) : TUndoData( new TUndoActionImplMF<TPartModeUndo>(this, &TPartModeUndo::undo)),
       Atom(XA->Atom().CAtom()), LabelIndex(XA->GetXAppId())
@@ -24,7 +25,7 @@ protected:
   friend class TPartModeUndo;
 #endif
 public:
-  TPartMode(int id) : AModeWithLabels(id)  {  HasInstance = true;  }
+  TPartMode(size_t id) : AModeWithLabels(id)  {  HasInstance = true;  }
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     Part = Cmds.IsEmpty() ? 0 : Cmds[0].ToInt();
     TGlXApp::GetMainForm()->SetUserCursor( Part, "part");

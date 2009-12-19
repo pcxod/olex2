@@ -9,7 +9,7 @@ class THfixMode : public AModeWithLabels  {
 protected:
   TXlConGen* xlConGen;
 public:
-  THfixMode(int id) : AModeWithLabels(id)  {}
+  THfixMode(size_t id) : AModeWithLabels(id)  {}
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     if( !TGlXApp::GetGXApp()->CheckFileType<TIns>() )  return false;
     Hfix = Cmds.IsEmpty() ? 0 : Cmds[0].ToInt();

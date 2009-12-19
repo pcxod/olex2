@@ -186,12 +186,12 @@ public:
   inline TUndoStack* GetUndoStack()  {  return FUndoStack;  }
 
   void SetProgramState(bool val, uint32_t state, const olxstr& data );
-  bool CheckMode(unsigned short mode, const olxstr& modeData);
+  bool CheckMode(size_t mode, const olxstr& modeData);
   bool CheckState(uint32_t state, const olxstr& stateData);
 
 protected:
   void PostCmdHelp(const olxstr &Cmd, bool Full=false);
-  void AnalyseError( TMacroError& error );
+  void AnalyseError(TMacroError& error);
 
   void OnSize(wxSizeEvent& event);
 
@@ -226,7 +226,7 @@ protected:
   void OnFragmentSelectBonds(wxCommandEvent& event);
   void OnFragmentSelectAll(wxCommandEvent& event);
   // helper function to get the list of fragments (if several selected)
-  int GetFragmentList(TNetPList& res);
+  size_t GetFragmentList(TNetPList& res);
 
   void OnAtomTypeChange(wxCommandEvent& event);
   void OnAtomOccuChange(wxCommandEvent& event);
