@@ -3742,7 +3742,7 @@ void TGXApp::BuildSceneMask(FractMask& mask, double inc)  {
   atoms.SetCapacity( XAtoms.Count() );
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
     if( XAtoms[i].IsDeleted() || !XAtoms[i].IsVisible() )  continue;
-    if( XAtoms[i].Atom().GetAtomInfo() == iQPeakIndex )  continue;
+    //if( XAtoms[i].Atom().GetAtomInfo() == iQPeakIndex )  continue;
     vec3d::UpdateMinMax(XAtoms[i].Atom().ccrd(), mn, mx);
     atoms.AddNew( XAtoms[i].Atom().crd(), olx_sqr(XAtoms[i].Atom().GetAtomInfo().GetRad2())+inc );
   }

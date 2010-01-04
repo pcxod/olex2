@@ -311,9 +311,7 @@ void TXFile::ValidateTabs()  {
     }
     bool hasH = false;
     for( size_t j=0; j < sa->NodeCount(); j++ )  {
-      if( !sa->Node(j).IsDeleted() && 
-        (sa->Node(j).GetAtomInfo() == iHydrogenIndex || sa->Node(j).GetAtomInfo() == iDeuteriumIndex) )  
-      {
+      if( !sa->Node(j).IsDeleted() && TAtomsInfo::IsHAtom(sa->Node(j).GetAtomInfo()) )  {
         hasH = true;
         break;
       }
