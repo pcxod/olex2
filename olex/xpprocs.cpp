@@ -5753,106 +5753,125 @@ void TMainForm::macDelOFile(TStrObjList &Cmds, const TParamList &Options, TMacro
 }
 //..............................................................................
 
-class TTetrahedron  {
+class helper_Tetrahedron  {
   vec3d_list Points;
   olxstr Name;
   double Volume;
 protected:
   double CalcVolume()  {
-    return TetrahedronVolume( Points[0], Points[1], Points[2], Points[3] );
+    return TetrahedronVolume(Points[0], Points[1], Points[2], Points[3]);
   }
 public:
-  TTetrahedron(const olxstr& name)  {
+  helper_Tetrahedron(const olxstr& name) : Name(name)  {
     Name = name;
     Volume = -1;
   }
-  void AddPoint( const vec3d& p )  {
-    Points.AddNew( p );
+  void AddPoint(const vec3d& p)  {
+    Points.AddNew(p);
     if( Points.Count() == 4 )
       Volume = CalcVolume();
   }
-  const olxstr& GetName() const  {  return Name;  }
-  const vec3d& operator [] (int i)  const  {  return Points[i];  }
-
-  double GetVolume()  const  {  return Volume;  }
+  const olxstr& GetName() const {  return Name;  }
+  const vec3d& operator [] (size_t i) const {  return Points[i];  }
+  double GetVolume() const {  return Volume;  }
+  int Compare(const helper_Tetrahedron& th) const {
+    const double v = GetVolume() - th.GetVolume();
+    return v < 0 ? -1 : (v > 0 ? 1 : 0);
+  }
 };
 
-int ThSort( const TTetrahedron& th1, const TTetrahedron& th2 )  {
-  double v = th1.GetVolume() - th2.GetVolume();
-  if( v < 0 )  return -1;
-  if( v > 0 )  return 1;
-  return 0;
-}
 
 void TMainForm::macCalcVol(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-
-  TXAtom* xa = FXApp->GetXAtom( Cmds[0], !Options.Contains("cs") );
-  if( xa == NULL )  {
-    Error.ProcessingError(__OlxSrcInfo, "no atom provided");
+  TXAtomPList xatoms;
+  if( !FindXAtoms(Cmds, xatoms, false, !Options.Contains("cs")) )  {
+    Error.ProcessingError(__OlxSrcInfo, "no atom(s) given");
     return;
   }
-  TSAtomPList atoms;
-  for( size_t i=0; i < xa->Atom().NodeCount(); i++ ) {
-    TSAtom& A = xa->Atom().Node(i);
-    if( A.IsDeleted() || (A.GetAtomInfo() == iQPeakIndex ) )
-      continue;
-    atoms.Add(&A);
-  }
-  if( atoms.Count() == 3 )
-    atoms.Add( &xa->Atom() );
-  if( atoms.Count() < 4 )  {
-    Error.ProcessingError(__OlxSrcInfo, "an atom with at least four bonds is expected");
-    return;
-  }
-  TTypeList<TTetrahedron> tetrahedra;
-  // special case for 4 nodes
-  if( atoms.Count() == 4 )  {
-    TTetrahedron& th = tetrahedra.AddNew( olxstr(atoms[0]->GetLabel() ) << '-'
-      << atoms[1]->GetLabel() << '-'
-      << atoms[2]->GetLabel() << '-'
-      << atoms[3]->GetLabel()               );
-    th.AddPoint( atoms[0]->crd() );
-    th.AddPoint( atoms[1]->crd() );
-    th.AddPoint( atoms[2]->crd() );
-    th.AddPoint( atoms[3]->crd() );
-  }
-  else  {
-    for( size_t i=0; i < atoms.Count(); i++ ) {
-      for( size_t j=i+1; j < atoms.Count(); j++ ) {
-        for( size_t k=j+1; k < atoms.Count(); k++ ) {
-          TTetrahedron& th = tetrahedra.AddNew( olxstr(xa->Atom().GetLabel() ) << '-'
-                 << atoms[i]->GetLabel() << '-'
-                 << atoms[j]->GetLabel() << '-'
-                 << atoms[k]->GetLabel()               );
-          th.AddPoint( xa->Atom().crd() );
-          th.AddPoint( atoms[i]->crd() );
-          th.AddPoint( atoms[j]->crd() );
-          th.AddPoint( atoms[k]->crd() );
+  bool normalise = Options.Contains('n');
+  for( size_t i=0; i < xatoms.Count(); i++ )  {
+    TSAtomPList atoms;
+    for( size_t j=0; j < xatoms[i]->Atom().NodeCount(); j++ ) {
+      TSAtom& A = xatoms[i]->Atom().Node(j);
+      if( A.IsDeleted() || (A.GetAtomInfo() == iQPeakIndex ) )
+        continue;
+      atoms.Add(A);
+    }
+    if( atoms.Count() < 3 ) continue;
+    if( normalise )
+      TBasicApp::GetLog() << (olxstr("Current atom: ") << xatoms[i]->Atom().GetLabel() << 
+      " (volumes for normalised bonds)\n");
+    else
+      TBasicApp::GetLog() << (olxstr("Current atom: ") << xatoms[i]->Atom().GetLabel() << '\n');
+    if( atoms.Count() == 3 )  {
+      double sa = Angle(atoms[0]->crd(), xatoms[i]->Atom().crd(), atoms[1]->crd());
+      sa += Angle(atoms[0]->crd(), xatoms[i]->Atom().crd(), atoms[2]->crd());
+      sa += Angle(atoms[1]->crd(), xatoms[i]->Atom().crd(), atoms[2]->crd());
+      TBasicApp::GetLog() << (olxstr("Sum of angles is ") << olxstr::FormatFloat(3,sa) << '\n' );
+      double v;
+      if( normalise )  {
+        v = TetrahedronVolume(
+        xatoms[i]->Atom().crd(), 
+        xatoms[i]->Atom().crd() + (atoms[0]->crd()-xatoms[i]->Atom().crd()).Normalise(), 
+        xatoms[i]->Atom().crd() + (atoms[1]->crd()-xatoms[i]->Atom().crd()).Normalise(), 
+        xatoms[i]->Atom().crd() + (atoms[2]->crd()-xatoms[i]->Atom().crd()).Normalise());
+      }
+      else
+        v = TetrahedronVolume(xatoms[i]->Atom().crd(), atoms[0]->crd(), atoms[1]->crd(), atoms[2]->crd());
+      TBasicApp::GetLog() << (olxstr("The tetrahedron volume is ") << olxstr::FormatFloat(3,v) << '\n' );
+    }
+    else if( atoms.Count() == 4 )  {
+      double v;
+      if( normalise )  {
+        v = TetrahedronVolume(
+        xatoms[i]->Atom().crd() + (atoms[0]->crd()-xatoms[i]->Atom().crd()).Normalise(), 
+        xatoms[i]->Atom().crd() + (atoms[1]->crd()-xatoms[i]->Atom().crd()).Normalise(), 
+        xatoms[i]->Atom().crd() + (atoms[2]->crd()-xatoms[i]->Atom().crd()).Normalise(), 
+        xatoms[i]->Atom().crd() + (atoms[3]->crd()-xatoms[i]->Atom().crd()).Normalise());
+      }
+      else
+        v = TetrahedronVolume(atoms[0]->crd(), atoms[1]->crd(), atoms[2]->crd(), atoms[3]->crd());
+      TBasicApp::GetLog() << (olxstr("The tetrahedron volume is ") << olxstr::FormatFloat(3,v) << '\n' );
+    }
+    else  {
+      TTypeList<helper_Tetrahedron> tetrahedra;
+      for( size_t i1=0; i1 < atoms.Count(); i1++ ) {
+        for( size_t i2=i1+1; i2 < atoms.Count(); i2++ ) {
+          for( size_t i3=i2+1; i3 < atoms.Count(); i3++ ) {
+            helper_Tetrahedron& th = tetrahedra.AddNew(olxstr(xatoms[i]->Atom().GetLabel()) << '-'
+              << atoms[i1]->GetLabel() << '-' << atoms[i2]->GetLabel() << '-' << atoms[i3]->GetLabel());
+            if( normalise )  {
+              th.AddPoint(xatoms[i]->Atom().crd());
+              th.AddPoint(xatoms[i]->Atom().crd() + (atoms[i1]->crd()-xatoms[i]->Atom().crd()).Normalise());
+              th.AddPoint(xatoms[i]->Atom().crd() + (atoms[i2]->crd()-xatoms[i]->Atom().crd()).Normalise());
+              th.AddPoint(xatoms[i]->Atom().crd() + (atoms[i3]->crd()-xatoms[i]->Atom().crd()).Normalise());
+            }
+            else  {
+              th.AddPoint(xatoms[i]->Atom().crd());
+              th.AddPoint(atoms[i1]->crd());
+              th.AddPoint(atoms[i2]->crd());
+              th.AddPoint(atoms[i3]->crd());
+            }
+          }
         }
       }
+      const size_t thc = (atoms.Count()-2)*2;
+      tetrahedra.QuickSorter.Sort<TComparableComparator>(tetrahedra);
+      for( size_t j=0; j < tetrahedra.Count(); j++ )  {
+        TBasicApp::GetLog() << (olxstr("Tetrahedron ") << j+1 <<  ' ' << tetrahedra[j].GetName() 
+          << " V = " << tetrahedra[j].GetVolume() << '\n');
+      }
+      while(  tetrahedra.Count() > thc )
+        tetrahedra.Delete(0);
+      double v = 0;
+      for( size_t j=0; j < tetrahedra.Count(); j++ )
+        v += tetrahedra[j].GetVolume();
+      TBasicApp::GetLog() << ( olxstr("The sum of volumes of ") << thc << " largest tetrahedra is " << olxstr::FormatFloat(3,v) << '\n' );
     }
   }
-  const size_t thc = (atoms.Count()-2)*2;
-
-  TTypeList<TTetrahedron>::QuickSorter.SortSF( tetrahedra, &ThSort );
-  bool removed = false;
-  while(  tetrahedra.Count() > thc )  {
-    TBasicApp::GetLog() << ( olxstr("Removing tetrahedron ") <<  tetrahedra[0].GetName() << " with volume " << tetrahedra[0].GetVolume() << '\n' );
-    tetrahedra.Delete(0);
-    removed = true;
-  }
-  double v = 0;
-  for( size_t i=0; i < tetrahedra.Count(); i++ )
-    v += tetrahedra[i].GetVolume();
-
-  if( removed )
-    TBasicApp::GetLog() << ( olxstr("The volume for remaining tetrahedra is ") << olxstr::FormatFloat(3,v) << '\n' );
-  else
-    TBasicApp::GetLog() << ( olxstr("The tetrahedra volume is ") << olxstr::FormatFloat(3,v) << '\n' );
 }
 //..............................................................................
 void TMainForm::funTranslatePhrase(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal( TranslatePhrase(Params[0]) );
+  E.SetRetVal(TranslatePhrase(Params[0]));
 }
 //..............................................................................
 void TMainForm::funCurrentLanguageEncoding(const TStrObjList& Params, TMacroError &E) {

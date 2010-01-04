@@ -252,6 +252,17 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
       pw.drawQuads(parent.BondProjF, parent.BondProjT, 16, &PSWriter::fill);
     else
       pw.drawQuads(parent.BondProjF, parent.BondProjT, &PSWriter::fill);
+
+    // renders an intersection bond and ellipsoid ellipse
+    //if( !atom_a.IsSpherical() && atom_a.IsSolid() )  {
+    //  pw.color(0xff);
+    //  mat3f pm = proj_mat;
+    //  pm[0].Normalise();
+    //  pm[1].Normalise();
+    //  pm[2].Normalise();
+    //  pm *= *atom_a.p_ielpm;
+    //  pw.drawEllipse(NullVec, pm);
+    //}
   }
 }
 

@@ -836,7 +836,7 @@ v-[grow] use user provided delta for connectivity analysis, default 2A",
 
   this_InitMacroD(Match, "s-subgraph match&;n-naming. If the value a symbol [or set of]\
  this is appended to the label, '$xx' replaces the symbols after the atom type symbol with xx,\
- leving the ending, '-xx' - changes the ending of the label with xx&;a-align&;\
+ leaving the ending, '-xx' - changes the ending of the label with xx&;a-align&;\
 i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fpOne|fpTwo, "Fragment matching, alignment and label transfer routine");
   this_InitMacroD(Conn, EmptyString, fpAny^fpNone, "Changes provided atom(s) connectivity (only until next connectivity modifying operation for now). First parameter is the new connectivity");
   this_InitMacroD(AddBond, EmptyString, fpAny, "Adds specified bond to the connectivity table");
@@ -844,7 +844,7 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
   this_InitMacro(ShowWindow, ,fpOne|fpTwo);
   
   this_InitMacro(DelOFile, ,fpOne);
-  this_InitMacro(CalcVol, cs, fpOne);
+  this_InitMacroD(CalcVol, "n-normalises bonds before the calculation&;cs-do not clear the selection", fpNone|fpOne, "Calculates tetrahedron or bipyramidal shape volume for given (selected) atom");
 
   this_InitMacroD(Schedule, "r-repeatable", fpAny^(fpNone|fpOne),
 "Schedules a particular macro (second argument) to be executed within provided\
