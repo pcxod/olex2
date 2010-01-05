@@ -42,6 +42,11 @@ double TNetwork_FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAt
     sumA += atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetAtomInfo().GetMr();
     centB += crds[i].GetB()*atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetAtomInfo().GetMr();
     sumB += atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetAtomInfo().GetMr();
+    // unit weights give the figures like XP or Mercury (overwise Olex2 gives higher values)
+    //centA += crds[i].GetA()*atoms[i].GetA()->CAtom().GetOccu();
+    //sumA += atoms[i].GetA()->CAtom().GetOccu();
+    //centB += crds[i].GetB()*atoms[i].GetB()->CAtom().GetOccu();
+    //sumB += atoms[i].GetB()->CAtom().GetOccu();
   }
   res.t = centA/sumA;
   _centB = centB/sumB;
