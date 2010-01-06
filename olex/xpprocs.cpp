@@ -6008,6 +6008,37 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TAtomsInfo& ai = TAtomsInfo::GetInstance();
+  for( size_t i=0; i < ai.Count(); i++ )  {
+    cm_Element* e = XElementLib::FindBySymbol(ai.GetAtomInfo(i).GetSymbol());
+    if( e == NULL )  continue;
+    if( e->henke_count == 0 )  continue;
+    TEFile out(olxstr("e:/tmp/henke/henke_") << e->symbol << ".cpp", "w+b");
+    out.Writenl("#include \"../henke.h\"");
+    out.Writenl("#define NOVAL cm_Anomalous_Henke::Undefined");
+    out.Writenl(olxcstr("static const cm_Anomalous_Henke XlibObject(_cm_henke_") << e->symbol << ")[] = {");
+    
+    for( int j=0; j < e->henke_count; j++ )  {
+      olxcstr line("  {");
+      line << e->henke_data[j].energy;
+      if( e->henke_data[j].fp == cm_Anomalous_Henke::Undefined )
+        line << ", NOVAL, ";
+      else
+        line << ", " << e->henke_data[j].fp << ", "; 
+      if( e->henke_data[j].fdp == cm_Anomalous_Henke::Undefined )
+        line << "NOVAL}";
+      else
+        line << e->henke_data[j].fdp << '}';
+      if( (j+1) < e->henke_count )
+        line << ',';
+      out.Writenl(line);
+    }
+    out.Writenl("};");
+    out.Writenl(EmptyString);
+    TBasicApp::GetLog() << olxstr("extern const cm_Anomalous_Henke _cm_henke_") << e->symbol << "[];\n";
+  }
+  
+  return;
   FXApp->SetActiveXFile(0);
   //TAsymmUnit& _au = FXApp->XFile().GetAsymmUnit();
   //TUnitCell& uc = FXApp->XFile().GetUnitCell();
