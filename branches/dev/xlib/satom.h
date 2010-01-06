@@ -1,7 +1,6 @@
 #ifndef __olx_xl_satom_H
 #define __olx_xl_satom_H
 #include "xbase.h"
-#include "atominfo.h"
 #include "catom.h"
 #include "symmat.h"
 #include "typelist.h"
@@ -53,7 +52,6 @@ public:
   TCAtom& CAtom() const {  return *FCAtom; }
   void CAtom(TCAtom& CA);
 
-  void AtomInfo(TBasicAtomInfo& AI);
   const cm_Element& GetType() const {  return FCAtom->GetType(); }
 
   void SetLabel(const olxstr& L)  { FCAtom->SetLabel(L); }

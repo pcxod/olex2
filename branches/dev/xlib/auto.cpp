@@ -512,7 +512,7 @@ int SearchCompareFunc( const TAutoDBNode* a, const TAutoDBNode* b )  {
 TAutoDB* TAutoDB::Instance = NULL;
 
 
-TAutoDB::TAutoDB(TXFile& xfile, ALibraryContainer& lc) : XFile(xfile), AtomsInfo(TAtomsInfo::GetInstance())  {
+TAutoDB::TAutoDB(TXFile& xfile, ALibraryContainer& lc) : XFile(xfile)  {
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "duplicated object instance");
   Instance = this;
@@ -680,7 +680,7 @@ TAutoDBNet* TAutoDB::BuildSearchNet( TNetwork& net, TSAtomPList& cas )  {
   for( size_t i=0; i < net.NodeCount(); i++ )
     net.Node(i).SetTag(1);
   for( size_t i=0; i < net.NodeCount(); i++ )  {
-//    if( net.Node(i).GetAtomInfo() != iQPeakIndex &&
+//    if( net.Node(i).GetType() != iQPeakZ &&
     if( net.Node(i).GetType() != iHydrogenZ ) {
       netItem = new TTmpNetData;
       netItem->neighbours = new TTypeList<AnAssociation2<TCAtom*, vec3d> >;
@@ -929,8 +929,8 @@ void TAutoDB::AnalyseStructure(const olxstr& lastFileName, TLattice& latt,
   LastStat = stat;
 }
 //..............................................................................
-int SortGuessListByCount(const AnAssociation3<double, TBasicAtomInfo*, int>& a,
-                         const AnAssociation3<double, TBasicAtomInfo*, int>& b )  {
+int SortGuessListByCount(const AnAssociation3<double, const cm_Element*, int>& a,
+                         const AnAssociation3<double, const cm_Element*, int>& b )  {
   return a.GetC() - b.GetC();
 }
 //..............................................................................
@@ -1081,7 +1081,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
   }
 
   TTypeList< TGuessCount > guesses;
-  guesses.SetCapacity( sn_count);
+  guesses.SetCapacity(sn_count);
   for( size_t i=0; i < sn_count; i++ )  {
     sn->Node(i).SetTag(-1);
     sn->Node(i).SetId(0);

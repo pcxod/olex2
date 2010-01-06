@@ -699,7 +699,6 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       max_d = 2.9;
   }
   TIntList bais;
-  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   bais.Add(iNitrogenIndex);
   bais.Add(iOxygenIndex);
   bais.Add(iFluorineIndex);
@@ -710,11 +709,11 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( Options.Contains('t') )  {
     TStrList elm(Options.FindValue('t'), ',');
     for( size_t i=0; i < elm.Count(); i++ )  {
-      TBasicAtomInfo* bai = AtomsInfo.FindAtomInfoBySymbol(elm[i]);
-      if( bai == NULL )
+      cm_Element* e = XElementLib::FindBySymbol(elm[i]);
+      if( e == NULL )
         TBasicApp::GetLog() << (olxstr("Unknown element type: ") << elm[i] << '\n');
-      else if( bais.IndexOf(bai->GetIndex()) == InvalidIndex )
-          bais.Add(bai->GetIndex());
+      else if( bais.IndexOf(e->index) == InvalidIndex )
+        bais.Add(e->index);
     }
   }
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
@@ -833,7 +832,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           int afix = TXlConGen::ShelxToOlex(Hfix, AE);
           if( afix != -1 )  {
             TCAtomPList generated;
-            xlConGen.FixAtom(AE, afix, TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex), NULL, &generated);
+            xlConGen.FixAtom(AE, afix, XElementLib::GetByIndex(iHydrogenIndex), NULL, &generated);
             if( !generated.IsEmpty() && generated[0]->GetParentAfixGroup() != NULL ) // hack to get desired Hfix...
               generated[0]->GetParentAfixGroup()->SetAfix(Hfix);
           }
@@ -871,7 +870,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
             //
             int afix = TXlConGen::ShelxToOlex(Hfix, AE);
             if( afix != -1 )  {
-              xlConGen.FixAtom(AE, afix, TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex), NULL, &generated);
+              xlConGen.FixAtom(AE, afix, XElementLib::GetByIndex(iHydrogenIndex), NULL, &generated);
               for( size_t j=0; j < generated.Count(); j++ )  {
                 generated[j]->SetPart( parts[i] );
                 rm.Vars.SetParam(*generated[j], catom_var_name_Sof, occu[i]);
@@ -1703,7 +1702,6 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     eg = &xapp.XFile().GetRM().ExyzGroups.New();
     eg->Add(atoms[0]->CAtom());
   }
-  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   RefinementModel& rm = xapp.XFile().GetRM();
   for( size_t i=0; i < Cmds.Count(); i++ )  {
     cm_Element* elm = XElementLib::FindBySymbol(Cmds[i]);
@@ -1906,15 +1904,14 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     E.ProcessingError(__OlxSrcInfo, "no atoms provided" );
     return;
   }
-  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   TStrList output;
   ElementPList Exceptions;
-  Exceptions.Add(XElementLib::FindBySymbol("Q"));
-  Exceptions.Add(XElementLib::FindBySymbol("H"));
+  Exceptions.Add(XElementLib::GetByIndex(iQPeakIndex));
+  Exceptions.Add(XElementLib::GetByIndex(iHydrogenIndex));
   if( Options.Contains('q') )
-    Exceptions.Remove(XElementLib::FindBySymbol("Q"));
+    Exceptions.Remove(XElementLib::GetByIndex(iQPeakIndex));
   if( Options.Contains('h') )
-    Exceptions.Remove(XElementLib::FindBySymbol("H"));
+    Exceptions.Remove(XElementLib::GetByIndex(iHydrogenIndex));
 
   TSAtom& SA = *atoms[0];
   TLattice& latt = TXApp::GetInstance().XFile().GetLattice();
@@ -3525,19 +3522,18 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroE
   chne.LoadFromExpression(Cmds[0]);
   TStrList solvents;
   olxdict<short, double, TPrimitiveComparator> obs, calc;
-  TAtomsInfo& ai = TAtomsInfo::GetInstance();
   for( size_t i=1; i < Cmds.Count(); i++ )  {
     size_t si = Cmds[i].IndexOf(':');
     if( si == InvalidIndex )
       solvents.Add(Cmds[i]);
     else  {
-      TBasicAtomInfo* bai = ai.FindAtomInfoBySymbol(Cmds[i].SubStringTo(si));
-      if( bai == NULL )  {
+      cm_Element* elm = XElementLib::FindBySymbol(Cmds[i].SubStringTo(si));
+      if( elm == NULL )  {
         Error.ProcessingError(__OlxSrcInfo, olxstr("Invalid element: ") << Cmds[i]);
         return;
       }
-      obs(bai->GetIndex(), Cmds[i].SubStringFrom(si+1).ToDouble()/100);
-      calc(bai->GetIndex(), 0);
+      obs(elm->index, Cmds[i].SubStringFrom(si+1).ToDouble()/100);
+      calc(elm->index, 0);
     }
   }
   if( solvents.IsEmpty() )  {
@@ -3553,8 +3549,8 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroE
   for( size_t i=0; i < obs.Count(); i++ )  {
     p[i] = calc.GetValue(i) - obs.GetValue(i)*Mw;
     chn[0][i] = calc.GetValue(i);
-    fit_info_from << ai.GetAtomInfo(calc.GetKey(i)).GetSymbol() << ':' << olxstr::FormatFloat(2, calc.GetValue(i)*100/Mw);
-    fit_info_to << ai.GetAtomInfo(obs.GetKey(i)).GetSymbol() << ':' << olxstr::FormatFloat(2, obs.GetValue(i)*100);
+    fit_info_from << XElementLib::GetByIndex(calc.GetKey(i)).symbol << ':' << olxstr::FormatFloat(2, calc.GetValue(i)*100/Mw);
+    fit_info_to << XElementLib::GetByIndex(obs.GetKey(i)).symbol << ':' << olxstr::FormatFloat(2, obs.GetValue(i)*100);
     if( (i+1) < calc.Count() )  {
        fit_info_to << ' ';
        fit_info_from << ' ';
@@ -3606,13 +3602,12 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroE
     tab.ColName(0) = "Formula";
     tab.ColName(1) = "CHN";
     tab.ColName(2) = "Deviation";
-    TAtomsInfo& ai = TAtomsInfo::GetInstance();
     for( size_t i=0; i < list.Count(); i++ )  {
       tab[i][0] = list[i].formula;
       chne.LoadFromExpression(list[i].formula);
       const double M = chne.CHN(calc);
       for( size_t j=0; j < calc.Count(); j++ )  {
-        tab[i][1] << ai.GetAtomInfo(calc.GetKey(j)).GetSymbol() << ':' << olxstr::FormatFloat(2, calc.GetValue(j)*100/M);
+        tab[i][1] << XElementLib::GetByIndex(calc.GetKey(j)).symbol << ':' << olxstr::FormatFloat(2, calc.GetValue(j)*100/M);
         if( (j+1) < calc.Count() )
           tab[i][1] << ' ';
       }

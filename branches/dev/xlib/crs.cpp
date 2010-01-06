@@ -127,7 +127,6 @@ bool TCRSFile::Adopt(TXFile& f)  {
   GetAsymmUnit().Axes() = f.GetAsymmUnit().Axes();
   GetAsymmUnit().ChangeSpaceGroup(f.GetLastLoaderSG());
   SGInitialised = true;
-  TStrPObjList<olxstr, TBasicAtomInfo*> BasicAtoms;
   Title = f.LastLoader()->GetTitle();
   GetRM().SetHKLSource(f.LastLoader()->GetRM().GetHKLSource());
   return true;

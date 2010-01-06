@@ -192,7 +192,7 @@ public:
   // destructor
   TXAtom_BaiEvaluator()  {  ;  }
   // evaluator function
-  TBasicAtomInfo *GetTBasicAtomInfo()  {return &Parent->GetTXAtom()->Atom().GetAtomInfo();  }
+  const cm_Element *GetType()  {return &Parent->GetTXAtom()->Atom().GetType();  }
 };
 // evaluator implementation for scalar peak
 class TXAtom_PeakEvaluator: public IDoubleEvaluator
@@ -323,11 +323,11 @@ public:
   // constructor
   TXAtom_TypeEvaluator(ITXAtom_DataProvider* parent) { Parent = parent;  }
   // virtual method
-  IEvaluator *NewInstance( IDataProvider *dp)  {  return new TXAtom_TypeEvaluator( (ITXAtom_DataProvider*)dp);  }
+  IEvaluator *NewInstance(IDataProvider *dp)  {  return new TXAtom_TypeEvaluator( (ITXAtom_DataProvider*)dp);  }
   // destructor
   TXAtom_TypeEvaluator()  {  ;  }
   // evaluator function
-  const olxstr& EvaluateString() const {  return Parent->GetTXAtom()->Atom().GetAtomInfo().GetSymbol();  }
+  const olxstr& EvaluateString() const {  return Parent->GetTXAtom()->Atom().GetType().symbol;  }
 };
 // evaluator implementation for complex B
 class TXBond_BEvaluator: public ITSAtom_DataProvider
@@ -349,7 +349,7 @@ public:
   // constructor
   TXBond_DeletedEvaluator(ITXBond_DataProvider* parent) { Parent = parent;  }
   // virtual method
-  IEvaluator *NewInstance( IDataProvider *dp)  {  return new TXBond_DeletedEvaluator( (ITXBond_DataProvider*)dp);  }
+  IEvaluator *NewInstance(IDataProvider *dp)  {  return new TXBond_DeletedEvaluator( (ITXBond_DataProvider*)dp);  }
   // destructor
   TXBond_DeletedEvaluator()  {  ;  }
   // evaluator function

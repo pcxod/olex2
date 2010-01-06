@@ -229,7 +229,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
         AU->CellToCartesian(v);
         const double d = v.Length();
         if( d < tolerance )  {
-          if( Atoms[ind]->GetAtomInfo() == iQPeakIndex )  {
+          if( Atoms[ind]->GetType() == iQPeakZ )  {
             Atoms[ind]->SetDeleted(true);
             break;
           }
@@ -252,7 +252,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
         }
         if( Atoms[i]->GetExyzGroup() != NULL && Atoms[i]->GetExyzGroup() == Atoms[ind]->GetExyzGroup() ) 
           continue;  
-        if( Atoms[ind]->GetAtomInfo() == iQPeakIndex )  {
+        if( Atoms[ind]->GetType() == iQPeakZ )  {
           Atoms[ind]->SetDeleted(true);
           break;
         }
@@ -563,7 +563,7 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
   for( size_t i=0; i < atom.NodeCount(); i++ )  {
     TSAtom& a = atom.Node(i);
     if( a.IsDeleted() ) continue;
-    if( !IncludeQ && a.GetAtomInfo() == iQPeakIndex )  continue;
+    if( !IncludeQ && a.GetType() == iQPeakZ )  continue;
     if( part == DefNoPart || (a.CAtom().GetPart() == 0 || a.CAtom().GetPart() == part) )  {
       if( TNetwork::HaveSharedMatrix(atom, a) )  // put only the 'uniq' entries
         envi.Add( a.CAtom(), I, a.crd() );
@@ -571,7 +571,7 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
   }
   for( size_t i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
     TCAtom& A = atom.CAtom().GetAttachedAtom(i);
-    if( A.IsDeleted() || (!IncludeQ && A.GetAtomInfo() == iQPeakIndex) )  continue;
+    if( A.IsDeleted() || (!IncludeQ && A.GetType() == iQPeakZ) )  continue;
     if( A.GetPart() < 0 || atom.CAtom().GetPart() < 0 )
       continue;
 
@@ -667,12 +667,12 @@ void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
   for( size_t i=0; i < atom.NodeCount(); i++ )  {
     TSAtom& A = atom.Node(i);
     if( A.IsDeleted() ) continue;
-    if( A.GetAtomInfo() == iQPeakIndex && TNetwork::HaveSharedMatrix(A, atom) )
+    if( A.GetType() == iQPeakZ && TNetwork::HaveSharedMatrix(A, atom) )
       envi.Add(A.CAtom(), I, A.crd());
   }
   for( size_t i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
     TCAtom& A = atom.CAtom().GetAttachedAtom(i);
-    if( A.IsDeleted() || A.GetAtomInfo() != iQPeakIndex )  continue;
+    if( A.IsDeleted() || A.GetType() != iQPeakZ )  continue;
 
     smatd* m = GetClosest(atom.ccrd(), A.ccrd(), false);
     if( m == NULL )
@@ -701,16 +701,14 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
   const size_t ac = au.AtomCount();
   for( size_t i=0; i < ac; i++ )  {
     TCAtom& A = au.GetAtom(i);
-    if( A.GetAtomInfo() == iQPeakIndex || A.IsDeleted() )  continue;
+    if( A.GetType() == iQPeakZ || A.IsDeleted() )  continue;
 
     bool considerI =  (A != ae.GetBase().CAtom());
     // O and N and S for a while
-    if( !(A.GetAtomInfo() == iOxygenIndex ||
-          A.GetAtomInfo() == iNitrogenIndex ||
-          A.GetAtomInfo() == iSulphurIndex) )  continue;
+    if( !(A.GetType() == iOxygenZ || A.GetType() == iNitrogenZ || A.GetType() == iSulphurZ) )
+      continue;
 
     smatd_list& ms = *GetInRange( ae.GetBase().ccrd(), A.ccrd(), 2.9, considerI );
-
     for( size_t j=0; j < ms.Count(); j++ )  {
       vec3d v = ms[j] * A.ccrd();
       au.CellToCartesian(v);
@@ -778,7 +776,7 @@ TCAtom* TUnitCell::FindCAtom(const vec3d& center) const  {
 }
 //..............................................................................
 void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val, 
-                                  size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii,
+                                  size_t* structurePoints, ElementRadii* radii,
                                   const TCAtomPList* _template )  {
 
   TBasicApp::GetLog() << "Building structure map...\n";
@@ -798,18 +796,18 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
   TPSTypeList<int, double > scatterers;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).IsDeleted() )  continue;
-    size_t ind = scatterers.IndexOfComparable( au.GetAtom(i).GetAtomInfo().GetIndex() );
+    size_t ind = scatterers.IndexOfComparable(au.GetAtom(i).GetType().index);
     if( ind != InvalidIndex )  continue;
-    double r = au.GetAtom(i).GetAtomInfo().GetRad2() + delta;
+    double r = au.GetAtom(i).GetType().r_sfil + delta;
     if( radii != NULL )  {
-      size_t b_i = radii->IndexOfComparable( &au.GetAtom(i).GetAtomInfo() );
+      size_t b_i = radii->IndexOf(&au.GetAtom(i).GetType());
       if( b_i != InvalidIndex )
-        r = radii->GetObject(b_i) + delta;
+        r = radii->GetValue(b_i) + delta;
     }
-    scatterers.Add(au.GetAtom(i).GetAtomInfo().GetIndex(), r);
+    scatterers.Add(au.GetAtom(i).GetType().index, r);
   }
   for( size_t i=0; i < allAtoms.Count(); i++ )  {
-    const double sr = scatterers[ allAtoms[i].GetB()->GetAtomInfo().GetIndex() ];
+    const double sr = scatterers[allAtoms[i].GetB()->GetType().index];
     allAtoms[i].C() = sr*sr;
     au.CellToCartesian(allAtoms[i].A());
   }
@@ -847,10 +845,10 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
   TBasicApp::GetLog() << '\r' << "Done\n";
   TBasicApp::GetInstance().Update();
 }
-void TUnitCell::BuildStructureMapEx( TArray3D<short>& map, double resolution, double delta, short val, 
-                                  size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, 
-                                  double>* radii, const TCAtomPList* _template)  {
-
+void TUnitCell::BuildStructureMapEx(TArray3D<short>& map, double resolution, double delta, short val, 
+                                  size_t* structurePoints, ElementRadii* radii,
+                                  const TCAtomPList* _template)
+{
   throw TNotImplementedException(__OlxSourceInfo);
   //TTypeList< AnAssociation2<vec3d,TCAtom*> > allAtoms;
   //vec3d center;

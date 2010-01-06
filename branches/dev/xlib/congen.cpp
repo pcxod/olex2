@@ -53,18 +53,18 @@ void AConstraintGenerator::DoGenerateAtom(TCAtomPList& created, TAsymmUnit& au,
     if( IncLabel )  {
       size_t j = i;
       olxstr lbl = (StartingName + (char)('a' + j));
-      CA.Label() = au.CheckLabel(&CA, lbl);
+      CA.SetLabel(au.CheckLabel(&CA, lbl), false);
     }
     else
-      CA.Label() = au.CheckLabel(&CA, StartingName);
-    CA.SetAtomInfo(TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex));
+      CA.SetLabel(au.CheckLabel(&CA, StartingName), false);
+    CA.SetType(XElementLib::GetByIndex(iHydrogenIndex));
     CA.ccrd() = v;
     created.Add(CA);
   }
 }
 
 void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
-     const short Group, const TBasicAtomInfo& atomType, TAtomEnvi* pivoting )
+     const short Group, const cm_Element& atomType, TAtomEnvi* pivoting )
 {
   TAsymmUnit& au = *envi.GetBase().CAtom().GetParent();
   mat3d M, M1;
@@ -81,8 +81,8 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
   vec3d_list crds;
   olxstr tmp;
   double dis;
-  tmp = atomType.GetSymbol();
-  tmp << envi.GetBase().GetLabel().SubStringFrom( envi.GetBase().GetAtomInfo().GetSymbol().Length() );
+  tmp = atomType.symbol;
+  tmp << envi.GetBase().GetLabel().SubStringFrom(envi.GetBase().GetType().symbol.Length());
   if( tmp.Length() > 3 )
     tmp.SetLength(3);
 
@@ -90,7 +90,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
     case fgCH3:
       dis = Distances[GenId(fgCH3,1)];
       if( envi.Count() == 1 )  {
-        NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom( envi.GetCAtom(0) );
+        NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom(envi.GetCAtom(0));
         envi.GetBase().GetNetwork().GetLattice().GetUnitCell().GetAtomEnviList(*NA, NEnvi);
         NEnvi.Exclude( envi.GetBase().CAtom() );
         // best approximation, though not really required (one atom in plane of the subs and two - out)...
@@ -173,7 +173,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
         dis = Distances[GenId(fgCH1,3)];
         for( size_t i=0; i < envi.Count(); i++ )  {
           if( envi.GetCrd(i).DistanceTo( envi.GetBase().crd() ) > 1.95 &&
-            envi.GetBAI(i) != 34 )  {  // bromine
+            envi.GetType(i) != iBromineZ )  {  // bromine
             AnglesEqual = false;
             break;
           }
@@ -267,15 +267,15 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
         }
         else  {
           // Ar-B(OH)2 ?
-          if( envi.GetBAI(0).GetIndex() == iBoronIndex )  {
+          if( envi.GetType(0) == iBoronZ )  {
             NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom( envi.GetCAtom(0) );
             envi.GetBase().GetNetwork().GetLattice().GetUnitCell().GetAtomEnviList(*NA, NEnvi);
             NEnvi.Exclude( envi.GetBase().CAtom() );
             if( NEnvi.Count() == 2 )  { // ArC-BO
             /* in this case the could be cis or trans, put them cis as in Ar-B-O-H ...*/
-              if( NEnvi.GetBAI(0).GetIndex() == iOxygenIndex ||  // make sure deal with the right one
-                  NEnvi.GetBAI(1).GetIndex() == iOxygenIndex )  {
-                if( NEnvi.GetBAI(0).GetIndex() == iOxygenIndex )
+              if( NEnvi.GetType(0) == iOxygenZ ||  // make sure deal with the right one
+                  NEnvi.GetType(1) == iOxygenZ )  {
+                if( NEnvi.GetType(0) == iOxygenZ )
                   Vec1 = NEnvi.GetCrd(1);
                 else
                   Vec1 = NEnvi.GetCrd(0);

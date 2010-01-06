@@ -1,9 +1,6 @@
-#ifndef envilistH
-#define envilistH
-
+#ifndef __olx_xl_envilist_H
+#define __olx_xl_envilist_H
 #include "xbase.h"
-
-#include "atominfo.h"
 #include "symmat.h"
 #include "typelist.h"
 #include "tptrlist.h"

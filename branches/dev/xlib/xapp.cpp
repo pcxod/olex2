@@ -21,8 +21,6 @@
 TXApp::TXApp(const olxstr &basedir, ASelectionOwner* selOwner) : 
     SelectionOwner(selOwner), TBasicApp(basedir), Library(EmptyString, this)  {
   try  {
-    if( !TAtomsInfo::IsInitialised() )
-      TEGC::AddP(new TAtomsInfo(GetBaseDir() + "ptablex.dat"));
     if( !TSymmLib::IsInitialised() )
       TEGC::AddP(new TSymmLib(GetBaseDir() + "symmlib.xld"));
   }
@@ -475,7 +473,7 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
 }
 //..............................................................................
 short TXApp::CalcVoid(TArray3D<short>& map, double extraR, short val, size_t* structurePoints, 
-                      vec3d& voidCenter, TPSTypeList<TBasicAtomInfo*, double>* radii)  {
+                      vec3d& voidCenter, ElementRadii* radii)  {
   XFile().GetLattice().GetUnitCell().BuildStructureMap(map, extraR, val, structurePoints, radii);
   return MapUtil::AnalyseVoids(map.Data, (uint16_t)map.Length1(), (uint16_t)map.Length2(), (uint16_t)map.Length3(), voidCenter);
 }

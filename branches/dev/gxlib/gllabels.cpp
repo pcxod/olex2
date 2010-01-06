@@ -62,9 +62,9 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
   for( size_t i=0; i < ac; i++ )  {
     const TXAtom& XA = app.GetAtom(i);
     if( XA.IsDeleted() || (!XA.IsVisible()))  continue;
-    if( (Mode & lmHydr) == 0 && (XA.Atom().GetAtomInfo() == iHydrogenIndex || XA.Atom().GetAtomInfo() == iDeuteriumIndex) )  
+    if( (Mode & lmHydr) == 0 && (XA.Atom().GetType() == iHydrogenZ) )  
       continue;
-    if( !(Mode & lmQPeak) && (XA.Atom().GetAtomInfo() == iQPeakIndex ) )  continue;
+    if( !(Mode & lmQPeak) && (XA.Atom().GetType() == iQPeakZ) )  continue;
     const TCAtom& ca = XA.Atom().CAtom();
     olxstr Tmp(EmptyString, 48);
     if( Mode & lmLabels )  {
@@ -98,7 +98,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
         }
       }
     }
-    if( (Mode & lmQPeakI) && (XA.Atom().GetAtomInfo() == iQPeakIndex ) )  {
+    if( (Mode & lmQPeakI) && (XA.Atom().GetType() == iQPeakZ) )  {
       if( !Tmp.IsEmpty() )  Tmp << ", ";
       Tmp << olxstr::FormatFloat(1, ca.GetQPeak());
     }

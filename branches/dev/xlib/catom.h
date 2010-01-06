@@ -1,7 +1,6 @@
 #ifndef __olx_xl_catom_H
 #define __olx_xl_catom_H
 #include "xbase.h"
-//#include "atominfo.h"
 #include "chemdata.h"
 #include "symmat.h"
 #include "evpoint.h"

@@ -62,7 +62,6 @@ void TCAtom::SetLabel(const olxstr& L, bool validate)  {
   if( validate )  {
     if( L.IsEmpty() )
       throw TInvalidArgumentException(__OlxSourceInfo, "empty label");
-    TAtomsInfo& AI = TAtomsInfo::GetInstance();
     cm_Element *atype = XElementLib::FindBySymbolEx(L);
     if( atype == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: '") << L << '\'' );
@@ -81,7 +80,7 @@ void TCAtom::SetLabel(const olxstr& L, bool validate)  {
 }
 //..............................................................................
 void TCAtom::SetType(const cm_Element& t)  {
-  if( *Type != t )  {
+  if( Type != &t )  {
     Type = &t;
     FParent->_OnAtomTypeChanged(*this);
   }
@@ -110,7 +109,7 @@ void TCAtom::Assign(const TCAtom& S)  {
   else
     UisoOwner = NULL;
   Label   = S.Label;
-  if( *Type != S.GetType() )  {
+  if( Type != &S.GetType() )  {
     Type = &S.GetType();
     FParent->_OnAtomTypeChanged(*this);
   }

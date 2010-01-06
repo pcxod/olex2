@@ -22,7 +22,7 @@ typedef TTypeList<TSPoint> TPolySerie;
 struct TPMember  {
   size_t Id;
   int Extent;
-  void *Data;
+  const void* Data;
   bool Used;
   TPMember() : Id(0), Extent(1), Data(NULL) {}
   bool operator == (const TPMember& P) const {

@@ -43,7 +43,7 @@ int TLattice_AtomsSortByDistance(const TSAtom* A1, const TSAtom* A2)  {
 //---------------------------------------------------------------------------
 // TLattice function bodies
 //---------------------------------------------------------------------------
-TLattice::TLattice() : AtomsInfo(TAtomsInfo::GetInstance()),
+TLattice::TLattice() :
   OnStructureGrow(Actions.New("STRGEN")),
   OnStructureUniq(Actions.New("STRUNIQ")),
   OnDisassemble(Actions.New("DISASSEBLE"))
@@ -908,7 +908,7 @@ void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool Include
     for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )    {
       TCAtom& CA = GetAsymmUnit().GetAtom(i);
       if( CA.IsDeleted() )  continue;
-      if( !IncludeQ && CA.GetType() == iQPeakIndex )  continue;
+      if( !IncludeQ && CA.GetType() == iQPeakZ )  continue;
       TSAtom* A = L.Add(new TSAtom(Network));
       A->CAtom(CA);
       A->SetEllipsoid(&GetUnitCell().GetEllipsoid(0, CA.GetId())); // ellipsoid for the identity matrix
@@ -1338,7 +1338,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
     return false;
   ProcessingAtoms.Add(atom);
 
-  TBasicAtomInfo& HAI = AtomsInfo.GetAtomInfo(iHydrogenIndex);
+  cm_Element& h_elm = XElementLib::GetByIndex(iHydrogenIndex);
   TAtomEnvi AE;
   UnitCell->GetAtomEnviList(atom, AE, false, part);
   if( part == DefNoPart )  {  // check for disorder
@@ -1378,18 +1378,18 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       UnitCell->GetAtomEnviList(*A, NAE, false, part);
       if( A->GetType() == iCarbonZ && NAE.Count() == 2 && d < 1.2)  {
         TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": XCH");
-        cg.FixAtom(AE, fgCH1, HAI, NULL, generated);
+        cg.FixAtom(AE, fgCH1, h_elm, NULL, generated);
       }
       else  {
         if( d > 1.35 )  {
           TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": XCH3");
-          cg.FixAtom(AE, fgCH3, HAI, NULL, generated);
+          cg.FixAtom(AE, fgCH3, h_elm, NULL, generated);
         }
         else  {
           if( d < 1.25 )  {
             if( NAE.Count() > 1 ) {
               TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": X=CH2");
-              cg.FixAtom(AE, fgCH2, HAI, NULL, generated);
+              cg.FixAtom(AE, fgCH2, h_elm, NULL, generated);
             }
             else
               TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": possibly X=CH2");
@@ -1409,12 +1409,12 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       double d2 = AE.GetCrd(1).DistanceTo( atom.crd() );
       if(  d1 > db && d2 > db && v < 125 )  {
         TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": XYCH2");
-        cg.FixAtom(AE, fgCH2, HAI, NULL, generated);
+        cg.FixAtom(AE, fgCH2, h_elm, NULL, generated);
       }
       else  {
         if( (d1 < db || d2 < db) && v < 160 )  {
           TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": X(Y=C)H");
-          cg.FixAtom(AE, fgCH1, HAI, NULL, generated);
+          cg.FixAtom(AE, fgCH1, h_elm, NULL, generated);
         }
       }
     }
@@ -1422,7 +1422,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       double v = TetrahedronVolume( atom.crd(), AE.GetCrd(0), AE.GetCrd(1), AE.GetCrd(2) );
       if( v > 0.3 )  {
         TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": XYZCH");
-        cg.FixAtom(AE, fgCH1, HAI, NULL, generated);
+        cg.FixAtom(AE, fgCH1, h_elm, NULL, generated);
       }
     }
     else if( AE.Count() == 5 )  {  // carboranes ...
@@ -1434,7 +1434,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
         }
       if( proceed )  {
         TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": R5CH");
-        cg.FixAtom(AE, fgBH1, HAI, NULL, generated);
+        cg.FixAtom(AE, fgBH1, h_elm, NULL, generated);
       }
     }
   }
@@ -1443,7 +1443,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       double d = AE.GetCrd(0).DistanceTo( atom.crd() );
       if( d > 1.35 )  {
         TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": XNH2");
-        cg.FixAtom(AE, fgNH2, HAI, NULL, generated);
+        cg.FixAtom(AE, fgNH2, h_elm, NULL, generated);
       }
       else  {
         if( d > 1.2 )  {  //else nitrile
@@ -1466,12 +1466,12 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
             d = acos(d)*180/M_PI;
             if( d > 115 && d < 130 )  {
               TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": X=NH2");
-              cg.FixAtom(AE, fgNH2, HAI, &NAE, generated);
+              cg.FixAtom(AE, fgNH2, h_elm, &NAE, generated);
             }
           }
           else  {
             TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": X=NH");
-            cg.FixAtom(AE, fgNH1, HAI, NULL, generated);
+            cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
           }
         }
       }
@@ -1490,23 +1490,23 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
           TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": RN->M");
         else if( (d1 < 1.5 && d1 > 1.35) || (d2 < 1.5 && d2 > 1.35) )  {
           TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": RNH(2)M");
-          cg.FixAtom(AE, fgNH2, HAI, NULL, generated);
+          cg.FixAtom(AE, fgNH2, h_elm, NULL, generated);
         }
         else if( d1 > 1.72 && d2 > 1.72 )  {
           TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": XX'NH");
-          cg.FixAtom(AE, fgNH1, HAI, NULL, generated);
+          cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
         }
       }
       else if( v < 120 && d1 > 1.45 && d2 > 1.45 )  {
         TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": R2NH2+");
-        cg.FixAtom(AE, fgNH2, HAI, NULL, generated);
+        cg.FixAtom(AE, fgNH2, h_elm, NULL, generated);
       }
       else if( v < 120 && (d1 < 1.3 || d2 < 1.3) )
         ;
       else  {
         if( (d1+d2) > 2.70 )  {
           TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": XYNH");
-          cg.FixAtom(AE, fgNH1, HAI, NULL, generated);
+          cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
         }
       }
     }
@@ -1527,11 +1527,11 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       if( (v1+v2+v3) < 350 && d1 > 1.45 && d2 > 1.45 && d3 > 1.45 )  {
         if( d1 > 1.75 || d2 > 1.75 || d3 > 1.75 )  {
           TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": R2HN->M");
-          cg.FixAtom(AE, fgNH1, HAI, NULL, generated);
+          cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
         }
         else  {
           TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": R3NH+");
-          cg.FixAtom(AE, fgNH1, HAI, NULL, generated);
+          cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
         }
       }
     }
@@ -1545,7 +1545,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       if( pivoting.Count() > 0 )
         if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetCAtom(0)), ProcessingAtoms) )
           pivoting.Clear();
-      cg.FixAtom(AE, fgOH2, HAI, &pivoting, generated);
+      cg.FixAtom(AE, fgOH2, h_elm, &pivoting, generated);
     }
     else if( AE.Count() == 1 )  {
       double d = AE.GetCrd(0).DistanceTo( atom.crd() );
@@ -1560,12 +1560,12 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
           if( pivoting.Count() > 0 )
             if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetCAtom(0)), ProcessingAtoms) )
               pivoting.Clear();
-          cg.FixAtom(AE, fgOH1, HAI, &pivoting, generated);
+          cg.FixAtom(AE, fgOH1, h_elm, &pivoting, generated);
         }
         else  if( AE.GetType(0) == iSulphurZ )  {
           if( d > 1.48 )  {
             TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": SOH");
-            cg.FixAtom(AE, fgOH1, HAI, NULL, generated);
+            cg.FixAtom(AE, fgOH1, h_elm, NULL, generated);
           }
         }
         else  if( AE.GetType(0) == iPhosphorusZ )  {
@@ -1577,7 +1577,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
             if( pivoting.Count() > 0 )
               if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetCAtom(0)), ProcessingAtoms) )
                 pivoting.Clear();
-            cg.FixAtom(AE, fgOH1, HAI, &pivoting, generated);
+            cg.FixAtom(AE, fgOH1, h_elm, &pivoting, generated);
           }
         }
         else  if( AE.GetType(0) == iSiliconZ )  {
@@ -1589,7 +1589,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
             if( pivoting.Count() > 0 )
               if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetCAtom(0)), ProcessingAtoms) )
                 pivoting.Clear();
-            cg.FixAtom(AE, fgOH1, HAI, &pivoting, generated);
+            cg.FixAtom(AE, fgOH1, h_elm, &pivoting, generated);
           }
         }
         else  if( AE.GetType(0) == iBoronZ )  {
@@ -1601,7 +1601,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
             if( pivoting.Count() > 0 )
               if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetCAtom(0)), ProcessingAtoms) )
                 pivoting.Clear();
-            cg.FixAtom(AE, fgOH1, HAI, &pivoting, generated);
+            cg.FixAtom(AE, fgOH1, h_elm, &pivoting, generated);
           }
         }
         else  if( AE.GetType(0) == iNitrogenZ )  {
@@ -1613,12 +1613,12 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
             if( pivoting.Count() > 0 )
               if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetCAtom(0)), ProcessingAtoms) )
                 pivoting.Clear();
-            cg.FixAtom(AE, fgOH1, HAI, &pivoting, generated);
+            cg.FixAtom(AE, fgOH1, h_elm, &pivoting, generated);
           }
         }
         else if( d > 1.8 )  {  // coordination bond?
           TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": possibly M-OH2");
-          cg.FixAtom(AE, fgOH2, HAI, NULL, generated);
+          cg.FixAtom(AE, fgOH2, h_elm, NULL, generated);
         }
       }
     }
@@ -1633,7 +1633,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
         (AE.GetCrd(2)-cnt).Normalise() + cnt);
       if( v > 0.1 )  {
         TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": XYZBH");
-        cg.FixAtom(AE, fgBH1, HAI, NULL, generated);
+        cg.FixAtom(AE, fgBH1, h_elm, NULL, generated);
       }
     }
     else if( AE.Count() == 4 )  {
@@ -1653,12 +1653,12 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       }
       if( sumAng*180/M_PI > 700 )  {   //!! not sure it works, lol
         TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": X4BH");
-        cg.FixAtom(AE, fgBH1, HAI, NULL, generated);
+        cg.FixAtom(AE, fgBH1, h_elm, NULL, generated);
       }
     }
     else if( AE.Count() == 5 )  {
       TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": X5BH");
-      cg.FixAtom(AE, fgBH1, HAI, NULL, generated);
+      cg.FixAtom(AE, fgBH1, h_elm, NULL, generated);
     }
   }
   else if( atom.GetType() == iSiliconZ )  {
@@ -1671,12 +1671,12 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
         (AE.GetCrd(2)-cnt).Normalise() + cnt);
       if( v > 0.1 )  {
         TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": XYZSiH");
-        cg.FixAtom(AE, fgSiH1, HAI, NULL, generated);
+        cg.FixAtom(AE, fgSiH1, h_elm, NULL, generated);
       }
     }
     else if( AE.Count() == 2 )  {  // no validation yet...
       TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": XYSiH2");
-      cg.FixAtom(AE, fgSiH2, HAI, NULL, generated);
+      cg.FixAtom(AE, fgSiH2, h_elm, NULL, generated);
     }
   }
   else if( atom.GetType() == iSulphurZ )  {
@@ -1684,7 +1684,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       double d = AE.GetCrd(0).DistanceTo(atom.crd());
       if( d > 1.72 )  {
         TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": CSH");
-        cg.FixAtom(AE, fgSH1, HAI, NULL, generated);
+        cg.FixAtom(AE, fgSH1, h_elm, NULL, generated);
       }
     }
   }
@@ -1694,7 +1694,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
 //..............................................................................
 void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rcont) {
   TTypeList<TSAtomPList> rings;
-  TBasicAtomInfo& HAI = AtomsInfo.GetAtomInfo(iHydrogenIndex);
+  cm_Element& h_elm = XElementLib::GetByIndex(iHydrogenIndex);
   for( size_t i=0; i < FragmentCount(); i++ )
     GetFragment(i).FindRings(rcont, rings);
   TAtomEnvi AE;
@@ -1719,7 +1719,7 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rc
         }
         if( AE.Count() == 2 && rings[i][j]->GetType() == iCarbonZ )  {
           TBasicApp::GetLog().Info(olxstr(rings[i][j]->GetLabel()) << ": X(Y=C)H (ring)");
-          cg.FixAtom(AE, fgCH1, HAI);
+          cg.FixAtom(AE, fgCH1, h_elm);
           rings[i][j]->CAtom().SetHAttached(true);
         }
       }

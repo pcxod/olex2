@@ -134,11 +134,11 @@ public:
   Returns the number of grid points occupied by the structure to structurePoinst if not NULL.
   If _template is provided - only these atoms are used int the calculation
   */
-  void BuildStructureMap( TArray3D<short>& map, double delta, short value, 
-    size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii, const TCAtomPList* _template = NULL );
+  void BuildStructureMap(TArray3D<short>& map, double delta, short value, 
+    size_t* structurePoints, ElementRadii* radii, const TCAtomPList* _template = NULL);
   // for internal tests...
-  void BuildStructureMapEx( TArray3D<short>& map, double resolution, double delta, short value, 
-    size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii, const TCAtomPList* _template = NULL );
+  void BuildStructureMapEx(TArray3D<short>& map, double resolution, double delta, short value, 
+    size_t* structurePoints, ElementRadii* radii, const TCAtomPList* _template = NULL);
 protected:
   // helper function, association should be AnAssociation2+<vec3d,TCAtom*,+>
   template <class Association> 

@@ -399,7 +399,7 @@ of components 1 ... m
   }
   void SetUserFormula(const olxstr& frm, bool mult_z=true)  {
     UserContent.Clear();
-    TAtomsInfo::GetInstance().ParseElementString(frm, UserContent);
+    XElementLib::ParseElementString(frm, UserContent);
     for( size_t i=0; i < UserContent.Count(); i++ )
       UserContent[i].B() *= (mult_z ? aunit.GetZ() : 1.0);
   }

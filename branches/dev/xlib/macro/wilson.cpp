@@ -73,26 +73,23 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
 
   TScattererLib scat_lib(9);
   TTypeList< AnAssociation2<TLibScatterer*, double> > scatterers;
-  TPtrList<const TBasicAtomInfo> bais;
-  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
+  ElementPList elements;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     const TCAtom& ca = au.GetAtom(i);
-    if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  continue;
-    const TBasicAtomInfo& bai = (ca.GetAtomInfo() == iDeuteriumIndex) ? 
-      AtomsInfo.GetAtomInfo(iHydrogenIndex) : ca.GetAtomInfo();
-    size_t ind = bais.IndexOf( &bai );
+    if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
+    size_t ind = elements.IndexOf(&ca.GetType());
     if( ind == InvalidIndex )  {
-      scatterers.AddNew<TLibScatterer*, int>(scat_lib.Find(bai.GetSymbol()), 0);
+      scatterers.AddNew<TLibScatterer*, int>(scat_lib.Find(ca.GetType().symbol), 0);
       ind = scatterers.Count() -1;
       if( scatterers[ind].GetA() == NULL ) {
-        throw TFunctionFailedException(__OlxSourceInfo, olxstr("could not locate scatterer: ") << ca.GetAtomInfo().GetSymbol() );
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("could not locate scatterer: ") << ca.GetType().symbol);
       }
-      bais.Add( &bai );
+      elements.Add(ca.GetType());
     }
     scatterers[ind].B() += ca.GetOccu();
   }
   if( scatterers.IsEmpty() )  {
-    bais.Add( &AtomsInfo.GetAtomInfo(iCarbonIndex) );
+    elements.Add(XElementLib::GetByIndex(iCarbonIndex));
     int atomCount = (int)XApp.XFile().GetUnitCell().CalcVolume()/18;
     scatterers.AddNew<TLibScatterer*, int>(scat_lib.Find("C"), atomCount);
   }
@@ -204,7 +201,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     header.Add("RMS = ") << olxstr::FormatFloat(3, rms);
     olxstr scat;
     for( size_t i=0; i < scatterers.Count(); i++ )
-      scat << bais[i]->GetSymbol() << scatterers[i].GetB() << ' ';
+      scat << elements[i]->symbol << scatterers[i].GetB() << ' ';
     tab.CreateTXTList(header, olxstr("Graph data for ") << scat, false, false, EmptyString);
     XApp.GetLog() << header;
     double K = exp(line[0]), B = -line[1]/2;

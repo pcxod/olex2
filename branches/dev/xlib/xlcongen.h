@@ -9,7 +9,7 @@ class TXlConGen : public AConstraintGenerator {
 public:
   TXlConGen(RefinementModel& rm) : AConstraintGenerator(rm) {}
   virtual bool FixParam(const short paramMask, TStrList& res, const TCAtomPList& atoms, const TFixedValueList& values);
-  virtual bool FixAtom(TAtomEnvi& envi, const short Group, const TBasicAtomInfo& atomType, 
+  virtual bool FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& atomType, 
     TAtomEnvi* pivoting = NULL, TCAtomPList* generated = NULL);
   // translates shelxl AFIX, HFIX to olex2 notation
   static int OlexToShelx(short code, TAtomEnvi& envi, TAtomEnvi* pivot = NULL) {

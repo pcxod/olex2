@@ -10,7 +10,7 @@ bool TXlConGen::FixParam(const short paramMask, TStrList& res, const TCAtomPList
   throw TNotImplementedException( __OlxSourceInfo );
 }
 //..............................................................................
-bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const TBasicAtomInfo& atomType, TAtomEnvi* pivoting, TCAtomPList* generated)  {
+bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& atomType, TAtomEnvi* pivoting, TCAtomPList* generated)  {
   try  {
     TSimpleRestraint* sr;
     TCAtomPList CreatedAtoms;

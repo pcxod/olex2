@@ -458,7 +458,6 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TXFile::LibSetFormula(const TStrObjList& Params, TMacroError& E) {
-  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   if( Params[0].IndexOf(':') == InvalidIndex )
     GetRM().SetUserFormula(Params[0]);
   else  {

@@ -1,8 +1,9 @@
 #ifndef __chem_lib_data
 #define __chem_lib_data
-
 #include "xbase.h"
 #include "ecomplex.h"
+#include "edict.h"
+#include "henke.h"
 
 // atomic number of some atoms
 static const short 
@@ -20,7 +21,27 @@ static const short
   iChlorineZ   = 17,
   iPotassiumZ  = 19,
   iCalciumZ    = 20,
+  iBromineZ    = 35,
   iQPeakZ      = -1;
+
+const  short
+  iHydrogenIndex    = 0,
+  iBoronIndex       = 4,
+  iCarbonIndex      = 5,
+  iNitrogenIndex    = 6,
+  iOxygenIndex      = 7,
+  iFluorineIndex    = 8,
+  iSodiumIndex      = 10,
+  iMagnesiumIndex   = 11,
+  iSiliconIndex     = 13,
+  iPhosphorusIndex  = 14,
+  iSulphurIndex     = 15,
+  iChlorineIndex    = 16,
+  iPotassiumIndex   = 18,
+  iCalciumIndex     = 19,
+  iQPeakIndex       = 104,
+  iDeuteriumIndex   = 105,
+  iMaxElementIndex = 105;  // for iterations
 
 /*
   the source of data for Henke tables and scattering data is cctbx
@@ -57,10 +78,7 @@ struct cm_Isotope {
   double Mr, W;  
   const cm_Neutron_Scattering* neutron_scattering;
 };
-struct cm_Anomalous_Henke {  
-  double energy, fp, fdp;  
-  static const double Undefined;
-};
+
 struct cm_Gaussians {  
   double a1, a2, a3, a4, b1, b2, b3, b4, c;  
   // constructor, note that b values are inverted!
@@ -155,8 +173,17 @@ public:
 };
 
 typedef TPtrList<const cm_Element> ElementPList;
-
+typedef TTypeList<AnAssociation2<olxstr, double> > ContentList;
+typedef olxdict<const cm_Element*, double, TPrimitiveComparator> ElementRadii;
 class XElementLib {
+  static void ParseSimpleElementStr(const olxstr& str, TStrList& toks);
+  static void ExpandShortcut(const olxstr& sh, ContentList& res, double cnt=1.0);
+  // checks if p is an element symbol, will correctly distinguis "C " and "Cd"
+  static bool IsShortcut(const olxstr& c)  {
+    return c.Equalsi("Ph") || c.Equalsi("Cp") || c.Equalsi("Me") ||
+      c.Equalsi("Et") || c.Equalsi("Bu") ||
+      c.Equalsi("Py") || c.Equalsi("Tf");
+  }
 public:
   static double Wavelength2eV(double lambda) {
     static const double ev_angstrom  = 6626.0755 * 2.99792458 / 1.60217733;
@@ -175,6 +202,13 @@ public:
   }
   // returns true if labels starts from a symbol
   static bool IsElement(const olxstr& label) {  return !ExtractSymbol(label).IsEmpty();  }
+  // checks if p is a label starting from an element symbol
+  static bool IsAtom(const olxstr& label)  {  return (FindBySymbolEx(label) != NULL);  }
+
+  /* parses a string like C37H41P2BRhClO into a list of element names and theur
+    count
+  */
+  static void ParseElementString(const olxstr& su, ContentList& res);
 };
 
 EndXlibNamespace()

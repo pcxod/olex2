@@ -2,7 +2,6 @@
 #define __olx_xl_lattice_H
 #include "xbase.h"
 #include "symmat.h"
-#include "atominfo.h"
 #include "catom.h"
 #include "satom.h"
 #include "sbond.h"
@@ -36,7 +35,6 @@ private:
 protected:
   TActionQList Actions;
   bool Generated;
-  TAtomsInfo& AtomsInfo;  // reference to TAtomsInfo::Instance
   void Generate(TCAtomPList* Template, bool ClearCont, bool IncludeQ);  // generates atoms using current matrices list
   void GenerateAtoms( const TSAtomPList& atoms, TSAtomPList& result, const smatd_plist& matrices);
   void ClearFragments();

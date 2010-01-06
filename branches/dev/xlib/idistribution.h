@@ -1,6 +1,7 @@
 #ifndef __olx__cl_idustribution_H
 #define __olx__cl_idustribution_H
 #include "chembase.h"
+#include "chemdata.h"
 #include "poly.h"
 
 BeginChemNamespace()
@@ -26,7 +27,7 @@ protected:
 public:
   TIDistribution();
   ~TIDistribution() {}
-  void AddIsotope(class TBasicAtomInfo& ai, size_t count);
+  void AddIsotope(const cm_Element& elm, size_t count);
   void Calc(TPolySerie& S);
   DefPropP(double, Threshold)
   void SetMaxPoints(size_t v)  {  MaxPoints = v;  }

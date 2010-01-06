@@ -82,7 +82,7 @@ public:
   returns the maximum level reached.  The void center is assigned to the point coordinates with
   largest level*/
   short CalcVoid(TArray3D<short>& map, double extraR, short val, size_t* structurePoints, 
-    vec3d& voidCenter, TPSTypeList<TBasicAtomInfo*, double>* radii);
+    vec3d& voidCenter, ElementRadii* radii);
   /* function undoes renaming atoms */
   void undoName(TUndoData *data);
   void NameHydrogens(TSAtom& a, TUndoData* ud, bool CheckLabel);

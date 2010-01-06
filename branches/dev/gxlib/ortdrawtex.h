@@ -81,7 +81,7 @@ protected:
         continue; 
       dir_vec = (p1-oa.crd).Normalise();
       const float pers_scale = 1.0-olx_sqr(dir_vec[2]);
-      float brad = (bn.A().GetAtomInfo() < 4 || bn.B().GetAtomInfo() < 4) ? 
+      float brad = (bn.A().GetType() == iHydrogenZ || bn.B().GetType() == iHydrogenZ) ? 
         BondRad*HBondScale : BondRad;
       if( bn.GetType() == sotHBond )  //even thiner H-bonds
         brad *= HBondScale;      
@@ -104,7 +104,7 @@ protected:
         }
       }
       else  {
-        const float off_len = AradScale*sa.GetAtomInfo().GetRad1()/2;
+        const float off_len = AradScale*sa.GetType().r_bonding/2;
         for( int j=0; j < BondDiv; j++ )  {
           BondProjT[j] = BondProjF[j] = (BondCrd[j]*proj_mat).NormaliseTo(brad*(1+pers_scale)*scalex); 
           BondProjT[j].NormaliseTo(brad*2*scalex) += dir_vec*b_len;
@@ -174,14 +174,14 @@ protected:
             {
                 if(p2[2] < p3[2])
                     sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
-                        bn.B().GetAtomInfo().GetSymbol().c_str(), bn.A().GetAtomInfo().GetSymbol().c_str(), angle,
+                        bn.B().GetType().symbol.c_str(), bn.A().GetType().symbol.c_str(), angle,
                         xc/5,yc/5,
                         xe/5, ye/5,
                         xf/5, yf/5, 
                         xd/5, yd/5);
                 else
                     sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
-                        bn.A().GetAtomInfo().GetSymbol().c_str(), bn.B().GetAtomInfo().GetSymbol().c_str(), angle,
+                        bn.A().GetType().symbol.c_str(), bn.B().GetType().symbol.c_str(), angle,
                         xc/5,yc/5,
                         xe/5, ye/5,
                         xf/5, yf/5, 
@@ -191,14 +191,14 @@ protected:
             {
                 if(p2[2] < p3[2])
                     sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
-                        bn.B().GetAtomInfo().GetSymbol().c_str(), bn.A().GetAtomInfo().GetSymbol().c_str(), angle,
+                        bn.B().GetType().symbol.c_str(), bn.A().GetType().symbol.c_str(), angle,
                         xc/5,yc/5,
                         xe/5, ye/5,
                         xf/5, yf/5, 
                         xd/5, yd/5);
                 else
                     sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
-                        bn.A().GetAtomInfo().GetSymbol().c_str(), bn.B().GetAtomInfo().GetSymbol().c_str(), angle,
+                        bn.A().GetType().symbol.c_str(), bn.B().GetType().symbol.c_str(), angle,
                         xc/5,yc/5,
                         xe/5, ye/5,
                         xf/5, yf/5, 
@@ -208,14 +208,14 @@ protected:
             {
                 if(p2[2] < p3[2])
                     sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
-                        bn.A().GetAtomInfo().GetSymbol().c_str(), bn.B().GetAtomInfo().GetSymbol().c_str(), angle,
+                        bn.A().GetType().symbol.c_str(), bn.B().GetType().symbol.c_str(), angle,
                         xc/5,yc/5,
                         xe/5, ye/5,
                         xf/5, yf/5, 
                         xd/5, yd/5);
                 else
                     sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
-                        bn.B().GetAtomInfo().GetSymbol().c_str(), bn.A().GetAtomInfo().GetSymbol().c_str(), angle,
+                        bn.B().GetType().symbol.c_str(), bn.A().GetType().symbol.c_str(), angle,
                         xc/5,yc/5,
                         xe/5, ye/5,
                         xf/5, yf/5, 
@@ -225,14 +225,14 @@ protected:
             {
                 if(p2[2] < p3[2])
                     sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
-                        bn.A().GetAtomInfo().GetSymbol().c_str(), bn.B().GetAtomInfo().GetSymbol().c_str(), angle,
+                        bn.A().GetType().symbol.c_str(), bn.B().GetType().symbol.c_str(), angle,
                         xc/5,yc/5,
                         xe/5, ye/5,
                         xf/5, yf/5, 
                         xd/5, yd/5);
                 else
                     sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
-                        bn.B().GetAtomInfo().GetSymbol().c_str(), bn.A().GetAtomInfo().GetSymbol().c_str(), angle,
+                        bn.B().GetType().symbol.c_str(), bn.A().GetType().symbol.c_str(), angle,
                         xc/5,yc/5,
                         xe/5, ye/5,
                         xf/5, yf/5, 
@@ -490,26 +490,26 @@ public:
       //We check first if a similar atom already get processed.
       for( size_t j=0; j < atoms.Count(); j++ )  {
         const TSAtom& sa2 = *atoms[j].atom;
-        if(sa.GetAtomInfo().GetSymbol() == sa2.GetAtomInfo().GetSymbol())
+        if(sa.GetType().symbol == sa2.GetType().symbol)
             CurrentAtom=true;
       }
       //writing of the color definition of the atom
       if(CurrentAtom == false)
       {
         sprintf(bf, "\\newcommand{\\color%s}{%s!90!black}",         
-            sa.GetAtomInfo().GetSymbol().c_str(),
-            ColourDic[sa.GetAtomInfo().GetSymbol()].c_str()
+            sa.GetType().symbol.c_str(),
+            ColourDic[sa.GetType().symbol].c_str()
         );        
         pw.Writenl(bf);
                     
         sprintf(bf, "\\pgfdeclareradialshading{ballshading%s}{\\pgfpoint{-10bp}{10bp}}",
-            sa.GetAtomInfo().GetSymbol().c_str());
+            sa.GetType().symbol.c_str());
         pw.Writenl(bf);
         sprintf(bf, "{color(0bp)=(\\color%s!15!white); color(9bp)=(\\color%s!75!white);",
-            sa.GetAtomInfo().GetSymbol().c_str(), sa.GetAtomInfo().GetSymbol().c_str());
+            sa.GetType().symbol.c_str(), sa.GetType().symbol.c_str());
         pw.Writenl(bf);
         sprintf(bf, "color(18bp)=(\\color%s!70!black); color(25bp)=(\\color%s!50!black); color(50bp)=(black)} ",
-            sa.GetAtomInfo().GetSymbol().c_str(), sa.GetAtomInfo().GetSymbol().c_str());          
+            sa.GetType().symbol.c_str(), sa.GetType().symbol.c_str());          
         pw.Writenl(bf);
       }
       
@@ -545,14 +545,14 @@ public:
         //draw circle, centre, radius
         sprintf(bf, "\\begin{pgfscope}\\pgfsetstrokecolor{white}\\pgfsetlinewidth{\\whitespace}\\pgfpathcircle{\\pgfpoint{%fmm}{%fmm}}{%fmm}\n\\pgfshadepath{ballshading%s}{0}\n\\pgfusepath{draw}\\end{pgfscope}",         
             p[0]/5, p[1]/5,
-            AradScale*sqrt(sa.GetAtomInfo().GetRad())/5,
-            sa.GetAtomInfo().GetSymbol().c_str()
+            AradScale*sqrt(sa.GetType().r_pers)/5,
+            sa.GetType().symbol.c_str()
         );        
         pw.Writenl(bf);
         sprintf(bf, "\\pgfpathcircle{\\pgfpoint{%fmm}{%fmm}}{%fmm}\n\\pgfshadepath{ballshading%s}{0}\n\\pgfusepath{draw}",         
             p[0]/5, p[1]/5,
-            AradScale*sqrt(sa.GetAtomInfo().GetRad1())/5,
-            sa.GetAtomInfo().GetSymbol().c_str()
+            AradScale*sqrt(sa.GetType().r_bonding)/5,
+            sa.GetType().symbol.c_str()
         );        
         pw.Writenl(bf);
         //write a node to make life easier later
@@ -571,7 +571,7 @@ public:
             p[0]/5, p[1]/5,
             ielpm[0][0]/5, ielpm[0][1]/5, 
             ielpm[1][0]/5, ielpm[1][1]/5,
-            sa.GetAtomInfo().GetSymbol().c_str()
+            sa.GetType().symbol.c_str()
             );
         pw.Writenl(bf);
         pw.Writenl("\\end{pgfscope}");
@@ -580,7 +580,7 @@ public:
             p[0]/5, p[1]/5,
             ielpm[0][0]/5, ielpm[0][1]/5, 
             ielpm[1][0]/5, ielpm[1][1]/5,
-            sa.GetAtomInfo().GetSymbol().c_str()
+            sa.GetType().symbol.c_str()
             );
         pw.Writenl(bf);
         //write a node to make life easier later

@@ -84,20 +84,19 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
 
   TLattice& latt = xapp.XFile().GetLattice();
   TAsymmUnit& au = latt.GetAsymmUnit();
-  TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
-  TBAIPList bai_l;
+  ElementPList elm_l;
   if( arg == 1 )  {
     if( xapp.CheckFileType<TIns>() )  {
       TIns& ins = xapp.XFile().GetLastLoader<TIns>();
       const ContentList& cl = ins.GetRM().GetUserContent();
       for( size_t i=0; i < cl.Count(); i++ ) 
-        bai_l.Add( atomsInfo.FindAtomInfoBySymbol(cl[i].GetA()) );
+        elm_l.Add(XElementLib::FindBySymbol(cl[i].GetA()));
     }    
   }
   TAutoDB::AnalysisStat stat;
   uint64_t st = TETime::msNow();
   TAutoDB::GetInstance()->AnalyseStructure( xapp.XFile().GetFileName(), latt, 
-    NULL, stat, bai_l.IsEmpty() ? NULL : &bai_l);
+    NULL, stat, elm_l.IsEmpty() ? NULL : &elm_l);
   st = TETime::msNow() - st;
   TBasicApp::GetLog().Info( olxstr("Elapsed time ") << st << " ms");
 
@@ -170,22 +169,21 @@ void helper_CleanBaiList(TStrPObjList<olxstr,const cm_Element*>& list, SortedEle
 
 void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
-  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   TStrPObjList<olxstr,const cm_Element*> sfac;
   SortedElementList AvailableTypes;
   static ElementPList StandAlone;
   if( StandAlone.IsEmpty() )  {
-    StandAlone.Add(XElementLib::FindBySymbol("O"));
-    StandAlone.Add(XElementLib::FindBySymbol("Mg"));
-    StandAlone.Add(XElementLib::FindBySymbol("Cl"));
-    StandAlone.Add(XElementLib::FindBySymbol("K"));
-    StandAlone.Add(XElementLib::FindBySymbol("Ca"));
+    StandAlone.Add(XElementLib::GetByIndex(iOxygenIndex));
+    StandAlone.Add(XElementLib::GetByIndex(iMagnesiumIndex));
+    StandAlone.Add(XElementLib::GetByIndex(iChlorineIndex));
+    StandAlone.Add(XElementLib::GetByIndex(iPotassiumIndex));
+    StandAlone.Add(XElementLib::GetByIndex(iCalciumIndex));
   }
   helper_CleanBaiList(sfac, AvailableTypes);
   if( TAutoDB::GetInstance() == NULL )  {
     olxstr autodbf( xapp.GetBaseDir() + "acidb.db");
     TEGC::AddP(new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ));
-    if( TEFile::Exists( autodbf ) )  {
+    if( TEFile::Exists(autodbf) )  {
       TEFile dbf(autodbf, "rb");
       TAutoDB::GetInstance()->LoadFromStream(dbf);
     }
@@ -475,14 +473,6 @@ struct Main_SfacComparator {
   }
 };
 void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
-  //olxstr autodbf( xapp.BaseDir() + "acidb.db");
-  //if( TAutoDB::GetInstance() == NULL )  {
-  //  TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), *FXApp ) );
-  //  if( TEFile::Exists( autodbf ) )  {
-  //    TEFile dbf(autodbf, "rb");
-  //    TAutoDB::GetInstance()->LoadFromStream( dbf );
-  //  }
-  //}
   TXApp& xapp = TXApp::GetInstance();
   TLattice& latt = xapp.XFile().GetLattice();
   TUnitCell& uc = latt.GetUnitCell();

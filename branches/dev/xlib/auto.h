@@ -1,6 +1,5 @@
-//---------------------------------------------------------------------------
-#ifndef autoH
-#define autoH
+#ifndef __olx_xl_auto_H
+#define __olx_xl_auto_H
 #include "xbase.h"
 #include "typelist.h"
 #include "estlist.h"
@@ -9,7 +8,6 @@
 #include "lattice.h"
 #include "satom.h"
 #include "network.h"
-#include "atominfo.h"
 #include "xfiles.h"
 #include "tptrlist.h"
 #include "library.h"
@@ -275,7 +273,6 @@ private:
   olxstr LastFileName;
   int BAIDelta; // maximim element promotion
   double URatio; // ratio beyond which search for element promotion
-  TAtomsInfo& AtomsInfo; 
 public:
   /* the instance must be created with Replcate to aoid any problems.
    It will be deleted by this object
@@ -300,7 +297,6 @@ public:
   inline const olxstr& GetLastFileName() const {  return LastFileName;  }
   void AnalyseNode(TSAtom& sa, TStrList& report);
   inline static TAutoDB* GetInstance()  {  return Instance;  }
-  inline static TAtomsInfo& GetAtomsInfo()  {  return Instance->AtomsInfo;  }
   inline TAutoDBIdObject& Reference(size_t i)  {  return LocateFile(i);  }
   inline TAutoDBNode* Node(size_t i)  {  return LocateNode(i);  }
   DefPropP(int, BAIDelta)

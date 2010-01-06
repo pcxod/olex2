@@ -1783,8 +1783,8 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
       pmBang->Append(-1, SL[i].u_str());
     pmAtom->Enable(ID_MenuBang, SL.Count() != 0);
     T = XA->Atom().GetLabel();
-    T << ':' << ' ' <<  XA->Atom().GetAtomInfo().GetName();
-    if( XA->Atom().GetAtomInfo().GetIndex() == iQPeakIndex )  {
+    T << ':' << ' ' <<  XA->Atom().GetType().name;
+    if( XA->Atom().GetType() == iQPeakZ )  {
       T << ": " << olxstr::FormatFloat(3, XA->Atom().CAtom().GetQPeak());
     }
     else 
@@ -1796,10 +1796,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     pmAtom->Enable(ID_SelGroup, false);
     int bound_cnt = 0;
     for( size_t i=0; i < XA->Atom().NodeCount(); i++ )  {
-      if( XA->Atom().Node(i).IsDeleted() || 
-        XA->Atom().Node(i).GetAtomInfo() == iHydrogenIndex ||
-        XA->Atom().Node(i).GetAtomInfo() == iDeuteriumIndex || 
-        XA->Atom().Node(i).GetAtomInfo() == iQPeakIndex )
+      if( XA->Atom().Node(i).IsDeleted() || XA->Atom().Node(i).GetType().GetMr() < 3.5 )  // H,D,Q
         continue;
       bound_cnt++;
     }
@@ -1887,7 +1884,7 @@ void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
       Tmp << 'S';
       break;
   }
-  Tmp << XA->Atom().GetLabel().SubStringFrom(XA->Atom().GetAtomInfo().GetSymbol().Length());
+  Tmp << XA->Atom().GetLabel().SubStringFrom(XA->Atom().GetType().symbol.Length());
   ProcessMacro(Tmp);
   TimePerFrame = FXApp->Draw();
 }
@@ -1903,8 +1900,8 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
   Tmp << ' ';
   TPTableDlg *Dlg = new TPTableDlg(this);
   if( Dlg->ShowModal() == wxID_OK )  {
-    Tmp << Dlg->GetSelected()->GetSymbol();
-    Tmp << XA->Atom().GetLabel().SubStringFrom(XA->Atom().GetAtomInfo().GetSymbol().Length());
+    Tmp << Dlg->GetSelected()->symbol;
+    Tmp << XA->Atom().GetLabel().SubStringFrom(XA->Atom().GetType().symbol.Length());
     ProcessMacro(Tmp);
   }
   Dlg->Destroy();
@@ -1996,7 +1993,7 @@ void TMainForm::AquireTooltipValue()  {
       const TXAtom &xa = *(TXAtom*)G;
       const TCAtom& ca = xa.Atom().CAtom();
       Tooltip = xa.Atom().GetGuiLabelEx();
-      if( xa.Atom().GetAtomInfo() == iQPeakIndex )
+      if( xa.Atom().GetType() == iQPeakZ )
         Tooltip << ':' << xa.Atom().CAtom().GetQPeak();
       Tooltip << "\nOccu (";
       if( ca.GetVarRef(catom_var_name_Sof) != NULL && 
