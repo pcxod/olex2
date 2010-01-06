@@ -1,0 +1,29 @@
+<test1 help="test macro"
+  <body
+    <args
+      <arg0 name="File extension" def="fileext(fileopen(Open File,All supported files|*.ins;*.cif;*res;|INS files (*.ins)|*.ins|CIF files (*.cif)|*.cif,e:\))" \>
+    \>
+    <cmd
+      <cmd1 cmd="edit fileopen(Open File,All supported files|*.ins;*.cif;*res;|INS files (*.ins)|*.ins|CIF files (*.cif)|*.cif,c:\)">
+      <cmd2 1cmd="edit strcat(filename(filefull()),.res)">
+      <cmd3 cmd="rem cell(a)">
+      <cmd4 cmd="rem cell(b)">
+      <cmd5 cmd="rem cell(c)">
+      <cmd6 cmd="rem cell(alpha)">
+      <cmd7 cmd="rem cell(beta)">
+      <cmd8 cmd="rem cell(gamma)">
+    \>
+  >
+>
+<reap help="test macro"
+  <body
+    <args
+      <arg0 name="fn" def="">
+    \>
+    <cmd
+      <cmd1 cmd="@reap %1">
+      <cmd2 1cmd="itemstate title 1">
+    \>
+  >
+
+>
