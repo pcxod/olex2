@@ -3,16 +3,11 @@
 #include "xbase.h"
 #include "ematrix.h"
 #include "threex3.h"
-
 #include "evpoint.h"
 #include "macroerror.h"
-
-#include "scat_it.h"
 #include "srestraint.h"
-
 #include "ellipsoid.h"
 #include "samegroup.h"
-
 #include "dataitem.h"
 #include "conninfo.h"
 

@@ -84,7 +84,6 @@
 #include "tls.h"
 #include "ecast.h"
 
-#include "scat_it.h"
 #include "arrays.h"
 #include "estrbuffer.h"
 #include "unitcell.h"
@@ -4941,7 +4940,7 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         Lst.TrefTry(i-1).NQual == Lst.TrefTry(i).NQual )
       continue;
     }
-    Solutions.AddACopy( Lst.TrefTry(i).Try );
+    Solutions.AddACopy(Lst.TrefTry(i).Try);
     reps --;
     if( reps <=0 )  break;
   }
@@ -4949,23 +4948,27 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TEFile::AddPathDelimeterI( SolutionFolder ) << "olex_sol\\";
   if( !TEFile::Exists( SolutionFolder ) )
     TEFile::MakeDir( SolutionFolder );
-  olxstr cinsFN = TEFile::ChangeFileExt( FXApp->XFile().GetFileName(), "ins" );
-  olxstr cresFN = TEFile::ChangeFileExt( FXApp->XFile().GetFileName(), "res" );
-  olxstr clstFN = TEFile::ChangeFileExt( FXApp->XFile().GetFileName(), "lst" );
-  for( size_t i=0; i < Solutions.Count(); i++ )  {
-    TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
-    Ins.SaveForSolution(cinsFN, olxstr("TREF -") << Solutions[i], EmptyString);
-    FXApp->LoadXFile(cinsFN);
-    Macros.ProcessMacro("solve", E);
-    while( FProcess )  {
-      FParent->Dispatch();
-      //FTimer->OnTimer->Execute((AActionHandler*)this, NULL);
+  olxstr cinsFN = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "ins");
+  olxstr cresFN = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "res");
+  olxstr clstFN = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "lst");
+  TOlxVars::SetVar("internal_tref", TrueString);
+  try  {
+    for( size_t i=0; i < Solutions.Count(); i++ )  {
+      TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
+      Ins.SaveForSolution(cinsFN, olxstr("TREF -") << Solutions[i], EmptyString);
+      FXApp->LoadXFile(cinsFN);
+      Macros.ProcessMacro("solve", E);
+      while( FProcess )  {
+        FParent->Dispatch();
+        //FTimer->OnTimer->Execute((AActionHandler*)this, NULL);
+      }
+      TEFile::Copy(cresFN, olxstr(SolutionFolder) <<  Solutions[i] << ".res");
+      TEFile::Copy(clstFN, olxstr(SolutionFolder) <<  Solutions[i] << ".lst");
     }
-    TEFile::Copy( cresFN, olxstr(SolutionFolder) <<  Solutions[i] << ".res" );
-    TEFile::Copy( clstFN, olxstr(SolutionFolder) <<  Solutions[i] << ".lst" );
+    ChangeSolution(0);
   }
-  ChangeSolution(0);
-//  Macros.ProcessMacro( olxstr("reap \'") << currentFile << '\'', E);
+  catch(...)  {  }
+  TOlxVars::UnsetVar("internal_tref");
 }
 //..............................................................................
 void TMainForm::macPatt(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -5397,19 +5400,23 @@ void TMainForm::CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS)  
 }
 //..............................................................................
 void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TActionQueue* q_draw = FXApp->ActionQueue(olxappevent_GL_DRAW);
+  if( q_draw != NULL )  q_draw->SetEnabled(false);
+  // restore if already applied
+  TLattice& latt = FXApp->XFile().GetLattice();
+  const TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
+  TUnitCell& uc = FXApp->XFile().GetUnitCell();
+  uc.UpdateEllipsoids();
+  for( size_t i=0; i < latt.AtomCount(); i++ )  {
+    TSAtom& sa = latt.GetAtom(i);
+    au.CellToCartesian(sa.ccrd(), sa.crd());
+    if( sa.CAtom().GetEllipsoid() != NULL ) 
+      sa.SetEllipsoid(&uc.GetEllipsoid(sa.GetMatrix(0).GetContainerId(), sa.CAtom().GetId()));
+  }
+  FXApp->UpdateBonds();
+  FXApp->CenterView();
   if( Options.Contains("u") )  {
-    TLattice& latt = FXApp->XFile().GetLattice();
-    const TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
-    TUnitCell& uc = FXApp->XFile().GetUnitCell();
-    uc.UpdateEllipsoids();
-    for( size_t i=0; i < latt.AtomCount(); i++ )  {
-      TSAtom& sa = latt.GetAtom(i);
-      au.CellToCartesian(sa.ccrd(), sa.crd());
-      if( sa.CAtom().GetEllipsoid() != NULL ) 
-        sa.SetEllipsoid(&uc.GetEllipsoid(sa.GetMatrix(0).GetContainerId(), sa.CAtom().GetId()));
-    }
-    FXApp->UpdateBonds();
-    FXApp->CenterView();
+    if( q_draw != NULL )  q_draw->SetEnabled(true);
     return;
   }
   CallbackFunc(StartMatchCBName, EmptyString);
@@ -5420,22 +5427,17 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   const bool name = Options.Contains("n");
   const bool align = Options.Contains("a");
   FindXAtoms(Cmds, atoms, false, true);
-  TUnitCell& uc = FXApp->XFile().GetUnitCell();
   for( size_t i=0; i < uc.EllpCount(); i++ )  {
     TEllipsoid* elp = uc.GetEllp(i);
     if( elp != NULL )  
       elp->SetTag(0);
   }
   if( !atoms.IsEmpty() )  {
-    if( atoms.Count() == 2 )  {
+    if( atoms.Count() == 2 && (&atoms[0]->Atom().GetNetwork() != &atoms[1]->Atom().GetNetwork()) )  {
       TTypeList< AnAssociation2<size_t, size_t> > res;
       TSizeList sk;
       TNetwork &netA = atoms[0]->Atom().GetNetwork(),
                &netB = atoms[1]->Atom().GetNetwork();
-      if( &netA == &netB )  {
-        E.ProcessingError(__OlxSrcInfo, "Please select different fragments");
-        return;
-      }
       bool match = subgraph ? netA.IsSubgraphOf( netB, res, sk ) :
                               netA.DoMatch( netB, res, TryInvert );
       TBasicApp::GetLog() << ( olxstr("Graphs match: ") << match << '\n' );
@@ -5521,44 +5523,38 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           }
         }
       }
-      return;
     }
-
-    if( atoms.Count() >= 6 )  {  // a full basis provided
-      if( (atoms.Count()%2) != 0 )  {
-        E.ProcessingError(__OlxSrcInfo, "even number of atoms is expected");
-        return;
-      }
+    else if( atoms.Count() >= 6 && (atoms.Count()%2) == 0 )  {  // a full basis provided
       TTypeList< AnAssociation2<TSAtom*,TSAtom*> > satomp;
       TSAtomPList atomsToTransform;
       for( size_t i=0; i < atoms.Count()/2; i++ )
-        satomp.AddNew<TSAtom*,TSAtom*>( &atoms[i]->Atom(), &atoms[i+atoms.Count()/2]->Atom() );
+        satomp.AddNew<TSAtom*,TSAtom*>(&atoms[i]->Atom(), &atoms[i+atoms.Count()/2]->Atom());
       TNetwork &netA = satomp[0].GetA()->GetNetwork(),
                &netB = satomp[0].GetB()->GetNetwork();
+      bool valid = true;
       for( size_t i=1; i < satomp.Count(); i++ )  {
-        if( satomp[i].GetA()->GetNetwork() != netA ||
-            satomp[i].GetB()->GetNetwork() != netB )  {
-          if( (atoms.Count()%2) != 0 )  {
-            E.ProcessingError(__OlxSrcInfo, "atoms should belong to two distinct fragments or the same fragment");
-           return;
-          }
+        if( satomp[i].GetA()->GetNetwork() != netA || satomp[i].GetB()->GetNetwork() != netB )  {
+          valid = false;
+          E.ProcessingError(__OlxSrcInfo, "atoms should belong to two distinct fragments or the same fragment");
+          break;
         }
       }
-      if( netA != netB )  {  // collect all atoms
-        for( size_t i=0; i < netB.NodeCount(); i++ )
-          atomsToTransform.Add( &netB.Node(i) );
+      if( valid )  {
+        if( netA != netB )  {  // collect all atoms
+          for( size_t i=0; i < netB.NodeCount(); i++ )
+            atomsToTransform.Add(netB.Node(i));
+        }
+        else  {
+          for( size_t i=atoms.Count()/2; i < atoms.Count(); i++ )
+            atomsToTransform.Add(atoms[i]->Atom());
+        }
+        smatdd S;
+        double rms = MatchAtomPairsQT( satomp, S, TryInvert);
+        TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, TryInvert);
+        FXApp->UpdateBonds();
+        FXApp->CenterView();
+        CallMatchCallbacks(netA, netB, rms);
       }
-      else  {
-        for( size_t i=atoms.Count()/2; i < atoms.Count(); i++ )
-          atomsToTransform.Add( &atoms[i]->Atom() );
-      }
-      smatdd S;
-      double rms = MatchAtomPairsQT( satomp, S, TryInvert);
-      TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, TryInvert);
-      FXApp->UpdateBonds();
-      FXApp->CenterView();
-
-      CallMatchCallbacks(netA, netB, rms);
     }
   }
   else  {
@@ -5595,6 +5591,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     FXApp->CenterView();
     // do match all possible fragments with similar number of atoms
   }
+  if( q_draw != NULL )  q_draw->SetEnabled(true);
 }
 //..............................................................................
 void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -8571,5 +8568,24 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TListCaster::POP(xatoms, satoms);
 	  main_CreateWBox(*FXApp, satoms, crds, all_radii, true);
 	}
+}
+//..............................................................................
+void TMainForm::macCenter(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  if( Cmds.Count() == 3 && Cmds[0].IsNumber() && Cmds[1].IsNumber() && Cmds[2].IsNumber() )
+    FXApp->GetRender().GetBasis().SetCenter(vec3d(-Cmds[0].ToDouble(), -Cmds[1].ToDouble(), -Cmds[2].ToDouble()));
+  else  {
+    TXAtomPList atoms;
+    FindXAtoms(Cmds, atoms, true, true);
+    vec3d center;
+    double sum = 0;
+    for( size_t i=0; i < atoms.Count(); i++ )  {
+      center += atoms[i]->Atom().crd()*atoms[i]->Atom().CAtom().GetOccu();
+      sum += atoms[i]->Atom().CAtom().GetOccu();;
+    }
+    if( sum != 0 )  {
+      center /= sum;
+      FXApp->GetRender().GetBasis().SetCenter(-center);
+    }
+  }
 }
 //..............................................................................

@@ -1175,7 +1175,7 @@ void TGXApp::SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b)
     TXAtom& a = XAtoms[i];
     if( a.Atom().GetType() != atom_type )
       continue;
-    if( atom_type == iHydrogenIndex)  {
+    if( atom_type == iHydrogenZ )  {
       bool vis = false;
       size_t nc = 0;
       for( size_t j=0; j < a.Atom().NodeCount(); j++ )  {
@@ -1203,7 +1203,7 @@ void TGXApp::SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b)
       b.SetVisible(false);
       continue;
     }
-    if( atom_type == iHydrogenIndex )   {
+    if( atom_type == iHydrogenZ )   {
       if( b.Bond().GetType() == sotHBond )
         b.SetVisible(show_b);
       else if( b.Bond().A().GetType() == atom_type || b.Bond().B().GetType() == atom_type )  {
@@ -2863,9 +2863,9 @@ void TGXApp::SetHydrogensVisible(bool v)  {
   if( FHydrogensVisible != v )  {
     FHydrogensVisible = v;
     GetRender().ClearSelection();
-    XFile().GetAsymmUnit().DetachAtomType(iHydrogenIndex, !FHydrogensVisible);
+    XFile().GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
     for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )  {
-      OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iHydrogenIndex, !FHydrogensVisible);
+      OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
       OverlayedXFiles[i].GetLattice().UpdateConnectivity();
     }
     XFile().GetLattice().UpdateConnectivity();
@@ -3729,9 +3729,9 @@ void TGXApp::BuildSceneMask(FractMask& mask, double inc)  {
   atoms.SetCapacity( XAtoms.Count() );
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
     if( XAtoms[i].IsDeleted() || !XAtoms[i].IsVisible() )  continue;
-    //if( XAtoms[i].Atom().GetAtomInfo() == iQPeakIndex )  continue;
+    //if( XAtoms[i].Atom().GetType() == iQPeakZ )  continue;
     vec3d::UpdateMinMax(XAtoms[i].Atom().ccrd(), mn, mx);
-    atoms.AddNew(XAtoms[i].Atom().crd(), olx_sqr(XAtoms[i].Atom().GetType().r_sfil)+inc );
+    atoms.AddNew(XAtoms[i].Atom().crd(), olx_sqr(XAtoms[i].Atom().GetType().r_sfil)+inc);
   }
   mn -= 1./4;
   mx += 1./4;

@@ -362,17 +362,9 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
 //..............................................................................
 void TAsymmUnit::DetachAtomType(short type, bool detach)  {
   const size_t ac = CAtoms.Count();
-  if( type == iHydrogenIndex )  {
-    for( size_t i =0; i < ac; i++ )  {
-      if( CAtoms[i]->GetType() == iHydrogenZ )
-        CAtoms[i]->SetDetached(detach);
-    }
-  }
-  else  {
-    for( size_t i =0; i < ac; i++ )  {
-      if( CAtoms[i]->GetType() == type )
-        CAtoms[i]->SetDetached(detach);
-    }
+  for( size_t i =0; i < ac; i++ )  {
+    if( CAtoms[i]->GetType() == type )
+      CAtoms[i]->SetDetached(detach);
   }
 }
 //..............................................................................

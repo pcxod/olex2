@@ -8,7 +8,6 @@
 #include "etable.h"
 #include "emath.h"
 
-
 //..............................................................................
 struct TWilsonRef  {
   double ds, Fo2, Fe2;
@@ -49,14 +48,13 @@ struct TWilsonEBin {
 };
 void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp &XApp = TXApp::GetInstance();
-
   olxstr HklFN( XApp.LocateHklFile() );
   if( !TEFile::Exists(HklFN) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file" );
     return;
   }
   olxstr outputFileName;
-  if( Cmds.Count() != 0 )
+  if( !Cmds.IsEmpty() )
     outputFileName = Cmds[0];
   else
     outputFileName << XApp.XFile().GetFileName();
@@ -71,31 +69,21 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TTypeList<TWilsonRef> refs;
   refs.SetCapacity(Refs.Count());
 
-  TScattererLib scat_lib(9);
-  TTypeList< AnAssociation2<TLibScatterer*, double> > scatterers;
-  ElementPList elements;
+  olxdict<const cm_Element*, double, TPrimitiveComparator> elements;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     const TCAtom& ca = au.GetAtom(i);
     if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
     size_t ind = elements.IndexOf(&ca.GetType());
-    if( ind == InvalidIndex )  {
-      scatterers.AddNew<TLibScatterer*, int>(scat_lib.Find(ca.GetType().symbol), 0);
-      ind = scatterers.Count() -1;
-      if( scatterers[ind].GetA() == NULL ) {
-        throw TFunctionFailedException(__OlxSourceInfo, olxstr("could not locate scatterer: ") << ca.GetType().symbol);
-      }
-      elements.Add(ca.GetType());
-    }
-    scatterers[ind].B() += ca.GetOccu();
+    if( ind == InvalidIndex )
+      elements.Add(&ca.GetType(), ca.GetOccu());
+    else
+      elements.GetValue(ind) += ca.GetOccu();
   }
-  if( scatterers.IsEmpty() )  {
-    elements.Add(XElementLib::GetByIndex(iCarbonIndex));
-    int atomCount = (int)XApp.XFile().GetUnitCell().CalcVolume()/18;
-    scatterers.AddNew<TLibScatterer*, int>(scat_lib.Find("C"), atomCount);
-  }
+  if( elements.IsEmpty() )
+    elements.Add(&XElementLib::GetByIndex(iCarbonIndex), XApp.XFile().GetUnitCell().CalcVolume()/18);
   else  {
-    for( size_t i=0; i < scatterers.Count(); i++ )
-      scatterers[i].B() *= XApp.XFile().GetUnitCell().MatrixCount();
+    for( size_t i=0; i < elements.Count(); i++ )
+      elements.GetValue(i) *= XApp.XFile().GetUnitCell().MatrixCount();
   }
 
   double minds=100, maxds=0;
@@ -110,9 +98,9 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     ref.Fo2 = Refs[i].GetI(); // * Refs[i].GetDegeneracy(); merged in P-1 now, so no use
 //    if( Refs[i].IsCentric() ) 
 //      ref.Fo2 /= 2;
-    for( size_t j=0; j < scatterers.Count(); j++ )  {
-      double v = scatterers[j].GetA()->Calc_sq( ref.ds );
-      ref.Fe2 += v*v*scatterers[j].GetB();
+    for( size_t j=0; j < elements.Count(); j++ )  {
+      double v = elements.GetKey(j)->gaussians->calc_sq(ref.ds);
+      ref.Fe2 += v*v*elements.GetValue(j);
     }
   }
 
@@ -153,9 +141,9 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   // calculate Fexpected for the bins
   for( size_t i=0; i < bins.Count(); i++ )  {
-    for( size_t j=0; j < scatterers.Count(); j++ )  {
-      double v = scatterers[j].GetA()->Calc_sq( (bins[i].Maxds+bins[i].Minds)/2 );
-      bins[i].Fe2 += v*v*scatterers[j].GetB();
+    for( size_t j=0; j < elements.Count(); j++ )  {
+      double v = elements.GetKey(j)->gaussians->calc_sq((bins[i].Maxds+bins[i].Minds)/2);
+      bins[i].Fe2 += v*v*elements.GetValue(j);
     }
   }
   // fill the bins and assign Fexp to the refelections
@@ -200,8 +188,8 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     l << line[0];
     header.Add("RMS = ") << olxstr::FormatFloat(3, rms);
     olxstr scat;
-    for( size_t i=0; i < scatterers.Count(); i++ )
-      scat << elements[i]->symbol << scatterers[i].GetB() << ' ';
+    for( size_t i=0; i < elements.Count(); i++ )
+      scat << elements.GetKey(i)->symbol << elements.GetValue(i) << ' ';
     tab.CreateTXTList(header, olxstr("Graph data for ") << scat, false, false, EmptyString);
     XApp.GetLog() << header;
     double K = exp(line[0]), B = -line[1]/2;

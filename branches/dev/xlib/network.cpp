@@ -571,7 +571,7 @@ struct GraphAnalyser  {
       return CalcRMS();
     size_t h_cnt = 0;
     for( size_t i=0; i < src.Count(); i++ )
-      if( src[i].GetData() == iHydrogenIndex || src[i].GetData() == iDeuteriumIndex )
+      if( src[i].GetData() == iHydrogenZ )
         h_cnt++;
     if( h_cnt < 2 )
       return CalcRMS();
@@ -600,7 +600,7 @@ struct GraphAnalyser  {
     if( !n1.IsShallowEqual(n2) )  return;
     TSizeList hpos;
     for( size_t i=0; i < n1.Count(); i++ )  {
-      if( n1[i].GetData() == iHydrogenIndex )
+      if( n1[i].GetData() == iHydrogenZ )
         hpos.Add(i);
       HValidator(n1[i], n2[i]);
     }
@@ -780,6 +780,8 @@ bool TNetwork::TryRing(TSAtom& sa, size_t node, TSAtomPList& ring)  {
 }
 //..............................................................................
 bool TNetwork::TryRing(TSAtom& sa, TSAtomPList& ring, size_t level)  {
+  if( level > 12 )  // safety precaution
+    return false;
   sa.SetTag(level);
   for( size_t i=0; i < sa.NodeCount(); i++ )  {
     TSAtom& a = sa.Node(i);

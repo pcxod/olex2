@@ -67,7 +67,7 @@ void TCifLoop::Format(TStrList& Data)  {
       Data[i] = EmptyString;
     }
   }
-  olxstr D = Data.Text(" \\n ").DeleteSequencesOf(' ');
+  olxstr D = Data.Text(" \\n ").Replace('\t', ' ').DeleteSequencesOf(' ');
   TStrPObjList<olxstr,TCifLoopData*> Params;
   TCifLoopData *CData=NULL;
   const size_t DL = D.Length();
@@ -83,7 +83,7 @@ void TCifLoop::Format(TStrList& Data)  {
         i++;
         if( i >= DL )  {
           Param.Delete(0, 1);
-          Params.Add(Param, new TCifLoopData(true) );
+          Params.Add(Param, new TCifLoopData(true));
           goto end_cyc;
         }
         Char = D.CharAt(i);
@@ -108,6 +108,10 @@ void TCifLoop::Format(TStrList& Data)  {
 end_cyc:;
   }
   if( (Params.Count() % ColCount) != 0 )  {
+    // clean up the memory
+    for( size_t i=0; i < Params.Count(); i++ )
+      if( Params.GetObject(i) != NULL )
+        delete Params.GetObject(i);
     olxstr msg("wrong loop parameters number. ");
     msg << "Failed in loop: " << GetLoopName() << ". Failed on: \'" << Param << '\'';
     throw TFunctionFailedException(__OlxSourceInfo, msg );

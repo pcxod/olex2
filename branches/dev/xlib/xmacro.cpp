@@ -1608,8 +1608,7 @@ void XLibMacros::macPlan(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 class TFixUnit_Sorter  {
 public:
   static int Compare(const cm_Element* s1, const cm_Element* s2)  {
-    const double diff = s1->GetMr() - s1->GetMr();
-    return diff < 0 ? -1 : ( diff > 0 ? 1 : 0);
+    return s1->z - s1->z;
   }
 };
 void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -1617,7 +1616,7 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
   if( Zp <= 0 )  Zp = 1;
   TXApp::GetInstance().XFile().UpdateAsymmUnit();
   ElementPList content;
-  TDoubleList count;
+  TDoubleList counts;
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
   size_t nhc = 0;
   const cm_Element *cBai = NULL, *hBai = NULL;
@@ -1630,12 +1629,12 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
     size_t ind = content.IndexOf(elm);
     if( ind == InvalidIndex )  {
       content.Add(elm);
-      count.Add(ca.GetOccu());
+      counts.Add(ca.GetOccu());
       if( cBai == NULL && elm == iCarbonZ )    cBai = &elm;
       if( hBai == NULL && elm == iHydrogenZ )  hBai = &elm;
     }
     else
-      count[ind] += ca.GetOccu();
+      counts[ind] += ca.GetOccu();
   }
   int Z_est = olx_round(au.EstimateZ(nhc));
   int Z = olx_round(Z_est*Zp);
@@ -1643,21 +1642,21 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
   TBasicApp::GetLog() << (olxstr("for Z'=") << olxstr::FormatFloat(2, Zp).TrimFloat() <<
     " and " << nhc << " non hydrogen atoms Z is estimated to be " << Z << '\n');
   olxstr sfac, unit, n_c;
-  content.QuickSorter.Sort<TFixUnit_Sorter>(content);
+  content.QuickSorter.SyncSort<TFixUnit_Sorter>(content, counts);
   if( cBai != NULL && content.Count() > 1 )  {
     size_t ind = content.IndexOf(cBai);
     content.Swap(0, ind);
-    count.Swap(0, ind);
+    counts.Swap(0, ind);
   }
   if( hBai != NULL && content.Count() > 2 )  {
     size_t ind = content.IndexOf(hBai);
     content.Swap(1, ind);
-    count.Swap(1, ind);
+    counts.Swap(1, ind);
   }
   ContentList new_content;
   for( size_t i=0; i < content.Count(); i++ )  {
-    new_content.AddNew(content[i]->symbol, count[i]*Z_est);
-    n_c << content[i]->symbol << olxstr::FormatFloat(3,count[i]/Zp).TrimFloat();
+    new_content.AddNew(content[i]->symbol, counts[i]*Z_est);
+    n_c << content[i]->symbol << olxstr::FormatFloat(3,counts[i]/Zp).TrimFloat();
     if( (i+1) < content.Count() )
       n_c << ' ';
   }
@@ -1774,7 +1773,6 @@ void XLibMacros::macEADP(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   TXApp& xapp = TXApp::GetInstance();
-  
   TLattice& latt = xapp.XFile().GetLattice();
   TUnitCell& uc = latt.GetUnitCell();
   TAsymmUnit& au = latt.GetAsymmUnit();
@@ -2152,43 +2150,37 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
       tmp << rm.used_weight[j];
       if( (j+1) < rm.used_weight.Count() )  tmp << ' ';
     }
-    E.SetRetVal(tmp);
+    E.SetRetVal(tmp.IsEmpty() ? NAString : tmp);
   }
   else if( Params[0].Equalsi("weight1") )  {
     for( size_t j=0; j < rm.proposed_weight.Count(); j++ )  {
       tmp << rm.proposed_weight[j];
       if( (j+1) < rm.proposed_weight.Count() )  tmp << ' ';
     }
-    E.SetRetVal( tmp );
+    E.SetRetVal(tmp.IsEmpty() ? NAString : tmp);
   }
   else if( Params[0].Equalsi("L.S.") || Params[0].Equalsi("CGLS")  )  {
     for( size_t i=0; i < rm.LS.Count(); i++ )  {
       tmp << rm.LS[i];
       if( (i+1) < rm.LS.Count() )  tmp << ' ';
     }
-    E.SetRetVal( rm.LS.Count() == 0 ? NAString : tmp );
+    E.SetRetVal(rm.LS.Count() == 0 ? NAString : tmp);
   }
-  else if( Params[0].Equalsi("ls") )  {
-    olxstr rv = rm.LS.Count() == 0 ? NAString : olxstr(rm.LS[0]) ;
-    E.SetRetVal(rv);
-  }
+  else if( Params[0].Equalsi("ls") )
+    E.SetRetVal(rm.LS.Count() == 0 ? NAString : olxstr(rm.LS[0]));
   else if( Params[0].Equalsi("plan") )  {
     for( size_t i=0; i < rm.PLAN.Count(); i++ )  {
       tmp << ((i < 1) ? olx_round(rm.PLAN[i]) : rm.PLAN[i]);
       if( (i+1) < rm.PLAN.Count() )  tmp << ' ';
     }
-    E.SetRetVal( rm.PLAN.Count() == 0 ? NAString : tmp );
+    E.SetRetVal(rm.PLAN.Count() == 0 ? NAString : tmp);
   }
-  else if( Params[0].Equalsi("qnum") )  {
-    tmp = rm.PLAN.Count() == 0 ? NAString : olxstr(rm.PLAN[0]);
-    E.SetRetVal(tmp);
-  }
+  else if( Params[0].Equalsi("qnum") )
+    E.SetRetVal(rm.PLAN.Count() == 0 ? NAString : olxstr(rm.PLAN[0]));
   else  {
     TIns& I = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
-    if( Params[0].Equalsi("R1") )  {
-      olxstr rv = I.GetR1() < 0 ? NAString : olxstr(I.GetR1());
-      E.SetRetVal( rv );
-    }
+    if( Params[0].Equalsi("R1") )
+      E.SetRetVal(I.GetR1() < 0 ? NAString : olxstr(I.GetR1()));
     if( !I.InsExists(Params[0]) )  {
       E.SetRetVal(NAString);
       return;
@@ -2196,7 +2188,7 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
     //  xapp.XFile().UpdateAsymmUnit();
     //  I->UpdateParams();
 
-    TInsList* insv = I.FindIns( Params[0] );
+    TInsList* insv = I.FindIns(Params[0]);
     if( insv != 0 )
       E.SetRetVal(insv->Text(' '));
     else
@@ -3728,6 +3720,8 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( !(xapp.CheckFileType<TIns>() ||
         xapp.CheckFileType<TP4PFile>() ||
         xapp.CheckFileType<TCRSFile>()  )  )  return;
+  if( TOlxVars::IsVar("internal_tref") )
+    return;
   using namespace olex;
   IOlexProcessor* op = IOlexProcessor::GetInstance();
   olxstr newSg(Options.FindValue('s')), 

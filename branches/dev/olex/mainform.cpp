@@ -142,8 +142,8 @@ enum
   ID_AtomTypeChangeH,
   ID_AtomTypeChangeS,
   ID_AtomTypePTable,
-  ID_AtomGrowShells,
-  ID_AtomGrowFrags,
+  ID_AtomGrow,
+  ID_AtomCenter,
   ID_AtomSelRings,
   
   ID_PlaneActivate,
@@ -155,7 +155,7 @@ enum
   ID_FragmentSelectAll,
   ID_FileLoad,
 
-  ID_View100,   // vew menu
+  ID_View100,   // view menu
   ID_View010,
   ID_View001,
   ID_View110,
@@ -349,8 +349,8 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomTypeChangeH, TMainForm::OnAtomTypeChange)
   EVT_MENU(ID_AtomTypeChangeS, TMainForm::OnAtomTypeChange)
   EVT_MENU(ID_AtomTypePTable, TMainForm::OnAtomTypePTable)
-  EVT_MENU(ID_AtomGrowShells, TMainForm::OnAtom)
-  EVT_MENU(ID_AtomGrowFrags, TMainForm::OnAtom)
+  EVT_MENU(ID_AtomGrow, TMainForm::OnAtom)
+  EVT_MENU(ID_AtomCenter, TMainForm::OnAtom)
   EVT_MENU(ID_AtomSelRings, TMainForm::OnAtom)
 
   EVT_MENU(ID_PlaneActivate, TMainForm::OnPlane)
@@ -919,6 +919,8 @@ separated values of Atom Type and radius, an entry a line");
  or provided atoms into the residue. If provided residue class name is 'none', provided atoms are removed from their residues");
   this_InitMacroD(WBox, "w-use atomic weights instead of unit weights for atoms&;s-create separate boxes for fragments", 
 	(fpAny)|psFileLoaded, "Calculates wrapping box around provided box using the set of best, intermidiate and worst planes");
+  this_InitMacroD(Center, EmptyString, 
+	(fpAny)|psFileLoaded, "Sets the centre of rotation to given point");
   // FUNCTIONS _________________________________________________________________
 
   this_InitFunc(FileLast, fpNone|fpOne);
@@ -1172,10 +1174,9 @@ separated values of Atom Type and radius, an entry a line");
   pmAtom->Append(ID_MenuAtomOccu, wxT("Occupancy"), pmAtomOccu);
   pmAtom->Append(ID_MenuAtomPoly, wxT("Polyhedron"), pmAtomPoly);
   pmAtom->AppendSeparator();
-  pmAtom->Append(ID_AtomGrowShells, wxT("Grow Shell"));
-    miAtomGrowShell = pmAtom->FindItemByPosition(pmAtom->GetMenuItemCount()-1);
-  pmAtom->Append(ID_AtomGrowFrags, wxT("Grow Fragments"));
-    miAtomGrowFrag = pmAtom->FindItemByPosition(pmAtom->GetMenuItemCount()-1);
+  pmAtom->Append(ID_AtomGrow, wxT("Grow"));
+    miAtomGrow = pmAtom->FindItemByPosition(pmAtom->GetMenuItemCount()-1);
+  pmAtom->Append(ID_AtomCenter, wxT("Center"));
   pmAtom->Append(ID_AtomSelRings, wxT("Select ring(s)"));
   pmAtom->AppendSeparator();
   pmAtom->Append(ID_GraphicsKill, wxT("Delete"));
@@ -1790,8 +1791,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     else 
       T << " Occu: " << olxstr::FormatFloat(3, XA->Atom().CAtom().GetOccu());
     miAtomInfo->SetText(T.u_str());
-    pmAtom->Enable(ID_AtomGrowShells, FXApp->AtomExpandable(XA));
-    pmAtom->Enable(ID_AtomGrowFrags, FXApp->AtomExpandable(XA));
+    pmAtom->Enable(ID_AtomGrow, FXApp->AtomExpandable(XA));
     pmAtom->Enable(ID_Selection, G->IsSelected());
     pmAtom->Enable(ID_SelGroup, false);
     int bound_cnt = 0;
@@ -2459,9 +2459,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
 void TMainForm::OnAtom(wxCommandEvent& event)  {
   if( FObjectUnderMouse == NULL )  return;
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
-  if( event.GetId() == ID_AtomGrowShells )
-    ProcessMacro(olxstr("grow -s #x") << XA->GetXAppId());
-  else if( event.GetId() == ID_AtomGrowFrags )
+  if( event.GetId() == ID_AtomGrow )
     ProcessMacro(olxstr("grow #x") << XA->GetXAppId());
   else if( event.GetId() == ID_AtomSelRings )  {
     TTypeList<TSAtomPList> rings;
@@ -2476,6 +2474,13 @@ void TMainForm::OnAtom(wxCommandEvent& event)  {
       }
       TimePerFrame = FXApp->Draw();
     }
+  }
+  else if( event.GetId() == ID_AtomCenter )  {
+    if( !XA->IsSelected() )
+      ProcessMacro(olxstr("center #x") << XA->GetXAppId());
+    else
+      ProcessMacro("center");  // center of the selection
+    TimePerFrame = FXApp->Draw();
   }
 }
 //..............................................................................

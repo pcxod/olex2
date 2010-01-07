@@ -1094,10 +1094,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\scat_it.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\xlib\seval.cpp"
 				>
 			</File>

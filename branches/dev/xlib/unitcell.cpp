@@ -793,7 +793,7 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
   // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
 
-  TPSTypeList<int, double > scatterers;
+  TPSTypeList<short, double > scatterers;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).IsDeleted() )  continue;
     size_t ind = scatterers.IndexOfComparable(au.GetAtom(i).GetType().index);
