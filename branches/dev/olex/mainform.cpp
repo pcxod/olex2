@@ -908,7 +908,8 @@ separated values of Atom Type and radius, an entry a line");
   this_InitMacroD(PictPS, "color_line-lines&;color_fill-ellipses are filled&;color_bond-bonds\
  are colored&;div_pie-number [4] of stripes in the octant&;lw_pie-line width [0.5] of the octant\
  stripes&;lw_octant-line width [0.5] of the octant arcs&;lw_font-line width [1] for the vector\
- font&;lw_ellipse-line width [0.5] of the ellipse&;scale_hb-scale for H-bonds [0.5]&;p-perspective", fpOne|psFileLoaded, 
+ font&;lw_ellipse-line width [0.5] of the ellipse&;scale_hb-scale for H-bonds [0.5]&;p-perspective\
+ &;octants-comma separated atom types/names ADP's of which to be rendered with octants[-$C]", fpOne|psFileLoaded, 
     "Experimental postscript rendering");
   this_InitMacroD(PictTEX, "color_line-lines&;color_fill-ellipses are filled", fpOne|psFileLoaded, 
     "Experimental tex/pgf rendering");

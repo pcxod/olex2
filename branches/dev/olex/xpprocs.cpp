@@ -794,7 +794,69 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   od.SetQuadLineWidth(Options.FindValue("lw_octant", "0.5").ToDouble());
   if( Options.Contains('p') )
     od.SetPerspective(true);
+  olxstr octants = Options.FindValue("octants", "-$C");
+  // store the atom draw styles
+  TIntList ds(FXApp->AtomCount());
+  for( size_t i=0; i < FXApp->AtomCount(); i++ )  {
+    ds[i] = FXApp->GetAtom(i).DrawStyle();
+    if( ds[i] == adsEllipsoid )
+      FXApp->GetAtom(i).DrawStyle(adsOrtep);
+  }
+  TStrList toks(octants, ',');
+  for( size_t i=0; i < toks.Count(); i++ )  {
+    if( toks[i].Length() < 2 || !(toks[i].CharAt(0) == '-' || toks[i].CharAt(0) == '+') )  continue;
+    if( toks[i].CharAt(0) == '-' )  {  // exclude
+      if( toks[i].Length() == 2 && toks[i].CharAt(1) == '*' )  { // special case...
+        for( size_t j=0; j < FXApp->AtomCount(); j++ )  {
+          if( FXApp->GetAtom(j).DrawStyle() == adsOrtep )
+            FXApp->GetAtom(j).DrawStyle(adsEllipsoid);
+        }
+      }
+      else if( toks[i].CharAt(1) == '$' )  {  // atom type
+        cm_Element* elm = XElementLib::FindBySymbol(toks[i].SubStringFrom(2));
+        if( elm == NULL )  continue;
+        for( size_t j=0; j < FXApp->AtomCount(); j++ )  {
+          if( FXApp->GetAtom(j).Atom().GetType() == *elm && FXApp->GetAtom(j).DrawStyle() == adsOrtep )
+            FXApp->GetAtom(j).DrawStyle(adsEllipsoid);
+        }
+      }
+      else  {  // atom name
+        olxstr aname = toks[i].SubStringFrom(1);
+        for( size_t j=0; j < FXApp->AtomCount(); j++ )  {
+          if( FXApp->GetAtom(j).DrawStyle() == adsOrtep && FXApp->GetAtom(j).Atom().GetLabel().Equalsi(aname) )
+            FXApp->GetAtom(j).DrawStyle(adsEllipsoid);
+        }
+      }
+    }
+    else  {  // include
+      if( toks[i].Length() == 2 && toks[i].CharAt(1) == '*' )  { // special case...
+        for( size_t j=0; j < FXApp->AtomCount(); j++ )  {
+          if( FXApp->GetAtom(j).DrawStyle() == adsEllipsoid )
+            FXApp->GetAtom(j).DrawStyle(adsOrtep);
+        }
+      }
+      else if( toks[i].CharAt(1) == '$' )  {  // atom type
+        cm_Element* elm = XElementLib::FindBySymbol(toks[i].SubStringFrom(2));
+        if( elm == NULL )  continue;
+        for( size_t j=0; j < FXApp->AtomCount(); j++ )  {
+          if( FXApp->GetAtom(j).Atom().GetType() == *elm && FXApp->GetAtom(j).DrawStyle() == adsEllipsoid )
+            FXApp->GetAtom(j).DrawStyle(adsOrtep);
+        }
+      }
+      else  {  // atom name
+        olxstr aname = toks[i].SubStringFrom(1);
+        for( size_t j=0; j < FXApp->AtomCount(); j++ )  {
+          if( FXApp->GetAtom(j).DrawStyle() == adsEllipsoid && FXApp->GetAtom(j).Atom().GetLabel().Equalsi(aname) )
+            FXApp->GetAtom(j).DrawStyle(adsOrtep);
+        }
+      }
+    }
+  }
+
   od.Render(Cmds[0]);
+  // restore atom draw styles
+  for( size_t i=0; i < FXApp->AtomCount(); i++ )
+    FXApp->GetAtom(i).DrawStyle(ds[i]);
 }
 //..............................................................................
 void TMainForm::macPictTEX(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

@@ -439,7 +439,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
     app.GetAtom(i).Atom().SetTag(objects.Count());
     ort_atom *a = new ort_atom(*this, app.GetAtom(i));
     a->draw_style |= ortep_atom_rims;
-    if( a->atom.Atom().GetType() != iCarbonZ )
+    if( app.GetAtom(i).DrawStyle() == adsOrtep )
       a->draw_style |= ortep_atom_quads;
     if( (ColorMode&ortep_color_lines) )
       a->draw_style |= ortep_color_lines;
