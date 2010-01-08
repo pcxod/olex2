@@ -1,6 +1,6 @@
 #include "../henke.h"
 #define NOVAL cm_Anomalous_Henke::Undefined
-static const cm_Anomalous_Henke XlibObject(_cm_henke_C)[] = {
+const cm_Anomalous_Henke XlibObject(_cm_henke_C)[] = {
   {10, NOVAL, 0.806885},
   {10.1617, NOVAL, 0.851522},
   {10.3261, NOVAL, 0.898628},
