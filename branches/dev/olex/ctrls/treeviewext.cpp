@@ -7,17 +7,24 @@ IMPLEMENT_CLASS(TTreeView, wxGenericTreeCtrl)
 BEGIN_EVENT_TABLE(TTreeView, wxGenericTreeCtrl)
   EVT_TREE_ITEM_ACTIVATED(-1, TTreeView::ItemActivateEvent)
   EVT_TREE_SEL_CHANGED(-1, TTreeView::SelectionEvent)
+  EVT_TREE_END_LABEL_EDIT(-1, TTreeView::ItemEditEvent)
 END_EVENT_TABLE()
 
 void TTreeView::ItemActivateEvent(wxTreeEvent& event)  {
   StartEvtProcessing()
-    OnDblClick.Execute(this, &TEGC::New<olxstr>(GetOnItemActivateStr()) );
+    OnDblClick.Execute(this, &TEGC::New<olxstr>(GetOnItemActivateStr()));
   EndEvtProcessing()
 }
 //..............................................................................
 void TTreeView::SelectionEvent(wxTreeEvent& event) {
   StartEvtProcessing()
-    OnSelect.Execute(this, &TEGC::New<olxstr>(GetOnSelectStr()) );
+    OnSelect.Execute(this, &TEGC::New<olxstr>(GetOnSelectStr()));
+  EndEvtProcessing()
+}
+//..............................................................................
+void TTreeView::ItemEditEvent(wxTreeEvent& event) {
+  StartEvtProcessing()
+    OnSelect.Execute(this, &TEGC::New<olxstr>(GetOnEditStr()));
   EndEvtProcessing()
 }
 //..............................................................................

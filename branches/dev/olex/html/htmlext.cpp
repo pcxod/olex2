@@ -1001,8 +1001,13 @@ olxstr THtml::GetObjectValue(const AOlxCtrl *Obj)  {
   if( EsdlInstanceOf(*Obj, TTreeView) )  {
     TTreeView* T = (TTreeView*)Obj;
     wxTreeItemId ni = T->GetSelection();
-    //T->
-    return T->GetItemText(ni).c_str();
+    wxTreeItemData* td = T->GetItemData(ni);
+    if( td == NULL || !EsdlInstanceOf(*td, TTreeNodeData) )
+      return EmptyString;
+    TTreeNodeData* olx_td = dynamic_cast<TTreeNodeData*>(td);
+    if( olx_td == NULL || olx_td->GetData() == NULL )
+      return EmptyString;
+    return olx_td->GetData()->ToString();
   }
   return EmptyString;
 }
