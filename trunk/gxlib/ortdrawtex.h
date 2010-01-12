@@ -65,9 +65,9 @@ protected:
     return cnt;
   }
   void DoDrawBonds(TEXWriter& pw, const OrtAtom& oa, uint32_t color, float scalex, const vec3d& p)  {
-                              char bf[250]; //pascal
-      float xa, xb, ya, yb, za, zb, angle, xc, yc, xd, yd, xe, ye, xf, yf;
-      static int AtomCount;
+    char bf[250]; //pascal
+    float xa, xb, ya, yb, za, zb, angle, xc, yc, xd, yd, xe, ye, xf, yf;
+    static int AtomCount;
     const TSAtom& sa = *oa.atom;
     vec3f dir_vec, touch_point, touch_point_proj, off_vec, bproj_cnt;
     mat3f proj_mat, rot_mat;

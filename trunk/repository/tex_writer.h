@@ -36,8 +36,8 @@ public:
     out.Writenl("");   
   }
   //..........................................................................
-  void Writenl(char bf[250])  {
-    out.Writenl( bf );
+  void Writenl(const char* bf)  {
+    out.Writenl(bf);
   }  
 };
 
