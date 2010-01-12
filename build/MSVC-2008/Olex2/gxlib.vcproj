@@ -1559,6 +1559,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\gxlib\ortdrawtex.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\gxlib\oxmfile.h"
 				>
 			</File>
