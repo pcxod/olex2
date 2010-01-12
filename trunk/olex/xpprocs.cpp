@@ -4130,7 +4130,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       size_t whereIndex = Cmds.IndexOf(olxstr("where"));
       if( whereIndex >= 1 && whereIndex != InvalidIndex)  {
         Tmp = Cmds[whereIndex-1];
-        while( whereIndex >= 0  )  {  Cmds.Delete(whereIndex);  whereIndex --;  }
+        while( olx_is_valid_index(whereIndex) )  {  Cmds.Delete(whereIndex--);  }
         if( Tmp.Equalsi("atoms") )
           FXApp->SelectAtomsWhere(Cmds.Text(' '));
         else if( Tmp.Equalsi("bonds") )
