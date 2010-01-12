@@ -597,11 +597,15 @@ TAG_HANDLER_PROC(tag)  {
 /******************* TREE CONTROL *********************************************/
   else if( TagName.Equalsi("tree") )  {
     olxstr src = tag.GetParam(wxT("SRC")).c_str();
+    long flags = wxTR_HAS_BUTTONS;
+    if( tag.HasParam(wxT("NOROOT")) )
+      flags |= wxTR_HIDE_ROOT;
+    if( tag.HasParam(wxT("EDITABLE")) )
+      flags |= wxTR_EDIT_LABELS;
     TGlXApp::GetMainForm()->ProcessFunction(src);
     IInputStream* ios = TFileHandlerManager::GetInputStream(src);
-    TTreeView *Tree = new TTreeView(m_WParser->GetWindowInterface()->GetHTMLWindow());
-    Tree->SetFont( m_WParser->GetDC()->GetFont() );
-
+    TTreeView *Tree = new TTreeView(m_WParser->GetWindowInterface()->GetHTMLWindow(), flags);
+    Tree->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Tree;
     CreatedWindow = Tree;
     Tree->WI.SetWidth(ax);
@@ -615,6 +619,10 @@ TAG_HANDLER_PROC(tag)  {
     if( tag.HasParam(wxT("ONITEM")) )  {
       Tree->SetOnItemActivateStr( tag.GetParam(wxT("ONITEM")).c_str() );
       Tree->OnDblClick.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+    }
+    if( (flags&wxTR_EDIT_LABELS) != 0 && tag.HasParam(wxT("ONEDIT")) )  {
+      Tree->SetOnEditStr( tag.GetParam(wxT("ONEDIT")).c_str() );
+      Tree->OnEdit.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Tree, fl));
     if( ios == NULL )  {  // create test tree

@@ -1066,7 +1066,7 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
     TUnitCell& uc = aunit.GetLattice().GetUnitCell();
     for( size_t i=0; i < lat.AtomCount(); i++ )  {
       TSAtom& sa = lat.GetAtom(i);
-      if( sa.IsDeleted() || sa.GetAtomInfo() == iQPeakIndex )  continue;
+      if( sa.IsDeleted() || sa.GetType() == iQPeakZ )  continue;
       // make sure that only AU atoms go to 
       if( !sa.GetMatrix(0).IsFirst() )  continue;
       uc.GetAtomEnviList(sa, ae);

@@ -30,7 +30,7 @@ olxstr TMol::MOLAtom(TCAtom& A)  {
   const vec3d& v = A.ccrd();
   for( int i=0; i < 3; i++ )
     Tmp << olxstr::FormatFloat(4, v[i]).Format(10, false, ' ');
-  Tmp << ' ' << olxstr(A.GetAtomInfo().GetSymbol()).Format(3, true, ' ');
+  Tmp << ' ' << olxstr(A.GetType().symbol).Format(3, true, ' ');
   for( int j=0; j < 12; j ++ )
     Tmp << "  0";
   return Tmp;
@@ -75,7 +75,6 @@ void TMol::SaveToStrings(TStrList& Strings)  {
 void TMol::LoadFromStrings(const TStrList& Strings)  {
   Clear();
   Title = "OLEX: imported from MDL MOL";
-  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   GetAsymmUnit().Axes()[0] = 1;
   GetAsymmUnit().Axes()[1] = 1;
   GetAsymmUnit().Axes()[2] = 1;
@@ -91,7 +90,7 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
     if( AtomsCycle && (line.Length() > 33) )  {
       vec3d crd(line.SubString(0, 9).ToDouble(), line.SubString(10, 10).ToDouble(), line.SubString(20, 10).ToDouble());
       olxstr atom_name = line.SubString(31, 3).Trim(' ');
-      if( AtomsInfo.IsAtom(atom_name) )  {
+      if( XElementLib::IsAtom(atom_name) )  {
         TCAtom& CA = GetAsymmUnit().NewAtom();
         CA.ccrd() = crd;
         CA.SetLabel( (atom_name << GetAsymmUnit().AtomCount()+1) );
@@ -136,9 +135,9 @@ bool TMol::Adopt(TXFile& XF)  {
     TSAtom& sa = latt.GetAtom(i);
     if( !sa.IsAvailable() )  continue;
     TCAtom& a = GetAsymmUnit().NewAtom();
-    a.Label() = sa.GetLabel();
+    a.SetLabel(sa.GetLabel(), false);
     a.ccrd() = sa.crd();
-    a.SetAtomInfo(sa.GetAtomInfo());
+    a.SetType(sa.GetType());
     sa.SetTag(i);
   }
   for( size_t i=0; i < latt.BondCount(); i++ )  {

@@ -138,6 +138,7 @@ sdl = Glob('./sdl/*.cpp')
 sdl_exp = Glob('./sdl/exparse/*.cpp')
 sdl_smart = Glob('./sdl/smart/*.cpp')
 xlib = Glob('./xlib/*.cpp')
+xlib_henke = Glob('./xlib/henke/*.cpp')
 xlib_macro = Glob('./xlib/macro/*.cpp')
 glib = Glob('./glib/*.cpp')
 gxlib = Glob('./gxlib/*.cpp')
@@ -290,7 +291,8 @@ env.Append(LIBS = ['sdl'])
 
 generic_files = fileListToStringList('alglib', alglib) + \
                 fileListToStringList('xlib', xlib) + \
-                fileListToStringList('xlib/macro', xlib_macro)
+                fileListToStringList('xlib/macro', xlib_macro) + \
+                fileListToStringList('xlib/henke', xlib_henke)
 generic_files = processFileNameList(generic_files, env, out_dir+'generic')
 
 olex2c_env = env.Clone()

@@ -793,7 +793,7 @@ public:
     Table.ColName(6) = "Peak";
     for( size_t i = 0; i < atoms.Count(); i++ )  {
       Table[i][0] = atoms[i]->GetLabel();
-      Table[i][1] = atoms[i]->GetAtomInfo().GetSymbol();
+      Table[i][1] = atoms[i]->GetType().symbol;
       Table[i][2] = olxstr::FormatFloat(3, atoms[i]->ccrd()[0]);
       Table[i][3] = olxstr::FormatFloat(3, atoms[i]->ccrd()[1]);
       Table[i][4] = olxstr::FormatFloat(3, atoms[i]->ccrd()[2]);
@@ -814,10 +814,8 @@ public:
     if( !LocateAtoms(toks, atoms, false) )  return;
     if( Cmds[Cmds.Count()-1].IsNumber() )  {
       int start = Cmds[1].ToInt();
-      for( size_t i=0; i < atoms.Count(); i++ ) {
-        atoms[i]->CAtom().Label() = atoms[i]->GetAtomInfo().GetSymbol();
-        atoms[i]->CAtom().Label() << start++;
-      }
+      for( size_t i=0; i < atoms.Count(); i++ )
+        atoms[i]->CAtom().SetLabel(atoms[i]->GetType().symbol + start++, false);
     }
     else  {
       for( size_t i=0; i < atoms.Count(); i++ ) 

@@ -120,7 +120,7 @@ olxstr TOlexViewer::GetObjectLabelAt(int x, int y)  {
     if( EsdlInstanceOf( *G, TXAtom) )  {
       TXAtom& xa = *(TXAtom*)G;
       Tip = xa.Atom().GetLabel();
-      if( xa.Atom().GetAtomInfo() == iQPeakIndex )  {
+      if( xa.Atom().GetType() == iQPeakZ )  {
         Tip << ':' << xa.Atom().CAtom().GetQPeak();
       }
     }

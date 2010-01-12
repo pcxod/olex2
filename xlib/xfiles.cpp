@@ -214,7 +214,7 @@ void TXFile::Sort(const TStrList& ins)  {
   size_t moiety_index = InvalidIndex, h_cnt=0, del_h_cnt = 0, free_h_cnt = 0;
   bool keeph = true;
   for( size_t i=0; i < list.Count(); i++ )  {
-    if( list[i]->GetAtomInfo() == iHydrogenIndex || list[i]->GetAtomInfo() == iHydrogenIndex )  {
+    if( list[i]->GetType() == iHydrogenZ )  {
       if( !list[i]->IsDeleted() )  {
         h_cnt++;
         if( list[i]->GetParentAfixGroup() == NULL )
@@ -311,7 +311,7 @@ void TXFile::ValidateTabs()  {
     }
     bool hasH = false;
     for( size_t j=0; j < sa->NodeCount(); j++ )  {
-      if( !sa->Node(j).IsDeleted() && TAtomsInfo::IsHAtom(sa->Node(j).GetAtomInfo()) )  {
+      if( !sa->Node(j).IsDeleted() && sa->Node(j).GetType() == iHydrogenZ )  {
         hasH = true;
         break;
       }
@@ -458,7 +458,6 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TXFile::LibSetFormula(const TStrObjList& Params, TMacroError& E) {
-  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   if( Params[0].IndexOf(':') == InvalidIndex )
     GetRM().SetUserFormula(Params[0]);
   else  {

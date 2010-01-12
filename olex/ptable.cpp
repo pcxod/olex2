@@ -35,8 +35,8 @@ TPTableDlg::TPTableDlg(TMainFrame *Parent) :
   }
   CreateButton(8, 17, 5 );  // q peak
 
-  for( size_t i=iQPeakIndex+1; i < TAtomsInfo::GetInstance().Count(); i++ )
-    CreateButton(9, i-iQPeakIndex-1, 5 );  // q peak
+  for( size_t i=iQPeakIndex+1; i <= iMaxElementIndex; i++ )
+    CreateButton(9, i-iQPeakIndex-1, 5);  // q peak
   wxDialog::Fit();
   wxDialog::Center();
 }
@@ -79,7 +79,7 @@ void TPTableDlg::CreateButton(int i, int j, int offset )  {
 data:
   if( ii >= 107 )
     ii-=2;
-  B->SetCaption( TAtomsInfo::GetInstance().GetAtomInfo(ii-1).GetSymbol() );
+  B->SetCaption(XElementLib::GetByIndex(ii-1).symbol);
 //  B->Font->Color = A->Color;
   B->OnClick.Add(this);
   B->SetTag( ii );
@@ -87,7 +87,7 @@ data:
 //..............................................................................
 bool TPTableDlg::Execute(const IEObject *Sender, const IEObject *Data)  {
   TButton *S = (TButton*)(AOlxCtrl*)Sender;
-  Selected = &TAtomsInfo::GetInstance().GetAtomInfo( S->GetTag()-1 );
+  Selected = &XElementLib::GetByIndex(S->GetTag()-1);
   wxDialog::EndModal(wxID_OK);
   return true;
 }

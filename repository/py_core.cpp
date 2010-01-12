@@ -205,13 +205,13 @@ PyObject* pyRefModel(PyObject* self, PyObject* args)  {
     for( size_t j=0; j < residue.Count(); j++ )  {
       if( residue[j].IsDeleted() )  continue;
       if( residue[j].GetLabel().Length() > 4 ) 
-        residue[j].Label() = au.CheckLabel(&residue[j], residue[j].GetLabel());
+        residue[j].SetLabel(au.CheckLabel(&residue[j], residue[j].GetLabel()), false);
       for( size_t k=j+1; k < residue.Count(); k++ )  {
         if( residue[k].IsDeleted() )  continue;
         if( residue[j].GetPart() != residue[k].GetPart() && 
             residue[j].GetPart() != 0 && residue[k].GetPart() != 0 )  continue;
         if( residue[j].GetLabel().Equalsi(residue[k].GetLabel()) ) 
-          residue[k].Label() = au.CheckLabel(&residue[k], residue[k].GetLabel());
+          residue[k].SetLabel(au.CheckLabel(&residue[k], residue[k].GetLabel()), false);
       }
     }
   }

@@ -28,7 +28,7 @@ void TXyz::SaveToStrings(TStrList& Strings)  {
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& CA = GetAsymmUnit().GetAtom(i);
     if( CA.IsDeleted() )  continue;
-    olxstr Tmp = CA.GetAtomInfo().GetSymbol();
+    olxstr Tmp = CA.GetType().symbol;
     Tmp << ' ';
     const vec3d& v = CA.ccrd();
     for( int j=0; j < 3; j++ )
@@ -39,7 +39,6 @@ void TXyz::SaveToStrings(TStrList& Strings)  {
 //..............................................................................
 void TXyz::LoadFromStrings(const TStrList& Strings)  {
   Clear();
-  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   Title = "OLEX2: imported from XYZ";
   GetAsymmUnit().Axes()[0] = 1;
   GetAsymmUnit().Axes()[1] = 1;
@@ -53,7 +52,7 @@ void TXyz::LoadFromStrings(const TStrList& Strings)  {
     if( line.IsEmpty() )  continue;
     TStrList toks(line, ' ');
     if( toks.Count() != 4 )  continue;
-    if( AtomsInfo.IsAtom(toks[0]) )  {
+    if( XElementLib::IsAtom(toks[0]) )  {
       TCAtom& CA = GetAsymmUnit().NewAtom();
       CA.ccrd()[0] = toks[1].ToDouble();
       CA.ccrd()[1] = toks[2].ToDouble();
@@ -73,9 +72,9 @@ bool TXyz::Adopt(TXFile& XF)  {
     TSAtom& sa = latt.GetAtom(i);
     if( !sa.IsAvailable() )  continue;
     TCAtom& a = GetAsymmUnit().NewAtom();
-    a.Label() = sa.GetLabel();
+    a.SetLabel(sa.GetLabel(), false);
     a.ccrd() = sa.crd();
-    a.SetAtomInfo(sa.GetAtomInfo());
+    a.SetType(sa.GetType());
   }
   GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
   return true;

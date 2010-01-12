@@ -1001,14 +1001,19 @@ olxstr THtml::GetObjectValue(const AOlxCtrl *Obj)  {
   if( EsdlInstanceOf(*Obj, TTreeView) )  {
     TTreeView* T = (TTreeView*)Obj;
     wxTreeItemId ni = T->GetSelection();
-    //T->
-    return T->GetItemText(ni).c_str();
+    wxTreeItemData* td = T->GetItemData(ni);
+    if( td == NULL || !EsdlInstanceOf(*td, TTreeNodeData) )
+      return EmptyString;
+    TTreeNodeData* olx_td = dynamic_cast<TTreeNodeData*>(td);
+    if( olx_td == NULL || olx_td->GetData() == NULL )
+      return EmptyString;
+    return olx_td->GetData()->ToString();
   }
   return EmptyString;
 }
 void THtml::funGetValue(const TStrObjList &Params, TMacroError &E)  {
   const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml(Params[0].SubStringTo(ind));
   olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
@@ -1289,11 +1294,16 @@ void THtml::funGetLabel(const TStrObjList &Params, TMacroError &E)  {
   if( EsdlInstanceOf(*Obj, TButton) )  rV = ((TButton*)Obj)->GetCaption();
   else if( EsdlInstanceOf(*Obj, TLabel) )   rV = ((TLabel*)Obj)->GetCaption();
   else if( EsdlInstanceOf(*Obj, TCheckBox) )   rV = ((TCheckBox*)Obj)->GetCaption();
+  else if( EsdlInstanceOf(*Obj, TTreeView) )  {
+    TTreeView* T = (TTreeView*)Obj;
+    wxTreeItemId ni = T->GetSelection();
+    rV = T->GetItemText(ni).c_str();
+  }
   else  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object type: ")  << EsdlObjectName(*Obj);
     return;
   }
-  E.SetRetVal( rV );
+  E.SetRetVal(rV);
 }
 //..............................................................................
 void THtml::funSetLabel(const TStrObjList &Params, TMacroError &E)  {
@@ -1309,9 +1319,14 @@ void THtml::funSetLabel(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
     return;
   }
-  if( EsdlInstanceOf(*Obj, TButton) )       ((TButton*)Obj)->SetCaption( Params[1] );
-  else if( EsdlInstanceOf(*Obj, TLabel) )   ((TLabel*)Obj)->SetCaption( Params[1] );
-  else if( EsdlInstanceOf(*Obj, TCheckBox) )   ((TCheckBox*)Obj)->SetCaption( Params[1] );
+  if( EsdlInstanceOf(*Obj, TButton) )       ((TButton*)Obj)->SetCaption(Params[1]);
+  else if( EsdlInstanceOf(*Obj, TLabel) )   ((TLabel*)Obj)->SetCaption(Params[1]);
+  else if( EsdlInstanceOf(*Obj, TCheckBox) )   ((TCheckBox*)Obj)->SetCaption(Params[1]);
+  else if( EsdlInstanceOf(*Obj, TTreeView) )  {
+    TTreeView* T = (TTreeView*)Obj;
+    wxTreeItemId ni = T->GetSelection();
+    T->SetItemText(ni, Params[1].u_str());
+  }
   else  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object type: ")  << EsdlObjectName(*Obj);
     return;

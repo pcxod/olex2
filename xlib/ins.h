@@ -29,7 +29,7 @@ class TIns: public TBasicCFile  {
   // parsing context state and varables
   struct ParseContext {
     TStrList Symm;
-    TStrPObjList<olxstr, TBasicAtomInfo*>  BasicAtoms;  // SFAC container
+    TStrPObjList<olxstr, const cm_Element*>  BasicAtoms;  // SFAC container
     bool CellFound, SetNextPivot, End;
     int Part;
     esdl::TStack< AnAssociation3<int,TAfixGroup*, bool> > AfixGroups;  // number of atoms (left), pivot, Hydrogens or not
@@ -74,7 +74,7 @@ protected:
   static void _ProcessAfix0(ParseContext& cx);
   // if atoms is saved, its Tag is added to the index (if not NULL) 
   static void _SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix, 
-    TStrPObjList<olxstr,TBasicAtomInfo*>* sfac, TStrList& sl, TIndexList* index=NULL, bool checkSame=true);
+    TStrPObjList<olxstr,const cm_Element*>* sfac, TStrList& sl, TIndexList* index=NULL, bool checkSame=true);
   static void _ProcessSame(ParseContext& cx);
   // initialises the unparsed instruction list
   void _FinishParsing(ParseContext& cx);

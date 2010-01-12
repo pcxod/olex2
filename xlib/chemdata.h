@@ -1,8 +1,9 @@
 #ifndef __chem_lib_data
 #define __chem_lib_data
-
 #include "xbase.h"
 #include "ecomplex.h"
+#include "edict.h"
+#include "henke.h"
 
 // atomic number of some atoms
 static const short 
@@ -20,7 +21,27 @@ static const short
   iChlorineZ   = 17,
   iPotassiumZ  = 19,
   iCalciumZ    = 20,
+  iBromineZ    = 35,
   iQPeakZ      = -1;
+
+const  short
+  iHydrogenIndex    = 0,
+  iBoronIndex       = 4,
+  iCarbonIndex      = 5,
+  iNitrogenIndex    = 6,
+  iOxygenIndex      = 7,
+  iFluorineIndex    = 8,
+  iSodiumIndex      = 10,
+  iMagnesiumIndex   = 11,
+  iSiliconIndex     = 13,
+  iPhosphorusIndex  = 14,
+  iSulphurIndex     = 15,
+  iChlorineIndex    = 16,
+  iPotassiumIndex   = 18,
+  iCalciumIndex     = 19,
+  iQPeakIndex       = 104,
+  iDeuteriumIndex   = 105,
+  iMaxElementIndex = 105;  // for iterations
 
 /*
   the source of data for Henke tables and scattering data is cctbx
@@ -57,10 +78,7 @@ struct cm_Isotope {
   double Mr, W;  
   const cm_Neutron_Scattering* neutron_scattering;
 };
-struct cm_Anomalous_Henke {  
-  double energy, fp, fdp;  
-  static const double Undefined;
-};
+
 struct cm_Gaussians {  
   double a1, a2, a3, a4, b1, b2, b3, b4, c;  
   // constructor, note that b values are inverted!
@@ -85,23 +103,34 @@ struct cm_Gaussians {
 };
 
 struct cm_Element {
+protected:
+  double Mr;
+public:
   const olxstr symbol, name;
   const cm_Gaussians* gaussians;  // 9 elements = 4 gaussians + const
   const cm_Isotope* isotopes;
   const cm_Anomalous_Henke* henke_data; 
   const cm_Neutron_Scattering* neutron_scattering;
-  unsigned int def_color;
+  uint32_t def_color;
   const short z, isotope_count, henke_count;
+  const short index;
   double r_pers, r_bonding, r_sfil;
-  cm_Element(const char* _symbol, const char* _name, unsigned int _def_color, short _z, 
+  cm_Element(short _index, const char* _symbol, const char* _name, uint32_t _def_color, short _z, 
     double _r_pers, double _r_bonding, double _r_sfil, const cm_Gaussians* _gaussians, 
     const cm_Isotope* _isotopes, short _isotope_count, 
     const cm_Anomalous_Henke* _henke_data, short _henke_count, 
     const cm_Neutron_Scattering* _neutron_scattering) :
+    index(_index),
     symbol(_symbol), name(_name), def_color(_def_color), z(_z), r_pers(_r_pers), 
     r_bonding(_r_bonding), r_sfil(_r_sfil), gaussians(_gaussians), 
     isotopes(_isotopes), isotope_count(_isotope_count),
-    henke_data(_henke_data), henke_count(_henke_count), neutron_scattering(_neutron_scattering) {  }
+    henke_data(_henke_data), henke_count(_henke_count),
+    neutron_scattering(_neutron_scattering),
+    Mr(0.0)
+  {
+    for( int i=0; i < isotope_count; i++ )
+      Mr += isotopes[i].Mr*isotopes[i].W;
+  }
 
   compd CalcFpFdp(double eV) const  {
     if( henke_data == NULL )
@@ -128,14 +157,7 @@ struct cm_Element {
     }
     throw TFunctionFailedException(__OlxSourceInfo, "cannot happen");
   }
-  double CalcMr() const {
-    if( isotope_count == 0 )
-      throw TFunctionFailedException(__OlxSourceInfo, "no data available");
-    double rv = 0;
-    for( int i=0; i < isotope_count; i++ )
-      rv += isotopes[i].Mr*isotopes[i].W;
-    return rv;
-  }
+  double GetMr() const {  return Mr;  }
   inline bool operator >  (const cm_Element& ce) const {  return z >  ce.z;  }
   inline bool operator >= (const cm_Element& ce) const {  return z >= ce.z;  }
   inline bool operator <  (const cm_Element& ce) const {  return z <  ce.z;  }
@@ -150,7 +172,18 @@ struct cm_Element {
   inline bool operator != (short _z) const {  return z != _z;  }
 };
 
+typedef TPtrList<const cm_Element> ElementPList;
+typedef TTypeList<AnAssociation2<olxstr, double> > ContentList;
+typedef olxdict<const cm_Element*, double, TPrimitiveComparator> ElementRadii;
 class XElementLib {
+  static void ParseSimpleElementStr(const olxstr& str, TStrList& toks);
+  static void ExpandShortcut(const olxstr& sh, ContentList& res, double cnt=1.0);
+  // checks if p is an element symbol, will correctly distinguis "C " and "Cd"
+  static bool IsShortcut(const olxstr& c)  {
+    return c.Equalsi("Ph") || c.Equalsi("Cp") || c.Equalsi("Me") ||
+      c.Equalsi("Et") || c.Equalsi("Bu") ||
+      c.Equalsi("Py") || c.Equalsi("Tf");
+  }
 public:
   static double Wavelength2eV(double lambda) {
     static const double ev_angstrom  = 6626.0755 * 2.99792458 / 1.60217733;
@@ -158,15 +191,24 @@ public:
   }
   // and exact symbol as C or Cr is expected
   static cm_Element* FindBySymbol(const olxstr& symbol);
+  // for compatibility with old routines...
+  static cm_Element& GetByIndex(short);
   // a label might be passed as C1 or Cr2
   static cm_Element* FindBySymbolEx(const olxstr& symbol);
   // extracts symbol from a label, like C for C1 or Cr for Cr2
-  static inline const olxstr& ExtractSymbol(const olxstr& label)  {
-    cm_Element* elm = FindBySymbolEx(label);
-    return elm == NULL ? EmptyString : elm->symbol;
+  static const olxstr& ExtractSymbol(const olxstr& label)  {
+    cm_Element* type = FindBySymbolEx(label);
+    return type == NULL ? EmptyString : type->symbol;
   }
   // returns true if labels starts from a symbol
-  static inline bool IsElement(const olxstr& label) {  return !ExtractSymbol(label).IsEmpty();  }
+  static bool IsElement(const olxstr& label) {  return !ExtractSymbol(label).IsEmpty();  }
+  // checks if p is a label starting from an element symbol
+  static bool IsAtom(const olxstr& label)  {  return (FindBySymbolEx(label) != NULL);  }
+
+  /* parses a string like C37H41P2BRhClO into a list of element names and theur
+    count
+  */
+  static void ParseElementString(const olxstr& su, ContentList& res);
 };
 
 EndXlibNamespace()

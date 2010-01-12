@@ -1,6 +1,6 @@
 #include "ipattern.h"
+#include "chemdata.h"
 #include "chnexp.h"
-#include "atominfo.h"
 #include "estrlist.h"
 #include "idistribution.h"
 #include "bapp.h"
@@ -21,18 +21,17 @@ bool TIPattern::Calc(const olxstr& Exp, olxstr& Msg, bool Combine, double Delta)
     return false;
   }
   CHN.CalcSummFormula(SL);
-  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   for( size_t i=0; i < SL.Count(); i++ )  {
-    TBasicAtomInfo* AI = AtomsInfo.FindAtomInfoBySymbol( SL[i] );
-    if( AI == NULL )
+    cm_Element* elm = XElementLib::FindBySymbol(SL[i]);
+    if( elm == NULL )
       return false;
     int occupancy = (int)SL.GetObject(i);
     if( occupancy == 0 )  {
       occupancy++;
       TBasicApp::GetLog().Error(
-        olxstr("The occupancy is set to 1 for ") << AI->GetSymbol() << " the molecular weight might be incorrect");
+        olxstr("The occupancy is set to 1 for ") << elm->symbol << " the molecular weight might be incorrect");
     }
-    ID.AddIsotope(*AI, occupancy);
+    ID.AddIsotope(*elm, occupancy);
   }
   ID.Calc(Points);
   if( !Points.IsEmpty() )  {

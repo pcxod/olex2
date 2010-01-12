@@ -1,8 +1,7 @@
-#ifndef catomH
-#define catomH
-
+#ifndef __olx_xl_catom_H
+#define __olx_xl_catom_H
 #include "xbase.h"
-#include "atominfo.h"
+#include "chemdata.h"
 #include "symmat.h"
 #include "evpoint.h"
 #include "typelist.h"
@@ -47,9 +46,10 @@ struct CXConnInfo;
 
 class TCAtom: public ACollectionItem, public IXVarReferencer  {
 private:
-  class TAsymmUnit *FParent;
-  TBasicAtomInfo*  FAtomInfo;    // a pointer to TBasisAtomInfo object
-  olxstr FLabel;    // atom's label
+  class TAsymmUnit* FParent;
+  //TBasicAtomInfo* FAtomInfo;    // a pointer to TBasisAtomInfo object
+  const cm_Element* Type;
+  olxstr Label;    // atom's label
   size_t Id, EllpId;  // c_atoms id; this is also used to identify if TSAtoms are the same
   uint32_t FragmentId, // this is used in asymmetric unit sort and initialised in TLatice::InitBody()
     ResiId;
@@ -73,18 +73,19 @@ private:
   CXConnInfo* ConnInfo;
   inline void SetId(size_t id) {  Id = id;  }
 public:
-  TCAtom(TAsymmUnit *Parent);
+  TCAtom(TAsymmUnit* Parent);
   virtual ~TCAtom();
   inline TAsymmUnit* GetParent() const {  return FParent; }
-  inline TBasicAtomInfo& GetAtomInfo() const {  return *FAtomInfo; }
-  void SetAtomInfo(TBasicAtomInfo& A);
+  //inline TBasicAtomInfo& GetAtomInfo() const {  return *FAtomInfo; }
+  //void SetAtomInfo(TBasicAtomInfo& A);
+  const cm_Element& GetType() const {  return *Type; }
+  void SetType(const cm_Element& A);
 
-  inline olxstr& Label()  {  return FLabel; }
   // function validates and changes the atom type, use the syntax above just to set the label
-  bool SetLabel(const olxstr &L);
+  void SetLabel(const olxstr& L, bool validate=true);
   
   // returns just atom label
-  inline const olxstr& GetLabel() const {  return FLabel;  }
+  const olxstr& GetLabel() const {  return Label;  }
   // if ResiId == -1 works the same as GetLabel(), otherwise appends '_' and Residue number
   olxstr GetResiLabel()  const;
 
@@ -107,19 +108,19 @@ public:
     }
   }
 
-  inline size_t AttachedAtomICount()      const {
+  inline size_t AttachedAtomICount() const {
     return FAttachedAtomsI == NULL ? 0 : FAttachedAtomsI->Count();
   }
-  inline TCAtom& GetAttachedAtomI(size_t i)      const {  return *FAttachedAtomsI->Item(i);  }
+  inline TCAtom& GetAttachedAtomI(size_t i) const {  return *FAttachedAtomsI->Item(i);  }
   void AttachAtomI(TCAtom *CA);
   inline bool IsAttachedToI(TCAtom& CA)const {
     return FAttachedAtomsI == NULL ? false : FAttachedAtomsI->IndexOf(&CA) != InvalidIndex;
   }
   // beware - just the memory addresses compared!
-  inline bool operator == (const TCAtom& ca)  const  {  return this == &ca;  }
-  inline bool operator == (const TCAtom* ca)  const  {  return this == ca;  }
-  inline bool operator != (const TCAtom& ca)  const  {  return this != &ca;  }
-  inline bool operator != (const TCAtom* ca)  const  {  return this != ca;  }
+  inline bool operator == (const TCAtom& ca) const {  return this == &ca;  }
+  inline bool operator == (const TCAtom* ca) const {  return this == ca;  }
+  inline bool operator != (const TCAtom& ca) const {  return this != &ca;  }
+  inline bool operator != (const TCAtom* ca) const {  return this != ca;  }
 
 //  TAtomsInfo *AtomsInfo() const;
   void  Assign(const TCAtom& S);
@@ -193,7 +194,7 @@ public:
   virtual double GetValue(size_t var_index) const;
   virtual void SetValue(size_t var_index, const double& val);
   virtual bool IsValid() const {  return !IsDeleted();  }
-  virtual olxstr GetIdName() const {  return FLabel;  }
+  virtual olxstr GetIdName() const {  return Label;  }
 //
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);
@@ -213,10 +214,10 @@ public:
     if( a1->GetFragmentId() != a2->GetFragmentId() )  return a1->GetFragmentId() - a2->GetFragmentId();
     if( a1->GetResiId() != a2->GetResiId() )          return olx_cmp_size_t(a1->GetResiId(),a2->GetResiId());
     // asc sort by label
-    if( a1->GetAtomInfo().GetIndex() == a2->GetAtomInfo().GetIndex() )
-      return TCAtom::CompareAtomLabels( a1->GetLabel(), a2->GetLabel());
-    // desc sort my mr
-    if( (a1->GetAtomInfo().GetIndex() - a2->GetAtomInfo().GetIndex() ) < 0 )  return 1;
+    if( a1->GetType() == a2->GetType() )
+      return TCAtom::CompareAtomLabels(a1->GetLabel(), a2->GetLabel());
+    // desc sort my weight
+    if( (a1->GetType().GetMr() - a2->GetType().GetMr()) < 0 )  return 1;
     return -1;
   }
 };

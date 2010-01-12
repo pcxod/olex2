@@ -3,7 +3,7 @@
 #endif
 
 #include "chnexp.h"
-#include "atominfo.h"
+#include "chemdata.h"
 
 //---------------------------------------------------------------------------
 //..............................................................................
@@ -32,9 +32,10 @@ double TCHNExp::MolWeight()  {
   TStrPObjList<olxstr,double> E1;
   CalcSummFormula(E1);
   double w = 0;
-  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   for( size_t i=0; i < E1.Count(); i++ )  {
-    TBasicAtomInfo* I = AtomsInfo.FindAtomInfoBySymbol( E1[i] );
+    cm_Element* I = XElementLib::FindBySymbol(E1[i]);
+    if( I == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Undefined elment: ") << E1[i]);
     w += (E1.GetObject(i) * I->GetMr());
   }
   return w;
@@ -43,18 +44,17 @@ double TCHNExp::MolWeight()  {
 double TCHNExp::CHN(olxdict<short, double, TPrimitiveComparator>& rv) const {
   TStrPObjList<olxstr,double> E1;
   CalcSummFormula(E1);
-  TPtrList<TBasicAtomInfo> bais(E1.Count());
+  ElementPList bais(E1.Count());
   double w = 0;
-  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   for( size_t i=0; i < E1.Count(); i++ )  {
-    bais[i] = AtomsInfo.FindAtomInfoBySymbol(E1[i]);
+    bais[i] = XElementLib::FindBySymbol(E1[i]);
     w += (E1.GetObject(i) * bais[i]->GetMr());
   }
   if( w == 0 )  w = 1;  // if w == 0 then all components are zero, so ... why not?
   for( size_t i=0; i < rv.Count(); i++ )
     rv.GetValue(i) = 0.0;
   for( size_t i=0; i < E1.Count(); i++ )  {
-    size_t ei = rv.IndexOf(bais[i]->GetIndex());
+    size_t ei = rv.IndexOf(bais[i]->index);
     if( ei == InvalidIndex )  continue;
     rv.GetValue(ei) = E1.GetObject(i)*bais[i]->GetMr();
   }
@@ -64,21 +64,20 @@ double TCHNExp::CHN(olxdict<short, double, TPrimitiveComparator>& rv) const {
 void TCHNExp::CHN(double &C, double &H, double &N, double &Mr) const {
   TStrPObjList<olxstr,double> E1;
   CalcSummFormula(E1);
+  ElementPList elms(E1.Count());
   double w = 0;
-  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   for( size_t i=0; i < E1.Count(); i++ )  {
-    TBasicAtomInfo* I = AtomsInfo.FindAtomInfoBySymbol( E1[i] );
-    w += (E1.GetObject(i) * I->GetMr() );
+    elms[i] = XElementLib::FindBySymbol(E1[i]);
+    w += (E1.GetObject(i) * elms[i]->GetMr());
   }
   if( w == 0 )  w = 1;  // if w == 0 then all components are zero, so ... why not?
   for( size_t i=0; i < E1.Count(); i++ )  {
-    TBasicAtomInfo* I = AtomsInfo.FindAtomInfoBySymbol(E1[i]);
-    if( I->GetIndex() == iCarbonIndex )
-      C = E1.GetObject(i) * I->GetMr();
-    else if( I->GetIndex() == iHydrogenIndex )
-      H = E1.GetObject(i) * I->GetMr();
-    else if( I->GetIndex() == iNitrogenIndex )
-      N = E1.GetObject(i) * I->GetMr();
+    if( *elms[i] == iCarbonZ )
+      C = E1.GetObject(i) * elms[i]->GetMr();
+    else if( elms[i]->index == iHydrogenIndex )  // careful H and D are not same here!
+      H = E1.GetObject(i) * elms[i]->GetMr();
+    else if( *elms[i] == iNitrogenZ )
+      N = E1.GetObject(i) * elms[i]->GetMr();
   }
   Mr = w;
 }
@@ -86,21 +85,20 @@ void TCHNExp::CHN(double &C, double &H, double &N, double &Mr) const {
 olxstr TCHNExp::Composition()  {
   TStrPObjList<olxstr,double> E1;
   CalcSummFormula(E1);
-  TPtrList<TBasicAtomInfo> bais(E1.Count());
+  ElementPList elms(E1.Count());
   double w = 0;
   olxstr Res("Calculated ("), SF;
-  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   for( size_t i=0; i < E1.Count(); i++ )  {
-    bais[i] = AtomsInfo.FindAtomInfoBySymbol(E1[i]);
+    elms[i] = XElementLib::FindBySymbol(E1[i]);
     SF << E1[i] << E1.GetObject(i);
     if( (i+1) < E1.Count() )
       SF <<  ' ';
-    w += (E1.GetObject(i) * bais[i]->GetMr());
+    w += (E1.GetObject(i) * elms[i]->GetMr());
   }
   Res << SF << "): ";
   if( w == 0 )  w = 1;  // if w == 0 then all components are zero, so ... why not?
   for( size_t i=0; i < E1.Count(); i++ )  {
-    const double v = (E1.GetObject(i) * bais[i]->GetMr());
+    const double v = (E1.GetObject(i) * elms[i]->GetMr());
     Res << E1[i] <<  ": " << olxstr::FormatFloat(3, v/w*100);
     if( (i+1) < E1.Count() )
       Res << "; ";
@@ -144,7 +142,6 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
   bool ElementDefined = false;
   short ob, cb; // open and close brackets
   Clear();
-  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   for( size_t i=0; i < E.Length(); i++ )  {
     if( E[i] == '(' )   {
       NExp = EmptyString;
@@ -188,7 +185,7 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
     else  {
       if( ElementDefined )  {
         if( Element.IsEmpty() )  return;
-        if( !AtomsInfo.IsElement(Element) )
+        if( !XElementLib::IsElement(Element) )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: '") << Element << '\'');
         if( ECount.Length() != 0 )
           Exp.Add(Element, ECount.ToDouble());
@@ -200,7 +197,7 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
         Element << E[i];
         i++;
         if( Element.Length() == 2 )  {  // CD
-          if( !AtomsInfo.IsElement(Element) )  {  // CC-D
+          if( !XElementLib::IsElement(Element) )  {  // CC-D
             Element.SetLength(1);
             i--;
             break;  // the firts letter should be an element labels
@@ -208,7 +205,7 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
           break;
         }
         if( i >= E.Length() )  {
-          if( !AtomsInfo.IsElement(Element) )
+          if( !XElementLib::IsElement(Element) )
             throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: '") << Element << '\'');
           Exp.Add(Element, 1);
           return;
@@ -220,7 +217,7 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
     }
   }
   if( ElementDefined && !Element.IsEmpty() )  { // add lst element
-    if( !AtomsInfo.IsElement(Element) )
+    if( !XElementLib::IsElement(Element) )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: '") << Element << '\'');
     if( !ECount.IsEmpty() )
       Exp.Add(Element, ECount.ToDouble());

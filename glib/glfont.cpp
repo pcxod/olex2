@@ -1228,11 +1228,11 @@ void TGlFont::RenderPSLabel(const vec3d& pos, const olxstr& label, TStrList& out
         }
       }
     }
-    size_t di = definitions.IndexOf(label.CharAt(i));
+    size_t di = definitions.IndexOf((size_t)label.CharAt(i));
     if( di == InvalidIndex )  {
       TStrList sl = DefinePSChar(label.CharAt(i), drawScale, definitions);
       out.Insert(0, sl);
-      di = definitions.IndexOf(label.CharAt(i));
+      di = definitions.IndexOf((size_t)label.CharAt(i));
       if( di == InvalidIndex )  continue;
     }
     out.Add(definitions.GetValue(di));

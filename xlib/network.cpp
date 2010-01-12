@@ -38,10 +38,10 @@ double TNetwork_FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAt
   double sumA = 0, sumB = 0;
   vec3d centA, centB;
   for( size_t i=0; i < atoms.Count(); i++ )  {
-    centA += crds[i].GetA()*atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetAtomInfo().GetMr();
-    sumA += atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetAtomInfo().GetMr();
-    centB += crds[i].GetB()*atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetAtomInfo().GetMr();
-    sumB += atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetAtomInfo().GetMr();
+    centA += crds[i].GetA()*atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetType().GetMr();
+    sumA += atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetType().GetMr();
+    centB += crds[i].GetB()*atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetType().GetMr();
+    sumB += atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetType().GetMr();
     // unit weights give the figures like XP or Mercury (overwise Olex2 gives higher values)
     //centA += crds[i].GetA()*atoms[i].GetA()->CAtom().GetOccu();
     //sumA += atoms[i].GetA()->CAtom().GetOccu();
@@ -270,7 +270,7 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags, TSB
       // prevent q-peaks affecting the max number of bonds...
       uint16_t bc2set = olx_abs(ci.maxBonds);
       for( uint16_t j=0;  j < bc2set; j++ )  {
-        if( A1->Node(j).GetAtomInfo() == iQPeakIndex )  {
+        if( A1->Node(j).GetType() == iQPeakZ )  {
           if( ++bc2set >= A1->NodeCount() )  {
             break;
           }
@@ -323,11 +323,11 @@ void TNetwork::THBondSearchTask::Run(size_t ind)  {
   TSAtom *AA = NULL,
          *DA = NULL;
   TSAtom* A1 = Atoms[ind];
-  int aiIndex = A1->GetAtomInfo().GetIndex();
-  if( aiIndex == iHydrogenIndex )
+  const cm_Element& aT = A1->GetType();
+  if( aT == iHydrogenZ )
     AA = A1;
-  else if( aiIndex == iNitrogenIndex || aiIndex == iOxygenIndex || aiIndex == iFluorineIndex ||
-      aiIndex == iChlorineIndex || aiIndex == iSulphurIndex )
+  else if( aT == iNitrogenZ || aT == iOxygenZ || aT == iFluorineZ ||
+      aT == iChlorineZ || aT == iSulphurZ )
     DA = A1;
 
   if( AA == NULL && DA == NULL )  return;
@@ -344,11 +344,11 @@ void TNetwork::THBondSearchTask::Run(size_t ind)  {
     if( (Distances[3][ind] - Distances[3][i]) > dcMaxCBLength ||
         (Distances[3][ind] - Distances[3][i]) < -dcMaxCBLength )  continue;
 
-    const int aiIndex1 = Atoms[i]->GetAtomInfo().GetIndex();
-    if( !((AA != NULL && (aiIndex1 == iNitrogenIndex || aiIndex1 == iOxygenIndex||
-                        aiIndex1 == iFluorineIndex || aiIndex1 == iChlorineIndex ||
-                        aiIndex1 == iSulphurIndex))  ||
-          (DA != NULL && aiIndex1 == iHydrogenIndex) ) )  continue;
+    const cm_Element& aT1 = Atoms[i]->GetType();
+    if( !((AA != NULL && (aT1 == iNitrogenZ || aT1 == iOxygenZ||
+                        aT1 == iFluorineZ || aT1 == iChlorineZ ||
+                        aT1 == iSulphurZ))  ||
+          (DA != NULL && aT1 == iHydrogenZ) ) )  continue;
 
     if( A1->GetNetwork() == Atoms[i]->GetNetwork() )  {
       if( A1->IsConnectedTo( *Atoms[i]) )  continue;
@@ -357,7 +357,7 @@ void TNetwork::THBondSearchTask::Run(size_t ind)  {
              *NA  = ((DA!=NULL)?DA:Atoms[i]);
       bool connected = false;
       for( size_t j=0; j < CSA->NodeCount(); j++ )  {
-        if( CSA->Node(j).GetAtomInfo() == iQPeakIndex )  // 17/05/2007 - skip the Q peaks!
+        if( CSA->Node(j).GetType() == iQPeakZ )  // 17/05/2007 - skip the Q peaks!
           continue;
         if( CSA->Node(j).IsConnectedTo(*NA) )  {
           connected = true;
@@ -382,7 +382,7 @@ void TNetwork::THBondSearchTask::Run(size_t ind)  {
       const double D = A1->crd().QDistanceTo( Atoms[i]->crd() );
       const double D1 = olx_sqr(A1->CAtom().GetConnInfo().r + Atoms[i]->CAtom().GetConnInfo().r + Delta);
       if(  D < D1 && IsBondAllowed(*A1, *Atoms[i]) )  {
-        TSBond* B = new TSBond( &A1->GetNetwork() );
+        TSBond* B = new TSBond(&A1->GetNetwork());
         B->SetType(sotHBond);
         B->SetA(*A1);
         B->SetB(*Atoms[i]);
@@ -514,7 +514,7 @@ void ExpandGraphNode(TEGraphNode<size_t,TSAtom*>& graphNode)  {
   for( size_t i=0; i < graphNode.GetObject()->NodeCount(); i++ )  {
     TSAtom& sa = graphNode.GetObject()->Node(i);
     if( sa.GetTag() <= graphNode.GetObject()->GetTag() )  continue;
-    ExpandGraphNode(graphNode.NewNode(sa.GetAtomInfo().GetIndex(), &sa) );
+    ExpandGraphNode(graphNode.NewNode(sa.GetType().z, &sa) );
   }
 }
 
@@ -550,9 +550,7 @@ struct GraphAnalyser  {
     }
     else  {
       for( size_t i=0; i < matchedAtoms.Count(); i++ )
-        if( matchedAtoms[i].A()->GetTag() != i || 
-          matchedAtoms[i].A()->GetAtomInfo() == iHydrogenIndex ||
-          matchedAtoms[i].A()->GetAtomInfo() == iDeuteriumIndex )
+        if( matchedAtoms[i].A()->GetTag() != i || matchedAtoms[i].A()->GetType() == iHydrogenZ )
           matchedAtoms.NullItem(i);
     }
     matchedAtoms.Pack();
@@ -573,7 +571,7 @@ struct GraphAnalyser  {
       return CalcRMS();
     size_t h_cnt = 0;
     for( size_t i=0; i < src.Count(); i++ )
-      if( src[i].GetData() == iHydrogenIndex || src[i].GetData() == iDeuteriumIndex )
+      if( src[i].GetData() == iHydrogenZ )
         h_cnt++;
     if( h_cnt < 2 )
       return CalcRMS();
@@ -602,7 +600,7 @@ struct GraphAnalyser  {
     if( !n1.IsShallowEqual(n2) )  return;
     TSizeList hpos;
     for( size_t i=0; i < n1.Count(); i++ )  {
-      if( n1[i].GetData() == iHydrogenIndex )
+      if( n1[i].GetData() == iHydrogenZ )
         hpos.Add(i);
       HValidator(n1[i], n2[i]);
     }
@@ -649,8 +647,8 @@ bool TNetwork::DoMatch(TNetwork& net, TTypeList<AnAssociation2<size_t,size_t> >&
     vec3d v = net.Node(i).ccrd();
     if( Invert )  v *= -1;
     au_b.CellToCartesian(v);
-    centb += v*net.Node(i).CAtom().GetOccu()*net.Node(i).GetAtomInfo().GetMr();
-    centb_wght += net.Node(i).CAtom().GetOccu()*net.Node(i).GetAtomInfo().GetMr();
+    centb += v*net.Node(i).CAtom().GetOccu()*net.Node(i).GetType().GetMr();
+    centb_wght += net.Node(i).CAtom().GetOccu()*net.Node(i).GetType().GetMr();
   }
   centb /= centb_wght;
 
@@ -660,25 +658,25 @@ bool TNetwork::DoMatch(TNetwork& net, TTypeList<AnAssociation2<size_t,size_t> >&
     if( Node(i).NodeCount() > maxbc )  {
       thisSa = &Node(i);
       maxbc = Node(i).NodeCount();
-      maxMw = Node(i).GetAtomInfo().GetMr();
+      maxMw = Node(i).GetType().GetMr();
     }
     else if( Node(i).NodeCount() == maxbc )  {
-      if( Node(i).GetAtomInfo().GetMr() > maxMw )  {
+      if( Node(i).GetType().GetMr() > maxMw )  {
         thisSa = &Node(i);
-        maxMw = thisSa->GetAtomInfo().GetMr();
+        maxMw = thisSa->GetType().GetMr();
       }
     }
-    if( Node(i).GetAtomInfo() == iHydrogenIndex || Node(i).GetAtomInfo() == iDeuteriumIndex )
+    if( Node(i).GetType() == iHydrogenZ )
       HCount++;
     vec3d v = Node(i).ccrd();
     au_a.CellToCartesian(v);
-    centa += v*Node(i).CAtom().GetOccu()*Node(i).GetAtomInfo().GetMr();
-    centa_wght += Node(i).CAtom().GetOccu()*Node(i).GetAtomInfo().GetMr();
+    centa += v*Node(i).CAtom().GetOccu()*Node(i).GetType().GetMr();
+    centa_wght += Node(i).CAtom().GetOccu()*Node(i).GetType().GetMr();
   }
   centa /= centa_wght;
 
   if( thisSa == NULL )  return false;
-  TEGraph<size_t, TSAtom*> thisGraph(thisSa->GetAtomInfo().GetIndex(), thisSa);
+  TEGraph<size_t, TSAtom*> thisGraph(thisSa->GetType().z, thisSa);
 //  TEGraph<int, TSAtom*> thisGraph( 0, thisSa );
   BuildGraph(thisGraph.GetRoot(), thisSa);
   TNetTraverser trav;
@@ -688,10 +686,10 @@ bool TNetwork::DoMatch(TNetwork& net, TTypeList<AnAssociation2<size_t,size_t> >&
   for( size_t i=0; i < net.NodeCount(); i++ )  {
     TSAtom& thatSa = net.Node(i);
     if( thisSa->NodeCount() != thatSa.NodeCount() )  continue;
-    if( thisSa->GetAtomInfo() != thatSa.GetAtomInfo() )  continue;
+    if( thisSa->GetType() != thatSa.GetType() )  continue;
     for( size_t j=0; j < net.NodeCount(); j++ )
       net.Node(j).SetTag(0);
-    TEGraph<size_t, TSAtom*> thatGraph(thatSa.GetAtomInfo().GetIndex(), &thatSa);
+    TEGraph<size_t, TSAtom*> thatGraph(thatSa.GetType().z, &thatSa);
     BuildGraph(thatGraph.GetRoot(), &thatSa);
 
     trav.ClearData();
@@ -718,8 +716,8 @@ bool TNetwork::DoMatch(TNetwork& net, TTypeList<AnAssociation2<size_t,size_t> >&
 }
 //..............................................................................
 bool TNetwork::IsSubgraphOf( TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res,
-                             const TSizeList& rootsToSkip )  {
-
+                             const TSizeList& rootsToSkip )
+{
   if( NodeCount() > net.NodeCount() )  return false;
   TSAtom* thisSa = NULL;
   size_t maxbc = 0;
@@ -730,35 +728,35 @@ bool TNetwork::IsSubgraphOf( TNetwork& net, TTypeList< AnAssociation2<size_t, si
       maxbc = Node(i).NodeCount();
     }
   }
-  TEGraph<size_t, TSAtom*> thisGraph( thisSa->GetAtomInfo().GetIndex(), thisSa );
+  TEGraph<size_t, TSAtom*> thisGraph( thisSa->GetType().z, thisSa );
   BuildGraph( thisGraph.GetRoot(), thisSa );
   TIntList GraphId;
   for( size_t i=0; i < net.NodeCount(); i++ )  {
     TSAtom* thatSa = &net.Node(i);
     if( thisSa->NodeCount() > thatSa->NodeCount() )  continue;
-    if( thisSa->GetAtomInfo().GetIndex() != thatSa->GetAtomInfo().GetIndex() )  continue;
+    if( thisSa->GetType() != thatSa->GetType() )  continue;
     if( rootsToSkip.IndexOf(i) != InvalidIndex )
       continue;
     for( size_t j=0; j < net.NodeCount(); j++ )
       net.Node(j).SetTag(0);
-    TEGraph<size_t, TSAtom*> thatGraph( thatSa->GetAtomInfo().GetIndex(), thatSa );
+    TEGraph<size_t, TSAtom*> thatGraph(thatSa->GetType().z, thatSa);
     BuildGraph(thatGraph.GetRoot(), thatSa);
     //continue;
-    if( thisGraph.GetRoot().IsSubgraphOf( thatGraph.GetRoot() ) )  {
-      ResultCollector( thisGraph.GetRoot(), thatGraph.GetRoot(), res);
+    if( thisGraph.GetRoot().IsSubgraphOf(thatGraph.GetRoot()) )  {
+      ResultCollector(thisGraph.GetRoot(), thatGraph.GetRoot(), res);
       return true;
     }
   }
   return false;
 }
 //..............................................................................
-bool TNetwork::TryRing(TSAtom& sa, size_t node, TSAtomPList& ring, const TPtrList<TBasicAtomInfo>& ringContent)  {
+bool TNetwork::TryRing(TSAtom& sa, size_t node, TSAtomPList& ring, const ElementPList& ringContent)  {
   sa.SetTag(1);
   return TryRing(sa.Node(node), ring, ringContent, 2);
 }
 //..............................................................................
-bool TNetwork::TryRing(TSAtom& sa, TSAtomPList& ring, const TPtrList<TBasicAtomInfo>& ringContent, size_t level)  {
-  if( ringContent[level-1] != NULL && (sa.GetAtomInfo() != *ringContent[level-1]) )
+bool TNetwork::TryRing(TSAtom& sa, TSAtomPList& ring, const ElementPList& ringContent, size_t level)  {
+  if( ringContent[level-1] != NULL && (sa.GetType() != *ringContent[level-1]) )
     return false;
   sa.SetTag(level);
   for( size_t i=0; i < sa.NodeCount(); i++ )  {
@@ -782,10 +780,12 @@ bool TNetwork::TryRing(TSAtom& sa, size_t node, TSAtomPList& ring)  {
 }
 //..............................................................................
 bool TNetwork::TryRing(TSAtom& sa, TSAtomPList& ring, size_t level)  {
+  if( level > 12 )  // safety precaution
+    return false;
   sa.SetTag(level);
   for( size_t i=0; i < sa.NodeCount(); i++ )  {
     TSAtom& a = sa.Node(i);
-    if( a.IsDeleted() || a.GetAtomInfo() == iQPeakIndex )  continue;
+    if( a.IsDeleted() || a.GetType() == iQPeakZ )  continue;
     if( a.GetTag() == 1 && level != 2 )
       return true;
     if( a.GetTag() == 0 )  {
@@ -827,7 +827,7 @@ void TNetwork::UnifyRings(TTypeList<TSAtomPList>& rings)  {
   }
 }
 //..............................................................................
-void TNetwork::FindRings(const TPtrList<TBasicAtomInfo>& ringContent, TTypeList<TSAtomPList>& res)  {
+void TNetwork::FindRings(const ElementPList& ringContent, TTypeList<TSAtomPList>& res)  {
   if( ringContent.IsEmpty() )  return;
   TSAtomPList all;
   all.SetCapacity( NodeCount() );
@@ -843,7 +843,7 @@ void TNetwork::FindRings(const TPtrList<TBasicAtomInfo>& ringContent, TTypeList<
   TTypeList<TSAtomPList> rings;
   size_t resCount = res.Count();
   for( size_t i=0; i < all.Count(); i++ )  {
-    if( all[i]->GetAtomInfo() != *ringContent[0] )  continue;
+    if( all[i]->GetType() != *ringContent[0] )  continue;
     ring.Clear();
     for( size_t j=0; j < NodeCount(); j++ )
       Node(j).SetTag(0);
@@ -870,7 +870,7 @@ void TNetwork::FindAtomRings(TSAtom& ringAtom, TTypeList<TSAtomPList>& res)  {
   for( size_t i=0; i < NodeCount(); i++ )  {
     TSAtom& a = Node(i);
     a.SetTag(0);
-    if( a.IsDeleted() || a.NodeCount() < 2 || a.GetAtomInfo() == iQPeakIndex )  continue;
+    if( a.IsDeleted() || a.NodeCount() < 2 || a.GetType() == iQPeakZ )  continue;
     all.Add(a);
   }
   // we have to keep the order of the ring atoms, so need an extra 'rings' array
@@ -879,7 +879,7 @@ void TNetwork::FindAtomRings(TSAtom& ringAtom, TTypeList<TSAtomPList>& res)  {
   size_t resCount = res.Count();
   for( size_t i=0; i < ringAtom.NodeCount(); i++ )  {
     TSAtom& a = ringAtom.Node(i);
-    if( a.IsDeleted() || a.NodeCount() < 2 || a.GetAtomInfo() == iQPeakIndex )  continue;
+    if( a.IsDeleted() || a.NodeCount() < 2 || a.GetType() == iQPeakZ )  continue;
     ring.Clear();
     for( size_t j=0; j < NodeCount(); j++ )
       Node(j).SetTag(0);
@@ -900,10 +900,10 @@ void TNetwork::FindAtomRings(TSAtom& ringAtom, TTypeList<TSAtomPList>& res)  {
   res.Pack();
 }
 //..............................................................................
-void TNetwork::FindAtomRings(TSAtom& ringAtom, const TPtrList<TBasicAtomInfo>& ringContent,
+void TNetwork::FindAtomRings(TSAtom& ringAtom, const ElementPList& ringContent,
                              TTypeList<TSAtomPList>& res)  {
   if( ringAtom.NodeCount() < 2 || &ringAtom.GetNetwork() != this )  return;
-  if( ringContent[0] != NULL && ringAtom.GetAtomInfo() != *ringContent[0] )  return;
+  if( ringContent[0] != NULL && ringAtom.GetType() != *ringContent[0] )  return;
   TSAtomPList all;
   all.SetCapacity( NodeCount() );
   for( size_t i=0; i < NodeCount(); i++ )  {
@@ -920,7 +920,7 @@ void TNetwork::FindAtomRings(TSAtom& ringAtom, const TPtrList<TBasicAtomInfo>& r
   for( size_t i=0; i < ringAtom.NodeCount(); i++ )  {
     TSAtom& a = ringAtom.Node(i);
     if( a.IsDeleted() || a.NodeCount() < 2 || 
-       (ringContent[1] != NULL && a.GetAtomInfo() != *ringContent[1]) )  continue;
+       (ringContent[1] != NULL && a.GetType() != *ringContent[1]) )  continue;
     ring.Clear();
     for( size_t j=0; j < NodeCount(); j++ )
       Node(j).SetTag(0);
@@ -954,9 +954,9 @@ TNetwork::RingInfo& TNetwork::AnalyseRing( const TSAtomPList& ring, TNetwork::Ri
     double local_maxmw = 0;
     for( size_t j=0; j < ring[i]->NodeCount(); j++ )  {
       TSAtom& ra = ring[i]->Node(j);
-      if( ra.IsDeleted() || ra.GetAtomInfo() == iQPeakIndex )  continue;
-      double mw = ra.GetAtomInfo().GetMr();
-      if( mw < 3 )  continue; // H, D
+      if( ra.IsDeleted() )  continue;
+      const double mw = ra.GetType().GetMr();
+      if( mw < 3 )  continue; // Q, H, D
       if( ra.crd().DistanceTo( ring[i]->crd() ) > 2 )  continue;  // skip M-E bonds
       if( mw > local_maxmw )  local_maxmw = mw;
       if( ring.IndexOf(&ra) != InvalidIndex )
@@ -968,7 +968,7 @@ TNetwork::RingInfo& TNetwork::AnalyseRing( const TSAtomPList& ring, TNetwork::Ri
     if( nhc != rnc )  {
       if( local_maxmw > maxmw )  {
         ri.HeaviestSubsIndex = i;
-        ri.HeaviestSubsType = &ring[i]->GetAtomInfo();
+        ri.HeaviestSubsType = &ring[i]->GetType();
         maxmw = local_maxmw;
       }
       ri.Substituted.Add(i);
@@ -1104,8 +1104,8 @@ void TNetwork::PrepareESDCalc(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >
     for(size_t i=0; i < atoms.Count(); i++ )  {
       atoms_out[i] = atoms[i].A();
       atoms_out[atoms.Count()+i] = atoms[i].B();
-      wght_out[i] = atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetAtomInfo().GetMr();
-      wght_out[atoms.Count()+i] = atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetAtomInfo().GetMr();
+      wght_out[i] = atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetType().GetMr();
+      wght_out[atoms.Count()+i] = atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetType().GetMr();
       vec3d v = atoms[i].GetB()->ccrd() * -1;
       au2.CellToCartesian(v);
       crd_out[i] = atoms[i].GetA()->crd(); 
@@ -1116,8 +1116,8 @@ void TNetwork::PrepareESDCalc(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >
     for(size_t i=0; i < atoms.Count(); i++ )  {
       atoms_out[i] = atoms[i].A();
       atoms_out[atoms.Count()+i] = atoms[i].B();
-      wght_out[i] = atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetAtomInfo().GetMr();
-      wght_out[atoms.Count()+i] = atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetAtomInfo().GetMr();
+      wght_out[i] = atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetType().GetMr();
+      wght_out[atoms.Count()+i] = atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetType().GetMr();
       crd_out[i] = atoms[i].GetA()->crd(); 
       crd_out[atoms.Count()+i] = atoms[i].GetB()->crd();
     }
@@ -1138,16 +1138,16 @@ void TNetwork::DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& 
     for( size_t i=0; i < satomp.Count(); i++ )  {
       vec3d v = -satomp[i].GetB()->ccrd();
       au2.CellToCartesian(v);
-      mcent += v*satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
-      sum += satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
+      mcent += v*satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetType().GetMr();
+      sum += satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetType().GetMr();
     }
   }
   else  {
     for( size_t i=0; i < atomsToTransform.Count(); i++ )
       au1.CellToCartesian(atomsToTransform[i]->ccrd(), atomsToTransform[i]->crd());
     for( size_t i=0; i < satomp.Count(); i++ )  {
-      mcent += satomp[i].GetB()->crd()*satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
-      sum += satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
+      mcent += satomp[i].GetB()->crd()*satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetType().GetMr();
+      sum += satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetType().GetMr();
     }
   }
   mcent /= sum;
@@ -1171,11 +1171,11 @@ bool TNetwork::RingInfo::IsSingleCSubstituted() const  {
   for( size_t i=0; i < Substituents.Count(); i++ )  {
     if( Substituents[i].Count() != 1 )  return false;
     TSAtom& sa = *Substituents[i][0];
-    if( sa.GetAtomInfo() != iCarbonIndex )  return false;
+    if( sa.GetType() != iCarbonZ )  return false;
     size_t nhc = 0;
     for( size_t j=0; j < sa.NodeCount(); j++ )  {
       TSAtom& ra = sa.Node(j);
-      if( ra.GetAtomInfo().GetMr() < 3 || ra.GetAtomInfo() == iQPeakIndex )  continue;
+      if( ra.GetType().GetMr() < 3 )  continue;  // H,D,Q
       nhc++;
     }
     if( nhc > 1 )  return false;  // only one to ring bond 

@@ -172,16 +172,16 @@ void TXAtom::CalcRad(short DefRadius)  {
   GetPrimitives().GetStyle().SetParam("DR", DefRadius);
 
   if( DefRadius == darPers )  
-    FParams[0] = FAtom->GetAtomInfo().GetRad();   
+    FParams[0] = FAtom->GetType().r_pers;   
   else if( DefRadius == darPack )  
-    FParams[0] = FAtom->GetAtomInfo().GetRad2();
+    FParams[0] = FAtom->GetType().r_sfil;
   else if( DefRadius == darBond )  
     FParams[0] = sqrt(caDefIso)/2;
   else if( DefRadius == darIsot )  {
-    if( FAtom->GetAtomInfo() == iHydrogenIndex ) 
+    if( FAtom->GetType() == iHydrogenZ ) 
       FParams[0] = 2*caDefIso;
     else  {
-      if( FAtom->GetAtomInfo() == iQPeakIndex )
+      if( FAtom->GetType() == iQPeakZ )
         FParams[0] = sqrt(FAtom->CAtom().GetUiso())*GetQPeakSizeScale();
       else if( FAtom->CAtom().GetUiso() > 0 )
         FParams[0] = sqrt(FAtom->CAtom().GetUiso());
@@ -222,7 +222,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
     CreateStaticPrimitives();
 
   // find collection
-  if( FAtom->GetAtomInfo() == iQPeakIndex )  {
+  if( FAtom->GetType() == iQPeakZ )  {
     Legend = GetLabelLegend(FAtom);
     GPC = Parent.FindCollection(Legend);
     if( GPC == NULL || GPC->ObjectCount() == 0 )  {  // if the collection is empty, need to fill it...
@@ -305,7 +305,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
       GlP.CallList(SGlP);
       GlP.EndList();
 
-      if( FAtom->GetAtomInfo() == iQPeakIndex )  {
+      if( FAtom->GetType() == iQPeakZ )  {
         GetDefSphereMaterial(*FAtom, RGlM);
         GlP.SetProperties(RGlM);
       }
@@ -343,13 +343,13 @@ ACreationParams* TXAtom::GetCreationParams() const {
 }
 //..............................................................................
 olxstr TXAtom::GetLabelLegend(TSAtom *A)  {
-  olxstr L = A->GetAtomInfo().GetSymbol();
-  L << '.' << A->CAtom().Label();
+  olxstr L = A->GetType().symbol;
+  L << '.' << A->CAtom().GetLabel();
   return L;
 }
 //..............................................................................
 olxstr TXAtom::GetLegend(const TSAtom& A, const short Level)  {
-  olxstr L = A.GetAtomInfo().GetSymbol();  
+  olxstr L = A.GetType().symbol;  
   if( Level == 0 )  return L;
   L << '.' << A.CAtom().GetLabel();
   if( Level == 1 )  return L;
@@ -440,7 +440,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
           return true;
       }
       else  {
-        Parent.GlOrient( FAtom->GetEllipsoid()->GetMatrix() );
+        Parent.GlOrient(FAtom->GetEllipsoid()->GetMatrix());
         Parent.GlScale(
           (float)(FAtom->GetEllipsoid()->GetSX()*scale),
           (float)(FAtom->GetEllipsoid()->GetSY()*scale),
@@ -497,7 +497,7 @@ bool TXAtom::DrawStencil()  {
 }
 //..............................................................................
 bool TXAtom::GetDimensions(vec3d &Max, vec3d &Min)  {
-  double dZ = FAtom->GetAtomInfo().GetRad2();
+  double dZ = FAtom->GetType().r_sfil;
   Max = FAtom->crd();
   Min = FAtom->crd();
   Max += dZ;
@@ -506,11 +506,11 @@ bool TXAtom::GetDimensions(vec3d &Max, vec3d &Min)  {
 }
 //..............................................................................
 void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M)  {
-  int Cl, Mask;
+  uint32_t Cl, Mask;
   Mask = RGBA(0x5f, 0x5f, 0x5f, 0x00);
-  Cl = (int)Atom.GetAtomInfo().GetDefColor();
+  Cl = (int)Atom.GetType().def_color;
 ///////////
-  if( Atom.GetAtomInfo() == iQPeakIndex )  {
+  if( Atom.GetType() == iQPeakZ )  {
     const double peak = Atom.CAtom().GetQPeak();
     // this is to tackle the shelxs86 output...
     if( olx_abs(Atom.CAtom().GetParent()->GetMaxQPeak() - Atom.CAtom().GetParent()->GetMinQPeak()) < 0.001 )  {
@@ -562,13 +562,12 @@ void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M)  {
 }
 //..............................................................................
 void TXAtom::GetDefRimMaterial(const TSAtom& Atom, TGlMaterial &M)  {
-  int Cl, Mask;
+  uint32_t Cl, Mask;
   Mask = RGBA(0x5f, 0x5f, 0x5f, 0x00);
 
   M.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|sglmEmissionF);
 //  |  sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB|sglmEmissionB);
-  Cl = (int)Atom.GetAtomInfo().GetDefColor();
-
+  Cl = Atom.GetType().def_color;
   M.AmbientF = Cl;
   M.DiffuseF =  Mask ^ Cl;
   M.SpecularF = 0xffffffff;
@@ -1083,14 +1082,11 @@ void TXAtom::CreatePolyhedron(bool v)  {
   }
   if( !v )  return;
   if( FAtom->NodeCount() < 4 )  return;
-  if( FAtom->IsDeleted() || FAtom->GetAtomInfo() == iQPeakIndex )
+  if( FAtom->IsDeleted() || FAtom->GetType() == iQPeakZ )
     return;
   TPtrList<TSAtom> bound;
   for( size_t i=0; i < FAtom->NodeCount(); i++ )  {
-    if( FAtom->Node(i).IsDeleted() || 
-      FAtom->Node(i).GetAtomInfo() == iHydrogenIndex ||
-      FAtom->Node(i).GetAtomInfo() == iDeuteriumIndex || 
-      FAtom->Node(i).GetAtomInfo() == iQPeakIndex )
+    if( FAtom->Node(i).IsDeleted() || FAtom->Node(i).GetType().GetMr() < 3.5  )
       continue;
     //if( FAtom->Node(i).NodeCount() > FAtom->NodeCount() )
     //  continue;

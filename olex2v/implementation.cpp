@@ -161,7 +161,7 @@ olxstr TOlexViewer::GetObjectLabelAt(int x, int y)  {
     if( EsdlInstanceOf( *G, TXAtom) )  {
       TXAtom& xa = *(TXAtom*)G;
       Tip = xa.Atom().GetLabel();
-      if( xa.Atom().GetAtomInfo() == iQPeakIndex )  {
+      if( xa.Atom().GetType() == iQPeakZ )  {
         Tip << ':' << xa.Atom().CAtom().GetQPeak();
       }
     }
@@ -191,8 +191,8 @@ void TOlexViewer::ShowLabels(unsigned short type)  {
 }
 //.......................................................................................
 void TOlexViewer::ShowQPeaks(short what)  {
-  GXApp->QPeaksVisible((what & olxv_ShowQAtoms) != 0);
-  GXApp->QPeaksVisible((what & olxv_ShowQBonds) != 0);
+  GXApp->SetQPeaksVisible((what & olxv_ShowQAtoms) != 0);
+  GXApp->SetQPeaksVisible((what & olxv_ShowQBonds) != 0);
 }
 //.......................................................................................
 void TOlexViewer::ShowCell(bool v)  {

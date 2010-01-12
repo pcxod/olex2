@@ -41,12 +41,12 @@ protected:
     const TSAtom& sa = xa.Atom();
     for( size_t i=0; i < sa.NodeCount(); i++ )  {
       const TSAtom& nd = sa.Node(i);
-      if( nd.IsDeleted() || nd.GetAtomInfo() == iQPeakIndex || nd.GetAtomInfo().GetMr() < 3.5 )
+      if( nd.IsDeleted() || nd.GetType() < 3.5 ) // H,D,Q
         continue;
       if( app.IsLabelMarked(app.GetAtom(nd.GetTag())) )
         continue;
       // 2009.07.17 --
-      if( xa.Atom().GetAtomInfo() != nd.GetAtomInfo() )
+      if( xa.Atom().GetType() != nd.GetType() )
         continue;
       // 2009.08.03 --
       if( xa.Atom().CAtom().GetPart() != nd.CAtom().GetPart() )
@@ -54,9 +54,9 @@ protected:
       outgoing.Add( app.GetAtom(nd.GetTag()) );
     }
     if( outgoing.Count() == 1 )  {
-      olxstr Labl ( Symbol.IsEmpty() ? outgoing[0]->Atom().GetAtomInfo().GetSymbol() : Symbol);
+      olxstr Labl (Symbol.IsEmpty() ? outgoing[0]->Atom().GetType().symbol : Symbol);
       Labl << Prefix <<  Index << Suffix;
-      undo->AddAction( TGlXApp::GetGXApp()->Name(*outgoing[0], Labl, false) );
+      undo->AddAction(TGlXApp::GetGXApp()->Name(*outgoing[0], Labl, false));
       undo->AddAtom( *outgoing[0] );
       TGlXApp::GetGXApp()->MarkLabel(*outgoing[0], true);
       Index++;
@@ -74,7 +74,7 @@ public:
     AutoComplete = Options.Contains('a');
     bool typeSet = false;
     // validate if type is correct
-    if( !Symbol.IsEmpty() && TAtomsInfo::GetInstance().FindAtomInfoBySymbol(Symbol) == NULL )
+    if( !Symbol.IsEmpty() && !XElementLib::IsElement(Symbol) )
       throw TInvalidArgumentException(__OlxSourceInfo, "element type");
     if( Cmds.IsEmpty() && !Symbol.IsEmpty() )
       Index = TGlXApp::GetGXApp()->GetNextAvailableLabel(Symbol);
@@ -99,7 +99,7 @@ public:
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf( obj, TXAtom) )  {
       TXAtom &XA = (TXAtom&)obj;
-      olxstr Labl ( Symbol.IsEmpty() ? XA.Atom().GetAtomInfo().GetSymbol() : Symbol);
+      olxstr Labl (Symbol.IsEmpty() ? XA.Atom().GetType().symbol : Symbol);
       Labl << Prefix <<  Index << Suffix;
       TNameModeUndo* undo = new TNameModeUndo(XA);
       undo->AddAction( TGlXApp::GetGXApp()->Name(XA, Labl, false) );

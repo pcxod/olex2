@@ -1,19 +1,13 @@
 #ifndef __olx_xl_asymmunit_H
 #define __olx_xl_asymmunit_H
 #include "xbase.h"
-#include "atominfo.h"
 #include "ematrix.h"
 #include "threex3.h"
-
 #include "evpoint.h"
 #include "macroerror.h"
-
-#include "scat_it.h"
 #include "srestraint.h"
-
 #include "ellipsoid.h"
 #include "samegroup.h"
-
 #include "dataitem.h"
 #include "conninfo.h"
 
@@ -180,7 +174,7 @@ public:
   /* creates a SFAC/UNIT strings; BasicAtoms is filled with atom labels constituting the
    asymmertic unit; see example in TIns::SaveToFile
   */
-  void SummFormula(TStrPObjList<olxstr,TBasicAtomInfo*>& BasicAtoms, olxstr &Elements, olxstr &Numbers, bool MultiplyZ=true) const;
+  void SummFormula(TStrPObjList<olxstr,const cm_Element*>& BasicAtoms, olxstr& Elements, olxstr& Numbers, bool MultiplyZ=true) const;
   /* returns molecular weight of the asymmetric unit */
   double MolWeight() const;
   size_t CountElements(const olxstr& Symbol) const;

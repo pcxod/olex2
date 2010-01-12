@@ -98,13 +98,13 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
   // extract and remove atom types
   for( size_t i=0; i < ins.Count(); i++ )  {
     if( ins[i].CharAt(0) == '$' )  {
-      TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoBySymbol(ins[i].SubStringFrom(1));
-      if( bai == NULL )  {
+      cm_Element* elm = XElementLib::FindBySymbol(ins[i].SubStringFrom(1));
+      if( elm == NULL )  {
         TBasicApp::GetLog().Error(olxstr("Undefined atom type in CONN: ") << ins[i].SubStringFrom(1));
         ins.Delete(i--);
         continue;
       }
-      TypeConnInfo& ci = TypeInfo.Add(bai, TypeConnInfo(*bai) );
+      TypeConnInfo& ci = TypeInfo.Add(elm, TypeConnInfo(*elm) );
       ci.maxBonds = maxB;
       ci.r = r;
       ins.Delete(i--);
@@ -146,7 +146,7 @@ void ConnInfo::ToInsList(TStrList& ins) const {
       str << tci.maxBonds << ' ';
     if( tci.r != -1 )
       str << tci.r << ' ';
-    str << '$' << tci.atomInfo->GetSymbol();
+    str << '$' << tci.atomType->symbol;
   }
   // specialisation for particular atoms to follow the generic type info
   for( size_t i=0; i < AtomInfo.Count(); i++ )  {
@@ -193,37 +193,37 @@ void ConnInfo::ToInsList(TStrList& ins) const {
 CXConnInfo& ConnInfo::GetConnInfo(const TCAtom& ca) const {
   CXConnInfo& ci = *(new CXConnInfo);  
   size_t ai_ind, ti_ind;
-  if( (ti_ind = TypeInfo.IndexOf(&ca.GetAtomInfo())) != InvalidIndex )  {
+  if( (ti_ind = TypeInfo.IndexOf(&ca.GetType())) != InvalidIndex )  {
     const TypeConnInfo& aci = TypeInfo.GetValue(ti_ind);
-    ci.r = (aci.r < 0 ? ca.GetAtomInfo().GetRad1() : aci.r);
+    ci.r = (aci.r < 0 ? ca.GetType().r_bonding : aci.r);
     ci.maxBonds = aci.maxBonds;
   }
   // specialise the connectivity info...
   if( (ai_ind = AtomInfo.IndexOf(&ca)) != InvalidIndex )  {
     const AtomConnInfo& aci = AtomInfo.GetValue(ai_ind);
-    ci.r = aci.r < 0 ? ca.GetAtomInfo().GetRad1() : aci.r;
+    ci.r = aci.r < 0 ? ca.GetType().r_bonding : aci.r;
     ci.maxBonds = aci.maxBonds;
     ci.BondsToCreate.AddListC(aci.BondsToCreate);
     ci.BondsToRemove.AddListC(aci.BondsToRemove);
   } 
   // use defaults then
   if( ai_ind == InvalidIndex && ti_ind == InvalidIndex )  {
-    ci.r = ca.GetAtomInfo().GetRad1();
+    ci.r = ca.GetType().r_bonding;
     ci.maxBonds = def_max_bonds;
   }
   return ci;
 }
 //........................................................................
-CXConnInfo& ConnInfo::GetConnInfo(TBasicAtomInfo& bai) const {
+CXConnInfo& ConnInfo::GetConnInfo(const cm_Element& elm) const {
   CXConnInfo& ci = *(new CXConnInfo);
-  size_t ti_ind = TypeInfo.IndexOf(&bai);
+  size_t ti_ind = TypeInfo.IndexOf(&elm);
   if( ti_ind != InvalidIndex )  {
     const TypeConnInfo& aci = TypeInfo.GetValue(ti_ind);
-    ci.r = (aci.r < 0 ? bai.GetRad1() : aci.r);
+    ci.r = (aci.r < 0 ? elm.r_bonding : aci.r);
     ci.maxBonds = aci.maxBonds;
   }
   else  {
-    ci.r = bai.GetRad1();
+    ci.r = elm.r_bonding;
     ci.maxBonds = def_max_bonds;
   }
   return ci;
@@ -269,20 +269,19 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
 void ConnInfo::ToDataItem(TDataItem& item) const {
   TDataItem& ti_item = item.AddItem("TYPE");
   for( size_t i=0; i < TypeInfo.Count(); i++ )
-    TypeInfo.GetValue(i).ToDataItem(ti_item.AddItem(TypeInfo.GetValue(i).atomInfo->GetSymbol()));
+    TypeInfo.GetValue(i).ToDataItem(ti_item.AddItem(TypeInfo.GetValue(i).atomType->symbol));
   TDataItem& ai_item = item.AddItem("ATOM");
   for( size_t i=0; i < AtomInfo.Count(); i++ ) 
     AtomInfo.GetValue(i).ToDataItem(ai_item.AddItem(AtomInfo.GetValue(i).atom->GetTag()));
 }
 //........................................................................
 void ConnInfo::FromDataItem(const TDataItem& item)  {
-  TAtomsInfo& ai = TAtomsInfo::GetInstance();
   TDataItem& ti_item = item.FindRequiredItem("TYPE");
   for( size_t i=0; i < ti_item.ItemCount(); i++ )  {
-    TBasicAtomInfo* bai = ai.FindAtomInfoBySymbol(ti_item.GetItem(i).GetName());
-    if( bai == NULL )
+    cm_Element* elm = XElementLib::FindBySymbol(ti_item.GetItem(i).GetName());
+    if( elm == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown symbol: ") << ti_item.GetItem(i).GetName());
-    TypeInfo.Add(bai).FromDataItem(ti_item.GetItem(i), bai);
+    TypeInfo.Add(elm).FromDataItem(ti_item.GetItem(i), elm);
 
   }
   TDataItem& ai_item = item.FindRequiredItem("ATOM");
@@ -298,8 +297,8 @@ void ConnInfo::TypeConnInfo::ToDataItem(TDataItem& item) const {
   item.AddField("r", r);
   item.AddField("b", maxBonds);
 }
-void ConnInfo::TypeConnInfo::FromDataItem(const TDataItem& item, TBasicAtomInfo* bai)  {
-  atomInfo = bai;
+void ConnInfo::TypeConnInfo::FromDataItem(const TDataItem& item, const cm_Element* elm)  {
+  atomType = elm;
   r = item.GetRequiredField("r").ToDouble();
   maxBonds = item.GetRequiredField("b").ToInt();
 }

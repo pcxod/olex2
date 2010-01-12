@@ -452,6 +452,7 @@ private:
   DefMacro(SAME)
   DefMacro(RESI)
   DefMacro(WBox)
+  DefMacro(Center)
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////FUNCTIONS/////////////////////////////////////////
   DefFunc(FileLast)
@@ -644,8 +645,7 @@ protected:
                 *pmDrawQ;
   TMenu    *pmAtom;
     wxMenuItem *miAtomInfo;
-    wxMenuItem *miAtomGrowShell;
-    wxMenuItem *miAtomGrowFrag;
+    wxMenuItem *miAtomGrow;
     TMenu    *pmBang;  // bonds angles
     TMenu    *pmAtomType;
     TMenu    *pmAtomOccu, 

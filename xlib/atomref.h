@@ -28,9 +28,7 @@ class TAtomReference : public IEObject  {
   olxstr Expression;
 protected:
   inline bool IsValidAtom(TCAtom* ca)  {
-    return !(ca->IsDeleted() || ca->GetAtomInfo() == iHydrogenIndex ||
-                                ca->GetAtomInfo() == iDeuteriumIndex ||
-                                ca->GetAtomInfo() == iQPeakIndex );
+    return !(ca->IsDeleted() || ca->GetType().GetMr() < 3);
   }
   ASelectionOwner* SelectionOwner;
 public:
@@ -154,13 +152,13 @@ public:
     }
     if( Expression.CharAt(0) == '$' )  {  // sfac type
       olxstr sfac = ((resi_ind == InvalidIndex) ? Expression.SubStringFrom(1) : Expression.SubString(1, resi_ind-1));
-      TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoBySymbol(sfac);
-      if( bai == NULL )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("sfac=") << sfac);
+      cm_Element* elm = XElementLib::FindBySymbol(sfac);
+      if( elm == NULL )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("sfac=") << sfac);
       for( size_t i=0; i < residues.Count(); i++ )  {
         for( size_t j=0; j < residues[i]->Count(); j++ )  {
           TCAtom* ca = &residues[i]->GetAtom(j);
-          if( !ca->IsDeleted() && ca->GetAtomInfo() == *bai )  // cannot use IsValid here, $H woill not work
-            atoms.AddNew( ca, eqiv );
+          if( !ca->IsDeleted() && ca->GetType() == *elm )  // cannot use IsValid here, $H woill not work
+            atoms.AddNew(ca, eqiv);
         }
       }
     }
@@ -171,7 +169,7 @@ public:
         for( size_t j=0; j < residues[i]->Count(); j++ )  {
           TCAtom* ca = &residues[i]->GetAtom(j);
           if( !ca->IsDeleted() && ca->GetLabel().Equalsi(aname) )  {  // must be unique!
-            atoms.AddNew( ca, eqiv );
+            atoms.AddNew(ca, eqiv);
             break;
           }
         }
