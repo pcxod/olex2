@@ -877,8 +877,17 @@ olxstr TGXApp::GetSelectionInfo()  {
       if( EsdlInstanceOf(Sel[1], TXPlane) && EsdlInstanceOf(Sel[0], TXPlane) )  {
         TSPlane &a = ((TXPlane&)Sel[0]).Plane(),
           &b = ((TXPlane&)Sel[1]).Plane();
+        
+        vec3d n_c = (b.GetCenter()-a.GetCenter()).XProdVec(a.GetNormal()+b.GetNormal()).Normalise();
+        vec3d p_a = a.GetNormal() -  n_c*n_c.DotProd(a.GetNormal());
+        vec3d p_b = b.GetNormal() -  n_c*n_c.DotProd(b.GetNormal());
+
         Tmp = "Angle (plane-plane): ";
         Tmp << olxstr::FormatFloat(3, a.Angle(b)) <<
+          "\nTwist Angle (plane-plane, experimental): " <<
+          olxstr::FormatFloat(3, TorsionAngle(a.GetCenter()+a.GetNormal(), a.GetCenter(), b.GetCenter(), b.GetCenter()+b.GetNormal())) <<
+          "\nFold Angle (plane-plane, experimental): " <<
+          olxstr::FormatFloat(3, acos(p_a.CAngle(p_b))*180/M_PI) <<
           "\nDistance (plane centroid-plane centroid): " <<
           olxstr::FormatFloat(3, a.GetCenter().DistanceTo(b.GetCenter())) <<
           "\nDistance (plane[" << macSel_GetPlaneName(a) << "]-centroid): " <<

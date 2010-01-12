@@ -24,7 +24,7 @@ void TTreeView::SelectionEvent(wxTreeEvent& event) {
 //..............................................................................
 void TTreeView::ItemEditEvent(wxTreeEvent& event) {
   StartEvtProcessing()
-    OnSelect.Execute(this, &TEGC::New<olxstr>(GetOnEditStr()));
+    OnSelect.Execute(this, &TEGC::New<olxstr>(GetOnEditStr()).Replace("~label~", event.GetLabel().c_str()));
   EndEvtProcessing()
 }
 //..............................................................................
