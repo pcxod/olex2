@@ -14,7 +14,7 @@ TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)  {
   FParent = Parent;
   SetHandler(smbLeft, 0, meRotateXY);
   SetHandler(smbLeft, sssCtrl, meRotateZ);
-  //SetHandler( smbLeft, sssShift, meMoveXY);
+  SetHandler(smbLeft, sssShift|sssCtrl, meMoveXY);
   //SetHandler( smbLeft, sssAlt, meMoveZ);
 
   SetHandler(smbRight, 0, meZoom);
@@ -192,8 +192,8 @@ void TGlMouse::SetHandler( const short Button, const short Shift, MMoveHandler M
 void GlobalGlFunction( meMoveXY(TGlMouse *G, int dx, int dy) )  {
   TGlRenderer *R = G->Parent();
   double v = R->GetScale();
-  R->TranslateX(dx*v);
-  R->TranslateY(dy*v);
+  vec3d t(dx*v, dy*v, 0);
+  R->Translate(R->GetBasis().GetMatrix()*t);
   G->Action(glmaTranslateXY);
 }
 //..............................................................................

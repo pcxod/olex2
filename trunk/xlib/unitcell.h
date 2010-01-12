@@ -134,11 +134,11 @@ public:
   Returns the number of grid points occupied by the structure to structurePoinst if not NULL.
   If _template is provided - only these atoms are used int the calculation
   */
-  void BuildStructureMap( TArray3D<short>& map, double delta, short value, 
-    size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii, const TCAtomPList* _template = NULL );
+  void BuildStructureMap(TArray3D<short>& map, double delta, short value, 
+    size_t* structurePoints, ElementRadii* radii, const TCAtomPList* _template = NULL);
   // for internal tests...
-  void BuildStructureMapEx( TArray3D<short>& map, double resolution, double delta, short value, 
-    size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii, const TCAtomPList* _template = NULL );
+  void BuildStructureMapEx(TArray3D<short>& map, double resolution, double delta, short value, 
+    size_t* structurePoints, ElementRadii* radii, const TCAtomPList* _template = NULL);
 protected:
   // helper function, association should be AnAssociation2+<vec3d,TCAtom*,+>
   template <class Association> 
@@ -157,8 +157,8 @@ public:
       list.SetCapacity(Lattice->GetAsymmUnit().AtomCount()*Matrices.Count());
       for( size_t i=0; i < Lattice->GetAsymmUnit().AtomCount(); i++ )  {
         TCAtom& ca = Lattice->GetAsymmUnit().GetAtom(i);
-        if( ca.GetAtomInfo() == iQPeakIndex || ca.IsDeleted() )  continue;
-        if( !IncludeH && ca.GetAtomInfo() == iHydrogenIndex )    continue;
+        if( ca.GetType() == iQPeakZ || ca.IsDeleted() )  continue;
+        if( !IncludeH && ca.GetType() == iHydrogenZ )    continue;
         atoms.Add(&ca);
       }
     }
@@ -166,7 +166,7 @@ public:
     const size_t atom_cnt = atoms.Count();
     for( size_t i=0; i < atom_cnt; i++ )  {
       TCAtom* ca = atoms[i];
-      if( ca->GetAtomInfo() == iQPeakIndex || ca->IsDeleted() )  continue;
+      if( ca->GetType() == iQPeakZ || ca->IsDeleted() )  continue;
       for( size_t j=0; j < Matrices.Count(); j++ )  {
         vec3d center = Matrices[j] * ca->ccrd();
         for( int k=0; k < 3; k++ )  {

@@ -40,12 +40,12 @@ protected:
     return ((uint32_t)(groupId))|(((uint32_t)bonds) << 16);
   }
   void DoGenerateAtom( TCAtomPList& created, TAsymmUnit& au, vec3d_list& Crds, const olxstr& StartingName);
-  void GenerateAtom( TCAtomPList& created, TAtomEnvi& envi, const short Group, const TBasicAtomInfo& atomType, TAtomEnvi* pivoting = NULL);
+  void GenerateAtom(TCAtomPList& created, TAtomEnvi& envi, const short Group, const cm_Element& atomType, TAtomEnvi* pivoting = NULL);
   RefinementModel& RefMod;
 public:
   AConstraintGenerator(RefinementModel& rm);
   virtual bool FixParam(const short paramMask, TStrList& res, const TCAtomPList& atoms, const TFixedValueList& values) = 0;
-  virtual bool FixAtom(TAtomEnvi& envi, const short Group, const TBasicAtomInfo& atomType, 
+  virtual bool FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& atomType, 
     TAtomEnvi* pivoting = NULL, TCAtomPList* generated = NULL) = 0;
 };
 

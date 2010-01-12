@@ -494,7 +494,7 @@ int PythonExt::RunPython( const olxstr& script, bool inThread )  {
   }
   else  {
 #endif
-    return PyRun_SimpleString( script.c_str() );
+    return PyRun_SimpleString(script.c_str());
 #ifdef __WXWIDGETS__
   }
 #endif

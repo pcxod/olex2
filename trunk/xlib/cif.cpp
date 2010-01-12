@@ -67,7 +67,7 @@ void TCifLoop::Format(TStrList& Data)  {
       Data[i] = EmptyString;
     }
   }
-  olxstr D = Data.Text(" \\n ").DeleteSequencesOf(' ');
+  olxstr D = Data.Text(" \\n ").Replace('\t', ' ').DeleteSequencesOf(' ');
   TStrPObjList<olxstr,TCifLoopData*> Params;
   TCifLoopData *CData=NULL;
   const size_t DL = D.Length();
@@ -83,7 +83,7 @@ void TCifLoop::Format(TStrList& Data)  {
         i++;
         if( i >= DL )  {
           Param.Delete(0, 1);
-          Params.Add(Param, new TCifLoopData(true) );
+          Params.Add(Param, new TCifLoopData(true));
           goto end_cyc;
         }
         Char = D.CharAt(i);
@@ -108,6 +108,10 @@ void TCifLoop::Format(TStrList& Data)  {
 end_cyc:;
   }
   if( (Params.Count() % ColCount) != 0 )  {
+    // clean up the memory
+    for( size_t i=0; i < Params.Count(); i++ )
+      if( Params.GetObject(i) != NULL )
+        delete Params.GetObject(i);
     olxstr msg("wrong loop parameters number. ");
     msg << "Failed in loop: " << GetLoopName() << ". Failed on: \'" << Param << '\'';
     throw TFunctionFailedException(__OlxSourceInfo, msg );
@@ -241,7 +245,7 @@ void TCifLoop::UpdateTable()  {
   for( size_t i=0; i < FTable.RowCount(); i++ )  {
     for( size_t j=0; j < FTable.ColCount(); j++ )  {
       if( FTable[i].GetObject(j)->CA != NULL )
-        FTable[i][j] = FTable[i].GetObject(j)->CA->Label();                                      
+        FTable[i][j] = FTable[i].GetObject(j)->CA->GetLabel();                                      
     }
   }
   FTable.SortRows<CifLoopSorter>();
@@ -748,7 +752,6 @@ bool TCif::AddParam(const olxstr &Param, const olxstr &Params, bool String)  {
 void TCif::Initialize()  {
   olxstr Param;
   TCifLoop *ALoop, *Loop;
-  TCAtom *A;
   double Q[6], E[6]; // quadratic form of ellipsoid
   TEValueD EValue;
   try  {
@@ -808,27 +811,26 @@ void TCif::Initialize()  {
     TBasicApp::GetLog().Error("Failed to locate required fields in atoms loop");
     return;
   }
-  TAtomsInfo& atoms_info = TAtomsInfo::GetInstance();
   for( size_t i=0; i < ALoop->GetTable().RowCount(); i++ )  {
-    A = &GetAsymmUnit().NewAtom();
-    A->SetLabel( ALoop->GetTable()[i][ALabel] );
-    A->SetAtomInfo( *atoms_info.FindAtomInfoBySymbol(ALoop->GetTable()[i][ASymbol]) );
+    TCAtom& A = GetAsymmUnit().NewAtom();
+    A.SetLabel(ALoop->GetTable()[i][ALabel], false);
+    A.SetType(*XElementLib::FindBySymbol(ALoop->GetTable()[i][ASymbol]));
     EValue = ALoop->GetTable()[i][ACx];
-    A->ccrd()[0] = EValue.GetV();  A->ccrdEsd()[0] = EValue.GetE();
+    A.ccrd()[0] = EValue.GetV();  A.ccrdEsd()[0] = EValue.GetE();
     EValue = ALoop->GetTable()[i][ACy];
-    A->ccrd()[1] = EValue.GetV();  A->ccrdEsd()[1] = EValue.GetE();
+    A.ccrd()[1] = EValue.GetV();  A.ccrdEsd()[1] = EValue.GetE();
     EValue = ALoop->GetTable()[i][ACz];
-    A->ccrd()[2] = EValue.GetV();  A->ccrdEsd()[2] = EValue.GetE();
+    A.ccrd()[2] = EValue.GetV();  A.ccrdEsd()[2] = EValue.GetE();
     if( ACUiso != InvalidIndex )    {
       EValue = ALoop->GetTable()[i][ACUiso];
-      A->SetUisoEsd( EValue.GetE() );
-      A->SetUiso( EValue.GetV() );
+      A.SetUisoEsd(EValue.GetE());
+      A.SetUiso(EValue.GetV());
     }
     if( APart != InvalidIndex && ALoop->GetTable()[i][APart].IsNumber() )
-      A->SetPart(ALoop->GetTable()[i][APart].ToInt() );
+      A.SetPart(ALoop->GetTable()[i][APart].ToInt());
 
 //    if( !A->Info ) ;
-    ALoop->GetTable()[i].GetObject(ALabel)->CA = A;
+    ALoop->GetTable()[i].GetObject(ALabel)->CA = &A;
   }
   for( size_t i=0; i < Loops.Count(); i++ )  {
     if( Loops.GetObject(i) == ALoop )  continue;
@@ -856,7 +858,7 @@ void TCif::Initialize()  {
   size_t U12 =     ALoop->GetTable().ColIndex("_atom_site_aniso_U_12");
   if( (ALabel|U11|U22|U33|U23|U13|U12) == InvalidIndex )  return;
   for( size_t i=0; i < ALoop->GetTable().RowCount(); i++ )  {
-    A = GetAsymmUnit().FindCAtom( ALoop->GetTable()[i][ALabel] );
+    TCAtom* A = GetAsymmUnit().FindCAtom( ALoop->GetTable()[i][ALabel] );
     if( A == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("wrong atom in the aniso loop ") << ALabel);
     EValue = ALoop->GetTable()[i][U11];  Q[0] = EValue.GetV();  E[0] = EValue.GetE();
@@ -866,7 +868,7 @@ void TCif::Initialize()  {
     EValue = ALoop->GetTable()[i][U13];  Q[4] = EValue.GetV();  E[4] = EValue.GetE();
     EValue = ALoop->GetTable()[i][U12];  Q[5] = EValue.GetV();  E[5] = EValue.GetE();
     GetAsymmUnit().UcifToUcart(Q);
-    A->AssignEllp( &GetAsymmUnit().NewEllp().Initialise(Q, E));
+    A->AssignEllp(&GetAsymmUnit().NewEllp().Initialise(Q, E));
   }
   // bond lengths
   /*
@@ -1031,8 +1033,8 @@ bool TCif::Adopt(TXFile& XF)  {
   for( size_t i = 0; i < GetAsymmUnit().AtomCount(); i++ )  {
     A = &GetAsymmUnit().GetAtom(i);
     TStrPObjList<olxstr,TCifLoopData*>& Row = Table->AddRow(EmptyString);
-    Row[0] = A->Label();  Row.GetObject(0) = new TCifLoopData(A);
-    Row[1] = A->GetAtomInfo().GetSymbol();  Row.GetObject(1) = new TCifLoopData;
+    Row[0] = A->GetLabel();  Row.GetObject(0) = new TCifLoopData(A);
+    Row[1] = A->GetType().symbol;  Row.GetObject(1) = new TCifLoopData;
     for( int j=0; j < 3; j++ )  {
       EValue.V() = A->ccrd()[j];  EValue.E() = A->ccrdEsd()[j];
       Row[j+2] = EValue.ToCStr();
@@ -1053,7 +1055,7 @@ bool TCif::Adopt(TXFile& XF)  {
       GetAsymmUnit().UcartToUcif(Q);
 
       TStrPObjList<olxstr,TCifLoopData*>& Row1 = ATable->AddRow(EmptyString);
-      Row1[0] = A->Label();  Row1.GetObject(0) = new TCifLoopData(A);
+      Row1[0] = A->GetLabel();  Row1.GetObject(0) = new TCifLoopData(A);
       for( int j=0; j < 6; j++ )  {
         EValue.V() = Q[j];  EValue.E() = E[j];
         Row1[j+1] = EValue.ToCStr();
@@ -1074,7 +1076,7 @@ int TLLTBondSort::Compare(const TLBond *I, const TLBond *I1)  {
     v = I->Value.ToDouble() - I1->Value.ToDouble();
     if( v < 0 ) return -1;
     if( v > 0 ) return 1;
-    v = I->Another(Atom).CA.GetAtomInfo().GetMr() - I1->Another(Atom).CA.GetAtomInfo().GetMr();
+    v = I->Another(Atom).CA.GetType().GetMr() - I1->Another(Atom).CA.GetType().GetMr();
     if( v > 0 ) return 1;
     if( v < 0 ) return -1;
     v = I->Another(Atom).Label.Compare(I1->Another(Atom).Label);
@@ -1096,7 +1098,7 @@ int TLLTBondSort::Compare(const TLBond *I, const TLBond *I1)  {
     return 0;
   }
   if( SortType & slltMw )  {  // Mr, Length, Label
-    v = I->Another(Atom).CA.GetAtomInfo().GetMr() - I1->Another(Atom).CA.GetAtomInfo().GetMr();
+    v = I->Another(Atom).CA.GetType().GetMr() - I1->Another(Atom).CA.GetType().GetMr();
     if( v < 0 ) return -1;
     if( v > 0 ) return 1;
     v = I->Value.ToDouble() - I1->Value.ToDouble();
@@ -1155,7 +1157,7 @@ TLinkedLoopTable::TLinkedLoopTable(TCif *C)  {
     TCAtom &CA = C->GetAsymmUnit().GetAtom(j);
     TLAtom* LA = new TLAtom(CA);
     FAtoms.Add(LA);
-    LA->Label = CA.Label();
+    LA->Label = CA.GetLabel();
   }
   TCifLoop *CL = C->FindLoop("_geom_bond");
   if( CL == NULL ) return;
@@ -1588,7 +1590,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
       if( !Tmp.IsEmpty() )  {  // check for atom type equals to
         TCifLoopData* CD = (*LT)[i].GetObject(j);
         if( CD != NULL && CD->CA != NULL )
-          if( !CD->CA->GetAtomInfo().GetSymbol().Equalsi(Tmp) )  {
+          if( !CD->CA->GetType().symbol.Equalsi(Tmp) )  {
             AddRow = false;
             break;
           }
@@ -1597,7 +1599,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
       if( !Tmp.IsEmpty() )  {  // check for atom type equals to
         TCifLoopData* CD = (*LT)[i].GetObject(j);
         if( CD != NULL && CD->CA != NULL )
-          if( CD->CA->GetAtomInfo().GetSymbol().Equalsi(Tmp) )  {
+          if( CD->CA->GetType().symbol.Equalsi(Tmp) )  {
             AddRow = false;
             break;
           }

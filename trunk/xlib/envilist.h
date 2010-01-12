@@ -1,9 +1,6 @@
-#ifndef envilistH
-#define envilistH
-
+#ifndef __olx_xl_envilist_H
+#define __olx_xl_envilist_H
 #include "xbase.h"
-
-#include "atominfo.h"
 #include "symmat.h"
 #include "typelist.h"
 #include "tptrlist.h"
@@ -35,8 +32,8 @@ public:
 
   inline TSAtom& GetBase() const {  return *Base;  }
   inline void SetBase(TSAtom& base)  {  Base = &base;  }
-  inline const olxstr& GetLabel(size_t ind) const {  return Envi[ind].A()->Label();  }
-  inline TBasicAtomInfo& GetBAI(size_t ind)  {  return Envi[ind].A()->GetAtomInfo();  }
+  inline const olxstr& GetLabel(size_t ind) const {  return Envi[ind].A()->GetLabel();  }
+  inline const cm_Element& GetType(size_t ind)  {  return Envi[ind].A()->GetType();  }
   inline TCAtom& GetCAtom(size_t ind) const {  return *Envi[ind].A();  }
   inline const vec3d& GetCrd(size_t ind) const {  return Envi[ind].GetC();  }
   inline const smatd& GetMatrix(size_t ind) const {  return Envi[ind].GetB();  }

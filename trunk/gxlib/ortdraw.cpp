@@ -24,14 +24,14 @@ draw_style(0)
   }
   draw_rad = (float)atom.GetDrawScale()*parent.DrawScale;
   crd = parent.ProjectPoint(sa.crd());
-  sphere_color = atom.Atom().GetAtomInfo().GetDefColor();
+  sphere_color = atom.Atom().GetType().def_color;
   const TGraphicsStyle& style = atom.GetPrimitives().GetStyle();
   size_t lmi = style.IndexOfMaterial("Sphere");
   if( lmi != InvalidIndex )  {
     TGlMaterial& glm = style.GetPrimitiveStyle(lmi).GetProperties();
     sphere_color = glm.AmbientF.GetRGB();
   }
-  rim_color = atom.Atom().GetAtomInfo().GetDefColor();
+  rim_color = atom.Atom().GetType().def_color;
   lmi = style.IndexOfMaterial("Rims");
   if( lmi != InvalidIndex )  {
     TGlMaterial& glm = style.GetPrimitiveStyle(lmi).GetProperties();
@@ -163,7 +163,7 @@ void ort_bond::render(PSWriter& pw) const {
   if( (draw_style&ortep_color_bond) == 0 )
     pw.color(0);
   else if( (mask&((1<<4)|(1<<5)|(1<<6)|(1<<7)|(1<<9)|(1<<10))) == 0 )
-    pw.color(atom_a.atom.Atom().GetAtomInfo() > atom_b.atom.Atom().GetAtomInfo() ?
+    pw.color(atom_a.atom.Atom().GetType() > atom_b.atom.Atom().GetType() ?
       atom_a.sphere_color : atom_b.sphere_color);
   _render(pw, 1, mask);
   pw.translate(-atom_a.crd);
@@ -439,7 +439,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
     app.GetAtom(i).Atom().SetTag(objects.Count());
     ort_atom *a = new ort_atom(*this, app.GetAtom(i));
     a->draw_style |= ortep_atom_rims;
-    if( a->atom.Atom().GetAtomInfo() != iCarbonIndex )
+    if( app.GetAtom(i).DrawStyle() == adsOrtep )
       a->draw_style |= ortep_atom_quads;
     if( (ColorMode&ortep_color_lines) )
       a->draw_style |= ortep_color_lines;
@@ -562,7 +562,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
 }
 
 float OrtDraw::GetBondRad(const ort_bond& b, uint32_t mask) const {
-  float r = (b.bond.Bond().A().GetAtomInfo() < 4 || b.bond.Bond().B().GetAtomInfo() < 4) ? 
+  float r = (b.bond.Bond().A().GetType() == iHydrogenZ || b.bond.Bond().B().GetType() < iHydrogenZ) ? 
     BondRad*HBondScale : BondRad;
   if( (mask&((1<<13)|(1<<12)|(1<<11)|(1<<7)|(1<<6))) != 0 )  //even thinner for line or "balls" bond
     r /= 4;

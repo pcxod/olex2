@@ -21,12 +21,10 @@ class IDataInputStream;
 class IDataOutputStream;
 
 class IDataInputStream: public IInputStream  {
-  template <class T> inline T& readType( T& v )  {
-//    IInputStream::operator >> (v);
-    Read( &v, sizeof(T) );
+  template <class T> inline T& readType(T& v)  {
+    Read(&v, sizeof(T));
     return v;
   }
-
 public:
   virtual ~IDataInputStream() {  ;  }
   virtual void Read(void *Data, size_t size) = 0;
@@ -35,6 +33,11 @@ public:
   }
   virtual void Read(olxwstr& whr, size_t size)  {
     whr.AppendFromStream(*this, size);
+  }
+  template <class T> inline T Read()  {
+    T v;
+    Read(&v, sizeof(T));
+    return v;
   }
   inline char&                   operator >> ( char& v )                   {  return readType(v);  }
   inline unsigned char&          operator >> ( unsigned char& v )          {  return readType(v);  }

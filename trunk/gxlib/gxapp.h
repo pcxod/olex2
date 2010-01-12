@@ -339,8 +339,8 @@ public:
 protected:
   void XAtomsByMask(const olxstr& Name, int Mask, TXAtomPList& List);
   void CAtomsByMask(const olxstr& Name, int Mask, TCAtomPList& List);
-  void XAtomsByType(const TBasicAtomInfo& AI, TXAtomPList& List, bool FindHidden=false);
-  void CAtomsByType(const TBasicAtomInfo& AI, TCAtomPList& List);
+  void XAtomsByType(const cm_Element& AI, TXAtomPList& List, bool FindHidden=false);
+  void CAtomsByType(const cm_Element& AI, TCAtomPList& List);
   void GetSelectedXAtoms(TXAtomPList& List, bool Clear=true);
   void GetSelectedCAtoms(TCAtomPList& List, bool Clear=true);
 public:

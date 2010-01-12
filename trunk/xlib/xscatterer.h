@@ -28,7 +28,7 @@ private:
   cm_Gaussians gaussians;
   double mu, wt, r;
   compd fpfdp;
-  cm_Element* source;
+  const cm_Element* source;
   olxstr Label;
   bool builtIn;
 public:
@@ -36,7 +36,7 @@ public:
   XScatterer() : mu(0), r(0), wt(0), source(NULL), gaussians(0,0,0,0,0,0,0,0,0), builtIn(false) {  }
   
   // creates scatterer from the library
-  XScatterer(cm_Element& src, double energy) : mu(0), builtIn(true), gaussians(0,0,0,0,0,0,0,0,0)  {  
+  XScatterer(const cm_Element& src, double energy) : mu(0), builtIn(true), gaussians(0,0,0,0,0,0,0,0,0)  {  
     SetSource(src, energy);
   }
   // searches for the scatterer in the library and initialises data. If scatterer no found, throws exception
@@ -57,12 +57,12 @@ public:
     builtIn(sc.builtIn),
     fpfdp(sc.fpfdp)  {  }
   // initialises data from the provided library element
-  void SetSource(cm_Element& src, double energy)  {
+  void SetSource(const cm_Element& src, double energy)  {
     if( src.gaussians == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, "given scatterer is only partially initialised");
     gaussians = *src.gaussians;
     Label = src.symbol;
-    wt = src.CalcMr();
+    wt = src.GetMr();
     r = src.r_bonding;
     fpfdp = src.CalcFpFdp(energy) - src.z;
     source = &src;

@@ -21,8 +21,6 @@
 TXApp::TXApp(const olxstr &basedir, ASelectionOwner* selOwner) : 
     SelectionOwner(selOwner), TBasicApp(basedir), Library(EmptyString, this)  {
   try  {
-    if( !TAtomsInfo::IsInitialised() )
-      TEGC::AddP(new TAtomsInfo(GetBaseDir() + "ptablex.dat"));
     if( !TSymmLib::IsInitialised() )
       TEGC::AddP(new TSymmLib(GetBaseDir() + "symmlib.xld"));
   }
@@ -128,25 +126,17 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   
   cm_Element* carb = XElementLib::FindBySymbol("C");
   compd carb_fpfdp = carb->CalcFpFdp(ev_angstrom/WaveLength);
-  TPtrList<TBasicAtomInfo> bais;
+  ElementPList bais;
   TPtrList<TCAtom> alist;
   double *Ucifs = new double[6*au.AtomCount() + 1];
-  TTypeList< AnAssociation3<cm_Element*, compd, compd> > scatterers;
+  TTypeList< AnAssociation3<const cm_Element*, compd, compd> > scatterers;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     TCAtom& ca = au.GetAtom(i);
-    if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  continue;
-    size_t ind = bais.IndexOf( &ca.GetAtomInfo() );
+    if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
+    size_t ind = bais.IndexOf(ca.GetType());
     if( ind == InvalidIndex )  {
-      if( ca.GetAtomInfo() == iDeuteriumIndex ) // treat D as H
-        scatterers.AddNew<cm_Element*,compd,compd>(XElementLib::FindBySymbol("H"), 0, 0);
-      else 
-        scatterers.AddNew<cm_Element*,compd,compd>(XElementLib::FindBySymbol(ca.GetAtomInfo().GetSymbol()), 0, 0);
-     
-      if( scatterers.Last().GetA() == NULL ) {
-        delete [] Ucifs;
-        throw TFunctionFailedException(__OlxSourceInfo, olxstr("could not locate scatterer: ") << ca.GetAtomInfo().GetSymbol() );
-      }
-      bais.Add( &ca.GetAtomInfo() );
+      scatterers.AddNew<const cm_Element*,compd,compd>(&ca.GetType(), 0, 0);
+      bais.Add(ca.GetType());
       scatterers.Last().C() = scatterers.Last().GetA()->CalcFpFdp(ev_angstrom/WaveLength);
       scatterers.Last().C() -= scatterers.Last().GetA()->z;
       ind = scatterers.Count() - 1;
@@ -216,23 +206,23 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
   int lablInc = 0; 
   olxdict<int,TSAtomPList,TPrimitiveComparator> parts;
   olxstr Name( 
-    SA.GetLabel().StartsFromi(SA.GetAtomInfo().GetSymbol()) ? 
-      SA.GetLabel().SubStringFrom(SA.GetAtomInfo().GetSymbol().Length())
+    SA.GetLabel().StartsFromi(SA.GetType().symbol) ? 
+      SA.GetLabel().SubStringFrom(SA.GetType().symbol.Length())
     :
       EmptyString
   );
   // is H atom under consideration?
-  if( TAtomsInfo::IsHAtom(SA.GetAtomInfo()) && SA.GetTag() == -2 )
-    parts.Add(SA.CAtom().GetPart()).Add(&SA);
+  if( SA.GetType() == iHydrogenZ && SA.GetTag() == -2 )
+    parts.Add(SA.CAtom().GetPart()).Add(SA);
   for( size_t i=0; i < SA.NodeCount(); i++ )  {
     TSAtom& sa = SA.Node(i);
-    if( TAtomsInfo::IsHAtom(sa.GetAtomInfo()) && sa.GetTag() == -2 )
-      parts.Add(sa.CAtom().GetPart()).Add(&sa);
+    if( sa.GetType() == iHydrogenZ && sa.GetTag() == -2 )
+      parts.Add(sa.CAtom().GetPart()).Add(sa);
   }
   for( size_t i=0; i < parts.Count(); i++ )  {
     const TSAtomPList& al = parts.GetValue(i);
     for( size_t j=0; j < al.Count(); j++ )  {
-      olxstr Labl = al[j]->GetAtomInfo().GetSymbol() + Name;
+      olxstr Labl = al[j]->GetType().symbol + Name;
       if( Labl.Length() >= 4 )
         Labl.SetLength(3);
       else if( Labl.Length() < 3 && parts.Count() > 1 )
@@ -243,7 +233,7 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
         TCAtom* CA;
         while( (CA = XFile().GetAsymmUnit().FindCAtom(Labl)) != NULL )  {
           if( CA == &al[j]->CAtom() || CA->IsDeleted() || CA->GetTag() < 0 )  break;
-          Labl = al[j]->GetAtomInfo().GetSymbol() + Name;
+          Labl = al[j]->GetType().symbol + Name;
           if( Labl.Length() >= 4 )  
             Labl.SetLength(3);
           else if( Labl.Length() < 3 && parts.Count() > 1 )
@@ -258,7 +248,7 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
       if( al[j]->GetLabel() != Labl )  {
         if( nu != NULL )  
           nu->AddAtom(al[j]->CAtom(), al[j]->GetLabel());
-        al[j]->CAtom().Label() = Labl;
+        al[j]->CAtom().SetLabel(Labl, false);
       }
       al[j]->CAtom().SetTag(0);
       al[j]->SetTag(0);
@@ -273,10 +263,10 @@ void TXApp::undoName(TUndoData *data)  {
     if( undo->GetCAtomId(i) >= au.AtomCount() )  // would definetely be an error
       continue;
     TCAtom& ca = au.GetAtom(undo->GetCAtomId(i));
-    TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoEx(undo->GetLabel(i));
-    ca.Label() = undo->GetLabel(i);
-    if( ca.GetAtomInfo() != *bai )
-      ca.SetAtomInfo(*bai);
+    cm_Element* elm = XElementLib::FindBySymbolEx(undo->GetLabel(i));
+    ca.SetLabel(undo->GetLabel(i), false);
+    if( ca.GetType() != *elm )
+      ca.SetType(*elm);
   }
 }
 //..............................................................................
@@ -294,16 +284,16 @@ TUndoData* TXApp::FixHL()  {
   const size_t ac = XFile().GetLattice().AtomCount();
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& sa = XFile().GetLattice().GetAtom(i);
-    if( !sa.CAtom().IsAvailable() || (sa.GetAtomInfo() == iQPeakIndex) )  {
+    if( !sa.CAtom().IsAvailable() || (sa.GetType() == iQPeakZ) )  {
       sa.SetTag(-1);
       continue;
     }
     const bool au_atom = sa.GetMatrix(0).IsFirst();
-    if( TAtomsInfo::IsHAtom(sa.GetAtomInfo()) )  {
+    if( sa.GetType() == iHydrogenZ )  {
       sa.SetTag(au_atom ? -2 : -1);  // mark as unpocessed or to skip
       if( au_atom )  {
         sa.CAtom().SetTag(-2);  // mark as unpocessed or to skip
-        sa.CAtom().Label() = EmptyString;
+        sa.CAtom().SetLabel(EmptyString, false);
       }
       continue;
     }
@@ -328,7 +318,7 @@ TUndoData* TXApp::FixHL()  {
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& sa = XFile().GetLattice().GetAtom(i);
     if( !sa.CAtom().IsAvailable() )  continue;
-    if( TAtomsInfo::IsHAtom(sa.GetAtomInfo()) && sa.CAtom().GetTag() == -2 )
+    if( sa.GetType() == iHydrogenZ && sa.CAtom().GetTag() == -2 )
       NameHydrogens(sa, undo, true);
   }
   return undo;
@@ -348,7 +338,7 @@ bool RingsEq(const TSAtomPList& r1, const TSAtomPList& r2 )  {
   }
   return true;
 }
-void TXApp::RingContentFromStr(const olxstr& Condition, TPtrList<TBasicAtomInfo>& ringDesc)  {
+void TXApp::RingContentFromStr(const olxstr& Condition, ElementPList& ringDesc)  {
   TStrList toks;
   olxstr symbol, count;
   for( size_t i=0; i < Condition.Length(); i++ )  {
@@ -386,16 +376,16 @@ void TXApp::RingContentFromStr(const olxstr& Condition, TPtrList<TBasicAtomInfo>
   if( toks.Count() < 3 )  return;
 
   for( size_t i=0; i < toks.Count(); i++ )  {
-    TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoBySymbol( toks[i] );
-    if( bai == NULL )
-      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: ") << toks[i] );
-    ringDesc.Add( bai );
+    cm_Element* elm = XElementLib::FindBySymbol(toks[i]);
+    if( elm == NULL )
+      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: ") << toks[i]);
+    ringDesc.Add(elm);
   }
 }
 void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings)  {
-  TPtrList<TBasicAtomInfo> ring;
+  ElementPList ring;
   // external ring connectivity
-  TTypeList< TPtrList<TBasicAtomInfo> > extRing;
+  TTypeList< ElementPList > extRing;
   RingContentFromStr(Condition, ring);
   for( size_t i=0; i < XFile().GetLattice().FragmentCount(); i++ )  {
     XFile().GetLattice().GetFragment(i).FindRings(ring, rings);
@@ -483,7 +473,7 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
 }
 //..............................................................................
 short TXApp::CalcVoid(TArray3D<short>& map, double extraR, short val, size_t* structurePoints, 
-                      vec3d& voidCenter, TPSTypeList<TBasicAtomInfo*, double>* radii)  {
+                      vec3d& voidCenter, ElementRadii* radii)  {
   XFile().GetLattice().GetUnitCell().BuildStructureMap(map, extraR, val, structurePoints, radii);
   return MapUtil::AnalyseVoids(map.Data, (uint16_t)map.Length1(), (uint16_t)map.Length2(), (uint16_t)map.Length3(), voidCenter);
 }
@@ -563,12 +553,12 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
       }
     }
     else  {  // sa != NULL
-      TPtrList<TBasicAtomInfo> ring;
+      ElementPList ring;
       TTypeList< TSAtomPList > rings;
-      if( sa->GetAtomInfo() != iCarbonIndex )
-        ring.Add( &sa->GetAtomInfo() );
+      if( sa->GetType() != iCarbonZ)
+        ring.Add(sa->GetType());
       if( m == 6 || m == 7)
-        RingContentFromStr( ring.IsEmpty() ? "C6" :"C5", ring);
+        RingContentFromStr(ring.IsEmpty() ? "C6" :"C5", ring);
       else if( m == 5 )
         RingContentFromStr(ring.IsEmpty() ? "C5" :"C4", ring);
       else if( m == 10 )
@@ -634,7 +624,7 @@ void TXApp::SetAtomUiso(TSAtom& sa, double val) {
       size_t ni = InvalidIndex;
       for( size_t i=0; i < sa.NodeCount(); i++ ) {
         TSAtom& nd = sa.Node(i);
-        if( nd.IsDeleted() || nd.GetAtomInfo() == iQPeakIndex )
+        if( nd.IsDeleted() || nd.GetType() == iQPeakZ )
           continue;
         if( ni != InvalidIndex )  {  // to many bonds
           ni = InvalidIndex;

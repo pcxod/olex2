@@ -180,7 +180,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
   return EmptyString;
 }
 //...........................................................................................
-void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, TPtrList<cm_Element>& scatterers, TCAtomPList& alist)  {
+void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatterers, TCAtomPList& alist)  {
   const mat3d& hkl2c = au.GetHklToCartesian();
   double quad[6];
   // the thermal ellipsoid scaling factors
@@ -192,23 +192,12 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, TPtrList<cm_Element>
   BM[1] *= BM[1];
   BM[2] *= BM[2];
   
-  TPtrList<TBasicAtomInfo> bais;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     TCAtom& ca = au.GetAtom(i);
-    if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  continue;
-    size_t ind = bais.IndexOf( &ca.GetAtomInfo() );
+    if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
+    size_t ind = scatterers.IndexOf(ca.GetType());
     if( ind == InvalidIndex )  {
-      cm_Element* elm;
-      if( ca.GetAtomInfo() == iDeuteriumIndex ) // treat D as H
-        elm = XElementLib::FindBySymbol("H");
-      else 
-        elm = XElementLib::FindBySymbol(ca.GetAtomInfo().GetSymbol());
-      if( elm == NULL ) {
-        delete [] U;
-        throw TFunctionFailedException(__OlxSourceInfo, olxstr("could not locate scatterer: ") << ca.GetAtomInfo().GetSymbol() );
-      }
-      scatterers.Add(elm);
-      bais.Add( &ca.GetAtomInfo() );
+      scatterers.Add(ca.GetType());
       ind = scatterers.Count() - 1;
     }
     ca.SetTag(ind);
@@ -240,7 +229,7 @@ void SFUtil::CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<TEComp
   TAsymmUnit& au = xfile.GetAsymmUnit();
   double *U = new double[6*au.AtomCount() + 1];
   TPtrList<TCAtom> alist;
-  TPtrList<cm_Element> scatterers;
+  ElementPList scatterers;
   PrepareCalcSF(au, U, scatterers, alist);
 
   sf_util->Calculate(
@@ -268,7 +257,7 @@ void SFUtil::CalcSF(const TXFile& xfile, const TRefPList& refs, TArrayList<TECom
   TAsymmUnit& au = xfile.GetAsymmUnit();
   double *U = new double[6*au.AtomCount() + 1];
   TPtrList<TCAtom> alist;
-  TPtrList<cm_Element> scatterers;
+  ElementPList scatterers;
   PrepareCalcSF(au, U, scatterers, alist);
 
   sf_util->Calculate(

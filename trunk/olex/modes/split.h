@@ -118,8 +118,8 @@ public:
             new_l[new_l.Length()-1] = ++lc;
           else
             new_l << 'a';
-          xa->Atom().CAtom().Label() = TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CheckLabel(&xa->Atom().CAtom(), new_l);
-          if( xa->Atom().GetAtomInfo() == iQPeakIndex )
+          xa->Atom().CAtom().SetLabel(TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CheckLabel(&xa->Atom().CAtom(), new_l), false);
+          if( xa->Atom().GetType() == iQPeakZ )
             xa->Atom().CAtom().SetQPeak(1.0);
         }
       }

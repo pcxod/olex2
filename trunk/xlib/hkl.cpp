@@ -126,7 +126,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
           Toks.Strtok(line, ' ');  // do the validation
           TStrList unit;
           for( size_t k=1; k < Toks.Count(); k++ )  {
-            if( !TAtomsInfo::GetInstance().IsAtom(Toks[k]) )
+            if( !XElementLib::IsAtom(Toks[k]) )
               throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid element ") << Toks[k]);
             unit.Add('1');
           }

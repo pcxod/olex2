@@ -337,7 +337,7 @@ void XVarManager::Describe(TStrList& lst)  {
   // fixed params...
   olxdict<olxstr,olxstr,olxstrComparator<false> > fixed;
   for( size_t i=0; i < Vars[0]._RefCount(); i++ )  {
-    //if( Vars[0].GetRef(i).atom->GetAtomInfo() == iQPeakIndex )  continue;
+    //if( Vars[0].GetRef(i).atom->GetType() == iQPeakZ )  continue;
     size_t ind = fixed.IndexOf(Vars[0].GetRef(i).referencer.GetVarName(Vars[0].GetRef(i).var_index));
     if( ind == InvalidIndex )
       fixed.Add(Vars[0].GetRef(i).referencer.GetVarName(Vars[0].GetRef(i).var_index), 

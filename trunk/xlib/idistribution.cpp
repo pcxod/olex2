@@ -2,14 +2,9 @@
 // namespace TChemObj: TIDistribution
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "idistribution.h"
-#include "atominfo.h"
 #include "ipattern.h"
+#include "chemdata.h"
 #include "emath.h"
 
 //..............................................................................
@@ -22,9 +17,9 @@ bool PAddEvaluator(const TPolynomMember& PM)  {
   double W = 1;
   for( size_t i=0; i < PM.Members().Count(); i++ )  {
     const TPMember& P = PM.Members()[i];
-    TIsotope* Is = (TIsotope*)P.Data;
+    const cm_Isotope* Is = (const cm_Isotope*)P.Data;
     for( int j=0; j < P.Extent; j++ )
-      W *= Is->GetW();
+      W *= Is->W;
   }
   W *= PM.GetMult();
   if( W > MaxC )  {
@@ -44,9 +39,9 @@ double PEvaluator(const TPolynomMember& PM)  {
   double W = 1;
   for( size_t i=0; i < PM.Members().Count(); i++ ) {
     const TPMember& P = PM.Members()[i];
-    TIsotope* Is = (TIsotope*)P.Data;
+    const cm_Isotope* Is = (const cm_Isotope*)P.Data;
     for( int j=0; j < P.Extent; j++ )
-      W *= Is->GetW();
+      W *= Is->W;
   }
   W *= PM.GetMult();
   return W;
@@ -57,15 +52,15 @@ int PPolyEvaluator(const TPolynomMember& P, const TPolynomMember& P1) {
          W1=P1.GetMult();
   const TTypeList<TPMember>& L = P.Members();
   for( size_t i=0; i < L.Count(); i++ )  {
-    TIsotope* Is = (TIsotope*)L[i].Data;
+    const cm_Isotope* Is = (const cm_Isotope*)L[i].Data;
     for( int j=0; j < L[i].Extent; j++ )
-      W *= Is->GetW();
+      W *= Is->W;
   }
   const TTypeList<TPMember>& L1 = P1.Members();
   for( size_t i=0; i < L1.Count(); i++ )  {
-    TIsotope* Is = (TIsotope*)L1[i].Data;
+    cm_Isotope* Is = (cm_Isotope*)L1[i].Data;
     for( int j=0; j < L1[i].Extent; j++ )
-      W1 *= Is->GetW();
+      W1 *= Is->W;
   }
   if( W < W1 )  return 1;
   if( W > W1 )  return -1;
@@ -106,12 +101,12 @@ TIDistribution::TIDistribution()  {
   MaxPoints = 25000;
 }
 //..............................................................................
-void TIDistribution::AddIsotope(TBasicAtomInfo& ai, size_t count)  {
+void TIDistribution::AddIsotope(const cm_Element& elm, size_t count)  {
   TPolynom *P = new TPolynom(NULL, PEvaluator, PPolyEvaluator);
-  for( size_t i=0; i < ai.IsotopeCount(); i++ )  {
+  for( short i=0; i < elm.isotope_count; i++ )  {
     TPMember& PPM = P->AddMember().AddMember();
     PPM.Id = i;
-    PPM.Data = &ai.GetIsotope(i);
+    PPM.Data = &elm.isotopes[i];
   }
 //  P1 = P->Pow(count);  // exact calculation
   TPolynom* P1 = P->PowX(20, count);
@@ -144,10 +139,10 @@ void TIDistribution::AddIsotope(TBasicAtomInfo& ai, size_t count)  {
 void TIDistribution::Evail(const TPolynomMember& PM, double& M, double& W) const {
   W *= PM.GetMult();
   for( size_t i=0; i < PM.Members().Count(); i++ )  {
-    TIsotope* Is = (TIsotope*)PM.Members()[i].Data;
-    M += Is->GetMr() * PM.Members()[i].Extent;
+    const cm_Isotope* Is = (const cm_Isotope*)PM.Members()[i].Data;
+    M += Is->Mr * PM.Members()[i].Extent;
     for( int j=0; j < PM.Members()[i].Extent; j++ )
-      W *= Is->GetW();
+      W *= Is->W;
   }
 }
 //..............................................................................

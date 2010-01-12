@@ -10,7 +10,7 @@ bool TXlConGen::FixParam(const short paramMask, TStrList& res, const TCAtomPList
   throw TNotImplementedException( __OlxSourceInfo );
 }
 //..............................................................................
-bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const TBasicAtomInfo& atomType, TAtomEnvi* pivoting, TCAtomPList* generated)  {
+bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& atomType, TAtomEnvi* pivoting, TCAtomPList* generated)  {
   try  {
     TSimpleRestraint* sr;
     TCAtomPList CreatedAtoms;
@@ -127,7 +127,7 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const TBasicAtomInfo
     for( size_t i=0; i < CreatedAtoms.Count(); i++ )  {
       CreatedAtoms[i]->SetPart(envi.GetBase().CAtom().GetPart());
       CreatedAtoms[i]->SetUisoOwner(&envi.GetBase().CAtom());
-      if( envi.GetBase().GetAtomInfo() == iOxygenIndex || Group == fgCH3 )
+      if( envi.GetBase().GetType() == iOxygenZ || Group == fgCH3 )
         CreatedAtoms[i]->SetUisoScale(1.5);
       else
         CreatedAtoms[i]->SetUisoScale(1.2);

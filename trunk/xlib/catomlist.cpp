@@ -52,7 +52,7 @@ size_t ImplicitCAtomRef::Expand(RefinementModel& rm, TAtomRefList& res, TResidue
     for( size_t i=0; i < resi.Count(); i++ )  {
       TCAtom& ca = resi[i];
       // skip deleted atoms, q-peaks and H (D)
-      if( ca.IsDeleted() || ca.GetAtomInfo().GetMr() < 3.5 )  continue;
+      if( ca.IsDeleted() || ca.GetType().GetMr() < 3.5 )  continue;
       res.Add( new ExplicitCAtomRef(resi[i], NULL) );
       ac++;
     }
@@ -104,16 +104,16 @@ size_t ImplicitCAtomRef::Expand(RefinementModel& rm, TAtomRefList& res, TResidue
   }
   size_t ac = 0;
   if( aname.StartsFrom('$') )  {
-    TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoBySymbol( aname.SubStringFrom(1) );
-    if( bai == NULL )  return 0;
+    cm_Element* elm = XElementLib::FindBySymbol(aname.SubStringFrom(1));
+    if( elm == NULL )  return 0;
     for( size_t i=0; i < residues.Count(); i++ )  {
       for( size_t j=0; j < residues[i]->Count(); j++ )  {
         if( residues[i]->GetAtom(j).IsDeleted() || 
-          residues[i]->GetAtom(j).GetAtomInfo() != bai->GetIndex() )  
+          residues[i]->GetAtom(j).GetType() != *elm )  
         {
           continue;
         }
-        res.Add( new ExplicitCAtomRef(residues[i]->GetAtom(j), symm) );
+        res.Add(new ExplicitCAtomRef(residues[i]->GetAtom(j), symm));
         ac++;
       }
     }
@@ -122,7 +122,7 @@ size_t ImplicitCAtomRef::Expand(RefinementModel& rm, TAtomRefList& res, TResidue
     for( size_t i=0; i < residues.Count(); i++ )  {
       for( size_t j=0; j < residues[i]->Count(); j++ )  {
         if( !residues[i]->GetAtom(j).IsDeleted() && residues[i]->GetAtom(j).GetLabel().Equalsi(aname) )  {
-          res.Add( new ExplicitCAtomRef(residues[i]->GetAtom(j), symm) );
+          res.Add(new ExplicitCAtomRef(residues[i]->GetAtom(j), symm));
           ac++;
           break;  // must be unique to the RESI
         }
@@ -151,8 +151,8 @@ size_t ListIAtomRef::Expand(RefinementModel& rm, TAtomRefList& res, TResidue& _r
   if( op == '>' && si <= ei )  {
     size_t ac = 0;
     for( size_t i=si; i <= ei; i++ )  {
-      if( resi[i].IsDeleted() || resi[i].GetAtomInfo().GetMr() < 3.5 )  continue;
-      res.Add( new ExplicitCAtomRef(resi[i], boundaries[0].GetMatrix()) );
+      if( resi[i].IsDeleted() || resi[i].GetType().GetMr() < 3.5 )  continue;
+      res.Add(new ExplicitCAtomRef(resi[i], boundaries[0].GetMatrix()));
       ac++;
     }
     return ac;
@@ -160,8 +160,8 @@ size_t ListIAtomRef::Expand(RefinementModel& rm, TAtomRefList& res, TResidue& _r
   if( op == '<' && si >= ei )  {
     size_t ac = 0;
     for( size_t i=si; i >= ei; i-- )  {
-      if( resi[i].IsDeleted() || resi[i].GetAtomInfo().GetMr() < 3.5 )  continue;
-      res.Add( new ExplicitCAtomRef(resi[i], boundaries[0].GetMatrix()) );
+      if( resi[i].IsDeleted() || resi[i].GetType().GetMr() < 3.5 )  continue;
+      res.Add(new ExplicitCAtomRef(resi[i], boundaries[0].GetMatrix()));
       ac++;
       if( i == 0 )  break;
     }

@@ -29,10 +29,6 @@ void  TSAtom::CAtom(TCAtom& S)  {
   FEllipsoid = S.GetEllipsoid();
 }
 //..............................................................................
-void TSAtom::AtomInfo(TBasicAtomInfo& AI)  {
-  FCAtom->SetAtomInfo(AI);
-}
-//..............................................................................
 int TSAtom::_SortBondsByLengthAsc(const TSBond* b1, const TSBond* b2)  {
   const double diff = b1->QLength() - b2->QLength();
   return diff < 0 ? -1 : (diff > 0 ? 1 : 0);

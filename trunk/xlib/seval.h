@@ -23,7 +23,7 @@ class TBaiMwEvaluator;
 // data provider interface
 class ITBasicAtomInfoDataProvider: public IDataProvider  {
 public:
-  virtual TBasicAtomInfo *GetTBasicAtomInfo() = 0;
+  virtual const cm_Element *GetType() = 0;
 };
 // data provider interface
 class ITSAtom_DataProvider: public IDataProvider  {
@@ -55,7 +55,7 @@ public:
   // destructor
   TBaiNameEvaluator()  {  ;  }
   // evaluator function
-  const olxstr& EvaluateString() const {  return Parent->GetTBasicAtomInfo()->GetName();  }
+  const olxstr& EvaluateString() const {  return Parent->GetType()->name;  }
 };
 // evaluator implementation for scalar uiso
 class TSAtom_TypeEvaluator: public IStringEvaluator
@@ -65,11 +65,11 @@ public:
   // constructor
   TSAtom_TypeEvaluator(ITSAtom_DataProvider* parent) { Parent = parent;  }
   // virtual method
-  IEvaluator *NewInstance( IDataProvider *dp)  {  return new TSAtom_TypeEvaluator( (ITSAtom_DataProvider*)dp);  }
+  IEvaluator *NewInstance(IDataProvider *dp)  {  return new TSAtom_TypeEvaluator( (ITSAtom_DataProvider*)dp);  }
   // destructor
   TSAtom_TypeEvaluator()  {  ;  }
   // evaluator function
-  const olxstr& EvaluateString() const {  return Parent->GetTSAtom()->GetAtomInfo().GetSymbol();  }
+  const olxstr& EvaluateString() const {  return Parent->GetTSAtom()->GetType().symbol;  }
 };
 // evaluator implementation for bool selected
 class TTSAtom_EvaluatorFactory: public IEvaluatorFactory, ITSAtom_DataProvider
@@ -99,9 +99,8 @@ public:
   TTSAtom_EvaluatorFactory(IEvaluatorFactory *parent);
 };
 // factory class implementation
-class TTBasicAtomInfoEvaluatorFactory: public IEvaluatorFactory, ITBasicAtomInfoDataProvider
-{
-  TBasicAtomInfo *bai;
+class TTBasicAtomInfoEvaluatorFactory: public IEvaluatorFactory, ITBasicAtomInfoDataProvider  {
+  const cm_Element *type;
   // the list of all evaluators
   TSStrPObjList<olxstr,IEvaluator*, true> Evaluators;
   TSStrPObjList<olxstr,IDataProvider*, true> DataProviders;
@@ -112,9 +111,9 @@ public:
   const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetComparable(index);  }
   size_t EvaluatorCount()  {  return Evaluators.Count();  }
   // variable getter, to be used by evaluators
-  TBasicAtomInfo *GetTBasicAtomInfo(){  return bai;  }
+  const cm_Element *GetType()  {  return type;  }
   // variable setter
-  void SetTBasicAtomInfo(TBasicAtomInfo *val)  {  bai = val;  }
+  void SetType(const cm_Element* val)  {  type = val;  }
   // destructor
   ~TTBasicAtomInfoEvaluatorFactory()  {
     for( size_t i=0; i < Evaluators.Count(); i++ )
@@ -161,11 +160,11 @@ public:
   // constructor
   TBaiTypeEvaluator(ITBasicAtomInfoDataProvider* parent) { Parent = parent;  }
   // virtual method
-  IEvaluator *NewInstance( IDataProvider *dp)  {  return new TBaiTypeEvaluator( (ITBasicAtomInfoDataProvider*)dp);  }
+  IEvaluator *NewInstance(IDataProvider *dp)  {  return new TBaiTypeEvaluator( (ITBasicAtomInfoDataProvider*)dp);  }
   // destructor
   TBaiTypeEvaluator()  {  ;  }
   // evaluator function
-  const olxstr& EvaluateString() const {  return Parent->GetTBasicAtomInfo()->GetSymbol();  }
+  const olxstr& EvaluateString() const {  return Parent->GetType()->symbol;  }
 };
 // evaluator implementation for scalar peak
 class TSAtom_PeakEvaluator: public IDoubleEvaluator
@@ -193,7 +192,7 @@ public:
   // destructor
   TBaiMwEvaluator()  {  ;  }
   // evaluator function
-  double EvaluateDouble() const {  return Parent->GetTBasicAtomInfo()->GetMr();  }
+  double EvaluateDouble() const {  return Parent->GetType()->GetMr();  }
 };
 // evaluator implementation for scalar afix
 class TSAtom_AfixEvaluator: public IDoubleEvaluator

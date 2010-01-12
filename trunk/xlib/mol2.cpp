@@ -22,7 +22,7 @@ olxstr TMol2::MOLAtom(TCAtom& A)  {
      << '\t' << A.ccrd()[0] 
      << '\t' << A.ccrd()[1] 
      << '\t' << A.ccrd()[2]
-     << '\t' << A.GetAtomInfo().GetSymbol();
+     << '\t' << A.GetType().symbol;
   return rv;
 }
 //..............................................................................
@@ -69,7 +69,6 @@ void TMol2::SaveToStrings(TStrList& Strings)  {
 void TMol2::LoadFromStrings(const TStrList& Strings)  {
   Clear();
   Title = "OLEX: imported from TRIPOS MOL2";
-  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   GetAsymmUnit().Axes()[0] = 1;
   GetAsymmUnit().Axes()[1] = 1;
   GetAsymmUnit().Axes()[2] = 1;
@@ -91,7 +90,7 @@ void TMol2::LoadFromStrings(const TStrList& Strings)  {
       TStrList toks(line, ' ');
       if( toks.Count() < 6 )  continue;
       vec3d crd(toks[2].ToDouble(), toks[3].ToDouble(), toks[4].ToDouble());
-      if( AtomsInfo.IsElement(toks[5]) )  {
+      if( XElementLib::IsElement(toks[5]) )  {
         TCAtom& CA = GetAsymmUnit().NewAtom();
         CA.ccrd() = crd;
         CA.SetLabel( (toks[5] << GetAsymmUnit().AtomCount()+1) );
@@ -128,9 +127,9 @@ bool TMol2::Adopt(TXFile& XF)  {
     TSAtom& sa = latt.GetAtom(i);
     if( !sa.IsAvailable() )  continue;
     TCAtom& a = GetAsymmUnit().NewAtom();
-    a.Label() = sa.GetLabel();
+    a.SetLabel(sa.GetLabel(), false);
     a.ccrd() = sa.crd();
-    a.SetAtomInfo(sa.GetAtomInfo());
+    a.SetType(sa.GetType());
     sa.SetTag(i);
   }
   for( size_t i=0; i < latt.BondCount(); i++ )  {

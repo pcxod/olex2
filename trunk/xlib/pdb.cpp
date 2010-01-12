@@ -119,7 +119,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
       if( ca != NULL )  {
         ca->UpdateEllp(QE);
         if( ca->GetEllipsoid()->IsNPD() )
-          TBasicApp::GetLog().Error(olxstr("Not positevely defined: ") + ca->Label());
+          TBasicApp::GetLog().Error(olxstr("Not positevely defined: ") + ca->GetLabel());
         ca->SetUiso((QE[0] +  QE[1] + QE[2])/3);
       }
     }

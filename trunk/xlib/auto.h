@@ -1,6 +1,5 @@
-//---------------------------------------------------------------------------
-#ifndef autoH
-#define autoH
+#ifndef __olx_xl_auto_H
+#define __olx_xl_auto_H
 #include "xbase.h"
 #include "typelist.h"
 #include "estlist.h"
@@ -9,7 +8,6 @@
 #include "lattice.h"
 #include "satom.h"
 #include "network.h"
-#include "atominfo.h"
 #include "xfiles.h"
 #include "tptrlist.h"
 #include "library.h"
@@ -71,30 +69,23 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 class TAttachedNode  {
-  TBasicAtomInfo* BasicAtomInfo;
+  const cm_Element* Element;
   vec3d FCenter;
 public:
-  TAttachedNode( TBasicAtomInfo* bai, const vec3d& c)  {
-    BasicAtomInfo = bai;
-    FCenter = c;
-  }
-  TAttachedNode( IDataInputStream& in );
-  TAttachedNode()  {
-    BasicAtomInfo = NULL;
-  }
-  void SaveToStream( IDataOutputStream& output ) const;
-  inline void SetAtomInfo(TBasicAtomInfo* ai)  {  BasicAtomInfo = ai;  }
+  TAttachedNode(const cm_Element* element, const vec3d& c) : Element(element), FCenter(c)  {}
+  TAttachedNode(IDataInputStream& in);
+  TAttachedNode()  {  Element = NULL;  }
+  void SaveToStream(IDataOutputStream& output ) const;
+  inline void SetType(const cm_Element* e)  {  Element = e;  }
   inline void SetCenter(const vec3d& c)  {  FCenter = c;  }
-  inline const TBasicAtomInfo& GetAtomInfo() const {  return *BasicAtomInfo;  }
-  inline TBasicAtomInfo* BAI() const {  return BasicAtomInfo;  }
+  inline const cm_Element& GetType() const {  return *Element;  }
   inline const vec3d& GetCenter() const {  return FCenter;  }
-  inline vec3d& Center()  {  return FCenter;  }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 class TAutoDBNode  {
   TTypeList<TAttachedNode> AttachedNodes;
-  TBasicAtomInfo* BasicAtomInfo;
+  const cm_Element* Element;
   vec3d Center;
 //  int AppendedCount,
   int32_t Id;
@@ -126,8 +117,7 @@ public:
 
   inline size_t NodeCount() const {  return AttachedNodes.Count();  }
   inline const TAttachedNode& GetNode(size_t i) const {  return AttachedNodes[i];  }
-  inline TBasicAtomInfo& GetAtomInfo() const {  return *BasicAtomInfo;  }
-  inline TBasicAtomInfo* BAI() const {  return BasicAtomInfo;  }
+  inline const cm_Element& GetType() const {  return *Element;  }
   inline size_t DistanceCount() const {  return AttachedNodes.Count();  }
   inline double GetDistance(size_t i) const {  return Params[i];  }
   inline double GetAngle(size_t i) const {  return Params[AttachedNodes.Count()+i];  }
@@ -162,9 +152,9 @@ class TAutoDBNetNode  {
   TPtrList<TAutoDBNetNode>  AttachedNodes;
   int32_t Id, Tag;
 public:
-  TAutoDBNetNode( TAutoDBNode* node )     {  FCenter = node;  }
-  TAutoDBNetNode( IDataInputStream& input )  {  LoadFromStream(input);  }
-  void AttachNode( TAutoDBNetNode* node ) {  AttachedNodes.Add(node);  }
+  TAutoDBNetNode(TAutoDBNode* node)  {  FCenter = node;  }
+  TAutoDBNetNode(IDataInputStream& input)  {  LoadFromStream(input);  }
+  void AttachNode(TAutoDBNetNode* node) {  AttachedNodes.Add(node);  }
   inline size_t Count() const {  return AttachedNodes.Count();  }
   TAutoDBNetNode* Node(size_t i) const {  return AttachedNodes[i];  }
   TAutoDBNode* Center() const {  return FCenter;  }
@@ -172,8 +162,8 @@ public:
   bool IsSameType(const TAutoDBNetNode& dbn, bool ExtraLevel) const;
   bool IsMetricSimilar(const TAutoDBNetNode& nd, double& cfom, uint16_t* cindexes, bool ExtraLevel)  const;
 
-  void SaveToStream( IDataOutputStream& output ) const;
-  void LoadFromStream( IDataInputStream& input );
+  void SaveToStream(IDataOutputStream& output) const;
+  void LoadFromStream(IDataInputStream& input);
 
   const olxstr& ToString(int level) const;
 
@@ -212,7 +202,6 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 class TAutoDBSearchNode  {
   TAutoDBNodePList PossibleCentres;
-
 };
 ////////////////////////////////////////////////////////////////////////////////
 class TAutoDB : public IEObject  {
@@ -227,8 +216,8 @@ private:
   TTypeList<TAutoDBNet> Nets;
   void PrepareForSearch();
 protected:
-  void ProcessNodes( TAutoDBIdObject* currentFile, TNetwork& net );
-  TAutoDBNet* BuildSearchNet( TNetwork& net, TSAtomPList& cas );
+  void ProcessNodes(TAutoDBIdObject* currentFile, TNetwork& net);
+  TAutoDBNet* BuildSearchNet(TNetwork& net, TSAtomPList& cas);
   //............................................................................
   TAutoDBNode* LocateNode(size_t index) {
     for( size_t i=0; i < Nodes.Count(); i++ )  {
@@ -284,7 +273,6 @@ private:
   olxstr LastFileName;
   int BAIDelta; // maximim element promotion
   double URatio; // ratio beyond which search for element promotion
-  TAtomsInfo& AtomsInfo; 
 public:
   /* the instance must be created with Replcate to aoid any problems.
    It will be deleted by this object
@@ -297,19 +285,18 @@ public:
   void LoadFromStream( IDataInputStream& input );
 protected:
   void AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator, 
-    double& Uiso, AnalysisStat& stat, TBAIPList* proposed_atoms = NULL);
+    double& Uiso, AnalysisStat& stat, ElementPList* proposed_atoms = NULL);
   // a helper function to check C-O and C-N
-  void A2Pemutate(TCAtom& a1, TCAtom& a2, TBasicAtomInfo& ai1, TBasicAtomInfo& ai2, double threshold);
+  void A2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1, const cm_Element& e2, double threshold);
 public:
   void AnalyseStructure(const olxstr& LastFileName, TLattice& latt, 
-    TAtomTypePermutator* permutator, AnalysisStat& stat, TBAIPList* proposed_atoms = NULL);
+    TAtomTypePermutator* permutator, AnalysisStat& stat, ElementPList* proposed_atoms = NULL);
 
   inline const TDoubleList& GetUisos() const {  return Uisos;  }
   const AnalysisStat& GetStats() const {  return LastStat;  }
   inline const olxstr& GetLastFileName() const {  return LastFileName;  }
   void AnalyseNode(TSAtom& sa, TStrList& report);
   inline static TAutoDB* GetInstance()  {  return Instance;  }
-  inline static TAtomsInfo& GetAtomsInfo()  {  return Instance->AtomsInfo;  }
   inline TAutoDBIdObject& Reference(size_t i)  {  return LocateFile(i);  }
   inline TAutoDBNode* Node(size_t i)  {  return LocateNode(i);  }
   DefPropP(int, BAIDelta)
@@ -334,7 +321,7 @@ public:
   template <class NodeClass>
     struct THitList {
       TTypeList< THitStruct<NodeClass> > hits;
-      TBasicAtomInfo* BAI;
+      const cm_Element* Type;
       double meanFom;
       static int SortByFOMFunc( const THitList<NodeClass>& a,
                                 const THitList<NodeClass>& b )  {
@@ -354,8 +341,8 @@ public:
                                 const THitList<NodeClass>& b )  {
         return olx_cmp_size_t(b.hits.Count(), a.hits.Count());
       }
-      THitList( TBasicAtomInfo* bai, NodeClass* node, double fom )  {
-        BAI = bai;
+      THitList(const cm_Element& type, NodeClass* node, double fom)  {
+        Type = &type;
         hits.AddNew(node, fom);
         meanFom = 0;
       }
@@ -371,19 +358,19 @@ public:
           mf += hits[i].Fom;
         return mf /= cnt;
       }
-      void Sort()  {  hits.QuickSorter.SortSF( hits, THitStruct<NodeClass>::SortByFOMFunc);  }
+      void Sort()  {  hits.QuickSorter.SortSF(hits, THitStruct<NodeClass>::SortByFOMFunc);  }
     };
   struct TGuessCount  {
     TCAtom* atom;
-    TTypeList< THitList<TAutoDBNode> >* list1;
-    TTypeList< THitList<TAutoDBNetNode> >* list2;
-    TTypeList< THitList<TAutoDBNetNode> >* list3;
+    TTypeList<THitList<TAutoDBNode> >* list1;
+    TTypeList<THitList<TAutoDBNetNode> >* list2;
+    TTypeList<THitList<TAutoDBNetNode> >* list3;
   };
   void ValidateResult(const olxstr& fileName, const TLattice& au, TStrList& report);
 protected:
   // hits must be sorted beforehand!
-  void AnalyseUiso(TCAtom& ca, const TTypeList< THitList<TAutoDBNode> >& list, AnalysisStat& stat, 
-    bool heavier, bool lighter, TBAIPList* proposed_atoms = NULL);
+  void AnalyseUiso(TCAtom& ca, const TTypeList<THitList<TAutoDBNode> >& list, AnalysisStat& stat, 
+    bool heavier, bool lighter, ElementPList* proposed_atoms = NULL);
   
   class TAnalyseNetNodeTask  {
     TTypeList< TPtrList<TAutoDBNode> >& Nodes;
@@ -406,24 +393,24 @@ protected:
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class NodeType>  bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list, AnalysisStat& stat, 
-                          bool heavier, bool lighter, TBAIPList* proposed_atoms)  {
+                          bool heavier, bool lighter, ElementPList* proposed_atoms)  {
   if( !lighter && !heavier )  return false;
   olxstr tmp( ca.GetLabel() );
   tmp << ' ';
-  TBasicAtomInfo* type = &ca.GetAtomInfo();
+  const cm_Element* type = &ca.GetType();
   if( heavier )  {
-    TBasicApp::GetLog().Info( olxstr("Searching element heavier for ") << ca.GetLabel() );
+    TBasicApp::GetLog().Info(olxstr("Searching element heavier for ") << ca.GetLabel());
     for( size_t j=0; j < list.Count(); j++ )  {
-      if( list[j].BAI->GetIndex() > type->GetIndex() )  {
+      if( list[j].Type->z > type->z )  {
         if( proposed_atoms != NULL )  {
-          if( proposed_atoms->IndexOf( list[j].BAI ) != InvalidIndex )  {
-            type = list[j].BAI;
+          if( proposed_atoms->IndexOf(list[j].Type) != InvalidIndex )  {
+            type = list[j].Type;
             break;
           }
         }
         else if( BAIDelta != -1 )  {
-          if( (list[j].BAI->GetIndex() - ca.GetAtomInfo().GetIndex()) < BAIDelta )  {
-            type = list[j].BAI;
+          if( (list[j].Type->z - ca.GetType().z) < BAIDelta )  {
+            type = list[j].Type;
             break;
           }
         }
@@ -433,18 +420,18 @@ template <class NodeType>  bool AnalyseUiso(TCAtom& ca, const TTypeList< THitLis
     }
   }
   else if( lighter )  {
-    TBasicApp::GetLog().Info( olxstr("Searching element lighter for ") << ca.GetLabel() );
+    TBasicApp::GetLog().Info(olxstr("Searching element lighter for ") << ca.GetLabel());
     for( size_t j=0; j < list.Count(); j++ )  {
-      if( list[j].BAI->GetIndex() < type->GetIndex() )  {
+      if( list[j].Type->z < type->z )  {
         if( proposed_atoms != NULL )  {
-          if( proposed_atoms->IndexOf( list[j].BAI ) != InvalidIndex )  {
-            type = list[j].BAI;
+          if( proposed_atoms->IndexOf(list[j].Type) != InvalidIndex )  {
+            type = list[j].Type;
             break;
           }
         }
         else if( BAIDelta != -1 )  {
-          if( (ca.GetAtomInfo().GetIndex() - list[j].BAI->GetIndex()) < BAIDelta  )  {
-            type = list[j].BAI;
+          if( (ca.GetType().z - list[j].Type->z) < BAIDelta  )  {
+            type = list[j].Type;
             break;
           }
         }
@@ -454,32 +441,32 @@ template <class NodeType>  bool AnalyseUiso(TCAtom& ca, const TTypeList< THitLis
     }
   }
   for( size_t j=0; j < list.Count(); j++ )  {
-    tmp << list[j].BAI->GetSymbol() << '(' <<
+    tmp << list[j].Type->symbol << '(' <<
       olxstr::FormatFloat(3,1.0/(list[j].MeanFom()+0.001)) << ")" << list[j].hits[0].Fom;
     if( (j+1) < list.Count() )  tmp << ',';
   }
-  if( type == NULL || *type == ca.GetAtomInfo() )  return false;
+  if( type == NULL || *type == ca.GetType() )  return false;
   int atc = stat.AtomTypeChanges;
   if( proposed_atoms != NULL )  {
-    if( proposed_atoms->IndexOf( type ) != InvalidIndex )  {
+    if( proposed_atoms->IndexOf(type) != InvalidIndex )  {
       stat.AtomTypeChanges++;
-      ca.Label() =  type->GetSymbol();
-      ca.SetAtomInfo( *type );
+      ca.SetLabel(type->symbol, false);
+      ca.SetType(*type);
     }
   }
   else if( BAIDelta != -1 )  {
-    if( abs(type->GetIndex() - ca.GetAtomInfo().GetIndex()) < BAIDelta )  {
+    if( abs(type->z - ca.GetType().z) < BAIDelta )  {
       stat.AtomTypeChanges++;
-      ca.Label() =  type->GetSymbol();
-      ca.SetAtomInfo( *type );
+      ca.SetLabel(type->symbol, false);
+      ca.SetType(*type);
     }
   }
   else  {
     stat.AtomTypeChanges++;
-    ca.Label() =  type->GetSymbol();
-    ca.SetAtomInfo( *type );
+    ca.SetLabel(type->symbol, false);
+    ca.SetType(*type);
   }
-  TBasicApp::GetLog().Info( tmp );
+  TBasicApp::GetLog().Info(tmp);
   return atc != stat.AtomTypeChanges;
 }
 
@@ -490,15 +477,15 @@ public:
   struct TPermutation  {
     vec3d AtomCenter;
     TCAtom* Atom;
-    TTypeList< AnAssociation3<TBasicAtomInfo*,double, double> > Tries;
+    TTypeList<AnAssociation3<const cm_Element*,double, double> > Tries;
   };
 protected:
   TTypeList<TPermutation> Atoms;
-  TPtrList<TBasicAtomInfo> TypeRestraints;
+  ElementPList TypeRestraints;
   bool Active;
 public:
   TAtomTypePermutator()  {  Active = true;  }
-  void Init(TPtrList<TBasicAtomInfo>* typeRestraints = NULL);
+  void Init(ElementPList* typeRestraints = NULL);
   void ReInit(const TAsymmUnit& au);
   void InitAtom(TAutoDB::TGuessCount& guess);
   void Permutate();

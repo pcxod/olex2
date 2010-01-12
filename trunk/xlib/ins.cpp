@@ -62,7 +62,6 @@ void TIns::LoadFromFile(const olxstr& fileName)  {
 void TIns::LoadFromStrings(const TStrList& FileContent)  {
   Clear();
   ParseContext cx(GetRM());
-  TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
   TStrList Toks, InsFile(FileContent);
   for( size_t i=0; i < InsFile.Count(); i++ )  {
     InsFile[i].Trim(' ').\
@@ -72,7 +71,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       Trim(' ');
   }
   InsFile.CombineLines('=');
-  TBasicAtomInfo& baiQPeak = atomsInfo.GetAtomInfo(iQPeakIndex);
+  cm_Element& elmQPeak = XElementLib::GetByIndex(iQPeakIndex);
   cx.Resi = &GetAsymmUnit().GetResidue(0);
   cx.ins = this;
   for( size_t i=0; i < InsFile.Count(); i++ )  {
@@ -126,12 +125,12 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
         throw TFunctionFailedException(__OlxSourceInfo, "uninitialised cell");
       }
       TCAtom* atom = _ParseAtom(Toks, cx);
-      atom->Label() = Toks[0];
+      atom->SetLabel(Toks[0], false);
       if( qpeak ) 
-        atom->SetAtomInfo(baiQPeak);
+        atom->SetType(elmQPeak);
       else
-        atom->SetAtomInfo(*cx.BasicAtoms.GetObject(Toks[1].ToInt()-1));
-      if( atom->GetAtomInfo().GetMr() > 3.5 )
+        atom->SetType(*cx.BasicAtoms.GetObject(Toks[1].ToInt()-1));
+      if( atom->GetType().GetMr() > 3.5 )
         cx.LastNonH = atom;
       _ProcessAfix(*atom, cx);
     }
@@ -219,7 +218,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
         if( ca->GetId() + j >= cx.au.AtomCount() )
           throw TFunctionFailedException(__OlxSourceInfo, "not enough atoms to create the reference group for SAME");
         TCAtom& a = cx.au.GetAtom(ca->GetId() + j);
-        if( a.GetAtomInfo() == iHydrogenIndex || a.GetAtomInfo() == iDeuteriumIndex )  {
+        if( a.GetType() == iHydrogenZ )  {
           max_atoms++;
           continue;
         }
@@ -303,7 +302,6 @@ void TIns::_ProcessAfix0(ParseContext& cx)  {
 }
 //..............................................................................
 bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx, size_t& i)  {
-  TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
   if( _ParseIns(cx.rm, Toks) )
     return true;
   else if( !cx.CellFound && Toks[0].Equalsi("CELL") )  {
@@ -461,7 +459,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         so we keep it as it is to save in the ins file
         */
         cx.rm.AddUserContent(Toks[1]);
-        cx.BasicAtoms.Add(Toks[1], atomsInfo.FindAtomInfoBySymbol(Toks[1]));
+        cx.BasicAtoms.Add(Toks[1], XElementLib::FindBySymbol(Toks[1]));
         if( cx.BasicAtoms.Last().Object == NULL )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find suitable scatterer for '") << Toks[1] << '\'' );
         expandedSfacProcessed = true;
@@ -476,8 +474,8 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
     }
     if( !expandedSfacProcessed )  {
       for( size_t j=1; j < Toks.Count(); j++ )  {
-        if( atomsInfo.IsAtom(Toks[j]) )  {
-          cx.BasicAtoms.Add(Toks[j], atomsInfo.FindAtomInfoBySymbol(Toks[j]) );
+        if( XElementLib::IsElement(Toks[j]) )  {
+          cx.BasicAtoms.Add(Toks[j], XElementLib::FindBySymbol(Toks[j]));
           if( cx.BasicAtoms.Last().Object == NULL )
             throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find suitable scatterer for '") << Toks[j] << '\'' );
           cx.rm.AddUserContent(Toks[j]);
@@ -728,7 +726,7 @@ void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
 }
 //..............................................................................
 void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix, 
-                     TStrPObjList<olxstr,TBasicAtomInfo*>* sfac, TStrList& sl, TIndexList* index, bool checkSame)  {
+                     TStrPObjList<olxstr,const cm_Element*>* sfac, TStrList& sl, TIndexList* index, bool checkSame)  {
   if( a.IsDeleted() || a.IsSaved() )  return;
   if( checkSame && olx_is_valid_index(a.GetSameId()) )  {  // "
     TSameGroup& sg = rm.rSAME[a.GetSameId()];
@@ -775,11 +773,11 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   afix = atom_afix;
   part = a.GetPart();
   index_t spindex;
-  if( a.GetAtomInfo() == iQPeakIndex )
+  if( a.GetType() == iQPeakZ )
     spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOfi('c'));
   else
-    spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOfObject(&a.GetAtomInfo()));
-  HyphenateIns( _AtomToString(rm, a, spindex+1), sl );
+    spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOfObject(&a.GetType()));
+  HyphenateIns(_AtomToString(rm, a, spindex+1), sl);
   a.SetSaved(true);
   if( index != NULL )  index->Add(a.GetTag());
   for( size_t i=0; i < a.DependentHfixGroupCount(); i++ )  {
@@ -812,46 +810,45 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
 }
 //..............................................................................
 void TIns::SaveToStrings(TStrList& SL)  {
-  TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
   evecd QE;  // quadratic form of s thermal ellipsoid
   olxstr Tmp;
-  TStrPObjList<olxstr,TBasicAtomInfo*> BasicAtoms;
+  TStrPObjList<olxstr,const cm_Element*> BasicAtoms;
   for( size_t i=0; i < GetRM().GetUserContent().Count(); i++ )  {
-    TBasicAtomInfo* BAI = atomsInfo.FindAtomInfoBySymbol(GetRM().GetUserContent()[i].GetA());
-    if( BAI == NULL )
+    cm_Element* elm = XElementLib::FindBySymbol(GetRM().GetUserContent()[i].GetA());
+    if( elm == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: ") << BasicAtoms[i]);
-    BasicAtoms.Add(BAI->GetSymbol(), BAI);
+    BasicAtoms.Add(elm->symbol, elm);
   }
-  size_t carbonBAIIndex = BasicAtoms.IndexOfi('c');  // for Q-peaks
+  size_t carbonIndex = BasicAtoms.IndexOfi('c');  // for Q-peaks
   for( size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ )  {
     TResidue& residue = GetAsymmUnit().GetResidue(i);
     for( size_t j=0; j < residue.Count(); j++ )  {
       if( residue[j].IsDeleted() )  continue;
       residue[j].SetSaved(false);
-      size_t spindex = BasicAtoms.IndexOfObject(&residue[j].GetAtomInfo());  // fix the SFAC, if wrong
+      size_t spindex = BasicAtoms.IndexOfObject(&residue[j].GetType());  // fix the SFAC, if wrong
       if( spindex == InvalidIndex )  {
-        if( residue[j].GetAtomInfo() == iQPeakIndex )  {
-          if( carbonBAIIndex == InvalidIndex )  {
+        if( residue[j].GetType() == iQPeakZ )  {
+          if( carbonIndex == InvalidIndex )  {
             GetRM().AddUserContent("C", 1.0);
-            BasicAtoms.Add("C", &atomsInfo.GetAtomInfo(iCarbonIndex));
-            carbonBAIIndex = BasicAtoms.Count() -1;
+            BasicAtoms.Add("C", &XElementLib::GetByIndex(iCarbonIndex));
+            carbonIndex = BasicAtoms.Count() -1;
           }
         }
         else  {
-          BasicAtoms.Add(residue[j].GetAtomInfo().GetSymbol(), &residue[j].GetAtomInfo());
-          GetRM().AddUserContent(residue[j].GetAtomInfo().GetSymbol(), 1.0);
-          if( residue[j].GetAtomInfo() == iCarbonIndex )
-            carbonBAIIndex = BasicAtoms.Count() - 1;
+          BasicAtoms.Add(residue[j].GetType().symbol, &residue[j].GetType());
+          GetRM().AddUserContent(residue[j].GetType().symbol, 1.0);
+          if( residue[j].GetType() == iCarbonZ )
+            carbonIndex = BasicAtoms.Count() - 1;
         }
       }
       if( residue[j].GetLabel().Length() > 4 ) 
-        residue[j].Label() = GetAsymmUnit().CheckLabel(&residue[j], residue[j].GetLabel());
+        residue[j].SetLabel(GetAsymmUnit().CheckLabel(&residue[j], residue[j].GetLabel()), false);
       for( size_t k=j+1; k < residue.Count(); k++ )  {
         if( residue[k].IsDeleted() )  continue;
         if( residue[j].GetPart() != residue[k].GetPart() && 
             residue[j].GetPart() != 0 && residue[k].GetPart() != 0 )  continue;
         if( residue[j].GetLabel().Equalsi(residue[k].GetLabel()) ) 
-          residue[k].Label() = GetAsymmUnit().CheckLabel(&residue[k], residue[k].GetLabel());
+          residue[k].SetLabel(GetAsymmUnit().CheckLabel(&residue[k], residue[k].GetLabel()), false);
       }
     }
   }
@@ -906,7 +903,6 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
   if( CAtoms.Count() != index.Count() )
     throw TInvalidArgumentException(__OlxSourceInfo, "index");
   if( CAtoms.IsEmpty() )  return;
-  TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
   TStrList Toks;
   olxstr Tmp, Tmp1;
   TCAtom *atom;
@@ -940,21 +936,20 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
       ;
     else if( Toks.Count() < 6 )  // should be at least
       Instructions.Add(Tmp);
-    else if( !atomsInfo.IsAtom(Toks[1]) )  // is a valid atom
+    else if( !XElementLib::IsElement(Toks[1]) )  // is a valid atom
       Instructions.Add(Tmp);
     else if( (!Toks[2].IsNumber()) || (!Toks[3].IsNumber()) || // should be four numbers
         (!Toks[4].IsNumber()) || (!Toks[5].IsNumber()) )  {
       Instructions.Add(Tmp);
     }
     else  {
-      TBasicAtomInfo* bai = atomsInfo.FindAtomInfoBySymbol(Toks[1]);
-      if( bai == NULL ) // wrong SFAC
+      cm_Element* elm = XElementLib::FindBySymbol(Toks[1]);
+      if( elm == NULL ) // wrong SFAC
         throw TInvalidArgumentException(__OlxSourceInfo, "unknown element symbol");
 
       if( (atomCount+1) > CAtoms.Count() )  {
-        if( atom && atom->GetParent() )  {
+        if( atom && atom->GetParent() )
           atom = &atom->GetParent()->NewAtom(cx.Resi);
-        }
       }
       else  {
         atom = CAtoms[index[atomCount]];
@@ -964,11 +959,11 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
       // clear fixed fixed values as they reread
       //atom->FixedValues().Null();
 
-      _ParseAtom( Toks, cx, atom );
+      _ParseAtom(Toks, cx, atom);
       atomCount++;
-      atom->Label() = Tmp1;
-      atom->SetAtomInfo(*bai);
-      if( atom->GetAtomInfo().GetMr() > 3.5 )
+      atom->SetLabel(Tmp1, false);
+      atom->SetType(*elm);
+      if( atom->GetType().GetMr() > 3.5 )
         cx.LastNonH = atom;
       _ProcessAfix(*atom, cx);
     }
@@ -1006,18 +1001,17 @@ bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms, TI
 //..............................................................................
 void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& atoms, const olxstr& comments )  {
   TStrList SL;
-  TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
   TTypeList<AnAssociation2<olxstr,double> > content;
-  SortedPtrList<TBasicAtomInfo, TPrimitivePtrComparator> bais;
+  SortedPtrList<const cm_Element, TPrimitivePtrComparator> elements;
   TSizeList Sfacs;
   for( size_t i=0; i < atoms.Count(); i++ )  {
-    TBasicAtomInfo* BAI = atomsInfo.FindAtomInfoEx(atoms[i].GetName());
-    if( BAI == NULL )
+    cm_Element* elm = XElementLib::FindBySymbolEx(atoms[i].GetName());
+    if( elm == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: ") << atoms[i].GetName() );
-    size_t index = bais.IndexOf(BAI);
+    size_t index = elements.IndexOf(elm);
     if( index == InvalidIndex )  {
-      bais.Add(BAI);
-      content.AddNew(BAI->GetSymbol(), 1.0);
+      elements.Add(elm);
+      content.AddNew(elm->symbol, 1.0);
     }
   }
   SL.Add("TITLE ") << GetTitle();
@@ -1082,7 +1076,7 @@ void TIns::_ProcessAfix(TCAtom& a, ParseContext& cx)  {
   //}
   //else  {
   if( cx.AfixGroups.Current().GetC() )  {
-    if( a.GetAtomInfo() != iHydrogenIndex && a.GetAtomInfo() != iDeuteriumIndex )  {
+    if( a.GetType() != iHydrogenZ )  {
       cx.AfixGroups.Current().A()--;
       cx.AfixGroups.Current().B()->AddDependent(a);
     }
@@ -1145,10 +1139,10 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
 //..............................................................................
 olxstr TIns::_AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex)  {
   double v, Q[6];   // quadratic form of ellipsoid
-  olxstr Tmp( CA.Label() );
+  olxstr Tmp = CA.GetLabel();
   Tmp.Format(6, true, ' ');
   if( SfacIndex < 0 )
-    Tmp << CA.GetAtomInfo().GetSymbol();
+    Tmp << CA.GetType().symbol;
   else
     Tmp << SfacIndex;
 
@@ -1174,7 +1168,7 @@ olxstr TIns::_AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex)  
     Tmp << olxstr::FormatFloat(-5, v) << ' ';
   }
   // Q-Peak
-  if( CA.GetAtomInfo() == iQPeakIndex )
+  if( CA.GetType() == iQPeakZ )
     Tmp << olxstr::FormatFloat(-3, CA.GetQPeak());
   return Tmp;
 }
@@ -1478,14 +1472,14 @@ void TIns::ValidateRestraintsAtomNames(RefinementModel& rm)  {
     for( size_t j=0; j < srl.Count(); j++ )  {
       TSimpleRestraint& sr = srl[j];
       for( size_t k=0; k < sr.AtomCount(); k++ )
-        sr.GetAtom(k).GetAtom()->Label() = rm.aunit.ValidateLabel(sr.GetAtom(k).GetAtom()->GetLabel());   
+        sr.GetAtom(k).GetAtom()->SetLabel(rm.aunit.ValidateLabel(sr.GetAtom(k).GetAtom()->GetLabel()), false);
     }
   }
   // equivalent EXYZ constraint
   for( size_t i=0; i < rm.ExyzGroups.Count(); i++ )  {
     TExyzGroup& sr = rm.ExyzGroups[i];
     for( size_t j=0; j < sr.Count(); j++ )
-      sr[j].Label() = rm.aunit.ValidateLabel(sr[j].GetLabel());   
+      sr[j].SetLabel(rm.aunit.ValidateLabel(sr[j].GetLabel()), false);
   }
 }
 //..............................................................................

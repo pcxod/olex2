@@ -82,13 +82,13 @@ public:
   returns the maximum level reached.  The void center is assigned to the point coordinates with
   largest level*/
   short CalcVoid(TArray3D<short>& map, double extraR, short val, size_t* structurePoints, 
-    vec3d& voidCenter, TPSTypeList<TBasicAtomInfo*, double>* radii);
+    vec3d& voidCenter, ElementRadii* radii);
   /* function undoes renaming atoms */
   void undoName(TUndoData *data);
   void NameHydrogens(TSAtom& a, TUndoData* ud, bool CheckLabel);
   // fixes hydrogen atom labels
   TUndoData* FixHL();
-  void RingContentFromStr(const olxstr& textDescr, TPtrList<TBasicAtomInfo>& ringDesc);
+  void RingContentFromStr(const olxstr& textDescr, ElementPList& ringDesc);
   void FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings);
   // 
   virtual bool FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll = true, bool ClearSelection=true);

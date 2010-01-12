@@ -30,20 +30,20 @@ protected:
     void FromDataItem(const TDataItem& item, RefinementModel& rm, TCAtom& atom);
   };
   struct TypeConnInfo : public CXConnInfoBase  {
-    TBasicAtomInfo* atomInfo;
-    TypeConnInfo() : atomInfo(NULL) {}
-    TypeConnInfo(TBasicAtomInfo& bai) : atomInfo(&bai) {}
-    TypeConnInfo(const TypeConnInfo& ci) : CXConnInfoBase(ci), atomInfo(ci.atomInfo) {}
+    const cm_Element* atomType;
+    TypeConnInfo() : atomType(NULL) {}
+    TypeConnInfo(const cm_Element& type) : atomType(&type) {}
+    TypeConnInfo(const TypeConnInfo& ci) : CXConnInfoBase(ci), atomType(ci.atomType) {}
     TypeConnInfo& operator = (const TypeConnInfo& ti)  {
       CXConnInfoBase::operator = (ti);
-      atomInfo = ti.atomInfo;
+      atomType = ti.atomType;
       return *this;
     }
     void ToDataItem(TDataItem& item) const;
-    void FromDataItem(const TDataItem& item, TBasicAtomInfo* bai);
+    void FromDataItem(const TDataItem& item, const cm_Element* elm);
   };
   olxdict<TCAtom*, AtomConnInfo, TPointerPtrComparator> AtomInfo;
-  olxdict<TBasicAtomInfo*, TypeConnInfo, TPointerPtrComparator> TypeInfo;
+  olxdict<const cm_Element*, TypeConnInfo, TPointerPtrComparator> TypeInfo;
   // 
   const smatd* GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, bool release) const;
 public:
@@ -54,7 +54,7 @@ public:
   // prepares a list of extra connectivity info for each atom of the AUnit
   CXConnInfo& GetConnInfo(const TCAtom& ca) const;
   // an object created with new is returned always
-  CXConnInfo& GetConnInfo(TBasicAtomInfo& bai) const;
+  CXConnInfo& GetConnInfo(const cm_Element& elm) const;
 
   void ProcessConn(TStrList& ins);
   // eqiv corresponds to a2

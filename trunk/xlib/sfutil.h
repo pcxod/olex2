@@ -48,15 +48,15 @@ namespace SFUtil {
     /* atoms[i]->Tag() must be index of the corresponding scatterer. U has 6 elements of Ucif or Uiso for each 
     atom  */
     virtual void Calculate(double eV, const TRefList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
-      const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, const double* U, bool useFpFdp) const = 0;
+      const ElementPList& scatterers, const TCAtomPList& atoms, const double* U, bool useFpFdp) const = 0;
     virtual void Calculate(double eV, const TRefPList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
-      const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, const double* U, bool useFpFdp) const = 0;
+      const ElementPList& scatterers, const TCAtomPList& atoms, const double* U, bool useFpFdp) const = 0;
     virtual size_t GetSGOrder() const = 0;
   };
 
 
   // for internal use
-  void PrepareCalcSF(const TAsymmUnit& au, double* U, TPtrList<cm_Element>& scatterers, TCAtomPList& alist); 
+  void PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatterers, TCAtomPList& alist); 
   /* calculates the scale sum(Fc)/sum(Fo) Fc = k*Fo. Can accept a list of doubles (Fo) */
   template <class RefList>
   static double CalcFScale(const TArrayList<compd>& F, const RefList& refs)  {
@@ -141,7 +141,7 @@ namespace SFUtil {
   protected:
     template <class RefList>
     void CalculateWithFpFdp(double eV, const RefList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
-                            const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, 
+                            const ElementPList& scatterers, const TCAtomPList& atoms, 
                             const double* U) const
     {
       TArrayList<vec3i> rv(sg::size);
@@ -191,7 +191,7 @@ namespace SFUtil {
     }
     template <class RefList>
     void CalculateWithoutFpFdp(const RefList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
-                               const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, 
+                               const ElementPList& scatterers, const TCAtomPList& atoms, 
                                const double* U) const 
     {
       TArrayList<vec3i> rv(sg::size);
@@ -260,7 +260,7 @@ namespace SFUtil {
       }
     }
     virtual void Calculate( double eV, const TRefList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
-                            const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, 
+                            const ElementPList& scatterers, const TCAtomPList& atoms, 
                             const double* U, bool useFpFdp) const 
     {
       if( useFpFdp )
@@ -269,7 +269,7 @@ namespace SFUtil {
         CalculateWithoutFpFdp<TRefList>(refs, hkl2c, F, scatterers, atoms, U);
     }
     virtual void Calculate( double eV, const TRefPList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
-                            const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, 
+                            const ElementPList& scatterers, const TCAtomPList& atoms, 
                             const double* U, bool useFpFdp) const 
     {
       if( useFpFdp )

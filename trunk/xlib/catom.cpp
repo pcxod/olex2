@@ -34,7 +34,7 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   FragmentId = ~0;
   FAttachedAtoms = NULL;
   FAttachedAtomsI = NULL;
-  FAtomInfo = NULL;
+  Type = NULL;
   Degeneracy = 1;
   SetTag(-1);
   DependentAfixGroup = ParentAfixGroup = NULL;
@@ -58,50 +58,32 @@ void TCAtom::SetConnInfo(CXConnInfo& ci) {
   ConnInfo = &ci;
 }
 //..............................................................................
-bool TCAtom::SetLabel(const olxstr &L)  {
-  if( L.IsEmpty() )
-    throw TInvalidArgumentException(__OlxSourceInfo, "empty label");
-
-  olxstr Tmp;
-  TAtomsInfo& AI = TAtomsInfo::GetInstance();
-  TBasicAtomInfo *BAI = NULL;
-  if( L.Length() >= 2 )  {
-    Tmp = L.SubString(0, 2);
-    if( AI.IsElement(Tmp) )
-      BAI = AI.FindAtomInfoBySymbol(Tmp);
-    else  {
-      Tmp = L.SubString(0, 1);
-      if( AI.IsElement(Tmp) )
-        BAI = AI.FindAtomInfoBySymbol(Tmp);
-    }
-  }
-  else  {
-    Tmp = L.SubString(0, 1);
-    if( AI.IsElement(Tmp) )
-      BAI = AI.FindAtomInfoBySymbol(Tmp);
-  }
-  if( BAI == NULL )
-    throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: '") << L << '\'' );
-  else  {
-    if( FAtomInfo != BAI )  {
-      FAtomInfo = BAI;
+void TCAtom::SetLabel(const olxstr& L, bool validate)  {
+  if( validate )  {
+    if( L.IsEmpty() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "empty label");
+    cm_Element *atype = XElementLib::FindBySymbolEx(L);
+    if( atype == NULL )
+      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: '") << L << '\'' );
+    if( Type != atype )  {
+      Type = atype;
       FParent->_OnAtomTypeChanged(*this);
     }
-    FLabel = L;
-    if( *BAI != iQPeakIndex )
+    Label = L;
+    if( *atype != iQPeakZ )
       SetQPeak(0);
+    if( Type->symbol.Length() == 2 )
+      Label[1] = Label.o_tolower(Label.CharAt(1));
   }
-
-  if( GetAtomInfo().GetSymbol().Length() == 2 )
-      FLabel[1] = FLabel.o_tolower(FLabel[1]);
-  return true;
+  else
+    Label = L;
 }
 //..............................................................................
-void TCAtom::SetAtomInfo(TBasicAtomInfo& A)  {
-  if( FAtomInfo == &A )
-    return;
-  FAtomInfo = &A;
-  FParent->_OnAtomTypeChanged(*this);
+void TCAtom::SetType(const cm_Element& t)  {
+  if( Type != &t )  {
+    Type = &t;
+    FParent->_OnAtomTypeChanged(*this);
+  }
 }
 //..............................................................................
 void TCAtom::Assign(const TCAtom& S)  {
@@ -126,9 +108,9 @@ void TCAtom::Assign(const TCAtom& S)  {
   }
   else
     UisoOwner = NULL;
-  FLabel   = S.FLabel;
-  if( FAtomInfo != &S.GetAtomInfo() )  {
-    FAtomInfo = &S.GetAtomInfo();
+  Label   = S.Label;
+  if( Type != &S.GetType() )  {
+    Type = &S.GetType();
     FParent->_OnAtomTypeChanged(*this);
   }
 //  Frag    = S.Frag;
@@ -172,8 +154,8 @@ void TCAtom::UpdateEllp(const TEllipsoid &NV ) {
 }
 //..............................................................................
 void TCAtom::ToDataItem(TDataItem& item) const  {
-  item.AddField("label", FLabel );
-  item.AddField("type", FAtomInfo->GetSymbol() );
+  item.AddField("label", Label);
+  item.AddField("type", Type->symbol);
   item.AddField("part", (int)Part);
   item.AddField("sof", Occu);
   item.AddField("flags", Flags);
@@ -193,23 +175,22 @@ void TCAtom::ToDataItem(TDataItem& item) const  {
     elp.AddField("xz", TEValue<double>(Q[4], E[4]).ToString());
     elp.AddField("xy", TEValue<double>(Q[5], E[5]).ToString());
   }
-  if( *FAtomInfo == iQPeakIndex )
+  if( *Type == iQPeakZ )
     item.AddField("peak", QPeak);
-
 }
 //..............................................................................
 #ifndef _NO_PYTHON
 PyObject* TCAtom::PyExport()  {
   PyObject* main = PyDict_New();
-  PyDict_SetItemString(main, "label", PythonExt::BuildString(FLabel) );
-  PyDict_SetItemString(main, "type", PythonExt::BuildString(FAtomInfo->GetSymbol()) );
-  PyDict_SetItemString(main, "part", Py_BuildValue("i", Part) );
-  PyDict_SetItemString(main, "occu", Py_BuildValue("d", Occu) );
-  PyDict_SetItemString(main, "tag", Py_BuildValue("i", GetTag()) );
+  PyDict_SetItemString(main, "label", PythonExt::BuildString(Label));
+  PyDict_SetItemString(main, "type", PythonExt::BuildString(Type->symbol));
+  PyDict_SetItemString(main, "part", Py_BuildValue("i", Part));
+  PyDict_SetItemString(main, "occu", Py_BuildValue("d", Occu));
+  PyDict_SetItemString(main, "tag", Py_BuildValue("i", GetTag()));
   PyDict_SetItemString(main, "crd", 
-    Py_BuildValue("(ddd)(ddd)", Center[0], Center[1], Center[2], Esd[0], Esd[1], Esd[2]) );
+    Py_BuildValue("(ddd)(ddd)", Center[0], Center[1], Center[2], Esd[0], Esd[1], Esd[2]));
   if( !olx_is_valid_index(EllpId) )
-    PyDict_SetItemString(main, "uiso", Py_BuildValue("(dd)", Uiso, UisoEsd) );
+    PyDict_SetItemString(main, "uiso", Py_BuildValue("(dd)", Uiso, UisoEsd));
   else  {
     double Q[6], E[6];
     GetEllipsoid()->GetQuad(Q, E);
@@ -218,17 +199,17 @@ PyObject* TCAtom::PyExport()  {
        E[0], E[1], E[2], E[3], E[4], E[5]
       ) );
   }
-  if( *FAtomInfo == iQPeakIndex )
+  if( *Type == iQPeakZ )
     PyDict_SetItemString(main, "peak", Py_BuildValue("d", QPeak) );
   return main;
 }
 #endif
 //..............................................................................
 void TCAtom::FromDataItem(TDataItem& item)  {
-  FAtomInfo = TAtomsInfo::GetInstance().FindAtomInfoBySymbol( item.GetRequiredField("type") );
-  if( FAtomInfo == NULL )
+  Type = XElementLib::FindBySymbol(item.GetRequiredField("type"));
+  if( Type == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid atom type");
-  FLabel = item.GetRequiredField("label");
+  Label = item.GetRequiredField("label");
   Part = item.GetRequiredField("part").ToInt();
   Occu = item.GetRequiredField("sof").ToDouble();
   Flags = item.GetRequiredField("flags").ToInt();
@@ -259,7 +240,7 @@ void TCAtom::FromDataItem(TDataItem& item)  {
     Uiso = ev.V();
     UisoEsd = ev.E();
   }
-  if( *FAtomInfo == iQPeakIndex )
+  if( *Type == iQPeakZ )
     QPeak = item.GetRequiredField("peak").ToDouble();
 }
 //..............................................................................

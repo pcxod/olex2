@@ -1,6 +1,5 @@
-#ifndef networkH
-#define networkH
-
+#ifndef __olx_xl_network_H
+#define __olx_xl_network_H
 #include "satom.h"
 #include "sbond.h"
 #include "tptrlist.h"
@@ -88,31 +87,31 @@ public:
   // returns true if the ring is regular (distances from centroid and angles) 
   static bool IsRingRegular(const TSAtomPList& ring);
   // inverttion must be specified for the permutational graph match
-  bool DoMatch( TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res, bool Invert );
+  bool DoMatch(TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res, bool Invert );
   bool IsSubgraphOf( TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res, const TSizeList& rootsToSkip);
 
 protected:
   static int TNetwork_SortRingAtoms(const TSAtom* a, const TSAtom* b)  {
     return (int)(a->GetTag()-b->GetTag());
   }
-  static bool TryRing(TSAtom& sa, TSAtomPList& ring, const TPtrList<TBasicAtomInfo>& ringContent, size_t level=1);
+  static bool TryRing(TSAtom& sa, TSAtomPList& ring, const ElementPList& ringContent, size_t level=1);
   static bool TryRing(TSAtom& sa, TSAtomPList& ring, size_t level=1);
 // tries to find the ring in given direction
-  static bool TryRing(TSAtom& sa, size_t node, TSAtomPList& ring, const TPtrList<TBasicAtomInfo>& ringContent);
+  static bool TryRing(TSAtom& sa, size_t node, TSAtomPList& ring, const ElementPList& ringContent);
   static bool TryRing(TSAtom& sa, size_t node, TSAtomPList& ring);
   void UnifyRings(TTypeList<TSAtomPList>& rings);
 
 public:
   // finds only primitive rings
-  void FindRings(const TPtrList<TBasicAtomInfo>& ringContent, TTypeList<TSAtomPList>& res);
+  void FindRings(const ElementPList& ringContent, TTypeList<TSAtomPList>& res);
 
-  void FindAtomRings(TSAtom& ringAtom, const TPtrList<TBasicAtomInfo>& ringContent,
+  void FindAtomRings(TSAtom& ringAtom, const ElementPList& ringContent,
         TTypeList<TSAtomPList>& res);
   // finds all rings
   void FindAtomRings(TSAtom& ringAtom, TTypeList<TSAtomPList>& res);
   struct RingInfo  {
     size_t MaxSubsANode, HeaviestSubsIndex;
-    TBasicAtomInfo* HeaviestSubsType;
+    const cm_Element* HeaviestSubsType;
     TSizeList Ternary, // three bond inside the ring
       Substituted,    // more than two connections, two belong to the ring
       Alpha;          // susbtituted next to a ternary atom 

@@ -9,7 +9,7 @@ class TXlConGen : public AConstraintGenerator {
 public:
   TXlConGen(RefinementModel& rm) : AConstraintGenerator(rm) {}
   virtual bool FixParam(const short paramMask, TStrList& res, const TCAtomPList& atoms, const TFixedValueList& values);
-  virtual bool FixAtom(TAtomEnvi& envi, const short Group, const TBasicAtomInfo& atomType, 
+  virtual bool FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& atomType, 
     TAtomEnvi* pivoting = NULL, TCAtomPList* generated = NULL);
   // translates shelxl AFIX, HFIX to olex2 notation
   static int OlexToShelx(short code, TAtomEnvi& envi, TAtomEnvi* pivot = NULL) {
@@ -62,35 +62,35 @@ public:
     switch( m ) {
       case 1:
         if( envi.Count() == 3 )  {
-          if( envi.GetBase().GetAtomInfo() == iCarbonIndex )
+          if( envi.GetBase().GetType() == iCarbonZ )
             return fgCH1;
-          else if( envi.GetBase().GetAtomInfo() == iNitrogenIndex )
+          else if( envi.GetBase().GetType() == iNitrogenZ )
             return fgNH1;
-          else if( envi.GetBase().GetAtomInfo() == iSiliconIndex )
+          else if( envi.GetBase().GetType() == iSiliconZ )
             return fgSiH1;
         }
         break;
       case 2:
       case 9:
         if( envi.Count() == 2 || envi.Count() == 1 )  {
-          if( envi.GetBase().GetAtomInfo() == iCarbonIndex )
+          if( envi.GetBase().GetType() == iCarbonZ )
             return fgCH2;
-          else if( envi.GetBase().GetAtomInfo() == iNitrogenIndex )
+          else if( envi.GetBase().GetType() == iNitrogenZ )
             return fgNH2;
         }
         break;
       case 3:
       case 13:
-        if( envi.Count() == 1 && envi.GetBase().GetAtomInfo() == iCarbonIndex )
+        if( envi.Count() == 1 && envi.GetBase().GetType() == iCarbonZ )
           return fgCH3;
-        else if( envi.Count() == 1 && envi.GetBase().GetAtomInfo() == iNitrogenIndex )
+        else if( envi.Count() == 1 && envi.GetBase().GetType() == iNitrogenZ )
           return fgNH3;
         break;
       case 4:
         if( envi.Count() == 2 )  {
-          if( envi.GetBase().GetAtomInfo() == iCarbonIndex )
+          if( envi.GetBase().GetType() == iCarbonZ )
             return fgCH1;
-          else if( envi.GetBase().GetAtomInfo() == iNitrogenIndex )
+          else if( envi.GetBase().GetType() == iNitrogenZ )
             return fgNH1;
         }
         break;
@@ -98,20 +98,18 @@ public:
       case 14:
         if( envi.Count() != 1 )
           break;
-        if( envi.GetBase().GetAtomInfo() == iOxygenIndex )
+        if( envi.GetBase().GetType() == iOxygenZ )
           return fgOH1;
-        else if( envi.GetBase().GetAtomInfo() == iSulphurIndex )
+        else if( envi.GetBase().GetType() == iSulphurZ )
           return fgOH1;
         break;
       case 15:
-        if( envi.GetBase().GetAtomInfo() == iBoronIndex && 
-          (envi.Count() == 4 || envi.Count() == 5) )
-        {
+        if( envi.GetBase().GetType() == iBoronZ && (envi.Count() == 4 || envi.Count() == 5) )  {
           return fgBH1;
         }
         break;
       case 16:
-        if( envi.Count() == 1 && envi.GetBase().GetAtomInfo() == iCarbonIndex )
+        if( envi.Count() == 1 && envi.GetBase().GetType() == iCarbonZ )
           return fgCH1;
         break;
     }

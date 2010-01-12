@@ -25,7 +25,7 @@ public:
     return a1->GetPart() - a2->GetPart();  // smallest goes first
   }
   static int atom_cmp_Mw(const TCAtom* a1, const TCAtom* a2) {
-    const double diff = a2->GetAtomInfo().GetMr() - a1->GetAtomInfo().GetMr();
+    const double diff = a2->GetType().GetMr() - a1->GetType().GetMr();
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
   }
   static int atom_cmp_Label(const TCAtom* a1, const TCAtom* a2)  {
@@ -63,7 +63,7 @@ public:
       l1[i]->SetTag(0);
     size_t atom_count = 0;
     for( size_t i=0; i < l1.Count(); i++ )  {
-      if( l1[i]->GetAtomInfo() == iHydrogenIndex || l1[i]->GetAtomInfo() == iDeuteriumIndex )
+      if( l1[i]->GetType() == iHydrogenZ )
         continue;
       TSAtom* sa = NULL;
       for( size_t j=0; j < latt.AtomCount(); j++ )  {
@@ -73,7 +73,7 @@ public:
         }
       }
       TCAtomPList& ca_list = atom_tree.Add( new tree_node(l1[i])).B();
-      if( l1[i]->GetAtomInfo() == iQPeakIndex || l1[i]->IsDeleted() )  {
+      if( l1[i]->GetType() == iQPeakZ || l1[i]->IsDeleted() )  {
         atom_count++;
         continue;
       }
@@ -81,8 +81,7 @@ public:
         throw TFunctionFailedException(__OlxSourceInfo, "aunit and lattice mismatch");
       for( size_t j=0; j < sa->NodeCount(); j++ )  {
         // check if the atom in the list
-        if( sa->Node(j).CAtom().GetTag() == 0 && 
-            (sa->Node(j).GetAtomInfo() == iHydrogenIndex || sa->Node(j).GetAtomInfo() == iDeuteriumIndex) )
+        if( sa->Node(j).CAtom().GetTag() == 0 && (sa->Node(j).GetType() == iHydrogenZ) )
           ca_list.Add( &sa->Node(j).CAtom() )->SetTag(1);
       }
       if( ca_list.Count() > 1 && sort_func != NULL )
@@ -241,13 +240,13 @@ public:
       for( size_t j=0; j < moieties.Count(); j++ )  {
         if( moieties[j].GetA() == list[i]->GetFragmentId() )  {
           ca_list = &moieties[j].C();
-          if( list[i]->GetAtomInfo().GetMr() > moieties[j].GetB() )
-            moieties[j].B() = list[i]->GetAtomInfo().GetMr();
+          if( list[i]->GetType().GetMr() > moieties[j].GetB() )
+            moieties[j].B() = list[i]->GetType().GetMr();
           break;
         }
       }
       if( ca_list == NULL )
-        ca_list = &moieties.Add( new moiety(list[i]->GetFragmentId(), list[i]->GetAtomInfo().GetMr()) ).C();
+        ca_list = &moieties.Add(new moiety(list[i]->GetFragmentId(), list[i]->GetType().GetMr())).C();
       ca_list->Add(list[i]);
     }
     if( moieties.Count() < 2 )  return;
@@ -266,12 +265,12 @@ public:
       for( size_t j=0; j < moieties.Count(); j++ )  {
         if( moieties[j].GetA() == list[i]->GetFragmentId() )  {
           ca_list = &moieties[j].C();
-          moieties[j].B() += list[i]->GetAtomInfo().GetMr();
+          moieties[j].B() += list[i]->GetType().GetMr();
           break;
         }
       }
       if( ca_list == NULL )
-        ca_list = &moieties.Add( new moiety(list[i]->GetFragmentId(), list[i]->GetAtomInfo().GetMr()) ).C();
+        ca_list = &moieties.Add(new moiety(list[i]->GetFragmentId(), list[i]->GetType().GetMr())).C();
       ca_list->Add(list[i]);
     }
     if( moieties.Count() < 2 )  return;

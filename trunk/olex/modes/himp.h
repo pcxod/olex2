@@ -21,10 +21,10 @@ public:
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf( obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;
-      if( XA.Atom().GetAtomInfo() == iHydrogenIndex )  {
+      if( XA.Atom().GetType() == iHydrogenZ )  {
         TSAtom* aa = NULL;
         for( size_t i=0; i < XA.Atom().NodeCount(); i++ )  {
-          if( XA.Atom().Node(i).GetAtomInfo() != iQPeakIndex )  {
+          if( XA.Atom().Node(i).GetType() != iQPeakZ )  {
             if( aa == NULL )  aa = &XA.Atom().Node(i);
             else  {  // bad connectivity
               aa = NULL;
