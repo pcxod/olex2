@@ -596,21 +596,28 @@ TAG_HANDLER_PROC(tag)  {
   }
 /******************* TREE CONTROL *********************************************/
   else if( TagName.Equalsi("tree") )  {
-    olxstr src = tag.GetParam(wxT("SRC")).c_str();
     long flags = wxTR_HAS_BUTTONS;
     if( tag.HasParam(wxT("NOROOT")) )
       flags |= wxTR_HIDE_ROOT;
     if( tag.HasParam(wxT("EDITABLE")) )
       flags |= wxTR_EDIT_LABELS;
+
+    TTreeView *Tree = new TTreeView(m_WParser->GetWindowInterface()->GetHTMLWindow(), flags);
+
+    if( (flags&wxTR_HIDE_ROOT) == 0 && tag.HasParam(wxT("ROOTLABEL")) )
+      Tree->SetItemText(Tree->GetRootItem(), tag.GetParam(wxT("ROOTLABEL")));
+    olxstr src = tag.GetParam(wxT("SRC")).c_str();
     TGlXApp::GetMainForm()->ProcessFunction(src);
     IInputStream* ios = TFileHandlerManager::GetInputStream(src);
-    TTreeView *Tree = new TTreeView(m_WParser->GetWindowInterface()->GetHTMLWindow(), flags);
     Tree->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Tree;
     CreatedWindow = Tree;
     Tree->WI.SetWidth(ax);
     Tree->WI.SetHeight(ay);
-
+    wxMenu* menu = new wxMenu;
+    menu->Append(1000, wxT("Expand all"));
+    menu->Append(1001, wxT("Collapse all"));
+    Tree->SetPopup(menu);
     Tree->SetData( Data );
     if( tag.HasParam(wxT("ONSELECT")) )  {
       Tree->SetOnSelectStr( tag.GetParam(wxT("ONSELECT")).c_str() );

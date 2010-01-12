@@ -502,7 +502,7 @@ bool THtml::ReloadPage()  {
 }
 //..............................................................................
 bool THtml::LoadPage(const wxString &file)  {
-  if( file.length() == 0 )
+  if( file.IsEmpty() )
     return false;
   
   if( IsPageLocked() )  {
@@ -1623,9 +1623,8 @@ void THtml::TObjectsState::SaveState()  {
       props->Add("data", lb->GetData() );
     }
     else if( EsdlInstanceOf(*obj, TTreeView) )  {  
-//      TTreeView* tv = (TTreeView*)obj;  
-//      props->Add("val", tv->GetValue() );
-//      props->Add("items", tv->GetItems() );
+      TTreeView* tv = (TTreeView*)obj;  
+      props->Add("state", tv->SaveState());
     }
     else if( EsdlInstanceOf(*obj, TLabel) )  {  
       TLabel* lb = (TLabel*)obj;  
@@ -1716,6 +1715,7 @@ void THtml::TObjectsState::RestoreState()  {
       lb->AddItems(toks);
     }
     else if( EsdlInstanceOf(*obj, TTreeView) )  {  
+      ((TTreeView*)obj)->RestoreState(props["state"]);
     }
     else if( EsdlInstanceOf(*obj, TLabel) )  {  
       TLabel* lb = (TLabel*)obj;  
@@ -1804,6 +1804,7 @@ TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(const olxstr& na
     props->Add("items");
   }
   else if( type == typeid(TTreeView) )  {  
+    props->Add("state");
   }
   else if( type == typeid(TLabel) )  {  
     props->Add("val");
