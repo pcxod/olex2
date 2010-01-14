@@ -97,6 +97,7 @@ protected:
     DefFunc(GetFontName)
     DefFunc(GetBorders)
     DefFunc(SetFocus)
+    DefFunc(Select)
     DefFunc(EndModal)
     DefFunc(ShowModal)
 

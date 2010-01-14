@@ -30,8 +30,10 @@ namespace ctrl_ext  {
     // returns index of the selected item...
     size_t _SaveState(TEBitArray& res, const wxTreeItemId& item, size_t& counter) const;
     void _RestoreState(const TEBitArray& res, const wxTreeItemId& item, size_t& counter, size_t selected);
+    wxTreeItemId _FindByLabel(const wxTreeItemId& root, const olxstr& label) const;
+    wxTreeItemId _FindByData(const wxTreeItemId& root, const olxstr& data) const;
   public:
-    TTreeView(wxWindow* Parent, long flags=(1|8)) :
+    TTreeView(wxWindow* Parent, long flags=(wxTR_HAS_BUTTONS|wxTR_LINES_AT_ROOT)) :
       wxGenericTreeCtrl(Parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, flags), 
       AOlxCtrl(this),
       Popup(NULL),
@@ -51,6 +53,9 @@ namespace ctrl_ext  {
     DefPropC(olxstr, OnSelectStr) // this is passed to the OnSelect
     DefPropC(olxstr, OnEditStr) // this is passed to the OnEdit
     DefPropP(wxMenu*, Popup)
+
+    void SelectByLabel(const olxstr& label);
+    void SelectByData(const olxstr& data);
 
     bool LoadFromStrings(const TStrList& strings);
     olxstr SaveState() const;

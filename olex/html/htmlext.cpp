@@ -106,7 +106,8 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC) :
     this_InitFuncD(SetBG, fpTwo, "Sets background of specified object");
     this_InitFuncD(GetFontName, fpNone, "Returns current font name");
     this_InitFuncD(GetBorders, fpNone, "Returns borders width between HTML content and window boundaries");
-    this_InitFuncD(SetFocus, fpOne,    "Sets input focus to the specified HTML control");
+    this_InitFuncD(SetFocus, fpOne, "Sets input focus to the specified HTML control");
+    this_InitFuncD(Select, fpTwo|fpThree, "Selects a treeview item by label (default) or data (third argument should be False)");
     this_InitFuncD(GetItemState, fpOne|fpTwo, "Returns item state of provided switch");
     this_InitFuncD(IsItem, fpOne, "Returns true if specified switch exists");
     this_InitFuncD(IsPopup, fpOne, "Returns true if specified popup window exists and visible");
@@ -1399,6 +1400,27 @@ void THtml::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
 #endif		
   }
   InFocus->SetFocus();
+}
+//..............................................................................
+void THtml::funSelect(const TStrObjList &Params, TMacroError &E)  {
+  bool by_label = Params.Count() == 3 ? Params[2].ToBool() : true;
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml(Params[0].SubStringTo(ind));
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  if( html == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
+    return;
+  }
+  AOlxCtrl* Obj = html->FindObject(objName);
+  if( !EsdlInstanceOf(*Obj, TTreeView) )  {
+    E.ProcessingError(__OlxSrcInfo, "incompatible object type");
+    return;
+  }
+  TTreeView* tv = (TTreeView*)Obj;
+  if( by_label )
+    tv->SelectByLabel(Params[1]);
+  else
+    tv->SelectByData(Params[1]);
 }
 //..............................................................................
 void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {
