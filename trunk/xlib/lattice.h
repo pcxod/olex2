@@ -185,7 +185,10 @@ protected:
     int part = DefNoPart, TCAtomPList* generated = NULL);
   void _ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rcont);
 public:
+  // implements HADD command
   void AnalyseHAdd(class AConstraintGenerator& cg, const TSAtomPList& atoms);
+  // returns a chemical moiety string for CIF
+  olxstr CalcMoiety() const;
 
   DefPropP(double, Delta)
   DefPropP(double, DeltaI)

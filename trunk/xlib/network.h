@@ -104,7 +104,8 @@ protected:
 public:
   // finds only primitive rings
   void FindRings(const ElementPList& ringContent, TTypeList<TSAtomPList>& res);
-
+  // returns a content of this fragment
+  ContentList GetContentList() const;
   void FindAtomRings(TSAtom& ringAtom, const ElementPList& ringContent,
         TTypeList<TSAtomPList>& res);
   // finds all rings

@@ -1053,7 +1053,7 @@ cm_Element* XElementLib::FindBySymbolEx(const olxstr& label)  {
   return NULL;
 }
 //..............................................................................
-void XElementLib::ParseElementString(const olxstr& su, ContentList& res)  {
+ContentList& XElementLib::ParseElementString(const olxstr& su, ContentList& res)  {
   olxstr elm, cnt;
   bool nowCnt = false;
   TStrList toks;
@@ -1095,6 +1095,7 @@ void XElementLib::ParseElementString(const olxstr& su, ContentList& res)  {
       ExpandShortcut(toks[i], res);
     ExpandShortcut(toks[toks.Count() -1], res, cnt.IsEmpty() ? 1 : cnt.ToDouble());
   }
+  return res;
 }
 //..............................................................................
 void XElementLib::ParseSimpleElementStr(const olxstr& str, TStrList& toks)  {
@@ -1181,3 +1182,28 @@ void XElementLib::ExpandShortcut(const olxstr& sh, ContentList& res, double cnt)
       res.AddCCopy(shc[i]);
   }
 }
+//..............................................................................
+ContentList& XElementLib::SortContentList(ContentList& cl)  {
+  const cm_Element *c_type = NULL, *h_type = NULL;
+  ElementPList elms;
+  for( size_t i=0; i < cl.Count(); i++ )  {
+    elms.Add(FindBySymbol(cl[i].GetA()));
+    if( elms.Last() == NULL )
+      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: ") << cl[i].GetA());
+    if( *elms.Last() == iCarbonZ )
+      c_type = elms.Last();
+    else if( *elms.Last() == iHydrogenZ )
+      h_type = elms.Last();
+  }
+  elms.QuickSorter.SyncSort<ElementPSymbolSorter>(elms, cl);
+  if( c_type != NULL && elms.Count() > 1 )  {
+    size_t ind = elms.IndexOf(c_type);
+    cl.Move(ind, 0);
+  }
+  if( h_type != NULL && elms.Count() > 2 )  {
+    size_t ind = elms.IndexOf(h_type);
+    cl.Move(ind, 1);
+  }
+  return cl;
+}
+//..............................................................................

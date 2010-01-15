@@ -458,8 +458,8 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TPtrList<TSpaceGroup> AllGroups;
   smatd_list SGMatrices;
 
-  TBasicApp::GetLog() << ( sg->IsCentrosymmetric() ? "Centrosymmetric" : "Non centrosymmetric") << '\n';
-  TBasicApp::GetLog() << ( olxstr("Hall symbol: ") << sg->GetHallSymbol() << '\n');
+  TBasicApp::GetLog() << (sg->IsCentrosymmetric() ? "Centrosymmetric" : "Non centrosymmetric") << '\n';
+  TBasicApp::GetLog() << (olxstr("Hall symbol: ") << sg->GetHallSymbol() << '\n');
 
   TSymmLib::GetInstance().GetGroupByNumber( sg->GetNumber(), AllGroups );
   if( AllGroups.Count() > 1 )  {
@@ -1605,12 +1605,6 @@ void XLibMacros::macPlan(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TXApp::GetInstance().XFile().GetRM().SetPlan(plan);
 }
 //..............................................................................
-class TFixUnit_Sorter  {
-public:
-  static int Compare(const cm_Element* s1, const cm_Element* s2)  {
-    return s1->z - s1->z;
-  }
-};
 void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   double Zp = Cmds.IsEmpty() ? 1 : Cmds[0].ToDouble();
   if( Zp <= 0 )  Zp = 1;
@@ -1642,16 +1636,16 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
   TBasicApp::GetLog() << (olxstr("for Z'=") << olxstr::FormatFloat(2, Zp).TrimFloat() <<
     " and " << nhc << " non hydrogen atoms Z is estimated to be " << Z << '\n');
   olxstr sfac, unit, n_c;
-  content.QuickSorter.SyncSort<TFixUnit_Sorter>(content, counts);
+  content.QuickSorter.SyncSort<ElementPSymbolSorter>(content, counts);
   if( cBai != NULL && content.Count() > 1 )  {
     size_t ind = content.IndexOf(cBai);
-    content.Swap(0, ind);
-    counts.Swap(0, ind);
+    content.Move(ind, 0);
+    counts.Move(ind, 0);
   }
   if( hBai != NULL && content.Count() > 2 )  {
     size_t ind = content.IndexOf(hBai);
-    content.Swap(1, ind);
-    counts.Swap(1, ind);
+    content.Move(ind, 1);
+    counts.Move(ind, 1);
   }
   ContentList new_content;
   for( size_t i=0; i < content.Count(); i++ )  {
@@ -2580,7 +2574,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
-    olxstr cifFN = TEFile::ChangeFileExt( xapp.XFile().GetFileName(), "cif");
+    olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
     if( TEFile::Exists( cifFN ) )  {
       Cif2.LoadFromFile( cifFN );
     }
@@ -2595,7 +2589,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     try {
       IInputStream *is = TFileHandlerManager::GetInputStream(Cmds[i]);
       if( is == NULL )  {
-        TBasicApp::GetLog().Error( olxstr("Could not find file: ") << Cmds[i] );
+        TBasicApp::GetLog().Error(olxstr("Could not find file: ") << Cmds[i]);
         continue;
       }
       TStrList sl;
@@ -2614,6 +2608,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     // update publication info loop
     MergePublTableData(publ_info.GetTable(), pil.GetTable());
   }
+  // generate moiety string if does not exist
+  if( !Cif->ParamExists("_chemical_formula_moiety") )
+    Cif->AddParam("_chemical_formula_moiety", xapp.XFile().GetLattice().CalcMoiety(), true);
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(Cif->GetAsymmUnit());
   if( sg != NULL )  {
     if( !Cif->ParamExists("_symmetry_cell_setting") )
@@ -2621,7 +2618,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     else  {
       TCifData* cd = Cif->FindParam("_symmetry_cell_setting");
       if( cd->Data->IsEmpty() )
-        cd->Data->Add( sg->GetBravaisLattice().GetName() );
+        cd->Data->Add(sg->GetBravaisLattice().GetName());
       else
         cd->Data->GetString(0) = sg->GetBravaisLattice().GetName();
       cd->String = true;
@@ -2631,7 +2628,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     else  {
       TCifData* cd = Cif->FindParam("_symmetry_space_group_name_H-M");
       if( cd->Data->IsEmpty() )
-        cd->Data->Add( sg->GetFullName() );
+        cd->Data->Add(sg->GetFullName());
       else
         cd->Data->GetString(0) = sg->GetFullName();
       cd->String = true;
@@ -2641,7 +2638,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     else  {
       TCifData* cd = Cif->FindParam("_symmetry_space_group_name_Hall");
       if( cd->Data->IsEmpty() )
-        cd->Data->Add( sg->GetHallSymbol() );
+        cd->Data->Add(sg->GetHallSymbol());
       else
         cd->Data->GetString(0) = sg->GetHallSymbol();
       cd->String = true;

@@ -175,6 +175,18 @@ public:
 typedef TPtrList<const cm_Element> ElementPList;
 typedef TTypeList<AnAssociation2<olxstr, double> > ContentList;
 typedef olxdict<const cm_Element*, double, TPrimitiveComparator> ElementRadii;
+typedef olxdict<const cm_Element*, double, TPrimitiveComparator> ElementDict;
+
+// sorts elemnt pointers by Z descending 
+struct ElementPZSorter  {
+  static int Compare(const cm_Element* s1, const cm_Element* s2)  {  return s2->z - s1->z;  }
+};
+// sorts elemnt pointers by symbol ascending
+struct ElementPSymbolSorter  {
+  static int Compare(const cm_Element* s1, const cm_Element* s2)  {  return s1->symbol.Compare(s2->symbol);  }
+};
+
+
 class XElementLib {
   static void ParseSimpleElementStr(const olxstr& str, TStrList& toks);
   static void ExpandShortcut(const olxstr& sh, ContentList& res, double cnt=1.0);
@@ -205,10 +217,13 @@ public:
   // checks if p is a label starting from an element symbol
   static bool IsAtom(const olxstr& label)  {  return (FindBySymbolEx(label) != NULL);  }
 
-  /* parses a string like C37H41P2BRhClO into a list of element names and theur
-    count
-  */
-  static void ParseElementString(const olxstr& su, ContentList& res);
+  /* parses a string like C37H41P2BRhClO into a list of element names and their count,
+  the provided list is being appended to and not cleared; returns a reference to provided
+  ContentList*/
+  static ContentList& ParseElementString(const olxstr& su, ContentList& cl);
+  /* sorts the content list, so that C comes first, then H and then by Z descending;
+  returns a reference to th provide ContentList */
+  static ContentList& SortContentList(ContentList& cl);
 };
 
 EndXlibNamespace()
