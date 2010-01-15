@@ -1210,3 +1210,20 @@ void TNetwork::FromDataItem(const TDataItem& item) {
     Bonds.Add(&Lattice->GetBond(bonds.GetField(i).ToInt()));
 }
 //..............................................................................
+ContentList TNetwork::GetContentList() const {
+  ElementDict elms;
+  for( size_t i=0; i < NodeCount(); i++ )  {
+    const TSAtom& a = Node(i);
+    if( a.IsDeleted() || a.GetType() == iQPeakZ )  continue;
+    size_t ind = elms.IndexOf(&a.GetType());
+    if( ind == InvalidIndex )
+      elms.Add(&a.GetType(), a.CAtom().GetOccu()*a.MatrixCount());
+    else
+      elms.GetValue(ind) += (a.CAtom().GetOccu()*a.MatrixCount());
+  }
+  ContentList rv;
+  for( size_t i=0; i < elms.Count(); i++ )
+    rv.AddNew(elms.GetKey(i)->symbol, elms.GetValue(i));
+  return rv;
+}
+//..............................................................................

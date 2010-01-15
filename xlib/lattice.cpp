@@ -2093,6 +2093,59 @@ bool TLattice::ApplyGrowInfo()  {
   return true;
 }
 //..............................................................................
+olxstr TLattice::CalcMoiety() const {
+  /* There is a need to find out if fragments can be grow and if they are polymeric,
+  a simple test for polymers would be to compare the atom's degenerocity is smaller than
+  the number of potential uniq directions in which the atom can grow. It is more complicated
+  if the atoms is not on a special position, because it can be either polymeric or form
+  dimers/trimers etc... */
+  TLattice latt;
+  latt.AsymmUnit->SetRefMod(AsymmUnit->GetRefMod());
+  latt.AsymmUnit->Assign(GetAsymmUnit());
+  latt.AsymmUnit->_UpdateConnInfo();
+  latt.AsymmUnit->DetachAtomType(iQPeakZ, true);
+  latt.Init();
+  latt.CompaqAll();
+  latt.Fragments.QuickSorter.SortSF(latt.Fragments, TLattice_SortFragments);
+  TTypeList<AnAssociation2<int,ContentList> > frags;
+  for( size_t i=0; i < latt.FragmentCount(); i++ )  {
+    ContentList cl = latt.GetFragment(i).GetContentList();
+    XElementLib::SortContentList(cl);
+    bool uniq = true;
+    for( size_t j=0; j < frags.Count(); j++ )  {
+      if( frags[j].GetB().Count() != cl.Count() )  continue;
+      bool equals = true;
+      for( size_t k=0; k < cl.Count(); k++ )  {
+        if( frags[j].GetB()[k].GetA() != cl[k].GetA() || frags[j].GetB()[k].GetB() != cl[k].GetB() )  {
+          equals = false;
+          break;
+        }
+      }
+      if( equals )  {  // just increment the count
+        frags[j].A()++;
+        uniq = false;
+        break;
+      }
+    }
+    if( uniq )
+      frags.AddNew(1, cl);
+  }
+  olxstr rv;
+  for( size_t i=0; i < frags.Count(); i++ )  {
+    if( !rv.IsEmpty() )  rv << ", ";
+    if( frags[i].GetA() > 1 )
+      rv << frags[i].GetA() << '(';
+    for( size_t j=0; j < frags[i].GetB().Count(); j++ )  {
+      rv << frags[i].GetB()[j].GetA() << frags[i].GetB()[j].GetB();
+      if( (j+1) < frags[i].GetB().Count() )
+        rv << ' ';
+    }
+    if( frags[i].GetA() > 1 )
+      rv << ')';
+  }
+  return rv;
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TLattice::LibGetFragmentCount(const TStrObjList& Params, TMacroError& E)  {
@@ -2111,8 +2164,6 @@ void TLattice::LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal( rv );
 }
 //..............................................................................
-
-
 TLibrary*  TLattice::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("latt") : name);
   lib->RegisterFunction<TLattice>( new TFunction<TLattice>(this,  &TLattice::LibGetFragmentCount, "GetFragmentCount", fpNone,

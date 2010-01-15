@@ -134,7 +134,7 @@ void TAsymmUnit::ComplyToResidues()  {
 void TAsymmUnit::_UpdateConnInfo()  {
   for( size_t i = 0; i < AtomCount(); i++ )  {
     TCAtom& ca = GetAtom(i);
-    ca.SetConnInfo( RefMod->Conn.GetConnInfo(ca) );
+    ca.SetConnInfo(RefMod->Conn.GetConnInfo(ca));
   }
 }
 //..............................................................................
