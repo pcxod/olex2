@@ -57,8 +57,8 @@ public:
   inline const vec3d& GetRAxes() const {  return RAxes;  }
   inline const vec3d& GetRAngles() const {  return RAngles;  }
   double CalcCellVolume() const;
-  // estimates Z=Z'*sg.multiplicity according to 18.6A rule
-  double EstimateZ(size_t atomCount) const;
+  // estimates Z=Z'*sg.multiplicity according to 18.6A rule, partial occupancy implied double...
+  double EstimateZ(double atomCount) const;
   DefPropP(short, Z)
   DefPropP(short, Latt)
 

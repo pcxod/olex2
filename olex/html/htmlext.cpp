@@ -1412,7 +1412,7 @@ void THtml::funSelect(const TStrObjList &Params, TMacroError &E)  {
     return;
   }
   AOlxCtrl* Obj = html->FindObject(objName);
-  if( !EsdlInstanceOf(*Obj, TTreeView) )  {
+  if( Obj == NULL || !EsdlInstanceOf(*Obj, TTreeView) )  {
     E.ProcessingError(__OlxSrcInfo, "incompatible object type");
     return;
   }

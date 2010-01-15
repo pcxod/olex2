@@ -1618,14 +1618,14 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
   ElementPList content;
   TDoubleList counts;
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
-  size_t nhc = 0;
+  double nhc = 0;
   const cm_Element *cBai = NULL, *hBai = NULL;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     TCAtom& ca = au.GetAtom(i);
     const cm_Element& elm = ca.GetType();
     if( ca.IsDeleted() || elm == iQPeakZ )  continue;
     if( elm.GetMr() > 3.5 )
-      nhc++;
+      nhc += ca.GetOccu();
     size_t ind = content.IndexOf(elm);
     if( ind == InvalidIndex )  {
       content.Add(elm);
@@ -1637,7 +1637,7 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
       counts[ind] += ca.GetOccu();
   }
   int Z_est = olx_round(au.EstimateZ(nhc));
-  int Z = olx_round(Z_est*Zp);
+  int Z = olx_max(olx_round(Z_est*Zp), 1);
   au.SetZ(Z);
   TBasicApp::GetLog() << (olxstr("for Z'=") << olxstr::FormatFloat(2, Zp).TrimFloat() <<
     " and " << nhc << " non hydrogen atoms Z is estimated to be " << Z << '\n');

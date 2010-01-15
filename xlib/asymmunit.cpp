@@ -635,7 +635,7 @@ double TAsymmUnit::CalcCellVolume()  const  {
           FAxes[1].GetV()*
           FAxes[2].GetV()*sqrt( (1-cosa*cosa-cosb*cosb-cosg*cosg) + 2*(cosa*cosb*cosg));
 }
-double TAsymmUnit::EstimateZ(size_t atomCount) const  {
+double TAsymmUnit::EstimateZ(double atomCount) const  {
   double auv = (double)(CalcCellVolume()/(TUnitCell::GetMatrixMultiplier(GetLatt())*(MatrixCount()+1)));
   int zp = olx_round(auv/(18.6*atomCount));
   return (double)olx_max((TUnitCell::GetMatrixMultiplier(GetLatt())*(MatrixCount()+1) * zp), 1);

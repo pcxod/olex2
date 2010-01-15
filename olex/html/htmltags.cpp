@@ -649,6 +649,14 @@ TAG_HANDLER_PROC(tag)  {
 #endif
       Tree->LoadFromStrings(list);
       delete ios;
+      wxString sel = tag.GetParam(wxT("SELECTED"));
+      if( sel.IsEmpty() )  {
+        sel = tag.GetParam(wxT("VALUE"));
+        if( !sel.IsEmpty() )
+          Tree->SelectByLabel(sel.c_str());
+      }
+      else
+          Tree->SelectByData(sel.c_str());
     }
   }
 /******************* LIST CONTROL *********************************************/

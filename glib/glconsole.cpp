@@ -181,12 +181,12 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
 //..............................................................................
 bool TGlConsole::WillProcessKey( int Key, short ShiftState )  {
   if( Key == WXK_DELETE )  {
-    if( ShiftState == 0 && StringPosition() < FCommand.Length() &&
-         StringPosition() >= PromptStr.Length() )  {
+    if( ShiftState == 0 && GetInsertPosition() < FCommand.Length() &&
+         GetInsertPosition() >= PromptStr.Length() )  {
       return true;
     }
   }
-  else if( Key == WXK_BACK && StringPosition() != PromptStr.Length() )
+  else if( Key == WXK_BACK && GetInsertPosition() != PromptStr.Length() )
     return true;
   return false;
 }
@@ -199,7 +199,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
       olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
       FCommand = PromptStr;
       FCommand << FCommands[FCmdPos];
-      StringPosition(  FCommand.Length() );
+      SetInsertPosition(FCommand.Length());
     }
     return true;
   }
@@ -210,55 +210,55 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
       olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
       FCommand = PromptStr;
       FCommand << FCommands[FCmdPos];
-      StringPosition(  FCommand.Length() );
+      SetInsertPosition(FCommand.Length());
     }
     return true;
   }
-  if( (Key == WXK_LEFT) && IsPromptVisible() && (StringPosition() > PromptStr.Length()) )  {
+  if( (Key == WXK_LEFT) && IsPromptVisible() && (GetInsertPosition() > PromptStr.Length()) )  {
     if( ShiftState == 0 )  {
-      StringPosition( StringPosition()-1 );
+      SetInsertPosition(GetInsertPosition()-1);
       return true;
     }
     else if( ShiftState == sssCtrl  )  {
-      size_t ind = FCommand.LastIndexOf(' ', StringPosition()-1);
+      size_t ind = FCommand.LastIndexOf(' ', GetInsertPosition()-1);
       if( ind != InvalidIndex )
-        StringPosition( ind );
+        SetInsertPosition( ind );
       else
-        StringPosition( PromptStr.Length() );
+        SetInsertPosition(PromptStr.Length());
       return true;
     }
     return false;
   }
-  if( (Key == WXK_RIGHT) && IsPromptVisible() && (StringPosition() < FCommand.Length()) )  {
+  if( (Key == WXK_RIGHT) && IsPromptVisible() && (GetInsertPosition() < FCommand.Length()) )  {
     if( ShiftState == 0 )  {
-      StringPosition( StringPosition()+1 );
+      SetInsertPosition(GetInsertPosition()+1);
       return true;
     }
     else if( ShiftState == sssCtrl )  {
-      size_t ind = FCommand.FirstIndexOf(' ', StringPosition()+1);
+      size_t ind = FCommand.FirstIndexOf(' ', GetInsertPosition()+1);
       if( ind != InvalidIndex )
-        StringPosition( ind );
+        SetInsertPosition( ind );
       else
-        StringPosition( FCommand.Length() );
+        SetInsertPosition(FCommand.Length());
       return true;
     }
     return false;
   }
   if( Key == WXK_DELETE )  {
-    if( ShiftState == 0 && StringPosition() < FCommand.Length() &&
-         StringPosition() >= PromptStr.Length() )  {
-      FCommand.Delete(StringPosition(), 1);
+    if( ShiftState == 0 && GetInsertPosition() < FCommand.Length() &&
+         GetInsertPosition() >= PromptStr.Length() )  {
+      FCommand.Delete(GetInsertPosition(), 1);
       UpdateCursorPosition(true);
       return true;
     }
     return false;
   }
   if( (Key == WXK_HOME) && !ShiftState  && IsPromptVisible() )  {
-    StringPosition( PromptStr.Length() );
+    SetInsertPosition(PromptStr.Length());
     return true;
   }
   if( (Key == WXK_END) && !ShiftState  && IsPromptVisible() )  {
-    StringPosition( FCommand.Length() );
+    SetInsertPosition(FCommand.Length());
     return true;
   }
   if( Key == WXK_PAGEUP || Key == WXK_PAGEDOWN )  {
@@ -280,7 +280,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
       else
         FTxtPos -= lc;
     }
-    StringPosition( FCommand.Length() );
+    SetInsertPosition(FCommand.Length());
     return true;
   }
   if( !Key || Key > 255 || (ShiftState & sssCtrl) || (ShiftState & sssAlt))  return false;
@@ -289,7 +289,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
   if( Key == WXK_ESCAPE )  {
     olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
     FCommand = PromptStr;
-    StringPosition( FCommand.Length() );
+    SetInsertPosition(FCommand.Length());
     return true;
   }
   if( Key == WXK_RETURN )  {
@@ -308,29 +308,29 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
       olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
       FCommand = PromptStr;
     }
-    StringPosition( FCommand.Length() );
+    SetInsertPosition(FCommand.Length());
     return true;
   }
   if( Key == WXK_BACK )  {
     if( FCommand.Length() > PromptStr.Length() )  {
-      if( StringPosition() == FCommand.Length() )  {
+      if( GetInsertPosition() == FCommand.Length() )  {
         FCommand.SetLength(FCommand.Length()-1);
-        StringPosition( FCommand.Length() );
+        SetInsertPosition(FCommand.Length());
       }
       else  {  // works like delete
-        if( StringPosition() > PromptStr.Length() )  {
-          FCommand.Delete(StringPosition()-1, 1);
-          StringPosition( StringPosition()-1 );
+        if( GetInsertPosition() > PromptStr.Length() )  {
+          FCommand.Delete(GetInsertPosition()-1, 1);
+          SetInsertPosition(GetInsertPosition()-1);
         }
       }
     }
     return true;
   }
-  if( StringPosition() == FCommand.Length() )
-    FCommand << (char)Key;
+  if( GetInsertPosition() == FCommand.Length() )
+    FCommand << (olxch)Key;
   else
-    FCommand.Insert((char)Key, StringPosition() );
-  StringPosition( StringPosition()+1 );
+    FCommand.Insert((olxch)Key, GetInsertPosition());
+  SetInsertPosition(GetInsertPosition()+1);
   return true;
 }
 //..............................................................................
@@ -368,7 +368,7 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hyphenate)  {
     }
     else
       FBuffer.Add(Tmp, GlM);
-    OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &Tmp );
+    OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &Tmp);
   }
 
   KeepSize();
@@ -418,7 +418,7 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  
       }
       else
         FBuffer.Add(Tmp, GlM);
-      OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &Tmp );
+      OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &Tmp);
     }
   }
   KeepSize();
@@ -427,16 +427,14 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  
 }
 //..............................................................................
 olxstr TGlConsole::GetCommand() const  {
-  if( FCommand.StartsFrom( PromptStr ) )
-    return  FCommand.SubStringFrom( PromptStr.Length() );
-  return (!FCommand.IsEmpty()) ? FCommand :EmptyString;
+  return (FCommand.StartsFrom(PromptStr) ? FCommand.SubStringFrom(PromptStr.Length()) : FCommand);
 }
 //..............................................................................
-void TGlConsole::SetCommand(const olxstr &NewCmd)  {
+void TGlConsole::SetCommand(const olxstr& NewCmd)  {
   olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
   FCommand = PromptStr;
   FCommand << NewCmd;
-  StringPosition( FCommand.Length() );
+  SetInsertPosition( FCommand.Length() );
 }
 //..............................................................................
 void TGlConsole::ClearBuffer()  {
@@ -483,7 +481,7 @@ void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
   // update cursor position ...
   if( !Cmds.IsEmpty() )   {
     T[0] = GlLeft;
-    index_t dxp = StringPosition();
+    index_t dxp = GetInsertPosition();
     size_t i;
     for( i=0; i < Cmds.Count(); i++ )  {
       dxp -= Cmds[i].Length();
@@ -493,7 +491,7 @@ void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
     T[1] = GlTop + (Cmds.Count()-1-i)*LineInc;
 
     if( dxp < 0 )
-      T[0] += Fnt.TextWidth( Cmds[i].SubStringTo( Cmds[i].Length() + dxp ) );
+      T[0] += Fnt.TextWidth( Cmds[i].SubStringTo(Cmds[i].Length() + dxp) );
     else
       T[0] += Fnt.TextWidth(Cmds[i]);
     T[0] -= Fnt.GetMaxWidth()/2;  // move the cursor half a char left
@@ -503,7 +501,7 @@ void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
   }
 }
 //..............................................................................
-void TGlConsole::StringPosition(size_t v)  {
+void TGlConsole::SetInsertPosition(size_t v)  {
   FStringPos = v;
   UpdateCursorPosition(true);
 }
@@ -522,7 +520,7 @@ bool TGlConsole::Execute(const IEObject *Sender, const IEObject *Data)  {
 //  olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
 //  FCommand = PromptStr;
 //  FCommand << cmd;
-//  StringPosition( PromptStr.Length() + pos);
+//  SetInsertPosition( PromptStr.Length() + pos);
   
   UpdateCursorPosition(false);
   return true;
@@ -540,7 +538,7 @@ void TGlConsole::SetInviteString(const olxstr &S)  {
   olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
   FCommand = PromptStr;
   FCommand << cmd;
-  StringPosition(  FCommand.Length() );
+  SetInsertPosition(  FCommand.Length() );
 }
 //..............................................................................
 void TGlConsole::SetLinesToShow(size_t V)  {
@@ -639,33 +637,33 @@ void TGlConsole::LibShowBuffer(const TStrObjList& Params, TMacroError& E)  {
   if( !Params.IsEmpty() )
     ShowBuffer( Params[0].ToBool() );
   else
-    E.SetRetVal<olxstr>( FShowBuffer );
+    E.SetRetVal<olxstr>(FShowBuffer);
 }
 //..............................................................................
 void TGlConsole::LibPostText(const TStrObjList& Params, TMacroError& E)  {
   for( size_t i=0; i < Params.Count(); i++ )
-    PrintText( Params[i] );
+    PrintText(Params[i]);
 }
 //..............................................................................
 void TGlConsole::LibLineSpacing(const TStrObjList& Params, TMacroError& E)  {
   if( !Params.IsEmpty() )
-    SetLineSpacing( Params[0].ToDouble() );
+    SetLineSpacing(Params[0].ToDouble());
   else
-    E.SetRetVal<olxstr>( FLineSpacing );
+    E.SetRetVal<olxstr>(FLineSpacing);
 }
 //..............................................................................
 void TGlConsole::LibInviteString(const TStrObjList& Params, TMacroError& E)  {
   if( !Params.IsEmpty() )
-    SetInviteString( Params[0] );
+    SetInviteString(Params[0]);
   else
-    E.SetRetVal( InviteStr );
+    E.SetRetVal(InviteStr);
 }
 //..............................................................................
 void TGlConsole::LibBlend(const TStrObjList& Params, TMacroError& E)  {
   if( !Params.IsEmpty() )
-    SetBlend( Params[0].ToBool() );
+    SetBlend(Params[0].ToBool());
   else
-    E.SetRetVal( IsBlend() );
+    E.SetRetVal(IsBlend());
 }
 //..............................................................................
 void TGlConsole::LibCommand(const TStrObjList& Params, TMacroError& E)  {
@@ -673,10 +671,10 @@ void TGlConsole::LibCommand(const TStrObjList& Params, TMacroError& E)  {
     olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
     FCommand = PromptStr;
     FCommand << Params[0];
-    StringPosition( FCommand.Length() );
+    SetInsertPosition(FCommand.Length());
   }
   else
-    E.SetRetVal( FCommand );
+    E.SetRetVal(FCommand);
 }
 //..............................................................................
 TLibrary* TGlConsole::ExportLibrary(const olxstr& name)  {
