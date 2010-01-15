@@ -32,8 +32,8 @@ class TGlConsole: public AGDrawObject,
   bool PromptVisible;
 protected:
   void KeepSize();
-  void StringPosition(size_t v);
-  inline size_t StringPosition() const {  return FStringPos;  }
+  void SetInsertPosition(size_t v);
+  size_t GetInsertPosition() const {  return FStringPos;  }
   void UpdateCursorPosition(bool InitCmds);
   class TGlCursor *FCursor;
 
@@ -42,7 +42,7 @@ protected:
   virtual size_t Writenl(const void *Data, size_t size);
   virtual size_t Write(const olxstr& str);
   virtual size_t Writenl(const olxstr& str);
-  virtual IOutputStream& operator << (IInputStream &is);
+  virtual IOutputStream& operator << (IInputStream& is);
   virtual size_t GetSize() const;
   virtual size_t GetPosition() const;
   virtual void SetPosition(size_t newPos);
@@ -54,7 +54,10 @@ public:
   virtual ~TGlConsole();
 
   olxstr GetCommand() const;
-  void SetCommand(const olxstr &NewCmd);
+  void SetCommand(const olxstr& NewCmd);
+  size_t GetCmdInsertPosition() const {  
+    return (FCommand.StartsFrom(PromptStr) ? (FStringPos - PromptStr.Length()) : FStringPos);
+  }
 
   inline const TStrPObjList<olxstr,TGlMaterial*>& Buffer()  const  {  return FBuffer;  }
   void ClearBuffer();
@@ -63,12 +66,12 @@ public:
   void SetPromptVisible(bool v);
 
   inline size_t GetCommandCount() const {  return FCommands.Count();  }
-  inline const olxstr& GetCommandByIndex(size_t i)  {  return FCommands[i];  }
+  inline const olxstr& GetCommandByIndex(size_t i) const {  return FCommands[i];  }
   inline size_t GetCommandIndex() const  {  return FCmdPos;  }
   inline void SetCommandIndex(size_t i) {  FCmdPos = i;  }
 
   bool Orient(TGlPrimitive& P);
-  bool GetDimensions(vec3d &Max, vec3d &Min);
+  bool GetDimensions(vec3d& Max, vec3d& Min);
   bool ProcessKey( int Key, short ShiftState );
   bool WillProcessKey( int Key, short ShiftState );
 
@@ -78,29 +81,29 @@ public:
   DefPropP(uint16_t, Left)
   DefPropBIsSet(Blend)
   DefPropBIsSet(SkipPosting)
-  inline bool ShowBuffer() const                  {  return FShowBuffer; }
-  inline void ShowBuffer(bool v)                  {  FShowBuffer = v; }
-  inline float GetLineSpacing()  const            {  return FLineSpacing; }
+  inline bool ShowBuffer() const {  return FShowBuffer; }
+  inline void ShowBuffer(bool v)  {  FShowBuffer = v; }
+  inline float GetLineSpacing() const {  return FLineSpacing; }
   void SetLineSpacing(float v);
-  inline const olxstr& GetInviolxstr()  const { return InviteStr; }
-  void SetInviteString(const olxstr &S);
+  inline const olxstr& GetInviteString() const { return InviteStr; }
+  void SetInviteString(const olxstr& S);
 
-  void PrintText(const olxstr &S, TGlMaterial *M=NULL, bool Hyphenate=true);
-  void PrintText(const TStrList &SL, TGlMaterial *M=NULL, bool Hyphenate=true);
-  inline void NewLine()           {  FBuffer.Add(EmptyString); }
+  void PrintText(const olxstr& S, TGlMaterial *M=NULL, bool Hyphenate=true);
+  void PrintText(const TStrList& SL, TGlMaterial *M=NULL, bool Hyphenate=true);
+  inline void NewLine()  {  FBuffer.Add(EmptyString); }
   size_t MaxLines();
-  inline void SetMaxLines(size_t V)     {  FMaxLines = V; };
+  inline void SetMaxLines(size_t V)  {  FMaxLines = V; };
   inline size_t GetLinesToShow() const {  return FLinesToShow;  }
   void SetLinesToShow(size_t V);
 
   class TGlFont& GetFont()  const;
   DefPropP(uint16_t, FontIndex)
 
-  inline TGlCursor* Cursor()const {  return FCursor;  }
+  inline TGlCursor& Cursor() const {  return *FCursor;  }
   void Visible(bool On);
 
   inline bool ScrollDirectionUp() const {  return FScrollDirectionUp; }
-  inline void ScrollDirectionUp( bool v){  FScrollDirectionUp = v; }
+  inline void ScrollDirectionUp(bool v) {  FScrollDirectionUp = v; }
 
   TActionQueue &OnCommand, &OnPost;
 
@@ -112,7 +115,7 @@ public:
   void LibInviteString(const TStrObjList& Params, TMacroError& E);
   void LibCommand(const TStrObjList& Params, TMacroError& E);
   void LibBlend(const TStrObjList& Params, TMacroError& E);
-  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
+  class TLibrary* ExportLibrary(const olxstr& name=EmptyString);
 };
 
 

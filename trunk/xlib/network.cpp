@@ -132,7 +132,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
   double** Distances = new double* [4];
   double  Delta = GetLattice().GetDelta();
   Atoms.QuickSorter.SortSF(Atoms, AtomsSortByDistance);
-  Distances[0] = new double[ Atoms.Count() ];  // distsnaces from {0,0,0} to an atom
+  Distances[0] = new double[ Atoms.Count() ];  // distances from {0,0,0} to an atom
   size_t ac = Atoms.Count();
   for( size_t i = 0; i < ac; i++ )  {
     Distances[0][i] = Atoms[i]->crd().Length();
@@ -166,7 +166,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
   Distances[1] = new double[ ac ];
   Distances[2] = new double[ ac ];
   Distances[3] = new double[ ac ];
-  for( size_t i = 0; i < ac; i++ )  {  // recalculate distances and remove some function calls
+  for( size_t i = 0; i < ac; i++ )  {  // precalculate distances and remove some function calls
     TSAtom* A = Atoms[i];
     Distances[0][i] = A->crd().Length();
     Distances[1][i] = A->crd()[0];

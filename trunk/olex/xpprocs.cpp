@@ -3730,6 +3730,8 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
 
   FXApp->XFile().GetUnitCell().BuildStructureMap(map, surfdis, -101, &structureGridPoints, 
     radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
+  //FXApp->XFile().GetUnitCell().BuildStructureMapEx(map, surfdis, -101, &structureGridPoints, 
+  //  radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
   const short MaxLevel = MapUtil::AnalyseVoids(map.Data, map.Length1(), map.Length2(), map.Length3(), voidCenter);
   FXApp->XGrid().Clear();  // release the occupied memory
 

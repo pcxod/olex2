@@ -1374,7 +1374,7 @@ void TMainForm::StartupInit()  {
   FXApp->SetLabelsFont(3);
 
   FGlConsole->SetFontIndex(0);
-  FGlConsole->Cursor()->SetFontIndex(0);
+  FGlConsole->Cursor().SetFontIndex(0);
   FHelpWindow->SetFontIndex(1);
   FInfoBox->SetFontIndex(2);
   GlTooltip->SetFontIndex(5);
@@ -2599,7 +2599,12 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
         wxTextDataObject data;
         wxTheClipboard->GetData(data);
         olxstr Tmp = FGlConsole->GetCommand();
-        FGlConsole->SetCommand(Tmp << data.GetText().c_str());
+        size_t ip = FGlConsole->GetCmdInsertPosition();
+        if( ip >= Tmp.Length() )
+          Tmp << data.GetText().c_str();
+        else
+          Tmp.Insert(data.GetText().c_str(), ip);
+        FGlConsole->SetCommand(Tmp);
         TimePerFrame = FXApp->Draw();
       }
       wxTheClipboard->Close();

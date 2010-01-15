@@ -192,13 +192,19 @@ wxTreeItemId TTreeView::_FindByData(const wxTreeItemId& root, const olxstr& data
 //..............................................................................
 void TTreeView::SelectByLabel(const olxstr& label)  {
   wxTreeItemId item = _FindByLabel(GetRootItem(), label);
-  if( item.IsOk() )
+  if( item.IsOk() )  {
+    OnSelect.SetEnabled(false);
     SelectItem(item);
+    OnSelect.SetEnabled(true);
+  }
 }
 //..............................................................................
 void TTreeView::SelectByData(const olxstr& data)  {
   wxTreeItemId item = _FindByData(GetRootItem(), data);
-  if( item.IsOk() )
+  if( item.IsOk() )  {
+    OnSelect.SetEnabled(false);
     SelectItem(item);
+    OnSelect.SetEnabled(true);
+  }
 }
 //..............................................................................
