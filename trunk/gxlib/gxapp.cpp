@@ -2182,7 +2182,7 @@ void TGXApp::ExpandSelection(TCAtomGroup& atoms)  {
   TXAtomPList xatoms;
   GetSelectedXAtoms(xatoms, GetDoClearSelection());
   for( size_t i=0; i < xatoms.Count(); i++ )
-    atoms.AddNew( &xatoms[i]->Atom().CAtom(), &xatoms[i]->Atom().GetMatrix(0) );
+    atoms.AddNew(&xatoms[i]->Atom().CAtom(), &xatoms[i]->Atom().GetMatrix(0));
 }
 //..............................................................................
 void TGXApp::ExpandSelectionEx(TSAtomPList& atoms)  {
@@ -2190,7 +2190,7 @@ void TGXApp::ExpandSelectionEx(TSAtomPList& atoms)  {
   GetSelectedXAtoms(xatoms, GetDoClearSelection());
   atoms.SetCapacity(atoms.Count()+xatoms.Count());
   for( size_t i=0; i < xatoms.Count(); i++ )
-    atoms.Add( xatoms[i]->Atom() );
+    atoms.Add(xatoms[i]->Atom());
 }
 //..............................................................................
 void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelection)  {
@@ -2203,7 +2203,7 @@ void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelect
       TResidue& resi = AU.GetResidue(i);
       for( size_t j=0; j < resi.Count(); j++ )  {
         if( !resi[j].IsDeleted() )
-          List.Add( &resi[j] );
+          List.Add(resi[j]);
       }
     }
     return;
