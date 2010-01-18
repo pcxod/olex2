@@ -2107,40 +2107,78 @@ olxstr TLattice::CalcMoiety() const {
   latt.Init();
   latt.CompaqAll();
   latt.Fragments.QuickSorter.SortSF(latt.Fragments, TLattice_SortFragments);
-  TTypeList<AnAssociation2<int,ContentList> > frags;
+  // multiplicity,content, reference fragment index
+  TTypeList<AnAssociation3<double,ContentList, size_t> > frags;
+  TArrayList<vec3d> centres(latt.FragmentCount());
   for( size_t i=0; i < latt.FragmentCount(); i++ )  {
     ContentList cl = latt.GetFragment(i).GetContentList();
+    if( cl.IsEmpty())  continue;
     XElementLib::SortContentList(cl);
     bool uniq = true;
+    double wght=0, overall_occu = 0;
+    for( size_t j=0; j < latt.GetFragment(i).NodeCount(); j++ )  {
+      TSAtom& nd = latt.GetFragment(i).Node(j);
+      if( nd.IsDeleted() || nd.GetType() == iQPeakZ )  continue;
+      centres[i] += nd.crd();
+      wght += 1;
+      const double occu = nd.CAtom().GetOccu()*nd.CAtom().GetDegeneracy();
+      if( overall_occu == 0 )
+        overall_occu = occu;
+      else if( overall_occu != -1 && olx_abs(overall_occu-occu) > 0.01 )
+        overall_occu = -1;
+    }
+    centres[i] /= wght;
     for( size_t j=0; j < frags.Count(); j++ )  {
       if( frags[j].GetB().Count() != cl.Count() )  continue;
       bool equals = true;
-      for( size_t k=0; k < cl.Count(); k++ )  {
-        if( frags[j].GetB()[k].GetA() != cl[k].GetA() || frags[j].GetB()[k].GetB() != cl[k].GetB() )  {
-          equals = false;
-          break;
+      if( frags[j].GetB()[0].GetA() != cl[0].GetA() )
+        equals = false;
+      else  {
+        for( size_t k=1; k < cl.Count(); k++ )  {
+          if( frags[j].GetB()[k].GetA() != cl[k].GetA() || 
+            olx_abs((frags[j].GetB()[k].GetB()/frags[j].GetB()[0].GetB())-(cl[k].GetB()/cl[0].GetB())) > 0.01 )
+          {
+            equals = false;
+            break;
+          }
         }
       }
-      if( equals )  {  // just increment the count
-        frags[j].A()++;
+      if( equals )  {
+        // consider special case of nearby and/or overlapping fragments, compare rations, not counts...
+        if( centres[i].QDistanceTo(centres[frags[j].GetC()]) < 4 )  {    // just sum up the values
+          for( size_t k=0; k < cl.Count(); k++ )
+            frags[j].B()[k].B() += cl[k].GetB();
+        }
+        else  {  // just increment the count
+          frags[j].A() += cl[0].GetB()/frags[j].GetB()[0].GetB();
+        }
         uniq = false;
         break;
       }
     }
-    if( uniq )
-      frags.AddNew(1, cl);
+    if( uniq )  {
+      if( olx_abs(overall_occu) == 1 )
+        frags.AddNew(1, cl, i);
+      else  {  // apply overal atom occupancy
+        for( size_t j=0; j < cl.Count(); j++ )
+          cl[j].B() /= overall_occu;
+        frags.AddNew(overall_occu, cl, i);
+      }
+    }
   }
   olxstr rv;
   for( size_t i=0; i < frags.Count(); i++ )  {
     if( !rv.IsEmpty() )  rv << ", ";
-    if( frags[i].GetA() > 1 )
+    if( frags[i].GetA() != 1 )
       rv << frags[i].GetA() << '(';
     for( size_t j=0; j < frags[i].GetB().Count(); j++ )  {
-      rv << frags[i].GetB()[j].GetA() << frags[i].GetB()[j].GetB();
+      rv << frags[i].GetB()[j].GetA();
+      if( frags[i].GetB()[j].GetB() != 1 )
+        rv << frags[i].GetB()[j].GetB();
       if( (j+1) < frags[i].GetB().Count() )
         rv << ' ';
     }
-    if( frags[i].GetA() > 1 )
+    if( frags[i].GetA() != 1 )
       rv << ')';
   }
   return rv;

@@ -807,11 +807,12 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   TActionQueue* q_draw = XApp.ActionQueue(olxappevent_GL_DRAW);
   if( q_draw != NULL )  q_draw->SetEnabled(false);
-  XApp.XFile().GetLattice().UpdateConnectivity();
   try  {
     TSAtomPList satoms;
-    XApp.FindSAtoms( Cmds.Text(' '), satoms, true );
-    TXlConGen xlConGen( XApp.XFile().GetRM() );
+    XApp.FindSAtoms(Cmds.Text(' '), satoms, true);
+    // find atoms first, or selection gets lost...
+    XApp.XFile().GetLattice().UpdateConnectivity();
+    TXlConGen xlConGen(XApp.XFile().GetRM());
     if( Hfix == 0 ) 
       XApp.XFile().GetLattice().AnalyseHAdd(xlConGen, satoms);
     else  {
@@ -2611,6 +2612,14 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   // generate moiety string if does not exist
   if( !Cif->ParamExists("_chemical_formula_moiety") )
     Cif->AddParam("_chemical_formula_moiety", xapp.XFile().GetLattice().CalcMoiety(), true);
+  else  {
+    TCifData* cd = Cif->FindParam("_chemical_formula_moiety");
+    if( cd->Data->IsEmpty() )
+      cd->Data->Add(xapp.XFile().GetLattice().CalcMoiety());
+    else if(  cd->Data->Count() == 1 && (*cd->Data)[0] == '?' ) 
+      cd->Data->GetString(0) = xapp.XFile().GetLattice().CalcMoiety();
+    cd->String = true;
+  }
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(Cif->GetAsymmUnit());
   if( sg != NULL )  {
     if( !Cif->ParamExists("_symmetry_cell_setting") )

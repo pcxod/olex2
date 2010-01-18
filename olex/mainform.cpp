@@ -920,7 +920,7 @@ separated values of Atom Type and radius, an entry a line");
  or provided atoms into the residue. If provided residue class name is 'none', provided atoms are removed from their residues");
   this_InitMacroD(WBox, "w-use atomic weights instead of unit weights for atoms&;s-create separate boxes for fragments", 
 	(fpAny)|psFileLoaded, "Calculates wrapping box around provided box using the set of best, intermidiate and worst planes");
-  this_InitMacroD(Center, EmptyString, 
+  this_InitMacroD(Center, "z-also recalculates the scene zoom", 
 	(fpAny)|psFileLoaded, "Sets the centre of rotation to given point");
   // FUNCTIONS _________________________________________________________________
 
@@ -957,8 +957,8 @@ separated values of Atom Type and radius, an entry a line");
   this_InitFunc(VVol, fpNone|fpOne|psFileLoaded);
 
   this_InitFunc(Env, fpOne|psFileLoaded);
-  this_InitFunc(Crd, fpOne|psFileLoaded);
-  this_InitFunc(CCrd, fpOne|psFileLoaded);
+  this_InitFunc(Crd, fpAny|psFileLoaded);
+  this_InitFunc(CCrd, fpAny|psFileLoaded);
   this_InitFunc(Atoms, fpOne|psFileLoaded);
 
   this_InitFunc(Sel, fpNone|psFileLoaded);

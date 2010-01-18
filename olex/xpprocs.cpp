@@ -499,7 +499,7 @@ void TMainForm::funColor(const TStrObjList& Params, TMacroError &E)  {
 //..............................................................................
 void TMainForm::funZoom(const TStrObjList &Cmds, TMacroError &E)  {
   if( Cmds.IsEmpty() )
-    E.SetRetVal( FXApp->GetRender().GetZoom() );
+    E.SetRetVal(FXApp->GetRender().GetZoom());
   else  {
     double zoom = FXApp->GetRender().GetZoom() + Cmds[0].ToDouble();
     if( zoom < 0.001 )  zoom = 0.001;
@@ -8638,17 +8638,21 @@ void TMainForm::macCenter(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( Cmds.Count() == 3 && Cmds[0].IsNumber() && Cmds[1].IsNumber() && Cmds[2].IsNumber() )
     FXApp->GetRender().GetBasis().SetCenter(vec3d(-Cmds[0].ToDouble(), -Cmds[1].ToDouble(), -Cmds[2].ToDouble()));
   else  {
-    TXAtomPList atoms;
-    FindXAtoms(Cmds, atoms, true, true);
-    vec3d center;
-    double sum = 0;
-    for( size_t i=0; i < atoms.Count(); i++ )  {
-      center += atoms[i]->Atom().crd()*atoms[i]->Atom().CAtom().GetOccu();
-      sum += atoms[i]->Atom().CAtom().GetOccu();;
-    }
-    if( sum != 0 )  {
-      center /= sum;
-      FXApp->GetRender().GetBasis().SetCenter(-center);
+    if( Options.Contains('z') )
+      FXApp->GetRender().GetBasis().SetZoom(FXApp->GetRender().CalcZoom());
+    else  {
+      TXAtomPList atoms;
+      FindXAtoms(Cmds, atoms, true, true);
+      vec3d center;
+      double sum = 0;
+      for( size_t i=0; i < atoms.Count(); i++ )  {
+        center += atoms[i]->Atom().crd()*atoms[i]->Atom().CAtom().GetOccu();
+        sum += atoms[i]->Atom().CAtom().GetOccu();;
+      }
+      if( sum != 0 )  {
+        center /= sum;
+        FXApp->GetRender().GetBasis().SetCenter(-center);
+      }
     }
   }
 }
