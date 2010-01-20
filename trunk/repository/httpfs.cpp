@@ -38,7 +38,7 @@ void THttpFileSystem::GetAddress(struct sockaddr* Result)  {
   memset(&Address, 0, sizeof(Address));
 
   olxstr HostAdd = Url.HasProxy() ? Url.GetProxy().GetHost() : Url.GetHost();
-  Host = gethostbyname( olxcstr(HostAdd).c_str() );  // c_str() on unicode is not thread safe!
+  Host = gethostbyname(olxcstr(HostAdd).c_str());  // c_str() on unicode is not thread safe!
   if( Host != NULL )  {
     Address.sin_family  = AF_INET;
     Address.sin_port    = htons( (unsigned short)(Url.HasProxy() ? Url.GetProxy().GetPort() : Url.GetPort()) );
@@ -69,11 +69,6 @@ bool THttpFileSystem::Connect()  {
   GetAddress(&SockAddr);
   int  Status;
   Socket = socket(AF_INET, SOCK_STREAM, 0);
-  Status = connect(Socket, &SockAddr, sizeof(SockAddr));
-  if(Status >= 0)
-    Connected = true;
-  else
-    throw TFunctionFailedException(__OlxSourceInfo, "connection failed");
 #ifdef __WIN32__
   int timeout = 10000; // ms ?
 #else
@@ -81,8 +76,15 @@ bool THttpFileSystem::Connect()  {
 	memset(&timeout, 0, sizeof(timeout));
 	timeout.tv_sec = 10;
 #endif
-  if( setsockopt(Socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout)) != 0 )
+  if( setsockopt(Socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout)) != 0 ||  
+      setsockopt(Socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(timeout)) != 0 )
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("Failed to setup timeout: ") << errno);
+
+  Status = connect(Socket, &SockAddr, sizeof(SockAddr));
+  if(Status >= 0)
+    Connected = true;
+  else
+    throw TFunctionFailedException(__OlxSourceInfo, "connection failed");
   return Connected;
 }
 //..............................................................................

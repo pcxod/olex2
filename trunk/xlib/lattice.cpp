@@ -2146,8 +2146,12 @@ olxstr TLattice::CalcMoiety() const {
       if( equals )  {
         // consider special case of nearby and/or overlapping fragments, compare rations, not counts...
         if( centres[i].QDistanceTo(centres[frags[j].GetC()]) < 4 )  {    // just sum up the values
-          for( size_t k=0; k < cl.Count(); k++ )
-            frags[j].B()[k].B() += cl[k].GetB();
+          if( olx_abs(overall_occu) == 1 )  {
+            for( size_t k=0; k < cl.Count(); k++ )
+              frags[j].B()[k].B() += cl[k].GetB();
+          }
+          else
+            frags[j].A() += cl[0].GetB()/frags[j].GetB()[0].GetB();
         }
         else  {  // just increment the count
           frags[j].A() += cl[0].GetB()/frags[j].GetB()[0].GetB();
