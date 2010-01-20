@@ -163,8 +163,8 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
       P.SetString(NULL);
     }
     else  {
-      for( size_t i=Cmds.Count(); i > 0 ; i-- )  {
-        const size_t ii = Cmds.Count()-i-2;
+      for( size_t i=Cmds.Count()-1; olx_is_valid_index(i); i-- )  {
+        const size_t ii = Cmds.Count()-i-1;
         if( olx_is_valid_size(FLinesToShow) && ii > FLinesToShow )  continue;
         T[0] = GlLeft;  T[1] = GlTop + ii*LineInc;
         T *= Scale;

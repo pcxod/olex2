@@ -2604,6 +2604,9 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
           Tmp << data.GetText().c_str();
         else
           Tmp.Insert(data.GetText().c_str(), ip);
+        for( size_t i=0; i < Tmp.Length(); i++ )
+          if( Tmp.CharAt(i) > 255 )
+            Tmp[i] = 255;
         FGlConsole->SetCommand(Tmp);
         TimePerFrame = FXApp->Draw();
       }
