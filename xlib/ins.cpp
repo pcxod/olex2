@@ -712,7 +712,7 @@ void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
         lines.Clear();
         HyphenateIns(tmp, lines);
         for( size_t j=0; j < lines.Count(); j++ )
-          list.Insert(pos++, lines[j] );
+          list.Insert(pos++, lines[j]);
       }
       else
         list.Insert(pos++, "SFAC ") << ' ' << rm.GetUserContent()[i].GetA();
@@ -721,8 +721,15 @@ void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
   for( size_t i=0; i < rm.DispCount(); i++ )
     list.Insert(++pos, olxstr("DISP ") << rm.GetDispData(i).ToInsString());
   olxstr& unit = list.Insert(++pos, "UNIT");
-  for( size_t i=0; i < rm.GetUserContent().Count(); i++ )
-    unit << ' ' << content[i].GetB();
+
+  if( rm.SfacCount() == 0 )  {
+    for( size_t i=0; i < content.Count(); i++ )
+      unit << ' ' << content[i].GetB();
+  }
+  else  {
+    for( size_t i=0; i < rm.GetUserContent().Count(); i++ )
+      unit << ' ' << rm.GetUserContent()[i].GetB();
+  }
 }
 //..............................................................................
 void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix, 
@@ -810,13 +817,12 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
 }
 //..............................................................................
 void TIns::SaveToStrings(TStrList& SL)  {
-  evecd QE;  // quadratic form of s thermal ellipsoid
-  olxstr Tmp;
   TStrPObjList<olxstr,const cm_Element*> BasicAtoms;
   for( size_t i=0; i < GetRM().GetUserContent().Count(); i++ )  {
     cm_Element* elm = XElementLib::FindBySymbol(GetRM().GetUserContent()[i].GetA());
     if( elm == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: ") << BasicAtoms[i]);
+      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: ") 
+        << GetRM().GetUserContent()[i].GetA());
     BasicAtoms.Add(elm->symbol, elm);
   }
   size_t carbonIndex = BasicAtoms.IndexOfi('c');  // for Q-peaks
@@ -1000,20 +1006,29 @@ bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms, TI
 }
 //..............................................................................
 void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& atoms, const olxstr& comments )  {
-  TStrList SL;
-  TTypeList<AnAssociation2<olxstr,double> > content;
-  SortedPtrList<const cm_Element, TPrimitivePtrComparator> elements;
+  TPtrList<const cm_Element> BasicAtoms;
+  for( size_t i=0; i < GetRM().GetUserContent().Count(); i++ )  {
+    cm_Element* elm = XElementLib::FindBySymbol(GetRM().GetUserContent()[i].GetA());
+    if( elm == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: ") 
+        << GetRM().GetUserContent()[i].GetA());
+    BasicAtoms.Add(elm);
+  }
   TSizeList Sfacs;
   for( size_t i=0; i < atoms.Count(); i++ )  {
     cm_Element* elm = XElementLib::FindBySymbolEx(atoms[i].GetName());
     if( elm == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: ") << atoms[i].GetName() );
-    size_t index = elements.IndexOf(elm);
+    size_t index = BasicAtoms.IndexOf(elm);
     if( index == InvalidIndex )  {
-      elements.Add(elm);
-      content.AddNew(elm->symbol, 1.0);
+      GetRM().AddUserContent(elm->symbol, 1.0);
+      BasicAtoms.Add(elm);
+      Sfacs.Add(BasicAtoms.Count()-1);
     }
+    else
+      Sfacs.Add(index);
   }
+  TStrList SL;
   SL.Add("TITLE ") << GetTitle();
   if( !comments.IsEmpty() )
     SL.Add("REM ") << comments;
@@ -1022,7 +1037,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
   SL.Add(_ZerrToString());
   _SaveSymm(SL);
   SL.Add(EmptyString);
-  SaveSfacUnit(GetRM(), content, SL, SL.Count()-1);
+  SaveSfacUnit(GetRM(), GetRM().GetUserContent(), SL, SL.Count()-1);
 
   _SaveRefMethod(SL);
   _SaveSizeTemp(SL);
@@ -1044,7 +1059,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
     _wght << " 0.1";
 
   SL.Add("FVAR 1");
-  SL.Add( EmptyString );
+  SL.Add(EmptyString);
   for( size_t i=0; i < atoms.Count(); i++ )  {
     olxstr& aline = SL.Add(atoms[i].GetName());
     aline.Format(6, true, ' ');
