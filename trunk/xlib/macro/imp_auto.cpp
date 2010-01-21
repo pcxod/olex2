@@ -268,7 +268,6 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   // end qpeak analysis
 
   // distance analysis
-  TTypeList<AnAssociation2<TCAtom*, vec3d> > neighbours;
   TLattice& latt = xapp.XFile().GetLattice();
   // qpeaks first
   TSAtomPList QPeaks;
@@ -280,7 +279,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
   for( size_t i=0; i < QPeaks.Count(); i++ )  {
     if( QPeaks[i]->IsDeleted() || QPeaks[i]->CAtom().IsDeleted() )  continue;
-    neighbours.Clear();
+    TTypeList<AnAssociation2<TCAtom*, vec3d> > neighbours;
     TAutoDBNode nd(*QPeaks[i], &neighbours);
     for( size_t j=0; j < nd.DistanceCount(); j++ )  {
       if( nd.GetDistance(j) < (neighbours[j].GetA()->GetType().r_bonding+aqV) )  {  // at least an H-bond
@@ -330,7 +329,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     Uisos.Assign(TAutoDB::GetInstance()->GetUisos());
   for( size_t i=0; i < latt.FragmentCount(); i++ )  {
     if( latt.GetFragment(i).NodeCount() > 7 )   { // skip up to PF6 or so for Uiso analysis
-      if( Uisos.Count() <= i )  Uisos.Add(0.0);
+      while( Uisos.Count() <= i ) Uisos.Add(0.0);
       if( olx_abs(Uisos[i]) < 1e-6 )  {
         size_t ac = 0;
         for( size_t j=0;  j < latt.GetFragment(i).NodeCount(); j++ )  {
@@ -425,8 +424,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     for( size_t j=0;  j < latt.GetFragment(i).NodeCount(); j++ )  {
       TSAtom& sa = latt.GetFragment(i).Node(j);
       if( sa.IsDeleted() || sa.CAtom().IsDeleted() || sa.GetType().GetMr() < 3  )  continue;
-
-      neighbours.Clear();
+      TTypeList<AnAssociation2<TCAtom*, vec3d> > neighbours;
       TAutoDBNode nd(sa, &neighbours);
       for( size_t k=0; k < nd.DistanceCount(); k++ )  {
         if( neighbours[k].GetA()->IsDeleted() )
@@ -530,25 +528,20 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
     for( size_t i=0; i < au.AtomCount(); i++ )  {
       if( au.GetAtom(i).IsDeleted() )  continue;
       uc.FindInRangeAC(au.GetAtom(i).ccrd(), au.GetAtom(i).GetType().r_bonding+1.3, res);
+      vec3d center = au.GetAtom(i).ccrd();
+      au.CellToCartesian(center);
       for( size_t j=0; j < res.Count(); j++ )  {
-        if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() )  {
-          res.Delete(j);
-          break;
-        }
+        if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() && center.QDistanceTo(res[j].GetB()) < 1e-4 )
+          res.Delete(j--);
       }
       AtomCount++;
       double wght = 1;
       if( res.Count() > 1 )  {
-        vec3d center = au.GetAtom(i).ccrd();
-        au.CellToCartesian(center);
         double awght = 1./(res.Count()*(res.Count()-1));
         for( size_t j=0; j < res.Count(); j++ )  {
-          if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() )  continue;
           if( res[j].GetB().QLength() < 1 )
             wght -= 0.5/res.Count();
           for( size_t k=j+1; k < res.Count(); k++ )  {
-            vec3d va = res[j].GetB()-center;
-            vec3d vb = res[k].GetB()-center;
             double cang = (res[j].GetB()-center).CAngle(res[k].GetB()-center);
             if( cang > 0.588 )  { // 56 degrees
               wght -= awght;
