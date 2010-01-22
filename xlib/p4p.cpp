@@ -127,7 +127,8 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   params.Strtok( Source, ' ');
   if( params.Count() > 2 )
     GetRM().expl.SetRadiation(params[1].ToDouble());
-  GetRM().SetUserFormula(chem.DeleteChars('_'));
+	try  {  GetRM().SetUserFormula(chem.DeleteChars('_'));  }
+	catch(...)  {  }  // just skip...
 }
 
 bool TP4PFile::Adopt(TXFile& f)  {
