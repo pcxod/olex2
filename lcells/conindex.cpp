@@ -201,16 +201,16 @@ olxstr TNet::GetDebugInfo()  {
 void TNet::Assign(TLattice& latt)  {
   Clear();
   for( size_t i=0; i < latt.AtomCount(); i++ )  {
-    if( latt.GetAtom(i).GetAtomInfo() == iQPeakIndex )  continue;
+    if( latt.GetAtom(i).GetType() == iQPeakZ )  continue;
     latt.GetAtom(i).SetTag(Nodes.Count());
-    Nodes.AddNew().AtomType = latt.GetAtom(i).GetAtomInfo().GetIndex();
+    Nodes.AddNew().AtomType = latt.GetAtom(i).GetType().index;
   }
   int ni=0;
   for( size_t i=0; i < latt.AtomCount(); i++ )  {
     TSAtom& sa = latt.GetAtom(i);
-    if( sa.GetAtomInfo() == iQPeakIndex )  continue;
+    if( sa.GetType() == iQPeakZ )  continue;
     for( size_t j=0; j < sa.BondCount(); j++ )    {
-      if( sa.Bond(j).Another(sa).GetAtomInfo() == iQPeakIndex )
+      if( sa.Bond(j).Another(sa).GetType() == iQPeakZ )
         continue;
       Nodes[ni].Nodes.Add(Nodes[sa.Bond(j).Another(sa).GetTag()]);
     }

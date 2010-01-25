@@ -52,8 +52,10 @@ public:
   virtual ~TAsymmUnit();
 
   inline TLattice& GetLattice() const {  return *Lattice;  }
-  inline TEVPointD&  Axes()  {  return FAxes;  }
-  inline TEVPointD&  Angles()  {  return FAngles;  }
+  inline TEVPointD& Axes()  {  return FAxes;  }
+  inline TEVPointD& Angles()  {  return FAngles;  }
+  inline const TEVPointD& GetAxes() const {  return FAxes;  }
+  inline const TEVPointD& GetAngles() const {  return FAngles;  }
   inline const vec3d& GetRAxes() const {  return RAxes;  }
   inline const vec3d& GetRAngles() const {  return RAngles;  }
   double CalcCellVolume() const;

@@ -5,7 +5,6 @@
 #include "evpoint.h"
 #include "ebasis.h"
 
-#include "atominfo.h"
 #include "satom.h"
 #include "xfiles.h"
 //---------------------------------------------------------------------------
@@ -17,7 +16,6 @@ struct TDrawSort {
 
 class TOrganiser  {
   TXFile* FXFile;
-  TAtomsInfo* FAtomsInfo;
   Graphics::TBitmap *FBitmap;
 
   bool MouseDown;
@@ -30,7 +28,6 @@ public:
   __fastcall ~TOrganiser();
   void _fastcall Update();
   void _fastcall CalcZoom();
-  __property TAtomsInfo*    AtomsInfo  = { read = FAtomsInfo };
   __property TXFile* XFile  = {read = FXFile};
   void _fastcall Draw();
 
