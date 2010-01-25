@@ -38,7 +38,6 @@ __fastcall TOrganiser::TOrganiser(Graphics::TBitmap *Bmp)  {
   MouseDown = false;
   FBitmap = Bmp;
 
-  FAtomsInfo = new TAtomsInfo( TBasicApp::GetBaseDir() + "ptablex.dat" );
   FXFile = new TXFile();
   FXFile->RegisterFileFormat( new xlib::TCif, "cif");
   FXFile->RegisterFileFormat( new xlib::TMol, "mol");
@@ -47,7 +46,6 @@ __fastcall TOrganiser::TOrganiser(Graphics::TBitmap *Bmp)  {
 //..............................................................................
 __fastcall TOrganiser::~TOrganiser()  {
   delete FXFile;
-  delete FAtomsInfo;
 }
 //..............................................................................
 void _fastcall TOrganiser::CalcZoom()  {
@@ -146,10 +144,10 @@ void _fastcall TOrganiser::Draw()  {
 
   for( size_t i=0; i < XFile->GetLattice().BondCount(); i++ )  {
     TSBond* B = &XFile->GetLattice().GetBond(i);
-    if( B->A().GetAtomInfo().GetMr() > B->B().GetAtomInfo().GetMr() )
-      C->Pen->Color = (TColor)B->A().GetAtomInfo().GetDefColor();
+    if( B->A().GetType() > B->B().GetType() )
+      C->Pen->Color = (TColor)B->A().GetType().def_color;
     else
-      C->Pen->Color = (TColor)B->B().GetAtomInfo().GetDefColor();
+      C->Pen->Color = (TColor)B->B().GetType().def_color;
     C->MoveTo(DrawSort[B->A().GetTag()].P[0], DrawSort[B->A().GetTag()].P[1]);
     C->LineTo(DrawSort[B->B().GetTag()].P[0], DrawSort[B->B().GetTag()].P[1]);
   }
@@ -161,8 +159,8 @@ void _fastcall TOrganiser::Draw()  {
 //  DrawSort->Sort(DrawPointsSortZ);
   for( size_t i=0; i < DrawSort.Count(); i++ )  {
     TDrawSort& DS = DrawSort[i];
-    C->Brush->Color = (TColor)DS.A->GetAtomInfo().GetDefColor();
-    double rad = DS.A->GetAtomInfo().GetRad() * Basis.GetZoom();
+    C->Brush->Color = (TColor)DS.A->GetType().def_color;
+    double rad = DS.A->GetType().r_pers * Basis.GetZoom();
     C->Ellipse(
       (DS.P[0] - rad),
       (DS.P[1] - rad),
@@ -170,7 +168,7 @@ void _fastcall TOrganiser::Draw()  {
       (DS.P[1] + rad)
       );
     rad = rad/2 + 0.3;
-    if( DS.A->GetAtomInfo() != iHydrogenIndex )  {
+    if( DS.A->GetType() != iHydrogenZ )  {
       C->Brush->Color = clWhite;
       C->TextOut(DS.P[0]+rad, DS.P[1]+rad, DS.A->GetLabel().c_str());
     }

@@ -863,83 +863,86 @@ void TUnitCell::BuildStructureMapEx(TArray3D<short>& map, double delta, short va
                                   size_t* structurePoints, ElementRadii* radii,
                                   const TCAtomPList* _template)
 {
-  throw TNotImplementedException(__OlxSourceInfo);
-  //TTypeList< AnAssociation2<vec3d,TCAtom*> > allAtoms;
-  //GenereteAtomCoordinates(allAtoms, true, _template);
-  //
-  //const size_t da = map.Length1(),
-  //          db = map.Length2(),
-  //          dc = map.Length3();
-  //vec3i dim(da, db, dc);
-  //// angstrem per pixel
-  //double capp = Lattice->GetAsymmUnit().Axes()[2].GetV()/dc,
-  //       bapp = Lattice->GetAsymmUnit().Axes()[1].GetV()/db,
-  //       aapp = Lattice->GetAsymmUnit().Axes()[0].GetV()/da;
-  //map.FastInitWith(0);
-  //// precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
-  //const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  //olxdict<short, TArray3D<bool>*, TPrimitiveComparator> scatterers;
-  //for( size_t i=0; i < au.AtomCount(); i++ )  {
-  //  if( au.GetAtom(i).IsDeleted() )  continue;
-  //  size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().index);
-  //  if( ind != InvalidIndex )  continue;
-  //  double r = au.GetAtom(i).GetType().r_sfil + delta;
-  //  if( radii != NULL )  {
-  //    size_t b_i = radii->IndexOf(&au.GetAtom(i).GetType());
-  //    if( b_i != InvalidIndex )
-  //      r = radii->GetValue(b_i) + delta;
-  //  }
-  //  const double sr = r*r;
-  //  int ad = olx_round(r/aapp);
-  //  int bd = olx_round(r/bapp);
-  //  int cd = olx_round(r/capp);
-  //  TArray3D<bool>* spm = new TArray3D<bool>(-ad, ad, -bd, bd, -cd, cd);
-  //  for( int x=-ad; x <= ad; x ++ )  {
-  //    for( int y=-bd; y <= bd; y ++ )  {
-  //      for( int z=-cd; z <= cd; z ++ )  {
-  //        vec3d v((double)x/da, (double)y/db, (double)z/dc);
-  //        au.CellToCartesian(v);
-  //        spm->Data[x+ad][y+bd][z+cd] = (v.QLength() <= sr);
-  //      }
-  //    }
-  //  }
-  //  scatterers.Add(au.GetAtom(i).GetType().index, spm);
-  //}
+  //throw TNotImplementedException(__OlxSourceInfo);
+  TTypeList< AnAssociation2<vec3d,TCAtom*> > allAtoms;
+  GenereteAtomCoordinates(allAtoms, true, _template);
+  
+  const size_t da = map.Length1(),
+            db = map.Length2(),
+            dc = map.Length3();
+  vec3i dim(da, db, dc);
+  // angstrem per pixel
+  double capp = Lattice->GetAsymmUnit().Axes()[2].GetV()/dc,
+         bapp = Lattice->GetAsymmUnit().Axes()[1].GetV()/db,
+         aapp = Lattice->GetAsymmUnit().Axes()[0].GetV()/da;
+  map.FastInitWith(0);
+  // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
+  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  const double sin_a = sin(au.GetAngles()[0].GetV()*M_PI/180);
+  const double sin_b = sin(au.GetAngles()[1].GetV()*M_PI/180);
+  const double sin_g = sin(au.GetAngles()[2].GetV()*M_PI/180);
+  olxdict<short, TArray3D<bool>*, TPrimitiveComparator> scatterers;
+  for( size_t i=0; i < au.AtomCount(); i++ )  {
+    if( au.GetAtom(i).IsDeleted() )  continue;
+    size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().index);
+    if( ind != InvalidIndex )  continue;
+    double r = au.GetAtom(i).GetType().r_sfil + delta;
+    if( radii != NULL )  {
+      size_t b_i = radii->IndexOf(&au.GetAtom(i).GetType());
+      if( b_i != InvalidIndex )
+        r = radii->GetValue(b_i) + delta;
+    }
+    const double sr = r*r;
+    int ad = olx_round(olx_max(2*r/sin_b, 2*r/sin_g)/aapp);
+    int bd = olx_round(olx_max(2*r/sin_a, 2*r/sin_g)/aapp);
+    int cd = olx_round(olx_max(2*r/sin_a, 2*r/sin_b)/aapp);
+    TArray3D<bool>* spm = new TArray3D<bool>(-ad, ad, -bd, bd, -cd, cd);
+    for( int x=-ad; x <= ad; x ++ )  {
+      for( int y=-bd; y <= bd; y ++ )  {
+        for( int z=-cd; z <= cd; z ++ )  {
+          vec3d v((double)x/da, (double)y/db, (double)z/dc);
+          au.CellToCartesian(v);
+          spm->Data[x+ad][y+bd][z+cd] = (v.QLength() <= sr);
+        }
+      }
+    }
+    scatterers.Add(au.GetAtom(i).GetType().index, spm);
+  }
 
-  //for( size_t i=0; i < allAtoms.Count(); i++ )  {
-  //  TArray3D<bool>* spm = scatterers[allAtoms[i].GetB()->GetType().index];
-  //  vec3d center = allAtoms[i].GetA()*dim;
-  //  const int ad = spm->Length1()/2;
-  //  const int bd = spm->Length2()/2;
-  //  const int cd = spm->Length3()/2;
-  //  for( int j = -ad; j <= ad; j ++ )  {
-  //    for( int k = -bd; k <= bd; k ++ )  {
-  //      for( int l = -cd; l <= cd; l ++ )  {
-  //        if( !spm->Data[j+ad][k+bd][l+cd] )  continue;
-  //        vec3i crd( olx_round(center[0]+j), olx_round(center[1]+k), olx_round(center[2]+l));
-  //        for( size_t m=0; m < 3; m++ )  {
-  //          if( crd[m] < 0 )        crd[m] += dim[m];
-  //          if( crd[m] >= dim[m] )  crd[m] -= dim[m];
-  //        }
-  //        map.Data[crd[0]][crd[1]][crd[2]] = val;
-  //      }
-  //    }
-  //  }
-  //}
-  //if( structurePoints != NULL )  {
-  //  long sp = 0;
-  //  size_t mapX = map.Length1(), mapY = map.Length2(), mapZ = map.Length3();
-  //  for( size_t i=0; i < mapX; i++ )
-  //    for( size_t j=0; j < mapY; j++ )
-  //      for( size_t k=0; k < mapZ; k++ )
-  //        if( map.Data[i][j][k] == val )  {
-  //          sp ++;
-  //        }
-  //  *structurePoints = sp;
-  //}
+  for( size_t i=0; i < allAtoms.Count(); i++ )  {
+    TArray3D<bool>* spm = scatterers[allAtoms[i].GetB()->GetType().index];
+    vec3d center = allAtoms[i].GetA()*dim;
+    const int ad = spm->Length1()/2;
+    const int bd = spm->Length2()/2;
+    const int cd = spm->Length3()/2;
+    for( int j = -ad; j <= ad; j ++ )  {
+      for( int k = -bd; k <= bd; k ++ )  {
+        for( int l = -cd; l <= cd; l ++ )  {
+          if( !spm->Data[j+ad][k+bd][l+cd] )  continue;
+          vec3i crd( olx_round(center[0]+j), olx_round(center[1]+k), olx_round(center[2]+l));
+          for( size_t m=0; m < 3; m++ )  {
+            if( crd[m] < 0 )        crd[m] += dim[m];
+            if( crd[m] >= dim[m] )  crd[m] -= dim[m];
+          }
+          map.Data[crd[0]][crd[1]][crd[2]] = val;
+        }
+      }
+    }
+  }
+  if( structurePoints != NULL )  {
+    long sp = 0;
+    size_t mapX = map.Length1(), mapY = map.Length2(), mapZ = map.Length3();
+    for( size_t i=0; i < mapX; i++ )
+      for( size_t j=0; j < mapY; j++ )
+        for( size_t k=0; k < mapZ; k++ )
+          if( map.Data[i][j][k] == val )  {
+            sp ++;
+          }
+    *structurePoints = sp;
+  }
 
-  //for( size_t i=0; i < scatterers.Count(); i++ )
-  //  delete scatterers.GetValue(i);
+  for( size_t i=0; i < scatterers.Count(); i++ )
+    delete scatterers.GetValue(i);
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
