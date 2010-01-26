@@ -814,7 +814,10 @@ void TCif::Initialize()  {
   for( size_t i=0; i < ALoop->GetTable().RowCount(); i++ )  {
     TCAtom& A = GetAsymmUnit().NewAtom();
     A.SetLabel(ALoop->GetTable()[i][ALabel], false);
-    A.SetType(*XElementLib::FindBySymbol(ALoop->GetTable()[i][ASymbol]));
+    cm_Element* type = XElementLib::FindBySymbol(ALoop->GetTable()[i][ASymbol]);
+    if( type == NULL )
+      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Undefined element: ") << ALoop->GetTable()[i][ASymbol]);
+    A.SetType(*type);
     EValue = ALoop->GetTable()[i][ACx];
     A.ccrd()[0] = EValue.GetV();  A.ccrdEsd()[0] = EValue.GetE();
     EValue = ALoop->GetTable()[i][ACy];
