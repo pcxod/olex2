@@ -110,55 +110,235 @@ public:
   expects a map with structure points marked as negative values and the rest - 0
   */
   template <typename map_type> static map_type AnalyseVoids(map_type*** map, uint16_t mapX, uint16_t mapY, uint16_t mapZ, 
-    vec3d& void_center)  {
-      map_type level = 0, MaxLevel = 0;
-      while( true )  {
-        bool levelUsed = false;
-        for( uint16_t i=0; i < mapX; i++ )  {
-          for( uint16_t j=0; j < mapY; j++ )  {
-            for( uint16_t k=0; k < mapZ; k++ )  {
-              // neigbouring points analysis
-              bool inside = true;
-              for( int ii = -1; ii <= 1; ii++)  {
-                for( int jj = -1; jj <= 1; jj++)  {
-                  for( int kk = -1; kk <= 1; kk++)  {
-                    int iind = i+ii, jind = j+jj, kind = k+kk;
-                    // index "rotation" step
-                    if( iind < 0 )  iind += mapX;
-                    if( jind < 0 )  jind += mapY;
-                    if( kind < 0 )  kind += mapZ;
-                    if( iind >= mapX )  iind -= mapX;
-                    if( jind >= mapY )  jind -= mapY;
-                    if( kind >= mapZ )  kind -= mapZ;
-                    // main condition
-                    if( map[iind][jind][kind] < level )  {
-                      inside = false;
-                      break;
-                    }
+    vec3d& void_center)
+  {
+    map_type level = 0, MaxLevel = 0;
+    while( true )  {
+      bool levelUsed = false;
+      for( uint16_t i=0; i < mapX; i++ )  {
+        for( uint16_t j=0; j < mapY; j++ )  {
+          for( uint16_t k=0; k < mapZ; k++ )  {
+            // neigbouring points analysis
+            bool inside = true;
+            for( int ii = -1; ii <= 1; ii++ )  {
+              int iind = i+ii;
+              if( iind < 0 )  iind += mapX;
+              if( iind >= mapX )  iind -= mapX;
+              for( int jj = -1; jj <= 1; jj++ )  {
+                int jind = j+jj;
+                if( jind < 0 )  jind += mapY;
+                if( jind >= mapY )  jind -= mapY;
+                for( int kk = -1; kk <= 1; kk++ )  {
+                  int kind = k+kk;
+                  if( kind < 0 )  kind += mapZ;
+                  if( kind >= mapZ )  kind -= mapZ;
+                  // main condition
+                  if( map[iind][jind][kind] < level )  {
+                    inside = false;
+                    break;
                   }
-                  if( !inside )  break;
                 }
                 if( !inside )  break;
               }
-              if( inside )  {
-                map[i][j][k] = level + 1;
-                levelUsed = true;
-                MaxLevel = level+1;
-                void_center[0] = i;  
-                void_center[1] = j;  
-                void_center[2] = k;
-              }
+              if( !inside )  break;
+            }
+            if( inside )  {
+              map[i][j][k] = level + 1;
+              levelUsed = true;
+              MaxLevel = level+1;
+              void_center[0] = i;  
+              void_center[1] = j;  
+              void_center[2] = k;
             }
           }
         }
-        if( !levelUsed ) // reached the last point
-          break;
-        level ++;
       }
-      void_center[0] /= mapX;
-      void_center[1] /= mapY;
-      void_center[2] /= mapZ;
-      return MaxLevel;
+      if( !levelUsed ) // reached the last point
+        break;
+      level ++;
+    }
+    void_center[0] /= mapX;
+    void_center[1] /= mapY;
+    void_center[2] /= mapZ;
+    return MaxLevel;
+  }
+  /* Finds the largest 'level' at which it is possible to penetratethe structure;
+  expects a map prepared with AnalyseVoids; only finds unidirectional channels, it
+  will also not be able to 'climb' long walls unless they are thivk enough for dir++ condition
+  */
+  template <typename map_type> static vec3i AnalyseChannels(map_type*** map, uint16_t mapX, uint16_t mapY, uint16_t mapZ,
+    map_type max_level)
+  {
+    const vec3i dim(mapX, mapY, mapZ);
+    map_type*** map_copy = new map_type**[mapX];
+    for( size_t mi=0; mi < mapX; mi++ )  {
+      map_copy[mi] = new map_type*[mapY];
+      for( size_t mj=0; mj < mapY; mj++ )  {
+        map_copy[mi][mj] = new map_type[mapZ];
+        memcpy(map_copy[mi][mj], map[mi][mj], mapZ*sizeof(map_type));
+      }
+    }
+    vec3i dim_ind(0, 1, 2);
+    vec3i res;
+    for( int dim_n=0; dim_n < 3; dim_n++ )  {
+      res[dim_n] = max_level;
+      if( dim_n == 1 )  // Y,Z,X
+        dim_ind = vec3i(1, 2, 0);
+      else if( dim_n == 2 )  // Z,X,Y
+        dim_ind = vec3i(2, 0, 1);
+      while( true )  {
+        bool level_accessible = true;
+        vec3i pt;
+        // initialise starting layer
+        for( uint16_t j=0; j < dim[dim_ind[1]]; j++ )  {
+          for( uint16_t k=0; k < dim[dim_ind[2]]; k++ )  {
+            pt[dim_ind[1]] = j;
+            pt[dim_ind[2]] = k;
+            if( map[pt[0]][pt[1]][pt[2]] >= res[dim_n] )  // find suitable start
+              map[pt[0]][pt[1]][pt[2]] = max_level+1;
+          }
+        }
+        for( int16_t i=1; i < dim[dim_ind[0]]; i++ )  {  // flow direction
+          const int src_ind = i - 1;
+          const int dest_ind = (i == dim[dim_ind[0]]-1 ? 0 : i+1);
+          size_t leaks = 0;
+          pt[dim_ind[0]] = i;
+          for( uint16_t j=0; j < dim[dim_ind[1]]; j++ )  {
+            for( uint16_t k=0; k < dim[dim_ind[2]]; k++ )  {
+              pt[dim_ind[1]] = j;
+              pt[dim_ind[2]] = k;
+              if( map[pt[0]][pt[1]][pt[2]] < res[dim_n] )  // find suitable start
+                continue;
+              bool src_exists = false, dest_exists = false;
+              for( int ii = -1; ii <= 1; ii++)  {
+                pt[dim_ind[1]] = j+ii;
+                if( pt[dim_ind[1]] < 0 )  pt[dim_ind[1]] += dim[dim_ind[1]];
+                if( pt[dim_ind[1]] >= dim[dim_ind[1]] )  pt[dim_ind[1]] -= dim[dim_ind[1]];
+                for( int jj = -1; jj <= 1; jj++)  {
+                  pt[dim_ind[2]] = k+jj;
+                  if( pt[dim_ind[2]] < 0 )  pt[dim_ind[2]] += dim[dim_ind[2]];
+                  if( pt[dim_ind[2]] >= dim[dim_ind[2]] )  pt[dim_ind[2]] -= dim[dim_ind[2]];
+                  pt[dim_ind[0]] = src_ind;  // check the 'source' condition
+                  if( !src_exists && map[pt[0]][pt[1]][pt[2]] > max_level )
+                    src_exists = true;
+                  pt[dim_ind[0]] = dest_ind;  // check the 'flow' condition
+                  if( !dest_exists && map[pt[0]][pt[1]][pt[2]] >= res[dim_n] )
+                    dest_exists = true;
+                }
+              }
+              if( src_exists && dest_exists )  {
+                pt[dim_ind[0]] = i;  pt[dim_ind[1]] = j;  pt[dim_ind[2]] = k;
+                map[pt[0]][pt[1]][pt[2]] = max_level+1;
+                leaks++;
+              }
+            }
+          }
+          if( leaks == 0 )  {
+            level_accessible = false;
+            break;
+          }
+        }
+        if( !level_accessible )  {
+          if( res[dim_n] == 1 )  {
+            res[dim_n] = 0;
+            break;
+          }
+          res[dim_n]--;
+        }
+        else
+          break;
+      }
+      for( size_t mi=0; mi < mapX; mi++ )
+        for( size_t mj=0; mj < mapY; mj++ )
+          memcpy(map[mi][mj], map_copy[mi][mj], mapZ*sizeof(map_type));
+    }
+    for( size_t mi=0; mi < mapX; mi++ )  {
+      for( size_t mj=0; mj < mapY; mj++ )
+        delete [] map_copy[mi][mj];
+      delete [] map_copy[mi];
+    }
+    delete [] map_copy;
+    return res;
+  }
+  /* a flood fill based algorithm to find undulating channels, which however come and exit at one of the 
+  3 crystallographic directions */
+  template <typename map_type> static vec3i AnalyseChannels1(map_type*** map, uint16_t mapX, uint16_t mapY, uint16_t mapZ,
+    map_type max_level)
+  {
+    const vec3i dim(mapX, mapY, mapZ);
+    map_type*** map_copy = new map_type**[mapX];
+    for( size_t mi=0; mi < mapX; mi++ )  {
+      map_copy[mi] = new map_type*[mapY];
+      for( size_t mj=0; mj < mapY; mj++ )  {
+        map_copy[mi][mj] = new map_type[mapZ];
+        memcpy(map_copy[mi][mj], map[mi][mj], mapZ*sizeof(map_type));
+      }
+    }
+    vec3i dim_ind(0, 1, 2);
+    vec3i res;
+    for( int dim_n=0; dim_n < 3; dim_n++ )  {
+      res[dim_n] = max_level;
+      if( dim_n == 1 )  // Y,Z,X
+        dim_ind = vec3i(1, 2, 0);
+      else if( dim_n == 2 )  // Z,X,Y
+        dim_ind = vec3i(2, 0, 1);
+      while( true )  {
+        bool level_accessible = false;
+        vec3i pt;
+        TStack<vec3i> stack;
+        // seed
+        for( uint16_t j=0; j < dim[dim_ind[1]]; j++ )  {
+          for( uint16_t k=0; k < dim[dim_ind[2]]; k++ )  {
+            pt[dim_ind[1]] = j;
+            pt[dim_ind[2]] = k;
+            if( map[pt[0]][pt[1]][pt[2]] == res[dim_n] )  {  // find suitable start
+              stack.Push(pt);
+              map[pt[0]][pt[1]][pt[2]] = res[dim_n]-1;
+            }
+          }
+        }
+        while( !stack.IsEmpty() )  {
+          pt = stack.Pop();
+          if( pt[dim_ind[0]] == dim[dim_ind[0]]-1 )  { // a weak condition, needs more work
+            level_accessible = true;
+            break;
+          }
+          vec3i p(pt);
+          for( int ii=0; ii < 3; ii++ )  {
+            p[dim_ind[ii]] = pt[dim_ind[ii]]-1;
+            if( p[dim_ind[ii]] >= 0 && map[p[0]][p[1]][p[2]] == res[dim_n] )  {
+              stack.Push(p);
+              map[p[0]][p[1]][p[2]] = res[dim_n]-1;
+            } 
+            p[dim_ind[ii]] = pt[dim_ind[ii]]+1;
+            if( p[dim_ind[ii]] < dim[dim_ind[ii]] && map[p[0]][p[1]][p[2]] == res[dim_n] )  {
+              stack.Push(p);
+              map[p[0]][p[1]][p[2]] = res[dim_n]-1;
+            } 
+            p[dim_ind[ii]] = pt[dim_ind[ii]];
+          }
+        }
+        if( !level_accessible )  {
+          if( res[dim_n] == 1 )  {
+            res[dim_n] = 0;
+            break;
+          }
+          res[dim_n]--;
+        }
+        else
+          break;
+      }
+      for( size_t mi=0; mi < mapX; mi++ )
+        for( size_t mj=0; mj < mapY; mj++ )
+          memcpy(map[mi][mj], map_copy[mi][mj], mapZ*sizeof(map_type));
+    }
+    for( size_t mi=0; mi < mapX; mi++ )  {
+      for( size_t mj=0; mj < mapY; mj++ )
+        delete [] map_copy[mi][mj];
+      delete [] map_copy[mi];
+    }
+    delete [] map_copy;
+    return res;
   }
   static int PeakSortByCount(const MapUtil::peak& a, const MapUtil::peak& b)  {
     return b.count - a.count;

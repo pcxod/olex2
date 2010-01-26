@@ -3728,11 +3728,12 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   vec3d voidCenter;
   size_t structureGridPoints = 0;
 
-  FXApp->XFile().GetUnitCell().BuildStructureMap(map, surfdis, -101, &structureGridPoints, 
-    radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
-  //FXApp->XFile().GetUnitCell().BuildStructureMapEx(map, surfdis, -101, &structureGridPoints, 
+  //FXApp->XFile().GetUnitCell().BuildStructureMap(map, surfdis, -101, &structureGridPoints, 
   //  radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
+  FXApp->XFile().GetUnitCell().BuildStructureMapEx(map, surfdis, -101, &structureGridPoints, 
+    radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
   const short MaxLevel = MapUtil::AnalyseVoids(map.Data, map.Length1(), map.Length2(), map.Length3(), voidCenter);
+  //const vec3i MaxXCh = MapUtil::AnalyseChannels1(map.Data, map.Length1(), map.Length2(), map.Length3(), MaxLevel);
   FXApp->XGrid().Clear();  // release the occupied memory
 
   const double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
