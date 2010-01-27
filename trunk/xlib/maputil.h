@@ -162,6 +162,51 @@ public:
     void_center[2] /= mapZ;
     return MaxLevel;
   }
+  // same as above, but stops the process when threshold level is reached
+  template <typename map_type> static void AnalyseVoidsX(map_type*** map, uint16_t mapX, 
+    uint16_t mapY, uint16_t mapZ, map_type threshold)
+  {
+    map_type level = 0;
+    while( true )  {
+      bool levelUsed = false;
+      for( uint16_t i=0; i < mapX; i++ )  {
+        for( uint16_t j=0; j < mapY; j++ )  {
+          for( uint16_t k=0; k < mapZ; k++ )  {
+            // neigbouring points analysis
+            bool inside = true;
+            for( int ii = -1; ii <= 1; ii++ )  {
+              int iind = i+ii;
+              if( iind < 0 )  iind += mapX;
+              if( iind >= mapX )  iind -= mapX;
+              for( int jj = -1; jj <= 1; jj++ )  {
+                int jind = j+jj;
+                if( jind < 0 )  jind += mapY;
+                if( jind >= mapY )  jind -= mapY;
+                for( int kk = -1; kk <= 1; kk++ )  {
+                  int kind = k+kk;
+                  if( kind < 0 )  kind += mapZ;
+                  if( kind >= mapZ )  kind -= mapZ;
+                  // main condition
+                  if( map[iind][jind][kind] < level )  {
+                    inside = false;
+                    break;
+                  }
+                }
+                if( !inside )  break;
+              }
+              if( !inside )  break;
+            }
+            if( inside )  {
+              map[i][j][k] = level + 1;
+              levelUsed = true;
+            }
+          }
+        }
+      }
+      if( ++level >= threshold || !levelUsed )
+        break;
+    }
+  }
   /* Finds the largest 'level' at which it is possible to penetratethe structure;
   expects a map prepared with AnalyseVoids; only finds unidirectional channels, it
   will also not be able to 'climb' long walls unless they are thivk enough for dir++ condition
@@ -265,15 +310,8 @@ public:
   template <typename map_type> static vec3i AnalyseChannels1(map_type*** map, uint16_t mapX, uint16_t mapY, uint16_t mapZ,
     map_type max_level)
   {
+    map_type*** map_copy = ReplicateMap(map, mapX, mapY, mapZ);
     const vec3i dim(mapX, mapY, mapZ);
-    map_type*** map_copy = new map_type**[mapX];
-    for( size_t mi=0; mi < mapX; mi++ )  {
-      map_copy[mi] = new map_type*[mapY];
-      for( size_t mj=0; mj < mapY; mj++ )  {
-        map_copy[mi][mj] = new map_type[mapZ];
-        memcpy(map_copy[mi][mj], map[mi][mj], mapZ*sizeof(map_type));
-      }
-    }
     vec3i dim_ind(0, 1, 2);
     vec3i res;
     for( int dim_n=0; dim_n < 3; dim_n++ )  {
@@ -328,16 +366,9 @@ public:
         else
           break;
       }
-      for( size_t mi=0; mi < mapX; mi++ )
-        for( size_t mj=0; mj < mapY; mj++ )
-          memcpy(map[mi][mj], map_copy[mi][mj], mapZ*sizeof(map_type));
+      CopyMap(map, map_copy, mapX, mapY, mapZ);
     }
-    for( size_t mi=0; mi < mapX; mi++ )  {
-      for( size_t mj=0; mj < mapY; mj++ )
-        delete [] map_copy[mi][mj];
-      delete [] map_copy[mi];
-    }
-    delete [] map_copy;
+    DeleteMap(map_copy, mapX, mapY, mapZ);
     return res;
   }
   static int PeakSortByCount(const MapUtil::peak& a, const MapUtil::peak& b)  {
@@ -425,6 +456,39 @@ public:
         out.NullItem(i);
     }
     out.Pack();
+  }
+  template <typename map_type> static map_type*** ReplicateMap(map_type*** const map,
+    size_t mapX, size_t mapY, size_t mapZ)
+  {
+    map_type*** map_copy = new map_type**[mapX];
+    for( size_t mi=0; mi < mapX; mi++ )  {
+      map_copy[mi] = new map_type*[mapY];
+      for( size_t mj=0; mj < mapY; mj++ )  {
+        map_copy[mi][mj] = new map_type[mapZ];
+        memcpy(map_copy[mi][mj], map[mi][mj], mapZ*sizeof(map_type));
+      }
+    }
+    return map_copy;
+  }
+  template <typename map_type> static map_type*** CopyMap(map_type*** dest,
+    map_type*** const src, size_t mapX, size_t mapY, size_t mapZ)
+  {
+    for( size_t mi=0; mi < mapX; mi++ )  {
+      for( size_t mj=0; mj < mapY; mj++ )  {
+        memcpy(dest[mi][mj], src[mi][mj], mapZ*sizeof(map_type));
+      }
+    }
+    return dest;
+  }
+  template <typename map_type> static void DeleteMap(map_type*** map,
+    size_t mapX, size_t mapY, size_t mapZ)
+  {
+    for( size_t mi=0; mi < mapX; mi++ )  {
+      for( size_t mj=0; mj < mapY; mj++ )
+        delete [] map[mi][mj];
+      delete [] map[mi];
+    }
+    delete [] map;
   }
 };
 
