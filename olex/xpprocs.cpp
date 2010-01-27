@@ -3723,21 +3723,52 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   const int mapX = (int)(au.Axes()[0].GetV()*resolution),
 			mapY = (int)(au.Axes()[1].GetV()*resolution),
 			mapZ = (int)(au.Axes()[2].GetV()*resolution);
-  double mapVol = mapX*mapY*mapZ;
+  const double mapVol = mapX*mapY*mapZ;
+  const double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
+  const int minLevel = olx_round(pow(6*mapVol*3/(4*M_PI*vol), 1./3));
   TArray3D<short> map(0, mapX-1, 0, mapY-1, 0, mapZ-1);
   vec3d voidCenter;
   size_t structureGridPoints = 0;
+  FXApp->XGrid().Clear();  // release the occupied memory
 
   //FXApp->XFile().GetUnitCell().BuildStructureMap(map, surfdis, -101, &structureGridPoints, 
   //  radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
   FXApp->XFile().GetUnitCell().BuildStructureMapEx(map, surfdis, -101, &structureGridPoints, 
     radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
-  const short MaxLevel = MapUtil::AnalyseVoids(map.Data, map.Length1(), map.Length2(), map.Length3(), voidCenter);
-  //const vec3i MaxXCh = MapUtil::AnalyseChannels1(map.Data, map.Length1(), map.Length2(), map.Length3(), MaxLevel);
-  FXApp->XGrid().Clear();  // release the occupied memory
-
-  const double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
+  const short MaxLevel = MapUtil::AnalyseVoids(map.Data, mapX, mapY, mapZ, voidCenter);
+  if( MaxLevel < minLevel )  {
+    TBasicApp::GetLog() << "Given structure has no voids\n";
+    return;
+  }
+  const vec3i MaxXCh = MapUtil::AnalyseChannels1(map.Data, mapX, mapY, mapZ, MaxLevel);
+  for( int i=0; i < 3; i++ )  {
+    if( MaxXCh[i] >= minLevel )
+      TBasicApp::GetLog() << (olxstr((olxch)('a'+i)) << " direction can be penetrated at level " << MaxXCh[i] << '\n' );
+  }
+  short*** map_copy = MapUtil::ReplicateMap(map.Data, mapX, mapY, mapZ);
+  for( int i=0; i < mapX; i++ )  {
+    for( int j=0; j < mapY; j++ )  {
+      for( int k=0; k < mapZ; k++ )  {
+        if( map_copy[i][j][k] < minLevel )
+          map_copy[i][j][k] = 0;
+        else
+          map_copy[i][j][k] = -101;
+      }
+    }
+  }
+  MapUtil::AnalyseVoidsX<short>(map_copy, mapX, mapY, mapZ, minLevel+1);
+  size_t _pc = 0;
+  for( int i=0; i < mapX; i++ )  {
+    for( int j=0; j < mapY; j++ )  {
+      for( int k=0; k < mapZ; k++ )  {
+        if( map_copy[i][j][k] > minLevel )
+          _pc++;
+      }
+    }
+  }
+  MapUtil::DeleteMap(map_copy, mapX, mapY, mapZ);
   TBasicApp::GetLog() << ( olxstr("Cell volume (A^3) ") << olxstr::FormatFloat(3, vol) << '\n');
+  TBasicApp::GetLog() << ( olxstr("Voids volume (A^3) ") << olxstr::FormatFloat(3, (mapVol-_pc)*vol/mapVol) << '\n');
   TBasicApp::GetLog() << ( olxstr("Max level reached ") << MaxLevel << '\n');
   TBasicApp::GetLog() << ( olxstr("  at (") << olxstr::FormatFloat(2, voidCenter[0]) << ", "  <<
     olxstr::FormatFloat(2, voidCenter[1]) << ", "  <<
@@ -3746,9 +3777,8 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   TBasicApp::GetLog() << ( olxstr(catoms.IsEmpty() ? "Structure occupies" : "Selected atoms occupy") << " (A^3) "
     << olxstr::FormatFloat(3, structureGridPoints*vol/mapVol) 
     << " (" << olxstr::FormatFloat(2, structureGridPoints*100/mapVol) << "%)\n");
-  const int minLevel = olx_round( pow( 6*mapVol*3/(4*M_PI*vol), 1./3) );
   TBasicApp::GetLog() << ( olxstr("6A^3 level is ") << minLevel << '\n');
-  TIntList levels(MaxLevel+ 2);
+  TIntList levels(MaxLevel+2);
   for( size_t i=0; i < levels.Count(); i++ )
     levels[i] = 0;
   //FGlConsole->PostText( olxstr("0.5A level is ") << minLevel1 );

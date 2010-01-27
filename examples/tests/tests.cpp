@@ -1,6 +1,8 @@
 #include "xapp.h"
 #include "ins.h"
 #include "xmacro.h"
+#include "unitcell.h"
+#include "maputil.h"
 
 #ifdef __WIN32__
   #include <windows.h>
@@ -57,8 +59,62 @@ int main(int argc, char* argv[])  {
     ABasicFunction* macWilson = XApp.GetLibrary().FindMacro("Wilson");
     if( macSG == NULL || macWilson == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "could not locate library function");
+    
+    ElementRadii radii;
+    olxstr radii_file("e:/radii.txt");
+    if( TEFile::Exists(radii_file) )  {
+      TBasicApp::GetLog() << "Using user defined radii for: \n";
+      TStrList sl, toks;
+      sl.LoadFromFile(radii_file);
+      for( size_t i=0; i < sl.Count(); i++ )  {
+        toks.Clear();
+        toks.Strtok(sl[i], ' ');
+        if( toks.Count() == 2 )  {
+          cm_Element* elm = XElementLib::FindBySymbol(toks[0]);
+          if( elm == NULL )  {
+            TBasicApp::GetLog() << " invalid atom type: " << toks[0] << '\n';
+            continue;
+          }
+          TBasicApp::GetLog() << ' ' << toks[0] << '\t' << toks[1] << '\n';
+          size_t b_i = radii.IndexOf(elm);
+          if( b_i == InvalidIndex )
+            radii.Add(elm, toks[1].ToDouble());
+          else
+            radii.GetValue(b_i) = toks[1].ToDouble();
+        }
+      }
+    }
+
     uint64_t time_start = TETime::msNow();
     for( size_t i=0; i < files.Count(); i++ )  {
+      try {
+        TBasicApp::GetLog() << "\r               \r" << TEFile::ExtractFileName(files[i]);
+        XApp.XFile().LoadFromFile(files[i]);
+        TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
+        size_t ac = 0;
+        for( size_t ai=0; ai < au.AtomCount(); ai++ )
+          if( au.GetAtom(ai).GetType() != iQPeakZ )
+            ac++;
+        if( ac == 0 )  continue;
+        const int mapX = (int)(au.Axes()[0].GetV()*5),
+          mapY = (int)(au.Axes()[1].GetV()*5),
+          mapZ = (int)(au.Axes()[2].GetV()*5);
+        const double mapVol = mapX*mapY*mapZ;
+        const double vol = XApp.XFile().GetLattice().GetUnitCell().CalcVolume();
+        const int minLevel = olx_round(pow(6*mapVol*3/(4*M_PI*vol), 1./3));
+        TArray3D<short> map(0, mapX-1, 0, mapY-1, 0, mapZ-1);
+        vec3d voidCenter;
+        size_t structureGridPoints = 0;
+        XApp.XFile().GetUnitCell().BuildStructureMapEx(map, 0, -101, &structureGridPoints, 
+          radii.IsEmpty() ? NULL : &radii, NULL);
+        const short MaxLevel = MapUtil::AnalyseVoids(map.Data, map.Length1(), map.Length2(), map.Length3(), voidCenter);
+        if( MaxLevel > minLevel )  {
+          TBasicApp::GetLog() << (olxstr("\r--> ") << TEFile::ExtractFileName(files[i]) << "      \n");
+        }
+      }
+      catch(...)  {}
+      continue;
+
       try  {
         //if( files[i].IndexOf(".olex") != InvalidIndex )  continue;
         XApp.XFile().LoadFromFile(files[i]);
