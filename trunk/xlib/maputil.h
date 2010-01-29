@@ -113,6 +113,8 @@ public:
     vec3d& void_center)
   {
     map_type level = 0, MaxLevel = 0;
+    const vec3i dim(mapX, mapY, mapZ);
+    //vec3i[3] dims = {vec3i(0,1,2), vec3i(2,0,1), vec3i(1,2,0)};
     while( true )  {
       bool levelUsed = false;
       for( uint16_t i=0; i < mapX; i++ )  {
@@ -120,28 +122,45 @@ public:
           for( uint16_t k=0; k < mapZ; k++ )  {
             // neigbouring points analysis
             bool inside = true;
-            for( int ii = -1; ii <= 1; ii++ )  {
-              int iind = i+ii;
-              if( iind < 0 )  iind += mapX;
-              if( iind >= mapX )  iind -= mapX;
-              for( int jj = -1; jj <= 1; jj++ )  {
-                int jind = j+jj;
-                if( jind < 0 )  jind += mapY;
-                if( jind >= mapY )  jind -= mapY;
-                for( int kk = -1; kk <= 1; kk++ )  {
-                  int kind = k+kk;
-                  if( kind < 0 )  kind += mapZ;
-                  if( kind >= mapZ )  kind -= mapZ;
-                  // main condition
-                  if( map[iind][jind][kind] < level )  {
-                    inside = false;
-                    break;
-                  }
-                }
-                if( !inside )  break;
+            const vec3i _pt(i,j,k);
+            vec3i pt = _pt;
+            for( int di=0; di < 3; di++ )  {
+              pt[di]++;
+              if( pt[di] >= dim[di] )  pt[di] -= dim[di];
+              if( map[pt[0]][pt[1]][pt[2]] < level )  {
+                inside = false;
+                break;
               }
-              if( !inside )  break;
+              pt[di] = _pt[di] - 1;
+              if( pt[di] < 0 )  pt[di] += dim[di];
+              if( map[pt[0]][pt[1]][pt[2]] < level )  {
+                inside = false;
+                break;
+              }
+              pt[di] = _pt[di];  // restore...
             }
+            //for( int ii = -1; ii <= 1; ii++ )  {
+            //  int iind = i+ii;
+            //  if( iind < 0 )  iind += mapX;
+            //  if( iind >= mapX )  iind -= mapX;
+            //  for( int jj = -1; jj <= 1; jj++ )  {
+            //    int jind = j+jj;
+            //    if( jind < 0 )  jind += mapY;
+            //    if( jind >= mapY )  jind -= mapY;
+            //    for( int kk = -1; kk <= 1; kk++ )  {
+            //      int kind = k+kk;
+            //      if( kind < 0 )  kind += mapZ;
+            //      if( kind >= mapZ )  kind -= mapZ;
+            //      // main condition
+            //      if( map[iind][jind][kind] < level )  {
+            //        inside = false;
+            //        break;
+            //      }
+            //    }
+            //    if( !inside )  break;
+            //  }
+            //  if( !inside )  break;
+            //}
             if( inside )  {
               map[i][j][k] = level + 1;
               levelUsed = true;
@@ -166,6 +185,7 @@ public:
   template <typename map_type> static void AnalyseVoidsX(map_type*** map, uint16_t mapX, 
     uint16_t mapY, uint16_t mapZ, map_type threshold)
   {
+    const vec3i dim(mapX, mapY, mapZ);
     map_type level = 0;
     while( true )  {
       bool levelUsed = false;
@@ -174,28 +194,45 @@ public:
           for( uint16_t k=0; k < mapZ; k++ )  {
             // neigbouring points analysis
             bool inside = true;
-            for( int ii = -1; ii <= 1; ii++ )  {
-              int iind = i+ii;
-              if( iind < 0 )  iind += mapX;
-              if( iind >= mapX )  iind -= mapX;
-              for( int jj = -1; jj <= 1; jj++ )  {
-                int jind = j+jj;
-                if( jind < 0 )  jind += mapY;
-                if( jind >= mapY )  jind -= mapY;
-                for( int kk = -1; kk <= 1; kk++ )  {
-                  int kind = k+kk;
-                  if( kind < 0 )  kind += mapZ;
-                  if( kind >= mapZ )  kind -= mapZ;
-                  // main condition
-                  if( map[iind][jind][kind] < level )  {
-                    inside = false;
-                    break;
-                  }
-                }
-                if( !inside )  break;
+            const vec3i _pt(i,j,k);
+            vec3i pt = _pt;
+            for( int di=0; di < 3; di++ )  {
+              pt[di]++;
+              if( pt[di] >= dim[di] )  pt[di] -= dim[di];
+              if( map[pt[0]][pt[1]][pt[2]] < level )  {
+                inside = false;
+                break;
               }
-              if( !inside )  break;
+              pt[di] = _pt[di] - 1;
+              if( pt[di] < 0 )  pt[di] += dim[di];
+              if( map[pt[0]][pt[1]][pt[2]] < level )  {
+                inside = false;
+                break;
+              }
+              pt[di] = _pt[di];  // restore...
             }
+            //for( int ii = -1; ii <= 1; ii++ )  {
+            //  int iind = i+ii;
+            //  if( iind < 0 )  iind += mapX;
+            //  if( iind >= mapX )  iind -= mapX;
+            //  for( int jj = -1; jj <= 1; jj++ )  {
+            //    int jind = j+jj;
+            //    if( jind < 0 )  jind += mapY;
+            //    if( jind >= mapY )  jind -= mapY;
+            //    for( int kk = -1; kk <= 1; kk++ )  {
+            //      int kind = k+kk;
+            //      if( kind < 0 )  kind += mapZ;
+            //      if( kind >= mapZ )  kind -= mapZ;
+            //      // main condition
+            //      if( map[iind][jind][kind] < level )  {
+            //        inside = false;
+            //        break;
+            //      }
+            //    }
+            //    if( !inside )  break;
+            //  }
+            //  if( !inside )  break;
+            //}
             if( inside )  {
               map[i][j][k] = level + 1;
               levelUsed = true;
