@@ -3746,22 +3746,24 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
       TBasicApp::GetLog() << (olxstr((olxch)('a'+i)) << " direction can be penetrated at level " << MaxXCh[i] << '\n' );
   }
   short*** map_copy = MapUtil::ReplicateMap(map.Data, mapX, mapY, mapZ);
+  short*** amap = map_copy;
+  //short*** amap = map.Data;
   for( int i=0; i < mapX; i++ )  {
     for( int j=0; j < mapY; j++ )  {
       for( int k=0; k < mapZ; k++ )  {
-        if( map_copy[i][j][k] < minLevel )
-          map_copy[i][j][k] = 0;
+        if( amap[i][j][k] < minLevel )
+          amap[i][j][k] = 0;
         else
-          map_copy[i][j][k] = -101;
+          amap[i][j][k] = -101;
       }
     }
   }
-  MapUtil::AnalyseVoidsX<short>(map_copy, mapX, mapY, mapZ, minLevel+1);
+  MapUtil::AnalyseVoidsX<short>(amap, mapX, mapY, mapZ, minLevel+1);
   size_t _pc = 0;
   for( int i=0; i < mapX; i++ )  {
     for( int j=0; j < mapY; j++ )  {
       for( int k=0; k < mapZ; k++ )  {
-        if( map_copy[i][j][k] > minLevel )
+        if( amap[i][j][k] > minLevel )
           _pc++;
       }
     }
