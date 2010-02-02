@@ -20,6 +20,10 @@ class TUnitCell: public IEObject  {
   class TLattice*  Lattice;    // parent lattice
   // a macro FindInRange
   void _FindInRange(const vec3d& center, double R, TTypeList< AnAssociation3<TCAtom const*, smatd, vec3d> >& res) const;
+  static int _AtomSorter(const AnAssociation3<vec3d,TCAtom*, double>& a1, const AnAssociation3<vec3d,TCAtom*, double>& a2)  {
+    const double d = a1.GetA().QLength() - a2.GetA().QLength();
+    return d < 0 ? -1 : (d > 0 ? 1 : 0);
+  }
 public:
   TUnitCell(TLattice* L);
   virtual ~TUnitCell();
@@ -247,6 +251,30 @@ protected:
     void Run(size_t ind) const;
     TSearchSymmEqTask* Replicate() const  {
       return new TSearchSymmEqTask(Atoms, Matrices, tolerance);
+    }
+  };
+  class TBuildDistanceMapTask  {
+    short*** map;
+    const TTypeList<AnAssociation3<vec3f,TCAtom*, float> >& atoms;
+    const vec3i& dims;
+    const mat3f& tm;
+    float** loop_data;
+    bool owns_data;
+    TBuildDistanceMapTask(TBuildDistanceMapTask& parent) : 
+    tm(parent.tm), map(parent.map), atoms(parent.atoms), dims(parent.dims),
+      loop_data(parent.loop_data), owns_data(false)  {}
+  public:
+    TBuildDistanceMapTask(const mat3f& _tm, short*** _map, const vec3i& _dims,
+      const TTypeList<AnAssociation3<vec3f,TCAtom*, float> >& _atoms) :
+      tm(_tm), map(_map), atoms(_atoms), dims(_dims), owns_data(true)
+    {
+      init_loop_data();
+    }
+    void init_loop_data();
+    void clear_loop_data();
+    void Run(size_t ind) const;
+    TBuildDistanceMapTask* Replicate() {
+      return new TBuildDistanceMapTask(*this);
     }
   };
 public:

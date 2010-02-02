@@ -3733,113 +3733,76 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
 
   //FXApp->XFile().GetUnitCell().BuildStructureMap(map, surfdis, -101, &structureGridPoints, 
   //  radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
-  FXApp->XFile().GetUnitCell().BuildStructureMapEx(map, surfdis, -101, &structureGridPoints, 
+  FXApp->XFile().GetUnitCell().BuildStructureMapEx(map, surfdis, -1, NULL, 
     radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
-  const short MaxLevel = MapUtil::AnalyseVoids(map.Data, mapX, mapY, mapZ, voidCenter);
-  if( MaxLevel < minLevel )  {
-    TBasicApp::GetLog() << "Given structure has no voids\n";
-    return;
+  //const short MaxLevel = MapUtil::AnalyseVoids(map.Data, mapX, mapY, mapZ, voidCenter);
+  //if( MaxLevel < minLevel )  {
+  //  TBasicApp::GetLog() << "Given structure has no voids\n";
+  //  return;
+  //}
+  short*** amap = map.Data;
+
+  short MaxLevel = 0;
+  for( int i=0; i < mapX; i++ )  {
+    for( int j=0; j < mapY; j++ )  {
+      for( int k=0; k < mapZ; k++ )  {
+        if( amap[i][j][k] > MaxLevel )
+          MaxLevel = amap[i][j][k];
+        if( amap[i][j][k] <= 0 )
+          structureGridPoints++;
+      }
+    }
   }
+
   const vec3i MaxXCh = MapUtil::AnalyseChannels1(map.Data, mapX, mapY, mapZ, MaxLevel);
   for( int i=0; i < 3; i++ )  {
-    if( MaxXCh[i] >= minLevel )
-      TBasicApp::GetLog() << (olxstr((olxch)('a'+i)) << " direction can be penetrated at level " << MaxXCh[i] << '\n' );
+    if( MaxXCh[i] != 0 )
+      TBasicApp::GetLog() << (olxstr((olxch)('a'+i)) << " direction can be penetrated by a sphere of " <<
+      olxstr::FormatFloat(1, MaxXCh[i]/50) << "A radius\n" );
   }
-  short*** map_copy = MapUtil::ReplicateMap(map.Data, mapX, mapY, mapZ);
-  short*** amap = map_copy;
-  //short*** amap = map.Data;
-  for( int i=0; i < mapX; i++ )  {
-    for( int j=0; j < mapY; j++ )  {
-      for( int k=0; k < mapZ; k++ )  {
-        if( amap[i][j][k] < minLevel )
-          amap[i][j][k] = 0;
-        else
-          amap[i][j][k] = -101;
-      }
-    }
-  }
-  MapUtil::AnalyseVoidsX<short>(amap, mapX, mapY, mapZ, minLevel+1);
-  size_t _pc = 0;
-  for( int i=0; i < mapX; i++ )  {
-    for( int j=0; j < mapY; j++ )  {
-      for( int k=0; k < mapZ; k++ )  {
-        if( amap[i][j][k] > minLevel )
-          _pc++;
-      }
-    }
-  }
-  MapUtil::DeleteMap(map_copy, mapX, mapY, mapZ);
-  TBasicApp::GetLog() << ( olxstr("Cell volume (A^3) ") << olxstr::FormatFloat(3, vol) << '\n');
-  TBasicApp::GetLog() << ( olxstr("Voids volume (A^3) ") << olxstr::FormatFloat(3, (mapVol-_pc)*vol/mapVol) << '\n');
-  TBasicApp::GetLog() << ( olxstr("Max level reached ") << MaxLevel << '\n');
-  TBasicApp::GetLog() << ( olxstr("  at (") << olxstr::FormatFloat(2, voidCenter[0]) << ", "  <<
-    olxstr::FormatFloat(2, voidCenter[1]) << ", "  <<
-    olxstr::FormatFloat(2, voidCenter[2]) << ")\n");
-  TBasicApp::GetLog() << ( olxstr("Largest spherical void is (A^3) ") << olxstr::FormatFloat(3, MaxLevel*MaxLevel*MaxLevel*4*M_PI/(3*mapVol)*vol) << '\n');
+  //short*** map_copy = MapUtil::ReplicateMap(map.Data, mapX, mapY, mapZ);
+  //short*** amap = map_copy;
+  ////short*** amap = map.Data;
+  //for( int i=0; i < mapX; i++ )  {
+  //  for( int j=0; j < mapY; j++ )  {
+  //    for( int k=0; k < mapZ; k++ )  {
+  //      if( amap[i][j][k] < minLevel )
+  //        amap[i][j][k] = 0;
+  //      else
+  //        amap[i][j][k] = -101;
+  //    }
+  //  }
+  //}
+  //MapUtil::AnalyseVoidsX<short>(amap, mapX, mapY, mapZ, minLevel+1);
+  //size_t _pc = 0;
+  //for( int i=0; i < mapX; i++ )  {
+  //  for( int j=0; j < mapY; j++ )  {
+  //    for( int k=0; k < mapZ; k++ )  {
+  //      if( amap[i][j][k] > minLevel )
+  //        _pc++;
+  //    }
+  //  }
+  //}
+  //MapUtil::DeleteMap(map_copy, mapX, mapY, mapZ);
+  //TBasicApp::GetLog() << ( olxstr("Cell volume (A^3) ") << olxstr::FormatFloat(3, vol) << '\n');
+  //TBasicApp::GetLog() << ( olxstr("Voids volume (A^3) ") << olxstr::FormatFloat(3, (mapVol-_pc)*vol/mapVol) << '\n');
+  //TBasicApp::GetLog() << ( olxstr("Max level reached ") << MaxLevel << '\n');
+  //TBasicApp::GetLog() << ( olxstr("  at (") << olxstr::FormatFloat(2, voidCenter[0]) << ", "  <<
+  //  olxstr::FormatFloat(2, voidCenter[1]) << ", "  <<
+  //  olxstr::FormatFloat(2, voidCenter[2]) << ")\n");
+  TBasicApp::GetLog() << ( olxstr("Radius of the largest spherical void is (A) ") << olxstr::FormatFloat(1, (double)MaxLevel/50) << '\n');
   TBasicApp::GetLog() << ( olxstr(catoms.IsEmpty() ? "Structure occupies" : "Selected atoms occupy") << " (A^3) "
     << olxstr::FormatFloat(3, structureGridPoints*vol/mapVol) 
     << " (" << olxstr::FormatFloat(2, structureGridPoints*100/mapVol) << "%)\n");
-  TBasicApp::GetLog() << ( olxstr("6A^3 level is ") << minLevel << '\n');
-  TIntList levels(MaxLevel+2);
-  for( size_t i=0; i < levels.Count(); i++ )
-    levels[i] = 0;
-  //FGlConsole->PostText( olxstr("0.5A level is ") << minLevel1 );
-  short*** const D = map.Data;
-  if( catoms.IsEmpty() )  {  // makes no sense otherwise
-    structureGridPoints = 0;
-    //T3DIndexList allPoints;
-    //allPoints.SetCapacity( (int)mapVol );
-    for( int i=0; i < mapX; i++ )  {
-      for( int j=0; j < mapY; j++ )  {
-        for( int k=0; k < mapZ; k++ )  {
-          if( D[i][j][k] >= 0 )
-            levels[ D[i][j][k] ] ++;
-          if( D[i][j][k] >= minLevel )
-            structureGridPoints++;
-        }
-      }
-    }
-    //for( size_t i=0; i < allPoints.Count(); i++ )  {
-    //  if( InvestigateVoid(allPoints[i].x, allPoints[i].y, allPoints[i].z, map, allPoints) )
-    //    structureGridPoints ++;
-    //}
-    //allPoints.Clear();
-    // cannot claim this is the 'accessible' area...
-    //TBasicApp::GetLog() << ( olxstr("Total solvent accessible area is (A^3) ") << olxstr::FormatFloat(3, structureGridPoints*vol/mapVol) << '\n');
-    double totalVol = 0;
-    for( int i=MaxLevel; i >= 0; i-- )  {
-      totalVol += levels[i];
-      TBasicApp::GetLog() << ( olxstr("Level ") << i << " corresponds to sphere r/A " <<
-        olxstr::FormatFloat(3, pow(i*i*i*vol/mapVol, 1./3)) << " and total volume " <<
-        olxstr::FormatFloat(3, totalVol*vol/mapVol) << "(A^3)\n" );
-    }
-  }
-  // set map to view voids
+  //// set map to view voids
   FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
   FXApp->XGrid().SetMinVal(0);
-  FXApp->XGrid().SetMaxVal(MaxLevel);
-  if( invert )  {
-    for( int i=0; i < mapX; i++ )  {
-      for( int j=0; j < mapY; j++ )  {
-        for( int k=0; k < mapZ; k++ )  {
-          if( D[i][j][k] < 0 && D[i][j][k] != -101 )
-            FXApp->XGrid().SetValue(i, j, k, D[i][j][k]);
-          else
-            FXApp->XGrid().SetValue(i, j, k, -D[i][j][k]);
-        }
-      }
-    }
-  }
-  else  {
-    for( int i=0; i < mapX; i++ )  {
-      for( int j=0; j < mapY; j++ )  {
-        for( int k=0; k < mapZ; k++ )  {
-          if( D[i][j][k] < 0 && D[i][j][k] != -101 )
-            FXApp->XGrid().SetValue(i, j, k, -D[i][j][k]);
-          else
-            FXApp->XGrid().SetValue(i, j, k, D[i][j][k]);
-        }
-      }
+  //FXApp->XGrid().SetMaxVal(MaxLevel);
+  FXApp->XGrid().SetMaxVal(10000);
+  for( int i=0; i < mapX; i++ )  {
+    for( int j=0; j < mapY; j++ )  {
+      for( int k=0; k < mapZ; k++ )
+        FXApp->XGrid().SetValue(i, j, k, map.Data[i][j][k]*2);
     }
   }
   FXApp->XGrid().AdjustMap();
@@ -6998,7 +6961,11 @@ class MTTestTh : public AOlxThread  {
 public:
   MTTestTh() {  Detached = false;  }
 	int Run()  {
+#ifdef _DEBUG
+    for( size_t i=0; i < 10000; i++ )  {
+#else
     for( size_t i=0; i < 250000; i++ )  {
+#endif
       msg = SHA256::Digest(MD5::Digest(msg));
       for( size_t j=0; j < 1000; j++ )  {
         cd_res = (cd_res + compd(1.2, 1.4))*compd(1.00000001, 0.9999999);

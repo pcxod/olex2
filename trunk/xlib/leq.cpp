@@ -201,9 +201,12 @@ double XVarManager::SetParam(IXVarReferencer& ca, short var_index, double val) {
   short var_rel = relation_None;
   double coeff = 0, actual_val = val;
   XVar* var = NULL;
-  if( olx_abs(val) > 10 )  {
+  if( olx_abs(val) > 5 )  {
     int iv = (int)(val/10);
-    int var_index = abs(iv);
+    double a_val = olx_abs(val - iv*10);
+    if( a_val >= 5 )
+      iv = olx_sign(iv)*(olx_abs(iv)+1);
+    int var_index = olx_abs(iv);
     var = &GetReferencedVar(var_index);
     if( var_index == 1 )  // fixed parameter
       actual_val = val - iv*10;
