@@ -77,12 +77,6 @@ public:
   }
   // calculates structure factors for current structure, F.Count must be greater or equal to the ref.Count
   void CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F);
-  /*calculates a grid for the voids/squeeze analysis, extraR is the extra atomic radius 
-  The resulting map contains Levels, 0 for the surface, 1 - one pixel off the survface etc.
-  returns the maximum level reached.  The void center is assigned to the point coordinates with
-  largest level*/
-  short CalcVoid(TArray3D<short>& map, double extraR, short val, size_t* structurePoints, 
-    vec3d& voidCenter, ElementRadii* radii);
   /* function undoes renaming atoms */
   void undoName(TUndoData *data);
   void NameHydrogens(TSAtom& a, TUndoData* ud, bool CheckLabel);
