@@ -361,16 +361,19 @@ public:
         bool level_accessible = false;
         vec3i pt;
         TStack<vec3i> stack;
-        // seed
-        for( uint16_t j=0; j < dim[dim_ind[1]]; j++ )  {
-          for( uint16_t k=0; k < dim[dim_ind[2]]; k++ )  {
-            pt[dim_ind[1]] = j;
-            pt[dim_ind[2]] = k;
-            if( map[pt[0]][pt[1]][pt[2]] == res[dim_n] )  {  // find suitable start
-              stack.Push(pt);
-              map[pt[0]][pt[1]][pt[2]] = res[dim_n]-1;
+        while( stack.IsEmpty() )  { // seed
+          for( uint16_t j=0; j < dim[dim_ind[1]]; j++ )  {
+            for( uint16_t k=0; k < dim[dim_ind[2]]; k++ )  {
+              pt[dim_ind[1]] = j;
+              pt[dim_ind[2]] = k;
+              if( map[pt[0]][pt[1]][pt[2]] >= res[dim_n] )  {  // find suitable start
+                stack.Push(pt);
+                map[pt[0]][pt[1]][pt[2]] = res[dim_n]-1;
+              }
             }
           }
+          if( stack.IsEmpty() && --res[dim_n] == 0 ) // would be odd
+            break;
         }
         while( !stack.IsEmpty() )  {
           pt = stack.Pop();
@@ -386,7 +389,7 @@ public:
               map[p[0]][p[1]][p[2]] = res[dim_n]-1;
             } 
             p[dim_ind[ii]] = pt[dim_ind[ii]]+1;
-            if( p[dim_ind[ii]] < dim[dim_ind[ii]] && map[p[0]][p[1]][p[2]] == res[dim_n] )  {
+            if( p[dim_ind[ii]] < dim[dim_ind[ii]] && map[p[0]][p[1]][p[2]] >= res[dim_n] )  {
               stack.Push(p);
               map[p[0]][p[1]][p[2]] = res[dim_n]-1;
             } 
@@ -394,7 +397,7 @@ public:
           }
         }
         if( !level_accessible )  {
-          if( res[dim_n] == 1 )  {
+          if( res[dim_n] <= 8 )  {  // 0.8 A
             res[dim_n] = 0;
             break;
           }

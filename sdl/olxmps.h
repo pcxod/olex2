@@ -89,15 +89,17 @@ template <class TaskClass>
     }                                                
   protected:
     void CalculateRatios(eveci& res, size_t ListSize, const short TaskType)  {
-      const short mt = olx_min(4, TBasicApp::GetInstance().GetMaxThreadCount());
-      res.Resize( mt );  // max 4 threads to support
       if( TaskType == tLinearTask )  {
+        const short mt = TBasicApp::GetInstance().GetMaxThreadCount();
+        res.Resize(mt);  // max 4 threads to support
         res[0] = (int)(ListSize/mt);
         for( short i=1; i < mt-1; i++ ) res[i] = res[0];
         if( mt > 1 )
           res[mt-1] = (int)(ListSize - (int)((mt-1)*res[0]));
       }
       else if( TaskType == tQuadraticTask )  {
+        const short mt = olx_min(4, TBasicApp::GetInstance().GetMaxThreadCount());
+        res.Resize(mt);  // max 4 threads to support
         switch( mt )  {
           case 1:
             res[0] = (int)ListSize;
@@ -122,7 +124,7 @@ template <class TaskClass>
         }
       }
       else
-        throw TInvalidArgumentException(__OlxSourceInfo, "unknow task complexity");
+        throw TInvalidArgumentException(__OlxSourceInfo, "unknown task complexity");
     }
   public:
     TListIteratorManager(TaskClass& task, size_t ListSize, const short TaskType, size_t minSize)  {
@@ -150,7 +152,7 @@ template <class TaskClass>
         start_thread(item);
       }
       while( !IsCompleted() )
-        olx_sleep(25);
+        olx_sleep(100);
     }
     virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL) {
       ((TArrayIterationItem<TaskClass>*)Sender)->OnCompletion.Remove(this);
@@ -158,7 +160,7 @@ template <class TaskClass>
       return true;
     }
 
-    bool IsCompleted()  const {
+    bool IsCompleted() const {
       for( size_t i=0; i < Items.Count(); i++ )  {
         if( !Items.IsNull(i) )  return false;
       }
