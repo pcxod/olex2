@@ -775,15 +775,8 @@ TCAtom* TUnitCell::FindCAtom(const vec3d& center) const  {
   throw TFunctionFailedException(__OlxSourceInfo, "assert, too many atoms returned");
 }
 //..............................................................................
-int BuildStructureMap_SortAtoms(const AnAssociation3<vec3d,TCAtom*, double>& A1,
-                                const AnAssociation3<vec3d,TCAtom*, double>& A2)
-{
-  const double d = A2.GetA().QLength() - A1.GetA().QLength();
-  return (d < 0 ?  -1 : (d > 0) ? 1 : 0);
-}
-void TUnitCell::BuildStructureMap(TArray3D<short>& map, double delta, short val, 
-                                  size_t* structurePoints, ElementRadii* radii,
-                                  const TCAtomPList* _template)
+void TUnitCell::BuildStructureMap_Direct(TArray3D<short>& map, double delta, short val, 
+                                  ElementRadii* radii, const TCAtomPList* _template)
 {
   TBasicApp::GetLog() << "Building structure map...\n";
   TTypeList< AnAssociation3<vec3d,TCAtom*, double> > allAtoms;
@@ -820,11 +813,6 @@ void TUnitCell::BuildStructureMap(TArray3D<short>& map, double delta, short val,
     au.CellToCartesian(allAtoms[i].A());
   }
   const size_t ac = allAtoms.Count();
-  //allAtoms.QuickSorter.SortSF(allAtoms, BuildStructureMap_SortAtoms);
-  //double* distances = new double [ac];
-  //for( size_t i=0; i < ac; i++ )  {
-  //  distances[i] = allAtoms[i].GetA().QLength();
-  //}
   for( size_t j = 0; j < da; j ++ )  {
     const double dx = (double)j/da;
     if( (j%5) == 0 )  {
@@ -845,33 +833,84 @@ void TUnitCell::BuildStructureMap(TArray3D<short>& map, double delta, short val,
       }
     }
   }
-  if( structurePoints != NULL )  {
-    size_t sp = 0;
-    for( size_t i=0; i < da; i++ )  {
-      for( size_t j=0; j < db; j++ )
-        for( size_t k=0; k < dc; k++ )
-          if( map.Data[i][j][k] == val )
-            sp ++;
-    }
-    *structurePoints = sp;
-  }
-  //delete [] distances;
   TBasicApp::GetLog() << '\r' << "Done\n";
   TBasicApp::GetInstance().Update();
 }
-void TUnitCell::BuildStructureMapEx(TArray3D<short>& map, double delta, short val, 
-                                  size_t* structurePoints, ElementRadii* _radii,
-                                  const TCAtomPList* _template)
+//..................................................................................
+void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, short val, 
+                                  ElementRadii* radii, const TCAtomPList* _template)
 {
-  //throw TNotImplementedException(__OlxSourceInfo);
-  // start of masks approach
+  TTypeList< AnAssociation2<vec3d,TCAtom*> > allAtoms;
+  GenereteAtomCoordinates(allAtoms, true, _template);
+  const vec3i dim(map.Length1(), map.Length2(), map.Length3());
+  // angstrem per pixel scale
+  double capp = Lattice->GetAsymmUnit().Axes()[2].GetV()/dim[2],
+         bapp = Lattice->GetAsymmUnit().Axes()[1].GetV()/dim[1],
+         aapp = Lattice->GetAsymmUnit().Axes()[0].GetV()/dim[0];
+  // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
+  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  const double sin_a = sin(au.GetAngles()[0].GetV()*M_PI/180);
+  const double sin_b = sin(au.GetAngles()[1].GetV()*M_PI/180);
+  const double sin_g = sin(au.GetAngles()[2].GetV()*M_PI/180);
+  olxdict<short, TArray3D<bool>*, TPrimitiveComparator> scatterers;
+  for( size_t i=0; i < au.AtomCount(); i++ )  {
+    if( au.GetAtom(i).IsDeleted() )  continue;
+    size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().index);
+    if( ind != InvalidIndex )  continue;
+    double r = au.GetAtom(i).GetType().r_sfil + delta;
+    if( radii != NULL )  {
+      size_t b_i = radii->IndexOf(&au.GetAtom(i).GetType());
+      if( b_i != InvalidIndex )
+        r = radii->GetValue(b_i) + delta;
+    }
+    const double sr = r*r;
+    int ad = olx_round(olx_max(2*r/sin_b, 2*r/sin_g)/aapp);
+    int bd = olx_round(olx_max(2*r/sin_a, 2*r/sin_g)/aapp);
+    int cd = olx_round(olx_max(2*r/sin_a, 2*r/sin_b)/aapp);
+    TArray3D<bool>* spm = new TArray3D<bool>(-ad, ad, -bd, bd, -cd, cd);
+    for( int x=-ad; x <= ad; x ++ )  {
+      for( int y=-bd; y <= bd; y ++ )  {
+        for( int z=-cd; z <= cd; z ++ )  {
+          vec3d v((double)x/dim[0], (double)y/dim[1], (double)z/dim[2]);
+          au.CellToCartesian(v);
+          spm->Data[x+ad][y+bd][z+cd] = (v.QLength() <= sr);
+        }
+      }
+    }
+    scatterers.Add(au.GetAtom(i).GetType().index, spm);
+  }
+  for( size_t i=0; i < allAtoms.Count(); i++ )  {
+    TArray3D<bool>* spm = scatterers[allAtoms[i].GetB()->GetType().index];
+    vec3d center = allAtoms[i].GetA()*dim;
+    const int ad = spm->Length1()/2;
+    const int bd = spm->Length2()/2;
+    const int cd = spm->Length3()/2;
+    for( int j = -ad; j <= ad; j ++ )  {
+      for( int k = -bd; k <= bd; k ++ )  {
+        for( int l = -cd; l <= cd; l ++ )  {
+          if( !spm->Data[j+ad][k+bd][l+cd] )  continue;
+          vec3i crd( olx_round(center[0]+j), olx_round(center[1]+k), olx_round(center[2]+l));
+          for( size_t m=0; m < 3; m++ )  {
+            if( crd[m] < 0 )        crd[m] += dim[m];
+            if( crd[m] >= dim[m] )  crd[m] -= dim[m];
+          }
+          map.Data[crd[0]][crd[1]][crd[2]] = val;
+        }
+      }
+    }
+  }
+  for( size_t i=0; i < scatterers.Count(); i++ )
+    delete scatterers.GetValue(i);
+}
+//..................................................................................
+void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& map, double delta, short val, 
+                                  ElementRadii* _radii, const TCAtomPList* _template)
+{
   TTypeList< AnAssociation3<vec3f,TCAtom*, float> > allAtoms;
   GenereteAtomCoordinates(allAtoms, true, _template);
   ExpandAtomCoordinates(allAtoms, 1./2);
-  
   const vec3i dims(map.Length1(), map.Length2(), map.Length3());
-  map.FastInitWith(10000);
-  // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
+  //map.FastInitWith(10000);
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   TPSTypeList<short, float> radii;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
@@ -884,29 +923,16 @@ void TUnitCell::BuildStructureMapEx(TArray3D<short>& map, double delta, short va
       if( b_i != InvalidIndex )
         r = _radii->GetValue(b_i) + delta;
     }
-    radii.Add(au.GetAtom(i).GetType().index, r);
+    radii.Add(au.GetAtom(i).GetType().index, (float)r);
   }
-
   for( size_t i=0; i < allAtoms.Count(); i++ )  {
     allAtoms[i].C() = radii[allAtoms[i].GetB()->GetType().index];
     au.CellToCartesian(allAtoms[i].A());
   }
   mat3f tm = au.GetCellToCartesian();
   TBuildDistanceMapTask task(tm, map.Data, dims, allAtoms);
-  //task.init_loop_data();
   TListIteratorManager<TBuildDistanceMapTask> taskm(task, dims[0], tLinearTask, 0);
   task.clear_loop_data();
-
-  if( structurePoints != NULL )  {
-    long sp = 0;
-    for( int i=0; i < dims[0]; i++ )
-      for( int j=0; j < dims[1]; j++ )
-        for( int k=0; k < dims[2]; k++ )
-          if( map.Data[i][j][k] < 0 )  {
-            sp++;
-          }
-    *structurePoints = sp;
-  }
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
 void TUnitCell::TBuildDistanceMapTask::init_loop_data()  {
@@ -941,11 +967,106 @@ void TUnitCell::TBuildDistanceMapTask::Run(size_t ind) const {
     for( int j = 0; j < dims[2]; j++ )  {
       vec3f p(loop_data[0][ind] + loop_data[1][i] + loop_data[3][j], loop_data[2][i] + loop_data[4][j], loop_data[5][j]);
       for( size_t k=0; k < ac; k++ )  {
-        const float d = (p.DistanceTo(atoms[k].GetA())-atoms[k].GetC())*50;
+        const float d = (p.DistanceTo(atoms[k].GetA())-atoms[k].GetC())*10;
         if( map[ind][i][j] > d )
           map[ind][i][j] = static_cast<short>(d);
         if( d < 0 )  //not interested in the inside
           break;
+      }
+    }
+  }
+}
+//..................................................................................
+void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short val, 
+                                  ElementRadii* radii, const TCAtomPList* _template)
+{
+  TTypeList<AnAssociation3<vec3d,TCAtom*,short> > allAtoms;
+  GenereteAtomCoordinates(allAtoms, true, _template);
+  const vec3i dim(map.Length1(), map.Length2(), map.Length3());
+  // angstrem per pixel scale
+  double capp = Lattice->GetAsymmUnit().Axes()[2].GetV()/dim[2],
+         bapp = Lattice->GetAsymmUnit().Axes()[1].GetV()/dim[1],
+         aapp = Lattice->GetAsymmUnit().Axes()[0].GetV()/dim[0];
+  // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
+  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  const double sin_a = sin(au.GetAngles()[0].GetV()*M_PI/180);
+  const double sin_b = sin(au.GetAngles()[1].GetV()*M_PI/180);
+  const double sin_g = sin(au.GetAngles()[2].GetV()*M_PI/180);
+  
+  const double max_r = 15;
+  const int shell_res = olx_round(1./aapp);
+  TArrayList<vec3i_list> shells(olx_round(max_r*shell_res)+1);
+  int ad = olx_round(olx_max(max_r/sin_b, max_r/sin_g)/aapp);
+  int bd = olx_round(olx_max(max_r/sin_a, max_r/sin_g)/aapp);
+  int cd = olx_round(olx_max(max_r/sin_a, max_r/sin_b)/aapp);
+  for( int x=-ad; x <= ad; x++ )  {
+    for( int y=-bd; y <= bd; y++ )  {
+      for( int z=-cd; z <= cd; z++ )  {
+        vec3d v((double)x/dim[0], (double)y/dim[1], (double)z/dim[2]);
+        au.CellToCartesian(v);
+        const double r = v.Length();
+        if( r < max_r )  {
+          short shell_index = (short)(r*shell_res);
+          short shell_index1 = olx_round(r*shell_res);
+          shells[shell_index].AddNew(x,y,z);
+          if( shell_index != shell_index1 )
+            shells[shell_index1].AddNew(x,y,z);
+        }
+      }
+    }
+  }
+  // Z->number of shells
+  olxdict<short, short, TPrimitiveComparator> scatterers;
+  for( size_t i=0; i < au.AtomCount(); i++ )  {
+    if( au.GetAtom(i).IsDeleted() )  continue;
+    size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().index);
+    if( ind != InvalidIndex )  continue;
+    double r = au.GetAtom(i).GetType().r_sfil + delta;
+    if( radii != NULL )  {
+      size_t b_i = radii->IndexOf(&au.GetAtom(i).GetType());
+      if( b_i != InvalidIndex )
+        r = radii->GetValue(b_i) + delta;
+    }
+    scatterers.Add(au.GetAtom(i).GetType().index, olx_round_t<short,double>(r*shell_res));
+  }
+  // this builds the structure map
+  for( size_t i=0; i < allAtoms.Count(); i++ )  {
+    allAtoms[i].A() *= dim;
+    short shell_cnt = scatterers[allAtoms[i].GetB()->GetType().index];
+    allAtoms[i].C() = shell_cnt;
+    for( short j=0; j < shell_cnt; j++ )  {
+      for( size_t k=0; k < shells[j].Count(); k++ )  {
+        vec3i crd = allAtoms[i].A() + shells[j][k];
+        for( size_t m=0; m < 3; m++ )  {
+          if( crd[m] < 0 )        crd[m] += dim[m];
+          if( crd[m] >= dim[m] )  crd[m] -= dim[m];
+        }
+        map.Data[crd[0]][crd[1]][crd[2]] = val;
+      }
+    }
+  }
+  short shell_expansion=0;
+  bool changes = true;
+  while( changes )  {
+    shell_expansion++;
+    changes = false;
+    const short map_val = shell_expansion;//*shell_res;
+    for( size_t i=0; i < allAtoms.Count(); i++ )  {
+      const short shell_cnt = allAtoms[i].GetC();
+      const short shell_num = shell_cnt+shell_expansion;
+      for( size_t j=0; j < shells[shell_num].Count(); j++ )  {
+        vec3i crd = allAtoms[i].GetA() + shells[shell_num][j];
+        for( size_t k=0; k < 3; k++ )  {
+          if( crd[k] < 0 )
+            crd[k] += dim[k];
+          if( crd[k] >= dim[k] )
+            crd[k] -= dim[k];
+        }
+        short& cv = map.Data[crd[0]][crd[1]][crd[2]];
+        if( cv > map_val )  {
+          cv = map_val;
+          changes = true;
+        }
       }
     }
   }

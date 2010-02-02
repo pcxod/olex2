@@ -3715,7 +3715,6 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   double surfdis = Options.FindValue("d", "0.25").ToDouble();
   TBasicApp::GetLog() << "Extra distance from the surface: " << surfdis << '\n';
   
-  bool invert = Options.Contains("i");
   double resolution = Options.FindValue("r", "0.2").ToDouble();
   if( resolution < 0.01 )  
     resolution = 0.02;
@@ -3730,11 +3729,18 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   vec3d voidCenter;
   size_t structureGridPoints = 0;
   FXApp->XGrid().Clear();  // release the occupied memory
-
+  map.FastInitWith(10000);
   //FXApp->XFile().GetUnitCell().BuildStructureMap(map, surfdis, -101, &structureGridPoints, 
   //  radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
-  FXApp->XFile().GetUnitCell().BuildStructureMapEx(map, surfdis, -1, NULL, 
-    radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
+  double map_scale = 10;
+  if( Options.Contains('p') )
+    FXApp->XFile().GetUnitCell().BuildDistanceMap_Direct(map, surfdis, -1,
+      radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
+  else  {
+    FXApp->XFile().GetUnitCell().BuildDistanceMap_Masks(map, surfdis, -1,
+      radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
+    map_scale = resolution;
+  }
   //const short MaxLevel = MapUtil::AnalyseVoids(map.Data, mapX, mapY, mapZ, voidCenter);
   //if( MaxLevel < minLevel )  {
   //  TBasicApp::GetLog() << "Given structure has no voids\n";
@@ -3758,7 +3764,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   for( int i=0; i < 3; i++ )  {
     if( MaxXCh[i] != 0 )
       TBasicApp::GetLog() << (olxstr((olxch)('a'+i)) << " direction can be penetrated by a sphere of " <<
-      olxstr::FormatFloat(1, MaxXCh[i]/50) << "A radius\n" );
+      olxstr::FormatFloat(1, MaxXCh[i]/map_scale) << "A radius\n" );
   }
   //short*** map_copy = MapUtil::ReplicateMap(map.Data, mapX, mapY, mapZ);
   //short*** amap = map_copy;
@@ -3790,7 +3796,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   //TBasicApp::GetLog() << ( olxstr("  at (") << olxstr::FormatFloat(2, voidCenter[0]) << ", "  <<
   //  olxstr::FormatFloat(2, voidCenter[1]) << ", "  <<
   //  olxstr::FormatFloat(2, voidCenter[2]) << ")\n");
-  TBasicApp::GetLog() << ( olxstr("Radius of the largest spherical void is (A) ") << olxstr::FormatFloat(1, (double)MaxLevel/50) << '\n');
+  TBasicApp::GetLog() << ( olxstr("Radius of the largest spherical void is (A) ") << olxstr::FormatFloat(1, (double)MaxLevel/map_scale) << '\n');
   TBasicApp::GetLog() << ( olxstr(catoms.IsEmpty() ? "Structure occupies" : "Selected atoms occupy") << " (A^3) "
     << olxstr::FormatFloat(3, structureGridPoints*vol/mapVol) 
     << " (" << olxstr::FormatFloat(2, structureGridPoints*100/mapVol) << "%)\n");
@@ -3802,7 +3808,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   for( int i=0; i < mapX; i++ )  {
     for( int j=0; j < mapY; j++ )  {
       for( int k=0; k < mapZ; k++ )
-        FXApp->XGrid().SetValue(i, j, k, map.Data[i][j][k]*2);
+        FXApp->XGrid().SetValue(i, j, k, map.Data[i][j][k]);
     }
   }
   FXApp->XGrid().AdjustMap();

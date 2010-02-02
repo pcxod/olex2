@@ -2877,281 +2877,282 @@ struct XLibMacros_StrF  {
   TEComplex<double> v;
 };
 void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TXApp& XApp = TXApp::GetInstance();
-  double F000 = 0;
-  double factor = 2;
-  TRefList refs;
-  TArrayList<TEComplex<double> > F;
-  TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
-  const TUnitCell& uc = XApp.XFile().GetUnitCell();
-  // space group matrix list
-  TSpaceGroup* sg = NULL;
-  try  { sg = &XApp.XFile().GetLastLoaderSG();  }
-  catch(...)  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate space group");
-    return;
-  }
-  smatd_list ml;
-  sg->GetMatrices(ml, mattAll^mattInversion);
-  for( size_t i=0; i < au.AtomCount(); i++ )  {
-    TCAtom& ca = au.GetAtom(i);
-    if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  
-      continue;
-    F000 += ca.GetType().z*uc.MatrixCount()*ca.GetOccu();
-  }
-  olxstr fcffn = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "fcf");
-  if( !TEFile::Exists(fcffn) )  {
-    fcffn = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "fco");
-    if( !TEFile::Exists(fcffn) )  {
-      E.ProcessingError(__OlxSrcInfo, "please load fcf file or make sure the one exists in current folder");
-      return;
-    }
-  }
-  TCif cif;
-  cif.LoadFromFile( fcffn );
-//  F000 = cif.GetSParam("_exptl_crystal_F_000").ToDouble();
-  TCifLoop* hklLoop = cif.FindLoop("_refln");
-  if( hklLoop == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "no hkl loop found");
-    return;
-  }
-  size_t hInd = hklLoop->GetTable().ColIndex("_refln_index_h");
-  size_t kInd = hklLoop->GetTable().ColIndex("_refln_index_k");
-  size_t lInd = hklLoop->GetTable().ColIndex("_refln_index_l");
-  // list 3, F
-  size_t mfInd = hklLoop->GetTable().ColIndex("_refln_F_meas");
-  size_t sfInd = hklLoop->GetTable().ColIndex("_refln_F_sigma");
-  size_t aInd = hklLoop->GetTable().ColIndex("_refln_A_calc");
-  size_t bInd = hklLoop->GetTable().ColIndex("_refln_B_calc");
-
-  if( (hInd|kInd|lInd|mfInd|sfInd|aInd|bInd) == InvalidIndex ) {
-      E.ProcessingError(__OlxSrcInfo, "list 3 fcf file is expected");
-      return;
-  }
-  refs.SetCapacity( hklLoop->GetTable().RowCount() );
-  F.SetCount( hklLoop->GetTable().RowCount() );
-  for( size_t i=0; i < hklLoop->GetTable().RowCount(); i++ )  {
-    TStrPObjList<olxstr,TCifLoopData*>& row = hklLoop->GetTable()[i];
-    TReflection& ref = refs.AddNew(row[hInd].ToInt(), row[kInd].ToInt(), 
-      row[lInd].ToInt(), row[mfInd].ToDouble(), row[sfInd].ToDouble());
-    if( ref.GetH() < 0 )
-      factor = 4;
-//    const TEComplex<double> rv(row[aInd].ToDouble(), row[bInd].ToDouble());
-//    F[i] = TEComplex<double>::polar(ref.GetI(), rv.arg());
-//    F[i].A() = row[aInd].ToDouble();
-//    F[i].B() = row[bInd].ToDouble();
-      const TEComplex<double> rv(row[aInd].ToDouble(), row[bInd].ToDouble());
-      double dI = (ref.GetI() - rv.mod());
-      F[i] = TEComplex<double>::polar(dI, rv.arg());
-  }
-  olxstr hklFileName = XApp.LocateHklFile();
-  if( !TEFile::Exists(hklFileName) )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate hkl file");
-    return;
-  }
-  double vol = XApp.XFile().GetLattice().GetUnitCell().CalcVolume();
-  int minH = 100,  minK = 100,  minL = 100;
-  int maxH = -100, maxK = -100, maxL = -100;
-
-  vec3d hkl;
-  TArrayList<XLibMacros_StrF> AllF(refs.Count()*ml.Count());
-  int index = 0;
-  double f000 = 0;
-  for( size_t i=0; i < refs.Count(); i++ )  {
-    const TReflection& ref = refs[i];
-    for( size_t j=0; j < ml.Count(); j++, index++ )  {
-      ref.MulHkl(hkl, ml[j]);
-      if( hkl[0] < minH )  minH = (int)hkl[0];
-      if( hkl[1] < minK )  minK = (int)hkl[1];
-      if( hkl[2] < minL )  minL = (int)hkl[2];
-      if( hkl[0] > maxH )  maxH = (int)hkl[0];
-      if( hkl[1] > maxK )  maxK = (int)hkl[1];
-      if( hkl[2] > maxL )  maxL = (int)hkl[2];
-      AllF[index].h = (int)hkl[0];
-      AllF[index].k = (int)hkl[1];
-      AllF[index].l = (int)hkl[2];
-      AllF[index].ps = hkl[0]*ml[j].t[0] + hkl[1]*ml[j].t[1] + hkl[2]*ml[j].t[2];
-      AllF[index].v = F[i];
-      AllF[index].v *= TEComplex<double>::polar(1, 2*M_PI*AllF[index].ps);
-    }
-  }
-// init map, 0.1A for now
-  const int mapX = (int)au.Axes()[0].GetV()*3,
-			mapY = (int)au.Axes()[1].GetV()*3,
-			mapZ = (int)au.Axes()[2].GetV()*3;
-  double mapVol = mapX*mapY*mapZ;
-  TArray3D<double> fMap(0, mapX-1, 0, mapY-1, 0, mapZ-1);
-//////////////////////////////////////////////////////////////////////////////////////////
-  TEComplex<double> ** S, *T;
-  int kLen = maxK-minK+1, hLen = maxH-minH+1, lLen = maxL-minL+1;
-  S = new TEComplex<double>*[kLen];
-  for( int i=0; i < kLen; i++ )
-    S[i] = new TEComplex<double>[lLen];
-  T = new TEComplex<double>[lLen];
-  const double T_PI = 2*M_PI;
-// precalculations
-  int minInd = olx_min(minH, minK);
-  if( minL < minInd )  minInd = minL;
-  int maxInd = olx_max(maxH, maxK);
-  if( maxL > maxInd )  maxInd = maxL;
-  int iLen = maxInd - minInd + 1;
-  int mapMax = olx_max(mapX, mapY);
-  if( mapZ > mapMax )  mapMax = mapZ;
-  TEComplex<double>** sin_cosX = new TEComplex<double>*[mapX],
-                      **sin_cosY, **sin_cosZ;
-  for( int i=0; i < mapX; i++ )  {
-    sin_cosX[i] = new TEComplex<double>[iLen];
-    for( int j=minInd; j <= maxInd; j++ )  {
-      double rv = (double)(i*j)/mapX, ca, sa;
-      rv *= T_PI;
-      SinCos(-rv, &sa, &ca);
-      sin_cosX[i][j-minInd].SetRe(ca);
-      sin_cosX[i][j-minInd].SetIm(sa);
-    }
-  }
-  if( mapX == mapY )  {
-    sin_cosY = sin_cosX;
-  }
-  else  {
-    sin_cosY = new TEComplex<double>*[mapY];
-    for( int i=0; i < mapY; i++ )  {
-      sin_cosY[i] = new TEComplex<double>[iLen];
-      for( int j=minInd; j <= maxInd; j++ )  {
-        double rv = (double)(i*j)/mapY, ca, sa;
-        rv *= T_PI;
-        SinCos(-rv, &sa, &ca);
-        sin_cosY[i][j-minInd].SetRe(ca);
-        sin_cosY[i][j-minInd].SetIm(sa);
-      }
-    }
-  }
-  if( mapX == mapZ )  {
-    sin_cosZ = sin_cosX;
-  }
-  else if( mapY == mapZ )  {
-    sin_cosZ = sin_cosY;
-  }
-  else  {
-    sin_cosZ = new TEComplex<double>*[mapZ];
-    for( int i=0; i < mapZ; i++ )  {
-      sin_cosZ[i] = new TEComplex<double>[iLen];
-      for( int j=minInd; j <= maxInd; j++ )  {
-        double rv = (double)(i*j)/mapZ, ca, sa;
-        rv *= T_PI;
-        SinCos(-rv, &sa, &ca);
-        sin_cosZ[i][j-minInd].SetRe(ca);
-        sin_cosZ[i][j-minInd].SetIm(sa);
-      }
-    }
-  }
-  TEComplex<double> R;
-  double maxMapV = -1000, minMapV = 1000;
-  for( int ix=0; ix < mapX; ix++ )  {
-    for( size_t i=0; i < AllF.Count(); i++ )  {
-      const XLibMacros_StrF& sf = AllF[i];
-      S[sf.k-minK][sf.l-minL] += sf.v*sin_cosX[ix][sf.h-minInd];
-    }
-    for( int iy=0; iy < mapY; iy++ )  {
-      for( int i=minK; i <= maxK; i++ )  {
-        for( int j=minL; j <= maxL; j++ )  {
-          T[j-minL] += S[i-minK][j-minL]*sin_cosY[iy][i-minInd];
-        }
-      }
-      for( int iz=0; iz < mapZ; iz++ )  {
-        R.Null();
-        for( int i=minL; i <= maxL; i++ )  {
-          R += T[i-minL]*sin_cosZ[iz][i-minInd];
-        }
-        double val = factor*R.Re()/vol;
-        if( val > maxMapV )  maxMapV = val;
-        if( val < minMapV )  minMapV = val;
-        fMap.Data[ix][iy][iz] = val;
-      }
-      for( int i=0; i < lLen; i++ )  
-        T[i].Null();
-    }
-    for( int i=0; i < kLen; i++ )  
-      for( int j=0; j < lLen; j++ )  
-        S[i][j].Null();
-  }
-  TBasicApp::GetLog() << (olxstr("Map max val ") << olxstr::FormatFloat(3, maxMapV) << " min val " << olxstr::FormatFloat(3, minMapV) << '\n');
-//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-  // calculate the map
-  double surfdis = Options.FindValue("d", "1.0").ToDouble();
-  size_t structurePoints = 0;
-  vec3d voidCenter;
-  TArray3D<short> maskMap(0, mapX-1, 0, mapY-1, 0, mapZ-1);
-  short MaxLevel = XApp.CalcVoid(maskMap, surfdis, -101, &structurePoints, voidCenter, NULL);
-  XApp.GetLog() << ( olxstr("Cell volume (A^3) ") << olxstr::FormatFloat(3, vol) << '\n');
-  XApp.GetLog() << ( olxstr("Max level reached ") << MaxLevel << '\n');
-  XApp.GetLog() << ( olxstr("Largest spherical void is (A^3) ") << olxstr::FormatFloat(3, MaxLevel*MaxLevel*MaxLevel*4*M_PI/(3*mapVol)*vol) << '\n');
-  XApp.GetLog() << ( olxstr("Structure occupies (A^3) ") << olxstr::FormatFloat(3, structurePoints*vol/mapVol) << '\n');
-  int minLevel = olx_round( pow( 6*mapVol*3/(4*M_PI*vol), 1./3) );
-  XApp.GetLog() << ( olxstr("6A^3 level is ") << minLevel << '\n');
-  // calculate new structure factors
-  double Re = 0, Te=0, F0 = 0;
-  int RePointCount = 0, TePointCount = 0;
-//  for( int i=0; i < refs.Count(); i++ )  {
-//    TReflection& ref = refs[i];
-//    double A = 0, B = 0;
-    for( int ix=0; ix < mapX; ix++ )  {
-      for( int iy=0; iy < mapY; iy++ )  {
-        for( int iz=0; iz < mapZ; iz++ )  {
-          if( maskMap.Data[ix][iy][iz] <= 0  )  {
-//            double tv =  (double)ref.GetH()*ix/mapX;  
-//            tv += (double)ref.GetK()*iy/mapY;  
-//            tv += (double)ref.GetL()*iz/mapZ;
-//            tv *= T_PI;
-//            double ca, sa;
-//            SinCos(tv, &sa, &ca);
-//            A += fMap.Data[ix][iy][iz]*ca;
-//            B += fMap.Data[ix][iy][iz]*sa;
-//            if( i == 0 )  {
-              Te += fMap.Data[ix][iy][iz];
-              TePointCount++;
-//            }
-          }
-          else   {
-//            if( i == 0 )  {
-              Re += fMap.Data[ix][iy][iz];
-              RePointCount++;
-//            }
-          }
-//          if( i == 0 )  {
-            F0 += fMap.Data[ix][iy][iz];
-//          }
-        }
-      }
-    }
-//    ref.SetI( sqrt(A*A+B*B)/100 );
+  throw TNotImplementedException(__OlxSourceInfo);
+//  TXApp& XApp = TXApp::GetInstance();
+//  double F000 = 0;
+//  double factor = 2;
+//  TRefList refs;
+//  TArrayList<TEComplex<double> > F;
+//  TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
+//  const TUnitCell& uc = XApp.XFile().GetUnitCell();
+//  // space group matrix list
+//  TSpaceGroup* sg = NULL;
+//  try  { sg = &XApp.XFile().GetLastLoaderSG();  }
+//  catch(...)  {
+//    E.ProcessingError(__OlxSrcInfo, "could not locate space group");
+//    return;
 //  }
-//  TCStrList sl;
-//  for( int i=0;  i < refs.Count(); i++ )
-//    sl.Add( refs[i].ToString() );
-//  sl.SaveToFile( "test.hkl" );
-  XApp.GetLog() << "Voids         " << Re*vol/(mapVol) << "e-\n";
-//  XApp.GetLog() << "F000 calc     " << Te*vol/(mapVol) << "e-\n";
-  XApp.GetLog() << "F000 (formula)" << F000 << "e-\n";
-//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-  for( int i=0; i < kLen; i++ )
-    delete [] S[i];
-  delete [] S;
-  delete [] T;
-  if( sin_cosY == sin_cosX )  sin_cosY = NULL;
-  if( sin_cosZ == sin_cosX || sin_cosZ == sin_cosY )  sin_cosZ = NULL;
-  for( int i=0; i < mapX; i++ )
-    delete [] sin_cosX[i];
-  delete [] sin_cosX;
-  if( sin_cosY != NULL )  {
-    for( int i=0; i < mapY; i++ )
-      delete [] sin_cosY[i];
-    delete [] sin_cosY;
-  }
-  if( sin_cosZ != NULL )  {
-    for( int i=0; i < mapZ; i++ )
-      delete [] sin_cosZ[i];
-    delete [] sin_cosZ;
-  }
+//  smatd_list ml;
+//  sg->GetMatrices(ml, mattAll^mattInversion);
+//  for( size_t i=0; i < au.AtomCount(); i++ )  {
+//    TCAtom& ca = au.GetAtom(i);
+//    if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  
+//      continue;
+//    F000 += ca.GetType().z*uc.MatrixCount()*ca.GetOccu();
+//  }
+//  olxstr fcffn = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "fcf");
+//  if( !TEFile::Exists(fcffn) )  {
+//    fcffn = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "fco");
+//    if( !TEFile::Exists(fcffn) )  {
+//      E.ProcessingError(__OlxSrcInfo, "please load fcf file or make sure the one exists in current folder");
+//      return;
+//    }
+//  }
+//  TCif cif;
+//  cif.LoadFromFile( fcffn );
+////  F000 = cif.GetSParam("_exptl_crystal_F_000").ToDouble();
+//  TCifLoop* hklLoop = cif.FindLoop("_refln");
+//  if( hklLoop == NULL )  {
+//    E.ProcessingError(__OlxSrcInfo, "no hkl loop found");
+//    return;
+//  }
+//  size_t hInd = hklLoop->GetTable().ColIndex("_refln_index_h");
+//  size_t kInd = hklLoop->GetTable().ColIndex("_refln_index_k");
+//  size_t lInd = hklLoop->GetTable().ColIndex("_refln_index_l");
+//  // list 3, F
+//  size_t mfInd = hklLoop->GetTable().ColIndex("_refln_F_meas");
+//  size_t sfInd = hklLoop->GetTable().ColIndex("_refln_F_sigma");
+//  size_t aInd = hklLoop->GetTable().ColIndex("_refln_A_calc");
+//  size_t bInd = hklLoop->GetTable().ColIndex("_refln_B_calc");
+//
+//  if( (hInd|kInd|lInd|mfInd|sfInd|aInd|bInd) == InvalidIndex ) {
+//      E.ProcessingError(__OlxSrcInfo, "list 3 fcf file is expected");
+//      return;
+//  }
+//  refs.SetCapacity( hklLoop->GetTable().RowCount() );
+//  F.SetCount( hklLoop->GetTable().RowCount() );
+//  for( size_t i=0; i < hklLoop->GetTable().RowCount(); i++ )  {
+//    TStrPObjList<olxstr,TCifLoopData*>& row = hklLoop->GetTable()[i];
+//    TReflection& ref = refs.AddNew(row[hInd].ToInt(), row[kInd].ToInt(), 
+//      row[lInd].ToInt(), row[mfInd].ToDouble(), row[sfInd].ToDouble());
+//    if( ref.GetH() < 0 )
+//      factor = 4;
+////    const TEComplex<double> rv(row[aInd].ToDouble(), row[bInd].ToDouble());
+////    F[i] = TEComplex<double>::polar(ref.GetI(), rv.arg());
+////    F[i].A() = row[aInd].ToDouble();
+////    F[i].B() = row[bInd].ToDouble();
+//      const TEComplex<double> rv(row[aInd].ToDouble(), row[bInd].ToDouble());
+//      double dI = (ref.GetI() - rv.mod());
+//      F[i] = TEComplex<double>::polar(dI, rv.arg());
+//  }
+//  olxstr hklFileName = XApp.LocateHklFile();
+//  if( !TEFile::Exists(hklFileName) )  {
+//    E.ProcessingError(__OlxSrcInfo, "could not locate hkl file");
+//    return;
+//  }
+//  double vol = XApp.XFile().GetLattice().GetUnitCell().CalcVolume();
+//  int minH = 100,  minK = 100,  minL = 100;
+//  int maxH = -100, maxK = -100, maxL = -100;
+//
+//  vec3d hkl;
+//  TArrayList<XLibMacros_StrF> AllF(refs.Count()*ml.Count());
+//  int index = 0;
+//  double f000 = 0;
+//  for( size_t i=0; i < refs.Count(); i++ )  {
+//    const TReflection& ref = refs[i];
+//    for( size_t j=0; j < ml.Count(); j++, index++ )  {
+//      ref.MulHkl(hkl, ml[j]);
+//      if( hkl[0] < minH )  minH = (int)hkl[0];
+//      if( hkl[1] < minK )  minK = (int)hkl[1];
+//      if( hkl[2] < minL )  minL = (int)hkl[2];
+//      if( hkl[0] > maxH )  maxH = (int)hkl[0];
+//      if( hkl[1] > maxK )  maxK = (int)hkl[1];
+//      if( hkl[2] > maxL )  maxL = (int)hkl[2];
+//      AllF[index].h = (int)hkl[0];
+//      AllF[index].k = (int)hkl[1];
+//      AllF[index].l = (int)hkl[2];
+//      AllF[index].ps = hkl[0]*ml[j].t[0] + hkl[1]*ml[j].t[1] + hkl[2]*ml[j].t[2];
+//      AllF[index].v = F[i];
+//      AllF[index].v *= TEComplex<double>::polar(1, 2*M_PI*AllF[index].ps);
+//    }
+//  }
+//// init map, 0.1A for now
+//  const int mapX = (int)au.Axes()[0].GetV()*3,
+//			mapY = (int)au.Axes()[1].GetV()*3,
+//			mapZ = (int)au.Axes()[2].GetV()*3;
+//  double mapVol = mapX*mapY*mapZ;
+//  TArray3D<double> fMap(0, mapX-1, 0, mapY-1, 0, mapZ-1);
+////////////////////////////////////////////////////////////////////////////////////////////
+//  TEComplex<double> ** S, *T;
+//  int kLen = maxK-minK+1, hLen = maxH-minH+1, lLen = maxL-minL+1;
+//  S = new TEComplex<double>*[kLen];
+//  for( int i=0; i < kLen; i++ )
+//    S[i] = new TEComplex<double>[lLen];
+//  T = new TEComplex<double>[lLen];
+//  const double T_PI = 2*M_PI;
+//// precalculations
+//  int minInd = olx_min(minH, minK);
+//  if( minL < minInd )  minInd = minL;
+//  int maxInd = olx_max(maxH, maxK);
+//  if( maxL > maxInd )  maxInd = maxL;
+//  int iLen = maxInd - minInd + 1;
+//  int mapMax = olx_max(mapX, mapY);
+//  if( mapZ > mapMax )  mapMax = mapZ;
+//  TEComplex<double>** sin_cosX = new TEComplex<double>*[mapX],
+//                      **sin_cosY, **sin_cosZ;
+//  for( int i=0; i < mapX; i++ )  {
+//    sin_cosX[i] = new TEComplex<double>[iLen];
+//    for( int j=minInd; j <= maxInd; j++ )  {
+//      double rv = (double)(i*j)/mapX, ca, sa;
+//      rv *= T_PI;
+//      SinCos(-rv, &sa, &ca);
+//      sin_cosX[i][j-minInd].SetRe(ca);
+//      sin_cosX[i][j-minInd].SetIm(sa);
+//    }
+//  }
+//  if( mapX == mapY )  {
+//    sin_cosY = sin_cosX;
+//  }
+//  else  {
+//    sin_cosY = new TEComplex<double>*[mapY];
+//    for( int i=0; i < mapY; i++ )  {
+//      sin_cosY[i] = new TEComplex<double>[iLen];
+//      for( int j=minInd; j <= maxInd; j++ )  {
+//        double rv = (double)(i*j)/mapY, ca, sa;
+//        rv *= T_PI;
+//        SinCos(-rv, &sa, &ca);
+//        sin_cosY[i][j-minInd].SetRe(ca);
+//        sin_cosY[i][j-minInd].SetIm(sa);
+//      }
+//    }
+//  }
+//  if( mapX == mapZ )  {
+//    sin_cosZ = sin_cosX;
+//  }
+//  else if( mapY == mapZ )  {
+//    sin_cosZ = sin_cosY;
+//  }
+//  else  {
+//    sin_cosZ = new TEComplex<double>*[mapZ];
+//    for( int i=0; i < mapZ; i++ )  {
+//      sin_cosZ[i] = new TEComplex<double>[iLen];
+//      for( int j=minInd; j <= maxInd; j++ )  {
+//        double rv = (double)(i*j)/mapZ, ca, sa;
+//        rv *= T_PI;
+//        SinCos(-rv, &sa, &ca);
+//        sin_cosZ[i][j-minInd].SetRe(ca);
+//        sin_cosZ[i][j-minInd].SetIm(sa);
+//      }
+//    }
+//  }
+//  TEComplex<double> R;
+//  double maxMapV = -1000, minMapV = 1000;
+//  for( int ix=0; ix < mapX; ix++ )  {
+//    for( size_t i=0; i < AllF.Count(); i++ )  {
+//      const XLibMacros_StrF& sf = AllF[i];
+//      S[sf.k-minK][sf.l-minL] += sf.v*sin_cosX[ix][sf.h-minInd];
+//    }
+//    for( int iy=0; iy < mapY; iy++ )  {
+//      for( int i=minK; i <= maxK; i++ )  {
+//        for( int j=minL; j <= maxL; j++ )  {
+//          T[j-minL] += S[i-minK][j-minL]*sin_cosY[iy][i-minInd];
+//        }
+//      }
+//      for( int iz=0; iz < mapZ; iz++ )  {
+//        R.Null();
+//        for( int i=minL; i <= maxL; i++ )  {
+//          R += T[i-minL]*sin_cosZ[iz][i-minInd];
+//        }
+//        double val = factor*R.Re()/vol;
+//        if( val > maxMapV )  maxMapV = val;
+//        if( val < minMapV )  minMapV = val;
+//        fMap.Data[ix][iy][iz] = val;
+//      }
+//      for( int i=0; i < lLen; i++ )  
+//        T[i].Null();
+//    }
+//    for( int i=0; i < kLen; i++ )  
+//      for( int j=0; j < lLen; j++ )  
+//        S[i][j].Null();
+//  }
+//  TBasicApp::GetLog() << (olxstr("Map max val ") << olxstr::FormatFloat(3, maxMapV) << " min val " << olxstr::FormatFloat(3, minMapV) << '\n');
+////@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+//  // calculate the map
+//  double surfdis = Options.FindValue("d", "1.0").ToDouble();
+//  size_t structurePoints = 0;
+//  vec3d voidCenter;
+//  TArray3D<short> maskMap(0, mapX-1, 0, mapY-1, 0, mapZ-1);
+//  short MaxLevel = XApp.CalcVoid(maskMap, surfdis, -101, &structurePoints, voidCenter, NULL);
+//  XApp.GetLog() << ( olxstr("Cell volume (A^3) ") << olxstr::FormatFloat(3, vol) << '\n');
+//  XApp.GetLog() << ( olxstr("Max level reached ") << MaxLevel << '\n');
+//  XApp.GetLog() << ( olxstr("Largest spherical void is (A^3) ") << olxstr::FormatFloat(3, MaxLevel*MaxLevel*MaxLevel*4*M_PI/(3*mapVol)*vol) << '\n');
+//  XApp.GetLog() << ( olxstr("Structure occupies (A^3) ") << olxstr::FormatFloat(3, structurePoints*vol/mapVol) << '\n');
+//  int minLevel = olx_round( pow( 6*mapVol*3/(4*M_PI*vol), 1./3) );
+//  XApp.GetLog() << ( olxstr("6A^3 level is ") << minLevel << '\n');
+//  // calculate new structure factors
+//  double Re = 0, Te=0, F0 = 0;
+//  int RePointCount = 0, TePointCount = 0;
+////  for( int i=0; i < refs.Count(); i++ )  {
+////    TReflection& ref = refs[i];
+////    double A = 0, B = 0;
+//    for( int ix=0; ix < mapX; ix++ )  {
+//      for( int iy=0; iy < mapY; iy++ )  {
+//        for( int iz=0; iz < mapZ; iz++ )  {
+//          if( maskMap.Data[ix][iy][iz] <= 0  )  {
+////            double tv =  (double)ref.GetH()*ix/mapX;  
+////            tv += (double)ref.GetK()*iy/mapY;  
+////            tv += (double)ref.GetL()*iz/mapZ;
+////            tv *= T_PI;
+////            double ca, sa;
+////            SinCos(tv, &sa, &ca);
+////            A += fMap.Data[ix][iy][iz]*ca;
+////            B += fMap.Data[ix][iy][iz]*sa;
+////            if( i == 0 )  {
+//              Te += fMap.Data[ix][iy][iz];
+//              TePointCount++;
+////            }
+//          }
+//          else   {
+////            if( i == 0 )  {
+//              Re += fMap.Data[ix][iy][iz];
+//              RePointCount++;
+////            }
+//          }
+////          if( i == 0 )  {
+//            F0 += fMap.Data[ix][iy][iz];
+////          }
+//        }
+//      }
+//    }
+////    ref.SetI( sqrt(A*A+B*B)/100 );
+////  }
+////  TCStrList sl;
+////  for( int i=0;  i < refs.Count(); i++ )
+////    sl.Add( refs[i].ToString() );
+////  sl.SaveToFile( "test.hkl" );
+//  XApp.GetLog() << "Voids         " << Re*vol/(mapVol) << "e-\n";
+////  XApp.GetLog() << "F000 calc     " << Te*vol/(mapVol) << "e-\n";
+//  XApp.GetLog() << "F000 (formula)" << F000 << "e-\n";
+////@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+//  for( int i=0; i < kLen; i++ )
+//    delete [] S[i];
+//  delete [] S;
+//  delete [] T;
+//  if( sin_cosY == sin_cosX )  sin_cosY = NULL;
+//  if( sin_cosZ == sin_cosX || sin_cosZ == sin_cosY )  sin_cosZ = NULL;
+//  for( int i=0; i < mapX; i++ )
+//    delete [] sin_cosX[i];
+//  delete [] sin_cosX;
+//  if( sin_cosY != NULL )  {
+//    for( int i=0; i < mapY; i++ )
+//      delete [] sin_cosY[i];
+//    delete [] sin_cosY;
+//  }
+//  if( sin_cosZ != NULL )  {
+//    for( int i=0; i < mapZ; i++ )
+//      delete [] sin_cosZ[i];
+//    delete [] sin_cosZ;
+//  }
 }
 
 //..............................................................................

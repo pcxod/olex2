@@ -472,12 +472,6 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
   return !atoms.IsEmpty();
 }
 //..............................................................................
-short TXApp::CalcVoid(TArray3D<short>& map, double extraR, short val, size_t* structurePoints, 
-                      vec3d& voidCenter, ElementRadii* radii)  {
-  XFile().GetLattice().GetUnitCell().BuildStructureMap(map, extraR, val, structurePoints, radii);
-  return MapUtil::AnalyseVoids(map.Data, (uint16_t)map.Length1(), (uint16_t)map.Length2(), (uint16_t)map.Length3(), voidCenter);
-}
-//..............................................................................
 void TXApp::ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last)  {
   olxstr info("Processing");
   size_t pivot = (pivot_last ? ring.Count()-1 : 0);
