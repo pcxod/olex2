@@ -903,14 +903,13 @@ void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, shor
     delete scatterers.GetValue(i);
 }
 //..................................................................................
-void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& map, double delta, short val, 
+void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& _map, double delta, short val, 
                                   ElementRadii* _radii, const TCAtomPList* _template)
 {
   TTypeList< AnAssociation3<vec3f,TCAtom*, float> > allAtoms;
   GenereteAtomCoordinates(allAtoms, true, _template);
   ExpandAtomCoordinates(allAtoms, 1./2);
-  const vec3i dims(map.Length1(), map.Length2(), map.Length3());
-  //map.FastInitWith(10000);
+  const vec3i dims(_map.Length1(), _map.Length2(), _map.Length3());
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   TPSTypeList<short, float> radii;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
@@ -930,9 +929,22 @@ void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& map, double delta, shor
     au.CellToCartesian(allAtoms[i].A());
   }
   mat3f tm = au.GetCellToCartesian();
+  TArray3D<float> map(0, dims[0]-1, 0, dims[1]-1, 0, dims[2]-1);
+  map.InitWith(10000);
   TBuildDistanceMapTask task(tm, map.Data, dims, allAtoms);
   TListIteratorManager<TBuildDistanceMapTask> taskm(task, dims[0], tLinearTask, 0);
   task.clear_loop_data();
+  float scale = dims[0]/Lattice->GetAsymmUnit().Axes()[0].GetV();
+  for( int i=0; i < dims[0]; i++ )  {
+    for( int j=0; j < dims[1]; j++ )  {
+      for( int k=0; k < dims[2]; k++ )  {
+        if( map.Data[i][j][k] > 0 )
+          _map.Data[i][j][k] = olx_round_t<short,float>(map.Data[i][j][k]*scale);
+        else
+          _map.Data[i][j][k] = val;
+      }
+    }
+  }
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
 void TUnitCell::TBuildDistanceMapTask::init_loop_data()  {
@@ -959,7 +971,7 @@ void TUnitCell::TBuildDistanceMapTask::init_loop_data()  {
   atoms.QuickSorter.SortSF(atoms, &TUnitCell::AtomsSortByDistance<AnAssociation3<vec3f,TCAtom*,float> >);
   const size_t ac = atoms.Count();
   for( size_t i=0; i < ac; i++ )
-    loop_data[6][i] = atoms[i].GetA().QLength();
+    loop_data[6][i] = atoms[i].GetA().Length();
 }
 void TUnitCell::TBuildDistanceMapTask::clear_loop_data()  {
   for( int i=0; i < 7; i++ )
@@ -971,15 +983,15 @@ void TUnitCell::TBuildDistanceMapTask::Run(size_t ind) const {
   for( int i = 0; i < dims[1]; i++ )  {
     for( int j = 0; j < dims[2]; j++ )  {
       vec3f p(loop_data[0][ind] + loop_data[1][i] + loop_data[3][j], loop_data[2][i] + loop_data[4][j], loop_data[5][j]);
-      const double ql = p.QLength();
+      const float pl = p.Length();
       for( size_t k=0; k < ac; k++ )  {
-        const float d = (p.DistanceTo(atoms[k].GetA())-atoms[k].GetC())*10;
+        const float d = p.DistanceTo(atoms[k].GetA())-atoms[k].GetC();
         if( map[ind][i][j] > d )
-          map[ind][i][j] = static_cast<short>(d);
-        if( d < 0 )  //not interested in the inside
+          map[ind][i][j] = d;
+        if( d < 0 )  // inside
           break;
-        //if( loop_data[6][k]-50 > ql )
-        //  break;
+        if( (loop_data[6][k]-map[ind][i][j]-3) > pl )  // 3 - max rad (?)
+          break;
       }
     }
   }
