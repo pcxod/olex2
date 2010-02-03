@@ -397,11 +397,8 @@ public:
           }
         }
         if( !level_accessible )  {
-          if( res[dim_n] <= 8 )  {  // 0.8 A
-            res[dim_n] = 0;
+          if( --res[dim_n] == 0 )
             break;
-          }
-          res[dim_n]--;
         }
         else
           break;

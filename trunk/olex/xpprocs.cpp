@@ -3712,7 +3712,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
 
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
-  double surfdis = Options.FindValue("d", "0.25").ToDouble();
+  double surfdis = Options.FindValue("d", "0").ToDouble();
   TBasicApp::GetLog() << "Extra distance from the surface: " << surfdis << '\n';
   
   double resolution = Options.FindValue("r", "0.2").ToDouble();
@@ -3741,13 +3741,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
       radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
     map_scale = resolution;
   }
-  //const short MaxLevel = MapUtil::AnalyseVoids(map.Data, mapX, mapY, mapZ, voidCenter);
-  //if( MaxLevel < minLevel )  {
-  //  TBasicApp::GetLog() << "Given structure has no voids\n";
-  //  return;
-  //}
   short*** amap = map.Data;
-
   short MaxLevel = 0;
   for( int i=0; i < mapX; i++ )  {
     for( int j=0; j < mapY; j++ )  {
@@ -3808,7 +3802,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   for( int i=0; i < mapX; i++ )  {
     for( int j=0; j < mapY; j++ )  {
       for( int k=0; k < mapZ; k++ )
-        FXApp->XGrid().SetValue(i, j, k, map.Data[i][j][k]);
+        FXApp->XGrid().SetValue(i, j, k, map.Data[i][j][k]*10/map_scale);
     }
   }
   FXApp->XGrid().AdjustMap();
