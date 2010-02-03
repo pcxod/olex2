@@ -261,7 +261,7 @@ protected:
   };
   class TBuildDistanceMapTask  {
     short*** map;
-    const TTypeList<AnAssociation3<vec3f,TCAtom*, float> >& atoms;
+    TTypeList<AnAssociation3<vec3f,TCAtom*, float> >& atoms;
     const vec3i& dims;
     const mat3f& tm;
     float** loop_data;
@@ -271,7 +271,7 @@ protected:
       loop_data(parent.loop_data), owns_data(false)  {}
   public:
     TBuildDistanceMapTask(const mat3f& _tm, short*** _map, const vec3i& _dims,
-      const TTypeList<AnAssociation3<vec3f,TCAtom*, float> >& _atoms) :
+      TTypeList<AnAssociation3<vec3f,TCAtom*, float> >& _atoms) :
       tm(_tm), map(_map), atoms(_atoms), dims(_dims), owns_data(true)
     {
       init_loop_data();
