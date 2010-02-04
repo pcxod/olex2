@@ -67,7 +67,7 @@ public:
   const mat3d& GetCellToCartesian() const {  return Cell2Cartesian; }
   const mat3d& GetCartesianToCell() const {  return Cartesian2Cell; }
   const mat3d& GetHklToCartesian() const {  return Hkl2Cartesian; }
-  template <class VC> inline VC& CellToCartesian(const VC& cell, VC& crt) const  {
+  template <typename VC, typename VC1> inline VC& CellToCartesian(const VC& cell, VC1& crt) const  {
     crt[0] = cell[0]*Cell2Cartesian[0][0] + cell[1]*Cell2Cartesian[1][0] + cell[2]*Cell2Cartesian[2][0];
     crt[1] = cell[1]*Cell2Cartesian[1][1] + cell[2]*Cell2Cartesian[2][1];
     crt[2] = cell[2]*Cell2Cartesian[2][2];

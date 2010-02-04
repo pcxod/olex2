@@ -41,8 +41,8 @@ int main(int argc, char* argv[])  {
     TEFile logf(bd + "test.out", "w+b");
     TOnProgress pg;
     Listener listener;
-    //TFileTree ft("C:/Documents and Settings/oleg/My Documents/DS/Data");
-    TFileTree ft("E:/Data");
+    TFileTree ft("C:/Documents and Settings/oleg/My Documents/DS/Data");
+    //TFileTree ft("E:/Data");
     ft.OnExpand->Add(&listener);
     ft.Expand();
     ft.OnExpand->Remove(&listener);
@@ -84,7 +84,7 @@ int main(int argc, char* argv[])  {
         }
       }
     }
-
+    
     uint64_t time_start = TETime::msNow();
     for( size_t i=0; i < files.Count(); i++ )  {
       try {
@@ -96,19 +96,24 @@ int main(int argc, char* argv[])  {
           if( au.GetAtom(ai).GetType() != iQPeakZ )
             ac++;
         if( ac == 0 )  continue;
-        const int mapX = (int)(au.Axes()[0].GetV()*5),
-          mapY = (int)(au.Axes()[1].GetV()*5),
-          mapZ = (int)(au.Axes()[2].GetV()*5);
-        const double mapVol = mapX*mapY*mapZ;
-        const double vol = XApp.XFile().GetLattice().GetUnitCell().CalcVolume();
-        const int minLevel = olx_round(pow(6*mapVol*3/(4*M_PI*vol), 1./3));
+        const int res = 2;
+        const int mapX = (int)(au.Axes()[0].GetV()*res),
+          mapY = (int)(au.Axes()[1].GetV()*res),
+          mapZ = (int)(au.Axes()[2].GetV()*res);
         TArray3D<short> map(0, mapX-1, 0, mapY-1, 0, mapZ-1);
-        vec3d voidCenter;
-        size_t structureGridPoints = 0;
-        XApp.XFile().GetUnitCell().BuildStructureMapEx(map, 0, -101, &structureGridPoints, 
+        map.FastInitWith(10000);
+        XApp.XFile().GetUnitCell().BuildDistanceMap_Masks(map, 0, -101,
           radii.IsEmpty() ? NULL : &radii, NULL);
-        const short MaxLevel = MapUtil::AnalyseVoids(map.Data, map.Length1(), map.Length2(), map.Length3(), voidCenter);
-        if( MaxLevel > minLevel )  {
+        short maxL = 0;
+        for( int mx=0; mx < mapX; mx++ )  {
+          for( int my=0; my < mapY; my++ )  {
+            for( int mz=0; mz < mapZ; mz++ )  {
+              if( map.Data[mx][my][mz] > maxL )
+                maxL = map.Data[mx][my][mz];
+            }
+          }
+        }
+        if( maxL/res > 2 )  {  // 2 A
           TBasicApp::GetLog() << (olxstr("\r--> ") << TEFile::ExtractFileName(files[i]) << "      \n");
         }
       }
