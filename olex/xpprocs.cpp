@@ -3756,7 +3756,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   for( int i=0; i < 3; i++ )  {
     if( MaxXCh[i] != 0 )
       TBasicApp::GetLog() << (olxstr((olxch)('a'+i)) << " direction can be penetrated by a sphere of " <<
-      olxstr::FormatFloat(1, MaxXCh[i]/resolution) << "A radius\n" );
+      olxstr::FormatFloat(2, MaxXCh[i]/resolution) << "A radius\n" );
   }
   //short*** map_copy = MapUtil::ReplicateMap(map.Data, mapX, mapY, mapZ);
   //short*** amap = map_copy;
@@ -3789,9 +3789,9 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   //  olxstr::FormatFloat(2, voidCenter[1]) << ", "  <<
   //  olxstr::FormatFloat(2, voidCenter[2]) << ")\n");
   TBasicApp::GetLog() << ( olxstr("Radius of the largest spherical void is (A) ") <<
-    olxstr::FormatFloat(1, (double)MaxLevel/resolution) << '\n');
+    olxstr::FormatFloat(2, (double)MaxLevel/resolution) << '\n');
   TBasicApp::GetLog() << ( olxstr(catoms.IsEmpty() ? "Structure occupies" : "Selected atoms occupy") << " (A^3) "
-    << olxstr::FormatFloat(3, structureGridPoints*vol/mapVol) 
+    << olxstr::FormatFloat(2, structureGridPoints*vol/mapVol) 
     << " (" << olxstr::FormatFloat(2, structureGridPoints*100/mapVol) << "%)\n");
   //// set map to view voids
   FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
@@ -4189,11 +4189,14 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         FN = ins_fn;
     }
 #ifdef __WIN32__ // tackle short path names problem
-    WIN32_FIND_DATAA wfd;
+    WIN32_FIND_DATA wfd;
     ZeroMemory(&wfd, sizeof(wfd));
-    HANDLE fsh = FindFirstFileA(FN.c_str(), &wfd);
-    if( fsh != NULL )  {
-      FN = TEFile::AddPathDelimeter(TEFile::ExtractFilePath(FN)) + wfd.cFileName;
+    HANDLE fsh = FindFirstFile(FN.u_str(), &wfd);
+    if( fsh != INVALID_HANDLE_VALUE )  {
+      FN = TEFile::ExtractFilePath(FN);
+      if( !FN.IsEmpty() )
+        TEFile::AddPathDelimeterI(FN);
+      FN << wfd.cFileName;
       FindClose(fsh);
     }
 #endif // win32
@@ -4223,9 +4226,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     /* with some compilations Borland would bring program into an incorrect state
      if the NonExistenFile exception is thrown from XFile ... (MSVC is fine thought)
     */
-    if( !TEFile::Exists(FN) )  return;
-    // this can happen on windows when a file does not exist - the code above will get the folder name isntead...
-    if( TEFile::IsDir(FN) )  {
+    // FN might be a dir on windows when a file does not exist - the code above will get the folder name isntead...
+    if( !TEFile::Exists(FN) || TEFile::IsDir(FN) )  {
       Error.ProcessingError(__OlxSrcInfo, "Could not locate specified file");
       return;
     }
