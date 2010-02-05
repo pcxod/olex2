@@ -87,7 +87,8 @@ public:
   // returns true if the ring is regular (distances from centroid and angles) 
   static bool IsRingRegular(const TSAtomPList& ring);
   // inverttion must be specified for the permutational graph match
-  bool DoMatch(TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res, bool Invert );
+  bool DoMatch(TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res, bool Invert,
+    double (*weight_calculator)(const TSAtom&));
   bool IsSubgraphOf( TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res, const TSizeList& rootsToSkip);
 
 protected:
@@ -132,6 +133,8 @@ public:
     bool IsSingleCSubstituted() const;  // returns true if all substituents are single CHn groups
   };
   static RingInfo& AnalyseRing(const TSAtomPList& ring, RingInfo& ri);
+  static double weight_occu(const TSAtom& a)  {  return a.CAtom().GetOccu()*a.MatrixCount();  }
+  static double weight_occu_aw(const TSAtom& a)  {  return a.CAtom().GetOccu()*a.MatrixCount()*a.GetType().GetMr();  }
   /* quaternion method, Acta A45 (1989), 208
     This function finds the best match between atom pairs and returns the summ of
     distance deltas between corresponding atoms. If try inversion is specified,
@@ -139,7 +142,8 @@ public:
     the calculation
   */
   static double FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-                  smatdd& res, bool TryInversion);
+                  smatdd& res, bool TryInversion,
+                  double (*weight_calculator)(const TSAtom&));
   /* finds allignment quaternions for given coordinates and specified centers of these coordinates 
   the quaternions and the rms are sorted ascending 
   Acta A45 (1989), 208 */
@@ -153,14 +157,16 @@ public:
     bool TryInversion,
     TSAtomPList& atoms_out,
     vec3d_alist& crd_out, 
-    TDoubleList& wght_out);
+    TDoubleList& wght_out,
+    double (*weight_calculator)(const TSAtom&));
   /* this fuction is used alonside the above one to allign the atoms using provided
    matrix. Also the Inverted has to be specified if the matric was calculated using
    the function above with the inverted flag on. The atomsToTransform are the atoms
    being transformed (typically, the atoms[n].GetA() is the subset of these atoms
   */
   static void DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& satomp,
-                   const TSAtomPList& atomsToTransform, const smatdd& S, bool Inverted);
+                   const TSAtomPList& atomsToTransform, const smatdd& S, bool Inverted,
+                   double (*weight_calculator)(const TSAtom&));
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);

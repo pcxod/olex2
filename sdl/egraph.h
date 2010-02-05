@@ -167,7 +167,7 @@ public:
     }
     return true;
   }
-  bool AnalyseMutability(TEGraphNode& node) const {
+  bool AnalyseMutability(TEGraphNode& node, double& permutations) const {
     if( node.GetData() != GetData() )  return false;
     if( node.Count() != Count() )  return false;
     size_t maxMatches = 0;
@@ -175,20 +175,27 @@ public:
     for( size_t i=0; i < Count(); i++ )  {
       size_t mc=0;
       for( size_t j=0; j < Count(); j++ )  {  // Count equals for both nodes
-        if( Nodes[i]->AnalyseMutability( node[j] ) )
+        if( Nodes[i]->AnalyseMutability(node[j], permutations) )
            mc++;
       }
       if( mc == 0 )  return false;
       if( mc > maxMatches )
         maxMatches = mc;
     }
-    if( maxMatches > 1 )
+    if( maxMatches > 1 )  {
       Mutable = true;
+      permutations *= olx_factorial_t<double,size_t>(maxMatches);
+    }
     return true;
   }
   template <class Analyser> bool FullMatchEx(TEGraphNode& node, Analyser& analyser, bool analyse = false) const {
-    if( IsRoot() )
-      this->AnalyseMutability(node);
+    if( IsRoot() )  {
+      double permutations = 1;
+      this->AnalyseMutability(node, permutations);
+      if( permutations > 2000000 )
+        throw TFunctionFailedException(__OlxSourceInfo, 
+        olxstr("Matching aborted due to high graph symmetry, number of permutations: ") << permutations);
+    }
     const size_t node_cnt = Count();
     if( node.GetData() != GetData() )  return false;
     if( node.Count() != node_cnt )  return false;
