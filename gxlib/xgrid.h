@@ -3,7 +3,6 @@
 #include "gxbase.h"
 
 #include "glmouselistener.h"
-//#include "gdrawobject.h"
 #include "arrays.h"
 #include "evpoint.h"
 #include "IsoSurface.h"
@@ -15,6 +14,7 @@
 
 #include "wx/zipstrm.h"
 #include "fracmask.h"
+#include "ps_writer.h"
 
 BeginGxlNamespace()
 
@@ -50,10 +50,15 @@ protected:
   int MaxX, MaxY, MaxZ, MaxDim; 
   float MinHole, MaxHole;  // the values of scale to skip
   int LastMouseX, LastMouseY;
-  void CalcColorRGB(double v, double& R, double& G, double& B);
+  void CalcColorRGB(double v, uint8_t& R, uint8_t& G, uint8_t& B);
   void CalcColor(double v);
   bool MouseDown;
   void DoSmooth();
+  struct ContourDrawer {
+    PSWriter output;
+    ContourDrawer(const olxstr& file_name);
+    void draw(float x1, float y1, float x2, float y2, float z);
+  };
 public:
   TXGrid(const olxstr& collectionName, TGXApp* xapp);
   virtual ~TXGrid();
@@ -128,6 +133,7 @@ public:
   void LibGetMax(const TStrObjList& Params, TMacroError& E);
   void LibPolygonMode(const TStrObjList& Params, TMacroError& E);
   void LibIsvalid(const TStrObjList& Params, TMacroError& E);
+  void LibWritePS(TStrObjList& Params, const TParamList& Options, TMacroError& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 #ifndef _NO_PYTHON
   static void PyInit();
