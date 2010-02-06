@@ -1,26 +1,17 @@
 //----------------------------------------------------------------------------//
-// namespace TXClasses: crystallographic core
 // TXGrid
 // (c) Oleg V. Dolomanov, 2006
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "xgrid.h"
 #include "gpcollection.h"
 
 #include "styles.h"
-
 #include "glmaterial.h"
 #include "glrender.h"
-
 #include "efile.h"
-
 #include "gxapp.h"
-
 #include "library.h"
+#include "conrec.h"
 
 #ifndef _NO_PYTHON
   #include "pyext.h"
@@ -217,50 +208,46 @@ void TXGrid::Create(const olxstr& cName, const ACreationParams* cpar)  {
     TGlMaterial("85;1.000,0.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36")));
 }
 //..............................................................................
-void TXGrid::CalcColorRGB(double v, double& R, double& G, double& B) {
+void TXGrid::CalcColorRGB(double v, uint8_t& R, uint8_t& G, uint8_t& B) {
   //if( v == 0 )
   // v = MaxVal;
   double cs;
   if( Scale < 0 )  {  // show both
     cs = v/(-Scale + 0.001);
     if( cs < -0.5 )  {
-      R = 1;
-      G = -sin(M_PI*cs);
+      R = 255;
+      G = (uint8_t)(-sin(M_PI*cs)*255);
       B = G;
     }
     else if( cs < 0 ) {
-      R = -sin(M_PI*cs/2);
+      R = (uint8_t)(-sin(M_PI*cs/2)*255);
       G = R;
       B = R;
     }
     else if( cs < 0.5 ) {
-      G = sin(M_PI*cs/2);
+      G = (uint8_t)(sin(M_PI*cs/2)*255);
       R = G;
       B = G;
     }
     else {
-      R = sin(M_PI*cs);
-      G = 1;
+      R = (uint8_t)(sin(M_PI*cs)*255);
+      G = 255;
       B = R;
     }
   }
   else  {
     cs = olx_abs(v)/(Scale+0.001);
     if( cs < 0.5 ) {
-      R = sin(M_PI*cs);
-      G = 1;
-      B = 1;
+      R = (uint8_t)(sin(M_PI*cs)*255);
+      G = 255;
+      B = 255;
     }
     else {
-      R = 1;
-      G = sin(M_PI*cs);
+      R = 255;
+      G = (uint8_t)(sin(M_PI*cs)*255);
       B = 0;
     }
   }
-
-  R *=255;
-  G *=255;
-  B *=255;
 }
 //..............................................................................
 void TXGrid::CalcColor(double v) {
@@ -303,7 +290,6 @@ void TXGrid::CalcColor(double v) {
 //..............................................................................
 bool TXGrid::Orient(TGlPrimitive& GlP)  {
   if( ED == NULL )  return true;
-
   if( IS != NULL && Mode3D )  {
     if( &GlP == glpN )  // draw once only
       glCallList(PListId);
@@ -313,36 +299,27 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   }
   if( &GlP == glpP || &GlP == glpN )  return true;
 
-//  mat3d bm ( mat3d::Transpose(Parent.GetBasis().GetMatrix()) );
-  mat3d bm( Parent.GetBasis().GetMatrix() );
-  mat3d c2c(  XApp->XFile().GetAsymmUnit().GetCartesianToCell() );
-
-  double R, G, B;
-  vec3d p, p1, p2, p3, p4;
+  const mat3f bm(Parent.GetBasis().GetMatrix());
+  const mat3f c2c(XApp->XFile().GetAsymmUnit().GetCartesianToCell());
   const float hh = (float)MaxDim/2;
-
-  p1[0] = -hh/Size;  p1[1] = -hh/Size;
-  p2[0] = hh/Size;   p2[1] = -hh/Size;
-  p3[0] = hh/Size;   p3[1] = hh/Size;
-  p4[0] = -hh/Size;  p4[1] = hh/Size;
-  p1[2] = p2[2] = p3[2] = p4[2] = Depth;
-  p1 = bm * p1;  p1 -= Parent.GetBasis().GetCenter();
-  p2 = bm * p2;  p2 -= Parent.GetBasis().GetCenter();
-  p3 = bm * p3;  p3 -= Parent.GetBasis().GetCenter();
-  p4 = bm * p4;  p4 -= Parent.GetBasis().GetCenter();
-
+  const vec3f center(Parent.GetBasis().GetCenter());
+  vec3f p1(-hh/Size, -hh/Size, Depth),
+        p2(hh/Size, -hh/Size, Depth),
+        p3(hh/Size, hh/Size, Depth),
+        p4(-hh/Size, hh/Size, Depth);
+  p1 = bm * p1;  p1 -= center;
+  p2 = bm * p2;  p2 -= center;
+  p3 = bm * p3;  p3 -= center;
+  p4 = bm * p4;  p4 -= center;
   for( int i=0; i < MaxDim; i++ )  {
     for( int j=0; j < MaxDim; j++ )  {  // (i,j,Depth)        
-      p[0] = (double)(i-hh)/Size;
-      p[1] = (double)(j-hh)/Size;
-      p[2] = Depth;
-
-      p = bm * p;
-      p -= Parent.GetBasis().GetCenter();
+      vec3f p((float)(i-hh)/Size, (float)(j-hh)/Size,  Depth);
+      p = bm*p;
+      p -= center;
       p *= c2c;
-      p[0] *= MaxX;  p[0] = olx_round(p[0]);
-      p[1] *= MaxY;  p[1] = olx_round(p[1]);
-      p[2] *= MaxZ;  p[2] = olx_round(p[2]);
+      p[0] = olx_round(p[0]*MaxX);
+      p[1] = olx_round(p[1]*MaxY);
+      p[2] = olx_round(p[2]*MaxZ);
 
       while( p[0] < 0 )     p[0] += MaxX;
       while( p[0] >= MaxX )  p[0] -= MaxX;
@@ -351,23 +328,24 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
       while( p[2] < 0 )     p[2] += MaxZ;
       while( p[2] >= MaxZ )  p[2] -= MaxZ;
       float val = ED->Data[(int)p[0]][(int)p[1]][(int)p[2]];
+      uint8_t R, G, B;
       CalcColorRGB(val, R, G, B);
       const int off = (i+j*MaxDim)*3; 
-      TextData[off]     = (char)R;
-      TextData[off + 1] = (char)G;
-      TextData[off + 2] = (char)B;
+      TextData[off] = R;
+      TextData[off+1] = G;
+      TextData[off+2] = B;
     }
   }
 
   if( !olx_is_valid_index(TextIndex) )  {
     TextIndex = Parent.GetTextureManager().Add2DTexture("Plane", 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
     TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextIndex);
-    tex->SetEnvMode( tpeDecal );
-    tex->SetSCrdWrapping( tpCrdClamp );
-    tex->SetTCrdWrapping( tpCrdClamp );
+    tex->SetEnvMode(tpeDecal);
+    tex->SetSCrdWrapping(tpCrdClamp);
+    tex->SetTCrdWrapping(tpCrdClamp);
 
-    tex->SetMinFilter( tpFilterLinear );
-    tex->SetMagFilter( tpFilterLinear );
+    tex->SetMinFilter(tpFilterLinear);
+    tex->SetMagFilter(tpFilterLinear);
     tex->SetEnabled(true);
   }
   else
@@ -750,15 +728,15 @@ void TXGrid::LibSize(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TXGrid::LibIsvalid(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( ED != NULL );
+  E.SetRetVal(ED != NULL);
 }
 //..............................................................................
 void TXGrid::LibGetMin(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( MinVal );
+  E.SetRetVal(MinVal);
 }
 //..............................................................................
 void TXGrid::LibGetMax(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( MaxVal );
+  E.SetRetVal(MaxVal);
 }
 //..............................................................................
 void TXGrid::LibPolygonMode(const TStrObjList& Params, TMacroError& E)  {
@@ -777,6 +755,78 @@ void TXGrid::LibPolygonMode(const TStrObjList& Params, TMacroError& E)  {
   // have to recreate
   if( pm != PolygonMode )
     SetScale(Scale);
+}
+//..............................................................................
+TXGrid::ContourDrawer::ContourDrawer(const olxstr& file_name) : output(file_name)  {
+  //output.translate(output.GetWidth()/2, output.GetHeight()/2);
+  output.scale(1, 1);
+  output.color(0);
+  output.lineWidth(0.1);
+}
+void TXGrid::ContourDrawer::draw(float x1, float y1, float x2, float y2, float z)  {
+  output.moveto(x1, y1);
+  output.lineto(x2, y2);
+  output.stroke();
+}
+//..............................................................................
+void TXGrid::LibWritePS(TStrObjList& Params, const TParamList& Options, TMacroError& E)  {
+  Contour<float> cm;
+  TXGrid::ContourDrawer drawer(Params[0]);
+  Contour<float>::MemberFeedback<TXGrid::ContourDrawer> mf(drawer, &TXGrid::ContourDrawer::draw);
+
+  float d_step = (float)drawer.output.GetWidth()/MaxDim;
+  float **data = new float*[MaxDim];
+  float *x = new float[MaxDim];
+  float *y = new float[MaxDim];
+  for( int i=0; i < MaxDim; i++ )  {
+    data[i] = new float[MaxDim];
+    y[i] = x[i] = i*d_step;
+  }
+  const int contour_cnt = 15;
+  float z[contour_cnt], minZ = 1000, maxZ = -1000;
+  const mat3f bm(Parent.GetBasis().GetMatrix());
+  const mat3f c2c(XApp->XFile().GetAsymmUnit().GetCartesianToCell());
+  const float hh = (float)MaxDim/2;
+  const vec3f center(Parent.GetBasis().GetCenter());
+  vec3f p1(-hh/Size, -hh/Size, Depth),
+        p2(hh/Size, -hh/Size, Depth),
+        p3(hh/Size, hh/Size, Depth),
+        p4(-hh/Size, hh/Size, Depth);
+  p1 = bm * p1;  p1 -= center;
+  p2 = bm * p2;  p2 -= center;
+  p3 = bm * p3;  p3 -= center;
+  p4 = bm * p4;  p4 -= center;
+  for( int i=0; i < MaxDim; i++ )  {
+    for( int j=0; j < MaxDim; j++ )  {  // (i,j,Depth)        
+      vec3f p((float)(i-hh)/Size, (float)(j-hh)/Size,  Depth);
+      p = bm*p;
+      p -= center;
+      p *= c2c;
+      p[0] = olx_round(p[0]*MaxX);
+      p[1] = olx_round(p[1]*MaxY);
+      p[2] = olx_round(p[2]*MaxZ);
+
+      while( p[0] < 0 )     p[0] += MaxX;
+      while( p[0] >= MaxX )  p[0] -= MaxX;
+      while( p[1] < 0 )     p[1] += MaxY;
+      while( p[1] >= MaxY )  p[1] -= MaxY;
+      while( p[2] < 0 )     p[2] += MaxZ;
+      while( p[2] >= MaxZ )  p[2] -= MaxZ;
+      data[i][j] = ED->Data[(int)p[0]][(int)p[1]][(int)p[2]];
+      if( data[i][j] < minZ )  minZ = data[i][j];
+      if( data[i][j] > maxZ )  maxZ = data[i][j];
+    }
+  }
+  float contour_step = (maxZ - minZ)/(contour_cnt-1);
+  z[0] = minZ;
+  for( int i=1; i < contour_cnt; i++ )
+    z[i] = z[i-1]+contour_step;
+  cm.DoContour(data, 0, MaxDim-1, 0, MaxDim-1, x, y, contour_cnt, z, mf);
+  delete [] x;
+  delete [] y;
+  for( int i=0; i < MaxDim; i++ )
+    delete [] data[i];
+  delete [] data;
 }
 //..............................................................................
 void TXGrid::ToDataItem(TDataItem& item, IOutputStream& zos) const {
@@ -834,22 +884,24 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
 //..............................................................................
 TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xgrid") : name);
-  lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibGetMin, "GetMin",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibGetMin, "GetMin",
     fpNone, "Returns minimum value of the map") );
-  lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibGetMax, "GetMax",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibGetMax, "GetMax",
     fpNone, "Returns maximum value of the map") );
-  lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibDrawStyle3D, "3D",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibDrawStyle3D, "3D",
     fpNone|fpOne, "Returns/sets 3D drawing style") );
-  lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibExtended, "Extended",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibExtended, "Extended",
     fpNone|fpOne, "Returns/sets extended size of the grid") );
-  lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibScale, "Scale",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibScale, "Scale",
     fpNone|fpOne, "Returns/sets current scale") );
-  lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibSize, "Size",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibSize, "Size",
     fpNone|fpOne, "Returns/sets current size") );
-  lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibIsvalid, "IsValid",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibIsvalid, "IsValid",
     fpNone|fpOne, "Returns true if grid data is initialised") );
-  lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibPolygonMode, "FillMode",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibPolygonMode, "FillMode",
     fpNone|fpOne, "Returns/sets polygon mode for 3D display. Supported values: point, line, fill") );
+  lib->RegisterMacro<TXGrid>(new TMacro<TXGrid>(this,  &TXGrid::LibWritePS, "WritePS", EmptyString,
+    fpOne, "Writes current projection to a postscript file") );
 
   AGDrawObject::ExportLibrary( *lib );
   return lib;
@@ -903,10 +955,10 @@ PyObject* pyIsVisible(PyObject* self, PyObject* args)  {
 
 static PyMethodDef XGRID_Methods[] = {
   {"Init", pyInit, METH_VARARGS, "initialises grid memory"},
-  {"SetValue", pySetValue, METH_VARARGS, "sets grid value"},
+  {"SetValue", pySetValue, METH_VARARGS, "sets grid iso-level"},
   {"IsVisible", pyIsVisible, METH_VARARGS, "returns grid visibility status"},
   {"SetVisible", pySetVisible, METH_VARARGS, "sets grid visibility"},
-  {"InitSurface", pyInitSurface, METH_VARARGS, "inits surface drawing"},
+  {"InitSurface", pyInitSurface, METH_VARARGS, "initialisess surface drawing"},
   {NULL, NULL, 0, NULL}
    };
 
