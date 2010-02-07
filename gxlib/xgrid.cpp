@@ -770,6 +770,7 @@ void TXGrid::ContourDrawer::draw(float x1, float y1, float x2, float y2, float z
 }
 //..............................................................................
 void TXGrid::LibWritePS(TStrObjList& Params, const TParamList& Options, TMacroError& E)  {
+  if( ED == NULL )  return;
   Contour<float> cm;
   TXGrid::ContourDrawer drawer(Params[0]);
   Contour<float>::MemberFeedback<TXGrid::ContourDrawer> mf(drawer, &TXGrid::ContourDrawer::draw);
@@ -784,6 +785,7 @@ void TXGrid::LibWritePS(TStrObjList& Params, const TParamList& Options, TMacroEr
   }
   const int contour_cnt = 15;
   float z[contour_cnt], minZ = 1000, maxZ = -1000;
+  const vec3i dim(MaxX, MaxY, MaxZ);
   const mat3f bm(Parent.GetBasis().GetMatrix());
   const mat3f c2c(XApp->XFile().GetAsymmUnit().GetCartesianToCell());
   const float hh = (float)MaxDim/2;
@@ -796,23 +798,36 @@ void TXGrid::LibWritePS(TStrObjList& Params, const TParamList& Options, TMacroEr
   p2 = bm * p2;  p2 -= center;
   p3 = bm * p3;  p3 -= center;
   p4 = bm * p4;  p4 -= center;
+  vec3i aa[8];
   for( int i=0; i < MaxDim; i++ )  {
     for( int j=0; j < MaxDim; j++ )  {  // (i,j,Depth)        
       vec3f p((float)(i-hh)/Size, (float)(j-hh)/Size,  Depth);
       p = bm*p;
       p -= center;
       p *= c2c;
-      p[0] = olx_round(p[0]*MaxX);
-      p[1] = olx_round(p[1]*MaxY);
-      p[2] = olx_round(p[2]*MaxZ);
-
-      while( p[0] < 0 )     p[0] += MaxX;
-      while( p[0] >= MaxX )  p[0] -= MaxX;
-      while( p[1] < 0 )     p[1] += MaxY;
-      while( p[1] >= MaxY )  p[1] -= MaxY;
-      while( p[2] < 0 )     p[2] += MaxZ;
-      while( p[2] >= MaxZ )  p[2] -= MaxZ;
-      data[i][j] = ED->Data[(int)p[0]][(int)p[1]][(int)p[2]];
+      p *= dim;
+      aa[0] = vec3i(olx_round(p[0]), olx_round(p[1]), olx_round(p[2])); //x,y,z
+      aa[1] = vec3i((int)(p[0]), (int)(p[1]), (int)(p[2]));  //x',y',z'
+      aa[2] = vec3i(aa[1][0], aa[0][1], aa[0][2]);  // x',y,z
+      aa[3] = vec3i(aa[1][0], aa[1][1], aa[0][2]);  // x',y',z
+      aa[4] = vec3i(aa[1][0], aa[0][1], aa[1][2]);  // x',y,z'
+      aa[5] = vec3i(aa[0][0], aa[1][1], aa[0][2]);  // x,y',z
+      aa[6] = vec3i(aa[0][0], aa[1][1], aa[1][2]);  // x,y',z'
+      aa[7] = vec3i(aa[0][0], aa[0][1], aa[1][2]);  // x,y,z'
+      data[i][j] = 0;
+      float wght=0;
+      for( int k=0; k < 8; k++ )  {
+        const float w = 1.0f-(sqrt(p.QDistanceTo(aa[k])/3));
+        for( int m=0; m < 3; m++ )  {
+          while( aa[k][m] < 0 )
+            aa[k][m] += dim[m];
+          while( aa[k][m] >= dim[m] )
+            aa[k][m] -= dim[m];
+        }
+        data[i][j] += w*ED->Data[aa[k][0]][aa[k][1]][aa[k][2]];
+        wght += w;
+      }
+      data[i][j] /= wght;
       if( data[i][j] < minZ )  minZ = data[i][j];
       if( data[i][j] > maxZ )  maxZ = data[i][j];
     }
