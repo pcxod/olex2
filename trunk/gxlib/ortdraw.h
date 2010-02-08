@@ -57,6 +57,14 @@ protected:
   void _render(PSWriter&, float scalex, uint32_t mask) const;
 };
 
+struct ort_line : public a_ort_object  {
+  vec3f from, to;
+  ort_line(const OrtDraw& parent, const vec3f& _from, const vec3f _to) :
+    a_ort_object(parent), from(_from), to(_to)  {}
+  virtual void render(PSWriter&) const;
+  virtual float get_z() const {  return (from[2]+to[2])/2;  }
+};
+
 struct ort_poly : public a_ort_object  {
   vec3f_list points;
   bool fill;
@@ -147,8 +155,15 @@ protected:
   void RenderQuads(PSWriter& pw, const mat3f& pm) const;
   void _process_points(TPtrList<vec3f>& points, ort_poly& otp)  {
     for( size_t i=0; i < otp.points.Count(); i++ )
-      points.Add( otp.points[i] );
+      points.Add(otp.points[i]);
   }
+  struct ContourDrawer {
+    TTypeList<a_ort_object>& objects;
+    const OrtDraw& parent;
+    ContourDrawer(const OrtDraw& _parent, TTypeList<a_ort_object>& _objects) :
+      parent(_parent), objects(_objects)  {}
+    void draw(float x1, float y1, float x2, float y2, float z);
+  };
 public:
   OrtDraw() : app(TGXApp::GetInstance()), basis(app.GetRender().GetBasis()) {  
     ElpDiv = 36;

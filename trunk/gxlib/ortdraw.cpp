@@ -5,6 +5,8 @@
 #include "gllabel.h"
 #include "dunitcell.h"
 #include "dbasis.h"
+#include "xgrid.h"
+#include "conrec.h"
 
 ort_atom::ort_atom(const OrtDraw& parent, const TXAtom& a) :
 a_ort_object(parent), atom(a), p_elpm(NULL), p_ielpm(NULL),
@@ -266,6 +268,12 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   }
 }
 
+void ort_line::render(PSWriter& pw) const {
+  pw.lineWidth(0.1);
+  pw.color(0);
+  pw.drawLine(from, to);
+}
+
 void ort_poly::render(PSWriter& pw) const {
   if( fill && points.Count() > 2 )  {
     pw.color(color);
@@ -524,6 +532,74 @@ void OrtDraw::Render(const olxstr& fileName)  {
       b->draw_style |= ortep_color_bond;
     objects.Add(b);
   }
+  TXGrid& grid = app.XGrid();
+  if( grid.GetRenderMode() == planeRenderModeContour )  {
+    Contour<float> cm;
+    ContourDrawer drawer(*this, objects);
+    Contour<float>::MemberFeedback<OrtDraw::ContourDrawer> mf(drawer, &OrtDraw::ContourDrawer::draw);
+    int MaxDim = 128;
+    float Size = grid.GetSize();
+    float Depth = grid.GetDepth();
+    float **data = new float*[MaxDim];
+    float *x = new float[MaxDim];
+    float *y = new float[MaxDim];
+    for( int i=0; i < MaxDim; i++ )  {
+      data[i] = new float[MaxDim];
+      y[i] = x[i] = i - MaxDim/2;
+    }
+    const int contour_cnt = 15;
+    float z[contour_cnt], minZ = 1000, maxZ = -1000;
+    const vec3i dim = grid.GetDim();
+    const mat3f bm(app.GetRender().GetBasis().GetMatrix());
+    const mat3f c2c(app.XFile().GetAsymmUnit().GetCartesianToCell());
+    const float hh = (float)MaxDim/2;
+    const vec3f center(app.GetRender().GetBasis().GetCenter());
+    vec3i aa[8];
+    for( int i=0; i < MaxDim; i++ )  {
+      for( int j=0; j < MaxDim; j++ )  {  // (i,j,Depth)        
+        vec3f p((float)(i-hh)/Size, (float)(j-hh)/Size,  Depth);
+        p = bm*p;
+        p -= center;
+        p *= c2c;
+        p *= dim;
+        aa[0] = vec3i(olx_round(p[0]), olx_round(p[1]), olx_round(p[2])); //x,y,z
+        aa[1] = vec3i((int)(p[0]), (int)(p[1]), (int)(p[2]));  //x',y',z'
+        aa[2] = vec3i(aa[1][0], aa[0][1], aa[0][2]);  // x',y,z
+        aa[3] = vec3i(aa[1][0], aa[1][1], aa[0][2]);  // x',y',z
+        aa[4] = vec3i(aa[1][0], aa[0][1], aa[1][2]);  // x',y,z'
+        aa[5] = vec3i(aa[0][0], aa[1][1], aa[0][2]);  // x,y',z
+        aa[6] = vec3i(aa[0][0], aa[1][1], aa[1][2]);  // x,y',z'
+        aa[7] = vec3i(aa[0][0], aa[0][1], aa[1][2]);  // x,y,z'
+        data[i][j] = 0;
+        float wght=0;
+        for( int k=0; k < 8; k++ )  {
+          const float w = 1.0f-(sqrt(p.QDistanceTo(aa[k])/3));
+          for( int m=0; m < 3; m++ )  {
+            while( aa[k][m] < 0 )
+              aa[k][m] += dim[m];
+            while( aa[k][m] >= dim[m] )
+              aa[k][m] -= dim[m];
+          }
+          data[i][j] += w*grid.GetValue(aa[k]);
+          wght += w;
+        }
+        data[i][j] /= wght;
+        if( data[i][j] < minZ )  minZ = data[i][j];
+        if( data[i][j] > maxZ )  maxZ = data[i][j];
+      }
+    }
+    float contour_step = (maxZ - minZ)/(contour_cnt-1);
+    z[0] = minZ;
+    for( int i=1; i < contour_cnt; i++ )
+      z[i] = z[i-1]+contour_step;
+    cm.DoContour(data, 0, MaxDim-1, 0, MaxDim-1, x, y, contour_cnt, z, mf);
+    delete [] x;
+    delete [] y;
+    for( int i=0; i < MaxDim; i++ )
+      delete [] data[i];
+    delete [] data;
+  }
+
   objects.QuickSorter.SortSF(objects, OrtObjectsZSort);
 
   for( size_t i=0; i < objects.Count(); i++ )
@@ -559,6 +635,15 @@ void OrtDraw::Render(const olxstr& fileName)  {
       }
     }
   }
+}
+
+void OrtDraw::ContourDrawer::draw(float x1, float y1, float x2, float y2, float z)  {
+  const float Size = parent.app.XGrid().GetSize();
+  const float Depth = parent.app.XGrid().GetDepth();
+  vec3d p1(x1/Size, y1/Size, Depth), p2(x2/Size, y2/Size, Depth);
+  p1 = parent.basis.GetMatrix()*p1 - parent.basis.GetCenter();
+  p2 = parent.basis.GetMatrix()*p2 - parent.basis.GetCenter();
+  objects.Add(new ort_line(parent, parent.ProjectPoint(p1), parent.ProjectPoint(p2)));
 }
 
 float OrtDraw::GetBondRad(const ort_bond& b, uint32_t mask) const {

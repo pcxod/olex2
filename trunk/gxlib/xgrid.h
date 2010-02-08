@@ -18,8 +18,15 @@
 
 BeginGxlNamespace()
 
-const short planeDrawModeOriginal = 1,
-            planeDrawModeGradient = 2;
+const short
+  planeDrawModeOriginal = 1,
+  planeDrawModeGradient = 2;
+const short
+  planeRenderModePlane   = 1,
+  planeRenderModePoint   = 2,
+  planeRenderModeFill    = 3,
+  planeRenderModeLine    = 4,
+  planeRenderModeContour = 5;
 
 class TXGrid: public TGlMouseListener  {
   //TVectorDList AllPoints;
@@ -29,17 +36,24 @@ class TXGrid: public TGlMouseListener  {
   // if mask is specified
   GLuint PListId, NListId;
   char *TextData;
+  float **ContourData;
+  float *ContourCrds[2], *ContourLevels;
+  int ContourLevelCount;
   //TGlPrimitive *FPrimitive;
   class TGXApp * XApp;
   void DeleteObjects();
   GLuint TextIndex;
   static TXGrid* Instance;
+  /*currently unused procedure for smoothing polygonised plane by linearly interpolating
+  colours. So this procedure will render 4 quads with nice colour gradients */
   void DrawQuad4(double A[4], double B[4], double C[4], double D[4]);
+  /* a more detailed procedure based on the above - an original quad is split into 16
+  pieces and colours are lineraly interpolated */
   void DrawQuad16(double points[4][4]);
   void RescaleSurface();
   TGlTextBox* Info;
-  int PolygonMode;
-  bool Mode3D, Extended;
+  int RenderMode;
+  bool Extended;
   TGlPrimitive* glpP, *glpN;
   // these will keep the masked objects
   TTypeList<vec3f> p_vertices, n_vertices;
@@ -50,8 +64,8 @@ protected:
   int MaxX, MaxY, MaxZ, MaxDim; 
   float MinHole, MaxHole;  // the values of scale to skip
   int LastMouseX, LastMouseY;
-  void CalcColorRGB(double v, uint8_t& R, uint8_t& G, uint8_t& B);
-  void CalcColor(double v);
+  void CalcColorRGB(float v, uint8_t& R, uint8_t& G, uint8_t& B);
+  void CalcColor(float v);
   bool MouseDown;
   void DoSmooth();
   struct ContourDrawer {
@@ -59,6 +73,15 @@ protected:
     ContourDrawer(const olxstr& file_name);
     void draw(float x1, float y1, float x2, float y2, float z);
   };
+  void GlLine(float x1, float y1, float x2, float y2, float z);
+  int GetPolygonMode() const {  return RenderMode == planeRenderModeFill ? GL_FILL : 
+    (RenderMode == planeRenderModeLine ? GL_LINE : 
+    (RenderMode == planeRenderModePoint ? GL_POINT : -1)); 
+  }
+  bool Is3D() const {  return RenderMode == planeRenderModeFill || 
+    RenderMode == planeRenderModeLine ||
+    RenderMode == planeRenderModePoint;
+  }
 public:
   TXGrid(const olxstr& collectionName, TGXApp* xapp);
   virtual ~TXGrid();
@@ -91,7 +114,7 @@ public:
   bool GetDimensions(vec3d& Max, vec3d& Min);
 
   void SetScale(float v);
-  inline double GetScale()  const {  return Scale;  }
+  inline double GetScale() const {  return Scale;  }
   // this object will be deleted
   void SetMask(FractMask& fm) {  Mask = &fm;  }
 
@@ -101,7 +124,10 @@ public:
 
   void SetDepth(float v);
   void SetDepth(const vec3d& v);
-
+  float GetDepth() const {  return Depth;  }
+  vec3i GetDim() const {  return vec3i(MaxX, MaxY, MaxZ);  }
+  float GetSize() const {  return Size;  }
+  
   DefPropP(float, MinHole)
   DefPropP(float, MaxHole)
   DefPropP(float, MinVal)
@@ -111,7 +137,7 @@ public:
   void GlContextChange();
 
   inline bool IsEmpty()  const  {  return ED == NULL;  }
-
+  int GetRenderMode() const {  return RenderMode;  }
   inline virtual void SetVisible(bool On) {  
     AGDrawObject::SetVisible(On);  
     Info->SetVisible(On);
@@ -125,13 +151,12 @@ public:
 
   inline static TXGrid* GetInstance()  {  return Instance;  }
 
-  void LibDrawStyle3D(const TStrObjList& Params, TMacroError& E);
   void LibScale(const TStrObjList& Params, TMacroError& E);
   void LibExtended(const TStrObjList& Params, TMacroError& E);
   void LibSize(const TStrObjList& Params, TMacroError& E);
   void LibGetMin(const TStrObjList& Params, TMacroError& E);
   void LibGetMax(const TStrObjList& Params, TMacroError& E);
-  void LibPolygonMode(const TStrObjList& Params, TMacroError& E);
+  void LibRenderMode(const TStrObjList& Params, TMacroError& E);
   void LibIsvalid(const TStrObjList& Params, TMacroError& E);
   void LibWritePS(TStrObjList& Params, const TParamList& Options, TMacroError& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
