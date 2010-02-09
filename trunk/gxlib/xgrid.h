@@ -68,11 +68,6 @@ protected:
   void CalcColor(float v);
   bool MouseDown;
   void DoSmooth();
-  struct ContourDrawer {
-    PSWriter output;
-    ContourDrawer(const olxstr& file_name);
-    void draw(float x1, float y1, float x2, float y2, float z);
-  };
   void GlLine(float x1, float y1, float x2, float y2, float z);
   int GetPolygonMode() const {  return RenderMode == planeRenderModeFill ? GL_FILL : 
     (RenderMode == planeRenderModeLine ? GL_LINE : 
@@ -161,12 +156,12 @@ public:
   void LibScale(const TStrObjList& Params, TMacroError& E);
   void LibExtended(const TStrObjList& Params, TMacroError& E);
   void LibSize(const TStrObjList& Params, TMacroError& E);
+  void LibDepth(const TStrObjList& Params, TMacroError& E);
   void LibContours(const TStrObjList& Params, TMacroError& E);
   void LibGetMin(const TStrObjList& Params, TMacroError& E);
   void LibGetMax(const TStrObjList& Params, TMacroError& E);
   void LibRenderMode(const TStrObjList& Params, TMacroError& E);
   void LibIsvalid(const TStrObjList& Params, TMacroError& E);
-  void LibWritePS(TStrObjList& Params, const TParamList& Options, TMacroError& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 #ifndef _NO_PYTHON
   static void PyInit();
