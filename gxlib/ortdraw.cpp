@@ -7,6 +7,8 @@
 #include "dbasis.h"
 #include "xgrid.h"
 #include "conrec.h"
+//
+#include "sfutil.h"
 
 ort_atom::ort_atom(const OrtDraw& parent, const TXAtom& a) :
 a_ort_object(parent), atom(a), p_elpm(NULL), p_ielpm(NULL),
@@ -533,7 +535,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
     objects.Add(b);
   }
   TXGrid& grid = app.XGrid();
-  if( grid.GetRenderMode() == planeRenderModeContour )  {
+  if( (grid.GetRenderMode()&planeRenderModeContour) != 0 )  {
     Contour<float> cm;
     ContourDrawer drawer(*this, objects);
     Contour<float>::MemberFeedback<OrtDraw::ContourDrawer> mf(drawer, &OrtDraw::ContourDrawer::draw);
@@ -556,12 +558,26 @@ void OrtDraw::Render(const olxstr& fileName)  {
     const float hh = (float)MaxDim/2;
     const vec3f center(app.GetRender().GetBasis().GetCenter());
     vec3i aa[8];
+//////
+    //TRefList refs;
+    //TArrayList<compd> F;
+    //SFUtil::GetSF(refs, F, SFUtil::mapTypeCalc, SFUtil::sfOriginOlex2, SFUtil::scaleSimple);
+    //TSpaceGroup* sg = NULL;
+    //try  { sg = &app.XFile().GetLastLoaderSG();  }
+    //catch(...)  {  return;  }
+    //TArrayList<SFUtil::StructureFactor> P1SF;
+    //TArrayList<vec3i> hkl(refs.Count());
+    //for( size_t i=0; i < refs.Count(); i++ )
+    //  hkl[i] = refs[i].GetHkl();
+    //SFUtil::ExpandToP1(hkl, F, *sg, P1SF);
+//////
     for( int i=0; i < MaxDim; i++ )  {
       for( int j=0; j < MaxDim; j++ )  {  // (i,j,Depth)        
         vec3f p((float)(i-hh)/Size, (float)(j-hh)/Size,  Depth);
         p = bm*p;
         p -= center;
         p *= c2c;
+        
         p *= dim;
         aa[0] = vec3i(olx_round(p[0]), olx_round(p[1]), olx_round(p[2])); //x,y,z
         aa[1] = vec3i((int)(p[0]), (int)(p[1]), (int)(p[2]));  //x',y',z'
@@ -585,6 +601,15 @@ void OrtDraw::Render(const olxstr& fileName)  {
           wght += w;
         }
         data[i][j] /= wght;
+        //compd _val=0;
+        //for( size_t k=0; k < P1SF.Count(); k++ )  {
+        //  double tv = -2*M_PI*(p.DotProd(P1SF[k].hkl)+P1SF[k].ps), ca, sa;
+        //  SinCos(tv, &sa, &ca);
+        //  _val += P1SF[k].val*compd(ca,sa);
+        //}
+        //float val = (float)_val.Re();
+        //data[i][j] = val;
+
         if( data[i][j] < minZ )  minZ = data[i][j];
         if( data[i][j] > maxZ )  maxZ = data[i][j];
       }

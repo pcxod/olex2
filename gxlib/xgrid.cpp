@@ -322,14 +322,10 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   const float hh = (float)MaxDim/2;
   const vec3f center(Parent.GetBasis().GetCenter());
   const vec3i dim(MaxX, MaxY, MaxZ);
-  vec3f p1(-hh/Size, -hh/Size, Depth),
-        p2(hh/Size, -hh/Size, Depth),
-        p3(hh/Size, hh/Size, Depth),
-        p4(-hh/Size, hh/Size, Depth);
-  p1 = bm * p1;  p1 -= center;
-  p2 = bm * p2;  p2 -= center;
-  p3 = bm * p3;  p3 -= center;
-  p4 = bm * p4;  p4 -= center;
+  GlP.Vertices[0] = bm*vec3f(-hh/Size, -hh/Size, Depth)-center;
+  GlP.Vertices[1] = bm*vec3f(hh/Size, -hh/Size, Depth)-center;
+  GlP.Vertices[2] = bm*vec3f(hh/Size, hh/Size, Depth)-center;
+  GlP.Vertices[3] = bm*vec3f(-hh/Size, hh/Size, Depth)-center;
   vec3i aa[8];
   float minVal = 1000, maxVal = -1000;
   for( int i=0; i < MaxDim; i++ )  {
@@ -338,7 +334,6 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
       p = bm*p;
       p -= center;
       p *= c2c;
-      //
       p *= dim;
       aa[0] = vec3i(olx_round(p[0]), olx_round(p[1]), olx_round(p[2])); //x,y,z
       aa[1] = vec3i((int)(p[0]), (int)(p[1]), (int)(p[2]));  //x',y',z'
@@ -378,11 +373,6 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
       }
     }
   }
-  GlP.Vertices[0] = p1;
-  GlP.Vertices[1] = p2;
-  GlP.Vertices[2] = p3;
-  GlP.Vertices[3] = p4;
-
   if( (RenderMode&planeRenderModePlane) != 0 )  {
     if( !olx_is_valid_index(TextIndex) )  {
       TextIndex = Parent.GetTextureManager().Add2DTexture("Plane", 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
@@ -503,15 +493,11 @@ bool TXGrid::LoadFromFile(const olxstr& GridFile)  {
   toks.Strtok(SL[0], ' ');
 
   int vc = 3;
-
-  InitGrid( toks[0].ToInt(),
-            toks[1].ToInt(),
-            toks[2].ToInt());
-    
+  InitGrid( toks[0].ToInt(), toks[1].ToInt(), toks[2].ToInt());
   for( int i=0; i < MaxX; i++ )  {
     for( int j=0; j < MaxY; j++ )  {
       for( int k=0; k < MaxZ; k++ )  {
-        float val = (float)toks[vc].ToDouble();
+        const float val = toks[vc].ToFloat<float>();
         if( val > MaxVal ) MaxVal = val;
         if( val < MinVal ) MinVal = val;
         ED->Data[i][j][k] = val;
@@ -557,13 +543,19 @@ void TXGrid::SetScale(float v)  {
 }
 //..............................................................................
 void TXGrid::SetExtended(bool v)  {
-  if( Extended == v )
-    return;
+  if( Extended == v )  return;
   Extended = v;
   SetScale(Scale);
 }
 //..............................................................................
-void TXGrid::SetDepth(float v)  {  Depth = v;  }
+void TXGrid::SetDepth(float v)  {
+  Depth = v;
+  float z = (float)Parent.CalcZoom();
+  if( Depth < -z/2 )
+    Depth = -z/2;
+  if( Depth > z/2 )
+    Depth = z/2;
+}
 //..............................................................................
 void TXGrid::SetDepth(const vec3d& v)  {
   vec3d p = (v + Parent.GetBasis().GetCenter())*Parent.GetBasis().GetMatrix();
@@ -594,15 +586,8 @@ bool TXGrid::OnMouseUp(const IEObject *Sender, const TMouseData *Data) {
 //..............................................................................
 bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
   if( !MouseDown )  return false;
-
   if( (Data->Button & smbLeft) != 0 ) {
-    Depth += (float)(LastMouseX - Data->X)/15;
-    Depth += (float)(LastMouseY - Data->Y)/15;
-    float z = (float)Parent.CalcZoom();
-    if( Depth < -z/2 )
-      Depth = -z/2;
-    if( Depth > z/2 )
-      Depth = z/2;
+    SetDepth((float)(LastMouseX - Data->X)/15+(float)(LastMouseY - Data->Y)/15);
   }
   else  {
     if( (Data->Shift & sssShift) != 0 )  {
@@ -819,6 +804,12 @@ void TXGrid::LibSize(const TStrObjList& Params, TMacroError& E)  {
     Size = Params[0].ToFloat<float>();
 }
 //..............................................................................
+void TXGrid::LibDepth(const TStrObjList& Params, TMacroError& E)  {
+  if( Params.IsEmpty() )  E.SetRetVal(Depth);
+  else
+    Depth = Params[0].ToFloat<float>();
+}
+//..............................................................................
 void TXGrid::LibContours(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(ContourLevelCount);
   else
@@ -872,85 +863,6 @@ void TXGrid::LibRenderMode(const TStrObjList& Params, TMacroError& E)  {
   if( pm != RenderMode )  {
     InitIso();
   }
-}
-//..............................................................................
-TXGrid::ContourDrawer::ContourDrawer(const olxstr& file_name) : output(file_name)  {
-  //output.translate(output.GetWidth()/2, output.GetHeight()/2);
-  output.scale(1, 1);
-  output.color(0);
-  output.lineWidth(0.1);
-}
-void TXGrid::ContourDrawer::draw(float x1, float y1, float x2, float y2, float z)  {
-  output.moveto(x1, y1);
-  output.lineto(x2, y2);
-  output.stroke();
-}
-//..............................................................................
-void TXGrid::LibWritePS(TStrObjList& Params, const TParamList& Options, TMacroError& E)  {
-  if( ED == NULL )  return;
-  Contour<float> cm;
-  TXGrid::ContourDrawer drawer(Params[0]);
-  Contour<float>::MemberFeedback<TXGrid::ContourDrawer> mf(drawer, &TXGrid::ContourDrawer::draw);
-
-  float d_step = (float)drawer.output.GetWidth()/MaxDim;
-  float **data = new float*[MaxDim];
-  float *x = new float[MaxDim];
-  float *y = new float[MaxDim];
-  for( int i=0; i < MaxDim; i++ )  {
-    data[i] = new float[MaxDim];
-    y[i] = x[i] = i*d_step;
-  }
-  const int contour_cnt = 25;
-  float z[contour_cnt], minZ = 1000, maxZ = -1000;
-  const vec3i dim(MaxX, MaxY, MaxZ);
-  const mat3f bm(Parent.GetBasis().GetMatrix());
-  const mat3f c2c(XApp->XFile().GetAsymmUnit().GetCartesianToCell());
-  const float hh = (float)MaxDim/2;
-  const vec3f center(Parent.GetBasis().GetCenter());
-  vec3i aa[8];
-  for( int i=0; i < MaxDim; i++ )  {
-    for( int j=0; j < MaxDim; j++ )  {  // (i,j,Depth)        
-      vec3f p((float)(i-hh)/Size, (float)(j-hh)/Size,  Depth);
-      p = bm*p;
-      p -= center;
-      p *= c2c;
-      p *= dim;
-      aa[0] = vec3i(olx_round(p[0]), olx_round(p[1]), olx_round(p[2])); //x,y,z
-      aa[1] = vec3i((int)(p[0]), (int)(p[1]), (int)(p[2]));  //x',y',z'
-      aa[2] = vec3i(aa[1][0], aa[0][1], aa[0][2]);  // x',y,z
-      aa[3] = vec3i(aa[1][0], aa[1][1], aa[0][2]);  // x',y',z
-      aa[4] = vec3i(aa[1][0], aa[0][1], aa[1][2]);  // x',y,z'
-      aa[5] = vec3i(aa[0][0], aa[1][1], aa[0][2]);  // x,y',z
-      aa[6] = vec3i(aa[0][0], aa[1][1], aa[1][2]);  // x,y',z'
-      aa[7] = vec3i(aa[0][0], aa[0][1], aa[1][2]);  // x,y,z'
-      data[i][j] = 0;
-      float wght=0;
-      for( int k=0; k < 8; k++ )  {
-        const float w = 1.0f-(sqrt(p.QDistanceTo(aa[k])/3));
-        for( int m=0; m < 3; m++ )  {
-          while( aa[k][m] < 0 )
-            aa[k][m] += dim[m];
-          while( aa[k][m] >= dim[m] )
-            aa[k][m] -= dim[m];
-        }
-        data[i][j] += w*ED->Data[aa[k][0]][aa[k][1]][aa[k][2]];
-        wght += w;
-      }
-      data[i][j] /= wght;
-      if( data[i][j] < minZ )  minZ = data[i][j];
-      if( data[i][j] > maxZ )  maxZ = data[i][j];
-    }
-  }
-  float contour_step = (maxZ - minZ)/(contour_cnt-1);
-  z[0] = minZ;
-  for( int i=1; i < contour_cnt; i++ )
-    z[i] = z[i-1]+contour_step;
-  cm.DoContour(data, 0, MaxDim-1, 0, MaxDim-1, x, y, contour_cnt, z, mf);
-  delete [] x;
-  delete [] y;
-  for( int i=0; i < MaxDim; i++ )
-    delete [] data[i];
-  delete [] data;
 }
 //..............................................................................
 void TXGrid::ToDataItem(TDataItem& item, IOutputStream& zos) const {
@@ -1020,8 +932,6 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
     fpNone|fpOne, "Returns true if grid data is initialised") );
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibRenderMode, "RenderMode",
     fpNone|fpOne, "Returns/sets grid rendering mode. Supported values: point, line, fill, plane, contour") );
-  lib->RegisterMacro<TXGrid>(new TMacro<TXGrid>(this,  &TXGrid::LibWritePS, "WritePS", EmptyString,
-    fpOne, "Writes current projection to a postscript file") );
 
   AGDrawObject::ExportLibrary( *lib );
   return lib;

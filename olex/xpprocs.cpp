@@ -7406,7 +7406,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   if( !strMaskInc.IsEmpty() )
     maskInc = strMaskInc.ToDouble();
   TRefList refs;
-  TArrayList<compd > F;
+  TArrayList<compd> F;
   olxstr err( SFUtil::GetSF(refs, F, mapType, 
     Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2, 
     (Options.FindValue("scale", "r").ToLowerCase().CharAt(0) == 'r') ? SFUtil::scaleRegression : SFUtil::scaleSimple) );
@@ -7424,11 +7424,8 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   }
   TArrayList<SFUtil::StructureFactor> P1SF;
   TArrayList<vec3i> hkl(refs.Count());
-  for( size_t i=0; i < refs.Count(); i++ )  {
-    hkl[i][0] = refs[i].GetH();
-    hkl[i][1] = refs[i].GetK();
-    hkl[i][2] = refs[i].GetL();
-  }
+  for( size_t i=0; i < refs.Count(); i++ )
+    hkl[i] = refs[i].GetHkl();
   SFUtil::ExpandToP1(hkl, F, *sg, P1SF);
   double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   BVFourier::MapInfo mi;
