@@ -423,8 +423,14 @@ bool TEFile::IsDir(const olxstr& F)  {
   if( F.IsEmpty() )  return false;
   struct STAT_STR the_stat;
   olxstr fn = OLX_OS_PATH(F);
-  if( fn.EndsWith(OLX_PATH_DEL) )
-    fn = fn.SubStringFrom(0, 1);
+  if( fn.EndsWith(OLX_PATH_DEL) )  {
+#ifdef __WIN32__
+    if( !(fn.Length() == 3 && fn.CharAt(1) == ':' ) ) // e:\ is a dir e: not!
+#else
+    if( fn.Length() > 1 )  // / is a dir, nothing is not...
+#endif
+      fn = fn.SubStringFrom(0, 1);
+  }
   if( STAT(OLXSTR(fn), &the_stat) != 0 )
     return false;
   return (the_stat.st_mode & S_IFDIR) != 0;

@@ -686,7 +686,7 @@ void CInstallerDlg::InitRepositories()  {
   if( TEFile::Exists(zipfn) )  {
     if( !TEFile::IsAbsolutePath(zipfn) )  {
       zipfn = TEFile::CurrentDir();
-      zipfn << "\\" << updater::UpdateAPI::GetInstallationFileName();
+      TEFile::AddPathDelimeterI(zipfn) << updater::UpdateAPI::GetInstallationFileName();
     }
     combo_box::add_item(this, IDC_CB_REPOSITORY, zipfn);
     combo_box::sel_item(this, IDC_CB_REPOSITORY, zipfn);

@@ -547,8 +547,9 @@ void OrtDraw::Render(const olxstr& fileName)  {
       data[i] = new float[MaxDim];
       y[i] = x[i] = i - MaxDim/2;
     }
-    const int contour_cnt = 15;
-    float z[contour_cnt], minZ = 1000, maxZ = -1000;
+    const int contour_cnt = grid.GetContourLevelCount();
+    float* z = new float[contour_cnt];
+    float minZ = 1000, maxZ = -1000;
     const vec3i dim = grid.GetDim();
     const mat3f bm(app.GetRender().GetBasis().GetMatrix());
     const mat3f c2c(app.XFile().GetAsymmUnit().GetCartesianToCell());
@@ -598,6 +599,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
     for( int i=0; i < MaxDim; i++ )
       delete [] data[i];
     delete [] data;
+    delete [] z;
   }
 
   objects.QuickSorter.SortSF(objects, OrtObjectsZSort);

@@ -22,11 +22,11 @@ const short
   planeDrawModeOriginal = 1,
   planeDrawModeGradient = 2;
 const short
-  planeRenderModePlane   = 1,
-  planeRenderModePoint   = 2,
-  planeRenderModeFill    = 3,
-  planeRenderModeLine    = 4,
-  planeRenderModeContour = 5;
+  planeRenderModePlane   = 0x0001,
+  planeRenderModeContour = 0x0002,
+  planeRenderModePoint   = 0x0004,
+  planeRenderModeFill    = 0x0008,
+  planeRenderModeLine    = 0x0010;
 
 class TXGrid: public TGlMouseListener  {
   //TVectorDList AllPoints;
@@ -52,9 +52,9 @@ class TXGrid: public TGlMouseListener  {
   void DrawQuad16(double points[4][4]);
   void RescaleSurface();
   TGlTextBox* Info;
-  int RenderMode;
+  short RenderMode;
   bool Extended;
-  TGlPrimitive* glpP, *glpN;
+  TGlPrimitive* glpP, *glpN, *glpC;
   // these will keep the masked objects
   TTypeList<vec3f> p_vertices, n_vertices;
   TTypeList<vec3f> p_normals, n_normals;
@@ -82,6 +82,8 @@ protected:
     RenderMode == planeRenderModeLine ||
     RenderMode == planeRenderModePoint;
   }
+  // updates the text information regarding current map
+  void UpdateInfo();
 public:
   TXGrid(const olxstr& collectionName, TGXApp* xapp);
   virtual ~TXGrid();
@@ -89,7 +91,7 @@ public:
   inline TArray3D<float>* Data()  {  return ED;  }
   bool LoadFromFile(const olxstr& GridFile);
 
-  void InitIso(bool v = true);
+  void InitIso();
   void InitGrid(int maxX, int maxY, int MaxZ);
   inline void SetValue(int i, int j, int k, float v) {
     ED->Data[i][j][k] = v;
@@ -137,7 +139,12 @@ public:
   void GlContextChange();
 
   inline bool IsEmpty()  const  {  return ED == NULL;  }
-  int GetRenderMode() const {  return RenderMode;  }
+  short GetRenderMode() const {  return RenderMode;  }
+  
+  int GetContourLevelCount() const {  return ContourLevelCount;  }
+  // sets new number of contours...
+  void SetContourLevelCount(int v);
+
   inline virtual void SetVisible(bool On) {  
     AGDrawObject::SetVisible(On);  
     Info->SetVisible(On);
@@ -154,6 +161,7 @@ public:
   void LibScale(const TStrObjList& Params, TMacroError& E);
   void LibExtended(const TStrObjList& Params, TMacroError& E);
   void LibSize(const TStrObjList& Params, TMacroError& E);
+  void LibContours(const TStrObjList& Params, TMacroError& E);
   void LibGetMin(const TStrObjList& Params, TMacroError& E);
   void LibGetMax(const TStrObjList& Params, TMacroError& E);
   void LibRenderMode(const TStrObjList& Params, TMacroError& E);
