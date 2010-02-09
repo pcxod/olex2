@@ -1825,7 +1825,7 @@ TSPlane *TGXApp::TmpPlane(TXAtomPList* atoms, int weightExtent)  {
     TListCaster::TOP(XAtoms, SAtoms);
 
   if( SAtoms.Count() < 3 )  return NULL;
-  return XFile().GetLattice().NewPlane(SAtoms, weightExtent);
+  return XFile().GetLattice().TmpPlane(SAtoms, weightExtent);
 }
 //..............................................................................
 TXPlane * TGXApp::AddPlane(TXAtomPList &Atoms, bool Rectangular, int weightExtent)  {

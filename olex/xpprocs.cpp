@@ -1260,6 +1260,7 @@ void TMainForm::macActivate(TStrObjList &Cmds, const TParamList &Options, TMacro
   TXPlane *XP = FXApp->XPlane(Cmds[0]);
   if( XP != NULL )  {
     FXApp->GetRender().GetBasis().OrientNormal(XP->Plane().GetNormal());
+    FXApp->SetGridDepth(XP->Plane().GetCenter());
     FXApp->Draw();
   }
   else  {
@@ -1484,7 +1485,10 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( orientOnly )  {
     plane = FXApp->TmpPlane(&Atoms, weightExtent);
     if( plane != NULL )  {
-      FXApp->GetRender().GetBasis().OrientNormal( plane->GetNormal() );
+      FXApp->GetRender().GetBasis().OrientNormal(plane->GetNormal());
+      FXApp->SetGridDepth(plane->GetCenter());
+      delete plane;
+      plane = NULL;
     }
   }
   else  {
@@ -1512,11 +1516,6 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     tab.CreateTXTList(Output, olxstr("Atom-to-plane distances for ") << planeName, true, false, "  | ");
     TBasicApp::GetLog() << ( Output );
     TBasicApp::GetLog() << ( olxstr("Plane normal: ") << plane->GetNormal().ToString() << '\n');
-    vec3d center;
-    for( size_t i=0; i < Atoms.Count(); i++ )
-      center += Atoms[i]->Atom().crd();
-    center /= Atoms.Count();
-    FXApp->SetGridDepth(center);
   }
 }
 //..............................................................................
@@ -7346,7 +7345,7 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
     delete [] sin_cos[i];
   delete [] sin_cos;
 
-  FXApp->XGrid().InitIso(false);
+  FXApp->XGrid().InitIso();
   FXApp->ShowGrid(true, EmptyString);
 }
 //..............................................................................
@@ -7492,7 +7491,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     FXApp->BuildSceneMask(*fm, maskInc);
     FXApp->XGrid().SetMask(*fm);
   }
-  //FXApp->XGrid().InitIso(false);
+  FXApp->XGrid().InitIso();
   FXApp->ShowGrid(true, EmptyString);
 }
 //..............................................................................

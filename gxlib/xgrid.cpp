@@ -165,6 +165,7 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   MaxVal = MinVal = 0;
   MinHole = MaxHole = 0;
   PListId = NListId = ~0;
+  glpC = glpN = glpP = NULL;
 }
 //..............................................................................
 TXGrid::~TXGrid()  {
@@ -178,7 +179,7 @@ void TXGrid::Clear()  {  DeleteObjects();  }
 void TXGrid::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;
 
@@ -210,6 +211,11 @@ void TXGrid::Create(const olxstr& cName, const ACreationParams* cpar)  {
   glpN = &GPC.NewPrimitive("-Surface", sgloQuads);
   glpN->SetProperties(GS.GetMaterial("-Surface", 
     TGlMaterial("85;1.000,0.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36")));
+
+  glpC = &GPC.NewPrimitive("Contour plane", sgloQuads);
+  glpC->SetProperties(GS.GetMaterial("Contour plane", 
+    TGlMaterial("1029;3628944717;645955712")));
+  glpC->Vertices.SetCount(4);
 }
 //..............................................................................
 void TXGrid::CalcColorRGB(float v, uint8_t& R, uint8_t& G, uint8_t& B) {
@@ -294,7 +300,8 @@ void TXGrid::CalcColor(float v) {
 //..............................................................................
 bool TXGrid::Orient(TGlPrimitive& GlP)  {
   if( ED == NULL )  return true;
-  if( IS != NULL && Is3D() )  {
+  if( Is3D() )  {
+    if( IS == NULL )  return true;
     if( &GlP == glpN )  // draw once only
       glCallList(PListId);
     else if( &GlP == glpP )  // draw once only
@@ -302,7 +309,14 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     return true;
   }
   if( &GlP == glpP || &GlP == glpN )  return true;
-
+  if( &GlP == glpC )  {
+    if( (RenderMode&planeRenderModePlane) != 0 )
+      return true;
+  }
+  else  {
+    if( (RenderMode&planeRenderModeContour) != 0 && (RenderMode&planeRenderModePlane) == 0 )
+      return true;
+  }
   const mat3f bm(Parent.GetBasis().GetMatrix());
   const mat3f c2c(XApp->XFile().GetAsymmUnit().GetCartesianToCell());
   const float hh = (float)MaxDim/2;
@@ -347,7 +361,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
         wght += w;
       }
       val /= wght;
-      if( RenderMode == planeRenderModePlane )  {
+      if( (RenderMode&planeRenderModePlane) != 0 )  {
         uint8_t R, G, B;
         CalcColorRGB(val, R, G, B);
         const int off = (i+j*MaxDim)*3; 
@@ -355,7 +369,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
         TextData[off+1] = G;
         TextData[off+2] = B;
       }
-      else if( RenderMode == planeRenderModeContour )  {
+      if( (RenderMode&planeRenderModeContour) != 0 )  {
         if( val < minVal )
           minVal = val;
         if( val > maxVal )
@@ -368,7 +382,8 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   GlP.Vertices[1] = p2;
   GlP.Vertices[2] = p3;
   GlP.Vertices[3] = p4;
-  if( RenderMode == planeRenderModePlane )  {
+
+  if( (RenderMode&planeRenderModePlane) != 0 )  {
     if( !olx_is_valid_index(TextIndex) )  {
       TextIndex = Parent.GetTextureManager().Add2DTexture("Plane", 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
       TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextIndex);
@@ -388,21 +403,21 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     GlP.SetTextureId(TextIndex);
     //  glNormal3d(bm[0][2], bm[1][2], bm[2][2]);
     glNormal3d(0, 0, 1);
-    return false;
   }
-  else  {
-    glColor3f(0, 0, 0);
+  if( (RenderMode&planeRenderModeContour) != 0 )  {
     Contour<float> cm;
     Contour<float>::MemberFeedback<TXGrid> mf(*this, &TXGrid::GlLine);
     float contour_step = (maxVal - minVal)/(ContourLevelCount-1);
     ContourLevels[0] = minVal;
     for( int i=1; i < ContourLevelCount; i++ )
       ContourLevels[i] = ContourLevels[i-1]+contour_step;
+
+    TGlPrimitive::PrepareColorRendering(GL_LINES);
+    glColor3f(0, 0, 0);
     cm.DoContour(ContourData, 0, MaxDim-1, 0, MaxDim-1,
       ContourCrds[0], ContourCrds[1], 
       ContourLevelCount, ContourLevels, mf);
-    GlP.SetTextureId(~0);
-    return true;  // do not render the plane
+    TGlPrimitive::EndColorRendering();
   }
   return false;
 }
@@ -411,10 +426,8 @@ void TXGrid::GlLine(float x1, float y1, float x2, float y2, float z)  {
   vec3d p1(x1/Size, y1/Size, Depth), p2(x2/Size, y2/Size, Depth);
   p1 = Parent.GetBasis().GetMatrix()*p1 - Parent.GetBasis().GetCenter();
   p2 = Parent.GetBasis().GetMatrix()*p2 - Parent.GetBasis().GetCenter();
-  glBegin(GL_LINES);
   glVertex3d(p1[0], p1[1], p1[2]);
   glVertex3d(p2[0], p2[1], p2[2]);
-  glEnd();
 }
 //..............................................................................
 bool TXGrid::GetDimensions(vec3d &Max, vec3d &Min)  {
@@ -479,6 +492,7 @@ void TXGrid::DeleteObjects()  {
     delete [] ContourCrds[1];
     delete [] ContourLevels;
     ContourData = NULL;
+    ContourLevels = NULL;
   }
 }
 //..............................................................................
@@ -520,8 +534,7 @@ void TXGrid::SetScale(float v)  {
       return;
   }
   Scale = v;
-  Info->Clear();
-  Info->PostText( olxstr("Current level is ") << Scale);
+  UpdateInfo();
   if( IS != NULL && _3d )  {
     p_triangles.Clear();
     p_normals.Clear();
@@ -557,6 +570,14 @@ void TXGrid::SetDepth(const vec3d& v)  {
   SetDepth((float)p[2]);
 }
 //..............................................................................
+void TXGrid::SetContourLevelCount(int v)  {
+  if( v <= 2 || v > 30 )  return;
+  if( ContourLevels != NULL )
+    delete [] ContourLevels;
+  ContourLevelCount = v;
+  ContourLevels = new float[ContourLevelCount];
+}
+//..............................................................................
 bool TXGrid::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
   if( (Data->Shift & sssCtrl) == 0 && (Data->Shift & sssShift) == 0 )
     return false;
@@ -585,11 +606,17 @@ bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
   }
   else  {
     if( (Data->Shift & sssShift) != 0 )  {
-      double step = (MaxVal-MinVal)/250.0;
-      Scale -= step*(LastMouseX - Data->X);
-      Scale += step*(LastMouseY - Data->Y);
-      if( olx_abs(Scale) > olx_max(MaxVal,MinVal)  )
-        Scale = olx_sign(Scale)*olx_max(MaxVal,MinVal);
+      if( RenderMode == planeRenderModeContour )  {
+        const int v =  -(LastMouseX - Data->X)  + (LastMouseY - Data->Y);
+        SetContourLevelCount(GetContourLevelCount()+v/2);
+      }
+      else  {
+        const double step = (MaxVal-MinVal)/250.0;
+        Scale -= step*(LastMouseX - Data->X);
+        Scale += step*(LastMouseY - Data->Y);
+        if( olx_abs(Scale) > olx_max(MaxVal,MinVal)  )
+          Scale = olx_sign(Scale)*olx_max(MaxVal,MinVal);
+      }
     }
     else  {
       Size += (float)(LastMouseX - Data->X)/15;
@@ -601,11 +628,18 @@ bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
   if( IS != NULL )  {
     SetScale(Scale);
   }
-  Info->Clear();
-  Info->PostText(olxstr("Current level: ") << Scale);
+  UpdateInfo();
   LastMouseX = Data->X;
   LastMouseY = Data->Y;
   return true;
+}
+//..............................................................................
+void TXGrid::UpdateInfo()  {
+  Info->Clear();
+  if( RenderMode == planeRenderModeContour )
+    Info->PostText(olxstr("Contours number: ") << GetContourLevelCount());
+  else
+    Info->PostText(olxstr("Current level: ") << Scale);
 }
 //..............................................................................
 void TXGrid::GlContextChange()  {
@@ -750,8 +784,8 @@ void TXGrid::AdjustMap()  {
   ED->Data[MaxX][MaxY][MaxZ] = ED->Data[0][0][0];
 }
 //..............................................................................
-void TXGrid::InitIso(bool v)  {
-  if( !v )  {
+void TXGrid::InitIso()  {
+  if( !Is3D() )  {
     if( IS != NULL )  {
       delete IS;
       IS = NULL;
@@ -763,7 +797,6 @@ void TXGrid::InitIso(bool v)  {
     IS = new CIsoSurface<float>(*ED);
     SetScale(Scale);
   }
-  //Mode3D = v;
 }
 //..............................................................................
 //..............................................................................
@@ -784,6 +817,12 @@ void TXGrid::LibSize(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Size);
   else
     Size = Params[0].ToFloat<float>();
+}
+//..............................................................................
+void TXGrid::LibContours(const TStrObjList& Params, TMacroError& E)  {
+  if( Params.IsEmpty() )  E.SetRetVal(ContourLevelCount);
+  else
+    SetContourLevelCount(Params[0].ToSizeT());
 }
 //..............................................................................
 void TXGrid::LibIsvalid(const TStrObjList& Params, TMacroError& E)  {
@@ -810,6 +849,8 @@ void TXGrid::LibRenderMode(const TStrObjList& Params, TMacroError& E)  {
       E.SetRetVal<olxstr>("plane");
     else if( RenderMode == planeRenderModeContour )
       E.SetRetVal<olxstr>("contour");
+    else if( RenderMode == (planeRenderModeContour|planeRenderModePlane) )
+      E.SetRetVal<olxstr>("contour+plane");
     return;
   }
   int pm = RenderMode;
@@ -823,11 +864,13 @@ void TXGrid::LibRenderMode(const TStrObjList& Params, TMacroError& E)  {
     RenderMode = planeRenderModePlane;
   else if( Params[0] == "contour" )
     RenderMode = planeRenderModeContour;
+  else if( Params[0] == "contour+plane" )
+    RenderMode = planeRenderModeContour|planeRenderModePlane;
   else throw TInvalidArgumentException(__OlxSourceInfo,
          olxstr("incorrect mode value: '") << Params[0] << '\'');
   // have to recreate
   if( pm != RenderMode )  {
-    InitIso(Is3D());
+    InitIso();
   }
 }
 //..............................................................................
@@ -958,7 +1001,7 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
     Mask = new FractMask;
     Mask->FromDataItem(*maski, zis);
   }
-  InitIso(Is3D());
+  InitIso();
 }
 //..............................................................................
 TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
@@ -1007,8 +1050,8 @@ PyObject* pyInit(PyObject* self, PyObject* args)  {
 }
 //..............................................................................
 PyObject* pySetMinMax(PyObject* self, PyObject* args)  {
-  int min, max;
-  if( !PyArg_ParseTuple(args, "ii", &min, &max) )
+  float min, max;
+  if( !PyArg_ParseTuple(args, "ff", &min, &max) )
     return NULL;
   TXGrid::GetInstance()->SetMinVal(min);
   TXGrid::GetInstance()->SetMaxVal(max);
@@ -1016,8 +1059,8 @@ PyObject* pySetMinMax(PyObject* self, PyObject* args)  {
 }
 //..............................................................................
 PyObject* pySetHole(PyObject* self, PyObject* args)  {
-  int min, max;
-  if( !PyArg_ParseTuple(args, "ii", &min, &max) )
+  float min, max;
+  if( !PyArg_ParseTuple(args, "ff", &min, &max) )
     return NULL;
   TXGrid::GetInstance()->SetMinHole(min);
   TXGrid::GetInstance()->SetMaxHole(max);
@@ -1039,7 +1082,7 @@ PyObject* pyInitSurface(PyObject* self, PyObject* args)  {
     return NULL;
   if( v )
     TXGrid::GetInstance()->AdjustMap();
-  TXGrid::GetInstance()->InitIso(v);
+  TXGrid::GetInstance()->InitIso();
   Py_INCREF(Py_None);
   return Py_None;
 }

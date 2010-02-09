@@ -81,17 +81,6 @@ protected:
 
   void SetType(short T);
 
-  static void PrepareColorRendering(uint16_t _begin)  {
-    glPushAttrib(GL_LIGHTING_BIT);
-    glDisable(GL_LIGHTING);
-    glEnable(GL_COLOR_MATERIAL);
-    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-    glBegin(_begin);
-  }
-  static void EndColorRendering()  {
-    glEnd();
-    glPopAttrib();
-  }
   // helper functions
   void DrawVertex2(size_t i) const {
     DrawVertex(Vertices[i]);
@@ -187,7 +176,19 @@ public:
 
   TGlMaterial& GetProperties() const {  return (TGlMaterial&)AGroupObject::GetProperties();  }
   AGOProperties& SetProperties(const AGOProperties& C);
-  
+
+  static void PrepareColorRendering(uint16_t _begin)  {
+    glPushAttrib(GL_LIGHTING_BIT);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    glBegin(_begin);
+  }
+  static void EndColorRendering()  {
+    glEnd();
+    glPopAttrib();
+  }
+
   void CallList(TGlPrimitive* GlP)  {
     if( GlP->IsList() )
       glCallList(GlP->GetListId()); 
