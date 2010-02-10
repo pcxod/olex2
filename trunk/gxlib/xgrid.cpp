@@ -335,27 +335,33 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
       p -= center;
       p *= c2c;
       p *= dim;
-      aa[0] = vec3i(olx_round(p[0]), olx_round(p[1]), olx_round(p[2])); //x,y,z
-      aa[1] = vec3i((int)(p[0]), (int)(p[1]), (int)(p[2]));  //x',y',z'
-      aa[2] = vec3i(aa[1][0], aa[0][1], aa[0][2]);  // x',y,z
-      aa[3] = vec3i(aa[1][0], aa[1][1], aa[0][2]);  // x',y',z
-      aa[4] = vec3i(aa[1][0], aa[0][1], aa[1][2]);  // x',y,z'
-      aa[5] = vec3i(aa[0][0], aa[1][1], aa[0][2]);  // x,y',z
-      aa[6] = vec3i(aa[0][0], aa[1][1], aa[1][2]);  // x,y',z'
-      aa[7] = vec3i(aa[0][0], aa[0][1], aa[1][2]);  // x,y,z'
-      float val = 0, wght = 0;
-      for( int k=0; k < 8; k++ )  {
-        const float w = 1.0f-(p.QDistanceTo(aa[k])/3);
-        for( int m=0; m < 3; m++ )  {
-          while( aa[k][m] < 0 )
-            aa[k][m] += dim[m];
-          while( aa[k][m] >= dim[m] )
-            aa[k][m] -= dim[m];
+      float val = 0;
+      vec3i fp((int)(p[0]), (int)(p[1]), (int)(p[2]));  //x',y',z'
+      const float _p = p[0]-fp[0], _pc = _p*_p*_p, _ps = _p*_p;
+      const float _q = p[1]-fp[1], _qc = _q*_q*_q, _qs = _q*_q;
+      const float _r = p[2]-fp[2], _rc = _r*_r*_r, _rs = _r*_r;
+      const float vx[4] = {-_pc/6 + _ps/2 -_p/3, (_pc-_p)/2 - _ps + 1, (-_pc + _ps)/2 + _p, (_pc - _p)/6 };
+      const float vy[4] = {-_qc/6 + _qs/2 -_q/3, (_qc-_q)/2 - _qs + 1, (-_qc + _qs)/2 + _q, (_qc - _q)/6 };
+      const float vz[4] = {-_rc/6 + _rs/2 -_r/3, (_rc-_r)/2 - _rs + 1, (-_rc + _rs)/2 + _r, (_rc - _r)/6 };
+      for( int dx=-1; dx <= 2; dx++ )  {
+        const float _vx = vx[dx+1];
+        const int n_x = fp[0]+dx;
+        for( int dy=-1; dy <= 2; dy++ )  {
+          const float _vxy = vy[dy+1]*_vx;
+          const int n_y = fp[1]+dy;
+          for( int dz=-1; dz <= 2; dz++ )  {
+            const float _vxyz = vz[dz+1]*_vxy;
+            vec3i ijk(n_x, n_y, fp[2]+dz);
+            for( int m=0; m < 3; m++ )  {
+              while( ijk[m] < 0 )
+                ijk[m] += dim[m];
+              while( ijk[m] >= dim[m] )
+                ijk[m] -= dim[m];
+            }
+            val += ED->Data[ijk[0]][ijk[1]][ijk[2]]*_vxyz;
+          }
         }
-        val += w*ED->Data[aa[k][0]][aa[k][1]][aa[k][2]];
-        wght += w;
       }
-      val /= wght;
       if( (RenderMode&planeRenderModePlane) != 0 )  {
         uint8_t R, G, B;
         CalcColorRGB(val, R, G, B);
@@ -587,12 +593,12 @@ bool TXGrid::OnMouseUp(const IEObject *Sender, const TMouseData *Data) {
 bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
   if( !MouseDown )  return false;
   if( (Data->Button & smbLeft) != 0 ) {
-    SetDepth((float)(LastMouseX - Data->X)/15+(float)(LastMouseY - Data->Y)/15);
+    SetDepth(Depth+(float)((LastMouseX - Data->X)+(LastMouseY - Data->Y))/15);
   }
   else  {
     if( (Data->Shift & sssShift) != 0 )  {
       if( RenderMode == planeRenderModeContour )  {
-        const int v =  -(LastMouseX - Data->X)  + (LastMouseY - Data->Y);
+        const int v =  -(LastMouseX - Data->X) + (LastMouseY - Data->Y);
         SetContourLevelCount(GetContourLevelCount()+v/2);
       }
       else  {

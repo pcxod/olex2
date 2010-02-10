@@ -9,6 +9,7 @@
 #include "conrec.h"
 //
 #include "sfutil.h"
+#include "unitcell.h"
 
 ort_atom::ort_atom(const OrtDraw& parent, const TXAtom& a) :
 a_ort_object(parent), atom(a), p_elpm(NULL), p_ielpm(NULL),
@@ -272,7 +273,7 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
 
 void ort_line::render(PSWriter& pw) const {
   pw.lineWidth(0.1);
-  pw.color(0);
+  pw.color(color);
   pw.drawLine(from, to);
 }
 
@@ -436,7 +437,65 @@ void OrtDraw::Init(PSWriter& pw)  {
   ProjMatr = basis.GetMatrix()*DrawScale;  
   UnProjMatr = ProjMatr.Inverse();
 }
-
+/*
+Grid interpolation stuff...
+http://xtal.sourceforge.net/man/slant-desc.html
+the cubic interpolation does a good job on coarse grids (compared with direct calculations)
+for linear:
+    float _p = p[0]-fp[0];
+    float _q = p[1]-fp[1];
+    float _r = p[2]-fp[2];
+    float vx[2] = {1-_p, _p};
+    float vy[2] = {1-_q, _q};
+    float vz[2] = {1-_r, _r};
+    for( int dx=0; dx <= 1; dx++ )  {
+      float _vx = vx[dx];
+      for( int dy=0; dy <= 1; dy++ )  {
+        float _vy = vy[dy];
+        for( int dz=0; dz <= 1; dz++ )  {
+          float _vz = vz[dz];
+          vec3i ijk(fp[0]+dx, fp[1]+dy, fp[2]+dz);
+          for( int m=0; m < 3; m++ )  {
+            while( ijk[m] < 0 )
+              ijk[m] += dim[m];
+            while( ijk[m] >= dim[m] )
+              ijk[m] -= dim[m];
+          }
+          val += grid.GetValue(ijk)*_vx*_vy*_vz;
+        }
+      }
+    }
+Direct calculation:
+    TRefList refs;
+    TArrayList<compd> F;
+    SFUtil::GetSF(refs, F, SFUtil::mapTypeCalc, SFUtil::sfOriginOlex2, SFUtil::scaleSimple);
+    TSpaceGroup* sg = NULL;
+    try  { sg = &app.XFile().GetLastLoaderSG();  }
+    catch(...)  {  return;  }
+    TArrayList<SFUtil::StructureFactor> P1SF;
+    TArrayList<vec3i> hkl(refs.Count());
+    for( size_t i=0; i < refs.Count(); i++ )
+      hkl[i] = refs[i].GetHkl();
+    SFUtil::ExpandToP1(hkl, F, *sg, P1SF);
+    float cell_vol = (float)app.XFile().GetUnitCell().CalcVolume();
+    for( int i=0; i < MaxDim; i++ )  {
+      for( int j=0; j < MaxDim; j++ )  {  // (i,j,Depth)        
+        vec3f p((float)(i-hh)/Size, (float)(j-hh)/Size,  Depth);
+        p = bm*p;
+        p -= center;
+        p *= c2c;
+        compd _val=0;
+        for( size_t k=0; k < P1SF.Count(); k++ )  {
+          double tv = -2*M_PI*(p.DotProd(P1SF[k].hkl)+P1SF[k].ps), ca, sa;
+          SinCos(tv, &sa, &ca);
+          _val += P1SF[k].val*compd(ca,sa);
+        }
+        data[i][j] = (float)_val.Re()/cell_vol;
+        if( data[i][j] < minZ )  minZ = data[i][j];
+        if( data[i][j] > maxZ )  maxZ = data[i][j];
+      }
+    }
+*/
 void OrtDraw::Render(const olxstr& fileName)  {
   PSWriter pw(fileName);
   Init(pw);
@@ -537,7 +596,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
   TXGrid& grid = app.XGrid();
   if( (grid.GetRenderMode()&planeRenderModeContour) != 0 )  {
     Contour<float> cm;
-    ContourDrawer drawer(*this, objects);
+    ContourDrawer drawer(*this, objects, 0);
     Contour<float>::MemberFeedback<OrtDraw::ContourDrawer> mf(drawer, &OrtDraw::ContourDrawer::draw);
     int MaxDim = 128;
     float Size = grid.GetSize();
@@ -557,59 +616,41 @@ void OrtDraw::Render(const olxstr& fileName)  {
     const mat3f c2c(app.XFile().GetAsymmUnit().GetCartesianToCell());
     const float hh = (float)MaxDim/2;
     const vec3f center(app.GetRender().GetBasis().GetCenter());
-    vec3i aa[8];
-//////
-    //TRefList refs;
-    //TArrayList<compd> F;
-    //SFUtil::GetSF(refs, F, SFUtil::mapTypeCalc, SFUtil::sfOriginOlex2, SFUtil::scaleSimple);
-    //TSpaceGroup* sg = NULL;
-    //try  { sg = &app.XFile().GetLastLoaderSG();  }
-    //catch(...)  {  return;  }
-    //TArrayList<SFUtil::StructureFactor> P1SF;
-    //TArrayList<vec3i> hkl(refs.Count());
-    //for( size_t i=0; i < refs.Count(); i++ )
-    //  hkl[i] = refs[i].GetHkl();
-    //SFUtil::ExpandToP1(hkl, F, *sg, P1SF);
-//////
     for( int i=0; i < MaxDim; i++ )  {
-      for( int j=0; j < MaxDim; j++ )  {  // (i,j,Depth)        
+      for( int j=0; j < MaxDim; j++ )  {
         vec3f p((float)(i-hh)/Size, (float)(j-hh)/Size,  Depth);
         p = bm*p;
         p -= center;
         p *= c2c;
-        
         p *= dim;
-        aa[0] = vec3i(olx_round(p[0]), olx_round(p[1]), olx_round(p[2])); //x,y,z
-        aa[1] = vec3i((int)(p[0]), (int)(p[1]), (int)(p[2]));  //x',y',z'
-        aa[2] = vec3i(aa[1][0], aa[0][1], aa[0][2]);  // x',y,z
-        aa[3] = vec3i(aa[1][0], aa[1][1], aa[0][2]);  // x',y',z
-        aa[4] = vec3i(aa[1][0], aa[0][1], aa[1][2]);  // x',y,z'
-        aa[5] = vec3i(aa[0][0], aa[1][1], aa[0][2]);  // x,y',z
-        aa[6] = vec3i(aa[0][0], aa[1][1], aa[1][2]);  // x,y',z'
-        aa[7] = vec3i(aa[0][0], aa[0][1], aa[1][2]);  // x,y,z'
-        data[i][j] = 0;
-        float wght=0;
-        for( int k=0; k < 8; k++ )  {
-          const float w = 1.0f-(sqrt(p.QDistanceTo(aa[k])/3));
-          for( int m=0; m < 3; m++ )  {
-            while( aa[k][m] < 0 )
-              aa[k][m] += dim[m];
-            while( aa[k][m] >= dim[m] )
-              aa[k][m] -= dim[m];
+        vec3i fp((int)(p[0]), (int)(p[1]), (int)(p[2]));
+        float val = 0;
+        float _p = p[0]-fp[0], _pc = _p*_p*_p, _ps = _p*_p;
+        float _q = p[1]-fp[1], _qc = _q*_q*_q, _qs = _q*_q;
+        float _r = p[2]-fp[2], _rc = _r*_r*_r, _rs = _r*_r;
+        const float vx[4] = {-_pc/6 + _ps/2 -_p/3, (_pc-_p)/2 - _ps + 1, (-_pc + _ps)/2 + _p, (_pc - _p)/6 };
+        const float vy[4] = {-_qc/6 + _qs/2 -_q/3, (_qc-_q)/2 - _qs + 1, (-_qc + _qs)/2 + _q, (_qc - _q)/6 };
+        const float vz[4] = {-_rc/6 + _rs/2 -_r/3, (_rc-_r)/2 - _rs + 1, (-_rc + _rs)/2 + _r, (_rc - _r)/6 };
+        for( int dx=-1; dx <= 2; dx++ )  {
+          const float _vx = vx[dx+1];
+          const int n_x = fp[0]+dx;
+          for( int dy=-1; dy <= 2; dy++ )  {
+            const float _vxy = vy[dy+1]*_vx;
+            const int n_y = fp[1]+dy;
+            for( int dz=-1; dz <= 2; dz++ )  {
+              const float _vxyz = vz[dz+1]*_vxy;
+              vec3i ijk(n_x, n_y, fp[2]+dz);
+              for( int m=0; m < 3; m++ )  {
+                while( ijk[m] < 0 )
+                  ijk[m] += dim[m];
+                while( ijk[m] >= dim[m] )
+                  ijk[m] -= dim[m];
+              }
+              val += grid.GetValue(ijk)*_vxyz;
+            }
           }
-          data[i][j] += w*grid.GetValue(aa[k]);
-          wght += w;
         }
-        data[i][j] /= wght;
-        //compd _val=0;
-        //for( size_t k=0; k < P1SF.Count(); k++ )  {
-        //  double tv = -2*M_PI*(p.DotProd(P1SF[k].hkl)+P1SF[k].ps), ca, sa;
-        //  SinCos(tv, &sa, &ca);
-        //  _val += P1SF[k].val*compd(ca,sa);
-        //}
-        //float val = (float)_val.Re();
-        //data[i][j] = val;
-
+        data[i][j] = val;
         if( data[i][j] < minZ )  minZ = data[i][j];
         if( data[i][j] > maxZ )  maxZ = data[i][j];
       }
@@ -619,11 +660,11 @@ void OrtDraw::Render(const olxstr& fileName)  {
     for( int i=1; i < contour_cnt; i++ )
       z[i] = z[i-1]+contour_step;
     cm.DoContour(data, 0, MaxDim-1, 0, MaxDim-1, x, y, contour_cnt, z, mf);
-    delete [] x;
-    delete [] y;
     for( int i=0; i < MaxDim; i++ )
       delete [] data[i];
     delete [] data;
+    delete [] x;
+    delete [] y;
     delete [] z;
   }
 
@@ -670,7 +711,7 @@ void OrtDraw::ContourDrawer::draw(float x1, float y1, float x2, float y2, float 
   vec3d p1(x1/Size, y1/Size, Depth), p2(x2/Size, y2/Size, Depth);
   p1 = parent.basis.GetMatrix()*p1 - parent.basis.GetCenter();
   p2 = parent.basis.GetMatrix()*p2 - parent.basis.GetCenter();
-  objects.Add(new ort_line(parent, parent.ProjectPoint(p1), parent.ProjectPoint(p2)));
+  objects.Add(new ort_line(parent, parent.ProjectPoint(p1), parent.ProjectPoint(p2), color));
 }
 
 float OrtDraw::GetBondRad(const ort_bond& b, uint32_t mask) const {

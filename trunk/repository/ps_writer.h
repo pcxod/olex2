@@ -60,7 +60,7 @@ public:
   //..........................................................................
   template <typename float_t> 
   void lineWidth(const float_t& lw)  {
-    if( lw == CurrentLineWidth )  return;
+    if( olx_abs(lw-CurrentLineWidth) < 1e-6 )  return;
     psw_sprintf(bf, "%f setlinewidth", (float)lw);
     out.Writenl( bf );
     CurrentLineWidth = (float)lw;

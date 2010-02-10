@@ -140,7 +140,8 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
   // find & remove symmetrical equivalenrs from AllAtoms
   TDisassembleTaskRemoveSymmEq searchEqTask(Atoms, Distances);
   // profiling has shown it gives no benifit and makes the process slow
-  //TListIteratorManager<TDisassembleTaskRemoveSymmEq> searchEq(searchEqTask, Atoms.Count(), tQuadraticTask, 100);
+  TListIteratorManager<TDisassembleTaskRemoveSymmEq> searchEq(searchEqTask,
+    Atoms.Count(), tQuadraticTask, ~0);  // never does the threading
   ac = Atoms.Count();
   for( size_t i=0; i < ac; i++ )
     searchEqTask.Run(i);
@@ -154,7 +155,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
     }
     Atoms[i]->Clear();
     // preallocate memory to improve mulithreading
-    Atoms[i]->SetCapacity( Atoms[i]->NodeCount() + Atoms[i]->CAtom().AttachedAtomCount() );
+    Atoms[i]->SetCapacity(Atoms[i]->NodeCount() + Atoms[i]->CAtom().AttachedAtomCount());
   }
   Atoms.Pack();
   if( Atoms.IsEmpty() )  return;
@@ -174,14 +175,16 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
   // get extrac connectivity information
   sw.start("Connectivity analysis");
   TDisassembleTaskCheckConnectivity searchConTask(Atoms, Distances, Delta);
-  TListIteratorManager<TDisassembleTaskCheckConnectivity> searchCon(searchConTask, Atoms.Count(), tQuadraticTask, 100);
+  TListIteratorManager<TDisassembleTaskCheckConnectivity> searchCon(searchConTask,
+    Atoms.Count(), tQuadraticTask, ~0);
   sw.start("Creating bonds");
   CreateBondsAndFragments(Atoms, Frags, InterBonds);
   sw.start("Searching H-bonds");
   // preallocate 50 Hbonds per fragment
   InterBonds.SetCapacity(InterBonds.Count() + Frags.Count()*50); 
   THBondSearchTask searchHBTask(Atoms, &InterBonds, Distances, GetLattice().GetDeltaI());
-  TListIteratorManager<THBondSearchTask> searchHB(searchHBTask, Atoms.Count(), tQuadraticTask, 100);
+  TListIteratorManager<THBondSearchTask> searchHB(searchHBTask,
+    Atoms.Count(), tQuadraticTask, ~1);
   sw.start("Finalising");
   delete [] Distances[0];
   delete [] Distances[1];

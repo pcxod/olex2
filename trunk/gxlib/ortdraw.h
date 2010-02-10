@@ -59,8 +59,9 @@ protected:
 
 struct ort_line : public a_ort_object  {
   vec3f from, to;
-  ort_line(const OrtDraw& parent, const vec3f& _from, const vec3f _to) :
-    a_ort_object(parent), from(_from), to(_to)  {}
+  uint32_t color;
+  ort_line(const OrtDraw& parent, const vec3f& _from, const vec3f _to, uint32_t _color) :
+    a_ort_object(parent), from(_from), to(_to), color(_color)  {}
   virtual void render(PSWriter&) const;
   virtual float get_z() const {  return (from[2]+to[2])/2;  }
 };
@@ -160,8 +161,9 @@ protected:
   struct ContourDrawer {
     TTypeList<a_ort_object>& objects;
     const OrtDraw& parent;
-    ContourDrawer(const OrtDraw& _parent, TTypeList<a_ort_object>& _objects) :
-      parent(_parent), objects(_objects)  {}
+    uint32_t color;
+    ContourDrawer(const OrtDraw& _parent, TTypeList<a_ort_object>& _objects, uint32_t _color) :
+      parent(_parent), objects(_objects), color(_color)  {}
     void draw(float x1, float y1, float x2, float y2, float z);
   };
 public:
