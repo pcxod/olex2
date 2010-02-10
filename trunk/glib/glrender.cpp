@@ -1144,21 +1144,23 @@ void TGlRenderer::LibFog(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void TGlRenderer::LibZoom(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.IsEmpty() )  {
-    SetZoom( CalcZoom()*1.3);
+    SetZoom(CalcZoom());
   }
   else if( Cmds.Count() == 1 ) {
     double zoom = GetZoom() + Cmds[0].ToDouble();
     if( zoom < 0.001 )  zoom = 0.001;
     SetZoom(zoom);
   }
-  return;
+}
+//..............................................................................
+void TGlRenderer::LibCalcZoom(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  E.SetRetVal(CalcZoom());
 }
 //..............................................................................
 TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("gl") : name);
   lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibCompile, "Compile",
     fpOne, "Compiles or decompiles the model according to the boolean parameter") );
-
   lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibPerspective, "Perspective",
     EmptyString, fpNone|fpOne, "Un/Sets perspective view") );
   lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibFog, "Fog",
@@ -1166,6 +1168,8 @@ TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
   lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibZoom, "Zoom",
     EmptyString, fpNone|fpOne, "If no arguments provided - resets zoom to fit to screen, otherwise increments/\
 decrements current zoom by provided value") );
+  lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibCalcZoom, "CalcZoom",
+    EmptyString, fpNone, "Returns optimal zoom value") );
 
   return lib;
 }

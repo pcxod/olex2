@@ -272,6 +272,7 @@ public:
     dc.SetBrush(wxBrush(cl));//*wxWHITE_BRUSH);
     dc.SetPen(wxPen(cl));//*wxWHITE_PEN);
     dc.DrawRectangle(0, imgHeight, imgWidth, txtHeight);
+    dc.SetTextForeground(*wxWHITE);
     dc.DrawText(str, 0, imgHeight);
     if( ++generation > 20 )
       generation = 0;
