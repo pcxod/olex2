@@ -4023,6 +4023,22 @@ void TMainForm::macDirection(TStrObjList &Cmds, const TParamList &Options, TMacr
         }
       }
     }
+    if( !FXApp->XGrid().IsEmpty() && FXApp->XGrid().IsVisible() && 
+      (FXApp->XGrid().GetRenderMode()&(planeRenderModeContour|planeRenderModePlane)) != 0 )
+    {
+      const mat3f bm(FXApp->GetRender().GetBasis().GetMatrix());
+      const mat3f c2c(FXApp->XFile().GetAsymmUnit().GetCartesianToCell());
+      const vec3f center(FXApp->GetRender().GetBasis().GetCenter());
+      vec3f p(0, 0, FXApp->XGrid().GetDepth());
+      p = bm*p;
+      p -= center;
+      p *= c2c;
+      Tmp =  "Grid center: (";
+      Tmp << olxstr::FormatFloat(3, p[0]) << "*A, " <<
+             olxstr::FormatFloat(3, p[1]) << "*B, " <<
+             olxstr::FormatFloat(3, p[2]) << "*C)";
+      TBasicApp::GetLog() << (Tmp << '\n');
+    }
   }
   else  {
     Z = Basis[2];

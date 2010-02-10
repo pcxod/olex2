@@ -1777,15 +1777,15 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
     Table.ColName(5) = "Ueq";
     Table.ColName(6) = "Peak";
     for(size_t i = 0; i < AtomsList.Count(); i++ )  {
-      const TCAtom& A = AtomsList[i]->Atom().CAtom();
-      Table[i][0] = A.GetLabel();
+      const TSAtom& A = AtomsList[i]->Atom();
+      Table[i][0] = A.GetGuiLabel();
       Table[i][1] = A.GetType().symbol;
       Table[i][2] = olxstr::FormatFloat(3, A.ccrd()[0]);
       Table[i][3] = olxstr::FormatFloat(3, A.ccrd()[1]);
       Table[i][4] = olxstr::FormatFloat(3, A.ccrd()[2]);
-      Table[i][5] = olxstr::FormatFloat(3, A.GetUiso());
+      Table[i][5] = olxstr::FormatFloat(3, A.CAtom().GetUiso());
       if( A.GetType() == iQPeakZ )
-        Table[i][6] = olxstr::FormatFloat(3, A.GetQPeak());
+        Table[i][6] = olxstr::FormatFloat(3, A.CAtom().GetQPeak());
       else
         Table[i][6] = '-';
     }

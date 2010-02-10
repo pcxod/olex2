@@ -326,7 +326,6 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   GlP.Vertices[1] = bm*vec3f(hh/Size, -hh/Size, Depth)-center;
   GlP.Vertices[2] = bm*vec3f(hh/Size, hh/Size, Depth)-center;
   GlP.Vertices[3] = bm*vec3f(-hh/Size, hh/Size, Depth)-center;
-  vec3i aa[8];
   float minVal = 1000, maxVal = -1000;
   for( int i=0; i < MaxDim; i++ )  {
     for( int j=0; j < MaxDim; j++ )  {  // (i,j,Depth)        
@@ -934,6 +933,8 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
     fpNone|fpOne, "Returns/sets current scale") );
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibSize, "Size",
     fpNone|fpOne, "Returns/sets current size") );
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibDepth, "Depth",
+    fpNone|fpOne, "Returns/sets current depth") );
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibIsvalid, "IsValid",
     fpNone|fpOne, "Returns true if grid data is initialised") );
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibRenderMode, "RenderMode",
