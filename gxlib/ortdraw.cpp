@@ -598,7 +598,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
     Contour<float> cm;
     ContourDrawer drawer(*this, objects, 0);
     Contour<float>::MemberFeedback<OrtDraw::ContourDrawer> mf(drawer, &OrtDraw::ContourDrawer::draw);
-    int MaxDim = 128;
+    int MaxDim = grid.GetPlaneSize();
     float Size = grid.GetSize();
     float Depth = grid.GetDepth();
     float **data = new float*[MaxDim];
@@ -611,7 +611,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
     const int contour_cnt = grid.GetContourLevelCount();
     float* z = new float[contour_cnt];
     float minZ = 1000, maxZ = -1000;
-    const vec3i dim = grid.GetDim();
+    const vec3i dim = grid.GetDimVec();
     const mat3f bm(app.GetRender().GetBasis().GetMatrix());
     const mat3f c2c(app.XFile().GetAsymmUnit().GetCartesianToCell());
     const float hh = (float)MaxDim/2;

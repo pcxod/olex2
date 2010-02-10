@@ -1,5 +1,3 @@
-//---------------------------------------------------------------------------
-
 #ifndef olxmpsH
 #define olxmpsH
 #include "ebase.h"
@@ -8,7 +6,7 @@
 #include "log.h"
 #include "actions.h"
 #include "evector.h"
-
+#include "olxth.h"
 #include "etime.h"
 
 #ifdef __WIN32__
@@ -25,12 +23,11 @@ const short tLinearTask = 0x0000,
 
 template <typename> class TListIteratorManager;
 
-class TIterationTask {
+class ITask {
 public:
-  TIterationTask();
-  ~TIterationTask() {  ;  }
-  void Run(long index)  {  throw TNotImplementedException(__OlxSourceInfo);  }
-  TIterationTask* Replicate()  {  throw TNotImplementedException(__OlxSourceInfo);  }
+  ITask()  {}
+  ~ITask()  {}
+  virtual void Run() = 0;
 };
 
 template <class TaskClass>
@@ -61,12 +58,34 @@ template <class TaskClass>
       return 0;
     }
 
-    size_t GetCurrentIndex() const  {  return CurrentIndex;  }
+    size_t GetCurrentIndex() const {  return CurrentIndex;  }
     DefPropP(size_t, StartIndex)
     DefPropP(size_t, EndIndex)
     DefPropP(uint16_t, Id)
     TActionQueue& OnCompletion;
   };
+
+/* Instacnes of this class are supposed to be in a 'pool' and can be reused without the 
+need to create new threads. This allows to vectorise little tasks, where thread creation time 
+is longer that the actula task execution */
+class TIterationTaskX : public AOlxThread  {
+  ITask* task;
+public:
+  virtual int Run() {
+    while( true )  {
+      if( Terminate )  break;
+      if( task != NULL )  {
+        task->Run();
+        task = NULL;
+      }
+      Yield();
+    }
+    return 0;
+  }
+  void SetTask(ITask* _task)  {
+    task = _task;
+  }
+};
 
 
 template <class TaskClass>

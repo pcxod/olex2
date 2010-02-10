@@ -94,21 +94,19 @@ public:
   inline double GetValue(int i, int j, int k) const {
     return ED->Data[i][j][k];
   }
-  template <class T>
-    void SetValue(const T& ind, float v)  {
+  template <class T> void SetValue(const T& ind, float v)  {
       ED->Data[(int)ind[0]][(int)ind[1]][(int)ind[2]] = v;
     }
-  template <class T>
-    inline double GetValue(const T& v) const {
+  template <class T> inline float GetValue(const T& v) const {
       return ED->Data[(int)v[0]][(int)v[1]][(int)v[2]];
     }
   
   // copies the 0yz x0z and xy0 layers to Maxyz xMaxyz and xyMaxZ
   void AdjustMap();
-  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
+  virtual void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
 
-  bool Orient(TGlPrimitive& P);
-  bool GetDimensions(vec3d& Max, vec3d& Min);
+  virtual bool Orient(TGlPrimitive& P);
+  virtual bool GetDimensions(vec3d& Max, vec3d& Min);
 
   void SetScale(float v);
   inline double GetScale() const {  return Scale;  }
@@ -122,7 +120,10 @@ public:
   void SetDepth(float v);
   void SetDepth(const vec3d& v);
   float GetDepth() const {  return Depth;  }
-  vec3i GetDim() const {  return vec3i(MaxX, MaxY, MaxZ);  }
+  vec3i GetDimVec() const {  return vec3i(MaxX, MaxY, MaxZ);  }
+  inline int GetPlaneSize() const {  return MaxDim;  }
+  /* v=2^n values are acepted only (64, 128, 256, etc to be compatible with textures) */
+  void SetPlaneSize(int v);
   float GetSize() const {  return Size;  }
   
   DefPropP(float, MinHole)
@@ -158,6 +159,7 @@ public:
   void LibSize(const TStrObjList& Params, TMacroError& E);
   void LibDepth(const TStrObjList& Params, TMacroError& E);
   void LibContours(const TStrObjList& Params, TMacroError& E);
+  void LibPlaneSize(const TStrObjList& Params, TMacroError& E);
   void LibGetMin(const TStrObjList& Params, TMacroError& E);
   void LibGetMax(const TStrObjList& Params, TMacroError& E);
   void LibRenderMode(const TStrObjList& Params, TMacroError& E);

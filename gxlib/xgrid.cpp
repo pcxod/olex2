@@ -567,6 +567,36 @@ void TXGrid::SetDepth(const vec3d& v)  {
   SetDepth((float)p[2]);
 }
 //..............................................................................
+void TXGrid::SetPlaneSize(int _v)  {
+  int v = _v; 
+  while( (v&1) == 0 )
+    v = v >> 1;
+  if( v != 1 )
+    throw TInvalidArgumentException(__OlxSrcInfo, "PlaneSize must be a power of 2");
+  if( _v < 64 || _v > 1024 || _v == MaxDim )
+    return;
+  if( TextData != NULL )  {
+    delete TextData;
+    TextData = new char[_v*_v*3+1];
+  }
+  if( ContourData != NULL )  {
+    for( int i=0; i < MaxDim; i++ )
+      delete [] ContourData[i];
+    delete [] ContourData;
+    delete [] ContourCrds[0];
+    delete [] ContourCrds[1];
+    ContourData = new float*[_v];
+    ContourCrds[0] = new float[_v];
+    ContourCrds[1] = new float[_v];
+    for( int i=0; i < _v; i++ )  {
+      ContourData[i] = new float[_v];
+      ContourCrds[0][i] = ContourCrds[1][i] = (float)(i-_v/2);///MaxDim;
+    }
+  }
+  MaxDim = _v;   
+  Parent.Draw();
+}
+//..............................................................................
 void TXGrid::SetContourLevelCount(int v)  {
   if( v <= 2 || v > 30 )  return;
   if( ContourLevels != NULL )
@@ -760,8 +790,7 @@ void TXGrid::RescaleSurface()  {
 }
 //..............................................................................
 void TXGrid::AdjustMap()  {
-  if( ED == NULL )  
-    return;
+  if( ED == NULL )  return;
   for( int i=0; i < MaxX; i++ )
     for( int j=0; j < MaxY; j++ )
         ED->Data[i][j][MaxZ] = ED->Data[i][j][0];
@@ -807,6 +836,12 @@ void TXGrid::LibSize(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Size);
   else
     Size = Params[0].ToFloat<float>();
+}
+//..............................................................................
+void TXGrid::LibPlaneSize(const TStrObjList& Params, TMacroError& E)  {
+  if( Params.IsEmpty() )  E.SetRetVal(MaxDim);
+  else
+    SetPlaneSize(Params[0].ToSizeT());
 }
 //..............................................................................
 void TXGrid::LibDepth(const TStrObjList& Params, TMacroError& E)  {
@@ -932,6 +967,8 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibScale, "Scale",
     fpNone|fpOne, "Returns/sets current scale") );
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibSize, "Size",
+    fpNone|fpOne, "Returns/sets current size") );
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibPlaneSize, "PlaneSize",
     fpNone|fpOne, "Returns/sets current size") );
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibDepth, "Depth",
     fpNone|fpOne, "Returns/sets current depth") );
