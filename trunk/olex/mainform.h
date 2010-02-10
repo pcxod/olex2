@@ -522,6 +522,8 @@ private:
   DefFunc(GlTooltip)
   DefFunc(CurrentLanguage)
   DefFunc(GetMAC)
+  DefFunc(Profiling)
+  DefFunc(ThreadCount)
 
   TUndoStack *FUndoStack;
 //..............................................................................

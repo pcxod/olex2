@@ -105,6 +105,8 @@ void TNetwork::TDisassembleTaskCheckConnectivity::Run(size_t index)  {
       if( D < 1e-5 )  // EXYZ?
         continue;
       Atoms[index]->AddNode(*Atoms[i]);
+      // multithreading, Atoms[index] is unique, but not this one
+      volatile olx_scope_cs _cs(TBasicApp::GetCriticalSection());
       Atoms[i]->AddNode(*Atoms[index]);  // crosslinking
     }
   }
@@ -130,7 +132,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
   double** Distances = new double* [4];
   double  Delta = GetLattice().GetDelta();
   Atoms.QuickSorter.SortSF(Atoms, AtomsSortByDistance);
-  Distances[0] = new double[ Atoms.Count() ];  // distances from {0,0,0} to an atom
+  Distances[0] = new double[Atoms.Count()];  // distances from {0,0,0} to an atom
   size_t ac = Atoms.Count();
   for( size_t i = 0; i < ac; i++ )  {
     Distances[0][i] = Atoms[i]->crd().Length();
@@ -138,13 +140,12 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
     Atoms[i]->SetNetId(~0);
   }
   // find & remove symmetrical equivalenrs from AllAtoms
+  sw.start("Removing symmetrical equivalents");
   TDisassembleTaskRemoveSymmEq searchEqTask(Atoms, Distances);
   // profiling has shown it gives no benifit and makes the process slow
   TListIteratorManager<TDisassembleTaskRemoveSymmEq> searchEq(searchEqTask,
     Atoms.Count(), tQuadraticTask, ~0);  // never does the threading
   ac = Atoms.Count();
-  for( size_t i=0; i < ac; i++ )
-    searchEqTask.Run(i);
   // removing symmetrical equivalents from the Atoms list (passes as param)
   //............................................
   for( size_t i = 0; i < ac; i++ )  {
@@ -176,7 +177,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
   sw.start("Connectivity analysis");
   TDisassembleTaskCheckConnectivity searchConTask(Atoms, Distances, Delta);
   TListIteratorManager<TDisassembleTaskCheckConnectivity> searchCon(searchConTask,
-    Atoms.Count(), tQuadraticTask, ~0);
+    Atoms.Count(), tQuadraticTask, 10000);
   sw.start("Creating bonds");
   CreateBondsAndFragments(Atoms, Frags, InterBonds);
   sw.start("Searching H-bonds");
@@ -184,7 +185,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
   InterBonds.SetCapacity(InterBonds.Count() + Frags.Count()*50); 
   THBondSearchTask searchHBTask(Atoms, &InterBonds, Distances, GetLattice().GetDeltaI());
   TListIteratorManager<THBondSearchTask> searchHB(searchHBTask,
-    Atoms.Count(), tQuadraticTask, ~1);
+    Atoms.Count(), tQuadraticTask, 10000);
   sw.start("Finalising");
   delete [] Distances[0];
   delete [] Distances[1];
@@ -367,9 +368,10 @@ void TNetwork::THBondSearchTask::Run(size_t ind)  {
       }
       if( connected )  continue;
 
-      const double D = A1->crd().QDistanceTo( Atoms[i]->crd() );
+      const double D = A1->crd().QDistanceTo(Atoms[i]->crd());
       const double D1 = olx_sqr(A1->CAtom().GetConnInfo().r + Atoms[i]->CAtom().GetConnInfo().r + Delta);
       if(  D < D1 && IsBondAllowed(*A1, *Atoms[i]) )  {
+        volatile olx_scope_cs _cs(TBasicApp::GetCriticalSection());
         TSBond* B = new TSBond(&A1->GetNetwork());
         B->SetType(sotHBond);
         B->SetA(*A1);
@@ -383,6 +385,7 @@ void TNetwork::THBondSearchTask::Run(size_t ind)  {
       const double D = A1->crd().QDistanceTo( Atoms[i]->crd() );
       const double D1 = olx_sqr(A1->CAtom().GetConnInfo().r + Atoms[i]->CAtom().GetConnInfo().r + Delta);
       if(  D < D1 && IsBondAllowed(*A1, *Atoms[i]) )  {
+        volatile olx_scope_cs _cs(TBasicApp::GetCriticalSection());
         TSBond* B = new TSBond(&A1->GetNetwork());
         B->SetType(sotHBond);
         B->SetA(*A1);
