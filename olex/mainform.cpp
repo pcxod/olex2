@@ -268,8 +268,9 @@ public:
     wxString str(wxT("Olex2 is initialising"));
     for( size_t i=0; i < generation; i++ )
       str += '.';
-    dc.SetBrush(*wxWHITE_BRUSH);
-    dc.SetPen(*wxWHITE_PEN);
+    wxColor cl(0x8b7566);
+    dc.SetBrush(wxBrush(cl));//*wxWHITE_BRUSH);
+    dc.SetPen(wxPen(cl));//*wxWHITE_PEN);
     dc.DrawRectangle(0, imgHeight, imgWidth, txtHeight);
     dc.DrawText(str, 0, imgHeight);
     if( ++generation > 20 )
@@ -1019,6 +1020,8 @@ separated values of Atom Type and radius, an entry a line");
   this_InitFuncD(CurrentLanguage, fpNone|fpOne, "Returns/sets current language");
   this_InitFuncD(GetMAC, fpNone|fpOne, "Returns simicolon separated list of computer MAC addresses.\
  If 'full' is provided as argument, the adoptor names are also returned as adapter=MAC;..");
+  this_InitFuncD(Profiling, fpNone|fpOne, "Returns/sets the flag allowing to print profiling information");
+  this_InitFuncD(ThreadCount, fpNone|fpOne, "Returns/sets the number of simultaneous tasks");
 
   Library.AttachLibrary(TEFile::ExportLibrary());
   //Library.AttachLibrary(olxstr::ExportLibrary("str"));

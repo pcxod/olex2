@@ -8668,3 +8668,30 @@ void TMainForm::macCenter(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
 }
 //..............................................................................
+void TMainForm::funProfiling(const TStrObjList& Params, TMacroError &E)  {
+  if( Params.IsEmpty() )  E.SetRetVal(FXApp->IsProfiling());
+  else
+    FXApp->SetProfiling(Params[0].ToBool());
+}
+//..............................................................................
+void TMainForm::funThreadCount(const TStrObjList& Params, TMacroError &E)  {
+  if( Params.IsEmpty() )  E.SetRetVal(FXApp->GetMaxThreadCount());
+  else  {
+    int pthc = Params[0].ToInt();
+    int rthc = wxThread::GetCPUCount();
+    if( rthc != -1 && pthc > rthc )  {
+      E.ProcessingError(__OlxSrcInfo, "Number of proposed threads is larger than number of phisical ones");
+      return;
+    }
+    if( pthc > 0 )
+      FXApp->SetMaxThreadCount(pthc);
+    else if( pthc == -1 )  {
+      if( rthc == -1 )  {
+        E.ProcessingError(__OlxSrcInfo, "Could not determine the number of CPU");
+        return;
+      }
+      FXApp->SetMaxThreadCount(rthc);
+    }
+  }
+}
+//..............................................................................
