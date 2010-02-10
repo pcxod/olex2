@@ -7227,11 +7227,6 @@ void TMainForm::macLstGO(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TBasicApp::GetLog() << ( output );
 }
 //..............................................................................
-struct Main_StrFPatt  {
-  int h, k, l;
-  double ps;
-  compd v;
-};
 void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   // space group matrix list
@@ -7250,101 +7245,33 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
 
   TRefList refs;
-  RefinementModel::HklStat stats = FXApp->XFile().GetRM().GetFourierRefList<RefMerger::StandardMerger>( *sg, refs);
-
-  double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
-  int minH = 100,  minK = 100,  minL = 100;
-  int maxH = -100, maxK = -100, maxL = -100;
-
-  vec3d hkl;
-  TArrayList<Main_StrFPatt> AllF(refs.Count()*ml.Count());
-  int index = 0;
+  RefinementModel::HklStat stats = FXApp->XFile().GetRM().GetFourierRefList<RefMerger::StandardMerger>(*sg, refs);
+  const double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
+  TArrayList<SFUtil::StructureFactor> P1SF(refs.Count()*ml.Count());
+  size_t index = 0;
   for( size_t i=0; i < refs.Count(); i++ )  {
     const TReflection& ref = refs[i];
     for( size_t j=0; j < ml.Count(); j++, index++ )  {
+      vec3i hkl;
       ref.MulHkl(hkl, ml[j]);
-      if( hkl[0] < minH )  minH = (int)hkl[0];
-      if( hkl[1] < minK )  minK = (int)hkl[1];
-      if( hkl[2] < minL )  minL = (int)hkl[2];
-      if( hkl[0] > maxH )  maxH = (int)hkl[0];
-      if( hkl[1] > maxK )  maxK = (int)hkl[1];
-      if( hkl[2] > maxL )  maxL = (int)hkl[2];
-      AllF[index].h = (int)hkl[0];
-      AllF[index].k = (int)hkl[1];
-      AllF[index].l = (int)hkl[2];
-      AllF[index].ps = hkl[0]*ml[j].t[0] + hkl[1]*ml[j].t[1] + hkl[2]*ml[j].t[2];
-      AllF[index].v = sqrt(refs[i].GetI());
-      AllF[index].v *= compd::polar(1, 2*M_PI*AllF[index].ps);
+      P1SF[index].hkl = hkl;
+      P1SF[index].ps = ml[j].t.DotProd(ref.GetHkl());
+      P1SF[index].val = sqrt(refs[i].GetI());
+      P1SF[index].val *= compd::polar(1, 2*M_PI*P1SF[index].ps);
     }
   }
-// init map
-  //const int mapX = 4*olx_max(maxH, ::abs(minH)),
-		//	mapY = 4*olx_max(maxK, ::abs(minK)),
-		//	mapZ = 4*olx_max(maxL, ::abs(minL));
-  const int mapX =100, mapY = 100, mapZ = 100;
+  const double resolution = 5;
+  const int mapX = (int)(au.Axes()[0].GetV()*resolution),
+			mapY = (int)(au.Axes()[1].GetV()*resolution),
+			mapZ = (int)(au.Axes()[2].GetV()*resolution);
   FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
-//  TArray3D<double> map(0, mapX/ml.Count(), 
-//////////////////////////////////////////////////////////////////////////////////////////
-  compd ** S, *T;
-  int kLen = maxK-minK+1, hLen = maxH-minH+1, lLen = maxL-minL+1;
-  S = new compd*[kLen];
-  for( int i=0; i < kLen; i++ )
-    S[i] = new compd[lLen];
-  T = new compd[lLen];
-  const double T_PI = 2*M_PI;
-// precalculations
-  int maxDim = olx_max(mapX, mapY);
-  if( mapZ > maxDim ) maxDim = mapZ;
-  int minInd = olx_min(minH, minK);
-  if( minL < minInd )  minInd = minL;
-  int maxInd = olx_max(maxH, maxK);
-  if( maxL > maxInd )  maxInd = maxL;
-  int iLen = maxInd - minInd + 1;
-  compd** sin_cos = new compd*[maxDim];
-  for( int i=0; i < maxDim; i++ )  {
-    sin_cos[i] = new compd[iLen];
-    for( int j=minInd; j <= maxInd; j++ )  {
-      double rv = (double)(i*j)/maxDim, ca, sa;
-      rv *= T_PI;
-      SinCos(-rv, &sa, &ca);
-      sin_cos[i][j-minInd].SetRe(ca);
-      sin_cos[i][j-minInd].SetIm(sa);
-    }
-  }
-  compd R;
-  for( int ix=0; ix < mapX; ix++ )  {
-    for( size_t i=0; i < AllF.Count(); i++ )  {
-      const Main_StrFPatt& sf = AllF[i];
-      S[sf.k-minK][sf.l-minL] += sf.v*sin_cos[ix][sf.h-minInd];
-    }
-    for( int iy=0; iy < mapY; iy++ )  {
-      for( int i=minK; i <= maxK; i++ )  {
-        for( int j=minL; j <= maxL; j++ )  {
-          T[j-minL] += S[i-minK][j-minL]*sin_cos[iy][i-minInd];
-        }
-      }
-      for( int iz=0; iz < mapZ; iz++ )  {
-        R.Null();
-        for( int i=minL; i <= maxL; i++ )  {
-          R += T[i-minL]*sin_cos[iz][i-minInd];
-        }
-        FXApp->XGrid().SetValue(ix, iy, iz, R.mod()/vol);
-      }
-      for( int i=0; i < lLen; i++ )  
-        T[i].Null();
-    }
-    for( int i=0; i < kLen; i++ )  
-      for( int j=0; j < lLen; j++ )  
-        S[i][j].Null();
-  }
-  for( int i=0; i < kLen; i++ )
-    delete [] S[i];
-  delete [] S;
-  delete [] T;
-  for( int i=0; i < maxDim; i++ )
-    delete [] sin_cos[i];
-  delete [] sin_cos;
-
+  BVFourier::MapInfo mi = BVFourier::CalcPatt(P1SF, FXApp->XGrid().Data()->Data, mapX, mapY, mapZ, vol);
+  FXApp->XGrid().AdjustMap();
+  FXApp->XGrid().SetMinVal(mi.minVal);
+  FXApp->XGrid().SetMaxVal(mi.maxVal);
+  FXApp->XGrid().SetMaxHole( mi.sigma*1.4);
+  FXApp->XGrid().SetMinHole(-mi.sigma*1.4);
+  FXApp->XGrid().SetScale( -(mi.maxVal - mi.minVal)/2.5 );
   FXApp->XGrid().InitIso();
   FXApp->ShowGrid(true, EmptyString);
 }
@@ -7438,12 +7365,12 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
 //////////////////////////////////////////////////////////////////////////////////////////
   FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
 
-  FXApp->XGrid().SetMaxHole( mi.sigma*1.4);
+  FXApp->XGrid().SetMaxHole(mi.sigma*1.4);
   FXApp->XGrid().SetMinHole(-mi.sigma*1.4);
   //FXApp->XGrid().SetScale( -mi.sigma*4 );
   FXApp->XGrid().SetScale( -(mi.maxVal - mi.minVal)/2.5 );
-  FXApp->XGrid().SetMinVal( mi.minVal );
-  FXApp->XGrid().SetMaxVal( mi.maxVal );
+  FXApp->XGrid().SetMinVal(mi.minVal);
+  FXApp->XGrid().SetMaxVal(mi.maxVal);
   // copy map
   float*** XData = FXApp->XGrid().Data()->Data;
   for( int i=0; i < mapX; i++ )

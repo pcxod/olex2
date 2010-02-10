@@ -524,8 +524,8 @@ TAG_HANDLER_PROC(tag)  {
       tag.ScanParam(wxT("MAX"), wxT("%i"), &max);
     Track->WI.SetWidth(ax);
     Track->WI.SetHeight(ay);
-
-    Track->SetRange(min, max);
+    if( min < max )
+      Track->SetRange(min, max);
     try  {  Track->SetValue((int)Value.ToDouble());  }
     catch(...)  {
       TBasicApp::GetLog() << (olxstr("Invalid value slider: \'") << Value << "\'\n");
