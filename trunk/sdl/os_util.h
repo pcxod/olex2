@@ -43,7 +43,7 @@ struct olx_critical_section  {
   inline void leave() {  pthread_mutex_unlock(&cs);  }
 #endif
 };
-/* 'scope critical section' to be used for automatic mannagement of small portions of code.
+/* 'scope critical section' to be used for automatic management of small portions of code.
 use it like:
   {
     volatile olx_scope_cs _cs(TBasicApp::GetCriticalSection());  // make sure that optimised does not delete it at once...

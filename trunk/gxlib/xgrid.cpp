@@ -972,6 +972,8 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
     fpNone|fpOne, "Returns/sets current size") );
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibDepth, "Depth",
     fpNone|fpOne, "Returns/sets current depth") );
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibContours, "Contours",
+    fpNone|fpOne, "Returns/sets number of contour levels") );
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibIsvalid, "IsValid",
     fpNone|fpOne, "Returns true if grid data is initialised") );
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibRenderMode, "RenderMode",

@@ -144,7 +144,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
   TDisassembleTaskRemoveSymmEq searchEqTask(Atoms, Distances);
   // profiling has shown it gives no benifit and makes the process slow
   TListIteratorManager<TDisassembleTaskRemoveSymmEq> searchEq(searchEqTask,
-    Atoms.Count(), tQuadraticTask, ~0);  // never does the threading
+    Atoms.Count(), tQuadraticTask, 10000);  // never does the threading
   ac = Atoms.Count();
   // removing symmetrical equivalents from the Atoms list (passes as param)
   //............................................

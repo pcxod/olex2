@@ -227,7 +227,7 @@
 				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\olex;..\..\..\sdl;&quot;$(WX_DIR)\include&quot;;$(PY_DIR)\include;&quot;$(WX_DIR)\lib\vc_lib\mswud&quot;"
 				PreprocessorDefinitions="__WXWIDGETS__;__WXDEBUG__;_UNICODE;_DEBUG"
 				StringPooling="true"
-				MinimalRebuild="true"
+				MinimalRebuild="false"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				StructMemberAlignment="5"

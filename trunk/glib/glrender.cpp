@@ -1153,7 +1153,7 @@ void TGlRenderer::LibZoom(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
 }
 //..............................................................................
-void TGlRenderer::LibCalcZoom(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TGlRenderer::LibCalcZoom(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(CalcZoom());
 }
 //..............................................................................
@@ -1168,8 +1168,8 @@ TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
   lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibZoom, "Zoom",
     EmptyString, fpNone|fpOne, "If no arguments provided - resets zoom to fit to screen, otherwise increments/\
 decrements current zoom by provided value") );
-  lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibCalcZoom, "CalcZoom",
-    EmptyString, fpNone, "Returns optimal zoom value") );
+  lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibCalcZoom, "CalcZoom",
+    fpNone, "Returns optimal zoom value") );
 
   return lib;
 }
