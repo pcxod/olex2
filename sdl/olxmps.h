@@ -1,111 +1,44 @@
-#ifndef olxmpsH
-#define olxmpsH
-#include "ebase.h"
+#ifndef olx_sdl_mps_H
+#define olx_sdl_mps_H
 #include "exception.h"
 #include "bapp.h"
 #include "log.h"
 #include "actions.h"
 #include "evector.h"
-#include "olxth.h"
+#include "olxthpool.h"
 #include "etime.h"
 
-#ifdef __WIN32__
-  #include <process.h>
-#else
-  #include <pthread.h>
-#endif
-
-//---------------------------------------------------------------------------
 BeginEsdlNamespace()
 
-const short tLinearTask = 0x0000,
-            tQuadraticTask = 0x0001;
+const short
+  tLinearTask = 0x0000,
+  tQuadraticTask = 0x0001;
 
 template <typename> class TListIteratorManager;
 
-class ITask {
-public:
-  ITask()  {}
-  ~ITask()  {}
-  virtual void Run() = 0;
-};
-
-template <class TaskClass>
-  class TArrayIterationItem : public IEObject {
-    size_t StartIndex, EndIndex, CurrentIndex;
+template <class TaskClass> class TArrayIterationItem : public ITask {
+    size_t StartIndex, EndIndex;
     uint16_t Id;
     TaskClass& Task;
-    TActionQList Actions;
   public:
-    TArrayIterationItem(TaskClass& task, size_t startIndex, size_t endIndex) : Task(task),
-      OnCompletion(Actions.New("ONCOMPLETION"))
+    TArrayIterationItem(TaskClass& task, size_t startIndex, size_t endIndex) : Task(task)
     {
       StartIndex = startIndex;
       EndIndex = endIndex;
-      CurrentIndex = InvalidIndex;
     }
-#ifdef __WIN32__
-    static unsigned long _stdcall Run(void* _instance) {
-//    static void Run(void* _instance) {
-#else
-    static void* Run(void* _instance) {
-#endif
-      TArrayIterationItem<TaskClass>& inst = *(TArrayIterationItem<TaskClass>*)_instance;
-      for( inst.CurrentIndex = inst.StartIndex; inst.CurrentIndex < inst.EndIndex; inst.CurrentIndex++ )
-        inst.Task.Run( inst.CurrentIndex );
-      inst.OnCompletion.Execute(&inst, NULL);
-      delete &inst;
-      return 0;
+    virtual void Run() {
+      while( StartIndex < EndIndex )
+        Task.Run(StartIndex++);
     }
-
-    size_t GetCurrentIndex() const {  return CurrentIndex;  }
     DefPropP(size_t, StartIndex)
     DefPropP(size_t, EndIndex)
     DefPropP(uint16_t, Id)
-    TActionQueue& OnCompletion;
   };
 
-/* Instacnes of this class are supposed to be in a 'pool' and can be reused without the 
-need to create new threads. This allows to vectorise little tasks, where thread creation time 
-is longer that the actula task execution */
-class TIterationTaskX : public AOlxThread  {
-  ITask* task;
-public:
-  virtual int Run() {
-    while( true )  {
-      if( Terminate )  break;
-      if( task != NULL )  {
-        task->Run();
-        task = NULL;
-      }
-      Yield();
-    }
-    return 0;
-  }
-  void SetTask(ITask* _task)  {
-    task = _task;
-  }
-};
 
-
-template <class TaskClass>
-  class TListIteratorManager : public AActionHandler {
-    TTypeList< TArrayIterationItem<TaskClass>* > Items;
-    TTypeList< TaskClass > Tasks;
-    static bool start_thread(TArrayIterationItem<TaskClass>* code)  {
-#if defined(__WIN32__)
-      unsigned long thread_id;
-      HANDLE th = CreateThread(NULL, 0, code->Run, code, 0, &thread_id);
-      return (th != NULL);
-      //thread_id = _beginthread( code->Run, 4096, code );
-      //return (thread_id != -1);
-#else
-      pthread_t thread_id;
-      if( pthread_create(&thread_id,NULL, code->Run,(void*)code) != 0)
-#endif
-        return false;
-      return true;
-    }                                                
+template <class TaskClass> class TListIteratorManager {
+    TTypeList<TArrayIterationItem<TaskClass>> Items;
+    TTypeList<TaskClass> Tasks;
   protected:
     void CalculateRatios(eveci& res, size_t ListSize, const short TaskType)  {
       if( TaskType == tLinearTask )  {
@@ -147,8 +80,7 @@ template <class TaskClass>
     }
   public:
     TListIteratorManager(TaskClass& task, size_t ListSize, const short TaskType, size_t minSize)  {
-      SetToDelete(false);
-      if( ListSize < minSize || TBasicApp::GetInstance().GetMaxThreadCount() == 1)  {  // should we create parallel tasks then at all?
+      if( ListSize < minSize || TThreadPool::GetSlotsCount() == 1)  {  // should we create parallel tasks then at all?
         for( size_t i=0; i < ListSize; i++ )
           task.Run(i);
         return;
@@ -162,30 +94,14 @@ template <class TaskClass>
           taskInstance = task.Replicate();
           Tasks.Add(*taskInstance);
         }
-
-        TArrayIterationItem<TaskClass>* item = new TArrayIterationItem<TaskClass>( *taskInstance, startIndex, startIndex + ratios[i] );
+        TArrayIterationItem<TaskClass>& item = Items.Add(
+          new TArrayIterationItem<TaskClass>(*taskInstance, startIndex, startIndex + ratios[i]));
         startIndex += ratios[i];
-        Items.AddACopy(item) ;
-        item->SetId((short)(Items.Count()-1));
-        item->OnCompletion.Add(this);
-        start_thread(item);
+        item.SetId((uint16_t)(Items.Count()-1));
+        TThreadPool::AllocateTask(item);
       }
-      while( !IsCompleted() )
-        olx_sleep(100);
+      TThreadPool::DoRun();
     }
-    virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL) {
-      ((TArrayIterationItem<TaskClass>*)Sender)->OnCompletion.Remove(this);
-      Items.NullItem( ((TArrayIterationItem<TaskClass>*)Sender)->GetId() );
-      return true;
-    }
-
-    bool IsCompleted() const {
-      for( size_t i=0; i < Items.Count(); i++ )  {
-        if( !Items.IsNull(i) )  return false;
-      }
-      return true;
-    }
-    TTypeList<TaskClass>& GetTasks()  {  return Tasks;  }
   };
 
 EndEsdlNamespace()
