@@ -12,6 +12,7 @@
 #include "gxapp.h"
 #include "library.h"
 #include "conrec.h"
+#include "olxmps.h"
 
 #ifndef _NO_PYTHON
   #include "pyext.h"
@@ -218,7 +219,7 @@ void TXGrid::Create(const olxstr& cName, const ACreationParams* cpar)  {
   glpC->Vertices.SetCount(4);
 }
 //..............................................................................
-void TXGrid::CalcColorRGB(float v, uint8_t& R, uint8_t& G, uint8_t& B) {
+void TXGrid::CalcColorRGB(float v, uint8_t& R, uint8_t& G, uint8_t& B) const {
   //if( v == 0 )
   // v = MaxVal;
   float cs;
@@ -260,7 +261,7 @@ void TXGrid::CalcColorRGB(float v, uint8_t& R, uint8_t& G, uint8_t& B) {
   }
 }
 //..............................................................................
-void TXGrid::CalcColor(float v) {
+void TXGrid::CalcColor(float v) const {
   double cs, R, G, B;
   if( v < 0 )  {
     if( v < MinVal/Scale )
@@ -298,6 +299,58 @@ void TXGrid::CalcColor(float v) {
   glColor3d(R,G,B);
 }
 //..............................................................................
+void TXGrid::TPlaneCalculationTask::Run(size_t ind)  {
+  for( int j=0; j < max_dim; j++ )  {  // (i,j,Depth)        
+    vec3f p((float)(ind-hh)/size, (float)(j-hh)/size,  depth);
+    p = proj_m*p;
+    p -= center;
+    p *= c2c;
+    p *= dim;
+    float val = 0;
+    vec3i fp((int)(p[0]), (int)(p[1]), (int)(p[2]));  //x',y',z'
+    const float _p = p[0]-fp[0], _pc = _p*_p*_p, _ps = _p*_p;
+    const float _q = p[1]-fp[1], _qc = _q*_q*_q, _qs = _q*_q;
+    const float _r = p[2]-fp[2], _rc = _r*_r*_r, _rs = _r*_r;
+    const float vx[4] = {-_pc/6 + _ps/2 -_p/3, (_pc-_p)/2 - _ps + 1, (-_pc + _ps)/2 + _p, (_pc - _p)/6 };
+    const float vy[4] = {-_qc/6 + _qs/2 -_q/3, (_qc-_q)/2 - _qs + 1, (-_qc + _qs)/2 + _q, (_qc - _q)/6 };
+    const float vz[4] = {-_rc/6 + _rs/2 -_r/3, (_rc-_r)/2 - _rs + 1, (-_rc + _rs)/2 + _r, (_rc - _r)/6 };
+    for( int dx=-1; dx <= 2; dx++ )  {
+      const float _vx = vx[dx+1];
+      const int n_x = fp[0]+dx;
+      for( int dy=-1; dy <= 2; dy++ )  {
+        const float _vxy = vy[dy+1]*_vx;
+        const int n_y = fp[1]+dy;
+        for( int dz=-1; dz <= 2; dz++ )  {
+          const float _vxyz = vz[dz+1]*_vxy;
+          vec3i ijk(n_x, n_y, fp[2]+dz);
+          for( int m=0; m < 3; m++ )  {
+            while( ijk[m] < 0 )
+              ijk[m] += dim[m];
+            while( ijk[m] >= dim[m] )
+              ijk[m] -= dim[m];
+          }
+          val += src_data[ijk[0]][ijk[1]][ijk[2]]*_vxyz;
+        }
+      }
+    }
+    if( init_text )  {
+      uint8_t R, G, B;
+      parent.CalcColorRGB(val, R, G, B);
+      const int off = (ind+j*max_dim)*3; 
+      text_data[off] = R;
+      text_data[off+1] = G;
+      text_data[off+2] = B;
+    }
+    if( init_data )  {
+      if( val < minVal )
+        minVal = val;
+      if( val > maxVal )
+        maxVal = val;
+      data[ind][j] = val;
+    }
+  }
+}
+//..............................................................................
 bool TXGrid::Orient(TGlPrimitive& GlP)  {
   if( ED == NULL )  return true;
   if( Is3D() )  {
@@ -317,6 +370,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     if( (RenderMode&planeRenderModeContour) != 0 && (RenderMode&planeRenderModePlane) == 0 )
       return true;
   }
+
   const mat3f bm(Parent.GetBasis().GetMatrix());
   const mat3f c2c(XApp->XFile().GetAsymmUnit().GetCartesianToCell());
   const float hh = (float)MaxDim/2;
@@ -326,57 +380,15 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   GlP.Vertices[1] = bm*vec3f(hh/Size, -hh/Size, Depth)-center;
   GlP.Vertices[2] = bm*vec3f(hh/Size, hh/Size, Depth)-center;
   GlP.Vertices[3] = bm*vec3f(-hh/Size, hh/Size, Depth)-center;
+
+  TPlaneCalculationTask calc_task(*this, ED->Data, ContourData, TextData, MaxDim, Size, Depth, bm, c2c, center, dim, RenderMode);
+  TListIteratorManager<TPlaneCalculationTask> tasks(calc_task, MaxDim, tLinearTask, MaxDim > 64);
   float minVal = 1000, maxVal = -1000;
-  for( int i=0; i < MaxDim; i++ )  {
-    for( int j=0; j < MaxDim; j++ )  {  // (i,j,Depth)        
-      vec3f p((float)(i-hh)/Size, (float)(j-hh)/Size,  Depth);
-      p = bm*p;
-      p -= center;
-      p *= c2c;
-      p *= dim;
-      float val = 0;
-      vec3i fp((int)(p[0]), (int)(p[1]), (int)(p[2]));  //x',y',z'
-      const float _p = p[0]-fp[0], _pc = _p*_p*_p, _ps = _p*_p;
-      const float _q = p[1]-fp[1], _qc = _q*_q*_q, _qs = _q*_q;
-      const float _r = p[2]-fp[2], _rc = _r*_r*_r, _rs = _r*_r;
-      const float vx[4] = {-_pc/6 + _ps/2 -_p/3, (_pc-_p)/2 - _ps + 1, (-_pc + _ps)/2 + _p, (_pc - _p)/6 };
-      const float vy[4] = {-_qc/6 + _qs/2 -_q/3, (_qc-_q)/2 - _qs + 1, (-_qc + _qs)/2 + _q, (_qc - _q)/6 };
-      const float vz[4] = {-_rc/6 + _rs/2 -_r/3, (_rc-_r)/2 - _rs + 1, (-_rc + _rs)/2 + _r, (_rc - _r)/6 };
-      for( int dx=-1; dx <= 2; dx++ )  {
-        const float _vx = vx[dx+1];
-        const int n_x = fp[0]+dx;
-        for( int dy=-1; dy <= 2; dy++ )  {
-          const float _vxy = vy[dy+1]*_vx;
-          const int n_y = fp[1]+dy;
-          for( int dz=-1; dz <= 2; dz++ )  {
-            const float _vxyz = vz[dz+1]*_vxy;
-            vec3i ijk(n_x, n_y, fp[2]+dz);
-            for( int m=0; m < 3; m++ )  {
-              while( ijk[m] < 0 )
-                ijk[m] += dim[m];
-              while( ijk[m] >= dim[m] )
-                ijk[m] -= dim[m];
-            }
-            val += ED->Data[ijk[0]][ijk[1]][ijk[2]]*_vxyz;
-          }
-        }
-      }
-      if( (RenderMode&planeRenderModePlane) != 0 )  {
-        uint8_t R, G, B;
-        CalcColorRGB(val, R, G, B);
-        const int off = (i+j*MaxDim)*3; 
-        TextData[off] = R;
-        TextData[off+1] = G;
-        TextData[off+2] = B;
-      }
-      if( (RenderMode&planeRenderModeContour) != 0 )  {
-        if( val < minVal )
-          minVal = val;
-        if( val > maxVal )
-          maxVal = val;
-        ContourData[i][j] = val;
-      }
-    }
+  for( size_t i = 0; i < tasks.Count(); i++ )  {
+    if( tasks[i].minVal < minVal )
+      minVal = tasks[i].minVal;
+    if( tasks[i].maxVal > maxVal )
+      maxVal = tasks[i].maxVal;
   }
   if( (RenderMode&planeRenderModePlane) != 0 )  {
     if( !olx_is_valid_index(TextIndex) )  {

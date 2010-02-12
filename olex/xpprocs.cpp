@@ -5074,7 +5074,7 @@ void TMainForm::macPatt(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   olxstr exName;
-  if( Cmds.Count() != 0 )
+  if( !Cmds.IsEmpty() )
     exName = Cmds[0];
   else
     exName = TEFile::ChangeFileExt( FXApp->XFile().GetFileName(), "hkl" );

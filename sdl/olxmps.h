@@ -37,7 +37,7 @@ template <class TaskClass> class TArrayIterationItem : public ITask {
 
 
 template <class TaskClass> class TListIteratorManager {
-    TTypeList<TArrayIterationItem<TaskClass>> Items;
+    TTypeList<TArrayIterationItem<TaskClass> > Items;
     TTypeList<TaskClass> Tasks;
   protected:
     void CalculateRatios(eveci& res, size_t ListSize, const short TaskType)  {
@@ -102,6 +102,9 @@ template <class TaskClass> class TListIteratorManager {
       }
       TThreadPool::DoRun();
     }
+    size_t Count() {  return Tasks.Count();  }
+    TaskClass& operator [] (size_t i) {  return Tasks[i];  }
+    const TaskClass& operator [] (size_t i) const {  return Tasks[i];  }
   };
 
 EndEsdlNamespace()

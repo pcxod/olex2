@@ -28,7 +28,7 @@ int TThreadSlot::Run() {
     if( Terminate )  break;
     if( suspended )  {
       Yield();
-      olx_sleep(50);
+      olx_sleep(5);
       continue;
     }
     if( task != NULL )  {
@@ -47,7 +47,8 @@ void TThreadPool::_checkThreadCount()  {
   while( tasks.Count() < (size_t)max_th )
     tasks.AddNew();
   while( tasks.Count() > (size_t)max_th )  {
-    tasks.Last().Join(true);
+    if( tasks.Last().IsRunning() )
+      tasks.Last().Join(true);
     tasks.Delete(tasks.Count()-1);
   }
 }
@@ -79,7 +80,8 @@ void TThreadPool::DoRun()  {
         break;
       }
     }
-    olx_sleep(50);
+    AOlxThread::Yield();
+    //olx_sleep(50);
   }
   current_task = 0;
 }
