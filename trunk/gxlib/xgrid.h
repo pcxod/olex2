@@ -64,8 +64,8 @@ protected:
   int MaxX, MaxY, MaxZ, MaxDim; 
   float MinHole, MaxHole;  // the values of scale to skip
   int LastMouseX, LastMouseY;
-  void CalcColorRGB(float v, uint8_t& R, uint8_t& G, uint8_t& B);
-  void CalcColor(float v);
+  void CalcColorRGB(float v, uint8_t& R, uint8_t& G, uint8_t& B) const;
+  void CalcColor(float v) const;
   bool MouseDown;
   void DoSmooth();
   void GlLine(float x1, float y1, float x2, float y2, float z);
@@ -170,6 +170,33 @@ public:
 #endif  
   void ToDataItem(TDataItem& item, IOutputStream& zos) const;
   void FromDataItem(const TDataItem& item, IInputStream& zis);
+protected:
+  struct TPlaneCalculationTask  {
+    float **data, ***src_data;
+    char *text_data;
+    const mat3f &proj_m, &c2c;
+    const vec3f& center;
+    const vec3i& dim;
+    float minVal, maxVal, size, depth, hh;
+    int max_dim;
+    short mode;
+    bool init_data, init_text;
+    TXGrid& parent;
+    void Run(size_t index);
+    TPlaneCalculationTask(TXGrid& _parent, float*** _src_data, float** _data, char* _text_data, int _max_dim, float _size,
+      float _depth, const mat3f& _proj_m, const mat3f& _c2c, const vec3f& _center, const vec3i& _dim, short _mode) :
+        parent(_parent),
+        src_data(_src_data), data(_data), text_data(_text_data), max_dim(_max_dim), size(_size), depth(_depth),
+        proj_m(_proj_m), c2c(_c2c), center(_center), dim(_dim), minVal(1000), maxVal(-1000),
+        init_data((_mode&planeRenderModeContour) != 0),
+        init_text((_mode&planeRenderModePlane) != 0),
+        mode(_mode),
+        hh((float)_max_dim/2)  {}
+    TPlaneCalculationTask* Replicate() const {
+      return new TPlaneCalculationTask(parent, src_data, data, text_data, max_dim, size,
+        depth, proj_m, c2c, center, dim, mode);
+    }
+  };
 };
 
 EndGxlNamespace()
