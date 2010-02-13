@@ -376,10 +376,20 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   const float hh = (float)MaxDim/2;
   const vec3f center(Parent.GetBasis().GetCenter());
   const vec3i dim(MaxX, MaxY, MaxZ);
-  GlP.Vertices[0] = bm*vec3f(-hh/Size, -hh/Size, Depth)-center;
-  GlP.Vertices[1] = bm*vec3f(hh/Size, -hh/Size, Depth)-center;
-  GlP.Vertices[2] = bm*vec3f(hh/Size, hh/Size, Depth)-center;
-  GlP.Vertices[3] = bm*vec3f(-hh/Size, hh/Size, Depth)-center;
+  double Z;
+  // if only contours are drawn - render plane at the background
+  if( (RenderMode&planeRenderModeContour) != 0 )  {
+    if( (RenderMode&planeRenderModePlane) == 0 )
+      Z = -Parent.GetMaxRasterZ() + 0.02;
+    else  // render the plane just a bit behind
+      Z = Depth - 0.001;
+  }
+  else  // no adjustment is required
+    Z = Depth;
+  GlP.Vertices[0] = bm*vec3f(-hh/Size, -hh/Size, Z)-center;
+  GlP.Vertices[1] = bm*vec3f(hh/Size, -hh/Size, Z)-center;
+  GlP.Vertices[2] = bm*vec3f(hh/Size, hh/Size, Z)-center;
+  GlP.Vertices[3] = bm*vec3f(-hh/Size, hh/Size, Z)-center;
 
   TPlaneCalculationTask calc_task(*this, ED->Data, ContourData, TextData, MaxDim, Size, Depth, bm, c2c, center, dim, RenderMode);
   TListIteratorManager<TPlaneCalculationTask> tasks(calc_task, MaxDim, tLinearTask, MaxDim > 64);
@@ -1009,6 +1019,50 @@ PyObject* pySetValue(PyObject* self, PyObject* args)  {
   return Py_None;
 }
 //..............................................................................
+PyObject* pySetData(PyObject* self, PyObject* args)  {
+  int di, dj, dk;
+  PyObject *grid;
+  if( !PyArg_ParseTuple(args, "iiiO", &di, &dj, &dk, &grid) )
+    return NULL;
+  TXGrid& g = *TXGrid::GetInstance();
+  g.InitGrid(di, dj, dk);
+  PyObject* arglist = PyTuple_New(3);
+  bool error = false;
+  int max = olx_max(dk, olx_max(di,dj));
+  TPtrList<PyObject> indexes(max);
+  for( int i=0; i < max; i++ )
+    indexes[i] = PyInt_FromLong(i);
+  for( int i=0; i < di; i++ )  {
+    Py_INCREF(indexes[i]);
+    PyTuple_SetItem(arglist, 0, indexes[i]);
+    for( int j=0; j < dj; j++ )  {
+      Py_INCREF(indexes[j]);
+      PyTuple_SetItem(arglist, 1, indexes[j]);
+      for( int k=0; k < dk; k++ )  {
+        Py_INCREF(indexes[k]);
+        PyTuple_SetItem(arglist, 2, indexes[k]);
+        PyObject* result = PyObject_GetItem(grid, arglist);
+        if( result != NULL )  {
+          g.SetValue(i,j,k, (float)PyFloat_AsDouble(result));
+          Py_DECREF(result);
+        }
+        if( PyErr_Occurred() )  {
+          error = true;
+          break;
+        }
+      }
+      if( error )  break;
+    }
+    if( error )  break;
+  }
+  if( error )  PyErr_Print();
+  for( int i=0; i < max; i++ )
+    Py_DECREF(indexes[i]);
+  Py_DECREF(arglist);
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+//..............................................................................
 PyObject* pyInit(PyObject* self, PyObject* args)  {
   int i, j, k;
   if( !PyArg_ParseTuple(args, "iii", &i, &j, &k) )
@@ -1064,6 +1118,7 @@ PyObject* pyIsVisible(PyObject* self, PyObject* args)  {
 static PyMethodDef XGRID_Methods[] = {
   {"Init", pyInit, METH_VARARGS, "initialises grid memory"},
   {"SetValue", pySetValue, METH_VARARGS, "sets grid iso-level"},
+  {"SetData", pySetData, METH_VARARGS, "sets grid data, dimensions and a callable accessor are required"},
   {"SetMinMax", pySetMinMax, METH_VARARGS, "sets minimum and maximum vaues of the grid"},
   {"SetHole", pySetHole, METH_VARARGS, "sets minimum and maximum vaues of the grid to be avoided"},
   {"IsVisible", pyIsVisible, METH_VARARGS, "returns grid visibility status"},

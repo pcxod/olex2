@@ -63,7 +63,7 @@ void TThreadPool::AllocateTask(ITask& task) {
 
 void TThreadPool::DoRun()  {
   if( current_task == 0 )
-    throw TFunctionFailedException(__OlxSourceInfo, "No slots were alloceted");
+    throw TFunctionFailedException(__OlxSourceInfo, "No slots were allocated");
   for( size_t i=0; i < current_task; i++ )  {
     if( tasks[i].IsRunning() )
       tasks[i].Resume();

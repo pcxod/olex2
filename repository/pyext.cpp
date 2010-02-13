@@ -77,13 +77,13 @@ public:
 
   void Call(TStrObjList& Params, const TParamList &Options, TMacroError& E)  {
     OnCallEnter();
-    PyObject* arglist = PyTuple_New( Params.Count() + 1 );
+    PyObject* arglist = PyTuple_New(Params.Count() + 1);
     for( size_t i=0; i < Params.Count(); i++ )
-      PyTuple_SetItem(arglist, i, PyString_FromString(Params[i].c_str()) );
+      PyTuple_SetItem(arglist, i, PyString_FromString(Params[i].c_str()));
     PyObject* options = PyDict_New();
     for( size_t i=0; i < Options.Count(); i++ )
       PyDict_SetItemString(options,
-        Options.GetName(i).c_str(), PythonExt::BuildString(Options.GetValue(i)) );
+        Options.GetName(i).c_str(), PythonExt::BuildString(Options.GetValue(i)));
     PyTuple_SetItem(arglist, Params.Count(), options);
 
     PyObject* result = PyObject_CallObject(PyFunction, arglist);
@@ -133,7 +133,7 @@ PyObject* runReadImage(PyObject* self, PyObject* args)  {
     }
     char * bf = new char [io->GetSize() + 1];
     io->Read(bf, io->GetSize());
-    PyObject* po = Py_BuildValue("s#", bf, io->GetSize() );
+    PyObject* po = Py_BuildValue("s#", bf, io->GetSize());
     delete [] bf;
     delete io;
     //o_r->print(olxstr("PyExt - finished reading image: ") << name);
