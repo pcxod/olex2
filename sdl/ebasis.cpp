@@ -66,7 +66,7 @@ void  TEBasis::TranslateY(double y){  FCenter[1] += y; FMData[13] += (float)y; }
 //..............................................................................
 void  TEBasis::TranslateZ(double z){  FCenter[2] += z; FMData[14] += (float)z; };
 //..............................................................................
-void  TEBasis::RotateX( double A)  {
+void  TEBasis::RotateX(double A)  {
   if( FRX == A )    return;
   double RA = M_PI*(A-FRX)/180;
   FRX = A;
@@ -79,7 +79,7 @@ void  TEBasis::RotateX( double A)  {
   CopyMatrix();
 }
 //..............................................................................
-void  TEBasis::RotateY( double A)  {
+void  TEBasis::RotateY(double A)  {
   if( FRY == A )    return;
   double RA = M_PI*(A-FRY)/180;
   FRY = A;
@@ -92,7 +92,7 @@ void  TEBasis::RotateY( double A)  {
   CopyMatrix();
 }
 //..............................................................................
-void  TEBasis::RotateZ( double A)  {
+void  TEBasis::RotateZ(double A)  {
   if( FRZ == A )    return;
   double RA = M_PI*(A-FRZ)/180;
   FRZ = A;
