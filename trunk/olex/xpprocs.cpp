@@ -713,14 +713,14 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( res > 1 && res < 100 )
     res = olx_round(res);
 
-  int ScrHeight = (int)(((double)orgHeight/(res*2)-1.0)*res*2),
-      ScrWidth  = (int)(((double)orgWidth/(res*2)-1.0)*res*2);
-  int BmpHeight = (int)(ScrHeight*res), BmpWidth = (int)(ScrWidth*res);
-  if( BmpHeight < ScrHeight )
-    ScrHeight = BmpHeight;
-  if( BmpWidth < ScrWidth )
-    ScrWidth = BmpWidth;
-  FXApp->GetRender().Resize(0, 0, ScrWidth, ScrHeight, res); 
+  int SrcHeight = (int)(((double)orgHeight/(res*2)-1.0)*res*2),
+      SrcWidth  = (int)(((double)orgWidth/(res*2)-1.0)*res*2);
+  int BmpHeight = (int)(SrcHeight*res), BmpWidth = (int)(SrcWidth*res);
+  if( BmpHeight < SrcHeight )
+    SrcHeight = BmpHeight;
+  if( BmpWidth < SrcWidth )
+    SrcWidth = BmpWidth;
+  FXApp->GetRender().Resize(0, 0, SrcWidth, SrcHeight, res); 
 
   const int bmpSize = BmpHeight*BmpWidth*3;
   char* bmpData = (char*)malloc(bmpSize);
@@ -736,11 +736,11 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       FXApp->GetRender().LookAt(j, i, (int)(res < 1 ? 1 : res));
       FXApp->GetRender().Draw();
       char *PP = FXApp->GetRender().GetPixels(false, 1);
-      int mj = j*ScrWidth;
-      int mi = i*ScrHeight;
-      for( int k=0; k < ScrWidth; k++ )  {
-        for( int l=0; l < ScrHeight; l++ )  {
-          int indexA = (l*ScrWidth + k)*3;
+      int mj = j*SrcWidth;
+      int mi = i*SrcHeight;
+      for( int k=0; k < SrcWidth; k++ )  {
+        for( int l=0; l < SrcHeight; l++ )  {
+          int indexA = (l*SrcWidth + k)*3;
           int indexB = bmpSize - (BmpWidth*(mi + l + 1) - mj - k)*3;
           bmpData[indexB] = PP[indexA];
           bmpData[indexB+1] = PP[indexA+1];
@@ -773,7 +773,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   // correct a common typo
   if( TEFile::ExtractFileExt(bmpFN).Equalsi("jpeg") )
     bmpFN = TEFile::ChangeFileExt(bmpFN, "jpg");
-  image.SaveFile( bmpFN.u_str() );
+  image.SaveFile(bmpFN.u_str());
 }
 //..............................................................................
 void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -8636,5 +8636,115 @@ void TMainForm::funThreadCount(const TStrObjList& Params, TMacroError &E)  {
       FXApp->SetMaxThreadCount(rthc);
     }
   }
+}
+//..............................................................................
+void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  int orgHeight = FXApp->GetRender().GetHeight(),
+      orgWidth  = FXApp->GetRender().GetWidth();
+  double res = 1,
+    half_ang = Options.FindValue('a', "6").ToDouble()/2,
+    sep_width = Options.FindValue('s', "10").ToDouble();
+  if( Cmds.Count() == 2 && Cmds[1].IsNumber() )  
+    res = Cmds[1].ToDouble();
+  if( res >= 100 )  // width provided
+    res /= orgWidth;
+  if( res > 10 )
+    res = 10;
+  if( res <= 0 )  
+    res = 1;
+  if( res > 1 && res < 100 )
+    res = olx_round(res);
+
+  int SrcHeight = (int)(((double)orgHeight/(res*2)-1.0)*res*2),
+      SrcWidth  = (int)(((double)orgWidth/(res*2)-1.0)*res*2);
+  SrcHeight = Options.FindValue('h', SrcHeight).ToInt();
+  int BmpHeight = (int)(SrcHeight*res);
+  if( (BmpHeight%2) != 0 )  BmpHeight++;
+  int BmpWidth = (int)(SrcWidth*res),
+      ImgWidth = olx_round((double)BmpWidth*(2 + sep_width/100));  // sep_width% in between pictures
+  const int imgOff = ImgWidth - BmpWidth;
+  if( BmpHeight < SrcHeight )
+    SrcHeight = BmpHeight;
+  if( BmpWidth < SrcWidth )
+    SrcWidth = BmpWidth;
+  FXApp->GetRender().Resize(0, 0, SrcWidth, SrcHeight, res); 
+
+  const int bmpSize = BmpHeight*ImgWidth*3;
+  char* bmpData = (char*)malloc(bmpSize);
+  memset(bmpData, ~0, bmpSize);
+  FGlConsole->Visible(false);
+  FXApp->GetRender().OnDraw->SetEnabled(false);
+  if( res != 1 )    {
+    FXApp->GetRender().GetScene().ScaleFonts(res);
+    if( res >= 3 )
+      FXApp->Quality(qaPict);
+  }
+  const double RY = FXApp->GetRender().GetBasis().GetRY();
+  FXApp->GetRender().GetBasis().RotateY(RY-half_ang);
+  for( int i=0; i < res; i++ )  {
+    for( int j=0; j < res; j++ )  {
+      FXApp->GetRender().LookAt(j, i, (int)(res < 1 ? 1 : res));
+      FXApp->GetRender().Draw();
+      char *PP = FXApp->GetRender().GetPixels(false, 1);
+      const int mj = j*SrcWidth;
+      const int mi = i*SrcHeight;
+      for( int k=0; k < SrcWidth; k++ )  {
+        for( int l=0; l < SrcHeight; l++ )  {
+          const int indexA = (l*SrcWidth + k)*3;
+          const int indexB = bmpSize - (ImgWidth*(mi + l + 1) - mj - k)*3;
+          bmpData[indexB] = PP[indexA];
+          bmpData[indexB+1] = PP[indexA+1];
+          bmpData[indexB+2] = PP[indexA+2];
+        }
+      }
+      delete [] PP;
+    }
+  }
+  // second half
+  FXApp->GetRender().GetBasis().RotateY(RY+half_ang);
+  for( int i=0; i < res; i++ )  {
+    for( int j=0; j < res; j++ )  {
+      FXApp->GetRender().LookAt(j, i, (int)(res < 1 ? 1 : res));
+      FXApp->GetRender().Draw();
+      char *PP = FXApp->GetRender().GetPixels(false, 1);
+      const int mj = j*SrcWidth;
+      const int mi = i*SrcHeight;
+      for( int k=0; k < SrcWidth; k++ )  {
+        for( int l=0; l < SrcHeight; l++ )  {
+          const int indexA = (l*SrcWidth + k)*3;
+          const int indexB = bmpSize - (ImgWidth*(mi + l + 1) - mj - k - imgOff)*3;
+          bmpData[indexB] = PP[indexA];
+          bmpData[indexB+1] = PP[indexA+1];
+          bmpData[indexB+2] = PP[indexA+2];
+        }
+      }
+      delete [] PP;
+    }
+  }
+  FXApp->GetRender().GetBasis().RotateY(RY);
+  if( res != 1 ) {
+    FXApp->GetRender().GetScene().RestoreFontScale();
+    if( res >= 3 ) 
+      FXApp->Quality(qaMedium);
+  }
+
+  FXApp->GetRender().OnDraw->SetEnabled( true );
+  FGlConsole->Visible(true);
+  // end drawing etc
+  FXApp->GetRender().Resize(orgWidth, orgHeight); 
+  FXApp->GetRender().LookAt(0,0,1);
+  FXApp->GetRender().SetView();
+  FXApp->Draw();
+  olxstr bmpFN;
+  if( FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0]) )
+    bmpFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName(Cmds[0]);
+  else
+    bmpFN = Cmds[0];
+  wxImage image;
+  image.SetData((unsigned char*)bmpData, ImgWidth, BmpHeight); 
+  // correct a common typo
+  if( TEFile::ExtractFileExt(bmpFN).Equalsi("jpeg") )
+    bmpFN = TEFile::ChangeFileExt(bmpFN, "jpg");
+  image.SaveFile(bmpFN.u_str());
 }
 //..............................................................................

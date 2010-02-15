@@ -566,6 +566,16 @@ void TMainForm::XApp( TGXApp *XA)  {
 "A portable version of pict with limited resolution (OS/graphics card dependent). Not stable on some graphics cards");
   this_InitMacroD(Echo, EmptyString, fpAny,
 "Prints provided string, functions are evaluated before printing");
+  this_InitMacroD(PictPS, "color_line-lines&;color_fill-ellipses are filled&;color_bond-bonds\
+ are colored&;div_pie-number [4] of stripes in the octant&;lw_pie-line width [0.5] of the octant\
+ stripes&;lw_octant-line width [0.5] of the octant arcs&;lw_font-line width [1] for the vector\
+ font&;lw_ellipse-line width [0.5] of the ellipse&;scale_hb-scale for H-bonds [0.5]&;p-perspective\
+ &;octants-comma separated atom types/names ADP's of which to be rendered with octants[-$C]", fpOne|psFileLoaded, 
+    "Experimental postscript rendering");
+  this_InitMacroD(PictTEX, "color_line-lines&;color_fill-ellipses are filled", fpOne|psFileLoaded, 
+    "Experimental tex/pgf rendering");
+  this_InitMacroD(PictS, "a-view angle [6]&;s-separation between the images in % [10]&;h-output image height [screen*resolution]", fpOne|fpTwo|psFileLoaded, 
+    "Experimental stereoscopic picture output");
   // contains an accumulation buffer. prints only when '\n' is encountered
   this_InitMacroD(Post, EmptyString, fpAny,
 "Prints a string, but only after a new line character is encountered");
@@ -907,14 +917,6 @@ separated values of Atom Type and radius, an entry a line");
   this_InitMacroD(ExportFrag, EmptyString, fpNone|psFileLoaded, "Exports selected fragment to an external file");
   this_InitMacroD(ProjSph, "r-radius of the projection spehere [5]", fpNone|fpOne|psFileLoaded, 
     "Creates a projection of the fragment of the provided atom onto a spehere");
-  this_InitMacroD(PictPS, "color_line-lines&;color_fill-ellipses are filled&;color_bond-bonds\
- are colored&;div_pie-number [4] of stripes in the octant&;lw_pie-line width [0.5] of the octant\
- stripes&;lw_octant-line width [0.5] of the octant arcs&;lw_font-line width [1] for the vector\
- font&;lw_ellipse-line width [0.5] of the ellipse&;scale_hb-scale for H-bonds [0.5]&;p-perspective\
- &;octants-comma separated atom types/names ADP's of which to be rendered with octants[-$C]", fpOne|psFileLoaded, 
-    "Experimental postscript rendering");
-  this_InitMacroD(PictTEX, "color_line-lines&;color_fill-ellipses are filled", fpOne|psFileLoaded, 
-    "Experimental tex/pgf rendering");
   this_InitMacroD(UpdateQPeakTable, EmptyString, fpNone|psFileLoaded, "Internal routine for synchronisation");
   this_InitMacroD(SAME, "i-invert the graphs", fpAny|psFileLoaded, "Creates SAME for two fragments (two selected atoms or two\
  atoms provided) or number_of_groups and groups following each another (or selection)");
