@@ -400,6 +400,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     if( tasks[i].maxVal > maxVal )
       maxVal = tasks[i].maxVal;
   }
+  glNormal3f(bm[0][2], bm[1][2], bm[2][2]);
   if( (RenderMode&planeRenderModePlane) != 0 )  {
     if( !olx_is_valid_index(TextIndex) )  {
       TextIndex = Parent.GetTextureManager().Add2DTexture("Plane", 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
@@ -419,7 +420,6 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
 
     GlP.SetTextureId(TextIndex);
     //  glNormal3d(bm[0][2], bm[1][2], bm[2][2]);
-    glNormal3d(0, 0, 1);
   }
   if( (RenderMode&planeRenderModeContour) != 0 )  {
     Contour<float> cm;
