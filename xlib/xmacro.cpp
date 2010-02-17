@@ -2652,6 +2652,23 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
         cd->Data->GetString(0) = sg->GetHallSymbol();
       cd->String = true;
     }
+    
+    if( !sg->IsCentrosymmetric() && !Cif->ParamExists("_chemical_absolute_configuration") )  {
+      bool flack_used = false;
+      if( xapp.CheckFileType<TIns>() )  {
+        const TIns& ins = xapp.XFile().GetLastLoader<TIns>();
+        const TLst& lst = ins.GetLst();
+        if( lst.IsLoaded() && lst.HasFlack() )  {
+          TEValue<double> fv = lst.Flack();
+          if( fv.GetE() < 0.2 )  {
+            Cif->AddParam("_chemical_absolute_configuration", "ad", false);
+            flack_used = true;
+          }
+        }
+      }
+      if( !flack_used )
+        Cif->AddParam("_chemical_absolute_configuration", "?", false);
+    }
   }
   else
     TBasicApp::GetLog().Error("Could not locate space group ...");

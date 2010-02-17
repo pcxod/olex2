@@ -297,7 +297,12 @@ void TGlRenderer::Resize(int w, int h)  {
 void TGlRenderer::Resize(int l, int t, int w, int h, float Zoom)  {
   FLeft = l;
   FTop = t;
-  FWidth = w;
+  if( (StereoFlag&glStereoCross) != 0 )  {
+    FWidth = w/2;
+    FOWidth = w;
+  }
+  else
+    FWidth = w;
   FHeight = h;
   FZoom = Zoom;
   FGlImageChanged = true;
@@ -460,7 +465,7 @@ void TGlRenderer::Draw()  {
 
     GetBasis().RotateY(ry-StereoAngle);
     SetView();
-    glColor3f(0, 1, 0);
+    glColor3f(0, 0, 1);
     DrawObjects(0, 0, false, false);
 
     GetBasis().RotateY(ry);
