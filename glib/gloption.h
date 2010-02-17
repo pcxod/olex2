@@ -76,7 +76,7 @@ public:
 
   uint32_t GetRGB() const {  return (uint32_t)RGBA(255*data[0], 255*data[1], 255*data[2], 255*data[3]);  }
   inline const float* Data() const {  return data;  }
-  
+
   bool IsEmpty() const {  return (data[0] == 0 && data[1] == 0 && data[2] == 0);  }
   void Clear()  {  data[0] = data[1] = data[2] = data[3] = 0;  }
   

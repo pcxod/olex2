@@ -429,12 +429,12 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     for( int i=1; i < ContourLevelCount; i++ )
       ContourLevels[i] = ContourLevels[i-1]+contour_step;
 
-    TGlPrimitive::PrepareColorRendering(GL_LINES);
+    GlP.PrepareColorRendering(GL_LINES);
     glColor3f(0, 0, 0);
     cm.DoContour(ContourData, 0, MaxDim-1, 0, MaxDim-1,
       ContourCrds[0], ContourCrds[1], 
       ContourLevelCount, ContourLevels, mf);
-    TGlPrimitive::EndColorRendering();
+    GlP.EndColorRendering();
   }
   return false;
 }

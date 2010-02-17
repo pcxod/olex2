@@ -96,7 +96,7 @@ bool TXReflection::Orient(TGlPrimitive& GlP)  {
 
   double scale = (1.0-FParams[0]);
   GlM.AmbientF[3] = (float)scale;
-  GlM.Init();
+  GlM.Init(Parent.IsColorStereo());
   return false;
 }
 //..............................................................................

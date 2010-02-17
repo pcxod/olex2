@@ -25,6 +25,10 @@
 
 BeginGlNamespace()
 
+const uint8_t
+  glStereoColor = 0x0001,
+  glStereoCross = 0x0002;
+
 class AGDrawObject;
 class TGlGroup;
 
@@ -68,12 +72,11 @@ class TGlRenderer : public IEObject  {
   TGlOption FogColor;
   float FogDensity, FogStart, FogEnd;
 //__________________
-
-  int FWidth, FHeight, FLeft, FTop;
+  int FWidth, FHeight, FLeft, FTop, FOWidth;
   TGlListManager FListManager;
   int CompiledListId;
 protected:
-  void DrawObjects(int x, int y, bool SelectPrimitives, bool SelectObjects);
+  void DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimitives);
 
   vec3d FMaxV, FMinV;
   bool Changed;
@@ -85,6 +88,8 @@ protected:
   bool FGlImageChanged; // true if DrawMethod was used
   char *FGlImage;
   int FGlImageHeight, FGlImageWidth;
+  uint8_t StereoFlag;
+  double StereoAngle;
   mutable double CalculatedZoom;
   bool ATI;
 public:
@@ -146,7 +151,9 @@ public:
   DefPropC(TGlOption, FogColor)
 
   float GetExtraZoom() const {  return FZoom;  }
-
+  bool IsColorStereo() const {  return (StereoFlag&glStereoColor) != 0;  }
+  bool IsCroddStereo() const {  return (StereoFlag&glStereoCross) != 0;  }
+  
   void Initialise();
   void InitLights();
   double CalcZoom() const { 
@@ -306,9 +313,10 @@ public:
   static TGraphicsStyles& _GetStyles();
 
   void LibCompile(const TStrObjList& Params, TMacroError& E);
-  void LibFog(TStrObjList &Cmds, const TParamList &Options, TMacroError &E);
-  void LibPerspective(TStrObjList &Cmds, const TParamList &Options, TMacroError &E);
-  void LibZoom(TStrObjList &Cmds, const TParamList &Options, TMacroError &E);
+  void LibStereo(const TStrObjList& Params, TMacroError& E);
+  void LibFog(TStrObjList& Cmds, const TParamList& Options, TMacroError &E);
+  void LibPerspective(TStrObjList& Cmds, const TParamList& Options, TMacroError& E);
+  void LibZoom(TStrObjList& Cmds, const TParamList& Options, TMacroError& E);
   void LibCalcZoom(const TStrObjList& Params, TMacroError& E);
   TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 };

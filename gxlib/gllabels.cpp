@@ -169,7 +169,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     P.SetString(&Tmp);
     if( !matInited )  {
       if( Marks[i] ) {
-        FMarkMaterial.Init();
+        FMarkMaterial.Init(Parent.IsColorStereo());
         currentGlM = false;
         if( Parent.IsATI() )  {
           glRasterPos3d(0, 0, 0);
@@ -177,7 +177,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
         } 
       }
       else  {
-      P.GetProperties().Init();
+      P.GetProperties().Init(Parent.IsColorStereo());
         currentGlM = true;
         if( Parent.IsATI() )  {
           glRasterPos3d(0, 0, 0);
@@ -189,7 +189,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     else  {
       if( Marks[i] )  {
         if( currentGlM )  {
-          FMarkMaterial.Init();
+          FMarkMaterial.Init(Parent.IsColorStereo());
           currentGlM = false;
           if( Parent.IsATI() )  {
             glRasterPos3d(0, 0, 0);
@@ -199,7 +199,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
       }
       else  {
         if( !currentGlM )  {
-          P.GetProperties().Init();
+          P.GetProperties().Init(Parent.IsColorStereo());
           currentGlM = true;
           if( Parent.IsATI() )  {
             glRasterPos3d(0, 0, 0);
@@ -214,7 +214,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     glRasterPos3d(V[0]+0.15, V[1]+0.15, Parent.GetMaxRasterZ());
     P.Draw();
   }
-  OGlM.Init();
+  OGlM.Init(Parent.IsColorStereo());
   return true;
 }
 //..............................................................................

@@ -558,7 +558,6 @@ void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M)  {
   M.AmbientB = M.AmbientF;
   M.DiffuseB = M.DiffuseF;
   M.SpecularB = M.SpecularF;
-  M.SetMark(false);
 }
 //..............................................................................
 void TXAtom::GetDefRimMaterial(const TSAtom& Atom, TGlMaterial &M)  {
@@ -573,7 +572,6 @@ void TXAtom::GetDefRimMaterial(const TSAtom& Atom, TGlMaterial &M)  {
   M.SpecularF = 0xffffffff;
   M.EmissionF =  0x14141414;
   M.ShininessF = 12;
-  M.SetMark(false);
 }
 //..............................................................................
 TGraphicsStyle& TXAtom::Style()  {

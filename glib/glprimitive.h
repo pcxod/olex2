@@ -177,17 +177,8 @@ public:
   TGlMaterial& GetProperties() const {  return (TGlMaterial&)AGroupObject::GetProperties();  }
   AGOProperties& SetProperties(const AGOProperties& C);
 
-  static void PrepareColorRendering(uint16_t _begin)  {
-    glPushAttrib(GL_LIGHTING_BIT);
-    glDisable(GL_LIGHTING);
-    glEnable(GL_COLOR_MATERIAL);
-    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-    glBegin(_begin);
-  }
-  static void EndColorRendering()  {
-    glEnd();
-    glPopAttrib();
-  }
+  void PrepareColorRendering(uint16_t _begin) const;
+  void EndColorRendering() const;
 
   void CallList(TGlPrimitive* GlP)  {
     if( GlP->IsList() )
@@ -222,9 +213,7 @@ public:
   */
   evecd Params;
 
-  static void SetColor(const uint32_t& cl)  {
-    glColor4f( (float)GetRValue(cl)/255, (float)GetGValue(cl)/255, (float)GetBValue(cl)/255, (float)GetAValue(cl)/255 );
-  }
+  void SetColor(const uint32_t& cl) const;
   static void SetNormal(const vec3d& v)   {  glNormal3dv(v.GetData());  }
   static void SetNormal(const vec3f& v)   {  glNormal3fv(v.GetData());  }
   static void SetTexCrd(const TextureCrd& c)  {  glTexCoord4d(c.s, c.t, c.r, c.q);  }
@@ -233,12 +222,12 @@ public:
   static void DrawVertex(const vec3f& v)  {  glVertex3fv(v.GetData());  }
 
   template <class vec_class> 
-  static void DrawVertex(const vec_class& v, const uint32_t& c)  {  
+  void DrawVertex(const vec_class& v, const uint32_t& c) const {  
     SetColor(c);
     DrawVertex(v);
   }
   template <class vec_class> 
-  static void DrawVertex(const vec_class& v, const uint32_t& c, const TextureCrd& tc)  {  
+  void DrawVertex(const vec_class& v, const uint32_t& c, const TextureCrd& tc) const {  
     SetColor(c);
     SetTexCrd(tc);
     DrawVertex(v);

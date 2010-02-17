@@ -69,7 +69,7 @@ void TGlBackground::SetTexture(TGlTexture* tx)  {
 }
 //..............................................................................
 bool TGlBackground::Orient(TGlPrimitive& P)  {
-  P.GetProperties().Init();
+  if( Parent.IsColorStereo() )  return true; 
   if( Texture != NULL )
     P.SetTextureId( Texture->GetId() );
   double Scale = Parent.GetScale();

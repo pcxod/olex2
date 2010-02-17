@@ -38,7 +38,6 @@ void TXGrowPoint::Create(const olxstr& cName, const ACreationParams* cpar) {
   GlM.SetFlags( sglmAmbientF|sglmDiffuseF);
   GlM.AmbientF = 0x000000ff;
   GlM.DiffuseF = 0xf0f0f0;
-  GlM.SetMark(false);
   GlP.SetProperties( GS.GetMaterial(GetCollectionName(), GlM));
 
   double sz = 1;
