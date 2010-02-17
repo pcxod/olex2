@@ -80,6 +80,7 @@ template <class TaskClass> class TListIteratorManager {
     }
   public:
     TListIteratorManager(TaskClass& task, size_t ListSize, const short TaskType, size_t minSize)  {
+      Tasks.Add(task);  // must not delete it!!!
       if( ListSize < minSize || TThreadPool::GetSlotsCount() == 1)  {  // should we create parallel tasks then at all?
         for( size_t i=0; i < ListSize; i++ )
           task.Run(i);
@@ -101,6 +102,9 @@ template <class TaskClass> class TListIteratorManager {
         TThreadPool::AllocateTask(item);
       }
       TThreadPool::DoRun();
+    }
+    ~TListIteratorManager()  {
+      Tasks.Release(0);
     }
     size_t Count() {  return Tasks.Count();  }
     TaskClass& operator [] (size_t i) {  return Tasks[i];  }
