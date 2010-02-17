@@ -58,7 +58,7 @@ void TGlTextBox::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlM.AmbientF = 0x800f0f0f;
   GlM.DiffuseF = 0x800f0f0f;
 
-  TGlPrimitive& glpPlane = GPC.NewPrimitive("Plane", sgloQuads);  // a sphere at the basis of the object {0,0,0}
+  TGlPrimitive& glpPlane = GPC.NewPrimitive("Plane", sgloQuads);
   glpPlane.SetProperties(GS.GetMaterial("Plane", GlM) );
   glpPlane.Vertices.SetCount(4);
 
@@ -99,7 +99,7 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
     double hh = Parent.GetHeight()*Scale/2;
     Scale = Scale*Parent.GetExtraZoom()*Parent.GetViewZoom();
     double xx = Basis.GetCenter()[0], xy = -Basis.GetCenter()[1];
-    const double z = (Z-0.1)*Scale;
+    const double z = (Z-1)*Scale;
     P.Vertices[0] = vec3d((Left+Width+xx)*Scale-hw, hh-(Top+Height+xy)*Scale, z);
     P.Vertices[1] = vec3d((Left+Width+xx)*Scale-hw, hh-(Top+xy)*Scale, z);
     P.Vertices[2] = vec3d((Left+xx)*Scale-hw, hh-(Top+xy)*Scale, z);
