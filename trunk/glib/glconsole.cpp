@@ -137,15 +137,15 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
       glRasterPos3d(T[0], T[1], MaxZ);
       TGlMaterial* GlMP = FBuffer.GetObject(i);
       if( GlMP != NULL ) 
-        GlMP->Init();
+        GlMP->Init(Parent.IsColorStereo());
       else if( IsBlend() )  {
         GlM.AmbientF[0] = Ambient[0] + (float)ii*Rk;
         GlM.AmbientF[1] = Ambient[1] + (float)ii*Gk;
         GlM.AmbientF[2] = Ambient[2] + (float)ii*Bk;
-        GlM.Init(); // fading the text
+        GlM.Init(Parent.IsColorStereo()); // fading the text
       }
       else
-        OGlM.Init();
+        OGlM.Init(Parent.IsColorStereo());
       P.SetString(&line);
       Parent.DrawText(P, T[0], T[1], MaxZ); 
       P.SetString(NULL);
@@ -154,7 +154,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
   }
   if( PromptVisible )  {
     GlM.AmbientF =Ambient;
-    GlM.Init();
+    GlM.Init(Parent.IsColorStereo());
     if( Cmds.Count() == 1 )  {
       T[0] = GlLeft;  T[1] = GlTop;
       T *= Scale;
@@ -174,7 +174,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
       }
     }
   }
-  OGlM.Init(); // restore the material properties
+  OGlM.Init(Parent.IsColorStereo()); // restore the material properties
   FCursor->Draw();
   return true;
 }

@@ -12,7 +12,7 @@
 
 UseGlNamespace();
 //..............................................................................
-TGlOption GlobalGlFunction( BlackColor );
+const TGlOption GlobalGlFunction(BlackColor);
 //..............................................................................
 TGlMaterial::TGlMaterial()  {
   Flags = sglmShininessF | sglmSpecularF | sglmDiffuseF | sglmAmbientF;
@@ -23,7 +23,6 @@ TGlMaterial::TGlMaterial()  {
   SpecularB  = 0x80ffffff;
   DiffuseB   = 0x80777777;
   AmbientB   = 0x807f7f7f;
-  Mark = false;
 }
 //..............................................................................
 bool TGlMaterial::operator == (const AGOProperties &G) const  {
@@ -67,11 +66,11 @@ TGlMaterial& TGlMaterial::operator = (const TGlMaterial& G)  {
   DiffuseF     = G.DiffuseF;
   DiffuseB     = G.DiffuseB;
   Flags = G.Flags;
-  Mark = G.Mark;
   return *this;
 }
 //..............................................................................
-void TGlMaterial::Init() const  {
+void TGlMaterial::Init(bool skip) const  {
+  if( skip )  return;  
   if( Flags & sglmTransparent )  {
     //if( !glIsEnabled(GL_ALPHA_TEST) )  {
       glEnable(GL_ALPHA_TEST);

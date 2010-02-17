@@ -88,7 +88,7 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
       T[2] = Z;  
       TGlMaterial* GlM = FBuffer.GetObject(i);
       if( GlM != NULL ) 
-        GlM->Init();
+        GlM->Init(Parent.IsColorStereo());
       Parent.DrawTextSafe(T, FBuffer[i], Fnt); 
     }
     return true;
@@ -99,10 +99,11 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
     double hh = Parent.GetHeight()*Scale/2;
     Scale = Scale*Parent.GetExtraZoom()*Parent.GetViewZoom();
     double xx = Basis.GetCenter()[0], xy = -Basis.GetCenter()[1];
-    P.Vertices[0] = vec3d((Left+Width+xx)*Scale-hw, hh-(Top+Height+xy)*Scale, Z-1);
-    P.Vertices[1] = vec3d((Left+Width+xx)*Scale-hw, hh-(Top+xy)*Scale, Z-1);
-    P.Vertices[2] = vec3d((Left+xx)*Scale-hw, hh-(Top+xy)*Scale, Z-1);
-    P.Vertices[3] = vec3d((Left+xx)*Scale-hw, hh-(Top+Height+xy)*Scale, Z-1); 
+    const double z = (Z-0.1)*Scale;
+    P.Vertices[0] = vec3d((Left+Width+xx)*Scale-hw, hh-(Top+Height+xy)*Scale, z);
+    P.Vertices[1] = vec3d((Left+Width+xx)*Scale-hw, hh-(Top+xy)*Scale, z);
+    P.Vertices[2] = vec3d((Left+xx)*Scale-hw, hh-(Top+xy)*Scale, z);
+    P.Vertices[3] = vec3d((Left+xx)*Scale-hw, hh-(Top+Height+xy)*Scale, z); 
     return false;
   }
 }

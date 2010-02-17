@@ -1,8 +1,5 @@
-//---------------------------------------------------------------------------
-
-#ifndef glmaterialH
-#define glmaterialH
-
+#ifndef __olx_gl_material_H
+#define __olx_gl_material_H
 #include "glbase.h"
 #include "groupobj.h"
 #include "gloption.h"
@@ -11,38 +8,38 @@
 
 BeginGlNamespace()
 
-extern TGlOption BlackColor;
+extern const TGlOption BlackColor;
 
-const short    sglmAmbientF   = 0x0001,    // material properties
-               sglmAmbientB   = 0x0002,
-               sglmAmbientFB  = 0x0003,
-               
-               sglmDiffuseF   = 0x0004,
-               sglmDiffuseB   = 0x0008,
-               sglmDiffuseFB  = 0x000C,
+const uint16_t
+  sglmAmbientF   = 0x0001,    // material properties
+  sglmAmbientB   = 0x0002,
+  sglmAmbientFB  = 0x0003,
+  
+  sglmDiffuseF   = 0x0004,
+  sglmDiffuseB   = 0x0008,
+  sglmDiffuseFB  = 0x000C,
 
-               sglmSpecularF  = 0x0010,
-               sglmSpecularB  = 0x0020,
-               sglmSpecularFB = 0x0030,
+  sglmSpecularF  = 0x0010,
+  sglmSpecularB  = 0x0020,
+  sglmSpecularFB = 0x0030,
 
-               sglmShininessF = 0x0040,
-               sglmShininessB = 0x0080,
-               sglmShininessFB= 0x00C0,
-               
-               sglmEmissionF =  0x0100,
-               sglmEmissionB =  0x0200,
-               sglmEmissionFB = 0x0300,
-               
-               sglmTransparent =0x0400,
-               sglmIdentityDraw=0x0800,
-//               sglmStaticDraw  =0x1000,
+  sglmShininessF = 0x0040,
+  sglmShininessB = 0x0080,
+  sglmShininessFB= 0x00C0,
+  
+  sglmEmissionF =  0x0100,
+  sglmEmissionB =  0x0200,
+  sglmEmissionFB = 0x0300,
+  
+  sglmTransparent =0x0400,
+  sglmIdentityDraw=0x0800,
+//  sglmStaticDraw  =0x1000,
 
-               sglmLighting   =0x2000,
-               sglmColorMat   =0x4000;
+  sglmLighting   =0x2000,
+  sglmColorMat   =0x4000;
 
 class TGlMaterial: public AGOProperties, public IEObject  {
-  short Flags;
-  bool Mark;
+  uint16_t Flags;
 public:
   TGlOption EmissionF;
   TGlOption SpecularF;
@@ -61,13 +58,11 @@ public:
   TGlMaterial();
   TGlMaterial(const olxstr& str)  {  FromString(str);  }
 
-  void Init() const;
+  void Init(bool skip) const;
   const TGlMaterial& Intensity(TGlOption& ClearColor, double intensity) const;
   
-  DefPropP(short, Flags)
+  DefPropP(uint16_t, Flags)
 
-  inline bool HasMark() const {  return Mark;  }
-  inline void SetMark(bool v) {  Mark = v;  }
   // Has/Set 
   DefPropBFHasSet(AmbientF,   Flags, sglmAmbientF)
   DefPropBFHasSet(DiffuseF,   Flags, sglmDiffuseF)

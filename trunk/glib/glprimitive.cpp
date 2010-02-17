@@ -2,10 +2,6 @@
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
 
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "glprimitive.h"
 #include "glmaterial.h"
 #include "glrender.h"
@@ -189,6 +185,28 @@ void TGlPrimitive::Compile()  {
     default:
       Compiled = false;
   }
+}
+//..............................................................................
+void TGlPrimitive::PrepareColorRendering(uint16_t _begin) const {
+  if( !Renderer.IsColorStereo() )  {
+    glPushAttrib(GL_LIGHTING_BIT);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+  }
+  glBegin(_begin);
+}
+//..............................................................................
+void TGlPrimitive::EndColorRendering() const {
+  glEnd();
+  if( !Renderer.IsColorStereo() )
+    glPopAttrib();
+}
+//..............................................................................
+void TGlPrimitive::SetColor(const uint32_t& cl) const {
+  if( !Renderer.IsColorStereo() )
+    glColor4f((float)GetRValue(cl)/255, (float)GetGValue(cl)/255,
+    (float)GetBValue(cl)/255, (float)GetAValue(cl)/255);
 }
 //..............................................................................
 void TGlPrimitive::Draw()  {

@@ -1,11 +1,6 @@
 //---------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "glrender.h"
 #include "glscene.h"
 #include "glgroup.h"
@@ -32,6 +27,10 @@ TGlRenderer::TGlRenderer(AGlScene *S, int width, int height) {
   FLeft = FTop = 0;
   FPerspective = false;
   FPAngle = 1;
+  StereoFlag = 0;
+  StereoAngle = 3;
+  FOWidth = -1;
+
   LookAt(0,0,1);
 
   Fog = false;
@@ -405,7 +404,7 @@ void TGlRenderer::DrawObject(AGDrawObject *Object, bool DrawImage)  {
       TGlPrimitive& GlP = GPC.GetPrimitive(i);
       const TGlMaterial& GlM = GlP.GetProperties();
       if( !GlM.IsIdentityDraw() ) continue;
-      GlM.Init();
+      GlM.Init(false);
       glPushMatrix();
       if( Object->Orient(GlP) )  // the object has drawn itself
       {  glPopMatrix(); continue; }
@@ -417,7 +416,7 @@ void TGlRenderer::DrawObject(AGDrawObject *Object, bool DrawImage)  {
       TGlPrimitive& GlP = GPC.GetPrimitive(i);
       const TGlMaterial& GlM = GlP.GetProperties();
       if( GlM.IsIdentityDraw() ) continue;
-      GlM.Init();
+      GlM.Init(false);
       glPushMatrix();
       if( Object->Orient(GlP) )  // the object has drawn itself
       {  glPopMatrix(); continue; }
@@ -432,31 +431,64 @@ void TGlRenderer::DrawObject(AGDrawObject *Object, bool DrawImage)  {
 //..............................................................................
 void TGlRenderer::Draw()  {
   static double BZoom = 0;
-
   if( FWidth < 50 || !TBasicApp::GetInstance().IsMainFormVisible() )  return;
   
-
 // check if the projection matrices have to be reinitialised..
   if( FWidth < 10 || FHeight < 10 )  return;
-  if( BZoom != GetBasis().GetZoom() || IsChanged() )  {
+  if( StereoFlag == 0 && (BZoom != GetBasis().GetZoom() || IsChanged()) )  {
     BZoom = GetBasis().GetZoom();
     SetView();
     SetChanged(false);
   }
   glEnable(GL_NORMALIZE);
   BeforeDraw->Execute(this);
-  GetScene().StartDraw();
   //glLineWidth( (float)(0.07/GetScale()) );
   //glPointSize( (float)(0.07/GetScale()) );  
-  DrawObjects(0, 0, false, false);
+  GetScene().StartDraw();
+  if( (StereoFlag&glStereoColor) != 0 )  {
+    const double ry = GetBasis().GetRY();
+    GetBasis().RotateY(ry+StereoAngle);
+    SetView();
+    //glDisable(GL_LIGHTING);
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_BLEND);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    glColor3f(1, 0, 0);
+    DrawObjects(0, 0, false, false);
+
+    GetBasis().RotateY(ry-StereoAngle);
+    SetView();
+    glColor3f(0, 1, 0);
+    DrawObjects(0, 0, false, false);
+
+    GetBasis().RotateY(ry);
+  }
+  else if( (StereoFlag&glStereoCross) != 0 )  {
+    const double ry = GetBasis().GetRY();
+    int _l = FLeft;
+    GetBasis().RotateY(ry+StereoAngle);
+    SetView();
+    DrawObjects(0, 0, false, false);
+    GetBasis().RotateY(ry-StereoAngle);
+    FLeft = FWidth;
+    SetView();
+    DrawObjects(0, 0, false, false);
+    GetBasis().RotateY(ry);
+    FLeft = _l;
+  }
+  else
+    DrawObjects(0, 0, false, false);
   GetScene().EndDraw();
   FGlImageChanged = true;
   OnDraw->Execute(this);
 }
 //..............................................................................
-void TGlRenderer::DrawObjects(int x, int y, bool SelectPrimitives, bool SelectObjects)  {
-  const bool Select = SelectPrimitives || SelectObjects;
-  const int DrawMask = sgdoVisible|sgdoSelected|sgdoDeleted|sgdoGrouped;
+void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimitives)  {
+  const bool Select = SelectObjects || SelectPrimitives;
+  const bool skip_mat = (StereoFlag&glStereoColor) != 0;
+  static const int DrawMask = sgdoVisible|sgdoSelected|sgdoDeleted|sgdoGrouped;
   if( !FIdentityObjects.IsEmpty() || FSelection->GetGlM().IsIdentityDraw() )  {
     if( FPerspective )  {
       FPerspective = false;
@@ -467,7 +499,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectPrimitives, bool SelectOb
     const size_t id_obj_count = FIdentityObjects.Count();
     for( size_t i=0; i < id_obj_count; i++ )  {
       TGlMaterial* GlM = FIdentityObjects[i];
-      if( !Select )    GlM->Init();
+      if( !Select )  GlM->Init(skip_mat);
       const size_t obj_count = GlM->ObjectCount();
       for( size_t j=0; j < obj_count; j++ )  {
         TGlPrimitive& GlP = (TGlPrimitive&)GlM->GetObject(j);
@@ -477,7 +509,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectPrimitives, bool SelectOb
           AGDrawObject& GDO = GPC->GetObject(k);
           if( GDO.MaskFlags(DrawMask) != sgdoVisible )  continue;
           if( SelectObjects )  glLoadName((GLuint)GDO.GetTag());
-          if( SelectPrimitives )  glLoadName((GLuint)GlP.GetTag());
+          else if( SelectPrimitives )  glLoadName((GLuint)GlP.GetTag());
           glPushMatrix();
           if( GDO.Orient(GlP) )  // the object has drawn itself
           {  glPopMatrix(); continue; }
@@ -505,8 +537,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectPrimitives, bool SelectOb
       TGlMaterial& GlM = Primitives.GetProperties(i);
       if( GlM.IsIdentityDraw() ) continue;  // already drawn
       if( GlM.IsTransparent() ) continue;  // will be drawn
-      if( !Select )    
-        GlM.Init();
+      if( !Select )  GlM.Init(skip_mat);
       const size_t obj_count = GlM.ObjectCount();
       for( size_t j=0; j < obj_count; j++ )  {
         TGlPrimitive& GlP = (TGlPrimitive&)GlM.GetObject(j);
@@ -517,7 +548,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectPrimitives, bool SelectOb
           AGDrawObject& GDO = GPC->GetObject(k);
           if( GDO.MaskFlags(DrawMask) != sgdoVisible )  continue;
           if( SelectObjects )  glLoadName((GLuint)GDO.GetTag());
-          if( SelectPrimitives )  glLoadName((GLuint)GlP.GetTag());
+          else if( SelectPrimitives )  glLoadName((GLuint)GlP.GetTag());
           glPushMatrix();
           if( GDO.Orient(GlP) )  // the object has drawn itself
           {  glPopMatrix(); continue; }
@@ -530,8 +561,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectPrimitives, bool SelectOb
   const size_t trans_obj_count = FTransluentObjects.Count();
   for( size_t i=0; i < trans_obj_count; i++ )  {
     TGlMaterial* GlM = FTransluentObjects[i];
-    if( !Select )    
-      GlM->Init();
+    if( !Select )  GlM->Init(skip_mat);
     const size_t obj_count = GlM->ObjectCount();
     for( size_t j=0; j < obj_count; j++ )  {
       TGlPrimitive& GlP = (TGlPrimitive&)GlM->GetObject(j);
@@ -541,7 +571,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectPrimitives, bool SelectOb
         AGDrawObject& GDO = GPC->GetObject(k);
         if( GDO.MaskFlags(DrawMask) != sgdoVisible )  continue;
         if( SelectObjects )  glLoadName((GLuint)GDO.GetTag());
-        if( SelectPrimitives )  glLoadName((GLuint)GlP.GetTag());
+        else if( SelectPrimitives )  glLoadName((GLuint)GlP.GetTag());
         glPushMatrix();
         if( GDO.Orient(GlP) )  // the object has drawn itself
         {  glPopMatrix(); continue; }
@@ -569,7 +599,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectPrimitives, bool SelectOb
     const size_t trans_id_obj_count = FTransluentIdentityObjects.Count();
     for( size_t i=0; i < trans_id_obj_count; i++ )  {
       TGlMaterial* GlM = FTransluentIdentityObjects[i];
-      if( !Select )    GlM->Init();
+      if( !Select )  GlM->Init(skip_mat);
       const size_t obj_count = GlM->ObjectCount(); 
       for( size_t j=0; j < obj_count; j++ )  {
         TGlPrimitive& GlP = (TGlPrimitive&)GlM->GetObject(j);
@@ -579,7 +609,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectPrimitives, bool SelectOb
           AGDrawObject& GDO = GPC->GetObject(k);
           if( GDO.MaskFlags(DrawMask) != sgdoVisible )  continue;
           if( SelectObjects )  glLoadName((GLuint)GDO.GetTag());
-          if( SelectPrimitives )  glLoadName((GLuint)GlP.GetTag());
+          else if( SelectPrimitives )  glLoadName((GLuint)GlP.GetTag());
           glPushMatrix();
           if( GDO.Orient(GlP) )  // the object has drawn itself
           {  glPopMatrix(); continue; }
@@ -603,7 +633,7 @@ AGDrawObject* TGlRenderer::SelectObject(int x, int y, int depth)  {
   for( size_t i=0; i < ObjectCount(); i++ )
     GetObject(i).SetTag((int)(i+1));
   GetScene().StartSelect(x, y, selectBuf);
-  DrawObjects(x, y, false, true);
+  DrawObjects(x, y, true, false);
   int hits = GetScene().EndSelect();
   if (hits >= 1)  {
     if( hits == 1 )  {
@@ -641,7 +671,7 @@ TGlPrimitive* TGlRenderer::SelectPrimitive(int x, int y)  {
     Primitives.GetObject(i).SetTag( (int)(i+1) );
 
   GetScene().StartSelect(x, y, selectBuf);
-  DrawObjects(x, y, true, false);
+  DrawObjects(x, y, false, true);
   GetScene().EndSelect();
 
   int hits = glRenderMode(GL_RENDER);
@@ -1060,7 +1090,7 @@ void TGlRenderer::Compile(bool v)  {
       TGlMaterial& GlM = Primitives.GetProperties(i);
       if( GlM.IsIdentityDraw() ) continue;  // already drawn
       if( GlM.IsTransparent() ) continue;  // will be drawn
-      GlM.Init();
+      GlM.Init(false);
       for( size_t j=0; j < GlM.ObjectCount(); j++ )  {
         TGlPrimitive& GlP = (TGlPrimitive&)GlM.GetObject(j);
         TGPCollection* GPC = GlP.GetParentCollection();
@@ -1157,6 +1187,34 @@ void TGlRenderer::LibCalcZoom(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(CalcZoom());
 }
 //..............................................................................
+void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
+  if( Params.IsEmpty() )  {
+    if( (StereoFlag&glStereoColor) != 0 )
+      E.SetRetVal<olxstr>("color");
+    else if( (StereoFlag&glStereoCross) != 0 )
+      E.SetRetVal<olxstr>("cross");
+    else
+      E.SetRetVal<olxstr>("none");
+  }
+  else  {
+    if( FOWidth > 0 )  {
+      FWidth = FOWidth;
+      FOWidth = -1;
+    }
+    if( Params[0].Equalsi("color") )
+      StereoFlag = glStereoColor;
+    else if( Params[0].Equalsi("cross") )  {
+      FOWidth = FWidth;
+      FWidth /= 2;
+      StereoFlag = glStereoCross;
+    }
+    else
+      StereoFlag = 0;
+    if( Params.Count() == 2 )
+      StereoAngle = Params[1].ToDouble();
+  }
+}
+//..............................................................................
 TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("gl") : name);
   lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibCompile, "Compile",
@@ -1170,6 +1228,8 @@ TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
 decrements current zoom by provided value") );
   lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibCalcZoom, "CalcZoom",
     fpNone, "Returns optimal zoom value") );
+  lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibStereo, "Stereo",
+    fpNone|fpOne|fpTwo, "Returns/sets color/cross stereo mode and optionally stereo angle [3]") );
 
   return lib;
 }
