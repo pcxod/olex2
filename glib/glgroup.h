@@ -43,8 +43,8 @@ public:
 
   bool IsDefaultColor() const {  return DefaultColor;  }
 
-  DefPropC(TGlMaterial, GlM)
-  TGlMaterial& GetGlM() {  return GlM; }
+  const TGlMaterial& GetGlM() {  return GlM; }
+  void SetGlM(const TGlMaterial& m);
 };
 
 

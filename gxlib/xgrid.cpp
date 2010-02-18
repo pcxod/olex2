@@ -443,8 +443,29 @@ void TXGrid::GlLine(float x1, float y1, float x2, float y2, float z)  {
   vec3d p1(x1/Size, y1/Size, Depth), p2(x2/Size, y2/Size, Depth);
   p1 = Parent.GetBasis().GetMatrix()*p1 - Parent.GetBasis().GetCenter();
   p2 = Parent.GetBasis().GetMatrix()*p2 - Parent.GetBasis().GetCenter();
+  //static int8_t flag = 0;
+  //if( flag != 0 && olx_sign(flag) != olx_sign(z) )  {
+  //  glEnd();
+  //  if( flag < 0 )
+  //    glDisable(GL_LINE_STIPPLE);
+  //  else
+  //    glLineStipple(1, 0x03C0);
+  //  glBegin(GL_LINES);
+  //}
+  //if( flag == 0 )  {
+  //  if( z <= 0 )  {
+  //    glEnd();
+  //    glLineStipple(1, 0xf0f0);
+  //    glBegin(GL_LINES);
+  //  }
+  //}
+  if( z < 0 )  // render just a half of the segment
+    p2 = (p1 + p2)*0.5;
+  
   glVertex3d(p1[0], p1[1], p1[2]);
   glVertex3d(p2[0], p2[1], p2[2]);
+  //
+  //flag = olx_sign(z);
 }
 //..............................................................................
 bool TXGrid::GetDimensions(vec3d &Max, vec3d &Min)  {

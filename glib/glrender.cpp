@@ -720,7 +720,11 @@ void TGlRenderer::Select(AGDrawObject& G)  {
   if( !G.IsGroupable() )  return;
   if( G.GetPrimitives().PrimitiveCount() != 0 )  {
     if( FSelection->IsEmpty() )  {
-      FSelection->GetGlM().SetIdentityDraw(G.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw());
+      TGlMaterial glm = FSelection->GetGlM();
+      if( glm.IsIdentityDraw() != G.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw() )  {
+        glm.SetIdentityDraw(G.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw());
+        FSelection->SetGlM(glm);
+      }
     }
     else  {
       if( FSelection->GetGlM().IsIdentityDraw() != G.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw() )

@@ -151,10 +151,8 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
       for( int k=0; k < 6; k++ )
         Ucifs[ind+k] = -TQ_PI*quad[k]*BM[k];
     }
-    else  {
-      Ucifs[ind] = ca.GetUiso()*ca.GetUiso();
-      Ucifs[ind] *= -EQ_PI;
-    }
+    else
+      Ucifs[ind] = -EQ_PI*ca.GetUiso();
   }
   
   const size_t a_cnt = alist.Count(),
@@ -171,7 +169,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
       compd l;
       for( size_t k=0; k < m_cnt; k++ )  {
         const vec3d hkl = ref.GetHkl()*ml[k].r;
-        double tv =  T_PI*(hkl.DotProd(alist[j]->ccrd()) + ml[k].t.DotProd(ref.GetHkl()));  // scattering vector + phase shift
+        double tv =  T_PI*(alist[j]->ccrd().DotProd(hkl) + ml[k].t.DotProd(ref.GetHkl()));  // scattering vector + phase shift
         double ca, sa;
         SinCos(tv, &sa, &ca);
         if( alist[j]->GetEllipsoid() != NULL )  {

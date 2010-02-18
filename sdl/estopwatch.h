@@ -1,6 +1,5 @@
 #ifndef __olx_stop_watch_h
 #define __olx_stop_watch_h
-
 #include "etime.h"
 #include "bapp.h"
 #include "log.h"
@@ -42,9 +41,11 @@ protected:
   }
 public:
   template <class T> void print(T& out)  {
-    out << prepareList(TStrList());
+    if( TBasicApp::GetInstance().IsProfiling() )
+      out << prepareList(TStrList());
   }
   template <class T> void print(T& inst, void (T::*func)(const olxstr& str) )  {
+    if( !TBasicApp::GetInstance().IsProfiling() )  return;
     TStrList lst;
     prepareList(lst);
     for( size_t i=0; i < lst.Count(); i++ )

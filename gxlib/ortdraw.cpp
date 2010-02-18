@@ -711,6 +711,8 @@ void OrtDraw::ContourDrawer::draw(float x1, float y1, float x2, float y2, float 
   vec3d p1(x1/Size, y1/Size, Depth), p2(x2/Size, y2/Size, Depth);
   p1 = parent.basis.GetMatrix()*p1 - parent.basis.GetCenter();
   p2 = parent.basis.GetMatrix()*p2 - parent.basis.GetCenter();
+  if( z < 0 )
+    p2 = (p1+p2)*0.5;
   objects.Add(new ort_line(parent, parent.ProjectPoint(p1), parent.ProjectPoint(p2), color));
 }
 
