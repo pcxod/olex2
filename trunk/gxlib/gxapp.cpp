@@ -508,8 +508,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   GetRender().Initialise();
   FGlRender->SetSceneComplete(true);
   sw.stop();
-  if( IsProfiling() )
-    sw.print(GetLog(), &TLog::Info);
+  sw.print(GetLog(), &TLog::Info);
 }
 //..............................................................................
 void TGXApp::CenterModel()  {
@@ -3915,7 +3914,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   vis.FromBase64String( visibility.GetRequiredField("bonds") );
   if( vis.Count() != XBonds.Count() )
     throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
-  for( size_t i=0; i < vis.Count(); i++ )
+  for( size_t i=0; i < XBonds.Count(); i++ )
     XBonds[i].SetVisible( vis[i] );
   vis.FromBase64String( visibility.GetRequiredField("planes") );
   if( vis.Count() != XPlanes.Count() )
@@ -3946,7 +3945,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
     TDataItem& planes = group.FindRequiredItem("Planes");
     for( size_t j=0; j < planes.FieldCount(); j++ )
       glG.Add( XPlanes[planes.GetField(j).ToSizeT()] );
-    glG.Create();
+    glG.Create(group.GetValue());
   }
 
   TDataItem& renderer = item.FindRequiredItem("Renderer");

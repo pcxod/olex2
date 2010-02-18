@@ -128,8 +128,7 @@ class RefMerger {
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
     stats.UniqueReflections = output.Count();
-    stats.MeanIOverSigma = (double)(stats.UniqueReflections != 0 ? 
-      stats.UniqueReflections/stats.UniqueReflections : 0);
+    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1 : stats.UniqueReflections);
     return stats;
   }
   template <class RefListMerger> 
@@ -206,8 +205,7 @@ class RefMerger {
     }
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
-    stats.MeanIOverSigma = (double)(stats.UniqueReflections != 0 ? 
-      stats.UniqueReflections/stats.UniqueReflections : 0);
+    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1 : stats.UniqueReflections);
     return stats;
   }
 
@@ -303,7 +301,7 @@ class RefMerger {
     }
     stats.Rint = -1;
     stats.Rsigma = -1;
-    stats.MeanIOverSigma /= (stats.UniqueReflections == 1 ? 0 : stats.UniqueReflections) ;
+    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1 : stats.UniqueReflections) ;
     return stats;
   }
 
@@ -358,8 +356,7 @@ class RefMerger {
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
     stats.UniqueReflections = output.Count();
-    stats.MeanIOverSigma = (double)(stats.UniqueReflections != 0 ? 
-      stats.UniqueReflections/stats.UniqueReflections : 0);
+    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1 : stats.UniqueReflections);
     return stats;
   }
   template <class RefListMerger>
@@ -407,8 +404,7 @@ class RefMerger {
     }
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
-    stats.MeanIOverSigma = (stats.UniqueReflections != 0 ? 
-      stats.UniqueReflections/stats.UniqueReflections : 0);
+    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1 : stats.UniqueReflections);
     return stats;
   }
 public:

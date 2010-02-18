@@ -144,6 +144,11 @@ void TGlGroup::Draw(bool SelectPrimitives, bool SelectObjects) const  {
   }
 }
 //..............................................................................
+void TGlGroup::SetGlM(const TGlMaterial& m)  {
+  GetPrimitives().GetStyle().SetMaterial("mat", m);
+  GlM = m;
+}
+//..............................................................................
 bool TGlGroup::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
   for( size_t i=0; i < FObjects.Count(); i++ )
     FObjects[i]->OnMouseDown(Sender, Data);

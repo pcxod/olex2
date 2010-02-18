@@ -180,11 +180,12 @@ namespace SFUtil {
               l.Im() += sa;
             }
           }
+          compd scv = fo[atoms[j]->GetTag()];
           if( !olx_is_valid_index(atoms[j]->GetEllpId()) )
-            l *= exp( U[j*6]*d_s2 );
-          l *= atoms[j]->GetOccu();
-          l *= fo[ atoms[j]->GetTag() ];
-          ir += l;
+            scv *= exp(U[j*6]*d_s2);
+          scv *= atoms[j]->GetOccu();
+          scv *= l;
+          ir += scv;
         }
         F[i] = ir;
       }
@@ -225,11 +226,12 @@ namespace SFUtil {
               l.Im() += sa;
             }
           }
+          compd scv = fo[atoms[j]->GetTag()];
           if( !olx_is_valid_index(atoms[j]->GetEllpId()) )
-            l *= exp( U[j*6]*d_s2 );
-          l *= atoms[j]->GetOccu();
-          l *= fo[ atoms[j]->GetTag() ];
-          ir += l;
+            scv *= exp(U[j*6]*d_s2);
+          scv *= atoms[j]->GetOccu();
+          scv *= l;
+          ir += scv;
         }
         F[i] = ir;
       }

@@ -142,7 +142,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     //xapp.CalcSF(refs, F);
     //sw.start("Calculation structure factors A");
     //fastsymm version is just about 10% faster...
-    CalcSF(xapp.XFile(), refs, F, !sg.IsCentrosymmetric() );
+    CalcSF(xapp.XFile(), refs, F, !sg.IsCentrosymmetric());
     sw.start("Scaling structure factors");
     if( mapType != mapTypeCalc )  {
       // find a linear scale between F
@@ -210,10 +210,8 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatte
       for( int k=0; k < 6; k++ )
         U[ind+k] = -TQ_PI*quad[k]*BM[k];
     }
-    else  {
-      U[ind] = ca.GetUiso();//*ca.GetUiso();
-      U[ind] *= -EQ_PI;
-    }
+    else
+      U[ind] = -EQ_PI*ca.GetUiso();
   }
 }
 //...........................................................................................
