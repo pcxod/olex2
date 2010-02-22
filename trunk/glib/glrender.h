@@ -182,7 +182,7 @@ public:
   const vec3d& MinDim() const { return FMinV; }
   // Scene.Initialise must be called before to initialise drawing
   // contexts
-  int GetWidth()  const {  return FWidth;  }
+  int GetWidth()  const {  return ((StereoFlag&glStereoCross) != 0) ? FOWidth : FWidth;  }
   int GetHeight() const {  return FHeight;  }
   int GetLeft()   const {  return FLeft;  }
   int GetTop()    const {  return FTop;  }

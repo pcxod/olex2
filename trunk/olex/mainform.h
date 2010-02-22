@@ -525,6 +525,7 @@ private:
   DefFunc(GetMAC)
   DefFunc(Profiling)
   DefFunc(ThreadCount)
+  DefFunc(FullScreen)
 
   TUndoStack *FUndoStack;
 //..............................................................................

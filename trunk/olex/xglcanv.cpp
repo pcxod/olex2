@@ -186,12 +186,13 @@ void TGlCanvas::OnMouseMove(wxMouseEvent& me)  {
 
   if( !FLeftMouseDown && !FRightMouseDown )  
     FParent->OnMouseMove(me.m_x, me.m_y);
-  if( FXApp != NULL && FXApp->MouseMove(me.m_x, me.m_y, Fl) )  // check if a handler for the event is found
+  if( FXApp != NULL && FXApp->MouseMove(me.m_x, me.m_y, Fl) )  {  // check if a handler for the event is found
 #ifdef __WIN32__
     wxWindow::Refresh();
 #else
     FXApp->Draw();
 #endif
+  }
 }
 //..............................................................................
 void TGlCanvas::OnMouseDblClick(wxMouseEvent& me)  {

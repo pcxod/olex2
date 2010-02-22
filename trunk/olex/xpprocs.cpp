@@ -8748,3 +8748,8 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   image.SaveFile(bmpFN.u_str());
 }
 //..............................................................................
+void TMainForm::funFullScreen(const TStrObjList& Params, TMacroError &E)  {
+  if( Params.IsEmpty() )  E.SetRetVal(IsFullScreen());
+  else
+    ShowFullScreen(Params[0].ToBool());
+}

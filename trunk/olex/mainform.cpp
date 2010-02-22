@@ -1025,6 +1025,7 @@ separated values of Atom Type and radius, an entry a line");
  If 'full' is provided as argument, the adoptor names are also returned as adapter=MAC;..");
   this_InitFuncD(Profiling, fpNone|fpOne, "Returns/sets the flag allowing to print profiling information");
   this_InitFuncD(ThreadCount, fpNone|fpOne, "Returns/sets the number of simultaneous tasks");
+  this_InitFuncD(FullScreen, fpNone|fpOne, "Returns/sets full screen mode");
 
   Library.AttachLibrary(TEFile::ExportLibrary());
   //Library.AttachLibrary(olxstr::ExportLibrary("str"));
