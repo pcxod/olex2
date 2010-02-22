@@ -83,9 +83,9 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
   }
   TGraphicsStyle& GS = GPC->GetStyle();
 //  GS.SetSaveable( GPC->Name().CharCount('.') == 0 );
-  GS.SetSaveable( IsStyleSaveable() );
+  GS.SetSaveable(IsStyleSaveable());
 
-  int PrimitiveMask = GS.GetParam(GetPrimitiveMaskName(),
+  const int PrimitiveMask = GS.GetParam(GetPrimitiveMaskName(),
     (FBond && (FBond->GetType() == sotHBond)) ? 2048 : DefMask(), IsMaskSaveable()).ToInt();
 
   GPC->AddObject(*this);
@@ -95,8 +95,7 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
   Params()[4]= GS.GetParam("R", Params()[4]).ToDouble();
 
   for( size_t i=0; i < FStaticObjects.Count(); i++ )  {
-    const int off = (1 << i);
-    if( PrimitiveMask & off )    {
+    if( (PrimitiveMask & (1<<i)) != 0 )    {
       TGlPrimitive* SGlP = FStaticObjects.GetObject(i);
       TGlPrimitive& GlP = GPC->NewPrimitive(FStaticObjects[i], sgloCommandList);
       /* copy the default drawing style tag*/
@@ -108,7 +107,7 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
       GlP.EndList();
       if( FBond == NULL )  { // no bond?
         RGlM.FromString("85;2155839359;2155313015;1.000,1.000,1.000,0.502;36");
-        GlP.SetProperties( GS.GetMaterial(FStaticObjects[i], RGlM) );
+        GlP.SetProperties(GS.GetMaterial(FStaticObjects[i], RGlM));
       }
       else  {
         if( SGlP->Params.Last() == ddsDefAtomA || SGlP->Params.Last() == ddsDef )  {

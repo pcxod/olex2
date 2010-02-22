@@ -21,6 +21,7 @@ public:
   ~TPrimitiveStyle() { }
 
   const olxstr& GetName() const {  return Name; }
+  static const olxstr& ReadName(const TDataItem& Item)  {  return Item.GetFieldValue("PName");  }
 
   AGOProperties& SetProperties(const AGOProperties& C) {
     return AGroupObject::SetProperties(C);
@@ -227,8 +228,8 @@ public:
   virtual ~TGraphicsStyles();
 
   void Clear();
-  bool LoadFromFile(const olxstr &FN);
-  void SaveToFile(const olxstr &FN);
+  bool LoadFromFile(const olxstr& FN, bool merge);
+  void SaveToFile(const olxstr& FN);
 
   void Update();
   void Apply();
@@ -251,7 +252,7 @@ public:
   DefPropC(olxstr, LinkFile)
 
   void ToDataItem(TDataItem& Item) const;
-  bool FromDataItem(const TDataItem& Item);
+  bool FromDataItem(const TDataItem& Item, bool merge);
   // saves only provided styles
   void ToDataItem(TDataItem& item, const TPtrList<TGraphicsStyle>& styles);
 

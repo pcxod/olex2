@@ -1871,7 +1871,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     F.LoadFromXLFile(FN, NULL);
     FXApp->GetRender().ClearSelection();
     // this forces the object creation, so if there is anything wrong...
-    try  {  FXApp->GetRender().GetStyles().FromDataItem(*F.Root().FindItem("style"));  }
+    try  {  FXApp->GetRender().GetStyles().FromDataItem(*F.Root().FindItem("style"), false);  }
     catch(...)  {
       FXApp->GetRender().GetStyles().Clear();
       TBasicApp::GetLog().Error("Failed to load given style");
@@ -1928,9 +1928,9 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       DF.LoadFromXLFile(FN);
       TDataItem *style = DF.Root().FindItem("style");
       if( style == NULL )
-        FXApp->GetRender().GetStyles().FromDataItem(*DF.Root().FindItem("DStyle"));
+        FXApp->GetRender().GetStyles().FromDataItem(*DF.Root().FindItem("DStyle"), false);
       else  {
-        FXApp->GetRender().GetStyles().FromDataItem(*style);
+        FXApp->GetRender().GetStyles().FromDataItem(*style, false);
         TDataItem *basis = DF.Root().FindItem("basis");
         if( basis != NULL )  
           FXApp->GetRender().GetBasis().FromDataItem(*basis);
@@ -1943,6 +1943,10 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( FXApp->XFile().HasLastLoader() )  {
       FN = (!FN.IsEmpty() ? TEFile::ChangeFileExt(FN, "oxm") :
                             TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxm") );
+    }
+    if( !FN.IsEmpty() && TEFile::Exists(FN) )  {
+      if( !TEFile::IsAbsolutePath(FN) )
+        FN = TEFile::AddPathDelimeter(TEFile::CurrentDir()) << FN;        
       FXApp->XFile().LoadFromFile(FN);
     }
   }
@@ -4274,7 +4278,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     else  {
       if( TEFile::Exists(DefStyle) && ReadStyle )
-        FXApp->GetRender().GetStyles().LoadFromFile(DefStyle);
+        FXApp->GetRender().GetStyles().LoadFromFile(DefStyle, false);
     }
     // delete the Space groups infor mation file
     if( !(TEFile::ChangeFileExt(FN, EmptyString) == TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), EmptyString)) )
@@ -8750,6 +8754,10 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void TMainForm::funFullScreen(const TStrObjList& Params, TMacroError &E)  {
   if( Params.IsEmpty() )  E.SetRetVal(IsFullScreen());
-  else
-    ShowFullScreen(Params[0].ToBool());
+  else  {
+    if( Params[0].Equalsi("swap") )
+      ShowFullScreen(!IsFullScreen());
+    else
+      ShowFullScreen(Params[0].ToBool());
+  }
 }

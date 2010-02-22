@@ -20,13 +20,13 @@ void TPrimitiveStyle::ToDataItem(TDataItem& Item) const {
 }
 //..............................................................................
 bool TPrimitiveStyle::FromDataItem(const TDataItem& Item)  {
-  Name = Item.GetFieldValue("PName");
+  Name = ReadName(Item);
   TDataItem* MI = Item.FindItem("Material");
   if( MI != NULL )  {
     if( MI->ItemCount() != 0 )  {
       TGlMaterial* GlM = Parent.GetMaterial(MI->GetItem(0));
       if( GlM != NULL )  
-        SetProperties( *GlM );
+        SetProperties(*GlM);
     }
   }
   return true;
@@ -88,28 +88,39 @@ void TGraphicsStyle::ToDataItem(TDataItem& Item, bool saveAll) const {
 }
 //..............................................................................
 bool TGraphicsStyle::FromDataItem(const TDataItem& Item)  {
-  TGraphicsStyle *GS;
-  TPrimitiveStyle *PS;
   Name = Item.GetFieldValue("Name");
-  SetPersistent( Item.GetFieldValue("Persistent", FalseString).ToBool() );
+  SetPersistent(Item.GetFieldValue("Persistent", FalseString).ToBool());
   size_t i = IsPersistent() ? 2 : 1;
   for( ; i < Item.FieldCount(); i++ )
-    SetParam(Item.FieldName(i), Item.GetField(i), Level < 2 );
+    SetParam(Item.FieldName(i), Item.GetField(i), Level < 2);
 //    SetParam(Item.FieldName(i), Item.Field(i), FParent->GetVersion() > 0 );
   TDataItem* I = Item.FindItem("SubStyles");
   size_t off = 0;
   if( I != NULL )  {
     off = 1;
     for( i=0; i < I->ItemCount(); i++ )  {
-      GS = new TGraphicsStyle(Parent, this, EmptyString);
+      const TDataItem& si = I->GetItem(i);
+      const olxstr& si_name = si.GetFieldValue("Name");
+      TGraphicsStyle* GS = FindLocalStyle(si_name);
+      if( GS == NULL )
+        GS = Styles.Add(si_name, new TGraphicsStyle(Parent, this, si_name)).Object;
       GS->FromDataItem(I->GetItem(i));
-      Styles.Add(GS->GetName(), GS);
     }
   }
+  // merging happens here...
   for( i=off; i < Item.ItemCount(); i++ )  {
-    PS = Parent.NewPrimitiveStyle(EmptyString);
-    PS->FromDataItem( Item.GetItem(i) );
-    PStyles.Add(PS);
+    const TDataItem& psi = Item.GetItem(i);
+    const olxstr& psi_name = TPrimitiveStyle::ReadName(psi);
+    TPrimitiveStyle* PS = NULL;
+    for( size_t j=0; j < PStyles.Count(); j++ )  {
+      if( PStyles[j]->GetName() == psi_name )  {
+        PS = PStyles[j];
+        break;
+      }
+    }
+    if( PS == NULL )
+      PS = PStyles.Add(Parent.NewPrimitiveStyle(psi_name));
+    PS->FromDataItem(Item.GetItem(i));
   }
   return true;
 }
@@ -318,15 +329,15 @@ void TGraphicsStyles::ToDataItem(TDataItem& item, const TPtrList<TGraphicsStyle>
   root.ReleaseStyles();
 }
 //..............................................................................
-bool TGraphicsStyles::FromDataItem(const TDataItem& Item)  {
-  Clear();
+bool TGraphicsStyles::FromDataItem(const TDataItem& Item, bool merge)  {
   if( &Item == NULL )  throw TInvalidArgumentException(__OlxSourceInfo, "item=NULL");
+  if( !merge )  Clear();
   TDataItem* SI = Item.FindItem("Materials");
   TPtrList<TGlMaterial> mats;
   for( size_t i=0; i < SI->ItemCount(); i++ )  {
     TGlMaterial* GlM = new TGlMaterial;
-    SI->GetItem(i).SetData( GlM );
-    GlM->FromDataItem( SI->GetItem(i) );
+    SI->GetItem(i).SetData(GlM);
+    GlM->FromDataItem(SI->GetItem(i));
     mats.Add(GlM);
   }
   Name = Item.GetFieldValue("Name");
@@ -368,16 +379,16 @@ void TGraphicsStyles::DeleteStyle(TGraphicsStyle *Style)  {
     Style->GetParentStyle()->DeleteStyle(*Style);
 }
 //..............................................................................
-bool TGraphicsStyles::LoadFromFile(const olxstr &FN)  {
+bool TGraphicsStyles::LoadFromFile(const olxstr& FN, bool merge)  {
   TDataFile DF;
   if( !DF.LoadFromXLFile(FN, NULL) )  return false;
   TDataItem *DI = DF.Root().FindItem("DStyle");
   if( DI == NULL )  return false;
-  FromDataItem(*DI);
+  FromDataItem(*DI, merge);
   return true;
 }
 //..............................................................................
-void TGraphicsStyles::SaveToFile(const olxstr &FN)  {
+void TGraphicsStyles::SaveToFile(const olxstr& FN)  {
   TDataFile DF;
   TDataItem& DI = DF.Root().AddItem("DStyle");
   this->ToDataItem(DI);
