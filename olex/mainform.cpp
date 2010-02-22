@@ -1025,7 +1025,7 @@ separated values of Atom Type and radius, an entry a line");
  If 'full' is provided as argument, the adoptor names are also returned as adapter=MAC;..");
   this_InitFuncD(Profiling, fpNone|fpOne, "Returns/sets the flag allowing to print profiling information");
   this_InitFuncD(ThreadCount, fpNone|fpOne, "Returns/sets the number of simultaneous tasks");
-  this_InitFuncD(FullScreen, fpNone|fpOne, "Returns/sets full screen mode");
+  this_InitFuncD(FullScreen, fpNone|fpOne, "Returns/sets full screen mode (true/false/swap)");
 
   Library.AttachLibrary(TEFile::ExportLibrary());
   //Library.AttachLibrary(olxstr::ExportLibrary("str"));
@@ -3149,7 +3149,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   if( TEFile::Exists(DefStyle) )  {
     TDataFile SDF;
     SDF.LoadFromXLFile(DefStyle, &Log);
-    FXApp->GetRender().GetStyles().FromDataItem(*SDF.Root().FindItem("style"));
+    FXApp->GetRender().GetStyles().FromDataItem(*SDF.Root().FindItem("style"), false);
   }
   else  {
     TDataItem& last_saved_style = DF.Root().FindRequiredItem("Styles");
@@ -3165,15 +3165,15 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
           int d_version = TGraphicsStyles::ReadStyleVersion(distributed_style);
           // it would be weird if distributed version is not current... but might happen
           FXApp->GetRender().GetStyles().FromDataItem(
-            (d_version <= l_version) ? last_saved_style : distributed_style );
+            (d_version <= l_version) ? last_saved_style : distributed_style, false);
         }
         catch(...)  {  // recover...
-          FXApp->GetRender().GetStyles().FromDataItem(last_saved_style);
+          FXApp->GetRender().GetStyles().FromDataItem(last_saved_style, false);
         }
       }
     }
     else  // up-to-date then...
-      FXApp->GetRender().GetStyles().FromDataItem(last_saved_style);
+      FXApp->GetRender().GetStyles().FromDataItem(last_saved_style, false);
   }
   // default scene properties provided?
   if( TEFile::Exists(DefSceneP) )  {

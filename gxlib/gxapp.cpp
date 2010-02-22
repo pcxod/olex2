@@ -3877,7 +3877,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   FGlRender->Clear();
   ClearXObjects();
   FXFile->FromDataItem(item.FindRequiredItem("XFile"));
-  FGlRender->GetStyles().FromDataItem( item.FindRequiredItem("Style") );
+  FGlRender->GetStyles().FromDataItem( item.FindRequiredItem("Style"), true);
   
   IndividualCollections.Clear();
   TDataItem& ind_col = item.FindRequiredItem("ICollections");
