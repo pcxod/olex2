@@ -1782,16 +1782,15 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
   FCurrentPopup = NULL;
   if( G == NULL )  return;
   FCurrentPopup = NULL;
-  if( EsdlInstanceOf( *G, TXAtom) )  {
+  if( EsdlInstanceOf(*G, TXAtom) )  {
     TStrList SL;
-    olxstr T;
     TXAtom *XA = (TXAtom*)G;
     FXApp->BangList(XA, SL);
     pmBang->Clear();
     for( size_t i=0; i < SL.Count(); i++ )
       pmBang->Append(-1, SL[i].u_str());
     pmAtom->Enable(ID_MenuBang, SL.Count() != 0);
-    T = XA->Atom().GetLabel();
+    olxstr T = XA->Atom().GetLabel();
     T << ':' << ' ' <<  XA->Atom().GetType().name;
     if( XA->Atom().GetType() == iQPeakZ )  {
       T << ": " << olxstr::FormatFloat(3, XA->Atom().CAtom().GetQPeak());
@@ -1814,7 +1813,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     FCurrentPopup = pmAtom;
     
   }
-  else if( EsdlInstanceOf( *G, TXBond) )  {
+  else if( EsdlInstanceOf(*G, TXBond) )  {
     TStrList SL;
     olxstr T;
     TXBond *XB = (TXBond*)G;
@@ -1831,7 +1830,8 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     pmBond->Enable(ID_Selection, G->IsSelected());
     FCurrentPopup = pmBond;
   }
-  else if( EsdlInstanceOf( *G, TXPlane) )  {
+  else if( EsdlInstanceOf(*G, TXPlane) )  {
+    pmPlane->Enable(ID_Selection, G->IsSelected());
     FCurrentPopup = pmPlane;
   }
   if( FCurrentPopup != NULL )  {
@@ -1841,7 +1841,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
       FCurrentPopup->Enable(ID_SelGroup, true);
     }
     if( FXApp->GetSelection().Count() == 1 )  {
-      if( EsdlInstanceOf( FXApp->GetSelection().GetObject(0), TGlGroup) )  {
+      if( EsdlInstanceOf(FXApp->GetSelection().GetObject(0), TGlGroup) )  {
         FCurrentPopup->Enable(ID_SelUnGroup, true);
       }
     }

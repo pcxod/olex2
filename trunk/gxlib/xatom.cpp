@@ -142,7 +142,7 @@ void TXAtom::Quality(const short V)  {
 //..............................................................................
 void TXAtom::ListPrimitives(TStrList &List) const {
   for( size_t i=0; i < FStaticObjects.Count(); i++ )
-    List.Add( FStaticObjects[i] );
+    List.Add(FStaticObjects[i]);
   return;
 }
 //..............................................................................
@@ -807,12 +807,7 @@ void TXAtom::CreateStaticPrimitives()  {
 }
 //..............................................................................
 void TXAtom::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
-  olxstr& mstr = GetPrimitives().GetStyle().GetParam(GetPrimitiveMaskName(), "0");
-  if( mstr.ToInt() == Mask )  return;
-  mstr = Mask;
-  GetPrimitives().ClearPrimitives();
-  GetPrimitives().RemoveObject(*this);
-  Create(EmptyString, cpar);
+  AGDrawObject::UpdatePrimitives(Mask, cpar);
   bool create_polyhedron = (Mask & (1 << PolyhedronIndex)) != 0;
   for( size_t i=0; i < GetPrimitives().ObjectCount(); i++ ) {
     if( EsdlInstanceOf(GetPrimitives().GetObject(i), TXAtom) )

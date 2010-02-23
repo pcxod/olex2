@@ -1,16 +1,11 @@
 //---------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "gdrawobject.h"
 #include "glprimitive.h"
 #include "gpcollection.h"
-
 #include "library.h"
+#include "styles.h"
 
 UseGlNamespace();
 //..............................................................................
@@ -36,9 +31,14 @@ void AGDrawObject::Compile()  {
     Primitives->GetPrimitive(i).Compile();
 }
 //..............................................................................
-void AGDrawObject::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar) {  }
-//..............................................................................
-void AGDrawObject::OnPrimitivesCleared(){  return; }
+void AGDrawObject::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
+  olxstr& mstr = GetPrimitives().GetStyle().GetParam(GetPrimitiveMaskName(), "0");
+  if( mstr.ToInt() == Mask )  return;
+  mstr = Mask;
+  GetPrimitives().ClearPrimitives();
+  GetPrimitives().RemoveObject(*this);
+  Create(EmptyString, cpar);
+}
 //..............................................................................
 //..............................................................................
 //..............................................................................
