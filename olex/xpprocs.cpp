@@ -558,10 +558,10 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( PictureQuality )  FXApp->Quality(qaPict);
 
   short bits = 24, extraBytes;
-
-  int vpLeft = FXApp->GetRender().GetLeft(),
+  // keep old size values
+  const int vpLeft = FXApp->GetRender().GetLeft(),
       vpTop = FXApp->GetRender().GetTop(),
-      vpWidth = FXApp->GetRender().GetWidth(),
+      vpWidth = FXApp->GetRender().GetActualWidth(),
       vpHeight = FXApp->GetRender().GetHeight();
 
   double res = 2;
