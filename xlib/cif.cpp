@@ -1510,14 +1510,8 @@ void TCif::MultValue(olxstr &Val, const olxstr &N)  {
 }
 //..............................................................................
 bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& SymmList)  {
-  TCifLoop *Loop;
-  int defcnt, RowDeleted=0, ColDeleted=0;
-  olxstr Tmp, Val;
-  bool AddRow;
-  TStrList Toks;
+  int RowDeleted=0, ColDeleted=0;
   smatd_list AllSymmList;
-  smatd SymmMatr;
-
   size_t sindex = InvalidIndex;
   TCifLoop* SymmLoop = FindLoop("_symmetry_equiv_pos");
   if( SymmLoop == NULL)
@@ -1536,10 +1530,10 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
 
   TCifLoopTable* LT = NULL;
   for( size_t i=0; i < Loops.Count(); i++ )  {
-    Loop = Loops.GetObject(i);
+    TCifLoop* Loop = Loops.GetObject(i);
     LT = &Loop->GetTable();
     if( LT->ColCount() < TD->ItemCount() )  continue;
-    defcnt = 0;
+    size_t defcnt = 0;
     for( size_t j=0; j < LT->ColCount(); j++ )  {
       if( TD->FindItemi(LT->ColName(j)) != NULL )
         defcnt ++;
@@ -1554,38 +1548,35 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
   Table.Assign(*LT);
   // process rows
   for( size_t i=0; i < LT->RowCount(); i++ )  {
-    AddRow = true;
+    bool AddRow = true;
     for( size_t j=0; j < LT->ColCount(); j++ )  {
-      TDataItem *DI = TD->FindItemi( LT->ColName(j) );
-
-      if( sindex != InvalidIndex && LT->ColName(j).StartsFrom("_geom_") && LT->ColName(j).IndexOf("site_symmetry") != InvalidIndex)  {
-        // 1_555
-        if( (*LT)[i][j] != '.' )  {
-          olxstr tmp = LT->ColName(j).SubStringFrom( LT->ColName(j).LastIndexOf('_')+1 );
+      TDataItem *DI = TD->FindItemi(LT->ColName(j));
+      if( sindex != InvalidIndex && LT->ColName(j).StartsFrom("_geom_") && 
+        LT->ColName(j).IndexOf("site_symmetry") != InvalidIndex)
+      {
+        if( (*LT)[i][j] != '.' )  {  // 1_555
+          olxstr tmp = LT->ColName(j).SubStringFrom(LT->ColName(j).LastIndexOf('_')+1);
           //if( !tmp.IsNumber() ) continue;
-          Tmp = "label_";
+          olxstr Tmp = "label_";
           Tmp << tmp;
-          SymmMatr = TSymmParser::SymmCodeToMatrix(AllSymmList, (*LT)[i][j] );
-          size_t matIndex = SymmList.IndexOf( SymmMatr );
+          smatd SymmMatr = TSymmParser::SymmCodeToMatrix(AllSymmList, (*LT)[i][j]);
+          size_t matIndex = SymmList.IndexOf(SymmMatr);
           if( matIndex == InvalidIndex )  {
             SymmList.AddCCopy(SymmMatr);
             matIndex = SymmList.Count()-1;
           }
-          for( size_t k=0; k < LT->ColCount(); k++ )  {
-            if( LT->ColName(k).EndsWith( Tmp ) )  {
-              Table[i][k] << "<sup>" << (matIndex+1) << "</sup>";
+          for( size_t k=0; k < Table.ColCount(); k++ )  {
+            if( Table.ColName(k).EndsWith(Tmp) )  {
+              Table[i-RowDeleted][k] << "<sup>" << (matIndex+1) << "</sup>";
               break;
             }
           }
         }
       }
       if( DI == NULL )  continue;
-      Val = (*LT)[i][j];
-
-
-      Tmp = DI->GetFieldValue("mustequal", EmptyString);
-      Toks.Clear();
-      Toks.Strtok(Tmp, ';');
+      olxstr Val = (*LT)[i][j];
+      olxstr Tmp = DI->GetFieldValue("mustequal", EmptyString);
+      TStrList Toks(Tmp, ';');
       if( !Tmp.IsEmpty() && (Toks.IndexOfi(Val) == InvalidIndex) ) // equal to
       {  AddRow = false;  break;  }
 
@@ -1607,11 +1598,10 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
             break;
           }
       }
-
       Tmp = DI->GetFieldValue("mustnotequal", EmptyString);
       Toks.Clear();
       Toks.Strtok(Tmp, ';');
-      if( !Tmp.IsEmpty() && ( Toks.IndexOfi(Val) != InvalidIndex) ) // not equal to
+      if( !Tmp.IsEmpty() && (Toks.IndexOfi(Val) != InvalidIndex) ) // not equal to
       {  AddRow = false;  break;  }
 
       Tmp = DI->GetFieldValue("multiplier", EmptyString);
