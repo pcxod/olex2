@@ -82,6 +82,9 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
     double GlTop = ((double)Parent.GetHeight()/2 - (Top-Basis.GetCenter()[1])) + 0.1;
     double LineInc = (th*LineSpacing)*Parent.GetViewZoom();
     vec3d T;
+    //const size_t stl = ((olx_abs(Left)%Fnt.GetMaxWidth()) > Fnt.GetMaxWidth()/2) ? 1 : 0;
+    const size_t tl = Fnt.MaxTextLength(((Left+Width) > Parent.GetWidth()) ? 
+      Parent.GetWidth()-Left : Width);
     for( size_t i=0; i < FBuffer.Count() ; i++ )  {
       T[0] = GlLeft;
       T[1] = GlTop - (i+1)*LineInc;
@@ -89,7 +92,7 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
       TGlMaterial* GlM = FBuffer.GetObject(i);
       if( GlM != NULL ) 
         GlM->Init(Parent.IsColorStereo());
-      Parent.DrawTextSafe(T, FBuffer[i], Fnt); 
+      Parent.DrawTextSafe(T, (tl < FBuffer[i].Length()) ? FBuffer[i].SubStringTo(tl) : FBuffer[i], Fnt); 
     }
     return true;
   }

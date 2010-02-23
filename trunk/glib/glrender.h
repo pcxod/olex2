@@ -180,9 +180,10 @@ public:
   void ClearMinMax();
   const vec3d& MaxDim() const { return FMaxV; }
   const vec3d& MinDim() const { return FMinV; }
-  // Scene.Initialise must be called before to initialise drawing
-  // contexts
-  int GetWidth()  const {  return ((StereoFlag&glStereoCross) != 0) ? FOWidth : FWidth;  }
+  /* the actual width is to be used for modifying/restoring canvas size */
+  int GetActualWidth()  const {  return ((StereoFlag&glStereoCross) != 0) ? FOWidth : FWidth;  }
+  /* opposite to the above one - this is used in all model calcuations */
+  int GetWidth()  const {  return FWidth;  }
   int GetHeight() const {  return FHeight;  }
   int GetLeft()   const {  return FLeft;  }
   int GetTop()    const {  return FTop;  }
