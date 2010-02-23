@@ -15,13 +15,13 @@ private:
 public:
   TXPlane(TGlRenderer& Render, const olxstr& collectionName, TSPlane *Plane);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
-  virtual ~TXPlane();
+  virtual ~TXPlane()  {}
 
-  inline operator TSPlane* () const {  return FPlane;  }
-  inline TSPlane& Plane()     const {  return *FPlane; }
+  inline TSPlane& Plane() const {  return *FPlane; }
 
   bool Orient(TGlPrimitive& P);
-  bool GetDimensions(vec3d &Max, vec3d &Min){  return false; };
+  bool GetDimensions(vec3d &Max, vec3d &Min)  {  return false;  }
+  void ListPrimitives(TStrList &List) const;
 
   bool OnMouseDown(const IEObject *Sender, const TMouseData *Data){  return true; }
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {  return false; }

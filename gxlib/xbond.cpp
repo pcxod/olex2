@@ -155,16 +155,13 @@ TGraphicsStyle* TXBond::Style()  {
   return NULL;
 }
 //..............................................................................
-void TXBond::ListParams(TStrList &List, TGlPrimitive *Primitive)
-{
+void TXBond::ListParams(TStrList &List, TGlPrimitive *Primitive)  {
 }
 //..............................................................................
-void TXBond::ListParams(TStrList &List)
-{
+void TXBond::ListParams(TStrList &List)  {
 }
 //..............................................................................
-void TXBond::UpdatePrimitiveParams(TGlPrimitive *Primitive)
-{
+void TXBond::UpdatePrimitiveParams(TGlPrimitive *Primitive)  {
 }
 //..............................................................................
 void TXBond::ListPrimitives(TStrList &List) const {
@@ -430,16 +427,6 @@ void TXBond::CreateStaticPrimitives()  {
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
   GlP->Params.Last() = ddsDefAtomA;
-}
-//..............................................................................
-void TXBond::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
-  olxstr& pm = GetPrimitives().GetStyle().GetParam(GetPrimitiveMaskName(), "0", IsMaskSaveable()); 
-  if( pm.ToInt() == Mask )  return;
-  pm = Mask;
-  GetPrimitives().GetStyle().SetParam(GetPrimitiveMaskName(), Mask, IsMaskSaveable());
-  GetPrimitives().ClearPrimitives();
-  GetPrimitives().RemoveObject(*this);
-  Create(EmptyString, cpar);
 }
 //..............................................................................
 olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {

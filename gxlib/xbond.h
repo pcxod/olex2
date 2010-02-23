@@ -49,9 +49,8 @@ public:
   // creates legend up three levels (0 to 2)
   static olxstr GetLegend(const TSBond& B, const short level);
 
-  inline operator TSBond* () const {  return FBond;  }
-  // beware - for objects, having not tdbond underneath this might fail
-  inline TSBond& Bond()      const {  return *FBond; }
+  // beware - for objects, having no wrapped bond this might fail
+  inline TSBond& Bond() const {  return *FBond; }
   
   void SetRadius(float V);
   inline double GetRadius() const {  return FParams[4]; }
@@ -75,7 +74,6 @@ public:
   void SetDeleted(bool v)  {  AGDrawObject::SetDeleted(v);  FBond->SetDeleted(v); }
   void ListDrawingStyles(TStrList &List);
 
-  void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
   uint32_t GetPrimitiveMask() const;
   static void DefMask(int V);
   static int  DefMask();
