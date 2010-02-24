@@ -240,26 +240,26 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
     }
   }
   PyObject* out = PyDict_New();
-  PyDict_SetItemString(out, "Number", Py_BuildValue("i", sg->GetNumber()));
-  PyDict_SetItemString(out, "Centrosymmetric", Py_BuildValue("b", sg->IsCentrosymmetric()));
-  PyDict_SetItemString(out, "ShortName", PythonExt::BuildString(sg->GetName()));
-  PyDict_SetItemString(out, "FullName", PythonExt::BuildString(sg->GetFullName()));
-  PyDict_SetItemString(out, "System", PythonExt::BuildString(sg->GetBravaisLattice().GetName()));
-  PyDict_SetItemString(out, "Center", 
+  PythonExt::SetDictItem(out, "Number", Py_BuildValue("i", sg->GetNumber()));
+  PythonExt::SetDictItem(out, "Centrosymmetric", Py_BuildValue("b", sg->IsCentrosymmetric()));
+  PythonExt::SetDictItem(out, "ShortName", PythonExt::BuildString(sg->GetName()));
+  PythonExt::SetDictItem(out, "FullName", PythonExt::BuildString(sg->GetFullName()));
+  PythonExt::SetDictItem(out, "System", PythonExt::BuildString(sg->GetBravaisLattice().GetName()));
+  PythonExt::SetDictItem(out, "Center", 
     Py_BuildValue("(d,d,d)", sg->GetInversionCenter()[0], sg->GetInversionCenter()[1], sg->GetInversionCenter()[2]));
-  PyDict_SetItemString(out, "PointGroup", PythonExt::BuildString(sg->GetPointGroup().GetBareName()));
-  PyDict_SetItemString(out, "LaueClass", PythonExt::BuildString(sg->GetLaueClass().GetBareName()));
-  PyDict_SetItemString(out, "HallSymbol", PythonExt::BuildString(sg->GetHallSymbol()));
+  PythonExt::SetDictItem(out, "PointGroup", PythonExt::BuildString(sg->GetPointGroup().GetBareName()));
+  PythonExt::SetDictItem(out, "LaueClass", PythonExt::BuildString(sg->GetLaueClass().GetBareName()));
+  PythonExt::SetDictItem(out, "HallSymbol", PythonExt::BuildString(sg->GetHallSymbol()));
     PyObject* latt_out;
-    PyDict_SetItemString(out, "Lattice", (latt_out=PyDict_New()));
+    PythonExt::SetDictItem(out, "Lattice", (latt_out=PyDict_New()));
     TCLattice& latt = sg->GetLattice();
-    PyDict_SetItemString(latt_out, "Name", PythonExt::BuildString(latt.GetName()));
-    PyDict_SetItemString(latt_out, "Centering", PythonExt::BuildString(latt.GetSymbol()));
-    PyDict_SetItemString(latt_out, "InsCode", Py_BuildValue("i", latt.GetLatt()));
+    PythonExt::SetDictItem(latt_out, "Name", PythonExt::BuildString(latt.GetName()));
+    PythonExt::SetDictItem(latt_out, "Centering", PythonExt::BuildString(latt.GetSymbol()));
+    PythonExt::SetDictItem(latt_out, "InsCode", Py_BuildValue("i", latt.GetLatt()));
     PyObject* latt_vec_out = PyTuple_New(latt.VectorCount());
     for( size_t i=0; i < latt.VectorCount(); i++ ) 
       PyTuple_SetItem(latt_vec_out, i, Py_BuildValue("(ddd)", latt.GetVector(i)[0], latt.GetVector(i)[1], latt.GetVector(i)[2]));
-    PyDict_SetItemString(latt_out, "Translations", latt_vec_out);
+    PythonExt::SetDictItem(latt_out, "Translations", latt_vec_out);
     PyObject* matr_out = PyTuple_New(sg->MatrixCount());
     for( size_t i=0; i < sg->MatrixCount(); i++ )  {
       const smatd& m = sg->GetMatrix(i);
@@ -270,7 +270,7 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
         m.r[2][0], m.r[2][1], m.r[2][2], m.t[2]
       ));
     }
-    PyDict_SetItemString(out, "Matrices", matr_out);
+    PythonExt::SetDictItem(out, "Matrices", matr_out);
     smatd_list ml;
     sg->GetMatrices(ml, mattAll);
     matr_out=PyTuple_New(ml.Count());
@@ -283,7 +283,7 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
           m.r[2][0], m.r[2][1], m.r[2][2], m.t[2]
       ));
     }
-    PyDict_SetItemString(out, "MatricesAll", matr_out);
+    PythonExt::SetDictItem(out, "MatricesAll", matr_out);
 
     TPtrList<TSymmElement> ref, sg_elm;
     for( size_t i=0; i < TSymmLib::GetInstance().SymmElementCount(); i++ )
@@ -302,7 +302,7 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
       }
       PyTuple_SetItem(sysabs_out, i, Py_BuildValue("(OO)", PythonExt::BuildString(sg_elm[i]->GetName()), matr_out) );
     }
-    PyDict_SetItemString(out, "SysAbs", sysabs_out);
+    PythonExt::SetDictItem(out, "SysAbs", sysabs_out);
   return out;
 }
 //..............................................................................
@@ -310,32 +310,32 @@ PyObject* pyHklStat(PyObject* self, PyObject* args)  {
   TXApp& xapp = TXApp::GetInstance();
   RefinementModel::HklStat hs = xapp.XFile().GetRM().GetMergeStat();
   PyObject* out = PyDict_New();
-  PyDict_SetItemString(out, "TotalReflections", Py_BuildValue("i", hs.TotalReflections));
-  PyDict_SetItemString(out, "UniqueReflections", Py_BuildValue("i", hs.UniqueReflections));
-  PyDict_SetItemString(out, "FriedelOppositesMerged", Py_BuildValue("b", hs.FriedelOppositesMerged));
-  PyDict_SetItemString(out, "InconsistentEquivalents", Py_BuildValue("i", hs.InconsistentEquivalents));
-  PyDict_SetItemString(out, "SystematicAbsencesRemoved", Py_BuildValue("i", hs.SystematicAbsentcesRemoved));
-  PyDict_SetItemString(out, "MinD", Py_BuildValue("d", hs.MinD));
-  PyDict_SetItemString(out, "MaxD", Py_BuildValue("d", hs.MaxD));
-  PyDict_SetItemString(out, "LimDmin", Py_BuildValue("d", hs.LimDmin));
-  PyDict_SetItemString(out, "LimDmax", Py_BuildValue("d", hs.LimDmax));
-  PyDict_SetItemString(out, "FilteredOff", Py_BuildValue("i", hs.FilteredOff));
-  PyDict_SetItemString(out, "OmittedByUser", Py_BuildValue("i", hs.OmittedByUser));
-  PyDict_SetItemString(out, "OmittedReflections", Py_BuildValue("i", hs.OmittedReflections));
-  PyDict_SetItemString(out, "IntensityTransformed", Py_BuildValue("i", hs.IntensityTransformed));
-  PyDict_SetItemString(out, "Rint", Py_BuildValue("d", hs.Rint));
-  PyDict_SetItemString(out, "Rsigma", Py_BuildValue("d", hs.Rsigma));
-  PyDict_SetItemString(out, "MeanIOverSigma", Py_BuildValue("d", hs.MeanIOverSigma));
-  PyDict_SetItemString(out, "MaxIndexes", Py_BuildValue("(iii)", hs.MaxIndexes[0], hs.MaxIndexes[1], hs.MaxIndexes[2]) );
-  PyDict_SetItemString(out, "MinIndexes", Py_BuildValue("(iii)", hs.MinIndexes[0], hs.MinIndexes[1], hs.MinIndexes[2]) );
-  PyDict_SetItemString(out, "ReflectionAPotMax", Py_BuildValue("i", hs.ReflectionAPotMax));
-  PyDict_SetItemString(out, "FriedelPairCount", Py_BuildValue("i", xapp.XFile().GetRM().GetFriedelPairCount()));
+  PythonExt::SetDictItem(out, "TotalReflections", Py_BuildValue("i", hs.TotalReflections));
+  PythonExt::SetDictItem(out, "UniqueReflections", Py_BuildValue("i", hs.UniqueReflections));
+  PythonExt::SetDictItem(out, "FriedelOppositesMerged", Py_BuildValue("b", hs.FriedelOppositesMerged));
+  PythonExt::SetDictItem(out, "InconsistentEquivalents", Py_BuildValue("i", hs.InconsistentEquivalents));
+  PythonExt::SetDictItem(out, "SystematicAbsencesRemoved", Py_BuildValue("i", hs.SystematicAbsentcesRemoved));
+  PythonExt::SetDictItem(out, "MinD", Py_BuildValue("d", hs.MinD));
+  PythonExt::SetDictItem(out, "MaxD", Py_BuildValue("d", hs.MaxD));
+  PythonExt::SetDictItem(out, "LimDmin", Py_BuildValue("d", hs.LimDmin));
+  PythonExt::SetDictItem(out, "LimDmax", Py_BuildValue("d", hs.LimDmax));
+  PythonExt::SetDictItem(out, "FilteredOff", Py_BuildValue("i", hs.FilteredOff));
+  PythonExt::SetDictItem(out, "OmittedByUser", Py_BuildValue("i", hs.OmittedByUser));
+  PythonExt::SetDictItem(out, "OmittedReflections", Py_BuildValue("i", hs.OmittedReflections));
+  PythonExt::SetDictItem(out, "IntensityTransformed", Py_BuildValue("i", hs.IntensityTransformed));
+  PythonExt::SetDictItem(out, "Rint", Py_BuildValue("d", hs.Rint));
+  PythonExt::SetDictItem(out, "Rsigma", Py_BuildValue("d", hs.Rsigma));
+  PythonExt::SetDictItem(out, "MeanIOverSigma", Py_BuildValue("d", hs.MeanIOverSigma));
+  PythonExt::SetDictItem(out, "MaxIndexes", Py_BuildValue("(iii)", hs.MaxIndexes[0], hs.MaxIndexes[1], hs.MaxIndexes[2]) );
+  PythonExt::SetDictItem(out, "MinIndexes", Py_BuildValue("(iii)", hs.MinIndexes[0], hs.MinIndexes[1], hs.MinIndexes[2]) );
+  PythonExt::SetDictItem(out, "ReflectionAPotMax", Py_BuildValue("i", hs.ReflectionAPotMax));
+  PythonExt::SetDictItem(out, "FriedelPairCount", Py_BuildValue("i", xapp.XFile().GetRM().GetFriedelPairCount()));
 
   const TIntList& redInfo = xapp.XFile().GetRM().GetRedundancyInfo();
   PyObject* red = PyTuple_New(redInfo.Count());
   for( size_t i=0; i < redInfo.Count(); i++ )
     PyTuple_SetItem(red, i, Py_BuildValue("i", redInfo[i]));
-  PyDict_SetItemString(out, "Redundancy", red);
+  PythonExt::SetDictItem(out, "Redundancy", red);
   return out;
 }
 //..............................................................................

@@ -82,7 +82,7 @@ public:
       PyTuple_SetItem(arglist, i, PyString_FromString(Params[i].c_str()));
     PyObject* options = PyDict_New();
     for( size_t i=0; i < Options.Count(); i++ )
-      PyDict_SetItemString(options,
+      PythonExt::SetDictItem(options,
         Options.GetName(i).c_str(), PythonExt::BuildString(Options.GetValue(i)));
     PyTuple_SetItem(arglist, Params.Count(), options);
 

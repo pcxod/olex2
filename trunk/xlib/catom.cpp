@@ -182,25 +182,25 @@ void TCAtom::ToDataItem(TDataItem& item) const  {
 #ifndef _NO_PYTHON
 PyObject* TCAtom::PyExport()  {
   PyObject* main = PyDict_New();
-  PyDict_SetItemString(main, "label", PythonExt::BuildString(Label));
-  PyDict_SetItemString(main, "type", PythonExt::BuildString(Type->symbol));
-  PyDict_SetItemString(main, "part", Py_BuildValue("i", Part));
-  PyDict_SetItemString(main, "occu", Py_BuildValue("d", Occu));
-  PyDict_SetItemString(main, "tag", Py_BuildValue("i", GetTag()));
-  PyDict_SetItemString(main, "crd", 
+  PythonExt::SetDictItem(main, "label", PythonExt::BuildString(Label));
+  PythonExt::SetDictItem(main, "type", PythonExt::BuildString(Type->symbol));
+  PythonExt::SetDictItem(main, "part", Py_BuildValue("i", Part));
+  PythonExt::SetDictItem(main, "occu", Py_BuildValue("d", Occu));
+  PythonExt::SetDictItem(main, "tag", Py_BuildValue("i", GetTag()));
+  PythonExt::SetDictItem(main, "crd", 
     Py_BuildValue("(ddd)(ddd)", Center[0], Center[1], Center[2], Esd[0], Esd[1], Esd[2]));
   if( !olx_is_valid_index(EllpId) )
-    PyDict_SetItemString(main, "uiso", Py_BuildValue("(dd)", Uiso, UisoEsd));
+    PythonExt::SetDictItem(main, "uiso", Py_BuildValue("(dd)", Uiso, UisoEsd));
   else  {
     double Q[6], E[6];
     GetEllipsoid()->GetQuad(Q, E);
-    PyDict_SetItemString(main, "adp", 
+    PythonExt::SetDictItem(main, "adp", 
       Py_BuildValue("(dddddd)(dddddd)", Q[0], Q[1], Q[2], Q[3], Q[4], Q[5], 
        E[0], E[1], E[2], E[3], E[4], E[5]
       ) );
   }
   if( *Type == iQPeakZ )
-    PyDict_SetItemString(main, "peak", Py_BuildValue("d", QPeak) );
+    PythonExt::SetDictItem(main, "peak", Py_BuildValue("d", QPeak) );
   return main;
 }
 #endif
