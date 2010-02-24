@@ -152,6 +152,11 @@ public:
       rv = PyObject_REPR(pobj);
     return rv;
   }
+  // to tackle the difference with list and tuple... it steals the reference now
+  static void SetDictItem(PyObject* dict, const char* field_name, PyObject* val)  {
+    PyDict_SetItemString(dict, field_name, val);
+    Py_DECREF(val);
+  }
   /* tuple parsing to prcess unicode and string in the same way...
     s# - char*, len
     s - char*

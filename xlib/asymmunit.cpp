@@ -680,14 +680,14 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
   for( size_t i=0; i < CAtoms.Count(); i++ )
     CAtoms[i]->SetId(i);
   PyObject* main = PyDict_New(), *cell = PyDict_New();
-  PyDict_SetItemString(cell, "a", Py_BuildValue("(dd)", FAxes[0].GetV(), FAxes[0].GetE()));
-  PyDict_SetItemString(cell, "b", Py_BuildValue("(dd)", FAxes[1].GetV(), FAxes[1].GetE()));
-  PyDict_SetItemString(cell, "c", Py_BuildValue("(dd)", FAxes[2].GetV(), FAxes[2].GetE()));
-  PyDict_SetItemString(cell, "alpha", Py_BuildValue("(dd)", FAngles[0].GetV(), FAngles[0].GetE()));
-  PyDict_SetItemString(cell, "beta", Py_BuildValue("(dd)", FAngles[1].GetV(), FAngles[1].GetE()));
-  PyDict_SetItemString(cell, "gamma", Py_BuildValue("(dd)", FAngles[2].GetV(), FAngles[2].GetE()));
-  PyDict_SetItemString(cell, "z", Py_BuildValue("i", Z));
-  PyDict_SetItemString(main, "cell", cell);
+  PythonExt::SetDictItem(cell, "a", Py_BuildValue("(dd)", FAxes[0].GetV(), FAxes[0].GetE()));
+  PythonExt::SetDictItem(cell, "b", Py_BuildValue("(dd)", FAxes[1].GetV(), FAxes[1].GetE()));
+  PythonExt::SetDictItem(cell, "c", Py_BuildValue("(dd)", FAxes[2].GetV(), FAxes[2].GetE()));
+  PythonExt::SetDictItem(cell, "alpha", Py_BuildValue("(dd)", FAngles[0].GetV(), FAngles[0].GetE()));
+  PythonExt::SetDictItem(cell, "beta", Py_BuildValue("(dd)", FAngles[1].GetV(), FAngles[1].GetE()));
+  PythonExt::SetDictItem(cell, "gamma", Py_BuildValue("(dd)", FAngles[2].GetV(), FAngles[2].GetE()));
+  PythonExt::SetDictItem(cell, "z", Py_BuildValue("i", Z));
+  PythonExt::SetDictItem(main, "cell", cell);
   size_t resi_cnt = 0;
   for( size_t i=0; i < ResidueCount(); i++ )  {
     TResidue& r = GetResidue(i);
@@ -711,23 +711,23 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
       *ri = PyDict_New();
 
     if( i == 0 )
-      PyDict_SetItemString(ri, "class", PythonExt::BuildString("default"));
+      PythonExt::SetDictItem(ri, "class", PythonExt::BuildString("default"));
     else  {
-      PyDict_SetItemString(ri, "class", PythonExt::BuildString(r.GetClassName()));
-      PyDict_SetItemString(ri, "alias", PythonExt::BuildString(r.GetAlias()));
-      PyDict_SetItemString(ri, "number", Py_BuildValue("i", r.GetNumber()));
+      PythonExt::SetDictItem(ri, "class", PythonExt::BuildString(r.GetClassName()));
+      PythonExt::SetDictItem(ri, "alias", PythonExt::BuildString(r.GetAlias()));
+      PythonExt::SetDictItem(ri, "number", Py_BuildValue("i", r.GetNumber()));
     }
     atom_cnt = 0;
     for( size_t j=0; j < r.Count(); j++ )  {
       if( r[j].IsDeleted() )  continue;
       PyObject* atom = _atoms.Add(r[j].PyExport());
-      PyDict_SetItemString(atom, "aunit_id", Py_BuildValue("i", r[j].GetId()) );
-      PyTuple_SetItem(atoms, atom_cnt++, atom );
+      PythonExt::SetDictItem(atom, "aunit_id", Py_BuildValue("i", r[j].GetId()));
+      PyTuple_SetItem(atoms, atom_cnt++, atom);
     }
-    PyDict_SetItemString(ri, "atoms", atoms);
-    PyTuple_SetItem(residues, resi_cnt++, ri );
+    PythonExt::SetDictItem(ri, "atoms", atoms);
+    PyTuple_SetItem(residues, resi_cnt++, ri);
   }
-  PyDict_SetItemString(main, "residues", residues);
+  PythonExt::SetDictItem(main, "residues", residues);
   return main;
 }
 #endif

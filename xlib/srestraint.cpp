@@ -196,10 +196,10 @@ void TSimpleRestraint::ToDataItem(TDataItem& item) const {
 #ifndef _NO_PYTHON
 PyObject* TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv)  {
   PyObject* main = PyDict_New();
-  PyDict_SetItemString(main, "allNonH", Py_BuildValue("b", AllNonHAtoms)  );
-  PyDict_SetItemString(main, "esd1", Py_BuildValue("d", Esd) );
-  PyDict_SetItemString(main, "esd2", Py_BuildValue("d", Esd1) );
-  PyDict_SetItemString(main, "value", Py_BuildValue("d", Value) );
+  PythonExt::SetDictItem(main, "allNonH", Py_BuildValue("b", AllNonHAtoms));
+  PythonExt::SetDictItem(main, "esd1", Py_BuildValue("d", Esd));
+  PythonExt::SetDictItem(main, "esd2", Py_BuildValue("d", Esd1));
+  PythonExt::SetDictItem(main, "value", Py_BuildValue("d", Value));
 
   size_t atom_cnt=0;
   for( size_t i=0; i < InvolvedAtoms.Count(); i++ )  {
@@ -220,7 +220,7 @@ PyObject* TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObjec
     PyTuple_SetItem(involved, atom_cnt++, 
       Py_BuildValue("OO", Py_BuildValue("i", InvolvedAtoms[i].GetAtom()->GetTag()), eq));
   }
-  PyDict_SetItemString(main, "atoms", involved);
+  PythonExt::SetDictItem(main, "atoms", involved);
   return main;
 }
 #endif//..............................................................................

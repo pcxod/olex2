@@ -976,46 +976,46 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
     *hklf = PyDict_New(), 
     *eq = PyTuple_New(UsedSymm.Count());
   TPtrList<PyObject> atoms, equivs;
-  PyDict_SetItemString(main, "aunit", aunit.PyExport(atoms) );
+  PythonExt::SetDictItem(main, "aunit", aunit.PyExport(atoms));
   TArrayList<uint32_t> mat_tags(UsedSymm.Count());
   for( size_t i=0; i < UsedSymm.Count(); i++ )  {
     smatd& m = UsedSymm.GetValue(i);
     PyTuple_SetItem(eq, i, 
       equivs.Add(
-        Py_BuildValue("(iii)(iii)(iii)(ddd)", m.r[0][0], m.r[0][1], m.r[0][2],
-          m.r[1][0], m.r[1][1], m.r[1][2],
-          m.r[2][0], m.r[2][1], m.r[2][2],
-          m.t[0], m.t[1], m.t[2]
-      )) );
+      Py_BuildValue("(iii)(iii)(iii)(ddd)", m.r[0][0], m.r[0][1], m.r[0][2],
+      m.r[1][0], m.r[1][1], m.r[1][2],
+      m.r[2][0], m.r[2][1], m.r[2][2],
+      m.t[0], m.t[1], m.t[2]
+    )) );
     mat_tags[i] = m.GetId();
     m.SetRawId((uint32_t)i);
   }
-  PyDict_SetItemString(main, "equivalents", eq);
+  PythonExt::SetDictItem(main, "equivalents", eq);
 
-  PyDict_SetItemString(main, "variables", Vars.PyExport(atoms) );
-  PyDict_SetItemString(main, "exptl", expl.PyExport() );
-  PyDict_SetItemString(main, "afix", AfixGroups.PyExport(atoms) );
-  PyDict_SetItemString(main, "exyz", ExyzGroups.PyExport(atoms) );
-  PyDict_SetItemString(main, "same", rSAME.PyExport(atoms) );
-  PyDict_SetItemString(main, "dfix", rDFIX.PyExport(atoms, equivs) );
-  PyDict_SetItemString(main, "dang", rDANG.PyExport(atoms, equivs) );
-  PyDict_SetItemString(main, "sadi", rSADI.PyExport(atoms, equivs) );
-  PyDict_SetItemString(main, "chiv", rCHIV.PyExport(atoms, equivs) );
-  PyDict_SetItemString(main, "flat", rFLAT.PyExport(atoms, equivs) );
-  PyDict_SetItemString(main, "delu", rDELU.PyExport(atoms, equivs) );
-  PyDict_SetItemString(main, "simu", rSIMU.PyExport(atoms, equivs) );
-  PyDict_SetItemString(main, "isor", rISOR.PyExport(atoms, equivs) );
-  PyDict_SetItemString(main, "eadp", rEADP.PyExport(atoms, equivs) );
+  PythonExt::SetDictItem(main, "variables", Vars.PyExport(atoms));
+  PythonExt::SetDictItem(main, "exptl", expl.PyExport());
+  PythonExt::SetDictItem(main, "afix", AfixGroups.PyExport(atoms));
+  PythonExt::SetDictItem(main, "exyz", ExyzGroups.PyExport(atoms));
+  PythonExt::SetDictItem(main, "same", rSAME.PyExport(atoms));
+  PythonExt::SetDictItem(main, "dfix", rDFIX.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, "dang", rDANG.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, "sadi", rSADI.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, "chiv", rCHIV.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, "flat", rFLAT.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, "delu", rDELU.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, "simu", rSIMU.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, "isor", rISOR.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, "eadp", rEADP.PyExport(atoms, equivs));
 
-  PyDict_SetItemString(hklf, "value", Py_BuildValue("i", HKLF));
-  PyDict_SetItemString(hklf, "s", Py_BuildValue("d", HKLF_s));
-  PyDict_SetItemString(hklf, "m", Py_BuildValue("d", HKLF_m));
-  PyDict_SetItemString(hklf, "wt", Py_BuildValue("d", HKLF_wt));
-  PyDict_SetItemString(hklf, "matrix", 
+  PythonExt::SetDictItem(hklf, "value", Py_BuildValue("i", HKLF));
+  PythonExt::SetDictItem(hklf, "s", Py_BuildValue("d", HKLF_s));
+  PythonExt::SetDictItem(hklf, "m", Py_BuildValue("d", HKLF_m));
+  PythonExt::SetDictItem(hklf, "wt", Py_BuildValue("d", HKLF_wt));
+  PythonExt::SetDictItem(hklf, "matrix", 
     Py_BuildValue("(ddd)(ddd)(ddd)", HKLF_mat[0][0], HKLF_mat[0][1], HKLF_mat[0][2],
-      HKLF_mat[1][0], HKLF_mat[1][1], HKLF_mat[1][2],
-      HKLF_mat[2][0], HKLF_mat[2][1], HKLF_mat[2][2]));
-  PyDict_SetItemString(main, "hklf", hklf );
+    HKLF_mat[1][0], HKLF_mat[1][1], HKLF_mat[1][2],
+    HKLF_mat[2][0], HKLF_mat[2][1], HKLF_mat[2][2]));
+  PythonExt::SetDictItem(main, "hklf", hklf );
   {
     PyObject* uweight = PyTuple_New(used_weight.Count());
     PyObject* pweight = PyTuple_New(proposed_weight.Count());
@@ -1023,41 +1023,41 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
       PyTuple_SetItem(uweight, i, Py_BuildValue("d", used_weight[i]));
     for( size_t i=0; i < proposed_weight.Count(); i++ )
       PyTuple_SetItem(pweight, i, Py_BuildValue("d", proposed_weight[i]));
-    PyDict_SetItemString(main, "weight", uweight);
-    PyDict_SetItemString(main, "proposed_weight", pweight);
+    PythonExt::SetDictItem(main, "weight", uweight);
+    PythonExt::SetDictItem(main, "proposed_weight", pweight);
   }
   {
     PyObject* omit;
-    PyDict_SetItemString(main, "omit", omit = PyDict_New() );
-      PyDict_SetItemString(omit, "s", Py_BuildValue("d", OMIT_s));
-      PyDict_SetItemString(omit, "2theta", Py_BuildValue("d", OMIT_2t));
+    PythonExt::SetDictItem(main, "omit", omit = PyDict_New() );
+    PythonExt::SetDictItem(omit, "s", Py_BuildValue("d", OMIT_s));
+    PythonExt::SetDictItem(omit, "2theta", Py_BuildValue("d", OMIT_2t));
     if( !Omits.IsEmpty() )  {
       PyObject* omits = PyTuple_New(Omits.Count());
       for( size_t i=0; i < Omits.Count(); i++ )
         PyTuple_SetItem(omits, i, Py_BuildValue("(iii)", Omits[i][0], Omits[i][1], Omits[i][2]) );
 
-      PyDict_SetItemString(omit, "hkl", omits);
+      PythonExt::SetDictItem(omit, "hkl", omits);
     }
-    PyDict_SetItemString(main, "merge", Py_BuildValue("i", MERG));
+    PythonExt::SetDictItem(main, "merge", Py_BuildValue("i", MERG));
   }
   if( TWIN_set )  {
     PyObject* twin = PyDict_New(), 
       *basf = PyTuple_New(BASF.Count());
-      PyDict_SetItemString(twin, "n", Py_BuildValue("i", TWIN_n));
-      PyDict_SetItemString(twin, "matrix", 
-        Py_BuildValue("(ddd)(ddd)(ddd)", TWIN_mat[0][0], TWIN_mat[0][1], TWIN_mat[0][2],
-          TWIN_mat[1][0], TWIN_mat[1][1], TWIN_mat[1][2],
-          TWIN_mat[2][0], TWIN_mat[2][1], TWIN_mat[2][2]));
-      for( size_t i=0; i < BASF.Count(); i++ )
-        PyTuple_SetItem(basf, i, Py_BuildValue("d", BASF[i]) );
-    PyDict_SetItemString(twin, "basf", basf);
-    PyDict_SetItemString(main, "twin", twin );
+    PythonExt::SetDictItem(twin, "n", Py_BuildValue("i", TWIN_n));
+    PythonExt::SetDictItem(twin, "matrix", 
+      Py_BuildValue("(ddd)(ddd)(ddd)", TWIN_mat[0][0], TWIN_mat[0][1], TWIN_mat[0][2],
+      TWIN_mat[1][0], TWIN_mat[1][1], TWIN_mat[1][2],
+      TWIN_mat[2][0], TWIN_mat[2][1], TWIN_mat[2][2]));
+    for( size_t i=0; i < BASF.Count(); i++ )
+      PyTuple_SetItem(basf, i, Py_BuildValue("d", BASF[i]) );
+    PythonExt::SetDictItem(twin, "basf", basf);
+    PythonExt::SetDictItem(main, "twin", twin );
   }
   if( SHEL_set )  {
     PyObject* shel;
-    PyDict_SetItemString(main, "shel", shel = PyDict_New() );
-      PyDict_SetItemString(shel, "low", Py_BuildValue("d", SHEL_lr));
-      PyDict_SetItemString(shel, "high", Py_BuildValue("d", SHEL_hr));
+    PythonExt::SetDictItem(main, "shel", shel = PyDict_New() );
+    PythonExt::SetDictItem(shel, "low", Py_BuildValue("d", SHEL_lr));
+    PythonExt::SetDictItem(shel, "high", Py_BuildValue("d", SHEL_hr));
   }
   // attach the connectivity...
   if( export_connectivity )  {
@@ -1072,7 +1072,7 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
       uc.GetAtomEnviList(sa, ae);
       if( PyDict_GetItemString(atoms[sa.CAtom().GetTag()], "neighbours") != NULL )
         continue;
-      PyDict_SetItemString(atoms[sa.CAtom().GetTag()], "neighbours", ae.PyExport(atoms) );
+      PythonExt::SetDictItem(atoms[sa.CAtom().GetTag()], "neighbours", ae.PyExport(atoms) );
       ae.Clear();
     }
   }

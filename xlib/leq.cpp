@@ -15,11 +15,11 @@ void XVarReference::ToDataItem(TDataItem& item) const {
 #ifndef _NO_PYTHON
 PyObject* XVarReference::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* main = PyDict_New();
-  PyDict_SetItemString(main, "name", PythonExt::BuildString(referencer.GetParentContainer().GetIdName()) );
-  PyDict_SetItemString(main, "id", Py_BuildValue("i", referencer.GetPersistentId()) );
-  PyDict_SetItemString(main, "index", Py_BuildValue("i", var_index) );
-  PyDict_SetItemString(main, "relation", PythonExt::BuildString(XVarManager::RelationNames[relation_type]) );
-  PyDict_SetItemString(main, "k", Py_BuildValue("d", coefficient) );
+  PythonExt::SetDictItem(main, "name", PythonExt::BuildString(referencer.GetParentContainer().GetIdName()) );
+  PythonExt::SetDictItem(main, "id", Py_BuildValue("i", referencer.GetPersistentId()) );
+  PythonExt::SetDictItem(main, "index", Py_BuildValue("i", var_index) );
+  PythonExt::SetDictItem(main, "relation", PythonExt::BuildString(XVarManager::RelationNames[relation_type]) );
+  PythonExt::SetDictItem(main, "k", Py_BuildValue("d", coefficient) );
   return main;
 }
 #endif
@@ -54,10 +54,10 @@ void XVar::ToDataItem(TDataItem& item) const {
 PyObject* XVar::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* main = PyDict_New(), 
     *refs = PyTuple_New(References.Count());
-  PyDict_SetItemString(main, "value", Py_BuildValue("d", Value) );
+  PythonExt::SetDictItem(main, "value", Py_BuildValue("d", Value));
   for( size_t i=0; i < References.Count(); i++ )
-    PyTuple_SetItem(refs, i, References[i]->PyExport(atoms) );
-  PyDict_SetItemString(main, "references", refs);
+    PyTuple_SetItem(refs, i, References[i]->PyExport(atoms));
+  PythonExt::SetDictItem(main, "references", refs);
   return main;
 }
 #endif
@@ -94,14 +94,14 @@ void XLEQ::ToDataItem(TDataItem& item) const {
 #ifndef _NO_PYTHON
 PyObject* XLEQ::PyExport(TPtrList<PyObject>& _vars)  {
   PyObject* main = PyDict_New();
-  PyDict_SetItemString(main, "value", Py_BuildValue("d", Value) );
-  PyDict_SetItemString(main, "sigma", Py_BuildValue("d", Sigma) );
+  PythonExt::SetDictItem(main, "value", Py_BuildValue("d", Value) );
+  PythonExt::SetDictItem(main, "sigma", Py_BuildValue("d", Sigma) );
   PyObject* vars = PyTuple_New(Vars.Count());
   for( size_t i=0; i < Vars.Count(); i++ )  {
     Py_IncRef(_vars[Vars[i]->GetId()]);
     PyTuple_SetItem(vars, i, _vars[Vars[i]->GetId()] );
   }
-  PyDict_SetItemString(main, "variables", vars);
+  PythonExt::SetDictItem(main, "variables", vars);
   return main;
 }
 #endif
@@ -370,13 +370,12 @@ PyObject* XVarManager::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* vars = PyTuple_New(Vars.Count());
   for( size_t i=0; i < Vars.Count(); i++ )
     PyTuple_SetItem(vars, i, var_refs[i] = Vars[i].PyExport(atoms) );
-  PyDict_SetItemString(main, "variables", vars);
-  
-  
+  PythonExt::SetDictItem(main, "variables", vars);
+
   PyObject* eqs = PyTuple_New(Equations.Count());
   for( size_t i=0; i < Equations.Count(); i++ )
     PyTuple_SetItem(eqs, i, Equations[i].PyExport(var_refs) );
-  PyDict_SetItemString(main, "equations", eqs);
+  PythonExt::SetDictItem(main, "equations", eqs);
   return main;
 }
 #endif

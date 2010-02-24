@@ -52,8 +52,8 @@ void TSameGroup::ToDataItem(TDataItem& item) const {
 //..............................................................................
 #ifndef _NO_PYTHON
 PyObject* TSameGroup::PyExport(PyObject* main, TPtrList<PyObject>& allGroups, TPtrList<PyObject>& _atoms)  {
-  PyDict_SetItemString(main, "esd12", Py_BuildValue("d", Esd12)  );
-  PyDict_SetItemString(main, "esd13", Py_BuildValue("d", Esd13)  );
+  PythonExt::SetDictItem(main, "esd12", Py_BuildValue("d", Esd12));
+  PythonExt::SetDictItem(main, "esd13", Py_BuildValue("d", Esd13));
   int atom_cnt = 0;
   for( size_t i=0; i < Atoms.Count(); i++ )  {
     if( Atoms[i]->IsDeleted() )  continue;
@@ -65,13 +65,13 @@ PyObject* TSameGroup::PyExport(PyObject* main, TPtrList<PyObject>& allGroups, TP
     if( Atoms[i]->IsDeleted() )  continue;
     PyTuple_SetItem(atoms, atom_cnt++, Py_BuildValue("i", Atoms[i]->GetTag()) );
   }
-  PyDict_SetItemString(main, "atoms", atoms);
+  PythonExt::SetDictItem(main, "atoms", atoms);
   PyObject* dependent = PyTuple_New(Dependent.Count());
   for( size_t i=0; i < Dependent.Count(); i++ )
     PyTuple_SetItem(dependent, i, Py_BuildValue("i", Dependent[i]->GetTag()) );
-  PyDict_SetItemString(main, "dependent", dependent);
+  PythonExt::SetDictItem(main, "dependent", dependent);
   if( ParentGroup != NULL )
-    PyDict_SetItemString(main, "parent", Py_BuildValue("i", ParentGroup->GetTag()));
+    PythonExt::SetDictItem(main, "parent", Py_BuildValue("i", ParentGroup->GetTag()));
   return main;
 }
 #endif

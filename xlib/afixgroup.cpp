@@ -37,10 +37,10 @@ void TAfixGroup::ToDataItem(TDataItem& item) const {
 #ifndef _NO_PYTHON
 PyObject* TAfixGroup::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* main = PyDict_New();
-  PyDict_SetItemString(main, "afix", Py_BuildValue("i", Afix)  );
-  PyDict_SetItemString(main, "d", Py_BuildValue("d", U) );
-  PyDict_SetItemString(main, "u", Py_BuildValue("d", D) );
-  PyDict_SetItemString(main, "pivot", Py_BuildValue("i", Pivot->GetTag()) );
+  PythonExt::SetDictItem(main, "afix", Py_BuildValue("i", Afix));
+  PythonExt::SetDictItem(main, "d", Py_BuildValue("d", U));
+  PythonExt::SetDictItem(main, "u", Py_BuildValue("d", D));
+  PythonExt::SetDictItem(main, "pivot", Py_BuildValue("i", Pivot->GetTag()));
   int dep_cnt = 0;
   for( size_t i=0; i < Dependent.Count(); i++ )  {
     if( Dependent[i]->IsDeleted() )  continue;
@@ -50,9 +50,9 @@ PyObject* TAfixGroup::PyExport(TPtrList<PyObject>& atoms)  {
   dep_cnt = 0;
   for( size_t i=0; i < Dependent.Count(); i++ )  {
     if( Dependent[i]->IsDeleted() )  continue;
-    PyTuple_SetItem(dependent, dep_cnt++, Py_BuildValue("i", Dependent[i]->GetTag()) );
+    PyTuple_SetItem(dependent, dep_cnt++, Py_BuildValue("i", Dependent[i]->GetTag()));
   }
-  PyDict_SetItemString(main, "dependent", dependent);
+  PythonExt::SetDictItem(main, "dependent", dependent);
   return main;
 }
 #endif
