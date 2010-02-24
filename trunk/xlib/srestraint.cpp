@@ -216,7 +216,7 @@ PyObject* TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObjec
       eq = Py_None;
     else
       eq = equiv[InvolvedAtoms[i].GetMatrix()->GetId()];
-    Py_IncRef(eq);
+    Py_INCREF(eq);
     PyTuple_SetItem(involved, atom_cnt++, 
       Py_BuildValue("OO", Py_BuildValue("i", InvolvedAtoms[i].GetAtom()->GetTag()), eq));
   }

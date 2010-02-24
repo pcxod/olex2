@@ -18,19 +18,19 @@ TOlxPyVar::TOlxPyVar(const TOlxPyVar& oo)  {
   Type = oo.Type;
   Str = (oo.Str == NULL) ? NULL : new olxstr(*oo.Str);
   Obj = oo.Obj;
-  if( Obj != NULL )  Py_IncRef(Obj);
+  if( Obj != NULL )  Py_INCREF(Obj);
 }
 //..............................................................................
 TOlxPyVar::~TOlxPyVar()  {
   if( Str != NULL )  delete Str;
   if( Obj != NULL && Obj != Py_None)
-    Py_DecRef(Obj);
+    Py_DECREF(Obj);
 }
 //..............................................................................
 void TOlxPyVar::InitObject(PyObject* obj)  {
-  if( Obj != NULL )  Py_DecRef(Obj);
+  if( Obj != NULL )  Py_DECREF(Obj);
   Obj = obj;
-  Py_IncRef(obj);
+  Py_INCREF(obj);
 
   Type = potNone;
 
@@ -55,7 +55,7 @@ void TOlxPyVar::InitObject(PyObject* obj)  {
   else if( ot == &PyComplex_Type ) Type |= potComplex;
   else  Type |= potUndefined;
 
-  if( defv != NULL )  Py_DecRef(defv);
+  if( defv != NULL )  Py_DECREF(defv);
 }
 //..............................................................................
 PyObject* TOlxPyVar::ObjectValue(PyObject* obj)  {
@@ -65,48 +65,48 @@ PyObject* TOlxPyVar::ObjectValue(PyObject* obj)  {
 PyObject* TOlxPyVar::GetObjVal()  {
   if( Obj != NULL )  {
     PyObject *rv = HasGet() ? PyObject_CallMethod(Obj, gvmn, NULL) : Obj;
-    if( !HasGet() )Py_IncRef(rv);
+    if( !HasGet() )
+      Py_INCREF(rv);
     return rv;
   }
   else  if( Str != NULL )
     return PythonExt::BuildString(*Str);
   else  {
-    PyErr_SetObject(PyExc_RuntimeError, PythonExt::BuildString("Uninitialised object"));
-    Py_IncRef( Py_None);
-    return Py_None;
+    PythonExt::SetErrorMsg(PyExc_RuntimeError, "Uninitialised object");
+    return PythonExt::PyNone();
   }
 }
 //..............................................................................
 void TOlxPyVar::Set(PyObject* obj)  {
   if( Obj == NULL && obj == Py_None )  {
-    PyErr_SetObject(PyExc_TypeError, PythonExt::BuildString("A valid object is expected"));
+    PythonExt::SetErrorMsg(PyExc_TypeError, "A valid object is expected");
     return;
 //    throw TInvalidArgumentException(__OlxSourceInfo, "A valid object is expected");
   }
   if( Obj != NULL )  {
     if( obj == Py_None )  {
       if( !HasSet() )  {
-        PyErr_SetObject(PyExc_TypeError, PythonExt::BuildString("Missing set method"));
+        PythonExt::SetErrorMsg(PyExc_TypeError, "Missing set method");
         return;
       }
     }
     if( Obj->ob_type == obj->ob_type )  {
-      Py_DecRef(Obj);
-      Py_IncRef(obj);
+      Py_DECREF(Obj);
+      Py_INCREF(obj);
       Obj = obj;
     }
     else if( !HasSet() )  // replace object type
       InitObject(obj);
     else  {
       PyObject *rv = PyObject_CallMethod(Obj, svmn, "O", obj);
-      if( rv != NULL )  Py_DecRef(rv);
+      if( rv != NULL )  Py_DECREF(rv);
     }
   }
   else  {
     if( obj->ob_type == &PyString_Type || obj->ob_type == &PyUnicode_Type )
       *Str = PythonExt::ParseStr(obj);
     else  {
-      PyErr_SetObject(PyExc_RuntimeError, PythonExt::BuildString("Uninitialised object"));
+      PythonExt::SetErrorMsg(PyExc_RuntimeError, "Uninitialised object");
       return;
 //      throw TInvalidArgumentException(__OlxSourceInfo, "Uninitialised object");
     }
@@ -130,24 +130,24 @@ void TOlxPyVar::Set(const olxstr& str)  {
       if( (Type & potBool) != 0  )  {
         bool v = str.Equalsi(TrueString);
         if( !v && !str.Equalsi(FalseString) )  {
-          olxstr err("Boolean is expected, got '");  err << str << '\'';
-          PyErr_SetObject(PyExc_TypeError, PythonExt::BuildString(err));
+          olxstr err(olxstr("Boolean is expected, got '") << str << '\'');
+          PythonExt::SetErrorMsg(PyExc_TypeError, err);
           throw TInvalidArgumentException(__OlxSourceInfo, err);
         }
         arg = PyBool_FromLong(v);
       }
       else if( (Type & potInt) != 0  )  {
         if( !str.IsNumber() )  {
-          olxstr err("A number is expected, got '");  err << str << '\'';
-          PyErr_SetObject(PyExc_TypeError, PythonExt::BuildString(err));
+          olxstr err(olxstr("Boolean is expected, got '") << str << '\'');
+          PythonExt::SetErrorMsg(PyExc_TypeError, err);
           throw TInvalidArgumentException(__OlxSourceInfo, err);
         }
         arg = Py_BuildValue("i", str.ToInt());
       }
       else if( (Type & potFloat) != 0 )  {
         if( !str.IsNumber() )  {
-          olxstr err("A number is expected, got '");  err << str << '\'';
-          PyErr_SetObject(PyExc_TypeError, PythonExt::BuildString(err));
+          olxstr err(olxstr("Boolean is expected, got '") << str << '\'');
+          PythonExt::SetErrorMsg(PyExc_TypeError, err);
           throw TInvalidArgumentException(__OlxSourceInfo, err);
         }
         arg = Py_BuildValue("d", str.ToDouble());
@@ -155,11 +155,11 @@ void TOlxPyVar::Set(const olxstr& str)  {
       else if( (Type & potString) != 0 )
         arg = PythonExt::BuildString(str);
       else  {
-        olxstr err("No suitable convertion found for '"); err << str << '\'';
-        PyErr_SetObject(PyExc_TypeError, PythonExt::BuildString(err));
+        olxstr err(olxstr("Boolean is expected, got '") << str << '\'');
+        PythonExt::SetErrorMsg(PyExc_TypeError, err);
         throw TInvalidArgumentException(__OlxSourceInfo, err);
       }
-      Py_DecRef(Obj);
+      Py_DECREF(Obj);
       Obj = arg;
     }
   }

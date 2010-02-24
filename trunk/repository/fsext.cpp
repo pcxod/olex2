@@ -350,10 +350,8 @@ PyObject* pyTimestamp(PyObject* self, PyObject* args)  {
   olxstr fn;
   PythonExt::ParseTuple(args, "w", &fn);
   const TMemoryBlock* mb = TFileHandlerManager::FindMemoryBlock(fn);
-  if( mb == NULL )  {
-    Py_IncRef(Py_None);
-    return Py_None;
-  }
+  if( mb == NULL )
+    return PythonExt::PyNone();
   return Py_BuildValue("l", mb->DateTime );
 }
 
@@ -362,10 +360,8 @@ PyObject* pyNewFile(PyObject* self, PyObject* args)  {
   olxstr name;
   int persistenceId = 0;
   int length = 0;
-  if( !PythonExt::ParseTuple(args, "ws#|i", &name, &data, &length, &persistenceId) )  {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
+  if( !PythonExt::ParseTuple(args, "ws#|i", &name, &data, &length, &persistenceId) )
+    return PythonExt::PyNone();
   if( data != NULL && !name.IsEmpty() && length > 0 )  {
     TFileHandlerManager::AddMemoryBlock(name, data, length, persistenceId);
     return Py_BuildValue("b", true);
@@ -375,10 +371,8 @@ PyObject* pyNewFile(PyObject* self, PyObject* args)  {
 //..............................................................................
 PyObject* pyReadFile(PyObject* self, PyObject* args)  {
   olxstr name;
-  if( !PythonExt::ParseTuple(args, "w", &name) )  {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
+  if( !PythonExt::ParseTuple(args, "w", &name) )
+    return PythonExt::PyNone();
   IInputStream* io = TFileHandlerManager::GetInputStream(name);
   if( !name.IsEmpty() && (io = TFileHandlerManager::GetInputStream(name)) != NULL )  {
     char * bf = new char [io->GetSize() + 1];
@@ -388,9 +382,8 @@ PyObject* pyReadFile(PyObject* self, PyObject* args)  {
     delete io;
     return po;
   }
-  PyErr_SetObject(PyExc_TypeError, PythonExt::BuildString("file does not exist") );
-  Py_INCREF(Py_None);
-  return Py_None;
+  PythonExt::SetErrorMsg(PyExc_TypeError, "File does not exist");
+  return PythonExt::PyNone();
 }
 
 

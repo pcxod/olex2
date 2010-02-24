@@ -16,10 +16,8 @@ using namespace olex;
 PyObject* pyVarValue(PyObject* self, PyObject* args)  {
   olxstr varName;
   PyObject* defVal = NULL;
-  if( !PythonExt::ParseTuple(args, "w|O", &varName, &defVal) )  {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
+  if( !PythonExt::ParseTuple(args, "w|O", &varName, &defVal) )
+    return PythonExt::PyNone();
   size_t i = TOlxVars::VarIndex(varName);
   if( i == InvalidIndex )  {
     if( defVal != NULL )  {
@@ -28,9 +26,8 @@ PyObject* pyVarValue(PyObject* self, PyObject* args)  {
       return TOlxPyVar::ObjectValue(defVal);
     }
     else  {
-      PyErr_SetObject(PyExc_KeyError, PythonExt::BuildString("undefined key name"));
-      Py_INCREF(Py_None);
-      return Py_None;
+      PythonExt::SetErrorMsg(PyExc_KeyError, "Undefined key name");
+      return PythonExt::PyNone();
     }
   }
   return TOlxVars::GetVarValue(i);
@@ -39,10 +36,8 @@ PyObject* pyVarValue(PyObject* self, PyObject* args)  {
 PyObject* pyVarObject(PyObject* self, PyObject* args)  {
   olxstr varName;
   PyObject* defVal = NULL;
-  if( !PythonExt::ParseTuple(args, "w|O", &varName, &defVal) )  {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
+  if( !PythonExt::ParseTuple(args, "w|O", &varName, &defVal) )
+    return PythonExt::PyNone();
   size_t i = TOlxVars::VarIndex(varName);
   if( i == InvalidIndex )  {
     if( defVal != NULL )  {
@@ -51,9 +46,8 @@ PyObject* pyVarObject(PyObject* self, PyObject* args)  {
       return defVal;
     }
     else  {
-      PyErr_SetObject(PyExc_KeyError, PythonExt::BuildString("undefined key name"));
-      Py_INCREF(Py_None);
-      return Py_None;
+      PythonExt::SetErrorMsg(PyExc_KeyError, "Undefined key name");
+      return PythonExt::PyNone();
     }
   }
   PyObject *rv = TOlxVars::GetVarWrapper(i);
@@ -64,62 +58,49 @@ PyObject* pyVarObject(PyObject* self, PyObject* args)  {
 //..............................................................................
 PyObject* pyIsVar(PyObject* self, PyObject* args)  {
   olxstr varName;
-  if( !PythonExt::ParseTuple(args, "w", &varName) )  {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
-  return Py_BuildValue("b", TOlxVars::IsVar(varName) );
+  if( !PythonExt::ParseTuple(args, "w", &varName) )
+    return PythonExt::PyNone();
+  return Py_BuildValue("b", TOlxVars::IsVar(varName));
 }
 //..............................................................................
 PyObject* pyVarCount(PyObject* self, PyObject* args)  {
-  return Py_BuildValue("i", TOlxVars::VarCount() );
+  return Py_BuildValue("i", TOlxVars::VarCount());
 }
 //..............................................................................
 PyObject* pyGetVar(PyObject* self, PyObject* args)  {
   int varIndex;
-  if( !PyArg_ParseTuple(args, "i", &varIndex) )  {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
+  if( !PyArg_ParseTuple(args, "i", &varIndex) )
+    return PythonExt::PyNone();
   return TOlxVars::GetVarValue(varIndex);
 }
 //..............................................................................
 PyObject* pyGetVarName(PyObject* self, PyObject* args)  {
   int varIndex;
-  if( !PyArg_ParseTuple(args, "i", &varIndex) )  {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
-  return PythonExt::BuildString( TOlxVars::GetVarName(varIndex) );
+  if( !PyArg_ParseTuple(args, "i", &varIndex) )
+    return PythonExt::PyNone();
+  return PythonExt::BuildString(TOlxVars::GetVarName(varIndex));
 }
 //..............................................................................
 PyObject* pyFindGetVarName(PyObject* self, PyObject* args)  {
   PyObject *val;
-  if( !PyArg_ParseTuple(args, "O", &val) )  {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
-  return PythonExt::BuildString( TOlxVars::FindVarName(val) );
+  if( !PyArg_ParseTuple(args, "O", &val) )
+    return PythonExt::PyNone();
+  return PythonExt::BuildString(TOlxVars::FindVarName(val));
 }
 //..............................................................................
 PyObject* pySetVar(PyObject* self, PyObject* args)  {
   olxstr varName;
   PyObject *varValue = NULL;
-  if( !PythonExt::ParseTuple(args, "wO", &varName, &varValue) )  {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
+  if( !PythonExt::ParseTuple(args, "wO", &varName, &varValue) )
+    return PythonExt::PyNone();
   TOlxVars::SetVar(varName, varValue);
-  Py_INCREF(Py_None);
-  return Py_None;
+  return PythonExt::PyNone();
 }
 //..............................................................................
 PyObject* pyUnsetVar(PyObject* self, PyObject* args)  {
   olxstr varName;
-  if( !PythonExt::ParseTuple(args, "w", &varName) )  {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
+  if( !PythonExt::ParseTuple(args, "w", &varName) )
+    return PythonExt::PyNone();
   if( TOlxVars::UnsetVar(varName) )  {
     Py_INCREF(Py_True);
     return Py_True;
@@ -177,10 +158,8 @@ PyObject* pyExpMac(PyObject* self, PyObject* args)  {
 //..............................................................................
 PyObject* pyTranslate(PyObject* self, PyObject* args)  {
   olxstr str;
-  if( !PythonExt::ParseTuple(args, "w", &str) )  {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
+  if( !PythonExt::ParseTuple(args, "w", &str) )
+    return PythonExt::PyNone();
   return PythonExt::BuildString(IOlexProcessor::GetInstance()->TranslateString(str));
 }
 //..............................................................................
@@ -193,10 +172,8 @@ PyObject* pyDescRef(PyObject* self, PyObject* args)  {
 PyObject* pyRefModel(PyObject* self, PyObject* args)  {
   bool calc_connectivity = false;
   if( PyTuple_Size(args) != 0 )  {
-    if( !PyArg_ParseTuple(args, "b", &calc_connectivity) )  {
-      Py_INCREF(Py_None);
-      return Py_None;
-    }
+    if( !PyArg_ParseTuple(args, "b", &calc_connectivity) )
+      return PythonExt::PyNone();
   }
   // make the labels unique...
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
@@ -223,21 +200,16 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
   if( PyTuple_Size(args) == 0 )  {
     try  {  sg = &TXApp::GetInstance().XFile().GetLastLoaderSG();  }
     catch(...)  {
-      Py_INCREF(Py_None);
-      return Py_None;
+      return PythonExt::PyNone();
     }
   }
   else  {
     olxstr sg_name;
-    if( !PythonExt::ParseTuple(args, "w", &sg_name) )  {
-      Py_INCREF(Py_None);
-      return Py_None;
-    }
+    if( !PythonExt::ParseTuple(args, "w", &sg_name) )
+      return PythonExt::PyNone();
     sg = TSymmLib::GetInstance().FindGroup(sg_name);
-    if( sg == NULL )  {
-      Py_INCREF(Py_None);
-      return Py_None;
-    }
+    if( sg == NULL )
+      return PythonExt::PyNone();
   }
   PyObject* out = PyDict_New();
   PythonExt::SetDictItem(out, "Number", Py_BuildValue("i", sg->GetNumber()));
@@ -341,23 +313,21 @@ PyObject* pyHklStat(PyObject* self, PyObject* args)  {
 //..............................................................................
 PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
   olxstr index, index_fn, repos, dest, proxy;
-  if( !PythonExt::ParseTuple(args, "ww", &index, &dest) )  {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
-  olxstr SettingsFile( TBasicApp::GetBaseDir() + "usettings.dat" );
+  if( !PythonExt::ParseTuple(args, "ww", &index, &dest) )
+    return PythonExt::PyNone();
+  olxstr SettingsFile(TBasicApp::GetBaseDir() + "usettings.dat");
   if( TEFile::Exists(SettingsFile) )  {
     const TSettingsFile settings(SettingsFile);
     proxy = settings["proxy"];
   }
   size_t lsi = index.LastIndexOf('/');
   if( lsi == InvalidIndex )  {
-    PyErr_SetObject(PyExc_AttributeError, PythonExt::BuildString("Invalid index file") );
+    PythonExt::SetErrorMsg(PyExc_AttributeError, "Invalid index file");
     return Py_BuildValue("b", false);
   }
   dest = TBasicApp::GetBaseDir() + dest;
   if( !TEFile::MakeDirs(dest) )  {
-    PyErr_SetObject(PyExc_AttributeError, PythonExt::BuildString("Could not create distination folder") );
+    PythonExt::SetErrorMsg(PyExc_AttributeError, "Could not create distination folder");
     return Py_BuildValue("b", false);
   }
   index_fn = index.SubStringFrom(lsi+1);
@@ -371,7 +341,7 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
   TStrList properties;
   try  {  fsIndex.Synchronise(osFS, properties, NULL, NULL, NULL, index_fn);  }
   catch( const TExceptionBase& exc )  {
-    PyErr_SetObject(PyExc_TypeError, PythonExt::BuildString(exc.GetException()->GetFullMessage()) );
+    PythonExt::SetErrorMsg(PyExc_TypeError, exc.GetException()->GetFullMessage());
     return Py_BuildValue("b", false);
   }
   return Py_BuildValue("b", true);

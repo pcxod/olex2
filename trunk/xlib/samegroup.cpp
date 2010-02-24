@@ -128,7 +128,7 @@ PyObject* TSameGroupList::PyExport(TPtrList<PyObject>& _atoms)  {
       Groups[i].SetTag(id++);
   }
   if( id == 0 )
-    return Py_None;
+    return PythonExt::PyNone();
   PyObject* main = PyTuple_New( id );
   TPtrList<PyObject> allGroups;
   for( size_t i=0; i < id; i++ )

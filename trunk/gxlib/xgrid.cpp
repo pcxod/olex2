@@ -1036,8 +1036,7 @@ PyObject* pySetValue(PyObject* self, PyObject* args)  {
   if( !PyArg_ParseTuple(args, "iiif", &i, &j, &k, &val) )
     return NULL;
   TXGrid::GetInstance()->SetValue(i, j, k, val);
-  Py_INCREF(Py_None);
-  return Py_None;
+  return PythonExt::PyNone();
 }
 //..............................................................................
 PyObject* pySetData(PyObject* self, PyObject* args)  {
@@ -1080,8 +1079,7 @@ PyObject* pySetData(PyObject* self, PyObject* args)  {
   for( int i=0; i < max; i++ )
     Py_DECREF(indexes[i]);
   Py_DECREF(arglist);
-  Py_INCREF(Py_None);
-  return Py_None;
+  return PythonExt::PyNone();
 }
 //..............................................................................
 PyObject* pyInit(PyObject* self, PyObject* args)  {
@@ -1115,8 +1113,7 @@ PyObject* pySetVisible(PyObject* self, PyObject* args)  {
   if( !PyArg_ParseTuple(args, "b", &v) )
     return NULL;
   TXGrid::GetInstance()->SetVisible(v);
-  Py_INCREF(Py_None);
-  return Py_None;
+  return PythonExt::PyNone();
 }
 //..............................................................................
 PyObject* pyInitSurface(PyObject* self, PyObject* args)  {
@@ -1126,8 +1123,7 @@ PyObject* pyInitSurface(PyObject* self, PyObject* args)  {
   if( v )
     TXGrid::GetInstance()->AdjustMap();
   TXGrid::GetInstance()->InitIso();
-  Py_INCREF(Py_None);
-  return Py_None;
+  return PythonExt::PyNone();
 }
 //..............................................................................
 PyObject* pyIsVisible(PyObject* self, PyObject* args)  {
