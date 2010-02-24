@@ -4240,10 +4240,8 @@ void TMainForm::DoUpdateFiles()  {
 //..............................................................................
 PyObject* pyIsControl(PyObject* self, PyObject* args)  {
   olxstr cname, pname;  // control and popup (if any) name
-  if( !PythonExt::ParseTuple(args, "w|w", &cname, &pname) )  {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
+  if( !PythonExt::ParseTuple(args, "w|w", &cname, &pname) )
+    return PythonExt::PyNone();
   THtml* html = pname.IsEmpty() ? TGlXApp::GetMainForm()->GetHtml() :
                 TGlXApp::GetMainForm()->FindHtml(pname);
   return Py_BuildValue("b", html == NULL ? false : (html->FindObject(cname) != NULL) );
@@ -4254,19 +4252,16 @@ PyObject* pyGetUserInput(PyObject* self, PyObject* args)  {
   int flags = 0;
   if( !PythonExt::ParseTuple(args, "iww", &flags, &title, &str) ||
       title.IsEmpty() || str.IsEmpty() )  {
-    Py_INCREF(Py_None);
-    return Py_None;
+    return PythonExt::PyNone();
   }
-
-  bool MultiLine = (flags != 1);
-
+  const bool MultiLine = (flags != 1);
   TdlgEdit *dlg = new TdlgEdit(TGlXApp::GetMainForm(), MultiLine);
   dlg->SetTitle(title.u_str());
   dlg->SetText(str);
 
   PyObject* rv;
   if( dlg->ShowModal() == wxID_OK )
-    rv = PythonExt::BuildString( dlg->GetText() );
+    rv = PythonExt::BuildString(dlg->GetText());
   else  {
     rv = Py_None;
     Py_IncRef(rv);

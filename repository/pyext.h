@@ -157,6 +157,20 @@ public:
     PyDict_SetItemString(dict, field_name, val);
     Py_DECREF(val);
   }
+  static void SetErrorMsg(PyObject* err_type, const olxstr& msg)  {
+    PyObject* val = BuildString(msg);
+    PyErr_SetObject(err_type, val);
+    Py_DECREF(val);
+  }
+  static void SetErrorMsg(PyObject* err_type, const char* msg)  {
+    PyObject* val = Py_BuildValue("s", msg);
+    PyErr_SetObject(err_type, val);
+    Py_DECREF(val);
+  }
+  static PyObject* PyNone()  {
+    Py_INCREF(Py_None);
+    return Py_None;
+  }
   /* tuple parsing to prcess unicode and string in the same way...
     s# - char*, len
     s - char*

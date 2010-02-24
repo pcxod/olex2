@@ -14,15 +14,11 @@ void hkl_py::PyInit()  {
 //..................................................................................................
 PyObject* hkl_py::Read(PyObject* self, PyObject* args)  {
   olxstr fn;
-  if( !PythonExt::ParseTuple(args, "w", &fn) )  {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
+  if( !PythonExt::ParseTuple(args, "w", &fn) )
+    return PythonExt::PyNone();
   if( !TEFile::Exists(fn) )  {
-    PyErr_SetObject(PyExc_IOError, 
-      PythonExt::BuildString( olxstr("File does not exist: ") << fn) );
-    Py_INCREF(Py_None);
-    return Py_None;
+    PythonExt::SetErrorMsg(PyExc_IOError, olxstr("File does not exist: ") << fn);
+    return PythonExt::PyNone();
   }
   THklFile hkl;
   bool res = false;
@@ -30,10 +26,8 @@ PyObject* hkl_py::Read(PyObject* self, PyObject* args)  {
   try  {  res = hkl.LoadFromFile(fn);  }
   catch( const TExceptionBase& e )  {  error = e.GetException()->GetError();  }
   if( !res )  {
-    PyErr_SetObject(PyExc_IOError, 
-      PythonExt::BuildString( olxstr("Invalid HKL file: ") << fn << '\n' << error ) );
-    Py_INCREF(Py_None);
-    return Py_None;
+    PythonExt::SetErrorMsg(PyExc_IOError, olxstr("Invalid HKL file: ") << fn << '\n' << error);
+    return PythonExt::PyNone();
   }
   PyObject* rv = PyTuple_New( hkl.RefCount() );
   for( size_t i=0; i < hkl.RefCount(); i++ )  {
@@ -53,14 +47,11 @@ PyObject* hkl_py::Read(PyObject* self, PyObject* args)  {
 PyObject* hkl_py::Write(PyObject* self, PyObject* args)  {
   olxstr fn;
   PyObject* in;
-  if( !PythonExt::ParseTuple(args, "wO", &fn, &in) )  {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
+  if( !PythonExt::ParseTuple(args, "wO", &fn, &in) )
+    return PythonExt::PyNone();
   if( !PyList_CheckExact(in) )  {
-    PyErr_SetObject(PyExc_RuntimeError, PythonExt::BuildString("A list is expected"));
-    Py_INCREF(Py_None);
-    return Py_None;
+    PythonExt::SetErrorMsg(PyExc_RuntimeError, "A list is expected");
+    return PythonExt::PyNone();
   }
   size_t sz = PyList_Size(in);
   TRefList rf;
@@ -69,22 +60,19 @@ PyObject* hkl_py::Write(PyObject* self, PyObject* args)  {
   for( size_t i=0; i < sz; i++ )  {
     PyObject* prf = PyList_GetItem(in, i);
     if( !PyTuple_CheckExact(prf) || PyTuple_Size(prf) < 6)  {
-      PyErr_SetObject(PyExc_RuntimeError, PythonExt::BuildString("A tuple of 6 items is expected"));
-      Py_INCREF(Py_None);
-      return Py_None;
+      PythonExt::SetErrorMsg(PyExc_RuntimeError, "A tuple of 6 items is expected");
+      return PythonExt::PyNone();
     }
     if( !PyArg_ParseTuple(prf, "iiiddi", &h, &k, &l, &I, &S, &flag) )  {
-      PyErr_SetObject(PyExc_RuntimeError, PythonExt::BuildString("Failed to parse the (iiiddi) tuple"));
-      Py_INCREF(Py_None);
-      return Py_None;
+      PythonExt::SetErrorMsg(PyExc_RuntimeError, "Failed to parse the (iiiddi) tuple");
+      return PythonExt::PyNone();
     }
     if( test_flag == -1 )  
        test_flag = flag;
     else if( test_flag == NoFlagSet && flag != NoFlagSet )  {
-      PyErr_SetObject(PyExc_IOError, 
-        PythonExt::BuildString( "Error: reflections with and without batch numbers are provided") );
-      Py_INCREF(Py_None);
-      return Py_None;
+      PythonExt::SetErrorMsg(PyExc_IOError,
+        "Error: reflections with and without batch numbers are provided");
+      return PythonExt::PyNone();
     }
     rf.Add(new TReflection(h, k, l, I, S, flag)).SetTag(1);
   }
@@ -93,9 +81,8 @@ PyObject* hkl_py::Write(PyObject* self, PyObject* args)  {
   try  {  res = THklFile::SaveToFile(fn, rf);  }
   catch( const TExceptionBase& e )  {  error = e.GetException()->GetError();  }
   if( !res )  {
-    PyErr_SetObject(PyExc_IOError, 
-      PythonExt::BuildString( olxstr("Failed to save the HKL file: ") << fn << '\n' << error ) );
+    PythonExt::SetErrorMsg(PyExc_IOError,
+      olxstr("Failed to save the HKL file: ") << fn << '\n' << error);
   }
-  Py_INCREF(Py_None);
-  return Py_None;
+  return PythonExt::PyNone();
 }
