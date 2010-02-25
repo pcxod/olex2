@@ -6093,6 +6093,9 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  //uint64_t test_a = 1021;
+  //uint64_t test_b = test_a%10, test_c = test_a/10;
+  //uint64_t test_d = test_a/10, test_e = test_a-test_d*10;
   FXApp->SetActiveXFile(0);
   //TAsymmUnit& _au = FXApp->XFile().GetAsymmUnit();
   //TUnitCell& uc = FXApp->XFile().GetUnitCell();
@@ -7411,17 +7414,16 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     vec3d norm(1./mapX, 1./mapY, 1./mapZ);
     sg->GetMatrices(ml, mattAll^mattIdentity);
     MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, (mi.maxVal - mi.minVal)/2.5, Peaks);
+    //MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, mi.sigma*5, Peaks);
     MapUtil::MergePeaks(ml, au.GetCellToCartesian(), norm, Peaks, MergedPeaks);
     MergedPeaks.QuickSorter.SortSF(MergedPeaks, MapUtil::PeakSortBySum);
-    int PointCount = mapX*mapY*mapZ;
-    int minR = olx_round((3*1.5/(4*M_PI))*resolution);  // at least 1.5 A^3
-    int minPointCount = olx_round(SphereVol(minR));
+    const int PointCount = mapX*mapY*mapZ;
     for( size_t i=0; i < MergedPeaks.Count(); i++ )  {
       const MapUtil::peak& peak = MergedPeaks[i];
       if( peak.count == 0 )  continue;
       vec3d cnt((double)peak.center[0]/mapX, (double)peak.center[1]/mapY, (double)peak.center[2]/mapZ); 
       double pv = (double)peak.count*vol/PointCount;
-      double ed = peak.summ/(pv*218);
+      double ed = peak.summ/(pv);
       TCAtom& ca = au.NewAtom();
       ca.SetLabel(olxstr("Q") << olxstr((100+i)));
       ca.ccrd() = cnt;
