@@ -190,7 +190,14 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
 
   const bool runFuse = !Options.Contains("f");
-  const size_t changeNPD = !Options.Contains("npd") ? ~0 : Options.FindValue("npd", "0").ToInt();
+  size_t changeNPD = ~0;
+  if( Options.Contains("npd") )  {
+    olxstr _v = Options.FindValue("npd");
+    if( _v.IsEmpty() )
+      changeNPD = 0;
+    else
+      changeNPD = _v.ToSizeT();
+  }
   const bool analyseQ = !Options.Contains("aq");
   const bool assignTypes = !Options.Contains("at");
   const double aqV = Options.FindValue("aq", "0.3").ToDouble(); // R+aqV
