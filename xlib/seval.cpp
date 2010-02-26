@@ -44,5 +44,7 @@ TTBasicAtomInfoEvaluatorFactory::TTBasicAtomInfoEvaluatorFactory(IEvaluatorFacto
   Evaluators.Add("name", new TBaiNameEvaluator(this));
   // register new instance of TBaiMwEvaluator
   Evaluators.Add("mw", new TBaiMwEvaluator(this));
+  // register new instance of TBaiZEvaluator
+  Evaluators.Add("z", new TBaiZEvaluator(this));
 }
 

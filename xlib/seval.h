@@ -194,6 +194,20 @@ public:
   // evaluator function
   double EvaluateDouble() const {  return Parent->GetType()->GetMr();  }
 };
+// evaluator implementation for scalar z
+class TBaiZEvaluator: public IDoubleEvaluator
+{
+  ITBasicAtomInfoDataProvider *Parent;
+public:
+  // constructor
+  TBaiZEvaluator(ITBasicAtomInfoDataProvider* parent) { Parent = parent;  }
+  // virtual method
+  IEvaluator *NewInstance( IDataProvider *dp)  {  return new TBaiMwEvaluator( (ITBasicAtomInfoDataProvider*)dp);  }
+  // destructor
+  TBaiZEvaluator()  {  ;  }
+  // evaluator function
+  double EvaluateDouble() const {  return Parent->GetType()->z;  }
+};
 // evaluator implementation for scalar afix
 class TSAtom_AfixEvaluator: public IDoubleEvaluator
 {
