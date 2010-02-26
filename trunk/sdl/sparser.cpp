@@ -163,7 +163,7 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
           RightEvaluator = new TScalarEvaluator( RightExp.ToDouble() );
           Evaluators.Add( RightEvaluator );
         }
-        else if( RightExp.Equalsi("true") || !RightExp.Equalsi("false") )  {
+        else if( RightExp.Equalsi("true") || RightExp.Equalsi("false") )  {
           RightEvaluator = new TBoolEvaluator( RightExp.ToBool() );
           Evaluators.Add( RightEvaluator );
         }
