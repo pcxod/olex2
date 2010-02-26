@@ -7400,7 +7400,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     for( int j=0; j < mapY; j++ )
       for( int k=0; k < mapZ; k++ )  {
         XData[i][j][k] = map.Data[i][j][k]; 
-        }
+      }
   FXApp->XGrid().AdjustMap();
 
   TBasicApp::GetLog() << (olxstr("Map max val ") << olxstr::FormatFloat(3, mi.maxVal) << 
@@ -7422,12 +7422,11 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
       const MapUtil::peak& peak = MergedPeaks[i];
       if( peak.count == 0 )  continue;
       vec3d cnt((double)peak.center[0]/mapX, (double)peak.center[1]/mapY, (double)peak.center[2]/mapZ); 
-      double pv = (double)peak.count*vol/PointCount;
-      double ed = peak.summ/(pv);
+      const double ed = peak.summ/peak.count;
       TCAtom& ca = au.NewAtom();
       ca.SetLabel(olxstr("Q") << olxstr((100+i)));
       ca.ccrd() = cnt;
-      ca.SetQPeak( ed );
+      ca.SetQPeak(ed);
     }
     au.InitData();
     FXApp->XFile().EndUpdate();
