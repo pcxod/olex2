@@ -172,6 +172,10 @@ namespace SFUtil {
           }
         }
       }
+      virtual ~SFCalculateTask()  {
+        if( use_fpfdp )
+          delete fpfdp;
+      }
       void Run(size_t i)  {
         const TReflection& ref = TReflection::GetRef(refs[i]);
         const double d_s2 = ref.ToCart(hkl2c).QLength()*0.25;

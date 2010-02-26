@@ -72,7 +72,7 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(VATA, EmptyString, fpAny|psFileLoaded,
 "Compares current model with the cif file and write the report to provided file (appending)" );
-  xlib_InitMacro(Clean, "npd-does not change atom types of NPD atoms\
+  xlib_InitMacro(Clean, "npd-promotes at maximum given number of atoms a call [0]\
 &;f-does not run 'fuse' after the completion\
 &;aq-disables analysis of the Q-peaks based on thresholds\
 &;at-disables lonely atom types assignment to O and Cl", fpNone,

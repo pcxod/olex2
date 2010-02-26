@@ -189,10 +189,10 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     }
   }
 
-  bool runFuse = !Options.Contains("f");
-  bool changeNPD = !Options.Contains("npd");
-  bool analyseQ = !Options.Contains("aq");
-  bool assignTypes = !Options.Contains("at");
+  const bool runFuse = !Options.Contains("f");
+  const size_t changeNPD = !Options.Contains("npd") ? ~0 : Options.FindValue("npd", "0").ToInt();
+  const bool analyseQ = !Options.Contains("aq");
+  const bool assignTypes = !Options.Contains("at");
   const double aqV = Options.FindValue("aq", "0.3").ToDouble(); // R+aqV
   // qpeak anlysis
   TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
@@ -447,15 +447,19 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     }
   }
   // treating NPD atoms... promoting to the next available type
-  if( changeNPD && !sfac.IsEmpty() )  {
+  if( changeNPD > 0 && !sfac.IsEmpty() )  {
+    size_t atoms_transformed = 0;
     for( size_t i=0; i < latt.AtomCount(); i++ )  {
       TSAtom& sa = latt.GetAtom(i);
       if( (sa.GetEllipsoid() != NULL && sa.GetEllipsoid()->IsNPD()) ||
-        (sa.CAtom().GetUiso() <= 0.005) )  {
-          size_t ind = sfac.IndexOfObject(&sa.GetType());
-          if( ind != InvalidIndex && ((ind+1) < sfac.Count()) )  {
-            sa.CAtom().SetType(*sfac.GetObject(ind+1));
-          }
+        (sa.CAtom().GetUiso() <= 0.005) )
+      {
+        size_t ind = sfac.IndexOfObject(&sa.GetType());
+        if( ind != InvalidIndex && ((ind+1) < sfac.Count()) )  {
+          sa.CAtom().SetType(*sfac.GetObject(ind+1));
+          if( ++atoms_transformed >= changeNPD )
+            break;
+        }
       }
     }
   }
