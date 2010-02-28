@@ -6,7 +6,7 @@
     <PROJECT value="exe\lcells.exe"/>
     <OBJFILES value="build\lcells.obj build\about.obj build\ciffile.obj build\conindex.obj 
       build\cplanes.obj build\draw_mol.obj build\iinfo.obj 
-      build\inscellreader.obj build\Main.obj build\moldraw.obj build\msearch.obj 
+      build\inscellreader.obj build\main.obj build\moldraw.obj build\msearch.obj 
       build\preferences.obj build\progress.obj build\zips.obj build\unzip.obj 
       build\shellutil.obj build\asymmunit.obj build\catom.obj 
       build\ellipsoid.obj build\refmodel.obj build\unitcell.obj build\xbase.obj 
@@ -40,11 +40,11 @@
       build\henke_Te.obj build\henke_Th.obj build\henke_Ti.obj build\henke_Tl.obj 
       build\henke_Tm.obj build\henke_U.obj build\henke_V.obj build\henke_W.obj 
       build\henke_Xe.obj build\henke_Y.obj build\henke_Yb.obj build\henke_Zn.obj 
-      build\henke_Zr.obj"/>
+      build\henke_Zr.obj build\olxthpool.obj"/>
     <RESFILES value="lcells.res"/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) ..\..\..\lcells\about.dfm ..\..\..\lcells\iinfo.dfm 
-      ..\..\..\lcells\Main.dfm ..\..\..\lcells\moldraw.dfm 
+      ..\..\..\lcells\main.dfm ..\..\..\lcells\moldraw.dfm 
       ..\..\..\lcells\msearch.dfm ..\..\..\lcells\preferences.dfm 
       ..\..\..\lcells\progress.dfm"/>
     <LIBFILES value="..\Olex2\lib\sdl.lib &quot;C:\Program Files\Borland\CBuilder6\Lib\Debug\vclx.lib&quot;"/>
@@ -56,7 +56,7 @@
       vclie.bpi xmlrtl.bpi inet.bpi inetdbbde.bpi inetdbxpress.bpi inetdb.bpi 
       nmfast.bpi bcbie.bpi soaprtl.bpi dclocx.bpi dbexpress.bpi dbxcds.bpi 
       indy.bpi bcb2kaxserver.bpi"/>
-    <PATHCPP value=".;..\..\..\lcells;..\..\..\repository;..\..\..\xlib;..\..\..\xlib\henke"/>
+    <PATHCPP value=".;..\..\..\lcells;..\..\..\repository;..\..\..\xlib;..\..\..\xlib\henke;..\..\..\sdl"/>
     <PATHPAS value=".;"/>
     <PATHRC value=".;"/>
     <PATHASM value=".;"/>
@@ -67,7 +67,7 @@
     <SYSDEFINES value="NO_STRICT"/>
     <MAINSOURCE value="lcells.cpp"/>
     <INCLUDEPATH value="..\..\..\xlib\henke;..\..\..\sdl;$(BCB)\include;..\..\..\repository;..\..\..\lcells;..\..\..\..;$(BCB)\include\vcl;..\..\..\xlib"/>
-    <LIBPATH value="..\..\..\xlib\henke;..\..\..\xlib;..\..\..\repository;..\..\..\lcells;..\..\..\..;SVN\repository;$(BCB)\Projects\Lib;SVN\lcells;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <LIBPATH value="..\..\..\sdl;..\..\..\xlib\henke;..\..\..\xlib;..\..\..\repository;..\..\..\lcells;..\..\..\..;SVN\repository;$(BCB)\Projects\Lib;SVN\lcells;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
     <OTHERFILES value=""/>
   </MACROS>
@@ -96,7 +96,7 @@
       <FILE FILENAME="..\..\..\lcells\draw_mol.cpp" FORMNAME="" UNITNAME="draw_mol.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\lcells\iinfo.cpp" FORMNAME="dlgIndexInfo" UNITNAME="iinfo" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\lcells\inscellreader.cpp" FORMNAME="" UNITNAME="inscellreader.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\lcells\Main.cpp" FORMNAME="dlgMain" UNITNAME="main" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\lcells\main.cpp" FORMNAME="dlgMain" UNITNAME="main" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\lcells\moldraw.cpp" FORMNAME="dlgMolDraw" UNITNAME="moldraw" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\lcells\msearch.cpp" FORMNAME="dlgSearch" UNITNAME="msearch" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\lcells\preferences.cpp" FORMNAME="dlgPref" UNITNAME="preferences" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
@@ -225,6 +225,7 @@
       <FILE FILENAME="..\..\..\xlib\henke\henke_Yb.cpp" FORMNAME="" UNITNAME="henke_Yb.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\henke\henke_Zn.cpp" FORMNAME="" UNITNAME="henke_Zn.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\henke\henke_Zr.cpp" FORMNAME="" UNITNAME="henke_Zr.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\olxthpool.cpp" FORMNAME="" UNITNAME="olxthpool" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>

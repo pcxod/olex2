@@ -7,7 +7,7 @@
 //---------------------------------------------------------------------------
 USEFORM("..\..\..\lcells\about.cpp", dlgAbout);
 USEFORM("..\..\..\lcells\iinfo.cpp", dlgIndexInfo);
-USEFORM("..\..\..\lcells\Main.cpp", dlgMain);
+USEFORM("..\..\..\lcells\main.cpp", dlgMain);
 USEFORM("..\..\..\lcells\moldraw.cpp", dlgMolDraw);
 USEFORM("..\..\..\lcells\msearch.cpp", dlgSearch);
 USEFORM("..\..\..\lcells\preferences.cpp", dlgPref);
