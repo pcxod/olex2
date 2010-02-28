@@ -956,7 +956,7 @@ void TdlgMain::LoadCurrentFile()  {
       sbView->Enabled = true;
       sbOlex2->Enabled = true;
       Organiser->XFile->LoadFromFile(CurrentFile);
-      Organiser->XFile->GetAsymmUnit().DetachAtomType(iQPeakIndex, true);
+      Organiser->XFile->GetAsymmUnit().DetachAtomType(iQPeakZ, true);
       Organiser->XFile->GetLattice().UpdateConnectivity();
       Organiser->XFile->GetLattice().CompaqAll();
       //for( int i=0; i < Organiser->XFile->GetLattice().AtomCount(); i++ )
