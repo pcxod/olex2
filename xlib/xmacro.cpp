@@ -806,7 +806,11 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       ca.SetDetached(false);
   }
   TActionQueue* q_draw = XApp.ActionQueue(olxappevent_GL_DRAW);
-  if( q_draw != NULL )  q_draw->SetEnabled(false);
+  bool q_draw_changed = false;
+  if( q_draw != NULL )  {
+    q_draw->SetEnabled(false);
+    q_draw_changed = true;
+  }
   try  {
     TSAtomPList satoms;
     XApp.FindSAtoms(Cmds.Text(' '), satoms, true);
@@ -892,7 +896,8 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   catch(const TExceptionBase& e)  {
     Error.ProcessingError(__OlxSrcInfo, e.GetException()->GetError());
   }
-  if( q_draw != NULL )  q_draw->SetEnabled(true);
+  if( q_draw != NULL && q_draw_changed )
+    q_draw->SetEnabled(true);
   XApp.XFile().GetLattice().Init();
   delete XApp.FixHL();
 }

@@ -277,6 +277,7 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
         PyObject *key_ = PyList_GetItem(keys_, i);
         options.AddParam(PythonExt::ParseStr(key_), PythonExt::ParseStr(PyDict_GetItem(kwds_, key_)));
       }
+      Py_DECREF(keys_);
       TMacroError er;
       macro->Run(params, options, er);
       if( er.IsSuccessful() )
