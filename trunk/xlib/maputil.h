@@ -13,11 +13,11 @@ BeginXlibNamespace()
 class MapUtil  {
 public:
   struct peak  { 
-    uint32_t count;  //center
+    uint32_t count;
     TVector3<int16_t> center;
     bool process;
     double summ;
-    peak() : process(true), summ(0), count(0) {}
+    peak() : process(true), summ(0), count(0)  {}
     peak(uint16_t _x, uint16_t _y, uint16_t _z) : process(true),  
       summ(0), count(0), center(_x, _y, _z) {}
   };
@@ -185,6 +185,14 @@ public:
     double diff = b.summ - a.summ;
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0); 
   }
+  static int PeakSortByWeight(const MapUtil::peak& a, const MapUtil::peak& b)  {
+    if( a.count == 0 )
+      return b.count == 0 ? 0 : 1;
+    else if( b.count == 0 )
+      return a.count == 0 ? 0 : -1;
+    const double diff = b.summ/b.count - a.summ/a.count;
+    return diff < 0 ? -1 : (diff > 0 ? 1 : 0); 
+  }
 protected:
   static int SortByDistance(const vec3d& a, const vec3d& b)  {
     const double d = a.QLength() - b.QLength();
@@ -206,7 +214,7 @@ public:
           while( tmp[j] < 0 )  tmp[j] += 1.0;
           while( tmp[j] >= 1.0 )  tmp[j] -= 1.0;
         }
-        if( (tmp[0] < v[0]) ||        // standardise then ...
+        if( (tmp[0] < v[0] ) ||  // standardise then ...
             (olx_abs(tmp[0]-v[0]) < 1e-5 && (tmp[1] < v[1])) ||
             (olx_abs(tmp[0]-v[0]) < 1e-5 && olx_abs(tmp[1]-v[1]) < 1e-5 && (tmp[2] < v[2])) )    
         {
@@ -216,36 +224,42 @@ public:
       }
     }
   }
-  //
+  /*ml - all symmetry matrices, including identity matrix; cell2cart - symmetric matrix;
+  norm - the reciprocal gridding (1/mapX, 1/mapY, 1/mapZ)*/
   static void MergePeaks(const smatd_list& ml, const mat3d& cell2cart, const vec3d& norm, 
     TArrayList<MapUtil::peak>& Peaks, TTypeList<MapUtil::peak>& out)  
   {
     const size_t cnt = Peaks.Count();
     TTypeList<vec3d> crds;
-    mat3d cart2cell = cell2cart.Inverse();
     crds.SetCapacity(cnt);
     for( size_t i=0; i < cnt; i++ )  {
       crds.AddNew(Peaks[i].center) *= norm;
-      Peaks[i].process = true;
+      Peaks[i].process = Peaks.Count() != 0;
     }
-    
-    for( size_t i=0; i < cnt; i++ )  {
-      StandardiseVec(crds[i], ml);
-      crds[i] *= cell2cart;
-    }
-    crds.QuickSorter.SyncSortSF(crds, Peaks, SortByDistance);
-    TPtrList<MapUtil::peak> toMerge;
+    Peaks.QuickSorter.SyncSortSF(Peaks, crds, PeakSortByCount);
     for( size_t i=0; i < cnt; i++ )  {
       if( !Peaks[i].process )  continue;
-      toMerge.Clear();
-      toMerge.Add( Peaks[i] ); 
-      vec3d center(crds[i]);
+      TPtrList<MapUtil::peak> toMerge;
+      toMerge.Add(Peaks[i]); 
+      vec3d center(crds[i]), cmp_center(crds[i]);
       for( size_t j=i+1; j < cnt; j++ )  {
         if( !Peaks[j].process )  continue;
-        if( crds[i].QDistanceTo(crds[j]) < 0.5 )  {
-          toMerge.Add(Peaks[j]);
-          center += crds[j];
-          Peaks[j].process = false;
+        for( size_t k=0; k < ml.Count(); k++ )  {
+          const vec3d c = ml[k]*crds[j];
+          vec3d tmp = c - cmp_center;
+          const vec3i t = tmp.Round<int>();
+          tmp -= t;
+          tmp[0] = tmp[0]*cell2cart[0][0] + tmp[1]*cell2cart[1][0] + tmp[2]*cell2cart[2][0];
+          tmp[1] = tmp[1]*cell2cart[1][1] + tmp[2]*cell2cart[2][1];
+          tmp[2] = tmp[2]*cell2cart[2][2];
+          if( tmp.QLength() < 0.5 )  {
+            toMerge.Add(Peaks[j]);
+            const vec3d mc = c-t;
+            center += mc;
+            cmp_center = (cmp_center*toMerge.Count()+mc*0.25)/((double)toMerge.Count()+0.25);
+            Peaks[j].process = false;
+            break;
+          }
         }
       }
       MapUtil::peak& p = out.AddNew();
@@ -254,7 +268,6 @@ public:
         p.summ += toMerge[j]->summ;
       }
       center /= toMerge.Count();
-      center *= cart2cell;
       center /= norm;
       p.center = center.Round<int16_t>();
     }

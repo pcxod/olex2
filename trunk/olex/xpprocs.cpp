@@ -7412,7 +7412,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     TTypeList<MapUtil::peak> MergedPeaks;
     smatd_list ml;
     vec3d norm(1./mapX, 1./mapY, 1./mapZ);
-    sg->GetMatrices(ml, mattAll^mattIdentity);
+    sg->GetMatrices(ml, mattAll);
     MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, (mi.maxVal - mi.minVal)/2.5, Peaks);
     //MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, mi.sigma*5, Peaks);
     MapUtil::MergePeaks(ml, au.GetCellToCartesian(), norm, Peaks, MergedPeaks);
@@ -7422,14 +7422,23 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
       const MapUtil::peak& peak = MergedPeaks[i];
       if( peak.count == 0 )  continue;
       vec3d cnt((double)peak.center[0]/mapX, (double)peak.center[1]/mapY, (double)peak.center[2]/mapZ); 
-      const double ed = peak.summ/peak.count;
+      const double ed = (double)((long)((peak.summ*1000)/peak.count))/1000;
       TCAtom& ca = au.NewAtom();
       ca.SetLabel(olxstr("Q") << olxstr((100+i)));
       ca.ccrd() = cnt;
       ca.SetQPeak(ed);
     }
     au.InitData();
+    TActionQueue* q_draw = FXApp->ActionQueue(olxappevent_GL_DRAW);
+    bool q_draw_changed = false;
+    if( q_draw != NULL )  {
+      q_draw->SetEnabled(false);
+      q_draw_changed = true;
+    }
     FXApp->XFile().EndUpdate();
+    if( q_draw != NULL && q_draw_changed )
+      q_draw->SetEnabled(true);
+    Macros.ProcessMacro("compaq -q", E);
   }  // integration
   if( Options.Contains("m") )  {
     FractMask* fm = new FractMask;

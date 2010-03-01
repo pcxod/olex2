@@ -149,7 +149,7 @@ PyObject* pyExpMac(PyObject* self, PyObject* args)  {
     s = PyDict_New();
     PyTuple_SetItem(f, 3, s );
     for( size_t j=0; j < func->GetOptions().Count(); j++ )  {
-      PyDict_SetItem(s, PythonExt::BuildString(func->GetOptions().GetComparable(j)),
+      PythonExt::SetDictItem(s, func->GetOptions().GetComparable(j).c_str(),
                         PythonExt::BuildString(func->GetOptions().GetObject(j)) );
     }
   }
