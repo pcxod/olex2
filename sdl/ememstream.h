@@ -24,13 +24,13 @@ public:
   virtual ~TEMemoryStream()  {  }
   //void operator >> (IEOutputStream *os);
 
-  virtual inline size_t GetSize() const        {  return GetLength();  }
-  virtual inline size_t GetPosition() const {  return Position;  }
-  virtual void SetPosition(size_t pos)  {
+  virtual inline uint64_t GetSize() const {  return GetLength();  }
+  virtual inline uint64_t GetPosition() const {  return Position;  }
+  virtual void SetPosition(uint64_t pos)  {
 #ifdef _OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, pos, 0, GetLength()+1);
 #endif
-    Position = pos;
+    Position = OlxIStream::CheckSizeT(pos);
   }
   // returns updated position
   virtual size_t Write(const void *D, size_t count)  {
@@ -86,17 +86,14 @@ class TEMemoryInputStream : public IDataInputStream {
   size_t Position;
 public:
   TEMemoryInputStream(const void* data, size_t length) : 
-      Data((unsigned char const*)data), 
-      Position(0),
-      Length(length) {  }
+    Data((unsigned char const*)data), 
+    Position(0),
+    Length(length)  {  }
   
-  virtual inline size_t GetSize() const        {  return Length;  }
-  virtual inline size_t GetPosition() const {  return Position;  }
-  virtual void SetPosition(size_t pos)  {
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, pos, 0, Length+1);
-#endif
-    Position = pos;
+  virtual inline uint64_t GetSize() const {  return Length;  }
+  virtual inline uint64_t GetPosition() const {  return Position;  }
+  virtual void SetPosition(uint64_t pos)  {
+    Position = OlxIStream::CheckSizeT(pos);
   }
   virtual void Read(void* to, size_t count)  {
 #ifdef _OLX_DEBUG

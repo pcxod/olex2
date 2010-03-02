@@ -14,7 +14,7 @@ protected:
         if( CheckHeader )
           throw TFunctionFailedException(__OlxSourceInfo, "invalid UTF8 file signature");
         else
-          TEFile::Seek(0, sfStart);
+          TEFile::SetPosition(0);
       }
     }
   }
@@ -72,7 +72,7 @@ public:
           io.SetPosition(0);
       }
     }
-    size_t fl = io.GetSize() - io.GetPosition();
+    size_t fl = io.GetAvailableSizeT();
     char * bf = new char [fl+1];
     io.Read(bf, fl);
     list.Clear();
@@ -94,7 +94,7 @@ public:
           io.SetPosition(0);
       }
     }
-    size_t fl = io.GetSize() - io.GetPosition();
+    size_t fl = io.GetAvailableSizeT();
     char * bf = new char [fl+1];
     io.Read(bf, fl);
     olxwstr rv = TUtf8::Decode(bf, fl);
@@ -104,11 +104,11 @@ public:
   template <class T>
   static void ReadLines(const olxstr& fn, TTStrList<olxwstr,T>& list, bool CheckHeader=true)  {
     TUtf8File file(fn, "rb", CheckHeader);
-    size_t fl = file.Length() - file.GetPosition();
+    size_t fl = file.GetAvailableSizeT();
     char * bf = new char [fl+1];
     file.Read(bf, fl);
     list.Clear();
-    list.Strtok( TUtf8::Decode(bf, fl), '\n', false);
+    list.Strtok(TUtf8::Decode(bf, fl), '\n', false);
     delete [] bf;
     for( size_t i=0; i < list.Count(); i++ )
       if( list[i].EndsWith('\r') )  
@@ -117,7 +117,7 @@ public:
   // returns one long string
   static olxwstr ReadAsString(const olxstr& fn, bool CheckHeader=true)  {
     TUtf8File file(fn, "rb", CheckHeader);
-    size_t fl = file.Length() - file.GetPosition();
+    size_t fl = file.GetAvailableSizeT();
     char * bf = new char [fl+1];
     file.Read(bf, fl);
     olxwstr rv = TUtf8::Decode(bf, fl);
@@ -128,7 +128,7 @@ public:
   static void WriteLines(const olxstr& fn, const TTStrList<olxwstr,T>& list, bool WriteHeader=true)  {
     TUtf8File file(fn, "wb+");
     if( WriteHeader )
-      ((TEFile&)file).Write( &TUtf8::FileSignature, 3);
+      ((TEFile&)file).Write(&TUtf8::FileSignature, 3);
     for( size_t i=0; i < list.Count(); i++ )
       if( i+1 < list.Count() )  file.Writenl( list[i] );
       else                      file.Write( list[i] );
@@ -136,7 +136,7 @@ public:
   template <class T>
   static void WriteLines(IDataOutputStream& out, const TTStrList<olxwstr,T>& list, bool WriteHeader=true)  {
     if( WriteHeader )
-      out.Write( &TUtf8::FileSignature, 3);
+      out.Write(&TUtf8::FileSignature, 3);
     for( size_t i=0; i < list.Count(); i++ )
       if( i+1 < list.Count() )  out.Writenl( list[i] );
       else                      out.Write( list[i] );
@@ -144,7 +144,7 @@ public:
   template <class T>
   static void WriteLines(IDataOutputStream& out, const TTStrList<olxcstr,T>& list, bool WriteHeader=false)  {
     if( WriteHeader )
-      out.Write( &TUtf8::FileSignature, 3);
+      out.Write(&TUtf8::FileSignature, 3);
     for( size_t i=0; i < list.Count(); i++ )
       if( i+1 < list.Count() )  out.Writenl( list[i] );
       else                      out.Write( list[i] );
@@ -153,7 +153,7 @@ public:
   static void WriteLines(const olxstr& fn, const TTStrList<olxcstr,T>& list, bool WriteHeader=false)  {
     TUtf8File file(fn, "wb+");
     if( WriteHeader )
-      ((TEFile&)file).Write( &TUtf8::FileSignature, 3);
+      ((TEFile&)file).Write( TUtf8::FileSignature, 3);
     for( size_t i=0; i < list.Count(); i++ )
       if( i+1 < list.Count() )  file.Writenl( list[i] );
       else                      file.Write( list[i] );

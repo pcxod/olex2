@@ -424,13 +424,13 @@ bool TFileTree::CompareFiles(const olxstr& from, const olxstr& to) const {
   const int bf_sz = 16*1024*1024;
   char* bf1 = new char[bf_sz];
   char* bf2 = new char[bf_sz];
-  size_t fl = f1.Length();
+  uint64_t fl = f1.Length();
   TOnProgress pg;
-  pg.SetMax( fl );
+  pg.SetMax(fl);
   pg.SetPos(0);
   pg.SetAction( from );
-  size_t full = fl/bf_sz,
-    part = fl%bf_sz;
+  size_t full = static_cast<size_t>(fl/bf_sz),
+    part = static_cast<size_t>(fl%bf_sz);
   for( size_t i=0; i < full; i++ )  {
     f1.Read(bf1, bf_sz);
     f2.Read(bf2, bf_sz);

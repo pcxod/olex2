@@ -34,7 +34,10 @@ protected:
   virtual bool _DoDelDir(const olxstr& f) = 0;
   virtual bool _DoNewDir(const olxstr& f) = 0;
   virtual bool _DoAdoptFile(const TFSItem& src)=0;
-  virtual bool _DoesExist(const olxstr& df)=0;
+  /* forced check only affects remote systems like http, if the value is true
+  the check will be performed, otherwise, unless the index is loaded, FS dependent value
+  will be returned */
+  virtual bool _DoesExist(const olxstr& df, bool forced_check)=0;
   virtual IInputStream* _DoOpenFile(const olxstr& src)=0;
   virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) = 0;
 public:
@@ -44,7 +47,7 @@ public:
     Access(afs_FullAccess),  
     OnProgress(Actions.New("ON_PROGRESS"))  {}
 
-  virtual ~AFileSystem()  {  ; }
+  virtual ~AFileSystem()  {}
 
   // called on progress
   TActionQueue &OnProgress;
@@ -73,11 +76,12 @@ public:
       return false;  
     return _DoNewDir(d);
   }
-  // checks if the file exists
-  bool Exists(const olxstr& fn)  {
+  /* checks if the file exists, forced_check is applies to http FS, where
+  the check can take some time. See _DoesExist description for more details. */
+  bool Exists(const olxstr& fn, bool forced_check=false)  {
     if( (Access & afs_BrowseAccess) == 0 ) 
       return false;  
-    return _DoesExist(fn);
+    return _DoesExist(fn, forced_check);
   }
   // returns a stream for a specified stream, must be deleted
   IInputStream* OpenFile(const olxstr& src)  {
@@ -93,14 +97,14 @@ public:
   void RemoveAccessRight(uint16_t access)  {
     Access &= ~access;
   }
-  bool HasAccess(uint16_t access)  const {  return (Access & access) != 0;  }
+  bool HasAccess(uint16_t access) const {  return (Access & access) != 0;  }
   DefPropP(TFSIndex*, Index)
   // returns a base at which the file system is initalised
   inline const olxstr& GetBase() const  {  return FBase; }
   inline void SetBase(const olxstr& b)  {  FBase = TEFile::AddPathDelimeter(b); }
 
   // depends on the file system implementation
-  void DoBreak() {  Break = true;  }
+  void DoBreak()  {  Break = true;  }
 };
 //.............................................................................//
 //.............................................................................//
@@ -112,7 +116,7 @@ protected:
   virtual bool _DoDelDir(const olxstr& f);
   virtual bool _DoNewDir(const olxstr& f);
   virtual bool _DoAdoptFile(const TFSItem& Source);
-  virtual bool _DoesExist(const olxstr& df);
+  virtual bool _DoesExist(const olxstr& df, bool);
   virtual IInputStream* _DoOpenFile(const olxstr& src);
   virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name);
 public:

@@ -103,28 +103,27 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   char  Request[512], *Buffer;
   olxstr FileName = TEFile::UnixPath( Source );
 
-  const int BufferSize = 1024*64;
+  const size_t BufferSize = 1024*64;
 
-  int TotalRead = 0,
-    ThisRead = 1,
-    FileLength = -1;
+  uint64_t TotalRead = 0, FileLength = ~0;
+  int ThisRead = 1;
   Buffer = new char[BufferSize+1];
   static const char LengthId[] = "Content-Length:", EndTagId[]="ETag:";
-
   bool FileAttached = false;
 
   olxcstr Tmp = Url.GetFullHost();
   Tmp << '/' << FileName;
 
   sprintf(Request, "GET %s HTTP/1.0\n\n", Tmp.Replace(' ', "%20").c_str());
+  //sprintf(Request, "HEAD %s HTTP/1.0\n\n", Tmp.Replace(' ', "%20").c_str());
   if( Url.HasProxy() && !Url.GetProxy().GetUser().IsEmpty() && !Url.GetProxy().GetPassword().IsEmpty() )
     sprintf(Request, "Authorization: %s\n\n", olxcstr(Url.GenerateHTTPAuthString()).c_str());
 
   send(Socket, Request, strlen(Request), 0);
   while( ThisRead )  {
-    ThisRead = recv(Socket, Buffer, BufferSize, 0);
-    if( ThisRead == 0 )  break;
-    if( ThisRead == -1 )  break;
+    ThisRead = _read(Buffer, BufferSize);
+    if( ThisRead <= 0 )
+      break;
     else  {
       File->Write(Buffer, ThisRead);
       if( TotalRead == 0 )  {
@@ -133,17 +132,17 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
         if( off != InvalidIndex )  FileAttached = true;
         off = olxstr::o_strposi(Buffer, ThisRead, LengthId, olxstr::o_strlen(LengthId));
         if( off != InvalidIndex )  {
-          off += strlen(LengthId)+1;
+          off += olxstr::o_strlen(LengthId)+1;
           while( (off < (size_t)ThisRead) && Buffer[off] == ' ' ) {  off++; }  // skip spaces
-          while( (off < (size_t)ThisRead) && Buffer[off] >= '0' && Buffer[off] <= '9')  {
+          while( (off < (size_t)ThisRead) && olxstr::o_isdigit(Buffer[off]) )  {
             Tmp << Buffer[off];
             off++;
           }
           if( !Tmp.IsEmpty() && FileAttached )  {
-            FileLength = Tmp.ToInt();
-            Progress.SetPos( 0 );
+            FileLength = Tmp.RadUInt<uint64_t>();
+            Progress.SetPos(0);
             Progress.SetAction(Source);
-            Progress.SetMax( FileLength );
+            Progress.SetMax(FileLength);
             OnProgress.Enter(this, &Progress);
           }
         }
@@ -155,20 +154,11 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
       OnProgress.Execute(this, &Progress);
     }
   }
-  if( (FileLength != -1) && (FileLength <= TotalRead) && FileAttached )  {
+  if( olx_is_valid_size(FileLength) && (FileLength <= TotalRead) && FileAttached )  {
     File->Flush();
-    File->Seek(TotalRead-FileLength, SEEK_SET);
-    int parts = FileLength/BufferSize;
-    for( int i=0; i < parts; i++ )  {
-      File->Read(Buffer, BufferSize);
-      File1->Write(Buffer, BufferSize);
-    }
-    parts = FileLength%BufferSize;
-    if( parts )  {
-      File->Read(Buffer, parts);
-      File1->Write(Buffer, parts);
-    }
-    File1->Seek(0, SEEK_SET);
+    File->SetPosition(TotalRead-FileLength);
+    *File1 << *File;
+    File1->SetPosition(0);
     delete File;
     Progress.SetPos(FileLength);
     OnProgress.Exit(this, &Progress);
@@ -185,10 +175,54 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   }
 }
 //..............................................................................
-bool THttpFileSystem::_DoesExist(const olxstr& f)  {  
+int THttpFileSystem::_read(char* dest, size_t dest_sz) const {
+  int rl = recv(Socket, dest, dest_sz, 0);
+  if( rl <= 0 )  return rl;
+  else if( rl == dest_sz )
+    return rl;
+  size_t total_sz = rl;
+  while( total_sz < dest_sz )  {
+    rl = recv(Socket, &dest[total_sz], dest_sz-total_sz, 0);
+    if( rl < 0 )  return rl;
+    if( rl == 0 )
+      return total_sz;
+    total_sz += rl;
+  }
+  return total_sz;
+}
+//..............................................................................
+bool THttpFileSystem::_DoesExist(const olxstr& f, bool forced_check)  {
   if( Index != NULL )
     return Index->GetRoot().FindByFullName(f) != NULL;
-  return false;  
+  if( !forced_check )  return false;  
+
+  if( Connected )  {
+    Disconnect();
+    Connect();
+  }
+  if( !Connected )
+    throw TFunctionFailedException(__OlxSourceInfo, "could not connect");
+  char  Request[512], *Buffer;
+  olxstr FileName = TEFile::UnixPath(f);
+  const size_t BufferSize = 1024;
+  Buffer = new char[BufferSize+1];
+  olxcstr Tmp = Url.GetFullHost();
+  Tmp << '/' << FileName;
+  sprintf(Request, "HEAD %s HTTP/1.0\n\n", Tmp.Replace(' ', "%20").c_str());
+  if( Url.HasProxy() && !Url.GetProxy().GetUser().IsEmpty() && !Url.GetProxy().GetPassword().IsEmpty() )
+    sprintf(Request, "Authorization: %s\n\n", olxcstr(Url.GenerateHTTPAuthString()).c_str());
+  send(Socket, Request, strlen(Request), 0);
+  int read = _read(Buffer, BufferSize);
+  if( read <= 0 )  {
+    delete [] Buffer;
+    return false;
+  }
+  TEFile tmp("e:\\xxx.txt", "w+b");
+  tmp.Write(Buffer, read);
+  tmp.Close();
+  TCStrList toks;
+  toks.LoadFromTextArray(Buffer, read, true);
+  return toks[0].EndsWith("200 OK");
 }
 //..............................................................................
 

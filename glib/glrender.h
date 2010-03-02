@@ -27,7 +27,8 @@ BeginGlNamespace()
 
 const uint8_t
   glStereoColor = 0x0001,
-  glStereoCross = 0x0002;
+  glStereoCross = 0x0002,
+  glStereoAnaglyph = 0x0003;
 
 class AGDrawObject;
 class TGlGroup;
@@ -151,8 +152,9 @@ public:
   DefPropC(TGlOption, FogColor)
 
   float GetExtraZoom() const {  return FZoom;  }
-  bool IsColorStereo() const {  return (StereoFlag&glStereoColor) != 0;  }
-  bool IsCroddStereo() const {  return (StereoFlag&glStereoCross) != 0;  }
+  bool IsColorStereo() const {  return StereoFlag==glStereoColor;  }
+  bool IsCrossStereo() const {  return StereoFlag==glStereoCross;  }
+  bool IsAnaglyphStereo() const {  return StereoFlag==glStereoAnaglyph;  }
   
   void Initialise();
   void InitLights();
@@ -181,7 +183,7 @@ public:
   const vec3d& MaxDim() const { return FMaxV; }
   const vec3d& MinDim() const { return FMinV; }
   /* the actual width is to be used for modifying/restoring canvas size */
-  int GetActualWidth()  const {  return ((StereoFlag&glStereoCross) != 0) ? FOWidth : FWidth;  }
+  int GetActualWidth()  const {  return (StereoFlag==glStereoCross) ? FOWidth : FWidth;  }
   /* opposite to the above one - this is used in all model calcuations */
   int GetWidth()  const {  return FWidth;  }
   int GetHeight() const {  return FHeight;  }

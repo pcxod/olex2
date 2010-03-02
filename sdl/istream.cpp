@@ -2,12 +2,13 @@
 
 void IInputStream::operator >> (IOutputStream &os)  {
   const size_t BufferSize = 64*1024;
-  const size_t length = GetSize();
+  const uint64_t length = GetSize() - GetPosition();
   if( length < BufferSize )  {
-    char *Buffer = new char [length];
+    const size_t _length = static_cast<size_t>(length);
+    char *Buffer = new char [_length];
     try  {
-      Read( Buffer, length );
-      os.Write( Buffer, length );
+      Read(Buffer, _length);
+      os.Write(Buffer, _length);
     }
     catch( const TExceptionBase& exc )  {
       delete [] Buffer;
@@ -17,15 +18,15 @@ void IInputStream::operator >> (IOutputStream &os)  {
     return;
   }
   char *Buffer = new char [BufferSize];
-  size_t fullSize = length / BufferSize;
-  size_t partSize = length % BufferSize;
+  size_t fullSize = static_cast<size_t>(length/BufferSize);
+  size_t partSize = static_cast<size_t>(length%BufferSize);
   try  {
     for( size_t i=0; i < fullSize; i++ )  {
-      Read( Buffer, BufferSize );
-      os.Write( Buffer, BufferSize );
+      Read(Buffer, BufferSize);
+      os.Write(Buffer, BufferSize);
     }
-    Read( Buffer, partSize );
-    os.Write( Buffer, partSize );
+    Read(Buffer, partSize);
+    os.Write(Buffer, partSize);
   }
   catch( const TExceptionBase& exc )  {
    delete [] Buffer;
@@ -36,13 +37,14 @@ void IInputStream::operator >> (IOutputStream &os)  {
 
 IOutputStream& IOutputStream::operator << (IInputStream &is)  {
   const size_t BufferSize = 64*1024;
-  const size_t length = is.GetSize();
+  const uint64_t length = is.GetSize() - is.GetPosition();
   if( length == 0 )  return *this;
   if( length < BufferSize )  {
-    char *Buffer = new char [length];
+    const size_t _length = static_cast<size_t>(length);
+    char *Buffer = new char [_length];
     try  {
-      is.Read( Buffer, length );
-      Write( Buffer, length );
+      is.Read(Buffer, _length);
+      Write(Buffer, _length);
     }
     catch( const TExceptionBase& exc )  {
       delete [] Buffer;
@@ -52,15 +54,15 @@ IOutputStream& IOutputStream::operator << (IInputStream &is)  {
     return *this;
   }
   char *Buffer = new char [BufferSize];
-  size_t fullSize = length / BufferSize;
-  size_t partSize = length % BufferSize;
+  size_t fullSize = static_cast<size_t>(length/BufferSize);
+  size_t partSize = static_cast<size_t>(length%BufferSize);
   try  {
     for( size_t i=0; i < fullSize; i++ )  {
-      is.Read( Buffer, BufferSize );
-      Write( Buffer, BufferSize );
+      is.Read(Buffer, BufferSize);
+      Write(Buffer, BufferSize);
     }
-    is.Read( Buffer, partSize );
-    Write( Buffer, partSize );
+    is.Read(Buffer, partSize);
+    Write(Buffer, partSize);
   }
   catch( const TExceptionBase& exc )  {
    delete [] Buffer;

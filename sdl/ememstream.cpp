@@ -16,7 +16,9 @@ UseEsdlNamespace()
 //----------------------------------------------------------------------------//
 //TStream function bodies
 //----------------------------------------------------------------------------//
-TEMemoryStream::TEMemoryStream(IInputStream& is) : TDirectionalList<char>(is.GetSize()+1)  {
+TEMemoryStream::TEMemoryStream(IInputStream& is) :
+  TDirectionalList<char>(OlxIStream::CheckSizeT(is.GetSize()+1))
+{
   Position = 0;
   is >> *(IOutputStream*)this;
   SetPosition(0);
@@ -24,7 +26,7 @@ TEMemoryStream::TEMemoryStream(IInputStream& is) : TDirectionalList<char>(is.Get
 //..............................................................................
 void TEMemoryStream::operator >> (IOutputStream &os)  {
   size_t pos = Position;
-  TDirectionalListEntry<char>* en = GetEntryAtPosition( pos );
+  TDirectionalListEntry<char>* en = GetEntryAtPosition(pos);
   if( en == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "no entry at specified position");
   os.Write( en->GetData(), en->GetSize()-pos );
@@ -35,28 +37,38 @@ void TEMemoryStream::operator >> (IOutputStream &os)  {
 //..............................................................................
 IOutputStream& TEMemoryStream::operator << (IInputStream &is)  {
   this->CheckInitialised();
-
+  const size_t _off = GetLength() - Position;
   // we are not at the end of the stream ..
-  if( (GetLength() - Position) != 0 )  {
-    size_t size = GetLength() - Position;
-    char* mem = new char[ size ];
-    is.Read( mem, size );
-    // debug - remove the assignement after
-    TDirectionalList<char>::Write( mem, Position, size );
-    delete [] mem;
-    size = is.GetSize() - size;
-    mem = TTBuffer<char>::Alloc(size);
-    TDirectionalListEntry<char>* en = GetTail();
-    is.Read( mem, size );
-    // this takes the ownership of the allocated memory
-    en->AddEntry( mem, size );
-    UpdateLength();
-    Position += is.GetSize();
+  if( _off != 0 )  {
+    const size_t _asize = is.GetAvailableSizeT();
+    if( _asize < _off )  {  // have enough room for the is
+      char* mem = new char[_asize];
+      is.Read(mem, _asize);
+      TDirectionalList<char>::Write(mem, Position, _asize);
+      delete [] mem;
+      UpdateLength();
+      Position += _asize;
+    }
+    else  {  // have to created a new segment
+      size_t size = GetLength() - Position;
+      char* mem = new char[size];
+      is.Read(mem, size);
+      TDirectionalList<char>::Write(mem, Position, size);
+      delete [] mem;
+      size = is.GetAvailableSizeT();
+      mem = TTBuffer<char>::Alloc(size);
+      TDirectionalListEntry<char>* en = GetTail();
+      is.Read(mem, size);
+      // this takes the ownership of the allocated memory
+      en->AddEntry(mem, size);
+      UpdateLength();
+      Position += _asize;
+    }
   }
   else  {
     TDirectionalListEntry<char>* en = GetTail();
-    size_t size = is.GetSize();
-    if( en->GetCapacity() - en->GetSize() )  {
+    size_t size = is.GetAvailableSizeT();
+    if( (en->GetCapacity() - en->GetSize()) != 0 )  {
       size_t towrite = olx_min(en->GetCapacity() - en->GetSize(), size);
       char* bf = new char[towrite];
       is.Read(bf, towrite);
@@ -78,7 +90,7 @@ IOutputStream& TEMemoryStream::operator << (IInputStream &is)  {
 //..............................................................................
 void TEMemoryStream::SaveToFile(const olxstr& FN)  {
   TEFile file(FN, "w+b");
-  const size_t pos = GetPosition();
+  const size_t pos = Position;
   SetPosition(0);
   file << *this;
   SetPosition(pos);

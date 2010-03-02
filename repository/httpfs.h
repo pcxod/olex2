@@ -24,6 +24,8 @@ class THttpFileSystem: public AFileSystem, public IEObject  {
 #endif
   bool Connected, Successful;
   TUrl Url;
+  // reads as many bytes as available within [0..dest_sz)
+  int _read(char* dest, size_t dest_sz) const;
 protected:
   void GetAddress(struct sockaddr* Result);
   bool Connect();
@@ -32,7 +34,7 @@ protected:
   virtual bool _DoDelDir(const olxstr& f)  {  return false;  }
   virtual bool _DoNewDir(const olxstr& f)  {  return false;  }
   virtual bool _DoAdoptFile(const TFSItem& Source) {  return false;  }
-  virtual bool _DoesExist(const olxstr& df);
+  virtual bool _DoesExist(const olxstr& df, bool);
   virtual IInputStream* _DoOpenFile(const olxstr& src);
   virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) {  return false;  }
 public:

@@ -8,9 +8,9 @@ BeginEsdlNamespace()
 
 class TOutStream : public IDataOutputStream  {
 protected:
-  virtual size_t GetSize() const  {  return 1;  }
-  virtual size_t GetPosition() const  {  return 1;  }
-  virtual void SetPosition(size_t newPos)  {
+  virtual uint64_t GetSize() const  {  return 1;  }
+  virtual uint64_t GetPosition() const  {  return 1;  }
+  virtual void SetPosition(uint64_t newPos)  {
     throw TNotImplementedException(__OlxSourceInfo);
   }
   virtual size_t Write(const void* data, size_t len)  {

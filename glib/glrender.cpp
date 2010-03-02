@@ -297,7 +297,7 @@ void TGlRenderer::Resize(int w, int h)  {
 void TGlRenderer::Resize(int l, int t, int w, int h, float Zoom)  {
   FLeft = l;
   FTop = t;
-  if( (StereoFlag&glStereoCross) != 0 )  {
+  if( StereoFlag == glStereoCross )  {
     FWidth = w/2;
     FOWidth = w;
   }
@@ -450,7 +450,7 @@ void TGlRenderer::Draw()  {
   //glLineWidth( (float)(0.07/GetScale()) );
   //glPointSize( (float)(0.07/GetScale()) );  
   GetScene().StartDraw();
-  if( (StereoFlag&glStereoColor) != 0 )  {
+  if( StereoFlag == glStereoColor )  {
     const double ry = GetBasis().GetRY();
     GetBasis().RotateY(ry+StereoAngle);
     SetView();
@@ -470,13 +470,36 @@ void TGlRenderer::Draw()  {
 
     GetBasis().RotateY(ry);
   }
-  else if( (StereoFlag&glStereoCross) != 0 )  {
+  // http://local.wasp.uwa.edu.au/~pbourke/texture_colour/anaglyph/
+  else if( StereoFlag == glStereoAnaglyph )  {
     const double ry = GetBasis().GetRY();
-    int _l = FLeft;
     GetBasis().RotateY(ry+StereoAngle);
     SetView();
+    glClearAccum(0.0,0.0,0.0,0.0);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
     DrawObjects(0, 0, false, false);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glAccum(GL_LOAD, 0.5);
+
     GetBasis().RotateY(ry-StereoAngle);
+    SetView();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glColorMask(GL_TRUE,GL_FALSE,GL_FALSE,GL_TRUE);
+    DrawObjects(0, 0, false, false);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glAccum(GL_ACCUM, 0.5);
+    glAccum(GL_RETURN, 1.0);
+    GetBasis().RotateY(ry);
+  }
+  else if( StereoFlag == glStereoCross )  {
+    const double ry = GetBasis().GetRY();
+    int _l = FLeft;
+    GetBasis().RotateY(ry-StereoAngle);
+    SetView();
+    DrawObjects(0, 0, false, false);
+    GetBasis().RotateY(ry+StereoAngle);
     FLeft = FWidth;
     SetView();
     DrawObjects(0, 0, false, false);
@@ -492,7 +515,7 @@ void TGlRenderer::Draw()  {
 //..............................................................................
 void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimitives)  {
   const bool Select = SelectObjects || SelectPrimitives;
-  const bool skip_mat = (StereoFlag&glStereoColor) != 0;
+  const bool skip_mat = StereoFlag==glStereoColor;
   static const int DrawMask = sgdoVisible|sgdoSelected|sgdoDeleted|sgdoGrouped;
   if( !FIdentityObjects.IsEmpty() || FSelection->GetGlM().IsIdentityDraw() )  {
     if( FPerspective )  {
@@ -1198,10 +1221,12 @@ void TGlRenderer::LibCalcZoom(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  {
-    if( (StereoFlag&glStereoColor) != 0 )
+    if( StereoFlag == glStereoColor )
       E.SetRetVal<olxstr>("color");
-    else if( (StereoFlag&glStereoCross) != 0 )
+    else if( StereoFlag == glStereoCross )
       E.SetRetVal<olxstr>("cross");
+    else if( StereoFlag == glStereoAnaglyph )
+      E.SetRetVal<olxstr>("anaglyph");
     else
       E.SetRetVal<olxstr>("none");
   }
@@ -1212,6 +1237,8 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
     }
     if( Params[0].Equalsi("color") )
       StereoFlag = glStereoColor;
+    if( Params[0].Equalsi("anaglyph") )
+      StereoFlag = glStereoAnaglyph;
     else if( Params[0].Equalsi("cross") )  {
       FOWidth = FWidth;
       FWidth /= 2;

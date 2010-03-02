@@ -14,9 +14,9 @@ class TLog: public IEObject, public IDataOutputStream  {
 protected:
   virtual size_t Write(const void *Data, size_t size);
   virtual size_t Writenl(const void *Data, size_t size);
-  virtual size_t GetSize() const {  return 0;  }
-  virtual size_t GetPosition() const {  return 0;  }
-  virtual void SetPosition(size_t newPos) {    }
+  virtual uint64_t GetSize() const {  return 0;  }
+  virtual uint64_t GetPosition() const {  return 0;  }
+  virtual void SetPosition(uint64_t newPos)  {}
 
   void Add(const olxstr &str)  {
     for( size_t i=0; i < Streams.Count(); i++ )

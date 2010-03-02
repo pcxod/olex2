@@ -43,10 +43,11 @@ protected:
   virtual size_t Write(const olxstr& str);
   virtual size_t Writenl(const olxstr& str);
   virtual IOutputStream& operator << (IInputStream& is);
-  virtual size_t GetSize() const;
-  virtual size_t GetPosition() const;
-  virtual void SetPosition(size_t newPos);
-
+  virtual uint64_t GetSize() const {  return 1;  }
+  virtual uint64_t GetPosition() const { return 0;  }
+  virtual void SetPosition(uint64_t newPos)  {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
   virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL);
 public:
   TGlConsole(TGlRenderer& Render, const olxstr& collectionName);

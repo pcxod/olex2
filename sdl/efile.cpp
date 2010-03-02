@@ -247,29 +247,44 @@ void TEFile::Read(void *Bf, size_t count)  {
     throw TFileExceptionBase(__OlxSourceInfo, FName, "fread failed" );
 }
 //..............................................................................
-void TEFile::SetPosition(size_t p)  {
-  CheckHandle();
-  if( fseek(FHandle, (long)p, SEEK_SET) != 0 )  
+void TEFile::_seek(uint64_t off, int origin) const {
+#ifdef __WIN32__
+  if( _fseeki64(FHandle, off, origin) != 0 )  
+#else
+  if( fseek(FHandle, static_cast<long>(off), origin) != 0 )  
+#endif
     throw TFileExceptionBase(__OlxSourceInfo, FName, "fseek failed" );
 }
 //..............................................................................
-size_t TEFile::GetPosition() const  {
+void TEFile::SetPosition(uint64_t p)  {
   CheckHandle();
+  _seek(p, SEEK_SET);
+}
+//..............................................................................
+uint64_t TEFile::GetPosition() const  {
+  CheckHandle();
+#ifdef __WIN32__
+  int64_t v = _ftelli64(FHandle);
+#else
   long v = ftell(FHandle);
+#endif
   if( v == -1 )
     throw TFileExceptionBase(__OlxSourceInfo, FName, "ftell failed" );
   return v;
 }
 //..............................................................................
-long TEFile::Length() const  {
+uint64_t TEFile::Length() const  {
   CheckHandle();
-  size_t currentPos = GetPosition();
-  if( fseek( FHandle, 0, SEEK_END) )  
-    throw TFileExceptionBase(__OlxSourceInfo, FName, "fseek failed");
+  uint64_t currentPos = GetPosition();
+  _seek(0, SEEK_END);
+#ifdef __WIN32__
+  int64_t length = _ftelli64(FHandle);
+#else
   long length = ftell( FHandle );
+#endif
+  _seek(currentPos, SEEK_SET);
   if( length == -1 )
     throw TFileExceptionBase(__OlxSourceInfo, FName, "ftell failed" );
-  fseek(FHandle, (long)currentPos, SEEK_SET);
   return length;
 }
 //..............................................................................
@@ -285,12 +300,6 @@ size_t TEFile::Write(const void *Bf, size_t count)  {
   if( res == 0 )
     throw TFileExceptionBase(__OlxSourceInfo, FName, "fwrite failed" );
   return res;
-}
-//..............................................................................
-void TEFile::Seek( long Position, const int From)  {
-  CheckHandle();
-  if( fseek(FHandle, Position, From) != 0 )
-    throw TFileExceptionBase(__OlxSourceInfo, FName, "fseek failed");
 }
 //..............................................................................
 bool TEFile::Exists(const olxstr& F)  {

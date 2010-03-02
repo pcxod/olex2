@@ -72,7 +72,7 @@ protected:
   virtual bool _DoDelDir(const olxstr& f)  {  return false;  }
   virtual bool _DoNewDir(const olxstr& f)  {  return false;  }
   virtual bool _DoAdoptFile(const TFSItem& Source) {  return false;  }
-  virtual bool _DoesExist(const olxstr& df) {  return zip.FileExists(df);  }
+  virtual bool _DoesExist(const olxstr& df, bool)  {  return zip.FileExists(df);  }
   virtual IInputStream* _DoOpenFile(const olxstr& src);
   virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) {  return false;  }
 public:
@@ -97,9 +97,9 @@ public:
   virtual void Read(void* data, size_t sz)  {
     is.Read(data, sz);
   }
-  virtual void SetPosition(size_t i) {  is.SeekI(i);  }
-  virtual size_t GetPosition() const {  return is.TellI();  }
-  virtual size_t GetSize() const {  return is.GetSize();  }
+  virtual void SetPosition(uint64_t i) {  is.SeekI(OlxIStream::CheckSize<off_t>(i));  }
+  virtual uint64_t GetPosition() const {  return is.TellI();  }
+  virtual uint64_t GetSize() const {  return is.GetSize();  }
 };
 
 class TwxOutputStreamWrapper : public IOutputStream {
@@ -109,9 +109,9 @@ public:
   virtual size_t Write(const void* data, size_t sz)  {
     return os.Write(data, sz).LastWrite();
   }
-  virtual void SetPosition(size_t i) {  os.SeekO(i);  }
-  virtual size_t GetPosition() const {  return os.TellO();  }
-  virtual size_t GetSize() const {  return os.GetSize();  }
+  virtual void SetPosition(uint64_t i) {  os.SeekO(OlxIStream::CheckSize<off_t>(i));  }
+  virtual uint64_t GetPosition() const {  return os.TellO();  }
+  virtual uint64_t GetSize() const {  return os.GetSize();  }
 };
 
 #endif  // __WXWIDGETS__

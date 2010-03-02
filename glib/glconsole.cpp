@@ -600,18 +600,6 @@ IOutputStream& TGlConsole::operator << (IInputStream &is)  {
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
-size_t TGlConsole::GetSize() const  {
-  return 1;
-}
-//..............................................................................
-size_t TGlConsole::GetPosition() const  {
-  return 0;
-}
-//..............................................................................
-void TGlConsole::SetPosition(size_t newPos)  {
-  throw TNotImplementedException(__OlxSourceInfo);
-}
-//..............................................................................
 bool TGlConsole::GetDimensions(vec3d &Max, vec3d &Min)  {
   Max = vec3d(0.5, 0.5, 0);
   Min = vec3d(-0.5, -0.5, 0);
