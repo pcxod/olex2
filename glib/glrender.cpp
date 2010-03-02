@@ -450,20 +450,25 @@ void TGlRenderer::Draw()  {
   //glLineWidth( (float)(0.07/GetScale()) );
   //glPointSize( (float)(0.07/GetScale()) );  
   GetScene().StartDraw();
+
   if( StereoFlag == glStereoColor )  {
     const double ry = GetBasis().GetRY();
     GetBasis().RotateY(ry+StereoAngle);
     SetView();
-    //glDisable(GL_LIGHTING);
     glDisable(GL_ALPHA_TEST);
     glDisable(GL_BLEND);
     glDisable(GL_CULL_FACE);
     glEnable(GL_COLOR_MATERIAL);
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+
     glColor3f(1, 0, 0);
     DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry-StereoAngle);
     SetView();
+
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
     glColor3f(0, 0, 1);
     DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry);
