@@ -350,12 +350,12 @@ AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res) const {
       update = ((TETime::EpochTime() - sf.last_updated ) > SecsADay*30 );
 
     if( update )  {  
-      AFileSystem* FS = FindActiveRepositoryFS(&repo);
+      AFileSystem* FS = FindActiveRepositoryFS(&repo, AddTagPart(EmptyString, true)+"index.ind");
       if( FS == NULL )  {
         if( res != NULL )  *res = updater::uapi_NoSource;
         return NULL;
       }
-      FS->SetBase( AddTagPart(FS->GetBase(), true) );
+      FS->SetBase(AddTagPart(FS->GetBase(), true));
       return FS;
     }
   }
@@ -363,24 +363,17 @@ AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res) const {
   return NULL;
 }
 //.............................................................................
-AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name) const  {
-  olxstr def_repo("http://www.olex2.org/olex2-distro/");
+AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name, const olxstr& check_file) const  {
   //olxstr repo, def_repo("http://www.olex2.org/olex-distro-test/");
   TStrList repositories;
-  olxstr mirrors_fn = GetMirrorsFileName();
-  if( TEFile::Exists(mirrors_fn) )
-    repositories.LoadFromFile(mirrors_fn);
-  if( repositories.IndexOf(def_repo) == InvalidIndex )
-    repositories.Insert(0, def_repo);
-  if( settings.IsValid() && !settings.repository.IsEmpty() )  {
-    const size_t ind = repositories.IndexOf(settings.repository);
-    if( ind != InvalidIndex && ind != 0 )
-      repositories.Delete(ind);
-    repositories.Insert(0, settings.repository);
-  }
+  GetAvailableMirrors(repositories);
   for( size_t i=0; i < repositories.Count(); i++ )  {
     AFileSystem* fs = FSFromString(repositories[i], settings.proxy);
     if( fs != NULL )  {
+      if( !check_file.IsEmpty() && !fs->Exists(fs->GetBase().SubStringFrom(0,1)+check_file, true) )  {
+        delete fs;
+        continue;
+      }
       if( repo_name != NULL )
         *repo_name = repositories[i];
       return fs;
@@ -390,12 +383,11 @@ AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name) const  {
 }
 //.............................................................................
 void UpdateAPI::GetAvailableMirrors(TStrList& res) const  {
-  olxstr def_repo("http://www.olex2.org/olex2-distro/");
   olxstr mirrors_fn = GetMirrorsFileName();
   if( TEFile::Exists(mirrors_fn) )
     res.LoadFromFile(mirrors_fn);
-  if( res.IndexOf(def_repo) == InvalidIndex )
-    res.Insert(0, def_repo);
+  if( res.IndexOf(GetDefaultRepository()) == InvalidIndex )
+    res.Insert(0, GetDefaultRepository());
   if( settings.IsValid() && !settings.repository.IsEmpty() )  {
     const size_t ind = res.IndexOf(settings.repository);
     if( ind != InvalidIndex && ind != 0 )
@@ -409,13 +401,13 @@ void UpdateAPI::GetAvailableRepositories(TStrList& res) const {
   olxstr repo_name, 
          inst_zip_fn = TBasicApp::GetBaseDir() + GetInstallationFileName();
   if( TEFile::Exists(inst_zip_fn) )  
-    res.Add( inst_zip_fn );
-  AFileSystem* fs = FindActiveRepositoryFS(&repo_name);
+    res.Add(inst_zip_fn);
+  AFileSystem* fs = FindActiveRepositoryFS(&repo_name, GetInstallationFileName());
   if( fs == NULL )  return;
   IInputStream* is= NULL;
   try  { is = fs->OpenFile(fs->GetBase() + GetTagsFileName());  }
   catch( const TExceptionBase& exc )  {
-    log.Add( exc.GetException()->GetFullMessage() );
+    log.Add(exc.GetException()->GetFullMessage());
     delete fs;
     return;
   }
@@ -430,11 +422,11 @@ void UpdateAPI::GetAvailableRepositories(TStrList& res) const {
     res[i] = repo_name + res[i];
   // LoadFromTextStream clears the list...
   if( TEFile::Exists(inst_zip_fn) )  
-    res.Insert( 0, inst_zip_fn );
+    res.Insert(0, inst_zip_fn);
 }
 //.............................................................................
 void UpdateAPI::GetAvailableTags(TStrList& res, olxstr& repo_name) const {
-  AFileSystem* fs = FindActiveRepositoryFS(&repo_name);
+  AFileSystem* fs = FindActiveRepositoryFS(&repo_name, GetTagsFileName());
   if( fs == NULL )  return;
   IInputStream* is= NULL;
   try  { is = fs->OpenFile(fs->GetBase() + GetTagsFileName());  }

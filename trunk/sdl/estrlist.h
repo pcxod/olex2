@@ -1,10 +1,8 @@
 //----------------------------------------------------------------------------//
-// namespace TEObjects: lists
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-#ifndef estrlistH
-#define estrlistH
-//---------------------------------------------------------------------------
+#ifndef olx_sdl_strlist_H
+#define olx_sdl_strlist_H
 #include "typelist.h"
 #include "estrlist.h"
 #include "talist.h"
@@ -217,19 +215,22 @@ public:
     }
     return E;
   }
-  // convinience method
-  void LoadFromTextStream(IInputStream& io)  {
+  // convinience methods
+  void LoadFromTextArray(char *bf, size_t bf_sz, bool take_ownership)  {
     Clear();
-    size_t fl = io.GetSize() - io.GetPosition();
-    if( fl == 0 )  return;
-    char * const&bf = new char [fl+1];
-    io.Read(bf, fl);
-    bf[fl] = '\0';
-    Strtok(olxcstr(bf, fl), '\n', false); // must preserve the new lines on Linux!!! 2008.08.17
+    const olxcstr str = take_ownership ? olxcstr::FromExternal(bf, bf_sz) : olxcstr(bf, bf_sz);
+    Strtok(str, '\n', false); // must preserve the new lines on Linux!!! 2008.08.17
     for( size_t i=0; i < Count(); i++ )
       if( GetString(i).EndsWith('\r') )  
-        GetString(i).SetLength( GetString(i).Length() -1 );
-    delete [] bf;
+        GetString(i).SetLength(GetString(i).Length()-1);
+  }
+  void LoadFromTextStream(IInputStream& io)  {
+    Clear();
+    size_t fl = io.GetAvailableSizeT();
+    if( fl == 0 )  return;
+    char * bf = new char [fl+1];
+    io.Read(bf, fl);
+    LoadFromTextArray(bf, fl, true);
   }
 
   void LoadFromFile(const olxstr& fileName)  {
@@ -254,9 +255,9 @@ public:
   void SaveToTextStream(IDataOutputStream& os) const {
     if( IsEmpty() )  return;
     for( size_t i=0; i < Count()-1; i++ )
-      os.Writenl( Strings[i]->String.raw_str(), Strings[i]->String.RawLen());
+      os.Writenl(Strings[i]->String.raw_str(), Strings[i]->String.RawLen());
     if( Count() > 0 )
-      os.Writenl( Strings.Last()->String.raw_str(), Strings.Last()->String.RawLen());
+      os.Writenl(Strings.Last()->String.raw_str(), Strings.Last()->String.RawLen());
   }
   void SaveToFile(const olxstr& fileName) const {
     TEFile file(fileName, "wb+");

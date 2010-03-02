@@ -97,7 +97,7 @@ bool TOSFileSystem::_DoNewDir(const olxstr& DN)  {
   return TEFile::MakeDir(DN);
 }
 //..............................................................................
-bool TOSFileSystem::_DoesExist(const olxstr& FN)  {
+bool TOSFileSystem::_DoesExist(const olxstr& FN, bool)  {
   return TEFile::Exists(FN);
 }
 IInputStream* TOSFileSystem::_DoOpenFile(const olxstr& fileName)  {

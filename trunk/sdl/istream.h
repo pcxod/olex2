@@ -19,18 +19,39 @@ class OlxIStream  {
 public:
   virtual ~OlxIStream()  {  ;  }
   // these functions must throw an exception if an error happens
-  virtual size_t GetSize() const = 0;
-  virtual size_t GetPosition() const = 0;
-  virtual void SetPosition(size_t newPos) = 0;
-  inline void IncPosition() {  SetPosition(GetPosition()+1);  }
-  inline void DecPosition() {  SetPosition(GetPosition()-1);  }
+  virtual uint64_t GetSize() const = 0;
+  virtual uint64_t GetPosition() const = 0;
+  virtual void SetPosition(uint64_t newPos) = 0;
+  /* if do_throw is true throws an exception if size is larger than size_t (so that ne etc will fail)
+  otherwise will return max size_t. Works ONLY for unsigned types! */
+  template <typename IT> static IT CheckSize(uint64_t sz, bool do_throw=true)  {
+    static const uint64_t _mask = ~(uint64_t)((IT)(~0));
+    if( (sz&_mask) != 0 )  {
+      if( do_throw )  {
+        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid stream position");
+        return 0;  // make the compiler happy
+      }
+      else
+        return ~0;
+    }
+    else
+      return static_cast<IT>(sz);
+  }
+  static size_t CheckSizeT(uint64_t sz, bool do_throw=true)  {
+    return CheckSize<size_t>(sz, do_throw);
+  }
+  /* if do_throw is true throws an exception if size is larger than size_t (so that ne etc will fail)
+  otherwise will return max size_t */
+  size_t GetAvailableSizeT(bool do_throw=true) const {
+    return CheckSizeT(GetSize() - GetPosition(), do_throw);
+  }
 };
 
 class IInputStream: public OlxIStream  {
 protected:
   inline IInputStream& ValidateRead(size_t amount)  {
     if( (GetPosition() + amount) <= GetSize() )  return *this;
-    TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "inalid stream position");
+    TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid stream position");
     return *this;  /// just to avoid bloody warnings
   }
 public:
@@ -40,7 +61,7 @@ public:
 //...................................................................................
   // return the number of actual bytes read
   size_t SafeRead(void *Data, size_t size)  {
-    size_t toread = olx_min(GetSize()-GetPosition(), size);
+    size_t toread = olx_min(GetAvailableSizeT(false), size);
     if( toread == 0 )  return 0;
     Read(Data, toread);
     return toread;
@@ -68,7 +89,7 @@ public:
 //...................................................................................
   // beware not to pass classes here!
   template <class T> inline void operator >> (T& v)  {
-    ValidateRead(sizeof(T)).Read( &v, sizeof(T) );
+    ValidateRead(sizeof(T)).Read(&v, sizeof(T) );
   }
 };
 

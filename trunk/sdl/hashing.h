@@ -90,8 +90,8 @@ protected:
 
   olxcstr DoDigest(IInputStream& stream)  {
     unsigned char cbf[64];
-    const size_t blocks = stream.GetSize()/64;
-    for( size_t i=0; i < blocks; i++ )  {
+    const uint64_t blocks = stream.GetSize()/64;
+    for( uint64_t i=0; i < blocks; i++ )  {
       stream.Read(cbf, 64);
       Tools::hs_copy(cbf, bf, 64);
       Impl::digest64( bf );

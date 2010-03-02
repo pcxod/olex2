@@ -184,12 +184,13 @@ public:
   if down - checks the mirrors.txt file, if no valid repositories found, returns empty string */
   olxstr FindActiveRepositoryUrl() const  {
     olxstr repo_name;
-    AFileSystem* fs = FindActiveRepositoryFS(&repo_name);
+    AFileSystem* fs = FindActiveRepositoryFS(&repo_name, GetInstallationFileName());
     if( fs != NULL )  delete fs;
     return repo_name;
   }
-  // as above, but returns newly created file system wrapper or NULL if failed
-  AFileSystem* FindActiveRepositoryFS(olxstr* repo_name=NULL) const;
+  /* as above, but returns newly created file system wrapper or NULL if failed;
+  if check file is not empty, the file existence will be also checked */
+  AFileSystem* FindActiveRepositoryFS(olxstr* repo_name=NULL, const olxstr& check_file=EmptyString) const;
   // fills list with available repositories
   void GetAvailableRepositories(TStrList& res) const;
   // fills list with available repositories

@@ -114,6 +114,8 @@ protected:
   static bool DoesMatchMasks(const olxstr& fn, const MaskList& masks);
   // used to build masks ( ans association of mask by name and extension) from a semicolon separated string of masks
   static void BuildMaskList(const olxstr& mask, MaskList& out);
+  // a convinience, const, function
+  void _seek(uint64_t off, int origin) const;
 public:
   TEFile();
   TEFile(const olxstr& F, const olxstr& Attribs);
@@ -122,10 +124,9 @@ public:
   bool Open(const olxstr& F, const olxstr& Attribs);
   // closes the file, if was open - returns true, might throw an exception if fclose failed
   bool Close();
-  long Length() const;
+  uint64_t Length() const;
   virtual void Flush();
-  void Seek(long Position, const int From);
-  FILE* Handle()  const {  return FHandle; }
+  FILE* Handle() const {  return FHandle;  }
   FILE* ReleaseHandle() {
     FILE* rv = FHandle;
     FHandle = NULL;
@@ -151,10 +152,12 @@ public:
   template <class T> inline size_t Write(const T& data)  {  return IDataOutputStream::Write(data);  }
   template <class T> inline size_t Writenl(const T& data)  {  return IDataOutputStream::Writenl(data);  }
 
-  virtual inline size_t GetSize() const {  return Length();  }
-  virtual void SetPosition(size_t p);
-  virtual size_t GetPosition() const;
-
+  virtual inline uint64_t GetSize() const {  return Length();  }
+  virtual void SetPosition(uint64_t p);
+  virtual uint64_t GetPosition() const;
+  size_t GetAvailableSizeT(bool do_throw=true) const {
+    return OlxIStream::GetAvailableSizeT(do_throw);
+  }
   inline const olxstr& GetName() const {  return FName; }
   // closes the file handle and deletes the file
   bool Delete();

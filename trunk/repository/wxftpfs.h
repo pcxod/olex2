@@ -79,11 +79,11 @@ protected:
     return ms;  
     
   }
-  virtual bool _DoesExist(const olxstr& DN)  {  
+  virtual bool _DoesExist(const olxstr& DN, bool)  {
     olxstr fn( NormaliseName(DN).u_str() );
     if( Index != NULL )
       return Index->GetRoot().FindByFullName(fn) != NULL;
-    return Ftp.FileExists( fn.u_str() );  
+    return Ftp.FileExists(fn.u_str());  
   }
 
   virtual bool _DoDelFile(const olxstr& FN)     {  // to dangerous

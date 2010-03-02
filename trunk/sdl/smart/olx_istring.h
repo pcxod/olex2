@@ -954,8 +954,12 @@ public:
   template <typename FT> FT ToFloat() const {  return o_atof<FT>(T::Data(), T::_Length);  }
   //............................................................................
   void SetLength(size_t newLen)  {
-    T::checkBufferForModification(newLen);
-    if( newLen < T::_Length )  DecLength( T::_Length - newLen );
+    if( newLen < T::_Length )
+      DecLength(T::_Length - newLen);
+    else  {
+      T::checkBufferForModification(newLen);
+      T::_Length = newLen;
+    }
   }
   //............................................................................
   TTSString& Delete(size_t from, size_t count)  {
@@ -964,8 +968,9 @@ public:
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid size to delete");
     else  {
       if( dv == T::_Length )  { 
-        if( from != 0 ) {  T::_Length -= count;  return *this;  }  // substring to
-        else            {  T::_Length = 0;      return *this;  }  // empty string ...
+        if( from != 0 )  T::_Length -= count;  // substring to
+        else            T::_Length = 0;  // empty string ...
+        return *this;
       }
     }
     // delete from start - just substring from
