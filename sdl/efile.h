@@ -156,7 +156,7 @@ public:
   virtual void SetPosition(uint64_t p);
   virtual uint64_t GetPosition() const;
   size_t GetAvailableSizeT(bool do_throw=true) const {
-    return OlxIStream::GetAvailableSizeT(do_throw);
+    return ((IDataInputStream*)this)->GetAvailableSizeT(do_throw);
   }
   inline const olxstr& GetName() const {  return FName; }
   // closes the file handle and deletes the file
