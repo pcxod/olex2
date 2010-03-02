@@ -462,12 +462,10 @@ void TGlRenderer::Draw()  {
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     glColor3f(1, 0, 0);
     DrawObjects(0, 0, false, false);
-
     GetBasis().RotateY(ry-StereoAngle);
     SetView();
     glColor3f(0, 0, 1);
     DrawObjects(0, 0, false, false);
-
     GetBasis().RotateY(ry);
   }
   // http://local.wasp.uwa.edu.au/~pbourke/texture_colour/anaglyph/
@@ -485,7 +483,8 @@ void TGlRenderer::Draw()  {
 
     GetBasis().RotateY(ry+StereoAngle);
     SetView();
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if( !IsATI() )
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glColorMask(GL_TRUE,GL_FALSE,GL_FALSE,GL_TRUE);
     DrawObjects(0, 0, false, false);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -1237,7 +1236,7 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
     }
     if( Params[0].Equalsi("color") )
       StereoFlag = glStereoColor;
-    if( Params[0].Equalsi("anaglyph") )
+    else if( Params[0].Equalsi("anaglyph") )
       StereoFlag = glStereoAnaglyph;
     else if( Params[0].Equalsi("cross") )  {
       FOWidth = FWidth;
