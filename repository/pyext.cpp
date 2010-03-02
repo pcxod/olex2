@@ -125,9 +125,10 @@ PyObject* runReadImage(PyObject* self, PyObject* args)  {
     IInputStream* io = TFileHandlerManager::GetInputStream(name);
     if( io == NULL )
       return PythonExt::PyNone();
-    char * bf = new char [io->GetSize() + 1];
-    io->Read(bf, io->GetSize());
-    PyObject* po = Py_BuildValue("s#", bf, io->GetSize());
+    const size_t is = io->GetAvailableSizeT();
+    char * bf = new char [is + 1];
+    io->Read(bf, is);
+    PyObject* po = Py_BuildValue("s#", bf, is);
     delete [] bf;
     delete io;
     //o_r->print(olxstr("PyExt - finished reading image: ") << name);

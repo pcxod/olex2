@@ -769,7 +769,7 @@ void TFSIndex::ProcessActions(TFSItem& item)  {
   typedef TWinZipFileSystem ZipFS;
 #endif
   if( actions.IndexOfi("extract") != InvalidIndex )  {
-    ZipFS zp( DestFS->GetBase() + item.GetFullName() );
+    ZipFS zp(DestFS->GetBase() + item.GetFullName());
     zp.OnProgress.Add( new TActionProxy(OnAction) );
     zp.ExtractAll( DestFS->GetBase() );
   }
