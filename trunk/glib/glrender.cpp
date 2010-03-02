@@ -473,7 +473,7 @@ void TGlRenderer::Draw()  {
   // http://local.wasp.uwa.edu.au/~pbourke/texture_colour/anaglyph/
   else if( StereoFlag == glStereoAnaglyph )  {
     const double ry = GetBasis().GetRY();
-    GetBasis().RotateY(ry+StereoAngle);
+    GetBasis().RotateY(ry-StereoAngle);
     SetView();
     glClearAccum(0.0,0.0,0.0,0.0);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -483,7 +483,7 @@ void TGlRenderer::Draw()  {
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glAccum(GL_LOAD, 0.5);
 
-    GetBasis().RotateY(ry-StereoAngle);
+    GetBasis().RotateY(ry+StereoAngle);
     SetView();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glColorMask(GL_TRUE,GL_FALSE,GL_FALSE,GL_TRUE);

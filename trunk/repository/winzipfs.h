@@ -18,7 +18,7 @@ protected:
   virtual bool _DoDelDir(const olxstr& f)  {  return false;  }
   virtual bool _DoNewDir(const olxstr& f)  {  return false;  }
   virtual bool _DoAdoptFile(const TFSItem& Source) {  return false;  }
-  virtual bool _DoesExist(const olxstr& fn)  {
+  virtual bool _DoesExist(const olxstr& fn, bool)  {
     ZIPENTRY* ze = NULL;
     int zindex = -1;
     return FindZipItem(zip, fn.u_str(), true, &zindex, ze) == ZR_OK;

@@ -24,20 +24,20 @@
 TFileHandlerManager *TFileHandlerManager::FHandler = NULL;
 TStrList TFileHandlerManager::BaseDirs;
 
-TMemoryBlock *TFileHandlerManager::GetMemoryBlock( const olxstr &FN )  {
+TMemoryBlock *TFileHandlerManager::GetMemoryBlock(const olxstr& FN)  {
   olxstr fileName = TEFile::UnixPath(FN);
   TMemoryBlock *mb = FMemoryBlocks[fileName];
   if( mb == NULL )  {
     if( !TEFile::Exists(fileName) )  return NULL;
     TEFile file(fileName, "rb");
-    long fl = file.Length();
-    if( fl <= 0 ) return NULL;
+    const uint32_t fl = OlxIStream::CheckSize<uint32_t>(file.GetSize());
+    if( fl == 0 ) return NULL;
     mb = new TMemoryBlock;
-    mb->Buffer = new char [ fl + 1];
-    mb->Length = file.Length();
-    mb->DateTime = TEFile::FileAge( fileName );
-    file.Read( mb->Buffer, mb->Length );
-    FMemoryBlocks.Add( fileName, mb );
+    mb->Buffer = new char [fl + 1];
+    mb->Length = fl;
+    mb->DateTime = TEFile::FileAge(fileName);
+    file.Read(mb->Buffer, mb->Length);
+    FMemoryBlocks.Add(fileName, mb);
   }
   else  {
     if( mb->DateTime != 0 && TEFile::Exists(fileName) )  {
@@ -88,11 +88,11 @@ IDataInputStream *TFileHandlerManager::_GetInputStream(const olxstr &FN)  {
   }
   else  {
 #endif
-    TMemoryBlock *mb = GetMemoryBlock( FN );
+    TMemoryBlock *mb = GetMemoryBlock(FN);
     if( mb == NULL )  return NULL;
     TEMemoryStream *ms = new TEMemoryStream;
-    ms->Write( mb->Buffer, mb->Length );
-    ms->SetPosition( 0 );
+    ms->Write(mb->Buffer, mb->Length);
+    ms->SetPosition(0);
     return ms;
 #ifdef __WXWIDGETS__
   }
@@ -137,11 +137,11 @@ void TFileHandlerManager::_SaveToStream(IDataOutputStream& os, short persistence
       utfstr = TUtf8::Encode(FMemoryBlocks.GetString(i));
       strl = (uint32_t)utfstr.Length();
       os << strl;
-      os.Write( (void*)utfstr.raw_str(), strl);
+      os.Write((void*)utfstr.raw_str(), strl);
       os << mb->Length;
       os << mb->DateTime;
       if( mb->Length != 0 )
-        os.Write( mb->Buffer, mb->Length);
+        os.Write(mb->Buffer, mb->Length);
     }
   }
 }
@@ -157,24 +157,18 @@ void TFileHandlerManager::_LoadFromStream(IDataInputStream& is, short persistenc
   is >> fVersion;
   if( fVersion > FVersion )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid file version");
-
-  size_t length = is.GetSize();
-
+  size_t length = OlxIStream::CheckSize<size_t>(is.GetSize());
   uint32_t ic, strl;
-  TMemoryBlock* mb;
-  olxstr in;
-  olxcstr utfstr;
-
-  is.Read(&ic, sizeof(int) );
+  is >> ic;
   for(uint32_t i=0; i < ic; i++ )  {
     is >> strl;
     if( strl > (uint32_t)(length - is.GetPosition()) )  {
       _Clear();
       throw TFunctionFailedException(__OlxSourceInfo, "invalid file content");
     }
-    utfstr = CEmptyString;
-    in = TUtf8::Decode(utfstr.AppendFromStream(is, strl));
-    mb = FMemoryBlocks[in];
+    olxcstr utfstr;
+    olxstr in = TUtf8::Decode(utfstr.AppendFromStream(is, strl));
+    TMemoryBlock* mb = FMemoryBlocks[in];
     if( mb == NULL )  {
       mb = new TMemoryBlock;
       mb->PersistenceId = persistenceId;
@@ -193,7 +187,7 @@ void TFileHandlerManager::_LoadFromStream(IDataInputStream& is, short persistenc
 
     mb->Buffer = new char [mb->Length + 1];
     if( mb->Length != 0 )
-      is.Read( mb->Buffer, mb->Length);
+      is.Read(mb->Buffer, mb->Length);
     mb->PersistenceId = persistenceId;
   }
 }
@@ -250,7 +244,7 @@ olxstr TFileHandlerManager::LocateFile( const olxstr& fn )  {
 }
 //..............................................................................
 void TFileHandlerManager::AddBaseDir(const olxstr& bd)  {
-  BaseDirs.Add( TEFile::AddPathDelimeter( bd )  );
+  BaseDirs.Add(TEFile::AddPathDelimeter(bd));
 }
 //..............................................................................
 void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, const char *bf,
@@ -261,16 +255,16 @@ void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, const char *bf,
   if( mb == NULL )  {
     mb = new TMemoryBlock;
     mb->PersistenceId = persistenceId;
-    FMemoryBlocks.Add( fileName, mb );
+    FMemoryBlocks.Add(fileName, mb);
   }
   else
     delete [] mb->Buffer;
-  mb->Buffer = new char [ length + 1];
+  mb->Buffer = new char [length + 1];
   mb->Length = (uint32_t)length;
   mb->DateTime = TETime::Now();
   mb->PersistenceId = persistenceId;
   if( length != 0 )
-    memcpy( mb->Buffer, bf, length );
+    memcpy(mb->Buffer, bf, length);
 }
 //..............................................................................
 void TFileHandlerManager::AddMemoryBlock(const olxstr& name, const char *bf,
@@ -375,9 +369,10 @@ PyObject* pyReadFile(PyObject* self, PyObject* args)  {
     return PythonExt::PyNone();
   IInputStream* io = TFileHandlerManager::GetInputStream(name);
   if( !name.IsEmpty() && (io = TFileHandlerManager::GetInputStream(name)) != NULL )  {
-    char * bf = new char [io->GetSize() + 1];
-    io->Read(bf, io->GetSize());
-    PyObject* po = Py_BuildValue("s#", bf, io->GetSize() );
+    const size_t is = io->GetAvailableSizeT();
+    char * bf = new char [is + 1];
+    io->Read(bf, is);
+    PyObject* po = Py_BuildValue("s#", bf, is);
     delete [] bf;
     delete io;
     return po;
