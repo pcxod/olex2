@@ -856,7 +856,7 @@ void TXGrid::InitIso()  {
   else  {
     if( ED == NULL )  return;
     if( IS != NULL )  delete IS;
-    IS = new CIsoSurface<float>(*ED);
+    IS = new CIsoSurface(*ED);
     SetScale(Scale);
   }
 }
@@ -942,10 +942,7 @@ void TXGrid::LibRenderMode(const TStrObjList& Params, TMacroError& E)  {
     RenderMode = planeRenderModeContour|planeRenderModePlane;
   else throw TInvalidArgumentException(__OlxSourceInfo,
          olxstr("incorrect mode value: '") << Params[0] << '\'');
-  // have to recreate
-  if( pm != RenderMode )  {
-    InitIso();
-  }
+  InitIso();
 }
 //..............................................................................
 void TXGrid::ToDataItem(TDataItem& item, IOutputStream& zos) const {

@@ -15,7 +15,9 @@ UseGlNamespace();
 //..............................................................................
 TGraphicsStyles* TGlRenderer::FStyles = NULL;
 //..............................................................................
-TGlRenderer::TGlRenderer(AGlScene *S, int width, int height) {
+TGlRenderer::TGlRenderer(AGlScene *S, int width, int height) :
+  StereoRightColor(1, 0, 0, 1), StereoLeftColor(0, 1, 1, 1)
+{
   CompiledListId = -1;
   FScene = S;
   FZoom = 1;
@@ -39,7 +41,7 @@ TGlRenderer::TGlRenderer(AGlScene *S, int width, int height) {
   FogDensity = 1;
   FogStart = 0;
   FogEnd = 10;
-  CalculatedZoom = -1;
+  SceneDepth = -1;
 
   FStyles = new TGraphicsStyles(*this);
 
@@ -165,7 +167,7 @@ void TGlRenderer::UpdateGlImage()  {
 void TGlRenderer::ClearMinMax()  {
   FMaxV[0] = FMaxV[1] = FMaxV[2] = -100;
   FMinV[0] = FMinV[1] = FMinV[2] = +100;
-  CalculatedZoom = -1;
+  SceneDepth = -1;
 }
 //..............................................................................
 void TGlRenderer::UpdateMaxMin( const vec3d &Max, const vec3d &Min)  {
@@ -312,12 +314,12 @@ void TGlRenderer::Resize(int l, int t, int w, int h, float Zoom)  {
 void TGlRenderer::SetView(short Res)  {  SetView(0, 0, false, Res);  }
 //..............................................................................
 void TGlRenderer::SetZoom(double V) {  
-  double MaxZ = olx_max(FMaxV.DistanceTo(FMinV), 1);
-  double dv = V/MaxZ;
-  if( dv < 0.01 )  //  need to fix the zoom
-    FBasis.SetZoom(MaxZ*0.01);
-  else if( dv > MaxZ )
-    FBasis.SetZoom(MaxZ);
+  //const double MaxZ = olx_max(FMaxV.DistanceTo(FMinV), 1);
+  //double dv = V*MaxZ;
+  if( V < 0.001 )  //  need to fix the zoom
+    FBasis.SetZoom(0.001);
+  else if( V > 100 )
+    FBasis.SetZoom(100);
   else
     FBasis.SetZoom(V); 
 }
@@ -327,52 +329,61 @@ void TGlRenderer::SetView(int x, int y, bool Select, short Res)  {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   if( Select )  {
-    GLint  vp[4];
+    GLint vp[4];
     glGetIntegerv(GL_VIEWPORT, vp);
     gluPickMatrix(x, FHeight-y, 2, 2, vp);
   }
+  const double aspect = (double)FWidth/(double)FHeight;
   if( FPerspective )  {
-    double top = FPAngle;
-    double right = top*(double)FWidth/(double)FHeight;
-    //double top = 1;
-    //double right = top*(double)FWidth/(double)FHeight;
+    glOrtho(aspect*FProjectionLeft, aspect*FProjectionRight,
+              FProjectionTop, FProjectionBottom, 10, 0);
+    double right = FPAngle*aspect;
     glFrustum(right*FProjectionLeft, right*FProjectionRight,
-              top*FProjectionTop, top*FProjectionBottom, 1.0, 11.0);//MaxZ+0.1);
+              FPAngle*FProjectionTop, FPAngle*FProjectionBottom, 1, 10);
+    if( glIsEnabled(GL_FOG) )  {
+      glFogf(GL_FOG_START, 0);
+      glFogf(GL_FOG_END, 1);
+    }
   }
   else  {
-    double top = 1;
-    double right = top*(double)FWidth/(double)FHeight;
-    glOrtho(right*FProjectionLeft, right*FProjectionRight,
-              top*FProjectionTop, top*FProjectionBottom, 0, 10.0);
+    glOrtho(aspect*FProjectionLeft, aspect*FProjectionRight,
+              FProjectionTop, FProjectionBottom, 0, 10.0);
+    if( glIsEnabled(GL_FOG) )  {
+      glFogf(GL_FOG_START, 0);
+      glFogf(GL_FOG_END, 1);//(float)FBasis.GetZoom());
+    }
   }
   glMatrixMode(GL_MODELVIEW);
-  if( glIsEnabled(GL_FOG) )  
-    glFogf(GL_FOG_END, (float)FBasis.GetZoom());
 }
 //..............................................................................
 void TGlRenderer::SetBasis(bool Identity)  {
   static float Bf[4][4];
-  double scale = GetScale();
-  float MaxZ = (float)olx_max(FMaxV.DistanceTo(FMinV), 1);
   if( !Identity )  {
-    memcpy( &Bf[0][0], GetBasis().GetMData(), 12*sizeof(float));
+    memcpy(&Bf[0][0], GetBasis().GetMData(), 12*sizeof(float));
     Bf[3][0] = Bf[3][1] = 0;
   }
   else  {
     memset(&Bf[0][0], 0, 16*sizeof(float));
     Bf[0][0] = Bf[1][1] = Bf[2][2] = 1;
   }
-  // move the scene to 0
-  Bf[3][2] = -MaxZ;
   if( FPerspective )  {
-    if( Identity ) // heh? any better?
-      Bf[3][2] *= 5;
-    //Bf[3][3] = MaxZ/2;
+    Bf[3][2] = -1;
+    Bf[3][3] = 1;
   }
-  else
-    Bf[3][3] = MaxZ;
+  else  {
+    Bf[3][2] = -1;
+    Bf[3][3] = 1;
+  }
+  /* Mxv ->
+    x = {(Bf[0][0]*x+Bf[0][1]*y+Bf[0][2]*z+Bf[0][3]*w)},
+    y = {(Bf[1][0]*x+Bf[1][1]*y+Bf[1][2]*z+Bf[1][3]*w)},
+    z = {(Bf[2][0]*x+Bf[2][1]*y+Bf[2][2]*z+Bf[2][3]*w)},
+    w = {(Bf[3][0]*x+Bf[3][1]*y+Bf[3][2]*z+Bf[3][3]*w)}
+  */
+  float dv = (float)(GetBasis().GetZoom());
+  //for( int i=0; i < 12; i++)
+  //  (&Bf[0][0])[i] *= dv;
   glLoadMatrixf(&Bf[0][0]);
-  float dv = (float)(GetBasis().GetZoom()/MaxZ);
   glScalef(dv, dv, dv);
   if( !Identity )
     glTranslated(GetBasis().GetCenter()[0], GetBasis().GetCenter()[1], GetBasis().GetCenter()[2]);
@@ -452,8 +463,8 @@ void TGlRenderer::Draw()  {
   GetScene().StartDraw();
 
   if( StereoFlag == glStereoColor )  {
-    const double ry = GetBasis().GetRY();
-    GetBasis().RotateY(ry+StereoAngle);
+    const double ry = GetBasis().GetRY(), ra = StereoAngle;
+    GetBasis().RotateY(ry-ra);
     SetView();
     glDisable(GL_ALPHA_TEST);
     glDisable(GL_BLEND);
@@ -461,17 +472,28 @@ void TGlRenderer::Draw()  {
     glEnable(GL_COLOR_MATERIAL);
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
-    glColor3f(1, 0, 0);
+    glColorMask(
+      StereoRightColor[0] != 0 ? GL_TRUE : GL_FALSE,
+      StereoRightColor[1] != 0 ? GL_TRUE : GL_FALSE,
+      StereoRightColor[2] != 0 ? GL_TRUE : GL_FALSE,
+      StereoRightColor[3] != 0 ? GL_TRUE : GL_FALSE);
+    glColor4fv(StereoRightColor.Data());
     DrawObjects(0, 0, false, false);
-    GetBasis().RotateY(ry-StereoAngle);
+    GetBasis().RotateY(ry+ra);
     SetView();
 
     glClear(GL_DEPTH_BUFFER_BIT);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
-    glColor3f(0, 0, 1);
+    glColorMask(
+      StereoLeftColor[0] != 0 ? GL_TRUE : GL_FALSE,
+      StereoLeftColor[1] != 0 ? GL_TRUE : GL_FALSE,
+      StereoLeftColor[2] != 0 ? GL_TRUE : GL_FALSE,
+      StereoLeftColor[3] != 0 ? GL_TRUE : GL_FALSE);
+    glColor4fv(StereoLeftColor.Data());
     DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   }
   // http://local.wasp.uwa.edu.au/~pbourke/texture_colour/anaglyph/
   else if( StereoFlag == glStereoAnaglyph )  {
@@ -481,19 +503,27 @@ void TGlRenderer::Draw()  {
     glClearAccum(0.0,0.0,0.0,0.0);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glColorMask(
+      StereoRightColor[0] != 0 ? GL_TRUE : GL_FALSE,
+      StereoRightColor[1] != 0 ? GL_TRUE : GL_FALSE,
+      StereoRightColor[2] != 0 ? GL_TRUE : GL_FALSE,
+      StereoRightColor[3] != 0 ? GL_TRUE : GL_FALSE);
     DrawObjects(0, 0, false, false);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glAccum(GL_LOAD, 0.5);
+    glAccum(GL_LOAD, 1);
 
     GetBasis().RotateY(ry+StereoAngle);
     SetView();
     if( !IsATI() )
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glColorMask(GL_TRUE,GL_FALSE,GL_FALSE,GL_TRUE);
+    glColorMask(
+      StereoLeftColor[0] != 0 ? GL_TRUE : GL_FALSE,
+      StereoLeftColor[1] != 0 ? GL_TRUE : GL_FALSE,
+      StereoLeftColor[2] != 0 ? GL_TRUE : GL_FALSE,
+      StereoLeftColor[3] != 0 ? GL_TRUE : GL_FALSE);
     DrawObjects(0, 0, false, false);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glAccum(GL_ACCUM, 0.5);
+    glAccum(GL_ACCUM, 1);
     glAccum(GL_RETURN, 1.0);
     GetBasis().RotateY(ry);
   }
@@ -1255,6 +1285,28 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //..............................................................................
+void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
+  TGlOption* glo = Params[0].Equalsi("left") ? &StereoLeftColor : 
+    (Params[0].Equalsi("right") ? &StereoRightColor : NULL);
+  if( glo == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined parameter, left/right is expected");
+    return;
+  }
+  if( Params.Count() == 1 )  {
+    E.SetRetVal(glo->ToString());
+  }
+  else if( Params.Count() == 2 )  {
+    *glo = Params[1].SafeInt<uint32_t>();
+    (*glo)[3] = 1;
+  }
+  else if( Params.Count() == 4 )  {
+    (*glo)[0] = Params[1].ToFloat<float>();
+    (*glo)[1] = Params[2].ToFloat<float>();
+    (*glo)[2] = Params[3].ToFloat<float>();
+    (*glo)[3] = 1;
+  }
+}
+//..............................................................................
 TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("gl") : name);
   lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibCompile, "Compile",
@@ -1270,6 +1322,9 @@ decrements current zoom by provided value") );
     fpNone, "Returns optimal zoom value") );
   lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibStereo, "Stereo",
     fpNone|fpOne|fpTwo, "Returns/sets color/cross stereo mode and optionally stereo angle [3]") );
+  lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibStereoColor,
+    "StereoColor",
+    fpOne|fpTwo|fpFour, "Returns/sets colors for left/right color stereo mode glasses") );
 
   return lib;
 }

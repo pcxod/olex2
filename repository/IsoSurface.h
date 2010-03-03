@@ -20,26 +20,24 @@ struct IsoTriangle {
   int pointID[3];
 };
 
-template <class T> class CIsoSurface {
+class CIsoSurface {
 public:
   // Constructor and destructor.
-  CIsoSurface(TArray3D<T>& points);
+  CIsoSurface(TArray3D<float>& points);
   ~CIsoSurface()  {  DeleteSurface();  }
 
-  // Generates the isosurface from the scalar field contained in the
-  // buffer ptScalarField[].
-  void GenerateSurface(T tIsoLevel);
+  // Generates the isosurface from the scalar field contained in the buffer ptScalarField[].
+  void GenerateSurface(float tIsoLevel);
 
-  // Returns true if a valid surface has been generated.
+  // Returns true if a valid surface has been generated
   inline bool IsSurfaceValid() const {  return m_bValidSurface;  }
 
   // Deletes the isosurface.
   void DeleteSurface();
 
-  inline TArrayList<vec3f>& NormalList()         {  return Normals;  }
+  inline TArrayList<vec3f>& NormalList()  {  return Normals;  }
   inline TArrayList<IsoTriangle>& TriangleList() {  return Triangles;  }
-  inline TArrayList<vec3f>& VertexList()         {  return Vertices;  }
-
+  inline TArrayList<vec3f>& VertexList()  {  return Vertices;  }
 protected:
 ////////////////////////////////////////////////////////////////////////
   struct IsoPoint {
@@ -176,7 +174,7 @@ protected:
              (uint32_t)(y << 12) |
              (uint32_t)(z << 2);
     }
-    static inline void decode(uint32_t code, int& x, int& y, int& z, int& extra ) {
+    static inline void decode(uint32_t code, int& x, int& y, int& z, int& extra) {
       extra = (code & 0x00000002);
       z =     ((code & 0x00000FFC) >> 2);
       y =     ((code & 0x003FF000) >> 12);
@@ -204,10 +202,10 @@ protected:
   void CalculateNormals();
 
   // The buffer holding the scalar field.
-  TArray3D<T>& Points;
+  TArray3D<float>& Points;
 
   // The isosurface value.
-  T m_tIsoLevel;
+  float m_tIsoLevel;
 
   // Indicates whether a valid surface is present.
   bool m_bValidSurface;

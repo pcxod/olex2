@@ -31,7 +31,7 @@ const short
 class TXGrid: public TGlMouseListener  {
   //TVectorDList AllPoints;
   TArray3D<float>* ED;
-  CIsoSurface<float>* IS;
+  CIsoSurface* IS;
   FractMask* Mask;
   // if mask is specified
   GLuint PListId, NListId;

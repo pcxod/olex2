@@ -1352,13 +1352,6 @@ separated values of Atom Type and radius, an entry a line");
 #if defined(__WIN32__) || defined(__MAC__)
   StartupInit();
 #endif
-  if( FXApp->IsBaseDirWriteable() )  {
-    _UpdateThread = new UpdateThread(FXApp->GetSharedDir() + "patch");
-    _UpdateThread->OnTerminate.Add(this, ID_UpdateThreadTerminate);
-    _UpdateThread->OnDownload.Add(this, ID_UpdateThreadDownload);
-    _UpdateThread->OnAction.Add(this, ID_UpdateThreadAction);
-    _UpdateThread->Start();
-  }
 #ifdef __WIN32__
   rth.Join(true);
 #endif
@@ -1508,6 +1501,14 @@ void TMainForm::StartupInit()  {
 
   if( FXApp->Arguments.Count() == 2 )
     ProcessMacro(olxstr("reap \'") << FXApp->Arguments[1] << '\'', __OlxSrcInfo);
+// must move it here since on Linux things will not get initialised at the previous position
+  if( FXApp->IsBaseDirWriteable() )  {
+    _UpdateThread = new UpdateThread(FXApp->GetSharedDir() + "patch");
+    _UpdateThread->OnTerminate.Add(this, ID_UpdateThreadTerminate);
+    _UpdateThread->OnDownload.Add(this, ID_UpdateThreadDownload);
+    _UpdateThread->OnAction.Add(this, ID_UpdateThreadAction);
+    _UpdateThread->Start();
+  }
 }
 //..............................................................................
 void TMainForm::SetProcess( AProcess *Process )  {
