@@ -1,12 +1,6 @@
 //---------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
-//#include "smart/ostring.h"
 #include "ebase.h"
 #include <string.h>
 #include <sys/stat.h>
@@ -14,7 +8,7 @@
 #include "filetree.h"
 
 #ifdef __WIN32__
-  #include <malloc.h>
+#include <malloc.h>
   #include <io.h>
   #include <direct.h>
   #define OLXSTR(A) (A).u_str()
@@ -35,8 +29,10 @@
     #define STAT stat
     #define STAT_STR stat
   #endif
-  #define ftell _ftelli64
-  #define fseek _fseeki64
+  #ifndef __BORLANDC__ // this (as Builder 6.0 has no support for it
+  #  define ftell _ftelli64
+  #  define fseek _fseeki64
+  #endif
   #ifdef _MSC_VER
     #include <sys/utime.h>
     #ifndef _UNICODE
@@ -72,9 +68,10 @@
   #include <utime.h>
 
   #define OLXSTR(A) olxcstr(A).c_str()  //have to make it thread safe
-
-  #define ftell ftello64
-  #define fseek fseeko64
+  #ifndef __MAC__  // could not find these on MAC...
+    #define ftell ftello64
+    #define fseek fseeko64
+  #endif
   #define makedir(a) mkdir((a), 0755)
   #define UTIME utime
   #define STAT stat

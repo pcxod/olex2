@@ -34,7 +34,7 @@ public:
   // creates a file and writes data to it, closes it
   static void Create(const olxstr& name, const TIString& data)  {  
     TUtf8File file(name, "wb+");  
-    ((TEFile&)file).Write( &TUtf8::FileSignature, 3);
+    ((TEFile&)file).Write(&TUtf8::FileSignature, 3);
     file.Write(data);
   }
 
@@ -153,7 +153,7 @@ public:
   static void WriteLines(const olxstr& fn, const TTStrList<olxcstr,T>& list, bool WriteHeader=false)  {
     TUtf8File file(fn, "wb+");
     if( WriteHeader )
-      ((TEFile&)file).Write( TUtf8::FileSignature, 3);
+      ((TEFile&)file).Write(&TUtf8::FileSignature, 3);
     for( size_t i=0; i < list.Count(); i++ )
       if( i+1 < list.Count() )  file.Writenl( list[i] );
       else                      file.Write( list[i] );

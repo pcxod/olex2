@@ -11,7 +11,7 @@
 #include <math.h>
 #include "IsoSurface.h"
 
-template <class T> const unsigned int CIsoSurface<T>::m_edgeTable[256] = {
+const unsigned int CIsoSurface::m_edgeTable[256] = {
   0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
   0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
   0x190, 0x99 , 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
@@ -46,7 +46,7 @@ template <class T> const unsigned int CIsoSurface<T>::m_edgeTable[256] = {
   0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0
 };
 
-template <class T> const int CIsoSurface<T>::m_triTable[256][16] = {
+const int CIsoSurface::m_triTable[256][16] = {
   {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
   {0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
   {0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
@@ -305,7 +305,7 @@ template <class T> const int CIsoSurface<T>::m_triTable[256][16] = {
   {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}
 };
 
-template <class T> CIsoSurface<T>::CIsoSurface(TArray3D<T>& points) : 
+CIsoSurface::CIsoSurface(TArray3D<float>& points) : 
     Points(points), 
     DimmZ(points.Length3()), DimmY(points.Length2()), DimmX(points.Length1()),
     ZSlice(DimmY*DimmX) {
@@ -313,13 +313,13 @@ template <class T> CIsoSurface<T>::CIsoSurface(TArray3D<T>& points) :
   m_bValidSurface = false;
 }
 
-template <class T> void CIsoSurface<T>::GenerateSurface(T tIsoLevel)  {
+void CIsoSurface::GenerateSurface(float tIsoLevel)  {
   DeleteSurface();
 //  IsoPoints.SetCapacity(DimmX*DimmY);
   AllTriangles.SetCapacity(DimmX*DimmY);
 
   m_tIsoLevel = tIsoLevel;
-  T*** D = Points.Data;
+  float*** D = Points.Data;
   const int xmo = DimmX-2,
             ymo = DimmY-2,
             zmo = DimmZ-2;
@@ -386,7 +386,7 @@ template <class T> void CIsoSurface<T>::GenerateSurface(T tIsoLevel)  {
   m_bValidSurface = true;
 }
 
-template <class T> void CIsoSurface<T>::DeleteSurface()  {
+void CIsoSurface::DeleteSurface()  {
   m_tIsoLevel = 0;
   m_bValidSurface = false;
   Vertices.Clear();
@@ -394,8 +394,8 @@ template <class T> void CIsoSurface<T>::DeleteSurface()  {
   AllTriangles.Clear();
   IsoPoints.Clear();
 }
-template <class T> 
-void CIsoSurface<T>::AddSurfacePoint(unsigned int nX, unsigned int nY, unsigned int nZ, unsigned int nEdgeNo)  {
+
+void CIsoSurface::AddSurfacePoint(unsigned int nX, unsigned int nY, unsigned int nZ, unsigned int nEdgeNo)  {
   int v1x = nX, v1y = nY, v1z = nZ;
   int v2x = nX, v2y = nY, v2z = nZ;
   switch (nEdgeNo) {
@@ -462,22 +462,22 @@ void CIsoSurface<T>::AddSurfacePoint(unsigned int nX, unsigned int nY, unsigned 
   default:  // Invalid edge no.
     return;
   }
-  T val1 = Points.Data[v1x][v1y][v1z];
-  T val2 = Points.Data[v2x][v2y][v2z];
-  if( olx_abs((float)(m_tIsoLevel-val1)) < 0.001 )  
+  float val1 = Points.Data[v1x][v1y][v1z];
+  float val2 = Points.Data[v2x][v2y][v2z];
+  if( olx_abs(m_tIsoLevel-val1) < 0.01 )  
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z);
-  else if( olx_abs((float)(m_tIsoLevel-val2)) < 0.001 )  
+  else if( olx_abs(m_tIsoLevel-val2) < 0.01 )  
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v2x, (float)v2y, (float)v2z);
-  else if( olx_abs((float)(val1-val2)) < 0.001 )         
+  else if( olx_abs(val1-val2) < 0.01 )         
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z);
   else  {
-    T mu =  (m_tIsoLevel-val1)/(val2-val1);
+    const float mu =  (m_tIsoLevel-val1)/(val2-val1);
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x + mu*(v2x-v1x), (float)v1y + mu*(v2y-v1y),(float)v1z + mu*(v2z-v1z));
   }
 }
 
 
-template <class T> void CIsoSurface<T>::RenameVerticesAndTriangles()  {
+void CIsoSurface::RenameVerticesAndTriangles()  {
   IsoPoints.GetVertices( Vertices );
   Triangles.SetCapacity( AllTriangles.Count() );
   for( size_t i=0; i < AllTriangles.Count(); i++ )  {
@@ -485,45 +485,40 @@ template <class T> void CIsoSurface<T>::RenameVerticesAndTriangles()  {
     ta.pointID[0] = IsoPoints.Get(ta.pointID[0]).newID;
     ta.pointID[1] = IsoPoints.Get(ta.pointID[1]).newID;
     ta.pointID[2] = IsoPoints.Get(ta.pointID[2]).newID;
-    const vec3d& v1 = Vertices[ ta.pointID[0] ];
-    const vec3d& v2 = Vertices[ ta.pointID[1] ];
-    const vec3d& v3 = Vertices[ ta.pointID[2] ];
-    double d = v1.DistanceTo( v2 );
+    const vec3f& v1 = Vertices[ ta.pointID[0] ];
+    const vec3f& v2 = Vertices[ ta.pointID[1] ];
+    const vec3f& v3 = Vertices[ ta.pointID[2] ];
+    float d = v1.DistanceTo(v2);
     if( d < 0.01 || d > DimmX/2 )
       continue;
     else  {
-      d = v1.DistanceTo( v3 );
+      d = v1.DistanceTo(v3);
       if( d < 0.01 || d > DimmX/2 )
         continue;
       else  {
-        d = v2.DistanceTo( v3 );
+        d = v2.DistanceTo(v3);
         if( d < 0.01 || d > DimmX/2 )
           continue;
       }
     }
-    Triangles.Add( ta );
+    Triangles.Add(ta);
   }
   IsoPoints.Clear();
   AllTriangles.Clear();
 }
 
-template <class T> void CIsoSurface<T>::CalculateNormals()  {
-  Normals.SetCount( Vertices.Count() );
-  // Calculate normals.
-  vec3d vec1, vec2, normal;
+void CIsoSurface::CalculateNormals()  {
+  Normals.SetCount(Vertices.Count());
   for( size_t i = 0; i < Triangles.Count(); i++ ) {
-    int id0 = Triangles[i].pointID[0];
-    int id1 = Triangles[i].pointID[1];
-    int id2 = Triangles[i].pointID[2];
-    vec1 = Vertices[id1] - Vertices[id0];
-    vec2 = Vertices[id2] - Vertices[id0];
-    double S = vec1.QLength()*vec2.QLength()*sin( acos(vec1.CAngle(vec2)) );
-    normal = vec1.XProdVec(vec2);
-    if( S > 0 )  // weight upda normals of little triangles (hight curvature)
-      normal /= S;
-    Normals[id0] += normal;
-    Normals[id1] += normal;
-    Normals[id2] += normal;
+    const vec3f vec1 = Vertices[Triangles[i].pointID[1]] - Vertices[Triangles[i].pointID[0]];
+    const vec3f vec2 = Vertices[Triangles[i].pointID[2]] - Vertices[Triangles[i].pointID[0]];
+    const float S = vec1.QLength()*vec2.QLength()*sin(acos(vec1.CAngle(vec2)));
+    vec3f normal = vec1.XProdVec(vec2);
+    if( S > 0 )  // weight up normals of little triangles (hight curvature)
+      normal /= sqrt(S);
+    Normals[Triangles[i].pointID[0]] += normal;
+    Normals[Triangles[i].pointID[1]] += normal;
+    Normals[Triangles[i].pointID[2]] += normal;
   }
 
   // Normalize normals.
@@ -536,5 +531,3 @@ template <class T> void CIsoSurface<T>::CalculateNormals()  {
       Normals[i][2] = 1;
   }
 }
-
-template class CIsoSurface<float>;

@@ -91,7 +91,8 @@ protected:
   int FGlImageHeight, FGlImageWidth;
   uint8_t StereoFlag;
   double StereoAngle;
-  mutable double CalculatedZoom;
+  TGlOption StereoLeftColor, StereoRightColor;
+  mutable double SceneDepth;
   bool ATI;
 public:
   TGlRenderer(AGlScene *S, int width, int height);
@@ -159,16 +160,15 @@ public:
   void Initialise();
   void InitLights();
   double CalcZoom() const { 
-    return CalculatedZoom < 0 ? (CalculatedZoom=olx_max(FMaxV.DistanceTo(FMinV), 1.0)) : CalculatedZoom;
+    const double df = SceneDepth < 0 ? (SceneDepth=olx_max(FMaxV.DistanceTo(FMinV), 1.0)) : SceneDepth;
+    return 1./df;
   }
   double GetScale() const {  // to be used to calculate raster positions (x,y)
-    const double df = CalcZoom();
-    return (df*df)/(GetBasis().GetZoom()*FHeight);
+    return 1.0/(GetBasis().GetZoom()*FHeight);
   }
 
   double GetMaxRasterZ() const {  // to be used to calculate raster positions (z)
-    double df = CalcZoom();
-    return (df*df)/FBasis.GetZoom()-1;
+    return 1.0/FBasis.GetZoom();
   }
   /* this function provides extra value for use with rasters, when the scene is zoomed
   using LookAt function
@@ -317,6 +317,7 @@ public:
 
   void LibCompile(const TStrObjList& Params, TMacroError& E);
   void LibStereo(const TStrObjList& Params, TMacroError& E);
+  void LibStereoColor(const TStrObjList& Params, TMacroError& E);
   void LibFog(TStrObjList& Cmds, const TParamList& Options, TMacroError &E);
   void LibPerspective(TStrObjList& Cmds, const TParamList& Options, TMacroError& E);
   void LibZoom(TStrObjList& Cmds, const TParamList& Options, TMacroError& E);

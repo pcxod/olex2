@@ -238,7 +238,8 @@ void GlobalGlFunction( meRotateZ(TGlMouse *G, int dx, int dy) )  {
 //..............................................................................
 void GlobalGlFunction( meZoom(TGlMouse *G, int dx, int dy) )  {
   TGlRenderer *R = G->Parent();
-  R->SetZoom( R->GetZoom() + (double)dx/FZoomDiv - (double)dy/FZoomDiv);
+  static const double df = 600;
+  R->SetZoom( R->GetZoom() + (double)dx/df- (double)dy/df);
   G->Action(glmaZoom);
 }
 //..............................................................................
