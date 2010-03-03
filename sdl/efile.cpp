@@ -35,7 +35,8 @@
     #define STAT stat
     #define STAT_STR stat
   #endif
-
+  #define ftell _ftelli64
+  #define fseek _fseeki64
   #ifdef _MSC_VER
     #include <sys/utime.h>
     #ifndef _UNICODE
@@ -72,6 +73,8 @@
 
   #define OLXSTR(A) olxcstr(A).c_str()  //have to make it thread safe
 
+  #define ftell ftello64
+  #define fseek fseeko64
   #define makedir(a) mkdir((a), 0755)
   #define UTIME utime
   #define STAT stat
@@ -79,8 +82,8 @@
 
   #define OLX_PATH_DEL '/'
   #define OLX_ENVI_PATH_DEL ':'
-  #define OLX_OS_PATH(A)  TEFile::UnixPath( (A) )
-  #define OLX_OS_PATHI(A) TEFile::UnixPathI( (A) )
+  #define OLX_OS_PATH(A)  TEFile::UnixPath((A))
+  #define OLX_OS_PATHI(A) TEFile::UnixPathI((A))
   #define UTIMBUF utimbuf
 #endif
 
@@ -248,11 +251,7 @@ void TEFile::Read(void *Bf, size_t count)  {
 }
 //..............................................................................
 void TEFile::_seek(uint64_t off, int origin) const {
-#ifdef __WIN32__
-  if( _fseeki64(FHandle, off, origin) != 0 )  
-#else
-  if( fseek(FHandle, static_cast<long>(off), origin) != 0 )  
-#endif
+  if( fseek(FHandle, off, origin) != 0 )  
     throw TFileExceptionBase(__OlxSourceInfo, FName, "fseek failed" );
 }
 //..............................................................................
@@ -263,11 +262,7 @@ void TEFile::SetPosition(uint64_t p)  {
 //..............................................................................
 uint64_t TEFile::GetPosition() const  {
   CheckHandle();
-#ifdef __WIN32__
-  int64_t v = _ftelli64(FHandle);
-#else
-  long v = ftell(FHandle);
-#endif
+  int64_t v = ftell(FHandle);
   if( v == -1 )
     throw TFileExceptionBase(__OlxSourceInfo, FName, "ftell failed" );
   return v;
@@ -277,11 +272,7 @@ uint64_t TEFile::Length() const  {
   CheckHandle();
   uint64_t currentPos = GetPosition();
   _seek(0, SEEK_END);
-#ifdef __WIN32__
-  int64_t length = _ftelli64(FHandle);
-#else
-  long length = ftell( FHandle );
-#endif
+  int64_t length = ftell(FHandle);
   _seek(currentPos, SEEK_SET);
   if( length == -1 )
     throw TFileExceptionBase(__OlxSourceInfo, FName, "ftell failed" );
