@@ -350,7 +350,7 @@ AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res) const {
       update = ((TETime::EpochTime() - sf.last_updated ) > SecsADay*30 );
 
     if( update )  {  
-      AFileSystem* FS = FindActiveRepositoryFS(&repo, AddTagPart(EmptyString, true)+"index.ind");
+      AFileSystem* FS = FindActiveRepositoryFS(&repo, (AddTagPart(EmptyString, true)+"index.ind").SubStringFrom(1));
       if( FS == NULL )  {
         if( res != NULL )  *res = updater::uapi_NoSource;
         return NULL;
@@ -364,13 +364,13 @@ AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res) const {
 }
 //.............................................................................
 AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name, const olxstr& check_file) const  {
-  //olxstr repo, def_repo("http://www.olex2.org/olex-distro-test/");
   TStrList repositories;
   GetAvailableMirrors(repositories);
   for( size_t i=0; i < repositories.Count(); i++ )  {
     AFileSystem* fs = FSFromString(repositories[i], settings.proxy);
     if( fs != NULL )  {
-      if( !check_file.IsEmpty() && !fs->Exists(fs->GetBase().SubStringFrom(0,1)+check_file, true) )  {
+      //TBasicApp::GetLog() << "Rep: " << repositories[i] << '\n';
+      if( !check_file.IsEmpty() && !fs->Exists(fs->GetBase()+check_file, true) )  {
         delete fs;
         continue;
       }
@@ -402,7 +402,7 @@ void UpdateAPI::GetAvailableRepositories(TStrList& res) const {
          inst_zip_fn = TBasicApp::GetBaseDir() + GetInstallationFileName();
   if( TEFile::Exists(inst_zip_fn) )  
     res.Add(inst_zip_fn);
-  AFileSystem* fs = FindActiveRepositoryFS(&repo_name, GetInstallationFileName());
+  AFileSystem* fs = FindActiveRepositoryFS(&repo_name, GetTagsFileName());
   if( fs == NULL )  return;
   IInputStream* is= NULL;
   try  { is = fs->OpenFile(fs->GetBase() + GetTagsFileName());  }
