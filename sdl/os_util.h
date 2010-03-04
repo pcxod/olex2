@@ -31,12 +31,16 @@ struct olx_critical_section  {
   inline void leave() {  LeaveCriticalSection(&cs);  }
 #else
   pthread_mutex_t cs;
+  pthread_mutexattr_t csa;
   olx_critical_section() {
-    pthread_mutex_init(&cs, NULL);
+    pthread_mutexattr_init(&csa);
+    pthread_mutexattr_settype(&csa, PTHREAD_MUTEX_FAST_NP);
+    pthread_mutex_init(&cs, &csa);
   }
 
   ~olx_critical_section()  {
     pthread_mutex_destroy(&cs);
+    pthread_mutexattr_destroy(&csa);
   }
   inline bool tryEnter()  {  return pthread_mutex_trylock(&cs) != EBUSY;  }
   inline void enter() {  pthread_mutex_lock(&cs);  }
