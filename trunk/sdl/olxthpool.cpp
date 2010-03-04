@@ -1,24 +1,22 @@
 #include "olxthpool.h"
 #include "bapp.h"
+#include "log.h"
+
 
 TTypeList<TThreadSlot> TThreadPool::tasks;
 olx_critical_section TThreadPool::crit_sect;
 size_t TThreadPool::current_task = 0;
 
 bool TThreadSlot::IsSuspended() const {
-  volatile olx_scope_cs _cs(TThreadPool::GetCriticalSection());
   return suspended;
 }
 void TThreadSlot::Suspend()  {
-  volatile olx_scope_cs _cs(TThreadPool::GetCriticalSection());
   suspended = true;
 }
 void TThreadSlot::Resume()  {
-  volatile olx_scope_cs _cs(TThreadPool::GetCriticalSection());
   suspended = false;
 }
 void TThreadSlot::SetTask(ITask& _task)  {
-  volatile olx_scope_cs _cs(TThreadPool::GetCriticalSection());
   if( task != NULL )  // should never happen...
     throw TFunctionFailedException(__OlxSourceInfo, "Slot is occupied");
   task = &_task;
