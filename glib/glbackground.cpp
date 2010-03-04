@@ -75,9 +75,8 @@ bool TGlBackground::Orient(TGlPrimitive& P)  {
   double Scale = Parent.GetScale();
   double HW = (Parent.GetWidth()+1)/2*Scale;
   double HH = (Parent.GetHeight()+1)/2*Scale;
-  double MaxZ = Parent.GetMaxRasterZ();
+  double MaxZ = Parent.MaxDim()[2];
   MaxZ -= 0.01;
-//  if( !MaxZ )  MaxZ = -0.0001;
   if( !FCeiling )  MaxZ = -MaxZ;
 
   P.Vertices[0] = vec3d(-HW, -HH, MaxZ);

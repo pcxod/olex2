@@ -175,9 +175,9 @@ bool TDUnitCell::Orient(TGlPrimitive& P)  {
     const TGlFont& fnt = *Parent.GetScene().DefFont();
     vec3d T;
     const double tr = 0.3, 
-      scale = 1./Parent.GetScale(),
+      scale = Parent.GetBasis().GetZoom()/Parent.GetScale(),
       maxZ = Parent.GetMaxRasterZ();
-    vec3d cnt( Parent.GetBasis().GetCenter() );
+    vec3d cnt(Parent.GetBasis().GetCenter());
     cnt += Center;
     T += tr;
     T += cnt;

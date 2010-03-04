@@ -369,7 +369,12 @@ AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name, const olxstr& 
   for( size_t i=0; i < repositories.Count(); i++ )  {
     AFileSystem* fs = FSFromString(repositories[i], settings.proxy);
     if( fs != NULL )  {
-      //TBasicApp::GetLog() << "Rep: " << repositories[i] << '\n';
+#ifdef _DEBUG
+      if( !check_file.IsEmpty() )  {
+        TBasicApp::GetLog() << "Checking repository: " << repositories[i] <<
+          " for file: " << check_file << '\n';
+      }
+#endif
       if( !check_file.IsEmpty() && !fs->Exists(fs->GetBase()+check_file, true) )  {
         delete fs;
         continue;

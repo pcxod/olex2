@@ -191,7 +191,6 @@ int THttpFileSystem::_read(char* dest, size_t dest_sz) const {
 }
 //..............................................................................
 bool THttpFileSystem::_DoesExist(const olxstr& f, bool forced_check)  {
-  //TBasicApp::GetLog() << "Checking: " << f << '\n';
   if( Index != NULL )
     return Index->GetRoot().FindByFullName(f) != NULL;
   if( !forced_check )  return false;  
@@ -218,8 +217,8 @@ bool THttpFileSystem::_DoesExist(const olxstr& f, bool forced_check)  {
     return false;
   }
   TCStrList toks;
+  // make sure that \r\n or \n\n are treated properly
   toks.LoadFromTextArray(Buffer, read, true);
-  //TBasicApp::GetLog() << "Got: " << toks[0] << '\n';
   return toks[0].EndsWith("200 OK");
 }
 //..............................................................................

@@ -84,7 +84,7 @@ public:
   inline bool IsVectorFont() const {  return  (Flags & sglfVectorFont) == sglfVectorFont; }
   DefPropP(uint16_t, CharOffset)
   inline GLuint GetFontBase() const {  return FontBase; }
-  void DrawGlText(const vec3d& from, const olxstr& text, bool FixedWidth=false);
+  void DrawGlText(const vec3d& from, const olxstr& text, double scale = 1.0, bool FixedWidth=false);
   DefPropC(olxstr, IdString)
   inline const olxstr& GetName() const {  return Name; }
   inline TGlMaterial& GetMaterial()  {  return Material;  }

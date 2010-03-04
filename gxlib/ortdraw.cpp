@@ -430,7 +430,7 @@ void OrtDraw::Init(PSWriter& pw)  {
 
   pw.scale(LinearScale, LinearScale);
   LinearScale = 1; // reset now
-  DrawScale = 1./(LinearScale*app.GetRender().GetScale());
+  DrawScale = app.GetRender().GetBasis().GetZoom()/(LinearScale*app.GetRender().GetScale());
   BondRad = 0.05*DrawScale;
   SceneOrigin = basis.GetCenter();
   DrawOrigin = vec3f(vp[2]/2, vp[3]/2, 0);
@@ -687,7 +687,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
         const TXGlLabel& glxl = app.GetLabel(i);
         if( glxl.IsDeleted() || !glxl.IsVisible() )  continue;
         vec3d crd = glxl.GetVectorPosition()*DrawScale + DrawOrigin;
-        glf.RenderPSLabel(crd, glxl.GetLabel(), out, DrawScale, defs);
+        glf.RenderPSLabel(crd, glxl.GetLabel(), out, DrawScale/app.GetRender().CalcZoom(), defs);
       }
       pw.lineWidth(FontLineWidth);
       for( size_t i=0; i < out.Count(); i++ )

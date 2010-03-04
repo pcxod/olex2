@@ -74,6 +74,7 @@ vec3d TXGlLabel::GetRasterPosition() const {
   vec3d off = (Basis.GetCenter()*Parent.GetBasis().GetZoom());
   T += Center;
   T *= Parent.GetBasis().GetMatrix();
+  T *= Parent.GetBasis().GetZoom();
   T += off*(Scale*ScaleR);
   T /= Scale;
   return T;
@@ -84,10 +85,10 @@ vec3d TXGlLabel::GetVectorPosition() const {
   const double Scale = Parent.GetScale();
   const double ScaleR = Parent.GetExtraZoom()*Parent.GetViewZoom();
   const double ScaleVR = Scale*ScaleR;
-  vec3d off = Parent.GetBasis().GetMatrix()*(Basis.GetCenter()*Parent.GetBasis().GetZoom());
+  vec3d off = Parent.GetBasis().GetMatrix()*Basis.GetCenter();
   T += Center;
   T += off*(ScaleVR);
-  return T * Parent.GetBasis().GetMatrix();
+  return T *= Parent.GetBasis().GetMatrix();
 }
 //..............................................................................
 bool TXGlLabel::Orient(TGlPrimitive& P)  {
@@ -101,31 +102,35 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
       vec3d off = (Basis.GetCenter()*Parent.GetBasis().GetZoom());
       T += Center;
       T *= Parent.GetBasis().GetMatrix();
+      T *= Parent.GetBasis().GetZoom();
       T += off*(ScaleVR);
       T /= Scale;
       T[2] = Parent.GetMaxRasterZ();
       Parent.DrawTextSafe(T, FLabel, glf);
     }
     else  {
-      vec3d off = Parent.GetBasis().GetMatrix()*(Basis.GetCenter()*Parent.GetBasis().GetZoom());
+      vec3d off = Parent.GetBasis().GetMatrix()*Basis.GetCenter();
       T += Center;
       T += off*(ScaleVR);
       T *= Parent.GetBasis().GetMatrix();
+      T *= Parent.GetBasis().GetZoom();
       T[2] = Parent.MaxDim()[2];
       //float glw;
       //glGetFloatv(GL_LINE_WIDTH, &glw);
       //glLineWidth((float)(1./Scale)/50);
-      glf.DrawGlText(T, FLabel, true);
+      glf.DrawGlText(T, FLabel, Parent.GetBasis().GetZoom()/Parent.CalcZoom(), true);
       //glLineWidth(glw);
     }
     return true;
   }
   else  {
-    vec3d off = Parent.GetBasis().GetMatrix()*(Basis.GetCenter()*Parent.GetBasis().GetZoom());
+    //vec3d off = Parent.GetBasis().GetMatrix()*(Basis.GetCenter()*Parent.GetBasis().GetZoom());
+    vec3d off = Parent.GetBasis().GetMatrix()*Basis.GetCenter();
     T += Center;
     T += off*ScaleVR;
     T *= Parent.GetBasis().GetMatrix();
-    T[2] = Parent.MaxDim()[2];
+    T *= Parent.GetBasis().GetZoom();
+    T[2] = Parent.GetMaxRasterZ();
     Parent.GlTranslate(T);
     if( !glf.IsVectorFont() )  {
       P.Vertices[0] = vec3d(0, 0, -0.1);
@@ -134,10 +139,11 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
       P.Vertices[3] = vec3d(0, text_rect.height*ScaleVR, -0.1);
     }
     else  {
-      P.Vertices[0] = vec3d(text_rect.left, text_rect.top, -0.1);
-      P.Vertices[1] = vec3d(text_rect.left+text_rect.width, text_rect.top, -0.1);
-      P.Vertices[2] = vec3d(text_rect.left+text_rect.width, text_rect.top+text_rect.height, -0.1);
-      P.Vertices[3] = vec3d(text_rect.left, text_rect.top+text_rect.height, -0.1);
+      const double scale = Parent.GetBasis().GetZoom()/Parent.CalcZoom();
+      P.Vertices[0] = vec3d(text_rect.left, text_rect.top*scale, -0.1)*scale;
+      P.Vertices[1] = vec3d(text_rect.left+text_rect.width, text_rect.top, -0.1)*scale;
+      P.Vertices[2] = vec3d(text_rect.left+text_rect.width, text_rect.top+text_rect.height, -0.1)*scale;
+      P.Vertices[3] = vec3d(text_rect.left, text_rect.top+text_rect.height, -0.1)*scale;
     }
   }
   return false;
