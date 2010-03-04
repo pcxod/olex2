@@ -115,7 +115,6 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   Tmp << '/' << FileName;
 
   sprintf(Request, "GET %s HTTP/1.0\n\n", Tmp.Replace(' ', "%20").c_str());
-  //sprintf(Request, "HEAD %s HTTP/1.0\n\n", Tmp.Replace(' ', "%20").c_str());
   if( Url.HasProxy() && !Url.GetProxy().GetUser().IsEmpty() && !Url.GetProxy().GetPassword().IsEmpty() )
     sprintf(Request, "Authorization: %s\n\n", olxcstr(Url.GenerateHTTPAuthString()).c_str());
 
@@ -192,6 +191,7 @@ int THttpFileSystem::_read(char* dest, size_t dest_sz) const {
 }
 //..............................................................................
 bool THttpFileSystem::_DoesExist(const olxstr& f, bool forced_check)  {
+  //TBasicApp::GetLog() << "Checking: " << f << '\n';
   if( Index != NULL )
     return Index->GetRoot().FindByFullName(f) != NULL;
   if( !forced_check )  return false;  
@@ -217,11 +217,9 @@ bool THttpFileSystem::_DoesExist(const olxstr& f, bool forced_check)  {
     delete [] Buffer;
     return false;
   }
-  TEFile tmp("e:\\xxx.txt", "w+b");
-  tmp.Write(Buffer, read);
-  tmp.Close();
   TCStrList toks;
   toks.LoadFromTextArray(Buffer, read, true);
+  //TBasicApp::GetLog() << "Got: " << toks[0] << '\n';
   return toks[0].EndsWith("200 OK");
 }
 //..............................................................................
