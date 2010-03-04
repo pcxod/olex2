@@ -347,7 +347,7 @@ public:
     TGXApp& app = TGXApp::GetInstance();
     const TEBasis& basis = app.GetRender().GetBasis();
     LinearScale = 1; // reset now
-    DrawScale = LinearScale/app.GetRender().GetScale();
+    DrawScale = app.GetRender().GetBasis().GetZoom()/(LinearScale*app.GetRender().GetScale());
     AradScale = 0.5*DrawScale;///app.GetRender().GetScale(),
     BondRad = 0.1*DrawScale;///app.GetRender().GetScale();
     SceneOrigin = basis.GetCenter();

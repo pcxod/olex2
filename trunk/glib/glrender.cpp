@@ -335,58 +335,43 @@ void TGlRenderer::SetView(int x, int y, bool Select, short Res)  {
   }
   const double aspect = (double)FWidth/(double)FHeight;
   if( FPerspective )  {
-    glOrtho(aspect*FProjectionLeft, aspect*FProjectionRight,
-              FProjectionTop, FProjectionBottom, 10, 0);
     double right = FPAngle*aspect;
     glFrustum(right*FProjectionLeft, right*FProjectionRight,
-              FPAngle*FProjectionTop, FPAngle*FProjectionBottom, 1, 10);
-    if( glIsEnabled(GL_FOG) )  {
-      glFogf(GL_FOG_START, 0);
-      glFogf(GL_FOG_END, 1);
-    }
+              FPAngle*FProjectionTop, FPAngle*FProjectionBottom, 1, 100);
   }
   else  {
     glOrtho(aspect*FProjectionLeft, aspect*FProjectionRight,
-              FProjectionTop, FProjectionBottom, 0, 10.0);
-    if( glIsEnabled(GL_FOG) )  {
-      glFogf(GL_FOG_START, 0);
-      glFogf(GL_FOG_END, 1);//(float)FBasis.GetZoom());
-    }
+              FProjectionTop, FProjectionBottom, 1, 100);
   }
+  if( glIsEnabled(GL_FOG) )  {
+    glFogf(GL_FOG_START, 0);
+    glFogf(GL_FOG_END, FBasis.GetZoom()/CalcZoom());
+  }
+  glTranslated(0, 0, -FMaxV[2]);
   glMatrixMode(GL_MODELVIEW);
 }
 //..............................................................................
 void TGlRenderer::SetBasis(bool Identity)  {
-  static float Bf[4][4];
-  if( !Identity )  {
-    memcpy(&Bf[0][0], GetBasis().GetMData(), 12*sizeof(float));
-    Bf[3][0] = Bf[3][1] = 0;
-  }
-  else  {
-    memset(&Bf[0][0], 0, 16*sizeof(float));
-    Bf[0][0] = Bf[1][1] = Bf[2][2] = 1;
-  }
-  if( FPerspective )  {
-    Bf[3][2] = -1;
-    Bf[3][3] = 1;
-  }
-  else  {
-    Bf[3][2] = -1;
-    Bf[3][3] = 1;
-  }
   /* Mxv ->
     x = {(Bf[0][0]*x+Bf[0][1]*y+Bf[0][2]*z+Bf[0][3]*w)},
     y = {(Bf[1][0]*x+Bf[1][1]*y+Bf[1][2]*z+Bf[1][3]*w)},
     z = {(Bf[2][0]*x+Bf[2][1]*y+Bf[2][2]*z+Bf[2][3]*w)},
     w = {(Bf[3][0]*x+Bf[3][1]*y+Bf[3][2]*z+Bf[3][3]*w)}
   */
-  float dv = (float)(GetBasis().GetZoom());
-  //for( int i=0; i < 12; i++)
-  //  (&Bf[0][0])[i] *= dv;
-  glLoadMatrixf(&Bf[0][0]);
-  glScalef(dv, dv, dv);
-  if( !Identity )
+  if( !Identity )  {
+    static float Bf[4][4];
+    memcpy(&Bf[0][0], GetBasis().GetMData(), 12*sizeof(float));
+    Bf[3][0] = Bf[3][1] = 0;
+    Bf[3][2] = -1;
+    Bf[3][3] = 1;
+    glLoadMatrixf(&Bf[0][0]);
+    const double dv = GetBasis().GetZoom();
+    glScalef(dv, dv, dv);
     glTranslated(GetBasis().GetCenter()[0], GetBasis().GetCenter()[1], GetBasis().GetCenter()[2]);
+  }
+  else  {
+    LoadIdentity();
+  }
 }
 //..............................................................................
 void TGlRenderer::DrawObject(AGDrawObject *Object, bool DrawImage)  {
@@ -1230,7 +1215,7 @@ void TGlRenderer::LibFog(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( Cmds.Count() == 1 )  {
     SetFogType(GL_LINEAR);
     SetFogStart(0);
-    SetFogEnd((float)FBasis.GetZoom());
+    SetFogEnd(FBasis.GetZoom()/CalcZoom());
     SetFogColor(Cmds[0].SafeUInt<uint32_t>());
     EnableFog(true);
   }

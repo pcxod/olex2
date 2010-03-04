@@ -1129,7 +1129,7 @@ void TGlFont::CreateHershey(const olxdict<size_t, olxstr, TPrimitiveComparator>&
   ClearData();
   Flags |= sglfVectorFont;
   CharOffset = 0;
-  VectorScale = scale;
+  VectorScale = scale*10;
   PointSize = 15;
   int top=100, left = 100, right=0, bottom=0;
   for( size_t i=0; i < 95; i++ )  {
@@ -1244,10 +1244,10 @@ void TGlFont::RenderPSLabel(const vec3d& pos, const olxstr& label, TStrList& out
   out.Add("grestore");
 }
 //..............................................................................
-void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, bool FixedW)  {
+void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, double scale, bool FixedW)  {
   if( IsVectorFont() )  {
     glTranslated(from[0], from[1], from[2]);
-    glScalef((float)PointSize/15, (float)PointSize/15, 1);
+    glScaled(PointSize*scale/15, PointSize*scale/15, 1);
     short cstate=0;
     for( size_t i = 0; i < text.Length(); i++ )  {
       TFontCharSize* cs = CharSizes[text.CharAt(i)];

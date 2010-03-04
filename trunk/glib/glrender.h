@@ -164,12 +164,10 @@ public:
     return 1./df;
   }
   double GetScale() const {  // to be used to calculate raster positions (x,y)
-    return 1.0/(GetBasis().GetZoom()*FHeight);
+    return 1./FHeight;
   }
-
-  double GetMaxRasterZ() const {  // to be used to calculate raster positions (z)
-    return 1.0/FBasis.GetZoom();
-  }
+  // to be used to calculate raster positions (z)
+  double GetMaxRasterZ() const {  return 1.0;  }
   /* this function provides extra value for use with rasters, when the scene is zoomed
   using LookAt function
   */
