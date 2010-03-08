@@ -155,7 +155,7 @@ public:
   // FileName - argv[0]
   TGXApp(const olxstr& FileName);
   virtual ~TGXApp();
-  void CreateObjects(bool SyncBonds, bool CenterModel=true);
+  void CreateObjects(bool SyncBonds, bool CenterModel, bool re=true);
   void UpdateBonds();
   void AddObjectToCreate(AGDrawObject* obj)  {  ObjectsToCreate.Add(obj);  }
   void Clear();

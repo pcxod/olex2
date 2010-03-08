@@ -23,7 +23,6 @@ TGlRenderer::TGlRenderer(AGlScene *S, int width, int height) :
   FZoom = 1;
   FViewZoom = 1;
   FScene->Parent(this);
-  SetChanged(true);
   FWidth = width;
   FHeight = height;
   FLeft = FTop = 0;
@@ -178,7 +177,6 @@ void TGlRenderer::UpdateMaxMin( const vec3d &Max, const vec3d &Min)  {
   if( Min[0] < FMinV[0] )  FMinV[0] = Min[0];
   if( Min[1] < FMinV[1] )  FMinV[1] = Min[1];
   if( Min[2] < FMinV[2] )  FMinV[2] = Min[2];
-  SetChanged( true );
 }
 //..............................................................................
 void TGlRenderer::operator = (const TGlRenderer &G)  { ; }
@@ -283,12 +281,9 @@ void TGlRenderer::EnableFog(bool Set)  {
 void TGlRenderer::EnablePerspective(bool Set)  {
   if( Set == FPerspective )  return;
   FPerspective = Set;
-  SetChanged(true);
 }
 //..............................................................................
 void TGlRenderer::SetPerspectiveAngle(double angle)  {
-  if( FPerspective )  
-    SetChanged(true);
   FPAngle = (float)tan(angle*M_PI/360);
 }
 //..............................................................................
@@ -308,7 +303,6 @@ void TGlRenderer::Resize(int l, int t, int w, int h, float Zoom)  {
   FHeight = h;
   FZoom = Zoom;
   FGlImageChanged = true;
-  SetChanged(true);
 }
 //..............................................................................
 void TGlRenderer::SetView(short Res)  {  SetView(0, 0, false, Res);  }
@@ -366,7 +360,7 @@ void TGlRenderer::SetBasis(bool Identity)  {
     Bf[3][3] = 1;
     glLoadMatrixf(&Bf[0][0]);
     const double dv = GetBasis().GetZoom();
-    glScalef(dv, dv, dv);
+    glScaled(dv, dv, dv);
     glTranslated(GetBasis().GetCenter()[0], GetBasis().GetCenter()[1], GetBasis().GetCenter()[2]);
   }
   else  {
@@ -431,16 +425,8 @@ void TGlRenderer::DrawObject(AGDrawObject *Object, bool DrawImage)  {
 }
 //..............................................................................
 void TGlRenderer::Draw()  {
-  static double BZoom = 0;
-  if( FWidth < 50 || !TBasicApp::GetInstance().IsMainFormVisible() )  return;
-  
-// check if the projection matrices have to be reinitialised..
-  if( FWidth < 10 || FHeight < 10 )  return;
-  if( StereoFlag == 0 && (BZoom != GetBasis().GetZoom() || IsChanged()) )  {
-    BZoom = GetBasis().GetZoom();
-    SetView();
-    SetChanged(false);
-  }
+  if( FWidth < 50 || FHeight < 50 || !TBasicApp::GetInstance().IsMainFormVisible() )  return;
+  SetView();
   glEnable(GL_NORMALIZE);
   BeforeDraw->Execute(this);
   //glLineWidth( (float)(0.07/GetScale()) );
@@ -966,10 +952,8 @@ void TGlRenderer::AddObject(AGDrawObject& G)  {
   FGObjects.Add(G);
   if( FSceneComplete || !G.IsVisible() )  return;
   vec3d MaxV, MinV;
-  if( G.GetDimensions(MaxV, MinV) )  {
+  if( G.GetDimensions(MaxV, MinV) )
     UpdateMaxMin(MaxV, MinV);
-    SetChanged(true);
-  }
 }
 //..............................................................................
 /*
@@ -1038,7 +1022,6 @@ void TGlRenderer::LookAt(double x, double y, short res)  {
   FProjectionRight = (float)((x+1)/(double)res - 0.5);
   FProjectionTop = (float)(y/(double)res - 0.5);
   FProjectionBottom = (float)((y+1)/(double)res - 0.5);
-  SetChanged(true);
 }
 //..............................................................................
 char* TGlRenderer::GetPixels(bool useMalloc, short aligment)  {
