@@ -80,7 +80,6 @@ protected:
   void DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimitives);
 
   vec3d FMaxV, FMinV;
-  bool Changed;
   TEBasis FBasis;
   class AGlScene *FScene; // system dependent staff
 
@@ -104,14 +103,12 @@ public:
   void SetView(short Res=1); // is used to set current view (when initialisation is done by an external librray
   // such as wxWidgets
 
-  TGraphicsStyles& GetStyles()    const {  return *FStyles; }
+  TGraphicsStyles& GetStyles() const {  return *FStyles; }
   void CleanUpStyles(); // removes styles, which are not used by any collection
   void _OnStylesClear(); // is called by the FStyles only!
   void _OnStylesLoaded(); // is called by the FStyles only!
 
-  DefPropBIsSet(Changed)
-
-  bool IsCompiled()            const {  return CompiledListId != -1; }
+  bool IsCompiled() const {  return CompiledListId != -1; }
   void Compile(bool v);
 
   // if true, then min/max are not updated for newly created objects

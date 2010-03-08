@@ -643,7 +643,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   TRefList refs;
   TArrayList<compd> F;
   
-  olxstr err( SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff, SFUtil::sfOriginOlex2, SFUtil::scaleRegression) );
+  olxstr err(SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff, SFUtil::sfOriginOlex2, SFUtil::scaleRegression));
   if( !err.IsEmpty() )  {
     E.ProcessingError(__OlxSrcInfo, err);
     return;
@@ -666,30 +666,18 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   sw.start("Expanding structure factors to P1 (fast symm)");
   SFUtil::ExpandToP1(hkl, F, *sg, P1SF);
   sw.stop();
-  double vol = xapp.XFile().GetLattice().GetUnitCell().CalcVolume();
-  BVFourier::MapInfo mi;
+  const double vol = xapp.XFile().GetLattice().GetUnitCell().CalcVolume();
 // init map
   const int mapX = (int)(au.Axes()[0].GetV()*resolution),
 			mapY = (int)(au.Axes()[1].GetV()*resolution),
 			mapZ = (int)(au.Axes()[2].GetV()*resolution);
   TArray3D<float> map(0, mapX-1, 0, mapY-1, 0, mapZ-1);
-  sw.start("Calculating electron density map in P1 (Beevers-Lipson)");
-  mi = BVFourier::CalcEDM(P1SF, map.Data, mapX, mapY, mapZ, vol);
-  sw.stop();
-//////////////////////////////////////////////////////////////////////////////////////////
-  // map integration
-  TArrayList<MapUtil::peak> _Peaks;
-  TTypeList<MapUtil::peak> Peaks;
-  sw.start("Integrating P1 map: ");
-  MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, (float)((mi.maxVal - mi.minVal)/2.5), _Peaks);
   smatd_list ml;
   vec3d norm(1./mapX, 1./mapY, 1./mapZ);
   sg->GetMatrices(ml, mattAll^mattIdentity);
-  MapUtil::MergePeaks(ml, au.GetCellToCartesian(), norm, _Peaks, Peaks);
-  sw.stop();
   size_t PointCount = mapX*mapY*mapZ;
-  int minR = olx_round((3*1.5/(4*M_PI))*resolution);  // at least 1.5 A^3
-  size_t minPointCount = olx_round_t<size_t>(4*M_PI*minR*minR*minR/3.0);
+  const int minR = olx_round((3*1.5/(4*M_PI))*resolution);  // at least 1.5 A^3
+  const size_t minPointCount = olx_round_t<size_t>(4*M_PI*minR*minR*minR/3.0);
   TArrayList< AnAssociation3<TCAtom*,double, int> > atoms (au.AtomCount());
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     atoms[i].A() = &au.GetAtom(i);
@@ -697,35 +685,49 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
     atoms[i].C() = 0;
     atoms[i].A()->SetTag(i);
   }
-  for( size_t i=0; i < Peaks.Count(); i++ )  {
-    const MapUtil::peak& peak = Peaks[i];
-    if( peak.count >= minPointCount )  {
-      vec3d cnt((double)peak.center[0]/mapX, (double)peak.center[1]/mapY, (double)peak.center[2]/mapZ); 
-      double pv = (double)peak.count*vol/PointCount;
-      double ed = peak.summ/(pv*218);
-      TCAtom* oa = uc.FindOverlappingAtom(cnt, 0.5);
-      if( oa != NULL && oa->GetType() != iQPeakZ )  {
-        atoms[oa->GetTag()].B() += ed;
-        atoms[oa->GetTag()].C()++;
+  size_t count = 0;
+  while( ++count )  {
+    sw.start("Calculating electron density map in P1 (Beevers-Lipson)");
+    BVFourier::MapInfo mi = BVFourier::CalcEDM(P1SF, map.Data, mapX, mapY, mapZ, vol);
+    sw.stop();
+    TArrayList<MapUtil::peak> _Peaks;
+    TTypeList<MapUtil::peak> Peaks;
+    sw.start("Integrating P1 map: ");
+    MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, (float)((mi.maxVal - mi.minVal)/2.5), _Peaks);
+    MapUtil::MergePeaks(ml, au.GetCellToCartesian(), norm, _Peaks, Peaks);
+    sw.stop();
+    for( size_t i=0; i < Peaks.Count(); i++ )  {
+      const MapUtil::peak& peak = Peaks[i];
+      if( peak.count >= minPointCount )  {
+        const vec3d cnt = norm*peak.center; 
+        const double ed = peak.summ/peak.count;
+        TCAtom* oa = uc.FindOverlappingAtom(cnt, 0.5);
+        if( oa != NULL && oa->GetType() != iQPeakZ )  {
+          atoms[oa->GetTag()].B() += ed;
+          atoms[oa->GetTag()].C()++;
+        }
       }
     }
-    continue;
-  }
-  double minEd = mi.sigma*3;
-  int found_cnt = 0;
-  for( size_t i=0; i < atoms.Count(); i++ )  {
-    if( atoms[i].GetC() != 0 )  {
-      double ed = atoms[i].GetB() / atoms[i].GetC();  
-      if( olx_abs(ed) < minEd )  continue;
-      TBasicApp::GetLog() << (olxstr("Atom type under consideration ") << atoms[i].GetA()->GetLabel() << ": "
+    const double minEd = mi.sigma*3;
+    size_t found_cnt = 0;
+    for( size_t i=0; i < atoms.Count(); i++ )  {
+      if( atoms[i].GetC() != 0 )  {
+        const double ed = atoms[i].GetB()/atoms[i].GetC();  
+        if( olx_abs(ed) < minEd )  continue;
+        
+        TBasicApp::GetLog() << (olxstr("Atom type under consideration ") << atoms[i].GetA()->GetLabel() << ": "
           << (ed < 0 ? olxstr(ed) : olxstr("+") << ed) << '\n');
-      found_cnt++;
-    }
+        found_cnt++;
+      }
 
+    }
+    sw.print( xapp.GetLog(), &TLog::Info );
+    //if( found_cnt == 0 )  
+    //  TBasicApp::GetLog() << "No problems were found\n";
+    if( count >= 1 )
+      break;
   }
-  sw.print( xapp.GetLog(), &TLog::Info );
-  if( found_cnt == 0 )  
-    TBasicApp::GetLog() << "No problems were found\n";
+
   E.SetRetVal(false);
   //au.InitData();
 //  xapp.XFile().EndUpdate();

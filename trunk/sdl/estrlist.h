@@ -218,7 +218,7 @@ public:
   // convinience methods
   void LoadFromTextArray(char *bf, size_t bf_sz, bool take_ownership)  {
     Clear();
-    const olxcstr str = take_ownership ? olxcstr::FromExternal(bf, bf_sz) : olxcstr(bf, bf_sz);
+    const olxcstr str = take_ownership ? olxcstr(olxcstr::FromExternal(bf, bf_sz)) : olxcstr((const char*)bf, bf_sz);
     Strtok(str, '\n', false); // must preserve the new lines on Linux!!! 2008.08.17
     for( size_t i=0; i < Count(); i++ )
       if( GetString(i).EndsWith('\r') )  

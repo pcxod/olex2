@@ -46,9 +46,8 @@ TXApp::~TXApp()  {
 //..............................................................................
 olxstr TXApp::LocateHklFile()  {
   if( !XFile().HasLastLoader() )  return EmptyString;
-
   olxstr HklFN = XFile().GetRM().GetHKLSource();
-  if( TEFile::Existsi( olxstr(HklFN), HklFN) )  
+  if( TEFile::Existsi(olxstr(HklFN), HklFN) )  
     return HklFN;
   HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkl");
   if( TEFile::Existsi( olxstr(HklFN), HklFN ) )  
@@ -59,8 +58,8 @@ olxstr TXApp::LocateHklFile()  {
     Hkl.LoadFromFile(HklFN);
     HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkl");
     for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-      Hkl[i].SetI( (double)olx_round(Hkl[i].GetI())/100.0 );
-      Hkl[i].SetS( (double)olx_round(Hkl[i].GetS())/100.0 );
+      Hkl[i].SetI((double)olx_round(Hkl[i].GetI())/100.0 );
+      Hkl[i].SetS((double)olx_round(Hkl[i].GetS())/100.0 );
     }
     Hkl.SaveToFile( HklFN );
     GetLog().Info("The scaled hkl file is prepared");

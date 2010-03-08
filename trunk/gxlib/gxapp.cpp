@@ -228,7 +228,7 @@ class xappXFileClose: public AActionHandler  {
 public:
   virtual bool Exit(const IEObject *Sender, const IEObject *Data)  {
     TGXApp& app = TGXApp::GetInstance();
-    app.CreateObjects(false);
+    app.CreateObjects(false, false, false);
     app.GetRender().SetZoom(app.GetRender().CalcZoom());
     return true;
   }
@@ -362,7 +362,10 @@ size_t TGXApp::GetNetworks(TNetPList& nets) {
   return c;
 }
 //..............................................................................
-void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
+void TGXApp::CreateObjects(bool SyncBonds, bool centerModel, bool re)  {
+  if( re ) 
+    CreateObjects(SyncBonds, centerModel, false);
+
   TStopWatch sw(__FUNC__);
   sw.start("Initialising");
 
@@ -580,10 +583,10 @@ float TGXApp::ProbFactor(float Prob)  {
 }
 //..............................................................................
 void TGXApp::Init()  {
-  try  {  CreateObjects(true);  }
+  try  {  CreateObjects(true, false, false);  }
   catch(...)  {
     GetRender().GetStyles().Clear();
-    CreateObjects(true);
+    CreateObjects(true, false, false);
   }
 }
 //..............................................................................
@@ -3703,7 +3706,7 @@ void TGXApp::DeleteOverlayedXFile(size_t index) {
   ClearLabels();
   ClearSelectionCopy();
   OverlayedXFiles.Delete(index);
-  CreateObjects(true);
+  CreateObjects(true, false, false);
   CenterView();
   Draw();
 }
