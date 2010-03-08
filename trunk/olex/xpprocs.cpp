@@ -761,7 +761,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   // end drawing etc
   FXApp->GetRender().Resize(orgWidth, orgHeight); 
   FXApp->GetRender().LookAt(0,0,1);
-  FXApp->GetRender().SetView();
+  FXApp->GetRender().SetView(false, 1);
   FXApp->Draw();
   olxstr bmpFN;
   if( FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0]) )
@@ -8747,7 +8747,7 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   // end drawing etc
   FXApp->GetRender().Resize(orgWidth, orgHeight); 
   FXApp->GetRender().LookAt(0,0,1);
-  FXApp->GetRender().SetView();
+  FXApp->GetRender().SetView(false, 1);
   FXApp->Draw();
   olxstr bmpFN;
   if( FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0]) )

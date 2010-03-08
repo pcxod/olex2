@@ -50,8 +50,8 @@ class TGlRenderer : public IEObject  {
   ObjectGroup<TGlMaterial, TGlPrimitive>  Primitives;  // a list of all groups of primitives
   TSStrPObjList<olxcstr,TGPCollection*, false> FCollections;
 //  TPtrList<class TGPCollection> FCollections; // a named list of collections (TGPCollection)
-//  TSPtrList<TGlMaterial> FTransluentObjects, FIdentityObjects, FTransluentIdentityObjects;
-  TPtrList<TGlMaterial> FTransluentObjects, FIdentityObjects, FTransluentIdentityObjects;
+//  TSPtrList<TGlMaterial> FTranslucentObjects, FIdentityObjects, FTranslucentIdentityObjects;
+  TPtrList<TGlMaterial> FTranslucentObjects, FIdentityObjects, FTranslucentIdentityObjects;
   TPtrList<AGDrawObject> FGObjects;
   TPtrList<TGlGroup> FGroups;   // list of groups
   TGlGroup* FSelection;  // list of selected objects
@@ -98,9 +98,10 @@ public:
   virtual ~TGlRenderer();
   void Clear();
   void ClearPrimitives();
-  AGlScene& GetScene()  const {  return *FScene; }
-  void SetView(int x, int y, bool Select = false, short Res = 1);   // the functions set current matrix
-  void SetView(short Res=1); // is used to set current view (when initialisation is done by an external librray
+  AGlScene& GetScene() const {  return *FScene;  }
+  // the functions set current matrix
+  void SetView(int x, int y, bool Identity, bool Select, short Res);
+  void SetView(bool Identity, short Res=1); // is used to set current view (when initialisation is done by an external librray
   // such as wxWidgets
 
   TGraphicsStyles& GetStyles() const {  return *FStyles; }
@@ -160,20 +161,19 @@ public:
     const double df = SceneDepth < 0 ? (SceneDepth=olx_max(FMaxV.DistanceTo(FMinV), 1.0)) : SceneDepth;
     return 1./df;
   }
+  /* returns a "size of a pixel in current viewport"; use it to transform screen coordinates to
+  internal coordinates of OpenGl Scene like follow: if an object has to follow mouse pointer, then
+  the change in coordinates should be x = x0+MouseX*GetScale() y = y0+MouseY*GetScale() */
   double GetScale() const {  // to be used to calculate raster positions (x,y)
     return 1./FHeight;
   }
   // to be used to calculate raster positions (z)
-  double GetMaxRasterZ() const {  return 1.0;  }
+  double GetMaxRasterZ() const {  return 1;  }
   /* this function provides extra value for use with rasters, when the scene is zoomed
   using LookAt function
   */
   double GetViewZoom() const {  return FViewZoom;  }
-  // returns a "size of a pixel in currnet viewport"; use it to transform screen coor
-  //dinates to internal coordinates of OpenGl Scene like follow: if an object has to
-  //follow mouse pointer, then the change in coordinates should be x = x0+MouseX*GetScale()
-  //y = y0+MouseY*GetScale()
-  void UpdateMaxMin( const vec3d& Max, const vec3d& Min);
+  void UpdateMinMax(const vec3d& Max, const vec3d& Min);
   void ClearMinMax();
   const vec3d& MaxDim() const { return FMaxV; }
   const vec3d& MinDim() const { return FMinV; }
@@ -184,7 +184,6 @@ public:
   int GetHeight() const {  return FHeight;  }
   int GetLeft()   const {  return FLeft;  }
   int GetTop()    const {  return FTop;  }
-  void SetBasis(bool Identity = false);
   /*an "advanced" drawing procedure which draws an object on a static image
   . Used to implement faster drawing for such objects as text input controls and frames ...
   Be sure that the object is of "a modal" type, e.g. no significant drawing activity 
@@ -192,7 +191,6 @@ public:
   */
   void UpdateGlImage();
   bool GlImageChanged() const {  return FGlImageChanged; }
-  void DrawObject(class AGDrawObject *Object=NULL, bool DrawImage = false);
   void ReleaseGlImage();  // use to realease the internal memory allocated by the image
 
   void Draw();
@@ -247,7 +245,7 @@ public:
   TGlPrimitive& NewPrimitive(short type); // do not call directly, use GPCollection's method instead
   void RemovePrimitiveByTag(int index);
   void OnSetProperties(const TGlMaterial& P);
-  void SetProperties(TGlMaterial& P);  // tracks transluent and identity objects
+  void SetProperties(TGlMaterial& P);  // tracks translucent and identity objects
 //  void ReplacePrimitives(TEList *CurObj, TEList *NewObj);
 
   void SetObjectsCapacity(size_t v)  { FGObjects.SetCapacity(v);  } 

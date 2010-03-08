@@ -32,13 +32,13 @@ void AGlScene::StartSelect(int x, int y, GLuint *Bf)  {
   glRenderMode(GL_SELECT);
   glInitNames();
   glPushName(~0);
-  FParent->SetView(x, y, true);
+  FParent->SetView(x, y, false, true, 1);
 }
 //..............................................................................
 int AGlScene::EndSelect()  {
   int hits = glRenderMode(GL_RENDER);
   glFlush();
-  FParent->SetView();
+  FParent->SetView(false, 1);
   return hits;
 }
 //..............................................................................

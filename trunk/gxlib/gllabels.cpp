@@ -212,7 +212,8 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     V += Parent.GetBasis().GetCenter();
     V *= Parent.GetBasis().GetMatrix();
     V *= Parent.GetBasis().GetZoom();
-    glRasterPos3d(V[0]+0.01, V[1]+0.01, Parent.GetMaxRasterZ());
+    const double MaxZ = (Parent.GetMaxRasterZ()-0.001);
+    glRasterPos3d(V[0]+0.01, V[1]+0.01, MaxZ);
     P.Draw();
   }
   OGlM.Init(Parent.IsColorStereo());

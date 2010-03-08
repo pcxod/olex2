@@ -101,7 +101,7 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
   SpinCtrls.Add(scEmmF);   SpinCtrls.Add(scEmmB);
   SpinCtrls.Add(scSpecF);  SpinCtrls.Add(scSpecB);
 
-  cbTrans = new wxCheckBox(this, -1, wxT("Transluent"), wxDefaultPosition, wxDefaultSize);
+  cbTrans = new wxCheckBox(this, -1, wxT("Translucent"), wxDefaultPosition, wxDefaultSize);
   scTrans = new TSpinCtrl(this);  scTrans->SetRange(5, 95);  scTrans->OnChange.Add(this);
   cbIDraw = new wxCheckBox(this, -1, wxT("Identity Draw"), wxDefaultPosition, wxDefaultSize);
 

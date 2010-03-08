@@ -176,7 +176,7 @@ bool TDUnitCell::Orient(TGlPrimitive& P)  {
     vec3d T;
     const double tr = 0.3, 
       scale = Parent.GetBasis().GetZoom()/Parent.GetScale(),
-      maxZ = Parent.GetMaxRasterZ();
+      maxZ = Parent.GetMaxRasterZ()-0.001;
     vec3d cnt(Parent.GetBasis().GetCenter());
     cnt += Center;
     T += tr;
