@@ -1,9 +1,8 @@
 //----------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-#ifndef xbaseH
-#define xbaseH
-//---------------------------------------------------------------------------
+#ifndef __olx_xl_base_H
+#define __olx_xl_base_H
 
 #define BeginXlibNamespace()  namespace xlib {
 #define EndXlibNamespace()  };\
@@ -18,17 +17,19 @@
 
 BeginXlibNamespace()
 
-const  short sotNone  = 0x0000,
-             sotAtom = 0x0001,
-             sotBond = 0x0002,
-             sotHBond = 0x0003,
-             sotSCBond = 0x0004,
-             sotTBond = 0x0005,
-             sotBBond = 0x0006;
+const short
+  sotNone   = 0x0000,
+  sotAtom   = 0x0001,
+  sotBond   = 0x0002,
+  sotHBond  = 0x0003,
+  sotSCBond = 0x0004,
+  sotTBond  = 0x0005,
+  sotBBond  = 0x0006;
 
-extern const float dcMaxCBLength, // 3.5 maximum length of a covalent bond
-                   dcMaxHBLength; // 4.5 maximu length of a short interaction
-extern const float caDefIso;      // 0.05 default atom isotropic parameter;
+const float
+  dcMaxCBLength = 5.6, // maximum length of a covalent bond
+  dcMaxHBLength = 6; // maximu length of a short interaction
+const float caDefIso = 0.05;  // default atom isotropic parameter;
 
 template <class Net> class TSObject: public ACollectionItem  {
 protected:
@@ -97,11 +98,11 @@ public:
 
   inline size_t NodeCount() const {  return Nodes.Count(); }
   inline NodeType& Node(size_t i) const {  return *Nodes[i]; }
-  inline NodeType& AddNode(NodeType& N)   {  Nodes.Add(&N);  return N;  }
-  inline bool IsConnectedTo(NodeType &N)  {  return Nodes.IndexOf(&N) != InvalidIndex;  }
-  inline void NullNode(size_t i)          {  Nodes[i] = NULL; }
-  inline bool NullNode(const NodeType& N) {  
-    size_t ind = Nodes.IndexOf(&N);
+  inline NodeType& AddNode(NodeType& N)  {  return *Nodes.Add(N);  }
+  inline bool IsConnectedTo(NodeType &N)  {  return Nodes.IndexOf(N) != InvalidIndex;  }
+  inline void NullNode(size_t i)  {  Nodes[i] = NULL; }
+  inline bool NullNode(const NodeType& N)  {  
+    size_t ind = Nodes.IndexOf(N);
     if( ind != InvalidIndex )  {
       Nodes[ind] = NULL; 
       return true;
@@ -113,10 +114,10 @@ public:
 
   inline size_t BondCount() const {  return Bonds.Count(); }
   inline BondType& Bond(size_t i) const {  return *Bonds[i]; }
-  inline BondType& AddBond(BondType& N)  {  Bonds.Add(&N);  return N;  }
+  inline BondType& AddBond(BondType& N)  {  return *Bonds.Add(N);  }
   inline void NullBond(size_t i)  {  Bonds[i] = NULL;  }
   inline bool NullBond(const BondType& N) {  
-    size_t ind = Bonds.IndexOf(&N);
+    size_t ind = Bonds.IndexOf(N);
     if( ind != InvalidIndex )  {
       Bonds[ind] = NULL; 
       return true;

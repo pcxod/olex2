@@ -96,7 +96,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
   const uint16_t th = Fnt.TextHeight(EmptyString);
   const double Scale = Parent.GetScale(),
                MaxY = ((double)Parent.GetHeight()/2-Top-th)*Scale;
-  const double MaxZ = -Parent.GetMaxRasterZ() + 0.02;
+  const double MaxZ = -(Parent.GetMaxRasterZ()-0.002);
   const size_t MaxLineWidth = Fnt.MaxTextLength(Parent.GetWidth());
 
   olxstr line;

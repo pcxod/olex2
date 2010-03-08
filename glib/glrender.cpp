@@ -58,7 +58,7 @@ TGlRenderer::TGlRenderer(AGlScene *S, int width, int height) :
   FGlImageChanged = true; // will cause its update
   FGlImage = NULL;
   TextureManager = new TTextureManager();
-  FTransluentObjects.SetIncrement(512);
+  FTranslucentObjects.SetIncrement(512);
   FCollections.SetIncrement(512);
   FGObjects.SetIncrement(512);
 
@@ -111,8 +111,8 @@ void TGlRenderer::ClearPrimitives()  {
   for( size_t i=0; i < Primitives.PropertiesCount(); i++ )
     delete &Primitives.GetProperties(i);
   Primitives.Clear();
-  FTransluentIdentityObjects.Clear();
-  FTransluentObjects.Clear();
+  FTranslucentIdentityObjects.Clear();
+  FTranslucentObjects.Clear();
   FIdentityObjects.Clear();
   FGObjects.Clear();
   ClearMinMax();
@@ -138,8 +138,8 @@ void TGlRenderer::Clear()  {
   for( size_t i=0; i < Primitives.PropertiesCount(); i++ )
     delete &Primitives.GetProperties(i);
   Primitives.Clear();
-  FTransluentIdentityObjects.Clear();
-  FTransluentObjects.Clear();
+  FTranslucentIdentityObjects.Clear();
+  FTranslucentObjects.Clear();
   FIdentityObjects.Clear();
   // the function automaticallt removes the objects and their properties
   FGObjects.Clear();
@@ -169,7 +169,7 @@ void TGlRenderer::ClearMinMax()  {
   SceneDepth = -1;
 }
 //..............................................................................
-void TGlRenderer::UpdateMaxMin( const vec3d &Max, const vec3d &Min)  {
+void TGlRenderer::UpdateMinMax(const vec3d& Min, const vec3d& Max)  {
   if( Max[0] > FMaxV[0] )  FMaxV[0] = Max[0];
   if( Max[1] > FMaxV[1] )  FMaxV[1] = Max[1];
   if( Max[2] > FMaxV[2] )  FMaxV[2] = Max[2];
@@ -305,7 +305,7 @@ void TGlRenderer::Resize(int l, int t, int w, int h, float Zoom)  {
   FGlImageChanged = true;
 }
 //..............................................................................
-void TGlRenderer::SetView(short Res)  {  SetView(0, 0, false, Res);  }
+void TGlRenderer::SetView(bool i, short Res)  {  SetView(0, 0, i , false, Res);  }
 //..............................................................................
 void TGlRenderer::SetZoom(double V) {  
   //const double MaxZ = olx_max(FMaxV.DistanceTo(FMinV), 1);
@@ -318,7 +318,7 @@ void TGlRenderer::SetZoom(double V) {
     FBasis.SetZoom(V); 
 }
 //..............................................................................
-void TGlRenderer::SetView(int x, int y, bool Select, short Res)  {
+void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res)  {
   glViewport(FLeft*Res, FTop*Res, FWidth*Res, FHeight*Res);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -328,31 +328,31 @@ void TGlRenderer::SetView(int x, int y, bool Select, short Res)  {
     gluPickMatrix(x, FHeight-y, 2, 2, vp);
   }
   const double aspect = (double)FWidth/(double)FHeight;
-  if( FPerspective )  {
-    double right = FPAngle*aspect;
-    glFrustum(right*FProjectionLeft, right*FProjectionRight,
-              FPAngle*FProjectionTop, FPAngle*FProjectionBottom, 1, 100);
+  if( !identity )  {
+    if( FPerspective )  {
+      double right = FPAngle*aspect;
+      glFrustum(right*FProjectionLeft, right*FProjectionRight,
+        FPAngle*FProjectionTop, FPAngle*FProjectionBottom, 1, 10);
+    }
+    else  {
+      glOrtho(aspect*FProjectionLeft, aspect*FProjectionRight,
+        FProjectionTop, FProjectionBottom, 1, 10);
+    }
+    //glTranslated(0, 0, FMinV[2] > 0 ? -1 : FMinV[2]-FMaxV[2]);
+    glTranslated(0, 0, -2);
   }
   else  {
     glOrtho(aspect*FProjectionLeft, aspect*FProjectionRight,
-              FProjectionTop, FProjectionBottom, 1, 100);
+      FProjectionTop, FProjectionBottom, -1, 1);
   }
-  if( glIsEnabled(GL_FOG) )  {
-    glFogf(GL_FOG_START, 0);
-    glFogf(GL_FOG_END, FBasis.GetZoom()/CalcZoom());
-  }
-  glTranslated(0, 0, -FMaxV[2]);
   glMatrixMode(GL_MODELVIEW);
-}
-//..............................................................................
-void TGlRenderer::SetBasis(bool Identity)  {
   /* Mxv ->
     x = {(Bf[0][0]*x+Bf[0][1]*y+Bf[0][2]*z+Bf[0][3]*w)},
     y = {(Bf[1][0]*x+Bf[1][1]*y+Bf[1][2]*z+Bf[1][3]*w)},
     z = {(Bf[2][0]*x+Bf[2][1]*y+Bf[2][2]*z+Bf[2][3]*w)},
     w = {(Bf[3][0]*x+Bf[3][1]*y+Bf[3][2]*z+Bf[3][3]*w)}
   */
-  if( !Identity )  {
+  if( !identity )  {
     static float Bf[4][4];
     memcpy(&Bf[0][0], GetBasis().GetMData(), 12*sizeof(float));
     Bf[3][0] = Bf[3][1] = 0;
@@ -366,67 +366,11 @@ void TGlRenderer::SetBasis(bool Identity)  {
   else  {
     LoadIdentity();
   }
-}
-//..............................................................................
-void TGlRenderer::DrawObject(AGDrawObject *Object, bool DrawImage)  {
-  if( DrawImage )  {
-    if( GlImageChanged() )  {
-//      BasicApp->Log->Info("Image updated");
-      UpdateGlImage();
-    }
-    if( !FGlImage )  return;
-
-//    double Scale = GetScale();
-//    Scale = 1;
-    GetScene().StartDraw();
-    SetView();
-    LoadIdentity();
-//    glRasterPos3d((-FWidth/2+0.1)*Scale, (-FHeight/2)*Scale, -1);
-    glRasterPos3d(-0.5*(double)FWidth/(double)FHeight, -0.5,  -1);
-    glDrawPixels(
-          FGlImageWidth,
-          FGlImageHeight, GL_RGB, GL_UNSIGNED_BYTE, FGlImage);
-  }
-  if( Object != NULL )  {
-//    if( !Object->Visible() )  return;
-    if( Object->IsDeleted() )  return;
-
-    TGPCollection& GPC = Object->GetPrimitives();
-    // draw identity objects
-    SetView();
-    SetBasis(true);
-    for( size_t i=0; i < GPC.ObjectCount(); i++ )  {
-      TGlPrimitive& GlP = GPC.GetPrimitive(i);
-      const TGlMaterial& GlM = GlP.GetProperties();
-      if( !GlM.IsIdentityDraw() ) continue;
-      GlM.Init(false);
-      glPushMatrix();
-      if( Object->Orient(GlP) )  // the object has drawn itself
-      {  glPopMatrix(); continue; }
-      GlP.Draw();
-    }
-    // draw the rest of objects
-    SetBasis();
-    for( size_t i=0; i < GPC.ObjectCount(); i++ )  {
-      TGlPrimitive& GlP = GPC.GetPrimitive(i);
-      const TGlMaterial& GlM = GlP.GetProperties();
-      if( GlM.IsIdentityDraw() ) continue;
-      GlM.Init(false);
-      glPushMatrix();
-      if( Object->Orient(GlP) )  // the object has drawn itself
-      {  glPopMatrix(); continue; }
-      GlP.Draw();
-    }
-  }
-  if( DrawImage )  
-    GetScene().EndDraw();
-  if( DrawImage || Object )  
-    OnDraw->Execute(this);
+  //glDepthRange(1, 0);
 }
 //..............................................................................
 void TGlRenderer::Draw()  {
   if( FWidth < 50 || FHeight < 50 || !TBasicApp::GetInstance().IsMainFormVisible() )  return;
-  SetView();
   glEnable(GL_NORMALIZE);
   BeforeDraw->Execute(this);
   //glLineWidth( (float)(0.07/GetScale()) );
@@ -436,7 +380,6 @@ void TGlRenderer::Draw()  {
   if( StereoFlag == glStereoColor )  {
     const double ry = GetBasis().GetRY(), ra = StereoAngle;
     GetBasis().RotateY(ry-ra);
-    SetView();
     glDisable(GL_ALPHA_TEST);
     glDisable(GL_BLEND);
     glDisable(GL_CULL_FACE);
@@ -451,7 +394,6 @@ void TGlRenderer::Draw()  {
     glColor4fv(StereoRightColor.Data());
     DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry+ra);
-    SetView();
 
     glClear(GL_DEPTH_BUFFER_BIT);
     glEnable(GL_BLEND);
@@ -470,7 +412,6 @@ void TGlRenderer::Draw()  {
   else if( StereoFlag == glStereoAnaglyph )  {
     const double ry = GetBasis().GetRY();
     GetBasis().RotateY(ry-StereoAngle);
-    SetView();
     glClearAccum(0.0,0.0,0.0,0.0);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -484,7 +425,6 @@ void TGlRenderer::Draw()  {
     glAccum(GL_LOAD, 1);
 
     GetBasis().RotateY(ry+StereoAngle);
-    SetView();
     if( !IsATI() )
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glColorMask(
@@ -502,11 +442,9 @@ void TGlRenderer::Draw()  {
     const double ry = GetBasis().GetRY();
     int _l = FLeft;
     GetBasis().RotateY(ry-StereoAngle);
-    SetView();
     DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry+StereoAngle);
     FLeft = FWidth;
-    SetView();
     DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry);
     FLeft = _l;
@@ -523,12 +461,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
   const bool skip_mat = StereoFlag==glStereoColor;
   static const int DrawMask = sgdoVisible|sgdoSelected|sgdoDeleted|sgdoGrouped;
   if( !FIdentityObjects.IsEmpty() || FSelection->GetGlM().IsIdentityDraw() )  {
-    if( FPerspective )  {
-      FPerspective = false;
-      SetView(x, y, Select);
-      FPerspective = true;
-    }
-    SetBasis(true);
+    SetView(x, y, true, Select, 1);
     const size_t id_obj_count = FIdentityObjects.Count();
     for( size_t i=0; i < id_obj_count; i++ )  {
       TGlMaterial* GlM = FIdentityObjects[i];
@@ -556,9 +489,10 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
       FSelection->Draw(SelectPrimitives, SelectObjects);
       glPopAttrib();
     }
-    if( FPerspective )
-      SetView(x, y, Select);
-    SetBasis();
+    SetView(x, y, false, Select, 1);
+  }
+  else  {
+    SetView(x, y, false, Select, 1);
   }
 
   if( !Select && IsCompiled() )  {
@@ -591,9 +525,9 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
       }
     }
   }
-  const size_t trans_obj_count = FTransluentObjects.Count();
+  const size_t trans_obj_count = FTranslucentObjects.Count();
   for( size_t i=0; i < trans_obj_count; i++ )  {
-    TGlMaterial* GlM = FTransluentObjects[i];
+    TGlMaterial* GlM = FTranslucentObjects[i];
     if( !Select )  GlM->Init(skip_mat);
     const size_t obj_count = GlM->ObjectCount();
     for( size_t j=0; j < obj_count; j++ )  {
@@ -622,16 +556,11 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
     FSelection->Draw(SelectPrimitives, SelectObjects);
     glPopAttrib();
   }
-  if( !FTransluentIdentityObjects.IsEmpty() )  {
-    if( FPerspective )  {
-      FPerspective = false;
-      SetView(x, y, Select);
-      FPerspective = true;
-    }
-    SetBasis(true);
-    const size_t trans_id_obj_count = FTransluentIdentityObjects.Count();
+  if( !FTranslucentIdentityObjects.IsEmpty() )  {
+    SetView(x, y, true, Select, 1);
+    const size_t trans_id_obj_count = FTranslucentIdentityObjects.Count();
     for( size_t i=0; i < trans_id_obj_count; i++ )  {
-      TGlMaterial* GlM = FTransluentIdentityObjects[i];
+      TGlMaterial* GlM = FTranslucentIdentityObjects[i];
       if( !Select )  GlM->Init(skip_mat);
       const size_t obj_count = GlM->ObjectCount(); 
       for( size_t j=0; j < obj_count; j++ )  {
@@ -651,8 +580,6 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
         }
       }
     }
-    if( FPerspective )
-      SetView(x, y, Select);
   }
 }
 //..............................................................................
@@ -899,13 +826,13 @@ void TGlRenderer::EnableClipPlane(TGlClipPlane *P, bool v)  {
     glDisable(P->Id());
 }
 //..............................................................................
-void TGlRenderer::SetProperties(TGlMaterial& P)  {  // tracks transluent and identity objects
+void TGlRenderer::SetProperties(TGlMaterial& P)  {  // tracks translucent and identity objects
   if( P.IsTransparent() && P.IsIdentityDraw() )  {
-    FTransluentIdentityObjects.AddUnique(&P);
+    FTranslucentIdentityObjects.AddUnique(&P);
     return;
   }
   if( P.IsTransparent() )  {
-    FTransluentObjects.AddUnique(&P);
+    FTranslucentObjects.AddUnique(&P);
     return;
   }
   if( P.IsIdentityDraw() )  {
@@ -914,19 +841,19 @@ void TGlRenderer::SetProperties(TGlMaterial& P)  {  // tracks transluent and ide
   }
 }
 //..............................................................................
-void TGlRenderer::OnSetProperties(const TGlMaterial& P)  {  // tracks transluent and identity objects
+void TGlRenderer::OnSetProperties(const TGlMaterial& P)  {  // tracks translucent and identity objects
   //if( P == NULL )  return;
   if( P.ObjectCount() > 1 )  return; // the properties will not be removde
   if( P.IsTransparent() && P.IsIdentityDraw() )  {
-    size_t index = FTransluentIdentityObjects.IndexOf(&P);
+    size_t index = FTranslucentIdentityObjects.IndexOf(&P);
     if( index != InvalidIndex )  
-      FTransluentIdentityObjects.Delete(index);
+      FTranslucentIdentityObjects.Delete(index);
     return;
   }
   if( P.IsTransparent() )  {
-    size_t index = FTransluentObjects.IndexOf(&P);
+    size_t index = FTranslucentObjects.IndexOf(&P);
     if( index != InvalidIndex )  
-      FTransluentObjects.Delete(index);
+      FTranslucentObjects.Delete(index);
     return;
   }
   if( P.IsIdentityDraw() )  {
@@ -953,7 +880,7 @@ void TGlRenderer::AddObject(AGDrawObject& G)  {
   if( FSceneComplete || !G.IsVisible() )  return;
   vec3d MaxV, MinV;
   if( G.GetDimensions(MaxV, MinV) )
-    UpdateMaxMin(MaxV, MinV);
+    UpdateMinMax(MinV, MaxV);
 }
 //..............................................................................
 /*
@@ -965,8 +892,8 @@ void TGlRenderer::ReplacePrimitives(TEList *CurObj, TEList *NewObj)
 } */
 //..............................................................................
 void TGlRenderer::RemoveCollection(TGPCollection& GP)  {
-  FTransluentIdentityObjects.Clear();
-  FTransluentObjects.Clear();
+  FTranslucentIdentityObjects.Clear();
+  FTranslucentObjects.Clear();
   FIdentityObjects.Clear();
 
   for( size_t i=0; i < PrimitiveCount(); i++ )
@@ -979,9 +906,9 @@ void TGlRenderer::RemoveCollection(TGPCollection& GP)  {
   for( size_t i=0; i < Primitives.PropertiesCount(); i++ )  {
     TGlMaterial& GlM = Primitives.GetProperties(i);
     if( GlM.IsTransparent() && GlM.IsIdentityDraw()  )
-      FTransluentIdentityObjects.Add(GlM);
+      FTranslucentIdentityObjects.Add(GlM);
     else if( GlM.IsTransparent() )
-      FTransluentObjects.Add(GlM);
+      FTranslucentObjects.Add(GlM);
     else if( GlM.IsIdentityDraw() )
       FIdentityObjects.Add(GlM);
   }
@@ -991,8 +918,8 @@ void TGlRenderer::RemoveCollection(TGPCollection& GP)  {
 void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
   if( Colls.Count() == 0 )  return;
 
-  FTransluentIdentityObjects.Clear();
-  FTransluentObjects.Clear();
+  FTranslucentIdentityObjects.Clear();
+  FTranslucentObjects.Clear();
   FIdentityObjects.Clear();
 
   for( size_t i=0; i < PrimitiveCount(); i++ )
@@ -1008,9 +935,9 @@ void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
   for( size_t i=0; i < Primitives.PropertiesCount(); i++ )  {
     TGlMaterial& GlM = Primitives.GetProperties(i);
     if( GlM.IsTransparent() && GlM.IsIdentityDraw() )
-      FTransluentIdentityObjects.Add(&GlM);
+      FTranslucentIdentityObjects.Add(&GlM);
     else if( GlM.IsTransparent() )   
-      FTransluentObjects.Add(GlM);
+      FTranslucentObjects.Add(GlM);
     else if( GlM.IsIdentityDraw() )  
       FIdentityObjects.Add(GlM);
   }
@@ -1043,15 +970,15 @@ char* TGlRenderer::GetPixels(bool useMalloc, short aligment)  {
 //..............................................................................
 void TGlRenderer::RemovePrimitiveByTag(int in)  {
   Primitives.RemoveObjectsByTag(in);
-  FTransluentIdentityObjects.Clear();
-  FTransluentObjects.Clear();
+  FTranslucentIdentityObjects.Clear();
+  FTranslucentObjects.Clear();
   FIdentityObjects.Clear();
   for( size_t i=0; i < Primitives.PropertiesCount(); i++ )  {
     TGlMaterial& GlM = Primitives.GetProperties(i);
     if( GlM.IsTransparent() && GlM.IsIdentityDraw() )
-      FTransluentIdentityObjects.Add(GlM);
+      FTranslucentIdentityObjects.Add(GlM);
     else if( GlM.IsTransparent() )    
-      FTransluentObjects.Add(GlM);
+      FTranslucentObjects.Add(GlM);
     else if( GlM.IsIdentityDraw() )   
       FIdentityObjects.Add(GlM);
   }
@@ -1197,8 +1124,8 @@ void TGlRenderer::LibPerspective(TStrObjList &Cmds, const TParamList &Options, T
 void TGlRenderer::LibFog(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.Count() == 1 )  {
     SetFogType(GL_LINEAR);
-    SetFogStart(0);
-    SetFogEnd(FBasis.GetZoom()/CalcZoom());
+    SetFogStart(0.0f);
+    SetFogEnd(2.0f);
     SetFogColor(Cmds[0].SafeUInt<uint32_t>());
     EnableFog(true);
   }

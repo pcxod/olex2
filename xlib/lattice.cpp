@@ -1141,6 +1141,7 @@ void TLattice::CompaqAll()  {
   OnStructureUniq.Enter(this);
   OnDisassemble.SetEnabled(false);
   bool changes = true;
+  size_t itr = 0;
   while( changes )  {
     changes = false;
     for( size_t i=0; i < Fragments.Count(); i++ )  {
@@ -1151,7 +1152,8 @@ void TLattice::CompaqAll()  {
           for( size_t l=0; l < Fragments[j]->NodeCount(); l++ )  {
             if( Fragments[j]->Node(l).CAtom().IsAttachedTo(fa.CAtom()) )  {
               m = GetUnitCell().GetClosest(fa.CAtom(), Fragments[j]->Node(l).CAtom(), false);
-              if( m != NULL )  break;
+              if( m != NULL )
+                break;
             }
           }
           if( m != NULL )  break;
@@ -1168,6 +1170,12 @@ void TLattice::CompaqAll()  {
         delete m;
       }
       Init();
+      if( ++itr > 100 )  {
+        TBasicApp::GetLog().Error(olxstr("The procedure:\n")  << __OlxSourceInfo <<
+          "\nhas failed due to large number of iterations\nPlease contact the developers team");
+        changes = false;
+        break;
+      }
     }
   }
   OnDisassemble.SetEnabled(true);

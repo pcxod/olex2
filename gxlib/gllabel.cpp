@@ -105,7 +105,7 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
       T *= Parent.GetBasis().GetZoom();
       T += off*(ScaleVR);
       T /= Scale;
-      T[2] = Parent.GetMaxRasterZ();
+      T[2] = Parent.GetMaxRasterZ()-0.001;
       Parent.DrawTextSafe(T, FLabel, glf);
     }
     else  {
@@ -114,7 +114,7 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
       T += off*(ScaleVR);
       T *= Parent.GetBasis().GetMatrix();
       T *= Parent.GetBasis().GetZoom();
-      T[2] = Parent.MaxDim()[2];
+      T[2] = Parent.GetMaxRasterZ() - 0.001;
       //float glw;
       //glGetFloatv(GL_LINE_WIDTH, &glw);
       //glLineWidth((float)(1./Scale)/50);
@@ -124,26 +124,25 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
     return true;
   }
   else  {
-    //vec3d off = Parent.GetBasis().GetMatrix()*(Basis.GetCenter()*Parent.GetBasis().GetZoom());
     vec3d off = Parent.GetBasis().GetMatrix()*Basis.GetCenter();
     T += Center;
     T += off*ScaleVR;
     T *= Parent.GetBasis().GetMatrix();
     T *= Parent.GetBasis().GetZoom();
-    T[2] = Parent.GetMaxRasterZ();
+    T[2] = Parent.GetMaxRasterZ()-0.0015;
     Parent.GlTranslate(T);
     if( !glf.IsVectorFont() )  {
-      P.Vertices[0] = vec3d(0, 0, -0.1);
-      P.Vertices[1] = vec3d(text_rect.width*ScaleVR, 0, -0.1);
-      P.Vertices[2] = vec3d(text_rect.width*ScaleVR, text_rect.height*ScaleVR, -0.1);
-      P.Vertices[3] = vec3d(0, text_rect.height*ScaleVR, -0.1);
+      P.Vertices[0] = vec3d(0, 0, 0);
+      P.Vertices[1] = vec3d(text_rect.width*ScaleVR, 0, 0);
+      P.Vertices[2] = vec3d(text_rect.width*ScaleVR, text_rect.height*ScaleVR, 0);
+      P.Vertices[3] = vec3d(0, text_rect.height*ScaleVR, 0);
     }
     else  {
       const double scale = Parent.GetBasis().GetZoom()/Parent.CalcZoom();
-      P.Vertices[0] = vec3d(text_rect.left, text_rect.top*scale, -0.1)*scale;
-      P.Vertices[1] = vec3d(text_rect.left+text_rect.width, text_rect.top, -0.1)*scale;
-      P.Vertices[2] = vec3d(text_rect.left+text_rect.width, text_rect.top+text_rect.height, -0.1)*scale;
-      P.Vertices[3] = vec3d(text_rect.left, text_rect.top+text_rect.height, -0.1)*scale;
+      P.Vertices[0] = vec3d(text_rect.left, text_rect.top, 0)*scale;
+      P.Vertices[1] = vec3d(text_rect.left+text_rect.width, text_rect.top, 0)*scale;
+      P.Vertices[2] = vec3d(text_rect.left+text_rect.width, text_rect.top+text_rect.height, 0)*scale;
+      P.Vertices[3] = vec3d(text_rect.left, text_rect.top+text_rect.height, 0)*scale;
     }
   }
   return false;

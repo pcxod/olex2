@@ -123,7 +123,6 @@ public:
       GrowInfo = NULL;
     }
     EmptyFile = SameFile = false;
-    FParent->ClearLabels();
     // make sure that these are only cleared when file is loaded
     if( Sender && EsdlInstanceOf(*Sender, TXFile) )  {
       if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
@@ -162,6 +161,8 @@ public:
       FParent->DUnitCell().ResetCentres();
       //FParent->XGrid().Clear();
     }
+    FParent->GetRender().GetSelection().Clear();
+    FParent->ClearLabels();
     B = FParent->GetRender().GetBasis();
     FParent->GetRender().Clear();
     FParent->HklFile().Clear();
@@ -228,7 +229,7 @@ class xappXFileClose: public AActionHandler  {
 public:
   virtual bool Exit(const IEObject *Sender, const IEObject *Data)  {
     TGXApp& app = TGXApp::GetInstance();
-    app.CreateObjects(false, false, false);
+    app.CreateObjects(false, false);
     app.GetRender().SetZoom(app.GetRender().CalcZoom());
     return true;
   }
@@ -331,7 +332,6 @@ void TGXApp::Clear()  {
 //..............................................................................
 void TGXApp::CreateXRefs()  {
   if( !XReflections.IsEmpty() )  return;
-
   TRefList refs;
   RefinementModel::HklStat stats = XFile().GetRM().GetRefinementRefList<RefMerger::StandardMerger>(XFile().GetLastLoaderSG(), refs);
   vec3d Center;
@@ -362,16 +362,14 @@ size_t TGXApp::GetNetworks(TNetPList& nets) {
   return c;
 }
 //..............................................................................
-void TGXApp::CreateObjects(bool SyncBonds, bool centerModel, bool re)  {
-  if( re ) 
-    CreateObjects(SyncBonds, centerModel, false);
-
+void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   TStopWatch sw(__FUNC__);
   sw.start("Initialising");
 
-  vec3d glMax = FGlRender->MaxDim();
-  vec3d glMin = FGlRender->MinDim();
-  vec3d glCenter = FGlRender->GetBasis().GetCenter();
+  const vec3d
+    glMax = FGlRender->MaxDim(),
+    glMin = FGlRender->MinDim(),
+    glCenter = FGlRender->GetBasis().GetCenter();
   TXAtom::FStaticObjects.Clear();
   TXBond::FStaticObjects.Clear();
   FGlRender->ClearPrimitives();
@@ -500,14 +498,13 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel, bool re)  {
   if( centerModel )
     CenterModel();
   else  {
-   FGlRender->ClearMinMax();
-   FGlRender->UpdateMaxMin(glMin, glMax);
-   FGlRender->GetBasis().SetCenter( glCenter );
+    FGlRender->ClearMinMax();
+    FGlRender->UpdateMinMax(glMin, glMax);
+    FGlRender->GetBasis().SetCenter(glCenter);
   }
-
   GetRender().GetSelection().Create();
   GetRender().LoadIdentity();
-  GetRender().SetView();
+  GetRender().SetView(false, 1);
   GetRender().Initialise();
   FGlRender->SetSceneComplete(true);
   sw.stop();
@@ -535,7 +532,7 @@ void TGXApp::CenterModel()  {
   vec3d max = FGlRender->MaxDim() + Center;
   vec3d min = FGlRender->MinDim() + Center;
   FGlRender->ClearMinMax();
-  FGlRender->UpdateMaxMin(max, min);
+  FGlRender->UpdateMinMax(min, max);
 }
 //..............................................................................
 void TGXApp::CenterView(bool calcZoom)  {
@@ -557,7 +554,7 @@ void TGXApp::CenterView(bool calcZoom)  {
   maX += Center;
   miN += Center;
   FGlRender->ClearMinMax();
-  FGlRender->UpdateMaxMin(maX, miN);
+  FGlRender->UpdateMinMax(miN, maX);
   if( calcZoom )
     FGlRender->GetBasis().SetZoom(FGlRender->CalcZoom()*ExtraZoom);
   FGlRender->GetBasis().SetCenter(Center);
@@ -583,10 +580,10 @@ float TGXApp::ProbFactor(float Prob)  {
 }
 //..............................................................................
 void TGXApp::Init()  {
-  try  {  CreateObjects(true, false, false);  }
+  try  {  CreateObjects(true, false);  }
   catch(...)  {
     GetRender().GetStyles().Clear();
-    CreateObjects(true, false, false);
+    CreateObjects(true, false);
   }
 }
 //..............................................................................
@@ -1259,13 +1256,12 @@ void TGXApp::AllVisible(bool V)  {
 }
 //..............................................................................
 void TGXApp::Select(const vec3d& From, const vec3d& To )  {
-  vec3d Cnt, Cnt1, AC;
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
     TXAtom& XA = XAtoms[i];
     if( XA.IsVisible() )  {
-      AC = XA.Atom().crd();
-      AC += GetRender().GetBasis().GetCenter();
-      Cnt = AC * GetRender().GetBasis().GetMatrix();
+      vec3d Cnt = XA.Atom().crd() + GetRender().GetBasis().GetCenter();
+      Cnt *= GetRender().GetBasis().GetMatrix();
+      Cnt *= GetRender().GetBasis().GetZoom();
       if( Cnt[0] < To[0] && Cnt[1] < To[1] &&
           Cnt[0] > From[0] && Cnt[1] > From[1] )  {
         if( !XA.IsSelected() )  {
@@ -1278,10 +1274,12 @@ void TGXApp::Select(const vec3d& From, const vec3d& To )  {
   for(size_t i=0; i < XBonds.Count(); i++ )  {
     TXBond& B = XBonds[i];
     if( B.IsVisible() )  {
-      AC = B.Bond().A().crd();  AC += GetRender().GetBasis().GetCenter();
-      Cnt  = AC * GetRender().GetBasis().GetMatrix();
-      AC = B.Bond().B().crd();  AC += GetRender().GetBasis().GetCenter();
-      Cnt1 = AC * GetRender().GetBasis().GetMatrix();
+      vec3d Cnt = B.Bond().A().crd() + GetRender().GetBasis().GetCenter();
+      Cnt *= GetRender().GetBasis().GetMatrix();
+      Cnt *= GetRender().GetBasis().GetZoom();
+      vec3d Cnt1 = B.Bond().B().crd() + GetRender().GetBasis().GetCenter();
+      Cnt1 *= GetRender().GetBasis().GetMatrix();
+      Cnt1 *= GetRender().GetBasis().GetZoom();
       if( Cnt[0] < To[0] && Cnt[1] < To[1] && Cnt[0] > From[0] && Cnt[1] > From[1] &&
           Cnt1[0] < To[0] && Cnt1[1] < To[1] && Cnt1[0] > From[0] && Cnt1[1] > From[1] )  {
         if( !B.IsSelected() )  {
@@ -1294,7 +1292,9 @@ void TGXApp::Select(const vec3d& From, const vec3d& To )  {
   for( size_t i=0; i < XReflections.Count(); i++ )  {
     TXReflection& XR = XReflections[i];
     if( XR.IsVisible() )  {
-      Cnt = GetRender().GetBasis().GetMatrix() * XR.Center();
+      vec3d Cnt = XR.Center() + GetRender().GetBasis().GetCenter();
+      Cnt *= GetRender().GetBasis().GetMatrix();
+      Cnt *= GetRender().GetBasis().GetZoom();
       if( Cnt[0] < To[0] && Cnt[1] < To[1] &&
           Cnt[0] > From[0] && Cnt[1] > From[1] )  {
         if( !XR.IsSelected() )  
@@ -2271,6 +2271,10 @@ void TGXApp::ClearLabelMarks()  {  FLabels->ClearLabelMarks();  }
 //..............................................................................
 void TGXApp::ClearLabels()  {
   FLabels->Clear();
+  // check just in case...
+  for( size_t i=0; i < XLabels.Count(); i++ )
+    if( XLabels[i].IsSelected() )
+      XLabels[i].SetSelected(false);
   XLabels.Clear();
 }
 //..............................................................................
@@ -3021,14 +3025,6 @@ void TGXApp::SetHklVisible(bool v)  {
     // default if could not load the hkl ...
     FDUnitCell->SetReciprocal(false);
     FHklVisible = false;
-    if( !FHklFile->RefCount() )  {
-      if( !FXFile->HasLastLoader() )
-      {  Log->Error("Cannot display HKL - file is not loaded");  return;  }
-      if( !TEFile::Exists(FXFile->LastLoader()->GetRM().GetHKLSource()) )
-      {  Log->Error("Cannot display HKL - could locate HKL file");  return;  }
-      if( !FHklFile->LoadFromFile(FXFile->LastLoader()->GetRM().GetHKLSource()) )
-      {  Log->Error("Cannot display HKL - could load HKL file");  return;  }
-    }
     CreateXRefs();
   }
   for( size_t i=0; i < XReflections.Count(); i++ )  
@@ -3706,7 +3702,7 @@ void TGXApp::DeleteOverlayedXFile(size_t index) {
   ClearLabels();
   ClearSelectionCopy();
   OverlayedXFiles.Delete(index);
-  CreateObjects(true, false, false);
+  CreateObjects(true, false);
   CenterView();
   Draw();
 }
@@ -3956,7 +3952,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   vec3d max = PersUtil::FloatVecFromStr(renderer.GetRequiredField("max"));
   FGlRender->SetSceneComplete(false);
   FGlRender->ClearMinMax();
-  FGlRender->UpdateMaxMin(max, min);
+  FGlRender->UpdateMinMax(min, max);
   FGlRender->GetBasis().FromDataItem( item.FindRequiredItem("Basis") );
   FGlRender->SetSceneComplete(true);
 }

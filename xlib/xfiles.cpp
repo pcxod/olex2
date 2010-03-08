@@ -52,24 +52,11 @@ void TBasicCFile::LoadFromFile(const olxstr& fn)  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);  
   }
   FileName = fn;
-  if( GetRM().GetHKLSource().IsEmpty() )  {
-    olxstr src = TEFile::ChangeFileExt(fn, "hkl");
-    if( !TEFile::Existsi(olxstr(src), src) )
+  if( GetRM().GetHKLSource().IsEmpty() || !TEFile::Exists(GetRM().GetHKLSource()) )  {
+    olxstr src = TXApp::GetInstance().LocateHklFile();
+    if( !src.IsEmpty() && !TEFile::Existsi(olxstr(src), src) )
       src = EmptyString;
     GetRM().SetHKLSource(src);
-  }
-  else  {
-   /*
-    if( !TEFile::Exists(FHKLSource) )
-    {
-      BasicApp->Log->Error(olxstr("TBasicCFile::HKL source file does not exist: ") += FHKLSource);
-      FHKLSource = TEFile::ChangeFileExt(A, "hkl");
-      if( !TEFile::Exists(FHKLSource) )
-      {  FHKLSource = "";  }
-      else
-      {  BasicApp->Log->Error(olxstr("TBasicCFile::HKL source file reset to: ") += FHKLSource);  }
-    }
-    */
   }
 }
 //----------------------------------------------------------------------------//
