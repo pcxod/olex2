@@ -1150,10 +1150,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\xbase.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\xlib\xdmas.cpp"
 				>
 			</File>
