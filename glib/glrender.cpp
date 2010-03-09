@@ -87,6 +87,7 @@ void TGlRenderer::Initialise()  {
 }
 //..............................................................................
 void TGlRenderer::InitLights()  {
+  SetView(true, 1);
   glEnable(GL_LIGHTING);
   glEnable(GL_DEPTH_TEST);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
