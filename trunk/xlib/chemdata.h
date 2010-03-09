@@ -212,8 +212,8 @@ public:
     cm_Element* type = FindBySymbolEx(label);
     return type == NULL ? EmptyString : type->symbol;
   }
-  // returns true if labels starts from a symbol
-  static bool IsElement(const olxstr& label) {  return !ExtractSymbol(label).IsEmpty();  }
+  // returns true if labels is a symbol
+  static bool IsElement(const olxstr& label) {  return FindBySymbol(label) != NULL;  }
   // checks if p is a label starting from an element symbol
   static bool IsAtom(const olxstr& label)  {  return (FindBySymbolEx(label) != NULL);  }
 
