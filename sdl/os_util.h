@@ -34,7 +34,7 @@ struct olx_critical_section  {
   pthread_mutexattr_t csa;
   olx_critical_section() {
     pthread_mutexattr_init(&csa);
-    pthread_mutexattr_settype(&csa, PTHREAD_MUTEX_FAST_NP);
+    pthread_mutexattr_settype(&csa, PTHREAD_MUTEX_DEFAULT);
     pthread_mutex_init(&cs, &csa);
   }
 
