@@ -383,14 +383,12 @@ void TdlgSceneProps::OnApply(wxCommandEvent& event)  {
   UpdateLight(FLightModel.GetLight(FCurrentLight));
   UpdateLightModel(FLightModel);
   TGXApp::GetInstance().GetRender().LightModel = FLightModel;
-  TGXApp::GetInstance().GetRender().LoadIdentity();
   TGXApp::GetInstance().GetRender().InitLights();
   TGXApp::GetInstance().Draw();
 }
 //..............................................................................
 void TdlgSceneProps::OnCancel(wxCommandEvent& event)  {
   TGXApp::GetInstance().GetRender().LightModel = FOriginalModel;
-  TGXApp::GetInstance().GetRender().LoadIdentity();
   TGXApp::GetInstance().GetRender().InitLights();
   EndModal(wxID_OK);
 }

@@ -122,9 +122,8 @@ void TGlGroup::InitMaterial() const {
 }
 //..............................................................................
 void TGlGroup::Draw(bool SelectPrimitives, bool SelectObjects) const  {
-//  if( SelectObjects )     glLoadName(this->Tag());
   if( !SelectPrimitives && !SelectObjects )
-      InitMaterial();
+    InitMaterial();
 
   for( size_t i=0; i < FObjects.Count(); i++ )  {
     AGDrawObject* G = FObjects[i];
@@ -134,12 +133,15 @@ void TGlGroup::Draw(bool SelectPrimitives, bool SelectObjects) const  {
     const size_t pc = G->GetPrimitives().PrimitiveCount();
     for( size_t j=0; j < pc; j++ )  {
       TGlPrimitive& GlP = G->GetPrimitives().GetPrimitive(j);
-      if( SelectObjects )     glLoadName((GLuint)G->GetTag());
-      if( SelectPrimitives )  glLoadName((GLuint)GlP.GetTag());
-      glPushMatrix();
-      if( G->Orient(GlP) )  {  glPopMatrix();  continue;  }
+      if( SelectObjects )     olx_gl::loadName((GLuint)G->GetTag());
+      if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
+      olx_gl::pushMatrix();
+      if( G->Orient(GlP) )  {
+        olx_gl::popMatrix();
+        continue;
+      }
       GlP.Draw();
-      glPopMatrix();
+      olx_gl::popMatrix();
     }
   }
 }

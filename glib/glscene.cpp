@@ -1,11 +1,6 @@
 //---------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "glscene.h"
 #include "glrender.h"
 #include "glfont.h"
@@ -23,21 +18,21 @@ AGlScene::~AGlScene()  {
   }
 }
 //..............................................................................
-void AGlScene::StartDraw()  {  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
+void AGlScene::StartDraw()  {  olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
 //..............................................................................
-void AGlScene::EndDraw()    {  glFlush();  }
+void AGlScene::EndDraw()    {  olx_gl::flush();  }
 //..............................................................................
 void AGlScene::StartSelect(int x, int y, GLuint *Bf)  {
-  glSelectBuffer(MAXSELECT, Bf);
-  glRenderMode(GL_SELECT);
-  glInitNames();
-  glPushName(~0);
+  olx_gl::selectBuffer(MAXSELECT, Bf);
+  olx_gl::renderMode(GL_SELECT);
+  olx_gl::initNames();
+  olx_gl::pushName(~0);
   FParent->SetView(x, y, false, true, 1);
 }
 //..............................................................................
 int AGlScene::EndSelect()  {
-  int hits = glRenderMode(GL_RENDER);
-  glFlush();
+  int hits = olx_gl::renderMode(GL_RENDER);
+  olx_gl::flush();
   FParent->SetView(false, 1);
   return hits;
 }

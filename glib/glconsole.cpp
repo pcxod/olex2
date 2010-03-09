@@ -9,7 +9,6 @@
 #include "gpcollection.h"
 #include "glfont.h"
 #include "glmouse.h"
-#include "glscene.h"
 #include "glprimitive.h"
 
 #include "styles.h"
@@ -134,7 +133,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
       while( line.CharAt(stlen-1) == ' ' && stlen > 1 ) stlen--;
       line = line.SubStringTo(stlen);
 
-      glRasterPos3d(T[0], T[1], MaxZ);
+      olx_gl::rasterPos(T[0], T[1], MaxZ);
       TGlMaterial* GlMP = FBuffer.GetObject(i);
       if( GlMP != NULL ) 
         GlMP->Init(Parent.IsColorStereo());

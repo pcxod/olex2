@@ -121,10 +121,10 @@ void TXGrid::DrawQuad4(double A[4], double B[4], double C[4], double D[4])  {
   for(int i=0; i < 2; i++ )  {
     for(int j=0; j < 2; j++ )  {
       CalcColor( c[i][j] );
-      glVertex3d(p[i][j][0], p[i][j][1], p[i][j][2]);
-      glVertex3d(p[i+1][j][0], p[i+1][j][1], p[i+1][j][2]);
-      glVertex3d(p[i+1][j+1][0], p[i+1][j+1][1], p[i+1][j+1][2]);
-      glVertex3d(p[i][j+1][0], p[i][j+1][1], p[i][j+1][2]);
+      olx_gl::vertex(p[i][j]);
+      olx_gl::vertex(p[i+1][j]);
+      olx_gl::vertex(p[i+1][j+1]);
+      olx_gl::vertex(p[i][j+1]);
     }
   }
 }
@@ -296,7 +296,7 @@ void TXGrid::CalcColor(float v) const {
     G = (float)sin(M_PI*cs);
     B = 0;
   }
-  glColor3d(R,G,B);
+  olx_gl::color(R,G,B);
 }
 //..............................................................................
 void TXGrid::TPlaneCalculationTask::Run(size_t ind)  {
@@ -356,9 +356,9 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   if( Is3D() )  {
     if( IS == NULL )  return true;
     if( &GlP == glpN )  // draw once only
-      glCallList(PListId);
+      olx_gl::callList(PListId);
     else if( &GlP == glpP )  // draw once only
-      glCallList(NListId);
+      olx_gl::callList(NListId);
     return true;
   }
   if( &GlP == glpP || &GlP == glpN )  return true;
@@ -400,7 +400,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     if( tasks[i].maxVal > maxVal )
       maxVal = tasks[i].maxVal;
   }
-  glNormal3f(bm[0][2], bm[1][2], bm[2][2]);
+  olx_gl::normal(bm[0][2], bm[1][2], bm[2][2]);
   if( (RenderMode&planeRenderModePlane) != 0 )  {
     if( !olx_is_valid_index(TextIndex) )  {
       TextIndex = Parent.GetTextureManager().Add2DTexture("Plane", 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
@@ -419,7 +419,6 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
       FindTexture(TextIndex), 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
 
     GlP.SetTextureId(TextIndex);
-    //  glNormal3d(bm[0][2], bm[1][2], bm[2][2]);
   }
   if( (RenderMode&planeRenderModeContour) != 0 )  {
     Contour<float> cm;
@@ -430,7 +429,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
       ContourLevels[i] = ContourLevels[i-1]+contour_step;
 
     GlP.PrepareColorRendering(GL_LINES);
-    glColor3f(0, 0, 0);
+    olx_gl::color(0, 0, 0);
     cm.DoContour(ContourData, 0, MaxDim-1, 0, MaxDim-1,
       ContourCrds[0], ContourCrds[1], 
       ContourLevelCount, ContourLevels, mf);
@@ -443,29 +442,11 @@ void TXGrid::GlLine(float x1, float y1, float x2, float y2, float z)  {
   vec3d p1(x1/Size, y1/Size, Depth), p2(x2/Size, y2/Size, Depth);
   p1 = Parent.GetBasis().GetMatrix()*p1 - Parent.GetBasis().GetCenter();
   p2 = Parent.GetBasis().GetMatrix()*p2 - Parent.GetBasis().GetCenter();
-  //static int8_t flag = 0;
-  //if( flag != 0 && olx_sign(flag) != olx_sign(z) )  {
-  //  glEnd();
-  //  if( flag < 0 )
-  //    glDisable(GL_LINE_STIPPLE);
-  //  else
-  //    glLineStipple(1, 0x03C0);
-  //  glBegin(GL_LINES);
-  //}
-  //if( flag == 0 )  {
-  //  if( z <= 0 )  {
-  //    glEnd();
-  //    glLineStipple(1, 0xf0f0);
-  //    glBegin(GL_LINES);
-  //  }
-  //}
   if( z < 0 )  // render just a half of the segment
     p2 = (p1 + p2)*0.5;
   
-  glVertex3d(p1[0], p1[1], p1[2]);
-  glVertex3d(p2[0], p2[1], p2[2]);
-  //
-  //flag = olx_sign(z);
+  olx_gl::vertex(p1);
+  olx_gl::vertex(p2);
 }
 //..............................................................................
 bool TXGrid::GetDimensions(vec3d &Max, vec3d &Min)  {
@@ -519,7 +500,7 @@ void TXGrid::DeleteObjects()  {
     Mask = NULL;
   }
   if( olx_is_valid_index(PListId) )  {
-    glDeleteLists(PListId, 2);
+    olx_gl::deleteLists(PListId, 2);
     PListId = NListId = ~0;
   }
   if( ContourData != NULL )  {
@@ -709,7 +690,7 @@ void TXGrid::GlContextChange()  {
   if( ED == NULL )
     return;
   if( !olx_is_valid_index(PListId)  )  {
-    glDeleteLists(PListId, 2);
+    olx_gl::deleteLists(PListId, 2);
     PListId = NListId = ~0;
   }
   SetScale(Scale);
@@ -718,7 +699,7 @@ void TXGrid::GlContextChange()  {
 void TXGrid::RescaleSurface()  {
   const TAsymmUnit& au =  XApp->XFile().GetAsymmUnit();
   if( !olx_is_valid_index(PListId) )  {
-    PListId = glGenLists(2);
+    PListId = olx_gl::genLists(2);
     NListId = PListId+1;
   }
   if( Mask != NULL )  {
@@ -728,8 +709,8 @@ void TXGrid::RescaleSurface()  {
       const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
       const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
       glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
-      glPolygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
-      glBegin(GL_TRIANGLES);
+      olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
+      olx_gl::begin(GL_TRIANGLES);
       for( int x=-1; x <= 1; x++ )  {
         for( int y=-1; y <= 1; y++ )  {
           for( int z=-1; z <= 1; z++ )  {
@@ -747,17 +728,16 @@ void TXGrid::RescaleSurface()  {
               }
               if( !draw )  continue;
               for( int j=0; j < 3; j++ )  {
-                const vec3f& nr = norms[trians[i].pointID[j]];
-                glNormal3f( nr[0], nr[1], nr[2] );
-                glVertex3f(pts[j][0], pts[j][1], pts[j][2]);
+                olx_gl::normal(norms[trians[i].pointID[j]]);
+                olx_gl::vertex(pts[j]);
               }
             }
           }
         }
       }
-      glEnd();
-      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-      glEndList();
+      olx_gl::end();
+      olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      olx_gl::endList();
     }
     p_vertices.Clear();
     p_triangles.Clear();
@@ -774,8 +754,8 @@ void TXGrid::RescaleSurface()  {
         const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
         const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
         glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
-        glPolygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
-        glBegin(GL_TRIANGLES);
+        olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
+        olx_gl::begin(GL_TRIANGLES);
         for( int x=-1; x <= 1; x++ )  {
           for( int y=-1; y <= 1; y++ )  {
             for( int z=-1; z <= 1; z++ )  {
@@ -784,18 +764,17 @@ void TXGrid::RescaleSurface()  {
                   pts[j] = verts[trians[i].pointID[j]];                      // ext drawing
                   pts[j][0] /= MaxX;  pts[j][1] /= MaxY;  pts[j][2] /= MaxZ; // ext drawing
                   pts[j][0] += x;     pts[j][1] += y;     pts[j][2] += z;    // ext drawing
-                  const vec3f& nr = norms[trians[i].pointID[j]];
-                  glNormal3f( nr[0], nr[1], nr[2] );
+                  olx_gl::normal(norms[trians[i].pointID[j]]);
                   au.CellToCartesian(pts[j]);                                // ext drawing
-                  glVertex3f(pts[j][0], pts[j][1], pts[j][2]);               // ext drawing
+                  olx_gl::vertex(pts[j]);               // ext drawing
                 }
               }
             }
           }
         }
-        glEnd();
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glEndList();
+        olx_gl::end();
+        olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        olx_gl::endList();
       }
     }
     else  {
@@ -808,19 +787,17 @@ void TXGrid::RescaleSurface()  {
           au.CellToCartesian(verts[i]);                                     // cell drawing
         }
         glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
-        glPolygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
-        glBegin(GL_TRIANGLES);
+        olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
+        olx_gl::begin(GL_TRIANGLES);
         for( size_t i=0; i < trians.Count(); i++ )  {
           for( int j=0; j < 3; j++ )  {
-            const vec3f& nr = norms[trians[i].pointID[j]];
-            glNormal3f( nr[0], nr[1], nr[2] );
-            const vec3f& p = verts[trians[i].pointID[j]];  // cell drawing
-            glVertex3f(p[0], p[1], p[2]);                  // cell drawing
+            olx_gl::normal(norms[trians[i].pointID[j]]);
+            olx_gl::vertex(verts[trians[i].pointID[j]]);  // cell drawing
           }
         }
-        glEnd();
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glEndList();
+        olx_gl::end();
+        olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        olx_gl::endList();
       }
     }
     p_vertices.Clear();

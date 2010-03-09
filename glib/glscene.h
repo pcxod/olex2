@@ -1,8 +1,5 @@
-//---------------------------------------------------------------------------
-
-#ifndef glsceneH
-#define glsceneH
-
+#ifndef __olx_gl_scene_H
+#define __olx_gl_scene_H
 #include "glbase.h"
 #include "estrlist.h"
 #include "tptrlist.h"

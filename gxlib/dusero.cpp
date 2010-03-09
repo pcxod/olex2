@@ -3,17 +3,10 @@
 // User object - a drawing object for unit cell
 // (c) Oleg V. Dolomanov, 2004-8
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "dusero.h"
-
 #include "glprimitive.h"
 #include "glmaterial.h"
 #include "glrender.h"
-#include "glscene.h"
 #include "gpcollection.h"
 
 #include "styles.h"
@@ -57,10 +50,10 @@ void TDUserObj::Create(const olxstr& cName, const ACreationParams* cpar)  {
   }
 }
 bool TDUserObj::Orient(TGlPrimitive& P)  {
-  Parent.GlTranslate( Basis.GetCenter() );
+  olx_gl::translate(Basis.GetCenter());
   if( Type == sgloSphere && Vertices != NULL )  {
     for( size_t i=0; i < Vertices->Count(); i++ )  {
-      Parent.Translate( (*Vertices)[i] );
+      olx_gl::translate((*Vertices)[i]);
       P.Draw();
     }
     return true;

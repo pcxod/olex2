@@ -414,8 +414,8 @@ void OrtDraw::Init(PSWriter& pw)  {
     ps[0] = (float)(PieDiv-i-1)/PieDiv;
     ps[1] = (float)sqrt(1.0-ps[0]*ps[0]);
   }
-  float vp[4];
-  glGetFloatv(GL_VIEWPORT, vp);
+  GLfloat vp[4];
+  olx_gl::get(GL_VIEWPORT, vp);
   TGXApp& app = TGXApp::GetInstance();
   const TEBasis& basis = app.GetRender().GetBasis();
   LinearScale = olx_min((float)pw.GetWidth()/vp[2], (double)pw.GetHeight()/vp[3]);

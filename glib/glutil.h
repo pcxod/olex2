@@ -1,7 +1,5 @@
 #ifndef __olx_glutil_H
 #define __olx_glutil_H
-
-#include "glbase.h"
 #include "threex3.h"
 #include "talist.h"
 
@@ -85,27 +83,27 @@ public:
     TArrayList<vec3f> norms;
     Generate(rad, ext, vecs, triags, norms);
     const size_t tc = triags.Count();
-    glBegin(GL_TRIANGLES);
+    olx_gl::begin(GL_TRIANGLES);
     for( size_t i = 0; i < tc; i++ )  {
       const GlTriangle& t = triags[i];
       for( size_t j=0; j < 3; j++ )  {
-        glNormal3f( norms[t.verts[j]][0], norms[t.verts[j]][1], norms[t.verts[j]][2]); 
-        glVertex3f( vecs[t.verts[j]][0], vecs[t.verts[j]][1], vecs[t.verts[j]][2]); 
+        olx_gl::normal(norms[t.verts[j]]); 
+        olx_gl::vertex(vecs[t.verts[j]]); 
       }
     }
-    glEnd();
+    olx_gl::end();
   }
   void Render(const TTypeList<vec3f>& vecs, const TTypeList<GlTriangle>& triags, const TArrayList<vec3f>& norms) const {
     const size_t tc = triags.Count();
-    glBegin(GL_TRIANGLES);
+    olx_gl::begin(GL_TRIANGLES);
     for( size_t i = 0; i < tc; i++ )  {
       const GlTriangle& t = triags[i];
       for( size_t j=0; j < 3; j++ )  {
-        glNormal3f( norms[t.verts[j]][0], norms[t.verts[j]][1], norms[t.verts[j]][2]); 
-        glVertex3f( vecs[t.verts[j]][0], vecs[t.verts[j]][1], vecs[t.verts[j]][2]); 
+        olx_gl::normal(norms[t.verts[j]]);
+        olx_gl::vertex(vecs[t.verts[j]]);
       }
     }
-    glEnd();
+    olx_gl::end();
   }
   void RenderEx(float rad, int ext, const vec3f& f_mask, const vec3f& t_mask) const {
     TTypeList<vec3f> vecs;
@@ -113,7 +111,7 @@ public:
     TArrayList<vec3f> norms;
     Generate(rad, ext, vecs, triags, norms);
     const size_t tc = triags.Count();
-    glBegin(GL_TRIANGLES);
+    olx_gl::begin(GL_TRIANGLES);
     for( size_t i = 0; i < tc; i++ )  {
       const GlTriangle& t = triags[i];
       if( vec3f::IsInRangeInc(vecs[t.verts[0]], f_mask, t_mask) &&
@@ -121,16 +119,16 @@ public:
           vec3f::IsInRangeInc(vecs[t.verts[2]], f_mask, t_mask) )
          continue;
       for( size_t j=0; j < 3; j++ )  {
-        glNormal3f( norms[t.verts[j]][0], norms[t.verts[j]][1], norms[t.verts[j]][2]); 
-        glVertex3f( vecs[t.verts[j]][0], vecs[t.verts[j]][1], vecs[t.verts[j]][2]); 
+        olx_gl::normal(norms[t.verts[j]]);
+        olx_gl::vertex(vecs[t.verts[j]]); 
       }
     }
-    glEnd();
+    olx_gl::end();
   }
   void RenderEx(const TTypeList<vec3f>& vecs, const TTypeList<GlTriangle>& triags, const TArrayList<vec3f>& norms, 
       const vec3f& f_mask, const vec3f& t_mask) const {
     const size_t tc = triags.Count();
-    glBegin(GL_TRIANGLES);
+    olx_gl::begin(GL_TRIANGLES);
     for( size_t i = 0; i < tc; i++ )  {
       const GlTriangle& t = triags[i];
       if( vec3f::IsInRangeInc(vecs[t.verts[0]], f_mask, t_mask) &&
@@ -138,132 +136,132 @@ public:
           vec3f::IsInRangeInc(vecs[t.verts[2]], f_mask, t_mask) )
          continue;
       for( int j=0; j < 3; j++ )  {
-        glNormal3f( norms[t.verts[j]][0], norms[t.verts[j]][1], norms[t.verts[j]][2]); 
-        glVertex3f( vecs[t.verts[j]][0], vecs[t.verts[j]][1], vecs[t.verts[j]][2]); 
+        olx_gl::normal(norms[t.verts[j]]);
+        olx_gl::vertex(vecs[t.verts[j]]);
       }
     }
-    glEnd();
+    olx_gl::end();
   }
   void RenderDisks(float rad, int t, float disk_s)  {
     vec3f sf(rad, 0, 0);
     double sa, sma, ca, cma;
     SinCos(2*M_PI/t, &sa, &ca);
     SinCos(-2*M_PI/t, &sma, &cma);
-    glBegin(GL_POLYGON);
-    glNormal3f(0, 0, -1);
+    olx_gl::begin(GL_POLYGON);
+    olx_gl::normal(0, 0, -1);
     for( int i=0; i <= t; i++ )  {
-      glVertex3f(sf[0], sf[1], -disk_s/2);
+      olx_gl::vertex(sf[0], sf[1], -disk_s/2);
       if( (i+1) > t )  break;
       float x = sf[0];
       sf[0] = (float)(x*ca + sf[1]*sa);
       sf[1] = (float)(sf[1]*ca - x*sa);
     }
-    glEnd();
+    olx_gl::end();
     sf = vec3f(rad, 0, 0);
-    glBegin(GL_POLYGON);
-    glNormal3f(0, 0, 1);
+    olx_gl::begin(GL_POLYGON);
+    olx_gl::normal(0, 0, 1);
     for( int i=0; i <= t; i++ )  {
-      glVertex3f(sf[0], sf[1], disk_s/2);
+      olx_gl::vertex(sf[0], sf[1], disk_s/2);
       if( (i+1) > t )  break;
       float x = sf[0];
       sf[0] = (float)(x*cma + sf[1]*sma);
       sf[1] = (float)(sf[1]*cma - x*sma);
     }
-    glEnd();
+    olx_gl::end();
 
     sf = vec3f(rad, 0, 0);
-    glBegin(GL_POLYGON);
-    glNormal3f(0, -1, 0);
+    olx_gl::begin(GL_POLYGON);
+    olx_gl::normal(0, -1, 0);
     for( int i=0; i <= t; i++ )  {
-      glVertex3f(sf[1], -disk_s/2, sf[0]);
+      olx_gl::vertex(sf[1], -disk_s/2, sf[0]);
       if( (i+1) > t )  break;
       float x = sf[0];
       sf[0] = (float)(x*ca + sf[1]*sa);
       sf[1] = (float)(sf[1]*ca - x*sa);
     }
-    glEnd();
+    olx_gl::end();
     sf = vec3f(rad, 0, 0);
-    glBegin(GL_POLYGON);
-    glNormal3f(0, 1, 0);
+    olx_gl::begin(GL_POLYGON);
+    olx_gl::normal(0, 1, 0);
     for( int i=0; i <= t; i++ )  {
-      glVertex3f(sf[1], disk_s/2, sf[0]);
+      olx_gl::vertex(sf[1], disk_s/2, sf[0]);
       if( (i+1) > t )  break;
       float x = sf[0];
       sf[0] = (float)(x*cma + sf[1]*sma);
       sf[1] = (float)(sf[1]*cma - x*sma);
     }
-    glEnd();
+    olx_gl::end();
 
     sf = vec3f(rad, 0, 0);
-    glBegin(GL_POLYGON);
-    glNormal3f(-1, 0, 0);
+    olx_gl::begin(GL_POLYGON);
+    olx_gl::normal(-1, 0, 0);
     for( int i=0; i <= t; i++ )  {
-      glVertex3f(-disk_s/2, sf[0], sf[1]);
+      olx_gl::vertex(-disk_s/2, sf[0], sf[1]);
       float x = sf[0];
       sf[0] = (float)(x*ca + sf[1]*sa);
       sf[1] = (float)(sf[1]*ca - x*sa);
     }
-    glEnd();
+    olx_gl::end();
     sf = vec3f(rad, 0, 0);
-    glBegin(GL_POLYGON);
-    glNormal3f(1, 0, 0);
+    olx_gl::begin(GL_POLYGON);
+    olx_gl::normal(1, 0, 0);
     for( int i=0; i <= t; i++ )  {
-      glVertex3f(disk_s/2, sf[0], sf[1]);
+      olx_gl::vertex(disk_s/2, sf[0], sf[1]);
       float x = sf[0];
       sf[0] = (float)(x*cma + sf[1]*sma);
       sf[1] = (float)(sf[1]*cma - x*sma);
     }
-    glEnd();
+    olx_gl::end();
   }
   void RenderRims(float rad, int t, float disk_s)  {
     vec3f sf(rad, 0, 0), pv;
     double sa, ca;
     SinCos(2*M_PI/t, &sa, &ca);
-    glBegin(GL_QUADS);
+    olx_gl::begin(GL_QUADS);
     for( int i=0; i <= t; i++ )  {
-      glNormal3f(sf[0], sf[1], 0);
-      glVertex3f(sf[0], sf[1], -disk_s/2);
-      glVertex3f(sf[0], sf[1], +disk_s/2);
+      olx_gl::normal(sf[0], sf[1], 0.0f);
+      olx_gl::vertex(sf[0], sf[1], -disk_s/2);
+      olx_gl::vertex(sf[0], sf[1], +disk_s/2);
       if( (i+1) > t )  break;
       float x = sf[0];
       sf[0] = (float)(x*ca + sf[1]*sa);
       sf[1] = (float)(sf[1]*ca - x*sa);
-      glNormal3f(sf[0], sf[1], 0);
-      glVertex3f(sf[0], sf[1], +disk_s/2);
-      glVertex3f(sf[0], sf[1], -disk_s/2);
+      olx_gl::normal(sf[0], sf[1], 0.0f);
+      olx_gl::vertex(sf[0], sf[1], +disk_s/2);
+      olx_gl::vertex(sf[0], sf[1], -disk_s/2);
     }
-    glEnd();
+    olx_gl::end();
 
     sf = vec3f(rad, 0, 0);
-    glBegin(GL_QUADS);
+    olx_gl::begin(GL_QUADS);
     for( int i=0; i <= t; i++ )  {
-      glNormal3f(sf[1], 0, sf[0]);
-      glVertex3f(sf[1], -disk_s/2, sf[0]);
-      glVertex3f(sf[1], +disk_s/2, sf[0]);
+      olx_gl::normal(sf[1], 0.0f, sf[0]);
+      olx_gl::vertex(sf[1], -disk_s/2, sf[0]);
+      olx_gl::vertex(sf[1], +disk_s/2, sf[0]);
       if( (i+1) > t )  break;
       float x = sf[0];
       sf[0] = (float)(x*ca + sf[1]*sa);
       sf[1] = (float)(sf[1]*ca - x*sa);
-      glNormal3f(sf[1], 0, sf[0]);
-      glVertex3f(sf[1], +disk_s/2, sf[0]);
-      glVertex3f(sf[1], -disk_s/2, sf[0]);
+      olx_gl::normal(sf[1], 0.0f, sf[0]);
+      olx_gl::vertex(sf[1], +disk_s/2, sf[0]);
+      olx_gl::vertex(sf[1], -disk_s/2, sf[0]);
     }
-    glEnd();
+    olx_gl::end();
 
     sf = vec3f(rad, 0, 0);
-    glBegin(GL_QUADS);
+    olx_gl::begin(GL_QUADS);
     for( int i=0; i <= t; i++ )  {
-      glNormal3f(0, sf[0], sf[1]);
-      glVertex3f(-disk_s/2, sf[0], sf[1]);
-      glVertex3f(+disk_s/2, sf[0], sf[1]);
+      olx_gl::normal(0.0f, sf[0], sf[1]);
+      olx_gl::vertex(-disk_s/2, sf[0], sf[1]);
+      olx_gl::vertex(+disk_s/2, sf[0], sf[1]);
       float x = sf[0];
       sf[0] = (float)(x*ca + sf[1]*sa);
       sf[1] = (float)(sf[1]*ca - x*sa);
-      glNormal3f(0, sf[0], sf[1]);
-      glVertex3f(+disk_s/2, sf[0], sf[1]);
-      glVertex3f(-disk_s/2, sf[0], sf[1]);
+      olx_gl::normal(0.0f, sf[0], sf[1]);
+      olx_gl::vertex(+disk_s/2, sf[0], sf[1]);
+      olx_gl::vertex(-disk_s/2, sf[0], sf[1]);
     }
-    glEnd();
+    olx_gl::end();
   }
 };
 EndGlNamespace()

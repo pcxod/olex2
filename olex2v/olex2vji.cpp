@@ -37,7 +37,7 @@ TOlexViewer::TOlexViewer(int w, int h) {
       Initialised = Instances.GetObject(0)->Initialised;
     return;
   }
-  glClearColor(0.5, 0.5, 0, 0);
+  olx_gl::clearColor(0.5, 0.5, 0.0, 0.0);
   GXApp->GetRender().Resize(0, 0, w, h, 1);
   wxFont Font(*wxNORMAL_FONT);//|wxFONTFLAG_ANTIALIASED);
 //  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
@@ -75,7 +75,7 @@ TOlexViewer::~TOlexViewer()  {
 void TOlexViewer::OnPaint()  {
   GXApp->Draw();
   GdiFlush();
-  glFlush();
+  olx_gl::flush();
 }
 bool TOlexViewer::OnMouse(int x, int y, short MouseEvent, short MouseButton, short ShiftState)  {
   bool res = false;
@@ -224,9 +224,9 @@ DrawContext::~DrawContext()  {
 }
 char* DrawContext::ReadPixels()  {
   if( Buffer != NULL )  {
-    glReadBuffer(GL_FRONT);
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Buffer);
+    olx_gl::readBuffer(GL_FRONT);
+    olx_gl::pPixelStore(GL_PACK_ALIGNMENT, 1);
+    olx_gl::readPixels(0, 0, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Buffer);
     const int sz = Width*Height*4;
     for( int i=0; i < Width; i++ )  {  // mirrow by Heght and inverrt
       for( int j=0; j < Height/2; j++ )  {

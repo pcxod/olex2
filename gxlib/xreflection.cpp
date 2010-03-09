@@ -84,24 +84,22 @@ void TXReflection::Create(const olxstr& cName, const ACreationParams* cpar) {
 TXReflection::~TXReflection()  {  }
 //..............................................................................
 bool TXReflection::Orient(TGlPrimitive& GlP)  {
-  Parent.GlTranslate(FCenter);
+  olx_gl::translate(FCenter);
   // scale the larger reflections up
   double scale1 = sqrt(atan(FParams[0])*2/M_PI);
-  Parent.GlScale( (float)(1+scale1*6) );
+  olx_gl::scale(1.0+scale1*6);
 
   if( IsSelected() || !GlP.GetProperties().IsTransparent() )  
     return false;
 
   TGlMaterial GlM = GlP.GetProperties();
-
   double scale = (1.0-FParams[0]);
   GlM.AmbientF[3] = (float)scale;
   GlM.Init(Parent.IsColorStereo());
   return false;
 }
 //..............................................................................
-bool TXReflection::GetDimensions(vec3d &Max, vec3d &Min)
-{
+bool TXReflection::GetDimensions(vec3d &Max, vec3d &Min)  {
   Min = FCenter;
   Max = FCenter;
   return true;

@@ -6,6 +6,7 @@
 #include "gloption.h"
 #include "gllightmodel.h"
 #include "glmaterial.h"
+#include "glscene.h"
 #include "ebasis.h"
 #include "actions.h"
 #include "threex3.h"
@@ -257,44 +258,11 @@ public:
 
   TTextureManager& GetTextureManager() const {  return *TextureManager;  }
 
-  // GL interface
-  // is used to orient the object (if anisotropic); the function should use
-  // provided SetOrientation function
-  template <class MC> void GlOrient(const MC& m )  {
-    float Bf[4][4];
-    Bf[0][0] = (float)m[0][0];  Bf[0][1] = (float)m[0][1];  Bf[0][2] = (float)m[0][2];  Bf[0][3] = 0;
-    Bf[1][0] = (float)m[1][0];  Bf[1][1] = (float)m[1][1];  Bf[1][2] = (float)m[1][2];  Bf[1][3] = 0;
-    Bf[2][0] = (float)m[2][0];  Bf[2][1] = (float)m[2][1];  Bf[2][2] = (float)m[2][2];  Bf[2][3] = 0;
-    Bf[3][0] = 0;  Bf[3][1] = 0;  Bf[3][2] = 0;  Bf[3][3] = 1.0;
-    glMultMatrixf(&Bf[0][0]);
-  }
-  void GlOrient( const TEBasis &b ) const {
-    glMultMatrixf( b.GetMData() );
-  }
-  void LoadIdentity() const {  glLoadIdentity(); }
-  // multiplies current matrix by m
-  void GlOrient( const float *m )  const {  glMultMatrixf( m );  }
-
-  void GlTranslate( float _x, float _y, float _z) const {
-    glTranslatef(_x, _y, _z);
-  }
-  void GlRotate( float Angle, float _x, float _y, float _z) const {
-    glRotatef(Angle, _x, _y, _z);
-  }
-
-  template <class VC> void GlTranslate(const VC& trans) const {
-    glTranslatef((float)trans[0], (float)trans[1], (float)trans[2]);
-  }
-
-  void GlScale( const float _x, const float _y, const float _z) const {
-    glScalef(_x, _y, _z);
-  }
   // vendor specific, fixes for ATI
   void DrawText(TGlPrimitive& p, double x, double y, double z);
   // avoids clipping the text as well as vendor specific, uses screen coordinates
   void DrawTextSafe(const vec3d& pos, const olxstr& text, const class TGlFont& fnt);
   bool IsATI() const {  return ATI;  }
-  void GlScale( const float S ) const {  glScalef(S, S, S);  }
   void EnableClipPlane(class TGlClipPlane *P, bool v);
 
   TGlBackground* Background()  {  return FBackground; }

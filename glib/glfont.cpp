@@ -13,7 +13,7 @@ using namespace exparse::parser_util;
 UseGlNamespace()
 //..............................................................................
 TGlFont::TGlFont(const olxstr& name) {
-  FontBase = glGenLists(256);
+  FontBase = olx_gl::genLists(256);
   if( FontBase == (GLuint)~0 )
     throw TOutOfMemoryException(__OlxSourceInfo);
   CharSizes.SetCount(256);
@@ -34,9 +34,9 @@ TGlFont::~TGlFont()  {
   for( int i=0; i < 256; i++ )
     delete CharSizes[i];
   if( FontBase != (GLuint)~0 )
-    glDeleteLists(FontBase, 256);
+    olx_gl::deleteLists(FontBase, 256);
   if( Textures != NULL )  {
-    glDeleteTextures(256, Textures);
+    olx_gl::deleteTextures(256, Textures);
     delete [] Textures;
   }
 }
@@ -52,7 +52,7 @@ void TGlFont::ClearData()  {
   Topmost  = 1000;
   Flags = 0;
   //if( Textures != NULL )  {
-  //  glDeleteTextures(256, Textures);
+  //  olx_gl::deleteTextures(256, Textures);
   //  delete [] Textures;
   //  Textures = NULL;
   //}
@@ -207,7 +207,7 @@ void TGlFont::CreateGlyphsFromRGBArray(bool FW, uint16_t Width, uint16_t Height)
   SetBit(FW, Flags, sglfFixedWidth);
   uint16_t NHeight = MaxHeight;
   uint16_t BWidth = (MaxWidth/8+1);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);  // byte alignment
+  olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 1);  // byte alignment
   unsigned char *BmpData = new unsigned char [(NHeight+1)*BWidth];
   TFontCharSize* cs = CharSize('W');
   uint16_t maxCharW = cs->Right - cs->Left + CharOffset;
@@ -224,25 +224,25 @@ void TGlFont::CreateGlyphsFromRGBArray(bool FW, uint16_t Width, uint16_t Height)
             BmpData[(NHeight-k)*BWidth + (j+Leftmost)/8] |= (0x01 << (7-(j+Leftmost)%8));
         }
       }
-      glNewList(FontBase +i, GL_COMPILE_AND_EXECUTE);
+      olx_gl::newList(FontBase +i, GL_COMPILE_AND_EXECUTE);
       if( IsFixedWidth() )
-        glBitmap(BWidth*8, NHeight, 0.0, 0.0, (float)(MaxWidth), 0.0, BmpData);
+        olx_gl::bitmap(BWidth*8, NHeight, 0.0, 0.0, (float)(MaxWidth), 0.0, BmpData);
       else
-        glBitmap(BWidth*8, NHeight, 0.0, 0.0, (float)(cs->Right + CharOffset), 0.0, BmpData);
+        olx_gl::bitmap(BWidth*8, NHeight, 0.0, 0.0, (float)(cs->Right + CharOffset), 0.0, BmpData);
 
-      glEndList();
+      olx_gl::endList();
       cs->Data = NULL;
     }
     else  {  // an empty character as a space char
-      glNewList(FontBase +i, GL_COMPILE_AND_EXECUTE);
+      olx_gl::newList(FontBase +i, GL_COMPILE_AND_EXECUTE);
 
       if( IsFixedWidth() )
-        glBitmap(BWidth, MaxHeight, 0.0, 0.0, (float)(MaxWidth), 0.0, BmpData);
+        olx_gl::bitmap(BWidth, MaxHeight, 0.0, 0.0, (float)(MaxWidth), 0.0, BmpData);
       else
-        glBitmap(olx_min(BWidth*8, CharOffset*5), MaxHeight, 0.0, 0.0, 
+        olx_gl::bitmap(olx_min(BWidth*8, CharOffset*5), MaxHeight, 0.0, 0.0, 
            (float)(olx_min(BWidth*8, CharOffset*5)+CharOffset), 0.0, BmpData);
 
-      glEndList();
+      olx_gl::endList();
       cs->Top = 0;                 
       cs->Left = 0;
       cs->Right = olx_min(BWidth*8, CharOffset*5);   
@@ -306,7 +306,7 @@ void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, uint16_t w, ui
 
   uint16_t BWidth = (MaxWidth/8+1)*8;
   uint16_t BHeight = MaxHeight+1;
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);  // byte alignment
+  olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 1);  // byte alignment
   unsigned char* bf = new unsigned char[BWidth*BHeight];
   for( int i=0; i < 256; i++ )  {
     TFontCharSize* cs = CharSize(i);
@@ -319,21 +319,21 @@ void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, uint16_t w, ui
             bf[((BHeight-k)*BWidth + (j+Leftmost))/8] |= (0x01 << (7-(j+Leftmost)%8));
         }
       }
-      glNewList(FontBase +i, GL_COMPILE_AND_EXECUTE);
+      olx_gl::newList(FontBase +i, GL_COMPILE_AND_EXECUTE);
       if( fixedWidth )
-        glBitmap(BWidth, BHeight, 0.0, 0.0, (float)(MaxWidth), 0.0, bf);
+        olx_gl::bitmap(BWidth, BHeight, 0.0, 0.0, (float)(MaxWidth), 0.0, bf);
       else
-        glBitmap(BWidth, BHeight, 0.0, 0.0, (float)(cs->Right + CharOffset), 0.0, bf);
-      glEndList();
+        olx_gl::bitmap(BWidth, BHeight, 0.0, 0.0, (float)(cs->Right + CharOffset), 0.0, bf);
+      olx_gl::endList();
     }
     else  {  // an empty character as a space char
-      glNewList(FontBase +i, GL_COMPILE_AND_EXECUTE);
+      olx_gl::newList(FontBase +i, GL_COMPILE_AND_EXECUTE);
       if( fixedWidth )
-        glBitmap(BWidth, BHeight, 0.0, 0.0, (float)(MaxWidth), 0.0, bf);
+        olx_gl::bitmap(BWidth, BHeight, 0.0, 0.0, (float)(MaxWidth), 0.0, bf);
       else
-        glBitmap(olx_min(BWidth, CharOffset*3), BHeight, 0.0, 0.0, 
+        olx_gl::bitmap(olx_min(BWidth, CharOffset*3), BHeight, 0.0, 0.0, 
            (float)(olx_min(BWidth, CharOffset*3)+CharOffset), 0.0, bf);
-      glEndList();
+      olx_gl::endList();
       cs->Top = 0;                 
       cs->Left = 0;
       cs->Right = olx_min(BWidth, CharOffset*3);   
@@ -343,71 +343,6 @@ void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, uint16_t w, ui
   delete [] bf;
 }
 //..............................................................................
-//void TGlFont::CreateGlyphs(bool FW, short Width, short Height)  {
-//  if( Width < FMaxWidth || Width < 0 ||
-//      Height < FMaxHeight || Height < 0 ||
-//      FMaxWidth <=0 || FMaxHeight <=0 )
-//    throw TInvalidArgumentException(__OlxSourceInfo, olxstr("font size w:") << Width << "; h:" << Height);
-//
-//  SetBit(FW, FFlags, sglfFixedWidth);
-//  int NHeight = FMaxHeight;//(FMaxHeight/8+1)*8;
-//  int BWidth  = FMaxWidth;
-//  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);  // byte alignment
-//  unsigned char *BmpData = new unsigned char [NHeight*(BWidth+4)*4];
-//  TFontCharSize* cs = CharSize('W');
-//  int maxCharW = cs->Right - cs->Left + FCharOffset;
-//  if( FMaxWidth > maxCharW ) // makes a lot of difference on lInux with its crappy fonts...
-//    FMaxWidth = maxCharW;
-//  for( int i=0; i < 256; i++ )  {
-//    cs = CharSize(i);
-//    memset(BmpData, 0, NHeight*BWidth*4); // initialise the bits array
-//    if( cs->Data )  {  // check if bitmap is not empty
-//      for( int j=cs->Left; j <= cs->Right; j++ )  {
-//        for( int k=cs->Top; k <= cs->Bottom; k++ )  {
-//          int ind = (k*Width+j)*3;
-//          if( (cs->Data[ind] | cs->Data[ind+1] | cs->Data[ind+2]) != cs->Background )  { // is black?
-//            int ind1 = ((NHeight-k)*BWidth + (j+FLeftmost))*4;
-//            BmpData[ind1]   = cs->Data[ind];
-//            BmpData[ind1+1] = cs->Data[ind+1];
-//            BmpData[ind1+2] = cs->Data[ind+2];
-//            BmpData[ind1+3] = 255;
-//          }
-//        }
-//      }
-//      glNewList(FFontBase +i, GL_COMPILE);
-////      glGetDoublev(GL_CURRENT_RASTER_POSITION, raster_pos);
-//      if( FixedWidth() )  {
-//        glDrawPixels(BWidth, NHeight, GL_RGBA, GL_UNSIGNED_BYTE, BmpData);
-////        raster_pos[1] += FMaxWidth;
-//      }
-//      else  {
-//        glDrawPixels(BWidth, NHeight, GL_RGBA, GL_UNSIGNED_BYTE, BmpData);
-////        raster_pos[1] += (cs->Right + FCharOffset);
-//      }
-////      glRasterPos4dv(raster_pos);
-//      glEndList();
-//      cs->Data = NULL;
-//    }
-//    else  {  // an empty character as a space char
-//      glNewList(FFontBase +i, GL_COMPILE);
-////      glGetDoublev(GL_CURRENT_RASTER_POSITION, raster_pos);
-//      if( FixedWidth() )  {
-//        //glDrawPixels(BWidth, NHeight, GL_RGB, GL_UNSIGNED_BYTE, BmpData);
-////        raster_pos[1] += FMaxWidth;
-//      }
-//      else  {
-////        raster_pos[1] += (olx_min(BWidth, FCharOffset*5)+FCharOffset);
-//        //glDrawPixels(BWidth, NHeight, GL_RGB, GL_UNSIGNED_BYTE, BmpData);
-//      }
-////      glRasterPos4dv(raster_pos);
-//      glEndList();
-//      cs->Top = 0;                 cs->Left = 0;
-//      cs->Right = FCharOffset*5;   cs->Top = FMaxHeight;
-//    }
-//  }
-//  delete [] BmpData;
-//}
-//..............................................................................
 void TGlFont::CreateTextures(uint16_t Width, uint16_t Height)  {
   if( Width < MaxWidth || 
       Height < MaxHeight || 
@@ -415,7 +350,7 @@ void TGlFont::CreateTextures(uint16_t Width, uint16_t Height)  {
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("font size w:") << Width << "; h:" << Height);
   if( Textures == NULL )  {
     Textures = new GLuint[256];
-    glGenTextures(256, &Textures[0]);
+    olx_gl::genTextures(256, &Textures[0]);
   }
   // calculate the texture size
   uint16_t txt_w = 1, txt_h = 1;
@@ -441,16 +376,16 @@ void TGlFont::CreateTextures(uint16_t Width, uint16_t Height)  {
           }
         }
       }
-      glBindTexture( GL_TEXTURE_2D, Textures[i]);
-      glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-      glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-      glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );  
-      glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-      glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
-      glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+      olx_gl::bindTexture( GL_TEXTURE_2D, Textures[i]);
+      olx_gl::texEnv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+      olx_gl::texParam(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      olx_gl::texParam(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
+      olx_gl::texParam(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+      olx_gl::texParam(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+      olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 4);
 //      gluBuild2DMipmaps( GL_TEXTURE_2D, 3, Width, Height, GL_RGB, GL_UNSIGNED_BYTE, cs->Data );      
       //gluBuild2DMipmaps( GL_TEXTURE_2D, 4, txt_dim, txt_dim, GL_RGBA, GL_UNSIGNED_BYTE, BmpData );      
-      glTexImage2D(GL_TEXTURE_2D, 0, 4, txt_w, txt_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, BmpData);
+      olx_gl::texImage(GL_TEXTURE_2D, 0, 4, txt_w, txt_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, BmpData);
     }
     else  {  // an empty character as a space char
       //glDeleteTextures(1, &Textures[i]);
@@ -1160,22 +1095,22 @@ void TGlFont::CreateHershey(const olxdict<size_t, olxstr, TPrimitiveComparator>&
   }
   for( size_t i=0; i < 95; i++ )  {
     TFontCharSize* cs = CharSize(i+32);
-    glNewList((GLuint)(FontBase + i + 32), GL_COMPILE_AND_EXECUTE);
+    olx_gl::newList((GLuint)(FontBase + i + 32), GL_COMPILE_AND_EXECUTE);
     bool loop_started = false;
     for( int j=2; j < 112; j+=2 )  {
       if( gl_font_simplex[i][j] == -1 && gl_font_simplex[i][j] == -1 )  {
         if( loop_started )  {
-          glEnd();
+          olx_gl::end();
           loop_started = false;
         }
         continue;
       }
       else  {
         if( !loop_started )  {
-          glBegin(GL_LINE_STRIP);
+          olx_gl::begin(GL_LINE_STRIP);
           loop_started = true;
         }
-        glVertex2d((double)gl_font_simplex[i][j]/VectorScale, (double)gl_font_simplex[i][j+1]/VectorScale);
+        olx_gl::vertex((double)gl_font_simplex[i][j]/VectorScale, (double)gl_font_simplex[i][j+1]/VectorScale);
       }
     }
     if( i == 0 )  {
@@ -1185,8 +1120,8 @@ void TGlFont::CreateHershey(const olxdict<size_t, olxstr, TPrimitiveComparator>&
       cs->Top = 0;
     }
     if( loop_started )
-      glEnd();
-    glEndList();
+      olx_gl::end();
+    olx_gl::endList();
   }
 }
 //..............................................................................
@@ -1246,26 +1181,26 @@ void TGlFont::RenderPSLabel(const vec3d& pos, const olxstr& label, TStrList& out
 //..............................................................................
 void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, double scale, bool FixedW)  {
   if( IsVectorFont() )  {
-    glTranslated(from[0], from[1], from[2]);
-    glScaled(PointSize*scale/15, PointSize*scale/15, 1);
+    olx_gl::translate(from);
+    olx_gl::scale(PointSize*scale/15, PointSize*scale/15, 1.0);
     short cstate=0;
     for( size_t i = 0; i < text.Length(); i++ )  {
       TFontCharSize* cs = CharSizes[text.CharAt(i)];
       if( text.CharAt(i) == '\\' && ! is_escaped(text, i) && (i+1) < text.Length() )  {
         if( text.CharAt(i+1) == '+' )  {
           if( cstate == 0 )
-            glScalef(0.5, 0.5, 1);
+            olx_gl::scale(0.5f, 0.5f, 1.0f);
           if( cstate == 0 || cstate == -1 )
-            glTranslated(0, +MaxHeight/VectorScale, 0);
+            olx_gl::translate(0.0, MaxHeight/VectorScale, 0.0);
           cstate = 1;
           i++;
           continue;
         }
         else if( text.CharAt(i+1) == '-' )  {
           if( cstate == 0 )
-            glScalef(0.5, 0.5, 1);
+            olx_gl::scale(0.5f, 0.5f, 1.0f);
           else if( cstate == 1 )
-            glTranslated(0, -MaxHeight/VectorScale, 0);
+            olx_gl::translate(0.0, -MaxHeight/VectorScale, 0.0);
           cstate = -1;
           i++;
           continue;
@@ -1273,62 +1208,60 @@ void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, double scale, bo
         else if( text.CharAt(i+1) == '0' )  {
           if( cstate != 0 )  {          
             if( cstate == 1 )
-              glTranslated(0, -MaxHeight/VectorScale, 0);
-            glScalef(2, 2, 1);
+              olx_gl::translate(0.0, -MaxHeight/VectorScale, 0.0);
+            olx_gl::scale(2, 2, 1);
             i++;
             cstate = 0;
             continue;
           }
         }
       }
-      glCallList(FontBase+text.CharAt(i));
-      glTranslated((double)cs->Right/VectorScale, 0, 0);
+      olx_gl::callList(FontBase+text.CharAt(i));
+      olx_gl::translate((double)cs->Right/VectorScale, 0.0, 0.0);
     }
-    //glTranslated(-from[0], -(from[1]+text.Length()*inc), -from[2]);
+    //olx_gl::Translate(-from[0], -(from[1]+text.Length()*inc), -from[2]);
     return;
   }
   if( Textures == NULL || text.IsEmpty() )  return;
-  glEnable( GL_TEXTURE_2D );
-
-  glEnable(GL_ALPHA_TEST);
-  glEnable(GL_BLEND);
-  glDisable(GL_CULL_FACE);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+  olx_gl::enable(GL_TEXTURE_2D);
+  olx_gl::enable(GL_ALPHA_TEST);
+  olx_gl::enable(GL_BLEND);
+  olx_gl::disable(GL_CULL_FACE);
+  olx_gl::blendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   double step = 0.2, tx = (double)MaxWidth*step/TextureWidth, st=0,
     aspect=step*(double)TextureHeight/TextureWidth;
   //glEnable(GL_COLOR_MATERIAL);
   //glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 //  glColor4d(1, 1, 1, 0.5);
-  glTexCoord2d( 0, 0 );
-  glNormal3d(0, 0, 1);
+  olx_gl::texCoord(0, 0);
+  olx_gl::normal(0, 0, 1);
   for( size_t i=0; i < text.Length(); i++ )  {
     const unsigned ch = (unsigned)text.CharAt(i);
     if( ch > 256 )  continue;
     TFontCharSize* cs = CharSizes[ch];
-    glBindTexture(GL_TEXTURE_2D, Textures[ch] );
+    olx_gl::bindTexture(GL_TEXTURE_2D, Textures[ch] );
     if( Textures[ch] == (GLuint)~0 )  continue;  // empty char
-    glBegin(GL_QUADS);
-    glTexCoord2d( 1, 0 );  //0,1
-    glVertex3d(from[0], from[1], from[2]);
-    glTexCoord2d( 1, 1 );  // 0,0
-    glVertex3d(from[0], from[1]-aspect, from[2]);
-    glTexCoord2d( 0, 1 ); // 1,0
-    glVertex3d(from[0]-step, from[1]-aspect, from[2]);
-    glTexCoord2d( 0, 0 ); // 1, 1
-    glVertex3d(from[0]-step, from[1], from[2]);
-    glEnd();
+    olx_gl::begin(GL_QUADS);
+    olx_gl::texCoord(1, 0);  //0,1
+    olx_gl::vertex(from);
+    olx_gl::texCoord(1, 1);  // 0,0
+    olx_gl::vertex(from[0], from[1]-aspect, from[2]);
+    olx_gl::texCoord(0, 1); // 1,0
+    olx_gl::vertex(from[0]-step, from[1]-aspect, from[2]);
+    olx_gl::texCoord(0, 0); // 1, 1
+    olx_gl::vertex(from[0]-step, from[1], from[2]);
+    olx_gl::end();
     if( !FixedW )
       tx = step*(cs->Right-cs->Left+CharOffset)/TextureWidth;
-    glTranslated(tx, 0, 0);
+    olx_gl::translate(tx, 0.0, 0.0);
     st -= tx;
   }
-  glTranslated(st, 0, 0);
-  glDisable( GL_TEXTURE_2D );
-  glDisable(GL_ALPHA_TEST);
-  glDisable(GL_BLEND);
-  glDisable(GL_COLOR_MATERIAL);
+  olx_gl::translate(st, 0.0, 0.0);
+  olx_gl::disable(GL_TEXTURE_2D);
+  olx_gl::disable(GL_ALPHA_TEST);
+  olx_gl::disable(GL_BLEND);
+  olx_gl::disable(GL_COLOR_MATERIAL);
 }
 //..............................................................................
 void TGlFont::SetMaterial(const TGlMaterial& m)  {
@@ -1338,8 +1271,8 @@ void TGlFont::SetMaterial(const TGlMaterial& m)  {
   if( Textures == NULL || !ModifyTextures )  return;
   unsigned char *BmpData = new unsigned char [TextureWidth*TextureHeight*4];
   for( int i=0; i < 256; i++ )  {
-    glBindTexture(GL_TEXTURE_2D, Textures[i] );
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, BmpData);
+    olx_gl::bindTexture(GL_TEXTURE_2D, Textures[i] );
+    olx_gl::getTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, BmpData);
     for( int j=0; j < TextureWidth*TextureHeight*4; j+=4 )  {
       if( BmpData[j+3] == 255 )  {
         BmpData[j]   = (unsigned char)olx_round(255*m.AmbientF.Data()[0]);
@@ -1347,7 +1280,7 @@ void TGlFont::SetMaterial(const TGlMaterial& m)  {
         BmpData[j+2] = (unsigned char)olx_round(255*m.AmbientF.Data()[2]);
       }
     }
-    glTexImage2D(GL_TEXTURE_2D, 0, 4, TextureWidth, TextureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, BmpData);
+    olx_gl::texImage(GL_TEXTURE_2D, 0, 4, TextureWidth, TextureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, BmpData);
   }
 }
 //..............................................................................
