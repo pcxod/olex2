@@ -3,19 +3,11 @@
 // TGlXLabel - a drawing object for atom label
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "gllabel.h"
 #include "gpcollection.h"
 #include "styles.h"
-
 #include "glrender.h"
-#include "glscene.h"
 #include "glprimitive.h"
-
 #include "pers_util.h"
 
 TXGlLabel::TXGlLabel(TGlRenderer& R, const olxstr& collectionName) :
@@ -130,7 +122,7 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
     T *= Parent.GetBasis().GetMatrix();
     T *= Parent.GetBasis().GetZoom();
     T[2] = Parent.GetMaxRasterZ()-0.0015;
-    Parent.GlTranslate(T);
+    olx_gl::translate(T);
     if( !glf.IsVectorFont() )  {
       P.Vertices[0] = vec3d(0, 0, 0);
       P.Vertices[1] = vec3d(text_rect.width*ScaleVR, 0, 0);

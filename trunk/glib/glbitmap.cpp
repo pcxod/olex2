@@ -93,8 +93,7 @@ bool TGlBitmap::Orient(TGlPrimitive& P)  {
   P.Vertices[1] = vec3d(P.Vertices[0][0], hh-Top- xy, Z);
   P.Vertices[2] = vec3d(Left-hw + xx, P.Vertices[1][1], Z);
   P.Vertices[3] = vec3d(P.Vertices[2][0], P.Vertices[0][1], Z);
-
-  Parent.GlScale( (float)(Parent.GetScale()*Parent.GetExtraZoom()) );
+  olx_gl::scale(Parent.GetScale()*Parent.GetExtraZoom());
   return false;
 }
 

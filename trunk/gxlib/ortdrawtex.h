@@ -343,7 +343,7 @@ public:
       ps[1] = (float)sqrt(1.0-ps[0]*ps[0]);
     }
     float vp[4];
-    glGetFloatv(GL_VIEWPORT, vp);
+    olx_gl::get(GL_VIEWPORT, vp);
     TGXApp& app = TGXApp::GetInstance();
     const TEBasis& basis = app.GetRender().GetBasis();
     LinearScale = 1; // reset now

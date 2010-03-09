@@ -1,11 +1,6 @@
 //---------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "gllightmodel.h"
 #include "dataitem.h"
 
@@ -39,38 +34,32 @@ TGlLightModel& TGlLightModel::operator = (TGlLightModel& M)  {
 }
 //..............................................................................
 void TGlLightModel::Init()  {
-  glLightModelfv(GL_LIGHT_MODEL_AMBIENT, AmbientColor.Data());
-  glShadeModel( IsSmoothShade() ? GL_SMOOTH : GL_FLAT);
-  glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, IsLocalViewer() ? 1 : 0);
-  glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, IsTwoSides() ? 1 : 0);
-  glClearColor(ClearColor[0], ClearColor[1], ClearColor[2], ClearColor[3]);
+  olx_gl::lightModel(GL_LIGHT_MODEL_AMBIENT, AmbientColor.Data());
+  olx_gl::shadeModel(IsSmoothShade() ? GL_SMOOTH : GL_FLAT);
+  olx_gl::lightModel(GL_LIGHT_MODEL_LOCAL_VIEWER, IsLocalViewer() ? 1 : 0);
+  olx_gl::lightModel(GL_LIGHT_MODEL_TWO_SIDE, IsTwoSides() ? 1 : 0);
+  olx_gl::clearColor(ClearColor.Data());
   for( int i=0; i<8; i++ )  {
     if( Lights[i].IsEnabled() )  {
-      glLightfv(Lights[i].GetIndex(), GL_AMBIENT, Lights[i].GetAmbient().Data());
-      glLightfv(Lights[i].GetIndex(), GL_DIFFUSE, Lights[i].GetDiffuse().Data());
-      glLightfv(Lights[i].GetIndex(), GL_SPECULAR, Lights[i].GetSpecular().Data());
+      olx_gl::light(Lights[i].GetIndex(), GL_AMBIENT, Lights[i].GetAmbient().Data());
+      olx_gl::light(Lights[i].GetIndex(), GL_DIFFUSE, Lights[i].GetDiffuse().Data());
+      olx_gl::light(Lights[i].GetIndex(), GL_SPECULAR, Lights[i].GetSpecular().Data());
 
-      glLightfv(Lights[i].GetIndex(), GL_POSITION, Lights[i].GetPosition().Data());
-      glLighti(Lights[i].GetIndex(), GL_SPOT_CUTOFF, Lights[i].GetSpotCutoff());
+      olx_gl::light(Lights[i].GetIndex(), GL_POSITION, Lights[i].GetPosition().Data());
+      olx_gl::light(Lights[i].GetIndex(), GL_SPOT_CUTOFF, Lights[i].GetSpotCutoff());
 
-      glLightfv(Lights[i].GetIndex(), GL_SPOT_DIRECTION, Lights[i].GetSpotDirection().Data());
-      glLighti(Lights[i].GetIndex(), GL_SPOT_EXPONENT, Lights[i].GetSpotExponent());
+      olx_gl::light(Lights[i].GetIndex(), GL_SPOT_DIRECTION, Lights[i].GetSpotDirection().Data());
+      olx_gl::light(Lights[i].GetIndex(), GL_SPOT_EXPONENT, Lights[i].GetSpotExponent());
 
-      glLightf(Lights[i].GetIndex(), GL_CONSTANT_ATTENUATION, Lights[i].GetAttenuation()[0]);
-      glLightf(Lights[i].GetIndex(), GL_LINEAR_ATTENUATION, Lights[i].GetAttenuation()[1]);
-      glLightf(Lights[i].GetIndex(), GL_QUADRATIC_ATTENUATION, Lights[i].GetAttenuation()[2]);
-      glEnable(Lights[i].GetIndex());
+      olx_gl::light(Lights[i].GetIndex(), GL_CONSTANT_ATTENUATION, Lights[i].GetAttenuation()[0]);
+      olx_gl::light(Lights[i].GetIndex(), GL_LINEAR_ATTENUATION, Lights[i].GetAttenuation()[1]);
+      olx_gl::light(Lights[i].GetIndex(), GL_QUADRATIC_ATTENUATION, Lights[i].GetAttenuation()[2]);
+      olx_gl::enable(Lights[i].GetIndex());
     }
     else  {
-      glDisable(Lights[i].GetIndex());
+      olx_gl::disable(Lights[i].GetIndex());
     }
   }
-/*  glEnable(GL_POINT_SMOOTH);
-  glEnable(GL_LINE_SMOOTH);
-  glEnable(GL_POLYGON_SMOOTH);
-  glHint(GL_POINT_SMOOTH_HINT,GL_NICEST);
-  glHint(GL_LINE_SMOOTH_HINT,GL_NICEST);
-  glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST); */
 }
 //..............................................................................
 bool TGlLightModel::FromDataItem(const TDataItem& Item)  {

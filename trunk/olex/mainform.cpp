@@ -3255,7 +3255,6 @@ void TMainForm::LoadScene(const TDataItem& Root, TGlLightModel& FLM) {
     ci = I->FindItem("Exception");
     if( ci != NULL ) ExceptionFontColor.FromDataItem(*ci);
   }
-  FXApp->GetRender().LoadIdentity();
   FXApp->GetRender().InitLights();
 }
 //..............................................................................

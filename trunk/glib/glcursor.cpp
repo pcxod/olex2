@@ -3,15 +3,10 @@
 // TGlConsole - a console
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
 #define ID_TIMER 1000
 
 #include "glcursor.h"
 #include "glrender.h"
-#include "glscene.h"
 #include "gpcollection.h"
 #include "glmaterial.h"
 #include "styles.h"

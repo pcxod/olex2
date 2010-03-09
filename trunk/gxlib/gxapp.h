@@ -14,7 +14,6 @@
 #include "dframe.h"
 #include "gltext.h"
 #include "glfont.h"
-#include "glscene.h"
 #include "styles.h"
 
 #include "satom.h"

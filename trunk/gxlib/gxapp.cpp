@@ -503,7 +503,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     FGlRender->GetBasis().SetCenter(glCenter);
   }
   GetRender().GetSelection().Create();
-  GetRender().LoadIdentity();
+  olx_gl::loadIdentity();
   GetRender().SetView(false, 1);
   GetRender().Initialise();
   FGlRender->SetSceneComplete(true);

@@ -4,12 +4,8 @@
 //----------------------------------------------------------------------------//
 #include "dbasis.h"
 #include "gpcollection.h"
-
 #include "glrender.h"
-#include "glscene.h"
-
 #include "styles.h"
-
 #include "glmaterial.h"
 #include "glprimitive.h"
 #include "pers_util.h"
@@ -17,7 +13,7 @@
 TDBasis::TDBasis(TGlRenderer& Render, const olxstr& collectionName) : 
 TGlMouseListener(Render, collectionName)  
 {
-  SetMove2D(true);
+  SetMove2DZ(true);
   SetMoveable(true);
   SetZoomable(true);
   SetGroupable(false);
@@ -147,6 +143,7 @@ bool TDBasis::Orient(TGlPrimitive& P) {
       T *= Basis.GetZoom();
       T += Center;
       T *= Parent.GetBasis().GetMatrix();
+      T *= Parent.GetBasis().GetZoom();
       T *= scale;
       T[2] = Parent.GetMaxRasterZ();
       Str[0] = (char)('a'+i);
@@ -160,8 +157,8 @@ bool TDBasis::Orient(TGlPrimitive& P) {
   T *= Parent.GetScale();
   T = Parent.GetBasis().GetMatrix() * T;
   T -= Parent.GetBasis().GetCenter();
-  Parent.GlTranslate(T);
-  Parent.GlScale((float)Basis.GetZoom());
+  olx_gl::translate(T);
+  olx_gl::scale(Basis.GetZoom());
   return false;
 }
 //..............................................................................

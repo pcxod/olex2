@@ -86,8 +86,8 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
 }
 //..............................................................................
 bool TXPlane::Orient(TGlPrimitive& P)  {
-  Parent.GlTranslate(FPlane->GetCenter());
-  glNormal3d(FPlane->GetNormal()[0], FPlane->GetNormal()[1], FPlane->GetNormal()[2]);
+  olx_gl::translate(FPlane->GetCenter());
+  olx_gl::normal(FPlane->GetNormal());
   return false;
 }
 //..............................................................................

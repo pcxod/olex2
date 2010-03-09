@@ -1,12 +1,7 @@
-#ifdef __BORLANC__
-  #pragma hdrstop
-#endif
-
 #include "xlattice.h"
 #include "glrender.h"
 #include "styles.h"
 #include "gpcollection.h"
-#include "glscene.h"
 #include "glprimitive.h"
 
 TXLattice::TXLattice(TGlRenderer& Render, const olxstr& collectionName) :
@@ -20,8 +15,7 @@ TXLattice::TXLattice(TGlRenderer& Render, const olxstr& collectionName) :
   SetZoomable(false);
 }
 //..............................................................................
-TXLattice::~TXLattice()  {
-}
+TXLattice::~TXLattice()  {  }
 //..............................................................................
 void TXLattice::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
@@ -56,33 +50,24 @@ void TXLattice::Create(const olxstr& cName, const ACreationParams* cpar)  {
 bool TXLattice::Orient(TGlPrimitive& P)  {
   if( Fixed )  {
     vec3d c = Parent.GetBasis().GetCenter();
-    c *= -1;
-    Parent.GlTranslate( c );
-
-    mat3d m (Parent.GetBasis().GetMatrix());
-    m.Transpose();
-    m = Basis.GetMatrix() * m;
-    Parent.GlOrient(  m );
-
-    Parent.GlTranslate( Basis.GetCenter() );
+    olx_gl::translate(c*=-1);
+    mat3d m = Parent.GetBasis().GetMatrix();
+    olx_gl::orient(Basis.GetMatrix() * m.Transpose());
+    olx_gl::translate(Basis.GetCenter());
   }
-  else  {
-    Parent.GlTranslate( Basis.GetCenter() );
-  }
-  vec3d vec;
+  else
+    olx_gl::translate(Basis.GetCenter());
+
   if( P.GetType() == sgloLines )  {
-    glPointSize(5);
-    glBegin(GL_POINTS);
+    olx_gl::pointSize(5);
+    olx_gl::begin(GL_POINTS);
     for( int i=-Size; i  < Size; i++ )  {
       for( int j=-Size; j  < Size; j++ )  {
-        for( int k=-Size; k  < Size; k++ )  {
-          vec[0] = i;  vec[1] = j;  vec[2] = k;
-          vec *= LatticeBasis;
-          glVertex3d(vec[0], vec[1], vec[2]);
-        }
+        for( int k=-Size; k  < Size; k++ )
+          olx_gl::vertex(vec3d(i,j,k)*LatticeBasis);
       }
     }
-    glEnd();
+    olx_gl::end();
   }
   return true;
 }

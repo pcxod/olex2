@@ -2,16 +2,10 @@
 // TGlText - a drawing object for text
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "gltext.h"
 #include "glmaterial.h"
 #include "gpcollection.h"
 #include "glrender.h"
-#include "glscene.h"
 #include "glprimitive.h"
 
 UseGlNamespace()
@@ -105,7 +99,7 @@ bool TGlText::Orient(TGlPrimitive& P)  {
     return true;
   }
   else  // ttf
-    Parent.GlTranslate(T);
+    olx_gl::translate(T);
 
 /*  if( StaticWidth() )
   {

@@ -69,8 +69,8 @@ void TXGrowPoint::Create(const olxstr& cName, const ACreationParams* cpar) {
 TXGrowPoint::~TXGrowPoint()  {  }
 //..............................................................................
 bool TXGrowPoint::Orient(TGlPrimitive& GlP)  {
-  Parent.GlTranslate(Center);
-  Parent.GlScale((float)Params()[0], (float)Params()[0], (float)Params()[0]);
+  olx_gl::translate(Center);
+  olx_gl::scale(Params()[0]);
   return false;
 } 
 //..............................................................................

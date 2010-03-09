@@ -3,15 +3,9 @@
 // TGlTextBox - a text box
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "gltextbox.h"
 #include "styles.h"
 #include "glrender.h"
-#include "glscene.h"
 #include "gpcollection.h"
 #include "glprimitive.h"
 #include "glfont.h"
@@ -72,7 +66,7 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
   Trans = Parent.Basis().Center();
   Trans *= Parent.Basis().Matrix();
   Parent.GlTranslate(-Trans[0], -Trans[1], -Trans[2] );*/
-  glNormal3d(0, 0, 1);
+ olx_gl::normal(0, 0, 1);
   TGlFont& Fnt = GetFont();
   if( P.GetType() == sgloText )  {
     P.SetFont(&Fnt);

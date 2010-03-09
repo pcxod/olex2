@@ -3,15 +3,8 @@
 // TXLine
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "xline.h"
 #include "gpcollection.h"
-#include "glscene.h"
-
 #include "xatom.h"
 
 //----------------------------------------------------------------------------//
@@ -62,16 +55,16 @@ bool TXLine::Orient(TGlPrimitive& GlP)  {
     V = (FEdge+FBase)/2;
     V += Parent.GetBasis().GetCenter();
     V = Parent.GetBasis().GetMatrix()*V;
-    glRasterPos3d(V[0]+0.15, V[1]+0.15, V[2]+5);
+    olx_gl::rasterPos(V[0]+0.15, V[1]+0.15, V[2]+5);
     GlP.SetString(&Length);
     GlP.Draw();
     GlP.SetString(NULL);
     return true;
   }
   else  {
-    Parent.GlTranslate(FBase);
-    Parent.GlRotate((float)Params()[0], (float)Params()[1], (float)Params()[2], 0.0);
-    Parent.GlScale((float)Params()[4], (float)Params()[4], (float)Params()[3]);
+    olx_gl::translate(FBase);
+    olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
+    olx_gl::scale(Params()[4], Params()[4], Params()[3]);
   }
   return false;
 } 

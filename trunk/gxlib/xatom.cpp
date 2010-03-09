@@ -85,7 +85,7 @@ TXAtom::~TXAtom()  {
   if( !FPrimitiveParams.IsEmpty() )
     FPrimitiveParams.Clear();
   if( OrtepSpheres != -1 )  {
-    glDeleteLists(OrtepSpheres, 9);
+    olx_gl::deleteLists(OrtepSpheres, 9);
     OrtepSpheres = -1;
   }
   if( Polyhedron != NULL )  {
@@ -369,16 +369,14 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
  
   if( GlP.GetOwnerId() == xatom_PolyId )  {
     if( Polyhedron == NULL )  return true;
-    glBegin(GL_TRIANGLES);
+    olx_gl::begin(GL_TRIANGLES);
     const TXAtom::Poly& pl = *Polyhedron;
     for( size_t j=0; j < pl.faces.Count(); j++ )  {
-      glNormal3f( pl.norms[j][0], pl.norms[j][1], pl.norms[j][2] );
-      for( int k=0; k < 3; k++ )  {
-        const vec3f& vec = pl.vecs[pl.faces[j][k]];
-        glVertex3f( vec[0], vec[1], vec[2] );
-      }
+      olx_gl::normal(pl.norms[j]);
+      for( int k=0; k < 3; k++ )
+        olx_gl::vertex(pl.vecs[pl.faces[j][k]]);
     }
-    glEnd();
+    olx_gl::end();
     return true;
   }
   // override for iso atoms
@@ -421,7 +419,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
   //  }
   //}
   
-  Parent.GlTranslate(c);
+  olx_gl::translate(c);
 
   double scale = FParams[1];
   if( (FRadius & (darIsot|darIsotH)) != 0 )
@@ -431,7 +429,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
     if( FAtom->GetEllipsoid() != NULL )  {
       // override for NPD atoms
       if( FAtom->GetEllipsoid()->IsNPD() )  {
-        Parent.GlScale((float)(caDefIso*2*scale));
+        olx_gl::scale(caDefIso*2*scale);
         if( GlP.GetOwnerId() == xatom_SphereId )  {
           FStaticObjects.GetObject(SmallSphereIndex)->Draw();
           return true;
@@ -440,11 +438,11 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
           return true;
       }
       else  {
-        Parent.GlOrient(FAtom->GetEllipsoid()->GetMatrix());
-        Parent.GlScale(
-          (float)(FAtom->GetEllipsoid()->GetSX()*scale),
-          (float)(FAtom->GetEllipsoid()->GetSY()*scale),
-          (float)(FAtom->GetEllipsoid()->GetSZ()*scale)
+        olx_gl::orient(FAtom->GetEllipsoid()->GetMatrix());
+        olx_gl::scale(
+          FAtom->GetEllipsoid()->GetSX()*scale,
+          FAtom->GetEllipsoid()->GetSY()*scale,
+          FAtom->GetEllipsoid()->GetSZ()*scale
           );
         if( FDrawStyle == adsOrtep && GlP.GetOwnerId() == xatom_SphereId )  {
           short mask = 0;
@@ -453,23 +451,23 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
             if( mat[i][2] < 0 )
               mask |= (1<<i);
           }
-          glCallList(OrtepSpheres+mask);
+          olx_gl::callList(OrtepSpheres+mask);
           return true;
         }
       }
     }
     else 
-      Parent.GlScale( (float)(FParams[0]*scale) );
+      olx_gl::scale(FParams[0]*scale);
     return false;
   }
   // override for standalone atoms
   if( FDrawStyle == adsStandalone )  {
-    Parent.GlScale( (float)(FParams[0]*scale) );
+    olx_gl::scale(FParams[0]*scale);
     return false;
   }
   
   if( FDrawStyle == adsSphere )
-    Parent.GlScale( (float)(FParams[0]*scale) );
+    olx_gl::scale(FParams[0]*scale);
   return false;
 }
 //..............................................................................
@@ -480,16 +478,16 @@ bool TXAtom::DrawStencil()  {
 
   if( FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep )  {
     if( FAtom->GetEllipsoid() != NULL )  {
-      glPushMatrix();  
-      Parent.GlTranslate(Basis.GetCenter()+ FAtom->crd());
-      Parent.GlOrient( FAtom->GetEllipsoid()->GetMatrix() );
-      Parent.GlScale(
-        (float)(FAtom->GetEllipsoid()->GetSX()*scale),
-        (float)(FAtom->GetEllipsoid()->GetSY()*scale),
-        (float)(FAtom->GetEllipsoid()->GetSZ()*scale)
+      olx_gl::pushMatrix();  
+      olx_gl::translate(Basis.GetCenter()+ FAtom->crd());
+      olx_gl::orient(FAtom->GetEllipsoid()->GetMatrix());
+      olx_gl::scale(
+        FAtom->GetEllipsoid()->GetSX()*scale,
+        FAtom->GetEllipsoid()->GetSY()*scale,
+        FAtom->GetEllipsoid()->GetSZ()*scale
         );
-      glCallList(OrtepSpheres+8);
-      glPopMatrix();
+      olx_gl::callList(OrtepSpheres+8);
+      olx_gl::popMatrix();
       return true;
     }
   }
@@ -687,9 +685,9 @@ void TXAtom::CreateStaticPrimitives()  {
     FStaticObjects.Add("Rims", GlP = &Parent.NewPrimitive(sgloCommandList));
   GlP->StartList();
   GlP->CallList(GlPRC1);
-  Parent.GlRotate(90, 1, 0, 0);
+  olx_gl::rotate(90, 1, 0, 0);
   GlP->CallList(GlPRC1);
-  Parent.GlRotate(90, 0, 1, 0);
+  olx_gl::rotate(90, 0, 1, 0);
   GlP->CallList(GlPRC1);
   GlP->EndList();
   GlP->Params.Resize(3+1);  // radius, height, quality
@@ -719,15 +717,15 @@ void TXAtom::CreateStaticPrimitives()  {
     FStaticObjects.Add("Disks", GlP = &Parent.NewPrimitive(sgloCommandList));
   GlP->StartList();
   GlP->CallList(GlPRD2);
-  Parent.GlTranslate(0, 0, (float)DiskS);    GlP->CallList(GlPRD1);
-  Parent.GlTranslate(0, 0, (float)(-DiskS) );    
-  Parent.GlRotate(90, 1, 0, 0);
+  olx_gl::translate(0.0, 0.0, DiskS);    GlP->CallList(GlPRD1);
+  olx_gl::translate(0.0, 0.0, -DiskS);    
+  olx_gl::rotate(90, 1, 0, 0);
   GlP->CallList(GlPRD2);
-  Parent.GlTranslate(0, 0, (float)DiskS);    GlP->CallList(GlPRD1);
-  Parent.GlTranslate(0, 0, (float)(-DiskS) );    
-  Parent.GlRotate(90, 0, 1, 0);
+  olx_gl::translate(0.0, 0.0, DiskS);    GlP->CallList(GlPRD1);
+  olx_gl::translate(0.0, 0.0, -DiskS);    
+  olx_gl::rotate(90, 0, 1, 0);
   GlP->CallList(GlPRD2);
-  Parent.GlTranslate(0, 0, (float)DiskS);    GlP->CallList(GlPRD1);
+  olx_gl::translate(0.0, 0.0, DiskS);    GlP->CallList(GlPRD1);
   GlP->EndList();
   GlP->Params.Resize(4+1);  // inner radius, outer radius, Quality, offset
   GlP->Params[0] = DiskIR;
@@ -775,35 +773,35 @@ void TXAtom::CreateStaticPrimitives()  {
   TArrayList<vec3f> norms;
   gls.Generate(1, olx_round(log(SphereQ)+0.5), vecs, triags, norms);
   if( OrtepSpheres == -1 )
-    OrtepSpheres = glGenLists(9);
+    OrtepSpheres = olx_gl::genLists(9);
   
-  glNewList(OrtepSpheres, GL_COMPILE);
+  olx_gl::newList(OrtepSpheres, GL_COMPILE);
   gls.RenderEx(vecs, triags, norms, vec3f(0,0,0), vec3f(1,1,1));
-  glEndList();  
-  glNewList(OrtepSpheres+1, GL_COMPILE);
+  olx_gl::endList();  
+  olx_gl::newList(OrtepSpheres+1, GL_COMPILE);
   gls.RenderEx(vecs, triags, norms, vec3f(-1,0,0), vec3f(0,1,1));
-  glEndList();  
-  glNewList(OrtepSpheres+2, GL_COMPILE);
+  olx_gl::endList();  
+  olx_gl::newList(OrtepSpheres+2, GL_COMPILE);
   gls.RenderEx(vecs, triags, norms, vec3f(0,-1,0), vec3f(1,0,1));
-  glEndList();  
-  glNewList(OrtepSpheres+3, GL_COMPILE);
+  olx_gl::endList();  
+  olx_gl::newList(OrtepSpheres+3, GL_COMPILE);
   gls.RenderEx(vecs, triags, norms, vec3f(-1,-1,0), vec3f(0,0,1));
-  glEndList();  
-  glNewList(OrtepSpheres+4, GL_COMPILE);
+  olx_gl::endList();  
+  olx_gl::newList(OrtepSpheres+4, GL_COMPILE);
   gls.RenderEx(vecs, triags, norms, vec3f(0,0,-1), vec3f(1,1,0));
-  glEndList();  
-  glNewList(OrtepSpheres+5, GL_COMPILE);
+  olx_gl::endList();  
+  olx_gl::newList(OrtepSpheres+5, GL_COMPILE);
   gls.RenderEx(vecs, triags, norms, vec3f(-1,0,-1), vec3f(0,1,0));
-  glEndList();  
-  glNewList(OrtepSpheres+6, GL_COMPILE);
+  olx_gl::endList();  
+  olx_gl::newList(OrtepSpheres+6, GL_COMPILE);
   gls.RenderEx(vecs, triags, norms, vec3f(0,-1,-1), vec3f(1,0,0));
-  glEndList();  
-  glNewList(OrtepSpheres+7, GL_COMPILE);
+  olx_gl::endList();  
+  olx_gl::newList(OrtepSpheres+7, GL_COMPILE);
   gls.RenderEx(vecs, triags, norms, vec3f(-1,-1,-1), vec3f(0,0,0));
-  glEndList();  
-  glNewList(OrtepSpheres+8, GL_COMPILE);
+  olx_gl::endList();  
+  olx_gl::newList(OrtepSpheres+8, GL_COMPILE);
   gls.Render(vecs, triags, norms);
-  glEndList();  
+  olx_gl::endList();  
 }
 //..............................................................................
 void TXAtom::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {

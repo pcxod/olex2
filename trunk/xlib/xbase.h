@@ -27,9 +27,9 @@ const short
   sotBBond  = 0x0006;
 
 const float
-  dcMaxCBLength = 5.6, // maximum length of a covalent bond
-  dcMaxHBLength = 6; // maximu length of a short interaction
-const float caDefIso = 0.05;  // default atom isotropic parameter;
+  dcMaxCBLength = 5.6f, // maximum length of a covalent bond
+  dcMaxHBLength = 6.0f; // maximu length of a short interaction
+const float caDefIso = 0.05f;  // default atom isotropic parameter;
 
 template <class Net> class TSObject: public ACollectionItem  {
 protected:

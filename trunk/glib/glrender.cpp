@@ -2,7 +2,6 @@
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
 #include "glrender.h"
-#include "glscene.h"
 #include "glgroup.h"
 #include "styles.h"
 #include "glbackground.h"
@@ -82,17 +81,16 @@ void TGlRenderer::Initialise()  {
     Primitives.GetObject(i).Compile();
   FBackground->Create();
   FCeiling->Create();
-  olxcstr vendor( (const char*)glGetString(GL_VENDOR) );
-  ATI = vendor.StartsFrom("ATI");
+  ATI = olxcstr((const char*)olx_gl::getString(GL_VENDOR)).StartsFrom("ATI");
 }
 //..............................................................................
 void TGlRenderer::InitLights()  {
   SetView(true, 1);
-  glEnable(GL_LIGHTING);
-  glEnable(GL_DEPTH_TEST);
-  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-  glClearDepth(1.0);
-  glDepthFunc(GL_LEQUAL);
+  olx_gl::enable(GL_LIGHTING);
+  olx_gl::enable(GL_DEPTH_TEST);
+  olx_gl::hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+  olx_gl::clearDepth(1.0f);
+  olx_gl::depthFunc(GL_LEQUAL);
   LightModel.Init();
 }
 //..............................................................................
@@ -101,7 +99,7 @@ void TGlRenderer::ClearPrimitives()  {
   FSelection->Clear();
   FListManager.ClearLists();
   if( CompiledListId != -1 )  {
-    glDeleteLists(CompiledListId, 1);
+    olx_gl::deleteLists(CompiledListId, 1);
     CompiledListId = -1;
   }
   for( size_t i=0; i < FCollections.Count(); i++ )
@@ -128,7 +126,7 @@ void TGlRenderer::Clear()  {
   FGroups.Clear();
   FListManager.ClearLists();
   if( CompiledListId != -1 )  {
-    glDeleteLists(CompiledListId, 1);
+    olx_gl::deleteLists(CompiledListId, 1);
     CompiledListId = -1;
   }
   for( size_t i=0; i < FCollections.Count(); i++ )
@@ -267,15 +265,15 @@ TGlPrimitive& TGlRenderer::NewPrimitive(short type)  {
 }
 //..............................................................................
 void TGlRenderer::EnableFog(bool Set)  {
-  glFogi(GL_FOG_MODE, FogType);
-  glFogf(GL_FOG_DENSITY, FogDensity);
-  glFogfv(GL_FOG_COLOR, FogColor.Data());
-  glFogf(GL_FOG_START, FogStart);
-  glFogf(GL_FOG_END, FogEnd);
+  olx_gl::fog(GL_FOG_MODE, FogType);
+  olx_gl::fog(GL_FOG_DENSITY, FogDensity);
+  olx_gl::fog(GL_FOG_COLOR, FogColor.Data());
+  olx_gl::fog(GL_FOG_START, FogStart);
+  olx_gl::fog(GL_FOG_END, FogEnd);
   if( Set )
-    glEnable(GL_FOG);
+    olx_gl::enable(GL_FOG);
   else
-    glDisable(GL_FOG);
+    olx_gl::disable(GL_FOG);
   Fog = Set;
 }
 //..............................................................................
@@ -320,33 +318,33 @@ void TGlRenderer::SetZoom(double V) {
 }
 //..............................................................................
 void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res)  {
-  glViewport(FLeft*Res, FTop*Res, FWidth*Res, FHeight*Res);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
+  olx_gl::viewport(FLeft*Res, FTop*Res, FWidth*Res, FHeight*Res);
+  olx_gl::matrixMode(GL_PROJECTION);
+  olx_gl::loadIdentity();
   if( Select )  {
     GLint vp[4];
-    glGetIntegerv(GL_VIEWPORT, vp);
+    olx_gl::get(GL_VIEWPORT, vp);
     gluPickMatrix(x, FHeight-y, 2, 2, vp);
   }
   const double aspect = (double)FWidth/(double)FHeight;
   if( !identity )  {
     if( FPerspective )  {
       double right = FPAngle*aspect;
-      glFrustum(right*FProjectionLeft, right*FProjectionRight,
+      olx_gl::frustum(right*FProjectionLeft, right*FProjectionRight,
         FPAngle*FProjectionTop, FPAngle*FProjectionBottom, 1, 10);
     }
     else  {
-      glOrtho(aspect*FProjectionLeft, aspect*FProjectionRight,
+      olx_gl::ortho(aspect*FProjectionLeft, aspect*FProjectionRight,
         FProjectionTop, FProjectionBottom, 1, 10);
     }
     //glTranslated(0, 0, FMinV[2] > 0 ? -1 : FMinV[2]-FMaxV[2]);
-    glTranslated(0, 0, -2);
+    olx_gl::translate(0, 0, -2);
   }
   else  {
-    glOrtho(aspect*FProjectionLeft, aspect*FProjectionRight,
+    olx_gl::ortho(aspect*FProjectionLeft, aspect*FProjectionRight,
       FProjectionTop, FProjectionBottom, -1, 1);
   }
-  glMatrixMode(GL_MODELVIEW);
+  olx_gl::matrixMode(GL_MODELVIEW);
   /* Mxv ->
     x = {(Bf[0][0]*x+Bf[0][1]*y+Bf[0][2]*z+Bf[0][3]*w)},
     y = {(Bf[1][0]*x+Bf[1][1]*y+Bf[1][2]*z+Bf[1][3]*w)},
@@ -359,20 +357,19 @@ void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res)  
     Bf[3][0] = Bf[3][1] = 0;
     Bf[3][2] = -1;
     Bf[3][3] = 1;
-    glLoadMatrixf(&Bf[0][0]);
-    const double dv = GetBasis().GetZoom();
-    glScaled(dv, dv, dv);
-    glTranslated(GetBasis().GetCenter()[0], GetBasis().GetCenter()[1], GetBasis().GetCenter()[2]);
+    olx_gl::loadMatrix(&Bf[0][0]);
+    olx_gl::scale(GetBasis().GetZoom());
+    olx_gl::translate(GetBasis().GetCenter());
   }
   else  {
-    LoadIdentity();
+    olx_gl::loadIdentity();
   }
   //glDepthRange(1, 0);
 }
 //..............................................................................
 void TGlRenderer::Draw()  {
   if( FWidth < 50 || FHeight < 50 || !TBasicApp::GetInstance().IsMainFormVisible() )  return;
-  glEnable(GL_NORMALIZE);
+  olx_gl::enable(GL_NORMALIZE);
   BeforeDraw->Execute(this);
   //glLineWidth( (float)(0.07/GetScale()) );
   //glPointSize( (float)(0.07/GetScale()) );  
@@ -381,62 +378,62 @@ void TGlRenderer::Draw()  {
   if( StereoFlag == glStereoColor )  {
     const double ry = GetBasis().GetRY(), ra = StereoAngle;
     GetBasis().RotateY(ry-ra);
-    glDisable(GL_ALPHA_TEST);
-    glDisable(GL_BLEND);
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_COLOR_MATERIAL);
-    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    olx_gl::disable(GL_ALPHA_TEST);
+    olx_gl::disable(GL_BLEND);
+    olx_gl::disable(GL_CULL_FACE);
+    olx_gl::enable(GL_COLOR_MATERIAL);
+    olx_gl::colorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
-    glColorMask(
-      StereoRightColor[0] != 0 ? GL_TRUE : GL_FALSE,
-      StereoRightColor[1] != 0 ? GL_TRUE : GL_FALSE,
-      StereoRightColor[2] != 0 ? GL_TRUE : GL_FALSE,
-      StereoRightColor[3] != 0 ? GL_TRUE : GL_FALSE);
-    glColor4fv(StereoRightColor.Data());
+    olx_gl::colorMask(
+      StereoRightColor[0] != 0,
+      StereoRightColor[1] != 0,
+      StereoRightColor[2] != 0,
+      StereoRightColor[3] != 0);
+    olx_gl::color(StereoRightColor.Data());
     DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry+ra);
 
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE);
-    glColorMask(
-      StereoLeftColor[0] != 0 ? GL_TRUE : GL_FALSE,
-      StereoLeftColor[1] != 0 ? GL_TRUE : GL_FALSE,
-      StereoLeftColor[2] != 0 ? GL_TRUE : GL_FALSE,
-      StereoLeftColor[3] != 0 ? GL_TRUE : GL_FALSE);
-    glColor4fv(StereoLeftColor.Data());
+    olx_gl::clear(GL_DEPTH_BUFFER_BIT);
+    olx_gl::enable(GL_BLEND);
+    olx_gl::blendFunc(GL_ONE, GL_ONE);
+    olx_gl::colorMask(
+      StereoLeftColor[0] != 0,
+      StereoLeftColor[1] != 0,
+      StereoLeftColor[2] != 0,
+      StereoLeftColor[3] != 0);
+    olx_gl::color(StereoLeftColor.Data());
     DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    olx_gl::colorMask(true, true, true, true);
   }
   // http://local.wasp.uwa.edu.au/~pbourke/texture_colour/anaglyph/
   else if( StereoFlag == glStereoAnaglyph )  {
     const double ry = GetBasis().GetRY();
     GetBasis().RotateY(ry-StereoAngle);
-    glClearAccum(0.0,0.0,0.0,0.0);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glColorMask(
-      StereoRightColor[0] != 0 ? GL_TRUE : GL_FALSE,
-      StereoRightColor[1] != 0 ? GL_TRUE : GL_FALSE,
-      StereoRightColor[2] != 0 ? GL_TRUE : GL_FALSE,
-      StereoRightColor[3] != 0 ? GL_TRUE : GL_FALSE);
+    olx_gl::clearAccum(0.0,0.0,0.0,0.0);
+    olx_gl::colorMask(true, true, true, true);
+    olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    olx_gl::colorMask(
+      StereoRightColor[0] != 0,
+      StereoRightColor[1] != 0,
+      StereoRightColor[2] != 0,
+      StereoRightColor[3] != 0);
     DrawObjects(0, 0, false, false);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glAccum(GL_LOAD, 1);
+    olx_gl::colorMask(true, true, true, true);
+    olx_gl::accum(GL_LOAD, 1);
 
     GetBasis().RotateY(ry+StereoAngle);
     if( !IsATI() )
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glColorMask(
-      StereoLeftColor[0] != 0 ? GL_TRUE : GL_FALSE,
-      StereoLeftColor[1] != 0 ? GL_TRUE : GL_FALSE,
-      StereoLeftColor[2] != 0 ? GL_TRUE : GL_FALSE,
-      StereoLeftColor[3] != 0 ? GL_TRUE : GL_FALSE);
+      olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    olx_gl::colorMask(
+      StereoLeftColor[0] != 0,
+      StereoLeftColor[1] != 0,
+      StereoLeftColor[2] != 0,
+      StereoLeftColor[3] != 0);
     DrawObjects(0, 0, false, false);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glAccum(GL_ACCUM, 1);
-    glAccum(GL_RETURN, 1.0);
+    olx_gl::colorMask(true, true, true, true);
+    olx_gl::accum(GL_ACCUM, 1);
+    olx_gl::accum(GL_RETURN, 1.0);
     GetBasis().RotateY(ry);
   }
   else if( StereoFlag == glStereoCross )  {
@@ -475,20 +472,20 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
         for( size_t k=0; k < c_obj_count; k++ )  {
           AGDrawObject& GDO = GPC->GetObject(k);
           if( GDO.MaskFlags(DrawMask) != sgdoVisible )  continue;
-          if( SelectObjects )  glLoadName((GLuint)GDO.GetTag());
-          else if( SelectPrimitives )  glLoadName((GLuint)GlP.GetTag());
-          glPushMatrix();
+          if( SelectObjects )  olx_gl::loadName((GLuint)GDO.GetTag());
+          else if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
+          olx_gl::pushMatrix();
           if( GDO.Orient(GlP) )  // the object has drawn itself
-          {  glPopMatrix(); continue; }
+          {  olx_gl::popMatrix(); continue; }
           GlP.Draw();
-          glPopMatrix();
+          olx_gl::popMatrix();
         }
       }
     }
     if( FSelection->GetGlM().IsIdentityDraw() )  {
-      glPushAttrib(GL_ALL_ATTRIB_BITS);
+      olx_gl::pushAttrib(GL_ALL_ATTRIB_BITS);
       FSelection->Draw(SelectPrimitives, SelectObjects);
-      glPopAttrib();
+      olx_gl::popAttrib();
     }
     SetView(x, y, false, Select, 1);
   }
@@ -497,7 +494,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
   }
 
   if( !Select && IsCompiled() )  {
-    glCallList(CompiledListId);
+    olx_gl::callList(CompiledListId);
   }
   else  {
     const size_t prim_count = Primitives.PropertiesCount();
@@ -515,13 +512,13 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
         for( size_t k=0; k < c_obj_count; k++ )  {
           AGDrawObject& GDO = GPC->GetObject(k);
           if( GDO.MaskFlags(DrawMask) != sgdoVisible )  continue;
-          if( SelectObjects )  glLoadName((GLuint)GDO.GetTag());
-          else if( SelectPrimitives )  glLoadName((GLuint)GlP.GetTag());
-          glPushMatrix();
+          if( SelectObjects )  olx_gl::loadName((GLuint)GDO.GetTag());
+          else if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
+          olx_gl::pushMatrix();
           if( GDO.Orient(GlP) )  // the object has drawn itself
-          {  glPopMatrix(); continue; }
+          {  olx_gl::popMatrix(); continue; }
           GlP.Draw();
-          glPopMatrix();
+          olx_gl::popMatrix();
         }
       }
     }
@@ -538,13 +535,13 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
       for( size_t k=0; k < c_obj_count; k++ )  {
         AGDrawObject& GDO = GPC->GetObject(k);
         if( GDO.MaskFlags(DrawMask) != sgdoVisible )  continue;
-        if( SelectObjects )  glLoadName((GLuint)GDO.GetTag());
-        else if( SelectPrimitives )  glLoadName((GLuint)GlP.GetTag());
-        glPushMatrix();
+        if( SelectObjects )  olx_gl::loadName((GLuint)GDO.GetTag());
+        else if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
+        olx_gl::pushMatrix();
         if( GDO.Orient(GlP) )  // the object has drawn itself
-        {  glPopMatrix(); continue; }
+        {  olx_gl::popMatrix(); continue; }
         GlP.Draw();
-        glPopMatrix();
+        olx_gl::popMatrix();
       }
     }
   }
@@ -553,9 +550,9 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
     FGroups[i]->Draw(SelectPrimitives, SelectObjects);
 
   if( !FSelection->GetGlM().IsIdentityDraw() )  {
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
+    olx_gl::pushAttrib(GL_ALL_ATTRIB_BITS);
     FSelection->Draw(SelectPrimitives, SelectObjects);
-    glPopAttrib();
+    olx_gl::popAttrib();
   }
   if( !FTranslucentIdentityObjects.IsEmpty() )  {
     SetView(x, y, true, Select, 1);
@@ -571,13 +568,13 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
         for( size_t k=0; k < c_obj_count; k++ )  {
           AGDrawObject& GDO = GPC->GetObject(k);
           if( GDO.MaskFlags(DrawMask) != sgdoVisible )  continue;
-          if( SelectObjects )  glLoadName((GLuint)GDO.GetTag());
-          else if( SelectPrimitives )  glLoadName((GLuint)GlP.GetTag());
-          glPushMatrix();
+          if( SelectObjects )  olx_gl::loadName((GLuint)GDO.GetTag());
+          else if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
+          olx_gl::pushMatrix();
           if( GDO.Orient(GlP) )  // the object has drawn itself
-          {  glPopMatrix(); continue; }
+          {  olx_gl::popMatrix(); continue; }
           GlP.Draw();
-          glPopMatrix();
+          olx_gl::popMatrix();
         }
       }
     }
@@ -635,7 +632,7 @@ TGlPrimitive* TGlRenderer::SelectPrimitive(int x, int y)  {
   DrawObjects(x, y, false, true);
   GetScene().EndSelect();
 
-  int hits = glRenderMode(GL_RENDER);
+  int hits = olx_gl::renderMode(GL_RENDER);
   if( hits >= 1 )  {
     if( hits == 1 )  {
       GLuint in = selectBuf[(hits-1)*4+3];
@@ -820,11 +817,11 @@ void TGlRenderer::EnableClipPlane(TGlClipPlane *P, bool v)  {
     v[1] = P->Equation()[1];
     v[2] = P->Equation()[2];
     v[3] = P->Equation()[3];
-    glClipPlane( P->Id(), &v[0]);
-    glEnable(P->Id());
+    olx_gl::clipPlane( P->Id(), &v[0]);
+    olx_gl::enable(P->Id());
   }
   else
-    glDisable(P->Id());
+    olx_gl::disable(P->Id());
 }
 //..............................................................................
 void TGlRenderer::SetProperties(TGlMaterial& P)  {  // tracks translucent and identity objects
@@ -963,9 +960,9 @@ char* TGlRenderer::GetPixels(bool useMalloc, short aligment)  {
   }
   if( Bf == NULL )
     throw TOutOfMemoryException(__OlxSourceInfo);
-  glReadBuffer(GL_BACK);
-  glPixelStorei(GL_PACK_ALIGNMENT, aligment);
-  glReadPixels(0, 0, FWidth, FHeight, GL_RGB, GL_UNSIGNED_BYTE, Bf);
+  olx_gl::readBuffer(GL_BACK);
+  olx_gl::pixelStore(GL_PACK_ALIGNMENT, aligment);
+  olx_gl::readPixels(0, 0, FWidth, FHeight, GL_RGB, GL_UNSIGNED_BYTE, Bf);
   return Bf;
 }
 //..............................................................................
@@ -1008,7 +1005,7 @@ TGlListManager::~TGlListManager()  {
 //..............................................................................
 unsigned int TGlListManager::NewList()  {
   if( FPos >= Lists.Count() )  {
-    unsigned int s = glGenLists(10);
+    GLuint s = olx_gl::genLists(10);
     if( s == GL_INVALID_VALUE || s == GL_INVALID_OPERATION )
       throw TFunctionFailedException(__OlxSourceInfo, "glGenLists");
     for( int i=0; i < 10; i++ )
@@ -1019,14 +1016,14 @@ unsigned int TGlListManager::NewList()  {
 //..............................................................................
 void TGlListManager::ClearLists()  {
   for( size_t i=0; i < Lists.Count(); i+= FInc )
-    glDeleteLists(Lists[i], FInc);
+    olx_gl::deleteLists(Lists[i], FInc);
   FPos = 0;
   Lists.Clear();
 }
 //..............................................................................
 void TGlListManager::ReserveRange(unsigned int count)  {
   ClearLists();
-  unsigned int s = glGenLists(count);
+  GLint s = olx_gl::genLists(count);
   if( s == GL_INVALID_VALUE || s == GL_INVALID_OPERATION )
     throw TFunctionFailedException(__OlxSourceInfo, "glGenLists");
   for( unsigned int i=0; i < count; i++ )
@@ -1045,9 +1042,9 @@ void TGlRenderer::Compile(bool v)  {
   //return;
   if( v )  {
     if( CompiledListId == -1 )  {
-      CompiledListId = glGenLists(1);
+      CompiledListId = olx_gl::genLists(1);
     }
-    glNewList(CompiledListId, GL_COMPILE);
+    olx_gl::newList(CompiledListId, GL_COMPILE);
     for( size_t i=0; i < Primitives.PropertiesCount(); i++ )  {
       TGlMaterial& GlM = Primitives.GetProperties(i);
       if( GlM.IsIdentityDraw() ) continue;  // already drawn
@@ -1062,19 +1059,19 @@ void TGlRenderer::Compile(bool v)  {
           if( !GDO.IsVisible() )  continue;
           if( GDO.IsSelected() ) continue;
           if( GDO.IsGrouped() ) continue;
-          glPushMatrix();
+          olx_gl::pushMatrix();
           if( GDO.Orient(GlP) )  // the object has drawn itself
-          {  glPopMatrix(); continue; }
+          {  olx_gl::popMatrix(); continue; }
           GlP.Draw();
-          glPopMatrix();
+          olx_gl::popMatrix();
         }
       }
     }
-    glEndList();
+    olx_gl::endList();
   }
   else  {
     if( CompiledListId != -1 )  {
-      glDeleteLists(CompiledListId, 1);
+      olx_gl::deleteLists(CompiledListId, 1);
       CompiledListId = -1;
     }
   }
@@ -1082,30 +1079,30 @@ void TGlRenderer::Compile(bool v)  {
 //..............................................................................
 void TGlRenderer::DrawText(TGlPrimitive& p, double x, double y, double z)  {
   if( ATI )  {
-    glRasterPos3d(0, 0, 0);
-    glCallList(p.GetFont()->GetFontBase() + ' ');
+    olx_gl::rasterPos(0, 0, 0);
+    olx_gl::callList(p.GetFont()->GetFontBase() + ' ');
   }
-  glRasterPos3d(x, y, z);
+  olx_gl::rasterPos(x, y, z);
   p.Draw();
 }
 //..............................................................................
 void TGlRenderer::DrawTextSafe(const vec3d& pos, const olxstr& text, const TGlFont& fnt) {
   if( ATI )  {
-    glRasterPos3d(0, 0, 0);
-    glCallList(fnt.GetFontBase() + ' ');
+    olx_gl::rasterPos(0, 0, 0);
+    olx_gl::callList(fnt.GetFontBase() + ' ');
   }
   // set a valid raster position
-  glRasterPos3d(0, 0, pos[2]);
-  glBitmap(0, 0, 0, 0, (float)(pos[0]/FViewZoom), (float)(pos[1]/FViewZoom), NULL);
+  olx_gl::rasterPos(0.0, 0.0, pos[2]);
+  olx_gl::bitmap(0, 0, 0, 0, (float)(pos[0]/FViewZoom), (float)(pos[1]/FViewZoom), NULL);
   for( size_t i=0; i < text.Length(); i++ ) 
-    glCallList(fnt.GetFontBase() + text.CharAt(i));
+    olx_gl::callList(fnt.GetFontBase() + text.CharAt(i));
 }
 //..............................................................................
 //..............................................................................
 //..............................................................................
 
 void TGlRenderer::LibCompile(const TStrObjList& Params, TMacroError& E)  {
-  Compile( Params[0].ToBool() );
+  Compile(Params[0].ToBool());
 }
 //..............................................................................
 void TGlRenderer::LibPerspective(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

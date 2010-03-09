@@ -1,18 +1,14 @@
 //---------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-
 #include "gllabels.h"
 #include "glgroup.h"
 #include "gpcollection.h"
-
 #include "xatom.h"
 #include "gxapp.h"
 #include "asymmunit.h"
 #include "refmodel.h"
-
 #include "glrender.h"
-#include "glscene.h"
 
 //----------------------------------------------------------------------------//
 // TXGlLabels function bodies
@@ -55,8 +51,8 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
   P.SetFont(&Fnt);
   TGlMaterial& OGlM = P.GetProperties();
   if( Parent.IsATI() )  {
-    glRasterPos3d(0, 0, 0);
-    glCallList(Fnt.GetFontBase() + ' ');
+    olx_gl::rasterPos(0, 0, 0);
+    olx_gl::callList(Fnt.GetFontBase() + ' ');
   }
   const RefinementModel& rm = app.XFile().GetRM();
   for( size_t i=0; i < ac; i++ )  {
@@ -172,16 +168,16 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
         FMarkMaterial.Init(Parent.IsColorStereo());
         currentGlM = false;
         if( Parent.IsATI() )  {
-          glRasterPos3d(0, 0, 0);
-          glCallList(Fnt.GetFontBase() + ' ');
+          olx_gl::rasterPos(0, 0, 0);
+          olx_gl::callList(Fnt.GetFontBase() + ' ');
         } 
       }
       else  {
       P.GetProperties().Init(Parent.IsColorStereo());
         currentGlM = true;
         if( Parent.IsATI() )  {
-          glRasterPos3d(0, 0, 0);
-          glCallList(Fnt.GetFontBase() + ' ');
+          olx_gl::rasterPos(0, 0, 0);
+          olx_gl::callList(Fnt.GetFontBase() + ' ');
         } 
       }
       matInited = true;
@@ -192,8 +188,8 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
           FMarkMaterial.Init(Parent.IsColorStereo());
           currentGlM = false;
           if( Parent.IsATI() )  {
-            glRasterPos3d(0, 0, 0);
-            glCallList(Fnt.GetFontBase() + ' ');
+            olx_gl::rasterPos(0, 0, 0);
+            olx_gl::callList(Fnt.GetFontBase() + ' ');
           } 
         }
       }
@@ -202,8 +198,8 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
           P.GetProperties().Init(Parent.IsColorStereo());
           currentGlM = true;
           if( Parent.IsATI() )  {
-            glRasterPos3d(0, 0, 0);
-            glCallList(Fnt.GetFontBase() + ' ');
+            olx_gl::rasterPos(0, 0, 0);
+            olx_gl::callList(Fnt.GetFontBase() + ' ');
           } 
         }
       }
@@ -213,7 +209,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     V *= Parent.GetBasis().GetMatrix();
     V *= Parent.GetBasis().GetZoom();
     const double MaxZ = (Parent.GetMaxRasterZ()-0.001);
-    glRasterPos3d(V[0]+0.01, V[1]+0.01, MaxZ);
+    olx_gl::rasterPos(V[0]+0.01, V[1]+0.01, MaxZ);
     P.Draw();
   }
   OGlM.Init(Parent.IsColorStereo());

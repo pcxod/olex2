@@ -145,9 +145,9 @@ ACreationParams* TXBond::GetACreationParams() const {
 TXBond::~TXBond()  {  }
 //..............................................................................
 bool TXBond::Orient(TGlPrimitive& GlP)  {
-  Parent.GlTranslate(FBond->A().crd());
-  Parent.GlRotate((float)Params()[0], (float)Params()[1], (float)Params()[2], 0.0);
-  Parent.GlScale((float)Params()[4], (float)Params()[4], (float)Params()[3]);
+  olx_gl::translate(FBond->A().crd());
+  olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
+  olx_gl::scale(Params()[4], Params()[4], Params()[3]);
   return false;
 }
 //..............................................................................
@@ -212,7 +212,7 @@ void TXBond::CreateStaticPrimitives()  {
   GlPRC1->Compile();
 
   GlP->StartList();
-  Parent.GlTranslate(0, 0, 1);
+  olx_gl::translate(0, 0, 1);
   GlP->CallList(GlPRC1);
   GlP->EndList();
 
@@ -243,7 +243,7 @@ void TXBond::CreateStaticPrimitives()  {
   GlPRC1->Compile();
 
   GlP->StartList();
-  Parent.GlTranslate(0, 0, 0.5);
+  olx_gl::translate(0.0f, 0.0f, 0.5f);
   GlP->CallList(GlPRC1);
   GlP->EndList();
 
@@ -273,7 +273,7 @@ void TXBond::CreateStaticPrimitives()  {
   GlPRC1->Compile();
 
   GlP->StartList();
-  Parent.GlTranslate(0, 0, 0.5);
+  olx_gl::translate(0.0f, 0.0f, 0.5f);
   GlP->CallList(GlPRC1);
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
@@ -285,10 +285,10 @@ void TXBond::CreateStaticPrimitives()  {
     FStaticObjects.Add("Bottom line", GlP);
   }
   GlP->StartList();
-    glBegin(GL_LINES);
-      glVertex3f(0, 0, 0);
-      glVertex3f(0, 0, 0.5);
-    glEnd();
+    olx_gl::begin(GL_LINES);
+      olx_gl::vertex(0, 0, 0);
+      olx_gl::vertex(0.0f, 0.0f, 0.5f);
+    olx_gl::end();
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
   GlP->Params.Last() = ddsDefAtomA;
@@ -299,10 +299,10 @@ void TXBond::CreateStaticPrimitives()  {
     FStaticObjects.Add("Top line", GlP);
   }
   GlP->StartList();
-    glBegin(GL_LINES);
-      glVertex3f(0, 0, 0.5);
-      glVertex3f(0, 0, 1.0);
-    glEnd();
+    olx_gl::begin(GL_LINES);
+      olx_gl::vertex(0.0f, 0.0f, 0.5f);
+      olx_gl::vertex(0, 0, 1);
+    olx_gl::end();
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
   GlP->Params.Last() = ddsDefAtomB;
@@ -334,9 +334,9 @@ void TXBond::CreateStaticPrimitives()  {
     if( i != 0 )
       GlP->CallList(GlPRD2);
     GlP->CallList(GlPRC1);
-    Parent.GlTranslate(0, 0, CL);
+    olx_gl::translate(0.0f, 0.0f, CL);
     GlP->CallList(GlPRD1);
-    Parent.GlTranslate(0, 0, CL);
+    olx_gl::translate(0.0f, 0.0f, CL);
   }
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
@@ -347,14 +347,14 @@ void TXBond::CreateStaticPrimitives()  {
     FStaticObjects.Add("Bottom stipple cone", GlP);
   }
   GlP->StartList();
-  Parent.GlTranslate(0, 0, CL/2);
+  olx_gl::translate(0.0f, 0.0f, CL/2);
   for( int i=0; i < ConeStipples/2; i++ )  {
     if( i != 0 )
       GlP->CallList(GlPRD2);
     GlP->CallList(GlPRC1);
-    Parent.GlTranslate(0, 0, CL);
+    olx_gl::translate(0.0f, 0.0f, CL);
     GlP->CallList(GlPRD1);
-    Parent.GlTranslate(0, 0, CL);
+    olx_gl::translate(0.0f, 0.0f, CL);
   }
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
@@ -365,13 +365,13 @@ void TXBond::CreateStaticPrimitives()  {
     FStaticObjects.Add("Top stipple cone", GlP);
   }
   GlP->StartList();
-  Parent.GlTranslate(0, 0, (float)(0.5 + CL/2));
+  olx_gl::translate(0.0f, 0.0f, (float)(0.5 + CL/2));
   for( int i=0; i < ConeStipples/2; i++ )  {
     GlP->CallList(GlPRD2);
     GlP->CallList(GlPRC1);
-    Parent.GlTranslate(0, 0, CL);
+    olx_gl::translate(0.0f, 0.0f, CL);
     GlP->CallList(GlPRD1);
-    Parent.GlTranslate(0, 0, CL);
+    olx_gl::translate(0.0f, 0.0f, CL);
   }
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
@@ -390,7 +390,7 @@ void TXBond::CreateStaticPrimitives()  {
 
   GlP->StartList();
   for( int i=0; i < 12; i++ )  {
-    Parent.GlTranslate(0, 0, CL);
+    olx_gl::translate(0.0f, 0.0f, CL);
     GlP->CallList(GlPRC1);
   }
   GlP->EndList();
@@ -403,10 +403,10 @@ void TXBond::CreateStaticPrimitives()  {
     FStaticObjects.Add("Line", GlP);
   }
   GlP->StartList();
-    glBegin(GL_LINES);
-      glVertex3f(0, 0, 0);
-      glVertex3f(0, 0, 1.0);
-    glEnd();
+    olx_gl::begin(GL_LINES);
+      olx_gl::vertex(0, 0, 0);
+      olx_gl::vertex(0, 0, 1);
+    olx_gl::end();
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
   GlP->Params.Last() = ddsDefAtomA;
@@ -417,13 +417,13 @@ void TXBond::CreateStaticPrimitives()  {
     FStaticObjects.Add("Stippled line", GlP);
   }
   GlP->StartList();
-    glEnable(GL_LINE_STIPPLE );
-    glLineStipple(1, 0xf0f0 );
-    glBegin(GL_LINES);
-      glVertex3f(0, 0, 0);
-      glVertex3f(0, 0, 1.0);
-    glEnd();
-  glDisable(GL_LINE_STIPPLE );
+    olx_gl::enable(GL_LINE_STIPPLE);
+    olx_gl::lineStipple(1, 0xf0f0);
+    olx_gl::begin(GL_LINES);
+      olx_gl::vertex(0, 0, 0);
+      olx_gl::vertex(0, 0, 1);
+    olx_gl::endList();
+  olx_gl::disable(GL_LINE_STIPPLE);
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
   GlP->Params.Last() = ddsDefAtomA;

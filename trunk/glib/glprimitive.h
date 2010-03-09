@@ -186,13 +186,13 @@ public:
     else
       GlP->Draw();
   }
-  static void CallList(GLuint i)  {  glCallList(i); };
+  static void CallList(GLuint i)  {  olx_gl::callList(i); };
   void StartList()  {
-    if( ListId == ~0 )
+    if( !olx_is_valid_index(ListId) )
       throw TInvalidArgumentException(__OlxSourceInfo, "ListId");
-    glNewList(ListId, GL_COMPILE);
+    olx_gl::newList(ListId, GL_COMPILE);
   }
-  static void EndList()  { glEndList();  }
+  static void EndList()  { olx_gl::endList();  }
   bool IsCompiled() const {  return Compiled;  }
   bool IsList() const {  return Type == sgloCommandList;  }
 
@@ -214,12 +214,12 @@ public:
   evecd Params;
 
   void SetColor(const uint32_t& cl) const;
-  static void SetNormal(const vec3d& v)   {  glNormal3dv(v.GetData());  }
-  static void SetNormal(const vec3f& v)   {  glNormal3fv(v.GetData());  }
-  static void SetTexCrd(const TextureCrd& c)  {  glTexCoord4d(c.s, c.t, c.r, c.q);  }
+  static void SetNormal(const vec3d& v)   {  olx_gl::normal(v);  }
+  static void SetNormal(const vec3f& v)   {  olx_gl::normal(v);  }
+  static void SetTexCrd(const TextureCrd& c)  {  olx_gl::texCoord(c.s, c.t, c.r, c.q);  }
 
-  static void DrawVertex(const vec3d& v)  {  glVertex3dv(v.GetData());  }
-  static void DrawVertex(const vec3f& v)  {  glVertex3fv(v.GetData());  }
+  static void DrawVertex(const vec3d& v)  {  olx_gl::vertex(v);  }
+  static void DrawVertex(const vec3f& v)  {  olx_gl::vertex(v);  }
 
   template <class vec_class> 
   void DrawVertex(const vec_class& v, const uint32_t& c) const {  

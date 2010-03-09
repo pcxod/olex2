@@ -3,21 +3,12 @@
 // TDUnitCell - a drawing object for unit cell
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "dunitcell.h"
-
 #include "glprimitive.h"
 #include "glmaterial.h"
 #include "glrender.h"
-#include "glscene.h"
 #include "gpcollection.h"
-
 #include "styles.h"
-
 
 TDUnitCell::TDUnitCell(TGlRenderer& R, const olxstr& collectionName) : 
 AGDrawObject(R, collectionName) 
@@ -199,58 +190,7 @@ bool TDUnitCell::Orient(TGlPrimitive& P)  {
     }
     return true;
   }
-  Parent.GlTranslate(Center);
-/*
-  const TMatrixD& m = FAU->GetCellToCartesian();
-  const TMatrixD& n = FAU->GetCartesianToCell();
-  TMatrixD rm(3,3), rm1(3,3);
-   glDisable(GL_CULL_FACE);
-   vec3d v, p;
-   p = n[2];
-   p.Normalise();
-   p *= 0.5;
-   // current normal
-   v = m[0];   v.Normalise();  
-   CreateRotationMatrix(rm, v, 0.5);
-   CreateRotationMatrix(rm1, v, cos(18.0/180*M_PI));
-   v *= -1;
-   glNormal3d(v[0], v[1], v[2]);
-   //
-   glBegin(GL_POLYGON);
-   for( int i=0; i < 6; i++ )  {
-     if( i != 0 )
-       p *= rm;
-     glVertex3d(p[0], p[1], p[2]);
-
-   }
-   glEnd();
-   //
-   glTranslated(-v[0], -v[1], -v[2]);
-   glScaled(1, 0.25, 1);
-   p = n[2];
-   p.Normalise();
-   p *= 0.25;
-   glBegin(GL_POLYGON);
-   for( int i=0; i < 20; i++ )  {
-     if( i )  p *= rm1;
-     glVertex3d(p[0], p[1], p[2]);
-
-   }
-   glEnd();
-
-
-   glBegin(GL_QUADS);
-   v = m[0];   v /= 2;
-    glVertex3d(v[0], v[1], v[2]);
-   v = m[0];   v /= 2;  v += m[2];
-    glVertex3d(v[0], v[1], v[2]);
-   v = m[0];   v /= 2;  v += m[2];  v += m[1];
-    glVertex3d(v[0], v[1], v[2]);
-   v = m[0];   v /= 2;  v += m[1];
-    glVertex3d(v[0], v[1], v[2]);
-   glEnd();
-   glEnable(GL_CULL_FACE);
-*/
-   return false;
+  olx_gl::translate(Center);
+  return false;
 }
 

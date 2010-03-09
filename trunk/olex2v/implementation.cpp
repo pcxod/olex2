@@ -49,7 +49,7 @@ TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
   if( !wglMakeCurrent(WindowDC, GlContext) ) 
     throw TFunctionFailedException(__OlxSourceInfo, "wglMakeCurrent failed");
   
-  glClearColor(0.5, 0.5, 0, 0);
+  olx_gl::clearColor(0.5, 0.5, 0.0, 0.0);
   OnSize(w, h);
   TGlMaterial glm;
   glm.SetFlags(sglmAmbientF|sglmEmissionF|sglmIdentityDraw);
@@ -101,7 +101,7 @@ void TOlexViewer::OnPaint()  {
   GXApp->OnIdle.Execute(NULL, NULL);
   GXApp->Draw();
   GdiFlush();
-  glFlush();
+  olx_gl::flush();
   SwapBuffers(WindowDC);
 }
 void TOlexViewer::OnSize(int w, int h)  {
@@ -233,8 +233,8 @@ void TOlexViewer::LoadStyle(const olxstr& _styleFile)  {
     if( TEFile::Exists(styleFile) )  {
       TDataFile df;
       df.LoadFromXLFile(styleFile);
-      GXApp->GetRender().GetStyles().FromDataItem(*df.Root().FindItem("style"));
-      GXApp->CreateObjects( true );
+      GXApp->GetRender().GetStyles().FromDataItem(*df.Root().FindItem("style"), true);
+      GXApp->CreateObjects(true, false);
     }
   }
   catch( ... )  {  }  // be quite

@@ -1074,7 +1074,6 @@ void TMainForm::macSwapBg(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     FXApp->GetRender().LightModel.SetClearColor(FBgColor);
   else
     FXApp->GetRender().LightModel.SetClearColor(0xffffffff);
-  FXApp->GetRender().LoadIdentity();
   FXApp->GetRender().InitLights();
 }
 //..............................................................................

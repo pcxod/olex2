@@ -1,11 +1,6 @@
 //---------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "glmaterial.h"
 #include "dataitem.h"
 #include "egc.h"
@@ -73,82 +68,99 @@ void TGlMaterial::Init(bool skip) const  {
   if( skip )  return;  
   if( Flags & sglmTransparent )  {
     //if( !glIsEnabled(GL_ALPHA_TEST) )  {
-      glEnable(GL_ALPHA_TEST);
-//      glEnable( GL_POINT_SMOOTH);
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      glEnable(GL_CULL_FACE);
+      olx_gl::enable(GL_ALPHA_TEST);
+//      olx_gl::enable( GL_POINT_SMOOTH);
+      olx_gl::enable(GL_BLEND);
+      olx_gl::blendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      olx_gl::enable(GL_CULL_FACE);
     //}
   }
   else  {
     //if( glIsEnabled(GL_ALPHA_TEST) )  {
-      glDisable(GL_ALPHA_TEST);
-//      glDisable(GL_POINT_SMOOTH);
-      glDisable(GL_BLEND);
-      glDisable(GL_CULL_FACE);
+      olx_gl::disable(GL_ALPHA_TEST);
+//      olx_gl::disable(GL_POINT_SMOOTH);
+      olx_gl::disable(GL_BLEND);
+      olx_gl::disable(GL_CULL_FACE);
     //}
   }
-//  if( Flags & sglmLighting )  glEnable(GL_LIGHTING);
-//  else                        glDisable(GL_LIGHTING);
+//  if( Flags & sglmLighting )  olx_gl::enable(GL_LIGHTING);
+//  else                        olx_gl::disable(GL_LIGHTING);
   if( (Flags & sglmColorMat) == 0 )  {
-    glDisable(GL_COLOR_MATERIAL);
+    olx_gl::disable(GL_COLOR_MATERIAL);
     if( Flags & sglmDiffuseFB )  {
-      if( Flags & sglmDiffuseF )    glMaterialfv(GL_FRONT, GL_DIFFUSE, DiffuseF.Data());
-      if( Flags & sglmDiffuseB )    glMaterialfv(GL_BACK, GL_DIFFUSE, DiffuseB.Data());
+      if( Flags & sglmDiffuseF )  olx_gl::material(GL_FRONT, GL_DIFFUSE, DiffuseF.Data());
+      if( Flags & sglmDiffuseB )  olx_gl::material(GL_BACK, GL_DIFFUSE, DiffuseB.Data());
     }
     else  {
-      glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, BlackColor.Data());
+      olx_gl::material(GL_FRONT_AND_BACK, GL_DIFFUSE, BlackColor.Data());
     }
     if( Flags & sglmAmbientFB )  {
-      if( Flags & sglmAmbientF )    glMaterialfv(GL_FRONT, GL_AMBIENT, AmbientF.Data());
-      if( Flags & sglmAmbientB )    glMaterialfv(GL_BACK, GL_AMBIENT, AmbientB.Data());
+      if( Flags & sglmAmbientF )  olx_gl::material(GL_FRONT, GL_AMBIENT, AmbientF.Data());
+      if( Flags & sglmAmbientB )  olx_gl::material(GL_BACK, GL_AMBIENT, AmbientB.Data());
     }
     else  {
-      glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, BlackColor.Data());
+      olx_gl::material(GL_FRONT_AND_BACK, GL_AMBIENT, BlackColor.Data());
     }
     if( Flags & sglmSpecularFB )  {
-      if( Flags & sglmSpecularF )    glMaterialfv(GL_FRONT, GL_SPECULAR, SpecularF.Data());
-      if( Flags & sglmSpecularB )    glMaterialfv(GL_BACK, GL_SPECULAR, SpecularB.Data());
+      if( Flags & sglmSpecularF )  olx_gl::material(GL_FRONT, GL_SPECULAR, SpecularF.Data());
+      if( Flags & sglmSpecularB )  olx_gl::material(GL_BACK, GL_SPECULAR, SpecularB.Data());
     }
     else  {
-      glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, BlackColor.Data());
+      olx_gl::material(GL_FRONT_AND_BACK, GL_SPECULAR, BlackColor.Data());
     }
     if( Flags & sglmEmissionFB )  {
-      if( Flags & sglmEmissionF )    glMaterialfv(GL_FRONT, GL_EMISSION, EmissionF.Data());
-      if( Flags & sglmEmissionB )    glMaterialfv(GL_BACK, GL_EMISSION, EmissionB.Data());
+      if( Flags & sglmEmissionF )  olx_gl::material(GL_FRONT, GL_EMISSION, EmissionF.Data());
+      if( Flags & sglmEmissionB )  olx_gl::material(GL_BACK, GL_EMISSION, EmissionB.Data());
     }
     else  {
-      glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, BlackColor.Data());
+      olx_gl::material(GL_FRONT_AND_BACK, GL_EMISSION, BlackColor.Data());
     }
     if( Flags & sglmShininessFB )  {
-      if( Flags & sglmShininessF )    glMateriali(GL_FRONT, GL_SHININESS, ShininessF);
-      if( Flags & sglmShininessB )    glMateriali(GL_BACK, GL_SHININESS, ShininessB);
+      if( Flags & sglmShininessF )  olx_gl::material(GL_FRONT, GL_SHININESS, ShininessF);
+      if( Flags & sglmShininessB )  olx_gl::material(GL_BACK, GL_SHININESS, ShininessB);
     }
     else  {
-      glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 0);
+      olx_gl::material(GL_FRONT_AND_BACK, GL_SHININESS, 0);
     }
   }
   else  {
-    glEnable(GL_COLOR_MATERIAL);
-    if( Flags & sglmAmbientF )
-    {  glColorMaterial(GL_FRONT, GL_AMBIENT);  glColor4fv(AmbientF.Data());  }
-    if( Flags & sglmAmbientB )  glColorMaterial(GL_BACK, GL_AMBIENT);
-    {  glColorMaterial(GL_BACK, GL_AMBIENT);   glColor4fv(AmbientB.Data());  }
-    if( Flags & sglmDiffuseF )
-    {  glColorMaterial(GL_FRONT, GL_DIFFUSE);  glColor4fv(DiffuseF.Data());  }
-    if( Flags & sglmDiffuseB )
-    {  glColorMaterial(GL_BACK, GL_DIFFUSE);   glColor4fv(DiffuseB.Data());  }
-    if( Flags & sglmEmissionF )
-    {  glColorMaterial(GL_FRONT, GL_EMISSION); glColor4fv(EmissionF.Data());  }
-    if( Flags & sglmEmissionB )
-    {  glColorMaterial(GL_BACK, GL_EMISSION);  glColor4fv(EmissionB.Data());  }
-    if( Flags & sglmSpecularF )
-    {  glColorMaterial(GL_FRONT, GL_SPECULAR); glColor4fv(SpecularF.Data());  }
-    if( Flags & sglmEmissionB )
-    {  glColorMaterial(GL_BACK, GL_SPECULAR);  glColor4fv(SpecularB.Data());  }
-
-    if( Flags & sglmShininessF )    glMateriali(GL_FRONT, GL_SHININESS, ShininessF);
-    if( Flags & sglmShininessB )    glMateriali(GL_BACK, GL_SHININESS, ShininessB);
+    olx_gl::enable(GL_COLOR_MATERIAL);
+    if( Flags & sglmAmbientF )  {
+      olx_gl::colorMaterial(GL_FRONT, GL_AMBIENT);
+      olx_gl::color(AmbientF.Data());
+    }
+    if( Flags & sglmAmbientB )  {
+      olx_gl::colorMaterial(GL_BACK, GL_AMBIENT);
+      olx_gl::color(AmbientB.Data());
+    }
+    if( Flags & sglmDiffuseF )  {
+      olx_gl::colorMaterial(GL_FRONT, GL_DIFFUSE);
+      olx_gl::color(DiffuseF.Data());
+    }
+    if( Flags & sglmDiffuseB )  {
+      olx_gl::colorMaterial(GL_BACK, GL_DIFFUSE);
+      olx_gl::color(DiffuseB.Data());
+    }
+    if( Flags & sglmEmissionF )  {
+      olx_gl::colorMaterial(GL_FRONT, GL_EMISSION);
+      olx_gl::color(EmissionF.Data());
+    }
+    if( Flags & sglmEmissionB )  {
+      olx_gl::colorMaterial(GL_BACK, GL_EMISSION);
+      olx_gl::color(EmissionB.Data());
+    }
+    if( Flags & sglmSpecularF )  {
+      olx_gl::colorMaterial(GL_FRONT, GL_SPECULAR);
+      olx_gl::color(SpecularF.Data());
+    }
+    if( Flags & sglmEmissionB )  {
+      olx_gl::colorMaterial(GL_BACK, GL_SPECULAR);
+      olx_gl::color(SpecularB.Data());
+    }
+    if( Flags & sglmShininessF )
+      olx_gl::material(GL_FRONT, GL_SHININESS, ShininessF);
+    if( Flags & sglmShininessB )
+      olx_gl::material(GL_BACK, GL_SHININESS, ShininessB);
   }
 }
 //..............................................................................
