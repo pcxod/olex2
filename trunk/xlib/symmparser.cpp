@@ -178,6 +178,49 @@ olxstr TSymmParser::MatrixToSymmCode(const smatd_list& ml, const smatd& M)  {
   return olxstr(bf);
 }
 //..............................................................................
+bool TSymmParser::IsAbsSymm(const olxstr& s)  {
+  if( s.Length() < 5 )  return false;
+  if( s.IndexOf(',') != InvalidIndex )  { // asbolute representation
+    smatd m;
+    try  {
+      SymmToMatrix(s, m);
+      return true;
+    }
+    catch(...)  {  return false;  }
+  }
+  return false;
+}
+//..............................................................................
+bool TSymmParser::IsRelSymm(const olxstr& s)  {
+  if( s.Length() < 4 )  return false;
+  const size_t ui = s.IndexOf('_');
+  if( ui != InvalidIndex )  {
+    const size_t r = s.Length()-ui-1;
+    if( !(r == 3 || r == 6) )
+      return false;
+    for( size_t i=0; i < s.Length(); i++ )  {
+      if( i == ui )  continue;
+      if( !olxstr::o_isdigit(s.CharAt(i)) )
+        return false;
+    }
+  }
+  else  {
+    if( s.Length() < 4 || s.Length() > 9 )
+      return false;
+    for( size_t i=0; i < s.Length(); i++ )  {
+      if( !olxstr::o_isdigit(s.CharAt(i)) )
+        return false;
+    }
+  }
+  return true;
+}
+//..............................................................................
+bool TSymmParser::IsSymm(const olxstr& s)  {
+  if( !IsRelSymm(s) )
+    return IsAbsSymm(s);
+  return true;
+}
+//..............................................................................
 void TSymmParser::Tests(OlxTests& t)  {
   t.description = "TSymmParser::Tests";
   const mat3d mres1(-1,0,0,-1,0,-1), 

@@ -25,7 +25,8 @@ const short lmLabels   = 0x0001,  // atom label
             lmQPeak    = 0x0200,  // include Q-peaks
             lmQPeakI   = 0x0400,  // Q-peaks intensity
             lmFixed    = 0x0800,  // fixed values
-            lmConRes   = 0x1000;  // restraints, constraints
+            lmConRes   = 0x1000,  // restraints, constraints
+            lmIdentity = 0x2000;  // only for identity atoms
 class TXGlLabels: public AGDrawObject  {
   size_t FontIndex;
   TGlMaterial FMarkMaterial;

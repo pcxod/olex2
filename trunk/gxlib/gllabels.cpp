@@ -60,7 +60,8 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     if( XA.IsDeleted() || (!XA.IsVisible()))  continue;
     if( (Mode & lmHydr) == 0 && (XA.Atom().GetType() == iHydrogenZ) )  
       continue;
-    if( !(Mode & lmQPeak) && (XA.Atom().GetType() == iQPeakZ) )  continue;
+    if( (Mode & lmQPeak) == 0 && (XA.Atom().GetType() == iQPeakZ) )  continue;
+    if( (Mode & lmIdentity) != 0 && !XA.Atom().GetMatrix(0).IsFirst() )  continue;
     const TCAtom& ca = XA.Atom().CAtom();
     olxstr Tmp(EmptyString, 48);
     if( Mode & lmLabels )  {

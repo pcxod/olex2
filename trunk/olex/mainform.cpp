@@ -660,7 +660,7 @@ void TMainForm::XApp( TGXApp *XA)  {
   this_InitMacroD(Labels,
 "p-part&;l-label&;v-variables&;o-occupancy&;a-afix&;h-show hydrogen atom labels&;\
 f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
- (as in the ins file)&;qi-Q peak intensity",  fpNone,
+ (as in the ins file)&;qi-Q peak intensity&;i-display labels for identity atoms only",  fpNone,
 "Inverts visibility of atom labels on/off. Look at the options");
 
   this_InitMacroD(SetEnv, EmptyString, fpTwo,
@@ -1740,8 +1740,8 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
   else if( event.GetId() == ID_GraphicsP )  {
     TStrList Ps;
     FObjectUnderMouse->ListPrimitives(Ps);
-    if( Ps.Count() < 2 )  {
-      TBasicApp::GetLog().Info("The object does not support requested function...");
+    if( Ps.IsEmpty() )  {
+      TBasicApp::GetLog() << "The object does not support requested function...";
       return;
     }
     int i = FObjectUnderMouse->GetPrimitives().GetStyle().GetParam(FObjectUnderMouse->GetPrimitiveMaskName(), "0").ToInt();

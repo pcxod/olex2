@@ -1234,6 +1234,7 @@ void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( Options.Contains('h') )   lmode |= lmHydr;
   if( Options.Contains('f') )   lmode |= lmFixed;
   if( Options.Contains("qi") )   lmode |= lmQPeakI;
+  if( Options.Contains("i") )   lmode |= lmIdentity;
   if( lmode == 0 )  {
     lmode |= lmLabels;
     lmode |= lmQPeak;
@@ -4117,6 +4118,37 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     FXApp->GetLog() << '\n';
     return;
   }
+  if( Cmds.Count() == 1 && TSymmParser::IsRelSymm(Cmds[0]) )  {
+    bool invert = Options.Contains('i'), unselect=false;
+    if( !invert )
+      unselect = Options.Contains('u');
+    const smatd matr = TSymmParser::SymmCodeToMatrixU(FXApp->XFile().GetUnitCell(), Cmds[0]);
+    for( size_t i=0; i < FXApp->AtomCount(); i++ )  {
+      TXAtom& a = FXApp->GetAtom(i);
+      if( a.IsDeleted() || !a.IsVisible() )  continue;
+      if( a.Atom().ContainsMatrix(matr.GetId()) )  {
+        if( invert )
+          FXApp->GetRender().Select(a, !a.IsSelected());
+        else if( unselect )
+          FXApp->GetRender().Select(a, false);
+        else
+          FXApp->GetRender().Select(a, true);
+      }
+    }
+    for( size_t i=0; i < FXApp->BondCount(); i++ )  {
+      TXBond& b = FXApp->GetBond(i);
+      if( b.IsDeleted() || !b.IsVisible() )  continue;
+      if( b.Bond().A().ContainsMatrix(matr.GetId()) && b.Bond().B().ContainsMatrix(matr.GetId()) )  {
+        if( invert )
+          FXApp->GetRender().Select(b, !b.IsSelected());
+        else if( unselect )
+          FXApp->GetRender().Select(b, false);
+        else
+          FXApp->GetRender().Select(b, true);
+      }
+    }
+    return;
+  }
   if( Cmds.Count() > 1 && Cmds[0].Equalsi("part") )  {
     Cmds.Delete(0);
     TIntList parts;
@@ -4136,7 +4168,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       FXApp->SelectAtomsWhere(cond);
     }
   }
-  if( Options.Count() == 0 )  {  // print labels of selected atoms
+  if( Options.IsEmpty() )  {  // print labels of selected atoms
     olxstr Tmp("sel");
     size_t period=5;
     TGlGroup& Sel = FXApp->GetSelection();
@@ -8012,14 +8044,21 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
           p2.Add( xp2.Plane().Atom(i) );
           pld2 << p2.Last()->GetLabel() << ' ';
         }
+        const TEValue<double> angle = vcovc.CalcP2PAngle(p1, p2);
         TBasicApp::GetLog() << (olxstr("Plane ") << pld1 << "to plane angle: " <<
-          vcovc.CalcP2PAngle(p1, p2).ToString() << '\n' );
+          angle.ToString() << '\n' );
         TBasicApp::GetLog() << (olxstr("Plane centroid to plane centroid distance: ") <<
           vcovc.CalcPC2PCDistance(p1, p2).ToString() << '\n' );
         TBasicApp::GetLog() << (olxstr("Plane [") << pld1 << "] to plane centroid distance: " <<
           vcovc.CalcP2PCDistance(p1, p2).ToString() << '\n' );
-        TBasicApp::GetLog() << (olxstr("Plane [") << pld2 << "] to plane centroid distance: " <<
-          vcovc.CalcP2PCDistance(p2, p1).ToString() << '\n' );
+        TBasicApp::GetLog() << (olxstr("Plane [") << pld1 << "] to plane shift: " <<
+          vcovc.CalcP2PShiftDistance(p1, p2).ToString() << '\n' );
+        if( olx_abs(angle.GetV()) > 1e-6 )  {
+          TBasicApp::GetLog() << (olxstr("Plane [") << pld2 << "] to plane centroid distance: " <<
+            vcovc.CalcP2PCDistance(p2, p1).ToString() << '\n' );
+          TBasicApp::GetLog() << (olxstr("Plane [") << pld2 << "] to plane shift distance: " <<
+            vcovc.CalcP2PShiftDistance(p2, p1).ToString() << '\n' );
+        }
       }
     }
     else if( sel.Count() == 3 )  {

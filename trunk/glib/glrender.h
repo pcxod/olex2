@@ -210,6 +210,7 @@ public:
   void UnGroupSelection();
   void UnGroup(TGlGroup& GlG);
   TGlGroup& GetSelection()  const {  return *FSelection; }
+  void Select(AGDrawObject& G, bool v); // convinience function...
   void Select(AGDrawObject& G);
   void DeSelect(AGDrawObject& G);
   void ClearSelection();

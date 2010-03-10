@@ -691,6 +691,15 @@ void TGlRenderer::DeSelect(AGDrawObject& G)  {
   FSelection->Remove(G);
 }
 //..............................................................................
+void TGlRenderer::Select(AGDrawObject& G, bool v)  {
+  if( v )  {
+    if( !G.IsSelected()  )
+      Select(G);
+  }
+  else if( G.IsSelected() )
+    DeSelect(G);
+}
+//..............................................................................
 void TGlRenderer::InvertSelection()  {
   TPtrList<AGDrawObject> Selected;
   const size_t oc = FGObjects.Count();

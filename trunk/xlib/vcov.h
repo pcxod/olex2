@@ -229,6 +229,28 @@ protected:
     plane_param[0].Normalise();
     return crd.DotProd(plane_param[0]) - d;
   }
+  // plane to plane shift distance
+  double _calcP2PShiftDistance(const vec3d_alist& points, size_t fpc)  {
+    vec3d c1, c2;
+    vec3d_alist p1(fpc);
+    for( size_t i=0; i < points.Count(); i++ )  {
+      if( i < fpc )  {
+        p1[i] = points[i];
+        c1 += points[i];
+      }
+      else  {
+        c2 += points[i];
+      }
+    }
+    c1 /= fpc;
+    c2 /= (points.Count()-fpc);
+    _calcPlane<0,0>(p1);
+    double d = plane_param[0].DotProd(plane_center[0])/plane_param[0].Length();
+    plane_param[0].Normalise();
+    const double pcd = c2.DotProd(plane_param[0]) - d;
+    const double res = c1.QDistanceTo(c2) - pcd*pcd;
+    return  res <= 0 ? 0 : sqrt(res); 
+  }
   // alignment RMSD
   double _calcAllignmentRMSD(const vec3d_alist& points)  {
     ematd evm(4,4), quaternions(4,4);
@@ -706,7 +728,7 @@ public:
     offs.b = p1.Count() + p2.Count();
     return DoCalcExForAtoms(atoms, &VcoVContainer::_calc3PCAngle, offs);
   }
-  //plane to another centroid centroid distance
+  //plane to another plane centroid distance
   TEValue<double> CalcP2PCDistance(const TSAtomPList& p1, const TSAtomPList& p2) {
     weights[0].SetCount(p1.Count());
     for( size_t i=0; i < p1.Count(); i++ ) 
@@ -714,6 +736,15 @@ public:
     TSAtomPList atoms(p1);
     atoms.AddList(p2);
     return DoCalcExForAtoms(atoms, &VcoVContainer::_calcP2PCDistance, p1.Count());
+  }
+  //plane to another plane shift distance
+  TEValue<double> CalcP2PShiftDistance(const TSAtomPList& p1, const TSAtomPList& p2) {
+    weights[0].SetCount(p1.Count());
+    for( size_t i=0; i < p1.Count(); i++ ) 
+      weights[0][i] = 1.0;
+    TSAtomPList atoms(p1);
+    atoms.AddList(p2);
+    return DoCalcExForAtoms(atoms, &VcoVContainer::_calcP2PShiftDistance, p1.Count());
   }
   // tetrahedron volume
   TEValue<double> CalcTetrahedronVolume(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {

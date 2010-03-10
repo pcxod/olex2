@@ -52,12 +52,6 @@ void TBasicCFile::LoadFromFile(const olxstr& fn)  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);  
   }
   FileName = fn;
-  if( GetRM().GetHKLSource().IsEmpty() || !TEFile::Exists(GetRM().GetHKLSource()) )  {
-    olxstr src = TXApp::GetInstance().LocateHklFile();
-    if( !src.IsEmpty() && !TEFile::Existsi(olxstr(src), src) )
-      src = EmptyString;
-    GetRM().SetHKLSource(src);
-  }
 }
 //----------------------------------------------------------------------------//
 // TXFile function bodies
@@ -168,6 +162,12 @@ void TXFile::LoadFromFile(const olxstr & FN) {
     delete FLastLoader;
   }
   FLastLoader = Loader;
+  if( GetRM().GetHKLSource().IsEmpty() || !TEFile::Exists(GetRM().GetHKLSource()) )  {
+    olxstr src = TXApp::GetInstance().LocateHklFile();
+    if( !src.IsEmpty() && !TEFile::Existsi(olxstr(src), src) )
+      src = EmptyString;
+    GetRM().SetHKLSource(src);
+  }
 }
 //..............................................................................
 void TXFile::UpdateAsymmUnit()  {

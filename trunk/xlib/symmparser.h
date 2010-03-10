@@ -99,12 +99,15 @@ class TSymmParser  {
     }
     if( Toks.Count() != 2 )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong code: ") << Code);
-    size_t isymm = Toks[0].ToSizeT()-1;
+    const size_t isymm = Toks[0].ToSizeT()-1;
     if( isymm >= au.MatrixCount() )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
     mSymm = au.GetMatrix(isymm);
     if( index != NULL )  *index = isymm;
-    ExtractTranslation(Toks[1], mSymm.t);
+    vec3i t;
+    ExtractTranslation(Toks[1], t);
+    mSymm.t += t;
+    mSymm.SetRawId(smatd::GenerateId((uint8_t)isymm, t));
     return mSymm;
   }
   static const char Axis[];
@@ -137,6 +140,13 @@ public:
   // the length of translations; Matrix->Tag must be set to the index of the matrix in the Unit cell!!!
   static olxstr MatrixToSymmCode(const TUnitCell& UC, const smatd& M);
   static olxstr MatrixToSymmCode(const smatd_list& ml, const smatd& M);
+  /*checks if the given string represents a symmetry operation (1_554, 1554, 1555654, x,y,z) 
+  works as a combination of the two following functions */
+  static bool IsSymm(const olxstr& s);
+  //checks if the given string represents a symmetry operation (1_554, 1554, 1555654)
+  static bool IsRelSymm(const olxstr& s);
+  //checks if the given string represents a symmetry operation (x,y,z)
+  static bool IsAbsSymm(const olxstr& s);
   // runs various tests...
   static void Tests(OlxTests& t);
 };

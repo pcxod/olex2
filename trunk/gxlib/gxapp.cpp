@@ -459,7 +459,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     XFile().GetAsymmUnit().Angles()[1].GetV(),
     XFile().GetAsymmUnit().Angles()[2].GetV()
   };
-  DUnitCell().Init( cell );
+  DUnitCell().Init(cell);
   DBasis().SetAsymmUnit(&XFile().GetAsymmUnit());
 
   for( size_t i=0; i < ObjectsToCreate.Count(); i++ )
@@ -880,19 +880,31 @@ olxstr TGXApp::GetSelectionInfo()  {
         vec3d n_c = (b.GetCenter()-a.GetCenter()).XProdVec(a.GetNormal()+b.GetNormal()).Normalise();
         vec3d p_a = a.GetNormal() -  n_c*n_c.DotProd(a.GetNormal());
         vec3d p_b = b.GetNormal() -  n_c*n_c.DotProd(b.GetNormal());
-
+        const double ang = a.Angle(b);
         Tmp = "Angle (plane-plane): ";
-        Tmp << olxstr::FormatFloat(3, a.Angle(b)) <<
+        Tmp << olxstr::FormatFloat(3, ang) <<
           "\nTwist Angle (plane-plane, experimental): " <<
           olxstr::FormatFloat(3, TorsionAngle(a.GetCenter()+a.GetNormal(), a.GetCenter(), b.GetCenter(), b.GetCenter()+b.GetNormal())) <<
           "\nFold Angle (plane-plane, experimental): " <<
           olxstr::FormatFloat(3, acos(p_a.CAngle(p_b))*180/M_PI) <<
           "\nDistance (plane centroid-plane centroid): " <<
-          olxstr::FormatFloat(3, a.GetCenter().DistanceTo(b.GetCenter())) <<
+          olxstr::FormatFloat(3, a.GetCenter().DistanceTo(b.GetCenter()))  <<
           "\nDistance (plane[" << macSel_GetPlaneName(a) << "]-centroid): " <<
           olxstr::FormatFloat(3, a.DistanceTo(b.GetCenter())) <<
-          "\nDistance (plane[" << macSel_GetPlaneName(b) << "]-centroid): " <<
-          olxstr::FormatFloat(3, b.DistanceTo(a.GetCenter()));
+          "\nShift (plane [" << macSel_GetPlaneName(a) << "]-plane): " <<
+          olxstr::FormatFloat(3, 
+            sqrt(olx_max(0, a.GetCenter().QDistanceTo(b.GetCenter())
+            -
+            olx_sqr(a.DistanceTo(b.GetCenter())))));
+        if( olx_abs(ang) > 1e-6 )  {
+          Tmp << "\nDistance (plane[" << macSel_GetPlaneName(b) << "]-centroid): " <<
+          olxstr::FormatFloat(3, b.DistanceTo(a.GetCenter())) <<
+          "\nShift (plane [" << macSel_GetPlaneName(b) << "]-plane): " <<
+          olxstr::FormatFloat(3, 
+            sqrt(olx_max(0, a.GetCenter().QDistanceTo(b.GetCenter())
+            -
+            olx_sqr(b.DistanceTo(a.GetCenter())))));
+        }
       }
     }
     else if( Sel.Count() == 3 )  {
@@ -1830,14 +1842,14 @@ TSPlane *TGXApp::TmpPlane(TXAtomPList* atoms, int weightExtent)  {
   return XFile().GetLattice().TmpPlane(SAtoms, weightExtent);
 }
 //..............................................................................
-TXPlane * TGXApp::AddPlane(TXAtomPList &Atoms, bool Rectangular, int weightExtent)  {
+TXPlane *TGXApp::AddPlane(TXAtomPList &Atoms, bool Rectangular, int weightExtent)  {
   if( Atoms.Count() < 3 )  return NULL;
   TSAtomPList SAtoms;
   for( size_t i=0; i < Atoms.Count(); i++ )
     SAtoms.Add( &Atoms[i]->Atom() );
 
   TSPlane *S = XFile().GetLattice().NewPlane(SAtoms, weightExtent);
-  if( S )  {
+  if( S != NULL )  {
     TXPlane& XP = XPlanes.Add( new TXPlane(*FGlRender, olxstr("TXPlane") << XPlanes.Count(), S) );
     S->SetRegular(Rectangular);
     XP.Create();
