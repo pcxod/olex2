@@ -202,7 +202,7 @@ public:
   // constructor
   TBaiZEvaluator(ITBasicAtomInfoDataProvider* parent) { Parent = parent;  }
   // virtual method
-  IEvaluator *NewInstance( IDataProvider *dp)  {  return new TBaiMwEvaluator( (ITBasicAtomInfoDataProvider*)dp);  }
+  IEvaluator *NewInstance( IDataProvider *dp)  {  return new TBaiZEvaluator((ITBasicAtomInfoDataProvider*)dp);  }
   // destructor
   TBaiZEvaluator()  {  ;  }
   // evaluator function
