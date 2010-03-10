@@ -122,32 +122,37 @@ void TDUnitCell::SetReciprocal(bool v)  {
 void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  olxstr NewL;
-  TGPCollection* GPC = Parent.FindCollectionX( GetCollectionName(), NewL);
-  if( GPC == NULL )
-    GPC = &Parent.NewCollection(NewL);
-  if( GPC->PrimitiveCount() == 0 )  {
-    TGraphicsStyle& GS = GPC->GetStyle();
-    FGlP = &GPC->NewPrimitive("Lines", sgloLines);
-    TGlMaterial GlM;
-    GlM.SetFlags(sglmAmbientF);
-    GlM.AmbientF = 0;
+  TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
+  if( GPC.PrimitiveCount() != 0 )  {  // GetDimensions will be called 
+    FGlP = GPC.FindPrimitiveByName("Lines");
+    if( FGlP != NULL )  {
+      GPC.AddObject(*this);
+      return;
+    }
+    GPC.ClearPrimitives();
+  }
+  TGraphicsStyle& GS = GPC.GetStyle();
+  const int PMask = GS.GetParam(GetPrimitiveMaskName(), "3", true).ToInt();
+  if( PMask == 0 )  return;
+  
+  FGlP = &GPC.NewPrimitive("Lines", sgloLines);
+  TGlMaterial GlM;
+  GlM.SetFlags(sglmAmbientF);
+  GlM.AmbientF = 0;
+  FGlP->SetProperties(GS.GetMaterial(FGlP->GetName(), GlM));
+  FGlP->Vertices.SetCount(24);
+  SetReciprocal(Reciprocal);
 
-    FGlP->SetProperties( GS.GetMaterial("Lines", GlM));
-    FGlP->Vertices.SetCount(24);
-    SetReciprocal(Reciprocal);
-
-    TGlPrimitive& glpLabel = GPC->NewPrimitive("Label", sgloText);  // labels
-
+  if( (PMask & 0x2) != 0 )  {
+    TGlPrimitive& glpLabel = GPC.NewPrimitive("Label", sgloText);  // labels
     TGlMaterial lMat;
     lMat.SetFlags(sglmAmbientF);
     lMat.AmbientF = 0xff00ff;
     lMat.SetIdentityDraw(true);
-    glpLabel.SetProperties( GS.GetMaterial("Label", lMat) );
-
-    glpLabel.SetFont( Parent.GetScene().DefFont() );
+    glpLabel.SetProperties(GS.GetMaterial(glpLabel.GetName(), lMat));
+    glpLabel.SetFont(Parent.GetScene().DefFont());
   }
-  GPC->AddObject(*this);
+  GPC.AddObject(*this);
 }
 //..............................................................................
 bool TDUnitCell::GetDimensions(vec3d &Max, vec3d &Min)  {
@@ -193,4 +198,15 @@ bool TDUnitCell::Orient(TGlPrimitive& P)  {
   olx_gl::translate(Center);
   return false;
 }
+//..............................................................................
+void TDUnitCell::ListPrimitives(TStrList &List) const {
+  List.Add("Cell");
+  List.Add("Labels");
+}
+//..............................................................................
+void TDUnitCell::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
+  SetBit(true, Mask, 1);
+  AGDrawObject::UpdatePrimitives(Mask, cpar);
+}
+//..............................................................................
 

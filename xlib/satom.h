@@ -82,6 +82,12 @@ public:
     }
   }
   void ClearMatrices()  {  Matrices.Clear();  }
+  bool ContainsMatrix(uint32_t m_id) const {
+    for( size_t i=0; i < Matrices.Count(); i++ )
+      if( Matrices[i]->GetId() == m_id )
+        return true;
+    return false;
+  }
   void ChangeType(const olxstr& Type);
   // beware that underlying objkect might be shared by several atoms!
   TEllipsoid* GetEllipsoid() const {  return FEllipsoid;  }

@@ -211,6 +211,10 @@ void TGlPrimitive::SetColor(const uint32_t& cl) const {
 }
 //..............................................................................
 void TGlPrimitive::Draw()  {
+#ifdef _DEBUG
+  if( olx_is_valid_index(ListId) && !Compiled )
+    throw TInvalidArgumentException(__OlxSourceInfo, "uncompiled complex object");
+#endif
   if( Compiled )  {  
     olx_gl::callList(ListId);  
     return;  

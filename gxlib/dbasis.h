@@ -16,6 +16,9 @@ public:
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
+  void ListPrimitives(TStrList &List) const;
+  void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
+
   void ToDataItem(TDataItem& di) const;
   void FromDataItem(const TDataItem& di);
 };

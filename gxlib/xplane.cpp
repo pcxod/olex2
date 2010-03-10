@@ -22,12 +22,10 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;
-
   TGraphicsStyle& GS = GPC.GetStyle();
   GS.SetPersistent(true);
   const int PMask = GS.GetParam(GetPrimitiveMaskName(), "3", true).ToInt();
-  if( PMask == 0 )
-    return;
+  if( PMask == 0 )  return;
   if( (PMask & 1) != 0 )  {
     TGlMaterial GlM;
     GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmAmbientB|sglmDiffuseB|sglmTransparent);
@@ -36,7 +34,7 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
     GlM.AmbientB = 0x7f00007f;
     GlM.DiffuseB = 0x7f3f3f3f;
     TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloPolygon);
-    GlP.SetProperties(GS.GetMaterial("Plane", GlM));
+    GlP.SetProperties(GS.GetMaterial(GlP.GetName(), GlM));
     if( !FPlane->IsRegular() )  
       GlP.Vertices.SetCount(FPlane->CrdCount());
     else                 
@@ -79,10 +77,10 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
     GlM1.SetFlags(sglmAmbientF);
     GlM1.AmbientF = 0;
     TGlPrimitive& glpC = GPC.NewPrimitive("Centroid", sgloSphere);
-    glpC.SetProperties(GS.GetMaterial("Centroid", GlM1));
+    glpC.SetProperties(GS.GetMaterial(glpC.GetName(), GlM1));
     glpC.Params[0] = 0.25;  glpC.Params[1] = 10;  glpC.Params[2] = 10;
-    glpC.Compile();
   }
+  Compile();
 }
 //..............................................................................
 bool TXPlane::Orient(TGlPrimitive& P)  {

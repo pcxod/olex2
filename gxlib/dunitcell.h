@@ -19,6 +19,9 @@ public:
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min);
+  void ListPrimitives(TStrList &List) const;
+  void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
+
   size_t VertexCount() const {  return FGlP == NULL ? 0 : 8;  }
   const vec3f& GetVertex(size_t i) const {
     if( FGlP == NULL )
