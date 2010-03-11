@@ -4,10 +4,12 @@ import string
 import platform
 
 architecture = platform.architecture()[0]
+env_arch = 'x86'
 if not architecture:
   architecture = 'unknown'
 if architecture == '64bit':
   sse = None
+  env_arch = 'x86_64'
 print 'Build architecture: ' + architecture
 
 if sys.platform[:3] == 'win':
@@ -18,7 +20,7 @@ variables = Variables()
 variables.AddVariables(
     EnumVariable('TOOL', 'The tool to use', def_tool, allowed_values=('vc8', 'vc9', 'gnu', 'intel'))
     )
-env = Environment(ENV = os.environ, variables = variables)
+env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch)
 Help(variables.GenerateHelpText(env))
 
 if env['TOOL'] == 'vc8':
