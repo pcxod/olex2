@@ -31,9 +31,9 @@ class TSymmParser  {
       t[2] += (int)(str.CharAt(2)-'5');
     }
     else if( str.Length() == 6 ) {
-      t[0] += (str.SubString(0, 2).ToInt()-55);
-      t[1] += (str.SubString(2, 2).ToInt()-55);
-      t[2] += (str.SubString(4, 2).ToInt()-55);
+      t[0] += (str.SubString(0, 2).ToInt()-50);
+      t[1] += (str.SubString(2, 2).ToInt()-50);
+      t[2] += (str.SubString(4, 2).ToInt()-50);
     }
     else
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong translation code: ") << str);
@@ -124,11 +124,11 @@ public:
   static olxstr MatrixToSymmEx(const mat3i& M);
     // Transforms standard SYMM operation (INS, CIF files) to matrix
   static bool SymmToMatrix(const olxstr& symm, smatd& M);
-  // return a matrix representation of 1_555 or 1_555555 code for the unit cell
+  // return a matrix representation of 1_555 or 1_505050 code for the unit cell
   static smatd SymmCodeToMatrixU(const class TUnitCell& UC, const olxstr& Code);
-  // return a matrix representation of 1_555 or 1_555555 code for the asymmetric unit
+  // return a matrix representation of 1_555 or 1_505050 code for the asymmetric unit
   static smatd SymmCodeToMatrixA(const class TAsymmUnit& AU, const olxstr& Code);
-  // return a matrix representation of 1_555 or 1_555555 code for the the list of matrices
+  // return a matrix representation of 1_555 or 1_505050 code for the the list of matrices
   static smatd SymmCodeToMatrix(const smatd_list& ml, const olxstr& Code)  {
     size_t index = InvalidIndex;
     smatd rv = _SymmCodeToMatrix(sml_converter(ml), Code, &index);
@@ -136,14 +136,14 @@ public:
       rv.SetId(smatd::GenerateId((uint8_t)index, rv, ml[index]));
     return rv;
   }
-  // return a string representation of a matrix like 1_555 or 1_555555 code in dependence on
+  // return a string representation of a matrix like 1_555 or 1_505050 code in dependence on
   // the length of translations; Matrix->Tag must be set to the index of the matrix in the Unit cell!!!
   static olxstr MatrixToSymmCode(const TUnitCell& UC, const smatd& M);
   static olxstr MatrixToSymmCode(const smatd_list& ml, const smatd& M);
-  /*checks if the given string represents a symmetry operation (1_554, 1554, 1555654, x,y,z) 
+  /*checks if the given string represents a symmetry operation (1_554, 1554, 1505149, x,y,z) 
   works as a combination of the two following functions */
   static bool IsSymm(const olxstr& s);
-  //checks if the given string represents a symmetry operation (1_554, 1554, 1555654)
+  //checks if the given string represents a symmetry operation (1_554, 1554, 1505149)
   static bool IsRelSymm(const olxstr& s);
   //checks if the given string represents a symmetry operation (x,y,z)
   static bool IsAbsSymm(const olxstr& s);

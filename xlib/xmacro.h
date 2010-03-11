@@ -61,6 +61,7 @@ class XLibMacros  {
   static DefMacro(Sort)
   static DefMacro(SGInfo)
   static DefMacro(SAInfo)
+  static DefMacro(PiPi)
 
   static DefMacro(Flush)
 

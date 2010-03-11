@@ -31,6 +31,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
         continue;
       throw TFunctionFailedException(__OlxSourceInfo, "invalid matrix file");
     }
+    if( toks[4].Equalsi("BASF") )  continue;
     if( last_atom_name != toks[5] )  {
       atom = au.FindCAtom(toks[5]);
       last_atom_name = toks[5];
