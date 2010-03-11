@@ -281,7 +281,8 @@ public:
     IndexFS.DoBreak();  
   }
   bool IsInterrupted() const {
-    return Break && Progress.GetPos() != Progress.GetMax();
+    //return Break && Progress.GetPos() != Progress.GetMax();
+    return Break;
   }
   friend class TFSItem;
 };

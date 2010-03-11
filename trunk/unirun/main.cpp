@@ -194,7 +194,8 @@ void DoRun()  {
           return;
         }
         repo << tag;
-      }    }
+      }
+    }
     else  {
       api.GetAvailableRepositories(repos);
       if( repos.IsEmpty() )  {
