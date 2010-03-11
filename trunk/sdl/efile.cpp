@@ -436,7 +436,8 @@ bool TEFile::IsDir(const olxstr& F)  {
 bool TEFile::DeleteDir(const olxstr& F, bool ContentOnly)  {
   olxstr fn = OLX_OS_PATH(F);
   if( !Exists(fn) || !TEFile::IsDir(fn) )  
-    throw TFunctionFailedException(__OlxSourceInfo, "The directory does not exist");
+    return false;
+    //throw TFunctionFailedException(__OlxSourceInfo, "The directory does not exist");
   try  {
     TFileTree::Delete(fn, ContentOnly);
     return true;
