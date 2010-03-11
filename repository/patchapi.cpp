@@ -1,7 +1,3 @@
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "patchapi.h"
 #include "bapp.h"
 #include "efile.h"

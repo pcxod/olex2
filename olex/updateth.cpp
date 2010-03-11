@@ -111,15 +111,9 @@ int UpdateThread::Run()  {
     cmds.SaveToFile(cmd_fn);
 #endif
     // mark download as complete
-    if( !Index->IsInterrupted() )  {
-      //TBasicApp::GetLog().Info("Done update downloading");
-      TEFile f(download_vf, "w+b");
-      olxcstr location(dfs.GetBase());
-      f.Write(location);
-    }
-    else  {
-      //TBasicApp::GetLog().Info("Update downloading interrupted, will continue in the new session");
-    }
+    TEFile f(download_vf, "w+b");
+    olxcstr location(dfs.GetBase());
+    f.Write(location);
     patcher::PatchAPI::UnlockUpdater();
   }
   catch(const TExceptionBase&)  { // oups...
