@@ -6694,27 +6694,30 @@ void TMainForm::macSgen(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   smatd_list symm;
   smatd matr;
   for( size_t i=0; i < Cmds.Count(); i++ )  {
-    bool validSymm = true;
-    try  {  TSymmParser::SymmToMatrix( Cmds[i], matr );  }
-    catch( TExceptionBase& )  {
-      validSymm = false;
+    bool validSymm = false;
+    if( TSymmParser::IsRelSymm(Cmds[i]) )  {
+      try  {
+        matr = TSymmParser::SymmCodeToMatrixU(FXApp->XFile().GetLattice().GetUnitCell(), Cmds[i]);
+        validSymm = true;
+      }
+      catch( TExceptionBase& )  {}
     }
     if( !validSymm )  {
       try  {
-        matr = TSymmParser::SymmCodeToMatrixU(FXApp->XFile().GetLattice().GetUnitCell(), Cmds[i] );
+        TSymmParser::SymmToMatrix(Cmds[i], matr);
         validSymm = true;
       }
-      catch( TExceptionBase& )  {    }
+      catch( TExceptionBase& )  {}
     }
     if( validSymm )  {
-      Cmds.Delete(i);
-      symm.AddCCopy( matr );
-      i--;
+      Cmds.Delete(i--);
+      symm.AddCCopy(matr);
     }
   }
-  if( symm.IsEmpty() )
-    throw TInvalidArgumentException(__OlxSourceInfo, "no symm code(s) provided");
-
+  if( symm.IsEmpty() )  {
+    Error.ProcessingError(__OlxSrcInfo, "no symm code(s) provided");
+    return;
+  }
   if( !FindXAtoms(Cmds, Atoms, true, true) )  {
     Error.ProcessingError(__OlxSrcInfo, "no atoms provided" );
     return;

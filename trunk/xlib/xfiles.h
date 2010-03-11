@@ -104,7 +104,7 @@ public:
   void Sort(const TStrList& instructions);
   void LoadFromFile(const olxstr& FN);
   void SaveToFile(const olxstr& FN, bool Sort);
-  // clears the last loader amd the model
+  // clears the last loader and the model
   void Close();
   // returns last loaded file name (if any) or empty string 
   const olxstr& GetFileName() const {  return FLastLoader != NULL ? FLastLoader->GetFileName() : EmptyString; }

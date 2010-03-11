@@ -152,7 +152,7 @@ olxstr TSymmParser::MatrixToSymmCode(const TUnitCell& UC, const smatd& M)  {
   vec3i Trans(m.t - M.t);
   int baseVal = 5;
   if( (abs(Trans[0]) > 4) || (abs(Trans[1]) > 4) || (abs(Trans[1]) > 4) )
-    baseVal = 55;
+    baseVal = 50;
 
   static char bf[64];
 #ifdef _MSC_VER
@@ -167,7 +167,7 @@ olxstr TSymmParser::MatrixToSymmCode(const smatd_list& ml, const smatd& M)  {
   vec3i Trans(ml[M.GetContainerId()].t - M.t);
   int baseVal = 5;
   if( (abs(Trans[0]) > 4) || (abs(Trans[1]) > 4) || (abs(Trans[1]) > 4) )
-    baseVal = 55;
+    baseVal = 50;
 
   static char bf[64];
 #ifdef _MSC_VER
