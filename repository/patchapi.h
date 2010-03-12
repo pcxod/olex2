@@ -61,6 +61,7 @@ public:
   static bool UnlockUpdater();
 
   static const char* GetTagFileName()  {  return "olex2.tag";  }
+  static const char* GetPatchFolder()  {  return "patch";  }
   //reads current repository tag, returns EmptyString in the case of error
   static olxstr ReadRepositoryTag();
   // composes new shared dir and saves its info
@@ -75,6 +76,8 @@ public:
       new_shared_dir << MD5::Digest(esdl::olxcstr( 
         TEFile::AddPathDelimeter((base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir)) + ReadRepositoryTag())) );
   }
+  // checks for OLEX2_DATADIR, DataDir is raw data dir like Application Data without the MD5 suffix
+  static olxstr GetCurrentSharedDir(olxstr* DataDir=NULL);
   static void SaveLocationInfo(const olxstr& shared_dir, const olxstr& base_dir=EmptyString)  {
     TCStrList location_file_content;
     location_file_content.Add(TEFile::AddPathDelimeter((base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir))) 
