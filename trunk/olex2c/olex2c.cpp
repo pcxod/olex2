@@ -174,7 +174,7 @@ public:
     Library.AttachLibrary(XApp.XFile().ExportLibrary());
     Library.AttachLibrary(TFileHandlerManager::ExportLibrary());
 
-    DataDir = patcher::PatchAPI::ComposeNewSharedDir(TShellUtil::GetSpecialFolderLocation(fiAppData));
+    DataDir = patcher::PatchAPI::GetCurrentSharedDir();
     if( !TEFile::Exists(DataDir) )  {
       if( !TEFile::MakeDirs(DataDir) )  {
         cout << "Could not create data directory: " << DataDir.c_str() << '\n';

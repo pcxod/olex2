@@ -1240,14 +1240,7 @@ separated values of Atom Type and radius, an entry a line");
 
   TutorialDir = XA->GetBaseDir()+"etc/";
 //  DataDir = TutorialDir + "Olex_Data\\";
-  wxString data_dir; // we cannot use any TEFile functions, working eith c_str, as the TEGC is not initialised yet...
-  if( wxGetEnv( wxT("OLEX2_DATADIR"), &data_dir) )  {
-    if( wxDirExists(data_dir) )
-      DataDir = TEFile::AddPathDelimeter(data_dir.c_str());
-  }
-  if( DataDir.IsEmpty() )
-    DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
-  olxstr new_data_dir = patcher::PatchAPI::ComposeNewSharedDir(DataDir);
+  olxstr new_data_dir = patcher::PatchAPI::GetCurrentSharedDir(&DataDir);
   DataDir = patcher::PatchAPI::ComposeOldSharedDir(DataDir);
   // migration code...
   if( !TEFile::Exists(DataDir) )  {  // do not worry then - create the new one
@@ -1505,7 +1498,7 @@ void TMainForm::StartupInit()  {
     ProcessMacro(olxstr("reap \'") << FXApp->Arguments[1] << '\'', __OlxSrcInfo);
 // must move it here since on Linux things will not get initialised at the previous position
   if( FXApp->IsBaseDirWriteable() )  {
-    _UpdateThread = new UpdateThread(FXApp->GetSharedDir() + "patch");
+    _UpdateThread = new UpdateThread(FXApp->GetSharedDir() + patcher::PatchAPI::GetPatchFolder());
     _UpdateThread->OnTerminate.Add(this, ID_UpdateThreadTerminate);
     _UpdateThread->OnDownload.Add(this, ID_UpdateThreadDownload);
     _UpdateThread->OnAction.Add(this, ID_UpdateThreadAction);

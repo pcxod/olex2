@@ -6,6 +6,7 @@
 #include "egc.h"
 #include "filetree.h"
 #include "updateapi.h"
+#include "shellutil.h"
 
 using namespace patcher;
 
@@ -14,7 +15,17 @@ TEFile* PatchAPI::lock_file = NULL;
 short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCopy)  {
   if( !TBasicApp::IsBaseDirWriteable() )
     return papi_AccessDenied;
-  if( !TEFile::Exists( GetUpdateLocationFileName() ) )  {
+  if( !TEFile::Exists(GetUpdateLocationFileName()) )  {
+    // cheating... trying to update the exe even if the download is incomplete...
+    olxstr patch_location = GetCurrentSharedDir() + GetPatchFolder();
+#ifdef __WIN32__
+    olxstr exe_file = "olex2.dll";
+#else
+    olxstr exe_file = "olex2";
+#endif
+    if( TEFile::Exists(patch_location+exe_file) )  {
+      TEFile::Copy(patch_location+exe_file, TBasicApp::GetBaseDir() + exe_file);
+    }
     CleanUp(OnFileCopy, OnOverallCopy);
     return papi_OK;
   }
@@ -113,5 +124,22 @@ olxstr PatchAPI::ReadRepositoryTag()  {
   TStrList sl;
   sl.LoadFromFile(tag_fn);
   return sl.Count() == 1 ? sl[0] : EmptyString;
+}
+//.............................................................................
+olxstr PatchAPI::GetCurrentSharedDir(olxstr* DataDir)  {
+  const char* dd_str = getenv("OLEX2_DATADIR");
+  olxstr data_dir;
+  if( dd_str != NULL )  {
+    data_dir = dd_str;
+    if( !TEFile::IsDir(data_dir) )
+      data_dir = EmptyString;
+    else
+      TEFile::AddPathDelimeterI(data_dir);
+  }
+  if( data_dir.IsEmpty() )
+    data_dir = TShellUtil::GetSpecialFolderLocation(fiAppData);
+  if( DataDir != NULL )
+    *DataDir = data_dir;
+  return ComposeNewSharedDir(data_dir);
 }
 //.............................................................................
