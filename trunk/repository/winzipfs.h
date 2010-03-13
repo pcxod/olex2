@@ -9,7 +9,7 @@
   #include "filesystem.h"
   #include "unzip.h"
 
-class TWinZipFileSystem: public AFileSystem, public IEObject  {
+class TWinZipFileSystem: public AFileSystem  {
   HZIP zip;
   TStrList TmpFiles;
 protected:
@@ -29,7 +29,8 @@ public:
   TWinZipFileSystem(const olxstr& filename, bool unused=false);
   virtual ~TWinZipFileSystem();
 
-  void ExtractAll(const olxstr& dest);
+  // returns true if no errors happened
+  bool ExtractAll(const olxstr& dest);
 
   TEFile* OpenFileAsFile(const olxstr& Source)  {
     return (TEFile*)OpenFile(Source);

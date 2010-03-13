@@ -257,7 +257,14 @@ short UpdateAPI::DoSynch(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
 void UpdateAPI::EvaluateProperties(TStrList& props) const  {
   props.Add("olex-update");
 #if defined(__WIN32__) //&& !defined(_DEBUG)  // disable updates by the debug version 
-#  ifdef _WIN64
+#  if defined(_DEBUG)
+#    if !defined(_WIN64)
+       props.Add("port-win32-portable");  // but can change this ...
+       props.Add("port-win32");
+#    else
+       props.Add("port-win64");
+#    endif
+#  elif _WIN64
      props.Add("port-win64");
 #  else
      props.Add("port-win32-portable");  // but can change this ...

@@ -16,7 +16,7 @@
 #include "efile.h"
 //  #pragma link "../..lib/psdk/mswsock.lib"
 
-class THttpFileSystem: public AFileSystem, public IEObject  {
+class THttpFileSystem: public AFileSystem  {
 #ifdef __WIN32__
   SOCKET Socket;
 #else

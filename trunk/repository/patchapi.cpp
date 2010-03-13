@@ -16,16 +16,6 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
   if( !TBasicApp::IsBaseDirWriteable() )
     return papi_AccessDenied;
   if( !TEFile::Exists(GetUpdateLocationFileName()) )  {
-    // cheating... trying to update the exe even if the download is incomplete...
-    olxstr patch_location = GetCurrentSharedDir() + GetPatchFolder();
-#ifdef __WIN32__
-    olxstr exe_file = "olex2.dll";
-#else
-    olxstr exe_file = "olex2";
-#endif
-    if( TEFile::Exists(patch_location+exe_file) )  {
-      TEFile::Copy(patch_location+exe_file, TBasicApp::GetBaseDir() + exe_file);
-    }
     CleanUp(OnFileCopy, OnOverallCopy);
     return papi_OK;
   }

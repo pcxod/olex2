@@ -1,8 +1,3 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-  #include <winbase.h>
-#endif
-
 #ifdef __WXWIDGETS__
 
 #include "wxzipfs.h"
@@ -39,26 +34,24 @@ TMemoryBlock* TZipWrapper::GetMemoryBlock(const olxstr &EM)  {
 }
 //..............................................................................
 TZipWrapper::TZipWrapper(const olxstr &zipName, bool useCache) : zip_name(zipName),
-  OnProgress(Actions.New("ON_PROGRESS"))
+  OnProgress(Actions.New("ON_PROGRESS")), Break(false)
 {
   FInputStream = NULL;
   wxfile = NULL;
   UseCache = useCache;
-  //FFileInputStream = NULL;
-  if( !TEFile::Exists( zipName )  )  return;
-  FInputStream = new wxZipInputStream( new wxFileInputStream(zipName.u_str()) );
+  if( !TEFile::Exists(zipName)  )  return;
+  FInputStream = new wxZipInputStream(new wxFileInputStream(zipName.u_str()));
   wxZipEntry *entry;
   while( (entry = FInputStream->GetNextEntry() ) != NULL )
     FEntries.Add(TEFile::UnixPath(entry->GetName().c_str()), entry);
 }
 //..............................................................................
 TZipWrapper::TZipWrapper(TEFile* file, bool useCache) :
-  OnProgress(Actions.New("ON_PROGRESS"))
+  OnProgress(Actions.New("ON_PROGRESS")), Break(false)
 {
   FInputStream = NULL;
   wxfile = NULL;
   UseCache = useCache;
-  //FFileInputStream = NULL;
   if( file == NULL )  return;
   wxfile = new wxFile( file->FileNo() );
   FInputStream = new wxZipInputStream( new wxFileInputStream(*wxfile) );
@@ -81,14 +74,13 @@ TZipWrapper::~TZipWrapper()  {
     wxfile->Detach();
     delete wxfile;
   }
-//  if( FFileInputStream )  delete FFileInputStream;
 }
 //..............................................................................
 IDataInputStream* TZipWrapper::OpenEntry(const olxstr &EN)  {
   TMemoryBlock * mb = GetMemoryBlock(EN);
   if( mb == NULL )  return NULL;
   TEMemoryStream *ms = new TEMemoryStream();
-  ms->Write( mb->Buffer, mb->Length );
+  ms->Write(mb->Buffer, mb->Length);
   ms->SetPosition(0);
   if( !UseCache )  {
     delete [] mb->Buffer;
@@ -110,33 +102,43 @@ wxInputStream* TZipWrapper::OpenWxEntry(const olxstr &EN)  {
   return NULL;
 }
 //..............................................................................
-void TZipWrapper::ExtractAll(const olxstr& dest)  {
-  olxstr extractPath( TEFile::AddPathDelimeter(dest) );
+bool TZipWrapper::ExtractAll(const olxstr& dest)  {
+  olxstr extractPath(TEFile::AddPathDelimeter(dest));
   TOnProgress Progress;
   Progress.SetMax(FEntries.Count());
   Progress.SetAction(olxstr("Unpacking ") << zip_name << "...");
   OnProgress.Enter(NULL, &Progress);
   const size_t bf_sz = 1024*64;
   char* bf = new char[bf_sz];
+  bool res = true;
   for( size_t i=0; i < FEntries.Count(); i++ )  {
-    if( !FInputStream->OpenEntry( *FEntries.GetObject(i) ) )
+    if( this->Break )  {
+      res = false;
+      break;
+    }
+    if( !FInputStream->OpenEntry(*FEntries.GetObject(i)) )
       continue;
     if( FEntries.GetString(i).EndsWith('/') )  continue;
-
-    Progress.SetPos( i+1 );
-    Progress.SetAction( FEntries.GetString(i) );
+    Progress.SetPos(i+1);
+    Progress.SetAction(FEntries.GetString(i));
     OnProgress.Execute(NULL, &Progress);
 
     olxstr dest_file = extractPath + FEntries.GetString(i);
     olxstr dst_dir = TEFile::ExtractFilePath(dest_file);
     if( !TEFile::Exists(dst_dir) )
-      if( !TEFile::MakeDirs(dst_dir) )
+      if( !TEFile::MakeDirs(dst_dir) )  {
         TBasicApp::GetLog().Error(olxstr("Failed to create folder: ") << dst_dir);
+        res = false;
+        break;
+      }
     if( TEFile::Exists(dest_file) )  {
-      if( !TEFile::DelFile(dest_file) )
+      if( !TEFile::DelFile(dest_file) )  {
         TBasicApp::GetLog().Error(olxstr("Failed to remove/update file: ") << dest_file);
+        res = false;
+        break;
+      }
     }
-    wxFileOutputStream fos( dest_file.u_str() );
+    wxFileOutputStream fos(dest_file.u_str());
     while( FInputStream->Read(bf, bf_sz).LastRead() != 0 )
       fos.Write(bf, FInputStream->LastRead());
   }
@@ -144,6 +146,7 @@ void TZipWrapper::ExtractAll(const olxstr& dest)  {
   Progress.SetPos(FEntries.Count());
   Progress.SetAction("Done");
   OnProgress.Exit(NULL, &Progress);
+  return res;
 }
 //..............................................................................
 bool TZipWrapper::IsValidFileName(const olxstr &FN)  {
@@ -228,8 +231,8 @@ IInputStream* TwxZipFileSystem::_DoOpenFile(const olxstr& Source)  {
   return rv;
 }
 //..............................................................................
-void TwxZipFileSystem::ExtractAll(const olxstr& dest)  {
-  zip.ExtractAll(dest);
+bool TwxZipFileSystem::ExtractAll(const olxstr& dest)  {
+  return zip.ExtractAll(dest);
 }
 //..............................................................................
 

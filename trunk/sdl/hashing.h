@@ -101,9 +101,9 @@ protected:
     if( part > 0 )
       stream.Read(cbf, part);
     cbf[part] |= (0x01 << 7);
-    if( part > 56 )  {  // will not the length fit?
+    if( part >= 56 )  {  // will not the length fit?
       Tools::hs_copy(cbf, bf, 64);
-      Impl::digest64( bf );
+      Impl::digest64(bf);
       memset(cbf, 0, 64);
     }
     uint64_t len_bits_o = stream.GetSize()*8; 

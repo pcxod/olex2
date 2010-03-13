@@ -52,10 +52,11 @@ int UpdateThread::Run()  {
     TOSFileSystem dfs(PatchDir);
     TStrList cmds;
     bool skip = (extensionsToSkip.IsEmpty() && filesToSkip.IsEmpty());
-    UpdateSize = Index->CalcDiffSize(*destFS, properties, skip ? NULL : &toSkip);
+    // need to keep to check if sync was completed
+    const uint64_t update_size = Index->CalcDiffSize(*destFS, properties, skip ? NULL : &toSkip);
+    UpdateSize = update_size;
     patcher::PatchAPI::UnlockUpdater();
-    if( UpdateSize == 0 )
-      return 0;
+    if( UpdateSize == 0 )  return 0;
     while( !_DoUpdate )  {
       if( Terminate || !TBasicApp::HasInstance() )  {  // nobody took care ?
         CleanUp();
@@ -65,9 +66,9 @@ int UpdateThread::Run()  {
       olx_sleep(100);
     }
 #ifdef __WIN32__
-    olxstr updater_file( dfs.GetBase() + "olex2.exe");
+    olxstr updater_file = dfs.GetBase() + "olex2.exe";
 #else
-    olxstr updater_file( dfs.GetBase() + "unirun");
+    olxstr updater_file = dfs.GetBase() + "unirun";
 #endif
     // download completion file
     olxstr download_vf(patcher::PatchAPI::GetUpdateLocationFileName());
@@ -81,7 +82,12 @@ int UpdateThread::Run()  {
         return 0;
       }
     }
-    Index->Synchronise(*destFS, properties, skip ? NULL : &toSkip, &dfs, &cmds);
+    bool completed = false;
+    try {  
+      if( Index->Synchronise(*destFS, properties, skip ? NULL : &toSkip, &dfs, &cmds) == update_size )
+        completed = true;
+    }
+    catch(const TExceptionBase&)  {}
     // try to update the updater, should check the name of executable though!
     if( dfs.Exists(updater_file) )  {
       try  {
@@ -94,26 +100,27 @@ int UpdateThread::Run()  {
       }
       catch(...) {}
     }
-    
-    olxstr cmd_fn( TEFile::ParentDir(dfs.GetBase()) + patcher::PatchAPI::GetUpdaterCmdFileName());
-    if( TEFile::Exists(cmd_fn) )  {
-      TStrList pc;
+    if( completed )  {
+      olxstr cmd_fn(TEFile::ParentDir(dfs.GetBase()) + patcher::PatchAPI::GetUpdaterCmdFileName());
+      if( TEFile::Exists(cmd_fn) )  {
+        TStrList pc;
 #ifdef _UNICODE
-      TUtf8File::ReadLines(cmd_fn, pc);
+        TUtf8File::ReadLines(cmd_fn, pc);
 #else
-      pc.LoadFromFile(cmd_fn);
+        pc.LoadFromFile(cmd_fn);
 #endif
-      cmds.Insert(0, pc);
+        cmds.Insert(0, pc);
+      }
+#ifdef _UNICODE
+      TUtf8File::WriteLines(cmd_fn, cmds);
+#else
+      cmds.SaveToFile(cmd_fn);
+#endif
+      // mark download as complete
+      TEFile f(download_vf, "w+b");
+      olxcstr location(dfs.GetBase());
+      f.Write(location);
     }
-#ifdef _UNICODE
-    TUtf8File::WriteLines(cmd_fn, cmds);
-#else
-    cmds.SaveToFile(cmd_fn);
-#endif
-    // mark download as complete
-    TEFile f(download_vf, "w+b");
-    olxcstr location(dfs.GetBase());
-    f.Write(location);
     patcher::PatchAPI::UnlockUpdater();
   }
   catch(const TExceptionBase&)  { // oups...

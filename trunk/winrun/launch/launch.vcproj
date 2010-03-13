@@ -377,6 +377,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\repository\shellutil.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration

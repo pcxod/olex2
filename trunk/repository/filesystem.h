@@ -9,6 +9,7 @@
 #include "estlist.h"
 #include "etraverse.h"
 #include "efile.h"
+#include "bapp.h"
 #undef GetObject
 
 class TFSIndex;
@@ -23,7 +24,7 @@ const uint16_t
   afs_ReadOnlyAccess = afs_ReadAccess|afs_BrowseAccess;
 
 
-class AFileSystem  {
+class AFileSystem : public AActionHandler  {
   olxstr FBase;
   TActionQList Actions;
 protected:
@@ -40,17 +41,28 @@ protected:
   virtual bool _DoesExist(const olxstr& df, bool forced_check)=0;
   virtual IInputStream* _DoOpenFile(const olxstr& src)=0;
   virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) = 0;
+  // handles OnBreak
+  virtual bool Execute(const IEObject* Sender, const IEObject* Data=NULL)  {
+    DoBreak();
+    return true;
+  }
 public:
   AFileSystem() : 
     Break(false),
     Index(NULL),
     Access(afs_FullAccess),  
-    OnProgress(Actions.New("ON_PROGRESS"))  {}
+    OnProgress(Actions.New("ON_PROGRESS")),
+    OnBreak(Actions.New("ON_BREAK"))
+  {
+    AActionHandler::SetToDelete(false);
+    OnBreak.Add(this);
+  }
 
   virtual ~AFileSystem()  {}
 
   // called on progress
-  TActionQueue &OnProgress;
+  TActionQueue &OnProgress,
+    &OnBreak;  // add this one to the higher level handler to handle breaks
 
   // deletes a file
   bool DelFile(const olxstr& f)  {  
@@ -104,12 +116,12 @@ public:
   inline void SetBase(const olxstr& b)  {  FBase = TEFile::AddPathDelimeter(b); }
 
   // depends on the file system implementation
-  void DoBreak()  {  Break = true;  }
+  virtual void DoBreak()  {  Break = true;  }
 };
 //.............................................................................//
 //.............................................................................//
 //.............................................................................//
-class TOSFileSystem: public AFileSystem, public IEObject {
+class TOSFileSystem: public AFileSystem  {
   TActionQList Events;
 protected:
   virtual bool _DoDelFile(const olxstr& f);
@@ -250,6 +262,7 @@ protected:
   AFileSystem *DestFS;
   AFileSystem& IndexFS;
   TOnProgress Progress;
+  TActionQueue &OnBreak;
 public:
   TFSIndex(AFileSystem& fs);
   virtual ~TFSIndex();
@@ -274,15 +287,15 @@ public:
   if the timestamps of the items and size match and false in other cases; updates the dest digest if empty */
   bool ShallAdopt(const TFSItem& src, TFSItem& dest) const;
   bool ShouldExist(const TFSItem& src)  const {  return src.GetActions().IndexOfi("delete") == InvalidIndex;  }
-  void ProcessActions(TFSItem& item); 
+  // returns if the action was procesed (or not) successful
+  bool ProcessActions(TFSItem& item); 
   // stops the syncronisation and updates the index
   void DoBreak() {  
-    Break = true;  
-    IndexFS.DoBreak();  
+    Break = true;
+    OnBreak.Execute(this);
   }
   bool IsInterrupted() const {
-    //return Break && Progress.GetPos() != Progress.GetMax();
-    return Break;
+    return Break && Progress.GetPos() != Progress.GetMax();
   }
   friend class TFSItem;
 };

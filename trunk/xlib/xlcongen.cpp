@@ -16,6 +16,8 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
     TCAtomPList CreatedAtoms;
     TAtomEnvi NEnvi;
     GenerateAtom(CreatedAtoms, envi, Group, atomType, pivoting);
+    if( CreatedAtoms.IsEmpty() )  // nothing inserted
+      return false;
     short afix = 0;
     switch( Group )  {
       case fgNH3:
@@ -137,9 +139,6 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
       if( generated != NULL )
         generated->Add(CreatedAtoms[i]);
     }
-
-    if( CreatedAtoms.IsEmpty() )  // nothing inserted
-      return false;
   }
   catch( TExceptionBase& )  {}
   return false;
