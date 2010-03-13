@@ -298,9 +298,9 @@ olxstr TFSItem::GetFullName() const  {
 int TFSItem::GetLevel()  const  {
   int level = 0;
   TFSItem *FI = const_cast<TFSItem*>(this);
-  while( FI && FI->GetParent() )  {  
-    FI = FI->GetParent();  
-    level++;  
+  while( FI && FI->GetParent() )  {
+    FI = FI->GetParent();
+    level++;
   }
   return level;
 }
@@ -365,7 +365,7 @@ uint64_t TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties, TStrLis
     TFSItem& FI = Item(i);
     if( FI.IsProcessed() || !FI.ValidateProperties(properties) ) 
       continue;
-    if( Index.Break )  // termination signal    
+    if( Index.Break )  // termination signal
       return Index.Progress.GetPos();
     Index.Progress.SetAction( FI.GetFullName() );
     Index.OnProgress.Execute(this, &Index.Progress);
@@ -401,13 +401,14 @@ uint64_t TFSItem::CalcDiffSize(TFSItem& Dest, const TStrList& properties)  {
         continue;
       if( FI.IsFolder() ) 
         sz += Res->CalcDiffSize(FI, properties);
-      else if( Dest.Index.ShallAdopt(*Res, FI) )
+      else if( Dest.Index.ShallAdopt(*Res, FI) )  {
         sz += Res->GetSize();
+      }
     }
   }
   for( size_t i=0; i < this->Count(); i++ )  {
     TFSItem& res = Item(i);
-    if( res.IsProcessed() || !res.ValidateProperties(properties) ) 
+    if( res.IsProcessed() || !res.ValidateProperties(properties) )
       continue;
     sz += res.CalcTotalItemsSize(properties);
   }
@@ -554,7 +555,7 @@ TFSItem& TFSItem::NewItem(TFSItem* item)  {
 }
 //..............................................................................
 void TFSItem::ClearNonexisting()  {
-  if( !EsdlInstanceOf(GetIndexFS(), TOSFileSystem) ) 
+  if( !EsdlInstanceOf(GetIndexFS(), TOSFileSystem) )
     return;
   for( size_t i=0; i < Count(); i++ )  {
     if( !Item(i).IsFolder() )  {
@@ -683,6 +684,7 @@ uint64_t TFSIndex::CalcDiffSize(AFileSystem& To, const TStrList& properties, con
                                 const olxstr& indexName)  
 {
   TFSIndex DestI(To);
+  DestI.DestFS = &To;
   olxstr SrcInd = IndexFS.GetBase() + indexName;
   olxstr DestInd = To.GetBase() + indexName;
   try  {
@@ -712,7 +714,7 @@ bool TFSIndex::UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force, c
 
     TFSItem* src = GetRoot().FindByFullName(fileName);
     if( src == NULL )
-      throw TFileDoesNotExistException( __OlxSourceInfo, fileName );
+      throw TFileDoesNotExistException(__OlxSourceInfo, fileName);
     TFSItem* dest = DestI.GetRoot().FindByFullName(fileName);
     if( dest != NULL )  {
       bool update = Force;
@@ -720,7 +722,7 @@ bool TFSIndex::UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force, c
         if( !src->GetDigest().IsEmpty() && !dest->GetDigest().IsEmpty() )
           update = src->GetDigest() != dest->GetDigest();
         else
-          update = (src->GetDateTime() > dest->GetDateTime()) || (src->GetSize() != dest->GetSize()); 
+          update = (src->GetDateTime() > dest->GetDateTime()) || (src->GetSize() != dest->GetSize());
       }
       if( update )  {
         olxstr test = To.GetBase() + dest->GetFullName();
@@ -749,11 +751,11 @@ bool TFSIndex::ShallAdopt(const TFSItem& src, TFSItem& dest) const  {
   if( !dest.GetDigest().IsEmpty() && !src.GetDigest().IsEmpty() )  {
     if( src.GetActions().IndexOfi("delete") != InvalidIndex )
       return !(dest.GetDigest() == src.GetDigest() && dest.GetSize() == src.GetSize());
-    if( dest.GetDigest() != src.GetDigest() || 
-      !dest.GetIndexFS().Exists(dest.GetIndexFS().GetBase() + dest.GetFullName()) )  
+    if( dest.GetDigest() != src.GetDigest() ||
+      !dest.GetIndexFS().Exists(dest.GetIndexFS().GetBase() + dest.GetFullName()) )
     {
       if( &dest.GetDestFS() != NULL )  // validate if not already downloaded
-        return !dest.GetDestFS().Exists(dest.GetDestFS().GetBase() + dest.GetFullName());  
+        return !dest.GetDestFS().Exists(dest.GetDestFS().GetBase() + dest.GetFullName());
       return true;
     }
   }
@@ -762,10 +764,10 @@ bool TFSIndex::ShallAdopt(const TFSItem& src, TFSItem& dest) const  {
     if( src.GetActions().IndexOfi("delete") != InvalidIndex )
       return !(dest.GetDateTime() == src.GetDateTime() && dest.GetSize() == src.GetSize());
     if( dest.GetDateTime() != src.GetDateTime() || 
-      !dest.GetIndexFS().Exists(dest.GetIndexFS().GetBase() + dest.GetFullName()) )  
+      !dest.GetIndexFS().Exists(dest.GetIndexFS().GetBase() + dest.GetFullName()) )
     {
       if( &dest.GetDestFS() != NULL )  // validate if not already downloaded
-        return !dest.GetDestFS().Exists(dest.GetDestFS().GetBase() + dest.GetFullName());  
+        return !dest.GetDestFS().Exists(dest.GetDestFS().GetBase() + dest.GetFullName());
       return true;
     }
   }
