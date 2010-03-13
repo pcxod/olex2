@@ -1,4 +1,3 @@
-//---------------------------------------------------------------------------
 #ifndef wxFtpFSH
 #define wxFtpFSH
 #include "filesystem.h"
@@ -7,7 +6,7 @@
 #include "wx/protocol/ftp.h"
 #include "ememstream.h"
 //---------------------------------------------------------------------------
-class TwxFtpFileSystem: public AFileSystem, public IEObject  {
+class TwxFtpFileSystem : public AFileSystem  {
   TUrl Url;
   wxFTP Ftp;
   TwxZipFileSystem* ZipFS;

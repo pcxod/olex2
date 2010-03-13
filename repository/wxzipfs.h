@@ -18,7 +18,6 @@ struct TZipEntry  {
 class TZipWrapper  {
   wxZipInputStream *FInputStream;
   wxFile *wxfile;
-//  wxFileInputStream *FFileInputStream;
   TSStrPObjList<olxstr,wxZipEntry*, false> FEntries;
   TSStrPObjList<olxstr,TMemoryBlock*, false> FMemoryBlocks;
   TActionQList Actions;
@@ -26,6 +25,7 @@ protected:
   TMemoryBlock* GetMemoryBlock(const olxstr &EM);
   olxstr zip_name;
   bool UseCache;
+  bool Break;
 public:
   static olxstr ZipUrlSignature;
 
@@ -37,7 +37,7 @@ public:
   ~TZipWrapper();
   IDataInputStream* OpenEntry(const olxstr& EN);
   wxInputStream* OpenWxEntry(const olxstr& EN);
-  void ExtractAll(const olxstr& dest);
+  bool ExtractAll(const olxstr& dest);
   inline size_t Count() const {  return FEntries.Count();  }
   inline const olxstr& Name(size_t i) const {  return FEntries.GetString(i);  }
   inline time_t Timestamp(size_t i) const {  return FEntries.GetObject(i)->GetDateTime().GetTicks();  } 
@@ -50,23 +50,36 @@ public:
   static olxstr ExtractZipEntryName(const olxstr &FN);
   static bool SplitZipUrl(const olxstr &fullName, TZipEntry &ZE);
   static olxstr ComposeFileName(const olxstr &ZipFileNameA, const olxstr &FNA);
+  void DoBreak()  {  Break = true;  }
 };
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class TwxZipFileSystem: public AFileSystem, public AActionHandler  {
+class TwxZipFileSystem: public AFileSystem  {
   TZipWrapper zip;
 protected:
   // proxying functions
   virtual bool Enter(const IEObject *Sender, const IEObject *Data) {  
-    OnProgress.Enter(this, Data);
-    return true;
+    if( Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
+      OnProgress.Enter(this, Data);
+      return true;
+    }
+    else
+      return AFileSystem::Enter(Sender, Data);
   }
   virtual bool Exit(const IEObject *Sender, const IEObject *Data=NULL)  {  
-    OnProgress.Exit(this, Data);
-    return true; 
+    if( Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
+      OnProgress.Exit(this, Data);
+      return true;
+    }
+    else
+      return AFileSystem::Exit(Sender, Data);
   }
   virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL) {  
-    OnProgress.Execute(this, Data);
-    return false; 
+    if( Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
+      OnProgress.Execute(this, Data);
+      return true;
+    }
+    else
+      return AFileSystem::Execute(Sender, Data);
   }
   virtual bool _DoDelFile(const olxstr& f) {  return false;  }
   virtual bool _DoDelDir(const olxstr& f)  {  return false;  }
@@ -80,8 +93,12 @@ public:
   TwxZipFileSystem(TEFile* file, bool UseCache);
   virtual ~TwxZipFileSystem() {}
 
-  void ExtractAll(const olxstr& dest);
+  bool ExtractAll(const olxstr& dest);
 
+  virtual void DoBreak()  {
+    AFileSystem::DoBreak();
+    zip.DoBreak();
+  }
   virtual bool DelFile(const olxstr& FN)     {  throw TNotImplementedException(__OlxSourceInfo);    }
   virtual bool DelDir(const olxstr& DN)      {  throw TNotImplementedException(__OlxSourceInfo);     }
   virtual bool AdoptFile(const TFSItem& Source){  throw TNotImplementedException(__OlxSourceInfo);  }

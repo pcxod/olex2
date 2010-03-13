@@ -124,6 +124,14 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
     if( ThisRead <= 0 )
       break;
     else  {
+      if( this->Break )  {  // premature termination
+        Progress.SetPos(0);
+        OnProgress.Exit(this, &Progress);
+        delete [] Buffer;
+        delete File1;
+        delete File;
+        return NULL;
+      }
       File->Write(Buffer, ThisRead);
       if( TotalRead == 0 )  {
         Tmp.SetLength(0);

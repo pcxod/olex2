@@ -285,7 +285,7 @@ sdl_files = fileListToStringList('sdl', sdl) + fileListToStringList('sdl/smart',
   fileListToStringList('sdl/exparse', sdl_exp)
 sdl_files = processFileNameList(sdl_files, env, out_dir + 'sdl')
 env.StaticLibrary(out_dir + 'lib/sdl', sdl_files)
-
+             
 env.Append(LIBPATH=[out_dir+'lib'])
 env.Append(LIBS = ['sdl'])
 
