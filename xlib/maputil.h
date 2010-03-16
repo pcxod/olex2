@@ -226,7 +226,8 @@ public:
   }
   /*ml - all symmetry matrices, including identity matrix; cell2cart - symmetric matrix;
   norm - the reciprocal gridding (1/mapX, 1/mapY, 1/mapZ)*/
-  static void MergePeaks(const smatd_list& ml, const mat3d& cell2cart, const vec3d& norm, 
+  template <class MatList>
+  static void MergePeaks(const MatList& ml, const mat3d& cell2cart, const vec3d& norm, 
     TArrayList<MapUtil::peak>& Peaks, TTypeList<MapUtil::peak>& out)  
   {
     const size_t cnt = Peaks.Count();

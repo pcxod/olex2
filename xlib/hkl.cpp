@@ -52,107 +52,111 @@ void THklFile::Clear3D()  {
 }
 
 bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised)  {
-  Clear();
-  TEFile::CheckFileExists(__OlxSourceInfo, FN);
-  TCStrList SL, Toks;
-  bool ZeroRead = false, 
-       HklFinished = false,
-       HasBatch = false,
-       FormatInitialised = false;
-  int Tag = 1;
-  SL.LoadFromFile(FN);
+  try  {
+    Clear();
+    TEFile::CheckFileExists(__OlxSourceInfo, FN);
+    TCStrList SL, Toks;
+    bool ZeroRead = false, 
+      HklFinished = false,
+      HasBatch = false,
+      FormatInitialised = false;
+    int Tag = 1;
+    SL.LoadFromFile(FN);
 
-  const size_t line_cnt = SL.Count();
-  Refs.SetCapacity( line_cnt );
-  for( size_t i=0; i < line_cnt; i++ )  {
-    const olxcstr& line = SL[i];
-    if( !ZeroRead && line.Length() < 28 )  continue;
-    if( !FormatInitialised )  {
-      if( line.Length() >= 32 && line.SubString(28,4).IsNumber() )
-        HasBatch = true;
-      FormatInitialised = true;
-    }
-		if( ZeroRead && !HklFinished )  {
-      if( !line.SubString(0,4).IsNumber() || 
+    const size_t line_cnt = SL.Count();
+    Refs.SetCapacity( line_cnt );
+    for( size_t i=0; i < line_cnt; i++ )  {
+      const olxcstr& line = SL[i];
+      if( !ZeroRead && line.Length() < 28 )  continue;
+      if( !FormatInitialised )  {
+        if( line.Length() >= 32 && line.SubString(28,4).IsNumber() )
+          HasBatch = true;
+        FormatInitialised = true;
+      }
+      if( ZeroRead && !HklFinished )  {
+        if( !line.SubString(0,4).IsNumber() || 
           !line.SubString(4,4).IsNumber() || 
           !line.SubString(8,4).IsNumber() || 
           !line.SubString(12,8).IsNumber() || 
           !line.SubString(20,8).IsNumber() )  
-      {
-			  HklFinished = true; 
-        i--;  // reset to the non-hkl line
+        {
+          HklFinished = true; 
+          i--;  // reset to the non-hkl line
+        }
       }
-		}
-		if( !HklFinished )  {
-      const int h = line.SubString(0,4).ToInt(),
-                k = line.SubString(4,4).ToInt(),
-                l = line.SubString(8,4).ToInt();
-      if( (h|k|l) == 0 )  {  // end of the reflections included into calculations
-        ZeroRead = true;
-        Tag = -1;
-        continue;
-      }
-      TReflection* ref = HasBatch ? 
-        new TReflection( h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble(), line.SubString(28,4).ToInt() )
-        :
+      if( !HklFinished )  {
+        const int h = line.SubString(0,4).ToInt(),
+          k = line.SubString(4,4).ToInt(),
+          l = line.SubString(8,4).ToInt();
+        if( (h|k|l) == 0 )  {  // end of the reflections included into calculations
+          ZeroRead = true;
+          Tag = -1;
+          continue;
+        }
+        TReflection* ref = HasBatch ? 
+          new TReflection( h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble(), line.SubString(28,4).ToInt() )
+          :
         new TReflection( h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble() );
-      ref->SetTag( Tag );
-      UpdateMinMax( *ref );
-      Refs.Add(ref);
-		}
-		else  {
-			if( ins == NULL )  break;
-      ins->Clear();
-      ins->SetTitle( TEFile::ChangeFileExt(TEFile::ExtractFileName(FN), EmptyString) << " imported from HKL file" );
-      bool cell_found = false, sfac_found = false;
-      for( size_t j=i; j < SL.Count(); j++ )  {
-        olxstr line = SL[j].Trim(' ');
-        if( line.IsEmpty() )  continue;
-        Toks.Clear();
-        if( line.StartFromi("CELL") )  {
-          Toks.Strtok(line, ' ');
-          if( Toks.Count() != 8 )
-            throw TFunctionFailedException(__OlxSourceInfo, "invalid CELL format");
-          ins->GetRM().expl.SetRadiation( Toks[1].ToDouble() );
-          ins->GetAsymmUnit().Axes()[0] = Toks[2];
-          ins->GetAsymmUnit().Axes()[1] = Toks[3];
-          ins->GetAsymmUnit().Axes()[2] = Toks[4];
-          ins->GetAsymmUnit().Angles()[0] = Toks[5];
-          ins->GetAsymmUnit().Angles()[1] = Toks[6];
-          ins->GetAsymmUnit().Angles()[2] = Toks[7];
-          cell_found = true;
-        }
-        else if( line.StartFromi("SFAC") )  {
-          Toks.Strtok(line, ' ');  // do the validation
-          TStrList unit;
-          for( size_t k=1; k < Toks.Count(); k++ )  {
-            if( !XElementLib::IsAtom(Toks[k]) )
-              throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid element ") << Toks[k]);
-            unit.Add('1');
-          }
-          ins->GetRM().SetUserContentType(Toks.SubListFrom(1));
-          ins->GetRM().SetUserContentSize(unit);
-          sfac_found = true;
-        }
-        else if( line.StartFromi("TEMP") )
-          ins->AddIns(line, ins->GetRM());
-        else if( line.StartFromi("SIZE") )
-          ins->AddIns(line, ins->GetRM());
-        else if( line.StartFromi("REM") )
-          ins->AddIns(line, ins->GetRM());
-        else if( line.StartFromi("UNIT") )
-          ins->GetRM().SetUserContentSize(TStrList(line.SubStringFrom(5), ' '));
+        ref->SetTag( Tag );
+        UpdateMinMax( *ref );
+        Refs.Add(ref);
       }
-      if( !cell_found || !sfac_found )
-        throw TFunctionFailedException(__OlxSourceInfo, "could no locate valid CELL/SFAC instructions");
-      if( ins_initialised != NULL )
-        *ins_initialised = true;
-      break;
-		}
+      else  {
+        if( ins == NULL )  break;
+        ins->Clear();
+        ins->SetTitle( TEFile::ChangeFileExt(TEFile::ExtractFileName(FN), EmptyString) << " imported from HKL file" );
+        bool cell_found = false, sfac_found = false;
+        for( size_t j=i; j < SL.Count(); j++ )  {
+          olxstr line = SL[j].Trim(' ');
+          if( line.IsEmpty() )  continue;
+          Toks.Clear();
+          if( line.StartFromi("CELL") )  {
+            Toks.Strtok(line, ' ');
+            if( Toks.Count() != 8 )
+              throw TFunctionFailedException(__OlxSourceInfo, "invalid CELL format");
+            ins->GetRM().expl.SetRadiation( Toks[1].ToDouble() );
+            ins->GetAsymmUnit().Axes()[0] = Toks[2];
+            ins->GetAsymmUnit().Axes()[1] = Toks[3];
+            ins->GetAsymmUnit().Axes()[2] = Toks[4];
+            ins->GetAsymmUnit().Angles()[0] = Toks[5];
+            ins->GetAsymmUnit().Angles()[1] = Toks[6];
+            ins->GetAsymmUnit().Angles()[2] = Toks[7];
+            cell_found = true;
+          }
+          else if( line.StartFromi("SFAC") )  {
+            Toks.Strtok(line, ' ');  // do the validation
+            TStrList unit;
+            for( size_t k=1; k < Toks.Count(); k++ )  {
+              if( !XElementLib::IsAtom(Toks[k]) )
+                throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid element ") << Toks[k]);
+              unit.Add('1');
+            }
+            ins->GetRM().SetUserContentType(Toks.SubListFrom(1));
+            ins->GetRM().SetUserContentSize(unit);
+            sfac_found = true;
+          }
+          else if( line.StartFromi("TEMP") )
+            ins->AddIns(line, ins->GetRM());
+          else if( line.StartFromi("SIZE") )
+            ins->AddIns(line, ins->GetRM());
+          else if( line.StartFromi("REM") )
+            ins->AddIns(line, ins->GetRM());
+          else if( line.StartFromi("UNIT") )
+            ins->GetRM().SetUserContentSize(TStrList(line.SubStringFrom(5), ' '));
+        }
+        if( !cell_found || !sfac_found )
+          throw TFunctionFailedException(__OlxSourceInfo, "could no locate valid CELL/SFAC instructions");
+        if( ins_initialised != NULL )
+          *ins_initialised = true;
+        break;
+      }
+    }
+    for( size_t i=0; i < Refs.Count(); i++ )
+      Refs[i]->SetTag((i+1) * olx_sign(Refs[i]->GetTag()));
   }
-  for( size_t i=0; i < Refs.Count(); i++ )
-    Refs[i]->SetTag((i+1) * olx_sign(Refs[i]->GetTag()));
-
+  catch(const TExceptionBase& e)  {
+    throw TFunctionFailedException(__OlxSourceInfo, e);
+  }
   if( Refs.IsEmpty() )
     throw TFunctionFailedException(__OlxSourceInfo, "no reflections found");
   return true;

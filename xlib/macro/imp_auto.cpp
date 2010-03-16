@@ -635,6 +635,38 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
   Error.SetRetVal((double)ValidatedAtomCount*100/AtomCount);
 }
 //..............................................................................
+double TryPoint(TArray3D<float>& map, const TUnitCell& uc, const vec3d& crd)  {
+  TRefList refs;
+  TArrayList<compd> F;
+  TArrayList<SFUtil::StructureFactor> P1SF;
+  TUnitCell::MatrixList mat_list(uc);
+  SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff, SFUtil::sfOriginOlex2, SFUtil::scaleRegression);
+  SFUtil::ExpandToP1(refs, F, mat_list, P1SF);
+  smatd_list ml;
+  vec3d norm(1./map.Length1(), 1./map.Length2(), 1./map.Length3());
+  BVFourier::MapInfo mi = BVFourier::CalcEDM(P1SF, map.Data, map.Length1(), map.Length2(),
+    map.Length3(), uc.CalcVolume());
+  TArrayList<MapUtil::peak> _Peaks;
+  TTypeList<MapUtil::peak> Peaks;
+  MapUtil::Integrate<float>(map.Data, map.Length1(), map.Length2(), map.Length3(),
+    (float)((mi.maxVal - mi.minVal)/2.5), _Peaks);
+  MapUtil::MergePeaks(mat_list, uc.GetLattice().GetAsymmUnit().GetCellToCartesian(),
+    norm, _Peaks, Peaks);
+
+  double sum=0;
+  size_t count=0;
+  for( size_t i=0; i < Peaks.Count(); i++ )  {
+    const MapUtil::peak& peak = Peaks[i];
+    const vec3d cnt = norm*peak.center; 
+    const double ed = peak.summ/peak.count;
+    if( uc.FindClosestDistance(crd, cnt) < 1.0 )  {
+      sum += ed;
+      count++;
+    }
+  }
+  return count == 0 ? 0 : sum/count;
+}
+
 void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
   TStopWatch sw(__FUNC__);
@@ -658,11 +690,8 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   }
   TArrayList<SFUtil::StructureFactor> P1SF;
   TArrayList<vec3i> hkl(refs.Count());
-  for( size_t i=0; i < refs.Count(); i++ )  {
-    hkl[i][0] = refs[i].GetH();
-    hkl[i][1] = refs[i].GetK();
-    hkl[i][2] = refs[i].GetL();
-  }
+  for( size_t i=0; i < refs.Count(); i++ )
+    hkl[i] = refs[i].GetHkl();
   sw.start("Expanding structure factors to P1 (fast symm)");
   SFUtil::ExpandToP1(hkl, F, *sg, P1SF);
   sw.stop();
@@ -676,60 +705,109 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   vec3d norm(1./mapX, 1./mapY, 1./mapZ);
   sg->GetMatrices(ml, mattAll^mattIdentity);
   size_t PointCount = mapX*mapY*mapZ;
-  const int minR = olx_round((3*1.5/(4*M_PI))*resolution);  // at least 1.5 A^3
-  const size_t minPointCount = olx_round_t<size_t>(4*M_PI*minR*minR*minR/3.0);
-  TArrayList< AnAssociation3<TCAtom*,double, int> > atoms (au.AtomCount());
+  TArrayList<AnAssociation3<TCAtom*,double, int> > atoms(au.AtomCount());
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     atoms[i].A() = &au.GetAtom(i);
     atoms[i].B() = 0;
     atoms[i].C() = 0;
     atoms[i].A()->SetTag(i);
   }
-  size_t count = 0;
-  while( ++count )  {
-    sw.start("Calculating electron density map in P1 (Beevers-Lipson)");
-    BVFourier::MapInfo mi = BVFourier::CalcEDM(P1SF, map.Data, mapX, mapY, mapZ, vol);
-    sw.stop();
-    TArrayList<MapUtil::peak> _Peaks;
-    TTypeList<MapUtil::peak> Peaks;
-    sw.start("Integrating P1 map: ");
-    MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, (float)((mi.maxVal - mi.minVal)/2.5), _Peaks);
-    MapUtil::MergePeaks(ml, au.GetCellToCartesian(), norm, _Peaks, Peaks);
-    sw.stop();
-    for( size_t i=0; i < Peaks.Count(); i++ )  {
-      const MapUtil::peak& peak = Peaks[i];
-      if( peak.count >= minPointCount )  {
-        const vec3d cnt = norm*peak.center; 
-        const double ed = peak.summ/peak.count;
-        TCAtom* oa = uc.FindOverlappingAtom(cnt, 0.5);
-        if( oa != NULL && oa->GetType() != iQPeakZ )  {
-          atoms[oa->GetTag()].B() += ed;
-          atoms[oa->GetTag()].C()++;
+  size_t found_cnt = 0;
+  sw.start("Calculating electron density map in P1 (Beevers-Lipson)");
+  BVFourier::MapInfo mi = BVFourier::CalcEDM(P1SF, map.Data, mapX, mapY, mapZ, vol);
+  sw.stop();
+  TArrayList<MapUtil::peak> _Peaks;
+  TTypeList<MapUtil::peak> Peaks;
+  sw.start("Integrating P1 map: ");
+  MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, (float)((mi.maxVal - mi.minVal)/2.5), _Peaks);
+  MapUtil::MergePeaks(ml, au.GetCellToCartesian(), norm, _Peaks, Peaks);
+  sw.stop();
+  for( size_t i=0; i < Peaks.Count(); i++ )  {
+    const MapUtil::peak& peak = Peaks[i];
+    const vec3d cnt = norm*peak.center; 
+    const double ed = peak.summ/peak.count;
+    TCAtom* oa = uc.FindOverlappingAtom(cnt, 0.5);
+    if( oa != NULL && oa->GetType() != iQPeakZ )  {
+      atoms[oa->GetTag()].B() += ed;
+      atoms[oa->GetTag()].C()++;
+    }
+  }
+  const double minEd = mi.sigma*3;
+  for( size_t i=0; i < atoms.Count(); i++ )  {
+    if( atoms[i].GetC() != 0 )  {
+      const double ed = atoms[i].GetB()/atoms[i].GetC();  
+      if( olx_abs(ed) < minEd )  continue;
+      double p_ed = 0, n_ed  = 0; 
+      const cm_Element& original_type = atoms[i].GetA()->GetType();
+      cm_Element* n_e = XElementLib::NextZ(original_type);
+      if( n_e != NULL )  {
+        atoms[i].GetA()->SetType(*n_e);
+        sw.start("Trying next element");
+        n_ed = TryPoint(map, xapp.XFile().GetUnitCell(), atoms[i].GetA()->ccrd());
+        sw.stop();
+      }
+      cm_Element* p_e = XElementLib::PrevZ(original_type);
+      if( p_e != NULL )  {
+        sw.start("Trying previous element");
+        atoms[i].GetA()->SetType(*p_e);
+        p_ed = TryPoint(map, xapp.XFile().GetUnitCell(), atoms[i].GetA()->ccrd());
+        sw.stop();
+      }
+      atoms[i].GetA()->SetType(original_type);
+      if( n_e != NULL && p_e != NULL )  {
+        if( (n_ed == 0 || olx_sign(n_ed) == olx_sign(p_ed))&& p_ed > 0 )  {
+          found_cnt++;
+          TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
+            " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
+          atoms[i].GetA()->SetType(*n_e);
+        }
+        else if( n_ed < 0 && (p_ed == 0 || olx_sign(p_ed) == olx_sign(n_ed)) )  {
+          found_cnt++;
+          TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
+            " to " << p_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
+          atoms[i].GetA()->SetType(*p_e);
+        }
+        else if( n_ed != 0 && p_ed != 0 )  {
+          if( olx_sign(n_ed) != olx_sign(p_ed) )  {
+            const double r = ed/(olx_abs(n_ed)+olx_abs(p_ed));
+            if( olx_abs(r) > 0.5 )  {
+              found_cnt++;
+              if( r > 0 )  {
+                TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
+                  " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
+                atoms[i].GetA()->SetType(*n_e);
+              }
+              else  {
+                TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
+                  " to " << p_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
+                atoms[i].GetA()->SetType(*p_e);
+              }
+            }
+          }
+          else  { // same sign?
+            found_cnt++;
+            if( n_ed > 0 )  {
+              TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
+                " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
+              atoms[i].GetA()->SetType(*n_e);
+            }
+            else  {
+              TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
+                " to " << p_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
+              atoms[i].GetA()->SetType(*p_e);
+            }
+          }
         }
       }
     }
-    const double minEd = mi.sigma*3;
-    size_t found_cnt = 0;
-    for( size_t i=0; i < atoms.Count(); i++ )  {
-      if( atoms[i].GetC() != 0 )  {
-        const double ed = atoms[i].GetB()/atoms[i].GetC();  
-        if( olx_abs(ed) < minEd )  continue;
-        
-        TBasicApp::GetLog() << (olxstr("Atom type under consideration ") << atoms[i].GetA()->GetLabel() << ": "
-          << (ed < 0 ? olxstr(ed) : olxstr("+") << ed) << '\n');
-        found_cnt++;
-      }
-
-    }
-    sw.print( xapp.GetLog(), &TLog::Info );
-    //if( found_cnt == 0 )  
-    //  TBasicApp::GetLog() << "No problems were found\n";
-    if( count >= 1 )
-      break;
   }
-
-  E.SetRetVal(false);
-  //au.InitData();
-//  xapp.XFile().EndUpdate();
+  sw.print(xapp.GetLog(), &TLog::Info);
+  if( found_cnt == 0 )
+    TBasicApp::GetLog() << "No problems were found\n";
+  else  {
+    au.InitData();
+    xapp.XFile().EndUpdate();
+  }
+  E.SetRetVal(found_cnt != 0);
 }
 

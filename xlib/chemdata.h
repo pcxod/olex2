@@ -207,6 +207,10 @@ public:
   static cm_Element& GetByIndex(short);
   // a label might be passed as C1 or Cr2
   static cm_Element* FindBySymbolEx(const olxstr& symbol);
+  // returns element with Z+1
+  static cm_Element* NextZ(const cm_Element& elm);
+  // returns element with Z-1
+  static cm_Element* PrevZ(const cm_Element& elm);
   // extracts symbol from a label, like C for C1 or Cr for Cr2
   static const olxstr& ExtractSymbol(const olxstr& label)  {
     cm_Element* type = FindBySymbolEx(label);

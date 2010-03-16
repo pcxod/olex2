@@ -1032,6 +1032,26 @@ cm_Element& XElementLib::GetByIndex(short ind) {
   return cm_Elements[ind];
 }
 //..............................................................................
+cm_Element* XElementLib::NextZ(const cm_Element& elm)  {
+  if( elm.z == -1 )
+    throw TInvalidArgumentException(__OlxSourceInfo, "cannot iterrate the Q-peaks");
+  if( elm.z < cm_Element_Count )  {
+    if( cm_Elements[elm.z].z == elm.z+1 )
+      return &cm_Elements[elm.z];
+  }
+  return NULL;
+}
+//..............................................................................
+cm_Element* XElementLib::PrevZ(const cm_Element& elm)  {
+  if( elm.z == -1 )
+    throw TInvalidArgumentException(__OlxSourceInfo, "cannot iterrate the Q-peaks");
+  if( elm.z > 1 )  {
+    if( cm_Elements[elm.z-2].z == elm.z-1 )
+      return &cm_Elements[elm.z-2];
+  }
+  return NULL;
+}
+//..............................................................................
 cm_Element* XElementLib::FindBySymbolEx(const olxstr& label)  {
   if( label.IsEmpty() )  return NULL;
   // check if first char is a letter
