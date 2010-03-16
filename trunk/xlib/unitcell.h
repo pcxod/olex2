@@ -112,8 +112,41 @@ public:
   smatd_list* GetBinding(const TCAtom& toA, const TCAtom& fromA,
     const vec3d& to, const vec3d& from, bool IncludeI, bool IncludeHBonds) const;
   
+  // the adaptor to use unit cell as a matrix list
+  class MatrixList {
+    const TUnitCell& u;
+  public:
+    MatrixList(const TUnitCell& _u) : u(_u)  {}
+    inline size_t Count() const {  return u.MatrixCount();  }
+    inline const smatd& operator [](size_t i) const {  return u.GetMatrix(i);  }
+  };
+
   // returns the closest distance between two atoms considering the unit cell symmetry
-  double FindClosestDistance(const class TCAtom& to, const TCAtom& atom) const;
+  double FindClosestDistance(const TCAtom& to, const TCAtom& from) const {
+    return FindClosestDistance(GetLattice().GetAsymmUnit(), MatrixList(*this),
+      to.ccrd(), from.ccrd());
+  }
+  double FindClosestDistance(const vec3d& to, const vec3d& from) const {
+    return FindClosestDistance(GetLattice().GetAsymmUnit(), MatrixList(*this),
+      to, from);
+  }
+
+  template <class MatList> static double FindClosestDistance(const TAsymmUnit& au, const MatList& ml,
+    const vec3d& to, const vec3d& from)
+  {
+    vec3d v = from-to;
+    au.CellToCartesian(v);
+    double minD = v.QLength();
+    for( size_t i=0; i < ml.Count(); i++ )  {
+      v = ml[i]*from - to;
+      v -= v.Round<int>();
+      au.CellToCartesian(v);
+      const double D = v.QLength();
+      if( D < minD )  
+        minD = D;
+    }
+    return sqrt(minD);
+  }
   
   /* finds all atoms (+symm attached) and Q-peaks, if specfied; if part is not -1, part 0 and 
   the specified part are only placed

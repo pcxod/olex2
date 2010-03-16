@@ -59,6 +59,7 @@ bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Dat
       { T[0] = (float)(dx)*v;      T[1] = (float)(dy)*v;    }
       // use V*M not M*V, as the basis is transposed (See TEBasis::Orient for details)
       T = Parent.GetBasis().GetMatrix() * T;
+      T /= Parent.GetBasis().GetZoom();
       Basis.Translate(T);
       res = true;
     }

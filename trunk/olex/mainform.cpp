@@ -194,6 +194,7 @@ enum
   ID_GraphicsDS,
   ID_GraphicsP,
   ID_GraphicsEdit,
+  ID_GraphicsSelect,
 
   ID_GStyleSave,
   ID_GStyleOpen,
@@ -336,6 +337,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_GraphicsDS, TMainForm::OnGraphics)
   EVT_MENU(ID_GraphicsP, TMainForm::OnGraphics)
   EVT_MENU(ID_GraphicsEdit, TMainForm::OnGraphics)
+  EVT_MENU(ID_GraphicsSelect, TMainForm::OnGraphics)
   EVT_MENU(ID_FixLattice, TMainForm::OnGraphics)
   EVT_MENU(ID_FreeLattice, TMainForm::OnGraphics)
 
@@ -1140,6 +1142,7 @@ separated values of Atom Type and radius, an entry a line");
   pmGraphics->Append(ID_GraphicsHide, wxT("Hide"));
   pmGraphics->Append(ID_GraphicsDS, wxT("Draw style..."));
   pmGraphics->Append(ID_GraphicsP, wxT("Primitives..."));
+  pmGraphics->Append(ID_GraphicsSelect, wxT("Select the group(s)"));
 // setting label menu
   pmLabel = pmGraphics->Clone();
   pmLabel->Append(ID_GraphicsEdit, wxT("Edit..."));
@@ -1731,6 +1734,23 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     }
     MatProp->Destroy();
     TimePerFrame = FXApp->Draw();
+  }
+  else if( event.GetId() == ID_GraphicsSelect )  {
+    if( FObjectUnderMouse->IsSelected() )  {
+      SortedPtrList<TGPCollection, TPrimitiveComparator> colls;
+      TGlGroup& sel = FXApp->GetSelection();
+      for( size_t i=0; i < sel.Count(); i++ )  {
+        TGPCollection& gpc = sel.GetObject(i).GetPrimitives();
+        if( colls.AddUnique(&gpc) )  {
+          for( size_t j=0; j < gpc.ObjectCount(); j++ )
+            FXApp->GetRender().Select(gpc.GetObject(j), true);
+        }
+      }
+    }
+    else  {
+      for( size_t i=0; i < FObjectUnderMouse->GetPrimitives().ObjectCount(); i++ )
+        FXApp->GetRender().Select(FObjectUnderMouse->GetPrimitives().GetObject(i), true);
+    }
   }
   else if( event.GetId() == ID_GraphicsP )  {
     TStrList Ps;

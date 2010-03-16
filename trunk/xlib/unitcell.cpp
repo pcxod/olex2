@@ -351,25 +351,6 @@ smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOr
   return NULL;
 }
 //..............................................................................
-double TUnitCell::FindClosestDistance(const class TCAtom& a_from, const TCAtom& a_to) const  {
-  vec3d V1, from(a_from.ccrd()), to(a_to.ccrd());
-  V1 = from-to;
-  GetLattice().GetAsymmUnit().CellToCartesian(V1);
-  double minD = V1.QLength();
-  for( size_t i=0; i < MatrixCount(); i++ )  {
-    const smatd& matr = GetMatrix(i);
-    V1 = matr * from - to;
-    V1[0] -= olx_round(V1[0]);  // find closest distance
-    V1[1] -= olx_round(V1[1]);
-    V1[2] -= olx_round(V1[2]);
-    GetLattice().GetAsymmUnit().CellToCartesian(V1);
-    double D = V1.QLength();
-    if( D < minD )  
-      minD = D;
-  }
-  return sqrt(minD);
-}
-//..............................................................................
 smatd_list* TUnitCell::GetBinding(const TCAtom& toA, const TCAtom& fromA,
     const vec3d& to, const vec3d& from, bool IncludeI, bool IncludeHBonds) const  {
   smatd_list* retVal = new smatd_list;

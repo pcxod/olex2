@@ -34,6 +34,9 @@ namespace SFUtil {
   static inline double GetReflectionF2(const TReflection* r) {  return r->GetI();  }
   static inline double GetReflectionF2(const TReflection& r) {  return r.GetI();  }
   static inline double GetReflectionF2(const double& r) {  return r;  }
+  static inline const vec3i& GetReflectionHkl(const TReflection* r) {  return r->GetHkl();  }
+  static inline const vec3i& GetReflectionHkl(const TReflection& r) {  return r.GetHkl();  }
+  static inline const vec3i& GetReflectionHkl(const vec3i& r) {  return r;  }
 
   struct StructureFactor  {
     vec3i hkl;  // hkl indexes
@@ -111,6 +114,30 @@ namespace SFUtil {
   }
   // expands structure factors to P1 for given space group
   void ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F, const TSpaceGroup& sg, TArrayList<StructureFactor>& out);
+  template <class RefList, class MatList>
+  void ExpandToP1(const RefList& hkl_list, const TArrayList<compd>& F, const MatList& ml,
+    TArrayList<StructureFactor>& out)
+  {
+    const size_t ml_cnt = ml.Count();
+    out.SetCount(ml_cnt* hkl_list.Count());
+    for( size_t i=0; i < hkl_list.Count(); i++ )  {
+      const size_t off = i*ml_cnt;
+      for( size_t j=0; j < ml_cnt; j++ )  {
+        const smatd& m = ml[j];
+        const size_t ind = off+j;
+        const vec3i& hkl = GetReflectionHkl(hkl_list[i]);
+        out[ind].hkl = hkl*m.r;
+        out[ind].ps = m.t.DotProd(hkl);
+        if( out[ind].ps != 0 )  {
+          double ca=1, sa=0;
+          SinCos(-T_PI*out[ind].ps, &sa, &ca);
+          out[ind].val = F[i]*compd(ca,sa);
+        }
+        else
+          out[ind].val = F[i];
+      }  
+    }
+  }
   // find minimum and maximum values of the miller indexes of the structure factor
   void FindMinMax(const TArrayList<StructureFactor>& F, vec3i& min, vec3i& max);
   // prepares the list of hkl and structure factors, return error message or empty string

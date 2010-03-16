@@ -279,36 +279,42 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
 }
 //..............................................................................
 PyObject* pyHklStat(PyObject* self, PyObject* args)  {
-  TXApp& xapp = TXApp::GetInstance();
-  RefinementModel::HklStat hs = xapp.XFile().GetRM().GetMergeStat();
-  PyObject* out = PyDict_New();
-  PythonExt::SetDictItem(out, "TotalReflections", Py_BuildValue("i", hs.TotalReflections));
-  PythonExt::SetDictItem(out, "UniqueReflections", Py_BuildValue("i", hs.UniqueReflections));
-  PythonExt::SetDictItem(out, "FriedelOppositesMerged", Py_BuildValue("b", hs.FriedelOppositesMerged));
-  PythonExt::SetDictItem(out, "InconsistentEquivalents", Py_BuildValue("i", hs.InconsistentEquivalents));
-  PythonExt::SetDictItem(out, "SystematicAbsencesRemoved", Py_BuildValue("i", hs.SystematicAbsentcesRemoved));
-  PythonExt::SetDictItem(out, "MinD", Py_BuildValue("d", hs.MinD));
-  PythonExt::SetDictItem(out, "MaxD", Py_BuildValue("d", hs.MaxD));
-  PythonExt::SetDictItem(out, "LimDmin", Py_BuildValue("d", hs.LimDmin));
-  PythonExt::SetDictItem(out, "LimDmax", Py_BuildValue("d", hs.LimDmax));
-  PythonExt::SetDictItem(out, "FilteredOff", Py_BuildValue("i", hs.FilteredOff));
-  PythonExt::SetDictItem(out, "OmittedByUser", Py_BuildValue("i", hs.OmittedByUser));
-  PythonExt::SetDictItem(out, "OmittedReflections", Py_BuildValue("i", hs.OmittedReflections));
-  PythonExt::SetDictItem(out, "IntensityTransformed", Py_BuildValue("i", hs.IntensityTransformed));
-  PythonExt::SetDictItem(out, "Rint", Py_BuildValue("d", hs.Rint));
-  PythonExt::SetDictItem(out, "Rsigma", Py_BuildValue("d", hs.Rsigma));
-  PythonExt::SetDictItem(out, "MeanIOverSigma", Py_BuildValue("d", hs.MeanIOverSigma));
-  PythonExt::SetDictItem(out, "MaxIndexes", Py_BuildValue("(iii)", hs.MaxIndexes[0], hs.MaxIndexes[1], hs.MaxIndexes[2]) );
-  PythonExt::SetDictItem(out, "MinIndexes", Py_BuildValue("(iii)", hs.MinIndexes[0], hs.MinIndexes[1], hs.MinIndexes[2]) );
-  PythonExt::SetDictItem(out, "ReflectionAPotMax", Py_BuildValue("i", hs.ReflectionAPotMax));
-  PythonExt::SetDictItem(out, "FriedelPairCount", Py_BuildValue("i", xapp.XFile().GetRM().GetFriedelPairCount()));
+  try  {
+    TXApp& xapp = TXApp::GetInstance();
+    RefinementModel::HklStat hs = xapp.XFile().GetRM().GetMergeStat();
+    PyObject* out = PyDict_New();
+    PythonExt::SetDictItem(out, "TotalReflections", Py_BuildValue("i", hs.TotalReflections));
+    PythonExt::SetDictItem(out, "UniqueReflections", Py_BuildValue("i", hs.UniqueReflections));
+    PythonExt::SetDictItem(out, "FriedelOppositesMerged", Py_BuildValue("b", hs.FriedelOppositesMerged));
+    PythonExt::SetDictItem(out, "InconsistentEquivalents", Py_BuildValue("i", hs.InconsistentEquivalents));
+    PythonExt::SetDictItem(out, "SystematicAbsencesRemoved", Py_BuildValue("i", hs.SystematicAbsentcesRemoved));
+    PythonExt::SetDictItem(out, "MinD", Py_BuildValue("d", hs.MinD));
+    PythonExt::SetDictItem(out, "MaxD", Py_BuildValue("d", hs.MaxD));
+    PythonExt::SetDictItem(out, "LimDmin", Py_BuildValue("d", hs.LimDmin));
+    PythonExt::SetDictItem(out, "LimDmax", Py_BuildValue("d", hs.LimDmax));
+    PythonExt::SetDictItem(out, "FilteredOff", Py_BuildValue("i", hs.FilteredOff));
+    PythonExt::SetDictItem(out, "OmittedByUser", Py_BuildValue("i", hs.OmittedByUser));
+    PythonExt::SetDictItem(out, "OmittedReflections", Py_BuildValue("i", hs.OmittedReflections));
+    PythonExt::SetDictItem(out, "IntensityTransformed", Py_BuildValue("i", hs.IntensityTransformed));
+    PythonExt::SetDictItem(out, "Rint", Py_BuildValue("d", hs.Rint));
+    PythonExt::SetDictItem(out, "Rsigma", Py_BuildValue("d", hs.Rsigma));
+    PythonExt::SetDictItem(out, "MeanIOverSigma", Py_BuildValue("d", hs.MeanIOverSigma));
+    PythonExt::SetDictItem(out, "MaxIndexes", Py_BuildValue("(iii)", hs.MaxIndexes[0], hs.MaxIndexes[1], hs.MaxIndexes[2]) );
+    PythonExt::SetDictItem(out, "MinIndexes", Py_BuildValue("(iii)", hs.MinIndexes[0], hs.MinIndexes[1], hs.MinIndexes[2]) );
+    PythonExt::SetDictItem(out, "ReflectionAPotMax", Py_BuildValue("i", hs.ReflectionAPotMax));
+    PythonExt::SetDictItem(out, "FriedelPairCount", Py_BuildValue("i", xapp.XFile().GetRM().GetFriedelPairCount()));
 
-  const TIntList& redInfo = xapp.XFile().GetRM().GetRedundancyInfo();
-  PyObject* red = PyTuple_New(redInfo.Count());
-  for( size_t i=0; i < redInfo.Count(); i++ )
-    PyTuple_SetItem(red, i, Py_BuildValue("i", redInfo[i]));
-  PythonExt::SetDictItem(out, "Redundancy", red);
-  return out;
+    const TIntList& redInfo = xapp.XFile().GetRM().GetRedundancyInfo();
+    PyObject* red = PyTuple_New(redInfo.Count());
+    for( size_t i=0; i < redInfo.Count(); i++ )
+      PyTuple_SetItem(red, i, Py_BuildValue("i", redInfo[i]));
+    PythonExt::SetDictItem(out, "Redundancy", red);
+    return out;
+  }
+  catch(const TExceptionBase& e)  {
+    PythonExt::SetErrorMsg(PyExc_Exception, e.GetException()->GetFullMessage());
+    return PythonExt::PyNone();
+  }
 }
 //..............................................................................
 PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
