@@ -579,11 +579,11 @@ void TXGrid::SetExtended(bool v)  {
 //..............................................................................
 void TXGrid::SetDepth(float v)  {
   Depth = v;
-  float z = (float)Parent.CalcZoom();
-  if( Depth < -z/2 )
-    Depth = -z/2;
-  if( Depth > z/2 )
-    Depth = z/2;
+  const float z = Parent.MaxDim().DistanceTo(Parent.MinDim())/2;
+  if( Depth < -z )
+    Depth = -z;
+  if( Depth > z )
+    Depth = z;
 }
 //..............................................................................
 void TXGrid::SetDepth(const vec3d& v)  {
@@ -870,6 +870,10 @@ void TXGrid::LibDepth(const TStrObjList& Params, TMacroError& E)  {
     Depth = Params[0].ToFloat<float>();
 }
 //..............................................................................
+void TXGrid::LibMaxDepth(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal(Parent.MaxDim().DistanceTo(Parent.MinDim())/2);
+}
+//..............................................................................
 void TXGrid::LibContours(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(ContourLevelCount);
   else
@@ -989,6 +993,8 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
     fpNone|fpOne, "Returns/sets current size") );
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibDepth, "Depth",
     fpNone|fpOne, "Returns/sets current depth") );
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibDepth, "MaxDepth",
+    fpNone, "Returns maximum available depth") );
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibContours, "Contours",
     fpNone|fpOne, "Returns/sets number of contour levels") );
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibIsvalid, "IsValid",
