@@ -48,8 +48,8 @@ struct MergeStats  {
 };
 //..............................................................................
 class RefMerger {
-  template <class RefListMerger> 
-  static MergeStats _DoMerge(const smatd_list& ml, TRefPList& refs, const vec3i_list& omits, 
+  template <class MatList, class RefListMerger> 
+  static MergeStats _DoMerge(const MatList& ml, TRefPList& refs, const vec3i_list& omits, 
     TRefList& output, bool mergeFP)  
   {
     MergeStats stats;
@@ -131,8 +131,8 @@ class RefMerger {
     stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1 : stats.UniqueReflections);
     return stats;
   }
-  template <class RefListMerger> 
-  static MergeStats _DryMerge(const smatd_list& ml, TRefPList& refs, const vec3i_list& omits, bool mergeFP)  {
+  template <class MatList, class RefListMerger> 
+  static MergeStats _DryMerge(const MatList& ml, TRefPList& refs, const vec3i_list& omits, bool mergeFP)  {
     MergeStats stats;
     // search for the inversion matrix
     size_t inverseMatIndex = InvalidIndex;
@@ -208,8 +208,8 @@ class RefMerger {
     stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1 : stats.UniqueReflections);
     return stats;
   }
-
-  static MergeStats _DoSGFilter(const smatd_list& ml, TRefPList& refs, const vec3i_list& omits, 
+  template <class MatList>
+  static MergeStats _DoSGFilter(const MatList& ml, TRefPList& refs, const vec3i_list& omits, 
     TRefList& output)  
   {
     MergeStats stats;
@@ -259,8 +259,8 @@ class RefMerger {
     stats.MeanIOverSigma = -1;
     return stats;
   }
-
-  static MergeStats _DoDrySGFilter(const smatd_list& ml, TRefPList& refs, const vec3i_list& omits)  {
+  template <class MatList>
+  static MergeStats _DoDrySGFilter(const MatList& ml, TRefPList& refs, const vec3i_list& omits)  {
     MergeStats stats;
     stats.FriedelOppositesMerged = false;
     const size_t ref_cnt = refs.Count();
@@ -411,22 +411,24 @@ public:
 /* Function merges provided reflections using provided list of matrices. 
    The reflections are standardised. The resulting reflections are stored in the output .
 */
-  template <class RefListMerger, class RefList> 
-  static MergeStats Merge(const smatd_list& ml, RefList& Refs, TRefList& output, 
+  template <class MatList, class RefListMerger, class RefList> 
+  static MergeStats Merge(const MatList& ml, RefList& Refs, TRefList& output, 
     const vec3i_list& omits, bool mergeFP)  
   {
     TRefPList refs( Refs.Count() );  // list of replicated reflections
     for( size_t i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::RefP(Refs[i]);
-    return _DoMerge<RefListMerger>(ml, refs, omits, output, mergeFP);
+    return _DoMerge<MatList,RefListMerger>(
+      ml.SubListFrom(ml[0].IsI() ? 1 : 0), refs, omits, output, mergeFP);
   }
   /* Functions gets the statistic on the list of provided reflections (which get stantardised) */
-  template <class RefListMerger, class RefList> 
-  static MergeStats DryMerge(const smatd_list& ml, RefList& Refs, const vec3i_list& omits, bool mergeFP)  {
+  template <class MatList, class RefListMerger, class RefList> 
+  static MergeStats DryMerge(const MatList& ml, RefList& Refs, const vec3i_list& omits, bool mergeFP)  {
     TRefPList refs( Refs.Count() );  // list of replicated reflections
     for( size_t i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::RefP(Refs[i]);
-    return _DryMerge<RefListMerger>(ml, refs, omits, mergeFP);
+    return _DryMerge<MatList,RefListMerger>(
+      ml.SubListFrom(ml[0].IsI() ? 1 : 0), refs, omits, mergeFP);
   }
   /* The function merges provided reflections in P1 and strores the result in the output */
   template <class RefListMerger, class RefList> 
@@ -444,19 +446,19 @@ public:
     return _DryMergeInP1<RefListMerger>(refs, omits);
   }
   /* The function filters out systematic absences */
-  template <class RefList> 
-  static MergeStats SGFilter(const smatd_list& ml, RefList& Refs, TRefList& output, const vec3i_list& omits)  {
+  template <class MatList, class RefList> 
+  static MergeStats SGFilter(const MatList& ml, RefList& Refs, TRefList& output, const vec3i_list& omits)  {
     TRefPList refs( Refs.Count() );
     for( size_t i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::RefP(Refs[i]);
-    return _DoSGFilter(ml, refs, omits, output);
+    return _DoSGFilter<MatList>(ml.SubListFrom(ml[0].IsI() ? 1 : 0), refs, omits, output);
   }
-  template <class RefList> 
-  static MergeStats DrySGFilter(const smatd_list& ml, RefList& Refs, const vec3i_list& omits)  {
-    TRefPList refs( Refs.Count() );
+  template <class MatList, class RefList> 
+  static MergeStats DrySGFilter(const MatList& ml, RefList& Refs, const vec3i_list& omits)  {
+    TRefPList refs(Refs.Count());
     for( size_t i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::RefP(Refs[i]);
-    return _DoDrySGFilter(ml, refs, omits);
+    return _DoDrySGFilter<MatList>(ml.SubListFrom(ml[0].IsI() ? 1 : 0), refs, omits);
   }
 
   struct MergerOut  {

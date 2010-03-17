@@ -3,6 +3,7 @@
 #include "sfutil.h"
 #include "cif.h"
 #include "hkl.h"
+#include "unitcell.h"
 #include "estopwatch.h"
 
 using namespace SFUtil;
@@ -129,20 +130,21 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     sw.stop();
   }
   else  {  // olex2 calculated SF
-    olxstr hklFileName( xapp.LocateHklFile() );
+    olxstr hklFileName(xapp.LocateHklFile());
     if( !TEFile::Exists(hklFileName) )
       return "could not locate hkl file";
     double av = 0;
     sw.start("Loading/Filtering/Merging HKL");
-    const TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
-    RefinementModel::HklStat ms = xapp.XFile().GetRM().GetFourierRefList<RefMerger::ShelxMerger>(sg, refs);
+    TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
+    RefinementModel::HklStat ms =
+      xapp.XFile().GetRM().GetFourierRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
     F.SetCount(refs.Count());
     //THklFile::SaveToFile("e:/1.tmp", refs);
     sw.start("Calculation structure factors");
     //xapp.CalcSF(refs, F);
     //sw.start("Calculation structure factors A");
     //fastsymm version is just about 10% faster...
-    CalcSF(xapp.XFile(), refs, F, !sg.IsCentrosymmetric());
+    CalcSF(xapp.XFile(), refs, F, !sp.IsCentrosymmetric());
     sw.start("Scaling structure factors");
     if( mapType != mapTypeCalc )  {
       // find a linear scale between F

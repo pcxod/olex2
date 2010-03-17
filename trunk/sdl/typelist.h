@@ -23,7 +23,7 @@ public:
 //..............................................................................
   /* copy constuctor - creates new copies of the objest, be careful as the copy
    constructor must exist for nonpointer objects */
-  TTypeListExt( const TTypeListExt& list ) : List(list.Count())  {
+  TTypeListExt(const TTypeListExt& list) : List(list.Count())  {
     for( size_t i=0; i < list.Count(); i++ )
       List[i] =  new T(list[i]);
   }
@@ -36,7 +36,7 @@ public:
   }
 //..............................................................................
   /* copies values from an array of size elements  */
-  TTypeListExt( size_t size, const T* array ) : List(size)  {
+  TTypeListExt(size_t size, const T* array) : List(size)  {
     for( size_t i=0; i < size; i++ )
       List[i] = new T(array[i]);
   }
@@ -284,6 +284,17 @@ public:
     }
     List.Pack();
   }
+//..............................................................................
+  TTypeListExt SubList(size_t from, size_t count) const {
+    TTypeListExt rv(count);
+    for( size_t i=0; i < count; i++ )
+      rv.Set(i, new T(*List[i+from]));
+    return rv;
+  }
+//..............................................................................
+  TTypeListExt SubListFrom(size_t from) const {  return SubList(from, List.Count()-from);  }
+//..............................................................................
+  TTypeListExt SubListTo(size_t to) const {  return SubList(0, to);  }
 //..............................................................................
   void Shrink(size_t newSize)  {
     if( newSize >= List.Count() )  return;

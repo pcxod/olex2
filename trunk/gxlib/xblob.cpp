@@ -20,7 +20,7 @@ void TDBlob::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   olxstr NewL;
-  TGPCollection* GPC = Parent.FindCollectionX( GetCollectionName(), NewL);
+  TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);
   if( GPC == NULL )
     GPC = &Parent.NewCollection(NewL);
   GPC->AddObject(*this);

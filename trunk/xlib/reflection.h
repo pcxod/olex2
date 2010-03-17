@@ -65,11 +65,23 @@ public:
     res[1] = (hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1]);
     res[2] = (hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]);
   }
+  template <class MC> vec3i operator * (const MC& mat) const {
+    return vec3i(
+      (int)(hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0]),
+      (int)(hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1]),
+      (int)(hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]));
+  }
   // generates index of an equivalen reflection
   template <class V> void MulHkl(V& res, const smatd& mat) const {
     res[0] = (hkl[0]*mat.r[0][0] + hkl[1]*mat.r[1][0] + hkl[2]*mat.r[2][0]);
     res[1] = (hkl[0]*mat.r[0][1] + hkl[1]*mat.r[1][1] + hkl[2]*mat.r[2][1]);
     res[2] = (hkl[0]*mat.r[0][2] + hkl[1]*mat.r[1][2] + hkl[2]*mat.r[2][2]);
+  }
+  vec3i operator * (const smatd& mat) const {
+    return vec3i(
+      hkl[0]*mat.r[0][0] + hkl[1]*mat.r[1][0] + hkl[2]*mat.r[2][0],
+      hkl[0]*mat.r[0][1] + hkl[1]*mat.r[1][1] + hkl[2]*mat.r[2][1],
+      hkl[0]*mat.r[0][2] + hkl[1]*mat.r[1][2] + hkl[2]*mat.r[2][2]);
   }
   // generates an equivalent using rounding on the resulting indexes
   template <class VC, class MC> void MulHklR(VC& res, const MC& mat) const {
@@ -88,7 +100,7 @@ public:
   Also performs the reflection analysis, namely:
   Initialises Absent flag
   */
-  void StandardiseFP(const smatd_list &ml)  {
+  template <class MatList> void StandardiseFP(const MatList& ml)  {
     vec3i hklv;
     Absent = false;
     bool changes = true;
@@ -123,7 +135,7 @@ public:
       }
     }
   }
-  void Standardise(const smatd_list &ml)  {
+  template <class MatList> void Standardise(const MatList& ml)  {
     vec3i hklv;
     Absent = false;
     bool changes = true;
@@ -155,7 +167,7 @@ public:
   }
 //..............................................................................
   /* analyses if this reflection is centric, systematically absent and its multiplicity */
-  void Analyse(const smatd_list& ml)  {
+  template <class MatList> void Analyse(const MatList& ml)  {
     vec3i hklv;
     Multiplicity = 1;
     Centric = false;
@@ -186,7 +198,7 @@ public:
     return EqNegHkl(hklv);
   }
 //..............................................................................
-  bool IsAbsent(const smatd_list &ml) const {
+  template <class MatList> bool IsAbsent(const MatList& ml) const {
     for( size_t i=0; i < ml.Count(); i++ )  {
       if( IsSymmetric(ml[i]) )  {
         double l = PhaseShift(ml[i]);
@@ -228,9 +240,9 @@ public:
 //..............................................................................
   DefPropP(int, Flag)
 //..............................................................................
-  vec3i& GetHkl()             {  return hkl;  }
+  vec3i& GetHkl()  {  return hkl;  }
   const vec3i& GetHkl() const {  return hkl;  }
-  TReflection& SetHkl(const vec3i& _hkl) {  hkl = _hkl;  return *this;  }
+  TReflection& SetHkl(const vec3i& _hkl)  {  hkl = _hkl;  return *this;  }
   
   DefPropP(double, I)
   DefPropP(double, S)

@@ -19,20 +19,20 @@ public:
   typedef TArrayList<SFUtil::StructureFactor> SFList;
 
   template <class FloatT> static MapInfo CalcEDM(const TArrayList<SFUtil::StructureFactor>& F, 
-      FloatT*** map, size_t mapX, size_t mapY, size_t mapZ, double vol)
+      FloatT*** map, const vec3i& dim, double vol)
   {
-    return Calculate<FloatT, BVFourier::TCalcEDMTask<FloatT> >(F, map, mapX, mapY, mapZ, vol);
+    return Calculate<FloatT, BVFourier::TCalcEDMTask<FloatT> >(F, map, dim, vol);
   }
 
   template <class FloatT> static MapInfo CalcPatt(const TArrayList<SFUtil::StructureFactor>& F, 
-      FloatT*** map, size_t mapX, size_t mapY, size_t mapZ, double vol)
+      FloatT*** map, const vec3i& dim, double vol)
   {
-    return Calculate<FloatT, BVFourier::TCalcPattTask<FloatT> >(F, map, mapX, mapY, mapZ, vol);
+    return Calculate<FloatT, BVFourier::TCalcPattTask<FloatT> >(F, map, dim, vol);
   }
 
 
   template <typename FloatT, class Task> static MapInfo Calculate(const TArrayList<SFUtil::StructureFactor>& F, 
-      FloatT*** map, size_t mapX, size_t mapY, size_t mapZ, double vol)  {
+      FloatT*** map, const vec3i& dim, double vol)  {
     vec3i mini, maxi;
     SFUtil::FindMinMax(F, mini, maxi); 
     const double T_PI = 2*M_PI;
@@ -40,28 +40,28 @@ public:
     const int minInd = olx_min(mini[2], olx_min(mini[0], mini[1]));
     const int maxInd = olx_max(maxi[2], olx_max(maxi[0], maxi[1]));
     const size_t iLen = maxInd - minInd + 1;
-    const size_t mapMax = olx_max(mapZ, olx_max(mapX, mapY));
-    compd** sin_cosX = new compd*[mapX],
+    const int mapMax = olx_max(dim[2], olx_max(dim[0], dim[1]));
+    compd** sin_cosX = new compd*[dim[0]],
       **sin_cosY, **sin_cosZ;
-    for( size_t i=0; i < mapX; i++ )  {
+    for( int i=0; i < dim[0]; i++ )  {
       sin_cosX[i] = new compd[iLen];
       for( int j=minInd; j <= maxInd; j++ )  {
-        double rv = (double)i*j/(double)mapX, ca, sa;
+        double rv = (double)i*j/(double)dim[0], ca, sa;
         rv *= T_PI;
         SinCos(-rv, &sa, &ca);
         sin_cosX[i][j-minInd].SetRe(ca);
         sin_cosX[i][j-minInd].SetIm(sa);
       }
     }
-    if( mapX == mapY )  {
+    if( dim[0] == dim[1] )  {
       sin_cosY = sin_cosX;
     }
     else  {
-      sin_cosY = new compd*[mapY];
-      for( size_t i=0; i < mapY; i++ )  {
+      sin_cosY = new compd*[dim[1]];
+      for( int i=0; i < dim[1]; i++ )  {
         sin_cosY[i] = new compd[iLen];
         for( int j=minInd; j <= maxInd; j++ )  {
-          double rv = (double)i*j/(double)mapY, ca, sa;
+          double rv = (double)i*j/(double)dim[1], ca, sa;
           rv *= T_PI;
           SinCos(-rv, &sa, &ca);
           sin_cosY[i][j-minInd].SetRe(ca);
@@ -69,18 +69,18 @@ public:
         }
       }
     }
-    if( mapX == mapZ )  {
+    if( dim[0] == dim[2] )  {
       sin_cosZ = sin_cosX;
     }
-    else if( mapY == mapZ )  {
+    else if( dim[1] == dim[2] )  {
       sin_cosZ = sin_cosY;
     }
     else  {
-      sin_cosZ = new compd*[mapZ];
-      for( size_t i=0; i < mapZ; i++ )  {
+      sin_cosZ = new compd*[dim[2]];
+      for( int i=0; i < dim[2]; i++ )  {
         sin_cosZ[i] = new compd[iLen];
         for( int j=minInd; j <= maxInd; j++ )  {
-          double rv = (double)i*j/(double)mapZ, ca, sa;
+          double rv = (double)i*j/(double)dim[2], ca, sa;
           rv *= T_PI;
           SinCos(-rv, &sa, &ca);
           sin_cosZ[i][j-minInd].SetRe(ca);
@@ -93,29 +93,29 @@ public:
     */
     MapInfo mi = {0, 1000, -1000};
     double sum = 0, sq_sum = 0;
-    Task xtask(map, mapY, mapZ, vol, F, mini, maxi, sin_cosX, sin_cosY, sin_cosZ, minInd);
-    TListIteratorManager<Task> tasks(xtask, mapX, tLinearTask, 50);
+    Task xtask(map, dim, vol, F, mini, maxi, sin_cosX, sin_cosY, sin_cosZ, minInd);
+    TListIteratorManager<Task> tasks(xtask, dim[0], tLinearTask, 50);
     for( size_t i=0; i < tasks.Count(); i++ )  {
       sum += tasks[i].sum;
       sq_sum += tasks[i].sq_sum;
       if( tasks[i].minVal < mi.minVal )  mi.minVal = tasks[i].minVal;
       if( tasks[i].maxVal > mi.maxVal )  mi.maxVal = tasks[i].maxVal;
     }
-    double map_mean = sum/(mapX*mapY*mapZ);
-    mi.sigma = sqrt(sq_sum/(mapX*mapY*mapZ) - map_mean*map_mean);
+    double map_mean = sum/dim.Prod();
+    mi.sigma = sqrt(sq_sum/dim.Prod() - map_mean*map_mean);
     // clean up of allocated data
     if( sin_cosY == sin_cosX )  sin_cosY = NULL;
     if( sin_cosZ == sin_cosX || sin_cosZ == sin_cosY )  sin_cosZ = NULL;
-    for( size_t i=0; i < mapX; i++ )
+    for( int i=0; i < dim[0]; i++ )
       delete [] sin_cosX[i];
     delete [] sin_cosX;
     if( sin_cosY != NULL )  {
-      for( size_t i=0; i < mapY; i++ )
+      for( int i=0; i < dim[1]; i++ )
         delete [] sin_cosY[i];
       delete [] sin_cosY;
     }
     if( sin_cosZ != NULL )  {
-      for( size_t i=0; i < mapZ; i++ )
+      for( int i=0; i < dim[2]; i++ )
         delete [] sin_cosZ[i];
       delete [] sin_cosZ;
     }
@@ -125,17 +125,18 @@ public:
   template <typename FloatT>struct TCalcEDMTask  {
     FloatT*** map;
     const SFList& F;
-    size_t mapX, mapY, mapZ, kLen, lLen;
+    const vec3i& dim;
+    size_t kLen, lLen;
     compd  **sin_cosX, **sin_cosY, **sin_cosZ;
     compd ** S, *T;
     const vec3i &mini, &maxi;
     int minInd;
     double sum, sq_sum, vol;
     double maxVal, minVal;
-    TCalcEDMTask(FloatT*** _map, size_t _mapY, size_t _mapZ, double _volume,
+    TCalcEDMTask(FloatT*** _map, const vec3i& _dim, double _volume,
       const SFList& _F, const vec3i& _min, const vec3i& _max,
       compd** _scX, compd** _scY, compd** _scZ, int _minInd) :
-      map(_map), mapY(_mapY), mapZ(_mapZ), vol(_volume),
+      map(_map), dim(_dim), vol(_volume),
       F(_F), mini(_min), maxi(_max),
       sin_cosX(_scX), sin_cosY(_scY), sin_cosZ(_scZ),
       kLen(_max[1]-_min[1]+1), lLen(_max[2]-_min[2]+1), minInd(_minInd),
@@ -158,13 +159,13 @@ public:
         const SFUtil::StructureFactor& sf = F[i];
         S[sf.hkl[1]-mini[1]][sf.hkl[2]-mini[2]] += sf.val*sin_cosX[ix][sf.hkl[0]-minInd];
       }
-      for( size_t iy=0; iy < mapY; iy++ )  {
+      for( int iy=0; iy < dim[1]; iy++ )  {
         for( int i=mini[1]; i <= maxi[1]; i++ )  {
           for( int j=mini[2]; j <= maxi[2]; j++ )  {
             T[j-mini[2]] += S[i-mini[1]][j-mini[2]]*sin_cosY[iy][i-minInd];
           }
         }
-        for( size_t iz=0; iz < mapZ; iz++ )  {
+        for( int iz=0; iz < dim[2]; iz++ )  {
           compd R;
           for( int i=mini[2]; i <= maxi[2]; i++ )  {
             R += T[i-mini[2]]*sin_cosZ[iz][i-minInd];
@@ -183,7 +184,7 @@ public:
         for( size_t j=0; j < lLen; j++ )  
           S[i][j].Null();
     }
-    TCalcEDMTask* Replicate()  {  return new TCalcEDMTask(map, mapY, mapZ, vol,
+    TCalcEDMTask* Replicate()  {  return new TCalcEDMTask(map,dim, vol,
       F, mini, maxi, sin_cosX, sin_cosY, sin_cosZ, minInd);
     }
   };
@@ -191,17 +192,18 @@ public:
   template <typename FloatT>struct TCalcPattTask  {
     FloatT*** map;
     const SFList& F;
-    size_t mapX, mapY, mapZ, kLen, lLen;
+    const vec3i& dim;
+    size_t kLen, lLen;
     compd  **sin_cosX, **sin_cosY, **sin_cosZ;
     compd ** S, *T;
     const vec3i &mini, &maxi;
     int minInd;
     double sum, sq_sum, vol;
     double maxVal, minVal;
-    TCalcPattTask(FloatT*** _map, size_t _mapY, size_t _mapZ, double _volume,
+    TCalcPattTask(FloatT*** _map, const vec3i& _dim, double _volume,
       const SFList& _F, const vec3i& _min, const vec3i& _max,
       compd** _scX, compd** _scY, compd** _scZ, int _minInd) :
-      map(_map), mapY(_mapY), mapZ(_mapZ), vol(_volume),
+      map(_map), dim(_dim), vol(_volume),
       F(_F), mini(_min), maxi(_max),
       sin_cosX(_scX), sin_cosY(_scY), sin_cosZ(_scZ),
       kLen(_max[1]-_min[1]+1), lLen(_max[2]-_min[2]+1), minInd(_minInd),
@@ -224,13 +226,13 @@ public:
         const SFUtil::StructureFactor& sf = F[i];
         S[sf.hkl[1]-mini[1]][sf.hkl[2]-mini[2]] += sf.val*sin_cosX[ix][sf.hkl[0]-minInd];
       }
-      for( size_t iy=0; iy < mapY; iy++ )  {
+      for( int iy=0; iy < dim[1]; iy++ )  {
         for( int i=mini[1]; i <= maxi[1]; i++ )  {
           for( int j=mini[2]; j <= maxi[2]; j++ )  {
             T[j-mini[2]] += S[i-mini[1]][j-mini[2]]*sin_cosY[iy][i-minInd];
           }
         }
-        for( size_t iz=0; iz < mapZ; iz++ )  {
+        for( int iz=0; iz < dim[2]; iz++ )  {
           compd R;
           for( int i=mini[2]; i <= maxi[2]; i++ )  {
             R += T[i-mini[2]]*sin_cosZ[iz][i-minInd];
@@ -249,7 +251,7 @@ public:
         for( size_t j=0; j < lLen; j++ )  
           S[i][j].Null();
     }
-    TCalcPattTask* Replicate()  {  return new TCalcPattTask(map, mapY, mapZ, vol,
+    TCalcPattTask* Replicate()  {  return new TCalcPattTask(map, dim, vol,
       F, mini, maxi, sin_cosX, sin_cosY, sin_cosZ, minInd);
     }
   };

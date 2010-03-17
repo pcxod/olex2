@@ -1,5 +1,5 @@
-	#ifndef __olx_symmat
-#define __olx_symmat
+#ifndef __olx_xl_symmat_H
+#define __olx_xl_symmat_H
 #include "threex3.h"
 
 template <class MC, class VC> class TSymmMat {

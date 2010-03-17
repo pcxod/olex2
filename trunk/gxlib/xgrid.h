@@ -88,6 +88,7 @@ public:
 
   void InitIso();
   void InitGrid(int maxX, int maxY, int MaxZ);
+  void InitGrid(const vec3i& dim)  {  InitGrid(dim[0], dim[1], dim[2]);  }
   inline void SetValue(int i, int j, int k, float v) {
     ED->Data[i][j][k] = v;
   }
