@@ -159,6 +159,7 @@ public:
   void LibExtended(const TStrObjList& Params, TMacroError& E);
   void LibSize(const TStrObjList& Params, TMacroError& E);
   void LibDepth(const TStrObjList& Params, TMacroError& E);
+  void LibMaxDepth(const TStrObjList& Params, TMacroError& E);
   void LibContours(const TStrObjList& Params, TMacroError& E);
   void LibPlaneSize(const TStrObjList& Params, TMacroError& E);
   void LibGetMin(const TStrObjList& Params, TMacroError& E);
