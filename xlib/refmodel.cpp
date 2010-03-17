@@ -482,20 +482,16 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
     else  {
       HklStatFileID = HklFileID;
       _HklStat.SetDefaults();
-      // cannot use XFile, as we do not know which loader owns this object
-      TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(aunit);
-      if( sg == NULL )  // will not be seen outside though
-        throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
       TRefList refs;
       FilterHkl(refs, _HklStat);
-      smatd_list ml;
-      sg->GetMatrices(ml, mattAll^mattIdentity);
+      TUnitCell::SymSpace sp = aunit.GetLattice().GetUnitCell().GetSymSpace();
       if( MERG != 0 )  {
-        bool mergeFP = (MERG == 4 || MERG == 3) && !sg->IsCentrosymmetric();
-        _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(ml, refs, Omits, mergeFP);
+        bool mergeFP = (MERG == 4 || MERG == 3) && !sp.IsCentrosymmetric();
+        _HklStat = RefMerger::DryMerge<TUnitCell::SymSpace,RefMerger::ShelxMerger>(
+          sp, refs, Omits, mergeFP);
       }
       else
-        _HklStat = RefMerger::DrySGFilter(ml, refs, Omits);
+        _HklStat = RefMerger::DrySGFilter(sp, refs, Omits);
     }
   }
   catch(TExceptionBase&)  {

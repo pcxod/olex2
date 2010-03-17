@@ -692,8 +692,9 @@ void TGlRenderer::DeSelect(AGDrawObject& G)  {
 }
 //..............................................................................
 void TGlRenderer::Select(AGDrawObject& G, bool v)  {
+  if( !G.IsGroupable() )  return;
   if( v )  {
-    if( !G.IsSelected()  )
+    if( !G.IsSelected() )
       Select(G);
   }
   else if( G.IsSelected() )

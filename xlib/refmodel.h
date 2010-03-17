@@ -440,28 +440,28 @@ of components 1 ... m
 
   const HklStat& GetMergeStat();
   // merged according to MERG
-  template <class Merger> HklStat GetRefinementRefList(const TSpaceGroup& sg, TRefList& out)  {
+  template <class SymSpace, class Merger>
+  HklStat GetRefinementRefList(const SymSpace& sp, TRefList& out)  {
     HklStat stats;
     TRefList refs;
     FilterHkl(refs, stats);
     if( MERG != 0 )  {
-      smatd_list ml;
-      sg.GetMatrices(ml, mattAll^mattIdentity);
-      bool mergeFP = (MERG == 4 || MERG == 3) && !sg.IsCentrosymmetric();
-      stats = RefMerger::Merge<Merger>(ml, refs, out, Omits, mergeFP);
+      bool mergeFP = (MERG == 4 || MERG == 3) && !sp.IsCentrosymmetric();
+      stats = RefMerger::Merge<SymSpace,Merger>(sp, refs, out, 
+        Omits, mergeFP);
     }
     else
       stats = RefMerger::MergeInP1<Merger>(refs, out, Omits);
     return stats;
   }
   // Friedel pairs always merged
-  template <class Merger> HklStat GetFourierRefList(const TSpaceGroup& sg, TRefList& out) {
+  template <class SymSpace, class Merger>
+  HklStat GetFourierRefList(const SymSpace& sp, TRefList& out) {
     HklStat stats;
     TRefList refs;
     FilterHkl(refs, stats);
-    smatd_list ml;
-    sg.GetMatrices(ml, mattAll^mattIdentity);
-    stats = RefMerger::Merge<Merger>(ml, refs, out, Omits, !sg.IsCentrosymmetric());
+    stats = RefMerger::Merge<SymSpace,Merger>(sp, refs, out,
+      Omits, !sp.IsCentrosymmetric());
     return stats;
   }
   // P-1 merged, filtered
@@ -471,7 +471,7 @@ of components 1 ... m
     FilterHkl(refs, stats);
     smatd_list ml;
     ml.AddNew().I() *= -1;
-    stats = RefMerger::Merge<Merger>(ml, refs, out, Omits, true);
+    stats = RefMerger::Merge<smatd_list,Merger>(ml, refs, out, Omits, true);
     return stats;
   }
   // P1 merged, unfiltered

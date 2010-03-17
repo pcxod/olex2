@@ -33,13 +33,13 @@ public:
 //..............................................................................
   /* copy constuctor - creates new copies of the objest, be careful as the assignement
    operator must exist for nonpointer objects */
-  TPtrList( const TPtrList& list )  {
-   init( list.Count() );
-   memcpy( Items, list.Items, list.Count()*sizeof(T*));
+  TPtrList(const TPtrList& list)  {
+   init(list.Count());
+   memcpy(Items, list.Items, list.Count()*sizeof(T*));
   }
 //..............................................................................
   /* copies values from an array of size elements  */
-  TPtrList( size_t size, const T** array )  {
+  TPtrList(size_t size, const T** array )  {
    init( size );
    memcpy( Items, array, size*sizeof(T*));
   }
@@ -52,18 +52,21 @@ public:
 //..............................................................................
   virtual IEObject* Replicate() const  {  return new TPtrList(*this);  }
 //..............................................................................
-  inline TPtrList& Assign( const TPtrList& list )  {
-    SetCount( list.Count() );
-    memcpy( Items, list.Items, list.Count()*sizeof(T*) );
+  inline TPtrList& Assign(const TPtrList& list)  {
+    SetCount(list.Count());
+    memcpy(Items, list.Items, list.Count()*sizeof(T*));
     FCount = list.Count();
     return *this;
   }
+  inline TPtrList& operator = (const TPtrList& l)  {  return Assign(l);  }
 //..............................................................................
-  inline void AddList( const TPtrList& list )  {
-    SetCapacity( list.Count() + FCount );
-    memcpy( &Items[FCount], list.Items, list.Count()*sizeof(T*) );
+  inline TPtrList& AddList(const TPtrList& list)  {
+    SetCapacity(list.Count() + FCount);
+    memcpy(&Items[FCount], list.Items, list.Count()*sizeof(T*));
     FCount += list.Count();
+    return *this;
   }
+  inline TPtrList& operator += (const TPtrList& l)  {  return AddList(l);  }
 //..............................................................................
   inline T*& Add(T* pObj)  {
     if( FCapacity == FCount )  
@@ -159,10 +162,6 @@ public:
     return Items[index];
   }
 //..............................................................................
-  inline TPtrList& operator = (const TPtrList& list)  {
-    return Assign(list);
-  }
-//..............................................................................
   inline void SetCapacity(size_t v)  {
     if( v < FCapacity )    return;
     FCapacity = v;
@@ -190,6 +189,16 @@ public:
       Items[from+i-to] = Items[i];
     FCount -= (to-from);
   }
+//..............................................................................
+  TPtrList SubList(size_t from, size_t count) const {
+    TPtrList rv(count);
+    memcpy(rv.Items, Items[from], count*sizeof(T*));
+    return rv;
+  }
+//..............................................................................
+  inline TPtrList SubListFrom(size_t start) const {  return SubList(from, FCount-start);  }
+//..............................................................................
+  inline TPtrList SubListTo(size_t to) const {  return SubList(0, to);  }
 //..............................................................................
   inline void Remove(T* pObj)  {
     size_t i = IndexOf(pObj);
@@ -221,7 +230,7 @@ public:
       memcpy( D, Items, sv*sizeof(T*) );
       for( size_t i=sv; i <= FCount-1; i++ )
         Items[i-sv] = Items[i];
-      memcpy( &Items[FCount-sv], D, sv*sizeof(T*) );
+      memcpy(&Items[FCount-sv], D, sv*sizeof(T*));
       delete [] D;
     }
   }
@@ -243,7 +252,7 @@ public:
       const size_t diff = FCount-sv;
       for( size_t i=1; i <= diff; i++ )
         Items[FCount-i] = Items[diff-i];
-      memcpy( &Items[0], &D[0], sv*sizeof(T*) );
+      memcpy(&Items[0], &D[0], sv*sizeof(T*));
       delete [] D;
     }
   }
@@ -294,9 +303,9 @@ public:
     Allocate();
   }
 //..............................................................................
-  inline size_t Count() const  {  return FCount;  }
+  inline size_t Count() const {  return FCount;  }
 //..............................................................................
-  inline bool IsEmpty()  const  {  return (FCount == 0);  }
+  inline bool IsEmpty() const {  return (FCount == 0);  }
 //..............................................................................
   inline void SetCount(size_t v)  {
     if( v == FCount )  return;
@@ -314,14 +323,14 @@ public:
     }
   }
 //..............................................................................
-  size_t IndexOf(const T* val) const  {
+  size_t IndexOf(const T* val) const {
     for( size_t i=0; i < FCount; i++ )
       if( Items[i] == val )  
         return i;
     return InvalidIndex;
   }
 //..............................................................................
-  size_t IndexOf(const T& val) const  {
+  size_t IndexOf(const T& val) const {
     const T* pv = &val;
     for( size_t i=0; i < FCount; i++ )
       if( Items[i] == pv )  

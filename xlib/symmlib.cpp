@@ -1082,8 +1082,8 @@ size_t TSpaceGroup::GetUniqMatrices(smatd_list& matrices, short Flags) const  {
   size_t c = 0;
   GetMatrices( allm, Flags );
   for( size_t i=0; i < allm.Count(); i++ )  {
-    if( matrices.IndexOf( allm[i] ) == InvalidIndex )  {
-      matrices.AddCCopy( allm[i] );
+    if( matrices.IndexOf(allm[i]) == InvalidIndex )  {
+      matrices.AddCCopy(allm[i]);
       c++;
     }
   }
@@ -1151,6 +1151,14 @@ void TSpaceGroup::GetMatrices(smatd_list& matrices, short Flags) const {
       matrices.Insert(++i, new smatd(matrices[i])).r *= -1;
     if( (Flags & mattIdentity) != mattIdentity )
       matrices.Insert(0, new smatd).r.I() *= -1;
+  }
+  if( Flags == mattAll )  {
+    for( size_t i=0; i < matrices.Count(); i++ )
+      matrices[i].SetId(i, 0, 0, 0);
+  }
+  else if( Flags == (mattAll^mattIdentity) )  {
+    for( size_t i=0; i < matrices.Count(); i++ )
+      matrices[i].SetId(i+1, 0, 0, 0);
   }
 }
 //..............................................................................

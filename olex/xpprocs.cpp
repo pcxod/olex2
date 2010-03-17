@@ -3538,14 +3538,10 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macMergeHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TSpaceGroup* sg = NULL;
-  try  { sg = &FXApp->XFile().GetLastLoaderSG();  }
-  catch(...)  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate space group");
-    return;
-  }
   TRefList refs;
-  RefinementModel::HklStat ms = FXApp->XFile().GetRM().GetRefinementRefList<RefMerger::StandardMerger>(*sg, refs);
+  RefinementModel::HklStat ms =
+    FXApp->XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace,RefMerger::StandardMerger>(
+    FXApp->XFile().GetUnitCell().GetSymSpace(), refs);
   TTTable<TStrList> tab(6, 2);
   tab[0][0] << "Total reflections";             tab[0][1] << ms.GetReadReflections();
   tab[1][0] << "Unique reflections";            tab[1][1] << ms.UniqueReflections;
@@ -3722,13 +3718,14 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   if( resolution < 0.01 )  
     resolution = 0.02;
   resolution = 1./resolution;
-  const int mapX = (int)(au.Axes()[0].GetV()*resolution),
-			mapY = (int)(au.Axes()[1].GetV()*resolution),
-			mapZ = (int)(au.Axes()[2].GetV()*resolution);
-  const double mapVol = mapX*mapY*mapZ;
+  const vec3i dim(
+    (int)(au.Axes()[0].GetV()*resolution),
+		(int)(au.Axes()[1].GetV()*resolution),
+		(int)(au.Axes()[2].GetV()*resolution));
+  const double mapVol = dim.Prod();
   const double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   const int minLevel = olx_round(pow(6*mapVol*3/(4*M_PI*vol), 1./3));
-  TArray3D<short> map(0, mapX-1, 0, mapY-1, 0, mapZ-1);
+  TArray3D<short> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
   vec3d voidCenter;
   size_t structureGridPoints = 0;
   FXApp->XGrid().Clear();  // release the occupied memory
@@ -3743,9 +3740,9 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   TIntList levels;
   short*** amap = map.Data;
   short MaxLevel = 0;
-  for( int i=0; i < mapX; i++ )  {
-    for( int j=0; j < mapY; j++ )  {
-      for( int k=0; k < mapZ; k++ )  {
+  for( int i=0; i < dim[0]; i++ )  {
+    for( int j=0; j < dim[1]; j++ )  {
+      for( int k=0; k < dim[2]; k++ )  {
         if( amap[i][j][k] > MaxLevel )
           MaxLevel = amap[i][j][k];
         if( amap[i][j][k] < 0 )
@@ -3759,7 +3756,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
     }
   }
 
-  const vec3i MaxXCh = MapUtil::AnalyseChannels1(map.Data, mapX, mapY, mapZ, MaxLevel);
+  const vec3i MaxXCh = MapUtil::AnalyseChannels1(map.Data, dim, MaxLevel);
   for( int i=0; i < 3; i++ )  {
     if( MaxXCh[i] != 0 )
       TBasicApp::GetLog() << (olxstr((olxch)('a'+i)) << " direction can be penetrated by a sphere of " <<
@@ -3809,12 +3806,12 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
       olxstr::FormatFloat(3, totalVol*vol/mapVol) << "(A^3)\n" );
   }
   //// set map to view voids
-  FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
+  FXApp->XGrid().InitGrid(dim[0], dim[1], dim[2]);
   FXApp->XGrid().SetMinVal(0);
   FXApp->XGrid().SetMaxVal((float)MaxLevel/resolution);
-  for( int i=0; i < mapX; i++ )  {
-    for( int j=0; j < mapY; j++ )  {
-      for( int k=0; k < mapZ; k++ )
+  for( int i=0; i < dim[0]; i++ )  {
+    for( int j=0; j < dim[1]; j++ )  {
+      for( int k=0; k < dim[2]; k++ )
         FXApp->XGrid().SetValue(i, j, k, map.Data[i][j][k]*10/resolution);
     }
   }
@@ -6165,8 +6162,8 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       fp.AddNew( *fpp[i] );
     const vec3i_list empty_omits;
     smatd_list ml;
-    FXApp->XFile().GetLastLoaderSG().GetMatrices(ml, mattAll);
-    MergeStats stat = RefMerger::Merge<RefMerger::ShelxMerger>(ml, fp, refs, empty_omits, false);
+    FXApp->XFile().GetLastLoaderSG().GetMatrices(ml, mattAll^mattIdentity);
+    MergeStats stat = RefMerger::Merge<smatd_list,RefMerger::ShelxMerger>(ml, fp, refs, empty_omits, false);
     nrefs.SetCapacity(refs.Count());
     for( size_t i=0; i < refs.Count(); i++ ) 
       nrefs.AddNew(refs[i]).GetHkl() *= -1;
@@ -7293,36 +7290,35 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
     E.ProcessingError(__OlxSrcInfo, "could not locate space group");
     return;
   }
-  smatd_list ml;
-  sg->GetMatrices(ml, mattAll);
+  TUnitCell::SymSpace sp = FXApp->XFile().GetUnitCell().GetSymSpace();
   olxstr hklFileName = FXApp->LocateHklFile();
   if( !TEFile::Exists(hklFileName) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate hkl file");
     return;
   }
-
   TRefList refs;
-  RefinementModel::HklStat stats = FXApp->XFile().GetRM().GetFourierRefList<RefMerger::StandardMerger>(*sg, refs);
+  RefinementModel::HklStat stats =
+    FXApp->XFile().GetRM().GetFourierRefList<TUnitCell::SymSpace,RefMerger::StandardMerger>(
+    sp, refs);
   const double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
-  TArrayList<SFUtil::StructureFactor> P1SF(refs.Count()*ml.Count());
+  TArrayList<SFUtil::StructureFactor> P1SF(refs.Count()*sp.Count());
   size_t index = 0;
   for( size_t i=0; i < refs.Count(); i++ )  {
     const TReflection& ref = refs[i];
-    for( size_t j=0; j < ml.Count(); j++, index++ )  {
-      vec3i hkl;
-      ref.MulHkl(hkl, ml[j]);
-      P1SF[index].hkl = hkl;
-      P1SF[index].ps = ml[j].t.DotProd(ref.GetHkl());
+    for( size_t j=0; j < sp.Count(); j++, index++ )  {
+      P1SF[index].hkl = ref * sp[j];
+      P1SF[index].ps = sp[j].t.DotProd(ref.GetHkl());
       P1SF[index].val = sqrt(refs[i].GetI());
       P1SF[index].val *= compd::polar(1, 2*M_PI*P1SF[index].ps);
     }
   }
   const double resolution = 5;
-  const int mapX = (int)(au.Axes()[0].GetV()*resolution),
-			mapY = (int)(au.Axes()[1].GetV()*resolution),
-			mapZ = (int)(au.Axes()[2].GetV()*resolution);
-  FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
-  BVFourier::MapInfo mi = BVFourier::CalcPatt(P1SF, FXApp->XGrid().Data()->Data, mapX, mapY, mapZ, vol);
+  const vec3i dim(
+    (int)(au.Axes()[0].GetV()*resolution),
+		(int)(au.Axes()[1].GetV()*resolution),
+		(int)(au.Axes()[2].GetV()*resolution));
+  FXApp->XGrid().InitGrid(dim);
+  BVFourier::MapInfo mi = BVFourier::CalcPatt(P1SF, FXApp->XGrid().Data()->Data, dim, vol);
   FXApp->XGrid().AdjustMap();
   FXApp->XGrid().SetMinVal(mi.minVal);
   FXApp->XGrid().SetMaxVal(mi.maxVal);
@@ -7400,27 +7396,19 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   }
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   TUnitCell& uc = FXApp->XFile().GetUnitCell();
-  TSpaceGroup* sg = NULL;
-  try  { sg = &FXApp->XFile().GetLastLoaderSG();  }
-  catch(...)  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate space group");
-    return;
-  }
   TArrayList<SFUtil::StructureFactor> P1SF;
-  TArrayList<vec3i> hkl(refs.Count());
-  for( size_t i=0; i < refs.Count(); i++ )
-    hkl[i] = refs[i].GetHkl();
-  SFUtil::ExpandToP1(hkl, F, *sg, P1SF);
-  double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
+  SFUtil::ExpandToP1(refs, F, uc.GetMatrixList(), P1SF);
+  const double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   BVFourier::MapInfo mi;
 // init map
-  const int mapX = (int)(au.Axes()[0].GetV()*resolution),
-			mapY = (int)(au.Axes()[1].GetV()*resolution),
-			mapZ = (int)(au.Axes()[2].GetV()*resolution);
-  TArray3D<float> map(0, mapX-1, 0, mapY-1, 0, mapZ-1);
-  mi = BVFourier::CalcEDM(P1SF, map.Data, mapX, mapY, mapZ, vol);
+  const vec3i dim(
+    (int)(au.Axes()[0].GetV()*resolution),
+		(int)(au.Axes()[1].GetV()*resolution),
+		(int)(au.Axes()[2].GetV()*resolution));
+  TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
+  mi = BVFourier::CalcEDM(P1SF, map.Data, dim, vol);
 //////////////////////////////////////////////////////////////////////////////////////////
-  FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
+  FXApp->XGrid().InitGrid(dim);
 
   FXApp->XGrid().SetMaxHole(mi.sigma*1.4);
   FXApp->XGrid().SetMinHole(-mi.sigma*1.4);
@@ -7429,12 +7417,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   FXApp->XGrid().SetMinVal(mi.minVal);
   FXApp->XGrid().SetMaxVal(mi.maxVal);
   // copy map
-  float*** XData = FXApp->XGrid().Data()->Data;
-  for( int i=0; i < mapX; i++ )
-    for( int j=0; j < mapY; j++ )
-      for( int k=0; k < mapZ; k++ )  {
-        XData[i][j][k] = map.Data[i][j][k]; 
-      }
+  MapUtil::CopyMap(FXApp->XGrid().Data()->Data, map.Data, dim);
   FXApp->XGrid().AdjustMap();
 
   TBasicApp::GetLog() << (olxstr("Map max val ") << olxstr::FormatFloat(3, mi.maxVal) << 
@@ -7444,18 +7427,16 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   if( Options.Contains('i') )  {
     TArrayList<MapUtil::peak> Peaks;
     TTypeList<MapUtil::peak> MergedPeaks;
-    smatd_list ml;
-    vec3d norm(1./mapX, 1./mapY, 1./mapZ);
-    sg->GetMatrices(ml, mattAll);
-    MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, (mi.maxVal - mi.minVal)/2.5, Peaks);
+    vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
+    MapUtil::Integrate<float>(map.Data, dim, (mi.maxVal - mi.minVal)/2.5, Peaks);
     //MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, mi.sigma*5, Peaks);
-    MapUtil::MergePeaks(ml, au.GetCellToCartesian(), norm, Peaks, MergedPeaks);
+    MapUtil::MergePeaks(uc.GetSymSpace(), norm, Peaks, MergedPeaks);
     MergedPeaks.QuickSorter.SortSF(MergedPeaks, MapUtil::PeakSortBySum);
-    const int PointCount = mapX*mapY*mapZ;
+    const int PointCount = dim.Prod();
     for( size_t i=0; i < MergedPeaks.Count(); i++ )  {
       const MapUtil::peak& peak = MergedPeaks[i];
       if( peak.count == 0 )  continue;
-      vec3d cnt((double)peak.center[0]/mapX, (double)peak.center[1]/mapY, (double)peak.center[2]/mapZ); 
+      vec3d cnt((double)peak.center[0]/dim[0], (double)peak.center[1]/dim[1], (double)peak.center[2]/dim[2]); 
       const double ed = (double)((long)((peak.summ*1000)/peak.count))/1000;
       TCAtom& ca = au.NewAtom();
       ca.SetLabel(olxstr("Q") << olxstr((100+i)));

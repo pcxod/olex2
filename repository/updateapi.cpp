@@ -240,7 +240,7 @@ short UpdateAPI::DoSynch(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
     srcFS = FSFromString( sf.repository, sf.proxy );
   
   if( srcFS == NULL )  {
-    log.Add("Could not locate source for syncronisation");
+    log.Add("Could not locate source for synchronisation");
     return updater::uapi_NoSource;
   }
   AFileSystem* destFS = FSFromString( sf.dest_repository, sf.proxy );

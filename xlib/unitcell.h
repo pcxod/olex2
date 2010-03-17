@@ -8,6 +8,7 @@
 #include "arrays.h"
 #include "lattice.h"
 #include "asymmunit.h"
+#include "symspace.h"
 // on Linux its is defined as something...
 #undef QLength
 
@@ -117,10 +118,18 @@ public:
     const TUnitCell& u;
   public:
     MatrixList(const TUnitCell& _u) : u(_u)  {}
+    MatrixList(const MatrixList& ml) : u(ml.u)  {}
     inline size_t Count() const {  return u.MatrixCount();  }
     inline const smatd& operator [](size_t i) const {  return u.GetMatrix(i);  }
   };
+  MatrixList GetMatrixList() const {  return MatrixList(*this);  }
+  typedef TSymSpace<TUnitCell::MatrixList> SymSpace;
 
+  SymSpace GetSymSpace() const {
+    const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+    return SymSpace(MatrixList(*this),
+      au.GetCartesianToCell(), au.GetCellToCartesian(), au.GetHklToCartesian(), au.GetLatt() > 0);
+  }
   // returns the closest distance between two atoms considering the unit cell symmetry
   double FindClosestDistance(const TCAtom& to, const TCAtom& from) const {
     return FindClosestDistance(GetLattice().GetAsymmUnit(), MatrixList(*this),

@@ -1,6 +1,5 @@
 #ifndef olx_xlib_symmparser_H
 #define olx_xlib_symmparser_H
-
 #include "xbase.h"
 #include "symmat.h"
 #include "emath.h"

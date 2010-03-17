@@ -25,10 +25,9 @@ struct HklBrushRef  {
     }
     return res;
   }
-  void Standardise(const smatd_list &ml, bool CheckInversion)  {
-    vec3i hklv;
+  template <class MatList> void Standardise(const MatList& ml, bool CheckInversion)  {
     for( size_t i=0; i < ml.Count(); i++ )  {
-      ref->MulHkl(hklv, ml[i]);
+      vec3i hklv = (*ref)*ml[i];
       if( (hklv[2] > L) ||        // sdandardise then ...
           ((hklv[2] == L) && (hklv[1] > K)) ||
           ((hklv[2] == L) && (hklv[1] == K) && (hklv[0] > H)) )    {

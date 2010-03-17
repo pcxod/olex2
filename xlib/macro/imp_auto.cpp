@@ -639,19 +639,16 @@ double TryPoint(TArray3D<float>& map, const TUnitCell& uc, const vec3d& crd)  {
   TRefList refs;
   TArrayList<compd> F;
   TArrayList<SFUtil::StructureFactor> P1SF;
-  TUnitCell::MatrixList mat_list(uc);
+  const TUnitCell::SymSpace sym_space = uc.GetSymSpace();
   SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff, SFUtil::sfOriginOlex2, SFUtil::scaleRegression);
-  SFUtil::ExpandToP1(refs, F, mat_list, P1SF);
-  smatd_list ml;
-  vec3d norm(1./map.Length1(), 1./map.Length2(), 1./map.Length3());
-  BVFourier::MapInfo mi = BVFourier::CalcEDM(P1SF, map.Data, map.Length1(), map.Length2(),
-    map.Length3(), uc.CalcVolume());
+  SFUtil::ExpandToP1(refs, F, sym_space, P1SF);
+  const vec3i dim(map.Length1(), map.Length2(), map.Length3());
+  const vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
+  BVFourier::MapInfo mi = BVFourier::CalcEDM(P1SF, map.Data, dim, uc.CalcVolume());
   TArrayList<MapUtil::peak> _Peaks;
   TTypeList<MapUtil::peak> Peaks;
-  MapUtil::Integrate<float>(map.Data, map.Length1(), map.Length2(), map.Length3(),
-    (float)((mi.maxVal - mi.minVal)/2.5), _Peaks);
-  MapUtil::MergePeaks(mat_list, uc.GetLattice().GetAsymmUnit().GetCellToCartesian(),
-    norm, _Peaks, Peaks);
+  MapUtil::Integrate<float>(map.Data, dim, (float)((mi.maxVal - mi.minVal)/2.5), _Peaks);
+  MapUtil::MergePeaks(sym_space, norm, _Peaks, Peaks);
 
   double sum=0;
   size_t count=0;
@@ -674,7 +671,6 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   resolution = 1./resolution;
   TRefList refs;
   TArrayList<compd> F;
-  
   olxstr err(SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff, SFUtil::sfOriginOlex2, SFUtil::scaleRegression));
   if( !err.IsEmpty() )  {
     E.ProcessingError(__OlxSrcInfo, err);
@@ -682,29 +678,20 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   }
   TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
   TUnitCell& uc = xapp.XFile().GetUnitCell();
-  TSpaceGroup* sg = NULL;
-  try  { sg = &xapp.XFile().GetLastLoaderSG();  }
-  catch(...)  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate space group");
-    return;
-  }
   TArrayList<SFUtil::StructureFactor> P1SF;
-  TArrayList<vec3i> hkl(refs.Count());
-  for( size_t i=0; i < refs.Count(); i++ )
-    hkl[i] = refs[i].GetHkl();
+  const TUnitCell::SymSpace sym_space = uc.GetSymSpace();
   sw.start("Expanding structure factors to P1 (fast symm)");
-  SFUtil::ExpandToP1(hkl, F, *sg, P1SF);
+  SFUtil::ExpandToP1(refs, F, sym_space, P1SF);
   sw.stop();
   const double vol = xapp.XFile().GetLattice().GetUnitCell().CalcVolume();
 // init map
-  const int mapX = (int)(au.Axes()[0].GetV()*resolution),
-			mapY = (int)(au.Axes()[1].GetV()*resolution),
-			mapZ = (int)(au.Axes()[2].GetV()*resolution);
-  TArray3D<float> map(0, mapX-1, 0, mapY-1, 0, mapZ-1);
-  smatd_list ml;
-  vec3d norm(1./mapX, 1./mapY, 1./mapZ);
-  sg->GetMatrices(ml, mattAll^mattIdentity);
-  size_t PointCount = mapX*mapY*mapZ;
+  const vec3i dim(
+    (int)(au.Axes()[0].GetV()*resolution),
+    (int)(au.Axes()[1].GetV()*resolution),
+		(int)(au.Axes()[2].GetV()*resolution));
+  TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
+  vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
+  const size_t PointCount = dim.Prod();
   TArrayList<AnAssociation3<TCAtom*,double, int> > atoms(au.AtomCount());
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     atoms[i].A() = &au.GetAtom(i);
@@ -714,13 +701,13 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   }
   size_t found_cnt = 0;
   sw.start("Calculating electron density map in P1 (Beevers-Lipson)");
-  BVFourier::MapInfo mi = BVFourier::CalcEDM(P1SF, map.Data, mapX, mapY, mapZ, vol);
+  BVFourier::MapInfo mi = BVFourier::CalcEDM(P1SF, map.Data, dim, vol);
   sw.stop();
   TArrayList<MapUtil::peak> _Peaks;
   TTypeList<MapUtil::peak> Peaks;
   sw.start("Integrating P1 map: ");
-  MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, (float)((mi.maxVal - mi.minVal)/2.5), _Peaks);
-  MapUtil::MergePeaks(ml, au.GetCellToCartesian(), norm, _Peaks, Peaks);
+  MapUtil::Integrate<float>(map.Data, dim, (float)((mi.maxVal - mi.minVal)/2.5), _Peaks);
+  MapUtil::MergePeaks(sym_space, norm, _Peaks, Peaks);
   sw.stop();
   for( size_t i=0; i < Peaks.Count(); i++ )  {
     const MapUtil::peak& peak = Peaks[i];

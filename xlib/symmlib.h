@@ -1,20 +1,20 @@
-//---------------------------------------------------------------------------
-
-#ifndef symmlibH
-#define symmlibH
+#ifndef __olx_xl_symmlib_H
+#define __olx_xl_symmlib_H
 #include "evtypes.h"
 #include "log.h"
 #include "typelist.h"
-
 #include "asymmunit.h"
+#include "symspace.h"
+
 #undef GetObject
 
 BeginXlibNamespace()
-const short  mattTranslation = 0x0001,
-             mattCentering   = 0x0002,
-             mattInversion   = 0x0004,
-             mattIdentity    = 0x0008,
-             mattAll =  0x0001|0x0002|0x0004|0x0008;
+const short
+  mattTranslation = 0x0001,
+  mattCentering   = 0x0002,
+  mattInversion   = 0x0004,
+  mattIdentity    = 0x0008,
+  mattAll =  0x0001|0x0002|0x0004|0x0008;
 
 class TBravaisLattice;
 class TSymmElement;
@@ -69,11 +69,11 @@ public:
   virtual ~TSpaceGroup()  { ; }
 
   void SetBravaisLattice(TBravaisLattice& bl)  {  BravaisLattice = &bl;  }
-  TBravaisLattice& GetBravaisLattice()  const  {  return *BravaisLattice;  }
-  void SetLaueClass(TSpaceGroup& lc)           {  LaueClass = &lc;  }
-  TSpaceGroup&     GetLaueClass()       const  {  return *LaueClass;  }
-  void SetPointGroup(TSpaceGroup& lc)          {  PointGroup = &lc;  }
-  TSpaceGroup&     GetPointGroup()       const {  return *PointGroup;  }
+  TBravaisLattice& GetBravaisLattice() const {  return *BravaisLattice;  }
+  void SetLaueClass(TSpaceGroup& lc)  {  LaueClass = &lc;  }
+  TSpaceGroup&     GetLaueClass() const {  return *LaueClass;  }
+  void SetPointGroup(TSpaceGroup& lc)  {  PointGroup = &lc;  }
+  TSpaceGroup&     GetPointGroup() const {  return *PointGroup;  }
 
   bool operator == (const TAsymmUnit& AU) const;
   bool operator == (const smatd_list& matrices) const;
@@ -102,10 +102,10 @@ public:
   const olxstr& GetAxis() const {  return Axis;  }
   const olxstr& GetHallSymbol() const {  return HallSymbol;  }
 
-  TCLattice& GetLattice()         const {  return *Latt;  }
-  bool IsCentrosymmetric()        const {  return CentroSymmetric;  }
+  TCLattice& GetLattice() const {  return *Latt;  }
+  bool IsCentrosymmetric() const {  return CentroSymmetric;  }
   // retruns true if any matrix of the SG has a nonzero translation
-  bool HasTranslations()          const {  return Translations;  }
+  bool HasTranslations() const {  return Translations;  }
   /* it is NOT (0,0,0) for Fdd2, I41, I4122, I4132, I41md, I41cd, I-42d! 
   http://xrayweb.chem.ou.edu/notes/symmetry.html
   */
@@ -121,6 +121,15 @@ public:
   // this function is used to assign point groups to the space group
   bool ContainsElement(TSymmElement* symme);
   bool ContainsGroup(TSpaceGroup* symme);
+  typedef TSymSpace<smatd_list> SymSpace;
+
+  SymSpace GetSymSpace(const TAsymmUnit& au) const {
+    smatd_list ml;
+    GetMatrices(ml, mattAll);
+    return SymSpace(ml,
+      au.GetCartesianToCell(), au.GetCellToCartesian(), au.GetHklToCartesian(),
+      IsCentrosymmetric());
+  }
   friend class TSymmLib;
 };
 

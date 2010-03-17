@@ -279,7 +279,7 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   xapp.FindSAtoms(Cmds.Text(' '), atoms, true);
   smatd tm;
   tm.I() *= -1;
-  tm.t = sg->GetInversionCenter();
+  tm.t = sg->GetInversionCenter()*(-2);
   xapp.XFile().GetLattice().TransformFragments(atoms, tm);
 }
 //..............................................................................
@@ -595,7 +595,8 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
        merge = Options.Contains("m");
   TRefList Refs;
   if( merge )
-    xapp.XFile().GetRM().GetRefinementRefList<RefMerger::StandardMerger>(xapp.XFile().GetLastLoaderSG(), Refs);
+    xapp.XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace,RefMerger::StandardMerger>(
+    xapp.XFile().GetUnitCell().GetSymSpace(), Refs);
   else
     xapp.XFile().GetRM().GetFilteredP1RefList<RefMerger::StandardMerger>(Refs);
   evecd_list con;
