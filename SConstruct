@@ -60,23 +60,30 @@ else:
   def_tool = 'gnu'
 variables = Variables()
 variables.AddVariables(
-    EnumVariable('TOOL', 'The tool to use', def_tool, allowed_values=('vc8', 'vc9', 'gnu', 'intel'))
+    EnumVariable('TOOL', 'The tool to use', def_tool, allowed_values=('vc8', 'vc9', 'vc10', 'gnu', 'intel'))
     )
 env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch)
 Help(variables.GenerateHelpText(env))
 
 if env['TOOL'] == 'vc8':
-  env["MSVS"] = {'VERSION': '8.0'}
-  env['MSVS_VERSION'] = '8.0'
-  Tool('msvc')(env)
+  env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch, MSVC_VERSION='8.0')
+  #env["MSVS"] = {'VERSION': '8.0'}
+  #env['MSVS_VERSION'] = '8.0'
+  #Tool('msvc')(env)
 elif env['TOOL'] == 'vc9':
-  env['MSVS'] = {'VERSION': "9.0"} 
-  env['MSVS_VERSION'] = '9.0'
-  Tool('msvc')(env)
+  env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch, MSVC_VERSION='9.0')
+  #env['MSVS'] = {'VERSION': "9.0"} 
+  #env['MSVS_VERSION'] = '9.0'
+  #Tool('msvc')(env)
+elif env['TOOL'] == 'vc10':
+  env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch, MSVC_VERSION='10.0')
+  #env['MSVS'] = {'VERSION': "10.0"} 
+  #env['MSVS_VERSION'] = '10.0'
+  #Tool('msvc')(env)
 elif env['TOOL'] == 'gnu':
-  Tool('g++')(env)
+    Tool('g++')(env)
 elif env['TOOL'] == 'intel':
-  Tool('intelc')(env)
+    Tool('intelc')(env)
 env.Append(CCFLAGS = ['-D_UNICODE', '-DUNICODE'])
 env.Append(CPPPATH = ['alglib', 'sdl', 'glib', 'gxlib', 
                       'repository', 'xlib'])

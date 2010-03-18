@@ -754,8 +754,21 @@ bool TFSIndex::ShallAdopt(const TFSItem& src, TFSItem& dest) const  {
     if( dest.GetDigest() != src.GetDigest() ||
       !dest.GetIndexFS().Exists(dest.GetIndexFS().GetBase() + dest.GetFullName()) )
     {
-      if( &dest.GetDestFS() != NULL )  // validate if not already downloaded
-        return !dest.GetDestFS().Exists(dest.GetDestFS().GetBase() + dest.GetFullName());
+      if( &dest.GetDestFS() != NULL )  {  // validate if not already downloaded
+        const olxstr fn = dest.GetDestFS().GetBase() + dest.GetFullName();
+        bool exists = dest.GetDestFS().Exists(fn);
+        if( !exists )  return true;
+        try {  
+          TEFile fl(fn, "rb");
+          bool same_file = (MD5::Digest(fl) == src.GetDigest());
+          if( same_file )  {
+            dest = src;
+            return false;
+          }
+          return true;
+        }
+        catch(...)  {  return true;  }
+      }
       return true;
     }
   }
@@ -766,8 +779,6 @@ bool TFSIndex::ShallAdopt(const TFSItem& src, TFSItem& dest) const  {
     if( dest.GetDateTime() != src.GetDateTime() || 
       !dest.GetIndexFS().Exists(dest.GetIndexFS().GetBase() + dest.GetFullName()) )
     {
-      if( &dest.GetDestFS() != NULL )  // validate if not already downloaded
-        return !dest.GetDestFS().Exists(dest.GetDestFS().GetBase() + dest.GetFullName());
       return true;
     }
   }
