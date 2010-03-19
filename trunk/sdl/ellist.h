@@ -1,83 +1,86 @@
-/* primitive directional lists */
-#ifndef _ellist_h
-#define _ellist_h
+/* primitive directional lists, optimised for sequential access, the right cleanup class must be
+chosen to avoid memory leaks! */
+#ifndef __olx_sdl_linkedlist_H
+#define __olx_sdl_linkedlist_H
 #include "ebase.h"
 BeginEsdlNamespace()
-// none is yet tested!!!
-template <class T> TUDTypeList  {
-  struct Entry  {
-    T* data;
-    Entry* next;
-    Entry(T* d) : data(d), next(NULL) {  }
-  };
-  int count, pos;
-  Entry* first, *last, *cur;
+
+template <class T> class NewCleanup {
 public:
-  TUDTypeList() : count(0), pos(-1) {
-    cur = last = first = new Entry(NULL);  
-  }
-  ~TUDTypeList()       {  
-    Clear();  
-    delete first;
-  }
-  void Clear()         {
+  static inline void DoCleanup(T* v)  {  delete v;  }
+};
+template <class T> class DummyCleanup {
+public:
+  static inline void DoCleanup(T& v)  {}
+};
+template <typename T, class cleanupClass=DummyCleanup<T> > class TUDTypeList  {
+  struct Entry  {
+    T data;
+    Entry* next;
+    Entry(T& d) : data(d), next(NULL)  {}
+    ~Entry()  {  cleanupClass::DoCleanup(data);  }
+  };
+  size_t count;
+  mutable size_t pos;
+  Entry* first, *last;
+  mutable Entry *cur;
+public:
+  TUDTypeList() : count(0), pos(InvalidIndex), cur(NULL), last(NULL), first(NULL) {}
+  virtual ~TUDTypeList()  {  Clear();  }
+  void Clear()  {
+    if( first == NULL )  return;
     cur = first->next;
     while( cur != NULL )  {
-      delete cur->data;
       last = cur->next;
       delete cur;
       cur = last;
     }
-    cur = last = first;   
+    delete first;
+    cur = last = first = NULL;
     count = 0;
+    pos = InvalidIndex;
   }
-  void Reset()         {  cur = first;  pos = -1;  }
-  int Count()    const {  return count;  }
-  T& operator [] (int ind)  {
-    if( pos == (ind-1) )  return Next();
-    pos = -1;
+  void Reset()  {
     cur = first;
-    while( ind-- >= 0 )  {
+    pos = InvalidIndex;
+  }
+  size_t Count() const {  return count;  }
+  T& operator [] (size_t ind) const {
+    if( ind >= count )
+      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid index");
+    if( pos == (ind-1) )
+      return Next();
+    else if( ind == 0 )  {
+      cur = first;
+      pos = 0;
+      return cur->data;
+    }
+    pos = 0;
+    cur = first;
+    while( ind-- != 1 )  {
       cur = cur->next;
       pos++;
     }
-    return *cur->data;
+    return cur->data;
   }
-  bool HasNext() const {  return !(cur == NULL || cur->next == NULL);  }
-  T& Next() {  
-    if( first == NULL || cur == NULL || cur->next == NULL )
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "end of the list");
-    cur = cur->next;
-    return *cur->data;
-  }
-  const T& Next() const {  
-    if( first == NULL || cur == NULL || cur->next == NULL )
+  bool HasNext() const {  return cur == NULL ? false : cur->next != NULL;  }
+  T& Next() const {  
+    if( cur == NULL || cur->next == NULL )
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "end of the list");
     cur = cur->next;
     pos++;
-    return *cur->data;
+    return cur->data;
   }
-  T& Add(T& v)  {
-    if( last == NULL )
-      last = first = new Entry(&v);
-    else  {
-      last->next = new Entry(&v);
-      last = last->next;
-    }
-    count++;
-    pos++;
-    return v;
-  }
-  T& Add(T* v)  {
+  T& Add(T v)  {
     if( last == NULL )
       last = first = new Entry(v);
     else  {
       last->next = new Entry(v);
       last = last->next;
     }
-    count ++;
+    count++;
     pos++;
-    return *v;
+    return last->data;
   }
 };
 

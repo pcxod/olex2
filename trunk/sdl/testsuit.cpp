@@ -4,6 +4,7 @@
 #include "md5.h"
 #include "sha.h"
 #include "olxth.h"
+#include "ellist.h"
 
 //...................................................................................................
 void IsNumberTest(OlxTests& t)  {
@@ -130,6 +131,28 @@ void SHA2Test(OlxTests& t)  {
   if( !SHA224::Digest(msg).Equalsi(res224_0) )
     throw TFunctionFailedException(__OlxSourceInfo, "Wrong digest message");
 }
+void DirectionalListTest(OlxTests& t)  {
+  TUDTypeList<int> test;
+  t.description = __FUNC__;
+  for( int i=0; i < 10; i++ )
+    test.Add(i);
+  for( int i=0; i < 10; i++ )  {
+    if( test[i] != i )
+      throw TFunctionFailedException(__OlxSourceInfo, "Indexing is broken");
+  }
+  if( (test[5] = 7) != 7 )
+    throw TFunctionFailedException(__OlxSourceInfo, "Assignment is broken");
+
+  TUDTypeList<int*, NewCleanup<int> > test1;
+  for( int i=0; i < 10; i++ )
+    test1.Add(new int(i));
+  for( int i=0; i < 10; i++ )  {
+    if( *test1[i] != i )
+      throw TFunctionFailedException(__OlxSourceInfo, "Indexing is broken");
+  }
+  if( (*test1[5] = 7) != 7 )
+    throw TFunctionFailedException(__OlxSourceInfo, "Assignment is broken");
+}
 //...................................................................................................
 class CriticalSectionTest {
   int i, j, k, l;
@@ -183,6 +206,7 @@ OlxTests::OlxTests() {
   Add(&SHA2Test);
   Add(new CriticalSectionTest(true), &CriticalSectionTest::DoTest);  // the instance gets deleted
   Add(new CriticalSectionTest(false), &CriticalSectionTest::DoTest);  // the instance gets deleted
+  Add(&DirectionalListTest);
 }
 //...................................................................................................
 void OlxTests::run()  {
