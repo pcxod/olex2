@@ -1508,8 +1508,7 @@ void TMainForm::StartupInit()  {
     _UpdateThread->Start();
   }
   FileDropTarget* dndt = new FileDropTarget(*this);
-  FHtml->SetDropTarget(dndt);
-  DragAcceptFiles(true);
+  this->SetDropTarget(dndt);
 }
 //..............................................................................
 void TMainForm::SetProcess( AProcess *Process )  {
@@ -4324,8 +4323,11 @@ void TMainForm::OnPictureExport(wxCommandEvent& WXUNUSED(event))  {
 bool TMainForm::FileDropTarget::OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& filenames)  {
   if( filenames.Count() != 1 )  return false;
   const olxstr fn = filenames[0].c_str();
-  if( TXApp::GetInstance().XFile().FindFormat(TEFile::ExtractFilePath(fn)) == NULL )
-    return false;
+  try  {
+    if( parent.FXApp->XFile().FindFormat(TEFile::ExtractFileExt(fn)) == NULL )
+      return false;
+  }
+  catch(...)  {  return false;  }
   parent.executeMacro(olxstr("reap \'") << fn << '\'');
   return true;
 }
