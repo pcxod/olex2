@@ -226,7 +226,7 @@ int TCifLoop::CifLoopSorter::Compare(const TCifLoopTable::TableSort& r1,
                                      const TCifLoopTable::TableSort& r2)
 {
   uint64_t id1 = 0, id2 = 0;
-  int ac = 0;
+  size_t ac = 0;
   for( size_t i=r1.data.Count(); i > 0; i-- )  {
     bool atom = false;
     if( r1.data.GetObject(i-1)->CA != 0 )  {
@@ -242,6 +242,8 @@ int TCifLoop::CifLoopSorter::Compare(const TCifLoopTable::TableSort& r1,
   return (id1 < id2 ? -1 : (id1 > id2 ? 1 : 0)); 
 }
 void TCifLoop::UpdateTable()  {
+	if( GetLoopName().Equalsi("_symmetry_equiv_pos_as_xyz") )  // really no need
+	  return;
   for( size_t i=0; i < FTable.RowCount(); i++ )  {
     for( size_t j=0; j < FTable.ColCount(); j++ )  {
       if( FTable[i].GetObject(j)->CA != NULL )
