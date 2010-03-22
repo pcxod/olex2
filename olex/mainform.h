@@ -3,6 +3,7 @@
 #define _xl_mainformH
 //............................................................................//
 #include "wx/wx.h"
+#include "wx/dnd.h"
 #include "wx/process.h"
 #include "wx/thread.h"
 
@@ -669,8 +670,17 @@ protected:
   TMenu*    pmLabel;
   TMenu*    pmLattice;
   class TXGlLabel* LabelToEdit;
-
   wxMenu  *FCurrentPopup;
+
+  class FileDropTarget : public wxFileDropTarget {
+    TMainForm& parent;
+  public:
+    FileDropTarget(TMainForm& _parent) : parent(_parent)  {}
+    virtual bool OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& filenames);
+    virtual wxDragResult OnDragOver(wxCoord x, wxCoord y, wxDragResult def)  {
+      return wxFileDropTarget::OnDragOver(x,y,wxDragCopy);
+    }
+  };
 public:
   wxMenu* CurrentPopupMenu()    {  return FCurrentPopup; }
   wxMenu* DefaultPopup()        {  return pmGraphics; }

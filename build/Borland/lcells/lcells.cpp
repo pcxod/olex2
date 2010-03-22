@@ -20,8 +20,8 @@ WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
      Application->Initialize();
      Application->Title = "LCells";
      Application->CreateForm(__classid(TdlgMain), &dlgMain);
-     Application->CreateForm(__classid(TdlgMolDraw), &dlgMolDraw);
-     Application->Run();
+                 Application->CreateForm(__classid(TdlgMolDraw), &dlgMolDraw);
+                 Application->Run();
   }
   catch (Exception &exception)
   {

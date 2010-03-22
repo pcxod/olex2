@@ -1507,6 +1507,9 @@ void TMainForm::StartupInit()  {
     _UpdateThread->OnAction.Add(this, ID_UpdateThreadAction);
     _UpdateThread->Start();
   }
+  FileDropTarget* dndt = new FileDropTarget(*this);
+  FHtml->SetDropTarget(dndt);
+  DragAcceptFiles(true);
 }
 //..............................................................................
 void TMainForm::SetProcess( AProcess *Process )  {
@@ -4315,6 +4318,19 @@ void TMainForm::OnPictureExport(wxCommandEvent& WXUNUSED(event))  {
   
   wxMessageBox(wxT("Under construction"));    
 }
+//..............................................................................
+//..............................................................................
+//..............................................................................
+bool TMainForm::FileDropTarget::OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& filenames)  {
+  if( filenames.Count() != 1 )  return false;
+  const olxstr fn = filenames[0].c_str();
+  if( TXApp::GetInstance().XFile().FindFormat(TEFile::ExtractFilePath(fn)) == NULL )
+    return false;
+  parent.executeMacro(olxstr("reap \'") << fn << '\'');
+  return true;
+}
+//..............................................................................
+//..............................................................................
 //..............................................................................
 
 
