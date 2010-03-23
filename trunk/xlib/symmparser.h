@@ -8,12 +8,6 @@
 BeginXlibNamespace()
 
 class TSymmParser  {
-  struct sml_converter {  // adaptor to provide AsymmUnit or UnitCell interface for a list
-    const smatd_list& ml;
-    sml_converter(const smatd_list& _ml) : ml(_ml) {}
-    size_t MatrixCount() const {  return ml.Count();  }
-    const smatd& GetMatrix(size_t i) const {  return ml[i];  }
-  };
   // compares p with values in array axes. Used in SymmToMatrix function
   static short IsAxis(const olxstr& p) {
     if( p.IsEmpty() )  return -1;
@@ -79,9 +73,9 @@ class TSymmParser  {
     }
     return T;
   }
-  // can tace both TAsymmUnit or TUnitCell
-  template <class MC>
-  static smatd _SymmCodeToMatrix(const MC& au, const olxstr& Code, size_t* index=NULL)  {
+  // can take both TAsymmUnit or TUnitCell
+  template <class SymSpace>
+  static smatd _SymmCodeToMatrix(const SymSpace& sp, const olxstr& Code, size_t* index=NULL)  {
     TStrList Toks(Code, '_');
     smatd mSymm;
     if( Toks.Count() == 1 )  {  // standard XP symm code like 3444
@@ -91,17 +85,17 @@ class TSymmParser  {
       }
       else  {
         size_t isymm = Toks[0].ToSizeT()-1;
-        if( isymm >= au.MatrixCount() )
+        if( isymm >= sp.Count() )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
-        return au.GetMatrix(isymm);
+        return sp[isymm];
       }
     }
     if( Toks.Count() != 2 )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong code: ") << Code);
     const size_t isymm = Toks[0].ToSizeT()-1;
-    if( isymm >= au.MatrixCount() )
+    if( isymm >= sp.Count() )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
-    mSymm = au.GetMatrix(isymm);
+    mSymm = sp[isymm];
     if( index != NULL )  *index = isymm;
     vec3i t;
     ExtractTranslation(Toks[1], t);
@@ -109,6 +103,7 @@ class TSymmParser  {
     mSymm.SetRawId(smatd::GenerateId((uint8_t)isymm, t));
     return mSymm;
   }
+  
   static const char Axis[];
 public:
     // Transforms matrix to standard SYMM operation (INS, CIF files)
@@ -124,21 +119,33 @@ public:
     // Transforms standard SYMM operation (INS, CIF files) to matrix
   static bool SymmToMatrix(const olxstr& symm, smatd& M);
   // return a matrix representation of 1_555 or 1_505050 code for the unit cell
-  static smatd SymmCodeToMatrixU(const class TUnitCell& UC, const olxstr& Code);
-  // return a matrix representation of 1_555 or 1_505050 code for the asymmetric unit
-  static smatd SymmCodeToMatrixA(const class TAsymmUnit& AU, const olxstr& Code);
-  // return a matrix representation of 1_555 or 1_505050 code for the the list of matrices
   static smatd SymmCodeToMatrix(const smatd_list& ml, const olxstr& Code)  {
     size_t index = InvalidIndex;
-    smatd rv = _SymmCodeToMatrix(sml_converter(ml), Code, &index);
+    smatd rv = _SymmCodeToMatrix(ml, Code, &index);
     if( index != InvalidIndex )
       rv.SetId(smatd::GenerateId((uint8_t)index, rv, ml[index]));
     return rv;
   }
-  // return a string representation of a matrix like 1_555 or 1_505050 code in dependence on
-  // the length of translations; Matrix->Tag must be set to the index of the matrix in the Unit cell!!!
-  static olxstr MatrixToSymmCode(const TUnitCell& UC, const smatd& M);
-  static olxstr MatrixToSymmCode(const smatd_list& ml, const smatd& M);
+  template <class SymSpaceOwner>
+  static smatd SymmCodeToMatrix(const SymSpaceOwner& u, const olxstr& Code)  {
+    return _SymmCodeToMatrix(u.GetSymSpace(), Code);
+  }
+  /* return a string representation of a matrix like 1_555 or 1_505050 code in dependence on
+  the length of translations; Matrix->ContainerId must be set to the corerct index in the container!!! */
+  template <class SymSpace>
+  static olxstr MatrixToSymmCode(const SymSpace& sp, const smatd& M)  {
+    vec3i Trans(sp[M.GetContainerId()].t - M.t);
+    int baseVal = 5;
+    if( (olx_abs(Trans[0]) > 4) || (olx_abs(Trans[1]) > 4) || (olx_abs(Trans[1]) > 4) )
+      baseVal = 50;
+    static char bf[64];
+#ifdef _MSC_VER
+    sprintf_s(bf, 64, "%i_%i%i%i", M.GetContainerId()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
+#else
+    sprintf(bf, "%i_%i%i%i", M.GetContainerId()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
+#endif
+    return olxstr(bf);
+  }
   /*checks if the given string represents a symmetry operation (1_554, 1554, 1505149, x,y,z) 
   works as a combination of the two following functions */
   static bool IsSymm(const olxstr& s);

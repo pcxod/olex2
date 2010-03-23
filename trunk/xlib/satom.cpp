@@ -1,12 +1,9 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "satom.h"
 #include "network.h"
 #include "lattice.h"
 #include "residue.h"
 #include "symmparser.h"
+#include "unitcell.h"
 #include "pers_util.h"
 
           
@@ -69,7 +66,8 @@ olxstr TSAtom::GetGuiLabel() const  {
   if( Network == NULL || (Matrices[0]->r.IsI() && Matrices[0]->t.IsNull()) )
     return rv;
   else
-    return rv << '.' << TSymmParser::MatrixToSymmCode(Network->GetLattice().GetUnitCell(), *Matrices[0]);
+    return rv << '.' << TSymmParser::MatrixToSymmCode(
+    Network->GetLattice().GetUnitCell().GetSymSpace(), *Matrices[0]);
 }
 //..............................................................................
 void TSAtom::SetNodeCount(size_t cnt)  {

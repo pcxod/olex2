@@ -113,17 +113,10 @@ public:
   smatd_list* GetBinding(const TCAtom& toA, const TCAtom& fromA,
     const vec3d& to, const vec3d& from, bool IncludeI, bool IncludeHBonds) const;
   
-  // the adaptor to use unit cell as a matrix list
-  class MatrixList {
-    const TUnitCell& u;
-  public:
-    MatrixList(const TUnitCell& _u) : u(_u)  {}
-    MatrixList(const MatrixList& ml) : u(ml.u)  {}
-    inline size_t Count() const {  return u.MatrixCount();  }
-    inline const smatd& operator [](size_t i) const {  return u.GetMatrix(i);  }
-  };
-  MatrixList GetMatrixList() const {  return MatrixList(*this);  }
+  typedef MatrixListAdaptor<TUnitCell> MatrixList;
   typedef TSymSpace<TUnitCell::MatrixList> SymSpace;
+
+  MatrixList GetMatrixList() const {  return MatrixList(*this);  }
 
   SymSpace GetSymSpace() const {
     const TAsymmUnit& au = GetLattice().GetAsymmUnit();

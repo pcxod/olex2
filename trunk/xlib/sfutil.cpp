@@ -105,7 +105,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     refs.SetCapacity( hklLoop->GetTable().RowCount() );
     F.SetCount( hklLoop->GetTable().RowCount() );
     for( size_t i=0; i < hklLoop->GetTable().RowCount(); i++ )  {
-      TStrPObjList<olxstr,TCifLoopData*>& row = hklLoop->GetTable()[i];
+      TCifRow& row = hklLoop->GetTable()[i];
       TReflection& ref = refs.AddNew(row[hInd].ToInt(), row[kInd].ToInt(), 
         row[lInd].ToInt(), row[mfInd].ToDouble(), row[sfInd].ToDouble());
       if( mapType == mapTypeDiff )  {

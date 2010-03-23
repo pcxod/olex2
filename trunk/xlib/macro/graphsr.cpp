@@ -91,7 +91,7 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
   refs.SetCapacity(hklLoop->GetTable().RowCount());
 
   for( size_t i=0; i < hklLoop->GetTable().RowCount(); i++ )  {
-    TStrPObjList<olxstr,TCifLoopData*>& row = hklLoop->GetTable()[i];
+    TCifRow& row = hklLoop->GetTable()[i];
     hkl[0] = row[hInd].ToInt();
     hkl[1] = row[kInd].ToInt();
     hkl[2] = row[lInd].ToInt();
