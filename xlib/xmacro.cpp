@@ -1961,7 +1961,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     if( rd.GetC().r.IsI() && rd.GetC().t.IsNull() )
      table[i][1] = 'I';  // identity
     else
-      table[i][1] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell(), rd.GetC() );
+      table[i][1] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(), rd.GetC());
     table[i][0] = olxstr::FormatFloat(2, rd.GetB().Length());
     for( size_t j=0; j < rowData.Count(); j++ )  {
       if( i == j )  { table[i][j+2] = '-'; continue; }
@@ -2546,7 +2546,7 @@ void XLibMacros::MergePublTableData(TCifLoopTable& to, TCifLoopTable& from)  {
   /* by this point the uniqCols contains all the column names and the association
   holds corresponding column indexes in from and to tables */
   // the actual merge, by author name
-  size_t authNCI = uniqCols.IndexOfComparable( authorNameCN );
+  size_t authNCI = uniqCols.IndexOfComparable(authorNameCN);
   if( authNCI == InvalidIndex )  return;  // cannot do much, can we?
   AnAssociation2<size_t,size_t> authCA(uniqCols.GetObject(authNCI));
   if( authCA.GetA() == InvalidIndex )  return;  // no author?, bad ...
@@ -2571,9 +2571,9 @@ void XLibMacros::MergePublTableData(TCifLoopTable& to, TCifLoopTable& from)  {
   // null the objects - they must not be here anyway ..
   for( size_t i=0; i < to.RowCount(); i++ )  {
     for( size_t j=0; j < to.ColCount(); j++ )  {
-      if( to[i].GetObject(j) == NULL )
-        to[i].GetObject(j) = new TCifLoopData(true);
-      to[i].GetObject(j)->String = true;
+      if( to[i].GetObject(j) != NULL )
+        delete to[i].GetObject(j);
+      to[i].GetObject(j) = new StringCifCell(true);
     }
   }
 }
@@ -2628,7 +2628,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
       cd->Data->Add(xapp.XFile().GetLattice().CalcMoiety());
     else if(  cd->Data->Count() == 1 && (*cd->Data)[0] == '?' ) 
       cd->Data->GetString(0) = xapp.XFile().GetLattice().CalcMoiety();
-    cd->String = true;
+    cd->Quoted = true;
   }
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(Cif->GetAsymmUnit());
   if( sg != NULL )  {
@@ -2640,7 +2640,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
         cd->Data->Add(sg->GetBravaisLattice().GetName());
       else
         cd->Data->GetString(0) = sg->GetBravaisLattice().GetName();
-      cd->String = true;
+      cd->Quoted = true;
     }
     if( !Cif->ParamExists("_symmetry_space_group_name_H-M") )
       Cif->AddParam("_symmetry_space_group_name_H-M", sg->GetFullName(), true);
@@ -2650,7 +2650,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
         cd->Data->Add(sg->GetFullName());
       else
         cd->Data->GetString(0) = sg->GetFullName();
-      cd->String = true;
+      cd->Quoted = true;
     }
     if( !Cif->ParamExists("_symmetry_space_group_name_Hall") )
       Cif->AddParam("_symmetry_space_group_name_Hall", sg->GetHallSymbol(), true);
@@ -2660,7 +2660,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
         cd->Data->Add(sg->GetHallSymbol());
       else
         cd->Data->GetString(0) = sg->GetHallSymbol();
-      cd->String = true;
+      cd->Quoted = true;
     }
     
     if( !sg->IsCentrosymmetric() && !Cif->ParamExists("_chemical_absolute_configuration") )  {
@@ -2778,16 +2778,17 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       if( b.GetTag() == 0 )  continue;
       b.SetTag(0);
       TCifRow& row = bonds.GetTable().AddRow(EmptyString);
-      row[0] = b.A().GetLabel();  row.GetObject(0) = new TCifLoopData(&b.A().CAtom());
-      row[1] = b.B().GetLabel();  row.GetObject(1) = new TCifLoopData(&b.B().CAtom());
+      row[0] = b.A().GetLabel();  row.GetObject(0) = new AtomCifCell(&b.A().CAtom());
+      row[1] = b.B().GetLabel();  row.GetObject(1) = new AtomCifCell(&b.B().CAtom());
       row[2] = vcovc.CalcDistance(b.A(), b.B()).ToString();
       if( !b.B().GetMatrix(0).IsFirst() )
-        row[3] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell(), b.B().GetMatrix(0));
+        row[3] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
+        b.B().GetMatrix(0));
       else
         row[3] = '.';
       row[4] = '?';
       for( int k=2; k < 5; k++ )
-        row.GetObject(k) = new TCifLoopData;
+        row.GetObject(k) = new StringCifCell(false);
     }
   }
   TCifLoop& angles = cif.AddLoop("_geom_angle");
@@ -2810,21 +2811,23 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         if( c.IsDeleted() || c.GetType().GetMr() < 3 )
           continue;
         TCifRow& row = angles.GetTable().AddRow(EmptyString);
-        row[0] = b.GetLabel();  row.GetObject(0) = new TCifLoopData(&b.CAtom());
-        row[1] = a.GetLabel();  row.GetObject(1) = new TCifLoopData(&a.CAtom());
-        row[2] = c.GetLabel();  row.GetObject(2) = new TCifLoopData(&c.CAtom());
+        row[0] = b.GetLabel();  row.GetObject(0) = new AtomCifCell(&b.CAtom());
+        row[1] = a.GetLabel();  row.GetObject(1) = new AtomCifCell(&a.CAtom());
+        row[2] = c.GetLabel();  row.GetObject(2) = new AtomCifCell(&c.CAtom());
         row[3] = vcovc.CalcAngle(b, a, c).ToString();
         if( !b.GetMatrix(0).IsFirst() )
-          row[4] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell(), b.GetMatrix(0));
+          row[4] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
+          b.GetMatrix(0));
         else
           row[4] = '.';
         if( !c.GetMatrix(0).IsFirst() )
-          row[5] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell(), c.GetMatrix(0));
+          row[5] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
+          c.GetMatrix(0));
         else
           row[5] = '.';
         row[6] = '?';
         for( int l=3; l < 7; l++ )
-          row.GetObject(l) = new TCifLoopData;
+          row.GetObject(l) = new StringCifCell(false);
       }
     }
   }
@@ -2862,9 +2865,9 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       for( size_t j=0; j < envi.Count(); j++ )  {
         if( envi.GetType(j).GetMr() != iHydrogenZ)  continue;
         TCifRow& row = hbonds.GetTable().AddRow(EmptyString);
-        row[0] = d->GetAtom()->GetLabel();  row.GetObject(0) = new TCifLoopData(d->GetAtom());
-        row[1] = envi.GetCAtom(j).GetLabel();  row.GetObject(1) = new TCifLoopData(&envi.GetCAtom(j));
-        row[2] = a->GetAtom()->GetLabel();  row.GetObject(2) = new TCifLoopData(a->GetAtom());
+        row[0] = d->GetAtom()->GetLabel();  row.GetObject(0) = new AtomCifCell(d->GetAtom());
+        row[1] = envi.GetCAtom(j).GetLabel();  row.GetObject(1) = new AtomCifCell(&envi.GetCAtom(j));
+        row[2] = a->GetAtom()->GetLabel();  row.GetObject(2) = new AtomCifCell(a->GetAtom());
         TSAtom da(NULL), aa(NULL);
         da.CAtom(*d->GetAtom());
         da.AddMatrix(&I);
@@ -2889,9 +2892,10 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         if( a->GetMatrix() == NULL )
           row[7] = '.';
         else
-          row[7] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell(), aa.GetMatrix(0));
+          row[7] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
+          aa.GetMatrix(0));
         for( int l=3; l < 8; l++ )
-          row.GetObject(l) = new TCifLoopData;
+          row.GetObject(l) = new StringCifCell(false);
       }
     }
   }
@@ -3951,7 +3955,8 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
               const double shift = sqrt(olx_max(0, pccd*pccd - pcpd*pcpd));
               if( shift < max_shift )  {
                 int_cnt++;
-                TBasicApp::GetLog() << '#' << (j+1) << '@' << TSymmParser::MatrixToSymmCode(uc, mat) << 
+                TBasicApp::GetLog() << '#' << (j+1) << '@' <<
+                  TSymmParser::MatrixToSymmCode(uc.GetSymSpace(), mat) << 
                   " (" << TSymmParser::MatrixToSymmEx(mat) << ")\n";
                 TBasicApp::GetLog() << "angle: " << 
                   olxstr::FormatFloat(3, planes[i].Angle(plane_params)) <<

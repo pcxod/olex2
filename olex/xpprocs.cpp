@@ -4119,7 +4119,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     bool invert = Options.Contains('i'), unselect=false;
     if( !invert )
       unselect = Options.Contains('u');
-    const smatd matr = TSymmParser::SymmCodeToMatrixU(FXApp->XFile().GetUnitCell(), Cmds[0]);
+    const smatd matr = TSymmParser::SymmCodeToMatrix(FXApp->XFile().GetUnitCell(), Cmds[0]);
     for( size_t i=0; i < FXApp->AtomCount(); i++ )  {
       TXAtom& a = FXApp->GetAtom(i);
       if( a.IsDeleted() || !a.IsVisible() )  continue;
@@ -6677,7 +6677,7 @@ void TMainForm::macLstSymm(TStrObjList &Cmds, const TParamList &Options, TMacroE
   tab.ColName(0) = "Code";
   tab.ColName(1) = "Symm";
   for( size_t i=0; i < uc.MatrixCount(); i++ )  {
-    tab[i][0] = TSymmParser::MatrixToSymmCode(uc, uc.GetMatrix(i));
+    tab[i][0] = TSymmParser::MatrixToSymmCode(uc.GetSymSpace(), uc.GetMatrix(i));
     tab[i][1] = TSymmParser::MatrixToSymm(uc.GetMatrix(i));
   }
   TStrList output;
@@ -6694,7 +6694,7 @@ void TMainForm::macSgen(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     bool validSymm = false;
     if( TSymmParser::IsRelSymm(Cmds[i]) )  {
       try  {
-        matr = TSymmParser::SymmCodeToMatrixU(FXApp->XFile().GetLattice().GetUnitCell(), Cmds[i]);
+        matr = TSymmParser::SymmCodeToMatrix(FXApp->XFile().GetLattice().GetUnitCell(), Cmds[i]);
         validSymm = true;
       }
       catch( TExceptionBase& )  {}

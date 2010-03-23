@@ -1035,48 +1035,6 @@ bool TSpaceGroup::operator == (const TAsymmUnit& AU) const {
   return true;
 }
 //..............................................................................
-bool TSpaceGroup::EqualsExpandedSG(const TAsymmUnit& AU) const  {
-  if( MatrixCount() > AU.MatrixCount() )  return false;
-  smatd_list allMatrices;
-  GetMatrices(allMatrices, mattAll );
-  if( allMatrices.Count() != AU.MatrixCount() )  return false;
-  for( size_t i=0; i  < allMatrices.Count(); i++ )
-    allMatrices[i].SetRawId(0);
-
-  for( size_t i=0; i  < allMatrices.Count(); i++ )  {
-    bool found = false;
-    const smatd& m = AU.GetMatrix(i);
-    for( size_t j=0; j  < allMatrices.Count(); j++ )  {
-      smatd& m1 = allMatrices[j];
-      if( m1.GetId() != 0 )  continue;
-      bool equal = true;
-      for( size_t k=0; k < 3; k++ )  {
-        for( size_t l=0; l < 3; l++ )  {
-          if( m.r[k][l] != m1.r[k][l] )  {
-            equal = false;
-            break;
-          }
-        }
-        if( !equal )  break;
-      }
-      if( !equal )  continue;
-      vec3d translation;
-      for( size_t k=0; k < 3; k++ )  {
-        translation[k] = m.t[k] - m1.t[k];
-        int iv = (int)translation[k];  translation[k] -= iv;
-        if( olx_abs(translation[k]) < 0.01 || olx_abs(translation[k]) >= 0.99 )
-          translation[k] = 0;
-        if( translation[k] < 0 )
-          translation[k] += 1;
-      }
-      if( translation.Length() < 0.01 )  found = true;
-      if( found )  {  m1.SetRawId(1);  break;  }
-    }
-    if( !found )  return false;
-  }
-  return true;
-}
-//..............................................................................
 size_t TSpaceGroup::GetUniqMatrices(smatd_list& matrices, short Flags) const  {
   smatd_list allm;
   size_t c = 0;
@@ -1443,11 +1401,6 @@ TSpaceGroup* TSymmLib::FindSG(const TAsymmUnit& AU)  const {
       return &(GetGroup(i));
     }
   }
-  return NULL;
-}
-TSpaceGroup* TSymmLib::FindExpandedSG(const TAsymmUnit& AU) const  {
-  for( size_t i=0; i < SGCount(); i++ )
-    if( GetGroup(i).EqualsExpandedSG(AU) )  return &(GetGroup(i));
   return NULL;
 }
 //..............................................................................

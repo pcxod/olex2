@@ -75,4 +75,14 @@ public:
   TSymSpace<MatList> SubListFrom(size_t _start) const {  return TSymSpace<MatList>(*this, _start);  }
 };
 
+// the adaptor for complex classes having MatrixCount()/GetMatrix(size_t) methods
+template <class MatrixContainer> class MatrixListAdaptor {
+  const MatrixContainer& mc;
+public:
+  MatrixListAdaptor(const MatrixContainer& _mc) : mc(_mc)  {}
+  MatrixListAdaptor(const MatrixListAdaptor& mla) : mc(mla.mc)  {}
+  inline size_t Count() const {  return mc.MatrixCount();  }
+  inline const smatd& operator [](size_t i) const {  return mc.GetMatrix(i);  }
+};
+
 #endif

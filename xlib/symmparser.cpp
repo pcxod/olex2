@@ -1,16 +1,6 @@
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
-#include <stdlib.h>
-
 #include "symmparser.h"
-#include "unitcell.h"
-#include "asymmunit.h"
-
 #include "estack.h"
 #include "estrlist.h"
-
 #include "emath.h"
 //---------------------------------------------------------------------------
 const char TSymmParser::Axis[] = {'X','Y','Z'};
@@ -115,14 +105,6 @@ next_oper:
   return true;
 }
 //..............................................................................
-smatd TSymmParser::SymmCodeToMatrixU(const TUnitCell& UC, const olxstr& Code)  {
-  return _SymmCodeToMatrix(UC, Code);
-}
-//..............................................................................
-smatd TSymmParser::SymmCodeToMatrixA(const TAsymmUnit& AU, const olxstr& Code)  {
-  return _SymmCodeToMatrix(AU, Code);
-}
-//..............................................................................
 olxstr TSymmParser::MatrixToSymmEx(const mat3i& M)  {
   olxstr T, T1;
   for( int j=0; j < 3; j ++ )  {
@@ -144,38 +126,6 @@ olxstr TSymmParser::MatrixToSymmEx(const mat3i& M)  {
     T1 = EmptyString;
   }
   return T;
-}
-//..............................................................................
-// this needs to be of very high performance
-olxstr TSymmParser::MatrixToSymmCode(const TUnitCell& UC, const smatd& M)  {
-  const smatd& m = UC.GetMatrix(M.GetContainerId());
-  vec3i Trans(m.t - M.t);
-  int baseVal = 5;
-  if( (abs(Trans[0]) > 4) || (abs(Trans[1]) > 4) || (abs(Trans[1]) > 4) )
-    baseVal = 50;
-
-  static char bf[64];
-#ifdef _MSC_VER
-  sprintf_s(bf, 64, "%i_%i%i%i", M.GetContainerId()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
-#else
-  sprintf(bf, "%i_%i%i%i", M.GetContainerId()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
-#endif
-  return olxstr(bf);
-}
-//..............................................................................
-olxstr TSymmParser::MatrixToSymmCode(const smatd_list& ml, const smatd& M)  {
-  vec3i Trans(ml[M.GetContainerId()].t - M.t);
-  int baseVal = 5;
-  if( (abs(Trans[0]) > 4) || (abs(Trans[1]) > 4) || (abs(Trans[1]) > 4) )
-    baseVal = 50;
-
-  static char bf[64];
-#ifdef _MSC_VER
-  sprintf_s(bf, 64, "%i_%i%i%i", M.GetContainerId()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
-#else
-  sprintf(bf, "%i_%i%i%i", M.GetContainerId()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
-#endif
-  return olxstr(bf);
 }
 //..............................................................................
 bool TSymmParser::IsAbsSymm(const olxstr& s)  {

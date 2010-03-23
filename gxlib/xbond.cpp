@@ -3,16 +3,12 @@
 // TXBond
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "xbond.h"
 #include "gpcollection.h"
 #include "xatom.h"
 #include "lattice.h"
 #include "symmparser.h"
+#include "unitcell.h"
 
 //..............................................................................
 bool TXBondStylesClear::Enter(const IEObject *Sender, const IEObject *Data)
@@ -451,9 +447,10 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {
   if( level == 0 )  return L;
   L << '.' << A->GetLabel() << '-' << B->GetLabel();
   if( level == 1 )  return L;
-  L << '.' << TSymmParser::MatrixToSymmCode(A->GetNetwork().GetLattice().GetUnitCell(), A->GetMatrix(0)) <<
+  TUnitCell::SymSpace sp = A->GetNetwork().GetLattice().GetUnitCell().GetSymSpace();
+  L << '.' << TSymmParser::MatrixToSymmCode(sp, A->GetMatrix(0)) <<
     '-' <<
-    TSymmParser::MatrixToSymmCode(B->GetNetwork().GetLattice().GetUnitCell(), B->GetMatrix(0));
+    TSymmParser::MatrixToSymmCode(sp, B->GetMatrix(0));
   return L;
 }
 //..............................................................................

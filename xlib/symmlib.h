@@ -80,8 +80,50 @@ public:
   // compares m.R and summs (delta(m.t))^2 into st;
   bool Compare(const smatd_list& matrices, double& st) const;
 
-  bool EqualsExpandedSG(const TAsymmUnit& AU) const;
-
+  template <class SymSpace> bool EqualsSymSpace(const SymSpace& sp) const {
+    if( MatrixCount() > sp.Count() )  return false;
+    smatd_list allMatrices;
+    GetMatrices(allMatrices, mattAll );
+    if( allMatrices.Count() != sp.Count() )  return false;
+    for( size_t i=0; i  < allMatrices.Count(); i++ )
+      allMatrices[i].SetRawId(0);
+    for( size_t i=0; i  < allMatrices.Count(); i++ )  {
+      bool found = false;
+      const smatd& m = sp[i];
+      for( size_t j=0; j  < allMatrices.Count(); j++ )  {
+        smatd& m1 = allMatrices[j];
+        if( m1.GetId() != 0 )  continue;
+        bool equal = true;
+        for( size_t k=0; k < 3; k++ )  {
+          for( size_t l=0; l < 3; l++ )  {
+            if( m.r[k][l] != m1.r[k][l] )  {
+              equal = false;
+              break;
+            }
+          }
+          if( !equal )  break;
+        }
+        if( !equal )  continue;
+        vec3d translation;
+        for( size_t k=0; k < 3; k++ )  {
+          translation[k] = m.t[k] - m1.t[k];
+          const int iv = (int)translation[k];
+          translation[k] -= iv;
+          if( olx_abs(translation[k]) < 0.01 || olx_abs(translation[k]) >= 0.99 )
+            translation[k] = 0;
+          if( translation[k] < 0 )
+            translation[k] += 1;
+        }
+        if( translation.QLength() < 0.0001 )  {
+          found = true;
+          m1.SetRawId(1);
+          break;
+        }
+      }
+      if( !found )  return false;
+    }
+    return true;
+  }
   bool EqualsWithoutTranslation (const TSpaceGroup& sg) const;
   bool IsSubElement( TSpaceGroup* symme )  const;
   // decomoses space group into symmetry elements using reference as the basis
@@ -197,7 +239,14 @@ public:
 
   TSpaceGroup* FindSG(const TAsymmUnit& AU) const;
   TSpaceGroup* FindSG(const smatd_list& expanded_matrices) const;
-  TSpaceGroup* FindExpandedSG(const TAsymmUnit& AU) const;
+
+  // searches for expanded space groups like in the CIF
+  template <class SymSpace> TSpaceGroup* FindSymSpace(const SymSpace& sp) const {
+    for( size_t i=0; i < SGCount(); i++ )
+      if( GetGroup(i).EqualsSymSpace(sp) )
+        return &(GetGroup(i));
+    return NULL;
+  }
   size_t FindBravaisLattices(TAsymmUnit& AU, TTypeList<TBravaisLatticeRef>& res) const;
   // finds all space groups of specified point group
   size_t FindPointGroupGroups(const TSpaceGroup& PointGroup, TPtrList<TSpaceGroup>& res) const;

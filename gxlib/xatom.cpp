@@ -354,7 +354,8 @@ olxstr TXAtom::GetLegend(const TSAtom& A, const short Level)  {
   L << '.' << A.CAtom().GetLabel();
   if( Level == 1 )  return L;
   L << '.';
-  L << TSymmParser::MatrixToSymmCode(A.GetNetwork().GetLattice().GetUnitCell(), A.GetMatrix(0));
+  L << TSymmParser::MatrixToSymmCode(
+    A.GetNetwork().GetLattice().GetUnitCell().GetSymSpace(), A.GetMatrix(0));
   return L;
 }
 //..............................................................................

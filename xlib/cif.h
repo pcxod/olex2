@@ -1,9 +1,9 @@
 #ifndef __olx_xl_cif_H
 #define __olx_xl_cif_H
-
 #include "xfiles.h"
 #include "etable.h"
 #include "estrlist.h"
+#include "symmparser.h"
 
 BeginXlibNamespace()
 
@@ -11,25 +11,28 @@ class TCif;
 class TLinkedLoopTable;
 struct TCifData  {
   TStrList *Data;
-  bool String;  //specifies if the data is a string type, e.g. should be in commas
+  bool Quoted;
 };
-struct TCifLoopData  {
-  bool String;  //specifies if the data is a string type, e.g. should be in commas
-  TCAtom *CA;   ////contains a pointer to an atom if the cell is relevant to an atom label
-  TCifLoopData()  {
-    CA = NULL;
-    String = false;
-  }
-  TCifLoopData(bool str)  {
-    CA = NULL;
-    String = str;
-  }
-  TCifLoopData(TCAtom* ca)  {
-    CA = ca;
-    String = false;
-  }
+
+struct ICifCell  {
+  virtual ~ICifCell()  {}
+  virtual const TCAtom* GetAtomRef() const {  return NULL;  }
+  virtual bool IsQuoted() const {  return false;  }
 };
-typedef TStrPObjList<olxstr,TCifLoopData*> TCifRow;
+
+struct AtomCifCell : public ICifCell {
+  TCAtom* data;
+  virtual const TCAtom* GetAtomRef() const {  return data;  }
+  AtomCifCell(TCAtom* _data=NULL) : data(_data)  {}
+};
+
+struct StringCifCell : public ICifCell {
+  bool data;
+  virtual bool IsQuoted() const {  return data;  }
+  StringCifCell(bool _data=false) : data(_data)  {}
+};
+
+typedef TStrPObjList<olxstr,ICifCell*> TCifRow;
 typedef TTTable<TCifRow> TCifLoopTable;
 //---------------------------------------------------------------------------
 class TCifLoop: public IEObject  {
@@ -58,10 +61,15 @@ public:
   // removes rows havibng reference to the given atom
   void DeleteAtom(TCAtom* atom);
   // Updates the content of the table; changes labels of the atoms
-  void UpdateTable();
+  void UpdateTable(const TCif& parent);
   //Returns the table representing the loop data. Use it to make tables or iterate through data.
-  TCifLoopTable& GetTable()  {  return FTable; }
-  const TCifLoopTable& GetTable() const {  return FTable; }
+  TCifLoopTable& GetTable()  {  return FTable;  }
+  const TCifLoopTable& GetTable() const {  return FTable;  }
+  void SetData(size_t i, size_t j, ICifCell* data)  {
+    if( FTable[i].GetObject(j) != NULL )
+      delete FTable[i].GetObject(j);
+    FTable[i].GetObject(j) = data;
+  }
   // row sorter struct
   struct CifLoopSorter  {
   public:
@@ -74,7 +82,7 @@ public:
 class TCifValue : public IEObject  {
   TTypeList<vec3d> MatrixTranslations;
   TIntList MatrixIndexes;
-  TCAtomPList   Atoms;
+  TCAtomPList Atoms;
   TEValueD Value;
 protected:
   olxstr FormatTranslation(const vec3d& v);
@@ -83,7 +91,7 @@ public:
   virtual ~TCifValue()  {  }
 
   void AddAtom(TCAtom& A, const vec3d& Translation, int SymmIndex = 0 )  {
-    Atoms.Add(&A);
+    Atoms.Add(A);
     MatrixIndexes.Add( SymmIndex );
     MatrixTranslations.AddCCopy( Translation );
   }
@@ -91,7 +99,7 @@ public:
   inline int GetMatrixIndex(size_t index) const {  return MatrixIndexes[index];  }
   inline TCAtom& GetAtom(size_t index) const {  return *Atoms[index];  }
   inline const TEValueD& GetValue() const {  return Value;  }
-
+  void SetValue(const olxstr& v)  {  Value = v;  }
   olxstr Format()  const;
 };
 //---------------------------------------------------------------------------
@@ -104,7 +112,7 @@ public:
   virtual ~TCifDataManager()  {}
   TCifValue& NewValue()  {  return Items.AddNew();  }
   // finds a cif value for a list of TSATOMS(!)
-  TCifValue* Match( const TSAtomPList& Atoms );
+  TCifValue* Match(const TSAtomPList& Atoms) const;
   void Clear()  {  Items.Clear();  }
   size_t Count() const {  return Items.Count();  }
   const TCifValue& Item(size_t index) const {  return Items[index];  }
@@ -114,8 +122,7 @@ public:
 //---------------------------------------------------------------------------
 class TCif: public TBasicCFile  {
 private:
-  TStrPObjList<olxstr,TCifData*> Lines,
-                          Parameters;
+  TStrPObjList<olxstr,TCifData*> Lines, Parameters;
   void Format();
   olxstr FDataName, FWeightA, FWeightB;
   TStrPObjList<olxstr,TCifLoop*> Loops; // LoopName + CifLoop
@@ -123,6 +130,8 @@ private:
   bool FDataNameUpperCase;
   void Initialize();
   TCifDataManager DataManager;
+  smatd_list Matrices;
+  olxdict<olxstr, size_t, olxstrComparator<true> > MatrixMap;
 public:
   TCif();
   virtual ~TCif();
@@ -141,7 +150,7 @@ public:
   /*Adds a new parameter to the CIF. If the parameter is a string object, then set
     the String parameter to true.  */
   bool AddParam(const olxstr& Param, const olxstr& Params, bool String);
-  TCifData *FindParam(const olxstr& Param); //Returns full value of a parameter
+  TCifData *FindParam(const olxstr& Param) const; //Returns full value of a parameter
  /*Returns the first string of the TCifData objects associated with a given parameter.
    Note that the data is stores in a olxstrList, which may contain more than one string.
    To get full information, use GetParam function instead.  */
@@ -154,6 +163,22 @@ public:
   const olxstr& Param(size_t index) const {  return Parameters[index]; };
   // returns the name of a specified parameter
   TCifData* ParamValue(size_t index)  {  return Parameters.GetObject(index); };
+  // matrics access functions
+  size_t MatrixCount() const {  return Matrices.Count();  }
+  const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
+  const smatd& GetMatrixById(const olxstr& id) const {
+    size_t id_ind = MatrixMap.IndexOf(id);
+    if( id_ind == InvalidIndex )
+      throw TInvalidArgumentException(__OlxSrcInfo, "matrix id");
+    return Matrices[MatrixMap.GetValue(id_ind)];
+  }
+  // special for CIF dues to the MatrixMap...
+  smatd SymmCodeToMatrix(const olxstr& code) const;
+  /*Transforms a symmetry code written like "22_565" to the symmetry operation
+   corresponding to the code in a SYMM like view "x, 1+y, z" */
+  olxstr SymmCodeToSymm(const olxstr& Code) const {
+    return TSymmParser::MatrixToSymm(SymmCodeToMatrix(Code));
+  }
   //............................................................................
   //Returns the data name of the file (data_XXX, returns XXX in this case)
   inline const olxstr& GetDataName() const {  return FDataName; }
@@ -186,15 +211,15 @@ public:
   */
   TCifLoop& GetPublicationInfoLoop();
 protected:
-  void MultValue(olxstr& Val, const olxstr& N);
+  static void MultValue(olxstr& Val, const olxstr& N);
 public:
   bool ResolveParamsFromDictionary(
     TStrList &Dic,   // the dictionary containing the cif fields
     olxstr& String,    // the string in which the parameters are stores
     olxch Quote,           // %10%, #10#, ...
     olxstr (*ResolveExternal)(const olxstr& valueName) = NULL,
-    bool DoubleTheta = true);
-  bool CreateTable(TDataItem* TableDefinitions, TTTable<TStrList>& Table, smatd_list& SymmList);
+    bool DoubleTheta = true) const;
+  bool CreateTable(TDataItem* TableDefinitions, TTTable<TStrList>& Table, smatd_list& SymmList) const;
   void Group();
   const TCifDataManager& GetDataManager() const {  return DataManager;  }
 
@@ -289,9 +314,6 @@ public:
   /* Returns a table constructed for Atom. The Atom should represent a valid atom
    label in Cif->AsymmUnit. */
   TTTable<TStrList>* MakeTable(const olxstr& Atom);
-  /*Transforms a symmetry code written like "22_565" to the symmetry operation
-   corresponding to the code in a SYMM like view "x, 1+y, z" */
-  static olxstr SymmCodeToSymm(TCif *Cif, const olxstr& Code);
 };
 EndXlibNamespace()
 
