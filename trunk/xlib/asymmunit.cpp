@@ -442,83 +442,42 @@ vec3d TAsymmUnit::GetOCenter(bool IncludeQ, bool IncludeH) const {
   return P;
 }
 //..............................................................................
-void TAsymmUnit::SummFormula(TStrPObjList<olxstr,const cm_Element*>& BasicAtoms, olxstr& Elements,
-                             olxstr& Numbers, bool MultiplyZ) const
-{
-  BasicAtoms.Clear();
-  TDoubleList counts;
+ContentList TAsymmUnit::GetContentList(double mult) const {
+  ElementPList elements;
+  ContentList rv;
   const cm_Element *Carbon=NULL, *Hydrogen=NULL;
-
   for( size_t i=0; i < AtomCount(); i++ )  {
-    if( CAtoms[i]->IsDeleted() )  continue;
-    TCAtom& A = *CAtoms[i];
-    size_t ind = BasicAtoms.IndexOfObject(&A.GetType());
+    const cm_Element& elm = CAtoms[i]->GetType();
+    if( CAtoms[i]->IsDeleted() || elm == iQPeakZ )  continue;
+    size_t ind = elements.IndexOf(elm);
     if( ind == InvalidIndex )  {
-      counts.Add(A.GetOccu());
-      if( A.GetType() == iCarbonZ )
-        Carbon = &A.GetType();
-      if( A.GetType() == iHydrogenZ )
-        Hydrogen = &A.GetType();
-      BasicAtoms.Add(A.GetType().symbol, &A.GetType());
+      rv.AddNew(elm, CAtoms[i]->GetOccu()*CAtoms[i]->GetDegeneracy()*mult);
+      elements.Add(elm);
     }
     else
-      counts[ind] += A.GetOccu();
+      rv[ind] += CAtoms[i]->GetOccu()*CAtoms[i]->GetDegeneracy()*mult;
   }
-  BasicAtoms.QuickSort<TAU_SfacSorter>();
-  if( Carbon != NULL )  {
-    size_t ind = BasicAtoms.IndexOfObject(Carbon);
-    BasicAtoms.Swap(0, ind);
-    counts.Swap(0, ind);
-  }
-  if( Hydrogen != NULL && BasicAtoms.Count() > 1 )  {
-    size_t ind = BasicAtoms.IndexOfObject(Hydrogen);
-    BasicAtoms.Swap(1, ind);
-    counts.Swap(1, ind);
-  }
-  for( size_t i=0; i < BasicAtoms.Count(); i++)  {
-    const cm_Element* AI = BasicAtoms.GetObject(i);
-    Elements << AI->symbol;
-    if( MultiplyZ )
-      Numbers << olxstr::FormatFloat(3, counts[i]*GetZ());
-    else
-      Numbers << olxstr::FormatFloat(3, counts[i]);
-    if( i < (BasicAtoms.Count()-1) )  {
-      Elements << ' ';
-      Numbers  << ' ';
-    }
-  }
+  return XElementLib::SortContentList(rv);
 }
 //..............................................................................
 olxstr TAsymmUnit::SummFormula(const olxstr &Sep, bool MultiplyZ) const  {
-  olxdict<const cm_Element*, double, TPrimitiveComparator> elements; 
   size_t matrixInc = 0;
-  // searching for the identity matrix
+  // searching the identity matrix
   bool Uniq = true;
   for( size_t i=0; i < MatrixCount(); i++ )  {
-    if( GetMatrix(i).r.IsI() )  {
+    if( GetMatrix(i).IsI() )  {
       Uniq = false;
       break;
     }
   }
   if( Uniq )  matrixInc ++;
 
-  for( size_t i=0; i < AtomCount(); i++ )  {
-    TCAtom& A = GetAtom(i);
-    if( A.IsDeleted() || A.GetType() == iQPeakZ )  continue;
-    size_t ind = elements.IndexOf(&A.GetType());
-    if( ind == InvalidIndex )
-      elements.Add(&A.GetType(), A.GetOccu());
-    else
-      elements.GetValue(ind) += A.GetOccu();
-  }
+  ContentList cl = GetContentList(MultiplyZ ? (MatrixCount()+matrixInc) : 1.0);
   olxstr rv;
-  for( size_t i=0; i < elements.Count(); i++)  {
-    rv << elements.GetKey(i)->symbol;
-    if( MultiplyZ )
-      rv << olxstr::FormatFloat(3, elements.GetValue(i)*(MatrixCount()+matrixInc)).TrimFloat();
-    else
-      rv << olxstr::FormatFloat(3, elements.GetValue(i));
-    if( (i+1) < elements.Count() )
+  for( size_t i=0; i < cl.Count(); i++)  {
+    rv << cl[i].element.symbol;
+    rv << olxstr::FormatFloat(3, cl[i].count).TrimFloat();
+    if( (i+1) < cl.Count() )
       rv << Sep;
   }
   return rv;

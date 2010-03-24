@@ -172,8 +172,28 @@ public:
   inline bool operator != (short _z) const {  return z != _z;  }
 };
 
+struct ElementCount {
+  const cm_Element& element;
+  double count;
+  ElementCount(const cm_Element& _e, double _c) : element(_e), count(_c)  {}
+  ElementCount(const ElementCount& e) : element(e.element), count(e.count)  {}
+  ElementCount& operator += (double v) {
+    count += v;
+    return *this;
+  }
+  ElementCount& operator += (const ElementCount& v) {
+#ifdef _DEBUG
+    if( element != v.element )
+      throw TInvalidArgumentException(__OlxSourceInfo, "elements must match");
+#endif
+    count += v.count;
+    return *this;
+  }
+  bool operator == (const ElementCount& e) const {  return element == e.element;  }
+};
+
 typedef TPtrList<const cm_Element> ElementPList;
-typedef TTypeList<AnAssociation2<olxstr, double> > ContentList;
+typedef TTypeList<ElementCount> ContentList;
 typedef olxdict<const cm_Element*, double, TPrimitiveComparator> ElementRadii;
 typedef olxdict<const cm_Element*, double, TPrimitiveComparator> ElementDict;
 

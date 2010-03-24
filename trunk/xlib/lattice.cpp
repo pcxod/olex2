@@ -2139,12 +2139,12 @@ olxstr TLattice::CalcMoiety() const {
     for( size_t j=0; j < frags.Count(); j++ )  {
       if( frags[j].GetB().Count() != cl.Count() )  continue;
       bool equals = true;
-      if( frags[j].GetB()[0].GetA() != cl[0].GetA() )
+      if( frags[j].GetB()[0].element != cl[0].element )
         equals = false;
       else  {
         for( size_t k=1; k < cl.Count(); k++ )  {
-          if( frags[j].GetB()[k].GetA() != cl[k].GetA() || 
-            olx_abs((frags[j].GetB()[k].GetB()/frags[j].GetB()[0].GetB())-(cl[k].GetB()/cl[0].GetB())) > 0.01 )
+          if( frags[j].GetB()[k].element != cl[k].element || 
+            olx_abs((frags[j].GetB()[k].count/frags[j].GetB()[0].count)-(cl[k].count/cl[0].count)) > 0.01 )
           {
             equals = false;
             break;
@@ -2156,13 +2156,13 @@ olxstr TLattice::CalcMoiety() const {
         if( centres[i].QDistanceTo(centres[frags[j].GetC()]) < 4 )  {    // just sum up the values
           if( olx_abs(overall_occu) == 1 )  {
             for( size_t k=0; k < cl.Count(); k++ )
-              frags[j].B()[k].B() += cl[k].GetB();
+              frags[j].B()[k].count += cl[k].count;
           }
           else
-            frags[j].A() += cl[0].GetB()/frags[j].GetB()[0].GetB();
+            frags[j].A() += cl[0].count/frags[j].GetB()[0].count;
         }
         else  {  // just increment the count
-          frags[j].A() += cl[0].GetB()/frags[j].GetB()[0].GetB();
+          frags[j].A() += cl[0].count/frags[j].GetB()[0].count;
         }
         uniq = false;
         break;
@@ -2173,7 +2173,7 @@ olxstr TLattice::CalcMoiety() const {
         frags.AddNew(1, cl, i);
       else  {  // apply overal atom occupancy
         for( size_t j=0; j < cl.Count(); j++ )
-          cl[j].B() /= overall_occu;
+          cl[j].count /= overall_occu;
         frags.AddNew(overall_occu, cl, i);
       }
     }
@@ -2184,9 +2184,9 @@ olxstr TLattice::CalcMoiety() const {
     if( frags[i].GetA() != 1 )
       rv << frags[i].GetA() << '(';
     for( size_t j=0; j < frags[i].GetB().Count(); j++ )  {
-      rv << frags[i].GetB()[j].GetA();
-      if( frags[i].GetB()[j].GetB() != 1 )
-        rv << frags[i].GetB()[j].GetB();
+      rv << frags[i].GetB()[j].element.symbol;
+      if( frags[i].GetB()[j].count != 1 )
+        rv << frags[i].GetB()[j].count;
       if( (j+1) < frags[i].GetB().Count() )
         rv << ' ';
     }

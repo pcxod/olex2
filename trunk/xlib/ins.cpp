@@ -700,12 +700,12 @@ void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
   if( rm.SfacCount() == 0 )  {
     list[pos] = "SFAC";
     for( size_t i=0; i < content.Count(); i++ )
-      list[pos] << ' ' << content[i].GetA();
+      list[pos] << ' ' << content[i].element.symbol;
   }
   else  {
     TStrList lines;
     for( size_t i=0; i < rm.GetUserContent().Count(); i++ )  {
-      XScatterer* sd = rm.FindSfacData(rm.GetUserContent()[i].GetA());
+      XScatterer* sd = rm.FindSfacData(rm.GetUserContent()[i].element.symbol);
       if( sd != NULL )  {
         olxstr tmp = "SFAC ";
         tmp << sd->ToInsString();
@@ -715,7 +715,7 @@ void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
           list.Insert(pos++, lines[j]);
       }
       else
-        list.Insert(pos++, "SFAC ") << ' ' << rm.GetUserContent()[i].GetA();
+        list.Insert(pos++, "SFAC ") << ' ' << rm.GetUserContent()[i].element.symbol;
     }
   }
   for( size_t i=0; i < rm.DispCount(); i++ )
@@ -724,11 +724,11 @@ void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
 
   if( rm.SfacCount() == 0 )  {
     for( size_t i=0; i < content.Count(); i++ )
-      unit << ' ' << content[i].GetB();
+      unit << ' ' << content[i].count;
   }
   else  {
     for( size_t i=0; i < rm.GetUserContent().Count(); i++ )
-      unit << ' ' << rm.GetUserContent()[i].GetB();
+      unit << ' ' << rm.GetUserContent()[i].count;
   }
 }
 //..............................................................................
@@ -819,11 +819,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
 void TIns::SaveToStrings(TStrList& SL)  {
   TStrPObjList<olxstr,const cm_Element*> BasicAtoms;
   for( size_t i=0; i < GetRM().GetUserContent().Count(); i++ )  {
-    cm_Element* elm = XElementLib::FindBySymbol(GetRM().GetUserContent()[i].GetA());
-    if( elm == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: ") 
-        << GetRM().GetUserContent()[i].GetA());
-    BasicAtoms.Add(elm->symbol, elm);
+    BasicAtoms.Add(GetRM().GetUserContent()[i].element.symbol, &GetRM().GetUserContent()[i].element);
   }
   size_t carbonIndex = BasicAtoms.IndexOfi('c');  // for Q-peaks
   for( size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ )  {
@@ -1008,11 +1004,7 @@ bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms, TI
 void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& atoms, const olxstr& comments )  {
   TPtrList<const cm_Element> BasicAtoms;
   for( size_t i=0; i < GetRM().GetUserContent().Count(); i++ )  {
-    cm_Element* elm = XElementLib::FindBySymbol(GetRM().GetUserContent()[i].GetA());
-    if( elm == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: ") 
-        << GetRM().GetUserContent()[i].GetA());
-    BasicAtoms.Add(elm);
+    BasicAtoms.Add(GetRM().GetUserContent()[i].element);
   }
   TSizeList Sfacs;
   for( size_t i=0; i < atoms.Count(); i++ )  {
@@ -1021,7 +1013,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: ") << atoms[i].GetName() );
     size_t index = BasicAtoms.IndexOf(elm);
     if( index == InvalidIndex )  {
-      GetRM().AddUserContent(elm->symbol, 1.0);
+      GetRM().AddUserContent(*elm, 1.0);
       BasicAtoms.Add(elm);
       Sfacs.Add(BasicAtoms.Count()-1);
     }

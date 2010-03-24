@@ -263,46 +263,34 @@ void TCifLoop::UpdateTable(const TCif& parent)  {
   }
 }
 //----------------------------------------------------------------------------//
-// TCifValue function bodies
-//----------------------------------------------------------------------------//
-olxstr TCifValue::FormatTranslation(const vec3d& v)  {
-  olxstr retVal = (5.0-v[0]);
-  retVal << (5.0-v[1]);
-  retVal << (5.0-v[2]);
-  return retVal;
-}
-//..............................................................................
-olxstr TCifValue::Format() const  {
-  switch( Atoms.Count() )  {
-    case 2:
-    case 3:
-    case 4:
-       break;
-  }
-  return "nnnn";
-}
-//----------------------------------------------------------------------------//
 // TCifDataManager function bodies
 //----------------------------------------------------------------------------//
-TCifValue* TCifDataManager::Match(const TSAtomPList& Atoms) const {
-  for( size_t i=0; i < Items.Count(); i++ )  {
-    if( Items[i].Count() !=  Atoms.Count() )  continue;
-    const size_t ac = Atoms.Count();
-    bool match = true;
-    for( size_t j=0; j < ac; j++ )  {
-      bool found = false;
-      for( size_t k=0; k < ac; k++ )  {
-        if( Atoms[j]->CAtom().GetId() == Items[i].GetAtom(k).GetId() )  {
-          found = true;
-          break;
+bool CifBond::DoesMatch(const TSAtom& a, const TSAtom& b) const {
+  if( a.CAtom().GetId() == base.GetId() )  {
+    if( b.CAtom().GetId() != to.GetId() )  return false;
+    if( a.GetMatrix(0).IsFirst() )  {
+      if( mat.GetContainerId() == 0 )
+        return b.GetMatrix(0).IsFirst();
+      for( size_t i=0; i < b.MatrixCount(); i++ )
+        if( b.GetMatrix(i) == mat )
+          return true;
+      return false;
+    }
+    else  {
+      for( size_t i=0; i < a.MatrixCount(); i++ )  {
+        const smatd tm = mat*a.GetMatrix(i);
+        for( size_t j=0; j < b.MatrixCount(); j++ )  {
+          if( b.GetMatrix(j) == tm )
+            return true;
         }
       }
-      if( !found )  {
-        match = false;
-        break;
-      }
     }
-    if( match )
+  }
+  return false;
+}
+ACifValue* TCifDataManager::Match(const TSAtomPList& Atoms) const {
+  for( size_t i=0; i < Items.Count(); i++ )  {
+    if( Items[i].Match(Atoms) )
       return &Items[i];
   }
   return NULL;
@@ -860,6 +848,8 @@ void TCif::Initialize()  {
   size_t ACUiso =  ALoop->GetTable().ColIndex("_atom_site_U_iso_or_equiv");
   size_t ASymbol = ALoop->GetTable().ColIndex("_atom_site_type_symbol");
   size_t APart   = ALoop->GetTable().ColIndex("_atom_site_disorder_group");
+  size_t SiteOccu = ALoop->GetTable().ColIndex("_atom_site_occupancy");
+  size_t Degen = ALoop->GetTable().ColIndex("_atom_site_symmetry_multiplicity");
   if( (ALabel|ACx|ACy|ACz|ASymbol) == InvalidIndex )  {
     TBasicApp::GetLog().Error("Failed to locate required fields in atoms loop");
     return;
@@ -884,8 +874,10 @@ void TCif::Initialize()  {
     }
     if( APart != InvalidIndex && ALoop->GetTable()[i][APart].IsNumber() )
       A.SetPart(ALoop->GetTable()[i][APart].ToInt());
-
-//    if( !A->Info ) ;
+    if( SiteOccu != InvalidIndex )
+      A.SetOccu(ALoop->GetTable()[i][SiteOccu].ToDouble());
+    if( Degen != InvalidIndex )
+      A.SetOccu(A.GetOccu()/ALoop->GetTable()[i][Degen].ToDouble());
     ALoop->SetData(i, ALabel, new AtomCifCell(&A));
   }
   for( size_t i=0; i < Loops.Count(); i++ )  {
@@ -937,14 +929,27 @@ void TCif::Initialize()  {
     size_t BD =  tab.ColIndex("_geom_bond_distance");
     size_t SymmA = tab.ColIndex("_geom_bond_site_symmetry_2");
     if( (ALabel|ALabel1|BD|SymmA) == InvalidIndex )  return;
+    TEValueD ev;
     for( size_t i=0; i < tab.RowCount(); i++ )  {
       TCifRow& Row = tab[i];
-      TCifValue& cv = DataManager.NewValue();
+      ACifValue* cv = NULL;
       TCAtom* A = GetAsymmUnit().FindCAtom(Row[ALabel]);
-      cv.AddAtom(*A, vec3d(0,0,0), 0);
       A = GetAsymmUnit().FindCAtom(Row[ALabel1]);
-      cv.AddAtom(*A, vec3d(0,0,0), 0);
-      cv.SetValue(Row[BD]);
+      ev = Row[BD];
+      if( Row[SymmA] == '.' )  {
+        cv = new CifBond(
+          *GetAsymmUnit().FindCAtom(Row[ALabel]),
+          *GetAsymmUnit().FindCAtom(Row[ALabel1]),
+          ev);
+      }
+      else  {
+        cv = new CifBond(
+          *GetAsymmUnit().FindCAtom(Row[ALabel]),
+          *GetAsymmUnit().FindCAtom(Row[ALabel1]),
+          SymmCodeToMatrix(Row[SymmA]),
+          ev);
+      }
+      DataManager.AddValue(cv);
     }
   }
 }
@@ -1002,7 +1007,6 @@ bool TCif::Adopt(TXFile& XF)  {
   olxstr Param;
   TEValueD EValue;
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
-  bool AddUTable=false;
 
   GetRM().Assign(XF.GetRM(), true);
   GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
@@ -1017,12 +1021,12 @@ bool TCif::Adopt(TXFile& XF)  {
   AddParam("_cell_angle_beta",  GetAsymmUnit().Angles()[1].ToString(), false);
   AddParam("_cell_angle_gamma", GetAsymmUnit().Angles()[2].ToString(), false);
 
-  AddParam("_chemical_formula_sum", GetAsymmUnit().SummFormula(' '), true);
+  AddParam("_chemical_formula_sum", GetAsymmUnit().SummFormula(' ', false), true);
   Param = GetAsymmUnit().MolWeight();
   AddParam("_chemical_formula_weight", Param, false);
 
   TSpaceGroup& sg = XF.GetLastLoaderSG();
-  AddParam("_cell_formula_units_Z", XF.GetAsymmUnit().GetZ(), true);
+  AddParam("_cell_formula_units_Z", XF.GetAsymmUnit().GetZ(), false);
   AddParam("_symmetry_cell_setting", sg.GetBravaisLattice().GetName(), true);
   AddParam("_symmetry_space_group_name_H-M", sg.GetName(), true);
   AddParam("_symmetry_space_group_name_Hall", sg.GetHallSymbol(), true);
@@ -1039,65 +1043,59 @@ bool TCif::Adopt(TXFile& XF)  {
       row.GetObject(1) = new StringCifCell(true);
     }
   }
-  {
-    TCifLoop& Loop = AddLoop("_atom_site");
-    TCifLoopTable& Table = Loop.GetTable();
-    Table.AddCol("_atom_site_label");
-    Table.AddCol("_atom_site_type_symbol");
-    Table.AddCol("_atom_site_fract_x");
-    Table.AddCol("_atom_site_fract_y");
-    Table.AddCol("_atom_site_fract_z");
-    Table.AddCol("_atom_site_U_iso_or_equiv");
-    Table.AddCol("_atom_site_disorder_group");
-  }
+
+  TCifLoopTable& atom_table = AddLoop("_atom_site").GetTable();
+  atom_table.AddCol("_atom_site_label");
+  atom_table.AddCol("_atom_site_type_symbol");
+  atom_table.AddCol("_atom_site_fract_x");
+  atom_table.AddCol("_atom_site_fract_y");
+  atom_table.AddCol("_atom_site_fract_z");
+  atom_table.AddCol("_atom_site_U_iso_or_equiv");
+  atom_table.AddCol("_atom_site_occupancy");
+  atom_table.AddCol("_atom_site_symmetry_multiplicity");
+  atom_table.AddCol("_atom_site_disorder_group");
+
+  TCifLoopTable& u_table = AddLoop("_atom_site_aniso").GetTable();
+  u_table.AddCol("_atom_site_aniso_label");
+  u_table.AddCol("_atom_site_aniso_U_11");
+  u_table.AddCol("_atom_site_aniso_U_22");
+  u_table.AddCol("_atom_site_aniso_U_33");
+  u_table.AddCol("_atom_site_aniso_U_23");
+  u_table.AddCol("_atom_site_aniso_U_13");
+  u_table.AddCol("_atom_site_aniso_U_12");
+
   for( size_t i = 0; i < GetAsymmUnit().AtomCount(); i++ )  {
-    const TCAtom& A = GetAsymmUnit().GetAtom(i);
-    if( !A.IsDeleted() && A.GetEllipsoid() != NULL )  {
-      AddUTable = true;  
-      break;
+    TCAtom& A = GetAsymmUnit().GetAtom(i);
+    TCifRow& Row = atom_table.AddRow(EmptyString);
+    Row[0] = A.GetLabel();  Row.GetObject(0) = new AtomCifCell(&A);
+    Row[1] = A.GetType().symbol;  Row.GetObject(1) = new StringCifCell(false);
+    for( int j=0; j < 3; j++ )  {
+      EValue.V() = A.ccrd()[j];  EValue.E() = A.ccrdEsd()[j];
+      Row[j+2] = EValue.ToCStr();
+      Row.GetObject(j+2) = new StringCifCell(false);
     }
-  }
-  if( AddUTable )  {
-    TCifLoop& Loop = AddLoop("_atom_site_aniso");
-    TCifLoopTable& Table = Loop.GetTable();
-    Table.AddCol("_atom_site_aniso_label");
-    Table.AddCol("_atom_site_aniso_U_11");
-    Table.AddCol("_atom_site_aniso_U_22");
-    Table.AddCol("_atom_site_aniso_U_33");
-    Table.AddCol("_atom_site_aniso_U_23");
-    Table.AddCol("_atom_site_aniso_U_13");
-    Table.AddCol("_atom_site_aniso_U_12");
-
-    for( size_t i = 0; i < GetAsymmUnit().AtomCount(); i++ )  {
-      TCAtom& A = GetAsymmUnit().GetAtom(i);
-      TCifRow& Row = Table.AddRow(EmptyString);
-      Row[0] = A.GetLabel();  Row.GetObject(0) = new AtomCifCell(&A);
-      Row[1] = A.GetType().symbol;  Row.GetObject(1) = new StringCifCell(false);
-      for( int j=0; j < 3; j++ )  {
-        EValue.V() = A.ccrd()[j];  EValue.E() = A.ccrdEsd()[j];
-        Row[j+2] = EValue.ToCStr();
-        Row.GetObject(j+2) = new StringCifCell(false);
-      }
-      EValue.V() = A.GetUiso();  EValue.E() = A.GetUisoEsd();
-      Row[5] = EValue.ToString();
-      Row.GetObject(5) = new StringCifCell(false);
-      // process part as well
-      if( A.GetPart() != 0 )
-        Row[6] = (int)A.GetPart();
-      else
-        Row[6] = '.';
-      Row.GetObject(6) = new StringCifCell(false);
-
-      if( A.GetEllipsoid() != NULL )  {
-        A.GetEllipsoid()->GetQuad(Q, E);
-        GetAsymmUnit().UcartToUcif(Q);
-        TCifRow& Row1 = Table.AddRow(EmptyString);
-        Row1[0] = A.GetLabel();  Row1.GetObject(0) = new AtomCifCell(&A);
-        for( int j=0; j < 6; j++ )  {
-          EValue.V() = Q[j];  EValue.E() = E[j];
-          Row1[j+1] = EValue.ToCStr();
-          Row1.GetObject(j+1) = new StringCifCell(false);
-        }
+    EValue.V() = A.GetUiso();  EValue.E() = A.GetUisoEsd();
+    Row[5] = EValue.ToString();
+    Row.GetObject(5) = new StringCifCell(false);
+    Row[6] = A.GetOccu()*A.GetDegeneracy();
+    Row.GetObject(6) = new StringCifCell(false);
+    Row[7] = A.GetDegeneracy();
+    Row.GetObject(7) = new StringCifCell(false);
+    // process part as well
+    if( A.GetPart() != 0 )
+      Row[8] = (int)A.GetPart();
+    else
+      Row[8] = '.';
+    Row.GetObject(8) = new StringCifCell(false);
+    if( A.GetEllipsoid() != NULL )  {
+      A.GetEllipsoid()->GetQuad(Q, E);
+      GetAsymmUnit().UcartToUcif(Q);
+      TCifRow& Row1 = u_table.AddRow(EmptyString);
+      Row1[0] = A.GetLabel();  Row1.GetObject(0) = new AtomCifCell(&A);
+      for( int j=0; j < 6; j++ )  {
+        EValue.V() = Q[j];  EValue.E() = E[j];
+        Row1[j+1] = EValue.ToCStr();
+        Row1.GetObject(j+1) = new StringCifCell(false);
       }
     }
   }

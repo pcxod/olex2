@@ -1238,7 +1238,7 @@ ContentList TNetwork::GetContentList() const {
   }
   ContentList rv;
   for( size_t i=0; i < elms.Count(); i++ )
-    rv.AddNew(elms.GetKey(i)->symbol, elms.GetValue(i));
+    rv.AddNew(*elms.GetKey(i), elms.GetValue(i));
   return rv;
 }
 //..............................................................................

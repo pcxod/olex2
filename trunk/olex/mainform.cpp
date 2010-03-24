@@ -2036,7 +2036,7 @@ void TMainForm::AquireTooltipValue()  {
         TSAtomPList atoms;
         atoms.Add(((TXBond*)G)->Bond().A());
         atoms.Add(((TXBond*)G)->Bond().B());
-        TCifValue* cv = FXApp->XFile().GetLastLoader<TCif>().GetDataManager().Match(atoms);
+        ACifValue* cv = FXApp->XFile().GetLastLoader<TCif>().GetDataManager().Match(atoms);
         if( cv != NULL )
           Tooltip << cv->GetValue().ToString();
         else

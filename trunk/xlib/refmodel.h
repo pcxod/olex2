@@ -367,20 +367,20 @@ of components 1 ... m
   const olxstr GetUserContentStr() const {  
     olxstr rv;
     for( size_t i=0; i < UserContent.Count(); i++ )
-      rv << UserContent[i].GetA() << UserContent[i].GetB();
+      rv << UserContent[i].element.symbol << UserContent[i].count;
     return rv;
   }
   template <class StrLst> void SetUserContentType(const StrLst& sfac)  {
     UserContent.Clear();
     for( size_t i=0; i < sfac.Count(); i++ )
-      UserContent.AddNew(sfac[i], 0);
+      AddUserContent(sfac[i], 0);
   }
   template <class StrLst> void SetUserContent(const StrLst& sfac, const StrLst& unit)  {
     if( sfac.Count() != unit.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "UNIT/SFAC lists mismatch");
     UserContent.Clear();
     for( size_t i=0; i < sfac.Count(); i++ )
-      UserContent.AddNew(sfac[i], unit[i].ToDouble());
+      AddUserContent(sfac[i], unit[i].ToDouble());
   }
   void SetUserContent(const olxstr& sfac, const olxstr& unit)  {
     SetUserContent(TStrList(sfac, ' '), TStrList(unit, ' '));
@@ -392,16 +392,22 @@ of components 1 ... m
     if( UserContent.Count() != unit.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "UNIT/SFAC lists mismatch");
     for( size_t i=0; i < UserContent.Count(); i++ )
-      UserContent[i].SetB(unit[i].ToDouble());
+      UserContent[i].count = unit[i].ToDouble();
   }
   void AddUserContent(const olxstr& type, double amount=0)  {
-    UserContent.AddNew(type, amount);
+    const cm_Element* elm = XElementLib::FindBySymbol(type);
+    if( elm == NULL )
+      throw TInvalidArgumentException(__OlxSourceInfo, "element");
+    UserContent.AddNew(*elm, amount);
+  }
+  void AddUserContent(const cm_Element& elm, double amount=0)  {
+    UserContent.AddNew(elm, amount);
   }
   void SetUserFormula(const olxstr& frm, bool mult_z=true)  {
     UserContent.Clear();
     XElementLib::ParseElementString(frm, UserContent);
     for( size_t i=0; i < UserContent.Count(); i++ )
-      UserContent[i].B() *= (mult_z ? aunit.GetZ() : 1.0);
+      UserContent[i].count *= (mult_z ? aunit.GetZ() : 1.0);
   }
   // returns the restrained distance or -1
   double FindRestrainedDistance(const TCAtom& a1, const TCAtom& a2);
