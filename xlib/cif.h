@@ -79,43 +79,50 @@ public:
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
-class TCifValue : public IEObject  {
-  TTypeList<vec3d> MatrixTranslations;
-  TIntList MatrixIndexes;
-  TCAtomPList Atoms;
+class ACifValue : public IEObject  {
   TEValueD Value;
-protected:
-  olxstr FormatTranslation(const vec3d& v);
 public:
-  TCifValue()  {  }
-  virtual ~TCifValue()  {  }
+  ACifValue(const TEValueD& v) : Value(v)  {}
+  const TEValueD& GetValue() const {  return Value;  }
+  virtual bool Match(const TSAtomPList& atoms) const = 0;
+};
 
-  void AddAtom(TCAtom& A, const vec3d& Translation, int SymmIndex = 0 )  {
-    Atoms.Add(A);
-    MatrixIndexes.Add( SymmIndex );
-    MatrixTranslations.AddCCopy( Translation );
+class CifBond : public ACifValue {
+  const TCAtom &base, &to;
+  smatd mat;
+public:
+  CifBond(const TCAtom& _base, const TCAtom& _to, const smatd& _m, const TEValueD& _d) :
+    ACifValue(_d),
+    base(_base),
+    to(_to),
+    mat(_m)  {}
+  CifBond(const TCAtom& _base, const TCAtom& _to, const TEValueD& _d) :
+    ACifValue(_d),
+    base(_base),
+    to(_to)
+  {
+    mat.I();
   }
-  inline size_t Count() const {  return Atoms.Count();  }
-  inline int GetMatrixIndex(size_t index) const {  return MatrixIndexes[index];  }
-  inline TCAtom& GetAtom(size_t index) const {  return *Atoms[index];  }
-  inline const TEValueD& GetValue() const {  return Value;  }
-  void SetValue(const olxstr& v)  {  Value = v;  }
-  olxstr Format()  const;
+  bool DoesMatch(const TSAtom& a, const TSAtom& b) const;
+  virtual bool Match(const TSAtomPList& atoms) const {
+    if( atoms.Count() != 2 )  return false;
+    return DoesMatch(*atoms[0], *atoms[1]) || DoesMatch(*atoms[1], *atoms[0]);
+  }
 };
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
 class TCifDataManager  {
-  TTypeList<TCifValue> Items;
+  TTypeList<ACifValue> Items;
 public:
   TCifDataManager()  {}
   virtual ~TCifDataManager()  {}
-  TCifValue& NewValue()  {  return Items.AddNew();  }
+  ACifValue& AddValue(ACifValue* v)  {  return Items.Add(v);  }
   // finds a cif value for a list of TSATOMS(!)
-  TCifValue* Match(const TSAtomPList& Atoms) const;
+  ACifValue* Match(const TSAtomPList& Atoms) const;
   void Clear()  {  Items.Clear();  }
   size_t Count() const {  return Items.Count();  }
-  const TCifValue& Item(size_t index) const {  return Items[index];  }
+  const ACifValue& Item(size_t index) const {  return Items[index];  }
 };
 //---------------------------------------------------------------------------
 

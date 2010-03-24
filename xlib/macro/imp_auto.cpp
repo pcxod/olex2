@@ -90,7 +90,7 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
       TIns& ins = xapp.XFile().GetLastLoader<TIns>();
       const ContentList& cl = ins.GetRM().GetUserContent();
       for( size_t i=0; i < cl.Count(); i++ ) 
-        elm_l.Add(XElementLib::FindBySymbol(cl[i].GetA()));
+        elm_l.Add(cl[i].element);
     }    
   }
   TAutoDB::AnalysisStat stat;
@@ -158,10 +158,8 @@ void helper_CleanBaiList(TStrPObjList<olxstr,const cm_Element*>& list, SortedEle
     list.Clear();   
     const ContentList& cl = ins.GetRM().GetUserContent();
     for( size_t i=0; i < cl.Count(); i++ )  {
-      cm_Element* elm = XElementLib::FindBySymbol(cl[i].GetA()); 
-      if( elm == NULL )  continue;      
-      au_bais.Add(elm);
-      list.Add(cl[i].GetA(), elm);
+      au_bais.Add(&cl[i].element);
+      list.Add(cl[i].element.symbol, &cl[i].element);
     }
     list.QuickSort<Main_BaiComparator>();
   }
@@ -494,10 +492,9 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
     size_t ac = 0;
     const ContentList& cl = xapp.XFile().GetRM().GetUserContent();
     for( size_t i=0; i < cl.Count(); i++ )  {
-      cm_Element* elm = XElementLib::FindBySymbol(cl[i].GetA());
-      if( elm == NULL || *elm == iHydrogenZ )  continue;
-      sl.AddNew((int)cl[i].GetB(), elm);
-      ac += (int)cl[i].GetB();
+      if( cl[i].element == iHydrogenZ )  continue;
+      sl.AddNew((int)cl[i].count, &cl[i].element);
+      ac += (int)cl[i].count;
     }
     sl.QuickSorter.Sort<Main_SfacComparator>(sl);  // sorts ascending
     double auv = latt.GetUnitCell().CalcVolume()/latt.GetUnitCell().MatrixCount();

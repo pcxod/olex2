@@ -1153,47 +1153,51 @@ void XElementLib::ParseSimpleElementStr(const olxstr& str, TStrList& toks)  {
 }
 //..............................................................................
 void XElementLib::ExpandShortcut(const olxstr& sh, ContentList& res, double cnt)  {
-  TTypeList<AnAssociation2<olxstr, double> > shc;
+  ContentList shc;
   if( sh.Equalsi("Ph") )  {
-    shc.AddNew("C", 6);
-    shc.AddNew("H", 5);
+    shc.AddNew(XElementLib::GetByIndex(iCarbonIndex), 6);
+    shc.AddNew(XElementLib::GetByIndex(iHydrogenIndex), 5);
   }
   else if( sh.Equalsi("Py") )  {
-    shc.AddNew("C", 5);
-    shc.AddNew("N", 1);
-    shc.AddNew("H", 4);
+    shc.AddNew(XElementLib::GetByIndex(iCarbonIndex), 5);
+    shc.AddNew(XElementLib::GetByIndex(iNitrogenIndex), 1);
+    shc.AddNew(XElementLib::GetByIndex(iHydrogenIndex), 4);
   }
   else if( sh.Equalsi("Tf") )  {
-    shc.AddNew("C", 1);
-    shc.AddNew("S", 1);
-    shc.AddNew("O", 2);
-    shc.AddNew("F", 3);
+    shc.AddNew(XElementLib::GetByIndex(iCarbonIndex), 1);
+    shc.AddNew(XElementLib::GetByIndex(iSulphurIndex), 1);
+    shc.AddNew(XElementLib::GetByIndex(iOxygenIndex), 2);
+    shc.AddNew(XElementLib::GetByIndex(iFluorineIndex), 3);
   }
   else if( sh.Equalsi("Cp") )  {
-    shc.AddNew("C", 5);
-    shc.AddNew("H", 5);
+    shc.AddNew(XElementLib::GetByIndex(iCarbonIndex), 5);
+    shc.AddNew(XElementLib::GetByIndex(iHydrogenIndex), 5);
   }
   else if( sh.Equalsi("Me") )  {
-    shc.AddNew("C", 1);
-    shc.AddNew("H", 3);
+    shc.AddNew(XElementLib::GetByIndex(iCarbonIndex), 1);
+    shc.AddNew(XElementLib::GetByIndex(iHydrogenIndex), 3);
   }
   else if( sh.Equalsi("Et") )  {
-    shc.AddNew("C", 2);
-    shc.AddNew("H", 5);
+    shc.AddNew(XElementLib::GetByIndex(iCarbonIndex), 2);
+    shc.AddNew(XElementLib::GetByIndex(iHydrogenIndex), 5);
   }
   else if( sh.Equalsi("Bu") )  {
-    shc.AddNew("C", 4);
-    shc.AddNew("H", 9);
+    shc.AddNew(XElementLib::GetByIndex(iCarbonIndex), 4);
+    shc.AddNew(XElementLib::GetByIndex(iHydrogenIndex), 9);
   }
-  else    // just add whatever is provided
-    shc.AddNew(sh, 1);
+  else  {  // just add whatever is provided
+    cm_Element* elm = XElementLib::FindBySymbol(sh);
+    if( elm == NULL )
+      throw TInvalidArgumentException(__OlxSourceInfo, "element/shortcut");
+    shc.AddNew(*elm, 1);
+  }
 
   for( size_t i=0; i < shc.Count(); i++ )  {
-    shc[i].B() *= cnt;
+    shc[i].count *= cnt;
     bool found = false;
     for( size_t j=0; j < res.Count(); j++ )  {
-      if( res[j].GetA().Equalsi(shc[i].GetA()) )  {
-        res[j].B() += shc[i].GetB();
+      if( res[j].element == shc[i].element )  {
+        res[j] += shc[i];
         found = true;
         break;
       }
@@ -1207,9 +1211,7 @@ ContentList& XElementLib::SortContentList(ContentList& cl)  {
   const cm_Element *c_type = NULL, *h_type = NULL;
   ElementPList elms;
   for( size_t i=0; i < cl.Count(); i++ )  {
-    elms.Add(FindBySymbol(cl[i].GetA()));
-    if( elms.Last() == NULL )
-      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: ") << cl[i].GetA());
+    elms.Add(cl[i].element);
     if( *elms.Last() == iCarbonZ )
       c_type = elms.Last();
     else if( *elms.Last() == iHydrogenZ )

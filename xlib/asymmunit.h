@@ -169,14 +169,12 @@ public:
   TEllipsoid& NewEllp();  // initialisation performed manually !
 
   vec3d GetOCenter(bool IncludeQ, bool IncludeH) const;
+  // returns properly sorted content list
+  ContentList GetContentList(double mult=1.0) const;
   /* returns summarised formula of the asymmetric unit, use MutiplyZ to multiply the
      content by Z
   */
   olxstr SummFormula(const olxstr &Sep, bool MultiplyZ=true) const;
-  /* creates a SFAC/UNIT strings; BasicAtoms is filled with atom labels constituting the
-   asymmertic unit; see example in TIns::SaveToFile
-  */
-  void SummFormula(TStrPObjList<olxstr,const cm_Element*>& BasicAtoms, olxstr& Elements, olxstr& Numbers, bool MultiplyZ=true) const;
   /* returns molecular weight of the asymmetric unit */
   double MolWeight() const;
   size_t CountElements(const olxstr& Symbol) const;

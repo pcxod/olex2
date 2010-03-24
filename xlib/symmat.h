@@ -27,7 +27,7 @@ public:
   }
   
   inline TSymmMat<MC,VC> operator * (const TSymmMat<MC,VC>& v) const {
-    return TSymmMat<MC,VC>(r*v.r, v*t);
+    return TSymmMat<MC,VC>(v.r*r, v*t);
   }
 
   inline TSymmMat<MC,VC>& operator *= (const TSymmMat<MC,VC>& v)  {

@@ -1620,53 +1620,27 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
   double Zp = Cmds.IsEmpty() ? 1 : Cmds[0].ToDouble();
   if( Zp <= 0 )  Zp = 1;
   TXApp::GetInstance().XFile().UpdateAsymmUnit();
-  ElementPList content;
-  TDoubleList counts;
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
+  ContentList content = au.GetContentList();
   double nhc = 0;
-  const cm_Element *cBai = NULL, *hBai = NULL;
-  for( size_t i=0; i < au.AtomCount(); i++ )  {
-    TCAtom& ca = au.GetAtom(i);
-    const cm_Element& elm = ca.GetType();
-    if( ca.IsDeleted() || elm == iQPeakZ )  continue;
-    if( elm.GetMr() > 3.5 )
-      nhc += ca.GetOccu();
-    size_t ind = content.IndexOf(elm);
-    if( ind == InvalidIndex )  {
-      content.Add(elm);
-      counts.Add(ca.GetOccu());
-      if( cBai == NULL && elm == iCarbonZ )    cBai = &elm;
-      if( hBai == NULL && elm == iHydrogenZ )  hBai = &elm;
-    }
-    else
-      counts[ind] += ca.GetOccu();
+  for( size_t i=0; i < content.Count(); i++ )  {
+    if( content[i].element != iHydrogenZ )
+      nhc += content[i].count;
   }
   int Z_est = olx_round(au.EstimateZ(nhc));
   int Z = olx_max(olx_round(Z_est*Zp), 1);
   au.SetZ(Z);
   TBasicApp::GetLog() << (olxstr("for Z'=") << olxstr::FormatFloat(2, Zp).TrimFloat() <<
     " and " << nhc << " non hydrogen atoms Z is estimated to be " << Z << '\n');
-  olxstr sfac, unit, n_c;
-  content.QuickSorter.SyncSort<ElementPSymbolSorter>(content, counts);
-  if( cBai != NULL && content.Count() > 1 )  {
-    size_t ind = content.IndexOf(cBai);
-    content.Move(ind, 0);
-    counts.Move(ind, 0);
-  }
-  if( hBai != NULL && content.Count() > 2 )  {
-    size_t ind = content.IndexOf(hBai);
-    content.Move(ind, 1);
-    counts.Move(ind, 1);
-  }
-  ContentList new_content;
+  olxstr n_c;
   for( size_t i=0; i < content.Count(); i++ )  {
-    new_content.AddNew(content[i]->symbol, counts[i]*Z_est);
-    n_c << content[i]->symbol << olxstr::FormatFloat(3,counts[i]/Zp).TrimFloat();
+    n_c << content[i].element.symbol << olxstr::FormatFloat(3,content[i].count/Zp).TrimFloat();
     if( (i+1) < content.Count() )
       n_c << ' ';
+    content[i].count *= Z_est;
   }
   TBasicApp::GetLog() << "New content is: " << n_c << '\n';
-  TXApp::GetInstance().XFile().GetRM().SetUserContent(new_content);
+  TXApp::GetInstance().XFile().GetRM().SetUserContent(content);
 }
 //..............................................................................
 void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -1674,12 +1648,10 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options, TMacro
   const ContentList& content = rm.GetUserContent();
   const double en = rm.expl.GetRadiationEnergy();
   for( size_t i=0; i < content.Count(); i++ )  {
-    XDispersion* xd = rm.FindDispData(content[i].GetA());
-    cm_Element* ce = XElementLib::FindBySymbol(content[i].GetA());
-    if( ce == NULL )  continue;
+    XDispersion* xd = rm.FindDispData(content[i].element.symbol);
     if( xd == NULL )  {
-      compd fpfdp = ce->CalcFpFdp(en) - ce->z;
-      rm.AddDisp(content[i].GetA(), fpfdp.GetRe(), fpfdp.GetIm());
+      compd fpfdp = content[i].element.CalcFpFdp(en) - content[i].element.z;
+      rm.AddDisp(content[i].element.symbol, fpfdp.GetRe(), fpfdp.GetIm());
     }
     else
       ;//xd->fpfdp =  ce->CalcFpFdp(en);

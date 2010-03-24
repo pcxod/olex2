@@ -408,11 +408,10 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
   const ContentList& content = GetRM().GetUserContent();
   olxstr rv;
   for( size_t i=0; i < content.Count(); i++) {
-    rv << content[i].GetA().SubStringTo(1).UpperCase();
-    rv << content[i].GetA().SubStringFrom(1).LowerCase();
+    rv << content[i].element.symbol;
     if( list )  rv << ':';
     bool subAdded = false;
-    const double dv = content[i].GetB()/GetAsymmUnit().GetZ();
+    const double dv = content[i].count/GetAsymmUnit().GetZ();
     olxstr tmp = (digits > 0) ? olxstr::FormatFloat(digits, dv) : olxstr(dv);
     if( tmp.IndexOf('.') != InvalidIndex )
       tmp.TrimFloat();
@@ -456,7 +455,10 @@ void TXFile::LibSetFormula(const TStrObjList& Params, TMacroError& E) {
         E.ProcessingError(__OlxSrcInfo, "invalid formula syntax" );
         return;
       }
-      content.AddNew(toks[i].SubStringTo(ind), toks[i].SubStringFrom(ind+1).ToDouble()*GetAsymmUnit().GetZ());
+      const cm_Element* elm = XElementLib::FindBySymbol(toks[i].SubStringTo(ind));
+      if( elm == NULL )
+        throw TInvalidArgumentException(__OlxSourceInfo, "element");
+      content.AddNew(*elm, toks[i].SubStringFrom(ind+1).ToDouble()*GetAsymmUnit().GetZ());
     }
     if( content.IsEmpty() )  {
       E.ProcessingError(__OlxSrcInfo, "empty SFAC - check formula syntax");
