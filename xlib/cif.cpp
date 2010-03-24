@@ -842,15 +842,17 @@ void TCif::Initialize()  {
   if( ALoop == NULL )  return;
 
   size_t ALabel =  ALoop->GetTable().ColIndex("_atom_site_label");
-  size_t ACx =     ALoop->GetTable().ColIndex("_atom_site_fract_x");
-  size_t ACy =     ALoop->GetTable().ColIndex("_atom_site_fract_y");
-  size_t ACz =     ALoop->GetTable().ColIndex("_atom_site_fract_z");
+  size_t ACi[] = {
+    ALoop->GetTable().ColIndex("_atom_site_fract_x"),
+    ALoop->GetTable().ColIndex("_atom_site_fract_y"),
+    ALoop->GetTable().ColIndex("_atom_site_fract_z")
+  };
   size_t ACUiso =  ALoop->GetTable().ColIndex("_atom_site_U_iso_or_equiv");
   size_t ASymbol = ALoop->GetTable().ColIndex("_atom_site_type_symbol");
   size_t APart   = ALoop->GetTable().ColIndex("_atom_site_disorder_group");
   size_t SiteOccu = ALoop->GetTable().ColIndex("_atom_site_occupancy");
   size_t Degen = ALoop->GetTable().ColIndex("_atom_site_symmetry_multiplicity");
-  if( (ALabel|ACx|ACy|ACz|ASymbol) == InvalidIndex )  {
+  if( (ALabel|ACi[0]|ACi[1]|ACi[2]|ASymbol) == InvalidIndex )  {
     TBasicApp::GetLog().Error("Failed to locate required fields in atoms loop");
     return;
   }
@@ -861,21 +863,26 @@ void TCif::Initialize()  {
     if( type == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Undefined element: ") << ALoop->GetTable()[i][ASymbol]);
     A.SetType(*type);
-    EValue = ALoop->GetTable()[i][ACx];
-    A.ccrd()[0] = EValue.GetV();  A.ccrdEsd()[0] = EValue.GetE();
-    EValue = ALoop->GetTable()[i][ACy];
-    A.ccrd()[1] = EValue.GetV();  A.ccrdEsd()[1] = EValue.GetE();
-    EValue = ALoop->GetTable()[i][ACz];
-    A.ccrd()[2] = EValue.GetV();  A.ccrdEsd()[2] = EValue.GetE();
+    for( int j=0; j < 3; j++ )  {
+      EValue = ALoop->GetTable()[i][ACi[j]];
+      A.ccrd()[j] = EValue.GetV();  A.ccrdEsd()[j] = EValue.GetE();
+      if( EValue.GetE() == 0 )
+        GetRM().Vars.FixParam(A, catom_var_name_X+j);
+    }
     if( ACUiso != InvalidIndex )    {
       EValue = ALoop->GetTable()[i][ACUiso];
       A.SetUisoEsd(EValue.GetE());
       A.SetUiso(EValue.GetV());
+      if( EValue.GetE() == 0 )  GetRM().Vars.FixParam(A, catom_var_name_Uiso);
     }
     if( APart != InvalidIndex && ALoop->GetTable()[i][APart].IsNumber() )
       A.SetPart(ALoop->GetTable()[i][APart].ToInt());
-    if( SiteOccu != InvalidIndex )
-      A.SetOccu(ALoop->GetTable()[i][SiteOccu].ToDouble());
+    if( SiteOccu != InvalidIndex )  {
+      EValue = ALoop->GetTable()[i][SiteOccu];
+      A.SetOccu(EValue.GetV());
+      A.SetOccuEsd(EValue.GetE());
+      if( EValue.GetE() == 0 )  GetRM().Vars.FixParam(A, catom_var_name_Sof);
+    }
     if( Degen != InvalidIndex )
       A.SetOccu(A.GetOccu()/ALoop->GetTable()[i][Degen].ToDouble());
     ALoop->SetData(i, ALabel, new AtomCifCell(&A));
@@ -898,23 +905,24 @@ void TCif::Initialize()  {
   ALoop = FindLoop("_atom_site_aniso");
   if( ALoop == NULL )  return;
   ALabel =  ALoop->GetTable().ColIndex("_atom_site_aniso_label");
-  size_t U11 = ALoop->GetTable().ColIndex("_atom_site_aniso_U_11");
-  size_t U22 = ALoop->GetTable().ColIndex("_atom_site_aniso_U_22");
-  size_t U33 = ALoop->GetTable().ColIndex("_atom_site_aniso_U_33");
-  size_t U23 = ALoop->GetTable().ColIndex("_atom_site_aniso_U_23");
-  size_t U13 = ALoop->GetTable().ColIndex("_atom_site_aniso_U_13");
-  size_t U12 = ALoop->GetTable().ColIndex("_atom_site_aniso_U_12");
-  if( (ALabel|U11|U22|U33|U23|U13|U12) != InvalidIndex )  {
+  size_t Ui[] = {
+    ALoop->GetTable().ColIndex("_atom_site_aniso_U_11"),
+    ALoop->GetTable().ColIndex("_atom_site_aniso_U_22"),
+    ALoop->GetTable().ColIndex("_atom_site_aniso_U_33"),
+    ALoop->GetTable().ColIndex("_atom_site_aniso_U_23"),
+    ALoop->GetTable().ColIndex("_atom_site_aniso_U_13"),
+    ALoop->GetTable().ColIndex("_atom_site_aniso_U_12")
+  };
+  if( (ALabel|Ui[0]|Ui[1]|Ui[2]|Ui[3]|Ui[4]|Ui[5]) != InvalidIndex )  {
     for( size_t i=0; i < ALoop->GetTable().RowCount(); i++ )  {
       TCAtom* A = GetAsymmUnit().FindCAtom( ALoop->GetTable()[i][ALabel] );
       if( A == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, olxstr("wrong atom in the aniso loop ") << ALabel);
-      EValue = ALoop->GetTable()[i][U11];  Q[0] = EValue.GetV();  E[0] = EValue.GetE();
-      EValue = ALoop->GetTable()[i][U22];  Q[1] = EValue.GetV();  E[1] = EValue.GetE();
-      EValue = ALoop->GetTable()[i][U33];  Q[2] = EValue.GetV();  E[2] = EValue.GetE();
-      EValue = ALoop->GetTable()[i][U23];  Q[3] = EValue.GetV();  E[3] = EValue.GetE();
-      EValue = ALoop->GetTable()[i][U13];  Q[4] = EValue.GetV();  E[4] = EValue.GetE();
-      EValue = ALoop->GetTable()[i][U12];  Q[5] = EValue.GetV();  E[5] = EValue.GetE();
+      for( int j=0; j < 6; j++ )  {
+        EValue = ALoop->GetTable()[i][Ui[j]];  Q[j] = EValue.GetV();  E[j] = EValue.GetE();
+        if( EValue.GetE() == 0 )
+          GetRM().Vars.FixParam(*A, catom_var_name_U11+j);
+      }
       GetAsymmUnit().UcifToUcart(Q);
       A->AssignEllp(&GetAsymmUnit().NewEllp().Initialise(Q, E));
     }
@@ -1004,10 +1012,7 @@ TCifLoop& TCif::GetPublicationInfoLoop()  {
 //..............................................................................
 bool TCif::Adopt(TXFile& XF)  {
   Clear();
-  olxstr Param;
-  TEValueD EValue;
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
-
   GetRM().Assign(XF.GetRM(), true);
   GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
   Title = "OLEX2_EXP";
@@ -1022,8 +1027,7 @@ bool TCif::Adopt(TXFile& XF)  {
   AddParam("_cell_angle_gamma", GetAsymmUnit().Angles()[2].ToString(), false);
 
   AddParam("_chemical_formula_sum", GetAsymmUnit().SummFormula(' ', false), true);
-  Param = GetAsymmUnit().MolWeight();
-  AddParam("_chemical_formula_weight", Param, false);
+  AddParam("_chemical_formula_weight", olxstr(GetAsymmUnit().MolWeight()), false);
 
   TSpaceGroup& sg = XF.GetLastLoaderSG();
   AddParam("_cell_formula_units_Z", XF.GetAsymmUnit().GetZ(), false);
@@ -1070,14 +1074,12 @@ bool TCif::Adopt(TXFile& XF)  {
     Row[0] = A.GetLabel();  Row.GetObject(0) = new AtomCifCell(&A);
     Row[1] = A.GetType().symbol;  Row.GetObject(1) = new StringCifCell(false);
     for( int j=0; j < 3; j++ )  {
-      EValue.V() = A.ccrd()[j];  EValue.E() = A.ccrdEsd()[j];
-      Row[j+2] = EValue.ToCStr();
+      Row[j+2] = TEValueD(A.ccrd()[j], A.ccrdEsd()[j]).ToString();
       Row.GetObject(j+2) = new StringCifCell(false);
     }
-    EValue.V() = A.GetUiso();  EValue.E() = A.GetUisoEsd();
-    Row[5] = EValue.ToString();
+    Row[5] = TEValueD(A.GetUiso(), A.GetUisoEsd()).ToString();
     Row.GetObject(5) = new StringCifCell(false);
-    Row[6] = A.GetOccu()*A.GetDegeneracy();
+    Row[6] = TEValueD(A.GetOccu()*A.GetDegeneracy(), A.GetOccuEsd()).ToString();
     Row.GetObject(6) = new StringCifCell(false);
     Row[7] = A.GetDegeneracy();
     Row.GetObject(7) = new StringCifCell(false);
@@ -1093,8 +1095,7 @@ bool TCif::Adopt(TXFile& XF)  {
       TCifRow& Row1 = u_table.AddRow(EmptyString);
       Row1[0] = A.GetLabel();  Row1.GetObject(0) = new AtomCifCell(&A);
       for( int j=0; j < 6; j++ )  {
-        EValue.V() = Q[j];  EValue.E() = E[j];
-        Row1[j+1] = EValue.ToCStr();
+        Row1[j+1] = TEValueD(Q[j], E[j]).ToString();
         Row1.GetObject(j+1) = new StringCifCell(false);
       }
     }

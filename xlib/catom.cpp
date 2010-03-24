@@ -28,7 +28,7 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   FParent = Parent;
   EllpId = ~0;
   Uiso = caDefIso;
-  UisoEsd = 0;
+  OccuEsd = UisoEsd = 0;
   UisoScale = 0;
   UisoOwner = NULL;
   FragmentId = ~0;
@@ -93,13 +93,15 @@ void TCAtom::Assign(const TCAtom& S)  {
     DependentHfixGroups = NULL;
   }
   ExyzGroup = NULL;  // also managed by the group
-  SetPart( S.GetPart() );
-  SetOccu( S.GetOccu() );
-  SetQPeak( S.GetQPeak() );
-  SetResiId( S.GetResiId() );
-  SetSameId( S.GetSameId() );
+  SetPart(S.GetPart());
+  SetOccu(S.GetOccu());
+  SetOccuEsd(S.GetOccuEsd());
+  SetQPeak(S.GetQPeak());
+  SetResiId(S.GetResiId());
+  SetSameId(S.GetSameId());
   EllpId = S.EllpId;
-  SetUiso( S.GetUiso() );
+  SetUiso(S.GetUiso());
+  SetUisoEsd(S.GetUisoEsd());
   SetUisoScale( S.GetUisoScale() );
   if( S.UisoOwner != NULL )  {
     UisoOwner = FParent->FindCAtomById(S.UisoOwner->GetId());
@@ -119,7 +121,6 @@ void TCAtom::Assign(const TCAtom& S)  {
   Center = S.Center;
   Esd = S.Esd;
   Degeneracy = S.GetDegeneracy();
-  UisoEsd = S.GetUisoEsd();
   Flags = S.Flags;
 }
 //..............................................................................
@@ -157,7 +158,7 @@ void TCAtom::ToDataItem(TDataItem& item) const  {
   item.AddField("label", Label);
   item.AddField("type", Type->symbol);
   item.AddField("part", (int)Part);
-  item.AddField("sof", Occu);
+  item.AddField("sof", TEValue<double>(Occu, OccuEsd).ToString());
   item.AddField("flags", Flags);
   item.AddField("x", TEValue<double>(Center[0], Esd[0]).ToString());
   item.AddField("y", TEValue<double>(Center[1], Esd[1]).ToString());
@@ -185,7 +186,7 @@ PyObject* TCAtom::PyExport()  {
   PythonExt::SetDictItem(main, "label", PythonExt::BuildString(Label));
   PythonExt::SetDictItem(main, "type", PythonExt::BuildString(Type->symbol));
   PythonExt::SetDictItem(main, "part", Py_BuildValue("i", Part));
-  PythonExt::SetDictItem(main, "occu", Py_BuildValue("d", Occu));
+  PythonExt::SetDictItem(main, "occu", Py_BuildValue("(dd)", Occu, OccuEsd));
   PythonExt::SetDictItem(main, "tag", Py_BuildValue("i", GetTag()));
   PythonExt::SetDictItem(main, "crd", 
     Py_BuildValue("(ddd)(ddd)", Center[0], Center[1], Center[2], Esd[0], Esd[1], Esd[2]));
@@ -209,11 +210,12 @@ void TCAtom::FromDataItem(TDataItem& item)  {
   Type = XElementLib::FindBySymbol(item.GetRequiredField("type"));
   if( Type == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid atom type");
+  TEValue<double> ev;
   Label = item.GetRequiredField("label");
   Part = item.GetRequiredField("part").ToInt();
-  Occu = item.GetRequiredField("sof").ToDouble();
+  ev = item.GetRequiredField("sof");
+  Occu = ev.GetV();  OccuEsd = ev.GetE();
   Flags = item.GetRequiredField("flags").ToInt();
-  TEValue<double> ev;
   ev = item.GetRequiredField("x");
   Center[0] = ev.GetV();  Esd[0] = ev.GetE();
   ev = item.GetRequiredField("y");
@@ -228,8 +230,7 @@ void TCAtom::FromDataItem(TDataItem& item)  {
       throw TInvalidArgumentException(__OlxSourceInfo, "6 parameters expected for the ADP");
     for( int i=0; i < 6; i++ )  {
       ev = adp->GetField(i);
-      E[i] = ev.GetE();
-      Q[i] = ev.GetV();
+      E[i] = ev.GetE();  Q[i] = ev.GetV();
     }
     EllpId = FParent->NewEllp().Initialise(Q,E).GetId();
     Uiso = GetEllipsoid()->GetUiso();
@@ -237,8 +238,7 @@ void TCAtom::FromDataItem(TDataItem& item)  {
   else  {
     EllpId = InvalidIndex;
     ev = item.GetRequiredField("Uiso");
-    Uiso = ev.V();
-    UisoEsd = ev.E();
+    Uiso = ev.GetV();  UisoEsd = ev.GetE();
   }
   if( *Type == iQPeakZ )
     QPeak = item.GetRequiredField("peak").ToDouble();
