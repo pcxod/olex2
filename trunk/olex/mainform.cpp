@@ -1814,7 +1814,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
       T << ": " << olxstr::FormatFloat(3, XA->Atom().CAtom().GetQPeak());
     }
     else 
-      T << " Occu: " << olxstr::FormatFloat(3, XA->Atom().CAtom().GetOccu());
+      T << " Occu: " << TEValueD(XA->Atom().CAtom().GetOccu(), XA->Atom().CAtom().GetOccuEsd()).ToString();
     miAtomInfo->SetText(T.u_str());
     pmAtom->Enable(ID_AtomGrow, FXApp->AtomExpandable(XA));
     pmAtom->Enable(ID_Selection, G->IsSelected());
@@ -2027,7 +2027,19 @@ void TMainForm::AquireTooltipValue()  {
         Tooltip << "fixed): ";
       else
         Tooltip << "free): ";
-      Tooltip << olxstr::FormatFloat(3, xa.Atom().CAtom().GetOccu());
+      Tooltip << TEValueD(ca.GetOccu(), ca.GetOccuEsd()).ToString();
+      if( ca.GetEllipsoid() == NULL )  {
+        Tooltip << "\nUiso (";
+        if( ca.GetVarRef(catom_var_name_Uiso) != NULL && 
+          ca.GetVarRef(catom_var_name_Uiso)->relation_type == relation_None )
+          Tooltip << "fixed): " << olxstr::FormatFloat(3, ca.GetUiso());
+        else if( ca.GetUisoOwner() != NULL )
+          Tooltip << "riding): " << olxstr::FormatFloat(3, ca.GetUiso());
+        else
+          Tooltip << "free): " << TEValueD(ca.GetUiso(), ca.GetUisoEsd()).ToString();
+      }
+      else
+        Tooltip << "\nUeq " << olxstr::FormatFloat(3, ca.GetUiso());
     }
     else  if( EsdlInstanceOf( *G, TXBond) )  {
       Tooltip = ((TXBond*)G)->Bond().A().GetLabel();

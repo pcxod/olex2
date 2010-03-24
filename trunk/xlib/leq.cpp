@@ -228,6 +228,8 @@ double XVarManager::SetParam(IXVarReferencer& ca, short var_index, double val) {
 }
 //.................................................................................................
 void XVarManager::FixParam(IXVarReferencer& ca, short var_index) {
+  if( Vars.IsEmpty() )  // this is to fix states when vars are not defined (like while reading CIF)
+    NewVar(1.0).SetId(0);
   AddVarRef(Vars[0], ca, var_index, relation_None, 1);
 }
 //.................................................................................................

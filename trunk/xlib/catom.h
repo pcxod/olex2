@@ -55,10 +55,12 @@ private:
     ResiId;
   uint16_t SameId, Flags;
   int8_t Part;
-  double  Occu;     // occupancy and its variable
-  double  Uiso, // isotropic thermal parameter; use it when Ellipsoid = NULL
+  double
+    Occu,     // occupancy and its variable
+    OccuEsd,
+    Uiso, // isotropic thermal parameter; use it when Ellipsoid = NULL
+    UisoEsd,
     QPeak,      // if atom is a peak atom - this is not 0
-    UisoEsd,    //
     UisoScale;  // for proxied Uiso (depending on the UisoOwner, this defines the scaled value
   TCAtom* UisoOwner;  // the Uiso owner, if any
   vec3d Center, Esd;  // fractional coordinates and esds
@@ -152,6 +154,7 @@ public:
     DependentHfixGroups->Add(&hg);
   }
   DefPropP(double, Occu)
+  DefPropP(double, OccuEsd)
   DefPropP(double, Uiso)
   DefPropP(double, UisoEsd)
   DefPropP(double, UisoScale)
