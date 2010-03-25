@@ -2031,8 +2031,11 @@ void TMainForm::AquireTooltipValue()  {
       if( ca.GetEllipsoid() == NULL )  {
         Tooltip << "\nUiso (";
         if( ca.GetVarRef(catom_var_name_Uiso) != NULL && 
-          ca.GetVarRef(catom_var_name_Uiso)->relation_type == relation_None )
+          ca.GetVarRef(catom_var_name_Uiso)->relation_type == relation_None &&
+          ca.GetUisoOwner() == NULL)
+        {
           Tooltip << "fixed): " << olxstr::FormatFloat(3, ca.GetUiso());
+        }
         else if( ca.GetUisoOwner() != NULL )
           Tooltip << "riding): " << olxstr::FormatFloat(3, ca.GetUiso());
         else
