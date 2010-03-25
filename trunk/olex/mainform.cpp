@@ -2045,14 +2045,12 @@ void TMainForm::AquireTooltipValue()  {
       Tooltip = ((TXBond*)G)->Bond().A().GetLabel();
       Tooltip << '-' << ((TXBond*)G)->Bond().B().GetLabel() << ": ";
       if( FXApp->CheckFileType<TCif>() )  {
-        TSAtomPList atoms;
-        atoms.Add(((TXBond*)G)->Bond().A());
-        atoms.Add(((TXBond*)G)->Bond().B());
-        ACifValue* cv = FXApp->XFile().GetLastLoader<TCif>().GetDataManager().Match(atoms);
+        TSBond& sb = ((TXBond*)G)->Bond();
+        ACifValue* cv = FXApp->XFile().GetLastLoader<TCif>().GetDataManager().Match(sb.A(), sb.B());
         if( cv != NULL )
           Tooltip << cv->GetValue().ToString();
         else
-          Tooltip << olxstr::FormatFloat(3, ((TXBond*)G)->Bond().Length());
+          Tooltip << olxstr::FormatFloat(3, sb.Length());
       }
       else
         Tooltip << olxstr::FormatFloat(3, ((TXBond*)G)->Bond().Length());

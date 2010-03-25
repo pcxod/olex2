@@ -2,16 +2,9 @@
 #define __olx_xl_xfiles_H
 #include "xbase.h"
 #include "symmlib.h"
-
 #include "refmodel.h"
 #include "lattice.h"
-
 BeginXlibNamespace()
-
-// linked loop sort type
-const short slltLength = 0x0001,  // sorts by bond length
-            slltName   = 0x0002,  // sorts by atom name
-            slltMw     = 0x0004;  // sorts by atom moleculr weight
 
 class TBasicCFile: public ACollectionItem  {
 private:

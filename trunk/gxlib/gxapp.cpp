@@ -34,6 +34,7 @@
 #include "estopwatch.h"
 #include "pers_util.h"
 #include "planesort.h"
+#include "cif.h"
 
 #ifdef __WXWIDGETS__
   #include "wxglscene.h"
@@ -784,10 +785,19 @@ olxstr TGXApp::GetSelectionInfo()  {
       if( EsdlInstanceOf(Sel[0], TXAtom) &&
         EsdlInstanceOf(Sel[1], TXAtom) )
       {
+        TSAtom &a1 = ((TXAtom&)Sel[0]).Atom(),
+          &a2 = ((TXAtom&)Sel[1]).Atom();
         Tmp = "Distance (";
-        Tmp << macSel_GetName2(((TXAtom&)Sel[0]).Atom(), ((TXAtom&)Sel[1]).Atom());
-        v = ((TXAtom&)Sel[0]).Atom().crd().DistanceTo( ((TXAtom&)Sel[1]).Atom().crd() );
-        Tmp << "): " << olxstr::FormatFloat(3, v);
+        Tmp << macSel_GetName2(a1, a2) << "): ";
+        if( CheckFileType<TCif>() )  {
+          ACifValue* cv = XFile().GetLastLoader<TCif>().GetDataManager().Match(a1, a2);
+          if( cv != NULL )
+            Tmp << cv->GetValue().ToString();
+          else
+            Tmp << olxstr::FormatFloat(3, a1.crd().DistanceTo(a2.crd()));
+        }
+        else
+          Tmp << olxstr::FormatFloat(3, a1.crd().DistanceTo(a2.crd()));
       }
       else if( EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXBond) )  {
         TXBond& A = (TXBond&)Sel[0], &B =(TXBond&)Sel[1];
@@ -916,9 +926,17 @@ olxstr TGXApp::GetSelectionInfo()  {
           TSAtom &a1 = ((TXAtom&)Sel[0]).Atom(),
             &a2 = ((TXAtom&)Sel[1]).Atom(),
             &a3 = ((TXAtom&)Sel[2]).Atom();
-          Tmp = "Angle (";
-          Tmp << macSel_GetName3(a1, a2, a3)<< "): " << 
-            olxstr::FormatFloat(3, Angle(a1.crd(), a2.crd(), a3.crd()));
+        Tmp = "Angle (";
+        Tmp << macSel_GetName3(a1, a2, a3)<< "): ";
+        if( CheckFileType<TCif>() )  {
+          ACifValue* cv = XFile().GetLastLoader<TCif>().GetDataManager().Match(a1, a2, a3);
+          if( cv != NULL )
+            Tmp << cv->GetValue().ToString();
+          else
+            Tmp << olxstr::FormatFloat(3, Angle(a1.crd(), a2.crd(), a3.crd()));
+        }
+        else
+          Tmp << olxstr::FormatFloat(3, Angle(a1.crd(), a2.crd(), a3.crd()));
       }
       else if( EsdlInstanceOf(Sel[0], TXPlane) &&
         EsdlInstanceOf(Sel[1], TXPlane) &&
