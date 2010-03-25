@@ -1,4 +1,5 @@
 #include "vcov.h"
+#include "refmodel.h"
 
 void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   Clear();
@@ -10,8 +11,6 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       TBasicApp::GetLog() << "The mat file is possibly out of date\n";
   }
   TCStrList sl, toks;
-  static const olxcstr sof("sof"), 
-    u11("U11"), u22("U22"), u33("U33"), u23("U23"), u13("U13"), u12("U12");
   sl.LoadFromFile(fileName);
   if( sl.Count() < 10 )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid file content");
@@ -31,7 +30,25 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
         continue;
       throw TFunctionFailedException(__OlxSourceInfo, "invalid matrix file");
     }
-    if( toks[4].Equalsi("BASF") )  continue;
+    if( toks[4].Equals("BASF") )  continue;
+    if( toks[4].StartsFrom("FVAR") )  {
+      if( toks.Count() != 6 )  continue;
+      size_t var_ind = toks[5].ToSizeT();
+      if( au.GetRefMod()->Vars.VarCount() < var_ind ) 
+        throw TFunctionFailedException(__OlxSourceInfo, "model does not relate to the matrix file");
+      XVar& var = au.GetRefMod()->Vars.GetVar(var_ind-1);
+      const double esd = toks[2].ToDouble();
+      for( size_t j=0; j < var.RefCount(); j++ )  {
+        XVarReference& r = var.GetRef(j);
+        if( !EsdlInstanceOf(r.referencer, TCAtom) )  continue;
+        TCAtom& ca = (TCAtom&)r.referencer;
+        if( r.var_index == catom_var_name_Sof )
+          ca.SetOccuEsd(esd);
+        else if( r.var_index == catom_var_name_Uiso )
+          ca.SetUisoEsd(esd);
+      }
+      continue;
+    }
     if( last_atom_name != toks[5] )  {
       atom = au.FindCAtom(toks[5]);
       last_atom_name = toks[5];
@@ -56,26 +73,27 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       Index.AddNew(toks[5], vcoviZ, -1);
       indexes.Add(i);
     }
-    else if( toks[4] == sof )  {
+    else if( toks[4] == "sof" )  {
       diag.Add(toks[2].ToDouble());
+      atom->SetOccuEsd(diag.Last());
       Index.AddNew(toks[5], vcoviO , -1);
       indexes.Add(i);
     }
-    else if( toks[4] == u11 )  {
+    else if( toks[4] == "U11" )  {
       if( atom->GetEllipsoid() != NULL )
         atom->GetEllipsoid()->SetEsd(0, toks[2].ToDouble());
       else
         atom->SetUisoEsd(toks[2].ToDouble());
     }
-    else if( toks[4] == u22 )
+    else if( toks[4] == "U22" )
       atom->GetEllipsoid()->SetEsd(1, toks[2].ToDouble());
-    else if( toks[4] == u33 )
+    else if( toks[4] == "U33" )
       atom->GetEllipsoid()->SetEsd(2, toks[2].ToDouble());
-    else if( toks[4] == u23 )
+    else if( toks[4] == "U23" )
       atom->GetEllipsoid()->SetEsd(3, toks[2].ToDouble());
-    else if( toks[4] == u13 )
+    else if( toks[4] == "U13" )
       atom->GetEllipsoid()->SetEsd(4, toks[2].ToDouble());
-    else if( toks[4] == u12 )
+    else if( toks[4] == "U12" )
       atom->GetEllipsoid()->SetEsd(5, toks[2].ToDouble());
   }
   TDoubleList all_vcov( (cnt+1)*cnt/2);
