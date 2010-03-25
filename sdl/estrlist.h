@@ -12,7 +12,7 @@
 #undef GetObject
 
 BeginEsdlNamespace()
-  class TEFile;
+class TEFile;
 template <class SC> struct TSingleStringWrapper  {
   SC String;
   TSingleStringWrapper() {  }
@@ -442,7 +442,7 @@ public:
 
   TTOStringList& SubList(size_t offset, size_t count, TTOStringList& SL) const  {
     for( size_t i=offset; i < offset+count; i++ )
-      SL.Add( PList::GetString(i), GetObject(i));
+      SL.Add(PList::GetString(i), GetObject(i));
     return SL;
   }
 
@@ -473,10 +473,16 @@ public:
       Add(S[i], S.GetObject(i));
   }
 
-  inline GC& Add(const SC& S)  {  return *PList::Strings.Add( new GC(S) );  }
-  inline GC& Add(const SC& S, const OC& Object)  {  return *PList::Strings.Add( new GC(S,Object) );  }
-  inline GC& Insert(size_t i, const SC& S)  {  return *PList::Strings.Insert(i, new GC(S) );  }
-  inline GC& Insert(size_t i, const SC& S, const OC& O)  {  return *PList::Strings.Insert(i, new GC(S,O) );  }
+  inline GC& Add(const SC& S)  {  return *PList::Strings.Add(new GC(S));  }
+  inline GC& Add(const SC& S, const OC& Object)  {  return *PList::Strings.Add(new GC(S,Object));  }
+  inline GC& Insert(size_t i, const SC& S)  {  return *PList::Strings.Insert(i, new GC(S));  }
+  inline GC& Insert(size_t i, const SC& S, const OC& O)  {
+    return *PList::Strings.Insert(i, new GC(S,O) );
+  }
+  inline GC& Set(size_t i, const SC& S, const OC& O)  {  
+    delete PList::Strings[i];
+    return *(PList::Strings[i] = new GC(S,O));
+  }
 
   inline OC& GetObject(size_t i) const { return PList::Strings[i]->Object;  }
 
@@ -484,11 +490,11 @@ public:
     PList::Clear();
     PList::Strings.SetCapacity( list.Count() );
     for( size_t i=0; i < list.Count(); i++ )
-      Add( list[i], list.GetObject(i) );
+      Add(list[i], list.GetObject(i));
     return list;
   }
 
-  size_t IndexOfObject(const OC& C ) const  {
+  size_t IndexOfObject(const OC& C) const  {
     for( size_t i=0; i < PList::Count(); i++ )
       if( PList::Strings[i]->Object == C )
         return i;

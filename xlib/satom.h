@@ -171,6 +171,7 @@ public:
 
 typedef TTypeList<TSAtom> TSAtomList;
 typedef TPtrList<TSAtom> TSAtomPList;
+typedef TPtrList<const TSAtom> TSAtomCPList;
 
 EndXlibNamespace()
 #endif

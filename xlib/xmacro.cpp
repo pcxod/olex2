@@ -2750,8 +2750,8 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       if( b.GetTag() == 0 )  continue;
       b.SetTag(0);
       TCifRow& row = bonds.GetTable().AddRow(EmptyString);
-      row[0] = b.A().GetLabel();  row.GetObject(0) = new AtomCifCell(&b.A().CAtom());
-      row[1] = b.B().GetLabel();  row.GetObject(1) = new AtomCifCell(&b.B().CAtom());
+      row.Set(0, b.A().GetLabel(), new AtomCifCell(&b.A().CAtom()));
+      row.Set(1, b.B().GetLabel(), new AtomCifCell(&b.B().CAtom()));
       row[2] = vcovc.CalcDistance(b.A(), b.B()).ToString();
       if( !b.B().GetMatrix(0).IsFirst() )
         row[3] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
@@ -2783,9 +2783,9 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         if( c.IsDeleted() || c.GetType().GetMr() < 3 )
           continue;
         TCifRow& row = angles.GetTable().AddRow(EmptyString);
-        row[0] = b.GetLabel();  row.GetObject(0) = new AtomCifCell(&b.CAtom());
-        row[1] = a.GetLabel();  row.GetObject(1) = new AtomCifCell(&a.CAtom());
-        row[2] = c.GetLabel();  row.GetObject(2) = new AtomCifCell(&c.CAtom());
+        row.Set(0, b.GetLabel(), new AtomCifCell(&b.CAtom()));
+        row.Set(1, a.GetLabel(), new AtomCifCell(&a.CAtom()));
+        row.Set(2, c.GetLabel(), new AtomCifCell(&c.CAtom()));
         row[3] = vcovc.CalcAngle(b, a, c).ToString();
         if( !b.GetMatrix(0).IsFirst() )
           row[4] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
@@ -2837,9 +2837,9 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       for( size_t j=0; j < envi.Count(); j++ )  {
         if( envi.GetType(j).GetMr() != iHydrogenZ)  continue;
         TCifRow& row = hbonds.GetTable().AddRow(EmptyString);
-        row[0] = d->GetAtom()->GetLabel();  row.GetObject(0) = new AtomCifCell(d->GetAtom());
-        row[1] = envi.GetCAtom(j).GetLabel();  row.GetObject(1) = new AtomCifCell(&envi.GetCAtom(j));
-        row[2] = a->GetAtom()->GetLabel();  row.GetObject(2) = new AtomCifCell(a->GetAtom());
+        row.Set(0, d->GetAtom()->GetLabel(), new AtomCifCell(d->GetAtom()));
+        row.Set(1, envi.GetCAtom(j).GetLabel(), new AtomCifCell(&envi.GetCAtom(j)));
+        row.Set(2, a->GetAtom()->GetLabel(), new AtomCifCell(a->GetAtom()));
         TSAtom da(NULL), aa(NULL);
         da.CAtom(*d->GetAtom());
         da.AddMatrix(&I);

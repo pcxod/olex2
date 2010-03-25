@@ -23,279 +23,7 @@
 #include "symmlib.h"
 #include "etime.h"
 
-//---------------------------------------------------------------------------//
-// TCifLoop function bodies
-//---------------------------------------------------------------------------//
-TCifLoop::TCifLoop()  {  }
-//..............................................................................
-TCifLoop::~TCifLoop()  {  Clear();  }
-//..............................................................................
-void  TCifLoop::Clear()  {
-  for( size_t i=0; i < FTable.RowCount(); i++ )  {
-    for( size_t j=0; j < FTable.ColCount(); j++ )
-      delete FTable[i].GetObject(j);
-  }
-  FTable.Clear();
-  FComments = EmptyString;
-}
-//..............................................................................
-void TCifLoop::DeleteAtom(TCAtom *A)  {
-  for( size_t i=0; i < FTable.RowCount(); i++ )  {
-    for( size_t j=0; j < FTable.ColCount(); j++ )  {
-      ICifCell* CD = FTable[i].GetObject(j);
-      if( CD->GetAtomRef() == A )  {
-        for( size_t k=0; k < FTable.ColCount(); k++ )
-          delete FTable[i].GetObject(k);
-        FTable.DelRow(i--);
-        break;
-      }
-    }
-  }
-}
-//..............................................................................
-void TCifLoop::Format(TStrList& Data)  {
-  if( FTable.ColCount() == 0 )  return;
-  olxstr Param;
-  FComments = EmptyString;
-  const size_t ColCount = FTable.ColCount();
-  for( size_t i=0; i < Data.Count(); i++ )  {
-    if( Data[i].IsEmpty() )  continue;
-    if( Data[i].CharAt(0) == '#' )  {
-      FComments << Data[i] << '\n';
-      Data[i] = EmptyString;
-    }
-  }
-  olxstr D = Data.Text(" \\n ").Replace('\t', ' ').DeleteSequencesOf(' ');
-  TCifRow Params;
-  //TCifLoopData *CData=NULL;
-  const size_t DL = D.Length();
-  for( size_t i=0; i < DL; i++ )  {
-    Param = EmptyString;
-    olxch Char = D.CharAt(i);
-    if( Char == ' ' ) continue;
-    if( Char == '\'' || Char == ';' || Char == '"')  {  // string param
-      olxch SepChar = Char;
-      Char = 'a';
-      while( Char != SepChar )  {
-	      Param << D.CharAt(i);
-        i++;
-        if( i >= DL )  {
-          Param.Delete(0, 1);
-          Params.Add(Param, new StringCifCell(true));
-          goto end_cyc;
-        }
-        Char = D.CharAt(i);
-      }
-      Param.Delete(0, 1);
-      Params.Add(Param, new StringCifCell(true));
-      continue;
-    }
-    // normal parameter
-    while( (Char != ' ') )  {
-      Param << D.CharAt(i);
-      i++;
-      if( i >= DL )  {
-        if( !Param.IsEmpty() && Param != "\\n" )
-          Params.Add(Param, new StringCifCell(false));
-        goto end_cyc;
-      }
-      Char = D.CharAt(i);
-    }
-    if( !Param.IsEmpty() && Param != "\\n" )
-      Params.Add(Param, new StringCifCell(false));
-end_cyc:;
-  }
-  if( (Params.Count() % ColCount) != 0 )  {
-    // clean up the memory
-    for( size_t i=0; i < Params.Count(); i++ )
-      if( Params.GetObject(i) != NULL )
-        delete Params.GetObject(i);
-    olxstr msg("wrong loop parameters number. ");
-    msg << "Failed in loop: " << GetLoopName() << ". Failed on: \'" << Param << '\'';
-    throw TFunctionFailedException(__OlxSourceInfo, msg );
-  }
-  const size_t RowCount = Params.Count()/ColCount;
-  FTable.SetRowCount(RowCount);
-  for( size_t i=0; i < RowCount; i++ )  {
-    for( size_t j=0; j < ColCount; j++ )  {
-      FTable[i].GetObject(j) = Params.GetObject(i*ColCount+j);
-      FTable[i][j] = Params[i*ColCount+j];
-    }
-  }
-}
-//..............................................................................
-void TCifLoop::SaveToStrings(TStrList& Strings) const {
-  TStrList toks, htoks;
-  for( size_t i=0; i < FTable.ColCount(); i++ )  // loop header
-    Strings.Add("  ") << FTable.ColName(i);
-
-  for( size_t i=0; i < FTable.RowCount(); i++ ) {  // loop content
-    olxstr Tmp;
-    for( size_t j=0; j < FTable.ColCount(); j++ )  {
-      ICifCell* CLD = FTable[i].GetObject(j);
-      if( CLD->GetAtomRef() != NULL )  {
-        if( CLD->GetAtomRef()->IsDeleted() )  {  // skip deleted atom
-          Tmp = EmptyString;
-          break;
-        }
-      }
-      // according to the cif rules, the strings cannot be hyphenated ...
-      olxstr str = FTable[i][j];
-      if( str.EndsWith("\\n") )
-        str.SetLength(str.Length()-2);
-      if( CLD->IsQuoted() )  {
-        if( str.IndexOf("\\n") != InvalidIndex )  {
-          if( !Tmp.IsEmpty() )  {
-            Strings.Add(Tmp);
-            Tmp = EmptyString;
-          }
-          toks.Clear();
-          toks.Strtok(str, "\\n");
-          Strings.Add(';');
-          for( size_t j=0; j < toks.Count(); j++ )  {
-            htoks.Clear();
-            htoks.Hyphenate(toks[j], 78);
-            for( size_t k=0; k < htoks.Count(); k++ )  {
-              if( htoks[k].Length() > 1 )  // not just a space char
-                Strings.Add(htoks[k]);
-            }
-          }
-          Strings.Add(';');
-        }
-        else  {
-          if( Tmp.Length() + 3 + str.Length() > 80 )  {
-            Strings.Add(Tmp);
-            Tmp = EmptyString;
-          }
-          Tmp << ' ' << '\'' << str << '\'';
-        }
-      }
-      else  {
-        if( Tmp.Length() + str.Length() > 80 )  {  // \\n at the end
-          Strings.Add( Tmp );
-          Tmp = EmptyString;
-        }
-        Tmp << ' ' << str;
-      }
-    }
-    if( Tmp.Length() > 80 )  {
-      toks.Clear();
-      if( Tmp.StartsFrom(" '") )  // remove quotations ...
-        Tmp = Tmp.SubString(2, Tmp.Length()-3);
-      toks.Strtok(Tmp, "\\n");
-      Strings.Add(';');
-      for( size_t j=0; j < toks.Count(); j++ )  {
-        htoks.Clear();
-        htoks.Hyphenate(toks[j], 78);
-        for( size_t k=0; k < htoks.Count(); k++ )  {
-          if( htoks[k].Length() > 1 )  // not just a space char
-            Strings.Add(htoks[k]);
-        }
-      }
-      Strings.Add(';');
-    }
-    else  {
-      if( !Tmp.IsEmpty() )
-        Strings.Add(Tmp);
-    }
-  }
-  if( !FComments.IsEmpty() )
-    Strings.Add(FComments);
-}
-//..............................................................................
-olxstr TCifLoop::GetLoopName() const {
-  if( FTable.ColCount() == 0 )  return EmptyString;
-  if( FTable.ColCount() == 1 )  return FTable.ColName(0);
-  
-  olxstr C = olxstr::CommonString(FTable.ColName(0), FTable.ColName(1));
-  for( size_t i=2; i < FTable.ColCount(); i++ )
-    C = olxstr::CommonString(FTable.ColName(i), C);
-
-  if( C.Last() == '_' )
-    C.SetLength(C.Length()-1);
-  return C;
-}
-//..............................................................................
-olxstr TCifLoop::ShortColumnName(size_t in) const {
-  return FTable.ColName(in).SubStringFrom(GetLoopName().Length());
-}
-//..............................................................................
-int TCifLoop::CifLoopSorter::Compare(const TCifLoopTable::TableSort& r1,
-                                     const TCifLoopTable::TableSort& r2)
-{
-  uint64_t id1 = 0, id2 = 0;
-  size_t ac = 0;
-  for( size_t i=r1.data.Count(); i > 0; i-- )  {
-    bool atom = false;
-    if( r1.data.GetObject(i-1)->GetAtomRef() != NULL )  {
-      id1 |= ((uint64_t)(r1.data.GetObject(i-1)->GetAtomRef()->GetId()) << ac*16);
-      atom = true;
-    }
-    if( r2.data.GetObject(i-1)->GetAtomRef() != NULL )  {
-      id2 |= ((uint64_t)(r2.data.GetObject(i-1)->GetAtomRef()->GetId()) << ac*16);
-      atom = true;
-    }
-    if( atom )  ac++;
-  }
-  return (id1 < id2 ? -1 : (id1 > id2 ? 1 : 0)); 
-}
-void TCifLoop::UpdateTable(const TCif& parent)  {
-  if( GetLoopName().StartFromi("_space_group_symop") ||
-    GetLoopName().StartFromi("_symmetry_equiv") )
-  {
-	  return;
-  }
-  for( size_t i=0; i < FTable.RowCount(); i++ )  {
-    for( size_t j=0; j < FTable.ColCount(); j++ )  {
-      if( FTable[i].GetObject(j)->GetAtomRef() != NULL )
-        FTable[i][j] = FTable[i].GetObject(j)->GetAtomRef()->GetLabel();
-    }
-  }
-  FTable.SortRows<CifLoopSorter>();
-  size_t pi = FTable.ColIndex("_atom_site_disorder_group");
-  if( pi != InvalidIndex )  {
-    for( size_t i=0; i < FTable.RowCount(); i++ )
-      if( FTable[i].GetObject(0)->GetAtomRef() != NULL &&
-        FTable[i].GetObject(0)->GetAtomRef()->GetPart() != 0 )
-      {
-        FTable[i][pi] = (int)FTable[i].GetObject(0)->GetAtomRef()->GetPart();
-      }
-  }
-}
 //----------------------------------------------------------------------------//
-// TCifDataManager function bodies
-//----------------------------------------------------------------------------//
-bool CifBond::DoesMatch(const TSAtom& a, const TSAtom& b) const {
-  if( a.CAtom().GetId() == base.GetId() )  {
-    if( b.CAtom().GetId() != to.GetId() )  return false;
-    if( a.GetMatrix(0).IsFirst() )  {
-      if( mat.GetContainerId() == 0 )
-        return b.GetMatrix(0).IsFirst();
-      for( size_t i=0; i < b.MatrixCount(); i++ )
-        if( b.GetMatrix(i) == mat )
-          return true;
-      return false;
-    }
-    else  {
-      for( size_t i=0; i < a.MatrixCount(); i++ )  {
-        const smatd tm = mat*a.GetMatrix(i);
-        for( size_t j=0; j < b.MatrixCount(); j++ )  {
-          if( b.GetMatrix(j) == tm )
-            return true;
-        }
-      }
-    }
-  }
-  return false;
-}
-ACifValue* TCifDataManager::Match(const TSAtomPList& Atoms) const {
-  for( size_t i=0; i < Items.Count(); i++ )  {
-    if( Items[i].Match(Atoms) )
-      return &Items[i];
-  }
-  return NULL;
-}
-//..............................................................................
 // TCif function bodies
 //----------------------------------------------------------------------------//
 TCif::TCif() : FDataNameUpperCase(true)  {  }
@@ -928,47 +656,103 @@ void TCif::Initialize()  {
     }
   }
   // geometric parameters
-  {
-    ALoop = FindLoop("_geom_bond");
-    if( ALoop == NULL )  return;
+  ALoop = FindLoop("_geom_bond");
+  if( ALoop != NULL )  {
     TCifLoopTable& tab = ALoop->GetTable();
     size_t ALabel =  tab.ColIndex("_geom_bond_atom_site_label_1");
     size_t ALabel1 = tab.ColIndex("_geom_bond_atom_site_label_2");
     size_t BD =  tab.ColIndex("_geom_bond_distance");
     size_t SymmA = tab.ColIndex("_geom_bond_site_symmetry_2");
-    if( (ALabel|ALabel1|BD|SymmA) == InvalidIndex )  return;
-    TEValueD ev;
-    for( size_t i=0; i < tab.RowCount(); i++ )  {
-      TCifRow& Row = tab[i];
-      ACifValue* cv = NULL;
-      TCAtom* A = GetAsymmUnit().FindCAtom(Row[ALabel]);
-      A = GetAsymmUnit().FindCAtom(Row[ALabel1]);
-      ev = Row[BD];
-      if( Row[SymmA] == '.' )  {
-        cv = new CifBond(
-          *GetAsymmUnit().FindCAtom(Row[ALabel]),
-          *GetAsymmUnit().FindCAtom(Row[ALabel1]),
-          ev);
+    if( (ALabel|ALabel1|BD|SymmA) != InvalidIndex )  {
+      TEValueD ev;
+      for( size_t i=0; i < tab.RowCount(); i++ )  {
+        TCifRow& Row = tab[i];
+        ACifValue* cv = NULL;
+        ev = Row[BD];
+        if( Row[SymmA] == '.' )  {
+          cv = new CifBond(
+            *GetAsymmUnit().FindCAtom(Row[ALabel]),
+            *GetAsymmUnit().FindCAtom(Row[ALabel1]),
+            ev);
+        }
+        else  {
+          cv = new CifBond(
+            *GetAsymmUnit().FindCAtom(Row[ALabel]),
+            *GetAsymmUnit().FindCAtom(Row[ALabel1]),
+            SymmCodeToMatrix(Row[SymmA]),
+            ev);
+        }
+        DataManager.AddValue(cv);
       }
-      else  {
-        cv = new CifBond(
-          *GetAsymmUnit().FindCAtom(Row[ALabel]),
-          *GetAsymmUnit().FindCAtom(Row[ALabel1]),
-          SymmCodeToMatrix(Row[SymmA]),
-          ev);
-      }
-      DataManager.AddValue(cv);
     }
   }
-}
-//..............................................................................
-TCifLoop& TCif::Loop(size_t i) {
-  return *Loops.GetObject(i);
-};
-//..............................................................................
-TCifLoop *TCif::FindLoop(const olxstr &L)  {
-  size_t i = Loops.IndexOf(L);
-  return (i == InvalidIndex) ? NULL : Loops.GetObject(i);
+  ALoop = FindLoop("_geom_hbond");
+  if( ALoop != NULL )  {
+    TCifLoopTable& tab = ALoop->GetTable();
+    size_t ALabel =  tab.ColIndex("_geom_hbond_atom_site_label_D");
+    size_t ALabel1 = tab.ColIndex("_geom_hbond_atom_site_label_A");
+    size_t BD =  tab.ColIndex("_geom_hbond_distance_DA");
+    size_t SymmA = tab.ColIndex("_geom_hbond_site_symmetry_A");
+    if( (ALabel|ALabel1|BD|SymmA) != InvalidIndex )  {
+      TEValueD ev;
+      for( size_t i=0; i < tab.RowCount(); i++ )  {
+        TCifRow& Row = tab[i];
+        ACifValue* cv = NULL;
+        ev = Row[BD];
+        if( Row[SymmA] == '.' )  {
+          cv = new CifBond(
+            *GetAsymmUnit().FindCAtom(Row[ALabel]),
+            *GetAsymmUnit().FindCAtom(Row[ALabel1]),
+            ev);
+        }
+        else  {
+          cv = new CifBond(
+            *GetAsymmUnit().FindCAtom(Row[ALabel]),
+            *GetAsymmUnit().FindCAtom(Row[ALabel1]),
+            SymmCodeToMatrix(Row[SymmA]),
+            ev);
+        }
+        DataManager.AddValue(cv);
+      }
+    }
+  }
+  ALoop = FindLoop("_geom_angle");
+  if( ALoop != NULL )  {
+    TCifLoopTable& tab = ALoop->GetTable();
+    const size_t ind_l =  tab.ColIndex("_geom_angle_atom_site_label_1");
+    const size_t ind_m =  tab.ColIndex("_geom_angle_atom_site_label_2");
+    const size_t ind_r =  tab.ColIndex("_geom_angle_atom_site_label_3");
+    const size_t ind_a =  tab.ColIndex("_geom_angle");
+    const size_t ind_sl = tab.ColIndex("_geom_angle_site_symmetry_1");
+    const size_t ind_sr = tab.ColIndex("_geom_angle_site_symmetry_3");
+    if( (ind_l|ind_m|ind_r|ind_a|ind_sl|ind_sr) != InvalidIndex )  {
+      TEValueD ev;
+      smatd im;
+      im.I();
+      for( size_t i=0; i < tab.RowCount(); i++ )  {
+        TCifRow& Row = tab[i];
+        ACifValue* cv = NULL;
+        ev = Row[ind_a];
+        if( Row[ind_sl] == '.' && Row[ind_sr] == '.' )  {
+          cv = new CifAngle(
+            *GetAsymmUnit().FindCAtom(Row[ind_l]),
+            *GetAsymmUnit().FindCAtom(Row[ind_m]),
+            *GetAsymmUnit().FindCAtom(Row[ind_r]),
+            ev);
+        }
+        else  {
+          cv = new CifAngle(
+            *GetAsymmUnit().FindCAtom(Row[ind_l]),
+            *GetAsymmUnit().FindCAtom(Row[ind_m]),
+            *GetAsymmUnit().FindCAtom(Row[ind_r]),
+            Row[ind_sl] == '.' ? im : SymmCodeToMatrix(Row[ind_sl]),
+            Row[ind_sr] == '.' ? im : SymmCodeToMatrix(Row[ind_sr]),
+            ev);
+        }
+        DataManager.AddValue(cv);
+      }
+    }
+  }
 }
 //..............................................................................
 TCifLoop& TCif::AddLoop(const olxstr &Name)  {
@@ -1073,16 +857,11 @@ bool TCif::Adopt(TXFile& XF)  {
     TCifRow& Row = atom_table.AddRow(EmptyString);
     Row[0] = A.GetLabel();  Row.GetObject(0) = new AtomCifCell(&A);
     Row[1] = A.GetType().symbol;  Row.GetObject(1) = new StringCifCell(false);
-    for( int j=0; j < 3; j++ )  {
-      Row[j+2] = TEValueD(A.ccrd()[j], A.ccrdEsd()[j]).ToString();
-      Row.GetObject(j+2) = new StringCifCell(false);
-    }
-    Row[5] = TEValueD(A.GetUiso(), A.GetUisoEsd()).ToString();
-    Row.GetObject(5) = new StringCifCell(false);
-    Row[6] = TEValueD(A.GetOccu()*A.GetDegeneracy(), A.GetOccuEsd()).ToString();
-    Row.GetObject(6) = new StringCifCell(false);
-    Row[7] = A.GetDegeneracy();
-    Row.GetObject(7) = new StringCifCell(false);
+    for( int j=0; j < 3; j++ )
+      Row.Set(j+2, TEValueD(A.ccrd()[j], A.ccrdEsd()[j]).ToString(), new StringCifCell(false));
+    Row.Set(5, TEValueD(A.GetUiso(), A.GetUisoEsd()).ToString(), new StringCifCell(false));
+    Row.Set(6, TEValueD(A.GetOccu()*A.GetDegeneracy(), A.GetOccuEsd()).ToString(), new StringCifCell(false));
+    Row.Set(7, A.GetDegeneracy(), new StringCifCell(false));
     // process part as well
     if( A.GetPart() != 0 )
       Row[8] = (int)A.GetPart();
@@ -1095,8 +874,7 @@ bool TCif::Adopt(TXFile& XF)  {
       TCifRow& Row1 = u_table.AddRow(EmptyString);
       Row1[0] = A.GetLabel();  Row1.GetObject(0) = new AtomCifCell(&A);
       for( int j=0; j < 6; j++ )  {
-        Row1[j+1] = TEValueD(Q[j], E[j]).ToString();
-        Row1.GetObject(j+1) = new StringCifCell(false);
+        Row1.Set(j+1, TEValueD(Q[j], E[j]).ToString(), new StringCifCell(false));
       }
     }
   }
@@ -1104,250 +882,11 @@ bool TCif::Adopt(TXFile& XF)  {
     AddParam("_refine_diff_density_max", XF.GetAsymmUnit().GetMaxQPeak(), false);
   return true;
 }
-//----------------------------------------------------------------------------//
-// TLLTBondSort function bodies - bond sorting procedure in TLinkedLoopTable
-//----------------------------------------------------------------------------//
-int TLLTBondSort::Compare(const TLBond *I, const TLBond *I1)  {
-  double v;
-  if( SortType & slltLength )  {  // length, Mr, Label
-    v = I->Value.ToDouble() - I1->Value.ToDouble();
-    if( v < 0 ) return -1;
-    if( v > 0 ) return 1;
-    v = I->Another(Atom).CA.GetType().GetMr() - I1->Another(Atom).CA.GetType().GetMr();
-    if( v > 0 ) return 1;
-    if( v < 0 ) return -1;
-    v = I->Another(Atom).Label.Compare(I1->Another(Atom).Label);
-    if( v == 0 )
-      return olx_cmp_size_t(Symmetry.IndexOf(I->S2), Symmetry.IndexOf(I1->S2));
-  }
-  if( SortType & slltName )  {  // Name, length
-    v = I->Another(Atom).Label.Compare(I1->Another(Atom).Label);
-    if( v < 0 ) return -1;
-    if( v > 0 ) return 1;
-    if( v == 0 )  {
-      v = (int)(Symmetry.IndexOf(I->S2) - Symmetry.IndexOf(I1->S2));
-      if( v < 0 ) return -1;
-      if( v > 0 ) return 1;
-    }
-    v = I->Value.ToDouble() - I1->Value.ToDouble();
-    if( v < 0 ) return -1;
-    if( v > 0 ) return 1;
-    return 0;
-  }
-  if( SortType & slltMw )  {  // Mr, Length, Label
-    v = I->Another(Atom).CA.GetType().GetMr() - I1->Another(Atom).CA.GetType().GetMr();
-    if( v < 0 ) return -1;
-    if( v > 0 ) return 1;
-    v = I->Value.ToDouble() - I1->Value.ToDouble();
-    if( v > 0 ) return 1;
-    if( v < 0 ) return -1;
-    if( v == 0 )
-      return olx_cmp_size_t(Symmetry.IndexOf(I->S2), Symmetry.IndexOf(I1->S2));
-  }
-  return 0;
-}
-//----------------------------------------------------------------------------//
-// TLBond function bodies - bond objsect for TLinkedLoopTable
-//----------------------------------------------------------------------------//
-const TLAtom& TLBond::Another(TLAtom& A) const {
-  if(&A == &A1)  return A2; 
-  if(&A == &A2)  return A1; 
-  throw TInvalidArgumentException(__OlxSourceInfo, "atom");
-}
-//..............................................................................
-bool TLBond::operator == (const TLBond &B) const {
-  if( A1 == B.A1 && A2 == B.A2 && S2 == B.S2 )
-    return true;
-  return false;
-}
-//----------------------------------------------------------------------------//
-// TLAngle function bodies - angle objsect for TLinkedLoopTable
-//----------------------------------------------------------------------------//
-bool TLAngle::Contains(const TLAtom& A) const {
-  if( A1==A || A2==A || A3 == A ) return true; 
-  return false;
-}
-//..............................................................................
-bool TLAngle::FormedBy(const TLBond& B, const TLBond& B1) const {
-  TLAtom *a1=NULL, *a3=NULL;
-  olxstr s1, s3;
-  if( B.A1 == A2 )  {  a1 = &B.A2;  s1 = B.S2;  }
-  if( B.A2 == A2 )  {  a1 = &B.A1;  s1 = ".";  }
-  if( B1.A1 == A2 )  {  a3 = &B1.A2;  s3 = B1.S2;  }
-  if( B1.A2 == A2 )  {  a3 = &B1.A1;  s3 = ".";  }
-  if( a1 == &A1 && a3 == &A3 )  {
-//    if( LA.S1 == S1 && LA.S3 == S3 )
-      return true;
-  }
-  if( a1 == &A3 && a3 == &A1 )  {
-//    if( LA.S1 == S3 && LA.S3 == S1 )
-      return true;
-  }
-  return false;
-}
-//----------------------------------------------------------------------------//
-// TLinkedLoopTable function bodies
-//----------------------------------------------------------------------------//
-TLinkedLoopTable::TLinkedLoopTable(TCif *C)  {
-  FCif = C;
-  for( size_t j=0; j < C->GetAsymmUnit().AtomCount(); j++ )  {
-    TCAtom &CA = C->GetAsymmUnit().GetAtom(j);
-    TLAtom* LA = new TLAtom(CA);
-    FAtoms.Add(LA);
-    LA->Label = CA.GetLabel();
-  }
-  TCifLoop *CL = C->FindLoop("_geom_bond");
-  if( CL == NULL ) return;
-  TCifLoopTable *Table = &CL->GetTable();
-  size_t index =  Table->ColIndex("_geom_bond_atom_site_label_1");
-  size_t index1 = Table->ColIndex("_geom_bond_atom_site_label_2");
-  size_t index2 = Table->ColIndex("_geom_bond_distance");
-  size_t index3 = Table->ColIndex("_geom_bond_site_symmetry_2");
-  if( (index|index1|index2|index3) == InvalidIndex )  return;  // will not work then ...
-  for( size_t j=0; j < Table->RowCount(); j++ )  {
-    TCifRow& L = (*Table)[j];
-    TLBond *LB = new TLBond(AtomByName(L[index]), AtomByName(L[index1]));
-    LB->Value = L[index2];
-    LB->S2 = L[index3];
-    bool uniq = true;
-    for( size_t k=0; k < FBonds.Count(); k++ )  {
-      TLBond *LB1 = FBonds[k];
-      if( ((LB->A1 == LB1->A2) && (LB->A2 == LB1->A1)) )  {  // only then atoms are inverted !!
-        if( LB->Value == LB1->Value )  {
-          uniq = false;
-          break;
-        }
-      }
-    }
-    uniq = true;
-    if( uniq )  {
-      FBonds.Add(LB);
-      LB->A1.Bonds.Add(LB);
-      if( LB->S2 == "." )
-        LB->A2.Bonds.Add(LB);
-    }
-    else
-      delete LB;
-  }
-
-  CL = C->FindLoop("_geom_angle");
-  if( CL == NULL )  return;
-  Table = &CL->GetTable();
-  index =  Table->ColIndex("_geom_angle_atom_site_label_1");
-  index1 = Table->ColIndex("_geom_angle_atom_site_label_2");
-  index2 = Table->ColIndex("_geom_angle_atom_site_label_3");
-  index3 = Table->ColIndex("_geom_angle");
-  size_t index4 = Table->ColIndex("_geom_angle_site_symmetry_1");
-  size_t index5 = Table->ColIndex("_geom_angle_site_symmetry_3");
-  if( (index|index1|index2|index3|index4|index5) == InvalidIndex )  
-    return;  // will not work then ...
-  for( size_t j=0; j < Table->RowCount(); j++ )  {
-    TCifRow& L = (*Table)[j];
-    TLAngle* LAn = new TLAngle(AtomByName(L[index]), AtomByName(L[index1]), AtomByName(L[index2]));
-    FAngles.Add(LAn);
-    LAn->Value = L[index3];
-    LAn->S1 = L[index4];
-    LAn->S3 = L[index5];
-  }
-}
-//..............................................................................
-TLinkedLoopTable::~TLinkedLoopTable()  {
-  for( size_t i=0; i < FAtoms.Count(); i++ )
-    delete FAtoms[i];
-  for( size_t i=0; i < FBonds.Count(); i++ )
-    delete FBonds[i];
-  for( size_t i=0; i < FAngles.Count(); i++ )
-    delete FAngles[i];
-}
-//..............................................................................
-TLAtom& TLinkedLoopTable::AtomByName(const olxstr &Name)  {
-  for( size_t i=0; i < FAtoms.Count(); i++ )  {
-    if( FAtoms[i]->Label == Name )
-      return *FAtoms[i];
-  }
-  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("atom_name=") << Name);
-}
-//..............................................................................
-TTTable<TStrList>* TLinkedLoopTable::MakeTable(const olxstr &Atom)  {
-  TLAtom& A = AtomByName(Atom);
-  if( A.Bonds.IsEmpty() )
-    return NULL;
-  size_t bc = A.Bonds.Count();
-  TStrList Symm;
-  Symm.Add("."); // to give proper numbering of symm operations
-  // search for symm operations
-  for( size_t i=0; i < bc; i++ )  {
-    TLBond* LB = A.Bonds[i];
-    size_t sind = Symm.IndexOf(LB->S2);
-    if( sind == InvalidIndex )
-      Symm.Add(LB->S2);
-  }
-  // sort bonds according to the requirements
-  TLLTBondSort BondSort(A, Symm, slltLength);
-  A.Bonds.QuickSorter.SortMF(A.Bonds, BondSort, &TLLTBondSort::Compare);
-  olxstr Tmp;
-  Table.Resize(bc+1, bc);
-  Table.EmptyContent(true);
-  Table.ColName(0) = A.Label;
-  for( size_t i=0; i < bc-1; i++ )  {
-    TLBond* LB = A.Bonds[i];
-    const TLAtom& AAtom = LB->Another(A);
-    size_t sind = Symm.IndexOf(LB->S2);
-    if( sind != 0 )
-      Tmp << "<sup>" << sind << "</sup>";
-    Table.ColName(i+1) = AAtom.Label;
-  }
-  for( size_t i=0; i < bc; i++ )  {
-    TLBond* LB = A.Bonds[i];
-    const TLAtom& AAtom = LB->Another(A);
-    size_t sind = Symm.IndexOf(LB->S2);
-    if( sind != 0 )
-      Tmp << "<sup>" << sind << "</sup>";
-
-    Table.RowName(i) = AAtom.Label;
-    Table[i][0] = LB->Value;
-    for( size_t j=0; j < bc-1; j++ )  {
-      TLBond* LB1 = A.Bonds[j];
-      if( i==j )  {
-        Table[i][j+1] = "-";
-        continue;
-      }
-      if( i < j )  {
-        Table[i][j+1] = EmptyString;
-        continue;
-      }
-      bool found = false;
-      for( size_t k=0; k < A.Angles.Count(); k++ )  {
-        TLAngle* LA = A.Angles[k];
-        if( LA->FormedBy(*LB, *LB1) )  {
-          found = true;
-          Table[i][j+1] = LA->Value;
-          break;
-        }
-      }
-      if( !found )
-        Table[i][j+1] = '?';
-    }
-  }
-  Tmp = EmptyString;
-  for( size_t i=0; i < Symm.Count(); i++ )  {
-    if( Symm[i].Length() > 0 &&  (Symm[i] != '.') )  {
-      olxstr Tmp1 = FCif->SymmCodeToSymm(Symm[i]);
-      if( !Tmp1.IsEmpty() )  {
-        Tmp << "<sup>" << i << "</sup>" << ": " << Tmp1;
-        if( i < (Symm.Count()-1) )
-          Tmp << "<br>";
-      }
-    }
-  }
-  Table[A.Bonds.Count()][0] = Tmp;
-  return &Table;
-}
 //..............................................................................
 smatd TCif::SymmCodeToMatrix(const olxstr &Code) const {
   size_t ui = Code.LastIndexOf('_');
   if( ui == InvalidIndex )
-    GetMatrixById(Code);
+    return GetMatrixById(Code);
   smatd mSymm = GetMatrixById(Code.SubStringTo(ui));
   olxstr str_t = Code.SubStringFrom(ui+1);
   if( str_t.Length() != 3 )

@@ -1,130 +1,18 @@
 #ifndef __olx_xl_cif_H
 #define __olx_xl_cif_H
 #include "xfiles.h"
-#include "etable.h"
 #include "estrlist.h"
 #include "symmparser.h"
+#include "cifdata.h"
+#include "cifloop.h"
+#include "ciftab.h"
 
 BeginXlibNamespace()
 
-class TCif;
-class TLinkedLoopTable;
 struct TCifData  {
   TStrList *Data;
   bool Quoted;
 };
-
-struct ICifCell  {
-  virtual ~ICifCell()  {}
-  virtual const TCAtom* GetAtomRef() const {  return NULL;  }
-  virtual bool IsQuoted() const {  return false;  }
-};
-
-struct AtomCifCell : public ICifCell {
-  TCAtom* data;
-  virtual const TCAtom* GetAtomRef() const {  return data;  }
-  AtomCifCell(TCAtom* _data=NULL) : data(_data)  {}
-};
-
-struct StringCifCell : public ICifCell {
-  bool data;
-  virtual bool IsQuoted() const {  return data;  }
-  StringCifCell(bool _data=false) : data(_data)  {}
-};
-
-typedef TStrPObjList<olxstr,ICifCell*> TCifRow;
-typedef TTTable<TCifRow> TCifLoopTable;
-//---------------------------------------------------------------------------
-class TCifLoop: public IEObject  {
-  TCifLoopTable FTable;
-  olxstr FComments;
-//  int FRowCount, FColCount;
-public:
-  TCifLoop();
-  virtual ~TCifLoop();
-
-  void Clear(); // Clears the content of the loop
-  /* Parses strings and initialises the table. The strings should represent a valid loop data.
-   If any field of the table is recognised as a valid atom label, that atom is assigned the
-   corresponding data object (TCifLoopData). If labels have changed, call to the UpdateTable
-   to update labels in the table. */
-  void Format(TStrList& Data);
-  void SaveToStrings(TStrList& Strings) const; // Saves the loop to a stringlist
-  /* Returns a string, which is common for all columns. For example for the following loop:
-   loop_
-   _atom_site_label
-   _atom_site_type_symbol,  ... the function returns "_atom_site". */
-  olxstr GetLoopName() const;
-  /* Returns the column name minus the the loop name (see above). Thus for "_atom_site_label",
-    the name is "label". */
-  olxstr ShortColumnName(size_t col_i) const;
-  // removes rows havibng reference to the given atom
-  void DeleteAtom(TCAtom* atom);
-  // Updates the content of the table; changes labels of the atoms
-  void UpdateTable(const TCif& parent);
-  //Returns the table representing the loop data. Use it to make tables or iterate through data.
-  TCifLoopTable& GetTable()  {  return FTable;  }
-  const TCifLoopTable& GetTable() const {  return FTable;  }
-  void SetData(size_t i, size_t j, ICifCell* data)  {
-    if( FTable[i].GetObject(j) != NULL )
-      delete FTable[i].GetObject(j);
-    FTable[i].GetObject(j) = data;
-  }
-  // row sorter struct
-  struct CifLoopSorter  {
-  public:
-    static int Compare(const TCifLoopTable::TableSort& r1, const TCifLoopTable::TableSort& r2);
-  };
-};
-//---------------------------------------------------------------------------
-
-//---------------------------------------------------------------------------
-class ACifValue : public IEObject  {
-  TEValueD Value;
-public:
-  ACifValue(const TEValueD& v) : Value(v)  {}
-  const TEValueD& GetValue() const {  return Value;  }
-  virtual bool Match(const TSAtomPList& atoms) const = 0;
-};
-
-class CifBond : public ACifValue {
-  const TCAtom &base, &to;
-  smatd mat;
-public:
-  CifBond(const TCAtom& _base, const TCAtom& _to, const smatd& _m, const TEValueD& _d) :
-    ACifValue(_d),
-    base(_base),
-    to(_to),
-    mat(_m)  {}
-  CifBond(const TCAtom& _base, const TCAtom& _to, const TEValueD& _d) :
-    ACifValue(_d),
-    base(_base),
-    to(_to)
-  {
-    mat.I();
-  }
-  bool DoesMatch(const TSAtom& a, const TSAtom& b) const;
-  virtual bool Match(const TSAtomPList& atoms) const {
-    if( atoms.Count() != 2 )  return false;
-    return DoesMatch(*atoms[0], *atoms[1]) || DoesMatch(*atoms[1], *atoms[0]);
-  }
-};
-//---------------------------------------------------------------------------
-
-//---------------------------------------------------------------------------
-class TCifDataManager  {
-  TTypeList<ACifValue> Items;
-public:
-  TCifDataManager()  {}
-  virtual ~TCifDataManager()  {}
-  ACifValue& AddValue(ACifValue* v)  {  return Items.Add(v);  }
-  // finds a cif value for a list of TSATOMS(!)
-  ACifValue* Match(const TSAtomPList& Atoms) const;
-  void Clear()  {  Items.Clear();  }
-  size_t Count() const {  return Items.Count();  }
-  const ACifValue& Item(size_t index) const {  return Items[index];  }
-};
-//---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
 class TCif: public TBasicCFile  {
@@ -204,9 +92,12 @@ public:
   inline const olxstr& GetWeightB() const {  return FWeightB;  }
   //............................................................................
   //Returns a loop specified by index
-  TCifLoop& Loop(size_t i);
+  TCifLoop& GetLoop(size_t i) const {  return *Loops.GetObject(i);  }
   //Returns a loop specified by name
-  TCifLoop* FindLoop(const olxstr& L);
+  TCifLoop* FindLoop(const olxstr& L) const {
+    const size_t i = Loops.IndexOf(L);
+    return (i == InvalidIndex) ? NULL : Loops.GetObject(i);
+}
   //Returns the name of a loop specified by the index
   inline const olxstr& GetLoopName(size_t i) const {  return Loops[i];  }
   // Returns the number of loops
@@ -262,66 +153,6 @@ public:
         return i;
     return InvalidIndex;
   }
-
-};
-//---------------------------------------------------------------------------
-
-//---------------------------------------------------------------------------
-struct TLAtom; // for internal use by TLinkedLoopTable
-struct TLBond;
-struct TLAngle;
-class  TLinkedLoop;
-struct TLAtom  {
-  olxstr Label;
-  TPtrList<TLBond> Bonds;
-  TPtrList<TLAngle> Angles;
-  TCAtom &CA;
-  TLAtom(TCAtom& ca) : CA(ca)  {}
-  bool operator == (const TLAtom& a) const {  return this == &a;  }
-};
-struct TLBond  {
-  olxstr Value, S2;
-  TLAtom &A1, &A2;
-  TLBond(TLAtom& a1, TLAtom& a2) : A1(a1), A2(a2)  {}
-  const TLAtom& Another(TLAtom& A) const;
-  bool operator == (const TLBond &B) const;
-};
-struct TLAngle  {
-  olxstr Value, S1, S3;
-  TLAtom &A1, &A2, &A3;
-  TLAngle(TLAtom& a1, TLAtom& a2, TLAtom& a3) :A1(a1), A2(a2), A3(a3) {}
-  bool Contains(const TLAtom& A) const;
-  bool FormedBy(const TLBond& B, const TLBond& B1) const;
-};
-//---------------------------------------------------------------------------
-class TLLTBondSort  {
-public:
-  short SortType;
-  TLAtom &Atom; // must be initilaised before the call
-  const TStrList &Symmetry;
-  TLLTBondSort(TLAtom& atom, const TStrList& symm, short sort_type) :
-    Atom(atom), Symmetry(symm), SortType(sort_type)  {}
-  int Compare(const TLBond *I, const TLBond *I1);
-};
-//---------------------------------------------------------------------------
-class TLinkedLoopTable: public IEObject  {
-  TPtrList<TLAtom> FAtoms;
-  TPtrList<TLBond> FBonds;
-  TPtrList<TLAngle> FAngles;
-  TCif *FCif;
-protected:
-  TLAtom& AtomByName(const olxstr& Name);
-  TTTable< TStrList > Table;
-public:
-  TLinkedLoopTable(TCif *C);
-  virtual ~TLinkedLoopTable();
-
-  size_t AtomCount() const {  return FAtoms.Count(); }
-  TLAtom *Atom(size_t index) {  return FAtoms[index];  };
-  /* Returns a table constructed for Atom. The Atom should represent a valid atom
-   label in Cif->AsymmUnit. */
-  TTTable<TStrList>* MakeTable(const olxstr& Atom);
 };
 EndXlibNamespace()
-
 #endif
