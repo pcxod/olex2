@@ -2584,57 +2584,18 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     TCifLoop& pil = Cif1.GetPublicationInfoLoop();
     for( size_t j=0; j < Cif1.ParamCount(); j++ )  {
       if( !Cif->ParamExists(Cif1.Param(j)) )
-        Cif->AddParam(Cif1.Param(j), Cif1.ParamValue(j));
-      else
         Cif->SetParam(Cif1.Param(j), Cif1.ParamValue(j));
     }
     // update publication info loop
     MergePublTableData(publ_info.GetTable(), pil.GetTable());
   }
   // generate moiety string if does not exist
-  if( !Cif->ParamExists("_chemical_formula_moiety") )
-    Cif->AddParam("_chemical_formula_moiety", xapp.XFile().GetLattice().CalcMoiety(), true);
-  else  {
-    TCifData* cd = Cif->FindParam("_chemical_formula_moiety");
-    if( cd->Data->IsEmpty() )
-      cd->Data->Add(xapp.XFile().GetLattice().CalcMoiety());
-    else if(  cd->Data->Count() == 1 && (*cd->Data)[0] == '?' ) 
-      cd->Data->GetString(0) = xapp.XFile().GetLattice().CalcMoiety();
-    cd->Quoted = true;
-  }
+  Cif->SetParam("_chemical_formula_moiety", xapp.XFile().GetLattice().CalcMoiety(), true);
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(Cif->GetAsymmUnit());
   if( sg != NULL )  {
-    if( !Cif->ParamExists("_symmetry_cell_setting") )
-      Cif->AddParam("_symmetry_cell_setting", sg->GetBravaisLattice().GetName(), true);
-    else  {
-      TCifData* cd = Cif->FindParam("_symmetry_cell_setting");
-      if( cd->Data->IsEmpty() )
-        cd->Data->Add(sg->GetBravaisLattice().GetName());
-      else
-        cd->Data->GetString(0) = sg->GetBravaisLattice().GetName();
-      cd->Quoted = true;
-    }
-    if( !Cif->ParamExists("_symmetry_space_group_name_H-M") )
-      Cif->AddParam("_symmetry_space_group_name_H-M", sg->GetFullName(), true);
-    else  {
-      TCifData* cd = Cif->FindParam("_symmetry_space_group_name_H-M");
-      if( cd->Data->IsEmpty() )
-        cd->Data->Add(sg->GetFullName());
-      else
-        cd->Data->GetString(0) = sg->GetFullName();
-      cd->Quoted = true;
-    }
-    if( !Cif->ParamExists("_symmetry_space_group_name_Hall") )
-      Cif->AddParam("_symmetry_space_group_name_Hall", sg->GetHallSymbol(), true);
-    else  {
-      TCifData* cd = Cif->FindParam("_symmetry_space_group_name_Hall");
-      if( cd->Data->IsEmpty() )
-        cd->Data->Add(sg->GetHallSymbol());
-      else
-        cd->Data->GetString(0) = sg->GetHallSymbol();
-      cd->Quoted = true;
-    }
-    
+    Cif->SetParam("_symmetry_cell_setting", sg->GetBravaisLattice().GetName(), true);
+    Cif->SetParam("_symmetry_space_group_name_H-M", sg->GetFullName(), true);
+    Cif->SetParam("_symmetry_space_group_name_Hall", sg->GetHallSymbol(), true);
     if( !sg->IsCentrosymmetric() && !Cif->ParamExists("_chemical_absolute_configuration") )  {
       bool flack_used = false;
       if( xapp.CheckFileType<TIns>() )  {
@@ -2643,13 +2604,13 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
         if( lst.IsLoaded() && lst.HasFlack() )  {
           TEValue<double> fv = lst.Flack();
           if( fv.GetE() < 0.2 )  {
-            Cif->AddParam("_chemical_absolute_configuration", "ad", false);
+            Cif->SetParam("_chemical_absolute_configuration", "ad", false);
             flack_used = true;
           }
         }
       }
       if( !flack_used )
-        Cif->AddParam("_chemical_absolute_configuration", "?", false);
+        Cif->SetParam("_chemical_absolute_configuration", "?", false);
     }
   }
   else
@@ -2685,9 +2646,9 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMa
   catch( TExceptionBase& )  {}
 
   for( size_t i=0; i < In.ParamCount(); i++ )  {
-    TCifData* CifData = Cif->FindParam(In.Param(i));
+    TCif::CifData* CifData = Cif->FindParam(In.Param(i));
     if( CifData != NULL )
-      Out.AddParam(In.Param(i), CifData);
+      Out.SetParam(In.Param(i), *CifData);
   }
   try  {  Out.SaveToFile(Cmds[1]);  }
   catch( TExceptionBase& )  {

@@ -32,10 +32,8 @@ TCif::~TCif()  {  Clear();  }
 //..............................................................................
 void TCif::Clear()  {
   for( size_t i=0; i < Lines.Count(); i++ )  {
-    if( Lines.GetObject(i) != NULL )  {
-      delete Lines.GetObject(i)->Data;
+    if( Lines.GetObject(i) != NULL )
       delete Lines.GetObject(i);
-    }
   }
   Lines.Clear();
   Parameters.Clear();
@@ -53,11 +51,6 @@ void TCif::Clear()  {
 }
 //..............................................................................
 void TCif::Format()  {
-  TCifData *D;
-  olxstr Tmp, Tmp1;
-  TStrList toks;
-  TStrList *NewData;
-  bool AddSpace;
   for( size_t i=0; i < Lines.Count()-1; i++ )  {
     if( Lines[i].Length() == 0  && Lines[i+1].Length() == 0 )  {
       if( Lines.GetObject(i) != NULL )
@@ -66,52 +59,94 @@ void TCif::Format()  {
   }
   Lines.Pack();
   for( size_t i=0; i < Lines.Count(); i++ )  {
-    if( Lines.GetObject(i) != NULL )  {
-      size_t li = 0;
-      D = Lines.GetObject(i);
-      for( size_t j=0; j < D->Data->Count(); j++ )  {
-        size_t DL = D->Data->GetString(j).Length();
-        for( size_t k=0; k < DL; k++ )  {
-          const olxch Char = D->Data->GetString(j).CharAt(k);
-          if( Char == '\'' || Char == '"' || Char == ';')  {
-            D->Data->GetString(j)[k] = ' ';
-            D->Quoted = true;
-          }
+    if( Lines.GetObject(i) == NULL )  continue;
+    size_t li = 0;
+    CifData* D = Lines.GetObject(i);
+    for( size_t j=0; j < D->data.Count(); j++ )  {
+      for( size_t k=0; k < D->data[j].Length(); k++ )  {
+        const olxch Char = D->data[j].CharAt(k);
+        if( Char == '\'' || Char == '"' || Char == ';')  {
+          D->data[j][k] = ' ';
+          D->quoted = true;
         }
-        D->Data->GetString(j).DeleteSequencesOf(' ').Trim(' ');
-        if( !D->Data->GetString(j).IsEmpty() )  
-          li++;
       }
-      // check if a space should be added at the beginning of line
-      AddSpace = false;
-      if( li > 1 )  AddSpace = true;
+      D->data[j].DeleteSequencesOf(' ').Trim(' ');
+      if( !D->data[j].IsEmpty() )  
+        li++;
+    }
+    // check if a space should be added at the beginning of line
+    bool AddSpace = false;
+    if( li > 1 )  AddSpace = true;
+    else  {
+      if( D->data.Count() == 1 )  {
+        if( D->data[0].Length() > 80 )
+          AddSpace = true;
+      }
+    }
+    TStrList NewData, toks;
+    for( size_t j=0; j < D->data.Count(); j++ )  {
+      if( D->data[j].IsEmpty() )  continue;
+      toks.Clear();
+      toks.Hyphenate(D->data[j], 78);
+      for( size_t k=0; k < toks.Count(); k++ )  {
+        olxstr tmp;
+        if( AddSpace )  tmp = ' ';  // if a space should be added at the beginning of line
+        NewData.Add(tmp << toks[k]);
+      }
+    }
+    D->data = NewData;
+    if( NewData.Count() > 1 )  D->quoted = true;
+  }
+}
+//..............................................................................
+bool TCif::ExtractLoop(size_t& start)  {
+  if( !Lines[start].Equalsi("loop_") )  return false;
+  TCifLoop& Loop = *(new TCifLoop);
+  Loops.Add(EmptyString, &Loop);
+  olxch Char = '_';
+  while( Char == '_' )  {  // skip loop definition
+    if( ++start >= Lines.Count() )  {  // // end of file?
+      Loops.Last().String = Loop.GetLoopName();
+      return true;
+    }
+    if( Lines[start].IsEmpty() )  continue;
+    else  
+      Char = Lines[start].CharAt(0);
+    if( Char == '_' )  {
+      if( Loop.GetTable().ColCount() != 0 )  {
+/* check that the item actually belongs to the loop, this might happens in the case of empty loops */
+        if( olxstr::CommonString(Lines[start], Loop.GetTable().ColName(0)).Length() == 1 )  {
+          Loops.Last().String = Loop.GetLoopName();
+          start--;
+          return true;
+        }
+      }
+      if( Lines[start].IndexOf(' ') == InvalidIndex )
+        Loop.GetTable().AddCol(Lines[start]);
       else  {
-        if( D->Data->Count() == 1 )  {
-          if( D->Data->GetString(0).Length() > 80 )
-            AddSpace = true;
-        }
+        TStrList toks(Lines[start], ' ');
+        for( size_t i=0; i < toks.Count(); i++ )
+          Loop.GetTable().AddCol(toks[i]);
       }
-
-      NewData = new TStrList;
-      for( size_t j=0; j < D->Data->Count(); j++ )  {
-        size_t DL = D->Data->GetString(j).Length();
-        if( DL != 0 )  {
-          toks.Clear();
-          toks.Hyphenate(D->Data->GetString(j), 78);
-          for( size_t k=0; k < toks.Count(); k++ )  {
-            if( AddSpace )  Tmp = ' '; // if a space should be added at the beginning of line
-            else            Tmp = EmptyString;
-            Tmp << toks[k];
-            NewData->Add(Tmp);
-          }
-        }
-      }
-      delete D->Data;
-      D->Data = NewData;
-      if( NewData->Count() > 1 )
-        D->Quoted = true;
+      Lines[start] = EmptyString;
     }
   }
+  Char = 'a';
+  TStrList loop_data;
+  while( Char != '_' )  {  // skip loop data
+    loop_data.Add(Lines[start]);
+    Lines[start] = EmptyString;
+    if( ++start >= Lines.Count() )  break;
+    if( Lines[start].Equalsi("loop_") || Lines[start].StartsFromi("data_") ) // a new loop or dataset started
+      break;
+    if( Lines[start].IsEmpty() )   continue;
+    else  
+      Char = Lines[start].CharAt(0);
+  }
+  Loop.Format(loop_data);
+  Loops.Last().String = Loop.GetLoopName();
+  start--;
+  return true;
 }
 //..............................................................................
 void TCif::LoadFromStrings(const TStrList& Strings)  {
@@ -133,82 +168,28 @@ void TCif::LoadFromStrings(const TStrList& Strings)  {
   }
   olxch Char;
   for( size_t i=0; i < Lines.Count(); i++ )  {
-    olxstr Tmp = Lines[i];
-    if( Tmp.IsEmpty() )  continue;
-    if( Tmp.CharAt(0) == '#')  continue;
-next_loop:
-    if( Tmp.Equalsi("loop_") )  {  // parse a loop
-      TCifLoop *Loop = new TCifLoop();
-      LoopData.Clear();
-      Loops.Add(EmptyString, Loop);
-      Char = '_';
-      while( Char == '_' )  {  // skip loop definition
-        i++;
-        if( i >= Lines.Count() )  {  // // end of file?
-          Loop->Format(LoopData); // parse the loop
-          Loops[Loops.Count()-1] = Loop->GetLoopName();
-          goto exit;
-        }
-        Tmp = Lines[i];
-        if( Tmp.IsEmpty() )  continue;
-        else  
-          Char = Tmp.CharAt(0);
-        if( Char == '_' )  {
-          if( Loop->GetTable().ColCount() )  {
-            // check that the itm is actualli belongs to the loop
-            // happens in the case of empty loops
-            if( olxstr::CommonString(Tmp, Loop->GetTable().ColName(0)).Length() == 1 )  {
-              goto finalize_loop;
-            }
-          }
-          Loop->GetTable().AddCol(Tmp);
-          Lines[i] = EmptyString;
-        }
-      }
-      Char = 'a';
-      while( Char != '_' )  {  // skip loop data
-        Lines[i] = EmptyString;
-        LoopData.Add(Tmp);
-        i++;
-
-        if( i >= Lines.Count() )  {
-          Loop->Format(LoopData);
-          Loops.Last().String = Loop->GetLoopName();
-          goto exit;
-        }
-        Tmp = Lines[i];
-        if( Tmp == "loop_" || Tmp.StartsFrom("data_") )
-          goto finalize_loop;   // a new loop or dataset started
-        if( Tmp.IsEmpty() )   continue;
-        else  
-          Char = Tmp.CharAt(0);
-      }
-finalize_loop:
-      Loop->Format(LoopData);
-      Loops.Last().String = Loop->GetLoopName();
-      if( Tmp == "loop_" )
-        goto next_loop;
-    }
-    if( Tmp.CharAt(0) == '_' )  {  // parameter
+    const olxstr& line = Lines[i];
+    if( line.IsEmpty() )  continue;
+    if( line.CharAt(0) == '#')  continue;
+    if( ExtractLoop(i) )  continue;
+    if( line.CharAt(0) == '_' )  {  // parameter
       bool String = false;
-      olxstr Val(EmptyString), Param(EmptyString);
-      size_t spindex = Tmp.FirstIndexOf(' ');
+      olxstr Val, Param;
+      size_t spindex = line.FirstIndexOf(' ');
       if( spindex != InvalidIndex )  {
-        Param = Tmp.SubStringTo(spindex);
-        Val = Tmp.SubStringFrom(spindex+1); // to remove the space
+        Param = line.SubStringTo(spindex);
+        Val = line.SubStringFrom(spindex+1); // to remove the space
       }
       else  {
-        Param = Tmp;
+        Param = line;
         Val = EmptyString;
       }
       Lines[i] = Param;
-      TCifData *D = new TCifData;
-      D->Data = new TStrList;
-      D->Quoted = false;
+      CifData *D = new CifData(false);
       Lines.GetObject(i) = D;
       Parameters.Add(Param, D);
       if( !Val.IsEmpty() )
-        D->Data->Add(Val);
+        D->data.Add(Val);
       size_t j = i + 1;
       if( j < Lines.Count() )  {  // initialise 'Char'
         if( !Lines[j].IsEmpty() )
@@ -217,7 +198,6 @@ finalize_loop:
           Char = 'a';
       }
       while( Char != '_' && (j < Lines.Count()) )  {
-        olxstr Tmp1 = Lines[j];
         if( !Lines[j].IsEmpty() )  {
           Char = Lines[j].CharAt(0);
           if( Char == '#' )  {  j++;  continue;  }
@@ -226,9 +206,8 @@ finalize_loop:
             if( tmp.Equalsi("data") || tmp.Equalsi("loop") )  break;
           }
           if( Char != '_' )  {
-            D->Data->Add(Lines[j]);
-            Lines.Delete(j);
-            j--;
+            D->data.Add(Lines[j]);
+            Lines.Delete(j--);
           }
           else
             break;
@@ -236,54 +215,49 @@ finalize_loop:
         j++;
       }
       i = j-1;
-      D->Quoted = String;
+      D->quoted = String;
     }
-    else  {
-      if( Tmp.StartsFrom("data_") )  {
-        if( FDataNameUpperCase )
-          FDataName = Tmp.SubStringFrom(5).UpperCase();
-        else
-          FDataName = Tmp.SubStringFrom(5);
-        FDataName.DeleteSequencesOf(' ');
-        Lines[i] = "data_";
-        Lines[i] << FDataName;
-      }
+    else if( line.StartsFrom("data_") )  {
+      if( FDataNameUpperCase )
+        FDataName = line.SubStringFrom(5).UpperCase();
+      else
+        FDataName = line.SubStringFrom(5);
+      FDataName.DeleteSequencesOf(' ');
+      Lines[i] = "data_";
+      Lines[i] << FDataName;
     }
   }
-exit:
   Format();
   /******************************************************************/
-  /*search fo the weigting sceme*************************************/
-  TCifData *D = FindParam( "_refine_ls_weighting_details");
-  if( D != NULL)  {
-    if( D->Data->Count() == 1 )  {
-      const olxstr& tmp = D->Data->GetString(0);
-      for( size_t k=0; k < tmp.Length(); k++ )  {
-        if( tmp[k] == '+' )  {
-          if( FWeightA.IsEmpty() )  {
-            while( tmp[k] != ')' )  {
-              k++;
-              if( k >= tmp.Length() )  break;
-              FWeightA << tmp[k];
-            }
-            k--;
-            continue;
+  /*search for the weigting sceme*************************************/
+  CifData* D = FindParam( "_refine_ls_weighting_details");
+  if( D != NULL && D->data.Count() == 1 )  {
+    const olxstr& tmp = D->data[0];
+    for( size_t k=0; k < tmp.Length(); k++ )  {
+      if( tmp[k] == '+' )  {
+        if( FWeightA.IsEmpty() )  {
+          while( tmp[k] != ')' )  {
+            k++;
+            if( k >= tmp.Length() )  break;
+            FWeightA << tmp[k];
           }
-          if( FWeightB.IsEmpty() )  {
-            while( tmp[k] != ']' )  {
-              k++;
-              if( k >= tmp.Length() )  break;
-              FWeightB << tmp[k];
-            }
-            FWeightB.Delete(FWeightB.Length()-1, 1); // remove the [ bracket
+          k--;
+          continue;
+        }
+        if( FWeightB.IsEmpty() )  {
+          while( tmp[k] != ']' )  {
+            k++;
+            if( k >= tmp.Length() )  break;
+            FWeightB << tmp[k];
           }
+          FWeightB.Delete(FWeightB.Length()-1, 1); // remove the [ bracket
         }
       }
     }
   }
   /******************************************************************/
   for( size_t i=0; i < Lines.Count()-1; i++ )  {
-    if( (Lines.GetString(i).Length()|Lines.GetString(i+1).Length()) == 0 )  {
+    if( (Lines[i].Length()|Lines[i+1].Length()) == 0 )  {
       Lines.Delete(i+1);
       i--;
     }
@@ -310,7 +284,7 @@ void TCif::SetDataName(const olxstr &S)  {
   FDataName = S;
 }
 //..............................................................................
-void GroupSection(TStrPObjList<olxstr,TCifData*>& lines, size_t index,
+void GroupSection(TStrPObjList<olxstr,TCif::CifData*>& lines, size_t index,
        const olxstr& sectionName, AnAssociation2<size_t,size_t>& indexes)  {
   olxstr tmp;
   for( size_t i=index; i < lines.Count(); i++ )  {
@@ -384,34 +358,34 @@ void TCif::SaveToStrings(TStrList& Strings)  {
     }
     if( Lines.GetObject(i) != NULL )  {
       Tmp.Format(34, true, ' ');
-      TCifData* D = Lines.GetObject(i);
-      if( D->Data->Count() > 1 )  {
+      CifData* D = Lines.GetObject(i);
+      if( D->data.Count() > 1 )  {
         Strings.Add(Tmp);
         Strings.Add(";");
-        for( size_t j=0; j < D->Data->Count(); j++ )
-          Strings.Add( D->Data->GetString(j) );
+        for( size_t j=0; j < D->data.Count(); j++ )
+          Strings.Add( D->data[j] );
         Strings.Add(";");
       }
       else  {
-        if( D->Data->Count() == 1 )  {
-          if( (D->Data->GetString(0).Length() + 34) >= 80 )  {
+        if( D->data.Count() == 1 )  {
+          if( (D->data[0].Length() + 34) >= 80 )  {
             Strings.Add(Tmp);
             Strings.Add(";");
-            Strings.Add(D->Data->GetString(0));
+            Strings.Add(D->data[0]);
             Strings.Add(";");
           }
           else  {
-            if( D->Quoted )  {
-              Tmp << '\'' << D->Data->GetString(0) << '\'';
+            if( D->quoted )  {
+              Tmp << '\'' << D->data[0] << '\'';
             }
             else
-              Tmp << D->Data->GetString(0);
+              Tmp << D->data[0];
             Strings.Add(Tmp);
 
           }
         }
         else  {  // empty parameter
-          if( D->Quoted )
+          if( D->quoted )
             Tmp << "'?'";
           else
             Tmp << '?';
@@ -433,51 +407,40 @@ const olxstr& TCif::GetSParam(const olxstr &Param) const {
     return EmptyString;
   size_t i = Lines.IndexOf(Param);
   if( i != InvalidIndex )  {
-    if( Lines.GetObject(i)->Data->Count() >= 1 )
-      return Lines.GetObject(i)->Data->GetString(0);
+    if( Lines.GetObject(i)->data.Count() >= 1 )
+      return Lines.GetObject(i)->data[0];
     return EmptyString;
   }
   return EmptyString;
 }
 //..............................................................................
-TCifData *TCif::FindParam(const olxstr &Param) const {
+TCif::CifData *TCif::FindParam(const olxstr &Param) const {
   if( Param[0] != '_' )  return NULL;
   size_t i = Lines.IndexOf(Param);
   return (i == InvalidIndex) ? NULL : Lines.GetObject(i);
 }
 //..............................................................................
-bool TCif::SetParam(const olxstr &Param, TCifData *Params)  {
-  size_t i = Lines.IndexOf(Param);
-  if( i != InvalidIndex )  {
-    Lines.GetObject(i)->Data->Assign(*(Params->Data));
-    Lines.GetObject(i)->Quoted = Params->Quoted;
+bool TCif::SetParam(const olxstr& name, const CifData& value)  {
+  size_t i = Lines.IndexOf(name);
+  if( i == InvalidIndex )  {
+    Parameters.Add(name, Lines.Add(name, new CifData(value)).Object);
     return true;
   }
+  Lines.GetObject(i)->data = value.data;
+  Lines.GetObject(i)->quoted = value.quoted;
   return false;
 }
 //..............................................................................
-bool TCif::AddParam(const olxstr &Param, TCifData *Params)  {
-  size_t i = Lines.IndexOf(Param);
-  if( i != InvalidIndex )  return false;
-  TCifData *Data = new TCifData;
-  Data->Data = new TStrList;
-  Data->Data->Assign(*(Params->Data));
-  Data->Quoted = Params->Quoted;
-  Lines.Add(Param, Data);
-  Parameters.Add(Param, Data);
-  return true;
-}
-//..............................................................................
-bool TCif::AddParam(const olxstr &Param, const olxstr &Params, bool Quoted)  {
-  size_t i = Lines.IndexOf(Param);
-  if( i != InvalidIndex )  return false;
-  TCifData *Data = new TCifData;
-  Data->Data = new TStrList;
-  Data->Data->Add(Params);
-  Data->Quoted = Quoted;
-  Lines.Add(Param, Data);
-  Parameters.Add(Param, Data);
-  return true;
+bool TCif::SetParam(const olxstr& name, const olxstr& value, bool quoted)  {
+  size_t i = Lines.IndexOf(name);
+  if( i == InvalidIndex )  {
+    Parameters.Add(name, Lines.Add(name, new CifData(value, quoted)).Object);
+    return true;
+  }
+  Lines.GetObject(i)->data.Clear();
+  Lines.GetObject(i)->data.Add(value);
+  Lines.GetObject(i)->quoted = quoted;
+  return false;
 }
 //..............................................................................
 void TCif::Initialize()  {
@@ -778,10 +741,8 @@ TCifLoop& TCif::GetPublicationInfoLoop()  {
   Lines.Insert(index+1, "loop_");
   // to make the automatic grouping to work ...
   if( ! ParamExists(publ_jn) )  {
-    TCifData *Data = new TCifData;
-    Data->Data = new TStrList;
-    Data->Data->Add('?');
-    Data->Quoted = true;
+    CifData* Data = new CifData(true);
+    Data->data.Add('?');
     Lines.Insert(index+2, publ_jn, Data);
     Lines.Insert(index+3, EmptyString, NULL);
     Parameters.Add(publ_jn, Data);
@@ -802,22 +763,22 @@ bool TCif::Adopt(TXFile& XF)  {
   Title = "OLEX2_EXP";
 
   SetDataName(Title);
-  AddParam("_cell_length_a", GetAsymmUnit().Axes()[0].ToString(), false);
-  AddParam("_cell_length_b", GetAsymmUnit().Axes()[1].ToString(), false);
-  AddParam("_cell_length_c", GetAsymmUnit().Axes()[2].ToString(), false);
+  SetParam("_cell_length_a", GetAsymmUnit().Axes()[0].ToString(), false);
+  SetParam("_cell_length_b", GetAsymmUnit().Axes()[1].ToString(), false);
+  SetParam("_cell_length_c", GetAsymmUnit().Axes()[2].ToString(), false);
 
-  AddParam("_cell_angle_alpha", GetAsymmUnit().Angles()[0].ToString(), false);
-  AddParam("_cell_angle_beta",  GetAsymmUnit().Angles()[1].ToString(), false);
-  AddParam("_cell_angle_gamma", GetAsymmUnit().Angles()[2].ToString(), false);
+  SetParam("_cell_angle_alpha", GetAsymmUnit().Angles()[0].ToString(), false);
+  SetParam("_cell_angle_beta",  GetAsymmUnit().Angles()[1].ToString(), false);
+  SetParam("_cell_angle_gamma", GetAsymmUnit().Angles()[2].ToString(), false);
 
-  AddParam("_chemical_formula_sum", GetAsymmUnit().SummFormula(' ', false), true);
-  AddParam("_chemical_formula_weight", olxstr(GetAsymmUnit().MolWeight()), false);
+  SetParam("_chemical_formula_sum", GetAsymmUnit().SummFormula(' ', false), true);
+  SetParam("_chemical_formula_weight", olxstr(GetAsymmUnit().MolWeight()), false);
 
   TSpaceGroup& sg = XF.GetLastLoaderSG();
-  AddParam("_cell_formula_units_Z", XF.GetAsymmUnit().GetZ(), false);
-  AddParam("_symmetry_cell_setting", sg.GetBravaisLattice().GetName(), true);
-  AddParam("_symmetry_space_group_name_H-M", sg.GetName(), true);
-  AddParam("_symmetry_space_group_name_Hall", sg.GetHallSymbol(), true);
+  SetParam("_cell_formula_units_Z", XF.GetAsymmUnit().GetZ(), false);
+  SetParam("_symmetry_cell_setting", sg.GetBravaisLattice().GetName(), true);
+  SetParam("_symmetry_space_group_name_H-M", sg.GetName(), true);
+  SetParam("_symmetry_space_group_name_Hall", sg.GetHallSymbol(), true);
   {
     TCifLoop& Loop = AddLoop("_space_group_symop");
     TCifLoopTable& Table = Loop.GetTable();
@@ -879,7 +840,7 @@ bool TCif::Adopt(TXFile& XF)  {
     }
   }
   if( XF.GetAsymmUnit().IsQPeakMinMaxInitialised() )
-    AddParam("_refine_diff_density_max", XF.GetAsymmUnit().GetMaxQPeak(), false);
+    SetParam("_refine_diff_density_max", XF.GetAsymmUnit().GetMaxQPeak(), false);
   return true;
 }
 //..............................................................................
@@ -902,13 +863,9 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
  olxstr (*ResolveExternal)(const olxstr& valueName),
  bool DoubleTheta) const
 {
-
-  TCifData *Params;
-
   olxstr Tmp, Val, SVal;
   size_t index, start, end;
   double theta;
-
   for( size_t i=0; i < String.Length(); i++ )  {
     if( String.CharAt(i) == Quote )  {
       if( (i+1) < String.Length() && String.CharAt(i+1) == Quote )  {
@@ -948,11 +905,11 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
             }
           }
           else if( Val.CharAt(0) == '_' )  {
-            Params = FindParam(Val);
-            if( Params == NULL || Params->Data->IsEmpty() )  
+            CifData* Params = FindParam(Val);
+            if( Params == NULL || Params->data.IsEmpty() )  
               Tmp = 'N';
             else
-              Tmp = Params->Data->GetString(0);
+              Tmp = Params->data[0];
             String.Delete(start, end-start+1);
             String.Insert(Tmp, start);
             i = start + Tmp.Length() - 1;
@@ -1007,38 +964,38 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
             else if( SVal.Equalsi("weightb") )
               Tmp = GetWeightB();
             else {
-              Params = FindParam(SVal);
-              if( !Params )  {
+              CifData* Params = FindParam(SVal);
+              if( Params == NULL )  {
                 TBasicApp::GetLog().Info(olxstr("The parameter \'") << SVal << "' is not found");
                 Tmp = "N";
               }
-              else if( !Params->Data->Count() )  {
+              else if( !Params->data.Count() )  {
                 TBasicApp::GetLog().Info(olxstr("Value of parameter \'") << SVal << "' is not found");
                   Tmp = "none";
               }
-              else if( Params->Data->Count() == 1 )  {
-                if( Params->Data->GetString(0).IsEmpty() )  {
+              else if( Params->data.Count() == 1 )  {
+                if( Params->data[0].IsEmpty() )  {
                   TBasicApp::GetLog().Info(olxstr("Value of parameter \'") << SVal << "' is not found");
                   Tmp = "none";
                 }
-                else if( Params->Data->GetString(0).CharAt(0) == '?' )  {
+                else if( Params->data[0].CharAt(0) == '?' )  {
                   TBasicApp::GetLog().Info(olxstr("Value of parameter \'") << SVal << "' is not defined");
                   Tmp = "?";
                 }
                 else
-                  Tmp = Params->Data->GetString(0);
+                  Tmp = Params->data[0];
               }
               else if( index == 13 || index == 14 || index == 30 )  {
                 if( DoubleTheta )  {
-                  theta = Params->Data->Text(EmptyString).ToDouble();
+                  theta = Params->data.Text(EmptyString).ToDouble();
                   theta *= 2;
                   Tmp = theta;
                 }
                 else
-                  Tmp = Params->Data->Text(' ');
+                  Tmp = Params->data.Text(' ');
               }
               else
-                Tmp = Params->Data->Text(' ');
+                Tmp = Params->data.Text(' ');
             }
 
             String.Insert(Tmp, start);

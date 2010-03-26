@@ -41,7 +41,8 @@
       build\henke_Tm.obj build\henke_U.obj build\henke_V.obj build\henke_W.obj 
       build\henke_Xe.obj build\henke_Y.obj build\henke_Yb.obj build\henke_Zn.obj 
       build\henke_Zr.obj build\olxthpool.obj build\xapp.obj build\hkl.obj 
-      build\crs.obj build\p4p.obj"/>
+      build\crs.obj build\p4p.obj build\cifdata.obj build\cifloop.obj 
+      build\ciftab.obj"/>
     <RESFILES value="lcells.res"/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) ..\..\..\lcells\about.dfm ..\..\..\lcells\iinfo.dfm 
@@ -231,6 +232,9 @@
       <FILE FILENAME="..\..\..\xlib\hkl.cpp" FORMNAME="" UNITNAME="hkl" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\crs.cpp" FORMNAME="" UNITNAME="crs" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\p4p.cpp" FORMNAME="" UNITNAME="p4p" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\cifdata.cpp" FORMNAME="" UNITNAME="cifdata.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\cifloop.cpp" FORMNAME="" UNITNAME="cifloop.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\ciftab.cpp" FORMNAME="" UNITNAME="ciftab.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>
