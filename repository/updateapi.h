@@ -165,7 +165,7 @@ public:
   AFileSystem* FindActiveUpdateRepositoryFS(short* res) const;
   // creates an FS from string - ftpfs, httpfs, os-fs or zipfs
   static AFileSystem* FSFromString(const olxstr& repo_str, const olxstr& proxy_str);
-  static const char* GetDefaultRepository() {  return "http://www.olex2.org/olex2-distro/";  }
+  static TStrList GetDefaultRepositories();
   static olxstr GetSettingsFileName()  {  return TBasicApp::GetBaseDir() + "usettings.dat";  }
   static olxstr GetIndexFileName()  {  return TBasicApp::GetBaseDir() + "index.ind";  }
   static olxstr GetMirrorsFileName()  {  return TBasicApp::GetBaseDir() + "mirrors.txt";  }

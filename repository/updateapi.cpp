@@ -84,7 +84,7 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
       if( !zfs.Exists(patcher::PatchAPI::GetTagFileName()) )
         return updater::uapi_InvaildRepository;
       zfs.ExtractAll(TBasicApp::GetBaseDir());
-      settings.repository = GetDefaultRepository();
+      settings.repository = GetDefaultRepositories()[0];
       settings.last_updated = TETime::EpochTime();
       settings.Save();
       PatchAPI::UnlockUpdater();
@@ -398,8 +398,11 @@ void UpdateAPI::GetAvailableMirrors(TStrList& res) const  {
   olxstr mirrors_fn = GetMirrorsFileName();
   if( TEFile::Exists(mirrors_fn) )
     res.LoadFromFile(mirrors_fn);
-  if( res.IndexOf(GetDefaultRepository()) == InvalidIndex )
-    res.Insert(0, GetDefaultRepository());
+  TStrList defs = GetDefaultRepositories();
+  for( size_t i=0; i < defs.Count(); i++ )  {
+    if( res.IndexOf(defs[defs.Count()-i-1]) == InvalidIndex )
+      res.Insert(0, defs[defs.Count()-i-1]);
+  }
   if( settings.IsValid() && !settings.repository.IsEmpty() )  {
     const size_t ind = res.IndexOf(settings.repository);
     if( ind != InvalidIndex && ind != 0 )
@@ -473,6 +476,16 @@ olxstr UpdateAPI::AddTagPart(const olxstr& path, bool Update) const {
   rv << Tag << '/';
   if( Update )
     rv << "update/";
+  return rv;
+}
+//.............................................................................
+TStrList UpdateAPI::GetDefaultRepositories() {
+  static TStrList rv;
+  if( rv.IsEmpty() )  {
+    rv.Add("http://www.olex2.org/olex2-distro/");
+    rv.Add("http://www1.olex2.org/olex2-distro/");
+    rv.Add("http://www2.olex2.org/olex2-distro/");
+  }
   return rv;
 }
 //.............................................................................

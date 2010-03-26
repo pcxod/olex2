@@ -978,6 +978,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\cifdata.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\cifloop.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\ciftab.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\congen.cpp"
 				>
 			</File>
