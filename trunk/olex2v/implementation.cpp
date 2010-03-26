@@ -5,10 +5,10 @@
 
 #include "ins.h"
 #include "olxvar.h"
-#include "wx/wx.h"
+//#include "wx/wx.h"
 //#include "wx/fontmap.h"
-#include "wx/font.h"
-#include "wx/settings.h"
+//#include "wx/font.h"
+//#include "wx/settings.h"
 
 #include "xatom.h"
 #include "xbond.h"
@@ -19,7 +19,7 @@
 TOlexViewer* TOlexViewer::Instance = NULL;
 
 TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
-  GXApp = new TGXApp(TBasicApp::GuessBaseDir( wxApp::GetInstance()->argv[0], "OLEX2_DIR")); 
+  GXApp = new TGXApp(TBasicApp::GuessBaseDir(GetCommandLine(), "OLEX2_DIR")); 
   Instance = this;
   int PixelFormat;
   PIXELFORMATDESCRIPTOR pfd = {
@@ -55,8 +55,9 @@ TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
   glm.SetFlags(sglmAmbientF|sglmEmissionF|sglmIdentityDraw);
   glm.AmbientF = 0x7fff7f;
   glm.EmissionF = 0x1f2f1f;
-  wxFont Font(*wxNORMAL_FONT);//|wxFONTFLAG_ANTIALIASED);
-  GXApp->GetRender().GetScene().CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
+  //wxFont Font(*wxNORMAL_FONT);//|wxFONTFLAG_ANTIALIASED);
+  //GXApp->GetRender().GetScene().CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
+  GXApp->GetRender().GetScene().CreateFont("Labels", "@20")->SetMaterial(glm);
  
   GXApp->SetLabelsFont(0);
 
@@ -93,7 +94,7 @@ TOlexViewer::~TOlexViewer()  {
     wglDeleteContext(GlContext);
   }
   TOlxVars::Finalise();
-  wxStockGDI::DeleteAll();
+  // ! wxStockGDI::DeleteAll();
   // there is still a static font variable left from wxWidgest, duno how to reach it cleanly...
 }
 void TOlexViewer::OnPaint()  {

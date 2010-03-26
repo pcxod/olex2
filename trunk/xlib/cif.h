@@ -6,18 +6,19 @@
 #include "cifdata.h"
 #include "cifloop.h"
 #include "ciftab.h"
-
 BeginXlibNamespace()
 
-struct TCifData  {
-  TStrList *Data;
-  bool Quoted;
-};
-
-//---------------------------------------------------------------------------
 class TCif: public TBasicCFile  {
+public:
+  struct CifData  {
+    TStrList data;
+    bool quoted;
+    CifData(bool _quoted=false) : quoted(_quoted)  {}
+    CifData(const olxstr& val, bool _quoted) : quoted(_quoted)  {  data.Add(val);  }
+    CifData(const CifData& d) : data(d.data), quoted(d.quoted)  {}
+  };
 private:
-  TStrPObjList<olxstr,TCifData*> Lines, Parameters;
+  TStrPObjList<olxstr,CifData*> Lines, Parameters;
   void Format();
   olxstr FDataName, FWeightA, FWeightB;
   TStrPObjList<olxstr,TCifLoop*> Loops; // LoopName + CifLoop
@@ -27,11 +28,11 @@ private:
   TCifDataManager DataManager;
   smatd_list Matrices;
   olxdict<olxstr, size_t, olxstrComparator<true> > MatrixMap;
+  bool ExtractLoop(size_t& start);
 public:
   TCif();
   virtual ~TCif();
-
-  void Clear();  // Empties the content of current file
+  void Clear();
   //............................................................................
   //Load the object from a file.
   virtual void LoadFromStrings(const TStrList& Strings);
@@ -39,25 +40,23 @@ public:
   virtual void SaveToStrings(TStrList& Strings);
   //Adopts the content of a file (asymmetric unit, loops, etc) to a specified source file
   virtual bool Adopt(TXFile& XF);
-  /*Adds a new parameter to the CIF. The Params is copied to a new object, so it
-    should be deleted within the main body of a program  */
-  bool AddParam(const olxstr& Param, TCifData* Params);
-  /*Adds a new parameter to the CIF. If the parameter is a string object, then set
-    the String parameter to true.  */
-  bool AddParam(const olxstr& Param, const olxstr& Params, bool String);
-  TCifData *FindParam(const olxstr& Param) const; //Returns full value of a parameter
- /*Returns the first string of the TCifData objects associated with a given parameter.
-   Note that the data is stores in a olxstrList, which may contain more than one string.
+  //Finds a value by name
+  CifData *FindParam(const olxstr& name) const; 
+ /*Returns the first string of the CifData objects associated with a given parameter.
+   Note that there might be more than  one string.
    To get full information, use GetParam function instead.  */
-  const olxstr& GetSParam(const olxstr& Param) const;
-  bool ParamExists(const olxstr& Param);  //Returns true if a specified parameter exists
-  bool SetParam(const olxstr& Param, TCifData* Params);
+  const olxstr& GetSParam(const olxstr& name) const;
+  //Returns true if a specified parameter exists
+  bool ParamExists(const olxstr& name);  
+  //Adds/Sets given parameter a value; returns true if the parameter was created
+  bool SetParam(const olxstr& name, const CifData& value);
+  bool SetParam(const olxstr& name, const olxstr& value, bool quoted);
   // returns the number of parameters
-  inline size_t ParamCount() const {  return Parameters.Count(); };
+  inline size_t ParamCount() const {  return Parameters.Count();  }
   // returns the name of a specified parameter
-  const olxstr& Param(size_t index) const {  return Parameters[index]; };
-  // returns the name of a specified parameter
-  TCifData* ParamValue(size_t index)  {  return Parameters.GetObject(index); };
+  const olxstr& Param(size_t index) const {  return Parameters[index];  }
+  // returns the value of a specified parameter
+  CifData& ParamValue(size_t index)  {  return *Parameters.GetObject(index);  }
   // matrics access functions
   size_t MatrixCount() const {  return Matrices.Count();  }
   const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
