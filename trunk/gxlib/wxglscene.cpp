@@ -50,7 +50,7 @@ public:
     for( size_t i=0; i < fntFiles.Count(); i++ )
       cbFileName->Append( fntFiles[i].u_str() ); 
     AASizer->Add( cbFileName, 0, wxALL, 5);
-  
+
     wxBoxSizer *ASizer = new wxBoxSizer( wxHORIZONTAL );
     cbSize = new wxComboBox(this, -1, olxstr(mf.GetSize()).u_str() );
     cbSize->AppendString(wxT("10"));
@@ -528,10 +528,5 @@ olxstr TwxGlScene::MetaFont::GetIdString() const {
   return f.GetNativeFontInfoDesc().c_str();
 }
 //..............................................................................
-olxstr TwxGlScene::MetaFont::GetFileIdString() const {
-  if( IsOlexFont(OriginalId) ) 
-    return BuildOlexFontId(EmptyString, Size, Fixed, Bold, Italic);
-  throw TInvalidArgumentException(__OlxSourceInfo, "Olex2 font is expected");
-}
 #endif // __WXWIDGETS__
 
