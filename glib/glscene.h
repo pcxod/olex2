@@ -50,9 +50,10 @@ public:
   TGlFont* FindFont(const olxstr& name);
 
   class MetaFont {
+  protected:
+    olxstr OriginalId, FileName;
     bool Bold, Italic, Fixed, Underlined;
     short Size;
-    olxstr OriginalId, FileName;
   public:
     MetaFont(const olxstr& fontId);
     virtual olxstr GetIdString() const;
