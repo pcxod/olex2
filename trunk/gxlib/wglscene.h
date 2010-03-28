@@ -1,32 +1,21 @@
-//---------------------------------------------------------------------------
-#ifndef wglsceneH
-#define wglsceneH
+#ifndef __olx_gxl_wglscene_H
+#define __olx_gxl_wglscene_H
 #include "glscene.h" 
-//---------------------------------------------------------------------------
-// system dependent staff
-//__________________________________________
 #if defined(__WIN32__)
 class TWGlScene:public AGlScene  {
-private:
   HGLRC FGlContext;
   HDC   FWContext;
   HBITMAP FBitmap;
-
   void SetPixelFormatDescriptor(HDC hDc, __int8 bits);
   void SetPixelFormatDescriptorX(HDC hDc, __int8 bits);
-protected:
-//  GLYPHMETRICSFLOAT *FGlyphMetrics;  // represents the metrics of generateg font
-//  bool CreateBmpFont(HDC Dc, HFONT Font);
-//  bool CreateTtfFont(HDC Dc, HFONT Font);
-//  float FFontExtrusionZ;   // specifies the width of the font in Z direction
 public:
   TWGlScene();
   virtual ~TWGlScene();
 
-  void InitialiseBMP(HBITMAP Bmp, HFONT Font);
-  void InitialiseHDC(HDC Dc, HFONT Font);
+  void InitialiseBMP(HBITMAP Bmp);
+  void InitialiseHDC(HDC Dc);
 
-  TGlFont* CreateFont(const olxstr& name, void *Data, TGlFont *Replace=NULL, bool Bmp=true, bool FixedW=true);
+  virtual TGlFont* CreateFont(const olxstr& name, const olxstr& fntDescription, short Flags=TGlFont::fntBmp);
 
   void Destroy();
 
@@ -35,8 +24,16 @@ public:
 
   void StartDraw();
   void EndDraw();
+  virtual void ScaleFonts(double scale)  {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
+  // restores the font sizes after a call to the ScaleFonts
+  virtual void RestoreFontScale()  {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
+  virtual olxstr ShowFontDialog(TGlFont* glf = NULL, const olxstr& fontDescription = EmptyString)  {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
 };
-#endif
-//---------------------------------------------------------------------------
-
+#endif // __WIN32__
 #endif

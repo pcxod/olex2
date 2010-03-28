@@ -29,7 +29,8 @@ void __fastcall TForm1::FormPaint(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm1::FormShow(TObject *Sender)  {
   dc = GetDC(Handle);
-  olxv_Initialize(dc, Width, Height );
+  olxv_Initialize(dc, Width, Height);
+  olxv_EnableSelection(true);
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::FormMouseDown(TObject *Sender, TMouseButton Button,
@@ -55,8 +56,8 @@ void __fastcall TForm1::FormMouseMove(TObject *Sender, TShiftState Shift,
   if( Shift.Contains(ssShift) ) shift_state |= olxv_ShiftShift;
   if( Shift.Contains(ssCtrl) )  shift_state |= olxv_ShiftCtrl;
   if( !olxv_OnMouse(X, Y + (Height-ClientHeight), olxv_MouseMove, 0, shift_state) )  {
-//    Hint = olxv_GetObjectLabelAt(X, Y + (Height-ClientHeight));
-//    Update();
+    Hint = olxv_GetObjectLabelAt(X, Y + (Height-ClientHeight));
+    //Update();
   }
 }
 //---------------------------------------------------------------------------

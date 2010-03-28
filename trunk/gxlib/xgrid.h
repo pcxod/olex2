@@ -11,8 +11,9 @@
 
 #include "gltexture.h"
 #include "glprimitive.h"
-
+#ifdef __WXWIDGETS__
 #include "wx/zipstrm.h"
+#endif
 #include "fracmask.h"
 #include "ps_writer.h"
 

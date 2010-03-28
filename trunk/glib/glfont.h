@@ -78,15 +78,15 @@ public:
     const double& drawScale, olxdict<size_t, olxstr, TPrimitiveComparator>& definition);
   void CreateTextures(uint16_t Width, uint16_t Height);
   inline bool HasTextures() const {  return Textures != NULL;  }
-  inline TFontCharSize* CharSize(size_t Char)  { return CharSizes[(unsigned)Char];  }
+  inline TFontCharSize* CharSize(size_t Char)  {  return CharSizes[(unsigned)Char];  }
 
-  inline bool IsFixedWidth() const {  return  (Flags & sglfFixedWidth) == sglfFixedWidth; }
-  inline bool IsVectorFont() const {  return  (Flags & sglfVectorFont) == sglfVectorFont; }
+  inline bool IsFixedWidth() const {  return (Flags & sglfFixedWidth) == sglfFixedWidth;  }
+  inline bool IsVectorFont() const {  return (Flags & sglfVectorFont) == sglfVectorFont;  }
   DefPropP(uint16_t, CharOffset)
   inline GLuint GetFontBase() const {  return FontBase; }
-  void DrawGlText(const vec3d& from, const olxstr& text, double scale = 1.0, bool FixedWidth=false);
+  void DrawGlText(const vec3d& from, const olxstr& text, double scale = 1.0, bool FixedWidth=false) const;
   DefPropC(olxstr, IdString)
-  inline const olxstr& GetName() const {  return Name; }
+  inline const olxstr& GetName() const {  return Name;  }
   inline TGlMaterial& GetMaterial()  {  return Material;  }
   inline const TGlMaterial& GetMaterial() const {  return Material;  }
   void SetMaterial(const TGlMaterial& m);

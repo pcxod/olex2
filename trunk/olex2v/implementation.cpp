@@ -5,49 +5,26 @@
 
 #include "ins.h"
 #include "olxvar.h"
-//#include "wx/wx.h"
-//#include "wx/fontmap.h"
-//#include "wx/font.h"
-//#include "wx/settings.h"
 
 #include "xatom.h"
 #include "xbond.h"
 #include "gllabels.h"
 #include "shellutil.h"
 #include "patchapi.h"
+#include "wglscene.h"
 
 TOlexViewer* TOlexViewer::Instance = NULL;
 
 TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
   GXApp = new TGXApp(TBasicApp::GuessBaseDir(GetCommandLine(), "OLEX2_DIR")); 
   Instance = this;
-  int PixelFormat;
-  PIXELFORMATDESCRIPTOR pfd = {
-    sizeof(PIXELFORMATDESCRIPTOR),
-    1,
-    PFD_DRAW_TO_WINDOW |	// support window
-	  PFD_SUPPORT_OPENGL |	// support OpenGL
-	  PFD_DOUBLEBUFFER,	// double buffered
-	  PFD_TYPE_RGBA,
-    24,  // 24 bit
-    0,0,0,0,0,0,
-    0,0,
-    0,0,0,0,0,
-    32,
-    0,
-    0,
-    PFD_MAIN_PLANE,
-    0,
-    0,0,
-  };
-  PixelFormat = ChoosePixelFormat(WindowDC, &pfd);
-  if( !SetPixelFormat(WindowDC, PixelFormat, &pfd) )
-    throw TFunctionFailedException(__OlxSourceInfo, "SetPixelFormat failed");
-  GlContext = wglCreateContext(WindowDC);
-  if( GlContext == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "wglCreateContext failed");
-  if( !wglMakeCurrent(WindowDC, GlContext) ) 
-    throw TFunctionFailedException(__OlxSourceInfo, "wglMakeCurrent failed");
+  AGlScene& scene = GXApp->GetRender().GetScene();
+  if( !EsdlInstanceOf(scene, TWGlScene) )  {
+    MessageBox(NULL, olxT("Invalid initialisation parameter"), olxT("Error"), MB_OK|MB_ICONEXCLAMATION);
+    throw TInvalidArgumentException(__OlxSourceInfo, "scene");
+  }
+  else
+    ((TWGlScene&)scene).InitialiseHDC(windowDC);
   
   olx_gl::clearColor(0.5, 0.5, 0.0, 0.0);
   OnSize(w, h);
@@ -94,8 +71,6 @@ TOlexViewer::~TOlexViewer()  {
     wglDeleteContext(GlContext);
   }
   TOlxVars::Finalise();
-  // ! wxStockGDI::DeleteAll();
-  // there is still a static font variable left from wxWidgest, duno how to reach it cleanly...
 }
 void TOlexViewer::OnPaint()  {
 //  OnSize(Width, Height);
@@ -198,6 +173,10 @@ void TOlexViewer::ShowQPeaks(short what)  {
 //.......................................................................................
 void TOlexViewer::ShowCell(bool v)  {
   GXApp->SetCellVisible(v);
+}
+//.......................................................................................
+void TOlexViewer::EnableSelection(bool v)  {
+  GXApp->EnableSelection(v);
 }
 //.......................................................................................
 void TOlexViewer::DrawStyle(short style)  {
@@ -331,6 +310,9 @@ void olxv_ShowQPeaks(short what)  {
 }
 void olxv_ShowCell(bool v)  {
   if( TOlexViewer::Instance != NULL )  TOlexViewer::Instance->ShowCell(v);
+}
+void olxv_EnableSelection(bool v)  {
+  if( TOlexViewer::Instance != NULL )  TOlexViewer::Instance->EnableSelection(v);
 }
 void olxv_DrawStyle(short style)  {
   if( TOlexViewer::Instance != NULL )  TOlexViewer::Instance->DrawStyle(style);

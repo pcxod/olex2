@@ -1,21 +1,12 @@
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
-#define WGL_WGLEXT_PROTOTYPES
-
 #include "wglscene.h"
 #include "glfont.h"
 #include "exception.h"
 #include "glrender.h"
 #include "glscene.h"
 
-//---------------------------------------------------------------------------
-// TGlScene
-//---------------------------------------------------------------------------
 #if defined(__WIN32__)
-TWGlScene::TWGlScene()
-{
+
+TWGlScene::TWGlScene() {
   FBitmap = NULL;
   FWContext = NULL;
   FGlContext = NULL;
@@ -82,19 +73,27 @@ void TWGlScene::SetPixelFormatDescriptorX(HDC hDc, __int8 bits)
 //  const char * (*GetExtensions)(HDC) = (WINAPI)wglGetProcAddress("wglGetEntensionsStringARB");
 }
 //..............................................................................
-TGlFont* TWGlScene::CreateFont(const olxstr& name, void *Data, TGlFont *ReplaceFnt,
-         bool BmpF, bool FixedW)  {
-  TGlFont *Fnt;
-  HFONT Font = (HFONT)Data;
-  if( ReplaceFnt != NULL )  {
-    Fnt = ReplaceFnt;
+TGlFont* TWGlScene::CreateFont(const olxstr& name, const olxstr& fntDesc, short Flags)  {
+  TGlFont *Fnt = FindFont(name);
+  if( Fnt != NULL ) 
     Fnt->ClearData();
-  }
   else
     Fnt = new TGlFont(name);
-
-  Fnt->IdString("zzz");
-  TEList Images;
+  if( MetaFont::IsVectorFont(fntDesc) )  {
+    olxdict<size_t, olxstr, TPrimitiveComparator> dummy;
+    Fnt->CreateHershey(dummy, 120);
+    if( FindFont(name) == NULL )
+      Fonts.Add(Fnt);
+    Fnt->SetIdString(fntDesc);
+    MetaFont mf(fntDesc);
+    Fnt->SetPointSize(mf.GetSize());
+    return Fnt;
+  }
+  throw TNotImplementedException(__OlxSourceInfo);
+  MetaFont meta_fnt(fntDesc);
+  HFONT Font = (HFONT)NULL;
+  Fnt->SetIdString("zzz");
+  TPtrList<char*> Images;
   int ImageW = 36; //Font.GetPointSize()*1.5;
   RECT R = {0, 0, ImageW, ImageW};
   char *Image;
@@ -127,124 +126,33 @@ TGlFont* TWGlScene::CreateFont(const olxstr& name, void *Data, TGlFont *ReplaceF
   DeleteObject(Pen);
   DeleteObject(Brush);
   DeleteDC(hDC);
-  Fnt->CreateGlyphs(FixedW, ImageW, ImageW);
+  Fnt->CreateGlyphsFromRGBArray(meta_fnt.IsFixed(), ImageW, ImageW);
   for( int i=0; i < 256; i++ )  // to find maximum height and width
     delete [] (char*)Images[i];
-
-  if( ReplaceFnt == NULL )
-    Fonts.Add(Fnt);
-
   return Fnt;
 }
 //..............................................................................
-/*
-int TWGlScene::TtfTextWidth(const olxstr &Text)
-{
-  if( !FGlyphMetrics )  return -1;
-  int FCalcWidth = 0;
-  int i, tl = Text.Length();
-  GLYPHMETRICSFLOAT *GM;
-  for( i=0; i < tl; i++ )
-  {
-    GM = &FGlyphMetrics[Text[i]];
-    if( i < (tl - 1) )  { FCalcWidth += GM->gmfCellIncX;  }
-    else                { FCalcWidth += GM->gmfBlackBoxX; }
-  }
-  return FCalcWidth;
-}
-//..............................................................................
-int TWGlScene::TtfTextHeight(const olxstr &Text)
-{
-  if( !FGlyphMetrics )  return -1;
-  int FCalcHeight = 0;
-  int i, tl = Text.Length();
-  GLYPHMETRICSFLOAT *GM;
-  for( i=0; i < tl; i++ )
-  {
-    GM = &FGlyphMetrics[Text[i]];
-    if( i < (tl - 1) )  { FCalcHeight += GM->gmfCellIncY; }
-    else                { FCalcHeight += GM->gmfBlackBoxY; }
-  }
-  return FCalcHeight;
-}
-//..............................................................................
-bool TWGlScene::CreateBmpFont(void *Data)
-{
-  if( FWContext )  return CreateBmpFont(FWContext, (HFONT)Data);
-  else
-  {
-    HDC dc = CreateCompatibleDC(NULL);
-    return CreateBmpFont(dc, (HFONT)Data);
-  }
-}
-//..............................................................................
-bool TWGlScene::CreateTtfFont(void *Data)
-{
-  if( FWContext )  return CreateTtfFont(FWContext, (HFONT)Data);
-  else
-  {
-    HDC dc = CreateCompatibleDC(NULL);
-    return CreateTtfFont(dc, (HFONT)Data);
-  }
-}
-//..............................................................................
-bool TWGlScene::CreateBmpFont(HDC Dc, HFONT Font)
-{
-  bool res = true;
-  if( FBmpFontBase == -1 )
-  {
-    SelectObject(Dc, Font);
-    if( wglUseFontBitmaps(Dc, 0, 256, 5000) == TRUE )
-    {    FBmpFontBase = 5000;  }
-    else
-    {    FBmpFontBase = -1;  res = false; }
-  }
-  return res;
-}
-//..............................................................................
-bool TWGlScene::CreateTtfFont(HDC Dc, HFONT Font)
-{
-  bool res = true;
-  if( FTtfFontBase == -1 )
-  {
-    SelectObject(Dc, Font);
-    if( !FGlyphMetrics )    FGlyphMetrics = new GLYPHMETRICSFLOAT[256];
-    if( wglUseFontOutlines(Dc, 0, 255, 6000, 5.0f, FFontExtrusionZ, WGL_FONT_POLYGONS, FGlyphMetrics) == TRUE )
-    {    FTtfFontBase = 6000;  }
-    else
-    {    FTtfFontBase = -1;  delete [] FGlyphMetrics;  FGlyphMetrics = NULL; res = false; }
-  }
-  return res;
-} */
-//..............................................................................
-void TWGlScene::InitialiseBMP(HBITMAP Bmp, HFONT Font)
-{
+void TWGlScene::InitialiseBMP(HBITMAP Bmp)  {
   Destroy();
+  if( FBitmap == NULL )
+    throw TInvalidArgumentException(__OlxSourceInfo, "bitmap=NULL");
   FWContext = CreateCompatibleDC(NULL);
   FBitmap = Bmp;
-  if( !FBitmap )
-    throw TInvalidArgumentException(__OlxSourceInfo, "bitmap=NULL");
   SelectObject(FWContext, FBitmap);
   SetPixelFormatDescriptor(FWContext, 24);
   FGlContext = wglCreateContext(FWContext);
-  if( !FGlContext )
+  if( FGlContext == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "could not create gl context");
   if( wglMakeCurrent(FWContext, FGlContext) == FALSE )
     throw TFunctionFailedException(__OlxSourceInfo, "could not make current context");
 
-  // create fonts
-//  CreateBmpFont(FWContext, Font);
-//  CreateTtfFont(FWContext, Font);
-
-  if( FWContext )
-  {
+  if( FWContext != NULL )  {
     DeleteDC(FWContext);
     FWContext = NULL;
   }
 }
 //..............................................................................
-void TWGlScene::InitialiseHDC(HDC Dc, HFONT Font)
-{
+void TWGlScene::InitialiseHDC(HDC Dc)  {
   FBitmap = NULL;
   Destroy();
   FWContext = Dc;
@@ -254,48 +162,34 @@ void TWGlScene::InitialiseHDC(HDC Dc, HFONT Font)
     throw TFunctionFailedException(__OlxSourceInfo, "could not create gl context");
   if( wglMakeCurrent(FWContext, FGlContext) == FALSE )
     throw TFunctionFailedException(__OlxSourceInfo, "could not make curernt context");
-
-  // create fonts
-//  CreateBmpFont(Dc, Font);
-//  CreateTtfFont(Dc, Font);
-
-  FParent->SetView();
 }
 //..............................................................................
-void TWGlScene::StartDraw()
-{
-  if( FBitmap )
-  {
+void TWGlScene::StartDraw()  {
+  if( FBitmap != NULL )  {
     FWContext = CreateCompatibleDC(NULL);
     SelectObject(FWContext, FBitmap);
     SetPixelFormatDescriptor(FWContext, 24);
     if( wglMakeCurrent(FWContext, FGlContext) == FALSE )
       throw TFunctionFailedException(__OlxSourceInfo, "could not mak current context");
-    FParent->SetView();
   }
   AGlScene::StartDraw();
 }
 //..............................................................................
-void TWGlScene::EndDraw()
-{
+void TWGlScene::EndDraw()  {
   AGlScene::EndDraw();
-  if( !FBitmap )
-  {
-    if( FWContext )  SwapBuffers(FWContext);
-    return;
+  if( FBitmap == NULL )  {
+    //if( FWContext != NULL )
+    //  SwapBuffers(FWContext);
   }
-  if( FWContext )
-  {
+  else if( FWContext != NULL )  {
     SelectObject(FWContext, NULL);
     DeleteDC(FWContext);
     FWContext = NULL;
   }
 }
 //..............................................................................
-void TWGlScene::StartSelect(int x, int y, GLuint *Bf)
-{
-  if( FBitmap )
-  {
+void TWGlScene::StartSelect(int x, int y, GLuint *Bf)  {
+  if( FBitmap != NULL )  {
     FWContext = CreateCompatibleDC(NULL);
     SelectObject(FWContext, FBitmap);
     SetPixelFormatDescriptor(FWContext, 24);
@@ -305,72 +199,33 @@ void TWGlScene::StartSelect(int x, int y, GLuint *Bf)
   AGlScene::StartSelect(x, y, Bf);
 }
 //..............................................................................
-void TWGlScene::EndSelect()
-{
-  AGlScene::EndSelect();
-  if( !FBitmap  )
-  {
-
-    if( FWContext )  SwapBuffers(FWContext);
-    FParent->SetView();
-    return;
-  }
-  if( FWContext )
-  {
-    SelectObject(FWContext, NULL);
-    DeleteDC(FWContext);
-    FWContext = NULL;
-  }
+int TWGlScene::EndSelect()  {
+  const int rv = AGlScene::EndSelect();
+  return rv;
+  //if( FBitmap == NULL )  {
+  //  if( FWContext != NULL )
+  //    SwapBuffers(FWContext);
+  //  FParent->SetView();
+  //}
+  //else if( FWContext != NULL )  {
+  //  SelectObject(FWContext, NULL);
+  //  DeleteDC(FWContext);
+  //  FWContext = NULL;
+  //}
 }
 //..............................................................................
-void TWGlScene::Destroy()
-{
-//  if( FBmpFontBase > 0 )
-//  { glDeleteLists(FBmpFontBase, 255);  FBmpFontBase = -1; }
-//  if( FTtfFontBase > 0 )
-//  { glDeleteLists(FTtfFontBase, 255);  FTtfFontBase = -1; }
-//  if( FGlyphMetrics )
-//  {    delete [] FGlyphMetrics;  FGlyphMetrics = NULL; }
-  if( FGlContext)
-  {
+void TWGlScene::Destroy()  {
+  if( FGlContext != NULL )  {
     wglMakeCurrent(NULL, NULL);
     wglDeleteContext(FGlContext);
     FGlContext = NULL;
   }
-  if( FWContext && FBitmap )
-  {
+  if( FWContext != NULL && FBitmap != NULL )  {
     DeleteDC(FWContext);
     FWContext = NULL;
   }
   AGlScene::Destroy();
 }
-//..............................................................................
-/*bool TWGlScene::CreateBmpFont(HFONT Font)
-{
-  HDC hDc = CreateCompatibleDC(NULL);
-  SelectObject(hDc, Font);
-  if( wglUseFontBitmaps(hDc, 0, 256, 5000) == TRUE )
-  {    FBmpFontBase = 5000;  }
-  else
-  {    FBmpFontBase = -1;  }
-  DeleteDC(hDc);
-  if( FBmpFontBase < 0 )  return false;
-  return true;
-}
-//..............................................................................
-bool TWGlScene::CreateTtfFont(HFONT Font)
-{
-  HDC hDc = CreateCompatibleDC(NULL);
-  SelectObject(hDc, Font);
-
-  if( wglUseFontOutlines(hDc, 0, 255, 6000, 0.0f, 0.1f, WGL_FONT_POLYGONS, NULL) == TRUE )
-  {    FTtfFontBase = 6000;  }
-  else
-  {    FTtfFontBase = -1;  }
-  DeleteDC(hDc);
-  if( FTtfFontBase < 0 )  return false;
-  return true;
-} */
 //..............................................................................
 #endif // end Win32 section
  

@@ -506,69 +506,21 @@ olxstr TwxGlScene::ShowFontDialog(TGlFont* glf, const olxstr& fntDesc)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-TwxGlScene::MetaFont::MetaFont(const olxstr& idstr)  {
-  SetIdString(idstr);
-}
-//..............................................................................
-olxstr TwxGlScene::MetaFont::BuildOlexFontId(const olxstr& fileName, short size, bool fixed, bool bold, bool italic)  {
-  olxstr prefix, suffix;
-  if( !fileName.IsEmpty() )
-    prefix << '#' << fileName << ':';
-  suffix << (fixed ? "f" : "n" );
-  if( italic )  {
-    suffix << "i";
-    if( bold )
-      suffix << "b";
-  }
-  else if( bold )
-    suffix << "rb";
-  else
-    suffix << "r";
-  suffix.Format(4, true, '_');
-  return prefix << suffix << size;
-}
-//..............................................................................
-void TwxGlScene::MetaFont::SetIdString(const olxstr& idstr)  {
-  OriginalId = idstr;
-  if( IsOlexFont(idstr) )  {
-    size_t ci = idstr.IndexOf(':');
-    if( ci == InvalidIndex )
-      throw TFunctionFailedException(__OlxSourceInfo, "invalid font ID");
-    FileName = idstr.SubStringFrom(1).SubStringTo(ci-1);
-    olxstr fntid( idstr.SubStringFrom(ci+1) );
-    if( fntid.Length() < 5 )
-      throw TFunctionFailedException(__OlxSourceInfo, "invalid font ID");
-    Fixed = (fntid.CharAt(0) == 'f');
-    Italic = (fntid.CharAt(1) == 'i');
-    Bold = (fntid.CharAt(2) == 'b');
-    Size = fntid.SubStringFrom(4).ToInt();
-  }
-  else if( IsVectorFont(idstr) )  {
-    Fixed = false;
-    Italic = false;
-    Bold = false;
-    Size = 15;
-    if( idstr.SubStringFrom(1).IsNumber() )
-      Size = idstr.SubStringFrom(1).ToInt();
-  }
-  else  {
-    wxFont f(idstr.u_str());
-    if( !f.IsOk() )
-      throw TFunctionFailedException(__OlxSourceInfo, "invalid font ID");
-    Fixed = f.IsFixedWidth();
-    Italic = (f.GetStyle() == wxFONTSTYLE_ITALIC);
-    Bold = (f.GetWeight() == wxFONTWEIGHT_BOLD);
-    Size = f.GetPointSize();
-  }
+bool TwxGlScene::MetaFont::SetIdString(const olxstr& idstr)  {
+  if( AGlScene::MetaFont::SetIdString(idstr) )
+    return true;
+  wxFont f(idstr.u_str());
+  if( !f.IsOk() )
+    throw TFunctionFailedException(__OlxSourceInfo, "invalid font ID");
+  Fixed = f.IsFixedWidth();
+  Italic = (f.GetStyle() == wxFONTSTYLE_ITALIC);
+  Bold = (f.GetWeight() == wxFONTWEIGHT_BOLD);
+  Size = f.GetPointSize();
 }
 //..............................................................................
 olxstr TwxGlScene::MetaFont::GetIdString() const {
-  if( IsOlexFont(OriginalId) )  {
-    return BuildOlexFontId(FileName, Size, Fixed, Bold, Italic);
-  }
-  if( IsVectorFont(OriginalId) )  {
-    return olxstr('@') << Size;
-  }
+  const olxstr rv = AGlScene::MetaFont::GetIdString();
+  if( !rv.IsEmpty() )  return rv;
   wxFont f( OriginalId.u_str() );
   f.SetStyle( Italic ? wxFONTSTYLE_ITALIC: wxFONTSTYLE_NORMAL );
   f.SetWeight( Bold ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL );
