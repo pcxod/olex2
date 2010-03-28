@@ -1179,10 +1179,12 @@ void TGlFont::RenderPSLabel(const vec3d& pos, const olxstr& label, TStrList& out
   out.Add("grestore");
 }
 //..............................................................................
-void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, double scale, bool FixedW)  {
+void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, double scale, bool FixedW) const {
   if( IsVectorFont() )  {
+    olx_gl::pushMatrix();
     olx_gl::translate(from);
-    olx_gl::scale(PointSize*scale/15, PointSize*scale/15, 1.0);
+    const double _scale = PointSize*scale/15;
+    olx_gl::scale(_scale, _scale, 1.0);
     short cstate=0;
     for( size_t i = 0; i < text.Length(); i++ )  {
       TFontCharSize* cs = CharSizes[text.CharAt(i)];
@@ -1219,7 +1221,7 @@ void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, double scale, bo
       olx_gl::callList(FontBase+text.CharAt(i));
       olx_gl::translate((double)cs->Right/VectorScale, 0.0, 0.0);
     }
-    //olx_gl::Translate(-from[0], -(from[1]+text.Length()*inc), -from[2]);
+    olx_gl::popMatrix();
     return;
   }
   if( Textures == NULL || text.IsEmpty() )  return;

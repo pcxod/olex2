@@ -41,24 +41,11 @@ public:
   virtual void StartDraw() {  AGlScene::StartDraw();  }
   virtual void EndDraw()  {  AGlScene::EndDraw();  }
 
-  class MetaFont {
-    bool Bold, Italic, Fixed, Underlined;
-    short Size;
-    olxstr OriginalId, FileName;
+  class MetaFont : public AGlScene::MetaFont {
   public:
-    MetaFont(const olxstr& fontId);
-    olxstr GetIdString() const;
-    olxstr GetFileIdString() const;
-    void SetIdString(const olxstr& idstr);
-    static bool IsOlexFont(const olxstr& fntId) {  return fntId.IsEmpty()? false : fntId.CharAt(0) == '#';  }
-    static bool IsVectorFont(const olxstr& fntId) {  return fntId.IsEmpty()? false : fntId.CharAt(0) == '@';  }
-    static olxstr BuildOlexFontId(const olxstr& fileName, short size, bool fixed, bool bold, bool italic);
-    DefPropC(olxstr, FileName)
-    DefPropBIsSet(Bold)
-    DefPropBIsSet(Fixed)
-    DefPropBIsSet(Italic)
-    inline bool IsUnderlined() const {  return Underlined; }
-    DefPropP(short, Size)
+    MetaFont(const olxstr& fontId) : AGlScene::MetaFont(fontId)  {}
+    virtual olxstr GetIdString() const;
+    virtual bool SetIdString(const olxstr& idstr);
   };
 };
 

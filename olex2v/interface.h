@@ -19,8 +19,8 @@
   #endif
 #endif
 
-const int DllVersion = 1;
-/* version 1:
+const int DllVersion = 2;
+/* version 0:
   DllExportA const char* DllExportB olxv_Initialize(HDC hdc, int w, int h);
   DllExportA void DllExportB olxv_Finalize();
   DllExportA void DllExportB olxv_OnPaint();
@@ -37,8 +37,10 @@ const int DllVersion = 1;
   DllExportA void DllExportB olxv_LoadScene(const char* FN);
   DllExportA void DllExportB olxv_Clear();
   DllExportA int DllExportB olxv_GetVersion();
-  version 2:
+  version 1:
   olxv_OnFileChanged returns boolean to specify if the reloading failed or not
+  version 2:
+  added: DllExportA void DllExportB olxv_EnableSelection(bool v);
 */
 
 const short  // mouse event
@@ -92,6 +94,7 @@ public:
   void ShowLabels(unsigned short type);
   void ShowQPeaks(short what);
   void ShowCell(bool v);
+  void EnableSelection(bool v);
   void DrawStyle(short style);
   void LoadStyle(const olxstr& styleFile);
   void LoadScene(const olxstr& sceneFile);
@@ -123,6 +126,7 @@ extern "C" {
   DllExportA void DllExportB olxv_ShowLabels(unsigned short type);
   DllExportA void DllExportB olxv_ShowQPeaks(short what /* bonds, atoms, none*/);
   DllExportA void DllExportB olxv_ShowCell(bool v);
+  DllExportA void DllExportB olxv_EnableSelection(bool v);
   DllExportA void DllExportB olxv_DrawStyle(short style);
   DllExportA void DllExportB olxv_LoadStyle(const char* FN);
   DllExportA void DllExportB olxv_LoadScene(const char* FN);

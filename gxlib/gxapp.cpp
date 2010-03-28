@@ -42,6 +42,8 @@
   #include "wx/fontutil.h"
   #include "wx/wfstream.h"
   #include "wxzipfs.h"
+#elif __WIN32__
+  #include "wglscene.h"
 #endif
 #define ConeStipple  6.0
 #define LineStipple  0xf0f0
@@ -254,7 +256,11 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
   XGrowPointsVisible = FXGrowLinesVisible = FQPeakBondsVisible = false;
   FXPolyVisible = true;
   DeltaV = 3;
-  TwxGlScene *GlScene = new TwxGlScene( GetBaseDir() + "etc/Fonts/" );
+#ifdef __WXWIDGETS__
+  TwxGlScene *GlScene = new TwxGlScene(GetBaseDir() + "etc/Fonts/");
+#else
+  TWGlScene *GlScene = new TWGlScene();
+#endif
   FGrowMode = gmCovalent;
 //  TWGlScene *GlScene = new TWGlScene;
 //  TGlScene *GlScene = new TGlScene;
@@ -3990,6 +3996,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
 }
 //..............................................................................
 void TGXApp::SaveModel(const olxstr& fileName) const {
+#ifdef __WXWIDGETS__
   TDataFile df;
   wxFileOutputStream fos( fileName.u_str() );
   fos.Write("oxm", 3);
@@ -4011,9 +4018,13 @@ void TGXApp::SaveModel(const olxstr& fileName) const {
   zos.CloseEntry();
   zos.Close();
   fos.Close();
+#else
+  throw TNotImplementedException(__OlxSourceInfo);
+#endif
 }
 //..............................................................................
 void TGXApp::LoadModel(const olxstr& fileName) {
+#ifdef __WXWIDGETS__
   TEFile::CheckFileExists(__OlxSourceInfo, fileName);
   wxFileInputStream fis(fileName.u_str());
   char sig[3];
@@ -4060,5 +4071,8 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   delete model;
   delete grid;
   delete zin;
+#else
+  throw TNotImplementedException(__OlxSourceInfo);
+#endif
 }
 //..............................................................................

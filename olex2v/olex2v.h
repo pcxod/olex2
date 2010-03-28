@@ -50,6 +50,7 @@ extern "C" {
   void DllImport olxv_ShowLabels(unsigned short what);
   void DllImport olxv_ShowQPeaks(short what /* bonds, atoms, none*/);
   void DllImport olxv_ShowCell(bool v);
+  void DllImport olxv_EnableSelection(bool v);
   void DllImport olxv_DrawStyle(short style);
   void DllImport olxv_LoadStyle(const char* FN);
   void DllImport olxv_LoadScene(const char* FN);

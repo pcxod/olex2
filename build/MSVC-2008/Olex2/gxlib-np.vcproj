@@ -318,7 +318,7 @@
 				InlineFunctionExpansion="0"
 				EnableIntrinsicFunctions="false"
 				AdditionalIncludeDirectories="&quot;$(WX_DIR)\lib\vc_lib\mswud&quot;;&quot;$(WX_DIR)\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(PY_DIR)\include;..\..\..\sdl"
-				PreprocessorDefinitions="__WXWIDGETS__;_UNICODE;_NO_PYTHON;_DEBUG"
+				PreprocessorDefinitions="_UNICODE;_NO_PYTHON;_DEBUG"
 				StringPooling="true"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -601,8 +601,8 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="&quot;$(WX_DIR)\lib\vc_lib\mswud&quot;;&quot;$(WX_DIR)\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(PY_DIR)\include;..\..\..\sdl"
-				PreprocessorDefinitions="__WXWIDGETS__;_UNICODE;_NO_PYTHON"
+				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\xlib;..\..\..\repository;..\..\..\sdl"
+				PreprocessorDefinitions="_UNICODE;_NO_PYTHON"
 				StringPooling="true"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="0"
@@ -910,7 +910,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\gxlib\wxglscene.cpp"
+				RelativePath="..\..\..\gxlib\wglscene.cpp"
 				>
 			</File>
 			<File

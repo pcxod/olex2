@@ -24,8 +24,8 @@ object Form1: TForm1
   TextHeight = 13
   object sbStatus: TStatusBar
     Left = 0
-    Top = 510
-    Width = 769
+    Top = 506
+    Width = 761
     Height = 19
     Panels = <
       item

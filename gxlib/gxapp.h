@@ -24,8 +24,9 @@
 #include "hkl.h"
 #include "fracmask.h"
 
+#ifdef __WXWIDGETS__
 #include "wx/zipstrm.h"
-
+#endif
 #if defined __APPLE__ && defined __MACH__
   #define OLX_RESOURCES_FOLDER "olex2.app/Contents/Resources/"
 #else

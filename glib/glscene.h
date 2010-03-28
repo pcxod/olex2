@@ -46,9 +46,29 @@ public:
   inline TGlFont* GetFont(size_t i)  {
     return (i >= FontCount())  ? NULL : Fonts[i];
   }
-  /* be sure it exists */
   inline TGlFont* DefFont() const  {  return Fonts.IsEmpty() ? NULL : Fonts[0]; }
   TGlFont* FindFont(const olxstr& name);
+
+  class MetaFont {
+    bool Bold, Italic, Fixed, Underlined;
+    short Size;
+    olxstr OriginalId, FileName;
+  public:
+    MetaFont(const olxstr& fontId);
+    virtual olxstr GetIdString() const;
+    olxstr GetFileIdString() const;
+    // this function returns true if the ID is known and handler and false otherwise 
+    virtual bool SetIdString(const olxstr& idstr);
+    static bool IsOlexFont(const olxstr& fntId) {  return fntId.IsEmpty()? false : fntId.CharAt(0) == '#';  }
+    static bool IsVectorFont(const olxstr& fntId) {  return fntId.IsEmpty()? false : fntId.CharAt(0) == '@';  }
+    static olxstr BuildOlexFontId(const olxstr& fileName, short size, bool fixed, bool bold, bool italic);
+    DefPropC(olxstr, FileName)
+    DefPropBIsSet(Bold)
+    DefPropBIsSet(Fixed)
+    DefPropBIsSet(Italic)
+    inline bool IsUnderlined() const {  return Underlined; }
+    DefPropP(short, Size)
+  };
 };
 
 EndGlNamespace()

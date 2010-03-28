@@ -27,7 +27,7 @@
     <USERDEFINES value="_DEBUG"/>
     <SYSDEFINES value="NO_STRICT"/>
     <MAINSOURCE value="olex2vt.cpp"/>
-    <INCLUDEPATH value="..;olex2v-test;$(BCB)\include;$(BCB)\include\vcl;../olex2v"/>
+    <INCLUDEPATH value="..;olex2v-test;$(BCB)\include;$(BCB)\include\vcl;../olex2v;../sdl"/>
     <LIBPATH value="..;&quot;olex2v-test&quot;;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
     <OTHERFILES value=""/>
@@ -85,10 +85,11 @@ ProductVersion=1.0.0.0
 Comments=
 
 [HistoryLists\hlIncludePath]
-Count=3
-Item0=..;olex2v-test;$(BCB)\include;$(BCB)\include\vcl;../olex2v
-Item1=..;olex2v-test;$(BCB)\include;$(BCB)\include\vcl
-Item2=..\;olex2v-test;$(BCB)\include;$(BCB)\include\vcl
+Count=4
+Item0=..;olex2v-test;$(BCB)\include;$(BCB)\include\vcl;../olex2v;../sdl
+Item1=..;olex2v-test;$(BCB)\include;$(BCB)\include\vcl;../olex2v
+Item2=..;olex2v-test;$(BCB)\include;$(BCB)\include\vcl
+Item3=..\;olex2v-test;$(BCB)\include;$(BCB)\include\vcl
 
 [HistoryLists\hlLibraryPath]
 Count=2

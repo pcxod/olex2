@@ -173,25 +173,49 @@ bool TDUnitCell::Orient(TGlPrimitive& P)  {
     const double tr = 0.3, 
       scale = Parent.GetBasis().GetZoom()/Parent.GetScale(),
       maxZ = Parent.GetMaxRasterZ()-0.001;
-    vec3d cnt(Parent.GetBasis().GetCenter());
-    cnt += Center;
-    T += tr;
-    T += cnt;
-    T *= Parent.GetBasis().GetMatrix();
-    T *= scale;
-    T[2] = maxZ;
-    Parent.DrawTextSafe(T, Str, fnt);
-    for( int i=0; i < 3; i++ )  {
-      const int ind = i*2+1;
-      T = FGlP->Vertices[ind];  
-      for( int j=0; j < 3; j++ )
-        T[j] -= (j==i ? -tr : tr);
+    if( !fnt.IsVectorFont() )  {
+      vec3d cnt(Parent.GetBasis().GetCenter());
+      cnt += Center;
+      T += tr;
       T += cnt;
       T *= Parent.GetBasis().GetMatrix();
       T *= scale;
       T[2] = maxZ;
-      Str[0] = (char)('a'+i);
       Parent.DrawTextSafe(T, Str, fnt);
+      for( int i=0; i < 3; i++ )  {
+        const int ind = i*2+1;
+        T = FGlP->Vertices[ind];  
+        for( int j=0; j < 3; j++ )
+          T[j] -= (j==i ? -tr : tr);
+        T += cnt;
+        T *= Parent.GetBasis().GetMatrix();
+        T *= scale;
+        T[2] = maxZ;
+        Str[0] = (char)('a'+i);
+        Parent.DrawTextSafe(T, Str, fnt);
+      }
+    }
+    else  {
+      vec3d cnt(Parent.GetBasis().GetCenter());
+      cnt += Center;
+      T += tr;
+      T += cnt;
+      T *= Parent.GetBasis().GetMatrix();
+      T *= Parent.GetBasis().GetZoom();
+      T[2] = maxZ;
+      fnt.DrawGlText(T, Str, Parent.GetBasis().GetZoom()*0.75/Parent.CalcZoom(), true);
+      for( int i=0; i < 3; i++ )  {
+        const int ind = i*2+1;
+        T = FGlP->Vertices[ind];  
+        for( int j=0; j < 3; j++ )
+          T[j] -= (j==i ? -tr : tr);
+        T += cnt;
+        T *= Parent.GetBasis().GetMatrix();
+        T *= Parent.GetBasis().GetZoom();
+        T[2] = maxZ;
+        Str[0] = (char)('a'+i);
+        fnt.DrawGlText(T, Str, Parent.GetBasis().GetZoom()*0.75/Parent.CalcZoom(), true);
+      }
     }
     return true;
   }

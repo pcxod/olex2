@@ -206,8 +206,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
           }
         }
       }
-      V = XA.Atom().crd();
-      V += Parent.GetBasis().GetCenter();
+      V = XA.Atom().crd() + Parent.GetBasis().GetCenter();
       V *= Parent.GetBasis().GetMatrix();
       V *= Parent.GetBasis().GetZoom();
       const double MaxZ = (Parent.GetMaxRasterZ()-0.001);
@@ -215,17 +214,11 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
       P.Draw();
     }
     else  {  // vector font?
-      vec3d T(Parent.GetBasis().GetCenter());
-      T += XA.Atom().crd();
+      vec3d T = Parent.GetBasis().GetCenter() + XA.Atom().crd();
       T *= Parent.GetBasis().GetMatrix();
       T *= Parent.GetBasis().GetZoom();
       T[2] = Parent.GetMaxRasterZ() - 0.001;
-      //float glw;
-      //glGetFloatv(GL_LINE_WIDTH, &glw);
-      //glLineWidth((float)(1./Scale)/50);
-      //Fnt.DrawGlText(T, Tmp, Parent.GetBasis().GetZoom()/Parent.CalcZoom(), true);
-      Fnt.DrawGlText(T, Tmp, 1, true);
-      //glLineWidth(glw);
+      Fnt.DrawGlText(T, Tmp, Parent.GetBasis().GetZoom()*0.75/Parent.CalcZoom(), true);
     }
   }
   OGlM.Init(Parent.IsColorStereo());
