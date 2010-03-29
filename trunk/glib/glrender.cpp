@@ -7,8 +7,8 @@
 #include "glbackground.h"
 #include "gltexture.h"
 #include "library.h"
-
 #include "bapp.h"
+#include "log.h"
 
 UseGlNamespace();
 //..............................................................................
@@ -376,14 +376,14 @@ void TGlRenderer::Draw()  {
   GetScene().StartDraw();
 
   if( StereoFlag == glStereoColor )  {
-    const double ry = GetBasis().GetRY(), ra = StereoAngle;
-    GetBasis().RotateY(ry-ra);
+    const double ry = GetBasis().GetRY();
     olx_gl::disable(GL_ALPHA_TEST);
     olx_gl::disable(GL_BLEND);
     olx_gl::disable(GL_CULL_FACE);
     olx_gl::enable(GL_COLOR_MATERIAL);
     olx_gl::colorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-
+    // right eye
+    GetBasis().RotateY(ry+StereoAngle);
     olx_gl::colorMask(
       StereoRightColor[0] != 0,
       StereoRightColor[1] != 0,
@@ -391,8 +391,8 @@ void TGlRenderer::Draw()  {
       StereoRightColor[3] != 0);
     olx_gl::color(StereoRightColor.Data());
     DrawObjects(0, 0, false, false);
-    GetBasis().RotateY(ry+ra);
-
+    //left eye
+    GetBasis().RotateY(ry-StereoAngle);
     olx_gl::clear(GL_DEPTH_BUFFER_BIT);
     olx_gl::enable(GL_BLEND);
     olx_gl::blendFunc(GL_ONE, GL_ONE);
@@ -409,10 +409,11 @@ void TGlRenderer::Draw()  {
   // http://local.wasp.uwa.edu.au/~pbourke/texture_colour/anaglyph/
   else if( StereoFlag == glStereoAnaglyph )  {
     const double ry = GetBasis().GetRY();
-    GetBasis().RotateY(ry-StereoAngle);
     olx_gl::clearAccum(0.0,0.0,0.0,0.0);
     olx_gl::colorMask(true, true, true, true);
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // right eye
+    GetBasis().RotateY(ry+StereoAngle);
     olx_gl::colorMask(
       StereoRightColor[0] != 0,
       StereoRightColor[1] != 0,
@@ -421,8 +422,8 @@ void TGlRenderer::Draw()  {
     DrawObjects(0, 0, false, false);
     olx_gl::colorMask(true, true, true, true);
     olx_gl::accum(GL_LOAD, 1);
-
-    GetBasis().RotateY(ry+StereoAngle);
+    // left eye
+    GetBasis().RotateY(ry-StereoAngle);
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     olx_gl::colorMask(
       StereoLeftColor[0] != 0,
@@ -434,6 +435,16 @@ void TGlRenderer::Draw()  {
     olx_gl::accum(GL_ACCUM, 1);
     olx_gl::accum(GL_RETURN, 1.0);
     GetBasis().RotateY(ry);
+  }
+  else if( StereoFlag == glStereoHardware )  {
+    const double ry = GetBasis().GetRY();
+    GetBasis().RotateY(ry-StereoAngle);
+    olx_gl::drawBuffer(GL_BACK_LEFT);
+    DrawObjects(0, 0, false, false);
+    GetBasis().RotateY(ry+StereoAngle);
+    olx_gl::drawBuffer(GL_BACK_RIGHT);
+    DrawObjects(0, 0, false, false);
+    olx_gl::drawBuffer(GL_BACK);
   }
   else if( StereoFlag == glStereoCross )  {
     const double ry = GetBasis().GetRY();
@@ -1163,6 +1174,8 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
       E.SetRetVal<olxstr>("cross");
     else if( StereoFlag == glStereoAnaglyph )
       E.SetRetVal<olxstr>("anaglyph");
+    else if( StereoFlag == glStereoHardware )
+      E.SetRetVal<olxstr>("hardware");
     else
       E.SetRetVal<olxstr>("none");
   }
@@ -1171,17 +1184,40 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
       FWidth = FOWidth;
       FOWidth = -1;
     }
-    if( Params[0].Equalsi("color") )
+    if( Params[0].Equalsi("color") )  {
+      olx_gl::clearColor(0, 0, 0, 0);
       StereoFlag = glStereoColor;
-    else if( Params[0].Equalsi("anaglyph") )
-      StereoFlag = glStereoAnaglyph;
+    }
+    else if( Params[0].Equalsi("anaglyph") )  {
+      GLint bits = 0;
+      olx_gl::get(GL_ACCUM_RED_BITS, &bits);
+      if( bits == 0 )
+        TBasicApp::GetLog().Error("Sorry accumulation buffer is not initialised/available");
+      else  {
+        olx_gl::clearColor(0, 0, 0, 0);
+        StereoFlag = glStereoAnaglyph;
+      }
+    }
     else if( Params[0].Equalsi("cross") )  {
+      olx_gl::clearColor(LightModel.GetClearColor().Data());
       FOWidth = FWidth;
       FWidth /= 2;
       StereoFlag = glStereoCross;
     }
-    else
+    else if( Params[0].Equalsi("hardware") )  {
+      GLboolean stereo_supported = GL_FALSE;
+      olx_gl::get(GL_STEREO, &stereo_supported);
+      if( stereo_supported == GL_FALSE )
+        TBasicApp::GetLog().Error("Sorry stereo buffers are not initialised/available");
+      else  {
+        olx_gl::clearColor(LightModel.GetClearColor().Data());
+        StereoFlag = glStereoHardware;
+      }
+    }
+    else  {
+      olx_gl::clearColor(LightModel.GetClearColor().Data());
       StereoFlag = 0;
+    }
     if( Params.Count() == 2 )
       StereoAngle = Params[1].ToDouble();
   }
