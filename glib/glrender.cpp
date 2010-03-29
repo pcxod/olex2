@@ -423,8 +423,7 @@ void TGlRenderer::Draw()  {
     olx_gl::accum(GL_LOAD, 1);
 
     GetBasis().RotateY(ry+StereoAngle);
-    if( !IsATI() )
-      olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     olx_gl::colorMask(
       StereoLeftColor[0] != 0,
       StereoLeftColor[1] != 0,
