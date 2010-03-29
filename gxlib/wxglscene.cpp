@@ -516,6 +516,7 @@ bool TwxGlScene::MetaFont::SetIdString(const olxstr& idstr)  {
   Italic = (f.GetStyle() == wxFONTSTYLE_ITALIC);
   Bold = (f.GetWeight() == wxFONTWEIGHT_BOLD);
   Size = f.GetPointSize();
+  return true;
 }
 //..............................................................................
 olxstr TwxGlScene::MetaFont::GetIdString() const {

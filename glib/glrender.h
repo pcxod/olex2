@@ -29,7 +29,8 @@ BeginGlNamespace()
 const uint8_t
   glStereoColor = 0x0001,
   glStereoCross = 0x0002,
-  glStereoAnaglyph = 0x0003;
+  glStereoAnaglyph = 0x0003,
+  glStereoHardware = 0x0004;
 
 class AGDrawObject;
 class TGlGroup;

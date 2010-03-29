@@ -3388,11 +3388,9 @@ bool TMainForm::UpdateRecentFilesTable(bool TableDef)  {
   return true;
 }
 //..............................................................................
-int SortQPeak( const TXAtom* a1, const TXAtom* a2)  {
-  double v =  a2->Atom().CAtom().GetQPeak() - a1->Atom().CAtom().GetQPeak();
-  if( v < 0 )  return -1;
-  if( v > 0 )  return 1;
-  return 0;
+int SortQPeak(const TCAtom* a1, const TCAtom* a2)  {
+  const double v =  a2->GetQPeak() - a1->GetQPeak();
+  return (v < 0) ? -1 : ( v > 0 ? 1 : 0 );
 }
 void TMainForm::QPeakTable(bool TableDef, bool Create)  {
   static const olxstr QPeakTableFile("qpeaks.htm");
@@ -3401,11 +3399,13 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
     return;
   }
   TTTable<TStrList> Table;
-  TXAtomPList Atoms;
-  olxstr Tmp;
-  TStrList Output;
-  FXApp->FindXAtoms("$Q", Atoms);
-  if( Atoms.IsEmpty() )  {
+  TPtrList<const TCAtom> atoms;
+  const TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
+  for( size_t i=0; i < au.AtomCount(); i++ )  {
+    if( !au.GetAtom(i).IsDeleted() && au.GetAtom(i).GetType() == iQPeakZ )
+      atoms.Add(au.GetAtom(i));
+  }
+  if( atoms.IsEmpty() )  {
     Table.Resize(1, 3);
     Table[0][0] = "N/A";
     Table[0][1] = "N/A";
@@ -3415,27 +3415,28 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
       Table[0][1] = "N/A in this file format";
   }
   else  {
-    Atoms.QuickSorter.SortSF(Atoms, SortQPeak);
-    Table.Resize( olx_min(10, Atoms.Count()), 3);
-    double LQP = olx_max(0.01, Atoms[0]->Atom().CAtom().GetQPeak() );
+    atoms.QuickSorter.SortSF(atoms, SortQPeak);
+    Table.Resize( olx_min(10, atoms.Count()), 3);
+    const double LQP = olx_max(0.01, atoms[0]->GetQPeak());
     size_t rowIndex = 0;
-    for( size_t i=0; i < Atoms.Count(); i++, rowIndex++ )  {
-      if( i > 8 )  i = Atoms.Count() -1;
-      Table[rowIndex][0] = Atoms[i]->Atom().GetLabel();
-      Table[rowIndex][1] = olxstr::FormatFloat(3, Atoms[i]->Atom().CAtom().GetQPeak());
-      Tmp = "<a href=\"sel -i ";
+    for( size_t i=0; i < atoms.Count(); i++, rowIndex++ )  {
+      if( i > 8 )  i = atoms.Count() -1;
+      Table[rowIndex][0] = atoms[i]->GetLabel();
+      Table[rowIndex][1] = olxstr::FormatFloat(3, atoms[i]->GetQPeak());
+      olxstr Tmp = "<a href=\"sel -i ";
       if( i > rowIndex )
-        Tmp << Atoms[rowIndex]->Atom().GetLabel() << " to ";
-      Tmp << Atoms[i]->Atom().GetLabel();
-      if( Atoms[i]->Atom().CAtom().GetQPeak() < 2 )
+        Tmp << atoms[rowIndex]->GetLabel() << " to ";
+      Tmp << atoms[i]->GetLabel();
+      if( atoms[i]->GetQPeak() < 2 )
         Tmp << "\"><zimg border=\"0\" src=\"gui/images/bar_small.gif\" height=\"10\" width=\"";
       else
         Tmp << "\"><zimg border=\"0\" src=\"gui/images/bar_large.gif\" height=\"10\" width=\"";
-      Tmp << olxstr::FormatFloat(1, Atoms[i]->Atom().CAtom().GetQPeak()*100/LQP);
+      Tmp << olxstr::FormatFloat(1, atoms[i]->GetQPeak()*100/LQP);
       Tmp << "%\"></a>";
       Table[rowIndex][2] = Tmp;
     }
   }
+  TStrList Output;
   Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(QPeakTableFile, cst.c_str(), cst.Length(), plStructure);

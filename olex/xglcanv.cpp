@@ -18,6 +18,7 @@ int TGlCanvas::glAttrib[] = {
   WX_GL_MIN_ACCUM_BLUE, 16,
   WX_GL_MIN_ACCUM_GREEN, 16,
   WX_GL_MIN_ACCUM_ALPHA, 16,
+  WX_GL_STEREO, 1,
 //  WX_GL_SAMPLE_BUFFERS, 1,  // these are not defined though documented...
 //  WX_GL_SAMPLES, 4,
   0};

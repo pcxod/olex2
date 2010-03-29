@@ -209,6 +209,7 @@ struct olx_gl  {
   static void begin(GLenum v)  {  glBegin(v);  }
   static void end()  {  glEnd();  }
 
+  static void get(GLenum param, GLboolean* dest)  {  glGetBooleanv(param, dest);  }
   static void get(GLenum param, GLint* dest)  {  glGetIntegerv(param, dest);  }
   static void get(GLenum param, GLfloat* dest)  {  glGetFloatv(param, dest);  }
   static void get(GLenum param, GLdouble* dest)  {  glGetDoublev(param, dest);  }
@@ -289,6 +290,7 @@ struct olx_gl  {
     glOrtho(left, right, bottom, top, _near, _far);
   }
 
+  static void drawBuffer(GLenum mode)  {  glDrawBuffer(mode);  }
   static void readBuffer(GLenum mode)  {  glReadBuffer(mode);  }
   static void readPixels(GLint left, GLint top, GLsizei width, GLsizei height,
     GLenum format, GLenum type, GLvoid* pixels)

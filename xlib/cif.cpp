@@ -150,9 +150,8 @@ bool TCif::ExtractLoop(size_t& start)  {
 }
 //..............................................................................
 void TCif::LoadFromStrings(const TStrList& Strings)  {
-  TStrList LoopData;
   Clear();
-  Lines.Assign(Strings);
+  Lines = Strings;
   for( size_t i=0; i < Lines.Count(); i++ )  {
     Lines[i].DeleteSequencesOf<char>(' ').Trim(' ');
     if( Lines[i].IsEmpty() )  continue;
