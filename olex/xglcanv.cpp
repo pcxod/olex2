@@ -2,26 +2,11 @@
 // GlCanvas implementation
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "xglcanv.h"
 #include "mainform.h"
 #include "glgroup.h"
 
-int TGlCanvas::glAttrib[] = {
-  WX_GL_RGBA, 1, 
-  WX_GL_DOUBLEBUFFER, 1,
-  WX_GL_MIN_ACCUM_RED, 16,
-  WX_GL_MIN_ACCUM_BLUE, 16,
-  WX_GL_MIN_ACCUM_GREEN, 16,
-  WX_GL_MIN_ACCUM_ALPHA, 16,
-  WX_GL_STEREO, 1,
-//  WX_GL_SAMPLE_BUFFERS, 1,  // these are not defined though documented...
-//  WX_GL_SAMPLES, 4,
-  0};
+int* TGlCanvas::glAttrib = NULL;
  //----------------------------------------------------------------------------//
 // TGlCanvas function bodies
 //----------------------------------------------------------------------------//
@@ -66,7 +51,11 @@ TGlCanvas::TGlCanvas(TMainForm *parent, int* gl_attr, wxWindowID id,
 //..............................................................................
 TGlCanvas::~TGlCanvas(){
   if( Context != NULL )
-    delete Context; 
+    delete Context;
+  if( glAttrib != NULL )  {
+    delete glAttrib;
+    glAttrib = NULL;
+  }
 }
 //..............................................................................
 void TGlCanvas::Render()  {
@@ -220,17 +209,33 @@ void TGlCanvas::OnMouse(wxMouseEvent& me)  {
   me.Skip();
 }
 //..............................................................................
-void TGlCanvas::OnKeyDown(wxKeyEvent& m)
-{
+void TGlCanvas::OnKeyDown(wxKeyEvent& m)  {
   FParent->OnKeyDown(m);
 }
 //..............................................................................
-void TGlCanvas::OnKeyUp(wxKeyEvent& m)
-{
+void TGlCanvas::OnKeyUp(wxKeyEvent& m)  {
   FParent->OnKeyUp(m);
 }
-void TGlCanvas::OnChar(wxKeyEvent& m)
-{
+void TGlCanvas::OnChar(wxKeyEvent& m)  {
   FParent->OnChar(m);
 }
 //..............................................................................
+int* TGlCanvas::GetGlAttributes(bool _default, bool stereo)  {
+  if( _default )  return NULL;
+  if( glAttrib != NULL )  delete glAttrib;
+  const int cnt = stereo ? 7 : 6;
+  glAttrib = new int [2*cnt+1];
+  glAttrib[2*cnt] = 0;
+  glAttrib[0] = WX_GL_RGBA;  glAttrib[1] = 1;
+  glAttrib[2] = WX_GL_DOUBLEBUFFER;  glAttrib[3] = 1;
+  glAttrib[4] = WX_GL_MIN_ACCUM_RED;  glAttrib[5] = 16;
+  glAttrib[6] = WX_GL_MIN_ACCUM_RED;  glAttrib[7] = 16;
+  glAttrib[8] = WX_GL_MIN_ACCUM_RED;  glAttrib[9] = 16;
+  glAttrib[10] = WX_GL_MIN_ACCUM_RED;  glAttrib[11] = 16;
+  if( stereo )  {
+    glAttrib[12] = WX_GL_STEREO;  glAttrib[13] = 1;
+  }
+//  WX_GL_SAMPLE_BUFFERS, 1,  // these are not defined though documented...
+//  WX_GL_SAMPLES, 4,
+  return glAttrib;
+}

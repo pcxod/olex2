@@ -6,7 +6,6 @@
 class TGlCanvas: public wxGLCanvas  {
 private:
   class TGXApp *FXApp;
-
   void OnMouseDown(wxMouseEvent& event);
   void OnMouseUp(wxMouseEvent& event);
   void OnMouseMove(wxMouseEvent& event);
@@ -20,11 +19,11 @@ private:
   bool FRightMouseDown, FLeftMouseDown;
   class TMainForm *FParent;
   wxGLContext* Context;
-  static int glAttrib[];
+  static int* glAttrib;
 public:
   TGlCanvas(TMainForm *parent, int* gl_attr, const wxWindowID id = -1, const wxPoint& pos = wxDefaultPosition,
     const wxSize& size = wxDefaultSize, long style = 0, const wxString& name = wxT("TGlCanvas"));
-  ~TGlCanvas(void);
+  ~TGlCanvas();
 
   void OnPaint(wxPaintEvent& event);
   void OnSize(wxSizeEvent& event);
@@ -36,8 +35,9 @@ public:
 
   void Render();
   /* the arrays is staically allocated and should not be modified!!! 
-  wxWidgets needs not a const pointer... */
-  static int* GetGlAttributes()  {  return &glAttrib[0];  }
+  wxWidgets needs not a const pointer... If default is true - NULL is returned,
+  else if stereo is true - Olex2 will try to initialise stereo buffers */
+  static int* GetGlAttributes(bool _default, bool stereo);
   DECLARE_CLASS(wxGLCanvas)
   DECLARE_EVENT_TABLE()
 };
