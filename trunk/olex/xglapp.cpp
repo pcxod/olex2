@@ -140,13 +140,14 @@ bool TGlXApp::OnInit()  {
 
   // KUBUNTU opengl does not want any parameters :)
   TEGC::Initialise();  // prepare Olex2 API...
-  wxString glAttr;
-  int *gl_attr = NULL;
-  wxGetEnv(wxT("OLEX2_GL_DEFAULT"), &glAttr);
-  if( glAttr.IsEmpty() || glAttr.CmpNoCase(wxT("FALSE")) == 0 )
-    gl_attr = TGlCanvas::GetGlAttributes();
+  wxString str_glAttr, str_glStereo;
+  wxGetEnv(wxT("OLEX2_GL_DEFAULT"), &str_glAttr);
+  wxGetEnv(wxT("OLEX2_GL_STEREO"), &str_glStereo);
+  int *gl_attr = TGlCanvas::GetGlAttributes(
+    !str_glAttr.IsEmpty() && str_glAttr.CmpNoCase(wxT("TRUE")) == 0,
+    !str_glStereo.IsEmpty() && str_glStereo.CmpNoCase(wxT("TRUE")) == 0);
   MainForm->GlCanvas(new TGlCanvas(MainForm, gl_attr, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, wxT("GL_CANVAS") ) );
-  // cratea an instance of the XApplication
+  // create an instance of the XApplication
   olxstr BaseDir(argv[0]);
   // 2008.09.29
   // see if the system variable OLEX2_DIR is defined to override the default basedir
