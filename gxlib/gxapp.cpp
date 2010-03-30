@@ -1185,16 +1185,16 @@ void TGXApp::FragmentsVisible(const TNetPList& Frags, bool V)  {
 //..............................................................................
 TGlGroup& TGXApp::GroupFragments(const TNetPList& Fragments, const olxstr groupName)  {
   GetRender().GetSelection().Clear();
-  TSAtomPList satoms;
-  TXAtomPList xatoms;
+  TSBondPList sbonds;
+  TXBondPList xbonds;
   for( size_t i=0; i < Fragments.Count(); i++ )  {
-    for( size_t j=0; j < Fragments[i]->NodeCount(); j++ )
-      satoms.Add( Fragments[i]->Node(j) );
+    for( size_t j=0; j < Fragments[i]->BondCount(); j++ )
+      sbonds.Add(Fragments[i]->Bond(j));
   }
-  if( satoms.IsEmpty() )  return *(TGlGroup*)NULL;
-  SAtoms2XAtoms(satoms, xatoms);
-  for( size_t i=0; i < xatoms.Count(); i++ )
-    GetRender().GetSelection().Add( *xatoms[i] );
+  if( sbonds.IsEmpty() )  return *(TGlGroup*)NULL;
+  SBonds2XBonds(sbonds, xbonds);
+  for( size_t i=0; i < xbonds.Count(); i++ )
+    GetRender().GetSelection().Add(*xbonds[i]);
   return *GetRender().GroupSelection(groupName);
 }
 //..............................................................................
