@@ -1172,7 +1172,7 @@ void TNetwork::DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& 
     atomsToTransform[i]->crd() = S*(atomsToTransform[i]->crd() - mcent);
     if( atomsToTransform[i]->GetEllipsoid() != NULL )  {
       if( atomsToTransform[i]->GetEllipsoid()->GetTag() != 0 )  {
-        TBasicApp::GetLog().Error( olxstr("Ellipsoid has already been rotated for: ") << atomsToTransform[i]->GetLabel());
+        TBasicApp::GetLog().Error(olxstr("Ellipsoid has already been rotated for: ") << atomsToTransform[i]->GetLabel());
         continue;
       }
       uc.GetEllp(atomsToTransform[i]->GetEllipsoid()->GetId());

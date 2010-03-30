@@ -768,7 +768,6 @@ TSAtom* TLattice::FindSAtom(const TCAtom& ca) const {
 }
 //..............................................................................
 TSAtom* TLattice::NewCentroid(const TSAtomPList& Atoms)  {
-  TSAtom *Centroid;
   vec3d cc, ce;
   double aan = 0;
   for( size_t i=0; i < Atoms.Count(); i++ )  {
@@ -785,7 +784,7 @@ TSAtom* TLattice::NewCentroid(const TSAtomPList& Atoms)  {
   catch(const TExceptionBase& exc)  {
     throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate());
   }
-  Centroid = new TSAtom( Network );
+  TSAtom* Centroid = new TSAtom( Network );
   Centroid->CAtom(*CCent);
   CCent->ccrdEsd() = ce;
   Centroid->crd() = GetAsymmUnit().CellToCartesian(cc); 
@@ -817,11 +816,9 @@ TSPlane* TLattice::NewPlane(const TSAtomPList& Atoms, int weightExtent)  {
 //..............................................................................
 TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
   if( atoms.Count() < 3 )  return NULL;
-  TSPlane *Plane;
   //TODO: need to consider occupancy for disordered groups ...
-  TTypeList< AnAssociation2<TSAtom*, double> > Points;
-  Points.SetCapacity( atoms.Count() );
-
+  TTypeList<AnAssociation2<TSAtom*, double> > Points;
+  Points.SetCapacity(atoms.Count());
   if( weightExtent != 0 )  {
     double swg = 0;
     for( size_t i=0; i < atoms.Count(); i++ )  {
@@ -837,7 +834,7 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
       Points.AddNew(atoms[i], 1);
   }
 
-  Plane = new TSPlane(Network);
+  TSPlane* Plane = new TSPlane(Network);
   Plane->Init(Points);
   return Plane;
 }
@@ -923,8 +920,7 @@ void TLattice::MoveFragment(const vec3d& to, TSAtom& fragAtom)  {
     TBasicApp::GetLog().Error("Cannot perform this operation on grown structure");
     return;
   }
-  vec3d from( fragAtom.ccrd() );
-  smatd* m = GetUnitCell().GetClosest(to, from, true);
+  smatd* m = GetUnitCell().GetClosest(to, fragAtom.ccrd(), true);
   if( m != NULL )  {
     for( size_t i=0; i < fragAtom.GetNetwork().NodeCount(); i++ )  {
       TSAtom& SA = fragAtom.GetNetwork().Node(i);
@@ -1285,8 +1281,8 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& tra
     return;
   }
   // transform may come with random Tag, so need to process ADP's manually - cannot pick from UC
-  const mat3d abc2xyz( mat3d::Transpose(GetAsymmUnit().GetCellToCartesian()) ),
-              xyz2abc( mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()) );
+  const mat3d abc2xyz(mat3d::Transpose(GetAsymmUnit().GetCellToCartesian())),
+              xyz2abc(mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()));
   const mat3d etm = abc2xyz*transform.r*xyz2abc;
   for( size_t i=0; i < fragAtoms.Count(); i++ )
     fragAtoms[i]->GetNetwork().SetTag(i);
@@ -2196,6 +2192,24 @@ olxstr TLattice::CalcMoiety() const {
   return rv;
 }
 //..............................................................................
+void TLattice::RestoreADPs(bool restoreCoordinates)  {
+  TUnitCell& uc = GetUnitCell();
+  const TAsymmUnit& au = GetAsymmUnit();
+  uc.UpdateEllipsoids();
+  for( size_t i=0; i < AtomCount(); i++ )  {
+    TSAtom& sa = GetAtom(i);
+    if( restoreCoordinates )
+      au.CellToCartesian(sa.ccrd(), sa.crd());
+    if( sa.CAtom().GetEllipsoid() != NULL )
+      sa.SetEllipsoid(&uc.GetEllipsoid(sa.GetMatrix(0).GetContainerId(), sa.CAtom().GetId()));
+  }
+  for( size_t i=0; i < uc.EllpCount(); i++ )  {
+    TEllipsoid* elp = uc.GetEllp(i);
+    if( elp != NULL )  
+      elp->SetTag(0);
+  }
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TLattice::LibGetFragmentCount(const TStrObjList& Params, TMacroError& E)  {
@@ -2222,4 +2236,3 @@ TLibrary*  TLattice::ExportLibrary(const olxstr& name)  {
 "Returns a comma separated list of atoms in specified fragment") );
   return lib;
 }
-

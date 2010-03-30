@@ -48,12 +48,7 @@ void TCifLoop::Format(TStrList& Data)  {
       Char = 'a';
       while( Char != SepChar )  {
 	      Param << D.CharAt(i);
-        i++;
-        if( i >= DL )  {
-          Param.Delete(0, 1);
-          Params.Add(Param, new StringCifCell(true));
-          goto end_cyc;
-        }
+        if( ++i >= DL )  break;
         Char = D.CharAt(i);
       }
       Param.Delete(0, 1);
@@ -62,19 +57,27 @@ void TCifLoop::Format(TStrList& Data)  {
     }
     while( (Char != ' ') )  {  // normal parameter
       Param << D.CharAt(i);
-      i++;
-      if( i >= DL )  {
-        if( !Param.IsEmpty() && Param != "\\n" )
-          Params.Add(Param, new StringCifCell(false));
-        goto end_cyc;
-      }
+      if( ++i >= DL )  break;
       Char = D.CharAt(i);
     }
     if( !Param.IsEmpty() && Param != "\\n" )
       Params.Add(Param, new StringCifCell(false));
-end_cyc:;
   }
   if( (Params.Count() % ColCount) != 0 )  {
+#ifdef _DEBUG
+    for( size_t j=0; j < ColCount; j++ )
+      TBasicApp::GetLog() << FTable.ColName(j) << ' ';
+    TBasicApp::GetLog() << '\n';
+    for( size_t i=0; i < Params.Count(); i+= ColCount)  {
+      olxstr line;
+      for( size_t j=0; j < ColCount; j++ )  {
+        if( i+j >= Params.Count() )
+          break;
+        line << Params[i+j] << ' ';
+      }
+      TBasicApp::GetLog() << line << '\n';
+    }
+#endif
     for( size_t i=0; i < Params.Count(); i++ )  // clean up the memory
       if( Params.GetObject(i) != NULL )
         delete Params.GetObject(i);
@@ -175,7 +178,8 @@ olxstr TCifLoop::GetLoopName() const {
   olxstr C = olxstr::CommonString(FTable.ColName(0), FTable.ColName(1));
   for( size_t i=2; i < FTable.ColCount(); i++ )
     C = olxstr::CommonString(FTable.ColName(i), C);
-
+  if( C.IsEmpty() )
+    throw TFunctionFailedException(__OlxSourceInfo, "Mismatcing loop columns");
   if( C.Last() == '_' )
     C.SetLength(C.Length()-1);
   return C;

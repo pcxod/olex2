@@ -48,7 +48,7 @@ void TGlGroup::Create(const olxstr& cName, const ACreationParams* cpar)  {
     GlM.AmbientB = 0x7f00ff00;
     GlM.DiffuseB = 0x7f0000ff;
   }
-  DefaultColor = (GS.IndexOfMaterial("mat") != InvalidIndex);
+  DefaultColor = (GS.IndexOfMaterial("mat") == InvalidIndex);
   GlM = GS.GetMaterial("mat", GlM);
 }
 //..............................................................................

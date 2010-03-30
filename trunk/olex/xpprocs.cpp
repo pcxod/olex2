@@ -204,10 +204,12 @@ void TMainForm::funCell(const TStrObjList& Params, TMacroError &E)  {
 //..............................................................................
 void TMainForm::funCif(const TStrObjList& Params, TMacroError &E)  {
   TCif& cf = FXApp->XFile().GetLastLoader<TCif>();
-  if( cf.ParamExists( Params[0] ) )
-    E.SetRetVal( cf.GetSParam(Params[0]) );
+  if( cf.ParamExists(Params[0]) )  {
+    TCif::CifData* cd = cf.FindParam(Params[0]);
+    E.SetRetVal(cd->data.Text(EmptyString));
+  }
   else
-    E.SetRetVal( NAString );
+    E.SetRetVal(NAString);
 }
 //..............................................................................
 void TMainForm::funP4p(const TStrObjList& Params, TMacroError &E)  {
@@ -5500,23 +5502,6 @@ double MatchAtomPairsQTEsd(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& a
   return rms;
 }
 //..............................................................................
-void MatchRestoreADPS(TLattice& latt)  {
-  TUnitCell& uc = latt.GetUnitCell();
-  const TAsymmUnit& au = latt.GetAsymmUnit();
-  uc.UpdateEllipsoids();
-  for( size_t i=0; i < latt.AtomCount(); i++ )  {
-    TSAtom& sa = latt.GetAtom(i);
-    au.CellToCartesian(sa.ccrd(), sa.crd());
-    if( sa.CAtom().GetEllipsoid() != NULL )
-      sa.SetEllipsoid(&uc.GetEllipsoid(sa.GetMatrix(0).GetContainerId(), sa.CAtom().GetId()));
-  }
-  for( size_t i=0; i < uc.EllpCount(); i++ )  {
-    TEllipsoid* elp = uc.GetEllp(i);
-    if( elp != NULL )  
-      elp->SetTag(0);
-  }
-}
-//..............................................................................
 void TMainForm::CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS)  {
   olxstr arg;
   TStrObjList callBackArg;
@@ -5541,7 +5526,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   // restore if already applied
   TLattice& latt = FXApp->XFile().GetLattice();
   const TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
-  MatchRestoreADPS(latt);
+  latt.RestoreADPs();
   FXApp->UpdateBonds();
   FXApp->CenterView();
   if( Options.Contains("u") )  {
@@ -5572,7 +5557,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         // restore the other unit cell, if any...
         if( &latt != &netA.GetLattice() || &latt != &netB.GetLattice() )  {
           TLattice& latt1 = (&latt == &netA.GetLattice()) ? netB.GetLattice() : netA.GetLattice();
-          MatchRestoreADPS(latt1);
+          latt1.RestoreADPs();
         }
         TTypeList< AnAssociation2<TSAtom*,TSAtom*> > satomp;
         TSAtomPList atomsToTransform;
@@ -5675,7 +5660,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         // restore the other unit cell, if any...
         if( &latt != &netA.GetLattice() || &latt != &netB.GetLattice() )  {
           TLattice& latt1 = (&latt == &netA.GetLattice()) ? netB.GetLattice() : netA.GetLattice();
-          MatchRestoreADPS(latt1);
+          latt1.RestoreADPs();
         }
         if( netA != netB )  {  // collect all atoms
           for( size_t i=0; i < netB.NodeCount(); i++ )
@@ -5703,7 +5688,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     // restore the other unit cell, if any...
     for( size_t i=0; i < nets.Count(); i++ )  {
       if( &latt != &nets[i]->GetLattice() )
-        MatchRestoreADPS(nets[i]->GetLattice());
+        nets[i]->GetLattice().RestoreADPs();
     }
     for( size_t i=0; i < nets.Count(); i++ )  {
       if( !MatchConsiderNet(*nets[i]) )  continue;
@@ -7249,7 +7234,7 @@ void TMainForm::funChooseMaterial(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::funGetMaterial(const TStrObjList &Params, TMacroError &E)  {
-  TGlMaterial* mat = NULL;
+  const TGlMaterial* mat = NULL;
   if( Params[0] == "helpcmd" )
     mat = &HelpFontColorCmd;
   else if( Params[0] == "helptxt" )
@@ -7273,6 +7258,16 @@ void TMainForm::funGetMaterial(const TStrObjList &Params, TMacroError &E)  {
         TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(Params[0].SubStringTo(di));
         if( gs != NULL )
           mat = gs->FindMaterial(Params[0].SubStringFrom(di+1));
+      }
+    }
+    else  {
+      TGPCollection* gpc = FXApp->GetRender().FindCollection(Params[0]);
+      if( gpc != NULL && EsdlInstanceOf(*gpc, TGlGroup) )  {
+        mat = &((TGlGroup*)gpc)->GetGlM();
+      }
+      else  {  // check if the style exists
+        TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(Params[0]);
+        mat = gs->FindMaterial("mat");
       }
     }
   }

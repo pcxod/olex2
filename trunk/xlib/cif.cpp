@@ -103,6 +103,7 @@ bool TCif::ExtractLoop(size_t& start)  {
   if( !Lines[start].Equalsi("loop_") )  return false;
   TCifLoop& Loop = *(new TCifLoop);
   Loops.Add(EmptyString, &Loop);
+  TStrList loop_data;
   olxch Char = '_';
   while( Char == '_' )  {  // skip loop definition
     if( ++start >= Lines.Count() )  {  // // end of file?
@@ -121,23 +122,40 @@ bool TCif::ExtractLoop(size_t& start)  {
           return true;
         }
       }
+      bool param_found = false;
       if( Lines[start].IndexOf(' ') == InvalidIndex )
         Loop.GetTable().AddCol(Lines[start]);
       else  {
         TStrList toks(Lines[start], ' ');
-        for( size_t i=0; i < toks.Count(); i++ )
-          Loop.GetTable().AddCol(toks[i]);
+        for( size_t i=0; i < toks.Count(); i++ )  {
+          if( param_found || toks[i].CharAt(0) != '_' )  {
+            param_found = true;
+            loop_data.Add(toks[i]);
+          }
+          else
+            Loop.GetTable().AddCol(toks[i]);
+        }
       }
       Lines[start] = EmptyString;
+      if( param_found )
+        break;
     }
   }
-  Char = 'a';
-  TStrList loop_data;
+  while( Lines[start].IsEmpty() )  {
+    if( ++start >= Lines.Count() )  {
+      Loops.Last().String = Loop.GetLoopName();
+      return true;
+    }
+  }
+  Char = Lines[start].CharAt(0);
+  size_t q_cnt = 0;
   while( Char != '_' )  {  // skip loop data
+    if( Char == ';' )  q_cnt++;
     loop_data.Add(Lines[start]);
     Lines[start] = EmptyString;
     if( ++start >= Lines.Count() )  break;
-    if( Lines[start].Equalsi("loop_") || Lines[start].StartsFromi("data_") ) // a new loop or dataset started
+    // a new loop or dataset started
+    if( (q_cnt%2) == 0 && (Lines[start].Equalsi("loop_") || Lines[start].StartsFromi("data_")) )
       break;
     if( Lines[start].IsEmpty() )   continue;
     else  
@@ -165,56 +183,61 @@ void TCif::LoadFromStrings(const TStrList& Strings)  {
       }
     }
   }
-  olxch Char;
+  size_t sc_count=0;
   for( size_t i=0; i < Lines.Count(); i++ )  {
     const olxstr& line = Lines[i];
     if( line.IsEmpty() )  continue;
     if( line.CharAt(0) == '#')  continue;
+    if( line.CharAt(0) == ';' )  sc_count++;
+    if( (sc_count%2) != 0 )  continue;
     if( ExtractLoop(i) )  continue;
     if( line.CharAt(0) == '_' )  {  // parameter
-      bool String = false;
       olxstr Val, Param;
       size_t spindex = line.FirstIndexOf(' ');
       if( spindex != InvalidIndex )  {
         Param = line.SubStringTo(spindex);
         Val = line.SubStringFrom(spindex+1); // to remove the space
       }
-      else  {
+      else
         Param = line;
-        Val = EmptyString;
-      }
       Lines[i] = Param;
       CifData *D = new CifData(false);
       Lines.GetObject(i) = D;
       Parameters.Add(Param, D);
       if( !Val.IsEmpty() )
         D->data.Add(Val);
-      size_t j = i + 1;
-      if( j < Lines.Count() )  {  // initialise 'Char'
-        if( !Lines[j].IsEmpty() )
-          Char = Lines[j].CharAt(0);
-        else    // will initiate the while loop below
-          Char = 'a';
-      }
-      while( Char != '_' && (j < Lines.Count()) )  {
-        if( !Lines[j].IsEmpty() )  {
-          Char = Lines[j].CharAt(0);
-          if( Char == '#' )  {  j++;  continue;  }
-          if( Lines[j].Length() > 4 )  {  // check for special data items
-            olxstr tmp = Lines[j].SubString(0,4);
-            if( tmp.Equalsi("data") || tmp.Equalsi("loop") )  break;
-          }
-          if( Char != '_' )  {
-            D->data.Add(Lines[j]);
-            Lines.Delete(j--);
-          }
-          else
-            break;
+      else  {
+        olxch Char;
+        while( ++i < Lines.Count() && Lines[i].IsEmpty() )  continue;
+        if( i >= Lines.Count() )  continue;
+        Char = Lines[i].CharAt(0);
+        while( Char == '#' && ++i < Lines.Count() )  {
+          while( i < Lines.Count() && Lines[i].IsEmpty() )  i++;
+          if( i >= Lines.Count() )  break;
+          Char = Lines[i].CharAt(0);
         }
-        j++;
+        if( Char == ';' )  {
+          if( Lines[i].Length() > 1 )
+            D->data.Add(Lines[i].SubStringFrom(1));
+          Lines[i] = EmptyString;
+          while( ++i < Lines.Count() )  {
+            if( !Lines[i].IsEmpty() && Lines[i].CharAt(0) == ';' )  {
+              if( Lines[i].Length() > 1 )
+                D->data.Add(Lines[i].SubStringFrom(1));
+              Lines[i] = EmptyString;
+              break;
+            }
+            D->data.Add(Lines[i]);
+            Lines[i] = EmptyString;
+          }
+          D->quoted = true;
+        }
+        else if( Char = '\'' || Char == '"' )  {
+          D->data.Add(Lines[i]);
+          Lines[i] = EmptyString;
+          continue;
+        }
       }
-      i = j-1;
-      D->quoted = String;
     }
     else if( line.StartsFrom("data_") )  {
       if( FDataNameUpperCase )
@@ -519,8 +542,10 @@ void TCif::Initialize()  {
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSymSpace(Matrices);
   if( sg != NULL )
     GetAsymmUnit().ChangeSpaceGroup(*sg);
-  else 
-    throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
+  else   {
+    GetAsymmUnit().ChangeSpaceGroup(*TSymmLib::GetInstance().FindGroup("P1"));
+    //throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
+  }
   
   try  {  GetRM().SetUserFormula(olxstr::DeleteChars(GetSParam("_chemical_formula_sum"), ' '));  }
   catch(...)  {  }

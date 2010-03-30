@@ -138,7 +138,8 @@ public:
   inline TUnitCell& GetUnitCell() const {  return *UnitCell; }
   inline TAsymmUnit& GetAsymmUnit() const {  return *AsymmUnit; }
   void UpdateAsymmUnit();
-
+  // re-creats unit cell U's and reinitialises atom U's
+  void RestoreADPs(bool restoreCoordinates=true);  
   void MoveFragment(const vec3d& to, TSAtom& fragAtom);
   void MoveFragment(TSAtom& to, TSAtom& fragAtom);
   void MoveToCenter();
