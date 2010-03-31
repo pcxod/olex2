@@ -15,7 +15,7 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
   double Q[6];
 
   for( size_t i=0; i < Strings.Count(); i++ )  {
-    if( Strings[i].StartFromi("CELLSD") )  {
+    if( Strings[i].StartsFromi("CELLSD") )  {
       toks.Clear();
       toks.Strtok( Strings[i], ' ');
       if( toks.Count() < 7 )  
@@ -28,7 +28,7 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
       GetAsymmUnit().Angles()[1].E() = toks[5].ToDouble();
       GetAsymmUnit().Angles()[2].E() = toks[6].ToDouble();
     }
-    else if( Strings[i].StartFromi("CELL") )  {
+    else if( Strings[i].StartsFromi("CELL") )  {
       toks.Clear();
       toks.Strtok( Strings[i], ' ');
       if( toks.Count() < 7 )  
@@ -42,13 +42,13 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
       CellFound = true;
       GetAsymmUnit().InitMatrices();
     }
-    else if( Strings[i].StartFromi("WAVE") )  {
+    else if( Strings[i].StartsFromi("WAVE") )  {
       GetRM().expl.SetRadiation(Strings[i].SubStringFrom(4).Trim(' ').ToDouble());
     }
-    else if( Strings[i].StartFromi("SYMM") )  {
+    else if( Strings[i].StartsFromi("SYMM") )  {
       symm.Add( Strings[i] );
     }
-    else if( Strings[i].StartFromi("LATT") )  {
+    else if( Strings[i].StartsFromi("LATT") )  {
       toks.Clear();
       toks.Strtok( Strings[i], ' ');
       if( toks.Count() < 3 )  

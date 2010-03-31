@@ -11,6 +11,7 @@ struct ICifCell  {
   virtual ~ICifCell()  {}
   virtual const TCAtom* GetAtomRef() const {  return NULL;  }
   virtual bool IsQuoted() const {  return false;  }
+  virtual bool IsBlock() const {  return false;  }
 };
 
 struct AtomCifCell : public ICifCell {
@@ -23,6 +24,10 @@ struct StringCifCell : public ICifCell {
   bool data;
   virtual bool IsQuoted() const {  return data;  }
   StringCifCell(bool _data=false) : data(_data)  {}
+};
+
+struct StringListCifCell : public ICifCell {
+  virtual bool IsBlock() const {  return true;  }
 };
 
 typedef TStrPObjList<olxstr,ICifCell*> TCifRow;

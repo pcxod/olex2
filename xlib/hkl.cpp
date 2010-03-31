@@ -110,7 +110,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
           olxstr line = SL[j].Trim(' ');
           if( line.IsEmpty() )  continue;
           Toks.Clear();
-          if( line.StartFromi("CELL") )  {
+          if( line.StartsFromi("CELL") )  {
             Toks.Strtok(line, ' ');
             if( Toks.Count() != 8 )
               throw TFunctionFailedException(__OlxSourceInfo, "invalid CELL format");
@@ -123,7 +123,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
             ins->GetAsymmUnit().Angles()[2] = Toks[7];
             cell_found = true;
           }
-          else if( line.StartFromi("SFAC") )  {
+          else if( line.StartsFromi("SFAC") )  {
             Toks.Strtok(line, ' ');  // do the validation
             TStrList unit;
             for( size_t k=1; k < Toks.Count(); k++ )  {
@@ -135,13 +135,13 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
             ins->GetRM().SetUserContentSize(unit);
             sfac_found = true;
           }
-          else if( line.StartFromi("TEMP") )
+          else if( line.StartsFromi("TEMP") )
             ins->AddIns(line, ins->GetRM());
-          else if( line.StartFromi("SIZE") )
+          else if( line.StartsFromi("SIZE") )
             ins->AddIns(line, ins->GetRM());
-          else if( line.StartFromi("REM") )
+          else if( line.StartsFromi("REM") )
             ins->AddIns(line, ins->GetRM());
-          else if( line.StartFromi("UNIT") )
+          else if( line.StartsFromi("UNIT") )
             ins->GetRM().SetUserContentSize(TStrList(line.SubStringFrom(5), ' '));
         }
         if( !cell_found || !sfac_found )

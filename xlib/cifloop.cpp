@@ -36,54 +36,29 @@ void TCifLoop::Format(TStrList& Data)  {
       Data[i] = EmptyString;
     }
   }
-  //olxstr D = Data.Text(" \\n ").Replace('\t', ' ').DeleteSequencesOf(' ');
   TCifRow Params;
-  //const size_t DL = D.Length();
-  
-
   TStrList toks;
   for( size_t i=0; i < Data.Count(); i++ )  {
     if( Data[i].IsEmpty() )  continue;
     if( Data[i].StartsFrom(';') )  {
-      olxstr p;
+      toks.Clear();
       if( Data[i].Length() > 1 )
-        p << Data[i].SubStringFrom(1);
+        toks.Add(Data[i].SubStringFrom(1));
       while( ++i < Data.Count() && !Data[i].StartsFrom(';') )
-        p << " \\n " << Data[i];
-      if( i < Data.Count() && Data[i].Length() > 1 )
-        p << " \\n " << Data[i].SubStringFrom(1);
-      Params.Add(p, new StringCifCell(true));
+        toks.Add(Data[i]);
+      toks.TrimWhiteCharStrings();
+      Params.Add(toks.Text("\\n"), new StringListCifCell);
       continue;
     }
     toks.Clear();
     TCif::CIFToks(Data[i], toks);
     for( size_t j=0; j < toks.Count(); j++ )  {
       if( toks[j].StartsFrom('\'') || toks[j].StartsFrom('"') )
-        Params.Add(toks[j].SubStringFrom(1,1), new StringCifCell(true));
+        Params.Add(toks[j].SubStringFrom(1,1).TrimWhiteChars(), new StringCifCell(true));
       else
         Params.Add(toks[j], new StringCifCell(false));
     }
   }
-  //for( size_t i=0; i < DL; i++ )  {
-  //  olxch Char = D.CharAt(i);
-  //  if( Char == ' ' ) continue;
-  //  if( Char == '\'' || Char == ';' || Char == '"')  {  // string param
-  //    size_t start = i+1;
-  //    while( ++i < DL )  {
-  //      if( D.CharAt(i) == Char )  break;
-  //    }
-  //    Params.Add(D.SubStringFrom(start, i-start), new StringCifCell(true));
-  //    continue;
-  //  }
-  //  size_t start = i
-  //  while( (Char != ' ') )  {  // normal parameter
-  //    Param << D.CharAt(i);
-  //    if( ++i >= DL )  break;
-  //    Char = D.CharAt(i);
-  //  }
-  //  if( !Param.IsEmpty() && Param != "\\n" )
-  //    Params.Add(Param, new StringCifCell(false));
-  //}
   if( (Params.Count() % ColCount) != 0 )  {
 #ifdef _DEBUG
     for( size_t j=0; j < ColCount; j++ )
@@ -114,78 +89,38 @@ void TCifLoop::Format(TStrList& Data)  {
 }
 //..............................................................................
 void TCifLoop::SaveToStrings(TStrList& Strings) const {
-  TStrList toks, htoks;
   for( size_t i=0; i < FTable.ColCount(); i++ )  // loop header
     Strings.Add("  ") << FTable.ColName(i);
-
   for( size_t i=0; i < FTable.RowCount(); i++ ) {  // loop content
-    olxstr Tmp;
+    Strings.Add(EmptyString);
     for( size_t j=0; j < FTable.ColCount(); j++ )  {
       ICifCell* CLD = FTable[i].GetObject(j);
       if( CLD->GetAtomRef() != NULL )  {
         if( CLD->GetAtomRef()->IsDeleted() )  {  // skip deleted atom
-          Tmp = EmptyString;
           break;
         }
       }
-      // according to the cif rules, the strings cannot be hyphenated ...
       olxstr str = FTable[i][j];
-      if( str.EndsWith("\\n") )
-        str.SetLength(str.Length()-2);
-      if( CLD->IsQuoted() )  {
-        if( str.IndexOf("\\n") != InvalidIndex )  {
-          if( !Tmp.IsEmpty() )  {
-            Strings.Add(Tmp);
-            Tmp = EmptyString;
-          }
-          toks.Clear();
-          toks.Strtok(str, "\\n");
-          Strings.Add(';');
-          for( size_t j=0; j < toks.Count(); j++ )  {
-            htoks.Clear();
-            htoks.Hyphenate(toks[j], 78);
-            for( size_t k=0; k < htoks.Count(); k++ )  {
-              if( htoks[k].Length() > 1 )  // not just a space char
-                Strings.Add(htoks[k]);
-            }
-          }
-          Strings.Add(';');
-        }
-        else  {
-          if( Tmp.Length() + 3 + str.Length() > 80 )  {
-            Strings.Add(Tmp);
-            Tmp = EmptyString;
-          }
-          Tmp << ' ' << '\'' << str << '\'';
-        }
+      if( CLD->IsBlock() )  {
+        if( str.EndsWith("\\n") )
+          str.SetLength(str.Length()-2);
+        Strings.Add(';');
+        Strings.AddList(TStrList(str, "\\n"));
+        Strings.Add(';');
+        Strings.Add(EmptyString);
+      }
+      else if( CLD->IsQuoted() )  {
+        if( Strings.Last().String.Length() + str.Length() < 77 )
+          Strings.Last().String << " '" << str << '\'';
+        else
+          Strings.Add(" '") << str << '\'';
       }
       else  {
-        if( Tmp.Length() + str.Length() > 80 )  {  // \\n at the end
-          Strings.Add( Tmp );
-          Tmp = EmptyString;
-        }
-        Tmp << ' ' << str;
+        if( Strings.Last().String.Length() + str.Length() < 80 )
+          Strings.Last().String << ' ' << str;
+        else
+          Strings.Add(' ') << str;
       }
-    }
-    if( Tmp.Length() > 80 )  {
-      toks.Clear();
-      if( Tmp.StartsFrom(" '") )  // remove quotations ...
-        Tmp = Tmp.SubString(2, Tmp.Length()-3);
-      toks.Strtok(Tmp, "\\n");
-      Strings.Add(';');
-      for( size_t j=0; j < toks.Count(); j++ )  {
-        htoks.Clear();
-        htoks.Hyphenate(toks[j], 78);
-        for( size_t k=0; k < htoks.Count(); k++ )  {
-          if( htoks[k].Length() > 1 )  // not just a space char
-            Strings.Add(htoks[k]);
-        }
-      }
-      Strings.Add(';');
-    }
-    else  {
-      if( !Tmp.IsEmpty() )
-        Strings.Add(Tmp);
     }
   }
   if( !FComments.IsEmpty() )
@@ -200,7 +135,7 @@ olxstr TCifLoop::GetLoopName() const {
   for( size_t i=2; i < FTable.ColCount(); i++ )
     C = olxstr::CommonString(FTable.ColName(i), C);
   if( C.IsEmpty() )
-    throw TFunctionFailedException(__OlxSourceInfo, "Mismatcing loop columns");
+    throw TFunctionFailedException(__OlxSourceInfo, "Mismatching loop columns");
   if( C.Last() == '_' )
     C.SetLength(C.Length()-1);
   return C;
@@ -229,12 +164,17 @@ int TCifLoop::CifLoopSorter::Compare(const TCifLoopTable::TableSort& r1,
   }
   return (id1 < id2 ? -1 : (id1 > id2 ? 1 : 0)); 
 }
+//..............................................................................
 void TCifLoop::UpdateTable(const TCif& parent)  {
-  if( GetLoopName().StartFromi("_space_group_symop") ||
-    GetLoopName().StartFromi("_symmetry_equiv") )
-  {
-	  return;
+  if( FTable.RowCount() == 0 )  return;
+  bool update = false;
+  for( size_t i=0; i < FTable.ColCount(); i++ )  {
+    if( FTable[0].GetObject(i)->GetAtomRef() != NULL )  {
+      update = true;
+      break;
+    }
   }
+  if( !update  )  return;
   for( size_t i=0; i < FTable.RowCount(); i++ )  {
     for( size_t j=0; j < FTable.ColCount(); j++ )  {
       if( FTable[i].GetObject(j)->GetAtomRef() != NULL )

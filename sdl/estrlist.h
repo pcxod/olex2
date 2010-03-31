@@ -152,15 +152,39 @@ public:
   }
 
   template <class SC1, class T1>
-    void Assign(const TTStrList<SC1,T1>& S)  {
+    TTStrList& Assign(const TTStrList<SC1,T1>& S)  {
       Clear();
       for( size_t i=0; i < S.Count(); i++ )
         Add(S.GetString(i));
+      return *this;
     }
 
   void AddList(const TTStrList& S)  {
     for( size_t i=0; i < S.Count(); i++ )
-      Add( S.GetString(i) );
+      Add(S.GetString(i));
+  }
+
+  void TrimWhiteCharStrings(bool leading=true, bool trailing=true)  {
+    if( IsEmpty() )  return;
+    size_t start = 0, end = Count()-1;
+    if( trailing )  {
+      while( start < end && GetString(start).IsWhiteCharString() ) start++;
+      if( start >= Count() )  {  Clear();  return;  }
+      for( size_t i=0; i < start; i++ )  {
+        delete Strings[i];
+        Strings[i] = NULL;
+      }
+    }
+    if( trailing )  {
+      while( end > start && GetString(end).IsWhiteCharString() )  end--;
+      for( size_t i=end+1; i < Count(); i++ )  {
+        delete Strings[i];
+        Strings[i] = NULL;
+      }
+    }
+    if( start == 0 && end == Count()-1 )  return;
+    Strings.Pack();
+    return;
   }
 
   void CombineLines(const SC& LineContinuationDel)  {
@@ -266,10 +290,7 @@ public:
 
   virtual TIString ToString() const  {   return Text(NewLineSequence).ToString();  }
 
-  const TTStrList& operator = (const TTStrList& list)  {
-    Assign( list );
-    return list;
-  }
+  TTStrList& operator = (const TTStrList& list)  {  return Assign(list);  }
 
   template <class comparator>
     void BubleSort()  {  TPtrList<T>::BubleSorter.template Sort<comparator>(Strings);  }
@@ -463,9 +484,10 @@ public:
         Add(S[i]);
     }
 
-  inline void Assign(const TTOStringList& S)  {
+   TTOStringList& Assign(const TTOStringList& S)  {
     PList::Clear();
     PList::AddList(S);
+    return *this;
   }
 
   void AddList(const TTOStringList& S)  {
@@ -486,13 +508,7 @@ public:
 
   inline OC& GetObject(size_t i) const { return PList::Strings[i]->Object;  }
 
-  const TTOStringList& operator = (const TTOStringList& list)  {
-    PList::Clear();
-    PList::Strings.SetCapacity( list.Count() );
-    for( size_t i=0; i < list.Count(); i++ )
-      Add(list[i], list.GetObject(i));
-    return list;
-  }
+  TTOStringList& operator = (const TTOStringList& list)  {  return Assign(list);  }
 
   size_t IndexOfObject(const OC& C) const  {
     for( size_t i=0; i < PList::Count(); i++ )
