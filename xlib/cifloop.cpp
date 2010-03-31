@@ -36,33 +36,54 @@ void TCifLoop::Format(TStrList& Data)  {
       Data[i] = EmptyString;
     }
   }
-  olxstr D = Data.Text(" \\n ").Replace('\t', ' ').DeleteSequencesOf(' ');
+  //olxstr D = Data.Text(" \\n ").Replace('\t', ' ').DeleteSequencesOf(' ');
   TCifRow Params;
-  const size_t DL = D.Length();
-  for( size_t i=0; i < DL; i++ )  {
-    olxstr Param;
-    olxch Char = D.CharAt(i);
-    if( Char == ' ' ) continue;
-    if( Char == '\'' || Char == ';' || Char == '"')  {  // string param
-      olxch SepChar = Char;
-      Char = 'a';
-      while( Char != SepChar )  {
-	      Param << D.CharAt(i);
-        if( ++i >= DL )  break;
-        Char = D.CharAt(i);
-      }
-      Param.Delete(0, 1);
-      Params.Add(Param, new StringCifCell(true));
+  //const size_t DL = D.Length();
+  
+
+  TStrList toks;
+  for( size_t i=0; i < Data.Count(); i++ )  {
+    if( Data[i].IsEmpty() )  continue;
+    if( Data[i].StartsFrom(';') )  {
+      olxstr p;
+      if( Data[i].Length() > 1 )
+        p << Data[i].SubStringFrom(1);
+      while( ++i < Data.Count() && !Data[i].StartsFrom(';') )
+        p << " \\n " << Data[i];
+      if( i < Data.Count() && Data[i].Length() > 1 )
+        p << " \\n " << Data[i].SubStringFrom(1);
+      Params.Add(p, new StringCifCell(true));
       continue;
     }
-    while( (Char != ' ') )  {  // normal parameter
-      Param << D.CharAt(i);
-      if( ++i >= DL )  break;
-      Char = D.CharAt(i);
+    toks.Clear();
+    TCif::CIFToks(Data[i], toks);
+    for( size_t j=0; j < toks.Count(); j++ )  {
+      if( toks[j].StartsFrom('\'') || toks[j].StartsFrom('"') )
+        Params.Add(toks[j].SubStringFrom(1,1), new StringCifCell(true));
+      else
+        Params.Add(toks[j], new StringCifCell(false));
     }
-    if( !Param.IsEmpty() && Param != "\\n" )
-      Params.Add(Param, new StringCifCell(false));
   }
+  //for( size_t i=0; i < DL; i++ )  {
+  //  olxch Char = D.CharAt(i);
+  //  if( Char == ' ' ) continue;
+  //  if( Char == '\'' || Char == ';' || Char == '"')  {  // string param
+  //    size_t start = i+1;
+  //    while( ++i < DL )  {
+  //      if( D.CharAt(i) == Char )  break;
+  //    }
+  //    Params.Add(D.SubStringFrom(start, i-start), new StringCifCell(true));
+  //    continue;
+  //  }
+  //  size_t start = i
+  //  while( (Char != ' ') )  {  // normal parameter
+  //    Param << D.CharAt(i);
+  //    if( ++i >= DL )  break;
+  //    Char = D.CharAt(i);
+  //  }
+  //  if( !Param.IsEmpty() && Param != "\\n" )
+  //    Params.Add(Param, new StringCifCell(false));
+  //}
   if( (Params.Count() % ColCount) != 0 )  {
 #ifdef _DEBUG
     for( size_t j=0; j < ColCount; j++ )
