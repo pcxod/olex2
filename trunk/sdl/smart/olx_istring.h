@@ -434,17 +434,25 @@ public:
   //............................................................................
   template <typename AC> bool StartsFrom(const AC* v) const {
     size_t len = o_strlen(v);
-    return (len > T::_Length ) ? false : (o_memcmp(T::Data(), v, len) == 0);
+    return (len > T::_Length) ? false : (o_memcmp(T::Data(), v, len) == 0);
   }
   template <typename AC> bool StartsFromi(const AC* v) const {
     size_t len = o_strlen(v);
-    return (len > T::_Length ) ? false : (o_memcmpi(T::Data(), v, len) == 0);
+    return (len > T::_Length) ? false : (o_memcmpi(T::Data(), v, len) == 0);
   }
+  //
   bool StartsFrom(const TTSString& v) const {
-    return (v._Length > T::_Length ) ? false : (o_memcmp(T::Data(), v.Data(), v._Length) == 0);
+    return (v._Length > T::_Length) ? false : (o_memcmp(T::Data(), v.Data(), v._Length) == 0);
   }
   bool StartsFromi(const TTSString& v) const {
-    return (v._Length > T::_Length ) ? false : (o_memcmpi(T::Data(), v.Data(), v._Length) == 0);
+    return (v._Length > T::_Length) ? false : (o_memcmpi(T::Data(), v.Data(), v._Length) == 0);
+  }
+  //
+  template <typename AC> bool StartsFrom(AC v) const {
+    return (T::_Length == 0) ? false : T::Data()[0] == v;
+  }
+  template <typename AC> bool StartsFromi(AC v) const {
+    return (T::_Length == 0) ? false : o_tolower(T::Data()[0]) == o_tolower(v);
   }
   //............................................................................
   template <typename AC> size_t LeadingCharCount(AC v) const {
@@ -453,32 +461,29 @@ public:
     return cc;
   }
   //............................................................................
-  template <typename AC> bool StartFromi(const AC* v) const {
-    size_t len = o_strlen(v);
-    return (len > T::_Length ) ? false : (o_memcmpi(T::Data(), v, len) == 0);
-  }
-  bool StartFromi(const TTSString& v) const {
-    return (v._Length > T::_Length ) ? false : (o_memcmpi(T::Data(), v.Data(), v._Length) == 0);
-  }
-  //............................................................................
   template <typename AC> bool EndsWith(const AC* v) const {
     size_t len = o_strlen(v);
-    return (len > T::_Length ) ? false : (o_memcmp(&T::Data()[T::_Length-len], v, len) == 0);
+    return (len > T::_Length) ? false : (o_memcmp(&T::Data()[T::_Length-len], v, len) == 0);
   }
-  bool EndsWith(const TTSString& v) const {
-    return (v._Length > T::_Length ) ? false : (o_memcmp(&T::Data()[T::_Length-v._Length], v.Data(), v._Length) == 0);
-  }
-  bool EndsWith(char ch) const {
-    return T::_Length == 0 ? false : T::Data()[T::_Length-1] == ch;
-  }
-  //............................................................................
   template <typename AC> bool EndsWithi(const AC* v) const {
     size_t len = o_strlen(v);
-    return (len > T::_Length ) ? false : (o_memcmpi(&T::Data()[T::_Length-len], v, len) == 0);
+    return (len > T::_Length) ? false : (o_memcmpi(&T::Data()[T::_Length-len], v, len) == 0);
+  }
+  //
+  bool EndsWith(const TTSString& v) const {
+    return (v._Length > T::_Length) ? false : (o_memcmp(&T::Data()[T::_Length-v._Length], v.Data(), v._Length) == 0);
   }
   bool EndsWithi(const TTSString& v) const {
-    return (v._Length > T::_Length ) ? false : (o_memcmpi(&T::Data()[T::_Length-v._Length], v.Data(), v._Length) == 0);
+    return (v._Length > T::_Length) ? false : (o_memcmpi(&T::Data()[T::_Length-v._Length], v.Data(), v._Length) == 0);
   }
+  //
+  template <typename AC> bool EndsWith(AC ch) const {
+    return T::_Length == 0 ? false : T::Data()[T::_Length-1] == ch;
+  }
+  template <typename AC> bool EndsWithi(AC ch) const {
+    return T::_Length == 0 ? false : o_tolower(T::Data()[T::_Length-1]) == o_tolower(ch);
+  }
+  //............................................................................
   //............................................................................
   TTSString operator + (const TC* v) const { return (TTSString<T,TC>&)TTSString<T,TC>(*this).Append(v, o_strlen(v)); }
   //............................................................................
@@ -1350,11 +1355,21 @@ public:
     return *this;
   }
   //............................................................................
-  TTSString& TrimWhiteChars()  {
+  bool IsWhiteCharString() const {
+    const TC* data = T::Data();
+    for( size_t i=0; i < T::_Length; i++ )
+      if( !o_iswhitechar(data[i]) )
+        return false;
+    return true;
+  }
+  //............................................................................
+  TTSString& TrimWhiteChars(bool leading=true, bool trailing=true)  {
     if( T::_Length == 0 )  return *this;
-    size_t start = 0, end = T::_Length;
-    while( o_iswhitechar(TTIString<TC>::Data(start)) && ++start < end )  ;
-    while( --end > start && o_iswhitechar(TTIString<TC>::Data(start)) )  ;
+    size_t start = 0, end = T::_Length-1;
+    if( leading )
+      while( o_iswhitechar(TTIString<TC>::Data(start)) && ++start < end )  continue;
+    if( trailing )
+      while( end > start && o_iswhitechar(TTIString<TC>::Data(end)) )  end--;
     T::_Start += start;
     T::_Length = (end + 1 - start);
     return *this;

@@ -333,7 +333,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
     else
       frag->Reset(a, b, c, al, be, ga);
     TStrList f_toks;
-    while( ++i < ins.Count() && !ins[i].StartFromi("FEND") )  {
+    while( ++i < ins.Count() && !ins[i].StartsFromi("FEND") )  {
       if( ins[i].IsEmpty() )  continue;
       f_toks.Strtok(ins[i], ' ');
       if( f_toks.Count() > 4 )

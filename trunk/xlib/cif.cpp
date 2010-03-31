@@ -23,6 +23,8 @@
 #include "symmlib.h"
 #include "etime.h"
 
+using namespace exparse::parser_util;
+
 //----------------------------------------------------------------------------//
 // TCif function bodies
 //----------------------------------------------------------------------------//
@@ -60,42 +62,22 @@ void TCif::Format()  {
   Lines.Pack();
   for( size_t i=0; i < Lines.Count(); i++ )  {
     if( Lines.GetObject(i) == NULL )  continue;
-    size_t li = 0;
-    CifData* D = Lines.GetObject(i);
-    for( size_t j=0; j < D->data.Count(); j++ )  {
-      for( size_t k=0; k < D->data[j].Length(); k++ )  {
-        const olxch Char = D->data[j].CharAt(k);
-        if( Char == '\'' || Char == '"' || Char == ';')  {
-          D->data[j][k] = ' ';
-          D->quoted = true;
+    CifData& D = *Lines.GetObject(i);
+    if( D.data.Count() > 1 )
+      D.data.TrimWhiteCharStrings();
+    for( size_t j=0; j < D.data.Count(); j++ )  {
+      if( D.data[j].Length() > 1 )  {
+        const olxch ch = D.data[j].CharAt(0);
+        if( is_quote(ch) && D.data[j].EndsWith(ch) )  {
+          D.data[j] = D.data[j].SubStringFrom(1,1);
+          D.quoted = true;
         }
       }
-      //D->data[j].DeleteSequencesOf(' ').Trim(' ');
-      if( !D->data[j].IsEmpty() )  
-        li++;
     }
-    // check if a space should be added at the beginning of line
-    bool AddSpace = false;
-    if( li > 1 )  AddSpace = true;
-    else  {
-      if( D->data.Count() == 1 )  {
-        if( D->data[0].Length() > 80 )
-          AddSpace = true;
-      }
-    }
-    TStrList NewData, toks;
-    for( size_t j=0; j < D->data.Count(); j++ )  {
-      if( D->data[j].IsEmpty() )  continue;
-      toks.Clear();
-      toks.Hyphenate(D->data[j], 78);
-      for( size_t k=0; k < toks.Count(); k++ )  {
-        olxstr tmp;
-        if( !toks[k].StartsFrom(' ') && AddSpace )  tmp = ' ';  // if a space should be added at the beginning of line
-        NewData.Add(tmp << toks[k]);
-      }
-    }
-    D->data = NewData;
-    if( NewData.Count() > 1 )  D->quoted = true;
+    if( D.data.Count() == 1 )
+      D.data[0].TrimWhiteChars();
+    else if( D.data.Count() > 1 )
+      D.quoted = true;
   }
 }
 //..............................................................................
@@ -155,7 +137,8 @@ bool TCif::ExtractLoop(size_t& start)  {
     while( ++start < Lines.Count() && Lines[start].IsEmpty() )  continue;
     if( start >= Lines.Count() )  break;
     // a new loop or dataset started (not a part of a multi-string value)
-    if( (q_cnt%2) == 0 && (Lines[start].StartsFrom('_') || Lines[start].Equalsi("loop_") || Lines[start].StartsFromi("data_")) )
+    if( (q_cnt%2) == 0 && (Lines[start].StartsFrom('_') || 
+      Lines[start].StartsFromi("loop_") || Lines[start].StartsFromi("data_")) )
       break;
     if( Lines[start].CharAt(0) == ';' )  q_cnt++;
     loop_data.Add(Lines[start]);
@@ -220,8 +203,6 @@ void TCif::LoadFromStrings(const TStrList& Strings)  {
           Lines[i] = EmptyString;
           while( ++i < Lines.Count() )  {
             if( !Lines[i].IsEmpty() && Lines[i].CharAt(0) == ';' )  {
-              if( Lines[i].Length() > 1 )
-                D->data.Add(Lines[i].SubStringFrom(1));
               Lines[i] = EmptyString;
               break;
             }
@@ -247,7 +228,7 @@ void TCif::LoadFromStrings(const TStrList& Strings)  {
       Lines[i] << FDataName;
     }
   }
-  //Format();
+  Format();
   /******************************************************************/
   /*search for the weigting sceme*************************************/
   CifData* D = FindParam( "_refine_ls_weighting_details");
@@ -309,7 +290,7 @@ void GroupSection(TStrPObjList<olxstr,TCif::CifData*>& lines, size_t index,
   olxstr tmp;
   for( size_t i=index; i < lines.Count(); i++ )  {
     tmp = lines[i].Trim(' ');
-    if( tmp.IsEmpty() || tmp == "loop_" )  continue;
+    if( tmp.IsEmpty() || tmp.StartsFromi("loop_") )  continue;
     size_t ind = tmp.FirstIndexOf('_', 1);
     if( ind == InvalidIndex || ind == 0 ) // a _loop ?
       continue;
@@ -1162,7 +1143,6 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
 }
 //..............................................................................
 size_t TCif::CIFToks(const olxstr& exp, TStrList& out)  {
-  using namespace exparse::parser_util;
   size_t start = 0;
   const size_t toks_c = out.Count();
   for( size_t i=0; i < exp.Length(); i++ )  {

@@ -164,7 +164,7 @@ ABasicFunction* TLibrary::FindMacro(const olxstr& name, unsigned int argc)  {
 size_t TLibrary::LocateSimilarFunctions(const olxstr& name, TBasicFunctionPList& store)  {
   const size_t cnt = store.Count();
   for( size_t i=0; i < Functions.Count(); i++ )  {
-    if( Functions.GetString(i).StartFromi(name) )
+    if( Functions.GetString(i).StartsFromi(name) )
       store.Add( Functions.GetObject(i) );
   }
   return store.Count() - cnt;
@@ -173,7 +173,7 @@ size_t TLibrary::LocateSimilarFunctions(const olxstr& name, TBasicFunctionPList&
 size_t TLibrary::LocateSimilarMacros(const olxstr& name, TBasicFunctionPList& store)  {
   const size_t cnt = store.Count();
   for( size_t i=0; i < Macros.Count(); i++ )  {
-    if( Macros.GetString(i).StartFromi(name) )
+    if( Macros.GetString(i).StartsFromi(name) )
       store.Add( Macros.GetObject(i) );
   }
   return store.Count() - cnt;
@@ -182,7 +182,7 @@ size_t TLibrary::LocateSimilarMacros(const olxstr& name, TBasicFunctionPList& st
 size_t TLibrary::LocateSimilarLibraries(const olxstr& name, TBasicLibraryPList& store)  {
   const size_t cnt = store.Count();
   for( size_t i=0; i < Libraries.Count(); i++ )  {
-    if( Libraries.GetString(i).StartFromi(name) )
+    if( Libraries.GetString(i).StartsFromi(name) )
       store.Add( Libraries.GetObject(i) );
   }
   return store.Count() - cnt;
