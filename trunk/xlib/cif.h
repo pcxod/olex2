@@ -119,9 +119,9 @@ public:
   bool CreateTable(TDataItem* TableDefinitions, TTTable<TStrList>& Table, smatd_list& SymmList) const;
   void Group();
   const TCifDataManager& GetDataManager() const {  return DataManager;  }
-
+  // specific CIF tokeniser to tackle 'dog's' life'...
+  static size_t CIFToks(const olxstr& str, TStrList& toks);
   virtual IEObject* Replicate() const {  return new TCif;  }
-
 };
 //---------------------------------------------------------------------------
 
