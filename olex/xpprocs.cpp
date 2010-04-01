@@ -140,6 +140,7 @@
 #include "sha.h"
 #include "exparse/expbuilder.h"
 #include "encodings.h"
+#include "cifdp.h"
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
@@ -6125,6 +6126,15 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  cif_dp::TCifDP cdp;
+  TStrList _sl;
+  _sl.LoadFromFile("cif_core.cif");
+  cdp.LoadFromStrings(_sl);
+  _sl.Clear();
+  cdp.SaveToStrings(_sl);
+  TCStrList(_sl).SaveToFile("test_cif");
+  return;
+
   //uint64_t test_a = 1021;
   //uint64_t test_b = test_a%10, test_c = test_a/10;
   //uint64_t test_d = test_a/10, test_e = test_a-test_d*10;

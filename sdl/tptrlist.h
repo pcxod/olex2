@@ -68,7 +68,7 @@ public:
   }
   inline TPtrList& operator += (const TPtrList& l)  {  return AddList(l);  }
 //..............................................................................
-  inline T*& Add(T* pObj)  {
+  inline T*& Add(T* pObj=NULL)  {
     if( FCapacity == FCount )  
       SetCapacity((long)(1.5*FCount + FIncrement));
     Items[FCount] = pObj;
@@ -101,7 +101,7 @@ public:
     return Items[FCount++];
   }
 //..............................................................................
-  inline T*& Insert(size_t index, T* pObj)  {
+  inline T*& Insert(size_t index, T* pObj=NULL)  {
     if( FCapacity == FCount )  
       SetCapacity((long)(1.5*FCount + FIncrement));
     memmove(&Items[index+1], &Items[index], (FCount-index)*sizeof(T*));
