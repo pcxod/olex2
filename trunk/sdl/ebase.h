@@ -433,11 +433,7 @@ public:
   const class TBasicException* GetException() const; 
 };
 
-#ifdef _WIN64
-#  define olx_cmp_size_t(a,b) (a) < (b) ? -1 : ((a) > (b) ? 1 : 0)
-#else
-#  define olx_cmp_size_t(a,b) (a) - (b)
-#endif
+#define olx_cmp_size_t(a,b) (a) < (b) ? -1 : ((a) > (b) ? 1 : 0)
 
 EndEsdlNamespace()
 

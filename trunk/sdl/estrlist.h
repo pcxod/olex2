@@ -92,13 +92,14 @@ public:
   inline SC& LastStr()            const {  return Strings.Last()->String;   }
   inline size_t Count()           const {  return Strings.Count();  }
   inline bool IsEmpty()           const {  return Strings.IsEmpty();  }
-  inline SC& Add(const SC& str)         {  return Strings.Add( new T(str) )->String;  }
-  inline SC& Add(const char* str)       {  return Strings.Add( new T(str) )->String;  }
-  inline SC& Add(const wchar_t* str)    {  return Strings.Add( new T(str) )->String;  }
+  inline SC& Add()                      {  return Strings.Add(new T)->String;  }
+  inline SC& Add(const SC& str)         {  return Strings.Add(new T(str))->String;  }
+  inline SC& Add(const char* str)       {  return Strings.Add(new T(str))->String;  }
+  inline SC& Add(const wchar_t* str)    {  return Strings.Add(new T(str))->String;  }
 
-  inline TTStrList<SC,T>& operator << (const SC& str)      {  Strings.Add( new T(str) );  return *this;  }
-  inline TTStrList<SC,T>& operator << (const char* str)    {  Strings.Add( new T(str) );  return *this;  }
-  inline TTStrList<SC,T>& operator << (const wchar_t* str) {  Strings.Add( new T(str) );  return *this;  }
+  inline TTStrList<SC,T>& operator << (const SC& str)      {  Strings.Add(new T(str));  return *this;  }
+  inline TTStrList<SC,T>& operator << (const char* str)    {  Strings.Add(new T(str));  return *this;  }
+  inline TTStrList<SC,T>& operator << (const wchar_t* str) {  Strings.Add(new T(str));  return *this;  }
   template <class SC1, class T1> 
   TTStrList<SC,T>& operator << (const TTStrList<SC1,T1>& list)  {
     Strings.SetCapacity( Count() + list.Count() );
@@ -107,6 +108,7 @@ public:
     return *this;
   }
 
+  inline SC& Insert(size_t i)                   {  return Strings.Insert(i, new T)->String;  }
   inline SC& Insert(size_t i, const SC& S)      {  return Strings.Insert(i, new T(S))->String;  }
   inline SC& Insert(size_t i, const char* S)    {  return Strings.Insert(i, new T(S))->String;  }
   inline SC& Insert(size_t i, const wchar_t* S) {  return Strings.Insert(i, new T(S))->String;  }
@@ -403,19 +405,17 @@ template <class SC, typename OC>
 struct TPrimitiveStrListData : public TSingleStringWrapper<SC>  {
   OC Object;
   TPrimitiveStrListData() : Object(0) {  }
-  template <class T> TPrimitiveStrListData(const T& str, const OC& obj = 0 ) : 
-    TSingleStringWrapper<SC>(str),
-    Object(obj) {  }
-  virtual ~TPrimitiveStrListData()  {   }
+  template <class T> TPrimitiveStrListData(const T& str, const OC& obj = 0)
+    : TSingleStringWrapper<SC>(str), Object(obj) {  }
+  virtual ~TPrimitiveStrListData()  {  }
 };
 
 template <class SC, typename OC> struct TObjectStrListData : public TSingleStringWrapper<SC>  {
   OC Object;
-  TObjectStrListData() {  }
+  TObjectStrListData()  {  }
   template <class S> TObjectStrListData(const S& str ) : TSingleStringWrapper<SC>(str)  {  }
-  template <class S> TObjectStrListData(const S& str, const OC& obj ) : 
-    TSingleStringWrapper<SC>(str),
-    Object(obj)  {  }
+  template <class S> TObjectStrListData(const S& str, const OC& obj )
+    : TSingleStringWrapper<SC>(str), Object(obj)  {  }
   virtual ~TObjectStrListData()  {  }
 };
 
@@ -425,19 +425,19 @@ template <class SC, class OC, class GC> class TTOStringList: public TTStrList<SC
 public:
   // creates empty list
   TTOStringList()  {  }
-  TTOStringList(size_t count) : TTStrList<SC,GC>(count)  {    }
+  TTOStringList(size_t count) : TTStrList<SC,GC>(count)  {  }
   // copy constructor
   template <class SC1, class T1>
     TTOStringList(const TTStrList<SC1,T1>& list)  {
       PList::Strings.SetCapacity( list.Count() );
       for( size_t i=0; i < list.Count(); i++ )
-        Add( list[i] );
+        Add(list[i]);
     }
 
   TTOStringList(const TTOStringList& list)  {
     PList::Strings.SetCapacity( list.Count() );
     for( size_t i=0; i < list.Count(); i++ )
-      Add( list[i], list.GetObject(i) );
+      Add(list[i], list.GetObject(i));
   }
   // creates a list with strtok entries in it
   TTOStringList(const SC& string, const SC& sep, TTypeList<OC>* objects = NULL) :
@@ -495,10 +495,11 @@ public:
       Add(S[i], S.GetObject(i));
   }
 
-  inline GC& Add(const SC& S)  {  return *PList::Strings.Add(new GC(S));  }
-  inline GC& Add(const SC& S, const OC& Object)  {  return *PList::Strings.Add(new GC(S,Object));  }
-  inline GC& Insert(size_t i, const SC& S)  {  return *PList::Strings.Insert(i, new GC(S));  }
-  inline GC& Insert(size_t i, const SC& S, const OC& O)  {
+  GC& Add()             {  return *PList::Strings.Add(new GC);  }
+  GC& Add(const SC& S)  {  return *PList::Strings.Add(new GC(S));  }
+  GC& Add(const SC& S, const OC& Object)  {  return *PList::Strings.Add(new GC(S,Object));  }
+  GC& Insert(size_t i, const SC& S)  {  return *PList::Strings.Insert(i, new GC(S));  }
+  GC& Insert(size_t i, const SC& S, const OC& O)  {
     return *PList::Strings.Insert(i, new GC(S,O) );
   }
   inline GC& Set(size_t i, const SC& S, const OC& O)  {  

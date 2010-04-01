@@ -12,8 +12,7 @@
 BeginEsdlNamespace()
 
 //template argumets must be TTStrList or TTStringLists
-template <class T>
-class TTTable: public IEObject  {
+template <class T> class TTTable: public IEObject  {
   TTypeList<T> Rows;
   TStrList ColNames, RowNames;
 public:
@@ -33,11 +32,11 @@ public:
     ColNames.Assign(Table.GetColNames());
     RowNames.Assign(Table.GetRowNames());
     for( size_t i=0; i < RowCount(); i++ )
-      Rows[i].Assign( Table[i] );
+      Rows[i].Assign(Table[i]);
   }
 
-  const TStrList& GetColNames() const  {  return ColNames;  }
-  const TStrList& GetRowNames() const  {  return RowNames;  }
+  const TStrList& GetColNames() const {  return ColNames;  }
+  const TStrList& GetRowNames() const {  return RowNames;  }
   size_t RowCount() const {  return Rows.Count();  }
   size_t ColCount() const {  return ColNames.Count();  }
   olxstr& ColName(size_t index) const { return ColNames[index];  }
@@ -69,7 +68,7 @@ public:
     for( size_t i=0; i < Rows.Count(); i++ )  {
       if( Rows[i].Count() < ColCnt )  { 
         while( Rows[i].Count() < ColCnt )
-          Rows[i].Add(EmptyString);
+          Rows[i].Add();
       }
       else
         Rows[i].SetCount(ColCnt);
@@ -78,27 +77,27 @@ public:
 
   void SetColCount(size_t NCC)  {  Resize(RowCount(), NCC);  }
   void SetRowCount(size_t NRC)  {  Resize(NRC, ColNames.Count() );  }
-  void InsertCol(size_t index, const olxstr &Caption)  {
+  void InsertCol(size_t index, const olxstr& Caption=EmptyString)  {
     for( size_t i=0; i < RowCount(); i++ )
-      Rows[i].Insert(index, EmptyString);
+      Rows[i].Insert(index);
     ColNames.Insert(index, Caption);
   }
 
-  T& InsertRow(size_t index, const olxstr &Caption)  {
+  T& InsertRow(size_t index, const olxstr& Caption=EmptyString)  {
     T& SL = Rows.InsertNew(index);
     for( size_t i=0; i < ColNames.Count(); i++ )
-      SL.Add(EmptyString);
+      SL.Add();
     RowNames.Insert(index, Caption);
     return SL;
   }
 
-  void AddCol(const olxstr &Caption)  {
+  void AddCol(const olxstr& Caption=EmptyString)  {
     for( size_t i=0; i < RowCount(); i++ )
-      Rows[i].Add( EmptyString );
+      Rows[i].Add();
     ColNames.Add(Caption);
   }
 
-  T& AddRow(const olxstr &Caption)  {
+  T& AddRow(const olxstr& Caption=EmptyString)  {
     T& SL = Rows.AddNew();
     for( size_t i=0; i < ColNames.Count(); i++ )
       SL.Add(EmptyString);
