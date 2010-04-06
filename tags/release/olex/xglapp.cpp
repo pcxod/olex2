@@ -2,11 +2,6 @@
 // TGlApp implementation
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "xglapp.h"
 #include "xglcanv.h"
 #include "mainform.h"
@@ -145,7 +140,7 @@ bool TGlXApp::OnInit()  {
   wxGetEnv(wxT("OLEX2_GL_STEREO"), &str_glStereo);
   int *gl_attr = TGlCanvas::GetGlAttributes(
     !str_glAttr.IsEmpty() && str_glAttr.CmpNoCase(wxT("TRUE")) == 0,
-    !str_glStereo.IsEmpty() && str_glStereo.CmpNoCase(wxT("TRUE")) == 0);
+    str_glStereo.IsEmpty() || str_glStereo.CmpNoCase(wxT("TRUE")) == 0);
   MainForm->GlCanvas(new TGlCanvas(MainForm, gl_attr, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, wxT("GL_CANVAS") ) );
   // create an instance of the XApplication
   olxstr BaseDir(argv[0]);

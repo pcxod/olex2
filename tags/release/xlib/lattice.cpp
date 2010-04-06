@@ -1352,21 +1352,22 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
     for( size_t i=0; i < AE.Count(); i++ )  {
       if( AE.GetCAtom(i).GetPart() != 0 && AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() ) 
         if( parts.IndexOf(AE.GetCAtom(i).GetPart()) == InvalidIndex )  {
-          parts.Add( AE.GetCAtom(i).GetPart() );
-          occu.Add( rm->Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof) );
+          parts.Add(AE.GetCAtom(i).GetPart());
+          occu.Add(rm->Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof));
         }
     }
     if( !parts.IsEmpty() )  {  // here we go..
-      TCAtomPList gen;
+      TTypeList<TCAtomPList> gen_atoms;
       ProcessingAtoms.Remove(&atom);
       for( size_t i=0; i < parts.Count(); i++ )  {
-        _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, parts[i], &gen);
+        _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, parts[i], &gen_atoms.AddNew());
+        TCAtomPList& gen = gen_atoms.Last();
         for( size_t j=0; j < gen.Count(); j++ )  {
-          gen[j]->SetPart( parts[i] );
+          gen[j]->SetPart(parts[i]);
           rm->Vars.SetParam(*gen[j], catom_var_name_Sof, occu[i] );
         }
-        gen.Clear();
       }
+      cg.AnalyseMultipart(gen_atoms);
       return false;
     }
   }

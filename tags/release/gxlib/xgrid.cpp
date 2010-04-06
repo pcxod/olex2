@@ -545,8 +545,11 @@ bool TXGrid::LoadFromFile(const olxstr& GridFile)  {
 void TXGrid::SetScale(float v)  {
   bool _3d = Is3D();
   if( _3d && MinHole != MaxHole )  {
-    if( v >= MinHole && v <= MaxHole )
+    if( v >= MinHole && v <= MaxHole )  {
+      Info->Clear();
+      Info->PostText("Locked");
       return;
+    }
   }
   Scale = v;
   UpdateInfo();
