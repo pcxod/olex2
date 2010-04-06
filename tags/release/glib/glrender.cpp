@@ -438,20 +438,23 @@ void TGlRenderer::Draw()  {
   }
   else if( StereoFlag == glStereoHardware )  {
     const double ry = GetBasis().GetRY();
-    GetBasis().RotateY(ry-StereoAngle);
-    olx_gl::drawBuffer(GL_BACK_LEFT);
-    DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry+StereoAngle);
+    olx_gl::drawBuffer(GL_BACK_LEFT);
+    olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    DrawObjects(0, 0, false, false);
+    GetBasis().RotateY(ry-StereoAngle);
     olx_gl::drawBuffer(GL_BACK_RIGHT);
+    olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     DrawObjects(0, 0, false, false);
     olx_gl::drawBuffer(GL_BACK);
+    GetBasis().RotateY(ry);
   }
   else if( StereoFlag == glStereoCross )  {
     const double ry = GetBasis().GetRY();
     int _l = FLeft;
-    GetBasis().RotateY(ry-StereoAngle);
-    DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry+StereoAngle);
+    DrawObjects(0, 0, false, false);
+    GetBasis().RotateY(ry-StereoAngle);
     FLeft = FWidth;
     DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry);
