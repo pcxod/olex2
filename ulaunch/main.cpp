@@ -16,6 +16,12 @@
 #  define GetEnv getenv
 #endif
 
+void SetEnv(const olxstr& v)  {
+  char* buffer = new char [v.Length()+1];
+  PutEnv(strcpy(buffer, v.c_str()));
+  delete [] buffer;
+}
+
 void Launch();
 
 class TUProgress: public AActionHandler  {
@@ -74,10 +80,10 @@ int main(int argc, char** argv)  {
         if( !TEFile::MakeDirs(data_dir) )
           throw TFunctionFailedException(__OlxSourceInfo, "Failed to create DATA_DIR");
       }
-      PutEnv((olxstr("OLEX2_DATADIR=") << data_dir).u_str());
+      SetEnv(olxstr("OLEX2_DATADIR=") << data_dir);
       for( size_t i=0; i < sf.ParamCount(); i++ )  {
         if( sf.ParamName(i).StartsFrom("env_") )
-          PutEnv(sf.ParamValue(i).u_str());
+          SetEnv(sf.ParamValue(i));
       }
     }
     if( TBasicApp::GetInstance().IsBaseDirWriteable() )  {
@@ -108,12 +114,12 @@ void Launch()  {
   olxstr path;
   if( _path != NULL )  path = _path;
   path.Insert(bd.SubStringTo(bd.Length()-1) + ';', 0);
-  PutEnv((olxstr("PATH=") << path).u_str());
+  SetEnv(olxstr("PATH=") << path);
   olxstr py_path = TBasicApp::GetBaseDir() + "Python26";
-  PutEnv((olxstr("PYTHONHOME=") << py_path).u_str());
+  SetEnv(olxstr("PYTHONHOME=") << py_path);
   // remove all OLEX2_DATADIR and OLEX2_DIR variables
-  PutEnv("OLEX2_DIR=");
-  PutEnv("OLEX2_CCTBX_DIR=");
+  SetEnv("OLEX2_DIR=");
+  SetEnv("OLEX2_CCTBX_DIR=");
 #ifdef __WIN32__
 #else
 #  ifdef __MAC__
