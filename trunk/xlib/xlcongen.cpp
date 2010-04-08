@@ -10,6 +10,31 @@ bool TXlConGen::FixParam(const short paramMask, TStrList& res, const TCAtomPList
   throw TNotImplementedException( __OlxSourceInfo );
 }
 //..............................................................................
+void TXlConGen::AnalyseMultipart(const TTypeList<TCAtomPList>& parts)  {
+  size_t cnt = 0;
+  for( size_t i=0; i < parts.Count(); i++ )  {
+    if( !parts[i].IsEmpty() && parts[i][0]->GetParentAfixGroup() != NULL &&
+      parts[i][0]->GetParentAfixGroup()->IsRefinable() )
+    {
+      cnt++;
+    }
+  }
+  if( cnt > 1 )  {  // have to change the refineable groups to riding group...
+    for( size_t i=0; i < parts.Count(); i++ )  {
+      if( parts[i].IsEmpty() )  continue;
+      if( parts[i][0]->GetParentAfixGroup() != NULL && parts[i][0]->GetParentAfixGroup()->IsRefinable() )  {
+        const int m = parts[i][0]->GetParentAfixGroup()->GetM();
+        if( m == 13 )
+          parts[i][0]->GetParentAfixGroup()->SetAfix(33);
+        else if( m == 14 )
+          parts[i][0]->GetParentAfixGroup()->SetAfix(83);
+        else
+          parts[i][0]->GetParentAfixGroup()->SetAfix(m*10+3);
+      }
+    }
+  }
+}
+//..............................................................................
 bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& atomType, TAtomEnvi* pivoting, TCAtomPList* generated)  {
   try  {
     TSimpleRestraint* sr;

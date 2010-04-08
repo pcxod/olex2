@@ -2582,10 +2582,8 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     }
     catch( ... )  {    }  // most like the cif does not have cell, so pass it
     TCifLoop& pil = Cif1.GetPublicationInfoLoop();
-    for( size_t j=0; j < Cif1.ParamCount(); j++ )  {
-      if( !Cif->ParamExists(Cif1.Param(j)) )
-        Cif->SetParam(Cif1.Param(j), Cif1.ParamValue(j));
-    }
+    for( size_t j=0; j < Cif1.ParamCount(); j++ )
+      Cif->SetParam(Cif1.Param(j), Cif1.ParamValue(j));
     // update publication info loop
     MergePublTableData(publ_info.GetTable(), pil.GetTable());
   }

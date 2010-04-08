@@ -53,21 +53,26 @@ public:
   int GetN() const {  return GetN(Afix);  }
   bool IsFitted() const {  return IsFitted(Afix);  }
   bool IsRiding() const {  return IsRiding(Afix);  }
+  bool IsRefinable() const {  return IsRefinable(Afix);  }
   bool IsUnbound() const {  return IsUnbound(Afix);  }
   bool HasExcplicitPivot() const {  return HasExcplicitPivot(Afix);  }
   static int GetM(int afix) {  return afix < 10 ? 0 : afix/10;  }
   static int GetN(int afix) {  return afix < 10 ? afix : afix%10;  }
   static bool IsFitted(int afix)  {  
-    int m = GetM(afix);
+    const int m = GetM(afix);
     return (m == 5 || m == 6 || m == 7 || m == 10 || m == 11 || m > 16 );
   }
   static bool HasExcplicitPivot(int afix)  {
-    int n = GetN(afix), m = GetM(afix);
+    const int n = GetN(afix);
     return (n == 6 || n == 9);
   }
   static bool IsRiding(int afix)  {
-    int n = GetN(afix);
+    const int n = GetN(afix);
     return (n == 3 || n == 4 || n == 7 || n == 8);
+  }
+  static bool IsRefinable(int afix)  {
+    const int n = GetN(afix);
+    return (n == 7 || n == 8);
   }
   static bool IsUnbound(int afix)  {
     return (afix == 1 || afix == 2);

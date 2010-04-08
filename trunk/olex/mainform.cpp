@@ -573,7 +573,10 @@ void TMainForm::XApp( TGXApp *XA)  {
  are colored&;div_pie-number [4] of stripes in the octant&;lw_pie-line width [0.5] of the octant\
  stripes&;lw_octant-line width [0.5] of the octant arcs&;lw_font-line width [1] for the vector\
  font&;lw_ellipse-line width [0.5] of the ellipse&;scale_hb-scale for H-bonds [0.5]&;p-perspective\
- &;octants-comma separated atom types/names ADP's of which to be rendered with octants[-$C]", fpOne|psFileLoaded, 
+ &;octants-comma separated atom types/names ADP's of which to be rendered with octants\
+ [-$C]&;bond_outline_color-bond outline color[0xffffff]&;bond_outline_oversize-the extra size of the\
+ outline in percents [10]&;atom_outline_color-atom outline color[0xffffff]&;atom_outline_oversize- the\
+ extra size of outline in percents[5]", fpOne|psFileLoaded, 
     "Experimental postscript rendering");
   this_InitMacroD(PictTEX, "color_line-lines&;color_fill-ellipses are filled", fpOne|psFileLoaded, 
     "Experimental tex/pgf rendering");

@@ -20,7 +20,8 @@ variables = Variables()
 variables.AddVariables(
     EnumVariable('TOOL', 'The tool to use', def_tool, allowed_values=('vc8', 'vc9', 'gnu', 'intel'))
     )
-env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch)
+env = Environment(ENV = os.environ, variables = variables,\
+  TARGET_ARCH=env_arch, MSVS_VERSION='9.0')
 Help(variables.GenerateHelpText(env))
 
 if env['TOOL'] == 'vc8':

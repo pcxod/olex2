@@ -5,6 +5,7 @@
 #include "egc.h"
 #include "efile.h"
 #include "patchapi.h"
+#include "settingsfile.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -58,7 +59,7 @@ public:
     return true;
   }
 };
-
+// NOTE - cannot use EmptyString here yet
 LaunchApp::LaunchApp() : Bapp(TBasicApp::GuessBaseDir(GetCommandLine(), "")) {
   launch_successful = true;
   TParamList::StrtokParams(GetCommandLine(), ' ', Bapp.Arguments);
@@ -95,24 +96,62 @@ BOOL LaunchApp::InitInstance()  {
 	SetRegistryKey(_T("Olex2 launcher"));
   TEGC::Initialise();
   olxstr OlexFN(TBasicApp::GetBaseDir()+ "olex2.dll");
-  if( !TEFile::Exists(OlexFN) )  { // weird eh, but might happen if 'Open with...' is used?
+  const olxstr set_fn = TBasicApp::GetBaseDir()+ "launch.dat";
+  if( TEFile::Exists(set_fn) )  {
     try  {
-      CRegKey rc;
-      if( rc.Open(HKEY_CLASSES_ROOT, _T("Applications\\olex2.dll\\shell\\open\\command"), KEY_READ) == ERROR_SUCCESS )  {
-        olxch rv[MAX_PATH];
-        ULONG sz_rv = MAX_PATH;
-        if( rc.QueryStringValue(_T(""), rv, &sz_rv) == ERROR_SUCCESS )  {
-          rc.Close();
-          olxstr olex2_installed_path = rv;
-          olex2_installed_path = TEFile::ExtractFilePath(olex2_installed_path.Trim('"'));
-          TBasicApp::SetBaseDir(olex2_installed_path + "dummy.exe");
-          OlexFN = TBasicApp::GetBaseDir()+ "olex2.dll";
+      TSettingsFile sf(set_fn);
+      const olxstr original_bd = TBasicApp::GetBaseDir();
+      olxstr base_dir = sf.GetParam("base_dir");
+#ifdef __WIN64__
+      TEFile::AddPathDelimeterI(basedir) << sf.GetParam("windows64_prefix");
+#elif __WIN32__
+      TEFile::AddPathDelimeterI(basedir) << sf.GetParam("windows32_prefix");
+#endif
+      if( !TEFile::IsAbsolutePath(base_dir) )  {
+        if( base_dir.StartsFrom('.') || base_dir.StartsFrom("..") )
+          base_dir = TEFile::AbsolutePathTo(base_dir, original_bd);
+        else
+          base_dir = original_bd + base_dir;
+      }
+      TBasicApp::SetBaseDir(TEFile::AddPathDelimeter(base_dir)+"dummy.exe");
+      OlexFN = TBasicApp::GetBaseDir()+ "olex2.dll";
+      olxstr data_dir = sf.GetParam("data_dir", TBasicApp::GetBaseDir() + "olex2data");
+      if( !TEFile::IsAbsolutePath(data_dir) )  {
+        if( data_dir.StartsFrom('.') || data_dir.StartsFrom("..") )
+          data_dir = TEFile::AbsolutePathTo(data_dir, original_bd);
+        else
+          data_dir = original_bd + data_dir;
+      }
+      if( !TEFile::Exists(data_dir) )  {
+        if( !TEFile::MakeDirs(data_dir) )
+          throw TFunctionFailedException(__OlxSourceInfo, "Failed to create DATA_DIR");
+      }
+      SetEnvironmentVariable(_T("OLEX2_DATADIR"), TEFile::AddPathDelimeterI(data_dir).u_str());
+    }
+    catch( const TExceptionBase& e )  {
+      MessageBox(NULL, e.GetException()->GetFullMessage().u_str(), _T("Error reading settings file"), MB_OK|MB_ICONERROR);
+      return FALSE;
+    }
+  }
+  else  {
+    if( !TEFile::Exists(OlexFN) )  { // weird eh, but might happen if 'Open with...' is used?
+      try  {
+        CRegKey rc;
+        if( rc.Open(HKEY_CLASSES_ROOT, _T("Applications\\olex2.dll\\shell\\open\\command"), KEY_READ) == ERROR_SUCCESS )  {
+          olxch rv[MAX_PATH];
+          ULONG sz_rv = MAX_PATH;
+          if( rc.QueryStringValue(_T(""), rv, &sz_rv) == ERROR_SUCCESS )  {
+            rc.Close();
+            olxstr olex2_installed_path = rv;
+            olex2_installed_path = TEFile::ExtractFilePath(olex2_installed_path.Trim('"'));
+            TBasicApp::SetBaseDir(olex2_installed_path + "dummy.exe");
+            OlexFN = TBasicApp::GetBaseDir()+ "olex2.dll";
+          }
         }
       }
+      catch( ... )  {    }
     }
-    catch( ... )  {    }
   }
-
   MainDlg dlg;
 	m_pMainWnd = &dlg;
   dlgSplash = &dlg;
@@ -227,7 +266,7 @@ void LaunchApp::Launch()  {
   SetEnvironmentVariable(_T("PYTHONHOME"), py_path.u_str());
   // remove all OLEX2_DATADIR and OLEX2_DIR variables
   SetEnvironmentVariable(_T("OLEX2_DIR"), NULL);
-  //SetEnvironmentVariable("OLEX2_DATADIR", NULL);
+  //SetEnvironmentVariable(_T("OLEX2_DATADIR"), NULL);
 
   STARTUPINFO si;
   PROCESS_INFORMATION ProcessInfo;

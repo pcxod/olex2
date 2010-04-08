@@ -47,6 +47,7 @@ public:
   virtual bool FixParam(const short paramMask, TStrList& res, const TCAtomPList& atoms, const TFixedValueList& values) = 0;
   virtual bool FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& atomType, 
     TAtomEnvi* pivoting = NULL, TCAtomPList* generated = NULL) = 0;
+  virtual void AnalyseMultipart(const TTypeList<TCAtomPList>& parts) = 0;
 };
 
 EndXlibNamespace()
