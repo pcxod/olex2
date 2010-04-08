@@ -74,28 +74,16 @@ if sys.platform[:3] == 'win':
 else:
   if env['TOOL'] != 'intel':
     env.Append(CCFLAGS = ['-exceptions']) 
-  if debug:
-    env.Append(CCFLAGS = ['-g']) 
-  else:
     env.Append(CCFLAGS = ['-O3']) 
-  if profiling:
-    env.Append(CCFLAGS = ['-pg']) 
-    env.Append(LINKFLAGS=['-pg'])
-  try: 
-    if sys.platform[:6] == 'darwin':
-      env.Append(CCFLAGS = '-D__MAC__')
-  except:
-    print 'Please make sure that wxWidgets and Python config scripts are available'
-    Exit(1)
+  if sys.platform[:6] == 'darwin':
+    env.Append(CCFLAGS = '-D__MAC__')
+  env.Append(LIBS = Split("""pthread"""))
     
 #sdl
 sdl_files = fileListToStringList('../sdl', sdl) + fileListToStringList('../sdl/smart', sdl_smart) +\
   fileListToStringList('../sdl/exparse', sdl_exp)
 sdl_files = processFileNameList(sdl_files, env, out_dir + 'sdl')
 env.StaticLibrary(out_dir + 'lib/sdl', sdl_files)
-
-env.Append(LIBPATH=[out_dir+'lib'])
-env.Append(LIBS = ['sdl'])
 
 ulaunch_env = env.Clone()
 ulaunch_env.Append(LIBPATH=[out_dir+'lib'])
