@@ -10,27 +10,19 @@
 #  include <process.h>
 #  define PutEnv _putenv
 #  define GetEnv getenv
+void SetEnv(const olxstr& v)  {
+  putenv(v.u_str());
+}
 #else
 #  include <unistd.h>
 #  define PutEnv putenv
 #  define GetEnv getenv
-#endif
-
 void SetEnv(const olxstr& v)  {
-  static char* prev_env=NULL;
-  char* buffer = (char*)malloc(v.Length()+1);
-  if( PutEnv(strcpy(buffer, v.c_str())) != 0 )  {
-    delete [] buffer;
-    return;
-  }
-  if( prev_env != NULL )
-    free(prev_env);
-  prev_env = buffer; 
-  TBasicApp::GetLog() << "Setting: " << v << "\n\n";
   size_t ei = v.IndexOf('=');
-  if( ei != InvalidIndex )
-    TBasicApp::GetLog() << "Result: "  << GetEnv(v.SubStringTo(ei).c_str()) << "\n\n";
+  if( ei == InvalidIndex )  return;
+	setenv(v.SubStringTo(ei).u_str(), v.SubStringFrom(ei+1).u_str(), 1);
 }
+#endif
 
 void Launch();
 
@@ -54,7 +46,10 @@ int main(int argc, char** argv)  {
   TOutStream out;
   puts(argv[0]);
   try  {
-    TBasicApp app(TBasicApp::GuessBaseDir(argv[0]));
+    olxstr argv_0 = argv[0];
+		if( argv_0.IndexOf(' ') != InvalidIndex && !argv_0.StartsFrom('"') )
+		argv_0 = olxstr('"') << argv_0 << '"';
+		TBasicApp app(TBasicApp::GuessBaseDir(argv_0));
     app.GetLog().AddStream(new TOutStream, true);
     olxstr OlexFN(TBasicApp::GetBaseDir()+ "olex2.dll");
     const olxstr set_fn = TBasicApp::GetBaseDir()+ "launch.dat";
@@ -90,7 +85,7 @@ int main(int argc, char** argv)  {
         if( !TEFile::MakeDirs(data_dir) )
           throw TFunctionFailedException(__OlxSourceInfo, "Failed to create DATA_DIR");
       }
-      SetEnv(olxstr("OLEX2_DATADIR=") << data_dir);
+      SetEnv(olxstr("OLEX2_DATADIR=") << TEFile::AddPathDelimeterI(data_dir));
       for( size_t i=0; i < sf.ParamCount(); i++ )  {
         if( sf.ParamName(i).StartsFrom("env_") )
           SetEnv(sf.ParamValue(i));
@@ -125,33 +120,38 @@ void Launch()  {
   if( _path != NULL )  path = _path;
   path.Insert(bd.SubStringTo(bd.Length()-1) + ':', 0);
   SetEnv(olxstr("PATH=") << path);
-  olxstr py_path = TBasicApp::GetBaseDir() + "Python26";
-  SetEnv(olxstr("PYTHONHOME=") << py_path);
+  SetEnv(olxstr("PYTHONHOME=") << TBasicApp::GetBaseDir() << "Python26");
   // remove all OLEX2_DATADIR and OLEX2_DIR variables
   SetEnv("OLEX2_DIR=");
   SetEnv("OLEX2_CCTBX_DIR=");
 #ifdef __WIN32__
 #else
 #  ifdef __MAC__
+  olxstr base_dir = bd + "olex2.app/Contents/MacOS/";
+  SetEnv(olxstr("OLEX2_DIR=") << base_dir);
   static const olxch* ld_var = "DYLD_LIBRARY_PATH";
 #  else
+  olxstr base_dir = bd;
   static const olxch* ld_var = "LD_LIBRARY_PATH";
 #  endif
   olxch* _ld_path = GetEnv(ld_var);
   olxstr ld_path;
   if( _ld_path != NULL )  ld_path = _ld_path;
-  ld_path.Insert(bd+"cctbx/cctbx_build/lib:", 0);
-  ld_path.Insert(bd+"Pyhton26:", 0);
-  ld_path.Insert(bd+"lib:", 0);
+  ld_path.Insert(base_dir+"cctbx/cctbx_build/lib:", 0);
+  ld_path.Insert(base_dir+"Python26:", 0);
+  ld_path.Insert(base_dir+"lib:", 0);
   SetEnv(olxstr(ld_var) << '=' << ld_path);
+  SetEnv(olxstr("PYTHONHOME=") << base_dir << "Python26");
 #endif
   olxstr cmdl = TBasicApp::GetBaseDir();
 #ifdef __WIN32__
   cmdl << "olex2.dll";
+#elif __MAC__
+  cmdl << "olex2.app/Contents/MacOS/olex2";
 #else
   cmdl << "olex2";
 #endif
   TEFile::ChangeDir(bd);
-  execl(cmdl.u_str(), cmdl.u_str(), NULL, NULL);
+  execl(cmdl.u_str(), cmdl.u_str(), NULL);
   TBasicApp::GetLog().Error("Failed to launch Olex2");
 }
