@@ -17,9 +17,19 @@
 #endif
 
 void SetEnv(const olxstr& v)  {
-  char* buffer = new char [v.Length()+1];
-  PutEnv(strcpy(buffer, v.c_str()));
-  delete [] buffer;
+  static char* prev_env=NULL;
+  char* buffer = (char*)malloc(v.Length()+1);
+  if( PutEnv(strcpy(buffer, v.c_str())) != 0 )  {
+    delete [] buffer;
+    return;
+  }
+  if( prev_env != NULL )
+    free(prev_env);
+  prev_env = buffer; 
+  TBasicApp::GetLog() << "Setting: " << v << "\n\n";
+  size_t ei = v.IndexOf('=');
+  if( ei != InvalidIndex )
+    TBasicApp::GetLog() << "Result: "  << GetEnv(v.SubStringTo(ei).c_str()) << "\n\n";
 }
 
 void Launch();
@@ -113,7 +123,7 @@ void Launch()  {
   olxch* _path = GetEnv("PATH");
   olxstr path;
   if( _path != NULL )  path = _path;
-  path.Insert(bd.SubStringTo(bd.Length()-1) + ';', 0);
+  path.Insert(bd.SubStringTo(bd.Length()-1) + ':', 0);
   SetEnv(olxstr("PATH=") << path);
   olxstr py_path = TBasicApp::GetBaseDir() + "Python26";
   SetEnv(olxstr("PYTHONHOME=") << py_path);
@@ -133,7 +143,7 @@ void Launch()  {
   ld_path.Insert(bd+"cctbx/cctbx_build/lib:", 0);
   ld_path.Insert(bd+"Pyhton26:", 0);
   ld_path.Insert(bd+"lib:", 0);
-  PutEnv((olxstr(ld_var) << '=' << ld_path).u_str());
+  SetEnv(olxstr(ld_var) << '=' << ld_path);
 #endif
   olxstr cmdl = TBasicApp::GetBaseDir();
 #ifdef __WIN32__
