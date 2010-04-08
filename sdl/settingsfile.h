@@ -26,6 +26,9 @@ public:
   virtual ~TSettingsFile() {}
 
   inline size_t ParamCount() const {  return Params.Count();  }
+  const olxstr& ParamName(size_t i) const {  return Params.GetKey(i);  }
+  const olxstr& ParamValue(size_t i) const {  return Params.GetValue(i);  }
+
   // 
   template <class SC>
   inline const olxstr& GetParam(const SC& paramName, const olxstr& defVal=EmptyString ) const {

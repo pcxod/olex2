@@ -138,6 +138,8 @@ private:
   vec3f DrawOrigin, SceneOrigin;
   TGXApp& app;
   uint16_t ColorMode;
+  uint32_t BondOutlineColor, AtomOutlineColor;
+  float BondOutlineSize, AtomOutlineSize;
 protected:
   float PieLineWidth, 
     ElpLineWidth, 
@@ -176,6 +178,9 @@ public:
     BondRad = 1;
     ColorMode = 0;
     HBondScale = 0.5;
+    AtomOutlineColor = BondOutlineColor = ~0;
+    BondOutlineSize = 0.1;
+    AtomOutlineSize = 0.05;
     Perspective = false;
   }
   // create ellipse and pie coordinates
@@ -187,6 +192,10 @@ public:
   DefPropP(uint16_t, PieDiv) 
   DefPropP(uint16_t, BondDiv) 
   DefPropP(uint16_t, ColorMode)
+  DefPropP(uint32_t, BondOutlineColor)
+  DefPropP(uint32_t, AtomOutlineColor)
+  DefPropP(float, BondOutlineSize)
+  DefPropP(float, AtomOutlineSize)
   DefPropP(float, HBondScale)
   DefPropP(float, FontLineWidth)
   DefPropP(float, QuadLineWidth)

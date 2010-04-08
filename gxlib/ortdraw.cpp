@@ -50,8 +50,10 @@ draw_style(0)
 
 void ort_atom::render_elp(PSWriter& pw) const {
   const mat3f& ielpm = *p_ielpm;
-  pw.color(~0);
-  pw.drawEllipse(NullVec, ielpm*1.05f, &PSWriter::fill);
+  if( parent.GetAtomOutlineSize() > 0 )  {
+    pw.color(parent.GetAtomOutlineColor());
+    pw.drawEllipse(NullVec, ielpm*(parent.GetAtomOutlineSize()+1.0f), &PSWriter::fill);
+  }
   if( (draw_style&ortep_color_fill) != 0 )  {
     pw.newPath();
     pw.ellipse(NullVec, ielpm);
@@ -75,8 +77,10 @@ void ort_atom::render_elp(PSWriter& pw) const {
 }
 
 void ort_atom::render_sph(PSWriter& pw) const {
-  pw.color(~0);
-  pw.drawCircle(NullVec, draw_rad*1.05, &PSWriter::fill);
+  if( parent.GetAtomOutlineSize() > 0 )  {
+    pw.color(parent.GetAtomOutlineColor());
+    pw.drawCircle(NullVec, draw_rad*(parent.GetAtomOutlineSize()+1.0f), &PSWriter::fill);
+  }
   if( (draw_style&ortep_color_fill) != 0 )  {
     pw.newPath();
     pw.circle(NullVec, draw_rad);
@@ -163,8 +167,10 @@ void ort_bond::render(PSWriter& pw) const {
   if( mask == 0 )  return;
   pw.lineWidth(1.0f);
   pw.translate(atom_a.crd);
-  pw.color(~0);
-  _render(pw, 1.2, mask);
+  if( parent.GetBondOutlineSize() > 0 )  {
+    pw.color(parent.GetBondOutlineColor());
+    _render(pw, (parent.GetBondOutlineSize()+1.0f), mask);
+  }
   if( (draw_style&ortep_color_bond) == 0 )
     pw.color(0);
   else if( (mask&((1<<4)|(1<<5)|(1<<6)|(1<<7)|(1<<9)|(1<<10))) == 0 )

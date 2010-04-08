@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="ulaunch"
+	Name="unirun"
 	ProjectGUID="{FB67F543-EB17-4693-8A9A-4AA27F184129}"
 	RootNamespace="ulaunch"
 	Keyword="Win32Proj"
