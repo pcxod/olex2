@@ -137,7 +137,7 @@ void Launch()  {
   SetEnv("OLEX2_DIR=");
 #ifdef __WIN32__
   SetEnv(olxstr("PYTHONHOME=") << TBasicApp::GetBaseDir() << "Python26");
-  const olxstr cmdl = bf + "olex2.dll";
+  const olxstr cmdl = bd + "olex2.dll";
 #else
 #  ifdef __MAC__
   const olxstr base_dir = bd + "olex2.app/Contents/MacOS/";
