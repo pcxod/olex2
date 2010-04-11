@@ -103,9 +103,9 @@ BOOL LaunchApp::InitInstance()  {
       const olxstr original_bd = TBasicApp::GetBaseDir();
       olxstr base_dir = sf.GetParam("base_dir");
 #ifdef __WIN64__
-      TEFile::AddPathDelimeterI(basedir) << sf.GetParam("windows64_prefix");
+      TEFile::AddPathDelimeterI(base_dir) << sf.GetParam("prefix_win64");
 #elif __WIN32__
-      TEFile::AddPathDelimeterI(basedir) << sf.GetParam("windows32_prefix");
+      TEFile::AddPathDelimeterI(base_dir) << sf.GetParam("prefix_win32");
 #endif
       if( !TEFile::IsAbsolutePath(base_dir) )  {
         if( base_dir.StartsFrom('.') || base_dir.StartsFrom("..") )
