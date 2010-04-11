@@ -17,15 +17,16 @@
     #include <wx/stdpaths.h>
     #include <wx/dirdlg.h>
   #endif
+  #include <unistd.h>
   #ifdef __MAC__
-		#include <sys/types.h>
+    #include <sys/types.h>
     #include <sys/socket.h>
     #include <ifaddrs.h>
     #include <net/if_dl.h>
   #else
-	  #include <net/if.h>
-	  #include <sys/ioctl.h>
-	#endif
+    #include <net/if.h>
+    #include <sys/ioctl.h>
+  #endif
 #endif
 
 //#undef __WIN32__  // compilation test for wxWidgets
@@ -250,23 +251,23 @@ void TShellUtil::ListMACAddresses( TShellUtil::MACInfo& rv )  {
 	close(sckt);
 #else
   struct ifaddrs* ifaddrs, *tmpia;
-	getifaddrs(&ifaddrs);
-	tmpia = ifaddrs;
-	while( tmpia != NULL )  {
-	  if( tmpia->ifa_addr->sa_family != AF_LINK)  {
-		  tmpia = tmpia->ifa_next;
-			continue;
-		}
-		struct sockaddr_dl* sck_dl = (struct sockaddr_dl*)tmpia->ifa_addr;
-	  if( sck_dl->sdl_alen != 6 )  {
-		  tmpia = tmpia->ifa_next;
-			continue;
-		}
+  getifaddrs(&ifaddrs);
+  tmpia = ifaddrs;
+  while( tmpia != NULL )  {
+    if( tmpia->ifa_addr->sa_family != AF_LINK)  {
+     tmpia = tmpia->ifa_next;
+     continue;
+    }
+    struct sockaddr_dl* sck_dl = (struct sockaddr_dl*)tmpia->ifa_addr;
+    if( sck_dl->sdl_alen != 6 )  {
+      tmpia = tmpia->ifa_next;
+      continue;
+    }
     _MACFromArray( (unsigned char*)LLADDR(sck_dl), (char*)&(tmpia->ifa_name[0]), rv, 6, false);
-	  tmpia = tmpia->ifa_next;
-	}
-	if( ifaddrs != NULL )
-	  freeifaddrs(ifaddrs);
+    tmpia = tmpia->ifa_next;
+  }
+  if( ifaddrs != NULL )
+  freeifaddrs(ifaddrs);
 #endif
 }
 
