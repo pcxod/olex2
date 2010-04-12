@@ -939,6 +939,10 @@ olxstr TEFile::AbsolutePathTo(const olxstr &Path, const olxstr &relPath) {
       dirToks.Add(relPathToks[i]);
   }
   olxstr res = dirToks.Text(OLX_PATH_DEL);
+#ifndef __WIN32__
+  if( Path.StartsFrom(OLX_PATH_DEL) )
+    res = olxstr(OLX_PATH_DEL) << res;
+#endif
 //  if( !TEFile::FileExists( res ) )
 //    throw TFileDoesNotExistException(__OlxSourceInfo, res);
   return res;
@@ -948,7 +952,7 @@ olxstr TEFile::RelativePathTo(const olxstr& From, const olxstr& To)  {
   if( From.IsEmpty() || To.IsEmpty() )
     return OLX_OS_PATH(To);	
   TStrList fromToks(OLX_OS_PATH(From), OLX_PATH_DEL),
-				   toToks(OLX_OS_PATH(To), OLX_PATH_DEL);
+           toToks(OLX_OS_PATH(To), OLX_PATH_DEL);
   size_t match_count=0, max_cnt = olx_min(fromToks.Count(), toToks.Count());
   while(fromToks[match_count] == toToks[match_count] && ++match_count < max_cnt )  continue;
   if( match_count == 0 )  return OLX_OS_PATH(To);
