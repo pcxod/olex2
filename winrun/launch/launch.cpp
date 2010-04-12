@@ -102,11 +102,15 @@ BOOL LaunchApp::InitInstance()  {
       TSettingsFile sf(set_fn);
       const olxstr original_bd = TBasicApp::GetBaseDir();
       olxstr base_dir = sf.GetParam("base_dir");
+      TStrList env_toks(sf.GetParam("env"), ',');
 #ifdef __WIN64__
-      TEFile::AddPathDelimeterI(base_dir) << sf.GetParam("prefix_win64");
+      const olxstr prefix = sf.GetParam("prefix_win64");
+      env_toks.Strtok(sf.GetParam("env_win64"), ',');
 #elif __WIN32__
-      TEFile::AddPathDelimeterI(base_dir) << sf.GetParam("prefix_win32");
+      const olxstr prefix = sf.GetParam("prefix_win32");
+      env_toks.Strtok(sf.GetParam("env_win32"), ',');
 #endif
+      TEFile::AddPathDelimeterI(base_dir) << prefix;
       if( !TEFile::IsAbsolutePath(base_dir) )  {
         if( base_dir.StartsFrom('.') || base_dir.StartsFrom("..") )
           base_dir = TEFile::AbsolutePathTo(base_dir, original_bd);
@@ -122,11 +126,17 @@ BOOL LaunchApp::InitInstance()  {
         else
           data_dir = original_bd + data_dir;
       }
+      TEFile::AddPathDelimeterI(data_dir) << prefix;
       if( !TEFile::Exists(data_dir) )  {
         if( !TEFile::MakeDirs(data_dir) )
           throw TFunctionFailedException(__OlxSourceInfo, "Failed to create DATA_DIR");
       }
       SetEnvironmentVariable(_T("OLEX2_DATADIR"), TEFile::AddPathDelimeterI(data_dir).u_str());
+      for( size_t i=0; i < env_toks.Count(); i++ )  {
+        size_t ei = env_toks[i].IndexOf('=');
+        if( ei == InvalidIndex )  continue;
+        SetEnvironmentVariable(env_toks[i].SubStringTo(ei).u_str(), env_toks[i].SubStringFrom(ei+1).u_str());
+      }
     }
     catch( const TExceptionBase& e )  {
       MessageBox(NULL, e.GetException()->GetFullMessage().u_str(), _T("Error reading settings file"), MB_OK|MB_ICONERROR);

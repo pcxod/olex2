@@ -118,7 +118,7 @@ int UpdateThread::Run()  {
 #endif
       // mark download as complete
       TEFile f(download_vf, "w+b");
-      olxcstr location(dfs.GetBase());
+      olxcstr location(TEFile::RelativePathTo(TEFile::ExtractFilePath(download_vf), dfs.GetBase()));
       f.Write(location);
     }
     patcher::PatchAPI::UnlockUpdater();

@@ -48,7 +48,7 @@ public:
       TCStrList fc;
       fc.LoadFromFile(update_location);
       if( fc.Count() == 1 )
-        return fc[0];
+        return TEFile::AbsolutePathTo(TBasicApp::GetBaseDir(), fc[0]);
     }
     return EmptyString;
   }

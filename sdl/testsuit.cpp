@@ -5,6 +5,7 @@
 #include "sha.h"
 #include "olxth.h"
 #include "ellist.h"
+#include "efile.h"
 
 //...................................................................................................
 void IsNumberTest(OlxTests& t)  {
@@ -114,6 +115,37 @@ void SHA1Test(OlxTests& t)  {
     throw TFunctionFailedException(__OlxSourceInfo, "Wrong digest message");
 }
 //...................................................................................................
+void RelativePathTest(OlxTests& t)  {
+  t.description = __FUNC__;
+  olxstr base1="c:\\windows\\test",
+         base2="c:\\windows\\drivers\\test";
+  olxstr path1="c:\\windows\\sys32",
+         path2="c:\\test";
+  olxstr rel1=TEFile::RelativePathTo(base1,path1),
+         rel2=TEFile::RelativePathTo(base1,path2),
+         rel3=TEFile::RelativePathTo(base2,path1),
+         rel4=TEFile::RelativePathTo(base2,path2);
+  if( TEFile::WinPath(rel1) != "..\\sys32" )
+    throw TFunctionFailedException(__OlxSourceInfo, "failed to compose relative path");
+  if( TEFile::WinPath(rel2) != "..\\..\\test" )
+    throw TFunctionFailedException(__OlxSourceInfo, "failed to compose relative path");
+  if( TEFile::WinPath(rel3) != "..\\..\\sys32" )
+    throw TFunctionFailedException(__OlxSourceInfo, "failed to compose relative path");
+  if( TEFile::WinPath(rel4) != "..\\..\\..\\test" )
+    throw TFunctionFailedException(__OlxSourceInfo, "failed to compose relative path");
+  if( TEFile::WinPath(TEFile::RelativePathTo("d:\\test",path2)) != path2 )
+    throw TFunctionFailedException(__OlxSourceInfo, "failed to compose relative path");
+
+  if( TEFile::WinPath(TEFile::AbsolutePathTo(base1,rel1)) != path1 )
+    throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");
+  if( TEFile::WinPath(TEFile::AbsolutePathTo(base1,rel2)) != path2 )
+    throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");
+  if( TEFile::WinPath(TEFile::AbsolutePathTo(base2,rel3)) != path1 )
+    throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");
+  if( TEFile::WinPath(TEFile::AbsolutePathTo(base2,rel4)) != path2 )
+    throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");
+}
+//...................................................................................................
 void SHA2Test(OlxTests& t)  {
   t.description = __FUNC__;
   olxcstr msg("The quick brown fox jumps over the lazy dog"),
@@ -131,6 +163,7 @@ void SHA2Test(OlxTests& t)  {
   if( !SHA224::Digest(msg).Equalsi(res224_0) )
     throw TFunctionFailedException(__OlxSourceInfo, "Wrong digest message");
 }
+//...................................................................................................
 void DirectionalListTest(OlxTests& t)  {
   TUDTypeList<int> test;
   t.description = __FUNC__;
@@ -207,6 +240,7 @@ OlxTests::OlxTests() {
   Add(new CriticalSectionTest(true), &CriticalSectionTest::DoTest);  // the instance gets deleted
   Add(new CriticalSectionTest(false), &CriticalSectionTest::DoTest);  // the instance gets deleted
   Add(&DirectionalListTest);
+  Add(&RelativePathTest);
 }
 //...................................................................................................
 void OlxTests::run()  {

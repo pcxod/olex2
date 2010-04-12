@@ -13,7 +13,7 @@ variables.AddVariables(
     EnumVariable('TOOL', 'The tool to use', def_tool, allowed_values=('vc8', 'vc9', 'gnu', 'intel'))
     )
 if sys.platform[:3] == 'win':
-  env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH="x86", MSVS_VERSION='9.0')
+  env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH="x86", MSVC_VERSION='9.0')
 else:
   env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH="x86")
 Help(variables.GenerateHelpText(env))

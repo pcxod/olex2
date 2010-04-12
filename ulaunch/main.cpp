@@ -63,18 +63,19 @@ int main(int argc, char** argv)  {
       olxstr base_dir = sf.GetParam("base_dir");
       TStrList env_toks(sf.GetParam("env"), ',');
 #ifdef __WIN64__
-      TEFile::AddPathDelimeterI(base_dir) << sf.GetParam("prefix_win64");
+      const olxstr prefix = sf.GetParam("prefix_win64");
       env_toks.Strtok(sf.GetParam("env_win64"), ',');
 #elif __WIN32__
-      TEFile::AddPathDelimeterI(base_dir) << sf.GetParam("prefix_win32");
+      const olxstr prefix = sf.GetParam("prefix_win32");
       env_toks.Strtok(sf.GetParam("env_win32"), ',');
 #elif __MAC__
-      TEFile::AddPathDelimeterI(base_dir) << sf.GetParam("prefix_mac");
+      const olxstr prefix = sf.GetParam("prefix_mac");
       env_toks.Strtok(sf.GetParam("env_mac"), ',');
 #else
-      TEFile::AddPathDelimeterI(base_dir) << sf.GetParam("prefix_linux");
+      const olxstr prefix = sf.GetParam("prefix_linux");
       env_toks.Strtok(sf.GetParam("env_linux"), ',');
 #endif
+      TEFile::AddPathDelimeterI(base_dir) << prefix;
       if( !TEFile::IsAbsolutePath(base_dir) )  {
         if( base_dir.StartsFrom('.') || base_dir.StartsFrom("..") )
           base_dir = TEFile::AbsolutePathTo(base_dir, original_bd);
@@ -90,15 +91,15 @@ int main(int argc, char** argv)  {
         else
           data_dir = original_bd + data_dir;
       }
-#ifndef __WIN32__ // speciat treatment for non-windows data dirs...
+#ifndef __WIN32__ // special treatment for non-windows data dirs...
       TEFile::AddPathDelimeterI(data_dir) << ".olex2";
 #endif
+      TEFile::AddPathDelimeterI(data_dir) << prefix;
       if( !TEFile::Exists(data_dir) )  {
         if( !TEFile::MakeDirs(data_dir) )
           throw TFunctionFailedException(__OlxSourceInfo, "Failed to create DATA_DIR");
       }
-      SetEnv(olxstr("OLEX2_DATADIR=") << data_dir);
-
+      SetEnv(olxstr("OLEX2_DATADIR=") << TEFile::AddPathDelimeterI(data_dir));
       for( size_t i=0; i < env_toks.Count(); i++ )
         SetEnv(env_toks[i]);
     }
