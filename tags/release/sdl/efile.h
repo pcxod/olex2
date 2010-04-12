@@ -233,10 +233,11 @@ public:
   /*works for windows only, for other operation systems return LocalFN*/
   static olxstr UNCFileName(const olxstr& LocalFN);
   /* return absolute path as a relative to another path
-    so for "c:/windows/win32" and ".." return "c:/windows"
-    if the resulting path does not exist - throws an exception
-    */
+    so for "c:/windows/win32" and ".." return "c:/windows" */
   static olxstr AbsolutePathTo(const olxstr& Path, const olxstr& relPath);
+  /* return a string like '../win32' for From='c:/windows' and To='c:/windows/win32' or the original To string
+  if the paths do not share a common base */
+  static olxstr RelativePathTo(const olxstr& From, const olxstr& To);
   /* searches given file name in current folder and in path, if found returns full
     path to the file inclusive the file name, otherwise returns empty string.
     if the filename is absolute returns it straight away
