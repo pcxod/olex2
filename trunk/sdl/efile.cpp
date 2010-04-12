@@ -925,21 +925,45 @@ bool TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite)  {
   catch(...)  {  return false;  }
 }
 //..............................................................................
-olxstr TEFile::AbsolutePathTo(const olxstr &Path, const olxstr &relPath ) {
-  TStrList dirToks(OLX_OS_PATH( Path ), OLX_PATH_DEL),
-              relPathToks(OLX_OS_PATH( relPath ), OLX_PATH_DEL);
+olxstr TEFile::AbsolutePathTo(const olxstr &Path, const olxstr &relPath) {
+  if( !(relPath.StartsFrom('.') || relPath.StartsFrom("..")) )
+    return OLX_OS_PATH(relPath);
+  TStrList dirToks(OLX_OS_PATH(Path), OLX_PATH_DEL),
+           relPathToks(OLX_OS_PATH(relPath), OLX_PATH_DEL);
   for( size_t i=0; i < relPathToks.Count(); i++ )  {
     if( relPathToks[i] == ".." )
-      dirToks.Delete( dirToks.Count()-1 );
+      dirToks.Delete( dirToks.Count()-1);
     else if( relPathToks[i] == "." )
       ;
     else
-      dirToks.Add( relPathToks[i] );
+      dirToks.Add(relPathToks[i]);
   }
   olxstr res = dirToks.Text(OLX_PATH_DEL);
 //  if( !TEFile::FileExists( res ) )
 //    throw TFileDoesNotExistException(__OlxSourceInfo, res);
   return res;
+}
+//..............................................................................
+olxstr TEFile::RelativePathTo(const olxstr& From, const olxstr& To)  {
+  if( From.IsEmpty() || To.IsEmpty() )
+    return OLX_OS_PATH(To);	
+  TStrList fromToks(OLX_OS_PATH(From), OLX_PATH_DEL),
+				   toToks(OLX_OS_PATH(To), OLX_PATH_DEL);
+  size_t match_count=0, max_cnt = olx_min(fromToks.Count(), toToks.Count());
+  while(fromToks[match_count] == toToks[match_count] && ++match_count < max_cnt )  continue;
+  if( match_count == 0 )  return OLX_OS_PATH(To);
+  olxstr rv;
+  for( size_t i=match_count; i < fromToks.Count(); i++ )  {
+    rv << "..";
+    if( (i+1) < fromToks.Count() )
+      rv  << OLX_PATH_DEL;
+  }
+  for( size_t i=match_count; i < toToks.Count(); i++ )  {
+    if( !rv.IsEmpty() )
+      rv << OLX_PATH_DEL; 
+    rv << toToks[i];
+  }
+  return rv;
 }
 //..............................................................................
 olxstr TEFile::Which(const olxstr& filename)  {

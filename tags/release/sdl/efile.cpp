@@ -926,7 +926,7 @@ bool TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite)  {
 }
 //..............................................................................
 olxstr TEFile::AbsolutePathTo(const olxstr &Path, const olxstr &relPath) {
-  if( !relPath.StartsFrom('.') || !relPath.StartsFrom("..") )
+  if( !(relPath.StartsFrom('.') || relPath.StartsFrom("..")) )
     return relPath;
   TStrList dirToks(OLX_OS_PATH(Path), OLX_PATH_DEL),
            relPathToks(OLX_OS_PATH(relPath), OLX_PATH_DEL);

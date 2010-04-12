@@ -21,7 +21,7 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
   }
   olxstr patch_dir = GetUpdateLocation();
   if( patch_dir.IsEmpty() )  {
-    TEFile::DelFile( GetUpdateLocationFileName() );
+    TEFile::DelFile(GetUpdateLocationFileName());
     CleanUp(OnFileCopy, OnOverallCopy);
     return papi_InvalidUpdate;
   }
@@ -123,8 +123,12 @@ olxstr PatchAPI::GetCurrentSharedDir(olxstr* DataDir)  {
     data_dir = dd_str;
     if( !TEFile::IsDir(data_dir) )
       data_dir = EmptyString;
-    else
+    else  {
       TEFile::AddPathDelimeterI(data_dir);
+      const char* sd = getenv("OLEX2_DATADIR_STATIC");
+      if( sd != NULL && strcmpi(sd, "TRUE") == 0 )
+        return data_dir;
+    }
   }
   if( data_dir.IsEmpty() )
     data_dir = TShellUtil::GetSpecialFolderLocation(fiAppData);
