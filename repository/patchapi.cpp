@@ -126,7 +126,7 @@ olxstr PatchAPI::GetCurrentSharedDir(olxstr* DataDir)  {
     else  {
       TEFile::AddPathDelimeterI(data_dir);
       const char* sd = getenv("OLEX2_DATADIR_STATIC");
-      if( sd != NULL && strcmpi(sd, "TRUE") == 0 )
+      if( sd != NULL && olxstr(sd).Equalsi("TRUE") )
         return data_dir;
     }
   }
