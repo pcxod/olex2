@@ -962,10 +962,10 @@ olxstr TEFile::RelativePathTo(const olxstr& From, const olxstr& To)  {
     if( (i+1) < fromToks.Count() )
       rv  << OLX_PATH_DEL;
   }
+  if( rv.IsEmpty() )
+    rv << '.';
   for( size_t i=match_count; i < toToks.Count(); i++ )  {
-    if( !rv.IsEmpty() )
-      rv << OLX_PATH_DEL; 
-    rv << toToks[i];
+    rv << OLX_PATH_DEL << toToks[i];
   }
   return rv;
 }

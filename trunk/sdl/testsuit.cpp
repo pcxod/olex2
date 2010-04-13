@@ -118,13 +118,16 @@ void SHA1Test(OlxTests& t)  {
 void RelativePathTest(OlxTests& t)  {
   t.description = __FUNC__;
   olxstr base1="c:\\windows\\test",
-         base2="c:\\windows\\drivers\\test";
+         base2="c:\\windows\\drivers\\test",
+         base3="/tmp/test";
   olxstr path1="c:\\windows\\sys32",
-         path2="c:\\test";
+         path2="c:\\test",
+         path3="/tmp/test/test/tmp";
   olxstr rel1=TEFile::RelativePathTo(base1,path1),
          rel2=TEFile::RelativePathTo(base1,path2),
          rel3=TEFile::RelativePathTo(base2,path1),
-         rel4=TEFile::RelativePathTo(base2,path2);
+         rel4=TEFile::RelativePathTo(base2,path2),
+         rel5=TEFile::RelativePathTo(base3,path3);
   if( TEFile::WinPath(rel1) != "..\\sys32" )
     throw TFunctionFailedException(__OlxSourceInfo, "failed to compose relative path");
   if( TEFile::WinPath(rel2) != "..\\..\\test" )
@@ -132,6 +135,8 @@ void RelativePathTest(OlxTests& t)  {
   if( TEFile::WinPath(rel3) != "..\\..\\sys32" )
     throw TFunctionFailedException(__OlxSourceInfo, "failed to compose relative path");
   if( TEFile::WinPath(rel4) != "..\\..\\..\\test" )
+    throw TFunctionFailedException(__OlxSourceInfo, "failed to compose relative path");
+  if( TEFile::UnixPath(rel5) != "./test/tmp" )
     throw TFunctionFailedException(__OlxSourceInfo, "failed to compose relative path");
   if( TEFile::WinPath(TEFile::RelativePathTo("d:\\test",path2)) != path2 )
     throw TFunctionFailedException(__OlxSourceInfo, "failed to compose relative path");
@@ -143,6 +148,8 @@ void RelativePathTest(OlxTests& t)  {
   if( TEFile::WinPath(TEFile::AbsolutePathTo(base2,rel3)) != path1 )
     throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");
   if( TEFile::WinPath(TEFile::AbsolutePathTo(base2,rel4)) != path2 )
+    throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");
+  if( TEFile::UnixPath(TEFile::AbsolutePathTo(base3,rel5)) != path3 )
     throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");
 }
 //...................................................................................................
