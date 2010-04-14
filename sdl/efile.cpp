@@ -1095,8 +1095,15 @@ void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal( output.Text(';') );
 }
 
-TLibrary*  TEFile::ExportLibrary(const olxstr& name)
-{
+void RelativePath(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal(TEFile::RelativePathTo(Params[0], Params[1]));
+}
+
+void AbsolutePath(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal(TEFile::AbsolutePathTo(Params[0], Params[1]));
+}
+
+TLibrary*  TEFile::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("file") : name);
   lib->RegisterStaticFunction( new TStaticFunction( ::FileExists, "Exists", fpOne,
 "Returns true if specified file exists") );
@@ -1131,6 +1138,10 @@ TLibrary*  TEFile::ExportLibrary(const olxstr& name)
   lib->RegisterStaticFunction( new TStaticFunction( ::ListDirForGUI, "ListDirForGUI", fpTwo|fpThree,
 "Returns a ready to use in GUI list of files, matching provided mask(s) separated by semicolon.\
  The third, optional argument [f,d,fd] specifies what should be included into the list") );
+  lib->RegisterStaticFunction( new TStaticFunction( ::RelativePath, "RelativePath", fpTwo,
+"Returns a path to a folder relative to basedir; arguments are (base,path)") );
+  lib->RegisterStaticFunction( new TStaticFunction( ::AbsolutePath, "AbsolutePath", fpTwo,
+"Returns an absolute path to a folder relative to the basedir; arguments are (base,path)") );
   return lib;
 }
 
