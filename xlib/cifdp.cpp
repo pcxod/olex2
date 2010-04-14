@@ -6,6 +6,7 @@
 #include "bapp.h"
 #include "log.h"
 #include "etime.h"
+#include "egc.h"
 
 using namespace exparse::parser_util;
 using namespace cif_dp;
@@ -106,7 +107,7 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
     if( line.CharAt(0) == '#')  {
       if( context.current_block == NULL )
         context.current_block = &Add("anonymous");
-      context.current_block->Add(EmptyString, new cetComment(line));
+      context.current_block->Add(EmptyString, new cetComment(line.SubStringFrom(1)));
       continue;
     }
     if( ExtractLoop(i, context) )  continue;
@@ -215,7 +216,7 @@ void cetTable::ToStrings(TStrList& list) const {
       data[i][j]->ToStrings(list);
   }
 }
-olxstr cetTable::GetName() const {
+const olxstr& cetTable::GetName() const {
   if( data.ColCount() == 0 )  return EmptyString;
   if( data.ColCount() == 1 )  return data.ColName(0);
   olxstr C = olxstr::CommonString(data.ColName(0), data.ColName(1));
@@ -224,7 +225,7 @@ olxstr cetTable::GetName() const {
   if( C.IsEmpty() )
     throw TFunctionFailedException(__OlxSourceInfo, "Mismatching loop columns");
   if( C.Last() == '_' )  C.SetLength(C.Length()-1);
-  return C;
+  return TEGC::New<olxstr>(C);
 }
 void cetTable::DataFromStrings(TStrList& lines)  {
   if( data.ColCount() == 0 )  return;
