@@ -10,33 +10,44 @@ namespace cif_dp {
     virtual ~ICifEntry()  {}
     virtual void ToStrings(TStrList& list) const = 0;
     virtual void Format()  {}
-    //virtual bool IsMultiline
-    // virtual size_t const StringCount
-    // virtual const olxstr& GetString(size_t)
-    // virtual void AddString()
-    // virtual void Clear()
-    // virtual void ...
+    virtual bool HasName() const {  return false;  }
+    virtual const olxstr& GetName() const {  throw TNotImplementedException(__OlxSourceInfo);  }
   };
-  struct cetComment : public ICifEntry {
-    olxstr value;
-    cetComment(const olxstr& _value) : value(_value)  {}
+  struct IStringCifEntry : public ICifEntry {  // string(s) value accessor interface
+    IStringCifEntry()  {}
+    virtual ~IStringCifEntry()  {}
+    virtual size_t Count() const {  return 0;  }
+    virtual bool HasValue() const {  return Count() != 0;  }
+    virtual const olxstr& operator [] (size_t i) const {  throw TNotImplementedException(__OlxSourceInfo);  }
+    virtual bool HasComment() const {  return false;  }
+    virtual const olxstr& GetComment() const {  throw TNotImplementedException(__OlxSourceInfo);  }
+  };
+  struct cetComment : public IStringCifEntry {
+    olxstr comment;
+    cetComment(const olxstr& _value) : comment(_value)  {}
     virtual void ToStrings(TStrList& list) const {
-      if( !value.IsEmpty() )
-        list.Add(value);
+      if( !comment.IsEmpty() )
+        list.Add('#') << comment;
     }
+    virtual bool HasComment() const {  return true;  }
+    virtual const olxstr& GetComment() const {  return comment;  }
   };
-  struct cetString : public ICifEntry  {
+  struct cetString : public IStringCifEntry  {
     olxstr value;
     bool quoted;
     cetString(const olxstr& _val);
     virtual void ToStrings(TStrList& list) const;
+    virtual size_t Count() const {  return 1;  }
+    virtual const olxstr& operator [] (size_t i) const {  return value;  }
   };
   struct cetNamedString : public cetString {
     olxstr name;
     cetNamedString(const olxstr& _name, const olxstr& _val) : cetString(_val), name(_name)  {}
     virtual void ToStrings(TStrList& list) const;
+    virtual bool HasName() const {  return true;  }
+    virtual const olxstr& GetName() const {  return name;  }
   };
-  struct cetCommentedString : public cetNamedString {
+  struct cetCommentedString : public cetNamedString  {
     olxstr comment;
     cetCommentedString(const olxstr& _name, const olxstr& _val, const olxstr& _comment)
       : cetNamedString(_name, _val), comment(_comment)  {}
@@ -44,8 +55,10 @@ namespace cif_dp {
       cetNamedString::ToStrings(list);
       list.Last().String << " #" << comment;
     }
+    virtual bool HasComment() const {  return true;  }
+    virtual const olxstr& GetComment() const {  return comment;  }
   };
-  struct cetStringList : public ICifEntry {
+  struct cetStringList : public IStringCifEntry {
     TStrList lines;
     virtual void ToStrings(TStrList& list) const {
       list.Add(';');
@@ -56,30 +69,37 @@ namespace cif_dp {
       if( lines.Count() > 1 )
         lines.TrimWhiteCharStrings();
     }
+    virtual size_t Count() const {  return lines.Count();  }
+    virtual const olxstr& operator [] (size_t i) const {  return lines[i];  }
   };
-  struct cetNamedStringList : public cetStringList {
+  struct cetNamedStringList : public cetStringList  {
     olxstr name;
     cetNamedStringList(const olxstr& _name) : name(_name)  {}
     virtual void ToStrings(TStrList& list) const {
       list.Add(name);
       cetStringList::ToStrings(list);
     }
+    virtual bool HasName() const {  return true;  }
+    virtual const olxstr& GetName() const {  return name;  }
   };
   struct cetCommentedNamedStringList : public cetNamedStringList {
-    olxstr comment;
+   olxstr comment;
     cetCommentedNamedStringList(const olxstr& _name, const olxstr& _comment)
       : cetNamedStringList(_name), comment(_comment)  {}
     virtual void ToStrings(TStrList& list) const {
       list.Add(name) << " #" << comment;
       cetStringList::ToStrings(list);
     }
+    virtual bool HasComment() const {  return true;  }
+    virtual const olxstr& GetComment() const {  return comment;  }
   };
   struct cetTable : public ICifEntry {
     TTTable<TPtrList<ICifEntry> > data;
     virtual ~cetTable();
     virtual void ToStrings(TStrList& list) const;
     virtual void Format()  {}
-    olxstr GetName() const;
+    virtual const olxstr& GetName() const;
+    virtual bool HasName() const {  return true;  }   
     void DataFromStrings(TStrList& lines);
   };
 
