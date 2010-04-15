@@ -217,6 +217,8 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
   const size_t mc = Matrices.Count();
   for( size_t i=ind; i < ac; i++ )  {
     if( Atoms[i]->IsDeleted() )  continue;
+    if( Atoms[i]->GetExyzGroup() != NULL && Atoms[i]->GetExyzGroup() == Atoms[ind]->GetExyzGroup() ) 
+      continue;
     for( size_t j=0; j < mc; j++ )  {
       vec3d v = Atoms[ind]->ccrd() - Matrices[j] * Atoms[i]->ccrd();
       const int iLx = olx_round(v[0]);  v[0] -= iLx;
@@ -224,11 +226,10 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
       const int iLz = olx_round(v[2]);  v[2] -= iLz;
       if( j == 0 && (iLx|iLy|iLz) == 0 )  {  // I
         if( ind == i || Atoms[i]->GetFragmentId() == Atoms[ind]->GetFragmentId() )  continue;
-        if( Atoms[i]->GetExyzGroup() != NULL && Atoms[i]->GetExyzGroup() == Atoms[ind]->GetExyzGroup() ) 
-          continue;  
         AU->CellToCartesian(v);
         const double d = v.Length();
         if( d < tolerance )  {
+          if( Atoms[i]->GetPart() != Atoms[ind]->GetPart() )  continue;
           if( Atoms[ind]->GetType() == iQPeakZ )  {
             Atoms[ind]->SetDeleted(true);
             break;
@@ -242,7 +243,6 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
         }
         continue;
       }
-
       AU->CellToCartesian(v);
       const double Dis = v.Length();
       if( (j != 0) && (Dis < tolerance) )  {
@@ -250,12 +250,11 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           Atoms[ind]->SetDegeneracy(Atoms[ind]->GetDegeneracy() + 1);
           continue;
         }
-        if( Atoms[i]->GetExyzGroup() != NULL && Atoms[i]->GetExyzGroup() == Atoms[ind]->GetExyzGroup() ) 
-          continue;  
         if( Atoms[ind]->GetType() == iQPeakZ )  {
           Atoms[ind]->SetDeleted(true);
           break;
         }
+        if( Atoms[i]->GetPart() != Atoms[ind]->GetPart() )  continue;
         Atoms[i]->SetDeleted(true);
       }
       else  {
