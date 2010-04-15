@@ -48,7 +48,7 @@ public:
     return false;
   }
   static inline bool IsBondAllowed(const TSAtom& sa, const TSAtom& sb)  {
-    if( (sa.CAtom().GetPart() | sb.CAtom().GetPart()) < 0 )
+    if( (sa.CAtom().GetPart() | sb.CAtom().GetPart()) < 0 && sa.CAtom().GetPart() == sb.CAtom().GetPart() )
       return HaveSharedMatrix(sa, sb);
     else if( sa.CAtom().GetPart() == 0 || sb.CAtom().GetPart() == 0 || 
              (sa.CAtom().GetPart() == sb.CAtom().GetPart()) )

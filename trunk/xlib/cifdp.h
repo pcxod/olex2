@@ -99,7 +99,7 @@ namespace cif_dp {
     virtual void ToStrings(TStrList& list) const;
     virtual void Format()  {}
     virtual const olxstr& GetName() const;
-    virtual bool HasName() const {  return true;  }   
+    virtual bool HasName() const {  return true;  }
     void DataFromStrings(TStrList& lines);
   };
 
