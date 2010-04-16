@@ -128,19 +128,16 @@ bool TGlMouse::MouseMove(int x, int y, short Shift)  {
     Handler = NULL;
     return false;
   }
-  TGlGroup *PColl;
-  TGlMMoveEvent *ME;
   int DX = (x-FSX), DY = (FSY-y);
   FSX = x;      FSY = y;
   MData->X = x; MData->Y = y; MData->Shift = Shift;
-  if( Handler )  {
+  if( Handler != NULL)  {
     if( Handler == FDFrame )  {
       FDFrame->OnMouseMove(this, MData);
-//      FParent->DrawObject(FDFrame, true);
-//      FParent->DrawObject();
       return true;
     }
     else  {
+      TGlGroup* PColl = NULL;
       if( Handler->IsSelected() )
         PColl = &FParent->GetSelection();
       else  {
@@ -158,7 +155,7 @@ bool TGlMouse::MouseMove(int x, int y, short Shift)  {
   }
   // default handlers...
   for( size_t i=0; i < Handlers.Count(); i++ )  {
-    ME = Handlers[i];
+    TGlMMoveEvent* ME = Handlers[i];
     if( (ME->Button == MData->Button) && (ME->Shift == MData->Shift) )  {
       if( FButtonDown && ME->ButtonDown )  {
         ME->Handler(this, DX, DY);
@@ -171,9 +168,8 @@ bool TGlMouse::MouseMove(int x, int y, short Shift)  {
 //..............................................................................
 void TGlMouse::SetHandler( const short Button, const short Shift, MMoveHandler MH)  {
   bool found = false;
-  TGlMMoveEvent *ME;
   for( size_t i=0; i < Handlers.Count(); i++ )  {
-    ME = Handlers[i];
+    TGlMMoveEvent* ME = Handlers[i];
     if( (ME->Button == Button) && (ME->Shift == Shift) )  {
       ME->Handler = MH;
       found = true;
@@ -181,7 +177,7 @@ void TGlMouse::SetHandler( const short Button, const short Shift, MMoveHandler M
     }
   }
   if( !found )  {
-    ME = new TGlMMoveEvent;
+    TGlMMoveEvent* ME = new TGlMMoveEvent;
     ME->Button = Button;
     ME->Shift = Shift;
     ME->Handler = MH;
@@ -192,8 +188,8 @@ void TGlMouse::SetHandler( const short Button, const short Shift, MMoveHandler M
 void GlobalGlFunction( meMoveXY(TGlMouse *G, int dx, int dy) )  {
   TGlRenderer *R = G->Parent();
   double v = R->GetScale();
-  vec3d t(dx*v, dy*v, 0);
-  R->Translate(R->GetBasis().GetMatrix()*t);
+  vec3d t = R->GetBasis().GetMatrix()*vec3d(dx*v, dy*v, 0);
+  R->Translate(t/R->GetBasis().GetZoom());
   G->Action(glmaTranslateXY);
 }
 //..............................................................................

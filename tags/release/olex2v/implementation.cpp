@@ -280,7 +280,10 @@ const char* olxv_Initialize(HDC hdc, int w, int h)  {
   return "";
 }
 void olxv_Finalize()  {
-  if( TOlexViewer::Instance != NULL )  delete TOlexViewer::Instance;
+  if( TOlexViewer::Instance != NULL )  {
+    delete TOlexViewer::Instance;
+    TOlexViewer::Instance = NULL;
+  }
 }
 void olxv_OnPaint()  {
   if( TOlexViewer::Instance != NULL )  TOlexViewer::Instance->OnPaint();

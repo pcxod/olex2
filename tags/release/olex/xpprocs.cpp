@@ -4240,7 +4240,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   bool ReadStyle = !Options.Contains('r');
   bool OverlayXFile = Options.Contains('*');
   if( Cmds.Count() >= 1 && !Cmds[0].IsEmpty() )  {  // merge the file name if a long one...
-    FN = Cmds.Text(' ');
+    FN = TEFile::AbsolutePathTo(TBasicApp::GetBaseDir(), Cmds.Text(' '));
     if( TEFile::ExtractFileExt(FN).IsEmpty() )  {
       olxstr res_fn = TEFile::ChangeFileExt(FN, "res"),
              ins_fn = TEFile::ChangeFileExt(FN, "ins");

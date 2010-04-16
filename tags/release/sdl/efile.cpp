@@ -939,6 +939,10 @@ olxstr TEFile::AbsolutePathTo(const olxstr &Path, const olxstr &relPath) {
       dirToks.Add(relPathToks[i]);
   }
   olxstr res = dirToks.Text(OLX_PATH_DEL);
+#ifndef __WIN32__
+  if( Path.StartsFrom(OLX_PATH_DEL) )
+    res = olxstr(OLX_PATH_DEL) << res;
+#endif
 //  if( !TEFile::FileExists( res ) )
 //    throw TFileDoesNotExistException(__OlxSourceInfo, res);
   return res;
@@ -948,7 +952,7 @@ olxstr TEFile::RelativePathTo(const olxstr& From, const olxstr& To)  {
   if( From.IsEmpty() || To.IsEmpty() )
     return OLX_OS_PATH(To);	
   TStrList fromToks(OLX_OS_PATH(From), OLX_PATH_DEL),
-				   toToks(OLX_OS_PATH(To), OLX_PATH_DEL);
+           toToks(OLX_OS_PATH(To), OLX_PATH_DEL);
   size_t match_count=0, max_cnt = olx_min(fromToks.Count(), toToks.Count());
   while(fromToks[match_count] == toToks[match_count] && ++match_count < max_cnt )  continue;
   if( match_count == 0 )  return OLX_OS_PATH(To);
@@ -958,10 +962,10 @@ olxstr TEFile::RelativePathTo(const olxstr& From, const olxstr& To)  {
     if( (i+1) < fromToks.Count() )
       rv  << OLX_PATH_DEL;
   }
+  if( rv.IsEmpty() )
+    rv << '.';
   for( size_t i=match_count; i < toToks.Count(); i++ )  {
-    if( !rv.IsEmpty() )
-      rv << OLX_PATH_DEL; 
-    rv << toToks[i];
+    rv << OLX_PATH_DEL << toToks[i];
   }
   return rv;
 }
@@ -1091,8 +1095,15 @@ void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal( output.Text(';') );
 }
 
-TLibrary*  TEFile::ExportLibrary(const olxstr& name)
-{
+void RelativePath(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal(TEFile::RelativePathTo(Params[0], Params[1]));
+}
+
+void AbsolutePath(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal(TEFile::AbsolutePathTo(Params[0], Params[1]));
+}
+
+TLibrary*  TEFile::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("file") : name);
   lib->RegisterStaticFunction( new TStaticFunction( ::FileExists, "Exists", fpOne,
 "Returns true if specified file exists") );
@@ -1127,6 +1138,10 @@ TLibrary*  TEFile::ExportLibrary(const olxstr& name)
   lib->RegisterStaticFunction( new TStaticFunction( ::ListDirForGUI, "ListDirForGUI", fpTwo|fpThree,
 "Returns a ready to use in GUI list of files, matching provided mask(s) separated by semicolon.\
  The third, optional argument [f,d,fd] specifies what should be included into the list") );
+  lib->RegisterStaticFunction( new TStaticFunction( ::RelativePath, "RelativePath", fpTwo,
+"Returns a path to a folder relative to basedir; arguments are (base,path)") );
+  lib->RegisterStaticFunction( new TStaticFunction( ::AbsolutePath, "AbsolutePath", fpTwo,
+"Returns an absolute path to a folder relative to the basedir; arguments are (base,path)") );
   return lib;
 }
 
