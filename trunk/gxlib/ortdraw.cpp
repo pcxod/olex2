@@ -600,8 +600,8 @@ void OrtDraw::Render(const olxstr& fileName)  {
       b->draw_style |= ortep_color_bond;
     objects.Add(b);
   }
-  TXGrid& grid = app.XGrid();
-  if( (grid.GetRenderMode()&planeRenderModeContour) != 0 )  {
+  const TXGrid& grid = app.XGrid();
+  if( !grid.IsEmpty() && (grid.GetRenderMode()&planeRenderModeContour) != 0 )  {
     Contour<float> cm;
     ContourDrawer drawer(*this, objects, 0);
     Contour<float>::MemberFeedback<OrtDraw::ContourDrawer> mf(drawer, &OrtDraw::ContourDrawer::draw);
