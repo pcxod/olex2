@@ -148,12 +148,8 @@ void Launch()  {
   const olxstr base_dir = bd;
   static const olxch* ld_var = "LD_LIBRARY_PATH";
 #  endif
-  olxch* _ld_path = GetEnv(ld_var);
   olxstr ld_path;
-  if( _ld_path != NULL )  ld_path = _ld_path;
-  ld_path.Insert(base_dir+"cctbx/cctbx_build/lib:", 0);
-  ld_path.Insert(base_dir+"Python26:", 0);
-  ld_path.Insert(base_dir+"lib:", 0);
+  ld_path << base_dir << "lib:" << base_dir << "Python26:" << base_dir << "cctbx/cctbx_build/lib";
   SetEnv(olxstr(ld_var) << '=' << ld_path);
   SetEnv(olxstr("PYTHONHOME=") << base_dir << "Python26/python2.6");
   const olxstr cmdl = base_dir + "olex2";

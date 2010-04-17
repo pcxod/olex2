@@ -2287,12 +2287,10 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       MouseMoveTimeElapsed += FTimer->GetInterval();
     if( MouseMoveTimeElapsed > 500 && MouseMoveTimeElapsed < 5000 )  {
       if( !_UseGlTooltip )  {
-#ifdef __WIN32__
         AquireTooltipValue();
-#endif
-        FGlCanvas->SetToolTip( Tooltip.u_str());
+        FGlCanvas->SetToolTip(Tooltip.u_str());
       }
-      else if( GlTooltip != NULL )  {
+      else if( GlTooltip != NULL && !GlTooltip->IsDeleted() )  {
         AquireTooltipValue();
         if( Tooltip.IsEmpty() )  {
           if( GlTooltip->IsVisible() )  {
@@ -3574,14 +3572,8 @@ void TMainForm::OnMouseMove(int x, int y)  {
     MouseMoveTimeElapsed = 0;
     MousePositionX = x;
     MousePositionY = y;
-    if( !_UseGlTooltip )  {
-#if !defined(__WIN32__)
-      AquireTooltipValue();
-      FGlCanvas->SetToolTip(Tooltip.u_str());
-#else
-      FGlCanvas->SetToolTip(wxT(""));
-#endif
-    }
+    if( !_UseGlTooltip )
+      FGlCanvas->SetToolTip(NULL);
     else if( GlTooltip != NULL && GlTooltip->IsVisible() )  {
       GlTooltip->SetVisible(false);
       TimePerFrame = FXApp->Draw();
@@ -4360,6 +4352,17 @@ bool TMainForm::FileDropTarget::OnDropFiles(wxCoord x, wxCoord y, const wxArrayS
   return true;
 }
 //..............................................................................
+bool TMainForm::PopupMenu(wxMenu* menu, const wxPoint& p)  {
+  if( GlTooltip != NULL && _UseGlTooltip )  {
+    GlTooltip->SetDeleted(true);
+  }
+  bool res = wxWindow::PopupMenu(menu, p);
+  if( GlTooltip != NULL && _UseGlTooltip )  {
+    GlTooltip->SetVisible(false);
+    GlTooltip->SetDeleted(false);
+  }
+  return res;
+}
 //..............................................................................
 //..............................................................................
 

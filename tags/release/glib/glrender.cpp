@@ -373,9 +373,9 @@ void TGlRenderer::Draw()  {
   BeforeDraw->Execute(this);
   //glLineWidth( (float)(0.07/GetScale()) );
   //glPointSize( (float)(0.07/GetScale()) );  
-  GetScene().StartDraw();
-
   if( StereoFlag == glStereoColor )  {
+    olx_gl::clearColor(0.0,0.0,0.0,0.0);
+    olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     const double ry = GetBasis().GetRY();
     olx_gl::disable(GL_ALPHA_TEST);
     olx_gl::disable(GL_BLEND);
@@ -409,6 +409,7 @@ void TGlRenderer::Draw()  {
   // http://local.wasp.uwa.edu.au/~pbourke/texture_colour/anaglyph/
   else if( StereoFlag == glStereoAnaglyph )  {
     const double ry = GetBasis().GetRY();
+    olx_gl::clearColor(0.0,0.0,0.0,0.0);
     olx_gl::clearAccum(0.0,0.0,0.0,0.0);
     olx_gl::colorMask(true, true, true, true);
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -460,8 +461,10 @@ void TGlRenderer::Draw()  {
     GetBasis().RotateY(ry);
     FLeft = _l;
   }
-  else
+  else  {
+    GetScene().StartDraw();
     DrawObjects(0, 0, false, false);
+  }
   GetScene().EndDraw();
   FGlImageChanged = true;
   OnDraw->Execute(this);
@@ -1187,19 +1190,15 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
       FWidth = FOWidth;
       FOWidth = -1;
     }
-    if( Params[0].Equalsi("color") )  {
-      olx_gl::clearColor(0, 0, 0, 0);
+    if( Params[0].Equalsi("color") )
       StereoFlag = glStereoColor;
-    }
     else if( Params[0].Equalsi("anaglyph") )  {
       GLint bits = 0;
       olx_gl::get(GL_ACCUM_RED_BITS, &bits);
       if( bits == 0 )
         TBasicApp::GetLog().Error("Sorry accumulation buffer is not initialised/available");
-      else  {
-        olx_gl::clearColor(0, 0, 0, 0);
+      else
         StereoFlag = glStereoAnaglyph;
-      }
     }
     else if( Params[0].Equalsi("cross") )  {
       olx_gl::clearColor(LightModel.GetClearColor().Data());
