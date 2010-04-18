@@ -768,14 +768,14 @@ public:
   }
   //..............................................................................
   void macReap(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    XApp.XFile().LoadFromFile(Cmds.Text(' '));
+    XApp.XFile().LoadFromFile(TEFile::ExpandRelativePath(Cmds.Text(' ')));
   }
   //..............................................................................
   void funUser(const TStrObjList &Cmds, TMacroError &Error)  {
     if( Cmds.IsEmpty() )
-      Error.SetRetVal( TEFile::CurrentDir() );
+      Error.SetRetVal(TEFile::CurrentDir());
     else
-      TEFile::ChangeDir( Cmds[0] );
+      TEFile::ChangeDir(Cmds[0]);
   }
   //..............................................................................
   void macInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

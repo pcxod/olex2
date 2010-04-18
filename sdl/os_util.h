@@ -9,13 +9,63 @@
 #undef GetAtom
 #undef AddAtom
 #undef GetObject
-#ifndef __WIN32__
-  #include <pthread.h>
-  #include <time.h>
-  #include <errno.h>
+// includes...
+#ifdef __WIN32__
+#  include <process.h>
+#else
+#  include <pthread.h>
+#  include <time.h>
+#  include <errno.h>
+#  include <unistd.h>
 #endif
 
 BeginEsdlNamespace()
+
+#ifdef __WIN32__
+#  ifdef _MSC_VER
+#    ifdef _UNICODE
+#      define OLX_GETENV _wgetenv_s
+#      define OLX_PUTENV _wputenv_s
+#    else
+#      define OLX_GETENV getenv_s
+#      define OLX_PUTENV _putenv_s
+#    endif
+   static void olx_setenv(const olxstr& name, const olxstr& val)  {
+     OLX_PUTENV(name.u_str(), val.u_str());
+   }
+   static olxstr olx_getenv(const olxstr& name)  {
+     olxch* val=NULL;
+     size_t sz;
+     OLX_GETENV(&sz, NULL, 0, name.u_str());
+     if( sz == 0 )  return EmptyString;
+     val = new olxch[sz];
+     OLX_GETENV(&sz, val, sz, name.u_str());
+     return olxstr::FromExternal(val, sz-1);
+   }
+#  else // not MSVC
+   static void olx_setenv(const olxstr& name, const olxstr& val)  {
+     putenv((olxstr(name) << '=' << val).c_str());
+   }
+   static olxstr olx_getenv(const olxstr& name)  {
+      return getenv(name.c_str());
+   }
+#  endif  // MSVC and others WIN compilers
+#else  // not WIN
+   static void olx_setenv(const olxstr& name, const olxstr& val)  {
+     setenv(name.c_str(), val.c_str(), 1);
+   }
+   static olxstr olx_getenv(const olxstr& name)  {
+     return getenv(name.c_str());
+   }
+#endif
+// a convinience function
+static void olx_setenv(const olxstr& v)  {
+  size_t ei = v.IndexOf('=');
+  if( ei == InvalidIndex )  return;
+  olx_setenv(v.SubStringTo(ei).u_str(), v.SubStringFrom(ei+1).u_str());
+}
+
+
 // http://en.wikipedia.org/wiki/Critical_section
 struct olx_critical_section  {
 #ifdef __WIN32__

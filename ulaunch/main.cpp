@@ -7,20 +7,8 @@
 #include "patchapi.h"
 
 #ifdef __WIN32__
-#  include <process.h>
-#  define PutEnv _putenv
-#  define GetEnv getenv
-void SetEnv(const olxstr& v)  {  putenv(v.u_str());  }
 const char exe_name[] = "olex2.dll";
 #else
-#  include <unistd.h>
-#  define PutEnv putenv
-#  define GetEnv getenv
-void SetEnv(const olxstr& v)  {
-  size_t ei = v.IndexOf('=');
-  if( ei == InvalidIndex )  return;
-    setenv(v.SubStringTo(ei).u_str(), v.SubStringFrom(ei+1).u_str(), 1);
-}
 #  ifdef __MAC__
 const char exe_name[] = "olex2.app";
 #  else
@@ -78,7 +66,7 @@ int main(int argc, char** argv)  {
       TEFile::AddPathDelimeterI(base_dir) << prefix;
       if( !TEFile::IsAbsolutePath(base_dir) )  {
         if( base_dir.StartsFrom('.') || base_dir.StartsFrom("..") )
-          base_dir = TEFile::AbsolutePathTo(base_dir, original_bd);
+          base_dir = TEFile::ExpandRelativePath(base_dir, original_bd);
         else
           base_dir = original_bd + base_dir;
       }
@@ -87,7 +75,7 @@ int main(int argc, char** argv)  {
       olxstr data_dir = sf.GetParam("data_dir", TBasicApp::GetBaseDir() + "olex2data");
       if( !TEFile::IsAbsolutePath(data_dir) )  {
         if( data_dir.StartsFrom('.') || data_dir.StartsFrom("..") )
-          data_dir = TEFile::AbsolutePathTo(data_dir, original_bd);
+          data_dir = TEFile::ExpandRelativePath(data_dir, original_bd);
         else
           data_dir = original_bd + data_dir;
       }
@@ -99,9 +87,9 @@ int main(int argc, char** argv)  {
         if( !TEFile::MakeDirs(data_dir) )
           throw TFunctionFailedException(__OlxSourceInfo, "Failed to create DATA_DIR");
       }
-      SetEnv(olxstr("OLEX2_DATADIR=") << TEFile::AddPathDelimeterI(data_dir));
+      olx_setenv("OLEX2_DATADIR", TEFile::AddPathDelimeterI(data_dir));
       for( size_t i=0; i < env_toks.Count(); i++ )
-        SetEnv(env_toks[i]);
+        olx_setenv(env_toks[i]);
     }
     else if( !TEFile::Exists(OlexFN) )
       throw TFunctionFailedException(__OlxSourceInfo, "No settings file is provided or Olex2 executable found");
@@ -129,29 +117,27 @@ int main(int argc, char** argv)  {
 
 void Launch()  {
   const olxstr bd = TBasicApp::GetBaseDir();
-  olxch* _path = GetEnv("PATH");
-  olxstr path;
-  if( _path != NULL )  path = _path;
+  olxstr path = olx_getenv("PATH");
   path.Insert(bd.SubStringTo(bd.Length()-1) + ':', 0);
-  SetEnv(olxstr("PATH=") << path);
-  SetEnv("OLEX2_CCTBX_DIR=");
-  SetEnv("OLEX2_DIR=");
+  olx_setenv("PATH", path);
+  olx_setenv("OLEX2_CCTBX_DIR", EmptyString);
+  olx_setenv("OLEX2_DIR", EmptyString);
 #ifdef __WIN32__
-  SetEnv(olxstr("PYTHONHOME=") << TBasicApp::GetBaseDir() << "Python26");
+  olx_setenv("PYTHONHOME", bd + "Python26");
   const olxstr cmdl = bd + "olex2.dll";
 #else
 #  ifdef __MAC__
   const olxstr base_dir = bd + "olex2.app/Contents/MacOS/";
-  SetEnv(olxstr("OLEX2_DIR=") << base_dir);
-  static const olxch* ld_var = "DYLD_LIBRARY_PATH";
+  olx_setenv("OLEX2_DIR", base_dir);
+  static const olxstr ld_var = "DYLD_LIBRARY_PATH";
 #  else
   const olxstr base_dir = bd;
-  static const olxch* ld_var = "LD_LIBRARY_PATH";
+  static const olxstr ld_var = "LD_LIBRARY_PATH";
 #  endif
   olxstr ld_path;
   ld_path << base_dir << "lib:" << base_dir << "Python26:" << base_dir << "cctbx/cctbx_build/lib";
-  SetEnv(olxstr(ld_var) << '=' << ld_path);
-  SetEnv(olxstr("PYTHONHOME=") << base_dir << "Python26/python2.6");
+  olx_setenv(ld_var, ld_path);
+  olx_setenv("PYTHONHOME", base_dir + "Python26/python2.6");
   const olxstr cmdl = base_dir + "olex2";
 #endif
   TEFile::ChangeDir(bd);
