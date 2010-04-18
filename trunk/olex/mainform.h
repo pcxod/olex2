@@ -189,7 +189,8 @@ public:
   void SetProgramState(bool val, uint32_t state, const olxstr& data );
   bool CheckMode(size_t mode, const olxstr& modeData);
   bool CheckState(uint32_t state, const olxstr& stateData);
-
+  bool PopupMenu(wxMenu* menu, const wxPoint& p=wxDefaultPosition);
+  bool PopupMenu(wxMenu* menu, int x, int y)  {  return PopupMenu(menu, wxPoint(x,y));  }
 protected:
   void PostCmdHelp(const olxstr &Cmd, bool Full=false);
   void AnalyseError(TMacroError& error);

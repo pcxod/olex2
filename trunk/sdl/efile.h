@@ -232,15 +232,20 @@ public:
   static bool IsSubFolder(const olxstr& which, const olxstr& in_what);
   /*works for windows only, for other operation systems return LocalFN*/
   static olxstr UNCFileName(const olxstr& LocalFN);
-  /* return absolute path as a relative to another path
-    so for "c:/windows/win32" and ".." return "c:/windows" */
-  static olxstr AbsolutePathTo(const olxstr& Path, const olxstr& relPath);
-  /* return a string like '../win32' for From='c:/windows' and To='c:/windows/win32' or the original To string
-  if the paths do not share a common base */
-  static olxstr RelativePathTo(const olxstr& From, const olxstr& To);
+  /* return absolute path constructued from a relative path and a base so for
+  ".." and "c:/windows/win32" return "c:/windows". If path does not start from "."
+  or ".. " thr normalised original is returned. If base is empty, it is assumed to
+  be TBasicApp::GetBaseDir(). Fro empty path path is returned
+  */
+  static olxstr ExpandRelativePath(const olxstr& path, const olxstr& base=EmptyString);
+  /* return a string like '../win32' for path='c:/windows' and base='c:/windows/win32' or
+  the original path string if the paths do not share a common base.  If base is empty, it is
+  assumed to be TBasicApp::GetBaseDir(). For empty path path is returned.
+  */
+  static olxstr CreateRelativePath(const olxstr& path, const olxstr& base=EmptyString);
   /* searches given file name in current folder and in path, if found returns full
     path to the file inclusive the file name, otherwise returns empty string.
-    if the filename is absolute returns it straight away
+    if the filename is absolute returns it straight away.
   */
   static olxstr Which(const olxstr& filename);
   /* returns a new object created with new using tmpnam (on non-windows systems), or
@@ -260,7 +265,6 @@ public:
 
   static class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 };
-
 
 EndEsdlNamespace()
 #endif

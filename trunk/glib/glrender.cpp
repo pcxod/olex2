@@ -188,13 +188,19 @@ void TGlRenderer::_OnStylesClear()  {
 //..............................................................................
 void TGlRenderer::_OnStylesLoaded()  {
   for( size_t i=0; i < FCollections.Count(); i++ )
-    FCollections.GetObject(i)->SetStyle( &FStyles->NewStyle(FCollections.GetObject(i)->GetName(), true) );
-  TPtrList<AGDrawObject> GO( FGObjects );
+    FCollections.GetObject(i)->SetStyle(&FStyles->NewStyle(FCollections.GetObject(i)->GetName(), true));
+  TPtrList<AGDrawObject> GO(FGObjects);
   for( size_t i=0; i < GO.Count(); i++ )
     GO[i]->OnPrimitivesCleared();
   ClearPrimitives();
   for( size_t i=0; i < GO.Count(); i++ )
     GO[i]->Create();
+  TGraphicsStyle* gs = FStyles->FindStyle("GL.Stereo");
+  if( gs != NULL )  {
+    StereoLeftColor = gs->GetParam("left", StereoLeftColor.ToString(), true);
+    StereoRightColor = gs->GetParam("right", StereoRightColor.ToString(), true);
+    StereoAngle = gs->GetParam("angle", StereoAngle, true).ToDouble();
+  }
   OnStylesClear->Exit(this);
 }
 //..............................................................................
@@ -373,9 +379,9 @@ void TGlRenderer::Draw()  {
   BeforeDraw->Execute(this);
   //glLineWidth( (float)(0.07/GetScale()) );
   //glPointSize( (float)(0.07/GetScale()) );  
-  GetScene().StartDraw();
-
   if( StereoFlag == glStereoColor )  {
+    olx_gl::clearColor(0.0,0.0,0.0,0.0);
+    olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     const double ry = GetBasis().GetRY();
     olx_gl::disable(GL_ALPHA_TEST);
     olx_gl::disable(GL_BLEND);
@@ -409,6 +415,7 @@ void TGlRenderer::Draw()  {
   // http://local.wasp.uwa.edu.au/~pbourke/texture_colour/anaglyph/
   else if( StereoFlag == glStereoAnaglyph )  {
     const double ry = GetBasis().GetRY();
+    olx_gl::clearColor(0.0,0.0,0.0,0.0);
     olx_gl::clearAccum(0.0,0.0,0.0,0.0);
     olx_gl::colorMask(true, true, true, true);
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -460,8 +467,10 @@ void TGlRenderer::Draw()  {
     GetBasis().RotateY(ry);
     FLeft = _l;
   }
-  else
+  else  {
+    GetScene().StartDraw();
     DrawObjects(0, 0, false, false);
+  }
   GetScene().EndDraw();
   FGlImageChanged = true;
   OnDraw->Execute(this);
@@ -1187,19 +1196,15 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
       FWidth = FOWidth;
       FOWidth = -1;
     }
-    if( Params[0].Equalsi("color") )  {
-      olx_gl::clearColor(0, 0, 0, 0);
+    if( Params[0].Equalsi("color") )
       StereoFlag = glStereoColor;
-    }
     else if( Params[0].Equalsi("anaglyph") )  {
       GLint bits = 0;
       olx_gl::get(GL_ACCUM_RED_BITS, &bits);
       if( bits == 0 )
         TBasicApp::GetLog().Error("Sorry accumulation buffer is not initialised/available");
-      else  {
-        olx_gl::clearColor(0, 0, 0, 0);
+      else
         StereoFlag = glStereoAnaglyph;
-      }
     }
     else if( Params[0].Equalsi("cross") )  {
       olx_gl::clearColor(LightModel.GetClearColor().Data());
@@ -1224,6 +1229,8 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
     if( Params.Count() == 2 )
       StereoAngle = Params[1].ToDouble();
   }
+  TGraphicsStyle& gs = FStyles->NewStyle("GL.Stereo", true);
+  gs.SetParam("angle", StereoAngle, true);
 }
 //..............................................................................
 void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
@@ -1236,7 +1243,7 @@ void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
   if( Params.Count() == 1 )  {
     E.SetRetVal(glo->ToString());
   }
-  else if( Params.Count() == 2 )  {
+  if( Params.Count() == 2 )  {
     *glo = Params[1].SafeInt<uint32_t>();
     (*glo)[3] = 1;
   }
@@ -1246,6 +1253,9 @@ void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
     (*glo)[2] = Params[3].ToFloat<float>();
     (*glo)[3] = 1;
   }
+  TGraphicsStyle& gs = FStyles->NewStyle("GL.Stereo", true);
+  gs.SetParam("left", StereoLeftColor.ToString(), true);
+  gs.SetParam("right", StereoRightColor.ToString(), true);
 }
 //..............................................................................
 TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {

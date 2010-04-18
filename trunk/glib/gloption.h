@@ -45,6 +45,11 @@ public:
     data[3] = (float)c[3];
     return *this;
   }
+  // us the FromString instead if error handling is needed
+  TGlOption& operator = (const olxstr& v)  {
+    FromString(v);
+    return *this;
+  }
 
   template <class ft> TGlOption& operator *= (ft v)  {
     data[0] = (float)(data[0]*v);

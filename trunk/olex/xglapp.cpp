@@ -135,12 +135,11 @@ bool TGlXApp::OnInit()  {
 
   // KUBUNTU opengl does not want any parameters :)
   TEGC::Initialise();  // prepare Olex2 API...
-  wxString str_glAttr, str_glStereo;
-  wxGetEnv(wxT("OLEX2_GL_DEFAULT"), &str_glAttr);
-  wxGetEnv(wxT("OLEX2_GL_STEREO"), &str_glStereo);
+  olxstr str_glAttr = olx_getenv("OLEX2_GL_DEFAULT"),
+         str_glStereo = olx_getenv("OLEX2_GL_STEREO");
   int *gl_attr = TGlCanvas::GetGlAttributes(
-    !str_glAttr.IsEmpty() && str_glAttr.CmpNoCase(wxT("TRUE")) == 0,
-    str_glStereo.IsEmpty() || str_glStereo.CmpNoCase(wxT("TRUE")) == 0);
+    !str_glAttr.IsEmpty() && str_glAttr.Equalsi("TRUE"),
+    str_glStereo.IsEmpty() || str_glStereo.Equalsi("TRUE"));
   MainForm->GlCanvas(new TGlCanvas(MainForm, gl_attr, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, wxT("GL_CANVAS") ) );
   // create an instance of the XApplication
   olxstr BaseDir(argv[0]);

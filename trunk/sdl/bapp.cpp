@@ -2,11 +2,6 @@
 // TXApplication - a wraper for basic crystallographic graphic application
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "bapp.h"
 #include "log.h"
 #include "efile.h"
@@ -16,15 +11,8 @@
 #ifdef __WIN32__
   #define OLX_STR(a) (a).u_str()
   #define OLX_CHAR olxch
-  #ifdef _UNICODE
-    #define OLX_GETENV _wgetenv
-  #else
-    #define OLX_GETENV getenv
-  #endif
 #else
   #define OLX_STR(a) (a).c_str()
-  #define OLX_GETENV getenv
-  #define OLX_CHAR char
 #endif
 UseEsdlNamespace()
 
@@ -61,8 +49,8 @@ olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
   if( !toks.IsEmpty() )
     path = toks[0];
   if( !var_name.IsEmpty() )  {
-    OLX_CHAR* var_val = OLX_GETENV(OLX_STR(var_name));
-    if( var_val != NULL )
+    olxstr var_val = olx_getenv(var_name);
+    if( !var_val.IsEmpty() )
       bd = var_val;
   }
   else  {
@@ -70,8 +58,7 @@ olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
       bd = TEFile::ExtractFilePath(path);
 		else
 		  bd = path;
-    if( bd.EndsWith('.') || bd.EndsWith("..") )
-      bd = TEFile::AbsolutePathTo(TEFile::CurrentDir(), bd);
+    bd = TEFile::ExpandRelativePath(bd, TEFile::CurrentDir());
   }
   if( bd.IsEmpty() || !TEFile::Exists(bd) )
     bd = TEFile::CurrentDir();

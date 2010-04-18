@@ -925,48 +925,50 @@ bool TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite)  {
   catch(...)  {  return false;  }
 }
 //..............................................................................
-olxstr TEFile::AbsolutePathTo(const olxstr &Path, const olxstr &relPath) {
-  if( !(relPath.StartsFrom('.') || relPath.StartsFrom("..")) )
-    return OLX_OS_PATH(relPath);
-  TStrList dirToks(OLX_OS_PATH(Path), OLX_PATH_DEL),
-           relPathToks(OLX_OS_PATH(relPath), OLX_PATH_DEL);
-  for( size_t i=0; i < relPathToks.Count(); i++ )  {
-    if( relPathToks[i] == ".." )
-      dirToks.Delete( dirToks.Count()-1);
-    else if( relPathToks[i] == "." )
+olxstr TEFile::ExpandRelativePath(const olxstr& path, const olxstr& _base) {
+  if( path.IsEmpty() )  return path;
+  if( !(path.StartsFrom('.') || path.StartsFrom("..")) )
+    return OLX_OS_PATH(path);
+  olxstr base = OLX_OS_PATH(_base);
+  if( base.IsEmpty() )
+    base = TBasicApp::GetBaseDir();
+  TStrList baseToks(base, OLX_PATH_DEL),
+           pathToks(OLX_OS_PATH(path), OLX_PATH_DEL);
+  for( size_t i=0; i < pathToks.Count(); i++ )  {
+    if( pathToks[i] == ".." )
+      baseToks.Delete(baseToks.Count()-1);
+    else if( pathToks[i] == '.' )
       ;
     else
-      dirToks.Add(relPathToks[i]);
+      baseToks.Add(pathToks[i]);
   }
-  olxstr res = dirToks.Text(OLX_PATH_DEL);
-#ifndef __WIN32__
-  if( Path.StartsFrom(OLX_PATH_DEL) )
+  olxstr res = baseToks.Text(OLX_PATH_DEL);
+// make sure absolute paths stay absolute...
+  if( base.StartsFrom(OLX_PATH_DEL) )
     res = olxstr(OLX_PATH_DEL) << res;
-#endif
-//  if( !TEFile::FileExists( res ) )
-//    throw TFileDoesNotExistException(__OlxSourceInfo, res);
   return res;
 }
 //..............................................................................
-olxstr TEFile::RelativePathTo(const olxstr& From, const olxstr& To)  {
-  if( From.IsEmpty() || To.IsEmpty() )
-    return OLX_OS_PATH(To);	
-  TStrList fromToks(OLX_OS_PATH(From), OLX_PATH_DEL),
-           toToks(OLX_OS_PATH(To), OLX_PATH_DEL);
-  size_t match_count=0, max_cnt = olx_min(fromToks.Count(), toToks.Count());
-  while(fromToks[match_count] == toToks[match_count] && ++match_count < max_cnt )  continue;
-  if( match_count == 0 )  return OLX_OS_PATH(To);
+olxstr TEFile::CreateRelativePath(const olxstr& path, const olxstr& _base)  {
+  if( path.IsEmpty() )  return path;
+  olxstr base = OLX_OS_PATH(_base);
+  if( base.IsEmpty() )
+    base = TBasicApp::GetBaseDir();
+  TStrList baseToks(base, OLX_PATH_DEL),
+           pathToks(OLX_OS_PATH(path), OLX_PATH_DEL);
+  size_t match_count=0, max_cnt = olx_min(pathToks.Count(), baseToks.Count());
+  while(baseToks[match_count] == pathToks[match_count] && ++match_count < max_cnt )  continue;
+  if( match_count == 0 )  return OLX_OS_PATH(path);
   olxstr rv;
-  for( size_t i=match_count; i < fromToks.Count(); i++ )  {
+  for( size_t i=match_count; i < baseToks.Count(); i++ )  {
     rv << "..";
-    if( (i+1) < fromToks.Count() )
+    if( (i+1) < baseToks.Count() )
       rv  << OLX_PATH_DEL;
   }
   if( rv.IsEmpty() )
     rv << '.';
-  for( size_t i=match_count; i < toToks.Count(); i++ )  {
-    rv << OLX_PATH_DEL << toToks[i];
-  }
+  for( size_t i=match_count; i < pathToks.Count(); i++ )
+    rv << OLX_PATH_DEL << pathToks[i];
   return rv;
 }
 //..............................................................................
@@ -982,8 +984,8 @@ olxstr TEFile::Which(const olxstr& filename)  {
   fn << filename;
   if( Exists(fn) )  return fn;
   // check path then ...
-  char* path = getenv("PATH");
-  if( path == NULL )  return EmptyString;
+  olxstr path = olx_getenv("PATH");
+  if( path.IsEmpty() )  return path;
   TStrList toks(path, OLX_ENVI_PATH_DEL);
   for( size_t i=0; i < toks.Count(); i++ )  {
     TEFile::AddPathDelimeterI(toks[i]) << filename;
@@ -1095,12 +1097,12 @@ void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal( output.Text(';') );
 }
 
-void RelativePath(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal(TEFile::RelativePathTo(Params[0], Params[1]));
+void CreateRelativePath(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal(TEFile::CreateRelativePath(Params[0], Params.Count() == 2 ? Params[1] : EmptyString));
 }
 
-void AbsolutePath(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal(TEFile::AbsolutePathTo(Params[0], Params[1]));
+void ExpandRelativePath(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal(TEFile::ExpandRelativePath(Params[0], Params.Count() == 2 ? Params[1] : EmptyString));
 }
 
 TLibrary*  TEFile::ExportLibrary(const olxstr& name)  {
@@ -1138,10 +1140,10 @@ TLibrary*  TEFile::ExportLibrary(const olxstr& name)  {
   lib->RegisterStaticFunction( new TStaticFunction( ::ListDirForGUI, "ListDirForGUI", fpTwo|fpThree,
 "Returns a ready to use in GUI list of files, matching provided mask(s) separated by semicolon.\
  The third, optional argument [f,d,fd] specifies what should be included into the list") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::RelativePath, "RelativePath", fpTwo,
-"Returns a path to a folder relative to basedir; arguments are (base,path)") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::AbsolutePath, "AbsolutePath", fpTwo,
-"Returns an absolute path to a folder relative to the basedir; arguments are (base,path)") );
+  lib->RegisterStaticFunction( new TStaticFunction( ::CreateRelativePath, "RelativePath", fpOne|fpTwo,
+"Returns a path to a folder relative to basedir; arguments are (base=basedir,path)") );
+  lib->RegisterStaticFunction( new TStaticFunction( ::ExpandRelativePath, "AbsolutePath", fpOne|fpTwo,
+"Returns an absolute path to a folder relative to the basedir; arguments are (base=basedir,path)") );
   return lib;
 }
 
