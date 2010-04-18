@@ -2277,11 +2277,11 @@ void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroError &E)  {
 //..............................................................................
 void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
-  olxstr CifDictionaryFile( xapp.GetCifTemplatesDir() + "cifindex.dat");
+  olxstr CifDictionaryFile(xapp.GetCifTemplatesDir() + "cifindex.dat");
   if( Cmds.IsEmpty() )  {
     TStrList Output;
     olxstr CDir = TEFile::CurrentDir();
-    TEFile::ChangeDir( xapp.GetCifTemplatesDir() );
+    TEFile::ChangeDir(xapp.GetCifTemplatesDir());
     TEFile::ListCurrentDir(Output, "*.rtf;*html;*.htm", sefFile);
     TEFile::ChangeDir(CDir);
     xapp.GetLog() << "Templates found: \n";
@@ -2306,9 +2306,9 @@ void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacro
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
-    olxstr cifFN = TEFile::ChangeFileExt( xapp.XFile().GetFileName(), "cif");
-    if( TEFile::Exists( cifFN ) ) 
-      Cif1.LoadFromFile( cifFN );
+    olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
+    if( TEFile::Exists(cifFN) ) 
+      Cif1.LoadFromFile(cifFN);
     else  {
       Error.ProcessingError(__OlxSrcInfo, "existing cif is expected");
       return;
@@ -2334,8 +2334,8 @@ void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacro
 //..............................................................................
 void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
-  olxstr CifTablesFile( xapp.GetCifTemplatesDir() + "tables.xlt");
-  olxstr CifDictionaryFile( xapp.GetCifTemplatesDir() + "cifindex.dat");
+  olxstr CifTablesFile(xapp.GetCifTemplatesDir() + "tables.xlt");
+  olxstr CifDictionaryFile(xapp.GetCifTemplatesDir() + "cifindex.dat");
   if( Cmds.IsEmpty() )  {
     if( !TEFile::Exists(CifTablesFile) )  {
       Error.ProcessingError(__OlxSrcInfo, "tables definition file is not found" );
@@ -2370,9 +2370,9 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
-    olxstr cifFN = TEFile::ChangeFileExt( xapp.XFile().GetFileName(), "cif");
-    if( TEFile::Exists( cifFN ) )  {
-      Cif1.LoadFromFile( cifFN );
+    olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
+    if( TEFile::Exists(cifFN ) )  {
+      Cif1.LoadFromFile(cifFN );
     }
     else
         throw TFunctionFailedException(__OlxSourceInfo, "existing cif is expected");
@@ -2386,7 +2386,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
   TDataItem *TD, *Root;
   TTTable<TStrList> DT;
   DF.LoadFromXLFile(CifTablesFile, NULL);
-  Dic.LoadFromFile( CifDictionaryFile );
+  Dic.LoadFromFile(CifDictionaryFile);
 
   olxstr RF( Options.FindValue("n", EmptyString) ), 
          Tmp;
@@ -2436,32 +2436,32 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
       CLA.Add( TD->GetFieldValue("tha", EmptyString) );
       THA.Add( TD->GetFieldValue("tha", EmptyString) );
       for( size_t j=0; j < TD->ItemCount(); j++ )  {
-        CLA.Add( TD->GetItem(j).GetFieldValue("cola", EmptyString) );
-        THA.Add( TD->GetItem(j).GetFieldValue("tha", EmptyString) );
+        CLA.Add(TD->GetItem(j).GetFieldValue("cola", EmptyString));
+        THA.Add(TD->GetItem(j).GetFieldValue("tha", EmptyString));
       }
 
       olxstr footer;
       for( size_t i=0; i < SymmList.Count(); i++ )  {
-        footer << "<sup>" << (i+1) << "</sup>" <<
-           TSymmParser::MatrixToSymmEx(SymmList[i]);
+        footer << "<sup>" << (i+1) << "</sup>" << TSymmParser::MatrixToSymmEx(SymmList[i]);
         if( (i+1) < SymmList.Count() )
           footer << "; ";
       }
 
 
-      DT.CreateHTMLList(SL, Tmp,
-                      footer,
-                      true, false,
-                      TD->GetFieldValue("tita", EmptyString),  // title paragraph attributes
-                      TD->GetFieldValue("foota", EmptyString),  // footer paragraph attributes
-                      TD->GetFieldValue("taba", EmptyString),  //const olxstr& tabAttr,
-                      TD->GetFieldValue("rowa", EmptyString),  //const olxstr& rowAttr,
-                      THA, // header attributes
-                      CLA, // cell attributes,
-                      true,
-                      TD->GetFieldValue("coln", "1").ToInt()
-                      ); //bool Format) const  {
-
+      DT.CreateHTMLList(
+        SL,
+        Tmp,
+        footer,
+        true, false,
+        TD->GetFieldValue("tita", EmptyString),  // title paragraph attributes
+        TD->GetFieldValue("foota", EmptyString),  // footer paragraph attributes
+        TD->GetFieldValue("taba", EmptyString),  //const olxstr& tabAttr,
+        TD->GetFieldValue("rowa", EmptyString),  //const olxstr& rowAttr,
+        THA, // header attributes
+        CLA, // cell attributes,
+        true,
+        TD->GetFieldValue("coln", "1").ToInt()
+      ); //bool Format) const  {
       //DT.CreateHTMLList(SL, Tmp, true, false, true);
     }
   }
@@ -2631,9 +2631,9 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMa
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
-    olxstr cifFN = TEFile::ChangeFileExt( xapp.XFile().GetFileName(), "cif");
-    if( TEFile::Exists( cifFN ) )  {
-      Cif1.LoadFromFile( cifFN );
+    olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
+    if( TEFile::Exists(cifFN) )  {
+      Cif1.LoadFromFile(cifFN);
     }
     else
       throw TFunctionFailedException(__OlxSourceInfo, "existing cif is expected");

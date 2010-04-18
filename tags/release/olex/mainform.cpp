@@ -3022,9 +3022,9 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
 void TMainForm::SaveSettings(const olxstr &FN)  {
   TDataFile DF;
   TDataItem* I = &DF.Root().AddItem("Folders");
-  I->AddField("Styles", StylesDir);
-  I->AddField("SceneP", ScenesDir);
-  I->AddField("Current", XLibMacros::CurrentDir);
+  I->AddField("Styles", TEFile::CreateRelativePath(StylesDir));
+  I->AddField("Scenes", TEFile::CreateRelativePath(ScenesDir));
+  I->AddField("Current", TEFile::CreateRelativePath(XLibMacros::CurrentDir));
 
   I = &DF.Root().AddItem("HTML");
   I->AddField("Minimized", FHtmlMinimized);
@@ -3059,13 +3059,13 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("CmdLine", CmdLineVisible);
 
   I = &DF.Root().AddItem("Defaults");
-  I->AddField("Style", DefStyle);  // these file names are stored as absolute values!
-  I->AddField("SceneP", DefSceneP);
+  I->AddField("Style", TEFile::CreateRelativePath(DefStyle));
+  I->AddField("Scene", TEFile::CreateRelativePath(DefSceneP));
 
   I->AddField("BgColor", FBgColor.ToString());
   I->AddField("WhiteOn", (FXApp->GetRender().LightModel.GetClearColor().GetRGB() == 0xffffffff));
   I->AddField("Gradient", FXApp->GetRender().Background()->IsVisible());
-  I->AddField("GradientPicture", GradientPicture);
+  I->AddField("GradientPicture", TEFile::CreateRelativePath(GradientPicture));
   I->AddField("language", Dictionary.GetCurrentLanguage());
   I->AddField("ExtraZoom", FXApp->GetExtraZoom());
   I->AddField("GlTooltip", _UseGlTooltip);
@@ -3074,7 +3074,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 
   I = &DF.Root().AddItem("Recent_files");
   for( size_t i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++ )
-    I->AddField(olxstr("file") << i, FRecentFiles[i]);
+    I->AddField(olxstr("file") << i, TEFile::CreateRelativePath(FRecentFiles[i]));
 
   I = &DF.Root().AddItem("Stored_params");
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
@@ -3098,11 +3098,11 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   TDataItem *I = DF.Root().FindItem("Folders");
   if( I == NULL )
     return;
-  StylesDir = I->GetFieldValue("Styles");
+  StylesDir = TEFile::ExpandRelativePath(I->GetFieldValue("Styles"));
     executeFunction(StylesDir, StylesDir);
-  ScenesDir = I->GetFieldValue("SceneP");
-    executeFunction(ScenesDir);
-  XLibMacros::CurrentDir = I->GetFieldValue("Current");
+  ScenesDir = TEFile::ExpandRelativePath(I->GetFieldValue("Scenes"));
+    executeFunction(ScenesDir, ScenesDir);
+  XLibMacros::CurrentDir = TEFile::ExpandRelativePath(I->GetFieldValue("Current"));
     executeFunction(XLibMacros::CurrentDir, XLibMacros::CurrentDir);
 
   I = DF.Root().FindItem("HTML");
@@ -3117,7 +3117,8 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
       FHtmlWidthFixed = !Tmp.EndsWith('%');
       FHtmlPanelWidth = ((!FHtmlWidthFixed) ? Tmp.SubStringTo(Tmp.Length()-1).ToDouble() :
                                               Tmp.ToDouble());
-      if( !FHtmlWidthFixed && FHtmlPanelWidth >= 0.5 )  FHtmlPanelWidth = 0.25;
+      if( !FHtmlWidthFixed && FHtmlPanelWidth >= 0.5 )
+        FHtmlPanelWidth = 0.25;
     }
     else
       FHtmlPanelWidth = 0.25;
@@ -3130,8 +3131,8 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     if( !Tmp.IsEmpty() && Tmp.IsNumber() )
       FHtml->SetBorders(Tmp.ToInt());
 
-    olxstr nf( I->GetFieldValue("NormalFont", EmptyString) );
-    olxstr ff( I->GetFieldValue("FixedFont", EmptyString) );
+    olxstr nf(I->GetFieldValue("NormalFont", EmptyString));
+    olxstr ff(I->GetFieldValue("FixedFont", EmptyString));
     FHtml->SetFonts(nf, ff);
   }
 
@@ -3169,7 +3170,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     MenuFile->AppendSeparator();
     int i=0;
     TStrList uniqNames;
-    olxstr T = I->GetFieldValue( olxstr("file") << i);
+    olxstr T = TEFile::ExpandRelativePath(I->GetFieldValue( olxstr("file") << i));
     while( !T.IsEmpty() )  {
       if( T.EndsWithi(".ins") || T.EndsWithi(".res") )  {
         T = TEFile::ChangeFileExt(T, EmptyString);
@@ -3188,9 +3189,9 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   }
 
   I = DF.Root().FindItem("Defaults");
-  DefStyle = I->GetFieldValue("Style");
+  DefStyle = TEFile::ExpandRelativePath(I->GetFieldValue("Style"));
     executeFunction(DefStyle, DefStyle);
-  DefSceneP = I->GetFieldValue("SceneP");
+  DefSceneP = TEFile::ExpandRelativePath(I->GetFieldValue("Scene"));
     executeFunction(DefSceneP, DefSceneP);
   // loading default style if provided ?
   if( TEFile::Exists(DefStyle) )  {
@@ -3256,7 +3257,9 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   FXApp->GetRender().LightModel.SetClearColor(whiteOn ? 0xffffffff : FBgColor.GetRGB());
 
   T = I->GetFieldValue("Gradient", EmptyString);
-  GradientPicture = I->GetFieldValue("GradientPicture", EmptyString);
+  GradientPicture = TEFile::ExpandRelativePath(I->GetFieldValue("GradientPicture", EmptyString));
+  if( !TEFile::Exists(GradientPicture) )
+    GradientPicture = EmptyString;
   if( !T.IsEmpty() ) 
     ProcessMacro(olxstr("grad ") << T);
 

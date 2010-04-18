@@ -188,13 +188,19 @@ void TGlRenderer::_OnStylesClear()  {
 //..............................................................................
 void TGlRenderer::_OnStylesLoaded()  {
   for( size_t i=0; i < FCollections.Count(); i++ )
-    FCollections.GetObject(i)->SetStyle( &FStyles->NewStyle(FCollections.GetObject(i)->GetName(), true) );
-  TPtrList<AGDrawObject> GO( FGObjects );
+    FCollections.GetObject(i)->SetStyle(&FStyles->NewStyle(FCollections.GetObject(i)->GetName(), true));
+  TPtrList<AGDrawObject> GO(FGObjects);
   for( size_t i=0; i < GO.Count(); i++ )
     GO[i]->OnPrimitivesCleared();
   ClearPrimitives();
   for( size_t i=0; i < GO.Count(); i++ )
     GO[i]->Create();
+  TGraphicsStyle* gs = FStyles->FindStyle("GL.Stereo");
+  if( gs != NULL )  {
+    StereoLeftColor = gs->GetParam("left", StereoLeftColor.ToString(), true);
+    StereoRightColor = gs->GetParam("right", StereoRightColor.ToString(), true);
+    StereoAngle = gs->GetParam("angle", StereoAngle, true).ToDouble();
+  }
   OnStylesClear->Exit(this);
 }
 //..............................................................................
@@ -1223,6 +1229,8 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
     if( Params.Count() == 2 )
       StereoAngle = Params[1].ToDouble();
   }
+  TGraphicsStyle& gs = FStyles->NewStyle("GL.Stereo", true);
+  gs.SetParam("angle", StereoAngle, true);
 }
 //..............................................................................
 void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
@@ -1235,7 +1243,7 @@ void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
   if( Params.Count() == 1 )  {
     E.SetRetVal(glo->ToString());
   }
-  else if( Params.Count() == 2 )  {
+  if( Params.Count() == 2 )  {
     *glo = Params[1].SafeInt<uint32_t>();
     (*glo)[3] = 1;
   }
@@ -1245,6 +1253,9 @@ void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
     (*glo)[2] = Params[3].ToFloat<float>();
     (*glo)[3] = 1;
   }
+  TGraphicsStyle& gs = FStyles->NewStyle("GL.Stereo", true);
+  gs.SetParam("left", StereoLeftColor.ToString(), true);
+  gs.SetParam("right", StereoRightColor.ToString(), true);
 }
 //..............................................................................
 TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {

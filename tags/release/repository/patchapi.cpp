@@ -117,16 +117,16 @@ olxstr PatchAPI::ReadRepositoryTag()  {
 }
 //.............................................................................
 olxstr PatchAPI::GetCurrentSharedDir(olxstr* DataDir)  {
-  const char* dd_str = getenv("OLEX2_DATADIR");
+  const olxstr dd_str = olx_getenv("OLEX2_DATADIR");
   olxstr data_dir;
-  if( dd_str != NULL )  {
+  if( !dd_str.IsEmpty() )  {
     data_dir = dd_str;
     if( !TEFile::IsDir(data_dir) )
       data_dir = EmptyString;
     else  {
       TEFile::AddPathDelimeterI(data_dir);
-      const char* sd = getenv("OLEX2_DATADIR_STATIC");
-      if( sd != NULL && olxstr(sd).Equalsi("TRUE") )
+      const olxstr sd = olx_getenv("OLEX2_DATADIR_STATIC");
+      if( sd.Equalsi("TRUE") )
         return data_dir;
     }
   }

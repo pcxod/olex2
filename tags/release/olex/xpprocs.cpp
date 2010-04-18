@@ -264,12 +264,7 @@ void TMainForm::funStrcmp(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::funGetEnv(const TStrObjList& Params, TMacroError &E)  {
-  wxString Val;
-  if( !wxGetEnv( Params[0].u_str(), &Val) )  {
-    E.ProcessingError(__OlxSrcInfo,  "undefined variable: ") << Params[0];
-    return;
-  }
-  E.SetRetVal<olxstr>( Val.c_str() );
+  E.SetRetVal(olx_getenv(Params[0]));
 }
 //..............................................................................
 void TMainForm::funFileSave(const TStrObjList& Params, TMacroError &E)  {
@@ -4240,7 +4235,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   bool ReadStyle = !Options.Contains('r');
   bool OverlayXFile = Options.Contains('*');
   if( Cmds.Count() >= 1 && !Cmds[0].IsEmpty() )  {  // merge the file name if a long one...
-    FN = TEFile::AbsolutePathTo(TBasicApp::GetBaseDir(), Cmds.Text(' '));
+    FN = TEFile::ExpandRelativePath(Cmds.Text(' '));
     if( TEFile::ExtractFileExt(FN).IsEmpty() )  {
       olxstr res_fn = TEFile::ChangeFileExt(FN, "res"),
              ins_fn = TEFile::ChangeFileExt(FN, "ins");

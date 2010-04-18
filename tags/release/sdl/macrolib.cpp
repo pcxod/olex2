@@ -158,15 +158,15 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error)  {
       ind = Command.FirstIndexOf('|', ind1);
       continue;
     }
-    olxcstr envn( Command.SubString(ind+1, ind1-ind-1) );
-    char* eval = getenv( envn.c_str() );
-    if( eval != NULL )  {
-      Command.Delete( ind, ind1-ind+1);
-      Command.Insert(eval, ind );
-      ind1 = ind + olxstr::o_strlen(eval);
+    const olxstr var_name = Command.SubString(ind+1, ind1-ind-1);
+    const olxstr eval = olx_getenv(var_name);
+    if( !eval.IsEmpty() )  {
+      Command.Delete(ind, ind1-ind+1);
+      Command.Insert(eval, ind);
+      ind1 = ind + eval.Length();
     }
     else  // variable is not found - leave as it is
-      ind1 = ind + envn.Length();
+      ind1 = ind + var_name.Length();
 
     if( ind1+1 >= Command.Length() )  break;
     ind = Command.FirstIndexOf('|', ind1+1);
