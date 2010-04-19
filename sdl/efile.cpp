@@ -1,14 +1,20 @@
 //---------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-#include "ebase.h"
-#include <string.h>
-#include <sys/stat.h>
 #include "efile.h"
 #include "filetree.h"
+#include <string.h>
+#include <sys/stat.h>
+#include "exception.h"
+#include "estrlist.h"
+
+#include "library.h"
+#include "bapp.h"
+#include "log.h"
 
 #ifdef __WIN32__
-#include <malloc.h>
+  #include <winbase.h>
+  #include <malloc.h>
   #include <io.h>
   #include <direct.h>
   #define OLXSTR(A) (A).u_str()
@@ -25,9 +31,11 @@
     #define makedir _wmkdir
     #define fopen _wfopen
     #define rename _wrename
+    #define WinCopyFile CopyFileW
   #else
     #define STAT stat
     #define STAT_STR stat
+    #define WinCopyFile CopyFileA
   #endif
   #ifndef __BORLANDC__ // this (as Builder 6.0 has no support for it
   #  define ftell _ftelli64
@@ -83,14 +91,6 @@
   #define OLX_OS_PATHI(A) TEFile::UnixPathI((A))
   #define UTIMBUF utimbuf
 #endif
-
-
-#include "exception.h"
-#include "estrlist.h"
-
-#include "library.h"
-#include "bapp.h"
-#include "log.h"
 
 #ifndef MAX_PATH
   #define MAX_PATH 1024
@@ -907,20 +907,25 @@ bool TEFile::Rename(const olxstr& from, const olxstr& to, bool overwrite)  {
 //..............................................................................
 bool TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite)  {
   if( Exists(To) && !overwrite )  return false;
-  // need to check that the files are not the same though...
   try  {
+  // need to check that the files are not the same though...
     struct STAT_STR the_stat;
     olxstr from = OLX_OS_PATH(From);
     olxstr to = OLX_OS_PATH(To);
     if( STAT(OLXSTR(from), &the_stat) != 0 )
       return false;
+#ifdef __WIN32__ // to make the copying a transaction...
+    if( WinCopyFile(From.u_str(), To.u_str(), FALSE) == FALSE )
+      return false;
+#else
     TEFile in(from, "rb");
     TEFile out(to, "w+b");
     out << in;
     out.Close();
+    in.Close();
+#endif
     chmod(OLXSTR(to), the_stat.st_mode);
-    SetFileTimes(to, the_stat.st_atime, the_stat.st_mtime);
-    return true;
+    return SetFileTimes(to, the_stat.st_atime, the_stat.st_mtime);
   }
   catch(...)  {  return false;  }
 }

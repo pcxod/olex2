@@ -989,7 +989,7 @@ void XLibMacros::macIsot(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  olxstr vars( Cmds[0] );
+  olxstr vars(Cmds[0]);
   Cmds.Delete(0);
   double var_val = 0;
   if( !Cmds.IsEmpty() && Cmds[0].IsNumber() )  {
@@ -1018,14 +1018,28 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
   else if( vars.Equalsi( "OCCU" ) )  {
+    TLattice& latt = xapp.XFile().GetLattice();
+    for( size_t i=0; i < latt.AtomCount(); i++ )
+      latt.GetAtom(i).SetTag(0);
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_Sof);
-      if( var_val == 0 )  {
-        if( atoms[i]->CAtom().GetPart() == 0 )  // else leave as it is
-          atoms[i]->CAtom().SetOccu( 1./atoms[i]->CAtom().GetDegeneracy() );
+      if( atoms[i]->GetTag() != 0 )  continue;
+      TSAtomPList neighbours;
+      neighbours.Add(atoms[i]);
+      for( size_t j=0; j < atoms[i]->NodeCount(); j++ )  {
+        TSAtom& n = atoms[i]->Node(j);
+        if( n.IsDeleted() || n.GetType() != iHydrogenZ || n.GetTag() != 0 )  continue;
+        neighbours.Add(n);
       }
-      else
-        atoms[i]->CAtom().SetOccu( var_val );
+      for( size_t j=0; j < neighbours.Count(); j++ )  {
+        neighbours[j]->SetTag(1);
+        xapp.XFile().GetRM().Vars.FixParam(neighbours[j]->CAtom(), catom_var_name_Sof);
+        if( var_val == 0 )  {
+          if( neighbours[j]->CAtom().GetPart() == 0 )  // else leave as it is
+            neighbours[j]->CAtom().SetOccu(1./neighbours[j]->CAtom().GetDegeneracy());
+        }
+        else
+          neighbours[j]->CAtom().SetOccu(var_val);
+      }
     }
   }
 }

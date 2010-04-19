@@ -1634,6 +1634,7 @@ void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
   else                  
     Tmp << " #c" << XA->Atom().CAtom().GetId();
   ProcessMacro(Tmp);
+  TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
@@ -1756,6 +1757,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       for( size_t i=0; i < FObjectUnderMouse->GetPrimitives().ObjectCount(); i++ )
         FXApp->GetRender().Select(FObjectUnderMouse->GetPrimitives().GetObject(i), true);
     }
+    TimePerFrame = FXApp->Draw();
   }
   else if( event.GetId() == ID_GraphicsP )  {
     TStrList Ps;
@@ -3084,7 +3086,8 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 
   SaveScene(DF.Root().AddItem("Scene"), FXApp->GetRender().LightModel);
   FXApp->GetRender().GetStyles().ToDataItem(DF.Root().AddItem("Styles"));
-  DF.SaveToXLFile(FN);
+  DF.SaveToXLFile(FN+".tmp");
+  TEFile::Rename(FN+".tmp", FN);
 }
 //..............................................................................
 void TMainForm::LoadSettings(const olxstr &FN)  {
@@ -3575,8 +3578,10 @@ void TMainForm::OnMouseMove(int x, int y)  {
     MouseMoveTimeElapsed = 0;
     MousePositionX = x;
     MousePositionY = y;
-    if( !_UseGlTooltip )
-      FGlCanvas->SetToolTip(NULL);
+    if( !_UseGlTooltip )  {
+      if( FGlCanvas->GetToolTip() != NULL && !FGlCanvas->GetToolTip()->GetTip().IsEmpty() )
+        FGlCanvas->SetToolTip(wxT(""));
+    }
     else if( GlTooltip != NULL && GlTooltip->IsVisible() )  {
       GlTooltip->SetVisible(false);
       TimePerFrame = FXApp->Draw();
@@ -4137,8 +4142,10 @@ void TMainForm::SaveVFS(short persistenceId)  {
     else
       throw TFunctionFailedException(__OlxSourceInfo, "undefined persistence level");
 
-    TEFile dbf(dbFN, "wb");
+    TEFile dbf(dbFN + ".tmp", "wb");
     TFileHandlerManager::SaveToStream(dbf, persistenceId);
+    dbf.Close();
+    TEFile::Rename(dbFN + ".tmp", dbFN);
   }
   catch(const TExceptionBase &e)  {
     ShowAlert(e, "Failed to save VFS");
