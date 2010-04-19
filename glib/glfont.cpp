@@ -80,6 +80,7 @@ uint16_t TGlFont::TextHeight(const olxstr &Text)  {
     uint16_t w = 0, w1 = 0;
     for( size_t i=0; i < Text.Length(); i++ )  {
       TFontCharSize* cs = CharSize(Text.CharAt(i));
+      if( cs == NULL )  continue;
       short df = cs->Bottom - Topmost; // height from the top
       if( df > w )  w = df;
       df = cs->Bottom - cs->Top;  // height itself
@@ -91,6 +92,7 @@ uint16_t TGlFont::TextHeight(const olxstr &Text)  {
     uint16_t w = 0;
     for( size_t i=0; i < Text.Length(); i++ )  {
       TFontCharSize* cs = CharSize(Text.CharAt(i));
+      if( cs == NULL )  continue;
       short df = cs->Bottom - cs->Top; // height from the top
       if( df > w )  w = df;
     }
@@ -104,6 +106,7 @@ TTextRect TGlFont::GetTextRect(const olxstr& str)  {
   double scale = 1, y_shift=0;
   for( size_t i=0; i < str.Length(); i++ )  {
     TFontCharSize* cs = CharSize(str.CharAt(i));
+    if( cs == NULL )  continue;
     if( str.CharAt(i) == '\\' && ! is_escaped(str, i) && (i+1) < str.Length() )  {
       if( str.CharAt(i+1) == '+' || str.CharAt(i+1) == '-' )  {
         scale = 0.5;
