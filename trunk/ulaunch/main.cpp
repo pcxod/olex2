@@ -70,6 +70,9 @@ int main(int argc, char** argv)  {
         else
           base_dir = original_bd + base_dir;
       }
+#  ifdef __MAC__
+  base_dir = TEFile::AddPathDelimeterI(base_dir) << "olex2.app/Contents/MacOS/";
+#endif
       TBasicApp::SetBaseDir(TEFile::AddPathDelimeter(base_dir)+"dummy.exe");
       OlexFN = TBasicApp::GetBaseDir()+ "olex2.dll";
       olxstr data_dir = sf.GetParam("data_dir", TBasicApp::GetBaseDir() + "olex2data");
@@ -79,9 +82,6 @@ int main(int argc, char** argv)  {
         else
           data_dir = original_bd + data_dir;
       }
-#ifndef __WIN32__ // special treatment for non-windows data dirs...
-      TEFile::AddPathDelimeterI(data_dir) << ".olex2";
-#endif
       TEFile::AddPathDelimeterI(data_dir) << prefix;
       if( !TEFile::Exists(data_dir) )  {
         if( !TEFile::MakeDirs(data_dir) )
@@ -109,6 +109,8 @@ int main(int argc, char** argv)  {
       }
       Launch();
     }
+    else
+      TBasicApp::GetLog().Error("Read-only file system...");
   }
   catch(const TExceptionBase& e)  {
     out.Write(e.GetException()->GetFullMessage());
@@ -127,18 +129,16 @@ void Launch()  {
   const olxstr cmdl = bd + "olex2.dll";
 #else
 #  ifdef __MAC__
-  const olxstr base_dir = bd + "olex2.app/Contents/MacOS/";
-  olx_setenv("OLEX2_DIR", base_dir);
+  olx_setenv("OLEX2_DIR", bd);
   static const olxstr ld_var = "DYLD_LIBRARY_PATH";
 #  else
-  const olxstr base_dir = bd;
   static const olxstr ld_var = "LD_LIBRARY_PATH";
 #  endif
   olxstr ld_path;
-  ld_path << base_dir << "lib:" << base_dir << "Python26:" << base_dir << "cctbx/cctbx_build/lib";
+  ld_path << bd << "lib:" << bd << "Python26:" << bd << "cctbx/cctbx_build/lib";
   olx_setenv(ld_var, ld_path);
-  olx_setenv("PYTHONHOME", base_dir + "Python26/python2.6");
-  const olxstr cmdl = base_dir + "olex2";
+  olx_setenv("PYTHONHOME", bd + "Python26/python2.6");
+  const olxstr cmdl = bd + "olex2";
 #endif
   TEFile::ChangeDir(bd);
   execl(cmdl.u_str(), cmdl.u_str(), NULL);
