@@ -78,7 +78,7 @@ public:
     const double& drawScale, olxdict<size_t, olxstr, TPrimitiveComparator>& definition);
   void CreateTextures(uint16_t Width, uint16_t Height);
   inline bool HasTextures() const {  return Textures != NULL;  }
-  inline TFontCharSize* CharSize(size_t Char)  {  return CharSizes[(unsigned)Char];  }
+  inline TFontCharSize* CharSize(size_t Char)  {  return Char < 256 ? CharSizes[(unsigned)Char] : NULL;  }
 
   inline bool IsFixedWidth() const {  return (Flags & sglfFixedWidth) == sglfFixedWidth;  }
   inline bool IsVectorFont() const {  return (Flags & sglfVectorFont) == sglfVectorFont;  }

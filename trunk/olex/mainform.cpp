@@ -2104,11 +2104,13 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       //const wxSize glsz = FGlCanvas->GetSize();
       //wxBitmap bmp(glsz.GetWidth(), glsz.GetHeight());
       //dc.SelectObject(bmp);
-      //dc.SetBrush(*wxBLACK_BRUSH);
+      //GLfloat rgba[4];
+      //olx_gl::get(GL_COLOR_CLEAR_VALUE, rgba);
+      //dc.SetBackground(wxBrush(RGBA(rgba[0]*255,rgba[1]*255,rgba[2]*255,rgba[3]*255)));
       //dc.Clear();
       //dc.SetPen(*wxBLACK_PEN);
       //wxFont wxf(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_LIGHT, false, wxT(""), wxFONTENCODING_ISO8859_5);
-      //dc.SetFont( wxf);
+      //dc.SetFont(wxf);
       //const wxSize tsz = dc.GetTextExtent(wxT("X"));
       //int y=glsz.GetHeight()-tsz.GetY()*2;
       //for( int i=FGlConsole->Buffer().Count()-1; i >=0; i-- )  {
@@ -2127,10 +2129,12 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       //    bf[ind2+0] = data[ind1+0];
       //    bf[ind2+1] = data[ind1+1];
       //    bf[ind2+2] = data[ind1+2];
-      //    bf[ind2+3] = (data[ind1+0] == 0xFF && data[ind1+1] == 0xFF && data[ind1+2] == 0xFF) ? 0 : 0xFF;
+      //    bf[ind2+3] = 0xff; //(data[ind1+0] == 0xFF && data[ind1+1] == 0xFF && data[ind1+2] == 0xFF) ? 0 : 0xFF;
       //  }
       //}
-      //glDrawPixels(glsz.GetWidth(), glsz.GetHeight(), GL_RGBA, GL_UNSIGNED_BYTE, bf);
+      //olx_gl::drawBuffer(GL_BACK);
+      //olx_gl::rasterPos(0,0,0);
+      //olx_gl::drawPixels(glsz.GetWidth(), glsz.GetHeight(), GL_RGBA, GL_UNSIGNED_BYTE, bf);
       //delete [] bf;
       FGlCanvas->SwapBuffers();
     }
