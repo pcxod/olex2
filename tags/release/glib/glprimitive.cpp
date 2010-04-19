@@ -244,12 +244,19 @@ void TGlPrimitive::Draw()  {
           SetColor(Colors[i]);
           prev_color = Colors[i];
         }
-        olx_gl::callList(fontbase + String->CharAt(i));
+        if( String->CharAt(i) < 255 )
+          olx_gl::callList(fontbase + String->CharAt(i));
+        else
+          olx_gl::callList(fontbase + '?');
       }
     }
     else  {  /* all characters of the same colour */
-      for( size_t i=0; i < StrLen; i++ )
-        olx_gl::callList(fontbase + String->CharAt(i));
+      for( size_t i=0; i < StrLen; i++ )  {
+        if( String->CharAt(i) < 255 )
+          olx_gl::callList(fontbase + String->CharAt(i));
+        else
+          olx_gl::callList(fontbase + '?');
+      }
     }
   }
   else if( Type == sgloPoints )  {
