@@ -265,6 +265,7 @@ void TMainForm::funGetEnv(const TStrObjList& Params, TMacroError &E)  {
         TBasicApp::GetLog() << _wenviron[i] << '\n';
     }
 #else
+    extern char **environ;
     if( environ != NULL )  {
       for( size_t i=0; environ[i] != NULL; i++ )
         TBasicApp::GetLog() << environ[i] << '\n';
