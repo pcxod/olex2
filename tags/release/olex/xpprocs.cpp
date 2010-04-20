@@ -1251,7 +1251,7 @@ void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 //..............................................................................
 void TMainForm::macSetEnv(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( !wxSetEnv(Cmds[0].u_str(), Cmds[1].u_str()) )  {
+  if( !olx_setenv(Cmds[0], Cmds[1]) )  {
     Error.ProcessingError(__OlxSrcInfo, "could not set the variable" );
     return;
   }
