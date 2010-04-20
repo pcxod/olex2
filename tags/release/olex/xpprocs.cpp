@@ -143,7 +143,6 @@
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
-static const olxstr NAString("n/a");
 static const olxstr StartMatchCBName("startmatch");
 static const olxstr OnMatchCBName("onmatch");
 static const olxstr OnModeChangeCBName("modechange");
@@ -209,7 +208,7 @@ void TMainForm::funCif(const TStrObjList& Params, TMacroError &E)  {
     E.SetRetVal(cd->data.Text(EmptyString));
   }
   else
-    E.SetRetVal(NAString);
+    E.SetRetVal(XLibMacros::NAString);
 }
 //..............................................................................
 void TMainForm::funP4p(const TStrObjList& Params, TMacroError &E)  {
@@ -240,39 +239,48 @@ void TMainForm::funIsOS(const TStrObjList& Params, TMacroError &E)  {
 //..............................................................................
 void TMainForm::funCrs(const TStrObjList& Params, TMacroError &E)  {
   TCRSFile& cf = FXApp->XFile().GetLastLoader<TCRSFile>();
-  if( Params[0].Equalsi("sg") )  {
-    TSpaceGroup* sg = cf.GetSG();
-    if( sg != NULL )
-      E.SetRetVal( sg->GetName() );
-    else
-      E.SetRetVal( EmptyString );
-  }
+  if( Params[0].Equalsi("sg") )
+    E.SetRetVal(cf.GetSG() != NULL ? cf.GetSG()->GetName() : EmptyString );
   else
-    E.SetRetVal( NAString );
+    E.SetRetVal(XLibMacros::NAString);
 }
 //..............................................................................
 void TMainForm::funDataDir(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal( DataDir.SubStringFrom(0, 1) );
+  E.SetRetVal(DataDir.SubStringFrom(0, 1));
 }
 //..............................................................................
 void TMainForm::funStrcat(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal( Params[0] + Params[1] );
+  E.SetRetVal(Params[0] + Params[1]);
 }
 //..............................................................................
 void TMainForm::funStrcmp(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal( Params[0] == Params[1] );
+  E.SetRetVal(Params[0] == Params[1]);
 }
 //..............................................................................
 void TMainForm::funGetEnv(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal(olx_getenv(Params[0]));
+  if( Params.IsEmpty() )  {
+#if defined(__WIN32__) && defined(_UNICODE) && defined(_MSC_VER)
+    if( _wenviron != NULL )  {
+      for( size_t i=0; _wenviron[i] != NULL; i++ )
+        TBasicApp::GetLog() << _wenviron[i] << '\n';
+    }
+#else
+    if( environ != NULL )  {
+      for( size_t i=0; environ[i] != NULL; i++ )
+        TBasicApp::GetLog() << environ[i] << '\n';
+    }
+#endif
+  }
+  else
+    E.SetRetVal(olx_getenv(Params[0]));
 }
 //..............................................................................
 void TMainForm::funFileSave(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal( PickFile(Params[0], Params[1], Params[2], false) );
+  E.SetRetVal(PickFile(Params[0], Params[1], Params[2], false));
 }
 //..............................................................................
 void TMainForm::funFileOpen(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal( PickFile(Params[0], Params[1], Params[2], true) );
+  E.SetRetVal(PickFile(Params[0], Params[1], Params[2], true));
 }
 //..............................................................................
 void TMainForm::funUnsetVar(const TStrObjList& Params, TMacroError &E)  {
@@ -8470,7 +8478,7 @@ void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
     if( (i+1) < MACsInfo.Count() )  
       rv << ';';
   }
-  E.SetRetVal( rv.IsEmpty() ? NAString : rv );
+  E.SetRetVal(rv.IsEmpty() ? XLibMacros::NAString : rv);
 }
 //..............................................................................
 void main_CreateWBox(TGXApp& app, const TSAtomPList& atoms, const TTypeList< AnAssociation2<vec3d, double> >& crds, 

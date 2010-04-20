@@ -1,5 +1,5 @@
-#ifndef xmacroH
-#define xmacroH
+#ifndef __olx_xlib_xmacro_H
+#define __olx_xlib_xmacro_H
 #include "library.h"
 #include "xapp.h"
 #include "cif.h"

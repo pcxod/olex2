@@ -955,7 +955,7 @@ separated values of Atom Type and radius, an entry a line");
   this_InitFunc(Strcat, fpTwo);
   this_InitFunc(Strcmp, fpTwo);
 
-  this_InitFunc(GetEnv, fpOne);
+  this_InitFuncD(GetEnv, fpNone|fpOne, "Prints all variables if no arguments is given or returns the given veariable value");
 
   this_InitFunc(Eval, fpOne);
 
