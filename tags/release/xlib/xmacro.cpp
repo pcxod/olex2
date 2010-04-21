@@ -2197,7 +2197,7 @@ void XLibMacros::funSSM(const TStrObjList& Params, TMacroError &E) {
 //..............................................................................
 bool XLibMacros_funSGNameIsNextSub(const olxstr& name, size_t i)  {
   if( (i+1) < name.Length() )  {
-    if( olxstr::o_isdigit(name[i])  &&  olxstr::o_isdigit(name[i+1]) )  {
+    if( olxstr::o_isdigit(name[i]) && olxstr::o_isdigit(name[i+1]) )  {
       if( name[i] != '1' && name[i] > name[i+1] )
         return true;
     }
@@ -2225,8 +2225,8 @@ olxstr XLibMacros_funSGNameToHtmlX(const olxstr& name)  {
   TStrList toks(name, ' ');
   olxstr res;
   for( size_t i=0; i < toks.Count(); i++ )  {
-    if( toks[i].Length() == 2 )
-      res << toks[i].CharAt(0) << "<sub>" << toks[i].CharAt(1) << "</sub>";
+    if( toks[i].Length() >= 2 && XLibMacros_funSGNameIsNextSub(toks[i], 0) )
+      res << toks[i].CharAt(0) << "<sub>" << toks[i].CharAt(1) << "</sub>" << toks[i].SubStringFrom(2);
     else
       res << toks[i];
   }
@@ -2252,10 +2252,11 @@ void XLibMacros::funSG(const TStrObjList &Cmds, TMacroError &E)  {
         Replace("%N", sg->GetFullName()).\
         Replace("%HS", sg->GetHallSymbol()).\
         Replace("%s", sg->GetBravaisLattice().GetName());
-      if( Tmp.IndexOf("%H") != InvalidIndex )
         Tmp.Replace("%H", XLibMacros_funSGNameToHtmlX(sg->GetFullName()));
-      if( Tmp.IndexOf("%h") != InvalidIndex )
-        Tmp.Replace("%h", XLibMacros_funSGNameToHtml(sg->GetName()));
+        if( sg->GetName() == olxstr::DeleteChars(sg->GetFullName(), ' ') ) 
+          Tmp.Replace("%h", XLibMacros_funSGNameToHtmlX(sg->GetFullName()));
+        else
+          Tmp.Replace("%h", XLibMacros_funSGNameToHtml(sg->GetName()));
     }
     E.SetRetVal( Tmp );
   }
