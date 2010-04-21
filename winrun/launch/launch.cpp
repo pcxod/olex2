@@ -113,7 +113,7 @@ BOOL LaunchApp::InitInstance()  {
       TEFile::AddPathDelimeterI(base_dir) << prefix;
       if( !TEFile::IsAbsolutePath(base_dir) )  {
         if( base_dir.StartsFrom('.') || base_dir.StartsFrom("..") )
-          base_dir = TEFile::AbsolutePathTo(base_dir, original_bd);
+          base_dir = TEFile::ExpandRelativePath(base_dir, original_bd);
         else
           base_dir = original_bd + base_dir;
       }
@@ -122,7 +122,7 @@ BOOL LaunchApp::InitInstance()  {
       olxstr data_dir = sf.GetParam("data_dir", TBasicApp::GetBaseDir() + "olex2data");
       if( !TEFile::IsAbsolutePath(data_dir) )  {
         if( data_dir.StartsFrom('.') || data_dir.StartsFrom("..") )
-          data_dir = TEFile::AbsolutePathTo(data_dir, original_bd);
+          data_dir = TEFile::ExpandRelativePath(data_dir, original_bd);
         else
           data_dir = original_bd + data_dir;
       }
@@ -132,6 +132,8 @@ BOOL LaunchApp::InitInstance()  {
           throw TFunctionFailedException(__OlxSourceInfo, "Failed to create DATA_DIR");
       }
       SetEnvironmentVariable(_T("OLEX2_DATADIR"), TEFile::AddPathDelimeterI(data_dir).u_str());
+      // special treatment here...
+      SetEnvironmentVariable(_T("OLEX2_CCTBX_DIR"), NULL);
       for( size_t i=0; i < env_toks.Count(); i++ )  {
         size_t ei = env_toks[i].IndexOf('=');
         if( ei == InvalidIndex )  continue;
