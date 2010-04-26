@@ -45,7 +45,7 @@ void TCif::Clear()  {
   for( size_t i=0; i < Loops.Count(); i++ )
     delete Loops.GetObject(i);
   Loops.Clear();
-  GetRM().ClearAll();
+  GetRM().Clear(rm_clear_ALL);
   GetAsymmUnit().Clear();
   DataManager.Clear();
   Matrices.Clear();

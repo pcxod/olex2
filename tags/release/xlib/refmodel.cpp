@@ -54,7 +54,7 @@ void RefinementModel::SetDefaults() {
   TWIN_mat.I() *= -1;
 }
 //....................................................................................................
-void RefinementModel::Clear() {
+void RefinementModel::Clear(uint32_t clear_mask) {
   for( size_t i=0; i < SfacData.Count(); i++ )
     delete SfacData.GetValue(i);
   SfacData.Clear();
@@ -75,7 +75,9 @@ void RefinementModel::Clear() {
   rDELU.Clear();
   rISOR.Clear();
   rEADP.Clear();
-  rSAME.Clear();
+  ExyzGroups.Clear();
+  if( (clear_mask & rm_clear_SAME) != 0 )
+    rSAME.Clear();
   //ExyzGroups.Clear();
   //AfixGroups.Clear();
   InfoTables.Clear();
@@ -94,6 +96,10 @@ void RefinementModel::Clear() {
   Conn.Clear();
   PLAN.Clear();
   LS.Clear();
+  if( (clear_mask & rm_clear_AFIX) != 0 )
+    AfixGroups.Clear();
+  if( (clear_mask & rm_clear_VARS) != 0 )
+    Vars.ClearAll();
 }
 //....................................................................................................
 void RefinementModel::ClearVarRefs() {
@@ -135,7 +141,7 @@ void RefinementModel::RemUsedSymm(const smatd& matr)  {
 }
 //....................................................................................................
 RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignAUnit) {
-  ClearAll();
+  Clear(rm_clear_ALL);
   expl = rm.expl;
   used_weight = rm.used_weight;
   proposed_weight = rm.proposed_weight;
@@ -895,7 +901,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
 }
 //....................................................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {
-  ClearAll();
+  Clear(rm_clear_ALL);
   PersUtil::FloatNumberListFromStr(item.GetRequiredField("RefOutArg"), PLAN);
   PersUtil::FloatNumberListFromStr(item.GetRequiredField("Weight"), used_weight);
   PersUtil::FloatNumberListFromStr(item.GetRequiredField("ProposedWeight"), proposed_weight);
