@@ -1244,7 +1244,8 @@ void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( Options.Contains('h') )   lmode |= lmHydr;
   if( Options.Contains('f') )   lmode |= lmFixed;
   if( Options.Contains("qi") )   lmode |= lmQPeakI;
-  if( Options.Contains("i") )   lmode |= lmIdentity;
+  if( Options.Contains('i') )   lmode |= lmIdentity;
+  if( Options.Contains("co") )   lmode |= lmCOccu;
   if( lmode == 0 )  {
     lmode |= lmLabels;
     lmode |= lmQPeak;

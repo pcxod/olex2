@@ -664,7 +664,7 @@ void TMainForm::XApp( TGXApp *XA)  {
   this_InitMacroD(TelpV, EmptyString, fpOne,
 "Calculates ADPs for given thermal probability factor");
   this_InitMacroD(Labels,
-"p-part&;l-label&;v-variables&;o-occupancy&;a-afix&;h-show hydrogen atom labels&;\
+"p-part&;l-label&;v-variables&;o-occupancy&;co-chemical occupancy&;a-afix&;h-show hydrogen atom labels&;\
 f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
  (as in the ins file)&;qi-Q peak intensity&;i-display labels for identity atoms only",  fpNone,
 "Inverts visibility of atom labels on/off. Look at the options");
@@ -2032,7 +2032,7 @@ void TMainForm::AquireTooltipValue()  {
         Tooltip << "fixed): ";
       else
         Tooltip << "free): ";
-      Tooltip << TEValueD(ca.GetOccu(), ca.GetOccuEsd()).ToString();
+      Tooltip << TEValueD(ca.GetOccu()*ca.GetDegeneracy(), ca.GetOccuEsd()*ca.GetDegeneracy()).ToString();
       if( ca.GetEllipsoid() == NULL )  {
         Tooltip << "\nUiso (";
         if( ca.GetVarRef(catom_var_name_Uiso) != NULL && 
@@ -3500,9 +3500,8 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
     TFileHandlerManager::AddMemoryBlock(RefineDataFile, NULL, 0, plStructure);
     return;
   }
-  TTTable<TStrList> Table;
+  TTTable<TStrList> Table(8, 4);
   TStrList Output;
-  Table.Resize(13, 4);
 
   const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
   
@@ -3554,6 +3553,9 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
   Table[5][0] = "Refs(Fo > 4sig(Fo))";Table[5][1] = Lst.Refs4sig();
   Table[5][2] = "R(int)";             Table[5][3] = olxstr::FormatFloat(3,Lst.Rint());
   Table[6][0] = "R(sigma)";           Table[6][1] = olxstr::FormatFloat(3,Lst.Rsigma());
+  Table[6][2] = "F000";               Table[6][3] = olxstr::FormatFloat(3,Lst.F000()).TrimFloat();
+  Table[7][0] = "&rho;/g*mm<sup>-3</sup>"; Table[7][1] = olxstr::FormatFloat(3,Lst.Rho());
+  Table[7][2] = "&mu;/mm<sup>-1</sup>";  Table[7][3] = olxstr::FormatFloat(3,Lst.Mu());
 
   Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));

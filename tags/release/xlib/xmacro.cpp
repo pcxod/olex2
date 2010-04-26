@@ -3689,6 +3689,12 @@ void XLibMacros::funLst(const TStrObjList &Cmds, TMacroError &E)  {
     E.SetRetVal(Lst.Peak());
   else if( Cmds[0].Equalsi("hole") )
     E.SetRetVal(Lst.Hole());
+  else if( Cmds[0].Equalsi("F000") )
+    E.SetRetVal(Lst.F000());
+  else if( Cmds[0].Equalsi("Rho") )
+    E.SetRetVal(Lst.Rho());
+  else if( Cmds[0].Equalsi("Mu") )
+    E.SetRetVal(Lst.Mu());
   else if( Cmds[0].Equalsi("flack") )  {
     if( Lst.HasFlack() )
       E.SetRetVal(Lst.Flack().ToString());

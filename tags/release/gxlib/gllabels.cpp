@@ -64,30 +64,26 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     if( (Mode & lmIdentity) != 0 && !XA.Atom().GetMatrix(0).IsFirst() )  continue;
     const TCAtom& ca = XA.Atom().CAtom();
     olxstr Tmp(EmptyString, 48);
-    if( Mode & lmLabels )  {
+    if( (Mode & lmLabels) != 0 )  {
       Tmp << XA.Atom().GetLabel();
       if( XA.Atom().CAtom().GetResiId() != 0 )  {
         size_t resi = ca.GetParent()->GetResidue(ca.GetResiId()).GetNumber();
         Tmp << '_' << resi;
       }
     }
-    if( Mode & lmPart )  {
-      if( ca.GetPart() != 0)  {
-        if( Tmp.Length() )  Tmp << ", ";
-        Tmp << (int)ca.GetPart();
-      }
+    if( (Mode & lmPart) != 0 && ca.GetPart() != 0 )  {
+      if( !Tmp.IsEmpty() )  Tmp << ", ";
+      Tmp << (int)ca.GetPart();
     }
-    if( Mode & lmAfix )  {
-      if( ca.GetAfix() != 0 ) {
-        if( Tmp.Length() )  Tmp << ", ";
-        Tmp << ca.GetAfix();
-      }
+    if( (Mode & lmAfix) != 0 && ca.GetAfix() != 0 ) {
+      if( !Tmp.IsEmpty() )  Tmp << ", ";
+      Tmp << ca.GetAfix();
     }
-    if( Mode & lmOVar )  {
+    if( (Mode & lmOVar) != 0 )  {
       const XVarReference* vr = ca.GetVarRef(catom_var_name_Sof);
       if( vr != NULL )  {
         if( vr->relation_type != relation_None )  {
-          if( Tmp.Length() )  Tmp << ", ";
+          if( !Tmp.IsEmpty() )  Tmp << ", ";
           if( vr->relation_type == relation_AsVar )
             Tmp << vr->Parent.GetId()+1;
           else
@@ -95,25 +91,29 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
         }
       }
     }
-    if( (Mode & lmQPeakI) && (XA.Atom().GetType() == iQPeakZ) )  {
+    if( (Mode & lmQPeakI) != 0 && (XA.Atom().GetType() == iQPeakZ) )  {
       if( !Tmp.IsEmpty() )  Tmp << ", ";
       Tmp << olxstr::FormatFloat(1, ca.GetQPeak());
     }
-    if( Mode & lmAOcc )  {
-      if( Tmp.Length() )  Tmp << ", ";
+    if( (Mode & lmAOcc) != 0 )  {
+      if( !Tmp.IsEmpty() )  Tmp << ", ";
       Tmp << olxstr::FormatFloat(2, rm.Vars.GetParam(ca, catom_var_name_Sof) );
     }
-    if( Mode & lmUiso && ca.GetUisoOwner() == NULL )  {
+    if( (Mode & lmCOccu) != 0 )  {
       if( !Tmp.IsEmpty() )  Tmp << ", ";
-        Tmp << olxstr::FormatFloat(2, rm.Vars.GetParam(ca, catom_var_name_Uiso));
+      Tmp << olxstr::FormatFloat(3, ca.GetOccu()*ca.GetDegeneracy() );
     }
-    if( Mode & lmUisR )  {
+    if( (Mode & lmUiso) != 0 && ca.GetUisoOwner() == NULL )  {
+      if( !Tmp.IsEmpty() )  Tmp << ", ";
+      Tmp << olxstr::FormatFloat(2, rm.Vars.GetParam(ca, catom_var_name_Uiso));
+    }
+    if( (Mode & lmUisR) != 0 )  {
       if( ca.GetUisoOwner() != NULL )  {
         if( !Tmp.IsEmpty() )  Tmp << ", ";
-          Tmp << olxstr::FormatFloat(2, ca.GetUisoScale());
+        Tmp << olxstr::FormatFloat(2, ca.GetUisoScale());
       }
     }
-    if( Mode & lmFixed )  {
+    if( (Mode & lmFixed) != 0 )  {
       olxstr fXyz;
       for( size_t j=0; j < 3; j++ )  {
         if( ca.GetVarRef(catom_var_name_X+j) != NULL && ca.GetVarRef(catom_var_name_X+j)->relation_type == relation_None )
@@ -148,15 +148,13 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
         Tmp << "Uiso";
       }
     }
-    if( Mode & lmOccp )  {
+    if( (Mode & lmOccp) != 0 && ca.GetOccu() != 1.0 )  {
       if( !Tmp.IsEmpty() )  Tmp << ", ";
-      if( ca.GetOccu() != 1.0 )
-        Tmp << olxstr::FormatFloat(3, ca.GetOccu() );
+      Tmp << olxstr::FormatFloat(3, ca.GetOccu());
     }
-    if( Mode & lmConRes )  {
+    if( (Mode & lmConRes) != 0 && ca.GetOccu() != 1.0 )  {
       if( !Tmp.IsEmpty() )  Tmp << ", ";
-      if( ca.GetOccu() != 1.0 )
-        Tmp << olxstr::FormatFloat(3, ca.GetOccu() );
+      Tmp << olxstr::FormatFloat(3, ca.GetOccu());
     }
 #ifdef _DEBUG
     if( olx_is_valid_index(ca.GetSameId()) )
