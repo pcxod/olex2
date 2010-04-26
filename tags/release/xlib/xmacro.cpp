@@ -2475,7 +2475,8 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
         THA, // header attributes
         CLA, // cell attributes,
         true,
-        TD->GetFieldValue("coln", "1").ToInt()
+        TD->GetFieldValue("coln", "1").ToInt(),
+        TD->GetFieldValue("colsa", EmptyString)
       ); //bool Format) const  {
       //DT.CreateHTMLList(SL, Tmp, true, false, true);
     }

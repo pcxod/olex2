@@ -97,11 +97,13 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     }
     if( (Mode & lmAOcc) != 0 )  {
       if( !Tmp.IsEmpty() )  Tmp << ", ";
-      Tmp << olxstr::FormatFloat(2, rm.Vars.GetParam(ca, catom_var_name_Sof) );
+      Tmp << olxstr::FormatFloat(2, rm.Vars.GetParam(ca, catom_var_name_Sof));
     }
     if( (Mode & lmCOccu) != 0 )  {
+      const double val = ca.GetOccu()*ca.GetDegeneracy();
+      if( olx_abs(val-1) < 1e-5 )  continue;
       if( !Tmp.IsEmpty() )  Tmp << ", ";
-      Tmp << olxstr::FormatFloat(3, ca.GetOccu()*ca.GetDegeneracy() );
+      Tmp << olxstr::FormatFloat(3, ca.GetOccu()*ca.GetDegeneracy());
     }
     if( (Mode & lmUiso) != 0 && ca.GetUisoOwner() == NULL )  {
       if( !Tmp.IsEmpty() )  Tmp << ", ";
