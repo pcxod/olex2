@@ -116,7 +116,9 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(VoidE, EmptyString, fpNone|psFileLoaded, "calculates number of electrons in the voids area" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(ChangeSG, EmptyString, fpOne|fpFour|psFileLoaded, "[shift] SG Changes space group of current structure" );
+  xlib_InitMacro(ChangeSG, EmptyString, fpAny^fpNone|psFileLoaded,
+    "[shift] SG. Changes space group of current structure, applying given shit prior (if provided) to\
+ the change of symmetry of the unit cell");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Htab, "t-adds extra elements (comma separated -t=Br,I) to the donor list. Defaults are [N,O,F,Cl,S]", fpNone|fpOne|fpTwo|psCheckFileTypeIns, 
     "Adds HTAB instructions to the ins file, maximum bond length [2.9] and minimal angle [150] might be provided" );
@@ -151,7 +153,10 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(LstMac, "h-Shows help", fpAny, "Lists all defined macros. Accepts * based masks" );
   xlib_InitMacro(LstFun, "h-Shows help", fpAny, "Lists all defined functions. Accepts * based masks" );
   xlib_InitMacro(LstFS, EmptyString, fpAny, "Prints out detailed content of virtual file system. Accepts * based masks");
-  xlib_InitMacro(SGS, EmptyString, fpOne|fpTwo|psFileLoaded, "Changes current space group settings using provided cell setting (if applicable) and axis");
+  xlib_InitMacro(SGS, EmptyString, fpAny^fpNone|psFileLoaded,
+ "Changes current space group settings using provided cell setting (if applicable) and axis, or 9\
+ transformation matrix elements and the space group symbol. If the transformed HKL file is required,\
+ it should be provided as the last argument (like test.hkl)");
   xlib_InitMacro(ASR, EmptyString, fpNone^psFileLoaded, "Absolute structure refinement: adds TWIN and BASF to current model in the case of non-centrosymmetric structure");
   xlib_InitMacro(Describe, EmptyString, fpNone^psFileLoaded, "Describes current refinement in a human readable form");
   xlib_InitMacro(Sort, EmptyString, fpAny^psFileLoaded, "Sorts atoms of the default residue. Atom sort arguments:\
@@ -1411,18 +1416,18 @@ void XLibMacros::macLstFun(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
 }
 //..............................................................................
-void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg)  {
+void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const olxstr& resHKL_FN)  {
   TXApp& xapp = TXApp::GetInstance();
   TBasicApp::GetLog() << (olxstr("Cell choice trasformation matrix: \n"));
   TBasicApp::GetLog() << tm[0].ToString() << '\n';
   TBasicApp::GetLog() << tm[1].ToString() << '\n';
   TBasicApp::GetLog() << tm[2].ToString() << '\n';
   TBasicApp::GetLog() << ((olxstr("New space group: ") << new_sg.GetName() << '\n'));
-  const mat3d tm_t( mat3d::Transpose(tm) );
+  const mat3d tm_t(mat3d::Transpose(tm));
   xapp.XFile().UpdateAsymmUnit();
   TAsymmUnit& au = xapp.XFile().LastLoader()->GetAsymmUnit();
-  const mat3d i_tm( tm.Inverse() );
-  mat3d f2c( mat3d::Transpose(xapp.XFile().GetAsymmUnit().GetCellToCartesian())*tm );
+  const mat3d i_tm(tm.Inverse());
+  const mat3d f2c = mat3d::Transpose((mat3d::Transpose(au.GetCellToCartesian())*tm));
   mat3d ax_err;
   ax_err[0] = vec3d(olx_sqr(au.Axes()[0].GetE()), olx_sqr(au.Axes()[1].GetE()), olx_sqr(au.Axes()[2].GetE()));
   ax_err[1] = ax_err[0];  ax_err[2] = ax_err[0];
@@ -1437,22 +1442,21 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg)  {
         tm_p[i][j] = - tm_p[i][j];
   ax_err *= tm_p;
   an_err *= tm_p;
-  f2c.Transpose();
   au.Axes()[0].V() = f2c[0].Length();  au.Axes()[0].E() = sqrt(ax_err[0][0]);
   au.Axes()[1].V() = f2c[1].Length();  au.Axes()[1].E() = sqrt(ax_err[1][1]);
   au.Axes()[2].V() = f2c[2].Length();  au.Axes()[2].E() = sqrt(ax_err[2][2]);
   au.Angles()[0].V() = acos(f2c[1].CAngle(f2c[2]))*180.0/M_PI;  au.Angles()[0].E() = sqrt(an_err[0][0]);
   au.Angles()[1].V() = acos(f2c[0].CAngle(f2c[2]))*180.0/M_PI;  au.Angles()[1].E() = sqrt(an_err[1][1]);
   au.Angles()[2].V() = acos(f2c[0].CAngle(f2c[1]))*180.0/M_PI;  au.Angles()[2].E() = sqrt(an_err[2][2]);
+  const mat3d old_cac = au.GetCartesianToCell();
+  au.InitMatrices();
+  const mat3d elptm = mat3d::Transpose(au.GetCellToCartesian())*i_tm*mat3d::Transpose(old_cac);
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     TCAtom& ca = au.GetAtom(i);
     ca.ccrd() = i_tm * ca.ccrd();
-    if( ca.GetEllipsoid() != NULL )  { // reset to usio
-      au.NullEllp( ca.GetEllipsoid()->GetId() );
-      ca.AssignEllp(NULL);
-    }
+    if( ca.GetEllipsoid() != NULL )
+      ca.GetEllipsoid()->MultMatrix(elptm);
   }
-  au.PackEllps();
   TBasicApp::GetLog() << (olxstr("New cell: ") << au.Axes()[0].ToString() << 
     ' ' << au.Axes()[1].ToString() << 
     ' ' << au.Axes()[2].ToString() <<
@@ -1461,27 +1465,29 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg)  {
     ' '  << au.Angles()[2].ToString() << '\n'
     );
   TBasicApp::GetLog().Error("Cell esd's are estimated!");
-  olxstr hkl_fn( xapp.LocateHklFile() );
-  if( !hkl_fn.IsEmpty() )  {
-    THklFile hklf;
-    hklf.LoadFromFile(hkl_fn);
-    for( size_t i=0; i < hklf.RefCount(); i++ )  {
-      vec3d hkl(hklf[i].GetH(), hklf[i].GetK(), hklf[i].GetL());
-      hkl = tm_t * hkl;
-      hklf[i].SetH(olx_round(hkl[0]));
-      hklf[i].SetK(olx_round(hkl[1]));
-      hklf[i].SetL(olx_round(hkl[2]));
+  if( !resHKL_FN.IsEmpty() )  {
+    olxstr hkl_fn(xapp.LocateHklFile());
+    if( !hkl_fn.IsEmpty() )  {
+      THklFile hklf;
+      hklf.LoadFromFile(hkl_fn);
+      for( size_t i=0; i < hklf.RefCount(); i++ )  {
+        vec3d hkl(hklf[i].GetH(), hklf[i].GetK(), hklf[i].GetL());
+        hkl = tm_t * hkl;
+        hklf[i].SetH(olx_round(hkl[0]));
+        hklf[i].SetK(olx_round(hkl[1]));
+        hklf[i].SetL(olx_round(hkl[2]));
+      }
+      hklf.SaveToFile(resHKL_FN);
+      xapp.XFile().GetRM().SetHKLSource(resHKL_FN);
     }
-    olxstr new_hkl_fn( TEFile::ExtractFilePath(hkl_fn) );
-    TEFile::AddPathDelimeterI(new_hkl_fn) << "test.hkl";
-    hklf.SaveToFile( new_hkl_fn );
-    xapp.XFile().GetRM().SetHKLSource(new_hkl_fn);
+    else
+      TBasicApp::GetLog().Error("Could not locate source HKL file");
   }
   au.ChangeSpaceGroup(new_sg);
   au.InitMatrices();
   xapp.XFile().LastLoaderChanged();
   // keep the settings, as the hkl file has changed, so if user exists... inconsistency
-  xapp.XFile().SaveToFile( xapp.XFile().GetFileName(), false );
+  xapp.XFile().SaveToFile(xapp.XFile().GetFileName(), false);
 }
 //..............................................................................
 TSpaceGroup* XLibMacros_macSGS_FindSG(TPtrList<TSpaceGroup>& sgs, const olxstr& axis)  {
@@ -1504,6 +1510,26 @@ olxstr XLibMacros_macSGS_SgInfo(const olxstr& caxis)  {
 }
 void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
+  olxstr hkl_fn;
+  if( Cmds.Count() > 1 && Cmds.Last().String.EndsWithi(".hkl") )  {
+    hkl_fn = Cmds.Last().String;
+    Cmds.Delete(Cmds.Count()-1);
+  }
+  if( Cmds.Count() == 10 )  {  // transformation provided?
+    TSpaceGroup* sg = TSymmLib::GetInstance().FindGroup(Cmds[9]);
+    if( sg == NULL )  {
+      E.ProcessingError(__OlxSrcInfo, "undefined space group");
+      return;
+    }
+    mat3d tm;
+    for( int i=0; i < 9; i++ )
+      tm[i/3][i%3] = Cmds[i].ToDouble();
+    if( !tm.IsI() )  {
+      ChangeCell(tm, *sg, hkl_fn);
+      TBasicApp::GetLog() << "The cell, atomic coordinates and ADP's are transformed using user transform\n";
+    }
+    return;
+  }
   TSpaceGroup& sg = Cmds.Count() == 1 ? xapp.XFile().GetLastLoaderSG() : *TSymmLib::GetInstance().FindGroup(Cmds[1]);
   SGSettings sg_set(sg);
   olxstr axis = sg_set.axisInfo.GetAxis();
@@ -1530,14 +1556,14 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   mat3d tm;
   if( sg_set.GetTrasformation(n_ai, tm) )  {
-    TSpaceGroup* new_sg = XLibMacros_macSGS_FindSG( sgs, n_ai.GetAxis() );
+    TSpaceGroup* new_sg = XLibMacros_macSGS_FindSG(sgs, n_ai.GetAxis());
     if( new_sg == NULL && n_ai.GetAxis() == "abc" )
-      new_sg = XLibMacros_macSGS_FindSG( sgs, EmptyString );
+      new_sg = XLibMacros_macSGS_FindSG(sgs, EmptyString);
     if( new_sg == NULL )  {
       E.ProcessingError(__OlxSrcInfo, "Could not locate space group for given settings");
       return;
     }
-    ChangeCell(tm, *new_sg);
+    ChangeCell(tm, *new_sg, hkl_fn);
   }
   else  {
     E.ProcessingError(__OlxSrcInfo, "could not find appropriate transformation");
@@ -3136,7 +3162,6 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //..............................................................................
 void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
-  
   TLattice& latt = xapp.XFile().GetLattice();
   TUnitCell& uc = latt.GetUnitCell();
   TAsymmUnit& au = latt.GetAsymmUnit();
@@ -3182,7 +3207,7 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
     }
     if( !tm.IsI() )  {
       TBasicApp::GetLog() << "EXPERIMENTAL: transformations considering b unique\n";
-      ChangeCell(tm, *sg);
+      ChangeCell(tm, *sg, EmptyString);
     }
     else  {
       TBasicApp::GetLog() << "The transformation is not supported\n";
@@ -3201,17 +3226,15 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
     }
   }
   else   {
-    for( size_t i=0; i < list.Count(); i++ )  { 
+    for( size_t i=0; i < list.Count(); i++ )
       list[i].SetC(1);
-    }
   }
-  vec3d v;
   for( size_t i=0; i < list.Count(); i++ )  {
     if( list[i].GetC() == 0 )  continue;
     for( size_t j=i+1; j < list.Count(); j++ )  {
       if( list[j].GetC() == 0 )  continue;
       for( size_t k=1; k < ml.Count(); k++ )  {
-        v = ml[k] * list[i].GetA();
+        vec3d v = ml[k] * list[i].GetA();
         v -= list[j].GetA();
         v[0] -= olx_round(v[0]);  v[1] -= olx_round(v[1]);  v[2] -= olx_round(v[2]);
         au.CellToCartesian(v);

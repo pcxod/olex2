@@ -114,7 +114,7 @@ class XLibMacros  {
   static DefFunc(Run) // SG modification
 
   static TActionQList Actions;
-  static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg);
+  static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg, const olxstr& resHKL_FN);
 public:
   static const olxstr NoneString;
   static const olxstr NAString;
