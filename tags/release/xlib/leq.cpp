@@ -212,11 +212,8 @@ double XVarManager::SetParam(IXVarReferencer& ca, short var_index, double val) {
       actual_val = val - iv*10;
     else {
       var_rel = iv > 0 ? relation_AsVar : relation_AsOneMinusVar;
-      coeff = val -iv*10;
-      actual_val = coeff*var->GetValue();
-      if( iv < 0 )
-        actual_val += 1;
-      coeff = olx_abs(coeff);
+      coeff = olx_abs(val -iv*10);
+      actual_val = coeff*(var_rel == relation_AsVar ? var->GetValue() : 1.0 - var->GetValue());
     }
   }
   ca.SetValue(var_index, actual_val);
