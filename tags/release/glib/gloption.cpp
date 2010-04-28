@@ -1,11 +1,6 @@
 //---------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "gloption.h"
 #include "estrlist.h"
 #include "emath.h"
@@ -34,7 +29,7 @@ bool TGlOption::FromString(const olxstr &S)  {
     data[3] = (float)SL[3].ToDouble();
   }
   else  {
-    *this = S.ToInt();
+    *this = S.SafeInt<uint32_t>();
   }
   return true;
 }

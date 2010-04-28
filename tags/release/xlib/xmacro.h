@@ -111,7 +111,10 @@ class XLibMacros  {
   static DefFunc(FATA) // atom type assignment from Fourier map
 
   static DefFunc(RemoveSE) // SG modification
-  static DefFunc(Run) // SG modification
+  static DefFunc(Run)
+
+  static DefFunc(CCrd) // cell coordinates of atoms
+  static DefFunc(Crd) // cartesian coordinates of atoms
 
   static TActionQList Actions;
   static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg, const olxstr& resHKL_FN);

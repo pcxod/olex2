@@ -481,8 +481,6 @@ private:
 
   DefFunc(Sel)
   DefFunc(Atoms)
-  DefFunc(Crd)
-  DefFunc(CCrd)
   DefFunc(Env)
   DefFunc(FPS)
 

@@ -741,7 +741,9 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacro(ShowH, , fpNone|fpTwo|psFileLoaded);
   this_InitMacro(Fvar, , (fpAny)|psCheckFileTypeIns);
   this_InitMacro(Sump, , (fpAny^fpNone)|psCheckFileTypeIns);
-  this_InitMacro(Part, p&;lo, (fpAny^fpNone)|psFileLoaded);
+  this_InitMacroD(Part, "p-number of parts&;lo-link ocupancy of given atoms through FVAR's",
+    fpAny|psFileLoaded, "Sets part(s) to given atoms, also if -lo is given and -p > 1 allows linking\
+ occupancy of given atoms throw FVAR and/or SUMP in cases when -p > 2");
   this_InitMacroD(Afix,"n-to accept N atoms in the rings for afix 66" , 
     (fpAny^fpNone)|psCheckFileTypeIns,
     "sets atoms afix, special cases are 56,69,66,69,76,79,106,109,116 and 119");
@@ -967,8 +969,6 @@ separated values of Atom Type and radius, an entry a line");
   this_InitFunc(VVol, fpNone|fpOne|psFileLoaded);
 
   this_InitFunc(Env, fpOne|psFileLoaded);
-  this_InitFunc(Crd, fpAny|psFileLoaded);
-  this_InitFunc(CCrd, fpAny|psFileLoaded);
   this_InitFunc(Atoms, fpOne|psFileLoaded);
 
   this_InitFunc(Sel, fpNone|psFileLoaded);
@@ -3257,16 +3257,17 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     if( cpu_cnt > 0 )
       FXApp->SetMaxThreadCount(cpu_cnt);
   }
-
-  olxstr T( I->GetFieldValue("BgColor") );
-  if( !T.IsEmpty() )  FBgColor.FromString(T);
+  if( FBgColor.GetRGB() == 0xffffffff )  {  // only if the information got lost
+    olxstr T( I->GetFieldValue("BgColor") );
+    if( !T.IsEmpty() )  FBgColor.FromString(T);
+  }
   bool whiteOn =  I->GetFieldValue("WhiteOn", FalseString).ToBool();
   FXApp->GetRender().LightModel.SetClearColor(whiteOn ? 0xffffffff : FBgColor.GetRGB());
 
-  T = I->GetFieldValue("Gradient", EmptyString);
   GradientPicture = TEFile::ExpandRelativePath(I->GetFieldValue("GradientPicture", EmptyString));
   if( !TEFile::Exists(GradientPicture) )
     GradientPicture = EmptyString;
+  olxstr T = I->GetFieldValue("Gradient", EmptyString);
   if( !T.IsEmpty() ) 
     ProcessMacro(olxstr("grad ") << T);
 

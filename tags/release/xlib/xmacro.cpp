@@ -236,6 +236,9 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitFunc(Run, fpOne, "Same as the macro, executes provided commands (separated by >>) returns true if succeded");
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(Lst, fpOne|psCheckFileTypeIns, "returns a value from the Lst file");
+//_________________________________________________________________________________________________________________________
+  xlib_InitFunc(Crd, fpAny|psFileLoaded, "returns center of given (selected) atoms in cartesian coordinates");
+  xlib_InitFunc(CCrd, fpAny|psFileLoaded, "returns center of given (selected) atoms in fractional coordinates");
 }
 //..............................................................................
 void XLibMacros::macTransform(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -3961,5 +3964,35 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     xlatt.GrowAtoms(iatoms, transforms);
   }
+}
+//..............................................................................
+void XLibMacros::funCrd(const TStrObjList& Params, TMacroError &E) {
+  TSAtomPList Atoms;
+  if( !TXApp::GetInstance().FindSAtoms(Params.Text(' '), Atoms, true, true) ) {
+    E.ProcessingError(__OlxSrcInfo, "could not find any atoms" );
+    return;
+  }
+  vec3d center;
+  for( size_t i=0; i < Atoms.Count(); i++ )
+    center += Atoms[i]->crd();
+  center /= Atoms.Count();
+  E.SetRetVal(olxstr::FormatFloat(3, center[0]) << ' ' <<
+              olxstr::FormatFloat(3, center[1]) << ' ' <<
+              olxstr::FormatFloat(3, center[2]));
+}
+//..............................................................................
+void XLibMacros::funCCrd(const TStrObjList& Params, TMacroError &E)  {
+  TSAtomPList Atoms;
+  if( !TXApp::GetInstance().FindSAtoms(Params.Text(' '), Atoms, true, true) ) {
+    E.ProcessingError(__OlxSrcInfo, "could not find any atoms" );
+    return;
+  }
+  vec3d ccenter;
+  for( size_t i=0; i < Atoms.Count(); i++ )
+    ccenter += Atoms[i]->ccrd();
+  ccenter /= Atoms.Count();
+  E.SetRetVal(olxstr::FormatFloat(3, ccenter[0]) << ' ' <<
+              olxstr::FormatFloat(3, ccenter[1]) << ' ' <<
+              olxstr::FormatFloat(3, ccenter[2]));
 }
 //..............................................................................

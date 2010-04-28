@@ -305,7 +305,7 @@ void TMainForm::funGetVar(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::funIsVar(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal( TOlxVars::IsVar(Params[0]));
+  E.SetRetVal(TOlxVars::IsVar(Params[0]));
 }
 //..............................................................................
 void TMainForm::funVVol(const TStrObjList& Params, TMacroError &E)  {
@@ -344,10 +344,15 @@ void TMainForm::funSel(const TStrObjList& Params, TMacroError &E)  {
   for( size_t i=0; i < sel.Count(); i++ )  {
     AGDrawObject& gdo = sel[i];
     if( EsdlInstanceOf(gdo, TXAtom) )
-      atoms.Add( &((TXAtom&)gdo).Atom() );
+      atoms.Add(((TXAtom&)gdo).Atom());
     else if( EsdlInstanceOf(gdo, TXBond) )  {
-      atoms.Add( &((TXBond&)gdo).Bond().A() );
-      atoms.Add( &((TXBond&)gdo).Bond().B() );
+      atoms.Add(((TXBond&)gdo).Bond().A());
+      atoms.Add(((TXBond&)gdo).Bond().B());
+    }
+    else if( EsdlInstanceOf(gdo, TXPlane) )  {
+      TSPlane& sp = ((TXPlane&)gdo).Plane();
+      for( size_t j=0; j < sp.Count(); j++ )
+        atoms.Add(sp.Atom(j));
     }
   }
   olxstr tmp;
@@ -366,41 +371,6 @@ void TMainForm::funSel(const TStrObjList& Params, TMacroError &E)  {
 void TMainForm::funAtoms(const TStrObjList& Params, TMacroError &E)
 {
   throw TNotImplementedException(__OlxSourceInfo);
-}
-//..............................................................................
-void TMainForm::funCrd(const TStrObjList& Params, TMacroError &E) {
-  TXAtomPList Atoms;
-  if( !FindXAtoms(Params, Atoms, true, true) ) {
-    E.ProcessingError(__OlxSrcInfo, "could not find any atoms" );
-    return;
-  }
-  vec3d center;
-  for( size_t i=0; i < Atoms.Count(); i++ )
-    center += Atoms[i]->Atom().crd();
-
-  center /= Atoms.Count();
-  olxstr tmp = olxstr::FormatFloat(3, center[0]);
-  tmp << ' ' << olxstr::FormatFloat(3, center[1]) << ' ' <<
-         olxstr::FormatFloat(3, center[2]);
-  E.SetRetVal( tmp );
-}
-//..............................................................................
-void TMainForm::funCCrd(const TStrObjList& Params, TMacroError &E)  {
-  TXAtomPList Atoms;
-  if( !FindXAtoms(Params, Atoms, true, true) )  {
-    E.ProcessingError(__OlxSrcInfo, "no atoms provided" );
-    return;
-  }
-  vec3d ccenter;
-  for( size_t i=0; i < Atoms.Count(); i++ )
-    ccenter += Atoms[i]->Atom().ccrd();
-
-  ccenter /= Atoms.Count();
-  olxstr tmp= olxstr::FormatFloat(3, ccenter[0]);
-  tmp << ' ' << olxstr::FormatFloat(3, ccenter[1]) << ' ' <<
-         olxstr::FormatFloat(3, ccenter[2]); 
-
-  E.SetRetVal( tmp );
 }
 //..............................................................................
 void TMainForm::funEnv(const TStrObjList& Params, TMacroError &E)  {
@@ -1076,14 +1046,14 @@ void TMainForm::macWait(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olx_sleep(Cmds[0].ToInt());
 }
 //..............................................................................
-void TMainForm::macSwapBg(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)
-{
-  // hide the gradient background
-  FXApp->GetRender().Background()->SetVisible(false);
+void TMainForm::macSwapBg(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  FXApp->GetRender().Background()->SetVisible(false);  // hide the gradient background
   if( FXApp->GetRender().LightModel.GetClearColor().GetRGB() == 0xffffffff )
     FXApp->GetRender().LightModel.SetClearColor(FBgColor);
-  else
+  else  {
+    FBgColor = FXApp->GetRender().LightModel.GetClearColor();  // update if changed externally...
     FXApp->GetRender().LightModel.SetClearColor(0xffffffff);
+  }
   FXApp->GetRender().InitLights();
 }
 //..............................................................................
@@ -2498,7 +2468,7 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
             XVar& nv = rm.Vars.NewVar(1./Atoms.Count());
             rm.Vars.AddVarRef(nv, Atoms[j]->Atom().CAtom(), catom_var_name_Sof, relation_AsVar, 1.0);
           }
-          leq->AddMember( Atoms[j]->Atom().CAtom().GetVarRef(catom_var_name_Sof)->Parent);
+          leq->AddMember(Atoms[j]->Atom().CAtom().GetVarRef(catom_var_name_Sof)->Parent);
         }
       }
     }
