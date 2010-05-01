@@ -865,28 +865,30 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
  olxstr (*ResolveExternal)(const olxstr& valueName),
  bool DoubleTheta) const
 {
-  olxstr Tmp, Val, SVal;
-  size_t index, start, end;
-  double theta;
+  size_t start, end;
   for( size_t i=0; i < String.Length(); i++ )  {
     if( String.CharAt(i) == Quote )  {
       if( (i+1) < String.Length() && String.CharAt(i+1) == Quote )  {
         String.Delete(i, 1);
         continue;
       }
-      if( (i+1) < String.Length() && 
-        (String.CharAt(i+1) == '$' || String.CharAt(i+1) == '_' || 
-          (String.CharAt(i+1) <= '9' && String.CharAt(i+1) >= '0')) ) {
-        Val = EmptyString;
+      if( i > 0 && String.CharAt(i-1) == '\\' )  // escaped?
+        continue;
+      olxstr Val;
+      if( (i+1) < String.Length() &&
+          (String.CharAt(i+1) == '$' || String.CharAt(i+1) == '_' ||
+          olxstr::o_isdigit(String.CharAt(i+1))) )
+      {
         start = i;
-        while( (i+1) < String.Length() )  {
-          i++;
+        while( ++i < String.Length() )  {
           if( String.CharAt(i) == Quote )  {
             if( (i+1) < String.Length() && String.CharAt(i+1) == Quote )  {
               String.Delete(i, 1);
               Val << Quote;
               continue;
             }
+            else if( String.CharAt(i-1) == '\\' ) // escaped?
+              ;
             else  {
               end = i;  
               break;
@@ -900,7 +902,9 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
           if( Val.CharAt(0) == '$' )  {
             if( ResolveExternal != NULL )  {
               String.Delete(start, end-start+1);
-              Tmp = ResolveExternal( Val );
+              Val.Replace("\\%", '%');
+              ResolveParamsFromDictionary(Dic, Val, Quote, ResolveExternal);
+              olxstr Tmp = ResolveExternal(Val);
               ResolveParamsFromDictionary(Dic, Tmp, Quote, ResolveExternal);
               String.Insert(Tmp, start);
               i = start + Tmp.Length() - 1;
@@ -908,9 +912,8 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
           }
           else if( Val.CharAt(0) == '_' )  {
             CifData* Params = FindParam(Val);
-            if( Params == NULL || Params->data.IsEmpty() )  
-              Tmp = 'N';
-            else
+            olxstr Tmp = 'N';
+            if( Params != NULL && !Params->data.IsEmpty() )  
               Tmp = Params->data[0];
             String.Delete(start, end-start+1);
             String.Insert(Tmp, start);
@@ -920,8 +923,7 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
             TBasicApp::GetLog() << olxstr("A number or function starting from '$' or '_' is expected");
           continue;
         }
-        index = Val.ToInt();
-        Val = EmptyString;
+        size_t index = Val.ToSizeT();
         // Not much use if not for personal use :D
         /*
         if( index >= 73 )  {  //direct insert
@@ -945,63 +947,57 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
           TBasicApp::GetLog().Error(olxstr("Wrong parameter index ") << index);
         else  {  // resolve indexes
           String.Delete(start, end-start+1);
-          SVal = Dic[index-1];
-          Tmp = EmptyString;
-          if( SVal.Length() != 0 )  {
-            if( SVal.Equalsi("date") )  {
-              Tmp = TETime::FormatDateTime( TETime::Now() );
-              String.Insert(Tmp, start);
-            }
+          olxstr SVal = Dic[index-1];
+          olxstr value;
+          if( !SVal.IsEmpty() )  {
+            if( SVal.Equalsi("date") )
+              value = TETime::FormatDateTime(TETime::Now());
             else if( SVal.Equalsi("sg_number") )  {
               TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(GetAsymmUnit());
               if( sg != NULL )
-                Tmp = sg->GetNumber();
+                value = sg->GetNumber();
               else
-                Tmp = "unknown";
+                value = "unknown";
             }
             else if( SVal.Equalsi("data_name") )
-              Tmp = GetDataName();
+              value = GetDataName();
             else if( SVal.Equalsi("weighta") )
-              Tmp = GetWeightA();
+              value = GetWeightA();
             else if( SVal.Equalsi("weightb") )
-              Tmp = GetWeightB();
+              value = GetWeightB();
             else {
               CifData* Params = FindParam(SVal);
               if( Params == NULL )  {
                 TBasicApp::GetLog().Info(olxstr("The parameter \'") << SVal << "' is not found");
-                Tmp = "N";
+                value = 'N';
               }
               else if( !Params->data.Count() )  {
                 TBasicApp::GetLog().Info(olxstr("Value of parameter \'") << SVal << "' is not found");
-                  Tmp = "none";
+                  value = "none";
               }
               else if( Params->data.Count() == 1 )  {
                 if( Params->data[0].IsEmpty() )  {
                   TBasicApp::GetLog().Info(olxstr("Value of parameter \'") << SVal << "' is not found");
-                  Tmp = "none";
+                  value = "none";
                 }
                 else if( Params->data[0].CharAt(0) == '?' )  {
                   TBasicApp::GetLog().Info(olxstr("Value of parameter \'") << SVal << "' is not defined");
-                  Tmp = "?";
+                  value = '?';
                 }
                 else
-                  Tmp = Params->data[0];
+                  value = Params->data[0];
               }
               else if( index == 13 || index == 14 || index == 30 )  {
-                if( DoubleTheta )  {
-                  theta = Params->data.Text(EmptyString).ToDouble();
-                  theta *= 2;
-                  Tmp = theta;
-                }
+                if( DoubleTheta )
+                  value = (Params->data.Text(EmptyString).ToDouble()*2);
                 else
-                  Tmp = Params->data.Text(' ');
+                  value = Params->data.Text(' ');
               }
               else
-                Tmp = Params->data.Text(' ');
+                value = Params->data.Text(' ');
             }
-
-            String.Insert(Tmp, start);
-            i = start + Tmp.Length() - 1;
+            String.Insert(value, start);
+            i = start + value.Length() - 1;
           }
         }
       }

@@ -2465,7 +2465,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
       SL1.LoadFromFile( fn );
       for( size_t j=0; j < SL1.Count(); j++ )  {
         Cif->ResolveParamsFromDictionary(Dic, SL1[j], '%', &XLibMacros::CifResolve);
-        SL.Add( SL1[j] );
+        SL.Add(SL1[j]);
       }
       continue;
     }
