@@ -86,6 +86,7 @@ bool TCif::ExtractLoop(size_t& start)  {
   TCifLoop& Loop = *(new TCifLoop);
   Loops.Add(EmptyString, &Loop);
   TStrList loop_data;
+  TTypeList<AnAssociation2<size_t,bool> > OxfordCols;  // index, delete flag
   bool parse_header = true;
   if( Lines[start].IndexOf(' ') != InvalidIndex )  {
     TStrList toks;
@@ -109,14 +110,26 @@ bool TCif::ExtractLoop(size_t& start)  {
     if( Loop.GetTable().ColCount() != 0 )  {
       /* check that the item actually belongs to the loop, this might happens in the case of empty loops */
       if( olxstr::CommonString(Lines[start], Loop.GetTable().ColName(0)).Length() == 1 )  {
-        Loops.Last().String = Loop.GetLoopName();
-        start--;  // rewind
-        return true;
+        // special processing of the _oxford loop items
+        if( !Lines[start].StartsFrom("_oxford") ||
+            olxstr::CommonString(Lines[start].SubStringFrom(7), Loop.GetTable().ColName(0)).Length() <= 1 )
+        {
+          Loops.Last().String = Loop.GetLoopName();
+          start--;  // rewind
+          return true;
+        }
       }
     }
     bool param_found = false;  // in the case loop header is mixed up with loop data...
-    if( Lines[start].IndexOf(' ') == InvalidIndex )
+    if( Lines[start].IndexOf(' ') == InvalidIndex )  {
+      if( Loop.GetTable().ColCount() > 0 )  {  // find and remember oxford loop items...
+        if( Lines[start].StartsFrom("_oxford") && olxstr::CommonString(Lines[start], Loop.GetTable().ColName(0)).Length() == 1 )  {
+          Lines[start].Replace("_oxford", EmptyString);
+          OxfordCols.AddNew(Loop.GetTable().ColCount(), true);
+        }
+      }
       Loop.GetTable().AddCol(Lines[start]);
+    }
     else  {
       TStrList toks;
       CIFToks(Lines[start], toks);
@@ -125,8 +138,15 @@ bool TCif::ExtractLoop(size_t& start)  {
           param_found = true;
           loop_data.Add(toks[i]);
         }
-        else
+        else  {
+          if( Loop.GetTable().ColCount() > 0 )  {  // find and remember oxford loop items...
+            if( toks[i].StartsFrom("_oxford") && olxstr::CommonString(toks[i], Loop.GetTable().ColName(0)).Length() == 1 )  {
+              toks[i].Replace("_oxford", EmptyString);
+              OxfordCols.AddNew(Loop.GetTable().ColCount(), true);
+            }
+          }
           Loop.GetTable().AddCol(toks[i]);
+        }
       }
     }
     Lines[start] = EmptyString;
@@ -147,6 +167,44 @@ bool TCif::ExtractLoop(size_t& start)  {
   Loop.Format(loop_data);
   Loops.Last().String = Loop.GetLoopName();
   start--;
+  if( !OxfordCols.IsEmpty() )  {  // re-format the loop to correct the syntax
+    TIntList OxfordRows;
+    for( size_t i=0; i < Loop.GetTable().RowCount(); i++ )  {
+      for( size_t j=0; j < OxfordCols.Count(); j++ )  {
+        if( Loop[i][OxfordCols[j].GetA()] != '.' )
+          OxfordRows.Add(i);
+      }
+    }
+    if( !OxfordRows.IsEmpty() )  {
+      // try to find a reference row, like _atom_site and whatever _label, in reverse order!
+      for( size_t i=Loop.GetTable().ColCount(); i > 0; i-- )  {
+        const olxstr& col_name = Loop.GetTable().ColName(i-1);
+        if( col_name.IndexOf("atom_site") != InvalidIndex && col_name.IndexOf("label") != InvalidIndex )
+          OxfordCols.InsertNew(0, i-1, false);
+      }
+      TCifLoop& ox_loop = AddLoop(olxstr("_oxford") << Loop.GetLoopName());
+      for( size_t i=0; i < OxfordCols.Count(); i++ )
+        ox_loop.GetTable().AddCol(olxstr("_oxford") << Loop.GetTable().ColName(OxfordCols[i].GetA()));
+      for( size_t i=0; i < OxfordRows.Count(); i++ )  {
+        TCifRow& row = ox_loop.GetTable().AddRow(EmptyString);
+        for( size_t j=0; j < OxfordCols.Count(); j++ )  {
+          const olxstr& val = Loop[OxfordRows[i]][OxfordCols[j].GetA()];
+          if( val.StartsFrom('\'') || val.StartsFrom('"') )
+            row.Set(j, val.SubStringFrom(1,1).TrimWhiteChars(), new StringCifCell(true));
+          else
+            row.Set(j, val, new StringCifCell(false));
+        }
+      }
+    }
+    size_t col_deleted = 0;
+    for( size_t i=0; i < OxfordCols.Count(); i++ )  {
+      if( !OxfordCols[i].GetB() )  continue;
+      size_t col_ind = OxfordCols[i].GetA()-col_deleted;
+      for( size_t j=0; j < Loop.GetTable().RowCount(); j++ )
+        delete Loop[j].GetObject(col_ind);
+      Loop.GetTable().DelCol(col_ind);
+    }
+  }
   return true;
 }
 //..............................................................................
