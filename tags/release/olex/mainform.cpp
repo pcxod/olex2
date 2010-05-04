@@ -2026,7 +2026,7 @@ void TMainForm::AquireTooltipValue()  {
       Tooltip = xa.Atom().GetGuiLabelEx();
       if( xa.Atom().GetType() == iQPeakZ )
         Tooltip << ':' << xa.Atom().CAtom().GetQPeak();
-      Tooltip << "\nOccu (";
+      Tooltip << "\nChem occu(";
       if( ca.GetVarRef(catom_var_name_Sof) != NULL && 
         ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )
         Tooltip << "fixed): ";
