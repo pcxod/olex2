@@ -961,7 +961,7 @@ void TMainForm::macGroup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 void TMainForm::macFmol(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   FXApp->AllVisible(true);
   FXApp->CenterView();
-  FXApp->GetRender().GetBasis().SetZoom( FXApp->GetRender().CalcZoom()*FXApp->GetExtraZoom() );
+  FXApp->GetRender().GetBasis().SetZoom(FXApp->GetRender().CalcZoom()*FXApp->GetExtraZoom());
 }
 //..............................................................................
 void TMainForm::macClear(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
@@ -3281,13 +3281,11 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void TMainForm::macShowP(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TIntList parts;
-  if( Cmds.Count() )  {
+  if( !Cmds.IsEmpty() )  {
     for( size_t i=0; i < Cmds.Count(); i++ )
-      parts.Add( Cmds[i].ToInt() );
-    FXApp->ShowPart(parts, true);
+      parts.Add(Cmds[i].ToInt());
   }
-  else
-    FXApp->ShowPart(parts, true);
+  FXApp->ShowPart(parts, true);
   if( !Options.Contains('m') )
     FXApp->CenterView();
 }

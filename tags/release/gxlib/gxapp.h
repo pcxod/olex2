@@ -151,6 +151,7 @@ protected:
   has visible neighbours, if not - it will be hidden, otherwise its visibility will become 'show';
   for bonds makes them visible only if both atoms are visible */
   void SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b);
+  void _maskInvisible();
 public:
   // FileName - argv[0]
   TGXApp(const olxstr& FileName);

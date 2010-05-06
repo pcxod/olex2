@@ -1151,16 +1151,16 @@ void TGXApp::FragmentVisible(TNetwork *N, bool V)  {
 //  OnFragmentVisible->Enter(dynamic_cast<TBasicApp*>(this), dynamic_cast<IEObject*>(N));
   SA.SetCapacity( N->NodeCount() );
   for( size_t i=0; i < N->NodeCount(); i++ )
-    SA.Add( N->Node(i) );
+    SA.Add(N->Node(i));
   SAtoms2XAtoms(SA, XA);
   for( size_t i=0; i < XA.Count(); i++ )
     XA[i]->SetVisible(V);
 
   TSBondPList SB;
   TXBondPList XB;
-  SB.SetCapacity( N->BondCount() );
+  SB.SetCapacity(N->BondCount());
   for( size_t i=0; i < N->BondCount(); i++ )
-    SB.Add( N->Bond(i) );
+    SB.Add(N->Bond(i));
   SBonds2XBonds(SB, XB);
   for( size_t i=0; i < XB.Count(); i++ )
     XB[i]->SetVisible(V);
@@ -1173,16 +1173,8 @@ void TGXApp::FragmentsVisible(const TNetPList& Frags, bool V)  {
     FragmentVisible(Frags[i], V);
   // synchronise the intermolecular bonds
   SetHBondsVisible(FHBondsVisible);
-  TAsymmUnit& au = XFile().GetAsymmUnit();
-  TEBitArray vis( (uint32_t)au.AtomCount() );
-  for( size_t i=0; i < XAtoms.Count(); i++ )  {
-    const TXAtom& xa = XAtoms[i];
-    if( !XAtoms[i].IsVisible() )  continue;
-    vis.SetTrue( xa.Atom().CAtom().GetId() );
-  }
-  for( size_t i=0; i < vis.Count(); i++ )
-    au.GetAtom(i).SetMasked( !vis[i] );
-//  OnFragmentsVisible->Exit(this, dynamic_cast<IEObject*>(Frags));
+  _maskInvisible();
+  //  OnFragmentsVisible->Exit(this, dynamic_cast<IEObject*>(Frags));
   Draw();
 }
 //..............................................................................
@@ -2993,6 +2985,18 @@ void TGXApp::SetQPeakBondsVisible(bool v)  {
   }
 }
 //..............................................................................
+void TGXApp::_maskInvisible()  {
+  const TAsymmUnit& au = XFile().GetAsymmUnit();
+  TEBitArray vis(au.AtomCount());
+  for( size_t i=0; i < XAtoms.Count(); i++ )  {
+    const TXAtom& xa = XAtoms[i];
+    if( !XAtoms[i].IsVisible() )  continue;
+    vis.SetTrue(xa.Atom().CAtom().GetId());
+  }
+  for( size_t i=0; i < vis.Count(); i++ )
+    au.GetAtom(i).SetMasked(!vis[i]);
+}
+//..............................................................................
 void TGXApp::_syncBondsVisibility()  {
   for( size_t i=0; i < XBonds.Count(); i++ )  {
     const TSBond& b = XBonds[i].Bond();
@@ -3047,7 +3051,7 @@ void TGXApp::LoadXFile(const olxstr& fn)  {
 //..............................................................................
 void TGXApp::ShowPart(const TIntList& parts, bool show)  {
   if( parts.IsEmpty() )  {
-    SetStructureVisible(true);
+    AllVisible(true);
     return;
   }
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
@@ -3058,7 +3062,8 @@ void TGXApp::ShowPart(const TIntList& parts, bool show)  {
     if( XAtoms[i].IsVisible() )
       XAtoms[i].SetVisible(XAtoms[i].Atom().IsAvailable());
   }
-  _syncBondsVisibility();
+  _maskInvisible();
+  XFile().GetLattice().UpdateConnectivity();
 }
 //..............................................................................
 void TGXApp::SetHklVisible(bool v)  {
