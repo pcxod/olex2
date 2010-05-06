@@ -1802,13 +1802,10 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   if( Tmp == "view" )  {
     if( FXApp->XFile().HasLastLoader() )  {
-      Tmp = (Cmds.Count() == 1) ? TEFile::ChangeFileExt(Cmds[0], "xlds") :
-                                  TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "xlds");
+      Tmp = (Cmds.Count() == 1) ? TEFile::ChangeFileExt(Cmds[0], "xlv") :
+                                  TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "xlv");
       TDataFile DF;
-      TDataItem& style = DF.Root().AddItem("style");
-      FXApp->GetRender().GetStyles().ToDataItem(style);
-      TDataItem& basis = DF.Root().AddItem("basis");
-      FXApp->GetRender().GetBasis().ToDataItem(basis);
+      FXApp->GetRender().GetBasis().ToDataItem(DF.Root().AddItem("basis"));
       DF.SaveToXLFile(Tmp);
     }
   }
@@ -1900,23 +1897,14 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     olxstr FN = Cmds.Text(' ', 1);
     if( FXApp->XFile().HasLastLoader() )  {
       if( !FN.IsEmpty() )
-        FN = TEFile::ChangeFileExt(FN, "xlds");
+        FN = TEFile::ChangeFileExt(FN, "xlv");
       else
-        FN = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "xlds");
+        FN = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "xlv");
     }
     if( TEFile::Exists(FN) )  {
       TDataFile DF;
       DF.LoadFromXLFile(FN);
-      TDataItem *style = DF.Root().FindItem("style");
-      if( style == NULL )
-        FXApp->GetRender().GetStyles().FromDataItem(*DF.Root().FindItem("DStyle"), false);
-      else  {
-        FXApp->GetRender().GetStyles().FromDataItem(*style, false);
-        TDataItem *basis = DF.Root().FindItem("basis");
-        if( basis != NULL )  
-          FXApp->GetRender().GetBasis().FromDataItem(*basis);
-      }
-      FXApp->Draw();
+      FXApp->GetRender().GetBasis().FromDataItem(DF.Root().FindRequiredItem("basis"));
     }
   }
   else if( Cmds[0].Equalsi("model") )  {
