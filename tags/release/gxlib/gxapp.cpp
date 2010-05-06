@@ -250,7 +250,8 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
   OnGraphicsVisible(NewActionQueue("GRVISIBLE")),
   OnFragmentVisible(NewActionQueue("FRVISIBLE")),
   OnAllVisible(NewActionQueue("ALLVISIBLE")),
-  OnObjectsDestroy(NewActionQueue("OBJECTSDESTROY"))
+  OnObjectsDestroy(NewActionQueue("OBJECTSDESTROY")),
+  OnObjectsCreate(NewActionQueue("OBJECTSCREATE"))
 {
   FQPeaksVisible = FHydrogensVisible = FStructureVisible = FHBondsVisible = true;
   XGrowPointsVisible = FXGrowLinesVisible = FQPeakBondsVisible = false;
@@ -372,6 +373,7 @@ size_t TGXApp::GetNetworks(TNetPList& nets) {
 }
 //..............................................................................
 void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
+  OnObjectsCreate.Enter(dynamic_cast<TBasicApp*>(this), NULL);
   TStopWatch sw(__FUNC__);
   sw.start("Initialising");
 
@@ -518,6 +520,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   FGlRender->SetSceneComplete(true);
   sw.stop();
   sw.print(GetLog(), &TLog::Info);
+  OnObjectsCreate.Exit(dynamic_cast<TBasicApp*>(this), NULL);
 }
 //..............................................................................
 void TGXApp::CenterModel()  {

@@ -856,7 +856,7 @@ void TLattice::UpdateAsymmUnit()  {
   }
   for( size_t i=0; i < ac; i++ )  {  // create lists to store atom groups
     TSAtomPList& l = AUAtoms[i];
-    if( del_cnt[i] == 0 && (l.Count() != 1) )  continue;  // nothing to do
+    if( del_cnt[i] == 0 && (l.Count() > 1) )  continue;  // nothing to do
     TCAtom& ca = AsymmUnit->GetAtom(i);
     if( l.IsEmpty() )  {  // all atoms are deleted
       if( !ca.IsDeleted() )

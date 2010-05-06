@@ -447,7 +447,8 @@ public:     void CalcProbFactor(float Prob);
   TActionQueue &OnGraphicsVisible,
     &OnFragmentVisible,
     &OnAllVisible,
-    &OnObjectsDestroy;
+    &OnObjectsDestroy,
+    &OnObjectsCreate;
   bool IsCellVisible()  const;
   void SetCellVisible( bool v);
   bool IsBasisVisible() const;
