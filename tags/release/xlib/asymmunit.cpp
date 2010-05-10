@@ -442,6 +442,8 @@ vec3d TAsymmUnit::GetOCenter(bool IncludeQ, bool IncludeH) const {
   return P;
 }
 //..............................................................................
+/* since this is the AU, only the crystallographic occupancies must be summed up, atoms' 
+degenracy should not be taken into account ... */
 ContentList TAsymmUnit::GetContentList(double mult) const {
   ElementPList elements;
   ContentList rv;
@@ -451,11 +453,11 @@ ContentList TAsymmUnit::GetContentList(double mult) const {
     if( CAtoms[i]->IsDeleted() || elm == iQPeakZ )  continue;
     size_t ind = elements.IndexOf(elm);
     if( ind == InvalidIndex )  {
-      rv.AddNew(elm, CAtoms[i]->GetOccu()*CAtoms[i]->GetDegeneracy()*mult);
+      rv.AddNew(elm, CAtoms[i]->GetOccu()*mult);
       elements.Add(elm);
     }
     else
-      rv[ind] += CAtoms[i]->GetOccu()*CAtoms[i]->GetDegeneracy()*mult;
+      rv[ind] += CAtoms[i]->GetOccu()*mult;
   }
   return XElementLib::SortContentList(rv);
 }
