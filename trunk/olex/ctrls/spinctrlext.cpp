@@ -7,7 +7,7 @@ IMPLEMENT_CLASS(TSpinCtrl, wxSpinCtrl)
 
 BEGIN_EVENT_TABLE(TSpinCtrl, wxSpinCtrl)
   EVT_TEXT(101, TSpinCtrl::TextChangeEvent)
-  EVT_SPIN(102, TSpinCtrl::SpinChangeEvent)
+  EVT_SPINCTRL(-1, TSpinCtrl::SpinChangeEvent)
   EVT_TEXT_ENTER(103, TSpinCtrl::EnterPressedEvent)
   EVT_KILL_FOCUS(TSpinCtrl::LeaveEvent)
   EVT_SET_FOCUS(TSpinCtrl::EnterEvent)

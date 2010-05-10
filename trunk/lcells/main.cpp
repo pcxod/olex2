@@ -18,7 +18,7 @@
 #include "main.h"
 #include "conindex.h"
 
-#include "bapp.h"
+#include "xapp.h"
 #include "efile.h"
 #include "symmlib.h"
 #include "egc.h"
@@ -83,7 +83,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
   : TForm(Owner)
 {
 
-  new TBasicApp( TEFile::ExtractFilePath(ParamStr(0).c_str()));
+  new TXApp( TEFile::ExtractFilePath(ParamStr(0).c_str()));
   TEGC::NewG<TSymmLib>( TBasicApp::GetBaseDir() + "symmlib.xld" );
   LogListener& logListener = TEGC::NewG<LogListener>( this );
   TBasicApp::GetLog().OnException.Add(&logListener, ID_EXCEPTION);

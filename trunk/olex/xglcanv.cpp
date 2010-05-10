@@ -181,7 +181,11 @@ void TGlCanvas::OnMouseMove(wxMouseEvent& me)  {
   if( !FLeftMouseDown && !FRightMouseDown )  
     FParent->OnMouseMove(me.m_x, me.m_y);
   if( FXApp != NULL && FXApp->MouseMove(me.m_x, me.m_y, Fl) )  {  // check if a handler for the event is found
+#ifdef __WIN32__
+    wxWindow::Refresh();  // this seems to help but not to solve! with the desktop compositionon Vista/7
+#else
     FXApp->Draw();
+#endif
   }
 }
 //..............................................................................

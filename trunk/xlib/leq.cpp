@@ -1,5 +1,6 @@
 #include "leq.h"
 #include "refmodel.h"
+#include "srestraint.h"
 
 olxstr XVarManager::RelationNames[] = {"None", "var", "one_minus_var"};
 
@@ -70,6 +71,13 @@ XVar& XVar::FromDataItem(const TDataItem& item, XVarManager& parent) {
     var->References.Add(&rf);
   }
   return *var;
+}
+//.................................................................................................
+bool XVar::IsUsed() const {
+  const size_t rc = RefCount();
+  if( LeqCount() == 0 )
+    return rc == 1 ? (EsdlInstanceOf(References[0]->referencer, TSimpleRestraint) ? true : false) : rc > 1;
+  return rc > 0;
 }
 //.................................................................................................
 //.................................................................................................
@@ -212,11 +220,8 @@ double XVarManager::SetParam(IXVarReferencer& ca, short var_index, double val) {
       actual_val = val - iv*10;
     else {
       var_rel = iv > 0 ? relation_AsVar : relation_AsOneMinusVar;
-      coeff = val -iv*10;
-      actual_val = coeff*var->GetValue();
-      if( iv < 0 )
-        actual_val += 1;
-      coeff = olx_abs(coeff);
+      coeff = olx_abs(val -iv*10);
+      actual_val = coeff*(var_rel == relation_AsVar ? var->GetValue() : 1.0 - var->GetValue());
     }
   }
   ca.SetValue(var_index, actual_val);

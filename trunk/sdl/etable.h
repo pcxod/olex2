@@ -203,7 +203,10 @@ public:
                       const TStrList& thAttr,
                       const TStrList& clAttr,
                       bool Format=true,
-                      unsigned short colCount = 1) const  {
+                      unsigned short colCount = 1,
+                      const olxstr& colSepAttr = EmptyString
+                      ) const
+  {
 
     olxstr Tmp;
     if( Format )  {
@@ -215,10 +218,13 @@ public:
       L.Add("<p ") << titlePAttr << '>' << Title << "</p>";
 
     if( colNames )  {
-      if( rowNames )  Tmp << "<th>" << thAttr[0] << "</th>";
+      if( rowNames )
+        Tmp << "<th>" << thAttr[0] << "</th>";
       for( size_t i=0; i < colCount; i++ )  {
         for( size_t j=0; j < ColNames.Count(); j++ )
           Tmp << "<th " << thAttr[j+1] << '>' << ColNames[j] << "</th>";
+        if( (i+1) < colCount )
+          Tmp << "<td " << colSepAttr << ">&nbsp;</td>";
       }
       L.Add( (Tmp << "</tr>") );
     } //!ColNames
@@ -240,6 +246,8 @@ public:
           Tmp << "<td " << clAttr[0] << '>' << RowNames[index] << "</td>";
         for( size_t k=0; k < ColNames.Count(); k++ )
           Tmp << "<td " << clAttr[k+1] << '>' << Rows[index][k] << "</td>";
+        if( (j+1) < colCount )
+          Tmp << "<td " << colSepAttr << ">&nbsp;</td>";
       }
       L.Add( (Tmp << "</tr>") );
     }

@@ -23,8 +23,16 @@ static const double
   def_SHEL_hr = 0,
   def_SHEL_lr = 100;  // ['infinity' in A]
 static const short 
- def_MERG   = 2,
- def_TWIN_n = 2;
+  def_MERG   = 2,
+  def_TWIN_n = 2;
+
+// clear constants...
+static uint32_t
+  rm_clear_SAME = 0x00000001,
+  rm_clear_AFIX = 0x00000002,
+  rm_clear_VARS = 0x00000004,
+  rm_clear_ALL  = 0xFFFFFFFF,
+  rm_clear_DEF = (rm_clear_ALL^(rm_clear_SAME|rm_clear_AFIX|rm_clear_VARS));
 
 class RefinementModel : public IXVarReferencerContainer, public IXVarReferencer {
   // in INS file is EQUV command
@@ -113,7 +121,7 @@ public:
   TAsymmUnit& aunit;
 
   RefinementModel(TAsymmUnit& au);
-  virtual ~RefinementModel() {  Clear();  }
+  virtual ~RefinementModel() {  Clear(rm_clear_DEF);  }
   ExperimentalDetails expl;
   XVarManager Vars;
   TSRestraintList rDFIX,  // restrained distances (DFIX)
@@ -303,15 +311,9 @@ of components 1 ... m
   void SetPlan(int v);
 
   // clears restraints, SFAC and used symm but not AfixGroups, Exyzroups and Vars
-  void Clear();
+  void Clear(uint32_t clear_mask);
   // to be called by the Vars
   void ClearVarRefs();
-  void ClearAll()  {
-    Clear();
-    AfixGroups.Clear();
-    ExyzGroups.Clear();
-    Vars.ClearAll();
-  }
 
   void AddInfoTab(const TStrList& l);
   size_t InfoTabCount() const {  return InfoTables.Count();  }

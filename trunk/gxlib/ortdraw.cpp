@@ -433,14 +433,13 @@ void OrtDraw::Init(PSWriter& pw)  {
       pw.custom(fnt.c_str());
     }
   }
-
+  pw.translate(0.0f, ((float)pw.GetHeight()-LinearScale*vp[3])/2);
   pw.scale(LinearScale, LinearScale);
   LinearScale = 1; // reset now
   DrawScale = app.GetRender().GetBasis().GetZoom()/(LinearScale*app.GetRender().GetScale());
   BondRad = 0.05*DrawScale;
   SceneOrigin = basis.GetCenter();
-  //DrawOrigin = vec3f(vp[2]/2, vp[3], 0);
-  DrawOrigin = vec3f(vp[2]/2, 2*pw.GetHeight()-vp[3], 0);
+  DrawOrigin = vec3f(vp[2]/2, vp[3]/2, 0);
   ProjMatr = basis.GetMatrix()*DrawScale;  
   UnProjMatr = ProjMatr.Inverse();
 }

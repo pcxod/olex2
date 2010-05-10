@@ -56,7 +56,7 @@ public:
 
 class TLst: public IEObject  {
 protected:
-  double FR1, FR1a, FwR2, FS, FRS, FRint, FRsig;
+  double FR1, FR1a, FwR2, FS, FRS, FRint, FRsig, FRho, FF000, FMu;
   int FParams, FTotalRefs, FUniqRefs, FRefs4sig;
   double FPeak, FHole;
   TEValue<double> FlackParam;
@@ -97,6 +97,9 @@ public:
   inline double wR2() const    {  return FwR2; }
   inline double S() const      {  return FS; }
   inline double RS() const     {  return FRS; }
+  inline double Rho() const     {  return FRho; }
+  inline double F000() const     {  return FF000; }
+  inline double Mu() const     {  return FMu; }
   inline size_t Params() const   {  return FParams; }
   inline size_t TotalRefs()const {  return FTotalRefs; }
   inline size_t UniqRefs() const {  return FUniqRefs; }

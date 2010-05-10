@@ -664,7 +664,7 @@ void TMainForm::XApp( TGXApp *XA)  {
   this_InitMacroD(TelpV, EmptyString, fpOne,
 "Calculates ADPs for given thermal probability factor");
   this_InitMacroD(Labels,
-"p-part&;l-label&;v-variables&;o-occupancy&;a-afix&;h-show hydrogen atom labels&;\
+"p-part&;l-label&;v-variables&;o-occupancy&;co-chemical occupancy&;a-afix&;h-show hydrogen atom labels&;\
 f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
  (as in the ins file)&;qi-Q peak intensity&;i-display labels for identity atoms only",  fpNone,
 "Inverts visibility of atom labels on/off. Look at the options");
@@ -741,7 +741,9 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacro(ShowH, , fpNone|fpTwo|psFileLoaded);
   this_InitMacro(Fvar, , (fpAny)|psCheckFileTypeIns);
   this_InitMacro(Sump, , (fpAny^fpNone)|psCheckFileTypeIns);
-  this_InitMacro(Part, p&;lo, (fpAny^fpNone)|psFileLoaded);
+  this_InitMacroD(Part, "p-number of parts&;lo-link ocupancy of given atoms through FVAR's",
+    fpAny|psFileLoaded, "Sets part(s) to given atoms, also if -lo is given and -p > 1 allows linking\
+ occupancy of given atoms throw FVAR and/or SUMP in cases when -p > 2");
   this_InitMacroD(Afix,"n-to accept N atoms in the rings for afix 66" , 
     (fpAny^fpNone)|psCheckFileTypeIns,
     "sets atoms afix, special cases are 56,69,66,69,76,79,106,109,116 and 119");
@@ -955,7 +957,7 @@ separated values of Atom Type and radius, an entry a line");
   this_InitFunc(Strcat, fpTwo);
   this_InitFunc(Strcmp, fpTwo);
 
-  this_InitFunc(GetEnv, fpOne);
+  this_InitFuncD(GetEnv, fpNone|fpOne, "Prints all variables if no arguments is given or returns the given veariable value");
 
   this_InitFunc(Eval, fpOne);
 
@@ -967,8 +969,6 @@ separated values of Atom Type and radius, an entry a line");
   this_InitFunc(VVol, fpNone|fpOne|psFileLoaded);
 
   this_InitFunc(Env, fpOne|psFileLoaded);
-  this_InitFunc(Crd, fpAny|psFileLoaded);
-  this_InitFunc(CCrd, fpAny|psFileLoaded);
   this_InitFunc(Atoms, fpOne|psFileLoaded);
 
   this_InitFunc(Sel, fpNone|psFileLoaded);
@@ -2026,13 +2026,13 @@ void TMainForm::AquireTooltipValue()  {
       Tooltip = xa.Atom().GetGuiLabelEx();
       if( xa.Atom().GetType() == iQPeakZ )
         Tooltip << ':' << xa.Atom().CAtom().GetQPeak();
-      Tooltip << "\nOccu (";
+      Tooltip << "\nChem occu(";
       if( ca.GetVarRef(catom_var_name_Sof) != NULL && 
         ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )
         Tooltip << "fixed): ";
       else
         Tooltip << "free): ";
-      Tooltip << TEValueD(ca.GetOccu(), ca.GetOccuEsd()).ToString();
+      Tooltip << TEValueD(ca.GetOccu()*ca.GetDegeneracy(), ca.GetOccuEsd()*ca.GetDegeneracy()).ToString();
       if( ca.GetEllipsoid() == NULL )  {
         Tooltip << "\nUiso (";
         if( ca.GetVarRef(catom_var_name_Uiso) != NULL && 
@@ -3257,16 +3257,17 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     if( cpu_cnt > 0 )
       FXApp->SetMaxThreadCount(cpu_cnt);
   }
-
-  olxstr T( I->GetFieldValue("BgColor") );
-  if( !T.IsEmpty() )  FBgColor.FromString(T);
+  if( FBgColor.GetRGB() == 0xffffffff )  {  // only if the information got lost
+    olxstr T( I->GetFieldValue("BgColor") );
+    if( !T.IsEmpty() )  FBgColor.FromString(T);
+  }
   bool whiteOn =  I->GetFieldValue("WhiteOn", FalseString).ToBool();
   FXApp->GetRender().LightModel.SetClearColor(whiteOn ? 0xffffffff : FBgColor.GetRGB());
 
-  T = I->GetFieldValue("Gradient", EmptyString);
   GradientPicture = TEFile::ExpandRelativePath(I->GetFieldValue("GradientPicture", EmptyString));
   if( !TEFile::Exists(GradientPicture) )
     GradientPicture = EmptyString;
+  olxstr T = I->GetFieldValue("Gradient", EmptyString);
   if( !T.IsEmpty() ) 
     ProcessMacro(olxstr("grad ") << T);
 
@@ -3500,9 +3501,8 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
     TFileHandlerManager::AddMemoryBlock(RefineDataFile, NULL, 0, plStructure);
     return;
   }
-  TTTable<TStrList> Table;
+  TTTable<TStrList> Table(8, 4);
   TStrList Output;
-  Table.Resize(13, 4);
 
   const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
   
@@ -3554,6 +3554,9 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
   Table[5][0] = "Refs(Fo > 4sig(Fo))";Table[5][1] = Lst.Refs4sig();
   Table[5][2] = "R(int)";             Table[5][3] = olxstr::FormatFloat(3,Lst.Rint());
   Table[6][0] = "R(sigma)";           Table[6][1] = olxstr::FormatFloat(3,Lst.Rsigma());
+  Table[6][2] = "F000";               Table[6][3] = olxstr::FormatFloat(3,Lst.F000()).TrimFloat();
+  Table[7][0] = "&rho;/g*mm<sup>-3</sup>"; Table[7][1] = olxstr::FormatFloat(3,Lst.Rho());
+  Table[7][2] = "&mu;/mm<sup>-1</sup>";  Table[7][3] = olxstr::FormatFloat(3,Lst.Mu());
 
   Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));

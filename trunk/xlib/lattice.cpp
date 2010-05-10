@@ -856,11 +856,18 @@ void TLattice::UpdateAsymmUnit()  {
   }
   for( size_t i=0; i < ac; i++ )  {  // create lists to store atom groups
     TSAtomPList& l = AUAtoms[i];
-    if( del_cnt[i] == 0 && !l.IsEmpty() )  continue;  // nothing to do
+    if( del_cnt[i] == 0 && (l.Count() > 1) )  continue;  // nothing to do
     TCAtom& ca = AsymmUnit->GetAtom(i);
     if( l.IsEmpty() )  {  // all atoms are deleted
       if( !ca.IsDeleted() )
         ca.SetDeleted(ca.IsAvailable());
+      continue;
+    }
+    else if( l.Count() == 1 )  {  // special case...
+      if( l[0]->GetMatrix(0).IsFirst() )  continue;
+      if( l[0]->GetEllipsoid() )
+        ca.UpdateEllp(*l[0]->GetEllipsoid());
+      ca.ccrd() = l[0]->ccrd();
       continue;
     }
     // find the original atom, or symmetry equivalent if removed

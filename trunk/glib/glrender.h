@@ -285,7 +285,7 @@ public:
   void LibPerspective(TStrObjList& Cmds, const TParamList& Options, TMacroError& E);
   void LibZoom(TStrObjList& Cmds, const TParamList& Options, TMacroError& E);
   void LibCalcZoom(const TStrObjList& Params, TMacroError& E);
-  TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
+  TLibrary* ExportLibrary(const olxstr& name=EmptyString);
 };
 
 

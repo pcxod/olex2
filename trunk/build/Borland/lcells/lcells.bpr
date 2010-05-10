@@ -42,7 +42,7 @@
       build\henke_Xe.obj build\henke_Y.obj build\henke_Yb.obj build\henke_Zn.obj 
       build\henke_Zr.obj build\olxthpool.obj build\xapp.obj build\hkl.obj 
       build\crs.obj build\p4p.obj build\cifdata.obj build\cifloop.obj 
-      build\ciftab.obj"/>
+      build\ciftab.obj build\xmacro.obj"/>
     <RESFILES value="lcells.res"/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) ..\..\..\lcells\about.dfm ..\..\..\lcells\iinfo.dfm 
@@ -74,12 +74,12 @@
     <OTHERFILES value=""/>
   </MACROS>
   <OPTIONS>
-    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k- -vi- 
-      -c -tW -tWM"/>
+    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k -y -v 
+      -vi- -c -tW -tWM"/>
     <PFLAGS value="-N2build -N0build -$YD -$W -$O- -$A8 -v -JPHNE -M"/>
     <RFLAGS value=""/>
     <AFLAGS value="/mx /w2 /zi"/>
-    <LFLAGS value="-Ibuild -D&quot;&quot; -Gz -aa -Tpe -x -Gn"/>
+    <LFLAGS value="-Ibuild -D&quot;&quot; -Gz -aa -Tpe -x -Gn -v"/>
     <OTHERFILES value=""/>
   </OPTIONS>
   <LINKER>
@@ -235,6 +235,7 @@
       <FILE FILENAME="..\..\..\xlib\cifdata.cpp" FORMNAME="" UNITNAME="cifdata.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\cifloop.cpp" FORMNAME="" UNITNAME="cifloop.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\ciftab.cpp" FORMNAME="" UNITNAME="ciftab.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\xmacro.cpp" FORMNAME="" UNITNAME="xmacro" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>
@@ -275,10 +276,11 @@ Item2=..\..\..\repository;..\..\..\lcells;..\..\..\..;$(BCB)\include;$(BCB)\incl
 Item3=..\..\..\repository;..\..\..\lcells;..\..\..\..;SVN\repository;SVN\lcells;$(BCB)\include;$(BCB)\include\vcl
 
 [HistoryLists\hlLibraryPath]
-Count=3
-Item0=..\..\..\xlib\henke;..\..\..\xlib;..\..\..\repository;..\..\..\lcells;..\..\..\..;SVN\repository;$(BCB)\Projects\Lib;SVN\lcells;$(BCB)\lib\obj;$(BCB)\lib
-Item1=..\..\..\xlib;..\..\..\repository;..\..\..\lcells;..\..\..\..;SVN\repository;$(BCB)\Projects\Lib;SVN\lcells;$(BCB)\lib\obj;$(BCB)\lib
-Item2=..\..\..\repository;..\..\..\lcells;..\..\..\..;SVN\repository;$(BCB)\Projects\Lib;SVN\lcells;$(BCB)\lib\obj;$(BCB)\lib
+Count=4
+Item0=..\..\..\sdl;..\..\..\xlib\henke;..\..\..\xlib;..\..\..\repository;..\..\..\lcells;..\..\..\..;SVN\repository;$(BCB)\Projects\Lib;SVN\lcells;$(BCB)\lib\obj;$(BCB)\lib
+Item1=..\..\..\xlib\henke;..\..\..\xlib;..\..\..\repository;..\..\..\lcells;..\..\..\..;SVN\repository;$(BCB)\Projects\Lib;SVN\lcells;$(BCB)\lib\obj;$(BCB)\lib
+Item2=..\..\..\xlib;..\..\..\repository;..\..\..\lcells;..\..\..\..;SVN\repository;$(BCB)\Projects\Lib;SVN\lcells;$(BCB)\lib\obj;$(BCB)\lib
+Item3=..\..\..\repository;..\..\..\lcells;..\..\..\..;SVN\repository;$(BCB)\Projects\Lib;SVN\lcells;$(BCB)\lib\obj;$(BCB)\lib
 
 [HistoryLists\hlDebugSourcePath]
 Count=1
