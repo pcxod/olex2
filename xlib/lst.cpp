@@ -42,6 +42,7 @@ void TLst::Clear()  {
   PattSolutions.Clear();
   FR1 = FR1a = FwR2 = FS = FRS = FRint = FRsig = 0;
   FParams = FTotalRefs = FUniqRefs = FRefs4sig = 0;
+  FRho = FF000 = FMu = 0;
   FPeak = FHole = 0;
 
   ErrorMsgs.Clear();
@@ -62,10 +63,11 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
        SA     = false, // split atoms
        TrefT  = false,
        PattS  = false,
-       FlackF = false;
+       FlackF = false,
+       CellInfo = false;
   TStrList Toks;
   Clear();
-  SL.LoadFromFile( FN );
+  SL.LoadFromFile(FN);
   TLstRef *LstRef;
   TLstSplitAtom *SplitA;
   for( size_t i=0; i < SL.Count(); i++ )  {
@@ -288,6 +290,20 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
           _HasFlack = true;
         }
         FlackF = true;
+      }
+    }
+    if( !CellInfo &&
+      SL[i].IndexOf("F(000) = ") != InvalidIndex &&
+      SL[i].IndexOf("Mu = ") != InvalidIndex &&
+      SL[i].IndexOf("Rho = ") != InvalidIndex )
+    {
+      Toks.Clear();
+      Toks.Strtok(SL[i], ' ');
+      if( Toks.Count() == 17 )  {
+        FF000 = Toks[5].ToDouble();
+        FMu = Toks[8].ToDouble();
+        FRho = Toks[16].ToDouble();
+        CellInfo = true;
       }
     }
     // errors

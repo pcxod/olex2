@@ -85,12 +85,13 @@ public:
   bool IsEmpty() const {  return (data[0] == 0 && data[1] == 0 && data[2] == 0);  }
   void Clear()  {  data[0] = data[1] = data[2] = data[3] = 0;  }
   
-  float& operator[] (int i) {  return data[i]; }
-  const float& operator[] (int i) const {  return data[i]; }
+  float& operator[] (size_t i) {  return data[i]; }
+  const float& operator[] (size_t i) const {  return data[i]; }
   
-  bool operator == (const TGlOption& v) const  {
+  bool operator == (const TGlOption& v) const {
     return (olx_abs(data[0]-v[0])+olx_abs(data[1]-v[1])+olx_abs(data[2]-v[2])+olx_abs(data[3]-v[3])) < 1e-5;
   }
+  bool operator != (const TGlOption& v) const {  return !(*this == v);  }
 
   TIString ToString() const;
   bool FromString(const olxstr &S);

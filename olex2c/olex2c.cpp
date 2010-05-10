@@ -8,7 +8,7 @@ using namespace std;
 
 #include "con_in.h"
 
-#include "xapp.h"
+#include "xmacro.h"
 #include "log.h"
 #include "outstream.h"
 #include "pyext.h"
@@ -90,7 +90,6 @@ enum {
   Library.RegisterFunction( new TFunction<TOlex>(this, &TOlex::fun##funcName, #funcName, argc, desc))
 
 static const olxstr ProcessOutputCBName("procout");
-static const olxstr NAString("n/a");
 enum  {
   ID_PROCESSTERMINATE = 1,
   ID_TIMER,
@@ -850,7 +849,7 @@ public:
       if( (i+1) < MACsInfo.Count() )  
         rv << ';';
     }
-    E.SetRetVal( rv.IsEmpty() ? NAString : rv );
+    E.SetRetVal(rv.IsEmpty() ? XLibMacros::NAString : rv);
   }
   //..............................................................................
 //////////////////////////////////////////////////////////////////////////////////////////////////

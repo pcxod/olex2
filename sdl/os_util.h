@@ -30,8 +30,8 @@ BeginEsdlNamespace()
 #      define OLX_GETENV getenv_s
 #      define OLX_PUTENV _putenv_s
 #    endif
-   static void olx_setenv(const olxstr& name, const olxstr& val)  {
-     OLX_PUTENV(name.u_str(), val.u_str());
+   static bool olx_setenv(const olxstr& name, const olxstr& val)  {
+     return OLX_PUTENV(name.u_str(), val.u_str()) == 0;
    }
    static olxstr olx_getenv(const olxstr& name)  {
      olxch* val=NULL;
@@ -43,26 +43,26 @@ BeginEsdlNamespace()
      return olxstr::FromExternal(val, sz-1);
    }
 #  else // not MSVC
-   static void olx_setenv(const olxstr& name, const olxstr& val)  {
-     putenv((olxstr(name) << '=' << val).c_str());
+   static bool olx_setenv(const olxstr& name, const olxstr& val)  {
+     return putenv((olxstr(name) << '=' << val).c_str()) == 0;
    }
    static olxstr olx_getenv(const olxstr& name)  {
       return getenv(name.c_str());
    }
 #  endif  // MSVC and others WIN compilers
 #else  // not WIN
-   static void olx_setenv(const olxstr& name, const olxstr& val)  {
-     setenv(name.c_str(), val.c_str(), 1);
+   static bool olx_setenv(const olxstr& name, const olxstr& val)  {
+     return setenv(name.c_str(), val.c_str(), 1) == 0;
    }
    static olxstr olx_getenv(const olxstr& name)  {
      return getenv(name.c_str());
    }
 #endif
 // a convinience function
-static void olx_setenv(const olxstr& v)  {
+static bool olx_setenv(const olxstr& v)  {
   size_t ei = v.IndexOf('=');
-  if( ei == InvalidIndex )  return;
-  olx_setenv(v.SubStringTo(ei).u_str(), v.SubStringFrom(ei+1).u_str());
+  if( ei == InvalidIndex )  return false;
+  return olx_setenv(v.SubStringTo(ei).u_str(), v.SubStringFrom(ei+1).u_str());
 }
 
 

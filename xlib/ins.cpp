@@ -38,7 +38,7 @@ TIns::TIns()  {  LoadQPeaks = true;  }
 TIns::~TIns()  {  Clear();  }
 //..............................................................................
 void TIns::Clear()  {
-  GetRM().ClearAll();
+  GetRM().Clear(rm_clear_ALL);
   GetAsymmUnit().Clear();
   for( size_t i=0; i < Ins.Count(); i++ )
     delete Ins.GetObject(i);
@@ -1559,7 +1559,7 @@ void TIns::ParseHeader(const TStrList& in)  {
   Ins.Clear();
   Skipped.Clear();
   Title = EmptyString;
-  GetRM().Clear();
+  GetRM().Clear(rm_clear_DEF);
   GetAsymmUnit().ClearMatrices();
 // end clear, start parsing
   olxstr Tmp;

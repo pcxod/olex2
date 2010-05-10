@@ -141,14 +141,24 @@ void TSimpleRestraint::Substruct( TSimpleRestraint& sr )  {
   if( sr.GetListType() != ListType )
     throw TInvalidArgumentException(__OlxSourceInfo, "list type mismatch");
   if( ListType == rltAtoms || ListType == rltGroup )  {
+    size_t del_count = 0;
     for( size_t i=0; i < InvolvedAtoms.Count(); i++ )  {
       for( size_t j=0; j < sr.InvolvedAtoms.Count(); j++ )  {
         if( AtomsEqual(InvolvedAtoms[i].GetAtom(), InvolvedAtoms[i].GetMatrix(),
-                       sr.InvolvedAtoms[j].GetAtom(), sr.InvolvedAtoms[j].GetMatrix()) ) {
-          InvolvedAtoms.Delete(i);
+                       sr.InvolvedAtoms[j].GetAtom(), sr.InvolvedAtoms[j].GetMatrix()) )
+        {
+          if( InvolvedAtoms[i].GetMatrix() != NULL )
+            Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i].GetMatrix());
+          InvolvedAtoms.Delete(i--);
+          del_count++;
           break;
         }
       }
+    }
+    if( ListType == rltAtoms && del_count > 0 )  {  // should merge then... #199
+      for( size_t i=0; i < InvolvedAtoms.Count(); i++ )
+        sr.AddAtom(*InvolvedAtoms[i].GetAtom(), InvolvedAtoms[i].GetMatrix());
+      Delete();
     }
   }
   else if( ListType == rltBonds )  {
@@ -157,9 +167,15 @@ void TSimpleRestraint::Substruct( TSimpleRestraint& sr )  {
         if( (AtomsEqual(InvolvedAtoms[i].GetAtom(), InvolvedAtoms[i].GetMatrix(), sr.InvolvedAtoms[j].GetAtom(), sr.InvolvedAtoms[j].GetMatrix()) &&
              AtomsEqual(InvolvedAtoms[i+1].GetAtom(), InvolvedAtoms[i+1].GetMatrix(), sr.InvolvedAtoms[j+1].GetAtom(), sr.InvolvedAtoms[j+1].GetMatrix())) ||
             (AtomsEqual(InvolvedAtoms[i].GetAtom(), InvolvedAtoms[i].GetMatrix(), sr.InvolvedAtoms[j+1].GetAtom(), sr.InvolvedAtoms[j+1].GetMatrix()) &&
-             AtomsEqual(InvolvedAtoms[i+1].GetAtom(), InvolvedAtoms[i+1].GetMatrix(), sr.InvolvedAtoms[j].GetAtom(), sr.InvolvedAtoms[j].GetMatrix())) ) {
+             AtomsEqual(InvolvedAtoms[i+1].GetAtom(), InvolvedAtoms[i+1].GetMatrix(), sr.InvolvedAtoms[j].GetAtom(), sr.InvolvedAtoms[j].GetMatrix())) )
+        {
+          if( InvolvedAtoms[i].GetMatrix() != NULL )
+            Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i].GetMatrix());
+          if( InvolvedAtoms[i+1].GetMatrix() != NULL )
+            Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i+1].GetMatrix());
           InvolvedAtoms.Delete(i);
-          InvolvedAtoms.Delete(i+1);
+          InvolvedAtoms.Delete(i);
+          i -= 2;
           break;
         }
       }

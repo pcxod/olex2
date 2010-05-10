@@ -45,7 +45,7 @@ void TCif::Clear()  {
   for( size_t i=0; i < Loops.Count(); i++ )
     delete Loops.GetObject(i);
   Loops.Clear();
-  GetRM().ClearAll();
+  GetRM().Clear(rm_clear_ALL);
   GetAsymmUnit().Clear();
   DataManager.Clear();
   Matrices.Clear();
@@ -86,6 +86,7 @@ bool TCif::ExtractLoop(size_t& start)  {
   TCifLoop& Loop = *(new TCifLoop);
   Loops.Add(EmptyString, &Loop);
   TStrList loop_data;
+  TTypeList<AnAssociation2<size_t,bool> > OxfordCols;  // index, delete flag
   bool parse_header = true;
   if( Lines[start].IndexOf(' ') != InvalidIndex )  {
     TStrList toks;
@@ -109,14 +110,26 @@ bool TCif::ExtractLoop(size_t& start)  {
     if( Loop.GetTable().ColCount() != 0 )  {
       /* check that the item actually belongs to the loop, this might happens in the case of empty loops */
       if( olxstr::CommonString(Lines[start], Loop.GetTable().ColName(0)).Length() == 1 )  {
-        Loops.Last().String = Loop.GetLoopName();
-        start--;  // rewind
-        return true;
+        // special processing of the _oxford loop items
+        if( !Lines[start].StartsFrom("_oxford") ||
+            olxstr::CommonString(Lines[start].SubStringFrom(7), Loop.GetTable().ColName(0)).Length() <= 1 )
+        {
+          Loops.Last().String = Loop.GetLoopName();
+          start--;  // rewind
+          return true;
+        }
       }
     }
     bool param_found = false;  // in the case loop header is mixed up with loop data...
-    if( Lines[start].IndexOf(' ') == InvalidIndex )
+    if( Lines[start].IndexOf(' ') == InvalidIndex )  {
+      if( Loop.GetTable().ColCount() > 0 )  {  // find and remember oxford loop items...
+        if( Lines[start].StartsFrom("_oxford") && olxstr::CommonString(Lines[start], Loop.GetTable().ColName(0)).Length() == 1 )  {
+          Lines[start].Replace("_oxford", EmptyString);
+          OxfordCols.AddNew(Loop.GetTable().ColCount(), true);
+        }
+      }
       Loop.GetTable().AddCol(Lines[start]);
+    }
     else  {
       TStrList toks;
       CIFToks(Lines[start], toks);
@@ -125,8 +138,15 @@ bool TCif::ExtractLoop(size_t& start)  {
           param_found = true;
           loop_data.Add(toks[i]);
         }
-        else
+        else  {
+          if( Loop.GetTable().ColCount() > 0 )  {  // find and remember oxford loop items...
+            if( toks[i].StartsFrom("_oxford") && olxstr::CommonString(toks[i], Loop.GetTable().ColName(0)).Length() == 1 )  {
+              toks[i].Replace("_oxford", EmptyString);
+              OxfordCols.AddNew(Loop.GetTable().ColCount(), true);
+            }
+          }
           Loop.GetTable().AddCol(toks[i]);
+        }
       }
     }
     Lines[start] = EmptyString;
@@ -147,6 +167,44 @@ bool TCif::ExtractLoop(size_t& start)  {
   Loop.Format(loop_data);
   Loops.Last().String = Loop.GetLoopName();
   start--;
+  if( !OxfordCols.IsEmpty() )  {  // re-format the loop to correct the syntax
+    TIntList OxfordRows;
+    for( size_t i=0; i < Loop.GetTable().RowCount(); i++ )  {
+      for( size_t j=0; j < OxfordCols.Count(); j++ )  {
+        if( Loop[i][OxfordCols[j].GetA()] != '.' )
+          OxfordRows.Add(i);
+      }
+    }
+    if( !OxfordRows.IsEmpty() )  {
+      // try to find a reference row, like _atom_site and whatever _label, in reverse order!
+      for( size_t i=Loop.GetTable().ColCount(); i > 0; i-- )  {
+        const olxstr& col_name = Loop.GetTable().ColName(i-1);
+        if( col_name.IndexOf("atom_site") != InvalidIndex && col_name.IndexOf("label") != InvalidIndex )
+          OxfordCols.InsertNew(0, i-1, false);
+      }
+      TCifLoop& ox_loop = AddLoop(olxstr("_oxford") << Loop.GetLoopName());
+      for( size_t i=0; i < OxfordCols.Count(); i++ )
+        ox_loop.GetTable().AddCol(olxstr("_oxford") << Loop.GetTable().ColName(OxfordCols[i].GetA()));
+      for( size_t i=0; i < OxfordRows.Count(); i++ )  {
+        TCifRow& row = ox_loop.GetTable().AddRow(EmptyString);
+        for( size_t j=0; j < OxfordCols.Count(); j++ )  {
+          const olxstr& val = Loop[OxfordRows[i]][OxfordCols[j].GetA()];
+          if( val.StartsFrom('\'') || val.StartsFrom('"') )
+            row.Set(j, val.SubStringFrom(1,1).TrimWhiteChars(), new StringCifCell(true));
+          else
+            row.Set(j, val, new StringCifCell(false));
+        }
+      }
+    }
+    size_t col_deleted = 0;
+    for( size_t i=0; i < OxfordCols.Count(); i++ )  {
+      if( !OxfordCols[i].GetB() )  continue;
+      size_t col_ind = OxfordCols[i].GetA()-col_deleted;
+      for( size_t j=0; j < Loop.GetTable().RowCount(); j++ )
+        delete Loop[j].GetObject(col_ind);
+      Loop.GetTable().DelCol(col_ind);
+    }
+  }
   return true;
 }
 //..............................................................................
@@ -865,28 +923,30 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
  olxstr (*ResolveExternal)(const olxstr& valueName),
  bool DoubleTheta) const
 {
-  olxstr Tmp, Val, SVal;
-  size_t index, start, end;
-  double theta;
+  size_t start, end;
   for( size_t i=0; i < String.Length(); i++ )  {
     if( String.CharAt(i) == Quote )  {
       if( (i+1) < String.Length() && String.CharAt(i+1) == Quote )  {
         String.Delete(i, 1);
         continue;
       }
-      if( (i+1) < String.Length() && 
-        (String.CharAt(i+1) == '$' || String.CharAt(i+1) == '_' || 
-          (String.CharAt(i+1) <= '9' && String.CharAt(i+1) >= '0')) ) {
-        Val = EmptyString;
+      if( i > 0 && String.CharAt(i-1) == '\\' )  // escaped?
+        continue;
+      olxstr Val;
+      if( (i+1) < String.Length() &&
+          (String.CharAt(i+1) == '$' || String.CharAt(i+1) == '_' ||
+          olxstr::o_isdigit(String.CharAt(i+1))) )
+      {
         start = i;
-        while( (i+1) < String.Length() )  {
-          i++;
+        while( ++i < String.Length() )  {
           if( String.CharAt(i) == Quote )  {
             if( (i+1) < String.Length() && String.CharAt(i+1) == Quote )  {
               String.Delete(i, 1);
               Val << Quote;
               continue;
             }
+            else if( String.CharAt(i-1) == '\\' ) // escaped?
+              ;
             else  {
               end = i;  
               break;
@@ -900,7 +960,9 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
           if( Val.CharAt(0) == '$' )  {
             if( ResolveExternal != NULL )  {
               String.Delete(start, end-start+1);
-              Tmp = ResolveExternal( Val );
+              Val.Replace("\\%", '%');
+              ResolveParamsFromDictionary(Dic, Val, Quote, ResolveExternal);
+              olxstr Tmp = ResolveExternal(Val);
               ResolveParamsFromDictionary(Dic, Tmp, Quote, ResolveExternal);
               String.Insert(Tmp, start);
               i = start + Tmp.Length() - 1;
@@ -908,9 +970,8 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
           }
           else if( Val.CharAt(0) == '_' )  {
             CifData* Params = FindParam(Val);
-            if( Params == NULL || Params->data.IsEmpty() )  
-              Tmp = 'N';
-            else
+            olxstr Tmp = 'N';
+            if( Params != NULL && !Params->data.IsEmpty() )  
               Tmp = Params->data[0];
             String.Delete(start, end-start+1);
             String.Insert(Tmp, start);
@@ -920,8 +981,7 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
             TBasicApp::GetLog() << olxstr("A number or function starting from '$' or '_' is expected");
           continue;
         }
-        index = Val.ToInt();
-        Val = EmptyString;
+        size_t index = Val.ToSizeT();
         // Not much use if not for personal use :D
         /*
         if( index >= 73 )  {  //direct insert
@@ -945,63 +1005,57 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
           TBasicApp::GetLog().Error(olxstr("Wrong parameter index ") << index);
         else  {  // resolve indexes
           String.Delete(start, end-start+1);
-          SVal = Dic[index-1];
-          Tmp = EmptyString;
-          if( SVal.Length() != 0 )  {
-            if( SVal.Equalsi("date") )  {
-              Tmp = TETime::FormatDateTime( TETime::Now() );
-              String.Insert(Tmp, start);
-            }
+          olxstr SVal = Dic[index-1];
+          olxstr value;
+          if( !SVal.IsEmpty() )  {
+            if( SVal.Equalsi("date") )
+              value = TETime::FormatDateTime(TETime::Now());
             else if( SVal.Equalsi("sg_number") )  {
               TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(GetAsymmUnit());
               if( sg != NULL )
-                Tmp = sg->GetNumber();
+                value = sg->GetNumber();
               else
-                Tmp = "unknown";
+                value = "unknown";
             }
             else if( SVal.Equalsi("data_name") )
-              Tmp = GetDataName();
+              value = GetDataName();
             else if( SVal.Equalsi("weighta") )
-              Tmp = GetWeightA();
+              value = GetWeightA();
             else if( SVal.Equalsi("weightb") )
-              Tmp = GetWeightB();
+              value = GetWeightB();
             else {
               CifData* Params = FindParam(SVal);
               if( Params == NULL )  {
                 TBasicApp::GetLog().Info(olxstr("The parameter \'") << SVal << "' is not found");
-                Tmp = "N";
+                value = 'N';
               }
               else if( !Params->data.Count() )  {
                 TBasicApp::GetLog().Info(olxstr("Value of parameter \'") << SVal << "' is not found");
-                  Tmp = "none";
+                  value = "none";
               }
               else if( Params->data.Count() == 1 )  {
                 if( Params->data[0].IsEmpty() )  {
                   TBasicApp::GetLog().Info(olxstr("Value of parameter \'") << SVal << "' is not found");
-                  Tmp = "none";
+                  value = "none";
                 }
                 else if( Params->data[0].CharAt(0) == '?' )  {
                   TBasicApp::GetLog().Info(olxstr("Value of parameter \'") << SVal << "' is not defined");
-                  Tmp = "?";
+                  value = '?';
                 }
                 else
-                  Tmp = Params->data[0];
+                  value = Params->data[0];
               }
               else if( index == 13 || index == 14 || index == 30 )  {
-                if( DoubleTheta )  {
-                  theta = Params->data.Text(EmptyString).ToDouble();
-                  theta *= 2;
-                  Tmp = theta;
-                }
+                if( DoubleTheta )
+                  value = (Params->data.Text(EmptyString).ToDouble()*2);
                 else
-                  Tmp = Params->data.Text(' ');
+                  value = Params->data.Text(' ');
               }
               else
-                Tmp = Params->data.Text(' ');
+                value = Params->data.Text(' ');
             }
-
-            String.Insert(Tmp, start);
-            i = start + Tmp.Length() - 1;
+            String.Insert(value, start);
+            i = start + value.Length() - 1;
           }
         }
       }

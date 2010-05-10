@@ -79,12 +79,7 @@ public:
   void _RemLeq(XLEQ& eq)  {  Equations.Remove(&eq);  }
   // returns the number of equations, referencing this variable
   size_t LeqCount() const {  return Equations.Count();  }
-  bool IsUsed() const {
-    const size_t rc = RefCount();
-    if( LeqCount() == 0 )  
-      return rc > 1;
-    return rc > 0;
-  }
+  bool IsUsed() const;
   DefPropP(double, Value)
   DefPropP(size_t, Id)  
 

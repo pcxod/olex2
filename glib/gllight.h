@@ -3,10 +3,11 @@
 #include "glbase.h"
 #include "datafile.h"
 #include "gloption.h"
+#include "library.h"
 
 BeginGlNamespace()
 
-class TGlLight: public IEObject  {
+class TGlLight : public IEObject  {
   TGlOption Ambient;
   TGlOption Diffuse;
   TGlOption Specular;
@@ -17,6 +18,7 @@ class TGlLight: public IEObject  {
   TGlOption Attenuation;
   bool Enabled;
   short Index;
+  TActionQList actions;
 public:
   TGlLight();
   virtual ~TGlLight() {}
@@ -35,6 +37,19 @@ public:
   TGlLight& operator = (const TGlLight &S );
   void ToDataItem(TDataItem& Item) const;
   bool FromDataItem(const TDataItem& Item);
+
+  TActionQueue& OnLibChange;
+
+  void LibEnabled(const TStrObjList& Params, TMacroError& E);
+  void LibSpotCutoff(const TStrObjList& Params, TMacroError& E);
+  void LibSpotExponent(const TStrObjList& Params, TMacroError& E);
+  void LibAmbient(const TStrObjList& Params, TMacroError& E);
+  void LibDiffuse(const TStrObjList& Params, TMacroError& E);
+  void LibSpecular(const TStrObjList& Params, TMacroError& E);
+  void LibPosition(const TStrObjList& Params, TMacroError& E);
+  void LibSpotDirection(const TStrObjList& Params, TMacroError& E);
+  void LibAttenuation(const TStrObjList& Params, TMacroError& E);
+  TLibrary* ExportLibrary(const olxstr& name);
 };
 
 EndGlNamespace()

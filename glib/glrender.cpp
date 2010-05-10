@@ -1276,7 +1276,7 @@ decrements current zoom by provided value") );
   lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibStereoColor,
     "StereoColor",
     fpOne|fpTwo|fpFour, "Returns/sets colors for left/right color stereo mode glasses") );
-
+  lib->AttachLibrary(LightModel.ExportLibrary("lm"));
   return lib;
 }
 //..............................................................................

@@ -29,7 +29,7 @@ TBasicCFile::TBasicCFile() : RefMod(AsymmUnit), AsymmUnit(NULL)  {
 }
 //..............................................................................
 TBasicCFile::~TBasicCFile()  {  
-  RefMod.ClearAll();  // this must be called, as the AU might get destroyed beforehand and then AfixGroups cause crash
+  RefMod.Clear(rm_clear_ALL);  // this must be called, as the AU might get destroyed beforehand and then AfixGroups cause crash
 }
 //..............................................................................
 void TBasicCFile::SaveToFile(const olxstr& fn)  {
@@ -92,13 +92,13 @@ TBasicCFile *TXFile::FindFormat(const olxstr &Ext)  {
 //..............................................................................
 void TXFile::LastLoaderChanged() {
   if( FLastLoader == NULL )  {
-    GetRM().ClearAll();
+    GetRM().Clear(rm_clear_ALL);
     GetLattice().Clear(true);
     return;
   }
   FSG = TSymmLib::GetInstance().FindSG(FLastLoader->GetAsymmUnit());
   OnFileLoad.Enter(this, &FLastLoader->GetFileName());
-  GetRM().ClearAll();
+  GetRM().Clear(rm_clear_ALL);
   GetLattice().Clear(true);
   GetRM().Assign(FLastLoader->GetRM(), true);
   OnFileLoad.Execute(this);
@@ -144,7 +144,7 @@ void TXFile::LoadFromFile(const olxstr & FN) {
 
   if( !Loader->IsNative() )  {
     OnFileLoad.Enter(this, &FN);
-    try  {  GetRM().ClearAll();  }
+    try  {  GetRM().Clear(rm_clear_ALL);  }
     catch(const TExceptionBase& exc)  {
       TBasicApp::GetLog() << (olxstr("An error occured: ") << exc.GetException()->GetError());
     }
@@ -355,7 +355,7 @@ void TXFile::SaveToFile(const olxstr& FN, bool Sort)  {
 void TXFile::Close()  {
   OnFileClose.Enter(this, FLastLoader);
   FLastLoader = NULL;
-  RefMod.ClearAll();
+  RefMod.Clear(rm_clear_ALL);
   Lattice.Clear(true);
   OnFileClose.Exit(this, NULL);
 }
@@ -383,7 +383,7 @@ void TXFile::ToDataItem(TDataItem& item) {
 }
 //..............................................................................
 void TXFile::FromDataItem(TDataItem& item) {
-  GetRM().ClearAll();
+  GetRM().Clear(rm_clear_ALL);
   GetLattice().FromDataItem( item.FindRequiredItem("Lattice"));
   GetRM().FromDataItem(item.FindRequiredItem("RefModel"));
   //if( FLastLoader != NULL )  {

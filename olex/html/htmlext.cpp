@@ -577,6 +577,7 @@ bool THtml::UpdatePage()  {
   ObjectsState.SaveState();
   Objects.Clear();
   Traversables.Clear();
+  InFocus = NULL;
   int xPos = -1, yPos = -1, xWnd=-1, yWnd = -1;
   wxHtmlWindow::GetViewStart(&xPos, &yPos);
 #ifdef __WIN32__
@@ -584,10 +585,9 @@ bool THtml::UpdatePage()  {
 #else
   Hide();
 #endif
-  SetPage( Res.Text(' ').u_str() );
+  SetPage(Res.Text(' ').u_str());
   ObjectsState.RestoreState();
   wxHtmlWindow::Scroll(xPos, yPos);
-  //wxHtmlWindow::Thaw();
 #ifdef __WIN32__
   Thaw();
 #else
