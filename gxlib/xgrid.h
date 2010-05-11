@@ -55,6 +55,7 @@ class TXGrid: public TGlMouseListener  {
   TGlTextBox* Info;
   short RenderMode;
   bool Extended;
+  vec3f ExtMin, ExtMax;
   TGlPrimitive* glpP, *glpN, *glpC;
   // these will keep the masked objects
   TTypeList<vec3f> p_vertices, n_vertices;
