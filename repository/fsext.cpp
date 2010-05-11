@@ -41,7 +41,7 @@ TMemoryBlock *TFileHandlerManager::GetMemoryBlock(const olxstr& FN)  {
   }
   else  {
     if( mb->DateTime != 0 && TEFile::Exists(fileName) )  {
-      if( TEFile::FileAge( fileName ) != mb->DateTime )  {
+      if( TEFile::FileAge(fileName) > mb->DateTime )  {
         size_t ind = FMemoryBlocks.IndexOf(fileName);
         FMemoryBlocks.Delete(ind);
         delete [] mb->Buffer;
@@ -121,7 +121,7 @@ wxFSFile *TFileHandlerManager::_GetFSFileHandler( const olxstr &FN )  {
 #endif
 //..............................................................................
 void TFileHandlerManager::_SaveToStream(IDataOutputStream& os, short persistenceMask)  {
-  os.Write( FSignature, TFileHandlerManager_FSignatureLength );
+  os.Write(FSignature, TFileHandlerManager_FSignatureLength);
   os << FVersion;
 
   uint32_t ic = 0, strl;
@@ -293,7 +293,7 @@ size_t TFileHandlerManager::GetBlockSize(size_t i)  {
 const olxstr& TFileHandlerManager::GetBlockDateTime(size_t i)  {
   if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
   return TEGC::New<olxstr>( 
-    TETime::FormatDateTime( FHandler->FMemoryBlocks.GetObject(i)->DateTime ) 
+    TETime::FormatDateTime(FHandler->FMemoryBlocks.GetObject(i)->DateTime) 
   );
 }
 //..............................................................................
@@ -320,7 +320,7 @@ bool TFileHandlerManager::Exists(const olxstr& fn)  {
 //..............................................................................
 //..............................................................................
 void TFileHandlerManager::LibExists(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal<bool>( IsMemoryBlock(Params[0]) );
+  E.SetRetVal<bool>(IsMemoryBlock(Params[0]));
 }
 TLibrary* TFileHandlerManager::ExportLibrary(const olxstr& name)  {
   if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
@@ -338,8 +338,9 @@ TLibrary* TFileHandlerManager::ExportLibrary(const olxstr& name)  {
 PyObject* pyExists(PyObject* self, PyObject* args)  {
   olxstr fn;
   PythonExt::ParseTuple(args, "w", &fn);
-  return Py_BuildValue("b", TFileHandlerManager::Exists(fn) );
+  return Py_BuildValue("b", TFileHandlerManager::Exists(fn));
 }
+//..............................................................................
 PyObject* pyTimestamp(PyObject* self, PyObject* args)  {
   olxstr fn;
   PythonExt::ParseTuple(args, "w", &fn);
@@ -348,7 +349,7 @@ PyObject* pyTimestamp(PyObject* self, PyObject* args)  {
     return PythonExt::PyNone();
   return Py_BuildValue("l", mb->DateTime );
 }
-
+//..............................................................................
 PyObject* pyNewFile(PyObject* self, PyObject* args)  {
   char *data = NULL;
   olxstr name;
@@ -381,11 +382,10 @@ PyObject* pyReadFile(PyObject* self, PyObject* args)  {
   return PythonExt::PyNone();
 }
 
-
 static PyMethodDef OLEXFS_Methods[] = {
   {"Exists", pyExists, METH_VARARGS, "returns true if specified file exists"},
   {"Timestamp", pyTimestamp, METH_VARARGS, "returns timestamp (epoch time) of given file, if file does not exist, returns None"},
-  {"NewFile", pyNewFile, METH_VARARGS, "creates a new file (file_name, data,[persistence]), returns true if operation succeeded "},
+  {"NewFile", pyNewFile, METH_VARARGS, "creates a new file (file_name, data,[persistence]), returns true if operation succeeded"},
   {"ReadFile", pyReadFile, METH_VARARGS, "reads previously created file and reurns the content of the file or None, if error has occured"},
   {NULL, NULL, 0, NULL}
    };

@@ -16,15 +16,8 @@ AGDrawObject(R, collectionName)
   SetGroupable(false);
   Reciprocal = false;
   FGlP = NULL;
-  // FCenter[0] == M_PI - the object is not initialised
-  OldCenter[0] = OldCenter[1] = OldCenter[2] = 100;
   CellToCartesian.I();
   HklToCartesian.I();
-}
-//...........................................................................
-void TDUnitCell::ResetCentres()  {
-  Center.Null();
-  OldCenter[0] = OldCenter[1] = OldCenter[2] = 100;
 }
 //...........................................................................
 void TDUnitCell::Init(const double cell[6])  {
@@ -67,24 +60,8 @@ void TDUnitCell::Init(const double cell[6])  {
 //...........................................................................
 void TDUnitCell::SetReciprocal(bool v)  {
   if( FGlP == NULL )  return;
-  mat3d M;
-  if( v )  {
-    OldCenter = Center;
-    M = HklToCartesian;
-    //M.Transpose();
-    vec3d scaleV(1, 1, 1);
-    scaleV = M*scaleV;
-    double scale = olx_max(scaleV[2],  olx_max(scaleV[0], scaleV[1]) );
-    // with this scale it will cover 10 reflections
-    M *= (10.0/scale);                    // extra scaling;
-    Center = (M[0] + M[1] + M[2])*(-0.5);
-  }
-  else  {
-    M = CellToCartesian;
-    if( OldCenter.Length() == 1000000 )
-      Center = OldCenter;
-  }
 
+  mat3d M = v ? HklToCartesian : CellToCartesian;
   FGlP->Vertices[1] = M[0];  //000-A
   FGlP->Vertices[3] = M[1];  //000-B
   FGlP->Vertices[5] = M[2];  //000-C
@@ -115,10 +92,9 @@ void TDUnitCell::SetReciprocal(bool v)  {
 
   FGlP->Vertices[22] = M[2]+M[0];  //AC
   FGlP->Vertices[23] = M[2]+M[1]+M[0];  //ABC
-
   Reciprocal = v;
 }
-
+//...........................................................................
 void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
@@ -157,11 +133,11 @@ void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
 //..............................................................................
 bool TDUnitCell::GetDimensions(vec3d &Max, vec3d &Min)  {
   if( FGlP == NULL )  return false;
-  vec3f _min(100,100,100), _max(-100, -100, -100);
+  vec3d _min(100,100,100), _max(-100, -100, -100);
   for( int i=0; i < 8; i++ )
-    vec3f::UpdateMinMax(GetVertex(i), _min, _max);
-  Min = vec3d(_min) + Center;  
-  Max = vec3d(_max) + Center;  
+    vec3d::UpdateMinMax(GetVertex(i), _min, _max);
+  Min = _min;  
+  Max = _max;  
   return true;
 }
 //..............................................................................
@@ -170,12 +146,11 @@ bool TDUnitCell::Orient(TGlPrimitive& P)  {
     olxstr Str('O');
     const TGlFont& fnt = *Parent.GetScene().DefFont();
     vec3d T;
-    const double tr = 0.3, 
+    const double tr = 0.003, 
       scale = Parent.GetBasis().GetZoom()/Parent.GetScale(),
       maxZ = Parent.GetMaxRasterZ()-0.001;
     if( !fnt.IsVectorFont() )  {
       vec3d cnt(Parent.GetBasis().GetCenter());
-      cnt += Center;
       T += tr;
       T += cnt;
       T *= Parent.GetBasis().GetMatrix();
@@ -197,7 +172,6 @@ bool TDUnitCell::Orient(TGlPrimitive& P)  {
     }
     else  {
       vec3d cnt(Parent.GetBasis().GetCenter());
-      cnt += Center;
       T += tr;
       T += cnt;
       T *= Parent.GetBasis().GetMatrix();
@@ -219,7 +193,6 @@ bool TDUnitCell::Orient(TGlPrimitive& P)  {
     }
     return true;
   }
-  olx_gl::translate(Center);
   return false;
 }
 //..............................................................................
