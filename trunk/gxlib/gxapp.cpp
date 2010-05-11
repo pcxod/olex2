@@ -161,7 +161,6 @@ public:
         FParent->ClearIndividualCollections();
         FParent->GetRender().GetStyles().RemoveNamedStyles("Q");
       }
-      FParent->DUnitCell().ResetCentres();
       //FParent->XGrid().Clear();
     }
     FParent->GetRender().GetSelection().Clear();
@@ -341,21 +340,19 @@ void TGXApp::Clear()  {
 void TGXApp::CreateXRefs()  {
   if( !XReflections.IsEmpty() )  return;
   TRefList refs;
+  vec3d mind = FGlRender->MinDim(),
+        maxd = FGlRender->MaxDim();
   RefinementModel::HklStat stats = 
     XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace,RefMerger::StandardMerger>(
     XFile().GetUnitCell().GetSymSpace(), refs);
-  vec3d Center;
   for( size_t i=0; i < refs.Count(); i++ )  {
     TXReflection* xr = new TXReflection(*FGlRender, "XReflection", stats.MinI, stats.MaxI, refs[i],
-      &FXFile->GetAsymmUnit());
+      FXFile->GetAsymmUnit());
     xr->Create();
-    XReflections.Add( *xr );
-    Center += xr->Center();
+    XReflections.Add(*xr);
+    vec3d::UpdateMinMax(xr->GetCenter(), mind, maxd);
   }
-  if( !refs.IsEmpty() )  Center /= refs.Count();
-  Center += FGlRender->GetBasis().GetCenter();
-  for( size_t i=0; i < XReflections.Count(); i++ )
-    XReflections[i].Center() -= Center;
+  FGlRender->UpdateMinMax(mind, maxd);
 }
 //..............................................................................
 size_t TGXApp::GetNetworks(TNetPList& nets) {
@@ -538,6 +535,10 @@ void TGXApp::CenterModel()  {
     vec3d::UpdateMinMax(cell_min, miN, maX);
     vec3d::UpdateMinMax(cell_max, miN, maX);
   }
+  for( size_t i=0; i < XReflections.Count(); i++ )  {
+    if( !XReflections[i].IsVisible() || XReflections[i].IsDeleted() )  continue;
+    vec3d::UpdateMinMax(XReflections[i].GetCenter(), miN, maX);
+  }
   vec3d Center((miN+maX)/2);
   Center *= -1;
   FGlRender->GetBasis().SetCenter(Center);
@@ -560,6 +561,10 @@ void TGXApp::CenterView(bool calcZoom)  {
     FDUnitCell->GetDimensions(cell_max, cell_min);
     vec3d::UpdateMinMax(cell_min, miN, maX);
     vec3d::UpdateMinMax(cell_max, miN, maX);
+  }
+  for( size_t i=0; i < XReflections.Count(); i++ )  {
+    if( !XReflections[i].IsVisible() || XReflections[i].IsDeleted() )  continue;
+    vec3d::UpdateMinMax(XReflections[i].GetCenter(), miN, maX);
   }
   vec3d Center((miN+maX)/2);
   Center *= -1;
@@ -1325,7 +1330,7 @@ void TGXApp::Select(const vec3d& From, const vec3d& To )  {
   for( size_t i=0; i < XReflections.Count(); i++ )  {
     TXReflection& XR = XReflections[i];
     if( XR.IsVisible() )  {
-      vec3d Cnt = XR.Center() + GetRender().GetBasis().GetCenter();
+      vec3d Cnt = XR.GetCenter() + GetRender().GetBasis().GetCenter();
       Cnt *= GetRender().GetBasis().GetMatrix();
       Cnt *= GetRender().GetBasis().GetZoom();
       if( Cnt[0] < To[0] && Cnt[1] < To[1] &&
