@@ -2182,6 +2182,12 @@ olxstr TLattice::CalcMoiety() const {
       }
     }
   }
+  // apply Z' multiplier...
+  const double zp_mult = (double)GetUnitCell().MatrixCount()/olx_max((double)AsymmUnit->GetZ(), 0.0001);
+  if( zp_mult != 1 )  {
+    for( size_t i=0; i < frags.Count(); i++ )
+      frags[i].A() *= zp_mult;
+  }
   olxstr rv;
   for( size_t i=0; i < frags.Count(); i++ )  {
     if( !rv.IsEmpty() )  rv << ", ";
