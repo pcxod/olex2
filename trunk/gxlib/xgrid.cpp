@@ -13,6 +13,7 @@
 #include "library.h"
 #include "conrec.h"
 #include "olxmps.h"
+#include "pers_util.h"
 
 #ifndef _NO_PYTHON
   #include "pyext.h"
@@ -130,7 +131,10 @@ void TXGrid::DrawQuad4(double A[4], double B[4], double C[4], double D[4])  {
 }
 //----------------------------------------------------------------------------//
 TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
-                     TGlMouseListener(xapp->GetRender(), collectionName)  {
+                     TGlMouseListener(xapp->GetRender(), collectionName),
+                     ExtMin(-0.5,-0.5,-0.5),
+                     ExtMax(1.5,1.5,1.5)
+{
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
   Mask = NULL;
@@ -759,16 +763,24 @@ void TXGrid::RescaleSurface()  {
         glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
         olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
         olx_gl::begin(GL_TRIANGLES);
-        for( int x=-1; x <= 1; x++ )  {
-          for( int y=-1; y <= 1; y++ )  {
-            for( int z=-1; z <= 1; z++ )  {
+        for( float x=ExtMin[0]; x < ExtMax[0]; x++ )  {
+          for( float y=ExtMin[1]; y < ExtMax[1]; y++ )  {
+            for( float z=ExtMin[2]; z < ExtMax[2]; z++ )  {
               for( size_t i=0; i < trians.Count(); i++ )  {
+                bool draw = true;
                 for( int j=0; j < 3; j++ )  {
                   pts[j] = verts[trians[i].pointID[j]];                      // ext drawing
                   pts[j][0] /= MaxX;  pts[j][1] /= MaxY;  pts[j][2] /= MaxZ; // ext drawing
                   pts[j][0] += x;     pts[j][1] += y;     pts[j][2] += z;    // ext drawing
-                  olx_gl::normal(norms[trians[i].pointID[j]]);
+                  if( pts[j][0] > ExtMax[0] || pts[j][1] > ExtMax[1] || pts[j][2] > ExtMax[2] )  {
+                    draw = false;
+                    break;
+                  }
                   au.CellToCartesian(pts[j]);                                // ext drawing
+                }
+                if( !draw )  continue;
+                for( int j=0; j < 3; j++ )  {
+                  olx_gl::normal(norms[trians[i].pointID[j]]);
                   olx_gl::vertex(pts[j]);               // ext drawing
                 }
               }
@@ -845,8 +857,13 @@ void TXGrid::InitIso()  {
 //..............................................................................
 void TXGrid::LibExtended(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Extended);
-  else
-    SetExtended( Params[0].ToBool() );
+  else if( Params.Count() == 1 )
+    SetExtended(Params[0].ToBool());
+  else  {
+    ExtMin = vec3d(Params[0].ToDouble(), Params[1].ToDouble(), Params[2].ToDouble());
+    ExtMax = vec3d(Params[3].ToDouble(), Params[4].ToDouble(), Params[5].ToDouble());
+    SetExtended(true);
+  }
 }
 //..............................................................................
 void TXGrid::LibScale(const TStrObjList& Params, TMacroError& E)  {
@@ -939,6 +956,8 @@ void TXGrid::ToDataItem(TDataItem& item, IOutputStream& zos) const {
     item.AddField("depth", Depth);
     item.AddField("size", Size);
     item.AddField("extended", Extended);
+    item.AddField("ext_min", PersUtil::VecToStr(ExtMin));
+    item.AddField("ext_max", PersUtil::VecToStr(ExtMin));
     item.AddField("scale", Scale);
     item.AddField("max_x", MaxX);
     item.AddField("max_y", MaxY);
@@ -965,13 +984,20 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
   Depth = item.GetRequiredField("depth").ToDouble();
   Size = item.GetRequiredField("size").ToDouble();
   Extended = item.GetFieldValue("extended", FalseString).ToBool();
+  ExtMin = vec3f(-1,-1,-1);
+  ExtMax = vec3f(1,1,1);
+  const size_t ed_i = item.FieldIndex("ext_max");
+  if( ed_i != InvalidIndex )  {
+    ExtMin = PersUtil::FloatVecFromStr(item.GetField(ed_i));
+    ExtMax = PersUtil::FloatVecFromStr(item.GetRequiredField("ext_min"));
+  }
   Scale = item.GetRequiredField("scale").ToDouble();
   InitGrid( item.GetRequiredField("max_x").ToInt(), 
             item.GetRequiredField("max_y").ToInt(),
             item.GetRequiredField("max_z").ToInt() );
   for( int x=0; x < MaxX; x++ )
     for( int y=0; y < MaxY; y++ )
-      zis.Read( ED->Data[x][y], sizeof(float)*MaxZ );
+      zis.Read(ED->Data[x][y], sizeof(float)*MaxZ);
   TDataItem* maski = item.FindItem("mask");
   if( maski != NULL )  {
     Mask = new FractMask;
@@ -987,7 +1013,7 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibGetMax, "GetMax",
     fpNone, "Returns maximum value of the map") );
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibExtended, "Extended",
-    fpNone|fpOne, "Returns/sets extended size of the grid") );
+    fpNone|fpOne|fpSix, "Returns/sets extended size of the grid") );
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibScale, "Scale",
     fpNone|fpOne, "Returns/sets current scale") );
   lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibSize, "Size",
