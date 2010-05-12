@@ -7,13 +7,22 @@
 namespace ctrl_ext  {
 
   class TDialog: public wxDialog, public AOlxCtrl {
+    void OnSizeEvt(wxSizeEvent& event);
   protected:
     class TMainFrame *Parent;
+    TActionQList Actions;
   public:
-    TDialog(TMainFrame *Parent, const wxString &Title, const wxString &ClassName);
+    TDialog(TMainFrame *Parent,
+      const wxString &Title,
+      const wxString &ClassName,
+      const wxPoint& position = wxDefaultPosition,
+      const wxSize& size = wxDefaultSize,
+      int style=wxRESIZE_BORDER|wxDEFAULT_DIALOG_STYLE);
     virtual ~TDialog();
 
+    TActionQueue &OnResize;
     DECLARE_CLASS(TDialog)
+    DECLARE_EVENT_TABLE()
   };
 
   class TTimer: public wxTimer, public IEObject  {

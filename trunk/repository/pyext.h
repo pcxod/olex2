@@ -157,21 +157,28 @@ public:
     PyDict_SetItemString(dict, field_name, val);
     Py_DECREF(val);
   }
-  static void SetErrorMsg(PyObject* err_type, const olxstr& msg)  {
-    PyObject* val = BuildString(msg);
+  static PyObject* SetErrorMsg(PyObject* err_type, const olxcstr& location, const olxstr& msg)  {
+    PyObject* val = BuildString(olxstr(location) << ": " << msg);
     PyErr_SetObject(err_type, val);
     Py_DECREF(val);
+    return PyNone();
   }
-  static void SetErrorMsg(PyObject* err_type, const char* msg)  {
-    PyObject* val = Py_BuildValue("s", msg);
+  static PyObject* SetErrorMsg(PyObject* err_type, const olxcstr& location, const char* msg)  {
+    PyObject* val = Py_BuildValue("s: s", location.c_str(), msg);
     PyErr_SetObject(err_type, val);
     Py_DECREF(val);
+    return PyNone();
   }
-  static PyObject* PyNone()  {
-    Py_INCREF(Py_None);
-    return Py_None;
+  static PyObject* InvalidArgumentException(const olxcstr& location, const char* msg)  {
+    PyObject* val = Py_BuildValue("s: ss", location.c_str(), "invalid argument format for ", msg);
+    PyErr_SetObject(PyExc_TypeError, val);
+    Py_DECREF(val);
+    return PyNone();
   }
-  /* tuple parsing to prcess unicode and string in the same way...
+  static PyObject* PyNone()  {  Py_INCREF(Py_None);  return Py_None;  }
+  static PyObject* PyTrue()  {  Py_INCREF(Py_True);  return Py_True;  }
+  static PyObject* PyFalse()  {  Py_INCREF(Py_False);  return Py_False;  }
+  /* tuple parsing to process unicode and string in the same way...
     s# - char*, len
     s - char*
     w - olxstr

@@ -14,7 +14,11 @@
 
 class THtmlSwitch;
 
-class THtml: public wxHtmlWindow, public IEObject  {
+enum {
+  html_parent_resize = 2
+};
+
+class THtml: public wxHtmlWindow, public AEventsDispatcher  {
 private:
   bool Movable, PageLoadRequested, ShowTooltips;
   int LockPageLoad;
@@ -27,6 +31,7 @@ protected:
   void OnLinkClicked(const wxHtmlLinkInfo& link);
   wxHtmlOpeningStatus OnOpeningURL(wxHtmlURLType type, const wxString& url, wxString *redirect) const;
 
+  void OnSizeEvt(wxSizeEvent& event);
   void OnMouseDblClick(wxMouseEvent& event);
   void OnMouseDown(wxMouseEvent& event);
   void OnMouseUp(wxMouseEvent& event);
@@ -34,6 +39,8 @@ protected:
   void OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y);
   void OnChildFocus(wxChildFocusEvent& event);
   void DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next);
+  olxstr OnSizeData, OnDblClickData;
+  virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject* Sender, const IEObject* Data=NULL);
   /* on GTK scrolling makes mess out of the controls so will try to "fix it" here*/
   void OnScroll(wxScrollEvent& evt);
   virtual void ScrollWindow(int dx, int dy, const wxRect* rect = NULL);
@@ -106,6 +113,10 @@ protected:
     DefFunc(GetItemState)
     DefFunc(IsItem)
     DefFunc(IsPopup)
+    DefFunc(Width)
+    DefFunc(Height)
+    DefFunc(ContainerWidth)
+    DefFunc(ContainerHeight)
 
   olxstr GetObjectValue(const AOlxCtrl *Object);
   const olxstr& GetObjectData(const AOlxCtrl *Object);
@@ -186,9 +197,11 @@ public:
   TActionQueue& OnURL;
   TActionQueue& OnLink;
 
-  TActionQueue& OnDblClick;
+  TActionQueue& OnDblClick, &OnSize;
   TActionQueue& OnKey;
-  TActionQueue& OnCmd;
+
+  DefPropC(olxstr, OnSizeData)
+  DefPropC(olxstr, OnDblClickData)
 
   TWindowInterface WI;
   // global data for the HTML parsing....

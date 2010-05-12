@@ -2262,7 +2262,8 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   else if( str_lt.Equalsi("subscript") )
     lt = 2;
   for( size_t i=0; i < atoms.Count(); i++ )  {
-    TXGlLabel* gxl = FXApp->CreateLabel(atoms[i], fntPLabels);
+    // 4 - Picture_labels, TODO - avoid naked index reference...
+    TXGlLabel* gxl = FXApp->CreateLabel(atoms[i], 4);
     if( lt != 0 && atoms[i]->Atom().GetLabel().Length() > atoms[i]->Atom().GetType().symbol.Length() )  {
       olxstr bcc = atoms[i]->Atom().GetLabel().SubStringFrom(atoms[i]->Atom().GetType().symbol.Length());
       olxstr lb = atoms[i]->Atom().GetType().symbol;
@@ -4500,7 +4501,8 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     y = Options.FindValue("y", "0").ToInt();
   olxstr border = Options.FindValue("b"), 
     title = Options.FindValue("t"), 
-    onDblClick = Options.FindValue("d");
+    onDblClick = Options.FindValue("ondblclick"),
+    onSize = Options.FindValue("onsize");
   int iBorder = 0;
   for( size_t i=0; i < border.Length(); i++ )  {
     if( border.CharAt(i) == 't' )  {  iBorder |= wxCAPTION;        continue;  }
@@ -4535,9 +4537,10 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     return;
   }
 
-  wxDialog *dlg = new wxDialog(this, -1, title.u_str(), wxPoint(x,y), wxSize(width, height),
-    iBorder, wxT("htmlPopupWindow") );
+  TDialog *dlg = new TDialog(this, title.u_str(), wxT("htmlPopupWindow"), wxPoint(x,y),
+    wxSize(width, height), iBorder);
   THtml *html1 = new THtml(dlg, FXApp);
+  dlg->OnResize.Add(html1, html_parent_resize, msiExecute);
 //  html1->WI.AddWindowStyle(wxTAB_TRAVERSAL);
   html1->SetWebFolder( TutorialDir );
   html1->SetHomePage(TutorialDir + Cmds[1]);
@@ -4552,19 +4555,18 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   pd = new TPopupData;
   pd->Dialog = dlg;
   pd->Html = html1;
-  pd->OnDblClick = onDblClick;
 
   FPopups.Add(Cmds[0], pd);
   THtml* ph = FHtml;
   FHtml = html1;
-  try  {  html1->LoadPage( Cmds[1].u_str() );  }
+  try  {  html1->LoadPage(Cmds[1].u_str());  }
   catch( ... )  {}
   FHtml = ph;
   
   html1->OnLink.Add(this, ID_ONLINK);
   html1->OnKey.Add(this, ID_HTMLKEY);
-  html1->OnDblClick.Add(this, ID_HTMLDBLCLICK);
-  html1->OnCmd.Add(this, ID_HTMLCMD);
+  html1->OnDblClick.Add(this, ID_ONLINK);
+  html1->OnSize.Add(this, ID_ONLINK);
   if( !Options.Contains('s') )
     dlg->Show();
 }
