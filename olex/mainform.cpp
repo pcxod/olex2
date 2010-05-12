@@ -117,8 +117,6 @@ enum
   ID_MenuAtomConn,
   ID_MenuAtomPoly,
 
-  ID_About, // help menu
-
   ID_DSBS,  // drawing style, balls and sticks
   ID_DSES,  // ellipsoids and sticks
   ID_DSSP,  // sphere packing
@@ -300,7 +298,6 @@ public:
 //----------------------------------------------------------------------------//
 BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_SIZE(TMainForm::OnSize)
-  EVT_MENU(ID_About, TMainForm::OnAbout)
   EVT_MENU(ID_FILE0, TMainForm::OnFileOpen)
   EVT_MENU(ID_FILE0+1, TMainForm::OnFileOpen)
   EVT_MENU(ID_FILE0+2, TMainForm::OnFileOpen)
@@ -1082,8 +1079,6 @@ separated values of Atom Type and radius, an entry a line");
   MenuStructure->Append(ID_StrGenerate, wxT("&Generate..."));
   MenuStructure->Append(ID_PictureExport, wxT("&Export picture (experimental)"));
 
-  MenuHelp->Append(ID_About, wxT("&About..."));
-
 // statusbar initialisation
   StatusBar = CreateStatusBar();
   SetStatusText( wxT("Welcome to OLEX2!"));
@@ -1573,11 +1568,6 @@ void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))  {
     ProcessMacro(T);
   }
   G->Destroy();
-}
-//..............................................................................
-void TMainForm::OnAbout(wxCommandEvent& WXUNUSED(event))  {
-  wxMessageBox( wxT("OLEX 2\n(c) Oleg V. Dolomanov, Horst Puschmann and Richard J. Gildea, 2004-2009\nDurham University"),
-    wxT("About"), wxOK | wxICON_INFORMATION, this);
 }
 //..............................................................................
 void TMainForm::OnFileOpen(wxCommandEvent& event)  {

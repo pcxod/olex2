@@ -198,17 +198,11 @@ protected:
   void OnSize(wxSizeEvent& event);
 
   void OnQuit(wxCommandEvent& event);
-  void OnAbout(wxCommandEvent& event);
   void OnFileOpen(wxCommandEvent& event);
-
   void OnGenerate(wxCommandEvent& event);
-
   void OnDrawStyleChange(wxCommandEvent& event);
-
   void OnDrawQChange(wxCommandEvent& event);
-
   void OnViewAlong(wxCommandEvent& event);
-
   void OnInternalIdle();
 
   friend class TObjectVisibilityChange;
