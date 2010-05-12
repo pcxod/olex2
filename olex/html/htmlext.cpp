@@ -33,6 +33,7 @@ BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
   EVT_CHILD_FOCUS(THtml::OnChildFocus)
   EVT_KEY_DOWN(THtml::OnKeyDown)
   EVT_CHAR(THtml::OnChar)
+  EVT_SIZE(THtml::OnSizeEvt)
 END_EVENT_TABLE()
 //..............................................................................
 THtml::THtml(wxWindow *Parent, ALibraryContainer* LC) :
@@ -42,7 +43,7 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC) :
   OnURL(Actions.New("ONURL")),
   OnDblClick(Actions.New("ONDBLCL")),
   OnKey(Actions.New("ONCHAR")),
-  OnCmd(Actions.New("ONCMD"))
+  OnSize(Actions.New("ONSIZE"))
 {
   Root = new THtmlSwitch(this, NULL);
   Movable = false;
@@ -113,6 +114,10 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC) :
     this_InitFuncD(IsPopup, fpOne, "Returns true if specified popup window exists and visible");
     this_InitFuncD(EndModal, fpTwo, "Ends a modal popup and sets the return code");
     this_InitFuncD(ShowModal, fpOne, "Shows a previously created popup window as a modal dialog");
+    this_InitFuncD(Width, fpOne|fpTwo, "Returns/sets width of an HTML window");
+    this_InitFuncD(Height, fpOne|fpTwo, "Returns/sets height of an HTML window");
+    this_InitFuncD(ContainerWidth, fpOne|fpTwo, "Returns/sets width of a popup window");
+    this_InitFuncD(ContainerHeight, fpOne|fpTwo, "Returns/sets height of a popup window");
   }
 }
 //..............................................................................
@@ -196,7 +201,25 @@ void THtml::OnMouseMotion(wxMouseEvent& event)  {
 //..............................................................................
 void THtml::OnMouseDblClick(wxMouseEvent& event)  {
   event.Skip();
-  OnDblClick.Execute(this, NULL);
+  StartEvtProcessing()
+    OnDblClick.Execute(this, &OnDblClickData);
+  EndEvtProcessing()
+}
+//..............................................................................
+void THtml::OnSizeEvt(wxSizeEvent& event)  {
+  event.Skip();
+  StartEvtProcessing()
+    OnSize.Execute(this, &OnSizeData);
+  EndEvtProcessing()
+}
+//..............................................................................
+bool THtml::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender, const IEObject* Data)  {
+  if( MsgId == html_parent_resize )  {
+    TMainFrame::GetMainFrameInstance().LockWindowDestruction(this);
+    OnSize.Execute(this, &OnSizeData);
+    TMainFrame::GetMainFrameInstance().UnlockWindowDestruction(this);
+  }
+  return true;
 }
 //..............................................................................
 void THtml::OnChildFocus(wxChildFocusEvent& event)  {
@@ -1568,9 +1591,62 @@ void THtml::funShowModal(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
   }
-  E.SetRetVal( pd->Dialog->ShowModal() );
+  E.SetRetVal(pd->Dialog->ShowModal());
 }
 //..............................................................................
+void THtml::funWidth(const TStrObjList &Params, TMacroError &E)  {
+  TPopupData *pd = TGlXApp::GetMainForm()->FindHtmlEx(Params[0]);
+  if( pd == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    return;
+  }
+  if( Params.Count() == 1 )
+    E.SetRetVal(pd->Html->GetSize().GetWidth());
+  else  {
+    pd->Html->SetSize(-1, -1, Params[1].ToInt(), -1);
+    pd->Dialog->GetSizer()->SetSizeHints(pd->Html);
+    pd->Dialog->Fit();
+  }
+}
+//..............................................................................
+void THtml::funHeight(const TStrObjList &Params, TMacroError &E)  {
+  TPopupData *pd = TGlXApp::GetMainForm()->FindHtmlEx(Params[0]);
+  if( pd == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    return;
+  }
+  if( Params.Count() == 1 )
+    E.SetRetVal(pd->Html->GetSize().GetHeight());
+  else  {
+    pd->Html->SetSize(-1, -1, -1, Params[1].ToInt());
+    pd->Dialog->GetSizer()->SetSizeHints(pd->Html);
+    pd->Dialog->Fit();
+  }
+}
+//..............................................................................
+void THtml::funContainerWidth(const TStrObjList &Params, TMacroError &E)  {
+  TPopupData *pd = TGlXApp::GetMainForm()->FindHtmlEx(Params[0]);
+  if( pd == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    return;
+  }
+  if( Params.Count() == 1 )
+    E.SetRetVal(pd->Dialog->GetSize().GetWidth());
+  else
+    pd->Dialog->SetSize(-1, -1, Params[1].ToInt(), -1);
+}
+//..............................................................................
+void THtml::funContainerHeight(const TStrObjList &Params, TMacroError &E)  {
+  TPopupData *pd = TGlXApp::GetMainForm()->FindHtmlEx(Params[0]);
+  if( pd == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    return;
+  }
+  if( Params.Count() == 1 )
+    E.SetRetVal(pd->Dialog->GetSize().GetHeight());
+  else
+    pd->Dialog->SetSize(-1, -1, -1, Params[1].ToInt());
+}
 //..............................................................................
 //..............................................................................
 //..............................................................................

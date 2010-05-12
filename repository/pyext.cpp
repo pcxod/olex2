@@ -107,7 +107,7 @@ PyObject* runWriteImage(PyObject* self, PyObject* args)  {
   int persistenceId = 0;
   int length = 0;
   if( !PythonExt::ParseTuple(args, "ws#|i", &name, &data, &length, &persistenceId) )
-    return PythonExt::PyNone();
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "ws#|i");
   if( data != NULL && !name.IsEmpty() && length > 0 )  {
     TFileHandlerManager::AddMemoryBlock(name, data, length, persistenceId);
     return Py_BuildValue("b", true);
@@ -119,38 +119,33 @@ PyObject* runReadImage(PyObject* self, PyObject* args)  {
   //IOlexProcessor* o_r = PythonExt::GetOlexProcessor();
   olxstr name;
   if( !PythonExt::ParseTuple(args, "w", &name) )
-    return PythonExt::PyNone();
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
   if( !name.IsEmpty() )  {
     //o_r->print(olxstr("PyExt - reading image: ") << name);
     IInputStream* io = TFileHandlerManager::GetInputStream(name);
-    if( io == NULL )
-      return PythonExt::PyNone();
-    const size_t is = io->GetAvailableSizeT();
-    char * bf = new char [is + 1];
-    io->Read(bf, is);
-    PyObject* po = Py_BuildValue("s#", bf, is);
-    delete [] bf;
-    delete io;
-    //o_r->print(olxstr("PyExt - finished reading image: ") << name);
-    return po;
+    if( io != NULL )  {
+      const size_t is = io->GetAvailableSizeT();
+      char * bf = new char [is + 1];
+      io->Read(bf, is);
+      PyObject* po = Py_BuildValue("s#", bf, is);
+      delete [] bf;
+      delete io;
+      return po;
+    }
   }
-  PythonExt::SetErrorMsg(PyExc_TypeError, "Undefined object");
-  return PythonExt::PyNone();
+  return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "Undefined object");
 }
 //..............................................................................
 PyObject* runRegisterFunction(PyObject* self, PyObject* args)  {
   PyObject* fun;
   bool profile = false;
   if( !PyArg_ParseTuple(args, "O|b", &fun, &profile) )
-    return PythonExt::PyNone();
-  if( !PyCallable_Check(fun) )  {
-    PythonExt::SetErrorMsg(PyExc_TypeError, "Parameter must be callable");
-    return PythonExt::PyNone();
-  }
-  if( PythonExt::GetInstance()->GetBindLibrary() == NULL )  {
-    PythonExt::SetErrorMsg(PyExc_RuntimeError, "Olex2 binding python library is not initialised...");
-    return PythonExt::PyNone();
-  }
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "O|b");
+  if( !PyCallable_Check(fun) )
+    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "Parameter must be callable");
+  if( PythonExt::GetInstance()->GetBindLibrary() == NULL )
+    return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo, 
+    "Olex2 binding python library is not initialised...");
 
   TFuncWrapper* fw = PythonExt::GetInstance()->AddToDelete( new TFuncWrapper(fun, true, profile) );
   try  {
@@ -161,8 +156,7 @@ PyObject* runRegisterFunction(PyObject* self, PyObject* args)  {
   catch( const TExceptionBase& exc )  {
     TStrList st;
     exc.GetException()->GetStackTrace( st );
-    PythonExt::SetErrorMsg(PyExc_TypeError, st.Text('\n'));
-    return PythonExt::PyNone();
+    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, st.Text('\n'));
   }
 }
 //..............................................................................
@@ -171,15 +165,12 @@ PyObject* runRegisterCallback(PyObject* self, PyObject* args)  {
   PyObject* fun;
   bool profile = false;
   if( !PythonExt::ParseTuple(args, "wO|b", &cbEvent, &fun, &profile) )
-    return PythonExt::PyNone();
-  if( !PyCallable_Check(fun) )  {
-    PythonExt::SetErrorMsg(PyExc_TypeError, "Parameter must be callable");
-    return PythonExt::PyNone();
-  }
-  if( PythonExt::GetInstance()->GetBindLibrary() == NULL )  {
-    PythonExt::SetErrorMsg(PyExc_RuntimeError, "Olex2 binding python library is not initialised...");
-    return PythonExt::PyNone();
-  }
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "wO|b");
+  if( !PyCallable_Check(fun) )
+    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "Parameter must be callable");
+  if( PythonExt::GetInstance()->GetBindLibrary() == NULL )
+    return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
+    "Olex2 binding python library is not initialised...");
   // leave function wrapper util the end ..., but delete the binding
   TFuncWrapper* fw = PythonExt::GetInstance()->AddToDelete( new TFuncWrapper(fun, false, profile) );
   PythonExt::GetInstance()->GetOlexProcessor()->registerCallbackFunc(cbEvent,
@@ -191,11 +182,9 @@ PyObject* runUnregisterCallback(PyObject* self, PyObject* args)  {
   olxstr cbEvent;
   PyObject* fun;
   if( !PythonExt::ParseTuple(args, "wO", &cbEvent, &fun) )
-    return PythonExt::PyNone();
-  if( !PyCallable_Check(fun) )  {
-    PythonExt::SetErrorMsg(PyExc_TypeError, "Parameter must be callable");
-    return PythonExt::PyNone();
-  }
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "wO");
+  if( !PyCallable_Check(fun) )
+    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "Parameter must be callable");
   PythonExt::GetInstance()->GetOlexProcessor()->unregisterCallbackFunc(cbEvent, PyEval_GetFuncName(fun) );
   return Py_BuildValue("b", true);
 }
@@ -205,16 +194,12 @@ PyObject* runRegisterMacro(PyObject* self, PyObject* args)  {
   PyObject* fun;
   bool profile = false;
   if( !PythonExt::ParseTuple(args, "Ow|b", &fun, &validOptions, &profile) )
-    return PythonExt::PyNone();
-  if( !PyCallable_Check(fun) )  {
-    PythonExt::SetErrorMsg(PyExc_TypeError, "Parameter must be callable");
-    return PythonExt::PyNone();
-  }
-  if( PythonExt::GetInstance()->GetBindLibrary() == NULL )  {
-    PythonExt::SetErrorMsg(PyExc_RuntimeError, "Olex2 binding python library is not initialised...");
-    return PythonExt::PyNone();
-  }
-
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "Ow|b");
+  if( !PyCallable_Check(fun) )
+    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "Parameter must be callable");
+  if( PythonExt::GetInstance()->GetBindLibrary() == NULL )
+    return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo, 
+    "Olex2 binding python library is not initialised...");
   TMacroWrapper* mw = PythonExt::GetInstance()->AddToDelete( new TMacroWrapper(fun, profile) );
   try  {
     PythonExt::GetInstance()->GetBindLibrary()->RegisterMacro(
@@ -224,8 +209,7 @@ PyObject* runRegisterMacro(PyObject* self, PyObject* args)  {
   catch( const TExceptionBase& exc )  {
     TStrList st;
     exc.GetException()->GetStackTrace( st );
-    PythonExt::SetErrorMsg(PyExc_TypeError, st.Text('\n'));
-    return PythonExt::PyNone();
+    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, st.Text('\n'));
   }
 }
 //..............................................................................
@@ -237,7 +221,7 @@ PyObject* runOlexMacro(PyObject* self, PyObject* args)  {
   IOlexProcessor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   olxstr macroName;
   if( !PythonExt::ParseTuple(args, "w", &macroName) )
-    return PythonExt::PyNone();
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
   bool res = o_r->executeMacro(macroName);
   return Py_BuildValue("b", res);
 }
@@ -246,13 +230,13 @@ PyObject* runOlexFunction(PyObject* self, PyObject* args)  {
   IOlexProcessor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   olxstr functionName;
   if( !PythonExt::ParseTuple(args, "w", &functionName) )
-    return PythonExt::PyNone();
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
   olxstr retValue;
   bool res = o_r->executeFunction(functionName,  retValue);
   if( res )
     return PythonExt::BuildString(retValue);
-  PythonExt::SetErrorMsg(PyExc_RuntimeError, olxstr("Function '") << functionName << "' failed");
-  return PythonExt::PyNone();
+  return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
+    olxstr("Function '") << functionName << "' failed");
 }
 //..............................................................................
 PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
@@ -261,14 +245,13 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
   bool macro;
   PyObject *args_, *kwds_=NULL;
   if( !PythonExt::ParseTuple(args, "wbO|O", &name, &macro, &args_, &kwds_) )
-    return PythonExt::PyNone();
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "wbO|O");
   if( macro )  {
     if( kwds_ != NULL && PyDict_Size(kwds_) != 0 )  {
       ABasicFunction* macro = o_r->GetLibrary().FindMacro(name);
-      if( macro == NULL )  {
-        PythonExt::SetErrorMsg(PyExc_RuntimeError, olxstr("Undefined macro '") << name << '\'');
-        return PythonExt::PyNone();
-      }
+      if( macro == NULL )
+        return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
+          olxstr("Undefined macro '") << name << '\'');
       TStrObjList params;
       TParamList options;
       for( Py_ssize_t i=0; i < PyList_Size(args_); i++ )
@@ -301,10 +284,9 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
   }
   else  {
     ABasicFunction* func = o_r->GetLibrary().FindFunction(name);
-    if( func == NULL )  {
-      PythonExt::SetErrorMsg(PyExc_RuntimeError, olxstr("Undefined function '") << name << '\'');
-      return PythonExt::PyNone();
-    }
+    if( func == NULL )
+      return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
+        olxstr("Undefined function '") << name << '\'');
     TStrObjList params;
     for( Py_ssize_t i=0; i < PyList_Size(args_); i++ )
       params.Add(PythonExt::ParseStr(PyList_GetItem(args_, i)));
@@ -315,8 +297,8 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
       return PythonExt::BuildString(rv);
     }
     else  {
-      PythonExt::SetErrorMsg(PyExc_RuntimeError, olxstr("Function '") << name << "' failed: " << er.GetInfo());
-      return PythonExt::PyNone();
+      return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
+        olxstr("Function '") << name << "' failed: " << er.GetInfo());
     }
   }
 }
@@ -390,15 +372,12 @@ void PythonExt::CheckInitialised()  {
 }
 //..............................................................................
 PyObject* PythonExt::GetProfileInfo()  {
-  int picnt = 0;
+  size_t picnt = 0;
   for( size_t i=0; i < ToDelete.Count(); i++ )
     if( ToDelete[i]->ProfileInfo() != NULL && ToDelete[i]->ProfileInfo()->CallCount > 0 )
       picnt++;
 
-  if( picnt == 0 )
-    return PythonExt::PyNone();
-
-  PyObject *rv = PyTuple_New( picnt );
+  PyObject *rv = PyTuple_New(picnt);
   picnt = 0;
   for( size_t i=0; i < ToDelete.Count(); i++ )  {
     PythonExt::ProfileInfo *pi = ToDelete[i]->ProfileInfo();

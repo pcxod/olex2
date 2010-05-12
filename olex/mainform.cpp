@@ -813,8 +813,8 @@ v-[grow] use user provided delta for connectivity analysis, default 2A",
  a call to this function makes them uniq to the asymmetric unit, the following call makes the uniq to the element type");
 
   this_InitMacroD(Popup,"w-width&;h-height&;t-title&;b-border[trscaip],t-caption bar, r-sizeable border, s-system menu, c-close box,\
- a-maximise box, i-minimise box, p-window should stay on the top of others&;x-left position&;y-top position&;d-a macro or commands to\
- execute when window is double clicked&;s-do show the window after the creation",
+ a-maximise box, i-minimise box, p-window should stay on the top of others&;x-left position&;y-top position&;ondblclick-a macro or commands to\
+ execute when window is double clicked&;onsize-a macro to be executed when the popup is resized&;s-do show the window after the creation",
     fpTwo, "Creates a popup HTML window. Usage: popup popup_name html_source");
 
   this_InitMacroD(Delta, EmptyString, fpNone|fpOne, "Prints/sets current delta fir the covalent bonds");
@@ -1297,9 +1297,6 @@ separated values of Atom Type and radius, an entry a line");
 
   FHtml->OnLink.Add(this, ID_ONLINK);
   FHtml->OnKey.Add(this, ID_HTMLKEY);
-  /*  people do not like it very much ....*/
-//  FHtml->OnDblClick->Add(this, ID_HTMLDBLCLICK);
-  FHtml->OnCmd.Add(this, ID_HTMLCMD);
 
   FXApp->SetLabelsVisible(false);
   FXApp->GetRender().LightModel.SetClearColor(0x0f0f0f0f);
@@ -2427,30 +2424,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       FTimer->OnTimer.SetEnabled(true);
     }
   }
-  else if( MsgId == ID_HTMLCMD )  {
-    if( Data != NULL )  {
-      FMode |= mSilent;
-      res = ProcessFunction(*(olxstr*)Data);
-      if( !Silent )  FMode ^= mSilent;
-    }
-  }
   else if( MsgId == ID_HTMLKEY )  {
     FGlCanvas->SetFocus();
     OnChar(((TKeyEvent*)Data)->GetEvent());
-  }
-  else if( MsgId == ID_HTMLDBLCLICK )  {
-    TPopupData *pd = NULL;
-    for( size_t i=0; i < FPopups.Count(); i++ )  {
-      pd = FPopups.GetObject(i);
-      if( dynamic_cast<const THtml*>(Sender) == pd->Html  )  break;
-    }
-    bool processed = false;
-    if( pd != NULL && (dynamic_cast<const THtml*>(Sender) == (void*)pd->Html) )  {
-      if( !pd->OnDblClick.IsEmpty() )  {
-        ProcessMacro(pd->OnDblClick, "OnDblClick");
-        processed = true;
-      }
-    }
   }
   else if( MsgId == ID_PROCESSTERMINATE )  SetProcess(NULL);
   else if( MsgId == ID_TEXTPOST )  {
@@ -4289,7 +4265,7 @@ void TMainForm::DoUpdateFiles()  {
 PyObject* pyIsControl(PyObject* self, PyObject* args)  {
   olxstr cname, pname;  // control and popup (if any) name
   if( !PythonExt::ParseTuple(args, "w|w", &cname, &pname) )
-    return PythonExt::PyNone();
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w|w");
   THtml* html = pname.IsEmpty() ? TGlXApp::GetMainForm()->GetHtml() :
                 TGlXApp::GetMainForm()->FindHtml(pname);
   return Py_BuildValue("b", html == NULL ? false : (html->FindObject(cname) != NULL) );
@@ -4299,8 +4275,9 @@ PyObject* pyGetUserInput(PyObject* self, PyObject* args)  {
   olxstr title, str;
   int flags = 0;
   if( !PythonExt::ParseTuple(args, "iww", &flags, &title, &str) ||
-      title.IsEmpty() || str.IsEmpty() )  {
-    return PythonExt::PyNone();
+      title.IsEmpty() || str.IsEmpty() )
+  {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iww");
   }
   const bool MultiLine = (flags != 1);
   TdlgEdit *dlg = new TdlgEdit(TGlXApp::GetMainForm(), MultiLine);

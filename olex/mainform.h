@@ -30,55 +30,46 @@
 
 #define  ID_FILE0 100
 
-#define  ID_GLDRAW            1000
-#define  ID_TIMER             1001
-#define  ID_INFO              1002
-#define  ID_WARNING           1003
-#define  ID_ERROR             1004
-#define  ID_EXCEPTION         1005
-#define  ID_ONLINK            1006
-#define  ID_HTMLCMD           1007
-#define  ID_HTMLDBLCLICK      1008
-#define  ID_HTMLKEY           1009
-#define  ID_PROCESSTERMINATE  1010
-#define  ID_COMMAND           1011
-#define  ID_XOBJECTSDESTROY   1012
-#define  ID_CMDLINECHAR       1013
-#define  ID_CMDLINEKEYDOWN    1014
-#define  ID_TEXTPOST          1015
+enum  {
+  ID_GLDRAW = 1000,
+  ID_TIMER,
+  ID_INFO,
+  ID_WARNING,
+  ID_ERROR,
+  ID_EXCEPTION,
+  ID_ONLINK,
+  ID_HTMLKEY,
+  ID_PROCESSTERMINATE,
+  ID_COMMAND,
+  ID_XOBJECTSDESTROY,
+  ID_CMDLINECHAR,
+  ID_CMDLINEKEYDOWN,
+  ID_TEXTPOST
+};
 
 //............................................................................//
-const unsigned short mListen = 0x0001,    // modes
-                     mSilent = 0x0002,  // silent mode
-                     mPick   = 0x0020,  // pick mode, for a future use
-                     mFade   = 0x0080,  // structure fading ..
-                     mRota   = 0x0100,  // rotation
-                     mSolve  = 0x0200,  // structure solution
-                     mSGDet  = 0x0400;  // space group determination
-
-const int   fntConsole  = 0,
-            fntHelp     = 1,
-            fntNotes    = 2,
-            fntLabels   = 3,
-            fntPLabels  = 4;
+const unsigned short
+  mListen = 0x0001,    // modes
+  mSilent = 0x0002,  // silent mode
+  mPick   = 0x0020,  // pick mode, for a future use
+  mFade   = 0x0080,  // structure fading ..
+  mRota   = 0x0100,  // rotation
+  mSolve  = 0x0200,  // structure solution
+  mSGDet  = 0x0400;  // space group determination
 
 // persistence level
-const short plNone      = 0x0000,  // runtime data only - not saved at any moment
-            plStructure = 0x0001,  // data saved/loaded when structure is un/loaded
-            plGlobal    = 0x0002;  // data saved/loaded when olex is closed/executed
-/*
-const unsigned int   psFileLoaded        = pfSpecialCheckA,
-                     psCheckFileTypeIns  = pfSpecialCheckB,
-                     psCheckFileTypeCif  = pfSpecialCheckC,
-*/
+const short
+  plNone      = 0x0000,  // runtime data only - not saved at any moment
+  plStructure = 0x0001,  // data saved/loaded when structure is un/loaded
+  plGlobal    = 0x0002;  // data saved/loaded when olex is closed/executed
+
 class TMainForm;
 class TGlXApp;
 
 //............................................................................//
 struct TPopupData  {
-  wxDialog *Dialog;
+  TDialog *Dialog;
   class THtml *Html;
-  olxstr OnDblClick;
 };
 //............................................................................//
 struct TScheduledTask  {

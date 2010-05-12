@@ -356,7 +356,7 @@ PyObject* pyNewFile(PyObject* self, PyObject* args)  {
   int persistenceId = 0;
   int length = 0;
   if( !PythonExt::ParseTuple(args, "ws#|i", &name, &data, &length, &persistenceId) )
-    return PythonExt::PyNone();
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "ws#|i");
   if( data != NULL && !name.IsEmpty() && length > 0 )  {
     TFileHandlerManager::AddMemoryBlock(name, data, length, persistenceId);
     return Py_BuildValue("b", true);
@@ -367,7 +367,7 @@ PyObject* pyNewFile(PyObject* self, PyObject* args)  {
 PyObject* pyReadFile(PyObject* self, PyObject* args)  {
   olxstr name;
   if( !PythonExt::ParseTuple(args, "w", &name) )
-    return PythonExt::PyNone();
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
   IInputStream* io = TFileHandlerManager::GetInputStream(name);
   if( !name.IsEmpty() && (io = TFileHandlerManager::GetInputStream(name)) != NULL )  {
     const size_t is = io->GetAvailableSizeT();
@@ -378,8 +378,7 @@ PyObject* pyReadFile(PyObject* self, PyObject* args)  {
     delete io;
     return po;
   }
-  PythonExt::SetErrorMsg(PyExc_TypeError, "File does not exist");
-  return PythonExt::PyNone();
+  return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "File does not exist");
 }
 
 static PyMethodDef OLEXFS_Methods[] = {

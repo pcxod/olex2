@@ -1043,7 +1043,7 @@ PyObject* pySetValue(PyObject* self, PyObject* args)  {
   int i, j, k;
   float val;
   if( !PyArg_ParseTuple(args, "iiif", &i, &j, &k, &val) )
-    return NULL;
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iiif");
   TXGrid::GetInstance()->SetValue(i, j, k, val);
   return PythonExt::PyNone();
 }
@@ -1052,7 +1052,7 @@ PyObject* pySetData(PyObject* self, PyObject* args)  {
   int di, dj, dk;
   PyObject *grid;
   if( !PyArg_ParseTuple(args, "iiiO", &di, &dj, &dk, &grid) )
-    return NULL;
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iiiO");
   TXGrid& g = *TXGrid::GetInstance();
   g.InitGrid(di, dj, dk);
   PyObject* arglist = PyTuple_New(3);
@@ -1094,33 +1094,33 @@ PyObject* pySetData(PyObject* self, PyObject* args)  {
 PyObject* pyInit(PyObject* self, PyObject* args)  {
   int i, j, k;
   if( !PyArg_ParseTuple(args, "iii", &i, &j, &k) )
-    return NULL;
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iii");
   TXGrid::GetInstance()->InitGrid(i, j, k);
-  return Py_BuildValue("b", true);
+  return PythonExt::PyTrue();
 }
 //..............................................................................
 PyObject* pySetMinMax(PyObject* self, PyObject* args)  {
   float min, max;
   if( !PyArg_ParseTuple(args, "ff", &min, &max) )
-    return NULL;
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "ff");
   TXGrid::GetInstance()->SetMinVal(min);
   TXGrid::GetInstance()->SetMaxVal(max);
-  return Py_BuildValue("b", true);
+  return PythonExt::PyTrue();
 }
 //..............................................................................
 PyObject* pySetHole(PyObject* self, PyObject* args)  {
   float min, max;
   if( !PyArg_ParseTuple(args, "ff", &min, &max) )
-    return NULL;
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "ff");
   TXGrid::GetInstance()->SetMinHole(min);
   TXGrid::GetInstance()->SetMaxHole(max);
-  return Py_BuildValue("b", true);
+  return PythonExt::PyTrue();
 }
 //..............................................................................
 PyObject* pySetVisible(PyObject* self, PyObject* args)  {
   bool v;
   if( !PyArg_ParseTuple(args, "b", &v) )
-    return NULL;
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "b");
   TXGrid::GetInstance()->SetVisible(v);
   return PythonExt::PyNone();
 }
@@ -1128,7 +1128,7 @@ PyObject* pySetVisible(PyObject* self, PyObject* args)  {
 PyObject* pyInitSurface(PyObject* self, PyObject* args)  {
   bool v;
   if( !PyArg_ParseTuple(args, "b", &v) )
-    return NULL;
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "b");
   if( v )
     TXGrid::GetInstance()->AdjustMap();
   TXGrid::GetInstance()->InitIso();
