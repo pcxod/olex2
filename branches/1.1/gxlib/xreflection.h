@@ -1,27 +1,25 @@
-#ifndef xreflectionH
-#define xreflectionH
+#ifndef __olx_glx_xreflection_H
+#define __olx_glx_xreflection_H
 #include "gxbase.h"
-
 #include "gdrawobject.h"
-
 #include "hkl.h"
 
 BeginGxlNamespace()
 
 class TXReflection: public AGDrawObject  {
 private:
-  vec3d FCenter;
+  vec3d Center;
   vec3i hkl;
   double I;
 public:
   TXReflection(TGlRenderer& Render, const olxstr& collectionName, double minI, double maxI,
-                 const TReflection& R, TAsymmUnit* au);
+                 const TReflection& R, const TAsymmUnit& au);
   virtual ~TXReflection();
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
 
   const vec3i& GetHKL() const {  return hkl;  }
   double GetI() const {  return I;  }
-  vec3d& Center()    {  return FCenter;  }
+  const vec3d& GetCenter()  {  return Center;  }
 
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min);

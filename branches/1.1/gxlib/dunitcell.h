@@ -1,5 +1,5 @@
-#ifndef dunitcellH
-#define dunitcellH
+#ifndef __olx_glx_dunitcell_H
+#define __olx_glx_dunitcell_H
 #include "gxbase.h"
 #include "threex3.h"
 #include "gdrawobject.h"
@@ -9,7 +9,6 @@ BeginGxlNamespace()
 
 class TDUnitCell: public AGDrawObject  {
   bool Reciprocal;
-  vec3d Center, OldCenter;
   TGlPrimitive *FGlP;
   mat3d CellToCartesian, HklToCartesian;
 public:
@@ -41,12 +40,10 @@ public:
   }
   size_t EdgeCount() const {  return FGlP == NULL ? 0 : 24;  }
   const vec3f& GetEdge(size_t i) const {  return FGlP->Vertices[i];  }
-  inline bool IsReciprocal()  const {  return Reciprocal;  }
+  inline bool IsReciprocal() const {  return Reciprocal;  }
   void SetReciprocal(bool v);
-  DefPropC(vec3d, Center)
   inline const mat3d& GetCellToCartesian() const {  return CellToCartesian;  }
-  inline const mat3d& GetHklToCartesian()  const {  return HklToCartesian;  }
-  void ResetCentres();
+  inline const mat3d& GetHklToCartesian() const {  return HklToCartesian;  }
 };
 
 
