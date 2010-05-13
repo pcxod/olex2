@@ -1679,6 +1679,13 @@ void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  if( WaitingForProcess )  {
+    while( FProcess != NULL )  {
+      FParent->Dispatch();
+      Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
+    }
+    WaitingForProcess = false;
+  }
   bool Asyn = !Options.Contains('s'), // synchroniusly
     Cout = !Options.Contains('o'),    // catch output
     quite = Options.Contains('q');
@@ -1700,7 +1707,7 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TWxProcess* Process = new TWxProcess;
 #endif
 
-  Process->OnTerminateCmds().Assign( FOnTerminateMacroCmds );
+  Process->OnTerminateCmds().Assign(FOnTerminateMacroCmds);
   FOnTerminateMacroCmds.Clear();
   if( (Cout && Asyn) || Asyn )  {  // the only combination
     if( !Cout )  {
@@ -2161,10 +2168,14 @@ void TMainForm::macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroE
     }
   }
   else if( Cmds[0].Equalsi("process") )  {
+    WaitingForProcess = true;
     while( FProcess != NULL )  {
       FParent->Dispatch();
       Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
+      if( !WaitingForProcess )
+        break;
     }
+    WaitingForProcess = false;
   }
 }
 //..............................................................................

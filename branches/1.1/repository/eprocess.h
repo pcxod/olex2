@@ -103,6 +103,8 @@ public:
 class TWinProcess: public AEventsDispatcher, public AProcess {
 private:
 protected:
+  olxstr OutputString;
+  size_t CallsWasted;
   PROCESS_INFORMATION ProcessInfo;
   HANDLE OutRead, InWrite;
   HANDLE InRead, OutWrite, ErrWrite;  // initialised by InitStreams func

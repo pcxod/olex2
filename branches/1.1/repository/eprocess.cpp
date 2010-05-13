@@ -35,6 +35,7 @@ TWinProcess::TWinProcess()  {
   InWrite = OutRead = NULL;
   OutWrite = ErrWrite = InRead = NULL;
   ProcessInfo.hProcess = NULL;
+  CallsWasted = 0;
 }
 //..............................................................................
 TWinProcess::~TWinProcess()  {
@@ -143,7 +144,7 @@ bool TWinProcess::Execute(const olxstr & Cmd, short Flags)  {
   // are maintained in this process or else the pipe will not
   // close when the child process exits and ReadFile will hang.
   CloseThreadStreams();
-  if( !IsSynchronised() && IsRedirected() ) // Launch a thread to receive output from the child process.
+  if( !IsSynchronised() ) // Launch a thread to receive output from the child process.
     TBasicApp::GetInstance().OnTimer.Add(this, ID_Timer);
 
   if( IsSynchronised() )  {
@@ -184,64 +185,65 @@ void TWinProcess::Writenl()  {
 }
 //..............................................................................
 bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
-  DWORD dwAvail = 0;
-  static int wasted=0;  // acounter for how many times there is nothing to read in the pipe
-  const int BfC=512;
-  char Bf[BfC];
-  DWORD dwRead = 0;
   bool Terminated = false;
-  static olxstr Str;
-  switch( MsgId )  {
-    case ID_Timer:
-    if( !PeekNamedPipe(OutRead, NULL, 0, NULL, &dwAvail, NULL) )  {    // error
-      Terminated = true;
-      break;
-    }
-    if( dwAvail == 0 )  {  // no data
-      wasted++;
-      break;
-    }
-    wasted = 0;
-    dwRead = 0;
-    if( !ReadFile(OutRead, Bf, olx_min(BfC-1, dwAvail), &dwRead, NULL) || dwRead == 0 )  { // error, the child might ended
-      Terminated = true;
-      break;
-    }
-    Str.SetCapacity( Str.Length() + dwRead );
-    for( unsigned int i=0; i < dwRead; i++ )  {
-      if( Bf[i] == '\r' ) continue;
-      if( Bf[i] == '\n' )  {
-        AddString(Str);
-        if( GetDubStream() != NULL )
-          GetDubStream()->Writenl( Str.c_str(), Str.Length() );
-        if( !Str.IsEmpty() )
-          Str = EmptyString;
-        continue;
+  if( MsgId == ID_Timer )  {
+    if( IsRedirected() )  {
+      DWORD dwAvail = 0;
+      const size_t BfC=512;
+      char Bf[BfC];
+      DWORD dwRead = 0;
+      if( PeekNamedPipe(OutRead, NULL, 0, NULL, &dwAvail, NULL) == 0 )  // error
+        Terminated = true;
+      else  if( dwAvail == 0 )  {  // no data
+        CallsWasted++;
       }
-      Str << Bf[i];
+      else  {
+        CallsWasted = 0;
+        dwRead = 0;
+        if( ReadFile(OutRead, Bf, olx_min(BfC-1, dwAvail), &dwRead, NULL) == 0 || dwRead == 0 )  // error, the child might ended
+          Terminated = true;
+        else  {
+          OutputString.SetCapacity(OutputString.Length() + dwRead);
+          for( unsigned int i=0; i < dwRead; i++ )  {
+            if( Bf[i] == '\r' ) continue;
+            if( Bf[i] == '\n' )  {
+              AddString(OutputString);
+              if( GetDubStream() != NULL )
+                GetDubStream()->Writenl(OutputString.c_str(), OutputString.Length());
+              OutputString.SetLength(0);
+              continue;
+            }
+            OutputString << Bf[i];
+          }
+        }
+      }
     }
-    break;
+    else  {  // just check if still valid
+      DWORD Status;
+      if( GetExitCodeProcess(ProcessInfo.hProcess, &Status) == 0 || Status != STILL_ACTIVE )
+        Terminated = true;
+    }
   }
   // Win98 fix... as PeekNamedPipe does not fail after the process is terminate
-  if( wasted > 25 )  {
+  if( CallsWasted > 25 )  {
     unsigned long pec = 0;
     if( !Terminated && GetExitCodeProcess(ProcessInfo.hProcess, &pec) != 0 )
       if( pec != STILL_ACTIVE )
         Terminated = true;
-    wasted = 0;
+    CallsWasted = 0;
   }
   //
   if( Terminated )  {
-    if( !Str.IsEmpty() )  {
-      AddString(Str);
+    if( !OutputString.IsEmpty() )  {
+      AddString(OutputString);
       if( GetDubStream() != NULL )
-        GetDubStream()->Writenl( Str.c_str(), Str.Length() );
-      Str  = EmptyString;
+        GetDubStream()->Writenl(OutputString.c_str(), OutputString.Length() );
+      OutputString.SetLength(0);
     }
     CloseHandle(ProcessInfo.hProcess);
     ProcessInfo.hProcess = NULL;
     Terminate();
-    wasted = 0;
+    CallsWasted = 0;
   }
   return true;
 }

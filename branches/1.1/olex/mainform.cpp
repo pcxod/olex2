@@ -403,6 +403,7 @@ TMainForm::TMainForm(TGlXApp *Parent):
 {
   _UpdateThread = NULL;
 	ActionProgress = UpdateProgress = NULL;
+  WaitingForProcess = false;
   SkipSizing = false;
   Destroying = false;
 #ifdef __WIN32__
@@ -1550,7 +1551,7 @@ void TMainForm::SetProcess( AProcess *Process )  {
   }
   FProcess = Process;
   if( FProcess == NULL )  {
-  TBasicApp::GetLog().Info("The process has been terminated...");
+    TBasicApp::GetLog().Info("The process has been terminated...");
     TimePerFrame = FXApp->Draw();
   }
 }

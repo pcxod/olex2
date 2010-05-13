@@ -555,6 +555,7 @@ private:
   bool Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
   olxstr FLastSettingsFile;
   AProcess* FProcess;
+  bool WaitingForProcess;
   // class TIOExt* FIOExt;
   TTimer *FTimer;
   unsigned short FMode;
