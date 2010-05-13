@@ -1,5 +1,6 @@
 #include "htmlext.h"
 #include "imgcellext.h"
+#include "widgetcellext.h"
 #include "../mainform.h"
 #include "../xglapp.h"
 #include "wx/html/htmlcell.h"
