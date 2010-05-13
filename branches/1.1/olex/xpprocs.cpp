@@ -1220,7 +1220,7 @@ void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     lmode |= lmLabels;
     lmode |= lmQPeak;
     FXApp->SetLabelsMode(lmode);
-    FXApp->SetLabelsVisible( !FXApp->AreLabelsVisible() );
+    FXApp->SetLabelsVisible(!FXApp->AreLabelsVisible());
   }
   else  {
     FXApp->SetLabelsMode(lmode |= lmQPeak );
@@ -1228,6 +1228,29 @@ void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
   TStateChange sc(prsLabels, FXApp->AreLabelsVisible());
   OnStateChange.Execute((AOlxCtrl*)this, &sc);
+}
+//..............................................................................
+void TMainForm::macCapitalise(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TXAtomPList xatoms;
+  const olxstr format = Cmds[0];
+  Cmds.Delete(0);
+  if( !FindXAtoms(Cmds, xatoms, true, true) )  return;
+  for( size_t i=0; i < xatoms.Count(); i++ )
+    xatoms[i]->Atom().CAtom().SetTag(0);
+  for( size_t i=0; i < xatoms.Count(); i++ )  {
+    if( xatoms[i]->Atom().CAtom().GetTag() != 0 )  continue;
+    const olxstr& label = xatoms[i]->Atom().CAtom().GetLabel();
+    const size_t len = olx_min(Cmds[0].Length(), label.Length());
+    olxstr new_label(label);
+    for( size_t j=0; j < len; j++ )   {
+      if( format[j] >= 'a' && format[j] <= 'z' )
+        new_label[j] = olxstr::o_tolower(label.CharAt(j));
+      else if( format[j] >= 'A' && format[j] <= 'Z' )
+        new_label[j] = olxstr::o_toupper(label.CharAt(j));
+    }
+    xatoms[i]->Atom().CAtom().SetLabel(new_label, false);
+    xatoms[i]->Atom().CAtom().SetTag(1);
+  }
 }
 //..............................................................................
 void TMainForm::macSetEnv(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

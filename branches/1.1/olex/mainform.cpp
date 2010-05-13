@@ -649,9 +649,12 @@ void TMainForm::XApp( TGXApp *XA)  {
  like C6 or NC5. If the 'where' keyword is used, logical operators, like and (&&),\
  and or (||) can be used to refine the selection");
 
-  this_InitMacroD(Esd, "", fpAny|psFileLoaded,
+  this_InitMacroD(Capitalise, "", (fpAny|psFileLoaded)^fpNone,
+    "Changes atom labels capitalisation for all/given/selected atoms. The first argument is the template like Aaaa");
+
+  this_InitMacroD(Esd, EmptyString, fpAny|psFileLoaded,
     "This procedure calculates possible parameters for the selection and evaluates their esd using the variance-covariance\
- matrix coming from the ShelXL refinement with 'MORE -3' option");
+ matrix coming from the ShelXL refinement with negative 'MORE' like 'MORE -1' option");
   
   this_InitMacroD(Name, "c-disables checking labels for duplications&;s-simply changes suffix\
   of provided atoms to the provided one (or none)&;cs-leaves current selection unchanged", fpOne | fpTwo,
@@ -663,7 +666,8 @@ void TMainForm::XApp( TGXApp *XA)  {
   this_InitMacroD(Labels,
 "p-part&;l-label&;v-variables&;o-occupancy&;co-chemical occupancy&;a-afix&;h-show hydrogen atom labels&;\
 f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
- (as in the ins file)&;qi-Q peak intensity&;i-display labels for identity atoms only",  fpNone,
+ (as in the ins file)&;qi-Q peak intensity&;i-display labels for identity atoms only&;f-applies given\
+ format to the labels like -f=AaBB Aaaa or -f=Aabb etc",  fpNone,
 "Inverts visibility of atom labels on/off. Look at the options");
 
   this_InitMacroD(SetEnv, EmptyString, fpTwo,
