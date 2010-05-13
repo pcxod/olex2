@@ -1221,7 +1221,7 @@ void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     lmode |= lmLabels;
     lmode |= lmQPeak;
     FXApp->SetLabelsMode(lmode);
-    FXApp->SetLabelsVisible( !FXApp->AreLabelsVisible() );
+    FXApp->SetLabelsVisible(!FXApp->AreLabelsVisible());
   }
   else  {
     FXApp->SetLabelsMode(lmode |= lmQPeak );
@@ -1229,6 +1229,29 @@ void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
   TStateChange sc(prsLabels, FXApp->AreLabelsVisible());
   OnStateChange.Execute((AOlxCtrl*)this, &sc);
+}
+//..............................................................................
+void TMainForm::macCapitalise(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TXAtomPList xatoms;
+  const olxstr format = Cmds[0];
+  Cmds.Delete(0);
+  if( !FindXAtoms(Cmds, xatoms, true, true) )  return;
+  for( size_t i=0; i < xatoms.Count(); i++ )
+    xatoms[i]->Atom().CAtom().SetTag(0);
+  for( size_t i=0; i < xatoms.Count(); i++ )  {
+    if( xatoms[i]->Atom().CAtom().GetTag() != 0 )  continue;
+    const olxstr& label = xatoms[i]->Atom().CAtom().GetLabel();
+    const size_t len = olx_min(Cmds[0].Length(), label.Length());
+    olxstr new_label(label);
+    for( size_t j=0; j < len; j++ )   {
+      if( format[j] >= 'a' && format[j] <= 'z' )
+        new_label[j] = olxstr::o_tolower(label.CharAt(j));
+      else if( format[j] >= 'A' && format[j] <= 'Z' )
+        new_label[j] = olxstr::o_toupper(label.CharAt(j));
+    }
+    xatoms[i]->Atom().CAtom().SetLabel(new_label, false);
+    xatoms[i]->Atom().CAtom().SetTag(1);
+  }
 }
 //..............................................................................
 void TMainForm::macSetEnv(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -4505,13 +4528,13 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     onSize = Options.FindValue("onsize");
   int iBorder = 0;
   for( size_t i=0; i < border.Length(); i++ )  {
-    if( border.CharAt(i) == 't' )  {  iBorder |= wxCAPTION;        continue;  }
-    if( border.CharAt(i) == 'r' )  {  iBorder |= wxRESIZE_BORDER;  continue;  }
-    if( border.CharAt(i) == 's' )  {  iBorder |= wxSYSTEM_MENU;    continue;  }
-    if( border.CharAt(i) == 'c' )  {  iBorder |= wxCLOSE_BOX;     iBorder |= wxSYSTEM_MENU; continue;  }
-    if( border.CharAt(i) == 'a' )  {  iBorder |= wxMAXIMIZE_BOX;  iBorder |= wxSYSTEM_MENU; continue;  }
-    if( border.CharAt(i) == 'i' )  {  iBorder |= wxMINIMIZE_BOX;  iBorder |= wxSYSTEM_MENU; continue;  }
-    if( border.CharAt(i) == 'p' )  {  iBorder |= wxSTAY_ON_TOP;   continue;  }
+    if( border.CharAt(i) == 't' )  iBorder |= wxCAPTION;
+    else if( border.CharAt(i) == 'r' )  iBorder |= wxRESIZE_BORDER;
+    else if( border.CharAt(i) == 's' )  iBorder |= wxSYSTEM_MENU;
+    else if( border.CharAt(i) == 'c' )  iBorder |= (wxCLOSE_BOX|wxSYSTEM_MENU);
+    else if( border.CharAt(i) == 'a' )  iBorder |= (wxMAXIMIZE_BOX|wxSYSTEM_MENU);
+    else if( border.CharAt(i) == 'i' )  iBorder |= (wxMINIMIZE_BOX|wxSYSTEM_MENU);
+    else if( border.CharAt(i) == 'p' )  iBorder |= wxSTAY_ON_TOP;
   }
   if( iBorder == 0 )
     iBorder = wxNO_BORDER;
@@ -4542,16 +4565,13 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   THtml *html1 = new THtml(dlg, FXApp);
   dlg->OnResize.Add(html1, html_parent_resize, msiExecute);
 //  html1->WI.AddWindowStyle(wxTAB_TRAVERSAL);
-  html1->SetWebFolder( TutorialDir );
+  html1->SetWebFolder(TutorialDir);
   html1->SetHomePage(TutorialDir + Cmds[1]);
   html1->SetMovable(false);
+  html1->SetOnSizeData(onSize.Replace("\\(", '('));
+  html1->SetOnDblClickData(onDblClick.Replace("\\(", '('));
   dlg->GetClientSize(&width, &height);
   html1->SetSize(width, height);
-  wxBoxSizer *TopSizer = new wxBoxSizer(wxVERTICAL);
-  TopSizer->Add(html1, 0, wxALL, 1);
-  TopSizer->SetSizeHints(dlg);   // set size hints to honour minimum size
-  dlg->SetSizer(TopSizer);
-  dlg->Fit();
   pd = new TPopupData;
   pd->Dialog = dlg;
   pd->Html = html1;

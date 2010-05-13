@@ -905,9 +905,6 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
   if( CAtoms.Count() != index.Count() )
     throw TInvalidArgumentException(__OlxSourceInfo, "index");
   if( CAtoms.IsEmpty() )  return;
-  TStrList Toks;
-  olxstr Tmp, Tmp1;
-  TCAtom *atom;
   size_t atomCount = 0;
   ParseContext cx(rm);
   SL.CombineLines('=');
@@ -921,18 +918,14 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
       CAtoms[i]->GetExyzGroup()->Clear();
   }
   for( size_t i=0; i < SL.Count(); i++ )  {
-    Tmp = olxstr::DeleteSequencesOf<char>(SL[i].UpperCase(), true);
+    olxstr Tmp = olxstr::DeleteSequencesOf<char>(SL[i], true);
     if( Tmp.IsEmpty() )  continue;
-
     const size_t exi = Tmp.IndexOf('!');
     if( exi != InvalidIndex )
       Tmp.SetLength(exi);
-
-    Toks.Clear();
-    Toks.Strtok(Tmp, ' ');
+    TStrList Toks(Tmp, ' ');
     if( Toks.IsEmpty() )  continue;
-    Tmp1 = Toks[0];
-    if( Tmp1 == "REM" )  
+    if( Toks[0].Equalsi("REM") )  
       ;
     else if( ParseIns(SL, Toks, cx, i) )  
       ;
@@ -948,22 +941,21 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
       cm_Element* elm = XElementLib::FindBySymbol(Toks[1]);
       if( elm == NULL ) // wrong SFAC
         throw TInvalidArgumentException(__OlxSourceInfo, "unknown element symbol");
-
+      TCAtom* atom = NULL;
       if( (atomCount+1) > CAtoms.Count() )  {
-        if( atom && atom->GetParent() )
-          atom = &atom->GetParent()->NewAtom(cx.Resi);
+        if( CAtoms.Last()->GetParent() != NULL )
+          atom = &CAtoms.Last()->GetParent()->NewAtom(cx.Resi);
+        else
+          throw TInvalidArgumentException(__OlxSourceInfo, "uninitialised data provided");
       }
       else  {
         atom = CAtoms[index[atomCount]];
         if( cx.Resi != NULL )  
           cx.Resi->Add(*atom);
       }
-      // clear fixed fixed values as they reread
-      //atom->FixedValues().Null();
-
       _ParseAtom(Toks, cx, atom);
       atomCount++;
-      atom->SetLabel(Tmp1, false);
+      atom->SetLabel(Toks[0], false);
       atom->SetType(*elm);
       if( atom->GetType().GetMr() > 3.5 )
         cx.LastNonH = atom;
@@ -1114,7 +1106,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
       QE[j] = cx.rm.Vars.SetParam(*atom, catom_var_name_U11+j, Toks[j+6].ToDouble());
     cx.au.UcifToUcart(QE);
     TEllipsoid& elp = cx.au.NewEllp().Initialise(QE);
-    atom->AssignEllp( &elp );
+    atom->AssignEllp(&elp);
     if( atom->GetEllipsoid()->IsNPD() )  {
       TBasicApp::GetLog().Info(olxstr("Not positevely defined: ") << Toks[0]);
       atom->SetUiso( 0 );
@@ -1127,14 +1119,14 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
     if( Toks.Count() > 6 )
       cx.rm.Vars.SetParam(*atom, catom_var_name_Uiso, Toks[6].ToDouble());
     else // incomplete data...
-      atom->SetUiso( 4*caDefIso*caDefIso );
+      atom->SetUiso(4*caDefIso*caDefIso);
     if( Toks.Count() >= 8 ) // some other data as Q-peak itensity
       atom->SetQPeak( Toks[7].ToDouble() );
     if( atom->GetUiso() <= -0.5 )  {  // a value fixed to a bound atom value
       if( cx.LastWithU == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid Uiso proxy for: ") << Toks[0]);
-      atom->SetUisoScale( olx_abs(atom->GetUiso()) );
-      atom->SetUisoOwner( cx.LastWithU );
+      atom->SetUisoScale(olx_abs(atom->GetUiso()));
+      atom->SetUisoOwner(cx.LastWithU);
       //atom->SetUiso( 4*caDefIso*caDefIso );
       atom->SetUiso( cx.LastWithU->GetUiso()*olx_abs(atom->GetUiso()) );
     }
@@ -1268,7 +1260,7 @@ bool Ins_ProcessRestraint(const TCAtomPList* atoms, TSimpleRestraint& sr)  {
 }
 void StoreUsedSymIndex(TUIntList& il, const smatd* m, RefinementModel& rm)  {
   if( m == NULL )  return;
-  unsigned int ind = (unsigned int)rm.UsedSymmIndex( *m );
+  unsigned int ind = (unsigned int)rm.UsedSymmIndex(*m);
   if( il.IndexOf(ind) == InvalidIndex )
     il.Add(ind);
 }
@@ -1465,15 +1457,15 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
 void TIns::ValidateRestraintsAtomNames(RefinementModel& rm)  {
   // fixed distances
   TPtrList<TSRestraintList> restraints;
-  restraints.Add( &rm.rDFIX ); 
-  restraints.Add( &rm.rSADI ); 
-  restraints.Add( &rm.rDANG ); 
-  restraints.Add( &rm.rCHIV ); 
-  restraints.Add( &rm.rFLAT ); 
-  restraints.Add( &rm.rDELU ); 
-  restraints.Add( &rm.rSIMU ); 
-  restraints.Add( &rm.rISOR ); 
-  restraints.Add( &rm.rEADP ); 
+  restraints.Add(&rm.rDFIX); 
+  restraints.Add(&rm.rSADI); 
+  restraints.Add(&rm.rDANG); 
+  restraints.Add(&rm.rCHIV); 
+  restraints.Add(&rm.rFLAT); 
+  restraints.Add(&rm.rDELU); 
+  restraints.Add(&rm.rSIMU); 
+  restraints.Add(&rm.rISOR); 
+  restraints.Add(&rm.rEADP); 
   for( size_t i=0; i < restraints.Count(); i++ )  {
     TSRestraintList& srl = *restraints[i];
     for( size_t j=0; j < srl.Count(); j++ )  {

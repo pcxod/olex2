@@ -34,7 +34,7 @@ TBasicCFile::~TBasicCFile()  {
 //..............................................................................
 void TBasicCFile::SaveToFile(const olxstr& fn)  {
   TStrList L;
-  SaveToStrings( L );
+  SaveToStrings(L);
   TUtf8File::WriteLines(fn, L, false); 
   FileName = fn;
 };
@@ -50,6 +50,15 @@ void TBasicCFile::LoadFromFile(const olxstr& fn)  {
   catch( const TExceptionBase& exc )  {  
     FileName = EmptyString;
     throw TFunctionFailedException(__OlxSourceInfo, exc);  
+  }
+  /* fix labels for not native formats, will not help for FE1A, because it could come from
+  Fe1A or frim Fe1a ... */
+  if( !IsNative() )  {   
+    for( size_t i=0; i < AsymmUnit.AtomCount(); i++ )  {
+      TCAtom& a = AsymmUnit.GetAtom(i);
+      if( a.GetType().symbol.Length() == 2 && a.GetLabel().StartsFromi(a.GetType().symbol) )
+        a.SetLabel(a.GetType().symbol + a.GetLabel().SubStringFrom(a.GetType().symbol.Length()), false);
+    }
   }
   FileName = fn;
 }

@@ -1546,22 +1546,20 @@ void THtml::funSetBG(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
     return;
   }
-  if( wxw != NULL )  {
-    if( EsdlInstanceOf(*wxw, TComboBox) )  {
-      TComboBox* Box = (TComboBox*)wxw;
-      wxColor fgCl = wxColor(Params[1].u_str());
-      Box->SetBackgroundColour( fgCl );
+  if( EsdlInstanceOf(*wxw, TComboBox) )  {
+    TComboBox* Box = (TComboBox*)wxw;
+    wxColor fgCl = wxColor(Params[1].u_str());
+    Box->SetBackgroundColour( fgCl );
 #ifdef __WIN32__
-      if( Box->GetPopupControl() != NULL )
-        Box->GetPopupControl()->GetControl()->SetBackgroundColour( fgCl );
-      if( Box->GetTextCtrl() != NULL )
-        Box->GetTextCtrl()->SetBackgroundColour( fgCl );
+    if( Box->GetPopupControl() != NULL )
+      Box->GetPopupControl()->GetControl()->SetBackgroundColour( fgCl );
+    if( Box->GetTextCtrl() != NULL )
+      Box->GetTextCtrl()->SetBackgroundColour( fgCl );
 #endif				
-    }
-    else
-      wxw->SetBackgroundColour( wxColor(Params[1].u_str()) );
-    this->Refresh();
   }
+  else
+    wxw->SetBackgroundColour( wxColor(Params[1].u_str()) );
+  this->Refresh();
 }
 //..............................................................................
 void THtml::funGetFontName(const TStrObjList &Params, TMacroError &E)  {
@@ -1595,32 +1593,56 @@ void THtml::funShowModal(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funWidth(const TStrObjList &Params, TMacroError &E)  {
-  TPopupData *pd = TGlXApp::GetMainForm()->FindHtmlEx(Params[0]);
-  if( pd == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml(Params[0].SubStringTo(ind));
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  if( html == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
   }
-  if( Params.Count() == 1 )
-    E.SetRetVal(pd->Html->GetSize().GetWidth());
-  else  {
-    pd->Html->SetSize(-1, -1, Params[1].ToInt(), -1);
-    pd->Dialog->GetSizer()->SetSizeHints(pd->Html);
-    pd->Dialog->Fit();
+  if( objName.Equals("self") )  {
+    if( Params.Count() == 1 )
+      E.SetRetVal(html->GetSize().GetWidth());
+    else
+      html->SetSize(-1, -1, Params[1].ToInt(), -1);
+  }
+  else  {  
+    wxWindow *wxw = html->FindObjectWindow(objName);
+    if( wxw == NULL )  {
+      E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
+      return;
+    }
+    if( Params.Count() == 1 )
+      E.SetRetVal(wxw->GetSize().GetWidth());
+    else
+      wxw->SetSize(-1, -1, Params[1].ToInt(), -1);
   }
 }
 //..............................................................................
 void THtml::funHeight(const TStrObjList &Params, TMacroError &E)  {
-  TPopupData *pd = TGlXApp::GetMainForm()->FindHtmlEx(Params[0]);
-  if( pd == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml(Params[0].SubStringTo(ind));
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  if( html == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
   }
-  if( Params.Count() == 1 )
-    E.SetRetVal(pd->Html->GetSize().GetHeight());
-  else  {
-    pd->Html->SetSize(-1, -1, -1, Params[1].ToInt());
-    pd->Dialog->GetSizer()->SetSizeHints(pd->Html);
-    pd->Dialog->Fit();
+  if( objName.Equals("self") )  {
+    if( Params.Count() == 1 )
+      E.SetRetVal(html->GetSize().GetHeight());
+    else
+      html->SetSize(-1, -1, -1, Params[1].ToInt());
+  }
+  else  {  
+    wxWindow *wxw = html->FindObjectWindow(objName);
+    if( wxw == NULL )  {
+      E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
+      return;
+    }
+    if( Params.Count() == 1 )
+      E.SetRetVal(wxw->GetSize().GetHeight());
+    else
+      wxw->SetSize(-1, -1, -1, Params[1].ToInt());
   }
 }
 //..............................................................................
@@ -1631,9 +1653,9 @@ void THtml::funContainerWidth(const TStrObjList &Params, TMacroError &E)  {
     return;
   }
   if( Params.Count() == 1 )
-    E.SetRetVal(pd->Dialog->GetSize().GetWidth());
+    E.SetRetVal(pd->Dialog->GetClientSize().GetWidth());
   else
-    pd->Dialog->SetSize(-1, -1, Params[1].ToInt(), -1);
+    pd->Dialog->SetClientSize(Params[1].ToInt(), -1);
 }
 //..............................................................................
 void THtml::funContainerHeight(const TStrObjList &Params, TMacroError &E)  {
@@ -1643,9 +1665,9 @@ void THtml::funContainerHeight(const TStrObjList &Params, TMacroError &E)  {
     return;
   }
   if( Params.Count() == 1 )
-    E.SetRetVal(pd->Dialog->GetSize().GetHeight());
+    E.SetRetVal(pd->Dialog->GetClientSize().GetHeight());
   else
-    pd->Dialog->SetSize(-1, -1, -1, Params[1].ToInt());
+    pd->Dialog->SetClientSize(-1, Params[1].ToInt());
 }
 //..............................................................................
 //..............................................................................
