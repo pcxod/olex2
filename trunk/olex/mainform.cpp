@@ -457,10 +457,7 @@ TMainForm::TMainForm(TGlXApp *Parent):
   FParent = Parent;
   ObjectUnderMouse(NULL);
   FHelpItem = NULL;
-  FProcess = NULL;
-
-  // FIOExt = new TIOExt();
-
+  LastProcess = RedirectedProcess = CurrentProcess = NULL;
 
   FTimer = new TTimer;
 
@@ -524,7 +521,6 @@ TMainForm::~TMainForm()  {
   }
   FTimer->OnTimer.Clear();
   delete FTimer;
-//  delete FGlConsole;  // xapplication takes care !
   delete pmGraphics;
   delete pmFragment;
   delete pmMenu;
@@ -536,11 +532,11 @@ TMainForm::~TMainForm()  {
   delete pmLattice;
 
   delete FUndoStack;
-  // leave it fo last
-  if( FProcess )  {
-    FProcess->OnTerminate.Clear();
-    FProcess->Terminate();
-    delete FProcess;
+  // leave it for the end
+  for( size_t i=0; i < Processes.Count(); i++ )  {
+    Processes[i]->OnTerminate.Clear();
+    Processes[i]->Terminate();
+    delete Processes[i];
   }
   // the order is VERY important!
   TOlxVars::Finalise();
@@ -1510,46 +1506,52 @@ void TMainForm::StartupInit()  {
   this->SetDropTarget(dndt);
 }
 //..............................................................................
-void TMainForm::SetProcess( AProcess *Process )  {
-  if( FProcess != NULL && Process == NULL )  {
-    while( FProcess->StrCount() != 0 )  {
-      FGlConsole->PrintText(FProcess->GetString(0), &ExecFontColor);
-      CallbackFunc(ProcessOutputCBName, FProcess->GetString(0));
-      FProcess->DeleteStr(0);
+void TMainForm::OnProcessCreate(AProcess& Process)  {
+  Process.OnTerminate.Add(this, ID_PROCESSTERMINATE);
+  while( CurrentProcess != NULL && !CurrentProcess->IsTerminated() )  {
+    FParent->Dispatch();
+    Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
+    olx_sleep(50);
+  }
+  CurrentProcess = NULL;
+  Processes.Add(&Process);
+  if( Process.IsRedirected() )
+    RedirectedProcess = &Process;
+  LastProcess = &Process;
+}
+//..............................................................................
+void TMainForm::OnProcessTerminate(const AProcess& _process)  {
+  const size_t pi = Processes.IndexOf(&_process);
+  if( pi == InvalidIndex )  // howm come?
+    return;
+  AProcess& Process = *Processes[pi];
+  if( &Process == RedirectedProcess )  RedirectedProcess = NULL;
+  if( &Process == CurrentProcess )  CurrentProcess = NULL;
+  if( &Process == LastProcess )  LastProcess = NULL;
+  if( !Process.GetOutput().IsEmpty() )  {
+    olxstr rv = Process.GetOutput().ReadAll();
+    FGlConsole->SetPrintMaterial(&ExecFontColor);
+    TBasicApp::GetLog() << rv;
+    CallbackFunc(ProcessOutputCBName, rv);
+  }
+    //FGlConsole->PrintText(Process.GetOutput().ReadAll(), &ExecFontColor);
+  FGlConsole->PrintText(EmptyString);
+  if( FMode & mListen )
+    Dispatch(ID_TIMER, msiEnter, (AEventsDispatcher*)this, NULL);
+  TMacroError err;
+  while( !Process.OnTerminateCmds().IsEmpty() ) {
+    olxstr cmd = Process.OnTerminateCmds()[0];
+    Process.OnTerminateCmds().Delete(0);
+    ProcessMacro(cmd, olxstr("OnTerminate of: ") << Process.GetCmdLine());
+    if( !err.IsSuccessful() )  {
+      Process.OnTerminateCmds().Clear();
+      break;
     }
-    FGlConsole->PrintText(EmptyString);
-
-    if( FMode & mListen )
-      Dispatch(ID_TIMER, msiEnter, (AEventsDispatcher*)this, NULL);
-
-    FOnListenCmds.Clear();
-    olxstr Cmd;
-    TMacroError err;
-    while( FProcess->OnTerminateCmds().Count() ) {
-      Cmd = FProcess->OnTerminateCmds()[0];
-      FProcess->OnTerminateCmds().Delete(0);
-      ProcessMacro(Cmd, olxstr("OnTerminate of: ") << FProcess->GetCmdLine());
-      if( !err.IsSuccessful() )  {
-        FProcess->OnTerminateCmds().Clear();
-        break;
-      }
-    }
-    TimePerFrame = FXApp->Draw();
   }
-  if( Process != NULL )
-    Process->OnTerminate.Add(this, ID_PROCESSTERMINATE);
-
-  if( FProcess )  {  
-    FProcess->OnTerminate.Clear();  
-    FProcess->Detach();
-    // will be deleted anyway :), detach puts it to the TEGC
-    //delete FProcess;
-  }
-  FProcess = Process;
-  if( FProcess == NULL )  {
-  TBasicApp::GetLog().Info("The process has been terminated...");
-    TimePerFrame = FXApp->Draw();
-  }
+  TBasicApp::GetLog().Info(olxstr("The process '") << Process.GetCmdLine() << "' has been terminated...");
+  TEGC::Add(Processes[pi]);
+  Processes.Delete(pi);
+  TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
 // view menu
@@ -2208,15 +2210,14 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( GetHtml()->IsPageLoadRequested() && !GetHtml()->IsPageLocked() )
       GetHtml()->ProcessPageLoadRequest();
     FTimer->OnTimer.SetEnabled(true);
-    if( FProcess != NULL )  {
-      //FTimer->OnTimer->Enabled = false;
-      while( FProcess->StrCount() != 0 )  {
-        FGlConsole->PrintText(FProcess->GetString(0), &ExecFontColor);
-        CallbackFunc(ProcessOutputCBName, FProcess->GetString(0));
-        FProcess->DeleteStr(0);
+    for( size_t i=0; i < Processes.Count(); i++ )  {
+      if( !Processes[i]->GetOutput().IsEmpty() )  {
+        olxstr rv = Processes[i]->GetOutput().ReadAll();
+        FGlConsole->SetPrintMaterial(&ExecFontColor);
+        TBasicApp::GetLog() << rv;
+        CallbackFunc(ProcessOutputCBName, rv);
         Draw = true;
       }
-      //FTimer->OnTimer->Enabled = true;
     }
     if( (FMode & mListen) != 0 && TEFile::Exists(FListenFile) )  {
       static time_t FileMT = TEFile::FileAge(FListenFile);
@@ -2225,7 +2226,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         FObjectUnderMouse = NULL;
         ProcessMacro((olxstr("@reap -b -r \'") << FListenFile)+'\'', "OnListen");
         for( size_t i=0; i < FOnListenCmds.Count(); i++ )  {
-          if( ProcessMacro(FOnListenCmds[i], "OnListen") )            
+          if( !ProcessMacro(FOnListenCmds[i], "OnListen") )            
             break;
         }
         FileMT = FileT;
@@ -2432,7 +2433,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     FGlCanvas->SetFocus();
     OnChar(((TKeyEvent*)Data)->GetEvent());
   }
-  else if( MsgId == ID_PROCESSTERMINATE )  SetProcess(NULL);
+  else if( MsgId == ID_PROCESSTERMINATE )
+    OnProcessTerminate(dynamic_cast<const AProcess&>(*Sender));
   else if( MsgId == ID_TEXTPOST )  {
     if( Data != NULL )  {
       FGlConsole->SetSkipPosting(true);
@@ -2449,9 +2451,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     else if( EsdlInstanceOf( *Sender, TGlConsole ) )
         tmp = FGlConsole->GetCommand();
     if( !tmp.IsEmpty() )  {
-      if( FProcess != NULL && FProcess->IsRedirected() )  {  // here we do not need to remember the command
-        FProcess->Write(tmp);
-        FProcess->Writenl();
+      if( RedirectedProcess != NULL )  {
+        RedirectedProcess->Write(tmp);
+        RedirectedProcess->Writenl();
         TimePerFrame = FXApp->Draw();
         FGlConsole->SetCommand(EmptyString);
       }
@@ -2650,16 +2652,12 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
     return;
   }
   if( (Fl&sssCtrl) && m.GetKeyCode() == 'c'-'a'+1 )  {  // Ctrl+C
-    if( FProcess )  {
-      FProcess->OnTerminate.Clear();
-      if( FProcess->Terminate() )
+    if( RedirectedProcess != NULL )  {
+      if( RedirectedProcess->Terminate() )
         TBasicApp::GetLog().Info("Process has been successfully terminated...");
       else
         TBasicApp::GetLog().Info("Could not terminate the process...");
-      FProcess->Detach();
-      FProcess = NULL;
       TimePerFrame = FXApp->Draw();
-      return;
     }
     return;
   }
@@ -2705,12 +2703,13 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
     return;
   }
 
-  if( FProcess != NULL && FProcess->IsRedirected() )  {
+  if( RedirectedProcess != NULL )  {
     FHelpWindow->SetVisible(false);
     FGlConsole->ShowBuffer(true);
     TimePerFrame = FXApp->Draw();
     return;
   }
+
   if( !CmdLineVisible )
     Cmd = FGlConsole->GetCommand();
   else  {

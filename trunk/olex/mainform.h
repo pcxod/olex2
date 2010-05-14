@@ -545,7 +545,10 @@ public:
 private:
   bool Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
   olxstr FLastSettingsFile;
-  AProcess* FProcess;
+  /* there coud be many processes running at the same time, however only one process
+  a time can be redirected (i.e. get input) and only one process to wait for... */
+  SortedPtrList<AProcess, TPointerPtrComparator> Processes;
+  AProcess* RedirectedProcess, *CurrentProcess, *LastProcess;
   // class TIOExt* FIOExt;
   TTimer *FTimer;
   unsigned short FMode;
@@ -599,7 +602,8 @@ public:
   TMainForm(TGlXApp *Parent);
   virtual ~TMainForm();
   virtual bool Destroy();
-  void SetProcess( AProcess *Process );
+  void OnProcessCreate(AProcess& Process);
+  void OnProcessTerminate(const AProcess& Process);
   void LoadSettings(const olxstr &FN);
   void SaveSettings(const olxstr &FN);
   virtual const olxstr& GetScenesFolder() const {  return ScenesDir;  }

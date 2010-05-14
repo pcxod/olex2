@@ -33,6 +33,7 @@ TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   OnCommand(Actions.New("ONCOMMAND")),
   OnPost(Actions.New("ONPOST"))
 {
+  PrintMaterial = NULL;
   FLineSpacing = 0;
   Left = Top = 0;
   Width = Height = 100;
@@ -357,7 +358,7 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hyphenate)  {
   }
   if( !Hyphenate || SingleLine )  {
     TGlMaterial *GlM = NULL;
-    if( M != NULL )  {  GlM = new TGlMaterial;  *GlM = *M;  }
+    if( M != NULL )  GlM = new TGlMaterial(*M);
     if( !FBuffer.IsEmpty() && FBuffer.LastStr().IsEmpty() )  {
       FBuffer.Last().String = Tmp;
       /* this line is added after memory leak analysis by Compuware DevPartner 8.2 trial */
@@ -398,7 +399,7 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  
       Txt.Hyphenate(Tmp, sz, true);
       for( size_t j=0; j < Txt.Count(); j++ )  {
         TGlMaterial *GlM = NULL;
-        if( M != NULL )  {  GlM = new TGlMaterial;  *GlM = *M;  }
+        if( M != NULL )  GlM = new TGlMaterial(*M);
         if( j == 0 && !FBuffer.IsEmpty() && FBuffer.LastStr().IsEmpty() )  {
           FBuffer.Last().String = Txt[j];
           FBuffer.Last().Object = GlM;
@@ -410,7 +411,7 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  
     }
     else  {
       TGlMaterial *GlM = NULL;
-      if( M != NULL )  {  GlM = new TGlMaterial;  *GlM = *M;  }
+      if( M != NULL )  GlM = new TGlMaterial(*M);
       if( !FBuffer.IsEmpty() && FBuffer.LastStr().IsEmpty() )  {
         FBuffer.Last().String = Tmp;
         FBuffer.Last().Object = GlM;
@@ -490,7 +491,7 @@ void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
     T[1] = GlTop + (Cmds.Count()-1-i)*LineInc;
 
     if( dxp < 0 )
-      T[0] += Fnt.TextWidth( Cmds[i].SubStringTo(Cmds[i].Length() + dxp) );
+      T[0] += Fnt.TextWidth(Cmds[i].SubStringTo(Cmds[i].Length() + dxp));
     else
       T[0] += Fnt.TextWidth(Cmds[i]);
     T[0] -= Fnt.GetMaxWidth()/2;  // move the cursor half a char left
@@ -558,15 +559,19 @@ size_t TGlConsole::Write(const olxstr& str)  {
     SetSkipPosting(false);
     return 1;
   }
-  if( FBuffer.IsEmpty() )  
-    FBuffer.Add(EmptyString);
-  FBuffer.Last().String.SetCapacity( FBuffer.Last().String.Length() + str.Length());
+  if( FBuffer.IsEmpty() )
+    FBuffer.Add(EmptyString, PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
+  else  {
+    if( FBuffer.Last().Object == NULL )
+      FBuffer.Last().Object = (PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
+  }
+  FBuffer.Last().String.SetCapacity(FBuffer.Last().String.Length() + str.Length());
   for( size_t i=0; i < str.Length(); i++ )  {
     if( str.CharAt(i) == '\n' )
-      FBuffer.Add(EmptyString);
+      FBuffer.Add(EmptyString, PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
     else if( str.CharAt(i) == '\r' )  {
-      if( !FBuffer.IsEmpty() )
-      FBuffer.Last().String = EmptyString;
+      if( i+1 < str.Length() && str.CharAt(i+1) != '\n' &&!FBuffer.IsEmpty() )
+        FBuffer.Last().String = EmptyString;
     }
     else if( str.CharAt(i) == '\t') {
       int count = 8-FBuffer.Last().String.Length()%8;
@@ -578,6 +583,7 @@ size_t TGlConsole::Write(const olxstr& str)  {
   }
   KeepSize();
   FTxtPos = FBuffer.Count()-1;
+  PrintMaterial = NULL;
   return 1;
 }
 //..............................................................................
