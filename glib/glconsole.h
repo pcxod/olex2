@@ -30,6 +30,7 @@ class TGlConsole: public AGDrawObject,
     SkipPosting;  // the next pot operation will pass
   uint16_t FontIndex;
   bool PromptVisible;
+  TGlMaterial* PrintMaterial;
 protected:
   void KeepSize();
   void SetInsertPosition(size_t v);
@@ -82,6 +83,7 @@ public:
   DefPropP(uint16_t, Left)
   DefPropBIsSet(Blend)
   DefPropBIsSet(SkipPosting)
+  DefPropP(TGlMaterial*, PrintMaterial)
   inline bool ShowBuffer() const {  return FShowBuffer; }
   inline void ShowBuffer(bool v)  {  FShowBuffer = v; }
   inline float GetLineSpacing() const {  return FLineSpacing; }

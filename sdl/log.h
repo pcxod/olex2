@@ -44,18 +44,8 @@ public:
   }
   // use this operators for unconditional 'printing'
   TLog& operator << (const olxstr &str)  {
-    size_t ind = str.IndexOf('\n');
-    olxstr tmp(str);
-    while( ind != InvalidIndex )  {
-      for( size_t i=0; i < Streams.Count(); i++ )
-        Streams[i].A()->Writenl(tmp.SubStringTo(ind));
-      if( (size_t)ind >= tmp.Length() )  break;
-      tmp = tmp.SubStringFrom(ind+1);
-      ind = tmp.IndexOf('\n');
-    }
-    if( !tmp.IsEmpty() )
-      for( size_t i=0; i < Streams.Count(); i++ )
-        Streams[i].A()->Write(tmp);
+    for( size_t i=0; i < Streams.Count(); i++ )
+      Streams[i].A()->Write(str);
     return *this;
   }
   template <class SC, class T> TLog& operator << (const TTStrList<SC,T> &lst)  {

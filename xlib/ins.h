@@ -138,9 +138,20 @@ public:
             rm.proposed_weight[j-1] = Toks[j].ToDouble();
         }
         else  {
-          rm.used_weight.SetCount(Toks.Count()-1);
-          for( size_t j=1; j < Toks.Count(); j++ )
-            rm.used_weight[j-1] = Toks[j].ToDouble();
+          // shelxl proposes wght in .0000 but print in .000000 format, need to check for multiple values in tokens
+          TStrList toks(Toks);
+          for( size_t j=1; j < toks.Count(); j++ )  {
+            if( toks[j].CharCount('.') > 1 )  {
+              const size_t fp = toks[j].IndexOf('.');
+              if( toks[j].Length() - fp >= 6 )  {
+                toks.Insert(j+1, toks[j].SubStringFrom(fp+7));  // 'recursive' run
+                toks[j].SetLength(fp+6);
+              }
+            }
+          }
+          rm.used_weight.SetCount(toks.Count()-1);
+          for( size_t j=1; j < toks.Count(); j++ )
+            rm.used_weight[j-1] = toks[j].ToDouble();
           rm.proposed_weight = rm.used_weight;
         }
       }

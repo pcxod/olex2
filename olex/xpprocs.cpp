@@ -1029,17 +1029,17 @@ void TMainForm::macWindowCmd(TStrObjList &Cmds, const TParamList &Options, TMacr
 #endif
 //..............................................................................
 void TMainForm::macProcessCmd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( FProcess == NULL )  {
+  if( RedirectedProcess == NULL )  {
     Error.ProcessingError(__OlxSrcInfo, "process does not exist" );
     return;
   }
   for( size_t i=0; i < Cmds.Count(); i++ )  {
     if( Cmds[i].Equalsi("nl") )
-      FProcess->Writenl();
+      RedirectedProcess->Writenl();
     else if( Cmds[i].Equalsi("sp") )
-      FProcess->Write(' ');
+      RedirectedProcess->Write(' ');
     else
-      FProcess->Write(Cmds[i]+' ');
+      RedirectedProcess->Write(Cmds[i]+' ');
   }
 }
 //..............................................................................
@@ -1684,7 +1684,7 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Cout = !Options.Contains('o'),    // catch output
     quite = Options.Contains('q');
 
-  olxstr dubFile( Options.FindValue('s',EmptyString) );
+  olxstr dubFile(Options.FindValue('s',EmptyString));
 
   olxstr Tmp;
   for( size_t i=0; i < Cmds.Count(); i++ )  {
@@ -1695,42 +1695,50 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Tmp << ' ';
   }
   TBasicApp::GetLog().Info( olxstr("EXEC: ") << Tmp);
+  short flags = 0;
+  if( (Cout && Asyn) || Asyn )  {  // the only combination
+    if( !Cout )
+      flags = quite ? spfQuite : 0;
+    else
+      flags = quite ? spfRedirected|spfQuite : spfRedirected;
+  }
+  else
+    flags = spfSynchronised;
+
 #ifdef __WIN32__
-  TWinProcess* Process  = new TWinProcess;
+  TWinProcess* Process  = new TWinProcess(Tmp, flags);
 #elif defined(__WXWIDGETS__)
-  TWxProcess* Process = new TWxProcess;
+  TWxProcess* Process = new TWxProcess(Tmp, flags);
 #endif
 
-  Process->OnTerminateCmds().Assign( FOnTerminateMacroCmds );
+  Process->OnTerminateCmds().Assign(FOnTerminateMacroCmds);
   FOnTerminateMacroCmds.Clear();
   if( (Cout && Asyn) || Asyn )  {  // the only combination
     if( !Cout )  {
-      SetProcess(Process);
-      if( !Process->Execute(Tmp, quite ? spfQuite : 0) )  {
+      OnProcessCreate(*Process);
+      if( !Process->Execute() )  {
+        OnProcessTerminate(*Process);
         Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process" );
         return;
       }
-      return;
     }
     else  {
-      SetProcess(Process);
+      OnProcessCreate(*Process);
       if( !dubFile.IsEmpty() )  {
         TEFile* df = new TEFile(dubFile, "wb+");
-        Process->SetDubStream( df );
+        Process->SetDubStream(df);
       }
-      if( !Process->Execute(Tmp, quite ? spfRedirected|spfQuite : spfRedirected) )  {
+      if( !Process->Execute() )  {
+        OnProcessTerminate(*Process);
         Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process" );
-        SetProcess(NULL);
         return;
       }
     }
-    return;
   }
-  if( !Process->Execute(Tmp, spfSynchronised) )  {
+  else if( !Process->Execute() )  {
     Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process" );
-    return;
+    delete Process;
   }
-  delete Process;
 }
 //..............................................................................
 void TMainForm::macShell(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -2146,6 +2154,7 @@ void TMainForm::macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroE
     while( FMode & mFade )  {
       FParent->Dispatch();
       Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
+      olx_sleep(50);
     }
   }
   if( Cmds[0].Equalsi("xfader") )  {
@@ -2153,19 +2162,24 @@ void TMainForm::macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroE
     while( FXApp->GetFader().GetPosition() < 1 && FXApp->GetFader().IsVisible() )  {
       FParent->Dispatch();
       Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
+      olx_sleep(50);
     }
   }
   else if( Cmds[0].Equalsi("rota") )  {
     while( FMode & mRota )  {
       FParent->Dispatch();
       Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
+      olx_sleep(50);
     }
   }
   else if( Cmds[0].Equalsi("process") )  {
-    while( FProcess != NULL )  {
+    CurrentProcess = LastProcess;
+    while( CurrentProcess != NULL && !CurrentProcess->IsTerminated() )  {
       FParent->Dispatch();
       Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
+      olx_sleep(50);
     }
+    CurrentProcess = NULL;
   }
 }
 //..............................................................................
@@ -5067,10 +5081,7 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       Ins.SaveForSolution(cinsFN, olxstr("TREF -") << Solutions[i], EmptyString);
       FXApp->LoadXFile(cinsFN);
       Macros.ProcessMacro("solve", E);
-      while( FProcess )  {
-        FParent->Dispatch();
-        //FTimer->OnTimer->Execute((AActionHandler*)this, NULL);
-      }
+      Macros.ProcessMacro("waitfor process", E);
       TEFile::Copy(cresFN, olxstr(SolutionFolder) <<  Solutions[i] << ".res");
       TEFile::Copy(clstFN, olxstr(SolutionFolder) <<  Solutions[i] << ".lst");
     }
