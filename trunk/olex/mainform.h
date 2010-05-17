@@ -39,7 +39,6 @@ enum  {
   ID_EXCEPTION,
   ID_ONLINK,
   ID_HTMLKEY,
-  ID_PROCESSTERMINATE,
   ID_COMMAND,
   ID_XOBJECTSDESTROY,
   ID_CMDLINECHAR,
@@ -545,10 +544,19 @@ public:
 private:
   bool Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
   olxstr FLastSettingsFile;
-  /* there coud be many processes running at the same time, however only one process
-  a time can be redirected (i.e. get input) and only one process to wait for... */
-  SortedPtrList<AProcess, TPointerPtrComparator> Processes;
-  AProcess* RedirectedProcess, *CurrentProcess, *LastProcess;
+
+  class ProcessHandler : public ProcessManager::IProcessHandler  {
+    TMainForm& parent;
+  public:
+    ProcessHandler(TMainForm& _parent) : parent(_parent)  {}
+    virtual void BeforePrint();
+    virtual void Print(const olxstr& line);
+    virtual void AfterPrint();
+    virtual void OnWait();
+    virtual void OnTerminate(const AProcess& p);
+  };
+  ProcessHandler _ProcessHandler;
+  ProcessManager* _ProcessManager;
   // class TIOExt* FIOExt;
   TTimer *FTimer;
   unsigned short FMode;
@@ -602,8 +610,6 @@ public:
   TMainForm(TGlXApp *Parent);
   virtual ~TMainForm();
   virtual bool Destroy();
-  void OnProcessCreate(AProcess& Process);
-  void OnProcessTerminate(const AProcess& Process);
   void LoadSettings(const olxstr &FN);
   void SaveSettings(const olxstr &FN);
   virtual const olxstr& GetScenesFolder() const {  return ScenesDir;  }
