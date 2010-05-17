@@ -91,8 +91,7 @@ enum {
 
 static const olxstr ProcessOutputCBName("procout");
 enum  {
-  ID_PROCESSTERMINATE = 1,
-  ID_TIMER,
+  ID_TIMER = 1,
   ID_INFO,
   ID_ERROR,
   ID_WARNING,
@@ -108,7 +107,6 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   TStrList FOnAbortCmds;           // a "stack" of macroses, called when macro terminated
   TStrList FOnListenCmds;  // a list of commands called when a file is changed by another process
   TDataItem* FMacroItem;
-  AProcess* FProcess;
   TEMacroLib Macros;
   TSAtomPList Selection;
   TDataFile PluginFile;
@@ -152,8 +150,36 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
     UnifyAtomList(atoms);
     return !atoms.IsEmpty();
   }
+  class ProcessHandler : public ProcessManager::IProcessHandler  {
+    TOlex& parent;
+  public:
+    ProcessHandler(TOlex& _parent) : parent(_parent)  {}
+    virtual void BeforePrint()  {
+      parent.conint.SetTextForeground(fgcGreen, false);
+    }
+    virtual void Print(const olxstr& line)  {
+      TBasicApp::GetLog() << line;
+      parent.CallbackFunc(ProcessOutputCBName, line);
+    }
+    virtual void AfterPrint()  {
+      parent.conint.SetTextForeground(fgcReset, false);  // was setting the first read value!
+    }
+    virtual void OnWait()  {}
+    virtual void OnTerminate(const AProcess& p)  {
+      TMacroError err;
+      for( size_t i=0; i < p.OnTerminateCmds().Count(); i++ ) {
+        const olxstr& cmd = p.OnTerminateCmds()[i];
+        parent.Macros.ProcessMacro(cmd, err);
+        if( !err.IsSuccessful() )
+          break;
+      }
+      TBasicApp::GetLog().Info(olxstr("The process '") << p.GetCmdLine() << "' has been terminated...");
+    }
+  };
+  ProcessHandler _ProcessHandler;
+  ProcessManager* _ProcessManager;
 public:
-  TOlex(const olxstr& basedir) : XApp(basedir, this), Macros(*this) {
+  TOlex(const olxstr& basedir) : XApp(basedir, this), Macros(*this), _ProcessHandler(*this) {
     Macros.Init();   
     XApp.SetCifTemplatesDir( XApp.GetBaseDir() + "etc/CIF/" );
     OlexInstance = this;
@@ -185,7 +211,6 @@ public:
     AOlxThread::RunThread(&TOlex::TimerThreadFunction);
     XApp.GetLog().AddStream( TUtf8File::Create(DataDir + "olex2c.log"), true );
     FMacroItem = NULL;
-    FProcess = NULL;
 
     TCif *Cif = new TCif;  // the objects will be automatically removed by the XApp
     XApp.XFile().RegisterFileFormat(Cif, "cif");
@@ -257,17 +282,14 @@ public:
     }
     executeMacro("onstartup");
     TBasicApp::GetInstance().OnTimer.Add(this, ID_TIMER);
+    _ProcessManager = new ProcessManager(_ProcessHandler);
   }
   ~TOlex()  {
     TBasicApp::GetInstance().OnTimer.Clear();
     executeMacro("onexit");
     for( size_t i=0; i < CallbackFuncs.Count(); i++ )
       delete CallbackFuncs.GetObject(i);
-    if( FProcess )  {
-      FProcess->OnTerminate.Clear();
-      FProcess->Terminate();
-      delete FProcess;
-    }
+    delete _ProcessManager;
     TOlxVars::Finalise();
     PythonExt::Finilise();
     delete OutStream;
@@ -408,22 +430,7 @@ public:
 //          exit(0);
         }
       }
-      TBasicApp::GetInstance().OnTimer.SetEnabled(false);
-      // execute tasks ...
-      // end tasks ...
-      if( FProcess != NULL )  {
-        while( FProcess->StrCount() != 0 )  {
-          conint.SetTextForeground(fgcGreen, false);
-          TBasicApp::GetLog() << FProcess->GetString(0) << '\n';
-          conint.SetTextForeground(fgcReset, false);  // was setting the first read value!
-          CallbackFunc(ProcessOutputCBName, FProcess->GetString(0));
-          FProcess->DeleteStr(0);
-        }
-      }
-      //    if( (FMode & mListen) != 0 )  {
-      TBasicApp::GetInstance().OnTimer.SetEnabled(true);
     }
-    else if( MsgId == ID_PROCESSTERMINATE )  SetProcess(NULL);
     else if( MsgId == ID_INFO || MsgId == ID_WARNING || MsgId == ID_ERROR || MsgId == ID_EXCEPTION )  {
       if( MsgSubId == msiEnter )  {
         if( Data != NULL )  {
@@ -446,7 +453,7 @@ public:
     return res;
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  void AnalyseError( TMacroError& error )  {
+  void AnalyseError(TMacroError& error)  {
     if( !error.IsSuccessful() )  {
       while( !error.GetStack().IsEmpty() )  {
         TBasicApp::GetLog() << error.GetStack().Pop() << '\n';
@@ -539,11 +546,8 @@ public:
   }
   //..............................................................................
   void macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-    if( Cmds[0].Equalsi("process") )  {
-      while( FProcess != NULL )  {
-        olx_sleep(50);
-      }
-    }
+    if( Cmds[0].Equalsi("process") )
+      _ProcessManager->WaitForLast();
   }
   //..............................................................................
   void macDelIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -561,44 +565,6 @@ public:
     }
   }
   //..............................................................................
-  void SetProcess(AProcess *Process)  {
-    if( FProcess != NULL && Process == NULL )  {
-      while( FProcess->StrCount() != 0 )  {
-        TBasicApp::GetLog() << FProcess->GetString(0) << '\n';
-        CallbackFunc(ProcessOutputCBName, FProcess->GetString(0));
-        FProcess->DeleteStr(0);
-      }
-      TBasicApp::GetLog() << '\n';
-
-//      if( FMode & mListen )
-//        Dispatch(ID_TIMER, msiEnter, (AEventsDispatcher*)this, NULL);
-
-      FOnListenCmds.Clear();
-      olxstr Cmd;
-      TMacroError err;
-      while( FProcess->OnTerminateCmds().Count() ) {
-        Cmd = FProcess->OnTerminateCmds()[0];
-        FProcess->OnTerminateCmds().Delete(0);
-        Macros.ProcessMacro(Cmd, err);
-        if( !err.IsSuccessful() )  {
-          AnalyseError( err );
-          FProcess->OnTerminateCmds().Clear();
-          break;
-        }
-      }
-    }
-    if( Process )
-      Process->OnTerminate.Add(this, ID_PROCESSTERMINATE);
-
-    if( FProcess )  {  
-      FProcess->OnTerminate.Clear();  
-      FProcess->Detach();
-    }
-    FProcess = Process;
-    if( FProcess == NULL )  {
-      //TBasicApp::GetLog() << "\n>>";
-    }
-  }
   void macExec(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
     bool Asyn = !Options.Contains('s'), // synchroniusly
       Cout = !Options.Contains('o'),    // catch output
@@ -616,40 +582,46 @@ public:
       Tmp << ' ';
     }
     TBasicApp::GetLog() << (olxstr("EXEC: ") << Tmp << '\n');
+    short flags = 0;
+    if( (Cout && Asyn) || Asyn )  {  // the only combination
+      if( !Cout )
+        flags = quite ? spfQuite : 0;
+      else
+        flags = quite ? spfRedirected|spfQuite : spfRedirected;
+    }
+    else
+      flags = spfSynchronised;
 #ifdef __WIN32__
-    TWinProcess* Process  = new TWinProcess;
+    TWinProcess* Process  = new TWinProcess(Tmp, flags);
 #else
-    TWxProcess* Process = new TWxProcess;
+    TWxProcess* Process = new TWxProcess(Tmp, flags);
 #endif		
-    Process->OnTerminateCmds().Assign( FOnTerminateMacroCmds );
+    Process->SetOnTerminateCmds(FOnTerminateMacroCmds);
     FOnTerminateMacroCmds.Clear();
     if( (Cout && Asyn) || Asyn )  {  // the only combination
       if( !Cout )  {
-        SetProcess(Process);
-        if( !Process->Execute(Tmp, quite ? spfQuite : 0) )  {
+        _ProcessManager->OnCreate(*Process);
+        if( !Process->Execute() )  {
+          _ProcessManager->OnTerminate(*Process);
           Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process" );
-          return;
         }
         return;
       }
       else  {
-        SetProcess(Process);
+        _ProcessManager->OnCreate(*Process);
         if( !dubFile.IsEmpty() )  {
           TEFile* df = new TEFile(dubFile, "wb+");
           Process->SetDubStream( df );
         }
-        if( !Process->Execute(Tmp, quite ? spfRedirected|spfQuite : spfRedirected) )  {
+        if( !Process->Execute() )  {
+          _ProcessManager->OnTerminate(*Process);
           Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process" );
-          SetProcess(NULL);
-          return;
         }
       }
       return;
     }
-    if( !Process->Execute(Tmp, spfSynchronised) )  {
+    if( !Process->Execute() )
       Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process" );
-      return;
-    }
     delete Process;
   }
   //..............................................................................

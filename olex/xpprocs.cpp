@@ -1029,17 +1029,17 @@ void TMainForm::macWindowCmd(TStrObjList &Cmds, const TParamList &Options, TMacr
 #endif
 //..............................................................................
 void TMainForm::macProcessCmd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( RedirectedProcess == NULL )  {
+  if( _ProcessManager->GetRedirected() == NULL )  {
     Error.ProcessingError(__OlxSrcInfo, "process does not exist" );
     return;
   }
   for( size_t i=0; i < Cmds.Count(); i++ )  {
     if( Cmds[i].Equalsi("nl") )
-      RedirectedProcess->Writenl();
+      _ProcessManager->GetRedirected()->Writenl();
     else if( Cmds[i].Equalsi("sp") )
-      RedirectedProcess->Write(' ');
+      _ProcessManager->GetRedirected()->Write(' ');
     else
-      RedirectedProcess->Write(Cmds[i]+' ');
+      _ProcessManager->GetRedirected()->Write(Cmds[i]+' ');
   }
 }
 //..............................................................................
@@ -1711,25 +1711,25 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TWxProcess* Process = new TWxProcess(Tmp, flags);
 #endif
 
-  Process->OnTerminateCmds().Assign(FOnTerminateMacroCmds);
+  Process->SetOnTerminateCmds(FOnTerminateMacroCmds);
   FOnTerminateMacroCmds.Clear();
   if( (Cout && Asyn) || Asyn )  {  // the only combination
     if( !Cout )  {
-      OnProcessCreate(*Process);
+      _ProcessManager->OnCreate(*Process);
       if( !Process->Execute() )  {
-        OnProcessTerminate(*Process);
+        _ProcessManager->OnTerminate(*Process);
         Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process" );
         return;
       }
     }
     else  {
-      OnProcessCreate(*Process);
+      _ProcessManager->OnCreate(*Process);
       if( !dubFile.IsEmpty() )  {
         TEFile* df = new TEFile(dubFile, "wb+");
         Process->SetDubStream(df);
       }
       if( !Process->Execute() )  {
-        OnProcessTerminate(*Process);
+        _ProcessManager->OnTerminate(*Process);
         Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process" );
         return;
       }
@@ -2173,13 +2173,7 @@ void TMainForm::macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroE
     }
   }
   else if( Cmds[0].Equalsi("process") )  {
-    CurrentProcess = LastProcess;
-    while( CurrentProcess != NULL && !CurrentProcess->IsTerminated() )  {
-      FParent->Dispatch();
-      Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
-      olx_sleep(50);
-    }
-    CurrentProcess = NULL;
+    _ProcessManager->WaitForLast();
   }
 }
 //..............................................................................

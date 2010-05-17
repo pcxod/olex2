@@ -399,7 +399,8 @@ TMainForm::TMainForm(TGlXApp *Parent):
   TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm")),
   Macros(*this),
   OnModeChange(Actions.New("ONMODECHANGE")),
-  OnStateChange(Actions.New("ONSTATECHANGE"))
+  OnStateChange(Actions.New("ONSTATECHANGE")),
+  _ProcessHandler(*this)
 {
   _UpdateThread = NULL;
 	ActionProgress = UpdateProgress = NULL;
@@ -451,18 +452,14 @@ TMainForm::TMainForm(TGlXApp *Parent):
   ProgramState = prsQVis|prsHVis|prsHBVis;
 
   Modes = new TModes();
-
   FUndoStack = new TUndoStack();
 
   FParent = Parent;
   ObjectUnderMouse(NULL);
   FHelpItem = NULL;
-  LastProcess = RedirectedProcess = CurrentProcess = NULL;
-
   FTimer = new TTimer;
-
-   HelpFontColorCmd.SetFlags(sglmAmbientF);  HelpFontColorTxt.SetFlags(sglmAmbientF);
-   HelpFontColorCmd.AmbientF = 0x00ffff;     HelpFontColorTxt.AmbientF = 0x00ffff00;
+  HelpFontColorCmd.SetFlags(sglmAmbientF);  HelpFontColorTxt.SetFlags(sglmAmbientF);
+  HelpFontColorCmd.AmbientF = 0x00ffff;     HelpFontColorTxt.AmbientF = 0x00ffff00;
 
 //  ConsoleFontColor
 //  NotesFontColor
@@ -533,11 +530,7 @@ TMainForm::~TMainForm()  {
 
   delete FUndoStack;
   // leave it for the end
-  for( size_t i=0; i < Processes.Count(); i++ )  {
-    Processes[i]->OnTerminate.Clear();
-    Processes[i]->Terminate();
-    delete Processes[i];
-  }
+  delete _ProcessManager;
   // the order is VERY important!
   TOlxVars::Finalise();
   PythonExt::Finilise();
@@ -545,6 +538,7 @@ TMainForm::~TMainForm()  {
 //..............................................................................
 void TMainForm::XApp( TGXApp *XA)  {
   FXApp = XA;
+  _ProcessManager = new ProcessManager(_ProcessHandler);
   FXApp->SetCifTemplatesDir(XA->GetBaseDir() + "etc/CIF/");
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -1506,54 +1500,6 @@ void TMainForm::StartupInit()  {
   this->SetDropTarget(dndt);
 }
 //..............................................................................
-void TMainForm::OnProcessCreate(AProcess& Process)  {
-  Process.OnTerminate.Add(this, ID_PROCESSTERMINATE);
-  while( CurrentProcess != NULL && !CurrentProcess->IsTerminated() )  {
-    FParent->Dispatch();
-    Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
-    olx_sleep(50);
-  }
-  CurrentProcess = NULL;
-  Processes.Add(&Process);
-  if( Process.IsRedirected() )
-    RedirectedProcess = &Process;
-  LastProcess = &Process;
-}
-//..............................................................................
-void TMainForm::OnProcessTerminate(const AProcess& _process)  {
-  const size_t pi = Processes.IndexOf(&_process);
-  if( pi == InvalidIndex )  // howm come?
-    return;
-  AProcess& Process = *Processes[pi];
-  if( &Process == RedirectedProcess )  RedirectedProcess = NULL;
-  if( &Process == CurrentProcess )  CurrentProcess = NULL;
-  if( &Process == LastProcess )  LastProcess = NULL;
-  if( !Process.GetOutput().IsEmpty() )  {
-    olxstr rv = Process.GetOutput().ReadAll();
-    FGlConsole->SetPrintMaterial(&ExecFontColor);
-    TBasicApp::GetLog() << rv;
-    CallbackFunc(ProcessOutputCBName, rv);
-  }
-    //FGlConsole->PrintText(Process.GetOutput().ReadAll(), &ExecFontColor);
-  FGlConsole->PrintText(EmptyString);
-  if( FMode & mListen )
-    Dispatch(ID_TIMER, msiEnter, (AEventsDispatcher*)this, NULL);
-  TMacroError err;
-  while( !Process.OnTerminateCmds().IsEmpty() ) {
-    olxstr cmd = Process.OnTerminateCmds()[0];
-    Process.OnTerminateCmds().Delete(0);
-    ProcessMacro(cmd, olxstr("OnTerminate of: ") << Process.GetCmdLine());
-    if( !err.IsSuccessful() )  {
-      Process.OnTerminateCmds().Clear();
-      break;
-    }
-  }
-  TBasicApp::GetLog().Info(olxstr("The process '") << Process.GetCmdLine() << "' has been terminated...");
-  TEGC::Add(Processes[pi]);
-  Processes.Delete(pi);
-  TimePerFrame = FXApp->Draw();
-}
-//..............................................................................
 // view menu
 void TMainForm::OnHtmlPanel(wxCommandEvent& event)  {
   ProcessMacro("htmlpanelvisible");
@@ -2210,15 +2156,6 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( GetHtml()->IsPageLoadRequested() && !GetHtml()->IsPageLocked() )
       GetHtml()->ProcessPageLoadRequest();
     FTimer->OnTimer.SetEnabled(true);
-    for( size_t i=0; i < Processes.Count(); i++ )  {
-      if( !Processes[i]->GetOutput().IsEmpty() )  {
-        olxstr rv = Processes[i]->GetOutput().ReadAll();
-        FGlConsole->SetPrintMaterial(&ExecFontColor);
-        TBasicApp::GetLog() << rv;
-        CallbackFunc(ProcessOutputCBName, rv);
-        Draw = true;
-      }
-    }
     if( (FMode & mListen) != 0 && TEFile::Exists(FListenFile) )  {
       static time_t FileMT = TEFile::FileAge(FListenFile);
       time_t FileT = TEFile::FileAge(FListenFile);
@@ -2433,8 +2370,6 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     FGlCanvas->SetFocus();
     OnChar(((TKeyEvent*)Data)->GetEvent());
   }
-  else if( MsgId == ID_PROCESSTERMINATE )
-    OnProcessTerminate(dynamic_cast<const AProcess&>(*Sender));
   else if( MsgId == ID_TEXTPOST )  {
     if( Data != NULL )  {
       FGlConsole->SetSkipPosting(true);
@@ -2451,9 +2386,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     else if( EsdlInstanceOf( *Sender, TGlConsole ) )
         tmp = FGlConsole->GetCommand();
     if( !tmp.IsEmpty() )  {
-      if( RedirectedProcess != NULL )  {
-        RedirectedProcess->Write(tmp);
-        RedirectedProcess->Writenl();
+      if( _ProcessManager->GetRedirected() != NULL )  {
+        _ProcessManager->GetRedirected()->Write(tmp);
+        _ProcessManager->GetRedirected()->Writenl();
         TimePerFrame = FXApp->Draw();
         FGlConsole->SetCommand(EmptyString);
       }
@@ -2652,8 +2587,8 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
     return;
   }
   if( (Fl&sssCtrl) && m.GetKeyCode() == 'c'-'a'+1 )  {  // Ctrl+C
-    if( RedirectedProcess != NULL )  {
-      if( RedirectedProcess->Terminate() )
+    if( _ProcessManager->GetRedirected() != NULL )  {
+      if( _ProcessManager->GetRedirected()->Terminate() )
         TBasicApp::GetLog().Info("Process has been successfully terminated...");
       else
         TBasicApp::GetLog().Info("Could not terminate the process...");
@@ -2703,7 +2638,7 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
     return;
   }
 
-  if( RedirectedProcess != NULL )  {
+  if( _ProcessManager->GetRedirected() != NULL )  {
     FHelpWindow->SetVisible(false);
     FGlConsole->ShowBuffer(true);
     TimePerFrame = FXApp->Draw();
@@ -4352,5 +4287,28 @@ bool TMainForm::PopupMenu(wxMenu* menu, const wxPoint& p)  {
 }
 //..............................................................................
 //..............................................................................
-
-
+void TMainForm::ProcessHandler::BeforePrint() {
+  parent.FGlConsole->SetPrintMaterial(&parent.ExecFontColor);
+}
+void TMainForm::ProcessHandler::Print(const olxstr& line)  {
+  TBasicApp::GetLog() << line;
+  parent.CallbackFunc(ProcessOutputCBName, line);
+}
+void TMainForm::ProcessHandler::AfterPrint() {
+  parent.FXApp->Draw();
+}
+void TMainForm::ProcessHandler::OnWait() {
+  parent.FParent->Dispatch();
+  parent.Dispatch(ID_TIMER, -1, (AActionHandler*)&parent, NULL);
+}
+void TMainForm::ProcessHandler::OnTerminate(const AProcess& p)  {
+  TMacroError err;
+  for( size_t i=0; i < p.OnTerminateCmds().Count(); i++ ) {
+    const olxstr& cmd = p.OnTerminateCmds()[i];
+    parent.ProcessMacro(cmd, olxstr("OnTerminate of: ") << p.GetCmdLine());
+    if( !err.IsSuccessful() )
+      break;
+  }
+  TBasicApp::GetLog().Info(olxstr("The process '") << p.GetCmdLine() << "' has been terminated...");
+  parent.TimePerFrame = parent.FXApp->Draw();
+}

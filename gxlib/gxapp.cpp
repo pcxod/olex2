@@ -1286,7 +1286,9 @@ void TGXApp::AllVisible(bool V)  {
     TAsymmUnit& au = XFile().GetAsymmUnit();
     for( size_t i=0; i < au.AtomCount(); i++ )
       au.GetAtom(i).SetMasked(false);
+    //StoreGroups();
     XFile().GetLattice().UpdateConnectivity();
+    //RestoreGroups();
     CenterView(true);
   }
   OnAllVisible.Exit(dynamic_cast<TBasicApp*>(this), NULL);

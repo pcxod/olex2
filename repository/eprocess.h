@@ -4,6 +4,8 @@
 #include "estrlist.h"
 #include "edlist.h"
 #include "os_util.h"
+#include "sortedlist.h"
+#include "bapp.h"
 
 #ifdef __WXWIDGETS__
   #include "wx/process.h"
@@ -19,6 +21,11 @@ const short  // process flags
   spfTerminateOnDelete = 0x0004,
   spfQuite             = 0x0008,
   spfTerminated        = 0x0010;
+
+enum {
+  process_manager_timer,
+  process_manager_kill
+};
 
 class IProcessOutput  {
 public:
@@ -109,7 +116,8 @@ public:
   const BufferedProcessOutput& GetOutput() const {  return Output;  }
   BufferedProcessOutput& GetOutput()  {  return Output;  }
 
-  TStrList& OnTerminateCmds()  {  return FOnTerminateCmds;  }
+  const TStrList& OnTerminateCmds() const {  return FOnTerminateCmds;  }
+  void SetOnTerminateCmds(const TStrList& l)  {  FOnTerminateCmds.Assign(l);  }
   inline int GetProcessId() const {  return ProcessId;  }
   const olxstr&  GetCmdLine() const {  return CmdLine;  }
   IOutputStream* GetDubStream() const {  return DubOutput;  }
@@ -187,5 +195,108 @@ public:
   static bool SendWindowCmd(const olxstr& WndName, const olxstr& Cmd);
 };
 #endif // !__WIN32__
+
+class ProcessManager : public AEventsDispatcher  {
+public:
+  class IProcessHandler  {
+  public:
+    virtual ~IProcessHandler() {}
+    virtual void BeforePrint() {}
+    virtual void Print(const olxstr& line) = 0;
+    virtual void AfterPrint() {}
+    virtual void OnWait() {}
+    virtual void OnTerminate(const AProcess& p) = 0;
+  };
+private:
+  /* there coud be many processes running at the same time, however only one process
+  a time can be redirected (i.e. get input) and only one process to wait for... */
+  SortedPtrList<AProcess, TPointerPtrComparator> Processes;
+  AProcess* Redirected, *Current, *Last;
+protected:
+  IProcessHandler& OutputHandler;
+  virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject* Sender, const IEObject* Data=NULL)  {
+    if( MsgSubId != msiExecute )  return false;
+    if( MsgId == process_manager_timer )  {
+      if( !Processes.IsEmpty() )  {
+        OutputHandler.BeforePrint();
+        for( size_t i=0; i < Processes.Count(); i++ )  {
+          if( !Processes[i]->GetOutput().IsEmpty() )  {
+            olxstr rv = Processes[i]->GetOutput().ReadAll();
+            OutputHandler.Print(rv);
+          }
+        }
+        OutputHandler.AfterPrint();
+      }
+    }
+    else if( MsgId == process_manager_kill )  {
+      OnTerminate(dynamic_cast<const AProcess&>(*Sender));
+    }
+    else
+      return false;
+    return true;
+  }
+public:
+  ProcessManager(IProcessHandler& outputHandler) :
+    OutputHandler(outputHandler),
+    Redirected(NULL), Current(NULL), Last(NULL)
+  {
+    TBasicApp::GetInstance().OnTimer.Add(this, process_manager_timer); 
+  }
+  //..............................................................................
+  ~ProcessManager()  {
+    TBasicApp::GetInstance().OnTimer.Remove(this); 
+    for( size_t i=0; i < Processes.Count(); i++ )  {
+      Processes[i]->OnTerminate.Clear();
+      Processes[i]->Terminate();
+      delete Processes[i];
+    }
+  }
+  void OnCreate(AProcess& Process)  {
+    Process.OnTerminate.Add(this, process_manager_kill);
+    while( Current != NULL && !Current->IsTerminated() )  {
+      OutputHandler.OnWait();
+      olx_sleep(50);
+    }
+    Current = NULL;
+    Processes.Add(&Process);
+    if( Process.IsRedirected() )
+      Redirected = &Process;
+    Last = &Process;
+  }
+  //..............................................................................
+  void OnTerminate(const AProcess& _process)  {
+    const size_t pi = Processes.IndexOf(&_process);
+    if( pi == InvalidIndex )  // howm come?
+      return;
+    AProcess& Process = *Processes[pi];
+    if( &Process == Redirected )  Redirected = NULL;
+    if( &Process == Current )  Current = NULL;
+    if( &Process == Last )  Last = NULL;
+    if( !Process.GetOutput().IsEmpty() )  {
+      OutputHandler.BeforePrint();
+      const olxstr rv = Process.GetOutput().ReadAll();
+      OutputHandler.Print(rv);
+      OutputHandler.AfterPrint();
+    }
+    OutputHandler.OnTerminate(_process);
+    TEGC::Add(Processes[pi]);
+    Processes.Delete(pi);
+  }
+  //..............................................................................
+  void WaitForLast()  {
+    Current = Last;
+    while( Current != NULL && !Current->IsTerminated() )  {
+      OutputHandler.OnWait();
+      olx_sleep(50);
+    }
+    Current = NULL;
+  }
+  //..............................................................................
+  AProcess* GetCurrent() const {  return Current;  }
+  AProcess* GetLast() const {  return Last;  }
+  AProcess* GetRedirected() const {  return Redirected;  }
+  //..............................................................................
+
+};
 
 #endif
