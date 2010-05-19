@@ -43,11 +43,11 @@ void TMacroError::ProcessingException(const ABasicFunction& caller, const TExcep
   ErrorInfo = caller.GetRuntimeSignature();
   const TBasicException* exc = Exc.GetException();
   if( exc->GetCause() == NULL )
-    ErrorInfo << " <" << exc->GetFullMessage() << '>';
+    ErrorInfo << "\n  " << exc->GetFullMessage();
   else  {
     TStrList output;
     exc->GetStackTrace(output);
-    ErrorInfo << " <" << output.Text('\n') << '>';
+    ErrorInfo << "\n  " << output.Text('\n');
   }
   ProcessError |= peProcessingException;
 }

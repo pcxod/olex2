@@ -174,6 +174,12 @@ public:
     rv.SData = new struct T::Buffer(data, len);
     return rv;
   }
+  static TTSString FromExternal(TC* data)  {
+    TTSString rv;
+    rv._Length = o_strlen(data);
+    rv.SData = new struct T::Buffer(data, rv._Length);
+    return rv;
+  }
   //............................................................................
   TTSString& operator << (const TIString& v)  { T::Append(v.raw_str(), v.Length());  return *this;  }
   //............................................................................
@@ -369,7 +375,6 @@ public:
   }
   static int o_memcmpi(const char* wht, const char* with, size_t len) {
     return olx_strcmpni(wht, with, len);
-
   }
   static int o_memcmpi(const wchar_t* wht, const wchar_t* with, size_t len) {
     return olx_wcscmpni(wht, with, len);
@@ -388,49 +393,49 @@ public:
     if( len_a < len_b )  return -1;
     return 1;
   }
-  int Compare(const TTSString& v)       const { return o_strcmp(T::Data(), T::_Length, v.Data(), v._Length, false );  }
-  int Compare(const char& v)            const { 
+  int Compare(const TTSString& v) const { return o_strcmp(T::Data(), T::_Length, v.Data(), v._Length, false );  }
+  int Compare(const char& v) const { 
     if( T::_Length == 0 )  return -1;
     const int df = T::Data()[0] - v;
     return df != 0 ? df : (T::_Length == 1 ? 0 : 1);
   }
-  int Compare(const wchar_t& v)         const { 
+  int Compare(const wchar_t& v) const { 
     if( T::_Length == 0 )  return -1;
     const int df = T::Data()[0] - v;
     return df != 0 ? df : (T::_Length == 1 ? 0 : 1);
   }
   template <typename AC>
-    int Compare(const AC* v)            const { return o_strcmp(T::Data(), T::_Length, v, o_strlen(v), false );  }
-  int Comparei(const TTSString& v)      const { return o_strcmp(T::Data(), T::_Length, v.Data(), v._Length, true );  }
-  int Comparei(const char& v)           const { 
+    int Compare(const AC* v) const { return o_strcmp(T::Data(), T::_Length, v, o_strlen(v), false );  }
+  int Comparei(const TTSString& v) const { return o_strcmp(T::Data(), T::_Length, v.Data(), v._Length, true );  }
+  int Comparei(const char& v) const { 
     if( T::_Length == 0 )  return -1;
     const int df = o_toupper(T::Data()[0]) - o_toupper(v);
     return df != 0 ? df : (T::_Length == 1 ? 0 : 1);
   }
-  int Comparei(const wchar_t& v)        const { 
+  int Comparei(const wchar_t& v) const { 
     if( T::_Length == 0 )  return -1;
     const int df = o_toupper(T::Data()[0]) - o_toupper(v);
     return df != 0 ? df : (T::_Length == 1 ? 0 : 1);
   }
   template <typename AC>
-    int Comparei(const AC* v)           const { return o_strcmp(T::Data(), T::_Length, v, o_strlen(v), true );  }
+    int Comparei(const AC* v) const { return o_strcmp(T::Data(), T::_Length, v, o_strlen(v), true );  }
   template <typename AC>
-    bool Equals(const AC& v)            const {  return Compare(v) == 0;  }
+    bool Equals(const AC& v) const {  return Compare(v) == 0;  }
   template <typename AC>
-    bool Equalsi(const AC& v)           const {  return Comparei(v) == 0;  }
+    bool Equalsi(const AC& v) const {  return Comparei(v) == 0;  }
 
   template <typename AC>
-    bool operator == (const AC& v)      const { return Equals(v); }
+    bool operator == (const AC& v) const { return Equals(v); }
   template <typename AC>
-    bool operator != (const AC& v)      const { return !Equals(v); }
+    bool operator != (const AC& v) const { return !Equals(v); }
   template <typename AC>
-    bool operator >  (const AC& v)      const { return Compare(v) > 0; }
+    bool operator >  (const AC& v) const { return Compare(v) > 0; }
   template <typename AC>
-    bool operator >= (const AC& v)      const { return Compare(v) >= 0; }
+    bool operator >= (const AC& v) const { return Compare(v) >= 0; }
   template <typename AC>
-    bool operator <  (const AC& v)      const { return Compare(v) < 0; }
+    bool operator <  (const AC& v) const { return Compare(v) < 0; }
   template <typename AC>
-    bool operator <= (const AC& v)      const { return Compare(v) <= 0; }
+    bool operator <= (const AC& v) const { return Compare(v) <= 0; }
   //............................................................................
   template <typename AC> bool StartsFrom(const AC* v) const {
     size_t len = o_strlen(v);
@@ -771,7 +776,7 @@ public:
     bool negative;
     IT val = o_atois<IT>(data, len, negative, Rad);
     if( negative )
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid usigned integer format");
+      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid unsigned integer format");
     return val;
   }
   //............................................................................
@@ -788,12 +793,12 @@ public:
   // no '\0' at the end, got to do it ourselves, returns the value without applying chsig
   template <typename IT> static IT o_atoi_s(const TC* data, size_t len, bool& negative, unsigned short Rad=10) {
     if( len == 0 )    
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
+      TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
     size_t sts = 0, ste = len; // string start, end
     while( o_iswhitechar(data[sts]) && ++sts < len ) ;
     while( --ste > sts && o_iswhitechar(data[ste]) ) ;
     if( ++ste <= sts )
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
+      TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
     IT val=0;
     negative = false;
     if( data[sts] == '-' )  {  
@@ -803,7 +808,7 @@ public:
     else if( data[sts] == '+' )
       sts++;
     if( sts == ste )  
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
+      TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
     if( Rad > 10 )  {
       for( size_t i=sts; i < ste; i++ )  {
         short pv = 0;
@@ -814,9 +819,9 @@ public:
         else if( data[i] <= 'z' && data[i] >= 'a' )
           pv = data[i] - 'a' + 10;
         else  // throw
-          TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid digit");
+          TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
         if( pv >= Rad )
-          TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "digit out of range");
+          TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
         val = val*Rad + pv;
        }
      }
@@ -825,11 +830,11 @@ public:
          if( data[i] <= '9' && data[i] >= '0' )  {
            const short pv = data[i] - '0';
             if( pv >= Rad )
-              TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "digit out of range");
+              TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
            val = val*Rad + pv;
          }
          else  // throw
-           TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid digit");
+           TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
        }
      }
      return val;
@@ -878,7 +883,7 @@ public:
     bool negative;
     IT val = o_atoi_s<IT>(data, len, negative, Rad);
     if( negative )
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid unsigned integer format");
+      TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
     return val;
   }
   //............................................................................
@@ -909,17 +914,17 @@ public:
   // no '\0' at the end, got to do it ourselves
   template <class FT> static FT o_atof(const TC* data, size_t len) {
     if( len == 0 )  
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid float number format");
+      TExceptionBase::ThrowInvalidFloatFormat(__POlxSourceInfo, data, len);
     size_t sts = 0, ste = len; // string start, end
     while( o_iswhitechar(data[sts]) && ++sts < len ) ;
     while( --ste > sts && o_iswhitechar(data[ste]) ) ;
     if( ++ste <= sts )
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid float number format");
+      TExceptionBase::ThrowInvalidFloatFormat(__POlxSourceInfo, data, len);
     bool negative = false;
     if( data[sts] == '-' )  {  negative = true;  sts++;  }
     else if( data[sts] == '+' )  sts++;
     if( sts == ste )
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid float number format");
+      TExceptionBase::ThrowInvalidFloatFormat(__POlxSourceInfo, data, len);
     FT bp=0, ap=0, apexp=1;
     size_t exp = 0;
     bool fpfound = false, expfound = false, expneg = false;
@@ -933,9 +938,14 @@ public:
         }
         else
           bp = bp*10 + (data[i] - '0');
-      else if( data[i] == '.' )
+      else if( data[i] == '.' )  {
+        if( fpfound )
+          TExceptionBase::ThrowInvalidFloatFormat(__POlxSourceInfo, data, len);
         fpfound = true;
+      }
       else if( data[i] == 'e' || data[i] == 'E' )  {
+        if( expfound )
+          TExceptionBase::ThrowInvalidFloatFormat(__POlxSourceInfo, data, len);
         expfound = true;
         if( ++i == len )  break;
         if( data[i] == '-' )
@@ -945,10 +955,10 @@ public:
         else if( data[i] >= '0' && data[i] <= '9' )  // anonymous positive exp
          i--;
         else  // invalid dddd.ddddE-/+/ddd format
-          TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid digit in exponent");
+          TExceptionBase::ThrowInvalidFloatFormat(__POlxSourceInfo, data, len);
       }
       else  // invalid char for a number
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid float number digit");
+        TExceptionBase::ThrowInvalidFloatFormat(__POlxSourceInfo, data, len);
     }
     bp = (expneg) ? (bp + ap/apexp)/olx_pow10<FT>(exp) : (bp + ap/apexp)*olx_pow10<FT>(exp);
     return negative ? -bp : bp;

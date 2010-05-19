@@ -209,7 +209,7 @@ bool TEFile::Open(const olxstr& F, const olxstr& Attribs)  {
   if( FHandle == NULL )  {
     olxstr fn = FName;
     FName = EmptyString;
-    throw TFileExceptionBase(__OlxSourceInfo, F, olxstr("NULL handle for '") << F << '\'');
+    throw TFileException(__OlxSourceInfo, F, olxstr("NULL handle for '") << F << '\'');
   }
   return true;
 }
@@ -217,11 +217,11 @@ bool TEFile::Open(const olxstr& F, const olxstr& Attribs)  {
 bool TEFile::Close()  {
   if( FHandle != NULL )  {
     if( fclose(FHandle) != 0 )
-      throw TFileExceptionBase(__OlxSourceInfo, FName, "fclose failed");
+      throw TFileException(__OlxSourceInfo, FName, "fclose failed");
     FHandle = NULL;
     if( Temporary )  {
       if( !DelFile(FName) )
-        throw TFileExceptionBase(__OlxSourceInfo, FName, "could not remove temporary file");
+        throw TFileException(__OlxSourceInfo, FName, "could not remove temporary file");
     }
     return true;
   }
@@ -236,7 +236,7 @@ bool TEFile::Delete()  {
 //..............................................................................
 void TEFile::CheckHandle() const  {
   if( FHandle == NULL )
-    throw TFileExceptionBase(__OlxSourceInfo, EmptyString, "Invalid file handle");
+    throw TFileException(__OlxSourceInfo, EmptyString, "Invalid file handle");
 }
 //..............................................................................
 void TEFile::Read(void *Bf, size_t count)  {
@@ -244,12 +244,12 @@ void TEFile::Read(void *Bf, size_t count)  {
   if( count == 0 )  return;
   size_t res = fread(Bf, count, 1, FHandle);
   if( res != 1 )
-    throw TFileExceptionBase(__OlxSourceInfo, FName, "fread failed" );
+    throw TFileException(__OlxSourceInfo, FName, "fread failed" );
 }
 //..............................................................................
 void TEFile::_seek(uint64_t off, int origin) const {
   if( fseek(FHandle, off, origin) != 0 )  
-    throw TFileExceptionBase(__OlxSourceInfo, FName, "fseek failed" );
+    throw TFileException(__OlxSourceInfo, FName, "fseek failed" );
 }
 //..............................................................................
 void TEFile::SetPosition(uint64_t p)  {
@@ -261,7 +261,7 @@ uint64_t TEFile::GetPosition() const  {
   CheckHandle();
   int64_t v = ftell(FHandle);
   if( v == -1 )
-    throw TFileExceptionBase(__OlxSourceInfo, FName, "ftell failed" );
+    throw TFileException(__OlxSourceInfo, FName, "ftell failed" );
   return v;
 }
 //..............................................................................
@@ -272,7 +272,7 @@ uint64_t TEFile::Length() const  {
   int64_t length = ftell(FHandle);
   _seek(currentPos, SEEK_SET);
   if( length == -1 )
-    throw TFileExceptionBase(__OlxSourceInfo, FName, "ftell failed" );
+    throw TFileException(__OlxSourceInfo, FName, "ftell failed" );
   return length;
 }
 //..............................................................................
@@ -286,7 +286,7 @@ size_t TEFile::Write(const void *Bf, size_t count)  {
   if( count == 0 )  return count;
   size_t res = fwrite(Bf, count, 1, FHandle);
   if( res == 0 )
-    throw TFileExceptionBase(__OlxSourceInfo, FName, "fwrite failed" );
+    throw TFileException(__OlxSourceInfo, FName, "fwrite failed" );
   return res;
 }
 //..............................................................................

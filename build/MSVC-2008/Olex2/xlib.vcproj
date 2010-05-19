@@ -2328,6 +2328,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\atomregistry.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\atomsort.h"
 				>
 			</File>

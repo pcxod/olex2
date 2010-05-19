@@ -339,11 +339,11 @@ void TEMacroLib::funAnd(const TStrObjList& Params, TMacroError &E) {
       return;
     }
     if( !tmp.ToBool() )  {
-      E.SetRetVal( false );
+      E.SetRetVal(false);
       return;
     }
   }
-  E.SetRetVal( true );
+  E.SetRetVal(true);
 }
 //..............................................................................
 void TEMacroLib::funOr(const TStrObjList& Params, TMacroError &E) {
@@ -354,11 +354,11 @@ void TEMacroLib::funOr(const TStrObjList& Params, TMacroError &E) {
       return;
     }
     if( tmp.ToBool() )  {
-      E.SetRetVal( true );
+      E.SetRetVal(true);
       return;
     }
   }
-  E.SetRetVal( false );
+  E.SetRetVal(false);
 }
 //..............................................................................
 void TEMacroLib::funNot(const TStrObjList& Params, TMacroError &E) {
@@ -367,7 +367,7 @@ void TEMacroLib::funNot(const TStrObjList& Params, TMacroError &E) {
     E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
     return;
   }
-  E.SetRetVal( !tmp.ToBool() );
+  E.SetRetVal(!tmp.ToBool());
 }
 //..............................................................................
 void TEMacroLib::funLastError(const TStrObjList& Params, TMacroError &E) {

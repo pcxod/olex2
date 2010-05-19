@@ -10,66 +10,48 @@ class TBasicException: public TExceptionBase  {
   olxstr Message,
          Location;
   TBasicException* Cause;
-  virtual void CreationProtection()  {  };
+  virtual void CreationProtection()  {}
 protected:
   TBasicException(const TBasicException& toReplicate) {
     this->Message = toReplicate.Message;
     this->Location = toReplicate.Location;
-    if( toReplicate.Cause != NULL )
-      this->Cause = (TBasicException*)toReplicate.Cause->Replicate();
-    else
-      this->Cause = NULL;
+    this->Cause = toReplicate.Cause != NULL ? (TBasicException*)toReplicate.Cause->Replicate() : NULL;
   }
 public:
-  TBasicException()  {
-    Cause = NULL;
-  }
+  TBasicException() : Cause(NULL) {}
 
-  TBasicException(const olxstr& location, const TExceptionBase& cause, const olxstr& msg=EmptyString)  {
-    if( msg.IsEmpty() )  Message = "Inherited exception";
-    else                 Message = msg;
-    Location = location;
-    Cause = (TBasicException*)cause.GetException()->Replicate();
-  }
+  TBasicException(const olxstr& location, const TExceptionBase& cause, const olxstr& msg=EmptyString) :
+    Message(msg), Location(location), Cause((TBasicException*)cause.GetException()->Replicate())  {}
   /* caution: the expeceted object is an instance from a call to Replicate() !
     and will be deleted
   */
-  TBasicException(const olxstr& location, IEObject* cause)  {
-    Message = "Inherited exception";
-    Location = location;
-    Cause = (TBasicException*)cause;
-  }
+  TBasicException(const olxstr& location, IEObject* cause) :
+    Location(location), Cause((TBasicException*)cause) {}
 
-  TBasicException(const olxstr& location, const olxstr& Msg)  {
-      Message = Msg;
-      Location = location;
-      Cause = NULL;
-  }
+    TBasicException(const olxstr& location, const olxstr& Msg) :
+    Location(location), Message(Msg), Cause(NULL)  {}
 
   virtual ~TBasicException()  {
-    if( Cause != NULL )  delete Cause;
+    if( Cause != NULL )
+      delete Cause;
   }
-
-  inline const olxstr& GetError()         const {  return Message;  }
-  inline const olxstr& GetLocation()      const {  return Location;  }
-  inline TBasicException* GetCause()         const {  return Cause;  }
+  inline const olxstr& GetError() const {  return Message;  }
+  inline const olxstr& GetLocation() const {  return Location;  }
+  inline TBasicException* GetCause() const {  return Cause;  }
+  virtual const char* GetNiceName() const {  return NULL;  }
   // traces back to the original cause
-  TBasicException* GetSource()         const;
-  virtual IEObject* Replicate()  const = 0;
+  TBasicException* GetSource() const;
+  virtual IEObject* Replicate() const = 0;
   template <class List>
-    List& GetStackTrace( List& output )  const  {
+    List& GetStackTrace( List& output ) const {
       TBasicException const* cause = this;
-      //TPtrList<TBasicException const> list;
       while( cause != NULL )  {
-//        if( cause->GetCause() != NULL )
-//          output.Insert(0, cause->GetLocation() );
-//        else
         output.Insert(0, cause->GetFullMessage() );
         cause = cause->GetCause();
       }
       return output;
     }
-  olxstr GetFullMessage()  const;
+  olxstr GetFullMessage() const;
 };
 
 class TIndexOutOfRangeException: public TBasicException  {
@@ -83,7 +65,8 @@ public:
   }
 
   TIndexOutOfRangeException(const olxstr& location, size_t index, size_t min, size_t max):
-      TBasicException(location, olxstr("[") << min << ".." << max << "]: " << index )  {
+      TBasicException(location, olxstr("[") << min << ".." << max << "]: " << index )
+  {
     Index = index;
     Min = min;
     Max = max;
@@ -94,106 +77,125 @@ public:
       throw TIndexOutOfRangeException(location, index, min, max);
   }
 
-  inline size_t GetIndex() const  {  return Index;  }
-  inline size_t GetMin() const  {  return Min;  }
-  inline size_t GetMax() const  {  return Max;  }
+  inline size_t GetIndex() const {  return Index;  }
+  inline size_t GetMin() const {  return Min;  }
+  inline size_t GetMax() const {  return Max;  }
 
-  virtual IEObject* Replicate()  const    {  return new TIndexOutOfRangeException(*this);  }
+  virtual const char* GetNiceName() const {  return "Invalid index";  }
+  virtual IEObject* Replicate() const {  return new TIndexOutOfRangeException(*this);  }
 };
 
 class TFunctionFailedException: public TBasicException {
 public:
   TFunctionFailedException(const olxstr& location, const olxstr& msg) :
-    TBasicException(location, msg )  {    }
+    TBasicException(location, msg )  {}
   TFunctionFailedException(const olxstr& location, const TExceptionBase& cause, const olxstr& msg=EmptyString) :
-    TBasicException(location, cause, msg )  {    }
+    TBasicException(location, cause, msg )  {}
   TFunctionFailedException(const olxstr& location, IEObject* cause) :
-    TBasicException(location, cause )  {    }
+    TBasicException(location, cause )  {}
 
-  virtual IEObject* Replicate()  const    {  return new TFunctionFailedException(*this);  }
+  virtual const char* GetNiceName() const {  return "Failed";  }
+  virtual IEObject* Replicate() const {  return new TFunctionFailedException(*this);  }
 };
 
-class TInvalidArgumentException: public TBasicException  {
+class TInvalidArgumentException: public TBasicException {
 public:
   TInvalidArgumentException(const olxstr& location, const olxstr& argName):
-    TBasicException(location, argName )  {  }
-
-  inline const olxstr& GetArgumentName()  const  {  return GetError();  }
-  virtual IEObject* Replicate()  const    {  return new TInvalidArgumentException(*this);  }
+    TBasicException(location, argName)  {}
+  inline const olxstr& GetArgumentName() const {  return GetError();  }
+  virtual IEObject* Replicate() const {  return new TInvalidArgumentException(*this);  }
 
 };
 
-class TNotImplementedException: public TBasicException  {
+class TNotImplementedException: public TBasicException {
 public:
   TNotImplementedException(const olxstr& location) :
-    TBasicException(location, EmptyString )  {    }
-
-  virtual IEObject* Replicate()  const    {  return new TNotImplementedException(*this);  }
+    TBasicException(location, EmptyString)  {}
+  virtual const char* GetNiceName() const {  return "Not implemented";  }
+  virtual IEObject* Replicate() const {  return new TNotImplementedException(*this);  }
 };
-
-
-class TIOExceptionBase: public TBasicException  {
+//...........................................................................................
+class TIOException: public TBasicException {
 public:
-  TIOExceptionBase(const olxstr& location, const olxstr &msg):
+  TIOException(const olxstr& location, const olxstr &msg):
     TBasicException(location, msg )  {    }
 };
 
-class TFileExceptionBase: public TIOExceptionBase  {
+class TFileException: public TIOException {
   olxstr FileName;
 public:
-  TFileExceptionBase(const TFileExceptionBase& toReplicate) :
-      TIOExceptionBase(toReplicate)  {
+  TFileException(const TFileException& toReplicate) : TIOException(toReplicate)  {
     this->FileName = toReplicate.FileName;
   }
-
-  TFileExceptionBase(const olxstr& location, const olxstr& fileName, const olxstr& reason) :
-      TIOExceptionBase(location, olxstr(fileName) << ' ' << reason)  {
+  TFileException(const olxstr& location, const olxstr& fileName, const olxstr& reason) :
+    TIOException(location, olxstr(fileName) << ' ' << reason)
+  {
     FileName = fileName;
   }
-
-  inline const olxstr& GetFileName()  const  {  return FileName;  }
-
-  virtual IEObject* Replicate()  const    {  return new TFileExceptionBase(*this);  }
+  inline const olxstr& GetFileName() const {  return FileName;  }
+  virtual IEObject* Replicate() const {  return new TFileException(*this);  }
 };
 
-class TFileDoesNotExistException: public TFileExceptionBase  {
+class TFileDoesNotExistException: public TFileException {
 public:
   TFileDoesNotExistException(const olxstr& location, const olxstr& fileName) :
-    TFileExceptionBase(location, fileName, EmptyString )  {    }
-
-  virtual IEObject* Replicate()  const  {  return new TFileDoesNotExistException(*this);  }
+    TFileException(location, fileName, EmptyString )  {}
+  virtual const char* GetNiceName() const {  return "File does not exist";  }
+  virtual IEObject* Replicate() const {  return new TFileDoesNotExistException(*this);  }
 };
 
-class TEmptyFileException: public TFileExceptionBase  {
+class TEmptyFileException: public TFileException {
 public:
   TEmptyFileException(const olxstr& location, const olxstr& fileName) :
-    TFileExceptionBase(location, fileName, EmptyString )  {    }
-
-  virtual IEObject* Replicate()  const  {  return new TEmptyFileException(*this);  }
+    TFileException(location, fileName, EmptyString )  {}
+  virtual const char* GetNiceName() const {  return "Empty file";  }
+  virtual IEObject* Replicate() const {  return new TEmptyFileException(*this);  }
 };
-
-class TMathExceptionBase: public TBasicException  {
+//...........................................................................................
+class TMathException: public TBasicException {
 public:
-  TMathExceptionBase(const olxstr& location, const olxstr& msg):
-    TBasicException(location, msg )  {    }
-
-  virtual IEObject* Replicate()  const  {  return new TMathExceptionBase(*this);  }
+  TMathException(const olxstr& location, const olxstr& msg):
+    TBasicException(location, msg)  {}
+  virtual IEObject* Replicate() const {  return new TMathException(*this);  }
 };
 
-class TDivException: public TMathExceptionBase {
+class TDivException: public TMathException {
 public:
-  TDivException(const olxstr& location):
-    TMathExceptionBase(location, EmptyString )  {  }
-
-  virtual IEObject* Replicate()  const  {  return new TDivException(*this);  }
+  TDivException(const olxstr& location) : TMathException(location, EmptyString)  {}
+  virtual const char* GetNiceName() const {  return "Division by zero";  }
+  virtual IEObject* Replicate() const {  return new TDivException(*this);  }
+};
+//.........................................................................................
+class TInvalidNumberException: public TBasicException {
+public:
+  TInvalidNumberException(const olxstr& location, const olxstr& msg):
+    TBasicException(location, msg)  {}
+  virtual IEObject* Replicate() const {  return new TInvalidNumberException(*this);  }
 };
 
-class TOutOfMemoryException: public TBasicException  {
+class TInvalidIntegerNumberException : public TInvalidNumberException {
+public:
+  TInvalidIntegerNumberException(const olxstr& location, const olxstr& str):
+    TInvalidNumberException(location, str)  {}
+  virtual const char* GetNiceName() const {  return "Invalid integer format";  }
+  virtual IEObject* Replicate() const {  return new TInvalidIntegerNumberException(*this);  }
+};
+
+class TInvalidFloatNumberException : public TInvalidNumberException {
+public:
+  TInvalidFloatNumberException(const olxstr& location, const olxstr& str):
+    TInvalidNumberException(location, str)  {}
+  virtual const char* GetNiceName() const {  return "Invalid float format";  }
+  virtual IEObject* Replicate() const {  return new TInvalidFloatNumberException(*this);  }
+};
+//.........................................................................................
+
+class TOutOfMemoryException: public TBasicException {
 public:
   TOutOfMemoryException(const olxstr& location) :
-    TBasicException(location, EmptyString )  {    }
-
-  virtual IEObject* Replicate()  const  {  return new TOutOfMemoryException(*this);  }
+    TBasicException(location, EmptyString )  {}
+  virtual const char* GetNiceName() const {  return "Out of memory";  }
+  virtual IEObject* Replicate() const {  return new TOutOfMemoryException(*this);  }
 };
 
 EndEsdlNamespace()

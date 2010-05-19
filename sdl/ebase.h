@@ -270,9 +270,8 @@ public:
   }
 };
 
-  extern const IEObject& NullObject;
-  extern const char* NewLineSequence;
-  extern const short NewLineSequenceLength;
+extern const char* NewLineSequence;
+extern const short NewLineSequenceLength;
 
 // implements data for collection item
 class ACollectionItem : public IEObject  {
@@ -429,6 +428,14 @@ protected:
   virtual void CreationProtection() = 0;  
 public:
   static void ThrowFunctionFailed(const char* file, const char* function, int line, const char* msg);
+  static void ThrowInvalidIntegerFormat(const char* file, const char* function, int line, 
+    const char* src, size_t src_len);
+  static void ThrowInvalidIntegerFormat(const char* file, const char* function, int line, 
+    const wchar_t* src, size_t src_len);
+  static void ThrowInvalidFloatFormat(const char* file, const char* function, int line, 
+    const char* src, size_t src_len);
+  static void ThrowInvalidFloatFormat(const char* file, const char* function, int line, 
+    const wchar_t* src, size_t src_len);
   // returns recasted this, or throws exception if dynamic_cast fails
   const class TBasicException* GetException() const; 
 };

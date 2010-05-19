@@ -141,6 +141,7 @@
 #include "exparse/expbuilder.h"
 #include "encodings.h"
 #include "cifdp.h"
+#include "atomregistry.h"
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
@@ -939,24 +940,22 @@ void TMainForm::macUniq(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macGroup(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   olxstr name = Options.FindValue("n");
-  if( Cmds.Count() >= 1 )  {
-    TXAtomPList xatoms;
-    FXApp->FindXAtoms( Cmds.Text(' '), xatoms, false);
-    TGlGroup& glg = FXApp->GetSelection();
-    for( size_t i=0; i < xatoms.Count(); i++ )
-      xatoms[i]->SetTag( xatoms[i]->GetParentGroup() == NULL ? 0 : 1);
-    for( size_t i=0; i < glg.Count(); i++ )
-      glg[i].SetTag(1);
-    for( size_t i=0; i < xatoms.Count(); i++ )
-      if( xatoms[i]->GetTag() == 0 )
-        FXApp->GetRender().Select( *xatoms[i] );
-    if( name.IsEmpty() )  {
-      name = "group";
-      name << (FXApp->GetRender().GroupCount()+1);
-    }
-    FXApp->GroupSelection(name);
-    FXApp->SelectAll(false);
+  TXAtomPList xatoms;
+  FindXAtoms(Cmds, xatoms, true, false);
+  TGlGroup& glg = FXApp->GetSelection();
+  for( size_t i=0; i < xatoms.Count(); i++ )
+    xatoms[i]->SetTag(xatoms[i]->GetParentGroup() == NULL ? 0 : 1);
+  for( size_t i=0; i < glg.Count(); i++ )
+    glg[i].SetTag(1);
+  for( size_t i=0; i < xatoms.Count(); i++ )
+    if( xatoms[i]->GetTag() == 0 )
+      FXApp->GetRender().Select( *xatoms[i] );
+  if( name.IsEmpty() )  {
+    name = "group";
+    name << (FXApp->GetRender().GroupCount()+1);
   }
+  FXApp->GroupSelection(name);
+  FXApp->SelectAll(false);
 }
 //..............................................................................
 void TMainForm::macFmol(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -3532,7 +3531,9 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
     }
   }
   catch(const TExceptionBase& exc )  {
-    TBasicApp::GetLog().Exception( exc.GetException()->GetError() );
+    TStrList output;
+    exc.GetException()->GetStackTrace(output);
+    TBasicApp::GetLog().Exception(output.Text('\n'));
   }
   dlg->Destroy();
 }
@@ -4384,9 +4385,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       return;
     }
     catch(const TExceptionBase& exc)  { 
-      TStrList sl;
-      Error.ProcessingError(__OlxSrcInfo, exc.GetException()->GetStackTrace(sl).Text('\n') );
-      return;
+      throw TFunctionFailedException(__OlxSourceInfo, exc);
     }
     if( FXApp->XFile().HasLastLoader() )  {
       FInfoBox->Clear();
@@ -6118,14 +6117,15 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  cif_dp::TCifDP cdp;
-  TStrList _sl;
-  _sl.LoadFromFile("cif_core.cif");
-  cdp.LoadFromStrings(_sl);
-  _sl.Clear();
-  cdp.SaveToStrings(_sl);
-  TCStrList(_sl).SaveToFile("test_cif");
   return;
+  //cif_dp::TCifDP cdp;
+  //TStrList _sl;
+  //_sl.LoadFromFile("cif_core.cif");
+  //cdp.LoadFromStrings(_sl);
+  //_sl.Clear();
+  //cdp.SaveToStrings(_sl);
+  //TCStrList(_sl).SaveToFile("test_cif");
+  //return;
 
   //uint64_t test_a = 1021;
   //uint64_t test_b = test_a%10, test_c = test_a/10;

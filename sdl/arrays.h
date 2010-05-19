@@ -22,7 +22,7 @@ public:
 // the indexes provided are inclusive
   TArray1D(index_t minIndex, index_t maxIndex) : MinIndex(minIndex), _Length(maxIndex - minIndex + 1)  {
     Data = NULL;
-    if( minIndex >= maxIndex )  throw TInvalidArgumentException(__OlxSourceInfo, "size");
+    if( minIndex > maxIndex )  throw TInvalidArgumentException(__OlxSourceInfo, "size");
     Data = new AE[_Length];
     memset(Data, 0, _Length*sizeof(AE));
   }
@@ -56,7 +56,7 @@ public:
       MinWidth(minWidth), Width(maxWidth - minWidth + 1), 
       MinHeight(minHeight), Height(maxHeight - minHeight + 1)  {
     Data = NULL;
-    if( minWidth >= maxWidth || minHeight >= maxHeight )  
+    if( minWidth > maxWidth || minHeight > maxHeight )  
       throw TInvalidArgumentException(__OlxSourceInfo, "size");
     Data = new AE*[Width];
     for( size_t i=0; i < Width; i++ )  {
@@ -109,7 +109,28 @@ public:
 template <class AE> class TArray3D : public IEObject {
   const size_t Width, Height, Depth;
   const index_t MinWidth, MinHeight, MinDepth;
+  void Init()  {
+    Data = new AE**[Width];
+    for( size_t i=0; i < Width; i++ )  {
+      Data[i] = new AE*[Height];
+      for( size_t j=0; j < Height; j++ )  {
+        Data[i][j] = new AE[Depth];
+        memset(Data[i][j], 0, Depth*sizeof(AE));
+      }
+    }
+  }
 public:
+  template <typename vec_t>
+  TArray3D(const vec_t& mind, const vec_t& maxd) : 
+        MinWidth(mind[0]), Width(maxd[0] - mind[0] + 1),
+        MinHeight(mind[1]), Height(maxd[1] - mind[1] + 1),
+        MinDepth(mind[2]), Depth(maxd[2] - mind[1] + 1)
+  {
+    Data = NULL;
+    if( mind[0] > maxd[0] || mind[1] > maxd[1] || mind[2] > maxd[2] )  
+      throw TInvalidArgumentException(__OlxSourceInfo, "size");
+    Init();
+  }
   // the indexes provided are inclusive
   TArray3D(index_t minWidth, index_t maxWidth, index_t minHeight,
       index_t maxHeight, index_t minDepth, index_t maxDepth) : 
@@ -120,14 +141,7 @@ public:
     Data = NULL;
     if( minWidth >= maxWidth || minHeight >= maxHeight || minDepth >= maxDepth )  
       throw TInvalidArgumentException(__OlxSourceInfo, "size");
-    Data = new AE**[Width];
-    for( size_t i=0; i < Width; i++ )  {
-      Data[i] = new AE*[Height];
-      for( size_t j=0; j < Height; j++ )  {
-        Data[i][j] = new AE[Depth];
-        memset(Data[i][j], 0, Depth*sizeof(AE));
-      }
-    }
+    Init();
   }
 
   virtual ~TArray3D()  {
@@ -149,7 +163,7 @@ public:
   void FastInitWith(const int val)  {
     for( size_t i=0; i < Width; i++ )
       for( size_t j=0; j < Height; j++ )
-        memset( Data[i][j], val, Depth*sizeof(AE) );
+        memset(Data[i][j], val, Depth*sizeof(AE));
   }
 
   inline bool IsInRange(index_t x, index_t y, index_t z) const {  
@@ -158,9 +172,9 @@ public:
            (z >= MinDepth && ((z-MinDepth) < Depth));  
   }
   template <class vec> inline bool IsInRange(const vec& ind) const {  
-    return (ind[0] >= MinWidth && ((ind[0]-MinWidth) < Width)) &&
-           (ind[1] >= MinHeight && ((ind[1]-MinHeight) < Height)) &&
-           (ind[2] >= MinDepth && ((ind[2]-MinDepth) < Depth));  
+    return (ind[0] >= MinWidth && ((ind[0]-MinWidth) < (index_t)Width)) &&
+           (ind[1] >= MinHeight && ((ind[1]-MinHeight) < (index_t)Height)) &&
+           (ind[2] >= MinDepth && ((ind[2]-MinDepth) < (index_t)Depth));
   }
   inline size_t GetWidth() const {  return Width;  }
   inline size_t Length1() const {  return Width;  }

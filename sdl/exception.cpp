@@ -40,9 +40,17 @@ UseEsdlNamespace()
 //}
 
 
-olxstr TBasicException::GetFullMessage()  const  {
-  olxstr rv(EsdlClassName(*this));
-  rv << ' ' << Message << " occured at " << Location;
+olxstr TBasicException::GetFullMessage() const {
+  olxstr rv;
+  const char* n_n = GetNiceName();
+  if( n_n != NULL )
+    rv = n_n;
+  else 
+    rv = EsdlClassName(*this);
+  if( Message.IsEmpty() )
+    rv << " at " << Location;
+  else
+    rv << ' ' << Message << " at " << Location;
   return rv;
 }
 
