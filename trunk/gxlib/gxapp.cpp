@@ -1907,11 +1907,12 @@ TXAtom * TGXApp::AddCentroid(TXAtomPList& Atoms)  {
   TSAtomPList SAtoms;
   for( size_t i=0; i < Atoms.Count(); i++ )
     SAtoms.Add(Atoms[i]->Atom());
-  TSAtom *A = XFile().GetLattice().NewCentroid( SAtoms );
+  TSAtom *A = XFile().GetLattice().NewCentroid(SAtoms);
+  A->CAtom().GetConnInfo().maxBonds = 0;
   if( A != NULL )  {
-    TXAtom& XA = XAtoms.AddNew( *(new TXAtom(*FGlRender, EmptyString, *A)) );
+    TXAtom& XA = XAtoms.Add(new TXAtom(*FGlRender, EmptyString, *A));
     XA.Create();
-    XA.SetXAppId( XAtoms.Count() - 1);
+    XA.SetXAppId(XAtoms.Count() - 1);
     XA.Params()[0] = (float)A->GetType().r_pers;
     return &XA;
   }
