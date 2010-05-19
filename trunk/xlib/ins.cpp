@@ -75,64 +75,68 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   cx.Resi = &GetAsymmUnit().GetResidue(0);
   cx.ins = this;
   for( size_t i=0; i < InsFile.Count(); i++ )  {
-    if( InsFile[i].IsEmpty() )      continue;
+    try  {
+      if( InsFile[i].IsEmpty() )      continue;
+      const size_t exi = InsFile[i].IndexOf('!');
+      if( exi != InvalidIndex )
+        InsFile[i].SetLength(exi);
 
-    const size_t exi = InsFile[i].IndexOf('!');
-    if( exi != InvalidIndex )
-      InsFile[i].SetLength(exi);
+      Toks.Clear();
+      Toks.Strtok(InsFile[i], ' ');
+      if( Toks.IsEmpty() )  continue;
 
-    Toks.Clear();
-    Toks.Strtok(InsFile[i], ' ');
-    if( Toks.IsEmpty() )  continue;
-
-    if( Toks[0].Equalsi("MOLE") )  // these are dodgy
-      continue;
-    else if( ParseIns(InsFile, Toks, cx, i) )
-      continue;
-    else if( Toks[0].Equalsi("END") )  {   //reset RESI to default
-      cx.End = true;  
-      cx.Resi = &GetAsymmUnit().GetResidue(0);
-      cx.AfixGroups.Clear();
-      cx.Part = 0;
-    }
-    else if( Toks[0].Equalsi("TITL") )
-      SetTitle(Toks.Text(' ', 1));
-    else if( Toks.Count() < 6 || Toks.Count() > 12 )  // atom sgould have at least 7 parameters
-      Ins.Add(InsFile[i]);
-    else {
-      bool qpeak = olxstr::o_toupper(Toks[0].CharAt(0)) == 'Q';
-      if( qpeak && !cx.End && !LoadQPeaks )  continue;
-      if( cx.End && !qpeak )  continue;
-      // is a valid atom
-      //if( !atomsInfo.IsAtom(Toks[0]))  {  Ins.Add(InsFile[i]);  continue;  }
-      if( !Toks[1].IsUInt() )  {
-        Ins.Add(InsFile[i]);
+      if( Toks[0].Equalsi("MOLE") )  // these are dodgy
         continue;
-      }
-      uint32_t index = Toks[1].ToUInt();
-      if( index < 1 || index > cx.BasicAtoms.Count() )  {  // wrong index in SFAC
-        Ins.Add(InsFile[i]);
+      else if( ParseIns(InsFile, Toks, cx, i) )
         continue;
+      else if( Toks[0].Equalsi("END") )  {   //reset RESI to default
+        cx.End = true;  
+        cx.Resi = &GetAsymmUnit().GetResidue(0);
+        cx.AfixGroups.Clear();
+        cx.Part = 0;
       }
-      // should be four numbers
-      if( (!Toks[2].IsNumber()) || (!Toks[3].IsNumber()) ||
-        (!Toks[4].IsNumber()) || (!Toks[5].IsNumber()) )  {
+      else if( Toks[0].Equalsi("TITL") )
+        SetTitle(Toks.Text(' ', 1));
+      else if( Toks.Count() < 6 || Toks.Count() > 12 )  // atom sgould have at least 7 parameters
+        Ins.Add(InsFile[i]);
+      else {
+        bool qpeak = olxstr::o_toupper(Toks[0].CharAt(0)) == 'Q';
+        if( qpeak && !cx.End && !LoadQPeaks )  continue;
+        if( cx.End && !qpeak )  continue;
+        // is a valid atom
+        //if( !atomsInfo.IsAtom(Toks[0]))  {  Ins.Add(InsFile[i]);  continue;  }
+        if( !Toks[1].IsUInt() )  {
           Ins.Add(InsFile[i]);
           continue;
+        }
+        uint32_t index = Toks[1].ToUInt();
+        if( index < 1 || index > cx.BasicAtoms.Count() )  {  // wrong index in SFAC
+          Ins.Add(InsFile[i]);
+          continue;
+        }
+        // should be four numbers
+        if( (!Toks[2].IsNumber()) || (!Toks[3].IsNumber()) ||
+          (!Toks[4].IsNumber()) || (!Toks[5].IsNumber()) )  {
+            Ins.Add(InsFile[i]);
+            continue;
+        }
+        if( !cx.CellFound )  {
+          Clear();
+          throw TFunctionFailedException(__OlxSourceInfo, "uninitialised cell");
+        }
+        TCAtom* atom = _ParseAtom(Toks, cx);
+        atom->SetLabel(Toks[0], false);
+        if( qpeak ) 
+          atom->SetType(elmQPeak);
+        else
+          atom->SetType(*cx.BasicAtoms.GetObject(Toks[1].ToInt()-1));
+        if( atom->GetType().GetMr() > 3.5 )
+          cx.LastNonH = atom;
+        _ProcessAfix(*atom, cx);
       }
-      if( !cx.CellFound )  {
-        Clear();
-        throw TFunctionFailedException(__OlxSourceInfo, "uninitialised cell");
-      }
-      TCAtom* atom = _ParseAtom(Toks, cx);
-      atom->SetLabel(Toks[0], false);
-      if( qpeak ) 
-        atom->SetType(elmQPeak);
-      else
-        atom->SetType(*cx.BasicAtoms.GetObject(Toks[1].ToInt()-1));
-      if( atom->GetType().GetMr() > 3.5 )
-        cx.LastNonH = atom;
-      _ProcessAfix(*atom, cx);
+    }
+    catch(const TExceptionBase& exc)  {
+      throw TFunctionFailedException(__OlxSourceInfo, exc, olxstr("at line #") << i+1);
     }
   }
   smatd sm;
@@ -1554,30 +1558,34 @@ void TIns::ParseHeader(const TStrList& in)  {
   GetRM().Clear(rm_clear_DEF);
   GetAsymmUnit().ClearMatrices();
 // end clear, start parsing
-  olxstr Tmp;
   TStrList toks, lst(in);
   lst.CombineLines("=");
   ParseContext cx(GetRM());
   cx.ins = this;
   for( size_t i=0; i < lst.Count(); i++ )  {
-    Tmp = olxstr::DeleteSequencesOf<char>(lst[i], ' ');
-    if( Tmp.IsEmpty() )      continue;
-    for( size_t j=0; j < Tmp.Length(); j++ )  {
-      if( Tmp[j] == '!' )  {  // comment sign
-        Tmp.SetLength(j-1);
-        break;
+    try  {
+      olxstr Tmp = olxstr::DeleteSequencesOf<char>(lst[i], ' ');
+      if( Tmp.IsEmpty() )      continue;
+      for( size_t j=0; j < Tmp.Length(); j++ )  {
+        if( Tmp[j] == '!' )  {  // comment sign
+          Tmp.SetLength(j-1);
+          break;
+        }
       }
-    }
-    toks.Clear();
-    toks.Strtok(Tmp, ' ');
-    if( toks.IsEmpty() )  continue;
+      toks.Clear();
+      toks.Strtok(Tmp, ' ');
+      if( toks.IsEmpty() )  continue;
 
-    if( ParseIns(lst, toks, cx, i) )
-      continue;
-    else if( toks[0].Equalsi("TITL") )
-      SetTitle(toks.Text(' ', 1));
-    else
-      Ins.Add(lst[i]);
+      if( ParseIns(lst, toks, cx, i) )
+        continue;
+      else if( toks[0].Equalsi("TITL") )
+        SetTitle(toks.Text(' ', 1));
+      else
+        Ins.Add(lst[i]);
+    }
+    catch( const TExceptionBase& exc )  {
+      throw TFunctionFailedException(__OlxSourceInfo, exc, olxstr("at line #") << i+1);
+    }
   }
   smatd sm;
   for( size_t i=0; i < cx.Symm.Count(); i++ )  {

@@ -108,6 +108,12 @@ public:
   bool IsFirst() const {  return Id == 0x00808080;  }
   uint8_t GetContainerId() const {  return (uint8_t)(Id >> 24);  }
   static uint8_t GetContainerId(uint32_t id) {  return (uint8_t)(id >> 24);  }
+  static int8_t GetTx(uint32_t id) {  return (int8_t)(((id&0x00FF0000) >> 16) - 0x80);  }
+  static int8_t GetTy(uint32_t id) {  return (int8_t)(((id&0x0000FF00) >> 8) - 0x80);  }
+  static int8_t GetTz(uint32_t id) {  return (int8_t)(((id&0x000000FF)) - 0x80);  }
+  static vec3i GetT(uint32_t id)  {  
+    return vec3i(((id&0x00FF0000) >> 16) - 0x80, ((id&0x0000FF00) >> 8) - 0x80, ((id&0x000000FF)) - 0x80);
+  }
   static TSymmMat<MC,VC> FromId(uint32_t id, const TSymmMat<MC,VC>& ref)  {
     TSymmMat<MC,VC> rv(ref);
     rv.t[0] += (((id&0x00FF0000) >> 16) - 0x80);

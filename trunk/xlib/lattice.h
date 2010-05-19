@@ -7,6 +7,7 @@
 #include "sbond.h"
 #include "splane.h"
 #include "network.h"
+#include "atomregistry.h"
 
 #include "macroerror.h"
 #include "library.h"
@@ -120,7 +121,8 @@ public:
         return Atoms[i];
     return NULL;
   }
-  void RestoreAtom(const TSAtom::Ref& id);
+  AtomRegistry GetAtomRegistry();
+  void RestoreAtom(const TSAtom::FullRef& id);
 
   inline size_t BondCount() const {  return Bonds.Count();  }
   inline TSBond& GetBond(size_t i) const {  return *Bonds[i]; }

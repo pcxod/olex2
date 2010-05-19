@@ -12,7 +12,8 @@ void IsNumberTest(OlxTests& t)  {
   t.description = __FUNC__;
   olxstr valid_num_str[] = { "0", " 0 ", " 0", "0 ", " 0", " 0", " .0 ", " 0.0 ", " 0.e0 ", 
     "  0.e-1  ", "  0xffa  ", "  0xffa", " 0", " -0. ", " +0. ", "+0e-5", "-.e-5", "07777"  };
-  olxstr invalid_num_str[] = { EmptyString, "  0xffx", " 0a", " -.", "0e-a", "08" };
+  olxstr invalid_num_str[] = { EmptyString, "  0xffx", " 0a", " -.", "0e-a", "08", "..", "0.0.",
+    "1e-5e-4" };
   olxstr valid_int_str[] = {"  0xff ", "0xa", "0777", "-3", " +3 " };
   olxstr invalid_int_str[] = {"  0xffx", " 0xa.", " 0778", "-3.", " +3. " };
   olxstr valid_uint_str[] = {"  0xff", " 0xa", " 0777", "3", " +3 " };

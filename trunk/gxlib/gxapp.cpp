@@ -84,10 +84,10 @@ int CompareStr(const olxstr &Str, const olxstr &Str1, bool IC) {
 // UNDO DATA CLASSES
 class TKillUndo: public TUndoData  {
 public:
-  TTypeList<TSAtom::Ref> SAtomIds;
+  TTypeList<TSAtom::FullRef> SAtomIds;
   TKillUndo(IUndoAction *action):TUndoData(action)  {  }
   virtual ~TKillUndo()  {  }
-  void AddSAtom(const TSAtom& SA)  {  SAtomIds.AddCCopy( SA.GetRef() );  }
+  void AddSAtom(const TSAtom& SA)  {  SAtomIds.AddCCopy(SA.GetFullRef());  }
 };
 class THideUndo: public TUndoData  {
 public:
@@ -1286,9 +1286,10 @@ void TGXApp::AllVisible(bool V)  {
     TAsymmUnit& au = XFile().GetAsymmUnit();
     for( size_t i=0; i < au.AtomCount(); i++ )
       au.GetAtom(i).SetMasked(false);
-    //StoreGroups();
+    TTypeList<GroupDataEx> groups;
+    StoreGroupsEx(groups);
     XFile().GetLattice().UpdateConnectivity();
-    //RestoreGroups();
+    RestoreGroupsEx(groups);
     CenterView(true);
   }
   OnAllVisible.Exit(dynamic_cast<TBasicApp*>(this), NULL);
@@ -1913,7 +1914,7 @@ TXAtom * TGXApp::AddCentroid(TXAtomPList& Atoms)  {
     TXAtom& XA = XAtoms.Add(new TXAtom(*FGlRender, EmptyString, *A));
     XA.Create();
     XA.SetXAppId(XAtoms.Count() - 1);
-    XA.Params()[0] = (float)A->GetType().r_pers;
+    XA.Params()[0] = A->GetType().r_pers;
     return &XA;
   }
   return NULL;
@@ -1924,14 +1925,14 @@ void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& xatoms) {
     const TCAtom& ca = au.GetAtom(i);
     vec3d center = ca.ccrd();
     XFile().GetAsymmUnit().CartesianToCell(center);
-    TSAtom *A = XFile().GetLattice().NewAtom( center );
+    TSAtom *A = XFile().GetLattice().NewAtom(center);
     if( A != NULL )  {
       A->CAtom().SetType(ca.GetType());
       A->CAtom().SetLabel(ca.GetLabel(), false);
       TXAtom& XA = XAtoms.Add(new TXAtom(*FGlRender, EmptyString, *A));
       XA.Create();
       XA.SetXAppId(XAtoms.Count() - 1);
-      XA.Params()[0] = (float)A->GetType().r_pers;
+      XA.Params()[0] = A->GetType().r_pers;
       xatoms.Add(XA);
     }
   }
@@ -1955,7 +1956,7 @@ TXAtom* TGXApp::AddAtom(TXAtom* templ)  {
     TXAtom& XA = XAtoms.Add(new TXAtom(*FGlRender, colName, *A));
     XA.Create();
     XA.SetXAppId(XAtoms.Count() - 1);
-    XA.Params()[0] = (float)A->GetType().r_pers;
+    XA.Params()[0] = A->GetType().r_pers;
     return &XA;
   }
   return NULL;
@@ -2751,11 +2752,11 @@ void TGXApp::StoreGroups()  {
     for( size_t j=0; j < glG.Count(); j++ )  {
       AGDrawObject& glO = glG[j];
       if( EsdlInstanceOf(glO, TXAtom) )
-        gd.atoms.Add( ((TXAtom&)glO).Atom() );
+        gd.atoms.Add(((TXAtom&)glO).Atom());
       if( EsdlInstanceOf(glO, TXBond) )
-        gd.bonds.Add( ((TXBond&)glO).Bond() );
-      if( EsdlInstanceOf(glO, TXPlane) )
-        gd.planes.Add( ((TXPlane&)glO).Plane() );
+        gd.bonds.Add(((TXBond&)glO).Bond());
+      if( EsdlInstanceOf(glO, TXPlane))
+        gd.planes.Add(((TXPlane&)glO).Plane());
     }
   }
 }
@@ -2765,7 +2766,7 @@ void TGXApp::RestoreGroups()  {
   TXBondPList xbonds;
   TXPlanePList xplanes;
   olxstr className;
-  for( size_t i=0; i < FOldGroups.Count()-1; i++ )  {
+  for( size_t i=0; i < FOldGroups.Count(); i++ )  {
     GroupData& gd = FOldGroups[i];
     xatoms.Clear();   SAtoms2XAtoms(gd.atoms, xatoms);
     xbonds.Clear();   SBonds2XBonds(gd.bonds, xbonds);
@@ -2777,26 +2778,74 @@ void TGXApp::RestoreGroups()  {
       FGlRender->GetSelection().Add(*xbonds[j]);
     for( size_t j=0; j < xplanes.Count(); j++ )
       FGlRender->GetSelection().Add(*xplanes[j]);
-    TGlGroup* glG = FGlRender->GroupSelection(gd.collectionName);
-    if( glG == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "could not recreate groups");
-    glG->SetSelected(false);
-    FGlRender->GetSelection().Clear();
-    glG->SetGlM(gd.material);
-    glG->SetVisible(gd.visible);
+    if( (i+1) < FOldGroups.Count() )  {
+      TGlGroup* glG = FGlRender->GroupSelection(gd.collectionName);
+      if( glG == NULL )
+        throw TFunctionFailedException(__OlxSourceInfo, "could not recreate groups");
+      glG->SetSelected(false);
+      FGlRender->GetSelection().Clear();
+      glG->SetGlM(gd.material);
+      glG->SetVisible(gd.visible);
+    }
   }
-  GroupData& gd = FOldGroups.Last(); // the selection
-  xatoms.Clear();   SAtoms2XAtoms(gd.atoms, xatoms);
-  xbonds.Clear();   SBonds2XBonds(gd.bonds, xbonds);
-  xplanes.Clear();  SPlanes2XPlanes(gd.planes, xplanes);
-  FGlRender->GetSelection().Clear();
-  for( size_t j=0; j < xatoms.Count(); j++ )
-    FGlRender->Select(*xatoms[j]);
-  for( size_t j=0; j < xbonds.Count(); j++ )
-    FGlRender->Select(*xbonds[j]);
-  for( size_t j=0; j < xplanes.Count(); j++ )
-    FGlRender->Select(*xplanes[j]);
+}
+//..............................................................................
+void TGXApp::StoreGroupsEx(TTypeList<GroupDataEx>& groups)  {
+  for( size_t i=0; i <= FGlRender->GroupCount(); i++ )  {
+    TGlGroup& glG = (i < FGlRender->GroupCount() ? FGlRender->GetGroup(i) : FGlRender->GetSelection());
+    GroupDataEx& gd = groups.AddNew();
+    gd.collectionName = glG.GetCollectionName();  //planes
+    gd.visible = glG.IsVisible();
+    gd.material = glG.GetGlM();
+    for( size_t j=0; j < glG.Count(); j++ )  {
+      AGDrawObject& glO = glG[j];
+      if( EsdlInstanceOf(glO, TXAtom) )
+        gd.atoms.AddCCopy(((TXAtom&)glO).Atom().GetRef());
+      if( EsdlInstanceOf(glO, TXBond) )
+        gd.bonds.AddCCopy(((TXBond&)glO).Bond().GetRef());
+      if( EsdlInstanceOf(glO, TXPlane) )
+        gd.planes.Add( ((TXPlane&)glO).Plane());
+    }
+  }
+}
+//..............................................................................
+void TGXApp::RestoreGroupsEx(const TTypeList<GroupDataEx>& groups)  {
+  TXAtomPList xatoms;
+  TXBondPList xbonds;
+  TXPlanePList xplanes;
+  olxstr className;
+  AtomRegistry ar = XFile().GetLattice().GetAtomRegistry();
+  for( size_t i=0; i < groups.Count(); i++ )  {
+    GroupDataEx& gd = groups[i];
+    TSAtomPList atoms(gd.atoms.Count());
+    TSBondPList bonds(gd.bonds.Count());
+    for( size_t j=0; j < gd.atoms.Count(); j++ )
+      if( (atoms[j] = ar.Find(gd.atoms[j])) == NULL )
+        throw TFunctionFailedException(__OlxSourceInfo, "could not recreate groups");
+    for( size_t j=0; j < gd.bonds.Count(); j++ )
+      if( (bonds[j] = ar.Find(gd.bonds[j])) == NULL )
+        throw TFunctionFailedException(__OlxSourceInfo, "could not recreate groups");
 
+    xatoms.Clear();   SAtoms2XAtoms(atoms, xatoms);
+    xbonds.Clear();   SBonds2XBonds(bonds, xbonds);
+    xplanes.Clear();  SPlanes2XPlanes(gd.planes, xplanes);
+    FGlRender->GetSelection().Clear();
+    for( size_t j=0; j < xatoms.Count(); j++ )
+      FGlRender->GetSelection().Add(*xatoms[j]);
+    for( size_t j=0; j < xbonds.Count(); j++ )
+      FGlRender->GetSelection().Add(*xbonds[j]);
+    for( size_t j=0; j < xplanes.Count(); j++ )
+      FGlRender->GetSelection().Add(*xplanes[j]);
+    if( (i+1) < groups.Count() )  {
+      TGlGroup* glG = FGlRender->GroupSelection(gd.collectionName);
+      if( glG == NULL )
+        throw TFunctionFailedException(__OlxSourceInfo, "could not recreate groups");
+      glG->SetSelected(false);
+      FGlRender->GetSelection().Clear();
+      glG->SetGlM(gd.material);
+      glG->SetVisible(gd.visible);
+    }
+  }
 }
 //..............................................................................
 void TGXApp::StoreVisibility()  {

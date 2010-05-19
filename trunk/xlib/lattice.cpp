@@ -423,7 +423,7 @@ void TLattice::GenerateCell(bool includeQ)  {
       if( (distances[j] - distances[i]) > 0.1 )  break;
       const double qd = Atoms[i]->crd().QDistanceTo(Atoms[j]->crd());
       if( qd < 0.00001 )  {
-        Atoms[i]->AddMatrices(Atoms[j]);
+        Atoms[i]->AddMatrices(*Atoms[j]);
         delete Atoms[j];
         Atoms[j] = NULL;
         continue;
@@ -707,7 +707,7 @@ void TLattice::Grow(const smatd& transform)  {
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
-void TLattice::RestoreAtom(const TSAtom::Ref& id)  {
+void TLattice::RestoreAtom(const TSAtom::FullRef& id)  {
   if( smatd::GetContainerId(id.matrix_id) >= GetUnitCell().MatrixCount() )
     throw TInvalidArgumentException(__OlxSourceInfo, "matrix ID");
   if( id.catom_id >= GetAsymmUnit().AtomCount() )
@@ -2222,6 +2222,35 @@ void TLattice::RestoreADPs(bool restoreCoordinates)  {
     if( elp != NULL )  
       elp->SetTag(0);
   }
+}
+//..............................................................................
+AtomRegistry TLattice::GetAtomRegistry()  {
+  vec3i mind(100,100,100), maxd(-100,-100,-100);
+  for( size_t i=0; i < Matrices.Count(); i++ )
+    vec3i::UpdateMinMax(Matrices[i]->GetT(Matrices[i]->GetId()), mind, maxd);
+  maxd[0] += 1;  maxd[1] += 1;  maxd[2] += 1;
+  AtomRegistry ar(mind, maxd);
+  for( size_t i=0; i < Atoms.Count(); i++ )  {
+    const vec3i t = smatd::GetT(Atoms[i]->GetMatrix(0).GetId());
+    TArrayList<TSAtomPList*>* aum_slice = ar.GetRegistry().Value(t);
+    if( aum_slice == NULL )  {
+      const size_t matr_cnt = GetUnitCell().MatrixCount();
+      aum_slice = (ar.GetRegistry().Value(t) = new TArrayList<TSAtomPList*>(matr_cnt));
+      for( size_t j=0; j < matr_cnt; j++ )
+        (*aum_slice)[j] = NULL;
+    }
+    TSAtomPList* au_slice = (*aum_slice)[Atoms[i]->GetMatrix(0).GetContainerId()];
+    if( au_slice == NULL )  {
+      const size_t atom_cnt = GetAsymmUnit().AtomCount();
+      au_slice = ((*aum_slice)[Atoms[i]->GetMatrix(0).GetContainerId()] = new TSAtomPList(atom_cnt));
+      for( size_t j=0 ; j < atom_cnt; j++)
+        (*au_slice)[j] = NULL;
+    }
+    if( (*au_slice)[Atoms[i]->CAtom().GetId()] )
+      throw TFunctionFailedException(__OlxSourceInfo, "duplicate entry");
+    (*au_slice)[Atoms[i]->CAtom().GetId()] = Atoms[i];
+  }  
+  return ar;
 }
 //..............................................................................
 //..............................................................................

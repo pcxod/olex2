@@ -24,7 +24,7 @@ TXApp::TXApp(const olxstr &basedir, ASelectionOwner* selOwner) :
     if( !TSymmLib::IsInitialised() )
       TEGC::AddP(new TSymmLib(GetBaseDir() + "symmlib.xld"));
   }
-  catch( const TIOExceptionBase &exc )  {
+  catch( const TIOException& exc )  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
   FXFile = new TXFile;

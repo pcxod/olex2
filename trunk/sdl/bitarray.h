@@ -1,7 +1,5 @@
-//---------------------------------------------------------------------------
-
-#ifndef bitarrayH
-#define bitarrayH
+#ifndef __olx_sdl_bitarray_H
+#define __olx_sdl_bitarray_H
 #include "ebase.h"
 #include "istream.h"
 
@@ -70,8 +68,8 @@ public:
   void operator >> (IOutputStream& out) const;
   
   TEBitArray& operator = (const TEBitArray& arr);
-  bool operator == (const TEBitArray& arr )  const;
-  int Compare(const TEBitArray& arr )  const;
+  bool operator == (const TEBitArray& arr)  const;
+  int Compare(const TEBitArray& arr)  const;
   // base64 based string + one char {'0'+size%8}
   olxstr ToBase64String() const;
   void FromBase64String(const olxstr& str);

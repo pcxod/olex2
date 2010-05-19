@@ -5,15 +5,9 @@
 #include "exception.h"
 
 UseEsdlNamespace()
-  const IEObject& esdl::NullObject = (const IEObject&)(*(IEObject*)NULL);
 
-TIString IEObject::ToString() const  {
-  throw TNotImplementedException(__OlxSourceInfo);
-}
-
-IEObject* IEObject::Replicate() const  {
-  throw TNotImplementedException(__OlxSourceInfo);
-}
+TIString IEObject::ToString() const {  throw TNotImplementedException(__OlxSourceInfo);  }
+IEObject* IEObject::Replicate() const {  throw TNotImplementedException(__OlxSourceInfo);  }
 
 #ifdef __WIN32__
   const char* EsdlObject(NewLineSequence) = "\r\n";
@@ -27,11 +21,45 @@ AReferencible::~AReferencible()  {
   if( This_RefCount != 0 )
     throw TFunctionFailedException(__OlxSourceInfo, "reference count is not zero");
 }
-
-void TExceptionBase::ThrowFunctionFailed(const char* file, const char* func, int line, const char* msg) {
-  throw TFunctionFailedException( olxstr(EmptyString, 384) << '[' << file << '(' << func << "):" << line << ']', msg);
+//................................................................................................
+//................................................................................................
+//................................................................................................
+olxstr TExceptionBase_FormatSrc(const char* file, const char* func, int line)  {
+  return olxstr(EmptyString, 384) << '[' << file << '(' << func << "):" << line << ']';
 }
-
+//................................................................................................
+void TExceptionBase::ThrowFunctionFailed(const char* file, const char* func, int line, const char* msg) {
+  throw TFunctionFailedException(TExceptionBase_FormatSrc(file,func,line), msg);
+}
+//................................................................................................
+void TExceptionBase::ThrowInvalidIntegerFormat(const char* file, const char* func, int line, 
+    const char* src, size_t src_len)
+{
+  throw TInvalidIntegerNumberException(TExceptionBase_FormatSrc(file,func,line),
+    olxstr('\'') << olxstr(src, src_len) << '\'');
+}
+//................................................................................................
+void TExceptionBase::ThrowInvalidIntegerFormat(const char* file, const char* func, int line, 
+    const wchar_t* src, size_t src_len)
+{
+  throw TInvalidIntegerNumberException(TExceptionBase_FormatSrc(file,func,line),
+    olxstr('\'') << olxstr(src, src_len) << '\'');
+}
+//................................................................................................
+void TExceptionBase::ThrowInvalidFloatFormat(const char* file, const char* func, int line, 
+    const char* src, size_t src_len)
+{
+  throw TInvalidFloatNumberException(TExceptionBase_FormatSrc(file,func,line),
+    olxstr('\'') << olxstr(src, src_len) << '\'');
+}
+//................................................................................................
+void TExceptionBase::ThrowInvalidFloatFormat(const char* file, const char* func, int line, 
+    const wchar_t* src, size_t src_len)
+{
+  throw TInvalidFloatNumberException(TExceptionBase_FormatSrc(file,func,line),
+    olxstr('\'') << olxstr(src, src_len) << '\'');
+}
+//................................................................................................
 const TBasicException* TExceptionBase::GetException() const {
   const TBasicException* exc = dynamic_cast<const TBasicException*>(this);
   if( exc == NULL )

@@ -148,7 +148,7 @@ void TXFile::LoadFromFile(const olxstr & FN) {
   catch( const TExceptionBase& exc )  {
     if( replicated )  
       delete Loader;
-    throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate() );
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
 
   if( !Loader->IsNative() )  {

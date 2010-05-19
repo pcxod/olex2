@@ -582,7 +582,7 @@ void TMainForm::XApp( TGXApp *XA)  {
   this_InitMacroD(Uniq, EmptyString, fpAny | psFileLoaded,
 "Shows only fragments specified by atom name(s) or selection");
 
-  this_InitMacroD(Group, "n-a custom name can be provided", (fpAny ^ fpNone) | psFileLoaded,
+  this_InitMacroD(Group, "n-a custom name can be provided", fpAny|psFileLoaded,
 "Groups current selection");
 
   this_InitMacroD(Fmol, EmptyString, fpNone|psFileLoaded,
@@ -3648,13 +3648,13 @@ void TMainForm::OnInternalIdle()  {
 #endif
         }
       }
-      catch(const TExceptionBase &e)  {
+      catch(const TExceptionBase& e)  {
         ShowAlert(e);
       }
       time_t fa = TEFile::FileAge( rof[i] );
       // Null the file
       try  {  TEFile ef(rof[i], "wb+");  }
-      catch( TIOExceptionBase& )  { ;  }
+      catch(TIOException&)  {}
       TEFile::SetFileTimes(rof[i], fa, fa);
       //TEFile::DelFile(rof.String(i));
     }

@@ -37,24 +37,27 @@
 
 BeginGxlNamespace()
 
-const short simNone = 0x0000, // initialisation method
-            simHDC  = 0x0001,
-            simBMP  = 0x0002;
+const short
+  simNone = 0x0000, // initialisation method
+  simHDC  = 0x0001,
+  simBMP  = 0x0002;
 
-const short sdsNone   = 0, // drawing style
-            sdsBS     = 1, // bals and sticks
-            sdsSP     = 2, // space filling
-            sdsES     = 3,  // ellipsoide and sticks
-            sdsESR    = 4,  // ellipsoide and rims and sticks
-            sdsWF     = 5,  // wire frame
-            sdsSS     = 6,  // stippled cones + spheres
-            sdsST     = 7;  // sticks
+const short
+  sdsNone   = 0, // drawing style
+  sdsBS     = 1, // bals and sticks
+  sdsSP     = 2, // space filling
+  sdsES     = 3,  // ellipsoide and sticks
+  sdsESR    = 4,  // ellipsoide and rims and sticks
+  sdsWF     = 5,  // wire frame
+  sdsSS     = 6,  // stippled cones + spheres
+  sdsST     = 7;  // sticks
 
 // grow mode
-const short gmCovalent      = 0x0001,
-            gmSInteractions = 0x0002,
-            gmSameAtoms     = 0x0004,
-            gmVanDerWaals   = 0x0008;
+const short
+  gmCovalent      = 0x0001,
+  gmSInteractions = 0x0002,
+  gmSameAtoms     = 0x0004,
+  gmVanDerWaals   = 0x0008;
 //---------------------------------------------------------------------------
 class TDUnitCell;
 class TDBasis;
@@ -139,11 +142,22 @@ protected:
     bool visible;
     TGlMaterial material;
   };
+  struct GroupDataEx  {
+    TTypeList<TSAtom::Ref> atoms;
+    TTypeList<TSBond::Ref> bonds;
+    TSPlanePList planes;
+    olxstr collectionName;
+    bool visible;
+    TGlMaterial material;
+  };
 
   TTypeList<GroupData> FOldGroups;
   void RestoreGroups();
   void StoreGroups();
   void ClearGroups()  {  FOldGroups.Clear();  }
+  // stores numeric references vs object references
+  void RestoreGroupsEx(const TTypeList<GroupDataEx>& groups);
+  void StoreGroupsEx(TTypeList<GroupDataEx>& groups);
 
   float FProbFactor;
   double ExtraZoom;  // the default is 1, Calculated Zoom is multiplid by this number
