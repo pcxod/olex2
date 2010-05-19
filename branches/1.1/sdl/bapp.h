@@ -2,6 +2,7 @@
 #define __olx_bapp_H
 #include "paramlist.h"
 #include "os_util.h"
+#include "library.h"
 
 BeginEsdlNamespace()
 
@@ -66,6 +67,9 @@ public:
 
   // implementation might consider drawing scene, update GUI etc..
   virtual void Update()  {}
+  static size_t GetArgCount()  {  return GetInstance().Arguments.Count();  }
+  static const olxstr& GetArg(size_t i)  {  return GetInstance().Arguments[i];  }
+  TLibrary* ExportLibrary(const olxstr& lib_name="app");
 
   // application layer critical section
   inline static void EnterCriticalSection()  {  app_cs.enter();  }

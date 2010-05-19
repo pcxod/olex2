@@ -548,7 +548,7 @@ TMainForm::~TMainForm()  {
   PythonExt::Finilise();
 }
 //..............................................................................
-void TMainForm::XApp( TGXApp *XA)  {
+void TMainForm::XApp(TGXApp *XA)  {
   FXApp = XA;
   FXApp->SetCifTemplatesDir(XA->GetBaseDir() + "etc/CIF/");
 ////////////////////////////////////////////////////////////////////////////////
@@ -1035,6 +1035,7 @@ separated values of Atom Type and radius, an entry a line");
   this_InitFuncD(ThreadCount, fpNone|fpOne, "Returns/sets the number of simultaneous tasks");
   this_InitFuncD(FullScreen, fpNone|fpOne, "Returns/sets full screen mode (true/false/swap)");
 
+  Library.AttachLibrary(FXApp->ExportLibrary());
   Library.AttachLibrary(TEFile::ExportLibrary());
   //Library.AttachLibrary(olxstr::ExportLibrary("str"));
   Library.AttachLibrary(PythonExt::GetInstance()->ExportLibrary());
@@ -1491,18 +1492,14 @@ void TMainForm::StartupInit()  {
     try  { Dictionary.SetCurrentLanguage(DictionaryFile, "English");  }
     catch(...) {}
   }
-
   ProcessMacro("onstartup", __OlxSrcInfo);
   ProcessMacro("user_onstartup", __OlxSrcInfo);
-
-  // load html in last cal - it might call some destructive functions on uninitialised data
-
-  FHtml->LoadPage(FHtmlIndexFile.u_str());
-  FHtml->SetHomePage(FHtmlIndexFile);
-
   if( FXApp->Arguments.Count() == 2 )
     ProcessMacro(olxstr("reap \'") << FXApp->Arguments[1] << '\'', __OlxSrcInfo);
-// must move it here since on Linux things will not get initialised at the previous position
+  // load html in last cal - it might call some destructive functions on uninitialised data
+  FHtml->LoadPage(FHtmlIndexFile.u_str());
+  FHtml->SetHomePage(FHtmlIndexFile);
+  // must move it here since on Linux things will not get initialised at the previous position
   if( FXApp->IsBaseDirWriteable() )  {
     _UpdateThread = new UpdateThread(FXApp->GetSharedDir() + patcher::PatchAPI::GetPatchFolder());
     _UpdateThread->OnTerminate.Add(this, ID_UpdateThreadTerminate);
