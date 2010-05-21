@@ -21,7 +21,7 @@ double TSPlane::CalcRMS(const TSAtomPList& atoms)  {
   TTypeList< AnAssociation2<vec3d, double> > Points;
   Points.SetCapacity( atoms.Count() );
   for( size_t i=0; i < atoms.Count(); i++ )
-    Points.AddNew( atoms[i]->crd(), 1);
+    Points.AddNew(atoms[i]->crd(), 1);
   return CalcPlane(Points, p, c);
 }
 //..............................................................................
@@ -67,12 +67,9 @@ bool TSPlane::CalcPlanes(const TTypeList< AnAssociation2<vec3d, double> >& Point
   m[2][0] = m[0][2];
   m[2][1] = m[1][2];
   mat3d::EigenValues(m, Params.I());
-  for( int i=0; i < 3; i++ )  {
-    if( m[i][i] < 0 ) // optimised version will create slightly negative values!
-      rms[i] = 0;
-    else
-      rms[i] = sqrt(m[i][i]/Points.Count());
-  }
+  // optimised version will create slightly negative values!
+  for( int i=0; i < 3; i++ )
+    rms[i] = (m[i][i] < 0 ? 0 : sqrt(m[i][i]/Points.Count()));
   bool swaps = true;
   while( swaps )  {
     swaps = false;

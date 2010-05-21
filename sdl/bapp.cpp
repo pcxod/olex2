@@ -114,7 +114,23 @@ TActionQueue& TBasicApp::NewActionQueue(const olxstr& Name) {
     return *Actions.Find(Name);
   else
     return Actions.New(Name);
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+void _GetArgCount(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal(TBasicApp::GetArgCount());
+}
+void _GetArg(const TStrObjList& Params, TMacroError& E)  {
+  size_t i = Params[0].ToSizeT();
+  E.SetRetVal(i < TBasicApp::GetArgCount() ? TBasicApp::GetArg(i) : EmptyString);
+}
 
-  //TActionQueue* q = FActions->FindQueue(Name);
-  //return (q!=NULL) ? *q : FActions->NewQueue(Name);
+TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
+  TLibrary* lib = new TLibrary(lib_name);
+  lib->RegisterStaticFunction(new TStaticFunction(_GetArgCount, "ArgCount", fpNone,
+"Returns number of arguments passed to the application") );
+  lib->RegisterStaticFunction(new TStaticFunction(_GetArg, "GetArg", fpOne,
+"Returns application argument value by index") );
+ return lib;
 }

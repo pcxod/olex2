@@ -74,6 +74,48 @@ public:
   // returns sqrt(smallest eigen value/point.Count())
   static double CalcRMS(const TSAtomPList& atoms);
 
+  class Ref  {
+    struct RefData {
+      const TSAtom::Ref ref;
+      const double weight;
+      RefData(const TSAtom::Ref& r, double w) : ref(r), weight(w)  {}
+      bool operator == (const RefData& rd) const {
+        return (weight == rd.weight && ref == rd.ref);
+      }
+      bool operator != (const RefData& rd) const {  return !(*this == rd);  }
+    };
+    static int atom_comparator(const RefData& a, const RefData& b)  {
+      const int res = olx_cmp_size_t(a.ref.catom_id, b.ref.catom_id);
+      if( res == 0 )
+        return olx_cmp_size_t(a.ref.matrix_id, b.ref.matrix_id);
+    }
+    TTypeList<RefData> atoms;
+  public:
+    Ref(const TSPlane& plane) : atoms(plane.Count())  {
+      for( size_t i=0; i < plane.Count(); i++ )
+        atoms.Set(i, new RefData(plane.GetAtom(i).GetRef(), plane.Weight(i)));
+      atoms.QuickSorter.SortSF(atoms, Ref::atom_comparator);
+    }
+    Ref(const Ref& r) : atoms(r.atoms)  {}
+    Ref& operator = (const Ref& r)  {
+      atoms = r.atoms;
+      return *this;
+    }
+    bool operator == (const TSPlane::Ref& r) const {
+      if( atoms.Count() != r.atoms.Count() )  return false;
+      for( size_t i=0; i < atoms.Count(); i++ )
+        if( atoms[i] != r.atoms[i] )
+          return false;
+      return true;
+    }
+  };
+
+  Ref GetRef() const { return Ref(*this);  }
+  // despite the fact that atoms are alsways sorted, compare both end...
+  bool operator == (const Ref& r) const {
+    return (GetRef() == r);
+  }
+
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);
 };

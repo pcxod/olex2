@@ -136,7 +136,8 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       }
     }
     catch(const TExceptionBase& exc)  {
-      throw TFunctionFailedException(__OlxSourceInfo, exc, olxstr("at line #") << i+1);
+      throw TFunctionFailedException(__OlxSourceInfo, exc,
+        olxstr("at line #") << i+1 << " ('" << InsFile[i] << "')");
     }
   }
   smatd sm;
@@ -1584,7 +1585,8 @@ void TIns::ParseHeader(const TStrList& in)  {
         Ins.Add(lst[i]);
     }
     catch( const TExceptionBase& exc )  {
-      throw TFunctionFailedException(__OlxSourceInfo, exc, olxstr("at line #") << i+1);
+      throw TFunctionFailedException(__OlxSourceInfo, exc,
+        olxstr("at line #") << i+1 << " ('" << lst[i] << "')");
     }
   }
   smatd sm;
