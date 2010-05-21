@@ -110,17 +110,17 @@ void  TLattice::Clear(bool ClearUnitCell)  {
 }
 //..............................................................................
 void TLattice::AddSBond(TSBond *B)  {
-  B->SetLattId( Bonds.Count() );
-  Bonds.Add( B );
+  B->SetLattId(Bonds.Count());
+  Bonds.Add(B);
 }
 //..............................................................................
 void TLattice::AddSAtom(TSAtom *A)  {
-  A->SetLattId( Atoms.Count() );
+  A->SetLattId(Atoms.Count());
   Atoms.Add(A);
 }
 //..............................................................................
 void TLattice::AddSPlane(TSPlane *P)  {
-  P->SetLattId( Planes.Count() );
+  P->SetLattId(Planes.Count());
   Planes.Add(P);
 }
 //..............................................................................

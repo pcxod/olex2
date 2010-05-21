@@ -1088,6 +1088,17 @@ void TMainForm::macStop(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macEcho(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  olxstr m = Options.FindValue('m');
+  if( !m.IsEmpty() )  {
+    if( m.Equalsi("info") )
+      FGlConsole->SetPrintMaterial(&InfoFontColor);
+    else if( m.Equalsi("warning") )
+      FGlConsole->SetPrintMaterial(&WarningFontColor);
+    else if( m.Equalsi("error") )
+      FGlConsole->SetPrintMaterial(&ErrorFontColor);
+    else if( m.Equalsi("exception") )
+      FGlConsole->SetPrintMaterial(&ExceptionFontColor);
+  }
   TBasicApp::GetLog() << Cmds.Text(' ') << '\n';
   //FXApp->Draw();
 }
@@ -8342,7 +8353,7 @@ void TMainForm::macUpdateQPeakTable(TStrObjList &Cmds, const TParamList &Options
 }
 //..............................................................................
 void TMainForm::funCheckState(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal( CheckState(TStateChange::DecodeState(Params[0]), Params.Count() == 2 ? Params[1] : EmptyString) );
+  E.SetRetVal(CheckState(TStateChange::DecodeState(Params[0]), Params.Count() == 2 ? Params[1] : EmptyString));
 }
 //..............................................................................
 void TMainForm::funGlTooltip(const TStrObjList& Params, TMacroError &E)  {

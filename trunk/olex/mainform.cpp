@@ -536,7 +536,7 @@ TMainForm::~TMainForm()  {
   PythonExt::Finilise();
 }
 //..............................................................................
-void TMainForm::XApp( TGXApp *XA)  {
+void TMainForm::XApp(TGXApp *XA)  {
   FXApp = XA;
   _ProcessManager = new ProcessManager(_ProcessHandler);
   FXApp->SetCifTemplatesDir(XA->GetBaseDir() + "etc/CIF/");
@@ -554,7 +554,7 @@ void TMainForm::XApp( TGXApp *XA)  {
  provided, it is considered to be image resolution in range [0.1-10].");
   this_InitMacroD(Picta, "pq-picture quality", fpOne|fpTwo,
 "A portable version of pict with limited resolution (OS/graphics card dependent). Not stable on some graphics cards");
-  this_InitMacroD(Echo, EmptyString, fpAny,
+  this_InitMacroD(Echo, "m-the printing color (info, warning, error or exceptiion)", fpAny,
 "Prints provided string, functions are evaluated before printing");
   this_InitMacroD(PictPS, "color_line-lines&;color_fill-ellipses are filled&;color_bond-bonds\
  are colored&;div_pie-number [4] of stripes in the octant&;lw_pie-line width [0.5] of the octant\
@@ -1024,6 +1024,7 @@ separated values of Atom Type and radius, an entry a line");
   this_InitFuncD(ThreadCount, fpNone|fpOne, "Returns/sets the number of simultaneous tasks");
   this_InitFuncD(FullScreen, fpNone|fpOne, "Returns/sets full screen mode (true/false/swap)");
 
+  Library.AttachLibrary(FXApp->ExportLibrary());
   Library.AttachLibrary(TEFile::ExportLibrary());
   //Library.AttachLibrary(olxstr::ExportLibrary("str"));
   Library.AttachLibrary(PythonExt::GetInstance()->ExportLibrary());
@@ -1477,18 +1478,14 @@ void TMainForm::StartupInit()  {
     try  { Dictionary.SetCurrentLanguage(DictionaryFile, "English");  }
     catch(...) {}
   }
-
   ProcessMacro("onstartup", __OlxSrcInfo);
   ProcessMacro("user_onstartup", __OlxSrcInfo);
-
-  // load html in last cal - it might call some destructive functions on uninitialised data
-
-  FHtml->LoadPage(FHtmlIndexFile.u_str());
-  FHtml->SetHomePage(FHtmlIndexFile);
-
   if( FXApp->Arguments.Count() == 2 )
     ProcessMacro(olxstr("reap \'") << FXApp->Arguments[1] << '\'', __OlxSrcInfo);
-// must move it here since on Linux things will not get initialised at the previous position
+  // load html in last cal - it might call some destructive functions on uninitialised data
+  FHtml->LoadPage(FHtmlIndexFile.u_str());
+  FHtml->SetHomePage(FHtmlIndexFile);
+  // must move it here since on Linux things will not get initialised at the previous position
   if( FXApp->IsBaseDirWriteable() )  {
     _UpdateThread = new UpdateThread(FXApp->GetSharedDir() + patcher::PatchAPI::GetPatchFolder());
     _UpdateThread->OnTerminate.Add(this, ID_UpdateThreadTerminate);
