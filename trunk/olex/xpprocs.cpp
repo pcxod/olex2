@@ -354,7 +354,7 @@ void TMainForm::funSel(const TStrObjList& Params, TMacroError &E)  {
     else if( EsdlInstanceOf(gdo, TXPlane) )  {
       TSPlane& sp = ((TXPlane&)gdo).Plane();
       for( size_t j=0; j < sp.Count(); j++ )
-        atoms.Add(sp.Atom(j));
+        atoms.Add(sp.GetAtom(j));
     }
   }
   olxstr tmp;
@@ -2319,6 +2319,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void TMainForm::macFocus(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  this->Raise();
   FGlCanvas->SetFocus();
 }
 //..............................................................................
@@ -4569,12 +4570,15 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     FHtml = ph;
     pd->Html->SetHomePage(TutorialDir + Cmds[1]);
     if( Options.Contains('w') && Options.Contains('h') )  {
-      pd->Dialog->SetSize(width, height);
+#ifdef __WXGTK__  // any aother way to forse move ???
+      pd->Dialog->SetSize(5000, 5000, 0, 0);
+#endif
+      pd->Dialog->SetSize(x, y, width, height);
       pd->Dialog->GetClientSize(&width, &height);
       pd->Html->SetSize(width, height);
     }
-    if( !pd->Dialog->IsShown() && !Options.Contains('s'))  
-      pd->Dialog->Show();
+    if( !pd->Dialog->IsShown() && !Options.Contains('s'))
+      pd->Dialog->Show(true);
     return;
   }
 
@@ -7520,6 +7524,7 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   olxstr empty = EmptyString;
   OlxTests tests;
   tests.Add(&TSymmParser::Tests);
+  tests.Add(&smatd::Tests);
   tests.run();
   AtomRefList arl(FXApp->XFile().GetRM(), Cmds.Text(' '), "suc");
   TTypeList<TAtomRefList> res;
@@ -7549,7 +7554,6 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
     TBasicApp::GetLog() << "SHA256: " << SHA256::Digest(f) << '\n';
     TBasicApp::GetLog() << olxstr::FormatFloat(3, ((double)f.Length()/(((TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s\n";
   }
-#ifndef _WIN64
   using namespace esdl::exparse;
   EvaluableFactory evf;
   context cx;
@@ -7592,7 +7596,6 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
     delete iv1;
   }
   if( iv->ref_cnt == 0 )  delete iv;
-#endif
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {
@@ -7976,7 +7979,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TXPlane& xp = (TXPlane&)sel[0];
         olxstr pld;
         for( size_t i=0; i < xp.Plane().Count(); i++ )  {
-          atoms.Add( &xp.Plane().Atom(i) );
+          atoms.Add(xp.Plane().GetAtom(i));
           pld << atoms.Last()->GetLabel() << ' ';
         }
         TBasicApp::GetLog() << (olxstr("Plane ") << pld << "RMS: " << vcovc.CalcPlane(atoms).ToString() << '\n');
@@ -8015,7 +8018,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TXPlane& xp = (TXPlane&)sel[ EsdlInstanceOf(sel[0], TXPlane) ? 0 : 1];
         olxstr pld;
         for( size_t i=0; i < xp.Plane().Count(); i++ )  {
-          atoms.Add( &xp.Plane().Atom(i) );
+          atoms.Add(xp.Plane().GetAtom(i));
           pld << atoms.Last()->GetLabel() << ' ';
         }
         TSAtom& sa = ((TXAtom&)sel[EsdlInstanceOf(sel[0],TXAtom) ? 0 : 1]).Atom();
@@ -8033,7 +8036,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TXPlane& xp = (TXPlane&)sel[ EsdlInstanceOf(sel[0], TXPlane) ? 0 : 1];
         olxstr pld;
         for( size_t i=0; i < xp.Plane().Count(); i++ )  {
-          atoms.Add( &xp.Plane().Atom(i) );
+          atoms.Add(xp.Plane().GetAtom(i));
           pld << atoms.Last()->GetLabel() << ' ';
         }
         TSBond& sb = ((TXBond&)sel[ EsdlInstanceOf(sel[0], TXBond) ? 0 : 1]).Bond();
@@ -8048,11 +8051,11 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TXPlane& xp2 = (TXPlane&)sel[1];
         olxstr pld1, pld2;
         for( size_t i=0; i < xp1.Plane().Count(); i++ )  {
-          p1.Add( xp1.Plane().Atom(i) );
+          p1.Add(xp1.Plane().GetAtom(i));
           pld1 << p1.Last()->GetLabel() << ' ';
         }
         for( size_t i=0; i < xp2.Plane().Count(); i++ )  {
-          p2.Add( xp2.Plane().Atom(i) );
+          p2.Add(xp2.Plane().GetAtom(i));
           pld2 << p2.Last()->GetLabel() << ' ';
         }
         const TEValue<double> angle = vcovc.CalcP2PAngle(p1, p2);
@@ -8098,7 +8101,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         }
         olxstr pld;
         for( size_t i=0; i < xp->Plane().Count(); i++ )  {
-          atoms.Add( xp->Plane().Atom(i) );
+          atoms.Add(xp->Plane().GetAtom(i));
           pld << atoms.Last()->GetLabel() << ' ';
         }
         TBasicApp::GetLog() << (olxstr(a1->GetLabel()) << '-' << a2->GetLabel() << " to plane " << pld << "angle: " <<
@@ -8109,9 +8112,9 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TSPlane& p2 = ((TXPlane&)sel[1]).Plane();
         TSPlane& p3 = ((TXPlane&)sel[2]).Plane();
         TSAtomPList a1, a2, a3;
-        for( size_t i=0; i < p1.Count(); i++ )  a1.Add( p1.Atom(i) );
-        for( size_t i=0; i < p2.Count(); i++ )  a2.Add( p2.Atom(i) );
-        for( size_t i=0; i < p3.Count(); i++ )  a3.Add( p3.Atom(i) );
+        for( size_t i=0; i < p1.Count(); i++ )  a1.Add(p1.GetAtom(i));
+        for( size_t i=0; i < p2.Count(); i++ )  a2.Add(p2.GetAtom(i));
+        for( size_t i=0; i < p3.Count(); i++ )  a3.Add(p3.GetAtom(i));
         TBasicApp::GetLog() << "Angle between plane centroids: " <<
           vcovc.Calc3PCAngle(a1, a2, a3).ToString() << '\n';
       }

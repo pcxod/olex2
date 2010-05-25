@@ -26,25 +26,40 @@ class AtomRegistry  {
     }
   };
 protected:
-  mutable DataStruct& data;
-  AtomRegistry(const vec3i& mind, const vec3i& maxd) : data(*(new DataStruct(mind, maxd))) {}
-  AtomRegistry& operator = (const AtomRegistry&)  {
-    throw TNotImplementedException(__OlxSourceInfo);
-  }
+  mutable DataStruct* data;
 public:
-  AtomRegistry(const AtomRegistry& r) : data(r.data) {  data.ref_cnt++;  }
+  typedef TArray3D<TArrayList<TSAtomPList*>*> RegistryType;
+  //..................................................................................................
+  AtomRegistry() : data(NULL) {}
+  //..................................................................................................
+  AtomRegistry(const AtomRegistry& r) : data(r.data) {  data->ref_cnt++;  }
+  //..................................................................................................
+  RegistryType& Init(const vec3i& mind, const vec3i& maxd)  {
+    if( data != NULL && --data->ref_cnt == 0 )
+      delete data;
+    data = new DataStruct(mind, maxd);
+    return data->registry;
+  }
   //..................................................................................................
   ~AtomRegistry()  {
-    if( --data.ref_cnt  == 0 )
-      delete &data;
+    if( data != NULL && --data->ref_cnt  == 0 )
+      delete data;
   }
   //..................................................................................................
-  TArray3D<TArrayList<TSAtomPList*>*>& GetRegistry()  {  return data.registry;  }
+  AtomRegistry& operator = (const AtomRegistry& ar)  {
+    if( data != NULL && --data->ref_cnt == 0 )
+      delete data;
+    data = ar.data;
+    return *this;
+  }
+  //..................................................................................................
+  RegistryType& GetRegistry()  {  return data->registry;  }
   //..................................................................................................
   TSAtom* Find(const TSAtom::Ref& ref) const {
+    if( data == NULL )  return NULL;
     const vec3i t = smatd::GetT(ref.matrix_id);
-    if( !data.registry.IsInRange(t) ) return false;
-    TArrayList<TSAtomPList*>* aum_slice = data.registry.Value(t);
+    if( !data->registry.IsInRange(t) ) return false;
+    TArrayList<TSAtomPList*>* aum_slice = data->registry.Value(t);
     if( aum_slice == NULL )  return NULL;
     TSAtomPList* au_slice = (*aum_slice)[smatd::GetContainerId(ref.matrix_id)];
     if( au_slice == NULL ) return false;
@@ -54,13 +69,12 @@ public:
   TSBond* Find(const TSBond::Ref& ref) const {
     TSAtom* a = Find(ref.a);
     if( a == NULL )  return NULL;
-    for( size_t i=0; i < a->BondCount(); i++ )
-      if( a->Bond(i).Another(*a) == ref.b )
+    for( size_t i=0; i < a->BondCount(); i++ )  {
+      if( !a->Bond(i).IsDeleted() && a->Bond(i).Another(*a) == ref.b )
         return &a->Bond(i);
+    }
     return NULL;
   }
-  //..................................................................................................
-  friend class TLattice;
 };
 EndXlibNamespace()
 #endif

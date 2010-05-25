@@ -2,7 +2,6 @@
 #define __olx_xl_splane_H
 #include "xbase.h"
 #include "typelist.h"
-#include "tptrlist.h"
 #include "satom.h"
 
 BeginXlibNamespace()
@@ -31,7 +30,7 @@ public:
 
   inline size_t CrdCount() const {  return Crds.Count(); }
   // an association point, weight is provided
-  void Init(const TTypeList< AnAssociation2<TSAtom*, double> >& Points);
+  void Init(const TTypeList<AnAssociation2<TSAtom*, double> >& Points);
 
   inline const vec3d& GetNormal() const {  return FNormal; }
   inline const vec3d& GetCenter() const {  return FCenter; }
@@ -43,14 +42,14 @@ public:
   double Angle(const class TSBond& B) const;
   double Angle(const TSPlane& P) const {  return Angle(P.GetNormal());  }
   double GetD() const {  return FDistance; }
-  double Z(const double& X, const double& Y) const {
+  void SetD(double v) {  FDistance = v; }
+  double GetZ(const double& X, const double& Y) const {
     return (FNormal[2] == 0) ? 0.0 : (FNormal[0]*X + FNormal[1]*Y + FDistance)/FNormal[2];
   }
-  void D(double v) {  FDistance = v; }
   size_t Count() const {  return Crds.Count();  }
   const TSAtom& GetAtom(size_t i) const {  return *Crds[i].GetA();  }
-  TSAtom& Atom(size_t i) {  return *Crds[i].A();  }
-  double Weight(size_t i) const {  return Crds[i].GetB();  }
+  TSAtom& GetAtom(size_t i) {  return *Crds[i].A();  }
+  double GetWeight(size_t i) const {  return Crds[i].GetB();  }
 
 // static members
   /* calculates all three planes - best, worst and the complimentary, 
@@ -74,47 +73,45 @@ public:
   // returns sqrt(smallest eigen value/point.Count())
   static double CalcRMS(const TSAtomPList& atoms);
 
-  class Ref  {
-    struct RefData {
-      const TSAtom::Ref ref;
-      const double weight;
-      RefData(const TSAtom::Ref& r, double w) : ref(r), weight(w)  {}
-      bool operator == (const RefData& rd) const {
-        return (weight == rd.weight && ref == rd.ref);
+  class Def  {
+    struct DefData {
+      TSAtom::Ref ref;
+      double weight;
+      DefData(const TSAtom::Ref& r, double w) : ref(r), weight(w)  {}
+      DefData(const DefData& r) : ref(r.ref), weight(r.weight)  {}
+      DefData& operator = (const DefData& r)  {  
+        ref = r.ref;  
+        weight = r.weight;
+        return *this;
       }
-      bool operator != (const RefData& rd) const {  return !(*this == rd);  }
+      int Compare(const DefData& d) const {
+        int diff = olx_cmp_size_t(ref.catom_id, d.ref.catom_id);
+        if( diff == 0 )
+          diff = olx_cmp_size_t(ref.matrix_id, d.ref.matrix_id);
+        return diff;
+      }
     };
-    static int atom_comparator(const RefData& a, const RefData& b)  {
-      const int res = olx_cmp_size_t(a.ref.catom_id, b.ref.catom_id);
-      if( res == 0 )
-        return olx_cmp_size_t(a.ref.matrix_id, b.ref.matrix_id);
-    }
-    TTypeList<RefData> atoms;
+    TTypeList<DefData> atoms;
   public:
-    Ref(const TSPlane& plane) : atoms(plane.Count())  {
-      for( size_t i=0; i < plane.Count(); i++ )
-        atoms.Set(i, new RefData(plane.GetAtom(i).GetRef(), plane.Weight(i)));
-      atoms.QuickSorter.SortSF(atoms, Ref::atom_comparator);
-    }
-    Ref(const Ref& r) : atoms(r.atoms)  {}
-    Ref& operator = (const Ref& r)  {
+    Def(const TSPlane& plane);
+    Def(const Def& r) : atoms(r.atoms)  {}
+    Def& operator = (const Def& r)  {
       atoms = r.atoms;
       return *this;
     }
-    bool operator == (const TSPlane::Ref& r) const {
-      if( atoms.Count() != r.atoms.Count() )  return false;
-      for( size_t i=0; i < atoms.Count(); i++ )
-        if( atoms[i] != r.atoms[i] )
+    bool operator == (const Def& d)  const {
+      if( atoms.Count() != d.atoms.Count() )  return false;
+      for( size_t i=0; i < atoms.Count(); i++ )  {
+        if( atoms[i].ref.catom_id != d.atoms[i].ref.catom_id ||
+          atoms[i].ref.matrix_id != d.atoms[i].ref.matrix_id )
           return false;
+      }
       return true;
     }
+    TSPlane* FromAtomRegistry(class AtomRegistry& ar, class TNetwork* parent, const smatd& matr) const;
   };
 
-  Ref GetRef() const { return Ref(*this);  }
-  // despite the fact that atoms are alsways sorted, compare both end...
-  bool operator == (const Ref& r) const {
-    return (GetRef() == r);
-  }
+  Def GetDef() const { return Def(*this);  }
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);

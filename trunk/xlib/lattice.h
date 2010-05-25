@@ -5,9 +5,9 @@
 #include "catom.h"
 #include "satom.h"
 #include "sbond.h"
-#include "splane.h"
 #include "network.h"
 #include "atomregistry.h"
+#include "splane.h"
 
 #include "macroerror.h"
 #include "library.h"
@@ -21,7 +21,7 @@ private:
 private:
   /* generates matrices in volume {VFrom, VTo} and leaves only matrices, which
   transform the center of gravity of the asymmertic unit within {MFrom, MTo} volume
-  useually VFrom = olx_round(MFrom), VTo = olx_round(VFrom)
+  usually VFrom = olx_round(MFrom), VTo = olx_round(VFrom)
   */
   size_t GenerateMatrices(const vec3d& VFrom, const vec3d& VTo,
         const vec3d& MFrom, const vec3d& MTo);
@@ -32,6 +32,8 @@ private:
   TSBondPList  Bonds;      // list of all nework nodes; some of them are equal to Atoms
   TNetPList    Fragments;
   TSPlanePList Planes;
+  AtomRegistry atomRegistry;
+  TTypeList<TSPlane::Def> PlaneDefs;
   void GenerateBondsAndFragments(TArrayList<vec3d> *crd);
 protected:
   TActionQList Actions;
@@ -47,6 +49,7 @@ protected:
   void AddSBond(TSBond* B);
   void AddSAtom(TSAtom* A);
   void AddSPlane(TSPlane* P);
+  void BuildAtomRegistry();
 
   class TUnitCell*  UnitCell;
   class TAsymmUnit* AsymmUnit;
@@ -121,7 +124,8 @@ public:
         return Atoms[i];
     return NULL;
   }
-  AtomRegistry GetAtomRegistry();
+  //
+  const AtomRegistry& GetAtomRegistry() const {  return atomRegistry;  }
   void RestoreAtom(const TSAtom::FullRef& id);
 
   inline size_t BondCount() const {  return Bonds.Count();  }
@@ -130,12 +134,13 @@ public:
   inline size_t PlaneCount() const {  return Planes.Count(); }
   inline TSPlane& GetPlane(size_t i) const {  return *Planes[i];  }
   TSPlane* NewPlane(const TSAtomPList& Atoms, int weightExtent=0);
+  void ClearPlaneDefinitions()  {  PlaneDefs.Clear();  }
 
   TSPlane* TmpPlane(const TSAtomPList& Atoms, int weightExtent=0); //the plane must be deleted by the caller !
   TSAtom* NewCentroid(const TSAtomPList& Atoms);
   TSAtom* NewAtom(const vec3d& center);
 
-  void SetAnis( const TCAtomPList& atoms, bool anis );
+  void SetAnis(const TCAtomPList& atoms, bool anis);
 
   inline TUnitCell& GetUnitCell() const {  return *UnitCell; }
   inline TAsymmUnit& GetAsymmUnit() const {  return *AsymmUnit; }
@@ -173,7 +178,7 @@ public:
         delete matrices[i];
     }
   };
-  // takes the oenwership of the provided object
+  // takes the ownership of the provided object
   void SetGrowInfo(GrowInfo* grow_info);
   // returns an object created with new
   GrowInfo* GetGrowInfo() const;
@@ -192,7 +197,6 @@ public:
   void AnalyseHAdd(class AConstraintGenerator& cg, const TSAtomPList& atoms);
   // returns a chemical moiety string for CIF
   olxstr CalcMoiety() const;
-
   DefPropP(double, Delta)
   DefPropP(double, DeltaI)
 
