@@ -2310,6 +2310,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void TMainForm::macFocus(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  this->Raise();
   FGlCanvas->SetFocus();
 }
 //..............................................................................
@@ -4559,12 +4560,15 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     FHtml = ph;
     pd->Html->SetHomePage(TutorialDir + Cmds[1]);
     if( Options.Contains('w') && Options.Contains('h') )  {
-      pd->Dialog->SetSize(width, height);
+#ifdef __WXGTK__  // any aother way to forse move ???
+      pd->Dialog->SetSize(5000, 5000, 0, 0);
+#endif
+      pd->Dialog->SetSize(x, y, width, height);
       pd->Dialog->GetClientSize(&width, &height);
       pd->Html->SetSize(width, height);
     }
-    if( !pd->Dialog->IsShown() && !Options.Contains('s'))  
-      pd->Dialog->Show();
+    if( !pd->Dialog->IsShown() && !Options.Contains('s'))
+      pd->Dialog->Show(true);
     return;
   }
 
@@ -4572,7 +4576,7 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     iBorder, wxT("htmlPopupWindow") );
   THtml *html1 = new THtml(dlg, FXApp);
 //  html1->WI.AddWindowStyle(wxTAB_TRAVERSAL);
-  html1->SetWebFolder( TutorialDir );
+  html1->SetWebFolder(TutorialDir);
   html1->SetHomePage(TutorialDir + Cmds[1]);
   html1->SetMovable(false);
   dlg->GetClientSize(&width, &height);

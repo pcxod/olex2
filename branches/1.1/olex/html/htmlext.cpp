@@ -831,7 +831,7 @@ void THtml::funGetItemState(const TStrObjList &Params, TMacroError &E)  {
 //..............................................................................
 void THtml::funIsPopup(const TStrObjList& Params, TMacroError &E)  {
   THtml *html = TGlXApp::GetMainForm()->FindHtml(Params[0]);
-  E.SetRetVal(html != NULL && html->GetParent()->IsShown()); 
+  E.SetRetVal(html != NULL && html->GetParent()->IsShown());
 }
 //..............................................................................
 void THtml::funIsItem(const TStrObjList &Params, TMacroError &E)  {
@@ -920,12 +920,13 @@ void THtml::macHtmlLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void THtml::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  THtml *html = TGlXApp::GetMainForm()->FindHtml(Cmds[0]);
+  TPopupData *html = TGlXApp::GetMainForm()->FindHtmlEx(Cmds[0]);
   if( html == NULL )  {
     //E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
   }
-  html->GetParent()->Show(false);
+  if( html->Dialog->IsShown() )
+    html->Dialog->Show(false);
 }
 //..............................................................................
 void THtml::macHtmlDump(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
