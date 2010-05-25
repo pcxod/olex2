@@ -114,8 +114,10 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC) :
     this_InitFuncD(IsPopup, fpOne, "Returns true if specified popup window exists and visible");
     this_InitFuncD(EndModal, fpTwo, "Ends a modal popup and sets the return code");
     this_InitFuncD(ShowModal, fpOne, "Shows a previously created popup window as a modal dialog");
-    this_InitFuncD(Width, fpOne|fpTwo, "Returns/sets width of an HTML window");
-    this_InitFuncD(Height, fpOne|fpTwo, "Returns/sets height of an HTML window");
+    this_InitFuncD(Width, fpOne|fpTwo, "Returns/sets width of an HTML object window (use 'self' to address the window itself)");
+    this_InitFuncD(Height, fpOne|fpTwo, "Returns/sets height of an HTML object window (use 'self' to address the window itself)");
+    this_InitFuncD(ClientWidth, fpOne|fpTwo, "Returns/sets client width of an HTML window (use 'self' to address the window itself)");
+    this_InitFuncD(ClientHeight, fpOne|fpTwo, "Returns/sets client height of an HTML window (use 'self' to address the window itself)");
     this_InitFuncD(ContainerWidth, fpOne|fpTwo, "Returns/sets width of a popup window");
     this_InitFuncD(ContainerHeight, fpOne|fpTwo, "Returns/sets height of a popup window");
   }
@@ -854,7 +856,7 @@ void THtml::funGetItemState(const TStrObjList &Params, TMacroError &E)  {
 //..............................................................................
 void THtml::funIsPopup(const TStrObjList& Params, TMacroError &E)  {
   THtml *html = TGlXApp::GetMainForm()->FindHtml(Params[0]);
-  E.SetRetVal(html != NULL && html->GetParent()->IsShown()); 
+  E.SetRetVal(html != NULL && html->GetParent()->IsShown());
 }
 //..............................................................................
 void THtml::funIsItem(const TStrObjList &Params, TMacroError &E)  {
@@ -943,12 +945,13 @@ void THtml::macHtmlLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void THtml::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  THtml *html = TGlXApp::GetMainForm()->FindHtml(Cmds[0]);
+  TPopupData *html = TGlXApp::GetMainForm()->FindHtmlEx(Cmds[0]);
   if( html == NULL )  {
     //E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
   }
-  html->GetParent()->Show(false);
+  if( html->Dialog->IsShown() )
+    html->Dialog->Show(false);
 }
 //..............................................................................
 void THtml::macHtmlDump(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -1643,6 +1646,60 @@ void THtml::funHeight(const TStrObjList &Params, TMacroError &E)  {
       E.SetRetVal(wxw->GetSize().GetHeight());
     else
       wxw->SetSize(-1, -1, -1, Params[1].ToInt());
+  }
+}
+//..............................................................................
+void THtml::funClientWidth(const TStrObjList &Params, TMacroError &E)  {
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml(Params[0].SubStringTo(ind));
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  if( html == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
+    return;
+  }
+  if( objName.Equals("self") )  {
+    if( Params.Count() == 1 )
+      E.SetRetVal(html->GetClientSize().GetWidth());
+    else
+      html->SetClientSize(Params[1].ToInt(), -1);
+  }
+  else  {  
+    wxWindow *wxw = html->FindObjectWindow(objName);
+    if( wxw == NULL )  {
+      E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
+      return;
+    }
+    if( Params.Count() == 1 )
+      E.SetRetVal(wxw->GetClientSize().GetWidth());
+    else
+      wxw->SetClientSize(Params[1].ToInt(), -1);
+  }
+}
+//..............................................................................
+void THtml::funClientHeight(const TStrObjList &Params, TMacroError &E)  {
+  const size_t ind = Params[0].IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml(Params[0].SubStringTo(ind));
+  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  if( html == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
+    return;
+  }
+  if( objName.Equals("self") )  {
+    if( Params.Count() == 1 )
+      E.SetRetVal(html->GetClientSize().GetHeight());
+    else
+      html->SetClientSize(-1, Params[1].ToInt());
+  }
+  else  {  
+    wxWindow *wxw = html->FindObjectWindow(objName);
+    if( wxw == NULL )  {
+      E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
+      return;
+    }
+    if( Params.Count() == 1 )
+      E.SetRetVal(wxw->GetClientSize().GetHeight());
+    else
+      wxw->SetClientSize(-1, Params[1].ToInt());
   }
 }
 //..............................................................................

@@ -125,9 +125,9 @@ public:
       delete GrowInfo;
       GrowInfo = NULL;
     }
-    EmptyFile = SameFile = false;
     // make sure that these are only cleared when file is loaded
     if( Sender && EsdlInstanceOf(*Sender, TXFile) )  {
+      EmptyFile = SameFile = false;
       if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
         olxstr s1( TEFile::UnixPath(TEFile::ChangeFileExt(*(olxstr*)Data, EmptyString)) );
         olxstr s2( TEFile::UnixPath(TEFile::ChangeFileExt(FParent->XFile().GetFileName(), EmptyString)) );
@@ -162,6 +162,10 @@ public:
         FParent->GetRender().GetStyles().RemoveNamedStyles("Q");
       }
       //FParent->XGrid().Clear();
+    }
+    else  {
+      SameFile = true;
+      EmptyFile = false;
     }
     FParent->GetRender().GetSelection().Clear();
     FParent->ClearLabels();
@@ -210,8 +214,10 @@ public:
   bool Exit(const IEObject *Sender, const IEObject *Data)  {
     FParent->GetRender().SetBasis(B);
     FParent->CenterView();
-    if( !SameFile || EmptyFile )
-      FParent->GetRender().SetZoom( FParent->GetRender().CalcZoom()*FParent->GetExtraZoom() );
+    if( !SameFile || EmptyFile )  {
+      FParent->XFile().GetLattice().ClearPlaneDefinitions();
+    }
+    FParent->GetRender().SetZoom(FParent->GetRender().CalcZoom()*FParent->GetExtraZoom());
     FParent->Draw();
     return true;
   }
@@ -242,7 +248,9 @@ public:
 //----------------------------------------------------------------------------//
 enum  {
   ID_OnSelect = 1,
-  ID_OnDisassemble
+  ID_OnDisassemble,
+  ID_OnUniq,
+  ID_OnGrow
 };
 
 TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
@@ -295,6 +303,8 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
   XFile().GetLattice().OnStructureGrow.Add(P);
   XFile().GetLattice().OnStructureGrow.Add(new xappXFileUniq);
   XFile().GetLattice().OnStructureUniq.Add(P);
+  XFile().GetLattice().OnStructureUniq.Add(this, ID_OnUniq);
+  XFile().GetLattice().OnStructureGrow.Add(this, ID_OnGrow);
   XFile().GetLattice().OnStructureUniq.Add(new xappXFileUniq);
   XFile().OnFileLoad.Add(P);
   XFile().OnFileClose.Add(new xappXFileClose);
@@ -1110,12 +1120,12 @@ void TGXApp::SelectFragmentsAtoms(const TNetPList& frags, bool v)  {
   TXAtomPList XA;
   for( size_t i=0; i < frags.Count(); i++ )  {
     for( size_t j=0; j < frags[i]->NodeCount(); j++ )
-      SA.Add( frags[i]->Node(j) );
+      SA.Add(frags[i]->Node(j));
   }
   SAtoms2XAtoms(SA, XA);
   for( size_t i=0; i < XA.Count(); i++ )  {
     if( v )  {
-      if( !XA[i]->IsSelected() )
+      if( XA[i]->IsVisible() && !XA[i]->IsSelected() )
         GetRender().Select(*XA[i]);
     }
     else  {
@@ -1130,12 +1140,12 @@ void TGXApp::SelectFragmentsBonds(const TNetPList& frags, bool v)  {
   TXBondPList XB;
   for( size_t i=0; i < frags.Count(); i++ )  {
     for( size_t j=0; j < frags[i]->BondCount(); j++ )
-      SB.Add( frags[i]->Bond(j) );
+      SB.Add(frags[i]->Bond(j));
   }
   SBonds2XBonds(SB, XB);
   for( size_t i=0; i < XB.Count(); i++ )  {
     if( v )  {
-      if( !XB[i]->IsSelected() )
+      if( XB[i]->IsVisible() && !XB[i]->IsSelected() )
         GetRender().Select(*XB[i]);
     }
     else  {
@@ -1286,10 +1296,7 @@ void TGXApp::AllVisible(bool V)  {
     TAsymmUnit& au = XFile().GetAsymmUnit();
     for( size_t i=0; i < au.AtomCount(); i++ )
       au.GetAtom(i).SetMasked(false);
-    TTypeList<GroupDataEx> groups;
-    StoreGroupsEx(groups);
     XFile().GetLattice().UpdateConnectivity();
-    RestoreGroupsEx(groups);
     CenterView(true);
   }
   OnAllVisible.Exit(dynamic_cast<TBasicApp*>(this), NULL);
@@ -1347,17 +1354,22 @@ void TGXApp::Select(const vec3d& From, const vec3d& To )  {
 }
 //..............................................................................
 bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
+  static TTypeList<GroupDataEx> groups;
   if( MsgId == ID_OnSelect )  {
     const TSelectionInfo* SData = dynamic_cast<const TSelectionInfo*>(Data);
     if(  !(SData->From == SData->To) )
       Select(SData->From, SData->To);
   }
+  else if( (MsgId == ID_OnUniq || MsgId == ID_OnGrow) && MsgSubId == msiEnter ) {
+    StoreGroupsEx(groups);
+  }
   else if( MsgId == ID_OnDisassemble && MsgSubId == msiEnter ) {
-    //StoreGroups();
+    StoreGroupsEx(groups);
   }
   else if( MsgId == ID_OnDisassemble && MsgSubId == msiExit ) {
     CreateObjects(false, false);
-    //RestoreGroups();
+    RestoreGroupsEx(groups);
+    groups.Clear();
   }
   return false;
 }
@@ -2819,13 +2831,18 @@ void TGXApp::RestoreGroupsEx(const TTypeList<GroupDataEx>& groups)  {
     GroupDataEx& gd = groups[i];
     TSAtomPList atoms(gd.atoms.Count());
     TSBondPList bonds(gd.bonds.Count());
+    bool proceed = true;
     for( size_t j=0; j < gd.atoms.Count(); j++ )
-      if( (atoms[j] = ar.Find(gd.atoms[j])) == NULL )
-        throw TFunctionFailedException(__OlxSourceInfo, "could not recreate groups");
+      if( (atoms[j] = ar.Find(gd.atoms[j])) == NULL )  {
+        proceed = false;
+        break;
+      }
     for( size_t j=0; j < gd.bonds.Count(); j++ )
-      if( (bonds[j] = ar.Find(gd.bonds[j])) == NULL )
-        throw TFunctionFailedException(__OlxSourceInfo, "could not recreate groups");
-
+      if( (bonds[j] = ar.Find(gd.bonds[j])) == NULL )  {
+        proceed = false;
+        break;
+      }
+    if( !proceed )  continue;
     xatoms.Clear();   SAtoms2XAtoms(atoms, xatoms);
     xbonds.Clear();   SBonds2XBonds(bonds, xbonds);
     xplanes.Clear();  SPlanes2XPlanes(gd.planes, xplanes);
@@ -2838,8 +2855,12 @@ void TGXApp::RestoreGroupsEx(const TTypeList<GroupDataEx>& groups)  {
       FGlRender->GetSelection().Add(*xplanes[j]);
     if( (i+1) < groups.Count() )  {
       TGlGroup* glG = FGlRender->GroupSelection(gd.collectionName);
-      if( glG == NULL )
-        throw TFunctionFailedException(__OlxSourceInfo, "could not recreate groups");
+      if( glG == NULL )  {
+        if( FGlRender->GetSelection().Count() > 1 )
+          throw TFunctionFailedException(__OlxSourceInfo, "could not recreate groups");
+        else
+          continue;
+      }
       glG->SetSelected(false);
       FGlRender->GetSelection().Clear();
       glG->SetGlM(gd.material);

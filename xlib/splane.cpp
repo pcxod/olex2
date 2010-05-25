@@ -2,16 +2,12 @@
 // TSPlane implementation
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "splane.h"
 #include "ematrix.h"
 #include "satom.h"
 #include "sbond.h"
 #include "lattice.h"
+#include "unitcell.h"
 #include "pers_util.h"
 
 //..............................................................................
@@ -149,3 +145,44 @@ void TSPlane::FromDataItem(TDataItem& item)  {
   FNormal.Normalise();
 }
 //..............................................................................
+TSPlane::Def::Def(const TSPlane& plane) : atoms(plane.Count())  {
+  for( size_t i=0; i < plane.Count(); i++ )
+    atoms.Set(i, new DefData(plane.GetAtom(i).GetRef(), plane.GetWeight(i)));
+  if( plane.Count() == 0 )  return;
+  if( !plane.GetAtom(0).GetMatrix(0).IsFirst() )  {
+    const TUnitCell& uc = plane.GetNetwork().GetLattice().GetUnitCell();
+    const smatd im = plane.GetAtom(0).GetMatrix(0).Inverse();
+    for( size_t i=0; i < atoms.Count(); i++ )  {
+      smatd m = im*smatd::FromId(atoms[i].ref.matrix_id, uc.GetMatrix(smatd::GetContainerId(atoms[i].ref.matrix_id)));
+      uc.InitMatrixId(m);
+      atoms[i].ref.matrix_id = m.GetId();
+    }
+  }
+  atoms.QuickSorter.Sort<TComparableComparator>(atoms);
+}
+//..............................................................................
+TSPlane* TSPlane::Def::FromAtomRegistry(AtomRegistry& ar, TNetwork* parent, const smatd& matr) const {
+  TTypeList<AnAssociation2<TSAtom*, double> > points;
+  if( matr.IsFirst() )  {
+    for( size_t i=0; i < atoms.Count(); i++ )  {
+      TSAtom* sa = ar.Find(atoms[i].ref);
+      if( sa == NULL )  return NULL;
+      points.AddNew(sa, atoms[i].weight);
+    }
+  }
+  else  {
+    const TUnitCell& uc = parent->GetLattice().GetUnitCell();
+    for( size_t i=0; i < atoms.Count(); i++ )  {
+      TSAtom::Ref ref = atoms[i].ref;
+      smatd m = matr*smatd::FromId(ref.matrix_id, uc.GetMatrix(smatd::GetContainerId(ref.matrix_id)));
+      uc.InitMatrixId(m);
+      ref.matrix_id = m.GetId();
+      TSAtom* sa = ar.Find(ref);
+      if( sa == NULL )  return NULL;
+      points.AddNew(sa, atoms[i].weight);
+    }
+  }
+  TSPlane* p = new TSPlane(parent);
+  p->Init(points);
+  return p;
+}

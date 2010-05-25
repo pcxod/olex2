@@ -1,12 +1,8 @@
 //---------------------------------------------------------------------------//
-// Implementstion of Vector, Matrix, TVPoint (3D vector),
-// TEValue (value with an error), TEVPoint (3D Vector with errors)
-// TEBasis - A matrix assosiated with Rotate functions
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-
-#ifndef evalueH
-#define evalueH
+#ifndef __olx_sdl_evalue_H
+#define __olx_sdl_evalue_H
 #include <math.h>
 #include "exception.h"
 #include "evalue.h"
@@ -20,12 +16,9 @@ template <class EType> class TEValue: public IEObject  {
   EType FV, FE;
 public:
 
-  TEValue()  {  FV = FE = 0;  }
+  TEValue() : FV(0), FE(0) {}
 
-  TEValue(const TEValue& obj)  {
-    FV = obj.FV;
-    FE = obj.FE;
-  }
+  TEValue(const TEValue& obj) : FV(obj.FV), FE(obj.FE)  {}
 
   template <class T>
     TEValue(const TEValue<T>& obj)  {
@@ -33,19 +26,18 @@ public:
       FE = (EType)obj.E;
     }
 
-  TEValue( EType Value, EType Error)  {
-    FV = Value;
-    FE = Error;
-  }
+  TEValue(EType Value, EType Error) : FV(Value), FE(Error) {}
+
+  TEValue(const olxstr& str) : FV(0), FE(0) {  *this = str;  }
 
   EType& V()  {  return  FV;  }
   EType& E()  {  return  FE;  }
 
-  const EType& GetV()  const {  return  FV;  }
-  const EType& GetE()  const {  return  FE;  }
+  const EType& GetV() const {  return  FV;  }
+  const EType& GetE() const {  return  FE;  }
 
 
-  TEValue Sqrt()  const {
+  TEValue Sqrt() const {
     TEValue<EType> Val;
     if( FV == 0 )
       throw TDivException(__OlxSourceInfo);
@@ -154,71 +146,76 @@ public:
     return *this;
   }
 
-  TEValue operator + (EType S) const  {
+  TEValue operator + (EType S) const {
     return TEValue<EType>(FV+S, FE);
   }
 
-  TEValue operator - (EType S) const  {
+  TEValue operator - (EType S) const {
     return TEValue<EType>(FV-S, FE);
   }
 
-  TEValue operator * (EType S) const  {
+  TEValue operator * (EType S) const {
     return TEValue<EType>(FV*S, FE*S);
   }
 
-  TEValue operator / (EType S) const  {
+  TEValue operator / (EType S) const {
     if( S == 0 )
       throw TDivException(__OlxSourceInfo);
     return TEValue<EType>(FV/S, FE/S);
   }
 
   template <class AType>
-    TEValue operator + (const TEValue<AType> &S) const  {
+    TEValue operator + (const TEValue<AType> &S) const {
       TEValue<EType> P(*this);
       return (P += S);
     }
 
   template <class AType>
-    TEValue operator - (const TEValue<AType> &S) const  {
+    TEValue operator - (const TEValue<AType> &S) const {
       TEValue<EType> P(*this);
       return (P -= S);
     }
 
   template <class AType>
-    TEValue operator * (const TEValue<AType> &S) const  {
+    TEValue operator * (const TEValue<AType> &S) const {
       TEValue<EType> P(*this);
       return (P *= S);
     }
 
   template <class AType>
-    TEValue operator / (const TEValue<AType> &S) const  {
+    TEValue operator / (const TEValue<AType> &S) const {
       TEValue<EType> P(*this);
       return (P /= S);
     }
 
-  template <class SC> SC StrRepr() const  {
-    SC S;
-    int pr=0, iv;
-    double po = 1;
+  template <class SC> SC StrRepr() const {
     if( FE != 0 )  {
-      while( olx_abs(FE*po) < 1 )  {  po *= 10;    pr ++;  }
-      iv = olx_round(FE*po);
+      SC strv, stre;
+      int pr = 0;
+      double po = 1;
+      while( olx_abs(FE*po) < 10 )  {
+        po *= 10;
+        pr++;
+      }
+      int iv = olx_round(FE*po);
       if( pr != 0 )  {
-        if( iv == 10 && pr > 1 )  {
-          iv = 1;
-          pr--;
-        }
-        S = olxstr::FormatFloat(pr, FV);
-        S << '(' << iv << ')';
+        strv = olxstr::FormatFloat(pr, FV);
+        stre = iv;
       }
       else  {
-        S = (int)FV;
-        S << '(' << (int)olx_round(FE) << ')';
+        strv = (int)FV;
+        stre << (int)olx_round(FE);
       }
+      while( stre.EndsWith('0') && strv.EndsWith('0') )  {
+        stre.SetLength(stre.Length()-1);
+        strv.SetLength(strv.Length()-1);
+      }
+      if( strv.EndsWith('.') )
+        strv.SetLength(strv.Length()-1);
+      return (SC(strv) << '(' << stre << ')');
     }
     else
-      S = FV;
-    return S;
+      return SC(FV);
   }
   inline virtual TIString ToString() const {  return StrRepr<olxstr>();  }
   inline olxcstr ToCStr() const {  return StrRepr<olxcstr>();  }

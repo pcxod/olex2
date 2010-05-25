@@ -1065,24 +1065,7 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
 }
 //..............................................................................
 void TCif::MultValue(olxstr &Val, const olxstr &N)  {
-  olxstr E, V;
-  const size_t c = Val.Length();
-  double dV, dM = N.ToDouble();
-  size_t i = 0;
-  while( (i < c) && (Val[i] !='(') )  {
-    V << Val[i];
-    i++;
-  }
-  i++;
-  while( (i < c) && (Val[i] !=')') )  {
-    E << Val[i];
-    i++;
-  }
-  dV = V.ToDouble();
-  dV *= dM;
-  Val = dV;
-  if( !E.IsEmpty() )
-    Val << '(' << E << ')';
+  Val = (TEValue<double>(Val) *= N.ToDouble()).ToString();
 }
 //..............................................................................
 bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& SymmList) const {

@@ -1,6 +1,7 @@
 #ifndef __olx_xl_symmat_H
 #define __olx_xl_symmat_H
 #include "threex3.h"
+#include "testsuit.h"
 
 template <class MC, class VC> class TSymmMat {
   uint32_t Id;
@@ -108,17 +109,15 @@ public:
   bool IsFirst() const {  return Id == 0x00808080;  }
   uint8_t GetContainerId() const {  return (uint8_t)(Id >> 24);  }
   static uint8_t GetContainerId(uint32_t id) {  return (uint8_t)(id >> 24);  }
-  static int8_t GetTx(uint32_t id) {  return (int8_t)(((id&0x00FF0000) >> 16) - 0x80);  }
-  static int8_t GetTy(uint32_t id) {  return (int8_t)(((id&0x0000FF00) >> 8) - 0x80);  }
-  static int8_t GetTz(uint32_t id) {  return (int8_t)(((id&0x000000FF)) - 0x80);  }
-  static vec3i GetT(uint32_t id)  {  
-    return vec3i(((id&0x00FF0000) >> 16) - 0x80, ((id&0x0000FF00) >> 8) - 0x80, ((id&0x000000FF)) - 0x80);
-  }
+  static int8_t GetTx(uint32_t id) {  return (int8_t)(128-(int8_t)((id&0x00FF0000) >> 16));  }
+  static int8_t GetTy(uint32_t id) {  return (int8_t)(128-(int8_t)((id&0x0000FF00) >> 8));  }
+  static int8_t GetTz(uint32_t id) {  return (int8_t)(128-(int8_t)(id&0x000000FF));  }
+  static vec3i GetT(uint32_t id)  {  return vec3i(GetTx(id), GetTy(id), GetTz(id));  }
   static TSymmMat<MC,VC> FromId(uint32_t id, const TSymmMat<MC,VC>& ref)  {
     TSymmMat<MC,VC> rv(ref);
-    rv.t[0] += (((id&0x00FF0000) >> 16) - 0x80);
-    rv.t[1] += (((id&0x0000FF00) >> 8) - 0x80);
-    rv.t[2] += ((id&0x000000FF) - 0x80);
+    rv.t[0] += GetTx(id);
+    rv.t[1] += GetTy(id);
+    rv.t[2] += GetTz(id);
     rv.Id = id;
     return rv;
   }
@@ -135,6 +134,19 @@ public:
     rv |= ((uint32_t)(0x80-t[1]) << 8);
     rv |= (uint32_t)(0x80-t[2]);
     return rv;
+  }
+  static void Tests(OlxTests& t)  {
+    t.description = __OlxSourceInfo;
+    const uint32_t id_1 = GenerateId(0, -56, -43, -21);
+    const uint32_t id_2 = GenerateId(0, vec3i(-56, -43, -21));
+    if( id_1 != id_2 )
+      throw TFunctionFailedException(__OlxSourceInfo, "ID generation mismatch");
+    if( GetContainerId(id_1) != 0 )
+      throw TFunctionFailedException(__OlxSourceInfo, "invalid ID");
+    if( GetT(id_1)[0] != -56 || GetT(id_1)[1] != -43 || GetT(id_1)[2] != -21 )
+      throw TFunctionFailedException(__OlxSourceInfo, "invalid T");
+    if( GetT(id_1)[0] != GetTx(id_1) || GetT(id_1)[1] != GetTy(id_1) || GetT(id_1)[2] != GetTz(id_1) )
+      throw TFunctionFailedException(__OlxSourceInfo, "invalid T");
   }
 };
 

@@ -115,6 +115,8 @@ protected:
     DefFunc(IsPopup)
     DefFunc(Width)
     DefFunc(Height)
+    DefFunc(ClientWidth)
+    DefFunc(ClientHeight)
     DefFunc(ContainerWidth)
     DefFunc(ContainerHeight)
 

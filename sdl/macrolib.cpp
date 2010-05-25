@@ -116,7 +116,8 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
         return true;
       }
       Cmd.Delete(fstart, aend-fstart+1);
-      //TBasicApp::GetLog().Info( Function->GetRuntimeSignature() );
+      // print functions too... need a verbose mode flag - otherwise too much information...
+      //TBasicApp::GetLog().Info(Function->GetRuntimeSignature());
       Function->Run(Params, E);
       if( !E.IsSuccessful() ) //&& E.DoesFunctionExist() )  
         return false;

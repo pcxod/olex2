@@ -145,9 +145,9 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
     if( TSymmParser::SymmToMatrix(cx.Symm[i], sm) )
       GetAsymmUnit().AddMatrix(sm);
   }
-  // remove dublicated instructtions, rems etc
+  // remove dublicated instructtions, rems ONLY
   for( size_t i = 0; i < Ins.Count(); i++ )  {
-    if( Ins[i].IsEmpty() )  continue;
+    if( Ins[i].IsEmpty() || !Ins[i].StartsFromi("REM"))  continue;
     for( size_t j = i+1; j < Ins.Count(); j++ )  {
       if( Ins[i] == Ins[j] )
         Ins[j] = EmptyString;
