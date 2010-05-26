@@ -626,11 +626,9 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Exit, EmptyString, fpNone, "Exits Olex2");
   this_InitMacroAD(Exit, quit, EmptyString, fpNone, "Exits Olex2");
 
-  this_InitMacroD(Pack,
-"c-specifies if current lattice content should not be deleted&;q-includes Q-peaks to the atom list",
-  fpAny|psFileLoaded,
-"Packs structure within default or a volume provided as size numbers. If atom\
- names/types are provided it only packs the provided atoms.");
+  this_InitMacroD(Pack, "c-specifies if current lattice content should not be deleted", fpAny|psFileLoaded,
+    "Packs structure within default or given volume(6 or 2 values for parallelepiped "
+    "or 1 for sphere). If atom names/types are provided it only packs the provided atoms.");
   this_InitMacroD(Sel, "a-select all&;u-unselect all&;i-invert selection", fpAny,
 "If no arguments provided, prints current selection. This includes distances, angles\
  and torsion angles. Selects atoms fulfilling provided conditions. An extended\
@@ -669,7 +667,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
 "Prints available information. If no arguments provided prints available commands");
   this_InitMacroD(Matr, EmptyString, fpNone|fpOne|fpTwo|fpNine,
 "Displays or sets current orientation matrix. For single argument, 1,2,3 001, 111, etc\
- values are acceptable, two values taken are of the klm form, which specify a vew from k1*a+l1*b+m1*c to k2*a+l2*b+m2*c,\
+ values are acceptable, two values taken are of the klm form, which specify a view from k1*a+l1*b+m1*c to k2*a+l2*b+m2*c,\
  nine values provide a full matrix ");
   this_InitMacroD(Qual, "h-High&;m-Medium&;l-Low", fpNone, "Sets drawings quality");
 

@@ -1102,17 +1102,16 @@ void TMainForm::macExit(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  bool ClearCont = !Options.Contains("c");
-  bool IncludeQ = Options.Contains("q");
+  const bool ClearCont = !Options.Contains("c");
   bool cell = false;
-  if( Cmds.Count() > 0 && Cmds[0].Equalsi("cell") )  {  // for the future packing cells...
+  if( Cmds.Count() > 0 && Cmds[0].Equalsi("cell") )  {
     cell = true;
     Cmds.Delete(0);
   }
 
   int64_t st = TETime::msNow();
   if( Cmds.IsEmpty() && cell )
-    FXApp->XFile().GetLattice().GenerateCell(IncludeQ);
+    FXApp->XFile().GetLattice().GenerateCell();
   else  {
     vec3d From( -1.0, -1.0, -1.0);
     vec3d To( 1.5, 1.5, 1.5);
@@ -1144,7 +1143,7 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         From[1] = From[2] = From[0];
         To[1] = To[2] = To[0];
       }
-      FXApp->Generate(From, To, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont, IncludeQ);
+      FXApp->Generate(From, To, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont);
     }
     else  {
       TXAtomPList xatoms;
@@ -1157,7 +1156,7 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
       if( wght != 0 )
         cent /= wght;
-      FXApp->Generate(cent, From[0], TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont, IncludeQ);
+      FXApp->Generate(cent, From[0], TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont);
     }
   }
   TBasicApp::GetLog().Info( olxstr(FXApp->XFile().GetLattice().AtomCount()) << " atoms and " <<

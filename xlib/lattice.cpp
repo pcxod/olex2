@@ -277,7 +277,7 @@ void TLattice::InitBody()  {
   if( !ApplyGrowInfo() )  {
     // create identity matrix
     Matrices.Add(new smatd(GetUnitCell().GetMatrix(0)))->SetId(0);
-    ListAsymmUnit(Atoms, NULL, true);
+    ListAsymmUnit(Atoms, NULL);
   }
   GenerateBondsAndFragments(NULL);
   Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
@@ -326,10 +326,10 @@ void TLattice::GenerateAtoms(const TSAtomPList& atoms, TSAtomPList& result, cons
     smatd* M = matrices[i];
     for( size_t j=0; j < atoms.Count(); j++ )  {
       if( atoms[j]->IsDeleted() )  continue;
-      TSAtom* A = new TSAtom( Network );
-      A->CAtom( atoms[j]->CAtom() );
+      TSAtom* A = new TSAtom(Network);
+      A->CAtom(atoms[j]->CAtom());
       A->ccrd() = *M * A->ccrd();
-      GetAsymmUnit().CellToCartesian( A->ccrd(), A->crd() );
+      GetAsymmUnit().CellToCartesian(A->ccrd(), A->crd());
       A->SetEllipsoid(&GetUnitCell().GetEllipsoid(M->GetContainerId(), atoms[j]->CAtom().GetId()));
       A->AddMatrix(M);
       result.Add(A);
@@ -340,12 +340,12 @@ void TLattice::GenerateAtoms(const TSAtomPList& atoms, TSAtomPList& result, cons
 void TLattice::GenerateWholeContent(TCAtomPList* Template)  {
   OnStructureGrow.Enter(this);
   Generated = false; // force the procedure
-  Generate(Template, false, true);
+  Generate(Template, false);
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
-void TLattice::Generate(TCAtomPList* Template, bool ClearCont, bool IncludeQ)  {
-  if( ClearCont && Template)  {
+void TLattice::Generate(TCAtomPList* Template, bool ClearCont)  {
+  if( ClearCont && Template != NULL )  {
     ClearAtoms();
   }
   else  {
@@ -361,7 +361,7 @@ void TLattice::Generate(TCAtomPList* Template, bool ClearCont, bool IncludeQ)  {
   }
   Atoms.Pack();
   TSAtomPList AtomsList;
-  ListAsymmUnit(AtomsList, Template, IncludeQ);
+  ListAsymmUnit(AtomsList, Template);
   GenerateAtoms(AtomsList, Atoms, Matrices);
   for( size_t i=0; i < AtomsList.Count(); i++ )
     delete AtomsList[i];
@@ -370,7 +370,7 @@ void TLattice::Generate(TCAtomPList* Template, bool ClearCont, bool IncludeQ)  {
   Generated = true;
 }
 //..............................................................................
-void TLattice::GenerateCell(bool includeQ)  {
+void TLattice::GenerateCell()  {
   ClearAtoms();
   ClearMatrices();
   OnStructureGrow.Enter(this);
@@ -441,9 +441,7 @@ void TLattice::GenerateCell(bool includeQ)  {
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
-void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
-       bool ClearCont, bool IncludeQ)  
-{
+void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template, bool ClearCont)  {
   OnStructureGrow.Enter(this);
   vec3d VTo(olx_round(MTo[0]+1), olx_round(MTo[1]+1), olx_round(MTo[2]+1));
   vec3d VFrom(olx_round(MFrom[0]-1), olx_round(MFrom[1]-1), olx_round(MFrom[2]-1));
@@ -452,20 +450,18 @@ void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Templ
     ClearMatrices();
   }
   GenerateMatrices(VFrom, VTo, MFrom, MTo);
-  Generate(Template, ClearCont, IncludeQ);
+  Generate(Template, ClearCont);
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
-void TLattice::Generate(const vec3d& center, double rad, TCAtomPList* Template,
-       bool ClearCont, bool IncludeQ)
-{
+void TLattice::Generate(const vec3d& center, double rad, TCAtomPList* Template, bool ClearCont)  {
   OnStructureGrow.Enter(this);
   if( ClearCont )  {
     ClearAtoms();
     ClearMatrices();
   }
   GenerateMatrices(Matrices, center, rad);
-  Generate(Template, ClearCont, IncludeQ);
+  Generate(Template, ClearCont);
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
@@ -909,14 +905,14 @@ void TLattice::UpdateAsymmUnit()  {
   }
 }
 //..............................................................................
-void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool IncludeQ)  {
+void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template)  {
   ClearPlanes();
   if( Template != NULL )  {
-    L.SetCapacity( L.Count() + Template->Count() );
+    L.SetCapacity(L.Count() + Template->Count());
     for( size_t i=0; i < Template->Count(); i++ )  {
       if( (*Template)[i]->IsDeleted() )  continue;
       TSAtom* A = L.Add(new TSAtom(Network));
-      A->CAtom( *Template->Item(i) );
+      A->CAtom(*Template->Item(i));
       A->SetEllipsoid(&GetUnitCell().GetEllipsoid(0, Template->Item(i)->GetId())); // ellipsoid for the identity matrix
       A->AddMatrix(Matrices[0]);
       A->SetLattId(L.Count()-1);
@@ -927,7 +923,6 @@ void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool Include
     for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )    {
       TCAtom& CA = GetAsymmUnit().GetAtom(i);
       if( CA.IsDeleted() )  continue;
-      if( !IncludeQ && CA.GetType() == iQPeakZ )  continue;
       TSAtom* A = L.Add(new TSAtom(Network));
       A->CAtom(CA);
       A->SetEllipsoid(&GetUnitCell().GetEllipsoid(0, CA.GetId())); // ellipsoid for the identity matrix
@@ -2246,6 +2241,7 @@ void TLattice::BuildAtomRegistry()  {
     vec3i::UpdateMinMax(Matrices[i]->GetT(Matrices[i]->GetId()), mind, maxd);
   maxd[0] += 1;  maxd[1] += 1;  maxd[2] += 1;
   AtomRegistry::RegistryType& registry = atomRegistry.Init(mind, maxd);
+  size_t deleted_count=0;
   for( size_t i=0; i < Atoms.Count(); i++ )  {
     const vec3i t = smatd::GetT(Atoms[i]->GetMatrix(0).GetId());
     TArrayList<TSAtomPList*>* aum_slice = registry.Value(t);
@@ -2262,10 +2258,16 @@ void TLattice::BuildAtomRegistry()  {
       for( size_t j=0 ; j < atom_cnt; j++)
         (*au_slice)[j] = NULL;
     }
-    if( (*au_slice)[Atoms[i]->CAtom().GetId()] )
-      throw TFunctionFailedException(__OlxSourceInfo, "duplicate entry");
-    (*au_slice)[Atoms[i]->CAtom().GetId()] = Atoms[i];
-  }  
+    if( (*au_slice)[Atoms[i]->CAtom().GetId()] != NULL )  {
+      delete Atoms[i];
+      Atoms[i] = NULL;
+      deleted_count++;
+    }
+    else
+      (*au_slice)[Atoms[i]->CAtom().GetId()] = Atoms[i];
+  } 
+  if( deleted_count != 0 )
+    Atoms.Pack();
 }
 //..............................................................................
 //..............................................................................
