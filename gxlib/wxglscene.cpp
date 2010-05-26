@@ -522,10 +522,10 @@ bool TwxGlScene::MetaFont::SetIdString(const olxstr& idstr)  {
 olxstr TwxGlScene::MetaFont::GetIdString() const {
   const olxstr rv = AGlScene::MetaFont::GetIdString();
   if( !rv.IsEmpty() )  return rv;
-  wxFont f( OriginalId.u_str() );
-  f.SetStyle( Italic ? wxFONTSTYLE_ITALIC: wxFONTSTYLE_NORMAL );
-  f.SetWeight( Bold ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL );
-  f.SetPointSize( Size );
+  wxFont f(OriginalId.u_str());
+  f.SetStyle(Italic ? wxFONTSTYLE_ITALIC: wxFONTSTYLE_NORMAL);
+  f.SetWeight(Bold ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL);
+  f.SetPointSize(Size);
   return f.GetNativeFontInfoDesc().c_str();
 }
 //..............................................................................

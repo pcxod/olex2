@@ -1,7 +1,3 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "xapp.h"
 #include "hkl.h"
 #include "ins.h"
@@ -652,3 +648,70 @@ void TXApp::ToDataItem(TDataItem& item) const  {
 void TXApp::FromDataItem(TDataItem& item)  {
   throw TNotImplementedException(__OlxSourceInfo);
 }
+//..............................................................................
+ElementRadii TXApp::ReadVdWRadii(const olxstr& fileName)  {
+  ElementRadii radii;
+  if( TEFile::Exists(fileName) )  {
+    TStrList sl;
+    sl.LoadFromFile(fileName);
+    for( size_t i=0; i < sl.Count(); i++ )  {
+      TStrList toks(sl[i], ' ');
+      if( toks.Count() == 2 )  {
+        cm_Element* elm = XElementLib::FindBySymbol(toks[0]);
+        if( elm == NULL )  {
+          TBasicApp::GetLog().Error(olxstr("Invalid atom type: ") << toks[0]);
+          continue;
+        }
+        const size_t b_i = radii.IndexOf(elm);
+        if( b_i == InvalidIndex )
+          radii.Add(elm, toks[1].ToDouble());
+        else
+          radii.GetValue(b_i) = toks[1].ToDouble();
+      }
+    }
+  }
+  return radii;
+}
+//..............................................................................
+void TXApp::PrintVdWRadii(const ElementRadii& radii, const ContentList& au_cont)  {
+  if( au_cont.IsEmpty() )  return;
+  TBasicApp::GetLog() << "Using the following element radii:\n";
+  for( size_t i=0; i < au_cont.Count(); i++ )  {
+    const size_t ei = radii.IndexOf(&au_cont[i].element);
+    if( ei == InvalidIndex )
+      TBasicApp::GetLog() << au_cont[i].element.symbol << '\t' << au_cont[i].element.r_sfil << '\n';
+    else
+      TBasicApp::GetLog() << au_cont[i].element.symbol << '\t' << radii.GetValue(ei) << '\n';
+  }
+}
+//..............................................................................
+TXApp::CalcVolumeInfo TXApp::CalcVolume(const ElementRadii* radii)  {
+  const size_t ac = FXFile->GetLattice().AtomCount();
+  const size_t bc = FXFile->GetLattice().BondCount();
+  for( size_t i=0; i < bc; i++ )
+    FXFile->GetLattice().GetBond(i).SetTag(0);
+  double Vi=0, Vt=0;
+  for( size_t i=0; i < ac; i++ )  {
+    TSAtom& SA = FXFile->GetLattice().GetAtom(i);
+    if( SA.IsDeleted() || !SA.CAtom().IsAvailable() )  continue;
+    if( SA.GetType() == iQPeakZ )  continue;
+    const double R1 = GetVdWRadius(SA, radii);
+    Vt += M_PI*(R1*R1*R1)*4.0/3;
+    for( size_t j=0; j < SA.BondCount(); j++ )  {
+      TSBond& SB = SA.Bond(j);
+      if( SB.GetTag() != 0 )  continue;
+      const TSAtom& OA = SB.Another(SA);
+      SB.SetTag(1);
+      if( OA.IsDeleted() || !OA.CAtom().IsAvailable() )  continue;
+      if( OA.GetType() == iQPeakZ )  continue;
+      const double d = SB.Length();
+      const double R2 = GetVdWRadius(OA, radii);
+      const double h2 = (R1*R1 - (R2-d)*(R2-d))/(2*d);
+      const double h1 = (R1+R2-d-h2);
+      Vi += M_PI*( h1*h1*(R1-h1/3) + h2*h2*(R2-h2/3));
+      //Vt += M_PI*(R1*R1*R1 + R2*R2*R2)*4.0/3;
+    }
+  }
+  return CalcVolumeInfo(Vt, Vi);
+}
+//..............................................................................

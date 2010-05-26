@@ -3,10 +3,6 @@
 // TUnitCell: a collection of matrices and ellipoids
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include <stdlib.h>
 
 #include "unitcell.h"
@@ -18,7 +14,7 @@
 #include "ellipsoid.h"
 #include "network.h"
 
-#include "bapp.h"
+#include "xapp.h"
 #include "log.h"
 
 #include "emath.h"
@@ -775,12 +771,7 @@ void TUnitCell::BuildStructureMap_Direct(TArray3D<short>& map, double delta, sho
     if( au.GetAtom(i).IsDeleted() )  continue;
     size_t ind = scatterers.IndexOfComparable(au.GetAtom(i).GetType().index);
     if( ind != InvalidIndex )  continue;
-    double r = au.GetAtom(i).GetType().r_sfil + delta;
-    if( radii != NULL )  {
-      size_t b_i = radii->IndexOf(&au.GetAtom(i).GetType());
-      if( b_i != InvalidIndex )
-        r = radii->GetValue(b_i) + delta;
-    }
+    const double r = TXApp::GetVdWRadius(au.GetAtom(i), radii) + delta;
     scatterers.Add(au.GetAtom(i).GetType().index, r);
   }
   for( size_t i=0; i < allAtoms.Count(); i++ )  {
@@ -835,12 +826,7 @@ void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, shor
     if( au.GetAtom(i).IsDeleted() )  continue;
     size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().index);
     if( ind != InvalidIndex )  continue;
-    double r = au.GetAtom(i).GetType().r_sfil + delta;
-    if( radii != NULL )  {
-      size_t b_i = radii->IndexOf(&au.GetAtom(i).GetType());
-      if( b_i != InvalidIndex )
-        r = radii->GetValue(b_i) + delta;
-    }
+    const double r = TXApp::GetVdWRadius(au.GetAtom(i), radii) + delta;
     const double sr = r*r;
     int ad = olx_round(olx_max(2*r/sin_b, 2*r/sin_g)/aapp);
     int bd = olx_round(olx_max(2*r/sin_a, 2*r/sin_g)/aapp);
@@ -907,12 +893,7 @@ void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& _map, double delta, sho
     if( au.GetAtom(i).IsDeleted() )  continue;
     size_t ind = radii.IndexOfComparable(au.GetAtom(i).GetType().index);
     if( ind != InvalidIndex )  continue;
-    double r = au.GetAtom(i).GetType().r_sfil + delta;
-    if( _radii != NULL )  {
-      size_t b_i = _radii->IndexOf(&au.GetAtom(i).GetType());
-      if( b_i != InvalidIndex )
-        r = _radii->GetValue(b_i) + delta;
-    }
+    const double r = TXApp::GetVdWRadius(au.GetAtom(i), _radii) + delta;
     radii.Add(au.GetAtom(i).GetType().index, (float)r);
   }
   for( size_t i=0; i < allAtoms.Count(); i++ )  {
@@ -1029,12 +1010,7 @@ void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short
     if( au.GetAtom(i).IsDeleted() )  continue;
     size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().index);
     if( ind != InvalidIndex )  continue;
-    double r = au.GetAtom(i).GetType().r_sfil + delta;
-    if( radii != NULL )  {
-      size_t b_i = radii->IndexOf(&au.GetAtom(i).GetType());
-      if( b_i != InvalidIndex )
-        r = radii->GetValue(b_i) + delta;
-    }
+    const double r = TXApp::GetVdWRadius(au.GetAtom(i), radii) + delta;
     scatterers.Add(au.GetAtom(i).GetType().index, short(r*shell_res));
   }
   vec3i aa[8];

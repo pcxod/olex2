@@ -84,12 +84,26 @@ public:
   TUndoData* FixHL();
   void RingContentFromStr(const olxstr& textDescr, ElementPList& ringDesc);
   void FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings);
-  // 
+  //
   virtual bool FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll = true, bool ClearSelection=true);
   // fins Cp, Ph, Naph and Cp* rings and adds corresponding afixes
   void AutoAfixRings(int afix, TSAtom* sa = NULL, bool TryPyridine = false);
   void SetAtomUiso(TSAtom& sa, double val);
-  
+
+  static ElementRadii ReadVdWRadii(const olxstr& fileName);
+  static void PrintVdWRadii(const ElementRadii& radii, const ContentList& au_cont);
+  template <class AtomType>  // could be either TCAtom or TSAtom
+  static double GetVdWRadius(const AtomType& a, const ElementRadii* radii)  {
+    const size_t ei = radii == NULL ? InvalidIndex : radii->IndexOf(&a.GetType());
+    return ei == InvalidIndex ? a.GetType().r_sfil : radii->GetValue(ei);
+  }
+
+  struct CalcVolumeInfo  {
+    double total, overlapping;
+    CalcVolumeInfo(double _total, double _overlapping) : total(_total), overlapping(_overlapping)  {}
+  };
+  CalcVolumeInfo CalcVolume(const ElementRadii* radii);
+
   template <class atom_list> static void UnifyPAtomList(atom_list& alist) {
     const size_t ac = alist.Count();
     for( size_t i=0; i < ac; i++ )

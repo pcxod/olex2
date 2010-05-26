@@ -2701,58 +2701,6 @@ void TGXApp::GrowAtoms(const olxstr& AtomsStr, bool Shell, TCAtomPList* Template
   FXFile->GetLattice().GrowAtoms(satoms, Shell, Template);
 }
 //..............................................................................
-double TGXApp::CalcVolume(const TSStrPObjList<olxstr,double, true>* volumes, olxstr &report)  {
-  if( !FXFile )  {  report = "File is not loaded";  return 0;  }
-  size_t ac = FXFile->GetLattice().AtomCount();
-  size_t bc = FXFile->GetLattice().BondCount();
-  if( ac == 0 )  {  report = "Could not find any atoms";  return 0;  }
-  for( size_t i=0; i < bc; i++ )
-    FXFile->GetLattice().GetBond(i).SetTag(0);
-  double R1, R2, h1, h2, d, Vi=0, Vt=0;
-  for( size_t i=0; i < ac; i++ )  {
-    TSAtom& SA = FXFile->GetLattice().GetAtom(i);
-    if( SA.IsDeleted() )  continue;
-    if( SA.GetType() == iQPeakZ )  continue;
-    R1 = 0;
-    if( volumes )  {
-      size_t ind = volumes->IndexOfComparable(SA.GetType().symbol);
-      if( ind != InvalidIndex )
-        R1 = volumes->GetObject(ind);
-    }
-    if( R1 == 0 )  R1 = SA.GetType().r_sfil;
-    Vt += M_PI*(R1*R1*R1)*4.0/3;
-    for( size_t j=0; j < SA.BondCount(); j++ )  {
-      TSBond& SB = SA.Bond(j);
-      if( SB.GetTag() != 0 )  continue;
-      TSAtom& OA = SB.Another(SA);
-      SB.SetTag(1);
-      if( OA.IsDeleted() )  continue;
-      if( OA.GetType() == iQPeakZ )  continue;
-      d = SB.Length();
-      R1 = R2 = 0;
-      if( volumes != NULL )  {
-        size_t ind = volumes->IndexOfComparable(SA.GetType().symbol);
-        if( ind != InvalidIndex )
-          R1 = volumes->GetObject(ind);
-        ind = volumes->IndexOfComparable(OA.GetType().symbol);
-        if( ind != InvalidIndex )
-          R2 = volumes->GetObject(ind);
-      }
-      if( R1 == 0 )  R1 = SA.GetType().r_sfil;
-      if( R2 == 0 )  R2 = OA.GetType().r_sfil;
-      h2 = (R1*R1 - (R2-d)*(R2-d))/(2*d);
-      h1 = (R1+R2-d-h2);
-      Vi += M_PI*( h1*h1*(R1-h1/3) + h2*h2*(R2-h2/3));
-      //Vt += M_PI*(R1*R1*R1 + R2*R2*R2)*4.0/3;
-    }
-  }
-  report = "Total volume (A): ";  report << Vt <<  '\n';
-  report << "Overlapping volume (A): " << Vi << '\n';
-  report << "Overlapping area (%): " <<  Vi*100.0/Vt << '\n';
-  report << "Molecular volume (A): " <<  (Vt-Vi) << '\n';
-  return Vt-Vi;
-}
-//..............................................................................
 void TGXApp::StoreGroups()  {
   ClearGroups();
   for( size_t i=0; i <= FGlRender->GroupCount(); i++ )  {
