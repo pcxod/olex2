@@ -40,10 +40,11 @@ public:
 
   virtual void StartDraw() {  AGlScene::StartDraw();  }
   virtual void EndDraw()  {  AGlScene::EndDraw();  }
-
+  
+  // final object (at least the constructor calls only the SetIdString of THIS object
   class MetaFont : public AGlScene::MetaFont {
   public:
-    MetaFont(const olxstr& fontId) : AGlScene::MetaFont(fontId)  {}
+    MetaFont(const olxstr& fontId)  {  SetIdString(fontId);  }
     virtual olxstr GetIdString() const;
     virtual bool SetIdString(const olxstr& idstr);
   };

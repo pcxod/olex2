@@ -55,7 +55,7 @@ public:
     bool Bold, Italic, Fixed, Underlined;
     short Size;
   public:
-    MetaFont(const olxstr& fontId);
+    MetaFont() : Size(0), Bold(false), Italic(false), Fixed(false), Underlined(false) {}
     virtual olxstr GetIdString() const;
     olxstr GetFileIdString() const;
     // this function returns true if the ID is known and handler and false otherwise 

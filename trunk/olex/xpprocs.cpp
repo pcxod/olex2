@@ -311,33 +311,20 @@ void TMainForm::funIsVar(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::funVVol(const TStrObjList& Params, TMacroError &E)  {
-  TSStrPObjList<olxstr,double, true> *Volumes = NULL;
-  if( Params.Count() == 1 )  {
-    if( !TEFile::Exists(Params[0]) )  {
-      E.ProcessingError(__OlxSrcInfo, "the volumes file does not exist: ") << Params[0];
-      return;
-    }
-    TStrList SL, toks;
-    SL.LoadFromFile( Params[0] );
-    Volumes = new TSStrPObjList<olxstr,double, true>;
-    for( size_t i=0; i < SL.Count(); i++ )  {
-      toks.Clear();
-      toks.Strtok(SL[i], ' ');
-      if( toks.Count() != 2 )  {
-        E.ProcessingError(__OlxSrcInfo, "wrong file line: ") << SL[i];
-        delete Volumes;
-        return;
-      }
-      Volumes->Add(toks[0], toks[1].ToDouble());
-    }
-  }
+  ElementRadii radii;
+  if( Params.Count() == 1 && TEFile::Exists(Params[0]) )
+    radii = TXApp::ReadVdWRadii(Params[0]);
+  TXApp::PrintVdWRadii(radii, FXApp->XFile().GetAsymmUnit().GetContentList());
+
+  const TXApp::CalcVolumeInfo vi = FXApp->CalcVolume(&radii);
   olxstr report;
-  E.SetRetVal( FXApp->CalcVolume(Volumes, report) );
-  FGlConsole->PrintText( olxstr("Please note that this is a highly approximate procedure. \
-Volume of current fragment is calculated using a maximum two overlaping spheres, to calculate packing indexes, use calcvoid instead"), &ErrorFontColor);
-  TBasicApp::GetLog() << report;
-  if( Volumes != NULL )
-    delete Volumes;
+  E.SetRetVal(olxstr::FormatFloat(2, vi.total-vi.overlapping));
+  TBasicApp::GetLog().Warning("Please note that this is a highly approximate procedure."
+  " Volume of current fragment is calculated using a maximum two overlaping spheres," 
+  " to calculate packing indexes, use calcvoid instead");
+  
+  TBasicApp::GetLog() << "Molecular volume (A): " << olxstr::FormatFloat(2, vi.total-vi.overlapping) << '\n';
+  TBasicApp::GetLog() << "Overlapping volume (A): " << olxstr::FormatFloat(2, vi.overlapping) << '\n';
 }
 //..............................................................................
 void TMainForm::funSel(const TStrObjList& Params, TMacroError &E)  {
@@ -3680,28 +3667,10 @@ const index_t mapX = map.Length1(),
 //
 void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   ElementRadii radii;
-  if( Cmds.Count() == 1 && TEFile::Exists(Cmds[0]) )  {
-    TBasicApp::GetLog() << "Using user defined radii for: \n";
-    TStrList sl, toks;
-    sl.LoadFromFile(Cmds[0]);
-    for( size_t i=0; i < sl.Count(); i++ )  {
-      toks.Clear();
-      toks.Strtok(sl[i], ' ');
-      if( toks.Count() == 2 )  {
-        cm_Element* elm = XElementLib::FindBySymbol(toks[0]);
-        if( elm == NULL )  {
-          TBasicApp::GetLog() << " invalid atom type: " << toks[0] << '\n';
-          continue;
-        }
-        TBasicApp::GetLog() << ' ' << toks[0] << '\t' << toks[1] << '\n';
-        size_t b_i = radii.IndexOf(elm);
-        if( b_i == InvalidIndex )
-          radii.Add(elm, toks[1].ToDouble());
-        else
-          radii.GetValue(b_i) = toks[1].ToDouble();
-      }
-    }
-  }
+  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
+  if( Cmds.Count() == 1 && TEFile::Exists(Cmds[0]) )
+    radii = TXApp::ReadVdWRadii(Cmds[0]);
+  TXApp::PrintVdWRadii(radii, au.GetContentList());
   TCAtomPList catoms;
   // consider the selection if any
   TGlGroup& sel = FXApp->GetSelection();
@@ -3723,7 +3692,6 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
     FGlConsole->PrintText( atoms_str << " only" );
   }
 
-  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   double surfdis = Options.FindValue("d", "0").ToDouble();
   TBasicApp::GetLog() << "Extra distance from the surface: " << surfdis << '\n';
   
@@ -7099,7 +7067,6 @@ void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 //..............................................................................
 void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( Cmds[1].IsEmpty() )  return;
   TwxGlScene& scene = dynamic_cast<TwxGlScene&>(FXApp->GetRender().GetScene());
   TGlFont* glf = scene.FindFont(Cmds[0]);
   if( glf == NULL )  {
@@ -7112,10 +7079,10 @@ void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroE
     if( ps.CharAt(0) == '+' || ps.CharAt(0) == '-' )
       mf.SetSize( mf.GetSize() + ps.ToInt() );
     else 
-      mf.SetSize( ps.ToInt() );
+      mf.SetSize(ps.ToInt());
   }
-  if( Options.Contains('i') )  mf.SetItalic( true );
-  if( Options.Contains('b') )  mf.SetBold( true );
+  if( Options.Contains('i') )  mf.SetItalic(true);
+  if( Options.Contains('b') )  mf.SetBold(true);
   scene.CreateFont(glf->GetName(), mf.GetIdString());
   if( Cmds[0] == "Picture_labels" )
     FXApp->UpdateLabels();
@@ -7126,17 +7093,17 @@ void TMainForm::funChooseFont(const TStrObjList &Params, TMacroError &E)  {
   olxstr fntId(EmptyString);
   if( !Params.IsEmpty() && (Params[0].Comparei("olex2") == 0) )
     fntId = TwxGlScene::MetaFont::BuildOlexFontId("olex2.fnt", 12, true, false, false);
-  olxstr rv( FXApp->GetRender().GetScene().ShowFontDialog(NULL, fntId) );
-  E.SetRetVal( rv );
+  olxstr rv(FXApp->GetRender().GetScene().ShowFontDialog(NULL, fntId));
+  E.SetRetVal(rv);
 }
 //..............................................................................
 void TMainForm::funGetFont(const TStrObjList &Params, TMacroError &E)  {
-  TGlFont* glf = FXApp->GetRender().GetScene().FindFont( Params[0] );
+  TGlFont* glf = FXApp->GetRender().GetScene().FindFont(Params[0]);
   if( glf == NULL )  {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined font ") << Params[0]);
     return;
   }
-  E.SetRetVal( glf->GetIdString() );
+  E.SetRetVal(glf->GetIdString());
 }
 //..............................................................................
 void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -8578,29 +8545,10 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   radii.Add(&XElementLib::GetByIndex(iCarbonIndex), 1.7);
   radii.Add(&XElementLib::GetByIndex(iOxygenIndex), 1.52);
   radii.Add(&XElementLib::GetByIndex(iNitrogenIndex), 1.55);
-  if( !Cmds.IsEmpty() && TEFile::Exists(Cmds[0]) )  {
-    TBasicApp::GetLog() << "Using user defined radii for: \n";
-    TStrList sl, toks;
-    sl.LoadFromFile(Cmds[0]);
-    for( size_t i=0; i < sl.Count(); i++ )  {
-      toks.Clear();
-      toks.Strtok(sl[i], ' ');
-      if( toks.Count() == 2 )  {
-        cm_Element* elm = XElementLib::FindBySymbol(toks[0]);
-        if( elm == NULL )  {
-          TBasicApp::GetLog() << " invalid atom type: " << toks[0] << '\n';
-          continue;
-        }
-        TBasicApp::GetLog() << ' ' << toks[0] << '\t' << toks[1] << '\n';
-        size_t b_i = radii.IndexOf(elm);
-        if( b_i == InvalidIndex )
-          radii.Add(elm, toks[1].ToDouble());
-        else
-          radii.GetValue(b_i) = toks[1].ToDouble();
-      }
-    }
-    Cmds.Delete(0);
-  }
+  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
+  if( Cmds.Count() == 1 && TEFile::Exists(Cmds[0]) )
+    radii = TXApp::ReadVdWRadii(Cmds[0]);
+  TXApp::PrintVdWRadii(radii, au.GetContentList());
 	TSAtomPList satoms;
 	const bool use_aw = Options.Contains('w');
   if( Options.Contains('s') )  {

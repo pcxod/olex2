@@ -2131,6 +2131,7 @@ olxstr TLattice::CalcMoiety() const {
   latt.AsymmUnit->Assign(GetAsymmUnit());
   latt.AsymmUnit->_UpdateConnInfo();
   latt.AsymmUnit->DetachAtomType(iQPeakZ, true);
+  latt.AsymmUnit->DetachAtomType(iHydrogenZ, false);
   latt.Init();
   latt.CompaqAll();
   latt.Fragments.QuickSorter.SortSF(latt.Fragments, TLattice_SortFragments);
