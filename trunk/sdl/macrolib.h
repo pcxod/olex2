@@ -11,6 +11,10 @@
 
 BeginEsdlNamespace()
 
+const uint8_t
+  macro_log_macro    = 0x01,  //default log level
+  macro_log_function = 0x02;
+
 class TEMacro  {
   olxstr Name, Description;
   TStrList OnListen, OnTerminate, OnAbort, Commands;
@@ -107,6 +111,7 @@ class TEMacroLib {
   static bool is_allowed_in_name(olxch ch) {
     return (olxstr::o_isalphanumeric(ch) || ch == '_' || ch == '.');
   }
+  uint8_t LogLevel;
 protected:
 /////////////////////////////////////////////////////////////////////////////////////////
   bool ExtractItemVal(const TDataItem& tdi, olxstr& val)  {  // helper function
@@ -121,8 +126,9 @@ protected:
   DefFunc(Or)
   DefFunc(And)
   DefFunc(Not)
+  DefFunc(LogLevel)
 public:
-  TEMacroLib(olex::IOlexProcessor& olexProcessor) : OlexProcessor(olexProcessor)  {}
+  TEMacroLib(olex::IOlexProcessor& olexProcessor) : OlexProcessor(olexProcessor), LogLevel(macro_log_macro)  {}
   ~TEMacroLib() {  Clear();  }
   void Init();  // extends the Library with functionality
   void Load(const TDataItem& m_root)  {
@@ -175,6 +181,7 @@ public:
   }
   //..............................................................................
   void ProcessMacro(const olxstr& Cmd, TMacroError& Error);
+  DefPropP(uint8_t, LogLevel)
 };
 EndEsdlNamespace()
 #endif

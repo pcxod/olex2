@@ -38,7 +38,7 @@ private:
 protected:
   TActionQList Actions;
   bool Generated;
-  void Generate(TCAtomPList* Template, bool ClearCont, bool IncludeQ);  // generates atoms using current matrices list
+  void Generate(TCAtomPList* Template, bool ClearCont);  // generates atoms using current matrices list
   void GenerateAtoms( const TSAtomPList& atoms, TSAtomPList& result, const smatd_plist& matrices);
   void ClearFragments();
   void ClearAtoms();
@@ -58,7 +58,7 @@ protected:
   void DoGrow(const TSAtomPList& Atoms, bool GrowShell, TCAtomPList* Template);
   // fills the list with atoms of asymmertic unit
   // the atoms have to be deleted with a call to delete
-  void ListAsymmUnit(TSAtomPList& res, TCAtomPList* Template, bool IncludeQ);
+  void ListAsymmUnit(TSAtomPList& res, TCAtomPList* Template);
   // removes existing TSAtoms with TCAtom's masked
   void InitBody();
   void Disassemble();
@@ -78,13 +78,13 @@ public:
   void UpdateConnectivity();
   void Init();
   // generates atoms inside the unit cell only
-  void GenerateCell(bool IncludeQ);
+  void GenerateCell();
   // generates atoms within specified volume
   void Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
-    bool ClearCont, bool IncludeQ);
+    bool ClearCont);
   // generates atoms within sphere volume at center
   void Generate(const vec3d& center, double rad, TCAtomPList* Template,
-    bool ClearCont, bool IncludeQ);
+    bool ClearCont);
   // checks if the data alreade have been generated
   inline bool IsGenerated() const  {  return Generated;  }
 

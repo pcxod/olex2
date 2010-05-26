@@ -302,11 +302,11 @@ public:
   void LoadXFile(const olxstr& fn);
   void SaveXFile(const olxstr& fn, bool Sort)  {  FXFile->SaveToFile(fn, Sort); }
   void Generate( const vec3d& From, const vec3d& To,
-    TCAtomPList* Template, bool ClearPrevCont, bool IncludeQ)
-  {    FXFile->GetLattice().Generate(From, To, Template, ClearPrevCont, IncludeQ);  }
+    TCAtomPList* Template, bool ClearPrevCont)
+  {    FXFile->GetLattice().Generate(From, To, Template, ClearPrevCont);  }
   void Generate( const vec3d& center, double rad,
-    TCAtomPList* Template, bool ClearPrevCont, bool IncludeQ)
-  {    FXFile->GetLattice().Generate(center, rad, Template, ClearPrevCont, IncludeQ);  }
+    TCAtomPList* Template, bool ClearPrevCont)
+  {    FXFile->GetLattice().Generate(center, rad, Template, ClearPrevCont);  }
   void Uniq(bool remEqs=false)  {    FXFile->GetLattice().Uniq(remEqs);  }
   void GrowFragments(bool Shell, TCAtomPList* Template=NULL)  {
     FXFile->GetLattice().GrowFragments(Shell, Template);  

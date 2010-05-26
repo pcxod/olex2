@@ -6,15 +6,17 @@ using namespace exparse::parser_util;
 
 void TEMacroLib::Init()  {
   TLibrary &lib = OlexProcessor.GetLibrary();
-  lib.RegisterFunction<TEMacroLib>( new TFunction<TEMacroLib>(this,  &TEMacroLib::funAnd, "And", fpAny^(fpNone|fpOne),
+  lib.RegisterFunction<TEMacroLib>(new TFunction<TEMacroLib>(this,  &TEMacroLib::funAnd, "And", fpAny^(fpNone|fpOne),
     "Logical 'and' function"));
-  lib.RegisterFunction<TEMacroLib>( new TFunction<TEMacroLib>(this,  &TEMacroLib::funOr, "Or", fpAny^(fpNone|fpOne),
+  lib.RegisterFunction<TEMacroLib>(new TFunction<TEMacroLib>(this,  &TEMacroLib::funOr, "Or", fpAny^(fpNone|fpOne),
     "Logical 'or' function"));
-  lib.RegisterFunction<TEMacroLib>( new TFunction<TEMacroLib>(this,  &TEMacroLib::funNot, "Not", fpOne,
+  lib.RegisterFunction<TEMacroLib>(new TFunction<TEMacroLib>(this,  &TEMacroLib::funNot, "Not", fpOne,
     "Logical 'not' function"));
-  lib.RegisterFunction<TEMacroLib>( new TFunction<TEMacroLib>(this,  &TEMacroLib::funLastError, "LastError", fpNone,
+  lib.RegisterFunction<TEMacroLib>(new TFunction<TEMacroLib>(this,  &TEMacroLib::funLastError, "LastError", fpNone,
     "Returns last error"));
-  lib.RegisterMacro<TEMacroLib>( new TMacro<TEMacroLib>(this,  &TEMacroLib::macIF, "IF", EmptyString, fpAny^fpNone,
+  lib.RegisterFunction<TEMacroLib>(new TFunction<TEMacroLib>(this,  &TEMacroLib::funLogLevel, "LogLevel", fpNone|fpOne,
+    "Returns/sets log level, default is 'm' - for macro, accepts/returns 'm', 'mf' or 'f'"));
+  lib.RegisterMacro<TEMacroLib>(new TMacro<TEMacroLib>(this,  &TEMacroLib::macIF, "IF", EmptyString, fpAny^fpNone,
     "'if' construct"));
 }
 //..............................................................................................
@@ -116,11 +118,16 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
         return true;
       }
       Cmd.Delete(fstart, aend-fstart+1);
-      // print functions too... need a verbose mode flag - otherwise too much information...
-      //TBasicApp::GetLog().Info(Function->GetRuntimeSignature());
       Function->Run(Params, E);
-      if( !E.IsSuccessful() ) //&& E.DoesFunctionExist() )  
+      if( !E.IsSuccessful() )  {  //&& E.DoesFunctionExist() )  
+        if( (GetLogLevel()&macro_log_function) != 0 )
+          TBasicApp::GetLog().Info(olxstr(Function->GetRuntimeSignature()) << ": failed");
         return false;
+      }
+      else  {
+        if( (GetLogLevel()&macro_log_function) != 0 )
+          TBasicApp::GetLog().Info(olxstr(Function->GetRuntimeSignature()) << ": '" << E.GetRetVal() << '\'');
+      }
       Cmd.Insert(E.GetRetVal(), fstart);
       i = fstart + E.GetRetVal().Length();
     }
@@ -139,7 +146,8 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
 //..............................................................................................
 void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error)  {
   if( Cmd.IsEmpty() )  return;
-  TBasicApp::GetLog().Info(Cmd);
+  if( (GetLogLevel()&macro_log_macro) != 0 )
+    TBasicApp::GetLog().Info(Cmd);
   TStrObjList Cmds;
   TStrList MCmds;
   TParamList Options;
@@ -373,5 +381,20 @@ void TEMacroLib::funNot(const TStrObjList& Params, TMacroError &E) {
 //..............................................................................
 void TEMacroLib::funLastError(const TStrObjList& Params, TMacroError &E) {
   E.SetRetVal(E.GetInfo());
+}
+//..............................................................................
+void TEMacroLib::funLogLevel(const TStrObjList& Params, TMacroError &E) {
+  if( Params.IsEmpty() )  {
+    olxstr ll;
+    if( (GetLogLevel()&macro_log_macro) != 0 )  ll << 'm';
+    if( (GetLogLevel()&macro_log_function) != 0 )  ll << 'f';
+    E.SetRetVal(ll);
+  }
+  else  {
+    uint8_t ll = 0;
+    if( Params[0].IndexOfi('m') != InvalidIndex )  ll |= macro_log_macro;
+    if( Params[0].IndexOfi('f') != InvalidIndex )  ll |= macro_log_function;
+    SetLogLevel(ll);
+  }
 }
 //..............................................................................
