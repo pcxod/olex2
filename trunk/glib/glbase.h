@@ -53,13 +53,16 @@ struct olx_gl  {
   static void rotate(double angle, double x, double y, double z)  {
     glRotated(angle, x, y, z);
   }
+  static void rotate(int angle, const vec3i& v)  {  rotate(angle, v[0], v[1], v[2]);  }
+  static void rotate(float angle, const vec3f& v)  {  rotate(angle, v[0], v[1], v[2]);  }
+  static void rotate(double angle, const vec3d& v)  {  rotate(angle, v[0], v[1], v[2]);  }
 
   static void scale(int _x, int _y, int _z)  {  glScaled(_x, _y, _z);  }
   static void scale(float _x, float _y, float _z)  {  glScalef(_x, _y, _z);  }
   static void scale(double _x, double _y, double _z)  {  glScaled(_x, _y, _z);  }
-  static void scale(int S )  {  glScaled(S, S, S);  }
-  static void scale(float S )  {  glScalef(S, S, S);  }
-  static void scale(double S )  {  glScaled(S, S, S);  }
+  static void scale(int S )  {  scale(S, S, S);  }
+  static void scale(float S )  {  scale(S, S, S);  }
+  static void scale(double S )  {  scale(S, S, S);  }
 
   static void vertex(const vec3f& v)  {  glVertex3fv(v.GetData());  }
   static void vertex(const vec3d& v)  {  glVertex3dv(v.GetData());  }
@@ -72,16 +75,16 @@ struct olx_gl  {
   static void vertex(float x, float y, float z)  {  glVertex3f(x,y,z);  }
   static void vertex(double x, double y, double z)  {  glVertex3d(x,y,z);  }
 
-  static void rasterPos(const vec3f& v)  {  glRasterPos3fv(v.GetData());  }
-  static void rasterPos(const vec3d& v)  {  glRasterPos3dv(v.GetData());  }
+  static void rasterPos(const vec3f& v)  {  rasterPos(v.GetData());  }
+  static void rasterPos(const vec3d& v)  {  rasterPos(v.GetData());  }
   static void rasterPos(const float* v)  {  glRasterPos3fv(v);  }
   static void rasterPos(const double* v)  {  glRasterPos3dv(v);  }
   static void rasterPos(int x, int y, int z)  {  glRasterPos3d(x,y,z);  }
   static void rasterPos(float x, float y, float z)  {  glRasterPos3f(x,y,z);  }
   static void rasterPos(double x, double y, double z)  {  glRasterPos3d(x,y,z);  }
 
-  static void normal(const vec3f& v)  {  glNormal3fv(v.GetData());  }
-  static void normal(const vec3d& v)  {  glNormal3dv(v.GetData());  }
+  static void normal(const vec3f& v)  {  normal(v.GetData());  }
+  static void normal(const vec3d& v)  {  normal(v.GetData());  }
   static void normal(const float* v)  {  glNormal3fv(v);  }
   static void normal(const double* v)  {  glNormal3dv(v);  }
   static void normal(int x, int y, int z)  {  glNormal3i(x,y,z);  }

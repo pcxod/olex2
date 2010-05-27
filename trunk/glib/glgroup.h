@@ -18,25 +18,27 @@ public:
   virtual ~TGlGroup();
   void Clear();
   void Draw(bool SelectPrimitives, bool SelectObjects) const;
-  void Draw() const {  Draw(false, false); }
+  void Draw() const {  Draw(false, false);  }
   // Adds an object to the list if it is not there and removes it otherwise
   // returns true if the object is added and false if it is removed
   bool Add(AGDrawObject& G);
   void Remove(AGDrawObject& G);
   void RemoveDeleted();
 
-  inline bool Contains(AGDrawObject& G) const {  return  (FObjects.IndexOf(G) == InvalidIndex) ? false : true;  }
-  inline size_t Count() const {  return FObjects.Count(); }
+  inline bool Contains(AGDrawObject& G) const {  return  FObjects.IndexOf(G) != InvalidIndex;  }
+  inline size_t Count() const {  return FObjects.Count();  }
   bool IsEmpty() const {  return FObjects.IsEmpty();  }
-  inline AGDrawObject& GetObject(size_t i) const {  return *FObjects[i]; }
-  inline AGDrawObject& operator [] (size_t i) const {  return *FObjects[i]; }
-
+  inline AGDrawObject& GetObject(size_t i) const {  return *FObjects[i];  }
+  inline AGDrawObject& operator [] (size_t i) const {  return *FObjects[i];  }
+  /* returns true if there are at least two groupable objects, moving the ungroupable
+  ones to the provided list */
+  bool TryToGroup(TPtrList<AGDrawObject>& ungroupable);
   bool OnMouseDown(const IEObject *Sender, const class TMouseData *Data);
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
 
-  inline bool Orient(TGlPrimitive& P){  return false; };
-  inline bool GetDimensions(vec3d& Max, vec3d& Min){  return false;  }
+  inline bool Orient(TGlPrimitive& P)  {  return false;  }
+  inline bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
 
   void SetVisible(bool On);
   void SetSelected(bool On);

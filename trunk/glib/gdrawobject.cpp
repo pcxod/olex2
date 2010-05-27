@@ -17,7 +17,8 @@ AGDrawObject::AGDrawObject(TGlRenderer& parent, const olxstr& collectionName) :
   ParentGroup = NULL;
   Flags = 0;
   SetVisible(true);
-  SetGroupable(true);
+  SetGroupable(false);
+  SetSelectable(true);
   if( collectionName.Length() )
     CollectionName = collectionName;
   else

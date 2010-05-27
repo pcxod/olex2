@@ -64,9 +64,7 @@ TXAtom::TXAtom(TGlRenderer& Render, const olxstr& collectionName, TSAtom& A) :
   XAppId = ~0;
   FAtom = &A;
   Polyhedron = NULL;
-  SetMove2D(false);
-  SetMoveable(false);
-  SetZoomable(false);
+  SetGroupable(true);
 
   if( A.GetEllipsoid() != NULL )
     FDrawStyle = adsEllipsoid;
@@ -175,6 +173,8 @@ void TXAtom::CalcRad(short DefRadius)  {
     FParams[0] = FAtom->GetType().r_pers;   
   else if( DefRadius == darPack )  
     FParams[0] = FAtom->GetType().r_sfil;
+  else if( DefRadius == darVdW )  
+    FParams[0] = FAtom->GetType().r_vdw;
   else if( DefRadius == darBond )  
     FParams[0] = sqrt(caDefIso)/2;
   else if( DefRadius == darIsot )  {
@@ -496,7 +496,7 @@ bool TXAtom::DrawStencil()  {
 }
 //..............................................................................
 bool TXAtom::GetDimensions(vec3d &Max, vec3d &Min)  {
-  double dZ = FAtom->GetType().r_sfil;
+  const double dZ = FAtom->GetType().r_sfil;
   Max = FAtom->crd();
   Min = FAtom->crd();
   Max += dZ;

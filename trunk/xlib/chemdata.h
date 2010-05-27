@@ -114,15 +114,15 @@ public:
   uint32_t def_color;
   const short z, isotope_count, henke_count;
   const short index;
-  double r_pers, r_bonding, r_sfil;
+  double r_pers, r_bonding, r_sfil, r_cov, r_vdw;
   cm_Element(short _index, const char* _symbol, const char* _name, uint32_t _def_color, short _z, 
-    double _r_pers, double _r_bonding, double _r_sfil, const cm_Gaussians* _gaussians, 
+    double _r_vdw, double _r_cov, double _r_pers, double _r_bonding, double _r_sfil, const cm_Gaussians* _gaussians, 
     const cm_Isotope* _isotopes, short _isotope_count, 
     const cm_Anomalous_Henke* _henke_data, short _henke_count, 
     const cm_Neutron_Scattering* _neutron_scattering) :
     index(_index),
     symbol(_symbol), name(_name), def_color(_def_color), z(_z), r_pers(_r_pers), 
-    r_bonding(_r_bonding), r_sfil(_r_sfil), gaussians(_gaussians), 
+    r_cov(_r_cov), r_vdw(_r_vdw), r_bonding(_r_bonding), r_sfil(_r_sfil), gaussians(_gaussians), 
     isotopes(_isotopes), isotope_count(_isotope_count),
     henke_data(_henke_data), henke_count(_henke_count),
     neutron_scattering(_neutron_scattering),
@@ -132,7 +132,7 @@ public:
       Mr += isotopes[i].Mr*isotopes[i].W;
   }
 
-  compd CalcFpFdp(double eV) const  {
+  compd CalcFpFdp(double eV) const {
     if( henke_data == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "undefined f\' f\" data");
     if( eV < henke_data[0].energy || eV > henke_data[henke_count-1].energy )

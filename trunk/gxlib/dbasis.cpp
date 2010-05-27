@@ -16,7 +16,7 @@ TGlMouseListener(Render, collectionName)
   SetMove2D(true);
   SetMoveable(true);
   SetZoomable(true);
-  SetGroupable(false);
+  SetSelectable(false);
 }
 void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  

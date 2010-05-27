@@ -145,7 +145,7 @@ void TSPlane::FromDataItem(TDataItem& item)  {
   FNormal.Normalise();
 }
 //..............................................................................
-TSPlane::Def::Def(const TSPlane& plane) : atoms(plane.Count())  {
+TSPlane::Def::Def(const TSPlane& plane) : atoms(plane.Count()), regular(plane.IsRegular())  {
   for( size_t i=0; i < plane.Count(); i++ )
     atoms.Set(i, new DefData(plane.GetAtom(i).GetRef(), plane.GetWeight(i)));
   if( plane.Count() == 0 )  return;
@@ -161,7 +161,7 @@ TSPlane::Def::Def(const TSPlane& plane) : atoms(plane.Count())  {
   atoms.QuickSorter.Sort<TComparableComparator>(atoms);
 }
 //..............................................................................
-TSPlane* TSPlane::Def::FromAtomRegistry(AtomRegistry& ar, TNetwork* parent, const smatd& matr) const {
+TSPlane* TSPlane::Def::FromAtomRegistry(AtomRegistry& ar, size_t def_id, TNetwork* parent, const smatd& matr) const {
   TTypeList<AnAssociation2<TSAtom*, double> > points;
   if( matr.IsFirst() )  {
     for( size_t i=0; i < atoms.Count(); i++ )  {
@@ -182,7 +182,8 @@ TSPlane* TSPlane::Def::FromAtomRegistry(AtomRegistry& ar, TNetwork* parent, cons
       points.AddNew(sa, atoms[i].weight);
     }
   }
-  TSPlane* p = new TSPlane(parent);
+  TSPlane* p = new TSPlane(parent, def_id);
   p->Init(points);
+  p->SetRegular(regular);
   return p;
 }

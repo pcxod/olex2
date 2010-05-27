@@ -60,8 +60,9 @@ protected:
   // the atoms have to be deleted with a call to delete
   void ListAsymmUnit(TSAtomPList& res, TCAtomPList* Template);
   // removes existing TSAtoms with TCAtom's masked
+  void BuildPlanes();
   void InitBody();
-  void Disassemble();
+  void Disassemble(bool create_planes=true);
   void RestoreCoordinates();
 public:
   TLattice();
@@ -76,6 +77,7 @@ public:
   void Uniq(bool removeSymmEquivalents = false);
   // used if the connectivity ifosrmation was altered externally
   void UpdateConnectivity();
+  void UpdatePlaneDefinitions();
   void Init();
   // generates atoms inside the unit cell only
   void GenerateCell();
@@ -133,7 +135,8 @@ public:
 
   inline size_t PlaneCount() const {  return Planes.Count(); }
   inline TSPlane& GetPlane(size_t i) const {  return *Planes[i];  }
-  TSPlane* NewPlane(const TSAtomPList& Atoms, int weightExtent=0);
+  // for the grown structure might return more than one plane
+  TSPlanePList NewPlane(const TSAtomPList& Atoms, int weightExtent=0);
   void ClearPlaneDefinitions()  {  PlaneDefs.Clear();  }
 
   TSPlane* TmpPlane(const TSAtomPList& Atoms, int weightExtent=0); //the plane must be deleted by the caller !

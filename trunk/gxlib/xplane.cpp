@@ -14,6 +14,8 @@ TXPlane::TXPlane(TGlRenderer& r, const olxstr& collectionName, TSPlane *Plane) :
   AGDrawObject(r, collectionName)
 {
   FPlane = Plane;
+  this->SetGroupable(false);
+  Params().Resize(3);
 }
 //..............................................................................
 void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
@@ -21,7 +23,17 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
+  Params()[0] = acos(FPlane->GetNormal()[2])*180/M_PI;
+  if( olx_abs(Params()[0]-180) < 1e-3 )  { // degenerate case with Pi rotation
+    Params()[1] = 0;
+    Params()[2] = 1;
+  }
+  else {
+    Params()[1] = -FPlane->GetNormal()[1];
+    Params()[2] = FPlane->GetNormal()[0];
+  }
   if( GPC.PrimitiveCount() != 0 )  return;
+
   TGraphicsStyle& GS = GPC.GetStyle();
   GS.SetPersistent(true);
   const int PMask = GS.GetParam(GetPrimitiveMaskName(), "3", true).ToInt();
@@ -41,13 +53,16 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
       GlP.Vertices.SetCount(5);
 
     PlaneSort::Sorter sp(*FPlane);
+    mat3d norm_matr;
+    CreateRotationMatrix(norm_matr,
+      vec3d(-FPlane->GetNormal()[1], FPlane->GetNormal()[0], 0.0).Normalise(), FPlane->GetNormal()[2]);  
     if( !FPlane->IsRegular() )  {
       for( size_t i=0; i < sp.sortedPlane.Count(); i++ )  {
         const vec3d* crd = sp.sortedPlane.GetObject(i);
         double d = FPlane->DistanceTo(*crd);
         vec3d vec = *crd - FPlane->GetNormal()*d;
         vec -= FPlane->GetCenter();
-        GlP.Vertices[i] = vec;
+        GlP.Vertices[i] = norm_matr*vec;
       }
     }
     else  {
@@ -67,7 +82,7 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
       mat3d rm;
       CreateRotationMatrix(rm, FPlane->GetNormal(), cos(M_PI*72.0/180) );
       for( int i=0; i < 5; i++ )  {
-        GlP.Vertices[i] = marv;    
+        GlP.Vertices[i] = norm_matr*marv;    
         marv *= rm;
       }
     }
@@ -86,6 +101,7 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
 bool TXPlane::Orient(TGlPrimitive& P)  {
   olx_gl::translate(FPlane->GetCenter());
   olx_gl::normal(FPlane->GetNormal());
+  olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
   return false;
 }
 //..............................................................................

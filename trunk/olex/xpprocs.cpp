@@ -926,17 +926,9 @@ void TMainForm::macUniq(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macGroup(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  olxstr name = Options.FindValue("n");
-  TXAtomPList xatoms;
-  FindXAtoms(Cmds, xatoms, true, false);
-  TGlGroup& glg = FXApp->GetSelection();
-  for( size_t i=0; i < xatoms.Count(); i++ )
-    xatoms[i]->SetTag(xatoms[i]->GetParentGroup() == NULL ? 0 : 1);
-  for( size_t i=0; i < glg.Count(); i++ )
-    glg[i].SetTag(1);
-  for( size_t i=0; i < xatoms.Count(); i++ )
-    if( xatoms[i]->GetTag() == 0 )
-      FXApp->GetRender().Select( *xatoms[i] );
+  olxstr name = Options.FindValue('n');
+  if( FXApp->GetSelection().IsEmpty() )
+    FXApp->SelectAll(true);
   if( name.IsEmpty() )  {
     name = "group";
     name << (FXApp->GetRender().GroupCount()+1);
@@ -1634,7 +1626,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     if( !out.IsEmpty()  )  {
       FXApp->GetLog() << "Deleting " << out << '\n';
-      FUndoStack->Push( FXApp->DeleteXObjects(Objects) );
+      FUndoStack->Push(FXApp->DeleteXObjects(Objects));
       sel.RemoveDeleted();
     }
   }
@@ -1652,7 +1644,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     for( size_t i=0; i < todel.Count(); i++ )
       FXApp->GetLog() << todel[i]->Atom().GetLabel() << ' ';
     FXApp->GetLog() << '\n';
-    FUndoStack->Push( FXApp->DeleteXAtoms(todel) );
+    FUndoStack->Push(FXApp->DeleteXAtoms(todel));
   }
 }
 //..............................................................................
@@ -1972,6 +1964,13 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
             cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
             if( cme != NULL )
               cme->r_sfil = radii.GetValue(i);
+          }
+        }
+        if( Cmds[1].Equalsi("vdw") )  {
+          for( size_t i=0; i < radii.Count(); i++ )  {
+            cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
+            if( cme != NULL )
+              cme->r_vdw = radii.GetValue(i);
           }
         }
         else
@@ -8540,10 +8539,6 @@ void main_CreateWBox(TGXApp& app, const TSAtomPList& atoms, const TTypeList< AnA
 }
 void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   ElementRadii radii;
-  radii.Add(&XElementLib::GetByIndex(iHydrogenIndex), 1.2);
-  radii.Add(&XElementLib::GetByIndex(iCarbonIndex), 1.7);
-  radii.Add(&XElementLib::GetByIndex(iOxygenIndex), 1.52);
-  radii.Add(&XElementLib::GetByIndex(iNitrogenIndex), 1.55);
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   if( Cmds.Count() == 1 && TEFile::Exists(Cmds[0]) )
     radii = TXApp::ReadVdWRadii(Cmds[0]);
@@ -8570,7 +8565,7 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           crds.AddNew( satoms[j]->crd(), 1.0 );
         const size_t ri = radii.IndexOf(&satoms[j]->GetType());
         if( ri == InvalidIndex )
-          all_radii[j] = satoms[j]->GetType().r_sfil;
+          all_radii[j] = satoms[j]->GetType().r_vdw;
         else
           all_radii[j] = radii.GetValue(ri);
       }
@@ -8592,7 +8587,7 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         crds.AddNew( xatoms[i]->Atom().crd(), 1.0 );
       const size_t ri = radii.IndexOf(&xatoms[i]->Atom().GetType());
       if( ri == InvalidIndex )
-        all_radii[i] = xatoms[i]->Atom().GetType().r_sfil;
+        all_radii[i] = xatoms[i]->Atom().GetType().r_vdw;
       else
         all_radii[i] = radii.GetValue(ri);
     }
