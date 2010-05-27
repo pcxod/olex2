@@ -57,7 +57,7 @@ TGlGroup::~TGlGroup()  {
 void TGlGroup::Clear()  {
   for( size_t i=0; i < FObjects.Count(); i++ )  {
     FObjects[i]->SetParentGroup(NULL);
-    FObjects[i]->SetSelected(false);
+    FObjects[i]->SetGrouped(false);
   }
   FObjects.Clear();
 }
@@ -65,14 +65,14 @@ void TGlGroup::Clear()  {
 void TGlGroup::Remove(AGDrawObject& G)  {
   FObjects.Remove(G);
   G.SetParentGroup(NULL);
-  G.SetSelected(false);
+  G.SetGrouped(false);
 }
 //..............................................................................
 void TGlGroup::RemoveDeleted()  {
   for( size_t i=0; i < FObjects.Count(); i++ )  {
     if( FObjects[i]->IsDeleted() )  {
       FObjects[i]->SetParentGroup(NULL);
-      FObjects[i]->SetSelected(false);
+      FObjects[i]->SetGrouped(false);
       FObjects[i] = NULL;
     }
   }
@@ -88,13 +88,14 @@ bool TGlGroup::Add(AGDrawObject& GO)  {
     go = GlG;
   size_t i = FObjects.IndexOf(go);
   if( i == InvalidIndex )  {
-    FObjects.Add(go);
+    FObjects.Add(go)->SetGrouped(true);
     go->SetParentGroup(this);
     return true;
   }
   else  {
     FObjects.Delete(i);
     go->SetParentGroup(NULL);
+    go->SetGrouped(false);
     return false;
   }
 }
@@ -102,6 +103,7 @@ bool TGlGroup::Add(AGDrawObject& GO)  {
 void TGlGroup::SetVisible(bool On)  {
   for( size_t i=0; i < FObjects.Count(); i++ )
     FObjects[i]->SetVisible(On); 
+  AGDrawObject::SetVisible(On);
 }
 //..............................................................................
 void TGlGroup::SetSelected(bool On)  {
@@ -143,8 +145,7 @@ void TGlGroup::Draw(bool SelectPrimitives, bool SelectObjects) const  {
 }
 //..............................................................................
 void TGlGroup::SetGlM(const TGlMaterial& m)  {
-  GetPrimitives().GetStyle().SetMaterial("mat", m);
-  GlM = m;
+  GlM = GetPrimitives().GetStyle().SetMaterial("mat", m);
 }
 //..............................................................................
 bool TGlGroup::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {

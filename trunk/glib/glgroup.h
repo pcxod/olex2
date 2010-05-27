@@ -40,8 +40,8 @@ public:
   inline bool Orient(TGlPrimitive& P)  {  return false;  }
   inline bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
 
-  void SetVisible(bool On);
-  void SetSelected(bool On);
+  virtual void SetVisible(bool On);
+  virtual void SetSelected(bool On);
 
   bool IsDefaultColor() const {  return DefaultColor;  }
 
