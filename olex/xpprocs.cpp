@@ -1151,9 +1151,11 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       FXApp->Generate(cent, From[0], TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont);
     }
   }
-  TBasicApp::GetLog().Info( olxstr(FXApp->XFile().GetLattice().AtomCount()) << " atoms and " <<
+  if( TBasicApp::GetInstance().IsProfiling() )  {
+    TBasicApp::GetLog().Info( olxstr(FXApp->XFile().GetLattice().AtomCount()) << " atoms and " <<
      FXApp->XFile().GetLattice().BondCount() << " bonds generated in " <<
      FXApp->XFile().GetLattice().FragmentCount() << " fragments (" << (TETime::msNow()-st) << "ms)");
+  }
   // optimise drawing ...
   //FXApp->GetRender().Compile(true);
 }

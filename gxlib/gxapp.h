@@ -135,27 +135,15 @@ protected:
   void StoreVisibility();
 
   struct GroupData  {
-    TSAtomPList atoms;
-    TSBondPList bonds;
-    olxstr collectionName;
-    bool visible;
-    TGlMaterial material;
-  };
-  struct GroupDataEx  {
     TTypeList<TSAtom::Ref> atoms;
     TTypeList<TSBond::Ref> bonds;
     olxstr collectionName;
     bool visible;
-    TGlMaterial material;
+    index_t parent_id;
   };
-
-  TTypeList<GroupData> FOldGroups;
-  void RestoreGroups();
-  void StoreGroups();
-  void ClearGroups()  {  FOldGroups.Clear();  }
-  // stores numeric references vs object references
-  void RestoreGroupsEx(const TTypeList<GroupDataEx>& groups);
-  void StoreGroupsEx(TTypeList<GroupDataEx>& groups);
+  // stores numeric references
+  void RestoreGroups(const TTypeList<GroupData>& groups);
+  void StoreGroups(TTypeList<GroupData>& groups);
 
   float FProbFactor;
   double ExtraZoom;  // the default is 1, Calculated Zoom is multiplid by this number

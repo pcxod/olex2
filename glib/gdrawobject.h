@@ -78,10 +78,12 @@ public:
 
   // need a virtual setter!
   //DefPropBFIsSet(Visible, Flags, sgdoVisible)
+  //DefPropBFIsSet(Selected, Flags, sgdoSelected)
   virtual void SetVisible(bool v)  {  SetBit(v, Flags, sgdoVisible);  }
   inline bool IsVisible() const {  return ((Flags&sgdoVisible) != 0) && !IsDeleted();  }
+  virtual void SetSelected(bool v)  {  SetBit(v, Flags, sgdoSelected);  }
+  inline bool IsSelected() const {  return ((Flags&sgdoSelected) != 0);  }
 
-  DefPropBFIsSet(Selected, Flags, sgdoSelected)
   DefPropBFIsSet(Groupable, Flags, sgdoGroupable)
   DefPropBFIsSet(Grouped, Flags, sgdoGrouped)
   DefPropBFIsSet(Deleted, Flags, sgdoDeleted)
