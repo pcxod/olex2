@@ -34,8 +34,8 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   FragmentId = ~0;
   FAttachedAtoms = NULL;
   FAttachedAtomsI = NULL;
+  Equivs = NULL;
   Type = NULL;
-  Degeneracy = 1;
   SetTag(-1);
   DependentAfixGroup = ParentAfixGroup = NULL;
   DependentHfixGroups = NULL;
@@ -46,10 +46,11 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
 }
 //..............................................................................
 TCAtom::~TCAtom()  {
-  if( FAttachedAtoms != NULL )        delete FAttachedAtoms;
-  if( FAttachedAtomsI != NULL )       delete FAttachedAtomsI;
-  if( DependentHfixGroups != NULL )   delete DependentHfixGroups; 
-  if( ConnInfo != NULL )              delete ConnInfo;
+  if( FAttachedAtoms != NULL )       delete FAttachedAtoms;
+  if( FAttachedAtomsI != NULL )      delete FAttachedAtomsI;
+  if( DependentHfixGroups != NULL )  delete DependentHfixGroups; 
+  if( ConnInfo != NULL )             delete ConnInfo;
+  if( Equivs != NULL )               delete Equivs;
 }
 //..............................................................................
 void TCAtom::SetConnInfo(CXConnInfo& ci) {
@@ -83,6 +84,24 @@ void TCAtom::SetType(const cm_Element& t)  {
   if( Type != &t )  {
     Type = &t;
     FParent->_OnAtomTypeChanged(*this);
+  }
+}
+//..............................................................................
+void TCAtom::AssignEquivs(const TCAtom& S)  {
+  if( S.Equivs != NULL )  {
+    if( Equivs == NULL )
+      Equivs = new smatd_list(*S.Equivs);
+    else
+      *Equivs = *S.Equivs;
+  }
+  else if( Equivs != NULL )
+    delete Equivs;
+}
+//..............................................................................
+void TCAtom::ClearEquivs()  {  
+  if(Equivs != NULL )  {
+    delete Equivs;
+    Equivs = NULL;
   }
 }
 //..............................................................................
@@ -120,7 +139,7 @@ void TCAtom::Assign(const TCAtom& S)  {
   FragmentId = S.GetFragmentId();
   Center = S.Center;
   Esd = S.Esd;
-  Degeneracy = S.GetDegeneracy();
+  AssignEquivs(S);
   Flags = S.Flags;
 }
 //..............................................................................

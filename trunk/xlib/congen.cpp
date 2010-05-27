@@ -223,12 +223,13 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
           crds.AddNew(0, -sin(M_PI*109.4/180), cos(M_PI*109.4/180));
           crds[0] = M * crds[0];
           crds[0] *= dis;
-          crds.AddNew(crds[0]);
+          if( envi.GetBase().CAtom().GetDegeneracy() != 2 )  {
+            crds.AddNew(crds[0]);
+            CreateRotationMatrix(M, PlaneN, -0.5);
+            crds[1] = M * crds[1];
+            crds[1] += envi.GetBase().crd();
+          }
           crds[0] += envi.GetBase().crd();
-
-          CreateRotationMatrix(M, PlaneN, -0.5);
-          crds[1] = M * crds[1];
-          crds[1] += envi.GetBase().crd();
         }
       }
       else if( envi.Count() == 1 )  {
@@ -240,12 +241,13 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
         crds.AddNew(0, -sin(M_PI*109.4/180), cos(M_PI*109.4/180));
         crds[0] = M * crds[0];
         crds[0] *= dis;
-        crds.AddNew(crds[0]);
+        if( envi.GetBase().CAtom().GetDegeneracy() != 2 )  {
+          crds.AddNew(crds[0]);
+          CreateRotationMatrix(M, PlaneN, -0.5);
+          crds[1] = M * crds[1];
+          crds[1] += envi.GetBase().crd();
+        }
         crds[0] += envi.GetBase().crd();
-
-        CreateRotationMatrix(M, PlaneN, -0.5);
-        crds[1] = M * crds[1];
-        crds[1] += envi.GetBase().crd();
       }
       break;
     case fgOH1:

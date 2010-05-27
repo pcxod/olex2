@@ -64,8 +64,8 @@ private:
     UisoScale;  // for proxied Uiso (depending on the UisoOwner, this defines the scaled value
   TCAtom* UisoOwner;  // the Uiso owner, if any
   vec3d Center, Esd;  // fractional coordinates and esds
-  uint8_t Degeneracy;
   TPtrList<TCAtom>* FAttachedAtoms, *FAttachedAtomsI;
+  smatd_list* Equivs;
   /* Afix group is a fitted group, Hfix group the immediate dependent group */
   TAfixGroup* DependentAfixGroup, *ParentAfixGroup;
   TPtrList<TAfixGroup>* DependentHfixGroups;
@@ -132,10 +132,20 @@ public:
   DefPropP(uint32_t, FragmentId)
   DefPropP(uint16_t, SameId)
   DefPropP(size_t, EllpId)
-  DefPropP(uint8_t, Degeneracy)
   DefPropP(int8_t, Part)
   DefPropP(TExyzGroup*, ExyzGroup)
-  
+
+  size_t GetDegeneracy() const {  return EquivCount()+1;  }
+  void AddEquiv(const smatd& m)  {
+    if( Equivs == NULL )  Equivs = new smatd_list;
+    Equivs->AddCCopy(m);
+  }
+  size_t EquivCount() const  {  return Equivs == NULL ? 0 : Equivs->Count();  }
+  const smatd& GetEquiv(size_t i) const {  return Equivs->Item(i);  }
+  void AssignEquivs(const TCAtom& a);
+  // to be used externally by the UnitCell!
+  void ClearEquivs();
+
   CXConnInfo& GetConnInfo() const {  return *ConnInfo;  }
   void SetConnInfo(CXConnInfo& ci);
 
