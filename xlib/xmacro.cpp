@@ -120,7 +120,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "[shift] SG. Changes space group of current structure, applying given shit prior (if provided) to\
  the change of symmetry of the unit cell");
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Htab, "t-adds extra elements (comma separated -t=Br,I) to the donor list. Defaults are [N,O,F,Cl,S]", fpNone|fpOne|fpTwo|psCheckFileTypeIns, 
+  xlib_InitMacro(Htab, "t-adds extra elements (comma separated -t=Br,I) to the donor list. Defaults are [N,O,F,Cl,S]"
+    "&;g-generates found interactions", fpNone|fpOne|fpTwo|psCheckFileTypeIns, 
     "Adds HTAB instructions to the ins file, maximum bond length [2.9] and minimal angle [150] might be provided" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(HAdd, EmptyString, fpAny|psCheckFileTypeIns, "Adds hydrogen atoms to all or provided atoms, however\
@@ -711,6 +712,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     else if( max_d > 5 )
       max_d = 2.9;
   }
+  smatd_list transforms;
   TIntList bais;
   bais.Add(iNitrogenIndex);
   bais.Add(iOxygenIndex);
@@ -776,6 +778,8 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
             InfoTab& it_d = rm.AddRTAB(sa.GetType().symbol + ca.GetType().symbol);
             it_d.AddAtom( &sa.CAtom(), NULL );
             const smatd* mt = (!(all[j].GetB().t.IsNull() && all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
+            if( mt != NULL && transforms.IndexOf(*mt) == InvalidIndex )
+              transforms.AddCCopy(*mt);
             it_d.AddAtom(const_cast<TCAtom*>(&ca), mt);
             if( rm.ValidateInfoTab(it_d) )
               TBasicApp::GetLog() << it_d.InsStr() << " d=" << olxstr::FormatFloat(3, d) << '\n';
@@ -791,6 +795,8 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
             InfoTab& it = rm.AddHTAB();
             it.AddAtom(&sa.CAtom(), NULL);
             const smatd* mt = (!(all[j].GetB().t.IsNull() && all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
+            if( mt != NULL && transforms.IndexOf(*mt) == InvalidIndex )
+              transforms.AddCCopy(*mt);
             it.AddAtom(const_cast<TCAtom*>(&ca), mt);
             if( rm.ValidateInfoTab(it) )
               TBasicApp::GetLog() << it.InsStr() << " d=" << olxstr::FormatFloat(3, d) << '\n';
@@ -798,6 +804,17 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         }
       }
     }
+  }
+  if( Options.Contains('g') && !transforms.IsEmpty() )  {
+    TLattice& xlatt = TXApp::GetInstance().XFile().GetLattice();
+    TSAtomPList iatoms;
+    for( size_t i=0; i < xlatt.AtomCount(); i++ )  {
+      TSAtom& sa = xlatt.GetAtom(i);
+      if( sa.IsDeleted() )  continue;
+      if( sa.GetMatrix(0).IsFirst() )
+        iatoms.Add(sa);
+    }
+    xlatt.GrowAtoms(iatoms, transforms);
   }
 }
 //..............................................................................
@@ -3955,7 +3972,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       TBasicApp::GetLog() << "No interactions found\n";
     }
   }
-  if( Options.Contains('g') )  {
+  if( Options.Contains('g') && !transforms.IsEmpty() )  {
     TLattice& xlatt = xapp.XFile().GetLattice();
     TSAtomPList iatoms;
     for( size_t i=0; i < xlatt.AtomCount(); i++ )  {
