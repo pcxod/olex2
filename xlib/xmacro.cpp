@@ -1734,7 +1734,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       ca.SetLabel(elm->symbol + atoms[0]->GetLabel().SubStringFrom( 
         atoms[0]->GetType().symbol.Length()), false);
       ca.SetType(*elm);
-      ca.SetDegeneracy(atoms[0]->CAtom().GetDegeneracy());
+      ca.AssignEquivs(atoms[0]->CAtom());
       rm.Vars.FixParam(ca, catom_var_name_Sof);
       eg->Add(ca);
       ca.SetUiso(atoms[0]->CAtom().GetUiso());
@@ -3819,6 +3819,8 @@ void XLibMacros::macDegen(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     if( atoms[i]->CAtom().GetTag() != i || atoms[i]->CAtom().GetDegeneracy() == 1)  continue;
     olxstr str(atoms[i]->CAtom().GetLabel());
     TBasicApp::GetLog() << (str.Format(6, true, ' ') <<  atoms[i]->CAtom().GetDegeneracy() << '\n');
+    for( size_t j=0; j < atoms[i]->CAtom().EquivCount(); j++ )
+      TBasicApp::GetLog() << (olxstr('\t') << TSymmParser::MatrixToSymmEx(atoms[i]->CAtom().GetEquiv(j)) << '\n');
   }
 }
 //..............................................................................

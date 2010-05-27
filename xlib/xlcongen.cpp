@@ -96,6 +96,25 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
             sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[1], NULL);
           }
         }
+        else if( CreatedAtoms.Count() == 1 && envi.GetBase().CAtom().GetDegeneracy() == 2 )  {
+          sr = &RefMod.rDFIX.AddNew();
+          sr->SetEsd(0.02);
+          sr->SetValue(0.85);
+          sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
+          sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], &envi.GetBase().CAtom().GetEquiv(0));
+
+          sr = &RefMod.rDANG.AddNew();
+          sr->SetEsd(0.04);
+          sr->SetValue(1.39);
+          sr->AddAtomPair(*CreatedAtoms[0], &envi.GetBase().CAtom().GetEquiv(0), *CreatedAtoms[0], NULL);
+
+          if( envi.Count() == 1 )  {
+            sr = &RefMod.rSADI.AddNew();
+            sr->SetEsd(0.02);
+            sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[0], NULL);
+            sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[0], &envi.GetBase().CAtom().GetEquiv(0));
+          }
+        }
         break;
       case fgSH1:
       case fgOH1:
