@@ -241,7 +241,10 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
       const double Dis = v.Length();
       if( (j != 0) && (Dis < tolerance) )  {
         if( i == ind )  {
-          Atoms[ind]->SetDegeneracy(Atoms[ind]->GetDegeneracy() + 1);
+          smatd eqm(Matrices[j]);
+          eqm.t[0] += iLx;  eqm.t[1] += iLy;  eqm.t[2] += iLz;
+          eqm.SetId(j, iLx, iLy, iLz);
+          Atoms[ind]->AddEquiv(eqm);
           continue;
         }
         if( Atoms[ind]->GetType() == iQPeakZ )  {
@@ -287,7 +290,7 @@ void TUnitCell::FindSymmEq(double tol) const  {
     if( A1.IsDeleted() )  continue;
     ACA.Add(A1)->SetTag(0);  
     A1.ClearAttachedAtoms();
-    A1.SetDegeneracy(1);
+    A1.ClearEquivs();
   }
   // searching for symmetrical equivalents; the search could be optimised by
   // removing the translational equivalents in the firts order; however the task is not

@@ -344,7 +344,6 @@ void TGXApp::Clear()  {
 
   XLabels.Clear();
   GlBitmaps.Clear();
-  ClearGroups();
 }
 //..............................................................................
 void TGXApp::CreateXRefs()  {
@@ -1296,10 +1295,10 @@ void TGXApp::AllVisible(bool V)  {
     TAsymmUnit& au = XFile().GetAsymmUnit();
     for( size_t i=0; i < au.AtomCount(); i++ )
       au.GetAtom(i).SetMasked(false);
-    TTypeList<GroupDataEx> groups;
-    StoreGroupsEx(groups);
+    TTypeList<GroupData> stored_groups;
+    StoreGroups(stored_groups);
     XFile().GetLattice().UpdateConnectivity();
-    RestoreGroupsEx(groups);
+    RestoreGroups(stored_groups);
     CenterView(true);
   }
   OnAllVisible.Exit(dynamic_cast<TBasicApp*>(this), NULL);
@@ -2704,56 +2703,16 @@ void TGXApp::GrowAtoms(const olxstr& AtomsStr, bool Shell, TCAtomPList* Template
   FXFile->GetLattice().GrowAtoms(satoms, Shell, Template);
 }
 //..............................................................................
-void TGXApp::StoreGroups()  {
-  ClearGroups();
+void TGXApp::StoreGroups(TTypeList<GroupData>& groups)  {
+  for( size_t i=0; i < FGlRender->GroupCount(); i++ )
+    FGlRender->GetGroup(i).SetTag(i);
+  FGlRender->GetSelection().SetTag(-1);
   for( size_t i=0; i <= FGlRender->GroupCount(); i++ )  {
     TGlGroup& glG = (i < FGlRender->GroupCount() ? FGlRender->GetGroup(i) : FGlRender->GetSelection());
-    GroupData& gd = FOldGroups.AddNew();
+    GroupData& gd = groups.AddNew();
     gd.collectionName = glG.GetCollectionName();  //planes
     gd.visible = glG.IsVisible();
-    gd.material = glG.GetGlM();
-    for( size_t j=0; j < glG.Count(); j++ )  {
-      AGDrawObject& glO = glG[j];
-      if( EsdlInstanceOf(glO, TXAtom) )
-        gd.atoms.Add(((TXAtom&)glO).Atom());
-      if( EsdlInstanceOf(glO, TXBond) )
-        gd.bonds.Add(((TXBond&)glO).Bond());
-    }
-  }
-}
-//..............................................................................
-void TGXApp::RestoreGroups()  {
-  TXAtomPList xatoms;
-  TXBondPList xbonds;
-  olxstr className;
-  for( size_t i=0; i < FOldGroups.Count(); i++ )  {
-    GroupData& gd = FOldGroups[i];
-    xatoms.Clear();   SAtoms2XAtoms(gd.atoms, xatoms);
-    xbonds.Clear();   SBonds2XBonds(gd.bonds, xbonds);
-    FGlRender->GetSelection().Clear();
-    for( size_t j=0; j < xatoms.Count(); j++ )
-      FGlRender->GetSelection().Add(*xatoms[j]);
-    for( size_t j=0; j < xbonds.Count(); j++ )
-      FGlRender->GetSelection().Add(*xbonds[j]);
-    if( (i+1) < FOldGroups.Count() )  {
-      TGlGroup* glG = FGlRender->GroupSelection(gd.collectionName);
-      if( glG == NULL )
-        throw TFunctionFailedException(__OlxSourceInfo, "could not recreate groups");
-      glG->SetSelected(false);
-      FGlRender->GetSelection().Clear();
-      glG->SetGlM(gd.material);
-      glG->SetVisible(gd.visible);
-    }
-  }
-}
-//..............................................................................
-void TGXApp::StoreGroupsEx(TTypeList<GroupDataEx>& groups)  {
-  for( size_t i=0; i <= FGlRender->GroupCount(); i++ )  {
-    TGlGroup& glG = (i < FGlRender->GroupCount() ? FGlRender->GetGroup(i) : FGlRender->GetSelection());
-    GroupDataEx& gd = groups.AddNew();
-    gd.collectionName = glG.GetCollectionName();  //planes
-    gd.visible = glG.IsVisible();
-    gd.material = glG.GetGlM();
+    gd.parent_id = (glG.GetParentGroup() != NULL ? glG.GetParentGroup()->GetTag() : -2); 
     for( size_t j=0; j < glG.Count(); j++ )  {
       AGDrawObject& glO = glG[j];
       if( EsdlInstanceOf(glO, TXAtom) )
@@ -2764,13 +2723,18 @@ void TGXApp::StoreGroupsEx(TTypeList<GroupDataEx>& groups)  {
   }
 }
 //..............................................................................
-void TGXApp::RestoreGroupsEx(const TTypeList<GroupDataEx>& groups)  {
+void TGXApp::RestoreGroups(const TTypeList<GroupData>& groups)  {
   TXAtomPList xatoms;
   TXBondPList xbonds;
-  olxstr className;
-  AtomRegistry ar = XFile().GetLattice().GetAtomRegistry();
+  const AtomRegistry& ar = XFile().GetLattice().GetAtomRegistry();
+  for( size_t i=0; i < groups.Count()-1; i++ )
+    FGlRender->NewGroup(groups[i].collectionName).Create();
   for( size_t i=0; i < groups.Count(); i++ )  {
-    GroupDataEx& gd = groups[i];
+    GroupData& gd = groups[i];
+    TGlGroup& glg = (i < FGlRender->GroupCount() ? FGlRender->GetGroup(i) : FGlRender->GetSelection());
+    glg.SetVisible(gd.visible);
+    if( gd.parent_id != -2 )
+      (gd.parent_id == -1 ? FGlRender->GetSelection() : FGlRender->GetGroup(gd.parent_id)).Add(glg);
     TSAtomPList atoms(gd.atoms.Count());
     TSBondPList bonds(gd.bonds.Count());
     for( size_t j=0; j < gd.atoms.Count(); j++ )
@@ -2782,27 +2746,13 @@ void TGXApp::RestoreGroupsEx(const TTypeList<GroupDataEx>& groups)  {
     if( atoms.IsEmpty() && bonds.IsEmpty() )  continue;
     xatoms.Clear();   SAtoms2XAtoms(atoms, xatoms);
     xbonds.Clear();   SBonds2XBonds(bonds, xbonds);
-    FGlRender->GetSelection().Clear();
     for( size_t j=0; j < xatoms.Count(); j++ )  {
       if( xatoms[j]->IsVisible() )
-        FGlRender->GetSelection().Add(*xatoms[j]);
+        glg.Add(*xatoms[j]);
     }
     for( size_t j=0; j < xbonds.Count(); j++ )  {
       if( xbonds[j]->IsVisible() )
-        FGlRender->GetSelection().Add(*xbonds[j]);
-    }
-    if( (i+1) < groups.Count() )  {
-      TGlGroup* glG = FGlRender->GroupSelection(gd.collectionName);
-      if( glG == NULL )  {
-        if( FGlRender->GetSelection().Count() > 1 )
-          throw TFunctionFailedException(__OlxSourceInfo, "could not recreate groups");
-        else
-          continue;
-      }
-      glG->SetSelected(false);
-      FGlRender->GetSelection().Clear();
-      glG->SetGlM(gd.material);
-      glG->SetVisible(gd.visible);
+        glg.Add(*xbonds[j]);
     }
   }
 }
@@ -2838,21 +2788,23 @@ void TGXApp::BeginDrawBitmap(double resolution)  {
   FPictureResolution = resolution;
   FLabels->Clear();
   GetRender().GetScene().ScaleFonts(resolution);
-  StoreGroups();
+  TTypeList<GroupData> stored_groups;
+  StoreGroups(stored_groups);
   StoreVisibility();
   CreateObjects(false, false);
   FXGrid->GlContextChange();
-  RestoreGroups();
+  RestoreGroups(stored_groups);
   RestoreVisibility();
 }
 //..............................................................................
 void TGXApp::FinishDrawBitmap()  {
+  TTypeList<GroupData> stored_groups;
+  StoreGroups(stored_groups);
   FLabels->Clear();
   GetRender().GetScene().RestoreFontScale();
   CreateObjects(false, false);
   FXGrid->GlContextChange();
-  RestoreGroups();
-  ClearGroups();
+  RestoreGroups(stored_groups);
   RestoreVisibility();
   FVisibility.Clear();
 }
@@ -2928,14 +2880,14 @@ void TGXApp::SetHydrogensVisible(bool v)  {
     FHydrogensVisible = v;
     GetRender().ClearSelection();
     XFile().GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
-    TTypeList<GroupDataEx> groups;
-    StoreGroupsEx(groups);
+    TTypeList<GroupData> groups;
+    StoreGroups(groups);
     for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )  {
       OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
       OverlayedXFiles[i].GetLattice().UpdateConnectivity();
     }
     XFile().GetLattice().UpdateConnectivity();
-    RestoreGroupsEx(groups);
+    RestoreGroups(groups);
     CenterView(true);
   }
 }
@@ -2945,14 +2897,14 @@ void TGXApp::SetQPeaksVisible(bool v)  {
     FQPeaksVisible = v;
     GetRender().ClearSelection();
     XFile().GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
-    TTypeList<GroupDataEx> groups;
-    StoreGroupsEx(groups);
+    TTypeList<GroupData> groups;
+    StoreGroups(groups);
     for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )  {
       OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
       OverlayedXFiles[i].GetLattice().UpdateConnectivity();
     }
     XFile().GetLattice().UpdateConnectivity();
-    RestoreGroupsEx(groups);
+    RestoreGroups(groups);
     CenterView(true);
   }
 }
@@ -4008,10 +3960,10 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
       glG.Add( XAtoms[atoms.GetField(j).ToSizeT()] );
     TDataItem& bonds = group.FindRequiredItem("Bonds");
     for( size_t j=0; j < bonds.FieldCount(); j++ )
-      glG.Add( XBonds[bonds.GetField(j).ToSizeT()] );
+      glG.Add(XBonds[bonds.GetField(j).ToSizeT()]);
     TDataItem& planes = group.FindRequiredItem("Planes");
     for( size_t j=0; j < planes.FieldCount(); j++ )
-      glG.Add( XPlanes[planes.GetField(j).ToSizeT()] );
+      glG.Add(XPlanes[planes.GetField(j).ToSizeT()]);
     glG.Create(group.GetValue());
   }
 
@@ -4021,7 +3973,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   FGlRender->SetSceneComplete(false);
   FGlRender->ClearMinMax();
   FGlRender->UpdateMinMax(min, max);
-  FGlRender->GetBasis().FromDataItem( item.FindRequiredItem("Basis") );
+  FGlRender->GetBasis().FromDataItem(item.FindRequiredItem("Basis"));
   FGlRender->SetSceneComplete(true);
 }
 //..............................................................................

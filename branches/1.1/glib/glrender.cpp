@@ -749,7 +749,7 @@ void TGlRenderer::SelectAll(bool Select)  {
   if( Select )  {
     for( size_t i=0; i < ObjectCount(); i++ )  {
       AGDrawObject& GDO = GetObject(i);
-      if( !GDO.IsGrouped() && GDO.IsVisible() && GDO.IsGroupable() )  {
+      if( !GDO.IsGrouped() && GDO.IsVisible() && GDO.IsSelectable() )  {
         if( GDO.GetPrimitives().PrimitiveCount() != 0 &&
           FSelection->GetGlM().IsIdentityDraw() != GDO.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw())
           continue;
@@ -769,8 +769,8 @@ void TGlRenderer::SelectAll(bool Select)  {
           FSelection->Add(GDO);
       }
     }
+    FSelection->SetSelected(true);
   }
-  FSelection->SetSelected(true);
 }
 //..............................................................................
 void TGlRenderer::ClearGroups()  {
@@ -812,6 +812,7 @@ TGlGroup* TGlRenderer::GroupSelection(const olxstr& groupName)  {
     OS->GetPrimitives().RemoveObject(*OS);
     FGObjects.Remove(OS);  // avoid duplication in the list!
     OS->Create(groupName);
+    FSelection->SetSelected(false);
     return OS;
   }
   return NULL;
@@ -822,7 +823,6 @@ TGlGroup& TGlRenderer::NewGroup(const olxstr& collection_name) {
 }
 //..............................................................................
 void TGlRenderer::UnGroup(TGlGroup& OS)  {
-  if( !OS.IsGroup() )  return;
   FGroups.Remove(OS);
   if( FSelection->Contains(OS) )
     FSelection->Remove(OS);
