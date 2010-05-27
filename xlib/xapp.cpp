@@ -676,10 +676,11 @@ ElementRadii TXApp::ReadVdWRadii(const olxstr& fileName)  {
 void TXApp::PrintVdWRadii(const ElementRadii& radii, const ContentList& au_cont)  {
   if( au_cont.IsEmpty() )  return;
   TBasicApp::GetLog() << "Using the following element radii:\n";
+  TBasicApp::GetLog() << "(Default radii source: http://www.ccdc.cam.ac.uk/products/csd/radii)\n";
   for( size_t i=0; i < au_cont.Count(); i++ )  {
     const size_t ei = radii.IndexOf(&au_cont[i].element);
     if( ei == InvalidIndex )
-      TBasicApp::GetLog() << au_cont[i].element.symbol << '\t' << au_cont[i].element.r_sfil << '\n';
+      TBasicApp::GetLog() << au_cont[i].element.symbol << '\t' << au_cont[i].element.r_vdw << '\n';
     else
       TBasicApp::GetLog() << au_cont[i].element.symbol << '\t' << radii.GetValue(ei) << '\n';
   }

@@ -2,11 +2,6 @@
 // TGlGroup - a group of drawing objects
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "glgroup.h"
 #include "glrender.h"
 #include "gpcollection.h"
@@ -20,6 +15,7 @@ UseGlNamespace()
 TGlGroup::TGlGroup(TGlRenderer& R, const olxstr& collectionName) :
   AGDrawObject(R, collectionName)
 {
+  SetGroupable(true);
   Flags |= sgdoGroup;
   DefaultColor = true;
 }
@@ -166,6 +162,25 @@ bool TGlGroup::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
 bool TGlGroup::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
   for( size_t i=0; i < FObjects.Count(); i++ )
     FObjects[i]->OnMouseMove(Sender, Data);
+  return true;
+}
+//..............................................................................
+bool TGlGroup::TryToGroup(TPtrList<AGDrawObject>& ungroupable)  {
+  size_t groupable_cnt=0;
+  for( size_t i=0; i < FObjects.Count(); i++ )
+    if( FObjects[i]->IsGroupable() )
+      groupable_cnt++;
+  if( groupable_cnt < 2 )  return false;
+  if( groupable_cnt == FObjects.Count() )
+    return true;
+  ungroupable.SetCapacity(ungroupable.Count() + FObjects.Count() - groupable_cnt);
+  for( size_t i=0; i < FObjects.Count(); i++ )  {
+    if( !FObjects[i]->IsGroupable() )  {
+      ungroupable.Add(FObjects[i])->SetParentGroup(NULL);
+      FObjects[i] = NULL;
+    }
+  }
+  FObjects.Pack();
   return true;
 }
 //..............................................................................

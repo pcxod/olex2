@@ -95,7 +95,7 @@ public:
   template <class AtomType>  // could be either TCAtom or TSAtom
   static double GetVdWRadius(const AtomType& a, const ElementRadii* radii)  {
     const size_t ei = radii == NULL ? InvalidIndex : radii->IndexOf(&a.GetType());
-    return ei == InvalidIndex ? a.GetType().r_sfil : radii->GetValue(ei);
+    return ei == InvalidIndex ? a.GetType().r_vdw : radii->GetValue(ei);
   }
 
   struct CalcVolumeInfo  {

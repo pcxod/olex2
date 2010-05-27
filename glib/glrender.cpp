@@ -692,7 +692,7 @@ TGlGroup* TGlRenderer::FindObjectGroup(AGDrawObject& G)  {
 }
 //..............................................................................
 void TGlRenderer::Select(AGDrawObject& G)  {
-  if( !G.IsGroupable() )  return;
+  if( !G.IsSelectable() )  return;
   if( G.GetPrimitives().PrimitiveCount() != 0 )  {
     if( FSelection->IsEmpty() )  {
       TGlMaterial glm = FSelection->GetGlM();
@@ -710,11 +710,12 @@ void TGlRenderer::Select(AGDrawObject& G)  {
 }
 //..............................................................................
 void TGlRenderer::DeSelect(AGDrawObject& G)  {
+  if( !G.IsSelectable() )  return;
   FSelection->Remove(G);
 }
 //..............................................................................
 void TGlRenderer::Select(AGDrawObject& G, bool v)  {
-  if( !G.IsGroupable() )  return;
+  if( !G.IsSelectable() )  return;
   if( v )  {
     if( !G.IsSelected() )
       Select(G);
@@ -732,7 +733,7 @@ void TGlRenderer::InvertSelection()  {
       if( GDO->GetPrimitives().PrimitiveCount() != 0 &&
         FSelection->GetGlM().IsIdentityDraw() != GDO->GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw())
           continue;
-      if( !GDO->IsSelected() && GDO->IsGroupable() && GDO != FSelection )
+      if( !GDO->IsSelected() && GDO->IsSelectable() && GDO != FSelection )
         Selected.Add(GDO);
     }
   }
@@ -797,11 +798,16 @@ void TGlRenderer::ClearSelection()  {
 //..............................................................................
 TGlGroup* TGlRenderer::GroupSelection(const olxstr& groupName)  {
   if( FSelection->Count() > 1 )  {
+    TPtrList<AGDrawObject> ungroupable;
+    if( !FSelection->TryToGroup(ungroupable) )
+      return NULL;
     TGlGroup *OS = FSelection;
     FGroups.Add(FSelection);
     FSelection = new TGlGroup(*this, "Selection");
     FSelection->Create();
     FSelection->Add(*OS);
+    for( size_t i=0; i < ungroupable.Count(); i++ )
+      FSelection->Add(*ungroupable[i]);
     // read style information for this particular group
     OS->GetPrimitives().RemoveObject(*OS);
     FGObjects.Remove(OS);  // avoid duplication in the list!

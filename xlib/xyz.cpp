@@ -25,16 +25,20 @@ void TXyz::Clear()  {
 }
 //..............................................................................
 void TXyz::SaveToStrings(TStrList& Strings)  {
+  Strings.Add();
+  Strings.Add("Exported from Olex2");
+  size_t cnt = 0;
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& CA = GetAsymmUnit().GetAtom(i);
     if( CA.IsDeleted() )  continue;
-    olxstr Tmp = CA.GetType().symbol;
-    Tmp << ' ';
+    olxstr& aline = Strings.Add(CA.GetType().symbol);
+    aline << ' ';
     const vec3d& v = CA.ccrd();
     for( int j=0; j < 3; j++ )
-      Tmp << olxstr::FormatFloat(4, v[j]).Format(10, false, ' ');
-    Strings.Add(Tmp);
+      aline << olxstr::FormatFloat(4, v[j]).Format(10, false, ' ');
+    cnt++;
   }
+  Strings[0] = cnt;
 }
 //..............................................................................
 void TXyz::LoadFromStrings(const TStrList& Strings)  {

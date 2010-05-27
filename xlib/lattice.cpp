@@ -261,11 +261,14 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
   if( dac != 0 )
     Atoms.Pack();
   BuildAtomRegistry();
-  // and create planes...
+}
+//..............................................................................
+void TLattice::BuildPlanes()  {
+  ClearPlanes();
   for( size_t i=0; i < PlaneDefs.Count(); i++ )  {
     TSPlane::Def& pd = PlaneDefs[i];
     for( size_t j=0; j < Matrices.Count(); j++ )  {
-      TSPlane* p = pd.FromAtomRegistry(atomRegistry, Network, *Matrices[j]);
+      TSPlane* p = pd.FromAtomRegistry(atomRegistry, i, Network, *Matrices[j]);
       if( p != NULL )
         AddSPlane(p);
     }
@@ -296,6 +299,7 @@ void TLattice::InitBody()  {
       Frag->Node(j).CAtom().SetFragmentId((uint32_t)i);
   }
   TSAtomPList::QuickSorter.SortSF(Atoms, TLattice_SortAtomsById);
+  BuildPlanes();
   OnDisassemble.Exit(this);
 }
 //..............................................................................
@@ -807,10 +811,10 @@ TSAtom* TLattice::NewAtom(const vec3d& center)  {
   return a;
 }
 //..............................................................................
-TSPlane* TLattice::NewPlane(const TSAtomPList& Atoms, int weightExtent)  {
+TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, int weightExtent)  {
   TSPlane* Plane = TmpPlane(Atoms, weightExtent);
+  TSPlanePList rv;
   if( Plane != NULL)  {
-    AddSPlane(Plane);
     TSPlane::Def pd = Plane->GetDef();
     bool found = false;
     for( size_t i=0; i < PlaneDefs.Count(); i++ )  {
@@ -819,10 +823,22 @@ TSPlane* TLattice::NewPlane(const TSAtomPList& Atoms, int weightExtent)  {
         break;
       }
     }
-    if( !found )
+    if( !found )  {
       PlaneDefs.AddCCopy(pd);
+      if( IsGenerated() )  {
+        delete Plane;
+        for( size_t i=0; i < Matrices.Count(); i++ )  {
+          TSPlane* p = pd.FromAtomRegistry(atomRegistry, PlaneDefs.Count()-1, Network, *Matrices[i]);
+          if( p != NULL )
+            AddSPlane(rv.Add(p));
+        }
+      }
+      else  {
+        AddSPlane(rv.Add(Plane));
+      }
+    }
   }
-  return Plane;
+  return rv;
 }
 //..............................................................................
 TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
@@ -848,6 +864,20 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
   TSPlane* Plane = new TSPlane(Network);
   Plane->Init(Points);
   return Plane;
+}
+//..............................................................................
+void TLattice::UpdatePlaneDefinitions()  {
+  for( size_t i=0; i < PlaneDefs.Count(); i++ )
+    PlaneDefs[i].SetTag(0);
+  for( size_t i=0; i < Planes.Count(); i++ )  {
+    if( Planes[i]->IsDeleted() || Planes[i]->GetDefId() >= PlaneDefs.Count() )  // would be odd
+      continue;
+    PlaneDefs[Planes[i]->GetDefId()].IncTag();
+  }
+  for( size_t i=0; i < PlaneDefs.Count(); i++ )
+    if( PlaneDefs[i].GetTag() == 0 )
+      PlaneDefs.NullItem(i);
+  PlaneDefs.Pack();
 }
 //..............................................................................
 void TLattice::UpdateAsymmUnit()  {
@@ -1320,16 +1350,15 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& tra
 }
 //..............................................................................
 void TLattice::UpdateConnectivity()  {
-  Disassemble();
+  Disassemble(false);
   UpdateAsymmUnit();
 }
 //..............................................................................
-void TLattice::Disassemble()  {
+void TLattice::Disassemble(bool create_planes)  {
   OnDisassemble.Enter(this);
   // clear bonds & fargments
   ClearBonds();
   ClearFragments();
-  ClearPlanes();
   TArrayList<vec3d> ocrd(Atoms.Count());
   GenerateBondsAndFragments(&ocrd);
   Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
@@ -1345,6 +1374,8 @@ void TLattice::Disassemble()  {
       AddSBond(&Frag->Bond(j));
   }
   //TSAtomPList::QuickSorter.SortSF(Atoms, TLattice_SortAtomsById);
+  if( create_planes )
+    BuildPlanes();
   OnDisassemble.Exit(this);
 }
 //..............................................................................

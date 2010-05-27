@@ -137,7 +137,6 @@ protected:
   struct GroupData  {
     TSAtomPList atoms;
     TSBondPList bonds;
-    TSPlanePList planes;
     olxstr collectionName;
     bool visible;
     TGlMaterial material;
@@ -145,7 +144,6 @@ protected:
   struct GroupDataEx  {
     TTypeList<TSAtom::Ref> atoms;
     TTypeList<TSBond::Ref> bonds;
-    TSPlanePList planes;
     olxstr collectionName;
     bool visible;
     TGlMaterial material;

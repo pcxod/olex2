@@ -582,8 +582,8 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Uniq, EmptyString, fpAny | psFileLoaded,
 "Shows only fragments specified by atom name(s) or selection");
 
-  this_InitMacroD(Group, "n-a custom name can be provided", fpAny|psFileLoaded,
-"Groups current selection");
+  this_InitMacroD(Group, "n-a custom name can be provided", fpNone|psFileLoaded,
+"Groups current visible objects or selection");
 
   this_InitMacroD(Fmol, EmptyString, fpNone|psFileLoaded,
 "Shows all fragments (as opposite to uniq)");
@@ -2754,8 +2754,7 @@ void TMainForm::OnSelection(wxCommandEvent& m)  {
     GlR = (TGlGroup*)FObjectUnderMouse;
   switch( m.GetId() )  {
     case ID_SelGroup:
-      ProcessMacro("group sel");
-//      FXApp->GroupSelection();
+      ProcessMacro("group");
       break;
     case ID_SelUnGroup:
       if( GlR != NULL ) 

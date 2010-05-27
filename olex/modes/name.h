@@ -86,13 +86,13 @@ public:
     TGlXApp::GetMainForm()->executeMacro(labels);
     TGXApp& app = *TGlXApp::GetGXApp();
     for( size_t i=0; i < app.BondCount(); i++ )
-      app.GetBond(i).SetGroupable(false);
+      app.GetBond(i).SetSelectable(false);
     return true;
   }
   ~TNameMode() {
     TGXApp& app = *TGlXApp::GetGXApp();
     for( size_t i=0; i < app.BondCount(); i++ )
-      app.GetBond(i).SetGroupable(true);
+      app.GetBond(i).SetSelectable(true);
     Instance = NULL;
     app.XFile().GetLattice().UpdateConnectivity();
   }

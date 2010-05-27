@@ -15,7 +15,8 @@ const short  sgdoVisible   = 0x0001, // TGDrawObject flags
              sgdoGroupable = 0x0004,
              sgdoGroup     = 0x0008,
              sgdoGrouped   = 0x0010,
-             sgdoDeleted   = 0x0020;
+             sgdoDeleted   = 0x0020,
+             sgdoSelectable= 0x0040;
 
 class TlGroup;
 /*
@@ -84,6 +85,7 @@ public:
   DefPropBFIsSet(Groupable, Flags, sgdoGroupable)
   DefPropBFIsSet(Grouped, Flags, sgdoGrouped)
   DefPropBFIsSet(Deleted, Flags, sgdoDeleted)
+  DefPropBFIsSet(Selectable, Flags, sgdoSelectable)
 
   inline bool IsGroup() const {  return (Flags & sgdoGroup) == sgdoGroup; }
 

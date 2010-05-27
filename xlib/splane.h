@@ -19,9 +19,10 @@ private:
   vec3d FNormal, FCenter;
   double FDistance;
   uint16_t Flags;
+  size_t DefId;
 public:
-  TSPlane(TNetwork* Parent) : TSObject<TNetwork>(Parent), 
-    FDistance(0), Flags(0)  {}
+  TSPlane(TNetwork* Parent, size_t def_id = InvalidIndex) : TSObject<TNetwork>(Parent), 
+    FDistance(0), Flags(0), DefId(def_id)  {}
   virtual ~TSPlane()  {}
 
   DefPropBFIsSet(Deleted, Flags, plane_flag_deleted)
@@ -73,7 +74,7 @@ public:
   // returns sqrt(smallest eigen value/point.Count())
   static double CalcRMS(const TSAtomPList& atoms);
 
-  class Def  {
+  class Def : public ACollectionItem {
     struct DefData {
       TSAtom::Ref ref;
       double weight;
@@ -92,9 +93,10 @@ public:
       }
     };
     TTypeList<DefData> atoms;
+    bool regular;
   public:
     Def(const TSPlane& plane);
-    Def(const Def& r) : atoms(r.atoms)  {}
+    Def(const Def& r) : atoms(r.atoms), regular(r.regular)  {}
     Def& operator = (const Def& r)  {
       atoms = r.atoms;
       return *this;
@@ -108,10 +110,11 @@ public:
       }
       return true;
     }
-    TSPlane* FromAtomRegistry(class AtomRegistry& ar, class TNetwork* parent, const smatd& matr) const;
+    TSPlane* FromAtomRegistry(class AtomRegistry& ar, size_t def_id, class TNetwork* parent, const smatd& matr) const;
   };
 
   Def GetDef() const { return Def(*this);  }
+  size_t GetDefId() const {  return DefId; }
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);

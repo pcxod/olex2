@@ -19,7 +19,6 @@ TGlTextBox::TGlTextBox(TGlRenderer& Render, const olxstr& collectionName):
 {
   SetMove2D(true);
   SetMoveable(true);
-  SetGroupable(true);
   SetRoteable(false);
   SetZoomable(false);
 
