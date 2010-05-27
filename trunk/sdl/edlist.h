@@ -135,6 +135,7 @@ template <typename T>
       entry = en;
     }
     Head = Tail = NULL;
+    Length = 0;
   }
 
   inline TDirectionalListEntry<T>* GetHead()  const {  return Head;  }

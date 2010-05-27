@@ -1745,7 +1745,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
   return true;
 }
 //..............................................................................
-void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rcont) {
+void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rcont, const TSAtomPList& atoms) {
   TTypeList<TSAtomPList> rings;
   cm_Element& h_elm = XElementLib::GetByIndex(iHydrogenIndex);
   for( size_t i=0; i < FragmentCount(); i++ )
@@ -1770,7 +1770,7 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rc
           if( (AE.GetCrd(k) - rings[i][j]->crd()).QLength() > 4.0 )
             AE.Delete(k--);
         }
-        if( AE.Count() == 2 && rings[i][j]->GetType() == iCarbonZ )  {
+        if( AE.Count() == 2 && rings[i][j]->GetType() == iCarbonZ && atoms.IndexOf(AE.GetBase()) != InvalidIndex )  {
           TBasicApp::GetLog().Info(olxstr(rings[i][j]->GetLabel()) << ": X(Y=C)H (ring)");
           cg.FixAtom(AE, fgCH1, h_elm);
           rings[i][j]->CAtom().SetHAttached(true);
@@ -1802,11 +1802,11 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
   rcont.Add(CTypes[0]);
   for( size_t i=0; i < 4; i++ )  
     rcont.Add(rcont[0]);
-  _ProcessRingHAdd(cg, rcont); // Cp
+  _ProcessRingHAdd(cg, rcont, atoms); // Cp
   rcont.Add(rcont[0]);
-  _ProcessRingHAdd(cg, rcont); // Ph
+  _ProcessRingHAdd(cg, rcont, atoms); // Ph
   rcont.Last() = CTypes[1];
-  _ProcessRingHAdd(cg, rcont); // Py
+  _ProcessRingHAdd(cg, rcont, atoms); // Py
 
   for( size_t i=0; i < atoms.Count(); i++ )  {
     if( atoms[i]->IsDeleted() || !atoms[i]->CAtom().IsAvailable() )  continue;
