@@ -111,7 +111,7 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
       ABasicFunction *Function = OlexProcessor.GetLibrary().FindFunction(func_name);//, Params.Count() );
       if( Function == NULL )  {
         if( !func_name.IsEmpty() && !has_owner )  {
-          E.NonexitingMacroError( func_name );
+          E.NonexitingMacroError(func_name);
           return false;
         }
         E.GetStack().Pop();

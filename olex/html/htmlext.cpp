@@ -765,7 +765,8 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   THtmlSwitch& rootSwitch = html->GetRoot();
   TIndexList states;
   TPtrList<THtmlSwitch> Switches;
-  olxstr itemName( Cmds[0] );
+  olxstr itemName(Cmds[0]);
+  bool changed = false;
   for( size_t i=1; i < Cmds.Count(); i++ )  {
     Switches.Clear();
     if( itemName.EndsWith('.') )  {  // special treatment of any particular index
@@ -811,6 +812,8 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     if( states.Count() == 1 )  {  // simply change the state to the request
       for( size_t j=0; j < Switches.Count(); j++ )  {
+        if( Switches[j]->GetFileIndex() != states[0]-1 )
+          changed = true;
         Switches[j]->SetFileIndex(states[0]-1);
       }
     }
@@ -820,16 +823,22 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         const index_t currentState = sw->GetFileIndex();
         for( size_t k=0; k < states.Count(); k++ )  {
           if( states[k] == (currentState+1) )  {
-            if( (k+1) < states.Count() )
+            if( (k+1) < states.Count() )  {
+              if( sw->GetFileIndex() != states[k+1]-1 )
+                changed = true;
               sw->SetFileIndex(states[k+1]-1);
-            else
+            }
+            else  {
+              if( sw->GetFileIndex() != states[0]-1 )
+                changed = true;
               sw->SetFileIndex(states[0]-1);
+            }
           }
         }
       }
     }
   }
-  if( !Options.Contains("u") )
+  if( changed && !Options.Contains("u") )
     html->UpdatePage();
   return;
 }
