@@ -134,10 +134,11 @@ public:
         if( s1 != s2 )  {
           FParent->ClearIndividualCollections();
           FParent->GetRender().GetStyles().RemoveNamedStyles("Q");
+          FParent->XFile().GetLattice().ClearPlaneDefinitions();
         }
         else  {
           const TAsymmUnit& au = FParent->XFile().GetAsymmUnit();
-          int ac = 0;
+          size_t ac = 0;
           for( size_t i=0; i < au.AtomCount(); i++ )  {
             const TCAtom& ca = au.GetAtom(i);           
             if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
@@ -160,6 +161,7 @@ public:
       else  {
         FParent->ClearIndividualCollections();
         FParent->GetRender().GetStyles().RemoveNamedStyles("Q");
+        FParent->XFile().GetLattice().ClearPlaneDefinitions();
       }
       //FParent->XGrid().Clear();
     }
@@ -203,6 +205,9 @@ public:
       FParent->XFile().GetLattice().SetGrowInfo(GrowInfo);
       GrowInfo = NULL;
     }
+    else  {  // definition will get broken otherwise
+      FParent->XFile().GetLattice().ClearPlaneDefinitions();
+    }
     if( GrowInfo != NULL )  {
       delete GrowInfo;
       GrowInfo = NULL;
@@ -214,9 +219,6 @@ public:
   bool Exit(const IEObject *Sender, const IEObject *Data)  {
     FParent->GetRender().SetBasis(B);
     FParent->CenterView();
-    if( !SameFile || EmptyFile )  {
-      FParent->XFile().GetLattice().ClearPlaneDefinitions();
-    }
     FParent->GetRender().SetZoom(FParent->GetRender().CalcZoom()*FParent->GetExtraZoom());
     FParent->Draw();
     return true;

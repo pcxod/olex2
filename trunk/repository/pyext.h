@@ -1,10 +1,6 @@
 #ifndef __olx_python_ext_H
 #define __olx_python_ext_H
-
-#include "integration.h"
-#include "typelist.h"
-#include "tptrlist.h"
-#include "estrlist.h"
+#include "macrolib.h"
 #include "etime.h"
 #include "etbuffer.h"
 
@@ -89,17 +85,23 @@ public:
       delete ToDelete[i];
   }
 //..............................................................................
-  void funRunTh(TStrObjList& Cmds, const TParamList &Options, TMacroError& E);
-  void funReset(TStrObjList& Cmds, const TParamList &Options, TMacroError& E);
-  void funRun(TStrObjList& Cmds, const TParamList &Options, TMacroError& E);
+  void macReset(TStrObjList& Cmds, const TParamList &Options, TMacroError& E);
+  void macRun(TStrObjList& Cmds, const TParamList &Options, TMacroError& E);
+  void funLogLevel(const TStrObjList& Params, TMacroError& E);
   PythonExt(IOlexProcessor* olexProcessor);
+  uint16_t LogLevel;
 public:
   ~PythonExt();
   // must be called only once
   static PythonExt& Init(IOlexProcessor* olexProcessor)  { return *(new PythonExt(olexProcessor));  }
-  static void Finilise()  {   if( Instance != NULL )  delete Instance;  }
-
-  int RunPython( const olxstr& script, bool inThread );
+  static void Finilise()  {
+    if( Instance != NULL )  {
+      delete Instance;
+      Instance = NULL;
+    }
+  }
+  int RunPython(const olxstr& script);
+  DefPropP(uint16_t, LogLevel)
   template <class T>
     inline T * AddToDelete(T* td)  {  return (T*)ToDelete.Add(td);  }
 
@@ -111,8 +113,8 @@ public:
   }
   TLibrary* ExportLibrary(const olxstr& name=EmptyString);
 //  static inline TLibrary* GetExportedLibrary()  {  return Library;  }
-  inline TLibrary* GetBindLibrary()      {  return BindLibrary;  }
-  IOlexProcessor* GetOlexProcessor()     {  return OlexProcessor;  }
+  inline TLibrary* GetBindLibrary()  {  return BindLibrary;  }
+  IOlexProcessor* GetOlexProcessor()  {  return OlexProcessor;  }
   void CheckInitialised();
 
   static inline PythonExt* GetInstance()  {
