@@ -15,7 +15,6 @@ TXPlane::TXPlane(TGlRenderer& r, const olxstr& collectionName, TSPlane *Plane) :
 {
   FPlane = Plane;
   this->SetGroupable(false);
-  Params().Resize(3);
 }
 //..............................................................................
 void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
@@ -23,14 +22,13 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
-  Params()[0] = acos(FPlane->GetNormal()[2])*180/M_PI;
-  if( olx_abs(Params()[0]-180) < 1e-3 )  { // degenerate case with Pi rotation
-    Params()[1] = 0;
-    Params()[2] = 1;
-  }
-  else {
-    Params()[1] = -FPlane->GetNormal()[1];
-    Params()[2] = FPlane->GetNormal()[0];
+  if( FPlane->GetEquiv() != NULL )  {
+    const mat3d& m = *FPlane->GetEquiv();
+    Params().Resize(16);
+    FParams[0] = m[0][0];  FParams[1] = m[0][1];  FParams[2] = m[0][2];  FParams[3] = 0;
+    FParams[4] = m[1][0];  FParams[5] = m[1][1];  FParams[6] = m[1][2];  FParams[7] = 0;
+    FParams[8] = m[2][0];  FParams[9] = m[2][1];  FParams[10]= m[2][2];  FParams[11]= 0;
+    FParams[12] = 0;       FParams[13] = 0;       FParams[14]= 0;        FParams[15]= 1;
   }
   if( GPC.PrimitiveCount() != 0 )  return;
 
@@ -53,16 +51,10 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
       GlP.Vertices.SetCount(5);
 
     PlaneSort::Sorter sp(*FPlane);
-    mat3d norm_matr;
-    CreateRotationMatrix(norm_matr,
-      vec3d(-FPlane->GetNormal()[1], FPlane->GetNormal()[0], 0.0).Normalise(), FPlane->GetNormal()[2]);  
     if( !FPlane->IsRegular() )  {
       for( size_t i=0; i < sp.sortedPlane.Count(); i++ )  {
         const vec3d* crd = sp.sortedPlane.GetObject(i);
-        double d = FPlane->DistanceTo(*crd);
-        vec3d vec = *crd - FPlane->GetNormal()*d;
-        vec -= FPlane->GetCenter();
-        GlP.Vertices[i] = norm_matr*vec;
+        GlP.Vertices[i] = (*crd-FPlane->GetCenter());
       }
     }
     else  {
@@ -82,10 +74,11 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
       mat3d rm;
       CreateRotationMatrix(rm, FPlane->GetNormal(), cos(M_PI*72.0/180) );
       for( int i=0; i < 5; i++ )  {
-        GlP.Vertices[i] = norm_matr*marv;    
+        GlP.Vertices[i] = marv;    
         marv *= rm;
       }
     }
+
   }
   if( (PMask & 2) != 0 )  {
     TGlMaterial GlM1;
@@ -101,7 +94,8 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
 bool TXPlane::Orient(TGlPrimitive& P)  {
   olx_gl::translate(FPlane->GetCenter());
   olx_gl::normal(FPlane->GetNormal());
-  olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
+  if( Params().Count() == 16 )
+    olx_gl::orient(Params().GetRawData());
   return false;
 }
 //..............................................................................
@@ -110,6 +104,3 @@ void TXPlane::ListPrimitives(TStrList &List) const {
   List.Add("Centroid");
 }
 //..............................................................................
-
- 
- 
