@@ -4625,13 +4625,13 @@ void TMainForm::macPython(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     else
       dlg->SetText(wxT("import olex\n"));
     if( dlg->ShowModal() == wxID_OK )
-      PythonExt::GetInstance()->RunPython( dlg->GetText(), false );
+      PythonExt::GetInstance()->RunPython(dlg->GetText());
     dlg->Destroy();
   }
   olxstr tmp = Cmds.Text(' ');
   tmp.Replace("\\n", "\n");
   if( !tmp.EndsWith('\n') )  tmp << '\n';
-  PythonExt::GetInstance()->RunPython(  tmp, false );
+  PythonExt::GetInstance()->RunPython(tmp);
 }
 //..............................................................................
 void TMainForm::funEval(const TStrObjList& Params, TMacroError &E)  {

@@ -305,7 +305,6 @@ void TLattice::InitBody()  {
 //..............................................................................
 void TLattice::Init()  {
   Clear(false);
-  ClearPlaneDefinitions();
   GetUnitCell().ClearEllipsoids();
   GetUnitCell().InitMatrices();
   Generated = false;
@@ -2101,8 +2100,7 @@ TLattice::GrowInfo* TLattice::GetGrowInfo() const  {
 bool TLattice::ApplyGrowInfo()  {
   TAsymmUnit& au = GetAsymmUnit();
   if( _GrowInfo == NULL || !Atoms.IsEmpty() || !Matrices.IsEmpty() || 
-    GetUnitCell().MatrixCount() != _GrowInfo->unc_matrix_count ||
-    au.AtomCount() < _GrowInfo->info.Count() )  // let's be picky
+    GetUnitCell().MatrixCount() != _GrowInfo->unc_matrix_count )
   {
     if( _GrowInfo != NULL )  {
       delete _GrowInfo;
@@ -2110,7 +2108,7 @@ bool TLattice::ApplyGrowInfo()  {
     }
     return false;
   }
-  Matrices.Assign( _GrowInfo->matrices );
+  Matrices.Assign(_GrowInfo->matrices);
   _GrowInfo->matrices.Clear();
   Atoms.SetCapacity(au.AtomCount()*Matrices.Count());
   for( size_t i=0; i < au.AtomCount(); i++ )    {
@@ -2118,12 +2116,12 @@ bool TLattice::ApplyGrowInfo()  {
     // we still need masked and detached atoms here
     if( ca.IsDeleted() )  continue;
     if( i >= _GrowInfo->info.Count() )  {  // create just with I matrix
-      TSAtom* a = Atoms.Add( new TSAtom(Network) );
+      TSAtom* a = Atoms.Add(new TSAtom(Network));
       a->CAtom(ca);
-      a->SetEllipsoid( &GetUnitCell().GetEllipsoid(0, ca.GetId()) ); // ellipsoid for the identity matrix
-      a->SetLattId( Atoms.Count() - 1 );
+      a->SetEllipsoid(&GetUnitCell().GetEllipsoid(0, ca.GetId())); // ellipsoid for the identity matrix
+      a->SetLattId(Atoms.Count() - 1);
       au.CellToCartesian(a->ccrd(), a->crd());
-      a->AddMatrix( Matrices[0] );
+      a->AddMatrix(Matrices[0]);
       continue;
     }
     const TIndexList& mi = _GrowInfo->info[i];
@@ -2131,14 +2129,14 @@ bool TLattice::ApplyGrowInfo()  {
       if( mi[j] < 0 )  {
         const size_t matr_cnt = olx_abs(mi[j]),
           matr_start = j+1;       
-        TSAtom* a = Atoms.Add( new TSAtom(Network) );
+        TSAtom* a = Atoms.Add(new TSAtom(Network));
         a->CAtom(ca);
         a->SetEllipsoid(&GetUnitCell().GetEllipsoid(Matrices[mi[matr_start]]->GetContainerId(), ca.GetId())); // ellipsoid for the matrix
-        a->SetLattId( Atoms.Count() - 1 );
+        a->SetLattId(Atoms.Count() - 1);
         a->ccrd() = (*Matrices[mi[matr_start]]) * ca.ccrd();
         au.CellToCartesian(a->ccrd(), a->crd());
         for( size_t k=matr_start; k < matr_start+matr_cnt; k++, j++ )
-          a->AddMatrix( Matrices[mi[k]] );
+          a->AddMatrix(Matrices[mi[k]]);
       }
     }
   }

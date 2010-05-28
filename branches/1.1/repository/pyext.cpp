@@ -25,7 +25,6 @@ PythonExt* PythonExt::Instance = NULL;
 //..............................................................................
 //..............................................................................
 class TFuncWrapper : public PythonExt::BasicWrapper  {
-
   bool ProcessOutput;
 public:
   TFuncWrapper(PyObject* callable, bool processOutput, bool profile) :
@@ -74,7 +73,6 @@ public:
   virtual ~TMacroWrapper()  {
       Py_XDECREF(PyFunction);
   }
-
   void Call(TStrObjList& Params, const TParamList &Options, TMacroError& E)  {
     OnCallEnter();
     PyObject* arglist = PyTuple_New(Params.Count() + 1);
@@ -264,6 +262,8 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
       Py_DECREF(keys_);
       TMacroError er;
       macro->Run(params, options, er);
+      if( (PythonExt::GetInstance()->GetLogLevel() & macro_log_macro) != 0 )
+        TBasicApp::GetLog().Info(olxstr("@py: ") << macro->GetRuntimeSignature());
       if( er.IsSuccessful() )
         return Py_BuildValue("b", true);
       else  {
@@ -292,6 +292,9 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
       params.Add(PythonExt::ParseStr(PyList_GetItem(args_, i)));
     TMacroError er;
     func->Run(params, er);
+    if( (PythonExt::GetInstance()->GetLogLevel() & macro_log_function) != 0 )  {
+      TBasicApp::GetLog().Info(olxstr("@py: ") << func->GetRuntimeSignature());
+    }
     if( er.IsSuccessful() )  {
       olxstr rv = (er.HasRetVal() ? olxstr(er.RetObj()->ToString()) : EmptyString);
       return PythonExt::BuildString(rv);
@@ -348,7 +351,7 @@ olxcstr PyFuncBody(const olxcstr& olexName, const olxcstr& pyName, char sep)  {
   }
 }
 //..............................................................................
-PythonExt::PythonExt(IOlexProcessor* olexProcessor)  {
+PythonExt::PythonExt(IOlexProcessor* olexProcessor) : LogLevel(macro_log_macro)  {
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
   Instance = this;
@@ -410,30 +413,9 @@ public:
 };
 #endif // __WXWIDGETS__
 
-int PythonExt::RunPython( const olxstr& script, bool inThread )  {
+int PythonExt::RunPython(const olxstr& script)  {
   CheckInitialised();
-#ifdef __WXWIDGETS__
-  if( inThread )  {
-    TRunThread* rf = new TRunThread( script );
-    rf->Create();
-    Py_BEGIN_ALLOW_THREADS
-    rf->Run();
-    while( rf->IsRunning() )  {
-      rf->Yield();
-      rf->Sleep(30);
-      wxTheApp->Dispatch();
-    }
-    Py_END_ALLOW_THREADS
-    int res = rf->GetRetCode();
-    delete rf;
-    return res;
-  }
-  else  {
-#endif
-    return PyRun_SimpleString(script.c_str());
-#ifdef __WXWIDGETS__
-  }
-#endif
+  return PyRun_SimpleString(script.c_str());
 }
 //..............................................................................
 //..............................................................................
@@ -470,14 +452,14 @@ void Export(const TStrObjList& Cmds, TMacroError& E)  {
   ExportLib( EmptyString, file, o_r->GetLibrary());
 }
 //..............................................................................
-void PythonExt::funReset(TStrObjList& Cmds, const TParamList &Options, TMacroError& E)  {
+void PythonExt::macReset(TStrObjList& Cmds, const TParamList &Options, TMacroError& E)  {
   if( Py_IsInitialized() )
     Py_Finalize();
   CheckInitialised();
 }
 //..............................................................................
-void PythonExt::funRun(TStrObjList& Cmds, const TParamList &Options, TMacroError& E) {
-  olxstr fn = TEFile::OSPath( Cmds.Text(' ') );
+void PythonExt::macRun(TStrObjList& Cmds, const TParamList &Options, TMacroError& E) {
+  olxstr fn = TEFile::OSPath(Cmds.Text(' '));
   if( !TEFile::Exists(fn) )  {
     E.ProcessingError(__OlxSrcInfo, "specified script file does not exist: ") << fn;
     return;
@@ -485,31 +467,40 @@ void PythonExt::funRun(TStrObjList& Cmds, const TParamList &Options, TMacroError
   olxstr cd = TEFile::CurrentDir();
   TEFile::ChangeDir( TEFile::ExtractFilePath(fn) );
 
-  if( RunPython( olxstr("execfile(\'") <<
-                           TEFile::ExtractFileName(fn) << "\')", false ) == -1 )
+  if( RunPython( olxstr("execfile(\'") << TEFile::ExtractFileName(fn) << "\')") == -1 )
     E.ProcessingError(__OlxSrcInfo, "script execution failed");
 
   TEFile::ChangeDir( cd );
 }
 //..............................................................................
-void PythonExt::funRunTh(TStrObjList& Cmds, const TParamList &Options, TMacroError& E)  {
-  olxstr fn = Cmds.Text(' ');
-  if( !TEFile::Exists(fn) )  {
-    E.ProcessingError(__OlxSrcInfo, "specified scrip file does not exist: ") << fn;
-    return;
+void PythonExt::funLogLevel(const TStrObjList& Params, TMacroError& E)  {
+  if( Params.IsEmpty() )  {
+    olxstr ll;
+    if( (GetLogLevel()&macro_log_macro) != 0 )  ll << 'm';
+    if( (GetLogLevel()&macro_log_function) != 0 )  ll << 'f';
+    E.SetRetVal(ll);
   }
-  if( RunPython( olxstr("execfile(\'") << fn << "\')", true ) == -1 )
-    E.ProcessingError(__OlxSrcInfo, "script execution failed");
+  else  {
+    uint8_t ll = 0;
+    if( Params[0].IndexOfi('m') != InvalidIndex )  ll |= macro_log_macro;
+    if( Params[0].IndexOfi('f') != InvalidIndex )  ll |= macro_log_function;
+    SetLogLevel(ll);
+  }
 }
 //..............................................................................
 TLibrary* PythonExt::ExportLibrary(const olxstr& name)  {
   // binding library
   PythonExt::GetOlexProcessor()->GetLibrary().AttachLibrary(BindLibrary=new TLibrary("spy"));
   Library = new TLibrary(name.IsEmpty() ? olxstr("py") : name);
-  Library->RegisterStaticFunction( new TStaticFunction( ::Export, "Export", fpOne) );
-  Library->RegisterMacro<PythonExt>( new TMacro<PythonExt>(this, &PythonExt::funReset, "Reset", "", fpNone) );
-  Library->RegisterMacro<PythonExt>( new TMacro<PythonExt>(this, &PythonExt::funRun, "Run", "", fpAny^fpNone) );
-  Library->RegisterMacro<PythonExt>( new TMacro<PythonExt>(this, &PythonExt::funRunTh, "RunTh", "", fpAny^fpNone) );
+  Library->RegisterStaticFunction(
+    new TStaticFunction(::Export, "Export", fpOne, "Exports library to a python file") );
+  Library->RegisterMacro<PythonExt>(
+    new TMacro<PythonExt>(this, &PythonExt::macReset, "Reset", EmptyString, fpNone) );
+  Library->RegisterMacro<PythonExt>(
+    new TMacro<PythonExt>(this, &PythonExt::macRun, "Run", EmptyString, fpAny^fpNone, "Runs provided file") );
+  Library->RegisterFunction<PythonExt>(
+    new TFunction<PythonExt>(this, &PythonExt::funLogLevel, "LogLevel", fpNone|fpOne,
+    "Sets log level - default is macro, look at LogLevel for more information") );
   return Library;
 }
 
