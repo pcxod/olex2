@@ -203,7 +203,7 @@ BOOL LaunchApp::InitInstance()  {
             }
           }
         }
-        catch(const TIOExceptionBase&)  {}
+        catch(const TIOException&)  {}
         dlg.SetVersion(Tmp);
       }
       free(pBuf);

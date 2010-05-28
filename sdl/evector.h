@@ -136,7 +136,7 @@ public:
     return *this;
   }
 
-  inline VecType& operator  [](size_t offset) const  {
+  inline VecType& operator  [](size_t offset) const {
 #ifdef _OLX_DEBUG // index cheking is on
     TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, offset, 0, Fn);
 #endif
@@ -149,6 +149,8 @@ public:
 #endif
     return FData[offset];
   }
+
+  const VecType* GetRawData() const {  return FData;  }
 
   VecType& Last() const  {
 #ifdef _OLX_DEBUG // index cheking is on

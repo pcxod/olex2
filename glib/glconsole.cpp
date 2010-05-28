@@ -564,6 +564,10 @@ size_t TGlConsole::Write(const olxstr& str)  {
   else  {
     if( FBuffer.Last().Object == NULL )
       FBuffer.Last().Object = (PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
+    else if( FBuffer.Last().String.IsEmpty() )  {  // reset for empty lines
+      delete FBuffer.Last().Object;
+      FBuffer.Last().Object = (PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
+    }
   }
   FBuffer.Last().String.SetCapacity(FBuffer.Last().String.Length() + str.Length());
   for( size_t i=0; i < str.Length(); i++ )  {

@@ -14,16 +14,21 @@ const uint16_t
   plane_flag_regular = 0x0002;
 
 class TSPlane : public TSObject<TNetwork>  {
-private:
   TTypeList< AnAssociation2<TSAtom*, double> > Crds;
-  vec3d FNormal, FCenter;
-  double FDistance;
+  vec3d Center, Normal;
+  double Distance;
   uint16_t Flags;
   size_t DefId;
+  uint8_t NormalIndex;
+  mat3d* Equiv;
+  void _Init(const TTypeList<AnAssociation2<vec3d, double> >& points);
 public:
   TSPlane(TNetwork* Parent, size_t def_id = InvalidIndex) : TSObject<TNetwork>(Parent), 
-    FDistance(0), Flags(0), DefId(def_id)  {}
-  virtual ~TSPlane()  {}
+    Distance(0), Flags(0), DefId(def_id), Equiv(NULL)  {}
+  virtual ~TSPlane()  {
+    if( Equiv != NULL )
+      delete Equiv;
+  }
 
   DefPropBFIsSet(Deleted, Flags, plane_flag_deleted)
   // this is just a flag for the owner - is not used by the object itself
@@ -33,19 +38,18 @@ public:
   // an association point, weight is provided
   void Init(const TTypeList<AnAssociation2<TSAtom*, double> >& Points);
 
-  inline const vec3d& GetNormal() const {  return FNormal; }
-  inline const vec3d& GetCenter() const {  return FCenter; }
+  inline const vec3d& GetNormal() const {  return Normal; }
+  inline const vec3d& GetCenter() const {  return Center; }
 
-  double DistanceTo(const vec3d& Crd) const {  return Crd.DotProd(FNormal) - FDistance;  }
+  double DistanceTo(const vec3d& Crd) const {  return Crd.DotProd(GetNormal()) - Distance;  }
   double DistanceTo(const TSAtom& a) const {  return DistanceTo(a.crd());  }
-  double Angle(const vec3d& A, const vec3d& B) const {  return acos(FNormal.CAngle(B-A))*180/M_PI;  }
-  double Angle(const vec3d& v) const {  return acos(FNormal.CAngle(v))*180/M_PI;  }
+  double Angle(const vec3d& A, const vec3d& B) const {  return acos(GetNormal().CAngle(B-A))*180/M_PI;  }
+  double Angle(const vec3d& v) const {  return acos(GetNormal().CAngle(v))*180/M_PI;  }
   double Angle(const class TSBond& B) const;
   double Angle(const TSPlane& P) const {  return Angle(P.GetNormal());  }
-  double GetD() const {  return FDistance; }
-  void SetD(double v) {  FDistance = v; }
+  double GetD() const {  return Distance;  }
   double GetZ(const double& X, const double& Y) const {
-    return (FNormal[2] == 0) ? 0.0 : (FNormal[0]*X + FNormal[1]*Y + FDistance)/FNormal[2];
+    return (GetNormal()[2] == 0) ? 0.0 : (GetNormal()[0]*X + GetNormal()[1]*Y + Distance)/GetNormal()[2];
   }
   size_t Count() const {  return Crds.Count();  }
   const TSAtom& GetAtom(size_t i) const {  return *Crds[i].GetA();  }
@@ -58,7 +62,7 @@ public:
   returns true if the function succeded (point cound > 2)
   */
   static bool CalcPlanes(const TTypeList< AnAssociation2<vec3d, double> >& Points, 
-    mat3d& params, vec3d& rms, vec3d& center);
+    mat3d& params, vec3d& rms, vec3d& center, bool sort=true);
   // a convinience function for non-weighted plane
   static bool CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms, vec3d& center);
   /* calculates the A,B and C for the best/worst plane Ax*By*Cz+D=0, D can be calculated as
@@ -114,7 +118,16 @@ public:
   };
 
   Def GetDef() const { return Def(*this);  }
+  /* identifies the transformation from plane where the first atom is in the AU */
+  const mat3d* GetEquiv() {  return Equiv;  }
+  /* must be called with object created by new, it wil be deleted in the destructor */
+  void SetEquiv(mat3d* m)  {
+    if( Equiv != NULL )  delete Equiv;
+    Equiv = m;
+  }
   size_t GetDefId() const {  return DefId; }
+  // not for external use
+  void _SetDefId(size_t id)  {  DefId = id; }
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);

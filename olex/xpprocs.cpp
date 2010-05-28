@@ -1504,7 +1504,7 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           break;
         tab[i/colCount][j*2] = Atoms[i+j]->Atom().GetLabel();
         double v = plane->DistanceTo(Atoms[i+j]->Atom());
-        tab[i/colCount][j*2+1] = olxstr::FormatFloat(3, v );
+        tab[i/colCount][j*2+1] = olxstr::FormatFloat(3, v);
       }
     }
     TStrList Output;
