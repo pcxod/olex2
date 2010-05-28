@@ -22,19 +22,22 @@ double TSPlane::CalcRMS(const TSAtomPList& atoms)  {
 }
 //..............................................................................
 void TSPlane::Init(const TTypeList< AnAssociation2<TSAtom*, double> >& atoms)  {
-  TTypeList< AnAssociation2<vec3d, double> > points;
+  TTypeList<AnAssociation2<vec3d, double> > points;
   points.SetCapacity(atoms.Count());
   for( size_t i=0; i < atoms.Count(); i++ )
-    points.AddNew( atoms[i].GetA()->crd(), atoms[i].GetB());
-  CalcPlane(points, FNormal, FCenter);
-  FDistance = FNormal.DotProd(FCenter)/FNormal.Length();
-  FNormal.Normalise();
-  Crds.Clear();
-  Crds.AddListC(atoms);
+    points.AddNew(atoms[i].GetA()->crd(), atoms[i].GetB());
+  _Init(points);
+  Crds.Clear().AddListC(atoms);
+}
+//..............................................................................
+void TSPlane::_Init(const TTypeList<AnAssociation2<vec3d, double> >& points)  {
+  CalcPlane(points, Normal, Center);
+  Distance = GetNormal().DotProd(Center)/GetNormal().Length();
+  Normal.Normalise();
 }
 //..............................................................................
 bool TSPlane::CalcPlanes(const TTypeList< AnAssociation2<vec3d, double> >& Points, 
-                        mat3d& Params, vec3d& rms, vec3d& center)  
+                        mat3d& Params, vec3d& rms, vec3d& center, bool sort)  
 {
   if( Points.Count() < 3 )  return false;
   center.Null();
@@ -64,16 +67,18 @@ bool TSPlane::CalcPlanes(const TTypeList< AnAssociation2<vec3d, double> >& Point
   m[2][1] = m[1][2];
   mat3d::EigenValues(m, Params.I());
   // optimised version will create slightly negative values!
-  for( int i=0; i < 3; i++ )
-    rms[i] = (m[i][i] < 0 ? 0 : sqrt(m[i][i]/Points.Count()));
-  bool swaps = true;
-  while( swaps )  {
-    swaps = false;
-    for( int i=0; i < 2; i++ )  {
-      if( rms[i] > rms[i+1] )  {
-        olx_swap(Params[i], Params[i+1]);
-        olx_swap(rms[i], rms[i+1]);
-        swaps = true;
+  if( sort )  {
+    for( int i=0; i < 3; i++ )
+      rms[i] = (m[i][i] < 0 ? 0 : sqrt(m[i][i]/Points.Count()));
+    bool swaps = true;
+    while( swaps )  {
+      swaps = false;
+      for( int i=0; i < 2; i++ )  {
+        if( rms[i] > rms[i+1] )  {
+          olx_swap(Params[i], Params[i+1]);
+          olx_swap(rms[i], rms[i+1]);
+          swaps = true;
+        }
       }
     }
   }
@@ -84,7 +89,7 @@ bool TSPlane::CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms, ve
   TTypeList< AnAssociation2<vec3d, double> > Points;
   Points.SetCapacity(atoms.Count());
   for( size_t i=0; i < atoms.Count(); i++ )
-    Points.AddNew( atoms[i]->crd(), 1.0 );
+    Points.AddNew(atoms[i]->crd(), 1.0);
   return CalcPlanes(Points, params, rms, center);
 }
 //..............................................................................
@@ -114,7 +119,7 @@ double TSPlane::CalcPlane(const TSAtomPList& atoms,
   TTypeList< AnAssociation2<vec3d, double> > Points;
   Points.SetCapacity(atoms.Count());
   for( size_t i=0; i < atoms.Count(); i++ )
-    Points.AddNew( atoms[i]->crd(), 1.0 );
+    Points.AddNew(atoms[i]->crd(), 1.0);
   return CalcPlane(Points, Params, center, type);
 }
 //..............................................................................
@@ -133,16 +138,14 @@ void TSPlane::ToDataItem(TDataItem& item) const {
 void TSPlane::FromDataItem(TDataItem& item)  {
   Crds.Clear();
   for( size_t i=0; i < item.ItemCount(); i++ )  {
-    Crds.AddNew( &Network->GetLattice().GetAtom(item.GetItem(i).GetRequiredField("atom_id").ToInt()), 
+    Crds.AddNew(&Network->GetLattice().GetAtom(item.GetItem(i).GetRequiredField("atom_id").ToInt()), 
       item.GetItem(i).GetValue().ToDouble());
   }
   TTypeList< AnAssociation2<vec3d, double> > points;
   points.SetCapacity(Crds.Count());
   for( size_t i=0; i < Crds.Count(); i++ )
     points.AddNew( Crds[i].GetA()->crd(), Crds[i].GetB());
-  CalcPlane(points, FNormal, FCenter);
-  FDistance = FNormal.DotProd(FCenter)/FNormal.Length();
-  FNormal.Normalise();
+  _Init(points);
 }
 //..............................................................................
 TSPlane::Def::Def(const TSPlane& plane) : atoms(plane.Count()), regular(plane.IsRegular())  {
@@ -163,6 +166,8 @@ TSPlane::Def::Def(const TSPlane& plane) : atoms(plane.Count()), regular(plane.Is
 //..............................................................................
 TSPlane* TSPlane::Def::FromAtomRegistry(AtomRegistry& ar, size_t def_id, TNetwork* parent, const smatd& matr) const {
   TTypeList<AnAssociation2<TSAtom*, double> > points;
+  mat3d equiv;
+  equiv.I();
   if( matr.IsFirst() )  {
     for( size_t i=0; i < atoms.Count(); i++ )  {
       TSAtom* sa = ar.Find(atoms[i].ref);
@@ -176,6 +181,8 @@ TSPlane* TSPlane::Def::FromAtomRegistry(AtomRegistry& ar, size_t def_id, TNetwor
       TSAtom::Ref ref = atoms[i].ref;
       smatd m = matr*smatd::FromId(ref.matrix_id, uc.GetMatrix(smatd::GetContainerId(ref.matrix_id)));
       uc.InitMatrixId(m);
+      if( i == 0 )
+        equiv = m.r;
       ref.matrix_id = m.GetId();
       TSAtom* sa = ar.Find(ref);
       if( sa == NULL )  return NULL;
@@ -185,5 +192,7 @@ TSPlane* TSPlane::Def::FromAtomRegistry(AtomRegistry& ar, size_t def_id, TNetwor
   TSPlane* p = new TSPlane(parent, def_id);
   p->Init(points);
   p->SetRegular(regular);
+  if( !equiv.IsI() )
+    p->SetEquiv( new mat3d(equiv));
   return p;
 }

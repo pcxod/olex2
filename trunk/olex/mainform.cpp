@@ -4290,7 +4290,6 @@ void TMainForm::ProcessHandler::Print(const olxstr& line)  {
 }
 void TMainForm::ProcessHandler::AfterPrint() {
   parent.FGlConsole->SetPrintMaterial(NULL);
-  TBasicApp::GetLog() << '\n';  // reset the color...
   parent.FXApp->Draw();
 }
 void TMainForm::ProcessHandler::OnWait() {

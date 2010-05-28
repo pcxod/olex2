@@ -305,6 +305,7 @@ void TLattice::InitBody()  {
 //..............................................................................
 void TLattice::Init()  {
   Clear(false);
+  ClearPlaneDefinitions();
   GetUnitCell().ClearEllipsoids();
   GetUnitCell().InitMatrices();
   Generated = false;
@@ -835,6 +836,7 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, int weightExtent)  {
       }
       else  {
         AddSPlane(rv.Add(Plane));
+        Plane->_SetDefId(PlaneDefs.Count()-1);
       }
     }
   }
