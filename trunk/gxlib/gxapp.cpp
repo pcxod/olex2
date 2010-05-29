@@ -2428,29 +2428,34 @@ void TGXApp::GetBonds(const olxstr& Bonds, TXBondPList& List)  {
 void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
   short DS = -1;
   if( Rad.Equalsi("sfil") ) {
-    DS = darPack;  
+    DS = darPack;
     if( Atoms == NULL )
-      TXAtom::DefRad(darPack); 
+      TXAtom::DefRad(darPack);
   }
-  else if( Rad.Equalsi("pers") ) {  
-    DS = darPers;  
+  else if( Rad.Equalsi("pers") ) {
+    DS = darPers;
     if( Atoms == NULL )
-      TXAtom::DefRad(darPers); 
+      TXAtom::DefRad(darPers);
   }
-  else if( Rad.Equalsi("isot") ) {  
-    DS = darIsot;  
+  else if( Rad.Equalsi("isot") ) {
+    DS = darIsot;
     if( Atoms == NULL )
-      TXAtom::DefRad(darIsot); 
+      TXAtom::DefRad(darIsot);
   }
-  else if( Rad.Equalsi("isoth") ) {  
-    DS = darIsotH;  
+  else if( Rad.Equalsi("isoth") ) {
+    DS = darIsotH;
     if( Atoms == NULL )
-      TXAtom::DefRad(darIsotH); 
+      TXAtom::DefRad(darIsotH);
   }
-  else if( Rad.Equalsi("bond") ) {  
-    DS = darBond;  
+  else if( Rad.Equalsi("bond") ) {
+    DS = darBond;
     if( Atoms == NULL )
-      TXAtom::DefRad(darIsot); 
+      TXAtom::DefRad(darIsot);
+  }
+  else if( Rad.Equalsi("vdw") ) {
+    DS = darVdW;
+    if( Atoms == NULL )
+      TXAtom::DefRad(darVdW);
   }
   if( DS == -1 )
     throw TInvalidArgumentException(__OlxSourceInfo, "rad");

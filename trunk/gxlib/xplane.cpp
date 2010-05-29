@@ -93,9 +93,9 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
 //..............................................................................
 bool TXPlane::Orient(TGlPrimitive& P)  {
   olx_gl::translate(FPlane->GetCenter());
-  olx_gl::normal(FPlane->GetNormal());
   if( Params().Count() == 16 )
     olx_gl::orient(Params().GetRawData());
+  olx_gl::normal(FPlane->GetNormal());
   return false;
 }
 //..............................................................................

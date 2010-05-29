@@ -363,7 +363,7 @@ void TXApp::RingContentFromStr(const olxstr& Condition, ElementPList& ringDesc) 
         toks.Add( symbol );
     }
     else
-      toks.Add( symbol );
+      toks.Add(symbol);
   }
 
   if( toks.Count() < 3 )  return;

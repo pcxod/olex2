@@ -189,7 +189,8 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
     fpAny|psFileLoaded, "Resets current structure for the solution with ShelX");
   xlib_InitMacro(Degen, "cs-clear selection", fpAny|psFileLoaded, "Prints how many symmetry operators put given atom to the same site");
   xlib_InitMacro(Close, EmptyString, fpNone|psFileLoaded, "Closes currently loaded file");
-  xlib_InitMacro(PiPi, "g-generates using found symmetry operations", fpNone|fpTwo|psFileLoaded, "Analysis of the pi-pi interactions (experimental).\
+  xlib_InitMacro(PiPi, "g-generates using found symmetry operations&;r-ring content [C6,NC5]",
+    fpNone|fpTwo|psFileLoaded, "Analysis of the pi-pi interactions (experimental).\
  The procedure searches for flat reqular C6 or NC5 rings and prints information for the ones where the\
  centroid-centroid distance is smaller than [4] A and the shift is smaller than [3] A. These two parameters\
  can be customised.");
@@ -3856,18 +3857,34 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   latt.Init();
   latt.GrowFragments(false, NULL);
 
-  ElementPList C6_ring(6), NC5_ring(6);
-  C6_ring[0] = &XElementLib::GetByIndex(iCarbonIndex);
-  NC5_ring[0] = &XElementLib::GetByIndex(iNitrogenIndex);
-  for( int i=1; i < 6; i++ )  {
-    C6_ring[i] = NC5_ring[i] = C6_ring[0];
+  TTypeList<ElementPList> ring_cont;
+  //C6_ring(6), NC5_ring(6);
+  ring_cont.AddNew(6);  // C6
+  ring_cont.AddNew(6);  // NC5
+  ring_cont[0][0] = &XElementLib::GetByIndex(iCarbonIndex);
+  ring_cont[1][0] = &XElementLib::GetByIndex(iNitrogenIndex);
+  for( int i=1; i < 6; i++ )
+    ring_cont[0][i] = ring_cont[1][i] = ring_cont[0][0];
+  olxstr str_rings = Options.FindValue('r');
+  if( !str_rings.IsEmpty() )  {
+    TStrList toks(str_rings, ',');
+    for( size_t i=0; i < toks.Count(); i++ )  {
+      ElementPList* rc = new ElementPList;
+      try {  xapp.RingContentFromStr(toks[i], *rc);  }
+      catch(...)  {
+        TBasicApp::GetLog().Error(olxstr("Invalid ring definition: ") << toks[i]);
+        delete rc;
+        continue;
+      }
+      ring_cont.Add(rc);
+    }
   }
   TTypeList<TSAtomPList> rings;
   for( size_t i=0; i < latt.FragmentCount(); i++ )  {
     TNetwork& frag = latt.GetFragment(i);
-    if( frag.NodeCount() < 6 )  continue;
-    frag.FindRings(C6_ring, rings);
-    frag.FindRings(NC5_ring, rings);
+    if( frag.NodeCount() < 5 )  continue;
+    for( size_t j=0; j < ring_cont.Count(); j++ )
+      frag.FindRings(ring_cont[j], rings);
   }
   size_t plance_cnt = 0;
   for( size_t i=0; i < rings.Count(); i++ )  {
