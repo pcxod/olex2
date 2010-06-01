@@ -7,7 +7,6 @@
 #include "wx/process.h"
 #include "wx/thread.h"
 
-#include "globj.h"
 #include "gxapp.h"
 #include "ctrls.h"
 #include "eprocess.h"

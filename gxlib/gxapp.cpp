@@ -13,7 +13,6 @@
 #include "xgrowpoint.h"
 #include "xgrid.h"
 
-#include "globj.h"
 #include "gxapp.h"
 #include "log.h"
 #include "xeval.h"
