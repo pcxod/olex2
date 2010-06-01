@@ -1,3 +1,4 @@
+/* Graphics extensions, (c) Oleg Dolomanov 2009 */
 #ifndef __olx_glutil_H
 #define __olx_glutil_H
 #include "threex3.h"
@@ -5,10 +6,9 @@
 
 BeginGlNamespace()
 
-struct GlTriangle {
-  TVector3<size_t> verts;
-};
-
+struct GlTriangle {  TVector3<size_t> verts;  };
+/* a class to build sphere by partitioning an octahedron. Alows custom masks to be aplied when
+rendering the sphere in OpenGL or other rendering engine. All methods and members can be made static... */
 class GlSphereEx {
   vec3d v_oh[6];
   GlTriangle t_oh[8];
@@ -29,24 +29,35 @@ public:
     t_oh[6].verts = vec3i(5, 4, 3);
     t_oh[7].verts = vec3i(5, 1, 4);
   }
-  void Generate(float rad, size_t ext, TTypeList<vec3f>& vo, TTypeList<GlTriangle>& to, TArrayList<vec3f>& normals) const {
+  /* rad - radius of the sphere, ext - the generation to generate, vo - vector output,
+  to - triangles output, normals - the normals output (one a vertex, not triangle). Since
+  there is a huge redundancy, a unique set of vecteces is generated and triangles
+  contain inly indeces to the verteces they are based on */
+  void Generate(float rad, size_t ext,
+    TTypeList<vec3f>& vo, TTypeList<GlTriangle>& to, TArrayList<vec3f>& normals) const
+  {
+    Generate(rad, ext, vo, to, &normals);
+  }
+  void Generate(float rad, size_t ext,
+    TTypeList<vec3f>& vo, TTypeList<GlTriangle>& to, TArrayList<vec3f>* _normals=NULL) const
+  {
     size_t nc = 8;
     for( size_t i=0; i < ext; i++ )
       nc += nc*3;
     
-    to.SetCapacity( nc+1 );
-    vo.SetCapacity( nc-1 );
+    to.SetCapacity(nc+1);
+    vo.SetCapacity(nc-1);
     for( int i=0; i < 6; i++ )
-      vo.AddNew( v_oh[i] );
+      vo.AddNew(v_oh[i]);
     for( int i=0; i < 8; i++ )
-      to.AddNew( t_oh[i] );
+      to.AddNew(t_oh[i]);
     for( size_t i=0; i < ext; i++ ) {
       const size_t t_cnt = to.Count();
       for( size_t j=0; j < t_cnt; j++ )  {
         GlTriangle& t = to[j];
-        vo.AddNew( (vo[t.verts[0]]+vo[t.verts[1]])/2 );
-        vo.AddNew( (vo[t.verts[0]]+vo[t.verts[2]])/2 );
-        vo.AddNew( (vo[t.verts[1]]+vo[t.verts[2]])/2 );
+        vo.AddNew((vo[t.verts[0]]+vo[t.verts[1]])/2);
+        vo.AddNew((vo[t.verts[0]]+vo[t.verts[2]])/2);
+        vo.AddNew((vo[t.verts[1]]+vo[t.verts[2]])/2);
         // new triangle
         GlTriangle& nt1 = to.AddNew();
         nt1.verts[0] = vo.Count()-3;  //12
@@ -67,14 +78,20 @@ public:
         t.verts[2] = vo.Count()-2;  // 13
       }
     }
-    // normalise the vertices
-    for( size_t i=0; i < vo.Count(); i++ )
-      vo[i].Normalise();
-    // initialise normals
-    normals.SetCount(vo.Count());
-    for( size_t i=0; i < vo.Count(); i++ )  {
-      normals[i] = vo[i];
-      vo[i] *= rad;
+    if( _normals != NULL )  {
+      TArrayList<vec3f>& normals = *_normals;
+      for( size_t i=0; i < vo.Count(); i++ )  // normalise the vertices
+        vo[i].Normalise();
+      // initialise normals
+      normals.SetCount(vo.Count());  
+      for( size_t i=0; i < vo.Count(); i++ )  {
+        normals[i] = vo[i];
+        vo[i] *= rad;
+      }
+    }
+    else  {
+      for( size_t i=0; i < vo.Count(); i++ )
+        vo[i].NormaliseTo(rad);
     }
   }
   void Render(float rad, int ext) const {
