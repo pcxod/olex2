@@ -6105,99 +6105,82 @@ struct SpAtom  {
   float r;
 };
 
-struct SpVec  {
-  vec3f p1, p2;
-  size_t sp_ind;
-};
-
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TTypeList<vec3f> verts;
   TTypeList<GlTriangle> triags;
-  GlSphereEx().Generate(1.0, 4, verts, triags);
+  GlSphereEx().Generate(1.0, 5, verts, triags);
   TXAtomPList atoms;
   if( !FindXAtoms(Cmds, atoms, true, true) )
     return;
 
-  double volume_p = 0, volume_a = 0;
-  TArrayList<SpVec> all_verts(atoms.Count()*verts.Count());
+  double volume_p = 0, volume_a = 0, area_p = 0;
   TArrayList<SpAtom> satoms(atoms.Count());
+  TArrayList<int8_t> t_map(atoms.Count()*triags.Count());
   for( size_t i=0; i < atoms.Count(); i++ )  {
     const double r = atoms[i]->Atom().GetType().r_vdw;
     satoms[i].center = atoms[i]->Atom().crd();
     satoms[i].r = r;
     volume_p += SphereVol(r);
-    const size_t off = verts.Count()*i;
-    for( size_t j=0; j < verts.Count(); j++ )  {
-      all_verts[j+off].p1 = atoms[i]->Atom().crd();
-      all_verts[j+off].p2 = verts[j]*r + atoms[i]->Atom().crd();
-      all_verts[j+off].sp_ind = i;
-    }
+    area_p += 4*M_PI*r*r;
+    const size_t off = i*triags.Count();
     for( size_t j=0; j < triags.Count(); j++ )  {
-      volume_a += olx_abs((all_verts[triags[j].verts[0]+off].p2-all_verts[triags[j].verts[0]+off].p1).DotProd(
-        (all_verts[triags[j].verts[1]+off].p2-all_verts[triags[j].verts[1]+off].p1).XProdVec(
-        (all_verts[triags[j].verts[2]+off].p2-all_verts[triags[j].verts[2]+off].p1))));
+      t_map[j+off] = 3;
+      volume_a += olx_abs((verts[triags[j].verts[0]]*r).DotProd(
+        (verts[triags[j].verts[1]]*r).XProdVec(
+        (verts[triags[j].verts[2]]*r))));
     }
   }
   volume_a /= 6;
-
   for( size_t i=0; i < atoms.Count(); i++ )  {
     const SpAtom& a1 = satoms[i];
     const float r_sq = a1.r*a1.r;
-    for( size_t j=i+1; j < atoms.Count(); j++ )  {
-      // do not intersect?
-      const float dist = a1.center.DistanceTo(satoms[j].center);
-      if( dist >= (a1.r+satoms[i].r) )  continue;
-      //intersect first and second
-      const size_t off = j*verts.Count();
-      for( size_t k=0; k < verts.Count(); k++ )  {
-        SpVec& p = all_verts[off+k];
-        const float a = (p.p2-p.p1).QLength();
-        if( a == 0 )  continue;
-        // completely inside
-        if( p.p2.QDistanceTo(a1.center) <= r_sq && p.p1.QDistanceTo(a1.center) <= r_sq )  {
-          p.p1 = p.p2;
-          continue;
-        }
-        const float b = 2*(p.p2-p.p1).DotProd(p.p1-a1.center);
-        const float c = a1.center.QLength() + p.p1.QLength() - 2*a1.center.DotProd(p.p1) - r_sq;
-        const float d = b*b - 4*a*c;
-        if( d < 0 )  // no intersection
-          continue;
-        const float sd = sqrt(d);
-        const float u1 = (-b + sd)/(2*a);
-        const float u2 = (-b - sd)/(2*a);
-        if( u1 >= 0 && u2 >= 0 )  {
-          //if( u1 <= 1.0 && u2 <= 1.0 )  // p1 and p2 are outside a1
-          p.p2 = p.p1+(p.p2-p.p1)*olx_min(u1,u2);
-        }
-        else if( u1 >= 0 && u2 <= 0 )  {
-          p.p1 = p.p1+(p.p2-p.p1)*u1;
-        }
-        else if( u1 <= 0 && u2 >=0 )  {
-          p.p1 = p.p1+(p.p2-p.p1)*u2;
-        }
+    for( size_t j=0; j < atoms.Count(); j++ )  {
+      if( i == j )  continue;
+      const SpAtom& a2 = satoms[j];
+      const float dist = a1.center.DistanceTo(a2.center);
+      if( dist >= (a1.r+a2.r) )  continue;
+      const size_t off = triags.Count()*j;
+      for( size_t k=0; k < triags.Count(); k++ )  {
+        if( t_map[k+off] == 0 )  continue;
+        const float d[] = {
+          (verts[triags[k].verts[0]]*a2.r+a2.center).QDistanceTo(a1.center),
+          (verts[triags[k].verts[1]]*a2.r+a2.center).QDistanceTo(a1.center),
+          (verts[triags[k].verts[2]]*a2.r+a2.center).QDistanceTo(a1.center)
+        };
+        if( d[0] < r_sq && d[1] < r_sq && d[2] < r_sq )
+          t_map[k+off] = 0;
+        else if( (d[0] < r_sq && (d[1] < r_sq || d[2] < r_sq)) || (d[1] < r_sq && d[2] < r_sq) )
+          t_map[k+off] = 1;
+        else if( d[0] < r_sq || d[1] < r_sq || d[2] < r_sq )
+          t_map[k+off] = 2;
+        
       }
     }
   }
-  double mol_vol = 0;
+  double mol_vol_x = 0, mol_vol_y = 0, mol_vol_z = 0, mol_area = 0;
   for( size_t i=0; i < atoms.Count(); i++ )  {
-    const size_t off = verts.Count()*i;
+    const size_t off = triags.Count()*i;
     for( size_t j=0; j < triags.Count(); j++ )  {
-      const vec3f& o = satoms[all_verts[triags[j].verts[0]+off].sp_ind].center;
-      mol_vol += olx_abs((all_verts[triags[j].verts[0]+off].p2-o).DotProd(
-        (all_verts[triags[j].verts[1]+off].p2-o).XProdVec(
-        (all_verts[triags[j].verts[2]+off].p2-o))));
-      mol_vol -= olx_abs((all_verts[triags[j].verts[0]+off].p1-o).DotProd(
-        (all_verts[triags[j].verts[1]+off].p1-o).XProdVec(
-        (all_verts[triags[j].verts[2]+off].p1-o))));
-
-      //mol_vol += olx_abs(all_verts[triags[j].verts[0]+off].p2.DotProd(
-      //  all_verts[triags[j].verts[1]+off].p2.XProdVec(all_verts[triags[j].verts[2]+off].p2)));
-      //mol_vol -= olx_abs(all_verts[triags[j].verts[0]+off].p1.DotProd(
-      //  all_verts[triags[j].verts[1]+off].p1.XProdVec(all_verts[triags[j].verts[2]+off].p1)));
+      if( t_map[off+j] == 0 )  continue;
+      const vec3f v1 = verts[triags[j].verts[0]]*satoms[i].r,
+                  v2 = verts[triags[j].verts[1]]*satoms[i].r,
+                  v3 = verts[triags[j].verts[2]]*satoms[i].r;
+      vec3f dp = (v2-v1).XProdVec(v3-v1);
+      const float area = 0.5*dp.Length();
+      mol_area += area;
+      const float dx21 = v2[0]-v1[0],
+        dx31 = v3[0]-v1[0],
+        dy21 = v2[1]-v1[1],
+        dy31 = v3[1]-v1[1],
+        dz21 = v2[2]-v1[2],
+        dz31 = v3[2]-v1[2];
+      const float m = 1.0f/2*(float)t_map[off+j]/3.0f;
+      mol_vol_z += m*(1./3*(v1[2]+v2[2]+v3[2])+satoms[i].center[2])*(dx21*dy31-dy21*dx31);
+      mol_vol_y += m*(1./3*(v1[1]+v2[1]+v3[1])+satoms[i].center[1])*(dz21*dx31-dx21*dz31);
+      mol_vol_x += m*(1./3*(v1[0]+v2[0]+v3[0])+satoms[i].center[0])*(dy21*dz31-dz21*dy31);
     }
   }
-  mol_vol /= 6;
+  TBasicApp::GetLog() << (olxstr("Molecular volume: ") << olxstr::FormatFloat(2, (mol_vol_x+mol_vol_y+mol_vol_z)/3) << '\n');
   return;
   //cif_dp::TCifDP cdp;
   //TStrList _sl;
