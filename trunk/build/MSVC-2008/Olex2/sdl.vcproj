@@ -1351,6 +1351,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\esphere.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\estack.h"
 				>
 			</File>
