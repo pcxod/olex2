@@ -132,8 +132,8 @@ void TXGrid::DrawQuad4(double A[4], double B[4], double C[4], double D[4])  {
 //----------------------------------------------------------------------------//
 TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
                      TGlMouseListener(xapp->GetRender(), collectionName),
-                     ExtMin(-0.5,-0.5,-0.5),
-                     ExtMax(1.5,1.5,1.5)
+                     ExtMin(-1,-1,-1),
+                     ExtMax(1,1,1)
 {
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
