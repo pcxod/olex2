@@ -191,7 +191,7 @@ template <class List> void GeneratePermutation(List& out, size_t perm)  {
   }
 }
 
-static void SinCos(const double ang, double *sina, double *cosa)  {
+template <typename float_type> static void SinCos(const float_type ang, float_type *sina, float_type *cosa)  {
 #if defined(__WIN32__) && !defined(_WIN64)
   _asm  {
     FLD  ang

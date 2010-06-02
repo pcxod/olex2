@@ -141,7 +141,7 @@
 #include "exparse/expbuilder.h"
 #include "encodings.h"
 #include "cifdp.h"
-#include "atomregistry.h"
+#include "glutil.h"
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
@@ -321,7 +321,7 @@ void TMainForm::funVVol(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(olxstr::FormatFloat(2, vi.total-vi.overlapping));
   TBasicApp::GetLog().Warning("Please note that this is a highly approximate procedure."
   " Volume of current fragment is calculated using a maximum two overlaping spheres," 
-  " to calculate packing indexes, use calcvoid instead");
+  " to calculate packing indexes, use calcvoid or MolInfo instead");
   
   TBasicApp::GetLog() << "Molecular volume (A): " << olxstr::FormatFloat(2, vi.total-vi.overlapping) << '\n';
   TBasicApp::GetLog() << "Overlapping volume (A): " << olxstr::FormatFloat(2, vi.overlapping) << '\n';
@@ -3793,7 +3793,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   for( int i=0; i < dim[0]; i++ )  {
     for( int j=0; j < dim[1]; j++ )  {
       for( int k=0; k < dim[2]; k++ )
-        FXApp->XGrid().SetValue(i, j, k, map.Data[i][j][k]*10/resolution);
+        FXApp->XGrid().SetValue(i, j, k, (float)map.Data[i][j][k]/resolution);
     }
   }
   FXApp->XGrid().AdjustMap();
@@ -4044,14 +4044,14 @@ void TMainForm::macIndividualise(TStrObjList &Cmds, const TParamList &Options, T
   TXAtomPList Atoms;
   FindXAtoms(Cmds, Atoms, false, false);
   for( size_t i=0; i < Atoms.Count(); i++ )
-    FXApp->Individualise( *Atoms[i] );
+    FXApp->Individualise(*Atoms[i]);
 }
 //..............................................................................
 void TMainForm::macCollectivise(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXAtomPList Atoms;
   FindXAtoms(Cmds, Atoms, false, false);
   for( size_t i=0; i < Atoms.Count(); i++ )
-    FXApp->Collectivise( *Atoms[i] );
+    FXApp->Collectivise(*Atoms[i]);
 }
 //..............................................................................
 void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -6099,6 +6099,7 @@ public:
   }
 };
 #endif
+
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   return;
   //cif_dp::TCifDP cdp;

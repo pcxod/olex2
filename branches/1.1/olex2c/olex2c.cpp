@@ -629,7 +629,7 @@ public:
     olxstr tmp = Cmds.Text(' ');
     tmp.Replace("\\n", "\n");
     if( !tmp.EndsWith('\n') )  tmp << '\n';
-    PythonExt::GetInstance()->RunPython(  tmp, false );
+    PythonExt::GetInstance()->RunPython(tmp);
   }
   //..............................................................................
   void macReload(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

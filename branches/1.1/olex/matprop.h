@@ -1,7 +1,6 @@
 #ifndef __olx_dlg_matprop_H
 #define __olx_dlg_matprop_H
 #include "ctrls.h"
-#include "globj.h"
 #include "gxapp.h"
 
 class TdlgMatProp: public TDialog, public AActionHandler  {

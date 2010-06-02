@@ -768,10 +768,10 @@ void TXAtom::CreateStaticPrimitives()  {
   DisksIndex = (uint8_t)FStaticObjects.IndexOf("Disks");
   CrossIndex = (uint8_t)FStaticObjects.IndexOf("Cross");
 //..............................
-  GlSphereEx gls;
   TTypeList<vec3f> vecs;
-  TTypeList<GlTriangle> triags;
+  TTypeList<IndexTriangle> triags;
   TArrayList<vec3f> norms;
+  GlSphereEx<float, OctahedronFP<vec3f> > gls;
   gls.Generate(1, olx_round(log(SphereQ)+0.5), vecs, triags, norms);
   if( OrtepSpheres == -1 )
     OrtepSpheres = olx_gl::genLists(9);
