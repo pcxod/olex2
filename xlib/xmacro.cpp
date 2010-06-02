@@ -1,7 +1,3 @@
-#ifdef __BORLANC__
-  #pragma hdrstop
-#endif
-
 #include "xmacro.h"
 #include "xapp.h"
 
@@ -32,6 +28,7 @@
 #include "chnexp.h"
 #include "maputil.h"
 #include "vcov.h"
+#include "esphere.h"
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
@@ -194,6 +191,9 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
  The procedure searches for flat reqular C6 or NC5 rings and prints information for the ones where the\
  centroid-centroid distance is smaller than [4] A and the shift is smaller than [3] A. These two parameters\
  can be customised.");
+  xlib_InitMacro(MolInfo, "g-generation of the triangluation [5]&;s-source ([o]ctahedron, (t)etrahedron)",
+    fpAny|psFileLoaded,
+    "Prints molecular volume, surface area and other information for visible/selected atoms");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -4032,3 +4032,97 @@ void XLibMacros::funCCrd(const TStrObjList& Params, TMacroError &E)  {
               olxstr::FormatFloat(3, ccenter[2]));
 }
 //..............................................................................
+void XLibMacros::macMolInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TSAtomPList atoms;
+  if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true, true) )
+    return;
+  typedef double float_type; // for generation >= 8, double ,ust be used...
+  typedef TVector3<float_type> vec_type;
+  TTypeList<TVector3<float_type> > verts;
+  TTypeList<IndexTriangle> triags;
+  const size_t generation = olx_min(10, Options.FindValue('g', '5').ToSizeT());
+  if( Options.FindValue('s') == 't' )
+    OlxSphere<float_type, TetrahedronFP<vec_type> >::Generate(1.0, generation, verts, triags);
+  else
+    OlxSphere<float_type, OctahedronFP<vec_type> >::Generate(1.0, generation, verts, triags);
+
+  float_type volume_p = 0, volume_a = 0, area_p = 0, area_a = 0;
+  TArrayList<int8_t> t_map(atoms.Count()*triags.Count());
+  for( size_t i=0; i < atoms.Count(); i++ )  {
+    const float_type r = (float_type)atoms[i]->GetType().r_vdw;
+    volume_p += (float_type)SphereVol(r);
+    area_p += (float_type)(4*M_PI*r*r);
+    const size_t off = i*triags.Count();
+    for( size_t j=0; j < triags.Count(); j++ )  {
+      t_map[j+off] = 3;
+      volume_a += olx_abs((verts[triags[j].vertices[0]]*r).DotProd(
+        (verts[triags[j].vertices[1]]*r).XProdVec(
+        (verts[triags[j].vertices[2]]*r))));
+      area_a += ((verts[triags[j].vertices[1]]-verts[triags[j].vertices[0]])*r).XProdVec(
+        ((verts[triags[j].vertices[2]]-verts[triags[j].vertices[0]])*r)).Length();
+    }
+  }
+  volume_a /= 6;
+  area_a /= 2;
+  for( size_t i=0; i < atoms.Count(); i++ )  {
+    const TSAtom& a1 = *atoms[i];
+    const float_type r_sq = (float_type)olx_sqr(a1.GetType().r_vdw);
+    const vec_type center1 = a1.crd();
+    for( size_t j=0; j < atoms.Count(); j++ )  {
+      if( i == j )  continue;
+      const TSAtom& a2 = *atoms[j];
+      const float_type dist = (float_type)a1.crd().DistanceTo(a2.crd());
+      if( dist >= (a1.GetType().r_vdw+a2.GetType().r_vdw) )  continue;
+      const float_type r = (float_type)a2.GetType().r_vdw;
+      const vec_type center2 = a2.crd();
+      const size_t off = triags.Count()*j;
+      for( size_t k=0; k < triags.Count(); k++ )  {
+        if( t_map[k+off] == 0 )  continue;
+        const float_type d[] = {
+          (verts[triags[k].vertices[0]]*r+center2).QDistanceTo(center1),
+          (verts[triags[k].vertices[1]]*r+center2).QDistanceTo(center1),
+          (verts[triags[k].vertices[2]]*r+center2).QDistanceTo(center1)
+        };
+        if( d[0] < r_sq && d[1] < r_sq && d[2] < r_sq )
+          t_map[k+off] = 0;
+        else if( (d[0] < r_sq && (d[1] < r_sq || d[2] < r_sq)) || (d[1] < r_sq && d[2] < r_sq) )
+          t_map[k+off] = 1;
+        else if( d[0] < r_sq || d[1] < r_sq || d[2] < r_sq )
+          t_map[k+off] = 2;
+        
+      }
+    }
+  }
+  float_type mol_vol_x = 0, mol_vol_y = 0, mol_vol_z = 0, mol_area = 0;
+  for( size_t i=0; i < atoms.Count(); i++ )  {
+    const size_t off = triags.Count()*i;
+    const float_type r = (float_type)atoms[i]->GetType().r_vdw;
+    const vec_type center = atoms[i]->crd();
+    for( size_t j=0; j < triags.Count(); j++ )  {
+      if( t_map[off+j] == 0 )  continue;
+      const vec_type
+        v1 = verts[triags[j].vertices[0]]*r,
+        v2 = verts[triags[j].vertices[1]]*r,
+        v3 = verts[triags[j].vertices[2]]*r;
+      vec_type dp = (v2-v1).XProdVec(v3-v1);
+      const float_type area = (float_type)0.5*dp.Length();
+      mol_area += area;
+      const float_type dx21 = v2[0]-v1[0],
+        dx31 = v3[0]-v1[0],
+        dy21 = v2[1]-v1[1],
+        dy31 = v3[1]-v1[1],
+        dz21 = v2[2]-v1[2],
+        dz31 = v3[2]-v1[2];
+      const float_type m = 1.0f/2*(float_type)t_map[off+j]/3.0f;
+      mol_vol_z += (float_type)(m*(1./3*(v1[2]+v2[2]+v3[2])+center[2])*(dx21*dy31-dy21*dx31));
+      mol_vol_y += (float_type)(m*(1./3*(v1[1]+v2[1]+v3[1])+center[1])*(dz21*dx31-dx21*dz31));
+      mol_vol_x += (float_type)(m*(1./3*(v1[0]+v2[0]+v3[0])+center[0])*(dy21*dz31-dz21*dy31));
+    }
+  }
+  TBasicApp::GetLog() << (olxstr("Volume of all atoms (exact), A^3: ") << olxstr::FormatFloat(2, volume_p) << '\n');
+  TBasicApp::GetLog() << (olxstr("Volume of all atoms (triangulated), A^3: ") << olxstr::FormatFloat(2, volume_a) << '\n');
+  TBasicApp::GetLog() << (olxstr("Surface area of all atoms (exact), A^2: ") << olxstr::FormatFloat(2, area_p) << '\n');
+  TBasicApp::GetLog() << (olxstr("Surface area of all atoms (triangulated), A^2: ") << olxstr::FormatFloat(2, area_a) << '\n');
+  TBasicApp::GetLog() << (olxstr("Surface area, A^2: ") << olxstr::FormatFloat(2, mol_area) << '\n');
+  TBasicApp::GetLog() << (olxstr("Molecular volume, A^3: ") << olxstr::FormatFloat(2, (mol_vol_x+mol_vol_y+mol_vol_z)/3) << '\n');
+}

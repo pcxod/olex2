@@ -86,6 +86,7 @@ class XLibMacros  {
 
   static DefMacro(Close)
   static DefMacro(Omit)
+  static DefMacro(MolInfo)
   static DefFunc(Lst)
 
   static DefFunc(FileName)
