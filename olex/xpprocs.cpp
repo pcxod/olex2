@@ -321,7 +321,7 @@ void TMainForm::funVVol(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(olxstr::FormatFloat(2, vi.total-vi.overlapping));
   TBasicApp::GetLog().Warning("Please note that this is a highly approximate procedure."
   " Volume of current fragment is calculated using a maximum two overlaping spheres," 
-  " to calculate packing indexes, use calcvoid instead");
+  " to calculate packing indexes, use calcvoid or MolInfo instead");
   
   TBasicApp::GetLog() << "Molecular volume (A): " << olxstr::FormatFloat(2, vi.total-vi.overlapping) << '\n';
   TBasicApp::GetLog() << "Overlapping volume (A): " << olxstr::FormatFloat(2, vi.overlapping) << '\n';
@@ -3793,7 +3793,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   for( int i=0; i < dim[0]; i++ )  {
     for( int j=0; j < dim[1]; j++ )  {
       for( int k=0; k < dim[2]; k++ )
-        FXApp->XGrid().SetValue(i, j, k, map.Data[i][j][k]*10/resolution);
+        FXApp->XGrid().SetValue(i, j, k, (float)map.Data[i][j][k]/resolution);
     }
   }
   FXApp->XGrid().AdjustMap();
