@@ -18,20 +18,18 @@ else:
   def_tool = 'gnu'
 variables = Variables()
 variables.AddVariables(
-    EnumVariable('TOOL', 'The tool to use', def_tool, allowed_values=('vc8', 'vc9', 'gnu', 'intel'))
+    EnumVariable('TOOL', 'The tool to use', def_tool, allowed_values=('vc8', 'vc9', 'vc10', 'gnu', 'intel'))
     )
-env = Environment(ENV = os.environ, variables = variables,\
-  TARGET_ARCH=env_arch, MSVS_VERSION='9.0')
+
+env = Environment(ENV=os.environ, variables=variables, TARGET_ARCH=env_arch)
 Help(variables.GenerateHelpText(env))
 
 if env['TOOL'] == 'vc8':
-  env["MSVS"] = {'VERSION': '8.0'}
-  env['MSVS_VERSION'] = '8.0'
-  Tool('msvc')(env)
+  env = Environment(ENV=os.environ, variables=variables, TARGET_ARCH=env_arch, MSVS_VERSION='8.0')
 elif env['TOOL'] == 'vc9':
-  env['MSVS'] = {'VERSION': "9.0"} 
-  env['MSVS_VERSION'] = '9.0'
-  Tool('msvc')(env)
+  env = Environment(ENV=os.environ, variables=variables, TARGET_ARCH=env_arch, MSVS_VERSION='9.0')
+elif env['TOOL'] == 'vc10':
+  env = Environment(ENV=os.environ, variables=variables, TARGET_ARCH=env_arch, MSVS_VERSION='10.0')
 elif env['TOOL'] == 'gnu':
   Tool('g++')(env)
 elif env['TOOL'] == 'intel':
@@ -84,38 +82,8 @@ env.Append(LINKFLAGS=['/ENTRY:wWinMainCRTStartup',
                       '/OPT:ICF'])
 if architecture == '64bit':
   env.Append(LINKFLAGS=['/MACHINE:X64'])
-  lib_64 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib\x64',
-            r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\atlmfc\lib\amd64',
-            r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\lib\amd64']
-  for p in lib_64:
-    if os.path.exists(p):
-      env.Append(LIBPATH=[p])  
-  inc_64 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Include',
-            r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include',
-            r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\atlmfc\include']
-  for p in inc_64:
-    if os.path.exists(p):
-      env.Append(CPPPATH=[p])
-  env['ENV']['PATH'] = r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\bin\x64' +\
-                       os.pathsep + r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\amd64' +\
-                       os.pathsep + env['ENV']['PATH']
 else:
   env.Append(LINKFLAGS=['/MACHINE:X86'])
-  lib_32 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib',
-            r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\atlmfc\lib',
-            r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\lib']
-  for p in lib_32:
-    if os.path.exists(p):
-      env.Append(LIBPATH=[p])  
-  inc_32 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Include',
-            r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include',
-            r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\atlmfc\include']
-  for p in inc_32:
-    if os.path.exists(p):
-      env.Append(CPPPATH=[p])
-  env['ENV']['PATH'] = r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\bin' +\
-                       os.pathsep + r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin' +\
-                       os.pathsep + env['ENV']['PATH']
 
 #sdl
 sdl_files = fileListToStringList('../sdl', sdl) + fileListToStringList('../sdl/smart', sdl_smart) +\
