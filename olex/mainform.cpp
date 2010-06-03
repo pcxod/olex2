@@ -899,11 +899,11 @@ separated values of Atom Type and radius, an entry a line");
   this_InitMacroD(CalcPatt, EmptyString, fpNone|psFileLoaded,
 "Calculates patterson map");
   this_InitMacroD(CalcFourier, "fcf-reads structure factors from a fcf file&;diff-calculates\
-  difference map&;abs-calculates modulus of the electron density&;tomc-calculates 2Fo-Fc\
-  map&;obs-calculates observer emap&;calc-calculates calculated emap&;scale-scale to use\
-  for difference maps, currently available simple(s) sum(Fo^2)/sum(Fc^2) for Fo^2/sigme > 3)\
-  and regression(r)&;r-resolution in Angstrems&;i-integrates the map&;m-mask the structure", fpNone|psFileLoaded,
-"Calculates fourier map");
+ difference map&;tomc-calculates 2Fo-Fc map&;obs-calculates observed map&;calc-calculates\
+ calculated emap&;scale-scale to use for difference maps, currently available simple(s)\
+ sum(Fo^2)/sum(Fc^2)) and regression(r)&;r-resolution in\
+ Angstrems&;i-integrates the map&;m-mask the structure", fpNone|psFileLoaded,
+ "Calculates fourier map");
   this_InitMacroD(TestBinding, EmptyString, fpAny, "Internal tests");
   this_InitMacroD(ShowSymm, EmptyString, fpNone|fpOne, "Shows symmetry elements of the unitcell");
   this_InitMacroD(Textm, EmptyString, fpOne, "Runs subsequent commands stored in a text file");
@@ -919,7 +919,7 @@ separated values of Atom Type and radius, an entry a line");
  atoms provided) or number_of_groups and groups following each another (or selection)");
   this_InitMacroD(RESI, "a-alias", (fpAny^fpNone)|psFileLoaded, "Creates residue with given class name and optionally number and adds selected\
  or provided atoms into the residue. If provided residue class name is 'none', provided atoms are removed from their residues");
-  this_InitMacroD(WBox, "w-use atomic weights instead of unit weights for atoms&;s-create separate boxes for fragments", 
+  this_InitMacroD(WBox, "w-use atomic mass instead of unit weights for atoms&;s-create separate boxes for fragments", 
 	(fpAny)|psFileLoaded, "Calculates wrapping box around provided box using the set of best, intermidiate and worst planes");
   this_InitMacroD(Center, "z-also recalculates the scene zoom", 
 	(fpAny)|psFileLoaded, "Sets the centre of rotation to given point");
