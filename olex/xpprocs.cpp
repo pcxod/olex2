@@ -3701,8 +3701,8 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   resolution = 1./resolution;
   const vec3i dim(
     (int)(au.Axes()[0].GetV()*resolution),
-		(int)(au.Axes()[1].GetV()*resolution),
-		(int)(au.Axes()[2].GetV()*resolution));
+    (int)(au.Axes()[1].GetV()*resolution),
+    (int)(au.Axes()[2].GetV()*resolution));
   const double mapVol = dim.Prod();
   const double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   const int minLevel = olx_round(pow(6*mapVol*3/(4*M_PI*vol), 1./3));
@@ -4413,7 +4413,11 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       // check if the associated HKL file has the same name and location
       olxstr hkl_fn = TEFile::OSPath(FXApp->XFile().GetRM().GetHKLSource()).DeleteSequencesOf(TEFile::GetPathDelimeter()); 
       olxstr src_fn = TEFile::OSPath(FXApp->XFile().LastLoader()->GetFileName()).DeleteSequencesOf(TEFile::GetPathDelimeter()); 
+#ifdef __WIN32__
+      if( !TEFile::ChangeFileExt(hkl_fn, EmptyString).Equalsi(TEFile::ChangeFileExt(src_fn, EmptyString)) )  {
+#else
       if( TEFile::ChangeFileExt(hkl_fn, EmptyString) != TEFile::ChangeFileExt(src_fn, EmptyString) )  {
+#endif
         TBasicApp::GetLog() << "Note that the associated HKL file differs from the loaded file name:\n";
         TBasicApp::GetLog() << (olxstr("SRC: ") << src_fn << '\n');
         TBasicApp::GetLog() << (olxstr("HKL: ") << hkl_fn << '\n');
@@ -7018,7 +7022,7 @@ class MTTestTh : public AOlxThread  {
   compf cf_res;
 public:
   MTTestTh() {  Detached = false;  }
-	int Run()  {
+  int Run()  {
 #ifdef _DEBUG
     for( size_t i=0; i < 10000; i++ )  {
 #else
@@ -7034,35 +7038,35 @@ public:
         cf_res -= 1;
       }
     }
-	  return 0;
-	}
-	DefPropC(olxcstr, msg);
+    return 0;
+  }
+  DefPropC(olxcstr, msg);
 };
 
 void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   uint64_t times[8], min_t;
-	MTTestTh threads[8];
-	size_t max_th = 1;
-	memset(times, 0, sizeof(uint64_t)*8);
+  MTTestTh threads[8];
+  size_t max_th = 1;
+  memset(times, 0, sizeof(uint64_t)*8);
   TBasicApp::GetLog() << ("Testing multithreading compatibility...\n");
   for( size_t i=1; i <= 8; i++ )  {
-	  uint64_t st = TETime::msNow();
-		for( size_t j=0; j < i; j++ )
-		  threads[j].Start();
-	  for( size_t j=0; j < i; j++ )
-		  threads[j].Join();
-		times[i-1] = TETime::msNow() - st;
+    uint64_t st = TETime::msNow();
+    for( size_t j=0; j < i; j++ )
+      threads[j].Start();
+   for( size_t j=0; j < i; j++ )
+      threads[j].Join();
+    times[i-1] = TETime::msNow() - st;
     if( i == 1 )
       min_t = times[0];
     else if( times[i-1] < min_t )
       min_t = times[i-1];
     TBasicApp::GetLog() << ( olxstr(i) << " threads " << times[i-1] << " ms\n");
-		TBasicApp::GetInstance().Update();
-		if( i > 1 && ((double)times[i-1]/min_t) > 1.4 )  {
-		  max_th = i-1;
-			break;
-		}
-	}
+    TBasicApp::GetInstance().Update();
+    if( i > 1 && ((double)times[i-1]/min_t) > 1.4 )  {
+      max_th = i-1;
+      break;
+    }
+  }
   TBasicApp::GetLog() << ( olxstr("Maximum number of threads is set to ") << max_th << '\n' );
   FXApp->SetMaxThreadCount(max_th);
 }
@@ -7314,8 +7318,8 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
   const double resolution = 5;
   const vec3i dim(
     (int)(au.Axes()[0].GetV()*resolution),
-		(int)(au.Axes()[1].GetV()*resolution),
-		(int)(au.Axes()[2].GetV()*resolution));
+    (int)(au.Axes()[1].GetV()*resolution),
+    (int)(au.Axes()[2].GetV()*resolution));
   FXApp->XGrid().InitGrid(dim);
   BVFourier::MapInfo mi = BVFourier::CalcPatt(P1SF, FXApp->XGrid().Data()->Data, dim, vol);
   FXApp->XGrid().AdjustMap();
@@ -7402,8 +7406,8 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
 // init map
   const vec3i dim(
     (int)(au.Axes()[0].GetV()*resolution),
-		(int)(au.Axes()[1].GetV()*resolution),
-		(int)(au.Axes()[2].GetV()*resolution));
+    (int)(au.Axes()[1].GetV()*resolution),
+    (int)(au.Axes()[2].GetV()*resolution));
   TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
   mi = BVFourier::CalcEDM(P1SF, map.Data, dim, vol);
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -8493,14 +8497,14 @@ void main_CreateWBox(TGXApp& app, const TSAtomPList& atoms, const TTypeList< AnA
       }
     }
   }
-	if( print_info )  {
+  if( print_info )  {
     app.GetLog() << (olxstr("Wrapping box dimension: ") << 
       olxstr::FormatFloat(3, maxd[0]-mind[0]) << " x "  <<
       olxstr::FormatFloat(3, maxd[1]-mind[1]) << " x "  <<
       olxstr::FormatFloat(3, maxd[2]-mind[2]) << " A\n");
     app.GetLog() << (olxstr("Wrapping box volume: ") << 
       olxstr::FormatFloat(3, (maxd[0]-mind[0])*(maxd[1]-mind[1])*(maxd[2]-mind[2])) << " A^3\n");
-	}
+  }
   vec3d nx = normals[0]*mind1[0];
   vec3d px = normals[0]*maxd1[0];
   vec3d ny = normals[1]*mind1[1];
@@ -8530,7 +8534,7 @@ void main_CreateWBox(TGXApp& app, const TSAtomPList& atoms, const TTypeList< AnA
       poly_n[i] = norm;
   }
   for( int i=0; i < 24; i++ )
-		poly_d[i] = center + faces[i];
+    poly_d[i] = center + faces[i];
   TDUserObj* uo = new TDUserObj(app.GetRender(), sgloQuads, olxstr("wbox") << obj_cnt++);
   uo->SetVertices(&poly_d);
   uo->SetNormals(&poly_n);
@@ -8546,25 +8550,25 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( Cmds.Count() == 1 && TEFile::Exists(Cmds[0]) )
     radii = TXApp::ReadVdWRadii(Cmds[0]);
   TXApp::PrintVdWRadii(radii, au.GetContentList());
-	TSAtomPList satoms;
-	const bool use_aw = Options.Contains('w');
+  TSAtomPList satoms;
+  const bool use_aw = Options.Contains('w');
   if( Options.Contains('s') )  {
-  	TLattice& latt = FXApp->XFile().GetLattice();
-		for( size_t i=0; i < latt.FragmentCount(); i++ )  {
-		  satoms.Clear();
-			TNetwork& f = latt.GetFragment(i);
-			for( size_t j=0; j < f.NodeCount(); j++ )  {
-			  if( f.Node(j).IsDeleted() )  continue;
-				satoms.Add(f.Node(j));
-			}
-			if( satoms.Count() < 3 )  continue;
+    TLattice& latt = FXApp->XFile().GetLattice();
+    for( size_t i=0; i < latt.FragmentCount(); i++ )  {
+      satoms.Clear();
+      TNetwork& f = latt.GetFragment(i);
+      for( size_t j=0; j < f.NodeCount(); j++ )  {
+        if( f.Node(j).IsDeleted() )  continue;
+        satoms.Add(f.Node(j));
+      }
+      if( satoms.Count() < 3 )  continue;
   
-			TTypeList< AnAssociation2<vec3d, double> > crds;
+      TTypeList< AnAssociation2<vec3d, double> > crds;
       TArrayList<double> all_radii(satoms.Count());
       for( size_t j=0; j < satoms.Count(); j++ )  {
-	      if( use_aw )
+        if( use_aw )
           crds.AddNew(satoms[j]->crd(), satoms[j]->GetType().GetMr());
-		    else
+        else
           crds.AddNew( satoms[j]->crd(), 1.0 );
         const size_t ri = radii.IndexOf(&satoms[j]->GetType());
         if( ri == InvalidIndex )
@@ -8572,10 +8576,10 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         else
           all_radii[j] = radii.GetValue(ri);
       }
-			main_CreateWBox(*FXApp, satoms, crds, all_radii, false);
-		}
-	}
-	else  {
+      main_CreateWBox(*FXApp, satoms, crds, all_radii, false);
+    }
+  }
+  else  {
     TXAtomPList xatoms;
     if( !FindXAtoms(Cmds, xatoms, true, true) || xatoms.Count() < 3 )  {
       E.ProcessingError(__OlxSrcInfo, "no enough atoms provided");
@@ -8584,9 +8588,9 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TTypeList< AnAssociation2<vec3d, double> > crds;
     TArrayList<double> all_radii(xatoms.Count());
     for( size_t i=0; i < xatoms.Count(); i++ )  {
-	    if( use_aw )
+      if( use_aw )
         crds.AddNew(xatoms[i]->Atom().crd(), xatoms[i]->Atom().GetType().GetMr());
-		  else
+      else
         crds.AddNew( xatoms[i]->Atom().crd(), 1.0 );
       const size_t ri = radii.IndexOf(&xatoms[i]->Atom().GetType());
       if( ri == InvalidIndex )
@@ -8595,8 +8599,8 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         all_radii[i] = radii.GetValue(ri);
     }
     TListCaster::POP(xatoms, satoms);
-	  main_CreateWBox(*FXApp, satoms, crds, all_radii, true);
-	}
+    main_CreateWBox(*FXApp, satoms, crds, all_radii, true);
+  }
 }
 //..............................................................................
 void TMainForm::macCenter(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -8739,7 +8743,7 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       FXApp->Quality(qaMedium);
   }
 
-  FXApp->GetRender().OnDraw->SetEnabled( true );
+  FXApp->GetRender().OnDraw->SetEnabled(true);
   FGlConsole->Visible(true);
   // end drawing etc
   FXApp->GetRender().Resize(orgWidth, orgHeight); 

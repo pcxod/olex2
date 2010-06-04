@@ -336,6 +336,24 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
   return Py_BuildValue("b", true);
 }
 //..............................................................................
+PyObject* pyGetVdWRadii(PyObject* self, PyObject* args)  {
+  ElementRadii radii;
+  olxstr radii_fn;
+  if( !PythonExt::ParseTuple(args, "|w", &radii_fn) )
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "|w");
+  TXApp::ReadVdWRadii(radii_fn);
+  ContentList content = TXApp::GetInstance().XFile().GetAsymmUnit().GetContentList();
+  PyObject* dict = PyDict_New();
+  for( size_t i=0; i < content.Count(); i++ )  {
+    const size_t ei = radii.IndexOf(&content[i].element);
+    const double r = (ei == InvalidIndex ? content[i].element.r_vdw : radii.GetValue(ei));
+    PyDict_SetItem(dict,
+      PythonExt::BuildString(content[i].element.symbol),
+      Py_BuildValue("f", r));
+  }
+  return dict;
+}
+  //..............................................................................
 static PyMethodDef CORE_Methods[] = {
   {"UpdateRepository", pyUpdateRepository, METH_VARARGS, "Updates specified local repository from the http one. Takes the following arguments: \
 the index file name, destination folder (relative to the basedir)"},
@@ -357,6 +375,7 @@ the index file name, destination folder (relative to the basedir)"},
   {"GetRefinementModel", pyRefModel, METH_VARARGS, "Returns refinement model as python object"},
   {"GetHklStat", pyHklStat, METH_VARARGS, "Returns HKL statistics"},
   {"SGInfo", pySGInfo, METH_VARARGS, "Returns current/give space group information"},
+  {"GetVdWRadii", pyGetVdWRadii, METH_VARARGS, "Returns Van der Waals radii for elments of current model"},
   {NULL, NULL, 0, NULL}
    };
 
