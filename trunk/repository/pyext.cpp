@@ -511,13 +511,14 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...)  {
     va_end(argptr);
     return false;
   }
-  size_t slen = olxstr::o_strlen(format);
-  size_t tlen = PyTuple_Size(tuple), tind = InvalidIndex;
-  bool proceedOptional = false;
+  const size_t slen = olxstr::o_strlen(format),
+    tlen = PyTuple_Size(tuple);
+  size_t tind = InvalidIndex;
+  bool proceedOptional = (slen > 0 && (format[0] == '|')) ? true : false;
   for( size_t i=0; i < slen; i++ )  {
     if( ++tind >= tlen )  {
       if( !proceedOptional )  {
-        va_end(argptr);       
+        va_end(argptr);
         return false;
       }
         //throw TInvalidArgumentException(__OlxSourceInfo, "tuple has not enough items");
