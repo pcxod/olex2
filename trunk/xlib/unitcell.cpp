@@ -251,7 +251,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           Atoms[ind]->SetDeleted(true);
           break;
         }
-        if( Atoms[i]->GetPart() != Atoms[ind]->GetPart() )  continue;
+        if( Atoms[i]->GetPart() != Atoms[ind]->GetPart() || Atoms[i]->GetPart() < 0 )  continue;
         Atoms[i]->SetDeleted(true);
       }
       else  {

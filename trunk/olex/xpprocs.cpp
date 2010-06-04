@@ -1165,25 +1165,29 @@ void TMainForm::macName(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   bool changeSuffix = Options.Contains("s");
   if( changeSuffix )  {
     TXAtomPList xatoms;
-    FXApp->FindXAtoms( Cmds.Text(' '), xatoms, !Options.Contains("cs") );
-    if( xatoms.Count() != 0 )
-      FUndoStack->Push( FXApp->ChangeSuffix(xatoms, Options.FindValue("s"), checkLabels) );
+    if( FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs")) )
+      FUndoStack->Push(FXApp->ChangeSuffix(xatoms, Options.FindValue("s"), checkLabels));
   }
   else  {
     bool processed = false;
     if( Cmds.Count() == 1 )  { // bug #49
       const size_t spi = Cmds[0].IndexOf(' ');
       if( spi != InvalidIndex )  {
-        FUndoStack->Push( FXApp->Name(Cmds[0].SubStringTo(spi), Cmds[0].SubStringFrom(spi+1), checkLabels, !Options.Contains("cs")) );
-        processed = true;
+        FUndoStack->Push(
+          FXApp->Name(Cmds[0].SubStringTo(spi), Cmds[0].SubStringFrom(spi+1), checkLabels,
+          !Options.Contains("cs"))
+        );
       }
+      else
+        FUndoStack->Push(FXApp->Name("sel", Cmds[0], checkLabels, !Options.Contains("cs")));
+      processed = true;
     }
     else if( Cmds.Count() == 2 )  {
-      FUndoStack->Push( FXApp->Name(Cmds[0], Cmds[1], checkLabels, !Options.Contains("cs")) );
+      FUndoStack->Push(FXApp->Name(Cmds[0], Cmds[1], checkLabels, !Options.Contains("cs")));
       processed = true;
     }
     if( !processed )  {
-      Error.ProcessingError(__OlxSrcInfo, olxstr("invalid syntax: ") << Cmds.Text(' ') );
+      Error.ProcessingError(__OlxSrcInfo, olxstr("invalid syntax: ") << Cmds.Text(' '));
     }
   }
 }
