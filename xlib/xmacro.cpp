@@ -32,6 +32,8 @@
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
+#define xlib_InitMacroA(macroName, amacroName, validOptions, argc, desc)\
+  lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #amacroName, (validOptions), argc, desc))
 #define xlib_InitFunc(funcName, argc, desc) \
   lib.RegisterStaticFunction( new TStaticFunction(&XLibMacros::fun##funcName, #funcName, argc, desc))
 
@@ -185,7 +187,7 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(Reset, "s-space group&;c-content&;f-alternative file name&;rem-exclude remarks", 
     fpAny|psFileLoaded, "Resets current structure for the solution with ShelX");
   xlib_InitMacro(Degen, "cs-clear selection", fpAny|psFileLoaded, "Prints how many symmetry operators put given atom to the same site");
-  xlib_InitMacro(Close, EmptyString, fpNone|psFileLoaded, "Closes currently loaded file");
+  xlib_InitMacroA(Close, @Close, EmptyString, fpNone|psFileLoaded, "Closes currently loaded file");
   xlib_InitMacro(PiPi, "g-generates using found symmetry operations&;r-ring content [C6,NC5]",
     fpNone|fpTwo|psFileLoaded, "Analysis of the pi-pi interactions (experimental).\
  The procedure searches for flat reqular C6 or NC5 rings and prints information for the ones where the\
