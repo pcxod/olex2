@@ -1849,14 +1849,13 @@ void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
       Tmp << 'S';
       break;
   }
-  Tmp << XA->Atom().GetLabel().SubStringFrom(XA->Atom().GetType().symbol.Length());
   ProcessMacro(Tmp);
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
-  if( !XA )  return;
+  if( XA == NULL )  return;
   olxstr Tmp = "name ";
   if( XA->IsSelected() )  
     Tmp << "sel";
@@ -1866,7 +1865,6 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
   TPTableDlg *Dlg = new TPTableDlg(this);
   if( Dlg->ShowModal() == wxID_OK )  {
     Tmp << Dlg->GetSelected()->symbol;
-    Tmp << XA->Atom().GetLabel().SubStringFrom(XA->Atom().GetType().symbol.Length());
     ProcessMacro(Tmp);
   }
   Dlg->Destroy();
