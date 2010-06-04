@@ -695,7 +695,7 @@ void TLattice::Grow(const smatd& transform)  {
   Atoms.SetCapacity(Atoms.Count() + ac);
   for( size_t i=0; i < ac; i++ )  {
     TCAtom& ca = au.GetAtom(i);
-    if( ca.IsAvailable() )  continue;
+    if( !ca.IsAvailable() )  continue;
     TSAtom* SA = new TSAtom(Network);
     SA->CAtom(ca);
     SA->AddMatrix(M);
