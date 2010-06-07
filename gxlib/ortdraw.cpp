@@ -535,16 +535,16 @@ void OrtDraw::Render(const olxstr& fileName)  {
   }
   if( app.DBasis().IsVisible() )  {
     const TDBasis& b = app.DBasis();
-    vec3d T = b.Basis.GetCenter();
     mat3f cm = app.XFile().GetAsymmUnit().GetCellToCartesian();
     vec3f len(cm[0].Length(), cm[1].Length(), cm[2].Length());
     cm[0].Normalise();  cm[1].Normalise();  cm[2].Normalise();
     cm *= ProjMatr;
+    vec3d T = app.GetRender().GetBasis().GetMatrix()*b.Basis.GetCenter();
+    T /= app.GetRender().GetZoom();
     T *= app.GetRender().GetScale();
-    T = app.GetRender().GetBasis().GetMatrix() * T;
     T -= app.GetRender().GetBasis().GetCenter();
     vec3f cnt = ProjectPoint(T);
-    float sph_rad = 0.2*DrawScale*b.Basis.GetZoom();
+    const float sph_rad = 0.2*DrawScale*b.Basis.GetZoom();
     ort_circle* center = new ort_circle(*this, cnt, sph_rad, true);
     all_points.Add(center->center);
     center->color = 0xffffffff;
@@ -558,9 +558,9 @@ void OrtDraw::Render(const olxstr& fileName)  {
       all_points.Add(arrow_cone->bottom);
       all_points.Add(arrow_cone->top);
 
-      float z = cm[i][2]/cm[i].Length();
-      float pscale = 1+olx_sign(z)*sqrt(olx_abs(z))/2;
-      float base_r = 0.075*DrawScale*b.Basis.GetZoom();
+      const float z = cm[i][2]/cm[i].Length();
+      const float pscale = 1+olx_sign(z)*sqrt(olx_abs(z))/2;
+      const float base_r = 0.075*DrawScale*b.Basis.GetZoom();
       ort_cone* axis_cone = new ort_cone(*this,
         cnt+vec3f(cm[i]).NormaliseTo(sqrt(olx_sqr(sph_rad)-olx_sqr(base_r))), // extra 3D effect for the central sphere
         cnt+mp, 
