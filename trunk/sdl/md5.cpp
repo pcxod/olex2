@@ -38,15 +38,18 @@ void MD5Impl::digest64(const uint32_t* msg)  {
     }
     else if( i < 32 )  {
       f = (d & b) | (~d & c);
-      g = (i*5 + 1) % 16;
+      //g = (i*5 + 1) % 16;
+      g = (i*5 + 1)&(0x000F);
     }
     else if( i < 48 )  {
       f = b^c^d;
-      g = (i*3 + 5) % 16;
+      //g = (i*3 + 5) % 16;
+      g = (i*3 + 5)&(0x000F);
     }
     else  {
       f = c^(b | ~d);
-      g = (i*7) % 16;
+      //g = (i*7) % 16;
+      g = (i*7)&(0x000F);
     }
     const uint32_t tmp = d;
     d = c;
