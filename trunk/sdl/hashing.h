@@ -5,6 +5,7 @@
 BeginEsdlNamespace()
 
 struct HashingUtils  {
+  static const char digest_chars[17];
   static inline uint32_t hs_rotl(uint32_t v, uint32_t c)  {
     return (v << c) | (v >> (32-c));
   }

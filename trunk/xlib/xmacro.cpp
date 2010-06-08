@@ -1108,7 +1108,7 @@ void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   // do not print a warning...
   if( xapp.XFile().GetLattice().IsGenerated() )  return;
   TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
-  TEBitArray detached((uint32_t)au.AtomCount());
+  TEBitArray detached(au.AtomCount());
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     TCAtom &ca = au.GetAtom(i);
     detached.Set(i, ca.IsDetached());

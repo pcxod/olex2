@@ -1,5 +1,4 @@
 //----------------------------------------------------------------------------//
-// namespace TEXLib
 // TDUnitCell - a drawing object for unit cell
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
@@ -18,8 +17,15 @@ AGDrawObject(R, collectionName)
   FGlP = NULL;
   CellToCartesian.I();
   HklToCartesian.I();
+  olxstr label_cn("duc_label");
+  for( int i=0; i < 4; i++ )
+    (Labels[i] = new TXGlLabel(Parent, label_cn))->SetVisible(false);
 }
 //...........................................................................
+TDUnitCell::~TDUnitCell()  {
+  for( int i=0; i < 4; i++ )
+    delete Labels[i];
+}
 void TDUnitCell::Init(const double cell[6])  {
   if( cell[0] == 0 )  return;
   const double cG = cos(cell[5]/180*M_PI),
@@ -29,7 +35,7 @@ void TDUnitCell::Init(const double cell[6])  {
          sB = sin(cell[4]/180*M_PI),
          sA = sin(cell[3]/180*M_PI);
 
-  const double V = cell[0]*cell[1]*cell[2]*sqrt( (1-cA*cA-cB*cB-cG*cG) + 2*(cA*cB*cG));
+  const double V = cell[0]*cell[1]*cell[2]*sqrt((1-cA*cA-cB*cB-cG*cG) + 2*(cA*cB*cG));
 
   const double cGs = (cA*cB-cG)/(sA*sB),
          cBs = (cA*cG-cB)/(sA*sG),
@@ -93,6 +99,12 @@ void TDUnitCell::SetReciprocal(bool v)  {
   FGlP->Vertices[22] = M[2]+M[0];  //AC
   FGlP->Vertices[23] = M[2]+M[1]+M[0];  //ABC
   Reciprocal = v;
+  // reinitialise labels
+  for( int i=0; i < 3; i++ )  {  
+    Labels[i]->SetCenter(FGlP->Vertices[i*2+1]);
+    Labels[i]->SetLabel(olxstr((char)('a'+i)));
+  }
+  Labels[3]->SetLabel('o');
 }
 //...........................................................................
 void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
@@ -108,9 +120,6 @@ void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
     GPC.ClearPrimitives();
   }
   TGraphicsStyle& GS = GPC.GetStyle();
-  const int PMask = GS.GetParam(GetPrimitiveMaskName(), "3", true).ToInt();
-  if( PMask == 0 )  return;
-  
   FGlP = &GPC.NewPrimitive("Lines", sgloLines);
   TGlMaterial GlM;
   GlM.SetFlags(sglmAmbientF);
@@ -118,17 +127,9 @@ void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
   FGlP->SetProperties(GS.GetMaterial(FGlP->GetName(), GlM));
   FGlP->Vertices.SetCount(24);
   SetReciprocal(Reciprocal);
-
-  if( (PMask & 0x2) != 0 )  {
-    TGlPrimitive& glpLabel = GPC.NewPrimitive("Label", sgloText);  // labels
-    TGlMaterial lMat;
-    lMat.SetFlags(sglmAmbientF);
-    lMat.AmbientF = 0xff00ff;
-    lMat.SetIdentityDraw(true);
-    glpLabel.SetProperties(GS.GetMaterial(glpLabel.GetName(), lMat));
-    glpLabel.SetFont(Parent.GetScene().DefFont());
-  }
   GPC.AddObject(*this);
+  for( int i=0; i < 4; i++ )
+    Labels[i]->Create();
 }
 //..............................................................................
 bool TDUnitCell::GetDimensions(vec3d &Max, vec3d &Min)  {
@@ -196,14 +197,23 @@ bool TDUnitCell::Orient(TGlPrimitive& P)  {
   return false;
 }
 //..............................................................................
-void TDUnitCell::ListPrimitives(TStrList &List) const {
-  List.Add("Cell");
-  List.Add("Labels");
+void TDUnitCell::ListPrimitives(TStrList &List) const {}
+//..............................................................................
+void TDUnitCell::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {}
+//..............................................................................
+void TDUnitCell::SetLabelsFont(uint16_t fnt_index)  {
+  for( int i=0; i < 4; i++ )
+    Labels[i]->SetFontIndex(fnt_index);
 }
 //..............................................................................
-void TDUnitCell::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
-  SetBit(true, Mask, 1);
-  AGDrawObject::UpdatePrimitives(Mask, cpar);
+void TDUnitCell::UpdateLabels()  {
+  for( int i=0; i < 4; i++ )
+    Labels[i]->SetLabel(Labels[i]->GetLabel());
 }
 //..............................................................................
-
+void TDUnitCell::SetVisible(bool v)  {
+  AGDrawObject::SetVisible(v);
+  for( int i=0; i < 4; i++ )
+    Labels[i]->SetVisible(v);
+}
+//..............................................................................

@@ -7093,8 +7093,10 @@ void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroE
   if( Options.Contains('i') )  mf.SetItalic(true);
   if( Options.Contains('b') )  mf.SetBold(true);
   scene.CreateFont(glf->GetName(), mf.GetIdString());
-  if( Cmds[0] == "Picture_labels" )
+  if( Cmds[0] == "Picture_labels" )  {
     FXApp->UpdateLabels();
+    FXApp->DUnitCell().UpdateLabels();
+  }
 }
 
 //..............................................................................

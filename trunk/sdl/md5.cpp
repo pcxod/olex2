@@ -66,11 +66,10 @@ void MD5Impl::digest64(const uint32_t* msg)  {
 olxcstr MD5Impl::formatDigest()  {
   HashingUtilsLE::hs_copy(state, digest, 4);
   olxcstr rv;
-  char ch_bf[16];
-  memset(ch_bf, 0, 16);
+  rv.Allocate(33, false);
   for( int i=0; i < 16; i++ )  {
-    sprintf(ch_bf, "%02x", digest[i]);
-    rv << ch_bf;
+    rv << HashingUtils::digest_chars[((unsigned char)digest[i]) >> 4] <<
+      HashingUtils::digest_chars[digest[i]&0x0F];
   }
   return rv;
 }
