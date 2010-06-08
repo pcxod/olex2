@@ -26,7 +26,7 @@ int TThreadSlot::Run() {
     if( Terminate )  break;
     if( suspended )  {
       Yield();
-      olx_sleep(5);
+      olx_sleep(1);
       continue;
     }
     if( task != NULL )  {
