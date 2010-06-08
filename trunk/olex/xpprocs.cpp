@@ -6109,15 +6109,19 @@ public:
 #endif
 
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  cif_dp::TCifDP cdp;
+  TStrList _sl;
+  _sl.LoadFromFile("e:/tmp/vdlee142.cif");
+  cdp.LoadFromStrings(_sl);
+  _sl.Clear();
+  cdp.SaveToStrings(_sl);
+  for( size_t i=0; i < cdp.Count(); i++ )  {
+    cif_dp::CifBlock& cb = cdp[i];
+    for( size_t j=0; j < cb.table_map.Count(); j++ )
+      TBasicApp::GetLog() << cb.table_map.GetValue(j)->GetName() << '\n';
+  }
+  TCStrList(_sl).SaveToFile("e:/tmp/test_vdlee142.cif");
   return;
-  //cif_dp::TCifDP cdp;
-  //TStrList _sl;
-  //_sl.LoadFromFile("cif_core.cif");
-  //cdp.LoadFromStrings(_sl);
-  //_sl.Clear();
-  //cdp.SaveToStrings(_sl);
-  //TCStrList(_sl).SaveToFile("test_cif");
-  //return;
 
   //uint64_t test_a = 1021;
   //uint64_t test_b = test_a%10, test_c = test_a/10;

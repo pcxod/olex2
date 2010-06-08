@@ -25,7 +25,7 @@ bool TCifDP::ExtractLoop(size_t& start, parse_context& context)  {
   if( !context.lines[start].StartsFromi("loop_") )  return false;
   TStrList& Lines = context.lines;
   if( context.current_block == NULL )
-    context.current_block = &Add("anonymous");
+    context.current_block = &Add(EmptyString);
   cetTable& table = *(new cetTable);
   TStrList loop_data;
   bool parse_header = true;
@@ -42,19 +42,19 @@ bool TCifDP::ExtractLoop(size_t& start, parse_context& context)  {
     }
   }
   while( parse_header )  {  // skip loop definition
-    if( ++start >= Lines.Count() )  {  // // end of file?
+    if( ++start >= Lines.Count() )  {  // end of file?
       context.current_block->Add(table.GetName(), &table);
       return true;
     }
     if( Lines[start].IsEmpty() )  continue;
     if( Lines[start].CharAt(0) != '_' )  {  start--;  break;  }
-    if( table.data.ColCount() != 0 )  {
-      if( olxstr::CommonString(Lines[start], table.data.ColName(0)).Length() == 1 )  {
-        context.current_block->Add(table.GetName(), &table);
-        start--;  // rewind
-        return true;
-      }
-    }
+    //if( table.data.ColCount() != 0 )  {
+    //  if( olxstr::CommonString(Lines[start], table.data.ColName(0)).Length() == 1 )  {
+    //    context.current_block->Add(table.GetName(), &table);
+    //    start--;  // rewind
+    //    return true;
+    //  }
+    //}
     bool param_found = false;  // in the case loop header is mixed up with loop data...
     if( Lines[start].IndexOf(' ') == InvalidIndex )
       table.data.AddCol(Lines[start]);
@@ -77,8 +77,7 @@ bool TCifDP::ExtractLoop(size_t& start, parse_context& context)  {
     while( ++start < Lines.Count() && Lines[start].IsEmpty() )  continue;
     if( start >= Lines.Count() )  break;
     // a new loop or dataset started (not a part of a multi-string value)
-    if( (q_cnt%2) == 0 && (Lines[start].StartsFrom('_') || 
-      Lines[start].StartsFromi("loop_") || Lines[start].StartsFromi("data_")) )
+    if( (q_cnt%2) == 0 && IsLoopBreaking(Lines[start]) )
       break;
     if( Lines[start].CharAt(0) == ';' )  q_cnt++;
     loop_data.Add(Lines[start]);
@@ -106,14 +105,14 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
     if( line.IsEmpty() )  continue;
     if( line.CharAt(0) == '#')  {
       if( context.current_block == NULL )
-        context.current_block = &Add("anonymous");
+        context.current_block = &Add(EmptyString);
       context.current_block->Add(EmptyString, new cetComment(line.SubStringFrom(1)));
       continue;
     }
     if( ExtractLoop(i, context) )  continue;
     if( line.CharAt(0) == '_' )  {  // parameter
       if( context.current_block == NULL )
-        context.current_block = &Add("anonymous");
+        context.current_block = &Add(EmptyString);
       TStrList toks;
       CIFToks(line, toks);
       if( toks.Count() >= 3 && toks[2].CharAt(0) == '#' )  {
@@ -164,8 +163,18 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
         }
       }
     }
-    else if( line.StartsFrom("data_") )
+    else if( line.StartsFromi("data_") )
       context.current_block = &Add(line.SubStringFrom(5));
+    else if( line.StartsFromi("save_" ) )  {
+      if( line.Length() > 5 )  {
+        context.current_block = &Add(line.SubStringFrom(5),
+          context.current_block == NULL ? &Add(EmptyString) : context.current_block);
+      }  // close the block
+      else if( context.current_block != NULL && context.current_block->parent != NULL )
+        context.current_block = context.current_block->parent;
+      else
+        ; // should be error
+    }
   }
   Format();
 }
@@ -219,12 +228,20 @@ void cetTable::ToStrings(TStrList& list) const {
 const olxstr& cetTable::GetName() const {
   if( data.ColCount() == 0 )  return EmptyString;
   if( data.ColCount() == 1 )  return data.ColName(0);
-  olxstr C = olxstr::CommonString(data.ColName(0), data.ColName(1));
-  for( size_t i=2; i < data.ColCount(); i++ )
-    C = olxstr::CommonString(data.ColName(i), C);
+  olxstr C = data.ColName(0).CommonSubString(data.ColName(1));
+  size_t min_len = olx_min(data.ColName(0).Length(), data.ColName(1).Length());
+  for( size_t i=2; i < data.ColCount(); i++ )  {
+    C = data.ColName(i).CommonSubString(C);
+    if( data.ColName(i).Length() < min_len )
+      min_len = data.ColName(i).Length();
+  }
   if( C.IsEmpty() )
     throw TFunctionFailedException(__OlxSourceInfo, "Mismatching loop columns");
-  if( C.Last() == '_' )  C.SetLength(C.Length()-1);
+  if( C.Length() != min_len )  {  // lihe _geom_angle and geom_angle_etc
+    const size_t u_ind = C.LastIndexOf('_');
+    if( u_ind != InvalidIndex )
+      C.SetLength(u_ind);
+  }
   return TEGC::New<olxstr>(C);
 }
 void cetTable::DataFromStrings(TStrList& lines)  {
@@ -330,9 +347,12 @@ ICifEntry& CifBlock::Add(const olxstr& pname, ICifEntry* p)  {
   return *p;
 }
 void CifBlock::ToStrings(TStrList& list) const {
-  list.Add("data_") << name;
+  if( !name.IsEmpty() )
+    (parent != NULL ? list.Add("save_") : list.Add("data_")) << name;
   for( size_t i=0; i < params.Count(); i++ )
     params.GetObject(i)->ToStrings(list);
+  if( parent != NULL && !name.IsEmpty() )
+    list.Add("save_");
 }
 void CifBlock::Format()  {
   for( size_t i=0; i < params.Count(); i++ )
