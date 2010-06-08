@@ -9,7 +9,7 @@ olxcstr esdl::TTSString<T,TC>::WStr2CStr(const wchar_t* wstr, size_t len)  {
   if( res == (size_t)-1 )
     TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "could not convert wcs to mbs");
   olxcstr str;
-  str.Allocate(res);
+  str.Allocate(res, true);
   wcstombs(str.raw_str(), wstr, sz);
   return str;
 }
@@ -25,7 +25,7 @@ olxwstr esdl::TTSString<T,TC>::CStr2WStr(const char* mbs, size_t len)  {
   if( res == (size_t)-1 )
     TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "could not convert mbs to wcs");
   olxwstr str;
-  str.Allocate(res);
+  str.Allocate(res, true);
   mbstowcs(str.raw_str(), mbs, sz);
   return str;
 }

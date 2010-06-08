@@ -1358,7 +1358,7 @@ void TMainForm::StartupInit()  {
   FXApp->GetRender().GetScene().CreateFont("Tooltip", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
 
   FXApp->SetLabelsFont(3);
-
+  FXApp->DUnitCell().SetLabelsFont(4);
   FGlConsole->SetFontIndex(0);
   FGlConsole->Cursor().SetFontIndex(0);
   FHelpWindow->SetFontIndex(1);

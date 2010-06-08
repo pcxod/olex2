@@ -39,11 +39,15 @@ public:
   void color(uint32_t rgb)  {
     if( CurrentColor == rgb )  return;
       CurrentColor = rgb;
+    out.Writenl(color_str(rgb));
+  }
+  //..........................................................................
+  const char* color_str(uint32_t rgb)  {
     psw_sprintf(bf, "%f %f %f setrgbcolor", (float)GetRValue(rgb)/255, 
       (float)GetGValue(rgb)/255,
       (float)GetBValue(rgb)/255
     );
-    out.Writenl( bf );
+    return bf;
   }
   //..........................................................................
   template <typename vec_t> 
@@ -78,21 +82,26 @@ public:
     out.Writenl( bf );
   }
   //..........................................................................
-  void custom(const char* cmd) {  out.Writenl(cmd);  }
+  void custom(const char* cmd)  {  out.Writenl(cmd);  }
   //..........................................................................
-  void custom(const olxstr& cmd) {  out.Writenl(cmd);  }
+  void custom(const olxstr& cmd)  {  out.Writenl(cmd);  }
   //..........................................................................
-  void newPath() {  out.Writenl("newpath");  }
+  template <class List> void custom(const List& cmds)  {
+    for( size_t i=0; i < cmds.Count(); i++ )
+      out.Writenl(cmds[i]);
+  }
   //..........................................................................
-  void closePath() {  out.Writenl("closepath");  }
+  void newPath()  {  out.Writenl("newpath");  }
   //..........................................................................
-  void stroke() {  out.Writenl("stroke");  }
+  void closePath()  {  out.Writenl("closepath");  }
   //..........................................................................
-  void fill()   {  out.Writenl("fill");  }
+  void stroke()  {  out.Writenl("stroke");  }
   //..........................................................................
-  void gsave() {  out.Writenl("gsave");  }
+  void fill()  {  out.Writenl("fill");  }
   //..........................................................................
-  void grestore() {  out.Writenl("grestore");  }
+  void gsave()  {  out.Writenl("gsave");  }
+  //..........................................................................
+  void grestore()  {  out.Writenl("grestore");  }
   //..........................................................................
   // default scale, A4
   int GetWidth() const {  return 596;  }
@@ -200,7 +209,7 @@ public:
       (float)center[1], 
       (float)rad 
     );
-    out.Writenl( bf );
+    out.Writenl(bf);
   }
   template <typename vec_t, typename float_t> 
   void drawCircle(const vec_t& center, const float_t& rad, RenderFunc rf = &PSWriter::stroke)  {

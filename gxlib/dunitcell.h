@@ -1,8 +1,7 @@
 #ifndef __olx_glx_dunitcell_H
 #define __olx_glx_dunitcell_H
-#include "gxbase.h"
 #include "threex3.h"
-#include "gdrawobject.h"
+#include "gllabel.h"
 #include "glprimitive.h"
 
 BeginGxlNamespace()
@@ -11,10 +10,15 @@ class TDUnitCell: public AGDrawObject  {
   bool Reciprocal;
   TGlPrimitive *FGlP;
   mat3d CellToCartesian, HklToCartesian;
+  TXGlLabel* Labels[4];
 public:
   TDUnitCell(TGlRenderer& Render, const olxstr& collectionName);
-  virtual ~TDUnitCell() {  }
+  virtual ~TDUnitCell();
   void Init(const double cell_params[6]);
+  void SetLabelsFont(uint16_t fnt_index);
+  void UpdateLabels();
+  size_t LabelCount() const {  return 4;  }
+  TXGlLabel& GetLabel(size_t i) const {  return *Labels[i];  }
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min);
@@ -42,6 +46,7 @@ public:
   const vec3f& GetEdge(size_t i) const {  return FGlP->Vertices[i];  }
   inline bool IsReciprocal() const {  return Reciprocal;  }
   void SetReciprocal(bool v);
+  virtual void SetVisible(bool v);
   inline const mat3d& GetCellToCartesian() const {  return CellToCartesian;  }
   inline const mat3d& GetHklToCartesian() const {  return HklToCartesian;  }
 };

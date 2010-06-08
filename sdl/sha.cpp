@@ -54,13 +54,12 @@ void SHA1Impl::digest64(const uint32_t* msg)  {
 olxcstr SHA1Impl::formatDigest()  {
   HashingUtilsBE::hs_copy(state, digest, 5);
   olxcstr rv;
-  char ch_bf[16];
-  memset(ch_bf, 0, 16);
+  rv.Allocate(45, false);
   for( int i=0; i < 20; i++ )  {
-    sprintf(ch_bf, "%02x", digest[i]);
     if( i > 0 && (i%4) == 0 )
       rv << ' ';
-    rv << ch_bf;
+    rv << HashingUtils::digest_chars[((unsigned char)digest[i]) >> 4] <<
+      HashingUtils::digest_chars[digest[i]&0x0F];
   }
   return rv;
 }
@@ -136,14 +135,14 @@ SHA256Impl::SHA256Impl()  {
 olxcstr SHA256Impl::formatDigest()  {
   //volatile olx_scope_cs _cs( TBasicApp::GetCriticalSection() );
   HashingUtilsBE::hs_copy(state, digest, 8);
-  olxcstr rv;  // (CEmptyString, 256) global data, like EmptyString MUST not be used in threads without semaphores!
-  char ch_bf[16];
-  memset(ch_bf, 0, 16);
+  // (CEmptyString, 256) global data, like EmptyString MUST not be used in threads without semaphores!
+  olxcstr rv;
+  rv.Allocate(72, false);
   for( int i=0; i < 32; i++ )  {
-    sprintf(ch_bf, "%02x", digest[i]);
     if( i > 0 && (i%4) == 0 )
       rv << ' ';
-    rv << ch_bf;
+    rv << HashingUtils::digest_chars[((unsigned char)digest[i]) >> 4] <<
+      HashingUtils::digest_chars[digest[i]&0x0F];
   }
   return rv;
 }
@@ -162,13 +161,12 @@ SHA224Impl::SHA224Impl()  {
 olxcstr SHA224Impl::formatDigest()  {
   HashingUtilsBE::hs_copy(state, digest, 7);
   olxcstr rv;
-  char ch_bf[16];
-  memset(ch_bf, 0, 16);
+  rv.Allocate(63, false);
   for( int i=0; i < 28; i++ )  {
-    sprintf(ch_bf, "%02x", digest[i]);
     if( i > 0 && (i%4) == 0 )
       rv << ' ';
-    rv << ch_bf;
+    rv << HashingUtils::digest_chars[((unsigned char)digest[i]) >> 4] <<
+      HashingUtils::digest_chars[digest[i]&0x0F];
   }
   return rv;
 }

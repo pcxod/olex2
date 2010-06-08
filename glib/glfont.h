@@ -30,11 +30,22 @@ struct TTextRect  {
 
 class TGlFont: public IEObject  {
 public:
-  static const short fntFixedWidth = 0x0001,
-                     fntIntalic    = 0x0002,
-                     fntBold       = 0x0004,
-                     fntBmp        = 0x0008,  // create bitmap font
-                     fntTexture    = 0x0010;  // create texture font
+  static const short
+    fntFixedWidth = 0x0001,
+    fntIntalic    = 0x0002,
+    fntBold       = 0x0004,
+    fntBmp        = 0x0008,  // create bitmap font
+    fntTexture    = 0x0010;  // create texture font
+  struct PSRenderContext  {
+    struct PSChar  {
+      olxcstr id;
+      TCStrList definition;
+      PSChar(const olxcstr& _id) : id(_id) {}
+    };
+    TTypeList<PSChar> definitions;
+    olxdict<size_t, size_t, TPrimitiveComparator> def_dict;
+  };
+protected:
   GLuint FontBase;
   TPtrList<TFontCharSize> CharSizes;
   GLuint* Textures;
@@ -44,11 +55,9 @@ public:
   int16_t Leftmost, Topmost;
   TGlMaterial Material;
   double VectorScale;
-protected:
   olxstr IdString, Name;
   bool AnalyseBitArray(const TEBitArray& ba, size_t Char, uint16_t width, uint16_t height);
-  TStrList DefinePSChar(olxch ch, const double& drawScale,
-    olxdict<size_t, olxstr, TPrimitiveComparator>& definition);
+  const olxcstr& DefinePSChar(olxch ch, const double& drawScale, PSRenderContext& context) const;
 public:
   TGlFont(const olxstr& name);
   virtual ~TGlFont();
@@ -74,8 +83,8 @@ public:
   void CreateGlyphs(const TEBitArray& ba, bool FixedWidth, uint16_t Width, uint16_t Height);
   void CreateHershey(const olxdict<size_t, olxstr, TPrimitiveComparator>& definition, double scale);
   static TStrList ExportHersheyToPS(const olxstr& uniq_chars);
-  void RenderPSLabel(const vec3d& pos, const olxstr& label, TStrList& out, 
-    const double& drawScale, olxdict<size_t, olxstr, TPrimitiveComparator>& definition);
+  TCStrList RenderPSLabel(const vec3d& pos, const olxstr& label, double drawScale,
+    PSRenderContext& context) const;
   void CreateTextures(uint16_t Width, uint16_t Height);
   inline bool HasTextures() const {  return Textures != NULL;  }
   inline TFontCharSize* CharSize(size_t Char)  {  return Char < 256 ? CharSizes[(unsigned)Char] : NULL;  }

@@ -679,34 +679,53 @@ void OrtDraw::Render(const olxstr& fileName)  {
   for( size_t i=0; i < objects.Count(); i++ )
     objects[i].render(pw);
 
-  if( app.LabelCount() != 0 )  {
-    TGlFont& glf = app.GetLabel(0).GetFont();
-    uint32_t color = 0;
-    TGlMaterial* glm = app.GetLabel(0).GetPrimitives().GetStyle().FindMaterial("Text");
-    if( glm != NULL )
-      color = glm->AmbientF.GetRGB();
-    pw.color(color);
-    if( glf.IsVectorFont() )  {
-      TStrList out;
-      olxdict<size_t, olxstr, TPrimitiveComparator> defs;
-      for( size_t i=0; i < app.LabelCount(); i++ )  {
-        const TXGlLabel& glxl = app.GetLabel(i);
-        if( glxl.IsDeleted() || !glxl.IsVisible() )  continue;
-        vec3d crd = glxl.GetVectorPosition()*DrawScale + DrawOrigin;
-        glf.RenderPSLabel(crd, glxl.GetLabel(), out, DrawScale/app.GetRender().CalcZoom(), defs);
-      }
-      pw.lineWidth(FontLineWidth);
-      for( size_t i=0; i < out.Count(); i++ )
-        pw.custom(out[i].c_str());
+  TPtrList<const TXGlLabel> Labels;
+  for( size_t i=0; i < app.LabelCount(); i++ )  {
+    const TXGlLabel& glxl = app.GetLabel(i);
+    if( !glxl.IsDeleted() && glxl.IsVisible() )
+      Labels.Add(glxl);
+  }
+  if( app.DUnitCell().IsVisible() )  {
+    for( size_t i=0; i < app.DUnitCell().LabelCount(); i++ )  {
+      const TXGlLabel& glxl = app.DUnitCell().GetLabel(i);
+      if( !glxl.IsDeleted() && glxl.IsVisible() )
+        Labels.Add(glxl);
     }
-    else  {
-      for( size_t i=0; i < app.LabelCount(); i++ )  {
-        const TXGlLabel& glxl = app.GetLabel(i);
-        if( glxl.IsDeleted() || !glxl.IsVisible() )  continue;
-        vec3f rp = glxl.GetRasterPosition();
-        rp[1] += 4;
-        pw.drawText(glxl.GetLabel(), rp+DrawOrigin);
+  }
+  {  // labels rendering block
+    TGlFont::PSRenderContext context;
+    TCStrList output;
+    uint32_t prev_ps_color = 0;
+    output.Add(pw.color_str(prev_ps_color));
+    for( size_t i=0; i < Labels.Count(); i++ )  {
+      const TGlFont& glf = Labels[i]->GetFont();
+      uint32_t color = 0;
+      TGlMaterial* glm = Labels[i]->GetPrimitives().GetStyle().FindMaterial("Text");
+      if( glm != NULL )
+        color = glm->AmbientF.GetRGB();
+      pw.color(color);
+      if( glf.IsVectorFont() )  {
+        vec3d crd = Labels[i]->GetVectorPosition()*DrawScale + DrawOrigin;
+        if( color != prev_ps_color )  {
+          output.Add(pw.color_str(color));
+          prev_ps_color = color;
+        }
+        output.AddList(
+          glf.RenderPSLabel(crd, Labels[i]->GetLabel(), DrawScale/app.GetRender().CalcZoom(), context)
+        );
       }
+      else  {
+        pw.color(color);
+        vec3f rp = Labels[i]->GetRasterPosition();
+        rp[1] += 4;
+        pw.drawText(Labels[i]->GetLabel(), rp+DrawOrigin);
+      }
+    }
+    if( !output.IsEmpty() )  {
+      for( size_t i=0; i < context.definitions.Count(); i++ )
+        pw.custom(context.definitions[i].definition);
+      pw.lineWidth(FontLineWidth);
+      pw.custom(output);
     }
   }
 }

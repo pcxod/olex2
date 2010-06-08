@@ -478,7 +478,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     XFile().GetAsymmUnit().Angles()[2].GetV()
   };
   DUnitCell().Init(cell);
-  DBasis().SetAsymmUnit(&XFile().GetAsymmUnit());
+  DBasis().SetAsymmUnit(XFile().GetAsymmUnit());
 
   for( size_t i=0; i < ObjectsToCreate.Count(); i++ )
     ObjectsToCreate[i]->Create();
@@ -2312,7 +2312,9 @@ void TGXApp::SetLabelsMode(short lmode)  {  FLabels->SetMode(lmode); }
 //..............................................................................
 short TGXApp::GetLabelsMode()      const {  return FLabels->GetMode(); }
 //..............................................................................
-void TGXApp::SetLabelsFont(short Findex){  FLabels->SetFontIndex(Findex);  }
+void TGXApp::SetLabelsFont(short Findex)  {
+  FLabels->SetFontIndex(Findex);
+}
 //..............................................................................
 TGlMaterial& TGXApp::LabelsMarkMaterial()  {  return FLabels->MarkMaterial();  }
 //..............................................................................
