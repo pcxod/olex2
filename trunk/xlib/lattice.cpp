@@ -2155,9 +2155,15 @@ olxstr TLattice::CalcMoiety() const {
   TLattice latt;
   latt.AsymmUnit->SetRefMod(AsymmUnit->GetRefMod());
   latt.AsymmUnit->Assign(GetAsymmUnit());
+  for( size_t i=0; i < latt.GetAsymmUnit().AtomCount(); i++ )  {
+    TCAtom& a = latt.GetAsymmUnit().GetAtom(i);
+    if( a.IsDetached() )
+      a.SetDetached(false);
+    if( a.IsMasked() )
+      a.SetMasked(false);
+  }
   latt.AsymmUnit->_UpdateConnInfo();
   latt.AsymmUnit->DetachAtomType(iQPeakZ, true);
-  latt.AsymmUnit->DetachAtomType(iHydrogenZ, false);
   latt.Init();
   latt.CompaqAll();
   latt.Fragments.QuickSorter.SortSF(latt.Fragments, TLattice_SortFragments);
