@@ -321,6 +321,34 @@ public:
     return mlen;
   }
   //............................................................................
+  // returns length of common string and initialises start1 - the start in the first string
+  template <typename OC, typename AC>
+  static size_t o_cmnsubstr(OC* str1, size_t str1_len, AC* str2, size_t str2_len, size_t& start1)  {
+    size_t max_l = 0;
+    start1 = 0;
+    for( size_t i=0; i < str1_len; i++ )  {
+      const size_t l = olx_min(str1_len-i, str2_len);
+      if( l < max_l )  break;  // cannot be longer...
+      bool equal = true;
+      for( size_t j=0; j < l; j++ )  {
+        if( str1[j+i] != str2[j] )  {
+          if( j > max_l )  {
+            max_l = j;
+            start1 = i;
+          }
+          equal = false;
+          break;
+        }
+      }
+      if( equal )  {
+        max_l = l;
+        start1 = i;
+        break;
+      }
+    }
+    return max_l;
+  }
+  //............................................................................
   TTSString& UpperCase()  {
     T::checkBufferForModification(T::_Length);
     o_strtup( T::Data(), T::_Length );
@@ -353,12 +381,26 @@ public:
     return rv.LowerCase();
   }
   //............................................................................
-  TTSString CommonString(const TTSString& str)  const {
-    return SubStringTo( o_cmnstr(T::Data(), T::_Length, str.Data(), str.Length()) );
+  TTSString CommonString(const TTSString& str) const {
+    return SubStringTo(o_cmnstr(T::Data(), T::_Length, str.Data(), str.Length()));
   }
   //............................................................................
   static TTSString CommonString(const TTSString& str1, const TTSString& str2) {
     return str1.CommonString(str2);
+  }
+  //............................................................................
+  TTSString CommonSubString(const TTSString& str) const {
+    size_t s_ta = 0, s_at = 0;
+    const size_t l_ta = o_cmnsubstr(T::Data(), T::_Length, str.Data(), str.Length(), s_ta);
+    const size_t l_at = o_cmnsubstr(str.Data(), str.Length(), T::Data(), T::_Length, s_at);
+    if( l_ta > l_at )
+      return SubString(s_ta, l_ta);
+    else
+      return str.SubString(s_at, l_at);
+  }
+  //............................................................................
+  static TTSString CommonSubString(const TTSString& str1, const TTSString& str2) {
+    return str1.CommonSubString(str2);
   }
   //............................................................................
   template <typename OC, typename AC> static int o_memcmp(const OC* wht, const AC* with, size_t len) {
