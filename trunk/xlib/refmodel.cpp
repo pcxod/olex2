@@ -785,7 +785,64 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
   }
 }
 //....................................................................................................
+Fragment& RefinementModel::GenerateRegularFrag(int id, int sides, double side_length)  {
+  Fragment *f = FindFragByCode(id);
+  if( f == NULL )
+    f = &AddFrag(id);
+  olxstr label("C");
+  double sin_a, cos_a;
+  SinCos(2*M_PI/sides, &sin_a, &cos_a);
+  vec3d ps(cos_a, -sin_a, 0);
+  for( int i=0; i < sides; i++ )  {
+    f->Add(label, ps).crd *= side_length;
+    const double x = ps[0];
+    ps[0] = (float)(cos_a*x + sin_a*ps[1]);
+    ps[1] = (float)(cos_a*ps[1] - sin_a*x);
+  }
+  return *f;
+}
+//....................................................................................................
 void RefinementModel::ProcessFrags()  {
+  // generate missing atoms for the AFIX 59, 66
+  olxdict<int, TPtrList<TAfixGroup>, TPrimitiveComparator> a_groups;
+  olxdict<int, Fragment*, TPrimitiveComparator> frags;
+  for( size_t i=0; i < AfixGroups.Count(); i++ )  {
+    TAfixGroup& ag = AfixGroups[i];
+    int m = ag.GetM();
+    if( !ag.IsFitted() &&  m < 16 )  continue;
+    if( m == 7 )  m = 6;
+    bool generate = false;
+    for( size_t j=0; j < ag.Count(); j++ )  {
+      if( ag[j].ccrd().IsNull() )  {
+        generate = true;
+        a_groups.Add(ag.GetAfix()).Add(ag)->SetAfix(m*10+ag.GetN());
+        break;
+      }
+    }
+    if( generate )  {
+      if( frags.IndexOf(m) == InvalidIndex )  {
+        if( m == 5 )
+          frags.Add(m, &GenerateRegularFrag(5, 5, 1.42));
+        else if( m == 6 )
+          frags.Add(m, &GenerateRegularFrag(6, 6, 1.39));
+        else if( m == 10 )  {
+          const double l = 0.5*1.42/cos(54*M_PI/180);
+          frags.Add(m, &GenerateRegularFrag(10, 5, l));
+          GenerateRegularFrag(10, 5, l+1.063);
+        }
+        else if( m == 11 )  {
+          Fragment* f = frags.Add(m, &GenerateRegularFrag(11, 6, 1.39));
+          GenerateRegularFrag(11, 6, 1.39);
+          f->Delete(7);
+          f->Delete(7);
+          vec3d t = ((*f)[4].crd+(*f)[5].crd).NormaliseTo(1.39*2*cos(M_PI/6));
+          for( size_t j=6; j < f->Count(); j++ )
+            (*f)[j].crd += t;
+          olx_swap((*f)[9].crd, (*f)[7].crd);
+        }
+      }
+    }
+  }
   for( size_t i=0; i < Frags.Count(); i++ )  {
     Fragment* frag = Frags.GetValue(i);
     for( size_t j=0; j < AfixGroups.Count(); j++ )  {
@@ -793,13 +850,13 @@ void RefinementModel::ProcessFrags()  {
       if( ag.GetM() == frag->GetCode() && (ag.Count()+1) == frag->Count() )  {
         TTypeList< AnAssociation2<vec3d, vec3d> > crds, icrds;
         TCAtomPList atoms;
-        atoms.Add( &ag.GetPivot() );
+        atoms.Add(ag.GetPivot());
         for( size_t k=0; k < ag.Count(); k++ )
-          atoms.Add( ag[k] );
+          atoms.Add(ag[k]);
         for( size_t k=0; k < atoms.Count(); k++ )  {
           if( atoms[k]->ccrd().QLength() > 0.00001 )  {
-            crds.AddNew( atoms[k]->ccrd(), (*frag)[k].crd );
-            icrds.AddNew(atoms[k]->ccrd(), (*frag)[k].crd );
+            crds.AddNew(atoms[k]->ccrd(), (*frag)[k].crd);
+            icrds.AddNew(atoms[k]->ccrd(), (*frag)[k].crd);
           }
         }
         if( crds.Count() < 3 )
@@ -807,9 +864,9 @@ void RefinementModel::ProcessFrags()  {
         smatdd tm, tmi;
         vec3d tr, tri, t;
         for( size_t k=0; k < crds.Count(); k++ )  {
-          icrds[k].A() = aunit.CellToCartesian( crds[k].A() );
-          aunit.CartesianToCell( icrds[k].B() ) *= -1;
-          aunit.CellToCartesian( icrds[k].B() );
+          icrds[k].A() = aunit.CellToCartesian(crds[k].A());
+          aunit.CartesianToCell(icrds[k].B()) *= -1;
+          aunit.CellToCartesian(icrds[k].B());
           t += crds[k].GetA();
           tr += crds[k].GetB();
           tri += icrds[k].GetB();
@@ -838,9 +895,14 @@ void RefinementModel::ProcessFrags()  {
           v = tm*(v-tr);
           atoms[k]->ccrd() = aunit.CartesianToCell(v);
         }
-        ag.SetAfix( ag.GetN() );
+        ag.SetAfix(ag.GetN());
       }
     }
+  }
+  for( size_t i=0; i < a_groups.Count(); i++ )  {
+    TPtrList<TAfixGroup>& gs = a_groups.GetValue(i);
+    for( size_t j=0; j < gs.Count(); j++ )
+      gs[j]->SetAfix(a_groups.GetKey(i));
   }
 }
 //....................................................................................................
