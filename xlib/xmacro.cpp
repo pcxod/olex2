@@ -713,16 +713,16 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       min_ang = max_d;
       max_d = 2.9;
     }
-    else if( max_d > 5 )
+    if( max_d > 5 )
       max_d = 2.9;
   }
   smatd_list transforms;
   TIntList bais;
-  bais.Add(iNitrogenIndex);
-  bais.Add(iOxygenIndex);
-  bais.Add(iFluorineIndex);
-  bais.Add(iChlorineIndex);
-  bais.Add(iSulphurIndex);
+  bais.Add(iNitrogenZ);
+  bais.Add(iOxygenZ);
+  bais.Add(iFluorineZ);
+  bais.Add(iChlorineZ);
+  bais.Add(iSulphurZ);
   TBasicApp::GetLog() << "Processing HTAB with max D-A distance " << max_d << " and minimum angle " << min_ang << '\n';
   min_ang = cos(min_ang*M_PI/180.0);
   if( Options.Contains('t') )  {

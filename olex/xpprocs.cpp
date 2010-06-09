@@ -2854,31 +2854,30 @@ void TMainForm::macSadi(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     double td = 0;
     for( size_t i=0; i < XA->Atom().NodeCount(); i++ )  {
       TSAtom& SA = XA->Atom().Node(i);
-      if( SA.IsDeleted() )  continue;
-      if( SA.GetType() == iQPeakZ )  continue;
+      if( SA.IsDeleted() || SA.GetType() == iQPeakZ )  continue;
       sr1->AddAtomPair(XA->Atom().CAtom(), &XA->Atom().GetMatrix(0), SA.CAtom(), &SA.GetMatrix(0));
       if( td == 0 )  // need this one to remove opposite atoms from restraint
-        td = XA->Atom().crd().DistanceTo( SA.crd() ) * 2;
+        td = XA->Atom().crd().DistanceTo(SA.crd()) * 2;
       for( size_t j=i+1; j < XA->Atom().NodeCount(); j++ )  {
         TSAtom& SA1 = XA->Atom().Node(j);
-        if( SA1.IsDeleted() )  continue;
-        if( SA1.GetType() == iQPeakZ )  continue;
-        double d = SA.crd().DistanceTo(SA1.crd()) ;
+        if( SA1.IsDeleted() || SA1.GetType() == iQPeakZ || (SA.CAtom().GetPart() != SA1.CAtom().GetPart()) )
+         continue;
+        const double d = SA.crd().DistanceTo(SA1.crd()) ;
         if( d/td > 0.85 )  continue;
         sr->AddAtomPair(SA.CAtom(), &SA.GetMatrix(0), SA1.CAtom(), &SA1.GetMatrix(0));
         if( sr->AtomCount() >= 12 )  {
           FXApp->XFile().GetRM().rSADI.ValidateRestraint(*sr);
           sr = &FXApp->XFile().GetRM().rSADI.AddNew();
-          sr->SetEsd( esd*2 );
+          sr->SetEsd(esd*2);
         }
       }
     }
   }
   else if( Atoms.Count() == 3 )  {  // special case
-    sr->AddAtomPair( Atoms[0]->Atom().CAtom(), &Atoms[0]->Atom().GetMatrix(0), 
-                       Atoms[1]->Atom().CAtom(), &Atoms[1]->Atom().GetMatrix(0));
-    sr->AddAtomPair( Atoms[1]->Atom().CAtom(), &Atoms[1]->Atom().GetMatrix(0), 
-                       Atoms[2]->Atom().CAtom(), &Atoms[2]->Atom().GetMatrix(0));
+    sr->AddAtomPair(Atoms[0]->Atom().CAtom(), &Atoms[0]->Atom().GetMatrix(0), 
+                    Atoms[1]->Atom().CAtom(), &Atoms[1]->Atom().GetMatrix(0));
+    sr->AddAtomPair(Atoms[1]->Atom().CAtom(), &Atoms[1]->Atom().GetMatrix(0), 
+                    Atoms[2]->Atom().CAtom(), &Atoms[2]->Atom().GetMatrix(0));
   }
   else  {
     if( (Atoms.Count()%2) != 0 )  {
@@ -6109,18 +6108,18 @@ public:
 #endif
 
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  cif_dp::TCifDP cdp;
-  TStrList _sl;
-  _sl.LoadFromFile("e:/tmp/vdlee142.cif");
-  cdp.LoadFromStrings(_sl);
-  _sl.Clear();
-  cdp.SaveToStrings(_sl);
-  for( size_t i=0; i < cdp.Count(); i++ )  {
-    cif_dp::CifBlock& cb = cdp[i];
-    for( size_t j=0; j < cb.table_map.Count(); j++ )
-      TBasicApp::GetLog() << cb.table_map.GetValue(j)->GetName() << '\n';
-  }
-  TCStrList(_sl).SaveToFile("e:/tmp/test_vdlee142.cif");
+  //cif_dp::TCifDP cdp;
+  //TStrList _sl;
+  //_sl.LoadFromFile("e:/tmp/vdlee142.cif");
+  //cdp.LoadFromStrings(_sl);
+  //_sl.Clear();
+  //cdp.SaveToStrings(_sl);
+  //for( size_t i=0; i < cdp.Count(); i++ )  {
+  //  cif_dp::CifBlock& cb = cdp[i];
+  //  for( size_t j=0; j < cb.table_map.Count(); j++ )
+  //    TBasicApp::GetLog() << cb.table_map.GetValue(j)->GetName() << '\n';
+  //}
+  //TCStrList(_sl).SaveToFile("e:/tmp/test_vdlee142.cif");
   return;
 
   //uint64_t test_a = 1021;
