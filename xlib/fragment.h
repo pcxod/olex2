@@ -64,6 +64,11 @@ public:
     Atoms.Clear();
   }
 
+  template <class VecType>
+  FragAtom& Add(const olxstr& label, const VecType& v)  {
+    return Add(label, v[0], v[1], v[2]);
+  }
+  
   FragAtom& Add(const olxstr& label, double a, double b, double c)  {
     vec3d crd( 
       a*f2c[0][0] + b*f2c[1][0] + c*f2c[2][0],
@@ -79,7 +84,7 @@ public:
   inline size_t Count() const {  return Atoms.Count();  }
   FragAtom& operator [] (size_t i)  {  return Atoms[i];  }
   const FragAtom& operator [] (size_t i) const {  return Atoms[i];  }
-
+  void Delete(size_t i)  {  Atoms.Delete(i);  }
   template <class slist> void ToStrings(slist& lst) const {
     lst.Add("FRAG ") << Code;
     for( size_t i=0; i < Atoms.Count(); i++ )
