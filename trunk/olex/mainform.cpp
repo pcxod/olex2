@@ -1531,10 +1531,10 @@ void TMainForm::OnDrawStyleChange(wxCommandEvent& event)  {
       if( Dlg->ShowModal() == wxID_OK )  {
         FBgColor = FXApp->GetRender().LightModel.GetClearColor();
       }
-      TimePerFrame = FXApp->Draw();
       Dlg->Destroy();
     break;
   }
+  TimePerFrame = FXApp->Draw();
 }
 void TMainForm::OnViewAlong(wxCommandEvent& event) {
   switch( event.GetId() )  {
@@ -1958,13 +1958,18 @@ void TMainForm::AquireTooltipValue()  {
       Tooltip = xa.Atom().GetGuiLabelEx();
       if( xa.Atom().GetType() == iQPeakZ )
         Tooltip << ':' << xa.Atom().CAtom().GetQPeak();
+      double occu = ca.GetOccu()*ca.GetDegeneracy();
       Tooltip << "\nChem occu(";
       if( ca.GetVarRef(catom_var_name_Sof) != NULL && 
         ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )
+      {
         Tooltip << "fixed): ";
+        if( olx_abs(occu-olx_round(occu)) < 1e-3 )
+          occu = olx_round(occu);
+      }
       else
         Tooltip << "free): ";
-      Tooltip << TEValueD(ca.GetOccu()*ca.GetDegeneracy(), ca.GetOccuEsd()*ca.GetDegeneracy()).ToString();
+      Tooltip << TEValueD(occu, ca.GetOccuEsd()*ca.GetDegeneracy()).ToString();
       if( ca.GetEllipsoid() == NULL )  {
         Tooltip << "\nUiso (";
         if( ca.GetVarRef(catom_var_name_Uiso) != NULL && 
