@@ -17,7 +17,7 @@ TXGlLabels::TXGlLabels(TGlRenderer& Render, const olxstr& collectionName) :
   AGDrawObject(Render, collectionName)
 {
   FontIndex = InvalidIndex;
-  AGDrawObject::SetGroupable(false);
+  AGDrawObject::SetSelectable(false);
 
   FMarkMaterial = Render.GetSelection().GetGlM();
   FMarkMaterial.SetFlags(sglmAmbientF|sglmIdentityDraw);

@@ -13,7 +13,7 @@
 TDBlob::TDBlob(TGlRenderer& R, const olxstr& collectionName) :
   TGlMouseListener(R, collectionName)
 {
-  SetGroupable(false);
+  SetSelectable(false);
 }
 //...........................................................................
 void TDBlob::Create(const olxstr& cName, const ACreationParams* cpar)  {

@@ -26,7 +26,7 @@ TGlTextBox::TGlTextBox(TGlRenderer& Render, const olxstr& collectionName):
   Left = Top = 0;
   Width = Height = 0;
   MaxStringLength = 0;
-  SetGroupable(false);
+  SetSelectable(false);
   FontIndex = 0;  // previous -1 was very dangerous...
   ScrollDirectionUp = true;
   Z = 0;

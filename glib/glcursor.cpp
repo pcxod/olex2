@@ -24,7 +24,7 @@ TGlCursor::TGlCursor(TGlRenderer& R, const olxstr& collectionName, bool TextStyl
   TextStyle = TextStyle;
   Primitive = NULL;
   X = Y = 0;
-  SetGroupable(false);
+  SetSelectable(false);
 }
 //..............................................................................
 void TGlCursor::Create(const olxstr& cName, const ACreationParams* cpar)  {
