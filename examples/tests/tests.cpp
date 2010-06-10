@@ -41,7 +41,7 @@ int main(int argc, char* argv[])  {
     TEFile logf(bd + "test.out", "w+b");
     TOnProgress pg;
     Listener listener;
-    TFileTree ft("C:/Documents and Settings/oleg/My Documents/DS/Data/2009");
+    TFileTree ft("C:/Documents and Settings/oleg/My Documents/DS/Data/");
     //TFileTree ft("E:/Data");
     ft.OnExpand->Add(&listener);
     ft.Expand();
@@ -92,11 +92,17 @@ int main(int argc, char* argv[])  {
         XApp.XFile().LoadFromFile(files[i]);
         TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
         for( size_t ai=0; ai < au.AtomCount(); ai++ )  {
-          if( au.GetAtom(ai).GetType() == iCarbonZ && au.GetAtom(ai).GetDegeneracy() != 1 )
+          double od = olx_abs(au.GetAtom(ai).GetOccu()*au.GetAtom(ai).GetDegeneracy() - 1.0);
+          if( od != 0 && od < 1e-3 )
           {
             TBasicApp::GetLog() << "\r               \r" << TEFile::ExtractFileName(files[i]);
             break;
           }
+          //if( au.GetAtom(ai).GetType() == iCarbonZ && au.GetAtom(ai).GetDegeneracy() != 1 )
+          //{
+          //  TBasicApp::GetLog() << "\r               \r" << TEFile::ExtractFileName(files[i]);
+          //  break;
+          //}
         }
       }
       catch(...)  {}

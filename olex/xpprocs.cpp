@@ -1636,6 +1636,11 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       sel.RemoveDeleted();
     }
   }
+  else if( Cmds.Count() == 1 && Cmds[0].Equalsi("labels") )  {
+    FXApp->GetLog() << "Deleting labels\n";
+    for( size_t i=0; i < FXApp->LabelCount(); i++ )
+      FXApp->GetLabel(i).SetDeleted(true);
+  }
   else  {
     TXAtomPList Atoms, Selected;
     FXApp->FindXAtoms(Cmds.Text(' '), Atoms, true, Options.Contains('h'));
@@ -2287,26 +2292,63 @@ void TMainForm::macQPeakSizeScale(TStrObjList &Cmds, const TParamList &Options, 
 void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXAtomPList atoms;
   FindXAtoms(Cmds, atoms, true, true);
-  short lt = 0;
-  olxstr str_lt = Options.FindValue("type");
+  short lt = 0, symm_tag = 0;
+  const olxstr str_lt = Options.FindValue("type");
+  olxstr str_symm_tag = Options.FindValue("symm");
+  if( Options.Contains("symm") && str_symm_tag.IsEmpty() ) // enforce the default
+    str_symm_tag = '$';
   if( str_lt.Equalsi("brackets") )
     lt = 1;
   else if( str_lt.Equalsi("subscript") )
     lt = 2;
+  if( str_symm_tag.Equals('$') )  {  // have to kill labels in this case, for consistency of _$
+    for( size_t i=0; i < FXApp->LabelCount(); i++ )
+      FXApp->GetLabel(i).SetDeleted(true);
+    symm_tag = 1;
+  }
+  else if( str_symm_tag.Equals("full") )
+    symm_tag = 2;
+  TTypeList<uint32_t> equivs;
   for( size_t i=0; i < atoms.Count(); i++ )  {
     // 4 - Picture_labels, TODO - avoid naked index reference...
     TXGlLabel* gxl = FXApp->CreateLabel(atoms[i], 4);
+    olxstr lb;
     if( lt != 0 && atoms[i]->Atom().GetLabel().Length() > atoms[i]->Atom().GetType().symbol.Length() )  {
       olxstr bcc = atoms[i]->Atom().GetLabel().SubStringFrom(atoms[i]->Atom().GetType().symbol.Length());
-      olxstr lb = atoms[i]->Atom().GetType().symbol;
+      lb = atoms[i]->Atom().GetType().symbol;
       if( lt == 1 )
         lb << '(' << bcc << ')';
       else if( lt == 2 )
         lb << "\\-" << bcc;
-      gxl->SetLabel(lb);
     }
+    else
+      lb = gxl->GetLabel();
+    if( !atoms[i]->Atom().GetMatrix(0).IsFirst() )  {
+      if( symm_tag == 1 )  {
+        size_t pos = equivs.IndexOf(atoms[i]->Atom().GetMatrix(0).GetId());
+        if( pos == InvalidIndex )  {
+          equivs.AddCCopy(atoms[i]->Atom().GetMatrix(0).GetId());
+          pos = equivs.Count()-1;
+        }
+        lb << "_$" << (pos+1);
+      }
+      else if( symm_tag == 2 )
+        lb << ' ' << TSymmParser::MatrixToSymmEx(atoms[i]->Atom().GetMatrix(0));
+    }
+    gxl->SetLabel(lb);
     gxl->SetVisible(true);
   }
+  for( size_t i=0; i < equivs.Count(); i++ )  {
+    smatd m = FXApp->XFile().GetUnitCell().GetMatrix(smatd::GetContainerId(equivs[i]));
+    m.t += smatd::GetT(equivs[i]);
+    olxstr line("$");
+    line << (i+1);
+    line.Format(4, true, ' ') << TSymmParser::MatrixToSymmEx(m);
+    if( i != 0 && (i%3) == 0 )
+      TBasicApp::GetLog() << '\n';
+    TBasicApp::GetLog() << line.Format(26, true, ' ');
+  }
+  TBasicApp::GetLog() << '\n';
 }
 //..............................................................................
 void TMainForm::macFocus(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -2540,11 +2582,11 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         Fragment::GenerateFragCrds(frag_id_naphthalene, crds);
       for( size_t i=0; i < toks.Count(); i++ )  {
         const int v = toks[i].ToInt()-1;
-        if( i > 0 && pos.Last() >= v )  {
+        if( i > 0 && pos[i-1] >= v )  {
           E.ProcessingError(__OlxSrcInfo, "please provide position in the ascending order");
           return;
         }
-        if( v < 0 || v >= crds.Count() )  {
+        if( v < 0 || v >= (int)crds.Count() )  {
           E.ProcessingError(__OlxSrcInfo, "invalid ring position");
           return;
         }
@@ -2553,7 +2595,7 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       TTypeList<AnAssociation3<TCAtom*, const cm_Element*, bool> > atoms;
       const cm_Element& carb = XElementLib::GetByIndex(iCarbonIndex);
       for( size_t i=0; i < pos.Count(); i++ )  {
-        while( pos[i] > 0 && (pos[i] > atoms.Count()) )
+        while( pos[i] > 0 && (pos[i] > (int)atoms.Count()) )
           atoms.Add(new AnAssociation3<TCAtom*, const cm_Element*, bool>(NULL, &carb, false));
         atoms.Add(new AnAssociation3<TCAtom*, const cm_Element*, bool>(
           &Atoms[i]->Atom().CAtom(), (const cm_Element*)NULL, true));
@@ -2564,7 +2606,7 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       TAfixGroup& ag = FXApp->XFile().GetRM().AfixGroups.New(atoms[pos[0]].A(), afix);
       for( size_t i=pos[0]+1; i < atoms.Count(); i++ )
         ag.AddDependent(*atoms[i].A());
-      for( size_t i=0; i < pos[i]; i++ )
+      for( int i=0; i < pos[i]; i++ )
         ag.AddDependent(*atoms[i].A());
       FXApp->XFile().EndUpdate();
       return;

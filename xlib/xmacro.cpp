@@ -709,11 +709,15 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   double max_d = 2.9, min_ang = 150.0;
   size_t cnt = XLibMacros::ParseNumbers<double,TStrObjList>(Cmds, 2, &max_d, &min_ang);
   if( cnt == 1 )  {
-    if( max_d > 100 )  {
+    if( max_d > 10 )  {
       min_ang = max_d;
       max_d = 2.9;
     }
-    if( max_d > 5 )
+  }
+  if( max_d > 5 )  {
+    if( min_ang < 5 )
+      olx_swap(max_d, min_ang);
+    else
       max_d = 2.9;
   }
   smatd_list transforms;
@@ -731,8 +735,8 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       cm_Element* e = XElementLib::FindBySymbol(elm[i]);
       if( e == NULL )
         TBasicApp::GetLog() << (olxstr("Unknown element type: ") << elm[i] << '\n');
-      else if( bais.IndexOf(e->index) == InvalidIndex )
-        bais.Add(e->index);
+      else if( bais.IndexOf(e->z) == InvalidIndex )
+        bais.Add(e->z);
     }
   }
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();

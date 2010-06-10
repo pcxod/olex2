@@ -169,7 +169,6 @@ public:
       EmptyFile = false;
     }
     FParent->GetRender().GetSelection().Clear();
-    FParent->ClearLabels();
     B = FParent->GetRender().GetBasis();
     FParent->GetRender().Clear();
     FParent->HklFile().Clear();
@@ -206,6 +205,7 @@ public:
     }
     else  {  // definition will get broken otherwise
       FParent->XFile().GetLattice().ClearPlaneDefinitions();
+      FParent->ClearLabels();
     }
     if( GrowInfo != NULL )  {
       delete GrowInfo;
@@ -488,8 +488,13 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   selection is inpossible, unless properties are changed, odd... could not figure out
   what is going wrong... */
 
-  for( size_t i=0; i < XLabels.Count(); i++ )
-    XLabels[i].Create();
+  for( size_t i=0; i < XLabels.Count(); i++ )  {
+    if( XLabels[i].IsVisible() || !XLabels[i].IsDeleted() )
+      XLabels[i].Create();
+    else
+      XLabels.NullItem(i);
+  }
+  XLabels.Pack();
 
   for( size_t i=0; i < LooseObjects.Count(); i++ )  {
     if( LooseObjects[i]->IsDeleted() )  {
@@ -2347,10 +2352,10 @@ void TGXApp::SBonds2XBonds(TSBondPList& L, TXBondPList& Res)  {
   for( size_t i=0; i < L.Count(); i++ )
     L[i]->SetTag(1);
 
-  Res.SetCapacity( Res.Count() + L.Count() );
+  Res.SetCapacity(Res.Count() + L.Count());
   for( size_t i=0; i < XBonds.Count(); i++ )
     if( &XBonds[i].Bond().GetNetwork().GetLattice() == &latt && XBonds[i].Bond().GetTag() != 0 )
-      Res.Add( &XBonds[i] );
+      Res.Add(XBonds[i]);
 }
 //..............................................................................
 void TGXApp::SPlanes2XPlanes(TSPlanePList& L, TXPlanePList& Res)  {
