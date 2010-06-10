@@ -785,23 +785,6 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
   }
 }
 //....................................................................................................
-Fragment& RefinementModel::GenerateRegularFrag(int id, int sides, double side_length)  {
-  Fragment *f = FindFragByCode(id);
-  if( f == NULL )
-    f = &AddFrag(id);
-  olxstr label("C");
-  double sin_a, cos_a;
-  SinCos(2*M_PI/sides, &sin_a, &cos_a);
-  vec3d ps(cos_a, -sin_a, 0);
-  for( int i=0; i < sides; i++ )  {
-    f->Add(label, ps).crd *= side_length;
-    const double x = ps[0];
-    ps[0] = (float)(cos_a*x + sin_a*ps[1]);
-    ps[1] = (float)(cos_a*ps[1] - sin_a*x);
-  }
-  return *f;
-}
-//....................................................................................................
 void RefinementModel::ProcessFrags()  {
   // generate missing atoms for the AFIX 59, 66
   olxdict<int, TPtrList<TAfixGroup>, TPrimitiveComparator> a_groups;
@@ -821,25 +804,20 @@ void RefinementModel::ProcessFrags()  {
     }
     if( generate )  {
       if( frags.IndexOf(m) == InvalidIndex )  {
+        vec3d_list crds;
         if( m == 5 )
-          frags.Add(m, &GenerateRegularFrag(5, 5, 1.42));
+          Fragment::GenerateFragCrds(frag_id_cp, crds);
         else if( m == 6 )
-          frags.Add(m, &GenerateRegularFrag(6, 6, 1.39));
-        else if( m == 10 )  {
-          const double l = 0.5*1.42/cos(54*M_PI/180);
-          frags.Add(m, &GenerateRegularFrag(10, 5, l));
-          GenerateRegularFrag(10, 5, l+1.063);
-        }
-        else if( m == 11 )  {
-          Fragment* f = frags.Add(m, &GenerateRegularFrag(11, 6, 1.39));
-          GenerateRegularFrag(11, 6, 1.39);
-          f->Delete(7);
-          f->Delete(7);
-          vec3d t = ((*f)[4].crd+(*f)[5].crd).NormaliseTo(1.39*2*cos(M_PI/6));
-          for( size_t j=6; j < f->Count(); j++ )
-            (*f)[j].crd += t;
-          olx_swap((*f)[9].crd, (*f)[7].crd);
-        }
+          Fragment::GenerateFragCrds(frag_id_ph, crds);
+        else if( m == 10 )
+          Fragment::GenerateFragCrds(frag_id_cp_star, crds);
+        else if( m == 11 )
+          Fragment::GenerateFragCrds(frag_id_naphthalene, crds);
+        Fragment& f = AddFrag(m);
+        const olxstr label("C");
+        for( size_t i=0; i < crds.Count(); i++ )
+          f.Add(label, crds[i]);
+        frags.Add(m, &f);
       }
     }
   }
@@ -848,53 +826,17 @@ void RefinementModel::ProcessFrags()  {
     for( size_t j=0; j < AfixGroups.Count(); j++ )  {
       TAfixGroup& ag = AfixGroups[j];
       if( ag.GetM() == frag->GetCode() && (ag.Count()+1) == frag->Count() )  {
-        TTypeList< AnAssociation2<vec3d, vec3d> > crds, icrds;
-        TCAtomPList atoms;
-        atoms.Add(ag.GetPivot());
+        TTypeList<AnAssociation3<TCAtom*, const cm_Element*, bool> > atoms;
+        vec3d_list crds;
+        TCAtomPList all_atoms(ag.Count()+1);
+        all_atoms[0] = &ag.GetPivot();
         for( size_t k=0; k < ag.Count(); k++ )
-          atoms.Add(ag[k]);
-        for( size_t k=0; k < atoms.Count(); k++ )  {
-          if( atoms[k]->ccrd().QLength() > 0.00001 )  {
-            crds.AddNew(atoms[k]->ccrd(), (*frag)[k].crd);
-            icrds.AddNew(atoms[k]->ccrd(), (*frag)[k].crd);
-          }
+          all_atoms[k+1] = &ag[k];
+        for( size_t k=0; k < all_atoms.Count(); k++ )  {
+          atoms.AddNew(all_atoms[k], (const cm_Element*)NULL, all_atoms[k]->ccrd().QLength() > 1e-6);
+          crds.AddCCopy((*frag)[k].crd);
         }
-        if( crds.Count() < 3 )
-          throw TFunctionFailedException(__OlxSourceInfo, "Not enough atoms in fitted group");
-        smatdd tm, tmi;
-        vec3d tr, tri, t;
-        for( size_t k=0; k < crds.Count(); k++ )  {
-          icrds[k].A() = aunit.CellToCartesian(crds[k].A());
-          aunit.CartesianToCell(icrds[k].B()) *= -1;
-          aunit.CellToCartesian(icrds[k].B());
-          t += crds[k].GetA();
-          tr += crds[k].GetB();
-          tri += icrds[k].GetB();
-        }
-        t /= crds.Count();
-        tr /= crds.Count();
-        tri /= crds.Count();
-        tm.t = t;
-        tmi.t = t;
-        bool invert = false;
-        double rms = TNetwork::FindAlignmentMatrix(crds, t, tr, tm);
-        double irms = TNetwork::FindAlignmentMatrix(icrds, t, tri, tmi);
-        if( irms < rms && irms >= 0 )  {
-          tr = tri;
-          tm = tmi;
-          invert = true;
-        }
-        //tm.r.Transpose();
-        for( size_t k=0; k < atoms.Count(); k++ )  {
-          vec3d v = (*frag)[k].crd;
-          if( invert )  {
-            aunit.CartesianToCell(v);
-            v *= -1;
-            aunit.CellToCartesian(v);
-          }
-          v = tm*(v-tr);
-          atoms[k]->ccrd() = aunit.CartesianToCell(v);
-        }
+        aunit.FitAtoms(atoms, crds, false);
         ag.SetAfix(ag.GetN());
       }
     }
@@ -903,6 +845,13 @@ void RefinementModel::ProcessFrags()  {
     TPtrList<TAfixGroup>& gs = a_groups.GetValue(i);
     for( size_t j=0; j < gs.Count(); j++ )
       gs[j]->SetAfix(a_groups.GetKey(i));
+  }
+  // remove the 'special' frags
+  for( size_t i=0; i < frags.Count(); i++ )  {
+    const size_t ind = Frags.IndexOf(frags.GetKey(i));
+    if( ind == InvalidIndex )  continue;  // ?
+    delete Frags.GetValue(ind);
+    Frags.Delete(ind);
   }
 }
 //....................................................................................................

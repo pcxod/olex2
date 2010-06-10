@@ -60,7 +60,6 @@ protected:
   olxdict<olxstr, IXVarReferencerContainer*, olxstrComparator<false> > RefContainers;
   void SetDefaults();
   TTypeListExt<class InfoTab, IEObject> InfoTables;
-  Fragment& GenerateRegularFrag(int id, int sides, double side_length);
 public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
