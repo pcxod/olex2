@@ -41,6 +41,7 @@
 #include "gllabel.h"
 #include "gllabels.h"
 #include "dunitcell.h"
+#include "dbasis.h"
 
 #include "symmparser.h"
 
@@ -7198,6 +7199,7 @@ void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroE
   if( Cmds[0] == "Picture_labels" )  {
     FXApp->UpdateLabels();
     FXApp->DUnitCell().UpdateLabels();
+    FXApp->DBasis().UpdateLabels();
   }
 }
 
