@@ -12,7 +12,7 @@
 TDUnitCell::TDUnitCell(TGlRenderer& R, const olxstr& collectionName) : 
 AGDrawObject(R, collectionName) 
 {
-  SetGroupable(false);
+  SetSelectable(false);
   Reciprocal = false;
   FGlP = NULL;
   CellToCartesian.I();

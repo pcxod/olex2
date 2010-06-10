@@ -15,7 +15,7 @@
 TDUserObj::TDUserObj(TGlRenderer& R, short type, const olxstr& collectionName) :
   TGlMouseListener(R, collectionName), Type(type), Vertices(NULL), Normals(NULL)
 {
-  SetGroupable(false);
+  SetSelectable(false);
   GlM.SetFlags(sglmAmbientF);
   GlM.AmbientF = 0;
   GlM.SetIdentityDraw(false);

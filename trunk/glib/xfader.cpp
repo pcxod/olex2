@@ -15,7 +15,7 @@ UseGlNamespace()
 TXFader::TXFader(TGlRenderer& R, const olxstr& collectionName):
   AGDrawObject(R, collectionName)  
 {
-  SetGroupable(false);
+  SetSelectable(false);
   Foreground = Background = NULL;
   Step = 1./5;
   Position = 0;

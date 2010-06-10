@@ -15,8 +15,6 @@ TXGlLabel::TXGlLabel(TGlRenderer& R, const olxstr& collectionName) :
   SetMove2DZ(true);
   SetMoveable(true);
   SetZoomable(false);
-  SetSelectable(true);
-  SetGroupable(false);
   FontIndex = ~0;
 };
 TXGlLabel::~TXGlLabel(){}

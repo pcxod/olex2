@@ -43,7 +43,7 @@ TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
   FCommand = PromptStr;
   FShowBuffer = true;
-  SetGroupable(false);
+  SetSelectable(false);
   FontIndex = ~0;
   FTxtPos = ~0;
   FMaxLines = 1000;
