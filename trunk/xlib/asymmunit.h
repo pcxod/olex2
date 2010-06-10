@@ -189,7 +189,12 @@ public:
   bool IsQPeakMinMaxInitialised() const {  return MaxQPeak != -1000;  }
   inline double GetMaxQPeak() const {  return MaxQPeak;  }
   inline double GetMinQPeak() const {  return MinQPeak;  }
-
+  /* atoms should have at least three atoms for fitting. If the atoms.atom is NULL,
+  atoms.element must be provided, if atoms.bool is false, the atom is not used in
+  the fitting. The missing atoms will be initialised on successful completion of
+  the procedure. try_invert - try the fitting of the inverted set of coordinates */
+  void FitAtoms(TTypeList<AnAssociation3<TCAtom*, const cm_Element*, bool> >& atoms,
+    const vec3d_list& crds, bool try_invert);
   // returns next available part istruction in atoms
   int GetNextPart() const;
 

@@ -2507,25 +2507,82 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     E.ProcessingError(__OlxSrcInfo, "afix should be specified" );
     return;
   }
+  olxstr positions;
+  if( Cmds.Count() > 0 && Cmds[0].IndexOf(',') != InvalidIndex )  {
+    positions = Cmds[0];
+    Cmds.Delete(0);
+  }
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   RefinementModel& rm = FXApp->XFile().GetRM();
   FindXAtoms(Cmds, Atoms, false, !Options.Contains("cs"));
-  int m = TAfixGroup::GetM(afix), n = TAfixGroup::GetN(afix);
+  const int m = TAfixGroup::GetM(afix), n = TAfixGroup::GetN(afix);
   if( TAfixGroup::IsFitted(afix) && ( n == 6 || n == 9) )  {  // special case
+    // yet another special case
+    if( !positions.IsEmpty() )  {
+      TStrList toks(positions, ',');
+      if( toks.Count() < 3 )  {
+        E.ProcessingError(__OlxSrcInfo, "at least 3 atoms should be provided");
+        return;
+      }
+      if( toks.Count() != Atoms.Count() )  {
+        E.ProcessingError(__OlxSrcInfo, "mismatching number of positions and given atoms");
+        return;
+      }
+      TArrayList<int> pos(toks.Count());
+      vec3d_list crds;
+      if( m == 5 )
+        Fragment::GenerateFragCrds(frag_id_cp, crds);
+      else if( m == 6 || m == 7 )
+        Fragment::GenerateFragCrds(frag_id_ph, crds);
+      else if( m == 10 )
+        Fragment::GenerateFragCrds(frag_id_cp_star, crds);
+      else if( m == 11 )
+        Fragment::GenerateFragCrds(frag_id_naphthalene, crds);
+      for( size_t i=0; i < toks.Count(); i++ )  {
+        const int v = toks[i].ToInt()-1;
+        if( i > 0 && pos.Last() >= v )  {
+          E.ProcessingError(__OlxSrcInfo, "please provide position in the ascending order");
+          return;
+        }
+        if( v < 0 || v >= crds.Count() )  {
+          E.ProcessingError(__OlxSrcInfo, "invalid ring position");
+          return;
+        }
+        pos[i] = v;
+      }
+      TTypeList<AnAssociation3<TCAtom*, const cm_Element*, bool> > atoms;
+      const cm_Element& carb = XElementLib::GetByIndex(iCarbonIndex);
+      for( size_t i=0; i < pos.Count(); i++ )  {
+        while( pos[i] > 0 && (pos[i] > atoms.Count()) )
+          atoms.Add(new AnAssociation3<TCAtom*, const cm_Element*, bool>(NULL, &carb, false));
+        atoms.Add(new AnAssociation3<TCAtom*, const cm_Element*, bool>(
+          &Atoms[i]->Atom().CAtom(), (const cm_Element*)NULL, true));
+      }
+      while( atoms.Count() < crds.Count() )
+        atoms.Add(new AnAssociation3<TCAtom*, const cm_Element*, bool>(NULL, &carb, false));
+      FXApp->XFile().GetAsymmUnit().FitAtoms(atoms, crds, false);
+      TAfixGroup& ag = FXApp->XFile().GetRM().AfixGroups.New(atoms[pos[0]].A(), afix);
+      for( size_t i=pos[0]+1; i < atoms.Count(); i++ )
+        ag.AddDependent(*atoms[i].A());
+      for( size_t i=0; i < pos[i]; i++ )
+        ag.AddDependent(*atoms[i].A());
+      FXApp->XFile().EndUpdate();
+      return;
+    }
     if( Atoms.IsEmpty() )
       FXApp->AutoAfixRings(afix, NULL, Options.Contains('n'));
     else if( Atoms.Count() == 1 )
       FXApp->AutoAfixRings(afix, &Atoms[0]->Atom(), Options.Contains('n'));
     else  {
-      if( (afix == 56 || afix == 59) &&  Atoms.Count() != 5 )  {
+      if( (m == 5) &&  Atoms.Count() != 5 )  {
         E.ProcessingError(__OlxSrcInfo, "please provide 5 atoms exactly" );
         return;
       }
-      else if( (afix == 66 || afix == 69 || afix == 76 || afix == 79) &&  Atoms.Count() != 6 )  {
+      else if( (m == 6 || m == 7) &&  Atoms.Count() != 6 )  {
         E.ProcessingError(__OlxSrcInfo, "please provide 6 atoms exactly" );
         return;
       }
-      else if( (afix == 106 || afix == 109 || afix == 116 || afix == 119) &&  Atoms.Count() != 10 )  {
+      else if( (m == 10 || m == 11) &&  Atoms.Count() != 10 )  {
         E.ProcessingError(__OlxSrcInfo, "please provide 10 atoms exactly" );
         return;
       }
@@ -4407,7 +4464,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
               }
             }
             else
-              AnalyseError( er );
+              AnalyseError(er);
           }
         }
       }

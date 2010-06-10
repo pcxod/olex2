@@ -2,10 +2,6 @@
 // TAsymmUnit: a collection of symmetry independent atoms
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "asymmunit.h"
 #include "catom.h"
 #include "ellipsoid.h"
@@ -600,6 +596,82 @@ double TAsymmUnit::EstimateZ(double atomCount) const  {
   double auv = (double)(CalcCellVolume()/(TUnitCell::GetMatrixMultiplier(GetLatt())*(MatrixCount()+1)));
   int zp = olx_round(auv/(18.6*atomCount));
   return (double)olx_max((TUnitCell::GetMatrixMultiplier(GetLatt())*(MatrixCount()+1) * zp), 1);
+}
+//..............................................................................
+void TAsymmUnit::FitAtoms(TTypeList<AnAssociation3<TCAtom*, const cm_Element*, bool> >& _atoms,
+  const vec3d_list& _crds, bool _try_invert)
+{
+  // validate input
+  if( _atoms.Count() != _crds.Count() )
+    throw TInvalidArgumentException(__OlxSourceInfo, "mismatching atoms and coordinates lists");
+  size_t _atom_cnt = 0;
+  for( size_t i=0; i < _atoms.Count(); i++ )  {
+    if( _atoms[i].GetA() != NULL )  {
+      if( _atoms[i].GetC() )
+        _atom_cnt++;
+    }
+    else if( _atoms[i].GetB() == NULL )
+      throw TInvalidArgumentException(__OlxSourceInfo, "neither atom or element type is provided");
+  }
+  if( _atom_cnt < 3 )
+    throw TInvalidArgumentException(__OlxSourceInfo, "too few atoms for fitting");
+  else if( _atom_cnt == 3 )
+    _try_invert = false;
+  TTypeList< AnAssociation2<vec3d, vec3d> > crds;
+  for( size_t i=0; i < _atoms.Count(); i++ )  {
+    if( _atoms[i].GetA() != NULL && _atoms[i].GetC() )
+      crds.AddNew(_atoms[i].GetA()->ccrd(), _crds[i]);
+  }
+  // normal coordinate match
+  smatdd tm;
+  vec3d tr, t;
+  for( size_t k=0; k < crds.Count(); k++ )  {
+    t += CellToCartesian(crds[k].A());
+    tr += crds[k].GetB();
+  }
+  t /= crds.Count();
+  tr /= crds.Count();
+  tm.t = t;
+  const double rms = TNetwork::FindAlignmentMatrix(crds, t, tr, tm);
+  bool invert = false;
+  if( _try_invert )  {  // try inverted coordinate set
+    TTypeList< AnAssociation2<vec3d, vec3d> > icrds;
+    for( size_t i=0; i < _atoms.Count(); i++ )  {
+      if( _atoms[i].GetA() != NULL && _atoms[i].GetC() )
+        icrds.AddNew(_atoms[i].GetA()->ccrd(), _crds[i]);
+    }
+    smatdd tmi;
+    vec3d tri;
+    for( size_t i=0; i < crds.Count(); i++ )  {
+      icrds[i].A() = crds[i].GetA();
+      CartesianToCell(icrds[i].B()) *= -1;
+      CellToCartesian(icrds[i].B());
+      tri += icrds[i].GetB();
+    }
+    tri /= crds.Count();
+    tmi.t = t;
+    const double irms = TNetwork::FindAlignmentMatrix(icrds, t, tri, tmi);
+    if( irms < rms && irms >= 0 )  {
+      tr = tri;
+      tm = tmi;
+      invert = true;
+    }
+  }
+  for( size_t i=0; i < _atoms.Count(); i++ )  {
+    vec3d v = _crds[i];
+    if( invert )  {
+      CartesianToCell(v);
+      v *= -1;
+      CellToCartesian(v);
+    }
+    v = tm*(v-tr);
+    if( _atoms[i].GetA() == NULL )  {
+      _atoms[i].A() = &NewAtom();
+      _atoms[i].A()->SetType(*_atoms[i].GetB());
+      _atoms[i].A()->SetLabel(_atoms[i].A()->GetType().symbol+(olxstr('x') << (char)('a'+i)), false);
+    }
+    _atoms[i].A()->ccrd() = CartesianToCell(v);
+  }
 }
 //..............................................................................
 void TAsymmUnit::ToDataItem(TDataItem& item) const  {
