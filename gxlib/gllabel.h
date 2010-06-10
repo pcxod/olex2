@@ -8,10 +8,20 @@
 BeginGxlNamespace()
 
 class TXGlLabel: public TGlMouseListener  {
+public:
+  class ICrdTransformer  {
+  public:
+    virtual vec3d ForRaster(const TXGlLabel&) const = 0;
+    virtual vec3d ForVector(const TXGlLabel&) const = 0;
+    // returns the argument after the adjustment
+    virtual vec3d& AdjustZ(vec3d& v) const = 0;
+  };
+private:
   olxstr FLabel;
   uint16_t FontIndex;
   TTextRect text_rect;
   vec3d Center;
+  ICrdTransformer* Transformer;
 public:
   TXGlLabel(TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
@@ -23,6 +33,8 @@ public:
   void SetLabel(const olxstr& L);
   vec3d GetRasterPosition() const;
   vec3d GetVectorPosition() const;
+  // the object must be mannaged by whoever created it!
+  DefPropP(ICrdTransformer*, Transformer)
   DefPropC(vec3d, Center)
 
   TGlFont& GetFont() const;

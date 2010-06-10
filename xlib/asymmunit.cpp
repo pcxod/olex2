@@ -669,6 +669,7 @@ void TAsymmUnit::FitAtoms(TTypeList<AnAssociation3<TCAtom*, const cm_Element*, b
       _atoms[i].A() = &NewAtom();
       _atoms[i].A()->SetType(*_atoms[i].GetB());
       _atoms[i].A()->SetLabel(_atoms[i].A()->GetType().symbol+(olxstr('x') << (char)('a'+i)), false);
+      GetRefMod()->Vars.SetParam(*_atoms[i].A(), catom_var_name_Sof, 11.0);
     }
     _atoms[i].A()->ccrd() = CartesianToCell(v);
   }

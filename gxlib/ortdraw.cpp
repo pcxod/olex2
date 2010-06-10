@@ -692,11 +692,19 @@ void OrtDraw::Render(const olxstr& fileName)  {
         Labels.Add(glxl);
     }
   }
+  if( app.DBasis().IsVisible() )  {
+    for( size_t i=0; i < app.DBasis().LabelCount(); i++ )  {
+      const TXGlLabel& glxl = app.DBasis().GetLabel(i);
+      if( !glxl.IsDeleted() && glxl.IsVisible() )
+        Labels.Add(glxl);
+    }
+  }
   {  // labels rendering block
     TGlFont::PSRenderContext context;
     TCStrList output;
     uint32_t prev_ps_color = 0;
     output.Add(pw.color_str(prev_ps_color));
+    const double vector_scale = 1./app.GetRender().GetScale();
     for( size_t i=0; i < Labels.Count(); i++ )  {
       const TGlFont& glf = Labels[i]->GetFont();
       uint32_t color = 0;
@@ -705,7 +713,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
         color = glm->AmbientF.GetRGB();
       pw.color(color);
       if( glf.IsVectorFont() )  {
-        vec3d crd = Labels[i]->GetVectorPosition()*DrawScale + DrawOrigin;
+        vec3d crd = Labels[i]->GetVectorPosition()*vector_scale + DrawOrigin;
         if( color != prev_ps_color )  {
           output.Add(pw.color_str(color));
           prev_ps_color = color;

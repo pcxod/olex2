@@ -1360,6 +1360,7 @@ void TMainForm::StartupInit()  {
 
   FXApp->SetLabelsFont(3);
   FXApp->DUnitCell().SetLabelsFont(4);
+  FXApp->DBasis().SetLabelsFont(4);
   FGlConsole->SetFontIndex(0);
   FGlConsole->Cursor().SetFontIndex(0);
   FHelpWindow->SetFontIndex(1);
