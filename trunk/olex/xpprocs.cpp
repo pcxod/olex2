@@ -4312,6 +4312,8 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
 }
 //..............................................................................
 void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  // a Open dialog appearing braks the wxWidgets sizing...
+  if( !IsShown() && (Cmds.IsEmpty() || Cmds[0].IsEmpty()) )  return;
   SetSGList(EmptyString);
   olxstr FN, Tmp;
   bool Blind = Options.Contains('b'); // a switch showing if the last file is remembered
