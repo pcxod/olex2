@@ -458,7 +458,8 @@ void TGlRenderer::Draw()  {
   }
   else if( StereoFlag == glStereoCross )  {
     const double ry = GetBasis().GetRY();
-    int _l = FLeft;
+    olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    const int _l = FLeft;
     GetBasis().RotateY(ry+StereoAngle);
     DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry-StereoAngle);

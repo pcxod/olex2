@@ -125,15 +125,23 @@ public:
 // building string
   inline static PyObject* BuildString(const olxstr& str)  {
 #ifdef _UNICODE
+    if( str.IsEmpty() ) // silly Py...
+      return PyUnicode_FromWideChar(L"", 0);
     return PyUnicode_FromWideChar(str.raw_str(), str.Length());
 #else
-    return Py_BuildValue("s#", str.raw_str(), str.Length());
+    if( str.IsEmpty() ) // silly Py...
+      return PyString_FromStringAndSize("", 0);
+    return PyString_FromStringAndSize(str.raw_str(), str.Length());
 #endif
   }
   inline static PyObject* BuildCString(const olxcstr& str)  {
-    return Py_BuildValue("s#", str.raw_str(), str.Length());
+    if( str.IsEmpty() ) // silly Py...
+      return PyString_FromStringAndSize("", 0);
+    return PyString_FromStringAndSize(str.raw_str(), str.Length());
   }
   inline static PyObject* BuildWString(const olxwstr& str) {
+    if( str.IsEmpty() ) // silly Py...
+      return PyUnicode_FromWideChar(L"", 0);
     return PyUnicode_FromWideChar(str.raw_str(), str.Length());
   }
 // parsing string 

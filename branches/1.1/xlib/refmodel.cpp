@@ -786,61 +786,72 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
 }
 //....................................................................................................
 void RefinementModel::ProcessFrags()  {
+  // generate missing atoms for the AFIX 59, 66
+  olxdict<int, TPtrList<TAfixGroup>, TPrimitiveComparator> a_groups;
+  olxdict<int, Fragment*, TPrimitiveComparator> frags;
+  for( size_t i=0; i < AfixGroups.Count(); i++ )  {
+    TAfixGroup& ag = AfixGroups[i];
+    int m = ag.GetM();
+    if( !ag.IsFitted() &&  m < 16 )  continue;
+    if( m == 7 )  m = 6;
+    bool generate = false;
+    for( size_t j=0; j < ag.Count(); j++ )  {
+      if( ag[j].ccrd().IsNull() )  {
+        generate = true;
+        a_groups.Add(ag.GetAfix()).Add(ag)->SetAfix(m*10+ag.GetN());
+        break;
+      }
+    }
+    if( generate )  {
+      if( frags.IndexOf(m) == InvalidIndex )  {
+        vec3d_list crds;
+        if( m == 5 )
+          Fragment::GenerateFragCrds(frag_id_cp, crds);
+        else if( m == 6 )
+          Fragment::GenerateFragCrds(frag_id_ph, crds);
+        else if( m == 10 )
+          Fragment::GenerateFragCrds(frag_id_cp_star, crds);
+        else if( m == 11 )
+          Fragment::GenerateFragCrds(frag_id_naphthalene, crds);
+        Fragment& f = AddFrag(m);
+        const olxstr label("C");
+        for( size_t i=0; i < crds.Count(); i++ )
+          f.Add(label, crds[i]);
+        frags.Add(m, &f);
+      }
+    }
+  }
   for( size_t i=0; i < Frags.Count(); i++ )  {
     Fragment* frag = Frags.GetValue(i);
     for( size_t j=0; j < AfixGroups.Count(); j++ )  {
       TAfixGroup& ag = AfixGroups[j];
       if( ag.GetM() == frag->GetCode() && (ag.Count()+1) == frag->Count() )  {
-        TTypeList< AnAssociation2<vec3d, vec3d> > crds, icrds;
-        TCAtomPList atoms;
-        atoms.Add( &ag.GetPivot() );
+        TTypeList<AnAssociation3<TCAtom*, const cm_Element*, bool> > atoms;
+        vec3d_list crds;
+        TCAtomPList all_atoms(ag.Count()+1);
+        all_atoms[0] = &ag.GetPivot();
         for( size_t k=0; k < ag.Count(); k++ )
-          atoms.Add( ag[k] );
-        for( size_t k=0; k < atoms.Count(); k++ )  {
-          if( atoms[k]->ccrd().QLength() > 0.00001 )  {
-            crds.AddNew( atoms[k]->ccrd(), (*frag)[k].crd );
-            icrds.AddNew(atoms[k]->ccrd(), (*frag)[k].crd );
-          }
+          all_atoms[k+1] = &ag[k];
+        for( size_t k=0; k < all_atoms.Count(); k++ )  {
+          atoms.AddNew(all_atoms[k], (const cm_Element*)NULL, all_atoms[k]->ccrd().QLength() > 1e-6);
+          crds.AddCCopy((*frag)[k].crd);
         }
-        if( crds.Count() < 3 )
-          throw TFunctionFailedException(__OlxSourceInfo, "Not enough atoms in fitted group");
-        smatdd tm, tmi;
-        vec3d tr, tri, t;
-        for( size_t k=0; k < crds.Count(); k++ )  {
-          icrds[k].A() = aunit.CellToCartesian( crds[k].A() );
-          aunit.CartesianToCell( icrds[k].B() ) *= -1;
-          aunit.CellToCartesian( icrds[k].B() );
-          t += crds[k].GetA();
-          tr += crds[k].GetB();
-          tri += icrds[k].GetB();
-        }
-        t /= crds.Count();
-        tr /= crds.Count();
-        tri /= crds.Count();
-        tm.t = t;
-        tmi.t = t;
-        bool invert = false;
-        double rms = TNetwork::FindAlignmentMatrix(crds, t, tr, tm);
-        double irms = TNetwork::FindAlignmentMatrix(icrds, t, tri, tmi);
-        if( irms < rms && irms >= 0 )  {
-          tr = tri;
-          tm = tmi;
-          invert = true;
-        }
-        //tm.r.Transpose();
-        for( size_t k=0; k < atoms.Count(); k++ )  {
-          vec3d v = (*frag)[k].crd;
-          if( invert )  {
-            aunit.CartesianToCell(v);
-            v *= -1;
-            aunit.CellToCartesian(v);
-          }
-          v = tm*(v-tr);
-          atoms[k]->ccrd() = aunit.CartesianToCell(v);
-        }
-        ag.SetAfix( ag.GetN() );
+        aunit.FitAtoms(atoms, crds, false);
+        ag.SetAfix(ag.GetN());
       }
     }
+  }
+  for( size_t i=0; i < a_groups.Count(); i++ )  {
+    TPtrList<TAfixGroup>& gs = a_groups.GetValue(i);
+    for( size_t j=0; j < gs.Count(); j++ )
+      gs[j]->SetAfix(a_groups.GetKey(i));
+  }
+  // remove the 'special' frags
+  for( size_t i=0; i < frags.Count(); i++ )  {
+    const size_t ind = Frags.IndexOf(frags.GetKey(i));
+    if( ind == InvalidIndex )  continue;  // ?
+    delete Frags.GetValue(ind);
+    Frags.Delete(ind);
   }
 }
 //....................................................................................................

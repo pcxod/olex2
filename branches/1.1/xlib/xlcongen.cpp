@@ -43,6 +43,8 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
     GenerateAtom(CreatedAtoms, envi, Group, atomType, pivoting);
     if( CreatedAtoms.IsEmpty() )  // nothing inserted
       return false;
+    bool negative_part = false;
+    double occu_mult = 1.0;
     short afix = 0;
     switch( Group )  {
       case fgNH3:
@@ -54,6 +56,7 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
             afix = 137;
           else
             afix = 137;
+          negative_part = (envi.GetBase().CAtom().GetDegeneracy() != 1);
         }
         break;
       case fgCH2:
@@ -114,6 +117,7 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
             sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[0], NULL);
             sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[0], &envi.GetBase().CAtom().GetEquiv(0));
           }
+          occu_mult = 2;
         }
         break;
       case fgSH1:
@@ -171,7 +175,10 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
         ag.AddDependent(*CreatedAtoms[i]);
     }
     for( size_t i=0; i < CreatedAtoms.Count(); i++ )  {
-      CreatedAtoms[i]->SetPart(envi.GetBase().CAtom().GetPart());
+      if( negative_part )
+        CreatedAtoms[i]->SetPart(-1);
+      else
+        CreatedAtoms[i]->SetPart(envi.GetBase().CAtom().GetPart());
       CreatedAtoms[i]->SetUisoOwner(&envi.GetBase().CAtom());
       if( envi.GetBase().GetType() == iOxygenZ || Group == fgCH3 )
         CreatedAtoms[i]->SetUisoScale(1.5);
@@ -180,6 +187,7 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
       CreatedAtoms[i]->SetUiso(4*caDefIso*caDefIso);
       RefMod.Vars.SetParam(*CreatedAtoms[i], catom_var_name_Sof, 
         RefMod.Vars.GetParam(envi.GetBase().CAtom(), catom_var_name_Sof));
+      CreatedAtoms[i]->SetOccu(CreatedAtoms[i]->GetOccu()*occu_mult);
       if( generated != NULL )
         generated->Add(CreatedAtoms[i]);
     }

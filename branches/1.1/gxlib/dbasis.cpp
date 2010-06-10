@@ -18,6 +18,11 @@ TGlMouseListener(Render, collectionName)
   SetZoomable(true);
   SetSelectable(false);
 }
+//..............................................................................
+TDBasis::~TDBasis()  {}
+//..............................................................................
+void TDBasis::SetAsymmUnit(TAsymmUnit& au)  {  AU = &au;  }
+//..............................................................................
 void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);

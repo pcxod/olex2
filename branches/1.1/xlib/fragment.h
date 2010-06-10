@@ -3,11 +3,16 @@
 #include "xbase.h"
 BeginXlibNamespace()
 
+enum {
+  frag_id_cp = 0,
+  frag_id_ph,
+  frag_id_naphthalene,
+  frag_id_cp_star
+};
 // coordinates are always cartesian
 struct FragAtom {
   olxstr label;
   vec3d crd;
-  
   FragAtom(const olxstr& labl, const vec3d& _crd) : label(labl), crd(_crd)  {  }
   FragAtom(const FragAtom& a) :
   label(a.label),
@@ -64,6 +69,11 @@ public:
     Atoms.Clear();
   }
 
+  template <class VecType>
+  FragAtom& Add(const olxstr& label, const VecType& v)  {
+    return Add(label, v[0], v[1], v[2]);
+  }
+  
   FragAtom& Add(const olxstr& label, double a, double b, double c)  {
     vec3d crd( 
       a*f2c[0][0] + b*f2c[1][0] + c*f2c[2][0],
@@ -79,12 +89,52 @@ public:
   inline size_t Count() const {  return Atoms.Count();  }
   FragAtom& operator [] (size_t i)  {  return Atoms[i];  }
   const FragAtom& operator [] (size_t i) const {  return Atoms[i];  }
-
+  void Delete(size_t i)  {  Atoms.Delete(i);  }
   template <class slist> void ToStrings(slist& lst) const {
     lst.Add("FRAG ") << Code;
     for( size_t i=0; i < Atoms.Count(); i++ )
       lst.Add( Atoms[i].ToString() ); 
     lst.Add("FEND");
+  }
+  ////
+  template <class List>  // one of the type_list
+  static List& GenerateRegularRing(size_t sides, double norm, List& rv)  {
+    rv.SetCapacity(rv.Count()+sides);
+    double sin_a, cos_a;
+    SinCos(2*M_PI/sides, &sin_a, &cos_a);
+    vec3d ps(cos_a, -sin_a, 0);
+    for( size_t i=0; i < sides; i++ )  {
+      rv.AddCCopy(ps*norm);
+      const double x = ps[0];
+      ps[0] = (cos_a*x + sin_a*ps[1]);
+      ps[1] = (cos_a*ps[1] - sin_a*x);
+    }
+    return rv;
+  }
+  template <class List>  // one of the type_list
+  static List GenerateFragCrds(int frag_id, List& rv)  {
+    if( frag_id == frag_id_cp )
+      GenerateRegularRing(5, 0.5*1.42/cos(54*M_PI/180), rv);
+    else if( frag_id == frag_id_ph )
+      GenerateRegularRing(6, 1.39, rv);
+    else if( frag_id == frag_id_naphthalene )  {
+      GenerateRegularRing(6, 1.39, rv);
+      GenerateRegularRing(6, 1.39, rv);
+      rv.Delete(7);
+      rv.Delete(7);
+      const vec3d t = (rv[4]+rv[5]).NormaliseTo(1.39*2*cos(M_PI/6));
+      for( size_t i=6; i < rv.Count(); i++ )
+        rv[i] += t;
+      olx_swap(rv[9], rv[7]);
+    }
+    else if( frag_id == frag_id_cp_star )  {
+      const double l = 0.5*1.42/cos(54*M_PI/180);
+      GenerateRegularRing(5, l, rv);
+      GenerateRegularRing(5, l+1.063, rv);
+    }
+    else
+      throw TInvalidArgumentException(__OlxSourceInfo, "invalid fragment identifier");
+    return rv;
   }
 };
 

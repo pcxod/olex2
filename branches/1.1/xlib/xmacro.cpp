@@ -32,6 +32,8 @@
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
+#define xlib_InitMacroA(macroName, amacroName, validOptions, argc, desc)\
+  lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #amacroName, (validOptions), argc, desc))
 #define xlib_InitFunc(funcName, argc, desc) \
   lib.RegisterStaticFunction( new TStaticFunction(&XLibMacros::fun##funcName, #funcName, argc, desc))
 
@@ -185,13 +187,14 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(Reset, "s-space group&;c-content&;f-alternative file name&;rem-exclude remarks", 
     fpAny|psFileLoaded, "Resets current structure for the solution with ShelX");
   xlib_InitMacro(Degen, "cs-clear selection", fpAny|psFileLoaded, "Prints how many symmetry operators put given atom to the same site");
-  xlib_InitMacro(Close, EmptyString, fpNone|psFileLoaded, "Closes currently loaded file");
+  xlib_InitMacroA(Close, @Close, EmptyString, fpNone|psFileLoaded, "Closes currently loaded file");
   xlib_InitMacro(PiPi, "g-generates using found symmetry operations&;r-ring content [C6,NC5]",
     fpNone|fpTwo|psFileLoaded, "Analysis of the pi-pi interactions (experimental).\
  The procedure searches for flat reqular C6 or NC5 rings and prints information for the ones where the\
  centroid-centroid distance is smaller than [4] A and the shift is smaller than [3] A. These two parameters\
  can be customised.");
-  xlib_InitMacro(MolInfo, "g-generation of the triangluation [5]&;s-source ([o]ctahedron, (t)etrahedron)",
+  xlib_InitMacro(MolInfo, "g-generation of the triangluation [5]&;s-source ([o]ctahedron, (t)etrahedron)"
+    "&;o-use occupancy of the atoms in the integration",
     fpAny|psFileLoaded,
     "Prints molecular volume, surface area and other information for visible/selected atoms");
 //_________________________________________________________________________________________________________________________
@@ -710,16 +713,16 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       min_ang = max_d;
       max_d = 2.9;
     }
-    else if( max_d > 5 )
+    if( max_d > 5 )
       max_d = 2.9;
   }
   smatd_list transforms;
   TIntList bais;
-  bais.Add(iNitrogenIndex);
-  bais.Add(iOxygenIndex);
-  bais.Add(iFluorineIndex);
-  bais.Add(iChlorineIndex);
-  bais.Add(iSulphurIndex);
+  bais.Add(iNitrogenZ);
+  bais.Add(iOxygenZ);
+  bais.Add(iFluorineZ);
+  bais.Add(iChlorineZ);
+  bais.Add(iSulphurZ);
   TBasicApp::GetLog() << "Processing HTAB with max D-A distance " << max_d << " and minimum angle " << min_ang << '\n';
   min_ang = cos(min_ang*M_PI/180.0);
   if( Options.Contains('t') )  {
@@ -1105,7 +1108,7 @@ void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   // do not print a warning...
   if( xapp.XFile().GetLattice().IsGenerated() )  return;
   TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
-  TEBitArray detached((uint32_t)au.AtomCount());
+  TEBitArray detached(au.AtomCount());
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     TCAtom &ca = au.GetAtom(i);
     detached.Set(i, ca.IsDetached());
@@ -4036,6 +4039,7 @@ void XLibMacros::macMolInfo(TStrObjList &Cmds, const TParamList &Options, TMacro
   TSAtomPList atoms;
   if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true, true) )
     return;
+  const bool use_occu = Options.Contains('o');  
   typedef double float_type; // for generation >= 8, double ,ust be used...
   typedef TVector3<float_type> vec_type;
   TTypeList<TVector3<float_type> > verts;
@@ -4098,6 +4102,8 @@ void XLibMacros::macMolInfo(TStrObjList &Cmds, const TParamList &Options, TMacro
     const size_t off = triags.Count()*i;
     const float_type r = (float_type)atoms[i]->GetType().r_vdw;
     const vec_type center = atoms[i]->crd();
+    const float_type occu_factor = (float_type)(!use_occu ? 1.0 :
+      (atoms[i]->CAtom().GetOccu()*atoms[i]->CAtom().GetDegeneracy()));
     for( size_t j=0; j < triags.Count(); j++ )  {
       if( t_map[off+j] == 0 )  continue;
       const vec_type
@@ -4105,7 +4111,7 @@ void XLibMacros::macMolInfo(TStrObjList &Cmds, const TParamList &Options, TMacro
         v2 = verts[triags[j].vertices[1]]*r,
         v3 = verts[triags[j].vertices[2]]*r;
       vec_type dp = (v2-v1).XProdVec(v3-v1);
-      const float_type m = (float_type)(1.0/2*(float_type)t_map[off+j]/3.0);
+      const float_type m = (float_type)(occu_factor*1.0/2*(float_type)t_map[off+j]/3.0);
       const float_type area = m*dp.Length();
       mol_area += area;
       const float_type dx21 = v2[0]-v1[0],

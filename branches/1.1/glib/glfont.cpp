@@ -975,14 +975,17 @@ int gl_font_simplex[95][112] = {
    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
 };
 
-TStrList TGlFont::DefinePSChar(olxch ch, const double& drawScale,
-                               olxdict<size_t, olxstr, TPrimitiveComparator>& definitions)
+const olxcstr& TGlFont::DefinePSChar(olxch ch, const double& drawScale,
+                               TGlFont::PSRenderContext& context) const
 {
-  TStrList rv;
-  if( ch < 32 )  return rv;
+  if( ch < 32 || ch > 126 )  return CEmptyString;
+  const size_t _ind = context.def_dict.IndexOf(ch);
+  if( _ind != InvalidIndex )
+    return context.definitions[context.def_dict.GetValue(_ind)].id;
   size_t ch_ind = ch;
-  rv.Add("  /char_") << ch_ind << "  {";
-  definitions(ch, olxstr("char_") << ch_ind); 
+  context.def_dict.Add(ch, context.definitions.Count());
+  TCStrList& def = context.definitions.AddNew(olxcstr("char_") << ch_ind).definition;
+  def.Add("  /char_") << ch_ind << "  {";
   ch_ind -= 32;
   bool path_started = false;
   double scalex = (double)PointSize/15;
@@ -992,19 +995,19 @@ TStrList TGlFont::DefinePSChar(olxch ch, const double& drawScale,
       continue;
     }
     else  {
-      rv.Add("    ") << (double)gl_font_simplex[ch_ind][j]*drawScale*scalex/VectorScale 
+      def.Add("    ") << (double)gl_font_simplex[ch_ind][j]*drawScale*scalex/VectorScale 
         << ' ' << (double)gl_font_simplex[ch_ind][j+1]*drawScale*scalex/VectorScale;
       if( !path_started )  {
-        rv.Last().String  << " moveto";
+        def.Last().String  << " moveto";
         path_started = true;
       }
       else
-        rv.Last().String  << " lineto";
+        def.Last().String  << " lineto";
     }
   }
-  rv.Add("    stroke");
-  rv.Add("  } bind def");
-  return rv;
+  def.Add("    stroke");
+  def.Add("  } bind def");
+  return context.definitions.Last().id;
 }
 TStrList TGlFont::ExportHersheyToPS(const olxstr& uniq_chars)  {
   TStrList rv;
@@ -1128,12 +1131,12 @@ void TGlFont::CreateHershey(const olxdict<size_t, olxstr, TPrimitiveComparator>&
   }
 }
 //..............................................................................
-void TGlFont::RenderPSLabel(const vec3d& pos, const olxstr& label, TStrList& out,
-                            const double& drawScale,
-                            olxdict<size_t, olxstr, TPrimitiveComparator>& definitions)
+TCStrList TGlFont::RenderPSLabel(const vec3d& pos, const olxstr& label, double drawScale,
+                            PSRenderContext& context) const
 {
+  TCStrList out;
   out.Add("gsave");
-  out.Add(EmptyString) << pos[0] << ' ' << pos[1] << " translate";
+  out.Add() << pos[0] << ' ' << pos[1] << " translate";
   short cstate = 0;
   for( size_t i=0; i < label.Length(); i++ )  {
     if( label.CharAt(i) == '\\' && ! is_escaped(label, i) && (i+1) < label.Length() )  {
@@ -1166,20 +1169,14 @@ void TGlFont::RenderPSLabel(const vec3d& pos, const olxstr& label, TStrList& out
         }
       }
     }
-    size_t di = definitions.IndexOf((size_t)label.CharAt(i));
-    if( di == InvalidIndex )  {
-      TStrList sl = DefinePSChar(label.CharAt(i), drawScale, definitions);
-      out.Insert(0, sl);
-      di = definitions.IndexOf((size_t)label.CharAt(i));
-      if( di == InvalidIndex )  continue;
-    }
-    out.Add(definitions.GetValue(di));
+    out.Add(DefinePSChar(label.CharAt(i), drawScale, context));
     if( i+1 < label.Length() )  {
       TFontCharSize* cs = CharSizes[label.CharAt(i)];
-      out.Add(EmptyString) << (double)(cs->Right)*drawScale*PointSize/(15*VectorScale) << " 0 translate";
+      out.Add() << (double)(cs->Right)*drawScale*PointSize/(15*VectorScale) << " 0 translate";
     }
   }
   out.Add("grestore");
+  return out;
 }
 //..............................................................................
 void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, double scale, bool FixedW) const {

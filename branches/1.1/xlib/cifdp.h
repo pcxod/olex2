@@ -108,7 +108,8 @@ namespace cif_dp {
     olxdict<olxstr, cetTable*, olxstrComparator<true> > table_map;
     olxdict<olxstr, ICifEntry*, olxstrComparator<true> > param_map;
     TStrPObjList<olxstr, ICifEntry*> params;
-    CifBlock(const olxstr& _name) : name(_name)  {}
+    CifBlock* parent;
+    CifBlock(const olxstr& _name, CifBlock* _parent=NULL) : name(_name), parent(_parent)  {}
     virtual ~CifBlock();
     ICifEntry& Add(const olxstr& pname, ICifEntry* p);
     virtual void ToStrings(TStrList& list) const;
@@ -124,9 +125,13 @@ namespace cif_dp {
     struct parse_context  {
       CifBlock* current_block;
       TStrList& lines;
-      parse_context(TStrList& _lines) : lines(_lines), current_block(NULL) {}
+      parse_context(TStrList& _lines) : lines(_lines), current_block(NULL)  {}
     };
     bool ExtractLoop(size_t& start, parse_context& context);
+    static bool IsLoopBreaking(const olxstr& v)  {
+      return v.StartsFrom('_') || v.StartsFromi("loop_") || 
+        v.StartsFromi("data_") || v.StartsFromi("save_");
+    }
   public:
     TCifDP()  {}
     virtual ~TCifDP()  {  Clear();  }
@@ -139,12 +144,12 @@ namespace cif_dp {
     //Finds a value by name
     inline size_t Count() const {  return data.Count();  }
     CifBlock& operator [] (size_t i) const {  return data[i];  }
-    CifBlock& Add(const olxstr& name)  {
+    CifBlock& Add(const olxstr& name, CifBlock* parent=NULL)  {
       size_t i = data_map.IndexOf(name);
       if( i != InvalidIndex )
         return *data_map.GetValue(i);
       else
-        return *data_map.Add(name, &data.AddNew(name));
+        return *data_map.Add(name, &data.Add(new CifBlock(name, parent)));
     }
     CifBlock* Find(const olxstr& data_name) const {
       size_t i = data_map.IndexOf(data_name);

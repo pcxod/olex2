@@ -1,7 +1,6 @@
 #ifndef __olx_glx_label_H
 #define __olx_glx_label_H
 #include "gxbase.h"
-
 #include "glmouselistener.h"
 #include "glfont.h"
 #include "dataitem.h"

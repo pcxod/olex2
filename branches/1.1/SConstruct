@@ -339,7 +339,7 @@ if sys.platform[:3] == 'win':
   res_file = out_dir + 'olex/app.res'
   olex2_files = olex2_files + olex2_env.RES(res_file, 'olex/app.rc')
   olex2_env.Append(RCFLAGS=['/l 0x809'])
-  olex2_env.Append(LINKFLAGS=['/PDB:' + out_dir + 'exe/olex2.pdb'])
+  olex2_env.Append(LINKFLAGS=['/MANIFEST', '/PDB:' + out_dir + 'exe/olex2.pdb'])
 olex2_env.Program(out_dir+'exe/olex2', generic_files + olex2_files)
 
 unirun_files = np_repository + fileListToStringList('unirun', unirun)
@@ -350,7 +350,7 @@ unirun_files = processFileNameList(unirun_files, unirun_env, out_dir+'unirun')
 
 unirun_env.Append(CCFLAGS = ['-D_NO_PYTHON'])
 if sys.platform[:3] == 'win':
-  unirun_env.Append(LINKFLAGS=['/PDB:' + out_dir + 'exe/unirun.pdb'])
+  unirun_env.Append(LINKFLAGS=['/MANIFEST', '/PDB:' + out_dir + 'exe/unirun.pdb'])
 unirun_env.Program(out_dir+'exe/unirun', unirun_files)
 
 # make olex2c?
@@ -360,7 +360,7 @@ if sys.platform[:3] == 'win':
   olex2c_files = olex2c_files + processFileNameList(olex2c_win, olex2c_env, out_dir+'olex2c')
   olex2c_files = olex2c_files + olex2c_env.RES(res_file, 'olex2c/app.rc')
   olex2c_env.Append(RCFLAGS=['/l 0x809'])
-  olex2c_env.Append(LINKFLAGS=['/PDB:' + out_dir + 'exe/olex2c.pdb'])
+  olex2c_env.Append(LINKFLAGS=['/MANIFEST', '/PDB:' + out_dir + 'exe/olex2c.pdb'])
 else:
   olex2c_env.Append(LIBS=['readline'])
 

@@ -1165,25 +1165,29 @@ void TMainForm::macName(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   bool changeSuffix = Options.Contains("s");
   if( changeSuffix )  {
     TXAtomPList xatoms;
-    FXApp->FindXAtoms( Cmds.Text(' '), xatoms, !Options.Contains("cs") );
-    if( xatoms.Count() != 0 )
-      FUndoStack->Push( FXApp->ChangeSuffix(xatoms, Options.FindValue("s"), checkLabels) );
+    if( FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs")) )
+      FUndoStack->Push(FXApp->ChangeSuffix(xatoms, Options.FindValue("s"), checkLabels));
   }
   else  {
     bool processed = false;
     if( Cmds.Count() == 1 )  { // bug #49
       const size_t spi = Cmds[0].IndexOf(' ');
       if( spi != InvalidIndex )  {
-        FUndoStack->Push( FXApp->Name(Cmds[0].SubStringTo(spi), Cmds[0].SubStringFrom(spi+1), checkLabels, !Options.Contains("cs")) );
-        processed = true;
+        FUndoStack->Push(
+          FXApp->Name(Cmds[0].SubStringTo(spi), Cmds[0].SubStringFrom(spi+1), checkLabels,
+          !Options.Contains("cs"))
+        );
       }
+      else
+        FUndoStack->Push(FXApp->Name("sel", Cmds[0], checkLabels, !Options.Contains("cs")));
+      processed = true;
     }
     else if( Cmds.Count() == 2 )  {
-      FUndoStack->Push( FXApp->Name(Cmds[0], Cmds[1], checkLabels, !Options.Contains("cs")) );
+      FUndoStack->Push(FXApp->Name(Cmds[0], Cmds[1], checkLabels, !Options.Contains("cs")));
       processed = true;
     }
     if( !processed )  {
-      Error.ProcessingError(__OlxSrcInfo, olxstr("invalid syntax: ") << Cmds.Text(' ') );
+      Error.ProcessingError(__OlxSrcInfo, olxstr("invalid syntax: ") << Cmds.Text(' '));
     }
   }
 }
@@ -2503,25 +2507,82 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     E.ProcessingError(__OlxSrcInfo, "afix should be specified" );
     return;
   }
+  olxstr positions;
+  if( Cmds.Count() > 0 && Cmds[0].IndexOf(',') != InvalidIndex )  {
+    positions = Cmds[0];
+    Cmds.Delete(0);
+  }
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   RefinementModel& rm = FXApp->XFile().GetRM();
   FindXAtoms(Cmds, Atoms, false, !Options.Contains("cs"));
-  int m = TAfixGroup::GetM(afix), n = TAfixGroup::GetN(afix);
+  const int m = TAfixGroup::GetM(afix), n = TAfixGroup::GetN(afix);
   if( TAfixGroup::IsFitted(afix) && ( n == 6 || n == 9) )  {  // special case
+    // yet another special case
+    if( !positions.IsEmpty() )  {
+      TStrList toks(positions, ',');
+      if( toks.Count() < 3 )  {
+        E.ProcessingError(__OlxSrcInfo, "at least 3 atoms should be provided");
+        return;
+      }
+      if( toks.Count() != Atoms.Count() )  {
+        E.ProcessingError(__OlxSrcInfo, "mismatching number of positions and given atoms");
+        return;
+      }
+      TArrayList<int> pos(toks.Count());
+      vec3d_list crds;
+      if( m == 5 )
+        Fragment::GenerateFragCrds(frag_id_cp, crds);
+      else if( m == 6 || m == 7 )
+        Fragment::GenerateFragCrds(frag_id_ph, crds);
+      else if( m == 10 )
+        Fragment::GenerateFragCrds(frag_id_cp_star, crds);
+      else if( m == 11 )
+        Fragment::GenerateFragCrds(frag_id_naphthalene, crds);
+      for( size_t i=0; i < toks.Count(); i++ )  {
+        const int v = toks[i].ToInt()-1;
+        if( i > 0 && pos.Last() >= v )  {
+          E.ProcessingError(__OlxSrcInfo, "please provide position in the ascending order");
+          return;
+        }
+        if( v < 0 || v >= crds.Count() )  {
+          E.ProcessingError(__OlxSrcInfo, "invalid ring position");
+          return;
+        }
+        pos[i] = v;
+      }
+      TTypeList<AnAssociation3<TCAtom*, const cm_Element*, bool> > atoms;
+      const cm_Element& carb = XElementLib::GetByIndex(iCarbonIndex);
+      for( size_t i=0; i < pos.Count(); i++ )  {
+        while( pos[i] > 0 && (pos[i] > atoms.Count()) )
+          atoms.Add(new AnAssociation3<TCAtom*, const cm_Element*, bool>(NULL, &carb, false));
+        atoms.Add(new AnAssociation3<TCAtom*, const cm_Element*, bool>(
+          &Atoms[i]->Atom().CAtom(), (const cm_Element*)NULL, true));
+      }
+      while( atoms.Count() < crds.Count() )
+        atoms.Add(new AnAssociation3<TCAtom*, const cm_Element*, bool>(NULL, &carb, false));
+      FXApp->XFile().GetAsymmUnit().FitAtoms(atoms, crds, false);
+      TAfixGroup& ag = FXApp->XFile().GetRM().AfixGroups.New(atoms[pos[0]].A(), afix);
+      for( size_t i=pos[0]+1; i < atoms.Count(); i++ )
+        ag.AddDependent(*atoms[i].A());
+      for( size_t i=0; i < pos[i]; i++ )
+        ag.AddDependent(*atoms[i].A());
+      FXApp->XFile().EndUpdate();
+      return;
+    }
     if( Atoms.IsEmpty() )
       FXApp->AutoAfixRings(afix, NULL, Options.Contains('n'));
     else if( Atoms.Count() == 1 )
       FXApp->AutoAfixRings(afix, &Atoms[0]->Atom(), Options.Contains('n'));
     else  {
-      if( (afix == 56 || afix == 59) &&  Atoms.Count() != 5 )  {
+      if( (m == 5) &&  Atoms.Count() != 5 )  {
         E.ProcessingError(__OlxSrcInfo, "please provide 5 atoms exactly" );
         return;
       }
-      else if( (afix == 66 || afix == 69 || afix == 76 || afix == 79) &&  Atoms.Count() != 6 )  {
+      else if( (m == 6 || m == 7) &&  Atoms.Count() != 6 )  {
         E.ProcessingError(__OlxSrcInfo, "please provide 6 atoms exactly" );
         return;
       }
-      else if( (afix == 106 || afix == 109 || afix == 116 || afix == 119) &&  Atoms.Count() != 10 )  {
+      else if( (m == 10 || m == 11) &&  Atoms.Count() != 10 )  {
         E.ProcessingError(__OlxSrcInfo, "please provide 10 atoms exactly" );
         return;
       }
@@ -2850,31 +2911,30 @@ void TMainForm::macSadi(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     double td = 0;
     for( size_t i=0; i < XA->Atom().NodeCount(); i++ )  {
       TSAtom& SA = XA->Atom().Node(i);
-      if( SA.IsDeleted() )  continue;
-      if( SA.GetType() == iQPeakZ )  continue;
+      if( SA.IsDeleted() || SA.GetType() == iQPeakZ )  continue;
       sr1->AddAtomPair(XA->Atom().CAtom(), &XA->Atom().GetMatrix(0), SA.CAtom(), &SA.GetMatrix(0));
       if( td == 0 )  // need this one to remove opposite atoms from restraint
-        td = XA->Atom().crd().DistanceTo( SA.crd() ) * 2;
+        td = XA->Atom().crd().DistanceTo(SA.crd()) * 2;
       for( size_t j=i+1; j < XA->Atom().NodeCount(); j++ )  {
         TSAtom& SA1 = XA->Atom().Node(j);
-        if( SA1.IsDeleted() )  continue;
-        if( SA1.GetType() == iQPeakZ )  continue;
-        double d = SA.crd().DistanceTo(SA1.crd()) ;
+        if( SA1.IsDeleted() || SA1.GetType() == iQPeakZ || (SA.CAtom().GetPart() != SA1.CAtom().GetPart()) )
+         continue;
+        const double d = SA.crd().DistanceTo(SA1.crd()) ;
         if( d/td > 0.85 )  continue;
         sr->AddAtomPair(SA.CAtom(), &SA.GetMatrix(0), SA1.CAtom(), &SA1.GetMatrix(0));
         if( sr->AtomCount() >= 12 )  {
           FXApp->XFile().GetRM().rSADI.ValidateRestraint(*sr);
           sr = &FXApp->XFile().GetRM().rSADI.AddNew();
-          sr->SetEsd( esd*2 );
+          sr->SetEsd(esd*2);
         }
       }
     }
   }
   else if( Atoms.Count() == 3 )  {  // special case
-    sr->AddAtomPair( Atoms[0]->Atom().CAtom(), &Atoms[0]->Atom().GetMatrix(0), 
-                       Atoms[1]->Atom().CAtom(), &Atoms[1]->Atom().GetMatrix(0));
-    sr->AddAtomPair( Atoms[1]->Atom().CAtom(), &Atoms[1]->Atom().GetMatrix(0), 
-                       Atoms[2]->Atom().CAtom(), &Atoms[2]->Atom().GetMatrix(0));
+    sr->AddAtomPair(Atoms[0]->Atom().CAtom(), &Atoms[0]->Atom().GetMatrix(0), 
+                    Atoms[1]->Atom().CAtom(), &Atoms[1]->Atom().GetMatrix(0));
+    sr->AddAtomPair(Atoms[1]->Atom().CAtom(), &Atoms[1]->Atom().GetMatrix(0), 
+                    Atoms[2]->Atom().CAtom(), &Atoms[2]->Atom().GetMatrix(0));
   }
   else  {
     if( (Atoms.Count()%2) != 0 )  {
@@ -3701,8 +3761,8 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   resolution = 1./resolution;
   const vec3i dim(
     (int)(au.Axes()[0].GetV()*resolution),
-		(int)(au.Axes()[1].GetV()*resolution),
-		(int)(au.Axes()[2].GetV()*resolution));
+    (int)(au.Axes()[1].GetV()*resolution),
+    (int)(au.Axes()[2].GetV()*resolution));
   const double mapVol = dim.Prod();
   const double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   const int minLevel = olx_round(pow(6*mapVol*3/(4*M_PI*vol), 1./3));
@@ -4404,7 +4464,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
               }
             }
             else
-              AnalyseError( er );
+              AnalyseError(er);
           }
         }
       }
@@ -4413,7 +4473,11 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       // check if the associated HKL file has the same name and location
       olxstr hkl_fn = TEFile::OSPath(FXApp->XFile().GetRM().GetHKLSource()).DeleteSequencesOf(TEFile::GetPathDelimeter()); 
       olxstr src_fn = TEFile::OSPath(FXApp->XFile().LastLoader()->GetFileName()).DeleteSequencesOf(TEFile::GetPathDelimeter()); 
+#ifdef __WIN32__
+      if( !TEFile::ChangeFileExt(hkl_fn, EmptyString).Equalsi(TEFile::ChangeFileExt(src_fn, EmptyString)) )  {
+#else
       if( TEFile::ChangeFileExt(hkl_fn, EmptyString) != TEFile::ChangeFileExt(src_fn, EmptyString) )  {
+#endif
         TBasicApp::GetLog() << "Note that the associated HKL file differs from the loaded file name:\n";
         TBasicApp::GetLog() << (olxstr("SRC: ") << src_fn << '\n');
         TBasicApp::GetLog() << (olxstr("HKL: ") << hkl_fn << '\n');
@@ -6101,15 +6165,19 @@ public:
 #endif
 
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  return;
   //cif_dp::TCifDP cdp;
   //TStrList _sl;
-  //_sl.LoadFromFile("cif_core.cif");
+  //_sl.LoadFromFile("e:/tmp/vdlee142.cif");
   //cdp.LoadFromStrings(_sl);
   //_sl.Clear();
   //cdp.SaveToStrings(_sl);
-  //TCStrList(_sl).SaveToFile("test_cif");
-  //return;
+  //for( size_t i=0; i < cdp.Count(); i++ )  {
+  //  cif_dp::CifBlock& cb = cdp[i];
+  //  for( size_t j=0; j < cb.table_map.Count(); j++ )
+  //    TBasicApp::GetLog() << cb.table_map.GetValue(j)->GetName() << '\n';
+  //}
+  //TCStrList(_sl).SaveToFile("e:/tmp/test_vdlee142.cif");
+  return;
 
   //uint64_t test_a = 1021;
   //uint64_t test_b = test_a%10, test_c = test_a/10;
@@ -7018,7 +7086,7 @@ class MTTestTh : public AOlxThread  {
   compf cf_res;
 public:
   MTTestTh() {  Detached = false;  }
-	int Run()  {
+  int Run()  {
 #ifdef _DEBUG
     for( size_t i=0; i < 10000; i++ )  {
 #else
@@ -7034,35 +7102,35 @@ public:
         cf_res -= 1;
       }
     }
-	  return 0;
-	}
-	DefPropC(olxcstr, msg);
+    return 0;
+  }
+  DefPropC(olxcstr, msg);
 };
 
 void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   uint64_t times[8], min_t;
-	MTTestTh threads[8];
-	size_t max_th = 1;
-	memset(times, 0, sizeof(uint64_t)*8);
+  MTTestTh threads[8];
+  size_t max_th = 1;
+  memset(times, 0, sizeof(uint64_t)*8);
   TBasicApp::GetLog() << ("Testing multithreading compatibility...\n");
   for( size_t i=1; i <= 8; i++ )  {
-	  uint64_t st = TETime::msNow();
-		for( size_t j=0; j < i; j++ )
-		  threads[j].Start();
-	  for( size_t j=0; j < i; j++ )
-		  threads[j].Join();
-		times[i-1] = TETime::msNow() - st;
+    uint64_t st = TETime::msNow();
+    for( size_t j=0; j < i; j++ )
+      threads[j].Start();
+   for( size_t j=0; j < i; j++ )
+      threads[j].Join();
+    times[i-1] = TETime::msNow() - st;
     if( i == 1 )
       min_t = times[0];
     else if( times[i-1] < min_t )
       min_t = times[i-1];
     TBasicApp::GetLog() << ( olxstr(i) << " threads " << times[i-1] << " ms\n");
-		TBasicApp::GetInstance().Update();
-		if( i > 1 && ((double)times[i-1]/min_t) > 1.4 )  {
-		  max_th = i-1;
-			break;
-		}
-	}
+    TBasicApp::GetInstance().Update();
+    if( i > 1 && ((double)times[i-1]/min_t) > 1.4 )  {
+      max_th = i-1;
+      break;
+    }
+  }
   TBasicApp::GetLog() << ( olxstr("Maximum number of threads is set to ") << max_th << '\n' );
   FXApp->SetMaxThreadCount(max_th);
 }
@@ -7085,8 +7153,10 @@ void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroE
   if( Options.Contains('i') )  mf.SetItalic(true);
   if( Options.Contains('b') )  mf.SetBold(true);
   scene.CreateFont(glf->GetName(), mf.GetIdString());
-  if( Cmds[0] == "Picture_labels" )
+  if( Cmds[0] == "Picture_labels" )  {
     FXApp->UpdateLabels();
+    FXApp->DUnitCell().UpdateLabels();
+  }
 }
 
 //..............................................................................
@@ -7314,8 +7384,8 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
   const double resolution = 5;
   const vec3i dim(
     (int)(au.Axes()[0].GetV()*resolution),
-		(int)(au.Axes()[1].GetV()*resolution),
-		(int)(au.Axes()[2].GetV()*resolution));
+    (int)(au.Axes()[1].GetV()*resolution),
+    (int)(au.Axes()[2].GetV()*resolution));
   FXApp->XGrid().InitGrid(dim);
   BVFourier::MapInfo mi = BVFourier::CalcPatt(P1SF, FXApp->XGrid().Data()->Data, dim, vol);
   FXApp->XGrid().AdjustMap();
@@ -7402,8 +7472,8 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
 // init map
   const vec3i dim(
     (int)(au.Axes()[0].GetV()*resolution),
-		(int)(au.Axes()[1].GetV()*resolution),
-		(int)(au.Axes()[2].GetV()*resolution));
+    (int)(au.Axes()[1].GetV()*resolution),
+    (int)(au.Axes()[2].GetV()*resolution));
   TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
   mi = BVFourier::CalcEDM(P1SF, map.Data, dim, vol);
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -8493,14 +8563,14 @@ void main_CreateWBox(TGXApp& app, const TSAtomPList& atoms, const TTypeList< AnA
       }
     }
   }
-	if( print_info )  {
+  if( print_info )  {
     app.GetLog() << (olxstr("Wrapping box dimension: ") << 
       olxstr::FormatFloat(3, maxd[0]-mind[0]) << " x "  <<
       olxstr::FormatFloat(3, maxd[1]-mind[1]) << " x "  <<
       olxstr::FormatFloat(3, maxd[2]-mind[2]) << " A\n");
     app.GetLog() << (olxstr("Wrapping box volume: ") << 
       olxstr::FormatFloat(3, (maxd[0]-mind[0])*(maxd[1]-mind[1])*(maxd[2]-mind[2])) << " A^3\n");
-	}
+  }
   vec3d nx = normals[0]*mind1[0];
   vec3d px = normals[0]*maxd1[0];
   vec3d ny = normals[1]*mind1[1];
@@ -8530,7 +8600,7 @@ void main_CreateWBox(TGXApp& app, const TSAtomPList& atoms, const TTypeList< AnA
       poly_n[i] = norm;
   }
   for( int i=0; i < 24; i++ )
-		poly_d[i] = center + faces[i];
+    poly_d[i] = center + faces[i];
   TDUserObj* uo = new TDUserObj(app.GetRender(), sgloQuads, olxstr("wbox") << obj_cnt++);
   uo->SetVertices(&poly_d);
   uo->SetNormals(&poly_n);
@@ -8546,25 +8616,25 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( Cmds.Count() == 1 && TEFile::Exists(Cmds[0]) )
     radii = TXApp::ReadVdWRadii(Cmds[0]);
   TXApp::PrintVdWRadii(radii, au.GetContentList());
-	TSAtomPList satoms;
-	const bool use_aw = Options.Contains('w');
+  TSAtomPList satoms;
+  const bool use_aw = Options.Contains('w');
   if( Options.Contains('s') )  {
-  	TLattice& latt = FXApp->XFile().GetLattice();
-		for( size_t i=0; i < latt.FragmentCount(); i++ )  {
-		  satoms.Clear();
-			TNetwork& f = latt.GetFragment(i);
-			for( size_t j=0; j < f.NodeCount(); j++ )  {
-			  if( f.Node(j).IsDeleted() )  continue;
-				satoms.Add(f.Node(j));
-			}
-			if( satoms.Count() < 3 )  continue;
+    TLattice& latt = FXApp->XFile().GetLattice();
+    for( size_t i=0; i < latt.FragmentCount(); i++ )  {
+      satoms.Clear();
+      TNetwork& f = latt.GetFragment(i);
+      for( size_t j=0; j < f.NodeCount(); j++ )  {
+        if( f.Node(j).IsDeleted() )  continue;
+        satoms.Add(f.Node(j));
+      }
+      if( satoms.Count() < 3 )  continue;
   
-			TTypeList< AnAssociation2<vec3d, double> > crds;
+      TTypeList< AnAssociation2<vec3d, double> > crds;
       TArrayList<double> all_radii(satoms.Count());
       for( size_t j=0; j < satoms.Count(); j++ )  {
-	      if( use_aw )
+        if( use_aw )
           crds.AddNew(satoms[j]->crd(), satoms[j]->GetType().GetMr());
-		    else
+        else
           crds.AddNew( satoms[j]->crd(), 1.0 );
         const size_t ri = radii.IndexOf(&satoms[j]->GetType());
         if( ri == InvalidIndex )
@@ -8572,10 +8642,10 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         else
           all_radii[j] = radii.GetValue(ri);
       }
-			main_CreateWBox(*FXApp, satoms, crds, all_radii, false);
-		}
-	}
-	else  {
+      main_CreateWBox(*FXApp, satoms, crds, all_radii, false);
+    }
+  }
+  else  {
     TXAtomPList xatoms;
     if( !FindXAtoms(Cmds, xatoms, true, true) || xatoms.Count() < 3 )  {
       E.ProcessingError(__OlxSrcInfo, "no enough atoms provided");
@@ -8584,9 +8654,9 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TTypeList< AnAssociation2<vec3d, double> > crds;
     TArrayList<double> all_radii(xatoms.Count());
     for( size_t i=0; i < xatoms.Count(); i++ )  {
-	    if( use_aw )
+      if( use_aw )
         crds.AddNew(xatoms[i]->Atom().crd(), xatoms[i]->Atom().GetType().GetMr());
-		  else
+      else
         crds.AddNew( xatoms[i]->Atom().crd(), 1.0 );
       const size_t ri = radii.IndexOf(&xatoms[i]->Atom().GetType());
       if( ri == InvalidIndex )
@@ -8595,8 +8665,8 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         all_radii[i] = radii.GetValue(ri);
     }
     TListCaster::POP(xatoms, satoms);
-	  main_CreateWBox(*FXApp, satoms, crds, all_radii, true);
-	}
+    main_CreateWBox(*FXApp, satoms, crds, all_radii, true);
+  }
 }
 //..............................................................................
 void TMainForm::macCenter(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -8739,7 +8809,7 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       FXApp->Quality(qaMedium);
   }
 
-  FXApp->GetRender().OnDraw->SetEnabled( true );
+  FXApp->GetRender().OnDraw->SetEnabled(true);
   FGlConsole->Visible(true);
   // end drawing etc
   FXApp->GetRender().Resize(orgWidth, orgHeight); 
