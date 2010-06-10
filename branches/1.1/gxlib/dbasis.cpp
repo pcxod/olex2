@@ -17,11 +17,25 @@ TGlMouseListener(Render, collectionName)
   SetMoveable(true);
   SetZoomable(true);
   SetSelectable(false);
+  olxstr label_cn("db_label");
+  for( int i=0; i < 3; i++ )  {
+    (Labels[i] = new TXGlLabel(Parent, label_cn))->SetVisible(false);
+    Labels[i]->SetTransformer(this);
+  }
 }
 //..............................................................................
-TDBasis::~TDBasis()  {}
+TDBasis::~TDBasis()  {
+  for( int i=0; i < 3; i++ )
+    delete Labels[i];
+}
 //..............................................................................
-void TDBasis::SetAsymmUnit(TAsymmUnit& au)  {  AU = &au;  }
+void TDBasis::SetAsymmUnit(TAsymmUnit& au)  {
+  AU = &au;
+  for( int i=0; i < 3; i++ )  {  
+    //Labels[i]->SetCenter(FGlP->Vertices[i*2+1]);
+    Labels[i]->SetLabel(olxstr((char)('a'+i)));
+  }
+}
 //..............................................................................
 void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
@@ -30,12 +44,6 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;
   TGraphicsStyle& GS = GPC.GetStyle();
-  olxstr& str_mask = GS.GetParam(GetPrimitiveMaskName(), "3", true);
-  int PMask = str_mask.ToInt();
-  if( PMask == 0 )  {
-    PMask = 3;
-    str_mask = '3';
-  }
 
   mat3d m = AU->GetCellToCartesian();
   if( m[0].QLength() < 1.e-6 )
@@ -124,14 +132,58 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlP->Params[0] = ConeW/2;  GlP->Params[1] = ConeW/2;
   GlP->Params[2] = m[2].Length()/5; GlP->Params[3] = CQ; GlP->Params[4] = CQ;
   
-  if( (PMask & 0x2) != 0 )  {
-    GlM.SetIdentityDraw(true);
-    GlM.SetTransparent(false);
-    GlP = &GPC.NewPrimitive("Label", sgloText);  // labels
-    GlP->SetProperties(GS.GetMaterial(GlP->GetName(), GlM));
-    GlP->SetFont(Parent.GetScene().DefFont());
-  }
   Compile();
+  for( int i=0; i < 3; i++ )
+    Labels[i]->Create();
+}
+//..............................................................................
+vec3d TDBasis::ForRaster(const TXGlLabel& l) const {
+  const double EZoom = Parent.GetExtraZoom()*Parent.GetViewZoom();
+  const double scale = 1./Parent.GetScale();
+  vec3d Center(Basis.GetCenter());
+  Center[0] = Center[0]*EZoom;
+  Center[1] = Center[1]*EZoom;
+  Center = Parent.GetBasis().GetMatrix() * Center;
+  vec3d T;
+  if( &l == Labels[0] )
+    T = AU->GetCellToCartesian()[0];
+  else if( &l == Labels[1] )
+    T = AU->GetCellToCartesian()[1];
+  else if( &l == Labels[2] )
+    T = AU->GetCellToCartesian()[2];
+  T /= 5;
+  T += vec3d(T).NormaliseTo(0.8);
+  T *= (Basis.GetZoom()*Parent.GetBasis().GetZoom()* scale);
+  T += Center;
+  T *= Parent.GetBasis().GetMatrix();
+  return T;
+}
+//..............................................................................
+vec3d TDBasis::ForVector(const TXGlLabel& l) const {
+  const double EZoom = Parent.GetExtraZoom()*Parent.GetViewZoom();
+  vec3d Center(Basis.GetCenter());
+  Center[0] = Center[0]*EZoom;
+  Center[1] = Center[1]*EZoom;
+  Center *= Parent.GetScale();
+  Center = Parent.GetBasis().GetMatrix() * Center;
+  vec3d T;
+  if( &l == Labels[0] )
+    T = AU->GetCellToCartesian()[0];
+  else if( &l == Labels[1] )
+    T = AU->GetCellToCartesian()[1];
+  else if( &l == Labels[2] )
+    T = AU->GetCellToCartesian()[2];
+  T /= 5;
+  T += vec3d(T).NormaliseTo(0.8);
+  T *= (Basis.GetZoom()*Parent.GetBasis().GetZoom());
+  T += Center;
+  T *= Parent.GetBasis().GetMatrix();
+  return T;
+}
+//..............................................................................
+vec3d& TDBasis::AdjustZ(vec3d& v) const {
+  v[2] = Parent.GetMaxRasterZ();
+  return v;
 }
 //..............................................................................
 bool TDBasis::Orient(TGlPrimitive& P) {
@@ -139,31 +191,6 @@ bool TDBasis::Orient(TGlPrimitive& P) {
   // object is translated to the right place!
   const double EZoom = Parent.GetExtraZoom()*Parent.GetViewZoom();
   //const double zoom = olx_sqr(Parent.GetBasis().GetZoom());
-  if( P.GetType() == sgloText )  {
-    olxstr Str('a');
-    const double scale = 1./Parent.GetScale();
-    vec3d Center(Basis.GetCenter());
-    Center[0] = Center[0]*EZoom;
-    Center[1] = Center[1]*EZoom;
-    Center *= Parent.GetScale();
-    Center = Parent.GetBasis().GetMatrix() * Center;
-    Center /= Parent.GetBasis().GetZoom();
-    const TGlFont& fnt = *Parent.GetScene().DefFont();
-    for( int i=0; i < 3; i++ )  {
-      vec3d T = AU->GetCellToCartesian()[i];
-      T /= 5;
-      T += vec3d(T).NormaliseTo(0.8);
-      T *= Basis.GetZoom();
-      T += Center;
-      T *= Parent.GetBasis().GetMatrix();
-      T *= Parent.GetBasis().GetZoom();
-      T *= scale;
-      T[2] = Parent.GetMaxRasterZ();
-      Str[0] = (char)('a'+i);
-      Parent.DrawTextSafe(T, Str, fnt);
-    }
-    return true;
-  }
   vec3d T = Basis.GetCenter();
   T[0] = T[0]*EZoom;
   T[1] = T[1]*EZoom;
@@ -184,14 +211,23 @@ void TDBasis::FromDataItem(const TDataItem& di)  {
   Basis.FromDataItem(di.FindRequiredItem("basis"));
 }
 //..............................................................................
-void TDBasis::ListPrimitives(TStrList &List) const {
-  List.Add("Axis");
-  List.Add("Labels");
+void TDBasis::ListPrimitives(TStrList &List) const {}
+//..............................................................................
+void TDBasis::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar) {}
+//..............................................................................
+void TDBasis::SetLabelsFont(uint16_t fnt_index)  {
+  for( int i=0; i < 3; i++ )
+    Labels[i]->SetFontIndex(fnt_index);
 }
 //..............................................................................
-void TDBasis::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar) {
-  SetBit(true, Mask, 1);
-  AGDrawObject::UpdatePrimitives(Mask, cpar);
+void TDBasis::UpdateLabels()  {
+  for( int i=0; i < 3; i++ )
+    Labels[i]->SetLabel(Labels[i]->GetLabel());
 }
 //..............................................................................
- 
+void TDBasis::SetVisible(bool v)  {
+  AGDrawObject::SetVisible(v);
+  for( int i=0; i < 3; i++ )
+    Labels[i]->SetVisible(v);
+}
+//..............................................................................

@@ -718,8 +718,9 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
     "Prints/sets the scale of dependency of the Q-peak transparency vs height");
   this_InitMacroD(QPeakSizeScale, EmptyString, fpNone|fpOne,
     "Prints/sets the scale the Q-peak size relative to other atoms, default is 1");
-  this_InitMacroD(Label, "type-type of labels to make;\
-  possible options - subscript, brackers, default", fpAny, "Creates moveable labels for provided atoms (selection)");
+  this_InitMacroD(Label, "type-type of labels to make (works only for the PostScript output);"
+ " possible options - subscript, brackers, default&;symm-symmetry dependent tag type {[$], full}",
+ fpAny, "Creates moveable labels for provided atoms (selection)");
 
   this_InitMacroD(Focus, EmptyString, fpNone, "Sets input focus to the console");
   this_InitMacroD(Refresh, EmptyString, fpNone, "Refreshes the GUI");
@@ -1359,6 +1360,7 @@ void TMainForm::StartupInit()  {
 
   FXApp->SetLabelsFont(3);
   FXApp->DUnitCell().SetLabelsFont(4);
+  FXApp->DBasis().SetLabelsFont(4);
   FGlConsole->SetFontIndex(0);
   FGlConsole->Cursor().SetFontIndex(0);
   FHelpWindow->SetFontIndex(1);

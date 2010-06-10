@@ -1,13 +1,7 @@
 //----------------------------------------------------------------------------//
-// namespace TXClasses: crystallographic core
 // TXGrowLine
 // (c) Oleg V. Dolomanov, 2006
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "xgrowpoint.h"
 #include "gpcollection.h"
 
@@ -17,7 +11,7 @@
 TXGrowPoint::TXGrowPoint(TGlRenderer& R, const olxstr& collectionName, const vec3d& center,
   const smatd& transform) : AGDrawObject(R, collectionName)  
 {
-  AGDrawObject::SetGroupable(false);
+  AGDrawObject::SetSelectable(false);
   Params().Resize(1);
   Params()[0] = 1;
   Transform = transform;

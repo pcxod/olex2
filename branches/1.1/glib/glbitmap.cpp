@@ -23,7 +23,7 @@ TGlMouseListener(Render, collectionName)
 
   SetMove2D(true);
   SetMoveable(true);
-  SetGroupable(false);
+  SetSelectable(false);
   SetRoteable(false);
   SetZoomable(false);
 

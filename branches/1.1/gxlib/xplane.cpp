@@ -14,7 +14,6 @@ TXPlane::TXPlane(TGlRenderer& r, const olxstr& collectionName, TSPlane *Plane) :
   AGDrawObject(r, collectionName)
 {
   FPlane = Plane;
-  this->SetGroupable(false);
 }
 //..............................................................................
 void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {

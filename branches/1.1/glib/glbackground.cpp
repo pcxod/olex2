@@ -22,7 +22,7 @@ TGlBackground::TGlBackground(TGlRenderer& r, const olxstr& collectionName, bool 
   AGDrawObject(r, collectionName)
 {
   FCeiling = ceiling;
-  SetGroupable(false);
+  SetSelectable(false);
   Texture = NULL;
 }
 //..............................................................................

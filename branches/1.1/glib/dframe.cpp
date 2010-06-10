@@ -16,7 +16,7 @@ TDFrame::TDFrame(TGlRenderer& Render, const olxstr& collectionName) :
   OnSelect(Actions.New("ONSELECT"))
 {
   FPrimitive = NULL;
-  SetGroupable(false);
+  SetSelectable(false);
 };
 //..............................................................................
 void TDFrame::Create(const olxstr& cName, const ACreationParams* cpar) {
