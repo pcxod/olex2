@@ -1,18 +1,11 @@
 //---------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include <math.h>
 #include "emath.h"
 #include "exception.h"
-
-UseEsdlNamespace()
-
 //..............................................................................
-double GlobalEsdlFunction(NewtonSolve)( double (*f)(double), double (*df)(double), double point)  {
+double GlobalEsdlFunction(NewtonSolve)(double (*f)(double), double (*df)(double), double point)  {
   double ex1=100,x = point,x1;
   long count=0;
   while( ex1 > 1e-5 )  {
@@ -27,7 +20,7 @@ double GlobalEsdlFunction(NewtonSolve)( double (*f)(double), double (*df)(double
 }
 //..............................................................................
 // see wikipedia.com
-unsigned int GlobalEsdlFunction(gcd)(unsigned int u, unsigned int v)  {
+unsigned int GlobalEsdlFunction(olx_gcd)(unsigned int u, unsigned int v)  {
   /* GCD(0,x) := x */
   if( u == 0 || v == 0 )
     return u | v;

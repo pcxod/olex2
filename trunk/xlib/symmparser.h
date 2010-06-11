@@ -36,7 +36,7 @@ class TSymmParser  {
     olxstr rv;
     if( f < 0 )  rv << '-';
     int v = olx_abs(olx_round(f*12)), base = 12;
-    int denom = esdl::gcd(v, base);
+    int denom = olx_gcd(v, base);
     if( denom != 1 )  {
       v /= denom;
       base /= denom;

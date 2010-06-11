@@ -93,7 +93,7 @@ next_oper:
   for( int i=0; i < 3; i++ )  {
     if( M.t[i] == 0 )  continue;
     int v = olx_abs(olx_round(M.t[i]*12)), base = 12;
-    int denom = esdl::gcd(v, base);
+    int denom = olx_gcd(v, base);
     if( denom != 1 )  {
       v /= denom;
       base /= denom;
