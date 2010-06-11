@@ -4106,8 +4106,7 @@ void XLibMacros::macMolInfo(TStrObjList &Cmds, const TParamList &Options, TMacro
     const size_t off = triags.Count()*i;
     const float_type r = (float_type)atoms[i]->GetType().r_vdw;
     const vec_type center = atoms[i]->crd();
-    const float_type occu_factor = (float_type)(!use_occu ? 1.0 :
-      (atoms[i]->CAtom().GetOccu()*atoms[i]->CAtom().GetDegeneracy()));
+    const float_type occu_factor = (float_type)(!use_occu ? 1.0 : (atoms[i]->CAtom().GetOccu()));
     for( size_t j=0; j < triags.Count(); j++ )  {
       if( t_map[off+j] == 0 )  continue;
       const vec_type
