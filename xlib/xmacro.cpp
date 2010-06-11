@@ -2889,7 +2889,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         row[3] = olxstr::FormatFloat(2, envi.GetCrd(j).DistanceTo(da.crd()));
         row[4] = olxstr::FormatFloat(2, envi.GetCrd(j).DistanceTo(aa.crd()));
         row[5] = vcovc.CalcDistance(da, aa).ToString();
-        row[6] = olxstr::FormatFloat(1, Angle(da.crd(), envi.GetCrd(j), aa.crd()));
+        row[6] = olxstr::FormatFloat(1, olx_angle(da.crd(), envi.GetCrd(j), aa.crd()));
         if( a->GetMatrix() == NULL )
           row[7] = '.';
         else

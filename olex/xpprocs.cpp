@@ -6004,9 +6004,9 @@ void TMainForm::macCalcVol(TStrObjList &Cmds, const TParamList &Options, TMacroE
     else
       TBasicApp::GetLog() << (olxstr("Current atom: ") << xatoms[i]->Atom().GetLabel() << '\n');
     if( atoms.Count() == 3 )  {
-      double sa = Angle(atoms[0]->crd(), xatoms[i]->Atom().crd(), atoms[1]->crd());
-      sa += Angle(atoms[0]->crd(), xatoms[i]->Atom().crd(), atoms[2]->crd());
-      sa += Angle(atoms[1]->crd(), xatoms[i]->Atom().crd(), atoms[2]->crd());
+      double sa = olx_angle(atoms[0]->crd(), xatoms[i]->Atom().crd(), atoms[1]->crd());
+      sa += olx_angle(atoms[0]->crd(), xatoms[i]->Atom().crd(), atoms[2]->crd());
+      sa += olx_angle(atoms[1]->crd(), xatoms[i]->Atom().crd(), atoms[2]->crd());
       TBasicApp::GetLog() << (olxstr("Sum of angles is ") << olxstr::FormatFloat(3,sa) << '\n' );
       double v;
       if( normalise )  {
