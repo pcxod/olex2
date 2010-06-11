@@ -406,8 +406,8 @@ public:     void CalcProbFactor(float Prob);
 
   TXAtom *AddCentroid(TXAtomPList& Atoms);
   TXAtom* AddAtom(TXAtom* templ=NULL);
-  // adopts atoms of the auinit and returns newly created atoms
-  void AdoptAtoms(const TAsymmUnit& au, TXAtomPList& xatom);
+  // adopts atoms of the auinit and returns newly created atoms and bonds
+  void AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& bonds);
   void SelectAtoms(const olxstr& Names, bool Invert=false);
   void SelectAtomsWhere(const olxstr& Where, bool Invert=false);
   void SelectBondsWhere(const olxstr& Where, bool Invert=false);
