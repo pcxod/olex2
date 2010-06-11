@@ -1,12 +1,12 @@
-#ifndef obaseH
-#define obaseH
+#ifndef __olx_base_H
+#define __olx_base_H
 #include "estlist.h"
 #include "xatom.h"
 
 // mouse modes
 const unsigned short mmNone   = 0;
 // program states
-const size_t 
+const uint32_t 
   prsNone            = 0x00000000, // modes
   prsStrVis          = 0x00000001, // Structure visible/invisible
   prsHVis            = 0x00000002, // hydroges visible invisible

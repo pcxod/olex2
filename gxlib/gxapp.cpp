@@ -238,6 +238,7 @@ class xappXFileClose: public AActionHandler  {
 public:
   virtual bool Exit(const IEObject *Sender, const IEObject *Data)  {
     TGXApp& app = TGXApp::GetInstance();
+    app.ClearLabels();
     app.CreateObjects(false, false);
     app.GetRender().SetZoom(app.GetRender().CalcZoom());
     return true;
@@ -443,7 +444,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   XBonds.SetCapacity(allBonds.Count());
   for( size_t i=0; i < allBonds.Count(); i++ )  {
     TSBond* B = allBonds[i];
-    TXBond& XB = XBonds.Add( *(new TXBond(*FGlRender, TXBond::GetLegend( *B, 2), *allBonds[i])) );
+    TXBond& XB = XBonds.Add(new TXBond(*FGlRender, TXBond::GetLegend( *B, 2), *allBonds[i]));
     XB.SetDeleted(B->IsDeleted() || (B->A().IsDeleted() || allBonds[i]->B().IsDeleted()));
     BondCreationParams bcpar(XAtoms[B->A().GetTag()], XAtoms[B->B().GetTag()]);
     XB.Create(EmptyString, &bcpar);
@@ -1916,21 +1917,28 @@ TXAtom * TGXApp::AddCentroid(TXAtomPList& Atoms)  {
   return NULL;
 }
 //..............................................................................
-void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& xatoms) {
-  for( size_t i=0; i < au.AtomCount(); i++ )  {
-    const TCAtom& ca = au.GetAtom(i);
-    vec3d center = ca.ccrd();
-    XFile().GetAsymmUnit().CartesianToCell(center);
-    TSAtom *A = XFile().GetLattice().NewAtom(center);
-    if( A != NULL )  {
-      A->CAtom().SetType(ca.GetType());
-      A->CAtom().SetLabel(ca.GetLabel(), false);
-      TXAtom& XA = XAtoms.Add(new TXAtom(*FGlRender, EmptyString, *A));
-      XA.Create();
-      XA.SetXAppId(XAtoms.Count() - 1);
-      XA.Params()[0] = A->GetType().r_pers;
-      xatoms.Add(XA);
-    }
+void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& bonds) {
+  TLattice latt;
+  latt.GetAsymmUnit().SetRefMod(au.GetRefMod());
+  latt.GetAsymmUnit().Assign(au);
+  latt.GetAsymmUnit()._UpdateConnInfo();
+  latt.Init();
+  const size_t ac = XFile().GetLattice().AtomCount();
+  const size_t bc = XFile().GetLattice().BondCount();
+  XFile().GetLattice().AddLatticeContent(latt);
+  for( size_t i=ac; i < XFile().GetLattice().AtomCount(); i++ )  {
+    TSAtom& A = XFile().GetLattice().GetAtom(i);
+    TXAtom& XA = XAtoms.Add(new TXAtom(*FGlRender, EmptyString, A));
+    XA.Create();
+    XA.SetXAppId(XAtoms.Count() - 1);
+    XA.Params()[0] = A.GetType().r_pers;
+    atoms.Add(XA);
+  }
+  for( size_t i=bc; i < XFile().GetLattice().BondCount(); i++ )  {
+    TSBond& B = XFile().GetLattice().GetBond(i);
+    TXBond& XB = XBonds.Add(new TXBond(*FGlRender, TXBond::GetLegend(B, 2), B));
+    XB.Create();
+    bonds.Add(XB);
   }
 }
 //..............................................................................

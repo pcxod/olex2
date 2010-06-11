@@ -79,6 +79,8 @@ public:
   void UpdateConnectivity();
   void UpdatePlaneDefinitions();
   void Init();
+  /*adopts atoms, bonds and fragment from the given lattice */
+  void AddLatticeContent(const TLattice& latt);
   // generates atoms inside the unit cell only
   void GenerateCell();
   // generates atoms within specified volume
