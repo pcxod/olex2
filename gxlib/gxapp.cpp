@@ -239,6 +239,7 @@ public:
   virtual bool Exit(const IEObject *Sender, const IEObject *Data)  {
     TGXApp& app = TGXApp::GetInstance();
     app.ClearLabels();
+    app.XGrid().Clear();
     app.CreateObjects(false, false);
     app.GetRender().SetZoom(app.GetRender().CalcZoom());
     return true;
