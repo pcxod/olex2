@@ -29,18 +29,12 @@ void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   TGraphicsStyle& GS = GPC.GetStyle();
   GS.SetPersistent(true);
-  TGlMaterial GlM;
-  GlM.SetFlags(sglmAmbientF|sglmIdentityDraw|sglmTransparent);
-  GlM.AmbientF = 0x800f0f0f;
-  GlM.DiffuseF = 0x800f0f0f;
-  GlM.ShininessF = 128;
-
   TGlPrimitive& glpPlane = GPC.NewPrimitive("Plane", sgloQuads);  // a sphere at the basis of the object {0,0,0}
-  glpPlane.SetProperties(GS.GetMaterial("Plane", GlM));
+  glpPlane.SetProperties(GS.GetMaterial("Plane", TGlMaterial("3077;2131693327;427259767")));
   glpPlane.Vertices.SetCount(4);
 
   TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
-  glpText.SetProperties( GS.GetMaterial("Text", GetFont().GetMaterial()) );
+  glpText.SetProperties(GS.GetMaterial("Text", TGlMaterial("2049;0.000,0.000,0.000,1.000")));
   glpText.Params[0] = -1;  //bitmap; TTF by default
   glpText.SetFont(&GetFont());
 }
@@ -113,7 +107,7 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
   }
   else  {
     vec3d T = GetVectorPosition();
-    T[2] = Parent.GetMaxRasterZ()-0.0005;
+    T[2] -= 0.0005;
     olx_gl::translate(T);
     if( !glf.IsVectorFont() )  {
       P.Vertices[0] = vec3d(0, 0, 0);
