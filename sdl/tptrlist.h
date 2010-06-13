@@ -19,10 +19,16 @@ private:
   void init(size_t size)  {
     FCount = size;
     FIncrement = 5;
-    FCapacity = FCount + FIncrement;
+    FCapacity = FCount;
     Items = NULL;
-    Allocate();
-    memset(Items, 0, FCapacity*sizeof(T*));
+    if( size != NULL )  {
+      Allocate();
+      memset(Items, 0, FCapacity*sizeof(T*));
+    }
+  }
+  inline void checkSize()  {
+    if( FCapacity == FCount )
+      SetCapacity((long)(1.5*FCount + FIncrement));
   }
 
 public:
@@ -40,17 +46,23 @@ public:
 //..............................................................................
   /* copies values from an array of size elements  */
   TPtrList(size_t size, const T** array )  {
-   init( size );
-   memcpy( Items, array, size*sizeof(T*));
+   init(size);
+   memcpy(Items, array, size*sizeof(T*));
   }
 //..............................................................................
   //destructor - beware t40: error: expecthe objects are deleted!
-  virtual ~TPtrList()  {  free(Items);  }
+  virtual ~TPtrList()  {  if( Items != NULL )  free(Items);  }
 //..............................................................................
   //deletes the objects and clears the list
-  inline void Clear()  {  SetCount(0);  }
+  inline void Clear()  {  
+    if( Items != NULL )  {
+      free(Items);
+      Items = NULL;
+      FCount = FCapacity = 0;
+    }
+  }
 //..............................................................................
-  virtual IEObject* Replicate() const  {  return new TPtrList(*this);  }
+  virtual IEObject* Replicate() const {  return new TPtrList(*this);  }
 //..............................................................................
   inline TPtrList& Assign(const TPtrList& list)  {
     SetCount(list.Count());
@@ -69,41 +81,33 @@ public:
   inline TPtrList& operator += (const TPtrList& l)  {  return AddList(l);  }
 //..............................................................................
   inline T*& Add(T* pObj=NULL)  {
-    if( FCapacity == FCount )  
-      SetCapacity((long)(1.5*FCount + FIncrement));
+    checkSize();
     Items[FCount] = pObj;
     return Items[FCount++];
   }
 //..............................................................................
   inline T*& Add(T& Obj)  {
-    if( FCapacity == FCount )  
-      SetCapacity((long)(1.5*FCount + FIncrement));
+    checkSize();
     Items[FCount] = &Obj;
     return Items[FCount++];
   }
 //..............................................................................
   inline T*& AddUnique(T* pObj)  {
-    size_t ind = IndexOf(pObj);
+    const size_t ind = IndexOf(pObj);
     if( ind != InvalidIndex )  
       return Items[ind];
-    if( FCapacity == FCount )  SetCapacity((long)(1.5*FCount + FIncrement));
-    Items[FCount] = pObj;
-    return Items[FCount++];
+    return Add(pObj);
   }
 //..............................................................................
   inline T*& AddUnique(T& Obj)  {
-    index_t ind = IndexOf(Obj);
-    if( ind >=0 )  
+    const size_t ind = IndexOf(Obj);
+    if( ind != InvalidIndex )  
       return *Items[ind];
-    if( FCapacity == FCount )  
-      SetCapacity((long)(1.5*FCount + FIncrement));
-    Items[FCount] = &Obj;
-    return Items[FCount++];
+    return Add(Obj);
   }
 //..............................................................................
   inline T*& Insert(size_t index, T* pObj=NULL)  {
-    if( FCapacity == FCount )  
-      SetCapacity((long)(1.5*FCount + FIncrement));
+    checkSize();
     memmove(&Items[index+1], &Items[index], (FCount-index)*sizeof(T*));
     Items[index] = pObj;
     FCount++;
@@ -111,8 +115,7 @@ public:
   }
 //..............................................................................
   inline T*& Insert(size_t index, T& Obj)  {
-    if( FCapacity == FCount )  
-      SetCapacity((long)(1.5*FCount + FIncrement));
+    checkSize();
     memmove(&Items[index+1], &Items[index], (FCount-index)*sizeof(T*));
     Items[index] = &Obj;
     FCount++;
@@ -135,29 +138,29 @@ public:
   }
 //..............................................................................
   inline T*& operator [] (size_t index) const {
-#ifdef _OLX_DEBUG
-  TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, index, 0, FCount);
+#ifdef _DEBUG
+  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
     return Items[index];
   }
 //..............................................................................
   inline T*& Item(size_t index) const  {
-#ifdef _OLX_DEBUG
-  TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, index, 0, FCount);
+#ifdef _DEBUG
+  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
     return Items[index];
   }
 //..............................................................................
   inline T*& Last() const  {
-#ifdef _OLX_DEBUG
-  TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, FCount-1, 0, FCount);
+#ifdef _DEBUG
+  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, FCount-1, 0, FCount);
 #endif
     return Items[FCount-1];
   }
 //..............................................................................
   inline const T* GetItem(size_t index) const  {
-#ifdef _OLX_DEBUG
-  TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, index, 0, FCount);
+#ifdef _DEBUG
+  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
     return Items[index];
   }
@@ -166,14 +169,14 @@ public:
     if( v < FCapacity )    return;
     FCapacity = v;
     Allocate();
-    memset( &Items[FCount], 0, (FCapacity-FCount)*sizeof(T*) );  // initialise the rest of items to NULL
+    memset(&Items[FCount], 0, (FCapacity-FCount)*sizeof(T*));  // initialise the rest of items to NULL
   }
 //..............................................................................
   inline void SetIncrement(size_t v)  {  FIncrement = v;  }
 //..............................................................................
   void Delete(size_t index)  {
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, index, 0, FCount);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
     for( size_t i=index+1; i < FCount; i++ )
       Items[i-1] = Items[i];
@@ -181,9 +184,9 @@ public:
   }
 //..............................................................................
   void DeleteRange(size_t from, size_t to)  {
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, From, 0, FCount);
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, To, 0, FCount);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, FCount);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, to, 0, FCount);
 #endif
     for( size_t i=to; i < FCount; i++ )
       Items[from+i-to] = Items[i];
@@ -201,14 +204,14 @@ public:
   inline TPtrList SubListTo(size_t to) const {  return SubList(0, to);  }
 //..............................................................................
   inline void Remove(T* pObj)  {
-    size_t i = IndexOf(pObj);
+    const size_t i = IndexOf(pObj);
     if( i == InvalidIndex )  
       throw TFunctionFailedException(__OlxSourceInfo, "could not locate specified object");
     Delete(i);
   }
 //..............................................................................
   inline void Remove(const T& Obj)  {
-    size_t i = IndexOf(Obj);
+    const size_t i = IndexOf(Obj);
     if( i == InvalidIndex )  
       throw TFunctionFailedException(__OlxSourceInfo, "could not locate specified object");
     Delete(i);
@@ -217,7 +220,7 @@ public:
   // cyclic shift to the left
   void ShiftL(size_t cnt)  {
     if( FCount == 0 )  return;
-    size_t sv = cnt%FCount;
+    const size_t sv = cnt%FCount;
     if( sv == 0 )  return;
     if( sv == 1 )  {  // special case
       T *D = Items[0];
@@ -238,7 +241,7 @@ public:
   // cyclic shift to the right
   void ShiftR(size_t cnt)  {
     if( FCount == 0 )  return;
-    size_t sv = cnt%FCount;
+    const size_t sv = cnt%FCount;
     if( sv == 0 )  return;
     if( sv == 1 )  {  // special case
       T* D = Items[FCount-1];
@@ -248,7 +251,7 @@ public:
     }
     else  {
       T** D = new T*[sv];
-      memcpy( &D[0], &Items[FCount-sv], sv*sizeof(T*) );
+      memcpy(&D[0], &Items[FCount-sv], sv*sizeof(T*));
       const size_t diff = FCount-sv;
       for( size_t i=1; i <= diff; i++ )
         Items[FCount-i] = Items[diff-i];
@@ -258,9 +261,9 @@ public:
   }
 //..............................................................................
   inline void Swap(size_t i, size_t j)  {
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, i, 0, FCount);
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, j, 0, FCount);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, i, 0, FCount);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, j, 0, FCount);
 #endif
     T *D = Items[i];
     Items[i] = Items[j];
@@ -268,9 +271,9 @@ public:
   }
 //..............................................................................
   void Move(size_t from, size_t to)  {
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, from, 0, FCount);
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, to, 0, FCount);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, FCount);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, to, 0, FCount);
 #endif
     T *D = Items[from];
     if( from > to )  {
@@ -292,8 +295,7 @@ public:
         nc--;
         continue;
       }
-      if( i != nc )
-        Items[nc] = Items[i];
+      Items[nc] = Items[i];
     }
     FCount = nc;
   }
@@ -309,9 +311,6 @@ public:
 //..............................................................................
   inline void SetCount(size_t v)  {
     if( v == FCount )  return;
-#ifdef _OLX_DEBUG
-   // TODO: check if v is valid
-#endif
     if( v > FCount )  {
       if( v > FCapacity )
         SetCapacity(v + FIncrement);
@@ -340,15 +339,14 @@ public:
 
   void Rearrange(const TSizeList& indexes)  {
     if( FCount < 2 )  return;
-#ifdef _OLX_DEBUG
-    if( Count() != indexes.Count() )
+#ifdef _DEBUG
+    if( FCount != indexes.Count() )
       throw TFunctionFailedException(__OlxSourceInfo, "size mismatch");
 #endif
       // allocate the list of NULLs
       T** ni = (T**)malloc(FCount*sizeof(T*));
-      for( size_t i=0; i < FCount; i++ )  {
+      for( size_t i=0; i < FCount; i++ )
         ni[i] = Items[indexes[i]];
-      }
       free(Items);
       Items = ni;
   }

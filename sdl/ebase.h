@@ -436,6 +436,7 @@ public:
     const char* src, size_t src_len);
   static void ThrowInvalidFloatFormat(const char* file, const char* function, int line, 
     const wchar_t* src, size_t src_len);
+  static TIString FormatSrc(const char* file, const char* func, int line);
   // returns recasted this, or throws exception if dynamic_cast fails
   const class TBasicException* GetException() const; 
 };

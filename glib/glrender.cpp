@@ -57,9 +57,9 @@ TGlRenderer::TGlRenderer(AGlScene *S, int width, int height) :
   FGlImageChanged = true; // will cause its update
   FGlImage = NULL;
   TextureManager = new TTextureManager();
-  FTranslucentObjects.SetIncrement(512);
-  FCollections.SetIncrement(512);
-  FGObjects.SetIncrement(512);
+  FTranslucentObjects.SetIncrement(16);
+  FCollections.SetIncrement(16);
+  FGObjects.SetIncrement(16);
 
   FSelection->Create();
 }

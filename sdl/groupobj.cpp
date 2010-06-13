@@ -19,8 +19,8 @@ AGOProperties& AGroupObject::SetProperties( const AGOProperties& C)  {
 // TGObjectGroup
 //----------------------------------------------------------------------------//
 TObjectGroup::TObjectGroup()  {
-  Objects.SetIncrement( 512 );
-  Props.SetIncrement( 512 );
+  Objects.SetIncrement(16);
+  Props.SetIncrement(16);
 }
 //..............................................................................
 void TObjectGroup::Clear()  {

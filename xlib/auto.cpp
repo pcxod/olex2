@@ -557,39 +557,39 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
   TOnProgress progress;
   progress.SetMax( files.Count() );
   for( size_t i=0; i < Nodes.Count(); i++ )  {
-    Nodes[i].SetCapacity( Nodes[i].Count() + files.Count()*100);
+    Nodes[i].SetCapacity(Nodes[i].Count() + files.Count()*100);
     Nodes[i].SetIncrement(64*1024);
   }
   for( size_t i=0; i < files.Count(); i++ )  {
     if( (files[i].GetAttributes() & sefFile) != 0 )  {
       progress.SetPos(i);
-      if( dbfolder->Contains( files[i].GetName() ) )  continue;
+      if( dbfolder->Contains(files[i].GetName()) )  continue;
       try  {
-        TBasicApp::GetLog().Info( olxstr("Processing ") << files[i].GetName() << "..." );
-        XFile.LoadFromFile( files[i].GetName() );
+        TBasicApp::GetLog().Info(olxstr("Processing ") << files[i].GetName() << "...");
+        XFile.LoadFromFile(files[i].GetName());
         TCif& cif = XFile.GetLastLoader<TCif>();
         olxstr r1 = cif.GetSParam("_refine_ls_R_factor_gt");
         if( r1.Length() && r1.ToDouble() > 5 )  {
-          TBasicApp::GetLog().Info( olxstr("Skipped r1=") << r1 );
+          TBasicApp::GetLog().Info(olxstr("Skipped r1=") << r1);
           continue;
         }
         olxstr shift = cif.GetSParam("_refine_ls_shift/su_max");
         if( shift.Length() && shift.ToDouble() > 0.05 )  {
-          TBasicApp::GetLog().Info( olxstr("Skipped shift=") << shift );
+          TBasicApp::GetLog().Info(olxstr("Skipped shift=") << shift);
           continue;
         }
         olxstr gof = cif.GetSParam("_refine_ls_goodness_of_fit_ref");
         if( gof.Length() && olx_abs(1-gof.ToDouble()) > 0.1 )  {
-          TBasicApp::GetLog().Info( olxstr("Skipped GOF=") << gof );
+          TBasicApp::GetLog().Info(olxstr("Skipped GOF=") << gof);
           continue;
         }
         XFile.GetLattice().CompaqAll();
         TAutoDBIdObject& adf = dbfolder->Add( files[i].GetName() );
         for( size_t j=0; j < XFile.GetLattice().FragmentCount(); j++ )
-          ProcessNodes( &adf, XFile.GetLattice().GetFragment(j) );
+          ProcessNodes(&adf, XFile.GetLattice().GetFragment(j));
       }
       catch( const TExceptionBase& exc )  {
-        TBasicApp::GetLog().Error( olxstr("Failed to process: ") << exc.GetException()->GetError()  );
+        TBasicApp::GetLog().Error(olxstr("Failed to process: ") << exc.GetException()->GetError());
       }
     }
   }
@@ -601,7 +601,7 @@ struct TTmpNetData  {
   TAutoDBNode* Node;
   TTypeList<AnAssociation2<TCAtom*, vec3d> >* neighbours;
 };
-void TAutoDB::ProcessNodes( TAutoDBIdObject* currentFile, TNetwork& net )  {
+void TAutoDB::ProcessNodes(TAutoDBIdObject* currentFile, TNetwork& net)  {
   if( net.NodeCount() == 0 )  return;
   TTypeList< TTmpNetData* > netMatch;
   TTmpNetData* netItem;
@@ -631,9 +631,9 @@ void TAutoDB::ProcessNodes( TAutoDBIdObject* currentFile, TNetwork& net )  {
         }
         if( dbn != NULL )  {
           netItem->Node = dbn;
-          Nodes[dbn->NodeCount()-1].Add( dbn );
+          Nodes[dbn->NodeCount()-1].Add(dbn);
         }
-        netMatch.AddACopy( netItem );
+        netMatch.AddACopy(netItem);
       }
     }
   }
@@ -649,7 +649,7 @@ void TAutoDB::ProcessNodes( TAutoDBIdObject* currentFile, TNetwork& net )  {
       net.GetLattice().GetAsymmUnit().GetAtom(i).SetTag(-1);
     for( size_t i=0; i < netMatch.Count(); i++ )
       netMatch[i]->Atom->CAtom().SetTag(i);
-    TAutoDBNet& net = Nets.AddNew( currentFile );
+    TAutoDBNet& net = Nets.AddNew(currentFile);
     // precreate nodes
     for( uint32_t i=0; i < netMatch.Count(); i++ )  {
       net.NewNode(netMatch[i]->Node);
@@ -659,7 +659,7 @@ void TAutoDB::ProcessNodes( TAutoDBIdObject* currentFile, TNetwork& net )  {
     for( size_t i=0; i < netMatch.Count(); i++ )  {
       for( size_t j=0; j < netMatch[i]->neighbours->Count(); j++ )  {
         if( netMatch[i]->neighbours->Item(j).A()->GetTag() < 0 )  continue;
-        net.Node(i).AttachNode( &net.Node(netMatch[i]->neighbours->Item(j).A()->GetTag()) );
+        net.Node(i).AttachNode(&net.Node(netMatch[i]->neighbours->Item(j).A()->GetTag()));
       }
     }
     for( size_t i=0; i < netMatch.Count(); i++ ) {
@@ -749,7 +749,7 @@ void TAutoDB::SaveToStream( IDataOutputStream& output )  const {
 
   output << (uint32_t)Nets.Count();
   for( uint32_t i=0; i < Nets.Count(); i++ )
-    Nets[i].SaveToStream( output );
+    Nets[i].SaveToStream(output);
 }
 //..............................................................................
 void TAutoDB::LoadFromStream( IDataInputStream& input )  {
@@ -773,7 +773,7 @@ void TAutoDB::LoadFromStream( IDataInputStream& input )  {
   Folders.SetCapacity( ind );
   for( uint32_t i=0; i < ind; i++ )  {
     input >> tmp;
-    Folders.Add( TUtf8::Decode(tmp),  new TAutoDBFolder(input) );
+    Folders.Add(TUtf8::Decode(tmp),  new TAutoDBFolder(input));
     Folders.GetObject(i)->AssignIds(fileCount);
     fileCount += (uint32_t)Folders.GetObject(i)->Count();
   }
@@ -787,7 +787,7 @@ void TAutoDB::LoadFromStream( IDataInputStream& input )  {
     input >> ind;
     Nodes[i].SetCapacity( ind );
     for( uint32_t j=0; j < ind; j++ )  {
-      Nodes[i].Add( new TAutoDBNode(input) );
+      Nodes[i].Add(new TAutoDBNode(input));
       Nodes[i][j]->SetId(nodeCount + j);
     }
     nodeCount += ind;
@@ -795,14 +795,14 @@ void TAutoDB::LoadFromStream( IDataInputStream& input )  {
 
   input >> ind;
   for( uint32_t i=0; i < ind; i++ )
-    Nets.Add( *(new TAutoDBNet(input)) );
+    Nets.Add(*(new TAutoDBNet(input)));
 
   PrepareForSearch();
 }
 //..............................................................................
 void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
   TSAtomPList cas;
-  TAutoDBNet* sn = BuildSearchNet( sa.GetNetwork(), cas );
+  TAutoDBNet* sn = BuildSearchNet(sa.GetNetwork(), cas);
   if( sn == NULL )  return;
   olxstr tmp;
   size_t index = InvalidIndex;
@@ -815,12 +815,12 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
   if( index == InvalidIndex )  return;
   TAutoDBNetNode& node = sn->Node(index);
   if( node.Count() < 1 || node.Count() > Nodes.Count() ) return;
-  TPtrList< TAutoDBNode >& segment = Nodes[ node.Count() - 1];
+  TPtrList< TAutoDBNode >& segment = Nodes[node.Count() - 1];
   TTypeList< AnAssociation2<TAutoDBNode*, int> > S1Match;
   TTypeList< AnAssociation3<TAutoDBNetNode*, int, TAutoDBIdPList*> > S2Match, S3Match;
   for( size_t i=0; i < segment.Count(); i++ )  {
     double fom = 0;
-    if( segment[i]->IsMetricSimilar( *node.Center(), fom ) )  {
+    if( segment[i]->IsMetricSimilar(*node.Center(), fom) )  {
       //
       bool found = false;
       for( size_t j=0; j < S1Match.Count(); j++ )  {
@@ -842,14 +842,14 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
           for( size_t k=0; k < S2Match.Count(); k++ )  {
             if( S2Match[k].GetA()->IsSameType(netnd, false) )  {
               S2Match[k].B() ++;
-              S2Match[k].C()->Add( segment[i]->GetParent(j)->Reference() );
+              S2Match[k].C()->Add(segment[i]->GetParent(j)->Reference());
               found = true;
               break;
             }
           }
           if( !found )  {
             S2Match.AddNew<TAutoDBNetNode*,int,TAutoDBIdPList*>(&netnd, 1, new TAutoDBIdPList);
-            S2Match[S2Match.Count()-1].C()->Add( segment[i]->GetParent(j)->Reference() );
+            S2Match[S2Match.Count()-1].C()->Add(segment[i]->GetParent(j)->Reference());
           }
           //
           if( netnd.IsMetricSimilar(node, cfom, NULL, true) )  {
@@ -858,14 +858,14 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
             for( size_t k=0; k < S3Match.Count(); k++ )  {
               if( S3Match[k].GetA()->IsSameType(netnd, false) )  {
                 S3Match[k].B() ++;
-                S3Match[k].C()->Add( segment[i]->GetParent(j)->Reference() );
+                S3Match[k].C()->Add(segment[i]->GetParent(j)->Reference());
                 found = true;
                 break;
               }
             }
             if( !found )  {
               S3Match.AddNew<TAutoDBNetNode*,int,TAutoDBIdPList*>(&netnd, 1, new TAutoDBIdPList);
-              S3Match[S3Match.Count()-1].C()->Add( segment[i]->GetParent(j)->Reference() );
+              S3Match[S3Match.Count()-1].C()->Add(segment[i]->GetParent(j)->Reference());
             }
             //
           }
@@ -959,7 +959,7 @@ size_t TAutoDB::TAnalyseNetNodeTask::LocateDBNodeIndex(const TPtrList<TAutoDBNod
 void TAutoDB::TAnalyseNetNodeTask::Run(size_t index )  {
   const TAutoDBNetNode& nd = Network.Node(index);
   if( nd.Count() < 1 || nd.Count() > Nodes.Count() ) return;
-  const TPtrList< TAutoDBNode >& segment = Nodes[ nd.Count() - 1 ];
+  const TPtrList< TAutoDBNode >& segment = Nodes[nd.Count() - 1];
   //long ndind = LocateDBNodeIndex(segment, nd.Center());
   //if( ndind == -1 )  return;
   //long position = ndind, inc = 1;
