@@ -2889,7 +2889,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         row[3] = olxstr::FormatFloat(2, envi.GetCrd(j).DistanceTo(da.crd()));
         row[4] = olxstr::FormatFloat(2, envi.GetCrd(j).DistanceTo(aa.crd()));
         row[5] = vcovc.CalcDistance(da, aa).ToString();
-        row[6] = olxstr::FormatFloat(1, Angle(da.crd(), envi.GetCrd(j), aa.crd()));
+        row[6] = olxstr::FormatFloat(1, olx_angle(da.crd(), envi.GetCrd(j), aa.crd()));
         if( a->GetMatrix() == NULL )
           row[7] = '.';
         else
@@ -4106,8 +4106,7 @@ void XLibMacros::macMolInfo(TStrObjList &Cmds, const TParamList &Options, TMacro
     const size_t off = triags.Count()*i;
     const float_type r = (float_type)atoms[i]->GetType().r_vdw;
     const vec_type center = atoms[i]->crd();
-    const float_type occu_factor = (float_type)(!use_occu ? 1.0 :
-      (atoms[i]->CAtom().GetOccu()*atoms[i]->CAtom().GetDegeneracy()));
+    const float_type occu_factor = (float_type)(!use_occu ? 1.0 : (atoms[i]->CAtom().GetOccu()));
     for( size_t j=0; j < triags.Count(); j++ )  {
       if( t_map[off+j] == 0 )  continue;
       const vec_type

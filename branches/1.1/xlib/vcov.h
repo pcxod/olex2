@@ -142,19 +142,7 @@ protected:
     return TetrahedronVolume(points[0], points[1], points[2], points[3]);
   }
   double _calcTang(const vec3d_alist& points)  {
-    vec3d u(points[1]-points[0]),
-      v(points[2]-points[1]),
-      w(points[3]-points[2]);
-    double h11 = u.QLength(),
-      h22 = v.QLength(),
-      h33 = w.QLength(),
-      h12 = u.DotProd(v),
-      h13 = u.DotProd(w),
-      h23 = v.DotProd(w);
-    double A = h12*h23 - h13*h22;
-    double B = h11*h22 - h12*h12;
-    double C = h22*h33 - h23*h23;
-    return acos(A/sqrt(B*C))*180.0/M_PI;
+    return olx_dihedral_angle_signed(points[0], points[1], points[2], points[3]);
   }
   template <int k, int type> double _calcPlane(const vec3d_alist& Points) {
     mat3d m, vecs;

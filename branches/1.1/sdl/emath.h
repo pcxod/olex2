@@ -78,20 +78,29 @@ template <class VC>
     double d = n[2]*A[2] + n[1]*A[1] + n[0]*A[0];
     d = n[2]*D[2] + n[1]*D[1] + n[0]*D[0] - d;
     d /= n.Length();
-    return olx_abs( caS*d/3 );
+    return olx_abs(caS*d/3);
   }
-  // torsion angle in degrees [0..180], throws an exception
+  // dihedral angle in degrees [0..180], throws an exception
 template <class VC>
-  double TorsionAngle(const VC& v1, const VC& v2, const VC& v3, const VC& v4)  {
+  double olx_dihedral_angle(const VC& v1, const VC& v2, const VC& v3, const VC& v4)  {
     const VC a( (v1-v2).XProdVec(v3-v2) ), 
              b( (v2-v3).XProdVec(v4-v3) ); 
     if( a.QLength()*b.QLength() < 1e-15 )
       throw TDivException(__OlxSourceInfo);
     return acos(a.CAngle(b))*180/M_PI;
   }
+  /* dihedral angle in degrees (-180..180] 
+  http://en.wikipedia.org/wiki/Dihedral_angle
+  */
+template <class VC>
+  double olx_dihedral_angle_signed(const VC& v1, const VC& v2, const VC& v3, const VC& v4)  {
+    const VC b1(v2-v1), b2(v3-v2), b3(v4-v3),
+             b2xb3(b2.XProdVec(b3));
+    return atan2(b2.Length()*b1.DotProd(b2xb3), b1.XProdVec(b2).DotProd(b2xb3))*180/M_PI;
+  }
   //angle in degrees for three coordinates A-B B-C angle
 template <class VC>
-  double Angle(const VC& v1, const VC& v2, const VC& v3)  {
+  double olx_angle(const VC& v1, const VC& v2, const VC& v3)  {
     const VC a(v1-v2),
              b(v3-v2);
     if( a.QLength()*b.QLength() < 1e-15 )
@@ -100,7 +109,7 @@ template <class VC>
   }
   //angle in degrees for four coordinates A-B D-C angle
 template <class VC>
-  double Angle(const VC& v1, const VC& v2, const VC& v3, const VC& v4)  {
+  double olx_angle(const VC& v1, const VC& v2, const VC& v3, const VC& v4)  {
     const VC a(v1-v2),
              b(v4-v3);
     if( a.QLength()*b.QLength() < 1e-15 )
@@ -109,7 +118,7 @@ template <class VC>
   }
 
 // greatest common denominator
-extern unsigned int gcd(unsigned int u, unsigned int v);
+extern unsigned int olx_gcd(unsigned int u, unsigned int v);
 
 //extern void SetBit( const bool Set, short &V, const short Bit );
 //returns volume of a sphere of radius r

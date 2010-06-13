@@ -719,7 +719,7 @@ void TGXApp::BangList(TXAtom *XA, TStrList &L)  {
     }
   }
 }
-double TGXApp::Tang( TSBond *B1, TSBond *B2, TSBond *Middle, olxstr *Sequence )  {
+double TGXApp::Tang(TSBond *B1, TSBond *B2, TSBond *Middle, olxstr *Sequence)  {
   // right parameters should be passed, e.g. the bonds should be connecetd like
   // B1-Middle-B2 or B2-Middle->B1, otherwise the result is almost meaningless!
   if( Middle->A() == B1->A() || Middle->A() == B1->B() )
@@ -732,34 +732,20 @@ double TGXApp::Tang( TSBond *B1, TSBond *B2, TSBond *Middle, olxstr *Sequence ) 
   TSAtom &A3 = Middle->B();
   TSAtom &A1 = B1->Another(A2);
   TSAtom &A4 = B2->Another(A3);
-  const vec3d A = A1.crd() - A2.crd();
-  const vec3d B = A3.crd() - A2.crd();
-  const vec3d C = A2.crd() - A3.crd();
-  const vec3d D = A4.crd() - A3.crd();
-
-  const vec3d E = A.XProdVec(B);
-  const vec3d F = C.XProdVec(D);
-
-  if( E.QLength()*F.QLength() == 0 )  return -1;
-
-  double ca = E.CAngle(F);
-  double angle = acos(ca);
+  const double angle = olx_dihedral_angle_signed(A1.crd(), A2.crd(), A3.crd(), A4.crd());
   if( Sequence != NULL )  {
     *Sequence = A1.GetLabel();
     *Sequence << '-' << A2.GetLabel() <<
                  '-' << A3.GetLabel() <<
                  '-' << A4.GetLabel();
   }
-  return angle/M_PI*180;
+  return angle;
 }
 void TGXApp::TangList(TXBond *XMiddle, TStrList &L)  {
   TSBondPList BondsA, BondsB;
   size_t maxl=0;
-  TSAtom *A;
   TSBond *B, *Middle = &XMiddle->Bond();
-  olxstr T;
-  float angle;
-  A = &Middle->A();
+  TSAtom *A = &Middle->A();
   for( size_t i=0; i < A->BondCount(); i++ )  {
     B = &A->Bond(i);
     if( B != Middle ) BondsA.Add(B);
@@ -771,13 +757,11 @@ void TGXApp::TangList(TXBond *XMiddle, TStrList &L)  {
   }
   for( size_t i=0; i < BondsA.Count(); i++ )  {
     for( size_t j=0; j < BondsB.Count(); j++ )  {
-      angle = Tang( BondsA[i], BondsB[j], Middle, &T);
-      if( angle )  {
-        T << ':' << ' ';
-        if( T.Length() > maxl ) maxl = T.Length();  // to format thestring later
-        T << olxstr::FormatFloat(3, angle);
-        L.Add(T);
-      }
+      olxstr& T = L.Add();
+      const double angle = Tang( BondsA[i], BondsB[j], Middle, &T);
+      T << ':' << ' ';
+      if( T.Length() > maxl ) maxl = T.Length();  // to format the string later
+      T << olxstr::FormatFloat(3, angle);
     }
   }
   for( size_t i=0; i < L.Count(); i++ )  {
@@ -833,12 +817,12 @@ olxstr TGXApp::GetSelectionInfo()  {
         Tmp = "Angle (";
         Tmp << macSel_GetName4a(A.Bond().A(), A.Bond().B(), B.Bond().A(), B.Bond().B()) <<
           "): ";
-        v = Angle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
+        v = olx_angle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
         Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')' <<
           "\nAngle (" <<
           macSel_GetName4a(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) <<
           "): ";
-        v = Angle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
+        v = olx_angle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
         Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
         // check for ajusten bonds
         if( !(&A.Bond().A() == &B.Bond().A() || &A.Bond().A() == &B.Bond().B() ||
@@ -847,33 +831,33 @@ olxstr TGXApp::GetSelectionInfo()  {
           Tmp << "\nTorsion angle (" <<
             macSel_GetName4(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) <<
             "): ";
-          v = TorsionAngle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().B().crd(), B.Bond().A().crd());
+          v = olx_dihedral_angle_signed(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().B().crd(), B.Bond().A().crd());
           Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')' <<
             "\nTorsion angle (" <<
             macSel_GetName4(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) << 
             "): ";
-          v = TorsionAngle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
+          v = olx_dihedral_angle_signed(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
           Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
         }
       }
       else if( EsdlInstanceOf(Sel[0], TXLine) && EsdlInstanceOf(Sel[1], TXLine) )  {
         TXLine& A = (TXLine&)Sel[0], &B =(TXLine&)Sel[1];
         Tmp = "Angle: ";
-        v = Angle(A.Edge(), A.Base(), B.Edge(), B.Base());
+        v = olx_angle(A.Edge(), A.Base(), B.Edge(), B.Base());
         Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ")";
       }
       else if( EsdlInstanceOf(Sel[0], TXLine) && EsdlInstanceOf(Sel[1], TXBond) )  {
         TXLine& A = (TXLine&)Sel[0];
         TXBond& B =(TXBond&)Sel[1];
         Tmp = "Angle: ";
-        v = Angle(A.Edge(), A.Base(), B.Bond().A().crd(), B.Bond().B().crd());
+        v = olx_angle(A.Edge(), A.Base(), B.Bond().A().crd(), B.Bond().B().crd());
         Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ")";
       }
       else if( EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXLine) )  {
         TXLine& A = (TXLine&)Sel[1];
         TXBond& B =(TXBond&)Sel[0];
         Tmp = "Angle: ";
-        v = Angle(A.Edge(), A.Base(), B.Bond().A().crd(), B.Bond().B().crd());
+        v = olx_angle(A.Edge(), A.Base(), B.Bond().A().crd(), B.Bond().B().crd());
         Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ")";
       }
       else if( EsdlInstanceOf(Sel[0], TXPlane) && EsdlInstanceOf(Sel[1], TXAtom) )  {
@@ -925,7 +909,7 @@ olxstr TGXApp::GetSelectionInfo()  {
         Tmp = "Angle (plane-plane): ";
         Tmp << olxstr::FormatFloat(3, ang) <<
           "\nTwist Angle (plane-plane, experimental): " <<
-          olxstr::FormatFloat(3, TorsionAngle(a.GetCenter()+a.GetNormal(), a.GetCenter(), b.GetCenter(), b.GetCenter()+b.GetNormal())) <<
+          olxstr::FormatFloat(3, olx_dihedral_angle(a.GetCenter()+a.GetNormal(), a.GetCenter(), b.GetCenter(), b.GetCenter()+b.GetNormal())) <<
           "\nFold Angle (plane-plane, experimental): " <<
           olxstr::FormatFloat(3, acos(p_a.CAngle(p_b))*180/M_PI) <<
           "\nDistance (plane centroid-plane centroid): " <<
@@ -962,10 +946,10 @@ olxstr TGXApp::GetSelectionInfo()  {
           if( cv != NULL )
             Tmp << cv->GetValue().ToString();
           else
-            Tmp << olxstr::FormatFloat(3, Angle(a1.crd(), a2.crd(), a3.crd()));
+            Tmp << olxstr::FormatFloat(3, olx_angle(a1.crd(), a2.crd(), a3.crd()));
         }
         else
-          Tmp << olxstr::FormatFloat(3, Angle(a1.crd(), a2.crd(), a3.crd()));
+          Tmp << olxstr::FormatFloat(3, olx_angle(a1.crd(), a2.crd(), a3.crd()));
       }
       else if( EsdlInstanceOf(Sel[0], TXPlane) &&
         EsdlInstanceOf(Sel[1], TXPlane) &&
@@ -975,7 +959,7 @@ olxstr TGXApp::GetSelectionInfo()  {
             &p3 = ((TXPlane&)Sel[2]).Plane();
           Tmp = "Angle between plane centroids: ";
           Tmp << olxstr::FormatFloat(3, 
-            Angle(p1.GetCenter(), p2.GetCenter(), p3.GetCenter()));
+            olx_angle(p1.GetCenter(), p2.GetCenter(), p3.GetCenter()));
       }
     }
     else if( Sel.Count() == 4 )  {
@@ -989,18 +973,13 @@ olxstr TGXApp::GetSelectionInfo()  {
             &a4 = ((TXAtom&)Sel[3]).Atom();
           Tmp = "Torsion angle (";
           Tmp << macSel_GetName4(a1, a2, a3, a4) << "): ";
-          v = TorsionAngle(a1.crd(), a2.crd(), a3.crd(), a4.crd());
-          if( v >= 0 )
-            Tmp << olxstr::FormatFloat(3, v) << " (" 
-            << olxstr::FormatFloat(3, 180-v) << ')';
-          else 
-            Tmp << "n/a (n/a)";
-
+          v = olx_dihedral_angle_signed(a1.crd(), a2.crd(), a3.crd(), a4.crd());
+          Tmp << olxstr::FormatFloat(3, v);
           Tmp << 
             "\nAngle (" << macSel_GetName3(a1, a2, a3) << "): " <<
-            olxstr::FormatFloat(3, Angle(a1.crd(), a2.crd(), a3.crd())) <<
+            olxstr::FormatFloat(3, olx_angle(a1.crd(), a2.crd(), a3.crd())) <<
             "\nAngle (" << macSel_GetName3(a2, a3, a4) << "): " << 
-            olxstr::FormatFloat(3, Angle(a2.crd(), a3.crd(), a4.crd())) <<
+            olxstr::FormatFloat(3, olx_angle(a2.crd(), a3.crd(), a4.crd())) <<
             "\nDistance (" << macSel_GetName2(a1, a2) << "): " << 
             olxstr::FormatFloat(3, a1.crd().DistanceTo(a2.crd())) <<
             "\nDistance (" << macSel_GetName2(a2, a3) << "): " << 
