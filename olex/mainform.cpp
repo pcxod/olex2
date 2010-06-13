@@ -2303,8 +2303,11 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       FUndoStack->Clear();
   }
   else if( MsgId == ID_FileClose )  {
-    if( MsgSubId == msiExit )
+    if( MsgSubId == msiExit )  {
       UpdateRecentFile(EmptyString);
+      FInfoBox->Clear();
+      FInfoBox->PostText("No file is loaded");
+    }
   }
   else if( MsgId == ID_CMDLINECHAR )  {
     if( Data != NULL && EsdlInstanceOf(*Data, TKeyEvent) )
