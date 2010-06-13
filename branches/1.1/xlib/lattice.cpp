@@ -2307,6 +2307,48 @@ void TLattice::BuildAtomRegistry()  {
     Atoms.Pack();
 }
 //..............................................................................
+void TLattice::AddLatticeContent(const TLattice& latt)  {
+  if( latt.IsGenerated() )
+    throw TInvalidArgumentException(__OlxSourceInfo, "cannot adopt grow structure");
+  TSAtomPList new_atoms;
+  TSBondPList new_bonds;
+  for( size_t i=0; i < latt.AtomCount(); i++ )  {
+    const TSAtom& src_a = latt.GetAtom(i);
+    TCAtom& ca = GetAsymmUnit().NewAtom();
+    GetAsymmUnit().CartesianToCell(ca.ccrd() = src_a.crd());
+    ca.SetType(src_a.GetType());
+    ca.SetLabel(src_a.GetLabel(), false);
+    TSAtom* sa = new_atoms.Add(new TSAtom(Network));
+    sa->CAtom(ca);
+    sa->AddMatrix(Matrices[0]);
+    AddSAtom(sa);
+  }
+  for( size_t i=0; i < latt.BondCount(); i++ )  {
+    const TSBond& src_b = latt.GetBond(i);
+    TSBond* sb = new_bonds.Add(new TSBond(Network));
+    sb->SetA(*new_atoms[src_b.A().GetLattId()]);
+    sb->SetB(*new_atoms[src_b.B().GetLattId()]);
+    AddSBond(sb);
+  }
+  for( size_t i=0; i < latt.AtomCount(); i++ )  {
+    const TSAtom& src_a = latt.GetAtom(i);
+    TSAtom& sa = *new_atoms[i];
+    for( size_t j=0; j < src_a.NodeCount(); j++ )
+      sa.AddNode(*new_atoms[src_a.Node(j).GetLattId()]);
+    for( size_t j=0; j < src_a.BondCount(); j++ )
+      sa.AddBond(*new_bonds[src_a.Bond(j).GetLattId()]);
+  }
+  for( size_t i=0; i < latt.FragmentCount(); i++ )  {
+    const TNetwork& src_n = latt.GetFragment(i);
+    TNetwork* net = Fragments.Add(new TNetwork(this, Network));
+    net->SetLattId(Fragments.Count()-1);
+    for( size_t j=0; j < src_n.NodeCount(); j++ )
+      net->AddNode(*new_atoms[src_n.Node(j).GetLattId()]);
+    for( size_t j=0; j < src_n.BondCount(); j++ )
+      net->AddBond(*new_bonds[src_n.Bond(j).GetLattId()]);
+  }
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TLattice::LibGetFragmentCount(const TStrObjList& Params, TMacroError& E)  {

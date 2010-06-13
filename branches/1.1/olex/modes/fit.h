@@ -3,6 +3,7 @@
 
 class TFitMode : public AMode  {
   TXAtomPList Atoms;
+  TXBondPList Bonds;
 protected:
   void UpdateSelectionCrds() {
     TGlGroup& sel = TGlXApp::GetGXApp()->GetSelection();
@@ -13,7 +14,7 @@ protected:
         if( EsdlInstanceOf(sel[i], TXAtom) )  {
           cr += ((TXAtom&)sel[i]).Basis.GetCenter();
           cr += ((TXAtom&)sel[i]).Atom().crd();
-          atoms.Add( (TXAtom&)sel[i]);
+          atoms.Add((TXAtom&)sel[i]);
         }
       }
       if( atoms.Count() > 1 )  {
