@@ -27,8 +27,8 @@ public:
   virtual inline uint64_t GetSize() const {  return GetLength();  }
   virtual inline uint64_t GetPosition() const {  return Position;  }
   virtual void SetPosition(uint64_t pos)  {
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, pos, 0, GetLength()+1);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, pos, 0, GetLength()+1);
 #endif
     Position = OlxIStream::CheckSizeT(pos);
   }
@@ -96,8 +96,8 @@ public:
     Position = OlxIStream::CheckSizeT(pos);
   }
   virtual void Read(void* to, size_t count)  {
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, Position+count, 0, Length+1);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, Position+count, 0, Length+1);
 #endif
     memcpy(to, &Data[Position], count);
     Position += count;

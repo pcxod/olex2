@@ -254,9 +254,7 @@ public:
     for( size_t i=0; i < li.Count(); i++ )
       Add(li[i]);
   }
-  ~TObjectList() {  
-    Clear();
-  }
+  ~TObjectList() {  Clear();  }
   ObjectClass& operator [] (size_t i)  {  return *list[i];  }
   const ObjectClass& operator [] (size_t i) const {  return *list[i];  }
   ObjectClass& Last()  {  return *list.Last();  }
@@ -271,9 +269,7 @@ public:
       Add(li[i]);
     return *this;
   }
-  void Add(const ObjectClass& obj)  {
-    list.Add( new ObjectClass(obj) );
-  }
+  void Add(const ObjectClass& obj)  {  list.Add(new ObjectClass(obj));  }
   void Insert(size_t index, const ObjectClass& obj)  {
     list.Insert(index, new ObjectClass(obj) );
   }
@@ -288,8 +284,8 @@ public:
       delete list[ind];
     list.Delete(ind);
   }
-  void SetCapacity(size_t cap)   {  list.SetCapacity(cap);  }
-  void SetIncrement(size_t incr) {  list.SetIncrement(incr);  }
+  void SetCapacity(size_t cap)  {  list.SetCapacity(cap);  }
+  void SetIncrement(size_t incr)  {  list.SetIncrement(incr);  }
 };
 //............................................................................................
 /* A choice of comprators is provided:

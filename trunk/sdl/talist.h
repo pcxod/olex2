@@ -54,14 +54,14 @@ public:
     return new TArrayList(*this);
   }
 //..............................................................................
-  const TArrayList& Assign( const TArrayList& list )  {
-    SetCount( list.Count() );
+  const TArrayList& Assign(const TArrayList& list)  {
+    SetCount(list.Count());
     for( size_t i=0; i < FCount; i++ )
       Items[i] = list.Items[i];
     return list;
   }
 //..............................................................................
-  void AddList( const TArrayList& list )  {
+  void AddList(const TArrayList& list)  {
     SetCapacity( list.Count() + FCount );
     for( size_t i=0; i < list.FCount; i++ )
       Items[FCount+i] = list.Items[i];
@@ -88,34 +88,34 @@ public:
   }
 //..............................................................................
   inline T& operator [] (size_t index) const {
-#ifdef _OLX_DEBUG
-  TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, index, 0, FCount);
+#ifdef _DEBUG
+  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
     return Items[index];
   }
 //..............................................................................
-  inline T& Item(size_t index) const  {
-#ifdef _OLX_DEBUG
-  TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, index, 0, FCount);
+  inline T& Item(size_t index) const {
+#ifdef _DEBUG
+  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
     return Items[index];
   }
 //..............................................................................
-  inline T& Last() const  {
-#ifdef _OLX_DEBUG
-  TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, FCount-1, 0, FCount);
+  inline T& Last() const {
+#ifdef _DEBUG
+  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, FCount-1, 0, FCount);
 #endif
     return Items[FCount-1];
   }
 //..............................................................................
-  inline const T& GetItem(size_t index) const  {
-#ifdef _OLX_DEBUG
+  inline const T& GetItem(size_t index) const {
+#ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, index, 0, FCount);
 #endif
     return Items[index];
   }
 //..............................................................................
-  inline const TArrayList& operator = ( const TArrayList& list )  {
+  inline const TArrayList& operator = (const TArrayList& list)  {
     return Assign(list);
   }
 //..............................................................................
@@ -132,18 +132,18 @@ public:
   inline void SetIncrement(size_t v)  {  FIncrement = v;  }
 //..............................................................................
   void Delete(size_t index)  {
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, index, 0, FCount);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
     for( size_t i=index+1; i < FCount; i++ )
       Items[i-1] = Items[i];
-    FCount --;
+    FCount--;
   }
 //..............................................................................
   void DeleteRange(size_t From, size_t To)  {
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, From, 0, FCount);
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, To, 0, FCount);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, From, 0, FCount);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, To, 0, FCount);
 #endif
     for( size_t i=To; i < FCount; i++ )
       Items[From+i-To] = Items[i];
@@ -152,7 +152,8 @@ public:
 //..............................................................................
   void Remove(const T& pObj)  {
     index_t i = IndexOf(pObj);
-    if( i != InvalidIndex )  Delete(i);
+    if( i != InvalidIndex )
+      Delete(i);
     else
       throw TFunctionFailedException(__OlxSourceInfo, "could not locate specified object");
   }
@@ -160,9 +161,8 @@ public:
   // cyclic shift to the left
   void ShiftL(size_t cnt)  {
     if( FCount == 0 )  return;
-    size_t sv = cnt%FCount;
-    if( sv <= 0 )  return;
-
+    const size_t sv = cnt%FCount;
+    if( sv == 0 )  return;
     if( sv == 1 )  {  // special case
       T D = Items[0];
       for( size_t i=1; i <= FCount-1; i++ )
@@ -184,9 +184,8 @@ public:
   // cyclic shift to the right
   void ShiftR(size_t cnt)  {
     if( FCount == 0 )  return;
-    size_t sv = cnt%FCount;
-    if( sv <= 0 )  return;
-
+    const size_t sv = cnt%FCount;
+    if( sv == 0 )  return;
     if( sv == 1 )  {  // special case
       T D = Items[FCount-1];
       for( size_t i=1; i < FCount; i++ )
@@ -207,9 +206,9 @@ public:
   }
 //..............................................................................
   inline void Swap(size_t i, size_t j)  {
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, i, 0, FCount);
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, j, 0, FCount);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, i, 0, FCount);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, j, 0, FCount);
 #endif
     T D = Items[i];
     Items[i] = Items[j];
@@ -217,9 +216,9 @@ public:
   }
 //..............................................................................
   void Move(size_t from, size_t to)  {
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, from, 0, FCount);
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, to, 0, FCount);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, FCount);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, to, 0, FCount);
 #endif
     T D = Items[from];
     if( from > to )  {
@@ -234,18 +233,22 @@ public:
     Items[to] = D;
   }
 //..............................................................................
-  inline size_t Count()    const {  return FCount;  }
+  inline size_t Count() const {  return FCount;  }
 //..............................................................................
-  inline bool IsEmpty()  const {  return FCount == 0;  }
+  inline bool IsEmpty() const {  return FCount == 0;  }
 //..............................................................................
   void SetCount(size_t v)  {
     if( v == FCount )  return;
-#ifdef _OLX_DEBUG
-   // TODO: check if v is valid
-#endif
     if( v > FCount )  {
       if( v > FCapacity )
         SetCapacity(v + FIncrement);
+    }
+    else if( v == 0 )  {
+      if( Items != NULL )  {
+        delete [] Items;
+        Items = NULL;
+        FCapacity = 0;
+      }
     }
     else  {
       T* Bf = new T[v+FIncrement];
@@ -260,7 +263,8 @@ public:
 //..............................................................................
   size_t IndexOf(const T& val) const  {
     for( size_t i=0; i < FCount; i++ )
-      if( Items[i] == val )  return i;
+      if( Items[i] == val )
+        return i;
     return InvalidIndex;
   }
 

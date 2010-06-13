@@ -24,7 +24,7 @@ template <typename arg_t> double olx_factorial(const arg_t& a)  {
 template <typename ret_t, typename arg_t> ret_t olx_factorial_t(const arg_t& a)  {
   arg_t b=1;
   for( arg_t i=2; i <= a; i++ )  b *= i;
-  return b;
+  return static_cast<ret_t>(b);
 }
 // rounds a floating point number
 template <typename float_t> inline long olx_round(const float_t a)  {

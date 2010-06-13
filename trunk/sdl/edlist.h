@@ -112,25 +112,25 @@ template <typename T>
     SegmentSize = segmentSize;
     Length = 0;
     Head = Tail = NULL;
-    }
+  }
 
   TDirectionalList(const TDirectionalList& list)  {
      Length = 0;
      Head = Tail = NULL;
      TDirectionalListEntry<T>* entry = list.Root();
      SegmentSize = list.GetSegmentSize();
-     while( entry )  {
-       AddEntry( entry );
-       // TODO fix this: entry = GetNext();
+     while( entry != NULL )  {
+       AddEntry(entry);
+       entry = entry->GetNext();
      }
   }
 
   virtual ~TDirectionalList()  {  Clear();  }
 
   void Clear() {
-    TDirectionalListEntry<T>* entry = Head, *en;
-    while( entry )  {
-      en = entry->GetNext();
+    TDirectionalListEntry<T>* entry = Head;
+    while( entry != NULL )  {
+      TDirectionalListEntry<T>* en = entry->GetNext();
       delete entry;
       entry = en;
     }
@@ -138,11 +138,11 @@ template <typename T>
     Length = 0;
   }
 
-  inline TDirectionalListEntry<T>* GetHead()  const {  return Head;  }
-  inline TDirectionalListEntry<T>* GetTail()  const {  return Tail;  }
+  inline TDirectionalListEntry<T>* GetHead() const {  return Head;  }
+  inline TDirectionalListEntry<T>* GetTail() const {  return Tail;  }
   /* returns the entry at specified position and updates position to in the found entry
      so that a caller can use this position to read directly from the entry */
-  TDirectionalListEntry<T>* GetEntryAtPosition(size_t& pos)  const  {
+  TDirectionalListEntry<T>* GetEntryAtPosition(size_t& pos) const {
     if( !Head )  return Head;
     TDirectionalListEntry<T> *entry = Head;
 
@@ -158,26 +158,27 @@ template <typename T>
   inline bool IsEmpty() const {  return (Length == 0);  }
 
   T& Get(size_t index)  {
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, index, 0, Length+1);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, Length+1);
 #endif
     TDirectionalListEntry<T>* entry = Head;
     size_t ind = 0;
     while( (ind + entry->GetSize()) <= index )  {
       ind += entry->GetSize();
       entry = entry->GetNext();
-      if( !entry )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, Length-1);
+      if( entry = NULL )
+        throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, Length-1);
     }
     return entry->Item( index-ind );
   }
   // writes at the end od the list
-  TDirectionalList& Write( const T* Data, size_t length )  {
-    if( !Tail )  {
-      Tail = Head = new TDirectionalListEntry<T>(SegmentSize);  }
+  TDirectionalList& Write(const T* Data, size_t length)  {
+    if( Tail == NULL )
+      Tail = Head = new TDirectionalListEntry<T>(SegmentSize);
     size_t written=0;
     while( written < length )  {
       written += Tail->Write(&Data[written], length-written);
-      if( written < length )  Tail = Tail->AddEntry( SegmentSize );
+      if( written < length )  Tail = Tail->AddEntry(SegmentSize);
     }
     Length += length;
     return *this;
@@ -185,11 +186,11 @@ template <typename T>
 
   // writes starting from offset overwriting existing data
   TDirectionalList& Write( const T* Data, size_t offset, size_t length )  {
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, offset, 0, Length+1);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, offset, 0, Length+1);
 #endif
-    if( !Tail )  {
-      Tail = Head = new TDirectionalListEntry<T>(SegmentSize);  }
+    if( Tail == NULL )
+      Tail = Head = new TDirectionalListEntry<T>(SegmentSize);
 
     size_t firstOffset = offset;
     TDirectionalListEntry<T> *entry = GetEntryAtPosition(firstOffset);
@@ -199,35 +200,35 @@ template <typename T>
     while( written < length )  {
       if( entry->GetNext() == NULL )  {
         // allocate one big chank of memory
-        entry = entry->AddEntry( olx_max(length-written, SegmentSize) );
+        entry = entry->AddEntry(olx_max(length-written, SegmentSize));
         Tail = entry;
       }
       else
         entry = entry->GetNext();
-      written += entry->Write( &Data[written], 0, length-written );
+      written += entry->Write(&Data[written], 0, length-written);
     }
     return *this;
   }
 
   const TDirectionalList& Read( T* Data, size_t from, size_t length )  const {
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, from, 0, Length+1);
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, from+length, 0, Length+1);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, Length+1);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+length, 0, Length+1);
 #endif
     size_t firstOffset = from;
     TDirectionalListEntry<T> *entry = GetEntryAtPosition(firstOffset);
     size_t read = entry->Read(Data, firstOffset, length);
     while( read < length )  {
       entry = entry->GetNext();
-      read += entry->Read( &Data[read], 0, length-read );
+      read += entry->Read(&Data[read], 0, length-read);
     }
     return *this;
   }
 
-  TDirectionalList& Write( const T& entity )  {
-    if( !Tail )  {
-      Tail = Head = new TDirectionalListEntry<T>();  }
-    while( !Tail->Write(entity) )
+  TDirectionalList& Write(const T& entity)  {
+    if( Tail == NULL )
+      Tail = Head = new TDirectionalListEntry<T>();
+    while( Tail->Write(entity) == 0 )
       Tail = Tail->AddEntry(SegmentSize);
     Length += 1;
     return *this;

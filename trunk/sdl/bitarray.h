@@ -1,6 +1,6 @@
 #ifndef __olx_sdl_bitarray_H
 #define __olx_sdl_bitarray_H
-#include "ebase.h"
+#include "exception.h"
 #include "istream.h"
 
 BeginEsdlNamespace()
@@ -22,24 +22,24 @@ public:
   inline bool operator [] (size_t index) const  {
     size_t intIndex = index/8;
     size_t bitIndex = 1 << index%8;
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, intIndex, 0, FIntCount);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex, 0, FCharCount);
 #endif
     return (FData[intIndex] & bitIndex) != 0;
   }
   bool Get(size_t index) const  {
     size_t intIndex = index/8;
     size_t bitIndex = 1 << index%8;
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, intIndex, 0, FIntCount);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex, 0, FCharCount);
 #endif
     return (FData[intIndex] & bitIndex) != 0;
   }
   inline void Set(size_t index, bool v)  {
     size_t intIndex = index/8;
     size_t bitIndex = 1 << index%8;
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, intIndex, 0, FIntCount);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex, 0, FCharCount);
 #endif
     if( !v )  FData[intIndex] &= ~bitIndex;
     else      FData[intIndex] |= bitIndex;
@@ -47,16 +47,16 @@ public:
   inline void SetTrue(size_t index)   {  
     size_t intIndex = index/8;
     size_t bitIndex = 1 << index%8;
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, intIndex, 0, FIntCount);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex, 0, FCharCount);
 #endif
     FData[intIndex] |= bitIndex;
   }
   inline void SetFalse(size_t index)  {  
     size_t intIndex = index/8;
     size_t bitIndex = 1 << index%8;
-#ifdef _OLX_DEBUG
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, intIndex, 0, FIntCount);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex, 0, FCharCount);
 #endif
     FData[intIndex] &= ~bitIndex;
   }
