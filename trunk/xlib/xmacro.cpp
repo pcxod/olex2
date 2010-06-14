@@ -1888,8 +1888,7 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       E.ProcessingError(__OlxSrcInfo, "ooops...");
       return;
     }
-    TEStrBuffer out;
-    vec3d trans( st.GetResults()[ind].Center );
+    vec3d trans = st.GetResults()[ind].Center;
     //TVectorD trans = st.GetGravityCenter();
     trans /= 2;
     trans *= -1;

@@ -3981,7 +3981,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
 void TGXApp::SaveModel(const olxstr& fileName) const {
 #ifdef __WXWIDGETS__
   TDataFile df;
-  wxFileOutputStream fos( fileName.u_str() );
+  wxFileOutputStream fos(fileName.u_str());
   fos.Write("oxm", 3);
   wxZipOutputStream zos(fos, 9);
   TDataItem& mi = df.Root().AddItem("olex_model");
@@ -3993,9 +3993,9 @@ void TGXApp::SaveModel(const olxstr& fileName) const {
   TEStrBuffer bf(1024*32);
   df.Root().SaveToStrBuffer(bf);
 #ifdef _UNICODE
-  olxcstr model( TUtf8::Encode(bf.ToString()) );
+  olxcstr model(TUtf8::Encode(bf.ToString()));
 #else
-  olxcstr model( bf.ToString() );
+  olxcstr model(bf.ToString());
 #endif
   zos.Write(model.raw_str(), model.RawLen());
   zos.CloseEntry();

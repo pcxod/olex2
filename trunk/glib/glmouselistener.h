@@ -1,7 +1,5 @@
-//---------------------------------------------------------------------------
-
-#ifndef glmouselistenerH
-#define glmouselistenerH
+#ifndef __olx_gl_mouselistener_H
+#define __olx_gl_mouselistener_H
 #include "glbase.h"
 #include "gdrawobject.h"
 #include "ebasis.h"
@@ -15,7 +13,6 @@ const uint16_t
   glmlRoteable  = 0x0004,
   glmlZoomable  = 0x0008,
   glmlMove2dz   = 0x0010;  // the translation is devided by current zoom
-
 
 class TGlMouseListener: public AGDrawObject  {
 protected:

@@ -12,36 +12,44 @@ BeginEsdlNamespace()
 
 class TEBasis: public IEObject  {
 protected:
-  float FMData[16], FMDataT[16];  // matrix to call OpenGlDirectly
+  static float FMData[16], FMDataT[16];  // matrix to call OpenGlDirectly
   double   FRX, FRY, FRZ, // the rotaion angles
            FZoom;       // zoom
   mat3d  FMatrix;
-  void CopyMatrix();
   vec3d   FCenter;
 public:
   TEBasis();
-  TEBasis(const TEBasis &B);
+  TEBasis(const TEBasis& B);
   virtual ~TEBasis();
 
   const TEBasis& operator  = (const TEBasis &B);
   template <class VC> void SetCenter(const VC& V)  {
     FCenter[0] = V[0];  FCenter[1] = V[1];  FCenter[2] = V[2];
-    FMDataT[12] = FMData[12] = (float)V[0];
-    FMDataT[13] = FMData[13] = (float)V[1];
-    FMDataT[14] = FMData[14] = (float)V[2];
   }
   const vec3d& GetCenter() const {  return FCenter; }
-  void NullCenter()  {
-    FCenter.Null();
-    FMDataT[12] = FMData[12] = FMDataT[13] = FMData[13] = FMDataT[14] = FMData[14] = 0;
-  }
+  void NullCenter()  {  FCenter.Null();  }
 
   // orientation matrix in 4x4 opengl format
-  inline const float* GetMData() const {  return FMData; }  
+  inline const float* GetMData() const {
+    FMData[0] = (float)FMatrix[0][0];  FMData[1] = (float)FMatrix[0][1];  FMData[2] = (float)FMatrix[0][2];
+    FMData[4] = (float)FMatrix[1][0];  FMData[5] = (float)FMatrix[1][1];  FMData[6] = (float)FMatrix[1][2];
+    FMData[8] = (float)FMatrix[2][0];  FMData[9] = (float)FMatrix[2][1];  FMData[10] = (float)FMatrix[2][2];
+    FMData[3] = FMData[7] = FMData[11] = 0;
+    FMData[12] = (float)FCenter[0];  FMData[13] = (float)FCenter[1];  FMData[14] = (float)FCenter[2];
+    FMData[15] = 1;
+    return FMData;
+  }
   // transposed orientation matrix in 4x4 opengl format
-  inline const float* GetMDataT() const {  return FMDataT; }  // transposed orientation matrix
-  inline const mat3d& GetMatrix() const {  return FMatrix; }
-
+  inline const float* GetMDataT() const {
+    FMDataT[0] = (float)FMatrix[0][0];  FMDataT[1] = (float)FMatrix[1][0];  FMDataT[2] = (float)FMatrix[2][0];
+    FMDataT[4] = (float)FMatrix[0][1];  FMDataT[5] = (float)FMatrix[1][1];  FMDataT[6] = (float)FMatrix[2][1];
+    FMDataT[8] = (float)FMatrix[0][2];  FMDataT[9] = (float)FMatrix[1][2];  FMDataT[10] = (float)FMatrix[2][2];
+    FMDataT[3] = FMDataT[7] = FMDataT[11] = 0;
+    FMDataT[12] = (float)FCenter[0];  FMDataT[13] = (float)FCenter[1];  FMDataT[14] = (float)FCenter[2];
+    FMDataT[15] = 1;
+    return FMDataT;
+  }
+  inline const mat3d& GetMatrix() const {  return FMatrix;  }
   inline double GetZoom() const {  return FZoom; }
   void SetZoom(double v);
 
@@ -49,7 +57,6 @@ public:
     for( int i=0; i < 3; i++ )
       for( int j=0; j < 3; j++ )
         FMatrix[i][j] = M[i][j];
-    CopyMatrix();  
   }
 
 //  void  Rotate( double A, double B, double C);
@@ -60,39 +67,31 @@ public:
   void  RotateZ(double A);
   inline double GetRZ() const {  return FRZ; }
   // rotation using a matrix
-  template <class T> void Rotate(const T& M)  {
-    FMatrix *= M;
-    CopyMatrix();  
-  }
+  template <class T> void Rotate(const T& M)  {  FMatrix *= M;  }
 
   // rotation around an arbitrary vector, New = Current*m
   template <class VC> void Rotate(const VC& V, double angle)  {
     mat3d m;  
     CreateRotationMatrix(m, V, cos(angle), sin(angle) );
     FMatrix *= m;
-    CopyMatrix();  
   }
 
   // rotation around an arbitrary vector New = m*Current
   template <class VC> void RotateT(const VC& V, double angle)  {
     mat3d m;  
-    CreateRotationMatrix(m, V, cos(angle), sin(angle) );
+    CreateRotationMatrix(m, V, cos(angle), sin(angle));
     FMatrix = m * FMatrix;
-    CopyMatrix();  
   }
 
   template <class VC> void Translate(const VC& V)  {
     FCenter[0] += V[0];  FCenter[1] += V[1];  FCenter[2] += V[2];
-    FMDataT[12] += (float)V[0];  FMData[12] += (float)V[0];
-    FMDataT[13] += (float)V[1];  FMData[13] += (float)V[1];
-    FMDataT[14] += (float)V[2];  FMData[14] += (float)V[2];
   }
 
   void TranslateX(double x);
   void TranslateY(double y);
   void TranslateZ(double z);
   void Reset();
-  void ResetAngles()  {  FRX = FRY = FRZ = 0;  };
+  void ResetAngles()  {  FRX = FRY = FRZ = 0;  }
   template <class VC> void OrientNormal(const VC& normal)  {
     SetMatrix(CalcBasis<VC, mat3d>(normal).Transpose());  
   }
@@ -133,17 +132,15 @@ public:
       FMatrix[1][0] = X[1];  FMatrix[1][1] = Y[1];  FMatrix[1][2] = Z[1];
       FMatrix[2][0] = X[2];  FMatrix[2][1] = Y[2];  FMatrix[2][2] = Z[2];
     }
-    else
-    {
+    else  {
       FMatrix[0][0] = X[0];  FMatrix[0][1] = X[1];  FMatrix[0][2] = X[2];
       FMatrix[1][0] = Y[0];  FMatrix[1][1] = Y[1];  FMatrix[1][2] = Y[2];
       FMatrix[2][0] = Z[0];  FMatrix[2][1] = Z[1];  FMatrix[2][2] = Z[2];
     }
-    CopyMatrix();  
   }
 
   template <class MC> void Orient(const MC& M, bool Transpose=true)  {
-    double zm = GetZoom();
+    const double zm = GetZoom();
     Reset();
     if( Transpose )  {
       for( int i=0; i < 3; i++ )
@@ -156,10 +153,9 @@ public:
           FMatrix[j][i] = M[i][j];
     }
     SetZoom(zm);
-    CopyMatrix();  
   }
 
-  double    DistanceTo (TEBasis &B)  const {  return FCenter.DistanceTo(B.FCenter);  }
+  double DistanceTo (const TEBasis &B) const {  return FCenter.DistanceTo(B.FCenter);  }
 
   virtual void ToDataItem(TDataItem& Item) const;
   virtual bool FromDataItem(const TDataItem& Item);

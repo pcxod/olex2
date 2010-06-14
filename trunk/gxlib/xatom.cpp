@@ -203,20 +203,18 @@ void TXAtom::ValidateRadius(TGraphicsStyle& GS)  {
   CalcRad(dr);
 }
 void TXAtom::ValidateDS(TGraphicsStyle& GS)  {
-  DrawStyle( GS.GetParam("DS", DefDS()).ToInt() );
+  DrawStyle(GS.GetParam("DS", DefDS()).ToInt());
 }
 //..............................................................................
 void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
-  olxstr Legend, NewL;
-
+  olxstr Legend;
   if( !cName.IsEmpty() )  {
     SetCollectionName(cName);
     Legend = cName;
   }
   else  
-    Legend = GetLegend( *FAtom );
+    Legend = GetLegend(*FAtom);
 
-  TGlMaterial RGlM;
   TGPCollection *GPC = NULL;
   if( FStaticObjects.IsEmpty() )  
     CreateStaticPrimitives();
@@ -237,6 +235,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
     }
   }
   else  {
+    olxstr NewL;
     GPC = Parent.FindCollectionX(Legend, NewL);
     if( GPC == NULL )
       GPC = &Parent.NewCollection(NewL);
@@ -246,7 +245,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
         if( (GPC->GetStyle().GetParam(GetPrimitiveMaskName(), "0").ToInt() & (1 << PolyhedronIndex)) != 0 )
           CreatePolyhedron(true);
         if( cpar == NULL )  {
-          ValidateRadius( GPC->GetStyle() );
+          ValidateRadius(GPC->GetStyle());
           ValidateDS(GPC->GetStyle());
         }
         else if( cpar->params != 0 )
@@ -276,6 +275,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
     Params() = *cpar->params;
   }
 
+  TGlMaterial RGlM;
   for( size_t i=0; i < FStaticObjects.Count(); i++ )  {
     const int off = 1 << i;
     if( PMask & off )  {
@@ -312,7 +312,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
       else  {
         size_t mi = GS.IndexOfMaterial(FStaticObjects.GetString(i));
         if( mi != InvalidIndex )  {
-          GlP.SetProperties( GS.GetPrimitiveStyle(mi).GetProperties() );
+          GlP.SetProperties(GS.GetPrimitiveStyle(mi).GetProperties());
           continue;
         }
         if( SGlP->Params.Last() == ddsDefSphere )   {
@@ -329,11 +329,10 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
           else
             GetDefRimMaterial(*FAtom, RGlM);
         }
-        GlP.SetProperties( GS.GetMaterial(FStaticObjects.GetString(i), RGlM) );
+        GlP.SetProperties(GS.GetMaterial(FStaticObjects.GetString(i), RGlM));
       }
     }
   }
-  return; 
 }
 //..............................................................................
 ACreationParams* TXAtom::GetCreationParams() const {
@@ -387,11 +386,11 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
     return true;
   }
 
-  vec3d c( Basis.GetCenter() );
+  vec3d c(Basis.GetCenter());
   c += FAtom->crd();
   if( IsRoteable() )  {
     vec3d cr;
-    int ac = 0;
+    size_t ac = 0;
     TGlGroup& gr = Parent.GetSelection();
     for( size_t i=0; i < gr.Count(); i++ )  {
       if( EsdlInstanceOf(gr[i], TXAtom) )  {

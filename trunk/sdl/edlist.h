@@ -1,82 +1,80 @@
-//---------------------------------------------------------------------------
-#ifndef edListH
-#define edListH
+#ifndef __olx_sdl_edlist_H
+#define __olx_sdl_edlist_H
 #include "exception.h"
 #include "etbuffer.h"
 
 BeginEsdlNamespace()
-//---------------------------------------------------------------------------
+
 template <typename T>
-  class TDirectionalListEntry : public IEObject  {
-      TTBuffer<T>* Data;
-      TDirectionalListEntry<T>* NextEntry;
-    public:
-      TDirectionalListEntry( const TDirectionalListEntry& entry )  {
-        NextEntry = NULL;
-        Data = new TTBuffer<T>( entry.GetData() );
-      }
-      TDirectionalListEntry( size_t size = DefBufferSize )  {
-        NextEntry = NULL;
-        Data = new TTBuffer<T>( size );
-      }
-      TDirectionalListEntry( T* memoryBlockToOwn, size_t size )  {
-        NextEntry = NULL;
-        Data = new TTBuffer<T>( memoryBlockToOwn, size );
-      }
+class TDirectionalListEntry : public IEObject  {
+  TTBuffer<T>* Data;
+  TDirectionalListEntry<T>* NextEntry;
+public:
+  TDirectionalListEntry(const TDirectionalListEntry& entry)  {
+    NextEntry = NULL;
+    Data = new TTBuffer<T>(*entry.Data);
+  }
+  TDirectionalListEntry(size_t size = DefBufferSize)  {
+    NextEntry = NULL;
+    Data = new TTBuffer<T>(size);
+  }
+  TDirectionalListEntry(T* memoryBlockToOwn, size_t size)  {
+    NextEntry = NULL;
+    Data = new TTBuffer<T>(memoryBlockToOwn, size);
+  }
 
-      virtual ~TDirectionalListEntry()  {  delete Data;  }
+  virtual ~TDirectionalListEntry()  {  delete Data;  }
 
-      // returns the number of written elements
-      inline size_t Write( const T* data, size_t count )  {
-        return Data->Write(data, count);
-      }
+  // returns the number of written elements
+  inline size_t Write(const T* data, size_t count)  {
+    return Data->Write(data, count);
+  }
 
-      // returns the number of written elements
-      inline size_t Write( const T* data, size_t offset, size_t count )  {
-        return Data->Write(data, offset, count);
-      }
+  // returns the number of written elements
+  inline size_t Write(const T* data, size_t offset, size_t count)  {
+    return Data->Write(data, offset, count);
+  }
 
-      // returns the number of read elements
-      inline size_t Read( T* data, size_t offset, size_t count )  const {
-        return Data->Read(data, offset, count);
-      }
+  // returns the number of read elements
+  inline size_t Read(T* data, size_t offset, size_t count) const {
+    return Data->Read(data, offset, count);
+  }
 
-      // returns 1 if written and 0 otherwise
-      inline size_t Write( const T& entity )  {
-        return Data->Write(entity);
-      }
+  // returns 1 if written and 0 otherwise
+  inline size_t Write(const T& entity)  {
+    return Data->Write(entity);
+  }
 
-      inline TDirectionalListEntry* AddEntry(size_t size)  {
-        if( NextEntry != NULL )
-          throw TFunctionFailedException(__OlxSourceInfo, "already initialised");
-        TDirectionalListEntry<T>* e = new TDirectionalListEntry<T>( size );
-        NextEntry = e;
-        return e;
-      }
+  inline TDirectionalListEntry* AddEntry(size_t size)  {
+    if( NextEntry != NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "already initialised");
+    TDirectionalListEntry<T>* e = new TDirectionalListEntry<T>(size);
+    NextEntry = e;
+    return e;
+  }
 
-      inline TDirectionalListEntry* AddEntry(T* memoryBlockToOwn, size_t size)  {
-        if( NextEntry != NULL )
-          throw TFunctionFailedException(__OlxSourceInfo, "already initialised");
-        TDirectionalListEntry<T>* e = new TDirectionalListEntry<T>( memoryBlockToOwn, size );
-        NextEntry = e;
-        return e;
-      }
+  inline TDirectionalListEntry* AddEntry(T* memoryBlockToOwn, size_t size)  {
+    if( NextEntry != NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "already initialised");
+    TDirectionalListEntry<T>* e = new TDirectionalListEntry<T>(memoryBlockToOwn, size);
+    NextEntry = e;
+    return e;
+  }
 
-      inline TDirectionalListEntry* AddEntry( const TDirectionalListEntry& entry )  {
-        TDirectionalListEntry<T>* e = new TDirectionalListEntry<T>( entry );
-        NextEntry = e;
-        return e;
-      }
+  inline TDirectionalListEntry* AddEntry(const TDirectionalListEntry& entry)  {
+    TDirectionalListEntry<T>* e = new TDirectionalListEntry<T>(entry);
+    NextEntry = e;
+    return e;
+  }
 
-      inline TDirectionalListEntry* GetNext()  const  {  return NextEntry;  }
-      inline const T& Get(size_t ind )          const {  return Data->Get(ind);  }
-      inline T& Item(size_t ind )                     {  return Data->Item(ind);  }
-      inline void Set(size_t ind, T& val )            {  Data->Set(ind, val);  }
-      inline const T* GetData()                const  {  return Data->GetData();  }
-      inline size_t GetSize()                   const {  return Data->GetSize();  }
-      inline size_t RawLen()                    const {  return Data->RawLen();  }
-      inline size_t GetCapacity()               const {  return Data->GetCapacity();  }
-
+  inline TDirectionalListEntry* GetNext() const {  return NextEntry;  }
+  inline const T& Get(size_t ind ) const {  return Data->Get(ind);  }
+  inline T& Item(size_t ind )  {  return Data->Item(ind);  }
+  inline void Set(size_t ind, T& val )  {  Data->Set(ind, val);  }
+  inline const T* GetData() const {  return Data->GetData();  }
+  inline size_t GetSize() const {  return Data->GetSize();  }
+  inline size_t RawLen() const {  return Data->RawLen();  }
+  inline size_t GetCapacity() const {  return Data->GetCapacity();  }
   };
 
 template <typename T>
@@ -86,13 +84,16 @@ template <typename T>
     size_t SegmentSize;
   protected:
     void AddEntry(const TDirectionalListEntry<T>& entry)  {
-      if( !Head )  Tail = Head = new TDirectionalListEntry<T>( entry );
-      else         Tail = Tail->AddEntry( entry );
+      if( Head == NULL )
+        Tail = Head = new TDirectionalListEntry<T>(entry);
+      else
+        Tail = Tail->AddEntry(entry);
       Length += entry.GetSize();
     }
 
     void CheckInitialised()  {
-      if( !Head )  Tail = Head = new TDirectionalListEntry<T>( SegmentSize );
+      if( Head == NULL )
+        Tail = Head = new TDirectionalListEntry<T>(SegmentSize);
     }
 
     inline size_t GetSegmentSize() const {  return SegmentSize;  }
@@ -117,10 +118,10 @@ template <typename T>
   TDirectionalList(const TDirectionalList& list)  {
      Length = 0;
      Head = Tail = NULL;
-     TDirectionalListEntry<T>* entry = list.Root();
+     TDirectionalListEntry<T>* entry = list.GetHead();
      SegmentSize = list.GetSegmentSize();
      while( entry != NULL )  {
-       AddEntry(entry);
+       AddEntry(*entry);
        entry = entry->GetNext();
      }
   }
