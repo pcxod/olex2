@@ -304,15 +304,16 @@ const int CIsoSurface::m_triTable[256][16] = {
   {0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
   {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}
 };
-
+//.......................................................................................
 CIsoSurface::CIsoSurface(TArray3D<float>& points) : 
-    Points(points), 
-    DimmZ(points.Length3()), DimmY(points.Length2()), DimmX(points.Length1()),
-    ZSlice(DimmY*DimmX) {
+  Points(points), 
+  DimmZ(points.Length3()), DimmY(points.Length2()), DimmX(points.Length1()),
+  ZSlice(DimmY*DimmX)
+{
   m_tIsoLevel = 0;
   m_bValidSurface = false;
 }
-
+//.......................................................................................
 void CIsoSurface::GenerateSurface(float tIsoLevel)  {
   DeleteSurface();
 //  IsoPoints.SetCapacity(DimmX*DimmY);
@@ -385,7 +386,7 @@ void CIsoSurface::GenerateSurface(float tIsoLevel)  {
   CalculateNormals();
   m_bValidSurface = true;
 }
-
+//.......................................................................................
 void CIsoSurface::DeleteSurface()  {
   m_tIsoLevel = 0;
   m_bValidSurface = false;
@@ -394,7 +395,7 @@ void CIsoSurface::DeleteSurface()  {
   AllTriangles.Clear();
   IsoPoints.Clear();
 }
-
+//.......................................................................................
 void CIsoSurface::AddSurfacePoint(unsigned int nX, unsigned int nY, unsigned int nZ, unsigned int nEdgeNo)  {
   int v1x = nX, v1y = nY, v1z = nZ;
   int v2x = nX, v2y = nY, v2z = nZ;
@@ -475,29 +476,28 @@ void CIsoSurface::AddSurfacePoint(unsigned int nX, unsigned int nY, unsigned int
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x + mu*(v2x-v1x), (float)v1y + mu*(v2y-v1y),(float)v1z + mu*(v2z-v1z));
   }
 }
-
-
+//.......................................................................................
 void CIsoSurface::RenameVerticesAndTriangles()  {
-  IsoPoints.GetVertices( Vertices );
-  Triangles.SetCapacity( AllTriangles.Count() );
+  IsoPoints.GetVertices(Vertices);
+  Triangles.SetCapacity(AllTriangles.Count());
   for( size_t i=0; i < AllTriangles.Count(); i++ )  {
     IsoTriangle& ta = AllTriangles[i];
     ta.pointID[0] = IsoPoints.Get(ta.pointID[0]).newID;
     ta.pointID[1] = IsoPoints.Get(ta.pointID[1]).newID;
     ta.pointID[2] = IsoPoints.Get(ta.pointID[2]).newID;
-    const vec3f& v1 = Vertices[ ta.pointID[0] ];
-    const vec3f& v2 = Vertices[ ta.pointID[1] ];
-    const vec3f& v3 = Vertices[ ta.pointID[2] ];
-    float d = v1.DistanceTo(v2);
-    if( d < 0.01 || d > DimmX/2 )
+    const vec3f& v1 = Vertices[ta.pointID[0]];
+    const vec3f& v2 = Vertices[ta.pointID[1]];
+    const vec3f& v3 = Vertices[ta.pointID[2]];
+    float d = v1.QDistanceTo(v2);
+    if( d == 0 )
       continue;
     else  {
-      d = v1.DistanceTo(v3);
-      if( d < 0.01 || d > DimmX/2 )
+      d = v1.QDistanceTo(v3);
+      if( d == 0 )
         continue;
       else  {
-        d = v2.DistanceTo(v3);
-        if( d < 0.01 || d > DimmX/2 )
+        d = v2.QDistanceTo(v3);
+        if( d == 0 )
           continue;
       }
     }
@@ -506,7 +506,7 @@ void CIsoSurface::RenameVerticesAndTriangles()  {
   IsoPoints.Clear();
   AllTriangles.Clear();
 }
-
+//.......................................................................................
 void CIsoSurface::CalculateNormals()  {
   Normals.SetCount(Vertices.Count());
   for( size_t i = 0; i < Triangles.Count(); i++ ) {
@@ -531,3 +531,4 @@ void CIsoSurface::CalculateNormals()  {
       Normals[i][2] = 1;
   }
 }
+//.......................................................................................

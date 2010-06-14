@@ -1,19 +1,16 @@
 //---------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "ebasis.h"
 #include "dataitem.h"
 
 UseEsdlNamespace()
+// static data
+float TEBasis::FMData[16];
+float TEBasis::FMDataT[16];
 // TBasis function bodies
 //----------------------------------------------------------------------------//
-TEBasis::TEBasis() {
-  Reset();
-}
+TEBasis::TEBasis() {  Reset();  }
 //..............................................................................
 TEBasis::TEBasis(const TEBasis &B)  {
   *this = B;
@@ -25,22 +22,6 @@ TEBasis::~TEBasis()  {
 //..............................................................................
 void TEBasis::SetZoom(double v)   {  FZoom = v; }
 //..............................................................................
-void TEBasis::CopyMatrix()  {
-  FMData[0] = (float)FMatrix[0][0];  FMData[1] = (float)FMatrix[0][1];  FMData[2] = (float)FMatrix[0][2];
-  FMData[4] = (float)FMatrix[1][0];  FMData[5] = (float)FMatrix[1][1];  FMData[6] = (float)FMatrix[1][2];
-  FMData[8] = (float)FMatrix[2][0];  FMData[9] = (float)FMatrix[2][1];  FMData[10] = (float)FMatrix[2][2];
-  FMData[3] = FMData[7] = FMData[11] = 0;
-  FMData[12] = (float)FCenter[0];  FMData[13] = (float)FCenter[1];  FMData[14] = (float)FCenter[2];
-  FMData[15] = 1;
-
-  FMDataT[0] = (float)FMatrix[0][0];  FMDataT[1] = (float)FMatrix[1][0];  FMDataT[2] = (float)FMatrix[2][0];
-  FMDataT[4] = (float)FMatrix[0][1];  FMDataT[5] = (float)FMatrix[1][1];  FMDataT[6] = (float)FMatrix[2][1];
-  FMDataT[8] = (float)FMatrix[0][2];  FMDataT[9] = (float)FMatrix[1][2];  FMDataT[10] = (float)FMatrix[2][2];
-  FMDataT[3] = FMDataT[7] = FMDataT[11] = 0;
-  FMDataT[12] = (float)FCenter[0];  FMDataT[13] = (float)FCenter[1];  FMDataT[14] = (float)FCenter[2];
-  FMDataT[15] = 1;
-}
-//..............................................................................
 const TEBasis& TEBasis::operator  = (const TEBasis &B)  {
   FCenter = B.GetCenter();
   FRX = B.GetRX();
@@ -48,7 +29,6 @@ const TEBasis& TEBasis::operator  = (const TEBasis &B)  {
   FRZ = B.GetRZ();
   FMatrix = B.GetMatrix();
   FZoom = B.GetZoom();
-  CopyMatrix();
   return B;
 }
 //..............................................................................
@@ -57,7 +37,6 @@ void  TEBasis::Reset()  {
   FRX = FRY = FRZ = 0;
   FCenter.Null();
   FZoom = 1;
-  CopyMatrix();
 }
 //..............................................................................
 void  TEBasis::TranslateX(double x){  FCenter[0] += x; FMData[12] += (float)x; };
@@ -68,7 +47,7 @@ void  TEBasis::TranslateZ(double z){  FCenter[2] += z; FMData[14] += (float)z; }
 //..............................................................................
 void  TEBasis::RotateX(double A)  {
   if( FRX == A )    return;
-  double RA = M_PI*(A-FRX)/180;
+  const double RA = M_PI*(A-FRX)/180;
   FRX = A;
   mat3d M;  M.I();
   M[1][1] = cos(RA);
@@ -76,12 +55,11 @@ void  TEBasis::RotateX(double A)  {
   M[2][1] = -M[1][2];
   M[2][2] = M[1][1];
   FMatrix *= M;
-  CopyMatrix();
 }
 //..............................................................................
 void  TEBasis::RotateY(double A)  {
   if( FRY == A )    return;
-  double RA = M_PI*(A-FRY)/180;
+  const double RA = M_PI*(A-FRY)/180;
   FRY = A;
   mat3d M;  M.I();
   M[0][0] = cos(RA);
@@ -89,12 +67,11 @@ void  TEBasis::RotateY(double A)  {
   M[2][0] = -M[0][2];
   M[2][2] =  M[0][0];
   FMatrix *= M;
-  CopyMatrix();
 }
 //..............................................................................
 void  TEBasis::RotateZ(double A)  {
   if( FRZ == A )    return;
-  double RA = M_PI*(A-FRZ)/180;
+  const double RA = M_PI*(A-FRZ)/180;
   FRZ = A;
   mat3d M;  M.I();
   M[0][0] = cos(RA);
@@ -102,7 +79,6 @@ void  TEBasis::RotateZ(double A)  {
   M[1][0] = -M[0][1];
   M[1][1] =  M[0][0];
   FMatrix *= M;
-  CopyMatrix();
 }
 //..............................................................................
 void TEBasis::ToDataItem(TDataItem& Item) const  {
@@ -140,8 +116,7 @@ bool TEBasis::FromDataItem(const TDataItem& Item)  {
   FCenter[0] = center->GetFieldValue("x").ToDouble();
   FCenter[1] = center->GetFieldValue("y").ToDouble();
   FCenter[2] = center->GetFieldValue("z").ToDouble();
-  CopyMatrix();
-  double z = Item.GetFieldValue("zoom", "-1").ToDouble();
+  const double z = Item.GetFieldValue("zoom", "-1").ToDouble();
   if( z != -1 )
     FZoom = z;
   return true;

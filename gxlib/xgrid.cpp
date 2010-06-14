@@ -798,7 +798,7 @@ void TXGrid::RescaleSurface()  {
         const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
         const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
         for( size_t i=0; i < verts.Count(); i++ )  {                           // cell drawing
-          verts[i][0] /= MaxX;  verts[i][1] /= MaxY;  verts[i][2] /= MaxZ;  // cell drawing
+          verts[i][0] /= (MaxX-1);  verts[i][1] /= (MaxY-1);  verts[i][2] /= (MaxZ-1);  // cell drawing
           au.CellToCartesian(verts[i]);                                     // cell drawing
         }
         glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
@@ -828,13 +828,20 @@ void TXGrid::AdjustMap()  {
   if( ED == NULL )  return;
   for( int i=0; i < MaxX; i++ )
     for( int j=0; j < MaxY; j++ )
-        ED->Data[i][j][MaxZ] = ED->Data[i][j][0];
+      ED->Data[i][j][MaxZ] = ED->Data[i][j][0];
   for( int i=0; i < MaxX; i++ )
     for( int j=0; j < MaxZ; j++ )
-        ED->Data[i][MaxY][j] = ED->Data[i][0][j];
+      ED->Data[i][MaxY][j] = ED->Data[i][0][j];
   for( int i=0; i < MaxY; i++ )
     for( int j=0; j < MaxZ; j++ )
-        ED->Data[MaxX][i][j] = ED->Data[0][i][j];
+      ED->Data[MaxX][i][j] = ED->Data[0][i][j];
+
+  for( int i=0; i < MaxX; i++ )
+    ED->Data[i][MaxY][MaxZ] = ED->Data[i][0][0];
+  for( int i=0; i < MaxY; i++ )
+    ED->Data[MaxX][i][MaxZ] = ED->Data[0][i][0];
+  for( int i=0; i < MaxZ; i++ )
+    ED->Data[MaxX][MaxY][i] = ED->Data[0][0][i];
   ED->Data[MaxX][MaxY][MaxZ] = ED->Data[0][0][0];
 }
 //..............................................................................
