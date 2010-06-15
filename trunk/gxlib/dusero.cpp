@@ -1,5 +1,4 @@
 //----------------------------------------------------------------------------//
-// namespace TEXLib
 // User object - a drawing object for unit cell
 // (c) Oleg V. Dolomanov, 2004-8
 //----------------------------------------------------------------------------//
@@ -8,12 +7,10 @@
 #include "glmaterial.h"
 #include "glrender.h"
 #include "gpcollection.h"
-
 #include "styles.h"
 
-
 TDUserObj::TDUserObj(TGlRenderer& R, short type, const olxstr& collectionName) :
-  TGlMouseListener(R, collectionName), Type(type), Vertices(NULL), Normals(NULL)
+  AGlMouseHandlerImp(R, collectionName), Type(type), Vertices(NULL), Normals(NULL)
 {
   SetSelectable(false);
   GlM.SetFlags(sglmAmbientF);

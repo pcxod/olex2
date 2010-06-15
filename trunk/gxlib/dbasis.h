@@ -5,13 +5,24 @@
 
 BeginGxlNamespace()
 
-class TDBasis: public TGlMouseListener, public TXGlLabel::ICrdTransformer  {
+class TDBasis: public AGlMouseHandlerImp, public TXGlLabel::ICrdTransformer  {
   TAsymmUnit* AU;
 protected:
   TXGlLabel* Labels[3];
   virtual vec3d ForRaster(const TXGlLabel&) const;
   virtual vec3d ForVector(const TXGlLabel&) const;
   virtual vec3d& AdjustZ(vec3d&) const;
+protected:
+  vec3d _Center;
+  double Zoom;
+  virtual bool DoTranslate(const vec3d& t) {  _Center += t;  return true;  }
+  virtual bool DoRotate(const vec3d& vec, double angle) {  return false;  }
+  virtual bool DoZoom(double zoom, bool inc)  {
+    if( inc ) Zoom = ValidateZoom(Zoom+zoom);
+    else      Zoom = ValidateZoom(zoom);
+    return true;
+    return true;
+  }
 public:
   TDBasis(TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TDBasis();
@@ -19,7 +30,7 @@ public:
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
-  void ListPrimitives(TStrList &List) const;
+  void ListPrimitives(TStrList& List) const;
   void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
 
   void SetLabelsFont(uint16_t fnt_index);
@@ -27,6 +38,8 @@ public:
   size_t LabelCount() const {  return 3;  }
   TXGlLabel& GetLabel(size_t i) const {  return *Labels[i];  }
   void SetVisible(bool v);
+  const vec3d& GetCenter() const {  return _Center;  }
+  double GetZoom() const {  return Zoom;  }
 
   void ToDataItem(TDataItem& di) const;
   void FromDataItem(const TDataItem& di);

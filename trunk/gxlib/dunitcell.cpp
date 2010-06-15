@@ -101,7 +101,7 @@ void TDUnitCell::SetReciprocal(bool v)  {
   Reciprocal = v;
   // reinitialise labels
   for( int i=0; i < 3; i++ )  {  
-    Labels[i]->SetCenter(FGlP->Vertices[i*2+1]);
+    Labels[i]->SetOffset(FGlP->Vertices[i*2+1]);
     Labels[i]->SetLabel(olxstr((char)('a'+i)));
   }
   Labels[3]->SetLabel('o');

@@ -1836,7 +1836,7 @@ TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxst
   TXGlLabel* gl = new TXGlLabel(*FGlRender, Name);
   gl->SetFontIndex((uint16_t)FLabels->GetFontIndex());
   gl->SetLabel(T);
-  gl->SetCenter(center);
+  gl->SetOffset(center);
   gl->Create();
   LooseObjects.Add(gl);
   return gl;
@@ -2819,8 +2819,8 @@ TXGlLabel* TGXApp::CreateLabel(TXAtom *A, uint16_t FontIndex)  {
   TXGlLabel& L = XLabels.Add(new TXGlLabel(*FGlRender, "PLabels"));
   L.SetFontIndex(FontIndex);
   L.SetLabel(A->Atom().GetLabel());
-  L.SetCenter(A->Atom().crd());
-  L.Basis.Translate(vec3d(1, -1, 0));  // in pixels
+  L.SetOffset(A->Atom().crd());
+  L.TranslateBasis(vec3d(1, -1, 0));  // in pixels
   L.Create();
   return &L;
 }

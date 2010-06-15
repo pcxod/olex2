@@ -5,17 +5,14 @@
 #include "glprimitive.h"
 
 TXLattice::TXLattice(TGlRenderer& Render, const olxstr& collectionName) :
-  TGlMouseListener(Render, collectionName) {
-
+  AGlMouseHandlerImp(Render, collectionName)
+{
   Fixed = false;
   Size = 4;
-
   SetMove2D(false);
   SetMoveable(true);
   SetZoomable(false);
 }
-//..............................................................................
-TXLattice::~TXLattice()  {  }
 //..............................................................................
 void TXLattice::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
@@ -78,16 +75,16 @@ bool TXLattice::GetDimensions(vec3d &Max, vec3d &Min)  {
 //..............................................................................
 bool TXLattice::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
   if( !IsMoveable() )  return true;
-  return TGlMouseListener::OnMouseDown(Sender, Data);
+  return AGlMouseHandlerImp::OnMouseDown(Sender, Data);
 }
 //..............................................................................
 bool TXLattice::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
   if( !IsMoveable() )  return true;
-  return TGlMouseListener::OnMouseUp(Sender, Data);
+  return AGlMouseHandlerImp::OnMouseUp(Sender, Data);
 }
 //..............................................................................
 bool TXLattice::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
-  TGlMouseListener::OnMouseMove(Sender, Data);
+  AGlMouseHandlerImp::OnMouseMove(Sender, Data);
   return true;
 }
 //..............................................................................
