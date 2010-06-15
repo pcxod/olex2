@@ -131,7 +131,7 @@ void TXGrid::DrawQuad4(double A[4], double B[4], double C[4], double D[4])  {
 }
 //----------------------------------------------------------------------------//
 TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
-                     TGlMouseListener(xapp->GetRender(), collectionName),
+                     AGDrawObject(xapp->GetRender(), collectionName),
                      ExtMin(-1,-1,-1),
                      ExtMax(1,1,1)
 {
@@ -145,9 +145,6 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   PythonExt::GetInstance()->Register(&TXGrid::PyInit);
 #endif
   XApp = xapp;
-  SetMove2D(false);
-  SetMoveable(false);
-  SetZoomable(false);
   Depth = 0;
   ED = NULL;
   IS = NULL;

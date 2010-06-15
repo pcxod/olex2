@@ -1,12 +1,9 @@
 #ifndef __olx_glx_labels_H
 #define __olx_glx_labels_H
-
 #include "gxbase.h"
+#include "gdrawobject.h"
 #include "bitarray.h"
-
-#include "glmouselistener.h"
 #include "glfont.h"
-
 #include "glmaterial.h"
 
 BeginGxlNamespace()
@@ -48,7 +45,7 @@ public:
   void Selected(bool On);
 
   bool Orient(TGlPrimitive& P);
-  bool GetDimensions(vec3d &Max, vec3d &Min) {  return false;  }
+  bool GetDimensions(vec3d& Max, vec3d& Min) {  return false;  }
   
   void Init();
 
@@ -59,7 +56,7 @@ public:
 
   TGlFont& GetFont() const;
   DefPropP(size_t, FontIndex)
-  TGlMaterial& MarkMaterial()  {  return FMarkMaterial; }
+  TGlMaterial& MarkMaterial()  {  return FMarkMaterial;  }
 };
 
 EndGxlNamespace()

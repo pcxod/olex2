@@ -1,14 +1,12 @@
-//---------------------------------------------------------------------------
-
-#ifndef gltextboxH
-#define gltextboxH
+#ifndef __olx_gl_textbox_H
+#define __olx_gl_textbox_H
 #include "glbase.h"
 #include "estrlist.h"
-#include "glmouselistener.h"
+#include "glmousehandler.h"
 
 BeginGlNamespace()
 
-class TGlTextBox: public TGlMouseListener  {
+class TGlTextBox: public AGlMouseHandlerImp  {
   float LineSpacing;
   uint16_t Width, Height, MaxStringLength;
   int Top, Left;
@@ -17,6 +15,11 @@ class TGlTextBox: public TGlMouseListener  {
   uint16_t FontIndex;
   bool ScrollDirectionUp;
 protected:
+  vec3d Center;
+  virtual bool DoTranslate(const vec3d& t) {  Center += t;  return true;  }
+  virtual bool DoRotate(const vec3d&, double) {  return false;  }
+  virtual bool DoZoom(double, bool)  {  return false;  }
+  const vec3d& GetCenter() const {  return Center;  }
 public:
   TGlTextBox(TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);

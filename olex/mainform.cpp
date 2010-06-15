@@ -3886,18 +3886,15 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
         if( b == glB )  break;
         Top += (b->GetHeight() + 2);
       }
-      glB->Basis.Reset();
-      double r = ((double)FXApp->GetRender().GetWidth()/(double)glB->GetWidth()) / 10.0;
-      glB->Basis.SetZoom(r);
-      glB->SetTop( Top );
-      glB->SetLeft( FXApp->GetRender().GetWidth() - glB->GetWidth() );
+      const double r = ((double)FXApp->GetRender().GetWidth()/(double)glB->GetWidth()) / 10.0;
+      glB->SetZoom(r);
+      glB->SetTop(Top);
+      glB->SetLeft(FXApp->GetRender().GetWidth() - glB->GetWidth());
     }
     else  {
       glB->SetLeft(0);
-      glB->SetTop( InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() : 1 );
-      glB->Basis.Reset();
-
-      glB->Basis.SetZoom(1.0);
+      glB->SetTop(InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() : 1);
+      glB->SetZoom(1.0);
     }
   }
   else if( EsdlInstanceOf(*G, TXGlLabel) )  {

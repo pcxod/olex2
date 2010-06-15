@@ -1,14 +1,11 @@
 #ifndef __olx_glx_xgrid_H
 #define __olx_glx_xgrid_H
 #include "gxbase.h"
-
-#include "glmouselistener.h"
 #include "arrays.h"
 #include "evpoint.h"
 #include "IsoSurface.h"
 #include "gltextbox.h"
 #include "macroerror.h"
-
 #include "gltexture.h"
 #include "glprimitive.h"
 #ifdef __WXWIDGETS__
@@ -29,7 +26,8 @@ const short
   planeRenderModeFill    = 0x0008,
   planeRenderModeLine    = 0x0010;
 
-class TXGrid: public TGlMouseListener  {
+//class TXGrid: public TGlMouseListener  {
+class TXGrid: public AGDrawObject  {
   //TVectorDList AllPoints;
   TArray3D<float>* ED;
   CIsoSurface* IS;

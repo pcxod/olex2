@@ -1,13 +1,13 @@
 #ifndef __olx_glx_label_H
 #define __olx_glx_label_H
 #include "gxbase.h"
-#include "glmouselistener.h"
+#include "glmousehandler.h"
 #include "glfont.h"
 #include "dataitem.h"
 
 BeginGxlNamespace()
 
-class TXGlLabel: public TGlMouseListener  {
+class TXGlLabel: public AGlMouseHandlerImp  {
 public:
   class ICrdTransformer  {
   public:
@@ -20,8 +20,14 @@ private:
   olxstr FLabel;
   uint16_t FontIndex;
   TTextRect text_rect;
-  vec3d Center;
+  vec3d Offset;
   ICrdTransformer* Transformer;
+protected:
+  vec3d _Center;
+  virtual bool DoTranslate(const vec3d& t) {  _Center += t;  return true;  }
+  virtual bool DoRotate(const vec3d&, double) {  return false;  }
+  virtual bool DoZoom(double, bool)  {  return false;  }
+  const vec3d& GetCenter() const {  return _Center;  }
 public:
   TXGlLabel(TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
@@ -35,10 +41,10 @@ public:
   vec3d GetVectorPosition() const;
   // the object must be mannaged by whoever created it!
   DefPropP(ICrdTransformer*, Transformer)
-  DefPropC(vec3d, Center)
-
+  DefPropC(vec3d, Offset)
   TGlFont& GetFont() const;
   DefPropP(uint16_t, FontIndex)
+  void TranslateBasis(const vec3d& v)  {  DoTranslate(v);  }
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);

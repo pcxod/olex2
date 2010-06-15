@@ -12,7 +12,6 @@
 #include "xfader.h"
 #include "glmouse.h"
 #include "dframe.h"
-#include "gltext.h"
 #include "glfont.h"
 #include "styles.h"
 

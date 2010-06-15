@@ -15,23 +15,23 @@ protected:
       TXAtomPList atoms;
       for( size_t i=0; i < sel.Count(); i++ )  {
         if( EsdlInstanceOf(sel[i], TXAtom) )  {
-          cr += ((TXAtom&)sel[i]).Basis.GetCenter();
+          cr += ((TXAtom&)sel[i]).GetCenter();
           cr += ((TXAtom&)sel[i]).Atom().crd();
           atoms.Add( (TXAtom&)sel[i] );
         }
       }
-      if( atoms.Count() > 1 )  {
-        cr /= atoms.Count();
-        for( size_t i=0; i < atoms.Count(); i++ )  {
-          c = atoms[i]->Atom().crd();
-          c += atoms[i]->Basis.GetCenter();
-          c -= cr;
-          c *= atoms[i]->Basis.GetMatrix();
-          c += cr;
-          atoms[i]->Atom().crd() = c;
-          atoms[i]->Basis.Reset();
-        }
-      }
+      //if( atoms.Count() > 1 )  {
+      //  cr /= atoms.Count();
+      //  for( size_t i=0; i < atoms.Count(); i++ )  {
+      //    c = atoms[i]->Atom().crd();
+      //    c += atoms[i]->Basis.GetCenter();
+      //    c -= cr;
+      //    c *= atoms[i]->Basis.GetMatrix();
+      //    c += cr;
+      //    atoms[i]->Atom().crd() = c;
+      //    atoms[i]->Basis.Reset();
+      //  }
+      //}
     }
   }
   void UpdateCrds() const {
@@ -43,8 +43,8 @@ protected:
       xa.SetMoveable(false);
       xa.SetRoteable(false);
       // summ the translations
-      xa.Atom().crd() += xa.Basis.GetCenter();
-      xa.Basis.NullCenter();
+      xa.Atom().crd() += xa.GetCenter();
+      xa.NullCenter();
       vec3d c = xa.Atom().crd();
       au.CartesianToCell(c);
       xa.Atom().ccrd() = c;

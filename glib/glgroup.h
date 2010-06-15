@@ -12,20 +12,28 @@ class TGlGroup: public AGDrawObject {
   bool DefaultColor;
 protected:
   void InitMaterial() const;
+  virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) const;
 public:
   TGlGroup(TGlRenderer& R, const olxstr& collectionName);
   virtual void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlGroup();
   void Clear();
-  void Draw(bool SelectPrimitives, bool SelectObjects) const;
-  void Draw() const {  Draw(false, false);  }
+  void Draw(bool SelectPrimitives=false, bool SelectObjects=false) const {
+    DoDraw(SelectPrimitives, SelectObjects);
+  }
   // Adds an object to the list if it is not there and removes it otherwise
   // returns true if the object is added and false if it is removed
-  bool Add(AGDrawObject& G);
+  bool Add(AGDrawObject& G, bool remove=true);
+  // a list to ADrawObjects/derived classes is expected
+  template <class List> void AddObjects(const List& list)  {
+    FObjects.SetCapacity(FObjects.Count()+list.Count());
+    for( size_t i=0; i < list.Count(); i++ )
+      Add(*list[i], false);
+  }
   void Remove(AGDrawObject& G);
   void RemoveDeleted();
 
-  inline bool Contains(AGDrawObject& G) const {  return  FObjects.IndexOf(G) != InvalidIndex;  }
+  inline bool Contains(const AGDrawObject& G) const {  return  FObjects.IndexOf(G) != InvalidIndex;  }
   inline size_t Count() const {  return FObjects.Count();  }
   bool IsEmpty() const {  return FObjects.IsEmpty();  }
   inline AGDrawObject& GetObject(size_t i) const {  return *FObjects[i];  }
@@ -45,10 +53,9 @@ public:
 
   bool IsDefaultColor() const {  return DefaultColor;  }
 
-  const TGlMaterial& GetGlM() {  return GlM; }
+  const TGlMaterial& GetGlM()  {  return GlM; }
   void SetGlM(const TGlMaterial& m);
 };
-
 
 EndGlNamespace()
 #endif

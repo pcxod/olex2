@@ -1,34 +1,35 @@
-#ifndef xatomH
-#define xatomH
+#ifndef __olx_glx_xatom_H
+#define __olx_glx_xatom_H
 #include "gxbase.h"
-
 #include "actions.h"
-
 #include "glrender.h"
 #include "glprimitive.h"
-#include "glmouselistener.h"
+#include "glmousehandler.h"
 #include "styles.h"
-
 #include "satom.h"
 #include "ellipsoid.h"
+
 BeginGxlNamespace()
 
-const short adsSphere       = 1,  // atom draw styles
-            adsEllipsoid    = 2,
-            adsStandalone   = 3,
-            adsOrtep        = 4;
+const short
+  adsSphere       = 1,  // atom draw styles
+  adsEllipsoid    = 2,
+  adsStandalone   = 3,
+  adsOrtep        = 4;
 
-const short darPers     = 0x0001, // default atom radii
-            darIsot     = 0x0002,
-            darPack     = 0x0004,
-            darBond     = 0x0008,
-            darIsotH    = 0x0010,  // only affects H, others as darIsot
-            darVdW      = 0x0020;
-const short polyNone      = 0,
-            polyAuto      = 1,  // polyhedron type
-            polyRegular   = 2,
-            polyPyramid   = 3,
-            polyBipyramid = 4;
+const short
+  darPers     = 0x0001, // default atom radii
+  darIsot     = 0x0002,
+  darPack     = 0x0004,
+  darBond     = 0x0008,
+  darIsotH    = 0x0010,  // only affects H, others as darIsot
+  darVdW      = 0x0020;
+const short
+  polyNone      = 0,
+  polyAuto      = 1,  // polyhedron type
+  polyRegular   = 2,
+  polyPyramid   = 3,
+  polyBipyramid = 4;
 
 const int 
   xatom_PolyId        = 1,
@@ -46,7 +47,7 @@ public:
   bool Exit(const IEObject *Sender, const IEObject *Data=NULL);
 };
 
-class TXAtom: public TGlMouseListener  {
+class TXAtom: public AGlMouseHandlerImp  {
 private:
   TSAtom *FAtom;
   short FDrawStyle, FRadius;
@@ -79,7 +80,10 @@ protected:
   static void ValidateAtomParams();
   static TXAtomStylesClear *FXAtomStylesClear;
   static int OrtepSpheres;  // 8 glLists
-protected:
+  vec3d Center;
+  virtual bool DoTranslate(const vec3d& t) {  Center += t;  return true;  }
+  virtual bool DoRotate(const vec3d&, double) {  return false;  }
+  virtual bool DoZoom(double, bool)  {  return false;  }
   static float FTelpProb, FQPeakScale, FQPeakSizeScale;
   static short FDefRad, FDefDS;
   static TGraphicsStyle *FAtomParams;
@@ -131,6 +135,10 @@ public:
 
   void SetZoom(double Z);
   inline double GetZoom()  {  return Params()[1]; }
+  // this center is 'graphics' center which is updated when the object is dragged
+  const vec3d& GetCenter() const {  return Center;  }
+  void NullCenter()  {  Center.Null();  }
+
   double GetDrawScale() const {
     double scale = FParams[1];
     if( (FRadius & (darIsot|darIsotH)) != 0 )
@@ -145,21 +153,20 @@ public:
       return FParams[0]*scale;
   }
   bool Orient(TGlPrimitive& P);
-  bool DrawStencil();
-  bool GetDimensions(vec3d &Max, vec3d &Min);
+  bool GetDimensions(vec3d& Max, vec3d& Min);
 
-  void ListParams(TStrList &List, TGlPrimitive *Primitive);
+  void ListParams(TStrList& List, TGlPrimitive* Primitive);
   // for parameters of a specific primitive
-  void ListParams(TStrList &List);
+  void ListParams(TStrList& List);
   // fills the list with proposal primitives to construct object
-  void ListPrimitives(TStrList &List) const;
+  void ListPrimitives(TStrList& List) const;
   TGraphicsStyle& Style();
   void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
   uint32_t GetPrimitiveMask() const;
 
-  bool OnMouseDown(const IEObject *Sender, const TMouseData *Data);
-  bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
-  bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
+  bool OnMouseDown(const IEObject* Sender, const TMouseData* Data);
+  bool OnMouseUp(const IEObject* Sender, const TMouseData* Data);
+  bool OnMouseMove(const IEObject* Sender, const TMouseData* Data);
 
   inline bool IsDeleted() const {  return AGDrawObject::IsDeleted(); }
   void SetDeleted(bool v)  {  AGDrawObject::SetDeleted(v);  FAtom->SetDeleted(v); }
@@ -167,7 +174,7 @@ public:
   inline short DrawStyle() const {  return FDrawStyle; }
   void DrawStyle(short V);
 
-  void UpdatePrimitiveParams(TGlPrimitive *GlP);
+  void UpdatePrimitiveParams(TGlPrimitive* GlP);
   void OnPrimitivesCleared();
   void Quality(const short Val);
 

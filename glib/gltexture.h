@@ -55,7 +55,7 @@ class TGlTexture : public IEObject {
   unsigned short SetParams;
   TGlOption BorderColor, SGenParams, TGenParams, RGenParams, QGenParams, EnvColor;
   GLenum SGenMode, TGenMode, RGenMode, QGenMode;
-  unsigned int Id;
+  GLuint Id;
   olxstr Name;
 protected:
 //..............................................................................
@@ -76,9 +76,9 @@ protected:
   }
 public:
 //..............................................................................
-  TGlTexture()  {  SetParams = 0;  }
+  TGlTexture() : SetParams(0) {}
 //..............................................................................
-  TGlTexture(unsigned int id, unsigned short dimension, const olxstr& name)  {
+  TGlTexture(GLuint id, unsigned short dimension, const olxstr& name)  {
     Id = id;
     SetParams = 0;
     Name = name;
@@ -87,14 +87,14 @@ public:
     else if( dimension == tpt2D )
       SetBitTrue(SetParams, tp2D);
     else
-      throw TInvalidArgumentException(__OlxSourceInfo, "dimention");
+      throw TInvalidArgumentException(__OlxSourceInfo, "dimension");
   }
 //..............................................................................
   virtual ~TGlTexture()  {  }
 //..............................................................................
-  inline const olxstr& GetName()  const  {  return Name;  }
+  inline const olxstr& GetName() const {  return Name;  }
 //..............................................................................
-  inline unsigned int GetId()  const  {  return Id;  }
+  inline unsigned int GetId() const {  return Id;  }
 //..............................................................................
   inline void Clear()  {
     if( (SetParams & tp1D) != 0 )  {
@@ -137,32 +137,32 @@ public:
     BorderColor = cl;
   }
 //..............................................................................
-  inline void SetSCrdGen(GLenum modeName, const TGlOption& values)  {
+  void SetSCrdGen(GLenum modeName, const TGlOption& values)  {
     SetBitTrue(SetParams, tpSGen);
     SGenParams = values;
   }
 //..............................................................................
-  inline void SetTCrdGen(GLenum modeName, const TGlOption& values)  {
+  void SetTCrdGen(GLenum modeName, const TGlOption& values)  {
     SetBitTrue(SetParams, tpTGen);
     TGenParams = values;
   }
 //..............................................................................
-  inline void SetRCrdGen(GLenum modeName, const TGlOption& values)  {
+  void SetRCrdGen(GLenum modeName, const TGlOption& values)  {
     SetBitTrue(SetParams, tpRGen);
     RGenParams = values;
   }
 //..............................................................................
-  inline void SetQCrdGen(GLenum modeName, const TGlOption& values)  {
+  void SetQCrdGen(GLenum modeName, const TGlOption& values)  {
     SetBitTrue(SetParams, tpQGen);
     QGenParams = values;
   }
 //..............................................................................
-  inline void SetEnvMode(GLenum modeName)  {
+  void SetEnvMode(GLenum modeName)  {
     SetBitTrue(SetParams, tpEnvMode);
     EnvMode = modeName;
   }
 //..............................................................................
-  inline void SetEnvColor(const TGlOption& clr)  {
+  void SetEnvColor(const TGlOption& clr)  {
     SetBitTrue(SetParams, tpEnvColor);
     EnvColor = clr;
   }
@@ -191,7 +191,7 @@ public:
     return *this;
   }
 //..............................................................................
-  static void ReadStatus( unsigned short& status)  {
+  static void ReadStatus(unsigned short& status)  {
     status = 0;
     if( olx_gl::isEnabled(GL_TEXTURE_1D) )  {
       SetBitTrue(status, tp1D);
@@ -211,7 +211,7 @@ public:
       SetBitTrue(status, tpRGen);
   }
 //..............................................................................
-  static void RestoreStatus( const unsigned short status)  {
+  static void RestoreStatus(const unsigned short status)  {
     GLint TextureType = GL_TEXTURE_1D;
     if( (status & tp2D) != 0 )  TextureType = GL_TEXTURE_2D;
 
@@ -315,15 +315,14 @@ applied to the same texture). So the AddTexture function returns an integer whic
 to access the texture object, but must not be used to bind textures - just use texture::SetCurrent()
 */
 class TTextureManager : public IEObject  {
-  TPSTypeList<int, TGlTexture*> Textures;
-
+  TPSTypeList<GLuint, TGlTexture*> Textures;
 public:
-   TTextureManager()  {  }
+   TTextureManager()  {}
    // when cloning is implemented - this has to change!
    virtual ~TTextureManager()  {
      for( size_t i=0; i < Textures.Count(); i++ )  {
        TGlTexture* tex = Textures.GetObject(i);
-       unsigned int texId = tex->GetId();
+       GLuint texId = tex->GetId();
        olx_gl::deleteTextures(1, (GLuint*)&texId);
        delete tex;
      }
@@ -333,8 +332,8 @@ public:
   int Add2DTexture(const olxstr& name, GLint level, GLsizei width, GLsizei height, GLint border,
                          GLenum format, const GLvoid *pixels)
   {
-    unsigned int texId = 0;
-    olx_gl::genTextures(1, (GLuint*)&texId);
+    GLuint texId = 0;
+    olx_gl::genTextures(1, &texId);
     olx_gl::bindTexture(GL_TEXTURE_2D, texId);
 
     olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 4);
@@ -352,8 +351,8 @@ public:
   void Replace2DTexture(TGlTexture& tex, GLint level, GLsizei width, GLsizei height, GLint border,
                          GLenum format, const GLvoid *pixels)
   {
-    unsigned int texId = tex.GetId();
-    olx_gl::deleteTextures(1, (GLuint*)&texId);
+    GLuint texId = tex.GetId();
+    olx_gl::deleteTextures(1, &texId);
     olx_gl::bindTexture( GL_TEXTURE_2D, texId);
     olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 4);
     if( format == GL_RGB )
@@ -364,9 +363,9 @@ public:
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("format=") << (int)format);
   }
   /* creates a 1D, texture takes arrays of GL_RGB or GL_RGBA only, see glTexImage1D
-   for details. returns -1 is texture createion failed  */
-  int Add1DTexture(const olxstr& name, GLint level, GLsizei width, GLint border,
-                         GLenum format, const GLvoid *pixels)
+   for details. returns ~0 is texture creation failed  */
+  GLuint Add1DTexture(const olxstr& name, GLint level, GLsizei width, GLint border,
+                      GLenum format, const GLvoid *pixels)
   {
     olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 4);
     if( format == GL_RGB )
@@ -375,8 +374,8 @@ public:
       olx_gl::texImage(GL_TEXTURE_2D, 0, format, width, 0, format, GL_UNSIGNED_BYTE, pixels);
     else  
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("format=") << (int)format);
-    unsigned int texId = 0;
-    olx_gl::genTextures(1, (GLuint*)&texId);
+    GLuint texId = 0;
+    olx_gl::genTextures(1, &texId);
     TGlTexture* tex = new TGlTexture(texId, tpt1D, name);
     Textures.Add(texId, tex);
     return texId;
@@ -384,7 +383,7 @@ public:
   
   //int CloneTexture( int )
   //inline int GetTextureIndex( const TGlTexture& tex) const {  return Textures.}
-  inline TGlTexture* FindTexture(int textureIndex)  {
+  inline TGlTexture* FindTexture(GLuint textureIndex)  {
     size_t index = Textures.IndexOfComparable(textureIndex);
     return Textures.GetObject(index);
   }

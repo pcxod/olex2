@@ -10,7 +10,7 @@
 #include "pers_util.h"
 
 TXGlLabel::TXGlLabel(TGlRenderer& R, const olxstr& collectionName) :
-  TGlMouseListener(R, collectionName), Transformer(NULL)
+  AGlMouseHandlerImp(R, collectionName), Transformer(NULL)
 {
   SetMove2DZ(true);
   SetMoveable(true);
@@ -53,12 +53,12 @@ void TXGlLabel::SetLabel(const olxstr& L)   {
 //..............................................................................
 vec3d TXGlLabel::GetRasterPosition() const {
   const double ScaleR = Parent.GetExtraZoom()*Parent.GetViewZoom();
-  vec3d off = (Basis.GetCenter()*Parent.GetBasis().GetZoom());
+  vec3d off = (GetCenter()*Parent.GetBasis().GetZoom());
   if( Transformer != NULL )  {
     vec3d T = Transformer->ForRaster(*this);
     return Transformer->AdjustZ(T += off*ScaleR);
   }
-  vec3d T(Parent.GetBasis().GetCenter()+Center);
+  vec3d T(Parent.GetBasis().GetCenter()+GetOffset());
   T *= Parent.GetBasis().GetMatrix();
   T *= Parent.GetBasis().GetZoom();
   T /= Parent.GetScale();
@@ -68,7 +68,7 @@ vec3d TXGlLabel::GetRasterPosition() const {
 }
 //..............................................................................
 vec3d TXGlLabel::GetVectorPosition() const {
-  vec3d off = Parent.GetBasis().GetMatrix()*Basis.GetCenter();
+  vec3d off = Parent.GetBasis().GetMatrix()*GetCenter();
   const double Scale = Parent.GetScale();
   const double ScaleR = Parent.GetExtraZoom()*Parent.GetViewZoom();
   if( Transformer != NULL )  {
@@ -77,7 +77,7 @@ vec3d TXGlLabel::GetVectorPosition() const {
     return Transformer->AdjustZ(
       T += (off*Parent.GetBasis().GetMatrix())*(Scale*ScaleR*Parent.GetBasis().GetZoom()));
   }
-  vec3d T(Parent.GetBasis().GetCenter()+Center);
+  vec3d T(Parent.GetBasis().GetCenter()+GetOffset());
   T += off*(Scale*ScaleR);
   T *= Parent.GetBasis().GetMatrix();
   T *= Parent.GetBasis().GetZoom();
@@ -137,15 +137,24 @@ void TXGlLabel::ToDataItem(TDataItem& item) const {
   item.AddField("text", FLabel);
   item.AddField("visible", IsVisible());
   item.AddField("font_id", FontIndex);
-  item.AddField("center", PersUtil::VecToStr(Center));
-  Basis.ToDataItem(item.AddItem("Basis"));
+  item.AddField("offset", PersUtil::VecToStr(GetOffset()));
+  item.AddField("center", PersUtil::VecToStr(GetCenter()));
 }
 //..............................................................................
 void TXGlLabel::FromDataItem(const TDataItem& item) {
   SetVisible( item.GetRequiredField("visible").ToBool() );
   FontIndex = item.GetRequiredField("font_id").ToInt();
-  SetLabel( item.GetRequiredField("text") );
-  Center = PersUtil::FloatVecFromStr( item.GetRequiredField("center") );
-  Basis.FromDataItem( item.FindRequiredItem("Basis") );
+  SetLabel( item.GetRequiredField("text"));
+  TDataItem* basis = item.FindItem("Basis");
+  if( basis != NULL )  {
+    Offset = PersUtil::FloatVecFromStr(item.GetRequiredField("center"));
+    TEBasis b;
+    b.FromDataItem(*basis);
+    _Center = b.GetCenter();
+  }
+  else  {
+    Offset = PersUtil::FloatVecFromStr(item.GetRequiredField("offset"));
+    _Center = PersUtil::FloatVecFromStr(item.GetRequiredField("center"));
+  }
 }
 //..............................................................................

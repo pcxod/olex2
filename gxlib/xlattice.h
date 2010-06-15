@@ -1,21 +1,29 @@
 #ifndef xlatticeH
 #define xlatticeH
 #include "gxbase.h"
-#include "glmouselistener.h"
-//#include "arrays.h"
+#include "glmousehandler.h"
 
 #include "asymmunit.h"
 
 BeginGxlNamespace()
 
-class TXLattice: public TGlMouseListener  {
+class TXLattice: public AGlMouseHandlerImp  {
   bool Fixed;
   short Size;
   class TGlPrimitive* Lines;
   mat3d LatticeBasis;
+protected:
+  TEBasis Basis;
+  virtual bool DoTranslate(const vec3d& t) {  Basis.Translate(t);  return true;  }
+  virtual bool DoRotate(const vec3d& vec, double angle) {  Basis.Rotate(vec, angle);  return true;  }
+  virtual bool DoZoom(double zoom, bool inc)  {
+    if( inc )  Basis.SetZoom(ValidateZoom(Basis.GetZoom() + zoom));
+    else       Basis.SetZoom(ValidateZoom(zoom));
+    return true;
+  }
 public:
   TXLattice(TGlRenderer& Render, const olxstr& collectionName);
-  virtual ~TXLattice();
+  virtual ~TXLattice() {}
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
 
   bool Orient(TGlPrimitive& P);
@@ -23,10 +31,10 @@ public:
 
   DefPropC(mat3d, LatticeBasis)
 
-  inline bool IsFixed()  const {  return Fixed;  }
+  inline bool IsFixed() const {  return Fixed;  }
   void SetFixed(bool v );
 
-  inline short GetSize()  const {  return Size;  }
+  inline short GetSize() const {  return Size;  }
   void SetSize(short v);
 
   bool OnMouseDown(const IEObject *Sender, const TMouseData *Data);

@@ -1,12 +1,10 @@
-#ifndef xbondH
-#define xbondH
+#ifndef __olx_glx_xbond_H
+#define __olx_glx_xbond_H
 #include "gxbase.h"
-
 #include "glrender.h"
 #include "gdrawobject.h"
 #include "glprimitive.h"
 #include "styles.h"
-
 #include "sbond.h"
 #include "talist.h"
 

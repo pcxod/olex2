@@ -11,7 +11,7 @@
 
 
 TDBlob::TDBlob(TGlRenderer& R, const olxstr& collectionName) :
-  TGlMouseListener(R, collectionName)
+  AGDrawObject(R, collectionName)
 {
   SetSelectable(false);
 }
@@ -36,7 +36,7 @@ void TDBlob::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlP.SetProperties( GS.GetMaterial("Blob", GlM) );
 }
 bool TDBlob::Orient(TGlPrimitive& P)  {
-  olx_gl::translate(Basis.GetCenter());
+  //olx_gl::translate(Basis.GetCenter());
   olx_gl::polygonMode(GL_FRONT_AND_BACK, PolygonMode);
   olx_gl::begin(GL_TRIANGLES);
   for( size_t i=0; i < triangles.Count(); i++ )  {

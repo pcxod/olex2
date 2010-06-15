@@ -5081,8 +5081,7 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options, TM
   glB->SetTop( Top );
   if( resize && Created ) {
     double r = ((double)FXApp->GetRender().GetWidth()/(double)owidth)/10.0;
-    glB->Basis.Reset();
-    glB->Basis.SetZoom(r);
+    glB->SetZoom(r);
   }
   glB->SetLeft( FXApp->GetRender().GetWidth() - glB->GetWidth() );
   FXApp->Draw();
