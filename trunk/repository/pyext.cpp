@@ -336,7 +336,7 @@ olxcstr PyFuncBody(const olxcstr& olexName, const olxcstr& pyName, char sep)  {
     res << pyName << "(*args):\n  ";
     res << "al = []\n  ";
     res << "for arg in args:\n    ";
-    res << "al.append(str(arg))\n  ";
+    res << "al.append(unicode(arg))\n  ";
     res << "return olex.f_ex('" << olexName << "', False, al)";
     return res;
   }
@@ -345,7 +345,7 @@ olxcstr PyFuncBody(const olxcstr& olexName, const olxcstr& pyName, char sep)  {
     res << pyName << "(*args, **kwds):\n  ";
     res << "al = []\n  ";
     res << "for arg in args:\n    ";
-    res << "al.append(str(arg))\n  ";
+    res << "al.append(unicode(arg))\n  ";
     res << "return olex.f_ex('" << olexName << "', True, al, kwds)";
     return res;
   }

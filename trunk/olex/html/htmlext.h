@@ -136,7 +136,7 @@ protected:
   void DoNavigate(bool forward);
   static TLibrary* Library;
 public:
-  THtml(wxWindow *Parent, ALibraryContainer *LC);
+  THtml(wxWindow *Parent, ALibraryContainer* LC, int flags=4);
   virtual ~THtml();
 
   void OnKeyDown(wxKeyEvent &event);  

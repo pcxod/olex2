@@ -1287,7 +1287,7 @@ separated values of Atom Type and radius, an entry a line");
   XLibMacros::OnAddIns.Add(this, ID_ADDINS, msiExit);
   LoadVFS(plGlobal);
 
-  FHtml = new THtml(this, FXApp);
+  FHtml = new THtml(this, FXApp, 4|wxVSCROLL|wxALWAYS_SHOW_SB);
 
   FHtml->OnLink.Add(this, ID_ONLINK);
   FHtml->OnKey.Add(this, ID_HTMLKEY);
@@ -2814,22 +2814,19 @@ void TMainForm::OnResize()  {
   }
   else  {
     FHtml->Freeze();
-    int cw, ch;
     if( FHtmlOnLeft )  {
-      FHtml->SetSize(0, 0, (int)FHtmlPanelWidth, h);
-      FHtml->GetClientSize(&cw, &ch);
-      cw = FHtmlWidthFixed ? (int)FHtmlPanelWidth : (int)(w*FHtmlPanelWidth);
-      FHtml->SetClientSize(cw, h);
-      l = FHtml->GetSize().GetWidth();  // new left
-      FHtml->SetSize(0, 0, l, h);  // final iteration ....
-      w -= l;  // new width
+      const int cw = FHtmlWidthFixed ? (int)FHtmlPanelWidth : (int)(w*FHtmlPanelWidth);
+      FHtml->SetClientSize(cw, -1);
+      FHtml->SetSize(-1, h);
+      FHtml->Move(0, 0);
+      l = FHtml->GetSize().GetWidth();
+      w -= l;
     }
     else  {
-      FHtml->SetSize((int)(w-FHtmlPanelWidth), 0, (int)FHtmlPanelWidth, h);
-      FHtml->GetClientSize(&cw, &ch);
-      cw = FHtmlWidthFixed ? (int)FHtmlPanelWidth : (int)(w*FHtmlPanelWidth);
-      FHtml->SetClientSize(cw, ch);
-      FHtml->SetSize(w-FHtml->GetSize().GetWidth(), 0, FHtml->GetSize().GetWidth(), h);
+      const int cw = FHtmlWidthFixed ? (int)FHtmlPanelWidth : (int)(w*FHtmlPanelWidth);
+      FHtml->SetClientSize(cw, -1);
+      FHtml->SetSize(-1, h);
+      FHtml->Move((int)(w-FHtml->GetSize().GetWidth()), 0);
       w -= FHtml->GetSize().GetWidth();
     }
     FHtml->Refresh();
@@ -2844,7 +2841,7 @@ void TMainForm::OnResize()  {
   if( w <= 0 )  w = 5;
   if( h <= 0 )  h = 5;
   FGlConsole->SetTop(dheight);
-  FGlCanvas->SetSize(l, 0, w, h - (CmdLineVisible ? FCmdLine->WI.GetHeight() : 0) );
+  FGlCanvas->SetSize(l, 0, w, h - (CmdLineVisible ? FCmdLine->WI.GetHeight() : 0));
   FGlCanvas->GetClientSize(&w, &h);
   FXApp->GetRender().Resize(0, 0, w, h, 1);
   FGlConsole->SetLeft(0);
