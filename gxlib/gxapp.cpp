@@ -1655,15 +1655,19 @@ TUndoData* TGXApp::ChangeSuffix(const TXAtomPList& xatoms, const olxstr &To, boo
   return undo;
 }
 //..............................................................................
-TUndoData* TGXApp::Name(TXAtom& XA, const olxstr &Name, bool CheckLabel)  {
+TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& Name, bool CheckLabel)  {
   bool checkBonds = (XA.Atom().GetType() == iQPeakZ);
   cm_Element* elm = XElementLib::FindBySymbolEx(Name);
+  if( elm == NULL )
+    throw TFunctionFailedException(__OlxSourceInfo, "invalid element");
   TNameUndo *undo = new TNameUndo(new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
   olxstr oldL = XA.Atom().GetLabel();
   bool recreate = ((elm == NULL) ? true : XA.Atom().GetType() != *elm);
-  XA.Atom().SetLabel(CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA.Atom().CAtom(), Name) : Name);
-  if( oldL != XA.Atom().GetLabel() )
-    undo->AddAtom( XA.Atom().CAtom(), oldL );
+  XA.Atom().CAtom().SetLabel(
+    CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA.Atom().CAtom(), Name) : Name, false);
+  if( oldL != XA.Atom().GetLabel() || *elm != XA.Atom().GetType() )
+    undo->AddAtom(XA.Atom().CAtom(), oldL);
+  XA.Atom().CAtom().SetType(*elm);
   // Dima's complaint - leave all in for manual naming
   //NameHydrogens(XA.Atom(), undo, CheckLabel);
   if( checkBonds )  CheckQBonds(XA);
@@ -1684,7 +1688,7 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
     return Name( *XA, To, CheckLabel);
   }
   else  {
-    TNameUndo *undo = new TNameUndo( new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
+    TNameUndo *undo = new TNameUndo(new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
     TXAtomPList Atoms, ChangedAtoms;
     FindXAtoms(From, Atoms, ClearSelection);
     if( From.Equalsi("sel") && To.IsNumber() )  {
@@ -1718,8 +1722,8 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
         const olxstr oldL = XA->Atom().GetLabel();
         XA->Atom().CAtom().SetLabel(
           CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->Atom().CAtom(), NL) : NL, false);
-        XA->Atom().CAtom().SetType(*elm);
         undo->AddAtom( XA->Atom().CAtom(), oldL);
+        XA->Atom().CAtom().SetType(*elm);
         NameHydrogens(XA->Atom(), undo, CheckLabel);
         if( recreate )  {
           ChangedAtoms.Add(XA);
@@ -1760,8 +1764,8 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
         const olxstr oldL = XA->Atom().GetLabel();
         XA->Atom().CAtom().SetLabel(
           CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->Atom().CAtom(), NL) : NL, false);
-        XA->Atom().CAtom().SetType(*elm);
         undo->AddAtom(XA->Atom().CAtom(), oldL);
+        XA->Atom().CAtom().SetType(*elm);
         NameHydrogens(XA->Atom(), undo, CheckLabel);
         if( recreate )  {
           ChangedAtoms.Add(XA);
@@ -1985,19 +1989,20 @@ void TGXApp::undoDelete(TUndoData *data)  {
 //..............................................................................
 void TGXApp::undoName(TUndoData *data)  {
   TNameUndo *undo = dynamic_cast<TNameUndo*>(data);
-  TCAtomPList cal;
-  TAsymmUnit& au = XFile().GetAsymmUnit();
+  const TAsymmUnit& au = XFile().GetAsymmUnit();
+  bool recreate = false;
   for( size_t i=0; i < undo->AtomCount(); i++ )  {
     if( undo->GetCAtomId(i) >= au.AtomCount() )  //could happen?
       continue;
-    TCAtom& ca = au.GetAtom( undo->GetCAtomId(i));
-    cm_Element* elm = XElementLib::FindBySymbolEx(undo->GetLabel(i));
-    ca.SetLabel(undo->GetLabel(i), false);
-    if( ca.GetType() != *elm)
-      cal.Add(ca)->SetType(*elm);
+    const TCAtom& ca = au.GetAtom(undo->GetCAtomId(i));
+    if( ca.GetType() != undo->GetElement(i) )  {
+      recreate = true;
+      break;
+    }
   }
   // could be optimised...
-  if( !cal.IsEmpty() )
+  TXApp::undoName(data);
+  if( recreate )
     CreateObjects(false, false);
 }
 //..............................................................................

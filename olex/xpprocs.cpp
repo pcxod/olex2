@@ -760,7 +760,7 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   od.SetQuadLineWidth(Options.FindValue("lw_octant", "0.5").ToDouble());
   od.SetBondOutlineColor(Options.FindValue("bond_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
   od.SetBondOutlineSize(Options.FindValue("bond_outline_oversize", "10").ToFloat<float>()/100.0f);
-  od.SetAtomOutlineColor(Options.FindValue("atom_outline_color", "0xFFFFFF").SafeInt<uint32_t>());
+  od.SetAtomOutlineColor(Options.FindValue("atom_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
   od.SetAtomOutlineSize(Options.FindValue("atom_outline_oversize", "5").ToFloat<float>()/100.0f);
   if( Options.Contains('p') )
     od.SetPerspective(true);
@@ -4197,9 +4197,8 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     }
     FGlConsole->PrintText(out);
     FXApp->GetLog() << '\n';
-    return;
   }
-  if( Cmds.Count() == 1 && TSymmParser::IsRelSymm(Cmds[0]) )  {
+  else if( Cmds.Count() == 1 && TSymmParser::IsRelSymm(Cmds[0]) )  {
     bool invert = Options.Contains('i'), unselect=false;
     if( !invert )
       unselect = Options.Contains('u');
@@ -4228,9 +4227,8 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
           FXApp->GetRender().Select(b, true);
       }
     }
-    return;
   }
-  if( Cmds.Count() > 1 && Cmds[0].Equalsi("part") )  {
+  else if( Cmds.Count() > 1 && Cmds[0].Equalsi("part") )  {
     Cmds.Delete(0);
     TIntList parts;
     for( size_t i=0; Cmds.Count(); i++ )  {
@@ -4249,7 +4247,13 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       FXApp->SelectAtomsWhere(cond);
     }
   }
-  if( Options.IsEmpty() )  {  // print labels of selected atoms
+  else if( Cmds.Count() == 1 && Cmds[0].Equalsi("isot") )  {
+    for( size_t i=0; i < FXApp->AtomCount(); i++ )  {
+      if( FXApp->GetAtom(i).Atom().GetEllipsoid() == NULL )
+        FXApp->GetRender().Select(FXApp->GetAtom(i), true);
+    }
+  }
+  else if( Options.IsEmpty() )  {  // print labels of selected atoms
     olxstr Tmp("sel");
     size_t period=5;
     TGlGroup& Sel = FXApp->GetSelection();
