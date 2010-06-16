@@ -1,10 +1,8 @@
 //----------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-#ifndef ebaseH
-#define ebaseH
-//---------------------------------------------------------------------------
-
+#ifndef __olx_sdl_base_H
+#define __olx_sdl_base_H
 #include <typeinfo>
 #include <string.h>
 #include <stdlib.h>
@@ -160,10 +158,21 @@ public:
     }
     return &SData->Data[_Start];
   }
-  T Data(size_t i) const { return SData->Data[_Start + i];  }
   bool IsEmpty() const { return _Length == 0;  }
-  T CharAt(size_t i) const { return SData->Data[_Start + i];  }
-  T operator[] (size_t i) const { return SData->Data[_Start + i];  }
+  T CharAt(size_t i) const {
+#ifdef _DEBUG
+    if( i >= _Length )
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
+#endif
+    return SData->Data[_Start + i];
+  }
+  T operator[] (size_t i) const {
+#ifdef _DEBUG
+    if( i >= _Length )
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
+#endif
+    return SData->Data[_Start + i];
+  }
   /* reads content of the string to external buffer, which must be able to accommodate
    string length + 1 for the end of string char  */
   T *Read(T *v)  {
@@ -428,6 +437,8 @@ protected:
   virtual void CreationProtection() = 0;  
 public:
   static void ThrowFunctionFailed(const char* file, const char* function, int line, const char* msg);
+  static void ThrowIndexOutOfRange(const char* file, const char* function, int line,
+    size_t index, size_t min_ind, size_t max_ind);
   static void ThrowInvalidIntegerFormat(const char* file, const char* function, int line, 
     const char* src, size_t src_len);
   static void ThrowInvalidIntegerFormat(const char* file, const char* function, int line, 

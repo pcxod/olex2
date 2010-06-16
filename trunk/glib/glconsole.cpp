@@ -448,7 +448,7 @@ void TGlConsole::ClearBuffer()  {
 }
 //..............................................................................
 void TGlConsole::KeepSize()  {
-  size_t lc = FBuffer.Count();
+  const size_t lc = FBuffer.Count();
   if( lc > FMaxLines )  {
     for( size_t i = 0; i < lc-FMaxLines; i++ )
       if( FBuffer.GetObject(i) )
