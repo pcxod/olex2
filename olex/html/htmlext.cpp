@@ -36,8 +36,9 @@ BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
   EVT_SIZE(THtml::OnSizeEvt)
 END_EVENT_TABLE()
 //..............................................................................
-THtml::THtml(wxWindow *Parent, ALibraryContainer* LC) :
-  wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, 4), WI(this), ObjectsState(*this),
+THtml::THtml(wxWindow *Parent, ALibraryContainer* LC, int flags) :
+  wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, flags),
+  WI(this), ObjectsState(*this),
   InFocus(NULL),
   OnLink(Actions.New("ONLINK")),
   OnURL(Actions.New("ONURL")),
@@ -632,13 +633,6 @@ bool THtml::UpdatePage()  {
   SwitchSources.Clear();
   SwitchSource  = EmptyString;
   TEFile::ChangeDir(oldPath);
-
-  if( GetParent() == (wxWindow*)TGlXApp::GetMainForm() && HasScrollbar(wxVERTICAL) )  {
-    int w, h;
-    GetClientSize(&w, &h);
-    if( w != TGlXApp::GetMainForm()->GetHtmlPanelWidth() ) // scrollbar appeared?
-      TGlXApp::GetMainForm()->OnResize();
-  }
   if( !FocusedControl.IsEmpty() )  {
     size_t ind = Objects.IndexOf( FocusedControl );
     if( ind != InvalidIndex )  {
