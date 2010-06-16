@@ -1133,8 +1133,12 @@ void TGlRenderer::DrawTextSafe(const vec3d& pos, const olxstr& text, const TGlFo
   // set a valid raster position
   olx_gl::rasterPos(0.0, 0.0, pos[2]);
   olx_gl::bitmap(0, 0, 0, 0, (float)(pos[0]/FViewZoom), (float)(pos[1]/FViewZoom), NULL);
-  for( size_t i=0; i < text.Length(); i++ ) 
-    olx_gl::callList(fnt.GetFontBase() + text.CharAt(i));
+  for( size_t i=0; i < text.Length(); i++ )  {
+    if( text.CharAt(i) < 256 )
+      olx_gl::callList(fnt.GetFontBase() + text.CharAt(i));
+    else
+      olx_gl::callList(fnt.GetFontBase() + '?');
+  }
 }
 //..............................................................................
 //..............................................................................
@@ -1251,7 +1255,7 @@ void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
     E.SetRetVal(glo->ToString());
   }
   if( Params.Count() == 2 )  {
-    *glo = Params[1].SafeInt<uint32_t>();
+    *glo = Params[1].SafeUInt<uint32_t>();
     (*glo)[3] = 1;
   }
   else if( Params.Count() == 4 )  {

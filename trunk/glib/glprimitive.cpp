@@ -244,7 +244,7 @@ void TGlPrimitive::Draw()  {
           SetColor(Colors[i]);
           prev_color = Colors[i];
         }
-        if( String->CharAt(i) < 255 )
+        if( String->CharAt(i) < 256 )
           olx_gl::callList(fontbase + String->CharAt(i));
         else
           olx_gl::callList(fontbase + '?');
@@ -252,7 +252,7 @@ void TGlPrimitive::Draw()  {
     }
     else  {  /* all characters of the same colour */
       for( size_t i=0; i < StrLen; i++ )  {
-        if( String->CharAt(i) < 255 )
+        if( String->CharAt(i) < 256 )
           olx_gl::callList(fontbase + String->CharAt(i));
         else
           olx_gl::callList(fontbase + '?');

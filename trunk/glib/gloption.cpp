@@ -29,7 +29,7 @@ bool TGlOption::FromString(const olxstr &S)  {
     data[3] = (float)SL[3].ToDouble();
   }
   else  {
-    *this = S.SafeInt<uint32_t>();
+    *this = S.SafeUInt<uint32_t>();
   }
   return true;
 }
