@@ -15,7 +15,7 @@ protected:
     TNameModeUndo(TXAtom& xa) : TUndoData(new TUndoActionImplMF<TNameModeUndo>(this, &TNameModeUndo::undo))  {  
       AddAtom(xa);
     }
-    void AddAtom(TXAtom& xa)  {  LabelIndeces.Add( xa.GetXAppId() );  }
+    void AddAtom(TXAtom& xa)  {  LabelIndeces.Add(xa.GetXAppId());  }
     void undo(TUndoData* data)  {
       if( TNameMode::Instance != NULL )  {
         for( size_t i=0; i < LabelIndeces.Count(); i++ )  {
@@ -102,8 +102,8 @@ public:
       olxstr Labl (Symbol.IsEmpty() ? XA.Atom().GetType().symbol : Symbol);
       Labl << Prefix <<  Index << Suffix;
       TNameModeUndo* undo = new TNameModeUndo(XA);
-      undo->AddAction( TGlXApp::GetGXApp()->Name(XA, Labl, false) );
-      TGlXApp::GetMainForm()->GetUndoStack()->Push( undo );
+      undo->AddAction(TGlXApp::GetGXApp()->Name(XA, Labl, false));
+      TGlXApp::GetMainForm()->GetUndoStack()->Push(undo);
       TGlXApp::GetGXApp()->MarkLabel(XA, true);
       Index++;
       SetCursor();

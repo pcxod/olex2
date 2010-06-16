@@ -256,10 +256,10 @@ void TXApp::undoName(TUndoData *data)  {
     if( undo->GetCAtomId(i) >= au.AtomCount() )  // would definetely be an error
       continue;
     TCAtom& ca = au.GetAtom(undo->GetCAtomId(i));
-    cm_Element* elm = XElementLib::FindBySymbolEx(undo->GetLabel(i));
     ca.SetLabel(undo->GetLabel(i), false);
-    if( ca.GetType() != *elm )
-      ca.SetType(*elm);
+    ca.SetType(undo->GetElement(i));
+    if( ca.GetType() == iQPeakZ )
+      ca.SetQPeak(undo->GetPeakHeight(i));
   }
 }
 //..............................................................................
@@ -360,7 +360,7 @@ void TXApp::RingContentFromStr(const olxstr& Condition, ElementPList& ringDesc) 
     if( !count.IsEmpty() )  {
       const size_t c = count.ToSizeT();
       for( size_t j=0; j < c; j++ )
-        toks.Add( symbol );
+        toks.Add(symbol);
     }
     else
       toks.Add(symbol);
@@ -388,7 +388,7 @@ void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings)  {
     if( rings.IsNull(i) )  continue;
     for( size_t j= i+1; j < rings.Count(); j++ ) {
       if( rings.IsNull(j) )  continue;
-      if( RingsEq( rings[i], rings[j]) )
+      if( RingsEq(rings[i], rings[j]) )
         rings.NullItem(j);
     }
   }
@@ -638,7 +638,7 @@ void TXApp::GetSymm(smatd_list& ml) const {
   const TUnitCell& uc = FXFile->GetUnitCell();
   ml.SetCapacity( ml.Count() + uc.MatrixCount() );
   for( size_t i=0; i < uc.MatrixCount(); i++ )
-    ml.AddCCopy( uc.GetMatrix(i) );
+    ml.AddCCopy(uc.GetMatrix(i));
 }
 //..............................................................................
 void TXApp::ToDataItem(TDataItem& item) const  {

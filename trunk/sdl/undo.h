@@ -55,8 +55,8 @@ public:
       UndoList[i]->Undo();
   }
 
-  void AddAction( TUndoData* data )  {
-    UndoList.Add( data );
+  void AddAction(TUndoData* data)  {
+    UndoList.Add(data);
   }
 };
 

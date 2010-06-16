@@ -1,6 +1,5 @@
-#ifndef _xl_xappH
-#define _xl_xappH
-
+#ifndef __olx_xl_xappH
+#define __olx_xl_xappH
 #include "bapp.h"
 #include "xfiles.h"
 #include "library.h"
@@ -11,30 +10,36 @@
 #include "atomref.h"
 
 // program state and some other special checks for functions
-const unsigned int   psFileLoaded        = 0x00010000,
-                     psCheckFileTypeIns  = 0x00020000,
-                     psCheckFileTypeCif  = 0x00040000,
-                     psCheckFileTypeP4P  = 0x00080000,
-                     psCheckFileTypeCRS  = 0x00100000;
+const uint32_t
+  psFileLoaded       = 0x00010000,
+  psCheckFileTypeIns = 0x00020000,
+  psCheckFileTypeCif = 0x00040000,
+  psCheckFileTypeP4P = 0x00080000,
+  psCheckFileTypeCRS = 0x00100000;
 
 class TNameUndo : public TUndoData  {
 public:
   struct NameRef {
     size_t catom_id;
     olxstr name;
-    NameRef(size_t id, const olxstr& n) : catom_id(id), name(n)  {  }
+    double peak_height;
+    const cm_Element* elm;
+    NameRef(size_t id, const cm_Element* _elm, double _peak_height, const olxstr& n) :
+      catom_id(id), elm(_elm), peak_height(_peak_height), name(n)  {}
   };
 
-  TNameUndo(IUndoAction* action) : TUndoData(action)  {  }
+  TNameUndo(IUndoAction* action) : TUndoData(action)  {}
   
   TTypeList<NameRef> Data;
   
-  void AddAtom(TCAtom& A, const olxstr& newName)  {
-    Data.Add( new NameRef(A.GetId(), newName) );
+  void AddAtom(TCAtom& A, const olxstr& oldName)  {
+    Data.Add(new NameRef(A.GetId(), &A.GetType(), A.GetQPeak(), oldName));
   }
   inline size_t AtomCount() const {  return Data.Count();  }
   inline size_t GetCAtomId(size_t i) const {  return  Data[i].catom_id;  }
   inline const olxstr& GetLabel(size_t i) const {  return  Data[i].name;  }
+  double GetPeakHeight(size_t i) const {  return Data[i].peak_height;  }
+  const cm_Element& GetElement(size_t i) const {  return *Data[i].elm;  }
 };
 
                      
