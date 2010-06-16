@@ -491,7 +491,7 @@ void ConnInfo::AtomConnInfo::ToDataItem(TDataItem& item) const {
       continue;
     TDataItem& bi = ab.AddItem("bi");
     bi.AddField("to", BondsToRemove[i].to.GetTag());
-    if( BondsToCreate[i].matr != NULL )
+    if( BondsToRemove[i].matr != NULL )
       bi.AddField("eqiv", BondsToRemove[i].matr->GetId());
   }
 }
