@@ -169,7 +169,7 @@ public:
             for( int k=0; k < 3; k++ )
               (*iv)[k] = Cmds[j+k].ToInt();
             if( remove )  {
-              Cmds.DeleteRange(j, j+3);
+              Cmds.DeleteRange(j, 3);
               j--;
             }
             else
@@ -180,7 +180,7 @@ public:
             for( int k=0; k < 3; k++ )
               (*dv)[k] = Cmds[j+k].ToDouble();
             if( remove )  {
-              Cmds.DeleteRange(j, j+3);
+              Cmds.DeleteRange(j, 3);
               j--;
             }
             else
@@ -198,7 +198,7 @@ public:
               for( int l=0; l < 3; l++ )
                 (*im)[k][l] = Cmds[j+k*3+l].ToInt();
             if( remove )  {
-              Cmds.DeleteRange(j, j+9);
+              Cmds.DeleteRange(j, 9);
               j--;
             }
             else
@@ -210,7 +210,7 @@ public:
               for( int l=0; l < 3; l++ )
                 (*dm)[k][l] = Cmds[j+k*3+l].ToDouble();
             if( remove )  {
-              Cmds.DeleteRange(j, j+9);
+              Cmds.DeleteRange(j, 9);
               j--;
             }
             else

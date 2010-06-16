@@ -131,15 +131,24 @@ public:
     delete Strings[i];
     Strings.Delete(i);
   }
-  inline void DeleteRange(size_t From, size_t To)  {
-    for( size_t i=From; i < To; i++ )
-      delete Strings[i];
-    Strings.DeleteRange(From, To);
+  inline void DeleteRange(size_t from, size_t count)  {
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, Strings.Count());
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+count, 0, Strings.Count()+1);
+#endif
+    for( size_t i=0; i < count; i++ )
+      delete Strings[from+i];
+    Strings.DeleteRange(from, count);
   }
 
-  TTStrList& SubList(size_t offset, size_t count, TTStrList& SL) const  {
-    for( size_t i=offset; i < offset+count; i++ )
-      SL.Add( GetString(i) );
+  TTStrList& SubList(size_t from, size_t count, TTStrList& SL) const  {
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, Strings.Count()+1);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+count, 0, Strings.Count()+1);
+#endif
+    SL.Strings.SetCapacity(SL.Count()+count);
+    for( size_t i=0; i < count; i++ )
+      SL.Add(GetString(i+from));
     return SL;
   }
 

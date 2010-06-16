@@ -183,17 +183,22 @@ public:
     FCount --;
   }
 //..............................................................................
-  void DeleteRange(size_t from, size_t to)  {
+  void DeleteRange(size_t from, size_t count)  {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, FCount);
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, to, 0, FCount);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+count, 0, FCount+1);
 #endif
-    for( size_t i=to; i < FCount; i++ )
-      Items[from+i-to] = Items[i];
-    FCount -= (to-from);
+    const size_t copy_cnt = FCount-from-count;
+    for( size_t i=0; i < copy_cnt; i++ )
+      Items[from+i] = Items[from+count+i];
+    FCount -= count;
   }
 //..............................................................................
   TPtrList SubList(size_t from, size_t count) const {
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, List.Count()+1);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+count, 0, List.Count()+1);
+#endif
     TPtrList rv(count);
     memcpy(rv.Items, Items[from], count*sizeof(T*));
     return rv;

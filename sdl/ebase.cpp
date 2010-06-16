@@ -32,6 +32,12 @@ void TExceptionBase::ThrowFunctionFailed(const char* file, const char* func, int
   throw TFunctionFailedException(FormatSrc(file,func,line), msg);
 }
 //................................................................................................
+void TExceptionBase::ThrowIndexOutOfRange(const char* file, const char* func, int line,
+  size_t index, size_t min_ind, size_t max_ind)
+{
+  throw TIndexOutOfRangeException(FormatSrc(file,func,line), index, min_ind, max_ind);
+}
+//................................................................................................
 void TExceptionBase::ThrowInvalidIntegerFormat(const char* file, const char* func, int line, 
     const char* src, size_t src_len)
 {

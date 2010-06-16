@@ -26,6 +26,10 @@ public:
       xa.Atom().ccrd() = au.CartesianToCell(c);
       xa.Atom().CAtom().ccrd() = c;
     }
+    for( size_t i=0; i < group->Count(); i++ )  {
+      if( EsdlInstanceOf(group->GetObject(i), TXBond) )
+        ((TXBond&)group->GetObject(i)).BondUpdated();
+    }
     app.GetRender().ReplaceSelection<TGlGroup>();
   }
   virtual bool OnObject(AGDrawObject &obj)  {

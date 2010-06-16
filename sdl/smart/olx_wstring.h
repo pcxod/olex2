@@ -23,9 +23,9 @@ public:
       Index = index;
       Instance = inst;
     }
-    inline wchar_t GetValue()    const {  return Instance->CharAt(Index);  }
-    inline operator wchar_t ()   const {  return Instance->CharAt(Index);  }
-    inline void operator = (wchar_t v) {  Instance->Set(Index, v);  }
+    inline wchar_t GetValue() const {  return Instance->CharAt(Index);  }
+    inline operator wchar_t () const {  return Instance->CharAt(Index);  }
+    inline void operator = (wchar_t v)  {  Instance->Set(Index, v);  }
   };
 protected:
 //..............................................................................
@@ -126,9 +126,9 @@ public:
 
   TWString& operator << (const CharW &v);
   TWString& operator << (const char &v);
-  TWString& operator << (const char *v)       { return Append(v, strlen(v));  }
-  TWString& operator << (char * const  &v)    { return Append(v, strlen(v));  }
-  template <typename T> inline TWString& operator << (const T &v) {
+  TWString& operator << (const char *v)  { return Append(v, strlen(v));  }
+  TWString& operator << (char * const  &v)  { return Append(v, strlen(v));  }
+  template <typename T> inline TWString& operator << (const T &v)  {
     return writeType(printFormat(v), v);
   }
   TWString& TrimFloat()  {
@@ -164,33 +164,49 @@ public:
   }
 //..........................................................................................
   TWString& operator = (const TCString& astr); // cannot make it inline - forward reference...
-  inline TWString& operator = (const char *str)   {  return AssignCharStr(str);  }
-  inline TWString& operator = (char * const &str) {  return AssignCharStr(str);  }
+  inline TWString& operator = (const char *str)  {  return AssignCharStr(str);  }
+  inline TWString& operator = (char * const &str)  {  return AssignCharStr(str);  }
 //..........................................................................................
   TWString& operator = (const char &ch);
-  template <typename T> inline TWString& operator = (const T& v) {
+  template <typename T> inline TWString& operator = (const T& v)  {
     return assignTypeValue(printFormat(v), v);
   }
-  inline TWString& operator = (const float& v) {
+  inline TWString& operator = (const float& v)  {
     assignTypeValue(printFormat(v), v);
     TrimFloat();
     return *this;
   }
-  inline TWString& operator = (const double& v) {
+  inline TWString& operator = (const double& v)  {
     assignTypeValue(printFormat(v), v);
     TrimFloat();
     return *this;
   }
 protected:
-  inline wchar_t * Data()  const {  return ((SData==NULL) ? NULL : &SData->Data[_Start]);  }
+  inline wchar_t * Data() const {  return ((SData==NULL) ? NULL : &SData->Data[_Start]);  }
 public:
-  const char * c_str()  const;
-  inline const wchar_t * u_str() const { return ((SData==NULL) ? L"" : TTIString<wchar_t>::u_str());  }
-  inline const wchar_t * wc_str()       const {  return u_str();  }
-  inline CharW operator[] (size_t i)          { return CharW(i, this);  }
+  const char * c_str() const;
+  inline const wchar_t * u_str() const {  return ((SData==NULL) ? L"" : TTIString<wchar_t>::u_str());  }
+  inline const wchar_t * wc_str() const {  return u_str();  }
+  inline CharW operator[] (size_t i)  {
+#ifdef _DEBUG
+    if( i >= _Length )
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
+#endif
+    return CharW(i, this);
+  }
   // very bizzare compilation errors occur if it is not redefined here
-  inline wchar_t operator[] (size_t i)  const { return SData->Data[_Start + i];  }
-  inline void Set(size_t i, wchar_t v) {
+  inline wchar_t operator[] (size_t i) const {
+#ifdef _DEBUG
+    if( i >= _Length )
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
+#endif
+    return SData->Data[_Start + i];
+  }
+  inline void Set(size_t i, wchar_t v)  {
+#ifdef _DEBUG
+    if( i >= _Length )
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
+#endif
     checkBufferForModification(_Length);
     SData->Data[_Start+i] = v;
   }

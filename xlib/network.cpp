@@ -88,6 +88,7 @@ void TNetwork::TDisassembleTaskRemoveSymmEq::Run(size_t index)  {
       }
       if( Atoms[i]->CAtom().GetPart() != Atoms[index]->CAtom().GetPart() )
         continue;
+      if( Atoms[i]->CAtom().GetParentAfixGroup() != NULL )  continue;
       Atoms[index]->AddMatrices(*Atoms[i]);
       Atoms[i]->SetTag(2);            // specify that the node has to be deleted
     }

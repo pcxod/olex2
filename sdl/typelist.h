@@ -275,17 +275,23 @@ public:
     List.Delete(index);
   }
 //..............................................................................
-  void DeleteRange(size_t from, size_t to)  {
-    for( size_t i=from; i < to; i++ )  {
-      if( List[i] != NULL )  {  // check if not deleted yet
-        delete (DestructCast*)List[i];
-        List[i] = NULL;
-      }
+  void DeleteRange(size_t from, size_t count)  {
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, List.Count());
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+count, 0, List.Count()+1);
+#endif
+    for( size_t i=0; i < count; i++ )  {
+      if( List[from+i] != NULL )
+        delete (DestructCast*)List[from+i];
     }
-    List.Pack();
+    List.DeleteRange(from, count);
   }
 //..............................................................................
   TTypeListExt SubList(size_t from, size_t count) const {
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, List.Count()+1);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+count, 0, List.Count()+1);
+#endif
     TTypeListExt rv(count);
     for( size_t i=0; i < count; i++ )
       rv.Set(i, new T(*List[i+from]));

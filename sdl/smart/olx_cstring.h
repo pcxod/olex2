@@ -26,9 +26,9 @@ public:
       Index = index;
       Instance = inst;
     }
-    inline char GetValue()         const {  return Instance->CharAt(Index);  }
-    inline operator char ()        const {  return Instance->CharAt(Index);  }
-    inline void operator = (char v)      {  Instance->Set(Index, v);  }
+    inline char GetValue() const {  return Instance->CharAt(Index);  }
+    inline operator char () const {  return Instance->CharAt(Index);  }
+    inline void operator = (char v)  {  Instance->Set(Index, v);  }
   };
 protected:
 //..............................................................................
@@ -107,11 +107,11 @@ public:
   template <typename T> TCString(const T& v)  { setTypeValue( printFormat(v), v);  }
   // float numbers need trimming of the 0000
   TCString(const float& v)  {
-    setTypeValue( printFormat(v), v);
+    setTypeValue(printFormat(v), v);
     TrimFloat();
   }
   TCString(const double& v)  {
-    setTypeValue( printFormat(v), v);
+    setTypeValue(printFormat(v), v);
     TrimFloat();
   }
   virtual ~TCString()  {}
@@ -172,20 +172,34 @@ protected:
   inline char * Data()     const {  return ((SData==NULL) ? NULL :&SData->Data[_Start]);  }
 public:
   const wchar_t * wc_str() const;
-
   inline const char *u_str() const { return ((SData==NULL) ? "" : TTIString<char>::u_str());  }
   inline const char * c_str()  const {  return u_str();  }
-  inline CharW operator[] (size_t i)  { return CharW(i, this);  }
+  inline CharW operator[] (size_t i)  {
+#ifdef _DEBUG
+    if( i >= _Length )
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
+#endif
+    return CharW(i, this);
+  }
   // very bizzare compilation errors occur if it is not redefined here
-  inline char operator[] (size_t i)  const { return SData->Data[_Start + i];  }
-  inline void Set(size_t i, char v)   {
+  inline char operator[] (size_t i) const {
+#ifdef _DEBUG
+    if( i >= _Length )
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
+#endif
+    return SData->Data[_Start + i];
+  }
+  inline void Set(size_t i, char v)  {
+#ifdef _DEBUG
+    if( i >= _Length )
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
+#endif
     checkBufferForModification(_Length);
     SData->Data[_Start+i] = v;
   }
   //............................................................................
   virtual TIString ToString() const;
   //............................................................................
-
   friend class TCStrBuffer;
 };
 

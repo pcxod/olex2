@@ -252,7 +252,8 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           break;
         }
         if( Atoms[i]->GetPart() != Atoms[ind]->GetPart() || Atoms[i]->GetPart() < 0 )  continue;
-        Atoms[i]->SetDeleted(true);
+        if( Atoms[i]->GetParentAfixGroup() == NULL )
+          Atoms[i]->SetDeleted(true);
       }
       else  {
         if( Latt->GetNetwork().CBondExists(*Atoms[ind], *Atoms[i], Matrices[j], Dis) )  {

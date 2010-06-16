@@ -76,6 +76,9 @@ public:
   }
 //..............................................................................
   const T& Insert(size_t index, const T& Obj)  {
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount+1);
+#endif
     if( FCapacity == FCount )  SetCapacity((size_t)(1.5*FCount + FIncrement));
     const size_t diff = FCount - index;
     for( size_t i=0; i < diff; i++ )  {
@@ -140,14 +143,15 @@ public:
     FCount--;
   }
 //..............................................................................
-  void DeleteRange(size_t From, size_t To)  {
+  void DeleteRange(size_t from, size_t count)  {
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, From, 0, FCount);
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, To, 0, FCount);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, FCount);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+count, 0, FCount+1);
 #endif
-    for( size_t i=To; i < FCount; i++ )
-      Items[From+i-To] = Items[i];
-    FCount -= (To-From);
+    const size_t copy_cnt = FCount-from-count;
+    for( size_t i=0; i < copy_cnt; i++ )
+      Items[from+i] = Items[from+count+i];
+    FCount -= count;
   }
 //..............................................................................
   void Remove(const T& pObj)  {

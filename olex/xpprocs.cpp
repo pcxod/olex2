@@ -758,7 +758,7 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   od.SetPieLineWidth(Options.FindValue("lw_pie", "0.5").ToDouble());
   od.SetElpLineWidth(Options.FindValue("lw_ellipse", "1").ToDouble());
   od.SetQuadLineWidth(Options.FindValue("lw_octant", "0.5").ToDouble());
-  od.SetBondOutlineColor(Options.FindValue("bond_outline_color", "0xFFFFFF").SafeInt<uint32_t>());
+  od.SetBondOutlineColor(Options.FindValue("bond_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
   od.SetBondOutlineSize(Options.FindValue("bond_outline_oversize", "10").ToFloat<float>()/100.0f);
   od.SetAtomOutlineColor(Options.FindValue("atom_outline_color", "0xFFFFFF").SafeInt<uint32_t>());
   od.SetAtomOutlineSize(Options.FindValue("atom_outline_oversize", "5").ToFloat<float>()/100.0f);
@@ -3624,7 +3624,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
         }
       }
       SL.Clear();
-      SL.Strtok( dlg->GetText(), '\n' );
+      SL.Strtok(dlg->GetText(), '\n');
       Ins.ParseHeader(SL);
       FXApp->XFile().LastLoaderChanged();
       BadReflectionsTable(false);
@@ -8301,6 +8301,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
     for( size_t i=0; i < xatoms.Count(); i++ )
       xatoms[i]->Atom().CAtom().SetPart(part);
   }
+  FXApp->CenterView(true);
   Macros.ProcessMacro("mode fit", E);
   AMode *md = Modes->GetCurrent();
   if( md != NULL )  {
