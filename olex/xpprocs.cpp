@@ -8316,46 +8316,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
   }
 }
 //..............................................................................
-void TMainForm::macFRAG(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TStrList lines(Cmds.Text(' '), '\n');
-  if( lines.Count() < 3 || !lines[0].StartsFromi("FRAG") || !lines.Last().String.StartsFromi("FEND"))
-    return;
-  lines.Delete(lines.Count()-1);
-  lines.Delete(0);
-  for( size_t i=0; i < lines.Count(); i++ )  {
-    TStrList toks(lines[i].Trim('\r'), ' ');
-    if( toks.Count() != 5 )  {
-      lines[i].SetLength(0);
-      continue;
-    }
-    toks.Delete(1);
-    lines[i] = toks.Text(' ');
-  }
-  TXyz xyz;
-  xyz.LoadFromStrings(lines);
-  TXAtomPList xatoms;
-  TXBondPList xbonds;
-  FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
-  int part = Options.FindValue("p", "-100").ToInt();
-  if( part != -100 )  {
-    for( size_t i=0; i < xatoms.Count(); i++ )
-      xatoms[i]->Atom().CAtom().SetPart(part);
-  }
-  FXApp->CenterView(true);
-  Macros.ProcessMacro("mode fit", E);
-  AMode *md = Modes->GetCurrent();
-  if( md != NULL )  {
-    md->AddAtoms(xatoms);
-    for( size_t i=0; i < xbonds.Count(); i++ )
-      FXApp->GetRender().Select(*xbonds[i], true);
-  }
-}
-//..............................................................................
 void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  olxstr FN = PickFile("Save Fragment as...",
-    "XYZ files (*.xyz)|*.xyz",
-    XLibMacros::CurrentDir, false);
-  if( FN.IsEmpty() )  return;
   TXAtomPList xatoms;
   TGlGroup& glg = FXApp->GetSelection();
   for( size_t i=0; i < glg.Count(); i++ )  {
@@ -8372,8 +8333,9 @@ void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
     E.ProcessingError(__OlxSrcInfo, "please select one fragment or one atom only");
     return;
   }
+  olxstr FN = PickFile("Save Fragment as...", "XYZ files (*.xyz)|*.xyz", XLibMacros::CurrentDir, false);
+  if( FN.IsEmpty() )  return;
   TXyz xyz;
-  
   for( size_t i=0; i < nets[0]->NodeCount(); i++ )  {
     if( nets[0]->Node(i).IsDeleted() || nets[0]->Node(i).GetType() == iQPeakZ )
       continue;

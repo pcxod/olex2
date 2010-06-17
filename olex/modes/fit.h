@@ -17,10 +17,6 @@ protected:
       xa.Atom().ccrd() = au.CartesianToCell(c);
       xa.Atom().CAtom().ccrd() = c;
     }
-    for( size_t i=0; i < group->Count(); i++ )  {
-      if( EsdlInstanceOf(group->GetObject(i), TXBond) )
-        ((TXBond&)group->GetObject(i)).BondUpdated();
-    }
     group->ResetBasis();
   }
 public:
@@ -48,8 +44,10 @@ public:
         return true;
       AtomsToMatch.Add((TXAtom&)obj);
       TGlXApp::GetMainForm()->SetUserCursor(AtomsToMatch.Count(), "<F>");
-      Update();
-      TMatchMode::FitAtoms(AtomsToMatch, "<F>", false);
+      if( (AtomsToMatch.Count()%2) == 0 )  {
+        Update();
+        TMatchMode::FitAtoms(AtomsToMatch, "<F>", false);
+      }
     }
     return true;
   }

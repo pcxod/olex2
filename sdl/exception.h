@@ -181,6 +181,14 @@ public:
   virtual IEObject* Replicate() const {  return new TInvalidIntegerNumberException(*this);  }
 };
 
+class TInvalidUnsignedNumberException : public TInvalidNumberException {
+public:
+  TInvalidUnsignedNumberException(const olxstr& location, const olxstr& str):
+    TInvalidNumberException(location, str)  {}
+  virtual const char* GetNiceName() const {  return "Invalid unsigned format";  }
+  virtual IEObject* Replicate() const {  return new TInvalidUnsignedNumberException(*this);  }
+};
+
 class TInvalidFloatNumberException : public TInvalidNumberException {
 public:
   TInvalidFloatNumberException(const olxstr& location, const olxstr& str):

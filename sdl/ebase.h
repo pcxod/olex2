@@ -439,6 +439,10 @@ public:
   static void ThrowFunctionFailed(const char* file, const char* function, int line, const char* msg);
   static void ThrowIndexOutOfRange(const char* file, const char* function, int line,
     size_t index, size_t min_ind, size_t max_ind);
+  static void ThrowInvalidUnsignedFormat(const char* file, const char* function, int line, 
+    const char* src, size_t src_len);
+  static void ThrowInvalidUnsignedFormat(const char* file, const char* function, int line, 
+    const wchar_t* src, size_t src_len);
   static void ThrowInvalidIntegerFormat(const char* file, const char* function, int line, 
     const char* src, size_t src_len);
   static void ThrowInvalidIntegerFormat(const char* file, const char* function, int line, 

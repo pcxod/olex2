@@ -230,6 +230,7 @@ protected:
 
   // view menu
   void OnHtmlPanel(wxCommandEvent& event);
+  bool ImportFrag(const olxstr& line);
   // macro functions
 private:
 
@@ -415,7 +416,6 @@ private:
 
   DefMacro(ImportFrag)
   DefMacro(ExportFrag)
-  DefMacro(FRAG)
 
   DefMacro(OnRefine)
   DefMacro(TestMT)

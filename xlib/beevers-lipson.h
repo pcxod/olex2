@@ -32,7 +32,7 @@ public:
 
 
   template <typename FloatT, class Task> static MapInfo Calculate(const TArrayList<SFUtil::StructureFactor>& F, 
-      FloatT*** map, const vec3i& dim, double vol)  {
+      FloatT*** map, const vec3s& dim, double vol)  {
     vec3i mini, maxi;
     SFUtil::FindMinMax(F, mini, maxi); 
     const double T_PI = 2*M_PI;
@@ -40,10 +40,10 @@ public:
     const int minInd = olx_min(mini[2], olx_min(mini[0], mini[1]));
     const int maxInd = olx_max(maxi[2], olx_max(maxi[0], maxi[1]));
     const size_t iLen = maxInd - minInd + 1;
-    const int mapMax = olx_max(dim[2], olx_max(dim[0], dim[1]));
+    const size_t mapMax = olx_max(dim[2], olx_max(dim[0], dim[1]));
     compd** sin_cosX = new compd*[dim[0]],
       **sin_cosY, **sin_cosZ;
-    for( int i=0; i < dim[0]; i++ )  {
+    for( size_t i=0; i < dim[0]; i++ )  {
       sin_cosX[i] = new compd[iLen];
       for( int j=minInd; j <= maxInd; j++ )  {
         double rv = (double)i*j/(double)dim[0], ca, sa;
@@ -58,7 +58,7 @@ public:
     }
     else  {
       sin_cosY = new compd*[dim[1]];
-      for( int i=0; i < dim[1]; i++ )  {
+      for( size_t i=0; i < dim[1]; i++ )  {
         sin_cosY[i] = new compd[iLen];
         for( int j=minInd; j <= maxInd; j++ )  {
           double rv = (double)i*j/(double)dim[1], ca, sa;
@@ -77,7 +77,7 @@ public:
     }
     else  {
       sin_cosZ = new compd*[dim[2]];
-      for( int i=0; i < dim[2]; i++ )  {
+      for( size_t i=0; i < dim[2]; i++ )  {
         sin_cosZ[i] = new compd[iLen];
         for( int j=minInd; j <= maxInd; j++ )  {
           double rv = (double)i*j/(double)dim[2], ca, sa;
@@ -106,16 +106,16 @@ public:
     // clean up of allocated data
     if( sin_cosY == sin_cosX )  sin_cosY = NULL;
     if( sin_cosZ == sin_cosX || sin_cosZ == sin_cosY )  sin_cosZ = NULL;
-    for( int i=0; i < dim[0]; i++ )
+    for( size_t i=0; i < dim[0]; i++ )
       delete [] sin_cosX[i];
     delete [] sin_cosX;
     if( sin_cosY != NULL )  {
-      for( int i=0; i < dim[1]; i++ )
+      for( size_t i=0; i < dim[1]; i++ )
         delete [] sin_cosY[i];
       delete [] sin_cosY;
     }
     if( sin_cosZ != NULL )  {
-      for( int i=0; i < dim[2]; i++ )
+      for( size_t i=0; i < dim[2]; i++ )
         delete [] sin_cosZ[i];
       delete [] sin_cosZ;
     }
@@ -125,7 +125,7 @@ public:
   template <typename FloatT>struct TCalcEDMTask  {
     FloatT*** map;
     const SFList& F;
-    const vec3i& dim;
+    const vec3s& dim;
     size_t kLen, lLen;
     compd  **sin_cosX, **sin_cosY, **sin_cosZ;
     compd ** S, *T;
@@ -133,7 +133,7 @@ public:
     int minInd;
     double sum, sq_sum, vol;
     double maxVal, minVal;
-    TCalcEDMTask(FloatT*** _map, const vec3i& _dim, double _volume,
+    TCalcEDMTask(FloatT*** _map, const vec3s& _dim, double _volume,
       const SFList& _F, const vec3i& _min, const vec3i& _max,
       compd** _scX, compd** _scY, compd** _scZ, int _minInd) :
       map(_map), dim(_dim), vol(_volume),
@@ -159,13 +159,13 @@ public:
         const SFUtil::StructureFactor& sf = F[i];
         S[sf.hkl[1]-mini[1]][sf.hkl[2]-mini[2]] += sf.val*sin_cosX[ix][sf.hkl[0]-minInd];
       }
-      for( int iy=0; iy < dim[1]; iy++ )  {
+      for( size_t iy=0; iy < dim[1]; iy++ )  {
         for( int i=mini[1]; i <= maxi[1]; i++ )  {
           for( int j=mini[2]; j <= maxi[2]; j++ )  {
             T[j-mini[2]] += S[i-mini[1]][j-mini[2]]*sin_cosY[iy][i-minInd];
           }
         }
-        for( int iz=0; iz < dim[2]; iz++ )  {
+        for( size_t iz=0; iz < dim[2]; iz++ )  {
           compd R;
           for( int i=mini[2]; i <= maxi[2]; i++ )  {
             R += T[i-mini[2]]*sin_cosZ[iz][i-minInd];
@@ -192,7 +192,7 @@ public:
   template <typename FloatT>struct TCalcPattTask  {
     FloatT*** map;
     const SFList& F;
-    const vec3i& dim;
+    const vec3s& dim;
     size_t kLen, lLen;
     compd  **sin_cosX, **sin_cosY, **sin_cosZ;
     compd ** S, *T;
@@ -200,7 +200,7 @@ public:
     int minInd;
     double sum, sq_sum, vol;
     double maxVal, minVal;
-    TCalcPattTask(FloatT*** _map, const vec3i& _dim, double _volume,
+    TCalcPattTask(FloatT*** _map, const vec3s& _dim, double _volume,
       const SFList& _F, const vec3i& _min, const vec3i& _max,
       compd** _scX, compd** _scY, compd** _scZ, int _minInd) :
       map(_map), dim(_dim), vol(_volume),
@@ -226,13 +226,13 @@ public:
         const SFUtil::StructureFactor& sf = F[i];
         S[sf.hkl[1]-mini[1]][sf.hkl[2]-mini[2]] += sf.val*sin_cosX[ix][sf.hkl[0]-minInd];
       }
-      for( int iy=0; iy < dim[1]; iy++ )  {
+      for( size_t iy=0; iy < dim[1]; iy++ )  {
         for( int i=mini[1]; i <= maxi[1]; i++ )  {
           for( int j=mini[2]; j <= maxi[2]; j++ )  {
             T[j-mini[2]] += S[i-mini[1]][j-mini[2]]*sin_cosY[iy][i-minInd];
           }
         }
-        for( int iz=0; iz < dim[2]; iz++ )  {
+        for( size_t iz=0; iz < dim[2]; iz++ )  {
           compd R;
           for( int i=mini[2]; i <= maxi[2]; i++ )  {
             R += T[i-mini[2]]*sin_cosZ[iz][i-minInd];
