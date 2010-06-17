@@ -664,7 +664,7 @@ public:
     return InvalidIndex;
   }
   //............................................................................
-  size_t IndexOf(const TTSString& wht)  const { return o_strpos(T::Data(), T::_Length, wht.Data(), wht._Length);  }
+  size_t IndexOf(const TTSString& wht) const { return o_strpos(T::Data(), T::_Length, wht.Data(), wht._Length);  }
   size_t IndexOfi(const TTSString& wht) const { return o_strposi(T::Data(), T::_Length, wht.Data(), wht._Length);  }
   size_t FirstIndexOf(const TTSString& wht, size_t from = 0) const {
     size_t i = o_strpos(&T::Data()[from], T::_Length-from, wht.Data(), wht._Length);
@@ -776,11 +776,11 @@ public:
   // function checks for preceding radix encoding
   template <typename IT> static IT o_atois(const TC* data, size_t len, bool& negative, unsigned short Rad=10) {
     if( len == 0 )    
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
+      TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
     size_t sts = 0; // string start, end
     while( o_iswhitechar(data[sts]) && ++sts < len )
     if( sts >= len )  
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
+      TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
     // test for any particluar format specifier, here just '0x', for hexadecimal
     if( len > sts+1 && data[sts] == '0' && (data[sts+1] == 'x' || data[sts+1] == 'X') )  {
       Rad = 16;
@@ -828,7 +828,7 @@ public:
     bool negative;
     IT val = o_atois<IT>(data, len, negative, Rad);
     if( negative )
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid unsigned integer format");
+      TExceptionBase::ThrowInvalidUnsignedFormat(__POlxSourceInfo, data, len);
     return val;
   }
   //............................................................................

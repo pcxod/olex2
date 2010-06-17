@@ -1112,11 +1112,11 @@ void TSpaceGroup::GetMatrices(smatd_list& matrices, short Flags) const {
   }
   if( Flags == mattAll )  {
     for( size_t i=0; i < matrices.Count(); i++ )
-      matrices[i].SetId(i, 0, 0, 0);
+      matrices[i].SetId((uint8_t)i, 0, 0, 0);
   }
   else if( Flags == (mattAll^mattIdentity) )  {
     for( size_t i=0; i < matrices.Count(); i++ )
-      matrices[i].SetId(i+1, 0, 0, 0);
+      matrices[i].SetId((uint8_t)i+1, 0, 0, 0);
   }
 }
 //..............................................................................

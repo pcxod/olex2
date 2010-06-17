@@ -40,7 +40,7 @@ public:
 protected:
 ////////////////////////////////////////////////////////////////////////
   struct IsoPoint {
-    int newID;
+    size_t newID;
     float x, y, z;
     bool initialised;
     IsoPoint(): initialised(false) {  }

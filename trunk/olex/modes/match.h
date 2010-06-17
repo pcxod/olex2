@@ -136,7 +136,6 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
       if( &gb != NULL && gb.IsDefaultColor() )
         gb.SetGlM(TGlMaterial("85;1.000,0.000,0.000,0.000;4144959;1.000,1.000,1.000,0.500;36"));
     }
-    TGlXApp::GetGXApp()->CenterView();
   }
   else if( AtomsToMatch.Count() == 4 )  {
     vec3d orgn = AtomsToMatch[1]->Atom().crd();
@@ -146,8 +145,6 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
     mat3d rm;
     CreateRotationMatrix(rm, rv, vec1.CAngle(vec2));
     TransformAtoms(atomsA, rm, rm*AtomsToMatch[0]->Atom().crd()-orgn);
-    TGlXApp::GetGXApp()->UpdateBonds();
-    TGlXApp::GetGXApp()->CenterView();
   }
   else if( AtomsToMatch.Count() == 6 )  {
     vec3d rv((AtomsToMatch[1]->Atom().crd() - AtomsToMatch[3]->Atom().crd()).Normalise());
@@ -159,8 +156,6 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
     mat3d rm;
     CreateRotationMatrix(rm, rv, v1.CAngle(v2));
     TransformAtoms(atomsA, rm, rm*AtomsToMatch[0]->Atom().crd()-AtomsToMatch[1]->Atom().crd());
-    TGlXApp::GetGXApp()->UpdateBonds();
-    TGlXApp::GetGXApp()->CenterView();
   }
   else  {
     TTypeList<AnAssociation2<TSAtom*,TSAtom*> > atoms(AtomsToMatch.Count()/2);
@@ -177,9 +172,8 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
     TNetwork::FindAlignmentMatrix(atoms, rm, false, TNetwork::weight_occu);
     for( size_t i=0; i < atomsA.Count(); i++ )
       atomsA[i]->crd() = rm*(atomsA[i]->crd()-center);
-    TGlXApp::GetGXApp()->UpdateBonds();
-    TGlXApp::GetGXApp()->CenterView();
   }
+  TGlXApp::GetGXApp()->UpdateBonds();
 }
 
 #endif

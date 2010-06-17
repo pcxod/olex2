@@ -243,7 +243,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
         if( i == ind )  {
           smatd eqm(Matrices[j]);
           eqm.t[0] += iLx;  eqm.t[1] += iLy;  eqm.t[2] += iLz;
-          eqm.SetId(j, iLx, iLy, iLz);
+          eqm.SetId((uint8_t)j, iLx, iLy, iLz);
           Atoms[ind]->AddEquiv(eqm);
           continue;
         }
@@ -815,7 +815,7 @@ void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, shor
 {
   TTypeList< AnAssociation2<vec3d,TCAtom*> > allAtoms;
   GenereteAtomCoordinates(allAtoms, true, _template);
-  const vec3i dim(map.Length1(), map.Length2(), map.Length3());
+  const vec3s dim = map.GetSize();
   // angstrem per pixel scale
   double capp = Lattice->GetAsymmUnit().Axes()[2].GetV()/dim[2],
          bapp = Lattice->GetAsymmUnit().Axes()[1].GetV()/dim[1],
@@ -851,12 +851,12 @@ void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, shor
   for( size_t i=0; i < allAtoms.Count(); i++ )  {
     TArray3D<bool>* spm = scatterers[allAtoms[i].GetB()->GetType().index];
     vec3d center = allAtoms[i].GetA()*dim;
-    const int ad = spm->Length1()/2;
-    const int bd = spm->Length2()/2;
-    const int cd = spm->Length3()/2;
-    for( int j = -ad; j <= ad; j ++ )  {
-      for( int k = -bd; k <= bd; k ++ )  {
-        for( int l = -cd; l <= cd; l ++ )  {
+    const index_t ad = spm->Length1()/2;
+    const index_t bd = spm->Length2()/2;
+    const index_t cd = spm->Length3()/2;
+    for( index_t j = -ad; j <= ad; j ++ )  {
+      for( index_t k = -bd; k <= bd; k ++ )  {
+        for( index_t l = -cd; l <= cd; l ++ )  {
           if( !spm->Data[j+ad][k+bd][l+cd] )  continue;
           vec3i crd;
           aa[0] = vec3i(olx_round(center[0]+j), olx_round(center[1]+k), olx_round(center[2]+l)); //x,y,z
@@ -870,9 +870,9 @@ void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, shor
           for( int ci=0; ci < 8; ci++ )  {
             for( size_t m=0; m < 3; m++ )  {
               if( aa[ci][m] < 0 )
-                aa[ci][m] += dim[m];
+                aa[ci][m] += (int)dim[m];
               else if( aa[ci][m] >= dim[m] )
-                aa[ci][m] -= dim[m];
+                aa[ci][m] -= (int)dim[m];
             }
             map.Data[aa[ci][0]][aa[ci][1]][aa[ci][2]] = val;
           }
@@ -890,7 +890,7 @@ void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& _map, double delta, sho
   TTypeList< AnAssociation3<vec3f,TCAtom*, float> > allAtoms;
   GenereteAtomCoordinates(allAtoms, true, _template);
   ExpandAtomCoordinates(allAtoms, 1./2);
-  const vec3i dims(_map.Length1(), _map.Length2(), _map.Length3());
+  const vec3s dims = _map.GetSize();
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   TPSTypeList<short, float> radii;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
@@ -912,9 +912,9 @@ void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& _map, double delta, sho
   TListIteratorManager<TBuildDistanceMapTask> taskm(task, dims[0], tLinearTask, 0);
   task.clear_loop_data();
   float scale = (float)dims[0]/(float)Lattice->GetAsymmUnit().Axes()[0].GetV();
-  for( int i=0; i < dims[0]; i++ )  {
-    for( int j=0; j < dims[1]; j++ )  {
-      for( int k=0; k < dims[2]; k++ )  {
+  for( size_t i=0; i < dims[0]; i++ )  {
+    for( size_t j=0; j < dims[1]; j++ )  {
+      for( size_t k=0; k < dims[2]; k++ )  {
         if( map.Data[i][j][k] > 0 )
           _map.Data[i][j][k] = olx_round_t<short,float>(map.Data[i][j][k]*scale);
         else
@@ -957,8 +957,8 @@ void TUnitCell::TBuildDistanceMapTask::clear_loop_data()  {
 }
 void TUnitCell::TBuildDistanceMapTask::Run(size_t ind) const {
   const size_t ac = atoms.Count();
-  for( int i = 0; i < dims[1]; i++ )  {
-    for( int j = 0; j < dims[2]; j++ )  {
+  for( size_t i = 0; i < dims[1]; i++ )  {
+    for( size_t j = 0; j < dims[2]; j++ )  {
       vec3f p(loop_data[0][ind] + loop_data[1][i] + loop_data[3][j], loop_data[2][i] + loop_data[4][j], loop_data[5][j]);
       const float pl = p.Length();
       for( size_t k=0; k < ac; k++ )  {
@@ -977,7 +977,7 @@ void TUnitCell::TBuildDistanceMapTask::Run(size_t ind) const {
 void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short val, 
                                   ElementRadii* radii, const TCAtomPList* _template)
 {
-  const vec3i dims(map.Length1(), map.Length2(), map.Length3());
+  const vec3s dims = map.GetSize();
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   double capp = au.GetAxes()[2].GetV()/dims[2],
          bapp = au.GetAxes()[1].GetV()/dims[1],
@@ -1036,9 +1036,9 @@ void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short
         for( int ci=0; ci < 8; ci++ )  {
           for( size_t m=0; m < 3; m++ )  {
             if( aa[ci][m] < 0 )
-              aa[ci][m] += dims[m];
+              aa[ci][m] += (int)dims[m];
             else if( aa[ci][m] >= dims[m] )
-              aa[ci][m] -= dims[m];
+              aa[ci][m] -= (int)dims[m];
           }
           map.Data[aa[ci][0]][aa[ci][1]][aa[ci][2]] = val;
         }
@@ -1060,9 +1060,9 @@ void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short
         for( size_t k=0; k < 3; k++ )  {
           // cannot use if/else here - in some silly cases (like one atom in the AU) this can cause crashes
           while( crd[k] < 0 )
-            crd[k] += dims[k];
+            crd[k] += (int)dims[k];
           while( crd[k] >= dims[k] )
-            crd[k] -= dims[k];
+            crd[k] -= (int)dims[k];
         }
         short& cv = map.Data[crd[0]][crd[1]][crd[2]];
         if( cv > map_val )  {

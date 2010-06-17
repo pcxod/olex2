@@ -38,6 +38,20 @@ void TExceptionBase::ThrowIndexOutOfRange(const char* file, const char* func, in
   throw TIndexOutOfRangeException(FormatSrc(file,func,line), index, min_ind, max_ind);
 }
 //................................................................................................
+void TExceptionBase::ThrowInvalidUnsignedFormat(const char* file, const char* func, int line, 
+    const char* src, size_t src_len)
+{
+  throw TInvalidUnsignedNumberException(FormatSrc(file,func,line),
+    olxstr('\'') << olxstr(src, src_len) << '\'');
+}
+//................................................................................................
+void TExceptionBase::ThrowInvalidUnsignedFormat(const char* file, const char* func, int line, 
+    const wchar_t* src, size_t src_len)
+{
+  throw TInvalidUnsignedNumberException(FormatSrc(file,func,line),
+    olxstr('\'') << olxstr(src, src_len) << '\'');
+}
+//................................................................................................
 void TExceptionBase::ThrowInvalidIntegerFormat(const char* file, const char* func, int line, 
     const char* src, size_t src_len)
 {

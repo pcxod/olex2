@@ -50,6 +50,7 @@
 
 #include "ins.h"
 #include "cif.h"
+#include "xyz.h"
 
 #include "efile.h"
 
@@ -913,8 +914,6 @@ separated values of Atom Type and radius, an entry a line");
   this_InitMacroD(ImportFont, EmptyString, fpTwo, "");
   this_InitMacroD(ImportFrag, "p-part to assign", fpNone|psFileLoaded, "Import a fragment to current structure");
   this_InitMacroD(ExportFrag, EmptyString, fpNone|psFileLoaded, "Exports selected fragment to an external file");
-  this_InitMacroD(FRAG, EmptyString, (fpAny^fpNone)|psFileLoaded,
-    "Imports a fragment form the command line");
   this_InitMacroD(ProjSph, "r-radius of the projection spehere [5]", fpNone|fpOne|psFileLoaded, 
     "Creates a projection of the fragment of the provided atom onto a spehere");
   this_InitMacroD(UpdateQPeakTable, EmptyString, fpNone|psFileLoaded, "Internal routine for synchronisation");
@@ -2511,6 +2510,44 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
   }
 }
 //..............................................................................
+bool TMainForm::ImportFrag(const olxstr& line)  {
+  olxstr trimmed_content = line;
+  trimmed_content.Trim(' ').Trim('\n').Trim('\r');
+  if( !trimmed_content.StartsFromi("FRAG") || !trimmed_content.EndsWithi("FEND") )
+    return false;
+  TStrList lines(trimmed_content, '\n');
+  lines.Delete(lines.Count()-1);
+  lines.Delete(0);
+  for( size_t i=0; i < lines.Count(); i++ )  {
+    TStrList toks(lines[i].Trim('\r'), ' ');
+    if( toks.Count() != 5 )  {
+      lines[i].SetLength(0);
+      continue;
+    }
+    toks.Delete(1);
+    lines[i] = toks.Text(' ');
+  }
+  try {
+    TXyz xyz;
+    xyz.LoadFromStrings(lines);
+    if( xyz.GetAsymmUnit().AtomCount() == 0 )
+      return false;
+    TXAtomPList xatoms;
+    TXBondPList xbonds;
+    FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
+    FXApp->CenterView(true);
+    ProcessMacro("mode fit");
+    AMode *md = Modes->GetCurrent();
+    if( md != NULL )  {
+      md->AddAtoms(xatoms);
+      for( size_t i=0; i < xbonds.Count(); i++ )
+        FXApp->GetRender().Select(*xbonds[i], true);
+    }
+    return true;
+  }
+  catch(...)  {  return false;  }
+}
+//..............................................................................
 void TMainForm::OnChar(wxKeyEvent& m)  {
   short Fl=0, inc=3;
   olxstr Cmd, FullCmd;
@@ -2571,16 +2608,18 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
       if (wxTheClipboard->IsSupported(wxDF_TEXT) )  {
         wxTextDataObject data;
         wxTheClipboard->GetData(data);
-        olxstr Tmp = FGlConsole->GetCommand();
-        size_t ip = FGlConsole->GetCmdInsertPosition();
-        if( ip >= Tmp.Length() )
-          Tmp << data.GetText().c_str();
-        else
-          Tmp.Insert(data.GetText().c_str(), ip);
-        for( size_t i=0; i < Tmp.Length(); i++ )
-          if( Tmp.CharAt(i) > 255 )
-            Tmp[i] = 255;
-        FGlConsole->SetCommand(Tmp);
+        olxstr cmdl = FGlConsole->GetCommand();
+        olxstr content = data.GetText().c_str();
+        if( !ImportFrag(content) )  {
+        olxstr trimmed_content = content;
+        trimmed_content.Trim(' ').Trim('\n').Trim('\r');
+          const size_t ip = FGlConsole->GetCmdInsertPosition();
+          if( ip >= cmdl.Length() )
+            cmdl << content;
+          else
+            cmdl.Insert(content, ip);
+          FGlConsole->SetCommand(cmdl);
+        }
         TimePerFrame = FXApp->Draw();
       }
       wxTheClipboard->Close();

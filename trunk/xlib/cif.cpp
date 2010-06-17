@@ -168,7 +168,7 @@ bool TCif::ExtractLoop(size_t& start)  {
   Loops.Last().String = Loop.GetLoopName();
   start--;
   if( !OxfordCols.IsEmpty() )  {  // re-format the loop to correct the syntax
-    TIntList OxfordRows;
+    TArrayList<size_t> OxfordRows;
     for( size_t i=0; i < Loop.GetTable().RowCount(); i++ )  {
       for( size_t j=0; j < OxfordCols.Count(); j++ )  {
         if( Loop[i][OxfordCols[j].GetA()] != '.' )

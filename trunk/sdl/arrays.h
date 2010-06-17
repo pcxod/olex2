@@ -8,6 +8,7 @@
   #include <string.h>
 #endif
 #include "evector.h"
+#include "threex3.h"
 
 BeginEsdlNamespace()
 /*
@@ -176,6 +177,7 @@ public:
            (ind[1] >= MinHeight && ((ind[1]-MinHeight) < (index_t)Height)) &&
            (ind[2] >= MinDepth && ((ind[2]-MinDepth) < (index_t)Depth));
   }
+  vec3s GetSize() const {  return vec3s(Width, Height, Depth);  }
   inline size_t GetWidth() const {  return Width;  }
   inline size_t Length1() const {  return Width;  }
   index_t GetMin1() const {  return MinWidth;  }
