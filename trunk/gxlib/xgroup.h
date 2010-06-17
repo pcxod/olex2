@@ -11,10 +11,44 @@ class TXGroup : public TGlGroup, public AGlMouseHandler {
   vec3d RotationCenter;
 protected:
   virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) const {
+    if( GetParentGroup() != NULL )  {  // is inside a group?
+      TGlGroup::DoDraw(SelectPrimitives, SelectObjects);
+      return;
+    }
     olx_gl::translate(RotationCenter);  // + Basis.GetCenter() - in the next call to orient...
     olx_gl::orient(Basis);
     olx_gl::translate(-RotationCenter);
-    TGlGroup::DoDraw(SelectPrimitives, SelectObjects);
+    for( size_t i=0; i < Count(); i++ )  {
+      AGDrawObject& G = GetObject(i);
+      if( !G.IsVisible() || G.IsDeleted() )  continue;
+      if( G.IsGroup() )    {
+        TGlGroup* group = dynamic_cast<TGlGroup*>(&G);
+        if( group != NULL )  {
+          group->Draw(SelectPrimitives, SelectObjects);
+          continue;
+        }
+      }
+      const size_t pc = G.GetPrimitives().PrimitiveCount();
+      for( size_t j=0; j < pc; j++ )  {
+        TGlPrimitive& GlP = G.GetPrimitives().GetPrimitive(j);
+        TGlMaterial glm = GlP.GetProperties();
+        glm.SetFlags(glm.GetFlags()|sglmColorMat|sglmShininessF|sglmSpecularF);
+        glm.AmbientF *= 0.75;
+        glm.AmbientF = glm.AmbientF.GetRGB() | 0x007070;
+        glm.ShininessF = 32;
+        glm.SpecularF = 0xff00;
+        glm.Init(false);
+        if( SelectObjects )     olx_gl::loadName((GLuint)G.GetTag());
+        if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
+        olx_gl::pushMatrix();
+        if( G.Orient(GlP) )  {
+          olx_gl::popMatrix();
+          continue;
+        }
+        GlP.Draw();
+        olx_gl::popMatrix();
+      }
+    }
   }
   TEBasis Basis;
   virtual bool DoTranslate(const vec3d& t) {  Basis.Translate(t);  return true;  }
@@ -47,6 +81,7 @@ public:
   const vec3d& GetCenter() const {  return Basis.GetCenter();  }
   const mat3d& GetMatrix() const {  return Basis.GetMatrix();  }
   const vec3d& GetRotationCenter() const {  return RotationCenter;  }
+  void ResetBasis() {  Basis.Reset();  }
 };
 
 EndGxlNamespace()

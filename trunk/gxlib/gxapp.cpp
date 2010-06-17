@@ -323,13 +323,14 @@ TGXApp::~TGXApp()  {
 }
 //..............................................................................
 void TGXApp::ClearXObjects()  {
-  OnObjectsDestroy.Execute(dynamic_cast<TBasicApp*>(this), NULL);
+  OnObjectsDestroy.Enter(dynamic_cast<TBasicApp*>(this), NULL);
   XAtoms.Clear();
   XBonds.Clear();
   XGrowLines.Clear();
   XGrowPoints.Clear();
   XReflections.Clear();
   XPlanes.Clear();
+  OnObjectsDestroy.Exit(dynamic_cast<TBasicApp*>(this), NULL);
 }
 //..............................................................................
 void TGXApp::Clear()  {

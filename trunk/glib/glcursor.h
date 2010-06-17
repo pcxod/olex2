@@ -14,7 +14,7 @@ class TGlCursor: public AGDrawObject, AEventsDispatcher  {
   class TGlPrimitive *Primitive;
   olxch Symbol;
 protected:
-  bool Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
+  bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
 public:
   TGlCursor(TGlRenderer& Render, const olxstr& collectionName, bool TextStyle = true);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
@@ -26,15 +26,15 @@ public:
   DefPropP(uint16_t, FontIndex)
   class TGlFont& GetFont() const;
   
-  bool IsText()  const {  return TextStyle;  }
+  bool IsText() const {  return TextStyle;  }
   inline olxch GetSymbol() const {  return Symbol;  }
   void SetSymbol(olxch v);
 
   virtual bool Orient(TGlPrimitive& P);
-  bool GetDimensions(vec3d &Max, vec3d &Min){  return false;};
+  bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
 
   void LibSymbol(const TStrObjList& Params, TMacroError& E);
-  class TLibrary*  ExportLibrary(const olxstr& name="cursor");
+  class TLibrary* ExportLibrary(const olxstr& name="cursor");
 };
 
 EndGlNamespace()

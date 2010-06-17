@@ -125,7 +125,13 @@ void TGlGroup::DoDraw(bool SelectPrimitives, bool SelectObjects) const {
     AGDrawObject* G = FObjects[i];
     if( !G->IsVisible() )  continue;
     if( G->IsDeleted() )  continue;
-    if( G->IsGroup() )    { G->Draw();  continue; }
+    if( G->IsGroup() )    {
+      TGlGroup* group = dynamic_cast<TGlGroup*>(G);
+      if( group != NULL )  {
+        group->Draw(SelectPrimitives, SelectObjects);
+        continue;
+      }
+    }
     const size_t pc = G->GetPrimitives().PrimitiveCount();
     for( size_t j=0; j < pc; j++ )  {
       TGlPrimitive& GlP = G->GetPrimitives().GetPrimitive(j);

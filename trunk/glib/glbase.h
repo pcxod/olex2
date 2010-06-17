@@ -216,6 +216,11 @@ struct olx_gl  {
   static void get(GLenum param, GLint* dest)  {  glGetIntegerv(param, dest);  }
   static void get(GLenum param, GLfloat* dest)  {  glGetFloatv(param, dest);  }
   static void get(GLenum param, GLdouble* dest)  {  glGetDoublev(param, dest);  }
+  static GLint getInt(GLenum param)  {
+    GLint v[4];  // safety sake
+    glGetIntegerv(param, v);
+    return v[0];
+  }
 
   static void blendFunc(GLenum sfactor, GLenum dfactor)  {  glBlendFunc(sfactor, dfactor);  }
   static void alphaFunc(GLenum func, GLfloat ref)  {  glAlphaFunc(func, ref);  }

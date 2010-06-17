@@ -1,23 +1,14 @@
 #ifndef __OLX_FIT_MODE_H
 #define __OLX_FIT_MODE_H
 #include "xgroup.h"
+#include "match.h"
 
 class TFitMode : public AMode  {
   TXGroup* group;
-  TXAtomPList Atoms;
+  TXAtomPList Atoms, AtomsToMatch;
 protected:
-public:
-  TFitMode(size_t id) : AMode(id)  {}
-  bool Init(TStrObjList &Cmds, const TParamList &Options) {
-    TGXApp& app = *TGlXApp::GetGXApp();
-    TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
-    group = &app.GetRender().ReplaceSelection<TXGroup>();
-    return true;
-  }
-  ~TFitMode() {
-    TGXApp& app = *TGlXApp::GetGXApp();
-    TAsymmUnit& au = app.XFile().GetAsymmUnit();
-    RefinementModel& rm = app.XFile().GetRM();
+  void Update()  {
+    TAsymmUnit& au = TGlXApp::GetGXApp()->XFile().GetAsymmUnit();
     for( size_t i=0; i < Atoms.Count(); i++ )  {
       TXAtom& xa = *Atoms[i];
       xa.Atom().crd() = (xa.Atom().crd()-group->GetRotationCenter())*group->GetMatrix() +
@@ -30,10 +21,48 @@ public:
       if( EsdlInstanceOf(group->GetObject(i), TXBond) )
         ((TXBond&)group->GetObject(i)).BondUpdated();
     }
+    group->ResetBasis();
+  }
+public:
+  TFitMode(size_t id) : AMode(id)  {}
+  bool Init(TStrObjList &Cmds, const TParamList &Options) {
+    AtomsToMatch.Clear();
+    TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
+    group = &TGlXApp::GetGXApp()->GetRender().ReplaceSelection<TXGroup>();
+    return true;
+  }
+  ~TFitMode() {
+    TGXApp& app = *TGlXApp::GetGXApp();
+    TAsymmUnit& au = app.XFile().GetAsymmUnit();
+    RefinementModel& rm = app.XFile().GetRM();
+    Update();
+    for( size_t i=0; i < Atoms.Count(); i++ )  {
+      rm.Vars.FixParam(Atoms[i]->Atom().CAtom(), catom_var_name_Sof);
+    }
     app.GetRender().ReplaceSelection<TGlGroup>();
+    app.XFile().GetLattice().UpdateConnectivity();
   }
   virtual bool OnObject(AGDrawObject &obj)  {
-    if( EsdlInstanceOf( obj, TXAtom) )  {
+    if( EsdlInstanceOf(obj, TXAtom) )  {
+      if( AtomsToMatch.IsEmpty() && Atoms.IndexOf((TXAtom&)obj) == InvalidIndex )
+        return true;
+      AtomsToMatch.Add((TXAtom&)obj);
+      TGlXApp::GetMainForm()->SetUserCursor(AtomsToMatch.Count(), "<F>");
+      Update();
+      TMatchMode::FitAtoms(AtomsToMatch, "<F>", false);
+    }
+    return true;
+  }
+  virtual void OnGraphicsDestroy()  {
+    Atoms.Clear();
+    AtomsToMatch.Clear();
+    TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
+  }
+  virtual bool OnKey(int keyId, short shiftState)  {
+    if( shiftState == 0 && keyId == WXK_ESCAPE )  {
+      if( AtomsToMatch.IsEmpty() )  return false;
+      AtomsToMatch.Delete(AtomsToMatch.Count()-1);
+      TGlXApp::GetMainForm()->SetUserCursor(AtomsToMatch.Count(), "<F>");
       return true;
     }
     return false;
