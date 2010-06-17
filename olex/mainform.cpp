@@ -913,6 +913,8 @@ separated values of Atom Type and radius, an entry a line");
   this_InitMacroD(ImportFont, EmptyString, fpTwo, "");
   this_InitMacroD(ImportFrag, "p-part to assign", fpNone|psFileLoaded, "Import a fragment to current structure");
   this_InitMacroD(ExportFrag, EmptyString, fpNone|psFileLoaded, "Exports selected fragment to an external file");
+  this_InitMacroD(FRAG, EmptyString, (fpAny^fpNone)|psFileLoaded,
+    "Imports a fragment form the command line");
   this_InitMacroD(ProjSph, "r-radius of the projection spehere [5]", fpNone|fpOne|psFileLoaded, 
     "Creates a projection of the fragment of the provided atom onto a spehere");
   this_InitMacroD(UpdateQPeakTable, EmptyString, fpNone|psFileLoaded, "Internal routine for synchronisation");
@@ -2296,7 +2298,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     }
   }
   else if( MsgId == ID_XOBJECTSDESTROY )  {
-    if( Modes->GetCurrent() != NULL ) Modes->GetCurrent()->OnGraphicsDestroy();
+    if( Modes->GetCurrent() != NULL )
+      Modes->GetCurrent()->OnGraphicsDestroy();
   }
   else if( MsgId == ID_FileLoad )  {
     if( MsgSubId == msiEnter )
@@ -4119,7 +4122,7 @@ void TMainForm::UnlockWindowDestruction(wxWindow* wnd)  {
 bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool GetAll, bool unselect)  {
   size_t cnt = xatoms.Count();
   if( Cmds.IsEmpty() )  {
-    FXApp->FindXAtoms("sel", xatoms, unselect);
+    FXApp->FindXAtoms("sel", xatoms, EsdlInstanceOf(FXApp->GetSelection(), TGlGroup) ? unselect : false);
     if( GetAll && xatoms.IsEmpty() )
       FXApp->FindXAtoms(EmptyString, xatoms, unselect);
   }

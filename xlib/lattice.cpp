@@ -245,6 +245,7 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
     else
       atoms[i-dac] = Atoms[i];
   }
+  BuildAtomRegistry();
   Network->Disassemble(atoms, Fragments, Bonds);
   dac = 0;
   for( size_t i=0; i < ac; i++ )  {
@@ -260,7 +261,6 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
   }
   if( dac != 0 )
     Atoms.Pack();
-  BuildAtomRegistry();
 }
 //..............................................................................
 void TLattice::BuildPlanes()  {
@@ -2280,6 +2280,7 @@ void TLattice::BuildAtomRegistry()  {
   AtomRegistry::RegistryType& registry = atomRegistry.Init(mind, maxd);
   size_t deleted_count=0;
   for( size_t i=0; i < Atoms.Count(); i++ )  {
+    if( Atoms[i]->IsDeleted() )  continue;
     const vec3i t = smatd::GetT(Atoms[i]->GetMatrix(0).GetId());
     TArrayList<TSAtomPList*>* aum_slice = registry.Value(t);
     if( aum_slice == NULL )  {
@@ -2295,16 +2296,11 @@ void TLattice::BuildAtomRegistry()  {
       for( size_t j=0 ; j < atom_cnt; j++)
         (*au_slice)[j] = NULL;
     }
-    if( (*au_slice)[Atoms[i]->CAtom().GetId()] != NULL )  {
-      delete Atoms[i];
-      Atoms[i] = NULL;
-      deleted_count++;
-    }
+    if( (*au_slice)[Atoms[i]->CAtom().GetId()] != NULL )
+      Atoms[i]->SetDeleted(true);
     else
       (*au_slice)[Atoms[i]->CAtom().GetId()] = Atoms[i];
   } 
-  if( deleted_count != 0 )
-    Atoms.Pack();
 }
 //..............................................................................
 void TLattice::AddLatticeContent(const TLattice& latt)  {
@@ -2340,12 +2336,18 @@ void TLattice::AddLatticeContent(const TLattice& latt)  {
   }
   for( size_t i=0; i < latt.FragmentCount(); i++ )  {
     const TNetwork& src_n = latt.GetFragment(i);
-    TNetwork* net = Fragments.Add(new TNetwork(this, Network));
-    net->SetLattId(Fragments.Count()-1);
-    for( size_t j=0; j < src_n.NodeCount(); j++ )
-      net->AddNode(*new_atoms[src_n.Node(j).GetLattId()]);
-    for( size_t j=0; j < src_n.BondCount(); j++ )
-      net->AddBond(*new_bonds[src_n.Bond(j).GetLattId()]);
+    TNetwork& net = *Fragments.Add(new TNetwork(this, Network));
+    net.SetLattId(Fragments.Count()-1);
+    for( size_t j=0; j < src_n.NodeCount(); j++ )  {
+      TSAtom& a = *new_atoms[src_n.Node(j).GetLattId()];
+      net.AddNode(a);
+      a.SetNetwork(net);
+    }
+    for( size_t j=0; j < src_n.BondCount(); j++ )  {
+      TSBond& b = *new_bonds[src_n.Bond(j).GetLattId()];
+      net.AddBond(b);
+      b.SetNetwork(net);
+    }
   }
 }
 //..............................................................................

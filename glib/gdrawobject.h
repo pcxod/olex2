@@ -10,13 +10,14 @@
 
 BeginGlNamespace()
 
-const short  sgdoVisible   = 0x0001, // TGDrawObject flags
-             sgdoSelected  = 0x0002,
-             sgdoGroupable = 0x0004,
-             sgdoGroup     = 0x0008,
-             sgdoGrouped   = 0x0010,
-             sgdoDeleted   = 0x0020,
-             sgdoSelectable= 0x0040;
+const short
+  sgdoVisible    = 0x0001, // TGDrawObject flags
+  sgdoSelected   = 0x0002,
+  sgdoGroupable  = 0x0004,
+  sgdoGroup      = 0x0008,
+  sgdoGrouped    = 0x0010,
+  sgdoDeleted    = 0x0020,
+  sgdoSelectable = 0x0040;
 
 class TlGroup;
 /*
@@ -73,12 +74,7 @@ public:
   virtual bool OnDblClick(const IEObject *Sender, const class TMouseData *Data)  {  return false;  }
   virtual bool OnZoom(const IEObject *Sender, const class TMouseData *Data)  {  return false;  }
 
-  // to be used in groups only
-  virtual void Draw() const {}
-
-  // need a virtual setter!
-  //DefPropBFIsSet(Visible, Flags, sgdoVisible)
-  //DefPropBFIsSet(Selected, Flags, sgdoSelected)
+  // need a virtual setters for these
   virtual void SetVisible(bool v)  {  SetBit(v, Flags, sgdoVisible);  }
   inline bool IsVisible() const {  return ((Flags&sgdoVisible) != 0) && !IsDeleted();  }
   virtual void SetSelected(bool v)  {  SetBit(v, Flags, sgdoSelected);  }
@@ -101,7 +97,7 @@ public:
   virtual void UpdaterimitiveParams(TGlPrimitive* GlP)  {}
   // the object should update its parameters from GlP
 
-  virtual short DrawStyle() const {  return 0; }
+  virtual short DrawStyle() const {  return 0;  }
   /* is used to compile new created primitives without rebuilding entire model;
   use it when some object is added to existing scene */
   virtual void Compile(); 

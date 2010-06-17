@@ -754,8 +754,8 @@ void TGlRenderer::SelectAll(bool Select)  {
         if( GDO.GetPrimitives().PrimitiveCount() != 0 &&
           FSelection->GetGlM().IsIdentityDraw() != GDO.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw())
           continue;
+        if( &GDO == FSelection )  continue;
         if( EsdlInstanceOf(GDO, TGlGroup) )  {
-          if( &GDO == FSelection )  continue;
           bool Add = false;
           for( size_t j=0; j < ((TGlGroup&)GDO).Count(); j++ )  {
             if( ((TGlGroup&)GDO).GetObject(j).IsVisible() )  {

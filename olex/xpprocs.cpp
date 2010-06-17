@@ -42,6 +42,7 @@
 #include "gllabels.h"
 #include "dunitcell.h"
 #include "dbasis.h"
+#include "xgroup.h"
 
 #include "symmparser.h"
 
@@ -8315,6 +8316,41 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
   }
 }
 //..............................................................................
+void TMainForm::macFRAG(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TStrList lines(Cmds.Text(' '), '\n');
+  if( lines.Count() < 3 || !lines[0].StartsFromi("FRAG") || !lines.Last().String.StartsFromi("FEND"))
+    return;
+  lines.Delete(lines.Count()-1);
+  lines.Delete(0);
+  for( size_t i=0; i < lines.Count(); i++ )  {
+    TStrList toks(lines[i].Trim('\r'), ' ');
+    if( toks.Count() != 5 )  {
+      lines[i].SetLength(0);
+      continue;
+    }
+    toks.Delete(1);
+    lines[i] = toks.Text(' ');
+  }
+  TXyz xyz;
+  xyz.LoadFromStrings(lines);
+  TXAtomPList xatoms;
+  TXBondPList xbonds;
+  FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
+  int part = Options.FindValue("p", "-100").ToInt();
+  if( part != -100 )  {
+    for( size_t i=0; i < xatoms.Count(); i++ )
+      xatoms[i]->Atom().CAtom().SetPart(part);
+  }
+  FXApp->CenterView(true);
+  Macros.ProcessMacro("mode fit", E);
+  AMode *md = Modes->GetCurrent();
+  if( md != NULL )  {
+    md->AddAtoms(xatoms);
+    for( size_t i=0; i < xbonds.Count(); i++ )
+      FXApp->GetRender().Select(*xbonds[i], true);
+  }
+}
+//..............................................................................
 void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   olxstr FN = PickFile("Save Fragment as...",
     "XYZ files (*.xyz)|*.xyz",
@@ -8731,7 +8767,8 @@ void TMainForm::macCenter(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       FXApp->GetRender().GetBasis().SetZoom(FXApp->GetRender().CalcZoom());
     else  {
       TXAtomPList atoms;
-      FindXAtoms(Cmds, atoms, true, true);
+      if( !FindXAtoms(Cmds, atoms, true, true) )
+        return;
       vec3d center;
       double sum = 0;
       for( size_t i=0; i < atoms.Count(); i++ )  {
@@ -8740,6 +8777,8 @@ void TMainForm::macCenter(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       }
       if( sum != 0 )  {
         center /= sum;
+        if( atoms[0]->GetParentGroup() != NULL && EsdlInstanceOf(*atoms[0]->GetParentGroup(), TXGroup) )
+          center += ((TXGroup*)atoms[0]->GetParentGroup())->GetCenter();
         FXApp->GetRender().GetBasis().SetCenter(-center);
       }
     }

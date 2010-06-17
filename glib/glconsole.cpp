@@ -175,7 +175,6 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
     }
   }
   OGlM.Init(Parent.IsColorStereo()); // restore the material properties
-  FCursor->Draw();
   return true;
 }
 //..............................................................................

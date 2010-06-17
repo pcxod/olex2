@@ -415,6 +415,7 @@ private:
 
   DefMacro(ImportFrag)
   DefMacro(ExportFrag)
+  DefMacro(FRAG)
 
   DefMacro(OnRefine)
   DefMacro(TestMT)

@@ -9,17 +9,6 @@ UseGlNamespace();
 //..............................................................................
 const TGlOption GlobalGlFunction(BlackColor);
 //..............................................................................
-TGlMaterial::TGlMaterial()  {
-  Flags = sglmShininessF | sglmSpecularF | sglmDiffuseF | sglmAmbientF;
-  ShininessF = ShininessB = 36;
-  SpecularF  = 0x80ffffff;
-  DiffuseF   = 0x80777777;
-  AmbientF   = 0x807f7f7f;
-  SpecularB  = 0x80ffffff;
-  DiffuseB   = 0x80777777;
-  AmbientB   = 0x807f7f7f;
-}
-//..............................................................................
 bool TGlMaterial::operator == (const AGOProperties &G) const  {
   TGlMaterial *GlM = (TGlMaterial*)&G;
   return this->operator == (*GlM);
@@ -153,7 +142,7 @@ void TGlMaterial::Init(bool skip) const  {
       olx_gl::colorMaterial(GL_FRONT, GL_SPECULAR);
       olx_gl::color(SpecularF.Data());
     }
-    if( Flags & sglmEmissionB )  {
+    if( Flags & sglmSpecularB )  {
       olx_gl::colorMaterial(GL_BACK, GL_SPECULAR);
       olx_gl::color(SpecularB.Data());
     }
@@ -180,18 +169,7 @@ const TGlMaterial& TGlMaterial::Intensity(TGlOption& ClearColor, double intensit
 }
 //..............................................................................
 void TGlMaterial::ToDataItem(TDataItem& Item) const {
-  Item.SetValue( ToString() );
-//  Item->AddField("AmbientF", AmbientF.ToString());
-//  Item->AddField("AmbientB", AmbientB.ToString());
-//  Item->AddField("DiffuseF", DiffuseF.ToString());
-//  Item->AddField("DiffuseB", DiffuseB.ToString());
-//  Item->AddField("EmissionF", EmissionF.ToString());
-//  Item->AddField("EmissionB", EmissionB.ToString());
-//  Item->AddField("SpecularF", SpecularF.ToString());
-//  Item->AddField("SpecularB", SpecularB.ToString());
-//  Item->AddField("ShininessF", ShininessF);
-//  Item->AddField("ShininessB", ShininessB);
-//  Item->AddField("Flags", TEString( Flags) );
+  Item.SetValue(ToString());
 }
 //..............................................................................
 bool TGlMaterial::FromDataItem(const TDataItem& Item)  {
