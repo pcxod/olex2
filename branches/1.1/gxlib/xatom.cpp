@@ -1,13 +1,7 @@
 //----------------------------------------------------------------------------//
-// namespace TEXLib
 // TXAtom  - a drawing object for atom
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "xatom.h"
 #include "glprimitive.h"
 #include "gpcollection.h"
@@ -58,8 +52,7 @@ olxstr TXAtom::PolyTypeName("PolyType");
 //..............................................................................
 
 TXAtom::TXAtom(TGlRenderer& Render, const olxstr& collectionName, TSAtom& A) :
-  //AGDrawObject(collectionName)
-  TGlMouseListener(Render, collectionName)
+  AGlMouseHandlerImp(Render, collectionName)
 {
   XAppId = ~0;
   FAtom = &A;
@@ -203,20 +196,18 @@ void TXAtom::ValidateRadius(TGraphicsStyle& GS)  {
   CalcRad(dr);
 }
 void TXAtom::ValidateDS(TGraphicsStyle& GS)  {
-  DrawStyle( GS.GetParam("DS", DefDS()).ToInt() );
+  DrawStyle(GS.GetParam("DS", DefDS()).ToInt());
 }
 //..............................................................................
 void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
-  olxstr Legend, NewL;
-
+  olxstr Legend;
   if( !cName.IsEmpty() )  {
     SetCollectionName(cName);
     Legend = cName;
   }
   else  
-    Legend = GetLegend( *FAtom );
+    Legend = GetLegend(*FAtom);
 
-  TGlMaterial RGlM;
   TGPCollection *GPC = NULL;
   if( FStaticObjects.IsEmpty() )  
     CreateStaticPrimitives();
@@ -237,6 +228,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
     }
   }
   else  {
+    olxstr NewL;
     GPC = Parent.FindCollectionX(Legend, NewL);
     if( GPC == NULL )
       GPC = &Parent.NewCollection(NewL);
@@ -246,7 +238,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
         if( (GPC->GetStyle().GetParam(GetPrimitiveMaskName(), "0").ToInt() & (1 << PolyhedronIndex)) != 0 )
           CreatePolyhedron(true);
         if( cpar == NULL )  {
-          ValidateRadius( GPC->GetStyle() );
+          ValidateRadius(GPC->GetStyle());
           ValidateDS(GPC->GetStyle());
         }
         else if( cpar->params != 0 )
@@ -276,6 +268,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
     Params() = *cpar->params;
   }
 
+  TGlMaterial RGlM;
   for( size_t i=0; i < FStaticObjects.Count(); i++ )  {
     const int off = 1 << i;
     if( PMask & off )  {
@@ -312,7 +305,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
       else  {
         size_t mi = GS.IndexOfMaterial(FStaticObjects.GetString(i));
         if( mi != InvalidIndex )  {
-          GlP.SetProperties( GS.GetPrimitiveStyle(mi).GetProperties() );
+          GlP.SetProperties(GS.GetPrimitiveStyle(mi).GetProperties());
           continue;
         }
         if( SGlP->Params.Last() == ddsDefSphere )   {
@@ -329,11 +322,10 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
           else
             GetDefRimMaterial(*FAtom, RGlM);
         }
-        GlP.SetProperties( GS.GetMaterial(FStaticObjects.GetString(i), RGlM) );
+        GlP.SetProperties(GS.GetMaterial(FStaticObjects.GetString(i), RGlM));
       }
     }
   }
-  return; 
 }
 //..............................................................................
 ACreationParams* TXAtom::GetCreationParams() const {
@@ -387,26 +379,8 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
     return true;
   }
 
-  vec3d c( Basis.GetCenter() );
+  vec3d c = GetCenter();
   c += FAtom->crd();
-  if( IsRoteable() )  {
-    vec3d cr;
-    int ac = 0;
-    TGlGroup& gr = Parent.GetSelection();
-    for( size_t i=0; i < gr.Count(); i++ )  {
-      if( EsdlInstanceOf(gr[i], TXAtom) )  {
-        cr += ((TXAtom&)gr[i]).FAtom->crd();
-        cr += ((TXAtom&)gr[i]).Basis.GetCenter();
-        ac ++;
-      }
-    }
-    if( ac > 1 )  {
-      cr /= ac;
-      c -= cr;
-      c *= Basis.GetMatrix();
-      c += cr;
-    }
-  }
   //const TExyzGroup* eg = FAtom->CAtom().GetExyzGroup();
   //if( eg != NULL )  {
   //  //if( &(*eg)[0] != &FAtom->CAtom() )  return true;
@@ -472,30 +446,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
   return false;
 }
 //..............................................................................
-bool TXAtom::DrawStencil()  {
-  double scale = FParams[1];
-  if( (FRadius & (darIsot|darIsotH)) != 0 )
-    scale *= TelpProb();
-
-  if( FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep )  {
-    if( FAtom->GetEllipsoid() != NULL )  {
-      olx_gl::pushMatrix();  
-      olx_gl::translate(Basis.GetCenter()+ FAtom->crd());
-      olx_gl::orient(FAtom->GetEllipsoid()->GetMatrix());
-      olx_gl::scale(
-        FAtom->GetEllipsoid()->GetSX()*scale,
-        FAtom->GetEllipsoid()->GetSY()*scale,
-        FAtom->GetEllipsoid()->GetSZ()*scale
-        );
-      olx_gl::callList(OrtepSpheres+8);
-      olx_gl::popMatrix();
-      return true;
-    }
-  }
-  return false;
-}
-//..............................................................................
-bool TXAtom::GetDimensions(vec3d &Max, vec3d &Min)  {
+bool TXAtom::GetDimensions(vec3d& Max, vec3d& Min)  {
   const double dZ = FAtom->GetType().r_sfil;
   Max = FAtom->crd();
   Min = FAtom->crd();
@@ -930,16 +881,16 @@ void TXAtom::SetQPeakSizeScale(float V)  {
 //..............................................................................
 bool TXAtom::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
   if( !IsMoveable() )  return true;
-  return TGlMouseListener::OnMouseDown(Sender, Data);
+  return AGlMouseHandlerImp::OnMouseDown(Sender, Data);
 }
 //..............................................................................
 bool TXAtom::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
   if( !IsMoveable() )  return true;
-  return TGlMouseListener::OnMouseUp(Sender, Data);
+  return AGlMouseHandlerImp::OnMouseUp(Sender, Data);
 }
 //..............................................................................
 bool TXAtom::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
-  TGlMouseListener::OnMouseMove(Sender, Data);
+  AGlMouseHandlerImp::OnMouseMove(Sender, Data);
   return true;
 }
 //..............................................................................

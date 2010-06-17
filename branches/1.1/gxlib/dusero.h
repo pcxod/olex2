@@ -1,15 +1,24 @@
 #ifndef duserobjH
 #define duserobjH
 #include "gxbase.h"
-#include "glmouselistener.h"
+#include "glmousehandler.h"
 #include "ematrix.h"
 
 BeginGxlNamespace()
 
-class TDUserObj: public TGlMouseListener  {
+class TDUserObj: public AGlMouseHandlerImp  {
   short Type;
   TArrayList<vec3f>* Vertices, *Normals;
   TGlMaterial GlM;
+protected:
+  TEBasis Basis;
+  virtual bool DoTranslate(const vec3d& t) {  Basis.Translate(t);  return true;  }
+  virtual bool DoRotate(const vec3d& vec, double angle) {  Basis.Rotate(vec, angle);  return true;  }
+  virtual bool DoZoom(double zoom, bool inc)  {
+    if( inc )  Basis.SetZoom(ValidateZoom(Basis.GetZoom() + zoom));
+    else       Basis.SetZoom(ValidateZoom(zoom));
+    return true;
+  }
 public:
   TDUserObj(TGlRenderer& Render, short type, const olxstr& collectionName);
   virtual ~TDUserObj()  {  

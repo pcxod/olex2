@@ -269,13 +269,19 @@ public:
   }
   //............................................................................
   TTSString SubString(size_t from, size_t count) const {
+#ifdef _DEBUG
+    if( from > T::_Length )
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, from, 0, T::_Length);
+    if( from+count > T::_Length )
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, from+count, 0, T::_Length);
+#endif
     return TTSString<T,TC>(*this, from, count);
   }
   TTSString SubStringFrom(size_t from, size_t indexFromEnd=0) const {
-    return TTSString<T,TC>(*this, from, T::_Length-from-indexFromEnd);
+    return SubString(from, T::_Length-from-indexFromEnd);
   }
   TTSString SubStringTo(size_t to, size_t indexFromStart=0) const {
-    return TTSString<T,TC>(*this, indexFromStart, to-indexFromStart);
+    return SubString(indexFromStart, to-indexFromStart);
   }
   //............................................................................
   static char o_toupper(char ch)     {  return (ch >='a' && ch <= 'z') ? (ch + 'A'-'a') : ch;  }
@@ -658,7 +664,7 @@ public:
     return InvalidIndex;
   }
   //............................................................................
-  size_t IndexOf(const TTSString& wht)  const { return o_strpos(T::Data(), T::_Length, wht.Data(), wht._Length);  }
+  size_t IndexOf(const TTSString& wht) const { return o_strpos(T::Data(), T::_Length, wht.Data(), wht._Length);  }
   size_t IndexOfi(const TTSString& wht) const { return o_strposi(T::Data(), T::_Length, wht.Data(), wht._Length);  }
   size_t FirstIndexOf(const TTSString& wht, size_t from = 0) const {
     size_t i = o_strpos(&T::Data()[from], T::_Length-from, wht.Data(), wht._Length);
@@ -770,11 +776,11 @@ public:
   // function checks for preceding radix encoding
   template <typename IT> static IT o_atois(const TC* data, size_t len, bool& negative, unsigned short Rad=10) {
     if( len == 0 )    
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
+      TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
     size_t sts = 0; // string start, end
     while( o_iswhitechar(data[sts]) && ++sts < len )
     if( sts >= len )  
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
+      TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
     // test for any particluar format specifier, here just '0x', for hexadecimal
     if( len > sts+1 && data[sts] == '0' && (data[sts+1] == 'x' || data[sts+1] == 'X') )  {
       Rad = 16;
@@ -822,7 +828,7 @@ public:
     bool negative;
     IT val = o_atois<IT>(data, len, negative, Rad);
     if( negative )
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid unsigned integer format");
+      TExceptionBase::ThrowInvalidUnsignedFormat(__POlxSourceInfo, data, len);
     return val;
   }
   //............................................................................
@@ -1024,22 +1030,28 @@ public:
   }
   //............................................................................
   TTSString& Delete(size_t from, size_t count)  {
-    register size_t dv = from+count;
-    if( dv > T::_Length )  
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid size to delete");
-    else  {
-      if( dv == T::_Length )  { 
-        if( from != 0 )  T::_Length -= count;  // substring to
-        else            T::_Length = 0;  // empty string ...
-        return *this;
-      }
+    const size_t dv = from+count;
+#ifdef _DEBUG
+    if( from >= T::_Length )  
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, from, 0, T::_Length);
+    if( dv > T::_Length )
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, dv, 0, T::_Length);
+#endif
+    if( dv == T::_Length )  { 
+      if( from != 0 )  T::_Length -= count;  // substring to
+      else            T::_Length = 0;  // empty string ...
+      return *this;
     }
     // delete from start - just substring from
-    if( from == 0 )  {  T::_Start += count;  T::_Length -= count;  return *this;  }
-    
-    T::checkBufferForModification(T::_Length);
-    memmove( &T::Data()[from], &T::Data()[from+count], (T::_Length-from-count)*T::CharSize);
-    T::DecLength(count);
+    if( from == 0 )  {
+      T::_Start += count;
+      T::_Length -= count;  
+    }
+    else  {
+      T::checkBufferForModification(T::_Length);
+      memmove( &T::Data()[from], &T::Data()[from+count], (T::_Length-from-count)*T::CharSize);
+      T::DecLength(count);
+    }
     return *this;
   }
   //............................................................................
@@ -1138,16 +1150,20 @@ public:
   }
   //............................................................................
   TTSString& Insert(const TTSString& wht, size_t whr, size_t amount=1)  {
+#ifdef _DEBUG
     if( whr > T::_Length )  
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "index out of range");
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, whr, 0, T::_Length);
+#endif
     T::checkBufferForModification(T::_Length + wht._Length*amount);
     T::IncLength( o_strins(wht.Data(), wht._Length, T::Data(), T::_Length, whr, amount) );
     return *this;
   }
   //............................................................................
   TTSString& Insert(const TC* wht, size_t whr, size_t amount=1)  {
+#ifdef _DEBUG
     if( whr > T::_Length )  
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "index out of range");
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, whr, 0, T::_Length);
+#endif
     size_t wht_len = o_strlen(wht);
     T::checkBufferForModification(T::_Length + wht_len*amount);
     T::IncLength( o_strins(wht, wht_len, T::Data(), T::_Length, whr, amount) );
@@ -1155,8 +1171,10 @@ public:
   }
   //............................................................................
   TTSString& Insert(TC wht, size_t whr, size_t amount=1)  {
+#ifdef _DEBUG
     if( whr > T::_Length )  
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "index out of range");
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, whr, 0, T::_Length);
+#endif
     T::checkBufferForModification(T::_Length + amount);
     T::IncLength( o_chrins(wht, T::Data(), T::_Length, whr, amount) );
     return *this;
@@ -1404,8 +1422,8 @@ public:
   template <typename AC> TTSString& Trim(AC wht)  {
     if( T::_Length == 0 )  return *this;
     size_t start = 0, end = T::_Length;
-    while( TTIString<TC>::Data(start) == wht && ++start < end )  ;
-    while( --end > start && TTIString<TC>::Data(end) == wht )  ;
+    while( TTIString<TC>::CharAt(start) == wht && ++start < end )  ;
+    while( --end > start && TTIString<TC>::CharAt(end) == wht )  ;
     T::_Start += start;
     T::_Length = (end + 1 - start);
     return *this;
@@ -1423,9 +1441,9 @@ public:
     if( T::_Length == 0 )  return *this;
     size_t start = 0, end = T::_Length-1;
     if( leading )
-      while( o_iswhitechar(TTIString<TC>::Data(start)) && ++start < end )  continue;
+      while( o_iswhitechar(TTIString<TC>::CharAt(start)) && ++start < end )  continue;
     if( trailing )
-      while( end > start && o_iswhitechar(TTIString<TC>::Data(end)) )  end--;
+      while( end > start && o_iswhitechar(TTIString<TC>::CharAt(end)) )  end--;
     T::_Start += start;
     T::_Length = (end + 1 - start);
     return *this;

@@ -55,7 +55,7 @@ public:
   TGlOption AmbientB;
   TGlOption DiffuseB;
   
-  TGlMaterial();
+  TGlMaterial() : Flags(0), ShininessF(0), ShininessB(0) {}
   TGlMaterial(const olxstr& str)  {  FromString(str);  }
 
   void Init(bool skip) const;
@@ -90,7 +90,7 @@ public:
   bool FromDataItem(const TDataItem& Item);
 
   TIString ToString() const;
-  void FromString( const olxstr& str );
+  void FromString(const olxstr& str);
 };
 
 EndGlNamespace()

@@ -22,7 +22,6 @@ struct IsoTriangle {
 
 class CIsoSurface {
 public:
-  // Constructor and destructor.
   CIsoSurface(TArray3D<float>& points);
   ~CIsoSurface()  {  DeleteSurface();  }
 
@@ -41,7 +40,7 @@ public:
 protected:
 ////////////////////////////////////////////////////////////////////////
   struct IsoPoint {
-    int newID;
+    size_t newID;
     float x, y, z;
     bool initialised;
     IsoPoint(): initialised(false) {  }
@@ -54,29 +53,29 @@ protected:
     typedef TPSTypeList<int, IsoPointListZ*> IsoPointListY;  //y
     typedef TPSTypeList<int, IsoPointListY*> IsoPointListX;  //z
     IsoPointListX Data;
-    int Count;
+    size_t Count;
   public:
     T4DIndex() : Count(0) {  }
     ~T4DIndex()  {  Clear();  }
     void Add(int x, int y, int z, int edgeId, float vx, float vy, float vz)  {
       adjust(x,y,z,edgeId);
       IsoPoint* ip;
-      int yi = Data.IndexOfComparable(x);
-      if( yi == -1 )  {
+      const size_t yi = Data.IndexOfComparable(x);
+      if( yi == InvalidIndex )  {
         ip = &Data.Add(x, new IsoPointListY).Object->Add(y, new IsoPointListZ).
-          Object->Add(z, Points3() ).Object.ps[edgeId]; 
+          Object->Add(z, Points3()).Object.ps[edgeId]; 
       }
       else  {
         IsoPointListY* ly = Data.GetObject(yi);
-        int zi = ly->IndexOfComparable(y);
-        if( zi == -1 )  {
-          ip = &ly->Add(y, new IsoPointListZ).Object->Add(z, Points3() ).Object.ps[edgeId]; 
+        const size_t zi = ly->IndexOfComparable(y);
+        if( zi == InvalidIndex )  {
+          ip = &ly->Add(y, new IsoPointListZ).Object->Add(z, Points3()).Object.ps[edgeId]; 
         }
         else  {
           IsoPointListZ* lz = ly->GetObject(zi);
-          int pi = lz->IndexOfComparable(z);
-          if( pi == -1 )  {
-            ip = &lz->Add(z, Points3() ).Object.ps[edgeId]; 
+          const size_t pi = lz->IndexOfComparable(z);
+          if( pi == InvalidIndex )  {
+            ip = &lz->Add(z, Points3()).Object.ps[edgeId]; 
           }
           else  {
             ip = &lz->GetObject(pi).ps[edgeId];
@@ -109,7 +108,7 @@ protected:
     }
     void GetVertices(TArrayList<vec3f>& v) {  // an upper estimate
       v.SetCount(Count);
-      int ind = 0;
+      size_t ind = 0;
       for( size_t i=0; i < Data.Count(); i++ )  {
         IsoPointListY* ly = Data.GetObject(i);
         for( size_t j=0; j < ly->Count(); j++ )  {

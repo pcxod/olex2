@@ -131,7 +131,7 @@ void TXGrid::DrawQuad4(double A[4], double B[4], double C[4], double D[4])  {
 }
 //----------------------------------------------------------------------------//
 TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
-                     TGlMouseListener(xapp->GetRender(), collectionName),
+                     AGDrawObject(xapp->GetRender(), collectionName),
                      ExtMin(-1,-1,-1),
                      ExtMax(1,1,1)
 {
@@ -145,9 +145,6 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   PythonExt::GetInstance()->Register(&TXGrid::PyInit);
 #endif
   XApp = xapp;
-  SetMove2D(false);
-  SetMoveable(false);
-  SetZoomable(false);
   Depth = 0;
   ED = NULL;
   IS = NULL;
@@ -304,7 +301,7 @@ void TXGrid::CalcColor(float v) const {
 }
 //..............................................................................
 void TXGrid::TPlaneCalculationTask::Run(size_t ind)  {
-  for( int j=0; j < max_dim; j++ )  {  // (i,j,Depth)        
+  for( size_t j=0; j < max_dim; j++ )  {  // (i,j,Depth)        
     vec3f p((float)(ind-hh)/size, (float)(j-hh)/size,  depth);
     p = proj_m*p;
     p -= center;
@@ -329,9 +326,9 @@ void TXGrid::TPlaneCalculationTask::Run(size_t ind)  {
           vec3i ijk(n_x, n_y, fp[2]+dz);
           for( int m=0; m < 3; m++ )  {
             while( ijk[m] < 0 )
-              ijk[m] += dim[m];
+              ijk[m] += (int)dim[m];
             while( ijk[m] >= dim[m] )
-              ijk[m] -= dim[m];
+              ijk[m] -= (int)dim[m];
           }
           val += src_data[ijk[0]][ijk[1]][ijk[2]]*_vxyz;
         }
@@ -340,7 +337,7 @@ void TXGrid::TPlaneCalculationTask::Run(size_t ind)  {
     if( init_text )  {
       uint8_t R, G, B;
       parent.CalcColorRGB(val, R, G, B);
-      const int off = (ind+j*max_dim)*3; 
+      const size_t off = (ind+j*max_dim)*3; 
       text_data[off] = R;
       text_data[off+1] = G;
       text_data[off+2] = B;
@@ -379,7 +376,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   const mat3f c2c(XApp->XFile().GetAsymmUnit().GetCartesianToCell());
   const float hh = (float)MaxDim/2;
   const vec3f center(Parent.GetBasis().GetCenter());
-  const vec3i dim(MaxX, MaxY, MaxZ);
+  const vec3s dim(MaxX, MaxY, MaxZ);
   double Z;
   // if only contours are drawn - render plane at the background
   if( (RenderMode&planeRenderModeContour) != 0 )  {
@@ -407,7 +404,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   olx_gl::normal(bm[0][2], bm[1][2], bm[2][2]);
   if( (RenderMode&planeRenderModePlane) != 0 )  {
     if( !olx_is_valid_index(TextIndex) )  {
-      TextIndex = Parent.GetTextureManager().Add2DTexture("Plane", 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
+      TextIndex = Parent.GetTextureManager().Add2DTexture("Plane", 0, (GLsizei)MaxDim, (GLsizei)MaxDim, 0, GL_RGB, TextData);
       TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextIndex);
       tex->SetEnvMode(tpeDecal);
       tex->SetSCrdWrapping(tpCrdClamp);
@@ -420,7 +417,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     else
       Parent.GetTextureManager().
       Replace2DTexture(*Parent.GetTextureManager().
-      FindTexture(TextIndex), 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
+      FindTexture(TextIndex), 0, (GLsizei)MaxDim, (GLsizei)MaxDim, 0, GL_RGB, TextData);
 
     GlP.SetTextureId(TextIndex);
   }
@@ -434,7 +431,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
 
     GlP.PrepareColorRendering(GL_LINES);
     olx_gl::color(0, 0, 0);
-    cm.DoContour(ContourData, 0, MaxDim-1, 0, MaxDim-1,
+    cm.DoContour(ContourData, 0, (int)MaxDim-1, 0, (int)MaxDim-1,
       ContourCrds[0], ContourCrds[1], 
       ContourLevelCount, ContourLevels, mf);
     GlP.EndColorRendering();
@@ -459,7 +456,7 @@ bool TXGrid::GetDimensions(vec3d &Max, vec3d &Min)  {
   return false;
 };
 //..............................................................................
-void TXGrid::InitGrid(int maxX, int maxY, int maxZ)  {
+void TXGrid::InitGrid(size_t maxX, size_t maxY, size_t maxZ)  {
   DeleteObjects();
   MaxX = maxX;
   MaxY = maxY;
@@ -472,7 +469,7 @@ void TXGrid::InitGrid(int maxX, int maxY, int maxZ)  {
   ContourData = new float*[MaxDim];
   ContourCrds[0] = new float[MaxDim];
   ContourCrds[1] = new float[MaxDim];
-  for( int i=0; i < MaxDim; i++ )  {
+  for( size_t i=0; i < MaxDim; i++ )  {
     ContourData[i] = new float[MaxDim];
     ContourCrds[0][i] = ContourCrds[1][i] = (float)(i-MaxDim/2);///MaxDim;
   }
@@ -526,10 +523,10 @@ bool TXGrid::LoadFromFile(const olxstr& GridFile)  {
   toks.Strtok(SL[0], ' ');
 
   int vc = 3;
-  InitGrid( toks[0].ToInt(), toks[1].ToInt(), toks[2].ToInt());
-  for( int i=0; i < MaxX; i++ )  {
-    for( int j=0; j < MaxY; j++ )  {
-      for( int k=0; k < MaxZ; k++ )  {
+  InitGrid(toks[0].ToSizeT(), toks[1].ToSizeT(), toks[2].ToSizeT());
+  for( size_t i=0; i < MaxX; i++ )  {
+    for( size_t j=0; j < MaxY; j++ )  {
+      for( size_t k=0; k < MaxZ; k++ )  {
         const float val = toks[vc].ToFloat<float>();
         if( val > MaxVal ) MaxVal = val;
         if( val < MinVal ) MinVal = val;
@@ -540,7 +537,7 @@ bool TXGrid::LoadFromFile(const olxstr& GridFile)  {
   }
 
   // set default depth to center of the asymmetric unit
-  vec3d v( XApp->XFile().GetAsymmUnit().GetOCenter(true, true) );
+  vec3d v(XApp->XFile().GetAsymmUnit().GetOCenter(true, true));
   v = XApp->XFile().GetAsymmUnit().GetCellToCartesian() * v;
   SetDepth(v);
   return true;
@@ -598,8 +595,8 @@ void TXGrid::SetDepth(const vec3d& v)  {
   SetDepth((float)p[2]);
 }
 //..............................................................................
-void TXGrid::SetPlaneSize(int _v)  {
-  int v = _v; 
+void TXGrid::SetPlaneSize(size_t _v)  {
+  size_t v = _v; 
   while( (v&1) == 0 )
     v = v >> 1;
   if( v != 1 )
@@ -611,7 +608,7 @@ void TXGrid::SetPlaneSize(int _v)  {
     TextData = new char[_v*_v*3+1];
   }
   if( ContourData != NULL )  {
-    for( int i=0; i < MaxDim; i++ )
+    for( size_t i=0; i < MaxDim; i++ )
       delete [] ContourData[i];
     delete [] ContourData;
     delete [] ContourCrds[0];
@@ -628,7 +625,7 @@ void TXGrid::SetPlaneSize(int _v)  {
   Parent.Draw();
 }
 //..............................................................................
-void TXGrid::SetContourLevelCount(int v)  {
+void TXGrid::SetContourLevelCount(size_t v)  {
   if( v <= 2 || v > 30 )  return;
   if( ContourLevels != NULL )
     delete [] ContourLevels;
@@ -798,7 +795,7 @@ void TXGrid::RescaleSurface()  {
         const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
         const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
         for( size_t i=0; i < verts.Count(); i++ )  {                           // cell drawing
-          verts[i][0] /= MaxX;  verts[i][1] /= MaxY;  verts[i][2] /= MaxZ;  // cell drawing
+          verts[i][0] /= (MaxX-1);  verts[i][1] /= (MaxY-1);  verts[i][2] /= (MaxZ-1);  // cell drawing
           au.CellToCartesian(verts[i]);                                     // cell drawing
         }
         glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
@@ -828,13 +825,20 @@ void TXGrid::AdjustMap()  {
   if( ED == NULL )  return;
   for( int i=0; i < MaxX; i++ )
     for( int j=0; j < MaxY; j++ )
-        ED->Data[i][j][MaxZ] = ED->Data[i][j][0];
+      ED->Data[i][j][MaxZ] = ED->Data[i][j][0];
   for( int i=0; i < MaxX; i++ )
     for( int j=0; j < MaxZ; j++ )
-        ED->Data[i][MaxY][j] = ED->Data[i][0][j];
+      ED->Data[i][MaxY][j] = ED->Data[i][0][j];
   for( int i=0; i < MaxY; i++ )
     for( int j=0; j < MaxZ; j++ )
-        ED->Data[MaxX][i][j] = ED->Data[0][i][j];
+      ED->Data[MaxX][i][j] = ED->Data[0][i][j];
+
+  for( int i=0; i < MaxX; i++ )
+    ED->Data[i][MaxY][MaxZ] = ED->Data[i][0][0];
+  for( int i=0; i < MaxY; i++ )
+    ED->Data[MaxX][i][MaxZ] = ED->Data[0][i][0];
+  for( int i=0; i < MaxZ; i++ )
+    ED->Data[MaxX][MaxY][i] = ED->Data[0][0][i];
   ED->Data[MaxX][MaxY][MaxZ] = ED->Data[0][0][0];
 }
 //..............................................................................

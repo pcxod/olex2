@@ -1,79 +1,74 @@
 #ifndef __OLX_FIT_MODE_H
 #define __OLX_FIT_MODE_H
+#include "xgroup.h"
+#include "match.h"
 
 class TFitMode : public AMode  {
-  TXAtomPList Atoms;
-  TXBondPList Bonds;
+  TXGroup* group;
+  TXAtomPList Atoms, AtomsToMatch;
 protected:
-  void UpdateSelectionCrds() {
-    TGlGroup& sel = TGlXApp::GetGXApp()->GetSelection();
-    if( sel.Count() > 1 )  {
-      vec3d c, cr;
-      TXAtomPList atoms;
-      for( size_t i=0; i < sel.Count(); i++ )  {
-        if( EsdlInstanceOf(sel[i], TXAtom) )  {
-          cr += ((TXAtom&)sel[i]).Basis.GetCenter();
-          cr += ((TXAtom&)sel[i]).Atom().crd();
-          atoms.Add((TXAtom&)sel[i]);
-        }
-      }
-      if( atoms.Count() > 1 )  {
-        cr /= atoms.Count();
-        for( size_t i=0; i < atoms.Count(); i++ )  {
-          c = atoms[i]->Atom().crd();
-          c += atoms[i]->Basis.GetCenter();
-          c -= cr;
-          c *= atoms[i]->Basis.GetMatrix();
-          c += cr;
-          atoms[i]->Atom().crd() = c;
-          atoms[i]->Basis.Reset();
-        }
-      }
+  void Update()  {
+    TAsymmUnit& au = TGlXApp::GetGXApp()->XFile().GetAsymmUnit();
+    for( size_t i=0; i < Atoms.Count(); i++ )  {
+      TXAtom& xa = *Atoms[i];
+      xa.Atom().crd() = (xa.Atom().crd()-group->GetRotationCenter())*group->GetMatrix() +
+        group->GetRotationCenter() + group->GetCenter();
+      vec3d c = xa.Atom().crd();
+      xa.Atom().ccrd() = au.CartesianToCell(c);
+      xa.Atom().CAtom().ccrd() = c;
     }
+    group->ResetBasis();
   }
 public:
   TFitMode(size_t id) : AMode(id)  {}
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
-    TGXApp& app = *TGlXApp::GetGXApp();
-    TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
+    AtomsToMatch.Clear();
+    TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
+    group = &TGlXApp::GetGXApp()->GetRender().ReplaceSelection<TXGroup>();
     return true;
   }
   ~TFitMode() {
     TGXApp& app = *TGlXApp::GetGXApp();
-    vec3d c;
     TAsymmUnit& au = app.XFile().GetAsymmUnit();
     RefinementModel& rm = app.XFile().GetRM();
-    UpdateSelectionCrds();
+    Update();
     for( size_t i=0; i < Atoms.Count(); i++ )  {
-      TXAtom& xa = *Atoms[i];
-      xa.SetMoveable(false);
-      xa.SetRoteable(false);
-      // summ the translations
-      xa.Atom().crd() += xa.Basis.GetCenter();
-      xa.Basis.NullCenter();
-      c = xa.Atom().crd();
-      au.CartesianToCell(c);
-      xa.Atom().ccrd() = c;
-      xa.Atom().CAtom().ccrd() = c;
+      rm.Vars.FixParam(Atoms[i]->Atom().CAtom(), catom_var_name_Sof);
     }
-    //TGlXApp::GetMainForm()->executeMacro("fuse");
+    app.GetRender().ReplaceSelection<TGlGroup>();
+    app.XFile().GetLattice().UpdateConnectivity();
   }
   virtual bool OnObject(AGDrawObject &obj)  {
-    if( EsdlInstanceOf( obj, TXAtom) )  {
-      //TXAtom *XA = &(TXAtom&)obj;
-      UpdateSelectionCrds();
-      //TGlXApp::GetGXApp()->GetRender().Select(XA);
+    if( EsdlInstanceOf(obj, TXAtom) )  {
+      if( AtomsToMatch.IsEmpty() && Atoms.IndexOf((TXAtom&)obj) == InvalidIndex )
+        return true;
+      AtomsToMatch.Add((TXAtom&)obj);
+      TGlXApp::GetMainForm()->SetUserCursor(AtomsToMatch.Count(), "<F>");
+      if( (AtomsToMatch.Count()%2) == 0 )  {
+        Update();
+        TMatchMode::FitAtoms(AtomsToMatch, "<F>", false);
+      }
+    }
+    return true;
+  }
+  virtual void OnGraphicsDestroy()  {
+    Atoms.Clear();
+    AtomsToMatch.Clear();
+    TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
+  }
+  virtual bool OnKey(int keyId, short shiftState)  {
+    if( shiftState == 0 && keyId == WXK_ESCAPE )  {
+      if( AtomsToMatch.IsEmpty() )  return false;
+      AtomsToMatch.Delete(AtomsToMatch.Count()-1);
+      TGlXApp::GetMainForm()->SetUserCursor(AtomsToMatch.Count(), "<F>");
       return true;
     }
     return false;
   }
   virtual bool AddAtoms(const TXAtomPList& atoms)  {
     Atoms.AddList(atoms);
-    for( size_t i=0; i < Atoms.Count(); i++ )  {
-      Atoms[i]->SetRoteable(true);
-      Atoms[i]->SetMoveable(true);
-      TGlXApp::GetGXApp()->GetRender().Select(*Atoms[i]);
-    }
+    group->AddAtoms(atoms);
+    group->SetSelected(true);
     return true;
   }
 };

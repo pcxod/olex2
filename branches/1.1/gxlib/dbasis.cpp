@@ -11,7 +11,8 @@
 #include "pers_util.h"
 
 TDBasis::TDBasis(TGlRenderer& Render, const olxstr& collectionName) : 
-TGlMouseListener(Render, collectionName)  
+AGlMouseHandlerImp(Render, collectionName),
+Zoom(1.0)
 {
   SetMove2D(true);
   SetMoveable(true);
@@ -140,10 +141,10 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
 vec3d TDBasis::ForRaster(const TXGlLabel& l) const {
   const double EZoom = Parent.GetExtraZoom()*Parent.GetViewZoom();
   const double scale = 1./Parent.GetScale();
-  vec3d Center(Basis.GetCenter());
-  Center[0] = Center[0]*EZoom;
-  Center[1] = Center[1]*EZoom;
-  Center = Parent.GetBasis().GetMatrix() * Center;
+  vec3d center = GetCenter();
+  center[0] = center[0]*EZoom;
+  center[1] = center[1]*EZoom;
+  center = Parent.GetBasis().GetMatrix() * center;
   vec3d T;
   if( &l == Labels[0] )
     T = AU->GetCellToCartesian()[0];
@@ -153,19 +154,19 @@ vec3d TDBasis::ForRaster(const TXGlLabel& l) const {
     T = AU->GetCellToCartesian()[2];
   T /= 5;
   T += vec3d(T).NormaliseTo(0.8);
-  T *= (Basis.GetZoom()*Parent.GetBasis().GetZoom()* scale);
-  T += Center;
+  T *= (GetZoom()*Parent.GetBasis().GetZoom()* scale);
+  T += center;
   T *= Parent.GetBasis().GetMatrix();
   return T;
 }
 //..............................................................................
 vec3d TDBasis::ForVector(const TXGlLabel& l) const {
   const double EZoom = Parent.GetExtraZoom()*Parent.GetViewZoom();
-  vec3d Center(Basis.GetCenter());
-  Center[0] = Center[0]*EZoom;
-  Center[1] = Center[1]*EZoom;
-  Center *= Parent.GetScale();
-  Center = Parent.GetBasis().GetMatrix() * Center;
+  vec3d center = GetCenter();
+  center[0] = center[0]*EZoom;
+  center[1] = center[1]*EZoom;
+  center *= Parent.GetScale();
+  center = Parent.GetBasis().GetMatrix() * center;
   vec3d T;
   if( &l == Labels[0] )
     T = AU->GetCellToCartesian()[0];
@@ -175,8 +176,8 @@ vec3d TDBasis::ForVector(const TXGlLabel& l) const {
     T = AU->GetCellToCartesian()[2];
   T /= 5;
   T += vec3d(T).NormaliseTo(0.8);
-  T *= (Basis.GetZoom()*Parent.GetBasis().GetZoom());
-  T += Center;
+  T *= (GetZoom()*Parent.GetBasis().GetZoom());
+  T += center;
   T *= Parent.GetBasis().GetMatrix();
   return T;
 }
@@ -191,7 +192,7 @@ bool TDBasis::Orient(TGlPrimitive& P) {
   // object is translated to the right place!
   const double EZoom = Parent.GetExtraZoom()*Parent.GetViewZoom();
   //const double zoom = olx_sqr(Parent.GetBasis().GetZoom());
-  vec3d T = Basis.GetCenter();
+  vec3d T = GetCenter();
   T[0] = T[0]*EZoom;
   T[1] = T[1]*EZoom;
   T *= Parent.GetScale();
@@ -199,16 +200,27 @@ bool TDBasis::Orient(TGlPrimitive& P) {
   T /= Parent.GetBasis().GetZoom();
   T -= Parent.GetBasis().GetCenter();
   olx_gl::translate(T);
-  olx_gl::scale(Basis.GetZoom());
+  olx_gl::scale(GetZoom());
   return false;
 }
 //..............................................................................
 void TDBasis::ToDataItem(TDataItem& di) const {
-  Basis.ToDataItem(di.AddItem("basis"));
+  di.AddField("center", PersUtil::VecToStr(GetCenter()));
+  di.AddField("zoom", GetZoom());
 }
 //..............................................................................
 void TDBasis::FromDataItem(const TDataItem& di)  {
-  Basis.FromDataItem(di.FindRequiredItem("basis"));
+  const olxstr& c = di.GetFieldValue("center");
+  if( c.IsEmpty() )  {
+    TEBasis b;
+    b.FromDataItem(di.FindRequiredItem("basis"));
+    _Center = b.GetCenter();
+    Zoom = b.GetZoom();
+  }
+  else  {
+    _Center = PersUtil::FloatVecFromStr(c);
+    Zoom = di.GetRequiredField("zoom").ToDouble();
+  }
 }
 //..............................................................................
 void TDBasis::ListPrimitives(TStrList &List) const {}

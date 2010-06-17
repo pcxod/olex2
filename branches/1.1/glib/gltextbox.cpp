@@ -1,5 +1,4 @@
 //----------------------------------------------------------------------------//
-// namespace TEXLib
 // TGlTextBox - a text box
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
@@ -12,10 +11,8 @@
 
 UseGlNamespace()
 //..............................................................................
-//..............................................................................
-
 TGlTextBox::TGlTextBox(TGlRenderer& Render, const olxstr& collectionName):
-  TGlMouseListener(Render, collectionName)
+  AGlMouseHandlerImp(Render, collectionName)
 {
   SetMove2D(true);
   SetMoveable(true);
@@ -71,8 +68,8 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
     P.SetFont(&Fnt);
     uint16_t th = Fnt.TextHeight(EmptyString);
     double Scale = Parent.GetScale();
-    double GlLeft = ((double)Left - (double)Parent.GetWidth()/2 + Basis.GetCenter()[0]) + 0.1;
-    double GlTop = ((double)Parent.GetHeight()/2 - (Top-Basis.GetCenter()[1])) + 0.1;
+    double GlLeft = ((double)Left - (double)Parent.GetWidth()/2 + GetCenter()[0]) + 0.1;
+    double GlTop = ((double)Parent.GetHeight()/2 - (Top-GetCenter()[1])) + 0.1;
     double LineInc = (th*LineSpacing)*Parent.GetViewZoom();
     vec3d T;
     //const size_t stl = ((olx_abs(Left)%Fnt.GetMaxWidth()) > Fnt.GetMaxWidth()/2) ? 1 : 0;
@@ -94,7 +91,7 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
     double hw = Parent.GetWidth()*Scale/2;
     double hh = Parent.GetHeight()*Scale/2;
     Scale = Scale*Parent.GetExtraZoom()*Parent.GetViewZoom();
-    double xx = Basis.GetCenter()[0], xy = -Basis.GetCenter()[1];
+    double xx = GetCenter()[0], xy = -GetCenter()[1];
     const double z = Z-0.1;
     P.Vertices[0] = vec3d((Left+Width+xx)*Scale-hw, hh-(Top+Height+xy)*Scale, z);
     P.Vertices[1] = vec3d((Left+Width+xx)*Scale-hw, hh-(Top+xy)*Scale, z);
@@ -173,12 +170,10 @@ void TGlTextBox::SetTop(int t)  {
 }
 //..............................................................................
 bool TGlTextBox::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
-  SetLeft( (int)(Left + Basis.GetCenter()[0]) );
-  SetTop( (int)(Top - Basis.GetCenter()[1]) );
-
-  Basis.NullCenter();
-
-  return TGlMouseListener::OnMouseUp(Sender, Data);
+  SetLeft( (int)(Left + GetCenter()[0]) );
+  SetTop( (int)(Top - GetCenter()[1]) );
+  Center.Null();
+  return AGlMouseHandlerImp::OnMouseUp(Sender, Data);
 }
 //..............................................................................
 TGlFont& TGlTextBox::GetFont() const {

@@ -210,7 +210,16 @@ public:
   void ClearGroups();
   void UnGroupSelection();
   void UnGroup(TGlGroup& GlG);
-  TGlGroup& GetSelection()  const {  return *FSelection; }
+  TGlGroup& GetSelection() const {  return *FSelection; }
+  template <class SelType> SelType& ReplaceSelection() {
+    FSelection->GetPrimitives().RemoveObject(*FSelection);
+    FSelection->SetSelected(false);
+    delete FSelection;
+    SelType* sel = new SelType(*this, "Selection");
+    FSelection = sel;
+    FSelection->Create();
+    return *sel;
+  }
   void Select(AGDrawObject& G, bool v); // convinience function...
   void Select(AGDrawObject& G);
   void DeSelect(AGDrawObject& G);

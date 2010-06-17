@@ -10,8 +10,6 @@
 
 UseGlNamespace()
 //..............................................................................
-//..............................................................................
-
 TGlGroup::TGlGroup(TGlRenderer& R, const olxstr& collectionName) :
   AGDrawObject(R, collectionName)
 {
@@ -79,25 +77,25 @@ void TGlGroup::RemoveDeleted()  {
   FObjects.Pack();
 }
 //..............................................................................
-bool TGlGroup::Add(AGDrawObject& GO)  {
+bool TGlGroup::Add(AGDrawObject& GO, bool remove)  {
   AGDrawObject* go = &GO;
   if( go == this )
     throw TInvalidArgumentException(__OlxSourceInfo, "cannot add itself");
   TGlGroup *GlG = Parent.FindObjectGroup(GO);
   if( GlG != NULL )  
     go = GlG;
-  size_t i = FObjects.IndexOf(go);
+  const size_t i = FObjects.IndexOf(go);
   if( i == InvalidIndex )  {
     FObjects.Add(go)->SetGrouped(true);
     go->SetParentGroup(this);
     return true;
   }
-  else  {
+  else if( remove )  {
     FObjects.Delete(i);
     go->SetParentGroup(NULL);
     go->SetGrouped(false);
-    return false;
   }
+  return false;
 }
 //..............................................................................
 void TGlGroup::SetVisible(bool On)  {
@@ -119,7 +117,7 @@ void TGlGroup::InitMaterial() const {
     GlM.Init(Parent.IsColorStereo());
 }
 //..............................................................................
-void TGlGroup::Draw(bool SelectPrimitives, bool SelectObjects) const  {
+void TGlGroup::DoDraw(bool SelectPrimitives, bool SelectObjects) const {
   if( !SelectPrimitives && !SelectObjects )
     InitMaterial();
 
@@ -127,7 +125,13 @@ void TGlGroup::Draw(bool SelectPrimitives, bool SelectObjects) const  {
     AGDrawObject* G = FObjects[i];
     if( !G->IsVisible() )  continue;
     if( G->IsDeleted() )  continue;
-    if( G->IsGroup() )    { G->Draw();  continue; }
+    if( G->IsGroup() )    {
+      TGlGroup* group = dynamic_cast<TGlGroup*>(G);
+      if( group != NULL )  {
+        group->Draw(SelectPrimitives, SelectObjects);
+        continue;
+      }
+    }
     const size_t pc = G->GetPrimitives().PrimitiveCount();
     for( size_t j=0; j < pc; j++ )  {
       TGlPrimitive& GlP = G->GetPrimitives().GetPrimitive(j);

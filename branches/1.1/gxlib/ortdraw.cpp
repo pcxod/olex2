@@ -539,28 +539,28 @@ void OrtDraw::Render(const olxstr& fileName)  {
     vec3f len(cm[0].Length(), cm[1].Length(), cm[2].Length());
     cm[0].Normalise();  cm[1].Normalise();  cm[2].Normalise();
     cm *= ProjMatr;
-    vec3d T = app.GetRender().GetBasis().GetMatrix()*b.Basis.GetCenter();
+    vec3d T = app.GetRender().GetBasis().GetMatrix()*b.GetCenter();
     T /= app.GetRender().GetZoom();
     T *= app.GetRender().GetScale();
     T -= app.GetRender().GetBasis().GetCenter();
     vec3f cnt = ProjectPoint(T);
-    const float sph_rad = 0.2*DrawScale*b.Basis.GetZoom();
+    const float sph_rad = 0.2*DrawScale*b.GetZoom();
     ort_circle* center = new ort_circle(*this, cnt, sph_rad, true);
     all_points.Add(center->center);
     center->color = 0xffffffff;
     objects.Add(center);
     for( int i=0; i < 3; i++ )  {
-      vec3f mp = cm[i]*((float)(0.2*len[i]*b.Basis.GetZoom())), 
-        ep = cm[i]*((float)((0.2*len[i]+0.8)*b.Basis.GetZoom()));
+      vec3f mp = cm[i]*((float)(0.2*len[i]*b.GetZoom())), 
+        ep = cm[i]*((float)((0.2*len[i]+0.8)*b.GetZoom()));
       
-      ort_cone* arrow_cone = new ort_cone(*this, cnt+mp, cnt+ep, 0.2*DrawScale*b.Basis.GetZoom(), 0, 0); 
+      ort_cone* arrow_cone = new ort_cone(*this, cnt+mp, cnt+ep, 0.2*DrawScale*b.GetZoom(), 0, 0); 
       objects.Add(arrow_cone);
       all_points.Add(arrow_cone->bottom);
       all_points.Add(arrow_cone->top);
 
       const float z = cm[i][2]/cm[i].Length();
       const float pscale = 1+olx_sign(z)*sqrt(olx_abs(z))/2;
-      const float base_r = 0.075*DrawScale*b.Basis.GetZoom();
+      const float base_r = 0.075*DrawScale*b.GetZoom();
       ort_cone* axis_cone = new ort_cone(*this,
         cnt+vec3f(cm[i]).NormaliseTo(sqrt(olx_sqr(sph_rad)-olx_sqr(base_r))), // extra 3D effect for the central sphere
         cnt+mp, 
@@ -604,17 +604,17 @@ void OrtDraw::Render(const olxstr& fileName)  {
     Contour<float> cm;
     ContourDrawer drawer(*this, objects, 0);
     Contour<float>::MemberFeedback<OrtDraw::ContourDrawer> mf(drawer, &OrtDraw::ContourDrawer::draw);
-    int MaxDim = grid.GetPlaneSize();
+    size_t MaxDim = grid.GetPlaneSize();
     float Size = grid.GetSize();
     float Depth = grid.GetDepth();
     float **data = new float*[MaxDim];
     float *x = new float[MaxDim];
     float *y = new float[MaxDim];
-    for( int i=0; i < MaxDim; i++ )  {
+    for( size_t i=0; i < MaxDim; i++ )  {
       data[i] = new float[MaxDim];
       y[i] = x[i] = i - MaxDim/2;
     }
-    const int contour_cnt = grid.GetContourLevelCount();
+    const size_t contour_cnt = grid.GetContourLevelCount();
     float* z = new float[contour_cnt];
     float minZ = 1000, maxZ = -1000;
     const vec3i dim = grid.GetDimVec();
@@ -622,8 +622,8 @@ void OrtDraw::Render(const olxstr& fileName)  {
     const mat3f c2c(app.XFile().GetAsymmUnit().GetCartesianToCell());
     const float hh = (float)MaxDim/2;
     const vec3f center(app.GetRender().GetBasis().GetCenter());
-    for( int i=0; i < MaxDim; i++ )  {
-      for( int j=0; j < MaxDim; j++ )  {
+    for( size_t i=0; i < MaxDim; i++ )  {
+      for( size_t j=0; j < MaxDim; j++ )  {
         vec3f p((float)(i-hh)/Size, (float)(j-hh)/Size,  Depth);
         p = bm*p;
         p -= center;
@@ -665,7 +665,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
     z[0] = minZ;
     for( int i=1; i < contour_cnt; i++ )
       z[i] = z[i-1]+contour_step;
-    cm.DoContour(data, 0, MaxDim-1, 0, MaxDim-1, x, y, contour_cnt, z, mf);
+    cm.DoContour(data, 0, (int)MaxDim-1, 0, (int)MaxDim-1, x, y, contour_cnt, z, mf);
     for( int i=0; i < MaxDim; i++ )
       delete [] data[i];
     delete [] data;

@@ -1,18 +1,30 @@
-#ifndef glbitmapH
-#define glbitmapH
+#ifndef __olx_gl_bitmap_H
+#define __olx_gl_bitmap_H
 #include "glbase.h"
-#include "glmouselistener.h"
-//---------------------------------------------------------------------------
+#include "glmousehandler.h"
+
 BeginGlNamespace()
 
-class TGlBitmap : public TGlMouseListener  {
-  int Width, Height, Top, Left; // to clip the content
-  int TextureId;
+class TGlBitmap : public AGlMouseHandlerImp  {
+  unsigned int Width, Height;
+  int Top, Left; // to clip the content
+  GLuint TextureId;
   double Z;
+protected:
+  vec3d Center;
+  double Zoom;
+  virtual bool DoTranslate(const vec3d& t) {  Center += t;  return true;  }
+  virtual bool DoRotate(const vec3d& vec, double angle) {  return false;  }
+  virtual bool DoZoom(double zoom, bool inc)  {
+    if( inc ) Zoom = ValidateZoom(Zoom+zoom);
+    else      Zoom = ValidateZoom(zoom);
+    return true;
+  }
+  const vec3d& GetCenter() const {  return Center;  }
+  double GetZoom() const {  return Zoom;  }
 public:
-
   TGlBitmap(TGlRenderer& Render, const olxstr& collectionName,
-    int left, int top, int width, int height,
+    int left, int top, unsigned int width, unsigned int height,
       unsigned char* RGB, GLenum format);
 
   void ReplaceData(int width, int height, unsigned char* RGB, GLenum format);
@@ -20,20 +32,20 @@ public:
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlBitmap();
 
-  void SetZ( double z );
-  inline double GetZ( ) const   {  return Z;  }
-
-  void SetWidth(int w);
-  int GetWidth() const;
-  void SetHeight(int w);
-  int GetHeight() const;
+  void SetZ(double z);
+  double GetZ() const {  return Z;  }
+  void SetZoom(double v)  {  DoZoom(v, false);  }
+  void SetWidth(unsigned int w);
+  unsigned int GetWidth() const {  return (unsigned int)(Width*GetZoom());  }
+  void SetHeight(unsigned int w);
+  unsigned int GetHeight() const {  return (unsigned int)(Height*GetZoom());  }
   void SetLeft(int w);
-  int GetLeft()  const;
+  int GetLeft() const {  return Left; }
   void SetTop(int w);
-  int GetTop()  const;
+  int GetTop() const {  return Top; }
 
   virtual bool Orient(TGlPrimitive& P);
-  virtual bool GetDimensions(vec3d &Max, vec3d &Min);
+  virtual bool GetDimensions(vec3d& Max, vec3d& Min);
 };
 
 EndGlNamespace()

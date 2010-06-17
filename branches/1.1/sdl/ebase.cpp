@@ -24,39 +24,59 @@ AReferencible::~AReferencible()  {
 //................................................................................................
 //................................................................................................
 //................................................................................................
-olxstr TExceptionBase_FormatSrc(const char* file, const char* func, int line)  {
+TIString TExceptionBase::FormatSrc(const char* file, const char* func, int line)  {
   return olxstr(EmptyString, 384) << '[' << file << '(' << func << "):" << line << ']';
 }
 //................................................................................................
 void TExceptionBase::ThrowFunctionFailed(const char* file, const char* func, int line, const char* msg) {
-  throw TFunctionFailedException(TExceptionBase_FormatSrc(file,func,line), msg);
+  throw TFunctionFailedException(FormatSrc(file,func,line), msg);
+}
+//................................................................................................
+void TExceptionBase::ThrowIndexOutOfRange(const char* file, const char* func, int line,
+  size_t index, size_t min_ind, size_t max_ind)
+{
+  throw TIndexOutOfRangeException(FormatSrc(file,func,line), index, min_ind, max_ind);
+}
+//................................................................................................
+void TExceptionBase::ThrowInvalidUnsignedFormat(const char* file, const char* func, int line, 
+    const char* src, size_t src_len)
+{
+  throw TInvalidUnsignedNumberException(FormatSrc(file,func,line),
+    olxstr('\'') << olxstr(src, src_len) << '\'');
+}
+//................................................................................................
+void TExceptionBase::ThrowInvalidUnsignedFormat(const char* file, const char* func, int line, 
+    const wchar_t* src, size_t src_len)
+{
+  throw TInvalidUnsignedNumberException(FormatSrc(file,func,line),
+    olxstr('\'') << olxstr(src, src_len) << '\'');
 }
 //................................................................................................
 void TExceptionBase::ThrowInvalidIntegerFormat(const char* file, const char* func, int line, 
     const char* src, size_t src_len)
 {
-  throw TInvalidIntegerNumberException(TExceptionBase_FormatSrc(file,func,line),
+  throw TInvalidIntegerNumberException(FormatSrc(file,func,line),
     olxstr('\'') << olxstr(src, src_len) << '\'');
 }
 //................................................................................................
 void TExceptionBase::ThrowInvalidIntegerFormat(const char* file, const char* func, int line, 
     const wchar_t* src, size_t src_len)
 {
-  throw TInvalidIntegerNumberException(TExceptionBase_FormatSrc(file,func,line),
+  throw TInvalidIntegerNumberException(FormatSrc(file,func,line),
     olxstr('\'') << olxstr(src, src_len) << '\'');
 }
 //................................................................................................
 void TExceptionBase::ThrowInvalidFloatFormat(const char* file, const char* func, int line, 
     const char* src, size_t src_len)
 {
-  throw TInvalidFloatNumberException(TExceptionBase_FormatSrc(file,func,line),
+  throw TInvalidFloatNumberException(FormatSrc(file,func,line),
     olxstr('\'') << olxstr(src, src_len) << '\'');
 }
 //................................................................................................
 void TExceptionBase::ThrowInvalidFloatFormat(const char* file, const char* func, int line, 
     const wchar_t* src, size_t src_len)
 {
-  throw TInvalidFloatNumberException(TExceptionBase_FormatSrc(file,func,line),
+  throw TInvalidFloatNumberException(FormatSrc(file,func,line),
     olxstr('\'') << olxstr(src, src_len) << '\'');
 }
 //................................................................................................

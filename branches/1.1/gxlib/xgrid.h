@@ -1,14 +1,11 @@
 #ifndef __olx_glx_xgrid_H
 #define __olx_glx_xgrid_H
 #include "gxbase.h"
-
-#include "glmouselistener.h"
 #include "arrays.h"
 #include "evpoint.h"
 #include "IsoSurface.h"
 #include "gltextbox.h"
 #include "macroerror.h"
-
 #include "gltexture.h"
 #include "glprimitive.h"
 #ifdef __WXWIDGETS__
@@ -29,7 +26,8 @@ const short
   planeRenderModeFill    = 0x0008,
   planeRenderModeLine    = 0x0010;
 
-class TXGrid: public TGlMouseListener  {
+//class TXGrid: public TGlMouseListener  {
+class TXGrid: public AGDrawObject  {
   //TVectorDList AllPoints;
   TArray3D<float>* ED;
   CIsoSurface* IS;
@@ -39,7 +37,7 @@ class TXGrid: public TGlMouseListener  {
   char *TextData;
   float **ContourData;
   float *ContourCrds[2], *ContourLevels;
-  int ContourLevelCount;
+  size_t ContourLevelCount;
   //TGlPrimitive *FPrimitive;
   class TGXApp * XApp;
   void DeleteObjects();
@@ -63,7 +61,7 @@ class TXGrid: public TGlMouseListener  {
   TTypeList<IsoTriangle> p_triangles, n_triangles;
 protected:
   float MaxVal, MinVal, Depth, Size, Scale;
-  int MaxX, MaxY, MaxZ, MaxDim; 
+  size_t MaxX, MaxY, MaxZ, MaxDim; 
   float MinHole, MaxHole;  // the values of scale to skip
   int LastMouseX, LastMouseY;
   void CalcColorRGB(float v, uint8_t& R, uint8_t& G, uint8_t& B) const;
@@ -89,9 +87,9 @@ public:
   bool LoadFromFile(const olxstr& GridFile);
 
   void InitIso();
-  void InitGrid(int maxX, int maxY, int MaxZ);
-  void InitGrid(const vec3i& dim)  {  InitGrid(dim[0], dim[1], dim[2]);  }
-  inline void SetValue(int i, int j, int k, float v) {
+  void InitGrid(size_t maxX, size_t maxY, size_t MaxZ);
+  void InitGrid(const vec3s& dim)  {  InitGrid(dim[0], dim[1], dim[2]);  }
+  inline void SetValue(size_t i, size_t j, size_t k, float v) {
     ED->Data[i][j][k] = v;
   }
   inline double GetValue(int i, int j, int k) const {
@@ -123,10 +121,10 @@ public:
   void SetDepth(float v);
   void SetDepth(const vec3d& v);
   float GetDepth() const {  return Depth;  }
-  vec3i GetDimVec() const {  return vec3i(MaxX, MaxY, MaxZ);  }
-  inline int GetPlaneSize() const {  return MaxDim;  }
+  vec3s GetDimVec() const {  return vec3s(MaxX, MaxY, MaxZ);  }
+  inline size_t GetPlaneSize() const {  return MaxDim;  }
   /* v=2^n values are acepted only (64, 128, 256, etc to be compatible with textures) */
-  void SetPlaneSize(int v);
+  void SetPlaneSize(size_t v);
   float GetSize() const {  return Size;  }
   
   DefPropP(float, MinHole)
@@ -140,9 +138,9 @@ public:
   inline bool IsEmpty()  const  {  return ED == NULL;  }
   short GetRenderMode() const {  return RenderMode;  }
   
-  int GetContourLevelCount() const {  return ContourLevelCount;  }
+  size_t GetContourLevelCount() const {  return ContourLevelCount;  }
   // sets new number of contours...
-  void SetContourLevelCount(int v);
+  void SetContourLevelCount(size_t v);
 
   inline virtual void SetVisible(bool On) {  
     AGDrawObject::SetVisible(On);  
@@ -180,15 +178,15 @@ protected:
     char *text_data;
     const mat3f &proj_m, &c2c;
     const vec3f& center;
-    const vec3i& dim;
+    const vec3s& dim;
     float minVal, maxVal, size, depth, hh;
-    int max_dim;
+    size_t max_dim;
     short mode;
     bool init_data, init_text;
     TXGrid& parent;
     void Run(size_t index);
-    TPlaneCalculationTask(TXGrid& _parent, float*** _src_data, float** _data, char* _text_data, int _max_dim, float _size,
-      float _depth, const mat3f& _proj_m, const mat3f& _c2c, const vec3f& _center, const vec3i& _dim, short _mode) :
+    TPlaneCalculationTask(TXGrid& _parent, float*** _src_data, float** _data, char* _text_data, size_t _max_dim, float _size,
+      float _depth, const mat3f& _proj_m, const mat3f& _c2c, const vec3f& _center, const vec3s& _dim, short _mode) :
         parent(_parent),
         src_data(_src_data), data(_data), text_data(_text_data), max_dim(_max_dim), size(_size), depth(_depth),
         proj_m(_proj_m), c2c(_c2c), center(_center), dim(_dim), minVal(1000), maxVal(-1000),

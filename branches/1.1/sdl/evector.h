@@ -137,15 +137,15 @@ public:
   }
 
   inline VecType& operator  [](size_t offset) const {
-#ifdef _OLX_DEBUG // index cheking is on
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, offset, 0, Fn);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, offset, 0, Fn);
 #endif
     return   FData[offset];
   }
 
   VecType& Data(size_t offset) const  {
-#ifdef _OLX_DEBUG // index cheking is on
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, offset, 0, Fn);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, offset, 0, Fn);
 #endif
     return FData[offset];
   }
@@ -153,8 +153,8 @@ public:
   const VecType* GetRawData() const {  return FData;  }
 
   VecType& Last() const  {
-#ifdef _OLX_DEBUG // index cheking is on
-    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, Fn-1, 0, Fn);
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, Fn-1, 0, Fn);
 #endif
     return FData[Fn-1];
   }

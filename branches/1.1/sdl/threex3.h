@@ -1,10 +1,10 @@
 #ifndef __olx_3x3
 #define __olx_3x3
-
 #include "emath.h"
 #include "typelist.h"
 #include "talist.h"
 #undef QLength
+
 BeginEsdlNamespace()
 
 template <typename> class TVector33;
@@ -619,6 +619,7 @@ protected:  // used in GauseSolve to sort the matrix
   typedef TVector3<float>  vec3f;
   typedef TVector3<double> vec3d;
   typedef TVector3<int>    vec3i;
+  typedef TVector3<size_t> vec3s;
 
   typedef TTypeList<vec3i> vec3i_list;
   typedef TTypeList<vec3f> vec3f_list;

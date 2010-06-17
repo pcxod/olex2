@@ -639,7 +639,7 @@ double TryPoint(TArray3D<float>& map, const TUnitCell& uc, const vec3d& crd)  {
   const TUnitCell::SymSpace sym_space = uc.GetSymSpace();
   SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff, SFUtil::sfOriginOlex2, SFUtil::scaleRegression);
   SFUtil::ExpandToP1(refs, F, sym_space, P1SF);
-  const vec3i dim(map.Length1(), map.Length2(), map.Length3());
+  const vec3s dim = map.GetSize();
   const vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
   BVFourier::MapInfo mi = BVFourier::CalcEDM(P1SF, map.Data, dim, uc.CalcVolume());
   TArrayList<MapUtil::peak> _Peaks;

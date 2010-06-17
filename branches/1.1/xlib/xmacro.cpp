@@ -1888,8 +1888,7 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       E.ProcessingError(__OlxSrcInfo, "ooops...");
       return;
     }
-    TEStrBuffer out;
-    vec3d trans( st.GetResults()[ind].Center );
+    vec3d trans = st.GetResults()[ind].Center;
     //TVectorD trans = st.GetGravityCenter();
     trans /= 2;
     trans *= -1;
@@ -2628,9 +2627,8 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
     olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
-    if( TEFile::Exists( cifFN ) )  {
-      Cif2.LoadFromFile( cifFN );
-    }
+    if( TEFile::Exists(cifFN) )
+      Cif2.LoadFromFile(cifFN);
     else
       throw TFunctionFailedException(__OlxSourceInfo, "existing cif is expected");
     Cif = &Cif2;
@@ -4043,7 +4041,6 @@ void XLibMacros::macMolInfo(TStrObjList &Cmds, const TParamList &Options, TMacro
   TSAtomPList atoms;
   if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true, true) )
     return;
-  const bool use_occu = Options.Contains('o');  
   typedef double float_type; // for generation >= 8, double ,ust be used...
   typedef TVector3<float_type> vec_type;
   TTypeList<TVector3<float_type> > verts;
@@ -4101,12 +4098,13 @@ void XLibMacros::macMolInfo(TStrObjList &Cmds, const TParamList &Options, TMacro
       }
     }
   }
-  float_type mol_vol_x = 0, mol_vol_y = 0, mol_vol_z = 0, mol_area = 0;
+  TVector3<float_type> mol_vol;
+  float_type mol_area = 0;
   for( size_t i=0; i < atoms.Count(); i++ )  {
     const size_t off = triags.Count()*i;
     const float_type r = (float_type)atoms[i]->GetType().r_vdw;
     const vec_type center = atoms[i]->crd();
-    const float_type occu_factor = (float_type)(!use_occu ? 1.0 : (atoms[i]->CAtom().GetOccu()));
+    const float_type occu_factor = (float_type)atoms[i]->CAtom().GetOccu();
     for( size_t j=0; j < triags.Count(); j++ )  {
       if( t_map[off+j] == 0 )  continue;
       const vec_type
@@ -4114,25 +4112,28 @@ void XLibMacros::macMolInfo(TStrObjList &Cmds, const TParamList &Options, TMacro
         v2 = verts[triags[j].vertices[1]]*r,
         v3 = verts[triags[j].vertices[2]]*r;
       vec_type dp = (v2-v1).XProdVec(v3-v1);
-      const float_type m = (float_type)(occu_factor*1.0/2*(float_type)t_map[off+j]/3.0);
-      const float_type area = m*dp.Length();
-      mol_area += area;
+      const float_type m = (float_type)(1.0/2*(float_type)t_map[off+j]/3.0);
+      mol_area += m*dp.Length();
       const float_type dx21 = v2[0]-v1[0],
         dx31 = v3[0]-v1[0],
         dy21 = v2[1]-v1[1],
         dy31 = v3[1]-v1[1],
         dz21 = v2[2]-v1[2],
         dz31 = v3[2]-v1[2];
-      mol_vol_z += (float_type)(m*(1./3*(v1[2]+v2[2]+v3[2])+center[2])*(dx21*dy31-dy21*dx31));
-      mol_vol_y += (float_type)(m*(1./3*(v1[1]+v2[1]+v3[1])+center[1])*(dz21*dx31-dx21*dz31));
-      mol_vol_x += (float_type)(m*(1./3*(v1[0]+v2[0]+v3[0])+center[0])*(dy21*dz31-dz21*dy31));
+      const TVector3<float_type> dv(
+        (float_type)((1./3*(v1[0]+v2[0]+v3[0])+center[0])*(dy21*dz31-dz21*dy31)),
+        (float_type)((1./3*(v1[1]+v2[1]+v3[1])+center[1])*(dz21*dx31-dx21*dz31)),
+        (float_type)((1./3*(v1[2]+v2[2]+v3[2])+center[2])*(dx21*dy31-dy21*dx31)));
+      mol_vol += dv*m;
     }
   }
   TBasicApp::GetLog() << (olxstr("Approximating spheres by ") << triags.Count() << " triangles\n");
-  TBasicApp::GetLog() << (olxstr("Volume of all atoms (exact), A^3: ") << olxstr::FormatFloat(2, volume_p) << '\n');
-  TBasicApp::GetLog() << (olxstr("Volume of all atoms (triangulated), A^3: ") << olxstr::FormatFloat(2, volume_a) << '\n');
-  TBasicApp::GetLog() << (olxstr("Surface area of all atoms (exact), A^2: ") << olxstr::FormatFloat(2, area_p) << '\n');
-  TBasicApp::GetLog() << (olxstr("Surface area of all atoms (triangulated), A^2: ") << olxstr::FormatFloat(2, area_a) << '\n');
-  TBasicApp::GetLog() << (olxstr("Surface area, A^2: ") << olxstr::FormatFloat(2, mol_area) << '\n');
-  TBasicApp::GetLog() << (olxstr("Molecular volume, A^3: ") << olxstr::FormatFloat(2, (mol_vol_x+mol_vol_y+mol_vol_z)/3) << '\n');
+  TBasicApp::GetLog() << (olxstr("Volume approximation error, %: ") <<
+    olxstr::FormatFloat(3, olx_abs(volume_p-volume_a)*100.0/volume_p) << '\n');
+  TBasicApp::GetLog() << (olxstr("Surface area approximation error, %: ") <<
+    olxstr::FormatFloat(3, olx_abs(area_p-area_a)*100.0/area_p) << '\n');
+  TBasicApp::GetLog() << (olxstr("Molecular surface area, A^2: ") <<
+    olxstr::FormatFloat(2, mol_area) << '\n');
+  TBasicApp::GetLog() << (olxstr("Molecular volume, A^3: ") <<
+    olxstr::FormatFloat(2, mol_vol.AbsSum()/3) << '\n');
 }

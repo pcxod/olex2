@@ -81,6 +81,7 @@ public:
 
   uint32_t GetRGB() const {  return (uint32_t)RGBA(255*data[0], 255*data[1], 255*data[2], 255*data[3]);  }
   inline const float* Data() const {  return data;  }
+  float* _Data()  {  return data;  }
 
   bool IsEmpty() const {  return (data[0] == 0 && data[1] == 0 && data[2] == 0);  }
   void Clear()  {  data[0] = data[1] = data[2] = data[3] = 0;  }
@@ -89,12 +90,13 @@ public:
   const float& operator[] (size_t i) const {  return data[i]; }
   
   bool operator == (const TGlOption& v) const {
-    return (olx_abs(data[0]-v[0])+olx_abs(data[1]-v[1])+olx_abs(data[2]-v[2])+olx_abs(data[3]-v[3])) < 1e-5;
+    return !(olx_abs(data[0]-v[0]) > 1e-5 || olx_abs(data[1]-v[1]) > 1e-5 ||
+             olx_abs(data[2]-v[2]) > 1e-5 || olx_abs(data[3]-v[3]) > 1e-5);
   }
   bool operator != (const TGlOption& v) const {  return !(*this == v);  }
 
   TIString ToString() const;
-  bool FromString(const olxstr &S);
+  bool FromString(const olxstr& S);
 };
 
 EndGlNamespace()

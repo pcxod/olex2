@@ -1,7 +1,3 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "glbitmap.h"
 #include "glrender.h"
 #include "styles.h"
@@ -11,11 +7,12 @@
 
 
 TGlBitmap::TGlBitmap(TGlRenderer& Render, const olxstr& collectionName,
-  int left, int top, int width, int height,
+  int left, int top, unsigned int width, unsigned int height,
   unsigned char* RGB, GLenum format) : 
-TGlMouseListener(Render, collectionName)  
+AGlMouseHandlerImp(Render, collectionName)  
 {
   Z = -10.0;
+  Zoom = 1;
   Left = left;
   Top = top;
   Width = width;
@@ -31,13 +28,13 @@ TGlMouseListener(Render, collectionName)
                          format, RGB);
 
   TGlTexture* tex = Render.GetTextureManager().FindTexture(TextureId);
-  tex->SetEnvMode( tpeDecal );
-  tex->SetSCrdWrapping( tpCrdClamp );
-  tex->SetTCrdWrapping( tpCrdClamp );
+  tex->SetEnvMode(tpeDecal);
+  tex->SetSCrdWrapping(tpCrdClamp);
+  tex->SetTCrdWrapping(tpCrdClamp);
 
-  tex->SetMagFilter( tpFilterNearest );
-  tex->SetMinFilter( tpFilterLinear );
-  tex->SetEnabled( true );
+  tex->SetMagFilter(tpFilterNearest);
+  tex->SetMinFilter(tpFilterLinear);
+  tex->SetEnabled(true);
 }
 void TGlBitmap::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
@@ -86,9 +83,9 @@ bool TGlBitmap::Orient(TGlPrimitive& P)  {
   P.SetTextureId( TextureId );
   double hw = Parent.GetWidth()/2;
   double hh = Parent.GetHeight()/2;
-  double xx = Basis.GetCenter()[0],
-         xy = -Basis.GetCenter()[1],
-         zm = Basis.GetZoom();
+  double xx = GetCenter()[0],
+         xy = -GetCenter()[1],
+         zm = GetZoom();
   P.Vertices[0] = vec3d((Left+Width*zm)-hw + xx, hh-(Top+Height*zm) - xy, Z);
   P.Vertices[1] = vec3d(P.Vertices[0][0], hh-Top- xy, Z);
   P.Vertices[2] = vec3d(Left-hw + xx, P.Vertices[1][1], Z);
@@ -101,11 +98,11 @@ bool TGlBitmap::GetDimensions(vec3d &Max, vec3d &Min)  {
   return false;
 }
 
-void TGlBitmap::SetWidth(int w)   {
+void TGlBitmap::SetWidth(unsigned int w)   {
   Width = w;
 //  Primitives()->Style()->ParameterValue("Width") = w;
 }
-void TGlBitmap::SetHeight(int w)  {
+void TGlBitmap::SetHeight(unsigned int w)  {
   Height = w;
 //  Primitives()->Style()->ParameterValue("Height") = w;
 }
@@ -117,13 +114,7 @@ void TGlBitmap::SetTop(int w)     {
   Top = w;
   GetPrimitives().GetStyle().SetParam("Top", w);
 }
-void TGlBitmap::SetZ( double z )  {
+void TGlBitmap::SetZ(double z)  {
   Z = z;
   GetPrimitives().GetStyle().SetParam("Z", z);
 }
-
-int TGlBitmap::GetWidth() const   {  return (int)(Width*Basis.GetZoom());  }
-int TGlBitmap::GetHeight() const  {  return (int)(Height*Basis.GetZoom());  }
-int TGlBitmap::GetLeft()  const   {  return Left; }
-int TGlBitmap::GetTop()  const    {  return Top; }
-

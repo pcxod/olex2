@@ -199,7 +199,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
           Vec1 += (envi.GetCrd(i) - envi.GetBase().crd()).Normalise();
           c++;
         }
-        dis = Distances[GenId(fgCH1,c)];
+        dis = Distances[GenId(fgCH1,(uint16_t)c)];
         crds.AddNew(Vec1.NormaliseTo(-dis) + envi.GetBase().crd());
       }
       break;

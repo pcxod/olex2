@@ -67,12 +67,12 @@ void TCAtom::SetLabel(const olxstr& L, bool validate)  {
     if( atype == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: '") << L << '\'' );
     if( Type != atype )  {
+      if( Type != NULL && *Type == iQPeakZ )
+        SetQPeak(0);
       Type = atype;
       FParent->_OnAtomTypeChanged(*this);
     }
     Label = L;
-    if( *atype != iQPeakZ )
-      SetQPeak(0);
     if( Type->symbol.Length() == 2 )
       Label[1] = Label.o_tolower(Label.CharAt(1));
   }
@@ -82,6 +82,8 @@ void TCAtom::SetLabel(const olxstr& L, bool validate)  {
 //..............................................................................
 void TCAtom::SetType(const cm_Element& t)  {
   if( Type != &t )  {
+    if( Type != NULL && *Type == iQPeakZ )
+      SetQPeak(0);
     Type = &t;
     FParent->_OnAtomTypeChanged(*this);
   }

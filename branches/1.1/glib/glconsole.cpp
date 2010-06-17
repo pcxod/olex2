@@ -175,7 +175,6 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
     }
   }
   OGlM.Init(Parent.IsColorStereo()); // restore the material properties
-  FCursor->Draw();
   return true;
 }
 //..............................................................................
@@ -448,7 +447,7 @@ void TGlConsole::ClearBuffer()  {
 }
 //..............................................................................
 void TGlConsole::KeepSize()  {
-  size_t lc = FBuffer.Count();
+  const size_t lc = FBuffer.Count();
   if( lc > FMaxLines )  {
     for( size_t i = 0; i < lc-FMaxLines; i++ )
       if( FBuffer.GetObject(i) )

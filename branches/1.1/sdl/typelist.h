@@ -64,7 +64,7 @@ public:
 //..............................................................................
   /* creates new copies of the objest, be careful as the assignement operator must exist  */
   template <class alist> void AddListA(const alist& list)  {
-    List.SetCapacity( list.Count() + List.Count() );
+    List.SetCapacity(list.Count() + List.Count());
     for( size_t i=0; i < list.Count(); i++ )  {
       T* o = new T();
       *o = list[i];
@@ -74,7 +74,7 @@ public:
 //..............................................................................
   /* creates new copies of the objest, be careful as the copy constructor must exist  */
   template <class alist> void AddListC(const alist& list)  {
-    List.SetCapacity( list.Count() + List.Count() );
+    List.SetCapacity(list.Count() + List.Count());
     for( size_t i=0; i < list.Count(); i++ )
       List.Add(new T(list[i]));
   }
@@ -134,7 +134,7 @@ public:
   inline T& SetCCopy(size_t index, const T& Obj)  {
     if( List[index] != NULL )
       delete (DestructCast*)List[index];
-    return *(T*)( List[index] = new T(Obj) );
+    return *(List[index] = new T(Obj));
   }
 //..............................................................................
 //..............................................................................
@@ -157,23 +157,23 @@ public:
   inline T& InsertNew(size_t index)  {  return *List.Insert(index, new T());  }
 //..............................................................................
   template<class AC>
-    inline T& InsertNew( size_t index, const AC& arg )  {
+    inline T& InsertNew(size_t index, const AC& arg )  {
       return *List.Insert(index, new T(arg));  }
 //..............................................................................
   template<class FAC, class SAC>
-    inline T& InsertNew( size_t index, const FAC& arg1, const SAC& arg2 )  {
+    inline T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2 )  {
       return *List.Insert(index, new T(arg1, arg2));  }
 //..............................................................................
   template<class FAC, class SAC, class TAC>
-    inline T& InsertNew( size_t index, const FAC& arg1, const SAC& arg2, const TAC& arg3)  {
+    inline T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2, const TAC& arg3)  {
       return *List.Insert(index, new T(arg1, arg2, arg2));  }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC>
-    inline T& InsertNew( size_t index, const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4)  {
+    inline T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4)  {
       return *List.Insert(index, new T(arg1, arg2, arg2, arg4));  }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC, class FvAC>
-    inline T& InsertNew( size_t index, const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4, const FvAC& arg5)  {
+    inline T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4, const FvAC& arg5)  {
       return *List.Insert(index, new T(arg1, arg2, arg2, arg4, arg5));  }
 //..............................................................................
   inline T& AddNew()  {  return *List.Add(new T());  }
@@ -183,23 +183,23 @@ public:
       return *List.Add(new T(arg));  }
 //..............................................................................
   template<class FAC, class SAC>
-    inline T& AddNew( const FAC& arg1, const SAC& arg2 )  {
+    inline T& AddNew(const FAC& arg1, const SAC& arg2 )  {
       return *List.Add(new T(arg1, arg2));  }
 //..............................................................................
   template<class FAC, class SAC, class TAC>
-    inline T& AddNew( const FAC& arg1, const SAC& arg2, const TAC& arg3 )  {
+    inline T& AddNew(const FAC& arg1, const SAC& arg2, const TAC& arg3 )  {
       return *List.Add(new T(arg1, arg2, arg3));  }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC>
-    inline T& AddNew( const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4)  {
+    inline T& AddNew(const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4)  {
       return *List.Add(new T(arg1, arg2, arg3, arg4));  }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC, class FvAC>
-    inline T& AddNew( const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4, const FvAC& arg5)  {
+    inline T& AddNew(const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4, const FvAC& arg5)  {
       return *List.Add(new T(arg1, arg2, arg3, arg4, arg5));  }
 //..............................................................................
   inline T& operator [] (size_t index) const {
-#ifdef _OLX_DEBUG
+#ifdef _DEBUG
     T*& v = List[index];
     if( v == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "cannot dereference a NULL pointer");
@@ -210,7 +210,7 @@ public:
   }
 //..............................................................................
   inline T& Item(size_t index) const  {
-#ifdef _OLX_DEBUG
+#ifdef _DEBUG
     T*& v = List[index];
     if( v == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "cannot dereference a NULL pointer");
@@ -221,7 +221,7 @@ public:
   }
 //..............................................................................
   inline T& Last() const  {
-#ifdef _OLX_DEBUG
+#ifdef _DEBUG
     T*& v = List.Last();
     if( v == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "cannot dereference a NULL pointer");
@@ -275,17 +275,23 @@ public:
     List.Delete(index);
   }
 //..............................................................................
-  void DeleteRange(size_t from, size_t to)  {
-    for( size_t i=from; i < to; i++ )  {
-      if( List[i] != NULL )  {  // check if not deleted yet
-        delete (DestructCast*)List[i];
-        List[i] = NULL;
-      }
+  void DeleteRange(size_t from, size_t count)  {
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, List.Count());
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+count, 0, List.Count()+1);
+#endif
+    for( size_t i=0; i < count; i++ )  {
+      if( List[from+i] != NULL )
+        delete (DestructCast*)List[from+i];
     }
-    List.Pack();
+    List.DeleteRange(from, count);
   }
 //..............................................................................
   TTypeListExt SubList(size_t from, size_t count) const {
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, List.Count()+1);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+count, 0, List.Count()+1);
+#endif
     TTypeListExt rv(count);
     for( size_t i=0; i < count; i++ )
       rv.Set(i, new T(*List[i+from]));
@@ -307,7 +313,7 @@ public:
   // the memory has to be delalocated by calling process
   T& Release(size_t index)  {
     T*& v = List[index];
-#ifdef _OLX_DEBUG
+#ifdef _DEBUG
     if( v == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "cannot dereference a NULL pointer");
 #endif
@@ -328,7 +334,7 @@ public:
     objects are pointers
   */
   void Rearrange(const TSizeList& indexes)  {
-#ifdef _OLX_DEBUG
+#ifdef _DEBUG
     if( Count() != indexes.Count() )
       throw TFunctionFailedException(__OlxSourceInfo, "size mismatch");
 #endif

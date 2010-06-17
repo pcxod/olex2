@@ -42,6 +42,7 @@
 #include "gllabels.h"
 #include "dunitcell.h"
 #include "dbasis.h"
+#include "xgroup.h"
 
 #include "symmparser.h"
 
@@ -758,9 +759,9 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   od.SetPieLineWidth(Options.FindValue("lw_pie", "0.5").ToDouble());
   od.SetElpLineWidth(Options.FindValue("lw_ellipse", "1").ToDouble());
   od.SetQuadLineWidth(Options.FindValue("lw_octant", "0.5").ToDouble());
-  od.SetBondOutlineColor(Options.FindValue("bond_outline_color", "0xFFFFFF").SafeInt<uint32_t>());
+  od.SetBondOutlineColor(Options.FindValue("bond_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
   od.SetBondOutlineSize(Options.FindValue("bond_outline_oversize", "10").ToFloat<float>()/100.0f);
-  od.SetAtomOutlineColor(Options.FindValue("atom_outline_color", "0xFFFFFF").SafeInt<uint32_t>());
+  od.SetAtomOutlineColor(Options.FindValue("atom_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
   od.SetAtomOutlineSize(Options.FindValue("atom_outline_oversize", "5").ToFloat<float>()/100.0f);
   if( Options.Contains('p') )
     od.SetPerspective(true);
@@ -3624,7 +3625,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
         }
       }
       SL.Clear();
-      SL.Strtok( dlg->GetText(), '\n' );
+      SL.Strtok(dlg->GetText(), '\n');
       Ins.ParseHeader(SL);
       FXApp->XFile().LastLoaderChanged();
       BadReflectionsTable(false);
@@ -4197,9 +4198,8 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     }
     FGlConsole->PrintText(out);
     FXApp->GetLog() << '\n';
-    return;
   }
-  if( Cmds.Count() == 1 && TSymmParser::IsRelSymm(Cmds[0]) )  {
+  else if( Cmds.Count() == 1 && TSymmParser::IsRelSymm(Cmds[0]) )  {
     bool invert = Options.Contains('i'), unselect=false;
     if( !invert )
       unselect = Options.Contains('u');
@@ -4228,9 +4228,8 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
           FXApp->GetRender().Select(b, true);
       }
     }
-    return;
   }
-  if( Cmds.Count() > 1 && Cmds[0].Equalsi("part") )  {
+  else if( Cmds.Count() > 1 && Cmds[0].Equalsi("part") )  {
     Cmds.Delete(0);
     TIntList parts;
     for( size_t i=0; Cmds.Count(); i++ )  {
@@ -4249,7 +4248,13 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       FXApp->SelectAtomsWhere(cond);
     }
   }
-  if( Options.IsEmpty() )  {  // print labels of selected atoms
+  else if( Cmds.Count() == 1 && Cmds[0].Equalsi("isot") )  {
+    for( size_t i=0; i < FXApp->AtomCount(); i++ )  {
+      if( FXApp->GetAtom(i).Atom().GetEllipsoid() == NULL )
+        FXApp->GetRender().Select(FXApp->GetAtom(i), true);
+    }
+  }
+  else if( Options.IsEmpty() )  {  // print labels of selected atoms
     olxstr Tmp("sel");
     size_t period=5;
     TGlGroup& Sel = FXApp->GetSelection();
@@ -5081,8 +5086,7 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options, TM
   glB->SetTop( Top );
   if( resize && Created ) {
     double r = ((double)FXApp->GetRender().GetWidth()/(double)owidth)/10.0;
-    glB->Basis.Reset();
-    glB->Basis.SetZoom(r);
+    glB->SetZoom(r);
   }
   glB->SetLeft( FXApp->GetRender().GetWidth() - glB->GetWidth() );
   FXApp->Draw();
@@ -8302,6 +8306,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
     for( size_t i=0; i < xatoms.Count(); i++ )
       xatoms[i]->Atom().CAtom().SetPart(part);
   }
+  FXApp->CenterView(true);
   Macros.ProcessMacro("mode fit", E);
   AMode *md = Modes->GetCurrent();
   if( md != NULL )  {
@@ -8312,10 +8317,6 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
 }
 //..............................................................................
 void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  olxstr FN = PickFile("Save Fragment as...",
-    "XYZ files (*.xyz)|*.xyz",
-    XLibMacros::CurrentDir, false);
-  if( FN.IsEmpty() )  return;
   TXAtomPList xatoms;
   TGlGroup& glg = FXApp->GetSelection();
   for( size_t i=0; i < glg.Count(); i++ )  {
@@ -8332,8 +8333,9 @@ void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
     E.ProcessingError(__OlxSrcInfo, "please select one fragment or one atom only");
     return;
   }
+  olxstr FN = PickFile("Save Fragment as...", "XYZ files (*.xyz)|*.xyz", XLibMacros::CurrentDir, false);
+  if( FN.IsEmpty() )  return;
   TXyz xyz;
-  
   for( size_t i=0; i < nets[0]->NodeCount(); i++ )  {
     if( nets[0]->Node(i).IsDeleted() || nets[0]->Node(i).GetType() == iQPeakZ )
       continue;
@@ -8727,7 +8729,8 @@ void TMainForm::macCenter(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       FXApp->GetRender().GetBasis().SetZoom(FXApp->GetRender().CalcZoom());
     else  {
       TXAtomPList atoms;
-      FindXAtoms(Cmds, atoms, true, true);
+      if( !FindXAtoms(Cmds, atoms, true, true) )
+        return;
       vec3d center;
       double sum = 0;
       for( size_t i=0; i < atoms.Count(); i++ )  {
@@ -8736,6 +8739,8 @@ void TMainForm::macCenter(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       }
       if( sum != 0 )  {
         center /= sum;
+        if( atoms[0]->GetParentGroup() != NULL && EsdlInstanceOf(*atoms[0]->GetParentGroup(), TXGroup) )
+          center += ((TXGroup*)atoms[0]->GetParentGroup())->GetCenter();
         FXApp->GetRender().GetBasis().SetCenter(-center);
       }
     }

@@ -50,6 +50,7 @@
 
 #include "ins.h"
 #include "cif.h"
+#include "xyz.h"
 
 #include "efile.h"
 
@@ -1287,7 +1288,7 @@ separated values of Atom Type and radius, an entry a line");
   XLibMacros::OnAddIns.Add(this, ID_ADDINS, msiExit);
   LoadVFS(plGlobal);
 
-  FHtml = new THtml(this, FXApp);
+  FHtml = new THtml(this, FXApp, 4|wxVSCROLL|wxALWAYS_SHOW_SB);
 
   FHtml->OnLink.Add(this, ID_ONLINK);
   FHtml->OnKey.Add(this, ID_HTMLKEY);
@@ -2296,15 +2297,19 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     }
   }
   else if( MsgId == ID_XOBJECTSDESTROY )  {
-    if( Modes->GetCurrent() != NULL ) Modes->GetCurrent()->OnGraphicsDestroy();
+    if( Modes->GetCurrent() != NULL )
+      Modes->GetCurrent()->OnGraphicsDestroy();
   }
   else if( MsgId == ID_FileLoad )  {
     if( MsgSubId == msiEnter )
       FUndoStack->Clear();
   }
   else if( MsgId == ID_FileClose )  {
-    if( MsgSubId == msiExit )
+    if( MsgSubId == msiExit )  {
       UpdateRecentFile(EmptyString);
+      FInfoBox->Clear();
+      FInfoBox->PostText("No file is loaded");
+    }
   }
   else if( MsgId == ID_CMDLINECHAR )  {
     if( Data != NULL && EsdlInstanceOf(*Data, TKeyEvent) )
@@ -2505,6 +2510,44 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
   }
 }
 //..............................................................................
+bool TMainForm::ImportFrag(const olxstr& line)  {
+  olxstr trimmed_content = line;
+  trimmed_content.Trim(' ').Trim('\n').Trim('\r');
+  if( !trimmed_content.StartsFromi("FRAG") || !trimmed_content.EndsWithi("FEND") )
+    return false;
+  TStrList lines(trimmed_content, '\n');
+  lines.Delete(lines.Count()-1);
+  lines.Delete(0);
+  for( size_t i=0; i < lines.Count(); i++ )  {
+    TStrList toks(lines[i].Trim('\r'), ' ');
+    if( toks.Count() != 5 )  {
+      lines[i].SetLength(0);
+      continue;
+    }
+    toks.Delete(1);
+    lines[i] = toks.Text(' ');
+  }
+  try {
+    TXyz xyz;
+    xyz.LoadFromStrings(lines);
+    if( xyz.GetAsymmUnit().AtomCount() == 0 )
+      return false;
+    TXAtomPList xatoms;
+    TXBondPList xbonds;
+    FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
+    FXApp->CenterView(true);
+    ProcessMacro("mode fit");
+    AMode *md = Modes->GetCurrent();
+    if( md != NULL )  {
+      md->AddAtoms(xatoms);
+      for( size_t i=0; i < xbonds.Count(); i++ )
+        FXApp->GetRender().Select(*xbonds[i], true);
+    }
+    return true;
+  }
+  catch(...)  {  return false;  }
+}
+//..............................................................................
 void TMainForm::OnChar(wxKeyEvent& m)  {
   short Fl=0, inc=3;
   olxstr Cmd, FullCmd;
@@ -2565,16 +2608,18 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
       if (wxTheClipboard->IsSupported(wxDF_TEXT) )  {
         wxTextDataObject data;
         wxTheClipboard->GetData(data);
-        olxstr Tmp = FGlConsole->GetCommand();
-        size_t ip = FGlConsole->GetCmdInsertPosition();
-        if( ip >= Tmp.Length() )
-          Tmp << data.GetText().c_str();
-        else
-          Tmp.Insert(data.GetText().c_str(), ip);
-        for( size_t i=0; i < Tmp.Length(); i++ )
-          if( Tmp.CharAt(i) > 255 )
-            Tmp[i] = 255;
-        FGlConsole->SetCommand(Tmp);
+        olxstr cmdl = FGlConsole->GetCommand();
+        olxstr content = data.GetText().c_str();
+        if( !ImportFrag(content) )  {
+        olxstr trimmed_content = content;
+        trimmed_content.Trim(' ').Trim('\n').Trim('\r');
+          const size_t ip = FGlConsole->GetCmdInsertPosition();
+          if( ip >= cmdl.Length() )
+            cmdl << content;
+          else
+            cmdl.Insert(content, ip);
+          FGlConsole->SetCommand(cmdl);
+        }
         TimePerFrame = FXApp->Draw();
       }
       wxTheClipboard->Close();
@@ -2811,22 +2856,19 @@ void TMainForm::OnResize()  {
   }
   else  {
     FHtml->Freeze();
-    int cw, ch;
     if( FHtmlOnLeft )  {
-      FHtml->SetSize(0, 0, (int)FHtmlPanelWidth, h);
-      FHtml->GetClientSize(&cw, &ch);
-      cw = FHtmlWidthFixed ? (int)FHtmlPanelWidth : (int)(w*FHtmlPanelWidth);
-      FHtml->SetClientSize(cw, h);
-      l = FHtml->GetSize().GetWidth();  // new left
-      FHtml->SetSize(0, 0, l, h);  // final iteration ....
-      w -= l;  // new width
+      const int cw = FHtmlWidthFixed ? (int)FHtmlPanelWidth : (int)(w*FHtmlPanelWidth);
+      FHtml->SetClientSize(cw, -1);
+      FHtml->SetSize(-1, h);
+      FHtml->Move(0, 0);
+      l = FHtml->GetSize().GetWidth();
+      w -= l;
     }
     else  {
-      FHtml->SetSize((int)(w-FHtmlPanelWidth), 0, (int)FHtmlPanelWidth, h);
-      FHtml->GetClientSize(&cw, &ch);
-      cw = FHtmlWidthFixed ? (int)FHtmlPanelWidth : (int)(w*FHtmlPanelWidth);
-      FHtml->SetClientSize(cw, ch);
-      FHtml->SetSize(w-FHtml->GetSize().GetWidth(), 0, FHtml->GetSize().GetWidth(), h);
+      const int cw = FHtmlWidthFixed ? (int)FHtmlPanelWidth : (int)(w*FHtmlPanelWidth);
+      FHtml->SetClientSize(cw, -1);
+      FHtml->SetSize(-1, h);
+      FHtml->Move((int)(w-FHtml->GetSize().GetWidth()), 0);
       w -= FHtml->GetSize().GetWidth();
     }
     FHtml->Refresh();
@@ -2841,7 +2883,7 @@ void TMainForm::OnResize()  {
   if( w <= 0 )  w = 5;
   if( h <= 0 )  h = 5;
   FGlConsole->SetTop(dheight);
-  FGlCanvas->SetSize(l, 0, w, h - (CmdLineVisible ? FCmdLine->WI.GetHeight() : 0) );
+  FGlCanvas->SetSize(l, 0, w, h - (CmdLineVisible ? FCmdLine->WI.GetHeight() : 0));
   FGlCanvas->GetClientSize(&w, &h);
   FXApp->GetRender().Resize(0, 0, w, h, 1);
   FGlConsole->SetLeft(0);
@@ -3883,18 +3925,15 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
         if( b == glB )  break;
         Top += (b->GetHeight() + 2);
       }
-      glB->Basis.Reset();
-      double r = ((double)FXApp->GetRender().GetWidth()/(double)glB->GetWidth()) / 10.0;
-      glB->Basis.SetZoom(r);
-      glB->SetTop( Top );
-      glB->SetLeft( FXApp->GetRender().GetWidth() - glB->GetWidth() );
+      const double r = ((double)FXApp->GetRender().GetWidth()/(double)glB->GetWidth()) / 10.0;
+      glB->SetZoom(r);
+      glB->SetTop(Top);
+      glB->SetLeft(FXApp->GetRender().GetWidth() - glB->GetWidth());
     }
     else  {
       glB->SetLeft(0);
-      glB->SetTop( InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() : 1 );
-      glB->Basis.Reset();
-
-      glB->Basis.SetZoom(1.0);
+      glB->SetTop(InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() : 1);
+      glB->SetZoom(1.0);
     }
   }
   else if( EsdlInstanceOf(*G, TXGlLabel) )  {
@@ -4122,7 +4161,7 @@ void TMainForm::UnlockWindowDestruction(wxWindow* wnd)  {
 bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool GetAll, bool unselect)  {
   size_t cnt = xatoms.Count();
   if( Cmds.IsEmpty() )  {
-    FXApp->FindXAtoms("sel", xatoms, unselect);
+    FXApp->FindXAtoms("sel", xatoms, EsdlInstanceOf(FXApp->GetSelection(), TGlGroup) ? unselect : false);
     if( GetAll && xatoms.IsEmpty() )
       FXApp->FindXAtoms(EmptyString, xatoms, unselect);
   }

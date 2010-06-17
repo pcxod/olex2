@@ -1,10 +1,7 @@
-#ifndef egcH
-#define egcH
-
+#ifndef __olx_sdl_egc_H
+#define __olx_sdl_egc_H
 // atexit prototype
 #include <stdlib.h>
-
-//#include "exception.h"
 #include "actions.h"
 
 /* as simple garbage collector class
@@ -31,7 +28,7 @@ for now we use the latetr one
 
 BeginEsdlNamespace()
 
-class TEGC : public AActionHandler  {
+class TEGC : public AActionHandler {
   struct OEntry  {
     OEntry* Next;
     IEObject* Object;
@@ -61,11 +58,11 @@ public:
   virtual ~TEGC();
   // add an object to be deleted ASAP
   inline static void Add(IEObject* object)  {
-    GetInstance()->_AddASAP( object );
+    GetInstance()->_AddASAP(object);
   }
   // add an object with postponed deletion (in the destructor)
   inline static void AddP(IEObject* object)  {
-    GetInstance()->_AddATE( object );
+    GetInstance()->_AddATE(object);
   }
   /* call this before any API calls clike olxstr.c_str() and u_cstr(), once an instance of TBasicAPP,
   or derived class is created the instance gets attached and will be removde automatically */

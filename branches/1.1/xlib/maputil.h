@@ -14,16 +14,16 @@ class MapUtil  {
 public:
   struct peak  { 
     uint32_t count;
-    TVector3<int16_t> center;
+    vec3s center;
     bool process;
     double summ;
     peak() : process(true), summ(0), count(0)  {}
-    peak(uint16_t _x, uint16_t _y, uint16_t _z) : process(true),  
+    peak(size_t _x, size_t _y, size_t _z) : process(true),  
       summ(0), count(0), center(_x, _y, _z) {}
   };
 protected:
   template <typename MapT> 
-  static void peak_search(MapT*** const data, const vec3i& dim,
+  static void peak_search(MapT*** const data, const vec3s& dim,
     MapT pos_level, const TArray3D<bool>& Mask, TArrayList<peak>& maxima)  
   {
     TStack<vec3i> stack;
@@ -43,14 +43,14 @@ protected:
         for( size_t i=0; i < 3; i++ )  {
           norm_cent[i] = norm_cent[i]%dim[i]; 
           if( norm_cent[i] < 0 )
-            norm_cent[i] += dim[i];
+            norm_cent[i] += (int)dim[i];
         }
         mask[norm_cent[0]][norm_cent[1]][norm_cent[2]] = true;
         peak.summ += data[norm_cent[0]][norm_cent[1]][norm_cent[2]];
         vec3i pt = norm_cent, _pt = cent;
         for( int di=0; di < 3; di++ )  {
           pt[di] = (norm_cent[di]+1)%dim[di];
-          if( pt[di] < 0 )  pt[di] += dim[di];
+          if( pt[di] < 0 )  pt[di] += (int)dim[di];
           if( mask[pt[0]][pt[1]][pt[2]] )  continue;
           if( ref_val < 0 )  {
             if( data[pt[0]][pt[1]][pt[2]] < neg_level )  {
@@ -65,7 +65,7 @@ protected:
             mask[pt[0]][pt[1]][pt[2]] = true;
           }
           pt[di] = (norm_cent[di]-1)%dim[di];
-          if( pt[di] < 0 )  pt[di] += dim[di];
+          if( pt[di] < 0 )  pt[di] += (int)dim[di];
           if( mask[pt[0]][pt[1]][pt[2]] )  continue;
           if( ref_val < 0 )  {
             if( data[pt[0]][pt[1]][pt[2]] < neg_level )  {
@@ -84,25 +84,22 @@ protected:
         }
       }
       new_cent /= peak.count;
-      peak.center = new_cent.Round<int16_t>();
-      for( size_t i=0; i < 3; i++ )  {
+      peak.center = new_cent.Round<size_t>();
+      for( size_t i=0; i < 3; i++ )
         peak.center[i] = peak.center[i]%dim[i]; 
-        if( peak.center[i] < 0 )  
-          peak.center[i] += dim[i];
-      }
     }
   }
 
 public:
   // a simple map integration, considering the peaks and holes as spheres
-  template <typename MapT> static void Integrate(MapT*** const map, const vec3i& dim, 
+  template <typename MapT> static void Integrate(MapT*** const map, const vec3s& dim, 
     MapT pos_level, TArrayList<MapUtil::peak>& Peaks)  
   {
     TArray3D<bool> Mask(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
     const MapT neg_level = -pos_level; 
-    for( int ix=0; ix < dim[0]; ix++ )  {
-      for( int iy=0; iy < dim[1]; iy++ )  {
-        for( int iz=0; iz < dim[2]; iz++ )  {
+    for( size_t ix=0; ix < dim[0]; ix++ )  {
+      for( size_t iy=0; iy < dim[1]; iy++ )  {
+        for( size_t iz=0; iz < dim[2]; iz++ )  {
           const MapT& ref_val = map[ix][iy][iz];
           if( ref_val > pos_level || ref_val < neg_level )
             Peaks.Add(peak(ix, iy, iz));
@@ -113,13 +110,13 @@ public:
   }
   /* a flood fill based algorithm to find undulating channels, which however come and exit at one of the 
   3 crystallographic directions */
-  template <typename map_type> static vec3i AnalyseChannels1(map_type*** map, const vec3i& dim,
+  template <typename map_type> static vec3i AnalyseChannels1(map_type*** map, const vec3s& dim,
     map_type max_level)
   {
     map_type*** map_copy = ReplicateMap(map, dim);
     vec3i dim_ind(0, 1, 2);
     vec3i res;
-    for( int dim_n=0; dim_n < 3; dim_n++ )  {
+    for( size_t dim_n=0; dim_n < 3; dim_n++ )  {
       res[dim_n] = max_level;
       if( dim_n == 1 )  // Y,Z,X
         dim_ind = vec3i(1, 2, 0);
@@ -127,11 +124,11 @@ public:
         dim_ind = vec3i(2, 0, 1);
       while( true )  {
         bool level_accessible = false;
-        vec3i pt;
+        vec3s pt;
         TStack<vec3i> stack;
         while( stack.IsEmpty() )  { // seed
-          for( uint16_t j=0; j < dim[dim_ind[1]]; j++ )  {
-            for( uint16_t k=0; k < dim[dim_ind[2]]; k++ )  {
+          for( size_t j=0; j < dim[dim_ind[1]]; j++ )  {
+            for( size_t k=0; k < dim[dim_ind[2]]; k++ )  {
               pt[dim_ind[1]] = j;
               pt[dim_ind[2]] = k;
               if( map[pt[0]][pt[1]][pt[2]] >= res[dim_n] )  {  // find suitable start
@@ -273,11 +270,11 @@ public:
     }
     out.Pack();
   }
-  template <typename map_type> static map_type*** ReplicateMap(map_type*** const map, const vec3i& dim)  {
+  template <typename map_type> static map_type*** ReplicateMap(map_type*** const map, const vec3s& dim)  {
     map_type*** map_copy = new map_type**[dim[0]];
-    for( int mi=0; mi < dim[0]; mi++ )  {
+    for( size_t mi=0; mi < dim[0]; mi++ )  {
       map_copy[mi] = new map_type*[dim[1]];
-      for( int mj=0; mj < dim[1]; mj++ )  {
+      for( size_t mj=0; mj < dim[1]; mj++ )  {
         map_copy[mi][mj] = new map_type[dim[2]];
         memcpy(map_copy[mi][mj], map[mi][mj], dim[2]*sizeof(map_type));
       }
@@ -285,10 +282,10 @@ public:
     return map_copy;
   }
   template <typename map_type> static map_type*** CopyMap(map_type*** dest,
-    map_type*** const src, const vec3i& dim)
+    map_type*** const src, const vec3s& dim)
   {
-    for( int mi=0; mi < dim[0]; mi++ )  {
-      for( int mj=0; mj < dim[1]; mj++ )  {
+    for( size_t mi=0; mi < dim[0]; mi++ )  {
+      for( size_t mj=0; mj < dim[1]; mj++ )  {
         memcpy(dest[mi][mj], src[mi][mj], dim[2]*sizeof(map_type));
       }
     }
@@ -296,19 +293,19 @@ public:
   }
   // a more generic case, cannot use memcpy
   template <typename dest_map_type, typename src_map_type>
-  static dest_map_type*** CopyMap(dest_map_type*** dest, src_map_type*** const src, const vec3i& dim)  {
-    for( int mi=0; mi < dim[0]; mi++ )  {
-      for( int mj=0; mj < dim[1]; mj++ )  {
-        for( int mk=0; mk < dim[2]; mk++ )  {
+  static dest_map_type*** CopyMap(dest_map_type*** dest, src_map_type*** const src, const vec3s& dim)  {
+    for( size_t mi=0; mi < dim[0]; mi++ )  {
+      for( size_t mj=0; mj < dim[1]; mj++ )  {
+        for( size_t mk=0; mk < dim[2]; mk++ )  {
           dest[mi][mj][mk] = src[mi][mj][mk];
         }
       }
     }
     return dest;
   }
-  template <typename map_type> static void DeleteMap(map_type*** map, const vec3i& dim)  {
-    for( int mi=0; mi < dim[0]; mi++ )  {
-      for( int mj=0; mj < dim[1]; mj++ )
+  template <typename map_type> static void DeleteMap(map_type*** map, const vec3s& dim)  {
+    for( size_t mi=0; mi < dim[0]; mi++ )  {
+      for( size_t mj=0; mj < dim[1]; mj++ )
         delete [] map[mi][mj];
       delete [] map[mi];
     }

@@ -1,12 +1,12 @@
 #ifndef __olx_xblob_H
 #define __olx_xblob_H
 #include "gxbase.h"
-#include "glmouselistener.h"
+#include "gdrawobject.h"
 #include "IsoSurface.h"
 
 BeginGxlNamespace()
 
-class TDBlob: public TGlMouseListener  {
+class TDBlob: public AGDrawObject  {
   TTypeList<vec3f> vertices;
   TTypeList<vec3f> normals;
   TTypeList<IsoTriangle> triangles;
