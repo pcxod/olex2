@@ -4,11 +4,9 @@
 #include "gdrawobject.h"
 #include "glprimitive.h"
 #include "gpcollection.h"
-#include "library.h"
 #include "styles.h"
 
-UseGlNamespace();
-//..............................................................................
+UseGlNamespace()
 //..............................................................................
 AGDrawObject::AGDrawObject(TGlRenderer& parent, const olxstr& collectionName) :
   Parent(parent)

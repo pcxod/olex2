@@ -5,7 +5,6 @@
 #include "typelist.h"
 #include "gloption.h"
 #include "gllightmodel.h"
-#include "glmaterial.h"
 #include "glscene.h"
 #include "ebasis.h"
 #include "actions.h"
@@ -18,8 +17,7 @@
 
 #include "paramlist.h"
 #include "gpcollection.h"
-// sorted pointer list should not give any performace boost...
-//#include "sptrlist.h"
+#include "glgroup.h"
 
 #undef DrawText
 #undef GetObject
