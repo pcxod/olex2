@@ -1940,6 +1940,7 @@ void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& b
   const size_t ac = XFile().GetLattice().AtomCount();
   const size_t bc = XFile().GetLattice().BondCount();
   XFile().GetLattice().AddLatticeContent(latt);
+  if( FLabels->IsVisible() )  FLabels->Clear();
   for( size_t i=ac; i < XFile().GetLattice().AtomCount(); i++ )  {
     TSAtom& A = XFile().GetLattice().GetAtom(i);
     TXAtom& XA = XAtoms.Add(new TXAtom(*FGlRender, EmptyString, A));
@@ -1954,6 +1955,7 @@ void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& b
     XB.Create();
     bonds.Add(XB);
   }
+  if( FLabels->IsVisible() )  FLabels->Init();
 }
 //..............................................................................
 TXAtom* TGXApp::AddAtom(TXAtom* templ)  {
@@ -3252,7 +3254,7 @@ void TGXApp::SynchroniseBonds(TXAtomPList& xatoms)  {
   for( size_t i=0; i < xbonds.Count(); i++ )  {
 //    if( XB->GetPrimitives().ObjectCount() == 1 )  continue;
     // change the orientation if necessary
-    xbonds[i]->BondUpdated();
+    xbonds[i]->Update();
     xbonds[i]->GetPrimitives().RemoveObject(*xbonds[i]);
     TXAtom& XA  = XAtoms[xbonds[i]->Bond().A().GetTag()];
     TXAtom& XA1 = XAtoms[xbonds[i]->Bond().B().GetTag()];
@@ -3744,7 +3746,7 @@ void TGXApp::DeleteOverlayedXFile(size_t index) {
 //..............................................................................
 void TGXApp::UpdateBonds()  {
   for( size_t i=0; i < XBonds.Count(); i++ )
-    XBonds[i].BondUpdated();
+    XBonds[i].Update();
 }
 //..............................................................................
 TXLattice& TGXApp::AddLattice(const olxstr& Name, const mat3d& basis)  {

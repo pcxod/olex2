@@ -2,13 +2,10 @@
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
 #include "gllabels.h"
-#include "glgroup.h"
-#include "gpcollection.h"
 #include "xatom.h"
 #include "gxapp.h"
 #include "asymmunit.h"
 #include "refmodel.h"
-#include "glrender.h"
 
 //----------------------------------------------------------------------------//
 // TXGlLabels function bodies
@@ -44,9 +41,8 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
   TGlFont &Fnt = GetFont();
   TGXApp& app = TGXApp::GetInstance();
   const size_t ac = app.AtomCount();
-  if( ac == 0 )  return true;
-
-  vec3d V;
+  if( ac == 0 || Marks.Count() != ac )
+    return true;
   bool currentGlM, matInited = false;
   P.SetFont(&Fnt);
   TGlMaterial& OGlM = P.GetProperties();
@@ -57,7 +53,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
   const RefinementModel& rm = app.XFile().GetRM();
   for( size_t i=0; i < ac; i++ )  {
     const TXAtom& XA = app.GetAtom(i);
-    if( XA.IsDeleted() || (!XA.IsVisible()))  continue;
+    if( XA.IsDeleted() || !XA.IsVisible() )  continue;
     if( (Mode & lmHydr) == 0 && (XA.Atom().GetType() == iHydrogenZ) )  
       continue;
     if( (Mode & lmQPeak) == 0 && (XA.Atom().GetType() == iQPeakZ) )  continue;
@@ -206,10 +202,11 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
           }
         }
       }
-      V = XA.Atom().crd() + Parent.GetBasis().GetCenter();
+      vec3d V = XA.Atom().crd() + Parent.GetBasis().GetCenter();
       V *= Parent.GetBasis().GetMatrix();
       V *= Parent.GetBasis().GetZoom();
       const double MaxZ = (Parent.GetMaxRasterZ()-0.001);
+      Parent.DrawText(P, V[0]+0.01, V[1]+0.01, MaxZ);
       olx_gl::rasterPos(V[0]+0.01, V[1]+0.01, MaxZ);
       P.Draw();
     }
@@ -227,7 +224,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
 //..............................................................................
 void TXGlLabels::Init()  {
   TGXApp& app = TGXApp::GetInstance();
-  Marks.SetSize( (uint32_t)app.AtomCount() );
+  Marks.SetSize((uint32_t)app.AtomCount());
 }
 //..............................................................................
 void TXGlLabels::Selected(bool On) {  

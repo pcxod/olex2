@@ -35,17 +35,18 @@ protected:
   friend class TFixCModeUndo;
 #endif
 public:
-  TFixCMode(size_t id) : AModeWithLabels(id)  { HasInstance = true;  }
-  bool Init(TStrObjList &Cmds, const TParamList &Options) {
+  TFixCMode(size_t id) : AModeWithLabels(id)  {  HasInstance = true;  }
+  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     TGlXApp::GetMainForm()->executeMacro("labels -f");
     TGlXApp::GetMainForm()->SetUserCursor( "XYZ", "fix" );
     return true;
   }
   ~TFixCMode() {  HasInstance = false;  }
+  void Finalise()  {}
   virtual bool OnObject(AGDrawObject &obj)  {
-    if( EsdlInstanceOf( obj, TXAtom) )  {
+    if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;
-      TGlXApp::GetMainForm()->GetUndoStack()->Push( new TFixCModeUndo(&XA) );
+      TGlXApp::GetMainForm()->GetUndoStack()->Push(new TFixCModeUndo(&XA));
       RefinementModel& rm = *XA.Atom().CAtom().GetParent()->GetRefMod();
       for( int i=0; i < 3; i++ )
         rm.Vars.FixParam(XA.Atom().CAtom(), catom_var_name_X+i);

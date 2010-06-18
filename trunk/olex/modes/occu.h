@@ -26,18 +26,20 @@ protected:
 #endif
 public:
   TOccuMode(size_t id) : AModeWithLabels(id)  {  HasInstance = true;  }
-  bool Init(TStrObjList &Cmds, const TParamList &Options) {
+  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     Occu = Cmds.IsEmpty() ? 0 : Cmds[0].ToDouble();
     TGlXApp::GetMainForm()->SetUserCursor( Occu, "occu");
     TGlXApp::GetMainForm()->executeMacro("labels -ao");
     return true;
   }
   ~TOccuMode() {  HasInstance = false;  }
-  virtual bool OnObject(AGDrawObject &obj)  {
-    if( EsdlInstanceOf( obj, TXAtom) )  {
+  void Finalise()  {}
+  virtual bool OnObject(AGDrawObject& obj)  {
+    if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;
-      TGlXApp::GetMainForm()->GetUndoStack()->Push( new TOccuModeUndo(&XA) );
-      XA.Atom().CAtom().GetParent()->GetRefMod()->Vars.SetParam(XA.Atom().CAtom(), catom_var_name_Sof, Occu);
+      TGlXApp::GetMainForm()->GetUndoStack()->Push(new TOccuModeUndo(&XA));
+      XA.Atom().CAtom().GetParent()->GetRefMod()->Vars.SetParam(
+        XA.Atom().CAtom(), catom_var_name_Sof, Occu);
       TGlXApp::GetGXApp()->MarkLabel(XA, true);
       return true;
     }

@@ -54,7 +54,7 @@ protected:
   olxstr ReCon; // restraint or constraint to use for split atoms
 public:
   TSplitMode(size_t id) : AMode(id)  {  }
-  bool Init(TStrObjList &Cmds, const TParamList &Options) {
+  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     TGXApp& app = *TGlXApp::GetGXApp();
     if( !app.CheckFileType<TIns>() )  return false;
     ReCon = Options.FindValue("r", EmptyString).ToLowerCase();
@@ -65,7 +65,7 @@ public:
     app.XFile().GetLattice().OnDisassemble.Add(this, mode_split_Disassemble, msiEnter);
     return true;
   }
-  ~TSplitMode() {
+  void Finalise() {
     TGXApp& app = *TGlXApp::GetGXApp();
     app.OnObjectsCreate.Remove(this);
     app.XFile().GetLattice().OnDisassemble.Remove(this);

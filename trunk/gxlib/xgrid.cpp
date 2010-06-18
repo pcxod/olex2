@@ -327,7 +327,7 @@ void TXGrid::TPlaneCalculationTask::Run(size_t ind)  {
           for( int m=0; m < 3; m++ )  {
             while( ijk[m] < 0 )
               ijk[m] += (int)dim[m];
-            while( ijk[m] >= dim[m] )
+            while( ijk[m] >= (int)dim[m] )
               ijk[m] -= (int)dim[m];
           }
           val += src_data[ijk[0]][ijk[1]][ijk[2]]*_vxyz;
@@ -426,7 +426,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     Contour<float>::MemberFeedback<TXGrid> mf(*this, &TXGrid::GlLine);
     float contour_step = (maxVal - minVal)/(ContourLevelCount-1);
     ContourLevels[0] = minVal;
-    for( int i=1; i < ContourLevelCount; i++ )
+    for( size_t i=1; i < ContourLevelCount; i++ )
       ContourLevels[i] = ContourLevels[i-1]+contour_step;
 
     GlP.PrepareColorRendering(GL_LINES);
@@ -505,7 +505,7 @@ void TXGrid::DeleteObjects()  {
     PListId = NListId = ~0;
   }
   if( ContourData != NULL )  {
-    for( int i=0; i < MaxDim; i++ )
+    for( size_t i=0; i < MaxDim; i++ )
       delete [] ContourData[i];
     delete [] ContourData;
     delete [] ContourCrds[0];
@@ -616,7 +616,7 @@ void TXGrid::SetPlaneSize(size_t _v)  {
     ContourData = new float*[_v];
     ContourCrds[0] = new float[_v];
     ContourCrds[1] = new float[_v];
-    for( int i=0; i < _v; i++ )  {
+    for( size_t i=0; i < _v; i++ )  {
       ContourData[i] = new float[_v];
       ContourCrds[0][i] = ContourCrds[1][i] = (float)(i-_v/2);///MaxDim;
     }
@@ -823,21 +823,21 @@ void TXGrid::RescaleSurface()  {
 //..............................................................................
 void TXGrid::AdjustMap()  {
   if( ED == NULL )  return;
-  for( int i=0; i < MaxX; i++ )
-    for( int j=0; j < MaxY; j++ )
+  for( size_t i=0; i < MaxX; i++ )
+    for( size_t j=0; j < MaxY; j++ )
       ED->Data[i][j][MaxZ] = ED->Data[i][j][0];
-  for( int i=0; i < MaxX; i++ )
-    for( int j=0; j < MaxZ; j++ )
+  for( size_t i=0; i < MaxX; i++ )
+    for( size_t j=0; j < MaxZ; j++ )
       ED->Data[i][MaxY][j] = ED->Data[i][0][j];
-  for( int i=0; i < MaxY; i++ )
-    for( int j=0; j < MaxZ; j++ )
+  for( size_t i=0; i < MaxY; i++ )
+    for( size_t j=0; j < MaxZ; j++ )
       ED->Data[MaxX][i][j] = ED->Data[0][i][j];
 
-  for( int i=0; i < MaxX; i++ )
+  for( size_t i=0; i < MaxX; i++ )
     ED->Data[i][MaxY][MaxZ] = ED->Data[i][0][0];
-  for( int i=0; i < MaxY; i++ )
+  for( size_t i=0; i < MaxY; i++ )
     ED->Data[MaxX][i][MaxZ] = ED->Data[0][i][0];
-  for( int i=0; i < MaxZ; i++ )
+  for( size_t i=0; i < MaxZ; i++ )
     ED->Data[MaxX][MaxY][i] = ED->Data[0][0][i];
   ED->Data[MaxX][MaxY][MaxZ] = ED->Data[0][0][0];
 }
@@ -966,8 +966,8 @@ void TXGrid::ToDataItem(TDataItem& item, IOutputStream& zos) const {
     item.AddField("max_x", MaxX);
     item.AddField("max_y", MaxY);
     item.AddField("max_z", MaxZ);
-    for( int x=0; x < MaxX; x++ )  {
-      for( int y=0; y < MaxY; y++ )  {
+    for( size_t x=0; x < MaxX; x++ )  {
+      for( size_t y=0; y < MaxY; y++ )  {
         zos.Write( ED->Data[x][y], sizeof(float)*MaxZ );
       }
     }
@@ -999,8 +999,8 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
   InitGrid( item.GetRequiredField("max_x").ToInt(), 
             item.GetRequiredField("max_y").ToInt(),
             item.GetRequiredField("max_z").ToInt() );
-  for( int x=0; x < MaxX; x++ )
-    for( int y=0; y < MaxY; y++ )
+  for( size_t x=0; x < MaxX; x++ )
+    for( size_t y=0; y < MaxY; y++ )
       zis.Read(ED->Data[x][y], sizeof(float)*MaxZ);
   TDataItem* maski = item.FindItem("mask");
   if( maski != NULL )  {

@@ -9,16 +9,17 @@ class THfixMode : public AModeWithLabels  {
 protected:
   TXlConGen* xlConGen;
 public:
-  THfixMode(size_t id) : AModeWithLabels(id)  {}
-  bool Init(TStrObjList &Cmds, const TParamList &Options) {
-    if( !TGlXApp::GetGXApp()->CheckFileType<TIns>() )  return false;
+  THfixMode(size_t id) : AModeWithLabels(id), xlConGen(NULL)  {}
+  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
+    if( !TGlXApp::GetGXApp()->CheckFileType<TIns>() )
+      return false;
     Hfix = Cmds.IsEmpty() ? 0 : Cmds[0].ToInt();
     xlConGen = new TXlConGen( TGlXApp::GetGXApp()->XFile().GetRM() );
     TGlXApp::GetMainForm()->SetUserCursor( Hfix, "hfix");
     TGlXApp::GetMainForm()->executeMacro("labels -a -h");
     return true;
   }
-  ~THfixMode() {  
+  void Finalise()  {
     if( xlConGen != NULL )
       delete xlConGen;
   }
@@ -31,20 +32,18 @@ public:
       }
       else if( Hfix == 0 )  {  // special case
         TCAtom& ca = XA->Atom().CAtom();
-        if( ca.GetDependentAfixGroup() != NULL )       ca.GetDependentAfixGroup()->Clear();
+        if( ca.GetDependentAfixGroup() != NULL )
+          ca.GetDependentAfixGroup()->Clear();
         else if( ca.DependentHfixGroupCount() != 0 )  {
           for( size_t i=0; i < ca.DependentHfixGroupCount(); i++ )
             ca.GetDependentHfixGroup(i).Clear();
         }
-        else if( ca.GetParentAfixGroup() != NULL )     ca.GetParentAfixGroup()->Clear();
+        else if( ca.GetParentAfixGroup() != NULL )
+          ca.GetParentAfixGroup()->Clear();
       }
-      else  {
-        TGlXApp::GetMainForm()->executeMacro( olxstr("hadd ") << Hfix << " #c" << XA->Atom().CAtom().GetId() );
-      }
-      //if( TGlXApp::GetMainForm()->executeMacro(
-      //      olxstr("addins HFIX ") << Hfix << ' ' << XA->Atom().GetLabel()) )
-      //  XA->Atom().CAtom().SetHfix(Hfix);
-      
+      else
+        TGlXApp::GetMainForm()->executeMacro(
+        olxstr("hadd ") << Hfix << " #c" << XA->Atom().CAtom().GetId());
       return true;
     }
     return false;

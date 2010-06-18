@@ -61,7 +61,8 @@ AModeWithLabels::~AModeWithLabels()  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-  TModes* TModes::Instance = NULL;
+TModes* TModes::Instance = NULL;
+
 TModes::TModes() {
   if( Instance != NULL )  throw TFunctionFailedException(__OlxSourceInfo, "singleton");
   Instance = this;
@@ -83,16 +84,27 @@ TModes::TModes() {
 //..............................................................................
 AMode* TModes::SetMode(const olxstr& name)  {
   AModeFactory* mf = Modes[name];
-  if( CurrentMode != NULL )  delete CurrentMode;
+  if( CurrentMode != NULL )  {
+    CurrentMode->Finalise();
+    delete CurrentMode;
+  }
   CurrentMode = NULL;  // mf->New Calls other functions, validating currnet mode...
   CurrentMode = (mf == NULL) ? NULL : mf->New();
   return CurrentMode;
 }
 //..............................................................................
+void TModes::ClearMode(bool finalise)  {
+  if( CurrentMode == NULL )  return;
+  if( finalise )  CurrentMode->Finalise();
+  delete CurrentMode;
+  CurrentMode = NULL;
+}
+//..............................................................................
 TModes::~TModes()  {
   for( size_t i=0; i < Modes.Count(); i++ )
     delete Modes.GetObject(i);
-  if( CurrentMode != NULL )  delete CurrentMode;
+  if( CurrentMode != NULL )
+    delete CurrentMode;
   Instance = NULL;
 }
 //..............................................................................

@@ -20,7 +20,10 @@ namespace ctrl_ext  {
       AOlxCtrl(this),  
       OnChange(Actions.New(evt_change_id)),
       Data(EmptyString),
-      OnChangeStr(EmptyString)  {}
+      OnChangeStr(EmptyString)
+    {
+      SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+    }
     virtual ~TSpinCtrl()  {}
 
     DefPropC(olxstr, OnChangeStr) // this is passed to the OnChange event

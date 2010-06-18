@@ -26,21 +26,18 @@ protected:
 #endif
 public:
   TPartMode(size_t id) : AModeWithLabels(id)  {  HasInstance = true;  }
-  bool Init(TStrObjList &Cmds, const TParamList &Options) {
+  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     Part = Cmds.IsEmpty() ? 0 : Cmds[0].ToInt();
     TGlXApp::GetMainForm()->SetUserCursor( Part, "part");
     TGlXApp::GetMainForm()->executeMacro("labels -p -h");
     return true;
   }
-  ~TPartMode() {
-    HasInstance = false;
-    TXApp::GetInstance().XFile().GetLattice().UpdateConnectivity();
-    //TGlXApp::GetMainForm()->executeMacro("fuse");
-  }
-  virtual bool OnObject(AGDrawObject &obj)  {
-    if( EsdlInstanceOf( obj, TXAtom) )  {
+  ~TPartMode() {  HasInstance = false;  }
+  void Finalise()  {  TXApp::GetInstance().XFile().GetLattice().UpdateConnectivity();  }
+  virtual bool OnObject(AGDrawObject& obj)  {
+    if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;
-      TGlXApp::GetMainForm()->GetUndoStack()->Push( new TPartModeUndo(&XA) );
+      TGlXApp::GetMainForm()->GetUndoStack()->Push(new TPartModeUndo(&XA));
       XA.Atom().CAtom().SetPart(Part);
       TGlXApp::GetGXApp()->MarkLabel(XA, true);
       return true;

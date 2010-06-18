@@ -154,7 +154,7 @@ public:
               map[p[0]][p[1]][p[2]] = res[dim_n]-1;
             } 
             p[dim_ind[ii]] = pt[dim_ind[ii]]+1;
-            if( p[dim_ind[ii]] < dim[dim_ind[ii]] && map[p[0]][p[1]][p[2]] >= res[dim_n] )  {
+            if( p[dim_ind[ii]] < (int)dim[dim_ind[ii]] && map[p[0]][p[1]][p[2]] >= res[dim_n] )  {
               stack.Push(p);
               map[p[0]][p[1]][p[2]] = res[dim_n]-1;
             } 

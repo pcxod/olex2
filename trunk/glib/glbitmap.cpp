@@ -1,5 +1,4 @@
 #include "glbitmap.h"
-#include "glrender.h"
 #include "styles.h"
 #include "gpcollection.h"
 #include "gltexture.h"
