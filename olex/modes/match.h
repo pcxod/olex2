@@ -14,13 +14,14 @@ protected:
   }
 public:
   TMatchMode(size_t id) : AMode(id)  {}
-  bool Init(TStrObjList& Cmds, const TParamList& Options) {
+  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     AtomsToMatch.Clear();
     TGlXApp::GetMainForm()->SetUserCursor('0', "<M>");
     return true;
   }
-  virtual bool OnObject(AGDrawObject &obj)  {
-    if( EsdlInstanceOf( obj, TXAtom) && AtomsToMatch.Count() < 7 )  {
+  void Finalise()  {}
+  virtual bool OnObject(AGDrawObject& obj)  {
+    if( EsdlInstanceOf(obj, TXAtom) && AtomsToMatch.Count() < 7 )  {
       AtomsToMatch.Add((TXAtom&)obj);
       TGlXApp::GetMainForm()->SetUserCursor(AtomsToMatch.Count(), "<M>");
       FitAtoms(AtomsToMatch, "<M>", true);

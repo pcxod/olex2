@@ -1,12 +1,12 @@
 #ifndef gdrawobjectH
 #define gdrawobjectH
 #include "glbase.h"
-#include "glrender.h"
 #include "evector.h"
 #include "emath.h"
-
+#include "library.h"
 #include "macroerror.h"
 #include "gpcollection.h"
+#include "glmaterial.h"
 
 BeginGlNamespace()
 
@@ -19,7 +19,6 @@ const short
   sgdoDeleted    = 0x0020,
   sgdoSelectable = 0x0040;
 
-class TlGroup;
 /*
   defines basic functionality of a graphic object, accessible outside of
  the graphic core
@@ -35,8 +34,8 @@ class AGDrawObject: public ACollectionItem  {
 protected:
   short FDrawStyle;
   short Flags;
-  TGlGroup *ParentGroup;  // parent collection
-  TGlRenderer& Parent;
+  class TGlGroup *ParentGroup;  // parent collection
+  class TGlRenderer& Parent;
   TGPCollection *Primitives;
   evecd FParams;
   olxstr CollectionName;
@@ -93,8 +92,11 @@ public:
   virtual void SetParentGroup(TGlGroup* P)  {  SetGrouped((ParentGroup = P) != NULL);  }
   
   virtual void ListDrawingStyles(TStrList& List)  {}
-
   virtual void UpdaterimitiveParams(TGlPrimitive* GlP)  {}
+  /* a generic Update function, called when the model (like control points) has changed
+  should be implemented by objects depending on coordinates of others in an indirect way
+  */
+  virtual void Update()  {}
   // the object should update its parameters from GlP
 
   virtual short DrawStyle() const {  return 0;  }
@@ -115,7 +117,7 @@ public:
   void LibIsGrouped(const TStrObjList& Params, TMacroError& E);
   void LibIsSelected(const TStrObjList& Params, TMacroError& E);
   void LibGetName(const TStrObjList& Params, TMacroError& E);
-  void ExportLibrary(class TLibrary& lib);
+  void ExportLibrary(TLibrary& lib);
 
   virtual void Individualize() {}
   virtual void Collectivize()  {}

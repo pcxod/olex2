@@ -6,20 +6,20 @@ class THimpMode : public AMode  {
 protected:
 public:
   THimpMode(size_t id) : AMode(id)  {}
-  bool Init(TStrObjList &Cmds, const TParamList &Options) {
+  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     BondLength = Cmds.IsEmpty() ? 0 : Cmds[0].ToDouble();
     if( BondLength <= 0.5 )  {
       TBasicApp::GetLog().Error("suspicious bond length");
       return false;
     }
-    TGlXApp::GetMainForm()->SetUserCursor( "<->", olxstr(BondLength) );
+    TGlXApp::GetMainForm()->SetUserCursor("<->", olxstr(BondLength));
     return true;
   }
-  ~THimpMode() {
-    TGlXApp::GetMainForm()->executeMacro("fuse");
+  void Finalise()  {
+    TXApp::GetInstance().XFile().GetLattice().UpdateConnectivity();
   }
-  virtual bool OnObject(AGDrawObject &obj)  {
-    if( EsdlInstanceOf( obj, TXAtom) )  {
+  virtual bool OnObject(AGDrawObject& obj)  {
+    if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;
       if( XA.Atom().GetType() == iHydrogenZ )  {
         TSAtom* aa = NULL;

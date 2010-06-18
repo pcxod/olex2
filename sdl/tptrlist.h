@@ -21,7 +21,7 @@ private:
     FIncrement = 5;
     FCapacity = FCount;
     Items = NULL;
-    if( size != NULL )  {
+    if( size != 0 )  {
       Allocate();
       memset(Items, 0, FCapacity*sizeof(T*));
     }

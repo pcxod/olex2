@@ -6,18 +6,29 @@
 #include "xbond.h"
 
 BeginGxlNamespace()
-
+/* The group now updates the atom coordinates in real time to make the process
+more transparent, however, it could use the TEBasis in the following way:
+  virtual bool DoTranslate(const vec3d& t)  {  Basis.Translate(t);  return true;  }
+  virtual bool DoRotate(const vec3d& vec, double angle)  {
+    Basis.Rotate(vec, angle);
+    return true;
+  }
+  virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) const {
+    olx_gl::translate(RotationCenter);  // + Basis.GetCenter() - in the next call to orient...
+    olx_gl::orient(Basis);
+    olx_gl::translate(-RotationCenter);
+    ...
+  }
+*/
 class TXGroup : public TGlGroup, public AGlMouseHandler {
   vec3d RotationCenter;
+  TXAtomPList Atoms;
 protected:
   virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) const {
     if( GetParentGroup() != NULL )  {  // is inside a group?
       TGlGroup::DoDraw(SelectPrimitives, SelectObjects);
       return;
     }
-    olx_gl::translate(RotationCenter);  // + Basis.GetCenter() - in the next call to orient...
-    olx_gl::orient(Basis);
-    olx_gl::translate(-RotationCenter);
     for( size_t i=0; i < Count(); i++ )  {
       AGDrawObject& G = GetObject(i);
       if( !G.IsVisible() || G.IsDeleted() )  continue;
@@ -50,9 +61,23 @@ protected:
       }
     }
   }
-  TEBasis Basis;
-  virtual bool DoTranslate(const vec3d& t) {  Basis.Translate(t);  return true;  }
-  virtual bool DoRotate(const vec3d& vec, double angle) {  Basis.Rotate(vec, angle);  return true;  }
+  virtual bool DoTranslate(const vec3d& t) {
+    for( size_t i=0; i < Atoms.Count(); i++ )
+      Atoms[i]->Atom().crd() += t;
+    RotationCenter += t;
+    for( size_t i=0; i < Count(); i++ )
+      GetObject(i).Update();
+    return true;
+  }
+  virtual bool DoRotate(const vec3d& vec, double angle)  {
+    mat3d m;  
+    CreateRotationMatrix(m, vec, cos(angle), sin(angle) );
+    for( size_t i=0; i < Atoms.Count(); i++ )
+      Atoms[i]->Atom().crd() = (Atoms[i]->Atom().crd()-RotationCenter)*m+RotationCenter;
+    for( size_t i=0; i < Count(); i++ )
+      GetObject(i).Update();
+    return true;
+  }
   virtual bool DoZoom(double, bool)  {  return false;  }
   virtual const TGlRenderer& DoGetRenderer() const {  return GetParent();  }
   bool OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
@@ -73,15 +98,17 @@ public:
     SetRoteable(true);
   }
   void AddAtoms(const TPtrList<TXAtom>& atoms)  {
-    for( size_t i=0; i < atoms.Count(); i++ )
-      RotationCenter += atoms[i]->Atom().crd();
-    RotationCenter /= atoms.Count();
     TGlGroup::AddObjects(atoms);
+    Atoms.AddList(atoms);
+    UpdateRotationCenter();
   }
-  const vec3d& GetCenter() const {  return Basis.GetCenter();  }
-  const mat3d& GetMatrix() const {  return Basis.GetMatrix();  }
+  void UpdateRotationCenter()  {
+    RotationCenter.Null();
+    for( size_t i=0; i < Atoms.Count(); i++ )
+      RotationCenter += Atoms[i]->Atom().crd();
+    RotationCenter /= Atoms.Count();
+  }
   const vec3d& GetRotationCenter() const {  return RotationCenter;  }
-  void ResetBasis() {  Basis.Reset();  }
 };
 
 EndGxlNamespace()

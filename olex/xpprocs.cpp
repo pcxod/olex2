@@ -3194,13 +3194,20 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   // this variable is set when the mode is changed from within this function
   static bool ChangingMode = false;
   if( ChangingMode )  return;
-  AMode* md = Modes->SetMode( Cmds[0] );
+  AMode* md = Modes->SetMode(Cmds[0]);
   olxstr tmp = EmptyString;
   if( md != NULL )  {
     tmp << Cmds[0];
     Cmds.Delete(0);
-    try  {  md->Init(Cmds, Options);  }
+    try  {
+      if( !md->Initialise(Cmds, Options) )  {
+        E.ProcessingError(__OlxSrcInfo, "Current mode is unavailable");
+        Modes->ClearMode(false);
+        return;
+      }
+    }
     catch(const TExceptionBase& e)  {  
+      Modes->ClearMode(false);
       throw TFunctionFailedException(__OlxSrcInfo, e);  
     }
   }
@@ -7605,7 +7612,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   FXApp->GetRender().GetBasis().NullCenter();
   for( size_t i=0; i < FXApp->BondCount(); i++ )
-    FXApp->GetBond(i).BondUpdated();
+    FXApp->GetBond(i).Update();
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -8739,8 +8746,6 @@ void TMainForm::macCenter(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       }
       if( sum != 0 )  {
         center /= sum;
-        if( atoms[0]->GetParentGroup() != NULL && EsdlInstanceOf(*atoms[0]->GetParentGroup(), TXGroup) )
-          center += ((TXGroup*)atoms[0]->GetParentGroup())->GetCenter();
         FXApp->GetRender().GetBasis().SetCenter(-center);
       }
     }

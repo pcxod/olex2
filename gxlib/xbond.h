@@ -80,7 +80,8 @@ public:
   void UpdatePrimitiveParams(TGlPrimitive *Primitive);
   void OnPrimitivesCleared();
   void Quality(const short Val);
-  void BondUpdated();
+  // should be called when atom coordinates have changed
+  virtual void Update();
 
   static void Init(TGlRenderer* glr)  {
     if( FXBondStylesClear == NULL ) 

@@ -4,7 +4,6 @@
 //----------------------------------------------------------------------------//
 #include "dframe.h"
 #include "glmaterial.h"
-#include "glrender.h"
 #include "gpcollection.h"
 #include "glmouse.h"
 #include "glprimitive.h"

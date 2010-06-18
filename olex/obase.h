@@ -34,11 +34,12 @@ public:
   AMode(size_t id);
   virtual ~AMode();
   // mode initialisation
-  virtual bool Init(TStrObjList &Cmds, const TParamList &Options) = 0;
+  virtual bool Initialise(TStrObjList &Cmds, const TParamList &Options) = 0;
+  virtual void Finalise() = 0;
   //an action to be exected then any particular object is selected/clicked
   virtual bool OnObject(AGDrawObject &obj) = 0;
   // if the mode holds any reference to graphical objects - this should be cleared
-  virtual void OnGraphicsDestroy()  {  return;  }
+  virtual void OnGraphicsDestroy()  {}
   //if the mode processes the key - true should be returned to skip the event
   virtual bool OnKey(int keyId, short shiftState)  {  return false;  }
   // if the function supported - returns true
@@ -80,6 +81,7 @@ public:
   ~TModes();
   // NULL is returned of no mode foind
   AMode* SetMode(const olxstr& name);
+  void ClearMode(bool finalise);
   static size_t DecodeMode( const olxstr& mode );
   AMode* GetCurrent()  {  return CurrentMode;  }
 };

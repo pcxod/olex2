@@ -42,20 +42,21 @@ protected:
 #endif
 public:
   TFixUMode(size_t id) : AModeWithLabels(id)  {  HasInstance = true;  }
-  bool Init(TStrObjList &Cmds, const TParamList &Options) {
+  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     Val = Cmds.IsEmpty() ? 1 : Cmds[0].ToDouble();
     TGlXApp::GetMainForm()->executeMacro("labels -f -r -h");
     if( Val == 0 )
-      TGlXApp::GetMainForm()->SetUserCursor( "<U>", "fix" );
+      TGlXApp::GetMainForm()->SetUserCursor("<U>", "fix" );
     else
-      TGlXApp::GetMainForm()->SetUserCursor( Val, "fixU" );
+      TGlXApp::GetMainForm()->SetUserCursor(Val, "fixU" );
     return true;
   }
   ~TFixUMode() {  HasInstance = false;  }
-  virtual bool OnObject(AGDrawObject &obj)  {
-    if( EsdlInstanceOf( obj, TXAtom) )  {
+  void Finalise()  {}
+  virtual bool OnObject(AGDrawObject& obj)  {
+    if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;
-      TGlXApp::GetMainForm()->GetUndoStack()->Push( new TFixUModeUndo(&XA) );
+      TGlXApp::GetMainForm()->GetUndoStack()->Push(new TFixUModeUndo(&XA));
       RefinementModel& rm = *XA.Atom().CAtom().GetParent()->GetRefMod();
       if( XA.Atom().CAtom().GetEllipsoid() == NULL )
         TXApp::GetInstance().SetAtomUiso(XA.Atom(), Val);

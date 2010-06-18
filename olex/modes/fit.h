@@ -7,32 +7,21 @@ class TFitMode : public AMode  {
   TXGroup* group;
   TXAtomPList Atoms, AtomsToMatch;
 protected:
-  void Update()  {
-    TAsymmUnit& au = TGlXApp::GetGXApp()->XFile().GetAsymmUnit();
-    for( size_t i=0; i < Atoms.Count(); i++ )  {
-      TXAtom& xa = *Atoms[i];
-      xa.Atom().crd() = (xa.Atom().crd()-group->GetRotationCenter())*group->GetMatrix() +
-        group->GetRotationCenter() + group->GetCenter();
-      vec3d c = xa.Atom().crd();
-      xa.Atom().ccrd() = au.CartesianToCell(c);
-      xa.Atom().CAtom().ccrd() = c;
-    }
-    group->ResetBasis();
-  }
 public:
   TFitMode(size_t id) : AMode(id)  {}
-  bool Init(TStrObjList &Cmds, const TParamList &Options) {
+  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     AtomsToMatch.Clear();
     TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
     group = &TGlXApp::GetGXApp()->GetRender().ReplaceSelection<TXGroup>();
     return true;
   }
-  ~TFitMode() {
+  void Finalise() {
     TGXApp& app = *TGlXApp::GetGXApp();
     TAsymmUnit& au = app.XFile().GetAsymmUnit();
     RefinementModel& rm = app.XFile().GetRM();
-    Update();
     for( size_t i=0; i < Atoms.Count(); i++ )  {
+      Atoms[i]->Atom().CAtom().ccrd() = Atoms[i]->Atom().crd();
+      Atoms[i]->Atom().ccrd() = au.CartesianToCell(Atoms[i]->Atom().CAtom().ccrd());
       rm.Vars.FixParam(Atoms[i]->Atom().CAtom(), catom_var_name_Sof);
     }
     app.GetRender().ReplaceSelection<TGlGroup>();
@@ -45,8 +34,8 @@ public:
       AtomsToMatch.Add((TXAtom&)obj);
       TGlXApp::GetMainForm()->SetUserCursor(AtomsToMatch.Count(), "<F>");
       if( (AtomsToMatch.Count()%2) == 0 )  {
-        Update();
         TMatchMode::FitAtoms(AtomsToMatch, "<F>", false);
+        group->UpdateRotationCenter();
       }
     }
     return true;

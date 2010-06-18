@@ -1,20 +1,20 @@
 #ifndef __olx_gl_group_H
 #define __olx_gl_group_H
 #include "glbase.h"
-#include "gdrawobject.h"
 #include "tptrlist.h"
+#include "gdrawobject.h"
 
 BeginGlNamespace()
 
 class TGlGroup: public AGDrawObject {
   TPtrList<AGDrawObject> FObjects;   // a list of grouped objects
-  class TGlMaterial GlM;
+  TGlMaterial GlM;
   bool DefaultColor;
 protected:
   void InitMaterial() const;
   virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) const;
 public:
-  TGlGroup(TGlRenderer& R, const olxstr& collectionName);
+  TGlGroup(class TGlRenderer& R, const olxstr& collectionName);
   virtual void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlGroup();
   void Clear();

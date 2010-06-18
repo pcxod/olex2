@@ -663,10 +663,10 @@ void OrtDraw::Render(const olxstr& fileName)  {
     }
     float contour_step = (maxZ - minZ)/(contour_cnt-1);
     z[0] = minZ;
-    for( int i=1; i < contour_cnt; i++ )
+    for( size_t i=1; i < contour_cnt; i++ )
       z[i] = z[i-1]+contour_step;
     cm.DoContour(data, 0, (int)MaxDim-1, 0, (int)MaxDim-1, x, y, contour_cnt, z, mf);
-    for( int i=0; i < MaxDim; i++ )
+    for( size_t i=0; i < MaxDim; i++ )
       delete [] data[i];
     delete [] data;
     delete [] x;
