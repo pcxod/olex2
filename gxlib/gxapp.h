@@ -132,7 +132,7 @@ protected:
   TEBitArray FVisibility;
   void RestoreVisibility();
   void StoreVisibility();
-
+public:
   struct GroupData  {
     TTypeList<TSAtom::Ref> atoms;
     TTypeList<TSBond::Ref> bonds;
@@ -141,9 +141,11 @@ protected:
     index_t parent_id;
   };
   // stores numeric references
+  void RestoreGroup(TGlGroup& glg, const GroupData& group);
+  void StoreGroup(const TGlGroup& glg, GroupData& group);
   void RestoreGroups(const TTypeList<GroupData>& groups);
   void StoreGroups(TTypeList<GroupData>& groups);
-
+protected:
   float FProbFactor;
   double ExtraZoom;  // the default is 1, Calculated Zoom is multiplid by this number
   /* intialises SAtom::Tag to XAtom::Id and checks if any atom with AtomInfo == atom_type

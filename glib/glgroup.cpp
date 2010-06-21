@@ -22,19 +22,19 @@ void TGlGroup::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 
-  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   if( GPC.IsEmpty() )  return;
   TGraphicsStyle& GS = GPC.GetStyle();
   if( GetParentGroup() != NULL )  {
-    GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF );
+    GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF);
     GlM.ShininessF = 128;
     GlM.AmbientF = 0xff0fff0f;
     GlM.DiffuseF = 0xff00f0ff;
   }
   else  {
     GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|
-      sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB|sglmTransparent );
+      sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB|sglmTransparent);
     GlM.ShininessF = 128;
     GlM.AmbientF = 0x7f00ff00;
     GlM.DiffuseF = 0x7f0000ff;

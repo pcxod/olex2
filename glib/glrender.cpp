@@ -95,8 +95,8 @@ void TGlRenderer::InitLights()  {
 }
 //..............................................................................
 void TGlRenderer::ClearPrimitives()  {
-  ClearGroups();
   FSelection->Clear();
+  ClearGroups();
   FListManager.ClearLists();
   if( CompiledListId != -1 )  {
     olx_gl::deleteLists(CompiledListId, 1);

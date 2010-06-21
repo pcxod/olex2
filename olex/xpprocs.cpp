@@ -3119,7 +3119,6 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       d_cnt = qpeaks.Count();
     for( size_t i=0; i < qpeaks.Count(); i++ )  
       qpeaks[i]->SetDetached(i >= (size_t)d_cnt);
-    FXApp->GetSelection().Clear();
     FXApp->XFile().GetLattice().UpdateConnectivity();
     TimePerFrame = FXApp->Draw();
   }

@@ -53,7 +53,11 @@ protected:
   }
   olxstr ReCon; // restraint or constraint to use for split atoms
 public:
-  TSplitMode(size_t id) : AMode(id)  {  }
+  TSplitMode(size_t id) : AMode(id)  {
+    TGXApp& app = *TGlXApp::GetGXApp();
+    app.OnObjectsCreate.Add(this, mode_split_ObjectsCreate, msiExit);
+    app.XFile().GetLattice().OnDisassemble.Add(this, mode_split_Disassemble, msiEnter);
+  }
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     TGXApp& app = *TGlXApp::GetGXApp();
     if( !app.CheckFileType<TIns>() )  return false;
@@ -61,14 +65,15 @@ public:
     TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
     for( size_t i=0; i < app.AtomCount(); i++ )
       app.GetAtom(i).SetMoveable(true);
-    app.OnObjectsCreate.Add(this, mode_split_ObjectsCreate, msiExit);
-    app.XFile().GetLattice().OnDisassemble.Add(this, mode_split_Disassemble, msiEnter);
     return true;
   }
-  void Finalise() {
+  ~TSplitMode()  {
     TGXApp& app = *TGlXApp::GetGXApp();
     app.OnObjectsCreate.Remove(this);
     app.XFile().GetLattice().OnDisassemble.Remove(this);
+  }
+  void Finalise() {
+    TGXApp& app = *TGlXApp::GetGXApp();
     TIns& Ins = app.XFile().GetLastLoader<TIns>();
     RefinementModel& rm = app.XFile().GetRM();
     UpdateCrds();

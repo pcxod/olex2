@@ -36,9 +36,9 @@ public:
   AActionHandler() : Enabled(true), ToDelete(true)  {}
   virtual ~AActionHandler()  {}
   // handler before the event
-  virtual bool Enter(const IEObject* Sender, const IEObject* Data=NULL)  {  return false; }
+  virtual bool Enter(const IEObject* Sender, const IEObject* Data=NULL)  {  return false;  }
   // handler after the event
-  virtual bool Exit(const IEObject* Sender, const IEObject* Data=NULL)   {  return false; }
+  virtual bool Exit(const IEObject* Sender, const IEObject* Data=NULL)  {  return false;  }
   /* handler during the event, does some operation when Obj is changed;
      the action depends on the type of queue
   */
@@ -88,12 +88,12 @@ public:
   AActionHandler& GetHandler(size_t i) const {  return *Handlers[i]; }
 
   size_t DispatcherCount() const {  return Dispatchers.Count(); };
-  AEventsDispatcher& GetDispatcher(size_t i) const {  return *Dispatchers[i].Dispatcher; }
+  AEventsDispatcher& GetDispatcher(size_t i) const {  return *Dispatchers[i].Dispatcher;  }
   // adds new handler
   void Add(AActionHandler* handler);
   /* inserts a new handler at the beginning of the list so that it will be executed first of all */
   void AddFirst(AActionHandler* handler);
-  // adds new dispatcher
+  // adds new dispatcher, no AddFirst - Handlers are executed before the dispatchers...
   void Add(AEventsDispatcher* dispatcher, int MsgId, short MsgSubId = msiAll);
   //makes subsequent calls to the handlers stored in the list
   bool Execute(const IEObject* Sender, const IEObject* Data=NULL);
