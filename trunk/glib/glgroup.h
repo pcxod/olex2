@@ -17,7 +17,7 @@ public:
   TGlGroup(class TGlRenderer& R, const olxstr& collectionName);
   virtual void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlGroup();
-  void Clear();
+  virtual void Clear();
   void Draw(bool SelectPrimitives=false, bool SelectObjects=false) const {
     DoDraw(SelectPrimitives, SelectObjects);
   }

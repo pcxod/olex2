@@ -168,7 +168,6 @@ public:
       SameFile = true;
       EmptyFile = false;
     }
-    FParent->GetRender().GetSelection().Clear();
     B = FParent->GetRender().GetBasis();
     FParent->GetRender().Clear();
     FParent->HklFile().Clear();
@@ -540,59 +539,73 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
 //..............................................................................
 void TGXApp::CenterModel()  {
   const size_t ac = FXFile->GetLattice().AtomCount();
-  if( ac == 0 )  return;
-  vec3d maX(-100, -100, -100), miN(100, 100, 100);
+  double weight = 0;
+  vec3d center, maX(-100, -100, -100), miN(100, 100, 100);
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& A = FXFile->GetLattice().GetAtom(i);
-    if( !A.IsDeleted() )
+    if( !A.IsDeleted() )  {
+      center += A.crd();
       vec3d::UpdateMinMax(A.crd(), miN, maX);
+      weight += 1;
+    }
   }
   if( FDUnitCell->IsVisible() )  {
-    vec3d cell_min, cell_max;
-    FDUnitCell->GetDimensions(cell_max, cell_min);
-    vec3d::UpdateMinMax(cell_min, miN, maX);
-    vec3d::UpdateMinMax(cell_max, miN, maX);
+    for( size_t i=0; i < FDUnitCell->VertexCount(); i++ )  {
+      center += FDUnitCell->GetVertex(i);
+      weight += 1;
+      vec3d::UpdateMinMax(FDUnitCell->GetVertex(i), miN, maX);
+    }
   }
   for( size_t i=0; i < XReflections.Count(); i++ )  {
     if( !XReflections[i].IsVisible() || XReflections[i].IsDeleted() )  continue;
+    center += XReflections[i].GetCenter();
+    weight += 1;
     vec3d::UpdateMinMax(XReflections[i].GetCenter(), miN, maX);
   }
-  vec3d Center((miN+maX)/2);
-  Center *= -1;
-  FGlRender->GetBasis().SetCenter(Center);
-  vec3d max = FGlRender->MaxDim() + Center;
-  vec3d min = FGlRender->MinDim() + Center;
+  if( weight == 0 )  return;
+  center /= weight;
+  center *= -1;
+  FGlRender->GetBasis().SetCenter(center);
+  vec3d max = FGlRender->MaxDim() + center;
+  vec3d min = FGlRender->MinDim() + center;
   FGlRender->ClearMinMax();
   FGlRender->UpdateMinMax(min, max);
 }
 //..............................................................................
 void TGXApp::CenterView(bool calcZoom)  {
+  double weight = 0;
+  vec3d center;
   vec3d maX(-100, -100, -100), miN(100, 100, 100);
   if( FXFile->GetLattice().AtomCount() == 0 )  return;
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
     TXAtom& XA = XAtoms[i];
-    if( !XA.IsDeleted() && XA.IsVisible() )
+    if( !XA.IsDeleted() && XA.IsVisible() )  {
+      center += XA.Atom().crd();
+      weight += 1;
       vec3d::UpdateMinMax(XA.Atom().crd(), miN, maX);
+    }
   }
   if( FDUnitCell->IsVisible() )  {
-    vec3d cell_min, cell_max;
-    FDUnitCell->GetDimensions(cell_max, cell_min);
-    vec3d::UpdateMinMax(cell_min, miN, maX);
-    vec3d::UpdateMinMax(cell_max, miN, maX);
+    for( size_t i=0; i < FDUnitCell->VertexCount(); i++ )  {
+      center += FDUnitCell->GetVertex(i);
+      weight += 1;
+      vec3d::UpdateMinMax(FDUnitCell->GetVertex(i), miN, maX);
+    }
   }
   for( size_t i=0; i < XReflections.Count(); i++ )  {
     if( !XReflections[i].IsVisible() || XReflections[i].IsDeleted() )  continue;
+    center += XReflections[i].GetCenter();
+    weight += 1;
     vec3d::UpdateMinMax(XReflections[i].GetCenter(), miN, maX);
   }
-  vec3d Center((miN+maX)/2);
-  Center *= -1;
-  maX += Center;
-  miN += Center;
+  if( weight == 0 )  return;
+  center /= weight;
+  center *= -1;
   FGlRender->ClearMinMax();
-  FGlRender->UpdateMinMax(miN, maX);
+  FGlRender->UpdateMinMax(miN+center, maX+center);
   if( calcZoom )
     FGlRender->GetBasis().SetZoom(FGlRender->CalcZoom()*ExtraZoom);
-  FGlRender->GetBasis().SetCenter(Center);
+  FGlRender->GetBasis().SetCenter(center);
 }
 //..............................................................................
 void TGXApp::CalcProbFactor(float Prob)  {
@@ -1937,10 +1950,19 @@ void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& b
   latt.GetAsymmUnit().Assign(au);
   latt.GetAsymmUnit()._UpdateConnInfo();
   latt.Init();
+  vec3d cnt1, cnt2;
+  double R1, R2;
+  CalcLatticeRandCenter(XFile().GetLattice(), R1, cnt1);
+  CalcLatticeRandCenter(latt, R2, cnt2);
+  const vec3d right_shift = FGlRender->GetBasis().GetMatrix()*vec3d(1, 0, 0);
   const size_t ac = XFile().GetLattice().AtomCount();
   const size_t bc = XFile().GetLattice().BondCount();
+  for( size_t i=0; i < latt.AtomCount(); i++ )  {
+    latt.GetAtom(i).crd() = latt.GetAtom(i).crd()-cnt2+cnt1+right_shift*(R1+R2);
+  }
   XFile().GetLattice().AddLatticeContent(latt);
-  if( FLabels->IsVisible() )  FLabels->Clear();
+  if( FLabels->IsVisible() )
+    FLabels->Clear();
   for( size_t i=ac; i < XFile().GetLattice().AtomCount(); i++ )  {
     TSAtom& A = XFile().GetLattice().GetAtom(i);
     TXAtom& XA = XAtoms.Add(new TXAtom(*FGlRender, EmptyString, A));
@@ -1955,7 +1977,8 @@ void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& b
     XB.Create();
     bonds.Add(XB);
   }
-  if( FLabels->IsVisible() )  FLabels->Init();
+  if( FLabels->IsVisible() )
+    FLabels->Init();
 }
 //..............................................................................
 TXAtom* TGXApp::AddAtom(TXAtom* templ)  {
@@ -2720,57 +2743,63 @@ void TGXApp::GrowAtoms(const olxstr& AtomsStr, bool Shell, TCAtomPList* Template
   FXFile->GetLattice().GrowAtoms(satoms, Shell, Template);
 }
 //..............................................................................
+void TGXApp::RestoreGroup(TGlGroup& glg, const GroupData& gd)  {
+  const AtomRegistry& ar = XFile().GetLattice().GetAtomRegistry();
+  glg.SetVisible(gd.visible);
+  if( gd.parent_id != -2 )
+    (gd.parent_id == -1 ? FGlRender->GetSelection() : FGlRender->GetGroup(gd.parent_id)).Add(glg);
+  TSAtomPList atoms(gd.atoms.Count());
+  TSBondPList bonds(gd.bonds.Count());
+  for( size_t j=0; j < gd.atoms.Count(); j++ )
+    atoms[j] = ar.Find(gd.atoms[j]);
+  for( size_t j=0; j < gd.bonds.Count(); j++ )
+    bonds[j] = ar.Find(gd.bonds[j]);
+  atoms.Pack();
+  bonds.Pack();
+  if( atoms.IsEmpty() && bonds.IsEmpty() )  return;
+  TXAtomPList xatoms;
+  TXBondPList xbonds;
+  SAtoms2XAtoms(atoms, xatoms);
+  SBonds2XBonds(bonds, xbonds);
+  for( size_t j=0; j < xatoms.Count(); j++ )  {
+    if( xatoms[j]->IsVisible() )
+      glg.Add(*xatoms[j], false);
+  }
+  for( size_t j=0; j < xbonds.Count(); j++ )  {
+    if( xbonds[j]->IsVisible() )
+      glg.Add(*xbonds[j], false);
+  }
+}
+//..............................................................................
+void TGXApp::StoreGroup(const TGlGroup& glG, GroupData& gd)  {
+  gd.collectionName = glG.GetCollectionName();  //planes
+  gd.visible = glG.IsVisible();
+  gd.parent_id = (glG.GetParentGroup() != NULL ? glG.GetParentGroup()->GetTag() : -2); 
+  for( size_t j=0; j < glG.Count(); j++ )  {
+    AGDrawObject& glO = glG[j];
+    if( EsdlInstanceOf(glO, TXAtom) )
+      gd.atoms.AddCCopy(((TXAtom&)glO).Atom().GetRef());
+    if( EsdlInstanceOf(glO, TXBond) )
+      gd.bonds.AddCCopy(((TXBond&)glO).Bond().GetRef());
+  }
+}
+//..............................................................................
 void TGXApp::StoreGroups(TTypeList<GroupData>& groups)  {
   for( size_t i=0; i < FGlRender->GroupCount(); i++ )
     FGlRender->GetGroup(i).SetTag(i);
   FGlRender->GetSelection().SetTag(-1);
   for( size_t i=0; i <= FGlRender->GroupCount(); i++ )  {
-    TGlGroup& glG = (i < FGlRender->GroupCount() ? FGlRender->GetGroup(i) : FGlRender->GetSelection());
-    GroupData& gd = groups.AddNew();
-    gd.collectionName = glG.GetCollectionName();  //planes
-    gd.visible = glG.IsVisible();
-    gd.parent_id = (glG.GetParentGroup() != NULL ? glG.GetParentGroup()->GetTag() : -2); 
-    for( size_t j=0; j < glG.Count(); j++ )  {
-      AGDrawObject& glO = glG[j];
-      if( EsdlInstanceOf(glO, TXAtom) )
-        gd.atoms.AddCCopy(((TXAtom&)glO).Atom().GetRef());
-      if( EsdlInstanceOf(glO, TXBond) )
-        gd.bonds.AddCCopy(((TXBond&)glO).Bond().GetRef());
-    }
+    const TGlGroup& glG = (i < FGlRender->GroupCount() ? FGlRender->GetGroup(i) : FGlRender->GetSelection());
+    StoreGroup(glG, groups.AddNew());
   }
 }
 //..............................................................................
 void TGXApp::RestoreGroups(const TTypeList<GroupData>& groups)  {
-  TXAtomPList xatoms;
-  TXBondPList xbonds;
-  const AtomRegistry& ar = XFile().GetLattice().GetAtomRegistry();
   for( size_t i=0; i < groups.Count()-1; i++ )
     FGlRender->NewGroup(groups[i].collectionName).Create();
   for( size_t i=0; i < groups.Count(); i++ )  {
-    GroupData& gd = groups[i];
     TGlGroup& glg = (i < FGlRender->GroupCount() ? FGlRender->GetGroup(i) : FGlRender->GetSelection());
-    glg.SetVisible(gd.visible);
-    if( gd.parent_id != -2 )
-      (gd.parent_id == -1 ? FGlRender->GetSelection() : FGlRender->GetGroup(gd.parent_id)).Add(glg);
-    TSAtomPList atoms(gd.atoms.Count());
-    TSBondPList bonds(gd.bonds.Count());
-    for( size_t j=0; j < gd.atoms.Count(); j++ )
-      atoms[j] = ar.Find(gd.atoms[j]);
-    for( size_t j=0; j < gd.bonds.Count(); j++ )
-      bonds[j] = ar.Find(gd.bonds[j]);
-    atoms.Pack();
-    bonds.Pack();
-    if( atoms.IsEmpty() && bonds.IsEmpty() )  continue;
-    xatoms.Clear();   SAtoms2XAtoms(atoms, xatoms);
-    xbonds.Clear();   SBonds2XBonds(bonds, xbonds);
-    for( size_t j=0; j < xatoms.Count(); j++ )  {
-      if( xatoms[j]->IsVisible() )
-        glg.Add(*xatoms[j]);
-    }
-    for( size_t j=0; j < xbonds.Count(); j++ )  {
-      if( xbonds[j]->IsVisible() )
-        glg.Add(*xbonds[j]);
-    }
+    RestoreGroup(glg, groups[i]);
   }
 }
 //..............................................................................

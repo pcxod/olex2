@@ -102,6 +102,18 @@ public:
     Atoms.AddList(atoms);
     UpdateRotationCenter();
   }
+  void Clear()  {
+    TGlGroup::Clear();
+    Atoms.Clear();
+  }
+  void Update()  {
+    Atoms.Clear();
+    for( size_t i=0; i < Count(); i++ )  {
+      AGDrawObject& G = GetObject(i);
+      if( EsdlInstanceOf(G, TXAtom) )
+        Atoms.Add((TXAtom&)G);
+    }
+  }
   void UpdateRotationCenter()  {
     RotationCenter.Null();
     for( size_t i=0; i < Atoms.Count(); i++ )
