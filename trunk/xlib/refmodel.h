@@ -290,6 +290,7 @@ of components 1 ... m
   int GetTWIN_n() const {  return TWIN_n;  }
   void SetTWIN_n(int v)  {  TWIN_n = v;  TWIN_set = true;  }
   bool HasTWIN() const {  return TWIN_set;  }
+  void RemoveTWIN()  {  TWIN_set = false;  }
 
   void AddBASF(double val)  {  
     BASF.Add(val);  
@@ -302,6 +303,10 @@ of components 1 ... m
       BASF_Vars[i] = NULL;
       BASF[i] = Vars.SetParam(*this, i, bs[i].ToDouble());
     }
+  }
+  void ClearBASF()  {
+    BASF.Clear();
+    BASF_Vars.Clear();
   }
 
   DefPropC(olxstr, RefinementMethod)
