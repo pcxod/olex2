@@ -1317,10 +1317,15 @@ void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   else  {
     if( Cmds[0].Equalsi("OMIT") )
       TXApp::GetInstance().XFile().GetRM().ClearOmits();
+    else if( Cmds[0].Equalsi("TWIN") )
+      TXApp::GetInstance().XFile().GetRM().RemoveTWIN();
+    else if( Cmds[0].Equalsi("BASF") )
+      TXApp::GetInstance().XFile().GetRM().ClearBASF();
     else  {
       for( size_t i=0; i < Ins.InsCount(); i++ )  {
         if( Ins.InsName(i).Equalsi(Cmds[0]) )  {
-          Ins.DelIns(i);  i--;  continue;
+          Ins.DelIns(i--);
+          continue;
         }
       }
     }
