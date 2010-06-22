@@ -56,12 +56,14 @@ void TXyz::LoadFromStrings(const TStrList& Strings)  {
     if( line.IsEmpty() )  continue;
     TStrList toks(line, ' ');
     if( toks.Count() != 4 )  continue;
-    if( XElementLib::IsAtom(toks[0]) )  {
+    const cm_Element* elm = XElementLib::FindBySymbolEx(toks[0]);
+    if( elm != NULL )  {
       TCAtom& CA = GetAsymmUnit().NewAtom();
       CA.ccrd()[0] = toks[1].ToDouble();
       CA.ccrd()[1] = toks[2].ToDouble();
       CA.ccrd()[2] = toks[3].ToDouble();
-      CA.SetLabel(toks[0] << (GetAsymmUnit().AtomCount()+1));
+      CA.SetType(*elm);
+      CA.SetLabel(olxstr(elm->symbol) << (GetAsymmUnit().AtomCount()+1), false);
     }
   }
 }

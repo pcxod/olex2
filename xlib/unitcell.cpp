@@ -871,7 +871,7 @@ void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, shor
             for( size_t m=0; m < 3; m++ )  {
               if( aa[ci][m] < 0 )
                 aa[ci][m] += (int)dim[m];
-              else if( aa[ci][m] >= dim[m] )
+              else if( aa[ci][m] >= (int)dim[m] )
                 aa[ci][m] -= (int)dim[m];
             }
             map.Data[aa[ci][0]][aa[ci][1]][aa[ci][2]] = val;
@@ -933,14 +933,14 @@ void TUnitCell::TBuildDistanceMapTask::init_loop_data()  {
   loop_data[4] = new float[dims[2]];
   loop_data[5] = new float[dims[2]];
   loop_data[6] = new float[atoms.Count()];
-  for( int i=0; i < dims[0]; i++ )  {
+  for( size_t i=0; i < dims[0]; i++ )  {
     loop_data[0][i] = (float)i*tm[0][0]/dims[0];
   }
-  for( int i=0; i < dims[1]; i++ )  {
+  for( size_t i=0; i < dims[1]; i++ )  {
     loop_data[1][i] = (float)i*tm[1][0]/dims[1];
     loop_data[2][i] = (float)i*tm[1][1]/dims[1];
   }
-  for( int i=0; i < dims[2]; i++ )  {
+  for( size_t i=0; i < dims[2]; i++ )  {
     loop_data[3][i] = (float)i*tm[2][0]/dims[2];
     loop_data[4][i] = (float)i*tm[2][1]/dims[2];
     loop_data[5][i] = (float)i*tm[2][2]/dims[2];
@@ -1037,7 +1037,7 @@ void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short
           for( size_t m=0; m < 3; m++ )  {
             if( aa[ci][m] < 0 )
               aa[ci][m] += (int)dims[m];
-            else if( aa[ci][m] >= dims[m] )
+            else if( aa[ci][m] >= (int)dims[m] )
               aa[ci][m] -= (int)dims[m];
           }
           map.Data[aa[ci][0]][aa[ci][1]][aa[ci][2]] = val;
@@ -1061,7 +1061,7 @@ void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short
           // cannot use if/else here - in some silly cases (like one atom in the AU) this can cause crashes
           while( crd[k] < 0 )
             crd[k] += (int)dims[k];
-          while( crd[k] >= dims[k] )
+          while( crd[k] >= (int)dims[k] )
             crd[k] -= (int)dims[k];
         }
         short& cv = map.Data[crd[0]][crd[1]][crd[2]];

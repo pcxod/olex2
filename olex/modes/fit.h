@@ -10,13 +10,26 @@ enum  {
 class TFitMode : public AEventsDispatcher, public AMode  {
   TXGroup* group;
   TXAtomPList Atoms, AtomsToMatch;
-protected:
-  TGXApp::GroupData group_data;
+  TGXApp::GroupData* group_data;
+
+  class OnUniqHandler : public AActionHandler {
+    TFitMode& fit_mode;
+  public:
+    OnUniqHandler(TFitMode& fm) : fit_mode(fm)  {}
+    bool Enter(const IEObject* Sender, const IEObject* Data=NULL)  {
+      fit_mode.Dispatch(mode_fit_disassemble, msiEnter, NULL, NULL);
+      return true;
+    }
+  };
+
+  OnUniqHandler* uniq_handler;
 public:
-  TFitMode(size_t id) : AMode(id)  {
+  TFitMode(size_t id) : AMode(id), group_data(NULL)  {
+    uniq_handler = new OnUniqHandler(*this);
     TGlXApp::GetGXApp()->OnObjectsCreate.Add(this, mode_fit_create, msiExit);
     TGlXApp::GetGXApp()->XFile().GetLattice().OnDisassemble.Add(this, mode_fit_disassemble, msiEnter);
-    group_data.parent_id = -3;
+    TGlXApp::GetGXApp()->XFile().GetLattice().OnStructureUniq.AddFirst(uniq_handler);
+    TGlXApp::GetGXApp()->XFile().GetLattice().OnStructureGrow.AddFirst(uniq_handler);
   }
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     AtomsToMatch.Clear();
@@ -27,6 +40,11 @@ public:
   ~TFitMode()  {
     TGlXApp::GetGXApp()->OnObjectsCreate.Remove(this);
     TGlXApp::GetGXApp()->XFile().GetLattice().OnDisassemble.Remove(this);
+    TGlXApp::GetGXApp()->XFile().GetLattice().OnStructureUniq.Remove(uniq_handler);
+    TGlXApp::GetGXApp()->XFile().GetLattice().OnStructureGrow.Remove(uniq_handler);
+    delete uniq_handler;
+    if( group_data != NULL )
+      delete group_data;
   }
   void Finalise() {
     TGXApp& app = *TGlXApp::GetGXApp();
@@ -39,7 +57,9 @@ public:
       Atoms[i]->Atom().CAtom().SetPart(0);
     }
     app.GetRender().ReplaceSelection<TGlGroup>();
-    app.XFile().GetLattice().UpdateConnectivity();
+    //app.XFile().GetLattice().UpdateConnectivity();
+    // need to update symm eq etc
+    app.XFile().GetLattice().Init();
   }
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf(obj, TXAtom) )  {
@@ -57,28 +77,28 @@ public:
   virtual bool Dispatch(int msg, short id, const IEObject* Sender, const IEObject* Data=NULL)  {  
     TGXApp& app = *TGlXApp::GetGXApp();
     if( msg == mode_fit_disassemble )  {
-      if( !EsdlInstanceOf(app.GetRender().GetSelection(), TXGroup) )
+      if( group_data != NULL || !EsdlInstanceOf(app.GetRender().GetSelection(), TXGroup) )
         return true;
-      TGXApp::GetInstance().StoreGroup(*group, group_data);
+      group_data = new TGXApp::GroupData;
+      TGXApp::GetInstance().StoreGroup(*group, *group_data);
       Atoms.Clear();
       AtomsToMatch.Clear();
+      group->Clear();
       TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
     }
     else if( msg == mode_fit_create )  {
-      if( group_data.parent_id == -3 )  return true;
+      if( group_data == NULL )  return true;
       if( !EsdlInstanceOf(app.GetRender().GetSelection(), TXGroup) )
         group = &TGlXApp::GetGXApp()->GetRender().ReplaceSelection<TXGroup>();
-      TGXApp::GetInstance().RestoreGroup(*group, group_data);
+      TGXApp::GetInstance().RestoreGroup(*group, *group_data);
       for( size_t i=0; i < group->Count(); i++ )  {
         if( EsdlInstanceOf(group->GetObject(i), TXAtom) )
           Atoms.Add((TXAtom&)group->GetObject(i));
       }
       group->Update();
       group->SetSelected(true);
-      group->SetVisible(true);
-      group_data.atoms.Clear();
-      group_data.bonds.Clear();
-      group_data.parent_id = -3;
+      delete group_data;
+      group_data = NULL;
     }
     return true;
   }

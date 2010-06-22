@@ -72,7 +72,9 @@ public:
     Max = max;
   }
   // use __POlxSourceInfo to provide source exception, this is to avoid HUGE overhead when creating olxstr
-  static inline void ValidateRange(const char* file, const char* function, int line, size_t index, size_t min, size_t max)  {
+  static inline void ValidateRange(const char* file, const char* function, int line, size_t index,
+    size_t min, size_t max)
+  {
     if( index < min || index >= max )
       throw TIndexOutOfRangeException(TExceptionBase::FormatSrc(file, function, line), index, min, max);
   }
