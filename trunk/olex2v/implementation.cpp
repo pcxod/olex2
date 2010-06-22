@@ -125,7 +125,7 @@ bool TOlexViewer::OnFileChanged(const char* fileName)  {
 }
 //.......................................................................................
 void TOlexViewer::Clear()  {
-  GXApp->XFile().GetRM().ClearAll();
+  GXApp->XFile().GetRM().Clear(rm_clear_ALL);
   GXApp->XFile().GetLattice().Clear(true);
   GXApp->CreateObjects(false, false);
 }
