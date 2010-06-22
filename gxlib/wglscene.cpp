@@ -85,12 +85,14 @@ TGlFont* TWGlScene::CreateFont(const olxstr& name, const olxstr& fntDesc, short 
     if( FindFont(name) == NULL )
       Fonts.Add(Fnt);
     Fnt->SetIdString(fntDesc);
-    MetaFont mf(fntDesc);
+    MetaFont mf;
+    mf.SetIdString(fntDesc);
     Fnt->SetPointSize(mf.GetSize());
     return Fnt;
   }
   throw TNotImplementedException(__OlxSourceInfo);
-  MetaFont meta_fnt(fntDesc);
+  MetaFont meta_fnt;
+  meta_fnt.SetIdString(fntDesc);
   HFONT Font = (HFONT)NULL;
   Fnt->SetIdString("zzz");
   TPtrList<char*> Images;
