@@ -212,6 +212,7 @@ public:
   template <class SelType> SelType& ReplaceSelection() {
     FSelection->GetPrimitives().RemoveObject(*FSelection);
     FSelection->SetSelected(false);
+    FGObjects.Remove(FSelection);
     delete FSelection;
     SelType* sel = new SelType(*this, "Selection");
     FSelection = sel;

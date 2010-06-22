@@ -1635,7 +1635,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( !out.IsEmpty()  )  {
       FXApp->GetLog() << "Deleting " << out << '\n';
       FUndoStack->Push(FXApp->DeleteXObjects(Objects));
-      sel.RemoveDeleted();
+      sel.Clear();
     }
   }
   else if( Cmds.Count() == 1 && Cmds[0].Equalsi("labels") )  {
@@ -8297,20 +8297,59 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
 }
 //..............................................................................
 void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  olxstr FN = PickFile("Load Fragment",
-    "XYZ files (*.xyz)|*.xyz",
-    XLibMacros::CurrentDir, true);
-  if( FN.IsEmpty() ) 
-    return;
+  olxstr FN = PickFile("Load Fragment", "XYZ files (*.xyz)|*.xyz", XLibMacros::CurrentDir, true);
+  if( FN.IsEmpty() )  return;
   TXyz xyz;
   xyz.LoadFromFile(FN);
   TXAtomPList xatoms;
   TXBondPList xbonds;
   FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
-  int part = Options.FindValue("p", "-100").ToInt();
+  if( xatoms.IsEmpty() )  return;
+  const int part = Options.FindValue("p", "-100").ToInt();
   if( part != -100 )  {
     for( size_t i=0; i < xatoms.Count(); i++ )
       xatoms[i]->Atom().CAtom().SetPart(part);
+  }
+  const int afix = Options.FindValue("a", "-100").ToInt();
+  if( afix != -100 )  {
+    TCAtom* pivot = TAfixGroup::HasExcplicitPivot(afix) ? &xatoms[0]->Atom().CAtom() : NULL;
+    TAfixGroup& ag = FXApp->XFile().GetRM().AfixGroups.New(pivot, afix);
+    const size_t start = pivot != NULL ? 1 : 0;
+    for( size_t i=start; i < xatoms.Count(); i++ )
+      ag.AddDependent(xatoms[i]->Atom().CAtom());
+  }
+  else if( Options.Contains('d') )  {
+    RefinementModel& rm = FXApp->XFile().GetRM();
+    olxdict<double, TSimpleRestraint*, TPrimitiveComparator> r12, r13;
+    for( size_t i=0; i < xatoms.Count(); i++ )  {
+      TSAtom& a = xatoms[i]->Atom();
+      for( size_t j=0; j < a.BondCount(); j++ )  {
+        TSAtom& b = a.Bond(j).Another(a);
+        if( b.GetLattId() <= a.GetLattId() )  continue;
+        const double d = (double)olx_round(a.Bond(j).Length()*1000)/1000;
+        const size_t ri = r12.IndexOf(d);
+        TSimpleRestraint& df = (ri == InvalidIndex) ? rm.rDFIX.AddNew() : *r12.GetValue(ri);
+        df.AddAtomPair(a.CAtom(), NULL, b.CAtom(), NULL);
+        if( ri == InvalidIndex )  {
+          df.SetValue(d);
+          df.SetEsd(0.02);
+          r12.Add(d, &df);
+        }
+        for( size_t k=0; k < b.NodeCount(); k++ )  {
+          TSAtom& b1 = b.Node(k);
+          if( b1.GetLattId() <= a.GetLattId() )  continue;
+          const double d1 = (double)olx_round(a.crd().DistanceTo(b1.crd())*1000)/1000;
+          const size_t ri1 = r13.IndexOf(d1);
+          TSimpleRestraint& df1 = (ri1 == InvalidIndex) ? rm.rDFIX.AddNew() : *r13.GetValue(ri1);
+          df1.AddAtomPair(a.CAtom(), NULL, b1.CAtom(), NULL);
+          if( ri1 == InvalidIndex )  {
+            df1.SetValue(d1);
+            df1.SetEsd(0.04);
+            r13.Add(d1, &df1);
+          }
+        }
+      }
+    }
   }
   FXApp->CenterView(true);
   Macros.ProcessMacro("mode fit", E);

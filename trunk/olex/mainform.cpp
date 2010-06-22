@@ -912,7 +912,9 @@ separated values of Atom Type and radius, an entry a line");
   this_InitMacroD(TestStat, EmptyString, fpOne, "Test: runs statistical tests on structures in current folder. Expects a file name");
   this_InitMacroD(ExportFont, EmptyString, fpTwo, "");
   this_InitMacroD(ImportFont, EmptyString, fpTwo, "");
-  this_InitMacroD(ImportFrag, "p-part to assign", fpNone|psFileLoaded, "Import a fragment to current structure");
+  this_InitMacroD(ImportFrag,
+"p-part to assign&;d-generate DFIX for 1-2 and 1-3 distances&;a-set specified AFIX to the imported fragment",
+    fpNone|psFileLoaded, "Import a fragment to current structure");
   this_InitMacroD(ExportFrag, EmptyString, fpNone|psFileLoaded, "Exports selected fragment to an external file");
   this_InitMacroD(ProjSph, "r-radius of the projection spehere [5]", fpNone|fpOne|psFileLoaded, 
     "Creates a projection of the fragment of the provided atom onto a spehere");
