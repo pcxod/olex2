@@ -6,9 +6,9 @@ using namespace ctrl_ext;
 IMPLEMENT_CLASS(TSpinCtrl, wxSpinCtrl)
 
 BEGIN_EVENT_TABLE(TSpinCtrl, wxSpinCtrl)
-  EVT_TEXT(101, TSpinCtrl::TextChangeEvent)
+  EVT_TEXT(-1, TSpinCtrl::TextChangeEvent)
   EVT_SPINCTRL(-1, TSpinCtrl::SpinChangeEvent)
-  EVT_TEXT_ENTER(103, TSpinCtrl::EnterPressedEvent)
+  EVT_TEXT_ENTER(-1, TSpinCtrl::EnterPressedEvent)
   EVT_KILL_FOCUS(TSpinCtrl::LeaveEvent)
   EVT_SET_FOCUS(TSpinCtrl::EnterEvent)
 END_EVENT_TABLE()

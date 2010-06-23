@@ -23,9 +23,9 @@ public:
   bool GetDimensions(vec3d &Max, vec3d &Min)  {  return false;  }
   void ListPrimitives(TStrList &List) const;
 
-  bool OnMouseDown(const IEObject *Sender, const TMouseData *Data){  return true; }
-  bool OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {  return false; }
-  bool OnMouseMove(const IEObject *Sender, const TMouseData *Data){  return false; }
+  bool OnMouseDown(const IEObject *Sender, const TMouseData& Data){  return true; }
+  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {  return false; }
+  bool OnMouseMove(const IEObject *Sender, const TMouseData& Data){  return false; }
 
   inline bool IsDeleted()  const {  return AGDrawObject::IsDeleted(); }
   void SetDeleted(bool v){  AGDrawObject::SetDeleted(v);  FPlane->SetDeleted(v); }

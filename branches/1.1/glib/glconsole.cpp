@@ -54,11 +54,11 @@ TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   //FCursor->Visible(false);
 
   SetToDelete(false);
-  R.BeforeDraw->Add(this);
+  R.OnDraw.Add(this);
 }
 //..............................................................................
 TGlConsole::~TGlConsole()  {
-  Parent.BeforeDraw->Remove(this);
+  Parent.OnDraw.Remove(this);
   ClearBuffer();
   delete FCursor;
 }
@@ -512,15 +512,7 @@ TGlFont &TGlConsole::GetFont() const {
   return *fnt;
 }
 //..............................................................................
-bool TGlConsole::Execute(const IEObject *Sender, const IEObject *Data)  {
-
-//  TEString cmd = GetCommand();
-//  int pos = FStringPos - PromptStr.Length();
-//  olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
-//  FCommand = PromptStr;
-//  FCommand << cmd;
-//  SetInsertPosition( PromptStr.Length() + pos);
-  
+bool TGlConsole::Enter(const IEObject *Sender, const IEObject *Data)  {
   UpdateCursorPosition(false);
   return true;
 }

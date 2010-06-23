@@ -49,7 +49,7 @@ protected:
   virtual void SetPosition(uint64_t newPos)  {
     throw TNotImplementedException(__OlxSourceInfo);
   }
-  virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL);
+  virtual bool Enter(const IEObject *Sender, const IEObject *Data=NULL);
 public:
   TGlConsole(TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);

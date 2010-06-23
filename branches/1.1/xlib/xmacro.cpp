@@ -843,7 +843,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     if( ca.GetType() == iHydrogenZ )
       ca.SetDetached(false);
   }
-  TActionQueue* q_draw = XApp.ActionQueue(olxappevent_GL_DRAW);
+  TActionQueue* q_draw = XApp.FindActionQueue(olxappevent_GL_DRAW);
   bool q_draw_changed = false;
   if( q_draw != NULL )  {
     q_draw->SetEnabled(false);
@@ -1121,7 +1121,7 @@ void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     else if( ca.GetType().GetMr() < 3.5 )
       ca.SetDetached(false);
   }
-  TActionQueue* q_draw = xapp.ActionQueue(olxappevent_GL_DRAW);
+  TActionQueue* q_draw = xapp.FindActionQueue(olxappevent_GL_DRAW);
   if( q_draw != NULL )  q_draw->SetEnabled(false);
   xapp.XFile().GetLattice().UpdateConnectivity();
   delete TXApp::GetInstance().FixHL();
@@ -1317,10 +1317,15 @@ void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   else  {
     if( Cmds[0].Equalsi("OMIT") )
       TXApp::GetInstance().XFile().GetRM().ClearOmits();
+    else if( Cmds[0].Equalsi("TWIN") )
+      TXApp::GetInstance().XFile().GetRM().RemoveTWIN();
+    else if( Cmds[0].Equalsi("BASF") )
+      TXApp::GetInstance().XFile().GetRM().ClearBASF();
     else  {
       for( size_t i=0; i < Ins.InsCount(); i++ )  {
         if( Ins.InsName(i).Equalsi(Cmds[0]) )  {
-          Ins.DelIns(i);  i--;  continue;
+          Ins.DelIns(i--);
+          continue;
         }
       }
     }

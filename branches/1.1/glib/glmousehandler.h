@@ -19,10 +19,10 @@ class AGlMouseHandler  {
   // default handler implementation
   struct EventHandler {
     int SX, SY;
-    bool OnMouseDown(AGlMouseHandler& Sender, const TMouseData *Data);
-    bool OnMouseUp(AGlMouseHandler& Sender, const TMouseData *Data);
-    bool OnMouseMove(AGlMouseHandler& Sender, const TMouseData *Data);
-    bool OnDblClick(AGlMouseHandler& Sender, const TMouseData *Data)  {  return false;  }
+    bool OnMouseDown(AGlMouseHandler& Sender, const TMouseData& Data);
+    bool OnMouseUp(AGlMouseHandler& Sender, const TMouseData& Data);
+    bool OnMouseMove(AGlMouseHandler& Sender, const TMouseData& Data);
+    bool OnDblClick(AGlMouseHandler& Sender, const TMouseData& Data)  {  return false;  }
   } handler;
 protected:
   virtual bool DoTranslate(const vec3d& t) = 0;
@@ -49,16 +49,16 @@ public:
 
   ~AGlMouseHandlerImp()  {}
 
-  bool OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
+  bool OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
     return GetHandler().OnMouseDown(*this, Data);
   }
-  bool OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
+  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
     return GetHandler().OnMouseUp(*this, Data);
   }
-  bool OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
+  bool OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
     return GetHandler().OnMouseMove(*this, Data);
   }
-  bool OnDblClick(const IEObject *Sender, const TMouseData *Data)  {
+  bool OnDblClick(const IEObject *Sender, const TMouseData& Data)  {
     return GetHandler().OnDblClick(*this, Data);
   }
 };

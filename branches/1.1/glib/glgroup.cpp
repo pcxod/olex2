@@ -4,6 +4,7 @@
 //----------------------------------------------------------------------------//
 #include "glgroup.h"
 #include "glrender.h"
+#include "glmouse.h"
 #include "gpcollection.h"
 #include "styles.h"
 #include "glprimitive.h"
@@ -22,19 +23,19 @@ void TGlGroup::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 
-  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   if( GPC.IsEmpty() )  return;
   TGraphicsStyle& GS = GPC.GetStyle();
   if( GetParentGroup() != NULL )  {
-    GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF );
+    GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF);
     GlM.ShininessF = 128;
     GlM.AmbientF = 0xff0fff0f;
     GlM.DiffuseF = 0xff00f0ff;
   }
   else  {
     GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|
-      sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB|sglmTransparent );
+      sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB|sglmTransparent);
     GlM.ShininessF = 128;
     GlM.AmbientF = 0x7f00ff00;
     GlM.DiffuseF = 0x7f0000ff;
@@ -150,24 +151,6 @@ void TGlGroup::DoDraw(bool SelectPrimitives, bool SelectObjects) const {
 //..............................................................................
 void TGlGroup::SetGlM(const TGlMaterial& m)  {
   GlM = GetPrimitives().GetStyle().SetMaterial("mat", m);
-}
-//..............................................................................
-bool TGlGroup::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
-  for( size_t i=0; i < FObjects.Count(); i++ )
-    FObjects[i]->OnMouseDown(Sender, Data);
-  return true;
-}
-//..............................................................................
-bool TGlGroup::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
-  for( size_t i=0; i < FObjects.Count(); i++ )
-    FObjects[i]->OnMouseUp(Sender, Data);
-  return true;
-}
-//..............................................................................
-bool TGlGroup::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
-  for( size_t i=0; i < FObjects.Count(); i++ )
-    FObjects[i]->OnMouseMove(Sender, Data);
-  return true;
 }
 //..............................................................................
 bool TGlGroup::TryToGroup(TPtrList<AGDrawObject>& ungroupable)  {

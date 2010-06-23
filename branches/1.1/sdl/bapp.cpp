@@ -118,19 +118,29 @@ TActionQueue& TBasicApp::NewActionQueue(const olxstr& Name) {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void _GetArgCount(const TStrObjList& Params, TMacroError& E)  {
+void BAPP_GetArgCount(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(TBasicApp::GetArgCount());
 }
-void _GetArg(const TStrObjList& Params, TMacroError& E)  {
+void BAPP_GetArg(const TStrObjList& Params, TMacroError& E)  {
   size_t i = Params[0].ToSizeT();
   E.SetRetVal(i < TBasicApp::GetArgCount() ? TBasicApp::GetArg(i) : EmptyString);
 }
+//..............................................................................
+void BAPP_Profiling(const TStrObjList& Params, TMacroError &E)  {
+  if( Params.IsEmpty() )
+    E.SetRetVal(TBasicApp::IsProfiling());
+  else
+    TBasicApp::SetProfiling(Params[0].ToBool());
+}
+//..............................................................................
 
 TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
   TLibrary* lib = new TLibrary(lib_name);
-  lib->RegisterStaticFunction(new TStaticFunction(_GetArgCount, "ArgCount", fpNone,
+  lib->RegisterStaticFunction(new TStaticFunction(BAPP_GetArgCount, "ArgCount", fpNone,
 "Returns number of arguments passed to the application") );
-  lib->RegisterStaticFunction(new TStaticFunction(_GetArg, "GetArg", fpOne,
+  lib->RegisterStaticFunction(new TStaticFunction(BAPP_GetArg, "GetArg", fpOne,
 "Returns application argument value by index") );
+  lib->RegisterStaticFunction(new TStaticFunction(BAPP_Profiling, "Profiling", fpNone|fpOne,
+"Sets/Returns current procedure profiling status") );
  return lib;
 }

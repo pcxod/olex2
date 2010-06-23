@@ -1,8 +1,7 @@
-#ifndef xlatticeH
-#define xlatticeH
+#ifndef __olx_glx_xlattice_H
+#define __olx_glx_xlattice_H
 #include "gxbase.h"
 #include "glmousehandler.h"
-
 #include "asymmunit.h"
 
 BeginGxlNamespace()
@@ -37,9 +36,9 @@ public:
   inline short GetSize() const {  return Size;  }
   void SetSize(short v);
 
-  bool OnMouseDown(const IEObject *Sender, const TMouseData *Data);
-  bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
-  bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
+  bool OnMouseDown(const IEObject *Sender, const TMouseData& Data);
+  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
+  bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
 };
 
 EndGxlNamespace()

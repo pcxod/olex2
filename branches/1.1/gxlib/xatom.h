@@ -41,7 +41,7 @@ const int
 
 class TXAtomStylesClear: public AActionHandler  {
 public:
-  TXAtomStylesClear(TGlRenderer *Render)  {  Render->OnStylesClear->Add(this);  }
+  TXAtomStylesClear(TGlRenderer *Render)  {  Render->OnStylesClear.Add(this);  }
   virtual ~TXAtomStylesClear()  {  ;  }
   bool Enter(const IEObject *Sender, const IEObject *Data=NULL);
   bool Exit(const IEObject *Sender, const IEObject *Data=NULL);
@@ -164,9 +164,9 @@ public:
   void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
   uint32_t GetPrimitiveMask() const;
 
-  bool OnMouseDown(const IEObject* Sender, const TMouseData* Data);
-  bool OnMouseUp(const IEObject* Sender, const TMouseData* Data);
-  bool OnMouseMove(const IEObject* Sender, const TMouseData* Data);
+  bool OnMouseDown(const IEObject* Sender, const TMouseData& Data);
+  bool OnMouseUp(const IEObject* Sender, const TMouseData& Data);
+  bool OnMouseMove(const IEObject* Sender, const TMouseData& Data);
 
   inline bool IsDeleted() const {  return AGDrawObject::IsDeleted(); }
   void SetDeleted(bool v)  {  AGDrawObject::SetDeleted(v);  FAtom->SetDeleted(v); }

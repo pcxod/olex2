@@ -2305,7 +2305,7 @@ void TLattice::BuildAtomRegistry()  {
 //..............................................................................
 void TLattice::AddLatticeContent(const TLattice& latt)  {
   if( latt.IsGenerated() )
-    throw TInvalidArgumentException(__OlxSourceInfo, "cannot adopt grow structure");
+    throw TInvalidArgumentException(__OlxSourceInfo, "cannot adopt grown structure");
   TSAtomPList new_atoms;
   TSBondPList new_bonds;
   for( size_t i=0; i < latt.AtomCount(); i++ )  {
@@ -2349,6 +2349,8 @@ void TLattice::AddLatticeContent(const TLattice& latt)  {
       b.SetNetwork(net);
     }
   }
+  GetUnitCell().UpdateEllipsoids();
+  RestoreADPs(false);
 }
 //..............................................................................
 //..............................................................................

@@ -1,7 +1,6 @@
 #ifndef __olx_gl_group_H
 #define __olx_gl_group_H
 #include "glbase.h"
-#include "tptrlist.h"
 #include "gdrawobject.h"
 
 BeginGlNamespace()
@@ -17,7 +16,7 @@ public:
   TGlGroup(class TGlRenderer& R, const olxstr& collectionName);
   virtual void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlGroup();
-  void Clear();
+  virtual void Clear();
   void Draw(bool SelectPrimitives=false, bool SelectObjects=false) const {
     DoDraw(SelectPrimitives, SelectObjects);
   }
@@ -41,9 +40,6 @@ public:
   /* returns true if there are at least two groupable objects, moving the ungroupable
   ones to the provided list */
   bool TryToGroup(TPtrList<AGDrawObject>& ungroupable);
-  bool OnMouseDown(const IEObject *Sender, const class TMouseData *Data);
-  bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
-  bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
 
   inline bool Orient(TGlPrimitive& P)  {  return false;  }
   inline bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }

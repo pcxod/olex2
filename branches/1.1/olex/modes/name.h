@@ -66,7 +66,7 @@ protected:
   }
 public:
   TNameMode(size_t id) : AModeWithLabels(id)  {  Instance = this;  }
-  bool Init(TStrObjList &Cmds, const TParamList &Options) {
+  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     Index = Cmds.IsEmpty() ? 1 : Cmds[0].ToInt();
     Prefix = Options.FindValue('p');
     Suffix = Options.FindValue('s');
@@ -89,17 +89,17 @@ public:
       app.GetBond(i).SetSelectable(false);
     return true;
   }
-  ~TNameMode() {
+  ~TNameMode() {  Instance = NULL;  }
+  void Finalise()  {
     TGXApp& app = *TGlXApp::GetGXApp();
     for( size_t i=0; i < app.BondCount(); i++ )
       app.GetBond(i).SetSelectable(true);
-    Instance = NULL;
     app.XFile().GetLattice().UpdateConnectivity();
   }
-  virtual bool OnObject(AGDrawObject &obj)  {
-    if( EsdlInstanceOf( obj, TXAtom) )  {
+  virtual bool OnObject(AGDrawObject& obj)  {
+    if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom &XA = (TXAtom&)obj;
-      olxstr Labl (Symbol.IsEmpty() ? XA.Atom().GetType().symbol : Symbol);
+      olxstr Labl(Symbol.IsEmpty() ? XA.Atom().GetType().symbol : Symbol);
       Labl << Prefix <<  Index << Suffix;
       TNameModeUndo* undo = new TNameModeUndo(XA);
       undo->AddAction(TGlXApp::GetGXApp()->Name(XA, Labl, false));

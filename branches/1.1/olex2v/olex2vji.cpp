@@ -225,7 +225,7 @@ DrawContext::~DrawContext()  {
 char* DrawContext::ReadPixels()  {
   if( Buffer != NULL )  {
     olx_gl::readBuffer(GL_FRONT);
-    olx_gl::pPixelStore(GL_PACK_ALIGNMENT, 1);
+    olx_gl::pixelStore(GL_PACK_ALIGNMENT, 1);
     olx_gl::readPixels(0, 0, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Buffer);
     const int sz = Width*Height*4;
     for( int i=0; i < Width; i++ )  {  // mirrow by Heght and inverrt

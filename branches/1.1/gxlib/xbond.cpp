@@ -32,14 +32,14 @@ TXBond::TXBond(TGlRenderer& R, const olxstr& collectionName, TSBond& B) :
   Params().Resize(5);
   FBond = &B;
   if( FBond != NULL )
-    BondUpdated();
+    Update();
   Params()[4] = 0.8;
   if( FStaticObjects.IsEmpty() )  
     CreateStaticPrimitives();
   // the objects will be automatically deleted by the corresponding action collections
 }
 //..............................................................................
-void TXBond::BondUpdated()  {
+void TXBond::Update()  {
   vec3d C(FBond->B().crd() - FBond->A().crd());
   if( C.IsNull() )  
     Params().Null();
@@ -488,15 +488,15 @@ int TXBond::DefMask()  {
   return FBondParams->GetParam("DefM", "7", true).ToInt();
 }
 //..............................................................................
-bool TXBond::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
+bool TXBond::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
   return true;
 }
 //..............................................................................
-bool TXBond::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
+bool TXBond::OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
   return false;
 }
 //..............................................................................
-bool TXBond::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
+bool TXBond::OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
   return true;
 }
 //..............................................................................

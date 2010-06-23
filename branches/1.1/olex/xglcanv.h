@@ -16,7 +16,7 @@ private:
   void OnChar(wxKeyEvent& event);
 
   int FMX, FMY; // mouse coordinates to process clicks
-  bool FRightMouseDown, FLeftMouseDown;
+  short MouseButton;
   class TMainForm *FParent;
   wxGLContext* Context;
   static int* glAttrib;

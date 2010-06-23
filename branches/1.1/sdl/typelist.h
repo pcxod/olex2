@@ -166,15 +166,15 @@ public:
 //..............................................................................
   template<class FAC, class SAC, class TAC>
     inline T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2, const TAC& arg3)  {
-      return *List.Insert(index, new T(arg1, arg2, arg2));  }
+      return *List.Insert(index, new T(arg1, arg2, arg3));  }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC>
     inline T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4)  {
-      return *List.Insert(index, new T(arg1, arg2, arg2, arg4));  }
+      return *List.Insert(index, new T(arg1, arg2, arg3, arg4));  }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC, class FvAC>
     inline T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4, const FvAC& arg5)  {
-      return *List.Insert(index, new T(arg1, arg2, arg2, arg4, arg5));  }
+      return *List.Insert(index, new T(arg1, arg2, arg3, arg4, arg5));  }
 //..............................................................................
   inline T& AddNew()  {  return *List.Add(new T());  }
 //..............................................................................

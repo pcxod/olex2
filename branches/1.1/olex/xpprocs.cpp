@@ -692,7 +692,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   const int bmpSize = BmpHeight*BmpWidth*3;
   char* bmpData = (char*)malloc(bmpSize);
   FGlConsole->Visible(false);
-  FXApp->GetRender().OnDraw->SetEnabled( false );
+  FXApp->GetRender().OnDraw.SetEnabled(false);
   if( res != 1 )    {
     FXApp->GetRender().GetScene().ScaleFonts(res);
     if( res >= 3 )
@@ -723,7 +723,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       FXApp->Quality(qaMedium);
   }
 
-  FXApp->GetRender().OnDraw->SetEnabled( true );
+  FXApp->GetRender().OnDraw.SetEnabled(true);
   FGlConsole->Visible(true);
   // end drawing etc
   FXApp->GetRender().Resize(orgWidth, orgHeight); 
@@ -1635,7 +1635,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( !out.IsEmpty()  )  {
       FXApp->GetLog() << "Deleting " << out << '\n';
       FUndoStack->Push(FXApp->DeleteXObjects(Objects));
-      sel.RemoveDeleted();
+      sel.Clear();
     }
   }
   else if( Cmds.Count() == 1 && Cmds[0].Equalsi("labels") )  {
@@ -3119,7 +3119,6 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       d_cnt = qpeaks.Count();
     for( size_t i=0; i < qpeaks.Count(); i++ )  
       qpeaks[i]->SetDetached(i >= (size_t)d_cnt);
-    FXApp->GetSelection().Clear();
     FXApp->XFile().GetLattice().UpdateConnectivity();
     TimePerFrame = FXApp->Draw();
   }
@@ -3194,13 +3193,20 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   // this variable is set when the mode is changed from within this function
   static bool ChangingMode = false;
   if( ChangingMode )  return;
-  AMode* md = Modes->SetMode( Cmds[0] );
+  AMode* md = Modes->SetMode(Cmds[0]);
   olxstr tmp = EmptyString;
   if( md != NULL )  {
     tmp << Cmds[0];
     Cmds.Delete(0);
-    try  {  md->Init(Cmds, Options);  }
+    try  {
+      if( !md->Initialise(Cmds, Options) )  {
+        E.ProcessingError(__OlxSrcInfo, "Current mode is unavailable");
+        Modes->ClearMode(false);
+        return;
+      }
+    }
     catch(const TExceptionBase& e)  {  
+      Modes->ClearMode(false);
       throw TFunctionFailedException(__OlxSrcInfo, e);  
     }
   }
@@ -5609,7 +5615,7 @@ void TMainForm::CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS)  
 }
 //..............................................................................
 void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TActionQueue* q_draw = FXApp->ActionQueue(olxappevent_GL_DRAW);
+  TActionQueue* q_draw = FXApp->FindActionQueue(olxappevent_GL_DRAW);
   if( q_draw != NULL )  q_draw->SetEnabled(false);
   // restore if already applied
   TLattice& latt = FXApp->XFile().GetLattice();
@@ -7563,7 +7569,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
       ca.SetQPeak(ed);
     }
     au.InitData();
-    TActionQueue* q_draw = FXApp->ActionQueue(olxappevent_GL_DRAW);
+    TActionQueue* q_draw = FXApp->FindActionQueue(olxappevent_GL_DRAW);
     bool q_draw_changed = false;
     if( q_draw != NULL )  {
       q_draw->SetEnabled(false);
@@ -7605,7 +7611,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   FXApp->GetRender().GetBasis().NullCenter();
   for( size_t i=0; i < FXApp->BondCount(); i++ )
-    FXApp->GetBond(i).BondUpdated();
+    FXApp->GetBond(i).Update();
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -8291,20 +8297,59 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
 }
 //..............................................................................
 void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  olxstr FN = PickFile("Load Fragment",
-    "XYZ files (*.xyz)|*.xyz",
-    XLibMacros::CurrentDir, true);
-  if( FN.IsEmpty() ) 
-    return;
+  olxstr FN = PickFile("Load Fragment", "XYZ files (*.xyz)|*.xyz", XLibMacros::CurrentDir, true);
+  if( FN.IsEmpty() )  return;
   TXyz xyz;
   xyz.LoadFromFile(FN);
   TXAtomPList xatoms;
   TXBondPList xbonds;
   FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
-  int part = Options.FindValue("p", "-100").ToInt();
+  if( xatoms.IsEmpty() )  return;
+  const int part = Options.FindValue("p", "-100").ToInt();
   if( part != -100 )  {
     for( size_t i=0; i < xatoms.Count(); i++ )
       xatoms[i]->Atom().CAtom().SetPart(part);
+  }
+  const int afix = Options.FindValue("a", "-100").ToInt();
+  if( afix != -100 )  {
+    TCAtom* pivot = TAfixGroup::HasExcplicitPivot(afix) ? &xatoms[0]->Atom().CAtom() : NULL;
+    TAfixGroup& ag = FXApp->XFile().GetRM().AfixGroups.New(pivot, afix);
+    const size_t start = pivot != NULL ? 1 : 0;
+    for( size_t i=start; i < xatoms.Count(); i++ )
+      ag.AddDependent(xatoms[i]->Atom().CAtom());
+  }
+  else if( Options.Contains('d') )  {
+    RefinementModel& rm = FXApp->XFile().GetRM();
+    olxdict<double, TSimpleRestraint*, TPrimitiveComparator> r12, r13;
+    for( size_t i=0; i < xatoms.Count(); i++ )  {
+      TSAtom& a = xatoms[i]->Atom();
+      for( size_t j=0; j < a.BondCount(); j++ )  {
+        TSAtom& b = a.Bond(j).Another(a);
+        if( b.GetLattId() <= a.GetLattId() )  continue;
+        const double d = (double)olx_round(a.Bond(j).Length()*1000)/1000;
+        const size_t ri = r12.IndexOf(d);
+        TSimpleRestraint& df = (ri == InvalidIndex) ? rm.rDFIX.AddNew() : *r12.GetValue(ri);
+        df.AddAtomPair(a.CAtom(), NULL, b.CAtom(), NULL);
+        if( ri == InvalidIndex )  {
+          df.SetValue(d);
+          df.SetEsd(0.02);
+          r12.Add(d, &df);
+        }
+        for( size_t k=0; k < b.NodeCount(); k++ )  {
+          TSAtom& b1 = b.Node(k);
+          if( b1.GetLattId() <= a.GetLattId() )  continue;
+          const double d1 = (double)olx_round(a.crd().DistanceTo(b1.crd())*1000)/1000;
+          const size_t ri1 = r13.IndexOf(d1);
+          TSimpleRestraint& df1 = (ri1 == InvalidIndex) ? rm.rDFIX.AddNew() : *r13.GetValue(ri1);
+          df1.AddAtomPair(a.CAtom(), NULL, b1.CAtom(), NULL);
+          if( ri1 == InvalidIndex )  {
+            df1.SetValue(d1);
+            df1.SetEsd(0.04);
+            r13.Add(d1, &df1);
+          }
+        }
+      }
+    }
   }
   FXApp->CenterView(true);
   Macros.ProcessMacro("mode fit", E);
@@ -8739,18 +8784,10 @@ void TMainForm::macCenter(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       }
       if( sum != 0 )  {
         center /= sum;
-        if( atoms[0]->GetParentGroup() != NULL && EsdlInstanceOf(*atoms[0]->GetParentGroup(), TXGroup) )
-          center += ((TXGroup*)atoms[0]->GetParentGroup())->GetCenter();
         FXApp->GetRender().GetBasis().SetCenter(-center);
       }
     }
   }
-}
-//..............................................................................
-void TMainForm::funProfiling(const TStrObjList& Params, TMacroError &E)  {
-  if( Params.IsEmpty() )  E.SetRetVal(FXApp->IsProfiling());
-  else
-    FXApp->SetProfiling(Params[0].ToBool());
 }
 //..............................................................................
 void TMainForm::funThreadCount(const TStrObjList& Params, TMacroError &E)  {
@@ -8759,7 +8796,7 @@ void TMainForm::funThreadCount(const TStrObjList& Params, TMacroError &E)  {
     int pthc = Params[0].ToInt();
     int rthc = wxThread::GetCPUCount();
     if( rthc != -1 && pthc > rthc )  {
-      E.ProcessingError(__OlxSrcInfo, "Number of proposed threads is larger than number of phisical ones");
+      E.ProcessingError(__OlxSrcInfo, "Number of proposed threads is larger than number of physical ones");
       return;
     }
     if( pthc > 0 )
@@ -8809,7 +8846,7 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   char* bmpData = (char*)malloc(bmpSize);
   memset(bmpData, ~0, bmpSize);
   FGlConsole->Visible(false);
-  FXApp->GetRender().OnDraw->SetEnabled(false);
+  FXApp->GetRender().OnDraw.SetEnabled(false);
   if( res != 1 )    {
     FXApp->GetRender().GetScene().ScaleFonts(res);
     if( res >= 3 )
@@ -8864,7 +8901,7 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       FXApp->Quality(qaMedium);
   }
 
-  FXApp->GetRender().OnDraw->SetEnabled(true);
+  FXApp->GetRender().OnDraw.SetEnabled(true);
   FGlConsole->Visible(true);
   // end drawing etc
   FXApp->GetRender().Resize(orgWidth, orgHeight); 

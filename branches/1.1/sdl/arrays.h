@@ -37,14 +37,19 @@ public:
 
   inline void FastInitWith(const int val)  {  memset( Data, val, _Length*sizeof(AE) );  }
 
-  // direct access to private member
+  // direct access to "private" member
   AE* Data;
 
   inline size_t Length() const {  return _Length;  }
   index_t GetMin() const {  return MinIndex;  }
   inline bool IsInRange(index_t ind) const {  return ind >= MinIndex && ((ind-MinIndex) < _Length);  }
-  inline AE& operator [] (index_t index) const {  return Data[index-MinIndex];  }
-  inline AE& Value(index_t index) const {  return Data[index-MinIndex];  }
+  inline AE& operator [] (index_t index) const { return Value(index);  }
+  inline AE& Value(index_t index) const {
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index-MinIndex, 0, _Length);
+#endif
+    return Data[index-MinIndex];
+  }
 };
 
 // we do not use TArray1D< TArray1D > for performance reasons...
@@ -97,13 +102,23 @@ public:
   // direct access to private member
   AE** Data;
 
-  inline AE& Value(index_t x, index_t y)  {  return Data[x-MinWidth][y-MinHeight];  }
-  inline AE& operator () (index_t x, index_t y)  {  return Data[x-MinWidth][y-MinHeight];  }
+  inline const AE& Value(index_t x, index_t y) const {
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, x-MinWidth, 0, Width);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, y-MinHeight, 0, Height);
+#endif
+    return Data[x-MinWidth][y-MinHeight];
+  }
+  inline const AE& operator () (index_t x, index_t y) const {  return Value(x, y);  }
   
   template <class VC>
-    inline AE& Value(const TVector<VC>& ind)  {  return Data[(size_t)(ind[0]-MinWidth)][(size_t)(ind[1]-MinHeight)];  }
+    inline AE& Value(const TVector<VC>& ind) const {
+      return Value((index_t)ind[0], (index_t)ind[1]);
+    }
   template <class VC>
-    inline AE& operator () (const TVector<VC>& ind)  {  return Data[(size_t)(ind[0]-MinWidth)][(size_t)(ind[1]-MinHeight)];  }
+    inline AE& operator () (const TVector<VC>& ind) const {
+      return Value((index_t)ind[0], (index_t)ind[1]);
+    }
 };
 
 // we do not use TArray1D<TArray2D<AE>*>* Data for performance reasons
@@ -191,29 +206,21 @@ public:
   // direct access to private member
   AE*** Data;
 
-  inline AE& Value(index_t x, index_t y, index_t z)  {  return Data[x-MinWidth][y-MinHeight][z-MinDepth];  }
-  inline const AE& Value(index_t x, index_t y, index_t z) const  {  
+  inline AE& Value(index_t x, index_t y, index_t z) const {
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, x-MinWidth, 0, Width);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, y-MinHeight, 0, Height);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, z-MinDepth, 0, Depth);
+#endif
     return Data[x-MinWidth][y-MinHeight][z-MinDepth];  
   }
-  inline AE& operator () (index_t x, index_t y, index_t z)  {  
-    return Data[x-MinWidth][y-MinHeight][z-MinDepth];  
-  }
-  
-  inline const AE& operator () (index_t x, index_t y, index_t z) const {  
-    return Data[x-MinWidth][y-MinHeight][z-MinDepth];  
-  }
+  inline AE& operator () (index_t x, index_t y, index_t z) const {  return Value(x,y,z);  }
 
-  template <class VC> inline AE& Value(const VC& ind)  {  
-    return Data[(size_t)(ind[0]-MinWidth)][(size_t)(ind[1]-MinHeight)][(size_t)(ind[2]-MinDepth)];  
+  template <class VC> inline AE& Value(const VC& ind) const {  
+    return Value((index_t)ind[0], (index_t)ind[1], (index_t)ind[2]);  
   }
-  template <class VC> inline const AE& Value(const VC& ind) const {  
-    return Data[(size_t)(ind[0]-MinWidth)][(size_t)(ind[1]-MinHeight)][(size_t)(ind[2]-MinDepth)];  
-  }
-  template <class VC> inline AE& operator () (const VC& ind)  {  
-    return Data[(size_t)(ind[0]-MinWidth)][(size_t)(ind[1]-MinHeight)][(size_t)(ind[2]-MinDepth)];  
-  }
-  template <class VC> inline const AE& operator () (const VC& ind) const {  
-    return Data[(size_t)(ind[0]-MinWidth)][(size_t)(ind[1]-MinHeight)][(size_t)(ind[2]-MinDepth)];  
+  template <class VC> inline AE& operator () (const VC& ind) const {  
+    return Value((index_t)ind[0], (index_t)ind[1], (index_t)ind[2]);  
   }
 };
 

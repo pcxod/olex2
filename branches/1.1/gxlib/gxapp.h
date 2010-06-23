@@ -132,7 +132,7 @@ protected:
   TEBitArray FVisibility;
   void RestoreVisibility();
   void StoreVisibility();
-
+public:
   struct GroupData  {
     TTypeList<TSAtom::Ref> atoms;
     TTypeList<TSBond::Ref> bonds;
@@ -141,9 +141,11 @@ protected:
     index_t parent_id;
   };
   // stores numeric references
+  void RestoreGroup(TGlGroup& glg, const GroupData& group);
+  void StoreGroup(const TGlGroup& glg, GroupData& group);
   void RestoreGroups(const TTypeList<GroupData>& groups);
   void StoreGroups(TTypeList<GroupData>& groups);
-
+protected:
   float FProbFactor;
   double ExtraZoom;  // the default is 1, Calculated Zoom is multiplid by this number
   /* intialises SAtom::Tag to XAtom::Id and checks if any atom with AtomInfo == atom_type
@@ -151,6 +153,7 @@ protected:
   for bonds makes them visible only if both atoms are visible */
   void SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b);
   void _maskInvisible();
+  bool MainFormVisible;
 public:
   // FileName - argv[0]
   TGXApp(const olxstr& FileName);
@@ -178,6 +181,7 @@ public:
 
   // implementation of BasicApp function - renders the scene
   virtual void Update()  {  Draw();  }
+  DefPropBIsSet(MainFormVisible)
   // renders the scene and returns used time in ms
   uint64_t Draw();
   // prepares drawing on a bitmap, recreates graphics with different parameters, scales fonts
@@ -440,9 +444,9 @@ public:     void CalcProbFactor(float Prob);
   bool MouseMove(int x, int y, short Shift)  {
     return FGlMouse->MouseMove(x, y, Shift);
   }
-  bool DblClick()                {  return FGlMouse->DblClick();  }
-  void ResetMouseState()         {  FGlMouse->ResetMouseState();  }
-  void EnableSelection( bool v)  {  FGlMouse->SelectionEnabled = v;  }
+  bool DblClick()  {  return FGlMouse->DblClick();  }
+  void ResetMouseState()  {  FGlMouse->ResetMouseState();  }
+  void EnableSelection( bool v)  {  FGlMouse->SetSelectionEnabled(v);  }
 //..............................................................................
 // actions
   TActionQueue &OnGraphicsVisible,

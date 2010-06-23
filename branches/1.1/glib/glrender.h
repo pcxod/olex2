@@ -73,7 +73,8 @@ class TGlRenderer : public IEObject  {
   TGlOption FogColor;
   float FogDensity, FogStart, FogEnd;
 //__________________
-  int FWidth, FHeight, FLeft, FTop, FOWidth;
+  int Width, Height, OWidth;
+  int Left, Top;
   TGlListManager FListManager;
   int CompiledListId;
 protected:
@@ -87,14 +88,14 @@ protected:
   class TGlBackground *FBackground, *FCeiling;
   bool FGlImageChanged; // true if DrawMethod was used
   char *FGlImage;
-  int FGlImageHeight, FGlImageWidth;
+  int GlImageHeight, GlImageWidth;
   uint8_t StereoFlag;
   double StereoAngle;
   TGlOption StereoLeftColor, StereoRightColor;
   mutable double SceneDepth;
   bool ATI;
 public:
-  TGlRenderer(AGlScene *S, int width, int height);
+  TGlRenderer(AGlScene *S, size_t width, size_t height);
   virtual ~TGlRenderer();
   void Clear();
   void ClearPrimitives();
@@ -131,12 +132,11 @@ public:
   void ResetBasis()  {  FBasis.Reset();  }
   
   TGlLightModel LightModel;
-  // register your handler to swap buffers etc
-  TActionQueue *OnDraw, *BeforeDraw;
-  TActionQueue *OnStylesClear;  // Enter and Exit are called
+  TActionQueue &OnDraw, // register your handler to swap buffers etc
+    &OnStylesClear;  // Enter and Exit are called
 
-  void Resize(int h, int w);
-  void Resize(int Left, int Top, int h, int w, float Zoom);
+  void Resize(size_t h, size_t w);
+  void Resize(int Left, int Top, size_t h, size_t w, float Zoom);
 // perspective stuff
   void EnablePerspective(bool Set);
   bool IsPerspectiveEnabled() const {  return FPerspective; }
@@ -165,7 +165,7 @@ public:
   internal coordinates of OpenGl Scene like follow: if an object has to follow mouse pointer, then
   the change in coordinates should be x = x0+MouseX*GetScale() y = y0+MouseY*GetScale() */
   double GetScale() const {  // to be used to calculate raster positions (x,y)
-    return 1./FHeight;
+    return 1./Height;
   }
   // to be used to calculate raster positions (z)
   double GetMaxRasterZ() const {  return 1;  }
@@ -178,12 +178,12 @@ public:
   const vec3d& MaxDim() const { return FMaxV; }
   const vec3d& MinDim() const { return FMinV; }
   /* the actual width is to be used for modifying/restoring canvas size */
-  int GetActualWidth()  const {  return (StereoFlag==glStereoCross) ? FOWidth : FWidth;  }
+  size_t GetActualWidth() const {  return (StereoFlag==glStereoCross) ? OWidth : Width;  }
   /* opposite to the above one - this is used in all model calcuations */
-  int GetWidth()  const {  return FWidth;  }
-  int GetHeight() const {  return FHeight;  }
-  int GetLeft()   const {  return FLeft;  }
-  int GetTop()    const {  return FTop;  }
+  int GetWidth() const {  return Width;  }
+  int GetHeight() const {  return Height;  }
+  int GetLeft() const {  return Left;  }
+  int GetTop() const {  return Top;  }
   /*an "advanced" drawing procedure which draws an object on a static image
   . Used to implement faster drawing for such objects as text input controls and frames ...
   Be sure that the object is of "a modal" type, e.g. no significant drawing activity 
@@ -200,8 +200,8 @@ public:
   size_t GroupCount() const {  return FGroups.Count(); }
   TGlGroup& GetGroup(size_t i) const {  return *FGroups[i]; }
   TGlGroup& NewGroup(const olxstr& collection_name);
-  TGlGroup* FindGroupByName(const olxstr& colName);
-  TGlGroup* FindObjectGroup(AGDrawObject& G);
+  TGlGroup* FindGroupByName(const olxstr& colName) const;
+  TGlGroup* FindObjectGroup(const AGDrawObject& G) const;
   /* groups current selection and returns the created group object, or NULL
   if current selection had less than 2 elements */
   TGlGroup* GroupSelection(const olxstr& groupName);
@@ -212,6 +212,7 @@ public:
   template <class SelType> SelType& ReplaceSelection() {
     FSelection->GetPrimitives().RemoveObject(*FSelection);
     FSelection->SetSelected(false);
+    FGObjects.Remove(FSelection);
     delete FSelection;
     SelType* sel = new SelType(*this, "Selection");
     FSelection = sel;
