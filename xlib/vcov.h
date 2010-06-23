@@ -59,8 +59,10 @@ public:
   double Get(size_t i, size_t j) const {
     return (j <= i ) ? data[i][j] : data[j][i];
   }
-  // reads the shelxl VcoV matrix and initliases atom loader Ids'
+  // reads the shelxl VcoV matrix and initialises atom loader Ids'
   void ReadShelxMat(const olxstr& fileName, TAsymmUnit& au);
+  // reads the smtbx VcoV matrix and initialises atom loader Ids'
+  void ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au);
   // fills creates three matrices AA, AB, ... AX, BA, BB, ... BX, ...
   template <class list> void FindVcoV(const list& atoms, mat3d_list& m) const {
     TSizeList a_indexes;
@@ -495,6 +497,9 @@ public:
   VcoVContainer()  {  }
   void ReadShelxMat(const olxstr& fileName, TAsymmUnit& au) {
     vcov.ReadShelxMat(fileName, au);
+  }
+  void ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au) {
+    vcov.ReadSmtbxMat(fileName, au);
   }
   // precise calculation
   TEValue<double> CalcDistance(const TSAtom& a1, const TSAtom& a2) {
