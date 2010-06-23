@@ -426,7 +426,7 @@ const TRefList& RefinementModel::GetReflections() const {
     _FriedelPairCount = 0;
     _Reflections.SetCapacity(hkl_cnt);
     for( size_t i=0; i < hkl_cnt; i++ )  {
-      TReflection& r = _Reflections.AddNew( hf[i] );
+      TReflection& r = _Reflections.AddNew(hf[i]);
       TRefPList* rl = hkl3d(hf[i].GetHkl());
       if(  rl == NULL )
         hkl3d(hf[i].GetHkl()) = rl = new TRefPList;

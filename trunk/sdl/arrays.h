@@ -113,11 +113,11 @@ public:
   
   template <class VC>
     inline AE& Value(const TVector<VC>& ind) const {
-      return Value((size_t)(ind[0]-MinWidth), (size_t)(ind[1]-MinHeight));
+      return Value((index_t)ind[0], (index_t)ind[1]);
     }
   template <class VC>
     inline AE& operator () (const TVector<VC>& ind) const {
-      return Value((size_t)(ind[0]-MinWidth), (size_t)(ind[1]-MinHeight));
+      return Value((index_t)ind[0], (index_t)ind[1]);
     }
 };
 
@@ -217,10 +217,10 @@ public:
   inline AE& operator () (index_t x, index_t y, index_t z) const {  return Value(x,y,z);  }
 
   template <class VC> inline AE& Value(const VC& ind) const {  
-    return Value((size_t)(ind[0]-MinWidth), (size_t)(ind[1]-MinHeight), (size_t)(ind[2]-MinDepth));  
+    return Value((index_t)ind[0], (index_t)ind[1], (index_t)ind[2]);  
   }
   template <class VC> inline AE& operator () (const VC& ind) const {  
-    return Value((size_t)(ind[0]-MinWidth), (size_t)(ind[1]-MinHeight), (size_t)(ind[2]-MinDepth));  
+    return Value((index_t)ind[0], (index_t)ind[1], (index_t)ind[2]);  
   }
 };
 

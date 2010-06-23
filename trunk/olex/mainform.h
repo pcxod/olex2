@@ -508,7 +508,6 @@ private:
   DefFunc(GlTooltip)
   DefFunc(CurrentLanguage)
   DefFunc(GetMAC)
-  DefFunc(Profiling)
   DefFunc(ThreadCount)
   DefFunc(FullScreen)
 

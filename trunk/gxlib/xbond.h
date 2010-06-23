@@ -13,7 +13,7 @@ BeginGxlNamespace()
 
 class TXBondStylesClear: public AActionHandler  {
 public:
-  TXBondStylesClear(TGlRenderer *Render)  {  Render->OnStylesClear->Add(this);  }
+  TXBondStylesClear(TGlRenderer *Render)  {  Render->OnStylesClear.Add(this);  }
   virtual ~TXBondStylesClear();
   bool Enter(const IEObject *Sender, const IEObject *Data=NULL);
   bool Exit(const IEObject *Sender, const IEObject *Data=NULL);
@@ -64,9 +64,9 @@ public:
   // fills the list with proposal primitives to construct object
   TGraphicsStyle* Style();
 
-  bool OnMouseDown(const IEObject *Sender, const TMouseData *Data);
-  bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
-  bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
+  bool OnMouseDown(const IEObject *Sender, const TMouseData& Data);
+  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
+  bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
 
   inline bool IsDeleted() const {  return AGDrawObject::IsDeleted(); }
   void SetDeleted(bool v)  {  AGDrawObject::SetDeleted(v);  FBond->SetDeleted(v); }

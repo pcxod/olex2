@@ -9,8 +9,7 @@ BeginEsdlNamespace()
 // app event registry, these might not be implemented
 static olxstr 
   olxappevent_GL_DRAW("GLDRAW"),
-  olxappevent_GL_CLEAR_STYLES("GLDSCLEAR"),
-  olxappevent_GL_BEFORE_DRAW("BGLDRAW");
+  olxappevent_GL_CLEAR_STYLES("GLDSCLEAR");
 
 class TBasicApp: public IEObject  {
   olxstr BaseDir, SharedDir, ExeName;
@@ -55,15 +54,15 @@ public:
   static bool HasInstance()  {  return Instance != NULL;  }
 
   TActionQueue& NewActionQueue(const olxstr& Name);
-  inline TActionQueue* ActionQueue(const olxstr& Name){  
+  inline TActionQueue* FindActionQueue(const olxstr& Name){  
     try  {  return Actions.Find(Name);   }
     catch(...)  {  return NULL;  }
   }
 
   const TActionQList& GetActions() const {  return Actions; }
 
-  DefPropBIsSet(MainFormVisible)
-  DefPropBIsSet(Profiling)
+  static bool IsProfiling()  {  return GetInstance().Profiling;  }
+  static void SetProfiling(bool v)  {  GetInstance().Profiling = v;  }
 
   // implementation might consider drawing scene, update GUI etc..
   virtual void Update()  {}

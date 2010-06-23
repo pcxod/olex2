@@ -879,19 +879,18 @@ void TXAtom::SetQPeakSizeScale(float V)  {
   FQPeakSizeScale = V;
 }
 //..............................................................................
-bool TXAtom::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
-  if( !IsMoveable() )  return true;
+bool TXAtom::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
+  if( !IsMoveable() )  return false;
   return AGlMouseHandlerImp::OnMouseDown(Sender, Data);
 }
 //..............................................................................
-bool TXAtom::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
-  if( !IsMoveable() )  return true;
+bool TXAtom::OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
+  if( !IsMoveable() )  return false;
   return AGlMouseHandlerImp::OnMouseUp(Sender, Data);
 }
 //..............................................................................
-bool TXAtom::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
-  AGlMouseHandlerImp::OnMouseMove(Sender, Data);
-  return true;
+bool TXAtom::OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
+  return AGlMouseHandlerImp::OnMouseMove(Sender, Data);
 }
 //..............................................................................
 void TXAtom::CreateNormals(TXAtom::Poly& pl, const vec3f& cnt)  {

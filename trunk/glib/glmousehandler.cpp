@@ -8,21 +8,21 @@
 
 UseGlNamespace()
 //..............................................................................
-bool AGlMouseHandler::EventHandler::OnMouseDown(AGlMouseHandler& Sender, const TMouseData *Data)  {
-  SX = Data->DownX;
-  SY = Data->DownY;
-  return true;
-}
-//..............................................................................
-bool AGlMouseHandler::EventHandler::OnMouseUp(AGlMouseHandler& Sender, const TMouseData *Data)  {
+bool AGlMouseHandler::EventHandler::OnMouseDown(AGlMouseHandler& Sender, const TMouseData& Data)  {
+  SX = Data.DownX;
+  SY = Data.DownY;
   return false;
 }
 //..............................................................................
-bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender, const TMouseData *Data)  {
-  int dx = Data->X - SX, dy = SY - Data->Y;
+bool AGlMouseHandler::EventHandler::OnMouseUp(AGlMouseHandler& Sender, const TMouseData& Data)  {
+  return false;
+}
+//..............................................................................
+bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender, const TMouseData& Data)  {
+  const int dx = Data.X - SX, dy = SY - Data.Y;
   bool res = false;
-  if( (Data->Button == smbLeft) )  {
-    if( (Data->Shift == sssShift) )  {  // move
+  if( (Data.Button == smbLeft) )  {
+    if( (Data.Shift == sssShift) )  {  // move
       if( Sender.IsMoveable() )  {
         if( Sender.IsMove2D() )
           Sender.DoTranslate(vec3d(dx, dy, 0));
@@ -35,7 +35,7 @@ bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender, const T
         else  {  // move in 3D
           vec3d T;
           const double v = Sender.DoGetRenderer().GetScale();
-          if( (Data->Shift & sssCtrl) != 0 )
+          if( (Data.Shift & sssCtrl) != 0 )
             T[2] = (dx+dy)*v;
           else  {
             T[0] = dx*v;
@@ -49,7 +49,7 @@ bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender, const T
         res = true;
       }
     }
-    else if( (Data->Shift == 0 || ((Data->Shift&sssCtrl) != 0)) )  { // rotate
+    else if( (Data.Shift == 0 || ((Data.Shift&sssCtrl) != 0)) )  { // rotate
       if( Sender.IsRoteable() )  {  
         /* not a trivial (for some) task, to rotate in current basis as if the rotation
         happens in on screen (identity) basis; so we need to find such a vector, which becomes
@@ -58,7 +58,7 @@ bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender, const T
         three values of the rotation vector...
         */
         mat3d basis(mat3d::Transpose(Sender.DoGetRenderer().GetBasis().GetMatrix()));
-        if( Data->Shift == sssCtrl )  {
+        if( Data.Shift == sssCtrl )  {
           double RZ = 0;
           if( SX > Sender.DoGetRenderer().GetWidth()/2 )
             RZ -= (double)dy/FRotationDiv;
@@ -71,7 +71,7 @@ bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender, const T
           if( RZ != 0 )
             Sender.DoRotate(mat3d::CramerSolve(basis, vec3d(0,0,1)).Normalise(), RZ*M_PI/180);
         }
-        else if( Data->Shift == 0 )  {// rotate XY
+        else if( Data.Shift == 0 )  {// rotate XY
           const double RX = -(double)(dy)/FRotationDiv;
           const double RY = (double)(dx)/FRotationDiv;
           if( RX != 0 ) 
@@ -83,14 +83,14 @@ bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender, const T
       }
     }
   }
-  else if( (Data->Button&smbRight) != 0 && (Data->Shift == 0) )  {  // zoom
+  else if( (Data.Button&smbRight) != 0 && (Data.Shift == 0) )  {  // zoom
     if( Sender.IsZoomable() )  {
       Sender.DoZoom((double)(dx)/FZoomDiv - (double)(dy)/FZoomDiv, true);
       res = true;
     }
   }
-  SX = Data->X;
-  SY = Data->Y;
+  SX = Data.X;
+  SY = Data.Y;
   return res;
 }
 //..............................................................................

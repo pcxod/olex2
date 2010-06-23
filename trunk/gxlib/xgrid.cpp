@@ -633,42 +633,42 @@ void TXGrid::SetContourLevelCount(size_t v)  {
   ContourLevels = new float[ContourLevelCount];
 }
 //..............................................................................
-bool TXGrid::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
-  if( (Data->Shift & sssCtrl) == 0 && (Data->Shift & sssShift) == 0 )
+bool TXGrid::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
+  if( (Data.Shift & sssCtrl) == 0 && (Data.Shift & sssShift) == 0 )
     return false;
-  LastMouseX = Data->DownX;
-  LastMouseY = Data->DownY;
+  LastMouseX = Data.DownX;
+  LastMouseY = Data.DownY;
   MouseDown = true;
   return true;
 }
 //..............................................................................
-bool TXGrid::OnMouseUp(const IEObject *Sender, const TMouseData *Data) {
+bool TXGrid::OnMouseUp(const IEObject *Sender, const TMouseData& Data) {
   MouseDown = false;
   return true;
 }
 //..............................................................................
-bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
+bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
   if( !MouseDown )  return false;
-  if( (Data->Button & smbLeft) != 0 ) {
-    SetDepth(Depth+(float)((LastMouseX - Data->X)+(LastMouseY - Data->Y))/15);
+  if( (Data.Button & smbLeft) != 0 ) {
+    SetDepth(Depth+(float)((LastMouseX - Data.X)+(LastMouseY - Data.Y))/15);
   }
   else  {
-    if( (Data->Shift & sssShift) != 0 )  {
+    if( (Data.Shift & sssShift) != 0 )  {
       if( RenderMode == planeRenderModeContour )  {
-        const int v =  -(LastMouseX - Data->X) + (LastMouseY - Data->Y);
+        const int v =  -(LastMouseX - Data.X) + (LastMouseY - Data.Y);
         SetContourLevelCount(GetContourLevelCount()+v/2);
       }
       else  {
         const double step = (MaxVal-MinVal)/250.0;
-        Scale -= step*(LastMouseX - Data->X);
-        Scale += step*(LastMouseY - Data->Y);
+        Scale -= step*(LastMouseX - Data.X);
+        Scale += step*(LastMouseY - Data.Y);
         if( olx_abs(Scale) > olx_max(MaxVal,MinVal)  )
           Scale = olx_sign(Scale)*olx_max(MaxVal,MinVal);
       }
     }
     else  {
-      Size += (float)(LastMouseX - Data->X)/15;
-      Size += (float)(LastMouseY - Data->Y)/15;
+      Size += (float)(LastMouseX - Data.X)/15;
+      Size += (float)(LastMouseY - Data.Y)/15;
       if( Size < 1 )  Size = 1;
       if( Size > 20 )  Size = 20;
     }
@@ -677,8 +677,8 @@ bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
     SetScale(Scale);
   }
   UpdateInfo();
-  LastMouseX = Data->X;
-  LastMouseY = Data->Y;
+  LastMouseX = Data.X;
+  LastMouseY = Data.Y;
   return true;
 }
 //..............................................................................

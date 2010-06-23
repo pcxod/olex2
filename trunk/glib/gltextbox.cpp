@@ -169,7 +169,7 @@ void TGlTextBox::SetTop(int t)  {
   GetPrimitives().GetStyle().SetParam("Top", Top, true);
 }
 //..............................................................................
-bool TGlTextBox::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
+bool TGlTextBox::OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
   SetLeft( (int)(Left + GetCenter()[0]) );
   SetTop( (int)(Top - GetCenter()[1]) );
   Center.Null();

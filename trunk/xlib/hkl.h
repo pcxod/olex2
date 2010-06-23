@@ -30,12 +30,7 @@ protected:
       MinIS = MaxIS = r.GetS();
     }
     else  {
-      if( r.GetH() < MinHkl[0] )  MinHkl[0] = r.GetH();
-      if( r.GetH() > MaxHkl[0] )  MaxHkl[0] = r.GetH();
-      if( r.GetK() < MinHkl[1] )  MinHkl[1] = r.GetK();
-      if( r.GetK() > MaxHkl[1] )  MaxHkl[1] = r.GetK();
-      if( r.GetL() < MinHkl[2] )  MinHkl[2] = r.GetL();
-      if( r.GetL() > MaxHkl[2] )  MaxHkl[2] = r.GetL();
+      vec3i::UpdateMinMax(r.GetHkl(), MinHkl, MaxHkl);
       if( r.GetI() < MinI )  {  MinI = r.GetI();  MinIS = r.GetS();  }
       if( r.GetI() > MaxI )  {  MaxI = r.GetI();  MaxIS = r.GetS();  }
     }
@@ -57,12 +52,12 @@ public:
   inline TReflection& operator [](size_t i) const {  return *Refs[i];  }
   inline size_t RefCount() const {  return Refs.Count();  }
 
-  inline const vec3i& GetMaxHkl()  const {  return MaxHkl;  }
-  inline const vec3i& GetMinHkl()  const {  return MinHkl;  }
-  inline double GetMaxI()          const { return MaxI;  }
-  inline double GetMaxIS()         const { return MaxIS;  }
-  inline double GetMinI()          const { return MinI;  }
-  inline double GetMinIS()         const { return MinIS;  }
+  inline const vec3i& GetMaxHkl() const {  return MaxHkl;  }
+  inline const vec3i& GetMinHkl() const {  return MinHkl;  }
+  inline double GetMaxI() const { return MaxI;  }
+  inline double GetMaxIS() const { return MaxIS;  }
+  inline double GetMinI() const { return MinI;  }
+  inline double GetMinIS() const { return MinIS;  }
 
   void Clear();
   inline void Sort()  {  Refs.QuickSorter.SortSF(Refs, HklCmp);  }
