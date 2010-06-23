@@ -3,7 +3,7 @@
 
 void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   Clear();
-  olxstr lstFN( TEFile::ChangeFileExt(fileName, "lst") );
+  olxstr lstFN = TEFile::ChangeFileExt(fileName, "lst");
   if( TEFile::Exists(lstFN) && TEFile::Exists(fileName) )  {
     time_t lst_fa = TEFile::FileAge(lstFN);
     time_t mat_fa = TEFile::FileAge(fileName);
@@ -96,7 +96,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
     else if( toks[4] == "U12" )
       atom->GetEllipsoid()->SetEsd(5, toks[2].ToDouble());
   }
-  TDoubleList all_vcov( (cnt+1)*cnt/2);
+  TDoubleList all_vcov((cnt+1)*cnt/2);
   size_t vcov_cnt = 0;
   for( size_t i=0; i < sl.Count(); i++ )  {
     const size_t ind = i+cnt+10;
@@ -137,7 +137,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
     i = j-1;
   }
 }
-
+//..................................................................................
 double VcoVMatrix::Find(const olxstr& atom, const short va, const short vb) const {
   for( size_t i=0; i < Index.Count(); i++ )  {
     if( Index[i].GetA() == atom )  {
@@ -153,4 +153,75 @@ double VcoVMatrix::Find(const olxstr& atom, const short va, const short vb) cons
   }
   return 0;
 }
+//..................................................................................
+void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
+  TStrList in;
+  in.LoadFromFile(fileName);
+  if( in.Count() != 3 || !in[0].Equals("VCOV") )
+    throw TInvalidArgumentException(__OlxSourceInfo, "file format");
+  TStrList annotations(in[1], ' '),
+    values(in[2], ' ');
+  if( ((annotations.Count()*(annotations.Count()+1)))/2 != values.Count() )
+    throw TInvalidArgumentException(__OlxSourceInfo, "inconsistent matrix and annotations");
+
+  olxstr last_atom_name;
+  TSizeList indexes;
+  TDoubleList diag;
+  TCAtom* atom = NULL;
+  for( size_t i=0; i < annotations.Count(); i++ )  {
+    const size_t di = annotations[i].IndexOf('.');
+    if( di == InvalidIndex )
+      throw TInvalidArgumentException(__OlxSourceInfo, "annotation");
+    const olxstr atom_name = annotations[i].SubStringTo(di);
+    const olxstr param_name = annotations[i].SubStringFrom(di+1);
+    if( last_atom_name != atom_name )  {
+      atom = au.FindCAtom(atom_name);
+      last_atom_name = atom_name;
+    }
+    if( atom == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "mismatching matrix file");
+    //if( param_name == 'x' )  {
+    //  diag.Add(values[i].ToDouble());
+    //  atom->ccrdEsd()[0] = diag.Last();
+    //  Index.AddNew(atom_name, vcoviX, -1);
+    //  indexes.Add(i);
+    //}
+    //else if( toks[4].CharAt(0) == 'y' )  {
+    //  diag.Add(toks[2].ToDouble());
+    //  atom->ccrdEsd()[1] = diag.Last();
+    //  Index.AddNew(toks[5], vcoviY, -1);
+    //  indexes.Add(i);
+    //}
+    //else if( toks[4].CharAt(0) == 'z' )  {
+    //  diag.Add(toks[2].ToDouble());
+    //  atom->ccrdEsd()[2] = diag.Last();
+    //  Index.AddNew(toks[5], vcoviZ, -1);
+    //  indexes.Add(i);
+    //}
+    //else if( toks[4] == "sof" )  {
+    //  diag.Add(toks[2].ToDouble());
+    //  atom->SetOccuEsd(diag.Last());
+    //  Index.AddNew(toks[5], vcoviO , -1);
+    //  indexes.Add(i);
+    //}
+    //else if( toks[4] == "U11" )  {
+    //  if( atom->GetEllipsoid() != NULL )
+    //    atom->GetEllipsoid()->SetEsd(0, toks[2].ToDouble());
+    //  else
+    //    atom->SetUisoEsd(toks[2].ToDouble());
+    //}
+    //else if( toks[4] == "U22" )
+    //  atom->GetEllipsoid()->SetEsd(1, toks[2].ToDouble());
+    //else if( toks[4] == "U33" )
+    //  atom->GetEllipsoid()->SetEsd(2, toks[2].ToDouble());
+    //else if( toks[4] == "U23" )
+    //  atom->GetEllipsoid()->SetEsd(3, toks[2].ToDouble());
+    //else if( toks[4] == "U13" )
+    //  atom->GetEllipsoid()->SetEsd(4, toks[2].ToDouble());
+    //else if( toks[4] == "U12" )
+    //  atom->GetEllipsoid()->SetEsd(5, toks[2].ToDouble());
+  }
+
+}
+//..................................................................................
 
