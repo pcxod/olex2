@@ -20,8 +20,6 @@ TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)  {
   SetHandler(smbRight, 0, meZoom);
   // an alternative for MAC...
   SetHandler(smbLeft, sssAlt, meZoom);
-  Handler = NULL;
-  MData = new TMouseData;
   FDFrame = Frame;
   SelectionEnabled = true;
 }
@@ -29,38 +27,38 @@ TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)  {
 TGlMouse::~TGlMouse()  {
   for( size_t i=0; i < Handlers.Count(); i++ )
     delete Handlers[i];
-  delete MData;
 }
 //..............................................................................
 bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
   bool res = false;
-  TGlGroup *PColl;
-  MData->UpX = x; MData->UpY = y;
-  MData->Shift = Shift; 
-  MData->Button = button;
-  if( Handler != NULL )  {
-    if( Handler == FDFrame ) 
-      FDFrame->OnMouseUp(this, MData);
+  MData.UpX = x;
+  MData.UpY = y;
+  MData.Shift = Shift; 
+  MData.Button = button;
+  if( MData.Object != NULL )  {
+    if( MData.Object == FDFrame ) 
+      res = MData.Object->OnMouseUp(this, MData);
     else  {
-      PColl = FParent->FindObjectGroup(*Handler);
+      TGlGroup *PColl = FindObjectGroup(*MData.Object);
       if( PColl != NULL ) 
-        PColl->OnMouseUp(this, MData);
+        res = PColl->OnMouseUp(this, MData);
       else
-        Handler->OnMouseUp(this, MData);
-      if( (olx_abs(MData->DownX-MData->UpX)<=2) &&
-          (olx_abs(MData->DownY-MData->UpY)<=2) && (Shift==0) )  // click
+        res = MData.Object->OnMouseUp(this, MData);
+      if( res == false && SelectionEnabled && Shift == 0 && button == smbLeft &&
+          (olx_abs(MData.DownX-MData.UpX) <= 2) &&
+          (olx_abs(MData.DownY-MData.UpY) <=2 ) )  // right click
       {
-        if( PColl != NULL ) 
+        if( PColl != NULL && PColl != &FParent->GetSelection() ) 
           FParent->Select(*PColl); 
         else 
-          FParent->Select(*Handler);
+          FParent->Select(*MData.Object);
         FParent->Draw();
         res = true;
       }
     }
   }
   else  {
-    if( FAction == glmaRotateXY )  {
+    if( Action == glmaRotateXY )  {
 /*      float Length = 24;
       float Accel=2, Time=1, Path = Length;
       while( Path > 0 )
@@ -74,89 +72,90 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
       ;
     }
   }
-  Handler = NULL;
+  MData.Object = NULL;
   FButtonDown = false;
   return res;
 }
 //..............................................................................
 bool TGlMouse::DblClick()  {
   FDblClick = true;
-  return (Handler!=NULL) ? Handler->OnDblClick(this, MData) : false;
+  return (MData.Object != NULL) ? MData.Object->OnDblClick(this, MData) : false;
 }
 //..............................................................................
 void TGlMouse::ResetMouseState()  {
   FButtonDown = false;
   FDblClick = false;
-  Handler = NULL;
+  MData.Object = NULL;
+}
+//..............................................................................
+TGlGroup* TGlMouse::FindObjectGroup(const AGDrawObject& obj)  {
+  if( obj.IsSelected() )
+    return &FParent->GetSelection();
+  else  {
+    TGlGroup* p = FParent->FindObjectGroup(obj);
+    if( FParent->GetSelection().Contains(*p) ) 
+      return &FParent->GetSelection();
+    return p;
+  }
+  return NULL;
 }
 //..............................................................................
 bool TGlMouse::MouseDown(int x, int y, short Shift, short button)  {
-  TGlGroup *PColl;
+  bool res = false;
   FButtonDown = true;
-  MData->Button = button; MData->Shift = Shift;
-  MData->DownX = x;       MData->DownY = y;
-  if( SelectionEnabled )  {
-    Handler = FParent->SelectObject(x, y);
-    if( Handler != NULL )  {
-      if( Handler->IsSelected() )
-        PColl = &FParent->GetSelection();
-      else  {
-        PColl = FParent->FindObjectGroup(*Handler);
-        if( FParent->GetSelection().Contains(*PColl) ) 
-          PColl = &FParent->GetSelection();
-      }
-      if( PColl != NULL )
-        PColl->OnMouseDown(this, MData);
-      else if( !Handler->OnMouseDown(this, MData) )
-        Handler = NULL;
-    }
-    if( Handler == NULL && Shift == sssShift )  {
-      Handler = FDFrame;
-      //    FParent->UpdateGlImage();
-      Handler->OnMouseDown(this, MData);
-    }
+  MData.Button = button;
+  MData.Shift = Shift;
+  MData.DownX = x;
+  MData.DownY = y;
+  MData.Object = FParent->SelectObject(x, y);
+  if( MData.Object != NULL )  {
+    TGlGroup *PColl = FindObjectGroup(*MData.Object);
+    if( PColl != NULL )
+      res = PColl->OnMouseDown(this, MData);
+    else 
+      res = MData.Object->OnMouseDown(this, MData);
+  }
+  else if( Shift == sssShift )  {
+    MData.Object = FDFrame;
+    //    FParent->UpdateGlImage();
+    res = MData.Object->OnMouseDown(this, MData);
   }
   FSX = x;
   FSY = y;
-  return false;
+  return res;
 }
 //..............................................................................
 bool TGlMouse::MouseMove(int x, int y, short Shift)  {
   if( FDblClick )  {
     FButtonDown = false;
     FDblClick = false;
-    Handler = NULL;
+    MData.Object = NULL;
     return false;
   }
-  int DX = (x-FSX), DY = (FSY-y);
-  FSX = x;      FSY = y;
-  MData->X = x; MData->Y = y; MData->Shift = Shift;
-  if( Handler != NULL)  {
-    if( Handler == FDFrame )  {
-      FDFrame->OnMouseMove(this, MData);
-      return true;
+  const int DX = (x-FSX), DY = (FSY-y);
+  FSX = x;
+  FSY = y;
+  MData.X = x;
+  MData.Y = y;
+  MData.Shift = Shift;
+  if( MData.Object != NULL)  {
+    if( MData.Object == FDFrame )  {
+      return MData.Object->OnMouseMove(this, MData);
     }
     else  {
-      TGlGroup* PColl = NULL;
-      if( Handler->IsSelected() )
-        PColl = &FParent->GetSelection();
-      else  {
-        PColl = FParent->FindObjectGroup(*Handler);
-        if( FParent->GetSelection().Contains(*PColl) ) 
-          PColl = &FParent->GetSelection();
-      }
+      TGlGroup *PColl = FindObjectGroup(*MData.Object);
       if( PColl != NULL )  {
-        PColl->OnMouseMove(this, MData);
-        return true;
+        if( PColl->OnMouseMove(this, MData) )
+          return true;
       }
-      else if( Handler->OnMouseMove(this, MData) )      
+      else if( MData.Object->OnMouseMove(this, MData) )
         return true;
     }
   }
   // default handlers...
   for( size_t i=0; i < Handlers.Count(); i++ )  {
     TGlMMoveEvent* ME = Handlers[i];
-    if( (ME->Button == MData->Button) && (ME->Shift == MData->Shift) )  {
+    if( (ME->Button == MData.Button) && (ME->Shift == MData.Shift) )  {
       if( FButtonDown && ME->ButtonDown )  {
         ME->Handler(this, DX, DY);
         return true;
@@ -166,7 +165,7 @@ bool TGlMouse::MouseMove(int x, int y, short Shift)  {
   return false;
 }
 //..............................................................................
-void TGlMouse::SetHandler( const short Button, const short Shift, MMoveHandler MH)  {
+void TGlMouse::SetHandler(const short Button, const short Shift, MMoveHandler MH)  {
   bool found = false;
   for( size_t i=0; i < Handlers.Count(); i++ )  {
     TGlMMoveEvent* ME = Handlers[i];
@@ -190,14 +189,14 @@ void GlobalGlFunction( meMoveXY(TGlMouse *G, int dx, int dy) )  {
   double v = R->GetScale();
   vec3d t = R->GetBasis().GetMatrix()*vec3d(dx*v, dy*v, 0);
   R->Translate(t/R->GetBasis().GetZoom());
-  G->Action(glmaTranslateXY);
+  G->SetAction(glmaTranslateXY);
 }
 //..............................................................................
 void GlobalGlFunction( meMoveZ(TGlMouse *G, int dx, int dy) )  {
   TGlRenderer *R = G->Parent();
   double v = R->GetScale();
   R->TranslateZ(dx*v + dy*v);
-  G->Action(glmaTranslateZ);
+  G->SetAction(glmaTranslateZ);
 }
 //..............................................................................
 void GlobalGlFunction( meRotateXY(TGlMouse *G, int dx, int dy) )  {
@@ -210,7 +209,7 @@ void GlobalGlFunction( meRotateXY(TGlMouse *G, int dx, int dy) )  {
   if( RY < 0 )    RY = 360;
   R->RotateX(RX);
   R->RotateY(RY);
-  G->Action(glmaRotateXY);
+  G->SetAction(glmaRotateXY);
 }
 //..............................................................................
 void GlobalGlFunction( meRotateZ(TGlMouse *G, int dx, int dy) )  {
@@ -229,14 +228,14 @@ void GlobalGlFunction( meRotateZ(TGlMouse *G, int dx, int dy) )  {
   if( RZ > 360 )  RZ = 0;
   if( RZ < 0 )    RZ = 360;
   R->RotateZ(RZ);
-  G->Action(glmaRotateZ);
+  G->SetAction(glmaRotateZ);
 }
 //..............................................................................
 void GlobalGlFunction( meZoom(TGlMouse *G, int dx, int dy) )  {
   TGlRenderer *R = G->Parent();
   static const double df = 600;
   R->SetZoom( R->GetZoom() + (double)dx/df- (double)dy/df);
-  G->Action(glmaZoom);
+  G->SetAction(glmaZoom);
 }
 //..............................................................................
 

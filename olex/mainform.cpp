@@ -1022,7 +1022,6 @@ separated values of Atom Type and radius, an entry a line");
   this_InitFuncD(CurrentLanguage, fpNone|fpOne, "Returns/sets current language");
   this_InitFuncD(GetMAC, fpNone|fpOne, "Returns simicolon separated list of computer MAC addresses.\
  If 'full' is provided as argument, the adoptor names are also returned as adapter=MAC;..");
-  this_InitFuncD(Profiling, fpNone|fpOne, "Returns/sets the flag allowing to print profiling information");
   this_InitFuncD(ThreadCount, fpNone|fpOne, "Returns/sets the number of simultaneous tasks");
   this_InitFuncD(FullScreen, fpNone|fpOne, "Returns/sets full screen mode (true/false/swap)");
 
@@ -1227,15 +1226,12 @@ separated values of Atom Type and radius, an entry a line");
 
   SetMenuBar(MenuBar);
 //////////////////////////////////////////////////////////////
-  FXApp->GetRender().OnDraw->Add(this, ID_GLDRAW);
+  FXApp->GetRender().OnDraw.Add(this, ID_GLDRAW, msiExit);
   TObjectVisibilityChange* VC = new TObjectVisibilityChange(this);
   XA->OnGraphicsVisible.Add(VC);
   // put correct captions to the menu
-  if( FXApp->IsCellVisible() )   pmModel->SetLabel(ID_CellVisible, wxT("Hide cell"));
-  else                           pmModel->SetLabel(ID_CellVisible, wxT("Show cell"));
-  if( FXApp->IsBasisVisible() )  pmModel->SetLabel(ID_BasisVisible, wxT("Hide basis"));
-  else                           pmModel->SetLabel(ID_BasisVisible, wxT("Show basis"));
-
+  pmModel->SetLabel(ID_CellVisible, FXApp->IsCellVisible() ? wxT("Hide cell") : wxT("Show cell"));
+  pmModel->SetLabel(ID_BasisVisible, FXApp->IsBasisVisible() ? wxT("Hide basis") : wxT("Show basis"));
   TutorialDir = XA->GetBaseDir()+"etc/";
 //  DataDir = TutorialDir + "Olex_Data\\";
   olxstr new_data_dir = patcher::PatchAPI::GetCurrentSharedDir(&DataDir);
@@ -1761,7 +1757,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
       T << " Occu: " << TEValueD(XA->Atom().CAtom().GetOccu(), XA->Atom().CAtom().GetOccuEsd()).ToString();
     miAtomInfo->SetText(T.u_str());
     pmAtom->Enable(ID_AtomGrow, FXApp->AtomExpandable(XA));
-    pmAtom->Enable(ID_Selection, G->IsSelected());
+    pmAtom->Enable(ID_Selection, G->IsSelected() && EsdlInstanceOf(*G->GetParentGroup(), TGlGroup));
     pmAtom->Enable(ID_SelGroup, false);
     int bound_cnt = 0;
     for( size_t i=0; i < XA->Atom().NodeCount(); i++ )  {
@@ -1789,11 +1785,11 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     T << '-' << XB->Bond().B().GetLabel() << ':' << ' '
       << olxstr::FormatFloat(3, XB->Bond().Length());
     miBondInfo->SetText(T.u_str());
-    pmBond->Enable(ID_Selection, G->IsSelected());
+    pmBond->Enable(ID_Selection, G->IsSelected() && EsdlInstanceOf(*G->GetParentGroup(), TGlGroup));
     FCurrentPopup = pmBond;
   }
   else if( EsdlInstanceOf(*G, TXPlane) )  {
-    pmPlane->Enable(ID_Selection, G->IsSelected());
+    pmPlane->Enable(ID_Selection, G->IsSelected() && EsdlInstanceOf(*G->GetParentGroup(), TGlGroup));
     FCurrentPopup = pmPlane;
   }
   if( FCurrentPopup != NULL )  {
@@ -1808,7 +1804,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
       }
     }
   }
-  if( EsdlInstanceOf( *G, TGlGroup) )  {
+  if( EsdlInstanceOf(*G, TGlGroup) )  {
     pmSelection->Enable(ID_SelGroup, false);
     pmSelection->Enable(ID_SelUnGroup, true);
     FCurrentPopup = pmSelection;
@@ -2242,7 +2238,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
           int x = MousePositionX-GlTooltip->GetWidth()/2,
             y = MousePositionY-GlTooltip->GetHeight()-4;
           if( x < 0 )  x = 0;
-          if( (x + GlTooltip->GetWidth()) > FXApp->GetRender().GetWidth() )
+          if( (size_t)(x + GlTooltip->GetWidth()) > FXApp->GetRender().GetWidth() )
             x = FXApp->GetRender().GetWidth() - GlTooltip->GetWidth();
           if( y < 0 )
             y  = 0;
@@ -3956,7 +3952,7 @@ bool TMainForm::Show(bool v)  {
 #else
   bool res = wxFrame::Show(v);
 #endif
-  FXApp->SetMainFormVisible( v );
+  FXApp->SetMainFormVisible(v);
   FGlCanvas->SetFocus();
   return res;
 }

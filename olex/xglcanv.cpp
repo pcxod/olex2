@@ -45,7 +45,7 @@ TGlCanvas::TGlCanvas(TMainForm *parent, int* gl_attr, wxWindowID id,
 #endif
 #endif
   FXApp = NULL;
-  FLeftMouseDown = FRightMouseDown = false;
+  MouseButton = 0;
   FParent = parent;
 }
 //..............................................................................
@@ -95,17 +95,18 @@ void TGlCanvas::InitGL()  {
 }
  //..............................................................................
 void TGlCanvas::OnMouseDown(wxMouseEvent& me)  {
-  short Fl = 0, Btn = 0;
-  if( me.m_altDown )      Fl |= sssAlt;
-  if( me.m_shiftDown )    Fl |= sssShift;
+  short Fl = 0;
+  MouseButton = 0;
+  if( me.m_altDown )  Fl |= sssAlt;
+  if( me.m_shiftDown )  Fl |= sssShift;
   if( me.m_controlDown )  Fl |= sssCtrl;
-  if( me.ButtonDown(1) )    Btn = smbLeft;
-  if( me.ButtonDown(2) )    Btn = smbMiddle;
-  if( me.ButtonDown(3) )    Btn = smbRight;
+  if( me.ButtonDown(1) )  MouseButton = smbLeft;
+  else if( me.ButtonDown(2) )  MouseButton = smbMiddle;
+  else if( me.ButtonDown(3) )  MouseButton = smbRight;
 
-  FXApp->MouseDown(me.m_x, me.m_y, Fl, Btn);
-  if( me.ButtonDown(1) )  FLeftMouseDown = true;
-  if( me.ButtonDown(3) )  FRightMouseDown = true;
+  if( !FXApp->MouseDown(me.m_x, me.m_y, Fl, MouseButton) )
+    FParent->OnMouseDown(me.m_x, me.m_y, Fl, MouseButton);
+
   FMX = me.m_x;
   FMY = me.m_y;
   SetFocus();
@@ -114,13 +115,10 @@ void TGlCanvas::OnMouseDown(wxMouseEvent& me)  {
 //..............................................................................
 void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
   me.Skip();
-  short Fl = 0, Btn = 0;
-  if( me.m_altDown )      Fl |= sssAlt;
-  if( me.m_shiftDown )    Fl |= sssShift;
+  short Fl = 0;
+  if( me.m_altDown )  Fl |= sssAlt;
+  if( me.m_shiftDown )  Fl |= sssShift;
   if( me.m_controlDown )  Fl |= sssCtrl;
-  if( me.ButtonDown(1) )    Btn = smbLeft;
-  if( me.ButtonDown(2) )    Btn = smbMiddle;
-  if( me.ButtonDown(3) )    Btn = smbRight;
 
   int left = 0, top = 0;
 #ifdef __MAC__  // a solution for MAC's single button
@@ -130,55 +128,47 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
 #endif
   GetPosition(&left, &top);
 
-  if( (abs(me.m_x-FMX) <= 4) && (abs(me.m_y-FMY) <= 4) &&
-    (FRightMouseDown) && (Fl == os_mask || Fl == 0) )
+  if( FXApp->MouseUp(me.m_x, me.m_y, Fl, MouseButton) )  {
+  }
+  else if( (abs(me.m_x-FMX) <= 4) && (abs(me.m_y-FMY) <= 4) &&
+    (MouseButton == smbRight) && (Fl == os_mask || Fl == 0) )
   {
 //    FMY += (wxSystemSettings::GetMetric(wxSYS_MENU_Y)*FParent->pmMenu->GetMenuItemCount());
-    FXApp->ResetMouseState();  // reset mouse state
-    if( FRightMouseDown )  {
-      FXApp->MouseUp(me.m_x, me.m_y, Fl, Btn);
-      AGDrawObject *G = FXApp->SelectObject(me.m_x, me.m_y);
-      bool Handled = false;
-      if( G != NULL )  {
-        TGlGroup *GlG = FXApp->FindObjectGroup(*G);
-        if( GlG == NULL )  
-          FParent->ObjectUnderMouse(G);
-        else        
-          FParent->ObjectUnderMouse(GlG);
-        if( FParent->CurrentPopupMenu() )  {
-          FParent->PopupMenu(FParent->CurrentPopupMenu(), FMX+left, FMY+top);
-          Handled = true;
-        }
-        if( !Handled )
-          FParent->PopupMenu(FParent->DefaultPopup(), FMX+left, FMY+top);
+//      FXApp->MouseUp(me.m_x, me.m_y, Fl, Btn);
+    AGDrawObject *G = FXApp->SelectObject(me.m_x, me.m_y);
+    bool Handled = false;
+    if( G != NULL )  {
+      TGlGroup *GlG = FXApp->FindObjectGroup(*G);
+      if( GlG == NULL )  
+        FParent->ObjectUnderMouse(G);
+      else        
+        FParent->ObjectUnderMouse(GlG);
+      if( FParent->CurrentPopupMenu() )  {
+        FParent->PopupMenu(FParent->CurrentPopupMenu(), FMX+left, FMY+top);
+        Handled = true;
       }
-      else
-        FParent->PopupMenu(FParent->GeneralPopup(), FMX+left, FMY+top);
+      if( !Handled )
+        FParent->PopupMenu(FParent->DefaultPopup(), FMX+left, FMY+top);
     }
+    else
+      FParent->PopupMenu(FParent->GeneralPopup(), FMX+left, FMY+top);
     SetFocus();
-    FRightMouseDown = false;
-    FLeftMouseDown = false;
     return;
   }
-  if( FParent->OnMouseUp(me.m_x, me.m_y, Fl, Btn) )  {
+  else if( FParent->OnMouseUp(me.m_x, me.m_y, Fl, MouseButton) )  {
     FXApp->ResetMouseState();
-    FXApp->Draw();
   }
-  else  {
-    if( FXApp->MouseUp(me.m_x, me.m_y, Fl, Btn) )  
-      FXApp->Draw();
-  }
-  FRightMouseDown = false;
-  FLeftMouseDown = false;
+  FXApp->Draw();
+  FXApp->ResetMouseState();
 }
 //..............................................................................
 void TGlCanvas::OnMouseMove(wxMouseEvent& me)  {
   short Fl = 0;
-  if( me.m_altDown )      Fl |= sssAlt;
-  if( me.m_shiftDown )    Fl |= sssShift;
+  if( me.m_altDown )  Fl |= sssAlt;
+  if( me.m_shiftDown )  Fl |= sssShift;
   if( me.m_controlDown )  Fl |= sssCtrl;
 
-  if( !FLeftMouseDown && !FRightMouseDown )  
+  if( MouseButton == 0 )  
     FParent->OnMouseMove(me.m_x, me.m_y);
   if( FXApp != NULL && FXApp->MouseMove(me.m_x, me.m_y, Fl) )  {  // check if a handler for the event is found
 #ifdef __WIN32__
@@ -190,17 +180,16 @@ void TGlCanvas::OnMouseMove(wxMouseEvent& me)  {
 }
 //..............................................................................
 void TGlCanvas::OnMouseDblClick(wxMouseEvent& me)  {
-  short Fl = 0, Btn = 0;
-  if( me.m_altDown )      Fl |= sssAlt;
-  if( me.m_shiftDown )    Fl |= sssShift;
+  short Fl = 0;
+  if( me.m_altDown )  Fl |= sssAlt;
+  if( me.m_shiftDown )  Fl |= sssShift;
   if( me.m_controlDown )  Fl |= sssCtrl;
-  if( me.ButtonDown(1) )    Btn = smbLeft;
-  if( me.ButtonDown(2) )    Btn = smbMiddle;
-  if( me.ButtonDown(3) )    Btn = smbRight;
+  if( me.ButtonDown(1) )  MouseButton = smbLeft;
+  else if( me.ButtonDown(2) )  MouseButton = smbMiddle;
+  else if( me.ButtonDown(3) )  MouseButton = smbRight;
 
   if( FXApp != NULL && !FXApp->DblClick() )
-    FParent->OnMouseDblClick( me.m_x, me.m_y, Fl, Btn );
-  FRightMouseDown = false;
+    FParent->OnMouseDblClick(me.m_x, me.m_y, Fl, MouseButton);
 }
 //..............................................................................
 void TGlCanvas::OnMouse(wxMouseEvent& me)  {

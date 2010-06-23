@@ -692,7 +692,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   const int bmpSize = BmpHeight*BmpWidth*3;
   char* bmpData = (char*)malloc(bmpSize);
   FGlConsole->Visible(false);
-  FXApp->GetRender().OnDraw->SetEnabled( false );
+  FXApp->GetRender().OnDraw.SetEnabled(false);
   if( res != 1 )    {
     FXApp->GetRender().GetScene().ScaleFonts(res);
     if( res >= 3 )
@@ -723,7 +723,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       FXApp->Quality(qaMedium);
   }
 
-  FXApp->GetRender().OnDraw->SetEnabled( true );
+  FXApp->GetRender().OnDraw.SetEnabled(true);
   FGlConsole->Visible(true);
   // end drawing etc
   FXApp->GetRender().Resize(orgWidth, orgHeight); 
@@ -5615,7 +5615,7 @@ void TMainForm::CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS)  
 }
 //..............................................................................
 void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TActionQueue* q_draw = FXApp->ActionQueue(olxappevent_GL_DRAW);
+  TActionQueue* q_draw = FXApp->FindActionQueue(olxappevent_GL_DRAW);
   if( q_draw != NULL )  q_draw->SetEnabled(false);
   // restore if already applied
   TLattice& latt = FXApp->XFile().GetLattice();
@@ -7569,7 +7569,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
       ca.SetQPeak(ed);
     }
     au.InitData();
-    TActionQueue* q_draw = FXApp->ActionQueue(olxappevent_GL_DRAW);
+    TActionQueue* q_draw = FXApp->FindActionQueue(olxappevent_GL_DRAW);
     bool q_draw_changed = false;
     if( q_draw != NULL )  {
       q_draw->SetEnabled(false);
@@ -8790,19 +8790,13 @@ void TMainForm::macCenter(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
 }
 //..............................................................................
-void TMainForm::funProfiling(const TStrObjList& Params, TMacroError &E)  {
-  if( Params.IsEmpty() )  E.SetRetVal(FXApp->IsProfiling());
-  else
-    FXApp->SetProfiling(Params[0].ToBool());
-}
-//..............................................................................
 void TMainForm::funThreadCount(const TStrObjList& Params, TMacroError &E)  {
   if( Params.IsEmpty() )  E.SetRetVal(FXApp->GetMaxThreadCount());
   else  {
     int pthc = Params[0].ToInt();
     int rthc = wxThread::GetCPUCount();
     if( rthc != -1 && pthc > rthc )  {
-      E.ProcessingError(__OlxSrcInfo, "Number of proposed threads is larger than number of phisical ones");
+      E.ProcessingError(__OlxSrcInfo, "Number of proposed threads is larger than number of physical ones");
       return;
     }
     if( pthc > 0 )
@@ -8852,7 +8846,7 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   char* bmpData = (char*)malloc(bmpSize);
   memset(bmpData, ~0, bmpSize);
   FGlConsole->Visible(false);
-  FXApp->GetRender().OnDraw->SetEnabled(false);
+  FXApp->GetRender().OnDraw.SetEnabled(false);
   if( res != 1 )    {
     FXApp->GetRender().GetScene().ScaleFonts(res);
     if( res >= 3 )
@@ -8907,7 +8901,7 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       FXApp->Quality(qaMedium);
   }
 
-  FXApp->GetRender().OnDraw->SetEnabled(true);
+  FXApp->GetRender().OnDraw.SetEnabled(true);
   FGlConsole->Visible(true);
   // end drawing etc
   FXApp->GetRender().Resize(orgWidth, orgHeight); 

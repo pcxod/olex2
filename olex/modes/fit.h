@@ -30,6 +30,7 @@ public:
     TGlXApp::GetGXApp()->XFile().GetLattice().OnDisassemble.Add(this, mode_fit_disassemble, msiEnter);
     TGlXApp::GetGXApp()->XFile().GetLattice().OnStructureUniq.AddFirst(uniq_handler);
     TGlXApp::GetGXApp()->XFile().GetLattice().OnStructureGrow.AddFirst(uniq_handler);
+    TGlXApp::GetGXApp()->EnableSelection(false);
   }
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     AtomsToMatch.Clear();
@@ -45,6 +46,7 @@ public:
     delete uniq_handler;
     if( group_data != NULL )
       delete group_data;
+    TGlXApp::GetGXApp()->EnableSelection(true);
   }
   void Finalise() {
     TGXApp& app = *TGlXApp::GetGXApp();

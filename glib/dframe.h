@@ -24,9 +24,9 @@ public:
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min){  return false;};
 
-  bool OnMouseDown(const IEObject *Sender, const TMouseData *Data);
-  bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
-  bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
+  bool OnMouseDown(const IEObject *Sender, const TMouseData& Data);
+  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
+  bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
   
   TActionQueue& OnSelect;
 };

@@ -80,16 +80,28 @@ protected:
   }
   virtual bool DoZoom(double, bool)  {  return false;  }
   virtual const TGlRenderer& DoGetRenderer() const {  return GetParent();  }
-  bool OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
+  bool OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
     return GetHandler().OnMouseDown(*this, Data);
   }
-  bool OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
+  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
+    if( Data.Button == smbRight )  {
+      if( Data.Object != NULL )  {
+        if( EsdlInstanceOf(*Data.Object, TXAtom) )  {
+          RotationCenter = ((TXAtom*)Data.Object)->Atom().crd();
+        }
+        else if( EsdlInstanceOf(*Data.Object, TXBond) )  {
+          TXBond* xb = (TXBond*)Data.Object;
+          RotationCenter = (xb->Bond().A().crd() + xb->Bond().B().crd())/2;
+        }
+        return true;
+      }
+    }
     return GetHandler().OnMouseUp(*this, Data);
   }
-  bool OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
+  bool OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
     return GetHandler().OnMouseMove(*this, Data);
   }
-  bool OnDblClick(const IEObject *Sender, const TMouseData *Data)  {
+  bool OnDblClick(const IEObject *Sender, const TMouseData& Data)  {
     return GetHandler().OnDblClick(*this, Data);
   }
 public:

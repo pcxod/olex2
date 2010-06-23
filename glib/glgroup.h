@@ -41,9 +41,6 @@ public:
   /* returns true if there are at least two groupable objects, moving the ungroupable
   ones to the provided list */
   bool TryToGroup(TPtrList<AGDrawObject>& ungroupable);
-  bool OnMouseDown(const IEObject *Sender, const class TMouseData *Data);
-  bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
-  bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
 
   inline bool Orient(TGlPrimitive& P)  {  return false;  }
   inline bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }

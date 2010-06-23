@@ -1,9 +1,7 @@
-#ifndef xfader_H
-#define xfader_H
-
+#ifndef __olx_gl_xfader_H
+#define __olx_gl_xfader_H
 #include "glbase.h"
 #include "gdrawobject.h"
-
 #include "library.h"
 
 BeginGlNamespace()

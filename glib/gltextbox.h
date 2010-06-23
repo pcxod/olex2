@@ -46,7 +46,7 @@ public:
   void PostText(const TStrList &SL, TGlMaterial *M=NULL);
   inline void NewLine() {  FBuffer.Add(EmptyString); }
   class TGlFont& GetFont()  const;
-  bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
+  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
 };
 
 

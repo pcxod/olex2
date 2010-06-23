@@ -94,11 +94,11 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
           continue;
         }
         TReflection* ref = HasBatch ? 
-          new TReflection( h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble(), line.SubString(28,4).ToInt() )
+          new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble(), line.SubString(28,4).ToInt())
           :
-        new TReflection( h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble() );
-        ref->SetTag( Tag );
-        UpdateMinMax( *ref );
+        new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble());
+        ref->SetTag(Tag);
+        UpdateMinMax(*ref);
         Refs.Add(ref);
       }
       else  {

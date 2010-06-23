@@ -264,6 +264,7 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
 {
   FQPeaksVisible = FHydrogensVisible = FStructureVisible = FHBondsVisible = true;
   XGrowPointsVisible = FXGrowLinesVisible = FQPeakBondsVisible = false;
+  MainFormVisible = false;
   FXPolyVisible = true;
   DeltaV = 3;
 #ifdef __WXWIDGETS__
@@ -2871,6 +2872,7 @@ TXGlLabel* TGXApp::CreateLabel(TXAtom *A, uint16_t FontIndex)  {
 }
 //..............................................................................
 uint64_t TGXApp::Draw()  {
+  if( !IsMainFormVisible() )  return 0;
   uint64_t st = TETime::msNow();
   GetRender().Draw();
   return TETime::msNow() - st;

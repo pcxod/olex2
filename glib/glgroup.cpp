@@ -4,6 +4,7 @@
 //----------------------------------------------------------------------------//
 #include "glgroup.h"
 #include "glrender.h"
+#include "glmouse.h"
 #include "gpcollection.h"
 #include "styles.h"
 #include "glprimitive.h"
@@ -150,24 +151,6 @@ void TGlGroup::DoDraw(bool SelectPrimitives, bool SelectObjects) const {
 //..............................................................................
 void TGlGroup::SetGlM(const TGlMaterial& m)  {
   GlM = GetPrimitives().GetStyle().SetMaterial("mat", m);
-}
-//..............................................................................
-bool TGlGroup::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
-  for( size_t i=0; i < FObjects.Count(); i++ )
-    FObjects[i]->OnMouseDown(Sender, Data);
-  return true;
-}
-//..............................................................................
-bool TGlGroup::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
-  for( size_t i=0; i < FObjects.Count(); i++ )
-    FObjects[i]->OnMouseUp(Sender, Data);
-  return true;
-}
-//..............................................................................
-bool TGlGroup::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
-  for( size_t i=0; i < FObjects.Count(); i++ )
-    FObjects[i]->OnMouseMove(Sender, Data);
-  return true;
 }
 //..............................................................................
 bool TGlGroup::TryToGroup(TPtrList<AGDrawObject>& ungroupable)  {

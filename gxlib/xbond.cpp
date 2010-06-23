@@ -488,15 +488,15 @@ int TXBond::DefMask()  {
   return FBondParams->GetParam("DefM", "7", true).ToInt();
 }
 //..............................................................................
-bool TXBond::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
+bool TXBond::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
   return true;
 }
 //..............................................................................
-bool TXBond::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
+bool TXBond::OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
   return false;
 }
 //..............................................................................
-bool TXBond::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
+bool TXBond::OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
   return true;
 }
 //..............................................................................

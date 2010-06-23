@@ -14,22 +14,21 @@ UseGlNamespace();
 //..............................................................................
 TGraphicsStyles* TGlRenderer::FStyles = NULL;
 //..............................................................................
-TGlRenderer::TGlRenderer(AGlScene *S, int width, int height) :
-  StereoRightColor(1, 0, 0, 1), StereoLeftColor(0, 1, 1, 1)
+TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height) :
+  StereoRightColor(1, 0, 0, 1), StereoLeftColor(0, 1, 1, 1),
+  OnDraw(TBasicApp::GetInstance().NewActionQueue(olxappevent_GL_DRAW)),
+  OnStylesClear(TBasicApp::GetInstance().NewActionQueue(olxappevent_GL_CLEAR_STYLES)),
+  Top(0), Left(0), Width((int)width), Height((int)height), OWidth(0)
 {
   CompiledListId = -1;
   FScene = S;
   FZoom = 1;
   FViewZoom = 1;
   FScene->Parent(this);
-  FWidth = width;
-  FHeight = height;
-  FLeft = FTop = 0;
   FPerspective = false;
   FPAngle = 1;
   StereoFlag = 0;
   StereoAngle = 3;
-  FOWidth = -1;
 
   LookAt(0,0,1);
 
@@ -45,11 +44,6 @@ TGlRenderer::TGlRenderer(AGlScene *S, int width, int height) :
 
   FSelection = new TGlGroup(*this, "Selection");
   FSelection->SetSelected(true);
-
-  OnDraw = &TBasicApp::GetInstance().NewActionQueue(olxappevent_GL_DRAW);
-  BeforeDraw = &TBasicApp::GetInstance().NewActionQueue(olxappevent_GL_BEFORE_DRAW);
-  OnStylesClear  = &TBasicApp::GetInstance().NewActionQueue(olxappevent_GL_CLEAR_STYLES);
-  //GraphicsStyles = FStyles;
   FBackground = new TGlBackground(*this, "Background", false);
   FBackground->SetVisible(false);
   FCeiling = new TGlBackground(*this, "Ceiling", true);
@@ -60,8 +54,6 @@ TGlRenderer::TGlRenderer(AGlScene *S, int width, int height) :
   FTranslucentObjects.SetIncrement(16);
   FCollections.SetIncrement(16);
   FGObjects.SetIncrement(16);
-
-  FSelection->Create();
 }
 //..............................................................................
 TGlRenderer::~TGlRenderer()  {
@@ -79,6 +71,7 @@ void TGlRenderer::Initialise()  {
   InitLights();
   for( size_t i=0; i < Primitives.ObjectCount(); i++ )
     Primitives.GetObject(i).Compile();
+  FSelection->Create();
   FBackground->Create();
   FCeiling->Create();
   ATI = olxcstr((const char*)olx_gl::getString(GL_VENDOR)).StartsFrom("ATI");
@@ -157,8 +150,8 @@ void TGlRenderer::ReleaseGlImage()  {
 void TGlRenderer::UpdateGlImage()  {
   ReleaseGlImage();
   FGlImage = GetPixels();
-  FGlImageHeight = FHeight;
-  FGlImageWidth = FWidth;
+  GlImageHeight = Height;
+  GlImageWidth = Width;
   FGlImageChanged = false;
 }
 //..............................................................................
@@ -181,7 +174,7 @@ void TGlRenderer::UpdateMinMax(const vec3d& Min, const vec3d& Max)  {
 void TGlRenderer::operator = (const TGlRenderer &G)  { ; }
 //..............................................................................
 void TGlRenderer::_OnStylesClear()  {
-  OnStylesClear->Enter(this);
+  OnStylesClear.Enter(this);
   for( size_t i=0; i < FCollections.Count(); i++ )
     FCollections.GetObject(i)->SetStyle(NULL);
 }
@@ -201,7 +194,7 @@ void TGlRenderer::_OnStylesLoaded()  {
     StereoRightColor = gs->GetParam("right", StereoRightColor.ToString(), true);
     StereoAngle = gs->GetParam("angle", StereoAngle, true).ToDouble();
   }
-  OnStylesClear->Exit(this);
+  OnStylesClear.Exit(this);
 }
 //..............................................................................
 TGPCollection& TGlRenderer::NewCollection(const olxstr &Name)  {
@@ -292,20 +285,20 @@ void TGlRenderer::SetPerspectiveAngle(double angle)  {
   FPAngle = (float)tan(angle*M_PI/360);
 }
 //..............................................................................
-void TGlRenderer::Resize(int w, int h)  {
+void TGlRenderer::Resize(size_t w, size_t h)  {
   Resize(0, 0, w, h, 1);
 }
 //..............................................................................
-void TGlRenderer::Resize(int l, int t, int w, int h, float Zoom)  {
-  FLeft = l;
-  FTop = t;
+void TGlRenderer::Resize(int l, int t, size_t w, size_t h, float Zoom)  {
+  Left = l;
+  Top = t;
   if( StereoFlag == glStereoCross )  {
-    FWidth = w/2;
-    FOWidth = w;
+    Width = (int)w/2;
+    OWidth = (int)w;
   }
   else
-    FWidth = w;
-  FHeight = h;
+    Width = (int)w;
+  Height = (int)h;
   FZoom = Zoom;
   FGlImageChanged = true;
 }
@@ -324,15 +317,15 @@ void TGlRenderer::SetZoom(double V) {
 }
 //..............................................................................
 void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res)  {
-  olx_gl::viewport(FLeft*Res, FTop*Res, FWidth*Res, FHeight*Res);
+  olx_gl::viewport(Left*Res, Top*Res, Width*Res, Height*Res);
   olx_gl::matrixMode(GL_PROJECTION);
   olx_gl::loadIdentity();
   if( Select )  {
     GLint vp[4];
     olx_gl::get(GL_VIEWPORT, vp);
-    gluPickMatrix(x, FHeight-y, 2, 2, vp);
+    gluPickMatrix(x, Height-y, 2, 2, vp);
   }
-  const double aspect = (double)FWidth/(double)FHeight;
+  const double aspect = (double)Width/(double)Height;
   if( !identity )  {
     if( FPerspective )  {
       double right = FPAngle*aspect;
@@ -374,9 +367,9 @@ void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res)  
 }
 //..............................................................................
 void TGlRenderer::Draw()  {
-  if( FWidth < 50 || FHeight < 50 || !TBasicApp::GetInstance().IsMainFormVisible() )  return;
+  if( Width < 50 || Height < 50 )  return;
   olx_gl::enable(GL_NORMALIZE);
-  BeforeDraw->Execute(this);
+  OnDraw.Enter(this);
   //glLineWidth( (float)(0.07/GetScale()) );
   //glPointSize( (float)(0.07/GetScale()) );  
   if( StereoFlag == glStereoColor )  {
@@ -459,14 +452,14 @@ void TGlRenderer::Draw()  {
   else if( StereoFlag == glStereoCross )  {
     const double ry = GetBasis().GetRY();
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    const int _l = FLeft;
+    const int _l = Left;
     GetBasis().RotateY(ry+StereoAngle);
     DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry-StereoAngle);
-    FLeft = FWidth;
+    Left = Width;
     DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry);
-    FLeft = _l;
+    Left = _l;
   }
   else  {
     GetScene().StartDraw();
@@ -474,7 +467,8 @@ void TGlRenderer::Draw()  {
   }
   GetScene().EndDraw();
   FGlImageChanged = true;
-  OnDraw->Execute(this);
+  OnDraw.Execute(this);
+  OnDraw.Exit(this);
 }
 //..............................................................................
 void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimitives)  {
@@ -605,12 +599,9 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
 }
 //..............................................................................
 AGDrawObject* TGlRenderer::SelectObject(int x, int y, int depth)  {
-  if( FWidth*FHeight == 0 )  
-    return NULL;
-
+  if( (Width&Height) == 0 )  return NULL;
   AGDrawObject *Result = NULL;
   GLuint *selectBuf = new GLuint [MAXSELECT];
-
   for( size_t i=0; i < ObjectCount(); i++ )
     GetObject(i).SetTag((int)(i+1));
   GetScene().StartSelect(x, y, selectBuf);
@@ -642,9 +633,7 @@ AGDrawObject* TGlRenderer::SelectObject(int x, int y, int depth)  {
 }
 //..............................................................................
 TGlPrimitive* TGlRenderer::SelectPrimitive(int x, int y)  {
-  if( (FWidth&FHeight) == 0 )  // test for 0
-    return NULL;
-
+  if( (Width&Height) == 0 )  return NULL;
   TGlPrimitive *Result = NULL;
   GLuint *selectBuf = new GLuint [MAXSELECT];
   const size_t prim_count = Primitives.ObjectCount();
@@ -680,7 +669,7 @@ TGlPrimitive* TGlRenderer::SelectPrimitive(int x, int y)  {
   return Result;
 }
 //..............................................................................
-TGlGroup* TGlRenderer::FindObjectGroup(AGDrawObject& G)  {
+TGlGroup* TGlRenderer::FindObjectGroup(const AGDrawObject& G) const {
   // get the topmost group
   TGlGroup* G1 = G.GetParentGroup();
   if( G1 == NULL )  
@@ -786,7 +775,7 @@ void TGlRenderer::ClearGroups()  {
   FGroups.Clear();
 }
 //..............................................................................
-TGlGroup* TGlRenderer::FindGroupByName(const olxstr& colName)  {
+TGlGroup* TGlRenderer::FindGroupByName(const olxstr& colName) const {
   for( size_t i=0; i < FGroups.Count(); i++ )
     if( FGroups[i]->GetCollectionName() == colName )
       return FGroups[i];
@@ -953,8 +942,7 @@ void TGlRenderer::RemoveCollection(TGPCollection& GP)  {
 }
 //..............................................................................
 void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
-  if( Colls.Count() == 0 )  return;
-
+  if( Colls.IsEmpty() )  return;
   FTranslucentIdentityObjects.Clear();
   FTranslucentObjects.Clear();
   FIdentityObjects.Clear();
@@ -990,18 +978,18 @@ void TGlRenderer::LookAt(double x, double y, short res)  {
 //..............................................................................
 char* TGlRenderer::GetPixels(bool useMalloc, short aligment)  {
   char *Bf;
-  short extraBytes = (4-(FWidth*3)%4)%4;  //for bitmaps with 4 bytes aligment
+  short extraBytes = (4-(Width*3)%4)%4;  //for bitmaps with 4 bytes aligment
   if( useMalloc )  {
-    Bf = (char*)malloc((FWidth*3+extraBytes)*FHeight);
+    Bf = (char*)malloc((Width*3+extraBytes)*Height);
   }
   else  {
-    Bf = new char[(FWidth*3+extraBytes)*FHeight];
+    Bf = new char[(Width*3+extraBytes)*Height];
   }
   if( Bf == NULL )
     throw TOutOfMemoryException(__OlxSourceInfo);
   olx_gl::readBuffer(GL_BACK);
   olx_gl::pixelStore(GL_PACK_ALIGNMENT, aligment);
-  olx_gl::readPixels(0, 0, FWidth, FHeight, GL_RGB, GL_UNSIGNED_BYTE, Bf);
+  olx_gl::readPixels(0, 0, Width, Height, GL_RGB, GL_UNSIGNED_BYTE, Bf);
   return Bf;
 }
 //..............................................................................
@@ -1022,12 +1010,12 @@ void TGlRenderer::RemovePrimitiveByTag(int in)  {
 }
 //..............................................................................
 void TGlRenderer::CleanUpStyles()  {// removes styles, which are not used by any collection
-  OnStylesClear->Enter(this);
+  OnStylesClear.Enter(this);
   GetStyles().SetStylesTag(0);
   for( size_t i=0; i < FCollections.Count(); i++ )
     FCollections.GetObject(i)->GetStyle().SetTag(1);
   GetStyles().RemoveStylesByTag(0);
-  OnStylesClear->Exit(this);
+  OnStylesClear.Exit(this);
 }
 //...........TGLLISTMANAGER...................................................//
 //............................................................................//
@@ -1203,9 +1191,9 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
       E.SetRetVal<olxstr>("none");
   }
   else  {
-    if( FOWidth > 0 )  {
-      FWidth = FOWidth;
-      FOWidth = -1;
+    if( OWidth != 0 )  {
+      Width = OWidth;
+      OWidth = 0;
     }
     if( Params[0].Equalsi("color") )
       StereoFlag = glStereoColor;
@@ -1219,8 +1207,8 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
     }
     else if( Params[0].Equalsi("cross") )  {
       olx_gl::clearColor(LightModel.GetClearColor().Data());
-      FOWidth = FWidth;
-      FWidth /= 2;
+      OWidth = Width;
+      Width /= 2;
       StereoFlag = glStereoCross;
     }
     else if( Params[0].Equalsi("hardware") )  {
