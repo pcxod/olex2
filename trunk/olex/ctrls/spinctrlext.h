@@ -22,7 +22,6 @@ namespace ctrl_ext  {
       Data(EmptyString),
       OnChangeStr(EmptyString)
     {
-      SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     }
     virtual ~TSpinCtrl()  {}
 

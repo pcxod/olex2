@@ -160,6 +160,7 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
   }
   FXApp->Draw();
   FXApp->ResetMouseState();
+  MouseButton = 0;
 }
 //..............................................................................
 void TGlCanvas::OnMouseMove(wxMouseEvent& me)  {
