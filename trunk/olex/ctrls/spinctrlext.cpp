@@ -23,7 +23,7 @@ void TSpinCtrl::SpinChangeEvent(wxSpinEvent& event)  {
 }
 //..............................................................................
 void TSpinCtrl::TextChangeEvent(wxCommandEvent& event)  {
-  int val = GetValue();
+    int val = GetValue();
   if( val == Value ) return;
   Value = val;
   StartEvtProcessing()

@@ -198,6 +198,10 @@ public:
         pr++;
       }
       int iv = olx_round(FE*po);
+	  if( iv > 20 )  {
+		  iv /= 10;
+		  pr--;
+	  }
       if( pr != 0 )  {
         strv = olxstr::FormatFloat(pr, FV);
         stre = iv;
