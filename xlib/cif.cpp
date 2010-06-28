@@ -456,7 +456,7 @@ void TCif::SaveToStrings(TStrList& Strings)  {
   }
 }
 //..............................................................................
-bool TCif::ParamExists(const olxstr &Param) {
+bool TCif::ParamExists(const olxstr& Param) const {
   return (Lines.IndexOf(Param) != InvalidIndex);
 }
 //..............................................................................
@@ -489,15 +489,19 @@ bool TCif::SetParam(const olxstr& name, const CifData& value)  {
   return false;
 }
 //..............................................................................
-bool TCif::SetParam(const olxstr& name, const olxstr& value, bool quoted)  {
-  size_t i = Lines.IndexOf(name);
+bool TCif::ReplaceParam(const olxstr& old_name, const olxstr& new_name, const CifData& value)  {
+  size_t i = Lines.IndexOf(old_name);
   if( i == InvalidIndex )  {
-    Parameters.Add(name, Lines.Add(name, new CifData(value, quoted)).Object);
+    Parameters.Add(new_name, Lines.Add(new_name, new CifData(value)).Object);
     return true;
   }
-  Lines.GetObject(i)->data.Clear();
-  Lines.GetObject(i)->data.Add(value);
-  Lines.GetObject(i)->quoted = quoted;
+  else  {
+    Lines[i] = new_name;
+    Lines.GetObject(i)->data = value.data;
+    Lines.GetObject(i)->quoted = value.quoted;
+    i = Parameters.IndexOf(old_name);
+    Parameters[i] = new_name;
+  }
   return false;
 }
 //..............................................................................

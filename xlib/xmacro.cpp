@@ -2664,7 +2664,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   Cif->SetParam("_chemical_formula_moiety", xapp.XFile().GetLattice().CalcMoiety(), true);
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(Cif->GetAsymmUnit());
   if( sg != NULL )  {
-    Cif->SetParam("_symmetry_cell_setting", sg->GetBravaisLattice().GetName(), true);
+    Cif->ReplaceParam("_symmetry_cell_setting", "_space_group_crystal_system", TCif::CifData(sg->GetBravaisLattice().GetName().ToLowerCase(), true));
     Cif->SetParam("_symmetry_space_group_name_H-M", sg->GetFullName(), true);
     Cif->SetParam("_symmetry_space_group_name_Hall", sg->GetHallSymbol(), true);
     if( !sg->IsCentrosymmetric() && !Cif->ParamExists("_chemical_absolute_configuration") )  {
@@ -2731,7 +2731,24 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMa
 void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
   VcoVContainer vcovc;
-  vcovc.ReadShelxMat(TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "mat"), xapp.XFile().GetAsymmUnit());
+  const olxstr shelx_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "mat");
+  const olxstr smtbx_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "vcov");
+  bool shelx_exists = TEFile::Exists(shelx_fn),
+    smtbx_exists = TEFile::Exists(smtbx_fn);
+  if( shelx_exists && smtbx_exists )  {
+    if( TEFile::FileAge(shelx_fn) > TEFile::FileAge(smtbx_fn) )
+      vcovc.ReadShelxMat(shelx_fn, xapp.XFile().GetAsymmUnit());
+    else
+      vcovc.ReadSmtbxMat(smtbx_fn, xapp.XFile().GetAsymmUnit());
+  }
+  else if( shelx_exists )
+    vcovc.ReadShelxMat(shelx_fn, xapp.XFile().GetAsymmUnit());
+  else if( smtbx_exists )
+    vcovc.ReadSmtbxMat(smtbx_fn, xapp.XFile().GetAsymmUnit());
+  else  {
+    Error.ProcessingError(__OlxSrcInfo, "could not find a variance-covariance matrix");
+    return;
+  }
   TAsymmUnit& _au = xapp.XFile().GetAsymmUnit();
   for( size_t i=0; i < _au.AtomCount(); i++ )  {
     TCAtom& a = _au.GetAtom(i);

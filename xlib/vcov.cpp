@@ -126,6 +126,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       }
     }
   }
+  double q_esd[6];
   for( size_t i=0; i < Index.Count(); i++ )  {
     TCAtom* ca = au.FindCAtom(Index[i].GetA());
     if( ca == NULL )
@@ -135,6 +136,14 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
     while( ++j < Index.Count() && Index[i].GetA().Equalsi(Index[j].GetA()) )
       Index[j].C() = ca->GetId();
     i = j-1;
+    if( ca->GetEllipsoid() != NULL )  {
+      TEllipsoid& elp = *ca->GetEllipsoid();
+      for( size_t k=0; k < 6; k++ )
+        q_esd[k] = elp.GetEsd(k);
+      au.UstarToUcart(q_esd);
+      for( size_t k=0; k < 6; k++ )
+        elp.SetEsd(k, q_esd[k]);
+    }
   }
 }
 //..................................................................................
@@ -171,7 +180,7 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
   size_t d_index = 0;
   for( size_t i=0; i < annotations.Count(); i++ )  {
     if( i !=  0 )
-      d_index += (annotations.Count()-i);
+      d_index += (annotations.Count()-i+1);
     const size_t di = annotations[i].IndexOf('.');
     if( di == InvalidIndex )
       throw TInvalidArgumentException(__OlxSourceInfo, "annotation");
@@ -184,26 +193,22 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
     if( atom == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "mismatching matrix file");
     if( param_name == 'x' )  {
-      diag.Add(values[d_index].ToDouble());
-      atom->ccrdEsd()[0] = diag.Last();
+      atom->ccrdEsd()[0] = diag.Add(values[d_index].ToDouble());
       Index.AddNew(atom_name, vcoviX, -1);
       indexes.Add(i);
     }
     else if( param_name == 'y' )  {
-      diag.Add(values[d_index].ToDouble());
-      atom->ccrdEsd()[1] = diag.Last();
+      atom->ccrdEsd()[1] = diag.Add(values[d_index].ToDouble());
       Index.AddNew(atom_name, vcoviY, -1);
       indexes.Add(i);
     }
     else if( param_name == 'z' )  {
-      diag.Add(values[d_index].ToDouble());
-      atom->ccrdEsd()[2] = diag.Last();
+      atom->ccrdEsd()[2] = diag.Add(values[d_index].ToDouble());
       Index.AddNew(atom_name, vcoviZ, -1);
       indexes.Add(i);
     }
     else if( param_name == "uiso" )  {
-      diag.Add(values[d_index].ToDouble());
-      atom->SetOccuEsd(diag.Last());
+      atom->SetOccuEsd(diag.Add(values[d_index].ToDouble()));
       Index.AddNew(atom_name, vcoviO , -1);
       indexes.Add(i);
     }
