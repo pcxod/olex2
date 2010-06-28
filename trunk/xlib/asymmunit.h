@@ -21,10 +21,10 @@ class TAsymmUnit: public IXVarReferencerContainer, public IEObject  {
   TCAtomPList CAtoms;      // list of TCAtoms
   smatd_list  Matrices;  // list of matrices (excluding ones after centering)
   TEllpPList Ellipsoids;
-  mat3d Cell2Cartesian,  // transformation from cell crd to cartesian
-        Cartesian2Cell;  // transformation from cartesian crd to cell
+  mat3d Cell2Cartesian, Cell2CartesianT, // transformation from cell crd to cartesian
+        Cartesian2Cell, Cartesian2CellT;  // transformation from cartesian crd to cell
   mat3d UcifToUxyz,  UxyzToUcif,
-           UcifToUxyzT, UxyzToUcifT;
+        UcifToUxyzT, UxyzToUcifT;
   mat3d Hkl2Cartesian;  // transformation from HKL crd to cartesian
   TCAtomPList Centroids;
   double MaxQPeak,
@@ -104,12 +104,18 @@ public:
     v[3] = M[1][2];  v[4] = M[0][2];  v[5] = M[0][1];
     return v;
   }
-  template <class T> T& CellToCart(T& v) const {
-    v = UcifToUxyz*v*UcifToUxyzT;
+  template <class T> T& UstarToUcart(T& v) const {
+    mat3d M(v[0], v[5], v[4], v[1], v[3], v[2]);
+    M = Cell2Cartesian*M*Cell2CartesianT;
+    v[0] = M[0][0];  v[1] = M[1][1];  v[2] = M[2][2];
+    v[3] = M[1][2];  v[4] = M[0][2];  v[5] = M[0][1];
     return v;
   }
-  template <class T> T& CartToCell(T& v) const {
-    v = UxyzToUcif*v*UxyzToUcifT;
+  template <class T> T& UcartToUstar(T& v) const {
+    mat3d M(v[0], v[5], v[4], v[1], v[3], v[2]);
+    M = Cartesian2Cell*M*Cartesian2CellT;
+    v[0] = M[0][0];  v[1] = M[1][1];  v[2] = M[2][2];
+    v[3] = M[1][2];  v[4] = M[0][2];  v[5] = M[0][1];
     return v;
   }
   // copies the atoms from another AU, _UpdateConnInfo must be called after this

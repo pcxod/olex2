@@ -47,10 +47,13 @@ public:
    To get full information, use GetParam function instead.  */
   const olxstr& GetSParam(const olxstr& name) const;
   //Returns true if a specified parameter exists
-  bool ParamExists(const olxstr& name);  
+  bool ParamExists(const olxstr& name) const;
   //Adds/Sets given parameter a value; returns true if the parameter was created
   bool SetParam(const olxstr& name, const CifData& value);
-  bool SetParam(const olxstr& name, const olxstr& value, bool quoted);
+  bool SetParam(const olxstr& name, const olxstr& value, bool quoted)  {
+    return SetParam(name, CifData(value,quoted));
+  }
+  bool ReplaceParam(const olxstr& olx_name, const olxstr& new_name, const CifData& value);
   // returns the number of parameters
   inline size_t ParamCount() const {  return Parameters.Count();  }
   // returns the name of a specified parameter

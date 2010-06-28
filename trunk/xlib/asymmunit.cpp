@@ -164,7 +164,7 @@ void  TAsymmUnit::InitMatrices()  {
   Cartesian2Cell[2][1] = bs*cAs;
 
   Cartesian2Cell[2][2] = cs;
-
+  Cartesian2CellT = mat3d::Transpose(Cartesian2Cell);
   // cell to cartesian transformation matrix
   Cell2Cartesian.Null();
   Cell2Cartesian[0][0] = FAxes[0].GetV();
@@ -175,11 +175,12 @@ void  TAsymmUnit::InitMatrices()  {
   Cell2Cartesian[2][1] = -FAxes[2].GetV()*(cB*cG-cA)/sG;
 
   Cell2Cartesian[2][2] = 1./cs;
+  Cell2CartesianT = mat3d::Transpose(Cell2Cartesian);
 
   // init hkl to cartesian transformation matrix
 //  TMatrixD m( *Cartesian2Cell );
-  mat3d m( Cell2Cartesian );
-  vec3d v1(m[0]), v2(m[1]), v3(m[2]);
+  mat3d m = Cell2Cartesian;
+  const vec3d v1(m[0]), v2(m[1]), v3(m[2]);
 
   Hkl2Cartesian[0] = v2.XProdVec(v3)/V;
   Hkl2Cartesian[1] = v3.XProdVec(v1)/V;
