@@ -3,7 +3,7 @@
 
 void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   Clear();
-  olxstr lstFN( TEFile::ChangeFileExt(fileName, "lst") );
+  olxstr lstFN = TEFile::ChangeFileExt(fileName, "lst");
   if( TEFile::Exists(lstFN) && TEFile::Exists(fileName) )  {
     time_t lst_fa = TEFile::FileAge(lstFN);
     time_t mat_fa = TEFile::FileAge(fileName);
@@ -96,7 +96,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
     else if( toks[4] == "U12" )
       atom->GetEllipsoid()->SetEsd(5, toks[2].ToDouble());
   }
-  TDoubleList all_vcov( (cnt+1)*cnt/2);
+  TDoubleList all_vcov((cnt+1)*cnt/2);
   size_t vcov_cnt = 0;
   for( size_t i=0; i < sl.Count(); i++ )  {
     const size_t ind = i+cnt+10;
@@ -126,6 +126,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       }
     }
   }
+  double q_esd[6];
   for( size_t i=0; i < Index.Count(); i++ )  {
     TCAtom* ca = au.FindCAtom(Index[i].GetA());
     if( ca == NULL )
@@ -135,9 +136,17 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
     while( ++j < Index.Count() && Index[i].GetA().Equalsi(Index[j].GetA()) )
       Index[j].C() = ca->GetId();
     i = j-1;
+    if( ca->GetEllipsoid() != NULL )  {
+      TEllipsoid& elp = *ca->GetEllipsoid();
+      for( size_t k=0; k < 6; k++ )
+        q_esd[k] = elp.GetEsd(k);
+      au.UstarToUcart(q_esd);
+      for( size_t k=0; k < 6; k++ )
+        elp.SetEsd(k, q_esd[k]);
+    }
   }
 }
-
+//..................................................................................
 double VcoVMatrix::Find(const olxstr& atom, const short va, const short vb) const {
   for( size_t i=0; i < Index.Count(); i++ )  {
     if( Index[i].GetA() == atom )  {
@@ -153,4 +162,96 @@ double VcoVMatrix::Find(const olxstr& atom, const short va, const short vb) cons
   }
   return 0;
 }
+//..................................................................................
+void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
+  TStrList in;
+  in.LoadFromFile(fileName);
+  if( in.Count() != 3 || !in[0].Equals("VCOV") )
+    throw TInvalidArgumentException(__OlxSourceInfo, "file format");
+  TStrList annotations(in[1], ' '),
+    values(in[2], ' ');
+  if( ((annotations.Count()*(annotations.Count()+1)))/2 != values.Count() )
+    throw TInvalidArgumentException(__OlxSourceInfo, "inconsistent matrix and annotations");
 
+  olxstr last_atom_name;
+  TSizeList indexes;
+  TDoubleList diag;
+  TCAtom* atom = NULL;
+  size_t d_index = 0;
+  for( size_t i=0; i < annotations.Count(); i++ )  {
+    if( i !=  0 )
+      d_index += (annotations.Count()-i+1);
+    const size_t di = annotations[i].IndexOf('.');
+    if( di == InvalidIndex )
+      throw TInvalidArgumentException(__OlxSourceInfo, "annotation");
+    const olxstr atom_name = annotations[i].SubStringTo(di);
+    const olxstr param_name = annotations[i].SubStringFrom(di+1);
+    if( last_atom_name != atom_name )  {
+      atom = au.FindCAtom(atom_name);
+      last_atom_name = atom_name;
+    }
+    if( atom == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "mismatching matrix file");
+    if( param_name == 'x' )  {
+      atom->ccrdEsd()[0] = diag.Add(values[d_index].ToDouble());
+      Index.AddNew(atom_name, vcoviX, -1);
+      indexes.Add(i);
+    }
+    else if( param_name == 'y' )  {
+      atom->ccrdEsd()[1] = diag.Add(values[d_index].ToDouble());
+      Index.AddNew(atom_name, vcoviY, -1);
+      indexes.Add(i);
+    }
+    else if( param_name == 'z' )  {
+      atom->ccrdEsd()[2] = diag.Add(values[d_index].ToDouble());
+      Index.AddNew(atom_name, vcoviZ, -1);
+      indexes.Add(i);
+    }
+    else if( param_name == "uiso" )  {
+      atom->SetOccuEsd(diag.Add(values[d_index].ToDouble()));
+      Index.AddNew(atom_name, vcoviO , -1);
+      indexes.Add(i);
+    }
+    else if( param_name == "u11" )  {
+      if( atom->GetEllipsoid() != NULL )
+        atom->GetEllipsoid()->SetEsd(0, values[d_index].ToDouble());
+      else
+        atom->SetUisoEsd(values[d_index].ToDouble());
+    }
+    else if( param_name == "u22" )
+      atom->GetEllipsoid()->SetEsd(1, values[d_index].ToDouble());
+    else if( param_name == "u33" )
+      atom->GetEllipsoid()->SetEsd(2, values[d_index].ToDouble());
+    else if( param_name == "u23" )
+      atom->GetEllipsoid()->SetEsd(3, values[d_index].ToDouble());
+    else if( param_name == "u13" )
+      atom->GetEllipsoid()->SetEsd(4, values[d_index].ToDouble());
+    else if( param_name == "u12" )
+      atom->GetEllipsoid()->SetEsd(5, values[d_index].ToDouble());
+  }
+
+  TSizeList x_ind(annotations.Count());
+  x_ind[0] = 0;
+  for( size_t i=1; i < x_ind.Count() ; i++ )
+    x_ind[i] = x_ind.Count() + 1 - i + x_ind[i-1];
+
+  Allocate(diag.Count());
+
+  for( size_t i=0; i < indexes.Count(); i++ )  {
+    for( size_t j=0; j <= i; j++ )  {
+      const size_t ind = indexes[i] <= indexes[j] ? x_ind[indexes[i]] + indexes[j]-indexes[i] :
+        x_ind[indexes[j]]  + indexes[i]-indexes[j];
+      data[i][j] = values[ind].ToDouble();
+    }
+  }
+  for( size_t i=0; i < Index.Count(); i++ )  {
+    TCAtom* ca = au.FindCAtom(Index[i].GetA());
+    Index[i].C() = ca->GetId();
+    size_t j = i;
+    while( ++j < Index.Count() && Index[i].GetA().Equalsi(Index[j].GetA()) )
+      Index[j].C() = ca->GetId();
+    i = j-1;
+  }
+
+}
+//..................................................................................

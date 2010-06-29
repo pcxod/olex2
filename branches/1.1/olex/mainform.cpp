@@ -1345,7 +1345,6 @@ separated values of Atom Type and radius, an entry a line");
 //..............................................................................
 void TMainForm::StartupInit()  {
   if( StartupInitialised )  return;
-  StartupInitialised = true;
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   // create 4 fonts
   
@@ -1376,7 +1375,7 @@ void TMainForm::StartupInit()  {
   try  {  LoadSettings(T);  }
   catch(const TExceptionBase &e)  {
     ShowAlert(e);
-    throw;
+    //throw;
   }
 
   FXApp->Init(); // initialise the gl after styles reloaded
@@ -1494,6 +1493,7 @@ void TMainForm::StartupInit()  {
   }
   FileDropTarget* dndt = new FileDropTarget(*this);
   this->SetDropTarget(dndt);
+  StartupInitialised = true;
 }
 //..............................................................................
 // view menu
@@ -3183,7 +3183,10 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     LoadScene(DF.Root().FindRequiredItem("Scene"), FXApp->GetRender().LightModel);
   // restroring language or setting default
   if( TEFile::Exists( DictionaryFile ) )  {
-    Dictionary.SetCurrentLanguage(DictionaryFile, I->GetFieldValue("language", EmptyString));
+    try  {  Dictionary.SetCurrentLanguage(DictionaryFile, I->GetFieldValue("language", EmptyString));  }
+    catch(const TExceptionBase& e)  {
+      ShowAlert(e, "Failed loading/processing dictionary file");
+	  }
   }
   FXApp->SetExtraZoom(I->GetFieldValue("ExtraZoom", "1.25").ToDouble());
 #ifdef __WIN32__

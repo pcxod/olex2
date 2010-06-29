@@ -104,8 +104,8 @@ void TGlCanvas::OnMouseDown(wxMouseEvent& me)  {
   else if( me.ButtonDown(2) )  MouseButton = smbMiddle;
   else if( me.ButtonDown(3) )  MouseButton = smbRight;
 
-  if( !FXApp->MouseDown(me.m_x, me.m_y, Fl, MouseButton) )
-    FParent->OnMouseDown(me.m_x, me.m_y, Fl, MouseButton);
+   FParent->OnMouseDown(me.m_x, me.m_y, Fl, MouseButton);
+   FXApp->MouseDown(me.m_x, me.m_y, Fl, MouseButton);
 
   FMX = me.m_x;
   FMY = me.m_y;
@@ -128,7 +128,9 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
 #endif
   GetPosition(&left, &top);
 
-  if( FXApp->MouseUp(me.m_x, me.m_y, Fl, MouseButton) )  {
+  if( FParent->OnMouseUp(me.m_x, me.m_y, Fl, MouseButton) )  {
+  }
+  else if( FXApp->MouseUp(me.m_x, me.m_y, Fl, MouseButton) )  {
   }
   else if( (abs(me.m_x-FMX) <= 4) && (abs(me.m_y-FMY) <= 4) &&
     (MouseButton == smbRight) && (Fl == os_mask || Fl == 0) )

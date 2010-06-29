@@ -21,7 +21,7 @@ more transparent, however, it could use the TEBasis in the following way:
   }
 */
 class TXGroup : public TGlGroup, public AGlMouseHandler {
-  vec3d RotationCenter;
+  vec3d RotationCenter, RotationDir;
   TXAtomPList Atoms;
 protected:
   virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) const {
@@ -71,7 +71,10 @@ protected:
   }
   virtual bool DoRotate(const vec3d& vec, double angle)  {
     mat3d m;  
-    CreateRotationMatrix(m, vec, cos(angle), sin(angle) );
+    if( RotationDir.IsNull() )
+      CreateRotationMatrix(m, vec, cos(angle), sin(angle) );
+    else
+      CreateRotationMatrix(m, RotationDir, cos(angle), sin(angle) );
     for( size_t i=0; i < Atoms.Count(); i++ )
       Atoms[i]->Atom().crd() = (Atoms[i]->Atom().crd()-RotationCenter)*m+RotationCenter;
     for( size_t i=0; i < Count(); i++ )
@@ -88,10 +91,12 @@ protected:
       if( Data.Object != NULL )  {
         if( EsdlInstanceOf(*Data.Object, TXAtom) )  {
           RotationCenter = ((TXAtom*)Data.Object)->Atom().crd();
+          RotationDir.Null();
         }
         else if( EsdlInstanceOf(*Data.Object, TXBond) )  {
           TXBond* xb = (TXBond*)Data.Object;
           RotationCenter = (xb->Bond().A().crd() + xb->Bond().B().crd())/2;
+          RotationDir = (xb->Bond().B().crd() - xb->Bond().A().crd()).Normalise();
         }
         return true;
       }
