@@ -198,7 +198,7 @@ public:
         pr++;
       }
       int iv = olx_round(FE*po);
-	  if( iv > 20 )  {
+	  if( iv >= 20 )  {
 		  iv /= 10;
 		  pr--;
 	  }
