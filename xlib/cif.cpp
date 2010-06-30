@@ -840,9 +840,10 @@ bool TCif::Adopt(TXFile& XF)  {
 
   TSpaceGroup& sg = XF.GetLastLoaderSG();
   SetParam("_cell_formula_units_Z", XF.GetAsymmUnit().GetZ(), false);
-  SetParam("_symmetry_cell_setting", sg.GetBravaisLattice().GetName(), true);
-  SetParam("_symmetry_space_group_name_H-M", sg.GetName(), true);
-  SetParam("_symmetry_space_group_name_Hall", sg.GetHallSymbol(), true);
+  SetParam("_space_group_crystal_system", sg.GetBravaisLattice().GetName().ToLowerCase(), true);
+  SetParam("_space_group_name_H-M_alt", sg.GetFullName(), true);
+  SetParam("_space_group_name_Hall", sg.GetHallSymbol(), true);
+  SetParam("_space_group_IT_number", sg.GetNumber(), false);
   {
     TCifLoop& Loop = AddLoop("_space_group_symop");
     TCifLoopTable& Table = Loop.GetTable();
@@ -879,7 +880,7 @@ bool TCif::Adopt(TXFile& XF)  {
 
   for( size_t i = 0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& A = GetAsymmUnit().GetAtom(i);
-    TCifRow& Row = atom_table.AddRow(EmptyString);
+    TCifRow& Row = atom_table.AddRow();
     Row[0] = A.GetLabel();  Row.GetObject(0) = new AtomCifCell(&A);
     Row[1] = A.GetType().symbol;  Row.GetObject(1) = new StringCifCell(false);
     for( int j=0; j < 3; j++ )

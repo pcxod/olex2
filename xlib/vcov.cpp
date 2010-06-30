@@ -136,14 +136,6 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
     while( ++j < Index.Count() && Index[i].GetA().Equalsi(Index[j].GetA()) )
       Index[j].C() = ca->GetId();
     i = j-1;
-    if( ca->GetEllipsoid() != NULL )  {
-      TEllipsoid& elp = *ca->GetEllipsoid();
-      for( size_t k=0; k < 6; k++ )
-        q_esd[k] = elp.GetEsd(k);
-      au.UstarToUcart(q_esd);
-      for( size_t k=0; k < 6; k++ )
-        elp.SetEsd(k, q_esd[k]);
-    }
   }
 }
 //..................................................................................
@@ -252,6 +244,5 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
       Index[j].C() = ca->GetId();
     i = j-1;
   }
-
 }
 //..................................................................................

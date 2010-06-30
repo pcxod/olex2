@@ -2665,8 +2665,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(Cif->GetAsymmUnit());
   if( sg != NULL )  {
     Cif->ReplaceParam("_symmetry_cell_setting", "_space_group_crystal_system", TCif::CifData(sg->GetBravaisLattice().GetName().ToLowerCase(), true));
-    Cif->SetParam("_symmetry_space_group_name_H-M", sg->GetFullName(), true);
-    Cif->SetParam("_symmetry_space_group_name_Hall", sg->GetHallSymbol(), true);
+    Cif->ReplaceParam("_symmetry_space_group_name_Hall", "_space_group_name_Hall", TCif::CifData(sg->GetHallSymbol(), true));
+    Cif->ReplaceParam("_symmetry_space_group_name_H-M", "_space_group_name_H-M_alt", TCif::CifData(sg->GetFullName(), true));
+    Cif->ReplaceParam("_symmetry_Int_Tables_number-M", "_space_group_IT_number", TCif::CifData(sg->GetNumber(), false));
     if( !sg->IsCentrosymmetric() && !Cif->ParamExists("_chemical_absolute_configuration") )  {
       bool flack_used = false;
       if( xapp.CheckFileType<TIns>() )  {
@@ -2681,7 +2682,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
         }
       }
       if( !flack_used )
-        Cif->SetParam("_chemical_absolute_configuration", "?", false);
+        Cif->SetParam("_chemical_absolute_configuration", "unk", false);
     }
   }
   else
