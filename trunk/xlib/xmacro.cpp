@@ -2732,24 +2732,14 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMa
 void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
   VcoVContainer vcovc;
-  const olxstr shelx_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "mat");
-  const olxstr smtbx_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "vcov");
-  bool shelx_exists = TEFile::Exists(shelx_fn),
-    smtbx_exists = TEFile::Exists(smtbx_fn);
-  if( shelx_exists && smtbx_exists )  {
-    if( TEFile::FileAge(shelx_fn) > TEFile::FileAge(smtbx_fn) )
-      vcovc.ReadShelxMat(shelx_fn, xapp.XFile().GetAsymmUnit());
-    else
-      vcovc.ReadSmtbxMat(smtbx_fn, xapp.XFile().GetAsymmUnit());
+  try  {
+    olxstr src_mat = xapp.InitVcoV(vcovc);
+    xapp.GetLog() << "Using " << src_mat << " matrix for the calculation\n";
   }
-  else if( shelx_exists )
-    vcovc.ReadShelxMat(shelx_fn, xapp.XFile().GetAsymmUnit());
-  else if( smtbx_exists )
-    vcovc.ReadSmtbxMat(smtbx_fn, xapp.XFile().GetAsymmUnit());
-  else  {
-    Error.ProcessingError(__OlxSrcInfo, "could not find a variance-covariance matrix");
-    return;
+  catch(TExceptionBase& e)  {
+    throw TFunctionFailedException(__OlxSourceInfo, e);
   }
+
   TAsymmUnit& _au = xapp.XFile().GetAsymmUnit();
   for( size_t i=0; i < _au.AtomCount(); i++ )  {
     TCAtom& a = _au.GetAtom(i);
@@ -2773,7 +2763,23 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
     if( au.GetAtom(i).GetType() == iQPeakZ )
       au.GetAtom(i).SetDeleted(true);
   }
-  TLattice& latt = xapp.XFile().GetLattice();
+  TLattice latt;
+  latt.GetAsymmUnit().SetRefMod(&xapp.XFile().GetRM());
+  latt.GetAsymmUnit().Assign(xapp.XFile().GetAsymmUnit());
+  for( size_t i=0; i < latt.GetAsymmUnit().AtomCount(); i++ )  {
+    TCAtom& a = latt.GetAsymmUnit().GetAtom(i);
+    if( a.IsDetached() )
+      a.SetDetached(false);
+    if( a.IsMasked() )
+      a.SetMasked(false);
+  }
+  latt.GetAsymmUnit()._UpdateConnInfo();
+  latt.GetAsymmUnit().DetachAtomType(iQPeakZ, true);
+  latt.Init();
+  latt.CompaqAll();
+
+  latt.GrowFragments(false, NULL);
+
   TCifLoop& bonds = cif.AddLoop("_geom_bond");
   bonds.GetTable().AddCol("_geom_bond_atom_site_label_1");
   bonds.GetTable().AddCol("_geom_bond_atom_site_label_2");
@@ -2797,7 +2803,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
     if( a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.GetMatrix(0).IsFirst() )  continue;
     for( size_t j=0; j < a.BondCount(); j++ )  {
       TSBond& b = a.Bond(j);
-      if( b.GetTag() == 0 )  continue;
+      if( b.GetTag() == 0 || !b.A().GetMatrix(0).IsFirst() )  continue;
       b.SetTag(0);
       TCifRow& row = bonds.GetTable().AddRow(EmptyString);
       row.Set(0, b.A().GetLabel(), new AtomCifCell(&b.A().CAtom()));
@@ -2832,7 +2838,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         TSAtom& c = a.Node(k);      
         if( c.IsDeleted() || c.GetType().GetMr() < 3 )
           continue;
-        TSAtom& _b = (b.CAtom().GetId() < c.CAtom().GetId() ? b : c);
+        TSAtom& _b = (b.CAtom().GetId() <= c.CAtom().GetId() ? b : c);
         TSAtom& _c = (b.CAtom().GetId() > c.CAtom().GetId() ? b : c);
         TCifRow& row = angles.GetTable().AddRow(EmptyString);
         row.Set(0, _b.GetLabel(), new AtomCifCell(&_b.CAtom()));
@@ -2898,7 +2904,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         au.CellToCartesian(da.ccrd(), da.crd());
         aa.CAtom(*a->GetAtom());
         smatd am;
-        if( a->GetMatrix() == 0 )  {
+        if( a->GetMatrix() == NULL )  {
           am.I();
           am.SetId(0);
         }

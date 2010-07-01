@@ -8001,22 +8001,13 @@ int Esd_ThSort( const Esd_Tetrahedron& th1, const Esd_Tetrahedron& th2 )  {
 }
 void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   VcoVContainer vcovc;
-  const olxstr shelx_fn = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "mat");
-  const olxstr smtbx_fn = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "vcov");
-  bool shelx_exists = TEFile::Exists(shelx_fn),
-    smtbx_exists = TEFile::Exists(smtbx_fn);
-  if( shelx_exists && smtbx_exists )  {
-    if( TEFile::FileAge(shelx_fn) > TEFile::FileAge(smtbx_fn) )
-      vcovc.ReadShelxMat(shelx_fn, FXApp->XFile().GetAsymmUnit());
-    else
-      vcovc.ReadSmtbxMat(smtbx_fn, FXApp->XFile().GetAsymmUnit());
+  try  {
+    olxstr src_mat = FXApp->InitVcoV(vcovc);
+    FXApp->GetLog() << "Using " << src_mat << " matrix for the calculation\n";
   }
-  else if( shelx_exists )
-    vcovc.ReadShelxMat(shelx_fn, FXApp->XFile().GetAsymmUnit());
-  else if( smtbx_exists )
-    vcovc.ReadSmtbxMat(smtbx_fn, FXApp->XFile().GetAsymmUnit());
-  else  {
-    Error.ProcessingError(__OlxSrcInfo, "could not find a variance-covariance matrix");
+  catch(TExceptionBase& e)  {
+    Error.ProcessingError(__OlxSrcInfo, e.GetException()->GetError());
+    //throw TFunctionFailedException(__OlxSourceInfo, e);
     return;
   }
   TGlGroup& sel = FXApp->GetSelection();

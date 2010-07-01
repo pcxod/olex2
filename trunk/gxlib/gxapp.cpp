@@ -3423,15 +3423,15 @@ void TGXApp::CreateXGrowLines()  {
     if( (FGrowMode & gmCovalent) != 0 )  {
       for( size_t j=0; j < A->CAtom().AttachedAtomCount(); j++ )
         if( !A->CAtom().GetAttachedAtom(j).IsDeleted() )
-          AttachedAtoms.Add( &A->CAtom().GetAttachedAtom(j) );
+          AttachedAtoms.Add(A->CAtom().GetAttachedAtom(j));
     }
     if( (FGrowMode & gmSInteractions) != 0 )  {
       for( size_t j=0; j < A->CAtom().AttachedAtomICount(); j++ )
         if( !A->CAtom().GetAttachedAtomI(j).IsDeleted() )
-          AttachedAtoms.Add( &A->CAtom().GetAttachedAtomI(j) );
+          AttachedAtoms.Add(A->CAtom().GetAttachedAtomI(j));
     }
     if( (FGrowMode & gmSameAtoms) != 0 )
-      AttachedAtoms.Add( &A->CAtom() );
+      AttachedAtoms.Add(A->CAtom());
 
     if( AttachedAtoms.IsEmpty() )  continue;
 

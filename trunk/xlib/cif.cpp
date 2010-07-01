@@ -395,7 +395,6 @@ void TCif::Group()  {
 }
 //..............................................................................
 void TCif::SaveToStrings(TStrList& Strings)  {
-  GetAsymmUnit().ComplyToResidues();
   size_t loopc=0;
   //Lines.Sort();
   for( size_t i=0; i < Lines.Count(); i++ )  {
@@ -878,6 +877,11 @@ bool TCif::Adopt(TXFile& XF)  {
     }
   }
 
+  SetParam("_computing_structure_solution", "?", true);
+  SetParam("_computing_molecular_graphics", "?", true);
+  SetParam("_computing_publication_material", "?", true);
+
+  SetParam("_atom_sites_solution_primary", "?", false);
   TCifLoopTable& atom_table = AddLoop("_atom_site").GetTable();
   atom_table.AddCol("_atom_site_label");
   atom_table.AddCol("_atom_site_type_symbol");
