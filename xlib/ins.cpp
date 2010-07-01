@@ -1133,10 +1133,12 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
       atom->SetUisoScale(olx_abs(atom->GetUiso()));
       atom->SetUisoOwner(cx.LastWithU);
       //atom->SetUiso( 4*caDefIso*caDefIso );
-      atom->SetUiso( cx.LastWithU->GetUiso()*olx_abs(atom->GetUiso()) );
+      atom->SetUiso(cx.LastWithU->GetUiso()*olx_abs(atom->GetUiso()));
     }
-    else
+    else  {
+      atom->SetUisoOwner(NULL);
       cx.LastWithU = atom;
+    }
   }
   return atom;
 }
