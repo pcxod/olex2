@@ -198,8 +198,8 @@ public:
         pr++;
       }
       int iv = olx_round(FE*po);
-	  if( iv > 20 )  {
-		  iv /= 10;
+	  if( iv >= 20 )  {
+		  iv = olx_round((double)iv/10);
 		  pr--;
 	  }
       if( pr != 0 )  {

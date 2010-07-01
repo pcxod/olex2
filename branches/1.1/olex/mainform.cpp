@@ -654,7 +654,7 @@ void TMainForm::XApp(TGXApp *XA)  {
 "Calculates ADPs for given thermal probability factor");
   this_InitMacroD(Labels,
 "p-part&;l-label&;v-variables&;o-occupancy&;co-chemical occupancy&;a-afix&;h-show hydrogen atom labels&;\
-f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
+f-fixed parameters&;u-Uiso&;r-Uiso multiplier for riding atoms&;ao-actual occupancy\
  (as in the ins file)&;qi-Q peak intensity&;i-display labels for identity atoms only&;f-applies given\
  format to the labels like -f=AaBB Aaaa or -f=Aabb etc",  fpNone,
 "Inverts visibility of atom labels on/off. Look at the options");

@@ -10,7 +10,7 @@ bool TXlConGen::FixParam(const short paramMask, TStrList& res, const TCAtomPList
   throw TNotImplementedException( __OlxSourceInfo );
 }
 //..............................................................................
-void TXlConGen::AnalyseMultipart(const TTypeList<TCAtomPList>& parts)  {
+void TXlConGen::AnalyseMultipart(const TAtomEnvi& envi, const TTypeList<TCAtomPList>& parts)  {
   size_t cnt = 0;
   for( size_t i=0; i < parts.Count(); i++ )  {
     if( !parts[i].IsEmpty() && parts[i][0]->GetParentAfixGroup() != NULL &&
@@ -33,6 +33,7 @@ void TXlConGen::AnalyseMultipart(const TTypeList<TCAtomPList>& parts)  {
       }
     }
   }
+  //else if( envi.GetBase().GetType() == iOxygenZ && envi.Count()
 }
 //..............................................................................
 bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& atomType, TAtomEnvi* pivoting, TCAtomPList* generated)  {
@@ -44,7 +45,7 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
     if( CreatedAtoms.IsEmpty() )  // nothing inserted
       return false;
     bool negative_part = false;
-    double occu_mult = 1.0;
+    double occu_mult = 1.0, dis;
     short afix = 0;
     switch( Group )  {
       case fgNH3:
@@ -80,16 +81,17 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
       case fgOH3:
         break;
       case fgOH2:
+        dis = Distances[GenId(fgOH2,0)];
         if( CreatedAtoms.Count() == 2 )  {
           sr = &RefMod.rDFIX.AddNew();
-          sr->SetEsd(0.02);
-          sr->SetValue(0.85);
+          sr->SetEsd(0.01);
+          sr->SetValue(dis);
           sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
           sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[1], NULL);
 
           sr = &RefMod.rDANG.AddNew();
-          sr->SetEsd(0.04);
-          sr->SetValue(1.39);
+          sr->SetEsd(0.02);
+          sr->SetValue(dis*sqrt(2-2*cos(109.4*M_PI/180)));
           sr->AddAtomPair(*CreatedAtoms[1], NULL, *CreatedAtoms[0], NULL);
 
           if( envi.Count() == 1 )  {
@@ -101,14 +103,14 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
         }
         else if( CreatedAtoms.Count() == 1 && envi.GetBase().CAtom().GetDegeneracy() == 2 )  {
           sr = &RefMod.rDFIX.AddNew();
-          sr->SetEsd(0.02);
-          sr->SetValue(0.85);
+          sr->SetEsd(0.01);
+          sr->SetValue(dis);
           sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
           sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], &envi.GetBase().CAtom().GetEquiv(0));
 
           sr = &RefMod.rDANG.AddNew();
-          sr->SetEsd(0.04);
-          sr->SetValue(1.39);
+          sr->SetEsd(0.02);
+          sr->SetValue(dis*sqrt(2-2*cos(109.4*M_PI/180)));
           sr->AddAtomPair(*CreatedAtoms[0], &envi.GetBase().CAtom().GetEquiv(0), *CreatedAtoms[0], NULL);
 
           if( envi.Count() == 1 )  {
@@ -124,6 +126,30 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
       case fgOH1:
         if( envi.Count() == 1 )
           afix = 147;
+        else if( envi.Count() == 2 && CreatedAtoms.Count() == 1 )  {
+          const double d1 = envi.GetCrd(0).DistanceTo(envi.GetBase().crd());
+          const double d2 = envi.GetCrd(1).DistanceTo(envi.GetBase().crd());
+          if( (d1 > 1.8 && d2 < 1.8) || (d2 > 1.8 && d1 < 1.8) )  {
+            //afix = 3; // possible...
+            dis = Distances[GenId(fgOH2,0)];
+            sr = &RefMod.rDFIX.AddNew();
+            sr->SetEsd(0.01);
+            sr->SetValue(dis);
+            sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
+            const double _d1 = (d1 < 1.8 ? d1 : d2);
+            const double _d2 = (d1 > 1.8 ? d1 : d2);
+            // if this is not applied, the refinement may never converge 
+            sr = &RefMod.rDANG.AddNew();
+            sr->SetEsd(0.02);
+            sr->SetValue(sqrt(_d1*_d1+dis*dis-2*dis*_d1*cos(109.4*M_PI/180)));
+            sr->AddAtomPair(envi.GetCAtom(d1 < 1.8 ? 0 : 1), NULL, *CreatedAtoms[0], NULL);
+            // this is optional
+            //sr = &RefMod.rDANG.AddNew();
+            //sr->SetEsd(0.02);
+            //sr->SetValue(sqrt(_d2*_d2+dis*dis-2*dis*_d2*cos((360.0-109.4-olx_angle(envi.GetCrd(0), envi.GetBase().crd(), envi.GetCrd(1)))*M_PI/180)));
+            //sr->AddAtomPair(envi.GetCAtom(d1 > 1.8 ? 0 : 1), NULL, *CreatedAtoms[0], NULL);
+          }
+        }
         break;
       case fgNH4:
         break;

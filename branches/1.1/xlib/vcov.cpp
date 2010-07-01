@@ -136,14 +136,6 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
     while( ++j < Index.Count() && Index[i].GetA().Equalsi(Index[j].GetA()) )
       Index[j].C() = ca->GetId();
     i = j-1;
-    if( ca->GetEllipsoid() != NULL )  {
-      TEllipsoid& elp = *ca->GetEllipsoid();
-      for( size_t k=0; k < 6; k++ )
-        q_esd[k] = elp.GetEsd(k);
-      au.UstarToUcart(q_esd);
-      for( size_t k=0; k < 6; k++ )
-        elp.SetEsd(k, q_esd[k]);
-    }
   }
 }
 //..................................................................................
@@ -175,9 +167,17 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
 
   olxstr last_atom_name;
   TSizeList indexes;
-  TDoubleList diag;
   TCAtom* atom = NULL;
-  size_t d_index = 0;
+  static TStrList U_annotations;
+  if( U_annotations.IsEmpty() )  {
+    U_annotations.Add("u11");
+    U_annotations.Add("u22");
+    U_annotations.Add("u33");
+    U_annotations.Add("u23");
+    U_annotations.Add("u13");
+    U_annotations.Add("u12");
+  }
+  size_t ua_index, d_index = 0;
   for( size_t i=0; i < annotations.Count(); i++ )  {
     if( i !=  0 )
       d_index += (annotations.Count()-i+1);
@@ -193,41 +193,33 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
     if( atom == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "mismatching matrix file");
     if( param_name == 'x' )  {
-      atom->ccrdEsd()[0] = diag.Add(values[d_index].ToDouble());
+      atom->ccrdEsd()[0] = sqrt(values[d_index].ToDouble());
       Index.AddNew(atom_name, vcoviX, -1);
       indexes.Add(i);
     }
     else if( param_name == 'y' )  {
-      atom->ccrdEsd()[1] = diag.Add(values[d_index].ToDouble());
+      atom->ccrdEsd()[1] = sqrt(values[d_index].ToDouble());
       Index.AddNew(atom_name, vcoviY, -1);
       indexes.Add(i);
     }
     else if( param_name == 'z' )  {
-      atom->ccrdEsd()[2] = diag.Add(values[d_index].ToDouble());
+      atom->ccrdEsd()[2] = sqrt(values[d_index].ToDouble());
       Index.AddNew(atom_name, vcoviZ, -1);
       indexes.Add(i);
     }
-    else if( param_name == "uiso" )  {
-      atom->SetOccuEsd(diag.Add(values[d_index].ToDouble()));
+    else if( param_name == "occu" )  {
+      atom->SetOccuEsd(sqrt(values[d_index].ToDouble()));
       Index.AddNew(atom_name, vcoviO , -1);
       indexes.Add(i);
     }
-    else if( param_name == "u11" )  {
-      if( atom->GetEllipsoid() != NULL )
-        atom->GetEllipsoid()->SetEsd(0, values[d_index].ToDouble());
-      else
-        atom->SetUisoEsd(values[d_index].ToDouble());
+    else if( param_name == "uiso" )  {
+      atom->SetUisoEsd(values[d_index].ToDouble());
     }
-    else if( param_name == "u22" )
-      atom->GetEllipsoid()->SetEsd(1, values[d_index].ToDouble());
-    else if( param_name == "u33" )
-      atom->GetEllipsoid()->SetEsd(2, values[d_index].ToDouble());
-    else if( param_name == "u23" )
-      atom->GetEllipsoid()->SetEsd(3, values[d_index].ToDouble());
-    else if( param_name == "u13" )
-      atom->GetEllipsoid()->SetEsd(4, values[d_index].ToDouble());
-    else if( param_name == "u12" )
-      atom->GetEllipsoid()->SetEsd(5, values[d_index].ToDouble());
+    else if( (ua_index=U_annotations.IndexOf(param_name)) != InvalidIndex )  {
+      if( atom->GetEllipsoid() == NULL )
+        throw TInvalidArgumentException(__OlxSourceInfo, "U for isotropic atom");
+      atom->GetEllipsoid()->SetEsd(ua_index, sqrt(values[d_index].ToDouble()));
+    }
   }
 
   TSizeList x_ind(annotations.Count());
@@ -235,7 +227,7 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
   for( size_t i=1; i < x_ind.Count() ; i++ )
     x_ind[i] = x_ind.Count() + 1 - i + x_ind[i-1];
 
-  Allocate(diag.Count());
+  Allocate(indexes.Count());
 
   for( size_t i=0; i < indexes.Count(); i++ )  {
     for( size_t j=0; j <= i; j++ )  {
@@ -252,6 +244,5 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
       Index[j].C() = ca->GetId();
     i = j-1;
   }
-
 }
 //..................................................................................

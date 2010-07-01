@@ -1407,16 +1407,16 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
     }
     if( !parts.IsEmpty() )  {  // here we go..
       TTypeList<TCAtomPList> gen_atoms;
-      ProcessingAtoms.Remove(&atom);
+      ProcessingAtoms.Remove(atom);
       for( size_t i=0; i < parts.Count(); i++ )  {
         _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, parts[i], &gen_atoms.AddNew());
         TCAtomPList& gen = gen_atoms.Last();
         for( size_t j=0; j < gen.Count(); j++ )  {
           gen[j]->SetPart(parts[i]);
-          rm->Vars.SetParam(*gen[j], catom_var_name_Sof, occu[i] );
+          rm->Vars.SetParam(*gen[j], catom_var_name_Sof, occu[i]);
         }
       }
-      cg.AnalyseMultipart(gen_atoms);
+      cg.AnalyseMultipart(AE, gen_atoms);
       return false;
     }
   }
@@ -1602,7 +1602,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       cg.FixAtom(AE, fgOH2, h_elm, &pivoting, generated);
     }
     else if( AE.Count() == 1 )  {
-      double d = AE.GetCrd(0).DistanceTo( atom.crd() );
+      const double d = AE.GetCrd(0).DistanceTo(atom.crd());
       if( d > 1.3 )   {  // otherwise a doubl bond
         if( AE.GetType(0) == iChlorineZ )
           ;
@@ -1676,6 +1676,14 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
         }
       }
     }
+    else if( AE.Count() == 2 )  {
+      const double d1 = AE.GetCrd(0).DistanceTo(atom.crd());
+      const double d2 = AE.GetCrd(1).DistanceTo(atom.crd());
+      if( (d1 > 1.8 && d2 < 1.8) || (d2 > 1.8 && d1 < 1.8) )  {
+        TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": possibly M-O(H)R");
+        cg.FixAtom(AE, fgOH1, h_elm, NULL, generated);
+      }
+    }
   }
   else if( atom.GetType() == iBoronZ )  {  // boron
     if( AE.Count() == 3 )  {
@@ -1742,7 +1750,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       }
     }
   }
-  ProcessingAtoms.Delete( ProcessingAtoms.IndexOf(&atom) );
+  ProcessingAtoms.Delete(ProcessingAtoms.IndexOf(&atom));
   return true;
 }
 //..............................................................................

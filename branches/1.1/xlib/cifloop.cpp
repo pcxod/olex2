@@ -92,7 +92,6 @@ void TCifLoop::SaveToStrings(TStrList& Strings) const {
   for( size_t i=0; i < FTable.ColCount(); i++ )  // loop header
     Strings.Add("  ") << FTable.ColName(i);
   for( size_t i=0; i < FTable.RowCount(); i++ ) {  // loop content
-    Strings.Add(EmptyString);
     for( size_t j=0; j < FTable.ColCount(); j++ )  {
       ICifCell* CLD = FTable[i].GetObject(j);
       if( CLD->GetAtomRef() != NULL )  {
@@ -100,6 +99,8 @@ void TCifLoop::SaveToStrings(TStrList& Strings) const {
           break;
         }
       }
+      if( j == 0 )
+        Strings.Add(EmptyString);
       olxstr str = FTable[i][j];
       if( CLD->IsBlock() )  {
         if( str.EndsWith("\\n") )

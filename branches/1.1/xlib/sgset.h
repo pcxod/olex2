@@ -35,8 +35,8 @@ public:
   }
   bool HasMonoclinicAxis() const {
     if( axis.IsEmpty() )  return false; 
-    if( (axis.Length() == 3 && axis.CharAt(0) == '-' ) ||
-        axis.Length() < 3 )
+    if( (axis.Length() == 3 && axis.CharAt(0) == '-' && olxstr::o_isalphabetic(axis.CharAt(1)) ) ||
+      (axis.Length() < 3 && olxstr::o_isalphabetic(axis.CharAt(0))) )
       return true;
     return false;
   }
@@ -65,7 +65,8 @@ public:
     mat3d rv;
     if( axisInfo.HasMonoclinicAxis() && ai.HasMonoclinicAxis() )  {  // is monoclinic
       rv.I();
-      olxstr a_from( axisInfo.GetMonoclinicAxis() ), a_to(ai.GetMonoclinicAxis());
+      olxstr a_from(axisInfo.GetMonoclinicAxis()),
+             a_to(ai.GetMonoclinicAxis());
       olxch a_f = ExtractAxis(a_from), a_t = ExtractAxis(a_to);
       int a_d = a_t - a_f;
       if( a_d < 0 ) a_d += 3;
