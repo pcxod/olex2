@@ -270,9 +270,9 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
         else  {
           // Ar-B(OH)2 ?
           if( envi.GetType(0) == iBoronZ )  {
-            NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom( envi.GetCAtom(0) );
+            NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom(envi.GetCAtom(0));
             envi.GetBase().GetNetwork().GetLattice().GetUnitCell().GetAtomEnviList(*NA, NEnvi);
-            NEnvi.Exclude( envi.GetBase().CAtom() );
+            NEnvi.Exclude(envi.GetBase().CAtom());
             if( NEnvi.Count() == 2 )  { // ArC-BO
             /* in this case the could be cis or trans, put them cis as in Ar-B-O-H ...*/
               if( NEnvi.GetType(0) == iOxygenZ ||  // make sure deal with the right one
@@ -294,6 +294,26 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
               }
             }
           }
+        }
+      }
+      else if( envi.Count() == 2 )  {
+        const double d1 = envi.GetCrd(0).DistanceTo(envi.GetBase().crd());
+        const double d2 = envi.GetCrd(1).DistanceTo(envi.GetBase().crd());
+        if( (d1 > 1.8 && d2 < 1.8) || (d2 > 1.8 && d1 < 1.8) )  {
+          Vec1 = envi.GetCrd(0) - envi.GetBase().crd();
+          Vec2 = envi.GetCrd(1) - envi.GetBase().crd();
+          if( d1 < 1.8 )  {
+            RotVec = Vec1.XProdVec(Vec2).Normalise();
+            crds.AddNew(Vec1);
+          }
+          else  {
+            RotVec = Vec2.XProdVec(Vec1).Normalise();
+            crds.AddNew(Vec2);
+          }
+          CreateRotationMatrix(M, RotVec, cos(M_PI*109.4/180));
+          crds[0] = M * crds[0];
+          crds[0].NormaliseTo(dis);
+          crds[0] += envi.GetBase().crd();
         }
       }
       if( crds.IsEmpty() )  {  // generic case - random placement ...

@@ -166,9 +166,9 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
   //............................................
 
   ac = Atoms.Count();
-  Distances[1] = new double[ ac ];
-  Distances[2] = new double[ ac ];
-  Distances[3] = new double[ ac ];
+  Distances[1] = new double[ac];
+  Distances[2] = new double[ac];
+  Distances[3] = new double[ac];
   for( size_t i = 0; i < ac; i++ )  {  // precalculate distances and remove some function calls
     TSAtom* A = Atoms[i];
     Distances[0][i] = A->crd().Length();
@@ -331,7 +331,7 @@ void TNetwork::THBondSearchTask::Run(size_t ind)  {
   if( aT == iHydrogenZ )
     AA = A1;
   else if( aT == iNitrogenZ || aT == iOxygenZ || aT == iFluorineZ ||
-      aT == iChlorineZ || aT == iSulphurZ )
+      aT == iChlorineZ || aT == iSulphurZ || aT == iBromineZ )
     DA = A1;
 
   if( AA == NULL && DA == NULL )  return;
@@ -351,7 +351,7 @@ void TNetwork::THBondSearchTask::Run(size_t ind)  {
     const cm_Element& aT1 = Atoms[i]->GetType();
     if( !((AA != NULL && (aT1 == iNitrogenZ || aT1 == iOxygenZ||
                         aT1 == iFluorineZ || aT1 == iChlorineZ ||
-                        aT1 == iSulphurZ))  ||
+                        aT1 == iSulphurZ) || aT1 == iBromineZ) ||
           (DA != NULL && aT1 == iHydrogenZ) ) )  continue;
 
     if( A1->GetNetwork() == Atoms[i]->GetNetwork() )  {
