@@ -2688,7 +2688,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   else
     TBasicApp::GetLog().Error("Could not locate space group ...");
   Cif->Group();
-  Cif->SaveToFile( Cif->GetFileName() );
+  Cif->SaveToFile(Cif->GetFileName());
 }
 //..............................................................................
 void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -2832,19 +2832,21 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         TSAtom& c = a.Node(k);      
         if( c.IsDeleted() || c.GetType().GetMr() < 3 )
           continue;
+        TSAtom& _b = (b.CAtom().GetId() < c.CAtom().GetId() ? b : c);
+        TSAtom& _c = (b.CAtom().GetId() > c.CAtom().GetId() ? b : c);
         TCifRow& row = angles.GetTable().AddRow(EmptyString);
-        row.Set(0, b.GetLabel(), new AtomCifCell(&b.CAtom()));
+        row.Set(0, _b.GetLabel(), new AtomCifCell(&_b.CAtom()));
         row.Set(1, a.GetLabel(), new AtomCifCell(&a.CAtom()));
-        row.Set(2, c.GetLabel(), new AtomCifCell(&c.CAtom()));
-        row[3] = vcovc.CalcAngle(b, a, c).ToString();
-        if( !b.GetMatrix(0).IsFirst() )
+        row.Set(2, _c.GetLabel(), new AtomCifCell(&_c.CAtom()));
+        row[3] = vcovc.CalcAngle(_b, a, _c).ToString();
+        if( !_b.GetMatrix(0).IsFirst() )
           row[4] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
-          b.GetMatrix(0));
+          _b.GetMatrix(0));
         else
           row[4] = '.';
-        if( !c.GetMatrix(0).IsFirst() )
+        if( !_c.GetMatrix(0).IsFirst() )
           row[5] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
-          c.GetMatrix(0));
+          _c.GetMatrix(0));
         else
           row[5] = '.';
         row[6] = '?';
@@ -2885,7 +2887,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       envi.Clear();
       xapp.XFile().GetUnitCell().GetAtomEnviList(*dsa, envi);
       for( size_t j=0; j < envi.Count(); j++ )  {
-        if( envi.GetType(j).GetMr() != iHydrogenZ)  continue;
+        if( envi.GetType(j) != iHydrogenZ)  continue;
         TCifRow& row = hbonds.GetTable().AddRow(EmptyString);
         row.Set(0, d->GetAtom()->GetLabel(), new AtomCifCell(d->GetAtom()));
         row.Set(1, envi.GetCAtom(j).GetLabel(), new AtomCifCell(&envi.GetCAtom(j)));

@@ -71,27 +71,26 @@ void TUnitCell::InitMatrixId(smatd& m) const {
 double TUnitCell::CalcVolume()  const  {
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
   static const double k = M_PI/180;
-  vec3d ang(au.Angles()[0].GetV()*k, au.Angles()[1].GetV()*k, au.Angles()[2].GetV()*k);
-  vec3d ax(au.Axes()[0].GetV(), au.Axes()[1].GetV(), au.Axes()[2].GetV());
-  vec3d cs(cos(ang[0]), cos(ang[1]), cos(ang[2]) );
+  const vec3d ang(au.Angles()[0].GetV()*k, au.Angles()[1].GetV()*k, au.Angles()[2].GetV()*k);
+  const vec3d ax(au.Axes()[0].GetV(), au.Axes()[1].GetV(), au.Axes()[2].GetV());
+  const vec3d cs(cos(ang[0]), cos(ang[1]), cos(ang[2]) );
   return ax.Prod()*sqrt(1-cs.QLength() + 2*cs.Prod());
 }
 //..............................................................................
 TEValue<double> TUnitCell::CalcVolumeEx()  const  {
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
   static const double k = M_PI/180;
-  vec3d ang(au.Angles()[0].GetV()*k, au.Angles()[1].GetV()*k, au.Angles()[2].GetV()*k);
-  vec3d ange(au.Angles()[0].GetE()*k, au.Angles()[1].GetE()*k, au.Angles()[2].GetE()*k);
-  vec3d ax(au.Axes()[0].GetV(), au.Axes()[1].GetV(), au.Axes()[2].GetV());
-  vec3d axe(au.Axes()[0].GetE(), au.Axes()[1].GetE(), au.Axes()[2].GetE());
-  vec3d cs(cos(ang[0]), cos(ang[1]), cos(ang[2]) );
-  vec3d ss(sin(ang[0]), sin(ang[1]), sin(ang[2]) );
-  double t = sqrt(1-cs.QLength() + 2*cs.Prod());
-  double r = ax.Prod();
-  double v = r*t;
-  double esd = sqrt( olx_sqr(ax[1]*ax[2]*t*axe[0]) +  
-    olx_sqr(ax[0]*ax[2]*t*axe[1]) +
-    olx_sqr(ax[0]*ax[1]*t*axe[2]) +
+  const vec3d ang(au.Angles()[0].GetV()*k, au.Angles()[1].GetV()*k, au.Angles()[2].GetV()*k);
+  const vec3d ange(au.Angles()[0].GetE()*k, au.Angles()[1].GetE()*k, au.Angles()[2].GetE()*k);
+  const vec3d ax(au.Axes()[0].GetV(), au.Axes()[1].GetV(), au.Axes()[2].GetV());
+  const vec3d axe(au.Axes()[0].GetE(), au.Axes()[1].GetE(), au.Axes()[2].GetE());
+  const vec3d cs(cos(ang[0]), cos(ang[1]), cos(ang[2]) );
+  const vec3d ss(sin(ang[0]), sin(ang[1]), sin(ang[2]) );
+  const double t = sqrt(1-cs.QLength() + 2*cs.Prod());
+  const double r = ax.Prod();
+  const double v = r*t;
+  const double esd = sqrt(
+    olx_sqr(v*axe[0]/ax[0]) + olx_sqr(v*axe[1]/ax[1]) + olx_sqr(v*axe[2]/ax[2]) +
     olx_sqr(r/t*ss[0]*(cs[0]-cs[1]*cs[2])*ange[0]) +
     olx_sqr(r/t*ss[1]*(cs[1]-cs[0]*cs[2])*ange[1]) +
     olx_sqr(r/t*ss[2]*(cs[2]-cs[0]*cs[1])*ange[2]) 

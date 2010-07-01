@@ -492,8 +492,16 @@ bool TCif::SetParam(const olxstr& name, const CifData& value)  {
 bool TCif::ReplaceParam(const olxstr& old_name, const olxstr& new_name, const CifData& value)  {
   size_t i = Lines.IndexOf(old_name);
   if( i == InvalidIndex )  {
-    Parameters.Add(new_name, Lines.Add(new_name, new CifData(value)).Object);
-    return true;
+    i = Lines.IndexOf(new_name);
+    if( i == InvalidIndex )  {
+      Parameters.Add(new_name, Lines.Add(new_name, new CifData(value)).Object);
+      return true;
+    }
+    else  {
+      Lines.GetObject(i)->data = value.data;
+      Lines.GetObject(i)->quoted = value.quoted;
+      return false;
+    }
   }
   else  {
     Lines[i] = new_name;
@@ -501,8 +509,8 @@ bool TCif::ReplaceParam(const olxstr& old_name, const olxstr& new_name, const Ci
     Lines.GetObject(i)->quoted = value.quoted;
     i = Parameters.IndexOf(old_name);
     Parameters[i] = new_name;
+    return false;
   }
-  return false;
 }
 //..............................................................................
 void TCif::Initialize()  {
@@ -824,9 +832,17 @@ bool TCif::Adopt(TXFile& XF)  {
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
   GetRM().Assign(XF.GetRM(), true);
   GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
-  Title = "OLEX2_EXP";
+  Title = TEFile::ChangeFileExt(TEFile::ExtractFileName(XF.GetFileName()), EmptyString);
 
   SetDataName(Title);
+  SetParam("_audit_creation_method", "OLEX2", true);
+  SetParam("_chemical_name_systematic", "?", true);
+  SetParam("_chemical_name_common", "?", true);
+  SetParam("_chemical_melting_point", "?", false);
+  SetParam("_chemical_formula_moiety", XF.GetLattice().CalcMoiety(), true);
+  SetParam("_chemical_formula_sum", GetAsymmUnit().SummFormula(' ', false), true);
+  SetParam("_chemical_formula_weight", olxstr::FormatFloat(2, GetAsymmUnit().MolWeight()), false);
+
   SetParam("_cell_length_a", GetAsymmUnit().Axes()[0].ToString(), false);
   SetParam("_cell_length_b", GetAsymmUnit().Axes()[1].ToString(), false);
   SetParam("_cell_length_c", GetAsymmUnit().Axes()[2].ToString(), false);
@@ -834,12 +850,16 @@ bool TCif::Adopt(TXFile& XF)  {
   SetParam("_cell_angle_alpha", GetAsymmUnit().Angles()[0].ToString(), false);
   SetParam("_cell_angle_beta",  GetAsymmUnit().Angles()[1].ToString(), false);
   SetParam("_cell_angle_gamma", GetAsymmUnit().Angles()[2].ToString(), false);
-
-  SetParam("_chemical_formula_sum", GetAsymmUnit().SummFormula(' ', false), true);
-  SetParam("_chemical_formula_weight", olxstr(GetAsymmUnit().MolWeight()), false);
-
-  TSpaceGroup& sg = XF.GetLastLoaderSG();
+  SetParam("_cell_volume", XF.GetUnitCell().CalcVolumeEx().ToString(), false);
   SetParam("_cell_formula_units_Z", XF.GetAsymmUnit().GetZ(), false);
+
+  SetParam("_diffrn_ambient_temperature",
+    XF.GetRM().expl.IsTemperatureSet() ? XF.GetRM().expl.GetTemperature() : olxstr('?'), false);
+  SetParam("_diffrn_radiation_wavelength", XF.GetRM().expl.GetRadiation(), false);
+
+  if( XF.GetAsymmUnit().IsQPeakMinMaxInitialised() )
+    SetParam("_refine_diff_density_max", XF.GetAsymmUnit().GetMaxQPeak(), false);
+  TSpaceGroup& sg = XF.GetLastLoaderSG();
   SetParam("_space_group_crystal_system", sg.GetBravaisLattice().GetName().ToLowerCase(), true);
   SetParam("_space_group_name_H-M_alt", sg.GetFullName(), true);
   SetParam("_space_group_name_Hall", sg.GetHallSymbol(), true);
@@ -865,7 +885,9 @@ bool TCif::Adopt(TXFile& XF)  {
   atom_table.AddCol("_atom_site_fract_y");
   atom_table.AddCol("_atom_site_fract_z");
   atom_table.AddCol("_atom_site_U_iso_or_equiv");
+  atom_table.AddCol("_atom_site_adp_type");
   atom_table.AddCol("_atom_site_occupancy");
+  atom_table.AddCol("_atom_site_refinement_flags_posn");
   atom_table.AddCol("_atom_site_symmetry_multiplicity");
   atom_table.AddCol("_atom_site_disorder_group");
 
@@ -886,14 +908,19 @@ bool TCif::Adopt(TXFile& XF)  {
     for( int j=0; j < 3; j++ )
       Row.Set(j+2, TEValueD(A.ccrd()[j], A.ccrdEsd()[j]).ToString(), new StringCifCell(false));
     Row.Set(5, TEValueD(A.GetUiso(), A.GetUisoEsd()).ToString(), new StringCifCell(false));
-    Row.Set(6, TEValueD(A.GetOccu()*A.GetDegeneracy(), A.GetOccuEsd()).ToString(), new StringCifCell(false));
-    Row.Set(7, A.GetDegeneracy(), new StringCifCell(false));
+    Row.Set(6, A.GetEllipsoid() == NULL ? "Uiso" : "Uani", new StringCifCell(false));
+    Row.Set(7, TEValueD(A.GetOccu()*A.GetDegeneracy(), A.GetOccuEsd()).ToString(), new StringCifCell(false));
+    if( A.GetParentAfixGroup() != NULL && A.GetParentAfixGroup()->IsRiding() )
+      Row.Set(8, "R", new StringCifCell(false));
+    else
+      Row.Set(8, ".", new StringCifCell(false));
+    Row.Set(9, A.GetDegeneracy(), new StringCifCell(false));
     // process part as well
     if( A.GetPart() != 0 )
-      Row[8] = (int)A.GetPart();
+      Row[10] = (int)A.GetPart();
     else
-      Row[8] = '.';
-    Row.GetObject(8) = new StringCifCell(false);
+      Row[10] = '.';
+    Row.GetObject(10) = new StringCifCell(false);
     if( A.GetEllipsoid() != NULL )  {
       A.GetEllipsoid()->GetQuad(Q, E);
       GetAsymmUnit().UcartToUcif(Q);
@@ -904,8 +931,6 @@ bool TCif::Adopt(TXFile& XF)  {
       }
     }
   }
-  if( XF.GetAsymmUnit().IsQPeakMinMaxInitialised() )
-    SetParam("_refine_diff_density_max", XF.GetAsymmUnit().GetMaxQPeak(), false);
   return true;
 }
 //..............................................................................

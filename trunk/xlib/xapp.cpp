@@ -626,9 +626,13 @@ void TXApp::SetAtomUiso(TSAtom& sa, double val) {
         sa.CAtom().SetUisoScale(olx_abs(val));
         sa.CAtom().SetUiso(olx_abs(val)*sa.Node(ni).CAtom().GetUiso());
       }
+      else
+        throw TInvalidArgumentException(__OlxSourceInfo, "U owner");
     }
-    else
+    else  {
       rm.Vars.SetParam(sa.CAtom(), catom_var_name_Uiso, val);
+      sa.CAtom().SetUisoOwner(NULL);
+    }
   }
 }
 //..............................................................................
