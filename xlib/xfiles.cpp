@@ -283,8 +283,11 @@ void TXFile::Sort(const TStrList& ins)  {
   catch(const TExceptionBase& exc)  {
     TBasicApp::GetLog().Error( exc.GetException()->GetError() );
   }
-  if( !FLastLoader->IsNative() )
+  GetAsymmUnit().ComplyToResidues();
+  if( !FLastLoader->IsNative() )  {
     AtomSorter::SyncLists(list, FLastLoader->GetAsymmUnit().GetResidue(0).GetAtomList());
+    FLastLoader->GetAsymmUnit().ComplyToResidues();
+  }
 }
 //..............................................................................
 void TXFile::ValidateTabs()  {

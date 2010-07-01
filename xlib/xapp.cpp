@@ -13,6 +13,7 @@
 #include "unitcell.h"
 #include "chemdata.h"
 #include "maputil.h"
+#include "vcov.h"
 
 TXApp::TXApp(const olxstr &basedir, ASelectionOwner* selOwner) : 
     SelectionOwner(selOwner), TBasicApp(basedir), Library(EmptyString, this)  {
@@ -651,6 +652,35 @@ void TXApp::ToDataItem(TDataItem& item) const  {
 //..............................................................................
 void TXApp::FromDataItem(TDataItem& item)  {
   throw TNotImplementedException(__OlxSourceInfo);
+}
+//..............................................................................
+olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
+  const olxstr shelx_fn = TEFile::ChangeFileExt(XFile().GetFileName(), "mat");
+  const olxstr smtbx_fn = TEFile::ChangeFileExt(XFile().GetFileName(), "vcov");
+  bool shelx_exists = TEFile::Exists(shelx_fn),
+    smtbx_exists = TEFile::Exists(smtbx_fn);
+  olxstr src_mat;
+  if( shelx_exists && smtbx_exists )  {
+    if( TEFile::FileAge(shelx_fn) > TEFile::FileAge(smtbx_fn) )  {
+      vcovc.ReadShelxMat(shelx_fn, XFile().GetAsymmUnit());
+      src_mat = "shelxl";
+    }
+    else  {
+      src_mat = "smtbx";
+      vcovc.ReadSmtbxMat(smtbx_fn, XFile().GetAsymmUnit());
+    }
+  }
+  else if( shelx_exists )  {
+    vcovc.ReadShelxMat(shelx_fn, XFile().GetAsymmUnit());
+    src_mat = "shelxl";
+  }
+  else if( smtbx_exists )  {
+    vcovc.ReadSmtbxMat(smtbx_fn, XFile().GetAsymmUnit());
+    src_mat = "smtbx";
+  }
+  else
+    throw TFunctionFailedException(__OlxSourceInfo, "could not find a variance-covariance matrix");
+  return src_mat;
 }
 //..............................................................................
 ElementRadii TXApp::ReadVdWRadii(const olxstr& fileName)  {

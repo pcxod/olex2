@@ -115,9 +115,8 @@ bool TGlMouse::MouseDown(int x, int y, short Shift, short button)  {
     else 
       res = MData.Object->OnMouseDown(this, MData);
   }
-  else if( Shift == sssShift )  {
+  if( res == false && Shift == sssShift )  {
     MData.Object = FDFrame;
-    //    FParent->UpdateGlImage();
     res = MData.Object->OnMouseDown(this, MData);
   }
   FSX = x;

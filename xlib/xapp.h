@@ -9,6 +9,7 @@
 #include "arrays.h"
 #include "atomref.h"
 
+BeginXlibNamespace()
 // program state and some other special checks for functions
 const uint32_t
   psFileLoaded       = 0x00010000,
@@ -94,6 +95,9 @@ public:
   // fins Cp, Ph, Naph and Cp* rings and adds corresponding afixes
   void AutoAfixRings(int afix, TSAtom* sa = NULL, bool TryPyridine = false);
   void SetAtomUiso(TSAtom& sa, double val);
+  /* initialises the vcov matrix from shelx or smtbx, might throw an exception... 
+  returns the source of the matrix like: shelxl or smtbx */
+  olxstr InitVcoV(class VcoVContainer& vcov) const;
 
   static ElementRadii ReadVdWRadii(const olxstr& fileName);
   static void PrintVdWRadii(const ElementRadii& radii, const ContentList& au_cont);
@@ -123,6 +127,5 @@ public:
   void FromDataItem(TDataItem& item);
 };
 
-
-
+EndXlibNamespace()
 #endif
