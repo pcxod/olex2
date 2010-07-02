@@ -469,9 +469,9 @@ void TXGrid::InitGrid(size_t maxX, size_t maxY, size_t maxZ)  {
   ContourData = new float*[MaxDim];
   ContourCrds[0] = new float[MaxDim];
   ContourCrds[1] = new float[MaxDim];
-  for( size_t i=0; i < MaxDim; i++ )  {
+  for( int i=0; i < (int)MaxDim; i++ )  {
     ContourData[i] = new float[MaxDim];
-    ContourCrds[0][i] = ContourCrds[1][i] = (float)(i-MaxDim/2);///MaxDim;
+    ContourCrds[0][i] = ContourCrds[1][i] = (float)(i-(int)MaxDim/2);
   }
   ContourLevels = new float[ContourLevelCount];
   MaxHole = MinHole = 0;
@@ -643,6 +643,8 @@ bool TXGrid::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
 }
 //..............................................................................
 bool TXGrid::OnMouseUp(const IEObject *Sender, const TMouseData& Data) {
+  if( (Data.Shift & sssCtrl) == 0 && (Data.Shift & sssShift) == 0 )
+    return false;
   MouseDown = false;
   return true;
 }
