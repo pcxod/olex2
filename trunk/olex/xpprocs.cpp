@@ -7537,8 +7537,8 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
 
   FXApp->XGrid().SetMaxHole(mi.sigma*1.4);
   FXApp->XGrid().SetMinHole(-mi.sigma*1.4);
-  //FXApp->XGrid().SetScale( -mi.sigma*4 );
-  FXApp->XGrid().SetScale( -(mi.maxVal - mi.minVal)/2.5 );
+  FXApp->XGrid().SetScale(-mi.sigma*6);
+  //FXApp->XGrid().SetScale( -(mi.maxVal - mi.minVal)/2.5 );
   FXApp->XGrid().SetMinVal(mi.minVal);
   FXApp->XGrid().SetMaxVal(mi.maxVal);
   // copy map
@@ -7553,8 +7553,8 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     TArrayList<MapUtil::peak> Peaks;
     TTypeList<MapUtil::peak> MergedPeaks;
     vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
-    MapUtil::Integrate<float>(map.Data, dim, (mi.maxVal - mi.minVal)/2.5, Peaks);
-    //MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, mi.sigma*5, Peaks);
+    //MapUtil::Integrate<float>(map.Data, dim, (mi.maxVal - mi.minVal)/2.5, Peaks);
+    MapUtil::Integrate<float>(map.Data, dim, mi.sigma*6, Peaks);
     MapUtil::MergePeaks(uc.GetSymSpace(), norm, Peaks, MergedPeaks);
     MergedPeaks.QuickSorter.SortSF(MergedPeaks, MapUtil::PeakSortBySum);
     const int PointCount = dim.Prod();
