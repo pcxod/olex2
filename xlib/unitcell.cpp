@@ -637,7 +637,7 @@ void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
   if( atom.IsGrown() )
     throw TFunctionFailedException(__OlxSourceInfo, "Not implementd for grown structre");
 
-  envi.SetBase( atom );
+  envi.SetBase(atom);
   smatd I;
   I.I().SetId(0);
 
@@ -665,42 +665,37 @@ void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
       }
     }
     if( Add )
-      envi.Add( A, *m, v );
+      envi.Add(A, *m, v);
     delete m;
   }
 }
 //..............................................................................
 void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
-  envi.SetBase( ae.GetBase() );
-
+  envi.SetBase(ae.GetBase());
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
-
+  const static double D = 3.1;
   const size_t ac = au.AtomCount();
   for( size_t i=0; i < ac; i++ )  {
     TCAtom& A = au.GetAtom(i);
     if( A.GetType() == iQPeakZ || A.IsDeleted() )  continue;
-
-    bool considerI =  (A != ae.GetBase().CAtom());
+    const bool considerI =  (A != ae.GetBase().CAtom());
     // O and N and S for a while
-    if( !(A.GetType() == iOxygenZ || A.GetType() == iNitrogenZ || A.GetType() == iSulphurZ) )
+    if( !(A.GetType() == iOxygenZ || A.GetType() == iNitrogenZ || A.GetType() == iChlorineZ) )
       continue;
 
-    smatd_list& ms = *GetInRange( ae.GetBase().ccrd(), A.ccrd(), 2.9, considerI );
+    smatd_list& ms = *GetInRange(ae.GetBase().ccrd(), A.ccrd(), D, considerI);
     for( size_t j=0; j < ms.Count(); j++ )  {
       vec3d v = ms[j] * A.ccrd();
       au.CellToCartesian(v);
-      const double qd = v.QDistanceTo( ae.GetBase().crd() );
-      if(  qd < 2*2 || qd > 2.9*2.9 )  continue;
+      const double qd = v.QDistanceTo(ae.GetBase().crd());
+      if(  qd < 2*2 || qd > D*D )  continue;
       if( ae.Count() == 1 )  {
         vec3d v1 = ae.GetCrd(0) - ae.GetBase().crd();
         vec3d v2 = v - ae.GetBase().crd();
-        // 89 - 130 degrees
+        // 84 - 180 degrees
         const double ca = v1.CAngle(v2);
-        if( ca > 0.01 || ca < -0.64 )  continue;
+        if( ca > 0.1 )  continue;
       }
-//      else
-//        continue;
-
       // make sure that atoms on center of symmetry are not counted twice
       bool Add = true;
       for( size_t k=0; k < envi.Count(); k++ )  {
@@ -710,7 +705,7 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
         }
       }
       if( Add )
-        envi.Add( A, ms[j], v );
+        envi.Add(A, ms[j], v);
     }
     delete &ms;
   }

@@ -271,7 +271,15 @@ void TIns::__ProcessConn(ParseContext& cx)  {
 void TIns::_FinishParsing(ParseContext& cx)  {
   __ProcessConn(cx);
   for( size_t i=0; i < Ins.Count(); i++ )  {
-    TInsList* Param = new TInsList(Ins[i], ' ');
+    TStrList toks(Ins[i], ' ');
+    if( (toks[0].StartsFromi("HTAB") || toks[0].StartsFromi("RTAB") || toks[0].StartsFromi("MPLA")) && 
+      toks.Count() > 2 )
+    {
+      cx.rm.AddInfoTab(toks);
+      Ins.Delete(i--);
+      continue;
+    }
+    TInsList* Param = new TInsList(toks);
     Ins.GetObject(i) = Param;
     Ins[i] = Param->GetString(0);
     Param->Delete(0);
@@ -1607,12 +1615,6 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& toks)  {
     smatd SymM;
     TSymmParser::SymmToMatrix(toks.Text(EmptyString, 2), SymM);
     rm.AddUsedSymm(SymM, toks[1]);
-    return true;
-  }
-  if( (toks[0].StartsFromi("HTAB") || toks[0].StartsFromi("RTAB") || toks[0].StartsFromi("MPLA")) && 
-    toks.Count() > 2 )
-  {
-    rm.AddInfoTab(toks);
     return true;
   }
   TSRestraintList* srl = NULL;
