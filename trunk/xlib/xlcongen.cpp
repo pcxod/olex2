@@ -129,26 +129,24 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
         else if( envi.Count() == 2 && CreatedAtoms.Count() == 1 )  {
           const double d1 = envi.GetCrd(0).DistanceTo(envi.GetBase().crd());
           const double d2 = envi.GetCrd(1).DistanceTo(envi.GetBase().crd());
-          if( (d1 > 1.8 && d2 < 1.8) || (d2 > 1.8 && d1 < 1.8) )  {
-            //afix = 3; // possible...
-            dis = Distances[GenId(fgOH2,0)];
-            sr = &RefMod.rDFIX.AddNew();
-            sr->SetEsd(0.01);
-            sr->SetValue(dis);
-            sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
-            const double _d1 = (d1 < 1.8 ? d1 : d2);
-            const double _d2 = (d1 > 1.8 ? d1 : d2);
-            // if this is not applied, the refinement may never converge 
-            sr = &RefMod.rDANG.AddNew();
-            sr->SetEsd(0.02);
-            sr->SetValue(sqrt(_d1*_d1+dis*dis-2*dis*_d1*cos(109.4*M_PI/180)));
-            sr->AddAtomPair(envi.GetCAtom(d1 < 1.8 ? 0 : 1), NULL, *CreatedAtoms[0], NULL);
-            // this is optional
-            //sr = &RefMod.rDANG.AddNew();
-            //sr->SetEsd(0.02);
-            //sr->SetValue(sqrt(_d2*_d2+dis*dis-2*dis*_d2*cos((360.0-109.4-olx_angle(envi.GetCrd(0), envi.GetBase().crd(), envi.GetCrd(1)))*M_PI/180)));
-            //sr->AddAtomPair(envi.GetCAtom(d1 > 1.8 ? 0 : 1), NULL, *CreatedAtoms[0], NULL);
-          }
+          //afix = 3; // possible...
+          dis = Distances[GenId(fgOH2,0)];
+          sr = &RefMod.rDFIX.AddNew();
+          sr->SetEsd(0.01);
+          sr->SetValue(dis);
+          sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
+          const double _d1 = (d1 < 1.8 ? d1 : d2);
+          const double _d2 = (d1 > 1.8 ? d1 : d2);
+          // if this is not applied, the refinement may never converge 
+          sr = &RefMod.rDANG.AddNew();
+          sr->SetEsd(0.02);
+          sr->SetValue(sqrt(_d1*_d1+dis*dis-2*dis*_d1*cos(109.4*M_PI/180)));
+          sr->AddAtomPair(envi.GetCAtom(d1 < 1.8 ? 0 : 1), NULL, *CreatedAtoms[0], NULL);
+          // this is optional
+          //sr = &RefMod.rDANG.AddNew();
+          //sr->SetEsd(0.02);
+          //sr->SetValue(sqrt(_d2*_d2+dis*dis-2*dis*_d2*cos((360.0-109.4-olx_angle(envi.GetCrd(0), envi.GetBase().crd(), envi.GetCrd(1)))*M_PI/180)));
+          //sr->AddAtomPair(envi.GetCAtom(d1 > 1.8 ? 0 : 1), NULL, *CreatedAtoms[0], NULL);
         }
         break;
       case fgNH4:

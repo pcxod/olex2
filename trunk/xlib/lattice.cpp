@@ -1610,7 +1610,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
           TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": COH");
           TAtomEnvi pivoting;
           UnitCell->GetAtomPossibleHBonds(AE, pivoting);
-          RemoveNonHBonding( pivoting );
+          RemoveNonHBonding(pivoting);
           if( pivoting.Count() > 0 )
             if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetCAtom(0)), ProcessingAtoms) )
               pivoting.Clear();
@@ -1679,7 +1679,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
     else if( AE.Count() == 2 )  {
       const double d1 = AE.GetCrd(0).DistanceTo(atom.crd());
       const double d2 = AE.GetCrd(1).DistanceTo(atom.crd());
-      if( (d1 > 1.8 && d2 < 1.8) || (d2 > 1.8 && d1 < 1.8) )  {
+      if( (d1 > 1.8 && d2 < 1.8 && d2 > 1.38) || (d2 > 1.8 && d1 < 1.8 && d1 > 1.38) )  {
         TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": possibly M-O(H)R");
         cg.FixAtom(AE, fgOH1, h_elm, NULL, generated);
       }
@@ -1885,9 +1885,15 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
   // choose the shortest bond ...
   if( Envi.Count() > 1 )  {
     TPSTypeList<double, TCAtom*> hits;
-
-    for( size_t i=0; i < Envi.Count(); i++ )
-      hits.Add(Envi.GetBase().crd().DistanceTo(Envi.GetCrd(i)), &Envi.GetCAtom(i));
+    for( size_t i=0; i < Envi.Count(); i++ )  {
+      double d = Envi.GetBase().crd().DistanceTo(Envi.GetCrd(i));
+      if( Envi.GetMatrix(i).IsFirst() && // prioritise sligtly longer intramolecular bonds
+        Envi.GetBase().CAtom().GetFragmentId() == Envi.GetCAtom(i).GetFragmentId() )
+      {
+        d -= 0.15;
+      }
+      hits.Add(d, &Envi.GetCAtom(i));
+    }
 
     while( hits.Count() > 1 &&
       ((hits.GetComparable(hits.Count()-1) - hits.GetComparable(0)) > 0.05) )  {
@@ -1898,25 +1904,19 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
   // all similar length  .... Q peaks might help :)
   if( Envi.Count() > 1 )  {
     TPSTypeList<double, TCAtom*> hits;
-    vec3d vec1, vec2;
     AE.Clear();
-    UnitCell->GetAtomQEnviList( Envi.GetBase(), AE );
+    UnitCell->GetAtomQEnviList(Envi.GetBase(), AE);
     for( size_t i=0; i < AE.Count(); i++ )  {
 //      v1 = AE.GetCrd(i);
 //      v1 -= Envi.GetBase()->crd();
-      double d = Envi.GetBase().crd().DistanceTo( AE.GetCrd(i) );
-
-      if( d < 0.7 || d > 1.3 )  {
-        AE.Exclude(AE.GetCAtom(i));
-        i--;
-      }
+      const double d = Envi.GetBase().crd().DistanceTo(AE.GetCrd(i));
+      if( d < 0.7 || d > 1.3 )
+        AE.Exclude(AE.GetCAtom(i--));
     }
     if( AE.IsEmpty() || AE.Count() > 1 )  return;
-    vec1 = AE.GetCrd(0);
-    vec1 -= Envi.GetBase().crd();
+    vec3d vec1 = AE.GetCrd(0) - Envi.GetBase().crd();
     for( size_t i=0; i < Envi.Count(); i++ )  {
-      vec2 = Envi.GetCrd(i);
-      vec2 -= Envi.GetBase().crd();
+      vec3d vec2 = Envi.GetCrd(i) - Envi.GetBase().crd();
       hits.Add(olx_abs(-1 + vec2.CAngle(vec1)), &Envi.GetCAtom(i));
     }
     while( hits.Count() > 1 )  {
