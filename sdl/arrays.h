@@ -183,14 +183,12 @@ public:
   }
 
   inline bool IsInRange(index_t x, index_t y, index_t z) const {  
-    return (x >= MinWidth && ((x-MinWidth) < Width)) &&
-           (y >= MinHeight && ((y-MinHeight) < Height)) &&
-           (z >= MinDepth && ((z-MinDepth) < Depth));  
+    return (x >= MinWidth && ((x-MinWidth) < (index_t)Width)) &&
+           (y >= MinHeight && ((y-MinHeight) < (index_t)Height)) &&
+           (z >= MinDepth && ((z-MinDepth) < (index_t)Depth));  
   }
   template <class vec> inline bool IsInRange(const vec& ind) const {  
-    return (ind[0] >= MinWidth && ((ind[0]-MinWidth) < (index_t)Width)) &&
-           (ind[1] >= MinHeight && ((ind[1]-MinHeight) < (index_t)Height)) &&
-           (ind[2] >= MinDepth && ((ind[2]-MinDepth) < (index_t)Depth));
+    return IsInRange((index_t)ind[0], (index_t)ind[1], (index_t)ind[2]);
   }
   vec3s GetSize() const {  return vec3s(Width, Height, Depth);  }
   inline size_t GetWidth() const {  return Width;  }

@@ -1864,7 +1864,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     olxstr Tmp = TEFile::ExtractFilePath(FN);
     if( !Tmp.IsEmpty() )  {
       if( !StylesDir.Equalsi(Tmp) )  {
-        TBasicApp::GetLog().Info(olxstr("Styles folder is changed to: ") + Tmp);
+        TBasicApp::GetLog().Info(olxstr("Styles folder is changed to: ") << Tmp);
         StylesDir = Tmp;
       }
     }
@@ -1873,8 +1873,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         Tmp = StylesDir;
       else
         Tmp = FXApp->GetBaseDir();
-      Tmp << FN;
-      FN = Tmp;
+      FN = TEFile::AddPathDelimeterI(Tmp) << FN;
     }
     FN = TEFile::ChangeFileExt(FN, "glds");
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
@@ -1917,8 +1916,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         Tmp = ScenesDir;
       else
         Tmp = FXApp->GetBaseDir();
-      Tmp << FN;
-      FN = Tmp;
+      FN = TEFile::AddPathDelimeterI(Tmp) << FN;
     }
     FN = TEFile::ChangeFileExt(FN, "glsp");
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
