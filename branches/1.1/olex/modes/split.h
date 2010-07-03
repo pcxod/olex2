@@ -40,8 +40,6 @@ protected:
     UpdateSelectionCrds();
     for( size_t i=0; i < app.AtomCount(); i++ )  {
       TXAtom& xa = app.GetAtom(i);
-      xa.SetMoveable(false);
-      xa.SetRoteable(false);
       // summ the translations
       xa.Atom().crd() += xa.GetCenter();
       xa.NullCenter();
@@ -77,7 +75,14 @@ public:
     TIns& Ins = app.XFile().GetLastLoader<TIns>();
     RefinementModel& rm = app.XFile().GetRM();
     UpdateCrds();
-    if( SplitAtoms.IsEmpty() )  return;
+    // if this is not done here it interferes and may cause a crash
+    app.XFile().GetLattice().OnDisassemble.Remove(this);
+    for( size_t i=0; i < app.AtomCount(); i++ )
+      app.GetAtom(i).SetMoveable(false);
+    if( SplitAtoms.IsEmpty() )  {
+      app.XFile().GetLattice().UpdateConnectivity();
+      return;
+    }
     TCAtomPList to_isot;
     XVar& xv = rm.Vars.NewVar(0.5);
     for( size_t i=0; i < SplitAtoms.Count(); i++ )  {

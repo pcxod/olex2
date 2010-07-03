@@ -137,6 +137,7 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
 {
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
+  AGDrawObject::SetSelectable(false);
   Mask = NULL;
   Instance = this;
   Extended = false;
@@ -643,10 +644,8 @@ bool TXGrid::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
 }
 //..............................................................................
 bool TXGrid::OnMouseUp(const IEObject *Sender, const TMouseData& Data) {
-  if( (Data.Shift & sssCtrl) == 0 && (Data.Shift & sssShift) == 0 )
-    return false;
   MouseDown = false;
-  return true;
+  return !((Data.Shift & sssCtrl) == 0 && (Data.Shift & sssShift) == 0);
 }
 //..............................................................................
 bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {

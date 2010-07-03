@@ -3548,7 +3548,7 @@ bool TMainForm::OnMouseDown(int x, int y, short Flags, short Buttons) {
   return false;
 }
 bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
-  if( Modes->GetCurrent() != NULL )  {
+  if( Modes->GetCurrent() != NULL && Buttons == smbLeft )  {
     if( (abs(x-MousePositionX) < 3) && (abs(y-MousePositionY) < 3) )  {
       AGDrawObject *G = FXApp->SelectObject(x, y);
       if( G != NULL && Modes->GetCurrent()->OnObject(*G) )

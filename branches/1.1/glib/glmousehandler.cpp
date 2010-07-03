@@ -11,11 +11,11 @@ UseGlNamespace()
 bool AGlMouseHandler::EventHandler::OnMouseDown(AGlMouseHandler& Sender, const TMouseData& Data)  {
   SX = Data.DownX;
   SY = Data.DownY;
-  return false;
+  return Data.Button == smbLeft;
 }
 //..............................................................................
 bool AGlMouseHandler::EventHandler::OnMouseUp(AGlMouseHandler& Sender, const TMouseData& Data)  {
-  return false;
+  return Data.Button == smbLeft;
 }
 //..............................................................................
 bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender, const TMouseData& Data)  {
