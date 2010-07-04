@@ -1,9 +1,8 @@
 /* Map utilities 
  (c) O Dolomanov, 2008
 */
-#ifndef __map_util_h
-#define __map_util_h
-
+#ifndef __olx_xl_map_util_H
+#define __olx_xl_map_util_H
 #include "xbase.h"
 #include "arrays.h"
 #include "estack.h"
@@ -219,7 +218,7 @@ public:
       }
     }
   }
-  /*ml - all symmetry matrices, including identity matrix; cell2cart - symmetric matrix;
+  /*ml - all symmetry matrices, including identity matrix;
   norm - the reciprocal gridding (1/mapX, 1/mapY, 1/mapZ)*/
   template <class SymSpace>
   static void MergePeaks(const SymSpace& sp, const vec3d& norm, 
@@ -270,6 +269,97 @@ public:
     }
     out.Pack();
   }
+  //................................................................................................
+  // map getter, accessing an integral map using fractional index
+  template <typename mapT, int type> struct MapGetter  {
+    mapT*** const src;
+    const vec3s& dim;
+    static inline vec3i NormaliseIndex(const vec3d& i, const vec3s& boundary)  {
+      vec3i p(((int)i[0])%boundary[0], ((int)i[1])%boundary[1], ((int)i[2])%boundary[2]);
+      if( p[0] < 0 )  p[0] += boundary[0];
+      if( p[1] < 0 )  p[1] += boundary[1];
+      if( p[2] < 0 )  p[2] += boundary[2];
+      return p;
+    }
+    MapGetter(mapT*** const _src, const vec3s& _dim) : src(_src), dim(_dim)  {}
+    mapT Get(const vec3d& p) const {
+      if( type == 0 )  {  // cropped index value
+        const vec3i i = NormaliseIndex(p, dim);
+        return src[i[0]][i[1]][i[2]];
+      }
+      if( type == 1 )  {  // linear interpolation
+        mapT val = 0;
+        const vec3i fp((int)p[0], (int)p[1], (int)p[2]);
+        const mapT _p = p[0]-fp[0];
+        const mapT _q = p[1]-fp[1];
+        const mapT _r = p[2]-fp[2];
+        const mapT vx[2] = {1-_p, _p};
+        const mapT vy[2] = {1-_q, _q};
+        const mapT vz[2] = {1-_r, _r};
+        for( int dx=0; dx <= 1; dx++ )  {
+          const mapT _vx = vx[dx];
+          for( int dy=0; dy <= 1; dy++ )  {
+            const mapT _vy = vy[dy];
+            for( int dz=0; dz <= 1; dz++ )  {
+              const mapT _vz = vz[dz];
+              const vec3i i = NormaliseIndex(vec3d(fp[0]+dx, fp[1]+dy, fp[2]+dz), dim);
+              val += src[i[0]][i[1]][i[2]]*_vx*_vy*_vz;
+            }
+          }
+        }
+        return val;
+      }
+      if( type == 2 )  {  // cubic interpolation
+        vec3i fp((int)(p[0]), (int)(p[1]), (int)(p[2]));
+        mapT val = 0;
+        const mapT _p = p[0]-fp[0], _pc = _p*_p*_p, _ps = _p*_p;
+        const mapT _q = p[1]-fp[1], _qc = _q*_q*_q, _qs = _q*_q;
+        const mapT _r = p[2]-fp[2], _rc = _r*_r*_r, _rs = _r*_r;
+        const mapT vx[4] = {-_pc/6 + _ps/2 -_p/3, (_pc-_p)/2 - _ps + 1, (-_pc + _ps)/2 + _p, (_pc - _p)/6 };
+        const mapT vy[4] = {-_qc/6 + _qs/2 -_q/3, (_qc-_q)/2 - _qs + 1, (-_qc + _qs)/2 + _q, (_qc - _q)/6 };
+        const mapT vz[4] = {-_rc/6 + _rs/2 -_r/3, (_rc-_r)/2 - _rs + 1, (-_rc + _rs)/2 + _r, (_rc - _r)/6 };
+        for( int dx=-1; dx <= 2; dx++ )  {
+          const mapT _vx = vx[dx+1];
+          const int n_x = fp[0]+dx;
+          for( int dy=-1; dy <= 2; dy++ )  {
+            const float _vxy = vy[dy+1]*_vx;
+            const int n_y = fp[1]+dy;
+            for( int dz=-1; dz <= 2; dz++ )  {
+              const float _vxyz = vz[dz+1]*_vxy;
+              const vec3i i = NormaliseIndex(vec3d(n_x, n_y, fp[2]+dz), dim);
+              val += src[i[0]][i[1]][i[2]]*_vxyz;
+            }
+          }
+        }
+        return val;
+      }
+    }
+  };
+  /* fills a grid in cartesian coordinates with values from the map of the unit cell */
+  template <class _MapGetter, typename dest_t> static dest_t*** Cell2Cart(
+    const _MapGetter& src,
+    dest_t*** dest, const vec3s& dest_d, const TVector3<dest_t>& dest_n,
+    const mat3d& cart2cell)
+  {
+    for( size_t i=0; i < dest_d[0]; i++ )  {
+      const dest_t fx = (dest_t)i/dest_n[0];
+      for( size_t j=0; j < dest_d[1]; j++ )  {
+        const dest_t fy = (dest_t)j/dest_n[1];
+        for( size_t k=0; k < dest_d[2]; k++ )  {
+          const dest_t fz = (dest_t)k/dest_n[2];
+          vec3d p(
+            fx*cart2cell[0][0] + fy*cart2cell[1][0] + fz*cart2cell[2][0],
+            fy*cart2cell[1][1] + fz*cart2cell[2][1],
+            fz*cart2cell[2][2]
+          );
+          dest[i][j][k] = src.Get(p);
+        }
+      }
+    }
+    return dest;
+  }
+  //......................................................................................................
+  // map allocation/deallocation/copying uitilities
   template <typename map_type> static map_type*** ReplicateMap(map_type*** const map, const vec3s& dim)  {
     map_type*** map_copy = new map_type**[dim[0]];
     for( size_t mi=0; mi < dim[0]; mi++ )  {

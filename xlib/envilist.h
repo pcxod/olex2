@@ -1,3 +1,4 @@
+/* (c) O. Dolomanov, 2006 */
 #ifndef __olx_xl_envilist_H
 #define __olx_xl_envilist_H
 #include "xbase.h"
@@ -28,7 +29,7 @@ public:
   void Clear()  {  Envi.Clear();  }
 
   inline size_t Count() const {  return Envi.Count();  }
-  inline bool IsEmpty() const {  return (Envi.Count() == 0);  }
+  inline bool IsEmpty() const {  return Envi.IsEmpty();  }
 
   inline TSAtom& GetBase() const {  return *Base;  }
   inline void SetBase(TSAtom& base)  {  Base = &base;  }
@@ -55,8 +56,8 @@ public:
 #endif
 };
 
-  typedef TPtrList<TAtomEnvi>  TAtomEnviPList;
-  typedef TTypeList<TAtomEnvi>  TAtomEnviList;
+typedef TPtrList<TAtomEnvi> TAtomEnviPList;
+typedef TTypeList<TAtomEnvi> TAtomEnviList;
 
 EndXlibNamespace()
 #endif

@@ -1,5 +1,6 @@
-#ifndef olx_exceptionH
-#define olx_exceptionH
+/* (c) O. Dolomanov, 2004 */
+#ifndef __olx_sdl_exception_H
+#define __olx_sdl_exception_H
 #include "ebase.h"
 
 BeginEsdlNamespace()
