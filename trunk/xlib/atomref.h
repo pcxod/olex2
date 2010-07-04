@@ -1,5 +1,5 @@
-#ifndef __OLX__ATOM_GROUP
-#define __OLX__ATOM_GROUP
+#ifndef __olx_xl_atomref_H
+#define __olx_xl_atomref_H
 #include "refmodel.h"
 #include "residue.h"
 
@@ -111,14 +111,14 @@ public:
         for( size_t i=from[0].GetAtom()->GetId(); i <= to[0].GetAtom()->GetId(); i++ )  {
           TCAtom* ca = &rm.aunit.GetAtom(i);
           if( !IsValidAtom(ca) )  continue;
-          atoms.AddNew( ca, from[0].GetMatrix() );
+          atoms.AddNew(ca, from[0].GetMatrix());
         }
       }
       else  {
         for( size_t i=to[0].GetAtom()->GetId(); i >= from[0].GetAtom()->GetId(); i-- )  {
           TCAtom* ca = &rm.aunit.GetAtom(i);
           if( !IsValidAtom(ca) )  continue;
-          atoms.AddNew( ca, from[0].GetMatrix() );
+          atoms.AddNew(ca, from[0].GetMatrix());
         }
       }
       return atoms.Count() - ac;

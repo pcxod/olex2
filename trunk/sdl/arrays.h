@@ -1,5 +1,5 @@
-#ifndef __olx_arrays_H
-#define __olx_arrays_H
+#ifndef __olx_sdl_arrays_H
+#define __olx_sdl_arrays_H
 
 #ifdef __BORLANDC__
   #include <mem.h>

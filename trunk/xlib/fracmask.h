@@ -1,5 +1,5 @@
-#ifndef __xlib_fractional_mask_H
-#define __xlib_fractional_mask_H
+#ifndef __olx_xl_fractional_mask_H
+#define __olx_xl_fractional_mask_H
 #include "xbase.h"
 #include "arrays.h"
 #include "threex3.h"

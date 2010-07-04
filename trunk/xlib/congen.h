@@ -1,6 +1,6 @@
-#ifndef congenH
-#define congenH
-
+/* (c) O. Dolomanov 2009 */
+#ifndef __olx_xl_congen_H
+#define __olx_xl_congen_H
 #include "envilist.h"
 #include "refmodel.h"
 
@@ -31,7 +31,6 @@ const uint16_t
   fpVolume   = 0x0008;
 
 typedef TTypeList< AnAssociation2<double, double> > TFixedValueList;
-
 
 class AConstraintGenerator : public IEObject{
 protected:
