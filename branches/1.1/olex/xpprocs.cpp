@@ -6218,6 +6218,14 @@ public:
 #endif
 
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TArray3D<double> src(0, 99, 0, 99, 0, 99), dest(0, 9, 0, 9, 0, 9);
+  const vec3s src_d = src.GetSize();
+  for( size_t i=0; i < src_d[0]; i++ )
+    for( size_t j=0; j < src_d[1]; j++ )
+      for( size_t k=0; k < src_d[2]; k++ )
+        src.Data[i][j][k] = k;
+  MapUtil::Cell2Cart( MapUtil::MapGetter<double, 1>(src.Data, src.GetSize()), dest.Data, dest.GetSize(), vec3d(2, 2, 2), mat3d().I());
+  size_t v = src_d.Sum();
   //cif_dp::TCifDP cdp;
   //TStrList _sl;
   //_sl.LoadFromFile("e:/tmp/vdlee142.cif");

@@ -2627,7 +2627,13 @@ void XLibMacros::MergePublTableData(TCifLoopTable& to, TCifLoopTable& from)  {
 void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
   TCif *Cif, Cif1, Cif2;
-
+  const size_t _translation_count = 4;
+  static const olxstr _translations[2*_translation_count] = {
+    "_symmetry_cell_setting", "_space_group_crystal_system",
+    "_symmetry_space_group_name_Hall", "_space_group_name_Hall",
+    "_symmetry_space_group_name_H-M", "_space_group_name_H-M_alt",
+    "_symmetry_Int_Tables_number-M", "_space_group_IT_number"
+  };
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
@@ -2638,9 +2644,11 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
       throw TFunctionFailedException(__OlxSourceInfo, "existing cif is expected");
     Cif = &Cif2;
   }
+  // normalise
+  for( size_t i=0; i < _translation_count; i++ )
+    Cif->Rename(_translations[i*2], _translations[i*2+1]);
 
   TCifLoop& publ_info = Cif->GetPublicationInfoLoop();
-
   for( size_t i=0; i < Cmds.Count(); i++ )  {
     try {
       IInputStream *is = TFileHandlerManager::GetInputStream(Cmds[i]);
@@ -2654,6 +2662,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
       Cif1.LoadFromStrings(sl);
     }
     catch( ... )  {    }  // most like the cif does not have cell, so pass it
+    // normalise
+    for( size_t i=0; i < _translation_count; i++ )
+      Cif1.Rename(_translations[i*2], _translations[i*2+1]);
     TCifLoop& pil = Cif1.GetPublicationInfoLoop();
     for( size_t j=0; j < Cif1.ParamCount(); j++ )
       Cif->SetParam(Cif1.Param(j), Cif1.ParamValue(j));
@@ -2662,12 +2673,16 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   }
   // generate moiety string if does not exist
   Cif->SetParam("_chemical_formula_moiety", xapp.XFile().GetLattice().CalcMoiety(), true);
+  Cif->Rename("_symmetry_cell_setting", "_space_group_crystal_system");
+  Cif->Rename("_symmetry_space_group_name_Hall", "_space_group_name_Hall");
+  Cif->Rename("_symmetry_space_group_name_H-M", "_space_group_name_H-M_alt");
+  Cif->Rename("_symmetry_Int_Tables_number-M", "_space_group_IT_number");
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(Cif->GetAsymmUnit());
   if( sg != NULL )  {
-    Cif->ReplaceParam("_symmetry_cell_setting", "_space_group_crystal_system", TCif::CifData(sg->GetBravaisLattice().GetName().ToLowerCase(), true));
-    Cif->ReplaceParam("_symmetry_space_group_name_Hall", "_space_group_name_Hall", TCif::CifData(sg->GetHallSymbol(), true));
-    Cif->ReplaceParam("_symmetry_space_group_name_H-M", "_space_group_name_H-M_alt", TCif::CifData(sg->GetFullName(), true));
-    Cif->ReplaceParam("_symmetry_Int_Tables_number-M", "_space_group_IT_number", TCif::CifData(sg->GetNumber(), false));
+    Cif->SetParam("_space_group_crystal_system", TCif::CifData(sg->GetBravaisLattice().GetName().ToLowerCase(), true));
+    Cif->SetParam("_space_group_name_Hall", TCif::CifData(sg->GetHallSymbol(), true));
+    Cif->SetParam("_space_group_name_H-M_alt", TCif::CifData(sg->GetFullName(), true));
+    Cif->SetParam("_space_group_IT_number", TCif::CifData(sg->GetNumber(), false));
     if( !sg->IsCentrosymmetric() && !Cif->ParamExists("_chemical_absolute_configuration") )  {
       bool flack_used = false;
       if( xapp.CheckFileType<TIns>() )  {
@@ -3942,7 +3957,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     olxstr rc = "Plane #";
     rc << ++plance_cnt << '\n';
-    for( int j=0; j < 6; j++ )  {
+    for( size_t j=0; j < rings[i].Count(); j++ )  {
       rc << rings[i][j]->GetGuiLabel();
       if( j < 5 )
         rc << ' ';
@@ -3951,7 +3966,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   rings.Pack();
   if( rings.IsEmpty() )  {
-    TBasicApp::GetLog() << "No C6 or NC5 regular rings could be found\n";
+    TBasicApp::GetLog() << "No C6 or NC5 or user specified regular rings could be found\n";
     return;
   }
   double max_d = 4, max_shift = 3;
@@ -3966,17 +3981,13 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   for( size_t i=0; i < rings.Count(); i++ )  {
     TSPlane* sp = new TSPlane(&latt.GetNetwork());
     TTypeList<AnAssociation2<TSAtom*,double> > ring_atoms;
-    for( int j=0; j < 6; j++ )
+    for( size_t j=0; j < rings[i].Count(); j++ )
       ring_atoms.AddNew(rings[i][j],1.0);
     sp->Init(ring_atoms);
     planes.Set(i, sp);
     plane_centres[i] = sp->GetCenter();
     au.CartesianToCell(plane_centres[i]);
   }
-  TTypeList<AnAssociation2<vec3d, double> > points;
-  vec3d plane_params, plane_center;
-  for( int i =0; i < 6; i++ )
-    points.AddNew().B() = 1.0;
   smatd_list transforms;
   for( size_t i=0; i < planes.Count(); i++ )  {
     TBasicApp::GetLog() << "Considering plane #" << (i+1) << '\n';
@@ -3992,9 +4003,11 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
             for( int z=-2; z <= 2; z++ )  {
               smatd mat = _mat;
               mat.t += vec3d(x,y,z);
-              for( int pi=0; pi < 6; pi++ )  {
-                points[pi].A() = mat*planes[j].GetAtom(pi).ccrd();
-                au.CellToCartesian(points[pi].A());
+              TTypeList<AnAssociation2<vec3d, double> > points;
+              vec3d plane_params, plane_center;
+              for( size_t pi=0; pi < planes[j].Count(); pi++ )  {
+                points.AddNew(mat*planes[j].GetAtom(pi).ccrd(), 1.0);
+                au.CellToCartesian(points.Last().A());
               }
               TSPlane::CalcPlane(points, plane_params, plane_center);
               const double pccd = planes[i].GetCenter().DistanceTo(plane_center);

@@ -1,5 +1,5 @@
-#ifndef __olx_ref_model_H
-#define __olx_ref_model_H
+#ifndef __olx_xl_refmodel_H
+#define __olx_xl_refmodel_H
 #include "asymmunit.h"
 #include "xscatterer.h"
 #include "experimental.h"

@@ -1,6 +1,6 @@
-#ifndef xlcongenH
-#define xlcongenH
-
+/* (c) O. Dolomanov, 2009 */
+#ifndef __olx_xl_xlcongen_H
+#define __olx_xl_xlcongen_H
 #include "congen.h"
 #include "ins.h"
 

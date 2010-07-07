@@ -1,5 +1,6 @@
-#ifndef __olx_3x3
-#define __olx_3x3
+/* (c) O. Dolomanov, 2008 */
+#ifndef __olx_sdl_3x3
+#define __olx_sdl_3x3
 #include "emath.h"
 #include "typelist.h"
 #include "talist.h"
