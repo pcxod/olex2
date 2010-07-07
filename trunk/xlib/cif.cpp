@@ -512,6 +512,16 @@ bool TCif::ReplaceParam(const olxstr& old_name, const olxstr& new_name, const Ci
   }
 }
 //..............................................................................
+bool TCif::Rename(const olxstr& old_name, const olxstr& new_name)  {
+  size_t i = Lines.IndexOf(old_name);
+  if( i == InvalidIndex )
+      return false;
+  Lines[i] = new_name;
+  i = Parameters.IndexOf(old_name);
+  Parameters[i] = new_name;
+  return true;
+}
+//..............................................................................
 void TCif::Initialize()  {
   olxstr Param;
   TCifLoop *ALoop, *Loop;
