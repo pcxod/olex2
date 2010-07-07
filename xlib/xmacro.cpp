@@ -3942,7 +3942,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     olxstr rc = "Plane #";
     rc << ++plance_cnt << '\n';
-    for( int j=0; j < 6; j++ )  {
+    for( size_t j=0; j < rings[i].Count(); j++ )  {
       rc << rings[i][j]->GetGuiLabel();
       if( j < 5 )
         rc << ' ';
@@ -3951,7 +3951,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   rings.Pack();
   if( rings.IsEmpty() )  {
-    TBasicApp::GetLog() << "No C6 or NC5 regular rings could be found\n";
+    TBasicApp::GetLog() << "No C6 or NC5 or user specified regular rings could be found\n";
     return;
   }
   double max_d = 4, max_shift = 3;
@@ -3966,17 +3966,13 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   for( size_t i=0; i < rings.Count(); i++ )  {
     TSPlane* sp = new TSPlane(&latt.GetNetwork());
     TTypeList<AnAssociation2<TSAtom*,double> > ring_atoms;
-    for( int j=0; j < 6; j++ )
+    for( size_t j=0; j < rings[i].Count(); j++ )
       ring_atoms.AddNew(rings[i][j],1.0);
     sp->Init(ring_atoms);
     planes.Set(i, sp);
     plane_centres[i] = sp->GetCenter();
     au.CartesianToCell(plane_centres[i]);
   }
-  TTypeList<AnAssociation2<vec3d, double> > points;
-  vec3d plane_params, plane_center;
-  for( int i =0; i < 6; i++ )
-    points.AddNew().B() = 1.0;
   smatd_list transforms;
   for( size_t i=0; i < planes.Count(); i++ )  {
     TBasicApp::GetLog() << "Considering plane #" << (i+1) << '\n';
@@ -3992,9 +3988,11 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
             for( int z=-2; z <= 2; z++ )  {
               smatd mat = _mat;
               mat.t += vec3d(x,y,z);
-              for( int pi=0; pi < 6; pi++ )  {
-                points[pi].A() = mat*planes[j].GetAtom(pi).ccrd();
-                au.CellToCartesian(points[pi].A());
+              TTypeList<AnAssociation2<vec3d, double> > points;
+              vec3d plane_params, plane_center;
+              for( size_t pi=0; pi < planes[j].Count(); pi++ )  {
+                points.AddNew(mat*planes[j].GetAtom(pi).ccrd(), 1.0);
+                au.CellToCartesian(points.Last().A());
               }
               TSPlane::CalcPlane(points, plane_params, plane_center);
               const double pccd = planes[i].GetCenter().DistanceTo(plane_center);
