@@ -782,18 +782,20 @@ TSAtom* TLattice::NewCentroid(const TSAtomPList& Atoms)  {
   ce.Sqrt();
   ce /= aan;
   cc /= aan;
-  TCAtom *CCent;
-  try{ CCent = &AsymmUnit->NewCentroid(cc); }
-  catch(const TExceptionBase& exc)  {
-    throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate());
+  try{
+    TCAtom* CCent = &AsymmUnit->NewCentroid(cc);
+    TSAtom* Centroid = new TSAtom(Network);
+    Centroid->CAtom(*CCent);
+    CCent->ccrdEsd() = ce;
+    Centroid->crd() = GetAsymmUnit().CellToCartesian(cc); 
+    Centroid->AddMatrix(Matrices[0]);
+    AddSAtom(Centroid);
+    RestoreADPs();
+    return Centroid;
   }
-  TSAtom* Centroid = new TSAtom( Network );
-  Centroid->CAtom(*CCent);
-  CCent->ccrdEsd() = ce;
-  Centroid->crd() = GetAsymmUnit().CellToCartesian(cc); 
-  Centroid->AddMatrix( Matrices[0] );
-  AddSAtom(Centroid);
-  return Centroid;
+  catch(const TExceptionBase& exc)  {
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
+  }
 }
 //..............................................................................
 TSAtom* TLattice::NewAtom(const vec3d& center)  {

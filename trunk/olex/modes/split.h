@@ -77,6 +77,7 @@ public:
     UpdateCrds();
     // if this is not done here it interferes and may cause a crash
     app.XFile().GetLattice().OnDisassemble.Remove(this);
+    app.OnObjectsCreate.Remove(this);
     for( size_t i=0; i < app.AtomCount(); i++ )
       app.GetAtom(i).SetMoveable(false);
     if( SplitAtoms.IsEmpty() )  {

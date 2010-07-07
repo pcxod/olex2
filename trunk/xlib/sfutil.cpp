@@ -140,7 +140,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       xapp.XFile().GetRM().GetFourierRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
     F.SetCount(refs.Count());
     //THklFile::SaveToFile("e:/1.tmp", refs);
-    sw.start("Calculation structure factors");
+    sw.start("Calculating structure factors");
     //xapp.CalcSF(refs, F);
     //sw.start("Calculation structure factors A");
     //fastsymm version is just about 10% faster...
