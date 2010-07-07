@@ -2627,7 +2627,13 @@ void XLibMacros::MergePublTableData(TCifLoopTable& to, TCifLoopTable& from)  {
 void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
   TCif *Cif, Cif1, Cif2;
-
+  const size_t _translation_count = 4;
+  static const olxstr _translations[2*_translation_count] = {
+    "_symmetry_cell_setting", "_space_group_crystal_system",
+    "_symmetry_space_group_name_Hall", "_space_group_name_Hall",
+    "_symmetry_space_group_name_H-M", "_space_group_name_H-M_alt",
+    "_symmetry_Int_Tables_number-M", "_space_group_IT_number"
+  };
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
@@ -2638,9 +2644,11 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
       throw TFunctionFailedException(__OlxSourceInfo, "existing cif is expected");
     Cif = &Cif2;
   }
+  // normalise
+  for( size_t i=0; i < _translation_count; i++ )
+    Cif->Rename(_translations[i*2], _translations[i*2+1]);
 
   TCifLoop& publ_info = Cif->GetPublicationInfoLoop();
-
   for( size_t i=0; i < Cmds.Count(); i++ )  {
     try {
       IInputStream *is = TFileHandlerManager::GetInputStream(Cmds[i]);
@@ -2654,6 +2662,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
       Cif1.LoadFromStrings(sl);
     }
     catch( ... )  {    }  // most like the cif does not have cell, so pass it
+    // normalise
+    for( size_t i=0; i < _translation_count; i++ )
+      Cif1.Rename(_translations[i*2], _translations[i*2+1]);
     TCifLoop& pil = Cif1.GetPublicationInfoLoop();
     for( size_t j=0; j < Cif1.ParamCount(); j++ )
       Cif->SetParam(Cif1.Param(j), Cif1.ParamValue(j));
@@ -2662,12 +2673,16 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   }
   // generate moiety string if does not exist
   Cif->SetParam("_chemical_formula_moiety", xapp.XFile().GetLattice().CalcMoiety(), true);
+  Cif->Rename("_symmetry_cell_setting", "_space_group_crystal_system");
+  Cif->Rename("_symmetry_space_group_name_Hall", "_space_group_name_Hall");
+  Cif->Rename("_symmetry_space_group_name_H-M", "_space_group_name_H-M_alt");
+  Cif->Rename("_symmetry_Int_Tables_number-M", "_space_group_IT_number");
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(Cif->GetAsymmUnit());
   if( sg != NULL )  {
-    Cif->ReplaceParam("_symmetry_cell_setting", "_space_group_crystal_system", TCif::CifData(sg->GetBravaisLattice().GetName().ToLowerCase(), true));
-    Cif->ReplaceParam("_symmetry_space_group_name_Hall", "_space_group_name_Hall", TCif::CifData(sg->GetHallSymbol(), true));
-    Cif->ReplaceParam("_symmetry_space_group_name_H-M", "_space_group_name_H-M_alt", TCif::CifData(sg->GetFullName(), true));
-    Cif->ReplaceParam("_symmetry_Int_Tables_number-M", "_space_group_IT_number", TCif::CifData(sg->GetNumber(), false));
+    Cif->SetParam("_space_group_crystal_system", TCif::CifData(sg->GetBravaisLattice().GetName().ToLowerCase(), true));
+    Cif->SetParam("_space_group_name_Hall", TCif::CifData(sg->GetHallSymbol(), true));
+    Cif->SetParam("_space_group_name_H-M_alt", TCif::CifData(sg->GetFullName(), true));
+    Cif->SetParam("_space_group_IT_number", TCif::CifData(sg->GetNumber(), false));
     if( !sg->IsCentrosymmetric() && !Cif->ParamExists("_chemical_absolute_configuration") )  {
       bool flack_used = false;
       if( xapp.CheckFileType<TIns>() )  {

@@ -8,7 +8,52 @@ void TPdb::Clear()  {
 }
 //..............................................................................
 void TPdb::SaveToStrings(TStrList& Strings)  {
-  throw TNotImplementedException(__OlxSourceInfo);
+  char bf[120];
+  double q[6];
+  int iq[6];
+  TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(GetAsymmUnit());
+  sprintf(bf, "CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f %11s%4d",
+    GetAsymmUnit().Axes()[0].V(),
+    GetAsymmUnit().Axes()[1].V(),
+    GetAsymmUnit().Axes()[2].V(),
+    GetAsymmUnit().Angles()[0].V(),
+    GetAsymmUnit().Angles()[1].V(),
+    GetAsymmUnit().Angles()[2].V(),
+    sg == NULL ? "P1" : sg->GetFullName().c_str(),
+    GetAsymmUnit().GetZ());
+  Strings.Add(bf);
+  Strings.Add("TITLE OLEX2 export");
+  for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
+    TCAtom& a = GetAsymmUnit().GetAtom(i);
+    sprintf(bf, "ATOM  %5d %5s             %8.3f%8.3f%8.3f%6.2f%6.2f          %2s ",
+      i,
+      a.GetLabel().c_str(),
+      a.ccrd()[0],
+      a.ccrd()[1],
+      a.ccrd()[2],
+      a.GetOccu(),
+      a.GetUiso(),
+      a.GetType().symbol.c_str()
+    );
+    Strings.Add(bf);
+    TEllipsoid* e = a.GetEllipsoid();
+    if( e == NULL )  continue;
+    e->GetQuad(q);
+    for( int j=0; j < 6; j++ )
+      iq[j] = (int)(q[j]*10000);
+    sprintf(bf, "ANISOU%5d %5s           %7d%7d%7d%7d%7d%7d      %2s ",
+      i,
+      a.GetLabel().c_str(),
+      iq[0],
+      iq[1],
+      iq[2],
+      iq[5],
+      iq[4],
+      iq[3],
+      a.GetType().symbol.c_str()
+    );
+    Strings.Add(bf);
+  }
 }
 //..............................................................................
 void TPdb::LoadFromStrings(const TStrList& Strings)  {
@@ -17,13 +62,16 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
   evecd QE(6);
   TStrList toks;
   TSizeList CrystF;
-  CrystF.Add(6);
-  CrystF.Add(9);
-  CrystF.Add(9);
-  CrystF.Add(9);
-  CrystF.Add(7);
-  CrystF.Add(7);
-  CrystF.Add(7);
+  CrystF.Add(6);  // CRYST1
+  CrystF.Add(9);  // a
+  CrystF.Add(9);  // b
+  CrystF.Add(9);  // c
+  CrystF.Add(7);  // alpha
+  CrystF.Add(7);  // beta
+  CrystF.Add(7);  // gamma
+  CrystF.Add(1);  // ws
+  CrystF.Add(11);  // sg name
+  CrystF.Add(4);  // z
 
   TSizeList AtomF;
   AtomF.Add(6);  //"ATOM  "
@@ -65,13 +113,13 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
   AnisF.Add(2);  // Charge
 
 
-  Title = "OLEX: imported from PDB";
+  Title = "OLEX2: imported from PDB";
   for( size_t i=0; i < Strings.Count(); i++ )  {
     size_t spi = Strings[i].FirstIndexOf(' ');
     if( spi == InvalidIndex || spi == 0 )  continue;
     olxstr line = Strings[i].SubStringTo(spi).UpperCase();
     if( line == "CRYST1" )  {
-      toks.StrtokF( Strings[i], CrystF);
+      toks.StrtokF(Strings[i], CrystF);
       if( toks.Count() < 7 )  
         throw TFunctionFailedException(__OlxSourceInfo, "parsing failed");
       GetAsymmUnit().Axes()[0] = toks[1].ToDouble();
@@ -81,6 +129,21 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
       GetAsymmUnit().Angles()[1] = toks[5].ToDouble();
       GetAsymmUnit().Angles()[2] = toks[6].ToDouble();
       GetAsymmUnit().InitMatrices();
+      if( toks.Count() >= 8 )  {
+        TSymmLib& sl = TSymmLib::GetInstance();
+        TSpaceGroup* sg = NULL;
+        toks[8].Trim(' ');
+        for( size_t j=0; j < sl.SGCount(); j++ )  {
+          if( sl.GetGroup(j).GetFullName() == toks[8] )  {
+            sg = &sl.GetGroup(j);
+            break;
+          }
+        }
+        if( sg != NULL )
+          GetAsymmUnit().ChangeSpaceGroup(*sg);
+      }
+      if( toks.Count() >= 9 )
+        GetAsymmUnit().SetZ(toks[9].ToInt());
     }
     else if( line == "ATOM" )  {
       toks.Clear();
@@ -115,7 +178,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
       QE[4] = toks[14].ToDouble();
       QE[5] = toks[13].ToDouble();
       QE /= 10000;
-      TCAtom* ca = GetAsymmUnit().FindCAtomById( toks[1].ToInt() );
+      TCAtom* ca = GetAsymmUnit().FindCAtomById(toks[1].ToInt());
       if( ca != NULL )  {
         ca->UpdateEllp(QE);
         if( ca->GetEllipsoid()->IsNPD() )
@@ -128,8 +191,29 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
 //..............................................................................
 bool TPdb::Adopt(TXFile& XF)  {
   Clear();
-  GetAsymmUnit().Assign(XF.GetAsymmUnit());
+  // init AU
+  GetAsymmUnit().Axes() = XF.GetAsymmUnit().Axes();
+  GetAsymmUnit().Angles() = XF.GetAsymmUnit().Angles();
+  for( size_t i=0; i < XF.GetAsymmUnit().MatrixCount(); i++ )
+    GetAsymmUnit().AddMatrix(XF.GetAsymmUnit().GetMatrix(i));
+  GetAsymmUnit().SetLatt(XF.GetAsymmUnit().GetLatt());
   GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
+  GetAsymmUnit().InitMatrices();
+
+  TLattice& latt = XF.GetLattice();
+  for( size_t i=0; i < latt.AtomCount(); i++ )  {
+    TSAtom& sa = latt.GetAtom(i);
+    if( !sa.IsAvailable() )  continue;
+    TCAtom& a = GetAsymmUnit().NewAtom();
+    a.SetLabel(sa.GetLabel(), false);
+    a.ccrd() = sa.crd();
+    a.SetType(sa.GetType());
+    TEllipsoid* se = sa.GetEllipsoid();
+    if( se == NULL )  continue;
+    TEllipsoid& e = GetAsymmUnit().NewEllp();
+    e = *se;
+    a.AssignEllp(&e);
+  }
   return true;
 }
 //..............................................................................

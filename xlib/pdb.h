@@ -1,6 +1,5 @@
 #ifndef __olx_xl_pdb_H
 #define __olx_xl_pdb_H
-
 #include "xfiles.h"
 
 BeginXlibNamespace()
@@ -10,12 +9,12 @@ private:
   void Clear();
 protected:
 public:
-  TPdb()  {  }
+  TPdb()  {}
   virtual ~TPdb()  {  Clear();  }
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
   virtual bool Adopt(TXFile& XF);
-  virtual IEObject* Replicate()  const {  return new TPdb;  }
+  virtual IEObject* Replicate() const {  return new TPdb;  }
 };
 
 EndXlibNamespace()

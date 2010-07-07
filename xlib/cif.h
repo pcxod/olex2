@@ -54,6 +54,7 @@ public:
     return SetParam(name, CifData(value,quoted));
   }
   bool ReplaceParam(const olxstr& olx_name, const olxstr& new_name, const CifData& value);
+  bool Rename(const olxstr& olx_name, const olxstr& new_name);
   // returns the number of parameters
   inline size_t ParamCount() const {  return Parameters.Count();  }
   // returns the name of a specified parameter
