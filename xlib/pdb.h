@@ -1,7 +1,6 @@
 #ifndef __olx_xl_pdb_H
 #define __olx_xl_pdb_H
 #include "xfiles.h"
-
 BeginXlibNamespace()
 
 class TPdb: public TBasicCFile  {

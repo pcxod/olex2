@@ -12,7 +12,7 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
   double q[6];
   int iq[6];
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(GetAsymmUnit());
-  sprintf(bf, "CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f %11s%4d",
+  sprintf(bf, "CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f %-11s%4d",
     GetAsymmUnit().Axes()[0].V(),
     GetAsymmUnit().Axes()[1].V(),
     GetAsymmUnit().Axes()[2].V(),
@@ -25,8 +25,8 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
   Strings.Add("TITLE OLEX2 export");
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& a = GetAsymmUnit().GetAtom(i);
-    sprintf(bf, "ATOM  %5d %5s             %8.3f%8.3f%8.3f%6.2f%6.2f          %2s ",
-      i,
+    sprintf(bf, "ATOM  %5d %5s UNK     0   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s ",
+      i+1,
       a.GetLabel().c_str(),
       a.ccrd()[0],
       a.ccrd()[1],
@@ -42,7 +42,7 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
     for( int j=0; j < 6; j++ )
       iq[j] = (int)(q[j]*10000);
     sprintf(bf, "ANISOU%5d %5s           %7d%7d%7d%7d%7d%7d      %2s ",
-      i,
+      i+1,
       a.GetLabel().c_str(),
       iq[0],
       iq[1],
