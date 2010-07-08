@@ -3943,6 +3943,7 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
 void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   FGlRender->Clear();
   ClearXObjects();
+  ClearLabels();
   FXFile->FromDataItem(item.FindRequiredItem("XFile"));
   FGlRender->GetStyles().FromDataItem( item.FindRequiredItem("Style"), true);
   
