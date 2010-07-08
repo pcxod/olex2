@@ -2051,6 +2051,7 @@ void TLattice::FromDataItem(TDataItem& item)  {
   TDataItem& planes = item.FindRequiredItem("Planes");
   for( size_t i=0; i < planes.ItemCount(); i++ )
     Planes.Add(new TSPlane(Network))->FromDataItem(planes.GetItem(i));
+  BuildAtomRegistry();
 }
 //..............................................................................
 void TLattice::SetGrowInfo(GrowInfo* grow_info)  {
