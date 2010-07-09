@@ -56,7 +56,6 @@ public:
       Atoms[i]->Atom().CAtom().ccrd() = Atoms[i]->Atom().crd();
       Atoms[i]->Atom().ccrd() = au.CartesianToCell(Atoms[i]->Atom().CAtom().ccrd());
       rm.Vars.FixParam(Atoms[i]->Atom().CAtom(), catom_var_name_Sof);
-      Atoms[i]->Atom().CAtom().SetPart(0);
     }
     app.GetRender().ReplaceSelection<TGlGroup>();
     //app.XFile().GetLattice().UpdateConnectivity();
@@ -117,8 +116,6 @@ public:
     Atoms.AddList(atoms);
     group->AddAtoms(atoms);
     group->SetSelected(true);
-    for( size_t i=0; i < atoms.Count(); i++ )
-      atoms[i]->Atom().CAtom().SetPart(DefNoPart);
     return true;
   }
 };
