@@ -529,13 +529,8 @@ of components 1 ... m
   void ApplyMatrix(TRefList& refs, const mat3d& m)  {
     if( m.IsI() )  return;
     const size_t rc = refs.Count();
-    int hkl[3];
     for( size_t i=0; i < rc; i++ )  {
-      TReflection& ref = refs[i];
-      ref.MulHklR(hkl, HKLF_mat);  // indexe rounded
-      ref.SetH(hkl[0]);
-      ref.SetK(hkl[1]);
-      ref.SetL(hkl[2]);
+      refs[i].SetHkl((HKLF_mat*vec3d(refs[i].GetHkl())).Round<int>());
     }
   }
   IXVarReferencerContainer& GetRefContainer(const olxstr& id_name)  {

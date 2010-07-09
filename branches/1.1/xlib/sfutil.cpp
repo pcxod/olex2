@@ -102,8 +102,8 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     if( (hInd|kInd|lInd|mfInd|sfInd|aInd|bInd) == InvalidIndex  ) {
       return "list 3 fcf file is expected";
     }
-    refs.SetCapacity( hklLoop->GetTable().RowCount() );
-    F.SetCount( hklLoop->GetTable().RowCount() );
+    refs.SetCapacity(hklLoop->GetTable().RowCount());
+    F.SetCount(hklLoop->GetTable().RowCount());
     for( size_t i=0; i < hklLoop->GetTable().RowCount(); i++ )  {
       TCifRow& row = hklLoop->GetTable()[i];
       TReflection& ref = refs.AddNew(row[hInd].ToInt(), row[kInd].ToInt(), 
@@ -136,6 +136,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     double av = 0;
     sw.start("Loading/Filtering/Merging HKL");
     TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
+    
     RefinementModel::HklStat ms =
       xapp.XFile().GetRM().GetFourierRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
     F.SetCount(refs.Count());
@@ -144,7 +145,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     //xapp.CalcSF(refs, F);
     //sw.start("Calculation structure factors A");
     //fastsymm version is just about 10% faster...
-    CalcSF(xapp.XFile(), refs, F, !sp.IsCentrosymmetric());
+    CalcSF(xapp.XFile(), refs, F, true);
     sw.start("Scaling structure factors");
     if( mapType != mapTypeCalc )  {
       // find a linear scale between F

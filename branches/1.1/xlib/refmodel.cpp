@@ -538,7 +538,7 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
     }
     vec3i chkl = r.GetHkl();
     if( transform_hkl )
-      r.MulHklR(chkl, HKLF_mat);
+      chkl = (HKLF_mat*vec3d(chkl)).Round<int>();
 
     vec3d hkl(chkl[0]*hkl2c[0][0],
       chkl[0]*hkl2c[0][1] + chkl[1]*hkl2c[1][1],
@@ -554,13 +554,14 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
     if( qd < max_qd && qd > min_qd )  {
       TReflection& new_ref = out.AddNew(r);
       if( r.GetI() < h_o_s*r.GetS() )  {
-        new_ref.SetI( h_o_s*r.GetS() );
+        new_ref.SetI(h_o_s*r.GetS());
         stats.IntensityTransformed++;
       }
       if( new_ref.GetI() < 0 )
         new_ref.SetI(0);
       if( new_ref.GetI() > stats.MaxI )  stats.MaxI = new_ref.GetI();
       if( new_ref.GetI() < stats.MinI )  stats.MinI = new_ref.GetI();
+      new_ref.SetHkl(chkl);
     }
     else
       stats.FilteredOff++;

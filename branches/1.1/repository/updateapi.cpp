@@ -289,8 +289,12 @@ void UpdateAPI::EvaluateProperties(TStrList& props) const  {
       df.LoadFromXLFile( pluginFile, NULL );
       TDataItem* PluginItem = df.Root().FindItem("Plugin");
       if( PluginItem != NULL )  {
-        for( size_t i=0; i < PluginItem->ItemCount(); i++ )
-          props.Add( PluginItem->GetItem(i).GetName() );
+        for( size_t i=0; i < PluginItem->ItemCount(); i++ )  {
+          if( PluginItem->GetItem(i).GetName().StartsFrom("plugin-") )
+            props.Add(PluginItem->GetItem(i).GetName());
+          else
+            props.Add(olxstr("plugin-") << PluginItem->GetItem(i).GetName());
+        }
       }
     }
     catch(...)  {}  // unlucky
