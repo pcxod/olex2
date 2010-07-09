@@ -19,6 +19,8 @@ class AGlMouseHandler  {
   // default handler implementation
   struct EventHandler {
     int SX, SY;
+    bool MouseDown, MouseHandled;
+    EventHandler() : SX(-1), SY(-1), MouseDown(false), MouseHandled(false) {}
     bool OnMouseDown(AGlMouseHandler& Sender, const TMouseData& Data);
     bool OnMouseUp(AGlMouseHandler& Sender, const TMouseData& Data);
     bool OnMouseMove(AGlMouseHandler& Sender, const TMouseData& Data);
