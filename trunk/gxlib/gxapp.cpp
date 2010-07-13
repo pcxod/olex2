@@ -1296,10 +1296,7 @@ void TGXApp::AllVisible(bool V)  {
     TAsymmUnit& au = XFile().GetAsymmUnit();
     for( size_t i=0; i < au.AtomCount(); i++ )
       au.GetAtom(i).SetMasked(false);
-    TTypeList<GroupData> stored_groups;
-    StoreGroups(stored_groups);
-    XFile().GetLattice().UpdateConnectivity();
-    RestoreGroups(stored_groups);
+    UpdateConnectivity();
     CenterView(true);
   }
   OnAllVisible.Exit(dynamic_cast<TBasicApp*>(this), NULL);
@@ -2010,7 +2007,7 @@ void TGXApp::undoDelete(TUndoData *data)  {
   TLattice& latt = XFile().GetLattice();
   for( size_t i=0; i < undo->SAtomIds.Count(); i++ )
     latt.RestoreAtom(undo->SAtomIds[i]);
-  XFile().GetLattice().UpdateConnectivity();
+  UpdateConnectivity();
 }
 //..............................................................................
 void TGXApp::undoName(TUndoData *data)  {
@@ -2090,7 +2087,7 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
 
   //GetSelection().RemoveDeleted();
   GetSelection().Clear();
-  XFile().GetLattice().UpdateConnectivity();
+  UpdateConnectivity();
   //CenterView();
   return undo;
 }
@@ -2927,16 +2924,20 @@ void TGXApp::SetHydrogensVisible(bool v)  {
     FHydrogensVisible = v;
     GetRender().ClearSelection();
     XFile().GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
-    TTypeList<GroupData> groups;
-    StoreGroups(groups);
-    for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )  {
+    for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
       OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
-      OverlayedXFiles[i].GetLattice().UpdateConnectivity();
-    }
-    XFile().GetLattice().UpdateConnectivity();
-    RestoreGroups(groups);
+    UpdateConnectivity();
     CenterView(true);
   }
+}
+//..............................................................................
+void TGXApp::UpdateConnectivity()  {
+  TTypeList<GroupData> groups;
+  StoreGroups(groups);
+  for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
+    OverlayedXFiles[i].GetLattice().UpdateConnectivity();
+  XFile().GetLattice().UpdateConnectivity();
+  RestoreGroups(groups);
 }
 //..............................................................................
 void TGXApp::SetQPeaksVisible(bool v)  {
@@ -2944,14 +2945,9 @@ void TGXApp::SetQPeaksVisible(bool v)  {
     FQPeaksVisible = v;
     GetRender().ClearSelection();
     XFile().GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
-    TTypeList<GroupData> groups;
-    StoreGroups(groups);
-    for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )  {
+    for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
       OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
-      OverlayedXFiles[i].GetLattice().UpdateConnectivity();
-    }
-    XFile().GetLattice().UpdateConnectivity();
-    RestoreGroups(groups);
+    UpdateConnectivity();
     CenterView(true);
   }
 }
@@ -3084,7 +3080,7 @@ void TGXApp::ShowPart(const TIntList& parts, bool show)  {
       XAtoms[i].SetVisible(XAtoms[i].Atom().IsAvailable());
   }
   _maskInvisible();
-  XFile().GetLattice().UpdateConnectivity();
+  UpdateConnectivity();
 }
 //..............................................................................
 void TGXApp::SetHklVisible(bool v)  {

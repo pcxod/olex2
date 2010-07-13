@@ -902,6 +902,10 @@ void TGlRenderer::RemoveObjects(const TPtrList<AGDrawObject>& objects)  {
 }
 //..............................................................................
 void TGlRenderer::AddObject(AGDrawObject& G)  {
+#ifdef _DEBUG
+  if( FGObjects.IndexOf(G) != InvalidIndex )
+    throw TInvalidArgumentException(__OlxSourceInfo, "duplicate entry!");
+#endif
   FGObjects.Add(G);
   if( FSceneComplete || !G.IsVisible() )  return;
   vec3d MaxV, MinV;

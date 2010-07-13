@@ -2539,7 +2539,7 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     part++;
   }
-  FXApp->XFile().GetLattice().UpdateConnectivity();
+  FXApp->UpdateConnectivity();
 }
 void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   int afix = -1;
@@ -3117,7 +3117,7 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       d_cnt = qpeaks.Count();
     for( size_t i=0; i < qpeaks.Count(); i++ )  
       qpeaks[i]->SetDetached(i >= (size_t)d_cnt);
-    FXApp->XFile().GetLattice().UpdateConnectivity();
+    FXApp->UpdateConnectivity();
     TimePerFrame = FXApp->Draw();
   }
   else if( Cmds.Count() == 2 )  {
@@ -3161,7 +3161,7 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     for( size_t i=0; i < qpeaks.Count(); i++ )  
       qpeaks[i]->SetDetached( i >= (size_t)num );
     FXApp->GetSelection().Clear();
-    FXApp->XFile().GetLattice().UpdateConnectivity();
+    FXApp->UpdateConnectivity();
     TimePerFrame = FXApp->Draw();
   }
   else  {
@@ -8366,6 +8366,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
     }
   }
   FXApp->CenterView(true);
+  FXApp->SelectAll(false);
   Macros.ProcessMacro("mode fit", E);
   AMode *md = Modes->GetCurrent();
   if( md != NULL )  {
@@ -8420,7 +8421,7 @@ void TMainForm::macConn(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FXApp->XFile().GetRM().Conn.ProcessConn(lst);
     FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
     FXApp->GetRender().SelectAll(false);
-    FXApp->XFile().GetLattice().UpdateConnectivity();
+    FXApp->UpdateConnectivity();
   }
   catch( const TExceptionBase& exc )  {
     E.ProcessingError(__OlxSrcInfo, exc.GetException()->GetError());
@@ -8453,7 +8454,7 @@ void TMainForm::macAddBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
     FXApp->XFile().GetRM().Conn.AddBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv, true);
   }
   FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
-  FXApp->XFile().GetLattice().UpdateConnectivity();
+  FXApp->UpdateConnectivity();
 }
 //..............................................................................
 void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -8492,7 +8493,7 @@ void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
     }
     FXApp->GetRender().SelectAll(false);
     FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
-    FXApp->XFile().GetLattice().UpdateConnectivity();
+    FXApp->UpdateConnectivity();
   }
   else  {
     E.ProcessingError(__OlxSrcInfo, "please select some bonds or provide atom pairs");
