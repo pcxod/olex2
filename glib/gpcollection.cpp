@@ -44,9 +44,9 @@ void TGPCollection::Draw()  {
 }
 //..............................................................................
 void TGPCollection::AddObject(AGDrawObject& Obj)  {
-  GObjects.Add(&Obj);
-  Obj.SetPrimitives( *this );
-  Parent.AddObject( Obj );
+  GObjects.Add(Obj);
+  Obj.SetPrimitives(*this);
+  Parent.AddObject(Obj);
 };
 //..............................................................................
 void TGPCollection::ListParams(TStrList &List, TGlPrimitive *Primitive)  {
