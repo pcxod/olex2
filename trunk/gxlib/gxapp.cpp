@@ -528,7 +528,6 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     FGlRender->UpdateMinMax(glMin, glMax);
     FGlRender->GetBasis().SetCenter(glCenter);
   }
-  GetRender().GetSelection().Create();
   olx_gl::loadIdentity();
   GetRender().SetView(false, 1);
   GetRender().Initialise();

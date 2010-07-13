@@ -24,8 +24,8 @@ void TGlGroup::Create(const olxstr& cName, const ACreationParams* cpar)  {
     SetCollectionName(cName);
 
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
+  if( !GPC.IsEmpty() )  return;
   GPC.AddObject(*this);
-  if( GPC.IsEmpty() )  return;
   TGraphicsStyle& GS = GPC.GetStyle();
   if( GetParentGroup() != NULL )  {
     GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF);
