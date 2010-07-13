@@ -2273,7 +2273,7 @@ void TLattice::BuildAtomRegistry()  {
   AtomRegistry::RegistryType& registry = atomRegistry.Init(mind, maxd);
   size_t deleted_count=0;
   for( size_t i=0; i < Atoms.Count(); i++ )  {
-    if( Atoms[i]->IsDeleted() )  continue;
+    if( !Atoms[i]->IsAvailable() || Atoms[i]->CAtom().IsMasked() )  continue;
     const vec3i t = smatd::GetT(Atoms[i]->GetMatrix(0).GetId());
     TArrayList<TSAtomPList*>* aum_slice = registry.Value(t);
     if( aum_slice == NULL )  {

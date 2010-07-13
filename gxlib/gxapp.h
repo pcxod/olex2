@@ -145,6 +145,8 @@ public:
   void StoreGroup(const TGlGroup& glg, GroupData& group);
   void RestoreGroups(const TTypeList<GroupData>& groups);
   void StoreGroups(TTypeList<GroupData>& groups);
+  // stores groups beforehand abd restores afterwards, also considers overlayed files
+  void UpdateConnectivity();
 protected:
   float FProbFactor;
   double ExtraZoom;  // the default is 1, Calculated Zoom is multiplid by this number

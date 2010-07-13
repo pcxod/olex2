@@ -35,7 +35,19 @@ public:
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     AtomsToMatch.Clear();
     TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
+    TXAtomPList xatoms;
+    TPtrList<AGDrawObject> xbonds;
+    TGlGroup& sel = TGlXApp::GetGXApp()->GetSelection();
+    for( size_t i=0; i < sel.Count(); i++ )  {
+      if( EsdlInstanceOf(sel[i], TXAtom) )
+        xatoms.Add((TXAtom&)sel[i]);
+      else if( EsdlInstanceOf(sel[i], TXBond) )
+        xbonds.Add(sel[i]);
+    }
     group = &TGlXApp::GetGXApp()->GetRender().ReplaceSelection<TXGroup>();
+    AddAtoms(xatoms);
+    for( size_t i=0; i < xbonds.Count(); i++ )
+      TGlXApp::GetGXApp()->GetRender().Select(*xbonds[i]);
     return true;
   }
   ~TFitMode()  {
