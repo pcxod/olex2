@@ -209,12 +209,15 @@ public:
     return false;
   }
 //..............................................................................
-  int CompareTo(const TReflection &r ) const {
-    int res = hkl[2] - r.hkl[2];
+  int CompareTo(const TReflection &r) const {
+    int res = Flag - r.Flag;  // prioritise by batch number
     if( res == 0 )  {
-      res = hkl[1] - r.hkl[1];
-      if( res == 0 )
-        res = hkl[0] - r.hkl[0];
+      res = hkl[2] - r.hkl[2];
+      if( res == 0 )  {
+        res = hkl[1] - r.hkl[1];
+        if( res == 0 )
+          res = hkl[0] - r.hkl[0];
+      }
     }
     return res;
   }

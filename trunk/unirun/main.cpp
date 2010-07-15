@@ -8,6 +8,7 @@
 #include "outstream.h"
 #include "efile.h"
 #include "wxzipfs.h"
+#include "httpfs.h"
 #include "etime.h"
 #include "settingsfile.h"
 #include "datafile.h"
@@ -104,6 +105,7 @@ int main(int argc, char** argv)  {
   int res = 0;
   wxAppConsole::SetInstance(&app); // as soon as we create TBasicApp, this instance gets attached to it
   TEGC::Initialise();
+  THttpFileSystem::Initialise();
   try  {
     if( argc == 1 )  // no folder to update provided
       bapp = new TBasicApp(TBasicApp::GuessBaseDir(argv[0], "OLEX2_DIR"));
@@ -157,6 +159,7 @@ current folder will be updated\n";
 #if defined(__WIN32__ ) && defined(_DEBUG)
   system("PAUSE");
 #endif
+  THttpFileSystem::Finalise();
   return res;
 }
 
