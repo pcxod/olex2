@@ -5,7 +5,7 @@
 #include "efile.h"
 #include "updateapi.h"
 #include "patchapi.h"
-#include "httpfs.h"
+#include "socketfs.h"
 #include "winzipfs.h"
 
 #include "installer.h"
@@ -85,6 +85,7 @@ const size_t CInstallerDlg::exts_sz = sizeof(exts)/sizeof(exts[0]);
 CInstallerDlg::CInstallerDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CInstallerDlg::IDD, pParent), bapp(LocateBaseDir())
 {
+  THttpFileSystem::Initialise();
   tooltipCtrl = NULL;
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
   mouse_down = false;
@@ -96,6 +97,11 @@ CInstallerDlg::CInstallerDlg(CWnd* pParent /*=NULL*/)
   GetVersionEx(&veri);
   // only after XP
   run_as_admin = veri.dwMajorVersion > 5;
+}
+CInstallerDlg::~CInstallerDlg()  {
+  if( tooltipCtrl != NULL )  delete tooltipCtrl;
+  if( ctrlBrush != NULL )  delete ctrlBrush;
+  THttpFileSystem::Finalise();
 }
 
 void CInstallerDlg::DoDataExchange(CDataExchange* pDX)  {

@@ -1,5 +1,5 @@
-#ifndef __olx_win_httpfs_H
-#define __olx_win_httpfs_H
+#ifndef __olx_httpfs_H
+#define __olx_httpfs_H
 /* POSIX HTTP file fetching utility,
 (c) O Dolomanov, 2004-2009 */
 #include "ebase.h"
@@ -14,19 +14,38 @@
 #include "filesystem.h"
 #include "url.h"
 #include "efile.h"
+#include "edict.h"
 //  #pragma link "../..lib/psdk/mswsock.lib"
 
 class THttpFileSystem: public AFileSystem  {
+  bool Connected;
+  TUrl Url;
+#ifdef __WIN32__
+  static bool Initialised;
+#endif
+protected:
 #ifdef __WIN32__
   SOCKET Socket;
 #else
   int Socket;
 #endif
-  bool Connected, Successful;
-  TUrl Url;
+  void DoConnect();
+  typedef olxdict<olxcstr,olxcstr,olxstrComparator<false> > HeadersDict;
+  struct ResponseInfo  {
+    HeadersDict headers;
+    olxcstr status;
+  };
+  ResponseInfo ParseResponseInfo(const olxcstr& str, const olxcstr& sep);
+  static olxcstr GenerateRequest(const TUrl& url, const olxcstr& cmd, const olxcstr& file_name);
+  bool IsConnected() const {  return Connected;  }
+  const TUrl& GetUrl() const {  return Url;  }
+  // if false returned, the procedure is terminated, true means the the connection was re-established
+  virtual bool _OnReadFailed(const olxcstr& server_name, const olxstr& src, uint64_t position)  {  return false;  }
+  static bool IsCrLf(const char* bf, size_t len);
+  static size_t GetDataOffset(const char* bf, size_t len, bool crlf);
   // reads as many bytes as available within [0..dest_sz)
   int _read(char* dest, size_t dest_sz) const;
-protected:
+  int _write(const olxcstr& str);
   void GetAddress(struct sockaddr* Result);
   bool Connect();
   void Disconnect();
@@ -44,6 +63,9 @@ public:
   TEFile* OpenFileAsFile(const olxstr& Source)  {
     return (TEFile*)OpenFile(Source);
   }
+  // call these functions to initialise/finalise the static object data
+  static bool Initialise();
+  static void Finalise();
 };
 
 #endif

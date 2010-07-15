@@ -13,6 +13,7 @@ using namespace std;
 #include "outstream.h"
 #include "pyext.h"
 #include "fsext.h"
+#include "httpfs.h"
 #include "olxvar.h"
 #include "shellutil.h"
 #include "dataitem.h"
@@ -180,7 +181,8 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   ProcessManager* _ProcessManager;
 public:
   TOlex(const olxstr& basedir) : XApp(basedir, this), Macros(*this), _ProcessHandler(*this) {
-    Macros.Init();   
+    Macros.Init();
+    THttpFileSystem::Initialise();
     XApp.SetCifTemplatesDir( XApp.GetBaseDir() + "etc/CIF/" );
     OlexInstance = this;
     Silent = true;
@@ -292,6 +294,7 @@ public:
     delete _ProcessManager;
     TOlxVars::Finalise();
     PythonExt::Finilise();
+    THttpFileSystem::Finalise();
     delete OutStream;
     OlexInstance = NULL;
   }

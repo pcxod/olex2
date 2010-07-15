@@ -135,9 +135,9 @@ void TUrl::SetProtocol( const olxstr& protocol )  {
   Protocol = protocol;
 }
 //..............................................................................
-olxstr TUrl::GenerateHTTPAuthString(const olxstr& user, const olxstr& pass) {
-  olxstr buf("Basic ");
-  olxstr toencode(user);
+olxcstr TUrl::GenerateHTTPAuthString(const olxstr& user, const olxstr& pass)  {
+  olxcstr buf("Basic ");
+  olxcstr toencode(user);
   toencode << ':' << pass;
   return (buf << encoding::base64::encode(TUtf8::Encode(toencode)));
 }

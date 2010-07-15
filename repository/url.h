@@ -61,8 +61,8 @@ public:
   DefPropC(olxstr, User)
   DefPropC(olxstr, Password)
 
-  static olxstr GenerateHTTPAuthString(const olxstr& user, const olxstr& pass);
-  olxstr GenerateHTTPAuthString()  {
+  static olxcstr GenerateHTTPAuthString(const olxstr& user, const olxstr& pass);
+  olxcstr GenerateHTTPAuthString() const {
     return GenerateHTTPAuthString(User, Password);
   }
 };

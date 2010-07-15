@@ -878,7 +878,7 @@ public:
        }
      }
      else  {
-       for( size_t i=sts; i < len; i++ )  {
+       for( size_t i=sts; i < ste; i++ )  {
          if( data[i] <= '9' && data[i] >= '0' )  {
            const short pv = data[i] - '0';
             if( pv >= Rad )
