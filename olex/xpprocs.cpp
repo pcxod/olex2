@@ -73,7 +73,7 @@
 #include "network.h"
 
 #include "filesystem.h"
-#include "socketfs.h"
+#include "cdsfs.h"
 #include "wxzipfs.h"
 
 #include "ecast.h"
@@ -2514,7 +2514,8 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   for( size_t i=0; i < partCount; i++ )  {
     for( size_t j=(Atoms.Count()/partCount)*i; j < (Atoms.Count()/partCount)*(i+1); j++ )  {
       Atoms[j]->Atom().CAtom().SetPart(part);
-      if( Atoms[j]->Atom().GetType() == iHydrogenZ ) continue;
+      if( Atoms[j]->Atom().GetType() == iHydrogenZ || Atoms[j]->Atom().GetType() == iQPeakZ )
+        continue;
       for( size_t k=0; k <  Atoms[j]->Atom().NodeCount(); k++ )  {
         TSAtom& SA = Atoms[j]->Atom().Node(k);
         if( SA.GetType() == iHydrogenZ )

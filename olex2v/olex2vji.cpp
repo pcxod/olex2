@@ -8,9 +8,6 @@
 #include "ins.h"
 #include "cif.h"
 #include "olxvar.h"
-//#include "wx/fontmap.h"
-#include "wx/font.h"
-
 #include "xatom.h"
 #include "xbond.h"
 #include "gllabels.h"
@@ -39,14 +36,14 @@ TOlexViewer::TOlexViewer(int w, int h) {
   }
   olx_gl::clearColor(0.5, 0.5, 0.0, 0.0);
   GXApp->GetRender().Resize(0, 0, w, h, 1);
-  wxFont Font(*wxNORMAL_FONT);//|wxFONTFLAG_ANTIALIASED);
-//  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
-  // create 4 fonts
   TGlMaterial glm;
   glm.SetFlags(sglmAmbientF|sglmEmissionF|sglmIdentityDraw);
   glm.AmbientF = 0x7fff7f;
   glm.EmissionF = 0x1f2f1f;
-  GXApp->GetRender().GetScene().CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
+  //wxFont Font(*wxNORMAL_FONT);//|wxFONTFLAG_ANTIALIASED);
+  //GXApp->GetRender().GetScene().CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
+
+  GXApp->GetRender().GetScene().CreateFont("Labels", "@20")->SetMaterial(glm);
   
   GXApp->SetLabelsFont(0);
   

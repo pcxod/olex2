@@ -414,7 +414,6 @@ TMainForm::TMainForm(TGlXApp *Parent):
 #endif
   StartupInitialised = RunOnceProcessed = false;
   wxInitAllImageHandlers();
-  THttpFileSystem::Initialise();
   /* a singleton - will be deleted in destructor, we cannot use GC as the Py_DecRef
    would be called after finalising python
   */
@@ -535,7 +534,6 @@ TMainForm::~TMainForm()  {
   // the order is VERY important!
   TOlxVars::Finalise();
   PythonExt::Finilise();
-  THttpFileSystem::Finalise();
 }
 //..............................................................................
 void TMainForm::XApp(TGXApp *XA)  {

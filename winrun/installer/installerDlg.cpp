@@ -5,7 +5,7 @@
 #include "efile.h"
 #include "updateapi.h"
 #include "patchapi.h"
-#include "socketfs.h"
+#include "cdsfs.h"
 #include "winzipfs.h"
 
 #include "installer.h"

@@ -29,6 +29,15 @@ protected:
 #else
   int Socket;
 #endif
+  // intitialise/finalise functionality
+  static void Initialise();
+  // should not be called directly, look below
+  static void Finalise();
+  class Finaliser : public IEObject {
+  public:
+    ~Finaliser()  {  THttpFileSystem::Finalise();  }
+  };
+
   void DoConnect();
   typedef olxdict<olxcstr,olxcstr,olxstrComparator<false> > HeadersDict;
   struct ResponseInfo  {
@@ -41,6 +50,7 @@ protected:
   const TUrl& GetUrl() const {  return Url;  }
   // if false returned, the procedure is terminated, true means the the connection was re-established
   virtual bool _OnReadFailed(const olxcstr& server_name, const olxstr& src, uint64_t position)  {  return false;  }
+  virtual bool _DoValidate(const olxcstr& server_name, const olxstr& etag, TEFile& data) const {  return true;  }
   static bool IsCrLf(const char* bf, size_t len);
   static size_t GetDataOffset(const char* bf, size_t len, bool crlf);
   // reads as many bytes as available within [0..dest_sz)
@@ -63,9 +73,6 @@ public:
   TEFile* OpenFileAsFile(const olxstr& Source)  {
     return (TEFile*)OpenFile(Source);
   }
-  // call these functions to initialise/finalise the static object data
-  static bool Initialise();
-  static void Finalise();
 };
 
 #endif

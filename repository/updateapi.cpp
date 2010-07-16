@@ -8,7 +8,7 @@
 #include "dataitem.h"
 #include "patchapi.h"
 
-#include "socketfs.h"
+#include "cdsfs.h"
 
 #if defined(__WIN32__) && !defined(__WXWIDGETS__)
   #include "winzipfs.h"
