@@ -11,7 +11,7 @@
 THttpFileSystem::THttpFileSystem(const TUrl& url) : Url(url){
 #ifdef __WIN32__
   if( !Initialised )
-    throw TFunctionFailedException(__OlxSourceInfo, "Uninitialised WinSocks");
+    Initialise();
 #endif
   Access = afs_ReadOnlyAccess;
   SetBase(url.GetPath());
@@ -23,19 +23,23 @@ THttpFileSystem::~THttpFileSystem()  {
     Disconnect();
 }
 //..............................................................................
-bool THttpFileSystem::Initialise()  {
+void THttpFileSystem::Initialise()  {
 #ifdef __WIN32__
+  volatile olx_scope_cs _cs(TBasicApp::GetCriticalSection());
   if( !Initialised )  {
     WSADATA  WsaData;
-    Initialised = (WSAStartup(0x0001, &WsaData) == 0);
+    if( WSAStartup(0x0001, &WsaData) != 0 )
+      throw TFunctionFailedException(__OlxSourceInfo, "Uninitialised WinSocks");
+    Initialised = true;
+    TEGC::AddP(new THttpFileSystem::Finaliser);
   }
-  return Initialised;
 #endif
 }
 //..............................................................................
 void THttpFileSystem::Finalise()  {
 #ifdef __WIN32__
   if( Initialised )  {  
+    volatile olx_scope_cs _cs(TBasicApp::GetCriticalSection());
     WSACleanup();
     Initialised = false;
   }
@@ -175,6 +179,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
     return NULL;
   }
   const olxcstr server_name = info.headers.Find("Server", CEmptyString);
+  const olxcstr etag = info.headers["ETag"];
   Progress.SetPos(0);
   Progress.SetAction(Source);
   Progress.SetMax(FileLength);
@@ -212,7 +217,8 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
     }
   }
   delete [] Buffer;
-  if( TotalRead != FileLength )  {  // premature completion?
+  File->SetPosition(0);
+  if( TotalRead != FileLength || !_DoValidate(server_name, etag, *File) )  {  // premature completion?
     Progress.SetPos(0);
     OnProgress.Exit(this, &Progress);
     delete File;

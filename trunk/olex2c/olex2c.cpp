@@ -182,7 +182,6 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
 public:
   TOlex(const olxstr& basedir) : XApp(basedir, this), Macros(*this), _ProcessHandler(*this) {
     Macros.Init();
-    THttpFileSystem::Initialise();
     XApp.SetCifTemplatesDir( XApp.GetBaseDir() + "etc/CIF/" );
     OlexInstance = this;
     Silent = true;
@@ -294,7 +293,6 @@ public:
     delete _ProcessManager;
     TOlxVars::Finalise();
     PythonExt::Finilise();
-    THttpFileSystem::Finalise();
     delete OutStream;
     OlexInstance = NULL;
   }
@@ -310,16 +308,16 @@ public:
     switch( MessageType )  {
       case olex::mtError:
       case olex::mtException:
-        conint.SetTextForeground( fgcRed, true);
+        conint.SetTextForeground(fgcRed, true);
         break;
       case olex::mtWarning:
-        conint.SetTextForeground( fgcRed, false);
+        conint.SetTextForeground(fgcRed, false);
         break;
       case olex::mtInfo:
-        conint.SetTextForeground( fgcBlue, true);
+        conint.SetTextForeground(fgcBlue, true);
         break;
       default:
-        conint.SetTextForeground( fgcReset, false);
+        conint.SetTextForeground(fgcReset, false);
     }
     TBasicApp::GetLog() << msg << '\n';
     //SetConsoleTextAttribute(conout, FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE);
@@ -351,7 +349,7 @@ public:
     try  {
       Fun->Run(funParams, me);
       if( !me.IsSuccessful() )  {
-        AnalyseError( me );
+        AnalyseError(me);
         return NULL;
       }
     }
