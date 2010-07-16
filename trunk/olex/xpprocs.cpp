@@ -936,7 +936,6 @@ void TMainForm::macGroup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     name << (FXApp->GetRender().GroupCount()+1);
   }
   FXApp->GroupSelection(name);
-  FXApp->SelectAll(false);
 }
 //..............................................................................
 void TMainForm::macFmol(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -6218,13 +6217,13 @@ public:
 #endif
 
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TSocketFS fs(TUrl("http://localhost:8082"));
-  if( fs.Exists("dist/cds.jar", true) )  {
-    TEFile* ef = fs.OpenFileAsFile("dist/cds.jar");
-    TEFile ef1("e:/1.tmp", "w+b");
-    ef1 << *ef;
-    delete ef;
-  }
+  //TSocketFS fs(TUrl("http://localhost:8082"));
+  //if( fs.Exists("dist/cds.jar", true) )  {
+  //  TEFile* ef = fs.OpenFileAsFile("dist/cds.jar");
+  //  TEFile ef1("e:/1.tmp", "w+b");
+  //  ef1 << *ef;
+  //  delete ef;
+  //}
   //TArray3D<double> src(0, 99, 0, 99, 0, 99), dest(0, 9, 0, 9, 0, 9);
   //const vec3s src_d = src.GetSize();
   //for( size_t i=0; i < src_d[0]; i++ )

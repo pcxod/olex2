@@ -44,6 +44,9 @@ public:
 
   inline bool Orient(TGlPrimitive& P)  {  return false;  }
   inline bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
+  virtual bool OnMouseDown(const IEObject *Sender, const struct TMouseData& Data);
+  virtual bool OnMouseUp(const IEObject *Sender, const struct TMouseData& Data);
+  virtual bool OnMouseMove(const IEObject *Sender, const struct TMouseData& Data);
 
   virtual void SetVisible(bool On);
   virtual void SetSelected(bool On);

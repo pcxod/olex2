@@ -132,19 +132,22 @@ protected:
   TEBitArray FVisibility;
   void RestoreVisibility();
   void StoreVisibility();
-public:
   struct GroupData  {
     TTypeList<TSAtom::Ref> atoms;
     TTypeList<TSBond::Ref> bonds;
     olxstr collectionName;
     bool visible;
     index_t parent_id;
+    size_t id;
   };
+  TTypeList<GroupData> GroupDefs;
+  olxdict<TGlGroup*,size_t, TPointerPtrComparator> GroupDict;
   // stores numeric references
   void RestoreGroup(TGlGroup& glg, const GroupData& group);
+  void RestoreGroups();
   void StoreGroup(const TGlGroup& glg, GroupData& group);
-  void RestoreGroups(const TTypeList<GroupData>& groups);
   void StoreGroups(TTypeList<GroupData>& groups);
+public:
   // stores groups beforehand abd restores afterwards, also considers overlayed files
   void UpdateConnectivity();
 protected:
@@ -172,7 +175,8 @@ public:
   void Quality(const short v);
   void Init();
 //..............................................................................
-  void ClearIndividualCollections() {  IndividualCollections.Clear();  }
+  void ClearIndividualCollections()  {  IndividualCollections.Clear();  }
+  void ClearGroupDefinitions()  {  GroupDefs.Clear();  }
 //..............................................................................
 // GlRender interface
   void ClearColor(int Color) {  FGlRender->LightModel.SetClearColor(Color); }
@@ -228,9 +232,9 @@ public:
   inline TGlGroup* FindObjectGroup(AGDrawObject& G)  {  return GetRender().FindObjectGroup(G); }
   inline TGlGroup* FindGroup(const olxstr& colName)  {  return GetRender().FindGroupByName(colName); }
   inline TGlGroup& GetSelection() const {  return GetRender().GetSelection(); }
-  void GroupSelection(const olxstr& name)  {  GetRender().GroupSelection(name);  Draw(); }
-  void UnGroupSelection()  {  GetRender().UnGroupSelection(); Draw(); }
-  void UnGroup(TGlGroup& G)  {  GetRender().UnGroup(G); Draw(); }
+  void GroupSelection(const olxstr& name);
+  void UnGroupSelection();
+  void UnGroup(TGlGroup& G);
   olxstr GetSelectionInfo();
   // ASelection Owner interface
   virtual void ExpandSelection(TCAtomGroup& atoms);

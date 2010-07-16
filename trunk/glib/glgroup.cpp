@@ -24,18 +24,16 @@ void TGlGroup::Create(const olxstr& cName, const ACreationParams* cpar)  {
     SetCollectionName(cName);
 
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
-  if( !GPC.IsEmpty() )  return;
   GPC.AddObject(*this);
   TGraphicsStyle& GS = GPC.GetStyle();
-  if( GetParentGroup() != NULL )  {
+  if( !cName.IsEmpty() )  {
     GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF);
     GlM.ShininessF = 128;
     GlM.AmbientF = 0xff0fff0f;
     GlM.DiffuseF = 0xff00f0ff;
   }
   else  {
-    GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|
-      sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB|sglmTransparent);
+    GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|sglmTransparent);
     GlM.ShininessF = 128;
     GlM.AmbientF = 0x7f00ff00;
     GlM.DiffuseF = 0x7f0000ff;
@@ -170,5 +168,29 @@ bool TGlGroup::TryToGroup(TPtrList<AGDrawObject>& ungroupable)  {
   }
   FObjects.Pack();
   return true;
+}
+//..............................................................................
+bool TGlGroup::OnMouseDown(const IEObject *Sender, const struct TMouseData& Data)  {
+  bool res = false;
+  for( size_t i=0; i < FObjects.Count(); i++ )
+    if( FObjects[i]->OnMouseDown(Sender, Data) )
+      res = true;
+  return res;
+}
+//..............................................................................
+bool TGlGroup::OnMouseUp(const IEObject *Sender, const struct TMouseData& Data)  {
+  bool res = false;
+  for( size_t i=0; i < FObjects.Count(); i++ )
+    if( FObjects[i]->OnMouseUp(Sender, Data) )
+      res = true;
+  return res;
+}
+//..............................................................................
+bool TGlGroup::OnMouseMove(const IEObject *Sender, const struct TMouseData& Data)  {
+  bool res = false;
+  for( size_t i=0; i < FObjects.Count(); i++ )
+    if( FObjects[i]->OnMouseMove(Sender, Data) )
+      res = true;
+  return res;
 }
 //..............................................................................

@@ -6,12 +6,15 @@ package cds;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  *
@@ -22,12 +25,19 @@ public class Main {
   static boolean terminate = false;
   static int threadCount = 0;
   static String baseDir;
+  static PrintWriter logFile=null;
   public synchronized static void doTerminate()  {  terminate = true;  }
   public static String getBaseDir()  {  return baseDir;  }
   public synchronized static void onThreadTerminate()  {
     threadCount--;
   }
-  public static void print(String s)  {  System.out.println(s);  }
+  public static void print(String s)  {
+    if( logFile != null )  {
+      logFile.println(s);
+      logFile.flush();
+    }
+    System.out.println(s);
+  }
   public static void main(String[] args) {
     print("Download manager server, (c) O. Dolomanov, 2010");
     String status = "unknown";
@@ -35,17 +45,13 @@ public class Main {
     try {
       Socket s = new Socket();
       s.connect(new InetSocketAddress("localhost", port_number));
-      //s.connect(new InetSocketAddress("www.olex2.org", 80));
       PrintWriter out = new PrintWriter(s.getOutputStream(), true);
-      out.println("status");
-      //out.print("GET http://www.olex2.org/olex2-distro/tags.txt HTTP/1.0\n\n");
-      out.flush();
+      out.println("status\n");
       BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
-      //while( (status=in.readLine()) != null )
-      //  print(status);
       status = in.readLine();
       out.close();
       in.close();
+      s.close();
     }
     catch (IOException ex) {}  // unknow status
     if( args.length == 0 )  {
@@ -56,7 +62,7 @@ public class Main {
         print("Already running...");
         return;
       }
-      if( args.length != 2 )  {
+      if( args.length < 2 )  {
         print("Please provide the exposed root folder");
         return;
       }
@@ -77,7 +83,12 @@ public class Main {
         baseDir += File.separatorChar;
       print("Exposing: " + baseDir);
       try  {
+        if( args.length == 4 && args[2].equals("log") )  {
+           File log = new File(args[3]);
+           logFile = new PrintWriter(new FileWriter(log, true));
+        }
         ServerSocket s = new ServerSocket(port_number);
+        print("Server started at " + (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()));
         while( true )  {
           try  {
             Socket c = s.accept();
@@ -94,8 +105,14 @@ public class Main {
           }
         }
         s.close();
+        logFile.close();
+        logFile = null;
       }
       catch(Exception e)  {
+        if( logFile != null )  {
+          logFile.close();
+          logFile = null;
+        }
         e.printStackTrace();
       }
     }
@@ -108,12 +125,13 @@ public class Main {
         Socket s = new Socket();
         s.connect(new InetSocketAddress("localhost", port_number));
         PrintWriter out = new PrintWriter(s.getOutputStream(), true);
-        out.println("stop");
+        out.println("stop\n");
         out.close();
+        s.close();
         print("The server has been successfully stopped.");
       }
       catch (IOException ex) {
-        print("Failed to stop the server.");
+        ex.printStackTrace();
       }
     }
   }

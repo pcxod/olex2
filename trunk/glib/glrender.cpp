@@ -88,8 +88,8 @@ void TGlRenderer::InitLights()  {
 }
 //..............................................................................
 void TGlRenderer::ClearPrimitives()  {
-  FSelection->Clear();
   ClearGroups();
+  FSelection->Clear();
   FListManager.ClearLists();
   if( CompiledListId != -1 )  {
     olx_gl::deleteLists(CompiledListId, 1);
@@ -187,7 +187,13 @@ void TGlRenderer::_OnStylesLoaded()  {
     GO[i]->OnPrimitivesCleared();
   ClearPrimitives();
   for( size_t i=0; i < GO.Count(); i++ )
-    GO[i]->Create();
+    GO[i]->SetTag(0);
+  for( size_t i=0; i < GO.Count(); i++ )  {
+    if( GO[i]->GetTag() == 0 )   {  // some loose objects as labels can be created twice otherwise
+      GO[i]->Create();  // create itself calls AddObject, which also sets Tag to 1
+      GO[i]->SetTag(1);
+    }
+  }
   TGraphicsStyle* gs = FStyles->FindStyle("GL.Stereo");
   if( gs != NULL )  {
     StereoLeftColor = gs->GetParam("left", StereoLeftColor.ToString(), true);
@@ -701,7 +707,9 @@ void TGlRenderer::Select(AGDrawObject& G)  {
 //..............................................................................
 void TGlRenderer::DeSelect(AGDrawObject& G)  {
   if( !G.IsSelectable() )  return;
-  FSelection->Remove(G);
+  if( G.GetParentGroup() == FSelection )
+    FSelection->Remove(G);
+  G.SetSelected(false);
 }
 //..............................................................................
 void TGlRenderer::Select(AGDrawObject& G, bool v)  {
@@ -764,15 +772,21 @@ void TGlRenderer::SelectAll(bool Select)  {
 }
 //..............................................................................
 void TGlRenderer::ClearGroups()  {
+  if( FGroups.IsEmpty() )  return;
   for( size_t i=0; i < FGroups.Count(); i++ )  {
     if( FGroups[i]->IsSelected() )  
       DeSelect(*FGroups[i]);
     FGroups[i]->Clear();
   }
+  for( size_t i=0; i < FGObjects.Count(); i++ )
+    FGObjects[i]->SetTag(i);
   // just in case of groups in groups
-  for( size_t i=0; i < FGroups.Count(); i++ )
+  for( size_t i=0; i < FGroups.Count(); i++ )  {
+    FGObjects[FGroups[i]->GetTag()] = NULL;
     delete FGroups[i];
+  }
   FGroups.Clear();
+  FGObjects.Pack();
 }
 //..............................................................................
 TGlGroup* TGlRenderer::FindGroupByName(const olxstr& colName) const {
@@ -793,16 +807,15 @@ TGlGroup* TGlRenderer::GroupSelection(const olxstr& groupName)  {
       return NULL;
     TGlGroup *OS = FSelection;
     FGroups.Add(FSelection);
+    OS->GetPrimitives().RemoveObject(*OS);
     FSelection = new TGlGroup(*this, "Selection");
     FSelection->Create();
-    FSelection->Add(*OS);
     for( size_t i=0; i < ungroupable.Count(); i++ )
       FSelection->Add(*ungroupable[i]);
     // read style information for this particular group
-    OS->GetPrimitives().RemoveObject(*OS);
+    OS->SetSelected(false);
     FGObjects.Remove(OS);  // avoid duplication in the list!
     OS->Create(groupName);
-    FSelection->SetSelected(false);
     return OS;
   }
   return NULL;
@@ -906,7 +919,7 @@ void TGlRenderer::AddObject(AGDrawObject& G)  {
   if( FGObjects.IndexOf(G) != InvalidIndex )
     throw TInvalidArgumentException(__OlxSourceInfo, "duplicate entry!");
 #endif
-  FGObjects.Add(G);
+  FGObjects.Add(G)->SetTag(1);
   if( FSceneComplete || !G.IsVisible() )  return;
   vec3d MaxV, MinV;
   if( G.GetDimensions(MaxV, MinV) )
