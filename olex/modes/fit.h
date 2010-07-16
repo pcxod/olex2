@@ -10,7 +10,6 @@ enum  {
 class TFitMode : public AEventsDispatcher, public AMode  {
   TXGroup* group;
   TXAtomPList Atoms, AtomsToMatch;
-  TGXApp::GroupData* group_data;
 
   class OnUniqHandler : public AActionHandler {
     TFitMode& fit_mode;
@@ -24,7 +23,7 @@ class TFitMode : public AEventsDispatcher, public AMode  {
 
   OnUniqHandler* uniq_handler;
 public:
-  TFitMode(size_t id) : AMode(id), group_data(NULL)  {
+  TFitMode(size_t id) : AMode(id)  {
     uniq_handler = new OnUniqHandler(*this);
     TGlXApp::GetGXApp()->OnObjectsCreate.Add(this, mode_fit_create, msiExit);
     TGlXApp::GetGXApp()->XFile().GetLattice().OnDisassemble.Add(this, mode_fit_disassemble, msiEnter);
@@ -56,8 +55,6 @@ public:
     TGlXApp::GetGXApp()->XFile().GetLattice().OnStructureUniq.Remove(uniq_handler);
     TGlXApp::GetGXApp()->XFile().GetLattice().OnStructureGrow.Remove(uniq_handler);
     delete uniq_handler;
-    if( group_data != NULL )
-      delete group_data;
     TGlXApp::GetGXApp()->EnableSelection(true);
   }
   void Finalise() {
@@ -90,28 +87,22 @@ public:
   virtual bool Dispatch(int msg, short id, const IEObject* Sender, const IEObject* Data=NULL)  {  
     TGXApp& app = *TGlXApp::GetGXApp();
     if( msg == mode_fit_disassemble )  {
-      if( group_data != NULL || !EsdlInstanceOf(app.GetRender().GetSelection(), TXGroup) )
+      if( !EsdlInstanceOf(app.GetRender().GetSelection(), TXGroup) )
         return true;
-      group_data = new TGXApp::GroupData;
-      TGXApp::GetInstance().StoreGroup(*group, *group_data);
       Atoms.Clear();
       AtomsToMatch.Clear();
       group->Clear();
       TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
     }
     else if( msg == mode_fit_create )  {
-      if( group_data == NULL )  return true;
       if( !EsdlInstanceOf(app.GetRender().GetSelection(), TXGroup) )
         group = &TGlXApp::GetGXApp()->GetRender().ReplaceSelection<TXGroup>();
-      TGXApp::GetInstance().RestoreGroup(*group, *group_data);
       for( size_t i=0; i < group->Count(); i++ )  {
         if( EsdlInstanceOf(group->GetObject(i), TXAtom) )
           Atoms.Add((TXAtom&)group->GetObject(i));
       }
       group->Update();
       group->SetSelected(true);
-      delete group_data;
-      group_data = NULL;
     }
     return true;
   }

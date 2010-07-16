@@ -1736,7 +1736,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
   }
 }
 //..............................................................................
-void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
+void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
   FObjectUnderMouse = G;
   FCurrentPopup = NULL;
   if( G == NULL )  return;
@@ -1806,7 +1806,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     }
   }
   if( EsdlInstanceOf(*G, TGlGroup) )  {
-    pmSelection->Enable(ID_SelGroup, false);
+    pmSelection->Enable(ID_SelGroup, G->IsSelected() && FXApp->GetSelection().Count() > 1);
     pmSelection->Enable(ID_SelUnGroup, true);
     FCurrentPopup = pmSelection;
   }

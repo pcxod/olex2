@@ -16,6 +16,7 @@ import java.io.StringWriter;
 import java.net.Socket;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.UUID;
@@ -30,7 +31,7 @@ public class ClientHandler extends Thread {
   public ClientHandler(Socket _client)  {
     client = _client;
     if( TextExts.isEmpty() )  {
-      String[] exts = "txt py java html xml".split("\\s");
+      String[] exts = "txt py java cpp h html htm xml xld osp ind".split("\\s");
       for( int i=0; i < exts.length; i++ )
         TextExts.add(exts[i]);
     }
@@ -48,16 +49,25 @@ public class ClientHandler extends Thread {
     try {
       BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
       DataOutputStream out = new DataOutputStream(client.getOutputStream());  // true - autoflush
-      Main.print("Handling: " + client.getRemoteSocketAddress().toString());
-      String cmd = in.readLine();
-      if( cmd == null )  {
-        System.out.println("Connecting...");
+      ArrayList<String> cmds = new ArrayList();
+      String cmd, origin=null;
+      while( (cmd = in.readLine()) != null )  {
+        if( cmd.isEmpty() )
+          break;
+        cmds.add(cmd);
+        if( cmd.startsWith("X-Forwarded-For:") )
+          origin = cmd.substring(17);
       }
-      else  {
-        System.out.println(cmd);
+      cmd = (cmds.isEmpty() ? null : cmds.get(0));
+      if( cmd != null )  {
+        String info_line = "Handling ";
+        info_line += (origin == null ? client.getRemoteSocketAddress().toString() : origin);
+        info_line += (" at " + (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()));
+        info_line += (": " + cmd);
+        Main.print(info_line);
         boolean handled = false;
         // accept some command only from localhost...
-        if( client.getInetAddress().isLoopbackAddress() )  {
+        if( client.getInetAddress().isLoopbackAddress() && origin == null )  {
           if( cmd.equals("status") )  {
             out.writeBytes("running");
             handled = true;
@@ -115,14 +125,6 @@ public class ClientHandler extends Thread {
                   int read_len;
                   while( (read_len = fr.read(bf)) > 0 )
                     out.write(bf, 0, read_len);
-//                  read_len = fr.read(bf);
-//                  if( read_len > 0 )
-//                    out.write(bf, 0, read_len);
-//                  // emulate connection termination
-//                  out.close();
-//                  in.close();
-//                  client.close();
-//                  return;
                 }
                 catch(Exception e)  {
                   Main.print("Connection broken...");
@@ -142,7 +144,7 @@ public class ClientHandler extends Thread {
               }
               else
                 out.writeBytes("HTTP/1.0 404 ERROR\n");
-              out.writeBytes("Server: Olex2-CDS");
+              out.writeBytes("Server: Olex2-CDS\n");
             }
           }
         }

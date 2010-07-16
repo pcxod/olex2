@@ -161,6 +161,7 @@ public:
         FParent->ClearIndividualCollections();
         FParent->GetRender().GetStyles().RemoveNamedStyles("Q");
         FParent->XFile().GetLattice().ClearPlaneDefinitions();
+        FParent->ClearGroupDefinitions();
       }
       //FParent->XGrid().Clear();
     }
@@ -205,6 +206,7 @@ public:
     else  {  // definition will get broken otherwise
       FParent->XFile().GetLattice().ClearPlaneDefinitions();
       FParent->ClearLabels();
+      FParent->ClearGroupDefinitions();
     }
     if( GrowInfo != NULL )  {
       delete GrowInfo;
@@ -334,7 +336,7 @@ void TGXApp::ClearXObjects()  {
 }
 //..............................................................................
 void TGXApp::Clear()  {
-  FGlRender->GetSelection().Clear();
+  FGlRender->SelectAll(false);
   FGlRender->ClearGroups();
   ClearXObjects();
   
@@ -515,7 +517,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   if( FXGrowLinesVisible )  CreateXGrowLines();
   if( XGrowPointsVisible )  CreateXGrowPoints();
   FXGrid->Create();
-
+  RestoreGroups();
   // create hkls
   if( FHklVisible )  SetHklVisible(true);
 
@@ -2788,15 +2790,18 @@ void TGXApp::StoreGroups(TTypeList<GroupData>& groups)  {
   for( size_t i=0; i <= FGlRender->GroupCount(); i++ )  {
     const TGlGroup& glG = (i < FGlRender->GroupCount() ? FGlRender->GetGroup(i) : FGlRender->GetSelection());
     StoreGroup(glG, groups.AddNew());
+    groups.Last().id = i;
   }
 }
 //..............................................................................
-void TGXApp::RestoreGroups(const TTypeList<GroupData>& groups)  {
-  for( size_t i=0; i < groups.Count()-1; i++ )
-    FGlRender->NewGroup(groups[i].collectionName).Create();
-  for( size_t i=0; i < groups.Count(); i++ )  {
-    TGlGroup& glg = (i < FGlRender->GroupCount() ? FGlRender->GetGroup(i) : FGlRender->GetSelection());
-    RestoreGroup(glg, groups[i]);
+void TGXApp::RestoreGroups()  {
+  GroupDict.Clear();
+  for( size_t i=0; i < GroupDefs.Count(); i++ )
+    FGlRender->NewGroup(GroupDefs[i].collectionName).Create(GroupDefs[i].collectionName);
+  for( size_t i=0; i < GroupDefs.Count(); i++ )  {
+    TGlGroup& glg = FGlRender->GetGroup(i);
+    RestoreGroup(glg, GroupDefs[i]);
+    GroupDict(&glg, i);
   }
 }
 //..............................................................................
@@ -2831,23 +2836,17 @@ void TGXApp::BeginDrawBitmap(double resolution)  {
   FPictureResolution = resolution;
   FLabels->Clear();
   GetRender().GetScene().ScaleFonts(resolution);
-  TTypeList<GroupData> stored_groups;
-  StoreGroups(stored_groups);
   StoreVisibility();
   CreateObjects(false, false);
   FXGrid->GlContextChange();
-  RestoreGroups(stored_groups);
   RestoreVisibility();
 }
 //..............................................................................
 void TGXApp::FinishDrawBitmap()  {
-  TTypeList<GroupData> stored_groups;
-  StoreGroups(stored_groups);
   FLabels->Clear();
   GetRender().GetScene().RestoreFontScale();
   CreateObjects(false, false);
   FXGrid->GlContextChange();
-  RestoreGroups(stored_groups);
   RestoreVisibility();
   FVisibility.Clear();
 }
@@ -2932,12 +2931,9 @@ void TGXApp::SetHydrogensVisible(bool v)  {
 }
 //..............................................................................
 void TGXApp::UpdateConnectivity()  {
-  TTypeList<GroupData> groups;
-  StoreGroups(groups);
   for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
     OverlayedXFiles[i].GetLattice().UpdateConnectivity();
   XFile().GetLattice().UpdateConnectivity();
-  RestoreGroups(groups);
 }
 //..............................................................................
 void TGXApp::SetQPeaksVisible(bool v)  {
@@ -4100,5 +4096,36 @@ void TGXApp::LoadModel(const olxstr& fileName) {
 #else
   throw TNotImplementedException(__OlxSourceInfo);
 #endif
+}
+//..............................................................................
+void TGXApp::GroupSelection(const olxstr& name)  {
+  TGlGroup* glg = GetRender().GroupSelection(name);
+  if( glg != NULL )  {
+    for( size_t i=0; i < FGlRender->GroupCount(); i++ )
+      FGlRender->GetGroup(i).SetTag(i);
+    FGlRender->GetSelection().SetTag(-1);
+    StoreGroup(*glg, GroupDefs.AddNew());
+    for( size_t i=0; i < GroupDefs.Count(); i++ )  {
+      TGlGroup* p = FGlRender->GetGroup(i).GetParentGroup();
+      GroupDefs[i].parent_id = (p == NULL ? -2 : p->GetTag()) ;
+    }
+    GroupDict(glg, GroupDefs.Count()-1);
+    Draw();
+  }
+}
+//..............................................................................
+void TGXApp::UnGroupSelection()  {
+  GetRender().UnGroupSelection();
+  Draw();
+}
+//..............................................................................
+void TGXApp::UnGroup(TGlGroup& G)  {
+  size_t i = GroupDict.IndexOf(&G);
+  if( i != InvalidIndex )  {
+    GroupDefs.Delete(GroupDict.GetValue(i));
+    GroupDict.Delete(i);
+  }
+  GetRender().UnGroup(G);
+  Draw();
 }
 //..............................................................................
