@@ -52,7 +52,7 @@ class TGlRenderer : public IEObject  {
 //  TPtrList<class TGPCollection> FCollections; // a named list of collections (TGPCollection)
 //  TSPtrList<TGlMaterial> FTranslucentObjects, FIdentityObjects, FTranslucentIdentityObjects;
   TPtrList<TGlMaterial> FTranslucentObjects, FIdentityObjects, FTranslucentIdentityObjects;
-  TPtrList<AGDrawObject> FGObjects;
+  SortedPtrList<AGDrawObject, TPointerPtrComparator> FGObjects;
   TPtrList<TGlGroup> FGroups;   // list of groups
   TGlGroup* FSelection;  // list of selected objects
   class TTextureManager* TextureManager;
@@ -206,7 +206,6 @@ public:
   if current selection had less than 2 elements */
   TGlGroup* GroupSelection(const olxstr& groupName);
   void ClearGroups();
-  void UnGroupSelection();
   void UnGroup(TGlGroup& GlG);
   TGlGroup& GetSelection() const {  return *FSelection; }
   template <class SelType> SelType& ReplaceSelection() {

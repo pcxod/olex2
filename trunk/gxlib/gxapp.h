@@ -138,15 +138,21 @@ protected:
     olxstr collectionName;
     bool visible;
     index_t parent_id;
-    size_t id;
+    bool IsEmpty() const {  return atoms.IsEmpty() && bonds.IsEmpty();  }
+    void Clear()  {
+      atoms.Clear();
+      bonds.Clear();
+    }
   };
   TTypeList<GroupData> GroupDefs;
+  GroupData SelectionCopy;
   olxdict<TGlGroup*,size_t, TPointerPtrComparator> GroupDict;
   // stores numeric references
   void RestoreGroup(TGlGroup& glg, const GroupData& group);
   void RestoreGroups();
   void StoreGroup(const TGlGroup& glg, GroupData& group);
   void StoreGroups(TTypeList<GroupData>& groups);
+  void _UpdateGroupIds();
 public:
   // stores groups beforehand abd restores afterwards, also considers overlayed files
   void UpdateConnectivity();
@@ -176,7 +182,10 @@ public:
   void Init();
 //..............................................................................
   void ClearIndividualCollections()  {  IndividualCollections.Clear();  }
-  void ClearGroupDefinitions()  {  GroupDefs.Clear();  }
+  void ClearGroupDefinitions()  {
+    GroupDefs.Clear();
+    SelectionCopy.Clear();
+  }
 //..............................................................................
 // GlRender interface
   void ClearColor(int Color) {  FGlRender->LightModel.SetClearColor(Color); }
@@ -224,11 +233,12 @@ public:
 
   void Select(const vec3d& From, const vec3d& To);
   void SelectAll(bool Select)  {
-    if( !Select )  BackupSelection();
+    if( !Select )
+      SelectionCopy.Clear();
     GetRender().SelectAll(Select);
     Draw();
   }
-  void InvertSelection()  {  GetRender().InvertSelection(); Draw(); }
+  void InvertSelection()  {  GetRender().InvertSelection();  Draw(); }
   inline TGlGroup* FindObjectGroup(AGDrawObject& G)  {  return GetRender().FindObjectGroup(G); }
   inline TGlGroup* FindGroup(const olxstr& colName)  {  return GetRender().FindGroupByName(colName); }
   inline TGlGroup& GetSelection() const {  return GetRender().GetSelection(); }
@@ -253,7 +263,6 @@ public:
   void SetGridDepth(const vec3d& crd);
 
 protected:
-  TPtrList<AGDrawObject> SelectionCopy;
   bool FQPeaksVisible,
        FHydrogensVisible,
        FHBondsVisible,
@@ -379,7 +388,6 @@ protected:
   void FillXAtomList(TXAtomPList& res, TXAtomPList* providedAtoms);
   void FillXBondList(TXBondPList& res, TXBondPList* providedBonds);
 public:
-  void ClearSelectionCopy();
   void RestoreSelection();
   TUndoData* Name(const olxstr& From, const olxstr& To, bool CheckLabels, bool ClearSelection);
   TUndoData* Name(TXAtom& Atom, const olxstr& Name, bool CheckLabels);
