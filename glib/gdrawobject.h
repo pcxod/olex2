@@ -17,7 +17,8 @@ const short
   sgdoGroup      = 0x0008,
   sgdoGrouped    = 0x0010,
   sgdoDeleted    = 0x0020,
-  sgdoSelectable = 0x0040;
+  sgdoSelectable = 0x0040,
+  sgdoCreated    = 0x0080;
 
 /*
   defines basic functionality of a graphic object, accessible outside of
@@ -83,13 +84,19 @@ public:
   DefPropBFIsSet(Grouped, Flags, sgdoGrouped)
   DefPropBFIsSet(Deleted, Flags, sgdoDeleted)
   DefPropBFIsSet(Selectable, Flags, sgdoSelectable)
+  // for internal use, may not reflect the real state of the object
+  DefPropBFIsSet(Created, Flags, sgdoCreated)
 
   inline bool IsGroup() const {  return (Flags & sgdoGroup) == sgdoGroup; }
 
   short MaskFlags(short mask) const {  return (Flags&mask);  }
 
   virtual inline TGlGroup* GetParentGroup() const {  return ParentGroup;  }
-  virtual void SetParentGroup(TGlGroup* P)  {  SetGrouped((ParentGroup = P) != NULL);  }
+  virtual void SetParentGroup(TGlGroup* P)  {
+    SetGrouped((ParentGroup = P) != NULL);
+    if( P == NULL )
+      SetSelected(false);
+  }
   
   virtual void ListDrawingStyles(TStrList& List)  {}
   virtual void UpdaterimitiveParams(TGlPrimitive* GlP)  {}

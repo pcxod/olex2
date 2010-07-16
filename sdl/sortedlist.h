@@ -241,6 +241,8 @@ public:
   void Clear()  {  list.Clear();  }
   void SetCapacity(size_t cap)  {  list.SetCapacity(cap);  }
   void SetIncrement(size_t incr)  {  list.SetIncrement(incr);  }
+  // may be useful for copy constructors, etc
+  const ListClass& GetList() const {  return list;  }
 };
 //............................................................................................
 // a simple object list to use with sorted list

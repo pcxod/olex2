@@ -172,7 +172,6 @@ public:
     B = FParent->GetRender().GetBasis();
     FParent->GetRender().Clear();
     FParent->HklFile().Clear();
-    FParent->ClearSelectionCopy();
     return true;
   }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
@@ -388,7 +387,6 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   OnObjectsCreate.Enter(dynamic_cast<TBasicApp*>(this), NULL);
   TStopWatch sw(__FUNC__);
   sw.start("Initialising");
-
   const vec3d
     glMax = FGlRender->MaxDim(),
     glMin = FGlRender->MinDim(),
@@ -518,6 +516,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   if( XGrowPointsVisible )  CreateXGrowPoints();
   FXGrid->Create();
   RestoreGroups();
+  RestoreSelection();
   // create hkls
   if( FHklVisible )  SetHklVisible(true);
 
@@ -1363,10 +1362,11 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
   }
   else if( (MsgId == ID_OnUniq || MsgId == ID_OnGrow) && MsgSubId == msiEnter ) {
   }
-  else if( MsgId == ID_OnDisassemble && MsgSubId == msiEnter ) {
-  }
-  else if( MsgId == ID_OnDisassemble && MsgSubId == msiExit ) {
-    CreateObjects(false, false);
+  else if( MsgId == ID_OnDisassemble ) {
+    if( MsgSubId == msiExit )
+      CreateObjects(false, false);
+    else if( MsgSubId == msiEnter )
+      BackupSelection();
   }
   return false;
 }
@@ -1379,21 +1379,17 @@ void TGXApp::GetSelectedCAtoms(TCAtomPList& List, bool Clear)  {
     List.Add( &xAtoms[i]->Atom().CAtom() );
 }
 //..............................................................................
-void TGXApp::ClearSelectionCopy()  {  SelectionCopy.Clear();  }
 //..............................................................................
 void TGXApp::BackupSelection()  {
-  TGlGroup& Sel = GetSelection();
-  if( !Sel.Count() )  return;
   SelectionCopy.Clear();
-  for( size_t i=0; i < Sel.Count(); i++ )
-    SelectionCopy.Add(Sel.GetObject(i));
+  StoreGroup(GetSelection(), SelectionCopy);
 }
 //..............................................................................
 void TGXApp::RestoreSelection()  {
+  if( SelectionCopy.IsEmpty() )
+    return;
   GetRender().SelectAll(false);
-  for( size_t i=0; i < SelectionCopy.Count(); i++ )
-    GetRender().Select( *SelectionCopy[i] );
-  Draw();
+  RestoreGroup(GetSelection(), SelectionCopy);
 }
 //..............................................................................
 void TGXApp::GetSelectedXAtoms(TXAtomPList& List, bool Clear)  {
@@ -2790,7 +2786,6 @@ void TGXApp::StoreGroups(TTypeList<GroupData>& groups)  {
   for( size_t i=0; i <= FGlRender->GroupCount(); i++ )  {
     const TGlGroup& glG = (i < FGlRender->GroupCount() ? FGlRender->GetGroup(i) : FGlRender->GetSelection());
     StoreGroup(glG, groups.AddNew());
-    groups.Last().id = i;
   }
 }
 //..............................................................................
@@ -2921,7 +2916,6 @@ void TGXApp::SetHBondsVisible(bool v)  {
 void TGXApp::SetHydrogensVisible(bool v)  {
   if( FHydrogensVisible != v )  {
     FHydrogensVisible = v;
-    GetRender().ClearSelection();
     XFile().GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
     for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
       OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
@@ -2939,7 +2933,6 @@ void TGXApp::UpdateConnectivity()  {
 void TGXApp::SetQPeaksVisible(bool v)  {
   if( FQPeaksVisible != v )  {
     FQPeaksVisible = v;
-    GetRender().ClearSelection();
     XFile().GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
     for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
       OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
@@ -3759,7 +3752,6 @@ void TGXApp::AlignOverlayedXFiles() {
 //..............................................................................
 void TGXApp::DeleteOverlayedXFile(size_t index) {
   ClearLabels();
-  ClearSelectionCopy();
   OverlayedXFiles.Delete(index);
   CreateObjects(true, false);
   CenterView();
@@ -3935,6 +3927,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   FGlRender->Clear();
   ClearXObjects();
   ClearLabels();
+  ClearGroupDefinitions();
   FXFile->FromDataItem(item.FindRequiredItem("XFile"));
   FGlRender->GetStyles().FromDataItem( item.FindRequiredItem("Style"), true);
   
@@ -4101,21 +4094,28 @@ void TGXApp::LoadModel(const olxstr& fileName) {
 void TGXApp::GroupSelection(const olxstr& name)  {
   TGlGroup* glg = GetRender().GroupSelection(name);
   if( glg != NULL )  {
-    for( size_t i=0; i < FGlRender->GroupCount(); i++ )
-      FGlRender->GetGroup(i).SetTag(i);
-    FGlRender->GetSelection().SetTag(-1);
     StoreGroup(*glg, GroupDefs.AddNew());
-    for( size_t i=0; i < GroupDefs.Count(); i++ )  {
-      TGlGroup* p = FGlRender->GetGroup(i).GetParentGroup();
-      GroupDefs[i].parent_id = (p == NULL ? -2 : p->GetTag()) ;
-    }
+    _UpdateGroupIds();
     GroupDict(glg, GroupDefs.Count()-1);
     Draw();
   }
 }
 //..............................................................................
 void TGXApp::UnGroupSelection()  {
-  GetRender().UnGroupSelection();
+  TGlGroup& sel = GetSelection();
+  if( sel.Count() < 2 )  return;
+  for( size_t i=0; i < sel.Count(); i++ )  {
+    if( EsdlInstanceOf(sel[i], TGlGroup) )  {
+      TGlGroup& G = (TGlGroup&)sel[i];
+      size_t i = GroupDict.IndexOf(&G);
+      if( i != InvalidIndex )  {
+        GroupDefs.Delete(GroupDict.GetValue(i));
+        GroupDict.Delete(i);
+      }
+      GetRender().UnGroup(G);
+    }
+    _UpdateGroupIds();
+  }
   Draw();
 }
 //..............................................................................
@@ -4126,6 +4126,17 @@ void TGXApp::UnGroup(TGlGroup& G)  {
     GroupDict.Delete(i);
   }
   GetRender().UnGroup(G);
+  _UpdateGroupIds();
   Draw();
+}
+//..............................................................................
+void TGXApp::_UpdateGroupIds()  {
+  for( size_t i=0; i < FGlRender->GroupCount(); i++ )
+    FGlRender->GetGroup(i).SetTag(i);
+  FGlRender->GetSelection().SetTag(-1);
+  for( size_t i=0; i < GroupDefs.Count(); i++ )  {
+    TGlGroup* p = FGlRender->GetGroup(i).GetParentGroup();
+    GroupDefs[i].parent_id = (p == NULL ? -2 : p->GetTag()) ;
+  }
 }
 //..............................................................................
