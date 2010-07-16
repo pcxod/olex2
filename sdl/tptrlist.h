@@ -99,10 +99,10 @@ public:
   }
 //..............................................................................
   template <class List> TPtrList& AddList(const List& l)  {
-    SetCapacity(list.Count() + FCount);
+    SetCapacity(l.Count() + FCount);
     for( size_t i=0; i < l.Count(); i++ )
       Items[FCount+i] = l[i];
-    FCount += list.Count();
+    FCount += l.Count();
     return *this;
   }
 //..............................................................................
