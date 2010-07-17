@@ -52,7 +52,8 @@ class TGlRenderer : public IEObject  {
 //  TPtrList<class TGPCollection> FCollections; // a named list of collections (TGPCollection)
 //  TSPtrList<TGlMaterial> FTranslucentObjects, FIdentityObjects, FTranslucentIdentityObjects;
   TPtrList<TGlMaterial> FTranslucentObjects, FIdentityObjects, FTranslucentIdentityObjects;
-  SortedPtrList<AGDrawObject, TPointerPtrComparator> FGObjects;
+  typedef SortedPtrList<AGDrawObject, TPointerPtrComparator> GObjectList;
+  GObjectList FGObjects;
   TPtrList<TGlGroup> FGroups;   // list of groups
   TGlGroup* FSelection;  // list of selected objects
   class TTextureManager* TextureManager;
@@ -197,8 +198,9 @@ public:
   AGDrawObject* SelectObject(int x, int y, int depth=0);
   class TGlPrimitive* SelectPrimitive(int x, int y);
 
-  size_t GroupCount() const {  return FGroups.Count(); }
-  TGlGroup& GetGroup(size_t i) const {  return *FGroups[i]; }
+  size_t GroupCount() const {  return FGroups.Count();  }
+  TGlGroup& GetGroup(size_t i) const {  return *FGroups[i];  }
+  const TPtrList<TGlGroup>& GetGroups() const {  return FGroups;  }
   TGlGroup& NewGroup(const olxstr& collection_name);
   TGlGroup* FindGroupByName(const olxstr& colName) const;
   TGlGroup* FindObjectGroup(const AGDrawObject& G) const;
@@ -261,7 +263,7 @@ public:
   void SetObjectsCapacity(size_t v)  { FGObjects.SetCapacity(v);  } 
   AGDrawObject& GetObject(size_t i) const {  return *FGObjects[i]; }
   void RemoveObject(AGDrawObject& D)  {  FGObjects.Remove(&D);  }
-  void RemoveObjects(const TPtrList<AGDrawObject>& objects);
+  void RemoveObjects(const AGDObjList& objects);
   void AddObject(AGDrawObject& G);
   size_t ObjectCount() const {  return FGObjects.Count(); }
 

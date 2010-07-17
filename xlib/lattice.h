@@ -113,6 +113,7 @@ public:
   }
   inline size_t FragmentCount() const {  return Fragments.Count(); }
   inline TNetwork& GetFragment(size_t i) const {  return olx_is_valid_index(i) ? *Fragments[i] : *Network;  }
+  const TNetPList& GetFragments() const {  return Fragments;  }
 
   inline size_t MatrixCount() const {  return Matrices.Count();  }
   const smatd& GetMatrix(size_t i) const {  return *Matrices[i];  }
@@ -120,6 +121,7 @@ public:
 
   inline size_t AtomCount() const {  return Atoms.Count();  }
   inline TSAtom& GetAtom(size_t i) const {  return *Atoms[i];  }
+  const TSAtomPList& GetAtoms() const {  return Atoms;  }
   TSAtom* FindSAtom(const olxstr &Label) const;
   TSAtom* FindSAtom(const TCAtom& ca) const;
   TSAtom* FindSAtom(const TSAtom::Ref& id) const {
@@ -133,10 +135,12 @@ public:
   void RestoreAtom(const TSAtom::FullRef& id);
 
   inline size_t BondCount() const {  return Bonds.Count();  }
-  inline TSBond& GetBond(size_t i) const {  return *Bonds[i]; }
+  inline TSBond& GetBond(size_t i) const {  return *Bonds[i];  }
+  const TSBondPList& GetBonds() const {  return Bonds;  }
 
   inline size_t PlaneCount() const {  return Planes.Count(); }
   inline TSPlane& GetPlane(size_t i) const {  return *Planes[i];  }
+  const TSPlanePList& GetPlanes() const {  return Planes;  }
   // for the grown structure might return more than one plane
   TSPlanePList NewPlane(const TSAtomPList& Atoms, int weightExtent=0);
   void ClearPlaneDefinitions()  {  PlaneDefs.Clear();  }

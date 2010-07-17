@@ -66,7 +66,6 @@ public:
 class TObjectGroup: public IEObject  {
 protected:
   AGOProperties* FindProps(const AGOProperties& C);
-protected:
   TPtrList<AGroupObject> Objects;
   TPtrList<AGOProperties> Props;
 public:
@@ -76,6 +75,9 @@ public:
   template <class AGO>
   AGroupObject& AddObject(AGO const& O)  {  return *Objects.Add(O);  }
   inline AGroupObject& GetObject(size_t index) const {  return *Objects[index]; }
+  // access to the lists
+  const TPtrList<AGroupObject>& GetObjects() const {  return Objects;  }
+  const TPtrList<AGOProperties>& GetProperties() const {  return Props;  }
   inline size_t ObjectCount() const {  return Objects.Count(); }
   template <class AGO>  size_t IndexOfObject(const AGO& G)  {  return Objects.IndexOf(G); }
   // used to remove objects form the collection; if an object->Tag ==Tag, it is removed

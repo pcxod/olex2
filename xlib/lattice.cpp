@@ -870,17 +870,13 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
 }
 //..............................................................................
 void TLattice::UpdatePlaneDefinitions()  {
-  for( size_t i=0; i < PlaneDefs.Count(); i++ )
-    PlaneDefs[i].SetTag(0);
+  PlaneDefs.ForEach(ACollectionItem::TagSetter<>(0));
   for( size_t i=0; i < Planes.Count(); i++ )  {
     if( Planes[i]->IsDeleted() || Planes[i]->GetDefId() >= PlaneDefs.Count() )  // would be odd
       continue;
     PlaneDefs[Planes[i]->GetDefId()].IncTag();
   }
-  for( size_t i=0; i < PlaneDefs.Count(); i++ )
-    if( PlaneDefs[i].GetTag() == 0 )
-      PlaneDefs.NullItem(i);
-  PlaneDefs.Pack();
+  PlaneDefs.Pack(ACollectionItem::TagAnalyser<>(0));
 }
 //..............................................................................
 void TLattice::UpdateAsymmUnit()  {

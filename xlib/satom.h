@@ -46,9 +46,10 @@ public:
   bool IsAvailable() const {  return !(IsDeleted() || FCAtom->IsDetached());  }
   bool IsGrown() const;
   void SetGrown(bool v)  {  SetBit(v, Flags, satom_Grown);  }
-
+  struct CAtomAccessor  {
+    static inline TCAtom& Access(TSAtom& a)  {  return a.CAtom();  }
+  };
   operator TCAtom* () const {  return FCAtom;  }
-
   TCAtom& CAtom() const {  return *FCAtom; }
   void CAtom(TCAtom& CA);
 

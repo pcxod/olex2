@@ -100,7 +100,7 @@ public:
   }
   // finds a cif value for a list of TSATOMS(!)
   ACifValue* Match(const TSAtomCPList& Atoms) const {
-    size_t ci = Data.IndexOf(Atoms.Count());
+    const size_t ci = Data.IndexOf(Atoms.Count());
     if( ci == InvalidIndex )  return NULL;
     const TPtrList<ACifValue>& items = Data.GetValue(ci);
     for( size_t i=0; i < items.Count(); i++ )  {
@@ -108,6 +108,11 @@ public:
         return items[i];
     }
     return NULL;
+  }
+  const TPtrList<ACifValue>* FindValues(size_t number_of_atoms) const {
+    const size_t ci = Data.IndexOf(number_of_atoms);
+    if( ci == InvalidIndex )  return NULL;
+    return &Data.GetValue(ci);
   }
   void Clear()  {
     for( size_t i=0; i < Data.Count(); i++ )  {

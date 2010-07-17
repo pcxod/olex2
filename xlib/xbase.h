@@ -98,6 +98,7 @@ public:
 
   inline size_t NodeCount() const {  return Nodes.Count(); }
   inline NodeType& Node(size_t i) const {  return *Nodes[i]; }
+  const TPtrList<NodeType>& GetNodes() const {  return Nodes;  }
   inline NodeType& AddNode(NodeType& N)  {  return *Nodes.Add(N);  }
   inline bool IsConnectedTo(NodeType &N)  {  return Nodes.IndexOf(N) != InvalidIndex;  }
   inline void NullNode(size_t i)  {  Nodes[i] = NULL; }
@@ -115,6 +116,7 @@ public:
   inline size_t BondCount() const {  return Bonds.Count(); }
   inline BondType& Bond(size_t i) const {  return *Bonds[i]; }
   inline BondType& AddBond(BondType& N)  {  return *Bonds.Add(N);  }
+  const TPtrList<BondType>& GetBonds() const {  return Bonds;  }
   inline void NullBond(size_t i)  {  Bonds[i] = NULL;  }
   inline bool NullBond(const BondType& N) {  
     size_t ind = Bonds.IndexOf(N);

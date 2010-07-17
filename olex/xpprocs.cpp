@@ -1620,7 +1620,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   if( Cmds.Count() == 1 && Cmds[0].Equalsi("sel") )  {
-    TPtrList<AGDrawObject> Objects;
+    AGDObjList Objects;
     TGlGroup& sel = FXApp->GetSelection();
     olxstr out;
     for( size_t i=0; i < sel.Count(); i++ )  {
@@ -1662,7 +1662,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( Cmds.Count() == 0 || Cmds[0].Equalsi("sel") )  {
-    TPtrList<AGDrawObject> Objects;
+    AGDObjList Objects;
     TGlGroup& sel = FXApp->GetSelection();
     for( size_t i=0; i < sel.Count(); i++ )  
       Objects.Add( sel[i] );
@@ -1673,7 +1673,7 @@ void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TXAtomPList Atoms;
     FXApp->FindXAtoms(Cmds.Text(' '), Atoms, true, Options.Contains('h'));
     if( Atoms.IsEmpty() )  return;
-    TPtrList<AGDrawObject> go;
+    AGDObjList go;
     TListCaster::TT(Atoms, go);
     FUndoStack->Push( FXApp->SetGraphicsVisible(go, false) );
   }
@@ -2290,7 +2290,7 @@ void TMainForm::macQPeakSizeScale(TStrObjList &Cmds, const TParamList &Options, 
 //..............................................................................
 void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXAtomPList atoms;
-  FindXAtoms(Cmds, atoms, true, true);
+  FindXAtoms(Cmds, atoms, true, false);
   short lt = 0, symm_tag = 0;
   const olxstr str_lt = Options.FindValue("type");
   olxstr str_symm_tag = Options.FindValue("symm");
@@ -2300,17 +2300,17 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     lt = 1;
   else if( str_lt.Equalsi("subscript") )
     lt = 2;
-  if( str_symm_tag.Equals('$') )  {  // have to kill labels in this case, for consistency of _$
+  if( str_symm_tag =='$' || str_symm_tag == '#' )  {  // have to kill labels in this case, for consistency of _$ or ^#
     for( size_t i=0; i < FXApp->LabelCount(); i++ )
       FXApp->GetLabel(i).SetDeleted(true);
-    symm_tag = 1;
+    symm_tag = (str_symm_tag =='$' ? 1 : 2);
   }
   else if( str_symm_tag.Equals("full") )
-    symm_tag = 2;
+    symm_tag = 3;
   TTypeList<uint32_t> equivs;
   for( size_t i=0; i < atoms.Count(); i++ )  {
     // 4 - Picture_labels, TODO - avoid naked index reference...
-    TXGlLabel* gxl = FXApp->CreateLabel(atoms[i], 4);
+    TXGlLabel& gxl = FXApp->CreateLabel(*atoms[i], 4);
     olxstr lb;
     if( lt != 0 && atoms[i]->Atom().GetLabel().Length() > atoms[i]->Atom().GetType().symbol.Length() )  {
       olxstr bcc = atoms[i]->Atom().GetLabel().SubStringFrom(atoms[i]->Atom().GetType().symbol.Length());
@@ -2321,21 +2321,24 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         lb << "\\-" << bcc;
     }
     else
-      lb = gxl->GetLabel();
+      lb = gxl.GetLabel();
     if( !atoms[i]->Atom().GetMatrix(0).IsFirst() )  {
-      if( symm_tag == 1 )  {
+      if( symm_tag == 1 || symm_tag == 2 )  {
         size_t pos = equivs.IndexOf(atoms[i]->Atom().GetMatrix(0).GetId());
         if( pos == InvalidIndex )  {
           equivs.AddCCopy(atoms[i]->Atom().GetMatrix(0).GetId());
           pos = equivs.Count()-1;
         }
-        lb << "_$" << (pos+1);
+        if( symm_tag == 1 )
+          lb << "_$" << (pos+1);
+        else
+          lb << "\\+" << (pos+1);
       }
-      else if( symm_tag == 2 )
+      else if( symm_tag == 3 )
         lb << ' ' << TSymmParser::MatrixToSymmEx(atoms[i]->Atom().GetMatrix(0));
     }
-    gxl->SetLabel(lb);
-    gxl->SetVisible(true);
+    gxl.SetLabel(lb);
+    gxl.SetVisible(true);
   }
   for( size_t i=0; i < equivs.Count(); i++ )  {
     smatd m = FXApp->XFile().GetUnitCell().GetMatrix(smatd::GetContainerId(equivs[i]));
@@ -2348,6 +2351,27 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     TBasicApp::GetLog() << line.Format(26, true, ' ');
   }
   TBasicApp::GetLog() << '\n';
+
+  const olxstr _cif = Options.FindValue("cif");
+  if( !_cif.IsEmpty() && FXApp->CheckFileType<TCif>() )  {
+    const TCifDataManager& cifdn = FXApp->XFile().GetLastLoader<TCif>().GetDataManager();
+    const TGlGroup& sel = FXApp->GetSelection();
+    for( size_t i=0; i < sel.Count(); i++ )  {
+      if( EsdlInstanceOf(sel[i], TXBond) )  {
+        TSBond& b = ((TXBond&)sel[i]).Bond();
+        ACifValue* v = cifdn.Match(b.A(), b.B());
+        if( v == NULL )  continue;
+        TXGlLabel& l = FXApp->CreateLabel((b.A().crd()+b.B().crd())/2, v->GetValue().ToString(), 4);
+        vec3d off(-l.GetRect().width/2, -l.GetRect().height/2, 0);
+        //const double scale = l.GetFont().IsVectorFont() ? 1.0 : 1.0/FXApp->GetRender().GetBasis().GetZoom();
+        const double scale = 1.0/FXApp->GetRender().GetBasis().GetZoom();
+        l.TranslateBasis(off*scale);
+        //l.Get
+      }
+    }
+    //cifdn.
+  }
+  FXApp->SelectAll(false);
 }
 //..............................................................................
 void TMainForm::macFocus(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -2464,23 +2488,30 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macSump(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   RefinementModel& rm = FXApp->XFile().GetRM();
-  TCAtomPList CAtoms;
-  FXApp->FindCAtoms(Cmds.Text(' '), CAtoms);
-  if( CAtoms.Count() < 2 )  {
-    E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected" );
-    return;
-  }
+  TXAtomPList xatoms;
   double val = 1, esd = 0.01;
   XLibMacros::ParseNumbers<double>(Cmds, 2, &val, &esd);
+  FindXAtoms(Cmds, xatoms, false, true);
+  // create a list of unique catoms
+  for( size_t i=0; i < xatoms.Count(); i++ )
+    xatoms[i]->Atom().CAtom().SetTag(i);
+  TCAtomPList catoms;
+  for( size_t i=0; i < xatoms.Count(); i++ )
+    if( xatoms[i]->Atom().CAtom().GetTag() == i )  
+      catoms.Add(xatoms[i]->Atom().CAtom());
+  if( catoms.Count() < 2 )  {
+    E.ProcessingError(__OlxSrcInfo, "at least two unique atoms should be provided");
+    return;
+  }
   XLEQ& xeq = rm.Vars.NewEquation(val, esd);
-  for( size_t i=0; i < CAtoms.Count(); i++ )  {
-    if( CAtoms[i]->GetVarRef(catom_var_name_Sof) == NULL || 
-      CAtoms[i]->GetVarRef(catom_var_name_Sof)->relation_type == relation_None )  
+  for( size_t i=0; i < catoms.Count(); i++ )  {
+    if( catoms[i]->GetVarRef(catom_var_name_Sof) == NULL || 
+      catoms[i]->GetVarRef(catom_var_name_Sof)->relation_type == relation_None )  
     {
-      XVar& xv = rm.Vars.NewVar(1./CAtoms.Count());
-      rm.Vars.AddVarRef(xv, *CAtoms[i], catom_var_name_Sof, relation_AsVar, 1.0);
+      XVar& xv = rm.Vars.NewVar(1./catoms.Count());
+      rm.Vars.AddVarRef(xv, *catoms[i], catom_var_name_Sof, relation_AsVar, 1.0);
     }
-    xeq.AddMember( CAtoms[i]->GetVarRef(catom_var_name_Sof)->Parent );
+    xeq.AddMember(catoms[i]->GetVarRef(catom_var_name_Sof)->Parent);
   }
 }
 //..............................................................................
@@ -5272,31 +5303,27 @@ void TMainForm::funAlert(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::macAddLabel(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  double x = 0, 
-         y = 0, 
-         z = 0;
+  vec3d crd;
   olxstr name, label;
   if( Cmds.Count() == 3 )  {
     name = Cmds[0];
     label = Cmds[2];
     TStrList toks;
-    toks.Strtok( Cmds[1], ' ');
+    toks.Strtok(Cmds[1], ' ');
     if( toks.Count() == 3 )  {
-      x = toks[0].ToDouble();
-      y = toks[1].ToDouble();
-      z = toks[2].ToDouble();
+      crd[0] = toks[0].ToDouble();
+      crd[1] = toks[1].ToDouble();
+      crd[2] = toks[2].ToDouble();
     }
   }
   else  if( Cmds.Count() == 5 ) {
     name = Cmds[0];
-    x = Cmds[1].ToDouble();
-    y = Cmds[2].ToDouble();
-    z = Cmds[3].ToDouble();
+    crd[0] = Cmds[1].ToDouble();
+    crd[1] = Cmds[2].ToDouble();
+    crd[2] = Cmds[3].ToDouble();
     label = Cmds[4];
   }
-  FXApp->AddLabel( name, 
-                   vec3d(x, y, z),
-                   label);
+  FXApp->AddLabel(name, crd, label);
 }
 //..............................................................................
 //

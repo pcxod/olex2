@@ -126,10 +126,12 @@ public:
   static void SetQPeakSizeScale(float V);    // to use with q-peaks
 
   void CalcRad(short DefAtomR);
-
+  struct AtomAccessor  {
+    static TSAtom& Access(TXAtom& a)  {  return a.Atom();  }
+  };
   inline operator TSAtom* () const {  return FAtom;  }
-  
   inline TSAtom& Atom() const  {  return *FAtom;  }
+
   void ApplyStyle(TGraphicsStyle& S);
   void UpdateStyle(TGraphicsStyle& S);
 

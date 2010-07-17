@@ -101,7 +101,7 @@ public:
   template <class List> TPtrList& AddList(const List& l)  {
     SetCapacity(l.Count() + FCount);
     for( size_t i=0; i < l.Count(); i++ )
-      Items[FCount+i] = l[i];
+      Set(FCount+i, l[i]);
     FCount += l.Count();
     return *this;
   }
@@ -119,6 +119,15 @@ public:
   }
 //..............................................................................
   inline T*& Add(T& Obj)  {  return Add(&Obj);  }
+//..............................................................................
+  inline T*& Set(size_t i, T* pObj)  {
+#ifdef _DEBUG
+  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, i, 0, FCount);
+#endif
+    return (Items[i] = pObj);
+  }
+//..............................................................................
+  inline T*& Set(size_t i, T& Obj)  {  return Set(i , &Obj);  }
 //..............................................................................
   inline T*& AddUnique(T* pObj)  {
     const size_t ind = IndexOf(pObj);
@@ -174,6 +183,13 @@ public:
     SetCapacity((long)(FCount + FIncrement + cnt));
     memmove(&Items[index+cnt], &Items[index], (FCount-index)*sizeof(T*));
     FCount += cnt;
+  }
+//..............................................................................
+  inline void NullItem(size_t index) const {
+#ifdef _DEBUG
+  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
+#endif
+    Items[index] = NULL;
   }
 //..............................................................................
   inline T*& operator [] (size_t index) const {
@@ -342,6 +358,40 @@ public:
       Items[nc] = Items[i];
     }
     FCount = nc;
+  }
+//..............................................................................
+  template <class PackAnalyser> void Pack(const PackAnalyser& pa)  {
+    size_t nc = 0;  // count null pointers
+    for( size_t i=0; i < FCount; i++, nc++ )  {
+      if( pa.OnItem(*Items[i]) )  {
+        nc--;
+        continue;
+      }
+      Items[nc] = Items[i];
+    }
+    FCount = nc;
+  }
+//..............................................................................
+  template <class PackAnalyser> void PackEx(const PackAnalyser& pa)  {
+    size_t nc = 0;  // count null pointers
+    for( size_t i=0; i < FCount; i++, nc++ )  {
+      if( pa.OnItem(*Items[i], i) )  {
+        nc--;
+        continue;
+      }
+      Items[nc] = Items[i];
+    }
+    FCount = nc;
+  }
+//..............................................................................
+  template <class Functor> void ForEach(const Functor& f) const {
+    for( size_t i=0; i < FCount; i++ )
+      f.OnItem(*Items[i]);
+  }
+//..............................................................................
+  template <class Functor> void ForEachEx(const Functor& f) const {
+    for( size_t i=0; i < FCount; i++ )
+      f.OnItem(*Items[i], i);
   }
 //..............................................................................
   inline void Shrink() {
