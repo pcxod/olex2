@@ -1,5 +1,5 @@
-#ifndef gdrawobjectH
-#define gdrawobjectH
+#ifndef __olx_gl_gdrawobject_H
+#define __olx_gl_gdrawobject_H
 #include "glbase.h"
 #include "evector.h"
 #include "emath.h"
@@ -76,13 +76,18 @@ public:
 
   // need a virtual setters for these
   virtual void SetVisible(bool v)  {  SetBit(v, Flags, sgdoVisible);  }
-  inline bool IsVisible() const {  return ((Flags&sgdoVisible) != 0) && !IsDeleted();  }
+  inline bool IsVisible() const {  return ((Flags&sgdoVisible) != 0);  }
   virtual void SetSelected(bool v)  {  SetBit(v, Flags, sgdoSelected);  }
   inline bool IsSelected() const {  return ((Flags&sgdoSelected) != 0);  }
 
   DefPropBFIsSet(Groupable, Flags, sgdoGroupable)
   DefPropBFIsSet(Grouped, Flags, sgdoGrouped)
-  DefPropBFIsSet(Deleted, Flags, sgdoDeleted)
+  void SetDeleted(bool v)  {
+    SetBit(v, Flags, sgdoDeleted);
+    if( v )
+      SetBit(false, Flags, sgdoVisible);
+  }
+  inline bool IsDeleted() const {  return ((Flags&sgdoDeleted) != 0);  }
   DefPropBFIsSet(Selectable, Flags, sgdoSelectable)
   // for internal use, may not reflect the real state of the object
   DefPropBFIsSet(Created, Flags, sgdoCreated)
@@ -129,7 +134,27 @@ public:
   virtual void Individualize() {}
   virtual void Collectivize()  {}
 
+  struct FlagsAnalyser  {
+    const short ref_flags;
+    FlagsAnalyser(short _ref_flags) : ref_flags(_ref_flags)  {}
+    inline bool OnItem(const AGDrawObject& o) const {  return o.MaskFlags(ref_flags) != 0;  }
+  };
+  template <class Actor> struct FlagsAnalyserEx  {
+    const short ref_flags;
+    const Actor actor;
+    FlagsAnalyserEx(short _ref_flags, const Actor& _actor) : ref_flags(_ref_flags), actor(_actor)  {}
+    inline bool OnItem(AGDrawObject& o) const {
+      if( o.MaskFlags(ref_flags) != 0 )
+        return actor.OnItem(o);
+      return false;
+    }
+  };
+  struct PrimitivesAccessor  {
+    static TGPCollection& Access(const AGDrawObject& o)  {  return o.GetPrimitives();  }
+  };
 };
+
+typedef TPtrList<AGDrawObject> AGDObjList;
 
 EndGlNamespace()
 #endif

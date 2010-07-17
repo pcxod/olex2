@@ -1005,11 +1005,8 @@ void XLibMacros::macAnis(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
   TCAtomPList catoms;
   TListCaster::POP(atoms, catoms);
-  bool useH = Options.Contains("h");
-  for( size_t i=0; i < catoms.Count(); i++ )
-    if( !useH && catoms[i]->GetType() == iHydrogenZ )
-      catoms[i] = NULL;
-  catoms.Pack();
+  if( !Options.Contains("h") )
+    catoms.Pack(TCAtom::TypeAnalyser(iHydrogenZ));
   TXApp::GetInstance().XFile().GetLattice().SetAnis(catoms, true);
 }
 //..............................................................................

@@ -48,6 +48,9 @@ public:
   static olxstr GetLegend(const TSBond& B, const short level);
 
   // beware - for objects, having no wrapped bond this might fail
+  struct BondAccessor  {
+    static TSBond& Access(TXBond& b)  {  return b.Bond();  }
+  };
   inline TSBond& Bond() const {  return *FBond; }
   
   void SetRadius(float V);

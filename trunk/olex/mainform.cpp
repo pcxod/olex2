@@ -719,8 +719,9 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacroD(QPeakSizeScale, EmptyString, fpNone|fpOne,
     "Prints/sets the scale the Q-peak size relative to other atoms, default is 1");
   this_InitMacroD(Label, "type-type of labels to make (works only for the PostScript output);"
- " possible options - subscript, brackers, default&;symm-symmetry dependent tag type {[$], full}",
- fpAny, "Creates moveable labels for provided atoms (selection)");
+    " possible options - subscript, brackers, default&;symm-symmetry dependent tag type {[$], #, full}&;"
+    "cif-creates labels for CIF data a combination of {b,a,t,h}",
+ fpAny, "Creates moveable labels for provided atoms/bonds/angles (selection)");
 
   this_InitMacroD(Focus, EmptyString, fpNone, "Sets input focus to the console");
   this_InitMacroD(Refresh, EmptyString, fpNone, "Refreshes the GUI");
@@ -1645,7 +1646,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     if( FObjectUnderMouse->IsSelected() )
       ProcessMacro("kill sel");
     else  {
-      TPtrList<AGDrawObject> l;
+      AGDObjList l;
       l.Add(FObjectUnderMouse);
       FUndoStack->Push(FXApp->DeleteXObjects(l));
     }

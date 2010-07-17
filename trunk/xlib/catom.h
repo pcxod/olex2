@@ -215,6 +215,16 @@ public:
   PyObject* PyExport();
 #endif
   static int CompareAtomLabels(const olxstr& S, const olxstr& S1);
+  struct FlagsAnalyser  {
+    const short ref_flags;
+    FlagsAnalyser(short _ref_flags) : ref_flags(_ref_flags)  {}
+    inline bool OnItem(const TCAtom& o) const {  return (o.Flags&ref_flags) != 0;  }
+  };
+  struct TypeAnalyser  {
+    const short ref_type;
+    TypeAnalyser(short _ref_type) : ref_type(_ref_type)  {}
+    inline bool OnItem(const TCAtom& o) const {  return o.GetType() == ref_type;  }
+  };
   friend class TAsymmUnit;
 };
 //..............................................................................

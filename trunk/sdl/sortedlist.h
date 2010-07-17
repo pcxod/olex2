@@ -243,6 +243,11 @@ public:
   void SetIncrement(size_t incr)  {  list.SetIncrement(incr);  }
   // may be useful for copy constructors, etc
   const ListClass& GetList() const {  return list;  }
+  // allows to remove multiple items using a condition
+  template <class PackAnalyser> void Pack(const PackAnalyser& pa)  {  list.Pack(pa);  }
+  template <class PackAnalyser> void PackEx(const PackAnalyser& pa)  {  list.PackEx(pa);  }
+  template <class Functor> void ForEach(const Functor& f) const {  list.ForEach(f);  }
+  template <class Functor> void ForEachEx(const Functor& f) const {  list.ForEachEx(f);  }
 };
 //............................................................................................
 // a simple object list to use with sorted list

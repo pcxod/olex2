@@ -182,7 +182,7 @@ void TGlRenderer::_OnStylesClear()  {
 void TGlRenderer::_OnStylesLoaded()  {
   for( size_t i=0; i < FCollections.Count(); i++ )
     FCollections.GetObject(i)->SetStyle(&FStyles->NewStyle(FCollections.GetObject(i)->GetName(), true));
-  TPtrList<AGDrawObject> GO = FGObjects.GetList();
+  AGDObjList GO = FGObjects.GetList();
   for( size_t i=0; i < GO.Count(); i++ )  {
     GO[i]->OnPrimitivesCleared();
     GO[i]->SetCreated(false);
@@ -723,7 +723,7 @@ void TGlRenderer::Select(AGDrawObject& G, bool v)  {
 }
 //..............................................................................
 void TGlRenderer::InvertSelection()  {
-  TPtrList<AGDrawObject> Selected;
+  AGDObjList Selected;
   const size_t oc = FGObjects.Count();
   for( size_t i=0; i < oc; i++ )  {
     AGDrawObject* GDO = FGObjects[i];
@@ -748,9 +748,11 @@ void TGlRenderer::SelectAll(bool Select)  {
     for( size_t i=0; i < ObjectCount(); i++ )  {
       AGDrawObject& GDO = GetObject(i);
       if( !GDO.IsGrouped() && GDO.IsVisible() && GDO.IsSelectable() )  {
-        if( GDO.GetPrimitives().PrimitiveCount() != 0 &&
-          FSelection->GetGlM().IsIdentityDraw() != GDO.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw())
-          continue;
+        if( !FSelection->IsEmpty() )  {
+          if( GDO.GetPrimitives().PrimitiveCount() != 0 &&
+            FSelection->GetGlM().IsIdentityDraw() != GDO.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw() )
+            continue;
+        }
         if( &GDO == FSelection )  continue;
         if( EsdlInstanceOf(GDO, TGlGroup) )  {
           bool Add = false;
@@ -796,7 +798,7 @@ void TGlRenderer::ClearSelection()  {
 //..............................................................................
 TGlGroup* TGlRenderer::GroupSelection(const olxstr& groupName)  {
   if( FSelection->Count() > 1 )  {
-    TPtrList<AGDrawObject> ungroupable;
+    AGDObjList ungroupable;
     if( !FSelection->TryToGroup(ungroupable) )
       return NULL;
     TGlGroup *OS = FSelection;
@@ -824,7 +826,7 @@ void TGlRenderer::UnGroup(TGlGroup& OS)  {
   if( FSelection->Contains(OS) )
     FSelection->Remove(OS);
 
-  TPtrList<AGDrawObject> Objects(OS.Count());
+  AGDObjList Objects(OS.Count());
   for( size_t i=0; i < OS.Count(); i++ )
     Objects[i] = &OS[i];
   OS.GetPrimitives().RemoveObject(OS); // 
@@ -887,9 +889,8 @@ void TGlRenderer::OnSetProperties(const TGlMaterial& P)  {  // tracks translucen
   }
 }
 //..............................................................................
-void TGlRenderer::RemoveObjects(const TPtrList<AGDrawObject>& objects)  {
-  for( size_t i=0; i < objects.Count(); i++ )
-    FGObjects.Remove(objects[i]);
+void TGlRenderer::RemoveObjects(const AGDObjList& objects)  {
+  ACollectionItem::Exclude<>(FGObjects, objects);
 }
 //..............................................................................
 void TGlRenderer::AddObject(AGDrawObject& G)  {
@@ -914,13 +915,10 @@ void TGlRenderer::RemoveCollection(TGPCollection& GP)  {
   FTranslucentObjects.Clear();
   FIdentityObjects.Clear();
 
-  for( size_t i=0; i < PrimitiveCount(); i++ )
-    GetPrimitive(i).SetTag(-1);
-  for( size_t i=0; i < GP.PrimitiveCount(); i++ )
-    GP.GetPrimitive(i).SetTag(0);
+  Primitives.GetObjects().ForEach(ACollectionItem::TagSetter<>(-1));
+  GP.GetPrimitives().ForEach(ACollectionItem::TagSetter<>(0));
   Primitives.RemoveObjectsByTag(0);
-  FCollections.Delete( FCollections.IndexOfObject(&GP) );
-
+  FCollections.Delete(FCollections.IndexOfObject(&GP));
   for( size_t i=0; i < Primitives.PropertiesCount(); i++ )  {
     TGlMaterial& GlM = Primitives.GetProperties(i);
     if( GlM.IsTransparent() && GlM.IsIdentityDraw()  )
@@ -939,14 +937,12 @@ void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
   FTranslucentObjects.Clear();
   FIdentityObjects.Clear();
 
-  for( size_t i=0; i < PrimitiveCount(); i++ )
-    GetPrimitive(i).SetTag(-1);
+  Primitives.GetObjects().ForEach(ACollectionItem::TagSetter<>(-1));
   for( size_t i=0; i < Colls.Count(); i++ )  {
-    for( size_t j=0; j < Colls[i]->PrimitiveCount(); j++ )
-      Colls[i]->GetPrimitive(j).SetTag(0);
+    Colls[i]->GetPrimitives().ForEach(ACollectionItem::TagSetter<>(0));
     Primitives.RemoveObjectsByTag(0);
-    size_t col_ind = FCollections.IndexOfObject(Colls[i]);
-    FCollections.Remove( col_ind );
+    const size_t col_ind = FCollections.IndexOfObject(Colls[i]);
+    FCollections.Remove(col_ind);
     delete Colls[i];
   }
   for( size_t i=0; i < Primitives.PropertiesCount(); i++ )  {

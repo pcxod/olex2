@@ -96,8 +96,8 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   TXGlLabels *FLabels;
 
   // have to manage memory ourselves - base class is used
-  TPtrList<AGDrawObject> LooseObjects;
-  TPtrList<AGDrawObject> ObjectsToCreate;
+  AGDObjList LooseObjects;
+  AGDObjList ObjectsToCreate;
 
   void ClearXObjects();
 
@@ -127,7 +127,7 @@ protected:
 
   void FragmentVisible( TNetwork *N, bool V);
   bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
-  void GetGPCollections(TPtrList<AGDrawObject>& GDObjects, TPtrList<TGPCollection>& Result);
+  void GetGPCollections(AGDObjList& GDObjects, TPtrList<TGPCollection>& Result);
   // visibility is stored in a bitarray
   TEBitArray FVisibility;
   void RestoreVisibility();
@@ -143,15 +143,22 @@ protected:
       atoms.Clear();
       bonds.Clear();
     }
+    GroupData& operator = (const GroupData& g)  {
+      atoms = g.atoms;
+      bonds = g.bonds;
+      collectionName = g.collectionName;
+      visible = g.visible;
+      parent_id = g.parent_id;
+      return *this;
+    }
   };
   TTypeList<GroupData> GroupDefs;
-  GroupData SelectionCopy;
+  GroupData SelectionCopy[2];
   olxdict<TGlGroup*,size_t, TPointerPtrComparator> GroupDict;
   // stores numeric references
   void RestoreGroup(TGlGroup& glg, const GroupData& group);
   void RestoreGroups();
   void StoreGroup(const TGlGroup& glg, GroupData& group);
-  void StoreGroups(TTypeList<GroupData>& groups);
   void _UpdateGroupIds();
 public:
   // stores groups beforehand abd restores afterwards, also considers overlayed files
@@ -184,7 +191,8 @@ public:
   void ClearIndividualCollections()  {  IndividualCollections.Clear();  }
   void ClearGroupDefinitions()  {
     GroupDefs.Clear();
-    SelectionCopy.Clear();
+    SelectionCopy[0].Clear();
+    SelectionCopy[1].Clear();
   }
 //..............................................................................
 // GlRender interface
@@ -232,16 +240,11 @@ public:
   void DeleteOverlayedXFile(size_t index);
 
   void Select(const vec3d& From, const vec3d& To);
-  void SelectAll(bool Select)  {
-    if( !Select )
-      SelectionCopy.Clear();
-    GetRender().SelectAll(Select);
-    Draw();
-  }
-  void InvertSelection()  {  GetRender().InvertSelection();  Draw(); }
-  inline TGlGroup* FindObjectGroup(AGDrawObject& G)  {  return GetRender().FindObjectGroup(G); }
-  inline TGlGroup* FindGroup(const olxstr& colName)  {  return GetRender().FindGroupByName(colName); }
-  inline TGlGroup& GetSelection() const {  return GetRender().GetSelection(); }
+  void SelectAll(bool Select);
+  void InvertSelection()  {  GetRender().InvertSelection();  Draw();  }
+  inline TGlGroup* FindObjectGroup(AGDrawObject& G)  {  return GetRender().FindObjectGroup(G);  }
+  inline TGlGroup* FindGroup(const olxstr& colName)  {  return GetRender().FindGroupByName(colName);  }
+  inline TGlGroup& GetSelection() const {  return GetRender().GetSelection();  }
   void GroupSelection(const olxstr& name);
   void UnGroupSelection();
   void UnGroup(TGlGroup& G);
@@ -255,7 +258,7 @@ public:
     
   TGlBitmap* FindGlBitmap(const olxstr& name);
   void DeleteGlBitmap(const olxstr& name);
-  inline size_t GlBitmapCount() const {  return GlBitmaps.Count(); }
+  inline size_t GlBitmapCount() const {  return GlBitmaps.Count();  }
   inline TGlBitmap& GlBitmap(size_t i)  {  return *GlBitmaps[i];  }
 
   bool ShowGrid(bool v, const olxstr& FN=EmptyString);
@@ -273,7 +276,6 @@ protected:
        XGrowPointsVisible,
        FXPolyVisible;
   short FGrowMode, PackMode;
-  TEBitArray& GetVisibilityMask(TEBitArray& ba) const;
 public:
   TXGlLabels& GetLabels() const {  return *FLabels; }
   bool AreLabelsVisible() const;
@@ -434,8 +436,9 @@ public:     void CalcProbFactor(float Prob);
   */
   void SelectRings(const olxstr& Condition, bool Invert=false);
   void FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings );
-  
-  TXGlLabel* CreateLabel(TXAtom *A, uint16_t FontIndex);
+  // these two create structure scope labels
+  TXGlLabel& CreateLabel(const vec3d& center, const olxstr& T, uint16_t FontIndex);
+  TXGlLabel& CreateLabel(const TXAtom& A, uint16_t FontIndex);
   // recreated all labels (if any) in case if font size etc changed
   size_t LabelCount() const {  return XLabels.Count();  }
   TXGlLabel& GetLabel(size_t i)  {  return XLabels[i];  }
@@ -472,9 +475,9 @@ public:     void CalcProbFactor(float Prob);
   void SetCellVisible( bool v);
   bool IsBasisVisible() const;
   void SetBasisVisible( bool v);
-  inline bool IsGraphicsVisible( AGDrawObject *G ) const {  return G->IsVisible(); }
-  TUndoData* SetGraphicsVisible( AGDrawObject *G, bool v );
-  TUndoData* SetGraphicsVisible( TPtrList<AGDrawObject>& G, bool v );
+  inline bool IsGraphicsVisible(AGDrawObject *G ) const {  return G->IsVisible(); }
+  TUndoData* SetGraphicsVisible(AGDrawObject *G, bool v );
+  TUndoData* SetGraphicsVisible(AGDObjList& G, bool v );
 
   void FragmentsVisible(const TNetPList& Networks, bool V);
   size_t InvertFragmentsList(const TNetPList& SelectedFragments, TNetPList& Result);
@@ -499,7 +502,7 @@ public:     void CalcProbFactor(float Prob);
   void TangList(TXBond *Middle, TStrList& L);
 
   TUndoData* DeleteXAtoms(TXAtomPList& L);
-  TUndoData* DeleteXObjects(TPtrList<AGDrawObject>& L);
+  TUndoData* DeleteXObjects(AGDObjList& L);
   /* function undoes deleted atoms bonds and planes */
   void undoDelete(TUndoData *data);
   /* function undoes renaming atoms */
