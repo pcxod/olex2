@@ -43,19 +43,19 @@ public:
   bool IsEmpty() const {  return GObjects.IsEmpty();  }
 
   void ClearObjects()  {  GObjects.Clear();  }
-  void RemoveObject(AGDrawObject& G)  {  GObjects.Remove(G); }
-  void DeleteObject(size_t i)  {  GObjects.Delete(i); }
+  void RemoveObject(AGDrawObject& G)  {  GObjects.Remove(G);  }
+  void DeleteObject(size_t i)  {  GObjects.Delete(i);  }
 
   void Draw();
 
   void ListParams(TStrList& List, TGlPrimitive* Primitive);
 
-  inline TGlRenderer& GetParent()  const {  return Parent; }
+  inline TGlRenderer& GetParent() const {  return Parent;  }
   DefPropC(olxstr, Name)
 
   virtual void SetStyle(TGraphicsStyle* S);
   // it might be NULL
-  inline TGraphicsStyle& GetStyle() const {  return *Style; }
+  inline TGraphicsStyle& GetStyle() const {  return *Style;  }
 };
 
 

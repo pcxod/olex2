@@ -2363,8 +2363,8 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         if( v == NULL )  continue;
         TXGlLabel& l = FXApp->CreateLabel((b.A().crd()+b.B().crd())/2, v->GetValue().ToString(), 4);
         vec3d off(-l.GetRect().width/2, -l.GetRect().height/2, 0);
-        //const double scale = l.GetFont().IsVectorFont() ? 1.0 : 1.0/FXApp->GetRender().GetBasis().GetZoom();
-        const double scale = 1.0/FXApp->GetRender().GetBasis().GetZoom();
+        const double scale1 = l.GetFont().IsVectorFont() ? 1.0/FXApp->GetRender().GetScale() : 1.0;
+        const double scale = scale1/FXApp->GetRender().GetBasis().GetZoom();
         l.TranslateBasis(off*scale);
         //l.Get
       }

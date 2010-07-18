@@ -14,7 +14,6 @@
 
   #define EsdlInstanceOf( class, className )  (typeid(class) == typeid(className))
 
-
 // defines a primitive type property
 #define DefPropP(Type, Name) \
 public:\
@@ -282,210 +281,6 @@ public:
 extern const char* NewLineSequence;
 extern const short NewLineSequenceLength;
 
-// implements data for collection item
-class ACollectionItem : public IEObject  {
-  index_t CollectionItemTag;
-public:
-  ACollectionItem()  {  CollectionItemTag = -1;  }
-  virtual ~ACollectionItem()  {  ;  }
-  index_t GetTag() const {  return CollectionItemTag;  }
-  void SetTag(index_t v) { CollectionItemTag = v;  }
-  index_t IncTag()  {  return ++CollectionItemTag;  }
-  index_t DecTag()  {  return --CollectionItemTag;  }
-  // for extended functionality of containers
-  struct DirectAccessor  {
-    static const ACollectionItem& Access(const ACollectionItem& item)  {  return item;  }
-    static ACollectionItem& Access(ACollectionItem& item)  {  return item;  }
-  };
-  template <class Accessor=DirectAccessor> struct TagAnalyser  {
-    const index_t ref_tag;
-    TagAnalyser(index_t _ref_tag) : ref_tag(_ref_tag)  {}
-    template <class Item> inline bool OnItem(const Item& o) const {  return Accessor::Access(o).GetTag() == ref_tag;  }
-  };
-  template <class Actor, class Accessor=DirectAccessor> struct TagAnalyserEx  {
-    const index_t ref_tag;
-    const Actor& actor;
-    TagAnalyserEx(index_t _ref_tag, const Actor& _actor) : ref_tag(_ref_tag), actor(_actor)  {}
-    template <class Item> inline bool OnItem(Item& o) const {
-      if( Accessor::Access(o).GetTag() == ref_tag )
-        return actor(o);
-      return false;
-    }
-  };
-  template <class Accessor=DirectAccessor> struct IndexTagAnalyser  {
-    template <class Item> static inline bool OnItem(const Item& o, size_t i)  {
-      return Accessor::Access(o).GetTag() != i;
-    }
-  };
-  template <class Actor, class Accessor=DirectAccessor> struct IndexTagAnalyserEx  {
-    const Actor& actor;
-    IndexTagAnalyserEx(const Actor& _actor) : actor(_actor)  {}
-    template <class Item> inline bool OnItem(Item& o, size_t i) const {
-      if( Accessor::Access(o).GetTag() != i )
-        return actor(o);
-      return false;
-    }
-  };
-  template <class Accessor=DirectAccessor> struct TagSetter  {
-    const index_t ref_tag;
-    TagSetter(index_t _ref_tag) : ref_tag(_ref_tag)  {}
-    template <class Item> inline void OnItem(Item& o) const {
-      Accessor::Access(o).SetTag(ref_tag);
-    }
-  };
-  template <class Accessor=DirectAccessor> struct IndexTagSetter  {
-    template <class Item> static inline void OnItem(Item& o, size_t i)  {
-      Accessor::Access(o).SetTag(i);
-    }
-  };
-
-  // common algorithms
-  template <class Accessor=DirectAccessor>
-  struct Unique  {
-    template <class List> Unique(List& list)  {
-      list.ForEachEx(IndexTagSetter<Accessor>());
-      list.PackEx(IndexTagAnalyser<Accessor>());
-    }
-  };
-
-  template <class AccessorA=DirectAccessor, class AccessorB=DirectAccessor>
-  struct Exclude  {
-    template <class ListA, class ListB> Exclude(ListA& from, const ListB& set)  {
-      from.ForEach(TagSetter<AccessorA>(0));
-      set.ForEach(TagSetter<AccessorB>(1));
-      from.Pack(TagAnalyser<AccessorA>(1));
-    }
-    template <class List> Exclude(List& from, const List& set)  {
-      from.ForEach(TagSetter<>(0));
-      set.ForEach(TagSetter<>(1));
-      from.Pack(TagAnalyser<>(1));
-    }
-  };
-};
-
-// an association template; association of any complexity can be build from this :)
-// but for more flexibility still Association3 is provided
-template <class Ac, class Bc> class AnAssociation2  {
-  Ac a;
-  Bc b;
-public:
-  AnAssociation2()  {  ;  }
-  AnAssociation2( const Ac& a )  {  this->a = a;  }
-  AnAssociation2( const Ac& a, const Bc& b )  {
-    this->a = a;
-    this->b = b;
-  }
-  AnAssociation2( const AnAssociation2& an )  {
-    this->a = an.GetA();
-    this->b = an.GetB();
-  }
-  virtual ~AnAssociation2()  {  }
-
-  const AnAssociation2& operator = (const AnAssociation2& an)  {
-    SetA( an.GetA() );
-    SetB( an.GetB() );
-    return an;
-  }
-
-  Ac& A()  {  return a;  }
-  Bc& B()  {  return b;  }
-  const Ac& GetA() const  {  return a;  }
-  const Bc& GetB() const {  return b;  }
-  void SetA( const Ac& a )  {  this->a = a;  }
-  void SetB( const Bc& b )  {  this->b = b;  }
-};
-template <class Ac, class Bc, class Cc> class AnAssociation3  {
-  Ac a;
-  Bc b;
-  Cc c;
-public:
-  AnAssociation3()  {  ;  }
-  AnAssociation3( const Ac& a )  {  this->a = a;  }
-  AnAssociation3( const Ac& a, const Bc& b )  {
-    this->a = a;
-    this->b = b;
-  }
-  AnAssociation3( const Ac& a, const Bc& b, const Cc& c )  {
-    this->a = a;
-    this->b = b;
-    this->c = c;
-  }
-  AnAssociation3( const AnAssociation3& an )  {
-    this->a = an.GetA();
-    this->b = an.GetB();
-    this->c = an.GetC();
-  }
-  virtual ~AnAssociation3()  {  }
-
-  const AnAssociation3& operator = (const AnAssociation3& an)  {
-    SetA( an.GetA() );
-    SetB( an.GetB() );
-    SetC( an.GetC() );
-    return an;
-  }
-
-  Ac& A()  {  return a;  }
-  Bc& B()  {  return b;  }
-  Cc& C()  {  return c;  }
-  const Ac& GetA() const {  return a;  }
-  const Bc& GetB() const {  return b;  }
-  const Cc& GetC() const {  return c;  }
-  void SetA( const Ac& a )  {  this->a = a;  }
-  void SetB( const Bc& b )  {  this->b = b;  }
-  void SetC( const Cc& c )  {  this->c = c;  }
-};
-template <class Ac, class Bc, class Cc, class Dc> class AnAssociation4  {
-  Ac a;
-  Bc b;
-  Cc c;
-  Dc d;
-public:
-  AnAssociation4()  {  ;  }
-  AnAssociation4( const Ac& a )  {  this->a = a;  }
-  AnAssociation4( const Ac& a, const Bc& b )  {
-    this->a = a;
-    this->b = b;
-  }
-  AnAssociation4( const Ac& a, const Bc& b, const Cc& c )  {
-    this->a = a;
-    this->b = b;
-    this->c = c;
-  }
-  AnAssociation4( const Ac& a, const Bc& b, const Cc& c, const Dc& d )  {
-    this->a = a;
-    this->b = b;
-    this->c = c;
-    this->d = d;
-  }
-  AnAssociation4( const AnAssociation4& an )  {
-    this->a = an.GetA();
-    this->b = an.GetB();
-    this->c = an.GetC();
-    this->d = an.GetD();
-  }
-  virtual ~AnAssociation4()  {  }
-
-  const AnAssociation4& operator = (const AnAssociation4& an)  {
-    SetA( an.GetA() );
-    SetB( an.GetB() );
-    SetC( an.GetC() );
-    SetD( an.GetD() );
-    return an;
-  }
-
-  Ac& A()  {  return a;  }
-  Bc& B()  {  return b;  }
-  Cc& C()  {  return c;  }
-  Dc& D()  {  return d;  }
-  const Ac& GetA() const  {  return a;  }
-  const Bc& GetB() const  {  return b;  }
-  const Cc& GetC() const  {  return c;  }
-  const Dc& GetD() const  {  return d;  }
-  void SetA( const Ac& a )  {  this->a = a;  }
-  void SetB( const Bc& b )  {  this->b = b;  }
-  void SetC( const Cc& c )  {  this->c = c;  }
-  void SetD( const Dc& d )  {  this->d = d;  }
-};
 // an interface for a referencible object
 class AReferencible : public IEObject  {
   short This_RefCount;
@@ -527,10 +322,61 @@ public:
 
 #define olx_cmp_size_t(a,b) (a) < (b) ? -1 : ((a) > (b) ? 1 : 0)
 
+// logical NOT operator for an analyser
+template <class Analyser> struct olx_alg_not_  {
+  const Analyser& analyser;
+  olx_alg_not_(const Analyser& _analyser) : analyser(_analyser)  {}
+  template <class Item> inline bool OnItem(const Item& o) const {  return !analyser.OnItem(o);  }
+  template <class Item> inline bool OnItem(const Item& o, size_t i) const {  return !analyser.OnItem(o, i);  }
+};
+struct olx_alg_not  {
+  template <class Analyser> static olx_alg_not_<Analyser> create(const Analyser& a)  {
+    return olx_alg_not_<Analyser>(a);
+  }
+};
+// logical AND operator for two analysers
+template <class AnalyserA, class AnalyserB> struct olx_alg_and_  {
+  const AnalyserA& analyserA;
+  const AnalyserB& analyserB;
+  olx_alg_and_(const AnalyserA& _analyserA, const AnalyserB& _analyserB) :
+    analyserA(_analyserA), analyserB(_analyserB)  {}
+  template <class Item> inline bool OnItem(const Item& o) const {
+    return analyserA.OnItem(o) && analyserB.OnItem(o);
+  }
+  template <class Item> inline bool OnItem(const Item& o, size_t i) const {
+    return analyserA.OnItem(o, i) && analyserB.OnItem(o, i);
+  }
+};
+struct olx_alg_and  {
+  template <class AnalyserA, class AnalyserB>
+  static olx_alg_and_<AnalyserA, AnalyserB> create(const AnalyserA& a, const AnalyserB& b)  {
+    return olx_alg_and_<AnalyserA, AnalyserB>(a, b);
+  }
+};
+// logical OR operator for two analysers
+template <class AnalyserA, class AnalyserB> struct olx_alg_or_  {
+  const AnalyserA& analyserA;
+  const AnalyserB& analyserB;
+  olx_alg_or_(const AnalyserA& _analyserA, const AnalyserB& _analyserB) :
+    analyserA(_analyserA), analyserB(_analyserB)  {}
+  template <class Item> inline bool OnItem(const Item& o) const {
+    return analyserA.OnItem(o) || analyserB.OnItem(o);
+  }
+  template <class Item> inline bool OnItem(const Item& o, size_t i) const {
+    return analyserA.OnItem(o, i) || analyserB.OnItem(o, i);
+  }
+};
+struct olx_alg_or  {
+  template <class AnalyserA, class AnalyserB>
+  static olx_alg_or_<AnalyserA, AnalyserB> create(const AnalyserA& a, const AnalyserB& b)  {
+    return olx_alg_or_<AnalyserA, AnalyserB>(a, b);
+  }
+};
+#include "citem.h"
+#include "association.h"
+
 EndEsdlNamespace()
 
 #include "istream.h"
 #include "smart/ostring.h"
 #endif
-
-

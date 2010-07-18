@@ -47,7 +47,7 @@ public:
   virtual void Create(const olxstr& newCollectionName=EmptyString, const ACreationParams* cpar = NULL)  {}
   // this should return object created with new in order to recreate the objecs as it was
   virtual ACreationParams* GetCreationParams() const {  return NULL;  }
-  virtual ~AGDrawObject();
+  virtual ~AGDrawObject()  {}
 
   virtual const olxstr& GetPrimitiveMaskName() const {
     static const olxstr mn("PMask");
