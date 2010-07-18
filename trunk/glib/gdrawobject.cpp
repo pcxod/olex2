@@ -17,13 +17,8 @@ AGDrawObject::AGDrawObject(TGlRenderer& parent, const olxstr& collectionName) :
   SetVisible(true);
   SetGroupable(false);
   SetSelectable(true);
-  if( collectionName.Length() )
-    CollectionName = collectionName;
-  else
-    CollectionName = EsdlObjectName(*this);
+  CollectionName = collectionName.IsEmpty() ? EsdlObjectName(*this) : collectionName;
 }
-//..............................................................................
-AGDrawObject::~AGDrawObject()  {  ;  }
 //..............................................................................
 void AGDrawObject::Compile()  {
   for( size_t i=0; i < Primitives->PrimitiveCount(); i++ )
@@ -44,21 +39,21 @@ void AGDrawObject::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  
 
 void AGDrawObject::LibVisible(const TStrObjList& Params, TMacroError& E)  {
   if( !Params.IsEmpty() ) 
-    SetVisible( Params[0].ToBool() );
+    SetVisible(Params[0].ToBool());
   else
-    E.SetRetVal<olxstr>( IsVisible() );
+    E.SetRetVal<olxstr>(IsVisible());
 }
 //..............................................................................
 void AGDrawObject::LibIsGrouped(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal<olxstr>( IsGrouped() );
+  E.SetRetVal<olxstr>(IsGrouped());
 }
 //..............................................................................
 void AGDrawObject::LibIsSelected(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal<olxstr>( IsSelected() );
+  E.SetRetVal<olxstr>(IsSelected());
 }
 //..............................................................................
 void AGDrawObject::LibGetName(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal<olxstr>( CollectionName );
+  E.SetRetVal<olxstr>(CollectionName);
 }
 //..............................................................................
 void AGDrawObject::ExportLibrary(TLibrary& lib)  {

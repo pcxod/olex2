@@ -15,6 +15,24 @@ private:
   inline T& Alloc(size_t i)  {  return *(T*)( List[i] = new T() );  }
 protected:
   TPtrList<T> List;
+  template <class Analyser> struct PackItemActor  {
+    const Analyser& analyser;
+    PackItemActor(const Analyser& _analyser) : analyser(_analyser)  {}
+    inline bool OnItem(T& o) const {
+      if( analyser.OnItem(o) )  {
+        delete &o;
+        return true;
+      }
+      return false;
+    }
+    inline bool OnItem(T& o, size_t i) const {
+      if( analyser.OnItem(o, i) )  {
+        delete &o;
+        return true;
+      }
+      return false;
+    }
+  };
 public:
   // creates a new empty objects
   TTypeListExt() {  }
@@ -353,9 +371,13 @@ public:
 //..............................................................................
   inline void Pack()  {  List.Pack();  }
 //..............................................................................
-  template <class PackAnalyser> inline void Pack(const PackAnalyser& pa)  {  List.Pack(pa);  }
+  template <class PackAnalyser> inline void Pack(const PackAnalyser& pa)  {
+    List.Pack(PackItemActor<PackAnalyser>(pa));
+  }
 //..............................................................................
-  template <class PackAnalyser> inline void PackEx(const PackAnalyser& pa)  {  List.PackEx(pa);  }
+  template <class PackAnalyser> inline void PackEx(const PackAnalyser& pa)  {
+    List.PackEx(PackItemActor<PackAnalyser>(pa));
+  }
 //..............................................................................
   template <class Functor> inline void ForEach(const Functor& f) const {
     for( size_t i=0; i < List.Count(); i++ )

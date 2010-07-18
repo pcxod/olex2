@@ -67,13 +67,18 @@ void TGlGroup::RemoveDeleted()  {
 //..............................................................................
 bool TGlGroup::Add(AGDrawObject& GO, bool remove)  {
   AGDrawObject* go = &GO;
-  if( go == this )
-    throw TInvalidArgumentException(__OlxSourceInfo, "cannot add itself");
+  if( go == this || !GO.IsSelectable() )  return false;
   TGlGroup *GlG = Parent.FindObjectGroup(GO);
   if( GlG != NULL )  
     go = GlG;
   const size_t i = Objects.IndexOf(go);
   if( i == InvalidIndex )  {
+    if( !GO.GetPrimitives().IsEmpty() )  {  // check the compatibility of the selection
+      if( Objects.IsEmpty() )
+        GlM.SetIdentityDraw(GO.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw());
+      else if( GlM.IsIdentityDraw() != GO.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw() ) 
+        return false;
+    }
     go->SetGrouped(true);
     Objects.Add(go);
     go->SetParentGroup(this);

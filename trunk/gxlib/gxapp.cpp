@@ -491,7 +491,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   selection is inpossible, unless properties are changed, odd... could not figure out
   what is going wrong... */
 
-  XLabels.Pack(AGDrawObject::FlagsAnalyser(sgdoVisible));
+  XLabels.Pack(olx_alg_not::create(AGDrawObject::FlagsAnalyser(sgdoVisible)));
   for( size_t i=0; i < XLabels.Count(); i++ )  {
     if( XLabels[i].IsVisible() )
       XLabels[i].Create();

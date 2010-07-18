@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------//
-// TGlXLabel - a drawing object for atom label
+// TGlXLabel - a drawing object for text label
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
 #include "gllabel.h"
@@ -18,8 +18,7 @@ TXGlLabel::TXGlLabel(TGlRenderer& R, const olxstr& collectionName) :
   SetGroupable(true);
   FontIndex = ~0;
 };
-TXGlLabel::~TXGlLabel(){}
-
+//..............................................................................
 void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
@@ -147,7 +146,7 @@ void TXGlLabel::ToDataItem(TDataItem& item) const {
 void TXGlLabel::FromDataItem(const TDataItem& item) {
   SetVisible( item.GetRequiredField("visible").ToBool() );
   FontIndex = item.GetRequiredField("font_id").ToInt();
-  SetLabel( item.GetRequiredField("text"));
+  SetLabel(item.GetRequiredField("text"));
   TDataItem* basis = item.FindItem("Basis");
   if( basis != NULL )  {
     Offset = PersUtil::FloatVecFromStr(item.GetRequiredField("center"));
