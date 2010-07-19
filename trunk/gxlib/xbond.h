@@ -1,13 +1,12 @@
-#ifndef __olx_glx_xbond_H
-#define __olx_glx_xbond_H
-#include "gxbase.h"
+#ifndef __olx_gxl_xbond_H
+#define __olx_gxl_xbond_H
 #include "glrender.h"
 #include "gdrawobject.h"
 #include "glprimitive.h"
+#include "gllabel.h"
 #include "styles.h"
 #include "sbond.h"
 #include "talist.h"
-
 
 BeginGxlNamespace()
 
@@ -22,13 +21,16 @@ public:
 class TXBond: public AGDrawObject  {
 private:
   TSBond *FBond;
+  TXGlLabel* Label;
   short FDrawStyle;
+  size_t XAppId;
   friend class TXBondStylesClear;
 protected:
   void GetDefSphereMaterial(TGlMaterial &M);
   void GetDefRimMaterial(TGlMaterial &M);
   //TEStringList* FindPrimitiveParams(TGlPrimitive *P);
   static TArrayList<TGlPrimitiveParams> FPrimitiveParams;
+  static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
   static void ValidateBondParams();
   static TGraphicsStyle *FBondParams;
   static TXBondStylesClear *FXBondStylesClear;
@@ -41,15 +43,16 @@ public:
   virtual ACreationParams* GetACreationParams() const;
   virtual ~TXBond();
 
-  static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
-  void CreateStaticPrimitives();
-
+  DefPropP(size_t, XAppId)
+  TXGlLabel& GetLabel() const {  return *Label;  }
+  void UpdateLabel()  {  GetLabel().Update();  }
   // creates legend up three levels (0 to 2)
   static olxstr GetLegend(const TSBond& B, const short level);
 
   // beware - for objects, having no wrapped bond this might fail
   struct BondAccessor  {
-    static TSBond& Access(TXBond& b)  {  return b.Bond();  }
+    static inline TSBond& Access(TXBond& b)  {  return b.Bond();  }
+    static inline TSBond& Access(TXBond* b)  {  return b->Bond();  }
   };
   inline TSBond& Bond() const {  return *FBond; }
   
@@ -71,8 +74,16 @@ public:
   bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
   bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
 
-  inline bool IsDeleted() const {  return AGDrawObject::IsDeleted(); }
-  void SetDeleted(bool v)  {  AGDrawObject::SetDeleted(v);  FBond->SetDeleted(v); }
+  void SetDeleted(bool v)  {
+    AGDrawObject::SetDeleted(v);
+    Label->SetDeleted(v);
+    FBond->SetDeleted(v);
+  }
+  void SetVisible(bool v)  {
+    AGDrawObject::SetVisible(v);
+    if( !v )
+      Label->SetVisible(false);
+  }
   void ListDrawingStyles(TStrList &List);
 
   uint32_t GetPrimitiveMask() const;
@@ -92,6 +103,10 @@ public:
   }
 
   static TGraphicsStyle* GetParamStyle() {  return FBondParams;  }
+  void CreateStaticObjects();
+  static void ClearStaticObjects()  {
+    FStaticObjects.Clear();
+  }
 };
 
 struct BondCreationParams : public ACreationParams {

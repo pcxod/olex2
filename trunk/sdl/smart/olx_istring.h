@@ -221,7 +221,7 @@ public:
     if( T::SData != NULL )  T::SData->RefCnt++;
     return *this;
   }
-  template <class AC> TTSString& operator = (const AC& v)   { T::operator =(v);  return *this; }
+  template <class AC> TTSString& operator = (const AC& v)   { T::operator = (v);  return *this; }
   //............................................................................
   //............................................................................
   TTSString& operator = (TC* const& str)  {  return AssignCharStr(str);  }

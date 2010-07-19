@@ -1,5 +1,5 @@
-#ifndef __olx_glx_dunitcell_H
-#define __olx_glx_dunitcell_H
+#ifndef __olx_gxl_dunitcell_H
+#define __olx_gxl_dunitcell_H
 #include "threex3.h"
 #include "gllabel.h"
 #include "glprimitive.h"

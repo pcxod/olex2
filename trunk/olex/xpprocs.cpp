@@ -76,7 +76,6 @@
 #include "cdsfs.h"
 #include "wxzipfs.h"
 
-#include "ecast.h"
 #include "sls.h"
 
 #include "cmdline.h"
@@ -84,7 +83,6 @@
 #include "xlcongen.h"
 
 #include "tls.h"
-#include "ecast.h"
 
 #include "arrays.h"
 #include "estrbuffer.h"
@@ -121,7 +119,6 @@
 
 #include "olxvar.h"
 
-#include "ecast.h"
 #include "atomref.h"
 #include "wxglscene.h"
 #include "equeue.h"
@@ -1432,7 +1429,7 @@ void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   vec3d from, to;
   if( Atoms.Count() > 2 )  {
     TSAtomPList satoms;
-    TListCaster::POP(Atoms, satoms);
+    ListCaster::Cast(Atoms, satoms, ListCaster::AccessorCast<TSAtom&,TXAtom::AtomAccessor>());
     mat3d params;
     vec3d rms, center;
     TSPlane::CalcPlanes(satoms, params, rms, center);
@@ -1674,7 +1671,7 @@ void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FXApp->FindXAtoms(Cmds.Text(' '), Atoms, true, Options.Contains('h'));
     if( Atoms.IsEmpty() )  return;
     AGDObjList go;
-    TListCaster::TT(Atoms, go);
+    ListCaster::Cast(Atoms, go, ListCaster::SimpleCast<AGDrawObject*>());
     FUndoStack->Push( FXApp->SetGraphicsVisible(go, false) );
   }
 }
@@ -2310,7 +2307,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TTypeList<uint32_t> equivs;
   for( size_t i=0; i < atoms.Count(); i++ )  {
     // 4 - Picture_labels, TODO - avoid naked index reference...
-    TXGlLabel& gxl = FXApp->CreateLabel(*atoms[i], 4);
+    TXGlLabel& gxl = atoms[i]->GetLabel();
     olxstr lb;
     if( lt != 0 && atoms[i]->Atom().GetLabel().Length() > atoms[i]->Atom().GetType().symbol.Length() )  {
       olxstr bcc = atoms[i]->Atom().GetLabel().SubStringFrom(atoms[i]->Atom().GetType().symbol.Length());
@@ -2358,15 +2355,17 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     const TGlGroup& sel = FXApp->GetSelection();
     for( size_t i=0; i < sel.Count(); i++ )  {
       if( EsdlInstanceOf(sel[i], TXBond) )  {
+        TXBond& xb = (TXBond&)sel[i];
         TSBond& b = ((TXBond&)sel[i]).Bond();
         ACifValue* v = cifdn.Match(b.A(), b.B());
         if( v == NULL )  continue;
-        TXGlLabel& l = FXApp->CreateLabel((b.A().crd()+b.B().crd())/2, v->GetValue().ToString(), 4);
+        TXGlLabel& l = xb.GetLabel();
+        l.SetOffset((b.A().crd()+b.B().crd())/2);
+        l.SetLabel(v->GetValue().ToString());
         vec3d off(-l.GetRect().width/2, -l.GetRect().height/2, 0);
         const double scale1 = l.GetFont().IsVectorFont() ? 1.0/FXApp->GetRender().GetScale() : 1.0;
         const double scale = scale1/FXApp->GetRender().GetBasis().GetZoom();
         l.TranslateBasis(off*scale);
-        //l.Get
       }
     }
     //cifdn.
@@ -2910,7 +2909,7 @@ void TMainForm::macTria(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       E.ProcessingError(__OlxSrcInfo, "no atoms or bonds provided" );
   }
   else
-    TListCaster::POP(xatoms, satoms);
+    ListCaster::Cast(xatoms, satoms, ListCaster::AccessorCast<TSAtom&, TXAtom::AtomAccessor>());
 
   if( !Options.Contains("cs") )  FXApp->SelectAll(false);
 
@@ -6157,8 +6156,8 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
   TSAtomPList satoms;
   TXAtomPList xatoms;
   FXApp->FindXAtoms(Cmds.Text(' '), xatoms);
-  TListCaster::POP(xatoms, satoms);
-  if( !satoms.Count() )
+  ListCaster::Cast(xatoms, satoms, ListCaster::AccessorCast<TSAtom&, TXAtom::AtomAccessor>());
+  if( satoms.IsEmpty() )
     throw TInvalidArgumentException(__OlxSourceInfo, "atom count");
   xlib::TLS tls(satoms, cellParameters);
 
@@ -8508,7 +8507,7 @@ void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
     TXAtomPList atoms;
     FindXAtoms(Cmds, atoms, false, false);
     if( (atoms.Count()%2) == 0 )
-      TListCaster::POP(atoms, pairs);
+      ListCaster::Cast(atoms, pairs, ListCaster::AccessorCast<TSAtom&, TXAtom::AtomAccessor>());
   }
   if( !pairs.IsEmpty()  )  {
     for( size_t i=0; i < pairs.Count(); i+=2 )  {
@@ -8811,7 +8810,7 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       else
         all_radii[i] = radii.GetValue(ri);
     }
-    TListCaster::POP(xatoms, satoms);
+    ListCaster::Cast(xatoms, satoms, ListCaster::AccessorCast<TSAtom&, TXAtom::AtomAccessor>());
     main_CreateWBox(*FXApp, satoms, crds, all_radii, true);
   }
 }

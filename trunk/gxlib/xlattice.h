@@ -1,5 +1,5 @@
-#ifndef __olx_glx_xlattice_H
-#define __olx_glx_xlattice_H
+#ifndef __olx_gxl_xlattice_H
+#define __olx_gxl_xlattice_H
 #include "gxbase.h"
 #include "glmousehandler.h"
 #include "asymmunit.h"

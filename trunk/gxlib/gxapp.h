@@ -521,10 +521,10 @@ public:     void CalcProbFactor(float Prob);
 //..............................................................................
   static TGXApp& GetInstance()  {
     TBasicApp& bai = TBasicApp::GetInstance();
-    TGXApp& gxai = dynamic_cast<TGXApp&>(bai);
-    if( &gxai == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "unsuitabe application instance");
-    return gxai;
+    TGXApp* gxai = dynamic_cast<TGXApp*>(&bai);
+    if( gxai == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "unsuitable application instance");
+    return *gxai;
   }
 };
 ////////////////////////////////////////////////////////////////////////////////

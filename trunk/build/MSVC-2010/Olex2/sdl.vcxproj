@@ -592,21 +592,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\sdl\actions.cpp" />
-    <ClCompile Include="..\..\..\sdl\arrays.cpp" />
     <ClCompile Include="..\..\..\sdl\bapp.cpp" />
     <ClCompile Include="..\..\..\sdl\bitarray.cpp" />
     <ClCompile Include="..\..\..\sdl\datafile.cpp" />
     <ClCompile Include="..\..\..\sdl\dataitem.cpp" />
     <ClCompile Include="..\..\..\sdl\ebase.cpp" />
     <ClCompile Include="..\..\..\sdl\ebasis.cpp" />
-    <ClCompile Include="..\..\..\sdl\ecast.cpp" />
     <ClCompile Include="..\..\..\sdl\efile.cpp" />
     <ClCompile Include="..\..\..\sdl\egc.cpp" />
     <ClCompile Include="..\..\..\sdl\egraph.cpp" />
     <ClCompile Include="..\..\..\sdl\emath.cpp" />
     <ClCompile Include="..\..\..\sdl\ememstream.cpp" />
     <ClCompile Include="..\..\..\sdl\erange.cpp" />
-    <ClCompile Include="..\..\..\sdl\estrlist.cpp" />
     <ClCompile Include="..\..\..\sdl\etime.cpp" />
     <ClCompile Include="..\..\..\sdl\eutf8.cpp" />
     <ClCompile Include="..\..\..\sdl\exception.cpp" />
@@ -654,7 +651,6 @@
     <ClInclude Include="..\..\..\sdl\ebase.h" />
     <ClInclude Include="..\..\..\sdl\ebasis.h" />
     <ClInclude Include="..\..\..\sdl\ebtree.h" />
-    <ClInclude Include="..\..\..\sdl\ecast.h" />
     <ClInclude Include="..\..\..\sdl\ecomplex.h" />
     <ClInclude Include="..\..\..\sdl\edict.h" />
     <ClInclude Include="..\..\..\sdl\edlist.h" />
@@ -693,6 +689,7 @@
     <ClInclude Include="..\..\..\sdl\integration.h" />
     <ClInclude Include="..\..\..\sdl\istream.h" />
     <ClInclude Include="..\..\..\sdl\library.h" />
+    <ClInclude Include="..\..\..\sdl\listcast.h" />
     <ClInclude Include="..\..\..\sdl\log.h" />
     <ClInclude Include="..\..\..\sdl\macroerror.h" />
     <ClInclude Include="..\..\..\sdl\macrolib.h" />

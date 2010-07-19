@@ -10,11 +10,15 @@
 #include "unitcell.h"
 
 //..............................................................................
-bool TXBondStylesClear::Enter(const IEObject *Sender, const IEObject *Data)
-{  TXBond::FBondParams = NULL; return true; }
+bool TXBondStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {
+  TXBond::FBondParams = NULL;
+  return true;
+}
 //..............................................................................
-bool TXBondStylesClear::Exit(const IEObject *Sender, const IEObject *Data)
-{  TXBond::ValidateBondParams(); return true; }
+bool TXBondStylesClear::Exit(const IEObject *Sender, const IEObject *Data)  {
+  TXBond::ValidateBondParams();
+  return true;
+}
 //..............................................................................
 //----------------------------------------------------------------------------//
 // TXBond function bodies
@@ -25,18 +29,29 @@ TGraphicsStyle* TXBond::FBondParams=NULL;
 TXBondStylesClear *TXBond::FXBondStylesClear=NULL;
 //..............................................................................
 TXBond::TXBond(TGlRenderer& R, const olxstr& collectionName, TSBond& B) :
-  AGDrawObject(R, collectionName)
+  AGDrawObject(R, collectionName),
+  FDrawStyle(0x0001), FBond(&B),
+  XAppId(~0)
 {
   SetGroupable(true);
-  FDrawStyle = 0x0001;
   Params().Resize(5);
-  FBond = &B;
   if( FBond != NULL )
     Update();
   Params()[4] = 0.8;
-  if( FStaticObjects.IsEmpty() )  
-    CreateStaticPrimitives();
   // the objects will be automatically deleted by the corresponding action collections
+  if( FStaticObjects.IsEmpty() )  
+    CreateStaticObjects();
+  Label = new TXGlLabel(R, PLabelsCollectionName);
+  Label->SetFontIndex(4);
+  if( FBond != NULL )  {
+    Label->SetOffset((B.A().crd()+B.B().crd())/2);
+    Label->SetLabel(olxstr::FormatFloat(3, B.Length()));
+  }
+  Label->SetVisible(false);
+}
+//..............................................................................
+TXBond::~TXBond()  {
+  delete Label;
 }
 //..............................................................................
 void TXBond::Update()  {
@@ -61,13 +76,11 @@ void TXBond::Update()  {
 void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  olxstr NewL;
-
-  TGlMaterial RGlM;
-
   if( FStaticObjects.IsEmpty() )  
-    CreateStaticPrimitives();
+    CreateStaticObjects();
+  Label->Create();
   // find collection
+  olxstr NewL;
   TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);
   if( GPC == NULL )
     GPC = &Parent.NewCollection(NewL);
@@ -101,10 +114,11 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
       GlP.CallList(SGlP);
       GlP.EndList();
       if( FBond == NULL )  { // no bond?
-        RGlM.FromString("85;2155839359;2155313015;1.000,1.000,1.000,0.502;36");
-        GlP.SetProperties(GS.GetMaterial(FStaticObjects[i], RGlM));
+        GlP.SetProperties(GS.GetMaterial(FStaticObjects[i],
+          TGlMaterial("85;2155839359;2155313015;1.000,1.000,1.000,0.502;36")));
       }
       else  {
+        TGlMaterial RGlM;
         if( SGlP->Params.Last() == ddsDefAtomA || SGlP->Params.Last() == ddsDef )  {
           if( cpar == NULL )
             TXAtom::GetDefSphereMaterial(FBond->A(), RGlM);
@@ -136,8 +150,6 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
 ACreationParams* TXBond::GetACreationParams() const {
   return NULL;
 }
-//..............................................................................
-TXBond::~TXBond()  {  }
 //..............................................................................
 bool TXBond::Orient(TGlPrimitive& GlP)  {
   olx_gl::translate(FBond->A().crd());
@@ -177,7 +189,7 @@ void TXBond::Quality(const short Val)  {
 //..............................................................................
 void TXBond::ListDrawingStyles(TStrList &L){  return; }
 //..............................................................................
-void TXBond::CreateStaticPrimitives()  {
+void TXBond::CreateStaticObjects()  {
   TGlMaterial GlM;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
   ValidateBondParams();
@@ -489,14 +501,14 @@ int TXBond::DefMask()  {
 }
 //..............................................................................
 bool TXBond::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
-  return true;
+  return Label->IsVisible() ? Label->OnMouseDown(Sender, Data) : false;
 }
 //..............................................................................
 bool TXBond::OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
-  return false;
+  return Label->IsVisible() ? Label->OnMouseMove(Sender, Data) : false;
 }
 //..............................................................................
 bool TXBond::OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
-  return true;
+  return Label->IsVisible() ? Label->OnMouseMove(Sender, Data) : false;
 }
 //..............................................................................

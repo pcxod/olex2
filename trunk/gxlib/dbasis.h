@@ -1,5 +1,5 @@
-#ifndef __olx_glx_dbasis_H
-#define __olx_glx_dbasis_H
+#ifndef __olx_gxl_dbasis_H
+#define __olx_gxl_dbasis_H
 #include "gllabel.h"
 #include "asymmunit.h"
 

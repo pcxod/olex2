@@ -53,6 +53,7 @@ TGlGroup::~TGlGroup()  {
 //..............................................................................
 void TGlGroup::Clear()  {
   Objects.ForEach(ObjectReleaser());
+  GlM.SetIdentityDraw(false);  // most objects are 'normal'
   Objects.Clear();
 }
 //..............................................................................

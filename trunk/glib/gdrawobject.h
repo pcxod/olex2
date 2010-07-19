@@ -109,7 +109,8 @@ public:
   should be implemented by objects depending on coordinates of others in an indirect way
   */
   virtual void Update()  {}
-  // the object should update its parameters from GlP
+  // should be implemented to update labels when font is changed 
+  virtual void UpdateLabel()  {}
 
   virtual short DrawStyle() const {  return 0;  }
   /* is used to compile new created primitives without rebuilding entire model;

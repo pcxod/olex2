@@ -33,7 +33,6 @@ using namespace std;
 #include "symmlib.h"
 #include "xlcongen.h"
 #include "seval.h"
-#include "ecast.h"
 #include "utf8file.h"
 #include "settingsfile.h"
 #include "py_core.h"
@@ -126,8 +125,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
  
   void UnifyAtomList(TSAtomPList atoms)  {
     // unify the selection
-    for( size_t i=0; i < atoms.Count(); i++ )
-      atoms[i]->CAtom().SetTag(i);
+    atoms.ForEachEx(ACollectionItem::IndexTagSetter<>());
     for( size_t i=0; i < atoms.Count(); i++ )
       if( atoms[i]->CAtom().GetTag() != i || atoms[i]->CAtom().IsDeleted() )
         atoms[i] = NULL;
@@ -137,7 +135,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   virtual void ExpandSelection(TCAtomGroup& atoms)  {
     atoms.SetCapacity(atoms.Count() + Selection.Count());
     for( size_t i=0; i < Selection.Count(); i++ )
-      atoms.AddNew( &Selection[i]->CAtom(), &Selection[i]->GetMatrix(0) );
+      atoms.AddNew(&Selection[i]->CAtom(), &Selection[i]->GetMatrix(0));
     if( GetDoClearSelection() )
       Selection.Clear();
   }
@@ -502,10 +500,8 @@ public:
       Selection.Clear();
     }
     else if( Options.Contains("-i") )  {
-      for( size_t i=0; i < latt.AtomCount(); i++ )
-        latt.GetAtom(i).SetTag(0);
-      for( size_t i=0; i < Selection.Count(); i++ )
-        Selection[i]->SetTag(1);
+      latt.GetAtoms().ForEach(ACollectionItem::TagSetter<>(0));
+      Selection.ForEach(ACollectionItem::TagSetter<>(1));
       Selection.Clear();
       for( size_t i=0; i < latt.AtomCount(); i++ )
         if( latt.GetAtom(i).GetTag() == 0 && !latt.GetAtom(i).IsDeleted() )
@@ -754,7 +750,7 @@ public:
     TCAtomPList atoms;
     TSAtomPList satoms;
     LocateAtoms(Cmds, satoms, true);
-    TListCaster::POP(satoms, atoms);
+    ListCaster::Cast(satoms, atoms, ListCaster::AccessorCast<TCAtom&, TSAtom::CAtomAccessor>());
     TTTable<TStrList> Table(atoms.Count(), 7);
     Table.ColName(0) = "Atom";
     Table.ColName(1) = "Symb";
