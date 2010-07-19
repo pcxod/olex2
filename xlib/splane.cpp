@@ -179,7 +179,7 @@ TSPlane* TSPlane::Def::FromAtomRegistry(AtomRegistry& ar, size_t def_id, TNetwor
     const TUnitCell& uc = parent->GetLattice().GetUnitCell();
     for( size_t i=0; i < atoms.Count(); i++ )  {
       TSAtom::Ref ref = atoms[i].ref;
-      smatd m = matr*smatd::FromId(ref.matrix_id, uc.GetMatrix(smatd::GetContainerId(ref.matrix_id)));
+      smatd m = smatd::FromId(ref.matrix_id, uc.GetMatrix(smatd::GetContainerId(ref.matrix_id)))*matr;
       uc.InitMatrixId(m);
       if( i == 0 )
         equiv = m.r;

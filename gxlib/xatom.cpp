@@ -345,6 +345,8 @@ olxstr TXAtom::GetLabelLegend(const TSAtom& A)  {
 }
 //..............................................................................
 olxstr TXAtom::GetLegend(const TSAtom& A, const short Level)  {
+  if( A.GetType() == iQPeakZ )
+    return GetLabelLegend(A);
   olxstr L = A.GetType().symbol;  
   if( Level == 0 )  return L;
   L << '.' << A.CAtom().GetLabel();

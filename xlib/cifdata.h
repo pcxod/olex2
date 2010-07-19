@@ -88,15 +88,15 @@ public:
   ACifValue& AddValue(ACifValue* v)  {  return *Data.Add(v->Count()).Add(v);  }
   ACifValue* Match(const TSAtom& a, const TSAtom& b) const {
     const TSAtom* a_[] = {&a, &b};
-    return Match(TSAtomCPList(2, a_));
+    return Match(TSAtomCPList(2u, a_));
   }
   ACifValue* Match(const TSAtom& a, const TSAtom& b, const TSAtom& c) const {
     const TSAtom* a_[] = {&a, &b, &c};
-    return Match(TSAtomCPList(3, a_));
+    return Match(TSAtomCPList(3u, a_));
   }
   ACifValue* Match(const TSAtom& a, const TSAtom& b, const TSAtom& c, const TSAtom& d) const {
     const TSAtom* a_[] = {&a, &b, &c, &d};
-    return Match(TSAtomCPList(4, a_));
+    return Match(TSAtomCPList(4u, a_));
   }
   // finds a cif value for a list of TSATOMS(!)
   ACifValue* Match(const TSAtomCPList& Atoms) const {

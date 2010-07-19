@@ -12,10 +12,6 @@ public:
   index_t IncTag()  {  return ++CollectionItemTag;  }
   index_t DecTag()  {  return --CollectionItemTag;  }
   // for extended functionality of containers
-  struct DirectAccessor  {
-    static const ACollectionItem& Access(const ACollectionItem& item)  {  return item;  }
-    static ACollectionItem& Access(ACollectionItem& item)  {  return item;  }
-  };
   template <class Accessor=DirectAccessor> struct TagAnalyser  {
     const index_t ref_tag;
     TagAnalyser(index_t _ref_tag) : ref_tag(_ref_tag)  {}

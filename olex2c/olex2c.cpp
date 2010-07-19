@@ -747,10 +747,9 @@ public:
   }
   //..............................................................................
   void macInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    TCAtomPList atoms;
     TSAtomPList satoms;
     LocateAtoms(Cmds, satoms, true);
-    ListCaster::Cast(satoms, atoms, ListCaster::AccessorCast<TCAtom&, TSAtom::CAtomAccessor>());
+    TCAtomPList atoms(satoms, TSAtom::CAtomAccessor<>());
     TTTable<TStrList> Table(atoms.Count(), 7);
     Table.ColName(0) = "Atom";
     Table.ColName(1) = "Symb";
