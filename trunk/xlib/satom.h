@@ -46,11 +46,14 @@ public:
   bool IsAvailable() const {  return !(IsDeleted() || FCAtom->IsDetached());  }
   bool IsGrown() const;
   void SetGrown(bool v)  {  SetBit(v, Flags, satom_Grown);  }
-  struct CAtomAccessor  {
-    static inline TCAtom& Access(TSAtom& a)  {  return a.CAtom();  }
-    static inline TCAtom& Access(TSAtom* a)  {  return a->CAtom();  }
+  template <class Accessor=DirectAccessor> struct CAtomAccessor  {
+    template <class Item> static inline TCAtom& Access(Item& a)  {
+      return Accessor::Access(a).CAtom();
+    }
+    template <class Item> static inline TCAtom& Access(Item* a)  {
+      return Accessor::Access(*a).CAtom();
+    }
   };
-  operator TCAtom* () const {  return FCAtom;  }
   TCAtom& CAtom() const {  return *FCAtom; }
   void CAtom(TCAtom& CA);
 
@@ -103,6 +106,8 @@ public:
   vec3d& crd()  {  return FCenter;  }
   vec3d const& ccrd() const {  return FCCenter;  }
   vec3d const& crd() const {  return FCenter;  }
+  // pointers comparison!
+  bool operator == (const TSAtom& a) const {  return this == &a;  }
 
   void SortNodesByDistanceAsc()  {
     Nodes.QuickSorter.SortMF(Nodes, *this, &TSAtom::_SortNodesByDistanceAsc);
@@ -182,15 +187,21 @@ public:
 
   virtual void ToDataItem(TDataItem& item) const;
   virtual void FromDataItem(const TDataItem& item, class TLattice& parent);
-  struct FlagsAnalyser  {
+  
+  template <class Accessor=DirectAccessor> struct FlagsAnalyser  {
     const short ref_flags;
     FlagsAnalyser(short _ref_flags) : ref_flags(_ref_flags)  {}
-    inline bool OnItem(const TSAtom& o) const {  return (o.Flags&ref_flags) != 0;  }
+    template <class Item> inline bool OnItem(const Item& o) const {
+      return (Accessor::Access(o).Flags&ref_flags) != 0;
+    }
   };
-  struct TypeAnalyser  {
+  template <class Accessor=DirectAccessor> struct TypeAnalyser  {
     const short ref_type;
+    TypeAnalyser(const cm_Element _ref_type) : ref_type(_ref_type.z)  {}
     TypeAnalyser(short _ref_type) : ref_type(_ref_type)  {}
-    inline bool OnItem(const TSAtom& o) const {  return o.GetType() == ref_type;  }
+    template <class Item> inline bool OnItem(const Item& o) const {
+      return Accessor::Access(o).GetType() == ref_type;
+    }
   };
 };
 

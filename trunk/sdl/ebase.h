@@ -322,59 +322,85 @@ public:
 
 #define olx_cmp_size_t(a,b) (a) < (b) ? -1 : ((a) > (b) ? 1 : 0)
 
+struct DirectAccessor  {
+  template <typename Item> static inline const Item& Access(const Item& item)  {
+    return item;
+  }
+  template <typename Item> static inline Item& Access(Item& item)  {
+    return item;
+  }
+};
+template <typename CastType> struct CastAccessor  {
+  template <typename Item> static inline const CastType& Access(const Item& item)  {
+    return (const CastType&)item;
+  }
+  template <typename Item> static inline CastType& Access(Item& item)  {
+    return (CastType&)item;
+  }
+};
+
+struct olx_alg  {
+protected:
 // logical NOT operator for an analyser
-template <class Analyser> struct olx_alg_not_  {
-  const Analyser& analyser;
-  olx_alg_not_(const Analyser& _analyser) : analyser(_analyser)  {}
-  template <class Item> inline bool OnItem(const Item& o) const {  return !analyser.OnItem(o);  }
-  template <class Item> inline bool OnItem(const Item& o, size_t i) const {  return !analyser.OnItem(o, i);  }
-};
-struct olx_alg_not  {
-  template <class Analyser> static olx_alg_not_<Analyser> create(const Analyser& a)  {
-    return olx_alg_not_<Analyser>(a);
-  }
-};
-// logical AND operator for two analysers
-template <class AnalyserA, class AnalyserB> struct olx_alg_and_  {
-  const AnalyserA& analyserA;
-  const AnalyserB& analyserB;
-  olx_alg_and_(const AnalyserA& _analyserA, const AnalyserB& _analyserB) :
+  template <class Analyser> struct not_  {
+    const Analyser& analyser;
+    not_(const Analyser& _analyser) : analyser(_analyser)  {}
+    template <class Item> inline bool OnItem(const Item& o) const {  return !analyser.OnItem(o);  }
+    template <class Item> inline bool OnItem(const Item& o, size_t i) const {  return !analyser.OnItem(o, i);  }
+  };
+  // logical AND operator for two analysers
+  template <class AnalyserA, class AnalyserB> struct and_  {
+    const AnalyserA& analyserA;
+    const AnalyserB& analyserB;
+    and_(const AnalyserA& _analyserA, const AnalyserB& _analyserB) :
     analyserA(_analyserA), analyserB(_analyserB)  {}
-  template <class Item> inline bool OnItem(const Item& o) const {
-    return analyserA.OnItem(o) && analyserB.OnItem(o);
-  }
-  template <class Item> inline bool OnItem(const Item& o, size_t i) const {
-    return analyserA.OnItem(o, i) && analyserB.OnItem(o, i);
-  }
-};
-struct olx_alg_and  {
-  template <class AnalyserA, class AnalyserB>
-  static olx_alg_and_<AnalyserA, AnalyserB> create(const AnalyserA& a, const AnalyserB& b)  {
-    return olx_alg_and_<AnalyserA, AnalyserB>(a, b);
-  }
-};
-// logical OR operator for two analysers
-template <class AnalyserA, class AnalyserB> struct olx_alg_or_  {
-  const AnalyserA& analyserA;
-  const AnalyserB& analyserB;
-  olx_alg_or_(const AnalyserA& _analyserA, const AnalyserB& _analyserB) :
+    template <class Item> inline bool OnItem(const Item& o) const {
+      return analyserA.OnItem(o) && analyserB.OnItem(o);
+    }
+    template <class Item> inline bool OnItem(const Item& o, size_t i) const {
+      return analyserA.OnItem(o, i) && analyserB.OnItem(o, i);
+    }
+  };
+  // logical OR operator for two analysers
+  template <class AnalyserA, class AnalyserB> struct or_  {
+    const AnalyserA& analyserA;
+    const AnalyserB& analyserB;
+    or_(const AnalyserA& _analyserA, const AnalyserB& _analyserB) :
     analyserA(_analyserA), analyserB(_analyserB)  {}
-  template <class Item> inline bool OnItem(const Item& o) const {
-    return analyserA.OnItem(o) || analyserB.OnItem(o);
+    template <class Item> inline bool OnItem(const Item& o) const {
+      return analyserA.OnItem(o) || analyserB.OnItem(o);
+    }
+    template <class Item> inline bool OnItem(const Item& o, size_t i) const {
+      return analyserA.OnItem(o, i) || analyserB.OnItem(o, i);
+    }
+  };
+public:
+  template <class Analyser> static not_<Analyser> not(const Analyser& a)  {
+    return not_<Analyser>(a);
   }
-  template <class Item> inline bool OnItem(const Item& o, size_t i) const {
-    return analyserA.OnItem(o, i) || analyserB.OnItem(o, i);
-  }
-};
-struct olx_alg_or  {
   template <class AnalyserA, class AnalyserB>
-  static olx_alg_or_<AnalyserA, AnalyserB> create(const AnalyserA& a, const AnalyserB& b)  {
-    return olx_alg_or_<AnalyserA, AnalyserB>(a, b);
+  static and_<AnalyserA, AnalyserB> and(const AnalyserA& a, const AnalyserB& b)  {
+    return and_<AnalyserA, AnalyserB>(a, b);
   }
+  template <class AnalyserA, class AnalyserB>
+  static or_<AnalyserA, AnalyserB> or(const AnalyserA& a, const AnalyserB& b)  {
+    return or_<AnalyserA, AnalyserB>(a, b);
+  }
+  struct Bool  {
+    bool value;
+    Bool(bool _value) : value(_value)  {}
+    template <typename Item> inline bool OnItem(const Item& o) const {
+      return value;
+    }
+    template <typename Item> inline bool OnItem(const Item& o, size_t i) const {
+      return value;
+    }
+  };
+
 };
 #include "citem.h"
 #include "association.h"
-#include "listcast.h"
+#include "listalg.h"
 
 EndEsdlNamespace()
 

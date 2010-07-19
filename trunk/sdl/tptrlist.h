@@ -36,11 +36,16 @@ template <class T> class TPtrList : public IEObject  {
     if( FCapacity == FCount )
       SetCapacity((long)(1.5*FCount + FIncrement));
   }
+  void init_from_array(size_t size, const T** array)  {
+    init(size);
+    memcpy(Items, array, size*sizeof(T*));
+  }
 public:
   // creates a new empty objects
   TPtrList()  {  init(0);  }
   // allocates size elements (can be accessed diretly)
   TPtrList(size_t size)  {  init(size);  }
+  TPtrList(int size)  {  init(size);  }
 //..............................................................................
   /* copy constuctor - creates new copies of the objest, be careful as the assignement
    operator must exist for nonpointer objects */
@@ -50,9 +55,13 @@ public:
   }
 //..............................................................................
   /* copies values from an array of size elements  */
-  TPtrList(size_t size, const T** array)  {
-    init(size);
-    memcpy(Items, array, size*sizeof(T*));
+  TPtrList(size_t size, const T** array)  {  init_from_array(size, array);  }
+  TPtrList(int size, const T** array)  {  init_from_array(size, array);  }
+//..............................................................................
+  template <class List, class Accessor> TPtrList(const List& list, const Accessor& accessor)  {
+    init(list.Count());
+    for( size_t i=0; i < list.Count(); i++ )
+      Set(i, accessor.Access(list[i]));
   }
 //..............................................................................
   virtual ~TPtrList()  {
@@ -85,6 +94,13 @@ public:
     return *this;
   }
 //..............................................................................
+  template <class List, class Accessor> TPtrList& Assign(const List& l, const Accessor& accessor)  {
+    SetCount(l.Count());
+    for( size_t i=0; i < l.Count(); i++ )
+      Set(i, accessor.Access(l[i]));
+    return *this;
+  }
+//..............................................................................
   inline TPtrList& operator = (const TPtrList& l)  {  return Assign(l);  }
 //..............................................................................
   template <class List> inline TPtrList& operator = (const List& l)  {
@@ -99,10 +115,18 @@ public:
   }
 //..............................................................................
   template <class List> TPtrList& AddList(const List& l)  {
-    SetCapacity(l.Count() + FCount);
+    const size_t off = FCount;
+    SetCount(l.Count() + FCount);
     for( size_t i=0; i < l.Count(); i++ )
-      Set(FCount+i, l[i]);
-    FCount += l.Count();
+      Set(off+i, l[i]);
+    return *this;
+  }
+//..............................................................................
+  template <class List, class Accessor> TPtrList& AddList(const List& l, const Accessor& accessor)  {
+    const size_t off = FCount;
+    SetCount(l.Count() + FCount);
+    for( size_t i=0; i < l.Count(); i++ )
+      Set(off+i, accessor.Access(l[i]));
     return *this;
   }
 //..............................................................................

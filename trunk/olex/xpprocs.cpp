@@ -1428,8 +1428,7 @@ void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olxstr name;
   vec3d from, to;
   if( Atoms.Count() > 2 )  {
-    TSAtomPList satoms;
-    ListCaster::Cast(Atoms, satoms, ListCaster::AccessorCast<TSAtom&,TXAtom::AtomAccessor>());
+    TSAtomPList satoms(Atoms, TXAtom::AtomAccessor<>());
     mat3d params;
     vec3d rms, center;
     TSPlane::CalcPlanes(satoms, params, rms, center);
@@ -1670,9 +1669,8 @@ void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TXAtomPList Atoms;
     FXApp->FindXAtoms(Cmds.Text(' '), Atoms, true, Options.Contains('h'));
     if( Atoms.IsEmpty() )  return;
-    AGDObjList go;
-    ListCaster::Cast(Atoms, go, ListCaster::SimpleCast<AGDrawObject*>());
-    FUndoStack->Push( FXApp->SetGraphicsVisible(go, false) );
+    AGDObjList go(Atoms, CastAccessor<AGDrawObject*>());
+    FUndoStack->Push(FXApp->SetGraphicsVisible(go, false));
   }
 }
 //..............................................................................
@@ -2366,6 +2364,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         const double scale1 = l.GetFont().IsVectorFont() ? 1.0/FXApp->GetRender().GetScale() : 1.0;
         const double scale = scale1/FXApp->GetRender().GetBasis().GetZoom();
         l.TranslateBasis(off*scale);
+        l.SetVisible(true);
       }
     }
     //cifdn.
@@ -2900,16 +2899,16 @@ void TMainForm::macTria(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           E.ProcessingError(__OlxSrcInfo, "some bonds do not share atom" );
           return;
         }
-        satoms.Add( &sba.Another(*sa) );
-        satoms.Add( sa );
-        satoms.Add( &sbb.Another(*sa) );
+        satoms.Add(sba.Another(*sa));
+        satoms.Add(sa);
+        satoms.Add(sbb.Another(*sa));
       }
     }
     else
       E.ProcessingError(__OlxSrcInfo, "no atoms or bonds provided" );
   }
   else
-    ListCaster::Cast(xatoms, satoms, ListCaster::AccessorCast<TSAtom&, TXAtom::AtomAccessor>());
+    satoms.AddList(xatoms, TXAtom::AtomAccessor<>());
 
   if( !Options.Contains("cs") )  FXApp->SelectAll(false);
 
@@ -6153,10 +6152,9 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
     cellParameters[i+6]= FXApp->XFile().GetAsymmUnit().Axes()[i].GetE();
     cellParameters[i+9]= FXApp->XFile().GetAsymmUnit().Angles()[i].GetE();
   }
-  TSAtomPList satoms;
   TXAtomPList xatoms;
   FXApp->FindXAtoms(Cmds.Text(' '), xatoms);
-  ListCaster::Cast(xatoms, satoms, ListCaster::AccessorCast<TSAtom&, TXAtom::AtomAccessor>());
+  TSAtomPList satoms(xatoms, TXAtom::AtomAccessor<>());
   if( satoms.IsEmpty() )
     throw TInvalidArgumentException(__OlxSourceInfo, "atom count");
   xlib::TLS tls(satoms, cellParameters);
@@ -8507,7 +8505,7 @@ void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
     TXAtomPList atoms;
     FindXAtoms(Cmds, atoms, false, false);
     if( (atoms.Count()%2) == 0 )
-      ListCaster::Cast(atoms, pairs, ListCaster::AccessorCast<TSAtom&, TXAtom::AtomAccessor>());
+      pairs.AddList(atoms, TXAtom::AtomAccessor<>());
   }
   if( !pairs.IsEmpty()  )  {
     for( size_t i=0; i < pairs.Count(); i+=2 )  {
@@ -8762,12 +8760,11 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( Cmds.Count() == 1 && TEFile::Exists(Cmds[0]) )
     radii = TXApp::ReadVdWRadii(Cmds[0]);
   TXApp::PrintVdWRadii(radii, au.GetContentList());
-  TSAtomPList satoms;
   const bool use_aw = Options.Contains('w');
   if( Options.Contains('s') )  {
     TLattice& latt = FXApp->XFile().GetLattice();
     for( size_t i=0; i < latt.FragmentCount(); i++ )  {
-      satoms.Clear();
+      TSAtomPList satoms;
       TNetwork& f = latt.GetFragment(i);
       for( size_t j=0; j < f.NodeCount(); j++ )  {
         if( f.Node(j).IsDeleted() )  continue;
@@ -8810,8 +8807,7 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       else
         all_radii[i] = radii.GetValue(ri);
     }
-    ListCaster::Cast(xatoms, satoms, ListCaster::AccessorCast<TSAtom&, TXAtom::AtomAccessor>());
-    main_CreateWBox(*FXApp, satoms, crds, all_radii, true);
+    main_CreateWBox(*FXApp, TSAtomPList(xatoms, TXAtom::AtomAccessor<>()), crds, all_radii, true);
   }
 }
 //..............................................................................

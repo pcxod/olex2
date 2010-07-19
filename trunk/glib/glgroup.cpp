@@ -74,7 +74,7 @@ bool TGlGroup::Add(AGDrawObject& GO, bool remove)  {
     go = GlG;
   const size_t i = Objects.IndexOf(go);
   if( i == InvalidIndex )  {
-    if( !GO.GetPrimitives().IsEmpty() )  {  // check the compatibility of the selection
+    if( GO.GetPrimitives().PrimitiveCount() != 0 )  {  // check the compatibility of the selection
       if( Objects.IsEmpty() )
         GlM.SetIdentityDraw(GO.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw());
       else if( GlM.IsIdentityDraw() != GO.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw() ) 

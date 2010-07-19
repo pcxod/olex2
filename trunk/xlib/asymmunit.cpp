@@ -367,8 +367,8 @@ void TAsymmUnit::DetachAtomType(short type, bool detach)  {
 //..............................................................................
 void TAsymmUnit::PackAtoms()  {
   for( size_t i=0; i < Residues.Count(); i++ )
-    GetResidue(i).Atoms.Pack(TCAtom::FlagsAnalyser(catom_flag_Deleted));
-  CAtoms.Pack(TCAtom::FlagsAnalyser(catom_flag_Deleted));
+    GetResidue(i).Atoms.Pack(TCAtom::FlagsAnalyser<>(catom_flag_Deleted));
+  CAtoms.Pack(TCAtom::FlagsAnalyser<>(catom_flag_Deleted));
   for( size_t i=0; i < CAtoms.Count(); i++ )
     CAtoms[i]->SetId(i);
 }

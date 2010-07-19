@@ -1069,10 +1069,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\arrays.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\bapp.cpp"
 				>
 			</File>
@@ -1097,10 +1093,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\ecast.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\efile.cpp"
 				>
 			</File>
@@ -1122,10 +1114,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\erange.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\estrlist.cpp"
 				>
 			</File>
 			<File
@@ -1255,11 +1243,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\association.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\bapp.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\bitarray.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\citem.h"
 				>
 			</File>
 			<File
@@ -1288,10 +1284,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\ebtree.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\ecast.h"
 				>
 			</File>
 			<File
@@ -1448,6 +1440,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\library.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\listalg.h"
 				>
 			</File>
 			<File

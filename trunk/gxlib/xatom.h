@@ -127,9 +127,13 @@ public:
   static void SetQPeakSizeScale(float V);    // to use with q-peaks
 
   void CalcRad(short DefAtomR);
-  struct AtomAccessor  {
-    static TSAtom& Access(TXAtom& a)  {  return a.Atom();  }
-    static TSAtom& Access(TXAtom* a)  {  return a->Atom();  }
+  template <class Accessor=DirectAccessor> struct AtomAccessor  {
+    template <class Item> static inline TSAtom& Access(Item& a)  {
+      return Accessor::Access(a).Atom();
+    }
+    template <class Item> static inline TSAtom& Access(Item* a)  {
+      return Accessor::Access(*a).Atom();
+    }
   };
   inline TSAtom& Atom() const {  return FAtom;  }
 

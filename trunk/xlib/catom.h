@@ -215,15 +215,20 @@ public:
   PyObject* PyExport();
 #endif
   static int CompareAtomLabels(const olxstr& S, const olxstr& S1);
-  struct FlagsAnalyser  {
+  template <class Accessor=DirectAccessor> struct FlagsAnalyser  {
     const short ref_flags;
     FlagsAnalyser(short _ref_flags) : ref_flags(_ref_flags)  {}
-    inline bool OnItem(const TCAtom& o) const {  return (o.Flags&ref_flags) != 0;  }
+    template <class Item> inline bool OnItem(const Item& o) const {
+      return (Accessor::Access(o).Flags&ref_flags) != 0;
+    }
   };
-  struct TypeAnalyser  {
+  template <class Accessor=DirectAccessor> struct TypeAnalyser  {
     const short ref_type;
+    TypeAnalyser(const cm_Element _ref_type) : ref_type(_ref_type.z)  {}
     TypeAnalyser(short _ref_type) : ref_type(_ref_type)  {}
-    inline bool OnItem(const TCAtom& o) const {  return o.GetType() == ref_type;  }
+    template <class Item> inline bool OnItem(const Item& o) const {
+      return Accessor::Access(o).GetType() == ref_type;
+    }
   };
   friend class TAsymmUnit;
 };

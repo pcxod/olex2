@@ -1002,18 +1002,16 @@ void XLibMacros::macHImp(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 void XLibMacros::macAnis(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TSAtomPList atoms;
   if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
-  TCAtomPList catoms;
-  ListCaster::Cast(atoms, catoms, ListCaster::AccessorCast<TCAtom&, TSAtom::CAtomAccessor>());
+  TCAtomPList catoms(atoms, TSAtom::CAtomAccessor<>());
   if( !Options.Contains("h") )
-    catoms.Pack(TCAtom::TypeAnalyser(iHydrogenZ));
+    catoms.Pack(TCAtom::TypeAnalyser<>(iHydrogenZ));
   TXApp::GetInstance().XFile().GetLattice().SetAnis(catoms, true);
 }
 //..............................................................................
 void XLibMacros::macIsot(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TSAtomPList atoms;
   if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
-  TCAtomPList catoms;
-  ListCaster::Cast(atoms, catoms, ListCaster::AccessorCast<TCAtom&, TSAtom::CAtomAccessor>());
+  TCAtomPList catoms(atoms, TSAtom::CAtomAccessor<>());
   TXApp::GetInstance().XFile().GetLattice().SetAnis(catoms, false);
 }
 //..............................................................................
