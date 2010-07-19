@@ -22,7 +22,7 @@ public:
   TEBasis(const TEBasis& B);
   virtual ~TEBasis();
 
-  const TEBasis& operator  = (const TEBasis &B);
+  const TEBasis& operator = (const TEBasis &B);
   template <class VC> void SetCenter(const VC& V)  {
     FCenter[0] = V[0];  FCenter[1] = V[1];  FCenter[2] = V[2];
   }

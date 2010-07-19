@@ -11,11 +11,13 @@
 // TXLine function bodies
 //----------------------------------------------------------------------------//
 TXLine::TXLine(TGlRenderer& r, const olxstr& collectionName, const vec3d& base, const vec3d& edge): 
-  TXBond(r, collectionName, *(TSBond*)NULL)
+  TXBond(r, collectionName, *(TSBond*)NULL),
+  FBase(base), FEdge(edge)
 {
-  FBase = base;
-  FEdge = edge;
-  vec3d C( FEdge - FBase);
+  vec3d C(edge - base);
+  GetLabel().SetOffset((base+edge)/2);
+  GetLabel().SetLabel(olxstr::FormatFloat(3, C.Length()));
+  GetLabel().SetVisible(true);
   if( !C.IsNull() )  {
     Params()[3] = C.Length();
     C.Normalise();

@@ -709,10 +709,8 @@ void TGlRenderer::InvertSelection()  {
   const size_t oc = FGObjects.Count();
   for( size_t i=0; i < oc; i++ )  {
     AGDrawObject* GDO = FGObjects[i];
-    if( !GDO->IsGrouped() && GDO->IsVisible() )  {
-      if( !GDO->IsSelected() && GDO->IsSelectable() && GDO != FSelection )
-        Selected.Add(GDO);
-    }
+    if( !GDO->IsGrouped() && GDO->IsVisible() )
+      Selected.Add(GDO);
   }
   FSelection->Clear();
   for( size_t i=0; i < Selected.Count(); i++ )
@@ -720,29 +718,16 @@ void TGlRenderer::InvertSelection()  {
 }
 //..............................................................................
 void TGlRenderer::SelectAll(bool Select)  {
-  FSelection->Clear();
   if( Select )  {
     for( size_t i=0; i < ObjectCount(); i++ )  {
       AGDrawObject& GDO = GetObject(i);
-      if( !GDO.IsGrouped() && GDO.IsVisible() && GDO.IsSelectable() )  {
-        if( &GDO == FSelection )  continue;
-        if( EsdlInstanceOf(GDO, TGlGroup) )  {
-          bool Add = false;
-          for( size_t j=0; j < ((TGlGroup&)GDO).Count(); j++ )  {
-            if( ((TGlGroup&)GDO).GetObject(j).IsVisible() )  {
-              Add = true;
-              break;
-            }
-          }
-          if( Add )  
-            FSelection->Add(GDO);
-        }
-        else
-          FSelection->Add(GDO);
-      }
+      if( !GDO.IsGrouped() && GDO.IsVisible() && GDO.IsSelectable() )  // grouped covers selected
+        FSelection->Add(GDO);
     }
     FSelection->SetSelected(true);
   }
+  else
+    FSelection->Clear();
 }
 //..............................................................................
 void TGlRenderer::ClearGroups()  {

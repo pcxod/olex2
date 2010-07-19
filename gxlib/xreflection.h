@@ -1,5 +1,5 @@
-#ifndef __olx_glx_xreflection_H
-#define __olx_glx_xreflection_H
+#ifndef __olx_gxl_xreflection_H
+#define __olx_gxl_xreflection_H
 #include "gxbase.h"
 #include "gdrawobject.h"
 #include "hkl.h"

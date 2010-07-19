@@ -67,6 +67,10 @@ public:
     return Assign(list);
   }
 //..............................................................................
+  template <class List> inline TArrayList& operator = (const TArrayList& list)  {
+    return Assign(list);
+  }
+//..............................................................................
   template <class List> TArrayList& AddList(const List& list)  {
     SetCapacity(list.Count() + FCount);
     for( size_t i=0; i < list.Count(); i++ )
@@ -263,7 +267,7 @@ public:
     if( v == FCount )  return;
     if( v > FCount )  {
       if( v > FCapacity )
-        SetCapacity(v + FIncrement);
+        SetCapacity(v);
     }
     else if( v == 0 )  {
       if( Items != NULL )  {
@@ -274,9 +278,10 @@ public:
     }
     else  {
       T* Bf = new T[v+FIncrement];
-      for( size_t i=0; i < v; i++ )
+      for( size_t i=0; i < FCount; i++ )
         Bf[i] = Items[i];
-      delete [] Items;
+      if( Items != NULL )
+        delete [] Items;
       Items = Bf;
       FCapacity = v + FIncrement;
     }

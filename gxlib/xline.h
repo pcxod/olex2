@@ -1,5 +1,5 @@
-#ifndef __olx_glx_xline_H
-#define __olx_glx_xline_H
+#ifndef __olx_gxl_xline_H
+#define __olx_gxl_xline_H
 #include "xbond.h"
 #include "xatom.h"
 
@@ -12,15 +12,10 @@ public:
   void Create(const olxstr& cName=EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TXLine();
 
-  vec3d&  Base()  {  return FBase;  }
-  vec3d&  Edge()  {  return FEdge;  }
+  vec3d& Base()  {  return FBase;  }
+  vec3d& Edge()  {  return FEdge;  }
 
-  bool GetDimensions(vec3d &Max, vec3d &Min){  return false; };
-
-  bool OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {  return true;  }
-  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {  return false;  }
-  bool OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {  return false;  }
-
+  bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
   bool Orient(TGlPrimitive& P);
   void Radius(float V);
   inline double Radius()  {  return Params()[4]; }

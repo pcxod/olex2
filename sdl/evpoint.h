@@ -77,14 +77,14 @@ public:
   }
 
   template <class AType>
-    const TEVPoint<AType>& operator  =(const TEVPoint<AType> &S)  {
+    const TEVPoint<AType>& operator =(const TEVPoint<AType> &S)  {
       FValues[0] = S[0];
       FValues[1] = S[1];
       FValues[2] = S[2];
       return S;
     }
 
-  const TEVPoint& operator  = (const TEVPoint& S)  {
+  const TEVPoint& operator = (const TEVPoint& S)  {
     FValues[0] = S[0];  FValues[1] = S[1];  FValues[2] = S[2];
     return S;
   }

@@ -374,6 +374,7 @@ struct olx_alg_or  {
 };
 #include "citem.h"
 #include "association.h"
+#include "listcast.h"
 
 EndEsdlNamespace()
 

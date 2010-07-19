@@ -17,9 +17,9 @@ class TSAtom : public TBasicNode<class TNetwork, TSAtom, class TSBond>  {
 private:
   smatd_plist Matrices;
   // a list of pointers to matrices used for generation of atom
-  TCAtom*  FCAtom;       // basic crystallographic information
+  TCAtom* FCAtom;       // basic crystallographic information
 //  int FTag; // override TCollectioItem and TGDrawObject tags
-  class TEllipsoid*  FEllipsoid;   // a pointer to TEllipsoid object
+  class TEllipsoid* FEllipsoid;   // a pointer to TEllipsoid object
   vec3d  FCCenter;     // atom center in cell coordinates
   vec3d  FCenter;          // atom center in cartesian coordinates
 protected:
@@ -48,6 +48,7 @@ public:
   void SetGrown(bool v)  {  SetBit(v, Flags, satom_Grown);  }
   struct CAtomAccessor  {
     static inline TCAtom& Access(TSAtom& a)  {  return a.CAtom();  }
+    static inline TCAtom& Access(TSAtom* a)  {  return a->CAtom();  }
   };
   operator TCAtom* () const {  return FCAtom;  }
   TCAtom& CAtom() const {  return *FCAtom; }
@@ -181,6 +182,16 @@ public:
 
   virtual void ToDataItem(TDataItem& item) const;
   virtual void FromDataItem(const TDataItem& item, class TLattice& parent);
+  struct FlagsAnalyser  {
+    const short ref_flags;
+    FlagsAnalyser(short _ref_flags) : ref_flags(_ref_flags)  {}
+    inline bool OnItem(const TSAtom& o) const {  return (o.Flags&ref_flags) != 0;  }
+  };
+  struct TypeAnalyser  {
+    const short ref_type;
+    TypeAnalyser(short _ref_type) : ref_type(_ref_type)  {}
+    inline bool OnItem(const TSAtom& o) const {  return o.GetType() == ref_type;  }
+  };
 };
 
 typedef TTypeList<TSAtom> TSAtomList;

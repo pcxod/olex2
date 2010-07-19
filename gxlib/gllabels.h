@@ -1,5 +1,5 @@
-#ifndef __olx_glx_labels_H
-#define __olx_glx_labels_H
+#ifndef __olx_gxl_labels_H
+#define __olx_gxl_labels_H
 #include "gxbase.h"
 #include "gdrawobject.h"
 #include "bitarray.h"

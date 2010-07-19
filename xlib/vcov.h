@@ -2,7 +2,6 @@
 #define __olxs_v_co_v_h
 #include "asymmunit.h"
 #include "lattice.h"
-#include "ecast.h"
 #include "bapp.h"
 #include "log.h"
 /*
