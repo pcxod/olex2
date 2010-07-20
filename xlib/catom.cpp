@@ -221,7 +221,7 @@ PyObject* TCAtom::PyExport()  {
     PythonExt::SetDictItem(main, "uiso", Py_BuildValue("(dd)", Uiso, UisoEsd));
     if( UisoOwner != NULL && !UisoOwner->IsDeleted() )  {
       PyObject* uo = PyDict_New();
-      PythonExt::SetDictItem(uo, "id", Py_BuildValue("i", UisoOwner->GetId())) ;
+      PythonExt::SetDictItem(uo, "id", Py_BuildValue("i", UisoOwner->GetTag())) ;
       PythonExt::SetDictItem(uo, "k", Py_BuildValue("d", UisoScale)) ;
     }
   }
@@ -234,7 +234,7 @@ PyObject* TCAtom::PyExport()  {
       ) );
   }
   if( *Type == iQPeakZ )
-    PythonExt::SetDictItem(main, "peak", Py_BuildValue("d", QPeak) );
+    PythonExt::SetDictItem(main, "peak", Py_BuildValue("d", QPeak));
   return main;
 }
 #endif

@@ -16,11 +16,11 @@ void XVarReference::ToDataItem(TDataItem& item) const {
 #ifndef _NO_PYTHON
 PyObject* XVarReference::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* main = PyDict_New();
-  PythonExt::SetDictItem(main, "name", PythonExt::BuildString(referencer.GetParentContainer().GetIdName()) );
-  PythonExt::SetDictItem(main, "id", Py_BuildValue("i", referencer.GetPersistentId()) );
-  PythonExt::SetDictItem(main, "index", Py_BuildValue("i", var_index) );
-  PythonExt::SetDictItem(main, "relation", PythonExt::BuildString(XVarManager::RelationNames[relation_type]) );
-  PythonExt::SetDictItem(main, "k", Py_BuildValue("d", coefficient) );
+  PythonExt::SetDictItem(main, "name", PythonExt::BuildString(referencer.GetParentContainer().GetIdName()));
+  PythonExt::SetDictItem(main, "id", Py_BuildValue("i", referencer.GetPersistentId()));
+  PythonExt::SetDictItem(main, "index", Py_BuildValue("i", var_index));
+  PythonExt::SetDictItem(main, "relation", PythonExt::BuildString(XVarManager::RelationNames[relation_type]));
+  PythonExt::SetDictItem(main, "k", Py_BuildValue("d", coefficient));
   return main;
 }
 #endif
@@ -84,7 +84,7 @@ bool XVar::IsUsed() const {
 //.................................................................................................
 void XLEQ::_Assign(const XLEQ& leq)  {
   for( size_t i=0; i < leq.Vars.Count(); i++ )
-    AddMember(Parent.GetVar(leq.Vars[i]->GetId()), leq.Coefficients[i] );
+    AddMember(Parent.GetVar(leq.Vars[i]->GetId()), leq.Coefficients[i]);
   Value = leq.Value;
   Sigma = leq.Sigma;
 }
@@ -102,12 +102,12 @@ void XLEQ::ToDataItem(TDataItem& item) const {
 #ifndef _NO_PYTHON
 PyObject* XLEQ::PyExport(TPtrList<PyObject>& _vars)  {
   PyObject* main = PyDict_New();
-  PythonExt::SetDictItem(main, "value", Py_BuildValue("d", Value) );
-  PythonExt::SetDictItem(main, "sigma", Py_BuildValue("d", Sigma) );
+  PythonExt::SetDictItem(main, "value", Py_BuildValue("d", Value));
+  PythonExt::SetDictItem(main, "sigma", Py_BuildValue("d", Sigma));
   PyObject* vars = PyTuple_New(Vars.Count());
   for( size_t i=0; i < Vars.Count(); i++ )  {
     Py_IncRef(_vars[Vars[i]->GetId()]);
-    PyTuple_SetItem(vars, i, _vars[Vars[i]->GetId()] );
+    PyTuple_SetItem(vars, i, _vars[Vars[i]->GetId()]);
   }
   PythonExt::SetDictItem(main, "variables", vars);
   return main;
@@ -161,7 +161,7 @@ XVarReference& XVarManager::AddVarRef(XVar& var, IXVarReferencer& a, short var_n
     prf->Parent._RemRef(*prf);
     References.Delete(prf->GetId());
   }
-  XVarReference& rf = References.Add( new XVarReference(var, a, var_name, relation, coeff) );
+  XVarReference& rf = References.Add(new XVarReference(var, a, var_name, relation, coeff));
   for( size_t i=0; i < References.Count(); i++ )
     References[i].SetId(i);
   var._AddRef(rf);
@@ -376,12 +376,12 @@ PyObject* XVarManager::PyExport(TPtrList<PyObject>& atoms)  {
   TPtrList<PyObject> var_refs(Vars.Count());
   PyObject* vars = PyTuple_New(Vars.Count());
   for( size_t i=0; i < Vars.Count(); i++ )
-    PyTuple_SetItem(vars, i, var_refs[i] = Vars[i].PyExport(atoms) );
+    PyTuple_SetItem(vars, i, var_refs[i] = Vars[i].PyExport(atoms));
   PythonExt::SetDictItem(main, "variables", vars);
 
   PyObject* eqs = PyTuple_New(Equations.Count());
   for( size_t i=0; i < Equations.Count(); i++ )
-    PyTuple_SetItem(eqs, i, Equations[i].PyExport(var_refs) );
+    PyTuple_SetItem(eqs, i, Equations[i].PyExport(var_refs));
   PythonExt::SetDictItem(main, "equations", eqs);
   return main;
 }
@@ -396,7 +396,7 @@ void XVarManager::FromDataItem(const TDataItem& item) {
   for( size_t i=0; i < eqs.ItemCount(); i++ )
     Equations.Add( XLEQ::FromDataItem(eqs.GetItem(i), *this)).SetId(Vars.Count());
   for( size_t i=0; i < References.Count(); i++ )
-    References[i].referencer.SetVarRef( References[i].var_index, &References[i] );
+    References[i].referencer.SetVarRef(References[i].var_index, &References[i]);
 }
 //.................................................................................................
 
