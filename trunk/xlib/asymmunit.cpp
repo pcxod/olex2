@@ -677,9 +677,13 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
   TDataItem& symm = item.AddItem("symm");
   symm.AddField("latt", Latt);
   for( size_t i=0; i < Matrices.Count(); i++ )  
-    symm.AddItem(i, TSymmParser::MatrixToSymmEx(Matrices[i]) );
+    symm.AddItem(i, TSymmParser::MatrixToSymmEx(Matrices[i]));
+  size_t aid=0;
+  for( size_t i=0; i < CAtoms.Count(); i++ )
+    if( !CAtoms[i]->IsDeleted() )
+      CAtoms[i]->SetTag(aid++);
+  aid=0;
   TDataItem& resi = item.AddItem("residues");
-  int atom_id = 0;
   for( size_t i=0; i < ResidueCount(); i++ )  {
     TResidue& r = GetResidue(i);
     if( r.IsEmpty() )  continue;
@@ -693,8 +697,7 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
     }
     for( size_t j=0; j < r.Count(); j++ )  {
       if( r[j].IsDeleted() )  continue;
-      r[j].SetTag(atom_id);
-      r[j].ToDataItem(ri->AddItem(atom_id++));
+      r[j].ToDataItem(ri->AddItem(aid++));
     }
   }
 }
@@ -712,6 +715,11 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
   PythonExt::SetDictItem(cell, "gamma", Py_BuildValue("(dd)", FAngles[2].GetV(), FAngles[2].GetE()));
   PythonExt::SetDictItem(cell, "z", Py_BuildValue("i", Z));
   PythonExt::SetDictItem(main, "cell", cell);
+  // pre-set atom tags
+  size_t aid=0;
+  for( size_t i=0; i < CAtoms.Count(); i++ )
+    if( !CAtoms[i]->IsDeleted() )
+      CAtoms[i]->SetTag(aid++);
   size_t resi_cnt = 0;
   for( size_t i=0; i < ResidueCount(); i++ )  {
     TResidue& r = GetResidue(i);
@@ -720,15 +728,12 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
   }
   PyObject* residues = PyTuple_New(resi_cnt);
   resi_cnt = 0;
-
-  size_t atom_id = 0;
   for( size_t i=0; i < ResidueCount(); i++ )  {
     TResidue& r = GetResidue(i);
     if( r.IsEmpty() )  continue;
     size_t atom_cnt = 0;
     for( size_t j=0; j < r.Count(); j++ )  {
       if( r[j].IsDeleted() )  continue;
-      r[j].SetTag(atom_id++);
       atom_cnt++;
     }
     PyObject* atoms = PyTuple_New(atom_cnt), 
@@ -768,6 +773,7 @@ void TAsymmUnit::FromDataItem(TDataItem& item)  {
   Z = cell.GetRequiredField("Z").RadUInt<unsigned short>();
   TDataItem& symm = item.FindRequiredItem("symm");
   Latt = symm.GetRequiredField("latt").ToInt();
+  TPtrList<TDataItem> atom_items;
   for( size_t i=0; i < symm.ItemCount(); i++ )  
     TSymmParser::SymmToMatrix(symm.GetItem(i).GetValue(), Matrices.AddNew());
   TDataItem& resis = item.FindRequiredItem("residues");
@@ -776,9 +782,12 @@ void TAsymmUnit::FromDataItem(TDataItem& item)  {
     TResidue& r = (i==0 ? MainResidue : NewResidue(resi.GetRequiredField("class_name"),
       resi.GetValue().ToInt(), resi.GetRequiredField("alias")) );
     for( size_t j=0; j < resi.ItemCount(); j++ )  {
-      NewAtom(&r).FromDataItem(resi.GetItem(j));
+      atom_items.Add(resi.GetItem(j));
+      NewAtom(&r);
     }
   }
+  for( size_t i=0; i < atom_items.Count(); i++ )
+    CAtoms[i]->FromDataItem(*atom_items[i]);
   InitMatrices();
   InitData();
 }

@@ -184,8 +184,14 @@ void TCAtom::ToDataItem(TDataItem& item) const  {
   item.AddField("x", TEValue<double>(Center[0], Esd[0]).ToString());
   item.AddField("y", TEValue<double>(Center[1], Esd[1]).ToString());
   item.AddField("z", TEValue<double>(Center[2], Esd[2]).ToString());
-  if( !olx_is_valid_index(EllpId) )
+  if( !olx_is_valid_index(EllpId) )  {
     item.AddField("Uiso", TEValue<double>(Uiso, UisoEsd).ToString());
+    if( UisoOwner != NULL && !UisoOwner->IsDeleted() )  {
+      TDataItem& uo = item.AddItem("Uowner");
+      uo.AddField("id", UisoOwner->GetTag());
+      uo.AddField("k", UisoScale);
+    }
+  }
   else {
     double Q[6], E[6];
     GetEllipsoid()->GetQuad(Q, E);
@@ -211,8 +217,14 @@ PyObject* TCAtom::PyExport()  {
   PythonExt::SetDictItem(main, "tag", Py_BuildValue("i", GetTag()));
   PythonExt::SetDictItem(main, "crd", 
     Py_BuildValue("(ddd)(ddd)", Center[0], Center[1], Center[2], Esd[0], Esd[1], Esd[2]));
-  if( !olx_is_valid_index(EllpId) )
+  if( !olx_is_valid_index(EllpId) )  {
     PythonExt::SetDictItem(main, "uiso", Py_BuildValue("(dd)", Uiso, UisoEsd));
+    if( UisoOwner != NULL && !UisoOwner->IsDeleted() )  {
+      PyObject* uo = PyDict_New();
+      PythonExt::SetDictItem(uo, "id", Py_BuildValue("i", UisoOwner->GetId())) ;
+      PythonExt::SetDictItem(uo, "k", Py_BuildValue("d", UisoScale)) ;
+    }
+  }
   else  {
     double Q[6], E[6];
     GetEllipsoid()->GetQuad(Q, E);
@@ -260,6 +272,11 @@ void TCAtom::FromDataItem(TDataItem& item)  {
     EllpId = InvalidIndex;
     ev = item.GetRequiredField("Uiso");
     Uiso = ev.GetV();  UisoEsd = ev.GetE();
+    TDataItem* uo = item.FindItem("Uowner");
+    if( uo != NULL )  {
+      UisoOwner = &GetParent()->GetAtom(uo->GetRequiredField("id").ToSizeT());
+      UisoScale = uo->GetRequiredField("k").ToDouble();
+    }
   }
   if( *Type == iQPeakZ )
     QPeak = item.GetRequiredField("peak").ToDouble();
