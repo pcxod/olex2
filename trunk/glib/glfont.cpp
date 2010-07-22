@@ -12,10 +12,8 @@
 using namespace exparse::parser_util;
 UseGlNamespace()
 //..............................................................................
-TGlFont::TGlFont(const olxstr& name) {
-  FontBase = olx_gl::genLists(256);
-  if( FontBase == (GLuint)~0 )
-    throw TOutOfMemoryException(__OlxSourceInfo);
+TGlFont::TGlFont(size_t id, const olxstr& name) : Id(id), Name(name) {
+  FontBase = ~0;
   CharSizes.SetCount(256);
   for( int i=0; i < 256; i++ )
     CharSizes[i] = new TFontCharSize();
@@ -23,7 +21,6 @@ TGlFont::TGlFont(const olxstr& name) {
   Flags = 0;
   Textures = NULL;
   ClearData();
-  Name = name;
   PointSize = 0;
   MaxWidth = MaxHeight = 0;
   Leftmost = 1000; 
@@ -31,9 +28,8 @@ TGlFont::TGlFont(const olxstr& name) {
 }
 //..............................................................................
 TGlFont::~TGlFont()  {
-  for( int i=0; i < 256; i++ )
-    delete CharSizes[i];
-  if( FontBase != (GLuint)~0 )
+  CharSizes.Delete();
+  if( olx_is_valid_index(FontBase) )
     olx_gl::deleteLists(FontBase, 256);
   if( Textures != NULL )  {
     olx_gl::deleteTextures(256, Textures);
@@ -51,6 +47,10 @@ void TGlFont::ClearData()  {
   Leftmost = 1000; // an arbitrary value
   Topmost  = 1000;
   Flags = 0;
+  if( olx_is_valid_index(FontBase) )  {
+    olx_gl::deleteLists(FontBase, 256);
+    FontBase = (GLuint)~0;
+  }
   //if( Textures != NULL )  {
   //  olx_gl::deleteTextures(256, Textures);
   //  delete [] Textures;
@@ -208,7 +208,9 @@ void TGlFont::CreateGlyphsFromRGBArray(bool FW, uint16_t Width, uint16_t Height)
       MaxWidth == 0 || MaxHeight == 0 )
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("font size w:") << Width << "; h:" << Height);
 
-  SetBit(FW, Flags, sglfFixedWidth);
+  if( !olx_is_valid_index(FontBase) )
+    FontBase = olx_gl::genLists(256);
+  SetBit(FW, Flags, fntFixedWidth);
   uint16_t NHeight = MaxHeight;
   uint16_t BWidth = (MaxWidth/8+1);
   olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 1);  // byte alignment
@@ -254,6 +256,7 @@ void TGlFont::CreateGlyphsFromRGBArray(bool FW, uint16_t Width, uint16_t Height)
     }
   }
   delete [] BmpData;
+  Flags |= fntCreated;
 }
 //..............................................................................
 bool TGlFont::AnalyseBitArray(const TEBitArray& ba, size_t Char, uint16_t width, uint16_t height)  {
@@ -306,8 +309,9 @@ bool TGlFont::AnalyseBitArray(const TEBitArray& ba, size_t Char, uint16_t width,
 void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, uint16_t w, uint16_t h)  {
   for( int i=0; i < 256; i++ )
     AnalyseBitArray(ba, i, w, h);
-  SetBit(fixedWidth, Flags, sglfFixedWidth);
-
+  if( !olx_is_valid_index(FontBase) )
+    FontBase = olx_gl::genLists(256);
+  SetBit(fixedWidth, Flags, fntFixedWidth);
   uint16_t BWidth = (MaxWidth/8+1)*8;
   uint16_t BHeight = MaxHeight+1;
   olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 1);  // byte alignment
@@ -345,6 +349,7 @@ void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, uint16_t w, ui
     }
   }
   delete [] bf;
+  Flags |= fntCreated;
 }
 //..............................................................................
 void TGlFont::CreateTextures(uint16_t Width, uint16_t Height)  {
@@ -380,7 +385,7 @@ void TGlFont::CreateTextures(uint16_t Width, uint16_t Height)  {
           }
         }
       }
-      olx_gl::bindTexture( GL_TEXTURE_2D, Textures[i]);
+      olx_gl::bindTexture(GL_TEXTURE_2D, Textures[i]);
       olx_gl::texEnv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
       olx_gl::texParam(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       olx_gl::texParam(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
@@ -399,6 +404,7 @@ void TGlFont::CreateTextures(uint16_t Width, uint16_t Height)  {
     }
   }
   delete [] BmpData;
+  Flags |= fntCreated;
 }
 //..............................................................................
 // http://local.wasp.uwa.edu.au/~pbourke/dataformats/hershey/
@@ -1069,7 +1075,9 @@ TStrList TGlFont::ExportHersheyToPS(const olxstr& uniq_chars)  {
 }
 void TGlFont::CreateHershey(const olxdict<size_t, olxstr, TPrimitiveComparator>& definition, double scale)  {
   ClearData();
-  Flags |= sglfVectorFont;
+  Flags |= fntVectorFont;
+  if( !olx_is_valid_index(FontBase) )
+    FontBase = olx_gl::genLists(256);
   CharOffset = 0;
   VectorScale = scale*10;
   PointSize = 15;
@@ -1130,6 +1138,7 @@ void TGlFont::CreateHershey(const olxdict<size_t, olxstr, TPrimitiveComparator>&
       olx_gl::end();
     olx_gl::endList();
   }
+  Flags |= fntCreated;
 }
 //..............................................................................
 TCStrList TGlFont::RenderPSLabel(const vec3d& pos, const olxstr& label, double drawScale,

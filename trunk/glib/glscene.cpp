@@ -8,19 +8,13 @@
 UseGlNamespace();
 //..............................................................................
 //..............................................................................
-AGlScene::AGlScene()  {
-  FParent = NULL;
-}
+AGlScene::AGlScene() : FParent(NULL) {}
 //..............................................................................
-AGlScene::~AGlScene()  {
-  for( size_t i=0; i < Fonts.Count(); i++ )  {
-    delete Fonts[i];
-  }
-}
+AGlScene::~AGlScene()  {  Fonts.Delete();  }
 //..............................................................................
 void AGlScene::StartDraw()  {  olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
 //..............................................................................
-void AGlScene::EndDraw()    {  olx_gl::flush();  }
+void AGlScene::EndDraw()  {  olx_gl::flush();  }
 //..............................................................................
 void AGlScene::StartSelect(int x, int y, GLuint *Bf)  {
   olx_gl::selectBuffer(MAXSELECT, Bf);
@@ -35,15 +29,6 @@ int AGlScene::EndSelect()  {
   olx_gl::flush();
   FParent->SetView(false, 1);
   return hits;
-}
-//..............................................................................
-void AGlScene::Destroy()    {  return; }
-//..............................................................................
-TGlFont* AGlScene::FindFont(const olxstr& name)  {
-  for( size_t i=0; i < Fonts.Count(); i++ )
-    if( Fonts[i]->GetName().Equalsi(name) )
-      return Fonts[i];
-  return NULL;
 }
 //..............................................................................
 //..............................................................................

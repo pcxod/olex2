@@ -10,9 +10,9 @@ BeginGlNamespace()
 class TGlCursor: public AGDrawObject, AEventsDispatcher  {
   float X, Y;
   bool TextStyle;
-  uint16_t FontIndex;
   class TGlPrimitive *Primitive;
   olxch Symbol;
+  size_t FontIndex;
 protected:
   bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
 public:
@@ -23,7 +23,7 @@ public:
   void SetPosition(float x, float y)  {  X = x;  Y = y;  }
   DefPropP(float, X)
   DefPropP(float, Y)
-  DefPropP(uint16_t, FontIndex)
+  DefPropP(size_t, FontIndex)
   class TGlFont& GetFont() const;
   
   bool IsText() const {  return TextStyle;  }

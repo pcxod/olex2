@@ -1362,24 +1362,26 @@ separated values of Atom Type and radius, an entry a line");
 void TMainForm::StartupInit()  {
   if( StartupInitialised )  return;
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
-  // create 4 fonts
-  
   TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
-  FXApp->GetRender().GetScene().CreateFont("Console", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
-  FXApp->GetRender().GetScene().CreateFont("Help", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
-  FXApp->GetRender().GetScene().CreateFont("Notes", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
-  FXApp->GetRender().GetScene().CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
-  FXApp->GetRender().GetScene().CreateFont("Picture_labels", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
-  FXApp->GetRender().GetScene().CreateFont("Tooltip", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
+  AGlScene& gls = FXApp->GetRender().GetScene();
+  gls.CreateFont("Default", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
+  gls.CreateFont("Help", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
+  gls.CreateFont("Notes", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
+  gls.CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
+  gls.RegisterFontForType<TXAtom>(
+    gls.CreateFont("AtomLabels", Font.GetNativeFontInfoDesc().c_str())).SetMaterial(glm);
+  gls.RegisterFontForType<TXBond>(
+    gls.CreateFont("BondLabels", Font.GetNativeFontInfoDesc().c_str())).SetMaterial(glm);
+  gls.CreateFont("Tooltip", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
+  gls.RegisterFontForType<TDBasis>(gls._GetFont(4));
+  gls.RegisterFontForType<TDUnitCell>(gls._GetFont(4));
+  gls.RegisterFontForType<TXGlLabels>(gls._GetFont(3));
+  gls.RegisterFontForType<TGlConsole>(gls._GetFont(0));
+  gls.RegisterFontForType<TGlCursor>(gls._GetFont(0));
 
-  FXApp->SetLabelsFont(3);
-  FXApp->DUnitCell().SetLabelsFont(4);
-  FXApp->DBasis().SetLabelsFont(4);
-  FGlConsole->SetFontIndex(0);
-  FGlConsole->Cursor().SetFontIndex(0);
   FHelpWindow->SetFontIndex(1);
   FInfoBox->SetFontIndex(2);
-  GlTooltip->SetFontIndex(5);
+  GlTooltip->SetFontIndex(6);
 
   olxstr T(DataDir);  
   T << FLastSettingsFile;
@@ -1389,7 +1391,7 @@ void TMainForm::StartupInit()  {
     T << FLastSettingsFile;
   }
   try  {  LoadSettings(T);  }
-  catch(const TExceptionBase &e)  {
+  catch(const TExceptionBase& e)  {
     ShowAlert(e);
     //throw;
   }
@@ -1398,8 +1400,6 @@ void TMainForm::StartupInit()  {
   if( !GradientPicture.IsEmpty() )  // need to call it after all objects are created
     ProcessMacro(olxstr("grad ") << " -p=\'" << GradientPicture << '\'');
 
-  FInfoBox->SetHeight(FXApp->GetRender().GetScene().GetFont(2)->TextHeight(EmptyString));
-  
   ProcessMacro(olxstr("showwindow help ") << HelpWindowVisible);
   ProcessMacro(olxstr("showwindow info ") << InfoWindowVisible);
   ProcessMacro(olxstr("showwindow cmdline ") << CmdLineVisible);
@@ -1509,6 +1509,7 @@ void TMainForm::StartupInit()  {
   }
   FileDropTarget* dndt = new FileDropTarget(*this);
   this->SetDropTarget(dndt);
+  FInfoBox->SetHeight(gls._GetFont(2).TextHeight(EmptyString));
   StartupInitialised = true;
 }
 //..............................................................................
@@ -3274,7 +3275,11 @@ void TMainForm::LoadScene(const TDataItem& Root, TGlLightModel& FLM) {
   if( I == NULL )  return;
   for( size_t i=0; i < I->ItemCount(); i++ )  {
     TDataItem& fi = I->GetItem(i);
-    FXApp->GetRender().GetScene().CreateFont(fi.GetName(), fi.GetFieldValue("id") );
+    // compatibility conversion...
+    if( fi.GetName() == "Console" )
+      FXApp->GetRender().GetScene().CreateFont("Default", fi.GetFieldValue("id") );
+    else
+      FXApp->GetRender().GetScene().CreateFont(fi.GetName(), fi.GetFieldValue("id") );
   }
   I = Root.FindItem("Materials");
   if( I != NULL )  {
@@ -3302,8 +3307,8 @@ void TMainForm::SaveScene(TDataItem &Root, const TGlLightModel &FLM) const {
   FLM.ToDataItem(Root.AddItem("Scene_Properties"));
   TDataItem *I = &Root.AddItem("Fonts");
   for( size_t i=0; i < FXApp->GetRender().GetScene().FontCount(); i++ )  {
-    TDataItem& fi = I->AddItem( FXApp->GetRender().GetScene().GetFont(i)->GetName());
-    fi.AddField("id", FXApp->GetRender().GetScene().GetFont(i)->GetIdString() );
+    TDataItem& fi = I->AddItem(FXApp->GetRender().GetScene()._GetFont(i).GetName());
+    fi.AddField("id", FXApp->GetRender().GetScene()._GetFont(i).GetIdString());
   }
   I = &Root.AddItem("Materials");
   HelpFontColorTxt.ToDataItem(I->AddItem("Help_txt"));

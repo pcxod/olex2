@@ -2334,6 +2334,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     gxl.SetLabel(lb);
     gxl.SetVisible(true);
+    gxl.SetDeleted(false);
   }
   for( size_t i=0; i < equivs.Count(); i++ )  {
     smatd m = FXApp->XFile().GetUnitCell().GetMatrix(smatd::GetContainerId(equivs[i]));
@@ -7246,11 +7247,7 @@ void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroE
   if( Options.Contains('i') )  mf.SetItalic(true);
   if( Options.Contains('b') )  mf.SetBold(true);
   scene.CreateFont(glf->GetName(), mf.GetIdString());
-  if( Cmds[0] == "Picture_labels" )  {
-    FXApp->UpdateLabels();
-    FXApp->DUnitCell().UpdateLabels();
-    FXApp->DBasis().UpdateLabels();
-  }
+  FXApp->UpdateLabels();
 }
 
 //..............................................................................
@@ -7991,22 +7988,23 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
 }
 //..............................................................................
 void TMainForm::macExportFont(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TwxGlScene& wxs = dynamic_cast<TwxGlScene&>(FXApp->GetRender().GetScene());
-  if( &wxs == NULL )  {
+  TwxGlScene* wxs = dynamic_cast<TwxGlScene*>(&FXApp->GetRender().GetScene());
+  if( wxs == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "invalid scene object");
     return;
   }
-  wxs.ExportFont(Cmds[0], Cmds[1]);
+  wxs->ExportFont(Cmds[0], Cmds[1]);
 }
 //..............................................................................
 void TMainForm::macImportFont(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TwxGlScene& wxs = dynamic_cast<TwxGlScene&>(FXApp->GetRender().GetScene());
-  TGlFont* glf = wxs.FindFont( Cmds[0] );
+  TGlFont* glf = wxs.FindFont(Cmds[0]);
   if( glf == NULL )  {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined font ") << Cmds[0]);
     return;
   }
-  wxs.ImportFont(Cmds[0], Cmds[1]);
+  glf->SetIdString(Cmds[1]);
+  wxs.ImportFont(*glf);
 }
 //..............................................................................
 class Esd_Tetrahedron  {

@@ -24,14 +24,12 @@
   in previous position!  ...
 */
 
-UseGlNamespace()
 //..............................................................................
-//..............................................................................
-
 TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   AGDrawObject(R, collectionName),
   OnCommand(Actions.New("ONCOMMAND")),
-  OnPost(Actions.New("ONPOST"))
+  OnPost(Actions.New("ONPOST")),
+  FontIndex(~0)
 {
   PrintMaterial = NULL;
   FLineSpacing = 0;
@@ -44,15 +42,12 @@ TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   FCommand = PromptStr;
   FShowBuffer = true;
   SetSelectable(false);
-  FontIndex = ~0;
   FTxtPos = ~0;
   FMaxLines = 1000;
   FScrollDirectionUp = true;
   FLinesToShow = ~0;
   FCmdPos = ~0;
   FCursor = new TGlCursor(R, "Cursor");
-  //FCursor->Visible(false);
-
   SetToDelete(false);
   R.OnDraw.Add(this);
 }
@@ -64,19 +59,18 @@ TGlConsole::~TGlConsole()  {
 }
 //..............................................................................
 void TGlConsole::Create(const olxstr& cName, const ACreationParams* cpar)  {
+  FontIndex = Parent.GetScene().FindFontIndexForType<TGlConsole>(FontIndex);
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 
-  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;
 
   TGraphicsStyle& GS = GPC.GetStyle();
-
   FLinesToShow = GS.GetParam("LinesToShow", FLinesToShow, true).ToInt();
   FLineSpacing = GS.GetParam("LineSpacing", "0", true).ToDouble();
   InviteStr = GS.GetParam("Prompt", ">>", true);
-
   TGlPrimitive& GlP = GPC.NewPrimitive("Text", sgloText);
   GlP.SetProperties(GS.GetMaterial("Text", GetFont().GetMaterial()));
   GlP.Params[0] = -1;  //bitmap; TTF by default
@@ -462,8 +456,7 @@ void TGlConsole::Visible(bool On)  {
 }
 //..............................................................................
 void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
-  if( !IsPromptVisible() || !olx_is_valid_index(FontIndex) || 
-    Parent.GetWidth()*Parent.GetHeight() <= 50*50 )  return;
+  if( !IsPromptVisible() || Parent.GetWidth()*Parent.GetHeight() <= 50*50 )  return;
   TGlFont& Fnt = GetFont();
   if( InitCmds )  {
     Cmds.Clear();
@@ -496,7 +489,6 @@ void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
     T[0] -= Fnt.GetMaxWidth()/2;  // move the cursor half a char left
     T *= Scale;
     FCursor->SetPosition(T[0], T[1]);
-    FCursor->SetFontIndex(FontIndex);
   }
 }
 //..............................................................................
@@ -505,12 +497,7 @@ void TGlConsole::SetInsertPosition(size_t v)  {
   UpdateCursorPosition(true);
 }
 //..............................................................................
-TGlFont &TGlConsole::GetFont() const {  
-  TGlFont* fnt = Parent.GetScene().GetFont(FontIndex);
-  if( fnt == NULL )
-    throw TInvalidArgumentException(__OlxSourceInfo, "font index");
-  return *fnt;
-}
+TGlFont &TGlConsole::GetFont() const {  return Parent.GetScene().GetFont(FontIndex, true);  }
 //..............................................................................
 bool TGlConsole::Enter(const IEObject *Sender, const IEObject *Data)  {
   UpdateCursorPosition(false);
@@ -519,7 +506,7 @@ bool TGlConsole::Enter(const IEObject *Sender, const IEObject *Data)  {
 //..............................................................................
 void TGlConsole::SetPromptVisible(bool v)  {
   PromptVisible = v;
-  FCursor->SetVisible( v );
+  FCursor->SetVisible(v);
 }
 //..............................................................................
 void TGlConsole::SetInviteString(const olxstr &S)  {
@@ -608,8 +595,6 @@ bool TGlConsole::GetDimensions(vec3d &Max, vec3d &Min)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-
-
 void TGlConsole::LibClear(const TStrObjList& Params, TMacroError& E)  {
   ClearBuffer();
 }

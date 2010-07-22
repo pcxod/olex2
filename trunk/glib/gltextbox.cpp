@@ -24,7 +24,7 @@ TGlTextBox::TGlTextBox(TGlRenderer& Render, const olxstr& collectionName):
   Width = Height = 0;
   MaxStringLength = 0;
   SetSelectable(false);
-  FontIndex = 0;  // previous -1 was very dangerous...
+  FontIndex = ~0;
   ScrollDirectionUp = true;
   Z = 0;
 }
@@ -176,12 +176,7 @@ bool TGlTextBox::OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
   return AGlMouseHandlerImp::OnMouseUp(Sender, Data);
 }
 //..............................................................................
-TGlFont& TGlTextBox::GetFont() const {
-  TGlFont* fnt = Parent.GetScene().GetFont(FontIndex);
-  if( fnt == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "invalid font");
-  return *fnt;
-}
+TGlFont& TGlTextBox::GetFont() const {  return Parent.GetScene().GetFont(FontIndex, true);  }
 //..............................................................................
 
 

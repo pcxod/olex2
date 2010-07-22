@@ -13,14 +13,10 @@
 TXGlLabels::TXGlLabels(TGlRenderer& Render, const olxstr& collectionName) :
   AGDrawObject(Render, collectionName)
 {
-  FontIndex = InvalidIndex;
   AGDrawObject::SetSelectable(false);
-
   FMarkMaterial = Render.GetSelection().GetGlM();
   FMarkMaterial.SetFlags(sglmAmbientF|sglmIdentityDraw);
 }
-//..............................................................................
-TXGlLabels::~TXGlLabels() {}
 //..............................................................................
 void TXGlLabels::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
@@ -29,7 +25,7 @@ void TXGlLabels::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;
-
+  FontIndex = Parent.GetScene().FindFontIndexForType<TXGlLabels>();
   TGlPrimitive& GlP = GPC.NewPrimitive("Text", sgloText);
   GlP.SetProperties(GPC.GetStyle().GetMaterial("Text", GetFont().GetMaterial()));
   GlP.Params[0] = -1;  //bitmap; TTF by default
@@ -256,11 +252,6 @@ bool TXGlLabels::IsLabelMarked(size_t i) const {
   return false;  // should not happen...
 }
 //..............................................................................
-TGlFont& TXGlLabels::GetFont() const {  
-  TGlFont* glf = Parent.GetScene().GetFont(FontIndex);
-  if( glf == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "invalid font index");
-  return *glf; 
-}
+TGlFont& TXGlLabels::GetFont() const {  return Parent.GetScene().GetFont(FontIndex, true);  }
 //..............................................................................
 

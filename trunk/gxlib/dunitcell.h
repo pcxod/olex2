@@ -15,8 +15,7 @@ public:
   TDUnitCell(TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TDUnitCell();
   void Init(const double cell_params[6]);
-  void SetLabelsFont(uint16_t fnt_index);
-  void UpdateLabels();
+  void UpdateLabel();
   size_t LabelCount() const {  return 4;  }
   TXGlLabel& GetLabel(size_t i) const {  return *Labels[i];  }
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);

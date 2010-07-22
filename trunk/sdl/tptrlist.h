@@ -34,7 +34,7 @@ template <class T> class TPtrList : public IEObject  {
   }
   inline void checkSize()  {
     if( FCapacity == FCount )
-      SetCapacity((long)(1.5*FCount + FIncrement));
+      SetCapacity((size_t)(1.5*FCount + FIncrement));
   }
   void init_from_array(size_t size, const T** array)  {
     init(size);
@@ -76,6 +76,12 @@ public:
       Items = NULL;
       FCount = FCapacity = 0;
     }
+  }
+//..............................................................................
+  // calls delete on all items, does not change the object itself
+  void Delete() const {
+    for( size_t i=0; i < FCount; i++ )
+      delete Items[i];
   }
 //..............................................................................
   virtual IEObject* Replicate() const {  return new TPtrList(*this);  }
@@ -179,7 +185,7 @@ public:
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount+1);
 #endif
-    SetCapacity((long)(FCount + FIncrement + list.Count()));
+    SetCapacity(FCount + FIncrement + list.Count());
     const size_t lc = list.Count();
     memmove(&Items[index+lc], &Items[index], (FCount-index)*sizeof(T*));
     memcpy(&Items[index], list.Items, lc*sizeof(T*));
@@ -191,7 +197,7 @@ public:
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount+1);
 #endif
-    SetCapacity((long)(FCount + FIncrement + list.Count()));
+    SetCapacity(FCount + FIncrement + list.Count());
     const size_t lc = list.Count();
     memmove(&Items[index+lc], &Items[index], (FCount-index)*sizeof(T*));
     for( size_t i=0; i < lc; i++ )
@@ -204,7 +210,7 @@ public:
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount+1);
 #endif
-    SetCapacity((long)(FCount + FIncrement + cnt));
+    SetCapacity(FCount + FIncrement + cnt);
     memmove(&Items[index+cnt], &Items[index], (FCount-index)*sizeof(T*));
     FCount += cnt;
   }

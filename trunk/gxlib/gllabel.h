@@ -18,7 +18,7 @@ public:
   };
 private:
   olxstr FLabel;
-  uint16_t FontIndex;
+  size_t FontIndex;
   TTextRect text_rect;
   vec3d Offset;
   ICrdTransformer* Transformer;
@@ -45,7 +45,7 @@ public:
   DefPropP(ICrdTransformer*, Transformer)
   DefPropC(vec3d, Offset)
   TGlFont& GetFont() const;
-  DefPropP(uint16_t, FontIndex)
+  DefPropP(size_t, FontIndex)
   void TranslateBasis(const vec3d& v)  {  DoTranslate(v);  }
 
   void ToDataItem(TDataItem& item) const;
