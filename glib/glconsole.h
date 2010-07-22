@@ -28,7 +28,7 @@ class TGlConsole: public AGDrawObject,
          FStringPos;
   bool FShowBuffer, FScrollDirectionUp, Blend,
     SkipPosting;  // the next pot operation will pass
-  uint16_t FontIndex;
+  size_t FontIndex;
   bool PromptVisible;
   TGlMaterial* PrintMaterial;
 protected:
@@ -74,8 +74,8 @@ public:
 
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min);
-  bool ProcessKey( int Key, short ShiftState );
-  bool WillProcessKey( int Key, short ShiftState );
+  bool ProcessKey(int Key, short ShiftState);
+  bool WillProcessKey(int Key, short ShiftState);
 
   DefPropP(uint16_t, Width)
   DefPropP(uint16_t, Height)
@@ -99,9 +99,7 @@ public:
   inline size_t GetLinesToShow() const {  return FLinesToShow;  }
   void SetLinesToShow(size_t V);
 
-  class TGlFont& GetFont()  const;
-  DefPropP(uint16_t, FontIndex)
-
+  class TGlFont& GetFont() const;
   inline TGlCursor& Cursor() const {  return *FCursor;  }
   void Visible(bool On);
 

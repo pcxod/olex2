@@ -9,8 +9,9 @@
 #include "gpcollection.h"
 #include "styles.h"
 
+//...........................................................................
 TDUnitCell::TDUnitCell(TGlRenderer& R, const olxstr& collectionName) : 
-AGDrawObject(R, collectionName) 
+AGDrawObject(R, collectionName)
 {
   SetSelectable(false);
   Reciprocal = false;
@@ -26,6 +27,7 @@ TDUnitCell::~TDUnitCell()  {
   for( int i=0; i < 4; i++ )
     delete Labels[i];
 }
+//...........................................................................
 void TDUnitCell::Init(const double cell[6])  {
   if( cell[0] == 0 )  return;
   const double cG = cos(cell[5]/180*M_PI),
@@ -100,10 +102,13 @@ void TDUnitCell::SetReciprocal(bool v)  {
   FGlP->Vertices[23] = M[2]+M[1]+M[0];  //ABC
   Reciprocal = v;
   // reinitialise labels
+  const size_t FontIndex = Parent.GetScene().FindFontIndexForType<TDUnitCell>();
   for( int i=0; i < 3; i++ )  {  
+    Labels[i]->SetFontIndex(FontIndex);
     Labels[i]->SetOffset(FGlP->Vertices[i*2+1]);
     Labels[i]->SetLabel(olxstr((char)('a'+i)));
   }
+  Labels[3]->SetFontIndex(FontIndex);
   Labels[3]->SetLabel('o');
 }
 //...........................................................................
@@ -128,6 +133,7 @@ void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
   FGlP->Vertices.SetCount(24);
   SetReciprocal(Reciprocal);
   GPC.AddObject(*this);
+
   for( int i=0; i < 4; i++ )
     Labels[i]->Create();
 }
@@ -142,78 +148,22 @@ bool TDUnitCell::GetDimensions(vec3d &Max, vec3d &Min)  {
   return true;
 }
 //..............................................................................
-bool TDUnitCell::Orient(TGlPrimitive& P)  {
-  if( P.GetType() == sgloText )  {
-    olxstr Str('O');
-    const TGlFont& fnt = *Parent.GetScene().DefFont();
-    vec3d T;
-    const double tr = 0.003, 
-      scale = Parent.GetBasis().GetZoom()/Parent.GetScale(),
-      maxZ = Parent.GetMaxRasterZ()-0.001;
-    if( !fnt.IsVectorFont() )  {
-      vec3d cnt(Parent.GetBasis().GetCenter());
-      T += tr;
-      T += cnt;
-      T *= Parent.GetBasis().GetMatrix();
-      T *= scale;
-      T[2] = maxZ;
-      Parent.DrawTextSafe(T, Str, fnt);
-      for( int i=0; i < 3; i++ )  {
-        const int ind = i*2+1;
-        T = FGlP->Vertices[ind];  
-        for( int j=0; j < 3; j++ )
-          T[j] -= (j==i ? -tr : tr);
-        T += cnt;
-        T *= Parent.GetBasis().GetMatrix();
-        T *= scale;
-        T[2] = maxZ;
-        Str[0] = (char)('a'+i);
-        Parent.DrawTextSafe(T, Str, fnt);
-      }
-    }
-    else  {
-      vec3d cnt(Parent.GetBasis().GetCenter());
-      T += tr;
-      T += cnt;
-      T *= Parent.GetBasis().GetMatrix();
-      T *= Parent.GetBasis().GetZoom();
-      T[2] = maxZ;
-      fnt.DrawGlText(T, Str, Parent.GetBasis().GetZoom()*0.75/Parent.CalcZoom(), true);
-      for( int i=0; i < 3; i++ )  {
-        const int ind = i*2+1;
-        T = FGlP->Vertices[ind];  
-        for( int j=0; j < 3; j++ )
-          T[j] -= (j==i ? -tr : tr);
-        T += cnt;
-        T *= Parent.GetBasis().GetMatrix();
-        T *= Parent.GetBasis().GetZoom();
-        T[2] = maxZ;
-        Str[0] = (char)('a'+i);
-        fnt.DrawGlText(T, Str, Parent.GetBasis().GetZoom()*0.75/Parent.CalcZoom(), true);
-      }
-    }
-    return true;
-  }
-  return false;
-}
+bool TDUnitCell::Orient(TGlPrimitive& P)  {  return false;  }
 //..............................................................................
 void TDUnitCell::ListPrimitives(TStrList &List) const {}
 //..............................................................................
 void TDUnitCell::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {}
 //..............................................................................
-void TDUnitCell::SetLabelsFont(uint16_t fnt_index)  {
+void TDUnitCell::UpdateLabel()  {
   for( int i=0; i < 4; i++ )
-    Labels[i]->SetFontIndex(fnt_index);
-}
-//..............................................................................
-void TDUnitCell::UpdateLabels()  {
-  for( int i=0; i < 4; i++ )
-    Labels[i]->SetLabel(Labels[i]->GetLabel());
+    Labels[i]->Update();
 }
 //..............................................................................
 void TDUnitCell::SetVisible(bool v)  {
   AGDrawObject::SetVisible(v);
-  for( int i=0; i < 4; i++ )
+  for( int i=0; i < 4; i++ )  {
     Labels[i]->SetVisible(v);
+    Labels[i]->SetDeleted(false);
+  }
 }
 //..............................................................................

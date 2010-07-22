@@ -14,22 +14,38 @@ BeginGlNamespace()
 /* abstarct class */
 class AGlScene: public IEObject  {
 private:
+  olxdict<olxstr, TGlFont*, olxstrComparator<false> > FontsDict;
+  TPtrList<TGlFont> Fonts;
+  olxdict<type_info const*, size_t, TPointerPtrComparator> FontRegistry; 
 protected:
   class TGlRenderer *FParent;
-  TPtrList<TGlFont> Fonts;
+  /* The function creates or replaces a font (if exists under the same name)  */
+  virtual TGlFont& DoCreateFont(TGlFont& glf) const = 0;
 public:
   AGlScene();
   virtual ~AGlScene();
-  inline TGlRenderer *Parent()  {  return FParent; }
+  inline TGlRenderer *Parent()  {  return FParent;  }
   /* must be called by TGlrender */
-  void Parent(TGlRenderer *P)   {  FParent = P; }
+  void Parent(TGlRenderer *P)  {  FParent = P; }
   /* The function creates or replaces a font (if exists under the same name)  */
-  virtual TGlFont* CreateFont(const olxstr& name, const olxstr& fntDescription, short Flags=TGlFont::fntBmp) = 0;
+  TGlFont& CreateFont(const olxstr& name, const olxstr& fntDescription)  {
+    const size_t i = FontsDict.IndexOf(name);
+    if( i != InvalidIndex ) {
+      // overwrite
+      FontsDict.GetValue(i)->ClearData();
+      FontsDict.GetValue(i)->SetIdString(fntDescription);
+      return *FontsDict.GetValue(i);
+    }
+    TGlFont* fnt = Fonts.Add(new TGlFont(Fonts.Count(), name));
+    fnt->SetIdString(fntDescription);
+    FontsDict.Add(name, fnt);
+    return *fnt;
+  }
   // used to scale font when drawing on a scaled surface
   virtual void ScaleFonts(double scale) = 0;
   // restores the font sizes after a call to the ScaleFonts
   virtual void RestoreFontScale() = 0;
-  virtual void Destroy();
+  virtual void Destroy()  {}
   /* if the font is provided, it is replaced upon successful dialog.showmodal, otherwise
   it works as font chooser (default font-fontDescription). Returned string is the font Id string, 
   or empty string if the dialog is canceled  */
@@ -42,12 +58,37 @@ public:
   virtual void StartDraw();
   virtual void EndDraw();
 
-  inline size_t FontCount() const {  return Fonts.Count(); }
-  inline TGlFont* GetFont(size_t i)  {
-    return (i >= FontCount())  ? NULL : Fonts[i];
+  inline size_t FontCount() const {  return Fonts.Count();  }
+  // the fonts is created if uninitialised
+  inline TGlFont& GetFont(size_t i, bool use_default) const {
+    TGlFont* rv = NULL;
+    if( i >= Fonts.Count() )  {
+      if( use_default )
+        rv = &GetDefaultFont();
+    }
+    else
+      rv = Fonts[i];
+    if( rv == NULL )
+        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("invalid font index :") << i);
+    if( !rv->IsCreated() )
+      DoCreateFont(*rv);
+    return *rv;
   }
-  inline TGlFont* DefFont() const  {  return Fonts.IsEmpty() ? NULL : Fonts[0]; }
-  TGlFont* FindFont(const olxstr& name);
+  inline TGlFont& GetDefaultFont() const {
+    if( Fonts.IsEmpty() )
+      throw TFunctionFailedException(__OlxSourceInfo, "no fonts available");
+    return GetFont(0, true);
+  }
+  // this is motly for internal infrastructure calls - returned font might be not initialised
+  inline TGlFont& _GetFont(size_t i) const {  return *Fonts[i];  }
+  TGlFont* FindFont(const olxstr& name)  {  return FontsDict.Find(name, NULL);  }
+  template <class T> TGlFont& RegisterFontForType(TGlFont& fnt)  {
+    FontRegistry.Add(&typeid(T), fnt.GetId());
+    return fnt;
+  }
+  template <class T> size_t FindFontIndexForType(size_t def_ind=~0)  {
+    return FontRegistry.Find(&typeid(T), def_ind);
+  }
 
   class MetaFont {
   protected:
@@ -55,7 +96,7 @@ public:
     bool Bold, Italic, Fixed, Underlined;
     short Size;
   public:
-    MetaFont() : Size(0), Bold(false), Italic(false), Fixed(false), Underlined(false) {}
+    MetaFont() : Size(0), Bold(false), Italic(false), Fixed(false), Underlined(false)  {}
     virtual olxstr GetIdString() const;
     olxstr GetFileIdString() const;
     // this function returns true if the ID is known and handler and false otherwise 
@@ -67,7 +108,7 @@ public:
     DefPropBIsSet(Bold)
     DefPropBIsSet(Fixed)
     DefPropBIsSet(Italic)
-    inline bool IsUnderlined() const {  return Underlined; }
+    inline bool IsUnderlined() const {  return Underlined;  }
     DefPropP(short, Size)
   };
 };

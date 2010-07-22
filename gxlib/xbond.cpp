@@ -43,16 +43,12 @@ TXBond::TXBond(TGlRenderer& R, const olxstr& collectionName, TSBond& B) :
     CreateStaticObjects();
   Label = new TXGlLabel(R, PLabelsCollectionName);
   Label->SetFontIndex(4);
-  if( FBond != NULL )  {
+  if( FBond != NULL )
     Label->SetOffset((B.A().crd()+B.B().crd())/2);
-    Label->SetLabel(olxstr::FormatFloat(3, B.Length()));
-  }
   Label->SetVisible(false);
 }
 //..............................................................................
-TXBond::~TXBond()  {
-  delete Label;
-}
+TXBond::~TXBond()  {  delete Label;  }
 //..............................................................................
 void TXBond::Update()  {
   vec3d C(FBond->B().crd() - FBond->A().crd());
@@ -78,6 +74,7 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
     SetCollectionName(cName);
   if( FStaticObjects.IsEmpty() )  
     CreateStaticObjects();
+  Label->SetFontIndex(Parent.GetScene().FindFontIndexForType<TXBond>());
   Label->Create();
   // find collection
   olxstr NewL;

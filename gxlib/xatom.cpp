@@ -19,6 +19,7 @@
 #include "glgroup.h"
 #include "exyzgroup.h"
 #include "glutil.h"
+#include "gxapp.h"
 
 //..............................................................................
 bool TXAtomStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {  
@@ -69,8 +70,6 @@ TXAtom::TXAtom(TGlRenderer& Render, const olxstr& collectionName, TSAtom& A) :
   if( FStaticObjects.IsEmpty() )  
     CreateStaticObjects();
   Label = new TXGlLabel(Render, PLabelsCollectionName);
-  Label->SetFontIndex(4);
-  Label->SetLabel(A.GetLabel());
   Label->SetOffset(A.crd());
   Label->SetVisible(false);
 }
@@ -215,6 +214,8 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGPCollection *GPC = NULL;
   if( FStaticObjects.IsEmpty() )  
     CreateStaticObjects();
+  Label->SetFontIndex(Parent.GetScene().FindFontIndexForType<TXAtom>());
+  Label->SetLabel(Atom().GetLabel());
   Label->Create();
   // find collection
   if( FAtom.GetType() == iQPeakZ )  {
@@ -728,37 +729,37 @@ void TXAtom::CreateStaticObjects()  {
   TTypeList<vec3f> vecs;
   TTypeList<IndexTriangle> triags;
   TArrayList<vec3f> norms;
-  GlSphereEx<float, OctahedronFP<vec3f> > gls;
-  gls.Generate(1, olx_round(log(SphereQ)+0.5), vecs, triags, norms);
+  typedef GlSphereEx<float, OctahedronFP<vec3f> > gls;
+  gls::Generate(1, olx_round(log(SphereQ)+0.5), vecs, triags, norms);
   if( OrtepSpheres == -1 )
     OrtepSpheres = olx_gl::genLists(9);
   
   olx_gl::newList(OrtepSpheres, GL_COMPILE);
-  gls.RenderEx(vecs, triags, norms, vec3f(0,0,0), vec3f(1,1,1));
+  gls::RenderEx(vecs, triags, norms, vec3f(0,0,0), vec3f(1,1,1));
   olx_gl::endList();  
   olx_gl::newList(OrtepSpheres+1, GL_COMPILE);
-  gls.RenderEx(vecs, triags, norms, vec3f(-1,0,0), vec3f(0,1,1));
+  gls::RenderEx(vecs, triags, norms, vec3f(-1,0,0), vec3f(0,1,1));
   olx_gl::endList();  
   olx_gl::newList(OrtepSpheres+2, GL_COMPILE);
-  gls.RenderEx(vecs, triags, norms, vec3f(0,-1,0), vec3f(1,0,1));
+  gls::RenderEx(vecs, triags, norms, vec3f(0,-1,0), vec3f(1,0,1));
   olx_gl::endList();  
   olx_gl::newList(OrtepSpheres+3, GL_COMPILE);
-  gls.RenderEx(vecs, triags, norms, vec3f(-1,-1,0), vec3f(0,0,1));
+  gls::RenderEx(vecs, triags, norms, vec3f(-1,-1,0), vec3f(0,0,1));
   olx_gl::endList();  
   olx_gl::newList(OrtepSpheres+4, GL_COMPILE);
-  gls.RenderEx(vecs, triags, norms, vec3f(0,0,-1), vec3f(1,1,0));
+  gls::RenderEx(vecs, triags, norms, vec3f(0,0,-1), vec3f(1,1,0));
   olx_gl::endList();  
   olx_gl::newList(OrtepSpheres+5, GL_COMPILE);
-  gls.RenderEx(vecs, triags, norms, vec3f(-1,0,-1), vec3f(0,1,0));
+  gls::RenderEx(vecs, triags, norms, vec3f(-1,0,-1), vec3f(0,1,0));
   olx_gl::endList();  
   olx_gl::newList(OrtepSpheres+6, GL_COMPILE);
-  gls.RenderEx(vecs, triags, norms, vec3f(0,-1,-1), vec3f(1,0,0));
+  gls::RenderEx(vecs, triags, norms, vec3f(0,-1,-1), vec3f(1,0,0));
   olx_gl::endList();  
   olx_gl::newList(OrtepSpheres+7, GL_COMPILE);
-  gls.RenderEx(vecs, triags, norms, vec3f(-1,-1,-1), vec3f(0,0,0));
+  gls::RenderEx(vecs, triags, norms, vec3f(-1,-1,-1), vec3f(0,0,0));
   olx_gl::endList();  
   olx_gl::newList(OrtepSpheres+8, GL_COMPILE);
-  gls.Render(vecs, triags, norms);
+  gls::Render(vecs, triags, norms);
   olx_gl::endList();  
 }
 //..............................................................................

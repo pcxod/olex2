@@ -425,16 +425,16 @@ void ExportLib(const olxcstr& fullName, TEFile& file, const TLibrary& Lib)  {
     ABasicFunction* fun = Lib.GetFunctionByIndex(i);
     olxName = fun->GetQualifiedName();
     pyName = fun->GetName();
-    pyName.Replace('.', "").Replace('@', "At");
-    file.Writenl( PyFuncBody(olxName, fullName + pyName, ',') );
+    pyName.Replace('.', CEmptyString).Replace('@', "At");
+    file.Writenl(PyFuncBody(olxName, fullName + pyName, ','));
   }
 
   for( size_t i=0; i < Lib.MacroCount(); i++ )  {
     ABasicFunction* fun = Lib.GetMacroByIndex(i);
     olxName = fun->GetQualifiedName();
     pyName = fun->GetName();
-    pyName.Replace('.', "").Replace('@', "At");
-    file.Writenl( PyFuncBody(olxName, fullName + pyName, ' ') );
+    pyName.Replace('.', CEmptyString).Replace('@', "At");
+    file.Writenl(PyFuncBody(olxName, fullName + pyName, ' '));
   }
 
   for( size_t i=0; i < Lib.LibraryCount(); i++ )  {
@@ -470,7 +470,7 @@ void PythonExt::macRun(TStrObjList& Cmds, const TParamList &Options, TMacroError
   if( RunPython( olxstr("execfile(\'") << TEFile::ExtractFileName(fn) << "\')") == -1 )
     E.ProcessingError(__OlxSrcInfo, "script execution failed");
 
-  TEFile::ChangeDir( cd );
+  TEFile::ChangeDir(cd);
 }
 //..............................................................................
 void PythonExt::funLogLevel(const TStrObjList& Params, TMacroError& E)  {

@@ -17,16 +17,14 @@ private:
   TIntList FontSizes;
 protected:
   //olxstr ComposeIdString();
+  virtual TGlFont& DoCreateFont(TGlFont& fnt) const;
 public:
   TwxGlScene(const olxstr& fontsFolder);
   virtual ~TwxGlScene();
-
-  TGlFont* CreateFont(const olxstr& name, const olxstr& fntDescription, short Flags=TGlFont::fntBmp);
   // font names are seperated by the '&' char
-  void ExportFont(const olxstr& name, const olxstr& fileName);
+  void ExportFont(const olxstr& name, const olxstr& fileName) const;
   // imports font from a file, if the font Name exists, replaces it
-  TGlFont* ImportFont(const olxstr& Name, const olxstr& fntDescription,  
-    short Flags=TGlFont::fntBmp);
+  TGlFont& ImportFont(TGlFont& fnt) const;
   // used to scale font when drawing on a scaled surface
   virtual void ScaleFonts(double scale);
   // restores the font sizes after a call to the ScaleFonts
@@ -38,7 +36,7 @@ public:
   virtual void StartSelect(int x, int y, GLuint *Bf) {  AGlScene::StartSelect(x, y, Bf);  }
   virtual int EndSelect()  {  return AGlScene::EndSelect();  }
 
-  virtual void StartDraw() {  AGlScene::StartDraw();  }
+  virtual void StartDraw()  {  AGlScene::StartDraw();  }
   virtual void EndDraw()  {  AGlScene::EndDraw();  }
   
   // final object (at least the constructor calls only the SetIdString of THIS object

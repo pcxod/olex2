@@ -14,12 +14,9 @@
 
 #include "library.h"
 
-UseGlNamespace()
 //..............................................................................
-//..............................................................................
-
 TGlCursor::TGlCursor(TGlRenderer& R, const olxstr& collectionName, bool TextStyle) :
-  AGDrawObject(R, collectionName)
+  AGDrawObject(R, collectionName), FontIndex(~0)
 {
   TextStyle = TextStyle;
   Primitive = NULL;
@@ -28,10 +25,11 @@ TGlCursor::TGlCursor(TGlRenderer& R, const olxstr& collectionName, bool TextStyl
 }
 //..............................................................................
 void TGlCursor::Create(const olxstr& cName, const ACreationParams* cpar)  {
+  FontIndex = Parent.GetScene().FindFontIndexForType<TGlCursor>(FontIndex);
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 
-  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;
 
@@ -66,12 +64,7 @@ void TGlCursor::SetSymbol(olxch v)  {
   Symbol = v;
 }
 //..............................................................................
-TGlFont& TGlCursor::GetFont() const {  
-  TGlFont* fnt = Parent.GetScene().GetFont(FontIndex); 
-  if( fnt == NULL )
-    throw TInvalidArgumentException(__OlxSourceInfo, "font index");
-  return *fnt;
-}
+TGlFont& TGlCursor::GetFont() const { return Parent.GetScene().GetFont(FontIndex, true);  }
 //..............................................................................
 //..............................................................................
 //..............................................................................

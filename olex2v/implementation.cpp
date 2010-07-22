@@ -32,12 +32,6 @@ TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
   glm.SetFlags(sglmAmbientF|sglmEmissionF|sglmIdentityDraw);
   glm.AmbientF = 0x7fff7f;
   glm.EmissionF = 0x1f2f1f;
-  //wxFont Font(*wxNORMAL_FONT);//|wxFONTFLAG_ANTIALIASED);
-  //GXApp->GetRender().GetScene().CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
-  GXApp->GetRender().GetScene().CreateFont("Labels", "@20")->SetMaterial(glm);
- 
-  GXApp->SetLabelsFont(0);
-
   TIns *Ins = new TIns;
   GXApp->RegisterXFileFormat(Ins, "ins");
   GXApp->RegisterXFileFormat(Ins, "res");

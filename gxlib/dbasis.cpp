@@ -10,6 +10,7 @@
 #include "glprimitive.h"
 #include "pers_util.h"
 
+//..............................................................................
 TDBasis::TDBasis(TGlRenderer& Render, const olxstr& collectionName) : 
 AGlMouseHandlerImp(Render, collectionName),
 Zoom(1.0)
@@ -32,8 +33,10 @@ TDBasis::~TDBasis()  {
 //..............................................................................
 void TDBasis::SetAsymmUnit(TAsymmUnit& au)  {
   AU = &au;
+  const size_t FontIndex = Parent.GetScene().FindFontIndexForType<TDBasis>();
   for( int i=0; i < 3; i++ )  {  
     //Labels[i]->SetCenter(FGlP->Vertices[i*2+1]);
+    Labels[i]->SetFontIndex(FontIndex);
     Labels[i]->SetLabel(olxstr((char)('a'+i)));
   }
 }
@@ -227,19 +230,16 @@ void TDBasis::ListPrimitives(TStrList &List) const {}
 //..............................................................................
 void TDBasis::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar) {}
 //..............................................................................
-void TDBasis::SetLabelsFont(uint16_t fnt_index)  {
+void TDBasis::UpdateLabel()  {
   for( int i=0; i < 3; i++ )
-    Labels[i]->SetFontIndex(fnt_index);
-}
-//..............................................................................
-void TDBasis::UpdateLabels()  {
-  for( int i=0; i < 3; i++ )
-    Labels[i]->SetLabel(Labels[i]->GetLabel());
+    Labels[i]->Update();
 }
 //..............................................................................
 void TDBasis::SetVisible(bool v)  {
   AGDrawObject::SetVisible(v);
-  for( int i=0; i < 3; i++ )
+  for( int i=0; i < 3; i++ )  {
     Labels[i]->SetVisible(v);
+    Labels[i]->SetDeleted(false);
+  }
 }
 //..............................................................................

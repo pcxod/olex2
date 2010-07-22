@@ -267,10 +267,14 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
   MainFormVisible = false;
   FXPolyVisible = true;
   DeltaV = 3;
+  const TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
 #ifdef __WXWIDGETS__
   TwxGlScene *GlScene = new TwxGlScene(GetBaseDir() + "etc/Fonts/");
+  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
+  GlScene->CreateFont("Default", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
 #else
   TWGlScene *GlScene = new TWGlScene();
+  GlScene->CreateFont("Default", "@20").SetMaterial(glm);
 #endif
   FGrowMode = gmCovalent;
 //  TWGlScene *GlScene = new TWGlScene;
@@ -1888,7 +1892,6 @@ TXGlLabel& TGXApp::CreateLabel(const vec3d& center, const olxstr& T, uint16_t Fo
 //..............................................................................
 TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T)  {
   TXGlLabel* gl = new TXGlLabel(*FGlRender, Name);
-  gl->SetFontIndex((uint16_t)FLabels->GetFontIndex());
   gl->SetLabel(T);
   gl->SetOffset(center);
   gl->Create();
@@ -2359,10 +2362,6 @@ void TGXApp::SetLabelsVisible(bool v)    {  FLabels->SetVisible(v); }
 void TGXApp::SetLabelsMode(short lmode)  {  FLabels->SetMode(lmode); }
 //..............................................................................
 short TGXApp::GetLabelsMode()      const {  return FLabels->GetMode(); }
-//..............................................................................
-void TGXApp::SetLabelsFont(short Findex)  {
-  FLabels->SetFontIndex(Findex);
-}
 //..............................................................................
 TGlMaterial& TGXApp::LabelsMarkMaterial()  {  return FLabels->MarkMaterial();  }
 //..............................................................................

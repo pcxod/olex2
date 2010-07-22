@@ -15,15 +15,9 @@ TWGlScene::TWGlScene() {
 //  FFontExtrusionZ = 0.1f;
 }
 //..............................................................................
-TWGlScene::~TWGlScene()
-{
-  Destroy();
-}
-//..............................................................................
-void TWGlScene::SetPixelFormatDescriptor(HDC hDc, __int8 bits)
-{
+void TWGlScene::SetPixelFormatDescriptor(HDC hDc, __int8 bits)  {
   int PixelFormat;
-  if( !bits )
+  if( bits == 0 )
     bits = 24;  // by default
   PIXELFORMATDESCRIPTOR pfd = {
     sizeof(PIXELFORMATDESCRIPTOR),
@@ -45,10 +39,9 @@ void TWGlScene::SetPixelFormatDescriptor(HDC hDc, __int8 bits)
   SetPixelFormat(hDc, PixelFormat, &pfd);
 }
 //..............................................................................
-void TWGlScene::SetPixelFormatDescriptorX(HDC hDc, __int8 bits)
-{
+void TWGlScene::SetPixelFormatDescriptorX(HDC hDc, __int8 bits) {
   int PixelFormat;
-  if( !bits )
+  if( bits == 0 )
     bits = 24;  // by default
   PIXELFORMATDESCRIPTOR pfd = {
     sizeof(PIXELFORMATDESCRIPTOR),
@@ -73,65 +66,53 @@ void TWGlScene::SetPixelFormatDescriptorX(HDC hDc, __int8 bits)
 //  const char * (*GetExtensions)(HDC) = (WINAPI)wglGetProcAddress("wglGetEntensionsStringARB");
 }
 //..............................................................................
-TGlFont* TWGlScene::CreateFont(const olxstr& name, const olxstr& fntDesc, short Flags)  {
-  TGlFont *Fnt = FindFont(name);
-  if( Fnt != NULL ) 
-    Fnt->ClearData();
-  else
-    Fnt = new TGlFont(name);
-  if( MetaFont::IsVectorFont(fntDesc) )  {
+TGlFont& TWGlScene::DoCreateFont(TGlFont& glf) const {
+  glf.ClearData();
+  if( MetaFont::IsVectorFont(glf.GetIdString()) )  {
     olxdict<size_t, olxstr, TPrimitiveComparator> dummy;
-    Fnt->CreateHershey(dummy, 120);
-    if( FindFont(name) == NULL )
-      Fonts.Add(Fnt);
-    Fnt->SetIdString(fntDesc);
+    glf.CreateHershey(dummy, 120);
     MetaFont mf;
-    mf.SetIdString(fntDesc);
-    Fnt->SetPointSize(mf.GetSize());
-    return Fnt;
+    mf.SetIdString(glf.GetIdString());
+    glf.SetPointSize(mf.GetSize());
+    return glf;
   }
   throw TNotImplementedException(__OlxSourceInfo);
   MetaFont meta_fnt;
-  meta_fnt.SetIdString(fntDesc);
+  meta_fnt.SetIdString(glf.GetIdString());
   HFONT Font = (HFONT)NULL;
-  Fnt->SetIdString("zzz");
-  TPtrList<char*> Images;
+  TPtrList<char> Images(256);
   int ImageW = 36; //Font.GetPointSize()*1.5;
   RECT R = {0, 0, ImageW, ImageW};
-  char *Image;
   TCHAR Char[1];
   BITMAPINFO Bmpi;
-
   HDC hDC = CreateCompatibleDC(NULL);
   HBITMAP Bmp = CreateCompatibleBitmap(hDC, ImageW, ImageW);
-  if( !Bmp )  return NULL;
+  if( Bmp == NULL ) 
+    throw TFunctionFailedException(__OlxSourceInfo, "NULL handle");
   HBRUSH Brush = CreateSolidBrush(0);
   HPEN Pen = CreatePen(PS_SOLID, 1, 0);
   SelectObject(hDC, Font);
   SelectObject(hDC, Brush);
   SelectObject(hDC, Pen);
-
   for( int i=0; i < 256; i++ )  {
     SelectObject(hDC, Bmp);
     FillRect(hDC, &R, Brush);
     Char[0] = i;
     TextOut(hDC, 0, 0, Char, 1);
     SelectObject(hDC, NULL);
-    Image = new char[4*(ImageW+1)*(ImageW+1)];
-
+    char* Image = new char[4*(ImageW+1)*(ImageW+1)];
     GetDIBits(hDC, Bmp, 0, ImageW, NULL, &Bmpi, DIB_RGB_COLORS);
     GetDIBits(hDC, Bmp, 0, ImageW, Image, &Bmpi, DIB_RGB_COLORS);
-    Fnt->CharFromRGBArray(i, (unsigned char*)Image, ImageW, ImageW);
-    Images.Add(Image);
+    glf.CharFromRGBArray(i, (unsigned char*)Image, ImageW, ImageW);
+    Images[i] = Image;
   }
   DeleteObject(Bmp);
   DeleteObject(Pen);
   DeleteObject(Brush);
   DeleteDC(hDC);
-  Fnt->CreateGlyphsFromRGBArray(meta_fnt.IsFixed(), ImageW, ImageW);
-  for( int i=0; i < 256; i++ )  // to find maximum height and width
-    delete [] (char*)Images[i];
-  return Fnt;
+  glf.CreateGlyphsFromRGBArray(meta_fnt.IsFixed(), ImageW, ImageW);
+  Images.Delete();
+  return glf;
 }
 //..............................................................................
 void TWGlScene::InitialiseBMP(HBITMAP Bmp)  {

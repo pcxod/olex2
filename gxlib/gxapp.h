@@ -92,7 +92,6 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   TTypeListExt<TXReflection, IEObject> XReflections;
   TPtrList<TGlBitmap> GlBitmaps;
   TTypeListExt<TXGlLabel, IEObject> XLabels;
-
   TXGlLabels *FLabels;
 
   // have to manage memory ourselves - base class is used
@@ -282,7 +281,6 @@ public:
   void SetLabelsVisible(bool v);
   void SetLabelsMode(short lmode);
   short GetLabelsMode() const;
-  void SetLabelsFont(short FontIndex);
   TGlMaterial& LabelsMarkMaterial();
   void MarkLabel(const TXAtom& A, bool mark);
   void MarkLabel(size_t index, bool mark);

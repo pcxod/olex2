@@ -33,8 +33,7 @@ public:
   void ListPrimitives(TStrList& List) const;
   void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
 
-  void SetLabelsFont(uint16_t fnt_index);
-  void UpdateLabels();
+  void UpdateLabel();
   size_t LabelCount() const {  return 3;  }
   TXGlLabel& GetLabel(size_t i) const {  return *Labels[i];  }
   void SetVisible(bool v);

@@ -28,35 +28,31 @@ const short
   lmCOccu    = 0x4000;  // chemical occupancy
 
 class TXGlLabels: public AGDrawObject  {
-  size_t FontIndex;
   TGlMaterial FMarkMaterial;
   TEBitArray Marks;
   short Mode;
+  size_t FontIndex;
 public:
   TXGlLabels(TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
-  virtual ~TXGlLabels();
+  virtual ~TXGlLabels()  {}
 
   void Clear();
   void ClearLabelMarks();
 
   DefPropP(short, Mode)
-
   void Selected(bool On);
 
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min) {  return false;  }
-  
+ 
   void Init();
-
   void MarkLabel(const TXAtom& atom, bool v);
   void MarkLabel(size_t index, bool v);
   bool IsLabelMarked(const TXAtom& atom) const;
   bool IsLabelMarked(size_t index) const;
-
-  TGlFont& GetFont() const;
-  DefPropP(size_t, FontIndex)
   TGlMaterial& MarkMaterial()  {  return FMarkMaterial;  }
+  TGlFont& TXGlLabels::GetFont() const;
 };
 
 EndGxlNamespace()

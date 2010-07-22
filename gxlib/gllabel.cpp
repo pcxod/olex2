@@ -128,12 +128,7 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
   return false;
 }
 //..............................................................................
-TGlFont& TXGlLabel::GetFont() const {  
-  TGlFont* fnt = Parent.GetScene().GetFont(FontIndex); 
-  if( fnt == NULL )
-    throw TInvalidArgumentException(__OlxSourceInfo, "font index");
-  return *fnt;
-}
+TGlFont& TXGlLabel::GetFont() const {  return Parent.GetScene().GetFont(FontIndex, true);  }
 //..............................................................................
 void TXGlLabel::ToDataItem(TDataItem& item) const {
   item.AddField("text", FLabel);
