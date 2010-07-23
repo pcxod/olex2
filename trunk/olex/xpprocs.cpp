@@ -2366,6 +2366,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         const double scale = scale1/FXApp->GetRender().GetBasis().GetZoom();
         l.TranslateBasis(off*scale);
         l.SetVisible(true);
+        l.SetDeleted(false);
       }
     }
     //cifdn.
@@ -7236,25 +7237,46 @@ void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroE
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined font ") << Cmds[0]);
     return;
   }
-  TwxGlScene::MetaFont mf(Cmds[1]);
-  olxstr ps(Options.FindValue("ps"));
-  if( !ps.IsEmpty() )  {
-    if( ps.CharAt(0) == '+' || ps.CharAt(0) == '-' )
-      mf.SetSize( mf.GetSize() + ps.ToInt() );
-    else 
-      mf.SetSize(ps.ToInt());
+  try  {
+    TwxGlScene::MetaFont mf(Cmds[1]);
+    olxstr ps(Options.FindValue("ps"));
+    if( !ps.IsEmpty() )  {
+      if( ps.CharAt(0) == '+' || ps.CharAt(0) == '-' )
+        mf.SetSize(mf.GetSize() + ps.ToInt());
+      else 
+        mf.SetSize(ps.ToInt());
+    }
+    mf.SetItalic(Options.Contains('i'));
+    mf.SetBold(Options.Contains('b'));
+    scene.CreateFont(glf->GetName(), mf.GetIdString());
+    FXApp->UpdateLabels();
   }
-  if( Options.Contains('i') )  mf.SetItalic(true);
-  if( Options.Contains('b') )  mf.SetBold(true);
-  scene.CreateFont(glf->GetName(), mf.GetIdString());
-  FXApp->UpdateLabels();
+  catch(const TExceptionBase& e)  {
+    E.ProcessingError(__OlxSrcInfo, e.GetException()->GetError());
+  }
 }
 
 //..............................................................................
 void TMainForm::funChooseFont(const TStrObjList &Params, TMacroError &E)  {
-  olxstr fntId(EmptyString);
-  if( !Params.IsEmpty() && (Params[0].Comparei("olex2") == 0) )
-    fntId = TwxGlScene::MetaFont::BuildOlexFontId("olex2.fnt", 12, true, false, false);
+  olxstr fntId;
+  if( !Params.IsEmpty() )  {
+    if( Params[0].Equalsi("olex2") )  {
+      if( Params.Count() == 2 && TwxGlScene::MetaFont::IsOlexFont(Params[1]) ) 
+        fntId = Params[1];
+      else
+        fntId = TwxGlScene::MetaFont::BuildOlexFontId("olex2.fnt", 12, true, false, false);
+    }
+    else if( Params[0].Equalsi("system") )  {
+      if( Params.Count() == 2 && !TwxGlScene::MetaFont::IsOlexFont(Params[1]) )
+        fntId = Params[1];
+      else  {
+        wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);
+        fntId = Font.GetNativeFontInfoDesc().c_str();
+      }
+    }
+    else
+      fntId = Params[0];
+  }
   olxstr rv(FXApp->GetRender().GetScene().ShowFontDialog(NULL, fntId));
   E.SetRetVal(rv);
 }

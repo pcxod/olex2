@@ -117,7 +117,7 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
   tcShnB = new TTextEdit(this);  tcShnB->SetReadOnly(false); 
 
   wxBoxSizer *Sizer0 = NULL;
-  if( cbPrimitives )  {
+  if( cbPrimitives != NULL )  {
     Sizer0 = new wxBoxSizer(wxHORIZONTAL);
     Sizer0->Add(cbPrimitives, 0, wxEXPAND | wxALL, Border);
     if( cbApplyToGroup )
@@ -125,7 +125,7 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
     Sizer0->Add(new wxButton(this, ID_COPY, wxT("Copy  Mat.")), 1, wxEXPAND | wxALL, Border);
     Sizer0->Add(new wxButton(this, ID_PASTE, wxT("Paste Mat.")), 1, wxEXPAND | wxALL, Border);
     bEditFont = new wxButton(this, ID_EDITFONT, wxT("Edit Font"));
-    bEditFont->Enable(GPC->GetPrimitive(0).GetFont() != NULL);
+    bEditFont->Enable(GPC->GetPrimitive(0).GetFont() != NULL && !GPC->GetPrimitive(0).GetFont()->IsVectorFont());
     Sizer0->Add(bEditFont, 1, wxEXPAND | wxALL, Border);
   }
 
@@ -240,7 +240,7 @@ bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data)  {
       FCurrentMaterial = i;
       Init(FMaterials[FCurrentMaterial]);
       const TGlPrimitive* glp = (const TGlPrimitive*)cbPrimitives->GetObject(i);
-      bEditFont->Enable( glp->GetFont() != NULL);
+      bEditFont->Enable(glp->GetFont() != NULL && !glp->GetFont()->IsVectorFont());
     }
   }
   if( (TSpinCtrl*)Sender == scTrans )  {
