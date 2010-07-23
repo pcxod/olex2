@@ -2316,7 +2316,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         lb << "\\-" << bcc;
     }
     else
-      lb = gxl.GetLabel();
+      lb = atoms[i]->Atom().GetLabel();
     if( !atoms[i]->Atom().GetMatrix(0).IsFirst() )  {
       if( symm_tag == 1 || symm_tag == 2 )  {
         size_t pos = equivs.IndexOf(atoms[i]->Atom().GetMatrix(0).GetId());
@@ -2349,27 +2349,46 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TBasicApp::GetLog() << '\n';
 
   const olxstr _cif = Options.FindValue("cif");
-  if( !_cif.IsEmpty() && FXApp->CheckFileType<TCif>() )  {
-    const TCifDataManager& cifdn = FXApp->XFile().GetLastLoader<TCif>().GetDataManager();
-    const TGlGroup& sel = FXApp->GetSelection();
-    for( size_t i=0; i < sel.Count(); i++ )  {
-      if( EsdlInstanceOf(sel[i], TXBond) )  {
-        TXBond& xb = (TXBond&)sel[i];
-        TSBond& b = ((TXBond&)sel[i]).Bond();
-        ACifValue* v = cifdn.Match(b.A(), b.B());
-        if( v == NULL )  continue;
-        TXGlLabel& l = xb.GetLabel();
-        l.SetOffset((b.A().crd()+b.B().crd())/2);
-        l.SetLabel(v->GetValue().ToString());
-        vec3d off(-l.GetRect().width/2, -l.GetRect().height/2, 0);
-        const double scale1 = l.GetFont().IsVectorFont() ? 1.0/FXApp->GetRender().GetScale() : 1.0;
-        const double scale = scale1/FXApp->GetRender().GetBasis().GetZoom();
-        l.TranslateBasis(off*scale);
-        l.SetVisible(true);
-        l.SetDeleted(false);
+  if( !_cif.IsEmpty() )  {
+    TPtrList<TXGlLabel> labels;
+    if( FXApp->CheckFileType<TCif>() )  {
+      const TCifDataManager& cifdn = FXApp->XFile().GetLastLoader<TCif>().GetDataManager();
+      const TGlGroup& sel = FXApp->GetSelection();
+      for( size_t i=0; i < sel.Count(); i++ )  {
+        if( EsdlInstanceOf(sel[i], TXBond) )  {
+          TXBond& xb = (TXBond&)sel[i];
+          TSBond& b = ((TXBond&)sel[i]).Bond();
+          ACifValue* v = cifdn.Match(b.A(), b.B());
+          if( v == NULL )  continue;
+          TXGlLabel& l = xb.GetLabel();
+          l.SetOffset((b.A().crd()+b.B().crd())/2);
+          l.SetLabel(v->GetValue().ToString());
+          labels.Add(l);
+        }
       }
     }
-    //cifdn.
+    else  {
+      const TGlGroup& sel = FXApp->GetSelection();
+      for( size_t i=0; i < sel.Count(); i++ )  {
+        if( EsdlInstanceOf(sel[i], TXBond) )  {
+          TXBond& xb = (TXBond&)sel[i];
+          TSBond& b = ((TXBond&)sel[i]).Bond();
+          TXGlLabel& l = xb.GetLabel();
+          l.SetOffset((b.A().crd()+b.B().crd())/2);
+          l.SetLabel(olxstr::FormatFloat(b.Length(), 2));
+          labels.Add(l);
+        }
+      }
+    }
+    for( size_t i=0; i < labels.Count(); i++ )  {
+      TXGlLabel& l = *labels[i];
+      vec3d off(-l.GetRect().width/2, -l.GetRect().height/2, 0);
+      const double scale1 = l.GetFont().IsVectorFont() ? 1.0/FXApp->GetRender().GetScale() : 1.0;
+      const double scale = scale1/FXApp->GetRender().GetBasis().GetZoom();
+      l.TranslateBasis(off*scale);
+      l.SetVisible(true);
+      l.SetDeleted(false);
+    }
   }
   FXApp->SelectAll(false);
 }

@@ -155,11 +155,6 @@ enum
   ID_FileLoad,
   ID_FileClose,
 
-  ID_MenuObjectLabel,
-  ID_ObjectLabel_Show,
-  ID_ObjectLabel_Hide,
-  ID_ObjectLabel_Reset,
-
   ID_View100,   // view menu
   ID_View010,
   ID_View001,
@@ -370,10 +365,6 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_View101, TMainForm::OnViewAlong)
   EVT_MENU(ID_View011, TMainForm::OnViewAlong)
   EVT_MENU(ID_View111, TMainForm::OnViewAlong)
-
-  EVT_MENU(ID_ObjectLabel_Show, TMainForm::OnObjectLabel)
-  EVT_MENU(ID_ObjectLabel_Hide, TMainForm::OnObjectLabel)
-  EVT_MENU(ID_ObjectLabel_Reset, TMainForm::OnObjectLabel)
 
   EVT_MENU(ID_AtomOccu1, TMainForm::OnAtomOccuChange)
   EVT_MENU(ID_AtomOccu34, TMainForm::OnAtomOccuChange)
@@ -1060,7 +1051,6 @@ separated values of Atom Type and radius, an entry a line");
   pmDrawQ = new TMenu();
   pmModel = new TMenu();
   pmView = new TMenu();
-  pmObjectLabel = new TMenu();
   pmAtom = new TMenu();
     pmBang = new TMenu();
     pmAtomType = new TMenu();
@@ -1136,10 +1126,6 @@ separated values of Atom Type and radius, an entry a line");
   pmFragment->Append(ID_FragmentSelectAtoms, wxT("Select atoms"));
   pmFragment->Append(ID_FragmentSelectBonds, wxT("Select bonds"));
   pmFragment->Append(ID_FragmentSelectAll, wxT("Select"));
-// object label menu
-  pmObjectLabel->Append(ID_ObjectLabel_Show, wxT("Show"));
-  pmObjectLabel->Append(ID_ObjectLabel_Hide, wxT("Hide"));
-  pmObjectLabel->Append(ID_ObjectLabel_Reset, wxT("Reset"));
 // setting selection menu
   pmSelection->Append(ID_SelGroup, wxT("Group"));
   pmSelection->Append(ID_SelUnGroup, wxT("Ungroup"));
@@ -1194,7 +1180,6 @@ separated values of Atom Type and radius, an entry a line");
   pmAtom->Append(ID_MenuAtomConn, wxT("Bonds"), pmAtomConn);
   pmAtom->Append(ID_MenuAtomOccu, wxT("Occupancy"), pmAtomOccu);
   pmAtom->Append(ID_MenuAtomPoly, wxT("Polyhedron"), pmAtomPoly);
-  pmAtom->Append(ID_MenuObjectLabel, wxT("Label"), pmObjectLabel);
   pmAtom->AppendSeparator();
   pmAtom->Append(ID_AtomGrow, wxT("Grow"));
     miAtomGrow = pmAtom->FindItemByPosition(pmAtom->GetMenuItemCount()-1);
@@ -1210,7 +1195,6 @@ separated values of Atom Type and radius, an entry a line");
   pmBond->Append(ID_MenuItemBondInfo, wxT("?"));
   pmBond->AppendSeparator();
   miBondInfo = pmBond->FindItemByPosition(0);
-  pmBond->Append(ID_MenuObjectLabel, wxT("Label"), pmObjectLabel->Clone());
   pmBond->Append(ID_MenuTang, wxT("TANG"), pmTang);
   pmBond->AppendSeparator();
   pmBond->Append(ID_GraphicsKill, wxT("Delete"));
@@ -1837,32 +1821,6 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
   else if( EsdlInstanceOf( *G, TXLattice) )  {
     FCurrentPopup = pmLattice;
   }
-}
-//..............................................................................
-void TMainForm::OnObjectLabel(wxCommandEvent& event)  {
-  if( FObjectUnderMouse == NULL )  return;
-  TXGlLabel* label = NULL;
-  if( EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )  {
-    label = &((TXAtom*)FObjectUnderMouse)->GetLabel();
-  }
-  else if( EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
-    label = &((TXBond*)FObjectUnderMouse)->GetLabel();
-    if( label->GetLabel().IsEmpty() )
-      label->SetLabel(olxstr::FormatFloat(3, ((TXBond*)FObjectUnderMouse)->Bond().Length()));
-  }
-  if( label == NULL )  return;
-  switch( event.GetId() )  {
-    case ID_ObjectLabel_Show:
-      label->SetVisible(true);
-      label->SetDeleted(false);
-      break;
-    case ID_ObjectLabel_Hide:
-      label->SetVisible(false);
-      break;
-    case ID_ObjectLabel_Reset:
-      break;
-  }
-  TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {

@@ -215,7 +215,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( FStaticObjects.IsEmpty() )  
     CreateStaticObjects();
   Label->SetFontIndex(Parent.GetScene().FindFontIndexForType<TXAtom>());
-  Label->SetLabel(Atom().GetLabel());
+  //Label->SetLabel(Atom().GetLabel());
   Label->Create();
   // find collection
   if( FAtom.GetType() == iQPeakZ )  {

@@ -27,7 +27,6 @@ protected:
   virtual bool DoTranslate(const vec3d& t)  {  _Center += t;  return true;  }
   virtual bool DoRotate(const vec3d&, double)  {  return false;  }
   virtual bool DoZoom(double, bool)  {  return false;  }
-  const vec3d& GetCenter() const {  return _Center;  }
 public:
   TXGlLabel(TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
@@ -47,7 +46,7 @@ public:
   TGlFont& GetFont() const;
   DefPropP(size_t, FontIndex)
   void TranslateBasis(const vec3d& v)  {  DoTranslate(v);  }
-
+  const vec3d& GetCenter() const {  return _Center;  }
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);
 };
