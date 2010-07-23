@@ -213,8 +213,6 @@ protected:
   // helper function to get the list of fragments (if several selected)
   size_t GetFragmentList(TNetPList& res);
 
-  void OnObjectLabel(wxCommandEvent& event);
-  
   void OnAtomTypeChange(wxCommandEvent& event);
   void OnAtomOccuChange(wxCommandEvent& event);
   void OnAtomConnChange(wxCommandEvent& event);
@@ -663,7 +661,6 @@ protected:
   TMenu    *pmView;
   TMenu    *pmPlane;
   TMenu    *pmGraphics;  // generic menu for graphics
-  TMenu    *pmObjectLabel;  // generic
   TMenu    *pmLabel;
   TMenu    *pmLattice;
   class TXGlLabel* LabelToEdit;

@@ -151,6 +151,22 @@ protected:
       return *this;
     }
   };
+  struct {
+    TTypeList<TSAtom::Ref> atoms;
+    TTypeList<olxstr> labels;
+    TTypeList<vec3d> offsets;
+    TTypeList<vec3d> centers;
+    TTypeList<TSBond::Ref> bonds;
+    void Clear()  {
+      atoms.Clear();
+      bonds.Clear();
+      labels.Clear();
+      offsets.Clear();
+      centers.Clear();
+    }
+  } LabelInfo;
+  void StoreLabels();
+  void RestoreLabels();
   TTypeList<GroupData> GroupDefs;
   GroupData SelectionCopy[2];
   olxdict<TGlGroup*,size_t, TPointerPtrComparator> GroupDict;
@@ -192,6 +208,7 @@ public:
     GroupDefs.Clear();
     SelectionCopy[0].Clear();
     SelectionCopy[1].Clear();
+    LabelInfo.Clear();
   }
 //..............................................................................
 // GlRender interface

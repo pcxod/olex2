@@ -1369,6 +1369,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
     else if( MsgSubId == msiEnter )  {  // backup the selection
       SelectionCopy[0].Clear();
       StoreGroup(GetSelection(), SelectionCopy[0]);
+      StoreLabels();
     }
   }
   return false;
@@ -1392,7 +1393,7 @@ void TGXApp::RestoreSelection()  {
 //..............................................................................
 void TGXApp::GetSelectedXAtoms(TXAtomPList& List, bool Clear)  {
   TPtrList<TGlGroup> S;
-  S.Add( GetSelection() );
+  S.Add(GetSelection());
   for( size_t i=0; i < S.Count(); i++ )  {
     TGlGroup& Sel = *S[i];
     for( size_t j=0; j < Sel.Count(); j++ )  {
@@ -1401,7 +1402,7 @@ void TGXApp::GetSelectedXAtoms(TXAtomPList& List, bool Clear)  {
       if( GO.IsGroup() )  // another group
         S.Add((TGlGroup&)GO);  
       else if( EsdlInstanceOf(GO, TXAtom) )
-        List.Add( (TXAtom&)GO );
+        List.Add((TXAtom&)GO);
     }
   }
   if( Clear )  
@@ -2757,6 +2758,64 @@ void TGXApp::StoreGroup(const TGlGroup& glG, GroupData& gd)  {
   }
 }
 //..............................................................................
+void TGXApp::StoreLabels()  {
+  LabelInfo.Clear();
+  for( size_t i=0; i < XAtoms.Count(); i++ )  {
+    if( XAtoms[i].GetLabel().IsVisible() )  {
+      LabelInfo.atoms.AddCCopy(XAtoms[i].Atom().GetRef());
+      LabelInfo.labels.AddCCopy(XAtoms[i].GetLabel().GetLabel());
+      LabelInfo.offsets.AddCCopy(XAtoms[i].GetLabel().GetOffset());
+      LabelInfo.centers.AddCCopy(XAtoms[i].GetLabel().GetCenter());
+    }
+  }
+  for( size_t i=0; i < XBonds.Count(); i++ )  {
+    if( XBonds[i].GetLabel().IsVisible() )  {
+      LabelInfo.bonds.AddCCopy(XBonds[i].Bond().GetRef());
+      LabelInfo.labels.AddCCopy(XBonds[i].GetLabel().GetLabel());
+      LabelInfo.offsets.AddCCopy(XBonds[i].GetLabel().GetOffset());
+      LabelInfo.centers.AddCCopy(XBonds[i].GetLabel().GetCenter());
+    }
+  }
+}
+//..............................................................................
+void TGXApp::RestoreLabels()  {
+  const AtomRegistry& ar = XFile().GetLattice().GetAtomRegistry();
+  TSAtomPList atoms(LabelInfo.atoms.Count());
+  TSBondPList bonds(LabelInfo.bonds.Count());
+  TSizeList labels(atoms.Count()+bonds.Count());
+  size_t li=0;
+  for( size_t i=0; i < LabelInfo.atoms.Count(); i++ )  {
+    atoms[i] = ar.Find(LabelInfo.atoms[i]);
+    if( atoms[i] != NULL )
+      labels[li++] = i;
+  }
+  for( size_t i=0; i < LabelInfo.bonds.Count(); i++ )  {
+    bonds[i] = ar.Find(LabelInfo.bonds[i]);
+    if( bonds[i] != NULL )
+      labels[li++] = atoms.Count()+i;
+  }
+  bonds.Pack();
+  atoms.Pack();
+  TXAtomPList xatoms;
+  TXBondPList xbonds;
+  SAtoms2XAtoms(atoms, xatoms);
+  SBonds2XBonds(bonds, xbonds);
+  for( size_t j=0; j < xatoms.Count(); j++ )  {
+    xatoms[j]->GetLabel().SetVisible(true);
+    xatoms[j]->GetLabel().SetLabel(LabelInfo.labels[labels[j]]);
+    xatoms[j]->GetLabel().SetOffset(LabelInfo.offsets[labels[j]]);
+    xatoms[j]->GetLabel().TranslateBasis(-xatoms[j]->GetLabel().GetCenter());
+    xatoms[j]->GetLabel().TranslateBasis(LabelInfo.centers[labels[j]]);
+  }
+  for( size_t j=0; j < xbonds.Count(); j++ )  {
+    xbonds[j]->GetLabel().SetVisible(true);
+    xbonds[j]->GetLabel().SetLabel(LabelInfo.labels[labels[xatoms.Count()+j]]);
+    xbonds[j]->GetLabel().SetOffset(LabelInfo.offsets[labels[xatoms.Count()+j]]);
+    xbonds[j]->GetLabel().TranslateBasis(-xbonds[j]->GetLabel().GetCenter());
+    xbonds[j]->GetLabel().TranslateBasis(LabelInfo.centers[labels[xatoms.Count()+j]]);
+  }
+}
+//..............................................................................
 void TGXApp::RestoreGroups()  {
   if( !SelectionCopy[0].IsEmpty() )
     RestoreGroup(GetSelection(), SelectionCopy[0]);
@@ -2769,33 +2828,31 @@ void TGXApp::RestoreGroups()  {
     RestoreGroup(glg, GroupDefs[i]);
     GroupDict(&glg, i);
   }
+  RestoreLabels();
 }
 //..............................................................................
 void TGXApp::StoreVisibility()  {
-  FVisibility.SetSize((uint32_t)(XAtoms.Count() + XBonds.Count() + XPlanes.Count()));
-  // atoms
+  FVisibility.SetSize((XAtoms.Count() + XBonds.Count() + XPlanes.Count()));
   for( size_t i=0; i < XAtoms.Count(); i++ )
-    if( XAtoms[i].IsVisible() )
-      FVisibility.SetTrue(i);
-  // bonds
+    FVisibility.Set(i, XAtoms[i].IsVisible());
+  size_t inc = XAtoms.Count();
   for( size_t i=0; i < XBonds.Count(); i++ )
-    if( XBonds[i].IsVisible() )
-      FVisibility.SetTrue(XAtoms.Count() + i);
-  // planes
+    FVisibility.Set(inc+i, XBonds[i].IsVisible());
+  inc += XBonds.Count();
   for( size_t i=0; i < XPlanes.Count(); i++ )
-    if( XPlanes[i].IsVisible() )
-      FVisibility.SetTrue(XAtoms.Count() + XBonds.Count() + i);
+    FVisibility.Set(inc+i, XPlanes[i].IsVisible());
+  StoreLabels();
 }
 void TGXApp::RestoreVisibility()  {
-  //atoms
   for( size_t i=0; i < XAtoms.Count(); i++ )
-    XAtoms[i].SetVisible( FVisibility.Get(i) );
-  //bonds
+    XAtoms[i].SetVisible(FVisibility.Get(i));
+  size_t inc = XAtoms.Count();
   for( size_t i=0; i < XBonds.Count(); i++ )
-    XBonds[i].SetVisible(FVisibility.Get(XAtoms.Count() + i));
-  // planes
+    XBonds[i].SetVisible(FVisibility.Get(inc+i));
+  inc += XBonds.Count();
   for( size_t i=0; i < XPlanes.Count(); i++ )
-      XPlanes[i].SetVisible( FVisibility.Get(XAtoms.Count() + XBonds.Count() + i) );
+      XPlanes[i].SetVisible(FVisibility.Get(inc+i));
+  RestoreLabels();
 }
 //..............................................................................
 void TGXApp::BeginDrawBitmap(double resolution)  {
