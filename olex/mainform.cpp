@@ -1012,8 +1012,9 @@ separated values of Atom Type and radius, an entry a line");
   this_InitFuncD(StrDir, fpNone|psFileLoaded, "Returns location of the folder, where\
   Olex2 stores structure related data");
 
-  this_InitFuncD(ChooseFont, fpNone|fpOne, "Brings up a font dialog. If font\
-  information provided, initialises the dialog with that font");
+  this_InitFuncD(ChooseFont, fpNone|fpOne|fpTwo, "Brings up a font dialog. If font\
+ information provided, initialises the dialog with that font; the first argument may be just 'olex2' or 'system' to\
+ enforce choosing the Olex2/System font (the font information can be provided ib the second argument then)");
   this_InitFuncD(GetFont, fpOne, "Returns specified font");
   this_InitFuncD(GetMaterial, fpOne, "Returns specified material");
   this_InitFuncD(ChooseMaterial, fpNone|fpOne, "Brings up a dialog to edit\
@@ -1841,14 +1842,19 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
 void TMainForm::OnObjectLabel(wxCommandEvent& event)  {
   if( FObjectUnderMouse == NULL )  return;
   TXGlLabel* label = NULL;
-  if( EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )
+  if( EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )  {
     label = &((TXAtom*)FObjectUnderMouse)->GetLabel();
-  else if( EsdlInstanceOf(*FObjectUnderMouse, TXBond) )
+  }
+  else if( EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
     label = &((TXBond*)FObjectUnderMouse)->GetLabel();
+    if( label->GetLabel().IsEmpty() )
+      label->SetLabel(olxstr::FormatFloat(3, ((TXBond*)FObjectUnderMouse)->Bond().Length()));
+  }
   if( label == NULL )  return;
   switch( event.GetId() )  {
     case ID_ObjectLabel_Show:
       label->SetVisible(true);
+      label->SetDeleted(false);
       break;
     case ID_ObjectLabel_Hide:
       label->SetVisible(false);
