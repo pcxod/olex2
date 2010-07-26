@@ -1048,6 +1048,10 @@ void TGlRenderer::Compile(bool v)  {
 }
 //..............................................................................
 void TGlRenderer::DrawText(TGlPrimitive& p, double x, double y, double z)  {
+  olx_gl::rasterPos(x, y, z);
+  p.GetFont()->DrawGlText(vec3d(x,y,z), *p.GetString());
+  return;
+
   if( ATI )  {
     olx_gl::rasterPos(0, 0, 0);
     olx_gl::callList(p.GetFont()->GetFontBase() + ' ');
@@ -1057,6 +1061,11 @@ void TGlRenderer::DrawText(TGlPrimitive& p, double x, double y, double z)  {
 }
 //..............................................................................
 void TGlRenderer::DrawTextSafe(const vec3d& pos, const olxstr& text, const TGlFont& fnt) {
+  olx_gl::rasterPos(0.0, 0.0, pos[2]);
+  olx_gl::bitmap(0, 0, 0, 0, (float)(pos[0]/FViewZoom), (float)(pos[1]/FViewZoom), NULL);
+  fnt.DrawGlText(pos, text);
+  return;
+
   if( ATI )  {
     olx_gl::rasterPos(0, 0, 0);
     olx_gl::callList(fnt.GetFontBase() + ' ');

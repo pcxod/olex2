@@ -7,12 +7,15 @@
 #include "emath.h"
 #include "egc.h"
 #include "exparse/exptree.h"
-#include <memory.h>
+#include "glscene.h"
+#include "glrender.h"
 
 using namespace exparse::parser_util;
 UseGlNamespace()
 //..............................................................................
-TGlFont::TGlFont(size_t id, const olxstr& name) : Id(id), Name(name) {
+TGlFont::TGlFont(AGlScene& parent, size_t _Id, const olxstr& name, size_t _SmallId) :
+  Parent(parent), Id(_Id), Name(name), SmallId(_SmallId)
+{
   FontBase = ~0;
   CharSizes.SetCount(256);
   for( int i=0; i < 256; i++ )
@@ -25,6 +28,7 @@ TGlFont::TGlFont(size_t id, const olxstr& name) : Id(id), Name(name) {
   MaxWidth = MaxHeight = 0;
   Leftmost = 1000; 
   Topmost  = 1000;
+  VectorScale = 700;
 }
 //..............................................................................
 TGlFont::~TGlFont()  {
@@ -316,10 +320,39 @@ void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, uint16_t w, ui
   uint16_t BHeight = MaxHeight+1;
   olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 1);  // byte alignment
   unsigned char* bf = new unsigned char[BWidth*BHeight];
+/* //quad a pixel extras section
+  const double scale = 1./VectorScale;
+  Flags |= fntVectorFont;
+*/
   for( int i=0; i < 256; i++ )  {
     TFontCharSize* cs = CharSize(i);
     const size_t off = i*w*h;
     memset(bf, 0, BWidth*BHeight);
+    /* the commented section creates the 'quad a pixel', scalable font, which
+    which does not look very good... */
+    //if( cs->Left > 0 || cs->Bottom > 0 )  {  // check if bitmap is not empty
+    //  olx_gl::newList(FontBase +i, GL_COMPILE_AND_EXECUTE);
+    //  olx_gl::begin(GL_QUADS);
+    //  for( int j=cs->Left; j <= cs->Right; j++ )  {
+    //    for( int k=cs->Top; k <= cs->Bottom; k++ )  {
+    //      if( ba[off + k*w + j] )  {
+    //        const int y = MaxHeight-k;
+    //        olx_gl::vertex(j*scale, y*scale);
+    //        olx_gl::vertex((j+1)*scale, y*scale);
+    //        olx_gl::vertex((j+1)*scale, (y+1)*scale);
+    //        olx_gl::vertex(j*scale, (y+1)*scale);
+    //      }
+    //    }
+    //  }
+    //  olx_gl::end();
+    //  olx_gl::endList();
+    //}
+    //else  {  // an empty character as a space char
+    //  cs->Top = 0;                 
+    //  cs->Left = 0;
+    //  cs->Right = olx_min(BWidth, CharOffset*3);   
+    //  cs->Bottom = MaxHeight;
+    //}
     if( cs->Left > 0 || cs->Bottom > 0 )  {  // check if bitmap is not empty
       for( int j=cs->Left; j <= cs->Right; j++ )  {
         for( int k=cs->Top; k <= cs->Bottom; k++ )  {
@@ -1234,46 +1267,83 @@ void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, double scale, bo
     olx_gl::popMatrix();
     return;
   }
-  if( Textures == NULL || text.IsEmpty() )  return;
-  olx_gl::enable(GL_TEXTURE_2D);
-  olx_gl::enable(GL_ALPHA_TEST);
-  olx_gl::enable(GL_BLEND);
-  olx_gl::disable(GL_CULL_FACE);
-  olx_gl::blendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  double step = 0.2, tx = (double)MaxWidth*step/TextureWidth, st=0,
-    aspect=step*(double)TextureHeight/TextureWidth;
-  //glEnable(GL_COLOR_MATERIAL);
-  //glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-//  glColor4d(1, 1, 1, 0.5);
-  olx_gl::texCoord(0, 0);
-  olx_gl::normal(0, 0, 1);
-  for( size_t i=0; i < text.Length(); i++ )  {
-    const unsigned ch = (unsigned)text.CharAt(i);
-    if( ch > 256 )  continue;
-    TFontCharSize* cs = CharSizes[ch];
-    olx_gl::bindTexture(GL_TEXTURE_2D, Textures[ch] );
-    if( Textures[ch] == (GLuint)~0 )  continue;  // empty char
-    olx_gl::begin(GL_QUADS);
-    olx_gl::texCoord(1, 0);  //0,1
-    olx_gl::vertex(from);
-    olx_gl::texCoord(1, 1);  // 0,0
-    olx_gl::vertex(from[0], from[1]-aspect, from[2]);
-    olx_gl::texCoord(0, 1); // 1,0
-    olx_gl::vertex(from[0]-step, from[1]-aspect, from[2]);
-    olx_gl::texCoord(0, 0); // 1, 1
-    olx_gl::vertex(from[0]-step, from[1], from[2]);
-    olx_gl::end();
-    if( !FixedW )
-      tx = step*(cs->Right-cs->Left+CharOffset)/TextureWidth;
-    olx_gl::translate(tx, 0.0, 0.0);
-    st -= tx;
+  else  {
+    short cstate=0;
+    for( size_t i = 0; i < text.Length(); i++ )  {
+      TFontCharSize* cs = CharSizes[text.CharAt(i)];
+      if( text.CharAt(i) == '\\' && ! is_escaped(text, i) && (i+1) < text.Length() )  {
+        if( text.CharAt(i+1) == '+' )  {
+          if( cstate == 0 || cstate == -1 )
+            olx_gl::bitmap(0, 0, 0, 0, 0, MaxHeight/2, NULL);
+          cstate = 1;
+          i++;
+          continue;
+        }
+        else if( text.CharAt(i+1) == '-' )  {
+          if( cstate == 1 )
+            olx_gl::bitmap(0, 0, 0, 0, 0, -MaxHeight, NULL);
+          cstate = -1;
+          i++;
+          continue;
+        }
+        else if( text.CharAt(i+1) == '0' )  {
+          if( cstate != 0 )  {          
+            if( cstate == 1 )
+              olx_gl::bitmap(0, 0, 0, 0, 0, -MaxHeight/2, NULL);
+            i++;
+            cstate = 0;
+            continue;
+          }
+        }
+      }
+      if( cstate != 0 && olx_is_valid_index(SmallId) )
+        olx_gl::callList(Parent.GetSmallFont(SmallId).FontBase+text.CharAt(i));
+      else
+        olx_gl::callList(FontBase+text.CharAt(i));
+    }
+    return;
   }
-  olx_gl::translate(st, 0.0, 0.0);
-  olx_gl::disable(GL_TEXTURE_2D);
-  olx_gl::disable(GL_ALPHA_TEST);
-  olx_gl::disable(GL_BLEND);
-  olx_gl::disable(GL_COLOR_MATERIAL);
+//
+//  if( Textures == NULL || text.IsEmpty() )  return;
+//  olx_gl::enable(GL_TEXTURE_2D);
+//  olx_gl::enable(GL_ALPHA_TEST);
+//  olx_gl::enable(GL_BLEND);
+//  olx_gl::disable(GL_CULL_FACE);
+//  olx_gl::blendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//
+//  double step = 0.2, tx = (double)MaxWidth*step/TextureWidth, st=0,
+//    aspect=step*(double)TextureHeight/TextureWidth;
+//  //glEnable(GL_COLOR_MATERIAL);
+//  //glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+////  glColor4d(1, 1, 1, 0.5);
+//  olx_gl::texCoord(0, 0);
+//  olx_gl::normal(0, 0, 1);
+//  for( size_t i=0; i < text.Length(); i++ )  {
+//    const unsigned ch = (unsigned)text.CharAt(i);
+//    if( ch > 256 )  continue;
+//    TFontCharSize* cs = CharSizes[ch];
+//    olx_gl::bindTexture(GL_TEXTURE_2D, Textures[ch] );
+//    if( Textures[ch] == (GLuint)~0 )  continue;  // empty char
+//    olx_gl::begin(GL_QUADS);
+//    olx_gl::texCoord(1, 0);  //0,1
+//    olx_gl::vertex(from);
+//    olx_gl::texCoord(1, 1);  // 0,0
+//    olx_gl::vertex(from[0], from[1]-aspect, from[2]);
+//    olx_gl::texCoord(0, 1); // 1,0
+//    olx_gl::vertex(from[0]-step, from[1]-aspect, from[2]);
+//    olx_gl::texCoord(0, 0); // 1, 1
+//    olx_gl::vertex(from[0]-step, from[1], from[2]);
+//    olx_gl::end();
+//    if( !FixedW )
+//      tx = step*(cs->Right-cs->Left+CharOffset)/TextureWidth;
+//    olx_gl::translate(tx, 0.0, 0.0);
+//    st -= tx;
+//  }
+//  olx_gl::translate(st, 0.0, 0.0);
+//  olx_gl::disable(GL_TEXTURE_2D);
+//  olx_gl::disable(GL_ALPHA_TEST);
+//  olx_gl::disable(GL_BLEND);
+//  olx_gl::disable(GL_COLOR_MATERIAL);
 }
 //..............................................................................
 void TGlFont::SetMaterial(const TGlMaterial& m)  {

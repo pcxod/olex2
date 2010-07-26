@@ -8,7 +8,7 @@ class TWGlScene:public AGlScene  {
   HBITMAP FBitmap;
   void SetPixelFormatDescriptor(HDC hDc, __int8 bits);
   void SetPixelFormatDescriptorX(HDC hDc, __int8 bits);
-  virtual TGlFont& DoCreateFont(TGlFont& fnt) const;
+  virtual TGlFont& DoCreateFont(TGlFont& fnt, bool half_size) const;
 public:
   TWGlScene();
   virtual ~TWGlScene()  {  Destroy();  }

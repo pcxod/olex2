@@ -66,7 +66,7 @@ void TWGlScene::SetPixelFormatDescriptorX(HDC hDc, __int8 bits) {
 //  const char * (*GetExtensions)(HDC) = (WINAPI)wglGetProcAddress("wglGetEntensionsStringARB");
 }
 //..............................................................................
-TGlFont& TWGlScene::DoCreateFont(TGlFont& glf) const {
+TGlFont& TWGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
   glf.ClearData();
   if( MetaFont::IsVectorFont(glf.GetIdString()) )  {
     olxdict<size_t, olxstr, TPrimitiveComparator> dummy;

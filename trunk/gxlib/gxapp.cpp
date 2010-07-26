@@ -252,7 +252,8 @@ enum  {
   ID_OnSelect = 1,
   ID_OnDisassemble,
   ID_OnUniq,
-  ID_OnGrow
+  ID_OnGrow,
+  ID_OnClear
 };
 
 TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
@@ -312,12 +313,14 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
   XFile().GetLattice().OnStructureUniq.Add(P);
   XFile().GetLattice().OnStructureUniq.Add(this, ID_OnUniq);
   XFile().GetLattice().OnStructureGrow.Add(this, ID_OnGrow);
+  XFile().GetLattice().OnAtomsDeleted.Add(this, ID_OnClear);
   XFile().GetLattice().OnStructureUniq.Add(new xappXFileUniq);
   XFile().OnFileLoad.Add(P);
   XFile().OnFileClose.Add(new xappXFileClose);
 }
 //..............................................................................
 TGXApp::~TGXApp()  {
+  XFile().GetLattice().OnAtomsDeleted.Remove(this);
   Clear();
   delete FGlRender;
   delete FLabels;
@@ -1356,6 +1359,7 @@ void TGXApp::Select(const vec3d& From, const vec3d& To )  {
 }
 //..............................................................................
 bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
+  static bool ObjectsStored = false;
   if( MsgId == ID_OnSelect )  {
     const TSelectionInfo* SData = dynamic_cast<const TSelectionInfo*>(Data);
     if(  !(SData->From == SData->To) )
@@ -1367,10 +1371,23 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
     if( MsgSubId == msiExit )
       CreateObjects(false, false);
     else if( MsgSubId == msiEnter )  {  // backup the selection
+      if( ObjectsStored )
+        ObjectsStored = false;
+      else  {
+        SelectionCopy[0].Clear();
+        StoreGroup(GetSelection(), SelectionCopy[0]);
+        StoreLabels();
+      }
+    }
+  }
+  else if( MsgId == ID_OnClear ) {
+    if( MsgSubId == msiEnter )  {  // backup the selection
       SelectionCopy[0].Clear();
       StoreGroup(GetSelection(), SelectionCopy[0]);
       StoreLabels();
+      ObjectsStored = true;
     }
+    ClearXObjects();
   }
   return false;
 }
