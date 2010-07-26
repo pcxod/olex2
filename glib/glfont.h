@@ -44,6 +44,7 @@ public:
     olxdict<size_t, size_t, TPrimitiveComparator> def_dict;
   };
 protected:
+  class AGlScene& Parent;
   GLuint FontBase;
   TPtrList<TFontCharSize> CharSizes;
   GLuint* Textures;
@@ -51,14 +52,14 @@ protected:
   uint16_t MaxWidth, MaxHeight,
         CharOffset, TextureHeight, TextureWidth;
   int16_t Leftmost, Topmost;
-  size_t Id;
+  size_t Id, SmallId;
   TGlMaterial Material;
   double VectorScale;
   olxstr IdString, Name;
   bool AnalyseBitArray(const TEBitArray& ba, size_t Char, uint16_t width, uint16_t height);
   const olxcstr& DefinePSChar(olxch ch, const double& drawScale, PSRenderContext& context) const;
 public:
-  TGlFont(size_t id, const olxstr& name);
+  TGlFont(AGlScene& parent, size_t _Id, const olxstr& name, size_t _SmallId=~0);
   virtual ~TGlFont();
 
   void ClearData(); // must be called to reset all data
@@ -68,9 +69,8 @@ public:
   inline int16_t GetLeftmost() const {  return Leftmost;  }
   inline int16_t GetTopmost() const {  return Topmost;  }
   inline double GetVectorScale() const {  return VectorScale;  }
-  
+  size_t GetId() const {  return Id;  }  
   DefPropP(uint16_t, PointSize)
-  size_t GetId() const {  return Id;  }
   size_t TextWidth(const olxstr &Text, size_t cnt=InvalidSize);
   size_t MaxTextLength(size_t width);
   uint16_t TextHeight(const olxstr &Text=EmptyString);
@@ -99,6 +99,7 @@ public:
   inline TGlMaterial& GetMaterial()  {  return Material;  }
   inline const TGlMaterial& GetMaterial() const {  return Material;  }
   void SetMaterial(const TGlMaterial& m);
+  friend class AGlScene;
 };
 
 EndGlNamespace()

@@ -167,8 +167,13 @@ TwxGlScene::~TwxGlScene()  {
 //  return Fnt;
 //}
 //..............................................................................
-TGlFont& TwxGlScene::DoCreateFont(TGlFont& glf) const {
+TGlFont& TwxGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
   if( MetaFont::IsOlexFont(glf.GetIdString()) )  {
+    if( half_size )  {
+      MetaFont mf(glf.GetIdString());
+      mf.SetSize(mf.GetSize()/2);
+      glf.SetIdString(mf.GetIdString());
+    }
     return ImportFont(glf);
   }
   if( MetaFont::IsVectorFont(glf.GetIdString()) )  {
@@ -181,11 +186,11 @@ TGlFont& TwxGlScene::DoCreateFont(TGlFont& glf) const {
   // LINUZ port - ... native font string is system dependent...
   wxFont Font(glf.GetIdString().u_str());
   if( Font.GetPointSize() <= 1 )
-    Font.SetPointSize(6);
-    
+    Font.SetPointSize(10);
+  if( half_size )
+    Font.SetPointSize(Font.GetPointSize()/2);
   glf.SetIdString(Font.GetNativeFontInfoDesc().c_str());
   glf.SetPointSize(Font.GetPointSize());
-
   TPtrList<wxImage> Images;
   int ImageW = Font.GetPointSize()*2;
   wxMemoryDC memDC;
@@ -206,7 +211,7 @@ TGlFont& TwxGlScene::DoCreateFont(TGlFont& glf) const {
     memDC.Clear();
     memDC.DrawText(wxString((olxch)i), 0, 0);
     memDC.SelectObject(wxNullBitmap);
-    wxImage* Image = new wxImage( Bmp.ConvertToImage() );
+    wxImage* Image = new wxImage(Bmp.ConvertToImage());
     glf.CharFromRGBArray(i, Image->GetData(), ImageW, ImageW);
     Images.Add(Image);
   }
@@ -292,7 +297,7 @@ void TwxGlScene_RipFontA(wxFont& fnt, TGlFont& glf, wxZipOutputStream& zos)  {
 void TwxGlScene::ExportFont(const olxstr& name, const olxstr& fileName) const {
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   TStrList toks(name, '&');
-  TGlFont Fnt(InvalidIndex, name);
+  TGlFont Fnt(const_cast<TwxGlScene&>(*this), 0, name);
   wxFileOutputStream fos( fileName.u_str() );
   fos.Write("ofnt", 4);
   wxZipOutputStream zos(fos, 9);
@@ -359,7 +364,7 @@ TGlFont& TwxGlScene::ImportFont(TGlFont& fnt) const {
   zin->Read(&maxw, sizeof(uint16_t));
   zin->Read(&maxh, sizeof(uint16_t));
   int contentLen = zin->GetLength() - 2*sizeof(uint16_t);
-  unsigned char * bf1 = new unsigned char[ contentLen + 1];
+  unsigned char * bf1 = new unsigned char[contentLen + 1];
   zin->Read(bf1, contentLen);
   TEBitArray ba(bf1, contentLen, true);  // bf1 will be deleted
 

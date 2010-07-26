@@ -232,30 +232,36 @@ void TGlPrimitive::Draw()  {
   }
 
   if( Type == sgloText )  {
-    if( String == NULL || Font == NULL || String->IsEmpty() )   return;
-    const GLuint fontbase = Font->GetFontBase();
-    /* each character of different colour */
-    const size_t StrLen = String->Length();
-    if( Colors.Count() == StrLen )  {
-      uint32_t prev_color = Colors[0];
-      SetColor(prev_color);
-      for( size_t i=0; i < StrLen; i++ )  {
-        if( prev_color != Colors[i] )  {
-          SetColor(Colors[i]);
-          prev_color = Colors[i];
-        }
-        if( String->CharAt(i) < 256 )
-          olx_gl::callList(fontbase + String->CharAt(i));
-        else
-          olx_gl::callList(fontbase + '?');
+    if( !(String == NULL || Font == NULL || String->IsEmpty()) )  {
+      if( Font->IsVectorFont() )  {
+        Font->DrawGlText(vec3d(0, 0, 0), *String);
       }
-    }
-    else  {  /* all characters of the same colour */
-      for( size_t i=0; i < StrLen; i++ )  {
-        if( String->CharAt(i) < 256 )
-          olx_gl::callList(fontbase + String->CharAt(i));
-        else
-          olx_gl::callList(fontbase + '?');
+      else  {
+        const GLuint fontbase = Font->GetFontBase();
+        /* each character of different colour */
+        const size_t StrLen = String->Length();
+        if( Colors.Count() == StrLen )  {
+          uint32_t prev_color = Colors[0];
+          SetColor(prev_color);
+          for( size_t i=0; i < StrLen; i++ )  {
+            if( prev_color != Colors[i] )  {
+              SetColor(Colors[i]);
+              prev_color = Colors[i];
+            }
+            if( String->CharAt(i) < 256 )
+              olx_gl::callList(fontbase + String->CharAt(i));
+            else
+              olx_gl::callList(fontbase + '?');
+          }
+        }
+        else  {  /* all characters of the same colour */
+          for( size_t i=0; i < StrLen; i++ )  {
+            if( String->CharAt(i) < 256 )
+              olx_gl::callList(fontbase + String->CharAt(i));
+            else
+              olx_gl::callList(fontbase + '?');
+          }
+        }
       }
     }
   }

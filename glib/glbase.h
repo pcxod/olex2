@@ -79,6 +79,9 @@ struct olx_gl  {
   static void rasterPos(const vec3d& v)  {  rasterPos(v.GetData());  }
   static void rasterPos(const float* v)  {  glRasterPos3fv(v);  }
   static void rasterPos(const double* v)  {  glRasterPos3dv(v);  }
+  static void rasterPos(int x, int y)  {  glRasterPos2d(x,y);  }
+  static void rasterPos(float x, float y)  {  glRasterPos2f(x,y);  }
+  static void rasterPos(double x, double y)  {  glRasterPos2d(x,y);  }
   static void rasterPos(int x, int y, int z)  {  glRasterPos3d(x,y,z);  }
   static void rasterPos(float x, float y, float z)  {  glRasterPos3f(x,y,z);  }
   static void rasterPos(double x, double y, double z)  {  glRasterPos3d(x,y,z);  }

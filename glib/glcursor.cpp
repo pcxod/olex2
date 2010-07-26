@@ -1,20 +1,16 @@
 //----------------------------------------------------------------------------//
-// namespace TEXLib
-// TGlConsole - a console
+// TGlCursor - a console cursor
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
 #define ID_TIMER 1000
-
 #include "glcursor.h"
 #include "glrender.h"
 #include "gpcollection.h"
 #include "glmaterial.h"
 #include "styles.h"
 #include "glprimitive.h"
-
 #include "library.h"
 
-//..............................................................................
 TGlCursor::TGlCursor(TGlRenderer& R, const olxstr& collectionName, bool TextStyle) :
   AGDrawObject(R, collectionName), FontIndex(~0)
 {

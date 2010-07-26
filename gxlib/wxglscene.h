@@ -17,7 +17,7 @@ private:
   TIntList FontSizes;
 protected:
   //olxstr ComposeIdString();
-  virtual TGlFont& DoCreateFont(TGlFont& fnt) const;
+  virtual TGlFont& DoCreateFont(TGlFont& fnt, bool half_size) const;
 public:
   TwxGlScene(const olxstr& fontsFolder);
   virtual ~TwxGlScene();

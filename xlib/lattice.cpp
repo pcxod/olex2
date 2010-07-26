@@ -41,7 +41,8 @@ int TLattice_AtomsSortByDistance(const TSAtom* A1, const TSAtom* A2)  {
 TLattice::TLattice() :
   OnStructureGrow(Actions.New("STRGEN")),
   OnStructureUniq(Actions.New("STRUNIQ")),
-  OnDisassemble(Actions.New("DISASSEBLE"))
+  OnDisassemble(Actions.New("DISASSEBLE")),
+  OnAtomsDeleted(Actions.New("ATOMSDELETE"))
 {
   Generated = false;
   AsymmUnit = new TAsymmUnit(this);
@@ -62,9 +63,13 @@ TLattice::~TLattice()  {
 }
 //..............................................................................
 void TLattice::ClearAtoms()  {
-  for( size_t i=0; i < Atoms.Count(); i++ )
-    delete Atoms[i];
-  Atoms.Clear();
+  if( !Atoms.IsEmpty() )  {
+    OnAtomsDeleted.Enter(this);
+    for( size_t i=0; i < Atoms.Count(); i++ )
+      delete Atoms[i];
+    Atoms.Clear();
+    OnAtomsDeleted.Exit(this);
+  }
 }
 //..............................................................................
 void TLattice::ClearBonds()  {
@@ -249,18 +254,25 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
   Network->Disassemble(atoms, Fragments, Bonds);
   dac = 0;
   for( size_t i=0; i < ac; i++ )  {
-    if( Atoms[i]->IsDeleted() )  {
-      delete Atoms[i];
-      Atoms[i] = NULL;
+    if( Atoms[i]->IsDeleted() )
       dac++;
-      continue;
+    else  {
+      if( ocrd != NULL )
+        Atoms[i]->crd() = (*ocrd)[i];
+      Atoms[i]->SetLattId(i-dac);
     }
-    if( ocrd != NULL )
-      Atoms[i]->crd() = (*ocrd)[i];
-    Atoms[i]->SetLattId(i-dac);
   }
-  if( dac != 0 )
+  if( dac != 0 )  {
+    OnAtomsDeleted.Enter(this);
+    for( size_t i=0; i < ac; i++ )  {
+      if( Atoms[i]->IsDeleted() )  {
+        delete Atoms[i];
+        Atoms[i] = NULL;
+      }
+    }
     Atoms.Pack();
+    OnAtomsDeleted.Exit(this);
+  }
 }
 //..............................................................................
 void TLattice::BuildPlanes()  {
@@ -353,17 +365,26 @@ void TLattice::Generate(TCAtomPList* Template, bool ClearCont)  {
     ClearAtoms();
   }
   else  {
+    size_t da = 0;
     for( size_t i=0; i < Atoms.Count(); i++ )  {  // restore atom coordinates
-      TSAtom* A = Atoms[i];
-      if( A->IsDeleted() )  {
-        delete A;
-        Atoms[i] = NULL;
+      if( Atoms[i]->IsDeleted() )  {
+        da++;
         continue;
       }
-      GetAsymmUnit().CellToCartesian(A->ccrd(), A->crd());
+      GetAsymmUnit().CellToCartesian(Atoms[i]->ccrd(), Atoms[i]->crd());
+    }
+    if( da != 0 )  {
+      OnAtomsDeleted.Enter(this);
+      for( size_t i=0; i < Atoms.Count(); i++ )  {  // restore atom coordinates
+        if( Atoms[i]->IsDeleted() )  {
+          delete Atoms[i];
+          Atoms[i] = NULL;
+        }
+      }
+      Atoms.Pack();
+      OnAtomsDeleted.Exit(this);
     }
   }
-  Atoms.Pack();
   TSAtomPList AtomsList;
   ListAsymmUnit(AtomsList, Template);
   GenerateAtoms(AtomsList, Atoms, Matrices);

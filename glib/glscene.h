@@ -2,25 +2,25 @@
 #define __olx_gl_scene_H
 #include "glbase.h"
 #include "estrlist.h"
-#include "tptrlist.h"
 #include "glfont.h"
+#include "edict.h"
 
 #ifdef CreateFont
   #undef CreateFont
 #endif
 
 BeginGlNamespace()
-
+class TGlFont;
 /* abstarct class */
 class AGlScene: public IEObject  {
 private:
   olxdict<olxstr, TGlFont*, olxstrComparator<false> > FontsDict;
-  TPtrList<TGlFont> Fonts;
+  TPtrList<TGlFont> Fonts, SmallFonts;
   olxdict<type_info const*, size_t, TPointerPtrComparator> FontRegistry; 
 protected:
   class TGlRenderer *FParent;
   /* The function creates or replaces a font (if exists under the same name)  */
-  virtual TGlFont& DoCreateFont(TGlFont& glf) const = 0;
+  virtual TGlFont& DoCreateFont(TGlFont& glf, bool half_size) const = 0;
 public:
   AGlScene();
   virtual ~AGlScene();
@@ -28,19 +28,7 @@ public:
   /* must be called by TGlrender */
   void Parent(TGlRenderer *P)  {  FParent = P; }
   /* The function creates or replaces a font (if exists under the same name)  */
-  TGlFont& CreateFont(const olxstr& name, const olxstr& fntDescription)  {
-    const size_t i = FontsDict.IndexOf(name);
-    if( i != InvalidIndex ) {
-      // overwrite
-      FontsDict.GetValue(i)->ClearData();
-      FontsDict.GetValue(i)->SetIdString(fntDescription);
-      return *FontsDict.GetValue(i);
-    }
-    TGlFont* fnt = Fonts.Add(new TGlFont(Fonts.Count(), name));
-    fnt->SetIdString(fntDescription);
-    FontsDict.Add(name, fnt);
-    return *fnt;
-  }
+  TGlFont& CreateFont(const olxstr& name, const olxstr& fntDescription);
   // used to scale font when drawing on a scaled surface
   virtual void ScaleFonts(double scale) = 0;
   // restores the font sizes after a call to the ScaleFonts
@@ -59,21 +47,9 @@ public:
   virtual void EndDraw();
 
   inline size_t FontCount() const {  return Fonts.Count();  }
+  TGlFont& GetSmallFont(size_t i) const;
   // the fonts is created if uninitialised
-  inline TGlFont& GetFont(size_t i, bool use_default) const {
-    TGlFont* rv = NULL;
-    if( i >= Fonts.Count() )  {
-      if( use_default )
-        rv = &GetDefaultFont();
-    }
-    else
-      rv = Fonts[i];
-    if( rv == NULL )
-        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("invalid font index :") << i);
-    if( !rv->IsCreated() )
-      DoCreateFont(*rv);
-    return *rv;
-  }
+  TGlFont& GetFont(size_t i, bool use_default) const;
   inline TGlFont& GetDefaultFont() const {
     if( Fonts.IsEmpty() )
       throw TFunctionFailedException(__OlxSourceInfo, "no fonts available");
