@@ -1,11 +1,6 @@
 //----------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "groupobj.h"
 
 UseEsdlNamespace()
@@ -34,7 +29,7 @@ void TObjectGroup::RemoveObjectsByTag(int Tag)  {
       AGOProperties& P = Objects[i]->GetProperties();
       if( P.ObjectCount() == 1 )   
         P.SetObjectGroupId(InvalidIndex); // mark to remove
-      P.RemoveObject( Objects[i] );
+      P.RemoveObject(Objects[i]);
       delete Objects[i];
       Objects[i] = NULL;
     }

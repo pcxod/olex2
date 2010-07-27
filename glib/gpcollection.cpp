@@ -1,11 +1,6 @@
 //---------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "gpcollection.h"
 #include "glrender.h"
 #include "gdrawobject.h"
@@ -17,8 +12,7 @@ UseGlNamespace();
 void TGPCollection::ClearPrimitives()  {
   for( size_t i=0; i < Parent.PrimitiveCount(); i++ )
     Parent.GetPrimitive(i).SetTag(-1);
-  for( size_t i=0; i < PrimitiveCount(); i++ )
-    GetPrimitive(i).SetTag(0);
+  Primitives.ForEach(ACollectionItem::TagSetter<>(0));
   Parent.RemovePrimitiveByTag(0);
   Primitives.Clear();
 }
@@ -54,7 +48,7 @@ void TGPCollection::ListParams(TStrList &List, TGlPrimitive *Primitive)  {
     GetObject(0).ListParams(List, Primitive);
 }
 bool TGPCollection::ContainsPrimitive(TGlPrimitive& GlP)  {
-  return Primitives.IndexOf(&GlP) != InvalidIndex;
+  return Primitives.IndexOf(GlP) != InvalidIndex;
 }
 //..............................................................................
 void TGPCollection::SetStyle(TGraphicsStyle *S)  {

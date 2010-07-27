@@ -146,7 +146,7 @@ public:
   TGlPrimitive(TObjectGroup& ParentG, TGlRenderer& ParentR, short type);
   ~TGlPrimitive();
 
-  TGlRenderer& GetRenderer()  const {  return Renderer;  }
+  TGlRenderer& GetRenderer() const {  return Renderer;  }
   void Compile();
   void Draw();
 
@@ -180,9 +180,9 @@ public:
   void PrepareColorRendering(uint16_t _begin) const;
   void EndColorRendering() const;
 
-  void CallList(TGlPrimitive* GlP)  {
+  static void CallList(TGlPrimitive* GlP)  {
     if( GlP->IsList() )
-      glCallList(GlP->GetListId()); 
+      olx_gl::callList(GlP->GetListId()); 
     else
       GlP->Draw();
   }
