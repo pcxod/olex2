@@ -426,7 +426,7 @@ void TXBond::CreateStaticObjects()  {
     olx_gl::begin(GL_LINES);
       olx_gl::vertex(0, 0, 0);
       olx_gl::vertex(0, 0, 1);
-    olx_gl::endList();
+    olx_gl::end();
   olx_gl::disable(GL_LINE_STIPPLE);
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //

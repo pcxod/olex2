@@ -1668,7 +1668,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
   }
   else if( event.GetId() == ID_GraphicsDS )  {
     TGlGroup& Sel = FXApp->GetSelection();
-    TdlgMatProp* MatProp = new TdlgMatProp(this, &FObjectUnderMouse->GetPrimitives(), FXApp);
+    TdlgMatProp* MatProp = new TdlgMatProp(this, *FObjectUnderMouse);
     if( EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
       MatProp->SetCurrent(((TGlGroup*)FObjectUnderMouse)->GetGlM());
     if( MatProp->ShowModal() == wxID_OK )  {
@@ -1707,15 +1707,21 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     TdlgPrimitive* Primitives = new TdlgPrimitive(this, Ps, i);
     if( Primitives->ShowModal() == wxID_OK )  {
       if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
-        for( size_t i=0; i < FXApp->AtomCount(); i++ )
-          FXApp->GetAtom(i).Atom().SetTag(i);
         for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
-          if( !EsdlInstanceOf(FXApp->GetSelection()[i], TXBond) )
-            continue;
-          TXBond& xb = (TXBond&)FXApp->GetSelection()[i];
-          FXApp->Individualise(xb);
-          BondCreationParams bpar(FXApp->GetAtom(xb.Bond().A().GetTag()), FXApp->GetAtom(xb.Bond().B().GetTag()));
-          xb.UpdatePrimitives( Primitives->Mask, &bpar);
+          if( EsdlInstanceOf(FXApp->GetSelection()[i], TXBond) )  {
+            TXBond& xb = (TXBond&)FXApp->GetSelection()[i];
+            FXApp->Individualise(xb);
+            xb.UpdatePrimitives(Primitives->Mask);
+          }
+        }
+      }
+      else if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )  {
+        for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
+          if( EsdlInstanceOf(FXApp->GetSelection()[i], TXAtom) )  {
+            TXAtom& xa = (TXAtom&)FXApp->GetSelection()[i];
+            FXApp->Individualise(xa);
+            xa.UpdatePrimitives(Primitives->Mask);
+          }
         }
       }
       else  {

@@ -39,8 +39,10 @@ TGlFont& AGlScene::CreateFont(const olxstr& name, const olxstr& fntDescription) 
     // overwrite
     FontsDict.GetValue(i)->ClearData();
     FontsDict.GetValue(i)->SetIdString(fntDescription);
-    if( olx_is_valid_index(FontsDict.GetValue(i)->SmallId) )
+    if( olx_is_valid_index(FontsDict.GetValue(i)->SmallId) )  {
+      SmallFonts[FontsDict.GetValue(i)->SmallId]->ClearData();
       SmallFonts[FontsDict.GetValue(i)->SmallId]->SetIdString(fntDescription);
+    }
     return *FontsDict.GetValue(i);
   }
   TGlFont* fnt = Fonts.Add(new TGlFont(*this, Fonts.Count(), name));
@@ -51,29 +53,6 @@ TGlFont& AGlScene::CreateFont(const olxstr& name, const olxstr& fntDescription) 
     SmallFonts.Add(new TGlFont(*this, SmallFonts.Count(), name))->SetIdString(fntDescription);
   }
   return *fnt;
-}
-//..............................................................................
-TGlFont& AGlScene::GetSmallFont(size_t i) const {
-  if( i >= SmallFonts.Count() )
-    throw TInvalidArgumentException(__OlxSourceInfo, olxstr("invalid small font index :") << i);
-  if( !SmallFonts[i]->IsCreated() )
-    DoCreateFont(*SmallFonts[i], true);
-  return *SmallFonts[i];
-}
-//..............................................................................
-TGlFont& AGlScene::GetFont(size_t i, bool use_default) const {
-  TGlFont* rv = NULL;
-  if( i >= Fonts.Count() )  {
-    if( use_default )
-      rv = &GetDefaultFont();
-  }
-  else
-    rv = Fonts[i];
-  if( rv == NULL )
-    throw TInvalidArgumentException(__OlxSourceInfo, olxstr("invalid font index :") << i);
-  if( !rv->IsCreated() )
-    DoCreateFont(*rv, false);
-  return *rv;
 }
 //..............................................................................
 //..............................................................................

@@ -1548,7 +1548,7 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       //TimePerFrame = FXApp->Draw();
     }
     else  {
-      Error.ProcessingError(__OlxSrcInfo, olxstr("Indefined graphics :") << Cmds.Text(' ') );
+      Error.ProcessingError(__OlxSrcInfo, olxstr("Undefined graphics :") << Cmds.Text(' ') );
       return;
     }
   }
@@ -1637,6 +1637,10 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FXApp->GetLog() << "Deleting labels\n";
     for( size_t i=0; i < FXApp->LabelCount(); i++ )
       FXApp->GetLabel(i).SetDeleted(true);
+    for( size_t i=0; i < FXApp->AtomCount(); i++ )
+      FXApp->GetAtom(i).GetLabel().SetDeleted(true);
+    for( size_t i=0; i < FXApp->BondCount(); i++ )
+      FXApp->GetBond(i).GetLabel().SetDeleted(true);
   }
   else  {
     TXAtomPList Atoms, Selected;
@@ -2332,6 +2336,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       else if( symm_tag == 3 )
         lb << ' ' << TSymmParser::MatrixToSymmEx(atoms[i]->Atom().GetMatrix(0));
     }
+    gxl.SetOffset(atoms[i]->Atom().crd());
     gxl.SetLabel(lb);
     gxl.SetVisible(true);
     gxl.SetDeleted(false);
@@ -4199,10 +4204,21 @@ void TMainForm::macUndo(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macIndividualise(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TXAtomPList Atoms;
-  FindXAtoms(Cmds, Atoms, false, false);
-  for( size_t i=0; i < Atoms.Count(); i++ )
-    FXApp->Individualise(*Atoms[i]);
+  if( Cmds.IsEmpty() )  {
+    TGlGroup& sel = FXApp->GetSelection();
+    for( size_t i=0; i < sel.Count(); i++ )  {
+      if( EsdlInstanceOf(sel[i], TXAtom) )
+        FXApp->Individualise((TXAtom&)sel[i]);
+      else if( EsdlInstanceOf(sel[i], TXBond) )
+        FXApp->Individualise((TXBond&)sel[i]);
+    }
+  }
+  else  {
+    TXAtomPList Atoms;
+    FindXAtoms(Cmds, Atoms, false, false);
+    for( size_t i=0; i < Atoms.Count(); i++ )
+      FXApp->Individualise(*Atoms[i]);
+  }
 }
 //..............................................................................
 void TMainForm::macCollectivise(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -7265,8 +7281,10 @@ void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroE
       else 
         mf.SetSize(ps.ToInt());
     }
-    mf.SetItalic(Options.Contains('i'));
-    mf.SetBold(Options.Contains('b'));
+    if( Options.Contains('i') )
+      mf.SetItalic(true);
+    if( Options.Contains('b') )
+      mf.SetBold(true);
     scene.CreateFont(glf->GetName(), mf.GetIdString());
     FXApp->UpdateLabels();
   }
@@ -7342,19 +7360,21 @@ void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TM
     else
       gpc = FXApp->GetRender().FindCollection(Cmds[0]);
   }
-  if( mat == NULL && gpc == NULL )  {
+  if( mat == NULL && (gpc == NULL || gpc->ObjectCount() == 0) )  {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined material/control ") << Cmds[0]);
     return;
   }
-  TdlgMatProp* MatProp = new TdlgMatProp(this, gpc, FXApp);
-  if( mat != NULL )
-    MatProp->SetCurrent(*mat);
+  TdlgMatProp* MatProp;
+  if( gpc != NULL )
+    MatProp = new TdlgMatProp(this, gpc->GetObject(0));
+  else
+    MatProp = new TdlgMatProp(this, *mat);
 
   if( MatProp->ShowModal() == wxID_OK )  {
     if( mat != NULL )
       *mat = MatProp->GetCurrent();
     if( smat != NULL )
-      *smat = MatProp->GetCurrent();
+      *smat = *mat;
   }
   MatProp->Destroy();
 }
@@ -7409,12 +7429,10 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
 void TMainForm::funChooseMaterial(const TStrObjList &Params, TMacroError &E)  {
   TGlMaterial glm;
   if( Params.Count() == 1 )
-    glm.FromString( Params[0] );
-  TdlgMatProp* MatProp = new TdlgMatProp(this, NULL, FXApp);
-  MatProp->SetCurrent( glm );
-
+    glm.FromString(Params[0]);
+  TdlgMatProp* MatProp = new TdlgMatProp(this, glm);
   if( MatProp->ShowModal() == wxID_OK )
-    E.SetRetVal( MatProp->GetCurrent().ToString() );
+    E.SetRetVal(glm.ToString());
   else
     E.ProcessingError(__OlxSrcInfo, EmptyString);
   MatProp->Destroy();

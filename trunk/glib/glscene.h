@@ -47,9 +47,28 @@ public:
   virtual void EndDraw();
 
   inline size_t FontCount() const {  return Fonts.Count();  }
-  TGlFont& GetSmallFont(size_t i) const;
+  inline TGlFont& GetSmallFont(size_t i) const {
+    if( i >= SmallFonts.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("invalid small font index :") << i);
+    if( !SmallFonts[i]->IsCreated() )
+      DoCreateFont(*SmallFonts[i], true);
+    return *SmallFonts[i];
+  }
   // the fonts is created if uninitialised
-  TGlFont& GetFont(size_t i, bool use_default) const;
+  inline TGlFont& GetFont(size_t i, bool use_default) const {
+    TGlFont* rv = NULL;
+    if( i >= Fonts.Count() )  {
+      if( use_default )
+        rv = &GetDefaultFont();
+    }
+    else
+      rv = Fonts[i];
+    if( rv == NULL )
+      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("invalid font index :") << i);
+    if( !rv->IsCreated() )
+      DoCreateFont(*rv, false);
+    return *rv;
+  }
   inline TGlFont& GetDefaultFont() const {
     if( Fonts.IsEmpty() )
       throw TFunctionFailedException(__OlxSourceInfo, "no fonts available");

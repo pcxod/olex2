@@ -23,7 +23,7 @@ void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 
-  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;
 
@@ -42,7 +42,7 @@ void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
 void TXGlLabel::SetLabel(const olxstr& L)   {
   FLabel = L;  
   TGlFont& glf = GetFont();
-  if( glf.IsVectorFont() )  {
+  if( true || glf.IsVectorFont() )  {
     text_rect = glf.GetTextRect(FLabel);
   }
   else  {
@@ -90,7 +90,6 @@ vec3d TXGlLabel::GetVectorPosition() const {
 bool TXGlLabel::Orient(TGlPrimitive& P)  {
   const double Scale = Parent.GetScale();
   const double ScaleR = Parent.GetExtraZoom()*Parent.GetViewZoom();
-  const double ScaleVR = Scale*ScaleR;
   TGlFont& glf = GetFont();
   if( P.GetType() == sgloText )  {
     if( !glf.IsVectorFont() )  {
@@ -102,7 +101,7 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
       //float glw;
       //glGetFloatv(GL_LINE_WIDTH, &glw);
       //glLineWidth((float)(1./Scale)/50);
-      glf.DrawGlText(T, FLabel, Parent.GetBasis().GetZoom()/Parent.CalcZoom(), true);
+      glf.DrawVectorText(T, FLabel, Parent.GetBasis().GetZoom()/Parent.CalcZoom());
       //glLineWidth(glw);
     }
     return true;
@@ -112,18 +111,17 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
     T[2] -= 0.0005;
     olx_gl::translate(T);
     if( !glf.IsVectorFont() )  {
-      P.Vertices[0] = vec3d(0, 0, 0);
-      P.Vertices[1] = vec3d(text_rect.width*ScaleVR, 0, 0);
-      P.Vertices[2] = vec3d(text_rect.width*ScaleVR, text_rect.height*ScaleVR, 0);
-      P.Vertices[3] = vec3d(0, text_rect.height*ScaleVR, 0);
+      const double scale = Scale*ScaleR;
+      olx_gl::scale(scale, scale, 1.0);
     }
     else  {
       const double scale = Parent.GetBasis().GetZoom()/Parent.CalcZoom();
-      P.Vertices[0] = vec3d(text_rect.left, text_rect.top, 0)*scale;
-      P.Vertices[1] = vec3d(text_rect.left+text_rect.width, text_rect.top, 0)*scale;
-      P.Vertices[2] = vec3d(text_rect.left+text_rect.width, text_rect.top+text_rect.height, 0)*scale;
-      P.Vertices[3] = vec3d(text_rect.left, text_rect.top+text_rect.height, 0)*scale;
+      olx_gl::scale(scale, scale, 1.0);
     }
+    P.Vertices[0] = vec3d(text_rect.left, text_rect.top, 0);
+    P.Vertices[1] = vec3d(text_rect.left+text_rect.width, text_rect.top, 0);
+    P.Vertices[2] = vec3d(text_rect.left+text_rect.width, text_rect.top+text_rect.height, 0);
+    P.Vertices[3] = vec3d(text_rect.left, text_rect.top+text_rect.height, 0);
   }
   return false;
 }

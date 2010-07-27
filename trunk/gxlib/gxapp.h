@@ -310,7 +310,7 @@ public:
   // moving atom from/to collection
   void Individualise(TXAtom& XA);
   void Collectivise(TXAtom& XA);
-  void Individualise(TXBond& XB);
+  void Individualise(TXBond& XB, bool create=true);
   // should not be used externaly
   void ClearLabels();
 

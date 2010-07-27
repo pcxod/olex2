@@ -19,36 +19,28 @@ private:
 protected:
   void OnOK(wxCommandEvent& event);
   bool Execute(const IEObject *Sender, const IEObject *Data=NULL);
-  void OnRemove()  {  ;  }
-  TGlMaterial *FMaterials;
-  TXAtom *FAtom;
+  void OnRemove()  {}
+  TGlMaterial *Materials, *Material;
+  AGDrawObject* Object;
   int FCurrentMaterial;
-  TGXApp *FXApp;
-  void Init( const TGlMaterial &GlM );
-  void Update( TGlMaterial &GlM );
-  void Update(){  wxWindow::Update(); };
+  void Init(const TGlMaterial& GlM);
+  void Update(TGlMaterial& GlM);
+  void Update()  {  wxWindow::Update();  }
 
   static TGlMaterial MaterialCopy;
   void OnCopy(wxCommandEvent& event);
   void OnPaste(wxCommandEvent& event);
   void OnEditFont(wxCommandEvent& event);
+  void Init();
 public:
-  TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XApp);
-  virtual ~TdlgMatProp();
-  void ApplyToGroupEnabled(bool v){  if( cbApplyToGroup )  cbApplyToGroup->Enable(v); }
-  void ApplyToGroupChecked(bool v){  if( cbApplyToGroup )  cbApplyToGroup->SetValue(v); }
-
-  const TGlMaterial& GetCurrent()  const {  return FMaterials[FCurrentMaterial];  }
+  TdlgMatProp(TMainFrame *ParentFrame, AGDrawObject &GPC);
+  TdlgMatProp(TMainFrame *ParentFrame, TGlMaterial& mat);
+  ~TdlgMatProp();
+  const TGlMaterial& GetCurrent()  const {  return Materials[FCurrentMaterial];  }
   void SetCurrent(const TGlMaterial& m)  {
-    FMaterials[FCurrentMaterial] = m;
+    Materials[FCurrentMaterial] = m;
     Init(m);
   }
-//..............................................................................
-// properties
-
-//..............................................................................
-// interface
-//..............................................................................
   DECLARE_EVENT_TABLE()
 };
 

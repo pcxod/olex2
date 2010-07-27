@@ -82,7 +82,7 @@ public:
     TopSizer->Add( BSizer,     0, wxALL, 1);
     TopSizer->Add( ButtonsSizer,     0, wxALL, 1);
 
-    TopSizer->SetSizeHints( this );   // set size hints to honour minimum size
+    TopSizer->SetSizeHints(this);   // set size hints to honour minimum size
     SetSizer(TopSizer);
     Center();
   }
@@ -171,7 +171,7 @@ TGlFont& TwxGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
   if( MetaFont::IsOlexFont(glf.GetIdString()) )  {
     if( half_size )  {
       MetaFont mf(glf.GetIdString());
-      mf.SetSize(mf.GetSize()/2);
+      mf.SetSize(mf.GetSize()*3/4);
       glf.SetIdString(mf.GetIdString());
     }
     return ImportFont(glf);
@@ -188,7 +188,7 @@ TGlFont& TwxGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
   if( Font.GetPointSize() <= 1 )
     Font.SetPointSize(10);
   if( half_size )
-    Font.SetPointSize(Font.GetPointSize()/2);
+    Font.SetPointSize(Font.GetPointSize()*3/4);
   glf.SetIdString(Font.GetNativeFontInfoDesc().c_str());
   glf.SetPointSize(Font.GetPointSize());
   TPtrList<wxImage> Images;
