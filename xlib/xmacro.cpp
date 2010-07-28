@@ -1103,8 +1103,10 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp & xapp = TXApp::GetInstance();
-  // do not print a warning...
-  if( xapp.XFile().GetLattice().IsGenerated() )  return;
+  if( xapp.XFile().GetLattice().IsGenerated() )  {
+    TBasicApp::GetLog() << "FixHL failed because the structure is grown...\n";
+    return;
+  }
   TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
   TEBitArray detached(au.AtomCount());
   for( size_t i=0; i < au.AtomCount(); i++ )  {

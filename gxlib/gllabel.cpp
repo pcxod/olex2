@@ -36,19 +36,11 @@ void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
   glpText.SetProperties(GS.GetMaterial("Text", TGlMaterial("2049;0.000,0.000,0.000,1.000")));
   glpText.Params[0] = -1;  //bitmap; TTF by default
-  glpText.SetFont(&GetFont());
 }
 //..............................................................................
-void TXGlLabel::SetLabel(const olxstr& L)   {
+void TXGlLabel::SetLabel(const olxstr& L)  {
   FLabel = L;  
-  TGlFont& glf = GetFont();
-  if( true || glf.IsVectorFont() )  {
-    text_rect = glf.GetTextRect(FLabel);
-  }
-  else  {
-    text_rect.width = (double)glf.TextWidth(FLabel);
-    text_rect.height = (double)glf.TextHeight(FLabel);
-  }
+  text_rect = GetFont().GetTextRect(FLabel);
 }
 //..............................................................................
 vec3d TXGlLabel::GetRasterPosition() const {

@@ -713,7 +713,7 @@ void TXGrid::RescaleSurface()  {
       const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
       const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
       const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
-      glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
+      glNewList(li == 0 ? PListId : NListId, GL_COMPILE);
       olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
       olx_gl::begin(GL_TRIANGLES);
       for( int x=-1; x <= 1; x++ )  {
@@ -758,7 +758,7 @@ void TXGrid::RescaleSurface()  {
         TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
         const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
         const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
-        glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
+        glNewList(li == 0 ? PListId : NListId, GL_COMPILE);
         olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
         olx_gl::begin(GL_TRIANGLES);
         for( float x=ExtMin[0]; x < ExtMax[0]; x++ )  {
@@ -799,7 +799,7 @@ void TXGrid::RescaleSurface()  {
           verts[i][0] /= (MaxX-1);  verts[i][1] /= (MaxY-1);  verts[i][2] /= (MaxZ-1);  // cell drawing
           au.CellToCartesian(verts[i]);                                     // cell drawing
         }
-        glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
+        glNewList(li == 0 ? PListId : NListId, GL_COMPILE);
         olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
         olx_gl::begin(GL_TRIANGLES);
         for( size_t i=0; i < trians.Count(); i++ )  {

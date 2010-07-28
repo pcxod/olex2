@@ -93,7 +93,12 @@ public:
   inline bool IsFixedWidth() const {  return (Flags & fntFixedWidth) == fntFixedWidth;  }
   inline bool IsVectorFont() const {  return (Flags & fntVectorFont) == fntVectorFont;  }
   DefPropP(uint16_t, CharOffset)
-  inline GLuint GetFontBase() const {  return FontBase;  }
+  inline void Reset_ATI(bool v) const {
+    if( v )  {
+      olx_gl::rasterPos(0, 0, 0);
+      olx_gl::callList(FontBase + ' ');
+    }
+  }
   void DrawVectorText(const vec3d& from, const olxstr& text, double scale=1.0) const;
   void DrawRasterText(const olxstr& text) const;
   // renders a single char, if the \+, \- or \0 is used, the index is scrolled accordingly

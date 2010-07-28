@@ -477,6 +477,12 @@ void TGlRenderer::Draw()  {
 }
 //..............................................................................
 void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimitives)  {
+#ifdef _DEBUG
+  for( size_t i=0; i < PrimitiveCount(); i++ )  {
+    GetPrimitive(i).SetFont(NULL);
+    GetPrimitive(i).SetString(NULL);
+  }
+#endif
   const bool Select = SelectObjects || SelectPrimitives;
   const bool skip_mat = StereoFlag==glStereoColor;
   static const int DrawMask = sgdoVisible|sgdoSelected|sgdoDeleted|sgdoGrouped;
@@ -1048,19 +1054,13 @@ void TGlRenderer::Compile(bool v)  {
 }
 //..............................................................................
 void TGlRenderer::DrawText(TGlPrimitive& p, double x, double y, double z)  {
-  if( ATI )  {
-    olx_gl::rasterPos(0, 0, 0);
-    olx_gl::callList(p.GetFont()->GetFontBase() + ' ');
-  }
+  p.GetFont()->Reset_ATI(ATI);
   olx_gl::rasterPos(x, y, z);
   p.Draw();
 }
 //..............................................................................
 void TGlRenderer::DrawTextSafe(const vec3d& pos, const olxstr& text, const TGlFont& fnt) {
-  if( ATI )  {
-    olx_gl::rasterPos(0, 0, 0);
-    olx_gl::callList(fnt.GetFontBase() + ' ');
-  }
+  fnt.Reset_ATI(ATI);
   // set a valid raster position
   olx_gl::rasterPos(0.0, 0.0, pos[2]);
   olx_gl::bitmap(0, 0, 0, 0, (float)(pos[0]/FViewZoom), (float)(pos[1]/FViewZoom), NULL);

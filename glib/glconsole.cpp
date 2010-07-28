@@ -450,11 +450,6 @@ void TGlConsole::KeepSize()  {
   }
 }
 //..............................................................................
-void TGlConsole::Visible(bool On)  {
-  AGDrawObject::SetVisible(On);
-  FCursor->SetVisible(On);
-}
-//..............................................................................
 void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
   if( !IsPromptVisible() || Parent.GetWidth()*Parent.GetHeight() <= 50*50 )  return;
   TGlFont& Fnt = GetFont();
@@ -500,8 +495,17 @@ void TGlConsole::SetInsertPosition(size_t v)  {
 TGlFont &TGlConsole::GetFont() const {  return Parent.GetScene().GetFont(FontIndex, true);  }
 //..............................................................................
 bool TGlConsole::Enter(const IEObject *Sender, const IEObject *Data)  {
-  UpdateCursorPosition(false);
+  if( IsVisible() )
+    UpdateCursorPosition(false);
   return true;
+}
+//..............................................................................
+void TGlConsole::SetVisible(bool v)  {
+  AGDrawObject::SetVisible(v);
+  if( !v )
+    FCursor->SetVisible(false);
+  else
+    FCursor->SetVisible(PromptVisible);
 }
 //..............................................................................
 void TGlConsole::SetPromptVisible(bool v)  {
@@ -516,7 +520,7 @@ void TGlConsole::SetInviteString(const olxstr &S)  {
   olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
   FCommand = PromptStr;
   FCommand << cmd;
-  SetInsertPosition(  FCommand.Length() );
+  SetInsertPosition(FCommand.Length());
 }
 //..............................................................................
 void TGlConsole::SetLinesToShow(size_t V)  {

@@ -63,22 +63,17 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
   Trans *= Parent.Basis().Matrix();
   Parent.GlTranslate(-Trans[0], -Trans[1], -Trans[2] );*/
  olx_gl::normal(0, 0, 1);
-  TGlFont& Fnt = GetFont();
   if( P.GetType() == sgloText )  {
-    P.SetFont(&Fnt);
+    TGlFont& Fnt = GetFont();
     uint16_t th = Fnt.TextHeight(EmptyString);
     double Scale = Parent.GetScale();
     double GlLeft = ((double)Left - (double)Parent.GetWidth()/2 + GetCenter()[0]) + 0.1;
     double GlTop = ((double)Parent.GetHeight()/2 - (Top-GetCenter()[1])) + 0.1;
     double LineInc = (th*LineSpacing)*Parent.GetViewZoom();
-    vec3d T;
-    //const size_t stl = ((olx_abs(Left)%Fnt.GetMaxWidth()) > Fnt.GetMaxWidth()/2) ? 1 : 0;
-    const size_t tl = Fnt.MaxTextLength(((Left+Width) > Parent.GetWidth()) ? 
-      Parent.GetWidth()-Left : Width);
+    const size_t tl = (size_t)((double)Fnt.MaxTextLength(((Left+Width) > Parent.GetWidth()) ? 
+      Parent.GetWidth()-Left : Width)/Parent.GetViewZoom());
     for( size_t i=0; i < FBuffer.Count() ; i++ )  {
-      T[0] = GlLeft;
-      T[1] = GlTop - (i+1)*LineInc;
-      T[2] = Z;  
+      const vec3d T(GlLeft, GlTop - (i+1)*LineInc, Z);
       TGlMaterial* GlM = FBuffer.GetObject(i);
       if( GlM != NULL ) 
         GlM->Init(Parent.IsColorStereo());
@@ -117,7 +112,7 @@ void TGlTextBox::PostText(const olxstr& S, TGlMaterial* M)  {
     return;
   }
   olxstr Tmp = S;
-  Tmp.SetCapacity( S.CharCount('\t')*8 );
+  Tmp.SetCapacity(S.CharCount('\t')*8);
   for( size_t i=0; i < Tmp.Length(); i++ )  {
     if( Tmp.CharAt(i) == '\t' )  {
       Tmp[i] = ' ';

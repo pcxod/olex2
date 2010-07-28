@@ -140,7 +140,7 @@ public:
   TArray3D(const vec_t& mind, const vec_t& maxd) : 
         MinWidth(mind[0]), Width(maxd[0] - mind[0] + 1),
         MinHeight(mind[1]), Height(maxd[1] - mind[1] + 1),
-        MinDepth(mind[2]), Depth(maxd[2] - mind[1] + 1)
+        MinDepth(mind[2]), Depth(maxd[2] - mind[2] + 1)
   {
     Data = NULL;
     if( mind[0] > maxd[0] || mind[1] > maxd[1] || mind[2] > maxd[2] )  
