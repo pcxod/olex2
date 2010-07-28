@@ -45,7 +45,7 @@ public:
 
   bool IsAvailable() const {  return !(IsDeleted() || FCAtom->IsDetached());  }
   bool IsGrown() const;
-  void SetGrown(bool v)  {  SetBit(v, Flags, satom_Grown);  }
+  void SetGrown(bool v)  {  olx_set_bit(v, Flags, satom_Grown);  }
   template <class Accessor=DirectAccessor> struct CAtomAccessor  {
     template <class Item> static inline TCAtom& Access(Item& a)  {
       return Accessor::Access(a).CAtom();
@@ -140,6 +140,10 @@ public:
       return (catom_id == r.catom_id && matrix_id != r.matrix_id);
     }
     bool operator == (const TSAtom& a) const {  return a.operator == (*this);  }
+    int Compare(const Ref& r) const {
+      const int rv = olx_cmp(catom_id, r.catom_id);
+      return rv ==0 ? olx_cmp(matrix_id, r.matrix_id) : rv;
+    }
   };
 
   bool operator == (const Ref& id) const {

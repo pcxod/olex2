@@ -48,7 +48,7 @@ public:
       for( int j=minInd; j <= maxInd; j++ )  {
         double rv = (double)i*j/(double)dim[0], ca, sa;
         rv *= T_PI;
-        SinCos(-rv, &sa, &ca);
+        olx_sincos(-rv, &sa, &ca);
         sin_cosX[i][j-minInd].SetRe(ca);
         sin_cosX[i][j-minInd].SetIm(sa);
       }
@@ -63,7 +63,7 @@ public:
         for( int j=minInd; j <= maxInd; j++ )  {
           double rv = (double)i*j/(double)dim[1], ca, sa;
           rv *= T_PI;
-          SinCos(-rv, &sa, &ca);
+          olx_sincos(-rv, &sa, &ca);
           sin_cosY[i][j-minInd].SetRe(ca);
           sin_cosY[i][j-minInd].SetIm(sa);
         }
@@ -82,7 +82,7 @@ public:
         for( int j=minInd; j <= maxInd; j++ )  {
           double rv = (double)i*j/(double)dim[2], ca, sa;
           rv *= T_PI;
-          SinCos(-rv, &sa, &ca);
+          olx_sincos(-rv, &sa, &ca);
           sin_cosZ[i][j-minInd].SetRe(ca);
           sin_cosZ[i][j-minInd].SetIm(sa);
         }

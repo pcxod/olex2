@@ -4,6 +4,7 @@
 //---------------------------------------------------------------------------//
 #include "poly.h"
 #include "exception.h"
+#include "emath.h"
 
 UseEsdlNamespace()
 //----------------------------------------------------------------------------//
@@ -23,7 +24,7 @@ int _PMembersSort(const TPMember& I, const TPMember& I1) {
   if( I.Id == I1.Id )
     return I.Extent - I1.Extent;
   else
-    return olx_cmp_size_t(I.Id, I1.Id);
+    return olx_cmp(I.Id, I1.Id);
 }
 //----------------------------------------------------------------------------//
 int _PolynomMembersSort(const TPolynomMember& I, const TPolynomMember& I1)  {

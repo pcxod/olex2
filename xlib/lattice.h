@@ -169,8 +169,12 @@ public:
   void CompaqAll();
   // similar to Compaq, but considers atom to atom distances, not fragment centres
   void CompaqClosest();
+  // moves atoms of particular type into the positions closest other atoms, does not affect the other atoms
+  void CompaqType(short Z);
   // moves Q-peaks into the positions closest to real atoms, does not affect the other atoms
-  void CompaqQ();
+  void CompaqQ()  {  CompaqType(iQPeakZ);  }
+  // as above, for H
+  void CompaqH()  {  CompaqType(iHydrogenZ);  }
   // transforms fragments using a given smat
   void TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform);
 

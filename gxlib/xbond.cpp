@@ -438,16 +438,12 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {
   const TSAtom *A = &Bnd.A(),
                *B = &Bnd.B();
   if( A->GetType().z != B->GetType().z )  {
-    if( A->GetType().z < B->GetType().z )  {
-      A = &Bnd.B();  
-      B = &Bnd.A();
-    }
+    if( A->GetType().z < B->GetType().z )
+      olx_swap(A, B);
   }
   else  {
-    if( A->GetLabel().Compare(B->GetLabel()) < 0 )  {
-      A = &Bnd.B();
-      B = &Bnd.A();
-    }
+    if( A->GetLabel().Compare(B->GetLabel()) < 0 )
+      olx_swap(A, B);
   }
   L << A->GetType().symbol << '-' << B->GetType().symbol;
   if( Bnd.GetType() == sotHBond )  

@@ -208,9 +208,9 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   mat3f rot_mat;
   const vec3f touch_point = (atom_b.atom.Atom().crd() - atom_a.atom.Atom().crd()).Normalise();
   if( olx_abs(1.0f-olx_abs(touch_point[2])) < 1e-3 )  // degenerated case...
-    CreateRotationMatrixEx<float,mat3f,vec3f>(rot_mat, vec3f(0, 1, 0).Normalise(), touch_point[2]);
+    olx_create_rotation_matrix_<float,mat3f,vec3f>(rot_mat, vec3f(0, 1, 0).Normalise(), touch_point[2]);
   else
-    CreateRotationMatrixEx<float,mat3f,vec3f>(rot_mat, vec3f(-touch_point[1], touch_point[0], 0).Normalise(), touch_point[2]);
+    olx_create_rotation_matrix_<float,mat3f,vec3f>(rot_mat, vec3f(-touch_point[1], touch_point[0], 0).Normalise(), touch_point[2]);
   const mat3f proj_mat = rot_mat*parent.ProjMatr;
   const float _brad = brad*(1+pers_scale)*scalex;
   if( !atom_a.IsSpherical() && atom_a.IsSolid() )  {
@@ -325,7 +325,7 @@ void ort_circle::render(PSWriter& pw) const {
 void ort_cone::render(PSWriter& pw) const {
   vec3f n = (top-bottom).Normalise();
   mat3f rm, basis = TEBasis::CalcBasis<vec3f,mat3f>(n);
-  CreateRotationMatrixEx<float, mat3f, vec3f>(rm, n, (float)cos(M_PI*2/divs));
+  olx_create_rotation_matrix_<float, mat3f, vec3f>(rm, n, (float)cos(M_PI*2/divs));
   TArrayList<vec3f> t_crd(divs), b_crd(divs);
   vec3f ps = basis[1];
   for( uint16_t i=0; i < divs; i++ )  {
@@ -398,7 +398,7 @@ void OrtDraw::Init(PSWriter& pw)  {
   BondProjM.SetCount(BondDiv);
   BondProjT.SetCount(BondDiv);
   double sin_a, cos_a;
-  SinCos(2*M_PI/ElpDiv, &sin_a, &cos_a);
+  olx_sincos(2*M_PI/ElpDiv, &sin_a, &cos_a);
   vec3f ps(cos_a, -sin_a, 0);
   for( uint16_t i=0; i < ElpDiv; i++ )  {
     ElpCrd[i] = ps;
@@ -406,7 +406,7 @@ void OrtDraw::Init(PSWriter& pw)  {
     ps[0] = (float)(cos_a*x + sin_a*ps[1]);
     ps[1] = (float)(cos_a*ps[1] - sin_a*x);
   }
-  SinCos(2*M_PI/BondDiv, &sin_a, &cos_a);
+  olx_sincos(2*M_PI/BondDiv, &sin_a, &cos_a);
   ps = vec3f(cos_a/2, -sin_a/2, 0);
   for( uint16_t i=0; i < BondDiv; i++ )  {
     BondCrd[i] = ps;
@@ -493,7 +493,7 @@ Direct calculation:
         compd _val=0;
         for( size_t k=0; k < P1SF.Count(); k++ )  {
           double tv = -2*M_PI*(p.DotProd(P1SF[k].hkl)+P1SF[k].ps), ca, sa;
-          SinCos(tv, &sa, &ca);
+          olx_sincos(tv, &sa, &ca);
           _val += P1SF[k].val*compd(ca,sa);
         }
         data[i][j] = (float)_val.Re()/cell_vol;

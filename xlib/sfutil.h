@@ -130,7 +130,7 @@ namespace SFUtil {
         out[ind].ps = m.t.DotProd(hkl);
         if( out[ind].ps != 0 )  {
           double ca=1, sa=0;
-          SinCos(-T_PI*out[ind].ps, &sa, &ca);
+          olx_sincos(-T_PI*out[ind].ps, &sa, &ca);
           out[ind].val = F[i]*compd(ca,sa);
         }
         else
@@ -218,7 +218,7 @@ namespace SFUtil {
           for( size_t k=0; k < parent._getsize(); k++ )  {
             double tv =  SFUtil::T_PI*(atoms[j]->ccrd().DotProd(rv[k])+ps[k]);  // scattering vector + phase shift
             double ca, sa;
-            SinCos(tv, &sa, &ca);
+            olx_sincos(tv, &sa, &ca);
             if( olx_is_valid_index(atoms[j]->GetEllpId()) )  {
               const double* Q = &U[j*6];  // pick up the correct ellipsoid
               const double B = exp(
@@ -263,7 +263,7 @@ namespace SFUtil {
           out[ind].ps = ps[j];
           double ca = 1, sa = 0;
           if( ps[j] != 0 )  {
-            SinCos(-SFUtil::T_PI*ps[j], &sa, &ca);
+            olx_sincos(-SFUtil::T_PI*ps[j], &sa, &ca);
             out[ind].val = F[i]*compd(ca, sa);
           }
           else

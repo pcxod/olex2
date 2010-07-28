@@ -72,9 +72,9 @@ protected:
   virtual bool DoRotate(const vec3d& vec, double angle)  {
     mat3d m;  
     if( RotationDir.IsNull() )
-      CreateRotationMatrix(m, vec, cos(angle), sin(angle) );
+      olx_create_rotation_matrix(m, vec, cos(angle), sin(angle) );
     else
-      CreateRotationMatrix(m, RotationDir, cos(angle), sin(angle) );
+      olx_create_rotation_matrix(m, RotationDir, cos(angle), sin(angle) );
     for( size_t i=0; i < Atoms.Count(); i++ )
       Atoms[i]->Atom().crd() = (Atoms[i]->Atom().crd()-RotationCenter)*m+RotationCenter;
     for( size_t i=0; i < Count(); i++ )

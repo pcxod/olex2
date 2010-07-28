@@ -154,14 +154,12 @@ protected:
   struct {
     TTypeList<TSAtom::Ref> atoms;
     TTypeList<olxstr> labels;
-    TTypeList<vec3d> offsets;
     TTypeList<vec3d> centers;
     TTypeList<TSBond::Ref> bonds;
     void Clear()  {
       atoms.Clear();
       bonds.Clear();
       labels.Clear();
-      offsets.Clear();
       centers.Clear();
     }
   } LabelInfo;

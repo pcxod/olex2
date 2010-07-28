@@ -240,7 +240,7 @@ class TCAtomPComparator  {
 public:
   static int Compare(const TCAtom* a1, const TCAtom* a2)  {
     if( a1->GetFragmentId() != a2->GetFragmentId() )  return a1->GetFragmentId() - a2->GetFragmentId();
-    if( a1->GetResiId() != a2->GetResiId() )          return olx_cmp_size_t(a1->GetResiId(),a2->GetResiId());
+    if( a1->GetResiId() != a2->GetResiId() )          return olx_cmp(a1->GetResiId(),a2->GetResiId());
     // asc sort by label
     if( a1->GetType() == a2->GetType() )
       return TCAtom::CompareAtomLabels(a1->GetLabel(), a2->GetLabel());

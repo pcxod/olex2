@@ -5,12 +5,13 @@
 #include "emath.h"
 #include "exception.h"
 //..............................................................................
-double GlobalEsdlFunction(NewtonSolve)(double (*f)(double), double (*df)(double), double point)  {
-  double ex1=100,x = point,x1;
-  long count=0;
+double GlobalEsdlFunction(olx_newton_solve)(double (*f)(double), double (*df)(double), double point)  {
+  double ex1 = 100,
+         x = point;
+  size_t count = 0;
   while( ex1 > 1e-5 )  {
-    x1 = x - f(x)/df(x);
-    ex1 = olx_abs( f(x1));
+    double x1 = x - f(x)/df(x);
+    ex1 = olx_abs(f(x1));
     x = x1;
     count++;
     if( count >= 15000 )

@@ -71,7 +71,7 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
         }
       }
       mat3d rm;
-      CreateRotationMatrix(rm, FPlane->GetNormal(), cos(M_PI*72.0/180) );
+      olx_create_rotation_matrix(rm, FPlane->GetNormal(), cos(M_PI*72.0/180) );
       for( int i=0; i < 5; i++ )  {
         GlP.Vertices[i] = marv;    
         marv *= rm;

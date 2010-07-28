@@ -167,7 +167,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
         const vec3d hkl = ref.GetHkl()*ml[k].r;
         double tv =  T_PI*(alist[j]->ccrd().DotProd(hkl) + ml[k].t.DotProd(ref.GetHkl()));  // scattering vector + phase shift
         double ca, sa;
-        SinCos(tv, &sa, &ca);
+        olx_sincos(tv, &sa, &ca);
         if( alist[j]->GetEllipsoid() != NULL )  {
           const double* Q = &Ucifs[j*6];  // pick up the correct ellipsoid
           double B = (hkl[0]*(Q[0]*hkl[0]+Q[4]*hkl[2]+Q[5]*hkl[1]) + 

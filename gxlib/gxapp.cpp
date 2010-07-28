@@ -1027,7 +1027,7 @@ olxstr TGXApp::GetSelectionInfo()  {
         for( size_t i=0; i < 6; i++ )  {
           for( size_t j=i+1; j < 6; j++ )  {
             for( size_t k=j+1; k < 6; k++ )  {
-              const double thv = TetrahedronVolume( 
+              const double thv = olx_tetrahedron_volume( 
                 central_atom->crd(),
                 (atoms[i]->crd()-central_atom->crd()).Normalise() + central_atom->crd(),
                 (atoms[j]->crd()-central_atom->crd()).Normalise() + central_atom->crd(),
@@ -2793,7 +2793,6 @@ void TGXApp::StoreLabels()  {
     if( XAtoms[i].GetLabel().IsVisible() )  {
       LabelInfo.atoms.AddCCopy(XAtoms[i].Atom().GetRef());
       LabelInfo.labels.AddCCopy(XAtoms[i].GetLabel().GetLabel());
-      LabelInfo.offsets.AddCCopy(XAtoms[i].GetLabel().GetOffset());
       LabelInfo.centers.AddCCopy(XAtoms[i].GetLabel().GetCenter());
     }
   }
@@ -2801,7 +2800,6 @@ void TGXApp::StoreLabels()  {
     if( XBonds[i].GetLabel().IsVisible() )  {
       LabelInfo.bonds.AddCCopy(XBonds[i].Bond().GetRef());
       LabelInfo.labels.AddCCopy(XBonds[i].GetLabel().GetLabel());
-      LabelInfo.offsets.AddCCopy(XBonds[i].GetLabel().GetOffset());
       LabelInfo.centers.AddCCopy(XBonds[i].GetLabel().GetCenter());
     }
   }
@@ -2832,16 +2830,16 @@ void TGXApp::RestoreLabels()  {
   for( size_t j=0; j < xatoms.Count(); j++ )  {
     xatoms[j]->GetLabel().SetVisible(true);
     xatoms[j]->GetLabel().SetLabel(LabelInfo.labels[labels[j]]);
-    xatoms[j]->GetLabel().SetOffset(LabelInfo.offsets[labels[j]]);
-    xatoms[j]->GetLabel().TranslateBasis(-xatoms[j]->GetLabel().GetCenter());
-    xatoms[j]->GetLabel().TranslateBasis(LabelInfo.centers[labels[j]]);
+    xatoms[j]->GetLabel().SetOffset(xatoms[j]->Atom().crd());
+    xatoms[j]->GetLabel().TranslateBasis(
+      LabelInfo.centers[labels[j]]-xatoms[j]->GetLabel().GetCenter());
   }
   for( size_t j=0; j < xbonds.Count(); j++ )  {
     xbonds[j]->GetLabel().SetVisible(true);
     xbonds[j]->GetLabel().SetLabel(LabelInfo.labels[labels[xatoms.Count()+j]]);
-    xbonds[j]->GetLabel().SetOffset(LabelInfo.offsets[labels[xatoms.Count()+j]]);
-    xbonds[j]->GetLabel().TranslateBasis(-xbonds[j]->GetLabel().GetCenter());
-    xbonds[j]->GetLabel().TranslateBasis(LabelInfo.centers[labels[xatoms.Count()+j]]);
+    xbonds[j]->GetLabel().SetOffset(xbonds[j]->Bond().GetCenter());
+    xbonds[j]->GetLabel().TranslateBasis(
+      LabelInfo.centers[labels[xatoms.Count()+j]]-xbonds[j]->GetLabel().GetCenter());
   }
 }
 //..............................................................................
@@ -2935,9 +2933,7 @@ void TGXApp::MoveFragment(const vec3d& to, TXAtom* fragAtom, bool copy)  {
     FXFile->GetLattice().MoveFragment(to, fragAtom->Atom());
 }
 //..............................................................................
-void TGXApp::MoveToCenter()  {
-  FXFile->GetLattice().MoveToCenter();
-}
+void TGXApp::MoveToCenter()  {  FXFile->GetLattice().MoveToCenter();  }
 //..............................................................................
 void TGXApp::Compaq(bool All)  {
   if( All )
@@ -2971,7 +2967,10 @@ void TGXApp::SetHydrogensVisible(bool v)  {
     XFile().GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
     for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
       OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
-    UpdateConnectivity();
+    if( v )
+      XFile().GetLattice().CompaqH();
+    else
+      UpdateConnectivity();
     CenterView(true);
   }
 }
@@ -2988,7 +2987,10 @@ void TGXApp::SetQPeaksVisible(bool v)  {
     XFile().GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
     for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
       OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
-    UpdateConnectivity();
+    if( v )
+      XFile().GetLattice().CompaqQ();
+    else
+      UpdateConnectivity();
     CenterView(true);
   }
 }

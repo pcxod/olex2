@@ -32,7 +32,7 @@ public:
     return TCAtom::CompareAtomLabels(a1->GetLabel(), a2->GetLabel());
   }
   static int atom_cmp_Id(const TCAtom* a1, const TCAtom* a2)  {
-    return olx_cmp_size_t(a1->GetId(), a2->GetId());
+    return olx_cmp(a1->GetId(), a2->GetId());
   }
   static int atom_cmp_Label1(const TCAtom* a1, const TCAtom* a2) {
     return a1->GetLabel().Comparei(a2->GetLabel());
@@ -165,7 +165,7 @@ class MoietySorter {
   static int moiety_cmp_size(const AnAssociation2<int,TCAtomPList>& m1, 
     const AnAssociation2<int,TCAtomPList>& m2) 
   {
-    return olx_cmp_size_t(m2.GetB().Count(), m1.GetB().Count());
+    return olx_cmp(m2.GetB().Count(), m1.GetB().Count());
   }
 public:
   static void SortByMoietyAtom(TCAtomPList& list, const TStrList& atom_names)  {

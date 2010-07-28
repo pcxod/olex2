@@ -15,7 +15,7 @@ int TLLTBondSort::Compare(const CifTabBond *I, const CifTabBond *I1)  {
     if( v < 0 ) return -1;
     v = I->Another(Atom).Label.Compare(I1->Another(Atom).Label);
     if( v == 0 )
-      return olx_cmp_size_t(Symmetry.IndexOf(I->S2), Symmetry.IndexOf(I1->S2));
+      return olx_cmp(Symmetry.IndexOf(I->S2), Symmetry.IndexOf(I1->S2));
   }
   if( (SortType & cCifTabSortName) != 0 )  {  // Name, length
     v = I->Another(Atom).Label.Compare(I1->Another(Atom).Label);
@@ -39,7 +39,7 @@ int TLLTBondSort::Compare(const CifTabBond *I, const CifTabBond *I1)  {
     if( v > 0 ) return 1;
     if( v < 0 ) return -1;
     if( v == 0 )
-      return olx_cmp_size_t(Symmetry.IndexOf(I->S2), Symmetry.IndexOf(I1->S2));
+      return olx_cmp(Symmetry.IndexOf(I->S2), Symmetry.IndexOf(I1->S2));
   }
   return 0;
 }

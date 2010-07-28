@@ -26,10 +26,10 @@
 #undef GetObject
 // sorts largest -> smallest
 int TLattice_SortFragments(const TNetwork* n1, const TNetwork* n2)  {
-  return olx_cmp_size_t(n2->NodeCount(), n1->NodeCount());
+  return olx_cmp(n2->NodeCount(), n1->NodeCount());
 }
 int TLattice_SortAtomsById(const TSAtom* a1, const TSAtom* a2)  {
-  return olx_cmp_size_t(a1->CAtom().GetId(), a2->CAtom().GetId());
+  return olx_cmp(a1->CAtom().GetId(), a2->CAtom().GetId());
 }
 int TLattice_AtomsSortByDistance(const TSAtom* A1, const TSAtom* A2)  {
   const double d = A1->crd().QLength() - A2->crd().QLength();
@@ -1313,17 +1313,17 @@ void TLattice::CompaqClosest()  {
   OnStructureUniq.Exit(this);
 }
 //..............................................................................
-void TLattice::CompaqQ()  {
+void TLattice::CompaqType(short type)  {
   if( Generated )  return;
   OnStructureUniq.Enter(this);
   const size_t ac = Atoms.Count();
   for( size_t i=0; i < ac; i++ )  {
-    if( Atoms[i]->GetType() != iQPeakZ )  continue;
+    if( Atoms[i]->GetType() != type )  continue;
     const vec3d& crda = Atoms[i]->ccrd();
     smatd* transform = NULL;
     double minQD = 1000;
     for( size_t j=0; j < ac; j++ )  {
-      if( Atoms[j]->GetType() == iQPeakZ )  continue;
+      if( Atoms[j]->GetType() == type || Atoms[j]->GetType() == iQPeakZ )  continue;
       double qd = 0;
       smatd* m = GetUnitCell().GetClosest(Atoms[j]->ccrd(), crda, true, &qd);
       if( qd < minQD )  {
@@ -1492,7 +1492,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       }
     }
     else if( AE.Count() == 3 )  {
-      double v = TetrahedronVolume( atom.crd(), AE.GetCrd(0), AE.GetCrd(1), AE.GetCrd(2) );
+      double v = olx_tetrahedron_volume( atom.crd(), AE.GetCrd(0), AE.GetCrd(1), AE.GetCrd(2) );
       if( v > 0.3 )  {
         TBasicApp::GetLog().Info(olxstr(atom.GetLabel()) << ": XYZCH");
         cg.FixAtom(AE, fgCH1, h_elm, NULL, generated);
@@ -1689,7 +1689,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
   else if( atom.GetType() == iBoronZ )  {  // boron
     if( AE.Count() == 3 )  {
       const vec3d cnt = AE.GetBase().crd();
-      const double v = TetrahedronVolume( 
+      const double v = olx_tetrahedron_volume( 
         cnt, 
         (AE.GetCrd(0)-cnt).Normalise() + cnt, 
         (AE.GetCrd(1)-cnt).Normalise() + cnt, 
@@ -1727,7 +1727,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
   else if( atom.GetType() == iSiliconZ )  {
     if( AE.Count() == 3 )  {
       const vec3d cnt = AE.GetBase().crd();
-      const double v = TetrahedronVolume( 
+      const double v = olx_tetrahedron_volume( 
         cnt, 
         (AE.GetCrd(0)-cnt).Normalise() + cnt, 
         (AE.GetCrd(1)-cnt).Normalise() + cnt, 
@@ -1769,7 +1769,7 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rc
         UnitCell->GetAtomEnviList(*rings[i][j], AE);
         if( AE.Count() == 3 )  {
           const vec3d cnt = AE.GetBase().crd();
-          double v = TetrahedronVolume( 
+          double v = olx_tetrahedron_volume( 
             cnt, 
             (AE.GetCrd(0)-cnt).Normalise() + cnt, 
             (AE.GetCrd(1)-cnt).Normalise() + cnt, 

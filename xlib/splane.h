@@ -90,9 +90,9 @@ public:
         return *this;
       }
       int Compare(const DefData& d) const {
-        int diff = olx_cmp_size_t(ref.catom_id, d.ref.catom_id);
+        int diff = olx_cmp(ref.catom_id, d.ref.catom_id);
         if( diff == 0 )
-          diff = olx_cmp_size_t(ref.matrix_id, d.ref.matrix_id);
+          diff = olx_cmp(ref.matrix_id, d.ref.matrix_id);
         return diff;
       }
     };
