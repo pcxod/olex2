@@ -657,12 +657,16 @@ void TLattice::GrowAtom(uint32_t FragId, const smatd& transform)  {
 void TLattice::GrowAtoms(const TSAtomPList& atoms, const smatd_list& matrices)  {
   smatd *M = NULL;
   smatd_plist addedMatrices;
+  bool has_duplicates = false;
   // check if the matices is unique
   for( size_t i=0; i < matrices.Count(); i++ )  {
     bool found = false;
     for( size_t j=0; j < Matrices.Count(); j++ )  {
       if( *Matrices[j] == matrices[i] )  {
         found = true;
+        TBasicApp::GetLog() << olxstr("Skipping ") <<
+          TSymmParser::MatrixToSymmEx(matrices[i]) << " - already used\n";
+        has_duplicates = true;
         break;
       }
     }
@@ -673,7 +677,8 @@ void TLattice::GrowAtoms(const TSAtomPList& atoms, const smatd_list& matrices)  
       this->GetUnitCell().InitMatrixId(*M);
     }
   }
-
+  if( has_duplicates )
+    TBasicApp::GetLog() << "Use grow -w for already used matrices\n";
   OnStructureGrow.Enter(this);
   Atoms.SetCapacity( Atoms.Count() + atoms.Count()*addedMatrices.Count() );
   for( size_t i=0; i < addedMatrices.Count(); i++ )  {
