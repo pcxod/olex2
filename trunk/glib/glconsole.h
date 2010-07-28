@@ -74,6 +74,7 @@ public:
 
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min);
+  virtual void SetVisible(bool v);
   bool ProcessKey(int Key, short ShiftState);
   bool WillProcessKey(int Key, short ShiftState);
 
@@ -101,7 +102,6 @@ public:
 
   class TGlFont& GetFont() const;
   inline TGlCursor& Cursor() const {  return *FCursor;  }
-  void Visible(bool On);
 
   inline bool ScrollDirectionUp() const {  return FScrollDirectionUp; }
   inline void ScrollDirectionUp(bool v) {  FScrollDirectionUp = v; }

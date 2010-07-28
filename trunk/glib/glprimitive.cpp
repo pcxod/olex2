@@ -233,12 +233,15 @@ void TGlPrimitive::Draw()  {
   }
 
   if( Type == sgloText )  {
+#ifdef _DEBUG
+    if( Font == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "undefiend font");
+#endif
     if( !(String == NULL || Font == NULL || String->IsEmpty()) )  {
       if( Font->IsVectorFont() )  {
         Font->DrawVectorText(vec3d(0,0,0), *String);
       }
       else  {
-        const GLuint fontbase = Font->GetFontBase();
         /* each character of different colour */
         const size_t StrLen = String->Length();
         if( Colors.Count() == StrLen )  {

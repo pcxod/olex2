@@ -96,8 +96,10 @@ void TCAtom::AssignEquivs(const TCAtom& S)  {
     else
       *Equivs = *S.Equivs;
   }
-  else if( Equivs != NULL )
+  else if( Equivs != NULL )  {
     delete Equivs;
+    Equivs = NULL;
+  }
 }
 //..............................................................................
 void TCAtom::ClearEquivs()  {  

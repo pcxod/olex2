@@ -593,7 +593,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   FXApp->GetRender().Resize(0, 0, BmpWidth, BmpHeight, res);
   wglMakeCurrent(dDC, dglc);
   FBitmapDraw = true;
-  FGlConsole->Visible(false);
+  FGlConsole->SetVisible(false);
   FXApp->BeginDrawBitmap(res);
   FXApp->GetRender().EnableFog( FXApp->GetRender().IsFogEnabled() );
 
@@ -601,12 +601,11 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   GdiFlush();
   FBitmapDraw = false;
 
-
   wglDeleteContext(dglc);
   DeleteDC(dDC);
   wglMakeCurrent(hDC, glc);
   FXApp->GetRender().Resize(vpLeft, vpTop, vpWidth, vpHeight, 1);
-  FGlConsole->Visible(true);
+  FGlConsole->SetVisible(true);
   FXApp->FinishDrawBitmap();
   if( PictureQuality )  FXApp->Quality(qaMedium);
   FXApp->GetRender().EnableFog( FXApp->GetRender().IsFogEnabled() );
@@ -688,7 +687,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 
   const int bmpSize = BmpHeight*BmpWidth*3;
   char* bmpData = (char*)malloc(bmpSize);
-  FGlConsole->Visible(false);
+  FGlConsole->SetVisible(false);
   FXApp->GetRender().OnDraw.SetEnabled(false);
   if( res != 1 )    {
     FXApp->GetRender().GetScene().ScaleFonts(res);
@@ -721,7 +720,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
 
   FXApp->GetRender().OnDraw.SetEnabled(true);
-  FGlConsole->Visible(true);
+  FGlConsole->SetVisible(true);
   // end drawing etc
   FXApp->GetRender().Resize(orgWidth, orgHeight); 
   FXApp->GetRender().LookAt(0,0,1);
@@ -729,7 +728,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   FXApp->Draw();
   olxstr bmpFN;
   if( FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0]) )
-    bmpFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName( Cmds[0] );
+    bmpFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName(Cmds[0]);
   else
     bmpFN = Cmds[0];
   wxImage image;
@@ -5101,7 +5100,7 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options, TM
     E.ProcessingError(__OlxSrcInfo, "Image file does not exist: ") << Cmds[1];
     return;
   }
-  wxImage img( *inf->GetStream() );
+  wxImage img(*inf->GetStream());
   delete inf;
   if( !img.Ok() )  {
     E.ProcessingError(__OlxSrcInfo, "Invalid image file: ") << Cmds[1];
@@ -5110,13 +5109,13 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options, TM
   bool resize = !Options.Contains('r');
 
   int owidth = img.GetWidth(), oheight = img.GetHeight();
-  int l = CalcL( img.GetWidth() );
+  int l = CalcL(img.GetWidth());
   int swidth = (int)pow((double)2, (double)l);
-  l = CalcL( img.GetHeight() );
+  l = CalcL(img.GetHeight());
   int sheight = (int)pow((double)2, (double)l);
 
   if( swidth != owidth || sheight != oheight )
-    img.Rescale( swidth, sheight );
+    img.Rescale(swidth, sheight);
 
   int cl = 3, bmpType = GL_RGB;
   if( img.HasAlpha() )  {
@@ -5150,15 +5149,15 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options, TM
   }
 
   if( Created ) {
-    glB->SetWidth( owidth );
-    glB->SetHeight( oheight );
+    glB->SetWidth(owidth);
+    glB->SetHeight(oheight);
   }
-  glB->SetTop( Top );
+  glB->SetTop(Top);
   if( resize && Created ) {
     double r = ((double)FXApp->GetRender().GetWidth()/(double)owidth)/10.0;
     glB->SetZoom(r);
   }
-  glB->SetLeft( FXApp->GetRender().GetWidth() - glB->GetWidth() );
+  glB->SetLeft(FXApp->GetRender().GetWidth() - glB->GetWidth());
   FXApp->Draw();
 }
 //..............................................................................
@@ -8974,7 +8973,7 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   const int bmpSize = BmpHeight*ImgWidth*3;
   char* bmpData = (char*)malloc(bmpSize);
   memset(bmpData, ~0, bmpSize);
-  FGlConsole->Visible(false);
+  FGlConsole->SetVisible(false);
   FXApp->GetRender().OnDraw.SetEnabled(false);
   if( res != 1 )    {
     FXApp->GetRender().GetScene().ScaleFonts(res);
@@ -9031,7 +9030,7 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
 
   FXApp->GetRender().OnDraw.SetEnabled(true);
-  FGlConsole->Visible(true);
+  FGlConsole->SetVisible(true);
   // end drawing etc
   FXApp->GetRender().Resize(orgWidth, orgHeight); 
   FXApp->GetRender().LookAt(0,0,1);

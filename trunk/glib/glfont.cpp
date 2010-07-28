@@ -292,24 +292,21 @@ void TGlFont::CreateGlyphsFromRGBArray(bool FW, uint16_t Width, uint16_t Height)
             BmpData[(NHeight-k)*BWidth + (j+Leftmost)/8] |= (0x01 << (7-(j+Leftmost)%8));
         }
       }
-      olx_gl::newList(FontBase +i, GL_COMPILE_AND_EXECUTE);
+      olx_gl::newList(FontBase +i, GL_COMPILE);
       if( IsFixedWidth() )
         olx_gl::bitmap(BWidth*8, NHeight, 0.0, 0.0, (float)(MaxWidth), 0.0, BmpData);
       else
         olx_gl::bitmap(BWidth*8, NHeight, 0.0, 0.0, (float)(cs->Right + CharOffset), 0.0, BmpData);
-
       olx_gl::endList();
       cs->Data = NULL;
     }
     else  {  // an empty character as a space char
-      olx_gl::newList(FontBase +i, GL_COMPILE_AND_EXECUTE);
-
+      olx_gl::newList(FontBase +i, GL_COMPILE);
       if( IsFixedWidth() )
         olx_gl::bitmap(BWidth, MaxHeight, 0.0, 0.0, (float)(MaxWidth), 0.0, BmpData);
       else
         olx_gl::bitmap(olx_min(BWidth*8, CharOffset*5), MaxHeight, 0.0, 0.0, 
            (float)(olx_min(BWidth*8, CharOffset*5)+CharOffset), 0.0, BmpData);
-
       olx_gl::endList();
       cs->Top = 0;                 
       cs->Left = 0;
@@ -389,7 +386,7 @@ void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, uint16_t w, ui
     /* the commented section creates the 'quad a pixel', scalable font, which
     which does not look very good... */
     //if( cs->Left > 0 || cs->Bottom > 0 )  {  // check if bitmap is not empty
-    //  olx_gl::newList(FontBase +i, GL_COMPILE_AND_EXECUTE);
+    //  olx_gl::newList(FontBase +i, GL_COMPILE);
     //  olx_gl::begin(GL_QUADS);
     //  for( int j=cs->Left; j <= cs->Right; j++ )  {
     //    for( int k=cs->Top; k <= cs->Bottom; k++ )  {
@@ -418,7 +415,7 @@ void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, uint16_t w, ui
             bf[((BHeight-k)*BWidth + (j+Leftmost))/8] |= (0x01 << (7-(j+Leftmost)%8));
         }
       }
-      olx_gl::newList(FontBase +i, GL_COMPILE_AND_EXECUTE);
+      olx_gl::newList(FontBase +i, GL_COMPILE);
       if( fixedWidth )
         olx_gl::bitmap(BWidth, BHeight, 0.0, 0.0, (float)(MaxWidth), 0.0, bf);
       else
@@ -426,7 +423,7 @@ void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, uint16_t w, ui
       olx_gl::endList();
     }
     else  {  // an empty character as a space char
-      olx_gl::newList(FontBase +i, GL_COMPILE_AND_EXECUTE);
+      olx_gl::newList(FontBase +i, GL_COMPILE);
       if( fixedWidth )
         olx_gl::bitmap(BWidth, BHeight, 0.0, 0.0, (float)(MaxWidth), 0.0, bf);
       else
@@ -1201,7 +1198,7 @@ void TGlFont::CreateHershey(const olxdict<size_t, olxstr, TPrimitiveComparator>&
   }
   for( size_t i=0; i < 95; i++ )  {
     TFontCharSize* cs = CharSize(i+32);
-    olx_gl::newList((GLuint)(FontBase + i + 32), GL_COMPILE_AND_EXECUTE);
+    olx_gl::newList((GLuint)(FontBase + i + 32), GL_COMPILE);
     bool loop_started = false;
     for( int j=2; j < 112; j+=2 )  {
       if( gl_font_simplex[i][j] == -1 && gl_font_simplex[i][j] == -1 )  {
@@ -1359,6 +1356,10 @@ void TGlFont::DrawRasterText(const olxstr& text) const {
 }
 //..............................................................................
 void TGlFont::DrawRasterChar(size_t &i, const olxstr& str, short& cstate) const {
+#ifdef _DEBUG
+  if( !IsCreated() )
+    throw TFunctionFailedException(__OlxSourceInfo, "invalid font");
+#endif
   if( str.CharAt(i) == '\\' && !is_escaped(str, i) && (i+1) < str.Length() )  {
     if( str.CharAt(i+1) == '+' )  {
       if( cstate == 0 || cstate == -1 )
@@ -1390,6 +1391,10 @@ void TGlFont::DrawRasterChar(size_t &i, const olxstr& str, short& cstate) const 
 }
 //..............................................................................
 void TGlFont::DrawVectorChar(size_t &i, const olxstr& str, short& cstate) const {
+#ifdef _DEBUG
+  if( !IsCreated() )
+    throw TFunctionFailedException(__OlxSourceInfo, "invalid font");
+#endif
   if( str.CharAt(i) == '\\' && !is_escaped(str, i) && (i+1) < str.Length() )  {
     if( str.CharAt(i+1) == '+' )  {
       if( cstate == 0 )
