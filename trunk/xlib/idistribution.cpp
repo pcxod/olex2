@@ -68,7 +68,7 @@ int PPolyEvaluator(const TPolynomMember& P, const TPolynomMember& P1) {
 }
 //..............................................................................
 int _SeriesSort(const TPolySerie& I, const TPolySerie& I1) {
-  return olx_cmp_size_t(I.Count(), I1.Count());
+  return olx_cmp(I.Count(), I1.Count());
 }
 //..............................................................................
 int  _SerieSort(const TSPoint& I, const TSPoint& I1)  {

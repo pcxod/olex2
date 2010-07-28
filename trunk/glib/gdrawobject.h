@@ -75,17 +75,17 @@ public:
   virtual bool OnZoom(const IEObject *Sender, const struct TMouseData& Data)  {  return false;  }
 
   // need a virtual setters for these
-  virtual void SetVisible(bool v)  {  SetBit(v, Flags, sgdoVisible);  }
+  virtual void SetVisible(bool v)  {  olx_set_bit(v, Flags, sgdoVisible);  }
   inline bool IsVisible() const {  return ((Flags&sgdoVisible) != 0);  }
-  virtual void SetSelected(bool v)  {  SetBit(v, Flags, sgdoSelected);  }
+  virtual void SetSelected(bool v)  {  olx_set_bit(v, Flags, sgdoSelected);  }
   inline bool IsSelected() const {  return ((Flags&sgdoSelected) != 0);  }
 
   DefPropBFIsSet(Groupable, Flags, sgdoGroupable)
   DefPropBFIsSet(Grouped, Flags, sgdoGrouped)
   void SetDeleted(bool v)  {
-    SetBit(v, Flags, sgdoDeleted);
+    olx_set_bit(v, Flags, sgdoDeleted);
     if( v )
-      SetBit(false, Flags, sgdoVisible);
+      olx_set_bit(false, Flags, sgdoVisible);
   }
   inline bool IsDeleted() const {  return ((Flags&sgdoDeleted) != 0);  }
   DefPropBFIsSet(Selectable, Flags, sgdoSelectable)

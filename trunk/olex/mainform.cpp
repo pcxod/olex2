@@ -3900,7 +3900,7 @@ int TMainForm::TranslateShortcut(const olxstr& sk)  {
 }
 //..............................................................................
 void TMainForm::SetProgramState(bool val, uint32_t state, const olxstr& data )  {
-  SetBit(val, ProgramState, state);
+  olx_set_bit(val, ProgramState, state);
   uint32_t st = state;
   while( (st%2) == 0 && st > 0 )
     st /= 2;

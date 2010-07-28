@@ -63,8 +63,8 @@ public:
   void RenderDisks(float_type rad, size_t t, float_type disk_s)  {
     vec3f sf(rad, 0, 0);
     float_type sa, sma, ca, cma;
-    SinCos(2*M_PI/t, &sa, &ca);
-    SinCos(-2*M_PI/t, &sma, &cma);
+    olx_sincos(2*M_PI/t, &sa, &ca);
+    olx_sincos(-2*M_PI/t, &sma, &cma);
     olx_gl::begin(GL_POLYGON);
     olx_gl::normal(0, 0, -1);
     for( int i=0; i <= t; i++ )  {
@@ -134,7 +134,7 @@ public:
   void RenderRims(float_type rad, size_t t, float_type disk_s)  {
     vec3f sf(rad, 0, 0), pv;
     float_type sa, ca;
-    SinCos(2*M_PI/t, &sa, &ca);
+    olx_sincos(2*M_PI/t, &sa, &ca);
     olx_gl::begin(GL_QUADS);
     for( size_t i=0; i <= t; i++ )  {
       olx_gl::normal(sf[0], sf[1], 0.0f);

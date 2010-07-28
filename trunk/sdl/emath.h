@@ -11,10 +11,12 @@ BeginEsdlNamespace()
 template <typename T> inline olxch olx_sign_char(const T& p)  {  return (p<0) ? olxT('-') : olxT('+');  }
 // determines the sign of a number
 template <typename T> inline T olx_sign(const T& a)  {  return (T)((a < 0 ) ? -1 : 1);  }
-
-// solves an equation by the Newton method
-// f - function, df - first derivative, point - starting point
-extern double NewtonSolve( double (*f)(double), double (*df)(double), double point);
+// comparison function (useful for the size_t on Win64, where size_t=uint64_t and int is int32_t)
+template <typename T1, typename T2>
+  inline int olx_cmp(T1 a, T2 b)  {  return a < b ? -1 : (a > b ? 1 : 0);  }
+/* solves an equation by the Newton method
+ f - function, df - first derivative, point - starting point */
+extern double olx_newton_solve( double (*f)(double), double (*df)(double), double point);
 // calculates factorial of a number
 template <typename arg_t> double olx_factorial(const arg_t& a)  {
   double b=1;
@@ -50,22 +52,22 @@ template <typename obj> inline void olx_swap(obj& o1, obj& o2)  {
 template <typename num> inline num olx_sqr(num n) {  return n*n;  } 
 
 template <typename A, typename B>
-  inline void SetBit( const bool Set, A &V, const B Bit )  {
+  inline void olx_set_bit(const bool Set, A &V, const B Bit)  {
     if( Set )  V |= Bit;
     else       V &= ~Bit;
   }
 template <typename A, typename B>
-  inline void SetBitTrue(A &V, const B Bit )  {
+  inline void olx_set_true(A &V, const B Bit)  {
     V |= Bit;
   }
 template <typename A, typename B>
-  inline void SetBitFalse(A &V, const B Bit )  {
+  inline void olx_set_false(A &V, const B Bit)  {
     V &= ~Bit;
   }
 
 // throws an exception
 template <class VC>
-  double TetrahedronVolume(const VC& A, const VC& B, const VC& C,const VC& D )  {
+  double olx_tetrahedron_volume(const VC& A, const VC& B, const VC& C,const VC& D)  {
     const VC a(A-B), b(C-B);
     if( a.QLength()*b.QLength() < 1e-15 )
       throw TDivException(__OlxSourceInfo);
@@ -120,15 +122,15 @@ template <class VC>
 // greatest common denominator
 extern unsigned int olx_gcd(unsigned int u, unsigned int v);
 
-//extern void SetBit( const bool Set, short &V, const short Bit );
+//extern void olx_set_bit( const bool Set, short &V, const short Bit );
 //returns volume of a sphere of radius r
-inline double SphereVol(double r)  {  return 4.*M_PI/3.0*r*r*r;  }
+inline double olx_sphere_volume(double r)  {  return 4.*M_PI/3.0*r*r*r;  }
 //returns radius of a sphere of volume v
-inline double SphereRad(double v)   {  return pow(v*3.0/(4.0*M_PI), 1./3.);  }
+inline double olx_sphere_radius(double v)  {  return pow(v*3.0/(4.0*M_PI), 1./3.);  }
 // creates a 3D rotation matrix aroung rv vector, provided cosine of the rotation angle
 
 template <typename FloatType, typename MC, typename VC>
-MC& CreateRotationMatrixEx(MC& rm, const VC& rv, FloatType ca)  {
+MC& olx_create_rotation_matrix_(MC& rm, const VC& rv, FloatType ca)  {
   const FloatType sa = (olx_abs(ca) > 1e-15) ? sqrt(1-ca*ca) : 1;
   const FloatType t = 1-ca;
   rm[0][0] = t*rv[0]*rv[0] + ca;
@@ -145,7 +147,7 @@ MC& CreateRotationMatrixEx(MC& rm, const VC& rv, FloatType ca)  {
   return rm;
 }
 template <typename FloatType, typename MC, typename VC>
-MC& CreateRotationMatrixEx(MC& rm, const VC& rv, FloatType ca, FloatType sa)  {
+MC& olx_create_rotation_matrix_(MC& rm, const VC& rv, FloatType ca, FloatType sa)  {
   const FloatType t = 1-ca;
   rm[0][0] = t*rv[0]*rv[0] + ca;
   rm[0][1] = t*rv[0]*rv[1] + sa*rv[2];
@@ -162,12 +164,12 @@ MC& CreateRotationMatrixEx(MC& rm, const VC& rv, FloatType ca, FloatType sa)  {
 }
 
 template <typename MC, typename VC>
-MC& CreateRotationMatrix(MC& rm, const VC& rv, double ca)  {
-  return CreateRotationMatrixEx<double, MC, VC>(rm, rv, ca);
+MC& olx_create_rotation_matrix(MC& rm, const VC& rv, double ca)  {
+  return olx_create_rotation_matrix_<double, MC, VC>(rm, rv, ca);
 }
 template <typename MC, typename VC>
-MC& CreateRotationMatrix(MC& rm, const VC& rv, double ca, double sa)  {
-  return CreateRotationMatrixEx<double, MC, VC>(rm, rv, ca, sa);
+MC& olx_create_rotation_matrix(MC& rm, const VC& rv, double ca, double sa)  {
+  return olx_create_rotation_matrix_<double, MC, VC>(rm, rv, ca, sa);
 }
 template <class MC, class VC> MC& QuaternionToMatrix(const VC& qt, MC& matr)  {
   matr[0][0] = qt[0]*qt[0] + qt[1]*qt[1] - qt[2]*qt[2] - qt[3]*qt[3];
@@ -200,7 +202,8 @@ template <class List> void GeneratePermutation(List& out, size_t perm)  {
   }
 }
 
-template <typename float_type> static void SinCos(const float_type ang, float_type *sina, float_type *cosa)  {
+template <typename float_type>
+  static void olx_sincos(const float_type ang, float_type *sina, float_type *cosa)  {
 #if defined(__WIN32__) && !defined(_WIN64)
   _asm  {
     FLD  ang

@@ -3075,7 +3075,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //    for( int j=minInd; j <= maxInd; j++ )  {
 //      double rv = (double)(i*j)/mapX, ca, sa;
 //      rv *= T_PI;
-//      SinCos(-rv, &sa, &ca);
+//      olx_sincos(-rv, &sa, &ca);
 //      sin_cosX[i][j-minInd].SetRe(ca);
 //      sin_cosX[i][j-minInd].SetIm(sa);
 //    }
@@ -3090,7 +3090,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //      for( int j=minInd; j <= maxInd; j++ )  {
 //        double rv = (double)(i*j)/mapY, ca, sa;
 //        rv *= T_PI;
-//        SinCos(-rv, &sa, &ca);
+//        olx_sincos(-rv, &sa, &ca);
 //        sin_cosY[i][j-minInd].SetRe(ca);
 //        sin_cosY[i][j-minInd].SetIm(sa);
 //      }
@@ -3109,7 +3109,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //      for( int j=minInd; j <= maxInd; j++ )  {
 //        double rv = (double)(i*j)/mapZ, ca, sa;
 //        rv *= T_PI;
-//        SinCos(-rv, &sa, &ca);
+//        olx_sincos(-rv, &sa, &ca);
 //        sin_cosZ[i][j-minInd].SetRe(ca);
 //        sin_cosZ[i][j-minInd].SetIm(sa);
 //      }
@@ -3174,7 +3174,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 ////            tv += (double)ref.GetL()*iz/mapZ;
 ////            tv *= T_PI;
 ////            double ca, sa;
-////            SinCos(tv, &sa, &ca);
+////            olx_sincos(tv, &sa, &ca);
 ////            A += fMap.Data[ix][iy][iz]*ca;
 ////            B += fMap.Data[ix][iy][iz]*sa;
 ////            if( i == 0 )  {
@@ -4093,7 +4093,7 @@ void XLibMacros::macMolInfo(TStrObjList &Cmds, const TParamList &Options, TMacro
   TArrayList<int8_t> t_map(atoms.Count()*triags.Count());
   for( size_t i=0; i < atoms.Count(); i++ )  {
     const float_type r = (float_type)atoms[i]->GetType().r_vdw;
-    volume_p += (float_type)SphereVol(r);
+    volume_p += (float_type)olx_sphere_volume(r);
     area_p += (float_type)(4*M_PI*r*r);
     const size_t off = i*triags.Count();
     for( size_t j=0; j < triags.Count(); j++ )  {

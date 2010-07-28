@@ -53,7 +53,7 @@ bool TSAtom::IsGrown() const {
     if( Nodes[i]->IsDeleted() )
       subs--;
   if( subs < 0 )
-    SetBit(false, Flags, satom_Grown);
+    olx_set_bit(false, Flags, satom_Grown);
   return (Flags & satom_Grown) != 0;
 }
 //..............................................................................

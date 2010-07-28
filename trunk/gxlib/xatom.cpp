@@ -972,7 +972,7 @@ void TXAtom::CreatePoly(const TSAtomPList& bound, short type, const vec3d* _norm
         pl.vecs[i] = bound[i]->crd();
         for( size_t j=i+1; j < bound.Count(); j++ )  {
           for( size_t k=j+1; k < bound.Count(); k++ )  {
-            if( TetrahedronVolume(
+            if( olx_tetrahedron_volume(
               NullVec, 
               (bound[i]->crd()-FAtom.crd()).Normalise(), 
               (bound[j]->crd()-FAtom.crd()).Normalise(), 

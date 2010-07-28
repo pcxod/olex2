@@ -327,7 +327,7 @@ int TCAtom::CompareAtomLabels(const olxstr& S, const olxstr& S1)  {
     if( !Chars1.GetObject(i) && Chars2.GetObject(i) )  return 1;
     if( Chars1.GetObject(i) && !Chars2.GetObject(i) )  return -1;
   }
-  return olx_cmp_size_t(Chars1.Count(), Chars2.Count());
+  return olx_cmp(Chars1.Count(), Chars2.Count());
 }
 //..............................................................................
 void TCAtom::AttachAtom(TCAtom *CA)  {

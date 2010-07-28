@@ -339,7 +339,7 @@ public:
       }
       static int SortByCountFunc( const THitList<NodeClass>& a,
                                 const THitList<NodeClass>& b )  {
-        return olx_cmp_size_t(b.hits.Count(), a.hits.Count());
+        return olx_cmp(b.hits.Count(), a.hits.Count());
       }
       THitList(const cm_Element& type, NodeClass* node, double fom)  {
         Type = &type;

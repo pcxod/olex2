@@ -83,9 +83,9 @@ public:
     SetParams = 0;
     Name = name;
     if( dimension == tpt1D )
-      SetBitTrue(SetParams, tp1D);
+      olx_set_true(SetParams, tp1D);
     else if( dimension == tpt2D )
-      SetBitTrue(SetParams, tp2D);
+      olx_set_true(SetParams, tp2D);
     else
       throw TInvalidArgumentException(__OlxSourceInfo, "dimension");
   }
@@ -99,71 +99,71 @@ public:
   inline void Clear()  {
     if( (SetParams & tp1D) != 0 )  {
       SetParams = 0;
-      SetBitTrue(SetParams, tp1D);
+      olx_set_true(SetParams, tp1D);
     }
     else if( (SetParams & tp2D) != 0 )  {
       SetParams = 0;
-      SetBitTrue(SetParams, tp2D);
+      olx_set_true(SetParams, tp2D);
     }
 
   }
 //..............................................................................
   void SetEnabled(bool val)  {
-    SetBit(val, SetParams, tpEnabled);
+    olx_set_bit(val, SetParams, tpEnabled);
   }
 //..............................................................................
   void SetMinFilter(GLint val)  {
-    SetBitTrue(SetParams, tpminSet);
+    olx_set_true(SetParams, tpminSet);
     MinFilter = val;
   }
 //..............................................................................
   void SetMagFilter(GLint val)  {
-    SetBitTrue(SetParams, tpmagSet);
+    olx_set_true(SetParams, tpmagSet);
     MagFilter = val;
   }
 //..............................................................................
   void SetSCrdWrapping(GLint val)  {
-    SetBitTrue(SetParams, tpscrdSet);
+    olx_set_true(SetParams, tpscrdSet);
     SCrd = val;
   }
 //..............................................................................
   void SetTCrdWrapping(GLint val)  {
-    SetBitTrue(SetParams, tptcrdSet);
+    olx_set_true(SetParams, tptcrdSet);
     TCrd = val;
   }
 //..............................................................................
   void SetBorderColor(const TGlOption& cl)  {
-    SetBitTrue(SetParams, tpbrdSet);
+    olx_set_true(SetParams, tpbrdSet);
     BorderColor = cl;
   }
 //..............................................................................
   void SetSCrdGen(GLenum modeName, const TGlOption& values)  {
-    SetBitTrue(SetParams, tpSGen);
+    olx_set_true(SetParams, tpSGen);
     SGenParams = values;
   }
 //..............................................................................
   void SetTCrdGen(GLenum modeName, const TGlOption& values)  {
-    SetBitTrue(SetParams, tpTGen);
+    olx_set_true(SetParams, tpTGen);
     TGenParams = values;
   }
 //..............................................................................
   void SetRCrdGen(GLenum modeName, const TGlOption& values)  {
-    SetBitTrue(SetParams, tpRGen);
+    olx_set_true(SetParams, tpRGen);
     RGenParams = values;
   }
 //..............................................................................
   void SetQCrdGen(GLenum modeName, const TGlOption& values)  {
-    SetBitTrue(SetParams, tpQGen);
+    olx_set_true(SetParams, tpQGen);
     QGenParams = values;
   }
 //..............................................................................
   void SetEnvMode(GLenum modeName)  {
-    SetBitTrue(SetParams, tpEnvMode);
+    olx_set_true(SetParams, tpEnvMode);
     EnvMode = modeName;
   }
 //..............................................................................
   void SetEnvColor(const TGlOption& clr)  {
-    SetBitTrue(SetParams, tpEnvColor);
+    olx_set_true(SetParams, tpEnvColor);
     EnvColor = clr;
   }
 //..............................................................................
@@ -194,21 +194,21 @@ public:
   static void ReadStatus(unsigned short& status)  {
     status = 0;
     if( olx_gl::isEnabled(GL_TEXTURE_1D) )  {
-      SetBitTrue(status, tp1D);
-      SetBitTrue(status, tpEnabled);
+      olx_set_true(status, tp1D);
+      olx_set_true(status, tpEnabled);
     }
     else if( olx_gl::isEnabled(GL_TEXTURE_2D) )  {
-      SetBitTrue(status, tp2D);
-      SetBitTrue(status, tpEnabled);
+      olx_set_true(status, tp2D);
+      olx_set_true(status, tpEnabled);
     }
     if( olx_gl::isEnabled(GL_TEXTURE_GEN_S) )
-      SetBitTrue(status, tpSGen);
+      olx_set_true(status, tpSGen);
     if( olx_gl::isEnabled(GL_TEXTURE_GEN_T) )
-      SetBitTrue(status, tpTGen);
+      olx_set_true(status, tpTGen);
     if( olx_gl::isEnabled(GL_TEXTURE_GEN_Q) )
-      SetBitTrue(status, tpQGen);
+      olx_set_true(status, tpQGen);
     if( olx_gl::isEnabled(GL_TEXTURE_GEN_R) )
-      SetBitTrue(status, tpRGen);
+      olx_set_true(status, tpRGen);
   }
 //..............................................................................
   static void RestoreStatus(const unsigned short status)  {

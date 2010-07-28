@@ -320,8 +320,6 @@ public:
   const class TBasicException* GetException() const; 
 };
 
-#define olx_cmp_size_t(a,b) (a) < (b) ? -1 : ((a) > (b) ? 1 : 0)
-
 struct DirectAccessor  {
   template <typename Item> static inline const Item& Access(const Item& item)  {
     return item;

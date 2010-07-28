@@ -38,18 +38,18 @@ protected:
   size_t     NetId;    // reference in network container
   size_t     LattId;    // reference in lattice container
 public:
-  TSObject(Net* Parent) : Network(Parent), Type(sotNone) {  }
-  virtual ~TSObject() {  }
+  TSObject(Net* Parent) : Network(Parent), Type(sotNone) {}
+  virtual ~TSObject()  {}
   void Assign(const TSObject& S) {
-    SetType( S.GetType() );
+    SetType(S.GetType());
     Network = &S.GetNetwork();
-    SetTag( S.GetTag() );
-    SetNetId( S.GetNetId() );
-    SetLattId( S.GetLattId() );
+    SetTag(S.GetTag());
+    SetNetId(S.GetNetId());
+    SetLattId(S.GetLattId());
   }
 
-  inline Net& GetNetwork()  const  {  return *Network;  }
-  inline void SetNetwork(Net& n)   {  Network = &n;  }
+  inline Net& GetNetwork() const {  return *Network;  }
+  inline void SetNetwork(Net& n)  {  Network = &n;  }
 
   DefPropP(size_t, NetId)
   DefPropP(size_t, LattId)
@@ -69,10 +69,10 @@ public:
     TSObject<Net>::Type = sotBBond;
   }
   virtual ~TBasicBond() {}
-  Node& A()    const {  return *FA;  }
+  Node& A() const {  return *FA;  }
   void SetA(Node& a) {  FA = &a;  OnAtomSet();  }
 
-  Node& B()    const {  return *FB;  }
+  Node& B() const {  return *FB;  }
   void SetB(Node& a) {  FB = &a;  OnAtomSet();  }
 
   Node& Another(const Node& A) const {  return (&A == FA) ? *FB : *FA; }

@@ -2366,7 +2366,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           ACifValue* v = cifdn.Match(b.A(), b.B());
           if( v == NULL )  continue;
           TXGlLabel& l = xb.GetLabel();
-          l.SetOffset((b.A().crd()+b.B().crd())/2);
+          l.SetOffset(b.GetCenter());
           l.SetLabel(v->GetValue().ToString());
           labels.Add(l);
         }
@@ -2379,7 +2379,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           TXBond& xb = (TXBond&)sel[i];
           TSBond& b = ((TXBond&)sel[i]).Bond();
           TXGlLabel& l = xb.GetLabel();
-          l.SetOffset((b.A().crd()+b.B().crd())/2);
+          l.SetOffset(b.GetCenter());
           l.SetLabel(olxstr::FormatFloat(b.Length(), 2));
           labels.Add(l);
         }
@@ -6030,7 +6030,7 @@ class helper_Tetrahedron  {
   double Volume;
 protected:
   double CalcVolume()  {
-    return TetrahedronVolume(Points[0], Points[1], Points[2], Points[3]);
+    return olx_tetrahedron_volume(Points[0], Points[1], Points[2], Points[3]);
   }
 public:
   helper_Tetrahedron(const olxstr& name) : Name(name)  {
@@ -6080,27 +6080,27 @@ void TMainForm::macCalcVol(TStrObjList &Cmds, const TParamList &Options, TMacroE
       TBasicApp::GetLog() << (olxstr("Sum of angles is ") << olxstr::FormatFloat(3,sa) << '\n' );
       double v;
       if( normalise )  {
-        v = TetrahedronVolume(
+        v = olx_tetrahedron_volume(
         xatoms[i]->Atom().crd(), 
         xatoms[i]->Atom().crd() + (atoms[0]->crd()-xatoms[i]->Atom().crd()).Normalise(), 
         xatoms[i]->Atom().crd() + (atoms[1]->crd()-xatoms[i]->Atom().crd()).Normalise(), 
         xatoms[i]->Atom().crd() + (atoms[2]->crd()-xatoms[i]->Atom().crd()).Normalise());
       }
       else
-        v = TetrahedronVolume(xatoms[i]->Atom().crd(), atoms[0]->crd(), atoms[1]->crd(), atoms[2]->crd());
+        v = olx_tetrahedron_volume(xatoms[i]->Atom().crd(), atoms[0]->crd(), atoms[1]->crd(), atoms[2]->crd());
       TBasicApp::GetLog() << (olxstr("The tetrahedron volume is ") << olxstr::FormatFloat(3,v) << '\n' );
     }
     else if( atoms.Count() == 4 )  {
       double v;
       if( normalise )  {
-        v = TetrahedronVolume(
+        v = olx_tetrahedron_volume(
         xatoms[i]->Atom().crd() + (atoms[0]->crd()-xatoms[i]->Atom().crd()).Normalise(), 
         xatoms[i]->Atom().crd() + (atoms[1]->crd()-xatoms[i]->Atom().crd()).Normalise(), 
         xatoms[i]->Atom().crd() + (atoms[2]->crd()-xatoms[i]->Atom().crd()).Normalise(), 
         xatoms[i]->Atom().crd() + (atoms[3]->crd()-xatoms[i]->Atom().crd()).Normalise());
       }
       else
-        v = TetrahedronVolume(atoms[0]->crd(), atoms[1]->crd(), atoms[2]->crd(), atoms[3]->crd());
+        v = olx_tetrahedron_volume(atoms[0]->crd(), atoms[1]->crd(), atoms[2]->crd(), atoms[3]->crd());
       TBasicApp::GetLog() << (olxstr("The tetrahedron volume is ") << olxstr::FormatFloat(3,v) << '\n' );
     }
     else  {
@@ -8351,7 +8351,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
       for( size_t i=0; i < 6; i++ )  {
         for( size_t j=i+1; j < 6; j++ )  {
           for( size_t k=j+1; k < 6; k++ )  {
-            const double thv = TetrahedronVolume( 
+            const double thv = olx_tetrahedron_volume( 
               central_atom->crd(),
               (atoms[i]->crd()-central_atom->crd()).Normalise() + central_atom->crd(),
               (atoms[j]->crd()-central_atom->crd()).Normalise() + central_atom->crd(),

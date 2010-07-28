@@ -272,7 +272,7 @@ void TGlFont::CreateGlyphsFromRGBArray(bool FW, uint16_t Width, uint16_t Height)
 
   if( !olx_is_valid_index(FontBase) )
     FontBase = olx_gl::genLists(256);
-  SetBit(FW, Flags, fntFixedWidth);
+  olx_set_bit(FW, Flags, fntFixedWidth);
   uint16_t NHeight = MaxHeight;
   uint16_t BWidth = (MaxWidth/8+1);
   olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 1);  // byte alignment
@@ -373,7 +373,7 @@ void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, uint16_t w, ui
     AnalyseBitArray(ba, i, w, h);
   if( !olx_is_valid_index(FontBase) )
     FontBase = olx_gl::genLists(256);
-  SetBit(fixedWidth, Flags, fntFixedWidth);
+  olx_set_bit(fixedWidth, Flags, fntFixedWidth);
   uint16_t BWidth = (MaxWidth/8+1)*8;
   uint16_t BHeight = MaxHeight+1;
   olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 1);  // byte alignment

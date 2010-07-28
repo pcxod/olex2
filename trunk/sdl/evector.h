@@ -84,7 +84,7 @@ public:
       if( FData[i] < v[i] )  return -1;
       if( FData[i] > v[i] )  return 1;
     }
-    return olx_cmp_size_t(Count(), v.Count());
+    return olx_cmp(Count(), v.Count());
   }
 
   TVector& Normalise() {
