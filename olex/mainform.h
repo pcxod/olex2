@@ -656,8 +656,6 @@ protected:
   TMenu    *pmFragment;
     wxMenuItem *miFragGrow;
   TMenu    *pmSelection;
-    wxMenuItem  *miGroupSel;
-    wxMenuItem  *miUnGroupSel;
   TMenu    *pmView;
   TMenu    *pmPlane;
   TMenu    *pmGraphics;  // generic menu for graphics

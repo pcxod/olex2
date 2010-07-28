@@ -849,7 +849,7 @@ olxstr TGXApp::GetSelectionInfo()  {
           "): ";
         v = olx_angle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
         Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
-        // check for ajusten bonds
+        // check for adjacent bonds
         if( !(&A.Bond().A() == &B.Bond().A() || &A.Bond().A() == &B.Bond().B() ||
           &A.Bond().B() == &B.Bond().A() || &A.Bond().B() == &B.Bond().B()) )
         {
@@ -857,7 +857,7 @@ olxstr TGXApp::GetSelectionInfo()  {
             macSel_GetName4(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) <<
             "): ";
           v = olx_dihedral_angle_signed(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().B().crd(), B.Bond().A().crd());
-          Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')' <<
+          Tmp << olxstr::FormatFloat(3, v) <<
             "\nTorsion angle (" <<
             macSel_GetName4(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) << 
             "): ";

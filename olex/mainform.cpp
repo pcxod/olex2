@@ -187,6 +187,7 @@ enum
   ID_Selection,
   ID_SelGroup,
   ID_SelUnGroup,
+  ID_SelLabel,
 
   ID_GraphicsKill,
   ID_GraphicsHide,
@@ -389,6 +390,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
 
   EVT_MENU(ID_SelGroup, TMainForm::OnSelection)
   EVT_MENU(ID_SelUnGroup, TMainForm::OnSelection)
+  EVT_MENU(ID_SelLabel, TMainForm::OnSelection)
 
   EVT_MENU(ID_GStyleSave, TMainForm::OnGraphicsStyle)
   EVT_MENU(ID_GStyleOpen, TMainForm::OnGraphicsStyle)
@@ -640,7 +642,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Capitalise, "", (fpAny|psFileLoaded)^fpNone,
     "Changes atom labels capitalisation for all/given/selected atoms. The first argument is the template like Aaaa");
 
-  this_InitMacroD(Esd, EmptyString, fpAny|psFileLoaded,
+  this_InitMacroD(Esd, "label-creates a graphics label", fpAny|psFileLoaded,
     "This procedure calculates possible parameters for the selection and evaluates their esd using the variance-covariance\
  matrix coming from the ShelXL refinement with negative 'MORE' like 'MORE -1' option");
   
@@ -1129,8 +1131,7 @@ separated values of Atom Type and radius, an entry a line");
 // setting selection menu
   pmSelection->Append(ID_SelGroup, wxT("Group"));
   pmSelection->Append(ID_SelUnGroup, wxT("Ungroup"));
-  miGroupSel = pmSelection->FindItemByPosition(0);
-  miUnGroupSel = pmSelection->FindItemByPosition(1);
+  pmSelection->Append(ID_SelLabel, wxT("Label"));
 //  pmSelection->AppendSeparator();
 //  pmSelection->Append(ID_MenuGraphics, "Graphics", pmGraphics->Clone());
 // setting graphics menu
@@ -1767,7 +1768,7 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     pmAtom->Enable(ID_AtomGrow, FXApp->AtomExpandable(XA));
     pmAtom->Enable(ID_Selection, G->IsSelected() && EsdlInstanceOf(*G->GetParentGroup(), TGlGroup));
     pmAtom->Enable(ID_SelGroup, false);
-    int bound_cnt = 0;
+    size_t bound_cnt = 0;
     for( size_t i=0; i < XA->Atom().NodeCount(); i++ )  {
       if( XA->Atom().Node(i).IsDeleted() || XA->Atom().Node(i).GetType().GetMr() < 3.5 )  // H,D,Q
         continue;
@@ -1777,7 +1778,6 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     if( bound_cnt > 3 )
       pmAtom->Check(ID_AtomPolyNone + XA->GetPolyhedronType(), true);
     FCurrentPopup = pmAtom;
-    
   }
   else if( EsdlInstanceOf(*G, TXBond) )  {
     TStrList SL;
@@ -1811,6 +1811,8 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
         FCurrentPopup->Enable(ID_SelUnGroup, true);
       }
     }
+    AquireTooltipValue();
+    FCurrentPopup->Enable(ID_SelLabel, !Tooltip.IsEmpty());
   }
   if( EsdlInstanceOf(*G, TGlGroup) )  {
     pmSelection->Enable(ID_SelGroup, G->IsSelected() && FXApp->GetSelection().Count() > 1);
@@ -2805,19 +2807,37 @@ void TMainForm::OnNavigation(wxNavigationKeyEvent& event)  {
 }
 //..............................................................................
 void TMainForm::OnSelection(wxCommandEvent& m)  {
-  TGlGroup *GlR = NULL;
-  if( EsdlInstanceOf( *FObjectUnderMouse, TGlGroup) )
-    GlR = (TGlGroup*)FObjectUnderMouse;
-  switch( m.GetId() )  {
-    case ID_SelGroup:
+  if( m.GetId() == ID_SelGroup )
       ProcessMacro("group");
-      break;
-    case ID_SelUnGroup:
-      if( GlR != NULL ) 
-        FXApp->UnGroup(*GlR);
-      else      
-        FXApp->UnGroupSelection();
-      break;
+  else if( m.GetId() == ID_SelUnGroup )  {
+  TGlGroup *GlR = NULL;
+  if( FObjectUnderMouse != NULL && EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
+      FXApp->UnGroup(*((TGlGroup*)FObjectUnderMouse));
+    else      
+      FXApp->UnGroupSelection();
+  }
+  else if( m.GetId() == ID_SelLabel )  {
+    vec3d cent;
+    size_t cnt = 0;
+    TGlGroup& gl = FXApp->GetSelection();
+    for( size_t i=0; i < gl.Count(); i++ )  {
+      if( EsdlInstanceOf(gl[i], TXAtom) )  {
+        cent += ((TXAtom&)gl[i]).Atom().crd();
+        cnt++;
+      }
+      else if( EsdlInstanceOf(gl[i], TXBond) ) {
+        cent += ((TXBond&)gl[i]).Bond().GetCenter();
+        cnt++;
+      }
+      else if( EsdlInstanceOf(gl[i], TXPlane) ) {
+        cent += ((TXPlane&)gl[i]).Plane().GetCenter();
+        cnt++;
+      }
+    }
+    if( cnt != 0 )
+      cent /= cnt;
+    FXApp->CreateLabel(cent, Tooltip, 4);
+    TimePerFrame = FXApp->Draw();
   }
 }
 //..............................................................................
