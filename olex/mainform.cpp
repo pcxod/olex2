@@ -3046,7 +3046,6 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("language", Dictionary.GetCurrentLanguage());
   I->AddField("ExtraZoom", FXApp->GetExtraZoom());
   I->AddField("GlTooltip", _UseGlTooltip);
-  I->AddField("console.blend", FGlConsole->IsBlend());
   I->AddField("ThreadCount", FXApp->GetMaxThreadCount());
 
   I = &DF.Root().AddItem("Recent_files");
@@ -3223,7 +3222,6 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   const olxstr& defGlTVal = TrueString;
 #endif
   UseGlTooltip( I->GetFieldValue("GlTooltip", defGlTVal).ToBool() );
-  FGlConsole->SetBlend(I->GetFieldValue("console.blend", TrueString).ToBool());
   if( I->FieldExists("ThreadCount") ) 
     FXApp->SetMaxThreadCount(I->GetFieldValue("ThreadCount", "1").ToInt());
   else  {

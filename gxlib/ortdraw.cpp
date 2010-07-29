@@ -425,14 +425,16 @@ void OrtDraw::Init(PSWriter& pw)  {
   TGXApp& app = TGXApp::GetInstance();
   const TEBasis& basis = app.GetRender().GetBasis();
   LinearScale = olx_min((float)pw.GetWidth()/vp[2], (double)pw.GetHeight()/vp[3]);
-
-  if( app.LabelCount() != 0 )  {
-    if( !app.GetLabel(0).GetFont().IsVectorFont() )  {
-      olxcstr fnt("/Verdana findfont ");
-      fnt << olx_round(app.GetLabel(0).GetFont().GetPointSize()/sqrt(LinearScale)) << " scalefont setfont";
-      pw.custom(fnt.c_str());
-    }
+  
+  {
+    olxcstr fnt("/Verdana findfont ");
+    AGlScene& sc = app.GetRender().GetScene();
+    fnt << olx_round(
+      sc.GetFont(sc.FindFontIndexForType<TXAtom>(), true).GetPointSize()/sqrt(LinearScale))
+      << " scalefont setfont";
+    pw.custom(fnt.c_str());
   }
+
   pw.translate(0.0f, ((float)pw.GetHeight()-LinearScale*vp[3])/2);
   pw.scale(LinearScale, LinearScale);
   LinearScale = 1; // reset now
@@ -684,6 +686,14 @@ void OrtDraw::Render(const olxstr& fileName)  {
     const TXGlLabel& glxl = app.GetLabel(i);
     if( !glxl.IsDeleted() && glxl.IsVisible() )
       Labels.Add(glxl);
+  }
+  for( size_t i=0; i < app.AtomCount(); i++ )  {
+    if( app.GetAtom(i).GetLabel().IsVisible() )
+      Labels.Add(app.GetAtom(i).GetLabel());
+  }
+  for( size_t i=0; i < app.BondCount(); i++ )  {
+    if( app.GetBond(i).GetLabel().IsVisible() )
+      Labels.Add(app.GetBond(i).GetLabel());
   }
   if( app.DUnitCell().IsVisible() )  {
     for( size_t i=0; i < app.DUnitCell().LabelCount(); i++ )  {

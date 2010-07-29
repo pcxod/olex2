@@ -210,7 +210,7 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
     parts.Add(SA.CAtom().GetPart()).Add(SA);
   for( size_t i=0; i < SA.NodeCount(); i++ )  {
     TSAtom& sa = SA.Node(i);
-    if( sa.GetType() == iHydrogenZ && sa.GetTag() == -2 )
+    if( sa.GetType() == iHydrogenZ && sa.GetTag() == -2 && sa.IsAUAtom() )
       parts.Add(sa.CAtom().GetPart()).Add(sa);
   }
   for( size_t i=0; i < parts.Count(); i++ )  {
@@ -269,29 +269,28 @@ TUndoData* TXApp::FixHL()  {
   olxdict<int,TSAtomPList,TPrimitiveComparator> frags;
   TIntList frag_id;
   TSAtomPList satoms;
-  FindSAtoms(EmptyString, satoms, false, true);
+  FindSAtoms(EmptyString, satoms, false, true);  //the selection might be returned
   if( !satoms.IsEmpty() )  {
-    for( size_t i=0; i < satoms.Count(); i++ )
+    for( size_t i=0; i < satoms.Count(); i++ )  {
+      if( !satoms[i]->IsAUAtom() )  continue;
       if( frag_id.IndexOf(satoms[i]->CAtom().GetFragmentId()) == InvalidIndex )
         frag_id.Add(satoms[i]->CAtom().GetFragmentId());
+    }
   }
   const size_t ac = XFile().GetLattice().AtomCount();
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& sa = XFile().GetLattice().GetAtom(i);
-    if( !sa.CAtom().IsAvailable() || (sa.GetType() == iQPeakZ) )  {
+    if( !sa.CAtom().IsAvailable() || sa.GetType() == iQPeakZ || !sa.IsAUAtom() )  {
       sa.SetTag(-1);
       continue;
     }
-    const bool au_atom = sa.GetMatrix(0).IsFirst();
     if( sa.GetType() == iHydrogenZ )  {
-      sa.SetTag(au_atom ? -2 : -1);  // mark as unpocessed or to skip
-      if( au_atom )  {
-        sa.CAtom().SetTag(-2);  // mark as unpocessed or to skip
-        sa.CAtom().SetLabel(EmptyString, false);
-      }
+      sa.SetTag(-2);  // mark as unpocessed
+      sa.CAtom().SetTag(-2);
+      sa.CAtom().SetLabel(EmptyString, false);
       continue;
     }
-    if( au_atom && (frag_id.IsEmpty() || frag_id.IndexOf(sa.CAtom().GetFragmentId()) != InvalidIndex) )
+    if( frag_id.IsEmpty() || frag_id.IndexOf(sa.CAtom().GetFragmentId()) != InvalidIndex )
       frags.Add(sa.CAtom().GetFragmentId()).Add(sa);
   }
   if( frag_id.IsEmpty() )  {
@@ -311,7 +310,7 @@ TUndoData* TXApp::FixHL()  {
   // check if there are any standalone h atoms left...
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& sa = XFile().GetLattice().GetAtom(i);
-    if( !sa.CAtom().IsAvailable() )  continue;
+    if( !sa.CAtom().IsAvailable() || !sa.IsAUAtom() )  continue;
     if( sa.GetType() == iHydrogenZ && sa.CAtom().GetTag() == -2 )
       NameHydrogens(sa, undo, true);
   }
@@ -442,7 +441,7 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
             if( !sa.CAtom().IsAvailable() )  continue;
             if( sa.CAtom().GetTag() != ag[i].GetAtom()->GetTag() )  continue;
             if( ag[i].GetMatrix() == 0 )  {  // get an atom from the asymm unit
-              if( sa.GetMatrix(0).IsFirst() )
+              if( sa.IsAUAtom() )
                 atoms.Add(sa);
             }
             else  {

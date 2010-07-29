@@ -12,9 +12,10 @@ BeginGlNamespace()
 class TGlConsole: public AGDrawObject, 
                   public AActionHandler, 
                   public IDataOutputStream  {
-  float FLineSpacing;
+  double FLineSpacing;
   uint16_t Width, Height, Top, Left; // to clip the content
-  double GlLeft, GlTop, LineInc;
+  double GlLeft, GlTop;
+  size_t LinesVisible;
   TStrPObjList<olxstr,TGlMaterial*> FBuffer;
   TStrList FCommands;   // the content
   TStrList Cmds;        // hyphenated commands
@@ -26,7 +27,7 @@ class TGlConsole: public AGDrawObject,
          FMaxLines,
          FLinesToShow,
          FStringPos;
-  bool FShowBuffer, FScrollDirectionUp, Blend,
+  bool FShowBuffer, FScrollDirectionUp,
     SkipPosting;  // the next pot operation will pass
   size_t FontIndex;
   bool PromptVisible;
@@ -36,6 +37,7 @@ protected:
   void SetInsertPosition(size_t v);
   size_t GetInsertPosition() const {  return FStringPos;  }
   void UpdateCursorPosition(bool InitCmds);
+  size_t CalcScrollDown() const;
   class TGlCursor *FCursor;
 
   // redefine nl - we do not need to write new line 
@@ -61,10 +63,10 @@ public:
     return (FCommand.StartsFrom(PromptStr) ? (FStringPos - PromptStr.Length()) : FStringPos);
   }
 
-  inline const TStrPObjList<olxstr,TGlMaterial*>& Buffer()  const  {  return FBuffer;  }
+  inline const TStrPObjList<olxstr,TGlMaterial*>& Buffer() const {  return FBuffer;  }
   void ClearBuffer();
 
-  bool IsPromptVisible()  const  {  return PromptVisible;  }
+  bool IsPromptVisible() const {  return PromptVisible;  }
   void SetPromptVisible(bool v);
 
   inline size_t GetCommandCount() const {  return FCommands.Count();  }
@@ -82,13 +84,12 @@ public:
   DefPropP(uint16_t, Height)
   DefPropP(uint16_t, Top)
   DefPropP(uint16_t, Left)
-  DefPropBIsSet(Blend)
   DefPropBIsSet(SkipPosting)
   DefPropP(TGlMaterial*, PrintMaterial)
   inline bool ShowBuffer() const {  return FShowBuffer; }
   inline void ShowBuffer(bool v)  {  FShowBuffer = v; }
-  inline float GetLineSpacing() const {  return FLineSpacing; }
-  void SetLineSpacing(float v);
+  inline double GetLineSpacing() const {  return FLineSpacing; }
+  void SetLineSpacing(double v);
   inline const olxstr& GetInviteString() const { return InviteStr; }
   void SetInviteString(const olxstr& S);
 
@@ -115,7 +116,6 @@ public:
   void LibLineSpacing(const TStrObjList& Params, TMacroError& E);
   void LibInviteString(const TStrObjList& Params, TMacroError& E);
   void LibCommand(const TStrObjList& Params, TMacroError& E);
-  void LibBlend(const TStrObjList& Params, TMacroError& E);
   class TLibrary* ExportLibrary(const olxstr& name=EmptyString);
 };
 
