@@ -1746,12 +1746,16 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
   TXAtom* XA = GetXAtom(From, false);
   if( XA != NULL )  {
     if( ClearSelection ) SelectAll(false);
-    return Name( *XA, To, CheckLabel);
+    return Name(*XA, To, CheckLabel);
   }
   else  {
     TNameUndo *undo = new TNameUndo(new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
     TXAtomPList Atoms, ChangedAtoms;
     FindXAtoms(From, Atoms, ClearSelection);
+    // leave only AU atoms
+    for( size_t i=0; i < Atoms.Count(); i++ )
+      Atoms[i]->SetTag(Atoms[i]->Atom().IsAUAtom() ? 1 : 0);
+    Atoms.Pack(ACollectionItem::TagAnalyser<>(0));
     if( From.Equalsi("sel") && To.IsNumber() )  {
       int j = To.ToInt();
       for( size_t i=0; i < Atoms.Count(); i++ )  {
@@ -1769,29 +1773,49 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
           CheckQBonds(*XA);
       }
     }
-    else  if( From[0] == '$' && To[0] == '$' )  {  // change type
-      const cm_Element* elm = XElementLib::FindBySymbolEx(To.SubStringFrom(1));
-      if( elm == NULL )
-        throw TFunctionFailedException(__OlxSourceInfo, "wrong syntax");
-      for( size_t i=0; i < Atoms.Count(); i++ )  {
-        XA = Atoms[i];
-        const bool checkBonds = (XA->Atom().GetType() == iQPeakZ);
-        const olxstr Tmp = XA->Atom().GetLabel();
-        olxstr NL = To.SubStringFrom(1);
-        NL << Tmp.SubStringFrom(From.Length()-1);
-        bool recreate = XA->Atom().GetType() != *elm;
-        const olxstr oldL = XA->Atom().GetLabel();
-        XA->Atom().CAtom().SetLabel(
-          CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->Atom().CAtom(), NL) : NL, false);
-        undo->AddAtom( XA->Atom().CAtom(), oldL);
-        XA->Atom().CAtom().SetType(*elm);
-        NameHydrogens(XA->Atom(), undo, CheckLabel);
-        if( recreate )  {
-          ChangedAtoms.Add(XA);
+    else  if( From.CharAt(0) == '$' )  {
+      const cm_Element* elm = XElementLib::FindBySymbolEx(
+        To.CharAt(0) == '$' ? To.SubStringFrom(1) : To);
+      if( elm != NULL )  {  // change type
+        for( size_t i=0; i < Atoms.Count(); i++ )  {
+          XA = Atoms[i];
+          const bool checkBonds = (XA->Atom().GetType() == iQPeakZ);
+          const olxstr Tmp = XA->Atom().GetLabel();
+          olxstr NL = To.SubStringFrom(1);
+          NL << Tmp.SubStringFrom(From.Length()-1);
+          bool recreate = XA->Atom().GetType() != *elm;
+          const olxstr oldL = XA->Atom().GetLabel();
+          XA->Atom().CAtom().SetLabel(
+            CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->Atom().CAtom(), NL) : NL, false);
+          undo->AddAtom( XA->Atom().CAtom(), oldL);
+          XA->Atom().CAtom().SetType(*elm);
+          NameHydrogens(XA->Atom(), undo, CheckLabel);
+          if( recreate )  {
+            ChangedAtoms.Add(XA);
+            if( checkBonds )
+              CheckQBonds(*XA);
+          }
+        }
+      }
+      else if( To.IsNumber() ) {  // change number
+        int j = To.ToInt();
+        for( size_t i=0; i < Atoms.Count(); i++ )  {
+          XA = Atoms[i];
+          bool checkBonds = (XA->Atom().GetType() == iQPeakZ);
+          const olxstr Tmp = XA->Atom().GetLabel();
+          olxstr NL = XA->Atom().GetType().symbol;
+          NL << j++;
+          const olxstr oldL = XA->Atom().GetLabel();
+          XA->Atom().CAtom().SetLabel(
+            CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->Atom().CAtom(), NL) : NL, false);
+          undo->AddAtom(XA->Atom().CAtom(), oldL);
+          NameHydrogens(XA->Atom(), undo, CheckLabel);
           if( checkBonds )
             CheckQBonds(*XA);
         }
       }
+      else
+        throw TFunctionFailedException(__OlxSourceInfo, "wrong syntax");
     }
     else  {  // C2? to C3? ; Q? to Ni? ...
       const cm_Element* elm = XElementLib::FindBySymbolEx(To);
@@ -2908,7 +2932,7 @@ void TGXApp::UpdateLabels()  {
     XAtoms[i].UpdateLabel();
   for( size_t i=0; i < XBonds.Count(); i++ )
     XBonds[i].UpdateLabel();
-  for( int i=0; i < LooseObjects.Count(); i++ )
+  for( size_t i=0; i < LooseObjects.Count(); i++ )
     LooseObjects[i]->UpdateLabel();
 }
 //..............................................................................

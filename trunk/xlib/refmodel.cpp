@@ -1090,7 +1090,7 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
       TSAtom& sa = lat.GetAtom(i);
       if( sa.IsDeleted() || sa.GetType() == iQPeakZ )  continue;
       // make sure that only AU atoms go to 
-      if( !sa.GetMatrix(0).IsFirst() )  continue;
+      if( !sa.IsAUAtom() )  continue;
       uc.GetAtomEnviList(sa, ae);
       if( PyDict_GetItemString(atoms[sa.CAtom().GetTag()], "neighbours") != NULL )
         continue;

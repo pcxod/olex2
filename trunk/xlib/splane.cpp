@@ -152,7 +152,7 @@ TSPlane::Def::Def(const TSPlane& plane) : atoms(plane.Count()), regular(plane.Is
   for( size_t i=0; i < plane.Count(); i++ )
     atoms.Set(i, new DefData(plane.GetAtom(i).GetRef(), plane.GetWeight(i)));
   if( plane.Count() == 0 )  return;
-  if( !plane.GetAtom(0).GetMatrix(0).IsFirst() )  {
+  if( !plane.GetAtom(0).IsAUAtom() )  {
     const TUnitCell& uc = plane.GetNetwork().GetLattice().GetUnitCell();
     const smatd im = plane.GetAtom(0).GetMatrix(0).Inverse();
     for( size_t i=0; i < atoms.Count(); i++ )  {

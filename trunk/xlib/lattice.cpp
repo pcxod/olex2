@@ -930,7 +930,7 @@ void TLattice::UpdateAsymmUnit()  {
       continue;
     }
     else if( l.Count() == 1 )  {  // special case...
-      if( l[0]->GetMatrix(0).IsFirst() )  continue;
+      if( l[0]->IsAUAtom() )  continue;
       if( l[0]->GetEllipsoid() )
         ca.UpdateEllp(*l[0]->GetEllipsoid());
       ca.ccrd() = l[0]->ccrd();

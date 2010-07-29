@@ -818,7 +818,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     for( size_t i=0; i < xlatt.AtomCount(); i++ )  {
       TSAtom& sa = xlatt.GetAtom(i);
       if( sa.IsDeleted() )  continue;
-      if( sa.GetMatrix(0).IsFirst() )
+      if( sa.IsAUAtom() )
         iatoms.Add(sa);
     }
     xlatt.GrowAtoms(iatoms, transforms);
@@ -1103,10 +1103,6 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp & xapp = TXApp::GetInstance();
-  if( xapp.XFile().GetLattice().IsGenerated() )  {
-    TBasicApp::GetLog() << "FixHL failed because the structure is grown...\n";
-    return;
-  }
   TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
   TEBitArray detached(au.AtomCount());
   for( size_t i=0; i < au.AtomCount(); i++ )  {
@@ -2811,16 +2807,16 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
   }
   for( size_t i=0; i < latt.AtomCount(); i++ )  {
     TSAtom& a = latt.GetAtom(i);
-    if( a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.GetMatrix(0).IsFirst() )  continue;
+    if( a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.IsAUAtom() )  continue;
     for( size_t j=0; j < a.BondCount(); j++ )  {
       TSBond& b = a.Bond(j);
-      if( b.GetTag() == 0 || !b.A().GetMatrix(0).IsFirst() )  continue;
+      if( b.GetTag() == 0 || !b.A().IsAUAtom() )  continue;
       b.SetTag(0);
       TCifRow& row = bonds.GetTable().AddRow(EmptyString);
       row.Set(0, b.A().GetLabel(), new AtomCifCell(&b.A().CAtom()));
       row.Set(1, b.B().GetLabel(), new AtomCifCell(&b.B().CAtom()));
       row[2] = vcovc.CalcDistance(b.A(), b.B()).ToString();
-      if( !b.B().GetMatrix(0).IsFirst() )
+      if( !b.B().IsAUAtom() )
         row[3] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
         b.B().GetMatrix(0));
       else
@@ -2840,7 +2836,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
   angles.GetTable().AddCol("_geom_angle_publ_flag");
   for( size_t i=0; i < latt.AtomCount(); i++ )  {
     TSAtom& a = latt.GetAtom(i);
-    if( a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.GetMatrix(0).IsFirst() )  continue;
+    if( a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.IsAUAtom() )  continue;
     for( size_t j=0; j < a.NodeCount(); j++ )  {
       TSAtom& b = a.Node(j);
       if( b.IsDeleted() || b.GetType().GetMr() < 3 )
@@ -2856,12 +2852,12 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         row.Set(1, a.GetLabel(), new AtomCifCell(&a.CAtom()));
         row.Set(2, _c.GetLabel(), new AtomCifCell(&_c.CAtom()));
         row[3] = vcovc.CalcAngle(_b, a, _c).ToString();
-        if( !_b.GetMatrix(0).IsFirst() )
+        if( !_b.IsAUAtom() )
           row[4] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
           _b.GetMatrix(0));
         else
           row[4] = '.';
-        if( !_c.GetMatrix(0).IsFirst() )
+        if( !_c.IsAUAtom() )
           row[5] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
           _c.GetMatrix(0));
         else
@@ -3942,7 +3938,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     bool identity_based = false;
     for( int j=0; j < 6; j++ )  {
-      if( rings[i][j]->GetMatrix(0).IsFirst() )  {
+      if( rings[i][j]->IsAUAtom() )  {
         identity_based = true;
         break;
       }
@@ -4040,7 +4036,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     for( size_t i=0; i < xlatt.AtomCount(); i++ )  {
       TSAtom& sa = xlatt.GetAtom(i);
       if( sa.IsDeleted() )  continue;
-      if( sa.GetMatrix(0).IsFirst() )
+      if( sa.IsAUAtom() )
         iatoms.Add(sa);
     }
     xlatt.GrowAtoms(iatoms, transforms);

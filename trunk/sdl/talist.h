@@ -278,7 +278,7 @@ public:
     }
     else  {
       T* Bf = new T[v+FIncrement];
-      for( size_t i=0; i < FCount; i++ )
+      for( size_t i=0; i < v; i++ )
         Bf[i] = Items[i];
       if( Items != NULL )
         delete [] Items;

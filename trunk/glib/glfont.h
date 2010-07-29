@@ -72,8 +72,12 @@ public:
   inline double GetVectorScale() const {  return VectorScale;  }
   size_t GetId() const {  return Id;  }  
   DefPropP(uint16_t, PointSize)
-  size_t TextWidth(const olxstr& Text, size_t cnt=InvalidSize);
+  size_t TextWidth(const olxstr& Text);
+  size_t TextWidth(const olxstr& Text, short& state);
   size_t MaxTextLength(size_t width);
+  double GetCharHalfWidth(short state) const;
+  size_t LengthForWidth(const olxstr& str, size_t width);
+  size_t LengthForWidth(const olxstr& str, size_t width, short& state);
   uint16_t TextHeight(const olxstr& Text=EmptyString);
   bool IsCreated() const {  return (Flags&fntCreated) != 0;  }
   TTextRect GetTextRect(const olxstr& str);
