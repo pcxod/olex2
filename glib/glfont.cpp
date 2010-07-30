@@ -1429,21 +1429,19 @@ void TGlFont::_DrawText(const vec3d& from, const olxstr& text, double scale) con
 //  olx_gl::disable(GL_COLOR_MATERIAL);
 }
 //..............................................................................
-void TGlFont::DrawVectorText(const vec3d& pos, const olxstr& text, double scale) const {
+void TGlFont::DrawVectorText(const vec3d& pos, const olxstr& text, double scale, short& state) const {
   olx_gl::pushMatrix();
   olx_gl::translate(pos);
   const double _scale = PointSize*scale/15;
   olx_gl::scale(_scale, _scale, 1.0);
-  short cstate=0;
   for( size_t i = 0; i < text.Length(); i++ )
-    DrawVectorChar(i, text, cstate);
+    DrawVectorChar(i, text, state);
   olx_gl::popMatrix();
 }
 //..............................................................................
-void TGlFont::DrawRasterText(const olxstr& text) const {
-  short cstate=0;
+void TGlFont::DrawRasterText(const olxstr& text, short& state) const {
   for( size_t i = 0; i < text.Length(); i++ )
-    DrawRasterChar(i, text, cstate);
+    DrawRasterChar(i, text, state);
 }
 //..............................................................................
 void TGlFont::DrawRasterChar(size_t &i, const olxstr& str, short& cstate) const {

@@ -103,8 +103,16 @@ public:
       olx_gl::callList(FontBase + ' ');
     }
   }
-  void DrawVectorText(const vec3d& from, const olxstr& text, double scale=1.0) const;
-  void DrawRasterText(const olxstr& text) const;
+  void DrawVectorText(const vec3d& from, const olxstr& text, double scale=1.0) const {
+    short state = 0;
+    DrawVectorText(from, text, scale, state);
+  }
+  void DrawVectorText(const vec3d& from, const olxstr& text, double scale, short& state) const;
+  void DrawRasterText(const olxstr& text) const {
+    short state = 0;
+    DrawRasterText(text, state);
+  }
+  void DrawRasterText(const olxstr& text, short& state) const;
   // renders a single char, if the \+, \- or \0 is used, the index is scrolled accordingly
   void DrawRasterChar(size_t& i, const olxstr& str, short& state) const;
   void DrawVectorChar(size_t& i, const olxstr& str, short& state) const;

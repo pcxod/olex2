@@ -66,25 +66,30 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
   if( P.GetType() == sgloText )  {
     TGlFont& Fnt = GetFont();
     uint16_t th = Fnt.TextHeight(EmptyString);
-    double Scale = Parent.GetScale();
-    double GlLeft = ((double)Left - (double)Parent.GetWidth()/2 + GetCenter()[0]) + 0.1;
-    double GlTop = ((double)Parent.GetHeight()/2 - (Top-GetCenter()[1])) + 0.1;
-    double LineInc = (th*LineSpacing)*Parent.GetViewZoom();
+    const double Scale = Parent.GetScale();
+    const double GlLeft = ((double)Left - (double)Parent.GetWidth()/2 + GetCenter()[0]) + 0.1;
+    const double GlTop = ((double)Parent.GetHeight()/2 - (Top-GetCenter()[1])) + 0.1;
+    const double LineInc = (th*LineSpacing)*Parent.GetViewZoom();
     const size_t tl = (size_t)((double)Fnt.MaxTextLength(((Left+Width) > Parent.GetWidth()) ? 
       Parent.GetWidth()-Left : Width)/Parent.GetViewZoom());
+    bool mat_changed = false;
     for( size_t i=0; i < FBuffer.Count() ; i++ )  {
       const vec3d T(GlLeft, GlTop - (i+1)*LineInc, Z);
       TGlMaterial* GlM = FBuffer.GetObject(i);
-      if( GlM != NULL ) 
+      if( GlM != NULL )  {
         GlM->Init(Parent.IsColorStereo());
+        mat_changed = true;
+      }
       Parent.DrawTextSafe(T, (tl < FBuffer[i].Length()) ? FBuffer[i].SubStringTo(tl) : FBuffer[i], Fnt); 
     }
+    if( mat_changed )
+      P.GetProperties().Init(Parent.IsColorStereo());
     return true;
   }
   else  {
     double Scale = Parent.GetScale();
-    double hw = Parent.GetWidth()*Scale/2;
-    double hh = Parent.GetHeight()*Scale/2;
+    const double hw = Parent.GetWidth()*Scale/2;
+    const double hh = Parent.GetHeight()*Scale/2;
     Scale = Scale*Parent.GetExtraZoom()*Parent.GetViewZoom();
     double xx = GetCenter()[0], xy = -GetCenter()[1];
     const double z = Z-0.1;
@@ -111,47 +116,32 @@ void TGlTextBox::PostText(const olxstr& S, TGlMaterial* M)  {
     PostText(toks, M);
     return;
   }
-  olxstr Tmp = S;
-  Tmp.SetCapacity(S.CharCount('\t')*8);
-  for( size_t i=0; i < Tmp.Length(); i++ )  {
-    if( Tmp.CharAt(i) == '\t' )  {
-      Tmp[i] = ' ';
-      int count = 4-i%4-1;
-      if( count > 0 ) Tmp.Insert(' ', i, count);
-    }
-  }
-  if( MaxStringLength && (Tmp.Length() > MaxStringLength) )  {
+  if( MaxStringLength && (S.Length() > MaxStringLength) )  {
     TStrList Txt;
-    Txt.Hyphenate(Tmp, MaxStringLength, true);
+    Txt.Hyphenate(S, MaxStringLength, true);
     PostText(Txt, M);
     return;
   }
-  if( M != NULL )  {
-    TGlMaterial *GlM = new TGlMaterial;
-    *GlM = *M;
-    FBuffer.Add(Tmp, GlM);
-  }
-  else  {
-    FBuffer.Add(S);
-  }
-  size_t width = GetFont().TextWidth(Tmp);
-  if( width > Width )  Width = (uint16_t)(width + 3);
-  if( FBuffer.Count() > 1 )
-    Height = (int)(GetFont().TextHeight()*(LineSpacing)*FBuffer.Count());
-  else
-    Height = GetFont().TextHeight(FBuffer[0]);
+  FBuffer.Add(S, M != NULL ? new TGlMaterial(*M) : NULL);
+  const size_t width = GetFont().TextWidth(S);
+  if( width > Width )
+    Width = (uint16_t)(width + 3);
+
 }
 //..............................................................................
 void TGlTextBox::PostText(const TStrList &SL, TGlMaterial *M)  {
   size_t position = FBuffer.Count();
   for( size_t i=0; i < SL.Count(); i++ )
     PostText(SL[i], NULL);
-  if( M != NULL )  {
-    TGlMaterial *GlM = new TGlMaterial;
-    *GlM = *M;
-//    FBuffer.Object(FBuffer.Count()-1) = GlM;
-    FBuffer.GetObject(position) = GlM;
-  }
+  if( M != NULL )
+    FBuffer.GetObject(position) = new TGlMaterial(*M);
+}
+//..............................................................................
+void TGlTextBox::Fit()  {
+  if( FBuffer.Count() > 1 )
+    Height = (int)(GetFont().TextHeight()*(LineSpacing)*FBuffer.Count());
+  else
+    Height = GetFont().TextHeight(FBuffer[0]);
 }
 //..............................................................................
 void TGlTextBox::SetLeft(int l)  {
