@@ -336,7 +336,6 @@ template <typename CastType> struct CastAccessor  {
     return (CastType&)item;
   }
 };
-
 struct olx_alg  {
 protected:
 // logical NOT operator for an analyser
@@ -373,20 +372,20 @@ protected:
     }
   };
 public:
-  template <class Analyser> static not_<Analyser> not(const Analyser& a)  {
+  template <class Analyser> static not_<Analyser> olx_not(const Analyser& a)  {
     return not_<Analyser>(a);
   }
   template <class AnalyserA, class AnalyserB>
-  static and_<AnalyserA, AnalyserB> and(const AnalyserA& a, const AnalyserB& b)  {
+  static and_<AnalyserA, AnalyserB> olx_and(const AnalyserA& a, const AnalyserB& b)  {
     return and_<AnalyserA, AnalyserB>(a, b);
   }
   template <class AnalyserA, class AnalyserB>
-  static or_<AnalyserA, AnalyserB> or(const AnalyserA& a, const AnalyserB& b)  {
+  static or_<AnalyserA, AnalyserB> olx_or(const AnalyserA& a, const AnalyserB& b)  {
     return or_<AnalyserA, AnalyserB>(a, b);
   }
-  struct Bool  {
+  struct olx_bool  {
     bool value;
-    Bool(bool _value) : value(_value)  {}
+    olx_bool(bool _value) : value(_value)  {}
     template <typename Item> inline bool OnItem(const Item& o) const {
       return value;
     }

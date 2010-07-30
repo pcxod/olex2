@@ -52,7 +52,7 @@ public:
   bool IsLabelMarked(const TXAtom& atom) const;
   bool IsLabelMarked(size_t index) const;
   TGlMaterial& MarkMaterial()  {  return FMarkMaterial;  }
-  TGlFont& TXGlLabels::GetFont() const;
+  TGlFont& GetFont() const;
 };
 
 EndGxlNamespace()
