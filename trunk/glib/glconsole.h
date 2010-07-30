@@ -18,7 +18,6 @@ class TGlConsole: public AGDrawObject,
   size_t LinesVisible;
   TStrPObjList<olxstr,TGlMaterial*> FBuffer;
   TStrList FCommands;   // the content
-  TStrList Cmds;        // hyphenated commands
   olxstr FCommand;    // the command
   olxstr InviteStr, PromptStr;   //
   TActionQList Actions; // actions list
