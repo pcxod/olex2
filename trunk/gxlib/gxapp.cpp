@@ -500,7 +500,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   selection is inpossible, unless properties are changed, odd... could not figure out
   what is going wrong... */
 
-  XLabels.Pack(olx_alg::not(AGDrawObject::FlagsAnalyser(sgdoVisible)));
+  XLabels.Pack(olx_alg::olx_not(AGDrawObject::FlagsAnalyser(sgdoVisible)));
   for( size_t i=0; i < XLabels.Count(); i++ )  {
     if( XLabels[i].IsVisible() )
       XLabels[i].Create();
@@ -1440,8 +1440,8 @@ void TGXApp::GetSelectedXAtoms(TXAtomPList& List, bool Clear)  {
 //..............................................................................
 void TGXApp::CAtomsByType(const cm_Element& AI, TCAtomPList& res)  {
   ListFilter::Filter(XFile().GetLattice().GetAsymmUnit().GetAtoms(), res,
-    olx_alg::and(
-      olx_alg::not(TCAtom::FlagsAnalyser<>(catom_flag_Deleted)),
+    olx_alg::olx_and(
+      olx_alg::olx_not(TCAtom::FlagsAnalyser<>(catom_flag_Deleted)),
       TCAtom::TypeAnalyser<>(AI)));
 }
 //..............................................................................
@@ -3803,6 +3803,7 @@ void TGXApp::AlignOverlayedXFiles() {
   col_width[0] = row_height[0] = 0;
 
   const vec3d right_shift = FGlRender->GetBasis().GetMatrix()*vec3d(1, 0, 0);
+
   const vec3d up_shift = FGlRender->GetBasis().GetMatrix()*vec3d(0, 1, 0);
   for( size_t i=0; i < dim; i++ )  {
     for( size_t j=0; j < dim; j++ )  {

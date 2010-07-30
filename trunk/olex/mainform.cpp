@@ -70,6 +70,7 @@
 
 #include "egc.h"
 #include "gllabel.h"
+#include "gllabels.h"
 #include "xlattice.h"
 #include "xgrid.h"
 
@@ -540,6 +541,7 @@ TMainForm::~TMainForm()  {
 //..............................................................................
 void TMainForm::XApp(TGXApp *XA)  {
   FXApp = XA;
+
   _ProcessManager = new ProcessManager(_ProcessHandler);
   FXApp->SetCifTemplatesDir(XA->GetBaseDir() + "etc/CIF/");
 ////////////////////////////////////////////////////////////////////////////////
@@ -2101,6 +2103,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   else if( MsgId == ID_UpdateThreadTerminate )  {
     volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
     _UpdateThread = NULL;
+
      if( UpdateProgress != NULL )  {
        delete UpdateProgress;
        UpdateProgress = NULL;
@@ -3024,6 +3027,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
     int w_w = 0, w_h = 0;
     GetSize(&w_w, &w_h);
     I->AddField("Width", w_w);
+
     I->AddField("Height", w_h);
     GetPosition(&w_w, &w_h);
     I->AddField("X", w_w);

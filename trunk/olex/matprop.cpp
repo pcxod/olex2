@@ -8,6 +8,7 @@
 #include "gpcollection.h"
 #include "glgroup.h"
 #include "xatom.h"
+#include "xbond.h"
 //..............................................................................
 enum  {
   ID_COPY = 1,
