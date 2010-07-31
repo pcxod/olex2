@@ -283,6 +283,7 @@ else:
     env.Append(CCFLAGS = ['-D__WXWIDGETS__'])
     env.ParseConfig("python-config --includes")
     env.ParseConfig("python-config --ldflags")
+    env.Append(LIBS=['libGL', 'libGLU'])
   except:
     print 'Please make sure that wxWidgets and Python config scripts are available'
     Exit(1)
