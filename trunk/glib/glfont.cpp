@@ -62,7 +62,7 @@ void TGlFont::ClearData()  {
   //}
 }
 //..............................................................................
-size_t TGlFont::TextWidth(const olxstr& Text, short& state)  {
+size_t TGlFont::TextWidth(const olxstr& Text, short& state) const {
   size_t w = 0;
   const size_t tl = Text.Length();
   for( size_t i=0; i < tl; i++ )  {
@@ -78,7 +78,7 @@ size_t TGlFont::TextWidth(const olxstr& Text, short& state)  {
         continue;
       }
     }
-    TGlFont& glf = (state != 0 && olx_is_valid_index(SmallId)) ? Parent.GetSmallFont(SmallId) : *this;
+    const TGlFont& glf = (state != 0 && olx_is_valid_index(SmallId)) ? Parent.GetSmallFont(SmallId) : *this;
     TFontCharSize* cs = glf.CharSize(Text[i]);
     if( cs == NULL )  cs = glf.CharSize('?');
     if( glf.IsFixedWidth() )
@@ -99,21 +99,21 @@ double TGlFont::GetCharHalfWidth(short state) const {
   return (double)(Parent.GetSmallFont(SmallId).MaxWidth)/2;
 }
 //..............................................................................
-size_t TGlFont::TextWidth(const olxstr &Text)  {
+size_t TGlFont::TextWidth(const olxstr &Text) const {
   short state = 0;
   return TextWidth(Text, state);
 }
 //..............................................................................
-size_t TGlFont::MaxTextLength(size_t width)  {
+size_t TGlFont::MaxTextLength(size_t width) const {
   return width/MaxWidth;
 }
 //..............................................................................
-size_t TGlFont::LengthForWidth(const olxstr& str, size_t width)  {
+size_t TGlFont::LengthForWidth(const olxstr& str, size_t width) const {
   short state = 0;
   return LengthForWidth(str, width, state);
 }
 //..............................................................................
-size_t TGlFont::LengthForWidth(const olxstr& str, size_t width, short& state)  {
+size_t TGlFont::LengthForWidth(const olxstr& str, size_t width, short& state) const {
   if( width/MaxWidth > str.Length() )
     return str.Length();
   size_t w = 0;
@@ -130,7 +130,7 @@ size_t TGlFont::LengthForWidth(const olxstr& str, size_t width, short& state)  {
         continue;
       }
     }
-    TGlFont& glf = (state != 0 && olx_is_valid_index(SmallId)) ? Parent.GetSmallFont(SmallId) : *this;
+    const TGlFont& glf = (state != 0 && olx_is_valid_index(SmallId)) ? Parent.GetSmallFont(SmallId) : *this;
     TFontCharSize* cs = glf.CharSize(str.CharAt(i));
     if( cs == NULL )  cs = glf.CharSize('?');
     if( str.CharAt(i) == '\t' && !is_escaped(str, i) )  {
@@ -158,7 +158,7 @@ size_t TGlFont::LengthForWidth(const olxstr& str, size_t width, short& state)  {
   return str.Length();
 }
 //..............................................................................
-uint16_t TGlFont::TextHeight(const olxstr &Text)  {
+uint16_t TGlFont::TextHeight(const olxstr &Text) const {
   if( Text.IsEmpty() )  {
     if( olx_is_valid_index(SmallId) )  {
       return (uint16_t)olx_round((double)MaxHeight*0.75+Parent.GetSmallFont(SmallId).MaxHeight);
@@ -189,7 +189,7 @@ uint16_t TGlFont::TextHeight(const olxstr &Text)  {
         continue;
       }
     }
-    TGlFont& glf = (small_font && olx_is_valid_index(SmallId)) ? Parent.GetSmallFont(SmallId) : *this;
+    const TGlFont& glf = (small_font && olx_is_valid_index(SmallId)) ? Parent.GetSmallFont(SmallId) : *this;
     TFontCharSize* cs = glf.CharSize(Text.CharAt(i));
     if( cs == NULL )  cs = glf.CharSize('?');
     const short df = cs->Bottom - cs->Top + y_shift;
@@ -199,7 +199,7 @@ uint16_t TGlFont::TextHeight(const olxstr &Text)  {
   return w;
 }
 //..............................................................................
-TTextRect TGlFont::GetTextRect(const olxstr& str)  {
+TTextRect TGlFont::GetTextRect(const olxstr& str) const {
   TTextRect tr;
   tr.top = 100;
   const double st = (double)MaxHeight/4;
@@ -261,7 +261,7 @@ TTextRect TGlFont::GetTextRect(const olxstr& str)  {
           continue;
         }
       }
-      TGlFont& glf = (small_fnt && olx_is_valid_index(SmallId)) ? Parent.GetSmallFont(SmallId) : *this;
+      const TGlFont& glf = (small_fnt && olx_is_valid_index(SmallId)) ? Parent.GetSmallFont(SmallId) : *this;
       TFontCharSize* cs = glf.CharSize(str.CharAt(i));
       if( cs == NULL )  cs = glf.CharSize('?');
       const double dt = (glf.MaxHeight-cs->Bottom) + y_shift;

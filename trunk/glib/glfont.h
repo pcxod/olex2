@@ -72,15 +72,15 @@ public:
   inline double GetVectorScale() const {  return VectorScale;  }
   size_t GetId() const {  return Id;  }  
   DefPropP(uint16_t, PointSize)
-  size_t TextWidth(const olxstr& Text);
-  size_t TextWidth(const olxstr& Text, short& state);
-  size_t MaxTextLength(size_t width);
+  size_t TextWidth(const olxstr& Text) const;
+  size_t TextWidth(const olxstr& Text, short& state) const;
+  size_t MaxTextLength(size_t width) const;
   double GetCharHalfWidth(short state) const;
-  size_t LengthForWidth(const olxstr& str, size_t width);
-  size_t LengthForWidth(const olxstr& str, size_t width, short& state);
-  uint16_t TextHeight(const olxstr& Text=EmptyString);
+  size_t LengthForWidth(const olxstr& str, size_t width) const;
+  size_t LengthForWidth(const olxstr& str, size_t width, short& state) const;
+  uint16_t TextHeight(const olxstr& Text=EmptyString) const;
   bool IsCreated() const {  return (Flags&fntCreated) != 0;  }
-  TTextRect GetTextRect(const olxstr& str);
+  TTextRect GetTextRect(const olxstr& str) const;
   bool CharFromRGBArray(size_t Char, unsigned char *RGBData, uint16_t width, uint16_t height);
 
   void CreateGlyphsFromRGBArray(bool FixedWidth, uint16_t Width, uint16_t Height);

@@ -85,7 +85,7 @@ size_t TGlConsole::CalcScrollDown() const {
   const uint16_t th = Fnt.TextHeight(EmptyString);
   const double Scale = Parent.GetScale(),
                MaxY = ((double)Parent.GetHeight()/2-Top-th)*Scale,
-               LineSpacer = (0.1+FLineSpacing)*th;
+               LineSpacer = (0.05+FLineSpacing)*th;
   const double empty_line_height = th*0.75*(1+FLineSpacing)*Scale;
   vec3d T(GlLeft*Scale, GlTop*Scale, 0);
   if( FBuffer[FTxtPos].IsEmpty() )
@@ -116,7 +116,7 @@ size_t TGlConsole::CalcScrollDown() const {
       if( tr.top < 0 )
         T[1] += tr.top*Scale;
       if( i== 0 )  break;
-      T[1] += (tr.height+LineSpacer)*Scale;
+      T[1] += (olx_max(tr.height, Fnt.GetMaxHeight())+LineSpacer)*Scale;
       lines++;
     }
   }
@@ -131,7 +131,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
   const uint16_t th = Fnt.TextHeight(EmptyString);
   const double Scale = Parent.GetScale(),
                MaxY = ((double)Parent.GetHeight()/2-Top-th)*Scale,
-               LineSpacer = (0.1+FLineSpacing)*th;
+               LineSpacer = (0.05+FLineSpacing)*th;
   const double MaxZ = -(Parent.GetMaxRasterZ()-0.002);
   const double empty_line_height = th*0.75*(1+FLineSpacing)*Scale;
   vec3d T(GlLeft*Scale, GlTop*Scale, MaxZ);
@@ -171,8 +171,8 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
         T[1] -= tr.top*Scale;
       Parent.DrawText(P, T[0], T[1], MaxZ); 
       P.SetString(NULL);
-      if( i== 0 )  break;
-      T[1] += (tr.height+LineSpacer)*Scale;
+      if( i == 0 )  break;
+      T[1] += (olx_max(tr.height, Fnt.GetMaxHeight())+LineSpacer)*Scale;
       LinesVisible++;
     }
   }
