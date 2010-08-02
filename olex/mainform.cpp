@@ -1497,7 +1497,6 @@ void TMainForm::StartupInit()  {
   }
   FileDropTarget* dndt = new FileDropTarget(*this);
   this->SetDropTarget(dndt);
-  FInfoBox->SetHeight(gls._GetFont(2).TextHeight(EmptyString));
   StartupInitialised = true;
 }
 //..............................................................................

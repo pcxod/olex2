@@ -7,9 +7,6 @@
 #include "glgroup.h"
 
 int* TGlCanvas::glAttrib = NULL;
- //----------------------------------------------------------------------------//
-// TGlCanvas function bodies
-//----------------------------------------------------------------------------//
 
 IMPLEMENT_CLASS(TGlCanvas, wxGLCanvas)
 
@@ -53,7 +50,7 @@ TGlCanvas::~TGlCanvas(){
   if( Context != NULL )
     delete Context;
   if( glAttrib != NULL )  {
-    delete glAttrib;
+    delete [] glAttrib;
     glAttrib = NULL;
   }
 }
@@ -214,7 +211,8 @@ void TGlCanvas::OnChar(wxKeyEvent& m)  {
 //..............................................................................
 int* TGlCanvas::GetGlAttributes(bool _default, bool stereo)  {
   if( _default )  return NULL;
-  if( glAttrib != NULL )  delete glAttrib;
+  if( glAttrib != NULL )
+    delete [] glAttrib;
   const int cnt = stereo ? 7 : 6;
   glAttrib = new int [2*cnt+1];
   glAttrib[2*cnt] = 0;
