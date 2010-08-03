@@ -190,6 +190,9 @@ enum
   ID_SelUnGroup,
   ID_SelLabel,
 
+  ID_GridMenu,
+  ID_GridMenuCreateBlob,
+
   ID_GraphicsKill,
   ID_GraphicsHide,
   ID_GraphicsDS,
@@ -340,6 +343,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_GraphicsSelect, TMainForm::OnGraphics)
   EVT_MENU(ID_FixLattice, TMainForm::OnGraphics)
   EVT_MENU(ID_FreeLattice, TMainForm::OnGraphics)
+  EVT_MENU(ID_GridMenuCreateBlob, TMainForm::OnGraphics)
 
   EVT_MENU(ID_FragmentHide, TMainForm::OnFragmentHide)
   EVT_MENU(ID_FragmentShowOnly, TMainForm::OnFragmentShowOnly)
@@ -530,6 +534,7 @@ TMainForm::~TMainForm()  {
   delete pmSelection;
   delete pmLabel;
   delete pmLattice;
+  delete pmGrid;
 
   delete FUndoStack;
   // leave it for the end
@@ -1144,6 +1149,9 @@ separated values of Atom Type and radius, an entry a line");
 // setting label menu
   pmLabel = pmGraphics->Clone();
   pmLabel->Append(ID_GraphicsEdit, wxT("Edit..."));
+// setting label menu
+  pmGrid = pmGraphics->Clone();
+  pmGrid->Append(ID_GridMenuCreateBlob, wxT("Create blob"));
 // setting Lattice menu
   pmLattice = pmGraphics->Clone();
   pmLattice->Append(ID_FixLattice, wxT("Fix"));
@@ -1743,6 +1751,12 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     if( EsdlInstanceOf(*FObjectUnderMouse, TXLattice) )
       ((TXLattice*)FObjectUnderMouse)->SetFixed(false);
   }
+  else if( event.GetId() == ID_GridMenuCreateBlob )  {
+    TXBlob* xb = FXApp->XGrid().CreateBlob(MousePositionX, MousePositionY);
+    if( xb != NULL )
+      FXApp->AddObjectToCreate(xb);
+    xb->Create();
+  }
 }
 //..............................................................................
 void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
@@ -1829,6 +1843,9 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
   }
   else if( EsdlInstanceOf( *G, TXLattice) )  {
     FCurrentPopup = pmLattice;
+  }
+  else if( EsdlInstanceOf(*G, TXGrid) )  {
+    FCurrentPopup = pmGrid;
   }
 }
 //..............................................................................
@@ -2247,10 +2264,11 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         else  {
           GlTooltip->Clear();
           GlTooltip->PostText(Tooltip);
+          GlTooltip->Fit();
           int x = MousePositionX-GlTooltip->GetWidth()/2,
             y = MousePositionY-GlTooltip->GetHeight()-4;
           if( x < 0 )  x = 0;
-          if( (size_t)(x + GlTooltip->GetWidth()) > FXApp->GetRender().GetWidth() )
+          if( (size_t)(x + GlTooltip->GetWidth()) > (size_t)FXApp->GetRender().GetWidth() )
             x = FXApp->GetRender().GetWidth() - GlTooltip->GetWidth();
           if( y < 0 )
             y  = 0;
@@ -2317,8 +2335,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   else if( MsgId == ID_FileClose )  {
     if( MsgSubId == msiExit )  {
       UpdateRecentFile(EmptyString);
-      FInfoBox->Clear();
-      FInfoBox->PostText("No file is loaded");
+      UpdateInfoBox();
     }
   }
   else if( MsgId == ID_CMDLINECHAR )  {
@@ -2508,6 +2525,7 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
           //}
         }
       }
+      FHelpWindow->Fit();
     }
     else  {
       FHelpWindow->SetVisible(false);
@@ -2962,6 +2980,7 @@ olxstr TMainForm::ExpandCommand(const olxstr &Cmd)  {
       else
         FXApp->GetLog() << line;
     }
+    FHelpWindow->Fit();
     FXApp->GetLog() << '\n';
   }
   else if( all_cmds.Count() == 1 )
@@ -4358,22 +4377,38 @@ bool TMainForm::PopupMenu(wxMenu* menu, const wxPoint& p)  {
   return res;
 }
 //..............................................................................
+void TMainForm::UpdateInfoBox()  {
+  FInfoBox->Clear();
+  if( FXApp->XFile().HasLastLoader() )  {
+    FInfoBox->PostText(olxstr("\\-") << TEFile::ExtractFilePath(FXApp->XFile().GetFileName()));
+    FInfoBox->PostText(TEFile::ExtractFileName(FXApp->XFile().GetFileName()));
+    FInfoBox->PostText(FXApp->XFile().LastLoader()->GetTitle());
+    FInfoBox->Fit();
+  }
+  else  {
+    FInfoBox->PostText("No file is loaded");
+  }
+}
 //..............................................................................
 void TMainForm::ProcessHandler::BeforePrint() {
   parent.FGlConsole->SetPrintMaterial(&parent.ExecFontColor);
 }
+//..............................................................................
 void TMainForm::ProcessHandler::Print(const olxstr& line)  {
   TBasicApp::GetLog() << line;
   parent.CallbackFunc(ProcessOutputCBName, line);
 }
+//..............................................................................
 void TMainForm::ProcessHandler::AfterPrint() {
   parent.FGlConsole->SetPrintMaterial(NULL);
   parent.FXApp->Draw();
 }
+//..............................................................................
 void TMainForm::ProcessHandler::OnWait() {
   parent.FParent->Dispatch();
   parent.Dispatch(ID_TIMER, -1, (AActionHandler*)&parent, NULL);
 }
+//..............................................................................
 void TMainForm::ProcessHandler::OnTerminate(const AProcess& p)  {
   TMacroError err;
   for( size_t i=0; i < p.OnTerminateCmds().Count(); i++ ) {
@@ -4385,3 +4420,4 @@ void TMainForm::ProcessHandler::OnTerminate(const AProcess& p)  {
   TBasicApp::GetLog().Info(olxstr("The process '") << p.GetCmdLine() << "' has been terminated...");
   parent.TimePerFrame = parent.FXApp->Draw();
 }
+//..............................................................................
