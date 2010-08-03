@@ -201,7 +201,7 @@ uint16_t TGlFont::TextHeight(const olxstr &Text) const {
 //..............................................................................
 TTextRect TGlFont::GetTextRect(const olxstr& str) const {
   TTextRect tr;
-  tr.top = 100;
+  tr.top = str.IsEmpty() ? MaxHeight : 100;
   const double st = (double)MaxHeight/4;
   if( IsVectorFont() )  {
     double scale = 1, y_shift=0;

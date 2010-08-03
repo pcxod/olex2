@@ -62,7 +62,9 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
   Trans = Parent.Basis().Center();
   Trans *= Parent.Basis().Matrix();
   Parent.GlTranslate(-Trans[0], -Trans[1], -Trans[2] );*/
- olx_gl::normal(0, 0, 1);
+  if( Width == 0 || Height == 0 )
+    return true;
+  olx_gl::normal(0, 0, 1);
   if( P.GetType() == sgloText )  {
     TGlFont& Fnt = GetFont();
     const uint16_t th = Fnt.TextHeight(EmptyString);
@@ -70,8 +72,6 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
     const double GlLeft = ((double)Left - (double)Parent.GetWidth()/2 + GetCenter()[0]) + 0.1;
     const double GlTop = ((double)Parent.GetHeight()/2 - (Top-GetCenter()[1]+Height)) + 0.1;
     const double LineSpacer = (0.05+LineSpacing-1)*th;
-    const size_t tl = (size_t)((double)Fnt.MaxTextLength(((Left+Width) > Parent.GetWidth()) ? 
-      Parent.GetWidth()-Left : Width)/Parent.GetViewZoom());
     bool mat_changed = false;
     vec3d T(GlLeft, GlTop, Z);
     for( size_t i=0; i < FBuffer.Count(); i++ )  {
@@ -81,8 +81,9 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
         GlM->Init(Parent.IsColorStereo());
         mat_changed = true;
       }
-      olxstr const line = (tl < FBuffer[ii].Length()) ? FBuffer[ii].SubStringTo(tl) : FBuffer[ii];
+      olxstr const line = FBuffer[ii].SubStringTo(Fnt.LengthForWidth(FBuffer[ii], Parent.GetWidth()));
       const TTextRect tr = Fnt.GetTextRect(line);
+      T[1] -= tr.top;
       Parent.DrawTextSafe(T, line, Fnt);
       T[1] += (olx_max(tr.height, Fnt.GetMaxHeight())+LineSpacer);
     }
@@ -130,7 +131,6 @@ void TGlTextBox::PostText(const olxstr& S, TGlMaterial* M)  {
   const size_t width = GetFont().TextWidth(S);
   if( width > Width )
     Width = (uint16_t)(width + 3);
-  Fit();
 }
 //..............................................................................
 void TGlTextBox::PostText(const TStrList &SL, TGlMaterial *M)  {
@@ -139,7 +139,6 @@ void TGlTextBox::PostText(const TStrList &SL, TGlMaterial *M)  {
     PostText(SL[i], NULL);
   if( M != NULL )
     FBuffer.GetObject(position) = new TGlMaterial(*M);
-  Fit();
 }
 //..............................................................................
 void TGlTextBox::Fit()  {
@@ -150,11 +149,18 @@ void TGlTextBox::Fit()  {
     Height = 0;
     for( size_t i=0; i < FBuffer.Count(); i++ )  {
       const TTextRect tr = glf.GetTextRect(FBuffer[i]);
+      Height -= (uint16_t)olx_round(tr.top);
       Height += (uint16_t)olx_round(olx_max(tr.height, glf.GetMaxHeight())+LineSpacer);
     }
   }
-  else
-    Height = GetFont().TextHeight(FBuffer[0]);
+  else if( FBuffer.Count() == 1 )  {
+    const TTextRect tr = GetFont().GetTextRect(FBuffer[0]);
+    Height = (uint16_t)olx_round(tr.height);
+    Width = (uint16_t)olx_round(tr.width);
+  }
+  else  {
+    Height = Width = 0;
+  }
 }
 //..............................................................................
 void TGlTextBox::SetLeft(int l)  {

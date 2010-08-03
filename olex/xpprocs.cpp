@@ -3687,6 +3687,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
       Ins.ParseHeader(SL);
       FXApp->XFile().LastLoaderChanged();
       BadReflectionsTable(false);
+      UpdateInfoBox();
     }
     else  {
     }
@@ -4587,8 +4588,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           }
         }
       }
-      FInfoBox->PostText(FN);
-      FInfoBox->PostText(FXApp->XFile().LastLoader()->GetTitle());
+      UpdateInfoBox();
       // check if the associated HKL file has the same name and location
       olxstr hkl_fn = TEFile::OSPath(FXApp->XFile().GetRM().GetHKLSource()).DeleteSequencesOf(TEFile::GetPathDelimeter()); 
       olxstr src_fn = TEFile::OSPath(FXApp->XFile().LastLoader()->GetFileName()).DeleteSequencesOf(TEFile::GetPathDelimeter()); 
@@ -5877,14 +5877,14 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
   if( Cmds.Count() == 2 )  {
     if( Cmds[0].Equalsi("help") )  {
       HelpWindowVisible = Cmds[1].ToBool();
-      FHelpWindow->SetVisible( HelpWindowVisible );
-      FGlConsole->ShowBuffer( !HelpWindowVisible );  // sync states
+      FHelpWindow->SetVisible(HelpWindowVisible);
+      FGlConsole->ShowBuffer(!HelpWindowVisible);  // sync states
       TStateChange sc(prsHelpVis, HelpWindowVisible);
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
     } 
     else  if( Cmds[0].Equalsi("info") )  {
       InfoWindowVisible = Cmds[1].ToBool();
-      FInfoBox->SetVisible( InfoWindowVisible );
+      FInfoBox->SetVisible(InfoWindowVisible);
       TStateChange sc(prsInfoVis, InfoWindowVisible);
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       OnResize();
@@ -5894,7 +5894,7 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
       CmdLineVisible = Cmds[1].ToBool();
       FCmdLine->Show( CmdLineVisible );
       if( CmdLineVisible )  FCmdLine->SetFocus();
-      FGlConsole->SetPromptVisible( !CmdLineVisible );
+      FGlConsole->SetPromptVisible(!CmdLineVisible);
       TStateChange sc(prsCmdlVis, CmdLineVisible);
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       OnResize();
@@ -5904,14 +5904,14 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
   else  {
     if( Cmds[0].Equalsi("help") )  {
       HelpWindowVisible = !HelpWindowVisible;
-      FHelpWindow->SetVisible( HelpWindowVisible );
-      FGlConsole->ShowBuffer( !HelpWindowVisible );  // sync states
+      FHelpWindow->SetVisible(HelpWindowVisible);
+      FGlConsole->ShowBuffer(!HelpWindowVisible);  // sync states
       TStateChange sc(prsHelpVis, HelpWindowVisible);
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
     } 
     else if( Cmds[0].Equalsi("info") )  {
       InfoWindowVisible = !InfoWindowVisible;
-      FInfoBox->SetVisible( InfoWindowVisible );
+      FInfoBox->SetVisible(InfoWindowVisible);
       TStateChange sc(prsInfoVis, InfoWindowVisible);
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       OnResize();
@@ -5921,7 +5921,7 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
       CmdLineVisible = !CmdLineVisible;
       FCmdLine->Show( CmdLineVisible );
       if( CmdLineVisible )  FCmdLine->SetFocus();
-      FGlConsole->SetPromptVisible( !CmdLineVisible );
+      FGlConsole->SetPromptVisible(!CmdLineVisible);
       TStateChange sc(prsCmdlVis, CmdLineVisible);
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       OnResize();

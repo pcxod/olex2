@@ -39,9 +39,16 @@ namespace exparse  {
     }
     // checks if the char at ch_ind is ascaped (\')
     static bool is_escaped(const olxstr& exp, size_t ch_ind)  {
-      int sc = 0;
+      size_t sc = 0;
       while( --ch_ind != InvalidIndex && exp.CharAt(ch_ind) == '\\' ) sc++;
       return (sc%2) != 0;
+    }
+    // returns index of th next unescaped char...
+    static size_t next_unescaped(olxch _what, const olxstr& _where, size_t _from)  {
+      for( size_t i=_from; i < _where.Length(); i++ )
+        if( _where.CharAt(i) == _what && !is_escaped(_where, i) )
+          return i;
+      return InvalidIndex;
     }
     // splits expressions like ("",ddd(),"\""), leaves tokens quoted if quoted originally
     template <class StrLst> static void split_args(const olxstr& exp, StrLst& res)  {

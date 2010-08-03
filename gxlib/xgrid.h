@@ -3,7 +3,6 @@
 #include "gxbase.h"
 #include "arrays.h"
 #include "evpoint.h"
-#include "IsoSurface.h"
 #include "gltextbox.h"
 #include "macroerror.h"
 #include "gltexture.h"
@@ -13,6 +12,7 @@
 #endif
 #include "fracmask.h"
 #include "ps_writer.h"
+#include "xblob.h"
 
 BeginGxlNamespace()
 
@@ -172,6 +172,8 @@ public:
 #endif  
   void ToDataItem(TDataItem& item, IOutputStream& zos) const;
   void FromDataItem(const TDataItem& item, IInputStream& zis);
+  // creates a blob at given screen coordinates (raster position)
+  TXBlob* CreateBlob(int x, int y) const;
 protected:
   struct TPlaneCalculationTask  {
     float **data, ***src_data;
