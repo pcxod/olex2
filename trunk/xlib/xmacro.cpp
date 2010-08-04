@@ -3937,7 +3937,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       continue;
     }
     bool identity_based = false;
-    for( int j=0; j < 6; j++ )  {
+    for( int j=0; j < rings[i].Count(); j++ )  {
       if( rings[i][j]->IsAUAtom() )  {
         identity_based = true;
         break;
