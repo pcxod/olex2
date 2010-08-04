@@ -82,7 +82,7 @@ public:
 
   DefPropBFIsSet(Groupable, Flags, sgdoGroupable)
   DefPropBFIsSet(Grouped, Flags, sgdoGrouped)
-  void SetDeleted(bool v)  {
+  virtual void SetDeleted(bool v)  {
     olx_set_bit(v, Flags, sgdoDeleted);
     if( v )
       olx_set_bit(false, Flags, sgdoVisible);

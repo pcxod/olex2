@@ -77,7 +77,8 @@ public:
   void SetDeleted(bool v)  {
     AGDrawObject::SetDeleted(v);
     Label->SetDeleted(v);
-    FBond->SetDeleted(v);
+    if( FBond != NULL )
+      FBond->SetDeleted(v);
   }
   void SetVisible(bool v)  {
     AGDrawObject::SetVisible(v);

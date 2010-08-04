@@ -885,7 +885,19 @@ TXBlob* TXGrid::CreateBlob(int x, int) const {
       for( int j=0; j < 3; j++ )  {
         if( verts[t.pointID[j]] )  {
           has_shared_point = true;
-          break;
+          //break;
+        }
+        bool trimmed = false;
+        vec3f v = vertices[t.pointID[j]];
+        if( v[0] >= MaxX )  {  v[0] -= MaxX;  trimmed = true;  }
+        if( v[1] >= MaxY )  {  v[1] -= MaxY;  trimmed = true;  }
+        if( v[2] >= MaxZ )  {  v[2] -= MaxZ;  trimmed = true;  }
+        if( trimmed )  {
+          for( size_t k=0; k < vertices.Count(); k++ )  {
+            if( !verts[k] && vertices[k].QDistanceTo(v) < 1.7 )  {
+              verts.SetTrue(k);
+            }
+          }
         }
       }
       if( has_shared_point )  {
@@ -907,8 +919,26 @@ TXBlob* TXGrid::CreateBlob(int x, int) const {
   for( size_t i = 0; i < verts.Count(); i++ )  {
     if( verts[i] )  {
       new_ids[i] = xb->vertices.Count();
-      vec3f& v = xb->vertices.AddCCopy(vertices[i]);
-      au.CellToCartesian<vec3f,vec3f>(vec3f(v[0]/MaxX, v[1]/MaxY, v[2]/MaxZ), v);
+      vec3f &v = xb->vertices.AddCCopy(vertices[i]), v1;
+      au.CellToCartesian<vec3f,vec3f>(vec3f(v[0]/MaxX, v[1]/MaxY, v[2]/MaxZ), v1);
+      if( i > 0 )  {
+        float qd = v1.QDistanceTo(xb->vertices[0]);
+        int tx=0, ty=0, tz=0;
+        for( int ix=-1; ix <= 1; ix++ )  {
+          for( int iy=-1; iy <= 1; iy++ )  {
+            for( int iz=-1; iz <= 1; iz++ )  {
+              au.CellToCartesian<vec3f,vec3f>(vec3f(v[0]/MaxX+ix, v[1]/MaxY+iy, v[2]/MaxZ+iz), v1);
+              const float qd1 = v1.QDistanceTo(xb->vertices[0]);
+              if( qd1 < qd )  {
+                qd = qd1;
+                tx = ix;  ty = iy;  tz = iz;
+              }
+            }
+          }
+        }
+        au.CellToCartesian<vec3f,vec3f>(vec3f(v[0]/MaxX+tx, v[1]/MaxY+ty, v[2]/MaxZ+tz), v1);
+      }
+      v = v1;
       xb->normals.AddCCopy(normals[i]);
     }
     else
