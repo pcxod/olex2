@@ -85,7 +85,6 @@ const size_t CInstallerDlg::exts_sz = sizeof(exts)/sizeof(exts[0]);
 CInstallerDlg::CInstallerDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CInstallerDlg::IDD, pParent), bapp(LocateBaseDir())
 {
-  THttpFileSystem::Initialise();
   tooltipCtrl = NULL;
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
   mouse_down = false;
@@ -101,7 +100,6 @@ CInstallerDlg::CInstallerDlg(CWnd* pParent /*=NULL*/)
 CInstallerDlg::~CInstallerDlg()  {
   if( tooltipCtrl != NULL )  delete tooltipCtrl;
   if( ctrlBrush != NULL )  delete ctrlBrush;
-  THttpFileSystem::Finalise();
 }
 
 void CInstallerDlg::DoDataExchange(CDataExchange* pDX)  {

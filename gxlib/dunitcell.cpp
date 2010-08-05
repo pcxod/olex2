@@ -167,3 +167,17 @@ void TDUnitCell::SetVisible(bool v)  {
   }
 }
 //..............................................................................
+void TDUnitCell::ToDataItem(TDataItem& di) const {
+  di.AddField("reciprocal", IsReciprocal());
+  TDataItem& labels = di.AddItem("Labels");
+  for( int i=0; i < 4; i++ )
+    Labels[i]->ToDataItem(labels.AddItem(olxstr((olxch)('x'+i))));
+}
+//..............................................................................
+void TDUnitCell::FromDataItem(const TDataItem& di)  {
+  SetReciprocal(di.GetFieldValue("reciprocal").ToBool());
+  const TDataItem& labels = di.FindRequiredItem("Labels");
+  for( int i=0; i < 4; i++ )
+    Labels[i]->FromDataItem(labels.GetItem(i));
+}
+//..............................................................................

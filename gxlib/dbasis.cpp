@@ -210,6 +210,9 @@ bool TDBasis::Orient(TGlPrimitive& P) {
 void TDBasis::ToDataItem(TDataItem& di) const {
   di.AddField("center", PersUtil::VecToStr(GetCenter()));
   di.AddField("zoom", GetZoom());
+  TDataItem& labels = di.AddItem("Labels");
+  for( int i=0; i < 3; i++ )
+    Labels[i]->ToDataItem(labels.AddItem(olxstr((olxch)('x'+i))));
 }
 //..............................................................................
 void TDBasis::FromDataItem(const TDataItem& di)  {
@@ -223,6 +226,11 @@ void TDBasis::FromDataItem(const TDataItem& di)  {
   else  {
     _Center = PersUtil::FloatVecFromStr(c);
     Zoom = di.GetRequiredField("zoom").ToDouble();
+  }
+  const TDataItem* labels = di.FindItem("Labels");
+  if( labels != NULL && labels->ItemCount() == 3 )  {
+    for( int i=0; i < 3; i++ )
+      Labels[i]->FromDataItem(labels->GetItem(i));
   }
 }
 //..............................................................................

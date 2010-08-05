@@ -1844,9 +1844,11 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
   else if( EsdlInstanceOf( *G, TXLattice) )  {
     FCurrentPopup = pmLattice;
   }
+#ifdef _DEBUG
   else if( EsdlInstanceOf(*G, TXGrid) )  {
     FCurrentPopup = pmGrid;
   }
+#endif
 }
 //..............................................................................
 void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
