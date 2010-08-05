@@ -173,7 +173,7 @@ public:
     return false;
   }
 
-  template <class AType> TMatrix& operator  = (const TMatrix<AType>& C)  {
+  template <class AType> TMatrix& operator = (const TMatrix<AType>& C)  {
     this->Resize(C.Vectors(), C.Elements());
     for( size_t i = 0; i < Fn; i++)
       FData[i] = C[i];
@@ -181,7 +181,7 @@ public:
     return *this;
   }
 
-  TMatrix& operator  = (const TMatrix& C)  {
+  TMatrix& operator = (const TMatrix& C)  {
     Resize(C.Vectors(), C.Elements());
     for( size_t i = 0; i < Fn; i++ )
       FData[i] = C[i];

@@ -1,6 +1,6 @@
-//---------------------------------------------------------------------------
-#ifndef typeptrlistH
-#define typeptrlistH
+// (c) O. Dolomanov, 2004
+#ifndef __olx_sdl_ptrlist_H
+#define __olx_sdl_ptrlist_H
 #include <string.h>
 #include <stdlib.h>
 #include "talist.h"
@@ -8,12 +8,18 @@
 BeginEsdlNamespace()
 
 template <class T> class TPtrList : public IEObject  {
-private:
   size_t FCount, FCapacity;
   size_t FIncrement;
   T **Items;
   inline void Allocate()  {
-    Items = (T**)realloc( (void*)Items, FCapacity*sizeof(T*));
+    if( FCapacity == 0 )  {
+      if( Items!= NULL )  {
+        free(Items);
+        Items = 0;
+      }
+    }
+    else
+      Items = (T**)realloc((void*)Items, FCapacity*sizeof(T*));
   }
 
   void init(size_t size)  {
@@ -28,30 +34,40 @@ private:
   }
   inline void checkSize()  {
     if( FCapacity == FCount )
-      SetCapacity((long)(1.5*FCount + FIncrement));
+      SetCapacity((size_t)(1.5*FCount + FIncrement));
   }
-
+  void init_from_array(size_t size, const T** array)  {
+    init(size);
+    memcpy(Items, array, size*sizeof(T*));
+  }
 public:
   // creates a new empty objects
   TPtrList()  {  init(0);  }
   // allocates size elements (can be accessed diretly)
   TPtrList(size_t size)  {  init(size);  }
+  TPtrList(int size)  {  init(size);  }
 //..............................................................................
   /* copy constuctor - creates new copies of the objest, be careful as the assignement
    operator must exist for nonpointer objects */
   TPtrList(const TPtrList& list)  {
-   init(list.Count());
-   memcpy(Items, list.Items, list.Count()*sizeof(T*));
+    init(list.Count());
+    memcpy(Items, list.Items, list.Count()*sizeof(T*));
   }
 //..............................................................................
   /* copies values from an array of size elements  */
-  TPtrList(size_t size, const T** array )  {
-   init(size);
-   memcpy(Items, array, size*sizeof(T*));
+  TPtrList(size_t size, const T** array)  {  init_from_array(size, array);  }
+  TPtrList(int size, const T** array)  {  init_from_array(size, array);  }
+//..............................................................................
+  template <class List, class Accessor> TPtrList(const List& list, const Accessor& accessor)  {
+    init(list.Count());
+    for( size_t i=0; i < list.Count(); i++ )
+      Set(i, accessor.Access(list[i]));
   }
 //..............................................................................
-  //destructor - beware t40: error: expecthe objects are deleted!
-  virtual ~TPtrList()  {  if( Items != NULL )  free(Items);  }
+  virtual ~TPtrList()  {
+    if( Items != NULL )
+      free(Items);
+  }
 //..............................................................................
   //deletes the objects and clears the list
   inline void Clear()  {  
@@ -62,6 +78,12 @@ public:
     }
   }
 //..............................................................................
+  // calls delete on all items, does not change the object itself
+  void Delete() const {
+    for( size_t i=0; i < FCount; i++ )
+      delete Items[i];
+  }
+//..............................................................................
   virtual IEObject* Replicate() const {  return new TPtrList(*this);  }
 //..............................................................................
   inline TPtrList& Assign(const TPtrList& list)  {
@@ -70,7 +92,26 @@ public:
     FCount = list.Count();
     return *this;
   }
+//..............................................................................
+  template <class List> TPtrList& Assign(const List& l)  {
+    SetCount(l.Count());
+    for( size_t i=0; i < l.Count(); i++ )
+      Items[i] = l[i];
+    return *this;
+  }
+//..............................................................................
+  template <class List, class Accessor> TPtrList& Assign(const List& l, const Accessor& accessor)  {
+    SetCount(l.Count());
+    for( size_t i=0; i < l.Count(); i++ )
+      Set(i, accessor.Access(l[i]));
+    return *this;
+  }
+//..............................................................................
   inline TPtrList& operator = (const TPtrList& l)  {  return Assign(l);  }
+//..............................................................................
+  template <class List> inline TPtrList& operator = (const List& l)  {
+    return Assign(l);
+  }
 //..............................................................................
   inline TPtrList& AddList(const TPtrList& list)  {
     SetCapacity(list.Count() + FCount);
@@ -78,7 +119,28 @@ public:
     FCount += list.Count();
     return *this;
   }
+//..............................................................................
+  template <class List> TPtrList& AddList(const List& l)  {
+    const size_t off = FCount;
+    SetCount(l.Count() + FCount);
+    for( size_t i=0; i < l.Count(); i++ )
+      Set(off+i, l[i]);
+    return *this;
+  }
+//..............................................................................
+  template <class List, class Accessor> TPtrList& AddList(const List& l, const Accessor& accessor)  {
+    const size_t off = FCount;
+    SetCount(l.Count() + FCount);
+    for( size_t i=0; i < l.Count(); i++ )
+      Set(off+i, accessor.Access(l[i]));
+    return *this;
+  }
+//..............................................................................
   inline TPtrList& operator += (const TPtrList& l)  {  return AddList(l);  }
+//..............................................................................
+  template <class List> inline TPtrList& operator += (const List& l)  {
+    return AddList(l);
+  }
 //..............................................................................
   inline T*& Add(T* pObj=NULL)  {
     checkSize();
@@ -86,11 +148,16 @@ public:
     return Items[FCount++];
   }
 //..............................................................................
-  inline T*& Add(T& Obj)  {
-    checkSize();
-    Items[FCount] = &Obj;
-    return Items[FCount++];
+  inline T*& Add(T& Obj)  {  return Add(&Obj);  }
+//..............................................................................
+  inline T*& Set(size_t i, T* pObj)  {
+#ifdef _DEBUG
+  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, i, 0, FCount);
+#endif
+    return (Items[i] = pObj);
   }
+//..............................................................................
+  inline T*& Set(size_t i, T& Obj)  {  return Set(i , &Obj);  }
 //..............................................................................
   inline T*& AddUnique(T* pObj)  {
     const size_t ind = IndexOf(pObj);
@@ -99,14 +166,12 @@ public:
     return Add(pObj);
   }
 //..............................................................................
-  inline T*& AddUnique(T& Obj)  {
-    const size_t ind = IndexOf(Obj);
-    if( ind != InvalidIndex )  
-      return *Items[ind];
-    return Add(Obj);
-  }
+  inline T*& AddUnique(T& Obj)  {  return AddUnique(&Obj);  }
 //..............................................................................
   inline T*& Insert(size_t index, T* pObj=NULL)  {
+#ifdef _DEBUG
+  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount+1);
+#endif
     checkSize();
     memmove(&Items[index+1], &Items[index], (FCount-index)*sizeof(T*));
     Items[index] = pObj;
@@ -114,27 +179,47 @@ public:
     return Items[index];
   }
 //..............................................................................
-  inline T*& Insert(size_t index, T& Obj)  {
-    checkSize();
-    memmove(&Items[index+1], &Items[index], (FCount-index)*sizeof(T*));
-    Items[index] = &Obj;
-    FCount++;
-    return Items[index];
-  }
+  inline T*& Insert(size_t index, T& Obj)  {  return Insert(index, &Obj);  }
 //..............................................................................
-  TPtrList<T>& Insert(size_t index, const TPtrList<T>& list)  {
-    SetCapacity((long)(FCount + FIncrement + list.Count()));
-    size_t lc = list.Count();
+  TPtrList& Insert(size_t index, const TPtrList& list)  {
+#ifdef _DEBUG
+  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount+1);
+#endif
+    SetCapacity(FCount + FIncrement + list.Count());
+    const size_t lc = list.Count();
     memmove(&Items[index+lc], &Items[index], (FCount-index)*sizeof(T*));
     memcpy(&Items[index], list.Items, lc*sizeof(T*));
-    FCount += list.Count();
+    FCount += lc;
+    return *this;
+  }
+//..............................................................................
+  template <class List> TPtrList& Insert(size_t index, const List& list)  {
+#ifdef _DEBUG
+  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount+1);
+#endif
+    SetCapacity(FCount + FIncrement + list.Count());
+    const size_t lc = list.Count();
+    memmove(&Items[index+lc], &Items[index], (FCount-index)*sizeof(T*));
+    for( size_t i=0; i < lc; i++ )
+      Items[index+i] = list[i];
+    FCount += lc;
     return *this;
   }
 //..............................................................................
   inline void Insert(size_t index, size_t cnt)  {
-    SetCapacity((long)(FCount + FIncrement + cnt));
+#ifdef _DEBUG
+  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount+1);
+#endif
+    SetCapacity(FCount + FIncrement + cnt);
     memmove(&Items[index+cnt], &Items[index], (FCount-index)*sizeof(T*));
     FCount += cnt;
+  }
+//..............................................................................
+  inline void NullItem(size_t index) const {
+#ifdef _DEBUG
+  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
+#endif
+    Items[index] = NULL;
   }
 //..............................................................................
   inline T*& operator [] (size_t index) const {
@@ -144,21 +229,21 @@ public:
     return Items[index];
   }
 //..............................................................................
-  inline T*& Item(size_t index) const  {
+  inline T*& Item(size_t index) const {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
     return Items[index];
   }
 //..............................................................................
-  inline T*& Last() const  {
+  inline T*& Last() const {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, FCount-1, 0, FCount);
 #endif
     return Items[FCount-1];
   }
 //..............................................................................
-  inline const T* GetItem(size_t index) const  {
+  inline const T* GetItem(size_t index) const {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
@@ -166,7 +251,7 @@ public:
   }
 //..............................................................................
   inline void SetCapacity(size_t v)  {
-    if( v < FCapacity )    return;
+    if( v < FCapacity )  return;
     FCapacity = v;
     Allocate();
     memset(&Items[FCount], 0, (FCapacity-FCount)*sizeof(T*));  // initialise the rest of items to NULL
@@ -180,7 +265,7 @@ public:
 #endif
     for( size_t i=index+1; i < FCount; i++ )
       Items[i-1] = Items[i];
-    FCount --;
+    FCount--;
   }
 //..............................................................................
   void DeleteRange(size_t from, size_t count)  {
@@ -305,8 +390,42 @@ public:
     FCount = nc;
   }
 //..............................................................................
+  template <class PackAnalyser> void Pack(const PackAnalyser& pa)  {
+    size_t nc = 0;  // count null pointers
+    for( size_t i=0; i < FCount; i++, nc++ )  {
+      if( pa.OnItem(*Items[i]) )  {
+        nc--;
+        continue;
+      }
+      Items[nc] = Items[i];
+    }
+    FCount = nc;
+  }
+//..............................................................................
+  template <class PackAnalyser> void PackEx(const PackAnalyser& pa)  {
+    size_t nc = 0;  // count null pointers
+    for( size_t i=0; i < FCount; i++, nc++ )  {
+      if( pa.OnItem(*Items[i], i) )  {
+        nc--;
+        continue;
+      }
+      Items[nc] = Items[i];
+    }
+    FCount = nc;
+  }
+//..............................................................................
+  template <class Functor> void ForEach(const Functor& f) const {
+    for( size_t i=0; i < FCount; i++ )
+      f.OnItem(*Items[i]);
+  }
+//..............................................................................
+  template <class Functor> void ForEachEx(const Functor& f) const {
+    for( size_t i=0; i < FCount; i++ )
+      f.OnItem(*Items[i], i);
+  }
+//..............................................................................
   inline void Shrink() {
-    FCapacity = olx_max(1,FCount); // 0 will cause realloc to delete Items, causing troubles
+    FCapacity = FCount;
     Allocate();
   }
 //..............................................................................

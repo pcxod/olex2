@@ -101,7 +101,7 @@ public:
   static List& GenerateRegularRing(size_t sides, double norm, List& rv)  {
     rv.SetCapacity(rv.Count()+sides);
     double sin_a, cos_a;
-    SinCos(2*M_PI/sides, &sin_a, &cos_a);
+    olx_sincos(2*M_PI/sides, &sin_a, &cos_a);
     vec3d ps(cos_a, -sin_a, 0);
     for( size_t i=0; i < sides; i++ )  {
       rv.AddCCopy(ps*norm);

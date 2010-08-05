@@ -87,7 +87,7 @@ protected:
         brad *= HBondScale;      
       touch_point = (bn.Another(sa).crd()-oa.atom->crd()).Normalise();
       vec3f rot_vec(-touch_point[1], touch_point[0], 0);
-      CreateRotationMatrix(rot_mat, rot_vec.Normalise(), touch_point[2]);
+      olx_create_rotation_matrix(rot_mat, rot_vec.Normalise(), touch_point[2]);
       proj_mat = rot_mat*ProjMatr;
       const float b_len = (p1-oa.crd).Length();
       if( sa.GetEllipsoid() != NULL )  {
@@ -320,7 +320,7 @@ public:
     BondProjF.SetCount(BondDiv);
     BondProjT.SetCount(BondDiv);
     double sin_a, cos_a;
-    SinCos(2*M_PI/ElpDiv, &sin_a, &cos_a);
+    olx_sincos(2*M_PI/ElpDiv, &sin_a, &cos_a);
     vec3f ps(cos_a, -sin_a, 0);
     for( int i=0; i < ElpDiv; i++ )  {
       ElpCrd[i] = ps;
@@ -328,7 +328,7 @@ public:
       ps[0] = (float)(cos_a*x + sin_a*ps[1]);
       ps[1] = (float)(cos_a*ps[1] - sin_a*x);
     }
-    SinCos(2*M_PI/BondDiv, &sin_a, &cos_a);
+    olx_sincos(2*M_PI/BondDiv, &sin_a, &cos_a);
     ps = vec3f(cos_a/2, -sin_a/2, 0);
     for( int i=0; i < BondDiv; i++ )  {
       BondCrd[i] = ps;

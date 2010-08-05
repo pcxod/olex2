@@ -22,7 +22,7 @@ TEBasis::~TEBasis()  {
 //..............................................................................
 void TEBasis::SetZoom(double v)   {  FZoom = v; }
 //..............................................................................
-const TEBasis& TEBasis::operator  = (const TEBasis &B)  {
+const TEBasis& TEBasis::operator = (const TEBasis &B)  {
   FCenter = B.GetCenter();
   FRX = B.GetRX();
   FRY = B.GetRY();

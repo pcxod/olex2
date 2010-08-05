@@ -5,7 +5,7 @@
 #include "efile.h"
 #include "updateapi.h"
 #include "patchapi.h"
-#include "httpfs.h"
+#include "cdsfs.h"
 #include "winzipfs.h"
 
 #include "installer.h"
@@ -96,6 +96,10 @@ CInstallerDlg::CInstallerDlg(CWnd* pParent /*=NULL*/)
   GetVersionEx(&veri);
   // only after XP
   run_as_admin = veri.dwMajorVersion > 5;
+}
+CInstallerDlg::~CInstallerDlg()  {
+  if( tooltipCtrl != NULL )  delete tooltipCtrl;
+  if( ctrlBrush != NULL )  delete ctrlBrush;
 }
 
 void CInstallerDlg::DoDataExchange(CDataExchange* pDX)  {

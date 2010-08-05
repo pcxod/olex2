@@ -152,7 +152,7 @@ TSPlane::Def::Def(const TSPlane& plane) : atoms(plane.Count()), regular(plane.Is
   for( size_t i=0; i < plane.Count(); i++ )
     atoms.Set(i, new DefData(plane.GetAtom(i).GetRef(), plane.GetWeight(i)));
   if( plane.Count() == 0 )  return;
-  if( !plane.GetAtom(0).GetMatrix(0).IsFirst() )  {
+  if( !plane.GetAtom(0).IsAUAtom() )  {
     const TUnitCell& uc = plane.GetNetwork().GetLattice().GetUnitCell();
     const smatd im = plane.GetAtom(0).GetMatrix(0).Inverse();
     for( size_t i=0; i < atoms.Count(); i++ )  {
@@ -179,7 +179,7 @@ TSPlane* TSPlane::Def::FromAtomRegistry(AtomRegistry& ar, size_t def_id, TNetwor
     const TUnitCell& uc = parent->GetLattice().GetUnitCell();
     for( size_t i=0; i < atoms.Count(); i++ )  {
       TSAtom::Ref ref = atoms[i].ref;
-      smatd m = matr*smatd::FromId(ref.matrix_id, uc.GetMatrix(smatd::GetContainerId(ref.matrix_id)));
+      smatd m = smatd::FromId(ref.matrix_id, uc.GetMatrix(smatd::GetContainerId(ref.matrix_id)))*matr;
       uc.InitMatrixId(m);
       if( i == 0 )
         equiv = m.r;

@@ -24,14 +24,13 @@
   in previous position!  ...
 */
 
-UseGlNamespace()
 //..............................................................................
-//..............................................................................
-
 TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   AGDrawObject(R, collectionName),
   OnCommand(Actions.New("ONCOMMAND")),
-  OnPost(Actions.New("ONPOST"))
+  OnPost(Actions.New("ONPOST")),
+  FontIndex(~0),
+  LinesVisible(~0)
 {
   PrintMaterial = NULL;
   FLineSpacing = 0;
@@ -39,20 +38,16 @@ TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   Width = Height = 100;
   PromptVisible = true;
   SkipPosting = false;
-  Blend = true;
   olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
   FCommand = PromptStr;
   FShowBuffer = true;
   SetSelectable(false);
-  FontIndex = ~0;
   FTxtPos = ~0;
   FMaxLines = 1000;
   FScrollDirectionUp = true;
   FLinesToShow = ~0;
   FCmdPos = ~0;
   FCursor = new TGlCursor(R, "Cursor");
-  //FCursor->Visible(false);
-
   SetToDelete(false);
   R.OnDraw.Add(this);
 }
@@ -64,19 +59,18 @@ TGlConsole::~TGlConsole()  {
 }
 //..............................................................................
 void TGlConsole::Create(const olxstr& cName, const ACreationParams* cpar)  {
+  FontIndex = Parent.GetScene().FindFontIndexForType<TGlConsole>(FontIndex);
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 
-  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;
 
   TGraphicsStyle& GS = GPC.GetStyle();
-
   FLinesToShow = GS.GetParam("LinesToShow", FLinesToShow, true).ToInt();
   FLineSpacing = GS.GetParam("LineSpacing", "0", true).ToDouble();
   InviteStr = GS.GetParam("Prompt", ">>", true);
-
   TGlPrimitive& GlP = GPC.NewPrimitive("Text", sgloText);
   GlP.SetProperties(GS.GetMaterial("Text", GetFont().GetMaterial()));
   GlP.Params[0] = -1;  //bitmap; TTF by default
@@ -84,8 +78,49 @@ void TGlConsole::Create(const olxstr& cName, const ACreationParams* cpar)  {
   olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
   FCommand = PromptStr;
   FStringPos = FCommand.Length();
-  Cmds.Clear();
-  Cmds.Add(FCommand);
+}
+//..............................................................................
+size_t TGlConsole::CalcScrollDown() const {
+  TGlFont& Fnt = GetFont();
+  const uint16_t th = Fnt.TextHeight(EmptyString);
+  const double Scale = Parent.GetScale(),
+               MaxY = ((double)Parent.GetHeight()/2-Top-th)*Scale,
+               LineSpacer = (0.05+FLineSpacing)*th;
+  const double empty_line_height = th*0.75*(1+FLineSpacing)*Scale;
+  vec3d T(GlLeft*Scale, GlTop*Scale, 0);
+  if( FBuffer[FTxtPos].IsEmpty() )
+    T[1] -= 0.5*th*Scale;
+  TGlOption CC = Parent.LightModel.GetClearColor();
+  size_t lines = 0;
+  if( ShowBuffer() && FLinesToShow != 0 )  {
+    for( index_t i=FTxtPos; i < FBuffer.Count(); i++ )  {
+      if( FBuffer[i].IsEmpty() )  {
+        T[1] += empty_line_height;
+        lines++;
+        continue;
+      }
+      size_t ii = (FTxtPos-i);
+      if( olx_is_valid_size(FLinesToShow) && ii >= FLinesToShow )  break;
+      if( T[1] > MaxY )  break;
+      olxstr line = FBuffer[i].SubStringTo(Fnt.LengthForWidth(FBuffer[i], Parent.GetWidth()));
+      // drawing spaces is not required ...
+      size_t stlen = line.Length();
+      while( line.CharAt(stlen-1) == ' ' && stlen > 1 ) stlen--;
+      line = line.SubStringTo(stlen);
+      if( stlen == 0 )  {
+        T[1] += empty_line_height;
+        lines++;
+        continue;
+      }
+      const TTextRect tr = Fnt.GetTextRect(line);
+      if( tr.top < 0 )
+        T[1] += tr.top*Scale;
+      if( i== 0 )  break;
+      T[1] += (olx_max(tr.height, Fnt.GetMaxHeight())+LineSpacer)*Scale;
+      lines++;
+    }
+  }
+  return lines;
 }
 //..............................................................................
 bool TGlConsole::Orient(TGlPrimitive& P)  {
@@ -95,86 +130,69 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
   if( Parent.GetWidth() < 100 )  return true;
   const uint16_t th = Fnt.TextHeight(EmptyString);
   const double Scale = Parent.GetScale(),
-               MaxY = ((double)Parent.GetHeight()/2-Top-th)*Scale;
+               MaxY = ((double)Parent.GetHeight()/2-Top-th)*Scale,
+               LineSpacer = (0.05+FLineSpacing)*th;
   const double MaxZ = -(Parent.GetMaxRasterZ()-0.002);
-  const size_t MaxLineWidth = Fnt.MaxTextLength(Parent.GetWidth());
-
-  olxstr line;
-  vec3d T;
+  const double empty_line_height = th*0.75*(1+FLineSpacing)*Scale;
+  vec3d T(GlLeft*Scale, GlTop*Scale, MaxZ);
+  if( FBuffer[FTxtPos].IsEmpty() )
+    T[1] -= 0.5*th*Scale;
+  LinesVisible = 0;
   const TGlMaterial& OGlM = P.GetProperties();
   TGlOption CC = Parent.LightModel.GetClearColor();
-  TGlMaterial GlM = OGlM;  // copy properties
-//  GlM.AmbientF[0] = 1-CC[0];  GlM.AmbientF[1] = 1-CC[1];  GlM.AmbientF[2] = 1-CC[2];
-  TGlOption Ambient = GlM.AmbientF;
   if( ShowBuffer() && FLinesToShow != 0 )  {
-    float Rk=1, Gk=1, Bk=1;
-    index_t lc = (index_t)(((float)Height-0.1)/(th*(FLineSpacing+1))); // calc the number of lines
-    if( PromptVisible )  lc -= Cmds.Count();
-    if( lc != 0 )  {
-      Rk = (CC[0] - Ambient[0])/lc;
-      Gk = (CC[1] - Ambient[1])/lc;
-      Bk = (CC[2] - Ambient[2])/lc;
-    }
-    for( index_t i=FTxtPos; i >= olx_max(0, (index_t)(FTxtPos)-lc); i-- )  {
-      if( FBuffer[i].IsEmpty() )  continue;
+    for( index_t i=FTxtPos; i >= 0; i-- )  {
+      if( FBuffer[i].IsEmpty() )  {
+        T[1] += empty_line_height;
+        LinesVisible++;
+        continue;
+      }
       size_t ii = (FTxtPos-i);
-      if( olx_is_valid_size(FLinesToShow) && ii > FLinesToShow )  continue;
-      if( IsPromptVisible() )  ii += Cmds.Count();
-
-      T[0] = GlLeft;  T[1] = GlTop + ii*LineInc;
-      T *= Scale;
+      if( olx_is_valid_size(FLinesToShow) && ii >= FLinesToShow )  break;
       if( T[1] > MaxY )  break;
-      if( FBuffer[i].Length() > MaxLineWidth )  
-        line = FBuffer[i].SubStringTo(MaxLineWidth);
-      else
-        line = FBuffer[i];
+      olxstr line = FBuffer[i].SubStringTo(Fnt.LengthForWidth(FBuffer[i], Parent.GetWidth()));
       // drawing spaces is not required ...
       size_t stlen = line.Length();
-      if( stlen == 0 )  continue;
       while( line.CharAt(stlen-1) == ' ' && stlen > 1 ) stlen--;
       line = line.SubStringTo(stlen);
-
-      olx_gl::rasterPos(T[0], T[1], MaxZ);
+      if( stlen == 0 )  {
+        T[1] += empty_line_height;
+        LinesVisible++;
+        continue;
+      }
       TGlMaterial* GlMP = FBuffer.GetObject(i);
       if( GlMP != NULL ) 
         GlMP->Init(Parent.IsColorStereo());
-      else if( IsBlend() )  {
-        GlM.AmbientF[0] = Ambient[0] + (float)ii*Rk;
-        GlM.AmbientF[1] = Ambient[1] + (float)ii*Gk;
-        GlM.AmbientF[2] = Ambient[2] + (float)ii*Bk;
-        GlM.Init(Parent.IsColorStereo()); // fading the text
-      }
       else
         OGlM.Init(Parent.IsColorStereo());
       P.SetString(&line);
+      const TTextRect tr = Fnt.GetTextRect(line);
+      if( tr.top < 0 )
+        T[1] -= tr.top*Scale;
       Parent.DrawText(P, T[0], T[1], MaxZ); 
       P.SetString(NULL);
-      if( i== 0 )  break;
-    }
-  }
-  if( PromptVisible )  {
-    GlM.AmbientF =Ambient;
-    GlM.Init(Parent.IsColorStereo());
-    if( Cmds.Count() == 1 )  {
-      T[0] = GlLeft;  T[1] = GlTop;
-      T *= Scale;
-      P.SetString(&FCommand);
-      Parent.DrawText(P, T[0], T[1], MaxZ); 
-      P.SetString(NULL);
-    }
-    else  {
-      for( size_t i=Cmds.Count()-1; olx_is_valid_index(i); i-- )  {
-        const size_t ii = Cmds.Count()-i-1;
-        if( olx_is_valid_size(FLinesToShow) && ii > FLinesToShow )  continue;
-        T[0] = GlLeft;  T[1] = GlTop + ii*LineInc;
-        T *= Scale;
-        P.SetString(&Cmds[i]);
-        Parent.DrawText(P, T[0], T[1], MaxZ); 
-        P.SetString(NULL);
-      }
+      if( i == 0 )  break;
+      T[1] += (olx_max(tr.height, Fnt.GetMaxHeight())+LineSpacer)*Scale;
+      LinesVisible++;
     }
   }
   OGlM.Init(Parent.IsColorStereo()); // restore the material properties
+  if( PromptVisible && !FCommand.IsEmpty() )  {
+    Fnt.Reset_ATI(Parent.IsATI());
+    const double LineInc = (th*(1+FLineSpacing))*Parent.GetViewZoom();
+    short cstate = 0, lstate = 0;
+    double line_cnt = 1;
+    olxstr tmp = FCommand;
+    while( true )  {
+      const size_t ml = Fnt.LengthForWidth(tmp, Parent.GetWidth(), lstate);
+      olx_gl::rasterPos(GlLeft*Scale, (GlTop - line_cnt*LineInc)*Scale, MaxZ);
+      Fnt.DrawRasterText(tmp.SubStringTo(ml), cstate);
+      if( tmp.Length() == ml )
+        break;
+      tmp = tmp.SubStringFrom(ml);
+      line_cnt++;
+    }
+  }
   return true;
 }
 //..............................................................................
@@ -260,24 +278,18 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     SetInsertPosition(FCommand.Length());
     return true;
   }
-  if( Key == WXK_PAGEUP || Key == WXK_PAGEDOWN )  {
-    TGlFont& Fnt = GetFont();
-    uint16_t th = Fnt.TextHeight(EmptyString);
-    size_t lc;
-    if( !olx_is_valid_size(FLinesToShow) )
-      lc = (size_t)((float)Height/(th*(1.0+FLineSpacing))*Parent.GetViewZoom()); // calc the number of lines
-    else
-      lc = FLinesToShow;
+  if( Key == WXK_PAGEUP || Key == WXK_PAGEDOWN && olx_is_valid_index(LinesVisible) )  {
     if( Key == WXK_PAGEDOWN )  {
-      FTxtPos += lc;
+      const size_t lines = CalcScrollDown();
+      FTxtPos += lines-1;
       if( FTxtPos >= FBuffer.Count() )
         FTxtPos = FBuffer.Count()-1;
     }
-    if( Key == WXK_PAGEUP )  {
-      if( FTxtPos < lc )
+    else if( Key == WXK_PAGEUP )  {
+      if( FTxtPos < LinesVisible-1 )
         FTxtPos = FBuffer.IsEmpty() ? ~0 : 0;
       else
-        FTxtPos -= lc;
+        FTxtPos -= (LinesVisible-1);
     }
     SetInsertPosition(FCommand.Length());
     return true;
@@ -338,15 +350,7 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hyphenate)  {
     //SetSkipPosting(false);
     return;
   }
-  olxstr Tmp(S);
   bool SingleLine = false;
-  for( size_t i=0; i < Tmp.Length(); i++ )  {
-    if( Tmp[i] == '\t' )  {
-      Tmp[i] = ' ';
-      int count = 8-i%8-1;
-      if( count > 0 ) Tmp.Insert(' ', i, count);
-    }
-  }
   if( Hyphenate )  {
     const size_t sz = GetFont().MaxTextLength(Parent.GetWidth());
     if( sz <= 0 )  return;
@@ -359,17 +363,16 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hyphenate)  {
     TGlMaterial *GlM = NULL;
     if( M != NULL )  GlM = new TGlMaterial(*M);
     if( !FBuffer.IsEmpty() && FBuffer.LastStr().IsEmpty() )  {
-      FBuffer.Last().String = Tmp;
+      FBuffer.Last().String = S;
       /* this line is added after memory leak analysis by Compuware DevPartner 8.2 trial */
       if( FBuffer.Last().Object != NULL )
         delete FBuffer.Last().Object;
       FBuffer.Last().Object = GlM;
     }
     else
-      FBuffer.Add(Tmp, GlM);
-    OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &Tmp);
+      FBuffer.Add(S, GlM);
+    OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &S);
   }
-
   KeepSize();
   FTxtPos = FBuffer.Count()-1;
   //FBuffer.Add(EmptyString);
@@ -383,19 +386,10 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  
   const size_t sz = GetFont().MaxTextLength(Parent.GetWidth());
   if( sz <= 0 )  return;
   TStrList Txt;
-  olxstr Tmp;
   for( size_t i=0; i < SL.Count(); i++ )  {
-    Tmp = SL[i];
-    for( size_t j=0; j < Tmp.Length(); j++ )  {
-      if( Tmp.CharAt(j) == '\t' )  {
-        Tmp[j] = ' ';
-        int count = 8-j%8-1;
-        if( count > 0 ) Tmp.Insert(' ', j, count);
-      }
-    }
     if( Hyphenate )  {
-      Txt.Clear();
-      Txt.Hyphenate(Tmp, sz, true);
+      TStrList Txt;
+      Txt.Hyphenate(SL[i], sz, true);
       for( size_t j=0; j < Txt.Count(); j++ )  {
         TGlMaterial *GlM = NULL;
         if( M != NULL )  GlM = new TGlMaterial(*M);
@@ -412,12 +406,12 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  
       TGlMaterial *GlM = NULL;
       if( M != NULL )  GlM = new TGlMaterial(*M);
       if( !FBuffer.IsEmpty() && FBuffer.LastStr().IsEmpty() )  {
-        FBuffer.Last().String = Tmp;
+        FBuffer.Last().String = SL[i];
         FBuffer.Last().Object = GlM;
       }
       else
-        FBuffer.Add(Tmp, GlM);
-      OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &Tmp);
+        FBuffer.Add(SL[i], GlM);
+      OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &SL[i]);
     }
   }
   KeepSize();
@@ -456,47 +450,52 @@ void TGlConsole::KeepSize()  {
   }
 }
 //..............................................................................
-void TGlConsole::Visible(bool On)  {
-  AGDrawObject::SetVisible(On);
-  FCursor->SetVisible(On);
-}
-//..............................................................................
 void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
-  if( !IsPromptVisible() || !olx_is_valid_index(FontIndex) || 
-    Parent.GetWidth()*Parent.GetHeight() <= 50*50 )  return;
+  if( !IsPromptVisible() || Parent.GetWidth()*Parent.GetHeight() <= 50*50 )  return;
   TGlFont& Fnt = GetFont();
-  if( InitCmds )  {
-    Cmds.Clear();
-    size_t MaxLineWidth = Fnt.MaxTextLength(Parent.GetWidth());
-    if( MaxLineWidth == 0 )  return;
-    Cmds.Hyphenate(FCommand, MaxLineWidth, true);
-  }
   GlLeft = ((double)Left - (double)Parent.GetWidth()/2) + 0.1;
   GlTop = ((double)Parent.GetHeight()/2 - (Height+Top)) + 0.1;
-  int th = Fnt.TextHeight(EmptyString);
-  LineInc = (th*(1+FLineSpacing))*Parent.GetViewZoom();
-  double Scale = Parent.GetScale();
-  vec3d T;
+  const double th = Fnt.TextHeight(EmptyString);
+  const double LineInc = (th*(1+FLineSpacing))*Parent.GetViewZoom();
+  const double Scale = Parent.GetScale();
   // update cursor position ...
-  if( !Cmds.IsEmpty() )   {
-    T[0] = GlLeft;
-    index_t dxp = GetInsertPosition();
-    size_t i;
-    for( i=0; i < Cmds.Count(); i++ )  {
-      dxp -= Cmds[i].Length();
-      if( dxp <= 0 )  break;
+  if( IsPromptVisible() )   {
+    vec3d T;
+    if( FCommand.IndexOf("\\-") != InvalidIndex )  // got subscript?
+      GlTop += th/4;
+    T[1] = GlTop;
+    size_t printed_cnt = 0, line_cnt = 0, cursor_line=0;;
+    short state = 0, cursor_state = 0;
+    olxstr tmp = FCommand;
+    bool init_x = true;
+    while( true )  {
+      short _state = state;
+      const size_t ml = Fnt.LengthForWidth(tmp, Parent.GetWidth(), state);
+      printed_cnt += ml;
+      if( init_x && printed_cnt > GetInsertPosition() )  {
+        T[0] = Fnt.TextWidth(tmp.SubStringTo(ml-(printed_cnt-GetInsertPosition())), _state);
+        cursor_state = _state;
+        init_x = false;
+        cursor_line = line_cnt;
+      }
+      if( tmp.Length() == ml )  {
+        if( init_x )  {
+          T[0] = Fnt.TextWidth(tmp, _state);
+          init_x = false;
+          cursor_line = line_cnt;
+          cursor_state = state;
+        }
+        break;
+      }
+      tmp = tmp.SubStringFrom(ml);
+      line_cnt++;
     }
-    if( i >= Cmds.Count() )  i = Cmds.Count()-1;
-    T[1] = GlTop + (Cmds.Count()-1-i)*LineInc;
-
-    if( dxp < 0 )
-      T[0] += Fnt.TextWidth(Cmds[i].SubStringTo(Cmds[i].Length() + dxp));
-    else
-      T[0] += Fnt.TextWidth(Cmds[i]);
-    T[0] -= Fnt.GetMaxWidth()/2;  // move the cursor half a char left
+    T[0] += GlLeft;
+    T[0] -= Fnt.GetCharHalfWidth(cursor_state);  // move the cursor half a char left
+    T[1] += LineInc*(line_cnt-cursor_line);
     T *= Scale;
     FCursor->SetPosition(T[0], T[1]);
-    FCursor->SetFontIndex(FontIndex);
+    GlTop += th*(line_cnt+1);
   }
 }
 //..............................................................................
@@ -505,21 +504,25 @@ void TGlConsole::SetInsertPosition(size_t v)  {
   UpdateCursorPosition(true);
 }
 //..............................................................................
-TGlFont &TGlConsole::GetFont() const {  
-  TGlFont* fnt = Parent.GetScene().GetFont(FontIndex);
-  if( fnt == NULL )
-    throw TInvalidArgumentException(__OlxSourceInfo, "font index");
-  return *fnt;
-}
+TGlFont &TGlConsole::GetFont() const {  return Parent.GetScene().GetFont(FontIndex, true);  }
 //..............................................................................
 bool TGlConsole::Enter(const IEObject *Sender, const IEObject *Data)  {
-  UpdateCursorPosition(false);
+  if( IsVisible() )
+    UpdateCursorPosition(false);
   return true;
+}
+//..............................................................................
+void TGlConsole::SetVisible(bool v)  {
+  AGDrawObject::SetVisible(v);
+  if( !v )
+    FCursor->SetVisible(false);
+  else
+    FCursor->SetVisible(PromptVisible);
 }
 //..............................................................................
 void TGlConsole::SetPromptVisible(bool v)  {
   PromptVisible = v;
-  FCursor->SetVisible( v );
+  FCursor->SetVisible(v);
 }
 //..............................................................................
 void TGlConsole::SetInviteString(const olxstr &S)  {
@@ -529,7 +532,7 @@ void TGlConsole::SetInviteString(const olxstr &S)  {
   olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
   FCommand = PromptStr;
   FCommand << cmd;
-  SetInsertPosition(  FCommand.Length() );
+  SetInsertPosition(FCommand.Length());
 }
 //..............................................................................
 void TGlConsole::SetLinesToShow(size_t V)  {
@@ -537,7 +540,7 @@ void TGlConsole::SetLinesToShow(size_t V)  {
   GetPrimitives().GetStyle().SetParam("LinesToShow", FLinesToShow, true);
 }
 //..............................................................................
-void TGlConsole::SetLineSpacing(float v)  {
+void TGlConsole::SetLineSpacing(double v)  {
   FLineSpacing = olx_max(-0.9, v);
   GetPrimitives().GetStyle().SetParam("LineSpacing", FLineSpacing, true);
 }
@@ -567,11 +570,6 @@ size_t TGlConsole::Write(const olxstr& str)  {
     else if( str.CharAt(i) == '\r' )  {
       if( i+1 < str.Length() && str.CharAt(i+1) != '\n' &&!FBuffer.IsEmpty() )
         FBuffer.Last().String = EmptyString;
-    }
-    else if( str.CharAt(i) == '\t') {
-      int count = 8-FBuffer.Last().String.Length()%8;
-      if( count > 0 )
-        FBuffer.Last().String.Insert(' ', FBuffer.Last().String.Length(), count);
     }
     else
       FBuffer.Last().String << str.CharAt(i);
@@ -608,8 +606,6 @@ bool TGlConsole::GetDimensions(vec3d &Max, vec3d &Min)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-
-
 void TGlConsole::LibClear(const TStrObjList& Params, TMacroError& E)  {
   ClearBuffer();
 }
@@ -647,13 +643,6 @@ void TGlConsole::LibInviteString(const TStrObjList& Params, TMacroError& E)  {
     E.SetRetVal(InviteStr);
 }
 //..............................................................................
-void TGlConsole::LibBlend(const TStrObjList& Params, TMacroError& E)  {
-  if( !Params.IsEmpty() )
-    SetBlend(Params[0].ToBool());
-  else
-    E.SetRetVal(IsBlend());
-}
-//..............................................................................
 void TGlConsole::LibCommand(const TStrObjList& Params, TMacroError& E)  {
   if( !Params.IsEmpty() )  {
     olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
@@ -681,11 +670,9 @@ TLibrary* TGlConsole::ExportLibrary(const olxstr& name)  {
     fpNone|fpOne, "Changes/returns current prompt string") );
   lib->RegisterFunction<TGlConsole>( new TFunction<TGlConsole>(this,  &TGlConsole::LibCommand, "Command",
     fpNone|fpOne, "Changes/returns current command") );
-  lib->RegisterFunction<TGlConsole>( new TFunction<TGlConsole>(this,  &TGlConsole::LibBlend, "Blend",
-    fpNone|fpOne, "Changes/returns text blending status") );
 
-  AGDrawObject::ExportLibrary( *lib );
-  lib->AttachLibrary( FCursor->ExportLibrary() );
+  AGDrawObject::ExportLibrary(*lib);
+  lib->AttachLibrary(FCursor->ExportLibrary());
   return lib;
 }
 

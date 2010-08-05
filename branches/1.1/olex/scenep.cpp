@@ -199,7 +199,7 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   cbFonts = new TComboBox(this);
   AGlScene& ascene = TGXApp::GetInstance().GetRender().GetScene();
   for( size_t i=0; i < ascene.FontCount(); i++ )
-    cbFonts->AddObject( ascene.GetFont(i)->GetName(), ascene.GetFont(i) );
+    cbFonts->AddObject(ascene._GetFont(i).GetName(), &ascene._GetFont(i));
   cbFonts->SetSelection(0);
   cbFonts->OnChange.Add(this);
   tbEditFont = new TButton(this);  tbEditFont->SetCaption("Edit Font");  tbEditFont->OnClick.Add(this);

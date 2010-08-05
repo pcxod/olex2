@@ -15,7 +15,7 @@ AProcess::AProcess(bool use_threads, const olxstr& cmdl, short flags) :
   ProcessId = -1;
   DubOutput = NULL;
   if( IsRedirected() )  // must be async
-    SetBit(false, Flags, spfSynchronised);
+    olx_set_bit(false, Flags, spfSynchronised);
 }
 //..............................................................................
 AProcess::~AProcess()  {

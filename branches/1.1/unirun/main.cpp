@@ -8,6 +8,7 @@
 #include "outstream.h"
 #include "efile.h"
 #include "wxzipfs.h"
+#include "httpfs.h"
 #include "etime.h"
 #include "settingsfile.h"
 #include "datafile.h"

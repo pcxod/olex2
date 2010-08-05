@@ -550,6 +550,7 @@ void TXGrid::SetScale(float v)  {
     if( v >= MinHole && v <= MaxHole )  {
       Info->Clear();
       Info->PostText("Locked");
+      Info->Fit();
       return;
     }
   }
@@ -567,7 +568,7 @@ void TXGrid::SetScale(float v)  {
     p_normals = IS->NormalList();
     p_triangles = IS->TriangleList();
     if( Scale < 0 )  {
-      IS->GenerateSurface( -Scale );
+      IS->GenerateSurface(-Scale);
       n_vertices = IS->VertexList();
       n_normals = IS->NormalList();
       n_triangles = IS->TriangleList();
@@ -689,6 +690,7 @@ void TXGrid::UpdateInfo()  {
     Info->PostText(olxstr("Contours number: ") << GetContourLevelCount());
   else
     Info->PostText(olxstr("Current level: ") << Scale);
+  Info->Fit();
 }
 //..............................................................................
 void TXGrid::GlContextChange()  {
@@ -713,7 +715,7 @@ void TXGrid::RescaleSurface()  {
       const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
       const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
       const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
-      glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
+      glNewList(li == 0 ? PListId : NListId, GL_COMPILE);
       olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
       olx_gl::begin(GL_TRIANGLES);
       for( int x=-1; x <= 1; x++ )  {
@@ -758,7 +760,7 @@ void TXGrid::RescaleSurface()  {
         TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
         const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
         const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
-        glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
+        glNewList(li == 0 ? PListId : NListId, GL_COMPILE);
         olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
         olx_gl::begin(GL_TRIANGLES);
         for( float x=ExtMin[0]; x < ExtMax[0]; x++ )  {
@@ -799,7 +801,7 @@ void TXGrid::RescaleSurface()  {
           verts[i][0] /= (MaxX-1);  verts[i][1] /= (MaxY-1);  verts[i][2] /= (MaxZ-1);  // cell drawing
           au.CellToCartesian(verts[i]);                                     // cell drawing
         }
-        glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
+        glNewList(li == 0 ? PListId : NListId, GL_COMPILE);
         olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
         olx_gl::begin(GL_TRIANGLES);
         for( size_t i=0; i < trians.Count(); i++ )  {
@@ -856,6 +858,100 @@ void TXGrid::InitIso()  {
     IS = new CIsoSurface(*ED);
     SetScale(Scale);
   }
+}
+//..............................................................................
+TXBlob* TXGrid::CreateBlob(int x, int) const {
+  if( IS == NULL || !Is3D() )  return NULL;
+  const TAsymmUnit& au =  XApp->XFile().GetAsymmUnit();
+  TXBlob* xb = new TXBlob(Parent, "blob");
+  //IS->GenerateSurface(Scale);
+  TPtrList<IsoTriangle> triags;
+  const TArrayList<vec3f>& vertices = IS->VertexList();
+  const TArrayList<vec3f>& normals = IS->NormalList();
+  const TArrayList<IsoTriangle>& triangles = IS->TriangleList();
+  TEBitArray verts(vertices.Count()), used_triags(triangles.Count());
+  verts.SetTrue(triangles[0].pointID[0]);
+  verts.SetTrue(triangles[0].pointID[1]);
+  verts.SetTrue(triangles[0].pointID[2]);
+  triags.Add(triangles[0]);
+  bool added = true;
+  size_t vec_cnt = 0;
+  while( added )  {
+    added = false;
+    for( size_t i=1; i < triangles.Count(); i++ )  {
+      if( used_triags[i] )  continue;
+      IsoTriangle& t = triangles[i];
+      bool has_shared_point = false;
+      for( int j=0; j < 3; j++ )  {
+        if( verts[t.pointID[j]] )  {
+          has_shared_point = true;
+          //break;
+        }
+        bool trimmed = false;
+        vec3f v = vertices[t.pointID[j]];
+        if( v[0] >= MaxX )  {  v[0] -= MaxX;  trimmed = true;  }
+        if( v[1] >= MaxY )  {  v[1] -= MaxY;  trimmed = true;  }
+        if( v[2] >= MaxZ )  {  v[2] -= MaxZ;  trimmed = true;  }
+        if( trimmed )  {
+          for( size_t k=0; k < vertices.Count(); k++ )  {
+            if( !verts[k] && vertices[k].QDistanceTo(v) < 1.7 )  {
+              verts.SetTrue(k);
+            }
+          }
+        }
+      }
+      if( has_shared_point )  {
+        added = true;
+        used_triags.SetTrue(i);
+        triags.Add(t);
+        for( int j=0; j < 3; j++ )  {
+          if( !verts[t.pointID[j]] )  {
+            verts.SetTrue(t.pointID[j]);
+            vec_cnt++;
+          }
+        }
+      }
+    }
+  }
+  xb->vertices.SetCapacity(vec_cnt);
+  xb->normals.SetCapacity(vec_cnt);
+  TArrayList<size_t> new_ids(vertices.Count());
+  for( size_t i = 0; i < verts.Count(); i++ )  {
+    if( verts[i] )  {
+      new_ids[i] = xb->vertices.Count();
+      vec3f &v = xb->vertices.AddCCopy(vertices[i]), v1;
+      au.CellToCartesian<vec3f,vec3f>(vec3f(v[0]/MaxX, v[1]/MaxY, v[2]/MaxZ), v1);
+      if( i > 0 )  {
+        float qd = v1.QDistanceTo(xb->vertices[0]);
+        int tx=0, ty=0, tz=0;
+        for( int ix=-1; ix <= 1; ix++ )  {
+          for( int iy=-1; iy <= 1; iy++ )  {
+            for( int iz=-1; iz <= 1; iz++ )  {
+              au.CellToCartesian<vec3f,vec3f>(vec3f(v[0]/MaxX+ix, v[1]/MaxY+iy, v[2]/MaxZ+iz), v1);
+              const float qd1 = v1.QDistanceTo(xb->vertices[0]);
+              if( qd1 < qd )  {
+                qd = qd1;
+                tx = ix;  ty = iy;  tz = iz;
+              }
+            }
+          }
+        }
+        au.CellToCartesian<vec3f,vec3f>(vec3f(v[0]/MaxX+tx, v[1]/MaxY+ty, v[2]/MaxZ+tz), v1);
+      }
+      v = v1;
+      xb->normals.AddCCopy(normals[i]);
+    }
+    else
+      new_ids[i] = ~0;
+  }
+  xb->triangles.SetCapacity(triags.Count());
+  for( size_t i=0; i < triags.Count(); i++ )  {
+    IsoTriangle& t = xb->triangles.Add(new IsoTriangle(*triags[i]));
+    t.pointID[0] = new_ids[t.pointID[0]];
+    t.pointID[1] = new_ids[t.pointID[1]];
+    t.pointID[2] = new_ids[t.pointID[2]];
+  }
+  return xb;
 }
 //..............................................................................
 //..............................................................................

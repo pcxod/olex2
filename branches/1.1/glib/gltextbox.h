@@ -37,6 +37,7 @@ public:
   int GetLeft() const {  return Left;  }
   void SetTop(int top);
   int GetTop() const {  return Top;  }
+  void Fit();
 
   DefPropP(uint16_t, FontIndex)
   DefPropP(uint16_t, MaxStringLength)
@@ -44,8 +45,8 @@ public:
 
   void PostText(const olxstr &S, class TGlMaterial *M=NULL);
   void PostText(const TStrList &SL, TGlMaterial *M=NULL);
-  inline void NewLine() {  FBuffer.Add(EmptyString); }
-  class TGlFont& GetFont()  const;
+  inline void NewLine()  {  FBuffer.Add();  }
+  class TGlFont& GetFont() const;
   bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
 };
 

@@ -3,24 +3,20 @@
 //---------------------------------------------------------------------------//
 #include "glscene.h"
 #include "glrender.h"
-#include "glfont.h"
 
 UseGlNamespace();
 //..............................................................................
 //..............................................................................
-AGlScene::AGlScene()  {
-  FParent = NULL;
-}
+AGlScene::AGlScene() : FParent(NULL) {}
 //..............................................................................
 AGlScene::~AGlScene()  {
-  for( size_t i=0; i < Fonts.Count(); i++ )  {
-    delete Fonts[i];
-  }
+  Fonts.Delete();
+  SmallFonts.Delete();
 }
 //..............................................................................
 void AGlScene::StartDraw()  {  olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
 //..............................................................................
-void AGlScene::EndDraw()    {  olx_gl::flush();  }
+void AGlScene::EndDraw()  {  olx_gl::flush();  }
 //..............................................................................
 void AGlScene::StartSelect(int x, int y, GLuint *Bf)  {
   olx_gl::selectBuffer(MAXSELECT, Bf);
@@ -37,13 +33,26 @@ int AGlScene::EndSelect()  {
   return hits;
 }
 //..............................................................................
-void AGlScene::Destroy()    {  return; }
-//..............................................................................
-TGlFont* AGlScene::FindFont(const olxstr& name)  {
-  for( size_t i=0; i < Fonts.Count(); i++ )
-    if( Fonts[i]->GetName().Equalsi(name) )
-      return Fonts[i];
-  return NULL;
+TGlFont& AGlScene::CreateFont(const olxstr& name, const olxstr& fntDescription)  {
+  const size_t i = FontsDict.IndexOf(name);
+  if( i != InvalidIndex ) {
+    // overwrite
+    FontsDict.GetValue(i)->ClearData();
+    FontsDict.GetValue(i)->SetIdString(fntDescription);
+    if( olx_is_valid_index(FontsDict.GetValue(i)->SmallId) )  {
+      SmallFonts[FontsDict.GetValue(i)->SmallId]->ClearData();
+      SmallFonts[FontsDict.GetValue(i)->SmallId]->SetIdString(fntDescription);
+    }
+    return *FontsDict.GetValue(i);
+  }
+  TGlFont* fnt = Fonts.Add(new TGlFont(*this, Fonts.Count(), name));
+  fnt->SetIdString(fntDescription);
+  FontsDict.Add(name, fnt);
+  if( !fnt->IsVectorFont() )  {
+    fnt->SmallId = SmallFonts.Count();
+    SmallFonts.Add(new TGlFont(*this, SmallFonts.Count(), name))->SetIdString(fntDescription);
+  }
+  return *fnt;
 }
 //..............................................................................
 //..............................................................................

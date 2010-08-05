@@ -2,18 +2,13 @@
 // material properties dialog
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
 #include "matprop.h"
-
 #include "wx/colordlg.h"
 #include "wx/fontdlg.h"
-
 #include "gpcollection.h"
 #include "glgroup.h"
 #include "xatom.h"
+#include "xbond.h"
 //..............................................................................
 enum  {
   ID_COPY = 1,
@@ -30,53 +25,52 @@ END_EVENT_TABLE()
 //..............................................................................
 TGlMaterial TdlgMatProp::MaterialCopy;
 //..............................................................................
-TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XApp) :
+TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, AGDrawObject& object) :
   TDialog(ParentFrame, wxT("Material Parameters"), wxT("dlgMatProp"))
 {
+  Material = NULL;
+  Object = &object;
+  Init();
+}
+//..............................................................................
+TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGlMaterial& mat) :
+  TDialog(ParentFrame, wxT("Material Parameters"), wxT("dlgMatProp"))
+{
+  Material = &mat;
+  Object = NULL;
+  Init();
+  Materials[0] = mat;
+}
+//..............................................................................
+void TdlgMatProp::Init()  {
   AActionHandler::SetToDelete(false);
   bEditFont = NULL;
-  if( GPC != NULL && GPC->ObjectCount() == 0 )
-    throw TFunctionFailedException(__OlxSourceInfo, "empty collection");
   short Border = 3, SpW = 40;
-  GPCollection = GPC;
-  FXApp = XApp;
-  if( GPC != NULL )  {
-    if( EsdlInstanceOf( GPC->GetObject(0), TXAtom) && FXApp->GetSelection().Count() > 1 )  {
-      FAtom = &(TXAtom&)GPC->GetObject(0);
+  cbApplyToGroup = NULL;
+  FCurrentMaterial = 0;
+  if( Object != NULL && Object->GetPrimitives().PrimitiveCount() > 1 )  {
+    cbPrimitives = new TComboBox(this);
+    TGPCollection& gpc = Object->GetPrimitives();
+    Materials = new TGlMaterial[gpc.PrimitiveCount()+1];
+    for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
+      TGlPrimitive& GlP = gpc.GetPrimitive(i);
+      cbPrimitives->AddObject(GlP.GetName(), &GlP);
+      Materials[i] = GlP.GetProperties();
+    }
+    cbPrimitives->SetValue(gpc.GetPrimitive(0).GetName().u_str());
+    cbPrimitives->OnChange.Add(this);
+    if( (EsdlInstanceOf(*Object,TXAtom) || EsdlInstanceOf(*Object, TXBond)) && Object->IsSelected() )  {
       cbApplyToGroup = new wxCheckBox(this, -1, wxT("Apply to All"), wxDefaultPosition, wxDefaultSize);
       cbApplyToGroup->SetValue(true);
     }
-    else  {
-      FAtom = NULL;
-      cbApplyToGroup = NULL;
-    }
-  }
-  else  {
-    FAtom = NULL;
-    cbApplyToGroup = NULL;
-  }
-
-  if( GPC != NULL && GPC->PrimitiveCount() )  {
-    cbPrimitives = new TComboBox(this);
-    FMaterials = new TGlMaterial[GPC->PrimitiveCount()+1];
-    for( size_t i=0; i < GPC->PrimitiveCount(); i++ )  {
-      TGlPrimitive& GlP = GPC->GetPrimitive(i);
-      cbPrimitives->AddObject(GlP.GetName(), &GlP);
-      FMaterials[i] = GlP.GetProperties();
-    }
-    cbPrimitives->SetValue(GPC->GetPrimitive(0).GetName().u_str());
-    cbPrimitives->OnChange.Add(this);
-    FCurrentMaterial = 0;
   }
   else  {
     cbPrimitives = NULL;
-    FMaterials = new TGlMaterial[1];
-    if( GPC != NULL && EsdlInstanceOf(GPC->GetObject(0), TGlGroup) )  {
-      FMaterials[0] = ((TGlGroup&)GPC->GetObject(0)).GetGlM();
-    }
-    FCurrentMaterial = 0;
+    Materials = new TGlMaterial[1];
+    if( Object != NULL && EsdlInstanceOf(*Object, TGlGroup) )
+      Materials[0] = ((TGlGroup*)Object)->GetGlM();
   }
-  long flags = 0;wxCHK_3STATE|wxCHK_ALLOW_3RD_STATE_FOR_USER;
+  long flags = 0; //wxCHK_3STATE|wxCHK_ALLOW_3RD_STATE_FOR_USER;
   cbAmbF = new wxCheckBox(this, -1, wxT("Ambient Front"), wxDefaultPosition, wxDefaultSize, flags);
   scAmbF = new TSpinCtrl(this);  scAmbF->WI.SetWidth(SpW);  scAmbF->SetRange(0, 100);
   cbAmbB = new wxCheckBox(this, -1, wxT("Ambient Back"), wxDefaultPosition, wxDefaultSize, flags);
@@ -117,7 +111,7 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
   tcShnB = new TTextEdit(this);  tcShnB->SetReadOnly(false); 
 
   wxBoxSizer *Sizer0 = NULL;
-  if( cbPrimitives )  {
+  if( cbPrimitives != NULL )  {
     Sizer0 = new wxBoxSizer(wxHORIZONTAL);
     Sizer0->Add(cbPrimitives, 0, wxEXPAND | wxALL, Border);
     if( cbApplyToGroup )
@@ -125,7 +119,8 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
     Sizer0->Add(new wxButton(this, ID_COPY, wxT("Copy  Mat.")), 1, wxEXPAND | wxALL, Border);
     Sizer0->Add(new wxButton(this, ID_PASTE, wxT("Paste Mat.")), 1, wxEXPAND | wxALL, Border);
     bEditFont = new wxButton(this, ID_EDITFONT, wxT("Edit Font"));
-    bEditFont->Enable(GPC->GetPrimitive(0).GetFont() != NULL);
+    bEditFont->Enable(Object->GetPrimitives().GetPrimitive(0).GetFont() != NULL &&
+      !Object->GetPrimitives().GetPrimitive(0).GetFont()->IsVectorFont());
     Sizer0->Add(bEditFont, 1, wxEXPAND | wxALL, Border);
   }
 
@@ -197,18 +192,14 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
   if( Sizer0 )  TopSiser->Add(Sizer0, 0, wxEXPAND | wxALL, 5);
   TopSiser->Add(grid, 0, wxEXPAND | wxALL, 5);
   TopSiser->Add(ButtonsSizer, 0, wxALL, 10);
-
   SetSizer(TopSiser);      // use the sizer for layout
-
   TopSiser->SetSizeHints(this);   // set size hints to honour minimum size
-
   Center();
-
-  Init(FMaterials[0]);
+  Init(Materials[0]);
 }
 //..............................................................................
 TdlgMatProp::~TdlgMatProp()  {
-  delete [] FMaterials;
+  delete [] Materials;
   if( cbPrimitives != NULL )  
     cbPrimitives->OnChange.Clear();
   scTrans->OnChange.Clear();
@@ -234,13 +225,13 @@ bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data)  {
     delete CD;
   }
   if( (TComboBox*)Sender == cbPrimitives )  {
-    Update(FMaterials[FCurrentMaterial]);
+    Update(Materials[FCurrentMaterial]);
     int i = cbPrimitives->FindString(cbPrimitives->GetValue());
     if( i >= 0 )  {
       FCurrentMaterial = i;
-      Init(FMaterials[FCurrentMaterial]);
+      Init(Materials[FCurrentMaterial]);
       const TGlPrimitive* glp = (const TGlPrimitive*)cbPrimitives->GetObject(i);
-      bEditFont->Enable( glp->GetFont() != NULL);
+      bEditFont->Enable(glp->GetFont() != NULL && !glp->GetFont()->IsVectorFont());
     }
   }
   if( (TSpinCtrl*)Sender == scTrans )  {
@@ -337,63 +328,79 @@ void TdlgMatProp::Update(TGlMaterial &Glm)  {
 }
 //..............................................................................
 void TdlgMatProp::OnOK(wxCommandEvent& event)  {
-  Update(FMaterials[FCurrentMaterial]);
-  if( FAtom != NULL && cbApplyToGroup->GetValue() )  {
-    TGlGroup& gl = FXApp->GetSelection();
-    TGPCollection* ogpc = &FAtom->GetPrimitives();
-    SortedPtrList<TGPCollection, TPointerPtrComparator> uniqCol;
-    for( size_t i=0; i < gl.Count(); i++ )
-      if( EsdlInstanceOf(gl.GetObject(i), TXAtom) )  {
-        uniqCol.AddUnique(&gl.GetObject(i).GetPrimitives());
+  Update(Materials[FCurrentMaterial]);
+  if( Object != NULL )  {
+    if( EsdlInstanceOf(*Object, TGlGroup) )  {
+      ((TGlGroup*)Object)->SetGlM(Materials[0]);
     }
-    for( size_t i=0; i < uniqCol.Count(); i++ )  {
-      if( uniqCol[i] != ogpc )  {
-        for( size_t j=0; j < ogpc->PrimitiveCount(); j++ )  {
-          TGlPrimitive* glp = uniqCol[i]->FindPrimitiveByName(ogpc->GetPrimitive(j).GetName());
-          if( glp != NULL )  {
-            glp->SetProperties(FMaterials[j]);
-            uniqCol[i]->GetStyle().SetMaterial(glp->GetName(), FMaterials[j]);
-          }
+    else if( Object->IsSelected() )  {
+      TGXApp& app = TGXApp::GetInstance();
+      TGlGroup& gl = app.GetSelection();
+      TGPCollection* ogpc = &Object->GetPrimitives();
+      SortedPtrList<TGPCollection, TPointerPtrComparator> uniqCol;
+      if( (cbApplyToGroup == NULL || cbApplyToGroup->GetValue()) )  {
+        for( size_t i=0; i < gl.Count(); i++ )  {
+          if( EsdlInstanceOf(gl[i], *Object) )
+            uniqCol.AddUnique(&gl[i].GetPrimitives());
         }
       }
       else  {
-        for( size_t j=0; j < ogpc->PrimitiveCount(); j++ )  {
-          ogpc->GetPrimitive(j).SetProperties(FMaterials[j]);
-          ogpc->GetStyle().SetMaterial(ogpc->GetPrimitive(j).GetName(), FMaterials[j]);
+        for( size_t i=0; i < gl.Count(); i++ )  {
+          if( EsdlInstanceOf(gl[i], *Object) )  {
+            if( EsdlInstanceOf(gl[i], TXAtom) )
+              app.Individualise((TXAtom&)gl[i]);
+            else if( EsdlInstanceOf(gl[i], TXBond) )
+              app.Individualise((TXBond&)gl[i]);
+            uniqCol.AddUnique(&gl[i].GetPrimitives());
+          }
         }
+      }
+      for( size_t i=0; i < uniqCol.Count(); i++ )  {
+        if( uniqCol[i] != ogpc )  {
+          for( size_t j=0; j < ogpc->PrimitiveCount(); j++ )  {
+            TGlPrimitive* glp = uniqCol[i]->FindPrimitiveByName(ogpc->GetPrimitive(j).GetName());
+            if( glp != NULL )  {
+              glp->SetProperties(Materials[j]);
+              uniqCol[i]->GetStyle().SetMaterial(glp->GetName(), Materials[j]);
+            }
+          }
+        }
+        else  {
+          for( size_t j=0; j < ogpc->PrimitiveCount(); j++ )  {
+            ogpc->GetPrimitive(j).SetProperties(Materials[j]);
+            ogpc->GetStyle().SetMaterial(ogpc->GetPrimitive(j).GetName(), Materials[j]);
+          }
+        }
+      }
+    }
+    else  {
+      TGPCollection& gpc = Object->GetPrimitives();
+      for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
+        gpc.GetPrimitive(i).SetProperties(Materials[i]);
+        gpc.GetStyle().SetMaterial(gpc.GetPrimitive(i).GetName(), Materials[i]);
       }
     }
   }
   else  {
-    if( GPCollection != NULL && EsdlInstanceOf(GPCollection->GetObject(0), TGlGroup) )  {
-      ((TGlGroup&)GPCollection->GetObject(0)).SetGlM(FMaterials[0]);
-    }
-    else  {
-      if( GPCollection != NULL )  {
-        //TGraphicsStyle* GS = FXApp->GetRender().Styles()->NewStyle( GPCollection->Name(), true);
-        for( size_t i=0; i < GPCollection->PrimitiveCount(); i++ )  {
-          GPCollection->GetPrimitive(i).SetProperties(FMaterials[i]);
-          GPCollection->GetStyle().SetMaterial(GPCollection->GetPrimitive(i).GetName(), FMaterials[i]);
-        }
-      }
-    }
+    *Material = Materials[0];
   }
 //  FDrawObject->UpdatePrimitives(24);
   EndModal(wxID_OK);
 }
 //..............................................................................
 void TdlgMatProp::OnCopy(wxCommandEvent& event)  {
-  Update(FMaterials[FCurrentMaterial]);
-  MaterialCopy = FMaterials[FCurrentMaterial];
+  Update(Materials[FCurrentMaterial]);
+  MaterialCopy = Materials[FCurrentMaterial];
 }
 //..............................................................................
 void TdlgMatProp::OnPaste(wxCommandEvent& event)  {
-//  FMaterials[FCurrentMaterial] = MaterialCopy;
+//  Materials[FCurrentMaterial] = MaterialCopy;
   Init(MaterialCopy);
 }
 //..............................................................................
 void TdlgMatProp::OnEditFont(wxCommandEvent& event)  {
-  FXApp->GetRender().GetScene().ShowFontDialog( GPCollection->GetPrimitive(FCurrentMaterial).GetFont());
+  TGXApp::GetInstance().GetRender().GetScene().ShowFontDialog(
+    Object->GetPrimitives().GetPrimitive(FCurrentMaterial).GetFont());
 }
 //..............................................................................
 

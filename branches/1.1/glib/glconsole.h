@@ -12,12 +12,12 @@ BeginGlNamespace()
 class TGlConsole: public AGDrawObject, 
                   public AActionHandler, 
                   public IDataOutputStream  {
-  float FLineSpacing;
+  double FLineSpacing;
   uint16_t Width, Height, Top, Left; // to clip the content
-  double GlLeft, GlTop, LineInc;
+  double GlLeft, GlTop;
+  size_t LinesVisible;
   TStrPObjList<olxstr,TGlMaterial*> FBuffer;
   TStrList FCommands;   // the content
-  TStrList Cmds;        // hyphenated commands
   olxstr FCommand;    // the command
   olxstr InviteStr, PromptStr;   //
   TActionQList Actions; // actions list
@@ -26,9 +26,9 @@ class TGlConsole: public AGDrawObject,
          FMaxLines,
          FLinesToShow,
          FStringPos;
-  bool FShowBuffer, FScrollDirectionUp, Blend,
+  bool FShowBuffer, FScrollDirectionUp,
     SkipPosting;  // the next pot operation will pass
-  uint16_t FontIndex;
+  size_t FontIndex;
   bool PromptVisible;
   TGlMaterial* PrintMaterial;
 protected:
@@ -36,6 +36,7 @@ protected:
   void SetInsertPosition(size_t v);
   size_t GetInsertPosition() const {  return FStringPos;  }
   void UpdateCursorPosition(bool InitCmds);
+  size_t CalcScrollDown() const;
   class TGlCursor *FCursor;
 
   // redefine nl - we do not need to write new line 
@@ -61,10 +62,10 @@ public:
     return (FCommand.StartsFrom(PromptStr) ? (FStringPos - PromptStr.Length()) : FStringPos);
   }
 
-  inline const TStrPObjList<olxstr,TGlMaterial*>& Buffer()  const  {  return FBuffer;  }
+  inline const TStrPObjList<olxstr,TGlMaterial*>& Buffer() const {  return FBuffer;  }
   void ClearBuffer();
 
-  bool IsPromptVisible()  const  {  return PromptVisible;  }
+  bool IsPromptVisible() const {  return PromptVisible;  }
   void SetPromptVisible(bool v);
 
   inline size_t GetCommandCount() const {  return FCommands.Count();  }
@@ -74,20 +75,20 @@ public:
 
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min);
-  bool ProcessKey( int Key, short ShiftState );
-  bool WillProcessKey( int Key, short ShiftState );
+  virtual void SetVisible(bool v);
+  bool ProcessKey(int Key, short ShiftState);
+  bool WillProcessKey(int Key, short ShiftState);
 
   DefPropP(uint16_t, Width)
   DefPropP(uint16_t, Height)
   DefPropP(uint16_t, Top)
   DefPropP(uint16_t, Left)
-  DefPropBIsSet(Blend)
   DefPropBIsSet(SkipPosting)
   DefPropP(TGlMaterial*, PrintMaterial)
   inline bool ShowBuffer() const {  return FShowBuffer; }
   inline void ShowBuffer(bool v)  {  FShowBuffer = v; }
-  inline float GetLineSpacing() const {  return FLineSpacing; }
-  void SetLineSpacing(float v);
+  inline double GetLineSpacing() const {  return FLineSpacing; }
+  void SetLineSpacing(double v);
   inline const olxstr& GetInviteString() const { return InviteStr; }
   void SetInviteString(const olxstr& S);
 
@@ -99,11 +100,8 @@ public:
   inline size_t GetLinesToShow() const {  return FLinesToShow;  }
   void SetLinesToShow(size_t V);
 
-  class TGlFont& GetFont()  const;
-  DefPropP(uint16_t, FontIndex)
-
+  class TGlFont& GetFont() const;
   inline TGlCursor& Cursor() const {  return *FCursor;  }
-  void Visible(bool On);
 
   inline bool ScrollDirectionUp() const {  return FScrollDirectionUp; }
   inline void ScrollDirectionUp(bool v) {  FScrollDirectionUp = v; }
@@ -117,7 +115,6 @@ public:
   void LibLineSpacing(const TStrObjList& Params, TMacroError& E);
   void LibInviteString(const TStrObjList& Params, TMacroError& E);
   void LibCommand(const TStrObjList& Params, TMacroError& E);
-  void LibBlend(const TStrObjList& Params, TMacroError& E);
   class TLibrary* ExportLibrary(const olxstr& name=EmptyString);
 };
 

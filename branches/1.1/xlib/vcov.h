@@ -2,7 +2,6 @@
 #define __olxs_v_co_v_h
 #include "asymmunit.h"
 #include "lattice.h"
-#include "ecast.h"
 #include "bapp.h"
 #include "log.h"
 /*
@@ -141,7 +140,7 @@ protected:
     return acos( (points[1]-points[0]).CAngle(points[3]-points[2]))*180.0/M_PI;
   }
   double _calcTHV(const vec3d_alist& points) const {
-    return TetrahedronVolume(points[0], points[1], points[2], points[3]);
+    return olx_tetrahedron_volume(points[0], points[1], points[2], points[3]);
   }
   double _calcTang(const vec3d_alist& points)  {
     return olx_dihedral_angle_signed(points[0], points[1], points[2], points[3]);

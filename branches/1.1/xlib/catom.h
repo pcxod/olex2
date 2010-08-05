@@ -215,6 +215,21 @@ public:
   PyObject* PyExport();
 #endif
   static int CompareAtomLabels(const olxstr& S, const olxstr& S1);
+  template <class Accessor=DirectAccessor> struct FlagsAnalyser  {
+    const short ref_flags;
+    FlagsAnalyser(short _ref_flags) : ref_flags(_ref_flags)  {}
+    template <class Item> inline bool OnItem(const Item& o) const {
+      return (Accessor::Access(o).Flags&ref_flags) != 0;
+    }
+  };
+  template <class Accessor=DirectAccessor> struct TypeAnalyser  {
+    const short ref_type;
+    TypeAnalyser(const cm_Element _ref_type) : ref_type(_ref_type.z)  {}
+    TypeAnalyser(short _ref_type) : ref_type(_ref_type)  {}
+    template <class Item> inline bool OnItem(const Item& o) const {
+      return Accessor::Access(o).GetType() == ref_type;
+    }
+  };
   friend class TAsymmUnit;
 };
 //..............................................................................
@@ -225,7 +240,7 @@ class TCAtomPComparator  {
 public:
   static int Compare(const TCAtom* a1, const TCAtom* a2)  {
     if( a1->GetFragmentId() != a2->GetFragmentId() )  return a1->GetFragmentId() - a2->GetFragmentId();
-    if( a1->GetResiId() != a2->GetResiId() )          return olx_cmp_size_t(a1->GetResiId(),a2->GetResiId());
+    if( a1->GetResiId() != a2->GetResiId() )          return olx_cmp(a1->GetResiId(),a2->GetResiId());
     // asc sort by label
     if( a1->GetType() == a2->GetType() )
       return TCAtom::CompareAtomLabels(a1->GetLabel(), a2->GetLabel());

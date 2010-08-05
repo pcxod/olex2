@@ -22,7 +22,7 @@ public:
   TEBasis(const TEBasis& B);
   virtual ~TEBasis();
 
-  const TEBasis& operator  = (const TEBasis &B);
+  const TEBasis& operator = (const TEBasis &B);
   template <class VC> void SetCenter(const VC& V)  {
     FCenter[0] = V[0];  FCenter[1] = V[1];  FCenter[2] = V[2];
   }
@@ -72,14 +72,14 @@ public:
   // rotation around an arbitrary vector, New = Current*m
   template <class VC> void Rotate(const VC& V, double angle)  {
     mat3d m;  
-    CreateRotationMatrix(m, V, cos(angle), sin(angle) );
+    olx_create_rotation_matrix(m, V, cos(angle), sin(angle) );
     FMatrix *= m;
   }
 
   // rotation around an arbitrary vector New = m*Current
   template <class VC> void RotateT(const VC& V, double angle)  {
     mat3d m;  
-    CreateRotationMatrix(m, V, cos(angle), sin(angle));
+    olx_create_rotation_matrix(m, V, cos(angle), sin(angle));
     FMatrix = m * FMatrix;
   }
 

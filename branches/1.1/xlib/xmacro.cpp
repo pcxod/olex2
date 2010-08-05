@@ -15,7 +15,6 @@
 #include "datafile.h"
 #include "dataitem.h"
 #include "fsext.h"
-#include "ecast.h"
 #include "xlcongen.h"
 #include "bitarray.h"
 #include "olxvar.h"
@@ -819,7 +818,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     for( size_t i=0; i < xlatt.AtomCount(); i++ )  {
       TSAtom& sa = xlatt.GetAtom(i);
       if( sa.IsDeleted() )  continue;
-      if( sa.GetMatrix(0).IsFirst() )
+      if( sa.IsAUAtom() )
         iatoms.Add(sa);
     }
     xlatt.GrowAtoms(iatoms, transforms);
@@ -1003,21 +1002,16 @@ void XLibMacros::macHImp(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 void XLibMacros::macAnis(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TSAtomPList atoms;
   if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
-  TCAtomPList catoms;
-  TListCaster::POP(atoms, catoms);
-  bool useH = Options.Contains("h");
-  for( size_t i=0; i < catoms.Count(); i++ )
-    if( !useH && catoms[i]->GetType() == iHydrogenZ )
-      catoms[i] = NULL;
-  catoms.Pack();
+  TCAtomPList catoms(atoms, TSAtom::CAtomAccessor<>());
+  if( !Options.Contains("h") )
+    catoms.Pack(TCAtom::TypeAnalyser<>(iHydrogenZ));
   TXApp::GetInstance().XFile().GetLattice().SetAnis(catoms, true);
 }
 //..............................................................................
 void XLibMacros::macIsot(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TSAtomPList atoms;
   if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
-  TCAtomPList catoms;
-  TListCaster::POP(atoms, catoms);
+  TCAtomPList catoms(atoms, TSAtom::CAtomAccessor<>());
   TXApp::GetInstance().XFile().GetLattice().SetAnis(catoms, false);
 }
 //..............................................................................
@@ -1109,8 +1103,6 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp & xapp = TXApp::GetInstance();
-  // do not print a warning...
-  if( xapp.XFile().GetLattice().IsGenerated() )  return;
   TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
   TEBitArray detached(au.AtomCount());
   for( size_t i=0; i < au.AtomCount(); i++ )  {
@@ -2815,16 +2807,16 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
   }
   for( size_t i=0; i < latt.AtomCount(); i++ )  {
     TSAtom& a = latt.GetAtom(i);
-    if( a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.GetMatrix(0).IsFirst() )  continue;
+    if( a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.IsAUAtom() )  continue;
     for( size_t j=0; j < a.BondCount(); j++ )  {
       TSBond& b = a.Bond(j);
-      if( b.GetTag() == 0 || !b.A().GetMatrix(0).IsFirst() )  continue;
+      if( b.GetTag() == 0 || !b.A().IsAUAtom() )  continue;
       b.SetTag(0);
       TCifRow& row = bonds.GetTable().AddRow(EmptyString);
       row.Set(0, b.A().GetLabel(), new AtomCifCell(&b.A().CAtom()));
       row.Set(1, b.B().GetLabel(), new AtomCifCell(&b.B().CAtom()));
       row[2] = vcovc.CalcDistance(b.A(), b.B()).ToString();
-      if( !b.B().GetMatrix(0).IsFirst() )
+      if( !b.B().IsAUAtom() )
         row[3] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
         b.B().GetMatrix(0));
       else
@@ -2844,7 +2836,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
   angles.GetTable().AddCol("_geom_angle_publ_flag");
   for( size_t i=0; i < latt.AtomCount(); i++ )  {
     TSAtom& a = latt.GetAtom(i);
-    if( a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.GetMatrix(0).IsFirst() )  continue;
+    if( a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.IsAUAtom() )  continue;
     for( size_t j=0; j < a.NodeCount(); j++ )  {
       TSAtom& b = a.Node(j);
       if( b.IsDeleted() || b.GetType().GetMr() < 3 )
@@ -2860,12 +2852,12 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         row.Set(1, a.GetLabel(), new AtomCifCell(&a.CAtom()));
         row.Set(2, _c.GetLabel(), new AtomCifCell(&_c.CAtom()));
         row[3] = vcovc.CalcAngle(_b, a, _c).ToString();
-        if( !_b.GetMatrix(0).IsFirst() )
+        if( !_b.IsAUAtom() )
           row[4] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
           _b.GetMatrix(0));
         else
           row[4] = '.';
-        if( !_c.GetMatrix(0).IsFirst() )
+        if( !_c.IsAUAtom() )
           row[5] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
           _c.GetMatrix(0));
         else
@@ -3081,7 +3073,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //    for( int j=minInd; j <= maxInd; j++ )  {
 //      double rv = (double)(i*j)/mapX, ca, sa;
 //      rv *= T_PI;
-//      SinCos(-rv, &sa, &ca);
+//      olx_sincos(-rv, &sa, &ca);
 //      sin_cosX[i][j-minInd].SetRe(ca);
 //      sin_cosX[i][j-minInd].SetIm(sa);
 //    }
@@ -3096,7 +3088,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //      for( int j=minInd; j <= maxInd; j++ )  {
 //        double rv = (double)(i*j)/mapY, ca, sa;
 //        rv *= T_PI;
-//        SinCos(-rv, &sa, &ca);
+//        olx_sincos(-rv, &sa, &ca);
 //        sin_cosY[i][j-minInd].SetRe(ca);
 //        sin_cosY[i][j-minInd].SetIm(sa);
 //      }
@@ -3115,7 +3107,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //      for( int j=minInd; j <= maxInd; j++ )  {
 //        double rv = (double)(i*j)/mapZ, ca, sa;
 //        rv *= T_PI;
-//        SinCos(-rv, &sa, &ca);
+//        olx_sincos(-rv, &sa, &ca);
 //        sin_cosZ[i][j-minInd].SetRe(ca);
 //        sin_cosZ[i][j-minInd].SetIm(sa);
 //      }
@@ -3180,7 +3172,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 ////            tv += (double)ref.GetL()*iz/mapZ;
 ////            tv *= T_PI;
 ////            double ca, sa;
-////            SinCos(tv, &sa, &ca);
+////            olx_sincos(tv, &sa, &ca);
 ////            A += fMap.Data[ix][iy][iz]*ca;
 ////            B += fMap.Data[ix][iy][iz]*sa;
 ////            if( i == 0 )  {
@@ -3945,8 +3937,8 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       continue;
     }
     bool identity_based = false;
-    for( int j=0; j < 6; j++ )  {
-      if( rings[i][j]->GetMatrix(0).IsFirst() )  {
+    for( int j=0; j < rings[i].Count(); j++ )  {
+      if( rings[i][j]->IsAUAtom() )  {
         identity_based = true;
         break;
       }
@@ -4044,7 +4036,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     for( size_t i=0; i < xlatt.AtomCount(); i++ )  {
       TSAtom& sa = xlatt.GetAtom(i);
       if( sa.IsDeleted() )  continue;
-      if( sa.GetMatrix(0).IsFirst() )
+      if( sa.IsAUAtom() )
         iatoms.Add(sa);
     }
     xlatt.GrowAtoms(iatoms, transforms);
@@ -4099,7 +4091,7 @@ void XLibMacros::macMolInfo(TStrObjList &Cmds, const TParamList &Options, TMacro
   TArrayList<int8_t> t_map(atoms.Count()*triags.Count());
   for( size_t i=0; i < atoms.Count(); i++ )  {
     const float_type r = (float_type)atoms[i]->GetType().r_vdw;
-    volume_p += (float_type)SphereVol(r);
+    volume_p += (float_type)olx_sphere_volume(r);
     area_p += (float_type)(4*M_PI*r*r);
     const size_t off = i*triags.Count();
     for( size_t j=0; j < triags.Count(); j++ )  {

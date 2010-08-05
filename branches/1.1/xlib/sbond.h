@@ -1,6 +1,5 @@
 #ifndef __olx_xl_sbond_H
 #define __olx_xl_sbond_H
-
 #include "satom.h"
 #include "typelist.h"
 #include "tptrlist.h"
@@ -19,8 +18,9 @@ public:
 
   DefPropBIsSet(Deleted)
   bool IsAvailable() const {  return (!IsDeleted() && FA->IsAvailable() && FB->IsAvailable()); }
-  double Length() const {  return FA->crd().DistanceTo(FB->crd()); }
-  double QLength() const {  return FA->crd().QDistanceTo(FB->crd()); }
+  vec3d GetCenter() const {  return (FA->crd()+FB->crd())/2;  }
+  double Length() const {  return FA->crd().DistanceTo(FB->crd());  }
+  double QLength() const {  return FA->crd().QDistanceTo(FB->crd());  }
 
   struct Ref  {
     TSAtom::Ref a, b;
@@ -33,6 +33,10 @@ public:
     }
     bool operator == (const TSBond::Ref& r) const {
       return (a == r.a && b == r.b) || (a == r.b && b == r.a); 
+    }
+    int Compare(const Ref& r) const {
+      const int rv = a.Compare(r.a);
+      return rv == 0 ? b.Compare(r.b) : rv;
     }
   };
 

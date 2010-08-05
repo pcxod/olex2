@@ -272,7 +272,7 @@ double TAutoDBNode::SearchCompare(const TAutoDBNode& dbn, double* fom) const  {
 int TAutoDBNode::UpdateCompare(const TAutoDBNode& dbn) const  {
   double diff = Element->z - dbn.Element->z;
   if( diff == 0 )  {
-    diff = olx_cmp_size_t(AttachedNodes.Count(), dbn.AttachedNodes.Count());
+    diff = olx_cmp(AttachedNodes.Count(), dbn.AttachedNodes.Count());
     if( diff == 0 )  {
       for( size_t i=0; i < AttachedNodes.Count(); i++ )  {
         diff = AttachedNodes[i].GetType().z - dbn.AttachedNodes[i].GetType().z;
@@ -295,7 +295,7 @@ int TAutoDBNode::UpdateCompare(const TAutoDBNode& dbn) const  {
 bool TAutoDBNode::IsSameType(const TAutoDBNode& dbn) const  {
   int diff = Element->z - dbn.Element->z;
   if( diff != 0 )  return false;
-  diff = olx_cmp_size_t(AttachedNodes.Count(), dbn.AttachedNodes.Count());
+  diff = olx_cmp(AttachedNodes.Count(), dbn.AttachedNodes.Count());
   if( diff != 0 )  return false;
   for( size_t i=0; i < AttachedNodes.Count(); i++ )  {
     diff = AttachedNodes[i].GetType().z - dbn.AttachedNodes[i].GetType().z;
@@ -307,7 +307,7 @@ bool TAutoDBNode::IsSameType(const TAutoDBNode& dbn) const  {
 bool TAutoDBNode::IsSimilar(const TAutoDBNode& dbn) const  {
   double diff = Element->z - dbn.Element->z;
   if( diff == 0 )  {
-    diff = olx_cmp_size_t(AttachedNodes.Count(), dbn.AttachedNodes.Count());
+    diff = olx_cmp(AttachedNodes.Count(), dbn.AttachedNodes.Count());
     if( diff == 0 )  {
       // check types
       for( size_t i=0; i < AttachedNodes.Count(); i++ )  {

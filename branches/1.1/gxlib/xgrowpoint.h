@@ -1,5 +1,5 @@
-#ifndef __olx_glx_xgrowpoint_H
-#define __olx_glx_xgrowpoint_H
+#ifndef __olx_gxl_xgrowpoint_H
+#define __olx_gxl_xgrowpoint_H
 #include "xbond.h"
 #include "catom.h"
 #include "satom.h"

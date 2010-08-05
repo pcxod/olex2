@@ -56,7 +56,7 @@
 
 #include "html/htmlext.h"
 
-//#include "ioext.h"
+#include "httpfs.h"
 #include "pyext.h"
 
 #include "obase.h"
@@ -70,6 +70,7 @@
 
 #include "egc.h"
 #include "gllabel.h"
+#include "gllabels.h"
 #include "xlattice.h"
 #include "xgrid.h"
 
@@ -187,6 +188,10 @@ enum
   ID_Selection,
   ID_SelGroup,
   ID_SelUnGroup,
+  ID_SelLabel,
+
+  ID_GridMenu,
+  ID_GridMenuCreateBlob,
 
   ID_GraphicsKill,
   ID_GraphicsHide,
@@ -338,6 +343,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_GraphicsSelect, TMainForm::OnGraphics)
   EVT_MENU(ID_FixLattice, TMainForm::OnGraphics)
   EVT_MENU(ID_FreeLattice, TMainForm::OnGraphics)
+  EVT_MENU(ID_GridMenuCreateBlob, TMainForm::OnGraphics)
 
   EVT_MENU(ID_FragmentHide, TMainForm::OnFragmentHide)
   EVT_MENU(ID_FragmentShowOnly, TMainForm::OnFragmentShowOnly)
@@ -389,6 +395,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
 
   EVT_MENU(ID_SelGroup, TMainForm::OnSelection)
   EVT_MENU(ID_SelUnGroup, TMainForm::OnSelection)
+  EVT_MENU(ID_SelLabel, TMainForm::OnSelection)
 
   EVT_MENU(ID_GStyleSave, TMainForm::OnGraphicsStyle)
   EVT_MENU(ID_GStyleOpen, TMainForm::OnGraphicsStyle)
@@ -414,7 +421,6 @@ TMainForm::TMainForm(TGlXApp *Parent):
 #endif
   StartupInitialised = RunOnceProcessed = false;
   wxInitAllImageHandlers();
-
   /* a singleton - will be deleted in destructor, we cannot use GC as the Py_DecRef
    would be called after finalising python
   */
@@ -528,6 +534,7 @@ TMainForm::~TMainForm()  {
   delete pmSelection;
   delete pmLabel;
   delete pmLattice;
+  delete pmGrid;
 
   delete FUndoStack;
   // leave it for the end
@@ -539,6 +546,7 @@ TMainForm::~TMainForm()  {
 //..............................................................................
 void TMainForm::XApp(TGXApp *XA)  {
   FXApp = XA;
+
   _ProcessManager = new ProcessManager(_ProcessHandler);
   FXApp->SetCifTemplatesDir(XA->GetBaseDir() + "etc/CIF/");
 ////////////////////////////////////////////////////////////////////////////////
@@ -641,7 +649,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Capitalise, "", (fpAny|psFileLoaded)^fpNone,
     "Changes atom labels capitalisation for all/given/selected atoms. The first argument is the template like Aaaa");
 
-  this_InitMacroD(Esd, EmptyString, fpAny|psFileLoaded,
+  this_InitMacroD(Esd, "label-creates a graphics label", fpAny|psFileLoaded,
     "This procedure calculates possible parameters for the selection and evaluates their esd using the variance-covariance\
  matrix coming from the ShelXL refinement with negative 'MORE' like 'MORE -1' option");
   
@@ -720,8 +728,9 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacroD(QPeakSizeScale, EmptyString, fpNone|fpOne,
     "Prints/sets the scale the Q-peak size relative to other atoms, default is 1");
   this_InitMacroD(Label, "type-type of labels to make (works only for the PostScript output);"
- " possible options - subscript, brackers, default&;symm-symmetry dependent tag type {[$], full}",
- fpAny, "Creates moveable labels for provided atoms (selection)");
+    " possible options - subscript, brackers, default&;symm-symmetry dependent tag type {[$], #, full}&;"
+    "cif-creates labels for CIF data a combination of {b,a,t,h}",
+ fpAny, "Creates moveable labels for provided atoms/bonds/angles (selection)");
 
   this_InitMacroD(Focus, EmptyString, fpNone, "Sets input focus to the console");
   this_InitMacroD(Refresh, EmptyString, fpNone, "Refreshes the GUI");
@@ -1003,8 +1012,9 @@ separated values of Atom Type and radius, an entry a line");
   this_InitFuncD(StrDir, fpNone|psFileLoaded, "Returns location of the folder, where\
   Olex2 stores structure related data");
 
-  this_InitFuncD(ChooseFont, fpNone|fpOne, "Brings up a font dialog. If font\
-  information provided, initialises the dialog with that font");
+  this_InitFuncD(ChooseFont, fpNone|fpOne|fpTwo, "Brings up a font dialog. If font\
+ information provided, initialises the dialog with that font; the first argument may be just 'olex2' or 'system' to\
+ enforce choosing the Olex2/System font (the font information can be provided ib the second argument then)");
   this_InitFuncD(GetFont, fpOne, "Returns specified font");
   this_InitFuncD(GetMaterial, fpOne, "Returns specified material");
   this_InitFuncD(ChooseMaterial, fpNone|fpOne, "Brings up a dialog to edit\
@@ -1128,8 +1138,7 @@ separated values of Atom Type and radius, an entry a line");
 // setting selection menu
   pmSelection->Append(ID_SelGroup, wxT("Group"));
   pmSelection->Append(ID_SelUnGroup, wxT("Ungroup"));
-  miGroupSel = pmSelection->FindItemByPosition(0);
-  miUnGroupSel = pmSelection->FindItemByPosition(1);
+  pmSelection->Append(ID_SelLabel, wxT("Label"));
 //  pmSelection->AppendSeparator();
 //  pmSelection->Append(ID_MenuGraphics, "Graphics", pmGraphics->Clone());
 // setting graphics menu
@@ -1140,6 +1149,9 @@ separated values of Atom Type and radius, an entry a line");
 // setting label menu
   pmLabel = pmGraphics->Clone();
   pmLabel->Append(ID_GraphicsEdit, wxT("Edit..."));
+// setting label menu
+  pmGrid = pmGraphics->Clone();
+  pmGrid->Append(ID_GridMenuCreateBlob, wxT("Create blob"));
 // setting Lattice menu
   pmLattice = pmGraphics->Clone();
   pmLattice->Append(ID_FixLattice, wxT("Fix"));
@@ -1346,24 +1358,26 @@ separated values of Atom Type and radius, an entry a line");
 void TMainForm::StartupInit()  {
   if( StartupInitialised )  return;
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
-  // create 4 fonts
-  
   TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
-  FXApp->GetRender().GetScene().CreateFont("Console", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
-  FXApp->GetRender().GetScene().CreateFont("Help", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
-  FXApp->GetRender().GetScene().CreateFont("Notes", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
-  FXApp->GetRender().GetScene().CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
-  FXApp->GetRender().GetScene().CreateFont("Picture_labels", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
-  FXApp->GetRender().GetScene().CreateFont("Tooltip", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
+  AGlScene& gls = FXApp->GetRender().GetScene();
+  gls.CreateFont("Default", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
+  gls.CreateFont("Help", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
+  gls.CreateFont("Notes", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
+  gls.CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
+  gls.RegisterFontForType<TXAtom>(
+    gls.CreateFont("AtomLabels", Font.GetNativeFontInfoDesc().c_str())).SetMaterial(glm);
+  gls.RegisterFontForType<TXBond>(
+    gls.CreateFont("BondLabels", Font.GetNativeFontInfoDesc().c_str())).SetMaterial(glm);
+  gls.CreateFont("Tooltip", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
+  gls.RegisterFontForType<TDBasis>(gls._GetFont(4));
+  gls.RegisterFontForType<TDUnitCell>(gls._GetFont(4));
+  gls.RegisterFontForType<TXGlLabels>(gls._GetFont(3));
+  gls.RegisterFontForType<TGlConsole>(gls._GetFont(0));
+  gls.RegisterFontForType<TGlCursor>(gls._GetFont(0));
 
-  FXApp->SetLabelsFont(3);
-  FXApp->DUnitCell().SetLabelsFont(4);
-  FXApp->DBasis().SetLabelsFont(4);
-  FGlConsole->SetFontIndex(0);
-  FGlConsole->Cursor().SetFontIndex(0);
   FHelpWindow->SetFontIndex(1);
   FInfoBox->SetFontIndex(2);
-  GlTooltip->SetFontIndex(5);
+  GlTooltip->SetFontIndex(6);
 
   olxstr T(DataDir);  
   T << FLastSettingsFile;
@@ -1373,7 +1387,7 @@ void TMainForm::StartupInit()  {
     T << FLastSettingsFile;
   }
   try  {  LoadSettings(T);  }
-  catch(const TExceptionBase &e)  {
+  catch(const TExceptionBase& e)  {
     ShowAlert(e);
     //throw;
   }
@@ -1382,8 +1396,6 @@ void TMainForm::StartupInit()  {
   if( !GradientPicture.IsEmpty() )  // need to call it after all objects are created
     ProcessMacro(olxstr("grad ") << " -p=\'" << GradientPicture << '\'');
 
-  FInfoBox->SetHeight(FXApp->GetRender().GetScene().GetFont(2)->TextHeight(EmptyString));
-  
   ProcessMacro(olxstr("showwindow help ") << HelpWindowVisible);
   ProcessMacro(olxstr("showwindow info ") << InfoWindowVisible);
   ProcessMacro(olxstr("showwindow cmdline ") << CmdLineVisible);
@@ -1646,7 +1658,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     if( FObjectUnderMouse->IsSelected() )
       ProcessMacro("kill sel");
     else  {
-      TPtrList<AGDrawObject> l;
+      AGDObjList l;
       l.Add(FObjectUnderMouse);
       FUndoStack->Push(FXApp->DeleteXObjects(l));
     }
@@ -1666,7 +1678,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
   }
   else if( event.GetId() == ID_GraphicsDS )  {
     TGlGroup& Sel = FXApp->GetSelection();
-    TdlgMatProp* MatProp = new TdlgMatProp(this, &FObjectUnderMouse->GetPrimitives(), FXApp);
+    TdlgMatProp* MatProp = new TdlgMatProp(this, *FObjectUnderMouse);
     if( EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
       MatProp->SetCurrent(((TGlGroup*)FObjectUnderMouse)->GetGlM());
     if( MatProp->ShowModal() == wxID_OK )  {
@@ -1705,15 +1717,21 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     TdlgPrimitive* Primitives = new TdlgPrimitive(this, Ps, i);
     if( Primitives->ShowModal() == wxID_OK )  {
       if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
-        for( size_t i=0; i < FXApp->AtomCount(); i++ )
-          FXApp->GetAtom(i).Atom().SetTag(i);
         for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
-          if( !EsdlInstanceOf(FXApp->GetSelection()[i], TXBond) )
-            continue;
-          TXBond& xb = (TXBond&)FXApp->GetSelection()[i];
-          FXApp->Individualise(xb);
-          BondCreationParams bpar(FXApp->GetAtom(xb.Bond().A().GetTag()), FXApp->GetAtom(xb.Bond().B().GetTag()));
-          xb.UpdatePrimitives( Primitives->Mask, &bpar);
+          if( EsdlInstanceOf(FXApp->GetSelection()[i], TXBond) )  {
+            TXBond& xb = (TXBond&)FXApp->GetSelection()[i];
+            FXApp->Individualise(xb);
+            xb.UpdatePrimitives(Primitives->Mask);
+          }
+        }
+      }
+      else if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )  {
+        for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
+          if( EsdlInstanceOf(FXApp->GetSelection()[i], TXAtom) )  {
+            TXAtom& xa = (TXAtom&)FXApp->GetSelection()[i];
+            FXApp->Individualise(xa);
+            xa.UpdatePrimitives(Primitives->Mask);
+          }
         }
       }
       else  {
@@ -1733,9 +1751,15 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     if( EsdlInstanceOf(*FObjectUnderMouse, TXLattice) )
       ((TXLattice*)FObjectUnderMouse)->SetFixed(false);
   }
+  else if( event.GetId() == ID_GridMenuCreateBlob )  {
+    TXBlob* xb = FXApp->XGrid().CreateBlob(MousePositionX, MousePositionY);
+    if( xb != NULL )
+      FXApp->AddObjectToCreate(xb);
+    xb->Create();
+  }
 }
 //..............................................................................
-void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
+void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
   FObjectUnderMouse = G;
   FCurrentPopup = NULL;
   if( G == NULL )  return;
@@ -1759,7 +1783,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     pmAtom->Enable(ID_AtomGrow, FXApp->AtomExpandable(XA));
     pmAtom->Enable(ID_Selection, G->IsSelected() && EsdlInstanceOf(*G->GetParentGroup(), TGlGroup));
     pmAtom->Enable(ID_SelGroup, false);
-    int bound_cnt = 0;
+    size_t bound_cnt = 0;
     for( size_t i=0; i < XA->Atom().NodeCount(); i++ )  {
       if( XA->Atom().Node(i).IsDeleted() || XA->Atom().Node(i).GetType().GetMr() < 3.5 )  // H,D,Q
         continue;
@@ -1769,7 +1793,6 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     if( bound_cnt > 3 )
       pmAtom->Check(ID_AtomPolyNone + XA->GetPolyhedronType(), true);
     FCurrentPopup = pmAtom;
-    
   }
   else if( EsdlInstanceOf(*G, TXBond) )  {
     TStrList SL;
@@ -1803,9 +1826,11 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
         FCurrentPopup->Enable(ID_SelUnGroup, true);
       }
     }
+    AquireTooltipValue();
+    FCurrentPopup->Enable(ID_SelLabel, !Tooltip.IsEmpty());
   }
   if( EsdlInstanceOf(*G, TGlGroup) )  {
-    pmSelection->Enable(ID_SelGroup, false);
+    pmSelection->Enable(ID_SelGroup, G->IsSelected() && FXApp->GetSelection().Count() > 1);
     pmSelection->Enable(ID_SelUnGroup, true);
     FCurrentPopup = pmSelection;
   }
@@ -1819,6 +1844,11 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
   else if( EsdlInstanceOf( *G, TXLattice) )  {
     FCurrentPopup = pmLattice;
   }
+#ifdef _DEBUG
+  else if( EsdlInstanceOf(*G, TXGrid) )  {
+    FCurrentPopup = pmGrid;
+  }
+#endif
 }
 //..............................................................................
 void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
@@ -2091,6 +2121,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   else if( MsgId == ID_UpdateThreadTerminate )  {
     volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
     _UpdateThread = NULL;
+
      if( UpdateProgress != NULL )  {
        delete UpdateProgress;
        UpdateProgress = NULL;
@@ -2235,10 +2266,11 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         else  {
           GlTooltip->Clear();
           GlTooltip->PostText(Tooltip);
+          GlTooltip->Fit();
           int x = MousePositionX-GlTooltip->GetWidth()/2,
             y = MousePositionY-GlTooltip->GetHeight()-4;
           if( x < 0 )  x = 0;
-          if( (size_t)(x + GlTooltip->GetWidth()) > FXApp->GetRender().GetWidth() )
+          if( (size_t)(x + GlTooltip->GetWidth()) > (size_t)FXApp->GetRender().GetWidth() )
             x = FXApp->GetRender().GetWidth() - GlTooltip->GetWidth();
           if( y < 0 )
             y  = 0;
@@ -2305,8 +2337,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   else if( MsgId == ID_FileClose )  {
     if( MsgSubId == msiExit )  {
       UpdateRecentFile(EmptyString);
-      FInfoBox->Clear();
-      FInfoBox->PostText("No file is loaded");
+      UpdateInfoBox();
     }
   }
   else if( MsgId == ID_CMDLINECHAR )  {
@@ -2496,6 +2527,7 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
           //}
         }
       }
+      FHelpWindow->Fit();
     }
     else  {
       FHelpWindow->SetVisible(false);
@@ -2797,19 +2829,37 @@ void TMainForm::OnNavigation(wxNavigationKeyEvent& event)  {
 }
 //..............................................................................
 void TMainForm::OnSelection(wxCommandEvent& m)  {
-  TGlGroup *GlR = NULL;
-  if( EsdlInstanceOf( *FObjectUnderMouse, TGlGroup) )
-    GlR = (TGlGroup*)FObjectUnderMouse;
-  switch( m.GetId() )  {
-    case ID_SelGroup:
+  if( m.GetId() == ID_SelGroup )
       ProcessMacro("group");
-      break;
-    case ID_SelUnGroup:
-      if( GlR != NULL ) 
-        FXApp->UnGroup(*GlR);
-      else      
-        FXApp->UnGroupSelection();
-      break;
+  else if( m.GetId() == ID_SelUnGroup )  {
+  TGlGroup *GlR = NULL;
+  if( FObjectUnderMouse != NULL && EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
+      FXApp->UnGroup(*((TGlGroup*)FObjectUnderMouse));
+    else      
+      FXApp->UnGroupSelection();
+  }
+  else if( m.GetId() == ID_SelLabel )  {
+    vec3d cent;
+    size_t cnt = 0;
+    TGlGroup& gl = FXApp->GetSelection();
+    for( size_t i=0; i < gl.Count(); i++ )  {
+      if( EsdlInstanceOf(gl[i], TXAtom) )  {
+        cent += ((TXAtom&)gl[i]).Atom().crd();
+        cnt++;
+      }
+      else if( EsdlInstanceOf(gl[i], TXBond) ) {
+        cent += ((TXBond&)gl[i]).Bond().GetCenter();
+        cnt++;
+      }
+      else if( EsdlInstanceOf(gl[i], TXPlane) ) {
+        cent += ((TXPlane&)gl[i]).Plane().GetCenter();
+        cnt++;
+      }
+    }
+    if( cnt != 0 )
+      cent /= cnt;
+    FXApp->CreateLabel(cent, Tooltip, 4);
+    TimePerFrame = FXApp->Draw();
   }
 }
 //..............................................................................
@@ -2932,6 +2982,7 @@ olxstr TMainForm::ExpandCommand(const olxstr &Cmd)  {
       else
         FXApp->GetLog() << line;
     }
+    FHelpWindow->Fit();
     FXApp->GetLog() << '\n';
   }
   else if( all_cmds.Count() == 1 )
@@ -2996,6 +3047,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
     int w_w = 0, w_h = 0;
     GetSize(&w_w, &w_h);
     I->AddField("Width", w_w);
+
     I->AddField("Height", w_h);
     GetPosition(&w_w, &w_h);
     I->AddField("X", w_w);
@@ -3018,7 +3070,6 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("language", Dictionary.GetCurrentLanguage());
   I->AddField("ExtraZoom", FXApp->GetExtraZoom());
   I->AddField("GlTooltip", _UseGlTooltip);
-  I->AddField("console.blend", FGlConsole->IsBlend());
   I->AddField("ThreadCount", FXApp->GetMaxThreadCount());
 
   I = &DF.Root().AddItem("Recent_files");
@@ -3195,7 +3246,6 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   const olxstr& defGlTVal = TrueString;
 #endif
   UseGlTooltip( I->GetFieldValue("GlTooltip", defGlTVal).ToBool() );
-  FGlConsole->SetBlend(I->GetFieldValue("console.blend", TrueString).ToBool());
   if( I->FieldExists("ThreadCount") ) 
     FXApp->SetMaxThreadCount(I->GetFieldValue("ThreadCount", "1").ToInt());
   else  {
@@ -3237,7 +3287,11 @@ void TMainForm::LoadScene(const TDataItem& Root, TGlLightModel& FLM) {
   if( I == NULL )  return;
   for( size_t i=0; i < I->ItemCount(); i++ )  {
     TDataItem& fi = I->GetItem(i);
-    FXApp->GetRender().GetScene().CreateFont(fi.GetName(), fi.GetFieldValue("id") );
+    // compatibility conversion...
+    if( fi.GetName() == "Console" )
+      FXApp->GetRender().GetScene().CreateFont("Default", fi.GetFieldValue("id") );
+    else
+      FXApp->GetRender().GetScene().CreateFont(fi.GetName(), fi.GetFieldValue("id") );
   }
   I = Root.FindItem("Materials");
   if( I != NULL )  {
@@ -3265,8 +3319,8 @@ void TMainForm::SaveScene(TDataItem &Root, const TGlLightModel &FLM) const {
   FLM.ToDataItem(Root.AddItem("Scene_Properties"));
   TDataItem *I = &Root.AddItem("Fonts");
   for( size_t i=0; i < FXApp->GetRender().GetScene().FontCount(); i++ )  {
-    TDataItem& fi = I->AddItem( FXApp->GetRender().GetScene().GetFont(i)->GetName());
-    fi.AddField("id", FXApp->GetRender().GetScene().GetFont(i)->GetIdString() );
+    TDataItem& fi = I->AddItem(FXApp->GetRender().GetScene()._GetFont(i).GetName());
+    fi.AddField("id", FXApp->GetRender().GetScene()._GetFont(i).GetIdString());
   }
   I = &Root.AddItem("Materials");
   HelpFontColorTxt.ToDataItem(I->AddItem("Help_txt"));
@@ -3888,7 +3942,7 @@ int TMainForm::TranslateShortcut(const olxstr& sk)  {
 }
 //..............................................................................
 void TMainForm::SetProgramState(bool val, uint32_t state, const olxstr& data )  {
-  SetBit(val, ProgramState, state);
+  olx_set_bit(val, ProgramState, state);
   uint32_t st = state;
   while( (st%2) == 0 && st > 0 )
     st /= 2;
@@ -4325,22 +4379,38 @@ bool TMainForm::PopupMenu(wxMenu* menu, const wxPoint& p)  {
   return res;
 }
 //..............................................................................
+void TMainForm::UpdateInfoBox()  {
+  FInfoBox->Clear();
+  if( FXApp->XFile().HasLastLoader() )  {
+    FInfoBox->PostText(olxstr("\\-") << TEFile::ExtractFilePath(FXApp->XFile().GetFileName()));
+    FInfoBox->PostText(TEFile::ExtractFileName(FXApp->XFile().GetFileName()));
+    FInfoBox->PostText(FXApp->XFile().LastLoader()->GetTitle());
+    FInfoBox->Fit();
+  }
+  else  {
+    FInfoBox->PostText("No file is loaded");
+  }
+}
 //..............................................................................
 void TMainForm::ProcessHandler::BeforePrint() {
   parent.FGlConsole->SetPrintMaterial(&parent.ExecFontColor);
 }
+//..............................................................................
 void TMainForm::ProcessHandler::Print(const olxstr& line)  {
   TBasicApp::GetLog() << line;
   parent.CallbackFunc(ProcessOutputCBName, line);
 }
+//..............................................................................
 void TMainForm::ProcessHandler::AfterPrint() {
   parent.FGlConsole->SetPrintMaterial(NULL);
   parent.FXApp->Draw();
 }
+//..............................................................................
 void TMainForm::ProcessHandler::OnWait() {
   parent.FParent->Dispatch();
   parent.Dispatch(ID_TIMER, -1, (AActionHandler*)&parent, NULL);
 }
+//..............................................................................
 void TMainForm::ProcessHandler::OnTerminate(const AProcess& p)  {
   TMacroError err;
   for( size_t i=0; i < p.OnTerminateCmds().Count(); i++ ) {
@@ -4352,3 +4422,4 @@ void TMainForm::ProcessHandler::OnTerminate(const AProcess& p)  {
   TBasicApp::GetLog().Info(olxstr("The process '") << p.GetCmdLine() << "' has been terminated...");
   parent.TimePerFrame = parent.FXApp->Draw();
 }
+//..............................................................................

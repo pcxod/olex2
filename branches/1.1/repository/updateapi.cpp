@@ -8,8 +8,7 @@
 #include "dataitem.h"
 #include "patchapi.h"
 
-#include "httpfs.h"
-typedef THttpFileSystem HttpFS;
+#include "cdsfs.h"
 
 #if defined(__WIN32__) && !defined(__WXWIDGETS__)
   #include "winzipfs.h"
@@ -320,7 +319,7 @@ AFileSystem* UpdateAPI::FSFromString(const olxstr& _repo, const olxstr& _proxy) 
       if( !_proxy.IsEmpty() )
         url.SetProxy( _proxy );
       if( url.GetProtocol() == "http" )
-        FS = new HttpFS(url);
+        FS = new TSocketFS(url);
 #ifdef __WXWIDGETS__
       else if( url.GetProtocol() == "ftp" )
         FS = new TwxFtpFileSystem(url);
@@ -486,9 +485,9 @@ olxstr UpdateAPI::AddTagPart(const olxstr& path, bool Update) const {
 TStrList UpdateAPI::GetDefaultRepositories() {
   static TStrList rv;
   if( rv.IsEmpty() )  {
-    rv.Add("http://www.olex2.org/olex2-distro/");
-    rv.Add("http://www1.olex2.org/olex2-distro/");
-    rv.Add("http://www2.olex2.org/olex2-distro/");
+    rv.Add("http://www.olex2.org/olex2-cds/");
+    rv.Add("http://www1.olex2.org/olex2-cds/");
+    rv.Add("http://www2.olex2.org/olex2-cds/");
   }
   return rv;
 }

@@ -13,6 +13,7 @@ using namespace std;
 #include "outstream.h"
 #include "pyext.h"
 #include "fsext.h"
+#include "httpfs.h"
 #include "olxvar.h"
 #include "shellutil.h"
 #include "dataitem.h"
@@ -32,7 +33,6 @@ using namespace std;
 #include "symmlib.h"
 #include "xlcongen.h"
 #include "seval.h"
-#include "ecast.h"
 #include "utf8file.h"
 #include "settingsfile.h"
 #include "py_core.h"
@@ -125,8 +125,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
  
   void UnifyAtomList(TSAtomPList atoms)  {
     // unify the selection
-    for( size_t i=0; i < atoms.Count(); i++ )
-      atoms[i]->CAtom().SetTag(i);
+    atoms.ForEachEx(ACollectionItem::IndexTagSetter<>());
     for( size_t i=0; i < atoms.Count(); i++ )
       if( atoms[i]->CAtom().GetTag() != i || atoms[i]->CAtom().IsDeleted() )
         atoms[i] = NULL;
@@ -136,7 +135,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   virtual void ExpandSelection(TCAtomGroup& atoms)  {
     atoms.SetCapacity(atoms.Count() + Selection.Count());
     for( size_t i=0; i < Selection.Count(); i++ )
-      atoms.AddNew( &Selection[i]->CAtom(), &Selection[i]->GetMatrix(0) );
+      atoms.AddNew(&Selection[i]->CAtom(), &Selection[i]->GetMatrix(0));
     if( GetDoClearSelection() )
       Selection.Clear();
   }
@@ -180,7 +179,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   ProcessManager* _ProcessManager;
 public:
   TOlex(const olxstr& basedir) : XApp(basedir, this), Macros(*this), _ProcessHandler(*this) {
-    Macros.Init();   
+    Macros.Init();
     XApp.SetCifTemplatesDir( XApp.GetBaseDir() + "etc/CIF/" );
     OlexInstance = this;
     Silent = true;
@@ -307,16 +306,16 @@ public:
     switch( MessageType )  {
       case olex::mtError:
       case olex::mtException:
-        conint.SetTextForeground( fgcRed, true);
+        conint.SetTextForeground(fgcRed, true);
         break;
       case olex::mtWarning:
-        conint.SetTextForeground( fgcRed, false);
+        conint.SetTextForeground(fgcRed, false);
         break;
       case olex::mtInfo:
-        conint.SetTextForeground( fgcBlue, true);
+        conint.SetTextForeground(fgcBlue, true);
         break;
       default:
-        conint.SetTextForeground( fgcReset, false);
+        conint.SetTextForeground(fgcReset, false);
     }
     TBasicApp::GetLog() << msg << '\n';
     //SetConsoleTextAttribute(conout, FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE);
@@ -348,7 +347,7 @@ public:
     try  {
       Fun->Run(funParams, me);
       if( !me.IsSuccessful() )  {
-        AnalyseError( me );
+        AnalyseError(me);
         return NULL;
       }
     }
@@ -501,10 +500,8 @@ public:
       Selection.Clear();
     }
     else if( Options.Contains("-i") )  {
-      for( size_t i=0; i < latt.AtomCount(); i++ )
-        latt.GetAtom(i).SetTag(0);
-      for( size_t i=0; i < Selection.Count(); i++ )
-        Selection[i]->SetTag(1);
+      latt.GetAtoms().ForEach(ACollectionItem::TagSetter<>(0));
+      Selection.ForEach(ACollectionItem::TagSetter<>(1));
       Selection.Clear();
       for( size_t i=0; i < latt.AtomCount(); i++ )
         if( latt.GetAtom(i).GetTag() == 0 && !latt.GetAtom(i).IsDeleted() )
@@ -750,10 +747,9 @@ public:
   }
   //..............................................................................
   void macInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    TCAtomPList atoms;
     TSAtomPList satoms;
     LocateAtoms(Cmds, satoms, true);
-    TListCaster::POP(satoms, atoms);
+    TCAtomPList atoms(satoms, TSAtom::CAtomAccessor<>());
     TTTable<TStrList> Table(atoms.Count(), 7);
     Table.ColName(0) = "Atom";
     Table.ColName(1) = "Symb";

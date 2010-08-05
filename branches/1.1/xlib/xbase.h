@@ -38,18 +38,18 @@ protected:
   size_t     NetId;    // reference in network container
   size_t     LattId;    // reference in lattice container
 public:
-  TSObject(Net* Parent) : Network(Parent), Type(sotNone) {  }
-  virtual ~TSObject() {  }
+  TSObject(Net* Parent) : Network(Parent), Type(sotNone) {}
+  virtual ~TSObject()  {}
   void Assign(const TSObject& S) {
-    SetType( S.GetType() );
+    SetType(S.GetType());
     Network = &S.GetNetwork();
-    SetTag( S.GetTag() );
-    SetNetId( S.GetNetId() );
-    SetLattId( S.GetLattId() );
+    SetTag(S.GetTag());
+    SetNetId(S.GetNetId());
+    SetLattId(S.GetLattId());
   }
 
-  inline Net& GetNetwork()  const  {  return *Network;  }
-  inline void SetNetwork(Net& n)   {  Network = &n;  }
+  inline Net& GetNetwork() const {  return *Network;  }
+  inline void SetNetwork(Net& n)  {  Network = &n;  }
 
   DefPropP(size_t, NetId)
   DefPropP(size_t, LattId)
@@ -69,10 +69,10 @@ public:
     TSObject<Net>::Type = sotBBond;
   }
   virtual ~TBasicBond() {}
-  Node& A()    const {  return *FA;  }
+  Node& A() const {  return *FA;  }
   void SetA(Node& a) {  FA = &a;  OnAtomSet();  }
 
-  Node& B()    const {  return *FB;  }
+  Node& B() const {  return *FB;  }
   void SetB(Node& a) {  FB = &a;  OnAtomSet();  }
 
   Node& Another(const Node& A) const {  return (&A == FA) ? *FB : *FA; }
@@ -98,6 +98,7 @@ public:
 
   inline size_t NodeCount() const {  return Nodes.Count(); }
   inline NodeType& Node(size_t i) const {  return *Nodes[i]; }
+  const TPtrList<NodeType>& GetNodes() const {  return Nodes;  }
   inline NodeType& AddNode(NodeType& N)  {  return *Nodes.Add(N);  }
   inline bool IsConnectedTo(NodeType &N)  {  return Nodes.IndexOf(N) != InvalidIndex;  }
   inline void NullNode(size_t i)  {  Nodes[i] = NULL; }
@@ -115,6 +116,7 @@ public:
   inline size_t BondCount() const {  return Bonds.Count(); }
   inline BondType& Bond(size_t i) const {  return *Bonds[i]; }
   inline BondType& AddBond(BondType& N)  {  return *Bonds.Add(N);  }
+  const TPtrList<BondType>& GetBonds() const {  return Bonds;  }
   inline void NullBond(size_t i)  {  Bonds[i] = NULL;  }
   inline bool NullBond(const BondType& N) {  
     size_t ind = Bonds.IndexOf(N);

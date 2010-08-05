@@ -3,9 +3,9 @@
 bool CifBond::DoesMatch(const TSAtom& a, const TSAtom& b) const {
   if( a.CAtom().GetId() == base.GetId() )  {
     if( b.CAtom().GetId() != to.GetId() )  return false;
-    if( a.GetMatrix(0).IsFirst() )  {
+    if( a.IsAUAtom() )  {
       if( mat.GetContainerId() == 0 )
-        return b.GetMatrix(0).IsFirst();
+        return b.IsAUAtom();
       for( size_t i=0; i < b.MatrixCount(); i++ )
         if( b.GetMatrix(i) == mat )
           return true;
@@ -28,10 +28,10 @@ bool CifAngle::DoesMatch(const TSAtom& l, const TSAtom& m, const TSAtom& r) cons
   if( l.CAtom().GetId() == left.GetId() )  {
     if( m.CAtom().GetId() != middle.GetId() )  return false;
     if( r.CAtom().GetId() != right.GetId() )  return false;
-    if( m.GetMatrix(0).IsFirst() )  {
-      if( mat_l.GetContainerId() == 0 && !l.GetMatrix(0).IsFirst() )
+    if( m.IsAUAtom() )  {
+      if( mat_l.GetContainerId() == 0 && !l.IsAUAtom() )
         return false;
-      if( mat_r.GetContainerId() == 0 && !r.GetMatrix(0).IsFirst() )
+      if( mat_r.GetContainerId() == 0 && !r.IsAUAtom() )
         return false;
       bool found = false;
       for( size_t i=0; i < l.MatrixCount(); i++ )  {

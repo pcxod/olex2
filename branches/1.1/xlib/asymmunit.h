@@ -159,15 +159,16 @@ public:
   /* removes all atoms marked as deleted */
   void PackAtoms();
   inline TCAtom& GetAtom(size_t i) const {  return *CAtoms[i];  }
-  inline size_t AtomCount() const { return CAtoms.Count();};
+  const TCAtomPList& GetAtoms() const {  return CAtoms;  }
+  inline size_t AtomCount() const { return CAtoms.Count();  }
 
   inline size_t MatrixCount() const {  return Matrices.Count();  }
   inline const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
   void ClearMatrices()  {  Matrices.Clear();  }
   void AddMatrix(const smatd& a);
 
-  inline size_t EllpCount() const {  return Ellipsoids.Count(); }
-  inline TEllipsoid& GetEllp(size_t i) const {  return *Ellipsoids[i]; }
+  inline size_t EllpCount() const {  return Ellipsoids.Count();  }
+  inline TEllipsoid& GetEllp(size_t i) const {  return *Ellipsoids[i];  }
   void NullEllp(size_t i);
   void ClearEllps();
   void PackEllps();

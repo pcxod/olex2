@@ -1,5 +1,5 @@
-#ifndef __olx_glx_label_H
-#define __olx_glx_label_H
+#ifndef __olx_gxl_label_H
+#define __olx_gxl_label_H
 #include "gxbase.h"
 #include "glmousehandler.h"
 #include "glfont.h"
@@ -18,34 +18,35 @@ public:
   };
 private:
   olxstr FLabel;
-  uint16_t FontIndex;
+  size_t FontIndex;
   TTextRect text_rect;
   vec3d Offset;
   ICrdTransformer* Transformer;
 protected:
   vec3d _Center;
-  virtual bool DoTranslate(const vec3d& t) {  _Center += t;  return true;  }
-  virtual bool DoRotate(const vec3d&, double) {  return false;  }
+  virtual bool DoTranslate(const vec3d& t)  {  _Center += t;  return true;  }
+  virtual bool DoRotate(const vec3d&, double)  {  return false;  }
   virtual bool DoZoom(double, bool)  {  return false;  }
-  const vec3d& GetCenter() const {  return _Center;  }
 public:
   TXGlLabel(TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
-  virtual ~TXGlLabel();
+  virtual ~TXGlLabel()  {}
 
   bool Orient(TGlPrimitive& P);
-  bool GetDimensions(vec3d &Max, vec3d &Min){  return false;  }
-  inline const olxstr& GetLabel() const   {  return FLabel;  }
+  bool GetDimensions(vec3d &Max, vec3d &Min)  {  return false;  }
+  inline const olxstr& GetLabel() const {  return FLabel;  }
   void SetLabel(const olxstr& L);
+  void Update()  {  SetLabel(GetLabel());  }
+  const TTextRect& GetRect() const {  return text_rect;  }
   vec3d GetRasterPosition() const;
   vec3d GetVectorPosition() const;
   // the object must be mannaged by whoever created it!
   DefPropP(ICrdTransformer*, Transformer)
   DefPropC(vec3d, Offset)
   TGlFont& GetFont() const;
-  DefPropP(uint16_t, FontIndex)
+  DefPropP(size_t, FontIndex)
   void TranslateBasis(const vec3d& v)  {  DoTranslate(v);  }
-
+  const vec3d& GetCenter() const {  return _Center;  }
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);
 };

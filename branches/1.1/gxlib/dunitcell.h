@@ -1,5 +1,5 @@
-#ifndef __olx_glx_dunitcell_H
-#define __olx_glx_dunitcell_H
+#ifndef __olx_gxl_dunitcell_H
+#define __olx_gxl_dunitcell_H
 #include "threex3.h"
 #include "gllabel.h"
 #include "glprimitive.h"
@@ -15,8 +15,7 @@ public:
   TDUnitCell(TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TDUnitCell();
   void Init(const double cell_params[6]);
-  void SetLabelsFont(uint16_t fnt_index);
-  void UpdateLabels();
+  void UpdateLabel();
   size_t LabelCount() const {  return 4;  }
   TXGlLabel& GetLabel(size_t i) const {  return *Labels[i];  }
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
@@ -49,6 +48,8 @@ public:
   virtual void SetVisible(bool v);
   inline const mat3d& GetCellToCartesian() const {  return CellToCartesian;  }
   inline const mat3d& GetHklToCartesian() const {  return HklToCartesian;  }
+  void ToDataItem(TDataItem& di) const;
+  void FromDataItem(const TDataItem& di);
 };
 
 

@@ -10,13 +10,13 @@
 #include "styles.h"
 
 
-TDBlob::TDBlob(TGlRenderer& R, const olxstr& collectionName) :
+TXBlob::TXBlob(TGlRenderer& R, const olxstr& collectionName) :
   AGDrawObject(R, collectionName)
 {
   SetSelectable(false);
 }
 //...........................................................................
-void TDBlob::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TXBlob::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   olxstr NewL;
@@ -35,7 +35,7 @@ void TDBlob::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlM.SetTransparent(false);
   GlP.SetProperties( GS.GetMaterial("Blob", GlM) );
 }
-bool TDBlob::Orient(TGlPrimitive& P)  {
+bool TXBlob::Orient(TGlPrimitive& P)  {
   //olx_gl::translate(Basis.GetCenter());
   olx_gl::polygonMode(GL_FRONT_AND_BACK, PolygonMode);
   olx_gl::begin(GL_TRIANGLES);

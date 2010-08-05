@@ -1,10 +1,10 @@
-#ifndef __olx_glx_xatom_H
-#define __olx_glx_xatom_H
-#include "gxbase.h"
+#ifndef __olx_gxl_xatom_H
+#define __olx_gxl_xatom_H
 #include "actions.h"
 #include "glrender.h"
 #include "glprimitive.h"
 #include "glmousehandler.h"
+#include "gllabel.h"
 #include "styles.h"
 #include "satom.h"
 #include "ellipsoid.h"
@@ -49,7 +49,7 @@ public:
 
 class TXAtom: public AGlMouseHandlerImp  {
 private:
-  TSAtom *FAtom;
+  TSAtom& FAtom;
   short FDrawStyle, FRadius;
   size_t XAppId;
   static uint8_t PolyhedronIndex, 
@@ -65,6 +65,7 @@ private:
     TTypeList<TVector3<size_t> > faces;
   };
   Poly* Polyhedron;
+  TXGlLabel* Label;
   void CreatePolyhedron(bool v);
   // returns the center of the created polyhedron
   vec3f TriangulateType2(Poly& p, const TSAtomPList& atoms);
@@ -88,6 +89,7 @@ protected:
   static short FDefRad, FDefDS;
   static TGraphicsStyle *FAtomParams;
   static olxstr PolyTypeName;
+  static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
 public:
   TXAtom(TGlRenderer& Render, const olxstr& collectionName, TSAtom& A);
   virtual ~TXAtom();
@@ -95,14 +97,13 @@ public:
   virtual ACreationParams* GetCreationParams() const;
 
   DefPropP(size_t, XAppId)
-
-  static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
-  void CreateStaticPrimitives();
+  TXGlLabel& GetLabel() const {  return *Label;  }
+  void UpdateLabel()  {  GetLabel().Update();  }
 
   static olxstr GetLegend(const TSAtom& A, const short Level=2); // returns full legend with symm code
   // returns level of the given legend (number of '.', basically)
   static uint16_t LegendLevel(const olxstr& legend);
-  static olxstr GetLabelLegend(TSAtom *A);
+  static olxstr GetLabelLegend(const TSAtom& A);
   // returns full legend for the label. e.g. "Q.Q1"
 
   static void GetDefSphereMaterial(const TSAtom& A, TGlMaterial &M);
@@ -126,10 +127,16 @@ public:
   static void SetQPeakSizeScale(float V);    // to use with q-peaks
 
   void CalcRad(short DefAtomR);
+  template <class Accessor=DirectAccessor> struct AtomAccessor  {
+    template <class Item> static inline TSAtom& Access(Item& a)  {
+      return Accessor::Access(a).Atom();
+    }
+    template <class Item> static inline TSAtom& Access(Item* a)  {
+      return Accessor::Access(*a).Atom();
+    }
+  };
+  inline TSAtom& Atom() const {  return FAtom;  }
 
-  inline operator TSAtom* () const {  return FAtom;  }
-  
-  inline TSAtom& Atom() const  {  return *FAtom;  }
   void ApplyStyle(TGraphicsStyle& S);
   void UpdateStyle(TGraphicsStyle& S);
 
@@ -143,9 +150,9 @@ public:
     double scale = FParams[1];
     if( (FRadius & (darIsot|darIsotH)) != 0 )
       scale *= TelpProb();
-    if( (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) && FAtom->GetEllipsoid() != NULL )
+    if( (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) && FAtom.GetEllipsoid() != NULL )
     {
-      if( FAtom->GetEllipsoid()->IsNPD() )
+      if( FAtom.GetEllipsoid()->IsNPD() )
         return (caDefIso*2*scale);
       return scale;
     }
@@ -168,10 +175,18 @@ public:
   bool OnMouseUp(const IEObject* Sender, const TMouseData& Data);
   bool OnMouseMove(const IEObject* Sender, const TMouseData& Data);
 
-  inline bool IsDeleted() const {  return AGDrawObject::IsDeleted(); }
-  void SetDeleted(bool v)  {  AGDrawObject::SetDeleted(v);  FAtom->SetDeleted(v); }
+  void SetDeleted(bool v)  {
+    AGDrawObject::SetDeleted(v);
+    Label->SetDeleted(v);
+    FAtom.SetDeleted(v);
+  }
+  void SetVisible(bool v)  {
+    AGDrawObject::SetVisible(v);
+    if( !v )
+      Label->SetDeleted(false);
+  }
   void ListDrawingStyles(TStrList &List);
-  inline short DrawStyle() const {  return FDrawStyle; }
+  inline short DrawStyle() const {  return FDrawStyle;  }
   void DrawStyle(short V);
 
   void UpdatePrimitiveParams(TGlPrimitive* GlP);
@@ -187,6 +202,10 @@ public:
   int GetPolyhedronType();
 
   static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }
+  void CreateStaticObjects();
+  static void ClearStaticObjects()  {
+    FStaticObjects.Clear();
+  }
 };
 
 struct AtomCreationParams : public ACreationParams {

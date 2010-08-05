@@ -23,9 +23,10 @@ public:
   // use it to change the content of the collection
   void ClearPrimitives();
 
-  inline size_t PrimitiveCount() const {  return Primitives.Count();  }
-  inline TGlPrimitive& GetPrimitive(size_t index) const {  return *Primitives[index];  }
+  size_t PrimitiveCount() const {  return Primitives.Count();  }
+  TGlPrimitive& GetPrimitive(size_t index) const {  return *Primitives[index];  }
   TGlPrimitive* FindPrimitiveByName(const olxstr& Name) const;
+  const TPtrList<TGlPrimitive>& GetPrimitives() const {  return Primitives;  }
 
   TGlPrimitive& NewPrimitive(const olxstr& Name, short type);
   void AddPrimitive(TGlPrimitive& P)  {  Primitives.Add(P);  }
@@ -36,24 +37,25 @@ public:
   bool ContainsPrimitive(TGlPrimitive& GlP);
 
   inline size_t ObjectCount() const {  return GObjects.Count();  }
-  class AGDrawObject& GetObject(size_t index) const {  return *GObjects[index];  }
+  AGDrawObject& GetObject(size_t index) const {  return *GObjects[index];  }
+  const TPtrList<AGDrawObject>& GetObjects() const {  return GObjects;  }
   void AddObject(AGDrawObject& Obj);
   bool IsEmpty() const {  return GObjects.IsEmpty();  }
 
   void ClearObjects()  {  GObjects.Clear();  }
-  void RemoveObject(AGDrawObject& G)  {  GObjects.Remove(G); }
-  void DeleteObject(size_t i)  {  GObjects.Delete(i); }
+  void RemoveObject(AGDrawObject& G)  {  GObjects.Remove(G);  }
+  void DeleteObject(size_t i)  {  GObjects.Delete(i);  }
 
   void Draw();
 
   void ListParams(TStrList& List, TGlPrimitive* Primitive);
 
-  inline TGlRenderer& GetParent()  const {  return Parent; }
+  inline TGlRenderer& GetParent() const {  return Parent;  }
   DefPropC(olxstr, Name)
 
   virtual void SetStyle(TGraphicsStyle* S);
   // it might be NULL
-  inline TGraphicsStyle& GetStyle() const {  return *Style; }
+  inline TGraphicsStyle& GetStyle() const {  return *Style;  }
 };
 
 

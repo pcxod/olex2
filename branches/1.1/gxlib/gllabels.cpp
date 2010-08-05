@@ -13,14 +13,10 @@
 TXGlLabels::TXGlLabels(TGlRenderer& Render, const olxstr& collectionName) :
   AGDrawObject(Render, collectionName)
 {
-  FontIndex = InvalidIndex;
   AGDrawObject::SetSelectable(false);
-
   FMarkMaterial = Render.GetSelection().GetGlM();
   FMarkMaterial.SetFlags(sglmAmbientF|sglmIdentityDraw);
 }
-//..............................................................................
-TXGlLabels::~TXGlLabels() {}
 //..............................................................................
 void TXGlLabels::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
@@ -29,7 +25,7 @@ void TXGlLabels::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;
-
+  FontIndex = Parent.GetScene().FindFontIndexForType<TXGlLabels>();
   TGlPrimitive& GlP = GPC.NewPrimitive("Text", sgloText);
   GlP.SetProperties(GPC.GetStyle().GetMaterial("Text", GetFont().GetMaterial()));
   GlP.Params[0] = -1;  //bitmap; TTF by default
@@ -44,12 +40,11 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
   if( ac == 0 || Marks.Count() != ac )
     return true;
   bool currentGlM, matInited = false;
+  const bool zoomed_rendering = Parent.GetExtraZoom() > 1;
+  const bool optimise_ati = (Parent.IsATI() && !zoomed_rendering);
   P.SetFont(&Fnt);
   TGlMaterial& OGlM = P.GetProperties();
-  if( Parent.IsATI() )  {
-    olx_gl::rasterPos(0, 0, 0);
-    olx_gl::callList(Fnt.GetFontBase() + ' ');
-  }
+  Fnt.Reset_ATI(optimise_ati);
   const RefinementModel& rm = app.XFile().GetRM();
   for( size_t i=0; i < ac; i++ )  {
     const TXAtom& XA = app.GetAtom(i);
@@ -57,7 +52,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     if( (Mode & lmHydr) == 0 && (XA.Atom().GetType() == iHydrogenZ) )  
       continue;
     if( (Mode & lmQPeak) == 0 && (XA.Atom().GetType() == iQPeakZ) )  continue;
-    if( (Mode & lmIdentity) != 0 && !XA.Atom().GetMatrix(0).IsFirst() )  continue;
+    if( (Mode & lmIdentity) != 0 && !XA.Atom().IsAUAtom() )  continue;
     const TCAtom& ca = XA.Atom().CAtom();
     olxstr Tmp(EmptyString, 48);
     if( (Mode & lmLabels) != 0 )  {
@@ -165,18 +160,12 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
         if( Marks[i] ) {
           FMarkMaterial.Init(Parent.IsColorStereo());
           currentGlM = false;
-          if( Parent.IsATI() )  {
-            olx_gl::rasterPos(0, 0, 0);
-            olx_gl::callList(Fnt.GetFontBase() + ' ');
-          } 
+          Fnt.Reset_ATI(optimise_ati);
         }
         else  {
           P.GetProperties().Init(Parent.IsColorStereo());
           currentGlM = true;
-          if( Parent.IsATI() )  {
-            olx_gl::rasterPos(0, 0, 0);
-            olx_gl::callList(Fnt.GetFontBase() + ' ');
-          } 
+          Fnt.Reset_ATI(optimise_ati);
         }
         matInited = true;
       }
@@ -185,20 +174,14 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
           if( currentGlM )  {
             FMarkMaterial.Init(Parent.IsColorStereo());
             currentGlM = false;
-            if( Parent.IsATI() )  {
-              olx_gl::rasterPos(0, 0, 0);
-              olx_gl::callList(Fnt.GetFontBase() + ' ');
-            } 
+            Fnt.Reset_ATI(optimise_ati);
           }
         }
         else  {
           if( !currentGlM )  {
             P.GetProperties().Init(Parent.IsColorStereo());
             currentGlM = true;
-            if( Parent.IsATI() )  {
-              olx_gl::rasterPos(0, 0, 0);
-              olx_gl::callList(Fnt.GetFontBase() + ' ');
-            } 
+            Fnt.Reset_ATI(optimise_ati);
           }
         }
       }
@@ -206,16 +189,21 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
       V *= Parent.GetBasis().GetMatrix();
       V *= Parent.GetBasis().GetZoom();
       const double MaxZ = (Parent.GetMaxRasterZ()-0.001);
-      Parent.DrawText(P, V[0]+0.01, V[1]+0.01, MaxZ);
-      olx_gl::rasterPos(V[0]+0.01, V[1]+0.01, MaxZ);
-      P.Draw();
+      if( Parent.GetExtraZoom() > 1 )  {
+        V *= (1./Parent.GetScale());
+        Parent.DrawTextSafe(vec3d(V[0]+0.01, V[1]+0.01, MaxZ), Tmp, Fnt);
+      }
+      else  {
+        olx_gl::rasterPos(V[0]+0.01, V[1]+0.01, MaxZ);
+        P.Draw();
+      }
     }
     else  {  // vector font?
       vec3d T = Parent.GetBasis().GetCenter() + XA.Atom().crd();
       T *= Parent.GetBasis().GetMatrix();
       T *= Parent.GetBasis().GetZoom();
       T[2] = Parent.GetMaxRasterZ() - 0.001;
-      Fnt.DrawGlText(T, Tmp, Parent.GetBasis().GetZoom()*0.75/Parent.CalcZoom(), true);
+      Fnt.DrawVectorText(T, Tmp, Parent.GetBasis().GetZoom()*0.75/Parent.CalcZoom());
     }
   }
   OGlM.Init(Parent.IsColorStereo());
@@ -256,11 +244,6 @@ bool TXGlLabels::IsLabelMarked(size_t i) const {
   return false;  // should not happen...
 }
 //..............................................................................
-TGlFont& TXGlLabels::GetFont() const {  
-  TGlFont* glf = Parent.GetScene().GetFont(FontIndex);
-  if( glf == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "invalid font index");
-  return *glf; 
-}
+TGlFont& TXGlLabels::GetFont() const {  return Parent.GetScene().GetFont(FontIndex, true);  }
 //..............................................................................
 

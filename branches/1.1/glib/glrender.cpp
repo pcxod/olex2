@@ -88,8 +88,8 @@ void TGlRenderer::InitLights()  {
 }
 //..............................................................................
 void TGlRenderer::ClearPrimitives()  {
-  FSelection->Clear();
   ClearGroups();
+  FSelection->Clear();
   FListManager.ClearLists();
   if( CompiledListId != -1 )  {
     olx_gl::deleteLists(CompiledListId, 1);
@@ -112,7 +112,6 @@ void TGlRenderer::ClearPrimitives()  {
 }
 //..............................................................................
 void TGlRenderer::Clear()  {
-  FSelection->SetSelected(false);
   FSelection->Clear();
   for( size_t i=0; i < FGroups.Count(); i++ )
     delete FGroups[i];
@@ -182,12 +181,18 @@ void TGlRenderer::_OnStylesClear()  {
 void TGlRenderer::_OnStylesLoaded()  {
   for( size_t i=0; i < FCollections.Count(); i++ )
     FCollections.GetObject(i)->SetStyle(&FStyles->NewStyle(FCollections.GetObject(i)->GetName(), true));
-  TPtrList<AGDrawObject> GO(FGObjects);
-  for( size_t i=0; i < GO.Count(); i++ )
+  AGDObjList GO = FGObjects.GetList();
+  for( size_t i=0; i < GO.Count(); i++ )  {
     GO[i]->OnPrimitivesCleared();
+    GO[i]->SetCreated(false);
+  }
   ClearPrimitives();
-  for( size_t i=0; i < GO.Count(); i++ )
-    GO[i]->Create();
+  for( size_t i=0; i < GO.Count(); i++ )  {
+    if( !GO[i]->IsCreated() )   {  // some loose objects as labels can be created twice otherwise
+      GO[i]->Create();
+      GO[i]->SetCreated(true);
+    }
+  }
   TGraphicsStyle* gs = FStyles->FindStyle("GL.Stereo");
   if( gs != NULL )  {
     StereoLeftColor = gs->GetParam("left", StereoLeftColor.ToString(), true);
@@ -472,6 +477,12 @@ void TGlRenderer::Draw()  {
 }
 //..............................................................................
 void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimitives)  {
+#ifdef _DEBUG
+  for( size_t i=0; i < PrimitiveCount(); i++ )  {
+    GetPrimitive(i).SetFont(NULL);
+    GetPrimitive(i).SetString(NULL);
+  }
+#endif
   const bool Select = SelectObjects || SelectPrimitives;
   const bool skip_mat = StereoFlag==glStereoColor;
   static const int DrawMask = sgdoVisible|sgdoSelected|sgdoDeleted|sgdoGrouped;
@@ -682,30 +693,15 @@ TGlGroup* TGlRenderer::FindObjectGroup(const AGDrawObject& G) const {
 }
 //..............................................................................
 void TGlRenderer::Select(AGDrawObject& G)  {
-  if( !G.IsSelectable() )  return;
-  if( G.GetPrimitives().PrimitiveCount() != 0 )  {
-    if( FSelection->IsEmpty() )  {
-      TGlMaterial glm = FSelection->GetGlM();
-      if( glm.IsIdentityDraw() != G.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw() )  {
-        glm.SetIdentityDraw(G.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw());
-        FSelection->SetGlM(glm);
-      }
-    }
-    else  {
-      if( FSelection->GetGlM().IsIdentityDraw() != G.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw() )
-        return;
-    }
-  }
   G.SetSelected(FSelection->Add(G));
 }
 //..............................................................................
 void TGlRenderer::DeSelect(AGDrawObject& G)  {
-  if( !G.IsSelectable() )  return;
-  FSelection->Remove(G);
+  if( G.GetParentGroup() == FSelection )
+    FSelection->Remove(G);
 }
 //..............................................................................
 void TGlRenderer::Select(AGDrawObject& G, bool v)  {
-  if( !G.IsSelectable() )  return;
   if( v )  {
     if( !G.IsSelected() )
       Select(G);
@@ -715,61 +711,38 @@ void TGlRenderer::Select(AGDrawObject& G, bool v)  {
 }
 //..............................................................................
 void TGlRenderer::InvertSelection()  {
-  TPtrList<AGDrawObject> Selected;
+  AGDObjList Selected;
   const size_t oc = FGObjects.Count();
   for( size_t i=0; i < oc; i++ )  {
     AGDrawObject* GDO = FGObjects[i];
-    if( !GDO->IsGrouped() && GDO->IsVisible() )  {
-      if( GDO->GetPrimitives().PrimitiveCount() != 0 &&
-        FSelection->GetGlM().IsIdentityDraw() != GDO->GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw())
-          continue;
-      if( !GDO->IsSelected() && GDO->IsSelectable() && GDO != FSelection )
-        Selected.Add(GDO);
-    }
+    if( !GDO->IsGrouped() && GDO->IsVisible() )
+      Selected.Add(GDO);
   }
-  FSelection->SetSelected(false);
   FSelection->Clear();
   for( size_t i=0; i < Selected.Count(); i++ )
     Selected[i]->SetSelected(FSelection->Add(*Selected[i]));
 }
 //..............................................................................
 void TGlRenderer::SelectAll(bool Select)  {
-  FSelection->SetSelected(false);
-  FSelection->Clear();
   if( Select )  {
     for( size_t i=0; i < ObjectCount(); i++ )  {
       AGDrawObject& GDO = GetObject(i);
-      if( !GDO.IsGrouped() && GDO.IsVisible() && GDO.IsSelectable() )  {
-        if( GDO.GetPrimitives().PrimitiveCount() != 0 &&
-          FSelection->GetGlM().IsIdentityDraw() != GDO.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw())
-          continue;
-        if( &GDO == FSelection )  continue;
-        if( EsdlInstanceOf(GDO, TGlGroup) )  {
-          bool Add = false;
-          for( size_t j=0; j < ((TGlGroup&)GDO).Count(); j++ )  {
-            if( ((TGlGroup&)GDO).GetObject(j).IsVisible() )  {
-              Add = true;
-              break;
-            }
-          }
-          if( Add )  
-            FSelection->Add(GDO);
-        }
-        else
-          FSelection->Add(GDO);
-      }
+      if( !GDO.IsGrouped() && GDO.IsVisible() && GDO.IsSelectable() )  // grouped covers selected
+        FSelection->Add(GDO);
     }
     FSelection->SetSelected(true);
   }
+  else
+    FSelection->Clear();
 }
 //..............................................................................
 void TGlRenderer::ClearGroups()  {
+  if( FGroups.IsEmpty() )  return;
   for( size_t i=0; i < FGroups.Count(); i++ )  {
     if( FGroups[i]->IsSelected() )  
       DeSelect(*FGroups[i]);
     FGroups[i]->Clear();
   }
-  // just in case of groups in groups
   for( size_t i=0; i < FGroups.Count(); i++ )
     delete FGroups[i];
   FGroups.Clear();
@@ -782,27 +755,24 @@ TGlGroup* TGlRenderer::FindGroupByName(const olxstr& colName) const {
   return NULL;
 }
 //..............................................................................
-void TGlRenderer::ClearSelection()  {
-  FSelection->Clear();
-}
+void TGlRenderer::ClearSelection()  {  FSelection->Clear();  }
 //..............................................................................
 TGlGroup* TGlRenderer::GroupSelection(const olxstr& groupName)  {
   if( FSelection->Count() > 1 )  {
-    TPtrList<AGDrawObject> ungroupable;
+    AGDObjList ungroupable;
     if( !FSelection->TryToGroup(ungroupable) )
       return NULL;
     TGlGroup *OS = FSelection;
     FGroups.Add(FSelection);
+    OS->GetPrimitives().RemoveObject(*OS);
     FSelection = new TGlGroup(*this, "Selection");
     FSelection->Create();
-    FSelection->Add(*OS);
     for( size_t i=0; i < ungroupable.Count(); i++ )
       FSelection->Add(*ungroupable[i]);
     // read style information for this particular group
-    OS->GetPrimitives().RemoveObject(*OS);
+    OS->SetSelected(false);
     FGObjects.Remove(OS);  // avoid duplication in the list!
     OS->Create(groupName);
-    FSelection->SetSelected(false);
     return OS;
   }
   return NULL;
@@ -817,25 +787,15 @@ void TGlRenderer::UnGroup(TGlGroup& OS)  {
   if( FSelection->Contains(OS) )
     FSelection->Remove(OS);
 
-  TPtrList<AGDrawObject> Objects(OS.Count());
+  AGDObjList Objects(OS.Count());
   for( size_t i=0; i < OS.Count(); i++ )
     Objects[i] = &OS[i];
   OS.GetPrimitives().RemoveObject(OS); // 
-  FGObjects.Remove(OS);
+  FGObjects.Remove(&OS);
   delete &OS;  // it will reset Parent group to NULL in the objects
   for( size_t i=0; i < Objects.Count(); i++ )
     FSelection->Add( *Objects[i] );
   FSelection->SetSelected(true);
-}
-//..............................................................................
-void TGlRenderer::UnGroupSelection()  {
-  if( FSelection->Count() >= 1 )  {
-    for( size_t i=0; i < FSelection->Count(); i++ )  {
-      AGDrawObject& GDO = FSelection->GetObject(i);
-      if( GDO.IsGroup() )
-        UnGroup((TGlGroup&)GDO);
-    }
-  }
 }
 //..............................................................................
 void TGlRenderer::EnableClipPlane(TGlClipPlane *P, bool v)  {
@@ -890,20 +850,14 @@ void TGlRenderer::OnSetProperties(const TGlMaterial& P)  {  // tracks translucen
   }
 }
 //..............................................................................
-void TGlRenderer::RemoveObjects(const TPtrList<AGDrawObject>& objects)  {
-  for( size_t i=0; i < FGObjects.Count(); i++ )
-    FGObjects[i]->SetTag(-1);
-  for( size_t i=0; i < objects.Count(); i++ )
-    objects[i]->SetTag(0);
-  for( size_t i=0; i < FGObjects.Count(); i++ )
-    if( FGObjects[i]->GetTag() == 0 )
-      FGObjects[i] = NULL;
-  FGObjects.Pack();
+void TGlRenderer::RemoveObjects(const AGDObjList& objects)  {
+  ACollectionItem::Exclude<>(FGObjects, objects);
 }
 //..............................................................................
 void TGlRenderer::AddObject(AGDrawObject& G)  {
-  FGObjects.Add(G);
-  if( FSceneComplete || !G.IsVisible() )  return;
+  FGObjects.AddUnique(&G);
+  if( FSceneComplete || !G.IsVisible() )
+    return;
   vec3d MaxV, MinV;
   if( G.GetDimensions(MaxV, MinV) )
     UpdateMinMax(MinV, MaxV);
@@ -922,13 +876,10 @@ void TGlRenderer::RemoveCollection(TGPCollection& GP)  {
   FTranslucentObjects.Clear();
   FIdentityObjects.Clear();
 
-  for( size_t i=0; i < PrimitiveCount(); i++ )
-    GetPrimitive(i).SetTag(-1);
-  for( size_t i=0; i < GP.PrimitiveCount(); i++ )
-    GP.GetPrimitive(i).SetTag(0);
+  Primitives.GetObjects().ForEach(ACollectionItem::TagSetter<>(-1));
+  GP.GetPrimitives().ForEach(ACollectionItem::TagSetter<>(0));
   Primitives.RemoveObjectsByTag(0);
-  FCollections.Delete( FCollections.IndexOfObject(&GP) );
-
+  FCollections.Delete(FCollections.IndexOfObject(&GP));
   for( size_t i=0; i < Primitives.PropertiesCount(); i++ )  {
     TGlMaterial& GlM = Primitives.GetProperties(i);
     if( GlM.IsTransparent() && GlM.IsIdentityDraw()  )
@@ -947,14 +898,12 @@ void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
   FTranslucentObjects.Clear();
   FIdentityObjects.Clear();
 
-  for( size_t i=0; i < PrimitiveCount(); i++ )
-    GetPrimitive(i).SetTag(-1);
+  Primitives.GetObjects().ForEach(ACollectionItem::TagSetter<>(-1));
   for( size_t i=0; i < Colls.Count(); i++ )  {
-    for( size_t j=0; j < Colls[i]->PrimitiveCount(); j++ )
-      Colls[i]->GetPrimitive(j).SetTag(0);
+    Colls[i]->GetPrimitives().ForEach(ACollectionItem::TagSetter<>(0));
     Primitives.RemoveObjectsByTag(0);
-    size_t col_ind = FCollections.IndexOfObject(Colls[i]);
-    FCollections.Remove( col_ind );
+    const size_t col_ind = FCollections.IndexOfObject(Colls[i]);
+    FCollections.Remove(col_ind);
     delete Colls[i];
   }
   for( size_t i=0; i < Primitives.PropertiesCount(); i++ )  {
@@ -1105,33 +1054,21 @@ void TGlRenderer::Compile(bool v)  {
 }
 //..............................................................................
 void TGlRenderer::DrawText(TGlPrimitive& p, double x, double y, double z)  {
-  if( ATI )  {
-    olx_gl::rasterPos(0, 0, 0);
-    olx_gl::callList(p.GetFont()->GetFontBase() + ' ');
-  }
+  p.GetFont()->Reset_ATI(ATI);
   olx_gl::rasterPos(x, y, z);
   p.Draw();
 }
 //..............................................................................
 void TGlRenderer::DrawTextSafe(const vec3d& pos, const olxstr& text, const TGlFont& fnt) {
-  if( ATI )  {
-    olx_gl::rasterPos(0, 0, 0);
-    olx_gl::callList(fnt.GetFontBase() + ' ');
-  }
+  fnt.Reset_ATI(ATI);
   // set a valid raster position
   olx_gl::rasterPos(0.0, 0.0, pos[2]);
   olx_gl::bitmap(0, 0, 0, 0, (float)(pos[0]/FViewZoom), (float)(pos[1]/FViewZoom), NULL);
-  for( size_t i=0; i < text.Length(); i++ )  {
-    if( text.CharAt(i) < 256 )
-      olx_gl::callList(fnt.GetFontBase() + text.CharAt(i));
-    else
-      olx_gl::callList(fnt.GetFontBase() + '?');
-  }
+  fnt.DrawRasterText(text);
 }
 //..............................................................................
 //..............................................................................
 //..............................................................................
-
 void TGlRenderer::LibCompile(const TStrObjList& Params, TMacroError& E)  {
   Compile(Params[0].ToBool());
 }
@@ -1257,6 +1194,16 @@ void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
   gs.SetParam("right", StereoRightColor.ToString(), true);
 }
 //..............................................................................
+void TGlRenderer::LibLineWidth(const TStrObjList& Params, TMacroError& E)  {
+  if( Params.IsEmpty() )  {
+    float LW = 0;
+    olx_gl::get(GL_LINE_WIDTH, &LW);
+    E.SetRetVal(LW);
+  }
+  else
+    olx_gl::lineWidth(Params[0].ToFloat<float>());
+}
+//..............................................................................
 TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("gl") : name);
   lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibCompile, "Compile",
@@ -1275,6 +1222,9 @@ decrements current zoom by provided value") );
   lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibStereoColor,
     "StereoColor",
     fpOne|fpTwo|fpFour, "Returns/sets colors for left/right color stereo mode glasses") );
+  lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibLineWidth,
+    "LineWidth",
+    fpNone|fpOne, "Returns/sets width of the raster OpenGl line") );
   lib->AttachLibrary(LightModel.ExportLibrary("lm"));
   return lib;
 }

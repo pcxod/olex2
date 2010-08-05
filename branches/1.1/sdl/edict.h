@@ -50,12 +50,18 @@ public:
       throw TInvalidArgumentException(__OlxSourceInfo, "key");
     return SortedL::operator[] (ind).val;
   }
-  inline void Clear()                         {  SortedL::Clear();  }
-  inline size_t Count()                 const {  return SortedL::Count();  }
-  inline bool IsEmpty()                 const {  return SortedL::IsEmpty();  }
-  inline VType& GetValue(size_t ind)          {  return SortedL::operator[] (ind).val;  }
+  template <class T> const VType& Find(const T& key, const VType& def) const {
+    size_t ind = SortedL::IndexOf(key);
+    if( ind == InvalidIndex )
+      return def;
+    return SortedL::operator[] (ind).val;
+  }
+  inline void Clear()  {  SortedL::Clear();  }
+  inline size_t Count() const {  return SortedL::Count();  }
+  inline bool IsEmpty() const {  return SortedL::IsEmpty();  }
+  inline VType& GetValue(size_t ind)  {  return SortedL::operator[] (ind).val;  }
   inline const VType& GetValue(size_t ind) const {  return SortedL::operator[] (ind).val;  }
-  inline const KType& GetKey(size_t ind)   const {  return SortedL::operator[] (ind).key;  }
+  inline const KType& GetKey(size_t ind) const {  return SortedL::operator[] (ind).key;  }
   inline const EntryType& GetEntry(size_t ind) const {  return SortedL::operator[] (ind);  }
   template <class T> inline bool HasKey(const T& key) const {
     return SortedL::IndexOf(key) != InvalidIndex;

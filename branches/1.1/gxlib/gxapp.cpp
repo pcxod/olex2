@@ -22,7 +22,6 @@
 #include "symmparser.h"
 
 #include "efile.h"
-#include "ecast.h"
 
 #include "xlattice.h"
 #include "egc.h"
@@ -90,7 +89,7 @@ public:
 };
 class THideUndo: public TUndoData  {
 public:
-  TPtrList<AGDrawObject> Objects;
+  AGDObjList Objects;
   THideUndo(IUndoAction *action):TUndoData(action)  {  }
   virtual ~THideUndo()  {  }
   template <class T>  void AddObject(T& go)  {  Objects.Add(go);  }
@@ -161,6 +160,7 @@ public:
         FParent->ClearIndividualCollections();
         FParent->GetRender().GetStyles().RemoveNamedStyles("Q");
         FParent->XFile().GetLattice().ClearPlaneDefinitions();
+        FParent->ClearGroupDefinitions();
       }
       //FParent->XGrid().Clear();
     }
@@ -171,7 +171,6 @@ public:
     B = FParent->GetRender().GetBasis();
     FParent->GetRender().Clear();
     FParent->HklFile().Clear();
-    FParent->ClearSelectionCopy();
     return true;
   }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
@@ -205,6 +204,7 @@ public:
     else  {  // definition will get broken otherwise
       FParent->XFile().GetLattice().ClearPlaneDefinitions();
       FParent->ClearLabels();
+      FParent->ClearGroupDefinitions();
     }
     if( GrowInfo != NULL )  {
       delete GrowInfo;
@@ -252,7 +252,9 @@ enum  {
   ID_OnSelect = 1,
   ID_OnDisassemble,
   ID_OnUniq,
-  ID_OnGrow
+  ID_OnGrow,
+  ID_OnClear,
+  ID_OnFileLoad
 };
 
 TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
@@ -267,10 +269,14 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
   MainFormVisible = false;
   FXPolyVisible = true;
   DeltaV = 3;
+  const TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
 #ifdef __WXWIDGETS__
   TwxGlScene *GlScene = new TwxGlScene(GetBaseDir() + "etc/Fonts/");
+  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
+  GlScene->CreateFont("Default", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
 #else
   TWGlScene *GlScene = new TWGlScene();
+  GlScene->CreateFont("Default", "@20").SetMaterial(glm);
 #endif
   FGrowMode = gmCovalent;
 //  TWGlScene *GlScene = new TWGlScene;
@@ -308,12 +314,15 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
   XFile().GetLattice().OnStructureUniq.Add(P);
   XFile().GetLattice().OnStructureUniq.Add(this, ID_OnUniq);
   XFile().GetLattice().OnStructureGrow.Add(this, ID_OnGrow);
+  XFile().GetLattice().OnAtomsDeleted.Add(this, ID_OnClear);
+  XFile().OnFileLoad.Add(this, ID_OnFileLoad);
   XFile().GetLattice().OnStructureUniq.Add(new xappXFileUniq);
   XFile().OnFileLoad.Add(P);
   XFile().OnFileClose.Add(new xappXFileClose);
 }
 //..............................................................................
 TGXApp::~TGXApp()  {
+  XFile().GetLattice().OnAtomsDeleted.Remove(this);
   Clear();
   delete FGlRender;
   delete FLabels;
@@ -334,7 +343,7 @@ void TGXApp::ClearXObjects()  {
 }
 //..............................................................................
 void TGXApp::Clear()  {
-  FGlRender->GetSelection().Clear();
+  FGlRender->SelectAll(false);
   FGlRender->ClearGroups();
   ClearXObjects();
   
@@ -386,20 +395,19 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   OnObjectsCreate.Enter(dynamic_cast<TBasicApp*>(this), NULL);
   TStopWatch sw(__FUNC__);
   sw.start("Initialising");
-
   const vec3d
     glMax = FGlRender->MaxDim(),
     glMin = FGlRender->MinDim(),
     glCenter = FGlRender->GetBasis().GetCenter();
-  TXAtom::FStaticObjects.Clear();
-  TXBond::FStaticObjects.Clear();
+  TXAtom::ClearStaticObjects();
+  TXBond::ClearStaticObjects();
   FGlRender->ClearPrimitives();
   FLabels->Clear();
   ClearXObjects();
   FGlRender->SetSceneComplete(false);
 
   for( size_t i=0; i < IndividualCollections.Count(); i++ )
-    FGlRender->NewCollection( IndividualCollections[i] );
+    FGlRender->NewCollection(IndividualCollections[i]);
 
   size_t totalACount = XFile().GetLattice().AtomCount();
   for( size_t i=0; i < OverlayedXFiles.Count(); i++ )
@@ -412,19 +420,19 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
 
   sw.start("Atoms creation");
   TSAtomPList allAtoms;
-  allAtoms.SetCapacity( totalACount );
+  allAtoms.SetCapacity(totalACount);
   for( size_t i=0; i < XFile().GetLattice().AtomCount(); i++ )
-    allAtoms.Add( &XFile().GetLattice().GetAtom(i) );
+    allAtoms.Add(XFile().GetLattice().GetAtom(i));
   for( size_t i=0; i < OverlayedXFiles.Count(); i++ )  {
     for( size_t j=0; j < OverlayedXFiles[i].GetLattice().AtomCount(); j++ )
-      allAtoms.Add( &OverlayedXFiles[i].GetLattice().GetAtom(j) );
+      allAtoms.Add(OverlayedXFiles[i].GetLattice().GetAtom(j));
   }
 
-  XAtoms.SetCapacity( allAtoms.Count() );
+  XAtoms.SetCapacity(allAtoms.Count());
   const size_t this_a_count = XFile().GetLattice().AtomCount();
   for( size_t i=0; i < allAtoms.Count(); i++ )  {
     allAtoms[i]->SetTag(i);
-    TXAtom& XA = XAtoms.Add( *(new TXAtom(*FGlRender, EmptyString, *allAtoms[i])) );
+    TXAtom& XA = XAtoms.Add(new TXAtom(*FGlRender, EmptyString, *allAtoms[i]));
     XA.SetDeleted(allAtoms[i]->IsDeleted());
     XA.Create(EmptyString);
     XA.SetXAppId(i);
@@ -436,12 +444,12 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   
   sw.start("Bonds creation");
   TSBondPList allBonds;
-  allBonds.SetCapacity( totalBCount );
+  allBonds.SetCapacity(totalBCount);
   for( size_t i=0; i < XFile().GetLattice().BondCount(); i++ )
-    allBonds.Add( &XFile().GetLattice().GetBond(i) );
+    allBonds.Add(XFile().GetLattice().GetBond(i));
   for( size_t i=0; i < OverlayedXFiles.Count(); i++ )  {
     for( size_t j=0; j < OverlayedXFiles[i].GetLattice().BondCount(); j++ )
-      allBonds.Add( &OverlayedXFiles[i].GetLattice().GetBond(j) );
+      allBonds.Add(OverlayedXFiles[i].GetLattice().GetBond(j));
   }
   XBonds.SetCapacity(allBonds.Count());
   for( size_t i=0; i < allBonds.Count(); i++ )  {
@@ -450,6 +458,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     XB.SetDeleted(B->IsDeleted() || (B->A().IsDeleted() || allBonds[i]->B().IsDeleted()));
     BondCreationParams bcpar(XAtoms[B->A().GetTag()], XAtoms[B->B().GetTag()]);
     XB.Create(EmptyString, &bcpar);
+    XB.SetXAppId(i);
     if( !FStructureVisible )  {  
       XB.SetVisible(FStructureVisible);  
       continue;  
@@ -491,8 +500,9 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   selection is inpossible, unless properties are changed, odd... could not figure out
   what is going wrong... */
 
+  XLabels.Pack(olx_alg::olx_not(AGDrawObject::FlagsAnalyser(sgdoVisible)));
   for( size_t i=0; i < XLabels.Count(); i++ )  {
-    if( XLabels[i].IsVisible() || !XLabels[i].IsDeleted() )
+    if( XLabels[i].IsVisible() )
       XLabels[i].Create();
     else
       XLabels.NullItem(i);
@@ -502,12 +512,12 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   for( size_t i=0; i < LooseObjects.Count(); i++ )  {
     if( LooseObjects[i]->IsDeleted() )  {
       delete LooseObjects[i];
-      LooseObjects.Delete(i);
-      i--;
-      continue;
+      LooseObjects[i] = NULL;
     }
-    LooseObjects[i]->Create();
+    else
+      LooseObjects[i]->Create();
   }
+  LooseObjects.Pack();
 
   FLabels->Init();
   FLabels->Create();
@@ -515,7 +525,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   if( FXGrowLinesVisible )  CreateXGrowLines();
   if( XGrowPointsVisible )  CreateXGrowPoints();
   FXGrid->Create();
-
+  RestoreGroups();
   // create hkls
   if( FHklVisible )  SetHklVisible(true);
 
@@ -528,7 +538,6 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     FGlRender->UpdateMinMax(glMin, glMax);
     FGlRender->GetBasis().SetCenter(glCenter);
   }
-  GetRender().GetSelection().Create();
   olx_gl::loadIdentity();
   GetRender().SetView(false, 1);
   GetRender().Initialise();
@@ -619,13 +628,12 @@ void TGXApp::CalcProbFactor(float Prob)  {
 float TGXApp::ProbFactor(float Prob)  {
   Prob /= 100;
   double ProbFactor = 0, Inc = 0.0001, Summ = 0, TVal = Prob * 15.75, Var;
-  while( Summ < TVal && ProbFactor <= 10 )
-  {
+  while( Summ < TVal && ProbFactor <= 10 )  {
     Var = ProbFactor + Inc/2;
     Summ += 4*M_PI*exp(-Var*Var/2)*Var*Var*Inc;
     ProbFactor += Inc;
   }
-  return ProbFactor;
+  return (float)ProbFactor;
 }
 //..............................................................................
 void TGXApp::Init()  {
@@ -637,13 +645,13 @@ void TGXApp::Init()  {
 }
 //..............................................................................
 void TGXApp::Quality(const short V)  {
-  if( XAtoms.Count() )  {
+  if( !XAtoms.IsEmpty() )  {
     XAtoms[0].Quality(V);
-    XAtoms[0].CreateStaticPrimitives();
+    XAtoms[0].CreateStaticObjects();
   }
-  if( XBonds.Count() )  {
+  if( !XBonds.IsEmpty() )  {
     XBonds[0].Quality(V);
-    XBonds[0].CreateStaticPrimitives();
+    XBonds[0].CreateStaticObjects();
   }
   Draw();
 }
@@ -652,7 +660,7 @@ bool TGXApp::IsCellVisible()  const {
   return IsGraphicsVisible(FDUnitCell);
 }
 //..............................................................................
-void TGXApp::SetCellVisible( bool v)  {
+void TGXApp::SetCellVisible(bool v)  {
   SetGraphicsVisible(FDUnitCell, v);
 }
 //..............................................................................
@@ -660,11 +668,11 @@ bool TGXApp::IsBasisVisible() const {
   return IsGraphicsVisible(FDBasis);
 }
 //..............................................................................
-void TGXApp::SetBasisVisible( bool v)  {
+void TGXApp::SetBasisVisible(bool v)  {
   SetGraphicsVisible(FDBasis, v);
 }
 //..............................................................................
-TUndoData* TGXApp::SetGraphicsVisible( AGDrawObject *G, bool v )  {
+TUndoData* TGXApp::SetGraphicsVisible(AGDrawObject *G, bool v)  {
   if( v != IsGraphicsVisible(G) )  {
     G->SetVisible(v);
     OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), G);
@@ -673,7 +681,7 @@ TUndoData* TGXApp::SetGraphicsVisible( AGDrawObject *G, bool v )  {
   return NULL;
 }
 //..............................................................................
-TUndoData* TGXApp::SetGraphicsVisible( TPtrList<AGDrawObject>& G, bool v )  {
+TUndoData* TGXApp::SetGraphicsVisible(AGDObjList& G, bool v)  {
   for( size_t i=0; i < G.Count(); i++ )  {
     if( v == G[i]->IsVisible() )  continue;
     G[i]->SetVisible(v);
@@ -841,7 +849,7 @@ olxstr TGXApp::GetSelectionInfo()  {
           "): ";
         v = olx_angle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
         Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
-        // check for ajusten bonds
+        // check for adjacent bonds
         if( !(&A.Bond().A() == &B.Bond().A() || &A.Bond().A() == &B.Bond().B() ||
           &A.Bond().B() == &B.Bond().A() || &A.Bond().B() == &B.Bond().B()) )
         {
@@ -849,7 +857,7 @@ olxstr TGXApp::GetSelectionInfo()  {
             macSel_GetName4(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) <<
             "): ";
           v = olx_dihedral_angle_signed(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().B().crd(), B.Bond().A().crd());
-          Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')' <<
+          Tmp << olxstr::FormatFloat(3, v) <<
             "\nTorsion angle (" <<
             macSel_GetName4(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) << 
             "): ";
@@ -1019,7 +1027,7 @@ olxstr TGXApp::GetSelectionInfo()  {
         for( size_t i=0; i < 6; i++ )  {
           for( size_t j=i+1; j < 6; j++ )  {
             for( size_t k=j+1; k < 6; k++ )  {
-              const double thv = TetrahedronVolume( 
+              const double thv = olx_tetrahedron_volume( 
                 central_atom->crd(),
                 (atoms[i]->crd()-central_atom->crd()).Normalise() + central_atom->crd(),
                 (atoms[j]->crd()-central_atom->crd()).Normalise() + central_atom->crd(),
@@ -1028,9 +1036,10 @@ olxstr TGXApp::GetSelectionInfo()  {
               face_cnt++;
               TSAtomPList sorted_atoms;
               olxdict<index_t, vec3d, TPrimitiveComparator> transforms;
-              for( size_t l=0; l < atoms.Count(); l++ )
-                atoms[l]->SetTag(0);
-              atoms[i]->SetTag(1);  atoms[j]->SetTag(1);  atoms[k]->SetTag(1);
+              atoms.ForEach(ACollectionItem::TagSetter<>(0));
+              atoms[i]->SetTag(1);
+              atoms[j]->SetTag(1);
+              atoms[k]->SetTag(1);
               const vec3d face_center = (atoms[i]->crd()+atoms[j]->crd()+atoms[k]->crd())/3;
               const vec3d normal = (face_center - central_atom->crd()).Normalise();
 
@@ -1210,15 +1219,13 @@ TGlGroup& TGXApp::GroupFragments(const TNetPList& Fragments, const olxstr groupN
 }
 //..............................................................................
 size_t TGXApp::InvertFragmentsList(const TNetPList& SF, TNetPList& Result)  {
-  TLattice *L = &XFile().GetLattice();
+  TLattice& L = XFile().GetLattice();
   size_t fc=0;
-  for( size_t i=0; i < L->FragmentCount(); i++ )    
-    L->GetFragment(i).SetTag(1);
-  for( size_t i=0; i < SF.Count(); i++ )           
-    SF[i]->SetTag(0);
-  for( size_t i=0; i < L->FragmentCount(); i++ )  {
-    if( L->GetFragment(i).GetTag() )  {
-      Result.Add( L->GetFragment(i) );
+  L.GetFragments().ForEach(ACollectionItem::TagSetter<>(1));
+  SF.ForEach(ACollectionItem::TagSetter<>(0));
+  for( size_t i=0; i < L.FragmentCount(); i++ )  {
+    if( L.GetFragment(i).GetTag() != 0 )  {
+      Result.Add(L.GetFragment(i));
       fc++;
     }
   }
@@ -1226,8 +1233,7 @@ size_t TGXApp::InvertFragmentsList(const TNetPList& SF, TNetPList& Result)  {
 }
 //..............................................................................
 void TGXApp::SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b)  {
-  for( size_t i=0; i < XAtoms.Count(); i++ )
-    XAtoms[i].Atom().SetTag(i);
+  XAtoms.ForEachEx(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
     TXAtom& a = XAtoms[i];
     if( a.Atom().GetType() != atom_type )
@@ -1297,10 +1303,7 @@ void TGXApp::AllVisible(bool V)  {
     TAsymmUnit& au = XFile().GetAsymmUnit();
     for( size_t i=0; i < au.AtomCount(); i++ )
       au.GetAtom(i).SetMasked(false);
-    TTypeList<GroupData> stored_groups;
-    StoreGroups(stored_groups);
-    XFile().GetLattice().UpdateConnectivity();
-    RestoreGroups(stored_groups);
+    UpdateConnectivity();
     CenterView(true);
   }
   OnAllVisible.Exit(dynamic_cast<TBasicApp*>(this), NULL);
@@ -1358,6 +1361,7 @@ void TGXApp::Select(const vec3d& From, const vec3d& To )  {
 }
 //..............................................................................
 bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
+  static bool ObjectsStored = false, LoadingFile = false;
   if( MsgId == ID_OnSelect )  {
     const TSelectionInfo* SData = dynamic_cast<const TSelectionInfo*>(Data);
     if(  !(SData->From == SData->To) )
@@ -1365,10 +1369,37 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
   }
   else if( (MsgId == ID_OnUniq || MsgId == ID_OnGrow) && MsgSubId == msiEnter ) {
   }
-  else if( MsgId == ID_OnDisassemble && MsgSubId == msiEnter ) {
+  else if( MsgId == ID_OnFileLoad )  {
+    if( MsgSubId == msiEnter )  {
+      SelectionCopy[0].Clear();
+      StoreGroup(GetSelection(), SelectionCopy[0]);
+      StoreLabels();
+      LoadingFile = true;
+    }
+    else if( MsgSubId == msiExit )
+      LoadingFile = false;
   }
-  else if( MsgId == ID_OnDisassemble && MsgSubId == msiExit ) {
-    CreateObjects(false, false);
+  else if( MsgId == ID_OnDisassemble ) {
+    if( MsgSubId == msiExit )
+      CreateObjects(false, false);
+    else if( MsgSubId == msiEnter )  {  // backup the selection
+      if( ObjectsStored )
+        ObjectsStored = false;
+      else  if( !LoadingFile )  {
+        SelectionCopy[0].Clear();
+        StoreGroup(GetSelection(), SelectionCopy[0]);
+        StoreLabels();
+      }
+    }
+  }
+  else if( MsgId == ID_OnClear ) {
+    if( MsgSubId == msiEnter && !LoadingFile )  {  // backup the selection
+      SelectionCopy[0].Clear();
+      StoreGroup(GetSelection(), SelectionCopy[0]);
+      StoreLabels();
+      ObjectsStored = true;
+    }
+    ClearXObjects();
   }
   return false;
 }
@@ -1378,29 +1409,20 @@ void TGXApp::GetSelectedCAtoms(TCAtomPList& List, bool Clear)  {
   GetSelectedXAtoms(xAtoms, Clear);
   List.SetCapacity( xAtoms.Count() );
   for( size_t i=0; i < xAtoms.Count(); i++ )
-    List.Add( &xAtoms[i]->Atom().CAtom() );
-}
-//..............................................................................
-void TGXApp::ClearSelectionCopy()  {  SelectionCopy.Clear();  }
-//..............................................................................
-void TGXApp::BackupSelection()  {
-  TGlGroup& Sel = GetSelection();
-  if( !Sel.Count() )  return;
-  SelectionCopy.Clear();
-  for( size_t i=0; i < Sel.Count(); i++ )
-    SelectionCopy.Add(Sel.GetObject(i));
+    List.Add(xAtoms[i]->Atom().CAtom());
 }
 //..............................................................................
 void TGXApp::RestoreSelection()  {
+  if( !SelectionCopy[0].IsEmpty() || SelectionCopy[1].IsEmpty() )
+    return;
+  SelectionCopy[0] = SelectionCopy[1];
   GetRender().SelectAll(false);
-  for( size_t i=0; i < SelectionCopy.Count(); i++ )
-    GetRender().Select( *SelectionCopy[i] );
-  Draw();
+  RestoreGroup(GetSelection(), SelectionCopy[1]);
 }
 //..............................................................................
 void TGXApp::GetSelectedXAtoms(TXAtomPList& List, bool Clear)  {
   TPtrList<TGlGroup> S;
-  S.Add( GetSelection() );
+  S.Add(GetSelection());
   for( size_t i=0; i < S.Count(); i++ )  {
     TGlGroup& Sel = *S[i];
     for( size_t j=0; j < Sel.Count(); j++ )  {
@@ -1409,29 +1431,31 @@ void TGXApp::GetSelectedXAtoms(TXAtomPList& List, bool Clear)  {
       if( GO.IsGroup() )  // another group
         S.Add((TGlGroup&)GO);  
       else if( EsdlInstanceOf(GO, TXAtom) )
-        List.Add( (TXAtom&)GO );
+        List.Add((TXAtom&)GO);
     }
   }
   if( Clear )  
     SelectAll(false);
 }
 //..............................................................................
-void TGXApp::CAtomsByType(const cm_Element& AI, TCAtomPList& List)  {
-  TAsymmUnit& AU= XFile().GetLattice().GetAsymmUnit();
-  for( size_t i=0; i < AU.AtomCount(); i++ )  {
-    if( AU.GetAtom(i).IsDeleted())  continue;
-    if( AU.GetAtom(i).GetType() == AI )  {
-      List.Add(AU.GetAtom(i));
-    }
-  }
+void TGXApp::CAtomsByType(const cm_Element& AI, TCAtomPList& res)  {
+  ListFilter::Filter(XFile().GetLattice().GetAsymmUnit().GetAtoms(), res,
+    olx_alg::olx_and(
+      olx_alg::olx_not(TCAtom::FlagsAnalyser<>(catom_flag_Deleted)),
+      TCAtom::TypeAnalyser<>(AI)));
 }
 //..............................................................................
-void TGXApp::XAtomsByType(const cm_Element& AI, TXAtomPList& List, bool FindHidden) {
+void TGXApp::XAtomsByType(const cm_Element& AI, TXAtomPList& res, bool FindHidden) {
+  //ListFilter::Filter(XAtoms, res,
+  //  olx_alg::and(
+  //    olx_alg::Bool(!FindHidden),
+  //    olx_alg::and(
+  //      AGDrawObject::FlagsAnalyser(sgdoVisible),
+  //      TSAtom::TypeAnalyser<TXAtom::AtomAccessor<> >(AI))));
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
-    if( XAtoms[i].IsDeleted() )  continue;
     if( !FindHidden && !XAtoms[i].IsVisible() )  continue;
     if( XAtoms[i].Atom().GetType() == AI )  {
-      List.Add(XAtoms[i]);
+      res.Add(XAtoms[i]);
     }
   }
 }
@@ -1450,8 +1474,9 @@ void TGXApp::CAtomsByMask(const olxstr &StrMask, int Mask, TCAtomPList& List)  {
     found = true;
     for( size_t j=0; j < Name.Length(); j++ )  {
       if( !(Mask & (0x0001<<j)) )  {
-        if( Name[j] != Tmp[j] )  {
-          found = false;  break;
+        if( Name.CharAt(j) != Tmp.CharAt(j) )  {
+          found = false;
+          break;
         }
       }
     }
@@ -1460,63 +1485,84 @@ void TGXApp::CAtomsByMask(const olxstr &StrMask, int Mask, TCAtomPList& List)  {
   }
 }
 //..............................................................................
-TEBitArray& TGXApp::GetVisibilityMask(TEBitArray& ba) const {
-  for( size_t i=0; i < XAtoms.Count(); i++ )
-    XAtoms[i].Atom().SetTag(i);
-  ba.SetSize( (uint32_t)XAtoms.Count() );
-  const TLattice& latt = XFile().GetLattice();
-  for( size_t i=0; i < latt.AtomCount(); i++ )
-    ba.Set(i, XAtoms[latt.GetAtom(i).GetTag()].IsVisible() );
-  return ba;
-}
 void TGXApp::GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template)  {
   FXFile->GetLattice().GrowAtom(XA->Atom(), Shell, Template);
 }
 //..............................................................................
 void TGXApp::Grow(const TXAtomPList& atoms, const smatd_list& matrices)  {
-  TSAtomPList satoms;
-  TListCaster::POP(atoms, satoms);
+  TSAtomPList satoms(atoms, TXAtom::AtomAccessor<>());
   FXFile->GetLattice().GrowAtoms(satoms, matrices);
 }
 //..............................................................................
 bool TGXApp::AtomExpandable(TXAtom *XA)  {
-  return FXFile->GetLattice().IsExpandable( XA->Atom() );
+  return FXFile->GetLattice().IsExpandable(XA->Atom());
 }
 //..............................................................................
 void TGXApp::GetXAtoms(const olxstr& AtomName, TXAtomPList& res)  {
   const size_t xac = XAtoms.Count();
   const short SelMask = sgdoVisible|sgdoDeleted;
   if( AtomName.StartsFrom("#c") )  {  // TCAtom.Id
-    size_t id = AtomName.SubStringFrom(2).ToSizeT();
+    const size_t id = AtomName.SubStringFrom(2).ToSizeT();
     for( size_t i=0; i < xac; i++ )  {
       if( XAtoms[i].Atom().CAtom().GetId() == id )  
         if( XAtoms[i].MaskFlags(SelMask) == sgdoVisible )
-          res.Add( &XAtoms[i] );
+          res.Add(XAtoms[i]);
     }
   }
   else if( AtomName.StartsFrom("#s") )  {  // SAtom.LatId
-    size_t id = AtomName.SubStringFrom(2).ToSizeT();
+    const size_t id = AtomName.SubStringFrom(2).ToSizeT();
     for( size_t i=0; i < xac; i++ )  {
-      if(XAtoms[i].Atom().GetLattId() == id )  { // only one is possible
+      if( XAtoms[i].Atom().GetLattId() == id )  { // only one is possible
         if( XAtoms[i].MaskFlags(SelMask) == sgdoVisible )  
-          res.Add( &XAtoms[i] );
+          res.Add(XAtoms[i]);
         break;
       }
     }
   }
   else if( AtomName.StartsFrom("#x") )  {  // XAtom.XAppId
-    size_t id = AtomName.SubStringFrom(2).ToSizeT();
+    const size_t id = AtomName.SubStringFrom(2).ToSizeT();
     if( id >= xac )
       throw TInvalidArgumentException(__OlxSourceInfo, "xatom id");
     TXAtom& xa = XAtoms[id];
     if( xa.MaskFlags(SelMask) == sgdoVisible )  
-      res.Add( &xa );
+      res.Add(xa);
   }
   else  {
     for( size_t i=0; i < xac; i++ )  {
       if( XAtoms[i].Atom().GetLabel().Equalsi(AtomName) )  {
         if( XAtoms[i].MaskFlags(SelMask) == sgdoVisible )  
-          res.Add( &XAtoms[i] );
+          res.Add(XAtoms[i]);
+      }
+    }
+  }
+}
+//..............................................................................
+void TGXApp::GetXBonds(const olxstr& BondName, TXBondPList& res)  {
+  const size_t xbc = XBonds.Count();
+  const short SelMask = sgdoVisible|sgdoDeleted;
+  if( BondName.StartsFrom("#t") )  {  // SBond.LatId
+    size_t id = BondName.SubStringFrom(2).ToSizeT();
+    for( size_t i=0; i < xbc; i++ )  {
+      if( XBonds[i].Bond().GetLattId() == id )  { // only one is possible
+        if( XBonds[i].MaskFlags(SelMask) == sgdoVisible )  
+          res.Add(XBonds[i]);
+        break;
+      }
+    }
+  }
+  else if( BondName.StartsFrom("#y") )  {  // SBond.XAppId
+    size_t id = BondName.SubStringFrom(2).ToSizeT();
+    if( id >= xbc )
+      throw TInvalidArgumentException(__OlxSourceInfo, "xatom id");
+    TXBond& xb = XBonds[id];
+    if( xb.MaskFlags(SelMask) == sgdoVisible )  
+      res.Add(xb);
+  }
+  else  {
+    for( size_t i=0; i < xbc; i++ )  {
+      if( XBonds[i].GetCollectionName().Equalsi(BondName) )  {
+        if( XBonds[i].MaskFlags(SelMask) == sgdoVisible )  
+          res.Add(XBonds[i]);
       }
     }
   }
@@ -1542,7 +1588,7 @@ void TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask, TXAtomPList& List)  {
   olxstr Tmp, Name( olxstr::UpperCase(StrMask) );
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
     TXAtom& XA = XAtoms[i];
-    if( XA.IsDeleted() || !XA.IsVisible() )  continue;
+    if( !XA.IsVisible() )  continue;
     if( XA.Atom().GetLabel().Length() != Name.Length() )  continue;
     Tmp = olxstr::UpperCase(XA.Atom().GetLabel());
     found = true;
@@ -1636,15 +1682,15 @@ void TGXApp::CheckQBonds(TXAtom& XA)  {
   TSBondPList SB;
   TXBondPList XB;
   for(size_t i=0; i < XA.Atom().BondCount(); i++ )
-    SB.Add( &XA.Atom().Bond(i) );
+    SB.Add(XA.Atom().Bond(i));
   SBonds2XBonds(SB, XB);
   for(size_t i=0; i < XB.Count(); i++ )  {
     TXBond* xb = XB[i];
     /* check if any of the atoms still a Q-peak */
     if( xb->Bond().A().GetType() == iQPeakZ || xb->Bond().B().GetType() == iQPeakZ )  continue;
     /* check that the covalent bond really exists before showing it */
-    xb->SetVisible( FXFile->GetLattice().GetNetwork().CBondExistsQ(xb->Bond().A(),
-                    xb->Bond().B(), xb->Bond().QLength()) );
+    xb->SetVisible(FXFile->GetLattice().GetNetwork().CBondExistsQ(xb->Bond().A(),
+                    xb->Bond().B(), xb->Bond().QLength()));
   }
 }
 //..............................................................................
@@ -1700,12 +1746,16 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
   TXAtom* XA = GetXAtom(From, false);
   if( XA != NULL )  {
     if( ClearSelection ) SelectAll(false);
-    return Name( *XA, To, CheckLabel);
+    return Name(*XA, To, CheckLabel);
   }
   else  {
     TNameUndo *undo = new TNameUndo(new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
     TXAtomPList Atoms, ChangedAtoms;
     FindXAtoms(From, Atoms, ClearSelection);
+    // leave only AU atoms
+    for( size_t i=0; i < Atoms.Count(); i++ )
+      Atoms[i]->SetTag(Atoms[i]->Atom().IsAUAtom() ? 1 : 0);
+    Atoms.Pack(ACollectionItem::TagAnalyser<>(0));
     if( From.Equalsi("sel") && To.IsNumber() )  {
       int j = To.ToInt();
       for( size_t i=0; i < Atoms.Count(); i++ )  {
@@ -1723,29 +1773,49 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
           CheckQBonds(*XA);
       }
     }
-    else  if( From[0] == '$' && To[0] == '$' )  {  // change type
-      const cm_Element* elm = XElementLib::FindBySymbolEx(To.SubStringFrom(1));
-      if( elm == NULL )
-        throw TFunctionFailedException(__OlxSourceInfo, "wrong syntax");
-      for( size_t i=0; i < Atoms.Count(); i++ )  {
-        XA = Atoms[i];
-        const bool checkBonds = (XA->Atom().GetType() == iQPeakZ);
-        const olxstr Tmp = XA->Atom().GetLabel();
-        olxstr NL = To.SubStringFrom(1);
-        NL << Tmp.SubStringFrom(From.Length()-1);
-        bool recreate = XA->Atom().GetType() != *elm;
-        const olxstr oldL = XA->Atom().GetLabel();
-        XA->Atom().CAtom().SetLabel(
-          CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->Atom().CAtom(), NL) : NL, false);
-        undo->AddAtom( XA->Atom().CAtom(), oldL);
-        XA->Atom().CAtom().SetType(*elm);
-        NameHydrogens(XA->Atom(), undo, CheckLabel);
-        if( recreate )  {
-          ChangedAtoms.Add(XA);
+    else  if( From.CharAt(0) == '$' )  {
+      const cm_Element* elm = XElementLib::FindBySymbolEx(
+        To.CharAt(0) == '$' ? To.SubStringFrom(1) : To);
+      if( elm != NULL )  {  // change type
+        for( size_t i=0; i < Atoms.Count(); i++ )  {
+          XA = Atoms[i];
+          const bool checkBonds = (XA->Atom().GetType() == iQPeakZ);
+          const olxstr Tmp = XA->Atom().GetLabel();
+          olxstr NL = To.SubStringFrom(1);
+          NL << Tmp.SubStringFrom(From.Length()-1);
+          bool recreate = XA->Atom().GetType() != *elm;
+          const olxstr oldL = XA->Atom().GetLabel();
+          XA->Atom().CAtom().SetLabel(
+            CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->Atom().CAtom(), NL) : NL, false);
+          undo->AddAtom( XA->Atom().CAtom(), oldL);
+          XA->Atom().CAtom().SetType(*elm);
+          NameHydrogens(XA->Atom(), undo, CheckLabel);
+          if( recreate )  {
+            ChangedAtoms.Add(XA);
+            if( checkBonds )
+              CheckQBonds(*XA);
+          }
+        }
+      }
+      else if( To.IsNumber() ) {  // change number
+        int j = To.ToInt();
+        for( size_t i=0; i < Atoms.Count(); i++ )  {
+          XA = Atoms[i];
+          bool checkBonds = (XA->Atom().GetType() == iQPeakZ);
+          const olxstr Tmp = XA->Atom().GetLabel();
+          olxstr NL = XA->Atom().GetType().symbol;
+          NL << j++;
+          const olxstr oldL = XA->Atom().GetLabel();
+          XA->Atom().CAtom().SetLabel(
+            CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->Atom().CAtom(), NL) : NL, false);
+          undo->AddAtom(XA->Atom().CAtom(), oldL);
+          NameHydrogens(XA->Atom(), undo, CheckLabel);
           if( checkBonds )
             CheckQBonds(*XA);
         }
       }
+      else
+        throw TFunctionFailedException(__OlxSourceInfo, "wrong syntax");
     }
     else  {  // C2? to C3? ; Q? to Ni? ...
       const cm_Element* elm = XElementLib::FindBySymbolEx(To);
@@ -1859,9 +1929,23 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
   }
 }
 //..............................................................................
+TXGlLabel& TGXApp::CreateLabel(const TXAtom& a, uint16_t FontIndex)  {
+  TXGlLabel& l = CreateLabel(a.Atom().crd(), a.Atom().GetLabel(), FontIndex);
+  l.TranslateBasis(vec3d(1, -1, 0));  // in pixels
+  return l;
+}
+//..............................................................................
+TXGlLabel& TGXApp::CreateLabel(const vec3d& center, const olxstr& T, uint16_t FontIndex)  {
+  TXGlLabel& L = XLabels.Add(new TXGlLabel(*FGlRender, PLabelsCollectionName));
+  L.SetFontIndex(FontIndex);
+  L.SetLabel(T);
+  L.SetOffset(center);
+  L.Create();
+  return L;
+}
+//..............................................................................
 TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T)  {
   TXGlLabel* gl = new TXGlLabel(*FGlRender, Name);
-  gl->SetFontIndex((uint16_t)FLabels->GetFontIndex());
   gl->SetLabel(T);
   gl->SetOffset(center);
   gl->Create();
@@ -1886,20 +1970,16 @@ AGDrawObject* TGXApp::FindLooseObject(const olxstr &Name)  {
 TSPlane *TGXApp::TmpPlane(TXAtomPList* atoms, int weightExtent)  {
   TSAtomPList SAtoms;
   if( atoms != NULL )
-    TListCaster::POP(*atoms, SAtoms);
+    SAtoms.Assign(*atoms, TXAtom::AtomAccessor<>());
   else
-    TListCaster::TOP(XAtoms, SAtoms);
-
+    SAtoms.Assign(XAtoms, TXAtom::AtomAccessor<>());
   if( SAtoms.Count() < 3 )  return NULL;
   return XFile().GetLattice().TmpPlane(SAtoms, weightExtent);
 }
 //..............................................................................
 TXPlane *TGXApp::AddPlane(TXAtomPList &Atoms, bool Rectangular, int weightExtent)  {
   if( Atoms.Count() < 3 )  return NULL;
-  TSAtomPList SAtoms;
-  for( size_t i=0; i < Atoms.Count(); i++ )
-    SAtoms.Add( &Atoms[i]->Atom() );
-
+  TSAtomPList SAtoms(Atoms, TXAtom::AtomAccessor<>());
   TSPlanePList planes = XFile().GetLattice().NewPlane(SAtoms, weightExtent);
   TXPlane* rv = NULL;
   for( size_t i=0; i < planes.Count(); i++ )  {
@@ -1976,6 +2056,7 @@ void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& b
     TSBond& B = XFile().GetLattice().GetBond(i);
     TXBond& XB = XBonds.Add(new TXBond(*FGlRender, TXBond::GetLegend(B, 2), B));
     XB.Create();
+    XB.SetXAppId(XBonds.Count() - 1);
     bonds.Add(XB);
   }
   if( FLabels->IsVisible() )
@@ -2011,7 +2092,7 @@ void TGXApp::undoDelete(TUndoData *data)  {
   TLattice& latt = XFile().GetLattice();
   for( size_t i=0; i < undo->SAtomIds.Count(); i++ )
     latt.RestoreAtom(undo->SAtomIds[i]);
-  XFile().GetLattice().UpdateConnectivity();
+  UpdateConnectivity();
 }
 //..............................................................................
 void TGXApp::undoName(TUndoData *data)  {
@@ -2035,12 +2116,11 @@ void TGXApp::undoName(TUndoData *data)  {
 //..............................................................................
 void TGXApp::undoHide(TUndoData *data)  {
   THideUndo *undo = dynamic_cast<THideUndo*>(data);
-  for( size_t i=0; i < undo->Objects.Count(); i++ )  {
+  for( size_t i=0; i < undo->Objects.Count(); i++ )
     undo->Objects[i]->SetVisible(true);
-  }
 }
 //..............................................................................
-TUndoData* TGXApp::DeleteXObjects(TPtrList<AGDrawObject>& L)  {
+TUndoData* TGXApp::DeleteXObjects(AGDObjList& L)  {
   TXAtomPList atoms;
   atoms.SetCapacity(L.Count());
   bool planes_deleted = false;
@@ -2086,18 +2166,17 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
   SAtoms2XAtoms(SAL, XAL);
   for( size_t i=0; i < XAL.Count(); i++ )  {  
     XAL[i]->SetDeleted(true);
-    undo->AddSAtom( XAL[i]->Atom() );
+    undo->AddSAtom(XAL[i]->Atom());
   }
 
-  //GetSelection().RemoveDeleted();
   GetSelection().Clear();
-  XFile().GetLattice().UpdateConnectivity();
+  UpdateConnectivity();
   //CenterView();
   return undo;
 }
 //..............................................................................
 void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert)  {
-  olxstr str( olxstr::LowerCase(Where) );
+  olxstr str = olxstr::LowerCase(Where);
   if( str.FirstIndexOf("xatom") != InvalidIndex || str.FirstIndexOf("satom") != InvalidIndex)  {
     Log->Error("SelectBonds: xatom/satom are not allowed here");
     return;
@@ -2180,8 +2259,8 @@ bool GetRing(TSAtomPList& atoms, TTypeList<TSAtomPList>& rings)  {
     change = false;
     for( size_t i=starta; i < atoms.Count(); i++ )  {
       if( atoms[i]->GetTag() == 0 )  {  // unused atom
-        if( atoms[i]->IsConnectedTo( *ring->Item(ring->Count()-1) ) )  {
-          ring->Add( atoms[i] );
+        if( atoms[i]->IsConnectedTo(*ring->Item(ring->Count()-1)) )  {
+          ring->Add(atoms[i]);
           atoms[i]->SetTag(1);
           change = true;
         }
@@ -2195,11 +2274,9 @@ void TGXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings)  
   ElementPList ring;
   if( Condition.Equalsi("sel") )  {
     TXAtomPList L;
-    TSAtomPList SAtoms;
     GetSelectedXAtoms(L, false);
-    TListCaster::POP(L, SAtoms);
-    for( size_t i=0; i < SAtoms.Count(); i++ )
-      SAtoms[i]->SetTag(0);
+    TSAtomPList SAtoms(L, TXAtom::AtomAccessor<>());
+    SAtoms.ForEach(ACollectionItem::TagSetter<>(0));
     while( GetRing(SAtoms, rings) )
       ;
     return;
@@ -2220,42 +2297,37 @@ void SortRing(TSAtomPList& atoms)  {
     }
   }
   if( ind != InvalidIndex && ind > 0 )
-    atoms.ShiftL( ind );
+    atoms.ShiftL(ind);
 }
 
 void TGXApp::SelectRings(const olxstr& Condition, bool Invert)  {
   TTypeList< TSAtomPList > rings;
   try  {  FindRings(Condition, rings);  }
-  catch( const TExceptionBase& exc )  {  throw TFunctionFailedException(__OlxSourceInfo, exc);  }
+  catch( const TExceptionBase& exc )  {
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
+  }
 
   if( rings.IsEmpty() )  return;
 
-  TXAtomPList XA( rings.Count()*rings[0].Count() );
+  TXAtomPList XA(rings.Count()*rings[0].Count());
   TSAtomPList allSAtoms;
-  allSAtoms.SetCapacity( XA.Count() );
+  allSAtoms.SetCapacity(XA.Count());
   for( size_t i=0; i < rings.Count(); i++ )  {
     SortRing(rings[i]);
     for( size_t j=0; j < rings[i].Count(); j++ )
-      allSAtoms.Add( rings[i][j] );
+      allSAtoms.Add(rings[i][j]);
   }
-  for( size_t i=0; i < XFile().GetLattice().AtomCount(); i++ )
-    XFile().GetLattice().GetAtom(i).SetTag(-1);
-
-  for( size_t i=0; i < allSAtoms.Count(); i++ )
-    allSAtoms[i]->SetTag(i);
-
-  for( size_t i=0; i < XAtoms.Count(); i++ )
-    if( XAtoms[i].Atom().GetTag() != -1 )  {
-      XA[ XAtoms[i].Atom().GetTag() ] =&XAtoms[i];
-    }
-
+  XFile().GetLattice().GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));
+  allSAtoms.ForEachEx(ACollectionItem::IndexTagSetter<>());
+  for( size_t i=0; i < XAtoms.Count(); i++ )  {
+    if( XAtoms[i].Atom().GetTag() != -1 )
+      XA[XAtoms[i].Atom().GetTag()] = &XAtoms[i];
+  }
   XA.Pack();
-
-  for( size_t i=0; i < XA.Count(); i++ )
-    XA[i]->SetTag(i);
+  XA.ForEachEx(ACollectionItem::IndexTagSetter<>());
   for( size_t i=0; i < XA.Count(); i++ )
     if( XA[i]->GetTag() == i && XA[i]->IsVisible() )
-      FGlRender->Select( *XA[i] );
+      FGlRender->Select(*XA[i]);
 }
 //..............................................................................
 void TGXApp::SelectAtoms(const olxstr &Names, bool Invert)  {
@@ -2263,10 +2335,10 @@ void TGXApp::SelectAtoms(const olxstr &Names, bool Invert)  {
   FindXAtoms(Names, Sel, true);
   for( size_t i=0; i < Sel.Count(); i++ )  {
     if( Invert )
-      GetRender().Select( *Sel[i] );
+      GetRender().Select(*Sel[i]);
     else
       if( !Sel[i]->IsSelected() )  
-        GetRender().Select( *Sel[i] );
+        GetRender().Select(*Sel[i]);
   }
 }
 //..............................................................................
@@ -2290,7 +2362,7 @@ void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelect
     GetSelectedCAtoms(List, ClearSelection);
     if( !List.IsEmpty() )  return;
     TAsymmUnit& AU = XFile().GetLattice().GetAsymmUnit();
-    List.SetCapacity( List.Count() + AU.AtomCount() );
+    List.SetCapacity(List.Count() + AU.AtomCount());
     for( size_t i=0; i < AU.ResidueCount(); i++ )  {
       TResidue& resi = AU.GetResidue(i);
       for( size_t j=0; j < resi.Count(); j++ )  {
@@ -2332,8 +2404,8 @@ void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelect
       continue;
     }
     TCAtom* A = XFile().GetAsymmUnit().FindCAtom(Tmp);
-    if( A != NULL )
-      if( !A->IsDeleted() )  List.Add(A);
+    if( A != NULL && !A->IsDeleted() )
+      List.Add(A);
   }
 }
 //..............................................................................
@@ -2344,10 +2416,6 @@ void TGXApp::SetLabelsVisible(bool v)    {  FLabels->SetVisible(v); }
 void TGXApp::SetLabelsMode(short lmode)  {  FLabels->SetMode(lmode); }
 //..............................................................................
 short TGXApp::GetLabelsMode()      const {  return FLabels->GetMode(); }
-//..............................................................................
-void TGXApp::SetLabelsFont(short Findex)  {
-  FLabels->SetFontIndex(Findex);
-}
 //..............................................................................
 TGlMaterial& TGXApp::LabelsMarkMaterial()  {  return FLabels->MarkMaterial();  }
 //..............................................................................
@@ -2373,13 +2441,8 @@ void TGXApp::ClearLabels()  {
 void TGXApp::SBonds2XBonds(TSBondPList& L, TXBondPList& Res)  {
   if( L.IsEmpty() )  return;
   TLattice& latt = L[0]->GetNetwork().GetLattice();
-
-  for( size_t i=0; i < latt.BondCount(); i++ )
-    latt.GetBond(i).SetTag(0);
-
-  for( size_t i=0; i < L.Count(); i++ )
-    L[i]->SetTag(1);
-
+  latt.GetBonds().ForEach(ACollectionItem::TagSetter<>(0));
+  L.ForEach(ACollectionItem::TagSetter<>(1));
   Res.SetCapacity(Res.Count() + L.Count());
   for( size_t i=0; i < XBonds.Count(); i++ )
     if( &XBonds[i].Bond().GetNetwork().GetLattice() == &latt && XBonds[i].Bond().GetTag() != 0 )
@@ -2388,34 +2451,24 @@ void TGXApp::SBonds2XBonds(TSBondPList& L, TXBondPList& Res)  {
 //..............................................................................
 void TGXApp::SPlanes2XPlanes(TSPlanePList& L, TXPlanePList& Res)  {
   if( L.IsEmpty() )  return;
-  TLattice* latt = &L[0]->GetNetwork().GetLattice();
-
-  for( size_t i=0; i < latt->PlaneCount(); i++ )
-    latt->GetPlane(i).SetTag(0);
-
-  for( size_t i=0; i < L.Count(); i++ )
-    L[i]->SetTag(1);
-
-  Res.SetCapacity( Res.Count() + L.Count() );
+  TLattice& latt = L[0]->GetNetwork().GetLattice();
+  latt.GetPlanes().ForEach(ACollectionItem::TagSetter<>(0));
+  L.ForEach(ACollectionItem::TagSetter<>(1));
+  Res.SetCapacity(Res.Count() + L.Count());
   for( size_t i=0; i < XPlanes.Count(); i++ )
-    if( &XPlanes[i].Plane().GetNetwork().GetLattice() == latt && XPlanes[i].Plane().GetTag() != 0 )
-      Res.Add( &XPlanes[i] );
+    if( XPlanes[i].Plane().GetNetwork().GetLattice() == &latt && XPlanes[i].Plane().GetTag() != 0 )
+      Res.Add(XPlanes[i]);
 }
 //..............................................................................
 void TGXApp::SAtoms2XAtoms(TSAtomPList& L, TXAtomPList& Res)  {
   if( L.IsEmpty() )  return;
-  TLattice* latt = &L[0]->GetNetwork().GetLattice();
-
-  for( size_t i=0; i < latt->AtomCount(); i++ )
-    latt->GetAtom(i).SetTag(0);
-
-  for( size_t i=0; i < L.Count(); i++ )
-    L[i]->SetTag(1);
-
-  Res.SetCapacity( Res.Count() + L.Count() );
+  TLattice& latt = L[0]->GetNetwork().GetLattice();
+  latt.GetAtoms().ForEach(ACollectionItem::TagSetter<>(0));
+  L.ForEach(ACollectionItem::TagSetter<>(1));
+  Res.SetCapacity(Res.Count() + L.Count());
   for( size_t i=0; i < XAtoms.Count(); i++ )
-    if( &XAtoms[i].Atom().GetNetwork().GetLattice() == latt && XAtoms[i].Atom().GetTag() != 0 )
-      Res.Add( &XAtoms[i] );
+    if( XAtoms[i].Atom().GetNetwork().GetLattice() == latt && XAtoms[i].Atom().GetTag() != 0 )
+      Res.Add(XAtoms[i]);
 }
 //..............................................................................
 void TGXApp::GetBonds(const olxstr& Bonds, TXBondPList& List)  {
@@ -2431,20 +2484,12 @@ void TGXApp::GetBonds(const olxstr& Bonds, TXBondPList& List)  {
           sbonds.Add(sa.Bond(j));
       }
     }
-    for( size_t i=0; i < sbonds.Count(); i++ )
-      sbonds[i]->SetTag(i);
-    for( size_t i=0; i < sbonds.Count(); i++ )
-      if( sbonds[i]->GetTag() != i )
-        sbonds[i] = NULL;
-    sbonds.Pack();
+    sbonds.ForEachEx(ACollectionItem::IndexTagSetter<>());
+    sbonds.PackEx(ACollectionItem::IndexTagAnalyser<>());
     if( !sbonds.IsEmpty() )  {
       SBonds2XBonds(sbonds, List);
-      for( size_t i=0; i < List.Count(); i++ )
-        List[i]->SetTag(i);
-      for( size_t i=0; i < List.Count(); i++ )
-        if( List[i]->GetTag() != i )
-          List[i] = NULL;
-      List.Pack();
+      List.ForEachEx(ACollectionItem::IndexTagSetter<>());
+      List.PackEx(ACollectionItem::IndexTagAnalyser<>());
     }
     return;
   }
@@ -2452,10 +2497,10 @@ void TGXApp::GetBonds(const olxstr& Bonds, TXBondPList& List)  {
   if( GPC == NULL )  return;
   for( size_t i=0; i < GPC->ObjectCount(); i++ )  {
     if( i == 0 )  {  // check if the right type !
-      if( !EsdlInstanceOf( GPC->GetObject(0), TXBond) )  
+      if( !EsdlInstanceOf(GPC->GetObject(0), TXBond) )  
         return;
     }
-    List.Add( (TXBond*)&GPC->GetObject(i) );
+    List.Add((TXBond&)GPC->GetObject(i));
   }
 }
 //..............................................................................
@@ -2495,8 +2540,7 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
     throw TInvalidArgumentException(__OlxSourceInfo, "rad");
 
   if( Atoms != NULL )  {  // make sure all atoms of selected collections are updated
-    for( size_t i=0; i < Atoms->Count(); i++ )
-      (*Atoms)[i]->GetPrimitives().SetTag(i);
+    Atoms->ForEachEx(ACollectionItem::IndexTagSetter<AGDrawObject::PrimitivesAccessor>());
     for( size_t i=0; i < Atoms->Count(); i++ )  {
       if( (*Atoms)[i]->GetPrimitives().GetTag() == i )  {
         TGPCollection& gpc = (*Atoms)[i]->GetPrimitives();
@@ -2515,56 +2559,45 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
   }
 }
 //..............................................................................
-void TGXApp::GetGPCollections(TPtrList<AGDrawObject>& GDObjects, TPtrList<TGPCollection>& Result)  {
-  for( size_t i=0; i < GDObjects.Count(); i++ )
-    GDObjects[i]->GetPrimitives().SetTag(i);
-
+void TGXApp::GetGPCollections(AGDObjList& GDObjects, TPtrList<TGPCollection>& Result)  {
+  GDObjects.ForEachEx(ACollectionItem::IndexTagSetter<AGDrawObject::PrimitivesAccessor>());
   for( size_t i=0; i < GDObjects.Count(); i++ )  {
     if( GDObjects[i]->GetPrimitives().GetTag() == i )
-      Result.Add( &GDObjects[i]->GetPrimitives() );
+      Result.Add(GDObjects[i]->GetPrimitives());
   }
 }
 //..............................................................................
-void TGXApp::FillXAtomList( TXAtomPList& res, TXAtomPList* providedAtoms) {
-  if( providedAtoms != NULL )  {
-    res.AddList( *providedAtoms );
-  }
-  else  {
-    res.SetCapacity( XAtoms.Count() );
-    for( size_t i=0; i < XAtoms.Count(); i++ )
-      res.Add( &XAtoms[i] );
-  }
+void TGXApp::FillXAtomList(TXAtomPList& res, TXAtomPList* providedAtoms) {
+  if( providedAtoms != NULL )
+    res.AddList(*providedAtoms);
+  else
+    res.AddList(XAtoms);
 }
 //..............................................................................
 void TGXApp::FillXBondList( TXBondPList& res, TXBondPList* providedBonds)  {
-  if( providedBonds != NULL )  {
-    res.AddList( *providedBonds );
-  }
-  else  {
-    res.SetCapacity( XBonds.Count() );
-    for( size_t i=0; i < XBonds.Count(); i++ )
-      res.Add( &XBonds[i] );
-  }
+  if( providedBonds != NULL )
+    res.AddList(*providedBonds);
+  else
+    res.AddList(XBonds);
 }
 //..............................................................................
 void TGXApp::AtomZoom(float Zoom, TXAtomPList* Atoms)  {  // takes %
-  TPtrList<AGDrawObject> objects;
+  AGDObjList objects;
   if( Atoms != NULL )  {
-    objects.SetCapacity( Atoms->Count() );
+    objects.SetCapacity(Atoms->Count());
     for( size_t i=0; i < Atoms->Count(); i++ )
-      objects.Add( (AGDrawObject*)Atoms->Item(i) );
+      objects.Add((AGDrawObject*)Atoms->Item(i));
   }
   else  {
-    objects.SetCapacity( XAtoms.Count() );
+    objects.SetCapacity(XAtoms.Count());
     for( size_t i=0; i < XAtoms.Count(); i++ )
-      objects.Add( (AGDrawObject*)&XAtoms[i] );
+      objects.Add((AGDrawObject*)&XAtoms[i]);
   }
   TPtrList<TGPCollection> Colls;
   GetGPCollections(objects, Colls);
   for( size_t i=0; i < Colls.Count(); i++ )  {
-    if( Colls[i]->ObjectCount() )  {
+    if( Colls[i]->ObjectCount() != 0 )
       ((TXAtom&)Colls[i]->GetObject(0)).SetZoom(Zoom/100);
-    }
   }
 }
 //..............................................................................
@@ -2609,26 +2642,24 @@ float TGXApp::GetQPeakSizeScale()  {
 }
 //..............................................................................
 void TGXApp::BondRad(float R, TXBondPList* Bonds)  {
-  TPtrList<AGDrawObject> objects;
+  AGDObjList objects;
   if( Bonds != NULL )
-    TListCaster::TT(*Bonds, objects);
+    objects.Assign(*Bonds, CastAccessor<AGDrawObject*>());
   else
-    TListCaster::TTP(XBonds, objects);
+    objects.Assign(XBonds, CastAccessor<AGDrawObject>());
 
   TPtrList<TGPCollection> Colls;
   GetGPCollections(objects, Colls);
   for( size_t i=0; i < Colls.Count(); i++ )  {
-    if( Colls[i]->ObjectCount() != 0 )  {
+    if( Colls[i]->ObjectCount() != 0 ) 
       ((TXBond&)Colls[i]->GetObject(0)).SetRadius(R);
-    }
   }
 }
 //..............................................................................
 void TGXApp::UpdateAtomPrimitives(int Mask, TXAtomPList* Atoms) {
   TXAtomPList atoms;
-  FillXAtomList( atoms, Atoms );
-  for( size_t i=0; i < atoms.Count(); i++ )
-    atoms[i]->GetPrimitives().SetTag(i);
+  FillXAtomList(atoms, Atoms);
+  atoms.ForEachEx(ACollectionItem::IndexTagSetter<AGDrawObject::PrimitivesAccessor>());
   for( size_t i=0; i < atoms.Count(); i++ )
     if( atoms[i]->GetPrimitives().GetTag() == i )
       atoms[i]->UpdatePrimitives(Mask);
@@ -2644,9 +2675,8 @@ void TGXApp::UpdateAtomPrimitives(int Mask, TXAtomPList* Atoms) {
 void TGXApp::UpdateBondPrimitives(int Mask, TXBondPList* Bonds, bool HBondsOnly)  {
   TXBondPList bonds;
   FillXBondList(bonds, Bonds);
-  for( size_t i=0; i < XAtoms.Count(); i++ )  XAtoms[i].Atom().SetTag(i);
-  for( size_t i=0; i < bonds.Count(); i++ )  bonds[i]->GetPrimitives().SetTag(i);
-
+  XAtoms.ForEachEx(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());
+  bonds.ForEachEx(ACollectionItem::IndexTagSetter<AGDrawObject::PrimitivesAccessor>());
   if( HBondsOnly )  {
     for( size_t i=0; i < bonds.Count(); i++ )  {
       if( bonds[i]->Bond().GetType() != sotHBond )  continue;
@@ -2689,10 +2719,8 @@ void TGXApp::SetAtomDrawingStyle(short ADS, TXAtomPList* Atoms)  {
 }
 //..............................................................................
 void TGXApp::XAtomDS2XBondDS(const olxstr &Source)  {
-  int dds;
-  for( size_t i=0; i < XAtoms.Count(); i++ )  XAtoms[i].Atom().SetTag(i);
-  for( size_t i=0; i < XBonds.Count(); i++ )  XBonds[i].GetPrimitives().SetTag(i);
-
+  XAtoms.ForEachEx(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());
+  XBonds.ForEachEx(ACollectionItem::IndexTagSetter<AGDrawObject::PrimitivesAccessor>());
   for( size_t i=0; i < XBonds.Count(); i++ )  {
     if( XBonds[i].GetPrimitives().GetTag() != i )  continue;
     TXBond& XB = XBonds[i];
@@ -2714,7 +2742,7 @@ void TGXApp::XAtomDS2XBondDS(const olxstr &Source)  {
     for( size_t j=0; j < XB.GetPrimitives().PrimitiveCount(); j++ )  {
       TGlPrimitive& GlP = XBonds[i].GetPrimitives().GetPrimitive(j);
       if( GlP.Params.Count() >= 1 )  {
-        dds = (int)GlP.Params.Last();
+        int dds = (int)GlP.Params.Last();
         if( dds == ddsDefAtomA && GlMA != NULL )  {  // from atom A
           GlP.SetProperties(*GlMA);
           XB.GetPrimitives().GetStyle().SetMaterial(GlP.GetName(), *GlMA);
@@ -2733,14 +2761,12 @@ void TGXApp::XAtomDS2XBondDS(const olxstr &Source)  {
       }
     }
   }
-  return;
 }
 //..............................................................................
 void TGXApp::GrowAtoms(const olxstr& AtomsStr, bool Shell, TCAtomPList* Template)  {
   TXAtomPList xatoms;
   FindXAtoms(AtomsStr, xatoms, true);
-  TSAtomPList satoms;
-  TListCaster::POP(xatoms, satoms);
+  TSAtomPList satoms(xatoms, TXAtom::AtomAccessor<>());
   FXFile->GetLattice().GrowAtoms(satoms, Shell, Template);
 }
 //..............................................................................
@@ -2785,90 +2811,129 @@ void TGXApp::StoreGroup(const TGlGroup& glG, GroupData& gd)  {
   }
 }
 //..............................................................................
-void TGXApp::StoreGroups(TTypeList<GroupData>& groups)  {
-  for( size_t i=0; i < FGlRender->GroupCount(); i++ )
-    FGlRender->GetGroup(i).SetTag(i);
-  FGlRender->GetSelection().SetTag(-1);
-  for( size_t i=0; i <= FGlRender->GroupCount(); i++ )  {
-    const TGlGroup& glG = (i < FGlRender->GroupCount() ? FGlRender->GetGroup(i) : FGlRender->GetSelection());
-    StoreGroup(glG, groups.AddNew());
+void TGXApp::StoreLabels()  {
+  LabelInfo.Clear();
+  for( size_t i=0; i < XAtoms.Count(); i++ )  {
+    if( XAtoms[i].GetLabel().IsVisible() )  {
+      LabelInfo.atoms.AddCCopy(XAtoms[i].Atom().GetRef());
+      LabelInfo.labels.AddCCopy(XAtoms[i].GetLabel().GetLabel());
+      LabelInfo.centers.AddCCopy(XAtoms[i].GetLabel().GetCenter());
+    }
+  }
+  for( size_t i=0; i < XBonds.Count(); i++ )  {
+    if( XBonds[i].GetLabel().IsVisible() )  {
+      LabelInfo.bonds.AddCCopy(XBonds[i].Bond().GetRef());
+      LabelInfo.labels.AddCCopy(XBonds[i].GetLabel().GetLabel());
+      LabelInfo.centers.AddCCopy(XBonds[i].GetLabel().GetCenter());
+    }
   }
 }
 //..............................................................................
-void TGXApp::RestoreGroups(const TTypeList<GroupData>& groups)  {
-  for( size_t i=0; i < groups.Count()-1; i++ )
-    FGlRender->NewGroup(groups[i].collectionName).Create();
-  for( size_t i=0; i < groups.Count(); i++ )  {
-    TGlGroup& glg = (i < FGlRender->GroupCount() ? FGlRender->GetGroup(i) : FGlRender->GetSelection());
-    RestoreGroup(glg, groups[i]);
+void TGXApp::RestoreLabels()  {
+  const AtomRegistry& ar = XFile().GetLattice().GetAtomRegistry();
+  TSAtomPList atoms(LabelInfo.atoms.Count());
+  TSBondPList bonds(LabelInfo.bonds.Count());
+  TSizeList labels(atoms.Count()+bonds.Count());
+  size_t li=0;
+  for( size_t i=0; i < LabelInfo.atoms.Count(); i++ )  {
+    atoms[i] = ar.Find(LabelInfo.atoms[i]);
+    if( atoms[i] != NULL )
+      labels[li++] = i;
   }
+  for( size_t i=0; i < LabelInfo.bonds.Count(); i++ )  {
+    bonds[i] = ar.Find(LabelInfo.bonds[i]);
+    if( bonds[i] != NULL )
+      labels[li++] = atoms.Count()+i;
+  }
+  bonds.Pack();
+  atoms.Pack();
+  TXAtomPList xatoms;
+  TXBondPList xbonds;
+  SAtoms2XAtoms(atoms, xatoms);
+  SBonds2XBonds(bonds, xbonds);
+  for( size_t j=0; j < xatoms.Count(); j++ )  {
+    xatoms[j]->GetLabel().SetVisible(true);
+    xatoms[j]->GetLabel().SetLabel(LabelInfo.labels[labels[j]]);
+    xatoms[j]->GetLabel().SetOffset(xatoms[j]->Atom().crd());
+    xatoms[j]->GetLabel().TranslateBasis(
+      LabelInfo.centers[labels[j]]-xatoms[j]->GetLabel().GetCenter());
+  }
+  for( size_t j=0; j < xbonds.Count(); j++ )  {
+    xbonds[j]->GetLabel().SetVisible(true);
+    xbonds[j]->GetLabel().SetLabel(LabelInfo.labels[labels[xatoms.Count()+j]]);
+    xbonds[j]->GetLabel().SetOffset(xbonds[j]->Bond().GetCenter());
+    xbonds[j]->GetLabel().TranslateBasis(
+      LabelInfo.centers[labels[xatoms.Count()+j]]-xbonds[j]->GetLabel().GetCenter());
+  }
+}
+//..............................................................................
+void TGXApp::RestoreGroups()  {
+  if( !SelectionCopy[0].IsEmpty() )
+    RestoreGroup(GetSelection(), SelectionCopy[0]);
+
+  GroupDict.Clear();
+  for( size_t i=0; i < GroupDefs.Count(); i++ )
+    FGlRender->NewGroup(GroupDefs[i].collectionName).Create(GroupDefs[i].collectionName);
+  for( size_t i=0; i < GroupDefs.Count(); i++ )  {
+    TGlGroup& glg = FGlRender->GetGroup(i);
+    RestoreGroup(glg, GroupDefs[i]);
+    GroupDict(&glg, i);
+  }
+  RestoreLabels();
 }
 //..............................................................................
 void TGXApp::StoreVisibility()  {
-  FVisibility.SetSize((uint32_t)(XAtoms.Count() + XBonds.Count() + XPlanes.Count()));
-  // atoms
+  FVisibility.SetSize((XAtoms.Count() + XBonds.Count() + XPlanes.Count()));
   for( size_t i=0; i < XAtoms.Count(); i++ )
-    if( XAtoms[i].IsVisible() )
-      FVisibility.SetTrue(i);
-  // bonds
+    FVisibility.Set(i, XAtoms[i].IsVisible());
+  size_t inc = XAtoms.Count();
   for( size_t i=0; i < XBonds.Count(); i++ )
-    if( XBonds[i].IsVisible() )
-      FVisibility.SetTrue(XAtoms.Count() + i);
-  // planes
+    FVisibility.Set(inc+i, XBonds[i].IsVisible());
+  inc += XBonds.Count();
   for( size_t i=0; i < XPlanes.Count(); i++ )
-    if( XPlanes[i].IsVisible() )
-      FVisibility.SetTrue(XAtoms.Count() + XBonds.Count() + i);
+    FVisibility.Set(inc+i, XPlanes[i].IsVisible());
+  StoreLabels();
 }
 void TGXApp::RestoreVisibility()  {
-  //atoms
   for( size_t i=0; i < XAtoms.Count(); i++ )
-    XAtoms[i].SetVisible( FVisibility.Get(i) );
-  //bonds
+    XAtoms[i].SetVisible(FVisibility.Get(i));
+  size_t inc = XAtoms.Count();
   for( size_t i=0; i < XBonds.Count(); i++ )
-    XBonds[i].SetVisible(FVisibility.Get(XAtoms.Count() + i));
-  // planes
+    XBonds[i].SetVisible(FVisibility.Get(inc+i));
+  inc += XBonds.Count();
   for( size_t i=0; i < XPlanes.Count(); i++ )
-      XPlanes[i].SetVisible( FVisibility.Get(XAtoms.Count() + XBonds.Count() + i) );
+      XPlanes[i].SetVisible(FVisibility.Get(inc+i));
+  RestoreLabels();
 }
 //..............................................................................
 void TGXApp::BeginDrawBitmap(double resolution)  {
   FPictureResolution = resolution;
   FLabels->Clear();
   GetRender().GetScene().ScaleFonts(resolution);
-  TTypeList<GroupData> stored_groups;
-  StoreGroups(stored_groups);
   StoreVisibility();
   CreateObjects(false, false);
   FXGrid->GlContextChange();
-  RestoreGroups(stored_groups);
   RestoreVisibility();
 }
 //..............................................................................
 void TGXApp::FinishDrawBitmap()  {
-  TTypeList<GroupData> stored_groups;
-  StoreGroups(stored_groups);
   FLabels->Clear();
   GetRender().GetScene().RestoreFontScale();
   CreateObjects(false, false);
   FXGrid->GlContextChange();
-  RestoreGroups(stored_groups);
   RestoreVisibility();
   FVisibility.Clear();
 }
 //..............................................................................
 void TGXApp::UpdateLabels()  {
   for( size_t i=0; i < XLabels.Count(); i++ )
-    XLabels[i].SetLabel(XLabels[i].GetLabel()); 
-}
-//..............................................................................
-TXGlLabel* TGXApp::CreateLabel(TXAtom *A, uint16_t FontIndex)  {
-  TXGlLabel& L = XLabels.Add(new TXGlLabel(*FGlRender, "PLabels"));
-  L.SetFontIndex(FontIndex);
-  L.SetLabel(A->Atom().GetLabel());
-  L.SetOffset(A->Atom().crd());
-  L.TranslateBasis(vec3d(1, -1, 0));  // in pixels
-  L.Create();
-  return &L;
+    XLabels[i].SetLabel(XLabels[i].GetLabel());
+  for( size_t i=0; i < XAtoms.Count(); i++ )
+    XAtoms[i].UpdateLabel();
+  for( size_t i=0; i < XBonds.Count(); i++ )
+    XBonds[i].UpdateLabel();
+  for( size_t i=0; i < LooseObjects.Count(); i++ )
+    LooseObjects[i]->UpdateLabel();
 }
 //..............................................................................
 uint64_t TGXApp::Draw()  {
@@ -2892,14 +2957,13 @@ void TGXApp::MoveFragment(const vec3d& to, TXAtom* fragAtom, bool copy)  {
     FXFile->GetLattice().MoveFragment(to, fragAtom->Atom());
 }
 //..............................................................................
-void TGXApp::MoveToCenter()  {
-  FXFile->GetLattice().MoveToCenter();
-}
+void TGXApp::MoveToCenter()  {  FXFile->GetLattice().MoveToCenter();  }
 //..............................................................................
 void TGXApp::Compaq(bool All)  {
-  // compact on the atomic (ALl) or fragment level
-  if( All )  FXFile->GetLattice().CompaqAll();
-  else       FXFile->GetLattice().Compaq();
+  if( All )
+    FXFile->GetLattice().CompaqAll();
+  else
+    FXFile->GetLattice().Compaq();
 }
 //..............................................................................
 void TGXApp::SetHBondsVisible(bool v)  {
@@ -2911,9 +2975,7 @@ void TGXApp::SetHBondsVisible(bool v)  {
     }
   }
   else  {
-    const size_t ac = XAtoms.Count();
-    for( size_t i=0; i < ac; i++ )  
-      XAtoms[i].Atom().SetTag(i);
+    XAtoms.ForEachEx(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());
     for( size_t i=0; i < XBonds.Count(); i++ )  {
       const TSBond& b = XBonds[i].Bond(); 
       if( b.GetType() == sotHBond )  {
@@ -2926,44 +2988,40 @@ void TGXApp::SetHBondsVisible(bool v)  {
 void TGXApp::SetHydrogensVisible(bool v)  {
   if( FHydrogensVisible != v )  {
     FHydrogensVisible = v;
-    GetRender().ClearSelection();
     XFile().GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
-    TTypeList<GroupData> groups;
-    StoreGroups(groups);
-    for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )  {
+    for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
       OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
-      OverlayedXFiles[i].GetLattice().UpdateConnectivity();
-    }
-    XFile().GetLattice().UpdateConnectivity();
-    RestoreGroups(groups);
+    if( v )
+      XFile().GetLattice().CompaqH();
+    else
+      UpdateConnectivity();
     CenterView(true);
   }
+}
+//..............................................................................
+void TGXApp::UpdateConnectivity()  {
+  for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
+    OverlayedXFiles[i].GetLattice().UpdateConnectivity();
+  XFile().GetLattice().UpdateConnectivity();
 }
 //..............................................................................
 void TGXApp::SetQPeaksVisible(bool v)  {
   if( FQPeaksVisible != v )  {
     FQPeaksVisible = v;
-    GetRender().ClearSelection();
     XFile().GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
-    TTypeList<GroupData> groups;
-    StoreGroups(groups);
-    for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )  {
+    for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
       OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
-      OverlayedXFiles[i].GetLattice().UpdateConnectivity();
-    }
-    XFile().GetLattice().UpdateConnectivity();
-    RestoreGroups(groups);
+    if( v )
+      XFile().GetLattice().CompaqQ();
+    else
+      UpdateConnectivity();
     CenterView(true);
   }
 }
 //..............................................................................
 void TGXApp::SyncQVisibility()  {
   if( !FQPeakBondsVisible )  return;
- 
-  const size_t ac = XAtoms.Count();
-  for( size_t i=0; i < ac; i++ )  
-    XAtoms[i].Atom().SetTag(i);
-
+  XAtoms.ForEachEx(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());
   const size_t bc = XBonds.Count();
   for( size_t i=0; i < bc; i++ )  {
     const TSBond& b = XBonds[i].Bond();
@@ -2995,10 +3053,7 @@ void TGXApp::SetQPeakBondsVisible(bool v)  {
     }
   }
   else  {
-    const size_t ac = XAtoms.Count();
-    for( size_t i=0; i < ac; i++ )  
-      XAtoms[i].Atom().SetTag(i);
-
+    XAtoms.ForEachEx(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());
     for( size_t i=0; i < XBonds.Count(); i++ )  {
       const TSBond& b = XBonds[i].Bond();
       if( b.A().GetType() == iQPeakZ || b.B().GetType() == iQPeakZ )
@@ -3085,7 +3140,7 @@ void TGXApp::ShowPart(const TIntList& parts, bool show)  {
       XAtoms[i].SetVisible(XAtoms[i].Atom().IsAvailable());
   }
   _maskInvisible();
-  XFile().GetLattice().UpdateConnectivity();
+  UpdateConnectivity();
 }
 //..............................................................................
 void TGXApp::SetHklVisible(bool v)  {
@@ -3120,89 +3175,92 @@ bool TGXApp::ShowGrid(bool v, const olxstr& FN)  {
 //..............................................................................
 void TGXApp::Individualise(TXAtom& XA)  {
   if( XA.GetPrimitives().ObjectCount() == 1 )  return;
-  short level = XA.LegendLevel( XA.GetPrimitives().GetName() ), 
+  short level = XA.LegendLevel(XA.GetPrimitives().GetName()),
     required_level = FXFile->GetLattice().IsGenerated() ? 2 : 1;
   
   if( level >= required_level )  return;
   else  
     level = required_level;
 
-  olxstr leg = XA.GetLegend( XA.Atom(), level );
-  TGPCollection* indCol = FGlRender->FindCollection( leg );
+  olxstr leg = XA.GetLegend(XA.Atom(), level);
+  TGPCollection* indCol = FGlRender->FindCollection(leg);
   if( indCol != NULL && &XA.GetPrimitives() == indCol )  
     return;
   else  {
     if( indCol == NULL )  {
-      indCol = &FGlRender->NewCollection( leg );
+      indCol = &FGlRender->NewCollection(leg);
       IndividualCollections.Add(leg);
     }
     XA.GetPrimitives().RemoveObject(XA);
-    XA.Create( leg );
-    TSAtomPList satoms;
-    TSBondPList sbonds;
+    XA.Create(leg);
+    TSAtomPList satoms(XA.Atom().BondCount());
+    TSBondPList sbonds(XA.Atom().BondCount());
     TXAtomPList xatoms;
     TXBondPList xbonds;
-    short level1;
     for( size_t i=0; i < XA.Atom().BondCount(); i++ )  {
       TSBond& SB = XA.Atom().Bond(i);
-      sbonds.Add( &SB );
-      satoms.Add( &SB.Another(XA.Atom()) );
+      sbonds[i] = &SB;
+      satoms[i] = &SB.Another(XA.Atom());
     }
     SAtoms2XAtoms(satoms, xatoms);
     SBonds2XBonds(sbonds, xbonds);
     for( size_t i=0; i < xbonds.Count(); i++ )  {
-      level1 = TXAtom::LegendLevel( xatoms[i]->GetPrimitives().GetName() );
+      short level1 = TXAtom::LegendLevel(xatoms[i]->GetPrimitives().GetName());
       leg = xbonds[i]->GetLegend( xbonds[i]->Bond(), level);
       indCol = FGlRender->FindCollection( leg );
       if( indCol != NULL && &xbonds[i]->GetPrimitives() == indCol )  
         continue;
-      else  {
+      else
+      {
         if( indCol == NULL )  {
-          indCol = &FGlRender->NewCollection( leg );
+          indCol = &FGlRender->NewCollection(leg);
           IndividualCollections.Add(leg);
         }
-        xbonds[i]->GetPrimitives().RemoveObject( *xbonds[i] );
-        xbonds[i]->Create(leg);
+        xbonds[i]->GetPrimitives().RemoveObject(*xbonds[i]);
+        BondCreationParams cp(XA, *xatoms[i]);
+        xbonds[i]->Create(leg, &cp);
       }
     }
   }
 }
 //..............................................................................
-void TGXApp::Individualise(TXBond& XB)  {
+void TGXApp::Individualise(TXBond& XB, bool create)  {
   if( XB.GetPrimitives().ObjectCount() == 1 )  return;
-  short required_level = FXFile->GetLattice().IsGenerated() ? 2 : 1;
-  for( size_t i=0; i < XAtoms.Count(); i++)
-    XAtoms[i].Atom().SetTag(i);
+  const short required_level = FXFile->GetLattice().IsGenerated() ? 2 : 1;
+  XAtoms.ForEachEx(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());
   olxstr leg = XB.GetLegend(XB.Bond(), required_level);
-  TGPCollection* indCol = FGlRender->FindCollection( leg );
+  TGPCollection* indCol = FGlRender->FindCollection(leg);
   if( indCol != NULL && &XB.GetPrimitives() == indCol )  
     return;
   if( indCol == NULL )  {
-    indCol = &FGlRender->NewCollection( leg );
+    indCol = &FGlRender->NewCollection(leg);
     IndividualCollections.Add(leg);
   }
   XB.GetPrimitives().RemoveObject(XB);
-  BondCreationParams bcpar(XAtoms[XB.Bond().A().GetTag()], XAtoms[XB.Bond().B().GetTag()]); 
-  XB.Create( leg, &bcpar );
+  if( create )  {
+    BondCreationParams bcpar(XAtoms[XB.Bond().A().GetTag()], XAtoms[XB.Bond().B().GetTag()]); 
+    XB.Create(leg, &bcpar);
+  }
 }
 //..............................................................................
 void TGXApp::Collectivise(TXAtom& XA)  {
-  short level = XA.LegendLevel( XA.GetPrimitives().GetName() );
-  if( !level )  return;
-  else  level--;
+  short level = XA.LegendLevel(XA.GetPrimitives().GetName());
+  if( level == 0 )  return;
+  else
+    level--;
 
-  olxstr leg = XA.GetLegend( XA.Atom(), level );
-  TGPCollection* indCol = FGlRender->FindCollection( leg );
+  olxstr leg = XA.GetLegend(XA.Atom(), level);
+  TGPCollection* indCol = FGlRender->FindCollection(leg);
   if( indCol != NULL && &XA.GetPrimitives() == indCol )  
     return;
   else  {
     if( indCol == NULL )  
-      indCol = &FGlRender->NewCollection( leg );
+      indCol = &FGlRender->NewCollection(leg);
 
     XA.GetPrimitives().RemoveObject(XA);
     if( XA.GetPrimitives().ObjectCount() == 0 )  {
-      size_t index = IndividualCollections.IndexOf( XA.GetPrimitives().GetName() );
-      if( index >= InvalidIndex )  
+      const size_t index = IndividualCollections.IndexOf(XA.GetPrimitives().GetName());
+      if( index != InvalidIndex )  
         IndividualCollections.Delete(index);
     }
     XA.Create(leg);
@@ -3212,8 +3270,8 @@ void TGXApp::Collectivise(TXAtom& XA)  {
     TXBondPList xbonds;
     for( size_t i=0; i < XA.Atom().BondCount(); i++ )  {
       TSBond& SB = XA.Atom().Bond(i);
-      sbonds.Add( &SB );
-      satoms.Add( &SB.Another(XA.Atom()) );
+      sbonds.Add(SB);
+      satoms.Add(SB.Another(XA.Atom()));
     }
     SAtoms2XAtoms(satoms, xatoms);
     SBonds2XBonds(sbonds, xbonds);
@@ -3224,10 +3282,10 @@ void TGXApp::Collectivise(TXAtom& XA)  {
         continue;
       else  {
         if( indCol == NULL )  
-          indCol = &FGlRender->NewCollection( leg );
+          indCol = &FGlRender->NewCollection(leg);
         xbonds[i]->GetPrimitives().RemoveObject(*xbonds[i]);
         if( xbonds[i]->GetPrimitives().ObjectCount() == 0 )  {
-          size_t index = IndividualCollections.IndexOf( xbonds[i]->GetPrimitives().GetName() );
+          size_t index = IndividualCollections.IndexOf(xbonds[i]->GetPrimitives().GetName());
           if( index != InvalidIndex )  
             IndividualCollections.Delete(index);
         }
@@ -3269,19 +3327,13 @@ void TGXApp::SynchroniseBonds(TXAtomPList& xatoms)  {
   }
 
   // prepare unique list of bonds
-  for( size_t i=0; i < sbonds.Count(); i++ )  sbonds[i]->SetTag(i);
-  for( size_t i=0; i < sbonds.Count(); i++ )
-    if( sbonds[i]->GetTag() != i )
-      sbonds[i] = NULL;
-  sbonds.Pack();
-  // have to call setatom function to set thecorrect order for atom of bond
+  sbonds.ForEachEx(ACollectionItem::IndexTagSetter<>());
+  sbonds.PackEx(ACollectionItem::IndexTagAnalyser<>());
+  // have to call setatom function to set the correct order for atom of bond
   for( size_t i=0; i < sbonds.Count(); i++ )
     sbonds[i]->SetA(sbonds[i]->A());
-
   SBonds2XBonds(sbonds, xbonds);
-
-  for(size_t i=0; i < XAtoms.Count(); i++ )  XAtoms[i].Atom().SetTag(i);
-
+  XAtoms.ForEachEx(ACollectionItem::IndexTagSetter<>());
   for( size_t i=0; i < xbonds.Count(); i++ )  {
 //    if( XB->GetPrimitives().ObjectCount() == 1 )  continue;
     // change the orientation if necessary
@@ -3336,7 +3388,7 @@ void TGXApp::CreateXGrowPoints()  {
     }
     VTo = VFrom * matrices[i]->r;
     VTo += matrices[i]->t;
-    XFile().GetAsymmUnit().CellToCartesian( VTo );
+    XFile().GetAsymmUnit().CellToCartesian(VTo);
     TXGrowPoint& gp = XGrowPoints.Add( new TXGrowPoint(*FGlRender, EmptyString, VTo, *matrices[i]) );
     gp.Create("GrowPoint");
     delete matrices[i];
@@ -3382,16 +3434,16 @@ struct TGXApp_Transform1 : public TGXApp_Transform {
 void TGXApp::CreateXGrowLines()  {
   if( !XGrowLines.IsEmpty() )  {  // clear the existing ones...
     TPtrList<TGPCollection> colls; // list of unique collections
-    TPtrList<AGDrawObject> lines;  // list of the AGDrawObject pointers to lines...
+    AGDObjList lines;  // list of the AGDrawObject pointers to lines...
     for( size_t i=0; i < XGrowLines.Count(); i++ )  {
       XGrowLines[i].GetPrimitives().SetTag(i);
-      lines.Add(&XGrowLines[i]);
+      lines.Add(XGrowLines[i]);
     }
     for( size_t i=0; i < XGrowLines.Count(); i++ )
       if( XGrowLines[i].GetPrimitives().GetTag() == i )
-        colls.Add( &XGrowLines[i].GetPrimitives() );
-    FGlRender->RemoveCollections( colls );  // remove collections with their primitives
-    FGlRender->RemoveObjects( lines );  // remove the object references
+        colls.Add(XGrowLines[i].GetPrimitives());
+    FGlRender->RemoveCollections(colls);  // remove collections with their primitives
+    FGlRender->RemoveObjects(lines);  // remove the object references
     XGrowLines.Clear(); // and delete the objects
   }
   if( FGrowMode & gmVanDerWaals )  {
@@ -3404,7 +3456,7 @@ void TGXApp::CreateXGrowLines()  {
   if( !AtomsToGrow.IsEmpty() )  {
     TXAtomPList xatoms;
     FindXAtoms(AtomsToGrow, xatoms);
-    TListCaster::POP(xatoms, AtomsToProcess);
+    AtomsToProcess.AddList(xatoms, TXAtom::AtomAccessor<>());
   }
   else if( (FGrowMode & gmSameAtoms) == 0 ) {
     const size_t ac = FXFile->GetLattice().AtomCount();
@@ -3537,7 +3589,7 @@ void TGXApp::_CreateXGrowVLines()  {
   if( !AtomsToGrow.IsEmpty() )  {
     TXAtomPList xatoms;
     FindXAtoms(AtomsToGrow, xatoms);
-    TListCaster::POP( xatoms, AtomsToProcess );
+    AtomsToProcess.AddList(xatoms, TXAtom::AtomAccessor<>());
     const size_t ac = FXFile->GetLattice().AtomCount();
     for( size_t i=0; i < ac; i++ )  {
       TSAtom& A = FXFile->GetLattice().GetAtom(i);
@@ -3751,6 +3803,7 @@ void TGXApp::AlignOverlayedXFiles() {
   col_width[0] = row_height[0] = 0;
 
   const vec3d right_shift = FGlRender->GetBasis().GetMatrix()*vec3d(1, 0, 0);
+
   const vec3d up_shift = FGlRender->GetBasis().GetMatrix()*vec3d(0, 1, 0);
   for( size_t i=0; i < dim; i++ )  {
     for( size_t j=0; j < dim; j++ )  {
@@ -3768,7 +3821,6 @@ void TGXApp::AlignOverlayedXFiles() {
 //..............................................................................
 void TGXApp::DeleteOverlayedXFile(size_t index) {
   ClearLabels();
-  ClearSelectionCopy();
   OverlayedXFiles.Delete(index);
   CreateObjects(true, false);
   CenterView();
@@ -3875,10 +3927,13 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
     if( !XAtoms[i].Atom().IsDeleted() )
       a_cnt++;
   TEBitArray vis(a_cnt);
+  TPtrList<TXGlLabel> atom_labels(a_cnt);
   a_cnt = 0;
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
-    if( !XAtoms[i].Atom().IsDeleted() )
+    if( !XAtoms[i].Atom().IsDeleted() )  {
+      atom_labels.Set(a_cnt, XAtoms[i].GetLabel());
       vis.Set(a_cnt++, XAtoms[i].IsVisible());
+    }
   }
   visibility.AddField("atoms", vis.ToBase64String());
   size_t b_cnt = 0;
@@ -3886,10 +3941,13 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
     if( !XBonds[i].Bond().IsDeleted() )
       b_cnt++;
   vis.SetSize(b_cnt);
+  TPtrList<TXGlLabel> bond_labels(b_cnt);
   b_cnt = 0;
   for( size_t i=0; i < XBonds.Count(); i++ )  {
-    if( !XBonds[i].Bond().IsDeleted() )
-      vis.Set(b_cnt++, XBonds[i].IsVisible() );
+    if( !XBonds[i].Bond().IsDeleted() )  {
+      bond_labels.Set(b_cnt, XBonds[i].GetLabel());
+      vis.Set(b_cnt++, XBonds[i].IsVisible());
+    }
   }
   visibility.AddField("bonds", vis.ToBase64String());
   size_t p_cnt = 0;
@@ -3909,11 +3967,16 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
 
   TDataItem& labels = item.AddItem("Labels");
   for( size_t i=0; i < XLabels.Count(); i++ )
-    XLabels[i].ToDataItem( labels.AddItem("Label") );
+    XLabels[i].ToDataItem(labels.AddItem("Label"));
+  TDataItem& atom_labels_item = item.AddItem("AtomLabels");
+  for( size_t i=0; i < atom_labels.Count(); i++ )
+    atom_labels[i]->ToDataItem(atom_labels_item.AddItem("Label"));
+  TDataItem& bond_labels_item = item.AddItem("BondLabels");
+  for( size_t i=0; i < bond_labels.Count(); i++ )
+    bond_labels[i]->ToDataItem(bond_labels_item.AddItem("Label"));
 
   FGlRender->GetSelection().SetTag(-1);
-  for( size_t i=0; i < FGlRender->GroupCount(); i++ )
-    FGlRender->GetGroup(i).SetTag(i);
+  FGlRender->GetGroups().ForEachEx(ACollectionItem::IndexTagSetter<>());
   
   TDataItem& groups = item.AddItem("Groups");
   for( size_t i=0; i < FGlRender->GroupCount(); i++ )  {
@@ -3927,25 +3990,26 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
     for( size_t j=0; j < glG.Count(); j++ )  {
       AGDrawObject& glO = glG.GetObject(j);
       if( EsdlInstanceOf(glO, TXAtom) )
-        atoms.AddField("atom_id", ((TXAtom&)glO).Atom().GetTag() );
+        atoms.AddField("atom_id", ((TXAtom&)glO).Atom().GetTag());
       if( EsdlInstanceOf(glO, TXBond) )
-        bonds.AddField("bond_id", ((TXBond&)glO).Bond().GetTag() );
+        bonds.AddField("bond_id", ((TXBond&)glO).Bond().GetTag());
       if( EsdlInstanceOf(glO, TXPlane) )
-        planes.AddField("plane_id", ((TXPlane&)glO).Plane().GetTag() );
+        planes.AddField("plane_id", ((TXPlane&)glO).Plane().GetTag());
     }
   }
 
   TDataItem& renderer = item.AddItem("Renderer");
-  renderer.AddField("min", PersUtil::VecToStr( FGlRender->MinDim() ) );
-  renderer.AddField("max", PersUtil::VecToStr( FGlRender->MaxDim() ) );
+  renderer.AddField("min", PersUtil::VecToStr(FGlRender->MinDim()));
+  renderer.AddField("max", PersUtil::VecToStr(FGlRender->MaxDim()));
 }
 //..............................................................................
 void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   FGlRender->Clear();
   ClearXObjects();
   ClearLabels();
+  ClearGroupDefinitions();
   FXFile->FromDataItem(item.FindRequiredItem("XFile"));
-  FGlRender->GetStyles().FromDataItem( item.FindRequiredItem("Style"), true);
+  FGlRender->GetStyles().FromDataItem(item.FindRequiredItem("Style"), true);
   
   IndividualCollections.Clear();
   TDataItem& ind_col = item.FindRequiredItem("ICollections");
@@ -3954,7 +4018,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
 
   const TDataItem& labels = item.FindRequiredItem("Labels");
   for( size_t i=0; i < labels.ItemCount(); i++ )
-    XLabels.Add(new TXGlLabel(*FGlRender,"PLabels") ).FromDataItem(labels.GetItem(i));
+    XLabels.Add(new TXGlLabel(*FGlRender, PLabelsCollectionName)).FromDataItem(labels.GetItem(i));
 
   FXGrid->FromDataItem(item.FindRequiredItem("Grid"), zis);
   FDBasis->FromDataItem(item.FindRequiredItem("DBasis"));
@@ -3971,19 +4035,34 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   v = visibility.GetRequiredField("q_bonds").ToBool();
   if( v != FQPeakBondsVisible )  SetQPeakBondsVisible(v);
   FDBasis->SetVisible(visibility.GetRequiredField("basis").ToBool());
-  FDUnitCell->SetVisible( visibility.GetRequiredField("cell").ToBool() );
+  FDUnitCell->SetVisible(visibility.GetRequiredField("cell").ToBool());
+
+  const TDataItem* atom_labels = item.FindItem("AtomLabels");
+  if( atom_labels != NULL )  {
+    if( XAtoms.Count() != atom_labels->ItemCount() )
+      throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
+    for( size_t i=0; i < atom_labels->ItemCount(); i++ )
+      XAtoms[i].GetLabel().FromDataItem(atom_labels->GetItem(i));
+  }
+  const TDataItem* bond_labels = item.FindItem("BondLabels");
+  if( bond_labels != NULL )  {
+    if( XBonds.Count() != bond_labels->ItemCount() )
+      throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
+    for( size_t i=0; i < bond_labels->ItemCount(); i++ )
+      XBonds[i].GetLabel().FromDataItem(bond_labels->GetItem(i));
+  }
 
   TEBitArray vis;
   vis.FromBase64String( visibility.GetRequiredField("atoms") );
   if( vis.Count() != XAtoms.Count() )
     throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
   for( size_t i=0; i < vis.Count(); i++ )
-    XAtoms[i].SetVisible( vis[i] );
+    XAtoms[i].SetVisible(vis[i]);
   vis.FromBase64String( visibility.GetRequiredField("bonds") );
   if( vis.Count() != XBonds.Count() )
     throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
   for( size_t i=0; i < XBonds.Count(); i++ )
-    XBonds[i].SetVisible( vis[i] );
+    XBonds[i].SetVisible(vis[i]);
   vis.FromBase64String( visibility.GetRequiredField("planes") );
   if( vis.Count() != XPlanes.Count() )
     throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
@@ -4014,7 +4093,9 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
     for( size_t j=0; j < planes.FieldCount(); j++ )
       glG.Add(XPlanes[planes.GetField(j).ToSizeT()]);
     glG.Create(group.GetValue());
+    StoreGroup(glG, GroupDefs.AddNew());
   }
+  _UpdateGroupIds();
 
   TDataItem& renderer = item.FindRequiredItem("Renderer");
   vec3d min = PersUtil::FloatVecFromStr(renderer.GetRequiredField("min"));
@@ -4105,5 +4186,67 @@ void TGXApp::LoadModel(const olxstr& fileName) {
 #else
   throw TNotImplementedException(__OlxSourceInfo);
 #endif
+}
+//..............................................................................
+void TGXApp::GroupSelection(const olxstr& name)  {
+  TGlGroup* glg = GetRender().GroupSelection(name);
+  if( glg != NULL )  {
+    StoreGroup(*glg, GroupDefs.AddNew());
+    _UpdateGroupIds();
+    GroupDict(glg, GroupDefs.Count()-1);
+    Draw();
+  }
+}
+//..............................................................................
+void TGXApp::UnGroupSelection()  {
+  TGlGroup& sel = GetSelection();
+  if( sel.Count() < 2 )  return;
+  for( size_t i=0; i < sel.Count(); i++ )  {
+    if( EsdlInstanceOf(sel[i], TGlGroup) )  {
+      TGlGroup& G = (TGlGroup&)sel[i];
+      size_t i = GroupDict.IndexOf(&G);
+      if( i != InvalidIndex )  {
+        GroupDefs.Delete(GroupDict.GetValue(i));
+        GroupDict.Delete(i);
+      }
+      GetRender().UnGroup(G);
+    }
+    _UpdateGroupIds();
+  }
+  Draw();
+}
+//..............................................................................
+void TGXApp::UnGroup(TGlGroup& G)  {
+  size_t i = GroupDict.IndexOf(&G);
+  if( i != InvalidIndex )  {
+    GroupDefs.Delete(GroupDict.GetValue(i));
+    GroupDict.Delete(i);
+  }
+  GetRender().UnGroup(G);
+  _UpdateGroupIds();
+  Draw();
+}
+//..............................................................................
+void TGXApp::_UpdateGroupIds()  {
+  FGlRender->GetGroups().ForEachEx(ACollectionItem::IndexTagSetter<>());
+  FGlRender->GetSelection().SetTag(-1);
+  for( size_t i=0; i < GroupDefs.Count(); i++ )  {
+    TGlGroup* p = FGlRender->GetGroup(i).GetParentGroup();
+    GroupDefs[i].parent_id = (p == NULL ? -2 : p->GetTag()) ;
+  }
+}
+//..............................................................................
+void TGXApp::SelectAll(bool Select)  {
+  if( !Select )  {
+    if( !SelectionCopy[0].IsEmpty() )  {
+      SelectionCopy[1] = SelectionCopy[0];
+      SelectionCopy[0].Clear();
+    }
+    else
+      StoreGroup(GetSelection(), SelectionCopy[1]);
+  }
+  GetRender().SelectAll(Select);
+  _UpdateGroupIds();
+  Draw();
 }
 //..............................................................................

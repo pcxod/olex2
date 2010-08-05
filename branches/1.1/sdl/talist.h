@@ -12,60 +12,71 @@ private:
   size_t FCount, FCapacity;
   size_t FIncrement;
   T *Items;
-  void init(size_t size, bool exact)  {
-    FCount = size;
+  void init(size_t size)  {
+    FCapacity = FCount = size;
     FIncrement = 5;
-    if( !exact )
-      FCapacity = FCount + FIncrement;
+    if( FCapacity != 0 )
+      Items = new T[FCapacity];
     else
-      FCapacity = FCount;
-    Items = new T[FCapacity];
+      Items = NULL;
   }
 public:
   // creates a new empty objects
-  TArrayList()  {  init(0, true);  }
+  TArrayList()  {  init(0);  }
   // allocates size elements (can be accessed diretly)
-  TArrayList(size_t size, bool exact=true)  {  init(size, exact);  }
+  TArrayList(size_t size)  {  init(size);  }
 //..............................................................................
   /* copy constuctor - creates new copies of the objest, be careful as the assignement
    operator must exist for nonpointer objects */
   TArrayList(const TArrayList& list)  {
-    init(list.Count(), true);
+    init(list.Count());
     for( size_t i=0; i < FCount; i++ )
       Items[i] = list.Items[i];
   }
 //..............................................................................
   /* copies values from an array of size elements  */
   TArrayList(size_t size, const T* array)  {
-   init(size, true);
+   init(size);
    for( size_t i=0; i < FCount; i++ )
      Items[i] = array[i];
   }
 //..............................................................................
   //destructor - beware t40: error: expecthe objects are deleted!
   virtual ~TArrayList()  {
-    delete [] Items;
+    if( Items != NULL )
+      delete [] Items;
   }
 //..............................................................................
   //deletes the objects and clears the list
   inline void Clear()  {  SetCount(0);  }
 //..............................................................................
-  virtual IEObject* Replicate() const  {
-    return new TArrayList(*this);
-  }
+  virtual IEObject* Replicate() const {  return new TArrayList(*this);  }
 //..............................................................................
-  const TArrayList& Assign(const TArrayList& list)  {
+  template <class List> TArrayList& Assign(const List& list)  {
     SetCount(list.Count());
     for( size_t i=0; i < FCount; i++ )
-      Items[i] = list.Items[i];
-    return list;
+      Items[i] = list[i];
+    return *this;
   }
 //..............................................................................
-  void AddList(const TArrayList& list)  {
-    SetCapacity( list.Count() + FCount );
-    for( size_t i=0; i < list.FCount; i++ )
-      Items[FCount+i] = list.Items[i];
+  template <class List> inline TArrayList& operator = (const List& list)  {
+    return Assign(list);
+  }
+//..............................................................................
+  inline TArrayList& operator = (const TArrayList& list)  {
+    return Assign(list);
+  }
+//..............................................................................
+  template <class List> TArrayList& AddList(const List& list)  {
+    SetCapacity(list.Count() + FCount);
+    for( size_t i=0; i < list.Count(); i++ )
+      Items[FCount+i] = list[i];
     FCount += list.Count();
+    return *this;
+  }
+//..............................................................................
+  template <class List> inline TArrayList& operator += (const TArrayList& list)  {
+    return AddList(list);
   }
 //..............................................................................
   const T& Add(const T& Obj)  {
@@ -118,17 +129,24 @@ public:
     return Items[index];
   }
 //..............................................................................
-  inline const TArrayList& operator = (const TArrayList& list)  {
-    return Assign(list);
+  template <class Functor> void ForEach(const Functor& f) const {
+    for( size_t i=0; i < FCount; i++ )
+      f.OnItem(Items[i]);
+  }
+//..............................................................................
+  template <class Functor> void ForEachEx(const Functor& f) const {
+    for( size_t i=0; i < FCount; i++ )
+      f.OnItem(Items[i], i);
   }
 //..............................................................................
   void SetCapacity(size_t v)  {
-    if( v < FCapacity )    return;
+    if( v <= FCapacity )    return;
     FCapacity = v;
     T* Bf = new T[v];
     for( size_t i=0; i < FCount; i++ )
       Bf[i] = Items[i];
-    delete [] Items;
+    if( Items != NULL )
+      delete [] Items;
     Items = Bf;
   }
 //..............................................................................
@@ -155,7 +173,7 @@ public:
   }
 //..............................................................................
   void Remove(const T& pObj)  {
-    index_t i = IndexOf(pObj);
+    size_t i = IndexOf(pObj);
     if( i != InvalidIndex )
       Delete(i);
     else
@@ -242,10 +260,9 @@ public:
   inline bool IsEmpty() const {  return FCount == 0;  }
 //..............................................................................
   void SetCount(size_t v)  {
-    if( v == FCount )  return;
     if( v > FCount )  {
       if( v > FCapacity )
-        SetCapacity(v + FIncrement);
+        SetCapacity(v);
     }
     else if( v == 0 )  {
       if( Items != NULL )  {
@@ -258,7 +275,8 @@ public:
       T* Bf = new T[v+FIncrement];
       for( size_t i=0; i < v; i++ )
         Bf[i] = Items[i];
-      delete [] Items;
+      if( Items != NULL )
+        delete [] Items;
       Items = Bf;
       FCapacity = v + FIncrement;
     }

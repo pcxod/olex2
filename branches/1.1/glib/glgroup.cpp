@@ -25,17 +25,15 @@ void TGlGroup::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
-  if( GPC.IsEmpty() )  return;
   TGraphicsStyle& GS = GPC.GetStyle();
-  if( GetParentGroup() != NULL )  {
+  if( !cName.IsEmpty() )  {
     GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF);
     GlM.ShininessF = 128;
     GlM.AmbientF = 0xff0fff0f;
     GlM.DiffuseF = 0xff00f0ff;
   }
   else  {
-    GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|
-      sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB|sglmTransparent);
+    GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|sglmTransparent);
     GlM.ShininessF = 128;
     GlM.AmbientF = 0x7f00ff00;
     GlM.DiffuseF = 0x7f0000ff;
@@ -54,45 +52,41 @@ TGlGroup::~TGlGroup()  {
 } 
 //..............................................................................
 void TGlGroup::Clear()  {
-  for( size_t i=0; i < FObjects.Count(); i++ )  {
-    FObjects[i]->SetParentGroup(NULL);
-    FObjects[i]->SetGrouped(false);
-  }
-  FObjects.Clear();
+  Objects.ForEach(ObjectReleaser());
+  GlM.SetIdentityDraw(false);  // most objects are 'normal'
+  Objects.Clear();
 }
 //..............................................................................
 void TGlGroup::Remove(AGDrawObject& G)  {
-  FObjects.Remove(G);
-  G.SetParentGroup(NULL);
-  G.SetGrouped(false);
+  Objects.Remove(&G);
+  ObjectReleaser::OnItem(G);
 }
 //..............................................................................
 void TGlGroup::RemoveDeleted()  {
-  for( size_t i=0; i < FObjects.Count(); i++ )  {
-    if( FObjects[i]->IsDeleted() )  {
-      FObjects[i]->SetParentGroup(NULL);
-      FObjects[i]->SetGrouped(false);
-      FObjects[i] = NULL;
-    }
-  }
-  FObjects.Pack();
+  Objects.Pack(AGDrawObject::FlagsAnalyserEx<ObjectReleaser>(sgdoDeleted, ObjectReleaser()));
 }
 //..............................................................................
 bool TGlGroup::Add(AGDrawObject& GO, bool remove)  {
   AGDrawObject* go = &GO;
-  if( go == this )
-    throw TInvalidArgumentException(__OlxSourceInfo, "cannot add itself");
+  if( go == this || !GO.IsSelectable() )  return false;
   TGlGroup *GlG = Parent.FindObjectGroup(GO);
   if( GlG != NULL )  
     go = GlG;
-  const size_t i = FObjects.IndexOf(go);
+  const size_t i = Objects.IndexOf(go);
   if( i == InvalidIndex )  {
-    FObjects.Add(go)->SetGrouped(true);
+    if( GO.GetPrimitives().PrimitiveCount() != 0 )  {  // check the compatibility of the selection
+      if( Objects.IsEmpty() )
+        GlM.SetIdentityDraw(GO.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw());
+      else if( GlM.IsIdentityDraw() != GO.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw() ) 
+        return false;
+    }
+    go->SetGrouped(true);
+    Objects.Add(go);
     go->SetParentGroup(this);
     return true;
   }
   else if( remove )  {
-    FObjects.Delete(i);
+    Objects.Delete(i);
     go->SetParentGroup(NULL);
     go->SetGrouped(false);
   }
@@ -100,14 +94,14 @@ bool TGlGroup::Add(AGDrawObject& GO, bool remove)  {
 }
 //..............................................................................
 void TGlGroup::SetVisible(bool On)  {
-  for( size_t i=0; i < FObjects.Count(); i++ )
-    FObjects[i]->SetVisible(On); 
+  for( size_t i=0; i < Objects.Count(); i++ )
+    Objects[i]->SetVisible(On); 
   AGDrawObject::SetVisible(On);
 }
 //..............................................................................
 void TGlGroup::SetSelected(bool On)  {
-  for( size_t i=0; i < FObjects.Count(); i++ )
-    FObjects[i]->SetSelected(On);
+  for( size_t i=0; i < Objects.Count(); i++ )
+    Objects[i]->SetSelected(On);
   AGDrawObject::SetSelected(On);
 }
 //..............................................................................
@@ -122,8 +116,8 @@ void TGlGroup::DoDraw(bool SelectPrimitives, bool SelectObjects) const {
   if( !SelectPrimitives && !SelectObjects )
     InitMaterial();
 
-  for( size_t i=0; i < FObjects.Count(); i++ )  {
-    AGDrawObject* G = FObjects[i];
+  for( size_t i=0; i < Objects.Count(); i++ )  {
+    AGDrawObject* G = Objects[i];
     if( !G->IsVisible() )  continue;
     if( G->IsDeleted() )  continue;
     if( G->IsGroup() )    {
@@ -153,22 +147,45 @@ void TGlGroup::SetGlM(const TGlMaterial& m)  {
   GlM = GetPrimitives().GetStyle().SetMaterial("mat", m);
 }
 //..............................................................................
-bool TGlGroup::TryToGroup(TPtrList<AGDrawObject>& ungroupable)  {
+bool TGlGroup::TryToGroup(AGDObjList& ungroupable)  {
   size_t groupable_cnt=0;
-  for( size_t i=0; i < FObjects.Count(); i++ )
-    if( FObjects[i]->IsGroupable() )
+  for( size_t i=0; i < Objects.Count(); i++ )
+    if( Objects[i]->IsGroupable() )
       groupable_cnt++;
   if( groupable_cnt < 2 )  return false;
-  if( groupable_cnt == FObjects.Count() )
+  if( groupable_cnt == Objects.Count() )
     return true;
-  ungroupable.SetCapacity(ungroupable.Count() + FObjects.Count() - groupable_cnt);
-  for( size_t i=0; i < FObjects.Count(); i++ )  {
-    if( !FObjects[i]->IsGroupable() )  {
-      ungroupable.Add(FObjects[i])->SetParentGroup(NULL);
-      FObjects[i] = NULL;
+  ungroupable.SetCapacity(ungroupable.Count() + Objects.Count() - groupable_cnt);
+  for( size_t i=0; i < Objects.Count(); i++ )  {
+    if( !Objects[i]->IsGroupable() )  {
+      ungroupable.Add(Objects[i])->SetParentGroup(NULL);
+      Objects.Delete(i--);
     }
   }
-  FObjects.Pack();
   return true;
+}
+//..............................................................................
+bool TGlGroup::OnMouseDown(const IEObject *Sender, const struct TMouseData& Data)  {
+  bool res = false;
+  for( size_t i=0; i < Objects.Count(); i++ )
+    if( Objects[i]->OnMouseDown(Sender, Data) )
+      res = true;
+  return res;
+}
+//..............................................................................
+bool TGlGroup::OnMouseUp(const IEObject *Sender, const struct TMouseData& Data)  {
+  bool res = false;
+  for( size_t i=0; i < Objects.Count(); i++ )
+    if( Objects[i]->OnMouseUp(Sender, Data) )
+      res = true;
+  return res;
+}
+//..............................................................................
+bool TGlGroup::OnMouseMove(const IEObject *Sender, const struct TMouseData& Data)  {
+  bool res = false;
+  for( size_t i=0; i < Objects.Count(); i++ )
+    if( Objects[i]->OnMouseMove(Sender, Data) )
+      res = true;
+  return res;
 }
 //..............................................................................

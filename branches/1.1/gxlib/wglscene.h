@@ -8,20 +8,15 @@ class TWGlScene:public AGlScene  {
   HBITMAP FBitmap;
   void SetPixelFormatDescriptor(HDC hDc, __int8 bits);
   void SetPixelFormatDescriptorX(HDC hDc, __int8 bits);
+  virtual TGlFont& DoCreateFont(TGlFont& fnt, bool half_size) const;
 public:
   TWGlScene();
-  virtual ~TWGlScene();
-
+  virtual ~TWGlScene()  {  Destroy();  }
   void InitialiseBMP(HBITMAP Bmp);
   void InitialiseHDC(HDC Dc);
-
-  virtual TGlFont* CreateFont(const olxstr& name, const olxstr& fntDescription, short Flags=TGlFont::fntBmp);
-
   void Destroy();
-
   void StartSelect(int x, int y, GLuint *Bf);
   int EndSelect();
-
   void StartDraw();
   void EndDraw();
   virtual void ScaleFonts(double scale)  {

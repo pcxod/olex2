@@ -29,7 +29,7 @@ void TXLattice::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlM.SetIdentityDraw(false);
   GlM.SetTransparent(false);
 
-  Lines->SetProperties( GS.GetMaterial("Lines", GlM) );
+  Lines->SetProperties(GS.GetMaterial("Lines", GlM));
 
   // initialise data
   SetSize( GetSize() );
@@ -38,10 +38,9 @@ void TXLattice::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGlMaterial GlM1;
   GlM1.SetIdentityDraw(true);
   GlM1.SetTransparent(false);
-  
-  glpLabel.SetProperties( GS.GetMaterial("Label", GlM1) );
-
-  glpLabel.SetFont( Parent.GetScene().DefFont() );
+  glpLabel.SetProperties(GS.GetMaterial("Label", GlM1));
+  glpLabel.SetFont(
+    &Parent.GetScene().GetFont(Parent.GetScene().FindFontIndexForType<TXLattice>(), true));
 }
 //..............................................................................
 bool TXLattice::Orient(TGlPrimitive& P)  {

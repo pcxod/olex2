@@ -148,6 +148,7 @@ protected:
 
   // helper functions ...
   void CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS);
+  void UpdateInfoBox();
 public:
   bool ProcessFunction(olxstr &cmd, const olxstr& location=EmptyString) {  
     TMacroError err;
@@ -535,11 +536,10 @@ public:
     DataDir,
     TutorialDir,
     PluginFile;
-  TGlMaterial HelpFontColorCmd, HelpFontColorTxt,
-              ExecFontColor, InfoFontColor,
-              WarningFontColor, ErrorFontColor, ExceptionFontColor;
-              
-
+  TGlMaterial
+    HelpFontColorCmd, HelpFontColorTxt,
+    ExecFontColor, InfoFontColor,
+    WarningFontColor, ErrorFontColor, ExceptionFontColor;
 private:
   bool Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
   olxstr FLastSettingsFile;
@@ -656,13 +656,12 @@ protected:
   TMenu    *pmFragment;
     wxMenuItem *miFragGrow;
   TMenu    *pmSelection;
-    wxMenuItem  *miGroupSel;
-    wxMenuItem  *miUnGroupSel;
   TMenu    *pmView;
   TMenu    *pmPlane;
-  TMenu    *pmGraphics;  // general menu for graphics
-  TMenu*    pmLabel;
-  TMenu*    pmLattice;
+  TMenu    *pmGraphics;  // generic menu for graphics
+  TMenu    *pmGrid, *pmBlob;
+  TMenu    *pmLabel;
+  TMenu    *pmLattice;
   class TXGlLabel* LabelToEdit;
   wxMenu  *FCurrentPopup;
 

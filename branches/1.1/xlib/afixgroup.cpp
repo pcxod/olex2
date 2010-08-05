@@ -14,7 +14,7 @@ void TAfixGroup::Assign(const TAfixGroup& ag)  {
     throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
   SetPivot( *Pivot );
   for( size_t i=0; i < ag.Dependent.Count(); i++ )  {
-    Dependent.Add( Parent.RM.aunit.FindCAtomById( ag.Dependent[i]->GetId()) );
+    Dependent.Add(Parent.RM.aunit.FindCAtomById( ag.Dependent[i]->GetId()));
     if( Dependent.Last() == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
     Dependent.Last()->SetParentAfixGroup(this);
@@ -30,7 +30,7 @@ void TAfixGroup::ToDataItem(TDataItem& item) const {
   int dep_id = 0;
   for( size_t i=0; i < Dependent.Count(); i++ )  {
     if( Dependent[i]->IsDeleted() )  continue;
-    dep.AddField(olxstr("atom_id_") << dep_id++, Dependent[i]->GetId());
+    dep.AddField(olxstr("atom_id_") << dep_id++, Dependent[i]->GetTag());
   }
 }
 //..............................................................................
@@ -61,7 +61,7 @@ void TAfixGroup::FromDataItem(TDataItem& item) {
   Afix = item.GetRequiredField("afix").ToInt();
   D = item.GetRequiredField("d").ToDouble();
   U = item.GetRequiredField("u").ToDouble();
-  SetPivot( Parent.RM.aunit.GetAtom( item.GetRequiredField("pivot_atom_id").ToInt() ) );
+  SetPivot(Parent.RM.aunit.GetAtom(item.GetRequiredField("pivot_atom_id").ToSizeT()));
   TDataItem& dep = item.FindRequiredItem("dependent");
   for( size_t i=0; i < dep.FieldCount(); i++ )
     Dependent.Add( &Parent.RM.aunit.GetAtom(dep.GetField(i).ToInt()) )->SetParentAfixGroup(this);
@@ -81,7 +81,7 @@ void TAfixGroups::ToDataItem(TDataItem& item) {
   Groups.Pack();
   item.AddField("n", Groups.Count());
   for( size_t i=0; i < Groups.Count(); i++ )
-    Groups[i].ToDataItem( item.AddItem(i) );
+    Groups[i].ToDataItem(item.AddItem(i));
 }
 //..............................................................................
 #ifndef _NO_PYTHON
@@ -98,7 +98,7 @@ PyObject* TAfixGroups::PyExport(TPtrList<PyObject>& atoms)  {
 
   PyObject* main = PyTuple_New( Groups.Count() );
   for( size_t i=0; i < Groups.Count(); i++ )  {
-    PyTuple_SetItem(main, i, Groups[i].PyExport(atoms) );
+    PyTuple_SetItem(main, i, Groups[i].PyExport(atoms));
   }
   return main;
 }
@@ -110,7 +110,7 @@ void TAfixGroups::FromDataItem(TDataItem& item) {
   if( n != item.ItemCount() )
     throw TFunctionFailedException(__OlxSourceInfo, "number of items mismatch");
   for( size_t i=0; i < n; i++ )  {
-    Groups.Add( new TAfixGroup(*this) ).SetId(i);
-    Groups.Last().FromDataItem(item.GetItem(i) );
+    Groups.Add(new TAfixGroup(*this)).SetId(i);
+    Groups.Last().FromDataItem(item.GetItem(i));
   }
 }

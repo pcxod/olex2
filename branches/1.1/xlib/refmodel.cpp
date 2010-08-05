@@ -426,6 +426,14 @@ const TRefList& RefinementModel::GetReflections() const {
     _FriedelPairCount = 0;
     _Reflections.SetCapacity(hkl_cnt);
     for( size_t i=0; i < hkl_cnt; i++ )  {
+      if( HKLF == 5 )  {
+        if( hf[i].GetFlag() < 0 )  {
+          while( ++i < hkl_cnt && hf[i].GetFlag() < 0 )
+            ;
+          i--;
+          continue;
+        }
+      }
       TReflection& r = _Reflections.AddNew(hf[i]);
       TRefPList* rl = hkl3d(hf[i].GetHkl());
       if(  rl == NULL )
@@ -491,7 +499,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       TRefList refs;
       FilterHkl(refs, _HklStat);
       TUnitCell::SymSpace sp = aunit.GetLattice().GetUnitCell().GetSymSpace();
-      if( MERG != 0 )  {
+      if( MERG != 0 && HKLF != 5 )  {
         bool mergeFP = (MERG == 4 || MERG == 3) && !sp.IsCentrosymmetric();
         _HklStat = RefMerger::DryMerge<TUnitCell::SymSpace,RefMerger::ShelxMerger>(
           sp, refs, Omits, mergeFP);
@@ -524,7 +532,7 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
   const bool transform_hkl = !HKLF_mat.IsI();
 
   const size_t ref_cnt = all_refs.Count();
-  out.SetCapacity( ref_cnt );
+  out.SetCapacity(ref_cnt);
   stats.MinD = 100;
   stats.MaxD = -100;
   stats.MaxI = -100;
@@ -1082,7 +1090,7 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
       TSAtom& sa = lat.GetAtom(i);
       if( sa.IsDeleted() || sa.GetType() == iQPeakZ )  continue;
       // make sure that only AU atoms go to 
-      if( !sa.GetMatrix(0).IsFirst() )  continue;
+      if( !sa.IsAUAtom() )  continue;
       uc.GetAtomEnviList(sa, ae);
       if( PyDict_GetItemString(atoms[sa.CAtom().GetTag()], "neighbours") != NULL )
         continue;

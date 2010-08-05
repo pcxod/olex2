@@ -15,6 +15,24 @@ private:
   inline T& Alloc(size_t i)  {  return *(T*)( List[i] = new T() );  }
 protected:
   TPtrList<T> List;
+  template <class Analyser> struct PackItemActor  {
+    const Analyser& analyser;
+    PackItemActor(const Analyser& _analyser) : analyser(_analyser)  {}
+    inline bool OnItem(T& o) const {
+      if( analyser.OnItem(o) )  {
+        delete &o;
+        return true;
+      }
+      return false;
+    }
+    inline bool OnItem(T& o, size_t i) const {
+      if( analyser.OnItem(o, i) )  {
+        delete &o;
+        return true;
+      }
+      return false;
+    }
+  };
 public:
   // creates a new empty objects
   TTypeListExt() {  }
@@ -209,7 +227,7 @@ public:
 #endif
   }
 //..............................................................................
-  inline T& Item(size_t index) const  {
+  inline T& Item(size_t index) const {
 #ifdef _DEBUG
     T*& v = List[index];
     if( v == NULL )
@@ -220,7 +238,7 @@ public:
 #endif
   }
 //..............................................................................
-  inline T& Last() const  {
+  inline T& Last() const {
 #ifdef _DEBUG
     T*& v = List.Last();
     if( v == NULL )
@@ -231,10 +249,10 @@ public:
 #endif
   }
 //..............................................................................
-  inline bool IsNull(size_t index) const  {  return List[index] == NULL;  }
+  inline bool IsNull(size_t index) const {  return List[index] == NULL;  }
 //..............................................................................
   // beware that poiter assignement will not work with syntaxes above, use this function instead!
-  inline void NullItem(size_t index) const  {
+  inline void NullItem(size_t index) const {
     T* v = List[index];
     if( v != NULL )  {  // check if not deleted yet
       delete (DestructCast*)v;
@@ -264,7 +282,7 @@ public:
     return *this;
   }
 //..............................................................................
-  inline void SetCapacity(size_t v)   {  List.SetCapacity(v);  }
+  inline void SetCapacity(size_t v)  {  List.SetCapacity(v);  }
 //..............................................................................
   inline void SetIncrement(size_t v)  {  List.SetIncrement(v);  }
 //..............................................................................
@@ -352,6 +370,24 @@ public:
   inline void Move(size_t from, size_t to)  {  List.Move(from, to);  }
 //..............................................................................
   inline void Pack()  {  List.Pack();  }
+//..............................................................................
+  template <class PackAnalyser> inline void Pack(const PackAnalyser& pa)  {
+    List.Pack(PackItemActor<PackAnalyser>(pa));
+  }
+//..............................................................................
+  template <class PackAnalyser> inline void PackEx(const PackAnalyser& pa)  {
+    List.PackEx(PackItemActor<PackAnalyser>(pa));
+  }
+//..............................................................................
+  template <class Functor> inline void ForEach(const Functor& f) const {
+    for( size_t i=0; i < List.Count(); i++ )
+      f.OnItem(Item(i));
+  }
+//..............................................................................
+  template <class Functor> inline void ForEachEx(const Functor& f) const {
+    for( size_t i=0; i < List.Count(); i++ )
+      f.OnItem(Item(i), i);
+  }
 //..............................................................................
   inline size_t Count() const {  return List.Count();  }
 //..............................................................................

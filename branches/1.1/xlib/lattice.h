@@ -68,7 +68,8 @@ public:
   TLattice();
   virtual ~TLattice();
 
-  TActionQueue &OnStructureGrow, &OnStructureUniq, &OnDisassemble;
+  TActionQueue &OnStructureGrow, &OnStructureUniq, &OnDisassemble,
+    &OnAtomsDeleted;
 
   // this is does not have any usefull data - just for functions call!!!
   inline TNetwork& GetNetwork()  const  {  return *Network; }
@@ -113,6 +114,7 @@ public:
   }
   inline size_t FragmentCount() const {  return Fragments.Count(); }
   inline TNetwork& GetFragment(size_t i) const {  return olx_is_valid_index(i) ? *Fragments[i] : *Network;  }
+  const TNetPList& GetFragments() const {  return Fragments;  }
 
   inline size_t MatrixCount() const {  return Matrices.Count();  }
   const smatd& GetMatrix(size_t i) const {  return *Matrices[i];  }
@@ -120,6 +122,7 @@ public:
 
   inline size_t AtomCount() const {  return Atoms.Count();  }
   inline TSAtom& GetAtom(size_t i) const {  return *Atoms[i];  }
+  const TSAtomPList& GetAtoms() const {  return Atoms;  }
   TSAtom* FindSAtom(const olxstr &Label) const;
   TSAtom* FindSAtom(const TCAtom& ca) const;
   TSAtom* FindSAtom(const TSAtom::Ref& id) const {
@@ -133,10 +136,12 @@ public:
   void RestoreAtom(const TSAtom::FullRef& id);
 
   inline size_t BondCount() const {  return Bonds.Count();  }
-  inline TSBond& GetBond(size_t i) const {  return *Bonds[i]; }
+  inline TSBond& GetBond(size_t i) const {  return *Bonds[i];  }
+  const TSBondPList& GetBonds() const {  return Bonds;  }
 
   inline size_t PlaneCount() const {  return Planes.Count(); }
   inline TSPlane& GetPlane(size_t i) const {  return *Planes[i];  }
+  const TSPlanePList& GetPlanes() const {  return Planes;  }
   // for the grown structure might return more than one plane
   TSPlanePList NewPlane(const TSAtomPList& Atoms, int weightExtent=0);
   void ClearPlaneDefinitions()  {  PlaneDefs.Clear();  }
@@ -164,8 +169,12 @@ public:
   void CompaqAll();
   // similar to Compaq, but considers atom to atom distances, not fragment centres
   void CompaqClosest();
+  // moves atoms of particular type into the positions closest other atoms, does not affect the other atoms
+  void CompaqType(short Z);
   // moves Q-peaks into the positions closest to real atoms, does not affect the other atoms
-  void CompaqQ();
+  void CompaqQ()  {  CompaqType(iQPeakZ);  }
+  // as above, for H
+  void CompaqH()  {  CompaqType(iHydrogenZ);  }
   // transforms fragments using a given smat
   void TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform);
 

@@ -1,7 +1,6 @@
 //---------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-
 #include "glprimitive.h"
 #include "glmaterial.h"
 #include "glrender.h"
@@ -37,6 +36,8 @@ TGlPrimitive::~TGlPrimitive()  {
     delete Basis;
   if( ClipPlanes != NULL )  
     delete ClipPlanes;
+  if( olx_is_valid_index(ListId) )
+    olx_gl::deleteLists(ListId, 1);
 }
 //..............................................................................
 void TGlPrimitive::CreateQuadric()  {
@@ -51,9 +52,9 @@ void TGlPrimitive::CreateQuadric()  {
   else
     gluQuadricTexture(Quadric, GL_FALSE);
 
-  gluQuadricOrientation( Quadric, QuadricOrientation);
-  gluQuadricDrawStyle( Quadric, QuadricDrawStyle);
-  gluQuadricNormals( Quadric, QuadricNormals);
+  gluQuadricOrientation(Quadric, QuadricOrientation);
+  gluQuadricDrawStyle(Quadric, QuadricDrawStyle);
+  gluQuadricNormals(Quadric, QuadricNormals);
 }
 //..............................................................................
 void TGlPrimitive::SetType(short T)  {
@@ -232,30 +233,32 @@ void TGlPrimitive::Draw()  {
   }
 
   if( Type == sgloText )  {
-    if( String == NULL || Font == NULL || String->IsEmpty() )   return;
-    const GLuint fontbase = Font->GetFontBase();
-    /* each character of different colour */
-    const size_t StrLen = String->Length();
-    if( Colors.Count() == StrLen )  {
-      uint32_t prev_color = Colors[0];
-      SetColor(prev_color);
-      for( size_t i=0; i < StrLen; i++ )  {
-        if( prev_color != Colors[i] )  {
-          SetColor(Colors[i]);
-          prev_color = Colors[i];
-        }
-        if( String->CharAt(i) < 256 )
-          olx_gl::callList(fontbase + String->CharAt(i));
-        else
-          olx_gl::callList(fontbase + '?');
+#ifdef _DEBUG
+    if( Font == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "undefiend font");
+#endif
+    if( !(String == NULL || Font == NULL || String->IsEmpty()) )  {
+      if( Font->IsVectorFont() )  {
+        Font->DrawVectorText(vec3d(0,0,0), *String);
       }
-    }
-    else  {  /* all characters of the same colour */
-      for( size_t i=0; i < StrLen; i++ )  {
-        if( String->CharAt(i) < 256 )
-          olx_gl::callList(fontbase + String->CharAt(i));
-        else
-          olx_gl::callList(fontbase + '?');
+      else  {
+        /* each character of different colour */
+        const size_t StrLen = String->Length();
+        if( Colors.Count() == StrLen )  {
+          uint32_t prev_color = Colors[0];
+          SetColor(prev_color);
+          short cstate = 0;
+          for( size_t i=0; i < StrLen; i++ )  {
+            if( prev_color != Colors[i] )  {
+              SetColor(Colors[i]);
+              prev_color = Colors[i];
+            }
+            Font->DrawRasterChar(i, *String, cstate);
+          }
+        }
+        else  {  /* all characters of the same colour */
+          Font->DrawRasterText(*String);
+        }
       }
     }
   }

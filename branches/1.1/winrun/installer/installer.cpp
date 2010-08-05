@@ -5,7 +5,6 @@
 #include "ebase.h"
 #include "bapp.h"
 #include "estrlist.h"
-
 #include "installer.h"
 #include "installerDlg.h"
 

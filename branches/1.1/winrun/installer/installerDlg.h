@@ -15,10 +15,7 @@ const unsigned int bgColor = 0xEFEFEF;
 class CInstallerDlg : public CDialog  {
 public:
 	CInstallerDlg(CWnd* pParent = NULL);	// standard constructor
-  ~CInstallerDlg()  {
-    if( tooltipCtrl != NULL )  delete tooltipCtrl;
-    if( ctrlBrush != NULL )  delete ctrlBrush;
-  }
+  ~CInstallerDlg();
 	enum { IDD = IDD_INSTALLER_DIALOG };
 
   void SetAction(const olxch *val)  {

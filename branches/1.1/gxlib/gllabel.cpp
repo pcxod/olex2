@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------//
-// TGlXLabel - a drawing object for atom label
+// TGlXLabel - a drawing object for text label
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
 #include "gllabel.h"
@@ -18,13 +18,12 @@ TXGlLabel::TXGlLabel(TGlRenderer& R, const olxstr& collectionName) :
   SetGroupable(true);
   FontIndex = ~0;
 };
-TXGlLabel::~TXGlLabel(){}
-
+//..............................................................................
 void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 
-  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;
 
@@ -37,24 +36,17 @@ void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
   glpText.SetProperties(GS.GetMaterial("Text", TGlMaterial("2049;0.000,0.000,0.000,1.000")));
   glpText.Params[0] = -1;  //bitmap; TTF by default
-  glpText.SetFont(&GetFont());
 }
 //..............................................................................
-void TXGlLabel::SetLabel(const olxstr& L)   {
+void TXGlLabel::SetLabel(const olxstr& L)  {
   FLabel = L;  
-  TGlFont& glf = GetFont();
-  if( glf.IsVectorFont() )  {
-    text_rect = glf.GetTextRect(FLabel);
-  }
-  else  {
-    text_rect.width = (double)glf.TextWidth(FLabel);
-    text_rect.height = (double)glf.TextHeight(FLabel);
-  }
+  text_rect = GetFont().GetTextRect(FLabel);
 }
 //..............................................................................
 vec3d TXGlLabel::GetRasterPosition() const {
   const double ScaleR = Parent.GetExtraZoom()*Parent.GetViewZoom();
-  vec3d off = (GetCenter()*Parent.GetBasis().GetZoom());
+  vec3d off = (GetCenter()+vec3d(-text_rect.width/2,text_rect.height/2,0))*Parent.GetBasis().GetZoom();
+  //vec3d off = (GetCenter()*Parent.GetBasis().GetZoom());
   if( Transformer != NULL )  {
     vec3d T = Transformer->ForRaster(*this);
     return Transformer->AdjustZ(T += off*ScaleR);
@@ -69,7 +61,8 @@ vec3d TXGlLabel::GetRasterPosition() const {
 }
 //..............................................................................
 vec3d TXGlLabel::GetVectorPosition() const {
-  vec3d off = Parent.GetBasis().GetMatrix()*GetCenter();
+  vec3d off = Parent.GetBasis().GetMatrix()*(GetCenter()+vec3d(-text_rect.width/2,text_rect.height/2,0));
+  //vec3d off = Parent.GetBasis().GetMatrix()*GetCenter();
   const double Scale = Parent.GetScale();
   const double ScaleR = Parent.GetExtraZoom()*Parent.GetViewZoom();
   if( Transformer != NULL )  {
@@ -89,7 +82,6 @@ vec3d TXGlLabel::GetVectorPosition() const {
 bool TXGlLabel::Orient(TGlPrimitive& P)  {
   const double Scale = Parent.GetScale();
   const double ScaleR = Parent.GetExtraZoom()*Parent.GetViewZoom();
-  const double ScaleVR = Scale*ScaleR;
   TGlFont& glf = GetFont();
   if( P.GetType() == sgloText )  {
     if( !glf.IsVectorFont() )  {
@@ -101,7 +93,7 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
       //float glw;
       //glGetFloatv(GL_LINE_WIDTH, &glw);
       //glLineWidth((float)(1./Scale)/50);
-      glf.DrawGlText(T, FLabel, Parent.GetBasis().GetZoom()/Parent.CalcZoom(), true);
+      glf.DrawVectorText(T, FLabel, Parent.GetBasis().GetZoom()/Parent.CalcZoom());
       //glLineWidth(glw);
     }
     return true;
@@ -111,28 +103,22 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
     T[2] -= 0.0005;
     olx_gl::translate(T);
     if( !glf.IsVectorFont() )  {
-      P.Vertices[0] = vec3d(0, 0, 0);
-      P.Vertices[1] = vec3d(text_rect.width*ScaleVR, 0, 0);
-      P.Vertices[2] = vec3d(text_rect.width*ScaleVR, text_rect.height*ScaleVR, 0);
-      P.Vertices[3] = vec3d(0, text_rect.height*ScaleVR, 0);
+      const double scale = Scale*ScaleR;
+      olx_gl::scale(scale, scale, 1.0);
     }
     else  {
       const double scale = Parent.GetBasis().GetZoom()/Parent.CalcZoom();
-      P.Vertices[0] = vec3d(text_rect.left, text_rect.top, 0)*scale;
-      P.Vertices[1] = vec3d(text_rect.left+text_rect.width, text_rect.top, 0)*scale;
-      P.Vertices[2] = vec3d(text_rect.left+text_rect.width, text_rect.top+text_rect.height, 0)*scale;
-      P.Vertices[3] = vec3d(text_rect.left, text_rect.top+text_rect.height, 0)*scale;
+      olx_gl::scale(scale, scale, 1.0);
     }
+    P.Vertices[0] = vec3d(text_rect.left, text_rect.top, 0);
+    P.Vertices[1] = vec3d(text_rect.left+text_rect.width, text_rect.top, 0);
+    P.Vertices[2] = vec3d(text_rect.left+text_rect.width, text_rect.top+text_rect.height, 0);
+    P.Vertices[3] = vec3d(text_rect.left, text_rect.top+text_rect.height, 0);
   }
   return false;
 }
 //..............................................................................
-TGlFont& TXGlLabel::GetFont() const {  
-  TGlFont* fnt = Parent.GetScene().GetFont(FontIndex); 
-  if( fnt == NULL )
-    throw TInvalidArgumentException(__OlxSourceInfo, "font index");
-  return *fnt;
-}
+TGlFont& TXGlLabel::GetFont() const {  return Parent.GetScene().GetFont(FontIndex, true);  }
 //..............................................................................
 void TXGlLabel::ToDataItem(TDataItem& item) const {
   item.AddField("text", FLabel);
@@ -145,7 +131,7 @@ void TXGlLabel::ToDataItem(TDataItem& item) const {
 void TXGlLabel::FromDataItem(const TDataItem& item) {
   SetVisible( item.GetRequiredField("visible").ToBool() );
   FontIndex = item.GetRequiredField("font_id").ToInt();
-  SetLabel( item.GetRequiredField("text"));
+  SetLabel(item.GetRequiredField("text"));
   TDataItem* basis = item.FindItem("Basis");
   if( basis != NULL )  {
     Offset = PersUtil::FloatVecFromStr(item.GetRequiredField("center"));
