@@ -3927,10 +3927,13 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
     if( !XAtoms[i].Atom().IsDeleted() )
       a_cnt++;
   TEBitArray vis(a_cnt);
+  TPtrList<TXGlLabel> atom_labels(a_cnt);
   a_cnt = 0;
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
-    if( !XAtoms[i].Atom().IsDeleted() )
+    if( !XAtoms[i].Atom().IsDeleted() )  {
+      atom_labels.Set(a_cnt, XAtoms[i].GetLabel());
       vis.Set(a_cnt++, XAtoms[i].IsVisible());
+    }
   }
   visibility.AddField("atoms", vis.ToBase64String());
   size_t b_cnt = 0;
@@ -3938,10 +3941,13 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
     if( !XBonds[i].Bond().IsDeleted() )
       b_cnt++;
   vis.SetSize(b_cnt);
+  TPtrList<TXGlLabel> bond_labels(b_cnt);
   b_cnt = 0;
   for( size_t i=0; i < XBonds.Count(); i++ )  {
-    if( !XBonds[i].Bond().IsDeleted() )
-      vis.Set(b_cnt++, XBonds[i].IsVisible() );
+    if( !XBonds[i].Bond().IsDeleted() )  {
+      bond_labels.Set(b_cnt, XBonds[i].GetLabel());
+      vis.Set(b_cnt++, XBonds[i].IsVisible());
+    }
   }
   visibility.AddField("bonds", vis.ToBase64String());
   size_t p_cnt = 0;
@@ -3961,7 +3967,13 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
 
   TDataItem& labels = item.AddItem("Labels");
   for( size_t i=0; i < XLabels.Count(); i++ )
-    XLabels[i].ToDataItem( labels.AddItem("Label") );
+    XLabels[i].ToDataItem(labels.AddItem("Label"));
+  TDataItem& atom_labels_item = item.AddItem("AtomLabels");
+  for( size_t i=0; i < atom_labels.Count(); i++ )
+    atom_labels[i]->ToDataItem(atom_labels_item.AddItem("Label"));
+  TDataItem& bond_labels_item = item.AddItem("BondLabels");
+  for( size_t i=0; i < bond_labels.Count(); i++ )
+    bond_labels[i]->ToDataItem(bond_labels_item.AddItem("Label"));
 
   FGlRender->GetSelection().SetTag(-1);
   FGlRender->GetGroups().ForEachEx(ACollectionItem::IndexTagSetter<>());
@@ -3978,17 +3990,17 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
     for( size_t j=0; j < glG.Count(); j++ )  {
       AGDrawObject& glO = glG.GetObject(j);
       if( EsdlInstanceOf(glO, TXAtom) )
-        atoms.AddField("atom_id", ((TXAtom&)glO).Atom().GetTag() );
+        atoms.AddField("atom_id", ((TXAtom&)glO).Atom().GetTag());
       if( EsdlInstanceOf(glO, TXBond) )
-        bonds.AddField("bond_id", ((TXBond&)glO).Bond().GetTag() );
+        bonds.AddField("bond_id", ((TXBond&)glO).Bond().GetTag());
       if( EsdlInstanceOf(glO, TXPlane) )
-        planes.AddField("plane_id", ((TXPlane&)glO).Plane().GetTag() );
+        planes.AddField("plane_id", ((TXPlane&)glO).Plane().GetTag());
     }
   }
 
   TDataItem& renderer = item.AddItem("Renderer");
-  renderer.AddField("min", PersUtil::VecToStr( FGlRender->MinDim() ) );
-  renderer.AddField("max", PersUtil::VecToStr( FGlRender->MaxDim() ) );
+  renderer.AddField("min", PersUtil::VecToStr(FGlRender->MinDim()));
+  renderer.AddField("max", PersUtil::VecToStr(FGlRender->MaxDim()));
 }
 //..............................................................................
 void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
@@ -4006,7 +4018,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
 
   const TDataItem& labels = item.FindRequiredItem("Labels");
   for( size_t i=0; i < labels.ItemCount(); i++ )
-    XLabels.Add(new TXGlLabel(*FGlRender,"PLabels") ).FromDataItem(labels.GetItem(i));
+    XLabels.Add(new TXGlLabel(*FGlRender, PLabelsCollectionName)).FromDataItem(labels.GetItem(i));
 
   FXGrid->FromDataItem(item.FindRequiredItem("Grid"), zis);
   FDBasis->FromDataItem(item.FindRequiredItem("DBasis"));
@@ -4023,19 +4035,34 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   v = visibility.GetRequiredField("q_bonds").ToBool();
   if( v != FQPeakBondsVisible )  SetQPeakBondsVisible(v);
   FDBasis->SetVisible(visibility.GetRequiredField("basis").ToBool());
-  FDUnitCell->SetVisible( visibility.GetRequiredField("cell").ToBool() );
+  FDUnitCell->SetVisible(visibility.GetRequiredField("cell").ToBool());
+
+  const TDataItem* atom_labels = item.FindItem("AtomLabels");
+  if( atom_labels != NULL )  {
+    if( XAtoms.Count() != atom_labels->ItemCount() )
+      throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
+    for( size_t i=0; i < atom_labels->ItemCount(); i++ )
+      XAtoms[i].GetLabel().FromDataItem(atom_labels->GetItem(i));
+  }
+  const TDataItem* bond_labels = item.FindItem("BondLabels");
+  if( bond_labels != NULL )  {
+    if( XBonds.Count() != bond_labels->ItemCount() )
+      throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
+    for( size_t i=0; i < bond_labels->ItemCount(); i++ )
+      XBonds[i].GetLabel().FromDataItem(bond_labels->GetItem(i));
+  }
 
   TEBitArray vis;
   vis.FromBase64String( visibility.GetRequiredField("atoms") );
   if( vis.Count() != XAtoms.Count() )
     throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
   for( size_t i=0; i < vis.Count(); i++ )
-    XAtoms[i].SetVisible( vis[i] );
+    XAtoms[i].SetVisible(vis[i]);
   vis.FromBase64String( visibility.GetRequiredField("bonds") );
   if( vis.Count() != XBonds.Count() )
     throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
   for( size_t i=0; i < XBonds.Count(); i++ )
-    XBonds[i].SetVisible( vis[i] );
+    XBonds[i].SetVisible(vis[i]);
   vis.FromBase64String( visibility.GetRequiredField("planes") );
   if( vis.Count() != XPlanes.Count() )
     throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");

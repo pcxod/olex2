@@ -48,6 +48,8 @@ public:
   virtual void SetVisible(bool v);
   inline const mat3d& GetCellToCartesian() const {  return CellToCartesian;  }
   inline const mat3d& GetHklToCartesian() const {  return HklToCartesian;  }
+  void ToDataItem(TDataItem& di) const;
+  void FromDataItem(const TDataItem& di);
 };
 
 
