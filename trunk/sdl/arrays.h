@@ -166,7 +166,7 @@ public:
         delete [] Data[i][j];
       delete [] Data[i];
     }
-    delete Data;
+    delete [] Data;
   }
 
   void InitWith(const AE& val)  {
