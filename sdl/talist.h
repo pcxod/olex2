@@ -12,13 +12,9 @@ private:
   size_t FCount, FCapacity;
   size_t FIncrement;
   T *Items;
-  void init(size_t size, bool exact)  {
-    FCount = size;
+  void init(size_t size)  {
+    FCapacity = FCount = size;
     FIncrement = 5;
-    if( !exact )
-      FCapacity = FCount + FIncrement;
-    else
-      FCapacity = FCount;
     if( FCapacity != 0 )
       Items = new T[FCapacity];
     else
@@ -26,21 +22,21 @@ private:
   }
 public:
   // creates a new empty objects
-  TArrayList()  {  init(0, true);  }
+  TArrayList()  {  init(0);  }
   // allocates size elements (can be accessed diretly)
-  TArrayList(size_t size, bool exact=true)  {  init(size, exact);  }
+  TArrayList(size_t size)  {  init(size);  }
 //..............................................................................
   /* copy constuctor - creates new copies of the objest, be careful as the assignement
    operator must exist for nonpointer objects */
   TArrayList(const TArrayList& list)  {
-    init(list.Count(), true);
+    init(list.Count());
     for( size_t i=0; i < FCount; i++ )
       Items[i] = list.Items[i];
   }
 //..............................................................................
   /* copies values from an array of size elements  */
   TArrayList(size_t size, const T* array)  {
-   init(size, true);
+   init(size);
    for( size_t i=0; i < FCount; i++ )
      Items[i] = array[i];
   }
@@ -67,7 +63,7 @@ public:
     return Assign(list);
   }
 //..............................................................................
-  template <class List> inline TArrayList& operator = (const TArrayList& list)  {
+  inline TArrayList& operator = (const TArrayList& list)  {
     return Assign(list);
   }
 //..............................................................................
@@ -144,7 +140,7 @@ public:
   }
 //..............................................................................
   void SetCapacity(size_t v)  {
-    if( v < FCapacity )    return;
+    if( v <= FCapacity )    return;
     FCapacity = v;
     T* Bf = new T[v];
     for( size_t i=0; i < FCount; i++ )
@@ -264,7 +260,6 @@ public:
   inline bool IsEmpty() const {  return FCount == 0;  }
 //..............................................................................
   void SetCount(size_t v)  {
-    if( v == FCount )  return;
     if( v > FCount )  {
       if( v > FCapacity )
         SetCapacity(v);
