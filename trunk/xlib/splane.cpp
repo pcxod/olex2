@@ -36,81 +36,12 @@ void TSPlane::_Init(const TTypeList<AnAssociation2<vec3d, double> >& points)  {
   Normal.Normalise();
 }
 //..............................................................................
-bool TSPlane::CalcPlanes(const TTypeList< AnAssociation2<vec3d, double> >& Points, 
-                        mat3d& Params, vec3d& rms, vec3d& center, bool sort)  
-{
-  if( Points.Count() < 3 )  return false;
-  center.Null();
-  mat3d m;
-  double mass = 0;
-  center.Null();
-  for( size_t i=0; i < Points.Count(); i++ )  {
-    center += Points[i].GetA()*Points[i].GetB();
-    mass += Points[i].GetB();
-  }
-  center /= mass;
-
-  for( size_t i=0; i < Points.Count(); i++ )  {
-    vec3d t = Points[i].GetA() - center;
-    double wght = Points[i].GetB()*Points[i].GetB();
-    m[0][0] += (t[0]*t[0]*wght);
-    m[0][1] += (t[0]*t[1]*wght);
-    m[0][2] += (t[0]*t[2]*wght);
-
-    m[1][1] += (t[1]*t[1]*wght);
-    m[1][2] += (t[1]*t[2]*wght);
-
-    m[2][2] += (t[2]*t[2]*wght);
-  } 
-  m[1][0] = m[0][1];
-  m[2][0] = m[0][2];
-  m[2][1] = m[1][2];
-  mat3d::EigenValues(m, Params.I());
-  // optimised version will create slightly negative values!
-  if( sort )  {
-    for( int i=0; i < 3; i++ )
-      rms[i] = (m[i][i] < 0 ? 0 : sqrt(m[i][i]/Points.Count()));
-    bool swaps = true;
-    while( swaps )  {
-      swaps = false;
-      for( int i=0; i < 2; i++ )  {
-        if( rms[i] > rms[i+1] )  {
-          olx_swap(Params[i], Params[i+1]);
-          olx_swap(rms[i], rms[i+1]);
-          swaps = true;
-        }
-      }
-    }
-  }
-  return true;
-}
-//..............................................................................
 bool TSPlane::CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms, vec3d& center) {
   TTypeList< AnAssociation2<vec3d, double> > Points;
   Points.SetCapacity(atoms.Count());
   for( size_t i=0; i < atoms.Count(); i++ )
     Points.AddNew(atoms[i]->crd(), 1.0);
   return CalcPlanes(Points, params, rms, center);
-}
-//..............................................................................
-double TSPlane::CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Points, 
-                        vec3d& Params, vec3d& center, const short type)  
-{
-  mat3d normals;
-  vec3d rms;
-  if( CalcPlanes(Points, normals, rms, center) )  {
-    if( type == plane_best )  {
-      Params = normals[0];
-      return rms[0];
-    }
-    else if( type == plane_worst )  {
-      Params = normals[2];
-      return rms[2];
-    }
-    Params = normals[1];
-    return rms[1];
-  }
-  return -1;
 }
 //..............................................................................
 double TSPlane::CalcPlane(const TSAtomPList& atoms, 

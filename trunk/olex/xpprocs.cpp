@@ -2379,7 +2379,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           TSBond& b = ((TXBond&)sel[i]).Bond();
           TXGlLabel& l = xb.GetLabel();
           l.SetOffset(b.GetCenter());
-          l.SetLabel(olxstr::FormatFloat(b.Length(), 2));
+          l.SetLabel(olxstr::FormatFloat(2, b.Length()));
           labels.Add(l);
         }
       }
@@ -8755,55 +8755,25 @@ void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(rv.IsEmpty() ? XLibMacros::NAString : rv);
 }
 //..............................................................................
-void main_CreateWBox(TGXApp& app, const TSAtomPList& atoms, const TTypeList< AnAssociation2<vec3d, double> >& crds, 
+void main_CreateWBox(TGXApp& app, const TSAtomPList& atoms, double (*weight_c)(const TSAtom&), 
   const TDoubleList& all_radii, bool print_info)  
 {
+  const WBoxInfo bs = TXApp::CalcWBox(atoms, all_radii, weight_c);
   static int obj_cnt = 0;
-  mat3d normals;
-  vec3d rms, center, Ds;
-  TSPlane::CalcPlanes(crds, normals, rms, center);  
-  vec3d mind, maxd, mind1, maxd1;
-  for( int i=0; i < 3; i++ )  {
-    Ds[i] = normals[i].DotProd(center)/normals[i].Length();
-    normals[i].Normalise();
-    for( size_t j=0; j < crds.Count(); j++ )  {
-      const double d = crds[j].GetA().DotProd(normals[i]) - Ds[i];
-      if( d < 0 )  {
-        const double d1 = d - all_radii[j];
-        if( d1 < mind[i] )
-          mind[i] = d1;
-      }
-      else  {
-        const double d1 = d + all_radii[j];
-        if( d1 > maxd[i] )
-          maxd[i] = d1;
-      }
-      if( d < 0 )  {
-        const double d1 = d - atoms[j]->GetType().r_sfil;
-        if( d1 < mind1[i] )
-          mind1[i] = d1;
-      }
-      else  {
-        const double d1 = d + atoms[j]->GetType().r_sfil;
-        if( d1 > maxd1[i] )
-          maxd1[i] = d1;
-      }
-    }
-  }
   if( print_info )  {
     app.GetLog() << (olxstr("Wrapping box dimension: ") << 
-      olxstr::FormatFloat(3, maxd[0]-mind[0]) << " x "  <<
-      olxstr::FormatFloat(3, maxd[1]-mind[1]) << " x "  <<
-      olxstr::FormatFloat(3, maxd[2]-mind[2]) << " A\n");
+      olxstr::FormatFloat(3, bs.r_to[0]-bs.r_from[0]) << " x "  <<
+      olxstr::FormatFloat(3, bs.r_to[1]-bs.r_from[1]) << " x "  <<
+      olxstr::FormatFloat(3, bs.r_to[2]-bs.r_from[2]) << " A\n");
     app.GetLog() << (olxstr("Wrapping box volume: ") << 
-      olxstr::FormatFloat(3, (maxd[0]-mind[0])*(maxd[1]-mind[1])*(maxd[2]-mind[2])) << " A^3\n");
+      olxstr::FormatFloat(3, (bs.r_to-bs.r_from).Prod()) << " A^3\n");
   }
-  vec3d nx = normals[0]*mind1[0];
-  vec3d px = normals[0]*maxd1[0];
-  vec3d ny = normals[1]*mind1[1];
-  vec3d py = normals[1]*maxd1[1];
-  vec3d nz = normals[2]*mind1[2];
-  vec3d pz = normals[2]*maxd1[2];
+  const vec3d nx = bs.normals[0]*bs.s_from[0];
+  const vec3d px = bs.normals[0]*bs.s_to[0];
+  const vec3d ny = bs.normals[1]*bs.s_from[1];
+  const vec3d py = bs.normals[1]*bs.s_to[1];
+  const vec3d nz = bs.normals[2]*bs.s_from[2];
+  const vec3d pz = bs.normals[2]*bs.s_to[2];
 
   vec3d faces[] = {
     px + py + pz, px + ny + pz, px + ny + nz, px + py + nz, // normals[0]
@@ -8827,7 +8797,7 @@ void main_CreateWBox(TGXApp& app, const TSAtomPList& atoms, const TTypeList< AnA
       poly_n[i] = norm;
   }
   for( int i=0; i < 24; i++ )
-    poly_d[i] = center + faces[i];
+    poly_d[i] = bs.center + faces[i];
   TDUserObj* uo = new TDUserObj(app.GetRender(), sgloQuads, olxstr("wbox") << obj_cnt++);
   uo->SetVertices(&poly_d);
   uo->SetNormals(&poly_n);
@@ -8854,21 +8824,16 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         satoms.Add(f.Node(j));
       }
       if( satoms.Count() < 3 )  continue;
-  
-      TTypeList< AnAssociation2<vec3d, double> > crds;
       TArrayList<double> all_radii(satoms.Count());
       for( size_t j=0; j < satoms.Count(); j++ )  {
-        if( use_aw )
-          crds.AddNew(satoms[j]->crd(), satoms[j]->GetType().GetMr());
-        else
-          crds.AddNew( satoms[j]->crd(), 1.0 );
         const size_t ri = radii.IndexOf(&satoms[j]->GetType());
         if( ri == InvalidIndex )
           all_radii[j] = satoms[j]->GetType().r_vdw;
         else
           all_radii[j] = radii.GetValue(ri);
       }
-      main_CreateWBox(*FXApp, satoms, crds, all_radii, false);
+      main_CreateWBox(*FXApp, satoms,
+        use_aw ? TNetwork::weight_occu_aw : TNetwork::weight_occu, all_radii, false);
     }
   }
   else  {
@@ -8877,20 +8842,16 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       E.ProcessingError(__OlxSrcInfo, "no enough atoms provided");
       return;
     }
-    TTypeList< AnAssociation2<vec3d, double> > crds;
     TArrayList<double> all_radii(xatoms.Count());
     for( size_t i=0; i < xatoms.Count(); i++ )  {
-      if( use_aw )
-        crds.AddNew(xatoms[i]->Atom().crd(), xatoms[i]->Atom().GetType().GetMr());
-      else
-        crds.AddNew( xatoms[i]->Atom().crd(), 1.0 );
       const size_t ri = radii.IndexOf(&xatoms[i]->Atom().GetType());
       if( ri == InvalidIndex )
         all_radii[i] = xatoms[i]->Atom().GetType().r_vdw;
       else
         all_radii[i] = radii.GetValue(ri);
     }
-    main_CreateWBox(*FXApp, TSAtomPList(xatoms, TXAtom::AtomAccessor<>()), crds, all_radii, true);
+    main_CreateWBox(*FXApp, TSAtomPList(xatoms, TXAtom::AtomAccessor<>()),
+      use_aw ? TNetwork::weight_occu_aw : TNetwork::weight_occu, all_radii, true);
   }
 }
 //..............................................................................
