@@ -61,7 +61,7 @@ public:
   the normals are sorted by rms ascending, so the best plane is at [0] and the worst - at [2]
   returns true if the function succeded (point cound > 2)
   */
-  static bool CalcPlanes(const TTypeList< AnAssociation2<vec3d, double> >& Points, 
+  template <class List> static bool CalcPlanes(const List& Points, 
     mat3d& params, vec3d& rms, vec3d& center, bool sort=true);
   // a convinience function for non-weighted plane
   static bool CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms, vec3d& center);
@@ -70,7 +70,7 @@ public:
    for the point, weight association
    returns sqrt(smallest eigen value/point.Count())
   */
-  static double CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Points, 
+  template <class List> static double CalcPlane(const List& Points, 
     vec3d& Params, vec3d& center, const short plane_type = plane_best);
   // a convinience function for non-weighted planes
   static double CalcPlane(const TSAtomPList& Points, 
@@ -135,6 +135,74 @@ public:
 
   typedef TTypeList<TSPlane> TSPlaneList;
   typedef TPtrList<TSPlane> TSPlanePList;
+
+  
+template <class List>  // AnAssociation2<vec3d, double> list, returning & on []
+bool TSPlane::CalcPlanes(const List& Points, mat3d& Params, vec3d& rms, vec3d& center, bool sort)  {
+  if( Points.Count() < 3 )  return false;
+  center.Null();
+  double mass = 0;
+  center.Null();
+  for( size_t i=0; i < Points.Count(); i++ )  {
+    center += Points[i].GetA()*Points[i].GetB();
+    mass += Points[i].GetB();
+  }
+  if( mass == 0 )  return false;
+  center /= mass;
+  mat3d m;
+  for( size_t i=0; i < Points.Count(); i++ )  {
+    const vec3d t = Points[i].GetA() - center;
+    const double wght = olx_sqr(Points[i].GetB());
+    m[0][0] += (t[0]*t[0]*wght);
+    m[0][1] += (t[0]*t[1]*wght);
+    m[0][2] += (t[0]*t[2]*wght);
+    m[1][1] += (t[1]*t[1]*wght);
+    m[1][2] += (t[1]*t[2]*wght);
+    m[2][2] += (t[2]*t[2]*wght);
+  } 
+  m[1][0] = m[0][1];
+  m[2][0] = m[0][2];
+  m[2][1] = m[1][2];
+  mat3d::EigenValues(m, Params.I());
+  if( sort )  {
+    for( int i=0; i < 3; i++ )
+      rms[i] = (m[i][i] < 0 ? 0 : sqrt(m[i][i]/Points.Count()));
+    bool swaps = true;
+    while( swaps )  {
+      swaps = false;
+      for( int i=0; i < 2; i++ )  {
+        if( rms[i] > rms[i+1] )  {
+          olx_swap(Params[i], Params[i+1]);
+          olx_swap(rms[i], rms[i+1]);
+          swaps = true;
+        }
+      }
+    }
+  }
+  return true;
+}
+//..............................................................................
+// returns RMS or a negative number if an error occured
+template <class List>
+double TSPlane::CalcPlane(const List& Points, vec3d& Params, vec3d& center, const short type)  {
+  mat3d normals;
+  vec3d rms;
+  if( CalcPlanes(Points, normals, rms, center) )  {
+    if( type == plane_best )  {
+      Params = normals[0];
+      return rms[0];
+    }
+    else if( type == plane_worst )  {
+      Params = normals[2];
+      return rms[2];
+    }
+    Params = normals[1];
+    return rms[1];
+  }
+  return -1;
+}
+//..............................................................................
+
 EndXlibNamespace()
 #endif
 

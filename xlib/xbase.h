@@ -14,6 +14,7 @@
 #include "ebase.h"
 #include "tptrlist.h"
 #include "dataitem.h"
+#include "threex3.h"
 
 BeginXlibNamespace()
 
@@ -133,6 +134,15 @@ public:
     Nodes.SetCapacity(v);  
     Bonds.SetCapacity(v);  
   }
+};
+
+
+struct WBoxInfo  {
+  vec3d r_from, r_to, // dimensions for givent radii
+        s_from, s_to, //dimensions using the r_sfil
+        center,       // center of the box
+        d;            // three values for the planes: dist = p.DotProd(normals[i]) - d[i]
+  mat3d normals;      // face normals
 };
 
 EndXlibNamespace()
