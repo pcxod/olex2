@@ -134,49 +134,51 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
                LineSpacer = (0.05+FLineSpacing)*th;
   const double MaxZ = -(Parent.GetMaxRasterZ()-0.002);
   const double empty_line_height = th*0.75*(1+FLineSpacing)*Scale;
-  vec3d T(GlLeft*Scale, GlTop*Scale, MaxZ);
-  if( FBuffer[FTxtPos].IsEmpty() )
-    T[1] -= 0.5*th*Scale;
-  LinesVisible = 0;
-  const TGlMaterial& OGlM = P.GetProperties();
-  TGlOption CC = Parent.LightModel.GetClearColor();
-  if( ShowBuffer() && FLinesToShow != 0 )  {
-    for( index_t i=FTxtPos; i >= 0; i-- )  {
-      if( FBuffer[i].IsEmpty() )  {
-        T[1] += empty_line_height;
+  if( olx_is_valid_index(FTxtPos) )  {
+    vec3d T(GlLeft*Scale, GlTop*Scale, MaxZ);
+    if( FBuffer[FTxtPos].IsEmpty() )
+      T[1] -= 0.5*th*Scale;
+    LinesVisible = 0;
+    const TGlMaterial& OGlM = P.GetProperties();
+    TGlOption CC = Parent.LightModel.GetClearColor();
+    if( ShowBuffer() && FLinesToShow != 0 )  {
+      for( index_t i=FTxtPos; i >= 0; i-- )  {
+        if( FBuffer[i].IsEmpty() )  {
+          T[1] += empty_line_height;
+          LinesVisible++;
+          continue;
+        }
+        size_t ii = (FTxtPos-i);
+        if( olx_is_valid_size(FLinesToShow) && ii >= FLinesToShow )  break;
+        if( T[1] > MaxY )  break;
+        olxstr line = FBuffer[i].SubStringTo(Fnt.LengthForWidth(FBuffer[i], Parent.GetWidth()));
+        // drawing spaces is not required ...
+        size_t stlen = line.Length();
+        while( line.CharAt(stlen-1) == ' ' && stlen > 1 ) stlen--;
+        line = line.SubStringTo(stlen);
+        if( stlen == 0 )  {
+          T[1] += empty_line_height;
+          LinesVisible++;
+          continue;
+        }
+        TGlMaterial* GlMP = FBuffer.GetObject(i);
+        if( GlMP != NULL ) 
+          GlMP->Init(Parent.IsColorStereo());
+        else
+          OGlM.Init(Parent.IsColorStereo());
+        P.SetString(&line);
+        const TTextRect tr = Fnt.GetTextRect(line);
+        if( tr.top < 0 )
+          T[1] -= tr.top*Scale;
+        Parent.DrawText(P, T[0], T[1], MaxZ); 
+        P.SetString(NULL);
+        if( i == 0 )  break;
+        T[1] += (olx_max(tr.height, Fnt.GetMaxHeight())+LineSpacer)*Scale;
         LinesVisible++;
-        continue;
       }
-      size_t ii = (FTxtPos-i);
-      if( olx_is_valid_size(FLinesToShow) && ii >= FLinesToShow )  break;
-      if( T[1] > MaxY )  break;
-      olxstr line = FBuffer[i].SubStringTo(Fnt.LengthForWidth(FBuffer[i], Parent.GetWidth()));
-      // drawing spaces is not required ...
-      size_t stlen = line.Length();
-      while( line.CharAt(stlen-1) == ' ' && stlen > 1 ) stlen--;
-      line = line.SubStringTo(stlen);
-      if( stlen == 0 )  {
-        T[1] += empty_line_height;
-        LinesVisible++;
-        continue;
-      }
-      TGlMaterial* GlMP = FBuffer.GetObject(i);
-      if( GlMP != NULL ) 
-        GlMP->Init(Parent.IsColorStereo());
-      else
-        OGlM.Init(Parent.IsColorStereo());
-      P.SetString(&line);
-      const TTextRect tr = Fnt.GetTextRect(line);
-      if( tr.top < 0 )
-        T[1] -= tr.top*Scale;
-      Parent.DrawText(P, T[0], T[1], MaxZ); 
-      P.SetString(NULL);
-      if( i == 0 )  break;
-      T[1] += (olx_max(tr.height, Fnt.GetMaxHeight())+LineSpacer)*Scale;
-      LinesVisible++;
     }
+    OGlM.Init(Parent.IsColorStereo()); // restore the material properties
   }
-  OGlM.Init(Parent.IsColorStereo()); // restore the material properties
   if( PromptVisible && !FCommand.IsEmpty() )  {
     Fnt.Reset_ATI(Parent.IsATI());
     const double LineInc = (th*(1+FLineSpacing))*Parent.GetViewZoom();
