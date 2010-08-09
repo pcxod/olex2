@@ -606,15 +606,16 @@ void OrtDraw::Render(const olxstr& fileName)  {
     Contour<float> cm;
     ContourDrawer drawer(*this, objects, 0);
     Contour<float>::MemberFeedback<OrtDraw::ContourDrawer> mf(drawer, &OrtDraw::ContourDrawer::draw);
-    size_t MaxDim = grid.GetPlaneSize();
-    float Size = grid.GetSize();
-    float Depth = grid.GetDepth();
+    const size_t MaxDim = grid.GetPlaneSize();
+    const float hh = (float)MaxDim/2;
+    const float Size = grid.GetSize();
+    const float Depth = grid.GetDepth();
     float **data = new float*[MaxDim];
     float *x = new float[MaxDim];
     float *y = new float[MaxDim];
     for( size_t i=0; i < MaxDim; i++ )  {
       data[i] = new float[MaxDim];
-      y[i] = x[i] = i - MaxDim/2;
+      y[i] = x[i] = (float)i - hh;
     }
     const size_t contour_cnt = grid.GetContourLevelCount();
     float* z = new float[contour_cnt];
@@ -622,11 +623,10 @@ void OrtDraw::Render(const olxstr& fileName)  {
     const vec3i dim = grid.GetDimVec();
     const mat3f bm(app.GetRender().GetBasis().GetMatrix());
     const mat3f c2c(app.XFile().GetAsymmUnit().GetCartesianToCell());
-    const float hh = (float)MaxDim/2;
     const vec3f center(app.GetRender().GetBasis().GetCenter());
     for( size_t i=0; i < MaxDim; i++ )  {
       for( size_t j=0; j < MaxDim; j++ )  {
-        vec3f p((float)(i-hh)/Size, (float)(j-hh)/Size,  Depth);
+        vec3f p(((float)i-hh)/Size, ((float)j-hh)/Size,  Depth);
         p = bm*p;
         p -= center;
         p *= c2c;
@@ -674,9 +674,10 @@ void OrtDraw::Render(const olxstr& fileName)  {
     delete [] x;
     delete [] y;
     delete [] z;
+    objects.BubleSorter.SortSF(objects, OrtObjectsZSort);
   }
-
-  objects.QuickSorter.SortSF(objects, OrtObjectsZSort);
+  else
+    objects.QuickSorter.SortSF(objects, OrtObjectsZSort);
 
   for( size_t i=0; i < objects.Count(); i++ )
     objects[i].render(pw);
