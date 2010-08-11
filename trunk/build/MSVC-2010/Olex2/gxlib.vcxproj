@@ -774,6 +774,7 @@
     <ClInclude Include="..\..\..\gxlib\xbond.h" />
     <ClInclude Include="..\..\..\gxlib\xeval.h" />
     <ClInclude Include="..\..\..\gxlib\xgrid.h" />
+    <ClInclude Include="..\..\..\gxlib\xgroup.h" />
     <ClInclude Include="..\..\..\gxlib\xgrowline.h" />
     <ClInclude Include="..\..\..\gxlib\xgrowpoint.h" />
     <ClInclude Include="..\..\..\gxlib\xlattice.h" />

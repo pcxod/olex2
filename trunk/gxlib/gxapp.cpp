@@ -33,6 +33,7 @@
 #include "pers_util.h"
 #include "planesort.h"
 #include "cif.h"
+#include "3dframe.h"
 
 #ifdef __WXWIDGETS__
   #include "wxglscene.h"
@@ -305,7 +306,9 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
   FHklVisible = false;
 
   FXGrid = new TXGrid("XGrid", this);
-
+#ifdef _DEBUG
+  ObjectsToCreate.Add(new T3DFrameCtrl(*FGlRender, "3dframe"));
+#endif
   XFile().GetLattice().OnDisassemble.Add(this, ID_OnDisassemble);
 
   xappXFileLoad *P = &TEGC::NewG<xappXFileLoad>(this);

@@ -12,7 +12,7 @@ bool AGlMouseHandler::EventHandler::OnMouseDown(AGlMouseHandler& Sender, const T
   SX = Data.DownX;
   SY = Data.DownY;
   MouseHandled = false;
-  if( Data.Button == smbLeft )  {
+  if( Data.Button == smbLeft || (Sender.IsZoomable() && Data.Button == smbRight) )  {
     MouseDown = true;
     return true;
   }
@@ -21,6 +21,7 @@ bool AGlMouseHandler::EventHandler::OnMouseDown(AGlMouseHandler& Sender, const T
 //..............................................................................
 bool AGlMouseHandler::EventHandler::OnMouseUp(AGlMouseHandler& Sender, const TMouseData& Data)  {
   if( !MouseDown || !MouseHandled )  return false;
+  MouseDown = false;
   return Data.Button == smbLeft;
 }
 //..............................................................................

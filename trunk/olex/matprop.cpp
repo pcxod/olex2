@@ -67,8 +67,12 @@ void TdlgMatProp::Init()  {
   else  {
     cbPrimitives = NULL;
     Materials = new TGlMaterial[1];
-    if( Object != NULL && EsdlInstanceOf(*Object, TGlGroup) )
-      Materials[0] = ((TGlGroup*)Object)->GetGlM();
+    if( Object != NULL )  {
+      if( EsdlInstanceOf(*Object, TGlGroup) )
+        Materials[0] = ((TGlGroup*)Object)->GetGlM();
+      else if( Object->GetPrimitives().PrimitiveCount() != 0 )
+        Materials[0] = Object->GetPrimitives().GetPrimitive(0).GetProperties();
+    }
   }
   long flags = 0; //wxCHK_3STATE|wxCHK_ALLOW_3RD_STATE_FOR_USER;
   cbAmbF = new wxCheckBox(this, -1, wxT("Ambient Front"), wxDefaultPosition, wxDefaultSize, flags);
