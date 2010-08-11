@@ -485,9 +485,9 @@ olxstr UpdateAPI::AddTagPart(const olxstr& path, bool Update) const {
 TStrList UpdateAPI::GetDefaultRepositories() {
   static TStrList rv;
   if( rv.IsEmpty() )  {
-    rv.Add("http://www.olex2.org/olex2-cds/");
-    rv.Add("http://www1.olex2.org/olex2-cds/");
-    rv.Add("http://www2.olex2.org/olex2-cds/");
+    rv.Add("http://www.olex2.org/olex2-distro/");
+    rv.Add("http://www1.olex2.org/olex2-distro/");
+    rv.Add("http://www2.olex2.org/olex2-distro/");
   }
   return rv;
 }
