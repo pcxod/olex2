@@ -27,7 +27,7 @@ void TGlGroup::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GPC.AddObject(*this);
   TGraphicsStyle& GS = GPC.GetStyle();
   if( !cName.IsEmpty() )  {
-    GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF);
+    GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF);
     GlM.ShininessF = 128;
     GlM.AmbientF = 0xff0fff0f;
     GlM.DiffuseF = 0xff00f0ff;
