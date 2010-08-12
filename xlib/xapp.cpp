@@ -749,10 +749,10 @@ TXApp::CalcVolumeInfo TXApp::CalcVolume(const ElementRadii* radii)  {
   return CalcVolumeInfo(Vt, Vi);
 }
 //..............................................................................
-WBoxInfo TXApp::CalcWBox(const TSAtomPList& atoms, const TDoubleList& radii,
+WBoxInfo TXApp::CalcWBox(const TSAtomPList& atoms, const TDoubleList* radii,
                         double (*weight_calculator)(const TSAtom&))
 {
-  if( atoms.Count() != radii.Count() )
+  if( radii != NULL && atoms.Count() != radii->Count() )
     throw TInvalidArgumentException(__OlxSourceInfo, "radii count");
   TArrayList<AnAssociation2<vec3d, double> > crds(atoms.Count());
   for( size_t i=0; i < atoms.Count(); i++ )  {
@@ -769,26 +769,30 @@ WBoxInfo TXApp::CalcWBox(const TSAtomPList& atoms, const TDoubleList& radii,
     for( size_t j=0; j < crds.Count(); j++ )  {
       const double d = crds[j].GetA().DotProd(rv.normals[i]) - rv.d[i];
       if( d < 0 )  {
-        const double d1 = d - radii[j];
-        if( d1 < rv.r_from[i] )
-          rv.r_from[i] = d1;
+        if( radii != NULL )  {
+          const double d1 = d - radii->Item(j);
+          if( d1 < rv.r_from[i] )
+            rv.r_from[i] = d1;
+        }
+        const double d2 = d - atoms[j]->GetType().r_sfil;
+        if( d2 < rv.s_from[i] )
+          rv.s_from[i] = d2;
       }
       else  {
-        const double d1 = d + radii[j];
-        if( d1 > rv.r_to[i] )
-          rv.r_to[i] = d1;
-      }
-      if( d < 0 )  {
-        const double d1 = d - atoms[j]->GetType().r_sfil;
-        if( d1 < rv.s_from[i] )
-          rv.s_from[i] = d1;
-      }
-      else  {
-        const double d1 = d + atoms[j]->GetType().r_sfil;
-        if( d1 > rv.s_to[i] )
-          rv.s_to[i] = d1;
+        if( radii != NULL )  {
+          const double d1 = d + radii->Item(j);
+          if( d1 > rv.r_to[i] )
+            rv.r_to[i] = d1;
+        }
+        const double d2 = d + atoms[j]->GetType().r_sfil;
+        if( d2 > rv.s_to[i] )
+          rv.s_to[i] = d2;
       }
     }
+  }
+  if( radii == NULL )  {
+    rv.r_from = rv.s_from;
+    rv.r_to = rv.s_to;
   }
   return rv;
 }

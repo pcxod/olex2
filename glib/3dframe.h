@@ -17,7 +17,6 @@ public:
 class TFaceCtrl : public AGlMouseHandlerImp {
   vec3d &A, &B, &C, &D, &N;
   A3DFrameCtrl& ParentCtrl;
-  TGlPrimitive* pPrimitive;
   size_t Id;
 protected:
   virtual bool DoTranslate(const vec3d& t)  {
@@ -39,14 +38,9 @@ public:
     SetRoteable(true);
   }
   size_t GetId() const {  return Id;  }
-  TGlPrimitive& GetPrimitive() const {  return *pPrimitive;  }
   void Create(const olxstr& cName, const ACreationParams* cpar);
   virtual bool GetDimensions(vec3d&, vec3d&)  {  return false;  }
-  virtual bool Orient(class TGlPrimitive&)  {
-    ParentCtrl.SetBasis();
-    olx_gl::translate((A+B+C+D)/4);
-    return false;
-  }
+  virtual bool Orient(TGlPrimitive&);
   vec3d& GetA()  {  return A;  }
   vec3d& GetB()  {  return B;  }
   vec3d& GetC()  {  return C;  }
@@ -56,12 +50,9 @@ public:
 // the frame class itself...
 class T3DFrameCtrl : public AGlMouseHandlerImp, public A3DFrameCtrl {
   TTypeList<TFaceCtrl> Faces;
-  vec3d edges[8], norms[6], Center;
+  vec3d edges[8], norms[6];
 protected:
-  virtual bool DoTranslate(const vec3d& t)  {
-    Center += t;
-    return true;
-  }
+  virtual bool DoTranslate(const vec3d& t)  {  Translate(t);  return true;  }
   virtual bool DoRotate(const vec3d& vec, double angle);
   virtual bool DoZoom(double zoom, bool inc);
   virtual bool OnTranslate(size_t sender, const vec3d& t);
@@ -79,7 +70,17 @@ public:
       vec3d::UpdateMinMax(edges[i], _mn, _mx);
     return true;
   }
-  virtual void SetBasis() const {  olx_gl::translate(Center);  }
+  virtual void SetBasis() const {}
+  virtual void SetVisible(bool v)  {
+    AGDrawObject::SetVisible(v);
+    for( int i=0; i < 6; i++ )
+      Faces[i].SetVisible(v);
+  }
+  virtual void SetDeleted(bool v)  {
+    AGDrawObject::SetDeleted(v);
+    for( int i=0; i < 6; i++ )
+      Faces[i].SetDeleted(v);
+  }
   virtual bool Orient(TGlPrimitive&)  {
     SetBasis();
     olx_gl::begin(GL_QUADS);
@@ -92,6 +93,28 @@ public:
     }
     olx_gl::end();
     return true;
+  }
+  const vec3d& GetEdge(size_t i) const {
+    if( i >= 8 )
+      throw TIndexOutOfRangeException(__OlxSourceInfo, i, 0, 8);
+    return edges[i];
+  }
+  void SetEdge(size_t i, const vec3d& val)  {
+    if( i >= 8 )
+      throw TIndexOutOfRangeException(__OlxSourceInfo, i, 0, 8);
+    edges[i] = val;
+  }
+  // recalculates normals etc for the new edges
+  void UpdateEdges();
+  void Translate(const vec3d& t)  {
+    for( int i=0; i < 8; i++ )
+      edges[i] += t;
+  }
+  vec3d GetCenter() const {
+    vec3d cnt;
+    for( int i=0; i < 8; i++ )
+      cnt += edges[i];
+    return cnt/8;
   }
 };
 

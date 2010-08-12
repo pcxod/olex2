@@ -133,10 +133,6 @@ public:
     bool IsSingleCSubstituted() const;  // returns true if all substituents are single CHn groups
   };
   static RingInfo& AnalyseRing(const TSAtomPList& ring, RingInfo& ri);
-  static double weight_occu(const TSAtom& a)  {  return a.CAtom().GetOccu()*a.MatrixCount();  }
-  static double weight_occu_aw(const TSAtom& a)  {
-    return a.CAtom().GetOccu()*a.CAtom().GetDegeneracy()*a.GetType().GetMr();
-  }
   /* quaternion method, Acta A45 (1989), 208
     This function finds the best match between atom pairs and returns the summ of
     distance deltas between corresponding atoms. If try inversion is specified,

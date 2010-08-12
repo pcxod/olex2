@@ -6,12 +6,26 @@ void TFaceCtrl::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;
   TGraphicsStyle& GS = GPC.GetStyle();
-  TGlPrimitive& dummy = GPC.NewPrimitive("Sphere", sgloSphere);
-  TGlMaterial& glm = GS.GetMaterial("Sphere", TGlMaterial("85;1.000,0.000,0.000,0.500;1.000,1.000,0.000,0.100;1.000,1.000,1.000,1.000;1"));
+  TGlPrimitive& dummy = GPC.NewPrimitive("Button", sgloMacro);
+  TGlMaterial& glm = GS.GetMaterial("button",
+    TGlMaterial("85;1.000,0.000,0.000,0.500;1.000,1.000,0.000,0.100;1.000,1.000,1.000,1.000;1"));
   dummy.SetProperties(glm);
-  dummy.Params[0] = 0.1;
-  dummy.Params[1] = 6;
-  dummy.Params[2] = 6;
+}
+//.........................................................................................................
+bool TFaceCtrl::Orient(TGlPrimitive&)  {
+  ParentCtrl.SetBasis();
+  const vec3d cnt = (A+B+C+D)/4;
+  olx_gl::translate(cnt + N*0.04);
+  const vec3d v1 = (C-A)*0.1;
+  const vec3d v2 = (D-B)*0.1;
+  olx_gl::normal(N);
+  olx_gl::begin(GL_QUADS);
+  olx_gl::vertex(-v1);
+  olx_gl::vertex(-v2);
+  olx_gl::vertex(v1);
+  olx_gl::vertex(v2);
+  olx_gl::end();
+  return true;
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 T3DFrameCtrl::T3DFrameCtrl(TGlRenderer& prnt, const olxstr& cName) : AGlMouseHandlerImp(prnt, cName)  {
@@ -57,14 +71,10 @@ void T3DFrameCtrl::Create(const olxstr& cName, const ACreationParams* cpar)  {
 bool T3DFrameCtrl::DoRotate(const vec3d& vec, double angle)  {
   mat3d m;  
   olx_create_rotation_matrix(m, vec, cos(angle), sin(angle));
-  vec3d cnt;
-  for( int i=0; i < 8; i++ )
-    cnt += edges[i];
-  cnt /= 8;
+  vec3d cnt = GetCenter();
   for( int i=0; i < 8; i++ )
     edges[i] = (edges[i]-cnt)*m+cnt;
-  for( int i=0; i < 6; i++ )
-    norms[i] = (Faces[i].GetC()-Faces[i].GetB()).XProdVec(Faces[i].GetA()-Faces[i].GetB()).Normalise();
+  UpdateEdges();
   return true;
 }
 //.........................................................................................................
@@ -76,10 +86,7 @@ bool T3DFrameCtrl::DoZoom(double zoom, bool inc)  {
   else
     z = zoom;
   if( vol*z < 0.1 && z < 1.0 )  return true;
-  vec3d cnt;
-  for( int i=0; i < 8; i++ )
-    cnt += edges[i];
-  cnt /= 8;
+  vec3d cnt = GetCenter();
   for( int i=0; i < 8; i++ )
     edges[i] = (edges[i]-cnt)*z+cnt;
   return true;
@@ -92,5 +99,10 @@ bool T3DFrameCtrl::OnTranslate(size_t sender, const vec3d& t)  {
   Faces[sender].GetC() += dir;
   Faces[sender].GetD() += dir;
   return true;
+}
+//.........................................................................................................
+void T3DFrameCtrl::UpdateEdges()  {
+  for( int i=0; i < 6; i++ )
+    norms[i] = (Faces[i].GetC()-Faces[i].GetB()).XProdVec(Faces[i].GetA()-Faces[i].GetB()).Normalise();
 }
 //.........................................................................................................

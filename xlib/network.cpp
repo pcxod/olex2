@@ -565,7 +565,7 @@ struct GraphAnalyser  {
 //      return -1;
     vec3d centB;
     const double rms = TNetwork_FindAlignmentMatrix(matchedAtoms, alignmentMatrix, centB,
-      Invert, &TNetwork::weight_occu);
+      Invert, &TSAtom::weight_occu);
     if( minRms < 0 || rms < minRms )  {
       minRms = rms;
       bestMatrix = alignmentMatrix;
