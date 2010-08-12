@@ -4324,6 +4324,30 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         FXApp->GetRender().Select(FXApp->GetAtom(i), true);
     }
   }
+  else if( Cmds.Count() == 1 && Cmds[0].Equalsi("wbox") )  {
+    TSAtomPList atoms;
+    if( FXApp->FindSAtoms(EmptyString, atoms, true) )  {
+      const WBoxInfo bs = TXApp::CalcWBox(atoms, NULL, TSAtom::weight_occu);
+      T3DFrameCtrl& fr = FXApp->Get3DFrame();
+      const vec3d nx = bs.normals[0]*bs.s_from[0];
+      const vec3d px = bs.normals[0]*bs.s_to[0];
+      const vec3d ny = bs.normals[1]*bs.s_from[1];
+      const vec3d py = bs.normals[1]*bs.s_to[1];
+      const vec3d nz = bs.normals[2]*bs.s_from[2];
+      const vec3d pz = bs.normals[2]*bs.s_to[2];
+      fr.SetEdge(0, px+ny+nz);
+      fr.SetEdge(1, px+py+nz);
+      fr.SetEdge(2, nx+py+nz);
+      fr.SetEdge(3, nx+ny+nz);
+      fr.SetEdge(4, px+ny+pz);
+      fr.SetEdge(5, px+py+pz);
+      fr.SetEdge(6, nx+py+pz);
+      fr.SetEdge(7, nx+ny+pz);
+      fr.UpdateEdges();
+      fr.Translate(bs.center);
+      fr.SetVisible(true);
+    }
+  }
   else if( Options.IsEmpty() )  {  // print labels of selected atoms
     olxstr Tmp("sel");
     size_t period=5;
@@ -5689,9 +5713,9 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   CallbackFunc(StartMatchCBName, EmptyString);
   const bool TryInvert = Options.Contains("i");
   TXAtomPList atoms;
-  double (*weight_calculator)(const TSAtom&) = &TNetwork::weight_occu;
+  double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_occu;
   if( Options.FindValue('c', "geom") == "mass" )
-    weight_calculator = &TNetwork::weight_occu_aw;
+    weight_calculator = &TSAtom::weight_occu_aw;
   const bool subgraph = Options.Contains("s");
   olxstr suffix = Options.FindValue("n");
   const bool name = Options.Contains("n");
@@ -8655,7 +8679,7 @@ void TMainForm::macSAME(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       E.ProcessingError(__OlxSrcInfo, "Please select different fragments");
       return;
     }
-    if( !netA.DoMatch(netB, res, invert, &TNetwork::weight_occu) )  {
+    if( !netA.DoMatch(netB, res, invert, &TSAtom::weight_occu) )  {
       E.ProcessingError(__OlxSrcInfo, "Graphs do not match");
       return;
     }
@@ -8758,7 +8782,7 @@ void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
 void main_CreateWBox(TGXApp& app, const TSAtomPList& atoms, double (*weight_c)(const TSAtom&), 
   const TDoubleList& all_radii, bool print_info)  
 {
-  const WBoxInfo bs = TXApp::CalcWBox(atoms, all_radii, weight_c);
+  const WBoxInfo bs = TXApp::CalcWBox(atoms, &all_radii, weight_c);
   static int obj_cnt = 0;
   if( print_info )  {
     app.GetLog() << (olxstr("Wrapping box dimension: ") << 
@@ -8833,7 +8857,7 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           all_radii[j] = radii.GetValue(ri);
       }
       main_CreateWBox(*FXApp, satoms,
-        use_aw ? TNetwork::weight_occu_aw : TNetwork::weight_occu, all_radii, false);
+        use_aw ? TSAtom::weight_occu_aw : TSAtom::weight_occu, all_radii, false);
     }
   }
   else  {
@@ -8851,7 +8875,7 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         all_radii[i] = radii.GetValue(ri);
     }
     main_CreateWBox(*FXApp, TSAtomPList(xatoms, TXAtom::AtomAccessor<>()),
-      use_aw ? TNetwork::weight_occu_aw : TNetwork::weight_occu, all_radii, true);
+      use_aw ? TSAtom::weight_occu_aw : TSAtom::weight_occu, all_radii, true);
   }
 }
 //..............................................................................

@@ -138,7 +138,7 @@ public:
 
 
 struct WBoxInfo  {
-  vec3d r_from, r_to, // dimensions for givent radii
+  vec3d r_from, r_to, // dimensions for given radii
         s_from, s_to, //dimensions using the r_sfil
         center,       // center of the box
         d;            // three values for the planes: dist = p.DotProd(normals[i]) - d[i]
