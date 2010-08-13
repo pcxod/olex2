@@ -68,6 +68,8 @@ public:
   virtual void Update()  {}
   static size_t GetArgCount()  {  return GetInstance().Arguments.Count();  }
   static const olxstr& GetArg(size_t i)  {  return GetInstance().Arguments[i];  }
+  // returns WIN32, WIN64, LINUX32, LINUX64, MAC etc
+  static olxstr GetPlatformString();
   TLibrary* ExportLibrary(const olxstr& lib_name="app");
 
   // application layer critical section
