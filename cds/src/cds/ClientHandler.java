@@ -17,7 +17,9 @@ import java.net.Socket;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.UUID;
 
@@ -27,13 +29,22 @@ import java.util.UUID;
  */
 public class ClientHandler extends Thread {
   Socket client;
+  static HashMap<String,String> fileMapping = new HashMap();
   static HashSet<String> TextExts = new HashSet<String>();
   public ClientHandler(Socket _client)  {
     client = _client;
     if( TextExts.isEmpty() )  {
-      String[] exts = "txt py java cpp h html htm xml xld osp ind".split("\\s");
+      String[] exts = "txt py java cpp h html htm xml xld osp ind log".split("\\s");
       for( int i=0; i < exts.length; i++ )
         TextExts.add(exts[i]);
+    }
+    if( fileMapping.isEmpty() )  {
+      fileMapping.put("olex2.zip", "Windows 32bit distribution");
+      fileMapping.put("olex2-x64.zip", "Windows 64bit distribution");
+      fileMapping.put("suse101x32-py26.zip", "Linux 32bit distribution");
+      fileMapping.put("suse101x64-py26.zip", "Linux 64bit distribution");
+      fileMapping.put("mac-intel-py26.zip", "Mac OS 32bit distribution");
+      fileMapping.put("olex2-sse.zip", "Windows 32bit distribution for PIII");
     }
   }
   String getContentType(File f)  {
@@ -50,13 +61,16 @@ public class ClientHandler extends Thread {
       BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
       DataOutputStream out = new DataOutputStream(client.getOutputStream());  // true - autoflush
       ArrayList<String> cmds = new ArrayList();
-      String cmd, origin=null;
+      String cmd, origin=null, platform = null;
       while( (cmd = in.readLine()) != null )  {
-        if( cmd.isEmpty() )
+        if( cmd.length() == 0 )
           break;
         cmds.add(cmd);
         if( cmd.startsWith("X-Forwarded-For:") )
-          origin = cmd.substring(17);
+          origin = cmd.substring(16);
+        else if( cmd.startsWith("Platform:") )
+          platform = cmd.substring(10);
+
       }
       cmd = (cmds.isEmpty() ? null : cmds.get(0));
       if( cmd != null )  {
@@ -64,6 +78,8 @@ public class ClientHandler extends Thread {
         info_line += (origin == null ? client.getRemoteSocketAddress().toString() : origin);
         info_line += (" at " + (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()));
         info_line += (": " + cmd);
+        if( platform != null )
+          info_line += (" on " + platform);
         Main.print(info_line);
         boolean handled = false;
         // accept some command only from localhost...
@@ -162,19 +178,24 @@ public class ClientHandler extends Thread {
   }
   protected void listFolder(DataOutputStream out, File file) throws IOException  {
     File[] files = file.listFiles();
+    Arrays.sort(files, new DirAlphaComparator());
     out.writeBytes("HTTP/1.0 200 OK\n");
     out.writeBytes("Server: Olex2-CDS\n");
     StringWriter _strw;
     PrintWriter pr = new PrintWriter(_strw = new StringWriter());
     pr.println("<html><head><title>CDS</title></head><body><table>");
-    pr.println("<tr><td>Name</td><td>Last Modified</td><td>Size</td></tr>");
+    pr.println("<tr><td>Name</td><td align='center'>Description</td><td>Last Modified</td><td>Size</td></tr>");
     for( int i=0; i < files.length; i++ )  {
       String name = files[i].isDirectory() ? files[i].getName().toUpperCase() :
         files[i].getName().toLowerCase();
+      String mapping = fileMapping.get(files[i].getName());
+      if( mapping == null )
+          mapping = ".";
       pr.println("<tr><td><a href=\"" +
         files[i].getName() + 
         (files[i].isDirectory() ? "/" : "") + "\">" +
         name + "</a></td><td>");
+      pr.print(mapping + "</td><td>");
       pr.print((new java.text.SimpleDateFormat()).format(new Date(files[i].lastModified())) + "</td><td>");
       if( files[i].isFile() )
         pr.print(files[i].length());
