@@ -5989,30 +5989,7 @@ void TMainForm::funGetCompilationInfo(const TStrObjList& Params, TMacroError &E)
 #elif __GNUC__
       rv << " GCC:" << __GNUC__ << '.' << __GNUC_MINOR__ << '.' << __GNUC_PATCHLEVEL__;
 #endif
-#ifdef _WIN64
-      rv << " on WIN64";
-#elif _WIN32
-      rv << " on WIN32";
-#  if _M_IX86_FP == 0
-     rv << " without SSE";
-#  elif _M_IX86_FP == 1
-     rv << " with SSE";
-#  elif _M_IX86_FP == 2
-     rv << " with SSE2";
-#  endif
-
-#elif __MAC__
-      rv << " on MAC";
-#elif __linux__
-      rv << " on Linux";
-#  ifdef __LP64__
-      rv << "64";
-#  else
-      rv << "32";
-#  endif
-#else
-      rv << " on other";
-#endif
+      rv << " on " << TBasicApp::GetPlatformString();
       E.SetRetVal(rv);
     }
     else  {

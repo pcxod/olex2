@@ -110,10 +110,11 @@ bool THttpFileSystem::Connect()  {
 olxcstr THttpFileSystem::GenerateRequest(const TUrl& url, const olxcstr& cmd, const olxcstr& FileName)  {
   olxcstr request(cmd);
   request << ' ' << (url.GetFullHost() << '/' <<
-    TEFile::UnixPath(FileName)).Replace(' ', "%20") << " HTTP/1.0\n\n";
+    TEFile::UnixPath(FileName)).Replace(' ', "%20") << " HTTP/1.0\n";
   if( url.HasProxy() && !url.GetProxy().GetUser().IsEmpty() && !url.GetProxy().GetPassword().IsEmpty() )
-    request << "Authorization: " << olxcstr(url.GenerateHTTPAuthString()) << "\n\n";
-  return request;
+    request << "Authorization: " << olxcstr(url.GenerateHTTPAuthString()) << '\n';
+  request << "Platform: " << TBasicApp::GetPlatformString() << '\n';
+  return request << '\n';
 }
 //..............................................................................
 THttpFileSystem::ResponseInfo THttpFileSystem::ParseResponseInfo(const olxcstr& str, const olxcstr& sep)  {
