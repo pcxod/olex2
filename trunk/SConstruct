@@ -278,12 +278,12 @@ else:
       env.Append(FRAMEWORKS=['OpenGL', 'AGL', 'Python'])
     else:
       env.ParseConfig("wx-config --cxxflags --unicode --toolkit=gtk2 --libs gl,core,html,net,aui")
+      env.Append(LIBS=['libGL', 'libGLU'])
 #!!!
     unirun_env = env.Clone()
     env.Append(CCFLAGS = ['-D__WXWIDGETS__'])
     env.ParseConfig("python-config --includes")
     env.ParseConfig("python-config --ldflags")
-    env.Append(LIBS=['libGL', 'libGLU'])
   except:
     print 'Please make sure that wxWidgets and Python config scripts are available'
     Exit(1)
