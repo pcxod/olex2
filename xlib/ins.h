@@ -234,6 +234,34 @@ public:
   // helper function...
   static void SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
     TStrList& list, size_t sfac_pos);
+  template <class List> static List& Preprocess(List& l)  {
+    // combine lines
+    for( size_t i=0; i < l.Count(); i++ )  {
+      if( l[i].EndsWith('=') && !l[i].StartsFromi("REM") )  {
+        l[i].SetLength(l[i].Length()-1);
+        if( (i+1) < l.Count() )  {
+          l[i] << l[i+1];
+          l.Delete(1+i--);
+        }
+      }
+    }
+    // include files
+    for( size_t i=0; i < l.Count(); i++ )  {
+      if( l[i].StartsFrom('+') )  {
+        olxstr fn = l[i].SubStringFrom(1);
+        if( !TEFile::Exists(fn) )  {
+          TBasicApp::GetLog().Error(olxstr("Included file missing: ") << fn);
+          continue;
+        }
+        TStrList lst;
+        lst.LoadFromFile(fn);
+        l.Delete(i);
+        l.Insert(i, lst);
+        i += lst.Count();
+      }
+    }
+    return l;   
+  }
   // spits out all instructions, including CELL, FVAR, etc
   void SaveHeader(TStrList& out, bool ValidateRestraintNames);
   // Parses all instructions, exclusing atoms, throws if fails
