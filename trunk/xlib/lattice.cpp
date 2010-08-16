@@ -1320,7 +1320,6 @@ void TLattice::CompaqClosest()  {
 //..............................................................................
 void TLattice::CompaqType(short type)  {
   if( Generated )  return;
-  OnStructureUniq.Enter(this);
   const size_t ac = Atoms.Count();
   for( size_t i=0; i < ac; i++ )  {
     if( Atoms[i]->GetType() != type )  continue;
@@ -1343,6 +1342,7 @@ void TLattice::CompaqType(short type)  {
     Atoms[i]->CAtom().ccrd() = *transform * Atoms[i]->CAtom().ccrd();
     delete transform;
   }
+  OnStructureUniq.Enter(this);
   Init();
   OnStructureUniq.Exit(this);
 }
