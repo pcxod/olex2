@@ -70,7 +70,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       DeleteSequencesOf(' ').\
       Trim(' ');
   }
-  InsFile.CombineLines('=');
+  Preprocess(InsFile);
   cm_Element& elmQPeak = XElementLib::GetByIndex(iQPeakIndex);
   cx.Resi = &GetAsymmUnit().GetResidue(0);
   cx.ins = this;
@@ -920,7 +920,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
   if( CAtoms.IsEmpty() )  return;
   size_t atomCount = 0;
   ParseContext cx(rm);
-  SL.CombineLines('=');
+  Preprocess(SL);
   //rm.FVAR.Clear();
   for( size_t i=0; i < CAtoms.Count(); i++ )  {
     if( CAtoms[i]->GetParentAfixGroup() != NULL )
@@ -1570,7 +1570,7 @@ void TIns::ParseHeader(const TStrList& in)  {
   GetAsymmUnit().ClearMatrices();
 // end clear, start parsing
   TStrList toks, lst(in);
-  lst.CombineLines("=");
+  Preprocess(lst);
   ParseContext cx(GetRM());
   cx.ins = this;
   for( size_t i=0; i < lst.Count(); i++ )  {
