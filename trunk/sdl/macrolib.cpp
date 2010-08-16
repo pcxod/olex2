@@ -101,9 +101,13 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
         if( !Params.IsEmpty() )  
           ArgV = Params[0];
       }
-      if( func_name.IsEmpty() )  {  // in case arithmetic ()
+      if( func_name.IsEmpty() )  { // in case arithmetic ()
         Cmd.Delete(fstart+1, aend-fstart-2);  // have to leave ()
         Cmd.Insert(ArgV, fstart+1);
+        E.GetStack().Pop();
+        return true;
+      }
+      else if( !olxstr::o_isalphabetic(func_name.CharAt(0)) )  {
         E.GetStack().Pop();
         return true;
       }

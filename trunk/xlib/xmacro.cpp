@@ -196,6 +196,9 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
     "&;o-use occupancy of the atoms in the integration",
     fpAny|psFileLoaded,
     "Prints molecular volume, surface area and other information for visible/selected atoms");
+  xlib_InitMacro(RTab, EmptyString,
+    (fpAny^fpNone)|psCheckFileTypeIns,
+    "Adds RTAB with givn name for provided atoms/selection");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -4172,4 +4175,19 @@ void XLibMacros::macMolInfo(TStrObjList &Cmds, const TParamList &Options, TMacro
     olxstr::FormatFloat(2, mol_area) << '\n');
   TBasicApp::GetLog() << (olxstr("Molecular volume, A^3: ") <<
     olxstr::FormatFloat(2, mol_vol.AbsSum()/3) << '\n');
+}
+//..............................................................................
+void XLibMacros::macRTab(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TSAtomPList atoms;
+  olxstr name = Cmds[0];
+  if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' ', 1), atoms, true, true) )
+    return;
+  if( atoms.Count() >= 1 && atoms.Count() <= 4 )  {
+    RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
+    InfoTab& it = rm.AddRTAB(name);
+    for( size_t i=0; i < atoms.Count(); i++ )
+      it.AddAtom(&atoms[i]->CAtom(), atoms[i]->GetMatrix(0).IsFirst() ? NULL : &atoms[i]->GetMatrix(0));
+  }
+  else
+    Error.ProcessingError(__OlxSrcInfo, "1 to 3 atoms is expected");
 }
