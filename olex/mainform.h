@@ -176,6 +176,8 @@ public:
 
   inline TUndoStack* GetUndoStack()  {  return FUndoStack;  }
 
+  const TModes& GetModes() const {  return *Modes;  }
+
   void SetProgramState(bool val, uint32_t state, const olxstr& data );
   bool CheckMode(size_t mode, const olxstr& modeData);
   bool CheckState(uint32_t state, const olxstr& stateData);

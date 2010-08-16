@@ -82,8 +82,8 @@ public:
   // NULL is returned of no mode foind
   AMode* SetMode(const olxstr& name);
   void ClearMode(bool finalise);
-  static size_t DecodeMode( const olxstr& mode );
-  AMode* GetCurrent()  {  return CurrentMode;  }
+  static size_t DecodeMode(const olxstr& mode);
+  AMode* GetCurrent() const {  return CurrentMode;  }
 };
 
 class TModeChange: public IEObject  {
@@ -94,7 +94,7 @@ public:
   ~TModeChange()  {  }
   bool GetStatus() const {  return FStatus;  }
   static bool CheckStatus(const olxstr& mode, const olxstr& modeData=EmptyString);
-  static bool CheckStatus(size_t mode, const olxstr& modeData=EmptyString );
+  static bool CheckStatus(size_t mode, const olxstr& modeData=EmptyString);
 };
 //..............................................................................
 class TStateChange: public IEObject  {

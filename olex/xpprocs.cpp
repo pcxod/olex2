@@ -8440,6 +8440,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
   TXBondPList xbonds;
   FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
   if( xatoms.IsEmpty() )  return;
+  Macros.ProcessMacro("mode fit", E);
   const int part = Options.FindValue("p", "-100").ToInt();
   if( part != -100 )  {
     for( size_t i=0; i < xatoms.Count(); i++ )
@@ -8488,7 +8489,6 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
   }
   FXApp->CenterView(true);
   FXApp->SelectAll(false);
-  Macros.ProcessMacro("mode fit", E);
   AMode *md = Modes->GetCurrent();
   if( md != NULL )  {
     md->AddAtoms(xatoms);
