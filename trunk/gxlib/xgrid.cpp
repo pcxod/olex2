@@ -14,6 +14,7 @@
 #include "conrec.h"
 #include "olxmps.h"
 #include "pers_util.h"
+#include "maputil.h"
 
 #ifndef _NO_PYTHON
   #include "pyext.h"
@@ -618,9 +619,10 @@ void TXGrid::SetPlaneSize(size_t _v)  {
     ContourData = new float*[_v];
     ContourCrds[0] = new float[_v];
     ContourCrds[1] = new float[_v];
+    const float hh = _v/2;
     for( size_t i=0; i < _v; i++ )  {
       ContourData[i] = new float[_v];
-      ContourCrds[0][i] = ContourCrds[1][i] = (float)(i-_v/2);///MaxDim;
+      ContourCrds[0][i] = ContourCrds[1][i] = (float)i-hh;
     }
   }
   MaxDim = _v;   
@@ -709,7 +711,54 @@ void TXGrid::RescaleSurface()  {
     PListId = olx_gl::genLists(2);
     NListId = PListId+1;
   }
-  if( Mask != NULL )  {
+  if( XApp->Get3DFrame().IsVisible() )  {
+    const mat3f tm(XApp->Get3DFrame().GetNormals());
+    const vec3f dims = XApp->Get3DFrame().GetSize()/2;
+    const vec3f tc(XApp->Get3DFrame().GetCenter());
+    vec3d pts[3];
+    for( int li = 0; li <= 1; li++ )  {
+      const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
+      const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
+      const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+      glNewList(li == 0 ? PListId : NListId, GL_COMPILE);
+      olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
+      olx_gl::begin(GL_TRIANGLES);
+      for( int x=-1; x <= 1; x++ )  {
+        for( int y=-1; y <= 1; y++ )  {
+          for( int z=-1; z <= 1; z++ )  {
+            for( size_t i=0; i < trians.Count(); i++ )  {
+              bool draw = true;
+              for( int j=0; j < 3; j++ )  {
+                pts[j] = verts[trians[i].pointID[j]];
+                pts[j][0] /= MaxX;  pts[j][1] /= MaxY;  pts[j][2] /= MaxZ;
+                pts[j][0] += x;     pts[j][1] += y;     pts[j][2] += z;
+                vec3f t = tm*(au.CellToCartesian(pts[j]) - tc);
+                if( olx_abs(t[0]) > dims[0] || olx_abs(t[1]) > dims[1] || olx_abs(t[2]) > dims[2] )  {
+                  draw = false;
+                  break;
+                }
+              }
+              if( !draw )  continue;
+              for( int j=0; j < 3; j++ )  {
+                olx_gl::normal(norms[trians[i].pointID[j]]);
+                olx_gl::vertex(pts[j]);
+              }
+            }
+          }
+        }
+      }
+      olx_gl::end();
+      olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      olx_gl::endList();
+    }
+    p_vertices.Clear();
+    p_triangles.Clear();
+    p_normals.Clear();
+    n_vertices.Clear();
+    n_triangles.Clear();
+    n_normals.Clear();
+  }
+  else if( Mask != NULL )  {
     vec3d pts[3];
     for( int li = 0; li <= 1; li++ )  {
       const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
@@ -797,9 +846,9 @@ void TXGrid::RescaleSurface()  {
         TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
         const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
         const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
-        for( size_t i=0; i < verts.Count(); i++ )  {                           // cell drawing
-          verts[i][0] /= (MaxX-1);  verts[i][1] /= (MaxY-1);  verts[i][2] /= (MaxZ-1);  // cell drawing
-          au.CellToCartesian(verts[i]);                                     // cell drawing
+        for( size_t i=0; i < verts.Count(); i++ )  {
+          verts[i][0] /= (MaxX-1);  verts[i][1] /= (MaxY-1);  verts[i][2] /= (MaxZ-1);
+          au.CellToCartesian(verts[i]);
         }
         glNewList(li == 0 ? PListId : NListId, GL_COMPILE);
         olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());

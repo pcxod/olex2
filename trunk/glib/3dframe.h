@@ -110,11 +110,26 @@ public:
     for( int i=0; i < 8; i++ )
       edges[i] += t;
   }
+  double GetVolume() const {
+    return sqrt((edges[1]-edges[0]).QLength()*(edges[3]-edges[0]).QLength()*(edges[4]-edges[0]).QLength());
+  }
+  vec3d GetSize() const {
+    return vec3d(
+      (edges[1]-edges[0]).Length(),
+      (edges[3]-edges[0]).Length(),
+      (edges[4]-edges[0]).Length());
+  }
   vec3d GetCenter() const {
     vec3d cnt;
     for( int i=0; i < 8; i++ )
       cnt += edges[i];
     return cnt/8;
+  }
+  mat3d GetNormals() const {
+    return mat3d(
+      (edges[1]-edges[0]).Normalise(),
+      (edges[3]-edges[0]).Normalise(),
+      (edges[4]-edges[0]).Normalise());
   }
 };
 

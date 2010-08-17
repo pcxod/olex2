@@ -6297,7 +6297,10 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //  for( size_t j=0; j < src_d[1]; j++ )
   //    for( size_t k=0; k < src_d[2]; k++ )
   //      src.Data[i][j][k] = k;
-  //MapUtil::Cell2Cart( MapUtil::MapGetter<double, 1>(src.Data, src.GetSize()), dest.Data, dest.GetSize(), vec3d(2, 2, 2), mat3d().I());
+  //smatdd g2c(mat3d(0, 1, 0, -1, 0, 0, 0, 0, 1), vec3d(0,0,0));  // xyz->
+  //MapUtil::Cell2Cart(
+  //  MapUtil::MapGetter<double, 1>(src.Data, src.GetSize()), dest.Data, dest.GetSize(),
+  //  g2c, mat3d().I());
   //size_t v = src_d.Sum();
 
   //cif_dp::TCifDP cdp;
