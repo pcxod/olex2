@@ -64,7 +64,8 @@ void T3DFrameCtrl::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( GPC.PrimitiveCount() != 0 )  return;
   TGraphicsStyle& GS = GPC.GetStyle();
   TGlPrimitive& dummy = GPC.NewPrimitive("Box", sgloMacro);
-  TGlMaterial& glm = GS.GetMaterial("Box", TGlMaterial("1045;0.000,0.502,0.753,1.000;2768240640;0.192,0.192,0.192,1.000"));
+  TGlMaterial& glm = GS.GetMaterial("Box",
+    TGlMaterial("1109;0.000,0.502,0.753,1.000;2768240640;0.180,0.180,0.180,1.000;5"));
   dummy.SetProperties(glm);
 }
 //.........................................................................................................
@@ -79,7 +80,7 @@ bool T3DFrameCtrl::DoRotate(const vec3d& vec, double angle)  {
 }
 //.........................................................................................................
 bool T3DFrameCtrl::DoZoom(double zoom, bool inc)  {
-  const double vol = sqrt((edges[1]-edges[0]).QLength()*(edges[3]-edges[0]).QLength()*(edges[4]-edges[0]).QLength());
+  const double vol = GetVolume();
   double z;
   if( inc )
     z = 1.0 + zoom;

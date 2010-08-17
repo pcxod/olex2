@@ -1321,6 +1321,7 @@ void TLattice::CompaqClosest()  {
 void TLattice::CompaqType(short type)  {
   if( Generated )  return;
   const size_t ac = Atoms.Count();
+  const TAsymmUnit& au = GetAsymmUnit();
   for( size_t i=0; i < ac; i++ )  {
     if( Atoms[i]->GetType() != type )  continue;
     const vec3d& crda = Atoms[i]->ccrd();
@@ -1339,12 +1340,15 @@ void TLattice::CompaqType(short type)  {
         delete m;
     }
     if( transform == NULL )  continue;
-    Atoms[i]->CAtom().ccrd() = *transform * Atoms[i]->CAtom().ccrd();
+    Atoms[i]->ccrd() = Atoms[i]->CAtom().ccrd() = (*transform * Atoms[i]->ccrd());
+    au.CellToCartesian(Atoms[i]->CAtom().ccrd(), Atoms[i]->crd());
+    if( Atoms[i]->CAtom().GetEllipsoid() != NULL )
+      *Atoms[i]->CAtom().GetEllipsoid() =
+        GetUnitCell().GetEllipsoid(transform->GetContainerId(), Atoms[i]->CAtom().GetId());
     delete transform;
   }
-  OnStructureUniq.Enter(this);
-  Init();
-  OnStructureUniq.Exit(this);
+  RestoreADPs(false);
+  UpdateConnectivity();
 }
 //..............................................................................
 void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform)  {
