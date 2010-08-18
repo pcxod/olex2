@@ -695,6 +695,7 @@ TUndoData* TGXApp::SetGraphicsVisible(AGDObjList& G, bool v)  {
 //..............................................................................
 void TGXApp::BangTable(TXAtom *XA, TTTable<TStrList>& Table) {
   const TSAtom &A = XA->Atom();
+  if( A.BondCount() == 0 )  return;
   Table.Resize(A.BondCount(), A.BondCount());
   Table.ColName(0) = A.GetLabel();
   for( size_t i=0; i < A.BondCount()-1; i++ )

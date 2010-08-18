@@ -850,15 +850,15 @@ void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FXApp->BangTable(Atoms[i], Table);
     Output.Clear();
     Table.CreateTXTList(Output, EmptyString, true, true, ' ');
-    FGlConsole->PrintText( Output, NULL, false );
+    FGlConsole->PrintText(Output, NULL, false);
     clipbrd << Output.Text(NewLineSequence);
   }
   if( wxTheClipboard->Open() )  {
     if (wxTheClipboard->IsSupported(wxDF_TEXT) )
-      wxTheClipboard->SetData( new wxTextDataObject(clipbrd.u_str()) );
+      wxTheClipboard->SetData(new wxTextDataObject(clipbrd.u_str()));
     wxTheClipboard->Close();
   }
-  TBasicApp::GetLog() << "The environment list was placed to theclipboard\n";
+  TBasicApp::GetLog() << "The environment list was placed to the clipboard\n";
 }
 //..............................................................................
 void TMainForm::macGrow(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
