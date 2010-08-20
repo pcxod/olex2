@@ -2994,7 +2994,7 @@ void TGXApp::SetHydrogensVisible(bool v)  {
     XFile().GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
     for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
       OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
-    if( v )
+    if( v && !XFile().GetLattice().IsGenerated() )
       XFile().GetLattice().CompaqH();
     else
       UpdateConnectivity();
@@ -3014,7 +3014,7 @@ void TGXApp::SetQPeaksVisible(bool v)  {
     XFile().GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
     for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
       OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
-    if( v )
+    if( v && !XFile().GetLattice().IsGenerated() )
       XFile().GetLattice().CompaqQ();
     else
       UpdateConnectivity();
