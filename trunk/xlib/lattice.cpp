@@ -1778,12 +1778,15 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rc
         UnitCell->GetAtomEnviList(*rings[i][j], AE);
         if( AE.Count() == 3 )  {
           const vec3d cnt = AE.GetBase().crd();
-          double v = olx_tetrahedron_volume( 
-            cnt, 
-            (AE.GetCrd(0)-cnt).Normalise() + cnt, 
-            (AE.GetCrd(1)-cnt).Normalise() + cnt, 
-            (AE.GetCrd(2)-cnt).Normalise() + cnt);
-          if( v < 0.1 )  continue;  // coordination or substituted
+          try  {
+            const double v = olx_tetrahedron_volume( 
+              cnt, 
+              (AE.GetCrd(0)-cnt).Normalise() + cnt, 
+              (AE.GetCrd(1)-cnt).Normalise() + cnt, 
+              (AE.GetCrd(2)-cnt).Normalise() + cnt);
+            if( v < 0.1 )  continue;  // coordination or substituted
+          }
+          catch(...)  {  continue;  }
         }
         for( size_t k=0; k < AE.Count(); k++ )  {
           if( (AE.GetCrd(k) - rings[i][j]->crd()).QLength() > 4.0 )
