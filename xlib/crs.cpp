@@ -15,7 +15,7 @@ TSpaceGroup* TCRSFile::GetSG()  {
 void TCRSFile::SaveToStrings(TStrList& SL)  {
   olxstr Tmp;
 
-  SL.Add(olxstr("TITLE   ") << GetTitle() );
+  SL.Add("TITLE   ") << GetTitle();
 
   Tmp = "CELL ";
   Tmp << GetRM().expl.GetRadiation() << ' ' <<
@@ -39,13 +39,8 @@ void TCRSFile::SaveToStrings(TStrList& SL)  {
 
   TSpaceGroup* sg = GetSG();
   if( sg != NULL )  {
-    Tmp = "LATT ";
-    Tmp << sg->GetBravaisLattice().GetName() << ' ' << sg->GetLattice().GetSymbol();
-    SL.Add(Tmp);
-
-    Tmp = "SPGR ";
-    Tmp << sg->GetName();
-    SL.Add(Tmp);
+    SL.Add("LATT ")  << sg->GetBravaisLattice().GetName() << ' ' << sg->GetLattice().GetSymbol();
+    SL.Add("SPGR ") << sg->GetName();
   }
   else
     throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
@@ -104,7 +99,7 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
   toks.Clear();
   toks.Strtok( Zerr, ' ');
   if( toks.Count() >= 7 )  {
-    GetAsymmUnit().SetZ( toks[0].ToInt() );
+    GetAsymmUnit().SetZ(static_cast<short>(olx_round(toks[0].ToDouble())));
     GetAsymmUnit().Axes()[0].E() = toks[1].ToDouble();
     GetAsymmUnit().Axes()[1].E() = toks[2].ToDouble();
     GetAsymmUnit().Axes()[2].E() = toks[3].ToDouble();
