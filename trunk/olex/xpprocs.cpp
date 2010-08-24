@@ -1099,13 +1099,14 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 
   int64_t st = TETime::msNow();
-  if( Cmds.IsEmpty() && cell )
+  if( Cmds.IsEmpty() && cell )  {
     FXApp->XFile().GetLattice().GenerateCell();
+  }
   else  {
-    vec3d From( -1.0, -1.0, -1.0);
-    vec3d To( 1.5, 1.5, 1.5);
+    vec3d From(-1.0, -1.0, -1.0);
+    vec3d To(1.5, 1.5, 1.5);
 
-    int number_count = 0;
+    size_t number_count = 0;
     for( size_t i=0; i < Cmds.Count(); i++ )  {
       if( Cmds[i].IsNumber() )  {
         if( !(number_count%2) )
@@ -1113,8 +1114,7 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         else
           To[number_count/2]= Cmds[i].ToDouble();
         number_count++;
-        Cmds.Delete(i);
-        i--;
+        Cmds.Delete(i--);
       }
     }
 
