@@ -338,19 +338,17 @@ public:
   /* fills a grid in cartesian coordinates with values from the map of the unit cell */
   template <class _MapGetter, typename dest_t> static dest_t*** Cell2Cart(
     const _MapGetter& src,
-    dest_t*** dest, const vec3s& dest_d, const TVector3<dest_t>& dest_n,
+    dest_t*** dest, const vec3s& dest_d, const smatdd& grid_2_cart,
     const mat3d& cart2cell)
   {
     for( size_t i=0; i < dest_d[0]; i++ )  {
-      const dest_t fx = (dest_t)i/dest_n[0];
       for( size_t j=0; j < dest_d[1]; j++ )  {
-        const dest_t fy = (dest_t)j/dest_n[1];
         for( size_t k=0; k < dest_d[2]; k++ )  {
-          const dest_t fz = (dest_t)k/dest_n[2];
-          vec3d p(
-            fx*cart2cell[0][0] + fy*cart2cell[1][0] + fz*cart2cell[2][0],
-            fy*cart2cell[1][1] + fz*cart2cell[2][1],
-            fz*cart2cell[2][2]
+          const vec3d cc = grid_2_cart*vec3d(i,j,k);  // cartesian coordinates from grid
+          const vec3d p(
+            cc[0]*cart2cell[0][0] + cc[1]*cart2cell[1][0] + cc[2]*cart2cell[2][0],
+            cc[1]*cart2cell[1][1] + cc[2]*cart2cell[2][1],
+            cc[2]*cart2cell[2][2]
           );
           dest[i][j][k] = src.Get(p);
         }

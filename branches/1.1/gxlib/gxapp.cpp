@@ -306,6 +306,8 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
 
   FXGrid = new TXGrid("XGrid", this);
 
+  ObjectsToCreate.Add(F3DFrame=new T3DFrameCtrl(*FGlRender, "3DFrame"));
+  F3DFrame->SetVisible(false);
   XFile().GetLattice().OnDisassemble.Add(this, ID_OnDisassemble);
 
   xappXFileLoad *P = &TEGC::NewG<xappXFileLoad>(this);
@@ -333,6 +335,7 @@ TGXApp::~TGXApp()  {
 //..............................................................................
 void TGXApp::ClearXObjects()  {
   OnObjectsDestroy.Enter(dynamic_cast<TBasicApp*>(this), NULL);
+  GetSelection().Clear();
   XAtoms.Clear();
   XBonds.Clear();
   XGrowLines.Clear();
@@ -625,13 +628,17 @@ void TGXApp::CalcProbFactor(float Prob)  {
 //  AtomZoom(ProbFactor);
 }
 //..............................................................................
+/* finds such a value of x at wich the value of integral 4*pi*exp(-x/2)*x^2 is Prob/100 of the max value, which is sqrt(8*pi^3),
+max returned value is around 10 */
 float TGXApp::ProbFactor(float Prob)  {
-  Prob /= 100;
-  double ProbFactor = 0, Inc = 0.0001, Summ = 0, TVal = Prob * 15.75, Var;
-  while( Summ < TVal && ProbFactor <= 10 )  {
-    Var = ProbFactor + Inc/2;
-    Summ += 4*M_PI*exp(-Var*Var/2)*Var*Var*Inc;
-    ProbFactor += Inc;
+  static const double max_val = sqrt(8*M_PI*M_PI*M_PI)/(4*M_PI*100.0);  // max of 4pi*int(0,inf)(exp(-x/2)*x^2dx) [/(4*pi*100)]
+  const double t_val = Prob * max_val, inc = 1e-4;
+  double ProbFactor = 0, summ = 0;
+  while( summ < t_val )  {
+    const double v_sq = olx_sqr(ProbFactor + inc/2);
+    summ += exp(-v_sq/2)*v_sq*inc;
+    if( (ProbFactor += inc) >= 10 )  //  sanity check
+      break;
   }
   return (float)ProbFactor;
 }
@@ -693,6 +700,7 @@ TUndoData* TGXApp::SetGraphicsVisible(AGDObjList& G, bool v)  {
 //..............................................................................
 void TGXApp::BangTable(TXAtom *XA, TTTable<TStrList>& Table) {
   const TSAtom &A = XA->Atom();
+  if( A.BondCount() == 0 )  return;
   Table.Resize(A.BondCount(), A.BondCount());
   Table.ColName(0) = A.GetLabel();
   for( size_t i=0; i < A.BondCount()-1; i++ )
@@ -2991,7 +2999,7 @@ void TGXApp::SetHydrogensVisible(bool v)  {
     XFile().GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
     for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
       OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
-    if( v )
+    if( v && !XFile().GetLattice().IsGenerated() )
       XFile().GetLattice().CompaqH();
     else
       UpdateConnectivity();
@@ -3011,7 +3019,7 @@ void TGXApp::SetQPeaksVisible(bool v)  {
     XFile().GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
     for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
       OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
-    if( v )
+    if( v && !XFile().GetLattice().IsGenerated() )
       XFile().GetLattice().CompaqQ();
     else
       UpdateConnectivity();

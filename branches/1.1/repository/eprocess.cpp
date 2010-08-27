@@ -397,7 +397,7 @@ void TIStream::OnTerminate()  {
 void* TIStream::Entry()  {
   while( (FStream != NULL) && !FStream->Eof() )  {
     const char ch = (char)FStream->GetC();
-    if( !FStream->Eof() )  {
+    if( FStream != NULL && !FStream->Eof() ) {
       FParent->GetOutput().Write(ch);
       if( FParent->GetDubStream() != NULL )
         FParent->GetDubStream()->Write(&ch, 1);

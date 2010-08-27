@@ -479,6 +479,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\glib\3dframe.cpp" />
     <ClCompile Include="..\..\..\glib\dframe.cpp" />
     <ClCompile Include="..\..\..\glib\gdrawobject.cpp" />
     <ClCompile Include="..\..\..\glib\glbackground.cpp" />
@@ -503,6 +504,7 @@
     <ClCompile Include="..\..\..\glib\xfader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\glib\3dframe.h" />
     <ClInclude Include="..\..\..\glib\dframe.h" />
     <ClInclude Include="..\..\..\glib\gdrawobject.h" />
     <ClInclude Include="..\..\..\glib\glbackground.h" />

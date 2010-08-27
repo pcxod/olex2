@@ -2562,11 +2562,11 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
     xyz.LoadFromStrings(lines);
     if( xyz.GetAsymmUnit().AtomCount() == 0 )
       return false;
+    ProcessMacro("mode fit");
     TXAtomPList xatoms;
     TXBondPList xbonds;
     FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
     FXApp->CenterView(true);
-    ProcessMacro("mode fit");
     AMode *md = Modes->GetCurrent();
     if( md != NULL )  {
       md->AddAtoms(xatoms);

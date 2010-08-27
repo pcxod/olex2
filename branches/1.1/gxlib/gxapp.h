@@ -12,6 +12,7 @@
 #include "xfader.h"
 #include "glmouse.h"
 #include "dframe.h"
+#include "3dframe.h"
 #include "glfont.h"
 #include "styles.h"
 
@@ -31,8 +32,6 @@
 #else
   #define OLX_RESOURCES_FOLDER ""
 #endif
-
-
 
 BeginGxlNamespace()
 
@@ -121,7 +120,7 @@ protected:
   TDUnitCell* FDUnitCell;
   TDBasis* FDBasis;
   TDFrame* FDFrame;
-
+  T3DFrameCtrl* F3DFrame;
   TXGrid* FXGrid;
 
   void FragmentVisible( TNetwork *N, bool V);
@@ -238,6 +237,7 @@ public:
   inline THklFile& HklFile()  {  return *FHklFile; }
   inline TDFrame& DFrame()  {  return *FDFrame; }
   inline TXGrid& XGrid()  {  return *FXGrid;  }
+  inline T3DFrameCtrl& Get3DFrame() const { return *F3DFrame;  }
 
   // this function to be used to get all networks, including th overlayed files
   size_t GetNetworks(TNetPList& nets);
@@ -458,7 +458,6 @@ public:     void CalcProbFactor(float Prob);
   TXGlLabel& GetLabel(size_t i)  {  return XLabels[i];  }
   const TXGlLabel& GetLabel(size_t i) const {  return XLabels[i];  }
   void UpdateLabels();
-
 //..............................................................................
   void SetQPeakScale(float V);
   float GetQPeakScale();

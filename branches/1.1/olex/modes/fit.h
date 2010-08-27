@@ -86,20 +86,27 @@ public:
   }
   virtual bool Dispatch(int msg, short id, const IEObject* Sender, const IEObject* Data=NULL)  {  
     TGXApp& app = *TGlXApp::GetGXApp();
+    TAsymmUnit& au = app.XFile().GetAsymmUnit();
     if( msg == mode_fit_disassemble )  {
       if( !EsdlInstanceOf(app.GetRender().GetSelection(), TXGroup) )
         return true;
+      for( size_t i=0; i < Atoms.Count(); i++ )  {
+        Atoms[i]->Atom().CAtom().ccrd() = Atoms[i]->Atom().crd();
+        Atoms[i]->Atom().ccrd() = au.CartesianToCell(Atoms[i]->Atom().CAtom().ccrd());
+      }
       Atoms.Clear();
       AtomsToMatch.Clear();
-      group->Clear();
       TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
     }
     else if( msg == mode_fit_create )  {
       if( !EsdlInstanceOf(app.GetRender().GetSelection(), TXGroup) )
         group = &TGlXApp::GetGXApp()->GetRender().ReplaceSelection<TXGroup>();
       for( size_t i=0; i < group->Count(); i++ )  {
-        if( EsdlInstanceOf(group->GetObject(i), TXAtom) )
-          Atoms.Add((TXAtom&)group->GetObject(i));
+        if( EsdlInstanceOf(group->GetObject(i), TXAtom) )  {
+          TXAtom* xa = Atoms.Add((TXAtom&)group->GetObject(i));
+          xa->Atom().CAtom().ccrd() = xa->Atom().crd();
+          xa->Atom().ccrd() = au.CartesianToCell(xa->Atom().CAtom().ccrd());
+        }
       }
       group->Update();
       group->SetSelected(true);

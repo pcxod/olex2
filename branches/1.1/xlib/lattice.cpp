@@ -1320,8 +1320,8 @@ void TLattice::CompaqClosest()  {
 //..............................................................................
 void TLattice::CompaqType(short type)  {
   if( Generated )  return;
-  OnStructureUniq.Enter(this);
   const size_t ac = Atoms.Count();
+  const TAsymmUnit& au = GetAsymmUnit();
   for( size_t i=0; i < ac; i++ )  {
     if( Atoms[i]->GetType() != type )  continue;
     const vec3d& crda = Atoms[i]->ccrd();
@@ -1340,11 +1340,15 @@ void TLattice::CompaqType(short type)  {
         delete m;
     }
     if( transform == NULL )  continue;
-    Atoms[i]->CAtom().ccrd() = *transform * Atoms[i]->CAtom().ccrd();
+    Atoms[i]->ccrd() = Atoms[i]->CAtom().ccrd() = (*transform * Atoms[i]->ccrd());
+    au.CellToCartesian(Atoms[i]->CAtom().ccrd(), Atoms[i]->crd());
+    if( Atoms[i]->CAtom().GetEllipsoid() != NULL )
+      *Atoms[i]->CAtom().GetEllipsoid() =
+        GetUnitCell().GetEllipsoid(transform->GetContainerId(), Atoms[i]->CAtom().GetId());
     delete transform;
   }
-  Init();
-  OnStructureUniq.Exit(this);
+  RestoreADPs(false);
+  UpdateConnectivity();
 }
 //..............................................................................
 void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform)  {
@@ -1774,12 +1778,15 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rc
         UnitCell->GetAtomEnviList(*rings[i][j], AE);
         if( AE.Count() == 3 )  {
           const vec3d cnt = AE.GetBase().crd();
-          double v = olx_tetrahedron_volume( 
-            cnt, 
-            (AE.GetCrd(0)-cnt).Normalise() + cnt, 
-            (AE.GetCrd(1)-cnt).Normalise() + cnt, 
-            (AE.GetCrd(2)-cnt).Normalise() + cnt);
-          if( v < 0.1 )  continue;  // coordination or substituted
+          try  {
+            const double v = olx_tetrahedron_volume( 
+              cnt, 
+              (AE.GetCrd(0)-cnt).Normalise() + cnt, 
+              (AE.GetCrd(1)-cnt).Normalise() + cnt, 
+              (AE.GetCrd(2)-cnt).Normalise() + cnt);
+            if( v < 0.1 )  continue;  // coordination or substituted
+          }
+          catch(...)  {  continue;  }
         }
         for( size_t k=0; k < AE.Count(); k++ )  {
           if( (AE.GetCrd(k) - rings[i][j]->crd()).QLength() > 4.0 )

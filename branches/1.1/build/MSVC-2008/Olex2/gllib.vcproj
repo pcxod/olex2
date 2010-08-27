@@ -888,6 +888,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\..\glib\3dframe.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\glib\dframe.cpp"
 				>
 			</File>
@@ -982,7 +986,15 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath="..\..\..\glib\3dframe.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\glib\dframe.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\glib\etext.h"
 				>
 			</File>
 			<File

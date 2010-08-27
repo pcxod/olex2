@@ -165,12 +165,12 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
     for( size_t i=0; i < AtomsToMatch.Count(); i+=2 )  {
       atoms.Set(i/2, new AnAssociation2<TSAtom*,TSAtom*>(
       &AtomsToMatch[i+1]->Atom(), &AtomsToMatch[i]->Atom()));
-      center += AtomsToMatch[i]->Atom().crd()*TNetwork::weight_occu(AtomsToMatch[i]->Atom());
-      weight += TNetwork::weight_occu(AtomsToMatch[i]->Atom());
+      center += AtomsToMatch[i]->Atom().crd()*TSAtom::weight_occu(AtomsToMatch[i]->Atom());
+      weight += TSAtom::weight_occu(AtomsToMatch[i]->Atom());
     }
     center /= weight;
     smatdd rm;
-    TNetwork::FindAlignmentMatrix(atoms, rm, false, TNetwork::weight_occu);
+    TNetwork::FindAlignmentMatrix(atoms, rm, false, TSAtom::weight_occu);
     for( size_t i=0; i < atomsA.Count(); i++ )
       atomsA[i]->crd() = rm*(atomsA[i]->crd()-center);
   }

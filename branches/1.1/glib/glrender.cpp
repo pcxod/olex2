@@ -610,7 +610,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
 }
 //..............................................................................
 AGDrawObject* TGlRenderer::SelectObject(int x, int y, int depth)  {
-  if( (Width&Height) == 0 )  return NULL;
+  if( (Width*Height) <= 100 )  return NULL;
   AGDrawObject *Result = NULL;
   GLuint *selectBuf = new GLuint [MAXSELECT];
   for( size_t i=0; i < ObjectCount(); i++ )
@@ -644,7 +644,7 @@ AGDrawObject* TGlRenderer::SelectObject(int x, int y, int depth)  {
 }
 //..............................................................................
 TGlPrimitive* TGlRenderer::SelectPrimitive(int x, int y)  {
-  if( (Width&Height) == 0 )  return NULL;
+  if( (Width*Height) <= 100 )  return NULL;
   TGlPrimitive *Result = NULL;
   GLuint *selectBuf = new GLuint [MAXSELECT];
   const size_t prim_count = Primitives.ObjectCount();

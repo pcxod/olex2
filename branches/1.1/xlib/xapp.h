@@ -106,7 +106,11 @@ public:
     const size_t ei = (radii == NULL ? InvalidIndex : radii->IndexOf(&a.GetType()));
     return (ei == InvalidIndex ? a.GetType().r_vdw : radii->GetValue(ei));
   }
-
+  /* returns size of the box using radii in A and using r_sfil - in B. If the radii is NULL, the
+  values will be identical. If the radii is not null, the number of radii must equal the number of
+  atoms */
+  static WBoxInfo CalcWBox(const TSAtomPList& atoms, const TDoubleList* radii,
+    double (*weight_calculator)(const TSAtom&));
   struct CalcVolumeInfo  {
     double total, overlapping;
     CalcVolumeInfo(double _total, double _overlapping) : total(_total), overlapping(_overlapping)  {}

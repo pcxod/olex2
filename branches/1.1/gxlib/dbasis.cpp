@@ -64,7 +64,7 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlM1.SpecularB = 0x03030303;
 
   const double ConeH = 0.8, ConeW = 0.2; // cylinder dimensions
-  const int CQ = 5; // cylinder quality
+  const int CQ = 5, CQs = 1; // cylinder quality
 
   GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|
                 sglmAmbientB|sglmDiffuseB|sglmSpecularB);
@@ -94,7 +94,7 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlP->SetProperties(GS.GetMaterial(GlP->GetName(), GlM));
   EB = new TEBasis(*EB);  GlP->SetBasis(EB);  EB->NullCenter();
   GlP->Params[0] = ConeW/2;  GlP->Params[1] = ConeW/2;
-  GlP->Params[2] = m[0].Length()/5; GlP->Params[3] = CQ; GlP->Params[4] = CQ;
+  GlP->Params[2] = m[0].Length()/5; GlP->Params[3] = CQ; GlP->Params[4] = CQs;
 
   GlM.AmbientF = 0x8000ff00;
   GlP = &GPC.NewPrimitive("ConeY", sgloCylinder);  // Y
@@ -114,7 +114,7 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlP->SetProperties(GS.GetMaterial(GlP->GetName(), GlM));
   EB = new TEBasis(*EB);  GlP->SetBasis(EB);  EB->NullCenter();
   GlP->Params[0] = ConeW/2;  GlP->Params[1] = ConeW/2;
-  GlP->Params[2] = m[1].Length()/5; GlP->Params[3] = CQ; GlP->Params[4] = CQ;
+  GlP->Params[2] = m[1].Length()/5; GlP->Params[3] = CQ; GlP->Params[4] = CQs;
 
   GlM.AmbientF  = 0x80ff0000;
   GlP = &GPC.NewPrimitive("ConeZ", sgloCylinder);  //Z cone
@@ -134,7 +134,7 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlP->SetProperties(GS.GetMaterial(GlP->GetName(), GlM));
   EB = new TEBasis(*EB);  GlP->SetBasis(EB);  EB->NullCenter();
   GlP->Params[0] = ConeW/2;  GlP->Params[1] = ConeW/2;
-  GlP->Params[2] = m[2].Length()/5; GlP->Params[3] = CQ; GlP->Params[4] = CQ;
+  GlP->Params[2] = m[2].Length()/5; GlP->Params[3] = CQ; GlP->Params[4] = CQs;
   
   Compile();
   for( int i=0; i < 3; i++ )

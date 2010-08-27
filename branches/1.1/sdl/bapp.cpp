@@ -116,6 +116,32 @@ TActionQueue& TBasicApp::NewActionQueue(const olxstr& Name) {
     return Actions.New(Name);
 }
 //..............................................................................
+olxstr TBasicApp::GetPlatformString()  {
+  olxstr rv;
+#ifdef _WIN64
+  rv << "WIN64";
+#elif _WIN32
+  rv << "WIN32";
+#  if _M_IX86_FP == 1
+  rv << "_SSE";
+#  elif _M_IX86_FP == 2
+  rv << "_SSE2";
+#  endif
+
+#elif __MAC__
+  rv << "MAC";
+#elif __linux__
+  rv << "Linux";
+#  ifdef __LP64__
+  rv << "64";
+#  else
+  rv << "32";
+#  endif
+#else
+  rv << "Other";
+#endif
+  return rv;
+}
 //..............................................................................
 //..............................................................................
 void BAPP_GetArgCount(const TStrObjList& Params, TMacroError& E)  {

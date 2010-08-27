@@ -749,3 +749,51 @@ TXApp::CalcVolumeInfo TXApp::CalcVolume(const ElementRadii* radii)  {
   return CalcVolumeInfo(Vt, Vi);
 }
 //..............................................................................
+WBoxInfo TXApp::CalcWBox(const TSAtomPList& atoms, const TDoubleList* radii,
+                        double (*weight_calculator)(const TSAtom&))
+{
+  if( radii != NULL && atoms.Count() != radii->Count() )
+    throw TInvalidArgumentException(__OlxSourceInfo, "radii count");
+  TArrayList<AnAssociation2<vec3d, double> > crds(atoms.Count());
+  for( size_t i=0; i < atoms.Count(); i++ )  {
+    crds[i].A() = atoms[i]->crd();
+    crds[i].B() = (*weight_calculator)(*atoms[i]);
+  }
+
+  WBoxInfo rv;
+  vec3d rms;
+  TSPlane::CalcPlanes(crds, rv.normals, rms, rv.center);  
+  for( int i=0; i < 3; i++ )  {
+    rv.d[i] = rv.normals[i].DotProd(rv.center)/rv.normals[i].Length();
+    rv.normals[i].Normalise();
+    for( size_t j=0; j < crds.Count(); j++ )  {
+      const double d = crds[j].GetA().DotProd(rv.normals[i]) - rv.d[i];
+      if( d < 0 )  {
+        if( radii != NULL )  {
+          const double d1 = d - radii->Item(j);
+          if( d1 < rv.r_from[i] )
+            rv.r_from[i] = d1;
+        }
+        const double d2 = d - atoms[j]->GetType().r_sfil;
+        if( d2 < rv.s_from[i] )
+          rv.s_from[i] = d2;
+      }
+      else  {
+        if( radii != NULL )  {
+          const double d1 = d + radii->Item(j);
+          if( d1 > rv.r_to[i] )
+            rv.r_to[i] = d1;
+        }
+        const double d2 = d + atoms[j]->GetType().r_sfil;
+        if( d2 > rv.s_to[i] )
+          rv.s_to[i] = d2;
+      }
+    }
+  }
+  if( radii == NULL )  {
+    rv.r_from = rv.s_from;
+    rv.r_to = rv.s_to;
+  }
+  return rv;
+}
+//..............................................................................
