@@ -250,7 +250,6 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
     else
       atoms[i-dac] = Atoms[i];
   }
-  BuildAtomRegistry();
   Network->Disassemble(atoms, Fragments, Bonds);
   dac = 0;
   for( size_t i=0; i < ac; i++ )  {
@@ -273,6 +272,7 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
     Atoms.Pack();
     OnAtomsDeleted.Exit(this);
   }
+  BuildAtomRegistry();
 }
 //..............................................................................
 void TLattice::BuildPlanes()  {
