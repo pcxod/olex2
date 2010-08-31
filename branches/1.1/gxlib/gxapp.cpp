@@ -335,7 +335,9 @@ TGXApp::~TGXApp()  {
 //..............................................................................
 void TGXApp::ClearXObjects()  {
   OnObjectsDestroy.Enter(dynamic_cast<TBasicApp*>(this), NULL);
-  GetSelection().Clear();
+  FGlRender->SelectAll(false);
+  FGlRender->ClearGroups();
+  FGlRender->GetSelection().Clear();
   XAtoms.Clear();
   XBonds.Clear();
   XGrowLines.Clear();
@@ -346,10 +348,8 @@ void TGXApp::ClearXObjects()  {
 }
 //..............................................................................
 void TGXApp::Clear()  {
-  FGlRender->SelectAll(false);
-  FGlRender->ClearGroups();
   ClearXObjects();
-  
+ 
   for( size_t i=0; i < LooseObjects.Count(); i++ )  
     delete LooseObjects[i];   
   LooseObjects.Clear();
@@ -383,13 +383,13 @@ void TGXApp::CreateXRefs()  {
 size_t TGXApp::GetNetworks(TNetPList& nets) {
   size_t c = XFile().GetLattice().FragmentCount();
   for( size_t i=0; i < c; i++ )
-    nets.Add( &XFile().GetLattice().GetFragment(i) );
+    nets.Add(XFile().GetLattice().GetFragment(i));
 
   for( size_t i=0; i < OverlayedXFiles.Count(); i++ )  {
     size_t fc = OverlayedXFiles[i].GetLattice().FragmentCount();
     c += fc;
     for( size_t j=0; j < fc; j++ )
-      nets.Add( &OverlayedXFiles[i].GetLattice().GetFragment(j) );
+      nets.Add(OverlayedXFiles[i].GetLattice().GetFragment(j));
   }
   return c;
 }
@@ -419,7 +419,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   for( size_t i=0; i < OverlayedXFiles.Count(); i++ )
     totalBCount += OverlayedXFiles[i].GetLattice().BondCount();
 
-  GetRender().SetObjectsCapacity( totalACount + totalBCount + 512);
+  GetRender().SetObjectsCapacity(totalACount + totalBCount + 512);
 
   sw.start("Atoms creation");
   TSAtomPList allAtoms;
