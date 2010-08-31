@@ -31,9 +31,12 @@ void TSPlane::Init(const TTypeList< AnAssociation2<TSAtom*, double> >& atoms)  {
 }
 //..............................................................................
 void TSPlane::_Init(const TTypeList<AnAssociation2<vec3d, double> >& points)  {
-  CalcPlane(points, Normal, Center);
+  vec3d rms;
+  CalcPlanes(points, Normals, rms, Center, true);
   Distance = GetNormal().DotProd(Center)/GetNormal().Length();
-  Normal.Normalise();
+  Normals[0].Normalise();
+  Normals[1].Normalise();
+  Normals[2].Normalise();
 }
 //..............................................................................
 bool TSPlane::CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms, vec3d& center) {
@@ -123,7 +126,5 @@ TSPlane* TSPlane::Def::FromAtomRegistry(AtomRegistry& ar, size_t def_id, TNetwor
   TSPlane* p = new TSPlane(parent, def_id);
   p->Init(points);
   p->SetRegular(regular);
-  if( !equiv.IsI() )
-    p->SetEquiv( new mat3d(equiv));
   return p;
 }

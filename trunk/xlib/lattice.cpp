@@ -281,8 +281,19 @@ void TLattice::BuildPlanes()  {
     TSPlane::Def& pd = PlaneDefs[i];
     for( size_t j=0; j < Matrices.Count(); j++ )  {
       TSPlane* p = pd.FromAtomRegistry(atomRegistry, i, Network, *Matrices[j]);
-      if( p != NULL )
-        AddSPlane(p);
+      if( p != NULL ) {
+        bool uniq = true;
+        for( size_t k=0; k < Planes.Count(); k++ )  {
+          if( Planes[k]->GetCenter().QDistanceTo(p->GetCenter()) < 1e-6 )  {
+            uniq = false;
+            break;
+          }
+        }
+        if( uniq )
+          AddSPlane(p);
+        else
+          delete p;
+      }
     }
   }
 }
@@ -839,10 +850,11 @@ TSAtom* TLattice::NewAtom(const vec3d& center)  {
   return a;
 }
 //..............................................................................
-TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, int weightExtent)  {
+TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, int weightExtent, bool regular)  {
   TSPlane* Plane = TmpPlane(Atoms, weightExtent);
   TSPlanePList rv;
   if( Plane != NULL)  {
+    Plane->SetRegular(regular);
     TSPlane::Def pd = Plane->GetDef();
     bool found = false;
     for( size_t i=0; i < PlaneDefs.Count(); i++ )  {
@@ -857,8 +869,19 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, int weightExtent)  {
         delete Plane;
         for( size_t i=0; i < Matrices.Count(); i++ )  {
           TSPlane* p = pd.FromAtomRegistry(atomRegistry, PlaneDefs.Count()-1, Network, *Matrices[i]);
-          if( p != NULL )
+          if( p != NULL )  {
+            bool uniq = true;
+            for( size_t j=0; j < Planes.Count(); j++ )  {
+              if( Planes[j]->GetCenter().QDistanceTo(p->GetCenter()) < 1e-6 )  {
+                uniq = false;
+                break;
+              }
+            }
+            if( uniq )
             AddSPlane(rv.Add(p));
+            else
+              delete p;
+          }
         }
       }
       else  {

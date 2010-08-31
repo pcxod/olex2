@@ -15,20 +15,16 @@ const uint16_t
 
 class TSPlane : public TSObject<TNetwork>  {
   TTypeList< AnAssociation2<TSAtom*, double> > Crds;
-  vec3d Center, Normal;
+  vec3d Center;
+  mat3d Normals;
   double Distance;
   uint16_t Flags;
   size_t DefId;
-  uint8_t NormalIndex;
-  mat3d* Equiv;
   void _Init(const TTypeList<AnAssociation2<vec3d, double> >& points);
 public:
   TSPlane(TNetwork* Parent, size_t def_id = InvalidIndex) : TSObject<TNetwork>(Parent), 
-    Distance(0), Flags(0), DefId(def_id), Equiv(NULL)  {}
-  virtual ~TSPlane()  {
-    if( Equiv != NULL )
-      delete Equiv;
-  }
+    Distance(0), Flags(0), DefId(def_id)  {}
+  virtual ~TSPlane()  {}
 
   DefPropBFIsSet(Deleted, Flags, plane_flag_deleted)
   // this is just a flag for the owner - is not used by the object itself
@@ -38,7 +34,8 @@ public:
   // an association point, weight is provided
   void Init(const TTypeList<AnAssociation2<TSAtom*, double> >& Points);
 
-  inline const vec3d& GetNormal() const {  return Normal; }
+  inline const vec3d& GetNormal() const {  return Normals[0]; }
+  inline const mat3d& GetBasis() const {  return Normals;  }
   inline const vec3d& GetCenter() const {  return Center; }
 
   double DistanceTo(const vec3d& Crd) const {  return Crd.DotProd(GetNormal()) - Distance;  }
@@ -103,6 +100,7 @@ public:
     Def(const Def& r) : atoms(r.atoms), regular(r.regular)  {}
     Def& operator = (const Def& r)  {
       atoms = r.atoms;
+      regular = r.regular;
       return *this;
     }
     bool operator == (const Def& d)  const {
@@ -118,13 +116,6 @@ public:
   };
 
   Def GetDef() const { return Def(*this);  }
-  /* identifies the transformation from plane where the first atom is in the AU */
-  const mat3d* GetEquiv() {  return Equiv;  }
-  /* must be called with object created by new, it wil be deleted in the destructor */
-  void SetEquiv(mat3d* m)  {
-    if( Equiv != NULL )  delete Equiv;
-    Equiv = m;
-  }
   size_t GetDefId() const {  return DefId; }
   // not for external use
   void _SetDefId(size_t id)  {  DefId = id; }
