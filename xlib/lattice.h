@@ -143,7 +143,7 @@ public:
   inline TSPlane& GetPlane(size_t i) const {  return *Planes[i];  }
   const TSPlanePList& GetPlanes() const {  return Planes;  }
   // for the grown structure might return more than one plane
-  TSPlanePList NewPlane(const TSAtomPList& Atoms, int weightExtent=0);
+  TSPlanePList NewPlane(const TSAtomPList& Atoms, int weightExtent=0, bool regular=false);
   void ClearPlaneDefinitions()  {  PlaneDefs.Clear();  }
 
   TSPlane* TmpPlane(const TSAtomPList& Atoms, int weightExtent=0); //the plane must be deleted by the caller !

@@ -1985,14 +1985,13 @@ TSPlane *TGXApp::TmpPlane(TXAtomPList* atoms, int weightExtent)  {
   return XFile().GetLattice().TmpPlane(SAtoms, weightExtent);
 }
 //..............................................................................
-TXPlane *TGXApp::AddPlane(TXAtomPList &Atoms, bool Rectangular, int weightExtent)  {
+TXPlane *TGXApp::AddPlane(TXAtomPList &Atoms, bool regular, int weightExtent)  {
   if( Atoms.Count() < 3 )  return NULL;
   TSAtomPList SAtoms(Atoms, TXAtom::AtomAccessor<>());
-  TSPlanePList planes = XFile().GetLattice().NewPlane(SAtoms, weightExtent);
+  TSPlanePList planes = XFile().GetLattice().NewPlane(SAtoms, weightExtent, regular);
   TXPlane* rv = NULL;
   for( size_t i=0; i < planes.Count(); i++ )  {
     TXPlane& XP = XPlanes.Add(new TXPlane(*FGlRender, olxstr("TXPlane") << planes[i]->GetDefId(), planes[i]));
-    planes[i]->SetRegular(Rectangular);
     XP.Create();
     if( rv == NULL )
       rv = &XP;
