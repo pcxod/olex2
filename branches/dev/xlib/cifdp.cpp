@@ -209,11 +209,17 @@ size_t TCifDP::CIFToks(const olxstr& exp, TStrList& out)  {
     out.Add(exp.SubStringFrom(start).TrimWhiteChars());
   return out.Count() - toks_c;
 }
-//..............................................................................
-cetTable::~cetTable()  {
+//.............................................................................
+cetTable::cetTable(const cetTable& v) : data(v.data) {
+  for( size_t i=0; i < data.RowCount(); i++ )
+    for( size_t j=0; j < data.ColCount(); j++ )
+      data[i][j] = v.data[i][j]->Replicate();
+}
+void cetTable::Clear()  {
   for( size_t i=0; i < data.RowCount(); i++ )
     for( size_t j=0; j < data.ColCount(); j++ )
       delete data[i][j];
+  data.Clear();
 }
 void cetTable::ToStrings(TStrList& list) const {
   list.Add("loop_");
@@ -262,7 +268,7 @@ void cetTable::DataFromStrings(TStrList& lines)  {
     toks.Clear();
     TCifDP::CIFToks(lines[i], toks);
     for( size_t j=0; j < toks.Count(); j++ )
-      cells.Add( new cetString(toks[j]));
+      cells.Add(new cetString(toks[j]));
   }
   if( (cells.Count() % data.ColCount()) != 0 )  {
     for( size_t i=0; i < cells.Count(); i++ )  // clean up the memory
@@ -312,6 +318,14 @@ void cetNamedString::ToStrings(TStrList& list) const {
     tmp << value;
 }
 //..............................................................................
+CifBlock::CifBlock(const CifBlock& v)  {
+  for( size_t i=0; i < v.params.Count(); i++ )  {
+    param_map.Add(v.params[i], v.params.GetObject(i));
+    params.Add(v.params[i], v.params.GetObject(i));
+    if( EsdlInstanceOf(*v.params.GetObject(i), cetTable) )
+      table_map.Add(v.params[i], (cetTable*)v.params.GetObject(i));
+  }
+}
 CifBlock::~CifBlock()  {
   for( size_t i=0; i < params.Count(); i++ )
     delete params.GetObject(i);
@@ -327,7 +341,7 @@ ICifEntry& CifBlock::Add(const olxstr& pname, ICifEntry* p)  {
     param_map.Add(pname, p);
     params.Add(pname, p);
     if( EsdlInstanceOf(*p, cetTable) )
-      table_map.Add(pname, (cetTable*)p); 
+      table_map.Add(pname, (cetTable*)p);
   }
   else  {
     const size_t ti = table_map.IndexOf(pname);
@@ -345,6 +359,32 @@ ICifEntry& CifBlock::Add(const olxstr& pname, ICifEntry* p)  {
     param_map.GetValue(i) = p;
   }
   return *p;
+}
+bool CifBlock::Remove(const olxstr& pname)  {
+  const size_t i = param_map.IndexOf(pname);
+  if( i == InvalidIndex )  return false;
+  param_map.Delete(i);
+  const size_t ti = table_map.IndexOf(pname);
+  if( ti != InvalidIndex )
+    table_map.Delete(ti);
+  const size_t oi = params.IndexOf(pname);
+  delete params.GetObject(oi);
+  params.Delete(oi);
+  return true;
+}
+void CifBlock::Rename(const olxstr& old_name, const olxstr& new_name)  {
+  const size_t i = param_map.IndexOf(old_name);
+  if( i == InvalidIndex )  return;
+  ICifEntry* val = param_map.GetValue(i);
+  param_map.Delete(i);
+  param_map.Add(new_name, val);
+  const size_t ti = table_map.IndexOf(old_name);
+  if( ti != InvalidIndex )  {
+    table_map.Delete(ti);
+    table_map.Add(new_name, (cetTable*)val);
+  }
+  const size_t oi = params.IndexOf(old_name);
+  params[oi] = new_name;
 }
 void CifBlock::ToStrings(TStrList& list) const {
   if( !name.IsEmpty() )

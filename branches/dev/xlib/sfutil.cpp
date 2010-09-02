@@ -105,26 +105,29 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     refs.SetCapacity(hklLoop->GetTable().RowCount());
     F.SetCount(hklLoop->GetTable().RowCount());
     for( size_t i=0; i < hklLoop->GetTable().RowCount(); i++ )  {
-      TCifRow& row = hklLoop->GetTable()[i];
-      TReflection& ref = refs.AddNew(row[hInd].ToInt(), row[kInd].ToInt(), 
-        row[lInd].ToInt(), row[mfInd].ToDouble(), row[sfInd].ToDouble());
+      cif_dp::CifRow& row = hklLoop->GetTable()[i];
+      TReflection& ref = refs.AddNew(row[hInd]->GetStringValue().ToInt(),
+        row[kInd]->GetStringValue().ToInt(), 
+        row[lInd]->GetStringValue().ToInt(),
+        row[mfInd]->GetStringValue().ToDouble(),
+        row[sfInd]->GetStringValue().ToDouble());
       if( mapType == mapTypeDiff )  {
-        const compd rv(row[aInd].ToDouble(), row[bInd].ToDouble());
+        const compd rv(row[aInd]->GetStringValue().ToDouble(), row[bInd]->GetStringValue().ToDouble());
         double dI = (ref.GetI() - rv.mod());
         F[i] = compd::polar(dI, rv.arg());
       }
       else if( mapType == mapType2OmC )  {
-        const compd rv(row[aInd].ToDouble(), row[bInd].ToDouble());
+        const compd rv(row[aInd]->GetStringValue().ToDouble(), row[bInd]->GetStringValue().ToDouble());
         double dI = 2*ref.GetI() - rv.mod();
         F[i] = compd::polar(dI, rv.arg());
       }
       else if( mapType == mapTypeObs ) {
-        const compd rv(row[aInd].ToDouble(), row[bInd].ToDouble());
+        const compd rv(row[aInd]->GetStringValue().ToDouble(), row[bInd]->GetStringValue().ToDouble());
         F[i] = compd::polar(ref.GetI(), rv.arg());
       }
       else  {
-        F[i].SetRe(row[aInd].ToDouble());
-        F[i].SetIm(row[bInd].ToDouble());
+        F[i].SetRe(row[aInd]->GetStringValue().ToDouble());
+        F[i].SetIm(row[bInd]->GetStringValue().ToDouble());
       }
     }
     sw.stop();

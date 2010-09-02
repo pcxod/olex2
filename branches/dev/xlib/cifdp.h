@@ -12,6 +12,8 @@ namespace cif_dp {
     virtual void Format()  {}
     virtual bool HasName() const {  return false;  }
     virtual const olxstr& GetName() const {  throw TNotImplementedException(__OlxSourceInfo);  }
+    virtual ICifEntry* Replicate() const = 0;
+    virtual olxstr GetStringValue() const = 0;
   };
   struct IStringCifEntry : public ICifEntry {  // string(s) value accessor interface
     IStringCifEntry()  {}
@@ -24,6 +26,7 @@ namespace cif_dp {
   };
   struct cetComment : public IStringCifEntry {
     olxstr comment;
+    cetComment(const cetComment& v) : comment(v.comment)  {}
     cetComment(const olxstr& _value) : comment(_value)  {}
     virtual void ToStrings(TStrList& list) const {
       if( !comment.IsEmpty() )
@@ -31,24 +34,32 @@ namespace cif_dp {
     }
     virtual bool HasComment() const {  return true;  }
     virtual const olxstr& GetComment() const {  return comment;  }
+    virtual ICifEntry* Replicate() const {  return new cetComment(comment);  }
+    virtual olxstr GetStringValue() const {  return comment;  }
   };
   struct cetString : public IStringCifEntry  {
     olxstr value;
     bool quoted;
+    cetString(const cetString& v) : value(v.value), quoted(v.quoted)  {}
     cetString(const olxstr& _val);
     virtual void ToStrings(TStrList& list) const;
     virtual size_t Count() const {  return 1;  }
     virtual const olxstr& operator [] (size_t i) const {  return value;  }
+    virtual ICifEntry* Replicate() const {  return new cetString(*this);  }
+    virtual olxstr GetStringValue() const {  return value;  }
   };
   struct cetNamedString : public cetString {
     olxstr name;
+    cetNamedString(const cetNamedString& v) : cetString(v), name(v.name)  {}
     cetNamedString(const olxstr& _name, const olxstr& _val) : cetString(_val), name(_name)  {}
     virtual void ToStrings(TStrList& list) const;
     virtual bool HasName() const {  return true;  }
     virtual const olxstr& GetName() const {  return name;  }
+    virtual ICifEntry* Replicate() const {  return new cetNamedString(*this);  }
   };
   struct cetCommentedString : public cetNamedString  {
     olxstr comment;
+    cetCommentedString(const cetCommentedString& v) : cetNamedString(v), comment(v.comment)  {}
     cetCommentedString(const olxstr& _name, const olxstr& _val, const olxstr& _comment)
       : cetNamedString(_name, _val), comment(_comment)  {}
     virtual void ToStrings(TStrList& list) const {
@@ -57,9 +68,12 @@ namespace cif_dp {
     }
     virtual bool HasComment() const {  return true;  }
     virtual const olxstr& GetComment() const {  return comment;  }
+    virtual ICifEntry* Replicate() const {  return new cetCommentedString(*this);  }
   };
   struct cetStringList : public IStringCifEntry {
     TStrList lines;
+    cetStringList()  {}
+    cetStringList(const cetStringList& v) : lines(v.lines)  {}
     virtual void ToStrings(TStrList& list) const {
       list.Add(';');
       list.AddList(lines);
@@ -71,9 +85,12 @@ namespace cif_dp {
     }
     virtual size_t Count() const {  return lines.Count();  }
     virtual const olxstr& operator [] (size_t i) const {  return lines[i];  }
+    virtual ICifEntry* Replicate() const {  return new cetStringList(*this);  }
+    virtual olxstr GetStringValue() const {  throw TNotImplementedException(__OlxSourceInfo);  }
   };
   struct cetNamedStringList : public cetStringList  {
     olxstr name;
+    cetNamedStringList(const cetNamedStringList& v) : cetStringList(v), name(v.name)  {}
     cetNamedStringList(const olxstr& _name) : name(_name)  {}
     virtual void ToStrings(TStrList& list) const {
       list.Add(name);
@@ -81,9 +98,12 @@ namespace cif_dp {
     }
     virtual bool HasName() const {  return true;  }
     virtual const olxstr& GetName() const {  return name;  }
+    virtual ICifEntry* Replicate() const {  return new cetNamedStringList(*this);  }
   };
   struct cetCommentedNamedStringList : public cetNamedStringList {
    olxstr comment;
+    cetCommentedNamedStringList(const cetCommentedNamedStringList& v)
+      : cetNamedStringList(v), comment(v.comment)  {}
     cetCommentedNamedStringList(const olxstr& _name, const olxstr& _comment)
       : cetNamedStringList(_name), comment(_comment)  {}
     virtual void ToStrings(TStrList& list) const {
@@ -92,15 +112,23 @@ namespace cif_dp {
     }
     virtual bool HasComment() const {  return true;  }
     virtual const olxstr& GetComment() const {  return comment;  }
+    virtual ICifEntry* Replicate() const {  return new cetCommentedNamedStringList(*this);  }
   };
+  typedef TPtrList<ICifEntry> CifRow;
+  typedef TTTable<CifRow> CifTable;
   struct cetTable : public ICifEntry {
-    TTTable<TPtrList<ICifEntry> > data;
-    virtual ~cetTable();
+    CifTable data;
+    cetTable()  {}
+    cetTable(const cetTable& v);
+    virtual ~cetTable()  {  Clear();  }
+    void Clear();
     virtual void ToStrings(TStrList& list) const;
     virtual void Format()  {}
     virtual const olxstr& GetName() const;
     virtual bool HasName() const {  return true;  }
     void DataFromStrings(TStrList& lines);
+    virtual ICifEntry* Replicate() const {  return new cetTable(*this);  }
+    virtual olxstr GetStringValue() const {  throw TNotImplementedException(__OlxSourceInfo);  }
   };
 
   struct CifBlock : public ICifEntry {
@@ -109,11 +137,18 @@ namespace cif_dp {
     olxdict<olxstr, ICifEntry*, olxstrComparator<true> > param_map;
     TStrPObjList<olxstr, ICifEntry*> params;
     CifBlock* parent;
+    CifBlock(const CifBlock& v);
     CifBlock(const olxstr& _name, CifBlock* _parent=NULL) : name(_name), parent(_parent)  {}
     virtual ~CifBlock();
     ICifEntry& Add(const olxstr& pname, ICifEntry* p);
+    bool Remove(const olxstr& pname);
+    void Rename(const olxstr& old_name, const olxstr& new_name);
     virtual void ToStrings(TStrList& list) const;
     virtual void Format();
+    virtual ICifEntry* Replicate() const {  return new CifBlock(*this);  }
+    virtual olxstr GetStringValue() const {  throw TNotImplementedException(__OlxSourceInfo);  }
+    virtual bool HasName() const {  return true;  }
+    virtual const olxstr& GetName() const {  return name;  }
   };
 
   class TCifDP : public IEObject  {

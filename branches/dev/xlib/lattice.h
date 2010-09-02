@@ -29,7 +29,7 @@ private:
   size_t GenerateMatrices(smatd_plist& Result, const vec3d& center, double rad);
   smatd_plist Matrices;    // list of all matrices
   TSAtomPList  Atoms;      // list of all atoms
-  TSBondPList  Bonds;      // list of all nework nodes; some of them are equal to Atoms
+  TSBondPList  Bonds;      // list of all bonds
   TNetPList    Fragments;
   TSPlanePList Planes;
   AtomRegistry atomRegistry;

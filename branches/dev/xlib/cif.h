@@ -6,21 +6,14 @@
 #include "cifdata.h"
 #include "cifloop.h"
 #include "ciftab.h"
+#include "cifdp.h"
 BeginXlibNamespace()
 
 class TCif: public TBasicCFile  {
-public:
-  struct CifData  {
-    TStrList data;
-    bool quoted;
-    CifData(bool _quoted=false) : quoted(_quoted)  {}
-    CifData(const olxstr& val, bool _quoted) : quoted(_quoted)  {  data.Add(val);  }
-    CifData(const CifData& d) : data(d.data), quoted(d.quoted)  {}
-  };
 private:
-  TStrPObjList<olxstr,CifData*> Lines, Parameters;
-  void Format();
-  olxstr FDataName, FWeightA, FWeightB;
+  cif_dp::TCifDP data_provider;
+  size_t block_index;
+  olxstr FWeightA, FWeightB;
   TStrPObjList<olxstr,TCifLoop*> Loops; // LoopName + CifLoop
 //  void SetDataName(const olxstr& S);
   bool FDataNameUpperCase;
@@ -28,7 +21,6 @@ private:
   TCifDataManager DataManager;
   smatd_list Matrices;
   olxdict<olxstr, size_t, olxstrComparator<true> > MatrixMap;
-  bool ExtractLoop(size_t& start);
 public:
   TCif();
   virtual ~TCif();
@@ -41,26 +33,37 @@ public:
   //Adopts the content of a file (asymmetric unit, loops, etc) to a specified source file
   virtual bool Adopt(TXFile& XF);
   //Finds a value by name
-  CifData *FindParam(const olxstr& name) const; 
- /*Returns the first string of the CifData objects associated with a given parameter.
-   Note that there might be more than  one string.
-   To get full information, use GetParam function instead.  */
-  const olxstr& GetSParam(const olxstr& name) const;
+  cif_dp::ICifEntry* FindEntry(const olxstr& name) const {
+    return (block_index == InvalidIndex) ? false :
+      data_provider[block_index].param_map.Find(name, NULL);
+  }
+  template <class Entry> Entry* FindParam(const olxstr& name) const {
+    return dynamic_cast<Entry*>(FindEntry(name));
+  }
+ /* Returns the value of the given param as a string. Mght have '\n' as lines separator */
+  olxstr GetParamAsString(const olxstr& name) const;
   //Returns true if a specified parameter exists
   bool ParamExists(const olxstr& name) const;
-  //Adds/Sets given parameter a value; returns true if the parameter was created
-  bool SetParam(const olxstr& name, const CifData& value);
-  bool SetParam(const olxstr& name, const olxstr& value, bool quoted)  {
-    return SetParam(name, CifData(value,quoted));
+  //Adds/Sets given parameter a value
+  void SetParam(const olxstr& name, const cif_dp::ICifEntry& value);
+  void SetParam(const olxstr& name, const olxstr& value, bool quoted)  {
+    if( quoted )
+      SetParam(name, cif_dp::cetNamedString(name, olxstr('\'') << value << '\''));
+    else
+      SetParam(name, cif_dp::cetNamedString(name, value));
   }
-  bool ReplaceParam(const olxstr& olx_name, const olxstr& new_name, const CifData& value);
-  bool Rename(const olxstr& olx_name, const olxstr& new_name);
+  void ReplaceParam(const olxstr& olx_name, const olxstr& new_name, const cif_dp::ICifEntry& value);
+  void Rename(const olxstr& olx_name, const olxstr& new_name);
   // returns the number of parameters
-  inline size_t ParamCount() const {  return Parameters.Count();  }
+  inline size_t ParamCount() const {
+    return (block_index == InvalidIndex) ? 0 : data_provider[block_index].param_map.Count();
+  }
   // returns the name of a specified parameter
-  const olxstr& Param(size_t index) const {  return Parameters[index];  }
+  const olxstr& ParamName(size_t i) const {  return data_provider[block_index].param_map.GetKey(i);  }
   // returns the value of a specified parameter
-  CifData& ParamValue(size_t index)  {  return *Parameters.GetObject(index);  }
+  cif_dp::ICifEntry& ParamValue(size_t i) const {
+    return *data_provider[block_index].param_map.GetValue(i);
+  }
   // matrics access functions
   size_t MatrixCount() const {  return Matrices.Count();  }
   const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
@@ -79,11 +82,13 @@ public:
   }
   //............................................................................
   //Returns the data name of the file (data_XXX, returns XXX in this case)
-  inline const olxstr& GetDataName() const {  return FDataName; }
+  inline const olxstr& GetDataName() const {
+    return (block_index == InvalidIndex) ? EmptyString : data_provider[block_index].GetName();
+  }
   /*Set the data name. You should specify only the data name, not data_DATANAME.
     The function is not affected by DataNameUpperCase function, and, hence, specify
     the character's case manually, if necessary. */
-  void SetDataName(const olxstr& D);
+  //void SetDataName(const olxstr& D);
   /*Shows if the data name will appear in upper case or in a default case when
     current object is loaded from a file  */
   inline bool IsDataNameUpperCase() const { return FDataNameUpperCase;  }
@@ -106,7 +111,7 @@ public:
   // Returns the number of loops
   inline size_t LoopCount() const { return Loops.Count(); }
   // Adds a loop to current  file
-  TCifLoop& AddLoop(const olxstr& Name);
+  TCifLoop& AddLoop(const olxstr& name);
   /* this is the only loop, which is not automatically created from structure data!
    If the loop does not exist it is automatically created
   */
@@ -123,8 +128,6 @@ public:
   bool CreateTable(TDataItem* TableDefinitions, TTTable<TStrList>& Table, smatd_list& SymmList) const;
   void Group();
   const TCifDataManager& GetDataManager() const {  return DataManager;  }
-  // specific CIF tokeniser to tackle 'dog's life'...
-  static size_t CIFToks(const olxstr& str, TStrList& toks);
   virtual IEObject* Replicate() const {  return new TCif;  }
 };
 //---------------------------------------------------------------------------

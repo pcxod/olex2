@@ -204,10 +204,8 @@ void TMainForm::funCell(const TStrObjList& Params, TMacroError &E)  {
 //..............................................................................
 void TMainForm::funCif(const TStrObjList& Params, TMacroError &E)  {
   TCif& cf = FXApp->XFile().GetLastLoader<TCif>();
-  if( cf.ParamExists(Params[0]) )  {
-    TCif::CifData* cd = cf.FindParam(Params[0]);
-    E.SetRetVal(cd->data.Text(EmptyString));
-  }
+  if( cf.ParamExists(Params[0]) )
+    E.SetRetVal(cf.GetParamAsString(Params[0]));
   else
     E.SetRetVal(XLibMacros::NAString);
 }
@@ -5326,11 +5324,12 @@ void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 
   THklFile file;
   for( size_t i=0; i < hklLoop->GetTable().RowCount(); i++ )  {
-    TReflection* r = new TReflection( hklLoop->GetTable()[i][hInd].ToInt(),
-                                      hklLoop->GetTable()[i][kInd].ToInt(),
-                                      hklLoop->GetTable()[i][lInd].ToInt(),
-                                      hklLoop->GetTable()[i][mInd].ToDouble(),
-                                      hklLoop->GetTable()[i][sInd].ToDouble() );
+    TReflection* r = new TReflection(
+      hklLoop->GetTable()[i][hInd]->GetStringValue().ToInt(),
+      hklLoop->GetTable()[i][kInd]->GetStringValue().ToInt(),
+      hklLoop->GetTable()[i][lInd]->GetStringValue().ToInt(),
+      hklLoop->GetTable()[i][mInd]->GetStringValue().ToDouble(),
+      hklLoop->GetTable()[i][sInd]->GetStringValue().ToDouble() );
     file.Append( *r );
   }
   file.SaveToFile( exName );

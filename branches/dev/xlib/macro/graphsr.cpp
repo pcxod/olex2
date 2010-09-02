@@ -91,21 +91,22 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
   refs.SetCapacity(hklLoop->GetTable().RowCount());
 
   for( size_t i=0; i < hklLoop->GetTable().RowCount(); i++ )  {
-    TCifRow& row = hklLoop->GetTable()[i];
-    hkl[0] = row[hInd].ToInt();
-    hkl[1] = row[kInd].ToInt();
-    hkl[2] = row[lInd].ToInt();
+    cif_dp::CifRow& row = hklLoop->GetTable()[i];
+    hkl[0] = row[hInd]->GetStringValue().ToInt();
+    hkl[1] = row[kInd]->GetStringValue().ToInt();
+    hkl[2] = row[lInd]->GetStringValue().ToInt();
     hkl *= hkl2c;
     TGraphRSRef& ref = refs.AddNew();
     ref.ds = hkl.Length()*0.5;
 
     if( list == 3 )  {
-      ref.Fo = olx_abs(row[mfInd].ToDouble());
-      ref.Fc = TEComplex<double>(row[aInd].ToDouble(), row[bInd].ToDouble()).mod();
+      ref.Fo = olx_abs(row[mfInd]->GetStringValue().ToDouble());
+      ref.Fc = TEComplex<double>(
+        row[aInd]->GetStringValue().ToDouble(), row[bInd]->GetStringValue().ToDouble()).mod();
     }
     else if( list == 4 )  {
-      ref.Fo = row[mf2Ind].ToDouble();
-      ref.Fc = row[cf2Ind].ToDouble();
+      ref.Fo = row[mf2Ind]->GetStringValue().ToDouble();
+      ref.Fc = row[cf2Ind]->GetStringValue().ToDouble();
       if( ref.Fo < 0 )  ref.Fo = 0;
       else              ref.Fo = sqrt(ref.Fo);
       if( ref.Fc < 0 )  ref.Fc = 0;

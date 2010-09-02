@@ -1,22 +1,20 @@
 //----------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-#ifndef etableH
-#define etableH
-//---------------------------------------------------------------------------
+#ifndef __olx_sdl_etable_H
+#define __olx_sdl_etable_H
 #include "ebase.h"
 #include "estrlist.h"
 #include "typelist.h"
 #include "evector.h"
-
 BeginEsdlNamespace()
 
-//template argumets must be TTStrList or TTStringLists
 template <class T> class TTTable: public IEObject  {
   TTypeList<T> Rows;
   TStrList ColNames, RowNames;
 public:
   TTTable()  {}
+  TTTable(const TTTable& t) : Rows(t.Rows), ColNames(t.ColNames), RowNames(t.RowNames)  {}
   TTTable(size_t RowCnt, size_t ColCnt)  {  Resize(RowCnt, ColCnt);  }
 
   virtual ~TTTable()  {  Clear();  }
@@ -27,13 +25,17 @@ public:
     RowNames.Clear();
   }
 
-  template <class T1> void Assign( const TTTable<T1>& Table)  {
+  template <class T1> TTTable& Assign(const TTTable<T1>& Table)  {
     Resize(Table.RowCount(), Table.ColCount());
     ColNames.Assign(Table.GetColNames());
     RowNames.Assign(Table.GetRowNames());
     for( size_t i=0; i < RowCount(); i++ )
       Rows[i].Assign(Table[i]);
+    return *this;
   }
+  TTTable& operator = (const TTTable& Table)  {  return Assign(Table);  }
+  template <class T1> TTTable& operator = (const TTTable<T1>& Table)  {  return Assign(Table);  }
+  
 
   const TStrList& GetColNames() const {  return ColNames;  }
   const TStrList& GetRowNames() const {  return RowNames;  }
@@ -41,8 +43,8 @@ public:
   size_t ColCount() const {  return ColNames.Count();  }
   olxstr& ColName(size_t index) const { return ColNames[index];  }
   olxstr& RowName(size_t index) const {  return RowNames[index];  }
-  size_t ColIndex(const olxstr& N) const  {  return ColNames.IndexOf(N);  }
-  size_t RowIndex(const olxstr& N) const  {  return RowNames.IndexOf(N);  }
+  size_t ColIndex(const olxstr& N) const {  return ColNames.IndexOf(N);  }
+  size_t RowIndex(const olxstr& N) const {  return RowNames.IndexOf(N);  }
 
   void Resize(size_t  RowCnt, size_t ColCnt)  {
     if( RowCnt != Rows.Count() )  {
@@ -53,14 +55,14 @@ public:
       else  {
         while( Rows.Count() < RowCnt )  {
           Rows.AddNew();
-          RowNames.Add(EmptyString);
+          RowNames.Add();
         }
       }
     }
     if( ColCnt != ColNames.Count() )  {
       if( ColNames.Count() < ColCnt )  {  // can happen if RowCnt changed
         while( ColNames.Count() < ColCnt )
-          ColNames.Add(EmptyString);
+          ColNames.Add();
       }
       else
         ColNames.SetCount(ColCnt);
@@ -100,36 +102,9 @@ public:
   T& AddRow(const olxstr& Caption=EmptyString)  {
     T& SL = Rows.AddNew();
     for( size_t i=0; i < ColNames.Count(); i++ )
-      SL.Add(EmptyString);
+      SL.Add();
     RowNames.Add(Caption);
     return SL;
-  }
-
-  void EmptyContent(bool EmptyCaptions)  {
-    for( size_t i=0; i < Rows.Count(); i++ )  {
-      for( size_t j=0; j < Rows[i].Count(); j++ )
-        Rows[i][j] = EmptyString;
-    }
-    if( EmptyCaptions )  {
-      for( size_t j=0; j < ColNames.Count(); j++ )
-        ColNames[j] = EmptyString;
-      for( size_t j=0; j < RowNames.Count(); j++ )
-        RowNames[j] = EmptyString;
-    }
-  }
-
-  void EmptyRow(size_t index, bool EmptyCaption)  {
-    for( size_t j=0; j < Rows[index].Count(); j++ )
-      Rows[index][j] = EmptyString;
-    if( EmptyCaption )
-      RowNames[index] = EmptyString;
-  }
-
-  void EmptyCol(size_t index, bool EmptyCaption)  {
-    for( size_t i=0; i < RowCount(); i++ )
-      Rows[i][index] = EmptyString;
-    if( EmptyCaption )
-      ColNames[index] = EmptyString;
   }
 
   void DelRow(size_t index)  {
@@ -144,7 +119,7 @@ public:
   }
 
 
-  bool Find(const olxstr& What, size_t& row, size_t& col) const  {
+  bool Find(const olxstr& What, size_t& row, size_t& col) const {
     for( size_t i=0; i < Rows.Count(); i++ )  {
       col = Rows[i].IndexOf(What);
       if(  col != InvalidIndex )  {  
@@ -155,7 +130,7 @@ public:
     return false;
   }
   // finds a row for the column value
-  bool FindCol(const olxstr& What, size_t& col) const  {
+  bool FindCol(const olxstr& What, size_t& col) const {
     for( size_t i=0; i < Rows.Count(); i++ )
       if( Rows[i][col] == What )  { 
         col = i;  
@@ -164,8 +139,8 @@ public:
     return false;
   }
   // finds a column in the row
-  bool HasRow(const olxstr& What, size_t row ) const  {
-    return (Rows[row].IndexOf(What) == InvalidIndex) ? false : true;
+  bool HasRow(const olxstr& What, size_t row ) const {
+    return Rows[row].IndexOf(What) != InvalidIndex;
   }
 
   void CreateHTMLList(TStrList& L, const olxstr& Title,
