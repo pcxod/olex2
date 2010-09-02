@@ -392,7 +392,9 @@ void TNetwork::THBondSearchTask::Run(size_t ind)  {
         B->SetType(sotHBond);
         B->SetA(*A1);
         B->SetB(*Atoms[i]);
-        Bonds->Add( B );
+        A1->AddBond(*B);
+        Atoms[i]->AddBond(*B);
+        Bonds->Add(B);
       }
     }
   }

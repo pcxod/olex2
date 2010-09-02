@@ -70,8 +70,10 @@ bool TGlGroup::Add(AGDrawObject& GO, bool remove)  {
   AGDrawObject* go = &GO;
   if( go == this || !GO.IsSelectable() )  return false;
   TGlGroup *GlG = Parent.FindObjectGroup(GO);
-  if( GlG != NULL )  
+  if( GlG != NULL )
     go = GlG;
+  if( go == this )
+    return false;
   const size_t i = Objects.IndexOf(go);
   if( i == InvalidIndex )  {
     if( GO.GetPrimitives().PrimitiveCount() != 0 )  {  // check the compatibility of the selection
