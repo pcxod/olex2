@@ -2989,6 +2989,7 @@ void TGXApp::SetHBondsVisible(bool v)  {
         XBonds[i].SetVisible(XAtoms[b.A().GetTag()].IsVisible() && XAtoms[b.B().GetTag()].IsVisible());
       }
     }
+    RestoreGroups();
   }
 }
 //..............................................................................
@@ -3066,6 +3067,7 @@ void TGXApp::SetQPeakBondsVisible(bool v)  {
       if( b.A().GetType() == iQPeakZ || b.B().GetType() == iQPeakZ )
         XBonds[i].SetVisible(XAtoms[b.A().GetTag()].IsVisible() && XAtoms[b.B().GetTag()].IsVisible());
     }
+    RestoreGroups();
   }
 }
 //..............................................................................

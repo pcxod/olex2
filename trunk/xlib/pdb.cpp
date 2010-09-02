@@ -129,7 +129,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
       GetAsymmUnit().Angles()[1] = toks[5].ToDouble();
       GetAsymmUnit().Angles()[2] = toks[6].ToDouble();
       GetAsymmUnit().InitMatrices();
-      if( toks.Count() >= 8 )  {
+      if( toks.Count() > 8 )  {
         TSymmLib& sl = TSymmLib::GetInstance();
         TSpaceGroup* sg = NULL;
         toks[8].Trim(' ');
@@ -142,7 +142,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
         if( sg != NULL )
           GetAsymmUnit().ChangeSpaceGroup(*sg);
       }
-      if( toks.Count() >= 9 )
+      if( toks.Count() > 9 )
         GetAsymmUnit().SetZ(toks[9].ToInt());
     }
     else if( line == "ATOM" )  {
@@ -178,7 +178,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
       QE[4] = toks[14].ToDouble();
       QE[5] = toks[13].ToDouble();
       QE /= 10000;
-      TCAtom* ca = GetAsymmUnit().FindCAtomById(toks[1].ToInt());
+      TCAtom* ca = GetAsymmUnit().FindCAtomById(toks[1].ToInt()-1);
       if( ca != NULL )  {
         ca->UpdateEllp(QE);
         if( ca->GetEllipsoid()->IsNPD() )

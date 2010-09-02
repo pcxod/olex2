@@ -331,18 +331,22 @@ public:
     else      TPtrList<T>::QuickSorter.template Sort< TStringWrapperComparator<T,false> >(Strings);
   }
 
-  void StrtokF(const SC& Str, const TSizeList& indexes)  {
-    if( indexes.Count() < 2 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "at least two numbers are required");
-    size_t fLength = 0;
+  size_t StrtokF(const SC& Str, const TSizeList& indexes)  {
+    if( indexes.IsEmpty() )  return 0;
+    size_t fLength = 0, cnt = 0;
     for( size_t i=0; i < indexes.Count(); i++ )  {
       if( indexes[i] > (Str.Length()-fLength) )
-        throw TInvalidArgumentException(__OlxSourceInfo, "string is too short");
-      Add( Str.SubString(fLength, indexes[i]) );
+        break;
+      Add(Str.SubString(fLength, indexes[i]));
+      cnt++;
       fLength += indexes[i];
-      if( fLength >= Str.Length() )  return;
+      if( fLength >= Str.Length() )  return cnt;
     }
-    if( fLength < Str.Length() )  Add( Str.SubStringFrom(fLength) );
+    if( fLength < Str.Length() )  {
+      Add(Str.SubStringFrom(fLength));
+      cnt++;
+    }
+    return cnt;
   }
   void Strtok(const SC& Str, olxch Sep, bool SkipSequences = true)  {
     SC Tmp(Str);
@@ -351,16 +355,16 @@ public:
       if( ind != 0 )  // skip sequences of separators
         Add(Tmp.SubStringTo(ind));
       else if( !SkipSequences )
-        Add(EmptyString);
+        Add();
       if( (size_t)(ind+1) >= Tmp.Length() )  {
-        Tmp = EmptyString;
+        Tmp.SetLength(0);
         break;
       }
       while( (size_t)(++ind) < Tmp.Length() && Tmp.CharAt(ind) == Sep ) 
         if( !SkipSequences )
           Add(EmptyString);
       if( (size_t)ind >= Tmp.Length() )  {
-        Tmp = EmptyString;
+        Tmp.SetLength(0);
         break;
       }
       Tmp = Tmp.SubStringFrom(ind);
@@ -371,13 +375,13 @@ public:
   }
   // similar to previous implementation, the list is passed as one of the parameters
   // takes a string as a separator
-  void Strtok( const SC& Str, const SC &Sep )  {
+  void Strtok(const SC& Str, const SC &Sep)  {
     SC Tmp(Str);
     size_t ind = Tmp.IndexOf(Sep);
     while( ind != InvalidIndex )  {
       Add(Tmp.SubStringTo(ind));
       if( (ind+Sep.Length()) >= Tmp.Length() )  {
-        Tmp = EmptyString;
+        Tmp.SetLength(0);
         break;
       }
       Tmp = Tmp.SubStringFrom(ind+Sep.Length());
