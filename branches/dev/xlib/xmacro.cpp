@@ -2602,47 +2602,49 @@ bool XLibMacros::ProcessExternalFunction(olxstr& func)  {
   return false;
 }
 //..............................................................................
-void XLibMacros::MergePublTableData(cif_dp::CifTable& to, cif_dp::CifTable& from)  {
-  if( from.RowCount() == 0 )  return;
+void XLibMacros::MergePublTableData(cif_dp::cetTable& to, cif_dp::cetTable& from)  {
+  if( from.GetData().RowCount() == 0 )  return;
   static const olxstr authorNameCN("_publ_author_name");
   // create a list of unique colums, and prepeare them for indexed access
   TSStrPObjList<olxstr, AnAssociation2<size_t,size_t>, false> uniqCols;
   for( size_t i=0; i < from.ColCount(); i++ )  {
     if( uniqCols.IndexOfComparable(from.ColName(i)) == InvalidIndex )  {
-      uniqCols.Add(from.ColName(i), AnAssociation2<size_t,size_t>(i, InvalidIndex) );
+      uniqCols.Add(from.ColName(i), AnAssociation2<size_t,size_t>(i, InvalidIndex));
     }
   }
   for( size_t i=0; i < to.ColCount(); i++ )  {
-    size_t ind = uniqCols.IndexOfComparable( to.ColName(i) );
+    const size_t ind = uniqCols.IndexOfComparable(to.ColName(i));
     if( ind == InvalidIndex )
-      uniqCols.Add( to.ColName(i), AnAssociation2<size_t,size_t>(InvalidIndex, i) );
+      uniqCols.Add(to.ColName(i), AnAssociation2<size_t,size_t>(InvalidIndex, i));
     else
       uniqCols.GetObject(ind).B() = i;
   }
   // add new columns, if any
   for( size_t i=0; i < uniqCols.Count(); i++ ) {
     if( uniqCols.GetObject(i).GetB() == InvalidIndex )  {
-      to.AddCol( uniqCols.GetComparable(i) );
+      to.AddCol(uniqCols.GetComparable(i));
       uniqCols.GetObject(i).B() = to.ColCount() - 1;
     }
   }
   /* by this point the uniqCols contains all the column names and the association
   holds corresponding column indexes in from and to tables */
   // the actual merge, by author name
-  size_t authNCI = uniqCols.IndexOfComparable(authorNameCN);
+  const size_t authNCI = uniqCols.IndexOfComparable(authorNameCN);
   if( authNCI == InvalidIndex )  return;  // cannot do much, can we?
   AnAssociation2<size_t,size_t> authCA(uniqCols.GetObject(authNCI));
   if( authCA.GetA() == InvalidIndex )  return;  // no author?, bad ...
   for( size_t i=0; i < from.RowCount(); i++ )  {
     size_t ri = InvalidIndex;
     for( size_t j=0; j < to.RowCount(); j++ )  {
-      if( to[j][authCA.GetB()]->GetStringValue().Equalsi(from[i][authCA.GetA()]->GetStringValue()) )  {
+      if( to[j][authCA.GetB()]->GetStringValue().Equalsi(
+        from[i][authCA.GetA()]->GetStringValue()) )
+      {
         ri = j;
         break;
       }
     }
     if( ri == InvalidIndex )  {  // add a new row
-      to.AddRow( EmptyString );
+      to.AddRow();
       ri = to.RowCount()-1;
     }
     for( size_t j=0; j < uniqCols.Count(); j++ )  {
@@ -2698,7 +2700,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     for( size_t j=0; j < Cif1.ParamCount(); j++ )
       Cif->SetParam(Cif1.ParamName(j), Cif1.ParamValue(j));
     // update publication info loop
-    MergePublTableData(publ_info.GetTable(), pil.GetTable());
+    MergePublTableData(publ_info, pil);
   }
   // generate moiety string if does not exist
   Cif->SetParam("_chemical_formula_moiety", xapp.XFile().GetLattice().CalcMoiety(), true);
@@ -2824,12 +2826,9 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
 
   latt.GrowFragments(false, NULL);
 
-  TCifLoop& bonds = cif.AddLoop("_geom_bond");
-  bonds.GetTable().AddCol("_geom_bond_atom_site_label_1");
-  bonds.GetTable().AddCol("_geom_bond_atom_site_label_2");
-  bonds.GetTable().AddCol("_geom_bond_distance");
-  bonds.GetTable().AddCol("_geom_bond_site_symmetry_2");
-  bonds.GetTable().AddCol("_geom_bond_publ_flag");
+  TCifLoop& bonds = cif.AddLoopDef(
+    "_geom_bond_atom_site_label_1,_geom_bond_atom_site_label_2,_geom_bond_distance"
+    "_geom_bond_site_symmetry_2_geom_bond_publ_flag");
   for( size_t i=0; i < latt.BondCount(); i++ )  {
     TSBond& b = latt.GetBond(i);
     if( b.A().GetType().GetMr() < 3 || b.A().IsDeleted() )  {
@@ -2861,14 +2860,9 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       row[4] = new cetString('?');
     }
   }
-  TCifLoop& angles = cif.AddLoop("_geom_angle");
-  angles.GetTable().AddCol("_geom_angle_atom_site_label_1");
-  angles.GetTable().AddCol("_geom_angle_atom_site_label_2");
-  angles.GetTable().AddCol("_geom_angle_atom_site_label_3");
-  angles.GetTable().AddCol("_geom_angle");
-  angles.GetTable().AddCol("_geom_angle_site_symmetry_1");
-  angles.GetTable().AddCol("_geom_angle_site_symmetry_3");
-  angles.GetTable().AddCol("_geom_angle_publ_flag");
+  TCifLoop& angles = cif.AddLoopDef(
+    "_geom_angle_atom_site_label_1,_geom_angle_atom_site_label_2,_geom_angle_atom_site_label_3"
+    "_geom_angle,_geom_angle_site_symmetry_1,_geom_angle_site_symmetry_3,_geom_angle_publ_flag");
   for( size_t i=0; i < latt.AtomCount(); i++ )  {
     TSAtom& a = latt.GetAtom(i);
     if( a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.IsAUAtom() )  continue;

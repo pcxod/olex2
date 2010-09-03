@@ -21,6 +21,11 @@ private:
   TCifDataManager DataManager;
   smatd_list Matrices;
   olxdict<olxstr, size_t, olxstrComparator<true> > MatrixMap;
+protected:
+  static TCifLoop* LoopFromDef(cif_dp::CifBlock& dp, const TStrList& col_names);
+  static TCifLoop* LoopFromDef(cif_dp::CifBlock& dp, const olxstr& col_names)  {
+    return LoopFromDef(dp, TStrList(col_names, ','));
+  }
 public:
   TCif();
   virtual ~TCif();
@@ -111,7 +116,9 @@ public:
   // Returns the number of loops
   inline size_t LoopCount() const { return Loops.Count(); }
   // Adds a loop to current  file
-  TCifLoop& AddLoop(const olxstr& name);
+  //TCifLoop& AddLoop(const olxstr& name);
+  // creates a new loop from comma separated column names
+  TCifLoop& AddLoopDef(const olxstr& col_names);
   /* this is the only loop, which is not automatically created from structure data!
    If the loop does not exist it is automatically created
   */

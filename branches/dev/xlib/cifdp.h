@@ -19,7 +19,6 @@ namespace cif_dp {
     IStringCifEntry()  {}
     virtual ~IStringCifEntry()  {}
     virtual size_t Count() const {  return 0;  }
-    virtual bool HasValue() const {  return Count() != 0;  }
     virtual const olxstr& operator [] (size_t i) const {  throw TNotImplementedException(__OlxSourceInfo);  }
     virtual bool HasComment() const {  return false;  }
     virtual const olxstr& GetComment() const {  throw TNotImplementedException(__OlxSourceInfo);  }
@@ -117,18 +116,48 @@ namespace cif_dp {
   typedef TPtrList<ICifEntry> CifRow;
   typedef TTTable<CifRow> CifTable;
   struct cetTable : public ICifEntry {
+  protected:
     CifTable data;
+    olxstr name;
+  public:
     cetTable()  {}
     cetTable(const cetTable& v);
     virtual ~cetTable()  {  Clear();  }
     void Clear();
+    void AddCol(const olxstr& col_name);
+    CifRow& AddRow()  {  return data.AddRow();  }
+    ICifEntry& Set(size_t i, size_t j, ICifEntry* v);
+    const CifTable& GetData() const {  return data;  }
+    const CifRow& operator [] (size_t i) const {  return data[i];  }
+    size_t ColCount() const {  return data.ColCount();  }
+    const olxstr& ColName(size_t i) const {  return data.ColName(i);  }
+    size_t RowCount() const {  return data.RowCount();  }
     virtual void ToStrings(TStrList& list) const;
     virtual void Format()  {}
-    virtual const olxstr& GetName() const;
+    virtual const olxstr& GetName() const {  return name;  }
     virtual bool HasName() const {  return true;  }
     void DataFromStrings(TStrList& lines);
     virtual ICifEntry* Replicate() const {  return new cetTable(*this);  }
     virtual olxstr GetStringValue() const {  throw TNotImplementedException(__OlxSourceInfo);  }
+    template <class List> static olxstr GenerateName(const List& l)  {
+      if( l.IsEmpty() )  return EmptyString;
+      if( l.Count() == 1 )  return l[0];
+      olxstr name = l[0].CommonSubString(l[1]);
+      size_t min_len = olx_min(l[0].Length(), l[1].Length());
+      for( size_t i=2; i < l.Count(); i++ )  {
+        name = l[i].CommonSubString(name);
+        if( l[i].Length() < min_len )
+          min_len = l[i].Length();
+      }
+      if( name.IsEmpty() )
+        throw TFunctionFailedException(__OlxSourceInfo, "Mismatching loop columns");
+      if( name.Length() != min_len )  {  // lihe _geom_angle and geom_angle_etc
+        const size_t u_ind = name.LastIndexOf('_');
+        if( u_ind != InvalidIndex )
+          name.SetLength(u_ind);
+      }
+      return name;
+    }
   };
 
   struct CifBlock : public ICifEntry {
@@ -140,8 +169,10 @@ namespace cif_dp {
     CifBlock(const CifBlock& v);
     CifBlock(const olxstr& _name, CifBlock* _parent=NULL) : name(_name), parent(_parent)  {}
     virtual ~CifBlock();
-    ICifEntry& Add(const olxstr& pname, ICifEntry* p);
+    ICifEntry& Add(ICifEntry* p);
+    ICifEntry& Add(ICifEntry& p)  {  return Add(&p);  }
     bool Remove(const olxstr& pname);
+    bool Remove(const ICifEntry& e)  {  return Remove(e.GetName());  }
     void Rename(const olxstr& old_name, const olxstr& new_name);
     virtual void ToStrings(TStrList& list) const;
     virtual void Format();

@@ -38,26 +38,19 @@ bool TCifDP::ExtractLoop(size_t& start, parse_context& context)  {
         loop_data.Add(toks[i]);
       }
       else
-        table.data.AddCol(toks[i]);
+        table.AddCol(toks[i]);
     }
   }
   while( parse_header )  {  // skip loop definition
     if( ++start >= Lines.Count() )  {  // end of file?
-      context.current_block->Add(table.GetName(), &table);
+      context.current_block->Add(table);
       return true;
     }
     if( Lines[start].IsEmpty() )  continue;
     if( Lines[start].CharAt(0) != '_' )  {  start--;  break;  }
-    //if( table.data.ColCount() != 0 )  {
-    //  if( olxstr::CommonString(Lines[start], table.data.ColName(0)).Length() == 1 )  {
-    //    context.current_block->Add(table.GetName(), &table);
-    //    start--;  // rewind
-    //    return true;
-    //  }
-    //}
     bool param_found = false;  // in the case loop header is mixed up with loop data...
     if( Lines[start].IndexOf(' ') == InvalidIndex )
-      table.data.AddCol(Lines[start]);
+      table.AddCol(Lines[start]);
     else  {
       TStrList toks;
       CIFToks(Lines[start], toks);
@@ -67,7 +60,7 @@ bool TCifDP::ExtractLoop(size_t& start, parse_context& context)  {
           loop_data.Add(toks[i]);
         }
         else
-          table.data.AddCol(toks[i]);
+          table.AddCol(toks[i]);
       }
     }
     if( param_found )  break;
@@ -84,7 +77,7 @@ bool TCifDP::ExtractLoop(size_t& start, parse_context& context)  {
   }
   
   table.DataFromStrings(loop_data);
-  context.current_block->Add(table.GetName(), &table);
+  context.current_block->Add(table);
   start--;
   return true;
 }
@@ -106,7 +99,7 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
     if( line.CharAt(0) == '#')  {
       if( context.current_block == NULL )
         context.current_block = &Add(EmptyString);
-      context.current_block->Add(EmptyString, new cetComment(line.SubStringFrom(1)));
+      context.current_block->Add(new cetComment(line.SubStringFrom(1)));
       continue;
     }
     if( ExtractLoop(i, context) )  continue;
@@ -116,12 +109,11 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
       TStrList toks;
       CIFToks(line, toks);
       if( toks.Count() >= 3 && toks[2].CharAt(0) == '#' )  {
-        context.current_block->Add(toks[0],
-          new cetCommentedString(toks[0], toks[1], toks[2].SubStringFrom(1)));
+        context.current_block->Add(new cetCommentedString(toks[0], toks[1], toks[2].SubStringFrom(1)));
         toks.DeleteRange(0, 3);
       }
       else if( toks.Count() == 2 && toks[1].CharAt(0) != '#' )  {
-        context.current_block->Add(toks[0], new cetNamedString(toks[0], toks[1]));
+        context.current_block->Add(new cetNamedString(toks[0], toks[1]));
         toks.DeleteRange(0, 2);
       }
       else  {  // string list
@@ -136,12 +128,12 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
         }
         else
           throw 1;
-        context.current_block->Add(list->name, list);
+        context.current_block->Add(list);
         while( ++i < Lines.Count() && Lines[i].IsEmpty() )  continue;
         if( i >= Lines.Count() )  continue;
         olxch Char = Lines[i].CharAt(0);
         while( Char == '#' && ++i < Lines.Count() )  {
-          context.current_block->Add(EmptyString, new cetComment(line));
+          context.current_block->Add(new cetComment(line));
           while( Lines[i].IsEmpty() && ++i < Lines.Count() )  continue;
           if( i >= Lines.Count() )  break;
           Char = Lines[i].CharAt(0);
@@ -215,10 +207,35 @@ cetTable::cetTable(const cetTable& v) : data(v.data) {
     for( size_t j=0; j < data.ColCount(); j++ )
       data[i][j] = v.data[i][j]->Replicate();
 }
+ICifEntry& cetTable::Set(size_t i, size_t j, ICifEntry* v)  {
+  delete data[i][j];
+  return *(data[i][j] = v);
+}
+void cetTable::AddCol(const olxstr& col_name)  {
+  data.AddCol(col_name);
+  if( data.ColCount() == 0 )  {
+    name = col_name;
+  }
+  else  {
+    name = data.ColName(0).CommonSubString(data.ColName(1));
+    size_t min_len = olx_min(data.ColName(0).Length(), data.ColName(1).Length());
+    for( size_t i=2; i < data.ColCount(); i++ )  {
+      name = data.ColName(i).CommonSubString(name);
+      if( data.ColName(i).Length() < min_len )
+        min_len = data.ColName(i).Length();
+    }
+    if( name.IsEmpty() )
+      throw TFunctionFailedException(__OlxSourceInfo, "Mismatching loop columns");
+    if( name.Length() != min_len )  {  // lihe _geom_angle and geom_angle_etc
+      const size_t u_ind = name.LastIndexOf('_');
+      if( u_ind != InvalidIndex )
+        name.SetLength(u_ind);
+    }
+  }
+}
 void cetTable::Clear()  {
   for( size_t i=0; i < data.RowCount(); i++ )
-    for( size_t j=0; j < data.ColCount(); j++ )
-      delete data[i][j];
+    data[i].Delete();
   data.Clear();
 }
 void cetTable::ToStrings(TStrList& list) const {
@@ -230,25 +247,6 @@ void cetTable::ToStrings(TStrList& list) const {
     for( size_t j=0; j < data.ColCount(); j++ )
       data[i][j]->ToStrings(list);
   }
-}
-const olxstr& cetTable::GetName() const {
-  if( data.ColCount() == 0 )  return EmptyString;
-  if( data.ColCount() == 1 )  return data.ColName(0);
-  olxstr C = data.ColName(0).CommonSubString(data.ColName(1));
-  size_t min_len = olx_min(data.ColName(0).Length(), data.ColName(1).Length());
-  for( size_t i=2; i < data.ColCount(); i++ )  {
-    C = data.ColName(i).CommonSubString(C);
-    if( data.ColName(i).Length() < min_len )
-      min_len = data.ColName(i).Length();
-  }
-  if( C.IsEmpty() )
-    throw TFunctionFailedException(__OlxSourceInfo, "Mismatching loop columns");
-  if( C.Length() != min_len )  {  // lihe _geom_angle and geom_angle_etc
-    const size_t u_ind = C.LastIndexOf('_');
-    if( u_ind != InvalidIndex )
-      C.SetLength(u_ind);
-  }
-  return TEGC::New<olxstr>(C);
 }
 void cetTable::DataFromStrings(TStrList& lines)  {
   if( data.ColCount() == 0 )  return;
@@ -330,12 +328,13 @@ CifBlock::~CifBlock()  {
   for( size_t i=0; i < params.Count(); i++ )
     delete params.GetObject(i);
 }
-ICifEntry& CifBlock::Add(const olxstr& pname, ICifEntry* p)  {
-  if( pname.IsEmpty() )  {  // only comments are allowed to have not name
+ICifEntry& CifBlock::Add(ICifEntry* p)  {
+  if( !p->HasName() || p->GetName().IsEmpty() )  {  // only comments are allowed to have not name
     if( !EsdlInstanceOf(*p, cetComment) )
       throw TInvalidArgumentException(__OlxSourceInfo, "name");
-    return *params.Add(pname, p).Object;
+    return *params.Add(EmptyString, p).Object;
   }
+  const olxstr& pname = p->GetName();
   const size_t i = param_map.IndexOf(pname);
   if( i == InvalidIndex )  {
     param_map.Add(pname, p);

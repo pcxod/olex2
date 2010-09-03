@@ -32,23 +32,18 @@ public:
   virtual ~TCifLoop()  {}
   void Clear()  {  Table.Clear();  }
   olxstr GetLoopName() const {  return Table.GetName();  }
-  /* Returns the column name minus the the loop name (see above). Thus for "_atom_site_label",
-    the name is "label". */
-  olxstr ShortColumnName(size_t col_i) const;
-  // removes rows havibng reference to the given atom
+  // removes rows referencing to the given atom
   void DeleteAtom(TCAtom* atom);
   // Updates the content of the table; changes labels of the atoms
   void UpdateTable(const TCif& parent);
   //Returns the table representing the loop data. Use it to make tables or iterate through data.
-  cif_dp::CifTable& GetTable()  {  return Table.data;  }
-  const cif_dp::CifTable& GetTable() const {  return Table.data;  }
+  cif_dp::cetTable& GetDataProvider()  {  return Table;  }
+  const cif_dp::cetTable& GetDataProvider() const {  return Table;  }
+  const cif_dp::CifTable& GetTable() const {  return Table.GetData();  }
   void SetData(size_t i, size_t j, cif_dp::ICifEntry* data)  {
-    if( Table.data[i][j] != NULL )
-      delete Table.data[i][j];
-    Table.data[i][j] = data;
+    Table.Set(i,j,data);
   }
-  cif_dp::CifRow& operator [] (size_t i)  {  return Table.data[i];  }
-  const cif_dp::CifRow& operator [] (size_t i) const {  return Table.data[i];  }
+  const cif_dp::CifRow& operator [] (size_t i) const {  return Table.GetData()[i];  }
 
   // row sorter struct
   struct CifLoopSorter  {
