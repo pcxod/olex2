@@ -35,7 +35,6 @@ public:
   }
   TTTable& operator = (const TTTable& Table)  {  return Assign(Table);  }
   template <class T1> TTTable& operator = (const TTTable<T1>& Table)  {  return Assign(Table);  }
-  
 
   const TStrList& GetColNames() const {  return ColNames;  }
   const TStrList& GetRowNames() const {  return RowNames;  }
@@ -43,8 +42,8 @@ public:
   size_t ColCount() const {  return ColNames.Count();  }
   olxstr& ColName(size_t index) const { return ColNames[index];  }
   olxstr& RowName(size_t index) const {  return RowNames[index];  }
-  size_t ColIndex(const olxstr& N) const {  return ColNames.IndexOf(N);  }
-  size_t RowIndex(const olxstr& N) const {  return RowNames.IndexOf(N);  }
+  template <typename Str> size_t ColIndex(const Str& N) const {  return ColNames.IndexOf(N);  }
+  template <typename Str> size_t RowIndex(const Str& N) const {  return RowNames.IndexOf(N);  }
 
   void Resize(size_t  RowCnt, size_t ColCnt)  {
     if( RowCnt != Rows.Count() )  {

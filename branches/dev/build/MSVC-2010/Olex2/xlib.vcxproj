@@ -937,7 +937,6 @@
     <ClCompile Include="..\..\..\xlib\cif.cpp" />
     <ClCompile Include="..\..\..\xlib\cifdata.cpp" />
     <ClCompile Include="..\..\..\xlib\cifdp.cpp" />
-    <ClCompile Include="..\..\..\xlib\cifloop.cpp" />
     <ClCompile Include="..\..\..\xlib\ciftab.cpp" />
   </ItemGroup>
   <ItemGroup>

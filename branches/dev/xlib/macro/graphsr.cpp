@@ -45,32 +45,32 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
     C = &TEGC::New<TCif>();
     C->LoadFromFile(fcffn);
   }
-  TCifLoop* hklLoop = C->FindLoop("_refln");
-  if( !hklLoop )  {
+  cif_dp::cetTable* hklLoop = C->FindLoop("_refln");
+  if( hklLoop == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "no hkl loop found");
     return;
   }
   XApp.GetLog() << (olxstr("Processing file ") << TEFile::ExtractFileName(C->GetFileName()) << '\n' );
   short list = -1;
-  size_t hInd = hklLoop->GetTable().ColIndex("_refln_index_h");
-  size_t kInd = hklLoop->GetTable().ColIndex("_refln_index_k");
-  size_t lInd = hklLoop->GetTable().ColIndex("_refln_index_l");
+  const size_t hInd = hklLoop->ColIndex("_refln_index_h");
+  const size_t kInd = hklLoop->ColIndex("_refln_index_k");
+  const size_t lInd = hklLoop->ColIndex("_refln_index_l");
   // list 3, F
-  size_t mfInd = hklLoop->GetTable().ColIndex("_refln_F_meas");
-  size_t sfInd = hklLoop->GetTable().ColIndex("_refln_F_sigma");
-  size_t aInd = hklLoop->GetTable().ColIndex("_refln_A_calc");
-  size_t bInd = hklLoop->GetTable().ColIndex("_refln_B_calc");
+  const size_t mfInd = hklLoop->ColIndex("_refln_F_meas");
+  const size_t sfInd = hklLoop->ColIndex("_refln_F_sigma");
+  const size_t aInd = hklLoop->ColIndex("_refln_A_calc");
+  const size_t bInd = hklLoop->ColIndex("_refln_B_calc");
   // list 4, F^2
-  size_t mf2Ind = hklLoop->GetTable().ColIndex("_refln_F_squared_meas");
-  size_t sf2Ind = hklLoop->GetTable().ColIndex("_refln_F_squared_sigma");
-  size_t cf2Ind = hklLoop->GetTable().ColIndex("_refln_F_squared_calc");
+  const size_t mf2Ind = hklLoop->ColIndex("_refln_F_squared_meas");
+  const size_t sf2Ind = hklLoop->ColIndex("_refln_F_squared_sigma");
+  const size_t cf2Ind = hklLoop->ColIndex("_refln_F_squared_calc");
 
-  if( mf2Ind != InvalidIndex && sf2Ind != InvalidIndex && cf2Ind != InvalidIndex )
+  if( (mf2Ind|sf2Ind|cf2Ind) != InvalidIndex )
     list = 4;
-  else if( mfInd != InvalidIndex && sfInd != InvalidIndex && aInd != InvalidIndex && bInd != InvalidIndex )
+  else if( (mfInd|sfInd|aInd|bInd) != InvalidIndex )
     list = 3;
 
-  if( hInd == InvalidIndex || kInd == InvalidIndex || lInd == InvalidIndex || list == InvalidIndex ) {
+  if( (hInd|kInd|lInd) == InvalidIndex || list == -1 ) {
     E.ProcessingError(__OlxSrcInfo, "list 3/4 data is expected");
     return;
   }
@@ -88,10 +88,10 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
   TPtrList<TGraphRSBin> bins;
 
   TTypeList<TGraphRSRef> refs;
-  refs.SetCapacity(hklLoop->GetTable().RowCount());
+  refs.SetCapacity(hklLoop->RowCount());
 
-  for( size_t i=0; i < hklLoop->GetTable().RowCount(); i++ )  {
-    cif_dp::CifRow& row = hklLoop->GetTable()[i];
+  for( size_t i=0; i < hklLoop->RowCount(); i++ )  {
+    const cif_dp::CifRow& row = (*hklLoop)[i];
     hkl[0] = row[hInd]->GetStringValue().ToInt();
     hkl[1] = row[kInd]->GetStringValue().ToInt();
     hkl[2] = row[lInd]->GetStringValue().ToInt();

@@ -92,9 +92,9 @@ TLinkedLoopTable::TLinkedLoopTable(const TCif& C) : FCif(C)  {
     FAtoms.Add(LA);
     LA->Label = CA.GetLabel();
   }
-  TCifLoop *CL = C.FindLoop("_geom_bond");
+  cif_dp::cetTable *CL = C.FindLoop("_geom_bond");
   if( CL == NULL ) return;
-  const cif_dp::CifTable& BondTab = CL->GetTable();
+  const cif_dp::CifTable& BondTab = CL->GetData();
   size_t index =  BondTab.ColIndex("_geom_bond_atom_site_label_1");
   size_t index1 = BondTab.ColIndex("_geom_bond_atom_site_label_2");
   size_t index2 = BondTab.ColIndex("_geom_bond_distance");
@@ -129,7 +129,7 @@ TLinkedLoopTable::TLinkedLoopTable(const TCif& C) : FCif(C)  {
 
   CL = C.FindLoop("_geom_angle");
   if( CL == NULL )  return;
-  const cif_dp::CifTable& AngTab = CL->GetTable();
+  const cif_dp::CifTable& AngTab = CL->GetData();
   index =  AngTab.ColIndex("_geom_angle_atom_site_label_1");
   index1 = AngTab.ColIndex("_geom_angle_atom_site_label_2");
   index2 = AngTab.ColIndex("_geom_angle_atom_site_label_3");

@@ -480,9 +480,6 @@
     <ClCompile Include="..\..\..\xlib\cifdp.cpp">
       <Filter>Source Files\CIF</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\xlib\cifloop.cpp">
-      <Filter>Source Files\CIF</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\xlib\ciftab.cpp">
       <Filter>Source Files\CIF</Filter>
     </ClCompile>

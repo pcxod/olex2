@@ -5306,16 +5306,16 @@ void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     C = E.GetRetObj< TCif >();
   else
     C = &FXApp->XFile().GetLastLoader<TCif>();
-  TCifLoop* hklLoop = C->FindLoop("_refln");
+  cif_dp::cetTable* hklLoop = C->FindLoop("_refln");
   if( hklLoop == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "no hkl loop found");
     return;
   }
-  size_t hInd = hklLoop->GetTable().ColIndex("_refln_index_h");
-  size_t kInd = hklLoop->GetTable().ColIndex("_refln_index_k");
-  size_t lInd = hklLoop->GetTable().ColIndex("_refln_index_l");
-  size_t mInd = hklLoop->GetTable().ColIndex("_refln_F_squared_meas");
-  size_t sInd = hklLoop->GetTable().ColIndex("_refln_F_squared_sigma");
+  const size_t hInd = hklLoop->ColIndex("_refln_index_h");
+  const size_t kInd = hklLoop->ColIndex("_refln_index_k");
+  const size_t lInd = hklLoop->ColIndex("_refln_index_l");
+  const size_t mInd = hklLoop->ColIndex("_refln_F_squared_meas");
+  const size_t sInd = hklLoop->ColIndex("_refln_F_squared_sigma");
 
   if( (hInd|kInd|lInd|mInd|sInd) == InvalidIndex ) {
     E.ProcessingError(__OlxSrcInfo, "could not locate <h k l meas sigma> data");
@@ -5323,13 +5323,13 @@ void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
 
   THklFile file;
-  for( size_t i=0; i < hklLoop->GetTable().RowCount(); i++ )  {
+  for( size_t i=0; i < hklLoop->RowCount(); i++ )  {
     TReflection* r = new TReflection(
-      hklLoop->GetTable()[i][hInd]->GetStringValue().ToInt(),
-      hklLoop->GetTable()[i][kInd]->GetStringValue().ToInt(),
-      hklLoop->GetTable()[i][lInd]->GetStringValue().ToInt(),
-      hklLoop->GetTable()[i][mInd]->GetStringValue().ToDouble(),
-      hklLoop->GetTable()[i][sInd]->GetStringValue().ToDouble() );
+      hklLoop->Get(i, hInd).GetStringValue().ToInt(),
+      hklLoop->Get(i, kInd).GetStringValue().ToInt(),
+      hklLoop->Get(i, lInd).GetStringValue().ToInt(),
+      hklLoop->Get(i, mInd).GetStringValue().ToDouble(),
+      hklLoop->Get(i, sInd).GetStringValue().ToDouble() );
     file.Append( *r );
   }
   file.SaveToFile( exName );

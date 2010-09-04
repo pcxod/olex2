@@ -11,6 +11,8 @@ namespace cif_dp {
     virtual void ToStrings(TStrList& list) const = 0;
     virtual void Format()  {}
     virtual bool HasName() const {  return false;  }
+    // if the returned valus is InvalidIndex - the object is not comparable
+    virtual size_t GetCmpHash() const {  return InvalidIndex;  }
     virtual const olxstr& GetName() const {  throw TNotImplementedException(__OlxSourceInfo);  }
     virtual ICifEntry* Replicate() const = 0;
     virtual olxstr GetStringValue() const = 0;
@@ -127,10 +129,12 @@ namespace cif_dp {
     void AddCol(const olxstr& col_name);
     CifRow& AddRow()  {  return data.AddRow();  }
     ICifEntry& Set(size_t i, size_t j, ICifEntry* v);
+    const ICifEntry& Get(size_t i, size_t j)  const {  return *data[i][j];  }
     const CifTable& GetData() const {  return data;  }
     const CifRow& operator [] (size_t i) const {  return data[i];  }
     size_t ColCount() const {  return data.ColCount();  }
     const olxstr& ColName(size_t i) const {  return data.ColName(i);  }
+    template <class Str> size_t ColIndex(const Str& name) const {  return data.ColIndex(name);  }
     size_t RowCount() const {  return data.RowCount();  }
     virtual void ToStrings(TStrList& list) const;
     virtual void Format()  {}
@@ -158,6 +162,11 @@ namespace cif_dp {
       }
       return name;
     }
+    void Sort();
+    // used in table sorting
+    struct TableSorter  {
+      static int Compare(const CifTable::TableSort& r1, const CifTable::TableSort& r2);
+    };
   };
 
   struct CifBlock : public ICifEntry {

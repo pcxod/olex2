@@ -6,7 +6,7 @@
 #include "bapp.h"
 #include "log.h"
 #include "etime.h"
-#include "egc.h"
+#include "bitarray.h"
 
 using namespace exparse::parser_util;
 using namespace cif_dp;
@@ -116,19 +116,7 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
         context.current_block->Add(new cetNamedString(toks[0], toks[1]));
         toks.DeleteRange(0, 2);
       }
-      else  {  // string list
-        cetNamedStringList* list = NULL;
-        if( toks.Count() == 2 && toks[1].CharAt(0) == '#' )  {
-          list = new cetCommentedNamedStringList(toks[0], toks[1].SubStringFrom(1));
-          toks.DeleteRange(0, 2);
-        }
-        else if( toks.Count() == 1 )  {
-          list = new cetNamedStringList(toks[0]);
-          toks.Delete(0);
-        }
-        else
-          throw 1;
-        context.current_block->Add(list);
+      else  {  // string or list
         while( ++i < Lines.Count() && Lines[i].IsEmpty() )  continue;
         if( i >= Lines.Count() )  continue;
         olxch Char = Lines[i].CharAt(0);
@@ -139,7 +127,18 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
           Char = Lines[i].CharAt(0);
         }
         if( Char == ';' )  {
-          size_t sc_count = 1; 
+          cetNamedStringList* list = NULL;
+          if( toks.Count() == 2 && toks[1].CharAt(0) == '#' )  {
+            list = new cetCommentedNamedStringList(toks[0], toks[1].SubStringFrom(1));
+            toks.DeleteRange(0, 2);
+          }
+          else if( toks.Count() == 1 )  {
+            list = new cetNamedStringList(toks[0]);
+            toks.Delete(0);
+          }
+          else
+            throw 1;
+          context.current_block->Add(list);
           if( Lines[i].Length() > 1 )
             list->lines.Add(Lines[i].SubStringFrom(1));
           while( ++i < Lines.Count() )  {
@@ -149,9 +148,19 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
             list->lines.Add(Lines[i]);
           }
         }
-        else if( Char = '\'' || Char == '"' )  {
-          list->lines.Add(Lines[i]);
-          continue;
+        else if( Char == '\'' || Char == '"' )  {
+          cetNamedString* str = NULL;
+          if( toks.Count() == 2 && toks[1].CharAt(0) == '#' )  {
+            str = new cetCommentedString(toks[0], Lines[i], toks[1].SubStringFrom(1));
+            toks.DeleteRange(0, 2);
+          }
+          else if( toks.Count() == 1 )  {
+            str = new cetNamedString(toks[0], Lines[i]);
+            toks.Delete(0);
+          }
+          else
+            throw 1;
+          context.current_block->Add(str);
         }
       }
     }
@@ -202,7 +211,7 @@ size_t TCifDP::CIFToks(const olxstr& exp, TStrList& out)  {
   return out.Count() - toks_c;
 }
 //.............................................................................
-cetTable::cetTable(const cetTable& v) : data(v.data) {
+cetTable::cetTable(const cetTable& v) : name(v.name), data(v.data) {
   for( size_t i=0; i < data.RowCount(); i++ )
     for( size_t j=0; j < data.ColCount(); j++ )
       data[i][j] = v.data[i][j]->Replicate();
@@ -213,7 +222,7 @@ ICifEntry& cetTable::Set(size_t i, size_t j, ICifEntry* v)  {
 }
 void cetTable::AddCol(const olxstr& col_name)  {
   data.AddCol(col_name);
-  if( data.ColCount() == 0 )  {
+  if( data.ColCount() == 1 )  {
     name = col_name;
   }
   else  {
@@ -239,6 +248,7 @@ void cetTable::Clear()  {
   data.Clear();
 }
 void cetTable::ToStrings(TStrList& list) const {
+  if( data.RowCount() == 0 )  return;
   list.Add("loop_");
   for( size_t i=0; i < data.ColCount(); i++ )  // loop header
     list.Add("  ") << data.ColName(i);
@@ -281,6 +291,34 @@ void cetTable::DataFromStrings(TStrList& lines)  {
     for( size_t j=0; j < ColCount; j++ )
       data[i][j] = cells[i*ColCount+j];
   }
+}
+int cetTable::TableSorter::Compare(const CifTable::TableSort& r1, const CifTable::TableSort& r2)  {
+  size_t *a_d = new size_t[r1.data.Count()],
+    *b_d = new size_t[r1.data.Count()];
+  for( size_t i=r1.data.Count(); i > 0; i-- )  {
+    bool atom = false;
+    const size_t r_i = r1.data.Count()-1;
+    size_t h = r1.data[i-1]->GetCmpHash();
+    a_d[r_i] = (h == InvalidIndex) ? 0 : h;
+    h = r2.data[i-1]->GetCmpHash();
+    b_d[r_i] = (h == InvalidIndex) ? 0 : h;
+  }
+  TEBitArray a((unsigned char*)a_d, sizeof(size_t)*r1.data.Count(), true),
+    b((unsigned char*)b_d, sizeof(size_t)*r1.data.Count(), true);
+  return a.Compare(b); 
+}
+//.............................................................................
+void cetTable::Sort()  {
+  if( data.RowCount() == 0 )  return;
+  bool update = false;
+  for( size_t i=0; i < data.ColCount(); i++ )  {
+    if( data[0][i]->GetCmpHash() != InvalidIndex )  {
+      update = true;
+      break;
+    }
+  }
+  if( !update  )  return;
+  data.SortRows<TableSorter>();
 }
 //.............................................................................
 cetString::cetString(const olxstr& _val) : value(_val), quoted(false)  {

@@ -4,7 +4,6 @@
 #include "estrlist.h"
 #include "symmparser.h"
 #include "cifdata.h"
-#include "cifloop.h"
 #include "ciftab.h"
 #include "cifdp.h"
 BeginXlibNamespace()
@@ -14,7 +13,6 @@ private:
   cif_dp::TCifDP data_provider;
   size_t block_index;
   olxstr FWeightA, FWeightB;
-  TStrPObjList<olxstr,TCifLoop*> Loops; // LoopName + CifLoop
 //  void SetDataName(const olxstr& S);
   bool FDataNameUpperCase;
   void Initialize();
@@ -22,8 +20,8 @@ private:
   smatd_list Matrices;
   olxdict<olxstr, size_t, olxstrComparator<true> > MatrixMap;
 protected:
-  static TCifLoop* LoopFromDef(cif_dp::CifBlock& dp, const TStrList& col_names);
-  static TCifLoop* LoopFromDef(cif_dp::CifBlock& dp, const olxstr& col_names)  {
+  static cif_dp::cetTable* LoopFromDef(cif_dp::CifBlock& dp, const TStrList& col_names);
+  static cif_dp::cetTable* LoopFromDef(cif_dp::CifBlock& dp, const olxstr& col_names)  {
     return LoopFromDef(dp, TStrList(col_names, ','));
   }
 public:
@@ -105,24 +103,30 @@ public:
   inline const olxstr& GetWeightB() const {  return FWeightB;  }
   //............................................................................
   //Returns a loop specified by index
-  TCifLoop& GetLoop(size_t i) const {  return *Loops.GetObject(i);  }
+  cif_dp::cetTable& GetLoop(size_t i) const {
+    return *data_provider[block_index].table_map.GetValue(i);
+  }
   //Returns a loop specified by name
-  TCifLoop* FindLoop(const olxstr& L) const {
-    const size_t i = Loops.IndexOf(L);
-    return (i == InvalidIndex) ? NULL : Loops.GetObject(i);
+  cif_dp::cetTable* FindLoop(const olxstr& name) const {
+    if( block_index == InvalidIndex )  return NULL;
+    return data_provider[block_index].table_map.Find(name, NULL);
 }
   //Returns the name of a loop specified by the index
-  inline const olxstr& GetLoopName(size_t i) const {  return Loops[i];  }
+  inline const olxstr& GetLoopName(size_t i) const {
+    return data_provider[block_index].table_map.GetValue(i)->GetName();
+  }
   // Returns the number of loops
-  inline size_t LoopCount() const { return Loops.Count(); }
+  inline size_t LoopCount() const {
+    return (block_index == InvalidIndex) ? 0 : data_provider[block_index].table_map.Count();
+  }
   // Adds a loop to current  file
   //TCifLoop& AddLoop(const olxstr& name);
   // creates a new loop from comma separated column names
-  TCifLoop& AddLoopDef(const olxstr& col_names);
+  cif_dp::cetTable& AddLoopDef(const olxstr& col_names);
   /* this is the only loop, which is not automatically created from structure data!
    If the loop does not exist it is automatically created
   */
-  TCifLoop& GetPublicationInfoLoop();
+  cif_dp::cetTable& GetPublicationInfoLoop();
 protected:
   static void MultValue(olxstr& Val, const olxstr& N);
 public:
@@ -138,34 +142,44 @@ public:
   virtual IEObject* Replicate() const {  return new TCif;  }
 };
 //---------------------------------------------------------------------------
-
-//---------------------------------------------------------------------------
-class TMultiCifManager  {
-  struct cif_content  {
-    olxstr name;
-    TStrList content;
-  };
-  olxstr FileName;
-  TTypeList<cif_content> data;
-public:
-  TMultiCifManager()  {}
-  void LoadFromFile(const olxstr& file_name);
-  void Save();
-
-  size_t Count() const {  return data.Count();  }
-  const TStrList& GetContent(size_t i) const {  return data[i].content;  }
-  const olxstr& GetName(size_t i) const {  return data[i].name;  }
-  void Update(size_t i, TCif& cif)  {
-    data[i].content.Clear();
-    cif.SaveToStrings(data[i].content);
-    data[i].name = cif.GetDataName();
+struct AtomCifEntry : public cif_dp::IStringCifEntry {
+  TCAtom* data;
+  AtomCifEntry(const AtomCifEntry& v) : data(v.data)  {}
+  AtomCifEntry(TCAtom* _data) : data(_data)  {}
+  virtual size_t Count() const {  return 1;  }
+  virtual size_t GetCmpHash() const {  return data->GetId();  }
+  virtual const olxstr& operator [] (size_t i) const {  return  data->GetLabel();  }
+  virtual const olxstr& GetComment() const {  return EmptyString;  }
+  virtual cif_dp::ICifEntry* Replicate() const {  return new AtomCifEntry(*this);  }
+  virtual void ToStrings(TStrList& list) const {
+    if( list.IsEmpty() || (list.Last().String.Length() + data->GetLabel().Length() + 1 > 80) )
+      list.Add(' ') << data->GetLabel();
+    else
+      list.Last().String << ' ' << data->GetLabel();
   }
-  size_t IndexOf(const olxstr& data_name) const {
-    for( size_t i=0; i < data.Count(); i++ )
-      if( data[i].name.Equalsi(data_name) )
-        return i;
-    return InvalidIndex;
-  }
+  virtual olxstr GetStringValue() const {  return data->GetLabel();  }
 };
+struct AtomPartCifEntry : public cif_dp::IStringCifEntry {
+  TCAtom* data;
+  mutable olxstr tmp_val;
+  AtomPartCifEntry(const AtomPartCifEntry& v) : data(v.data)  {}
+  AtomPartCifEntry(TCAtom* _data) : data(_data)  {}
+  virtual size_t Count() const {  return 1;  }
+  virtual const olxstr& operator [] (size_t i) const {  return  (tmp_val = (int)data->GetPart());  }
+  virtual const olxstr& GetComment() const {  return EmptyString;  }
+  virtual cif_dp::ICifEntry* Replicate() const {  return new AtomPartCifEntry(*this);  }
+  virtual void ToStrings(TStrList& list) const {
+    if( data->GetPart() == 0 )
+      tmp_val = '.';
+    else
+      tmp_val = (int)data->GetPart();
+    if( list.IsEmpty() || (list.Last().String.Length() + data->GetLabel().Length() + 1 > 80) )
+      list.Add(' ') << tmp_val;
+    else
+      list.Last().String << ' ' << tmp_val;
+  }
+  virtual olxstr GetStringValue() const {  return data->GetLabel();  }
+};
+
 EndXlibNamespace()
 #endif

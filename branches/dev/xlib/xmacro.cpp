@@ -1805,7 +1805,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         groups[i]->Add(ca);
       }
       for( size_t j=0; j < groups[i]->Count(); j++ )
-        (*groups[i])[j].SetPart(part+j);
+        (*groups[i])[j].SetPart((int8_t)(part+j));
       processed.Add(atoms[i]->CAtom());
     }
   }
@@ -2679,7 +2679,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   for( size_t i=0; i < _translation_count; i++ )
     Cif->Rename(_translations[i*2], _translations[i*2+1]);
 
-  TCifLoop& publ_info = Cif->GetPublicationInfoLoop();
+  cif_dp::cetTable& publ_info = Cif->GetPublicationInfoLoop();
   for( size_t i=0; i < Cmds.Count(); i++ )  {
     try {
       IInputStream *is = TFileHandlerManager::GetInputStream(Cmds[i]);
@@ -2696,11 +2696,11 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     // normalise
     for( size_t i=0; i < _translation_count; i++ )
       Cif1.Rename(_translations[i*2], _translations[i*2+1]);
-    TCifLoop& pil = Cif1.GetPublicationInfoLoop();
+    cif_dp::cetTable& pil = Cif1.GetPublicationInfoLoop();
     for( size_t j=0; j < Cif1.ParamCount(); j++ )
       Cif->SetParam(Cif1.ParamName(j), Cif1.ParamValue(j));
     // update publication info loop
-    MergePublTableData(publ_info, pil);
+    //MergePublTableData(publ_info, pil);
   }
   // generate moiety string if does not exist
   Cif->SetParam("_chemical_formula_moiety", xapp.XFile().GetLattice().CalcMoiety(), true);
@@ -2826,7 +2826,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
 
   latt.GrowFragments(false, NULL);
 
-  TCifLoop& bonds = cif.AddLoopDef(
+  cif_dp::cetTable& bonds = cif.AddLoopDef(
     "_geom_bond_atom_site_label_1,_geom_bond_atom_site_label_2,_geom_bond_distance"
     "_geom_bond_site_symmetry_2_geom_bond_publ_flag");
   for( size_t i=0; i < latt.BondCount(); i++ )  {
@@ -2848,7 +2848,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       TSBond& b = a.Bond(j);
       if( b.GetTag() == 0 || !b.A().IsAUAtom() )  continue;
       b.SetTag(0);
-      cif_dp::CifRow& row = bonds.GetTable().AddRow(EmptyString);
+      cif_dp::CifRow& row = bonds.AddRow();
       row.Set(0, new AtomCifEntry(&b.A().CAtom()));
       row.Set(1, new AtomCifEntry(&b.B().CAtom()));
       row[2] = new cetString(vcovc.CalcDistance(b.A(), b.B()).ToString());
@@ -2860,7 +2860,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       row[4] = new cetString('?');
     }
   }
-  TCifLoop& angles = cif.AddLoopDef(
+  cif_dp::cetTable& angles = cif.AddLoopDef(
     "_geom_angle_atom_site_label_1,_geom_angle_atom_site_label_2,_geom_angle_atom_site_label_3"
     "_geom_angle,_geom_angle_site_symmetry_1,_geom_angle_site_symmetry_3,_geom_angle_publ_flag");
   for( size_t i=0; i < latt.AtomCount(); i++ )  {
@@ -2876,7 +2876,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
           continue;
         TSAtom& _b = (b.CAtom().GetId() <= c.CAtom().GetId() ? b : c);
         TSAtom& _c = (b.CAtom().GetId() > c.CAtom().GetId() ? b : c);
-        cif_dp::CifRow& row = angles.GetTable().AddRow(EmptyString);
+        cif_dp::CifRow& row = angles.AddRow();
         row.Set(0, new AtomCifEntry(&_b.CAtom()));
         row.Set(1, new AtomCifEntry(&a.CAtom()));
         row.Set(2, new AtomCifEntry(&_c.CAtom()));
@@ -2897,15 +2897,10 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
   }
   RefinementModel& rm = xapp.XFile().GetRM();
   if( rm.InfoTabCount() != 0 )  {
-    TCifLoop& hbonds = cif.AddLoop("_geom_hbond");
-    hbonds.GetTable().AddCol("_geom_hbond_atom_site_label_D");
-    hbonds.GetTable().AddCol("_geom_hbond_atom_site_label_H");
-    hbonds.GetTable().AddCol("_geom_hbond_atom_site_label_A");
-    hbonds.GetTable().AddCol("_geom_hbond_distance_DH");
-    hbonds.GetTable().AddCol("_geom_hbond_distance_HA");
-    hbonds.GetTable().AddCol("_geom_hbond_distance_DA");
-    hbonds.GetTable().AddCol("_geom_hbond_angle_DHA");
-    hbonds.GetTable().AddCol("_geom_hbond_site_symmetry_A");
+    cif_dp::cetTable& hbonds = cif.AddLoopDef(
+      "_geom_hbond_atom_site_label_D,_geom_hbond_atom_site_label_H,_geom_hbond_atom_site_label_A"
+      "_geom_hbond_distance_DH,_geom_hbond_distance_HA,_geom_hbond_distance_DA"
+      "_geom_hbond_angle_DHA,_geom_hbond_site_symmetry_A");
     smatd I;
     I.I().SetId(0);
     TAtomEnvi envi;
@@ -2928,7 +2923,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       xapp.XFile().GetUnitCell().GetAtomEnviList(*dsa, envi);
       for( size_t j=0; j < envi.Count(); j++ )  {
         if( envi.GetType(j) != iHydrogenZ)  continue;
-        CifRow& row = hbonds.GetTable().AddRow();
+        CifRow& row = hbonds.AddRow();
         row.Set(0, new AtomCifEntry(d->GetAtom()));
         row.Set(1, new AtomCifEntry(&envi.GetCAtom(j)));
         row.Set(2, new AtomCifEntry(a->GetAtom()));

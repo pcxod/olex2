@@ -36,9 +36,6 @@ TCif::~TCif()  {  Clear();  }
 void TCif::Clear()  {
   FWeightA.SetLength(0);
   FWeightB.SetLength(0);
-  for( size_t i=0; i < Loops.Count(); i++ )
-    delete Loops.GetObject(i);
-  Loops.Clear();
   GetRM().Clear(rm_clear_ALL);
   GetAsymmUnit().Clear();
   DataManager.Clear();
@@ -65,13 +62,14 @@ void TCif::LoadFromStrings(const TStrList& Strings)  {
       break;
     }
   }
-  if( block_index == InvalidIndex )
-    throw TFunctionFailedException(__OlxSourceInfo, "could not locate required data");
+  if( block_index == InvalidIndex )  {
+    if( data_provider.Count() > 1 || data_provider.Count() == 0 )
+      throw TFunctionFailedException(__OlxSourceInfo, "could not locate required data");
+    block_index = 0;
+    return;  // nothing to initialise anyway... must be a dummy CIF
+  }
   CifBlock& cif_data = data_provider[block_index];
   Clear();
-  for( size_t i=0; i < cif_data.table_map.Count(); i++ )  {
-    Loops.Add(cif_data.table_map.GetValue(i)->GetName(), new TCifLoop(*cif_data.table_map.GetValue(i)));
-  }
   /*search for the weigting sceme*************************************/
   const size_t ws_i = cif_data.param_map.IndexOf("_refine_ls_weighting_details");
   if( ws_i != InvalidIndex )  {
@@ -196,7 +194,7 @@ void TCif::Rename(const olxstr& old_name, const olxstr& new_name)  {
 //..............................................................................
 void TCif::Initialize()  {
   olxstr Param;
-  TCifLoop *ALoop, *Loop;
+  cetTable *ALoop, *Loop;
   double Q[6], E[6]; // quadratic form of ellipsoid
   TEValueD EValue;
   try  {
@@ -219,16 +217,16 @@ void TCif::Initialize()  {
   if( Loop == NULL )
     Loop = FindLoop("_space_group_symop_operation_xyz");
   if( Loop != NULL  )  {
-    size_t sindex = Loop->GetTable().ColIndex("_space_group_symop_operation_xyz");
-    size_t iindex = Loop->GetTable().ColIndex("_space_group_symop_id");
+    size_t sindex = Loop->ColIndex("_space_group_symop_operation_xyz");
+    size_t iindex = Loop->ColIndex("_space_group_symop_id");
     if( sindex != InvalidIndex )  {
-      for( size_t i=0; i < Loop->GetTable().RowCount(); i++ )  {
-        if( !TSymmParser::SymmToMatrix(Loop->GetTable()[i][sindex]->GetStringValue(), Matrices.AddNew()) )
+      for( size_t i=0; i < Loop->RowCount(); i++ )  {
+        if( !TSymmParser::SymmToMatrix(Loop->Get(i, sindex).GetStringValue(), Matrices.AddNew()) )
           throw TFunctionFailedException(__OlxSourceInfo, "could not process symmetry matrix");
         if( iindex == InvalidIndex )
           MatrixMap.Add(i+1, i);
         else
-          MatrixMap.Add(Loop->GetTable()[i][iindex]->GetStringValue(), i);
+          MatrixMap.Add(Loop->Get(i, iindex).GetStringValue(), i);
       }
     }
   }
@@ -237,34 +235,27 @@ void TCif::Initialize()  {
     if( Loop == NULL )
       Loop = FindLoop("_symmetry_equiv_pos_as_xyz");
     if( Loop != NULL  )  {
-      cetTable* cetTab = new cetTable();
-      cetTab->AddCol("_space_group_symop_id");
-      cetTab->AddCol("_space_group_symop_operation_xyz");
-      TCifLoop& symop_loop = *(new TCifLoop((cetTable&)data_provider[block_index].Add(cetTab)));
-      size_t sindex = Loop->GetTable().ColIndex("_symmetry_equiv_pos_as_xyz");
-      size_t iindex = Loop->GetTable().ColIndex("_symmetry_equiv_pos_site_id");
+      cetTable& symop_tab = AddLoopDef("_space_group_symop_id,_space_group_symop_operation_xyz");
+      size_t sindex = Loop->ColIndex("_symmetry_equiv_pos_as_xyz");
+      size_t iindex = Loop->ColIndex("_symmetry_equiv_pos_site_id");
       if( sindex != InvalidIndex )  {
-        for( size_t i=0; i < Loop->GetTable().RowCount(); i++ )  {
-          if( !TSymmParser::SymmToMatrix(Loop->GetTable()[i][sindex]->GetStringValue(), Matrices.AddNew()) )
+        for( size_t i=0; i < Loop->RowCount(); i++ )  {
+          if( !TSymmParser::SymmToMatrix(Loop->Get(i, sindex).GetStringValue(), Matrices.AddNew()) )
             throw TFunctionFailedException(__OlxSourceInfo, "could not process symmetry matrix");
-          CifRow& row = symop_loop.GetDataProvider().AddRow();
+          CifRow& row = symop_tab.AddRow();
           if( iindex == InvalidIndex )  {
             MatrixMap.Add(i+1, i);
             row[0] = new cetString(i+1);
           }
           else  {
-            MatrixMap.Add(Loop->GetTable()[i][iindex]->GetStringValue(), i);
-            row[0] = Loop->GetTable()[i][iindex]->Replicate();
+            MatrixMap.Add(Loop->Get(i, iindex).GetStringValue(), i);
+            row[0] = Loop->Get(i, iindex).Replicate();
           }
-          row[1] = Loop->GetTable()[i][sindex]->Replicate();
+          row[1] = Loop->Get(i, sindex).Replicate();
         }
       }
-      // replace obsolete loop
-      const size_t li = Loops.IndexOfObject(Loop);
-      data_provider[block_index].Remove(Loop->GetDataProvider());
-      Loops.Delete(li);
-      delete Loop;
-      Loops.Insert(li, symop_loop.GetLoopName(), &symop_loop);
+      // remove obsolete loop
+      data_provider[block_index].Remove(*Loop);
     }
   }
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSymSpace(Matrices);
@@ -286,57 +277,60 @@ void TCif::Initialize()  {
   ALoop = FindLoop("_atom_site");
   if( ALoop == NULL )  return;
 
-  size_t ALabel =  ALoop->GetTable().ColIndex("_atom_site_label");
-  size_t ACi[] = {
-    ALoop->GetTable().ColIndex("_atom_site_fract_x"),
-    ALoop->GetTable().ColIndex("_atom_site_fract_y"),
-    ALoop->GetTable().ColIndex("_atom_site_fract_z")
+  size_t ALabel = ALoop->ColIndex("_atom_site_label");
+  const size_t ACi[] = {
+    ALoop->ColIndex("_atom_site_fract_x"),
+    ALoop->ColIndex("_atom_site_fract_y"),
+    ALoop->ColIndex("_atom_site_fract_z")
   };
-  size_t ACUiso =  ALoop->GetTable().ColIndex("_atom_site_U_iso_or_equiv");
-  size_t ASymbol = ALoop->GetTable().ColIndex("_atom_site_type_symbol");
-  size_t APart   = ALoop->GetTable().ColIndex("_atom_site_disorder_group");
-  size_t SiteOccu = ALoop->GetTable().ColIndex("_atom_site_occupancy");
-  size_t Degen = ALoop->GetTable().ColIndex("_atom_site_symmetry_multiplicity");
+  const size_t ACUiso =  ALoop->ColIndex("_atom_site_U_iso_or_equiv");
+  const size_t ASymbol = ALoop->ColIndex("_atom_site_type_symbol");
+  const size_t APart   = ALoop->ColIndex("_atom_site_disorder_group");
+  const size_t SiteOccu = ALoop->ColIndex("_atom_site_occupancy");
+  const size_t Degen = ALoop->ColIndex("_atom_site_symmetry_multiplicity");
+  const size_t Part = ALoop->ColIndex("_atom_site_disorder_group");
   if( (ALabel|ACi[0]|ACi[1]|ACi[2]|ASymbol) == InvalidIndex )  {
     TBasicApp::GetLog().Error("Failed to locate required fields in atoms loop");
     return;
   }
-  for( size_t i=0; i < ALoop->GetTable().RowCount(); i++ )  {
+  for( size_t i=0; i < ALoop->RowCount(); i++ )  {
     TCAtom& A = GetAsymmUnit().NewAtom();
-    A.SetLabel(ALoop->GetTable()[i][ALabel]->GetStringValue(), false);
-    cm_Element* type = XElementLib::FindBySymbol(ALoop->GetTable()[i][ASymbol]->GetStringValue());
+    A.SetLabel(ALoop->Get(i, ALabel).GetStringValue(), false);
+    cm_Element* type = XElementLib::FindBySymbol(ALoop->Get(i, ASymbol).GetStringValue());
     if( type == NULL )  {
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Undefined element: ") <<
-        ALoop->GetTable()[i][ASymbol]->GetStringValue());
+        ALoop->Get(i, ASymbol).GetStringValue());
     }
     A.SetType(*type);
     for( int j=0; j < 3; j++ )  {
-      EValue = ALoop->GetTable()[i][ACi[j]]->GetStringValue();
+      EValue = ALoop->Get(i, ACi[j]).GetStringValue();
       A.ccrd()[j] = EValue.GetV();  A.ccrdEsd()[j] = EValue.GetE();
       if( EValue.GetE() == 0 )
         GetRM().Vars.FixParam(A, catom_var_name_X+j);
     }
     if( ACUiso != InvalidIndex )    {
-      EValue = ALoop->GetTable()[i][ACUiso]->GetStringValue();
+      EValue = ALoop->Get(i, ACUiso).GetStringValue();
       A.SetUisoEsd(EValue.GetE());
       A.SetUiso(EValue.GetV());
       if( EValue.GetE() == 0 )  GetRM().Vars.FixParam(A, catom_var_name_Uiso);
     }
-    if( APart != InvalidIndex && ALoop->GetTable()[i][APart]->GetStringValue().IsNumber() )
-      A.SetPart(ALoop->GetTable()[i][APart]->GetStringValue().ToInt());
+    if( APart != InvalidIndex && ALoop->Get(i, APart).GetStringValue().IsNumber() )
+      A.SetPart(ALoop->Get(i, APart).GetStringValue().ToInt());
     if( SiteOccu != InvalidIndex )  {
-      EValue = ALoop->GetTable()[i][SiteOccu]->GetStringValue();
+      EValue = ALoop->Get(i, SiteOccu).GetStringValue();
       A.SetOccu(EValue.GetV());
       A.SetOccuEsd(EValue.GetE());
       if( EValue.GetE() == 0 )  GetRM().Vars.FixParam(A, catom_var_name_Sof);
     }
     if( Degen != InvalidIndex )
-      A.SetOccu(A.GetOccu()/ALoop->GetTable()[i][Degen]->GetStringValue().ToDouble());
-    ALoop->SetData(i, ALabel, new AtomCifEntry(&A));
+      A.SetOccu(A.GetOccu()/ALoop->Get(i, Degen).GetStringValue().ToDouble());
+    ALoop->Set(i, ALabel, new AtomCifEntry(&A));
+    if( Part != InvalidIndex )
+      ALoop->Set(i, Part, new AtomPartCifEntry(&A));
   }
-  for( size_t i=0; i < Loops.Count(); i++ )  {
-    if( Loops.GetObject(i) == ALoop )  continue;
-    const CifTable& tab = Loops.GetObject(i)->GetTable();
+  for( size_t i=0; i < LoopCount(); i++ )  {
+    if( &GetLoop(i) == ALoop )  continue;
+    cetTable& tab = GetLoop(i);
     for( size_t j=0; j < tab.ColCount(); j++ )  {
       if(  tab.ColName(j).IndexOf("atom_site") != InvalidIndex &&
         tab.ColName(j).IndexOf("label") != InvalidIndex )
@@ -344,7 +338,7 @@ void TCif::Initialize()  {
         for( size_t k=0; k < tab.RowCount(); k++ )  {
           TCAtom* ca = GetAsymmUnit().FindCAtom(tab[k][j]->GetStringValue());
           if( ca != NULL )
-            Loops.GetObject(i)->SetData(k, j, new AtomCifEntry(ca));
+            tab.Set(k, j, new AtomCifEntry(ca));
         }
       }
     }
@@ -352,22 +346,22 @@ void TCif::Initialize()  {
 
   ALoop = FindLoop("_atom_site_aniso");
   if( ALoop == NULL )  return;
-  ALabel =  ALoop->GetTable().ColIndex("_atom_site_aniso_label");
-  size_t Ui[] = {
-    ALoop->GetTable().ColIndex("_atom_site_aniso_U_11"),
-    ALoop->GetTable().ColIndex("_atom_site_aniso_U_22"),
-    ALoop->GetTable().ColIndex("_atom_site_aniso_U_33"),
-    ALoop->GetTable().ColIndex("_atom_site_aniso_U_23"),
-    ALoop->GetTable().ColIndex("_atom_site_aniso_U_13"),
-    ALoop->GetTable().ColIndex("_atom_site_aniso_U_12")
+  ALabel =  ALoop->ColIndex("_atom_site_aniso_label");
+  const size_t Ui[] = {
+    ALoop->ColIndex("_atom_site_aniso_U_11"),
+    ALoop->ColIndex("_atom_site_aniso_U_22"),
+    ALoop->ColIndex("_atom_site_aniso_U_33"),
+    ALoop->ColIndex("_atom_site_aniso_U_23"),
+    ALoop->ColIndex("_atom_site_aniso_U_13"),
+    ALoop->ColIndex("_atom_site_aniso_U_12")
   };
   if( (ALabel|Ui[0]|Ui[1]|Ui[2]|Ui[3]|Ui[4]|Ui[5]) != InvalidIndex )  {
-    for( size_t i=0; i < ALoop->GetTable().RowCount(); i++ )  {
-      TCAtom* A = GetAsymmUnit().FindCAtom(ALoop->GetTable()[i][ALabel]->GetStringValue());
+    for( size_t i=0; i < ALoop->RowCount(); i++ )  {
+      TCAtom* A = GetAsymmUnit().FindCAtom(ALoop->Get(i, ALabel).GetStringValue());
       if( A == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, olxstr("wrong atom in the aniso loop ") << ALabel);
       for( int j=0; j < 6; j++ )  {
-        EValue = ALoop->GetTable()[i][Ui[j]]->GetStringValue();
+        EValue = ALoop->Get(i, Ui[j]).GetStringValue();
         Q[j] = EValue.GetV();  E[j] = EValue.GetE();
         if( EValue.GetE() == 0 )
           GetRM().Vars.FixParam(*A, catom_var_name_U11+j);
@@ -379,15 +373,14 @@ void TCif::Initialize()  {
   // geometric parameters
   ALoop = FindLoop("_geom_bond");
   if( ALoop != NULL )  {
-    const CifTable& tab = ALoop->GetTable();
-    size_t ALabel =  tab.ColIndex("_geom_bond_atom_site_label_1");
-    size_t ALabel1 = tab.ColIndex("_geom_bond_atom_site_label_2");
-    size_t BD =  tab.ColIndex("_geom_bond_distance");
-    size_t SymmA = tab.ColIndex("_geom_bond_site_symmetry_2");
+    const size_t ALabel =  ALoop->ColIndex("_geom_bond_atom_site_label_1");
+    const size_t ALabel1 = ALoop->ColIndex("_geom_bond_atom_site_label_2");
+    const size_t BD =      ALoop->ColIndex("_geom_bond_distance");
+    const size_t SymmA = ALoop->ColIndex("_geom_bond_site_symmetry_2");
     if( (ALabel|ALabel1|BD|SymmA) != InvalidIndex )  {
       TEValueD ev;
-      for( size_t i=0; i < tab.RowCount(); i++ )  {
-        const CifRow& Row = tab[i];
+      for( size_t i=0; i < ALoop->RowCount(); i++ )  {
+        const CifRow& Row = (*ALoop)[i];
         ACifValue* cv = NULL;
         ev = Row[BD]->GetStringValue();
         if( Row[SymmA]->GetStringValue() == '.' )  {
@@ -409,15 +402,14 @@ void TCif::Initialize()  {
   }
   ALoop = FindLoop("_geom_hbond");
   if( ALoop != NULL )  {
-    const CifTable& tab = ALoop->GetTable();
-    size_t ALabel =  tab.ColIndex("_geom_hbond_atom_site_label_D");
-    size_t ALabel1 = tab.ColIndex("_geom_hbond_atom_site_label_A");
-    size_t BD =  tab.ColIndex("_geom_hbond_distance_DA");
-    size_t SymmA = tab.ColIndex("_geom_hbond_site_symmetry_A");
+    const size_t ALabel =  ALoop->ColIndex("_geom_hbond_atom_site_label_D");
+    const size_t ALabel1 = ALoop->ColIndex("_geom_hbond_atom_site_label_A");
+    const size_t BD =      ALoop->ColIndex("_geom_hbond_distance_DA");
+    const size_t SymmA =   ALoop->ColIndex("_geom_hbond_site_symmetry_A");
     if( (ALabel|ALabel1|BD|SymmA) != InvalidIndex )  {
       TEValueD ev;
-      for( size_t i=0; i < tab.RowCount(); i++ )  {
-        const CifRow& Row = tab[i];
+      for( size_t i=0; i < ALoop->RowCount(); i++ )  {
+        const CifRow& Row = (*ALoop)[i];
         ACifValue* cv = NULL;
         ev = Row[BD]->GetStringValue();
         if( Row[SymmA]->GetStringValue() == '.' )  {
@@ -439,19 +431,18 @@ void TCif::Initialize()  {
   }
   ALoop = FindLoop("_geom_angle");
   if( ALoop != NULL )  {
-    const CifTable& tab = ALoop->GetTable();
-    const size_t ind_l =  tab.ColIndex("_geom_angle_atom_site_label_1");
-    const size_t ind_m =  tab.ColIndex("_geom_angle_atom_site_label_2");
-    const size_t ind_r =  tab.ColIndex("_geom_angle_atom_site_label_3");
-    const size_t ind_a =  tab.ColIndex("_geom_angle");
-    const size_t ind_sl = tab.ColIndex("_geom_angle_site_symmetry_1");
-    const size_t ind_sr = tab.ColIndex("_geom_angle_site_symmetry_3");
+    const size_t ind_l =  ALoop->ColIndex("_geom_angle_atom_site_label_1");
+    const size_t ind_m =  ALoop->ColIndex("_geom_angle_atom_site_label_2");
+    const size_t ind_r =  ALoop->ColIndex("_geom_angle_atom_site_label_3");
+    const size_t ind_a =  ALoop->ColIndex("_geom_angle");
+    const size_t ind_sl = ALoop->ColIndex("_geom_angle_site_symmetry_1");
+    const size_t ind_sr = ALoop->ColIndex("_geom_angle_site_symmetry_3");
     if( (ind_l|ind_m|ind_r|ind_a|ind_sl|ind_sr) != InvalidIndex )  {
       TEValueD ev;
       smatd im;
       im.I();
-      for( size_t i=0; i < tab.RowCount(); i++ )  {
-        const CifRow& Row = tab[i];
+      for( size_t i=0; i < ALoop->RowCount(); i++ )  {
+        const CifRow& Row = (*ALoop)[i];
         ACifValue* cv = NULL;
         ev = Row[ind_a]->GetStringValue();
         if( Row[ind_sl]->GetStringValue() == '.' && Row[ind_sr]->GetStringValue() == '.' )  {
@@ -476,37 +467,35 @@ void TCif::Initialize()  {
   }
 }
 //..............................................................................
-TCifLoop* TCif::LoopFromDef(CifBlock& dp, const TStrList& col_names)  {
+cetTable* TCif::LoopFromDef(CifBlock& dp, const TStrList& col_names)  {
   cetTable* tab = new cetTable();
   for( size_t i=0; i < col_names.Count(); i++ )
     tab->AddCol(col_names[i]);
-  return new TCifLoop((cetTable&)dp.Add(tab));
+  return &(cetTable&)dp.Add(tab);
 }
 //..............................................................................
-TCifLoop& TCif::AddLoopDef(const olxstr& col_names)  {
+cetTable& TCif::AddLoopDef(const olxstr& col_names)  {
   TStrList toks(col_names, ',');
   olxstr name = cetTable::GenerateName(toks);
-  TCifLoop *CF = FindLoop(name);
+  cetTable *CF = FindLoop(name);
   if( CF != NULL )  {
     for( size_t i=0; i < toks.Count(); i++ )
-      if( CF->GetTable().ColIndex(toks[i]) == InvalidIndex )
-        CF->GetDataProvider().AddCol(toks[i]);
+      if( CF->ColIndex(toks[i]) == InvalidIndex )
+        CF->AddCol(toks[i]);
     return *CF;
   }
-  return *Loops.Add(name, LoopFromDef(data_provider[block_index], toks)).Object;
+  return *LoopFromDef(data_provider[block_index], toks);
 }
 //..............................................................................
-TCifLoop& TCif::GetPublicationInfoLoop()  {
+cetTable& TCif::GetPublicationInfoLoop()  {
   const static olxstr publ_ln( "_publ_author" ), publ_jn("_publ_requested_journal");
-  TCifLoop *CF = FindLoop(publ_ln);
+  cetTable *CF = FindLoop(publ_ln);
   if( CF != NULL )  return *CF;
   // to make the automatic grouping to work ...
   if( !ParamExists(publ_jn) )
     data_provider[block_index].Add(new cetNamedString(publ_jn, "?"));
-  CF = Loops.Insert(0, publ_ln,
-    LoopFromDef(data_provider[block_index],
-    "_publ_author_name,_publ_author_email,_publ_author_address")).Object;
-  return *CF;
+  return *LoopFromDef(data_provider[block_index],
+    "_publ_author_name,_publ_author_email,_publ_author_address");
 }
 //..............................................................................
 bool TCif::Adopt(TXFile& XF)  {
@@ -548,10 +537,10 @@ bool TCif::Adopt(TXFile& XF)  {
   SetParam("_space_group_name_Hall", sg.GetHallSymbol(), true);
   SetParam("_space_group_IT_number", sg.GetNumber(), false);
   {
-    TCifLoop& Loop = AddLoopDef("_space_group_symop_id,_space_group_symop_operation_xyz");
+    cetTable& Loop = AddLoopDef("_space_group_symop_id,_space_group_symop_operation_xyz");
     sg.GetMatrices(Matrices, mattAll);
     for( size_t i=0; i < Matrices.Count(); i++ )  {
-      CifRow& row = Loop.GetDataProvider().AddRow();
+      CifRow& row = Loop.AddRow();
       row[0] = new cetString(i+1);
       row[1] = new cetString(TSymmParser::MatrixToSymm(Matrices[i]));
     }
@@ -563,20 +552,20 @@ bool TCif::Adopt(TXFile& XF)  {
 
   SetParam("_atom_sites_solution_primary", "?", false);
 
-  TCifLoop& atom_loop = AddLoopDef(
+  cetTable& atom_loop = AddLoopDef(
     "_atom_site_label,_atom_site_type_symbol,_atom_site_fract_x,"
     "_atom_site_fract_y,_atom_site_fract_z,_atom_site_U_iso_or_equiv,"
     "_atom_site_adp_type,_atom_site_occupancy,_atom_site_refinement_flags_posn,"
     "_atom_site_symmetry_multiplicity,_atom_site_disorder_group");
 
-  TCifLoop& u_loop = AddLoopDef(
+  cetTable& u_loop = AddLoopDef(
     "_atom_site_aniso,_atom_site_aniso_label,_atom_site_aniso_U_11"
     "_atom_site_aniso_U_22,_atom_site_aniso_U_33,_atom_site_aniso_U_23"
     "_atom_site_aniso_U_13,_atom_site_aniso_U_12");
 
   for( size_t i = 0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& A = GetAsymmUnit().GetAtom(i);
-    CifRow& Row = atom_loop.GetDataProvider().AddRow();
+    CifRow& Row = atom_loop.AddRow();
     Row[0] = new cetString(A.GetLabel());
     Row[1] = new cetString(A.GetType().symbol);
     for( int j=0; j < 3; j++ )
@@ -597,11 +586,10 @@ bool TCif::Adopt(TXFile& XF)  {
     if( A.GetEllipsoid() != NULL )  {
       A.GetEllipsoid()->GetQuad(Q, E);
       GetAsymmUnit().UcartToUcif(Q);
-      CifRow& Row1 = u_loop.GetDataProvider().AddRow();
+      CifRow& Row1 = u_loop.AddRow();
       Row1[0] = new AtomCifEntry(&A);
-      for( int j=0; j < 6; j++ )  {
+      for( int j=0; j < 6; j++ )
         Row1.Set(j+1, new cetString(TEValueD(Q[j], E[j]).ToString()));
-      }
     }
   }
   return true;
@@ -777,9 +765,8 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
   int RowDeleted=0, ColDeleted=0;
   SymmList.Clear();
   const CifTable* LT = NULL;
-  for( size_t i=0; i < Loops.Count(); i++ )  {
-    TCifLoop* Loop = Loops.GetObject(i);
-    LT = &Loop->GetTable();
+  for( size_t i=0; i < LoopCount(); i++ )  {
+    LT = &GetLoop(i).GetData();
     if( LT->ColCount() < TD->ItemCount() )  continue;
     size_t defcnt = 0;
     for( size_t j=0; j < LT->ColCount(); j++ )  {
