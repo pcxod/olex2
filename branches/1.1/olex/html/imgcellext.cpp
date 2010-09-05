@@ -102,19 +102,17 @@ THtmlImageCell::THtmlImageCell(wxWindow *window, wxFSFile *input,
 void THtmlImageCell::SetImage(const wxImage& img)  {
   if( img.Ok() )  {
     delete m_bitmap;
-    int ww, hh;
-    ww = img.GetWidth();
-    hh = img.GetHeight();
+    int ww = img.GetWidth();
+    int hh = img.GetHeight();
+    if( m_bmpW == wxDefaultCoord )  m_bmpW = ww;
+    if( m_bmpH == wxDefaultCoord )  m_bmpH = hh;
 
-     if( m_bmpW == wxDefaultCoord )  m_bmpW = ww;
-     if( m_bmpH == wxDefaultCoord )  m_bmpH = hh;
-
-     if ((m_bmpW != ww) || (m_bmpH != hh))  {
-         wxImage img2 = img.Scale(m_bmpW, m_bmpH, wxIMAGE_QUALITY_HIGH);
-         m_bitmap = new wxBitmap(img2);
-     }
-     else
-         m_bitmap = new wxBitmap(img);
+    if( (m_bmpW != ww || m_bmpH != hh) && m_bmpW > 0 && m_bmpH > 0 )  {
+      wxImage img2 = img.Scale(m_bmpW, m_bmpH, wxIMAGE_QUALITY_HIGH);
+      m_bitmap = new wxBitmap(img2);
+    }
+    else
+      m_bitmap = new wxBitmap(img);
   }
 }
 //..............................................................................
