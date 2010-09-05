@@ -183,6 +183,9 @@
     <ClCompile Include="..\..\..\olex\html\imgcellext.cpp">
       <Filter>html\sources</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\olex\main_gui.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\olex\cmdline.h">
