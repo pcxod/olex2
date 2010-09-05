@@ -45,6 +45,123 @@ enum  {
   ID_TEXTPOST
 };
 
+enum  {
+  ID_HtmlPanel=1,  // view menu
+
+  ID_StrGenerate,  // structure menu
+
+  ID_MenuTang,  // menu item ids
+  ID_MenuBang,
+  ID_MenuGraphics,
+  ID_MenuModel,
+  ID_MenuView,
+  ID_MenuFragment,
+  ID_MenuDrawStyle,
+  ID_MenuDrawQ,
+  ID_MenuItemAtomInfo,
+  ID_MenuItemBondInfo,
+  ID_MenuAtomType,
+  ID_MenuAtomOccu,
+  ID_MenuAtomConn,
+  ID_MenuAtomPoly,
+
+  ID_DSBS,  // drawing style, balls and sticks
+  ID_DSES,  // ellipsoids and sticks
+  ID_DSSP,  // sphere packing
+  ID_DSWF,  // wireframe
+  ID_DSST,   // sticks
+  ID_SceneProps,
+
+  ID_DQH,  // drawing quality
+  ID_DQM,
+  ID_DQL,
+
+  ID_CellVisible,  // model menu
+  ID_BasisVisible,
+  ID_ShowAll,
+  ID_ModelCenter,
+
+  ID_AtomTypeChangeC,
+  ID_AtomTypeChangeN,
+  ID_AtomTypeChangeO,
+  ID_AtomTypeChangeF,
+  ID_AtomTypeChangeH,
+  ID_AtomTypeChangeS,
+  ID_AtomTypePTable,
+  ID_AtomGrow,
+  ID_AtomCenter,
+  ID_AtomSelRings,
+  
+  ID_PlaneActivate,
+
+  ID_FragmentHide,  // fragment menu
+  ID_FragmentShowOnly,
+  ID_FragmentSelectAtoms,
+  ID_FragmentSelectBonds,
+  ID_FragmentSelectAll,
+  ID_FileLoad,
+  ID_FileClose,
+
+  ID_View100,   // view menu
+  ID_View010,
+  ID_View001,
+  ID_View110,
+  ID_View101,
+  ID_View011,
+  ID_View111,
+
+  ID_AtomOccu1,
+  ID_AtomOccu34,
+  ID_AtomOccu12,
+  ID_AtomOccu13,
+  ID_AtomOccu14,
+  ID_AtomOccuFix,
+  ID_AtomOccuFree,
+
+  ID_AtomConn0,
+  ID_AtomConn1,
+  ID_AtomConn2,
+  ID_AtomConn3,
+  ID_AtomConn4,
+  ID_AtomConn12,
+
+  ID_AtomPolyNone,
+  ID_AtomPolyAuto,
+  ID_AtomPolyRegular,
+  ID_AtomPolyPyramid,
+  ID_AtomPolyBipyramid,
+
+  ID_Selection,
+  ID_SelGroup,
+  ID_SelUnGroup,
+  ID_SelLabel,
+
+  ID_GridMenu,
+  ID_GridMenuCreateBlob,
+
+  ID_GraphicsKill,
+  ID_GraphicsHide,
+  ID_GraphicsDS,
+  ID_GraphicsP,
+  ID_GraphicsEdit,
+  ID_GraphicsSelect,
+
+  ID_GStyleSave,
+  ID_GStyleOpen,
+  ID_FixLattice,
+  ID_FreeLattice,
+  ID_DELINS,
+  ID_ADDINS,
+  ID_VarChange,
+
+  ID_gl2ps,
+  
+  ID_PictureExport,
+  ID_UpdateThreadTerminate,
+  ID_UpdateThreadDownload,
+  ID_UpdateThreadAction
+};
+
 //............................................................................//
 const unsigned short
   mListen = 0x0001,    // modes
