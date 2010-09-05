@@ -53,11 +53,11 @@ public:
       return InvalidIndex;
     }
 #else
-    static int CompareFiles(const TFileListItem& i1, const TFileListItem& i2)  {
-      return i1.GetName().Compare(i2.GetName());
+    static int CompareFiles(const TFileListItem* i1, const TFileListItem* i2)  {
+      return i1->GetName().Compare(i2->GetName());
     }
-    static int CompareFolders(const Folder& i1, const Folder& i2)  {
-      return i1.Name.Compare(i2.Name);
+    static int CompareFolders(const Folder* i1, const Folder* i2)  {
+      return i1->Name.Compare(i2->Name);
     }
     template <class T> static size_t FindSortedIndexOf(const T&list, const olxstr& entity) {
       if( list.Count() == 0 )  return InvalidIndex;

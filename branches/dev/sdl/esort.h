@@ -106,14 +106,14 @@ struct DummySwapListener  {
   static void OnSwap(size_t i, size_t j)  {}
 };
 template <typename List> struct SyncSwapListener  {
-  List& list;
+  mutable List& list;
   SyncSwapListener(List& _list) : list(_list)  {}
-  void OnSwap(size_t i, size_t j)  {  list.Swap(i, j);  }
+  void OnSwap(size_t i, size_t j) const {  list.Swap(i, j);  }
 };
 //.........................................................................................................................
 template <class List, class Item, class accessor, class Comparator, class Listener>
 struct QuickSorter  {
-  QuickSorter(List& _list, const Comparator& _cmp, Listener& _listener) :
+  QuickSorter(List& _list, const Comparator& _cmp, const Listener& _listener) :
     list(_list), cmp(_cmp), listener(_listener)  {}
   void Sort()  {
     if( list.Count() < 2 )  return;
@@ -121,7 +121,7 @@ struct QuickSorter  {
   }
 protected:
   List& list;
-  Listener& listener;
+  const Listener& listener;
   const Comparator& cmp;
   void DoSort(size_t lo0, size_t hi0)  {
     const size_t diff = hi0-lo0;
@@ -151,7 +151,7 @@ protected:
 //.........................................................................................................................
 template <class List, class Item, class accessor, class Comparator, class Listener>
 struct BubbleSorter  {
-  BubbleSorter(List& _list, const Comparator& _cmp, Listener& _listener) :
+  BubbleSorter(List& _list, const Comparator& _cmp, const Listener& _listener) :
     list(_list), cmp(_cmp), listener(_listener)  {}
   void Sort()  {
     bool changes = true;
@@ -168,7 +168,7 @@ struct BubbleSorter  {
   }
 protected:
   List& list;
-  Listener& listener;
+  const Listener& listener;
   const Comparator& cmp;
 };
 //.........................................................................................................................
@@ -184,7 +184,7 @@ public:
     QuickSorter<ListClass, ItemClass, Accessor, Comparator, DummySwapListener>(list, cmp, DummySwapListener()).Sort();
   }
   template <class Comparator, class SwapListener>
-  static void Sort(ListClass& list, const Comparator& cmp, SwapListener& sl)  {
+  static void Sort(ListClass& list, const Comparator& cmp, const SwapListener& sl)  {
     QuickSorter<ListClass, ItemClass, Accessor, Comparator, SwapListener>(list, cmp, sl).Sort();
   }
   // convenience functions
@@ -223,7 +223,7 @@ public:
     BubbleSorter<ListClass, ItemClass, Accessor, Comparator, DummySwapListener>(list, cmp, DummySwapListener()).Sort();
   }
   template <class Comparator, class SwapListener>
-  static void Sort(ListClass& list, const Comparator& cmp, SwapListener& sl)  {
+  static void Sort(ListClass& list, const Comparator& cmp, const SwapListener& sl)  {
     BubbleSorter<ListClass, ItemClass, Accessor, Comparator, SwapListener>(list, cmp, sl).Sort();
   }
   // convenience functions
