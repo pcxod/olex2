@@ -399,19 +399,13 @@ public:
       if( *List[i] == val )  return i;
     return InvalidIndex;
   }
-
-  static TQuickSorter<TTypeListExt<T,DestructCast>,T> QuickSorter;
-  static TBubbleSorter<TTypeListExt<T,DestructCast>,T> BubleSorter;
+  struct Accessor  {
+    static T* get(TTypeListExt<T,DestructCast>& l, size_t i)  {  return l.List[i];  }
+  };
+  static ListQuickSorter<TTypeListExt<T,DestructCast>,const T*, Accessor> QuickSorter;
+  static ListBubbleSorter<TTypeListExt<T,DestructCast>,const T*, Accessor> BubleSorter;
   static TListTraverser<TTypeListExt<T,DestructCast> > Traverser;
 };
-#ifndef __BORLANDC__
-template <class T, class DC>
-  TQuickSorter<TTypeListExt<T,DC>,T> TTypeListExt<T,DC>::QuickSorter;
-template <class T, class DC>
-  TBubbleSorter<TTypeListExt<T,DC>,T> TTypeListExt<T,DC>::BubleSorter;
-template <class T, class DC>
-  TListTraverser<TTypeListExt<T,DC> > TTypeListExt<T,DC>::Traverser;
-#endif
 template <class T>
   class TTypeList : public TTypeListExt<T,T>  {
   public:

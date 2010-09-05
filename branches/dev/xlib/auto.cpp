@@ -74,9 +74,9 @@ vec3d TAutoDBNode::SortCenter;
 
 static const vec3d ZAxis(0,0,1);
 
-int TAutoDBNode::SortMetricsFunc(const TAttachedNode& a, const TAttachedNode& b )  {
-  double diff = TAutoDBNode::SortCenter.DistanceTo(b.GetCenter()) -
-                TAutoDBNode::SortCenter.DistanceTo(a.GetCenter());
+int TAutoDBNode::SortMetricsFunc(const TAttachedNode* a, const TAttachedNode* b)  {
+  double diff = TAutoDBNode::SortCenter.DistanceTo(b->GetCenter()) -
+                TAutoDBNode::SortCenter.DistanceTo(a->GetCenter());
 /*  if( olx_abs(diff) < 0.001 )  {
     vec3d ap(a.crd()), bp(b.crd());
     ap -= TAutoDBNode::SortCenter;
@@ -96,10 +96,10 @@ int TAutoDBNode::SortMetricsFunc(const TAttachedNode& a, const TAttachedNode& b 
   if( diff > 0 )  return 1;
   return 0;
 }
-int TAutoDBNode::SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d>& a,
-                                const AnAssociation2<TCAtom*, vec3d>& b )  {
-  double diff = TAutoDBNode::SortCenter.DistanceTo(b.GetB()) -
-                TAutoDBNode::SortCenter.DistanceTo(a.GetB());
+int TAutoDBNode::SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d>* a,
+                                const AnAssociation2<TCAtom*, vec3d>* b)  {
+  double diff = TAutoDBNode::SortCenter.DistanceTo(b->GetB()) -
+                TAutoDBNode::SortCenter.DistanceTo(a->GetB());
   if( diff < 0 )  return -1;
   if( diff > 0 )  return 1;
   return 0;

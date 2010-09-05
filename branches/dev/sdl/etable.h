@@ -282,21 +282,8 @@ public:
   inline T& operator [] (size_t index)  {  return Rows[index];  }
   inline T const & operator [] (size_t index) const {  return Rows[index];  }
 
-  struct TableSort  {
-    const T& data;
-    size_t index;
-    TableSort(const T& _data, size_t i) : data(_data), index(i)  {}
-  };
-  template <class comparator> void SortRows()  {
-    TTypeList<TableSort> sl;
-    for( size_t i=0; i < Rows.Count(); i++ )
-      sl.AddNew(Rows[i], i);
-    sl.QuickSorter.SortSF(sl, comparator::Compare);
-    TSizeList indexes(Rows.Count());
-    for( size_t i=0; i < Rows.Count(); i++ )
-      indexes[i] = sl[i].index;
-    RowNames.Rearrange(indexes);
-    Rows.Rearrange(indexes);
+  template <class Comparator> void SortRows(const Comparator& cmp)  {
+    Rows.QuickSorter.Sort(Rows, cmp, SyncSwapListener<TStrList>(RowNames));
   }
   void SwapRows(size_t r1, size_t r2)  {
     Rows.Swap(r1, r2);

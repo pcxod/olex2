@@ -37,8 +37,12 @@ bool TCifDP::ExtractLoop(size_t& start, parse_context& context)  {
         parse_header = false;
         loop_data.Add(toks[i]);
       }
-      else
-        table.AddCol(toks[i]);
+      else  {
+        try  {  table.AddCol(toks[i]);  }
+        catch(...)  {
+          throw ParsingException(__OlxSourceInfo, "invalid table definition", start);
+        }
+      }
     }
   }
   while( parse_header )  {  // skip loop definition
@@ -76,7 +80,10 @@ bool TCifDP::ExtractLoop(size_t& start, parse_context& context)  {
     loop_data.Add(Lines[start]);
   }
   
-  table.DataFromStrings(loop_data);
+  try  {  table.DataFromStrings(loop_data);  }
+  catch(const TExceptionBase& e)  {
+    throw ParsingException(__OlxSourceInfo, e);
+  }
   context.current_block->Add(table);
   start--;
   return true;
@@ -103,6 +110,7 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
       continue;
     }
     if( ExtractLoop(i, context) )  continue;
+    const size_t src_line = i;
     if( line.CharAt(0) == '_' )  {  // parameter
       if( context.current_block == NULL )
         context.current_block = &Add(EmptyString);
@@ -137,7 +145,7 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
             toks.Delete(0);
           }
           else
-            throw 1;
+            throw ParsingException(__OlxSourceInfo, "invalid multi line parameter syntax", src_line);
           context.current_block->Add(list);
           if( Lines[i].Length() > 1 )
             list->lines.Add(Lines[i].SubStringFrom(1));
@@ -159,7 +167,7 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
             toks.Delete(0);
           }
           else
-            throw 1;
+            throw ParsingException(__OlxSourceInfo, "invalid single line parameter syntax", src_line);
           context.current_block->Add(str);
         }
       }
@@ -234,7 +242,7 @@ void cetTable::AddCol(const olxstr& col_name)  {
         min_len = data.ColName(i).Length();
     }
     if( name.IsEmpty() )
-      throw TFunctionFailedException(__OlxSourceInfo, "Mismatching loop columns");
+      throw TFunctionFailedException(__OlxSourceInfo, "mismatching loop columns");
     if( name.Length() != min_len )  {  // lihe _geom_angle and geom_angle_etc
       const size_t u_ind = name.LastIndexOf('_');
       if( u_ind != InvalidIndex )
@@ -282,7 +290,7 @@ void cetTable::DataFromStrings(TStrList& lines)  {
     for( size_t i=0; i < cells.Count(); i++ )  // clean up the memory
       delete cells[i];
     throw TFunctionFailedException(__OlxSourceInfo, 
-      olxstr("Wrong number of parameters in '") << GetName() << "' loop");
+      olxstr("wrong number of parameters in '") << GetName() << "' loop");
   }
   const size_t ColCount = data.ColCount();
   const size_t RowCount = cells.Count()/ColCount;
@@ -292,19 +300,18 @@ void cetTable::DataFromStrings(TStrList& lines)  {
       data[i][j] = cells[i*ColCount+j];
   }
 }
-int cetTable::TableSorter::Compare(const CifTable::TableSort& r1, const CifTable::TableSort& r2)  {
-  size_t *a_d = new size_t[r1.data.Count()],
-    *b_d = new size_t[r1.data.Count()];
-  for( size_t i=r1.data.Count(); i > 0; i-- )  {
+int cetTable::TableSorter::Compare(const CifRow* r1, const CifRow* r2) const {
+  const size_t sz = r1->Count();
+  for( size_t i=sz; i > 0; i-- )  {
     bool atom = false;
-    const size_t r_i = r1.data.Count()-1;
-    size_t h = r1.data[i-1]->GetCmpHash();
+    const size_t r_i = sz-i-1;
+    size_t h = r1->Item(i-1)->GetCmpHash();
     a_d[r_i] = (h == InvalidIndex) ? 0 : h;
-    h = r2.data[i-1]->GetCmpHash();
+    h = r2->Item(i-1)->GetCmpHash();
     b_d[r_i] = (h == InvalidIndex) ? 0 : h;
   }
-  TEBitArray a((unsigned char*)a_d, sizeof(size_t)*r1.data.Count(), true),
-    b((unsigned char*)b_d, sizeof(size_t)*r1.data.Count(), true);
+  const TEBitArray a((unsigned char*)a_d.GetData(), sizeof(size_t)*sz, false),
+    b((unsigned char*)b_d.GetData(), sizeof(size_t)*sz, false);
   return a.Compare(b); 
 }
 //.............................................................................
@@ -318,7 +325,7 @@ void cetTable::Sort()  {
     }
   }
   if( !update  )  return;
-  data.SortRows<TableSorter>();
+  data.SortRows(TableSorter(data[0].Count()));
 }
 //.............................................................................
 cetString::cetString(const olxstr& _val) : value(_val), quoted(false)  {
@@ -436,7 +443,57 @@ void CifBlock::Format()  {
     params.GetObject(i)->Format();    
 }
 //..............................................................................
-//..............................................................................
-//..............................................................................
-//..............................................................................
-//..............................................................................
+void CifBlock::Sort(const TStrList& pivots)  {
+  static TStrList def_pivots(
+    "_audit_creation,_publ,_chemical_name,_chemical_formula,_chemical,_atom_type,"
+    "_space_group,_space_group_symop,_cell_length,_cell_angle,_cell_volume,_cell_formula,_cell,"
+    "_exptl_,"
+    "_diffrn,"
+    "_reflns,"
+    "_computing,"
+    "_refine,"
+    "_atom_sites,_atom_site,_atom_site_aniso,"
+    "_geom_special,_geom"
+    , 
+    ',');
+  TTypeList<CifBlock::EntryGroup> groups;
+  for( size_t i=0; i < params.Count(); i++ )  {
+    CifBlock::EntryGroup& eg = groups.AddNew();
+    while( i < params.Count() && EsdlInstanceOf(*params.GetObject(i), cetComment) )  {
+      eg.items.Add(params.GetObject(i++));
+    }
+    if( i < params.Count() )  {
+      eg.items.Add(params.GetObject(i));
+      eg.name = params.GetObject(i)->GetName();
+    }
+  }
+  groups.QuickSorter.Sort(groups, CifSorter(pivots.IsEmpty() ? def_pivots : pivots));
+  params.Clear();
+  for( size_t i=0; i < groups.Count(); i++ )  {
+    for( size_t j=0; j < groups[i].items.Count()-1; j++ )
+      params.Add(EmptyString, groups[i].items[j]);
+    params.Add(groups[i].name, groups[i].items.Last());
+  }
+}
+//.............................................................................
+int CifBlock::CifSorter::Compare(const CifBlock::EntryGroup* e1, const CifBlock::EntryGroup* e2) const {
+  size_t c1=InvalidIndex, c2=InvalidIndex, c1_l=0, c2_l=2;
+  for( size_t i=0; i < pivots.Count(); i++ )  {
+    if( c1 == InvalidIndex && e1->name.StartsFromi(pivots[i]) )  {
+      if( pivots[i].Length() > c1_l )  {
+        c1 = i;
+        c1_l = pivots[i].Length();
+      }
+    }
+    if( c2 == InvalidIndex && e2->name.StartsFromi(pivots[i]) )  {
+      if( pivots[i].Length() > c2_l )  {
+        c2 = i;
+        c2_l = pivots[i].Length();
+      }
+    }
+  }
+  if( c1 == c2 )
+    return e1->name.Comparei(e2->name);
+  return olx_cmp(c1, c2);
+}
+//.............................................................................

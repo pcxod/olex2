@@ -75,8 +75,8 @@ class RefMerger {
         refs[i]->Standardise(ml);
     }
     // sort the list
-    TReflection::SortPList(refs);
-    output.SetCapacity( ref_cnt ); // better more that none :)
+    TReflection::SortList(refs);
+    output.SetCapacity(ref_cnt); // better more that none :)
     // merge reflections
     double Sdiff = 0, SI = 0, SS = 0, SI_tot = 0;
     TReflection* ref = refs[0];  // reference reflection
@@ -156,7 +156,7 @@ class RefMerger {
         refs[i]->Standardise(ml);
     }
     // sort the list
-    TReflection::SortPList(refs);
+    TReflection::SortList(refs);
     // merge reflections
     double Sdiff = 0, SI = 0, SS = 0, SI_tot = 0;
     TReflection* ref = refs[0];  // reference reflection
@@ -216,7 +216,7 @@ class RefMerger {
     stats.FriedelOppositesMerged = false;
     const size_t ref_cnt = refs.Count();
     // sort the list
-    TReflection::SortPList(refs);
+    TReflection::SortList(refs);
     output.SetCapacity( ref_cnt ); // better more that none :)
     TReflection* ref = refs[0];  // reference reflection
     for( size_t i=0; i < ref_cnt; )  {
@@ -265,7 +265,7 @@ class RefMerger {
     stats.FriedelOppositesMerged = false;
     const size_t ref_cnt = refs.Count();
     // sort the list
-    TReflection::SortPList(refs);
+    TReflection::SortList(refs);
     TReflection* ref = refs[0];  // reference reflection
     for( size_t i=0; i < ref_cnt; )  {
       ref->Analyse(ml);
@@ -309,7 +309,7 @@ class RefMerger {
   static MergeStats _DoMergeInP1(TPtrList<const TReflection>& refs, const vec3i_list& omits, TRefList& output)  {
     MergeStats stats;
     // sort the list
-    TReflection::SortPList(refs);
+    TReflection::SortList(refs);
     const size_t ref_cnt = refs.Count();
     output.SetCapacity( ref_cnt ); // better more that none :)
     // merge reflections
@@ -363,7 +363,7 @@ class RefMerger {
   static MergeStats _DryMergeInP1(TPtrList<const TReflection>& refs, const vec3i_list& omits)  {
     MergeStats stats;
     // sort the list
-    TReflection::SortPList(refs);
+    TReflection::SortList(refs);
     // merge reflections
     const size_t ref_cnt = refs.Count();
     double Sdiff = 0, SI_tot = 0, SI = 0, SS = 0;

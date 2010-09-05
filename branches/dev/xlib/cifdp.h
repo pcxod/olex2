@@ -5,6 +5,18 @@
 #include "edict.h"
 
 namespace cif_dp {
+  class ParsingException : public TBasicException  {
+    size_t LineNumber;
+  public:
+    ParsingException(const ParsingException& e) : TBasicException(e), LineNumber(e.LineNumber)  {} 
+    ParsingException(const olxstr& location, const olxstr& msg, size_t lineNumber) :
+      LineNumber(lineNumber),
+      TBasicException(location, olxstr("Failed to parse CIF because ") << msg << " at CIF#" << lineNumber)  {}
+    ParsingException(const olxstr& location, const TExceptionBase& cause, const olxstr& msg=EmptyString) :
+      TBasicException(location, cause, msg )  {}
+    virtual const char* GetNiceName() const {  return "CIF reading";  }
+    virtual IEObject* Replicate() const {  return new ParsingException(*this);  }
+  };
   struct ICifEntry  {
     ICifEntry()  {}
     virtual ~ICifEntry()  {}
@@ -163,9 +175,11 @@ namespace cif_dp {
       return name;
     }
     void Sort();
-    // used in table sorting
+    // used in table sorting, not suitable for parallelisation
     struct TableSorter  {
-      static int Compare(const CifTable::TableSort& r1, const CifTable::TableSort& r2);
+      mutable TArrayList<size_t> a_d, b_d;
+      TableSorter(size_t size) : a_d(size), b_d(size)  {}
+      int Compare(const CifRow* r1, const CifRow* r2) const;
     };
   };
 
@@ -189,6 +203,16 @@ namespace cif_dp {
     virtual olxstr GetStringValue() const {  throw TNotImplementedException(__OlxSourceInfo);  }
     virtual bool HasName() const {  return true;  }
     virtual const olxstr& GetName() const {  return name;  }
+    void Sort(const TStrList& pivots);
+    struct EntryGroup  {
+      TPtrList<ICifEntry> items;
+      olxstr name;
+    };
+    struct CifSorter  {
+      const TStrList& pivots;
+      CifSorter(const TStrList& _pivots) : pivots(_pivots)  {}
+      int Compare(const EntryGroup* e1, const EntryGroup* e2) const;
+    };
   };
 
   class TCifDP : public IEObject  {

@@ -25,8 +25,8 @@ private:
         delete ielpm;
     }
   };
-  static int OrtAtomZSort(const OrtAtom& a1, const OrtAtom& a2)  {
-    const float diff = a1.crd[2] - a2.crd[2];
+  static int OrtAtomZSort(const OrtAtom* a1, const OrtAtom* a2)  {
+    const float diff = a1->crd[2] - a2->crd[2];
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
   }
   float AradScale, DrawScale, BondRad, LinearScale;

@@ -129,6 +129,8 @@ public:
     return Items[index];
   }
 //..............................................................................
+  const T* GetData() const {  return Items;  }
+//..............................................................................
   template <class Functor> void ForEach(const Functor& f) const {
     for( size_t i=0; i < FCount; i++ )
       f.OnItem(Items[i]);
@@ -289,9 +291,12 @@ public:
         return i;
     return InvalidIndex;
   }
-
-  static TQuickObjectSorter<TArrayList<T>,T> QuickSorter;
-  static TBubbleSorter<TArrayList<T>,T> BubleSorter;
+//..............................................................................
+  struct Accessor  {
+    static T& get(TArrayList<T>& l, size_t i)  {  return l.Items[i];  }
+  };
+  static ListQuickSorter<TArrayList<T>,T, Accessor> QuickSorter;
+  static ListBubbleSorter<TArrayList<T>,T, Accessor> BubleSorter;
   static TListTraverser<TArrayList<T> > Traverser;
 };
 

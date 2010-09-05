@@ -155,6 +155,7 @@ void TCif::Group()  {
 //..............................................................................
 void TCif::SaveToStrings(TStrList& Strings)  {
   if( block_index == InvalidIndex )  return;
+  data_provider[block_index].Sort(TStrList());
   data_provider[block_index].ToStrings(Strings);
 }
 //..............................................................................
@@ -784,7 +785,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
   for( size_t i =0; i < Table.ColCount(); i++ )  {
     Table.ColName(i) = LT->ColName(i);
     for( size_t j=0; j < Table.RowCount(); j++ )
-      Table[i][j] = (*LT)[i][j]->GetStringValue();
+      Table[j][i] = (*LT)[j][i]->GetStringValue();
   }
   // process rows
   for( size_t i=0; i < LT->RowCount(); i++ )  {

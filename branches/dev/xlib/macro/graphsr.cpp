@@ -12,8 +12,8 @@
 //..............................................................................
 struct TGraphRSRef  {
   double ds, Fo, Fc;
-  static int SortByDs(const TGraphRSRef& r1, const TGraphRSRef& r2)  {
-    double v = r1.ds - r2.ds;
+  static int SortByDs(const TGraphRSRef* r1, const TGraphRSRef* r2)  {
+    double v = r1->ds - r2->ds;
     if( v < 0 )  return -1;
     if( v > 0 ) return 1;
     return 0;

@@ -6130,7 +6130,7 @@ void TMainForm::macCalcVol(TStrObjList &Cmds, const TParamList &Options, TMacroE
         }
       }
       const size_t thc = (atoms.Count()-2)*2;
-      tetrahedra.QuickSorter.Sort<TComparableComparator>(tetrahedra);
+      tetrahedra.QuickSorter.Sort<TComparablePtrComparator>(tetrahedra);
       for( size_t j=0; j < tetrahedra.Count(); j++ )  {
         TBasicApp::GetLog() << (olxstr("Tetrahedron ") << j+1 <<  ' ' << tetrahedra[j].GetName() 
           << " V = " << tetrahedra[j].GetVolume() << '\n');
@@ -8095,8 +8095,8 @@ public:
   double GetVolume()  const  {  return Volume.GetV();  }
   double GetEsd()  const  {  return Volume.GetE();  }
 };
-int Esd_ThSort( const Esd_Tetrahedron& th1, const Esd_Tetrahedron& th2 )  {
-  double v = th1.GetVolume() - th2.GetVolume();
+int Esd_ThSort( const Esd_Tetrahedron* th1, const Esd_Tetrahedron* th2 )  {
+  double v = th1->GetVolume() - th2->GetVolume();
   if( v < 0 )  return -1;
   if( v > 0 )  return 1;
   return 0;
@@ -8160,7 +8160,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
           }
         }
         const size_t thc = (atoms.Count()-2)*2;
-        TTypeList<Esd_Tetrahedron>::QuickSorter.SortSF( tetrahedra, &Esd_ThSort );
+        TTypeList<Esd_Tetrahedron>::QuickSorter.SortSF(tetrahedra, &Esd_ThSort);
         bool removed = false;
         while(  tetrahedra.Count() > thc )  {
           TBasicApp::GetLog() << ( olxstr("Removing tetrahedron ") <<  tetrahedra[0].GetName() << " with volume " << tetrahedra[0].GetVolume() << '\n' );
