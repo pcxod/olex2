@@ -34,9 +34,8 @@ public class ClientHandler extends Thread {
   public ClientHandler(Socket _client)  {
     client = _client;
     if( TextExts.isEmpty() )  {
-      String[] exts = "txt py java cpp h html htm xml xld osp ind log".split("\\s");
-      for( int i=0; i < exts.length; i++ )
-        TextExts.add(exts[i]);
+      String[] exts = "txt py java cpp h html htm xml xld osp ind log ins res cif".split("\\s");
+      TextExts.addAll(Arrays.asList(exts));
     }
     if( fileMapping.isEmpty() )  {
       fileMapping.put("olex2.zip", "Windows 32bit distribution");
@@ -105,6 +104,16 @@ public class ClientHandler extends Thread {
             } else if (cmd.equals("stop")) {
               Main.doTerminate();
               handled = true;
+            } else if (cmd.equals("block")) {
+              if( cmds.size() == 2 )  {
+                Main.blocked.add(cmds.get(1));
+                handled = true;
+              }
+            } else if (cmd.equals("unblock")) {
+              if( cmds.size() == 2 )  {
+                Main.blocked.remove(cmds.get(1));
+                handled = true;
+              }
             }
           }
           if (!handled) {
