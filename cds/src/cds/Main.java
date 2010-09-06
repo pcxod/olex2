@@ -6,6 +6,7 @@ package cds;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -15,6 +16,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 
 /**
  *
@@ -26,10 +28,14 @@ public class Main {
   static int threadCount = 0;
   static String baseDir;
   static PrintWriter logFile=null;
+  static HashSet<String> blocked = new HashSet();
   public synchronized static void doTerminate()  {  terminate = true;  }
   public static String getBaseDir()  {  return baseDir;  }
   public synchronized static void onThreadTerminate()  {
     threadCount--;
+  }
+  public static boolean shouldHandle(String src)  {
+    return !blocked.contains(src);
   }
   public static void print(String s)  {
     if( logFile != null )  {
@@ -86,6 +92,12 @@ public class Main {
         if( args.length == 4 && args[2].equals("log") )  {
            File log = new File(args[3]);
            logFile = new PrintWriter(new FileWriter(log, true));
+        }
+        if( args.length == 6 && args[4].equals("blocked") )  {
+           BufferedReader reader = new BufferedReader(new FileReader(args[5]));
+           String line = null;
+           while( (line = reader.readLine()) != null )
+             blocked.add(line);
         }
         ServerSocket s = new ServerSocket(port_number);
         print("Server started at " + (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()));
