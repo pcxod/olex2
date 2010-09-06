@@ -2673,7 +2673,6 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   }
   else
     TBasicApp::GetLog().Error("Could not locate space group ...");
-  Cif->Group();
   Cif->SaveToFile(Cif->GetFileName());
 }
 //..............................................................................
@@ -2767,8 +2766,8 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
   latt.GrowFragments(false, NULL);
 
   cif_dp::cetTable& bonds = cif.AddLoopDef(
-    "_geom_bond_atom_site_label_1,_geom_bond_atom_site_label_2,_geom_bond_distance"
-    "_geom_bond_site_symmetry_2_geom_bond_publ_flag");
+    "_geom_bond_atom_site_label_1,_geom_bond_atom_site_label_2,_geom_bond_distance,"
+    "_geom_bond_site_symmetry_2,_geom_bond_publ_flag");
   for( size_t i=0; i < latt.BondCount(); i++ )  {
     TSBond& b = latt.GetBond(i);
     if( b.A().GetType().GetMr() < 3 || b.A().IsDeleted() )  {
@@ -2801,7 +2800,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
     }
   }
   cif_dp::cetTable& angles = cif.AddLoopDef(
-    "_geom_angle_atom_site_label_1,_geom_angle_atom_site_label_2,_geom_angle_atom_site_label_3"
+    "_geom_angle_atom_site_label_1,_geom_angle_atom_site_label_2,_geom_angle_atom_site_label_3,"
     "_geom_angle,_geom_angle_site_symmetry_1,_geom_angle_site_symmetry_3,_geom_angle_publ_flag");
   for( size_t i=0; i < latt.AtomCount(); i++ )  {
     TSAtom& a = latt.GetAtom(i);
@@ -2838,8 +2837,8 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
   RefinementModel& rm = xapp.XFile().GetRM();
   if( rm.InfoTabCount() != 0 )  {
     cif_dp::cetTable& hbonds = cif.AddLoopDef(
-      "_geom_hbond_atom_site_label_D,_geom_hbond_atom_site_label_H,_geom_hbond_atom_site_label_A"
-      "_geom_hbond_distance_DH,_geom_hbond_distance_HA,_geom_hbond_distance_DA"
+      "_geom_hbond_atom_site_label_D,_geom_hbond_atom_site_label_H,_geom_hbond_atom_site_label_A,"
+      "_geom_hbond_distance_DH,_geom_hbond_distance_HA,_geom_hbond_distance_DA,"
       "_geom_hbond_angle_DHA,_geom_hbond_site_symmetry_A");
     smatd I;
     I.I().SetId(0);

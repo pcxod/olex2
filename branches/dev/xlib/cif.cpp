@@ -20,13 +20,13 @@ using namespace cif_dp;
 //----------------------------------------------------------------------------//
 // TCif function bodies
 //----------------------------------------------------------------------------//
-TCif::TCif() : FDataNameUpperCase(true), block_index(InvalidIndex)  {  }
+TCif::TCif() : block_index(InvalidIndex)  {  }
 //..............................................................................
 TCif::~TCif()  {  Clear();  }
 //..............................................................................
 void TCif::Clear()  {
-  FWeightA.SetLength(0);
-  FWeightB.SetLength(0);
+  WeightA.SetLength(0);
+  WeightB.SetLength(0);
   GetRM().Clear(rm_clear_ALL);
   GetAsymmUnit().Clear();
   DataManager.Clear();
@@ -35,7 +35,7 @@ void TCif::Clear()  {
 }
 //..............................................................................
 void TCif::LoadFromStrings(const TStrList& Strings)  {
-  block_index = InvalidIndex;
+  block_indexes.Clear();
   data_provider.LoadFromStrings(Strings);
   for( size_t i=0; i < data_provider.Count(); i++ )  {
     CifBlock& cb = data_provider[i];
@@ -48,11 +48,14 @@ void TCif::LoadFromStrings(const TStrList& Strings)  {
         break;
       }
     }
-    if( valid )  {  
-      block_index = i;
-      break;
-    }
+    if( valid )
+      block_indexes.Add(i);
   }
+  block_index = block_indexes.IsEmpty() ? InvalidIndex : block_indexes[0];
+  _LoadCurrent();
+}
+//..............................................................................
+void TCif::_LoadCurrent()  {
   if( block_index == InvalidIndex )  {
     if( data_provider.Count() > 1 || data_provider.Count() == 0 )
       throw TFunctionFailedException(__OlxSourceInfo, "could not locate required data");
@@ -69,23 +72,18 @@ void TCif::LoadFromStrings(const TStrList& Strings)  {
       const olxstr& tmp = (*ci)[0];
       for( size_t k=0; k < tmp.Length(); k++ )  {
         if( tmp[k] == '+' )  {
-          if( FWeightA.IsEmpty() )  {
-            while( tmp[k] != ')' )  {
-              k++;
-              if( k >= tmp.Length() )  break;
-              FWeightA << tmp[k];
-            }
-            k--;
-            continue;
+          if( WeightA.IsEmpty() )  {
+            const size_t st = k+2;
+            while( tmp[k] != ')' && ++k < tmp.Length() )  ;
+            WeightA = tmp.SubString(st, --k-st);
           }
-          if( FWeightB.IsEmpty() )  {
-            while( tmp[k] != ']' )  {
-              k++;
-              if( k >= tmp.Length() )  break;
-              FWeightB << tmp[k];
-            }
-            FWeightB.Delete(FWeightB.Length()-1, 1); // remove the [ bracket
+          else if( WeightB.IsEmpty() )  {
+            const size_t st = k;
+            while( tmp[k] != ']' && ++k < tmp.Length() )  ;
+            WeightB = tmp.SubString(st, k-st-1);
           }
+          else
+            break;
         }
       }
     }
@@ -500,12 +498,13 @@ bool TCif::Adopt(TXFile& XF)  {
     "_atom_site_symmetry_multiplicity,_atom_site_disorder_group");
 
   cetTable& u_loop = AddLoopDef(
-    "_atom_site_aniso,_atom_site_aniso_label,_atom_site_aniso_U_11"
-    "_atom_site_aniso_U_22,_atom_site_aniso_U_33,_atom_site_aniso_U_23"
+    "_atom_site_aniso_label,_atom_site_aniso_U_11,"
+    "_atom_site_aniso_U_22,_atom_site_aniso_U_33,_atom_site_aniso_U_23,"
     "_atom_site_aniso_U_13,_atom_site_aniso_U_12");
 
   for( size_t i = 0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& A = GetAsymmUnit().GetAtom(i);
+    if( A.IsDeleted() || A.GetType() == iQPeakZ )  continue;
     CifRow& Row = atom_loop.AddRow();
     Row[0] = new cetString(A.GetLabel());
     Row[1] = new cetString(A.GetType().symbol);
@@ -652,9 +651,9 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
             else if( SVal.Equalsi("data_name") )
               value = GetDataName();
             else if( SVal.Equalsi("weighta") )
-              value = GetWeightA();
+              value = WeightA;
             else if( SVal.Equalsi("weightb") )
-              value = GetWeightB();
+              value = WeightB;
             else {
               IStringCifEntry* Params = FindParam<IStringCifEntry>(SVal);
               if( Params == NULL )  {

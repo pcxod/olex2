@@ -12,9 +12,8 @@ class TCif: public TBasicCFile  {
 private:
   cif_dp::TCifDP data_provider;
   size_t block_index;
-  olxstr FWeightA, FWeightB;
-//  void SetDataName(const olxstr& S);
-  bool FDataNameUpperCase;
+  TSizeList block_indexes;
+  olxstr WeightA, WeightB;
   void Initialize();
   TCifDataManager DataManager;
   smatd_list Matrices;
@@ -24,6 +23,7 @@ protected:
   static cif_dp::cetTable* LoopFromDef(cif_dp::CifBlock& dp, const olxstr& col_names)  {
     return LoopFromDef(dp, TStrList(col_names, ','));
   }
+  void _LoadCurrent();
 public:
   TCif();
   virtual ~TCif();
@@ -90,19 +90,6 @@ public:
   inline const olxstr& GetDataName() const {
     return (block_index == InvalidIndex) ? EmptyString : data_provider[block_index].GetName();
   }
-  /*Set the data name. You should specify only the data name, not data_DATANAME.
-    The function is not affected by DataNameUpperCase function, and, hence, specify
-    the character's case manually, if necessary. */
-  //void SetDataName(const olxstr& D);
-  /*Shows if the data name will appear in upper case or in a default case when
-    current object is loaded from a file  */
-  inline bool IsDataNameUpperCase() const { return FDataNameUpperCase;  }
-  /*Allows changing the case of the data name. The change takes place only when a
-    file is being loaded. Use SetDataName function to change the data name  */
-  inline void SetDataNameUpperCase(bool v)  { FDataNameUpperCase = v; }
-  //............................................................................
-  inline const olxstr& GetWeightA() const {  return FWeightA;  }
-  inline const olxstr& GetWeightB() const {  return FWeightB;  }
   //............................................................................
   //Returns a loop specified by index
   cif_dp::cetTable& GetLoop(size_t i) const {
@@ -121,8 +108,17 @@ public:
   inline size_t LoopCount() const {
     return (block_index == InvalidIndex) ? 0 : data_provider[block_index].table_map.Count();
   }
-  // Adds a loop to current  file
-  //TCifLoop& AddLoop(const olxstr& name);
+  // return number of blocks with atoms
+  size_t BlockCount() const {  return block_indexes.Count();  }
+  // returns current block index
+  size_t BlockIndex() const {  return block_index;  }
+  // changes current block index, i.e. loads structure from different block
+  void SetBlockIndex(size_t i)  {
+    block_index = block_indexes[i];
+    _LoadCurrent();
+  }
+  // returns given block
+  const cif_dp::CifBlock& GetBlock(size_t i) const {  return data_provider[block_indexes[i]];  }
   // creates a new loop from comma separated column names
   cif_dp::cetTable& AddLoopDef(const olxstr& col_names);
   /* this is the only loop, which is not automatically created from structure data!

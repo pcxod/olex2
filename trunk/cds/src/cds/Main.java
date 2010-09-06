@@ -146,7 +146,43 @@ public class Main {
         print("The server has been successfully stopped.");
       }
       catch (IOException ex) {
-        ex.printStackTrace();
+        print("Failed to stop server: " + ex.getMessage());
+      }
+    }
+    else if( args[0].equals("block") && args.length == 2 )  {
+      if( !status.equals("running") )  {
+        print("Not running...");
+        return;
+      }
+      try {
+        Socket s = new Socket();
+        s.connect(new InetSocketAddress("localhost", port_number));
+        PrintWriter out = new PrintWriter(s.getOutputStream(), true);
+        out.println("block\n" + args[1] + '\n');
+        out.close();
+        s.close();
+        print("The address has been blocked for the session.");
+      }
+      catch (IOException ex) {
+        print("Failed to block the address: " + ex.getMessage());
+      }
+    }
+    else if( args[0].equals("unblock") && args.length == 2 )  {
+      if( !status.equals("running") )  {
+        print("Not running...");
+        return;
+      }
+      try {
+        Socket s = new Socket();
+        s.connect(new InetSocketAddress("localhost", port_number));
+        PrintWriter out = new PrintWriter(s.getOutputStream(), true);
+        out.println("unblock\n" + args[1] + '\n');
+        out.close();
+        s.close();
+        print("The address has been unblocked for the session.");
+      }
+      catch (IOException ex) {
+        print("Failed to block the address: " + ex.getMessage());
       }
     }
   }
