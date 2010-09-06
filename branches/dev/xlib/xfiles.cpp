@@ -198,7 +198,7 @@ void TXFile::UpdateAsymmUnit()  {
   RefMod.Validate();
   ValidateTabs();
   LL->GetRM().Assign(RefMod, false);
-  LL->GetAsymmUnit().SetZ( GetAsymmUnit().GetZ() );
+  LL->GetAsymmUnit().SetZ(GetAsymmUnit().GetZ());
 }
 //..............................................................................
 void TXFile::Sort(const TStrList& ins)  {
@@ -283,11 +283,12 @@ void TXFile::Sort(const TStrList& ins)  {
   catch(const TExceptionBase& exc)  {
     TBasicApp::GetLog().Error( exc.GetException()->GetError() );
   }
-  GetAsymmUnit().ComplyToResidues();
   if( !FLastLoader->IsNative() )  {
     AtomSorter::SyncLists(list, FLastLoader->GetAsymmUnit().GetResidue(0).GetAtomList());
     FLastLoader->GetAsymmUnit().ComplyToResidues();
   }
+  // this hanges Id's !!! so must be called before the SyncLists
+  GetAsymmUnit().ComplyToResidues();
 }
 //..............................................................................
 void TXFile::ValidateTabs()  {

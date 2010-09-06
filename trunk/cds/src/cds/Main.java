@@ -46,7 +46,7 @@ public class Main {
   }
   public static void main(String[] args) {
     print("Download manager server, (c) O. Dolomanov, 2010");
-    String status = "unknown";
+    String status = "unknown", status_info = "none";
     // read current status
     try {
       Socket s = new Socket();
@@ -55,6 +55,8 @@ public class Main {
       out.println("status\n");
       BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
       status = in.readLine();
+      if( in.ready() )
+        status_info = in.readLine();
       out.close();
       in.close();
       s.close();
@@ -62,6 +64,7 @@ public class Main {
     catch (IOException ex) {}  // unknow status
     if( args.length == 0 )  {
       print("Status: " + status);
+      print("Status Info: " + status_info);
     }
     else if( args[0].equals("start") )  {
       if( status.equals("running") )  {
@@ -105,7 +108,7 @@ public class Main {
           try  {
             Socket c = s.accept();
             threadCount++;
-            (new ClientHandler(c)).run();
+            (new ClientHandler(c)).start();
             if( terminate )  {
               while( threadCount != 0 )
                 Thread.sleep(1000);

@@ -6283,6 +6283,12 @@ public:
 #endif
 
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TTypeList<int> arr;
+  arr.AddNew(1);  arr.AddNew(2);
+  int *ip1 = &arr[0], *ip2 = &arr[1];
+  int &ir1 = arr[0], &ir2 = arr[1];
+  arr.Swap(0,1);
+  arr.Clear();
   //TSocketFS fs(TUrl("http://localhost:8082"));
   //if( fs.Exists("dist/cds.jar", true) )  {
   //  TEFile* ef = fs.OpenFileAsFile("dist/cds.jar");

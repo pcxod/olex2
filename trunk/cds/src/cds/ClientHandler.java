@@ -97,7 +97,10 @@ public class ClientHandler extends Thread {
           // accept some command only from localhost...
           if (client.getInetAddress().isLoopbackAddress() && origin == null) {
             if (cmd.equals("status")) {
-              out.writeBytes("running");
+              out.writeBytes("running\n");
+              String info = "Clients: ";
+              info += Main.threadCount;
+              out.writeBytes(info);
               handled = true;
             } else if (cmd.equals("stop")) {
               Main.doTerminate();

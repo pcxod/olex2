@@ -46,7 +46,9 @@ public:
  /* Returns the value of the given param as a string. Mght have '\n' as lines separator */
   olxstr GetParamAsString(const olxstr& name) const;
   //Returns true if a specified parameter exists
-  bool ParamExists(const olxstr& name) const;
+  template <typename Str> bool ParamExists(const Str& name) const {
+    return (block_index == InvalidIndex) ? false : data_provider[block_index].param_map.HasKey(name);
+  }
   //Adds/Sets given parameter a value
   void SetParam(const olxstr& name, const cif_dp::ICifEntry& value);
   void SetParam(const olxstr& name, const olxstr& value, bool quoted)  {
@@ -137,48 +139,47 @@ public:
     olxstr (*ResolveExternal)(const olxstr& valueName) = NULL,
     bool DoubleTheta = true) const;
   bool CreateTable(TDataItem* TableDefinitions, TTTable<TStrList>& Table, smatd_list& SymmList) const;
-  void Group();
   const TCifDataManager& GetDataManager() const {  return DataManager;  }
   virtual IEObject* Replicate() const {  return new TCif;  }
 };
 //---------------------------------------------------------------------------
 struct AtomCifEntry : public cif_dp::IStringCifEntry {
-  TCAtom* data;
+  TCAtom& data;
   AtomCifEntry(const AtomCifEntry& v) : data(v.data)  {}
-  AtomCifEntry(TCAtom* _data) : data(_data)  {}
+  AtomCifEntry(TCAtom& _data) : data(_data)  {}
   virtual size_t Count() const {  return 1;  }
-  virtual size_t GetCmpHash() const {  return data->GetId();  }
-  virtual const olxstr& operator [] (size_t i) const {  return  data->GetLabel();  }
+  virtual size_t GetCmpHash() const {  return data.GetId();  }
+  virtual const olxstr& operator [] (size_t i) const {  return  data.GetLabel();  }
   virtual const olxstr& GetComment() const {  return EmptyString;  }
   virtual cif_dp::ICifEntry* Replicate() const {  return new AtomCifEntry(*this);  }
   virtual void ToStrings(TStrList& list) const {
-    if( list.IsEmpty() || (list.Last().String.Length() + data->GetLabel().Length() + 1 > 80) )
-      list.Add(' ') << data->GetLabel();
+    if( list.IsEmpty() || (list.Last().String.Length() + data.GetLabel().Length() + 1 > 80) )
+      list.Add(' ') << data.GetLabel();
     else
-      list.Last().String << ' ' << data->GetLabel();
+      list.Last().String << ' ' << data.GetLabel();
   }
-  virtual olxstr GetStringValue() const {  return data->GetLabel();  }
+  virtual olxstr GetStringValue() const {  return data.GetLabel();  }
 };
 struct AtomPartCifEntry : public cif_dp::IStringCifEntry {
-  TCAtom* data;
+  TCAtom& data;
   mutable olxstr tmp_val;
   AtomPartCifEntry(const AtomPartCifEntry& v) : data(v.data)  {}
-  AtomPartCifEntry(TCAtom* _data) : data(_data)  {}
+  AtomPartCifEntry(TCAtom& _data) : data(_data)  {}
   virtual size_t Count() const {  return 1;  }
-  virtual const olxstr& operator [] (size_t i) const {  return  (tmp_val = (int)data->GetPart());  }
+  virtual const olxstr& operator [] (size_t i) const {  return  (tmp_val = (int)data.GetPart());  }
   virtual const olxstr& GetComment() const {  return EmptyString;  }
   virtual cif_dp::ICifEntry* Replicate() const {  return new AtomPartCifEntry(*this);  }
   virtual void ToStrings(TStrList& list) const {
-    if( data->GetPart() == 0 )
+    if( data.GetPart() == 0 )
       tmp_val = '.';
     else
-      tmp_val = (int)data->GetPart();
-    if( list.IsEmpty() || (list.Last().String.Length() + data->GetLabel().Length() + 1 > 80) )
+      tmp_val = (int)data.GetPart();
+    if( list.IsEmpty() || (list.Last().String.Length() + data.GetLabel().Length() + 1 > 80) )
       list.Add(' ') << tmp_val;
     else
       list.Last().String << ' ' << tmp_val;
   }
-  virtual olxstr GetStringValue() const {  return data->GetLabel();  }
+  virtual olxstr GetStringValue() const {  return (tmp_val = (int)data.GetPart());  }
 };
 
 EndXlibNamespace()

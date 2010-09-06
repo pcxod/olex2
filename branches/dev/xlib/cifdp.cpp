@@ -304,7 +304,7 @@ int cetTable::TableSorter::Compare(const CifRow* r1, const CifRow* r2) const {
   const size_t sz = r1->Count();
   for( size_t i=sz; i > 0; i-- )  {
     bool atom = false;
-    const size_t r_i = sz-i-1;
+    const size_t r_i = sz-i;
     size_t h = r1->Item(i-1)->GetCmpHash();
     a_d[r_i] = (h == InvalidIndex) ? 0 : h;
     h = r2->Item(i-1)->GetCmpHash();
@@ -336,6 +336,8 @@ cetString::cetString(const olxstr& _val) : value(_val), quoted(false)  {
       quoted = true;
     }
   }
+  if( !quoted && value.IndexOf(' ') != InvalidIndex )
+    quoted = true;
 }
 void cetString::ToStrings(TStrList& list) const {
   if( quoted )  {
@@ -446,7 +448,8 @@ void CifBlock::Format()  {
 void CifBlock::Sort(const TStrList& pivots)  {
   static TStrList def_pivots(
     "_audit_creation,_publ,_chemical_name,_chemical_formula,_chemical,_atom_type,"
-    "_space_group,_space_group_symop,_cell_length,_cell_angle,_cell_volume,_cell_formula,_cell,"
+    "_space_group,_space_group_symop,_symmetry,"
+    "_cell_length,_cell_angle,_cell_volume,_cell_formula,_cell,"
     "_exptl_,"
     "_diffrn,"
     "_reflns,"

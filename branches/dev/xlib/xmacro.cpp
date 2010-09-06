@@ -2602,59 +2602,6 @@ bool XLibMacros::ProcessExternalFunction(olxstr& func)  {
   return false;
 }
 //..............................................................................
-void XLibMacros::MergePublTableData(cif_dp::cetTable& to, cif_dp::cetTable& from)  {
-  if( from.GetData().RowCount() == 0 )  return;
-  static const olxstr authorNameCN("_publ_author_name");
-  // create a list of unique colums, and prepeare them for indexed access
-  TSStrPObjList<olxstr, AnAssociation2<size_t,size_t>, false> uniqCols;
-  for( size_t i=0; i < from.ColCount(); i++ )  {
-    if( uniqCols.IndexOfComparable(from.ColName(i)) == InvalidIndex )  {
-      uniqCols.Add(from.ColName(i), AnAssociation2<size_t,size_t>(i, InvalidIndex));
-    }
-  }
-  for( size_t i=0; i < to.ColCount(); i++ )  {
-    const size_t ind = uniqCols.IndexOfComparable(to.ColName(i));
-    if( ind == InvalidIndex )
-      uniqCols.Add(to.ColName(i), AnAssociation2<size_t,size_t>(InvalidIndex, i));
-    else
-      uniqCols.GetObject(ind).B() = i;
-  }
-  // add new columns, if any
-  for( size_t i=0; i < uniqCols.Count(); i++ ) {
-    if( uniqCols.GetObject(i).GetB() == InvalidIndex )  {
-      to.AddCol(uniqCols.GetComparable(i));
-      uniqCols.GetObject(i).B() = to.ColCount() - 1;
-    }
-  }
-  /* by this point the uniqCols contains all the column names and the association
-  holds corresponding column indexes in from and to tables */
-  // the actual merge, by author name
-  const size_t authNCI = uniqCols.IndexOfComparable(authorNameCN);
-  if( authNCI == InvalidIndex )  return;  // cannot do much, can we?
-  AnAssociation2<size_t,size_t> authCA(uniqCols.GetObject(authNCI));
-  if( authCA.GetA() == InvalidIndex )  return;  // no author?, bad ...
-  for( size_t i=0; i < from.RowCount(); i++ )  {
-    size_t ri = InvalidIndex;
-    for( size_t j=0; j < to.RowCount(); j++ )  {
-      if( to[j][authCA.GetB()]->GetStringValue().Equalsi(
-        from[i][authCA.GetA()]->GetStringValue()) )
-      {
-        ri = j;
-        break;
-      }
-    }
-    if( ri == InvalidIndex )  {  // add a new row
-      to.AddRow();
-      ri = to.RowCount()-1;
-    }
-    for( size_t j=0; j < uniqCols.Count(); j++ )  {
-      AnAssociation2<size_t,size_t>& as = uniqCols.GetObject(j);
-      if( as.GetA() == InvalidIndex )  continue;
-      to[ri][as.GetB()] = from[i][as.GetA()]->Replicate();
-    }
-  }
-}
-//..............................................................................
 void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
   TCif *Cif, Cif1, Cif2;
@@ -2679,7 +2626,6 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   for( size_t i=0; i < _translation_count; i++ )
     Cif->Rename(_translations[i*2], _translations[i*2+1]);
 
-  cif_dp::cetTable& publ_info = Cif->GetPublicationInfoLoop();
   for( size_t i=0; i < Cmds.Count(); i++ )  {
     try {
       IInputStream *is = TFileHandlerManager::GetInputStream(Cmds[i]);
@@ -2696,18 +2642,12 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     // normalise
     for( size_t i=0; i < _translation_count; i++ )
       Cif1.Rename(_translations[i*2], _translations[i*2+1]);
-    cif_dp::cetTable& pil = Cif1.GetPublicationInfoLoop();
     for( size_t j=0; j < Cif1.ParamCount(); j++ )
       Cif->SetParam(Cif1.ParamName(j), Cif1.ParamValue(j));
-    // update publication info loop
-    //MergePublTableData(publ_info, pil);
   }
   // generate moiety string if does not exist
   Cif->SetParam("_chemical_formula_moiety", xapp.XFile().GetLattice().CalcMoiety(), true);
-  Cif->Rename("_symmetry_cell_setting", "_space_group_crystal_system");
-  Cif->Rename("_symmetry_space_group_name_Hall", "_space_group_name_Hall");
-  Cif->Rename("_symmetry_space_group_name_H-M", "_space_group_name_H-M_alt");
-  Cif->Rename("_symmetry_Int_Tables_number-M", "_space_group_IT_number");
+  Cif->SetParam("_cell_formula_units_Z", xapp.XFile().GetAsymmUnit().GetZ(), false);
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(Cif->GetAsymmUnit());
   if( sg != NULL )  {
     Cif->SetParam("_space_group_crystal_system", sg->GetBravaisLattice().GetName().ToLowerCase(), true);
@@ -2849,8 +2789,8 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       if( b.GetTag() == 0 || !b.A().IsAUAtom() )  continue;
       b.SetTag(0);
       cif_dp::CifRow& row = bonds.AddRow();
-      row.Set(0, new AtomCifEntry(&b.A().CAtom()));
-      row.Set(1, new AtomCifEntry(&b.B().CAtom()));
+      row.Set(0, new AtomCifEntry(b.A().CAtom()));
+      row.Set(1, new AtomCifEntry(b.B().CAtom()));
       row[2] = new cetString(vcovc.CalcDistance(b.A(), b.B()).ToString());
       if( !b.B().IsAUAtom() )
         row[3] = new cetString(TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
@@ -2877,9 +2817,9 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         TSAtom& _b = (b.CAtom().GetId() <= c.CAtom().GetId() ? b : c);
         TSAtom& _c = (b.CAtom().GetId() > c.CAtom().GetId() ? b : c);
         cif_dp::CifRow& row = angles.AddRow();
-        row.Set(0, new AtomCifEntry(&_b.CAtom()));
-        row.Set(1, new AtomCifEntry(&a.CAtom()));
-        row.Set(2, new AtomCifEntry(&_c.CAtom()));
+        row.Set(0, new AtomCifEntry(_b.CAtom()));
+        row.Set(1, new AtomCifEntry(a.CAtom()));
+        row.Set(2, new AtomCifEntry(_c.CAtom()));
         row[3] = new cetString(vcovc.CalcAngle(_b, a, _c).ToString());
         if( !_b.IsAUAtom() )
           row[4] = new cetString(TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
@@ -2924,9 +2864,9 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       for( size_t j=0; j < envi.Count(); j++ )  {
         if( envi.GetType(j) != iHydrogenZ)  continue;
         CifRow& row = hbonds.AddRow();
-        row.Set(0, new AtomCifEntry(d->GetAtom()));
-        row.Set(1, new AtomCifEntry(&envi.GetCAtom(j)));
-        row.Set(2, new AtomCifEntry(a->GetAtom()));
+        row.Set(0, new AtomCifEntry(*d->GetAtom()));
+        row.Set(1, new AtomCifEntry(envi.GetCAtom(j)));
+        row.Set(2, new AtomCifEntry(*a->GetAtom()));
         TSAtom da(NULL), aa(NULL);
         da.CAtom(*d->GetAtom());
         da.AddMatrix(&I);

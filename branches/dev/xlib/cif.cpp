@@ -1,25 +1,16 @@
 //---------------------------------------------------------------------------//
-// namespace TXFiles
 // CIF and related data management procedures
-// (c) Oleg V. Dolomanov, 2004
+// (c) Oleg V. Dolomanov, 2004-2010
 //---------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "cif.h"
 #include "dataitem.h"
-
 #include "catom.h"
 #include "satom.h"
 #include "symmparser.h"
-
 #include "unitcell.h"
 #include "ellipsoid.h"
-
 #include "bapp.h"
 #include "log.h"
-
 #include "symmlib.h"
 #include "etime.h"
 
@@ -102,66 +93,13 @@ void TCif::LoadFromStrings(const TStrList& Strings)  {
   Initialize();
 }
 //..............................................................................
-//void GroupSection(TStrPObjList<olxstr,TCif::CifData*>& lines, size_t index,
-//       const olxstr& sectionName, AnAssociation2<size_t,size_t>& indexes)  {
-//  olxstr tmp;
-//  for( size_t i=index; i < lines.Count(); i++ )  {
-//    tmp = lines[i].Trim(' ');
-//    if( tmp.IsEmpty() || tmp.StartsFromi("loop_") )  continue;
-//    size_t ind = tmp.FirstIndexOf('_', 1);
-//    if( ind == InvalidIndex || ind == 0 ) // a _loop ?
-//      continue;
-//    tmp = tmp.SubStringTo(ind);
-//    if( tmp == sectionName )  {
-//      if( indexes.GetB() != (i+1) )
-//        lines.Move(i, indexes.GetB()+1);
-//      indexes.B() ++;
-//    }
-//  }
-//}
-void TCif::Group()  {
-  //TCSTypeList<olxstr, AnAssociation2<size_t,size_t> > sections;
-  //olxstr tmp;
-  //for( size_t i=0; i < Lines.Count(); i++ )  {
-  //  tmp = Lines[i].Trim(' ');
-  //  if( tmp.IsEmpty() || tmp.StartsFrom("loop_") )  continue;
-  //  size_t ind = tmp.FirstIndexOf('_', 1);
-  //  if( ind == InvalidIndex || ind == 0 ) // a _loop ?
-  //    continue;
-  //  tmp = tmp.SubStringTo(ind);
-  //  ind = sections.IndexOfComparable(tmp);
-  //  if( ind == InvalidIndex )  {
-  //    sections.Add( tmp, AnAssociation2<size_t,size_t>(i,i) );
-  //    AnAssociation2<size_t,size_t>& indexes = sections[tmp];
-  //    GroupSection(Lines, i+1, tmp, indexes);
-  //  }
-  //}
-  //// sorting the groups internally ...
-  //for( size_t i=0; i < sections.Count(); i++ )  {
-  //  size_t ss = sections.GetObject(i).GetA(),
-  //      se = sections.GetObject(i).GetB();
-  //  bool changes = true;
-  //  while( changes )  {
-  //    changes = false;
-  //    for( size_t j=ss; j < se; j++ )  {
-  //      if( Lines[j].Compare(Lines[j+1]) > 0 )  {
-  //        Lines.Swap(j, j+1);
-  //        changes = true;
-  //      }
-  //    }
-  //  }
-  //}
-}
-//..............................................................................
 void TCif::SaveToStrings(TStrList& Strings)  {
   if( block_index == InvalidIndex )  return;
+  GetAsymmUnit().ComplyToResidues();
+  for( size_t i=0; i < data_provider[block_index].table_map.Count(); i++ )
+    data_provider[block_index].table_map.GetValue(i)->Sort();
   data_provider[block_index].Sort(TStrList());
-  data_provider[block_index].ToStrings(Strings);
-}
-//..............................................................................
-bool TCif::ParamExists(const olxstr& Param) const {
-  return (block_index == InvalidIndex) ? false :
-    data_provider[block_index].param_map.HasKey(Param);
+  data_provider.SaveToStrings(Strings);
 }
 //..............................................................................
 olxstr TCif::GetParamAsString(const olxstr &Param) const {
@@ -206,6 +144,8 @@ void TCif::Initialize()  {
     GetAsymmUnit().Angles()[0] = GetParamAsString("_cell_angle_alpha");
     GetAsymmUnit().Angles()[1] = GetParamAsString("_cell_angle_beta");
     GetAsymmUnit().Angles()[2] = GetParamAsString("_cell_angle_gamma");
+    if( ParamExists("_cell_formula_units_Z") )
+      GetAsymmUnit().SetZ((short)olx_round(GetParamAsString("_cell_formula_units_Z").ToDouble()));
   }
   catch(...) {  return;  }
   // check if the cif file contains valid parameters
@@ -325,9 +265,9 @@ void TCif::Initialize()  {
     }
     if( Degen != InvalidIndex )
       A.SetOccu(A.GetOccu()/ALoop->Get(i, Degen).GetStringValue().ToDouble());
-    ALoop->Set(i, ALabel, new AtomCifEntry(&A));
+    ALoop->Set(i, ALabel, new AtomCifEntry(A));
     if( Part != InvalidIndex )
-      ALoop->Set(i, Part, new AtomPartCifEntry(&A));
+      ALoop->Set(i, Part, new AtomPartCifEntry(A));
   }
   for( size_t i=0; i < LoopCount(); i++ )  {
     if( &GetLoop(i) == ALoop )  continue;
@@ -339,7 +279,7 @@ void TCif::Initialize()  {
         for( size_t k=0; k < tab.RowCount(); k++ )  {
           TCAtom* ca = GetAsymmUnit().FindCAtom(tab[k][j]->GetStringValue());
           if( ca != NULL )
-            tab.Set(k, j, new AtomCifEntry(ca));
+            tab.Set(k, j, new AtomCifEntry(*ca));
         }
       }
     }
@@ -588,7 +528,7 @@ bool TCif::Adopt(TXFile& XF)  {
       A.GetEllipsoid()->GetQuad(Q, E);
       GetAsymmUnit().UcartToUcif(Q);
       CifRow& Row1 = u_loop.AddRow();
-      Row1[0] = new AtomCifEntry(&A);
+      Row1[0] = new AtomCifEntry(A);
       for( int j=0; j < 6; j++ )
         Row1.Set(j+1, new cetString(TEValueD(Q[j], E[j]).ToString()));
     }
@@ -825,7 +765,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
       if( !Tmp.IsEmpty() )  {  // check for atom type equals to
         ICifEntry* CD = (*LT)[i][j];
         if( CD != NULL && EsdlInstanceOf(*CD, AtomCifEntry) )
-          if( !((AtomCifEntry*)CD)->data->GetType().symbol.Equalsi(Tmp) )  {
+          if( !((AtomCifEntry*)CD)->data.GetType().symbol.Equalsi(Tmp) )  {
             AddRow = false;
             break;
           }
@@ -834,7 +774,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
       if( !Tmp.IsEmpty() )  {  // check for atom type equals to
         ICifEntry* CD = (*LT)[i][j];
         if( CD != NULL && EsdlInstanceOf(*CD, AtomCifEntry) )
-          if( ((AtomCifEntry*)CD)->data->GetType().symbol.Equalsi(Tmp) )  {
+          if( ((AtomCifEntry*)CD)->data.GetType().symbol.Equalsi(Tmp) )  {
             AddRow = false;
             break;
           }
