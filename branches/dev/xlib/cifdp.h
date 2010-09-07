@@ -23,6 +23,7 @@ namespace cif_dp {
     virtual void ToStrings(TStrList& list) const = 0;
     virtual void Format()  {}
     virtual bool HasName() const {  return false;  }
+    virtual bool IsSaveable() const {  return true;  }
     // if the returned valus is InvalidIndex - the object is not comparable
     virtual size_t GetCmpHash() const {  return InvalidIndex;  }
     virtual const olxstr& GetName() const {  throw TNotImplementedException(__OlxSourceInfo);  }
@@ -244,15 +245,33 @@ namespace cif_dp {
     inline size_t Count() const {  return data.Count();  }
     CifBlock& operator [] (size_t i) const {  return data[i];  }
     CifBlock& Add(const olxstr& name, CifBlock* parent=NULL)  {
-      size_t i = data_map.IndexOf(name);
+      const size_t i = data_map.IndexOf(name);
       if( i != InvalidIndex )
         return *data_map.GetValue(i);
       else
         return *data_map.Add(name, &data.Add(new CifBlock(name, parent)));
     }
     CifBlock* Find(const olxstr& data_name) const {
-      size_t i = data_map.IndexOf(data_name);
-      return i == InvalidIndex ? NULL : data_map.GetValue(i);
+      return data_map.Find(data_name, NULL);
+    }
+    size_t IndexOf(const CifBlock& cb) const {
+      const CifBlock* cb_ptr = &cb;
+      for( size_t i=0; i < data.Count(); i++ )
+        if( &data[i] == cb_ptr )
+          return i;
+      return InvalidIndex;
+    }
+    void Rename(const olxstr& old_name, const olxstr& new_name)  {
+      if( old_name == new_name )  return;
+      if( data_map.HasKey(new_name) )
+        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Name already in use: ") << new_name);
+      const size_t cb_ind = data_map.IndexOf(old_name);
+      if( cb_ind == InvalidIndex )
+        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Undefined block: ") << old_name);
+      CifBlock* cb = data_map.GetValue(cb_ind);
+      cb->name = new_name;
+      data_map.Delete(cb_ind);
+      data_map.Add(new_name, cb);
     }
     // specific CIF tokeniser to tackle 'dog's life'...
     static size_t CIFToks(const olxstr& str, TStrList& toks);

@@ -12,7 +12,6 @@ class TCif: public TBasicCFile  {
 private:
   cif_dp::TCifDP data_provider;
   size_t block_index;
-  TSizeList block_indexes;
   olxstr WeightA, WeightB;
   void Initialize();
   TCifDataManager DataManager;
@@ -109,16 +108,24 @@ public:
     return (block_index == InvalidIndex) ? 0 : data_provider[block_index].table_map.Count();
   }
   // return number of blocks with atoms
-  size_t BlockCount() const {  return block_indexes.Count();  }
-  // returns current block index
-  size_t BlockIndex() const {  return block_index;  }
+  size_t BlockCount() const {  return data_provider.Count();  }
   // changes current block index, i.e. loads structure from different block
-  void SetBlockIndex(size_t i)  {
-    block_index = block_indexes[i];
+  void SetCurrentBlock(size_t i)  {
+    if( i != InvalidIndex )  // load default
+    block_index = i;
     _LoadCurrent();
   }
+  void SetCurrentBlock(const olxstr& block_name)  {
+    cif_dp::CifBlock* cb = data_provider.Find(block_name);
+    block_index = data_provider.IndexOf(*cb);
+    _LoadCurrent();
+  }
+  // renames current block
+  void RenameCurrentBlock(const olxstr& new_name)  {
+    data_provider.Rename(data_provider[block_index].GetName(), new_name);
+  }
   // returns given block
-  const cif_dp::CifBlock& GetBlock(size_t i) const {  return data_provider[block_indexes[i]];  }
+  const cif_dp::CifBlock& GetBlock(size_t i) const {  return data_provider[i];  }
   // creates a new loop from comma separated column names
   cif_dp::cetTable& AddLoopDef(const olxstr& col_names);
   /* this is the only loop, which is not automatically created from structure data!
@@ -144,6 +151,7 @@ struct AtomCifEntry : public cif_dp::IStringCifEntry {
   AtomCifEntry(const AtomCifEntry& v) : data(v.data)  {}
   AtomCifEntry(TCAtom& _data) : data(_data)  {}
   virtual size_t Count() const {  return 1;  }
+  virtual bool IsSaveable() const {  return !data.IsDeleted();  }
   virtual size_t GetCmpHash() const {  return data.GetId();  }
   virtual const olxstr& operator [] (size_t i) const {  return  data.GetLabel();  }
   virtual const olxstr& GetComment() const {  return EmptyString;  }
@@ -162,6 +170,7 @@ struct AtomPartCifEntry : public cif_dp::IStringCifEntry {
   AtomPartCifEntry(const AtomPartCifEntry& v) : data(v.data)  {}
   AtomPartCifEntry(TCAtom& _data) : data(_data)  {}
   virtual size_t Count() const {  return 1;  }
+  virtual bool IsSaveable() const {  return !data.IsDeleted();  }
   virtual const olxstr& operator [] (size_t i) const {  return  (tmp_val = (int)data.GetPart());  }
   virtual const olxstr& GetComment() const {  return EmptyString;  }
   virtual cif_dp::ICifEntry* Replicate() const {  return new AtomPartCifEntry(*this);  }

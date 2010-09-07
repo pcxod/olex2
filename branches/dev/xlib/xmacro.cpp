@@ -2616,8 +2616,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
     olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
-    if( TEFile::Exists(cifFN) )
+    if( TEFile::Exists(cifFN) )  {
       Cif2.LoadFromFile(cifFN);
+    }
     else
       throw TFunctionFailedException(__OlxSourceInfo, "existing cif is expected");
     Cif = &Cif2;

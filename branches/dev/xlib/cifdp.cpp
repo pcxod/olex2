@@ -257,14 +257,27 @@ void cetTable::Clear()  {
 }
 void cetTable::ToStrings(TStrList& list) const {
   if( data.RowCount() == 0 )  return;
+  TStrList out;
   list.Add("loop_");
   for( size_t i=0; i < data.ColCount(); i++ )  // loop header
-    list.Add("  ") << data.ColName(i);
+    out.Add("  ") << data.ColName(i);
   for( size_t i=0; i < data.RowCount(); i++ ) {  // loop content
-    list.Add(EmptyString);
+    bool saveable = true;
+    for( size_t j=0; j < data.ColCount(); j++ )  {
+      if( !data[i][j]->IsSaveable() )  {
+        saveable = false;
+        break;
+      }
+    }
+    if( !saveable )  continue;
+    out.Add();
     for( size_t j=0; j < data.ColCount(); j++ )
-      data[i][j]->ToStrings(list);
+      data[i][j]->ToStrings(out);
   }
+  if( out.Count() == data.ColCount() )  // no content is added
+    return;
+  list.AddList(out);
+  list.Add();  // add an empty string after a loop for better formating
 }
 void cetTable::DataFromStrings(TStrList& lines)  {
   if( data.ColCount() == 0 )  return;

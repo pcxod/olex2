@@ -108,11 +108,26 @@ public:
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);
 
+  void LibDataCount(const TStrObjList& Params, TMacroError& E);
+  void LibCurrentData(const TStrObjList& Params, TMacroError& E);
+  void LibDataName(const TStrObjList& Params, TMacroError& E);
   void LibGetFormula(const TStrObjList& Params, TMacroError& E);
   void LibSetFormula(const TStrObjList& Params, TMacroError& E);
   void LibEndUpdate(const TStrObjList& Params, TMacroError& E);
   void LibSaveSolution(const TStrObjList& Params, TMacroError& E);
   class TLibrary* ExportLibrary(const olxstr& name=EmptyString);
+
+  struct NameArg  {
+    olxstr file_name;
+    olxstr data_name;
+    bool is_index;
+  };
+  static NameArg ParseName(const olxstr& fn);
+  static olxstr ComposeName(const NameArg& an)  {
+    if( an.data_name.IsEmpty() )
+      return an.file_name;
+    return olxstr(an.file_name) << (an.is_index ? '#' : '$') << an.data_name;
+  }
 };
 //---------------------------------------------------------------------------
 EndXlibNamespace()

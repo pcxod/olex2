@@ -35,7 +35,7 @@ void TCif::Clear()  {
 }
 //..............................................................................
 void TCif::LoadFromStrings(const TStrList& Strings)  {
-  block_indexes.Clear();
+  block_index = 0;
   data_provider.LoadFromStrings(Strings);
   for( size_t i=0; i < data_provider.Count(); i++ )  {
     CifBlock& cb = data_provider[i];
@@ -48,11 +48,12 @@ void TCif::LoadFromStrings(const TStrList& Strings)  {
         break;
       }
     }
-    if( valid )
-      block_indexes.Add(i);
+    if( valid )  {
+      block_index = i;
+      break;
+    }
   }
-  block_index = block_indexes.IsEmpty() ? InvalidIndex : block_indexes[0];
-  _LoadCurrent();
+  //_LoadCurrent();
 }
 //..............................................................................
 void TCif::_LoadCurrent()  {
@@ -145,7 +146,10 @@ void TCif::Initialize()  {
     if( ParamExists("_cell_formula_units_Z") )
       GetAsymmUnit().SetZ((short)olx_round(GetParamAsString("_cell_formula_units_Z").ToDouble()));
   }
-  catch(...) {  return;  }
+  catch(...)  {
+    TBasicApp::GetLog().Error("Given CIF data block does not contain cell parameters");
+    return;
+  }
   // check if the cif file contains valid parameters
   if( GetAsymmUnit().CalcCellVolume() == 0 )
     return;

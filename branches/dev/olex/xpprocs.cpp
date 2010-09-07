@@ -4417,41 +4417,43 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   // a Open dialog appearing braks the wxWidgets sizing...
   if( !IsShown() && (Cmds.IsEmpty() || Cmds[0].IsEmpty()) )  return;
   SetSGList(EmptyString);
-  olxstr FN, Tmp;
+  TXFile::NameArg file_n;
   bool Blind = Options.Contains('b'); // a switch showing if the last file is remembered
   bool ReadStyle = !Options.Contains('r');
   bool OverlayXFile = Options.Contains('*');
   if( Cmds.Count() >= 1 && !Cmds[0].IsEmpty() )  {  // merge the file name if a long one...
-    FN = TEFile::ExpandRelativePath(Cmds.Text(' '));
-    if( TEFile::ExtractFileExt(FN).IsEmpty() )  {
-      olxstr res_fn = TEFile::ChangeFileExt(FN, "res"),
-             ins_fn = TEFile::ChangeFileExt(FN, "ins");
+    file_n = TXFile::ParseName(TEFile::ExpandRelativePath(Cmds.Text(' ')));
+    if( !file_n.data_name.IsEmpty() && file_n.file_name.IsEmpty() )
+      file_n.file_name = FXApp->XFile().GetFileName();
+    if( TEFile::ExtractFileExt(file_n.file_name).IsEmpty() )  {
+      olxstr res_fn = TEFile::ChangeFileExt(file_n.file_name, "res"),
+             ins_fn = TEFile::ChangeFileExt(file_n.file_name, "ins");
       if( TEFile::Exists(res_fn) )  {
         if( TEFile::Exists(ins_fn) )
-          FN = TEFile::FileAge(ins_fn) < TEFile::FileAge(res_fn) ? res_fn : ins_fn;
+          file_n.file_name = TEFile::FileAge(ins_fn) < TEFile::FileAge(res_fn) ? res_fn : ins_fn;
         else
-          FN = res_fn;
+          file_n.file_name = res_fn;
       }
       else
-        FN = ins_fn;
+        file_n.file_name = ins_fn;
     }
 #ifdef __WIN32__ // tackle short path names problem
     WIN32_FIND_DATA wfd;
     ZeroMemory(&wfd, sizeof(wfd));
-    HANDLE fsh = FindFirstFile(FN.u_str(), &wfd);
+    HANDLE fsh = FindFirstFile(file_n.file_name.u_str(), &wfd);
     if( fsh != INVALID_HANDLE_VALUE )  {
-      FN = TEFile::ExtractFilePath(FN);
-      if( !FN.IsEmpty() )
-        TEFile::AddPathDelimeterI(FN);
-      FN << wfd.cFileName;
+      file_n.file_name = TEFile::ExtractFilePath(file_n.file_name);
+      if( !file_n.file_name.IsEmpty() )
+        TEFile::AddPathDelimeterI(file_n.file_name);
+      file_n.file_name << wfd.cFileName;
       FindClose(fsh);
     }
 #endif // win32
-    Tmp = TEFile::ExtractFilePath(FN);
-    if( Tmp.IsEmpty() )  { FN = XLibMacros::CurrentDir + FN; }
+    if( TEFile::ExtractFilePath(file_n.file_name).IsEmpty() )
+      file_n.file_name = XLibMacros::CurrentDir + file_n.file_name;
   }
   else  {
-    FN = PickFile("Open File",
+    file_n.file_name = PickFile("Open File",
         olxstr("All supported files|*.ins;*.cif;*.res;*.mol;*.xyz;*.p4p;*.mas;*.crs;*pdb;*.fco;*.fcf;*.hkl;*.oxm;*.mol2")  <<
           "|INS files (*.ins)|*.ins"  <<
           "|Olex2 model files (*.oxm)|*.oxm"  <<
@@ -4469,18 +4471,18 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           XLibMacros::CurrentDir, true);
   }
   
-  if( !FN.IsEmpty() )  {  // the dialog has been successfully executed
+  if( !file_n.file_name.IsEmpty() )  {  // the dialog has been successfully executed
     /* with some compilations Borland would bring program into an incorrect state
      if the NonExistenFile exception is thrown from XFile ... (MSVC is fine thought)
     */
     // FN might be a dir on windows when a file does not exist - the code above will get the folder name isntead...
-    if( !TEFile::Exists(FN) || TEFile::IsDir(FN) )  {
+    if( !TEFile::Exists(file_n.file_name) || TEFile::IsDir(file_n.file_name) )  {
       Error.ProcessingError(__OlxSrcInfo, "Could not locate specified file");
       return;
     }
     if( OverlayXFile )  {
       TXFile& xf = FXApp->NewOverlayedXFile();
-      xf.LoadFromFile(FN);
+      xf.LoadFromFile(TXFile::ComposeName(file_n));
       FXApp->CreateObjects(true, false);
       FXApp->CenterView(true);
       FXApp->AlignOverlayedXFiles();
@@ -4488,42 +4490,43 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     if( Modes->GetCurrent() != NULL )
       Macros.ProcessMacro("mode off", Error);
-    Tmp = TEFile::ChangeFileExt(FN, "xlds");
-    if( TEFile::Exists(Tmp) )  {
-      Macros.ProcessMacro(olxstr("load view '") << TEFile::ChangeFileExt(FN, EmptyString) << '\'', Error);
+    olxstr ds_fn = TEFile::ChangeFileExt(file_n.file_name, "xlds");
+    if( TEFile::Exists(ds_fn) )  {
+      Macros.ProcessMacro(
+        olxstr("load view '") << TEFile::ChangeFileExt(file_n.file_name, EmptyString) << '\'', Error);
     }
     else  {
       if( TEFile::Exists(DefStyle) && ReadStyle )
         FXApp->GetRender().GetStyles().LoadFromFile(DefStyle, false);
     }
-    // delete the Space groups infor mation file
-    if( !(TEFile::ChangeFileExt(FN, EmptyString) == TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), EmptyString)) )
+    // delete the Space groups information file
+    if( !(TEFile::ChangeFileExt(file_n.file_name, EmptyString) == TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), EmptyString)) )
       TEFile::DelFile(DataDir+"spacegroups.htm");
     // special treatment of the kl files
-    if( TEFile::ExtractFileExt(FN).Equalsi("hkl") )  {
-      if( !TEFile::Exists( TEFile::ChangeFileExt(FN, "ins") ) )  {
+    if( TEFile::ExtractFileExt(file_n.file_name).Equalsi("hkl") )  {
+      if( !TEFile::Exists(TEFile::ChangeFileExt(file_n.file_name, "ins") ) )  {
         THklFile hkl;
         bool ins_initialised = false;
         TIns* ins = (TIns*)FXApp->XFile().FindFormat("ins");
         //ins->Clear();
-        hkl.LoadFromFile(FN, ins, &ins_initialised);
+        hkl.LoadFromFile(file_n.file_name, ins, &ins_initialised);
         if( !ins_initialised )  {
-          olxstr src_fn = TEFile::ChangeFileExt(FN, "p4p");
+          olxstr src_fn = TEFile::ChangeFileExt(file_n.file_name, "p4p");
           if( !TEFile::Exists(src_fn) )
-            src_fn = TEFile::ChangeFileExt(FN, "crs");
+            src_fn = TEFile::ChangeFileExt(file_n.file_name, "crs");
           if( !TEFile::Exists(src_fn) )  {
             Error.ProcessingError(__OlxSrcInfo, "could not initialise CELL/SFAC from the hkl file");
             return;
           }
           else
-            FN = src_fn;
+            file_n.file_name = src_fn;
         }
         else  {
           FXApp->XFile().SetLastLoader(ins);
           ins->Clear();
-          FXApp->XFile().GetRM().SetHKLSource(FN);  // make sure tha SGE finds the related HKL
+          FXApp->XFile().GetRM().SetHKLSource(file_n.file_name);  // make sure tha SGE finds the related HKL
           TMacroError er;
-          Macros.ProcessMacro(olxstr("SGE '") << TEFile::ChangeFileExt(FN, "ins") << '\'', er);
+          Macros.ProcessMacro(olxstr("SGE '") << TEFile::ChangeFileExt(file_n.file_name, "ins") << '\'', er);
           if( !er.HasRetVal() || !er.GetRetObj< TEPType<bool> >()->GetValue()  )  {
             olxstr s_inp("getuserinput(1, \'Please, enter the spacegroup\', \'')"), s_sg(s_inp);
             TSpaceGroup* sg = NULL;
@@ -4547,20 +4550,20 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
               ins->GetRM().SetUserContentSize(unit);
               ins->GetAsymmUnit().SetZ((sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1));
             }
-            ins->SaveForSolution(TEFile::ChangeFileExt(FN, "ins"), EmptyString, EmptyString, false);
-            Macros.ProcessMacro( olxstr("reap '") << TEFile::ChangeFileExt(FN, "ins") << '\'', Error);
+            ins->SaveForSolution(TEFile::ChangeFileExt(file_n.file_name, "ins"), EmptyString, EmptyString, false);
+            Macros.ProcessMacro( olxstr("reap '") << TEFile::ChangeFileExt(file_n.file_name, "ins") << '\'', Error);
             Macros.ProcessMacro("solve", Error);
           }  // sge, if succeseded will run reap and solve
           return;
         }
       }
       else
-        FN = TEFile::ChangeFileExt(FN, "ins");
+        file_n.file_name = TEFile::ChangeFileExt(file_n.file_name, "ins");
     }
     try  {
       SaveVFS(plStructure); // save virtual fs file
       int64_t st = TETime::msNow();
-      FXApp->LoadXFile(FN);
+      FXApp->LoadXFile(TXFile::ComposeName(file_n));
       st = TETime::msNow() - st;
       TBasicApp::GetLog().Info( olxstr("Structure loaded in ") << st << " ms\n");
       BadReflectionsTable(false, false);
@@ -4578,7 +4581,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       FInfoBox->Clear();
       if( FXApp->CheckFileType<TP4PFile>() || FXApp->CheckFileType<TCRSFile>() )  {
         TMacroError er;
-        if( TEFile::Exists( TEFile::ChangeFileExt(FN, "ins") ) )
+        if( TEFile::Exists( TEFile::ChangeFileExt(file_n.file_name, "ins") ) )
           Macros.ProcessMacro("SG", er);
         else
           Macros.ProcessMacro("SGE", er);
@@ -4587,8 +4590,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if( FXApp->CheckFileType<TCif>() )  {
         TBasicApp::GetLog() << ("Start importing cif ...\n");
         FXApp->Draw();
-        olxstr hklFileName = TEFile::ChangeFileExt(FN, "hkl");
-        olxstr insFileName = TEFile::ChangeFileExt(FN, "ins");
+        olxstr hklFileName = TEFile::ChangeFileExt(file_n.file_name, "hkl");
+        olxstr insFileName = TEFile::ChangeFileExt(file_n.file_name, "ins");
         TMacroError er;
         if( !TEFile::Exists(hklFileName)  )  {
           TCif& C = FXApp->XFile().GetLastLoader<TCif>();
@@ -4631,7 +4634,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       // changes the loaded position of the box to left
       OnResize();
 
-      Tmp = TEFile::ExtractFilePath(FN);
+      olxstr Tmp = TEFile::ExtractFilePath(file_n.file_name);
       if( !Tmp.IsEmpty() && !(Tmp == XLibMacros::CurrentDir) )  {
         if( !TEFile::ChangeDir(Tmp) )
           TBasicApp::GetLog() << (olxstr("Cannot change current folder '") << TEFile::CurrentDir() << "'  to '" << Tmp << "'\n");
@@ -4640,7 +4643,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
             XLibMacros::CurrentDir = Tmp;
         }
       }
-      if( !Blind )  UpdateRecentFile(FN);
+      if( !Blind )  UpdateRecentFile(file_n.file_name);
       //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
       QPeakTable(false, true);
       UpdateRecentFilesTable(false);
