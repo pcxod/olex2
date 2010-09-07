@@ -6,6 +6,7 @@ package cds;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -15,6 +16,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 
 /**
  *
@@ -26,10 +28,14 @@ public class Main {
   static int threadCount = 0;
   static String baseDir;
   static PrintWriter logFile=null;
+  static HashSet<String> blocked = new HashSet();
   public synchronized static void doTerminate()  {  terminate = true;  }
   public static String getBaseDir()  {  return baseDir;  }
   public synchronized static void onThreadTerminate()  {
     threadCount--;
+  }
+  public static boolean shouldHandle(String src)  {
+    return !blocked.contains(src);
   }
   public static void print(String s)  {
     if( logFile != null )  {
@@ -40,7 +46,7 @@ public class Main {
   }
   public static void main(String[] args) {
     print("Download manager server, (c) O. Dolomanov, 2010");
-    String status = "unknown";
+    String status = "unknown", status_info = "none";
     // read current status
     try {
       Socket s = new Socket();
@@ -49,6 +55,8 @@ public class Main {
       out.println("status\n");
       BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
       status = in.readLine();
+      if( in.ready() )
+        status_info = in.readLine();
       out.close();
       in.close();
       s.close();
@@ -56,6 +64,7 @@ public class Main {
     catch (IOException ex) {}  // unknow status
     if( args.length == 0 )  {
       print("Status: " + status);
+      print("Status Info: " + status_info);
     }
     else if( args[0].equals("start") )  {
       if( status.equals("running") )  {
@@ -87,13 +96,19 @@ public class Main {
            File log = new File(args[3]);
            logFile = new PrintWriter(new FileWriter(log, true));
         }
+        if( args.length == 6 && args[4].equals("blocked") )  {
+           BufferedReader reader = new BufferedReader(new FileReader(args[5]));
+           String line = null;
+           while( (line = reader.readLine()) != null )
+             blocked.add(line);
+        }
         ServerSocket s = new ServerSocket(port_number);
         print("Server started at " + (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()));
         while( true )  {
           try  {
             Socket c = s.accept();
             threadCount++;
-            (new ClientHandler(c)).run();
+            (new ClientHandler(c)).start();
             if( terminate )  {
               while( threadCount != 0 )
                 Thread.sleep(1000);
@@ -131,7 +146,43 @@ public class Main {
         print("The server has been successfully stopped.");
       }
       catch (IOException ex) {
-        ex.printStackTrace();
+        print("Failed to stop server: " + ex.getMessage());
+      }
+    }
+    else if( args[0].equals("block") && args.length == 2 )  {
+      if( !status.equals("running") )  {
+        print("Not running...");
+        return;
+      }
+      try {
+        Socket s = new Socket();
+        s.connect(new InetSocketAddress("localhost", port_number));
+        PrintWriter out = new PrintWriter(s.getOutputStream(), true);
+        out.println("block\n" + args[1] + '\n');
+        out.close();
+        s.close();
+        print("The address has been blocked for the session.");
+      }
+      catch (IOException ex) {
+        print("Failed to block the address: " + ex.getMessage());
+      }
+    }
+    else if( args[0].equals("unblock") && args.length == 2 )  {
+      if( !status.equals("running") )  {
+        print("Not running...");
+        return;
+      }
+      try {
+        Socket s = new Socket();
+        s.connect(new InetSocketAddress("localhost", port_number));
+        PrintWriter out = new PrintWriter(s.getOutputStream(), true);
+        out.println("unblock\n" + args[1] + '\n');
+        out.close();
+        s.close();
+        print("The address has been unblocked for the session.");
+      }
+      catch (IOException ex) {
+        print("Failed to block the address: " + ex.getMessage());
       }
     }
   }

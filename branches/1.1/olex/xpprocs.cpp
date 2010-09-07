@@ -5629,9 +5629,9 @@ void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMac
   if( !Proxy.IsEmpty() ) 
     url.SetProxy( Proxy );
 
-  THttpFileSystem httpFS( url );
-  TOSFileSystem osFS( TBasicApp::GetBaseDir() );
-  TFSIndex fsIndex( httpFS );
+  TSocketFS httpFS(url);
+  TOSFileSystem osFS(TBasicApp::GetBaseDir());
+  TFSIndex fsIndex(httpFS);
 
   IEObject* Cause = NULL;
   try  {

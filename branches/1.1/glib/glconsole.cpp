@@ -99,8 +99,7 @@ size_t TGlConsole::CalcScrollDown() const {
         lines++;
         continue;
       }
-      size_t ii = (FTxtPos-i);
-      if( olx_is_valid_size(FLinesToShow) && ii >= FLinesToShow )  break;
+      if( olx_is_valid_size(FLinesToShow) && lines >= FLinesToShow )  break;
       if( T[1] > MaxY )  break;
       olxstr line = FBuffer[i].SubStringTo(Fnt.LengthForWidth(FBuffer[i], Parent.GetWidth()));
       // drawing spaces is not required ...
@@ -148,8 +147,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
           LinesVisible++;
           continue;
         }
-        size_t ii = (FTxtPos-i);
-        if( olx_is_valid_size(FLinesToShow) && ii >= FLinesToShow )  break;
+        if( olx_is_valid_size(FLinesToShow) && LinesVisible >= FLinesToShow )  break;
         if( T[1] > MaxY )  break;
         olxstr line = FBuffer[i].SubStringTo(Fnt.LengthForWidth(FBuffer[i], Parent.GetWidth()));
         // drawing spaces is not required ...

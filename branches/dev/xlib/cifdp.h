@@ -178,9 +178,7 @@ namespace cif_dp {
     void Sort();
     // used in table sorting, not suitable for parallelisation
     struct TableSorter  {
-      mutable TArrayList<size_t> a_d, b_d;
-      TableSorter(size_t size) : a_d(size), b_d(size)  {}
-      int Compare(const CifRow* r1, const CifRow* r2) const;
+      static int Compare(const CifRow* r1, const CifRow* r2);
     };
   };
 

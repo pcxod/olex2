@@ -34,9 +34,8 @@ public class ClientHandler extends Thread {
   public ClientHandler(Socket _client)  {
     client = _client;
     if( TextExts.isEmpty() )  {
-      String[] exts = "txt py java cpp h html htm xml xld osp ind log".split("\\s");
-      for( int i=0; i < exts.length; i++ )
-        TextExts.add(exts[i]);
+      String[] exts = "txt py java cpp h html htm xml xld osp ind log ins res cif".split("\\s");
+      TextExts.addAll(Arrays.asList(exts));
     }
     if( fileMapping.isEmpty() )  {
       fileMapping.put("olex2.zip", "Windows 32bit distribution");
@@ -70,97 +69,121 @@ public class ClientHandler extends Thread {
           origin = cmd.substring(16);
         else if( cmd.startsWith("Platform:") )
           platform = cmd.substring(10);
-
       }
       cmd = (cmds.isEmpty() ? null : cmds.get(0));
       if( cmd != null )  {
-        String info_line = "Handling ";
-        info_line += (origin == null ? client.getRemoteSocketAddress().toString() : origin);
-        info_line += (" at " + (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()));
-        info_line += (": " + cmd);
-        if( platform != null )
-          info_line += (" on " + platform);
-        Main.print(info_line);
-        boolean handled = false;
-        // accept some command only from localhost...
-        if( client.getInetAddress().isLoopbackAddress() && origin == null )  {
-          if( cmd.equals("status") )  {
-            out.writeBytes("running");
-            handled = true;
-          }
-          else if( cmd.equals("stop") )  {
-            Main.doTerminate();
-            handled = true;
-          }
+        String src = (origin == null ? client.getRemoteSocketAddress().toString() : origin).trim();
+        if( !Main.shouldHandle(src) )  {
+          String info_line = "Blocking ";
+          info_line += src;
+          info_line += (" at " + (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()));
+          info_line += (": " + cmd);
+          if( platform != null )
+            info_line += (" on " + platform);
+          Main.print(info_line);
+          out.writeBytes("HTTP/1.0 404 ERROR\n");
         }
-        if( !handled )  {
-          String[] toks = cmd.split("\\s");
-          int offset = 0;
-          if( toks.length > 1 )  {  // normalise file name
-            int off_ind = toks[1].indexOf('#');
-            if( off_ind != -1 )  {
-              offset = Integer.parseInt(toks[1].substring(off_ind+1));
-              toks[1] = toks[1].substring(0, off_ind);
-            }
-            if( !toks[1].startsWith("/") )  {
-              URL url = new URL(toks[1]);
-              toks[1] = url.getPath();
-            }
-            // make sure that the request does not end up outside the baseDir
-            toks[1] = toks[1].replace("..", "").replace("%20", " ");
-            if( toks[1].startsWith("/") )
-              toks[1] = toks[1].substring(1);
+        else  {
+          String info_line = "Handling ";
+          info_line += src;
+          info_line += (" at " + (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()));
+          info_line += (": " + cmd);
+          if (platform != null) {
+            info_line += (" on " + platform);
           }
-          if( toks[0].equals("GET") )  {
-            if( toks.length == 3 )  {
-              String fn = Main.getBaseDir()+toks[1];
-              File file = new File(fn);
-              if( file.isDirectory() )  {
-                listFolder(out, file);
-                out.close();
-                in.close();
-                client.close();
-                return;
+          Main.print(info_line);
+          boolean handled = false;
+          // accept some command only from localhost...
+          if (client.getInetAddress().isLoopbackAddress() && origin == null) {
+            if (cmd.equals("status")) {
+              out.writeBytes("running\n");
+              String info = "Clients: ";
+              info += Main.threadCount;
+              out.writeBytes(info);
+              handled = true;
+            } else if (cmd.equals("stop")) {
+              Main.doTerminate();
+              handled = true;
+            } else if (cmd.equals("block")) {
+              if( cmds.size() == 2 )  {
+                Main.blocked.add(cmds.get(1));
+                handled = true;
               }
-              if( !file.exists() || !file.isFile() || offset >= file.length() )  {
-                out.writeBytes("HTTP/1.0 404 ERROR");
+            } else if (cmd.equals("unblock")) {
+              if( cmds.size() == 2 )  {
+                Main.blocked.remove(cmds.get(1));
+                handled = true;
               }
-              else  {
-                out.writeBytes("HTTP/1.0 200 OK\n");
+            }
+          }
+          if (!handled) {
+            String[] toks = cmd.split("\\s");
+            int offset = 0;
+            if (toks.length > 1) {  // normalise file name
+              int off_ind = toks[1].indexOf('#');
+              if (off_ind != -1) {
+                offset = Integer.parseInt(toks[1].substring(off_ind + 1));
+                toks[1] = toks[1].substring(0, off_ind);
+              }
+              if (!toks[1].startsWith("/")) {
+                URL url = new URL(toks[1]);
+                toks[1] = url.getPath();
+              }
+              // make sure that the request does not end up outside the baseDir
+              toks[1] = toks[1].replace("..", "").replace("%20", " ");
+              if (toks[1].startsWith("/")) {
+                toks[1] = toks[1].substring(1);
+              }
+            }
+            if (toks[0].equals("GET")) {
+              if (toks.length == 3) {
+                String fn = Main.getBaseDir() + toks[1];
+                File file = new File(fn);
+                if (file.isDirectory()) {
+                  listFolder(out, file);
+                  out.close();
+                  in.close();
+                  client.close();
+                  return;
+                }
+                if (!file.exists() || !file.isFile() || offset >= file.length()) {
+                  out.writeBytes("HTTP/1.0 404 ERROR\n");
+                } else {
+                  out.writeBytes("HTTP/1.0 200 OK\n");
+                  out.writeBytes("Server: Olex2-CDS\n");
+                  FileInputStream fr = new FileInputStream(file);
+                  fr.skip(offset);
+                  out.writeBytes(("Content-Length: " + file.length()) + "\n");
+                  out.writeBytes("Last-Modified: " + (new SimpleDateFormat()).format(new Date(file.lastModified())) + "\n");
+                  out.writeBytes("ETag: \"" + UUID.randomUUID().toString() + "\"\n");
+                  out.writeBytes("Connection: close\n");
+                  out.writeBytes("Content-Type: " + getContentType(file) + "\n\n");
+                  final int bf_len = 1024 * 64;
+                  byte[] bf = new byte[bf_len];
+                  try {
+                    int read_len;
+                    while ((read_len = fr.read(bf)) > 0) {
+                      out.write(bf, 0, read_len);
+                    }
+                  } catch (Exception e) {
+                    Main.print("Connection broken...");
+                  }
+                  fr.close();
+                }
+              }
+            } else if (toks[0].equals("HEAD")) {
+              if (toks.length == 3) {
+                final String fn = Main.getBaseDir() + toks[1];
+                File file = new File(fn);
+                if (file.exists()) {
+                  out.writeBytes("HTTP/1.0 200 OK\n");
+                  out.writeBytes(("Content-Length: " + file.length()) + "\n");
+                  out.writeBytes("Last-Modified: " + (new SimpleDateFormat()).format(new Date(file.lastModified())) + "\n");
+                } else {
+                  out.writeBytes("HTTP/1.0 404 ERROR\n");
+                }
                 out.writeBytes("Server: Olex2-CDS\n");
-                FileInputStream fr = new FileInputStream(file);
-                fr.skip(offset);
-                out.writeBytes(("Content-Length: " + file.length())+"\n");
-                out.writeBytes("Last-Modified: " + (new SimpleDateFormat()).format(new Date(file.lastModified())) + "\n");
-                out.writeBytes("ETag: \"" + UUID.randomUUID().toString() + "\"\n");
-                out.writeBytes("Connection: close\n");
-                out.writeBytes("Content-Type: " + getContentType(file) + "\n\n");
-                final int bf_len = 1024*64;
-                byte[] bf = new byte[bf_len];
-                try  {
-                  int read_len;
-                  while( (read_len = fr.read(bf)) > 0 )
-                    out.write(bf, 0, read_len);
-                }
-                catch(Exception e)  {
-                  Main.print("Connection broken...");
-                }
-                fr.close();
               }
-            }
-          }
-          else if( toks[0].equals("HEAD") )  {
-            if( toks.length == 3 )  {
-              final String fn = Main.getBaseDir()+toks[1];
-              File file = new File(fn);
-              if( file.exists() )  {
-                out.writeBytes("HTTP/1.0 200 OK\n");
-                out.writeBytes(("Content-Length: " + file.length())+"\n");
-                out.writeBytes("Last-Modified: " + (new SimpleDateFormat()).format(new Date(file.lastModified())) + "\n");
-              }
-              else
-                out.writeBytes("HTTP/1.0 404 ERROR\n");
-              out.writeBytes("Server: Olex2-CDS\n");
             }
           }
         }

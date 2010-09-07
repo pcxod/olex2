@@ -258,7 +258,7 @@ void cetTable::Clear()  {
 void cetTable::ToStrings(TStrList& list) const {
   if( data.RowCount() == 0 )  return;
   TStrList out;
-  list.Add("loop_");
+  out.Add("loop_");
   for( size_t i=0; i < data.ColCount(); i++ )  // loop header
     out.Add("  ") << data.ColName(i);
   for( size_t i=0; i < data.RowCount(); i++ ) {  // loop content
@@ -274,10 +274,10 @@ void cetTable::ToStrings(TStrList& list) const {
     for( size_t j=0; j < data.ColCount(); j++ )
       data[i][j]->ToStrings(out);
   }
-  if( out.Count() == data.ColCount() )  // no content is added
+  if( out.Count() == data.ColCount() +1 )  // no content is added
     return;
   list.AddList(out);
-  list.Add();  // add an empty string after a loop for better formating
+  list.Add();  // add an empty string after loop for better formating
 }
 void cetTable::DataFromStrings(TStrList& lines)  {
   if( data.ColCount() == 0 )  return;
@@ -313,19 +313,17 @@ void cetTable::DataFromStrings(TStrList& lines)  {
       data[i][j] = cells[i*ColCount+j];
   }
 }
-int cetTable::TableSorter::Compare(const CifRow* r1, const CifRow* r2) const {
+int cetTable::TableSorter::Compare(const CifRow* r1, const CifRow* r2)  {
   const size_t sz = r1->Count();
-  for( size_t i=sz; i > 0; i-- )  {
-    bool atom = false;
-    const size_t r_i = sz-i;
-    size_t h = r1->Item(i-1)->GetCmpHash();
-    a_d[r_i] = (h == InvalidIndex) ? 0 : h;
-    h = r2->Item(i-1)->GetCmpHash();
-    b_d[r_i] = (h == InvalidIndex) ? 0 : h;
+  for( size_t i=0; i < sz; i++ )  {
+    size_t h1 = r1->Item(i)->GetCmpHash();
+    h1 = (h1 == InvalidIndex) ? 0 : h1;
+    size_t h2 = r2->Item(i)->GetCmpHash();
+    h2 = (h2 == InvalidIndex) ? 0 : h2;
+    if( h1 < h2 )  return -1;
+    if( h1 > h2 )  return 1;
   }
-  const TEBitArray a((unsigned char*)a_d.GetData(), sizeof(size_t)*sz, false),
-    b((unsigned char*)b_d.GetData(), sizeof(size_t)*sz, false);
-  return a.Compare(b); 
+  return 0;
 }
 //.............................................................................
 void cetTable::Sort()  {
@@ -338,7 +336,7 @@ void cetTable::Sort()  {
     }
   }
   if( !update  )  return;
-  data.SortRows(TableSorter(data[0].Count()));
+  data.SortRows(TableSorter());
 }
 //.............................................................................
 cetString::cetString(const olxstr& _val) : value(_val), quoted(false)  {
@@ -469,7 +467,7 @@ void CifBlock::Sort(const TStrList& pivots)  {
     "_computing,"
     "_refine,"
     "_atom_sites,_atom_site,_atom_site_aniso,"
-    "_geom_special,_geom"
+    "_geom_special,_geom_bond,_geom_angle,_geom"
     , 
     ',');
   TTypeList<CifBlock::EntryGroup> groups;

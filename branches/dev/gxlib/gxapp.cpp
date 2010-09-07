@@ -3107,7 +3107,7 @@ void TGXApp::SetStructureVisible(bool v)  {
     if( !v )
       XAtoms[i].SetVisible(v);
     else
-      XAtoms[i].SetVisible(XAtoms[i].Atom().IsAvailable());  
+      XAtoms[i].SetVisible(XAtoms[i].Atom().IsAvailable() && XAtoms[i].Atom().CAtom().IsAvailable());  
     XAtoms[i].Atom().SetTag(i);
   }
   for( size_t i=0; i < LooseObjects.Count(); i++ )  LooseObjects[i]->SetVisible(v);

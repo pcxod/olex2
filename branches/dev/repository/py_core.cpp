@@ -1,7 +1,4 @@
-#undef GetObject
-
 #include "py_core.h"
-
 #include "xapp.h"
 #include "efile.h"
 #include "settingsfile.h"
@@ -10,6 +7,8 @@
 #include "integration.h"
 #include "olxvar.h"
 #include "symmlib.h"
+#include "cdsfs.h"
+#undef GetObject
 
 using namespace olex;
 
@@ -325,7 +324,7 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
   TUrl url(repos);
   if( !proxy.IsEmpty() )  
     url.SetProxy(TUrl(proxy));
-  THttpFileSystem httpFS(url);
+  TSocketFS httpFS(url);
   TOSFileSystem osFS(dest);
   TFSIndex fsIndex(httpFS);
   TStrList properties;
