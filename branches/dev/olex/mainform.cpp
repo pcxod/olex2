@@ -796,7 +796,9 @@ separated values of Atom Type and radius, an entry a line");
   this_InitMacroD(ShowSymm, EmptyString, fpNone|fpOne, "Shows symmetry elements of the unitcell");
   this_InitMacroD(Textm, EmptyString, fpOne, "Runs subsequent commands stored in a text file");
   this_InitMacroD(TestStat, EmptyString, fpOne, "Test: runs statistical tests on structures in current folder. Expects a file name");
-  this_InitMacroD(ExportFont, EmptyString, fpTwo, "");
+  this_InitMacroD(ExportFont, EmptyString, fpTwo, "Exports given fonts into Olex2 portable format.\
+ At maximum two fonts a file are supported: a fixed and a proportional font.\
+ Example: ExportFont ChooseFont()&ChooseFont test.fnt");
   this_InitMacroD(ImportFont, EmptyString, fpTwo, "");
   this_InitMacroD(ImportFrag,
 "p-part to assign&;d-generate DFIX for 1-2 and 1-3 distances&;a-set specified AFIX to the imported fragment",

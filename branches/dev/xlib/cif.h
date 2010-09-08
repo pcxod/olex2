@@ -74,7 +74,7 @@ public:
   const smatd& GetMatrixById(const olxstr& id) const {
     size_t id_ind = MatrixMap.IndexOf(id);
     if( id_ind == InvalidIndex )
-      throw TInvalidArgumentException(__OlxSrcInfo, "matrix id");
+      throw TInvalidArgumentException(__OlxSrcInfo, olxstr("matrix id: '") << id << '\'');
     return Matrices[MatrixMap.GetValue(id_ind)];
   }
   // special for CIF dues to the MatrixMap...

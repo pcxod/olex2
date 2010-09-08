@@ -42,7 +42,7 @@ void TCif::LoadFromStrings(const TStrList& Strings)  {
     if( cb.param_map.IndexOf("_cell_length_a") == InvalidIndex )
       continue;
     bool valid = false;
-    for( size_t j=0; j < cb.table_map.Count(); i++ )  {
+    for( size_t j=0; j < cb.table_map.Count(); j++ )  {
       if( cb.table_map.GetKey(j).StartsFrom("_atom_site") )  {
         valid = true;
         break;

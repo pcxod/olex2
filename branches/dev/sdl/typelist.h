@@ -420,9 +420,16 @@ template <class T>
       return *this;  
     }
   };
+#ifndef __BORLANDC__
+template <class T, typename DestructCast>
+ListQuickSorter<TTypeListExt<T,DestructCast>,const T*,
+  typename TTypeListExt<T,DestructCast>::Accessor> TTypeListExt<T,DestructCast>::QuickSorter;
+template <class T, typename DestructCast>
+ListBubbleSorter<TTypeListExt<T,DestructCast>,const T*,
+  typename TTypeListExt<T,DestructCast>::Accessor> TTypeListExt<T,DestructCast>::BubleSorter;
+template <class T, typename DestructCast>
+  TListTraverser<TTypeListExt<T,DestructCast> > TTypeListExt<T,DestructCast>::Traverser;
+#endif
 
 EndEsdlNamespace()
 #endif
-
-
-
