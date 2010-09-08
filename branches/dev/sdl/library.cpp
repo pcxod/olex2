@@ -27,6 +27,8 @@ TLibrary* TLibrary::AddLibrary(const olxstr& name, ALibraryContainer* owner )  {
   TLibrary* lib = new TLibrary(name, owner);
   Libraries.Add(name, lib);
   lib->SetParentLibrary( this );
+  if( owner == NULL )
+    lib->LibraryOwner = this->LibraryOwner;
   return lib;
 }
 //..............................................................................
@@ -35,6 +37,7 @@ void TLibrary::AttachLibrary( TLibrary* lib )  {
     throw TDuplicateEntry(__OlxSourceInfo, lib->GetName(), "library" );
   Libraries.Add(lib->GetName(), lib);
   lib->SetParentLibrary( this );
+  lib->LibraryOwner = this->LibraryOwner;
 }
 //..............................................................................
 void TLibrary::RegisterStaticMacro( TStaticMacro* func, bool replace )  {
