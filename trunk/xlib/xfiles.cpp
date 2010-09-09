@@ -545,7 +545,7 @@ TLibrary*  TXFile::ExportLibrary(const olxstr& name)  {
 
   lib->RegisterFunction<TXFile>(
     new TFunction<TXFile>(this, &TXFile::LibGetFormula, "GetFormula",
-    fpNone|fpOne|fpTwo|psCheckFileTypeIns,
+    fpNone|fpOne|fpTwo|psFileLoaded,
 "Returns a string for content of the asymmetric unit. Takes single or none parameters.\
  If parameter equals 'html' and html formatted string is returned, for 'list' parameter\
  a string like 'C:26,N:45' is returned. If no parameter is specified, just formula is returned") );
