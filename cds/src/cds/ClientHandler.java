@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.UUID;
 
 /**
@@ -61,7 +62,7 @@ public class ClientHandler extends Thread {
       DataOutputStream out = new DataOutputStream(client.getOutputStream());  // true - autoflush
       ArrayList<String> cmds = new ArrayList();
       String cmd, origin=null, platform = null;
-      while( (cmd = in.readLine()) != null )  {
+      while( (cmd = in.readLine()) != null && !cmd.isEmpty() )  {
         if( cmd.length() == 0 )
           break;
         cmds.add(cmd);
@@ -103,16 +104,37 @@ public class ClientHandler extends Thread {
               handled = true;
             } else if (cmd.equals("stop")) {
               Main.doTerminate();
+              out.writeBytes("OK\n");
               handled = true;
             } else if (cmd.equals("block")) {
               if( cmds.size() == 2 )  {
                 Main.blocked.add(cmds.get(1));
                 handled = true;
+                out.writeBytes("OK\n");
               }
             } else if (cmd.equals("unblock")) {
               if( cmds.size() == 2 )  {
                 Main.blocked.remove(cmds.get(1));
                 handled = true;
+                out.writeBytes("OK\n");
+              }
+            } else if (cmd.equals("unmount")) {
+              if( cmds.size() == 2 )  {
+                File fp = new File(Main.baseDir + cmds.get(1));
+                if (fp.exists() && fp.isDirectory() )  {
+                  Main.unmounted.add(fp.getAbsolutePath());
+                  handled = true;
+                  out.writeBytes("OK\n");
+                }
+              }
+            } else if (cmd.equals("mount")) {
+              if( cmds.size() == 2 )  {
+                File fp = new File(Main.baseDir + cmds.get(1));
+                if (fp.exists() && fp.isDirectory() )  {
+                  Main.unmounted.remove(fp.getAbsolutePath());
+                  handled = true;
+                  out.writeBytes("OK\n");
+                }
               }
             }
           }
@@ -139,14 +161,27 @@ public class ClientHandler extends Thread {
               if (toks.length == 3) {
                 String fn = Main.getBaseDir() + toks[1];
                 File file = new File(fn);
-                if (file.isDirectory()) {
-                  listFolder(out, file);
-                  out.close();
-                  in.close();
-                  client.close();
-                  return;
+                fn = file.getAbsolutePath();
+                boolean unmounted = false;
+                Iterator<String> itr = Main.unmounted.iterator();
+                while( itr.hasNext() )  {
+                  String uf = itr.next();
+                  if( fn.startsWith(uf) )  {
+                    if( fn.length() > uf.length() )  {
+                      if( fn.charAt(uf.length()) != File.separatorChar )
+                        continue;
+                    }
+                    unmounted = true;
+                    break;
+                  }
                 }
-                if (!file.exists() || !file.isFile() || offset >= file.length()) {
+                if( unmounted )  {
+                  out.writeBytes("HTTP/1.0 404 ERROR\n");
+                }
+                else if (file.isDirectory()) {
+                  listFolder(out, file);
+                }
+                else if (!file.exists() || !file.isFile() || offset >= file.length()) {
                   out.writeBytes("HTTP/1.0 404 ERROR\n");
                 } else {
                   out.writeBytes("HTTP/1.0 200 OK\n");
