@@ -12,10 +12,10 @@ BeginXlibNamespace()
 class TAtomEnvi  {
   TTypeList< AnAssociation3<TCAtom*, smatd, vec3d> >  Envi;
   TSAtom* Base;
-  int _SortByDistance( const AnAssociation3<TCAtom*, smatd, vec3d>& i1, const 
-    AnAssociation3<TCAtom*, smatd, vec3d>& i2) const 
+  int _SortByDistance(const AnAssociation3<TCAtom*, smatd, vec3d>* i1, const 
+    AnAssociation3<TCAtom*, smatd, vec3d>* i2) const 
   {
-    const double diff = i1.GetC().QDistanceTo(Base->crd()) - i2.GetC().QDistanceTo(Base->crd());
+    const double diff = i1->GetC().QDistanceTo(Base->crd()) - i2->GetC().QDistanceTo(Base->crd());
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
   }
 public:
@@ -40,7 +40,7 @@ public:
   inline const smatd& GetMatrix(size_t ind) const {  return Envi[ind].GetB();  }
   void Delete(size_t i)  {  Envi.Delete(i);  }
   void SortByDistance()  {
-    Envi.QuickSorter.SortMF(Envi, *this, &TAtomEnvi::_SortByDistance);
+    Envi.QuickSorter.SortMF<TAtomEnvi>(Envi, *this, &TAtomEnvi::_SortByDistance);
   }
   void Exclude(TCAtom& ca )                    {
     for( size_t i=0; i < Envi.Count(); i++ )

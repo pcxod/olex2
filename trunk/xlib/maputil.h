@@ -172,24 +172,23 @@ public:
     DeleteMap(map_copy, dim);
     return res;
   }
-  static int PeakSortByCount(const MapUtil::peak& a, const MapUtil::peak& b)  {
-    return b.count - a.count;
-  }
-  static int PeakSortBySum(const MapUtil::peak& a, const MapUtil::peak& b)  {
-    double diff = b.summ - a.summ;
+  static int PeakPtrSortByCount(const MapUtil::peak* a, const MapUtil::peak* b)  {  return b->count - a->count;  }
+  static int PeakSortByCount(const MapUtil::peak& a, const MapUtil::peak& b)  {  return b.count - a.count;  }
+  static int PeakSortBySum(const MapUtil::peak* a, const MapUtil::peak* b)  {
+    double diff = b->summ - a->summ;
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0); 
   }
-  static int PeakSortByWeight(const MapUtil::peak& a, const MapUtil::peak& b)  {
-    if( a.count == 0 )
-      return b.count == 0 ? 0 : 1;
-    else if( b.count == 0 )
-      return a.count == 0 ? 0 : -1;
-    const double diff = b.summ/b.count - a.summ/a.count;
+  static int PeakSortByWeight(const MapUtil::peak* a, const MapUtil::peak* b)  {
+    if( a->count == 0 )
+      return b->count == 0 ? 0 : 1;
+    else if( b->count == 0 )
+      return a->count == 0 ? 0 : -1;
+    const double diff = b->summ/b->count - a->summ/a->count;
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0); 
   }
 protected:
-  static int SortByDistance(const vec3d& a, const vec3d& b)  {
-    const double d = a.QLength() - b.QLength();
+  static int SortByDistance(const vec3d* a, const vec3d* b)  {
+    const double d = a->QLength() - b->QLength();
     return d < 0 ? -1 : (d > 0 ? 1 : 0);
   }
 public:
@@ -231,7 +230,9 @@ public:
       crds.AddNew(Peaks[i].center) *= norm;
       Peaks[i].process = Peaks.Count() != 0;
     }
-    Peaks.QuickSorter.SyncSortSF(Peaks, crds, PeakSortByCount);
+    Peaks.QuickSorter.Sort(Peaks,
+      Sort_StaticFunctionWrapper<const MapUtil::peak&>(PeakSortByCount),
+      SyncSwapListener<TTypeList<vec3d> >(crds));
     for( size_t i=0; i < cnt; i++ )  {
       if( !Peaks[i].process )  continue;
       TPtrList<MapUtil::peak> toMerge;

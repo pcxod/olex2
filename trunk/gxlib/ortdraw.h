@@ -125,8 +125,8 @@ struct ort_cone : public a_ort_object  {
 
 class OrtDraw  {
 private:
-  static int OrtObjectsZSort(const a_ort_object& a1, const a_ort_object& a2)  {
-    const float diff = a1.get_z() - a2.get_z();
+  static int OrtObjectsZSort(const a_ort_object* a1, const a_ort_object* a2)  {
+    const float diff = a1->get_z() - a2->get_z();
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
   }
   static int OrtObjectsPtrZSort(const a_ort_object* a1, const a_ort_object* a2)  {

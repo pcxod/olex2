@@ -248,7 +248,10 @@ void TwxGlScene_RipFont(wxFont& fnt, TGlFont& glf, TEBitArray& ba)  {
   ba.SetSize( 256*maxw*maxh );
   for( int i=0; i < 256; i++ )  {
     TFontCharSize* cs = glf.CharSize(i);
-    if( cs->Data == NULL )  continue;
+    if( cs->Data == NULL )  {
+      delete Images[i];
+      continue;
+    }
     for( uint16_t j=0; j < maxw; j++ )  {
       for( uint16_t k=0; k < maxh; k++ )  {
         int ind = (k*ImageW+j)*3;
@@ -302,7 +305,7 @@ void TwxGlScene::ExportFont(const olxstr& name, const olxstr& fileName) const {
   fos.Write("ofnt", 4);
   wxZipOutputStream zos(fos, 9);
   for( size_t i=0; i < toks.Count(); i++ )  {
-    Font.SetNativeFontInfo( toks[i].u_str() );
+    Font.SetNativeFontInfo(toks[i].u_str());
     // regular
     TwxGlScene_RipFontA(Font, Fnt, zos);
     // bold

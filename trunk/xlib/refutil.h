@@ -151,7 +151,7 @@ protected:
     // standartise reflection indexes according to provieded list of symmetry operators
     rf.Standardize(refs);
     // sort the list
-    TReflection::SortPList(refs);
+    TReflection::SortList(refs);
     // merge reflections
     double Sdiff = 0, SI_tot = 0, SI = 0, SS = 0;
     const int ref_cnt = refs.Count();

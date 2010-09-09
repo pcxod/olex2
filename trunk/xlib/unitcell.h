@@ -187,8 +187,8 @@ public:
 protected:
   // helper function, association should be AnAssociation2+<vec3d,TCAtom*,+>
   template <class Association> 
-    static int AtomsSortByDistance(const Association& A1, const Association& A2)  {
-      const double d = A1.GetA().QLength() - A2.GetA().QLength();
+    static int AtomsSortByDistance(const Association* A1, const Association* A2)  {
+      const double d = A1->GetA().QLength() - A2->GetA().QLength();
       return (d < 0 ? -1 : ((d > 0 ) ? 1 : 0));
     }
 public:
@@ -223,7 +223,7 @@ public:
     }
     // create a list of unique atoms
     float* distances = new float[ list.Count()+1 ];
-    list.QuickSorter.SortSF( list, AtomsSortByDistance);
+    list.QuickSorter.SortSF(list, AtomsSortByDistance);
     const size_t lc = list.Count();
     for( size_t i=0; i < lc; i++ )
       distances[i] = (float)list[i].GetA().QLength();

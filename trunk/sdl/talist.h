@@ -129,6 +129,8 @@ public:
     return Items[index];
   }
 //..............................................................................
+  const T* GetData() const {  return Items;  }
+//..............................................................................
   template <class Functor> void ForEach(const Functor& f) const {
     for( size_t i=0; i < FCount; i++ )
       f.OnItem(Items[i]);
@@ -289,11 +291,23 @@ public:
         return i;
     return InvalidIndex;
   }
-
-  static TQuickObjectSorter<TArrayList<T>,T> QuickSorter;
-  static TBubbleSorter<TArrayList<T>,T> BubleSorter;
+//..............................................................................
+  struct Accessor  {
+    static T& get(TArrayList<T>& l, size_t i)  {  return l[i];  }
+  };
+  static ListQuickSorter<TArrayList<T>,T, Accessor> QuickSorter;
+  static ListBubbleSorter<TArrayList<T>,T, Accessor> BubleSorter;
   static TListTraverser<TArrayList<T> > Traverser;
 };
+
+#ifndef __BORLANDC__
+template <class T>
+ListQuickSorter<TArrayList<T>,T, typename TArrayList<T>::Accessor> TArrayList<T>::QuickSorter;
+template <class T>
+ListBubbleSorter<TArrayList<T>,T, typename TArrayList<T>::Accessor> TArrayList<T>::BubleSorter;
+template <class T>
+  TListTraverser<TArrayList<T> > TArrayList<T>::Traverser;
+#endif
 
   typedef TArrayList<int> TIntList;
   typedef TArrayList<unsigned int> TUIntList;

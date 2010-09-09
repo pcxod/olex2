@@ -36,6 +36,7 @@
 #define xlib_InitFunc(funcName, argc, desc) \
   lib.RegisterStaticFunction( new TStaticFunction(&XLibMacros::fun##funcName, #funcName, argc, desc))
 
+using namespace cif_dp;
 const olxstr XLibMacros::NoneString("none");
 const olxstr XLibMacros::NAString("n/a");
 olxstr XLibMacros::CurrentDir;
@@ -1128,8 +1129,8 @@ void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 //..............................................................................
 // http://www.minsocam.org/ammin/AM78/AM78_1104.pdf
-int macGraphPD_Sort(const AnAssociation2<double,double>& a1, const AnAssociation2<double,double>& a2) {
-  const double df = a1.GetA() - a2.GetA();
+int macGraphPD_Sort(const AnAssociation2<double,double>* a1, const AnAssociation2<double,double>* a2) {
+  const double df = a1->GetA() - a2->GetA();
   if( df < 0 )  return -1;
   if( df > 0 )  return 1;
   return 0;
@@ -1804,7 +1805,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         groups[i]->Add(ca);
       }
       for( size_t j=0; j < groups[i]->Count(); j++ )
-        (*groups[i])[j].SetPart(part+j);
+        (*groups[i])[j].SetPart((int8_t)(part+j));
       processed.Add(atoms[i]->CAtom());
     }
   }
@@ -2601,68 +2602,10 @@ bool XLibMacros::ProcessExternalFunction(olxstr& func)  {
   return false;
 }
 //..............................................................................
-void XLibMacros::MergePublTableData(TCifLoopTable& to, TCifLoopTable& from)  {
-  if( from.RowCount() == 0 )  return;
-  static const olxstr authorNameCN("_publ_author_name");
-  // create a list of unique colums, and prepeare them for indexed access
-  TSStrPObjList<olxstr, AnAssociation2<size_t,size_t>, false> uniqCols;
-  for( size_t i=0; i < from.ColCount(); i++ )  {
-    if( uniqCols.IndexOfComparable(from.ColName(i)) == InvalidIndex )  {
-      uniqCols.Add(from.ColName(i), AnAssociation2<size_t,size_t>(i, InvalidIndex) );
-    }
-  }
-  for( size_t i=0; i < to.ColCount(); i++ )  {
-    size_t ind = uniqCols.IndexOfComparable( to.ColName(i) );
-    if( ind == InvalidIndex )
-      uniqCols.Add( to.ColName(i), AnAssociation2<size_t,size_t>(InvalidIndex, i) );
-    else
-      uniqCols.GetObject(ind).B() = i;
-  }
-  // add new columns, if any
-  for( size_t i=0; i < uniqCols.Count(); i++ ) {
-    if( uniqCols.GetObject(i).GetB() == InvalidIndex )  {
-      to.AddCol( uniqCols.GetComparable(i) );
-      uniqCols.GetObject(i).B() = to.ColCount() - 1;
-    }
-  }
-  /* by this point the uniqCols contains all the column names and the association
-  holds corresponding column indexes in from and to tables */
-  // the actual merge, by author name
-  size_t authNCI = uniqCols.IndexOfComparable(authorNameCN);
-  if( authNCI == InvalidIndex )  return;  // cannot do much, can we?
-  AnAssociation2<size_t,size_t> authCA(uniqCols.GetObject(authNCI));
-  if( authCA.GetA() == InvalidIndex )  return;  // no author?, bad ...
-  for( size_t i=0; i < from.RowCount(); i++ )  {
-    size_t ri = InvalidIndex;
-    for( size_t j=0; j < to.RowCount(); j++ )  {
-      if( to[j][ authCA.GetB() ].Equalsi(from[i][authCA.GetA()]) )  {
-        ri = j;
-        break;
-      }
-    }
-    if( ri == InvalidIndex )  {  // add a new row
-      to.AddRow( EmptyString );
-      ri = to.RowCount()-1;
-    }
-    for( size_t j=0; j < uniqCols.Count(); j++ )  {
-      AnAssociation2<size_t,size_t>& as = uniqCols.GetObject(j);
-      if( as.GetA() == InvalidIndex )  continue;
-      to[ri][as.GetB()] = from[i][ as.GetA() ];
-    }
-  }
-  // null the objects - they must not be here anyway ..
-  for( size_t i=0; i < to.RowCount(); i++ )  {
-    for( size_t j=0; j < to.ColCount(); j++ )  {
-      if( to[i].GetObject(j) != NULL )
-        delete to[i].GetObject(j);
-      to[i].GetObject(j) = new StringCifCell(true);
-    }
-  }
-}
-//..............................................................................
 void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
-  TCif *Cif, Cif1, Cif2;
+  TCif *Cif, Cif2;
+  cif_dp::TCifDP src;
   const size_t _translation_count = 4;
   static const olxstr _translations[2*_translation_count] = {
     "_symmetry_cell_setting", "_space_group_crystal_system",
@@ -2670,12 +2613,17 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     "_symmetry_space_group_name_H-M", "_space_group_name_H-M_alt",
     "_symmetry_Int_Tables_number-M", "_space_group_IT_number"
   };
+  const size_t _loop_names_to_skip_count = 3;
+  static olxstr _loop_names_to_skip[_loop_names_to_skip_count] = {
+    "_atom_site", "_geom", "_space_group"
+  };
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
     olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
-    if( TEFile::Exists(cifFN) )
+    if( TEFile::Exists(cifFN) )  {
       Cif2.LoadFromFile(cifFN);
+    }
     else
       throw TFunctionFailedException(__OlxSourceInfo, "existing cif is expected");
     Cif = &Cif2;
@@ -2684,7 +2632,6 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   for( size_t i=0; i < _translation_count; i++ )
     Cif->Rename(_translations[i*2], _translations[i*2+1]);
 
-  TCifLoop& publ_info = Cif->GetPublicationInfoLoop();
   for( size_t i=0; i < Cmds.Count(); i++ )  {
     try {
       IInputStream *is = TFileHandlerManager::GetInputStream(Cmds[i]);
@@ -2695,30 +2642,36 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
       TStrList sl;
       sl.LoadFromTextStream(*is);
       delete is;
-      Cif1.LoadFromStrings(sl);
+      src.LoadFromStrings(sl);
     }
     catch( ... )  {    }  // most like the cif does not have cell, so pass it
+    if( src.Count() == 0 )  continue;
     // normalise
     for( size_t i=0; i < _translation_count; i++ )
-      Cif1.Rename(_translations[i*2], _translations[i*2+1]);
-    TCifLoop& pil = Cif1.GetPublicationInfoLoop();
-    for( size_t j=0; j < Cif1.ParamCount(); j++ )
-      Cif->SetParam(Cif1.Param(j), Cif1.ParamValue(j));
-    // update publication info loop
-    MergePublTableData(publ_info.GetTable(), pil.GetTable());
+      src[0].Rename(_translations[i*2], _translations[i*2+1]);
+    for( size_t j=0; j < src[0].param_map.Count(); j++ )  {
+      const cif_dp::ICifEntry& e = *src[0].param_map.GetValue(j);
+      if( !e.HasName() )  continue;
+      bool skip = false;
+      for( size_t k=0; k < _loop_names_to_skip_count; k++ )  {
+        if( e.GetName().StartsFromi(_loop_names_to_skip[k]) )  {
+          skip = true;
+          break;
+        }
+      }
+      if( ! skip )
+        Cif->SetParam(src[0].param_map.GetKey(j), e);
+    }
   }
   // generate moiety string if does not exist
   Cif->SetParam("_chemical_formula_moiety", xapp.XFile().GetLattice().CalcMoiety(), true);
-  Cif->Rename("_symmetry_cell_setting", "_space_group_crystal_system");
-  Cif->Rename("_symmetry_space_group_name_Hall", "_space_group_name_Hall");
-  Cif->Rename("_symmetry_space_group_name_H-M", "_space_group_name_H-M_alt");
-  Cif->Rename("_symmetry_Int_Tables_number-M", "_space_group_IT_number");
+  Cif->SetParam("_cell_formula_units_Z", xapp.XFile().GetAsymmUnit().GetZ(), false);
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(Cif->GetAsymmUnit());
   if( sg != NULL )  {
-    Cif->SetParam("_space_group_crystal_system", TCif::CifData(sg->GetBravaisLattice().GetName().ToLowerCase(), true));
-    Cif->SetParam("_space_group_name_Hall", TCif::CifData(sg->GetHallSymbol(), true));
-    Cif->SetParam("_space_group_name_H-M_alt", TCif::CifData(sg->GetFullName(), true));
-    Cif->SetParam("_space_group_IT_number", TCif::CifData(sg->GetNumber(), false));
+    Cif->SetParam("_space_group_crystal_system", sg->GetBravaisLattice().GetName().ToLowerCase(), true);
+    Cif->SetParam("_space_group_name_Hall", sg->GetHallSymbol(), true);
+    Cif->SetParam("_space_group_name_H-M_alt", sg->GetFullName(), true);
+    Cif->SetParam("_space_group_IT_number", sg->GetNumber(), false);
     if( !sg->IsCentrosymmetric() && !Cif->ParamExists("_chemical_absolute_configuration") )  {
       bool flack_used = false;
       if( xapp.CheckFileType<TIns>() )  {
@@ -2738,7 +2691,6 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   }
   else
     TBasicApp::GetLog().Error("Could not locate space group ...");
-  Cif->Group();
   Cif->SaveToFile(Cif->GetFileName());
 }
 //..............................................................................
@@ -2769,9 +2721,9 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMa
   catch( TExceptionBase& )  {}
 
   for( size_t i=0; i < In.ParamCount(); i++ )  {
-    TCif::CifData* CifData = Cif->FindParam(In.Param(i));
+    cif_dp::ICifEntry* CifData = Cif->FindParam<cif_dp::ICifEntry>(In.ParamName(i));
     if( CifData != NULL )
-      Out.SetParam(In.Param(i), *CifData);
+      Out.SetParam(In.ParamName(i), *CifData);
   }
   try  {  Out.SaveToFile(Cmds[1]);  }
   catch( TExceptionBase& )  {
@@ -2831,12 +2783,9 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
 
   latt.GrowFragments(false, NULL);
 
-  TCifLoop& bonds = cif.AddLoop("_geom_bond");
-  bonds.GetTable().AddCol("_geom_bond_atom_site_label_1");
-  bonds.GetTable().AddCol("_geom_bond_atom_site_label_2");
-  bonds.GetTable().AddCol("_geom_bond_distance");
-  bonds.GetTable().AddCol("_geom_bond_site_symmetry_2");
-  bonds.GetTable().AddCol("_geom_bond_publ_flag");
+  cif_dp::cetTable& bonds = cif.AddLoopDef(
+    "_geom_bond_atom_site_label_1,_geom_bond_atom_site_label_2,_geom_bond_distance,"
+    "_geom_bond_site_symmetry_2,_geom_bond_publ_flag");
   for( size_t i=0; i < latt.BondCount(); i++ )  {
     TSBond& b = latt.GetBond(i);
     if( b.A().GetType().GetMr() < 3 || b.A().IsDeleted() )  {
@@ -2856,28 +2805,21 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       TSBond& b = a.Bond(j);
       if( b.GetTag() == 0 || !b.A().IsAUAtom() )  continue;
       b.SetTag(0);
-      TCifRow& row = bonds.GetTable().AddRow(EmptyString);
-      row.Set(0, b.A().GetLabel(), new AtomCifCell(&b.A().CAtom()));
-      row.Set(1, b.B().GetLabel(), new AtomCifCell(&b.B().CAtom()));
-      row[2] = vcovc.CalcDistance(b.A(), b.B()).ToString();
+      cif_dp::CifRow& row = bonds.AddRow();
+      row.Set(0, new AtomCifEntry(b.A().CAtom()));
+      row.Set(1, new AtomCifEntry(b.B().CAtom()));
+      row[2] = new cetString(vcovc.CalcDistance(b.A(), b.B()).ToString());
       if( !b.B().IsAUAtom() )
-        row[3] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
-        b.B().GetMatrix(0));
+        row[3] = new cetString(TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
+          b.B().GetMatrix(0)));
       else
-        row[3] = '.';
-      row[4] = '?';
-      for( int k=2; k < 5; k++ )
-        row.GetObject(k) = new StringCifCell(false);
+        row[3] = new cetString('.');
+      row[4] = new cetString('?');
     }
   }
-  TCifLoop& angles = cif.AddLoop("_geom_angle");
-  angles.GetTable().AddCol("_geom_angle_atom_site_label_1");
-  angles.GetTable().AddCol("_geom_angle_atom_site_label_2");
-  angles.GetTable().AddCol("_geom_angle_atom_site_label_3");
-  angles.GetTable().AddCol("_geom_angle");
-  angles.GetTable().AddCol("_geom_angle_site_symmetry_1");
-  angles.GetTable().AddCol("_geom_angle_site_symmetry_3");
-  angles.GetTable().AddCol("_geom_angle_publ_flag");
+  cif_dp::cetTable& angles = cif.AddLoopDef(
+    "_geom_angle_atom_site_label_1,_geom_angle_atom_site_label_2,_geom_angle_atom_site_label_3,"
+    "_geom_angle,_geom_angle_site_symmetry_1,_geom_angle_site_symmetry_3,_geom_angle_publ_flag");
   for( size_t i=0; i < latt.AtomCount(); i++ )  {
     TSAtom& a = latt.GetAtom(i);
     if( a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.IsAUAtom() )  continue;
@@ -2891,38 +2833,31 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
           continue;
         TSAtom& _b = (b.CAtom().GetId() <= c.CAtom().GetId() ? b : c);
         TSAtom& _c = (b.CAtom().GetId() > c.CAtom().GetId() ? b : c);
-        TCifRow& row = angles.GetTable().AddRow(EmptyString);
-        row.Set(0, _b.GetLabel(), new AtomCifCell(&_b.CAtom()));
-        row.Set(1, a.GetLabel(), new AtomCifCell(&a.CAtom()));
-        row.Set(2, _c.GetLabel(), new AtomCifCell(&_c.CAtom()));
-        row[3] = vcovc.CalcAngle(_b, a, _c).ToString();
+        cif_dp::CifRow& row = angles.AddRow();
+        row.Set(0, new AtomCifEntry(_b.CAtom()));
+        row.Set(1, new AtomCifEntry(a.CAtom()));
+        row.Set(2, new AtomCifEntry(_c.CAtom()));
+        row[3] = new cetString(vcovc.CalcAngle(_b, a, _c).ToString());
         if( !_b.IsAUAtom() )
-          row[4] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
-          _b.GetMatrix(0));
+          row[4] = new cetString(TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
+            _b.GetMatrix(0)));
         else
-          row[4] = '.';
+          row[4] = new cetString('.');
         if( !_c.IsAUAtom() )
-          row[5] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
-          _c.GetMatrix(0));
+          row[5] = new cetString(TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
+            _c.GetMatrix(0)));
         else
-          row[5] = '.';
-        row[6] = '?';
-        for( int l=3; l < 7; l++ )
-          row.GetObject(l) = new StringCifCell(false);
+          row[5] = new cetString('.');
+        row[6] = new cetString('?');
       }
     }
   }
   RefinementModel& rm = xapp.XFile().GetRM();
   if( rm.InfoTabCount() != 0 )  {
-    TCifLoop& hbonds = cif.AddLoop("_geom_hbond");
-    hbonds.GetTable().AddCol("_geom_hbond_atom_site_label_D");
-    hbonds.GetTable().AddCol("_geom_hbond_atom_site_label_H");
-    hbonds.GetTable().AddCol("_geom_hbond_atom_site_label_A");
-    hbonds.GetTable().AddCol("_geom_hbond_distance_DH");
-    hbonds.GetTable().AddCol("_geom_hbond_distance_HA");
-    hbonds.GetTable().AddCol("_geom_hbond_distance_DA");
-    hbonds.GetTable().AddCol("_geom_hbond_angle_DHA");
-    hbonds.GetTable().AddCol("_geom_hbond_site_symmetry_A");
+    cif_dp::cetTable& hbonds = cif.AddLoopDef(
+      "_geom_hbond_atom_site_label_D,_geom_hbond_atom_site_label_H,_geom_hbond_atom_site_label_A,"
+      "_geom_hbond_distance_DH,_geom_hbond_distance_HA,_geom_hbond_distance_DA,"
+      "_geom_hbond_angle_DHA,_geom_hbond_site_symmetry_A");
     smatd I;
     I.I().SetId(0);
     TAtomEnvi envi;
@@ -2945,10 +2880,10 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       xapp.XFile().GetUnitCell().GetAtomEnviList(*dsa, envi);
       for( size_t j=0; j < envi.Count(); j++ )  {
         if( envi.GetType(j) != iHydrogenZ)  continue;
-        TCifRow& row = hbonds.GetTable().AddRow(EmptyString);
-        row.Set(0, d->GetAtom()->GetLabel(), new AtomCifCell(d->GetAtom()));
-        row.Set(1, envi.GetCAtom(j).GetLabel(), new AtomCifCell(&envi.GetCAtom(j)));
-        row.Set(2, a->GetAtom()->GetLabel(), new AtomCifCell(a->GetAtom()));
+        CifRow& row = hbonds.AddRow();
+        row.Set(0, new AtomCifEntry(*d->GetAtom()));
+        row.Set(1, new AtomCifEntry(envi.GetCAtom(j)));
+        row.Set(2, new AtomCifEntry(*a->GetAtom()));
         TSAtom da(NULL), aa(NULL);
         da.CAtom(*d->GetAtom());
         da.AddMatrix(&I);
@@ -2966,17 +2901,15 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         aa.AddMatrix(&am);
         aa.ccrd() = am*aa.ccrd();
         au.CellToCartesian(aa.ccrd(), aa.crd());
-        row[3] = olxstr::FormatFloat(2, envi.GetCrd(j).DistanceTo(da.crd()));
-        row[4] = olxstr::FormatFloat(2, envi.GetCrd(j).DistanceTo(aa.crd()));
-        row[5] = vcovc.CalcDistance(da, aa).ToString();
-        row[6] = olxstr::FormatFloat(1, olx_angle(da.crd(), envi.GetCrd(j), aa.crd()));
+        row[3] = new cetString(olxstr::FormatFloat(2, envi.GetCrd(j).DistanceTo(da.crd())));
+        row[4] = new cetString(olxstr::FormatFloat(2, envi.GetCrd(j).DistanceTo(aa.crd())));
+        row[5] = new cetString(vcovc.CalcDistance(da, aa).ToString());
+        row[6] = new cetString(olxstr::FormatFloat(1, olx_angle(da.crd(), envi.GetCrd(j), aa.crd())));
         if( a->GetMatrix() == NULL )
-          row[7] = '.';
+          row[7] = new cetString('.');
         else
-          row[7] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
-          aa.GetMatrix(0));
-        for( int l=3; l < 8; l++ )
-          row.GetObject(l) = new StringCifCell(false);
+          row[7] = new cetString(TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
+            aa.GetMatrix(0)));
       }
     }
   }
@@ -3705,7 +3638,7 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroE
   if( list.IsEmpty() )
     TBasicApp::GetLog() << "Could not fit provided data\n";
   else  {
-    list.QuickSorter.Sort<TComparableComparator>(list);
+    list.QuickSorter.Sort<TComparablePtrComparator>(list);
     TETable tab(list.Count(), 3);
     tab.ColName(0) = "Formula";
     tab.ColName(1) = "CHN";

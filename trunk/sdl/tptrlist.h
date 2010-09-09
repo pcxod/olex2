@@ -474,23 +474,22 @@ public:
       free(Items);
       Items = ni;
   }
-
-  static TQuickPtrSorter<TPtrList<T>,T> QuickSorter;
-  static TBubblePtrSorter<TPtrList<T>,T> BubleSorter;
+  struct Accessor  {
+    static T* get(TPtrList<T>& l, size_t i)  {  return l[i];  }
+  };
+  static ListQuickSorter<TPtrList<T>,const T*, Accessor> QuickSorter;
+  static ListBubbleSorter<TPtrList<T>,const T*, Accessor> BubleSorter;
   static TListTraverser<TPtrList<T> > Traverser;
 };
 
 #ifndef __BORLANDC__
 template <class T>
-  TQuickPtrSorter<TPtrList<T>,T> TPtrList<T>::QuickSorter;
+ListQuickSorter<TPtrList<T>,const T*, typename TPtrList<T>::Accessor> TPtrList<T>::QuickSorter;
 template <class T>
-  TBubblePtrSorter<TPtrList<T>,T> TPtrList<T>::BubleSorter;
+ListBubbleSorter<TPtrList<T>,const T*, typename TPtrList<T>::Accessor> TPtrList<T>::BubleSorter;
 template <class T>
   TListTraverser<TPtrList<T> > TPtrList<T>::Traverser;
 #endif
 
 EndEsdlNamespace()
 #endif
-
-
-

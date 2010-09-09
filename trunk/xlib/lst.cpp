@@ -11,13 +11,13 @@
 #include "etable.h"
 #include "ins.h"
 
-int SortTrefTries(const TTrefTry& I1, const TTrefTry& I2) {
-  if( I1.CFOM < I2.CFOM )  return -1;
-  if( I1.CFOM > I2.CFOM )  return 1;
-  int res = I1.Semivariants.Compare( I2.Semivariants );
+int SortTrefTries(const TTrefTry* I1, const TTrefTry* I2) {
+  if( I1->CFOM < I2->CFOM )  return -1;
+  if( I1->CFOM > I2->CFOM )  return 1;
+  int res = I1->Semivariants.Compare(I2->Semivariants);
   if( !res )  {
-    if( I1.NQual > I2.NQual )  return -1;
-    if( I1.NQual < I2.NQual )  return 1;
+    if( I1->NQual > I2->NQual )  return -1;
+    if( I1->NQual < I2->NQual )  return 1;
     return 0;
   }
   return res;
@@ -154,7 +154,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
             i++;
           }
         }
-        TrefTries.QuickSorter.SortSF(TrefTries, SortTrefTries );
+        TrefTries.QuickSorter.SortSF(TrefTries, SortTrefTries);
         TrefT = true;
         continue;
       }
