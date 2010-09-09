@@ -92,19 +92,20 @@ TLinkedLoopTable::TLinkedLoopTable(const TCif& C) : FCif(C)  {
     FAtoms.Add(LA);
     LA->Label = CA.GetLabel();
   }
-  TCifLoop *CL = C.FindLoop("_geom_bond");
+  cif_dp::cetTable *CL = C.FindLoop("_geom_bond");
   if( CL == NULL ) return;
-  const TCifLoopTable& BondTab = CL->GetTable();
+  const cif_dp::CifTable& BondTab = CL->GetData();
   size_t index =  BondTab.ColIndex("_geom_bond_atom_site_label_1");
   size_t index1 = BondTab.ColIndex("_geom_bond_atom_site_label_2");
   size_t index2 = BondTab.ColIndex("_geom_bond_distance");
   size_t index3 = BondTab.ColIndex("_geom_bond_site_symmetry_2");
   if( (index|index1|index2|index3) == InvalidIndex )  return;  // will not work then ...
   for( size_t j=0; j < BondTab.RowCount(); j++ )  {
-    const TCifRow& row = BondTab[j];
-    CifTabBond *LB = new CifTabBond(AtomByName(row[index]), AtomByName(row[index1]));
-    LB->Value = row[index2];
-    LB->S2 = row[index3];
+    const cif_dp::CifRow& row = BondTab[j];
+    CifTabBond *LB = new CifTabBond(AtomByName(row[index]->GetStringValue()),
+      AtomByName(row[index1]->GetStringValue()));
+    LB->Value = row[index2]->GetStringValue();
+    LB->S2 = row[index3]->GetStringValue();
     bool uniq = true;
     for( size_t k=0; k < FBonds.Count(); k++ )  {
       CifTabBond *LB1 = FBonds[k];
@@ -128,7 +129,7 @@ TLinkedLoopTable::TLinkedLoopTable(const TCif& C) : FCif(C)  {
 
   CL = C.FindLoop("_geom_angle");
   if( CL == NULL )  return;
-  const TCifLoopTable& AngTab = CL->GetTable();
+  const cif_dp::CifTable& AngTab = CL->GetData();
   index =  AngTab.ColIndex("_geom_angle_atom_site_label_1");
   index1 = AngTab.ColIndex("_geom_angle_atom_site_label_2");
   index2 = AngTab.ColIndex("_geom_angle_atom_site_label_3");
@@ -138,23 +139,22 @@ TLinkedLoopTable::TLinkedLoopTable(const TCif& C) : FCif(C)  {
   if( (index|index1|index2|index3|index4|index5) == InvalidIndex )  
     return;  // will not work then ...
   for( size_t j=0; j < AngTab.RowCount(); j++ )  {
-    const TCifRow& row = AngTab[j];
+    const cif_dp::CifRow& row = AngTab[j];
     CifTabAngle* ang = new CifTabAngle(
-      AtomByName(row[index]), AtomByName(row[index1]), AtomByName(row[index2]));
+      AtomByName(row[index]->GetStringValue()),
+      AtomByName(row[index1]->GetStringValue()),
+      AtomByName(row[index2]->GetStringValue()));
     FAngles.Add(ang);
-    ang->Value = row[index3];
-    ang->S1 = row[index4];
-    ang->S3 = row[index5];
+    ang->Value = row[index3]->GetStringValue();
+    ang->S1 = row[index4]->GetStringValue();
+    ang->S3 = row[index5]->GetStringValue();
   }
 }
 //..............................................................................
 TLinkedLoopTable::~TLinkedLoopTable()  {
-  for( size_t i=0; i < FAtoms.Count(); i++ )
-    delete FAtoms[i];
-  for( size_t i=0; i < FBonds.Count(); i++ )
-    delete FBonds[i];
-  for( size_t i=0; i < FAngles.Count(); i++ )
-    delete FAngles[i];
+  FAtoms.Delete();
+  FBonds.Delete();
+  FAngles.Delete();
 }
 //..............................................................................
 CifTabAtom& TLinkedLoopTable::AtomByName(const olxstr &Name)  {
@@ -183,8 +183,8 @@ TTTable<TStrList>* TLinkedLoopTable::MakeTable(const olxstr &Atom)  {
   TLLTBondSort BondSort(A, Symm, cCifTabSortLength);
   A.Bonds.QuickSorter.SortMF(A.Bonds, BondSort, &TLLTBondSort::Compare);
   olxstr Tmp;
+  Table.Clear();
   Table.Resize(bc+1, bc);
-  Table.EmptyContent(true);
   Table.ColName(0) = A.Label;
   for( size_t i=0; i < bc-1; i++ )  {
     CifTabBond* LB = A.Bonds[i];

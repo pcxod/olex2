@@ -24,11 +24,11 @@ private:
   vec3d  FCenter;          // atom center in cartesian coordinates
 protected:
   mutable short Flags;
-  int _SortNodesByDistanceAsc(const TSAtom* a1, const TSAtom* a2)  {
+  int _SortNodesByDistanceAsc(const TSAtom* a1, const TSAtom* a2) const {
     const double diff = FCenter.DistanceTo(a1->FCenter) - FCenter.DistanceTo(a2->FCenter);
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
   }
-  int _SortNodesByDistanceDsc(const TSAtom* a1, const TSAtom* a2)  {
+  int _SortNodesByDistanceDsc(const TSAtom* a1, const TSAtom* a2) const {
     const double diff = FCenter.DistanceTo(a2->FCenter) - FCenter.DistanceTo(a1->FCenter);
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
   }
@@ -115,10 +115,10 @@ public:
   bool operator == (const TSAtom& a) const {  return this == &a;  }
 
   void SortNodesByDistanceAsc()  {
-    Nodes.QuickSorter.SortMF(Nodes, *this, &TSAtom::_SortNodesByDistanceAsc);
+    Nodes.QuickSorter.SortMF<TSAtom>(Nodes, *this, &TSAtom::_SortNodesByDistanceAsc);
   }
   void SortNodesByDistanceDsc()  {
-    Nodes.QuickSorter.SortMF(Nodes, *this, &TSAtom::_SortNodesByDistanceDsc);
+    Nodes.QuickSorter.SortMF<TSAtom>(Nodes, *this, &TSAtom::_SortNodesByDistanceDsc);
   }
   void SortBondsByLengthAsc()  {
     Bonds.QuickSorter.SortSF(Bonds, &TSAtom::_SortBondsByLengthAsc);

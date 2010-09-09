@@ -35,20 +35,47 @@ int main(int argc, char* argv[])  {
     TEFile::AddPathDelimeterI(bd);
 
     TXApp XApp(bd);
+    for( int i=1; i < argc; i++ )
+      XApp.Arguments.Add(argv[i]);
     XApp.XFile().RegisterFileFormat(new TIns, "res");
-    XApp.GetLog().AddStream( new TOutStream(), true );
-    XApp.GetLog().AddStream( new TEFile( bd + "tests.log", "w+b"), true );
+    //XApp.GetLog().AddStream( new TOutStream(), true );
+    //XApp.GetLog().AddStream( new TEFile( bd + "tests.log", "w+b"), true );
     TEFile logf(bd + "test.out", "w+b");
     TOnProgress pg;
     Listener listener;
-    TFileTree ft("C:/Documents and Settings/oleg/My Documents/DS/Data/");
+    olxstr test_dir("C:/Documents and Settings/oleg/My Documents/Data/");
+    if( !XApp.Arguments.IsEmpty() && TEFile::IsDir(XApp.Arguments[0]) )
+      test_dir = XApp.Arguments[0];
+    TFileTree ft(test_dir);
     //TFileTree ft("E:/Data");
     ft.OnExpand->Add(&listener);
     ft.Expand();
     ft.OnExpand->Remove(&listener);
     XApp.GetLog() << '\n';
     TStrList files;
-    ft.GetRoot().ListFiles(files, "*.res");
+    //ft.GetRoot().ListFiles(files, "*.res");
+    {
+      uint64_t st = TETime::msNow();
+      size_t cnt = 0;
+      TStrList cifs;
+      ft.GetRoot().ListFiles(cifs, "*.cif");
+      TCif cif;
+      for( size_t i=0; i < cifs.Count(); i++ )  {
+        try  {
+          TBasicApp::GetLog() << "Loading: " << cifs[i] << '\n';
+          cif.LoadFromFile(cifs[i]);
+          cnt++;
+        }
+        catch(const TExceptionBase& e)  {
+          TStrList out;
+          e.GetException()->GetStackTrace(out);
+          TBasicApp::GetLog() << out.Text('\n') << '\n';
+        }
+      }
+      XApp.GetLog().AddStream( new TOutStream(), true );
+      TBasicApp::GetLog() << (olxstr(cnt) << " file loaded in " << TETime::msNow()-st << "ms\n");
+      return 0;
+    }
     TMacroError me;
     TStrObjList cmds;
     TParamList params;

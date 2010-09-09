@@ -25,12 +25,12 @@ class TSymmTest : public IEObject {
   TTypeList<TSymmTestData> Vecs;
 
 protected:
-  static inline int VecsCmpByCount( const TSymmTestData& a , const TSymmTestData& b )  {
-    return a.Count() < b.Count() ? -1 : (a.Count() > b.Count() ? 1 : 0);
+  static inline int VecsCmpByCount(const TSymmTestData* a , const TSymmTestData* b)  {
+    return a->Count() < b->Count() ? -1 : (a->Count() > b->Count() ? 1 : 0);
   }
-  static inline int VecsCmpByRadius( const AnAssociation3<vec3d,size_t,size_t>& a ,
-                                     const AnAssociation3<vec3d,size_t,size_t>& b )  {
-    const double v = a.GetA().QLength() - b.GetA().QLength();
+  static inline int VecsCmpByRadius(const AnAssociation3<vec3d,size_t,size_t>* a ,
+                                     const AnAssociation3<vec3d,size_t,size_t>* b)  {
+    const double v = a->GetA().QLength() - b->GetA().QLength();
     return (v > 0) ? 1 : (v < 0 ? -1 : 0);
   }
 

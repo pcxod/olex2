@@ -13,6 +13,7 @@
 
 #include "ins.h"
 #include "crs.h"
+#include "cif.h"
 #include "utf8file.h"
 #include "atomsort.h"
 #include "infotab.h"
@@ -39,14 +40,35 @@ void TBasicCFile::SaveToFile(const olxstr& fn)  {
   FileName = fn;
 };
 //..............................................................................
-void TBasicCFile::LoadFromFile(const olxstr& fn)  {
-  TEFile::CheckFileExists(__OlxSourceInfo, fn);
+void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
+  TXFile::NameArg file_n = TXFile::ParseName(_fn);  
+  TEFile::CheckFileExists(__OlxSourceInfo, file_n.file_name);
   TStrList L;
-  L.LoadFromFile(fn);
+  L.LoadFromFile(file_n.file_name);
   if( L.IsEmpty() )
-    throw TEmptyFileException(__OlxSourceInfo, fn);
-  FileName = fn;
-  try  {  LoadFromStrings(L);  }
+    throw TEmptyFileException(__OlxSourceInfo, _fn);
+  FileName = file_n.file_name;
+  try  {
+    LoadFromStrings(L);
+    if( EsdlInstanceOf(*this, TCif) )  {
+      TCif* cif = (TCif*)this;
+      if( cif->BlockCount() > 1 )  {
+        TBasicApp::GetLog() << "The following data blocks are available:\n";
+        for( size_t i=0; i < cif->BlockCount(); i++ )
+          TBasicApp::GetLog() << (olxstr('#') << i << ": " << cif->GetBlock(i).GetName() << '\n');
+      }
+      if( !file_n.data_name.IsEmpty() ) {
+        TBasicApp::GetLog() << (olxstr("Loading: ") << file_n.data_name << '\n');
+        if( file_n.is_index )
+          ((TCif*)this)->SetCurrentBlock(file_n.data_name.ToSizeT());
+        else
+          ((TCif*)this)->SetCurrentBlock(file_n.data_name);
+      }
+      else  {  // set first then
+        ((TCif*)this)->SetCurrentBlock(InvalidIndex);
+      }
+    }
+  }
   catch( const TExceptionBase& exc )  {  
     FileName = EmptyString;
     throw TFunctionFailedException(__OlxSourceInfo, exc);  
@@ -60,7 +82,7 @@ void TBasicCFile::LoadFromFile(const olxstr& fn)  {
         a.SetLabel(a.GetType().symbol + a.GetLabel().SubStringFrom(a.GetType().symbol.Length()), false);
     }
   }
-  FileName = fn;
+  FileName = file_n.file_name;
 }
 //----------------------------------------------------------------------------//
 // TXFile function bodies
@@ -93,7 +115,7 @@ void TXFile::RegisterFileFormat(TBasicCFile *F, const olxstr &Ext)  {
 }
 //..............................................................................
 TBasicCFile *TXFile::FindFormat(const olxstr &Ext)  {
-  size_t i= FileFormats.IndexOf(olxstr::LowerCase(Ext));
+  const size_t i = FileFormats.IndexOf(olxstr::LowerCase(Ext));
   if( i == InvalidIndex )
     throw TInvalidArgumentException(__OlxSourceInfo, "unknown file format");
   return FileFormats.GetObject(i);
@@ -135,16 +157,17 @@ bool TXFile::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender, const I
   return true;
 }
 //..............................................................................
-void TXFile::LoadFromFile(const olxstr & FN) {
-  olxstr Ext( TEFile::ExtractFileExt(FN) );
+void TXFile::LoadFromFile(const olxstr & _fn) {
+  const NameArg file_n = ParseName(_fn);
+  const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
   // this thows an exception if the file format loader does not exist
-  TBasicCFile* Loader = FindFormat(Ext);
+  TBasicCFile* Loader = FindFormat(ext);
   bool replicated = false;
   if( FLastLoader == Loader )  {
     Loader = (TBasicCFile*)Loader->Replicate();
     replicated = true;
   }
-  try  {  Loader->LoadFromFile(FN);  }
+  try  {  Loader->LoadFromFile(_fn);  }
   catch( const TExceptionBase& exc )  {
     if( replicated )  
       delete Loader;
@@ -152,7 +175,7 @@ void TXFile::LoadFromFile(const olxstr & FN) {
   }
 
   if( !Loader->IsNative() )  {
-    OnFileLoad.Enter(this, &FN);
+    OnFileLoad.Enter(this, &_fn);
     try  {  GetRM().Clear(rm_clear_ALL);  }
     catch(const TExceptionBase& exc)  {
       TBasicApp::GetLog() << (olxstr("An error occured: ") << exc.GetException()->GetError());
@@ -198,7 +221,7 @@ void TXFile::UpdateAsymmUnit()  {
   RefMod.Validate();
   ValidateTabs();
   LL->GetRM().Assign(RefMod, false);
-  LL->GetAsymmUnit().SetZ( GetAsymmUnit().GetZ() );
+  LL->GetAsymmUnit().SetZ(GetAsymmUnit().GetZ());
 }
 //..............................................................................
 void TXFile::Sort(const TStrList& ins)  {
@@ -283,11 +306,12 @@ void TXFile::Sort(const TStrList& ins)  {
   catch(const TExceptionBase& exc)  {
     TBasicApp::GetLog().Error( exc.GetException()->GetError() );
   }
-  GetAsymmUnit().ComplyToResidues();
   if( !FLastLoader->IsNative() )  {
     AtomSorter::SyncLists(list, FLastLoader->GetAsymmUnit().GetResidue(0).GetAtomList());
     FLastLoader->GetAsymmUnit().ComplyToResidues();
   }
+  // this hanges Id's !!! so must be called before the SyncLists
+  GetAsymmUnit().ComplyToResidues();
 }
 //..............................................................................
 void TXFile::ValidateTabs()  {
@@ -496,28 +520,106 @@ void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroError& E)  {
   ins.GetRM().SetUserContent(oins->GetRM().GetUserContent());
   ins.SaveToFile(Params[0]);
 }
+void TXFile::LibDataCount(const TStrObjList& Params, TMacroError& E)  {
+  if( EsdlInstanceOf(*FLastLoader, TCif) )
+    E.SetRetVal(((TCif*)FLastLoader)->BlockCount());
+  else
+    E.SetRetVal(1);
+}
+//..............................................................................
+void TXFile::LibCurrentData(const TStrObjList& Params, TMacroError& E)  {
+  throw TNotImplementedException(__OlxSourceInfo);
+}
+//..............................................................................
+void TXFile::LibDataName(const TStrObjList& Params, TMacroError& E)  {
+  if( Params.IsEmpty() )  {
+    E.SetRetVal(((TCif*)FLastLoader)->GetDataName());
+  }
+  else  {
+    ((TCif*)FLastLoader)->RenameCurrentBlock(Params[0]);
+  }
+}
 //..............................................................................
 TLibrary*  TXFile::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xf") : name );
+
   lib->RegisterFunction<TXFile>(
-    new TFunction<TXFile>(this,  &TXFile::LibGetFormula, "GetFormula", fpNone|fpOne|fpTwo|psCheckFileTypeIns,
+    new TFunction<TXFile>(this, &TXFile::LibGetFormula, "GetFormula",
+    fpNone|fpOne|fpTwo|psCheckFileTypeIns,
 "Returns a string for content of the asymmetric unit. Takes single or none parameters.\
  If parameter equals 'html' and html formatted string is returned, for 'list' parameter\
  a string like 'C:26,N:45' is returned. If no parameter is specified, just formula is returned") );
 
-  lib->RegisterFunction<TXFile>( new TFunction<TXFile>(this,  &TXFile::LibSetFormula, "SetFormula", fpOne|psCheckFileTypeIns,
+  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibSetFormula, "SetFormula",
+    fpOne|psCheckFileTypeIns,
 "Sets formula for current file, takes a string of the following form 'C:25,N:4'") );
 
-  lib->RegisterFunction<TXFile>( new TFunction<TXFile>(this,  &TXFile::LibEndUpdate, "EndUpdate", fpNone|psCheckFileTypeIns,
+  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibEndUpdate, "EndUpdate",
+    fpNone|psCheckFileTypeIns,
 "Must be called after the content of the asymmetric unit has changed - this function will\
  update the program state") );
-  lib->RegisterFunction<TXFile>( new TFunction<TXFile>(this,  &TXFile::LibSaveSolution, "SaveSolution", fpOne|psCheckFileTypeIns,
+
+  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibSaveSolution, "SaveSolution",
+    fpOne|psCheckFileTypeIns,
 "Saves current Q-peak model to provided file (res-file)") );
+
+  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibDataCount, "DataCount",
+    fpNone|psFileLoaded,
+"Returns number of available data sets") );
+
+  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibDataName, "DataName",
+    fpNone|fpOne|psCheckFileTypeCif,
+"Returns/Sets data name for current CIF block") );
+  
+  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibDataName, "CurrentData",
+    fpOne|psCheckFileTypeCif,
+"Changes current data block within the CIF") );
+  
   lib->AttachLibrary(Lattice.GetAsymmUnit().ExportLibrary());
   lib->AttachLibrary(Lattice.GetUnitCell().ExportLibrary());
   lib->AttachLibrary(Lattice.ExportLibrary());
   lib->AttachLibrary(RefMod.expl.ExportLibrary());
   return lib;
+}
+//..............................................................................
+TXFile::NameArg TXFile::ParseName(const olxstr& fn)  {
+  TXFile::NameArg rv;
+  rv.file_name = fn;
+  rv.is_index = false;
+  const size_t di = fn.LastIndexOf('.');
+  const size_t hi = fn.LastIndexOf('#');
+  const size_t ui = fn.LastIndexOf('$');
+  if( hi == InvalidIndex && ui == InvalidIndex )
+    return rv;
+  if( di != InvalidIndex )  {
+    if( hi != InvalidIndex && ui != InvalidIndex && di < hi && di < ui )
+      throw TInvalidArgumentException(__OlxSourceInfo, "only one data ID is allowed");
+    if( hi != InvalidIndex && di < hi )  {
+      rv.data_name = fn.SubStringFrom(hi+1);
+      rv.file_name = fn.SubStringTo(hi);
+      rv.is_index = true;
+    }
+    else if( ui != InvalidIndex && di < ui )  {
+      rv.data_name = fn.SubStringFrom(ui+1);
+      rv.file_name = fn.SubStringTo(ui);
+      rv.is_index = false;
+    }
+  }
+  else  {
+    if( hi != InvalidIndex && ui != InvalidIndex )
+      throw TInvalidArgumentException(__OlxSourceInfo, "only one data ID is allowed");
+    if( hi != InvalidIndex )  {
+      rv.data_name = fn.SubStringFrom(hi+1);
+      rv.file_name = fn.SubStringTo(hi);
+      rv.is_index = true;
+    }
+    else if( ui != InvalidIndex )  {
+      rv.data_name = fn.SubStringFrom(ui+1);
+      rv.file_name = fn.SubStringTo(ui);
+      rv.is_index = false;
+    }
+  }
+  return rv;
 }
 //..............................................................................
 

@@ -124,7 +124,6 @@ void TAsymmUnit::ComplyToResidues()  {
   CAtoms.QuickSorter.Sort<TCAtomTagComparator>(CAtoms);
   for( size_t i=0; i < CAtoms.Count(); i++ )
     CAtoms[i]->SetId(i);
-
 }
 //..............................................................................
 void TAsymmUnit::_UpdateConnInfo()  {
@@ -282,7 +281,7 @@ void TAsymmUnit::_OnAtomTypeChanged(TCAtom& caller)  {
 //..............................................................................
 TCAtom& TAsymmUnit::NewAtom(TResidue* resi)  {
   TCAtom *A = new TCAtom(this);
-  A->SetId( CAtoms.Count() );
+  A->SetId(CAtoms.Count());
   CAtoms.Add(A);
   if( resi == NULL )  
     resi = &MainResidue;
@@ -375,8 +374,8 @@ void TAsymmUnit::PackAtoms()  {
 //..............................................................................
 TEllipsoid& TAsymmUnit::NewEllp() {
   TEllipsoid *E = new TEllipsoid();
+  E->SetId(Ellipsoids.Count());
   Ellipsoids.Add(E);
-  E->SetId( Ellipsoids.Count()-1 );
   return *E;
 }
 //..............................................................................

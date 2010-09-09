@@ -156,16 +156,16 @@ public:
 };
 
 class MoietySorter {
-  static int moiety_cmp_Mr(const AnAssociation3<int,double,TCAtomPList>& m1, 
-    const AnAssociation3<int,double,TCAtomPList>& m2) 
+  static int moiety_cmp_Mr(const AnAssociation3<int,double,TCAtomPList>* m1, 
+    const AnAssociation3<int,double,TCAtomPList>* m2) 
   {
-    const double diff = m2.GetB() - m1.GetB();
+    const double diff = m2->GetB() - m1->GetB();
     return diff < 0 ? -1 : ( diff > 0 ? 1 : 0);
   }
-  static int moiety_cmp_size(const AnAssociation2<int,TCAtomPList>& m1, 
-    const AnAssociation2<int,TCAtomPList>& m2) 
+  static int moiety_cmp_size(const AnAssociation2<int,TCAtomPList>* m1, 
+    const AnAssociation2<int,TCAtomPList>* m2) 
   {
-    return olx_cmp(m2.GetB().Count(), m1.GetB().Count());
+    return olx_cmp(m2->GetB().Count(), m1->GetB().Count());
   }
 public:
   static void SortByMoietyAtom(TCAtomPList& list, const TStrList& atom_names)  {

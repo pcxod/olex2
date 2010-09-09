@@ -33,8 +33,8 @@ void TFileTree::Folder::Expand(TOnProgress& pg)  {
     }
   }
   Files.Pack();
-  Files.QuickSorter.SortSF(Files, &CompareFiles);
-  Folders.QuickSorter.SortSF(Folders, &CompareFolders);
+  Files.QuickSorter.SortSF(Files, &TFileTree::Folder::CompareFiles);
+  Folders.QuickSorter.SortSF(Folders, &TFileTree::Folder::CompareFolders);
 }
 //......................................................................................
 void TFileTree::Folder::Delete(TOnProgress& pg, bool ContentOnly)  {

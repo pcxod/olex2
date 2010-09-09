@@ -327,8 +327,8 @@ public:
 
 
   void QSort(bool ci)  {
-    if( ci )  TPtrList<T>::QuickSorter.template Sort< TStringWrapperComparator<T,true> >(Strings);
-    else      TPtrList<T>::QuickSorter.template Sort< TStringWrapperComparator<T,false> >(Strings);
+    if( ci )  TPtrList<T>::QuickSorter.template Sort<TStringWrapperComparator<T,true> >(Strings);
+    else      TPtrList<T>::QuickSorter.template Sort<TStringWrapperComparator<T,false> >(Strings);
   }
 
   size_t StrtokF(const SC& Str, const TSizeList& indexes)  {

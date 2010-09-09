@@ -13,8 +13,8 @@ BeginEsdlNamespace()
 struct TSPoint  {
   double X, Y;
   TSPoint(const double& a, const double& b) : X(a), Y(b) {  }
-  static int SPointsSortA(const TSPoint& I, const TSPoint& I1);
-  static int SPointsSortB(const TSPoint& I, const TSPoint& I1);
+  static int SPointsSortA(const TSPoint* I, const TSPoint* I1);
+  static int SPointsSortB(const TSPoint* I, const TSPoint* I1);
 };
 
 typedef TTypeList<TSPoint> TPolySerie;
@@ -100,7 +100,7 @@ public:
 //------------------------------------------------------------------------------
 typedef double (Evaluator)(const TPolynomMember& P);
 typedef bool (AddEvaluator)(const TPolynomMember& P);
-typedef int (PolySort)(const TPolynomMember& P, const TPolynomMember& P1);
+typedef int (PolySort)(const TPolynomMember* P, const TPolynomMember* P1);
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
