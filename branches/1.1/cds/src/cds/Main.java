@@ -15,6 +15,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 
@@ -29,6 +30,7 @@ public class Main {
   static String baseDir;
   static PrintWriter logFile=null;
   static HashSet<String> blocked = new HashSet();
+  static HashSet<String> unmounted = new HashSet();
   public synchronized static void doTerminate()  {  terminate = true;  }
   public static String getBaseDir()  {  return baseDir;  }
   public synchronized static void onThreadTerminate()  {
@@ -44,24 +46,33 @@ public class Main {
     }
     System.out.println(s);
   }
-  public static void main(String[] args) {
-    print("Download manager server, (c) O. Dolomanov, 2010");
-    String status = "unknown", status_info = "none";
-    // read current status
+  static ArrayList<String> doCall(String function, String arg)  {
+    ArrayList<String> rv = new ArrayList();
     try {
       Socket s = new Socket();
       s.connect(new InetSocketAddress("localhost", port_number));
       PrintWriter out = new PrintWriter(s.getOutputStream(), true);
-      out.println("status\n");
+      out.println(function);
+      out.println(arg + '\n');
       BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
-      status = in.readLine();
-      if( in.ready() )
-        status_info = in.readLine();
+      String line = null;
+      while ( (line = in.readLine()) != null && !line.isEmpty() )
+        rv.add(line);
       out.close();
       in.close();
       s.close();
     }
     catch (IOException ex) {}  // unknow status
+    return rv;
+  }
+  public static void main(String[] args) {
+    print("Download manager server, (c) O. Dolomanov, 2010");
+    String status = "unknown", status_info = "none";
+    ArrayList<String> st = doCall("status", "");
+    if( st.size() == 2 )  {
+      status = st.get(0);
+      status_info = st.get(1);
+    }
     if( args.length == 0 )  {
       print("Status: " + status);
       print("Status Info: " + status_info);
@@ -120,8 +131,10 @@ public class Main {
           }
         }
         s.close();
-        logFile.close();
-        logFile = null;
+        if( logFile != null )  {
+          logFile.close();
+          logFile = null;
+        }
       }
       catch(Exception e)  {
         if( logFile != null )  {
@@ -136,54 +149,56 @@ public class Main {
         print("Not running...");
         return;
       }
-      try {
-        Socket s = new Socket();
-        s.connect(new InetSocketAddress("localhost", port_number));
-        PrintWriter out = new PrintWriter(s.getOutputStream(), true);
-        out.println("stop\n");
-        out.close();
-        s.close();
+      st = doCall(args[0], "");
+      st = doCall(args[0], "");  // have to call twice since Accept is blocking
+      if( st.size() == 1 && st.get(0).equals("OK"))
         print("The server has been successfully stopped.");
-      }
-      catch (IOException ex) {
-        print("Failed to stop server: " + ex.getMessage());
-      }
+      else
+        print("Failed to stop server.");
     }
     else if( args[0].equals("block") && args.length == 2 )  {
       if( !status.equals("running") )  {
         print("Not running...");
         return;
       }
-      try {
-        Socket s = new Socket();
-        s.connect(new InetSocketAddress("localhost", port_number));
-        PrintWriter out = new PrintWriter(s.getOutputStream(), true);
-        out.println("block\n" + args[1] + '\n');
-        out.close();
-        s.close();
+      st = doCall("block", args[1]);
+      if( st.size() == 1 && st.get(0).equals("OK") )
         print("The address has been blocked for the session.");
-      }
-      catch (IOException ex) {
-        print("Failed to block the address: " + ex.getMessage());
-      }
+      else
+        print("Failed to block the address.");
     }
     else if( args[0].equals("unblock") && args.length == 2 )  {
       if( !status.equals("running") )  {
         print("Not running...");
         return;
       }
-      try {
-        Socket s = new Socket();
-        s.connect(new InetSocketAddress("localhost", port_number));
-        PrintWriter out = new PrintWriter(s.getOutputStream(), true);
-        out.println("unblock\n" + args[1] + '\n');
-        out.close();
-        s.close();
-        print("The address has been unblocked for the session.");
+      st = doCall(args[0], args[1]);
+      if( st.size() == 1 && st.get(0).equals("OK") )
+        print("The address has been blocked for the session.");
+      else
+        print("Failed to unblock the address.");
+    }
+    else if( args[0].equals("mount") && args.length == 2 )  {
+      if( !status.equals("running") )  {
+        print("Not running...");
+        return;
       }
-      catch (IOException ex) {
-        print("Failed to block the address: " + ex.getMessage());
+      st = doCall(args[0], args[1]);
+      if( st.size() == 1 && st.get(0).equals("OK") )
+        print("Mounted: " + args[1]);
+      else
+        print("Failed to mount the folder: " + args[1]);
+    }
+    else if( args[0].equals("unmount") && args.length == 2 )  {
+      if( !status.equals("running") )  {
+        print("Not running...");
+        return;
       }
+      st = doCall(args[0], args[1]);
+      if( st.size() >= 1 && st.get(0).equals("OK") )
+        print("Unmounted for the session: " + args[1]);
+      else
+        print("Failed to unmount the folder: " + args[1]);
     }
   }
 }
