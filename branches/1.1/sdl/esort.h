@@ -96,613 +96,161 @@ template <class Comparator, class ItemClass> struct Sort_ComparatorWrapper  {
 
 template <typename ItemClass> struct Sort_StaticFunctionWrapper  {
   int (*Func)(ItemClass a, ItemClass b);
-  Sort_StaticFunctionWrapper(int (*func)(ItemClass a, ItemClass b)) :
-  Func(func) {  }
+  Sort_StaticFunctionWrapper(int (*func)(ItemClass a, ItemClass b)) : Func(func)  {}
   inline int Compare(ItemClass a, ItemClass b) const {
     return (*Func)(a, b);
   }
 };
 
+struct DummySwapListener  {
+  static void OnSwap(size_t i, size_t j)  {}
+};
+template <typename List> struct SyncSwapListener  {
+  mutable List& list;
+  SyncSwapListener(List& _list) : list(_list)  {}
+  void OnSwap(size_t i, size_t j) const {  list.Swap(i, j);  }
+};
 //.........................................................................................................................
-template <class ListClass, class ItemClass >  class TQuickPtrSorter  {
-  // static comparator sort
-  template <class Comparator>
-    static void QuickSort(const Comparator& Cmp, size_t lo0, size_t hi0, ListClass& list)  {
+template <class List, class Item, class accessor, class Comparator, class Listener>
+struct QuickSorter  {
+  QuickSorter(List& _list, const Comparator& _cmp, const Listener& _listener) :
+    list(_list), cmp(_cmp), listener(_listener)  {}
+  void Sort()  {
+    if( list.Count() < 2 )  return;
+    DoSort(0, list.Count()-1);
+  }
+protected:
+  List& list;
+  const Listener& listener;
+  const Comparator& cmp;
+  void DoSort(size_t lo0, size_t hi0)  {
+    const size_t diff = hi0-lo0;
+    if( diff == 1 )  {
+      if( cmp.Compare(accessor::get(list, lo0), accessor::get(list, hi0)) > 0 )  {
+        listener.OnSwap(lo0, hi0);
+        list.Swap(lo0, hi0);
+      }
+    }
+    else if( diff > 0 ) {
       size_t lo = lo0;
       size_t hi = hi0;
-      if( hi0 > lo0)  {
-        ItemClass* mid = list.Item( ( lo0 + hi0 ) / 2 );
-        while( lo <= hi )  {
-          while( ( lo < hi0 ) && ( Cmp.Compare(list.Item(lo), mid) < 0) )  lo++;
-          while( ( hi > lo0 ) && ( Cmp.Compare(list.Item(hi), mid) > 0) )  hi--;
-          if( lo <= hi )  {
-            list.Swap(lo++, hi);
-            if( hi == 0 )  break;
-            hi--;
-          }
+      Item mid = accessor::get(list, (lo0 + hi0)/2);
+      while( lo <= hi )  {
+        while( cmp.Compare(accessor::get(list, lo), mid) < 0 )  lo++;
+        while( cmp.Compare(accessor::get(list, hi), mid) > 0 )  hi--;
+        if( lo <= hi )  {
+          listener.OnSwap(lo, hi);
+          list.Swap(lo++, hi--);
         }
-        if( lo0 < hi )  QuickSort(Cmp, lo0, hi, list);
-        if( lo < hi0 )  QuickSort(Cmp, lo, hi0, list);
       }
+      if( lo0 < hi )  DoSort(lo0, hi);
+      if( lo < hi0 )  DoSort(lo, hi0);
     }
-    //synchronious sort
-  template <class Comparator, class ListClassA>
-    static void QuickSort(const Comparator& Cmp, size_t lo0, size_t hi0, ListClass& list, ListClassA& list1)  {
-      size_t lo = lo0;
-      size_t hi = hi0;
-      if( hi0 > lo0)  {
-        ItemClass* mid = list.Item( ( lo0 + hi0 ) / 2 );
-        while( lo <= hi )  {
-          while( ( lo < hi0 ) && ( Cmp.Compare(list.Item(lo), mid) < 0) )   lo++;
-          while( ( hi > lo0 ) && ( Cmp.Compare(list.Item(hi), mid) > 0) ) hi--;
-          if( lo <= hi )  {
-            list.Swap(lo, hi);
-            list1.Swap(lo++, hi);
-            if( hi == 0 )  break;
-            hi--;
-          }
-        }
-        if( lo0 < hi )  QuickSort(Cmp, lo0, hi, list, list1);
-        if( lo < hi0 )  QuickSort(Cmp, lo, hi0, list, list1);
-      }
-    }
-public:
-  template <class Comparator>
-    static void Sort(ListClass& list)  {
-      if( list.Count() < 2 )  return;
-      Sort_ComparatorWrapper<Comparator, const ItemClass*> cmp;
-      QuickSort(cmp, 0, list.Count()-1, list);
-    }
-  template <class Comparator, class ListClassA>
-    static void SyncSort(ListClass& list, ListClassA& list1)  {
-      if( list.Count() < 2 )  return;
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_ComparatorWrapper<Comparator, const ItemClass*> cmp;
-      QuickSort(cmp, 0, list.Count()-1, list, list1);
-    }
-  static void SortSF(ListClass& list, int (*f)(const ItemClass* a, const ItemClass* b) )  {
-    if( list.Count() < 2 )  return;
-    Sort_StaticFunctionWrapper<const ItemClass*> cmp(f);  
-    QuickSort(cmp, 0, list.Count()-1, list);
   }
-  template <class ListClassA>
-    static void SyncSortSF(ListClass& list, ListClassA& list1, int (*f)(const ItemClass* a, const ItemClass* b) )  {
-      if( list.Count() < 2 )  return;
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_StaticFunctionWrapper<const ItemClass*> cmp(f);  
-      QuickSort(cmp, 0, list.Count()-1, list, list1);
-    }
-  template <class BaseClass>
-    static void SortMF(ListClass& list, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass* a, const ItemClass* b) )  {
-      if( list.Count() < 2 )  return;
-      Sort_MemberFunctionWrapper<BaseClass, const ItemClass*> cmp(baseClassInstance, f);
-      QuickSort(cmp, 0, list.Count()-1, list);
-    }
-  template <class BaseClass>
-    static void SortMF(ListClass& list, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass* a, const ItemClass* b) const )  {
-      if( list.Count() < 2 )  return;
-      Sort_ConstMemberFunctionWrapper<BaseClass, const ItemClass*> cmp(baseClassInstance, f);
-      QuickSort(cmp, 0, list.Count()-1, list);
-    }
-  template <class BaseClass, class ListClassA>
-    static void SortMF(ListClass& list, ListClassA& list1, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass* a, const ItemClass* b) )  {
-      if( list.Count() < 2 )  return;
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_MemberFunctionWrapper<BaseClass, const ItemClass*> cmp(baseClassInstance, f);
-      QuickSort(cmp, 0, list.Count()-1, list, list1);
-    }
-  template <class BaseClass, class ListClassA>
-    static void SortMF(ListClass& list, ListClassA& list1, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass* a, const ItemClass* b) const )  {
-      if( list.Count() < 2 )  return;
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_ConstMemberFunctionWrapper<BaseClass, const ItemClass*> cmp(baseClassInstance, f);
-      QuickSort(cmp, 0, list.Count()-1, list, list1);
-    }
 };
 //.........................................................................................................................
-template <class ListClass, class ItemClass >  class TBubblePtrSorter  {
-  // static comparator sort
-  template <class Comparator>
-    static void BubbleSort(const Comparator& Cmp, ListClass& list)  {
-      bool changes = true;
-      const size_t lc = list.Count();
-      while( changes )  {
-        changes = false;
-        for( size_t i=1; i < lc; i++ )  {
-          if( Cmp.Compare(list.Item(i-1), list.Item(i)) > 0 )  {
-            list.Swap(i-1, i);
-            changes = true;
-          }
+template <class List, class Item, class accessor, class Comparator, class Listener>
+struct BubbleSorter  {
+  BubbleSorter(List& _list, const Comparator& _cmp, const Listener& _listener) :
+    list(_list), cmp(_cmp), listener(_listener)  {}
+  void Sort()  {
+    bool changes = true;
+    const size_t lc = list.Count();
+    while( changes )  {
+      changes = false;
+      for( size_t i=1; i < lc; i++ )  {
+        if( cmp.Compare(accessor::get(list, i-1), accessor::get(list, i)) > 0 )  {
+          list.Swap(i-1, i);
+          changes = true;
         }
       }
     }
-  template <class Comparator, class ListClassA>
-    static void BubbleSortSC(const Comparator& Cmp, ListClass& list, ListClassA& list1)  {
-      bool changes = true;
-      const size_t lc = list.Count();
-      while( changes )  {
-        changes = false;
-        for( size_t i=1; i < lc; i++ )  {
-          if( Cmp.Compare(list.Item(i-1), list.Item(i)) > 0 )  {
-            list.Swap(i-1, i);
-            list1.Swap(i-1, i);
-            changes = true;
-          }
-        }
-      }
-    }
-public:
-  template <class Comparator>
-    static void Sort(ListClass& list)  {
-      Sort_ComparatorWrapper<Comparator, const ItemClass*> cmp;
-      BubbleSort(cmp, list);
-    }
-  template <class Comparator, class ListClassA>
-    static void SynchSort(ListClass& list, ListClassA& list1)  {
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_ComparatorWrapper<Comparator, const ItemClass*> cmp;
-      BubbleSort(cmp, list, list1);
-    }
-  static void SortSF(ListClass& list, int (*f)(const ItemClass* a, const ItemClass* b) )  {
-    Sort_StaticFunctionWrapper<const ItemClass*> cmp(f);  
-    BubbleSort(cmp, list);
   }
-  template <class ListClassA>
-    static void SyncSortSF(ListClass& list, ListClassA& list1, int (*f)(const ItemClass* a, const ItemClass* b) )  {
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_StaticFunctionWrapper<const ItemClass*> cmp(f);  
-      BubbleSort(cmp, list, list1);
-    }
-  template <class BaseClass>
-    static void SortMF(ListClass& list, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass* a, const ItemClass* b) )  {
-      Sort_MemberFunctionWrapper<BaseClass, const ItemClass*> cmp(baseClassInstance, f);
-      BubbleSort(cmp, list);
-    }
-  template <class BaseClass>
-    static void SortMF(ListClass& list, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass* a, const ItemClass* b) const )  {
-      Sort_ConstMemberFunctionWrapper<BaseClass, const ItemClass*> cmp(baseClassInstance, f);
-      BubbleSort(cmp, list);
-    }
-  template <class BaseClass, class ListClassA>
-    static void SynchSortMF(ListClass& list, ListClassA& list1, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass* a, const ItemClass* b) )  {
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_MemberFunctionWrapper<BaseClass, const ItemClass*> cmp(baseClassInstance, f);
-      BubbleSort(cmp, list, list1);
-    }
+protected:
+  List& list;
+  const Listener& listener;
+  const Comparator& cmp;
 };
 //.........................................................................................................................
-template <class ListClass, class ItemClass > class TQuickSorter  {
-  // static comparator sort
-  template <class Comparator>
-    static size_t partition(ListClass& list, const Comparator& Cmp, size_t left, size_t right)  {
-      const size_t pivot_index = (left+right)/2;
-      const ItemClass& pivot = list.Item(pivot_index);
-      list.Swap(pivot_index, right);
-      size_t store_index = left;
-      for( size_t i=left; i < right; i++ )  {
-        if( Cmp.Compare(list.Item(i), pivot) < 0 )
-          list.Swap(store_index++, i);
-      }
-      list.Swap(store_index, right);
-      return store_index;
-    }
-  template <class Comparator, class ListClassA>
-    static size_t partition(ListClass& list, ListClassA& list1, const Comparator& Cmp, size_t left, size_t right)  {
-      const size_t pivot_index = (left+right)/2;
-      const ItemClass& pivot = list.Item(pivot_index);
-      list.Swap(pivot_index, right);
-      size_t store_index = left;
-      for( size_t i=left; i < right; i++ )  {
-        if( Cmp.Compare(list.Item(i), pivot) < 0 )  {
-          list1.Swap(store_index, i);
-          list.Swap(store_index++, i);
-        }
-      }
-      list.Swap(store_index, right);
-      return store_index;
-    }
-
-  template <class Comparator>
-    static void QuickSort(const Comparator& Cmp, size_t left, size_t right, ListClass& list)  {
-      if( left < right )  {
-        const size_t pivot_index = partition(list, Cmp, left, right);
-        if( pivot_index > 0 )
-          QuickSort(Cmp, left, pivot_index-1, list);
-        QuickSort(Cmp, pivot_index+1, right, list);
-      }
-    }
-
-  template <class Comparator, class ListClassA>
-    static void QuickSort(const Comparator& Cmp, size_t left, size_t right, ListClass& list, ListClassA& list1)  {
-      if( left < right )  {
-        const size_t pivot_index = partition(list, list1, Cmp, left, right);
-        if( pivot_index > 0 )
-          QuickSort(Cmp, left, pivot_index-1, list, list1);
-        QuickSort(Cmp, pivot_index+1, right, list, list1);
-      }
-    }
+//.........................................................................................................................
+template <class ListClass, class ItemClass, class Accessor> class ListQuickSorter  {
 public:
   template <class Comparator>
-    static void Sort(ListClass& list)  {
-      if( list.Count() < 2 )  return;
-      Sort_ComparatorWrapper<Comparator, const ItemClass&> cmp;
-      QuickSort(cmp, 0, list.Count()-1, list);
-    }
-  template <class Comparator, class ListClassA>
-    static void SyncSort(ListClass& list, ListClassA& list1)  {
-      if( list.Count() < 2 )  return;
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_ComparatorWrapper<Comparator, const ItemClass&> cmp;
-      QuickSort(cmp, 0, list.Count()-1, list, list1);
-    }
-  static void SortSF(ListClass& list, int (*f)(const ItemClass& a, const ItemClass& b) )  {
-    if( list.Count() < 2 )  return;
-    Sort_StaticFunctionWrapper<const ItemClass&> cmp(f);  
-    QuickSort(cmp, 0, list.Count()-1, list);
+  static void Sort(ListClass& list)  {
+    QuickSorter<ListClass, ItemClass, Accessor, Comparator, DummySwapListener>(list, Comparator(), DummySwapListener()).Sort();
   }
-  template <class ListClassA>
-    static void SyncSortSF(ListClass& list, ListClassA& list1, int (*f)(const ItemClass& a, const ItemClass& b) )  {
-      if( list.Count() < 2 )  return;
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_StaticFunctionWrapper<const ItemClass&> cmp(f);  
-      QuickSort(cmp, 0, list.Count()-1, list, list1);
-    }
+  template <class Comparator>
+  static void Sort(ListClass& list, const Comparator& cmp)  {
+    QuickSorter<ListClass, ItemClass, Accessor, Comparator, DummySwapListener>(list, cmp, DummySwapListener()).Sort();
+  }
+  template <class Comparator, class SwapListener>
+  static void Sort(ListClass& list, const Comparator& cmp, const SwapListener& sl)  {
+    QuickSorter<ListClass, ItemClass, Accessor, Comparator, SwapListener>(list, cmp, sl).Sort();
+  }
+  // convenience functions
+  static void SortSF(ListClass& list, int (*f)(ItemClass a, ItemClass b))  {
+    QuickSorter<ListClass, ItemClass, Accessor, Sort_StaticFunctionWrapper<ItemClass>, DummySwapListener>(
+      list, Sort_StaticFunctionWrapper<ItemClass>(f), DummySwapListener()).Sort();
+  }
   template <class BaseClass>
-    static void SortMF(ListClass& list, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass& a, const ItemClass& b) const )  {
-      if( list.Count() < 2 )  return;
-      Sort_ConstMemberFunctionWrapper<BaseClass, const ItemClass&> cmp(baseClassInstance, f);
-      QuickSort(cmp, 0, list.Count()-1, list);
-    }
+  static void SortMF(ListClass& list, BaseClass& base, int (BaseClass::*f)(ItemClass a, ItemClass b) const)
+  {
+    QuickSorter<ListClass, ItemClass, Accessor,
+      Sort_ConstMemberFunctionWrapper<BaseClass,ItemClass>,
+      DummySwapListener>(
+        list, Sort_ConstMemberFunctionWrapper<BaseClass, ItemClass>(base, f),
+        DummySwapListener()).Sort();
+  }
   template <class BaseClass>
-    static void SortMF(ListClass& list, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass& a, const ItemClass& b) )  {
-      if( list.Count() < 2 )  return;
-      Sort_MemberFunctionWrapper<BaseClass, const ItemClass&> cmp(baseClassInstance, f);
-      QuickSort(cmp, 0, list.Count()-1, list);
-    }
-  template <class BaseClass, class ListClassA>
-    static void SyncSortMF(ListClass& list, ListClassA& list1, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass& a, const ItemClass& b) const )  {
-      if( list.Count() < 2 )  return;
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_ConstMemberFunctionWrapper<BaseClass, const ItemClass&> cmp(baseClassInstance, f);
-      QuickSort(cmp, 0, list.Count()-1, list, list1);
-    }
-  template <class BaseClass, class ListClassA>
-    static void SyncSortMF(ListClass& list, ListClassA& list1, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass& a, const ItemClass& b) )  {
-      if( list.Count() < 2 )  return;
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_MemberFunctionWrapper<BaseClass, const ItemClass&> cmp(baseClassInstance, f);
-      QuickSort(cmp, 0, list.Count()-1, list, list1);
-    }
+  static void SortMF(ListClass& list, BaseClass& base, int (BaseClass::*f)(ItemClass a, ItemClass b))
+  {
+    QuickSorter<ListClass, ItemClass, Accessor,
+      Sort_MemberFunctionWrapper<BaseClass,ItemClass>,
+      DummySwapListener>(
+        list, Sort_MemberFunctionWrapper<BaseClass, ItemClass>(base, f),
+        DummySwapListener()).Sort();
+  }
 };
 //.........................................................................................................................
-template <class ListClass, class ItemClass > class TBubbleSorter  {
-  // static comparator sort
-  template <class Comparator>
-    static void BubbleSort(const Comparator& Cmp, ListClass& list)  {
-      bool changes = true;
-      const size_t lc = list.Count();
-      while( changes )  {
-        changes = false;
-        for( size_t i=1; i < lc; i++ )  {
-          if( Cmp.Compare(list.Item(i-1), list.Item(i)) > 0 )  {
-            list.Swap(i-1, i);
-            changes = true;
-          }
-        }
-      }
-    }
-  template <class Comparator, class ListClassA>
-    static void BubbleSort(const Comparator& Cmp, ListClass& list, ListClassA& list1)  {
-      bool changes = true;
-      while( changes )  {
-        changes = false;
-        for( size_t i=1; i < list.Count(); i++ )  {
-          if( Cmp.Compare(list.Item(i-1), list.Item(i)) > 0 )  {
-            list.Swap(i-1, i);
-            list1.Swap(i-1, i);
-            changes = true;
-          }
-        }
-      }
-    }
+template <class ListClass, class ItemClass, class Accessor> class ListBubbleSorter  {
 public:
   template <class Comparator>
-    static void Sort(ListClass& list)  {
-      Sort_ComparatorWrapper<Comparator, const ItemClass&> cmp;
-      BubbleSort(cmp, list);
-    }
-  template <class Comparator, class ListClassA>
-    static void SyncSort(ListClass& list, ListClassA& list1)  {
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_ComparatorWrapper<Comparator, const ItemClass&> cmp;
-      BubbleSort(cmp, list, list1);
-    }
-  static void SortSF(ListClass& list, int (*f)(const ItemClass& a, const ItemClass& b) )  {
-    Sort_StaticFunctionWrapper<const ItemClass&> cmp(f);
-    BubbleSort(cmp, list);
+  static void Sort(ListClass& list)  {
+    BubbleSorter<ListClass, ItemClass, Accessor, Comparator, DummySwapListener>(list, Comparator(), DummySwapListener()).Sort();
   }
-  template <class ListClassA>
-    static void SyncSortSF(ListClass& list, ListClassA& list1, int (*f)(const ItemClass& a, const ItemClass& b) )  {
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_StaticFunctionWrapper<const ItemClass&> cmp(f);
-      BubbleSort(cmp, list, list1);
-    }
+  template <class Comparator>
+  static void Sort(ListClass& list, const Comparator& cmp)  {
+    BubbleSorter<ListClass, ItemClass, Accessor, Comparator, DummySwapListener>(list, cmp, DummySwapListener()).Sort();
+  }
+  template <class Comparator, class SwapListener>
+  static void Sort(ListClass& list, const Comparator& cmp, const SwapListener& sl)  {
+    BubbleSorter<ListClass, ItemClass, Accessor, Comparator, SwapListener>(list, cmp, sl).Sort();
+  }
+  // convenience functions
+  static void SortSF(ListClass& list, int (*f)(ItemClass a, ItemClass b))  {
+    BubbleSorter<ListClass, ItemClass, Accessor, Sort_StaticFunctionWrapper<ItemClass>, DummySwapListener>(
+      list, Sort_StaticFunctionWrapper<ItemClass>(f), DummySwapListener()).Sort();
+  }
   template <class BaseClass>
-    static void SortMF(ListClass& list, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass& a, const ItemClass& b) const )  {
-      Sort_ConstMemberFunctionWrapper<BaseClass, const ItemClass&> cmp(baseClassInstance, f);
-      BubbleSort(cmp, list);
-    }
+  static void SortMF(ListClass& list, BaseClass& base, int (BaseClass::*f)(ItemClass a, ItemClass b) const)
+  {
+    BubbleSorter<ListClass, ItemClass, Accessor,
+      Sort_ConstMemberFunctionWrapper<BaseClass,ItemClass>,
+      DummySwapListener>(
+        list, Sort_ConstMemberFunctionWrapper<BaseClass, ItemClass>(base, f),
+        DummySwapListener()).Sort();
+  }
   template <class BaseClass>
-    static void SortMF(ListClass& list, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass& a, const ItemClass& b) )  {
-      Sort_MemberFunctionWrapper<BaseClass, const ItemClass&> cmp(baseClassInstance, f);
-      BubbleSort(cmp, list);
-    }
-  template <class BaseClass, class ListClassA>
-    static void SyncSortMF(ListClass& list, ListClassA& list1, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass& a, const ItemClass& b) const )  {
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_ConstMemberFunctionWrapper<BaseClass, const ItemClass&> cmp(baseClassInstance, f);
-      BubbleSort(cmp, list, list1);
-    }
-  template <class BaseClass, class ListClassA>
-    static void SyncSortMF(ListClass& list, ListClassA& list1, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass& a, const ItemClass& b) )  {
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_MemberFunctionWrapper<BaseClass, const ItemClass&> cmp(baseClassInstance, f);
-      BubbleSort(cmp, list, list1);
-    }
+  static void SortMF(ListClass& list, BaseClass& base, int (BaseClass::*f)(ItemClass a, ItemClass b))
+  {
+    BubbleSorter<ListClass, ItemClass, Accessor,
+      Sort_MemberFunctionWrapper<BaseClass,ItemClass>,
+      DummySwapListener>(
+        list, Sort_MemberFunctionWrapper<BaseClass, ItemClass>(base, f),
+        DummySwapListener()).Sort();
+  }
 };
 //.........................................................................................................................
-/* and the last one ... for the ArrayList - same issues as for the pointers -
-  we need a copy of the object - not a reference to its location!
-*/
-template <class ListClass, class ItemClass > class TQuickObjectSorter  {
-  // static comparator sort
-  template <class Comparator>
-    static size_t partition(ListClass& list, const Comparator& Cmp, size_t left, size_t right)  {
-      const size_t pivot_index = (left+right)/2;
-      ItemClass pivot = list.Item(pivot_index);
-      list.Swap(pivot_index, right);
-      size_t store_index = left;
-      for( size_t i=left; i < right; i++ )  {
-        if( Cmp.Compare(list.Item(i), pivot) < 0 )
-          list.Swap(store_index++, i);
-      }
-      list.Swap(store_index, right);
-      return store_index;
-    }
-  template <class Comparator, class ListClassA>
-    static size_t partition(ListClass& list, ListClassA& list1, const Comparator& Cmp, size_t left, size_t right)  {
-      const size_t pivot_index = (left+right)/2;
-      ItemClass pivot = list.Item(pivot_index);
-      list.Swap(pivot_index, right);
-      size_t store_index = left;
-      for( size_t i=left; i < right; i++ )  {
-        if( Cmp.Compare(list.Item(i), pivot) < 0 )  {
-          list1.Swap(store_index, i);
-          list.Swap(store_index++, i);
-        }
-      }
-      list.Swap(store_index, right);
-      return store_index;
-    }
-
-  template <class Comparator>
-    static void QuickSort(const Comparator& Cmp, size_t left, size_t right, ListClass& list)  {
-      if( left < right )  {
-        const size_t pivot_index = partition(list, Cmp, left, right);
-        if( pivot_index > 0 )
-          QuickSort(Cmp, left, pivot_index-1, list);
-        QuickSort(Cmp, pivot_index+1, right, list);
-      }
-    }
-
-  template <class Comparator, class ListClassA>
-    static void QuickSort(const Comparator& Cmp, size_t left, size_t right, ListClass& list, ListClassA& list1)  {
-      if( left < right )  {
-        const size_t pivot_index = partition(list, list1, Cmp, left, right);
-        if( pivot_index > 0 )
-          QuickSort(Cmp, left, pivot_index-1, list, list1);
-        QuickSort(Cmp, pivot_index+1, right, list, list1);
-      }
-    }
-public:
-  template <class Comparator>
-    static void Sort(ListClass& list)  {
-      if( list.Count() < 2 )  return;
-      Sort_ComparatorWrapper<Comparator, const ItemClass&> cmp;
-      QuickSort(cmp, 0, list.Count()-1, list);
-    }
-  template <class Comparator, class ListClassA>
-    static void SyncSort(ListClass& list, ListClassA& list1)  {
-      if( list.Count() < 2 )  return;
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_ComparatorWrapper<Comparator, const ItemClass&> cmp;
-      QuickSort(cmp, 0, list.Count()-1, list, list1);
-    }
-  static void SortSF(ListClass& list, int (*f)(const ItemClass& a, const ItemClass& b) )  {
-    if( list.Count() < 2 )  return;
-    Sort_StaticFunctionWrapper<const ItemClass&> cmp(f);
-    QuickSort(cmp, 0, list.Count()-1, list);
-  }
-  template <class ListClassA>
-    static void SyncSortSF(ListClass& list, ListClassA& list1, int (*f)(const ItemClass& a, const ItemClass& b) )  {
-      if( list.Count() < 2 )  return;
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_StaticFunctionWrapper<const ItemClass&> cmp(f);
-      QuickSort(cmp, 0, list.Count()-1, list, list1);
-    }
-  template <class BaseClass>
-    static void SortMF(ListClass& list, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass& a, const ItemClass& b) const )  {
-      if( list.Count() < 2 )  return;
-      Sort_ConstMemberFunctionWrapper<BaseClass, const ItemClass&> cmp(baseClassInstance, f);
-      QuickSort(cmp, 0, list.Count()-1, list);
-    }
-  template <class BaseClass>
-    static void SortMF(ListClass& list, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass& a, const ItemClass& b) )  {
-      if( list.Count() < 2 )  return;
-      Sort_MemberFunctionWrapper<BaseClass, const ItemClass&> cmp(baseClassInstance, f);
-      QuickSort(cmp, 0, list.Count()-1, list);
-    }
-  template <class BaseClass, class ListClassA>
-    static void SyncSortMF(ListClass& list, ListClassA& list1, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass& a, const ItemClass& b) const )  {
-      if( list.Count() < 2 )  return;
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_ConstMemberFunctionWrapper<BaseClass, const ItemClass&> cmp(baseClassInstance, f);
-      QuickSort(cmp, 0, list.Count()-1, list, list1);
-    }
-  template <class BaseClass, class ListClassA>
-    static void SyncSortMF(ListClass& list, ListClassA& list1, BaseClass& baseClassInstance,
-                       int (BaseClass::*f)(const ItemClass& a, const ItemClass& b) )  {
-      if( list.Count() < 2 )  return;
-      if( list.Count() != list1.Count() )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_MemberFunctionWrapper<BaseClass, const ItemClass&> cmp(baseClassInstance, f);
-      QuickSort(cmp, 0, list.Count()-1, list, list1);
-    }
-};
-
-//examples
-/*
-class main_TestR  {
-public:
-  int Sort(const double& v, const double& v1 )   {  return ( v < v1 ) ? -1 : (( v1 > v ) ? 1 : 0);  }
-  int Sortp(const double* v, const double* v1 )   {  return (*v < *v1) ? -1 : (( *v1 > *v ) ? 1 : 0);  }
-  int PtrSort(const double* v, const double* v1 )   {  return (v < v1) ? -1 : (( v1 > v ) ? 1 : 0);  }
-  int CSort(const double& v, const double& v1 ) const  {  return ( v < v1 ) ? -1 : (( v1 > v ) ? 1 : 0);  }
-  int CSortp(const double* v, const double* v1 ) const  {  return ( *v < *v1 ) ? -1 : (( *v1 < *v ) ? 1 : 0);  }
-  int CPtrSort(const double* v, const double* v1 ) const   {  return (v < v1) ? -1 : (( v1 > v ) ? 1 : 0);  }
-  static int SSort(const double& v, const double& v1 )  {  return ( v < v1 ) ? -1 : (( v1 > v ) ? 1 : 0);  }
-  static int SSortp(const double* v, const double* v1 )  {  return ( *v < *v1 ) ? -1 : (( *v1 > *v ) ? 1 : 0);  }
-  static int SPtrSort(const double* v, const double* v1 )  {  return ( v < v1 ) ? -1 : (( v1 > v ) ? 1 : 0);  }
-};
-class main_TestR1 {
-  double v;
-  static int cmp(const main_TestR1& a, const main_TestR1& b)  {
-    return (a.v < b.v) ? -1 : ( a.v > b.v ? 1 : 0 );
-  }
-  static int cmp(const main_TestR1* a, const main_TestR1* b)  {
-    return (a->v < b->v) ? -1 : ( a->v > b->v ? 1 : 0 );
-  }
-public:
-  main_TestR1(double _v) : v(_v) {}
-  int Sort(const main_TestR1& a, const main_TestR1& b )   {  return cmp(a,b);  }
-  int CSort(const main_TestR1& a, const main_TestR1& b ) const  {  return cmp(a,b);  }
-  static int SSort(const main_TestR1& a, const main_TestR1& b )  {  return cmp(a,b);  }
-  int Sortp(const main_TestR1* a, const main_TestR1* b )   {  return cmp(a,b);  }
-  int CSortp(const main_TestR1* a, const main_TestR1* b ) const  {  return cmp(a,b);  }
-  static int SSortp(const main_TestR1* a, const main_TestR1* b )  {  return cmp(a,b);  }
-  int Compare(const main_TestR1& s) const {  return cmp(*this, s);  }
-};
-
-      TTypeList<double> AA;
-      AA.AddACopy(10.0);
-      AA.AddACopy(1.0);
-      AA.AddACopy(70.0);
-      AA.AddACopy(7.0);
-
-      main_TestR  testR;
-      main_TestR1  testR1(0);
-
-      TTypeList<double>::BubleSorter.SortSF(AA, &main_TestR::SSort);
-      TTypeList<double>::BubleSorter.SortMF(AA, testR, &main_TestR::Sort);
-      TTypeList<double>::BubleSorter.SortMF(AA, testR, &main_TestR::CSort);
-      TTypeList<double>::BubleSorter.Sort<TPrimitiveComparator>(AA);
-
-      TTypeList<double>::QuickSorter.SortSF(AA, &main_TestR::SSort);
-      TTypeList<double>::QuickSorter.SortMF(AA, testR, &main_TestR::Sort);
-      TTypeList<double>::QuickSorter.SortMF(AA, testR, &main_TestR::CSort);
-      TTypeList<double>::QuickSorter.Sort<TPrimitiveComparator>(AA);
-
-      TArrayList<double>  da;
-      TArrayList<double>::BubleSorter.SortSF(da, &main_TestR::SSort);
-      TArrayList<double>::BubleSorter.SortMF(da, testR, &main_TestR::Sort);
-      TArrayList<double>::BubleSorter.SortMF(da, testR, &main_TestR::CSort);
-      TArrayList<double>::BubleSorter.Sort<TPrimitiveComparator>(da);
-
-      TArrayList<double>::QuickSorter.SortSF(da, &main_TestR::SSort);
-      TArrayList<double>::QuickSorter.SortMF(da, testR, &main_TestR::Sort);
-      TArrayList<double>::QuickSorter.SortMF(da, testR, &main_TestR::CSort);
-      TArrayList<double>::QuickSorter.Sort<TPrimitiveComparator>(da);
-
-      TTypeList<main_TestR1> r1l;
-      r1l.AddNew(10);
-      r1l.AddNew(1);
-      r1l.AddNew(2);
-      r1l.AddNew(5);
-      r1l.AddNew(3);
-      TTypeList<main_TestR1>::BubleSorter.SortSF(r1l, &main_TestR1::SSort);
-      TTypeList<main_TestR1>::BubleSorter.SortMF(r1l, testR1, &main_TestR1::Sort);
-      TTypeList<main_TestR1>::BubleSorter.SortMF(r1l, testR1, &main_TestR1::CSort);
-      TTypeList<main_TestR1>::BubleSorter.Sort<TComparableComparator>(r1l);
-
-      TTypeList<main_TestR1>::QuickSorter.SortSF(r1l, &main_TestR1::SSort);
-      TTypeList<main_TestR1>::QuickSorter.SortMF(r1l, testR1, &main_TestR1::Sort);
-      TTypeList<main_TestR1>::QuickSorter.SortMF(r1l, testR1, &main_TestR1::CSort);
-      TTypeList<main_TestR1>::QuickSorter.Sort<TComparableComparator>(r1l);
-
-      TPtrList<main_TestR1> ptrl;
-      for( int i=0; i < r1l.Count(); i++ )
-        ptrl.Add( &r1l[i] );
-      TPtrList<main_TestR1>::BubleSorter.SortSF(ptrl, &main_TestR1::SSortp);
-      TPtrList<main_TestR1>::BubleSorter.SortMF(ptrl, testR1, &main_TestR1::Sortp);
-      TPtrList<main_TestR1>::BubleSorter.SortMF(ptrl, testR1, &main_TestR1::CSortp);
-      TPtrList<main_TestR1>::BubleSorter.Sort<TComparableComparator>(ptrl);
-
-      TPtrList<main_TestR1>::QuickSorter.SortSF(ptrl, &main_TestR1::SSortp);
-      TPtrList<main_TestR1>::QuickSorter.SortMF(ptrl, testR1, &main_TestR1::Sortp);
-      TPtrList<main_TestR1>::QuickSorter.SortMF(ptrl, testR1, &main_TestR1::CSortp);
-      TPtrList<main_TestR1>::QuickSorter.Sort<TComparableComparator>(ptrl);
-
-      TPtrList<double> pptrl;
-      for( int i=0; i < da.Count(); i++ )
-        pptrl.Add( &da[i] );
-      TPtrList<double>::BubleSorter.SortSF(pptrl, &main_TestR::SSortp);
-      TPtrList<double>::BubleSorter.SortSF(pptrl, &main_TestR::SPtrSort);
-      TPtrList<double>::BubleSorter.SortMF(pptrl, testR, &main_TestR::Sortp);
-      TPtrList<double>::BubleSorter.SortMF(pptrl, testR, &main_TestR::CSortp);
-      TPtrList<double>::BubleSorter.Sort<TPrimitiveComparator>(pptrl);
-
-      TPtrList<double>::QuickSorter.SortSF(pptrl, &main_TestR::SSortp);
-      TPtrList<double>::QuickSorter.SortMF(pptrl, testR, &main_TestR::Sortp);
-      TPtrList<double>::QuickSorter.SortMF(pptrl, testR, &main_TestR::CSortp);
-      // Comparator dereference the pointers
-      TPtrList<double>::QuickSorter.Sort<TPrimitiveComparator>(pptrl);
-*/
 EndEsdlNamespace()
 #endif
 

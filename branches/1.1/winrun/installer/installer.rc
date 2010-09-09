@@ -195,7 +195,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "E:\\svn\\olex2-sf\\trunk\\olex\\olex2.ico"
+IDR_MAINFRAME           ICON                    "..\\..\\olex\\olex2.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

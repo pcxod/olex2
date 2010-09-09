@@ -97,9 +97,9 @@ class TAutoDBNode  {
   inline double CalcDistance(size_t i) const {  return AttachedNodes[i].GetCenter().DistanceTo(Center);  }
   double CalcAngle(size_t i, size_t j) const;
 protected:
-  static int SortMetricsFunc(const TAttachedNode& a, const TAttachedNode& b);
-  static int SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d>& a,
-                            const AnAssociation2<TCAtom*, vec3d>& b);
+  static int SortMetricsFunc(const TAttachedNode* a, const TAttachedNode* b);
+  static int SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d>* a,
+                            const AnAssociation2<TCAtom*, vec3d>* b);
   static vec3d SortCenter;
 public:
   TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >* atoms);
@@ -310,9 +310,9 @@ public:
         Node = node;
         Fom = fom;
       }
-      static int SortByFOMFunc( const THitStruct<NodeClass>& a,
-                                const THitStruct<NodeClass>& b )  {
-        double d = a.Fom - b.Fom;
+      static int SortByFOMFunc(const THitStruct<NodeClass>* a,
+                               const THitStruct<NodeClass>* b)  {
+        double d = a->Fom - b->Fom;
         if( d < 0 )  return -1;
         if( d > 0 )  return 1;
         return 0;
@@ -323,23 +323,23 @@ public:
       TTypeList< THitStruct<NodeClass> > hits;
       const cm_Element* Type;
       double meanFom;
-      static int SortByFOMFunc( const THitList<NodeClass>& a,
-                                const THitList<NodeClass>& b )  {
-        const size_t nc = olx_min( a.hits.Count(), b.hits.Count() );
+      static int SortByFOMFunc(const THitList<NodeClass>* a,
+                               const THitList<NodeClass>* b)  {
+        const size_t nc = olx_min(a->hits.Count(), b->hits.Count());
         //nc = olx_min(1, nc);
         double foma = 0, fomb = 0;
         for( size_t i=0; i < nc; i++ )  {
-          foma += a.hits[i].Fom;
-          fomb += b.hits[i].Fom;
+          foma += a->hits[i].Fom;
+          fomb += b->hits[i].Fom;
         }
         foma -= fomb;
         if( foma < 0 )  return -1;
         if( foma > 0 )  return 1;
         return 0;
       }
-      static int SortByCountFunc( const THitList<NodeClass>& a,
-                                const THitList<NodeClass>& b )  {
-        return olx_cmp(b.hits.Count(), a.hits.Count());
+      static int SortByCountFunc(const THitList<NodeClass>* a,
+                                 const THitList<NodeClass>* b)  {
+        return olx_cmp(b->hits.Count(), a->hits.Count());
       }
       THitList(const cm_Element& type, NodeClass* node, double fom)  {
         Type = &type;

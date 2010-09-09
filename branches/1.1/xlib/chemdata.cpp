@@ -1218,7 +1218,7 @@ ContentList& XElementLib::SortContentList(ContentList& cl)  {
     else if( *elms.Last() == iHydrogenZ )
       h_type = elms.Last();
   }
-  elms.QuickSorter.SyncSort<ElementPSymbolSorter>(elms, cl);
+  elms.QuickSorter.Sort(elms, Sort_ComparatorWrapper<ElementPSymbolSorter, const cm_Element*>(), SyncSwapListener<ContentList>(cl));
   if( c_type != NULL && elms.Count() > 1 )  {
     size_t ind = elms.IndexOf(c_type);
     cl.Move(ind, 0);

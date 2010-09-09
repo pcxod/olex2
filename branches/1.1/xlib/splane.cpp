@@ -95,7 +95,7 @@ TSPlane::Def::Def(const TSPlane& plane) : atoms(plane.Count()), regular(plane.Is
       atoms[i].ref.matrix_id = m.GetId();
     }
   }
-  atoms.QuickSorter.Sort<TComparableComparator>(atoms);
+  atoms.QuickSorter.Sort<TComparablePtrComparator>(atoms);
 }
 //..............................................................................
 TSPlane* TSPlane::Def::FromAtomRegistry(AtomRegistry& ar, size_t def_id, TNetwork* parent, const smatd& matr) const {

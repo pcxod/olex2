@@ -85,46 +85,49 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     TCif cif;
     cif.LoadFromFile( fcffn );
     sw.stop();
-    TCifLoop* hklLoop = cif.FindLoop("_refln");
+    cif_dp::cetTable* hklLoop = cif.FindLoop("_refln");
     if( hklLoop == NULL )  {
       return "no hkl loop found";
     }
     sw.start("Extracting CIF data");
-    size_t hInd = hklLoop->GetTable().ColIndex("_refln_index_h");
-    size_t kInd = hklLoop->GetTable().ColIndex("_refln_index_k");
-    size_t lInd = hklLoop->GetTable().ColIndex("_refln_index_l");
+    const size_t hInd = hklLoop->ColIndex("_refln_index_h");
+    const size_t kInd = hklLoop->ColIndex("_refln_index_k");
+    const size_t lInd = hklLoop->ColIndex("_refln_index_l");
     // list 3, F
-    size_t mfInd = hklLoop->GetTable().ColIndex("_refln_F_meas");
-    size_t sfInd = hklLoop->GetTable().ColIndex("_refln_F_sigma");
-    size_t aInd = hklLoop->GetTable().ColIndex("_refln_A_calc");
-    size_t bInd = hklLoop->GetTable().ColIndex("_refln_B_calc");
+    const size_t mfInd = hklLoop->ColIndex("_refln_F_meas");
+    const size_t sfInd = hklLoop->ColIndex("_refln_F_sigma");
+    const size_t aInd = hklLoop->ColIndex("_refln_A_calc");
+    const size_t bInd = hklLoop->ColIndex("_refln_B_calc");
 
     if( (hInd|kInd|lInd|mfInd|sfInd|aInd|bInd) == InvalidIndex  ) {
       return "list 3 fcf file is expected";
     }
-    refs.SetCapacity(hklLoop->GetTable().RowCount());
-    F.SetCount(hklLoop->GetTable().RowCount());
-    for( size_t i=0; i < hklLoop->GetTable().RowCount(); i++ )  {
-      TCifRow& row = hklLoop->GetTable()[i];
-      TReflection& ref = refs.AddNew(row[hInd].ToInt(), row[kInd].ToInt(), 
-        row[lInd].ToInt(), row[mfInd].ToDouble(), row[sfInd].ToDouble());
+    refs.SetCapacity(hklLoop->RowCount());
+    F.SetCount(hklLoop->RowCount());
+    for( size_t i=0; i < hklLoop->RowCount(); i++ )  {
+      const cif_dp::CifRow& row = (*hklLoop)[i];
+      TReflection& ref = refs.AddNew(row[hInd]->GetStringValue().ToInt(),
+        row[kInd]->GetStringValue().ToInt(), 
+        row[lInd]->GetStringValue().ToInt(),
+        row[mfInd]->GetStringValue().ToDouble(),
+        row[sfInd]->GetStringValue().ToDouble());
       if( mapType == mapTypeDiff )  {
-        const compd rv(row[aInd].ToDouble(), row[bInd].ToDouble());
+        const compd rv(row[aInd]->GetStringValue().ToDouble(), row[bInd]->GetStringValue().ToDouble());
         double dI = (ref.GetI() - rv.mod());
         F[i] = compd::polar(dI, rv.arg());
       }
       else if( mapType == mapType2OmC )  {
-        const compd rv(row[aInd].ToDouble(), row[bInd].ToDouble());
+        const compd rv(row[aInd]->GetStringValue().ToDouble(), row[bInd]->GetStringValue().ToDouble());
         double dI = 2*ref.GetI() - rv.mod();
         F[i] = compd::polar(dI, rv.arg());
       }
       else if( mapType == mapTypeObs ) {
-        const compd rv(row[aInd].ToDouble(), row[bInd].ToDouble());
+        const compd rv(row[aInd]->GetStringValue().ToDouble(), row[bInd]->GetStringValue().ToDouble());
         F[i] = compd::polar(ref.GetI(), rv.arg());
       }
       else  {
-        F[i].SetRe(row[aInd].ToDouble());
-        F[i].SetIm(row[bInd].ToDouble());
+        F[i].SetRe(row[aInd]->GetStringValue().ToDouble());
+        F[i].SetIm(row[bInd]->GetStringValue().ToDouble());
       }
     }
     sw.stop();

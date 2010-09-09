@@ -74,9 +74,9 @@ vec3d TAutoDBNode::SortCenter;
 
 static const vec3d ZAxis(0,0,1);
 
-int TAutoDBNode::SortMetricsFunc(const TAttachedNode& a, const TAttachedNode& b )  {
-  double diff = TAutoDBNode::SortCenter.DistanceTo(b.GetCenter()) -
-                TAutoDBNode::SortCenter.DistanceTo(a.GetCenter());
+int TAutoDBNode::SortMetricsFunc(const TAttachedNode* a, const TAttachedNode* b)  {
+  double diff = TAutoDBNode::SortCenter.DistanceTo(b->GetCenter()) -
+                TAutoDBNode::SortCenter.DistanceTo(a->GetCenter());
 /*  if( olx_abs(diff) < 0.001 )  {
     vec3d ap(a.crd()), bp(b.crd());
     ap -= TAutoDBNode::SortCenter;
@@ -96,10 +96,10 @@ int TAutoDBNode::SortMetricsFunc(const TAttachedNode& a, const TAttachedNode& b 
   if( diff > 0 )  return 1;
   return 0;
 }
-int TAutoDBNode::SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d>& a,
-                                const AnAssociation2<TCAtom*, vec3d>& b )  {
-  double diff = TAutoDBNode::SortCenter.DistanceTo(b.GetB()) -
-                TAutoDBNode::SortCenter.DistanceTo(a.GetB());
+int TAutoDBNode::SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d>* a,
+                                const AnAssociation2<TCAtom*, vec3d>* b)  {
+  double diff = TAutoDBNode::SortCenter.DistanceTo(b->GetB()) -
+                TAutoDBNode::SortCenter.DistanceTo(a->GetB());
   if( diff < 0 )  return -1;
   if( diff > 0 )  return 1;
   return 0;
@@ -568,17 +568,17 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
         TBasicApp::GetLog().Info(olxstr("Processing ") << files[i].GetName() << "...");
         XFile.LoadFromFile(files[i].GetName());
         TCif& cif = XFile.GetLastLoader<TCif>();
-        olxstr r1 = cif.GetSParam("_refine_ls_R_factor_gt");
+        olxstr r1 = cif.GetParamAsString("_refine_ls_R_factor_gt");
         if( r1.Length() && r1.ToDouble() > 5 )  {
           TBasicApp::GetLog().Info(olxstr("Skipped r1=") << r1);
           continue;
         }
-        olxstr shift = cif.GetSParam("_refine_ls_shift/su_max");
+        olxstr shift = cif.GetParamAsString("_refine_ls_shift/su_max");
         if( shift.Length() && shift.ToDouble() > 0.05 )  {
           TBasicApp::GetLog().Info(olxstr("Skipped shift=") << shift);
           continue;
         }
-        olxstr gof = cif.GetSParam("_refine_ls_goodness_of_fit_ref");
+        olxstr gof = cif.GetParamAsString("_refine_ls_goodness_of_fit_ref");
         if( gof.Length() && olx_abs(1-gof.ToDouble()) > 0.1 )  {
           TBasicApp::GetLog().Info(olxstr("Skipped GOF=") << gof);
           continue;

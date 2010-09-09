@@ -474,9 +474,9 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 //..............................................................................
 struct Main_SfacComparator {
-  static int Compare(const AnAssociation2<int,const cm_Element*>& a, 
-                     const AnAssociation2<int,const cm_Element*>& b)  {
-      return b.GetB()->z - a.GetB()->z;
+  static int Compare(const AnAssociation2<int,const cm_Element*>* a, 
+                     const AnAssociation2<int,const cm_Element*>* b)  {
+      return b->GetB()->z - a->GetB()->z;
   }
 };
 void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
