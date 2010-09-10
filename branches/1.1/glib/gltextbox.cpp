@@ -68,9 +68,9 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
   if( P.GetType() == sgloText )  {
     TGlFont& Fnt = GetFont();
     const uint16_t th = Fnt.TextHeight(EmptyString);
-    const double Scale = Parent.GetScale();
     const double GlLeft = ((double)Left - (double)Parent.GetWidth()/2 + GetCenter()[0]) + 0.1;
-    const double GlTop = ((double)Parent.GetHeight()/2 - (Top-GetCenter()[1]+Height)) + 0.1;
+    const double GlTop = ((double)Parent.GetHeight()/2 -
+      (Top-GetCenter()[1]+Height*Parent.GetExtraZoom())) + 0.1;
     const double LineSpacer = (0.05+LineSpacing-1)*th;
     bool mat_changed = false;
     vec3d T(GlLeft, GlTop, Z);

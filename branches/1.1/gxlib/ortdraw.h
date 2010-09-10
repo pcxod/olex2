@@ -127,8 +127,6 @@ class OrtDraw  {
 private:
   static int OrtObjectsZSort(const a_ort_object* a1, const a_ort_object* a2)  {
     const float diff = a1->get_z() - a2->get_z();
-    if( olx_abs(diff) < 1e-3 )  // !!!
-      return 0;
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
   }
   static int OrtObjectsPtrZSort(const a_ort_object* a1, const a_ort_object* a2)  {
