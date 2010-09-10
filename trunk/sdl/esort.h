@@ -134,13 +134,22 @@ protected:
     else if( diff > 0 ) {
       size_t lo = lo0;
       size_t hi = hi0;
-      Item mid = accessor::get(list, (lo0 + hi0)/2);
+      const size_t m_ind = (lo0 + hi0)/2;
+      Item mid = accessor::get(list, m_ind);
       while( lo <= hi )  {
-        while( cmp.Compare(accessor::get(list, lo), mid) < 0 )  lo++;
-        while( cmp.Compare(accessor::get(list, hi), mid) > 0 )  hi--;
+        while( cmp.Compare(accessor::get(list, lo), mid) < 0 )  {
+          if( ++lo == m_ind )  break;
+        }
+        while( cmp.Compare(accessor::get(list, hi), mid) > 0 )  {
+          if( --hi == m_ind )  break;
+        }
         if( lo <= hi )  {
-          listener.OnSwap(lo, hi);
-          list.Swap(lo++, hi--);
+          if( lo != hi )  {
+            listener.OnSwap(lo, hi);
+            list.Swap(lo, hi);
+          }
+          lo++;
+          hi--;
         }
       }
       if( lo0 < hi )  DoSort(lo0, hi);
