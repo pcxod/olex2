@@ -39,7 +39,7 @@ void TP4PFile::SaveToStrings(TStrList& SL)  {
     << ' ' << GetRM().expl.GetCrystalSize()[2]
     << ' ';
     if( GetRM().expl.IsTemperatureSet() ) 
-      SL.Last().String << GetRM().expl.GetTemperature();
+      SL.Last().String << GetRM().expl.GetTempValue().ToString();
     else
       SL.Last().String << '0';
     SL.Add("SOURCE  ") << GetRM().expl.GetRadiation();
@@ -110,7 +110,7 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
         params[4] = params[4].SubStringTo(bi);
     }
     if( params[4].IsNumber() )
-      GetRM().expl.SetTemperature(params[4].ToDouble());
+      GetRM().expl.SetTemp(params[4]);
     params.Delete(4);
   }
   while( params.Count() > 3 )

@@ -129,6 +129,32 @@ public:
   inline compd calc_sq_anomalous(double sqv) const {
     return compd(gaussians.calc_sq(sqv) + fpfdp.GetRe(), fpfdp.GetIm());
   }
+  void ToDataItem(TDataItem& di) const {  di.AddField("data", ToInsString());  }
+  void FromDataItem(const TDataItem& di)  {
+    const TStrList toks(di.GetRequiredField("data"), ' ');
+    SetGaussians(
+      toks[0].ToDouble(), toks[1].ToDouble(), toks[2].ToDouble(),
+      toks[3].ToDouble(), toks[4].ToDouble(), toks[5].ToDouble(),
+      toks[6].ToDouble(), toks[7].ToDouble(), toks[8].ToDouble());
+    fpfdp.SetRe(toks[9].ToDouble());
+    fpfdp.SetIm(toks[10].ToDouble());
+    mu = toks[11].ToDouble();
+    r = toks[12].ToDouble();
+    wt = toks[13].ToDouble();
+  }
+#ifndef _NO_PYTHON
+  PyObject* PyExport()  {
+    PyObject* main = PyDict_New();
+    PythonExt::SetDictItem(main, "gaussian",
+      Py_BuildValue("(dddd)(dddd)d", gaussians.a1, gaussians.a2, gaussians.a3, gaussians.a4,
+      gaussians.b1, gaussians.b2, gaussians.b3, gaussians.b4, gaussians.c));
+    PythonExt::SetDictItem(main, "fpfdp", Py_BuildValue("(dd)", fpfdp.GetRe(), fpfdp.GetIm()));
+    PythonExt::SetDictItem(main, "mu", Py_BuildValue("d", mu));
+    PythonExt::SetDictItem(main, "r", Py_BuildValue("d", r));
+    PythonExt::SetDictItem(main, "wt", Py_BuildValue("d", wt));
+    return main;
+  }
+#endif
 };
 
 

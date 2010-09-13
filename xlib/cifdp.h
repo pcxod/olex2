@@ -202,14 +202,15 @@ namespace cif_dp {
     virtual olxstr GetStringValue() const {  throw TNotImplementedException(__OlxSourceInfo);  }
     virtual bool HasName() const {  return true;  }
     virtual const olxstr& GetName() const {  return name;  }
-    void Sort(const TStrList& pivots);
+    void Sort(const TStrList& pivots, const TStrList& endings);
     struct EntryGroup  {
       TPtrList<ICifEntry> items;
       olxstr name;
     };
     struct CifSorter  {
-      const TStrList& pivots;
-      CifSorter(const TStrList& _pivots) : pivots(_pivots)  {}
+      const TStrList &pivots, &endings;
+      CifSorter(const TStrList& _pivots, const TStrList& _endings) :
+        pivots(_pivots), endings(_endings)  {}
       int Compare(const EntryGroup* e1, const EntryGroup* e2) const;
     };
   };
