@@ -1513,7 +1513,7 @@ void TIns::_SaveSizeTemp(TStrList& SL)  {
   if( !size.IsNull() )
     SL.Add("SIZE ") << size[0] << ' ' << size[1] << ' ' << size[2];
   if( RefMod.expl.IsTemperatureSet() )
-    SL.Add("TEMP ") << RefMod.expl.GetTemperature();
+    SL.Add("TEMP ") << RefMod.expl.GetTempValue().ToString();
 }
 //..............................................................................
 void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {

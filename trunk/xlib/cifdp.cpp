@@ -456,7 +456,7 @@ void CifBlock::Format()  {
     params.GetObject(i)->Format();    
 }
 //..............................................................................
-void CifBlock::Sort(const TStrList& pivots)  {
+void CifBlock::Sort(const TStrList& pivots, const TStrList& endings)  {
   static TStrList def_pivots(
     "_audit_creation,_publ,_chemical_name,_chemical_formula,_chemical,_atom_type,"
     "_space_group,_space_group_symop,_symmetry,"
@@ -471,6 +471,10 @@ void CifBlock::Sort(const TStrList& pivots)  {
     "_smtbx"
     , 
     ',');
+  static TStrList def_endings(
+    "_h_min,_h_max,_k_min,k_max,_l_min,_l_max,_min,_max"
+    , 
+    ',');
   TTypeList<CifBlock::EntryGroup> groups;
   for( size_t i=0; i < params.Count(); i++ )  {
     CifBlock::EntryGroup& eg = groups.AddNew();
@@ -482,7 +486,8 @@ void CifBlock::Sort(const TStrList& pivots)  {
       eg.name = params.GetObject(i)->GetName();
     }
   }
-  groups.QuickSorter.Sort(groups, CifSorter(pivots.IsEmpty() ? def_pivots : pivots));
+  groups.QuickSorter.Sort(groups,
+    CifSorter(pivots.IsEmpty() ? def_pivots : pivots, endings.IsEmpty() ? def_endings : endings));
   params.Clear();
   for( size_t i=0; i < groups.Count(); i++ )  {
     for( size_t j=0; j < groups[i].items.Count()-1; j++ )
@@ -492,7 +497,7 @@ void CifBlock::Sort(const TStrList& pivots)  {
 }
 //.............................................................................
 int CifBlock::CifSorter::Compare(const CifBlock::EntryGroup* e1, const CifBlock::EntryGroup* e2) const {
-  size_t c1=InvalidIndex, c2=InvalidIndex, c1_l=0, c2_l=2;
+  size_t c1=InvalidIndex, c2=InvalidIndex, c1_l=0, c2_l=0;
   for( size_t i=0; i < pivots.Count(); i++ )  {
     if( c1 == InvalidIndex && e1->name.StartsFromi(pivots[i]) )  {
       if( pivots[i].Length() > c1_l )  {
@@ -507,8 +512,30 @@ int CifBlock::CifSorter::Compare(const CifBlock::EntryGroup* e1, const CifBlock:
       }
     }
   }
-  if( c1 == c2 )
-    return e1->name.Comparei(e2->name);
+  if( c1 == c2 )  {
+    if( e1->name.Length() == e1->name.Length() )  {
+      size_t s1=InvalidIndex, s2=InvalidIndex, s1_l=0, s2_l=0;
+      for( size_t i=0; i < endings.Count(); i++ )  {
+        if( s1 == InvalidIndex && e1->name.EndsWithi(endings[i]) )  {
+          if( endings[i].Length() > s1_l )  {
+            s1 = i;
+            s1_l = endings[i].Length();
+          }
+        }
+        if( s2 == InvalidIndex && e2->name.EndsWithi(endings[i]) )  {
+          if( endings[i].Length() > s2_l )  {
+            s2 = i;
+            s2_l = endings[i].Length();
+          }
+        }
+      }
+      if( s1 == s2 )
+        return e1->name.Comparei(e2->name);
+      return olx_cmp(s1, s2);
+    }
+    else
+       return e1->name.Comparei(e2->name);
+  }
   return olx_cmp(c1, c2);
 }
 //.............................................................................

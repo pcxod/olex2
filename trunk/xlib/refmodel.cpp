@@ -918,6 +918,11 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   // restore matrix tags
   for( size_t i=0; i < UsedSymm.Count(); i++ )
     UsedSymm.GetValue(i).SetRawId(mat_tags[i]);
+  if( !SfacData.IsEmpty() )  {
+    TDataItem& sfacs = item.AddItem("SFAC");
+    for( size_t i=0; i < SfacData.Count(); i++ )
+      SfacData.GetValue(i)->ToDataItem(item.AddItem(SfacData.GetKey(i)));      
+  }
 }
 //....................................................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {
@@ -989,6 +994,24 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   Vars.FromDataItem( item.FindRequiredItem("LEQS") );
   Conn.FromDataItem( item.FindRequiredItem("CONN") );
   SetUserFormula(item.GetFieldValue("UserContent"), false);
+  TDataItem* sfac = item.FindItem("SFAC");
+  if( sfac != NULL )  {
+    for( size_t i=0; i < sfac->ItemCount(); i++ )  {
+      cm_Element* src = XElementLib::FindBySymbol(sfac->GetItem(i).GetName());
+      XScatterer* sc;
+      if( src != NULL )  {
+        try  {  sc = new XScatterer(*src, expl.GetRadiationEnergy());  }
+        catch(...)  {  // may fail if radiation energy is too high
+          sc = new XScatterer;
+        }
+      }
+      else
+        throw TFunctionFailedException(__OlxSourceInfo, "could not locate reference chemical element");
+      sc->FromDataItem(sfac->GetItem(i));
+      sc->SetLabel(sfac->GetItem(i).GetName());
+      SfacData.Add(sfac->GetItem(i).GetName(), sc);
+    }
+  }
   aunit._UpdateConnInfo();
 }
 //....................................................................................................
@@ -1102,6 +1125,13 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
   // restore matrix tags
   for( size_t i=0; i < UsedSymm.Count(); i++ )
     UsedSymm.GetValue(i).SetRawId(mat_tags[i]);
+  if( !SfacData.IsEmpty() )  {
+    PyObject* sfac = PyDict_New();
+    for( size_t i=0; i < SfacData.Count(); i++ )
+      PythonExt::SetDictItem(sfac, SfacData.GetKey(i).c_str(),
+        SfacData.GetValue(i)->PyExport());
+    PythonExt::SetDictItem(main, "sfac", sfac);
+  }
   return main;
 }
 #endif

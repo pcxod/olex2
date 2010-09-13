@@ -30,11 +30,11 @@ AConstraintGenerator::AConstraintGenerator(RefinementModel& rm) : RefMod(rm) {
   Distances(GenId(fgSH1, 0), 1.2);
   
   if( rm.expl.IsTemperatureSet() )  {
-    if( rm.expl.GetTemperature() < -70 )  {
+    if( rm.expl.GetTempValue().GetV() < -70 )  {
       for( size_t i=0; i < Distances.Count(); i++ )
         Distances.GetValue(i) += 0.02;
     }
-    else if( rm.expl.GetTemperature() < -20 )  {
+    else if( rm.expl.GetTempValue().GetV() < -20 )  {
       for( size_t i=0; i < Distances.Count(); i++ )
         Distances.GetValue(i) += 0.01;
     }
