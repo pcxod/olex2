@@ -72,8 +72,8 @@ public class ClientHandler extends Thread {
           platform = cmd.substring(10);
       }
       cmd = (cmds.isEmpty() ? null : cmds.get(0));
+      final String src = (origin == null ? client.getRemoteSocketAddress().toString() : origin).trim();
       if( cmd != null )  {
-        String src = (origin == null ? client.getRemoteSocketAddress().toString() : origin).trim();
         if( !Main.shouldHandle(src) )  {
           String info_line = "Blocking ";
           info_line += src;
@@ -195,13 +195,19 @@ public class ClientHandler extends Thread {
                   out.writeBytes("Content-Type: " + getContentType(file) + "\n\n");
                   final int bf_len = 1024 * 64;
                   byte[] bf = new byte[bf_len];
+                  int written = 0;
                   try {
                     int read_len;
                     while ((read_len = fr.read(bf)) > 0) {
                       out.write(bf, 0, read_len);
+                      written += read_len;
                     }
                   } catch (Exception e) {
-                    Main.print("Connection broken...");
+                    Main.print(
+                            "Broken for " + src + " at " +
+                            (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()) +
+                            " at " + (float)written*100.0/file.length() + '%'
+                            );
                   }
                   fr.close();
                 }

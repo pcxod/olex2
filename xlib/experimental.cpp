@@ -52,7 +52,7 @@ PyObject* ExperimentalDetails::PyExport() {
 //..................................................................................................
 void ExperimentalDetails::FromDataItem(const TDataItem& item) {
   Radiation = item.GetRequiredField("radiation").ToDouble();
-  TempValue = item.GetRequiredField("temperature").ToDouble();
+  TempValue = item.GetRequiredField("temperature");
   CrystalSize = PersUtil::FloatVecFromStr( item.GetRequiredField("crystal_size") );
 }
 //..................................................................................................
