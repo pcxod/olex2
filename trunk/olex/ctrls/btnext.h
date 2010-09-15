@@ -104,6 +104,7 @@ namespace ctrl_ext  {
 
     void PaintEvent(wxPaintEvent & evt)  {  Render(wxPaintDC(this));  }
     void Paint()  {  Render(wxClientDC(this));  }
+    bool IsEnabled() const {  return state != stDisabled;  }
     void SetEnabled(bool v)  {  state = (v ? stUp : stDisabled);  }
     void Render(wxDC& dc) const;
     void SetImages(const TTypeList<wxImage>& images, short imgState, int w=-1, int h=-1);

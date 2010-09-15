@@ -982,7 +982,7 @@ void THtml::macDefineControl(TStrObjList &Cmds, const TParamList &Options, TMacr
   }
   else if( Cmds[1].Equalsi("button") )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TButton) );
-    (*props)["checked"] = Options.FindValue("c", "false");
+    (*props)["image"] = Options.FindValue("i");
   }
   else if( Cmds[1].Equalsi("combo") )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TComboBox) );
@@ -1195,25 +1195,67 @@ olxstr THtml::GetObjectImage(const AOlxCtrl* Obj)  {
 bool THtml::SetObjectImage(AOlxCtrl* Obj, const olxstr& src)  {
   if( src.IsEmpty() )  return false;
 
-  wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( src );
-  if( fsFile == NULL )  {
-    TBasicApp::GetLog().Error( olxstr("Setimage: could not locate specified file: ") << src );
-    return false;
+  if( EsdlInstanceOf(*Obj, TBmpButton) || EsdlInstanceOf(*Obj, THtmlImageCell) )  {
+    wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(src);
+    if( fsFile == NULL )  {
+      TBasicApp::GetLog().Error(olxstr("Setimage: could not locate specified file: ") << src);
+      return false;
+    }
+    wxImage image(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
+    delete fsFile;
+    if ( !image.Ok() )  {
+      TBasicApp::GetLog().Error(olxstr("Setimage: could not read specified file: ") << src);
+      return false;
+    }
+    if( EsdlInstanceOf(*Obj, TBmpButton) )  {
+      ((TBmpButton*)Obj)->SetBitmapLabel(image);
+      ((TBmpButton*)Obj)->SetSource(src);
+      ((TBmpButton*)Obj)->Refresh(true);
+    }
+    else if( EsdlInstanceOf(*Obj, THtmlImageCell) )  {
+      ((THtmlImageCell*)Obj)->SetImage(image);
+      ((THtmlImageCell*)Obj)->SetSource(src);
+      ((THtmlImageCell*)Obj)->GetWindow()->Refresh(true);
+    }
   }
-  wxImage image(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
-  delete fsFile;
-  if ( !image.Ok() )  {
-    TBasicApp::GetLog().Error( olxstr("Setimage: could not read specified file: ") << src );
-    return false;
-  }
-  if( EsdlInstanceOf(*Obj, TBmpButton) )  {
-    ((TBmpButton*)Obj)->SetBitmapLabel( image );
-    ((TBmpButton*)Obj)->SetSource( src );
-  }
-  else if( EsdlInstanceOf(*Obj, THtmlImageCell) )  {
-    ((THtmlImageCell*)Obj)->SetImage( image );
-    ((THtmlImageCell*)Obj)->SetSource( src );
-    ((THtmlImageCell*)Obj)->GetWindow()->Refresh(true);
+  else if( EsdlInstanceOf(*Obj, TImgButton) )  {
+    const TStrList toks(src, ',');
+    TTypeList<wxImage> images((size_t)4);
+    short imgState = 0;
+    for( size_t i=0; i < toks.Count(); i++ )  {
+      const size_t ei = toks[i].IndexOf('=');
+      if( ei == InvalidIndex )  continue;
+      const olxstr dest = toks[i].SubStringTo(ei),
+        fn = toks[i].SubStringFrom(ei+1);
+      wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(fn);
+      if( fsFile == NULL )  {
+        TBasicApp::GetLog().Error(olxstr("Setimage: could not read specified file: ") << src);
+        continue;
+      }
+      wxImage* img = new wxImage(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
+      if( dest.Equalsi("up") )  {
+        imgState |= TImgButton::stUp;
+        images.Set(0, img);
+      }
+      else if( dest.Equalsi("down") )  {
+        imgState |= TImgButton::stDown;
+        images.Set(1, img);
+      }
+      else if( dest.Equalsi("disabled") )  {
+        imgState |= TImgButton::stDisabled;
+        images.Set(2, img);
+      }
+      else if( dest.Equalsi("hover") )  {
+        imgState |= TImgButton::stHover;
+        images.Set(3, img);
+      }
+      else
+        delete img;
+      delete fsFile;
+    }
+    images.Pack();
+    ((TImgButton*)Obj)->SetImages(images, imgState);
+    ((TImgButton*)Obj)->Refresh(true);
   }
   else  {
     TBasicApp::GetLog().Error( "Setimage: unsupported object type" );
@@ -1281,6 +1323,8 @@ void THtml::funSetData(const TStrObjList &Params, TMacroError &E)  {
 bool THtml::GetObjectState(const AOlxCtrl *Obj)  {
   if( EsdlInstanceOf(*Obj, TCheckBox) )
     return ((TCheckBox*)Obj)->IsChecked();
+  else if( EsdlInstanceOf(*Obj, TImgButton) )
+    return ((TImgButton*)Obj)->IsEnabled();
   else if( EsdlInstanceOf(*Obj, TButton) )
     return ((TButton*)Obj)->IsDown();
   else
@@ -1304,7 +1348,7 @@ void THtml::funGetState(const TStrObjList &Params, TMacroError &E)  {
     E.SetRetVal( (*props)["checked"] );
   }
   else
-    E.SetRetVal( html->GetObjectState(Obj) );
+    E.SetRetVal(html->GetObjectState(Obj));
 }
 //..............................................................................
 void THtml::funGetLabel(const TStrObjList &Params, TMacroError &E)  {
@@ -1366,6 +1410,8 @@ void THtml::funSetLabel(const TStrObjList &Params, TMacroError &E)  {
 void THtml::SetObjectState(AOlxCtrl *Obj, bool State)  {
   if( EsdlInstanceOf(*Obj, TCheckBox) )
     ((TCheckBox*)Obj)->SetChecked(State);
+  else if( EsdlInstanceOf(*Obj, TImgButton) )
+    ((TImgButton*)Obj)->SetEnabled(State);
   else if( EsdlInstanceOf(*Obj, TButton) )
     ((TButton*)Obj)->SetDown(State);
 }
@@ -1383,7 +1429,7 @@ void THtml::funSetImage(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
     return;
   }
-  if( !html->SetObjectImage( Obj, Params[1] ) )  {
+  if( !html->SetObjectImage(Obj, Params[1]) )  {
     E.ProcessingError(__OlxSrcInfo, "could not set image for the object: ")  << objName;
   }
 }

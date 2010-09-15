@@ -64,7 +64,7 @@ END_EVENT_TABLE()
 void TButton::MouseEnterEvent(wxMouseEvent& event)  {
   SetCursor( wxCursor(wxCURSOR_HAND) );
   if( !GetHint().IsEmpty() )
-    SetToolTip( GetHint().u_str() );
+    SetToolTip(GetHint().u_str());
   event.Skip();
 }
 //..............................................................................
@@ -79,7 +79,9 @@ BEGIN_EVENT_TABLE(TBmpButton, wxBitmapButton)
 END_EVENT_TABLE()
 //..............................................................................
 void TBmpButton::MouseEnterEvent(wxMouseEvent& event)  {
-  SetCursor( wxCursor(wxCURSOR_HAND) );
+  SetCursor(wxCursor(wxCURSOR_HAND));
+  if( !GetHint().IsEmpty() )
+    SetToolTip(GetHint().u_str());
   event.Skip();
 }
 //..............................................................................
@@ -105,6 +107,8 @@ TImgButton::TImgButton(wxWindow* parent) : wxPanel(parent), AButtonBase(this) {
 //..............................................................................
 void TImgButton::MouseEnterEvent(wxMouseEvent& event)  {
   SetCursor(wxCursor(wxCURSOR_HAND));
+  if( !GetHint().IsEmpty() )
+    SetToolTip(GetHint().u_str());
   MouseIn = true;
   if( state != stDisabled && state != stDown )  {
     state = stHover;
@@ -159,14 +163,14 @@ void TImgButton::MouseDownEvent(wxMouseEvent& event)  {
 //..............................................................................
 void TImgButton::MouseUpEvent(wxMouseEvent& event)  {
   if( state != stDisabled && state != stUp && state != stHover )  {
-    state = stUp;
-    Paint();
     StartEvtProcessing()
       if( !GetOnUpStr().IsEmpty() )
         OnUp.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>( GetOnUpStr() ));
       if( !GetOnClickStr().IsEmpty() )
         OnClick.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnClickStr()) );
     EndEvtProcessing()
+    state = stUp;
+    Paint();
   }
 }
 //..............................................................................

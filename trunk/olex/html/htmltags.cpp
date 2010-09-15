@@ -164,6 +164,7 @@ TAG_HANDLER_PROC(tag)  {
   int valign = -1, halign = -1, 
     fl=0,
     ax=100, ay=20;
+  bool width_set = false, height_set = false;
   AOlxCtrl* CreatedObject = NULL;
   wxWindow* CreatedWindow = NULL;
   try  {
@@ -178,6 +179,7 @@ TAG_HANDLER_PROC(tag)  {
       }
       else
         ax = (int)Tmp.ToDouble();
+      width_set = true;
     }
     Tmp = tag.GetParam(wxT("HEIGHT")).c_str();
     TGlXApp::GetMainForm()->ProcessFunction(Tmp);
@@ -190,6 +192,7 @@ TAG_HANDLER_PROC(tag)  {
       }
       else
         ay = Tmp.ToDouble();
+      height_set = true;
     }
   }
   catch(const TExceptionBase& e)  {
@@ -371,7 +374,7 @@ TAG_HANDLER_PROC(tag)  {
         }
         images.Pack();
         TImgButton* ibtn = new TImgButton(m_WParser->GetWindowInterface()->GetHTMLWindow());
-        ibtn->SetImages(images, imgState, ax, ay);
+        ibtn->SetImages(images, imgState, width_set ? ax : -1, height_set ? ay : -1);
         if( tag.HasParam(wxT("ENABLED")) )
           ibtn->SetEnabled(olxstr(tag.GetParam(wxT("ENABLED")).c_str()).ToBool());
         CreatedWindow = ibtn;
