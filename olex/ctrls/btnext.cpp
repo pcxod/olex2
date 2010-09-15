@@ -100,7 +100,7 @@ END_EVENT_TABLE()
 //..............................................................................
 TImgButton::TImgButton(wxWindow* parent) : wxPanel(parent), AButtonBase(this) {
   state = 0;
-  MouseIn = false;
+  ProcessingOnDown = MouseIn = false;
 }
 //..............................................................................
 void TImgButton::MouseEnterEvent(wxMouseEvent& event)  {
@@ -115,7 +115,7 @@ void TImgButton::MouseEnterEvent(wxMouseEvent& event)  {
 //..............................................................................
 void TImgButton::MouseLeaveEvent(wxMouseEvent& event)  {  
   MouseIn = false;
-  if( state != stDisabled && state != stUp && state != stDown )  {
+  if( state != stDisabled && state != stUp && !ProcessingOnDown )  {
     state = stUp;
     Paint();
   }
@@ -142,6 +142,7 @@ void TImgButton::MouseDownEvent(wxMouseEvent& event)  {
   if( state != stDisabled && state != stDown )  {
     state = stDown;
     Paint();
+    ProcessingOnDown = true;
     StartEvtProcessing()
       if( !GetOnDownStr().IsEmpty() )
         OnDown.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>( GetOnDownStr() ));
@@ -152,6 +153,7 @@ void TImgButton::MouseDownEvent(wxMouseEvent& event)  {
       Paint();
     }
     EndEvtProcessing()
+    ProcessingOnDown = false;
   }
 }
 //..............................................................................

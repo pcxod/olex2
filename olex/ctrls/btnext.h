@@ -92,7 +92,7 @@ namespace ctrl_ext  {
       stHover    = 0x0008;
   private:
     short state;
-    bool MouseIn;
+    bool MouseIn, ProcessingOnDown;
     wxBitmap bmpDown, bmpUp, bmpDisabled, bmpHover;
   protected:
     virtual wxWindow* GetParent()  const  {  return wxPanel::GetParent();  }
