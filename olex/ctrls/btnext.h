@@ -7,7 +7,7 @@ namespace ctrl_ext  {
   class AButtonBase: public AActionHandler, public AOlxCtrl  {
     bool Down;
   protected:
-    void ClickEvent(wxCommandEvent& event);
+    void ClickEvent();
     olxstr OnClickStr, Data, OnUpStr, OnDownStr, DependMode, Hint;
     TActionQueue *ActionQueue;
     virtual wxWindow* GetParent()  const  = 0;
@@ -24,7 +24,7 @@ namespace ctrl_ext  {
       OnDownStr(EmptyString),
       DependMode(EmptyString),
       Hint(EmptyString),
-      Data(EmptyString)  {  SetToDelete(false); }
+      Data(EmptyString)  {  SetToDelete(false);  }
     virtual ~AButtonBase() {  if( ActionQueue != NULL )  ActionQueue->Remove(this);  }
 
     void SetActionQueue(TActionQueue& q, const olxstr& dependMode);
@@ -46,7 +46,7 @@ namespace ctrl_ext  {
   class TButton: public wxButton, public AButtonBase {
     void MouseEnterEvent(wxMouseEvent& event);
     void MouseLeaveEvent(wxMouseEvent& event);
-    void ClickEvent(wxCommandEvent& event)  {  AButtonBase::ClickEvent(event);  }
+    void ClickEvent(wxCommandEvent&)  {  AButtonBase::ClickEvent();  }
   protected:
     virtual wxWindow* GetParent()  const  {  return wxButton::GetParent();  }
   public:
@@ -66,7 +66,7 @@ namespace ctrl_ext  {
   class TBmpButton: public wxBitmapButton, public AButtonBase  {
     void MouseEnterEvent(wxMouseEvent& event);
     void MouseLeaveEvent(wxMouseEvent& event);
-    void ClickEvent(wxCommandEvent& event)  {  AButtonBase::ClickEvent(event);  }
+    void ClickEvent(wxCommandEvent&)  {  AButtonBase::ClickEvent();  }
     olxstr Source;
   public:
     virtual wxWindow* GetParent()  const  {  return wxBitmapButton::GetParent();  }
@@ -80,6 +80,39 @@ namespace ctrl_ext  {
     DefPropC(olxstr, Source)
 
     DECLARE_CLASS(TBmpButton)
+    DECLARE_EVENT_TABLE()
+  };
+
+  class TImgButton : public wxPanel, public AButtonBase  {
+  public:
+    static const short
+      stUp       = 0x0001,
+      stDown     = 0x0002,
+      stDisabled = 0x0004,
+      stHover    = 0x0008;
+  private:
+    short state;
+    bool MouseIn;
+    wxBitmap bmpDown, bmpUp, bmpDisabled, bmpHover;
+  protected:
+    virtual wxWindow* GetParent()  const  {  return wxPanel::GetParent();  }
+    const wxBitmap& ChooseBitmap() const;
+    wxBitmap BmpFromImage(const wxImage& img, int w, int h) const;
+    void ClickEvent(wxCommandEvent&)  {  AButtonBase::ClickEvent();  }
+  public:
+    TImgButton(wxWindow* parent);
+
+    void PaintEvent(wxPaintEvent & evt)  {  Render(wxPaintDC(this));  }
+    void Paint()  {  Render(wxClientDC(this));  }
+    void SetEnabled(bool v)  {  state = (v ? stUp : stDisabled);  }
+    void Render(wxDC& dc) const;
+    void SetImages(const TTypeList<wxImage>& images, short imgState, int w=-1, int h=-1);
+    void MouseDownEvent(wxMouseEvent& event);
+    void MouseUpEvent(wxMouseEvent& event);
+    void MouseMoveEvent(wxMouseEvent& event);
+    void MouseEnterEvent(wxMouseEvent& event);
+    void MouseLeaveEvent(wxMouseEvent& event);
+        
     DECLARE_EVENT_TABLE()
   };
 }; //end namespace ctrl_ext

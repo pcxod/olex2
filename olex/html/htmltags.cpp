@@ -334,31 +334,76 @@ TAG_HANDLER_PROC(tag)  {
     if( tag.HasParam(wxT("FLAT")) )  flags |= wxNO_BORDER;
     olxstr buttonImage = tag.GetParam(wxT("IMAGE")).c_str();
     if( !buttonImage.IsEmpty() )  {
-      Btn = new TBmpButton(  m_WParser->GetWindowInterface()->GetHTMLWindow(), -1, wxNullBitmap, 
-        wxDefaultPosition, wxDefaultSize, flags );
-      ((TBmpButton*)Btn)->SetSource( buttonImage );
-      wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( buttonImage );
-      if( fsFile == NULL )
-        TBasicApp::GetLog().Error(olxstr("THTML: could not locate image for button: ") << ObjectName);
-      else  {
-        wxImage image(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
-        if ( !image.Ok() )
-          TBasicApp::GetLog().Error(olxstr("THTML: could not load image for button: ") << ObjectName);
-        else  {
-          if( (image.GetWidth() > ax || image.GetHeight() > ay) && tag.HasParam(wxT("STRETCH")) )
-            image = image.Scale(ax, ay);
-          else  {
-            ax = image.GetWidth();
-            ay = image.GetHeight();
+      if( buttonImage.IndexOf(',') != InvalidIndex )  {
+        const TStrList toks(buttonImage, ',');
+        TTypeList<wxImage> images((size_t)4);
+        short imgState = 0;
+        for( size_t i=0; i < toks.Count(); i++ )  {
+          const size_t ei = toks[i].IndexOf('=');
+          if( ei == InvalidIndex )  continue;
+          const olxstr dest = toks[i].SubStringTo(ei),
+            fn = toks[i].SubStringFrom(ei+1);
+          wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(fn);
+          if( fsFile == NULL )  {
+            TBasicApp::GetLog().Error(olxstr("THTML: could not locate image for button: ") << ObjectName);
+            continue;
           }
-          ((TBmpButton*)Btn)->SetBitmapLabel( image );
+          wxImage* img = new wxImage(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
+          if( dest.Equalsi("up") )  {
+            imgState |= TImgButton::stUp;
+            images.Set(0, img);
+          }
+          else if( dest.Equalsi("down") )  {
+            imgState |= TImgButton::stDown;
+            images.Set(1, img);
+          }
+          else if( dest.Equalsi("disabled") )  {
+            imgState |= TImgButton::stDisabled;
+            images.Set(2, img);
+          }
+          else if( dest.Equalsi("hover") )  {
+            imgState |= TImgButton::stHover;
+            images.Set(3, img);
+          }
+          else
+            delete img;
+          delete fsFile;
         }
+        images.Pack();
+        TImgButton* ibtn = new TImgButton(m_WParser->GetWindowInterface()->GetHTMLWindow());
+        ibtn->SetImages(images, imgState, ax, ay);
+        if( tag.HasParam(wxT("ENABLED")) )
+          ibtn->SetEnabled(olxstr(tag.GetParam(wxT("ENABLED")).c_str()).ToBool());
+        CreatedWindow = ibtn;
+        Btn = ibtn;
       }
-      Btn->WI.SetWidth(ax);
-      Btn->WI.SetHeight(ay);
-      ((TBmpButton*)Btn)->SetFont( m_WParser->GetDC()->GetFont() );
-
-      CreatedWindow = (TBmpButton*)Btn;
+      else  {
+        Btn = new TBmpButton(  m_WParser->GetWindowInterface()->GetHTMLWindow(), -1, wxNullBitmap, 
+          wxDefaultPosition, wxDefaultSize, flags );
+        ((TBmpButton*)Btn)->SetSource( buttonImage );
+        wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( buttonImage );
+        if( fsFile == NULL )
+          TBasicApp::GetLog().Error(olxstr("THTML: could not locate image for button: ") << ObjectName);
+        else  {
+          wxImage image(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
+          if ( !image.Ok() )
+            TBasicApp::GetLog().Error(olxstr("THTML: could not load image for button: ") << ObjectName);
+          else  {
+            if( (image.GetWidth() > ax || image.GetHeight() > ay) && tag.HasParam(wxT("STRETCH")) )
+              image = image.Scale(ax, ay);
+            else  {
+              ax = image.GetWidth();
+              ay = image.GetHeight();
+            }
+            ((TBmpButton*)Btn)->SetBitmapLabel( image );
+          }
+          delete fsFile;
+        }
+        Btn->WI.SetWidth(ax);
+        Btn->WI.SetHeight(ay);
+        ((TBmpButton*)Btn)->SetFont( m_WParser->GetDC()->GetFont() );
+        CreatedWindow = (TBmpButton*)Btn;
+      }
     }
     else  {
       Btn = new TButton( m_WParser->GetWindowInterface()->GetHTMLWindow(), -1, wxEmptyString, 
@@ -411,6 +456,8 @@ TAG_HANDLER_PROC(tag)  {
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell((TButton*)Btn, fl));
     else  if( EsdlInstanceOf(*Btn, TBmpButton) )
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell((TBmpButton*)Btn, fl));
+    else  if( EsdlInstanceOf(*Btn, TImgButton) )
+      m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell((TImgButton*)Btn, fl));
   }
 /******************* COMBOBOX *************************************************/
   else if( TagName.Equalsi("combo") )  {
