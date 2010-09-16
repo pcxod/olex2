@@ -338,45 +338,12 @@ TAG_HANDLER_PROC(tag)  {
     olxstr buttonImage = tag.GetParam(wxT("IMAGE")).c_str();
     if( !buttonImage.IsEmpty() )  {
       if( buttonImage.IndexOf(',') != InvalidIndex )  {
-        const TStrList toks(buttonImage, ',');
-        TTypeList<wxImage> images((size_t)4);
-        short imgState = 0;
-        for( size_t i=0; i < toks.Count(); i++ )  {
-          const size_t ei = toks[i].IndexOf('=');
-          if( ei == InvalidIndex )  continue;
-          const olxstr dest = toks[i].SubStringTo(ei),
-            fn = toks[i].SubStringFrom(ei+1);
-          wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(fn);
-          if( fsFile == NULL )  {
-            TBasicApp::GetLog().Error(olxstr("THTML: could not locate image for button: ") << ObjectName);
-            continue;
-          }
-          wxImage* img = new wxImage(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
-          if( dest.Equalsi("up") )  {
-            imgState |= TImgButton::stUp;
-            images.Set(0, img);
-          }
-          else if( dest.Equalsi("down") )  {
-            imgState |= TImgButton::stDown;
-            images.Set(1, img);
-          }
-          else if( dest.Equalsi("disabled") )  {
-            imgState |= TImgButton::stDisabled;
-            images.Set(2, img);
-          }
-          else if( dest.Equalsi("hover") )  {
-            imgState |= TImgButton::stHover;
-            images.Set(3, img);
-          }
-          else
-            delete img;
-          delete fsFile;
-        }
-        images.Pack();
         TImgButton* ibtn = new TImgButton(m_WParser->GetWindowInterface()->GetHTMLWindow());
-        ibtn->SetImages(images, imgState, width_set ? ax : -1, height_set ? ay : -1);
+        ibtn->SetImages(buttonImage, width_set ? ax : -1, height_set ? ay : -1);
         if( tag.HasParam(wxT("ENABLED")) )
           ibtn->SetEnabled(olxstr(tag.GetParam(wxT("ENABLED")).c_str()).ToBool());
+        if( tag.HasParam(wxT("DOWN")) )
+          ibtn->SetDown(olxstr(tag.GetParam(wxT("DOWN")).c_str()).ToBool());
         CreatedWindow = ibtn;
         Btn = ibtn;
       }

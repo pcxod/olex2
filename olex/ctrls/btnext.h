@@ -11,6 +11,7 @@ namespace ctrl_ext  {
     olxstr OnClickStr, Data, OnUpStr, OnDownStr, DependMode, Hint;
     TActionQueue *ActionQueue;
     virtual wxWindow* GetParent()  const  = 0;
+    void _SetDown(bool v)  {  Down = v;  }
   public:
     AButtonBase(wxWindow* this_wnd) :
       AOlxCtrl(this_wnd),
@@ -91,14 +92,16 @@ namespace ctrl_ext  {
       stDisabled = 0x0004,
       stHover    = 0x0008;
   private:
-    short state;
+    short state, width, height;
     bool MouseIn, ProcessingOnDown;
     wxBitmap bmpDown, bmpUp, bmpDisabled, bmpHover;
+    olxstr Source;
   protected:
     virtual wxWindow* GetParent()  const  {  return wxPanel::GetParent();  }
     const wxBitmap& ChooseBitmap() const;
     wxBitmap BmpFromImage(const wxImage& img, int w, int h) const;
     void ClickEvent(wxCommandEvent&)  {  AButtonBase::ClickEvent();  }
+    void SetImages(const TTypeList<wxImage>& images, short imgState, int w=-1, int h=-1);
   public:
     TImgButton(wxWindow* parent);
 
@@ -112,8 +115,12 @@ namespace ctrl_ext  {
     }
     bool IsEnabled() const {  return state != stDisabled;  }
     void SetEnabled(bool v)  {  state = (v ? stUp : stDisabled);  }
+    void SetDown(bool v);  // swaps Up and Down images if v is different to Down state...
+    const olxstr& GetSource() const {  return Source;  }
+    short GetWidth() const {  return width;  }
+    short GetHeight() const {  return height;  }
     void Render(wxDC& dc) const;
-    void SetImages(const TTypeList<wxImage>& images, short imgState, int w=-1, int h=-1);
+    void SetImages(const olxstr& src, int w=-1, int h=-1);
     void MouseDownEvent(wxMouseEvent& event);
     void MouseUpEvent(wxMouseEvent& event);
     void MouseMoveEvent(wxMouseEvent& event);

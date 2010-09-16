@@ -122,12 +122,12 @@ protected:
 
   olxstr GetObjectValue(const AOlxCtrl *Object);
   const olxstr& GetObjectData(const AOlxCtrl *Object);
-  bool GetObjectState(const AOlxCtrl *Object);
+  bool GetObjectState(const AOlxCtrl *Object, const olxstr& state);
   olxstr GetObjectImage(const AOlxCtrl *Object);
   olxstr GetObjectItems(const AOlxCtrl *Object);
   void SetObjectValue(AOlxCtrl *AOlxCtrl, const olxstr& Value);
   void SetObjectData(AOlxCtrl *AOlxCtrl, const olxstr& Data);
-  void SetObjectState(AOlxCtrl *AOlxCtrl, bool State);
+  void SetObjectState(AOlxCtrl *AOlxCtrl, bool State, const olxstr& state_name);
   bool SetObjectImage(AOlxCtrl *AOlxCtrl, const olxstr& src);
   bool SetObjectItems(AOlxCtrl *AOlxCtrl, const olxstr& src);
   void _FindNext(index_t from, index_t &dest, bool scroll) const;
