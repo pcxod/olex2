@@ -147,8 +147,10 @@ const wxBitmap& TImgButton::ChooseBitmap() const {
 //..............................................................................
 void TImgButton::Render(wxDC& dc) const {
   const wxBitmap& bmp = ChooseBitmap();
-  if( bmp.IsOk() )
+  if( bmp.IsOk() )  {
+    dc.Clear();
     dc.DrawBitmap(bmp, 0, 0);
+  }
 }
 //..............................................................................
 void TImgButton::MouseDownEvent(wxMouseEvent& event)  {
