@@ -1,6 +1,7 @@
 #include "btnext.h"
 #include "frameext.h"
 #include "../obase.h"
+#include "fsext.h"
 
 using namespace ctrl_ext;
 IMPLEMENT_CLASS(TButton, wxButton)
@@ -91,10 +92,12 @@ void TBmpButton::MouseLeaveEvent(wxMouseEvent& event)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
+#ifdef __GNUC__
 const short TImgButton::stUp;
 const short TImgButton::stDown;
 const short TImgButton::stDisabled;
 const short TImgButton::stHover;
+#endif
 
 BEGIN_EVENT_TABLE(TImgButton, wxPanel)
   EVT_LEFT_DOWN(TImgButton::MouseDownEvent)
@@ -107,6 +110,7 @@ END_EVENT_TABLE()
 //..............................................................................
 TImgButton::TImgButton(wxWindow* parent) : wxPanel(parent), AButtonBase(this) {
   state = 0;
+  width = height = -1;
   ProcessingOnDown = MouseIn = false;
 }
 //..............................................................................
@@ -192,6 +196,48 @@ wxBitmap TImgButton::BmpFromImage(const wxImage& img, int w, int h) const {
   return wxBitmap(img);
 }
 //..............................................................................
+void TImgButton::SetImages(const olxstr& src, int w, int h)  {
+  Source = src;
+  width = w;
+  height = h;
+  const TStrList toks(src, ',');
+  TTypeList<wxImage> images((size_t)4);
+  short imgState = 0;
+  for( size_t i=0; i < toks.Count(); i++ )  {
+    const size_t ei = toks[i].IndexOf('=');
+    if( ei == InvalidIndex )  continue;
+    const olxstr dest = toks[i].SubStringTo(ei),
+      fn = toks[i].SubStringFrom(ei+1);
+    wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(fn);
+    if( fsFile == NULL )  {
+      TBasicApp::GetLog().Error(olxstr(__OlxSrcInfo) << ": could not locate image '" << fn << '\'');
+      continue;
+    }
+    wxImage* img = new wxImage(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
+    if( dest.Equalsi("up") )  {
+      imgState |= TImgButton::stUp;
+      images.Set(0, img);
+    }
+    else if( dest.Equalsi("down") )  {
+      imgState |= TImgButton::stDown;
+      images.Set(1, img);
+    }
+    else if( dest.Equalsi("disabled") )  {
+      imgState |= TImgButton::stDisabled;
+      images.Set(2, img);
+    }
+    else if( dest.Equalsi("hover") )  {
+      imgState |= TImgButton::stHover;
+      images.Set(3, img);
+    }
+    else
+      delete img;
+    delete fsFile;
+  }
+  images.Pack();
+  SetImages(images, imgState, w, h);
+}
+//..............................................................................
 void TImgButton::SetImages(const TTypeList<wxImage>& images, short imgState, int w, int h)  {
   if( images.IsEmpty() )  return;
   if( w == -1 )  w = images[0].GetWidth();
@@ -206,5 +252,11 @@ void TImgButton::SetImages(const TTypeList<wxImage>& images, short imgState, int
     bmpHover = BmpFromImage(images[img_index++], w, h);
   if( img_index < images.Count() && (imgState & stDisabled) != 0 )
     bmpDisabled = BmpFromImage(images[img_index++], w, h);
+}
+//..............................................................................
+void TImgButton::SetDown(bool v)  {
+  if( IsDown() != v )
+    olx_swap(bmpUp, bmpDown);
+  _SetDown(v);
 }
 //..............................................................................

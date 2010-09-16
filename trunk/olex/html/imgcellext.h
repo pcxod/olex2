@@ -37,6 +37,7 @@ class THtmlImageCell : public wxHtmlCell, public AOlxCtrl  {
     virtual bool IsInside(short x, short y) const {  return shape.IsInside(x, y);  }
   };
   TTypeList<AShapeInfo> Shapes;
+  void Draw(wxDC& dc, int x, int y);
 public:
   THtmlImageCell(wxWindow *window,
     wxFSFile *input, int w = wxDefaultCoord, int h = wxDefaultCoord,
@@ -45,8 +46,8 @@ public:
     bool WidthInPercent = false, 
     bool HeightInPercent = false);
   ~THtmlImageCell();
-  void Draw(wxDC& dc, int x, int y, int view_y1, int view_y2,
-    wxHtmlRenderingInfo& info);
+  void Draw(wxDC& dc, int x, int y, int WXUNUSED(view_y1), int WXUNUSED(view_y2),
+    wxHtmlRenderingInfo& WXUNUSED(info))  {  Draw(dc, x, y);  }
   virtual wxHtmlLinkInfo *GetLink(int x = 0, int y = 0) const;
   wxScrolledWindow* GetWindow()  {  return m_window;  }
   void SetImage(const wxImage& img);
