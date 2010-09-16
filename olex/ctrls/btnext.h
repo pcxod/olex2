@@ -85,7 +85,7 @@ namespace ctrl_ext  {
 
   class TImgButton : public wxPanel, public AButtonBase  {
   public:
-    static const short
+    const static short
       stUp       = 0x0001,
       stDown     = 0x0002,
       stDisabled = 0x0004,
@@ -102,8 +102,14 @@ namespace ctrl_ext  {
   public:
     TImgButton(wxWindow* parent);
 
-    void PaintEvent(wxPaintEvent & evt)  {  Render(wxPaintDC(this));  }
-    void Paint()  {  Render(wxClientDC(this));  }
+    void PaintEvent(wxPaintEvent & evt)  {
+      wxPaintDC dc(this);
+      Render(dc);
+    }
+    void Paint()  {
+      wxClientDC dc(this);
+      Render(dc);
+    }
     bool IsEnabled() const {  return state != stDisabled;  }
     void SetEnabled(bool v)  {  state = (v ? stUp : stDisabled);  }
     void Render(wxDC& dc) const;
