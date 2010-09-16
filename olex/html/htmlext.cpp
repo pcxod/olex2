@@ -86,6 +86,8 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC, int flags) :
       fpTwo, "Defines a managed control properties");
     InitMacroD( *THtml::Library, THtml, Hide, EmptyString, 
       fpOne, "Hides an Html popup window");
+    InitMacroD( *THtml::Library, THtml, Group, EmptyString, 
+      fpAny^(fpNone|fpOne), "Creates an exclusive group of buttons");
 
     this_InitFuncD(GetValue, fpOne, "Returns value of specified object");
     this_InitFuncD(GetData, fpOne, "Returns data associated with specified object");
@@ -1476,35 +1478,52 @@ void THtml::funSelect(const TStrObjList &Params, TMacroError &E)  {
     tv->SelectByData(Params[1]);
 }
 //..............................................................................
-void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {
+bool THtml::SetState(const TStrObjList &Params, TMacroError &E)  {
   const size_t ind = Params[0].IndexOf('.');
   THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
   olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
+    return false;
   }
+  const bool state = Params.Last().String.ToBool();
   AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
     TSStrStrList<olxstr,false>* props = html->ObjectsState.FindProperties(Params[0]);
     if( props == NULL )  {
-      E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
-      return;
+      E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
+      return false;
     }
     if( props->IndexOfComparable("checked") == InvalidIndex )  {
-      E.ProcessingError(__OlxSrcInfo,  "object definition does have state for: ") << objName;
-      return;
+      E.ProcessingError(__OlxSrcInfo, "object definition does have state for: ") << objName;
+      return false;
     }
     if( Params.Count() == 2 )
-      (*props)["checked"] = Params[1];
+      (*props)["checked"] = state;
     else
-      (*props)[Params[1]] = Params[2];
+      (*props)[Params[1]] = state;
   }
-  else  {
-    if( Params.Count() == 2 )
-      html->SetObjectState(Obj, Params[1].ToBool(), EmptyString);
-    else
-      html->SetObjectState(Obj, Params[2].ToBool(), Params[1]);
+  else
+    html->SetObjectState(Obj, state, (Params.Count() == 2 ? EmptyString : Params[1]));
+  return true;
+}
+//..............................................................................
+void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {
+  if( !SetState(Params, E) )
+    return;
+  if( Params.Last().String.ToBool() )  {
+    TStrObjList params(Params);
+    params.Last().String = FalseString;
+    TMacroError e;
+    for( size_t i=0; i < Groups.Count(); i++ )  {
+      if( Groups[i].IndexOf(Params[0]) == InvalidIndex )  continue;
+      const TStrList& group = Groups[i];
+      for( size_t j=0; j < group.Count(); j++ )  {
+        if( group[j].Equalsi(Params[0]) )  continue;
+        params[0] = group[j];
+        SetState(params, e);
+      }
+    }
   }
 }
 //..............................................................................
@@ -2051,6 +2070,24 @@ TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(const olxstr& na
   Objects.Add(name, props);
 
   return props;
+}
+//..............................................................................
+void THtml::macGroup(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  bool intersects = false;
+  for( size_t i=0; i < Groups.Count(); i++ )  {
+    for( size_t j=0; j < Cmds.Count(); j++ )  {
+      if( Groups[i].IndexOfi(Cmds[j]) != InvalidIndex )  {
+        intersects = true;
+        break;
+      }
+    }
+    if( intersects )  break;
+  }
+  if( intersects )  {
+    E.ProcessingError(__OlxSrcInfo, "The group intersects with already existing one");
+    return;
+  }
+  Groups.AddNew(Cmds);
 }
 //..............................................................................
 
