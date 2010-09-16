@@ -91,6 +91,11 @@ void TBmpButton::MouseLeaveEvent(wxMouseEvent& event)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
+const short TImgButton::stUp;
+const short TImgButton::stDown;
+const short TImgButton::stDisabled;
+const short TImgButton::stHover;
+
 BEGIN_EVENT_TABLE(TImgButton, wxPanel)
   EVT_LEFT_DOWN(TImgButton::MouseDownEvent)
   EVT_LEFT_UP(TImgButton::MouseUpEvent)
