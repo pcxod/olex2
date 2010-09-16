@@ -53,6 +53,7 @@ protected:
   olxdict<olxstr, AnAssociation3<AOlxCtrl*,wxWindow*,bool>, olxstrComparator<true> > Objects;
   TTypeList<AnAssociation2<AOlxCtrl*,wxWindow*> > Traversables;
   TSStrPObjList<olxstr,size_t,true> SwitchStates;
+  TTypeList<TStrList> Groups;
   olxstr FocusedControl;
   class TObjectsState  {
     TSStrPObjList<olxstr,TSStrStrList<olxstr,false>*, true> Objects;
@@ -71,6 +72,7 @@ protected:
     bool LoadFromFile(const olxstr& fn);
   };
   TObjectsState ObjectsState;
+  bool SetState(const TStrObjList &Params, TMacroError &E);
 protected:
   size_t GetSwitchState(const olxstr& switchName);
   void ClearSwitchStates()  {  SwitchStates.Clear();  }
@@ -86,6 +88,7 @@ protected:
     DefMacro(SetBorders)
     DefMacro(DefineControl)
     DefMacro(Hide)
+    DefMacro(Group)
 
     DefFunc(GetValue)
     DefFunc(GetData)
