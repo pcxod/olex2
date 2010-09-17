@@ -58,9 +58,6 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   for( size_t i=0; i < SfacData.Count(); i++ )
     delete SfacData.GetValue(i);
   SfacData.Clear();
-  for( size_t i=0; i < DispData.Count(); i++ )
-    delete DispData.GetValue(i);
-  DispData.Clear();
   UserContent.Clear();
   for( size_t i=0; i < Frags.Count(); i++ )
     delete Frags.GetValue(i);
@@ -207,8 +204,6 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
 
   for( size_t i=0; i < rm.SfacData.Count(); i++ )
     SfacData(rm.SfacData.GetKey(i), new XScatterer(*rm.SfacData.GetValue(i)));
-  for( size_t i=0; i < rm.DispData.Count(); i++ )
-    DispData(rm.DispData.GetKey(i), new XDispersion(*rm.DispData.GetValue(i)));
   UserContent = rm.UserContent;
   // check if all EQIV are used
   for( size_t i=0; i < UsedSymm.Count(); i++ )  {
@@ -254,55 +249,22 @@ void RefinementModel::SetPlan(int v)  {
     PLAN[0] = v;  
 }
 //....................................................................................................
-void RefinementModel::AddNewSfac(const olxstr& _label,
-                  double a1, double a2, double a3, double a4,
-                  double b1, double b2, double b3, double b4,
-                  double c, double fp, double fdp, double mu, double r, double wt)
-{
-  const olxstr lb(_label.CharAt(0) == '$' ? _label.SubStringFrom(1) : _label);
-  cm_Element* src = XElementLib::FindBySymbolEx(lb);
-  XScatterer* sc;
-  if( src != NULL )  {
-    try  {  sc = new XScatterer(*src, expl.GetRadiationEnergy());  }
-    catch(...)  {  // may fail if radiation energy is too high
-      sc = new XScatterer;
-    }
-  }
-  else
-    throw TFunctionFailedException(__OlxSourceInfo, "could not locate reference chemical element");
-  sc->SetLabel(lb);
-  sc->SetGaussians(a1, a2, a3, a4, b1, b2, b3, b4, c);
-  sc->SetAdsorptionCoefficient(mu);
-  sc->SetR(r);
-  sc->SetWeight(wt);
-  sc->SetFpFdp(compd(fp, fdp));
-  size_t i = SfacData.IndexOf(lb);
+void RefinementModel::AddSfac(XScatterer& sc)  {
+  const size_t i = SfacData.IndexOf(sc.GetLabel());
   if( i != InvalidIndex )  {
-    delete SfacData.GetValue(i);
-    SfacData.GetEntry(i).val = sc;
+    SfacData.GetEntry(i).val->Merge(sc);
+    delete &sc;
   }
   else
-    SfacData.Add(lb, sc);
-}
-//....................................................................................................
-void RefinementModel::AddDisp(const olxstr& _label, double fp, double fdp, double mu)  {
-  olxstr lb(_label.CharAt(0) == '$' ? _label.SubStringFrom(1) : _label);
-  XDispersion* xd = new XDispersion(lb, fp, fdp, mu);
-  size_t i = DispData.IndexOf(lb);
-  if( i != InvalidIndex )  {
-    delete DispData.GetValue(i);
-    DispData.GetEntry(i).val = xd;
-  }
-  else
-    DispData.Add(lb, xd);
+    SfacData.Add(sc.GetLabel(), &sc);
 }
 //....................................................................................................
 InfoTab& RefinementModel::AddHTAB() {
-  return InfoTables.Add( new InfoTab(*this, infotab_htab) );
+  return InfoTables.Add(new InfoTab(*this, infotab_htab));
 }
 //....................................................................................................
 InfoTab& RefinementModel::AddRTAB(const olxstr& codename, const olxstr& resi) {
-  return InfoTables.Add( new InfoTab(*this, infotab_rtab, codename, resi) );
+  return InfoTables.Add(new InfoTab(*this, infotab_rtab, codename, resi));
 }
 //....................................................................................................
 void RefinementModel::Validate() {
@@ -921,7 +883,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   if( !SfacData.IsEmpty() )  {
     TDataItem& sfacs = item.AddItem("SFAC");
     for( size_t i=0; i < SfacData.Count(); i++ )
-      SfacData.GetValue(i)->ToDataItem(item.AddItem(SfacData.GetKey(i)));      
+      SfacData.GetValue(i)->ToDataItem(sfacs);      
   }
 }
 //....................................................................................................
@@ -997,19 +959,9 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   TDataItem* sfac = item.FindItem("SFAC");
   if( sfac != NULL )  {
     for( size_t i=0; i < sfac->ItemCount(); i++ )  {
-      cm_Element* src = XElementLib::FindBySymbol(sfac->GetItem(i).GetName());
-      XScatterer* sc;
-      if( src != NULL )  {
-        try  {  sc = new XScatterer(*src, expl.GetRadiationEnergy());  }
-        catch(...)  {  // may fail if radiation energy is too high
-          sc = new XScatterer;
-        }
-      }
-      else
-        throw TFunctionFailedException(__OlxSourceInfo, "could not locate reference chemical element");
+      XScatterer* sc = new XScatterer(EmptyString);
       sc->FromDataItem(sfac->GetItem(i));
-      sc->SetLabel(sfac->GetItem(i).GetName());
-      SfacData.Add(sfac->GetItem(i).GetName(), sc);
+      SfacData.Add(sc->GetLabel(), sc);
     }
   }
   aunit._UpdateConnInfo();
