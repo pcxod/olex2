@@ -1718,13 +1718,9 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options, TMacro
   const ContentList& content = rm.GetUserContent();
   const double en = rm.expl.GetRadiationEnergy();
   for( size_t i=0; i < content.Count(); i++ )  {
-    XDispersion* xd = rm.FindDispData(content[i].element.symbol);
-    if( xd == NULL )  {
-      compd fpfdp = content[i].element.CalcFpFdp(en) - content[i].element.z;
-      rm.AddDisp(content[i].element.symbol, fpfdp.GetRe(), fpfdp.GetIm());
-    }
-    else
-      ;//xd->fpfdp =  ce->CalcFpFdp(en);
+    XScatterer* sc = new XScatterer(content[i].element.symbol);
+    sc->SetFpFdp(content[i].element.CalcFpFdp(en) - content[i].element.z);
+    rm.AddSfac(*sc);
   }
 }
 //..............................................................................
@@ -3914,7 +3910,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       continue;
     }
     bool identity_based = false;
-    for( int j=0; j < rings[i].Count(); j++ )  {
+    for( size_t j=0; j < rings[i].Count(); j++ )  {
       if( rings[i][j]->IsAUAtom() )  {
         identity_based = true;
         break;

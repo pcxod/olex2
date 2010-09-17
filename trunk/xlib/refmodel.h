@@ -38,7 +38,6 @@ class RefinementModel : public IXVarReferencerContainer, public IXVarReferencer 
   // in INS file is EQUV command
   olxdict<olxstr,smatd,olxstrComparator<false> > UsedSymm;
   olxdict<olxstr,XScatterer*, olxstrComparator<false> > SfacData;
-  olxdict<olxstr,XDispersion*, olxstrComparator<false> > DispData;
   olxdict<int, Fragment*, TPrimitiveComparator> Frags;
   ContentList UserContent;
 protected:
@@ -344,13 +343,8 @@ of components 1 ... m
     size_t i = UsedSymm.IndexOf(name);
     return (i == InvalidIndex ? NULL : &UsedSymm.GetValue(i));
   }
-  
-  // adds new custom scatterer
-  void AddNewSfac(const olxstr& label,
-                  double a1, double a2, double a3, double a4,
-                  double b1, double b2, double b3, double b4,
-                  double c, double fp, double fdp, double mu, 
-                  double r, double wt);
+  // adds new custom scatterer (created with new, will be deleted)
+  void AddSfac(XScatterer& sc);
   // returns number of custom scatterers
   inline size_t SfacCount() const {  return SfacData.Count();  }
   // returns scatterer at specified index
@@ -359,15 +353,6 @@ of components 1 ... m
   inline XScatterer* FindSfacData(const olxstr& label) const {
     size_t ind = SfacData.IndexOf(label);
     return ind == InvalidIndex ? NULL : SfacData.GetValue(ind);
-  }
-
-  size_t DispCount() const {  return DispData.Count();  }
-  XDispersion& GetDispData(size_t i) const {  return *DispData.GetValue(i);  }
-  void AddDisp(const olxstr& label, double fp, double fdp, double mu = -1);
-  // finds scatterer by label, returns NULL if nothing found
-  inline XDispersion* FindDispData(const olxstr& label) const {
-    size_t ind = DispData.IndexOf(label);
-    return ind == InvalidIndex ? NULL : DispData.GetValue(ind);
   }
   // user content management
   const ContentList& GetUserContent() const {  return UserContent;  }

@@ -81,6 +81,7 @@ struct cm_Isotope {
 
 struct cm_Gaussians {  
   double a1, a2, a3, a4, b1, b2, b3, b4, c;  
+  cm_Gaussians() : a1(0), a2(0), a3(0), a4(0), b1(0), b2(0), b3(0), b4(0), c(0)  {}
   // constructor, note that b values are inverted!
   cm_Gaussians(double _a1, double _a2, double _a3, double _a4, 
     double _b1, double _b2, double _b3, double _b4, double _c) :
@@ -100,6 +101,12 @@ struct cm_Gaussians {
     c = g.c;
     return *this;
   }
+  bool operator == (const cm_Gaussians& g) const {
+    return (a1 == g.a1 && a2 == g.a2 && a3 == g.a3 && a4 == g.a4 &&
+            b1 == g.b1 && b2 == g.b2 && b3 == g.b3 && b4 == g.b4 &&
+            c == g.c);
+  }
+  bool operator != (const cm_Gaussians& g) const {  return !(*this == g);  }
 };
 
 struct cm_Element {
