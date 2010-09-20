@@ -40,6 +40,7 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGlMaterial& mat) :
   Object = NULL;
   Init();
   Materials[0] = mat;
+  Init(Materials[0]);
 }
 //..............................................................................
 void TdlgMatProp::Init()  {

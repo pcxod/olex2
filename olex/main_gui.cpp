@@ -221,11 +221,14 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     TdlgPrimitive* Primitives = new TdlgPrimitive(this, Ps, i);
     if( Primitives->ShowModal() == wxID_OK )  {
       if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
+        FXApp->AtomTagsToIndexes();
         for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
           if( EsdlInstanceOf(FXApp->GetSelection()[i], TXBond) )  {
             TXBond& xb = (TXBond&)FXApp->GetSelection()[i];
             FXApp->Individualise(xb);
-            xb.UpdatePrimitives(Primitives->Mask);
+            BondCreationParams bcp(FXApp->GetAtom(xb.Bond().A().GetTag()),
+              FXApp->GetAtom(xb.Bond().B().GetTag()));
+            xb.UpdatePrimitives(Primitives->Mask, &bcp);
           }
         }
       }
