@@ -256,19 +256,22 @@ bool THttpFileSystem::_DoesExist(const olxstr& f, bool forced_check)  {
   if( Index != NULL )
     return Index->GetRoot().FindByFullName(f) != NULL;
   if( !forced_check )  return false;  
-  DoConnect();
-  const size_t BufferSize = 1024;
-  char* Buffer = new char[BufferSize+1];
-  _write(GenerateRequest(GetUrl(), "HEAD", f));
-  int read = _read(Buffer, BufferSize);
-  if( read <= 0 )  {
-    delete [] Buffer;
-    return false;
+  try  {
+    DoConnect();
+    const size_t BufferSize = 1024;
+    char* Buffer = new char[BufferSize+1];
+    _write(GenerateRequest(GetUrl(), "HEAD", f));
+    int read = _read(Buffer, BufferSize);
+    if( read <= 0 )  {
+      delete [] Buffer;
+      return false;
+    }
+    TCStrList toks;
+    // make sure that \r\n or \n\n are treated properly
+    toks.LoadFromTextArray(Buffer, read, true);
+    return toks[0].EndsWith("200 OK");
   }
-  TCStrList toks;
-  // make sure that \r\n or \n\n are treated properly
-  toks.LoadFromTextArray(Buffer, read, true);
-  return toks[0].EndsWith("200 OK");
+  catch(...)  {  return false;  }
 }
 //..............................................................................
 

@@ -573,8 +573,8 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
     tab[11][0] << "Reflections omitted by user (OMIT_hkl)";   tab[11][1] << hs.OmittedByUser;
     tab[12][0] << "Reflections skipped (after 0 0 0)";        tab[12][1] << hs.OmittedReflections;
     tab[13][0] << "Intensity transformed for (OMIT_s)";       tab[13][1] << hs.IntensityTransformed << " reflections";
-    tab[14][0] << "Rint";                         tab[14][1] << olxstr::FormatFloat(3, hs.Rint);
-    tab[15][0] << "Rsigma";                       tab[15][1] << olxstr::FormatFloat(3, hs.Rsigma);
+    tab[14][0] << "Rint, %";                         tab[14][1] << olxstr::FormatFloat(2, hs.Rint*100);
+    tab[15][0] << "Rsigma, %";                       tab[15][1] << olxstr::FormatFloat(2, hs.Rsigma*100);
     tab[16][0] << "Mean I/sig";                   tab[16][1] << olxstr::FormatFloat(3, hs.MeanIOverSigma);
     tab[17][0] << "HKL range";                    
     tab[17][1] << "h=[" << hs.MinIndexes[0] << ',' << hs.MaxIndexes[0] << "] "
