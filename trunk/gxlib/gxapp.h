@@ -381,6 +381,9 @@ public:
   TXAtom* GetXAtom(const olxstr& AtomName, bool Clear);
   void GetXAtoms(const olxstr& AtomName, TXAtomPList& res);
   void GetXBonds(const olxstr& BondName, TXBondPList& res);
+  struct BondCreationParams GetBondCreationParams(const TXBond& xb) const;
+  void AtomTagsToIndexes() const;
+  void BondTagsToIndexes() const;
   // these two do a command line parsing "sel C1 $N C?? C4 to end"
   void FindCAtoms(const olxstr& Atoms, TCAtomPList& List, bool ClearSelection=true);
   void FindXAtoms(const olxstr& Atoms, TXAtomPList& List, bool ClearSelection=true, 

@@ -1540,9 +1540,14 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Cmds.Delete( Cmds.Count() - 1 );
     TGPCollection *GPC = FXApp->GetRender().FindCollection(Cmds.Text(' '));
     if( GPC != NULL )  {
-      if( GPC->ObjectCount() != 0 )
-        GPC->GetObject(0).UpdatePrimitives(Mask);
-      //TimePerFrame = FXApp->Draw();
+      if( GPC->ObjectCount() != 0 )  {
+        if( EsdlInstanceOf(GPC->GetObject(0), TXBond) )  {
+          BondCreationParams bcp = FXApp->GetBondCreationParams((TXBond&)GPC->GetObject(0));
+          GPC->GetObject(0).UpdatePrimitives(Mask, &bcp);
+        }
+        else
+          GPC->GetObject(0).UpdatePrimitives(Mask);
+      }
     }
     else  {
       Error.ProcessingError(__OlxSrcInfo, olxstr("Undefined graphics :") << Cmds.Text(' ') );
