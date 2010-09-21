@@ -462,7 +462,7 @@ void CifBlock::Sort(const TStrList& pivots, const TStrList& endings)  {
     "_space_group,_space_group_symop,_symmetry,"
     "_cell_length,_cell_angle,_cell_volume,_cell_formula,_cell,"
     "_exptl_,"
-    "_diffrn,"
+    "_diffrn_reflns,_diffrn,"
     "_reflns,"
     "_computing,"
     "_refine,"

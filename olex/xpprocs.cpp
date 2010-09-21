@@ -3409,8 +3409,7 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   olxstr cr( Options.FindValue("r", EmptyString).ToLowerCase() );
   TCAtomPList Atoms;
-  olxstr tmp = Cmds.IsEmpty() ? olxstr("sel") : Cmds.Text(' ');
-  FXApp->FindCAtoms(tmp, Atoms, true);
+  FXApp->FindCAtoms(Cmds.IsEmpty() ? olxstr("sel") : Cmds.Text(' '), Atoms, true);
   if( Atoms.IsEmpty() )  return;
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   RefinementModel& rm = FXApp->XFile().GetRM();
@@ -3444,7 +3443,7 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     direction *= Length;
     direction /= 2;
-    FXApp->XFile().GetAsymmUnit().CartesianToCell( direction );
+    FXApp->XFile().GetAsymmUnit().CartesianToCell(direction);
 
     TCAtom& CA1 = FXApp->XFile().GetAsymmUnit().NewAtom();
     CA1.Assign(*CA);
@@ -3452,7 +3451,8 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     CA1.ccrd() += direction;
     CA1.SetLabel(FXApp->XFile().GetAsymmUnit().CheckLabel(&CA1, lbl+'a'), false);
     // link occupancies
-    rm.Vars.AddVarRef(var, CA1, catom_var_name_Sof, relation_AsVar, 1.0); 
+    rm.Vars.AddVarRef(var, CA1, catom_var_name_Sof, relation_AsVar, 1.0);
+    CA1.SetOccu(0.5);
     ProcessedAtoms.Add(CA1);
     TCAtom& CA2 = *CA;
     CA2.SetPart(2);
@@ -3460,6 +3460,7 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     CA2.SetLabel(FXApp->XFile().GetAsymmUnit().CheckLabel(&CA2, lbl+'b'), false);
     // link occupancies
     rm.Vars.AddVarRef(var, CA2, catom_var_name_Sof, relation_AsOneMinusVar, 1.0); 
+    CA2.SetOccu(0.5);
     ProcessedAtoms.Add(CA2);
     TSimpleRestraint* sr = NULL;
     if( cr.IsEmpty() );

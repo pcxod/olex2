@@ -1400,12 +1400,22 @@ void TMainForm::AquireTooltipValue()  {
         Tooltip << ':' << xa.Atom().CAtom().GetQPeak();
       double occu = ca.GetOccu()*ca.GetDegeneracy();
       Tooltip << "\nChem occu(";
-      if( ca.GetVarRef(catom_var_name_Sof) != NULL && 
-        ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )
-      {
-        Tooltip << "fixed): ";
-        if( olx_abs(occu-olx_round(occu)) < 1e-3 )
-          occu = olx_round(occu);
+      if( ca.GetVarRef(catom_var_name_Sof) != NULL )  {
+        if( ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )  {
+          Tooltip << "fixed): ";
+          if( olx_abs(occu-olx_round(occu)) < 1e-3 )
+            occu = olx_round(occu);
+        }
+        else  {
+          Tooltip << "linked to ";
+          if( olx_abs(ca.GetVarRef(catom_var_name_Sof)->coefficient-1.0) > 1e-6 )
+            Tooltip << olxstr(ca.GetVarRef(catom_var_name_Sof)->coefficient).TrimFloat() << 'x';
+          if( ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_AsVar )
+            Tooltip << "[FVAR#";
+          else
+            Tooltip << "[1-FVAR #";
+          Tooltip << (ca.GetVarRef(catom_var_name_Sof)->Parent.GetId()+1) << "]): ";
+        }
       }
       else
         Tooltip << "free): ";

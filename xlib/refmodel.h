@@ -70,14 +70,13 @@ public:
       OmittedReflections, // refs after 0 0 0
       TotalReflections, // reflections read = OmittedRefs + TotalRefs
       IntensityTransformed;  // by OMIT_s
-    HklStat()  {
-      SetDefaults();
-    }
-    HklStat( const HklStat& hs ) {
-      this->operator = (hs);
-    }
+    vec3i FileMinInd, FileMaxInd;  // hkl range in the file (all before 0 0 0)
+    HklStat()  {  SetDefaults();  }
+    HklStat(const HklStat& hs) {  this->operator = (hs);  }
     HklStat& operator = (const HklStat& hs)  {
       MergeStats::operator = (hs);
+      FileMinInd = hs.FileMinInd;
+      FileMaxInd = hs.FileMaxInd;
       MaxD = hs.MaxD;         MinD = hs.MinD; 
       OMIT_s = hs.OMIT_s;     OMIT_2t = hs.OMIT_2t;
       SHEL_lr = hs.SHEL_lr;   SHEL_hr = hs.SHEL_hr;
@@ -109,7 +108,7 @@ public:
     size_t GetReadReflections() const {  return TotalReflections+OmittedReflections;  }
   };
 protected:
-  HklStat _HklStat;
+  mutable HklStat _HklStat;
   mutable TRefList _Reflections;  // ALL un-merged reflections
   mutable TRefPList _FriedelPairs;  // references form the _Reflections
   mutable TEFile::FileID HklStatFileID, HklFileID;  // if this is not the HKLSource, statistics is recalculated
@@ -450,7 +449,7 @@ of components 1 ... m
     }
     else
       stats = RefMerger::MergeInP1<Merger>(refs, out, Omits);
-    return stats;
+    return AdjustIntensity(out, stats);
   }
   // Friedel pairs always merged
   template <class SymSpace, class Merger>
@@ -460,7 +459,7 @@ of components 1 ... m
     FilterHkl(refs, stats);
     stats = RefMerger::Merge<SymSpace,Merger>(sp, refs, out,
       Omits, !sp.IsCentrosymmetric());
-    return stats;
+    return AdjustIntensity(out, stats);
   }
   // P-1 merged, filtered
   template <class Merger> HklStat GetWilsonRefList(TRefList& out) {
@@ -470,7 +469,7 @@ of components 1 ... m
     smatd_list ml;
     ml.AddNew().I() *= -1;
     stats = RefMerger::Merge<smatd_list,Merger>(ml, refs, out, Omits, true);
-    return stats;
+    return AdjustIntensity(out, stats);
   }
   // P1 merged, unfiltered
   template <class Merger> HklStat GetAllP1RefList(TRefList& out)  {
@@ -487,13 +486,15 @@ of components 1 ... m
     TRefList refs;
     FilterHkl(refs, stats);
     stats = RefMerger::MergeInP1<Merger>(refs, out, Omits);
-    return stats;
+    return AdjustIntensity(out, stats);
   }
   // if none of the above functions help, try this ones
   // return complete list of unmerged reflections (HKLF matrix, if any is NOT applied)
   const TRefList& GetReflections() const;
   // filters the reflections according to the parameters
   HklStat& FilterHkl(TRefList& out, HklStat& stats);
+  // adjust intensity of reflections according to OMIT
+  HklStat& AdjustIntensity(TRefList& out, HklStat& stats) const;
   // returns un-filtered, un-merged list of the Friedel pairs
   const TRefPList& GetFriedelPairs() const  {
     GetReflections();
