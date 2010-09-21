@@ -373,11 +373,9 @@ const TRefList& RefinementModel::GetReflections() const {
     THklFile hf;
     hf.LoadFromFile(HKLSource);
     const vec3i minInd(hf.GetMinHkl()), maxInd(hf.GetMaxHkl());
-    TArray3D<TRefPList*> hkl3d(
-      minInd[0], maxInd[0],
-      minInd[1], maxInd[1],
-      minInd[2], maxInd[2]
-    );
+    _HklStat.FileMinInd = vec3i(100,100,100);
+    _HklStat.FileMaxInd = vec3i(-100,-100,-100);
+    TArray3D<TRefPList*> hkl3d(minInd, maxInd);
     hkl3d.FastInitWith(0);
     HklFileID = hkl_src_id;
     const size_t hkl_cnt = hf.RefCount();
@@ -396,7 +394,10 @@ const TRefList& RefinementModel::GetReflections() const {
           continue;
         }
       }
+      if( hf[i].GetTag() < 0 )  // is after (0, 0, 0) ?
+        continue;
       TReflection& r = _Reflections.AddNew(hf[i]);
+      vec3i::UpdateMinMax(r.GetHkl(), _HklStat.FileMinInd, _HklStat.FileMaxInd);
       TRefPList* rl = hkl3d(hf[i].GetHkl());
       if(  rl == NULL )
         hkl3d(hf[i].GetHkl()) = rl = new TRefPList;
@@ -410,19 +411,21 @@ const TRefList& RefinementModel::GetReflections() const {
     for( int h=minInd[0]; h <= maxInd[0]; h++ )  {
       for( int k=minInd[1]; k <= maxInd[1]; k++ )  {
         for( int l=minInd[2]; l <= maxInd[2]; l++ )  {
-          TRefPList* rl = hkl3d(h, k, l);
-          if(  rl == NULL )  continue;
-          if( (h|k|l) >= 0 )  {
-            vec3i ind(-h,-k,-l);
-            if( vec3i::IsInRangeInc(ind, minInd, maxInd) )  {
-              if( hkl3d(ind) != NULL )  {
-                _FriedelPairs.AddList(*hkl3d(ind));
-                _FriedelPairs.AddList(*rl);
-                _FriedelPairCount++;
-              }
+          TRefPList* rl1 = hkl3d(h, k, l);
+          if(  rl1 == NULL )  continue;
+          const vec3i ind(-h,-k,-l);
+          if( vec3i::IsInRangeInc(ind, minInd, maxInd) )  {
+            TRefPList* rl2 = hkl3d(ind);
+            if( rl2 != NULL )  {
+              _FriedelPairs.AddList(*rl2);
+              _FriedelPairs.AddList(*rl1);
+              _FriedelPairCount++;
+              _Redundancy[rl2->Count()-1]++;
+              delete rl2;
+              hkl3d(ind) = NULL;
             }
           }
-          _Redundancy[rl->Count()-1]++;
+          _Redundancy[rl1->Count()-1]++;
         }
       }
     }
@@ -480,11 +483,8 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
   const TRefList& all_refs = GetReflections();
   const mat3d& hkl2c = aunit.GetHklToCartesian();
   // swap the values if in wrong order
-  if( SHEL_hr > SHEL_lr )  {
-    double tmp = SHEL_hr;
-    SHEL_hr = SHEL_lr;
-    SHEL_lr = tmp;
-  }
+  if( SHEL_hr > SHEL_lr )
+    olx_swap(SHEL_hr, SHEL_lr);
   const double h_o_s = 0.5*OMIT_s, two_sin_2t = 2*sin(OMIT_2t*M_PI/360.0);
   double min_d = expl.GetRadiation()/( two_sin_2t == 0 ? 1e-6 : two_sin_2t);
   if( SHEL_set && SHEL_hr > min_d )
@@ -523,12 +523,6 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
     }
     if( qd < max_qd && qd > min_qd )  {
       TReflection& new_ref = out.AddNew(r);
-      if( r.GetI() < h_o_s*r.GetS() )  {
-        new_ref.SetI(h_o_s*r.GetS());
-        stats.IntensityTransformed++;
-      }
-      if( new_ref.GetI() < 0 )
-        new_ref.SetI(0);
       if( new_ref.GetI() > stats.MaxI )  stats.MaxI = new_ref.GetI();
       if( new_ref.GetI() < stats.MinI )  stats.MinI = new_ref.GetI();
       new_ref.SetHkl(chkl);
@@ -546,6 +540,23 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
   stats.SHEL_lr = SHEL_lr;
   stats.SHEL_hr = SHEL_hr;
   stats.TotalReflections = out.Count();
+  return stats;
+}
+//....................................................................................................
+RefinementModel::HklStat& RefinementModel::AdjustIntensity(TRefList& out,
+  RefinementModel::HklStat& stats) const
+{
+  const double h_o_s = 0.5*OMIT_s;
+  const size_t ref_cnt = out.Count();
+  for( size_t i=0; i < ref_cnt; i++ )  {
+    TReflection& r = out[i];
+    if( r.GetI() < h_o_s*r.GetS() )  {
+      r.SetI(h_o_s*r.GetS());
+      stats.IntensityTransformed++;
+    }
+    if( r.GetI() < 0 )
+      r.SetI(0);
+  }
   return stats;
 }
 //....................................................................................................

@@ -499,8 +499,8 @@ bool TCif::Adopt(TXFile& XF)  {
   SetParam("_reflns_number_total", hkl_stat.UniqueReflections, false);
   const char* hkl = "hkl";
   for( int i=0; i < 3; i++ )  {
-    SetParam(olxstr("_diffrn_reflns_limit_") << hkl[i] << "_min", hkl_stat.MinIndexes[i], false);
-    SetParam(olxstr("_diffrn_reflns_limit_") << hkl[i] << "_max", hkl_stat.MaxIndexes[i], false);
+    SetParam(olxstr("_diffrn_reflns_limit_") << hkl[i] << "_min", hkl_stat.FileMinInd[i], false);
+    SetParam(olxstr("_diffrn_reflns_limit_") << hkl[i] << "_max", hkl_stat.FileMaxInd[i], false);
   }
   if( hkl_stat.MaxD > 0 )
     SetParam("_diffrn_reflns_theta_min",
@@ -508,7 +508,8 @@ bool TCif::Adopt(TXFile& XF)  {
   if( hkl_stat.MinD > 0 )
     SetParam("_diffrn_reflns_theta_max",
       olxstr::FormatFloat(2, asin(XF.GetRM().expl.GetRadiation()/(2*hkl_stat.MinD))*180/M_PI), false);
-
+  SetParam("_diffrn_reflns_av_R_equivalents", olxstr::FormatFloat(4, hkl_stat.Rint), false);
+  SetParam("_diffrn_reflns_av_sigmaI/netI", olxstr::FormatFloat(4, hkl_stat.Rsigma), false);
   if( XF.GetAsymmUnit().IsQPeakMinMaxInitialised() )
     SetParam("_refine_diff_density_max", XF.GetAsymmUnit().GetMaxQPeak(), false);
   TSpaceGroup& sg = XF.GetLastLoaderSG();
