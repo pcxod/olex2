@@ -5,6 +5,7 @@
 #include "chemdata.h"
 #include "library.h"
 #include "macroerror.h"
+#include "evalue.h"
 
 #ifndef _NO_PYTHON
   #include "pyext.h"
@@ -14,13 +15,12 @@ BeginXlibNamespace()
 
 class ExperimentalDetails {
   double Radiation, RadiationEnergy;
-  double Temperature;  // always in C
+  TEValueD TempValue;  // always in C
   vec3d CrystalSize;
-  bool SetTemp(const olxstr& t);
   bool SetSize(const olxstr& t);
   bool SetWL(const olxstr& t);
 public:
-  ExperimentalDetails() : Temperature(-1000) {
+  ExperimentalDetails() : TempValue(-1000) {
     SetRadiation(0.71073);
   }
   ExperimentalDetails(const ExperimentalDetails& ed)  {
@@ -28,7 +28,7 @@ public:
   }
   ExperimentalDetails& operator = (const ExperimentalDetails& ed) {
     Radiation = ed.Radiation;
-    Temperature = ed.Temperature;
+    TempValue = ed.TempValue;
     CrystalSize = ed.CrystalSize;
     return *this;
   }
@@ -38,9 +38,10 @@ public:
     RadiationEnergy = XElementLib::Wavelength2eV(Radiation);
   }
   double GetRadiationEnergy() const {  return RadiationEnergy;  }
-  bool IsTemperatureSet() const {  return Temperature >= -273.15;  }
-
-  DefPropP(double, Temperature)
+  bool IsTemperatureSet() const {  return TempValue.GetV() >= -273.15;  }
+  // checks for scale type {F,C,K}
+  bool SetTemp(const olxstr& t);
+  DefPropC(TEValueD, TempValue)
   DefPropC(vec3d, CrystalSize)
   void SetCrystalSize(double x, double y, double z)  {
     CrystalSize = vec3d(x,y,z);
@@ -48,7 +49,7 @@ public:
   void Clear() {
     SetRadiation(0.71073);
     CrystalSize.Null();
-    Temperature = -1000;
+    TempValue = -1000;
   }
   void ToDataItem(class TDataItem& item) const;
 #ifndef _NO_PYTHON

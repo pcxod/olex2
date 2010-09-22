@@ -5,16 +5,17 @@
 //..................................................................................................
 bool ExperimentalDetails::SetTemp(const olxstr& t)  {
   if( t.IsEmpty() )  return false;
-  if( !olxstr::o_isdigit(t.Last()) )  {
+  olxch last_d = olxstr::o_toupper(t.Last());
+  if( last_d == 'F' || last_d == 'K' || last_d == 'C' )  {
     olxch scale = olxstr::o_toupper(t.Last());
-    Temperature = t.SubStringTo(t.Length()-1).ToDouble();
+    TempValue = t.SubStringTo(t.Length()-1);
     if( scale == 'F' )
-      Temperature = (Temperature-32.0)*5./9.;
+      TempValue = (TempValue-32.0)*5./9.;
     else if( scale == 'K' )
-      Temperature -= 273.15;
+      TempValue += 273.15;
   }
   else  {
-    Temperature = t.ToDouble();
+    TempValue = t;
   }
   return true;
 }
@@ -35,7 +36,7 @@ bool ExperimentalDetails::SetWL(const olxstr& wl)  {
 //..................................................................................................
 void ExperimentalDetails::ToDataItem(TDataItem& item) const {
   item.AddField("radiation", Radiation);
-  item.AddField("temperature", Temperature);
+  item.AddField("temperature", TempValue.ToString());
   item.AddField("crystal_size", PersUtil::VecToStr(CrystalSize));
 }
 //..................................................................................................
@@ -43,7 +44,7 @@ void ExperimentalDetails::ToDataItem(TDataItem& item) const {
 PyObject* ExperimentalDetails::PyExport() {
   PyObject* main = PyDict_New();
   PythonExt::SetDictItem(main, "radiation", Py_BuildValue("d", Radiation) );
-  PythonExt::SetDictItem(main, "temperature", Py_BuildValue("d", Temperature) );
+  PythonExt::SetDictItem(main, "temperature", Py_BuildValue("d", TempValue.GetV()) );
   PythonExt::SetDictItem(main, "size", Py_BuildValue("(ddd)", CrystalSize[0], CrystalSize[1], CrystalSize[2]) );
   return main;
 }
@@ -51,27 +52,27 @@ PyObject* ExperimentalDetails::PyExport() {
 //..................................................................................................
 void ExperimentalDetails::FromDataItem(const TDataItem& item) {
   Radiation = item.GetRequiredField("radiation").ToDouble();
-  Temperature = item.GetRequiredField("temperature").ToDouble();
+  TempValue = item.GetRequiredField("temperature");
   CrystalSize = PersUtil::FloatVecFromStr( item.GetRequiredField("crystal_size") );
 }
 //..................................................................................................
 void ExperimentalDetails::LibTemperature(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )
-    E.SetRetVal( IsTemperatureSet() ? olxstr(Temperature) : olxstr("n/a"));
+    E.SetRetVal( IsTemperatureSet() ? TempValue.ToString() : olxstr("n/a"));
   else
     SetTemp(Params[0]);
 }
 //..................................................................................................
 void ExperimentalDetails::LibRadiation(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )
-    E.SetRetVal( olxstr(Radiation) );
+    E.SetRetVal(olxstr(Radiation));
   else
     SetWL(Params[0]);
 }
 //..................................................................................................
 void ExperimentalDetails::LibSize(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )
-    E.SetRetVal( olxstr(CrystalSize[0]) << 'x' << CrystalSize[1] << 'x' << CrystalSize[2]);
+    E.SetRetVal(olxstr(CrystalSize[0]) << 'x' << CrystalSize[1] << 'x' << CrystalSize[2]);
   else
     SetSize(Params[0]);
 }

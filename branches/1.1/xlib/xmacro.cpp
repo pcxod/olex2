@@ -573,15 +573,19 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
     tab[11][0] << "Reflections omitted by user (OMIT_hkl)";   tab[11][1] << hs.OmittedByUser;
     tab[12][0] << "Reflections skipped (after 0 0 0)";        tab[12][1] << hs.OmittedReflections;
     tab[13][0] << "Intensity transformed for (OMIT_s)";       tab[13][1] << hs.IntensityTransformed << " reflections";
-    tab[14][0] << "Rint";                         tab[14][1] << olxstr::FormatFloat(3, hs.Rint);
-    tab[15][0] << "Rsigma";                       tab[15][1] << olxstr::FormatFloat(3, hs.Rsigma);
+    tab[14][0] << "Rint, %";                         tab[14][1] << olxstr::FormatFloat(2, hs.Rint*100);
+    tab[15][0] << "Rsigma, %";                       tab[15][1] << olxstr::FormatFloat(2, hs.Rsigma*100);
     tab[16][0] << "Mean I/sig";                   tab[16][1] << olxstr::FormatFloat(3, hs.MeanIOverSigma);
-    tab[17][0] << "HKL range";                    
+    tab[17][0] << "HKL range (refinement)";                    
     tab[17][1] << "h=[" << hs.MinIndexes[0] << ',' << hs.MaxIndexes[0] << "] "
                << "k=[" << hs.MinIndexes[1] << ',' << hs.MaxIndexes[1] << "] "
                << "l=[" << hs.MinIndexes[2] << ',' << hs.MaxIndexes[2] << "] ";
-    tab[18][0] << "Maximum redundancy (+symm eqivs)";    tab[18][1] << hs.ReflectionAPotMax;
-    tab[19][0] << "Average redundancy (+symm eqivs)";    tab[19][1] << olxstr::FormatFloat(2, (double)hs.TotalReflections/hs.UniqueReflections);
+    tab[18][0] << "HKL range (file)";                    
+    tab[18][1] << "h=[" << hs.FileMinInd[0] << ',' << hs.FileMaxInd[0] << "] "
+               << "k=[" << hs.FileMinInd[1] << ',' << hs.FileMaxInd[1] << "] "
+               << "l=[" << hs.FileMinInd[2] << ',' << hs.FileMaxInd[2] << "] ";
+    tab[19][0] << "Maximum redundancy (+symm eqivs)";    tab[19][1] << hs.ReflectionAPotMax;
+    tab[20][0] << "Average redundancy (+symm eqivs)";    tab[20][1] << olxstr::FormatFloat(2, (double)hs.TotalReflections/hs.UniqueReflections);
 
     TStrList Output;
     tab.CreateTXTList(Output, olxstr("Refinement reflection statistsics"), true, false, "  ");
@@ -605,7 +609,7 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
     xapp.GetLog() << Output << '\n';
     //const vec3i_list empty_omits;
     //MergeStats fr_ms = RefMerger::DryMergeInP1<RefMerger::UnitMerger>(xapp.XFile().GetRM().GetFriedelPairs(), empty_omits);
-    xapp.GetLog() << "Friedel pairs measured: " << xapp.XFile().GetRM().GetFriedelPairCount() << '\n';
+    xapp.GetLog() << "Friedel pairs measured (in P1): " << xapp.XFile().GetRM().GetFriedelPairCount() << '\n';
     return;
   }
   bool list = Options.Contains("l"), 
@@ -1718,13 +1722,9 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options, TMacro
   const ContentList& content = rm.GetUserContent();
   const double en = rm.expl.GetRadiationEnergy();
   for( size_t i=0; i < content.Count(); i++ )  {
-    XDispersion* xd = rm.FindDispData(content[i].element.symbol);
-    if( xd == NULL )  {
-      compd fpfdp = content[i].element.CalcFpFdp(en) - content[i].element.z;
-      rm.AddDisp(content[i].element.symbol, fpfdp.GetRe(), fpfdp.GetIm());
-    }
-    else
-      ;//xd->fpfdp =  ce->CalcFpFdp(en);
+    XScatterer* sc = new XScatterer(content[i].element.symbol);
+    sc->SetFpFdp(content[i].element.CalcFpFdp(en) - content[i].element.z);
+    rm.AddSfac(*sc);
   }
 }
 //..............................................................................
@@ -3914,7 +3914,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       continue;
     }
     bool identity_based = false;
-    for( int j=0; j < rings[i].Count(); j++ )  {
+    for( size_t j=0; j < rings[i].Count(); j++ )  {
       if( rings[i][j]->IsAUAtom() )  {
         identity_based = true;
         break;

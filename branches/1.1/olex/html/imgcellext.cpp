@@ -168,12 +168,8 @@ THtmlImageCell::~THtmlImageCell()  {
     delete m_gifDecoder;
 #endif
 }
-
-
-void THtmlImageCell::Draw(wxDC& dc, int x, int y,
-                           int WXUNUSED(view_y1), int WXUNUSED(view_y2),
-                           wxHtmlRenderingInfo& WXUNUSED(info))
-{
+//..............................................................................
+void THtmlImageCell::Draw(wxDC& dc, int x, int y)  {
   int width = m_bmpW, height = m_bmpH;
   if( WidthInPercent || HeightInPercent )  {
     if( WidthInPercent )
@@ -181,14 +177,13 @@ void THtmlImageCell::Draw(wxDC& dc, int x, int y,
     if( HeightInPercent )
       height = GetParent()->GetHeight() * m_Height / 100;
   }
-  if ( m_showFrame )  {
+  if( m_showFrame )  {
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.SetPen(*wxBLACK_PEN);
     dc.DrawRectangle(x + m_PosX, y + m_PosY, (int)(width*m_scale), (int)(height*m_scale));
     x++, y++;
   }
-  if ( m_bitmap )
-  {
+  if( m_bitmap != NULL )  {
     // We add in the scaling from the desired bitmap width
     // and height, so we only do the scaling once.
     double imageScaleX = 1.0;
@@ -206,17 +201,13 @@ void THtmlImageCell::Draw(wxDC& dc, int x, int y,
     //        dc.DrawBitmap(*m_bitmap, cx+1, cy, true);
     dc.DrawBitmap(*m_bitmap, cx, cy, true);
     dc.SetUserScale(us_x, us_y);
-    if( Text.Len() )
-    {
-      dc.SetTextForeground( *wxBLACK );
-      //          wxFont fnt = dc.GetFont();
-      //          fnt.SetPointSize(25);
-      //          dc.SetFont( fnt );
+    if( !Text.IsEmpty() )  {
+      dc.SetTextForeground(*wxBLACK);
       dc.DrawText(Text, x + m_PosX, y + m_PosY);
     }
   }
 }
-
+//..............................................................................
 wxHtmlLinkInfo *THtmlImageCell::GetLink( int x, int y ) const {
   for( int i=Shapes.Count()-1; i >=0; i-- )  {
     if( Shapes[i].IsInside(x,y) )
@@ -228,8 +219,7 @@ wxHtmlLinkInfo *THtmlImageCell::GetLink( int x, int y ) const {
     p = p->GetParent();
   }
   p = op;
-  wxHtmlCell *cell = (wxHtmlCell*)p->Find(wxHTML_COND_ISIMAGEMAP,
-    (const void*)(&m_mapName));
+  wxHtmlCell *cell = (wxHtmlCell*)p->Find(wxHTML_COND_ISIMAGEMAP, (const void*)(&m_mapName));
   return (cell == NULL) ? wxHtmlCell::GetLink(x, y) : cell->GetLink(x, y);
 }
-
+//..............................................................................

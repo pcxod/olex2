@@ -184,7 +184,7 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|Win32'">$(Configuration)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|x64'">$(Platform)\$(Configuration)\no_py\</IntDir>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">Z:\Program Files\Microsoft SDKs\Windows\v7.1\Lib\x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">$(OLX_PROGRAM_FILES)Microsoft SDKs\Windows\v7.1\Lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

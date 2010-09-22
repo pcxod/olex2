@@ -476,13 +476,19 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         if( cx.BasicAtoms.Last().Object == NULL )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find suitable scatterer for '") << Toks[1] << '\'' );
         expandedSfacProcessed = true;
-        cx.rm.AddNewSfac(Toks[1],
-          Toks[2].ToDouble(),  Toks[3].ToDouble(),  Toks[4].ToDouble(),
-          Toks[5].ToDouble(),  Toks[6].ToDouble(),  Toks[7].ToDouble(),
-          Toks[8].ToDouble(),  Toks[9].ToDouble(),  Toks[10].ToDouble(),
-          Toks[11].ToDouble(), Toks[12].ToDouble(), Toks[13].ToDouble(),
-          Toks[14].ToDouble(), Toks[15].ToDouble()
-        );
+        const olxstr lb(Toks[1].CharAt(0) == '$' ? Toks[1].SubStringFrom(1) : Toks[1]);
+        XScatterer* sc = new XScatterer(lb);
+        sc->SetGaussians(
+          cm_Gaussians(
+            Toks[2].ToDouble(), Toks[3].ToDouble(), Toks[4].ToDouble(), Toks[5].ToDouble(),
+            Toks[6].ToDouble(), Toks[7].ToDouble(), Toks[8].ToDouble(), Toks[9].ToDouble(),
+            Toks[10].ToDouble())
+          );
+        sc->SetFpFdp(compd(Toks[11].ToDouble(), Toks[12].ToDouble()));
+        sc->SetMu(Toks[13].ToDouble());
+        sc->SetR(Toks[14].ToDouble());
+        sc->SetWeight(Toks[15].ToDouble());
+        cx.rm.AddSfac(*sc);
       }
     }
     if( !expandedSfacProcessed )  {
@@ -496,8 +502,13 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
       }
     }
   }
-  else if( Toks[0].Equalsi("DISP") && Toks.Count() >= 4 )  {  
-    cx.rm.AddDisp(Toks[1], Toks[2].ToDouble(), Toks[3].ToDouble(), Toks.Count() >= 5 ? Toks[4].ToDouble() : -1.0);
+  else if( Toks[0].Equalsi("DISP") && Toks.Count() >= 4 )  {
+    const olxstr lb(Toks[1].CharAt(0) == '$' ? Toks[1].SubStringFrom(1) : Toks[1]);
+    XScatterer* sc = new XScatterer(lb);
+    sc->SetFpFdp(compd(Toks[2].ToDouble(), Toks[3].ToDouble()));
+    if( Toks.Count() >= 5 )
+      sc->SetMu(Toks[4].ToDouble());
+    cx.rm.AddSfac(*sc);
   }
   else if( Toks[0].Equalsi("REM") )  {  
     if( Toks.Count() > 1 )  {
@@ -710,30 +721,38 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod, const 
 void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
                      TStrList& list, size_t pos)
 {
-  if( rm.SfacCount() == 0 )  {
-    list[pos] = "SFAC";
-    for( size_t i=0; i < content.Count(); i++ )
-      list[pos] << ' ' << content[i].element.symbol;
-  }
-  else  {
-    TStrList lines;
-    for( size_t i=0; i < rm.GetUserContent().Count(); i++ )  {
-      XScatterer* sd = rm.FindSfacData(rm.GetUserContent()[i].element.symbol);
-      if( sd != NULL )  {
-        olxstr tmp = "SFAC ";
-        tmp << sd->ToInsString();
-        lines.Clear();
-        HyphenateIns(tmp, lines);
-        for( size_t j=0; j < lines.Count(); j++ )
-          list.Insert(pos++, lines[j]);
+  TStrList lines;
+  short state = 0;
+  for( size_t i=0; i < rm.GetUserContent().Count(); i++ )  {
+    XScatterer* sd = rm.FindSfacData(rm.GetUserContent()[i].element.symbol);
+    if( sd != NULL && sd->IsSFAC() )  {
+      olxstr tmp = sd->ToInsString();
+      lines.Clear();
+      HyphenateIns(tmp, lines);
+      for( size_t j=0; j < lines.Count(); j++ )
+        list.Insert(pos++, lines[j]);
+      state = 1;
+    }
+    else  {
+      if( state == 1 )  {
+        list.Insert(pos++,  olxstr("SFAC ") << rm.GetUserContent()[i].element.symbol);
+        state = 2;
       }
-      else
-        list.Insert(pos++, "SFAC ") << ' ' << rm.GetUserContent()[i].element.symbol;
+      else  {
+        if( state == 2 )  // SFAC added and pos incremented
+          list[pos-1] << ' ' << rm.GetUserContent()[i].element.symbol;
+        else if( state == 0 )  {  // nothing added yet
+          list[pos++] << "SFAC " << rm.GetUserContent()[i].element.symbol;
+          state = 2;
+        }
+      }
     }
   }
-  for( size_t i=0; i < rm.DispCount(); i++ )
-    list.Insert(++pos, olxstr("DISP ") << rm.GetDispData(i).ToInsString());
-  olxstr& unit = list.Insert(++pos, "UNIT");
+  for( size_t i=0; i < rm.SfacCount(); i++ )  {
+    if( rm.GetSfacData(i).IsDISP() )
+      list.Insert(pos++, rm.GetSfacData(i).ToInsString());
+  }
+  olxstr& unit = list.Insert(pos++, "UNIT");
 
   if( rm.SfacCount() == 0 )  {
     for( size_t i=0; i < content.Count(); i++ )
@@ -1513,7 +1532,7 @@ void TIns::_SaveSizeTemp(TStrList& SL)  {
   if( !size.IsNull() )
     SL.Add("SIZE ") << size[0] << ' ' << size[1] << ' ' << size[2];
   if( RefMod.expl.IsTemperatureSet() )
-    SL.Add("TEMP ") << RefMod.expl.GetTemperature();
+    SL.Add("TEMP ") << RefMod.expl.GetTempValue().ToString();
 }
 //..............................................................................
 void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {

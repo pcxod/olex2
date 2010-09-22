@@ -164,6 +164,7 @@ TAG_HANDLER_PROC(tag)  {
   int valign = -1, halign = -1, 
     fl=0,
     ax=100, ay=20;
+  bool width_set = false, height_set = false;
   AOlxCtrl* CreatedObject = NULL;
   wxWindow* CreatedWindow = NULL;
   try  {
@@ -178,6 +179,7 @@ TAG_HANDLER_PROC(tag)  {
       }
       else
         ax = (int)Tmp.ToDouble();
+      width_set = true;
     }
     Tmp = tag.GetParam(wxT("HEIGHT")).c_str();
     TGlXApp::GetMainForm()->ProcessFunction(Tmp);
@@ -190,6 +192,7 @@ TAG_HANDLER_PROC(tag)  {
       }
       else
         ay = Tmp.ToDouble();
+      height_set = true;
     }
   }
   catch(const TExceptionBase& e)  {
@@ -334,31 +337,43 @@ TAG_HANDLER_PROC(tag)  {
     if( tag.HasParam(wxT("FLAT")) )  flags |= wxNO_BORDER;
     olxstr buttonImage = tag.GetParam(wxT("IMAGE")).c_str();
     if( !buttonImage.IsEmpty() )  {
-      Btn = new TBmpButton(  m_WParser->GetWindowInterface()->GetHTMLWindow(), -1, wxNullBitmap, 
-        wxDefaultPosition, wxDefaultSize, flags );
-      ((TBmpButton*)Btn)->SetSource( buttonImage );
-      wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( buttonImage );
-      if( fsFile == NULL )
-        TBasicApp::GetLog().Error(olxstr("THTML: could not locate image for button: ") << ObjectName);
-      else  {
-        wxImage image(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
-        if ( !image.Ok() )
-          TBasicApp::GetLog().Error(olxstr("THTML: could not load image for button: ") << ObjectName);
-        else  {
-          if( (image.GetWidth() > ax || image.GetHeight() > ay) && tag.HasParam(wxT("STRETCH")) )
-            image = image.Scale(ax, ay);
-          else  {
-            ax = image.GetWidth();
-            ay = image.GetHeight();
-          }
-          ((TBmpButton*)Btn)->SetBitmapLabel( image );
-        }
+      if( buttonImage.IndexOf(',') != InvalidIndex )  {
+        TImgButton* ibtn = new TImgButton(m_WParser->GetWindowInterface()->GetHTMLWindow());
+        ibtn->SetImages(buttonImage, width_set ? ax : -1, height_set ? ay : -1);
+        if( tag.HasParam(wxT("ENABLED")) )
+          ibtn->SetEnabled(olxstr(tag.GetParam(wxT("ENABLED")).c_str()).ToBool());
+        if( tag.HasParam(wxT("DOWN")) )
+          ibtn->SetDown(olxstr(tag.GetParam(wxT("DOWN")).c_str()).ToBool());
+        CreatedWindow = ibtn;
+        Btn = ibtn;
       }
-      Btn->WI.SetWidth(ax);
-      Btn->WI.SetHeight(ay);
-      ((TBmpButton*)Btn)->SetFont( m_WParser->GetDC()->GetFont() );
-
-      CreatedWindow = (TBmpButton*)Btn;
+      else  {
+        Btn = new TBmpButton(  m_WParser->GetWindowInterface()->GetHTMLWindow(), -1, wxNullBitmap, 
+          wxDefaultPosition, wxDefaultSize, flags );
+        ((TBmpButton*)Btn)->SetSource( buttonImage );
+        wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( buttonImage );
+        if( fsFile == NULL )
+          TBasicApp::GetLog().Error(olxstr("THTML: could not locate image for button: ") << ObjectName);
+        else  {
+          wxImage image(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
+          if ( !image.Ok() )
+            TBasicApp::GetLog().Error(olxstr("THTML: could not load image for button: ") << ObjectName);
+          else  {
+            if( (image.GetWidth() > ax || image.GetHeight() > ay) && tag.HasParam(wxT("STRETCH")) )
+              image = image.Scale(ax, ay);
+            else  {
+              ax = image.GetWidth();
+              ay = image.GetHeight();
+            }
+            ((TBmpButton*)Btn)->SetBitmapLabel( image );
+          }
+          delete fsFile;
+        }
+        Btn->WI.SetWidth(ax);
+        Btn->WI.SetHeight(ay);
+        ((TBmpButton*)Btn)->SetFont( m_WParser->GetDC()->GetFont() );
+        CreatedWindow = (TBmpButton*)Btn;
+      }
     }
     else  {
       Btn = new TButton( m_WParser->GetWindowInterface()->GetHTMLWindow(), -1, wxEmptyString, 
@@ -411,6 +426,8 @@ TAG_HANDLER_PROC(tag)  {
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell((TButton*)Btn, fl));
     else  if( EsdlInstanceOf(*Btn, TBmpButton) )
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell((TBmpButton*)Btn, fl));
+    else  if( EsdlInstanceOf(*Btn, TImgButton) )
+      m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell((TImgButton*)Btn, fl));
   }
 /******************* COMBOBOX *************************************************/
   else if( TagName.Equalsi("combo") )  {

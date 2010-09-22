@@ -4259,3 +4259,21 @@ void TGXApp::SelectAll(bool Select)  {
   Draw();
 }
 //..............................................................................
+BondCreationParams TGXApp::GetBondCreationParams(const TXBond& xb) const {
+  xb.Bond().A().SetTag(-1);
+  xb.Bond().B().SetTag(-1);
+  XAtoms.ForEachEx(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());
+  if( xb.Bond().A().GetTag() == -1 || xb.Bond().B().GetTag() == -1 )
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+  return BondCreationParams(XAtoms[xb.Bond().A().GetTag()], XAtoms[xb.Bond().B().GetTag()]);
+}
+//..............................................................................
+void TGXApp::AtomTagsToIndexes() const {
+  XAtoms.ForEachEx(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());
+}
+//..............................................................................
+void TGXApp::BondTagsToIndexes() const {
+  XBonds.ForEachEx(ACollectionItem::IndexTagSetter<TXBond::BondAccessor>());
+}
+//..............................................................................
+

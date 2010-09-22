@@ -86,17 +86,20 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC, int flags) :
       fpTwo, "Defines a managed control properties");
     InitMacroD( *THtml::Library, THtml, Hide, EmptyString, 
       fpOne, "Hides an Html popup window");
+    InitMacroD( *THtml::Library, THtml, Group, EmptyString, 
+      fpAny^(fpNone|fpOne), "Creates an exclusive group of buttons");
 
     this_InitFuncD(GetValue, fpOne, "Returns value of specified object");
     this_InitFuncD(GetData, fpOne, "Returns data associated with specified object");
-    this_InitFuncD(GetState, fpOne, "Returns state of the checkbox");
+    this_InitFuncD(GetState, fpOne|fpTwo, "Returns state of the checkbox or a button.\
+ For example: echo getstate(button, enabled/down) or echo getstate(checkbox)");
     this_InitFuncD(GetLabel, fpOne,
 "Returns labels of specified object. Applicable to labels, buttons and checkboxes");
     this_InitFuncD(GetImage, fpOne, "Returns image source for a button or zimg");
     this_InitFuncD(GetItems, fpOne, "Returns items of a combobox or list");
     this_InitFuncD(SetValue, fpTwo, "Sets value of specified object");
     this_InitFuncD(SetData, fpTwo, "Sets data for specified object");
-    this_InitFuncD(SetState, fpTwo, "Sets state of a checkbox");
+    this_InitFuncD(SetState, fpTwo|fpThree, "Sets state of a checkbox or a button");
     this_InitFuncD(SetLabel, fpTwo, "Sets labels for a label, button or checkbox");
     this_InitFuncD(SetImage, fpTwo, "Sets image location for a button or a zimg");
     this_InitFuncD(SetItems, fpTwo, "Sets items for comboboxes and lists");
@@ -982,7 +985,7 @@ void THtml::macDefineControl(TStrObjList &Cmds, const TParamList &Options, TMacr
   }
   else if( Cmds[1].Equalsi("button") )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TButton) );
-    (*props)["checked"] = Options.FindValue("c", "false");
+    (*props)["image"] = Options.FindValue("i");
   }
   else if( Cmds[1].Equalsi("combo") )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TComboBox) );
@@ -1195,25 +1198,32 @@ olxstr THtml::GetObjectImage(const AOlxCtrl* Obj)  {
 bool THtml::SetObjectImage(AOlxCtrl* Obj, const olxstr& src)  {
   if( src.IsEmpty() )  return false;
 
-  wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( src );
-  if( fsFile == NULL )  {
-    TBasicApp::GetLog().Error( olxstr("Setimage: could not locate specified file: ") << src );
-    return false;
+  if( EsdlInstanceOf(*Obj, TBmpButton) || EsdlInstanceOf(*Obj, THtmlImageCell) )  {
+    wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(src);
+    if( fsFile == NULL )  {
+      TBasicApp::GetLog().Error(olxstr("Setimage: could not locate specified file: ") << src);
+      return false;
+    }
+    wxImage image(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
+    delete fsFile;
+    if ( !image.Ok() )  {
+      TBasicApp::GetLog().Error(olxstr("Setimage: could not read specified file: ") << src);
+      return false;
+    }
+    if( EsdlInstanceOf(*Obj, TBmpButton) )  {
+      ((TBmpButton*)Obj)->SetBitmapLabel(image);
+      ((TBmpButton*)Obj)->SetSource(src);
+      ((TBmpButton*)Obj)->Refresh(true);
+    }
+    else if( EsdlInstanceOf(*Obj, THtmlImageCell) )  {
+      ((THtmlImageCell*)Obj)->SetImage(image);
+      ((THtmlImageCell*)Obj)->SetSource(src);
+      ((THtmlImageCell*)Obj)->GetWindow()->Refresh(true);
+    }
   }
-  wxImage image(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
-  delete fsFile;
-  if ( !image.Ok() )  {
-    TBasicApp::GetLog().Error( olxstr("Setimage: could not read specified file: ") << src );
-    return false;
-  }
-  if( EsdlInstanceOf(*Obj, TBmpButton) )  {
-    ((TBmpButton*)Obj)->SetBitmapLabel( image );
-    ((TBmpButton*)Obj)->SetSource( src );
-  }
-  else if( EsdlInstanceOf(*Obj, THtmlImageCell) )  {
-    ((THtmlImageCell*)Obj)->SetImage( image );
-    ((THtmlImageCell*)Obj)->SetSource( src );
-    ((THtmlImageCell*)Obj)->GetWindow()->Refresh(true);
+  else if( EsdlInstanceOf(*Obj, TImgButton) )  {
+    ((TImgButton*)Obj)->SetImages(src);
+    ((TImgButton*)Obj)->Refresh(true);
   }
   else  {
     TBasicApp::GetLog().Error( "Setimage: unsupported object type" );
@@ -1278,9 +1288,17 @@ void THtml::funSetData(const TStrObjList &Params, TMacroError &E)  {
   html->SetObjectData(Obj, Params[1]);
 }
 //..............................................................................
-bool THtml::GetObjectState(const AOlxCtrl *Obj)  {
+bool THtml::GetObjectState(const AOlxCtrl *Obj, const olxstr& state)  {
   if( EsdlInstanceOf(*Obj, TCheckBox) )
     return ((TCheckBox*)Obj)->IsChecked();
+  else if( EsdlInstanceOf(*Obj, TImgButton) )  {
+    if( state.Equalsi("enabled") )
+      return ((TImgButton*)Obj)->IsEnabled();
+    else if( state.Equalsi("down") )
+      return ((TImgButton*)Obj)->IsDown();
+    else
+      return false;
+  }
   else if( EsdlInstanceOf(*Obj, TButton) )
     return ((TButton*)Obj)->IsDown();
   else
@@ -1301,10 +1319,13 @@ void THtml::funGetState(const TStrObjList &Params, TMacroError &E)  {
       E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
       return;
     }
-    E.SetRetVal( (*props)["checked"] );
+    if( Params.Count() == 1 )
+      E.SetRetVal((*props)["checked"]);
+    else
+      E.SetRetVal((*props)[Params[1]]);
   }
   else
-    E.SetRetVal( html->GetObjectState(Obj) );
+    E.SetRetVal(html->GetObjectState(Obj, Params.Count() == 1 ? EmptyString : Params[1]));
 }
 //..............................................................................
 void THtml::funGetLabel(const TStrObjList &Params, TMacroError &E)  {
@@ -1363,9 +1384,16 @@ void THtml::funSetLabel(const TStrObjList &Params, TMacroError &E)  {
   }
 }
 //..............................................................................
-void THtml::SetObjectState(AOlxCtrl *Obj, bool State)  {
+void THtml::SetObjectState(AOlxCtrl *Obj, bool State, const olxstr& state_name)  {
   if( EsdlInstanceOf(*Obj, TCheckBox) )
     ((TCheckBox*)Obj)->SetChecked(State);
+  else if( EsdlInstanceOf(*Obj, TImgButton) )  {
+    if( state_name.Equalsi("enabled") )
+      ((TImgButton*)Obj)->SetEnabled(State);
+    else if( state_name.Equalsi("down") )
+      ((TImgButton*)Obj)->SetDown(State);
+    ((TImgButton*)Obj)->Refresh(true);
+  }
   else if( EsdlInstanceOf(*Obj, TButton) )
     ((TButton*)Obj)->SetDown(State);
 }
@@ -1383,7 +1411,7 @@ void THtml::funSetImage(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
     return;
   }
-  if( !html->SetObjectImage( Obj, Params[1] ) )  {
+  if( !html->SetObjectImage(Obj, Params[1]) )  {
     E.ProcessingError(__OlxSrcInfo, "could not set image for the object: ")  << objName;
   }
 }
@@ -1401,7 +1429,7 @@ void THtml::funGetImage(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
     return;
   }
-  E.SetRetVal( html->GetObjectImage( Obj ) );
+  E.SetRetVal(html->GetObjectImage(Obj));
 }
 //..............................................................................
 void THtml::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
@@ -1416,8 +1444,6 @@ void THtml::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
   InFocus = html->FindObjectWindow(objName);
   if( InFocus == NULL )  // not created yet?
     return;
-  
-
   if( EsdlInstanceOf(*InFocus, TTextEdit) )
     ((TTextEdit*)InFocus)->SetSelection(-1,-1);
   else if( EsdlInstanceOf(*InFocus, TComboBox) )  {
@@ -1452,29 +1478,53 @@ void THtml::funSelect(const TStrObjList &Params, TMacroError &E)  {
     tv->SelectByData(Params[1]);
 }
 //..............................................................................
-void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {
+bool THtml::SetState(const TStrObjList &Params, TMacroError &E)  {
   const size_t ind = Params[0].IndexOf('.');
   THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
   olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
+    return false;
   }
+  const bool state = Params.Last().String.ToBool();
   AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
     TSStrStrList<olxstr,false>* props = html->ObjectsState.FindProperties(Params[0]);
     if( props == NULL )  {
-      E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
-      return;
+      E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
+      return false;
     }
     if( props->IndexOfComparable("checked") == InvalidIndex )  {
-      E.ProcessingError(__OlxSrcInfo,  "object definition does have state for: ") << objName;
-      return;
+      E.ProcessingError(__OlxSrcInfo, "object definition does have state for: ") << objName;
+      return false;
     }
-    (*props)["checked"] = Params[1];
+    if( Params.Count() == 2 )
+      (*props)["checked"] = state;
+    else
+      (*props)[Params[1]] = state;
   }
   else
-    html->SetObjectState(Obj, Params[1].ToBool());
+    html->SetObjectState(Obj, state, (Params.Count() == 2 ? EmptyString : Params[1]));
+  return true;
+}
+//..............................................................................
+void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {
+  if( !SetState(Params, E) )
+    return;
+  if( Params.Last().String.ToBool() )  {
+    TStrObjList params(Params);
+    params.Last().String = FalseString;
+    TMacroError e;
+    for( size_t i=0; i < Groups.Count(); i++ )  {
+      if( Groups[i].IndexOf(Params[0]) == InvalidIndex )  continue;
+      const TStrList& group = Groups[i];
+      for( size_t j=0; j < group.Count(); j++ )  {
+        if( group[j].Equalsi(Params[0]) )  continue;
+        params[0] = group[j];
+        SetState(params, e);
+      }
+    }
+  }
 }
 //..............................................................................
 void THtml::funSetItems(const TStrObjList &Params, TMacroError &E)  {
@@ -1753,42 +1803,51 @@ void THtml::TObjectsState::SaveState()  {
       props->Clear();
     }
     props->Add("type", EsdlClassName(*obj));  // type
-    if( EsdlInstanceOf(*obj, TTextEdit) )  {  
+    if( EsdlInstanceOf(*obj, TTextEdit))  {  
       TTextEdit* te = (TTextEdit*)obj;
-      props->Add("val", te->GetText() );
-      props->Add("data", te->GetData() );
+      props->Add("val", te->GetText());
+      props->Add("data", te->GetData());
     }
     else if( EsdlInstanceOf(*obj, TCheckBox) )  {  
       TCheckBox* cb = (TCheckBox*)obj;   
-      props->Add("val", cb->GetCaption() );
-      props->Add("checked", cb->IsChecked() );
-      props->Add("data", cb->GetData() );
+      props->Add("val", cb->GetCaption());
+      props->Add("checked", cb->IsChecked());
+      props->Add("data", cb->GetData());
     }
     else if( EsdlInstanceOf(*obj, TTrackBar) )  {  
       TTrackBar* tb = (TTrackBar*)obj;  
-      props->Add("min", tb->GetMin() );
-      props->Add("max", tb->GetMax() );
-      props->Add("val", tb->GetValue() );
-      props->Add("data", tb->GetData() );
+      props->Add("min", tb->GetMin());
+      props->Add("max", tb->GetMax());
+      props->Add("val", tb->GetValue());
+      props->Add("data", tb->GetData());
     }
     else if( EsdlInstanceOf(*obj, TSpinCtrl) )  {  
       TSpinCtrl* sc = (TSpinCtrl*)obj;  
-      props->Add("min", sc->GetMin() );
-      props->Add("max", sc->GetMax() );
-      props->Add("val", sc->GetValue() );
-      props->Add("data", sc->GetData() );
+      props->Add("min", sc->GetMin());
+      props->Add("max", sc->GetMax());
+      props->Add("val", sc->GetValue());
+      props->Add("data", sc->GetData());
     }
     else if( EsdlInstanceOf(*obj, TButton) )    {  
       TButton* bt = (TButton*)obj;
-      props->Add("val", bt->GetCaption() );
-      props->Add("checked", bt->IsDown() );
-      props->Add("data", bt->GetData() );
+      props->Add("val", bt->GetCaption());
+      props->Add("checked", bt->IsDown());
+      props->Add("data", bt->GetData());
     }
     else if( EsdlInstanceOf(*obj, TBmpButton) )    {  
       TBmpButton* bt = (TBmpButton*)obj;  
-      props->Add("checked", bt->IsDown() );
-      props->Add("val", bt->GetSource() );
-      props->Add("data", bt->GetData() );
+      props->Add("checked", bt->IsDown());
+      props->Add("val", bt->GetSource());
+      props->Add("data", bt->GetData());
+    }
+    else if( EsdlInstanceOf(*obj, TImgButton) )    {  
+      TImgButton* bt = (TImgButton*)obj;  
+      props->Add("checked", bt->IsDown());
+      props->Add("enabled", bt->IsEnabled());
+      props->Add("val", bt->GetSource());
+      props->Add("width", bt->GetWidth());
+      props->Add("height", bt->GetHeight());
+      props->Add("data", bt->GetData());
     }
     else if( EsdlInstanceOf(*obj, TComboBox) )  {  
       TComboBox* cb = (TComboBox*)obj;  
@@ -1879,6 +1938,13 @@ void THtml::TObjectsState::RestoreState()  {
       bt->OnDown.SetEnabled(true);
       bt->OnUp.SetEnabled(true);
       bt->OnClick.SetEnabled(true);
+    }
+    else if( EsdlInstanceOf(*obj, TImgButton) )    {  
+      TImgButton* bt = (TImgButton*)obj;  
+      bt->SetData(props["data"]);
+      bt->SetImages(props["val"], props["width"].ToInt(), props["height"].ToInt());
+      bt->SetDown(props["checked"].ToBool());
+      bt->SetEnabled(props["enabled"].ToBool());
     }
     else if( EsdlInstanceOf(*obj, TComboBox) )  {  
       TComboBox* cb = (TComboBox*)obj;  
@@ -1975,6 +2041,13 @@ TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(const olxstr& na
     props->Add("checked");
     props->Add("val");
   }
+  else if( type == typeid(TImgButton) )    {  
+    props->Add("checked");
+    props->Add("enabled");
+    props->Add("val");
+    props->Add("width");
+    props->Add("height");
+  }
   else if( type == typeid(TComboBox) )  {  
     props->Add("val");
     props->Add("items");
@@ -1997,6 +2070,24 @@ TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(const olxstr& na
   Objects.Add(name, props);
 
   return props;
+}
+//..............................................................................
+void THtml::macGroup(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  bool intersects = false;
+  for( size_t i=0; i < Groups.Count(); i++ )  {
+    for( size_t j=0; j < Cmds.Count(); j++ )  {
+      if( Groups[i].IndexOfi(Cmds[j]) != InvalidIndex )  {
+        intersects = true;
+        break;
+      }
+    }
+    if( intersects )  break;
+  }
+  if( intersects )  {
+    E.ProcessingError(__OlxSrcInfo, "The group intersects with already existing one");
+    return;
+  }
+  Groups.AddNew(Cmds);
 }
 //..............................................................................
 

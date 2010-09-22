@@ -97,7 +97,7 @@ void TCif::SaveToStrings(TStrList& Strings)  {
   GetAsymmUnit().ComplyToResidues();
   for( size_t i=0; i < data_provider[block_index].table_map.Count(); i++ )
     data_provider[block_index].table_map.GetValue(i)->Sort();
-  data_provider[block_index].Sort(TStrList());
+  data_provider[block_index].Sort(TStrList(), TStrList());
   data_provider.SaveToStrings(Strings);
 }
 //..............................................................................
@@ -136,6 +136,23 @@ void TCif::Initialize()  {
   double Q[6], E[6]; // quadratic form of ellipsoid
   TEValueD EValue;
   try  {
+    try  {
+      const olxstr mx = GetParamAsString("_exptl_crystal_size_max");
+      if( mx.IsNumber() )  {
+        const olxstr md = GetParamAsString("_exptl_crystal_size_mid"),
+          mn = GetParamAsString("_exptl_crystal_size_min");
+        if( md.IsNumber() && mn.IsNumber() )
+          GetRM().expl.SetCrystalSize(mx.ToDouble(), md.ToDouble(), mn.ToDouble());
+      }
+      const olxstr temp = GetParamAsString("_diffrn_ambient_temperature");
+      if( temp != '?' )
+        GetRM().expl.SetTempValue(TEValueD(temp));
+      const olxstr radiation = GetParamAsString("_diffrn_radiation_wavelength");
+      if( radiation != '?' )
+        GetRM().expl.SetRadiation(radiation.ToDouble());
+    }
+    catch(...)  {}
+    
     GetAsymmUnit().Axes()[0] = GetParamAsString("_cell_length_a");
     GetAsymmUnit().Axes()[1] = GetParamAsString("_cell_length_b");
     GetAsymmUnit().Axes()[2] = GetParamAsString("_cell_length_c");
@@ -469,9 +486,30 @@ bool TCif::Adopt(TXFile& XF)  {
   SetParam("_cell_formula_units_Z", XF.GetAsymmUnit().GetZ(), false);
 
   SetParam("_diffrn_ambient_temperature",
-    XF.GetRM().expl.IsTemperatureSet() ? XF.GetRM().expl.GetTemperature() : olxstr('?'), false);
+    XF.GetRM().expl.IsTemperatureSet() ? XF.GetRM().expl.GetTempValue().ToString() : olxstr('?'), false);
   SetParam("_diffrn_radiation_wavelength", XF.GetRM().expl.GetRadiation(), false);
-
+  if( XF.GetRM().expl.GetCrystalSize().QLength() > 1.e-6 )  {
+    SetParam("_exptl_crystal_size_max", XF.GetRM().expl.GetCrystalSize()[0], false);
+    SetParam("_exptl_crystal_size_mid", XF.GetRM().expl.GetCrystalSize()[1], false);
+    SetParam("_exptl_crystal_size_min", XF.GetRM().expl.GetCrystalSize()[2], false);
+  }
+  // HKL section
+  const RefinementModel::HklStat& hkl_stat = XF.GetRM().GetMergeStat();
+  SetParam("_diffrn_reflns_number", hkl_stat.TotalReflections-hkl_stat.SystematicAbsentcesRemoved, false);
+  SetParam("_reflns_number_total", hkl_stat.UniqueReflections, false);
+  const char* hkl = "hkl";
+  for( int i=0; i < 3; i++ )  {
+    SetParam(olxstr("_diffrn_reflns_limit_") << hkl[i] << "_min", hkl_stat.FileMinInd[i], false);
+    SetParam(olxstr("_diffrn_reflns_limit_") << hkl[i] << "_max", hkl_stat.FileMaxInd[i], false);
+  }
+  if( hkl_stat.MaxD > 0 )
+    SetParam("_diffrn_reflns_theta_min",
+      olxstr::FormatFloat(2, asin(XF.GetRM().expl.GetRadiation()/(2*hkl_stat.MaxD))*180/M_PI), false);
+  if( hkl_stat.MinD > 0 )
+    SetParam("_diffrn_reflns_theta_max",
+      olxstr::FormatFloat(2, asin(XF.GetRM().expl.GetRadiation()/(2*hkl_stat.MinD))*180/M_PI), false);
+  SetParam("_diffrn_reflns_av_R_equivalents", olxstr::FormatFloat(4, hkl_stat.Rint), false);
+  SetParam("_diffrn_reflns_av_sigmaI/netI", olxstr::FormatFloat(4, hkl_stat.Rsigma), false);
   if( XF.GetAsymmUnit().IsQPeakMinMaxInitialised() )
     SetParam("_refine_diff_density_max", XF.GetAsymmUnit().GetMaxQPeak(), false);
   TSpaceGroup& sg = XF.GetLastLoaderSG();

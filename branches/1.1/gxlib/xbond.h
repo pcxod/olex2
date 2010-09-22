@@ -112,7 +112,8 @@ public:
 
 struct BondCreationParams : public ACreationParams {
   class TXAtom &a1, &a2;
-  BondCreationParams(TXAtom& xa1, TXAtom& xa2) : a1(xa1), a2(xa2) { }
+  BondCreationParams(TXAtom& xa1, TXAtom& xa2) : a1(xa1), a2(xa2)  {}
+  BondCreationParams(const BondCreationParams& cp) : a1(cp.a1), a2(cp.a2)  {}
 };
 
 EndGxlNamespace()

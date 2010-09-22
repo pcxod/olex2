@@ -58,9 +58,6 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   for( size_t i=0; i < SfacData.Count(); i++ )
     delete SfacData.GetValue(i);
   SfacData.Clear();
-  for( size_t i=0; i < DispData.Count(); i++ )
-    delete DispData.GetValue(i);
-  DispData.Clear();
   UserContent.Clear();
   for( size_t i=0; i < Frags.Count(); i++ )
     delete Frags.GetValue(i);
@@ -207,8 +204,6 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
 
   for( size_t i=0; i < rm.SfacData.Count(); i++ )
     SfacData(rm.SfacData.GetKey(i), new XScatterer(*rm.SfacData.GetValue(i)));
-  for( size_t i=0; i < rm.DispData.Count(); i++ )
-    DispData(rm.DispData.GetKey(i), new XDispersion(*rm.DispData.GetValue(i)));
   UserContent = rm.UserContent;
   // check if all EQIV are used
   for( size_t i=0; i < UsedSymm.Count(); i++ )  {
@@ -254,55 +249,22 @@ void RefinementModel::SetPlan(int v)  {
     PLAN[0] = v;  
 }
 //....................................................................................................
-void RefinementModel::AddNewSfac(const olxstr& _label,
-                  double a1, double a2, double a3, double a4,
-                  double b1, double b2, double b3, double b4,
-                  double c, double fp, double fdp, double mu, double r, double wt)
-{
-  const olxstr lb(_label.CharAt(0) == '$' ? _label.SubStringFrom(1) : _label);
-  cm_Element* src = XElementLib::FindBySymbolEx(lb);
-  XScatterer* sc;
-  if( src != NULL )  {
-    try  {  sc = new XScatterer(*src, expl.GetRadiationEnergy());  }
-    catch(...)  {  // may fail if radiation energy is too high
-      sc = new XScatterer;
-    }
-  }
-  else
-    throw TFunctionFailedException(__OlxSourceInfo, "could not locate reference chemical element");
-  sc->SetLabel(lb);
-  sc->SetGaussians(a1, a2, a3, a4, b1, b2, b3, b4, c);
-  sc->SetAdsorptionCoefficient(mu);
-  sc->SetR(r);
-  sc->SetWeight(wt);
-  sc->SetFpFdp(compd(fp, fdp));
-  size_t i = SfacData.IndexOf(lb);
+void RefinementModel::AddSfac(XScatterer& sc)  {
+  const size_t i = SfacData.IndexOf(sc.GetLabel());
   if( i != InvalidIndex )  {
-    delete SfacData.GetValue(i);
-    SfacData.GetEntry(i).val = sc;
+    SfacData.GetEntry(i).val->Merge(sc);
+    delete &sc;
   }
   else
-    SfacData.Add(lb, sc);
-}
-//....................................................................................................
-void RefinementModel::AddDisp(const olxstr& _label, double fp, double fdp, double mu)  {
-  olxstr lb(_label.CharAt(0) == '$' ? _label.SubStringFrom(1) : _label);
-  XDispersion* xd = new XDispersion(lb, fp, fdp, mu);
-  size_t i = DispData.IndexOf(lb);
-  if( i != InvalidIndex )  {
-    delete DispData.GetValue(i);
-    DispData.GetEntry(i).val = xd;
-  }
-  else
-    DispData.Add(lb, xd);
+    SfacData.Add(sc.GetLabel(), &sc);
 }
 //....................................................................................................
 InfoTab& RefinementModel::AddHTAB() {
-  return InfoTables.Add( new InfoTab(*this, infotab_htab) );
+  return InfoTables.Add(new InfoTab(*this, infotab_htab));
 }
 //....................................................................................................
 InfoTab& RefinementModel::AddRTAB(const olxstr& codename, const olxstr& resi) {
-  return InfoTables.Add( new InfoTab(*this, infotab_rtab, codename, resi) );
+  return InfoTables.Add(new InfoTab(*this, infotab_rtab, codename, resi));
 }
 //....................................................................................................
 void RefinementModel::Validate() {
@@ -411,11 +373,9 @@ const TRefList& RefinementModel::GetReflections() const {
     THklFile hf;
     hf.LoadFromFile(HKLSource);
     const vec3i minInd(hf.GetMinHkl()), maxInd(hf.GetMaxHkl());
-    TArray3D<TRefPList*> hkl3d(
-      minInd[0], maxInd[0],
-      minInd[1], maxInd[1],
-      minInd[2], maxInd[2]
-    );
+    _HklStat.FileMinInd = vec3i(100,100,100);
+    _HklStat.FileMaxInd = vec3i(-100,-100,-100);
+    TArray3D<TRefPList*> hkl3d(minInd, maxInd);
     hkl3d.FastInitWith(0);
     HklFileID = hkl_src_id;
     const size_t hkl_cnt = hf.RefCount();
@@ -434,7 +394,10 @@ const TRefList& RefinementModel::GetReflections() const {
           continue;
         }
       }
+      if( hf[i].GetTag() < 0 )  // is after (0, 0, 0) ?
+        continue;
       TReflection& r = _Reflections.AddNew(hf[i]);
+      vec3i::UpdateMinMax(r.GetHkl(), _HklStat.FileMinInd, _HklStat.FileMaxInd);
       TRefPList* rl = hkl3d(hf[i].GetHkl());
       if(  rl == NULL )
         hkl3d(hf[i].GetHkl()) = rl = new TRefPList;
@@ -448,19 +411,21 @@ const TRefList& RefinementModel::GetReflections() const {
     for( int h=minInd[0]; h <= maxInd[0]; h++ )  {
       for( int k=minInd[1]; k <= maxInd[1]; k++ )  {
         for( int l=minInd[2]; l <= maxInd[2]; l++ )  {
-          TRefPList* rl = hkl3d(h, k, l);
-          if(  rl == NULL )  continue;
-          if( (h|k|l) >= 0 )  {
-            vec3i ind(-h,-k,-l);
-            if( vec3i::IsInRangeInc(ind, minInd, maxInd) )  {
-              if( hkl3d(ind) != NULL )  {
-                _FriedelPairs.AddList(*hkl3d(ind));
-                _FriedelPairs.AddList(*rl);
-                _FriedelPairCount++;
-              }
+          TRefPList* rl1 = hkl3d(h, k, l);
+          if(  rl1 == NULL )  continue;
+          const vec3i ind(-h,-k,-l);
+          if( vec3i::IsInRangeInc(ind, minInd, maxInd) )  {
+            TRefPList* rl2 = hkl3d(ind);
+            if( rl2 != NULL )  {
+              _FriedelPairs.AddList(*rl2);
+              _FriedelPairs.AddList(*rl1);
+              _FriedelPairCount++;
+              _Redundancy[rl2->Count()-1]++;
+              delete rl2;
+              hkl3d(ind) = NULL;
             }
           }
-          _Redundancy[rl->Count()-1]++;
+          _Redundancy[rl1->Count()-1]++;
         }
       }
     }
@@ -518,11 +483,8 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
   const TRefList& all_refs = GetReflections();
   const mat3d& hkl2c = aunit.GetHklToCartesian();
   // swap the values if in wrong order
-  if( SHEL_hr > SHEL_lr )  {
-    double tmp = SHEL_hr;
-    SHEL_hr = SHEL_lr;
-    SHEL_lr = tmp;
-  }
+  if( SHEL_hr > SHEL_lr )
+    olx_swap(SHEL_hr, SHEL_lr);
   const double h_o_s = 0.5*OMIT_s, two_sin_2t = 2*sin(OMIT_2t*M_PI/360.0);
   double min_d = expl.GetRadiation()/( two_sin_2t == 0 ? 1e-6 : two_sin_2t);
   if( SHEL_set && SHEL_hr > min_d )
@@ -561,12 +523,6 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
     }
     if( qd < max_qd && qd > min_qd )  {
       TReflection& new_ref = out.AddNew(r);
-      if( r.GetI() < h_o_s*r.GetS() )  {
-        new_ref.SetI(h_o_s*r.GetS());
-        stats.IntensityTransformed++;
-      }
-      if( new_ref.GetI() < 0 )
-        new_ref.SetI(0);
       if( new_ref.GetI() > stats.MaxI )  stats.MaxI = new_ref.GetI();
       if( new_ref.GetI() < stats.MinI )  stats.MinI = new_ref.GetI();
       new_ref.SetHkl(chkl);
@@ -584,6 +540,23 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
   stats.SHEL_lr = SHEL_lr;
   stats.SHEL_hr = SHEL_hr;
   stats.TotalReflections = out.Count();
+  return stats;
+}
+//....................................................................................................
+RefinementModel::HklStat& RefinementModel::AdjustIntensity(TRefList& out,
+  RefinementModel::HklStat& stats) const
+{
+  const double h_o_s = 0.5*OMIT_s;
+  const size_t ref_cnt = out.Count();
+  for( size_t i=0; i < ref_cnt; i++ )  {
+    TReflection& r = out[i];
+    if( r.GetI() < h_o_s*r.GetS() )  {
+      r.SetI(h_o_s*r.GetS());
+      stats.IntensityTransformed++;
+    }
+    if( r.GetI() < 0 )
+      r.SetI(0);
+  }
   return stats;
 }
 //....................................................................................................
@@ -918,6 +891,11 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   // restore matrix tags
   for( size_t i=0; i < UsedSymm.Count(); i++ )
     UsedSymm.GetValue(i).SetRawId(mat_tags[i]);
+  if( !SfacData.IsEmpty() )  {
+    TDataItem& sfacs = item.AddItem("SFAC");
+    for( size_t i=0; i < SfacData.Count(); i++ )
+      SfacData.GetValue(i)->ToDataItem(sfacs);      
+  }
 }
 //....................................................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {
@@ -989,6 +967,14 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   Vars.FromDataItem( item.FindRequiredItem("LEQS") );
   Conn.FromDataItem( item.FindRequiredItem("CONN") );
   SetUserFormula(item.GetFieldValue("UserContent"), false);
+  TDataItem* sfac = item.FindItem("SFAC");
+  if( sfac != NULL )  {
+    for( size_t i=0; i < sfac->ItemCount(); i++ )  {
+      XScatterer* sc = new XScatterer(EmptyString);
+      sc->FromDataItem(sfac->GetItem(i));
+      SfacData.Add(sc->GetLabel(), sc);
+    }
+  }
   aunit._UpdateConnInfo();
 }
 //....................................................................................................
@@ -1102,6 +1088,13 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
   // restore matrix tags
   for( size_t i=0; i < UsedSymm.Count(); i++ )
     UsedSymm.GetValue(i).SetRawId(mat_tags[i]);
+  if( !SfacData.IsEmpty() )  {
+    PyObject* sfac = PyDict_New();
+    for( size_t i=0; i < SfacData.Count(); i++ )
+      PythonExt::SetDictItem(sfac, SfacData.GetKey(i).c_str(),
+        SfacData.GetValue(i)->PyExport());
+    PythonExt::SetDictItem(main, "sfac", sfac);
+  }
   return main;
 }
 #endif

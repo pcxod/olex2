@@ -53,6 +53,7 @@ protected:
   olxdict<olxstr, AnAssociation3<AOlxCtrl*,wxWindow*,bool>, olxstrComparator<true> > Objects;
   TTypeList<AnAssociation2<AOlxCtrl*,wxWindow*> > Traversables;
   TSStrPObjList<olxstr,size_t,true> SwitchStates;
+  TTypeList<TStrList> Groups;
   olxstr FocusedControl;
   class TObjectsState  {
     TSStrPObjList<olxstr,TSStrStrList<olxstr,false>*, true> Objects;
@@ -71,6 +72,7 @@ protected:
     bool LoadFromFile(const olxstr& fn);
   };
   TObjectsState ObjectsState;
+  bool SetState(const TStrObjList &Params, TMacroError &E);
 protected:
   size_t GetSwitchState(const olxstr& switchName);
   void ClearSwitchStates()  {  SwitchStates.Clear();  }
@@ -86,6 +88,7 @@ protected:
     DefMacro(SetBorders)
     DefMacro(DefineControl)
     DefMacro(Hide)
+    DefMacro(Group)
 
     DefFunc(GetValue)
     DefFunc(GetData)
@@ -122,12 +125,12 @@ protected:
 
   olxstr GetObjectValue(const AOlxCtrl *Object);
   const olxstr& GetObjectData(const AOlxCtrl *Object);
-  bool GetObjectState(const AOlxCtrl *Object);
+  bool GetObjectState(const AOlxCtrl *Object, const olxstr& state);
   olxstr GetObjectImage(const AOlxCtrl *Object);
   olxstr GetObjectItems(const AOlxCtrl *Object);
   void SetObjectValue(AOlxCtrl *AOlxCtrl, const olxstr& Value);
   void SetObjectData(AOlxCtrl *AOlxCtrl, const olxstr& Data);
-  void SetObjectState(AOlxCtrl *AOlxCtrl, bool State);
+  void SetObjectState(AOlxCtrl *AOlxCtrl, bool State, const olxstr& state_name);
   bool SetObjectImage(AOlxCtrl *AOlxCtrl, const olxstr& src);
   bool SetObjectItems(AOlxCtrl *AOlxCtrl, const olxstr& src);
   void _FindNext(index_t from, index_t &dest, bool scroll) const;
