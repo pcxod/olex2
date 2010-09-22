@@ -52,7 +52,7 @@ public:
     r = src.r_bonding;
     fpfdp = src.CalcFpFdp(energy) - src.z;
     source = &src;
-    set_items = 0;
+    set_items = setAll^setMu;
   }
   // updates a scetterer info
   void Merge(const XScatterer& sc)  {
@@ -78,42 +78,32 @@ public:
   }
   // sets custom fp and fdp
   void SetFpFdp(const compd& v) {
-    if( v != fpfdp )  {
-      fpfdp = v;
-      set_items |= setDispersion;
-    }
+    fpfdp = v;
+    set_items |= setDispersion;
   }
   const compd& GetFpFdp() const {  return fpfdp;  }
   // sets custom bonding radius
   void SetR(double v)  {
-    if( r != v )  {
-      r = v;
-      set_items |= setR;
-    }
+    r = v;
+    set_items |= setR;
   }
   double GetR() const {  return r;  }
   // sets custom molecular weight
   void SetWeight(double v)  {
-    if( v != wt )  {
-      wt = v;
-      set_items |= setWt;
-    }
+    wt = v;
+    set_items |= setWt;
   }
   double GetWeight() const {  return wt;  }
   // sets custom adsorption coefficient
   void SetMu(double v)  {
-    if( v != mu )  {
-      mu = v;
-      set_items |= setMu;
-    }
+    mu = v;
+    set_items |= setMu;
   }
   double GetMu() const {  return mu;  }
   // sets custom gaussians
   void SetGaussians(const cm_Gaussians& g)  {
-    if( gaussians != g )  {
-      gaussians = g;
-      set_items |= setGaussian;
-    }
+    gaussians = g;
+    set_items |= setGaussian;
   }
   DefPropC(olxstr, Label)
   // return an INS file string representation
@@ -196,13 +186,19 @@ public:
 #ifndef _NO_PYTHON
   PyObject* PyExport()  {
     PyObject* main = PyDict_New();
-    PythonExt::SetDictItem(main, "gaussian",
-      Py_BuildValue("(dddd)(dddd)d", gaussians.a1, gaussians.a2, gaussians.a3, gaussians.a4,
-      gaussians.b1, gaussians.b2, gaussians.b3, gaussians.b4, gaussians.c));
-    PythonExt::SetDictItem(main, "fpfdp", Py_BuildValue("(dd)", fpfdp.GetRe(), fpfdp.GetIm()));
-    PythonExt::SetDictItem(main, "mu", Py_BuildValue("d", mu));
-    PythonExt::SetDictItem(main, "r", Py_BuildValue("d", r));
-    PythonExt::SetDictItem(main, "wt", Py_BuildValue("d", wt));
+    if( (set_items & setGaussian) != 0 )  {
+      PythonExt::SetDictItem(main, "gaussian",
+        Py_BuildValue("(dddd)(dddd)d", gaussians.a1, gaussians.a2, gaussians.a3, gaussians.a4,
+        gaussians.b1, gaussians.b2, gaussians.b3, gaussians.b4, gaussians.c));
+    }
+    if( (set_items & setDispersion) != 0 )
+      PythonExt::SetDictItem(main, "fpfdp", Py_BuildValue("(dd)", fpfdp.GetRe(), fpfdp.GetIm()));
+    if( (set_items & setMu) != 0 )
+      PythonExt::SetDictItem(main, "mu", Py_BuildValue("d", mu));
+    if( (set_items & setR) != 0 )
+      PythonExt::SetDictItem(main, "r", Py_BuildValue("d", r));
+    if( (set_items & setWt) != 0 )
+      PythonExt::SetDictItem(main, "wt", Py_BuildValue("d", wt));
     return main;
   }
 #endif
