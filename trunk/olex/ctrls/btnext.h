@@ -7,7 +7,7 @@ namespace ctrl_ext  {
   class AButtonBase: public AActionHandler, public AOlxCtrl  {
     bool Down;
   protected:
-    void ClickEvent();
+    void _ClickEvent();
     olxstr OnClickStr, Data, OnUpStr, OnDownStr, DependMode, Hint;
     TActionQueue *ActionQueue;
     virtual wxWindow* GetParent()  const  = 0;
@@ -47,7 +47,7 @@ namespace ctrl_ext  {
   class TButton: public wxButton, public AButtonBase {
     void MouseEnterEvent(wxMouseEvent& event);
     void MouseLeaveEvent(wxMouseEvent& event);
-    void ClickEvent(wxCommandEvent&)  {  AButtonBase::ClickEvent();  }
+    void ClickEvent(wxCommandEvent&)  {  AButtonBase::_ClickEvent();  }
   protected:
     virtual wxWindow* GetParent()  const  {  return wxButton::GetParent();  }
   public:
@@ -67,7 +67,7 @@ namespace ctrl_ext  {
   class TBmpButton: public wxBitmapButton, public AButtonBase  {
     void MouseEnterEvent(wxMouseEvent& event);
     void MouseLeaveEvent(wxMouseEvent& event);
-    void ClickEvent(wxCommandEvent&)  {  AButtonBase::ClickEvent();  }
+    void ClickEvent(wxCommandEvent&)  {  AButtonBase::_ClickEvent();  }
     olxstr Source;
   public:
     virtual wxWindow* GetParent()  const  {  return wxBitmapButton::GetParent();  }
@@ -100,7 +100,7 @@ namespace ctrl_ext  {
     virtual wxWindow* GetParent()  const  {  return wxPanel::GetParent();  }
     const wxBitmap& ChooseBitmap() const;
     wxBitmap BmpFromImage(const wxImage& img, int w, int h) const;
-    void ClickEvent(wxCommandEvent&)  {  AButtonBase::ClickEvent();  }
+    void ClickEvent(wxCommandEvent&)  {  AButtonBase::_ClickEvent();  }
     void SetImages(const TTypeList<wxImage>& images, short imgState, int w=-1, int h=-1);
   public:
     TImgButton(wxWindow* parent);
