@@ -925,7 +925,20 @@ void TLattice::UpdatePlaneDefinitions()  {
       continue;
     PlaneDefs[Planes[i]->GetDefId()].IncTag();
   }
-  PlaneDefs.Pack(ACollectionItem::TagAnalyser<>(0));
+  TSizeList ids(PlaneDefs.Count());
+  size_t id=0;
+  for( size_t i=0; i < PlaneDefs.Count(); i++ )  {
+    if( PlaneDefs[i].GetTag() != 0 )
+      ids[i] = id++;
+    else
+      PlaneDefs.NullItem(i);
+  }
+  for( size_t i=0; i < Planes.Count(); i++ )  {
+    if( Planes[i]->IsDeleted() || Planes[i]->GetDefId() >= PlaneDefs.Count() )  // would be odd
+      continue;
+    Planes[i]->_SetDefId(ids[Planes[i]->GetDefId()]);
+  }
+  PlaneDefs.Pack();
 }
 //..............................................................................
 void TLattice::UpdateAsymmUnit()  {
@@ -2060,7 +2073,6 @@ void TLattice::ToDataItem(TDataItem& item) const  {
 //..............................................................................
 void TLattice::FromDataItem(TDataItem& item)  {
   Clear(true);
-
   Delta = item.GetRequiredField("delta").ToDouble();
   DeltaI = item.GetRequiredField("deltai").ToDouble();
   Generated = item.GetRequiredField("grown").ToBool();
@@ -2101,8 +2113,24 @@ void TLattice::FromDataItem(TDataItem& item)  {
   //GetAsymmUnit().SetContainsEquivalents( eqc != 0 );
   //Disassemble();
   TDataItem& planes = item.FindRequiredItem("Planes");
-  for( size_t i=0; i < planes.ItemCount(); i++ )
-    Planes.Add(new TSPlane(Network))->FromDataItem(planes.GetItem(i));
+  for( size_t i=0; i < planes.ItemCount(); i++ )  {
+    TSPlane& p = *Planes.Add(new TSPlane(Network));
+    p.FromDataItem(planes.GetItem(i));
+    TSPlane::Def def = p.GetDef();
+    size_t di = InvalidIndex;
+    for( size_t j=0; j < PlaneDefs.Count(); j++ )  {
+      if( PlaneDefs[j] == def )  {
+        di = j;
+        break;
+      }
+    }
+    if( di == InvalidIndex )  {
+      p._SetDefId(PlaneDefs.Count());
+      PlaneDefs.AddNew(def);
+    }
+    else
+      p._SetDefId(di);
+  }
   BuildAtomRegistry();
 }
 //..............................................................................
