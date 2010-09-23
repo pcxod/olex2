@@ -101,6 +101,7 @@ namespace ctrl_ext  {
     const wxBitmap& ChooseBitmap() const;
     wxBitmap BmpFromImage(const wxImage& img, int w, int h) const;
     void ClickEvent(wxCommandEvent&)  {  AButtonBase::_ClickEvent();  }
+    void EraseBGEvent(wxEraseEvent&)  {}
     void SetImages(const TTypeList<wxImage>& images, short imgState, int w=-1, int h=-1);
   public:
     TImgButton(wxWindow* parent);
