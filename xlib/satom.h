@@ -136,6 +136,7 @@ public:
     uint32_t matrix_id;
     Ref(size_t a_id, uint32_t m_id) : catom_id(a_id), matrix_id(m_id) { } 
     Ref(const Ref& r) : catom_id(r.catom_id), matrix_id(r.matrix_id)  { }
+    Ref(const TDataItem& item)  {  FromDataItem(item);  }
     Ref& operator = (const Ref& r)  {
       catom_id = r.catom_id;
       matrix_id = r.matrix_id;
@@ -148,6 +149,13 @@ public:
     int Compare(const Ref& r) const {
       const int rv = olx_cmp(catom_id, r.catom_id);
       return rv ==0 ? olx_cmp(matrix_id, r.matrix_id) : rv;
+    }
+    void ToDataItem(TDataItem& item) const {
+      item.AddField("a_id", catom_id).AddField("m_id", matrix_id);
+    }
+    void FromDataItem(const TDataItem& item)  {
+      catom_id = item.GetRequiredField("a_id").ToSizeT();
+      matrix_id = item.GetRequiredField("m_id").ToUInt();
     }
   };
 

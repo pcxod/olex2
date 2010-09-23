@@ -94,7 +94,12 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
 bool TXPlane::Orient(TGlPrimitive& P)  {
   olx_gl::translate(FPlane->GetCenter());
   olx_gl::orient(Params().GetRawData());
-  olx_gl::normal(FPlane->GetNormal());
+  if( P.GetType() == sgloSphere )  {
+    if( FPlane->GetBasis().Determinant() < 0 )
+      olx_gl::scale(-1);
+  }
+  else
+    olx_gl::normal(FPlane->GetNormal());
   return false;
 }
 //..............................................................................

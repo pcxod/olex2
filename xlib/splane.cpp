@@ -62,6 +62,7 @@ double TSPlane::Angle(const TSBond& Bd) const {
 }
 //..............................................................................
 void TSPlane::ToDataItem(TDataItem& item) const {
+  item.AddField("regular", IsRegular());
   size_t cnt = 0;
   for( size_t i=0; i < Crds.Count(); i++ )  {
     if( Crds[i].GetA()->IsDeleted() )  continue;
@@ -69,7 +70,7 @@ void TSPlane::ToDataItem(TDataItem& item) const {
   }
 }
 //..............................................................................
-void TSPlane::FromDataItem(TDataItem& item)  {
+void TSPlane::FromDataItem(const TDataItem& item)  {
   Crds.Clear();
   for( size_t i=0; i < item.ItemCount(); i++ )  {
     Crds.AddNew(&Network->GetLattice().GetAtom(item.GetItem(i).GetRequiredField("atom_id").ToInt()), 
@@ -80,6 +81,7 @@ void TSPlane::FromDataItem(TDataItem& item)  {
   for( size_t i=0; i < Crds.Count(); i++ )
     points.AddNew( Crds[i].GetA()->crd(), Crds[i].GetB());
   _Init(points);
+  SetRegular(item.GetFieldValue("regular", FalseString).ToBool());
 }
 //..............................................................................
 TSPlane::Def::Def(const TSPlane& plane) : atoms(plane.Count()), regular(plane.IsRegular())  {
@@ -96,6 +98,29 @@ TSPlane::Def::Def(const TSPlane& plane) : atoms(plane.Count()), regular(plane.Is
     }
   }
   atoms.QuickSorter.Sort<TComparablePtrComparator>(atoms);
+}
+//..............................................................................
+void TSPlane::Def::DefData::ToDataItem(TDataItem& item) const {
+  item.AddField("weight", weight);
+  ref.ToDataItem(item.AddItem("atom"));
+}
+//..............................................................................
+void TSPlane::Def::DefData::FromDataItem(const TDataItem& item)  {
+  weight = item.GetRequiredField("weight").ToDouble();
+  ref.FromDataItem(item.GetItem(0));  //!! may be changed if extended
+}
+//..............................................................................
+void TSPlane::Def::ToDataItem(TDataItem& item) const {
+  item.AddField("regular", regular);
+  for( size_t i=0; i < atoms.Count(); i++ )
+    atoms[i].ToDataItem(item.AddItem(i+1));
+}
+//..............................................................................
+void TSPlane::Def::FromDataItem(const TDataItem& item)  {
+  atoms.Clear();
+  regular = item.GetRequiredField("regular").ToBool();
+  for( size_t i=0; i < item.ItemCount(); i++ )
+    atoms.AddNew(item.GetItem(i));
 }
 //..............................................................................
 TSPlane* TSPlane::Def::FromAtomRegistry(AtomRegistry& ar, size_t def_id, TNetwork* parent, const smatd& matr) const {
