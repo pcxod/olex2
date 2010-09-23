@@ -783,7 +783,7 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       Switches.Add(sw);
     }
     else  {
-      if( itemName == "*" )  {
+      if( itemName == '*' )  {
         for( size_t j=0; j < rootSwitch.SwitchCount(); j++ )
           Switches.Add(rootSwitch.GetSwitch(j));
       }
@@ -835,7 +835,7 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       }
     }
   }
-  if( changed && !Options.Contains("u") )
+  if( changed && !Options.Contains('u') )
     html->UpdatePage();
   return;
 }
