@@ -2606,13 +2606,36 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   TXApp& xapp = TXApp::GetInstance();
   TCif *Cif, Cif2;
   cif_dp::TCifDP src;
-  const size_t _translation_count = 4;
-  static const olxstr _translations[2*_translation_count] = {
+  const size_t _Translation_count = 5;
+  static const olxstr _Translations[2*_Translation_count] = {
     "_symmetry_cell_setting", "_space_group_crystal_system",
     "_symmetry_space_group_name_Hall", "_space_group_name_Hall",
     "_symmetry_space_group_name_H-M", "_space_group_name_H-M_alt",
-    "_symmetry_Int_Tables_number-M", "_space_group_IT_number"
+    "_symmetry_Int_Tables_number-M", "_space_group_IT_number",
+    "_diffrn_reflns_av_sigmaI/netI", "_diffrn_reflns_av_unetI/netI"
   };
+  TTypeList<AnAssociation2<olxstr,olxstr> > Translations;
+  olxstr CifCustomisationFN(xapp.GetCifTemplatesDir() + "customisation.xlt");
+  if( TEFile::Exists(CifCustomisationFN) )  {
+    try  {
+      TDataFile df;
+      if( !df.LoadFromXLFile(CifCustomisationFN) )  {
+        Error.ProcessingError(__OlxSrcInfo, "falied to load CIF customisation file");
+        return;
+      }
+      TDataItem& di = df.Root().FindRequiredItem("cif_customisation").FindRequiredItem("translation");
+      for( size_t i=0; i < di.ItemCount(); i++ )
+        Translations.AddNew(di.GetItem(i).GetRequiredField("from"), di.GetItem(i).GetRequiredField("to"));
+    }
+    catch(const TExceptionBase& e)  {
+      throw TFunctionFailedException(__OlxSourceInfo, e);
+    }
+  }
+  else  {
+    for( size_t i=0; i < _Translation_count; i++ )
+      Translations.AddNew(_Translations[i*2], _Translations[i*2+1]);
+    
+  }
   const size_t _loop_names_to_skip_count = 3;
   static olxstr _loop_names_to_skip[_loop_names_to_skip_count] = {
     "_atom_site", "_geom", "_space_group"
@@ -2621,16 +2644,15 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
     olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
-    if( TEFile::Exists(cifFN) )  {
+    if( TEFile::Exists(cifFN) )
       Cif2.LoadFromFile(cifFN);
-    }
     else
       throw TFunctionFailedException(__OlxSourceInfo, "existing cif is expected");
     Cif = &Cif2;
   }
   // normalise
-  for( size_t i=0; i < _translation_count; i++ )
-    Cif->Rename(_translations[i*2], _translations[i*2+1]);
+  for( size_t i=0; i < Translations.Count(); i++ )
+    Cif->Rename(Translations[i].GetA(), Translations[i].GetB());
 
   for( size_t i=0; i < Cmds.Count(); i++ )  {
     try {
@@ -2647,8 +2669,8 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     catch( ... )  {    }  // most like the cif does not have cell, so pass it
     if( src.Count() == 0 )  continue;
     // normalise
-    for( size_t i=0; i < _translation_count; i++ )
-      src[0].Rename(_translations[i*2], _translations[i*2+1]);
+    for( size_t i=0; i < Translations.Count(); i++ )
+      src[0].Rename(Translations[i].GetA(), Translations[i].GetB());
     for( size_t j=0; j < src[0].param_map.Count(); j++ )  {
       const cif_dp::ICifEntry& e = *src[0].param_map.GetValue(j);
       if( !e.HasName() )  continue;
@@ -3869,8 +3891,9 @@ void XLibMacros::macClose(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
   TLattice latt;
-  latt.GetAsymmUnit().SetRefMod(&xapp.XFile().GetRM());
-  latt.GetAsymmUnit().Assign(xapp.XFile().GetAsymmUnit());
+  RefinementModel rm(latt.GetAsymmUnit());
+  latt.GetAsymmUnit().SetRefMod(&rm);
+  rm.Assign(xapp.XFile().GetRM(), true);
   latt.GetAsymmUnit()._UpdateConnInfo();
   latt.GetAsymmUnit().DetachAtomType(iQPeakZ, true);
   latt.GetAsymmUnit().DetachAtomType(iHydrogenZ, true);
@@ -3910,6 +3933,14 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   for( size_t i=0; i < rings.Count(); i++ )  {
     const double rms = TSPlane::CalcRMS(rings[i]);
     if( rms > 0.05 || !TNetwork::IsRingRegular(rings[i]) )  {
+      olxstr rc = "Plane #";
+      rc << ++plance_cnt << '\n';
+      for( size_t j=0; j < rings[i].Count(); j++ )  {
+        rc << rings[i][j]->GetGuiLabel();
+        if( j < 5 )
+          rc << ' ';
+      }
+      TBasicApp::GetLog() << (rc << '\n');
       rings.NullItem(i);
       continue;
     }

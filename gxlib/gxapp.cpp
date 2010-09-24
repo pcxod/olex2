@@ -2021,7 +2021,7 @@ TXAtom * TGXApp::AddCentroid(TXAtomPList& Atoms)  {
   for( size_t i=0; i < Atoms.Count(); i++ )
     SAtoms.Add(Atoms[i]->Atom());
   TSAtom *A = XFile().GetLattice().NewCentroid(SAtoms);
-  A->CAtom().GetConnInfo().maxBonds = 0;
+  XFile().GetRM().Conn.Disconnect(A->CAtom());
   if( A != NULL )  {
     TXAtom& XA = XAtoms.Add(new TXAtom(*FGlRender, EmptyString, *A));
     XA.Create();

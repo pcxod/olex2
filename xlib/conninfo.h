@@ -57,6 +57,8 @@ public:
   CXConnInfo& GetConnInfo(const cm_Element& elm) const;
 
   void ProcessConn(TStrList& ins);
+  // the atom's connetivity table to have no bonds
+  void Disconnect(TCAtom& ca);
   // eqiv corresponds to a2
   static size_t FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv);
   void AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv);
