@@ -27,6 +27,7 @@ namespace cif_dp {
     // if the returned valus is InvalidIndex - the object is not comparable
     virtual size_t GetCmpHash() const {  return InvalidIndex;  }
     virtual const olxstr& GetName() const {  throw TNotImplementedException(__OlxSourceInfo);  }
+    virtual void SetName(const olxstr&)  {  throw TNotImplementedException(__OlxSourceInfo);  }
     virtual ICifEntry* Replicate() const = 0;
     virtual olxstr GetStringValue() const = 0;
   };
@@ -69,6 +70,7 @@ namespace cif_dp {
     virtual void ToStrings(TStrList& list) const;
     virtual bool HasName() const {  return true;  }
     virtual const olxstr& GetName() const {  return name;  }
+    virtual void SetName(const olxstr& _name)  {  name = _name;  }
     virtual ICifEntry* Replicate() const {  return new cetNamedString(*this);  }
   };
   struct cetCommentedString : public cetNamedString  {
@@ -112,6 +114,7 @@ namespace cif_dp {
     }
     virtual bool HasName() const {  return true;  }
     virtual const olxstr& GetName() const {  return name;  }
+    virtual void SetName(const olxstr& _name)  {  name = _name;  }
     virtual ICifEntry* Replicate() const {  return new cetNamedStringList(*this);  }
   };
   struct cetCommentedNamedStringList : public cetNamedStringList {

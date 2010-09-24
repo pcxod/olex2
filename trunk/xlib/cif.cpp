@@ -9,7 +9,7 @@
 #include "symmparser.h"
 #include "unitcell.h"
 #include "ellipsoid.h"
-#include "bapp.h"
+#include "xapp.h"
 #include "log.h"
 #include "symmlib.h"
 #include "etime.h"
@@ -93,11 +93,51 @@ void TCif::_LoadCurrent()  {
 }
 //..............................................................................
 void TCif::SaveToStrings(TStrList& Strings)  {
+  static olxstr def_pivots(
+    "_audit_creation,_publ,_chemical_name,_chemical_formula,_chemical,_atom_type,"
+    "_space_group,_space_group_symop,_symmetry,"
+    "_cell_length,_cell_angle,_cell_volume,_cell_formula,_cell,"
+    "_exptl_,"
+    "_diffrn_reflns,_diffrn,"
+    "_reflns,"
+    "_computing,"
+    "_refine,"
+    "_atom_sites,_atom_site,_atom_site_aniso,"
+    "_geom_special,_geom_bond,_geom_angle,_geom,"
+    "_smtbx"
+    );
+  static olxstr def_endings(
+    "_h_min,_h_max,_k_min,k_max,_l_min,_l_max,_min,_max"
+    );
   if( block_index == InvalidIndex )  return;
+  TStrList pivots, endings;
+  TXApp& xapp = TXApp::GetInstance();
+  olxstr CifCustomisationFN(xapp.GetCifTemplatesDir() + "customisation.xlt");
+  if( TEFile::Exists(CifCustomisationFN) )  {
+    try  {
+      TDataFile df;
+      if( !df.LoadFromXLFile(CifCustomisationFN) )
+        throw TFunctionFailedException(__OlxSourceInfo, "falied to load CIF customisation file");
+      const TDataItem& ist = df.Root().FindRequiredItem("cif_customisation").FindRequiredItem("sorting");
+      const TDataItem& ipv = ist.FindRequiredItem("pivots");
+      for( size_t i=0; i < ipv.ItemCount(); i++ )
+        pivots.Add(ipv.GetItem(i).GetValue());
+      const TDataItem& ied = ist.FindRequiredItem("endings");
+      for( size_t i=0; i < ied.ItemCount(); i++ )
+        pivots.Add(ied.GetItem(i).GetValue());
+    }
+    catch(const TExceptionBase& e)  {
+      throw TFunctionFailedException(__OlxSourceInfo, e);
+    }
+  }
+  else  {
+    pivots.Strtok(def_pivots, ',');
+    endings.Strtok(def_endings, ',');
+  }
   GetAsymmUnit().ComplyToResidues();
   for( size_t i=0; i < data_provider[block_index].table_map.Count(); i++ )
     data_provider[block_index].table_map.GetValue(i)->Sort();
-  data_provider[block_index].Sort(TStrList(), TStrList());
+  data_provider[block_index].Sort(pivots, endings);
   data_provider.SaveToStrings(Strings);
 }
 //..............................................................................
@@ -509,7 +549,7 @@ bool TCif::Adopt(TXFile& XF)  {
     SetParam("_diffrn_reflns_theta_max",
       olxstr::FormatFloat(2, asin(XF.GetRM().expl.GetRadiation()/(2*hkl_stat.MinD))*180/M_PI), false);
   SetParam("_diffrn_reflns_av_R_equivalents", olxstr::FormatFloat(4, hkl_stat.Rint), false);
-  SetParam("_diffrn_reflns_av_sigmaI/netI", olxstr::FormatFloat(4, hkl_stat.Rsigma), false);
+  SetParam("_diffrn_reflns_av_unetI/netI", olxstr::FormatFloat(4, hkl_stat.Rsigma), false);
   if( XF.GetAsymmUnit().IsQPeakMinMaxInitialised() )
     SetParam("_refine_diff_density_max", XF.GetAsymmUnit().GetMaxQPeak(), false);
   TSpaceGroup& sg = XF.GetLastLoaderSG();

@@ -433,6 +433,9 @@ void CifBlock::Rename(const olxstr& old_name, const olxstr& new_name)  {
   const size_t i = param_map.IndexOf(old_name);
   if( i == InvalidIndex )  return;
   ICifEntry* val = param_map.GetValue(i);
+  if( !val->HasName() )  return;
+  try  {  val->SetName(new_name);  }
+  catch(...)  {  return;  }  // read only name?
   param_map.Delete(i);
   param_map.Add(new_name, val);
   const size_t ti = table_map.IndexOf(old_name);
@@ -457,24 +460,6 @@ void CifBlock::Format()  {
 }
 //..............................................................................
 void CifBlock::Sort(const TStrList& pivots, const TStrList& endings)  {
-  static TStrList def_pivots(
-    "_audit_creation,_publ,_chemical_name,_chemical_formula,_chemical,_atom_type,"
-    "_space_group,_space_group_symop,_symmetry,"
-    "_cell_length,_cell_angle,_cell_volume,_cell_formula,_cell,"
-    "_exptl_,"
-    "_diffrn_reflns,_diffrn,"
-    "_reflns,"
-    "_computing,"
-    "_refine,"
-    "_atom_sites,_atom_site,_atom_site_aniso,"
-    "_geom_special,_geom_bond,_geom_angle,_geom,"
-    "_smtbx"
-    , 
-    ',');
-  static TStrList def_endings(
-    "_h_min,_h_max,_k_min,k_max,_l_min,_l_max,_min,_max"
-    , 
-    ',');
   TTypeList<CifBlock::EntryGroup> groups;
   for( size_t i=0; i < params.Count(); i++ )  {
     CifBlock::EntryGroup& eg = groups.AddNew();
@@ -486,8 +471,7 @@ void CifBlock::Sort(const TStrList& pivots, const TStrList& endings)  {
       eg.name = params.GetObject(i)->GetName();
     }
   }
-  groups.QuickSorter.Sort(groups,
-    CifSorter(pivots.IsEmpty() ? def_pivots : pivots, endings.IsEmpty() ? def_endings : endings));
+  groups.QuickSorter.Sort(groups, CifSorter(pivots, endings));
   params.Clear();
   for( size_t i=0; i < groups.Count(); i++ )  {
     for( size_t j=0; j < groups[i].items.Count()-1; j++ )
