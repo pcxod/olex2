@@ -2226,8 +2226,9 @@ olxstr TLattice::CalcMoiety() const {
   if the atoms is not on a special position, because it can be either polymeric or form
   dimers/trimers etc... */
   TLattice latt;
-  latt.AsymmUnit->SetRefMod(AsymmUnit->GetRefMod());
-  latt.AsymmUnit->Assign(GetAsymmUnit());
+  RefinementModel rm(latt.GetAsymmUnit());
+  latt.AsymmUnit->SetRefMod(&rm);
+  rm.Assign(*GetAsymmUnit().GetRefMod(), true);
   for( size_t i=0; i < latt.GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& a = latt.GetAsymmUnit().GetAtom(i);
     if( a.IsDetached() )
@@ -2235,7 +2236,6 @@ olxstr TLattice::CalcMoiety() const {
     if( a.IsMasked() )
       a.SetMasked(false);
   }
-  latt.AsymmUnit->_UpdateConnInfo();
   latt.AsymmUnit->DetachAtomType(iQPeakZ, true);
   latt.Init();
   latt.CompaqAll();
