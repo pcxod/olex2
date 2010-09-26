@@ -814,6 +814,7 @@
     <ClCompile Include="..\..\..\olex\dgenopt.cpp" />
     <ClCompile Include="..\..\..\olex\dgrad.cpp" />
     <ClCompile Include="..\..\..\olex\main_gui.cpp" />
+    <ClCompile Include="..\..\..\repository\cdsfs.cpp" />
     <ClCompile Include="..\..\..\repository\eaccell.cpp" />
     <ClCompile Include="..\..\..\olex\edit.cpp" />
     <ClCompile Include="..\..\..\repository\eprocess.cpp" />
@@ -873,6 +874,7 @@
     <ClInclude Include="..\..\..\olex\dgenopt.h" />
     <ClInclude Include="..\..\..\olex\dgrad.h" />
     <ClInclude Include="..\..\..\olex\edit.h" />
+    <ClInclude Include="..\..\..\repository\cdsfs.h" />
     <ClInclude Include="..\..\..\repository\eprocess.h" />
     <ClInclude Include="..\..\..\repository\fftn.h" />
     <ClInclude Include="..\..\..\repository\hkl_py.h" />

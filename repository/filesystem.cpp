@@ -66,7 +66,7 @@ bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src)  {
     }
   }
   IInputStream* is = NULL;
-  try  {  is = Src.GetIndexFS().OpenFile(Src.GetIndexFS().GetBase() + Src.GetFullName() );  }
+  try  {  is = Src.GetIndexFS().OpenFile(Src.GetIndexFS().GetBase() + Src.GetFullName());  }
   catch(const TExceptionBase& )  {  return false;  }
   if( is == NULL )  return false;
 
@@ -147,7 +147,7 @@ size_t TFSItem::UpdateDigest()  {
 }
 //..............................................................................
 void TFSItem::operator >> (TStrList& S) const  {
-  olxstr str = olxstr::CharStr('\t', GetLevel()-1 );
+  olxstr str = olxstr::CharStr('\t', GetLevel()-1);
   S.Add( str + GetName() );
   str << DateTime;
   str << ',' << GetSize() << ',' << GetDigest() << ",{";
@@ -237,7 +237,7 @@ size_t TFSItem::ReadStrings(size_t& index, TFSItem* caller, TStrList& strings, c
       if( toks.Count() < 2 )
         throw TInvalidArgumentException(__OlxSourceInfo, "token number");
       item->SetDateTime( toks[0].Trim('\t').RadInt<int64_t>() );
-      item->SetSize( toks[1].RadInt<int64_t>() );
+      item->SetSize(toks[1].RadInt<int64_t>());
       int start = 2;
       if( toks.Count() > 3 )  {
         item->SetDigest(toks[2]);
@@ -252,7 +252,7 @@ size_t TFSItem::ReadStrings(size_t& index, TFSItem* caller, TStrList& strings, c
             if( propToks[j].StartsFrom("action:") )
               item->Actions.Add(propToks[j].SubStringFrom(7));
             else
-              item->AddProperty( propToks[j] );
+              item->AddProperty(propToks[j]);
           }
         }
       }
@@ -312,8 +312,9 @@ void TFSItem::SetProcessed(bool V)  {
 }
 //..............................................................................
 uint64_t TFSItem::CalcTotalItemsSize(const TStrList& props) const {
-  if( !IsFolder() )
-    return ValidateProperties(props) ? GetSize() : 0;
+  // some folders like for plugins might have properties....
+  if( !ValidateProperties(props) )  return 0;
+  if( !IsFolder() )  return GetSize();
   uint64_t sz = 0;
   for( size_t i=0; i < Count(); i++ )
     sz += Item(i).CalcTotalItemsSize(props);
@@ -367,7 +368,7 @@ uint64_t TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties, TStrLis
       continue;
     if( Index.Break )  // termination signal
       return Index.Progress.GetPos();
-    Index.Progress.SetAction( FI.GetFullName() );
+    Index.Progress.SetAction(FI.GetFullName());
     Index.OnProgress.Execute(this, &Index.Progress);
     if( FI.IsFolder() )  {
       TFSItem* Res = Dest.UpdateFile(FI);
