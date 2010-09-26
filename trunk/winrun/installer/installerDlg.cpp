@@ -35,7 +35,7 @@ public:
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
     double div = 10;
     if( Sender != NULL )  {
-      if( EsdlInstanceOf(*Sender, THttpFileSystem) )  {
+      if( EsdlInstanceOf(*Sender, THttpFileSystem) || EsdlInstanceOf(*Sender, TSocketFS) )  {
         main_dlg->SetAction(olxstr("Downloading: ") << TEFile::ExtractFileName(A->GetAction().c_str()));
         div *= 10240;
       }
@@ -46,7 +46,7 @@ public:
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
     if( !EsdlInstanceOf( *Data, TOnProgress) )  return false;
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
-    if( Sender != NULL && EsdlInstanceOf(*Sender, THttpFileSystem) )
+    if( Sender != NULL && (EsdlInstanceOf(*Sender, THttpFileSystem) || EsdlInstanceOf(*Sender, TSocketFS)) )
       progress_bar::set_pos(main_dlg, IDC_PB_PROGRESS, (int)(A->GetPos()/(10240*10)));
     else  {
       main_dlg->SetAction(TEFile::ExtractFileName(A->GetAction()));
@@ -457,7 +457,7 @@ bool CInstallerDlg::DoInstall()  {
       TUrl url( reposPath );
       if( !proxyPath.IsEmpty() )
         url.SetProxy(proxyPath);
-      THttpFileSystem repos(url);
+      TSocketFS repos(url, false, 100);
       repos.OnProgress.Add( new TProgress );
       TEFile* zipf = repos.OpenFileAsFile(url.GetPath() + updater::UpdateAPI::GetInstallationFileName());
       if( zipf == NULL )  {

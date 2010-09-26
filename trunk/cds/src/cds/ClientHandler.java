@@ -61,7 +61,7 @@ public class ClientHandler extends Thread {
       BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
       DataOutputStream out = new DataOutputStream(client.getOutputStream());  // true - autoflush
       ArrayList<String> cmds = new ArrayList();
-      String cmd, origin=null, platform = null;
+      String cmd, origin=null, platform = null, resume_from=null;
       while( (cmd = in.readLine()) != null && !cmd.isEmpty() )  {
         if( cmd.length() == 0 )
           break;
@@ -70,6 +70,8 @@ public class ClientHandler extends Thread {
           origin = cmd.substring(16);
         else if( cmd.startsWith("Platform:") )
           platform = cmd.substring(10);
+        else if( cmd.startsWith("Resume-From:") )
+          resume_from = cmd.substring(13);
       }
       cmd = (cmds.isEmpty() ? null : cmds.get(0));
       final String src = (origin == null ? client.getRemoteSocketAddress().toString() : origin).trim();
@@ -89,9 +91,10 @@ public class ClientHandler extends Thread {
           info_line += src;
           info_line += (" at " + (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()));
           info_line += (": " + cmd);
-          if (platform != null) {
+          if (resume_from != null)
+            info_line += (" #" + resume_from);
+          if (platform != null)
             info_line += (" on " + platform);
-          }
           Main.print(info_line);
           boolean handled = false;
           // accept some command only from localhost...
@@ -141,12 +144,9 @@ public class ClientHandler extends Thread {
           if (!handled) {
             String[] toks = cmd.split("\\s");
             int offset = 0;
+            if( resume_from != null )
+              offset = Integer.parseInt(resume_from);
             if (toks.length > 1) {  // normalise file name
-              int off_ind = toks[1].indexOf('#');
-              if (off_ind != -1) {
-                offset = Integer.parseInt(toks[1].substring(off_ind + 1));
-                toks[1] = toks[1].substring(0, off_ind);
-              }
               if (!toks[1].startsWith("/")) {
                 URL url = new URL(toks[1]);
                 toks[1] = url.getPath();
@@ -181,35 +181,37 @@ public class ClientHandler extends Thread {
                 else if (file.isDirectory()) {
                   listFolder(out, file);
                 }
-                else if (!file.exists() || !file.isFile() || offset >= file.length()) {
+                else if (!file.exists() || !file.isFile() || offset > file.length()) {
                   out.writeBytes("HTTP/1.0 404 ERROR\n");
                 } else {
                   out.writeBytes("HTTP/1.0 200 OK\n");
                   out.writeBytes("Server: Olex2-CDS\n");
-                  FileInputStream fr = new FileInputStream(file);
-                  fr.skip(offset);
                   out.writeBytes(("Content-Length: " + file.length()) + "\n");
                   out.writeBytes("Last-Modified: " + (new SimpleDateFormat()).format(new Date(file.lastModified())) + "\n");
                   out.writeBytes("ETag: \"" + UUID.randomUUID().toString() + "\"\n");
                   out.writeBytes("Connection: close\n");
                   out.writeBytes("Content-Type: " + getContentType(file) + "\n\n");
-                  final int bf_len = 1024 * 64;
-                  byte[] bf = new byte[bf_len];
-                  int written = 0;
-                  try {
-                    int read_len;
-                    while ((read_len = fr.read(bf)) > 0) {
-                      out.write(bf, 0, read_len);
-                      written += read_len;
+                  if( offset != file.length() )  {
+                    FileInputStream fr = new FileInputStream(file);
+                    fr.skip(offset);
+                    final int bf_len = 1024 * 64;
+                    byte[] bf = new byte[bf_len];
+                    int written = 0;
+                    try {
+                      int read_len;
+                      while ((read_len = fr.read(bf)) > 0) {
+                        out.write(bf, 0, read_len);
+                        written += read_len;
+                      }
+                    } catch (Exception e) {
+                      Main.print(
+                              "Broken for " + src + " at " +
+                              (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()) +
+                              " at " + (float)written*100.0/file.length() + '%'
+                              );
                     }
-                  } catch (Exception e) {
-                    Main.print(
-                            "Broken for " + src + " at " +
-                            (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()) +
-                            " at " + (float)written*100.0/file.length() + '%'
-                            );
+                    fr.close();
                   }
-                  fr.close();
                 }
               }
             } else if (toks[0].equals("HEAD")) {
