@@ -81,6 +81,7 @@ public:
       double weight;
       DefData(const TSAtom::Ref& r, double w) : ref(r), weight(w)  {}
       DefData(const DefData& r) : ref(r.ref), weight(r.weight)  {}
+      DefData(const TDataItem& item) : ref(~0,~0) {  FromDataItem(item);  }
       DefData& operator = (const DefData& r)  {  
         ref = r.ref;  
         weight = r.weight;
@@ -92,12 +93,15 @@ public:
           diff = olx_cmp(ref.matrix_id, d.ref.matrix_id);
         return diff;
       }
+      void ToDataItem(TDataItem& item) const;
+      void FromDataItem(const TDataItem& item);
     };
     TTypeList<DefData> atoms;
     bool regular;
   public:
     Def(const TSPlane& plane);
     Def(const Def& r) : atoms(r.atoms), regular(r.regular)  {}
+    Def(const TDataItem& item)  {  FromDataItem(item);  }
     Def& operator = (const Def& r)  {
       atoms = r.atoms;
       regular = r.regular;
@@ -113,6 +117,8 @@ public:
       return true;
     }
     TSPlane* FromAtomRegistry(class AtomRegistry& ar, size_t def_id, class TNetwork* parent, const smatd& matr) const;
+    void ToDataItem(TDataItem& item) const;
+    void FromDataItem(const TDataItem& item);
   };
 
   Def GetDef() const { return Def(*this);  }
@@ -121,7 +127,7 @@ public:
   void _SetDefId(size_t id)  {  DefId = id; }
 
   void ToDataItem(TDataItem& item) const;
-  void FromDataItem(TDataItem& item);
+  void FromDataItem(const TDataItem& item);
 };
 
   typedef TTypeList<TSPlane> TSPlaneList;

@@ -3587,10 +3587,9 @@ bool TMainForm::IsControl(const olxstr& _cname) const {
 }
 //..............................................................................
 void TMainForm::DoUpdateFiles()  {
-  volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
+  volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
   if( _UpdateThread == NULL )  return;
   uint64_t sz = _UpdateThread->GetUpdateSize();
-  _UpdateThread->ResetUpdateSize();
   updater::SettingsFile sf(updater::UpdateAPI::GetSettingsFileName());
   TdlgMsgBox* msg_box = NULL;
   if( sf.ask_for_update )  {
@@ -3617,6 +3616,7 @@ void TMainForm::DoUpdateFiles()  {
   }
   else
     _UpdateThread->DoUpdate();
+  _UpdateThread->ResetUpdateSize();
 }
 //..............................................................................
 //..............................................................................

@@ -205,6 +205,7 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags, TSB
   // analyse extra connectivity information
   for( size_t i=0; i < ac; i++ )  {
     TSAtom* sa = Atoms[i];
+    sa->SetLattId(i);  // local to this procedure
     const CXConnInfo& ci = sa->CAtom().GetConnInfo();
     for( size_t j=0; j < ci.BondsToRemove.Count(); j++ )  {
       if( ci.BondsToRemove[j].matr == NULL )  {
@@ -280,8 +281,11 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags, TSB
           }
         }
       }
-      if( bc2set < A1->NodeCount() )
-        A1->SetNodeCount(bc2set);
+      for( size_t j = bc2set; j < A1->NodeCount(); j++ )  {
+        TSAtom& n = A1->Node(j--);
+        A1->RemoveNode(n);
+        n.RemoveNode(*A1);
+      }
     }
     A1->SetStandalone( A1->NodeCount() == 0 );
   }

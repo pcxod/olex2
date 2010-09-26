@@ -104,17 +104,18 @@ void TSAtom::ToDataItem(TDataItem& item) const {
   // need to save it for overlayed images etc
   item.AddField("crd", PersUtil::VecToStr(FCenter));
   item.AddField("flags", Flags);
-  TDataItem& nodes = item.AddItem("Nodes");
-  for( size_t i=0; i < Nodes.Count(); i++ )  {
-    if( Nodes[i]->IsDeleted() )  continue;
-    nodes.AddField("node_id", Nodes[i]->GetTag());
+  if( Network->GetTag() >= 0 )  {
+    TDataItem& nodes = item.AddItem("Nodes");
+    for( size_t i=0; i < Nodes.Count(); i++ )  {
+      if( Nodes[i]->IsDeleted() )  continue;
+      nodes.AddField("node_id", Nodes[i]->GetTag());
+    }
+    TDataItem& bonds = item.AddItem("Bonds");
+    for( size_t i=0; i < Bonds.Count(); i++ )  {
+      if( Bonds[i]->IsDeleted() )  continue;
+      bonds.AddField("bond_id", Bonds[i]->GetTag());
+    }
   }
-  TDataItem& bonds = item.AddItem("Bonds");
-  for( size_t i=0; i < Bonds.Count(); i++ )  {
-    if( Bonds[i]->IsDeleted() )  continue;
-    bonds.AddField("bond_id", Bonds[i]->GetTag());
-  }
-
   item.AddField("atom_id", FCAtom->GetTag());
   TDataItem& matrices = item.AddItem("Matrices");
   for( size_t i=0; i < Matrices.Count(); i++ )
@@ -122,16 +123,18 @@ void TSAtom::ToDataItem(TDataItem& item) const {
 }
 //..............................................................................
 void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
-  Network = &parent.GetFragment(item.GetRequiredField("net_id").ToInt());
-  const TDataItem& nodes = item.FindRequiredItem("Nodes");
-  Nodes.SetCapacity( nodes.FieldCount() );
-  for( size_t i=0; i < nodes.FieldCount(); i++ )
-    Nodes.Add(&parent.GetAtom(nodes.GetField(i).ToSizeT()));
-  const TDataItem& bonds = item.FindRequiredItem("Bonds");
-  Bonds.SetCapacity( bonds.FieldCount() );
-  for( size_t i=0; i < bonds.FieldCount(); i++ )
-    Bonds.Add(&parent.GetBond(bonds.GetField(i).ToSizeT()));
-
+  const size_t net_id = item.GetRequiredField("net_id").ToInt();
+  Network = &parent.GetFragment(net_id);
+  if( net_id != InvalidIndex )  {
+    const TDataItem& nodes = item.FindRequiredItem("Nodes");
+    Nodes.SetCapacity( nodes.FieldCount() );
+    for( size_t i=0; i < nodes.FieldCount(); i++ )
+      Nodes.Add(&parent.GetAtom(nodes.GetField(i).ToSizeT()));
+    const TDataItem& bonds = item.FindRequiredItem("Bonds");
+    Bonds.SetCapacity( bonds.FieldCount() );
+    for( size_t i=0; i < bonds.FieldCount(); i++ )
+      Bonds.Add(&parent.GetBond(bonds.GetField(i).ToSizeT()));
+  }
   TLattice& latt = Network->GetLattice();
   size_t ca_id = item.GetRequiredField("atom_id").ToSizeT();
   CAtom( latt.GetAsymmUnit().GetAtom(ca_id) );

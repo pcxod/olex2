@@ -2,6 +2,7 @@
 #include "efile.h"
 #include "bapp.h"
 #include "log.h"
+#include "eutf8.h"
 #include <errno.h>
 
 #ifdef __WIN32__
@@ -107,17 +108,24 @@ bool THttpFileSystem::Connect()  {
   return Connected;
 }
 //..............................................................................
-olxcstr THttpFileSystem::GenerateRequest(const TUrl& url, const olxcstr& cmd, const olxcstr& FileName)  {
+olxcstr THttpFileSystem::GenerateRequest(const TUrl& url, const olxcstr& cmd, const olxcstr& FileName,
+    size_t position)
+{
   olxcstr request(cmd);
-  request << ' ' << (url.GetFullHost() << '/' <<
-    TEFile::UnixPath(FileName)).Replace(' ', "%20") << " HTTP/1.0\n";
+  request << ' '
+    << TUtf8::Encode(url.GetFullHost() << '/' << TEFile::UnixPath(FileName)).Replace(' ', "%20")
+    << " HTTP/1.0\n";
   if( url.HasProxy() && !url.GetProxy().GetUser().IsEmpty() && !url.GetProxy().GetPassword().IsEmpty() )
     request << "Authorization: " << olxcstr(url.GenerateHTTPAuthString()) << '\n';
   request << "Platform: " << TBasicApp::GetPlatformString() << '\n';
+  if( position != InvalidIndex && position != 0 )
+    request << "Resume-From: " << position << '\n';
   return request << '\n';
 }
 //..............................................................................
-THttpFileSystem::ResponseInfo THttpFileSystem::ParseResponseInfo(const olxcstr& str, const olxcstr& sep)  {
+THttpFileSystem::ResponseInfo THttpFileSystem::ParseResponseInfo(const olxcstr& str,
+  const olxcstr& sep, const olxstr& src )
+{
   ResponseInfo rv;
   if( str.IsEmpty() )
     return rv;
@@ -128,6 +136,7 @@ THttpFileSystem::ResponseInfo THttpFileSystem::ParseResponseInfo(const olxcstr& 
     if( si == InvalidIndex )  continue;
     rv.headers(header_toks[i].SubStringTo(si), header_toks[i].SubStringFrom(si+1).Trim(' '));
   }
+  rv.source = src;
   return rv;
 }
 //..............................................................................
@@ -158,24 +167,34 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   DoConnect();
   const size_t BufferSize = 1024*64;
   char* Buffer = new char[BufferSize+1];
+  TEFile* File = _DoAllocateFile(Source);
+  if( File == NULL )  {
+    delete [] Buffer;
+    return NULL;
+  }
+  // if the file length is not 0, it means that the CDS of any kind is in place...
+  const size_t starting_file_len = File->Length();
   // read and extract headers
-  _write(GenerateRequest(GetUrl(), "GET", Source));
-  int ThisRead = _read(Buffer, BufferSize);
+  _write(GenerateRequest(GetUrl(), "GET", Source, starting_file_len));
+  int ThisRead = _read(Buffer, 512);
   // find the data start offset
   bool crlf = false;
   try  {  crlf = IsCrLf(Buffer, ThisRead);  }
   catch(...)  {
     delete [] Buffer;
+    delete File;
     return NULL;
   }
-  uint64_t TotalRead = 0, FileLength = ~0;
+  uint64_t TotalRead = starting_file_len, FileLength = ~0;
   size_t data_off = GetDataOffset(Buffer, ThisRead, crlf);
-  const ResponseInfo info = ParseResponseInfo(olxcstr(Buffer, data_off), olxcstr(crlf ? "\r\n" : "\n"));
+  const ResponseInfo info = ParseResponseInfo(
+    olxcstr(Buffer, data_off), olxcstr(crlf ? "\r\n" : "\n"), Source);
   try  {
     FileLength = info.headers.Find("Content-Length", "-1").ToInt();
   }
   catch(...)  {}  // toInt my throw an exception
   if( FileLength == ~0 || !info.status.EndsWithi("200 OK") || !info.headers.HasKey("ETag") )  {
+    delete File;
     delete [] Buffer;
     return NULL;
   }
@@ -185,9 +204,8 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   Progress.SetAction(Source);
   Progress.SetMax(FileLength);
   OnProgress.Enter(this, &Progress);
-  TEFile* File = TEFile::TmpFile();
-  TotalRead = ThisRead-data_off-1;
-  File->Write(&Buffer[data_off+1], TotalRead);
+  TotalRead = starting_file_len+ThisRead-data_off-1;
+  File->Write(&Buffer[data_off+1], TotalRead-starting_file_len);
   bool restarted = false;
   while( TotalRead != FileLength )  {
     if( TotalRead > FileLength ) // could happen?
@@ -203,7 +221,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
       continue;
     }
     if( ThisRead <= 0 )  {
-      if( _OnReadFailed(server_name, Source, TotalRead) )  {
+      if( _OnReadFailed(info, TotalRead) )  {
         restarted = true;
         continue;
       }
@@ -219,14 +237,12 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   }
   delete [] Buffer;
   File->SetPosition(0);
-  if( TotalRead != FileLength || !_DoValidate(server_name, etag, *File) )  {  // premature completion?
+  if( !_DoValidate(info, *File, FileLength) )  {  // premature completion?
     Progress.SetPos(0);
     OnProgress.Exit(this, &Progress);
     delete File;
     return NULL;
   }
-  File->Flush();
-  File->SetPosition(0);
   Progress.SetPos(FileLength);
   OnProgress.Exit(this, &Progress);
   return File;
@@ -253,8 +269,13 @@ int THttpFileSystem::_write(const olxcstr& str)  {
 }
 //..............................................................................
 bool THttpFileSystem::_DoesExist(const olxstr& f, bool forced_check)  {
-  if( Index != NULL )
-    return Index->GetRoot().FindByFullName(f) != NULL;
+  if( Index != NULL )  {
+    olxstr fn = TEFile::UnixPath(f);
+    if( fn.StartsFrom(GetBase()) )
+      return Index->GetRoot().FindByFullName(fn.SubStringFrom(GetBase().Length())) != NULL;
+    else
+      return Index->GetRoot().FindByFullName(fn) != NULL;
+  }
   if( !forced_check )  return false;  
   try  {
     DoConnect();

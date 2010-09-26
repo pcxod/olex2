@@ -72,6 +72,19 @@ void ConnInfo::ProcessBind(const TStrList& ins)  {
   }
 }
 //........................................................................
+void ConnInfo::Disconnect(TCAtom& ca)  {
+  const size_t i = AtomInfo.IndexOf(&ca);
+  if( i == InvalidIndex )  {
+    AtomConnInfo& ai = AtomInfo.Add(&ca, AtomConnInfo(ca));
+    ai.maxBonds = 0;
+    ai.r = -1;
+  }
+  else  {
+    AtomInfo.GetValue(i).maxBonds = 0;
+  }
+  ca.SetConnInfo(GetConnInfo(ca));
+}
+//........................................................................
 void ConnInfo::ProcessConn(TStrList& ins)  {
   short maxB = def_max_bonds;
   double r = -1;

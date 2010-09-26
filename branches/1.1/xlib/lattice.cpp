@@ -925,7 +925,20 @@ void TLattice::UpdatePlaneDefinitions()  {
       continue;
     PlaneDefs[Planes[i]->GetDefId()].IncTag();
   }
-  PlaneDefs.Pack(ACollectionItem::TagAnalyser<>(0));
+  TSizeList ids(PlaneDefs.Count());
+  size_t id=0;
+  for( size_t i=0; i < PlaneDefs.Count(); i++ )  {
+    if( PlaneDefs[i].GetTag() != 0 )
+      ids[i] = id++;
+    else
+      PlaneDefs.NullItem(i);
+  }
+  for( size_t i=0; i < Planes.Count(); i++ )  {
+    if( Planes[i]->IsDeleted() || Planes[i]->GetDefId() >= PlaneDefs.Count() )  // would be odd
+      continue;
+    Planes[i]->_SetDefId(ids[Planes[i]->GetDefId()]);
+  }
+  PlaneDefs.Pack();
 }
 //..............................................................................
 void TLattice::UpdateAsymmUnit()  {
@@ -2060,7 +2073,6 @@ void TLattice::ToDataItem(TDataItem& item) const  {
 //..............................................................................
 void TLattice::FromDataItem(TDataItem& item)  {
   Clear(true);
-
   Delta = item.GetRequiredField("delta").ToDouble();
   DeltaI = item.GetRequiredField("deltai").ToDouble();
   Generated = item.GetRequiredField("grown").ToBool();
@@ -2101,8 +2113,24 @@ void TLattice::FromDataItem(TDataItem& item)  {
   //GetAsymmUnit().SetContainsEquivalents( eqc != 0 );
   //Disassemble();
   TDataItem& planes = item.FindRequiredItem("Planes");
-  for( size_t i=0; i < planes.ItemCount(); i++ )
-    Planes.Add(new TSPlane(Network))->FromDataItem(planes.GetItem(i));
+  for( size_t i=0; i < planes.ItemCount(); i++ )  {
+    TSPlane& p = *Planes.Add(new TSPlane(Network));
+    p.FromDataItem(planes.GetItem(i));
+    TSPlane::Def def = p.GetDef();
+    size_t di = InvalidIndex;
+    for( size_t j=0; j < PlaneDefs.Count(); j++ )  {
+      if( PlaneDefs[j] == def )  {
+        di = j;
+        break;
+      }
+    }
+    if( di == InvalidIndex )  {
+      p._SetDefId(PlaneDefs.Count());
+      PlaneDefs.AddNew(def);
+    }
+    else
+      p._SetDefId(di);
+  }
   BuildAtomRegistry();
 }
 //..............................................................................
@@ -2198,8 +2226,9 @@ olxstr TLattice::CalcMoiety() const {
   if the atoms is not on a special position, because it can be either polymeric or form
   dimers/trimers etc... */
   TLattice latt;
-  latt.AsymmUnit->SetRefMod(AsymmUnit->GetRefMod());
-  latt.AsymmUnit->Assign(GetAsymmUnit());
+  RefinementModel rm(latt.GetAsymmUnit());
+  latt.AsymmUnit->SetRefMod(&rm);
+  rm.Assign(*GetAsymmUnit().GetRefMod(), true);
   for( size_t i=0; i < latt.GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& a = latt.GetAsymmUnit().GetAtom(i);
     if( a.IsDetached() )
@@ -2207,7 +2236,6 @@ olxstr TLattice::CalcMoiety() const {
     if( a.IsMasked() )
       a.SetMasked(false);
   }
-  latt.AsymmUnit->_UpdateConnInfo();
   latt.AsymmUnit->DetachAtomType(iQPeakZ, true);
   latt.Init();
   latt.CompaqAll();

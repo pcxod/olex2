@@ -106,6 +106,7 @@ BEGIN_EVENT_TABLE(TImgButton, wxPanel)
   EVT_ENTER_WINDOW(TImgButton::MouseEnterEvent)
   EVT_LEAVE_WINDOW(TImgButton::MouseLeaveEvent)
   EVT_PAINT(TImgButton::PaintEvent)
+  EVT_ERASE_BACKGROUND(TImgButton::EraseBGEvent)
 END_EVENT_TABLE()
 //..............................................................................
 TImgButton::TImgButton(wxWindow* parent) : wxPanel(parent), AButtonBase(this) {
@@ -148,8 +149,12 @@ const wxBitmap& TImgButton::ChooseBitmap() const {
 void TImgButton::Render(wxDC& dc) const {
   const wxBitmap& bmp = ChooseBitmap();
   if( bmp.IsOk() )  {
-    dc.Clear();
-    dc.DrawBitmap(bmp, 0, 0);
+    wxBitmap tbmp(bmp.GetWidth(), bmp.GetHeight(), bmp.GetDepth());
+    wxMemoryDC mdc(tbmp);
+    mdc.SetBackground(wxBrush(GetBackgroundColour()));
+    mdc.Clear();
+    mdc.DrawBitmap(bmp, 0, 0);
+    dc.Blit(0, 0, bmp.GetWidth(), bmp.GetHeight(), &mdc, 0, 0, wxCOPY);
   }
 }
 //..............................................................................

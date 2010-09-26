@@ -186,6 +186,9 @@
     <ClCompile Include="..\..\..\olex\main_gui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\repository\cdsfs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\olex\cmdline.h">
@@ -358,6 +361,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\olex\html\widgetcellext.h">
       <Filter>html\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\repository\cdsfs.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
