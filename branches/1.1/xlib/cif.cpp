@@ -789,19 +789,21 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
   const CifTable* LT = NULL;
   for( size_t i=0; i < LoopCount(); i++ )  {
     LT = &GetLoop(i).GetData();
-    if( LT->ColCount() < TD->ItemCount() )  continue;
+    if( LT->ColCount() < TD->ItemCount() )  {
+      LT = NULL;
+      continue;
+    }
     size_t defcnt = 0;
     for( size_t j=0; j < LT->ColCount(); j++ )  {
       if( TD->FindItemi(LT->ColName(j)) != NULL )
         defcnt ++;
     }
     if( defcnt == TD->ItemCount() )  break;
-    else  LT = NULL;
+    else
+      LT = NULL;
   }
-  if( LT == NULL )  {
-    TBasicApp::GetLog().Info(olxstr("Could not find loop for table definition: ") << TD->GetName());
+  if( LT == NULL || LT->RowCount() == 0 )
     return false;
-  }
   Table.Resize(LT->RowCount(), LT->ColCount());
   for( size_t i =0; i < Table.ColCount(); i++ )  {
     Table.ColName(i) = LT->ColName(i);

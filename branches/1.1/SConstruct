@@ -280,8 +280,8 @@ else:
       env.ParseConfig("wx-config --cxxflags --unicode --toolkit=gtk2 --libs gl,core,html,net,aui")
       env.Append(LIBS=['libGL', 'libGLU'])
 #!!!
-    unirun_env = env.Clone()
     env.Append(CCFLAGS = ['-D__WXWIDGETS__'])
+    unirun_env = env.Clone()
     env.ParseConfig("python-config --includes")
     env.ParseConfig("python-config --ldflags")
   except:
@@ -323,7 +323,6 @@ if sys.platform[:3] == 'win':
   olex2_env = wx_env.Clone()
   unirun_env = wx_env.Clone()
 else:
-  unirun_env = env.Clone()
   unirun_env.Append(LIBPATH=[out_dir+'lib'])
   unirun_env.Append(LIBS=['sdl'])
   olex2_env = env
