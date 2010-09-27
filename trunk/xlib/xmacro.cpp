@@ -2463,7 +2463,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
       xapp.GetLog().Info("Found table definitions:");
       for( size_t i=0; i < Root->ItemCount(); i++ )  {
         Tmp = "Table "; 
-        Tmp << Root->GetItem(i).GetName()  << "(" << " #" << (int)i+1 <<  "): caption <---";
+        Tmp << Root->GetItem(i).GetName()  << '(' << " #" << (int)i+1 <<  "): caption <---";
         xapp.GetLog().Info(Tmp);
         xapp.GetLog().Info(Root->GetItem(i).GetFieldValueCI("caption"));
         xapp.GetLog().Info("--->");
@@ -2493,24 +2493,20 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
     CLA, // cell attributes
     THA;  // header (th) attributes
   TDataFile DF;
-  TDataItem *TD, *Root;
   TTTable<TStrList> DT;
   DF.LoadFromXLFile(CifTablesFile, NULL);
   Dic.LoadFromFile(CifDictionaryFile);
-
-  olxstr RF( Options.FindValue("n", EmptyString) ), 
-         Tmp;
+  olxstr RF(Options.FindValue('n'));
   if( RF.IsEmpty() )  {
     RF = TEFile::ChangeFileExt(Cif->GetFileName(), EmptyString);
     RF << "_tables";
   }
   RF = TEFile::ChangeFileExt(RF, "html");
-
-  Root = DF.Root().FindItemi("Cif_Tables");
+  TDataItem* Root = DF.Root().FindItemi("Cif_Tables");
   smatd_list SymmList;
   size_t tab_count = 1;
   for( size_t i=0; i < Cmds.Count(); i++ )  {
-    TD = NULL;
+    TDataItem* TD = NULL;
     if( Cmds[i].IsNumber() )  {
       size_t index = Cmds[i].ToSizeT();
       if( index < Root->ItemCount() )
@@ -2519,16 +2515,16 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
     if( TD == NULL  )
       TD = Root->FindItem(Cmds[i]);
     if( TD == NULL )  {
-      xapp.GetLog().Warning( olxstr("Could not find table definition: ") << Cmds[i] );
+      xapp.GetLog().Warning(olxstr("Could not find table definition: ") << Cmds[i]);
       continue;
     }
     if( TD->GetName().Equalsi("footer") || TD->GetName().Equalsi("header") )  {
       olxstr fn = TD->GetFieldValue("source");
-      if( fn.IndexOf("$") != InvalidIndex )
+      if( fn.IndexOf('$') != InvalidIndex )
         ProcessExternalFunction(fn);
       if( !TEFile::IsAbsolutePath(fn) )
         fn = xapp.GetCifTemplatesDir() + fn;
-      SL1.LoadFromFile( fn );
+      SL1.LoadFromFile(fn);
       for( size_t j=0; j < SL1.Count(); j++ )  {
         Cif->ResolveParamsFromDictionary(Dic, SL1[j], '%', &XLibMacros::CifResolve);
         SL.Add(SL1[j]);
@@ -2536,18 +2532,19 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
       continue;
     }
     if( Cif->CreateTable(TD, DT, SymmList) )  {
-      Tmp = "Table "; Tmp << ++tab_count << ' ' << TD->GetFieldValueCI("caption");
+      olxstr Tmp = "Table ";
+      Tmp << ++tab_count << ' ' << TD->GetFieldValueCI("caption");
       Tmp.Replace("%DATA_NAME%", Cif->GetDataName());
-      if( Tmp.IndexOf("$") != InvalidIndex )
+      if( Tmp.IndexOf('$') != InvalidIndex )
         ProcessExternalFunction( Tmp );
       // attributes of the row names ...
       CLA.Clear();
       THA.Clear();
-      CLA.Add( TD->GetFieldValue("tha", EmptyString) );
-      THA.Add( TD->GetFieldValue("tha", EmptyString) );
+      CLA.Add(TD->GetFieldValue("tha"));
+      THA.Add(TD->GetFieldValue("tha"));
       for( size_t j=0; j < TD->ItemCount(); j++ )  {
-        CLA.Add(TD->GetItem(j).GetFieldValue("cola", EmptyString));
-        THA.Add(TD->GetItem(j).GetFieldValue("tha", EmptyString));
+        CLA.Add(TD->GetItem(j).GetFieldValue("cola"));
+        THA.Add(TD->GetItem(j).GetFieldValue("tha"));
       }
 
       olxstr footer;
@@ -2563,15 +2560,15 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
         Tmp,
         footer,
         true, false,
-        TD->GetFieldValue("tita", EmptyString),  // title paragraph attributes
-        TD->GetFieldValue("foota", EmptyString),  // footer paragraph attributes
-        TD->GetFieldValue("taba", EmptyString),  //const olxstr& tabAttr,
-        TD->GetFieldValue("rowa", EmptyString),  //const olxstr& rowAttr,
+        TD->GetFieldValue("tita"),  // title paragraph attributes
+        TD->GetFieldValue("foota"),  // footer paragraph attributes
+        TD->GetFieldValue("taba"),  //const olxstr& tabAttr,
+        TD->GetFieldValue("rowa"),  //const olxstr& rowAttr,
         THA, // header attributes
         CLA, // cell attributes,
         true,
         TD->GetFieldValue("coln", "1").ToInt(),
-        TD->GetFieldValue("colsa", EmptyString)
+        TD->GetFieldValue("colsa")
       ); //bool Format) const  {
       //DT.CreateHTMLList(SL, Tmp, true, false, true);
     }

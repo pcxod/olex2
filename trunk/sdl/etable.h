@@ -200,8 +200,7 @@ public:
         if( (i+1) < colCount )
           Tmp << "<td " << colSepAttr << ">&nbsp;</td>";
       }
-      L.Add( (Tmp << "</tr>") );
-    } //!ColNames
+    }
     size_t inc = (Rows.Count()%colCount)!=0 ? colCount : 0,
            l_l = (Rows.Count()+inc)/colCount;
     for( size_t i=0; i < l_l; i++ )  {

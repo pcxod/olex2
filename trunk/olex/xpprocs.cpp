@@ -7489,12 +7489,12 @@ void TMainForm::funGetMaterial(const TStrObjList &Params, TMacroError &E)  {
     }
     else  {
       TGPCollection* gpc = FXApp->GetRender().FindCollection(Params[0]);
-      if( gpc != NULL && EsdlInstanceOf(*gpc, TGlGroup) )  {
+      if( gpc != NULL && EsdlInstanceOf(*gpc, TGlGroup) )
         mat = &((TGlGroup*)gpc)->GetGlM();
-      }
       else  {  // check if the style exists
         TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(Params[0]);
-        mat = gs->FindMaterial("mat");
+        if( gs != NULL )
+          mat = gs->FindMaterial("mat");
       }
     }
   }
