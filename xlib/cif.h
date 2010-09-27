@@ -111,8 +111,8 @@ public:
   size_t BlockCount() const {  return data_provider.Count();  }
   // changes current block index, i.e. loads structure from different block
   void SetCurrentBlock(size_t i)  {
-    if( i != InvalidIndex )  // load default
-    block_index = i;
+    if( i != InvalidIndex && i < data_provider.Count() )  // load default
+      block_index = i;
     _LoadCurrent();
   }
   void SetCurrentBlock(const olxstr& block_name)  {

@@ -2035,7 +2035,6 @@ TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(const olxstr& na
   else if( type == typeid(TButton) )    {  
     props->Add("checked");
     props->Add("val");
-    props->Add("data");
   }
   else if( type == typeid(TBmpButton) )    {  
     props->Add("checked");

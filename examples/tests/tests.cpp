@@ -38,7 +38,7 @@ int main(int argc, char* argv[])  {
     for( int i=1; i < argc; i++ )
       XApp.Arguments.Add(argv[i]);
     XApp.XFile().RegisterFileFormat(new TIns, "res");
-    //XApp.GetLog().AddStream( new TOutStream(), true );
+    XApp.GetLog().AddStream( new TOutStream(), true );
     //XApp.GetLog().AddStream( new TEFile( bd + "tests.log", "w+b"), true );
     TEFile logf(bd + "test.out", "w+b");
     TOnProgress pg;

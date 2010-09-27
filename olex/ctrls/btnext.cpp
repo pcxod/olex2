@@ -40,17 +40,16 @@ void AButtonBase::SetDown(bool v)  {
 void AButtonBase::_ClickEvent()  {
   StartEvtProcessing()
     if( Down )  {
-      Down = false;
       if( !GetOnUpStr().IsEmpty() )
-        OnUp.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>( GetOnUpStr() ));
+        OnUp.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnUpStr()));
     }
     // we cannot check if the string is empty - it will be most of the time!
-    OnClick.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnClickStr()) );
+    OnClick.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnClickStr()));
     if( !Down )  {
-      Down = true;
       if( !GetOnDownStr().IsEmpty() )
-        OnDown.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>( GetOnDownStr() ));
+        OnDown.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnDownStr()));
     }
+    Down = !Down;
   EndEvtProcessing()
 }
 //..............................................................................
