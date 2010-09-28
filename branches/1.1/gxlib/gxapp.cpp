@@ -1789,13 +1789,13 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
           XA = Atoms[i];
           const bool checkBonds = (XA->Atom().GetType() == iQPeakZ);
           const olxstr Tmp = XA->Atom().GetLabel();
-          olxstr NL = To.SubStringFrom(1);
+          olxstr NL = elm->symbol;
           NL << Tmp.SubStringFrom(From.Length()-1);
           bool recreate = XA->Atom().GetType() != *elm;
           const olxstr oldL = XA->Atom().GetLabel();
           XA->Atom().CAtom().SetLabel(
             CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->Atom().CAtom(), NL) : NL, false);
-          undo->AddAtom( XA->Atom().CAtom(), oldL);
+          undo->AddAtom(XA->Atom().CAtom(), oldL);
           XA->Atom().CAtom().SetType(*elm);
           NameHydrogens(XA->Atom(), undo, CheckLabel);
           if( recreate )  {
