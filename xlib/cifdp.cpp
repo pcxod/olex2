@@ -82,6 +82,7 @@ bool TCifDP::ExtractLoop(size_t& start, parse_context& context)  {
   
   try  {  table.DataFromStrings(loop_data);  }
   catch(const TExceptionBase& e)  {
+    delete &table;
     throw ParsingException(__OlxSourceInfo, e);
   }
   context.current_block->Add(table);
@@ -291,6 +292,10 @@ void cetTable::DataFromStrings(TStrList& lines)  {
         cell->lines.Add(lines[i].SubStringFrom(1));
       while( ++i < lines.Count() && !lines[i].StartsFrom(';') )
         cell->lines.Add(lines[i]);
+      if( i < lines.Count() && lines[i].Length() > 1 )  {
+        lines[i] = lines[i].SubStringFrom(1);
+        i--;
+      }
       cell->lines.TrimWhiteCharStrings();
       continue;
     }
@@ -351,18 +356,15 @@ cetString::cetString(const olxstr& _val) : value(_val), quoted(false)  {
     quoted = true;
 }
 void cetString::ToStrings(TStrList& list) const {
-  if( quoted )  {
-    if( list.IsEmpty() || (list.Last().String.Length() + value.Length() + 3 > 80) )
-      list.Add(" '") << value << '\'';
-    else
-      list.Last().String << " '" << value << '\'';
-  }
-  else  {
-    if( list.IsEmpty() || (list.Last().String.Length() + value.Length() + 1 > 80) )
-      list.Add(' ') << value;
-    else
-      list.Last().String << ' ' << value;
-  }
+  olxstr& line =
+    (list.IsEmpty() || 
+     (list.Last().String.Length() + value.Length() + 3 > 80) || 
+     list.Last().String.StartsFrom(';')) ?
+    list.Add(' ') : (list.Last().String << ' ');
+  if( quoted )
+    line << '\'' << value << '\'';
+  else
+    line << value;
 }
 //..............................................................................
 void cetNamedString::ToStrings(TStrList& list) const {
