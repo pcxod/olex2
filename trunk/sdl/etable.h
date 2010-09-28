@@ -192,6 +192,7 @@ public:
       L.Add("<p ") << titlePAttr << '>' << Title << "</p>";
 
     if( colNames )  {
+      Tmp = "<tr>";
       if( rowNames )
         Tmp << "<th>" << thAttr[0] << "</th>";
       for( size_t i=0; i < colCount; i++ )  {
@@ -200,6 +201,7 @@ public:
         if( (i+1) < colCount )
           Tmp << "<td " << colSepAttr << ">&nbsp;</td>";
       }
+      L.Add(Tmp << "</tr>");
     }
     size_t inc = (Rows.Count()%colCount)!=0 ? colCount : 0,
            l_l = (Rows.Count()+inc)/colCount;
