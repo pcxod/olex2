@@ -1,0 +1,78 @@
+// scatterers definition, element:alias, alias is same as element by default
+Scatterers N:N, C:C, {N&C}:XS, H
+// model definition
+// all occupancies are chemical
+
+
+global {
+ dfix.s = 0.02
+ flat.s  = 0.02
+ sadi.s  = 0.04
+ ...
+ A6C.d = 1.39
+ A3H.d = 0.92
+ A3F.d = 1.52
+ A1HC.d = 0.92
+ HC_Uiso = 1.2
+ A1HO.d = 0.85
+ HO_Uiso = 1.5
+}
+ACp* (d1=1.39, d2=1.52)
+A1HO (d=0.85, kU=1.5)
+same (s12=0.02, s13=0.04)
+
+
+residue r1 (number=1, alias=none) {
+ group g1(type=regular) {
+  B1 { (x,y,z) occupancy (Uiso/anis) }
+  F1 { (x,y,z) occupancy (Uiso/anis) }
+  F2 { (x,y,z) occupancy (Uiso/anis) }
+  F3 { (x,y,z) occupancy (Uiso/anis) }
+  F4 { (x,y,z) occupancy (Uiso/anis) }
+ }
+ C5 { (x,y,z) occupancy (Uiso/anis) }
+ group A3H:C5H(type=rigid, pivot=C5, d=A3H.d, occu=pivot.occu Uiso=HC_Uiso*pivot.Ueq) {  // afix 137 
+  H5a { (x,y,z) occu (Uiso) }
+  H5b { (x,y,z) occu (Uiso) }
+  H5c { (x,y,z) occu (Uiso) }
+ }
+ C6 { (x,y,z) occupancy (Uiso/anis)
+  A6C:Ph1 (type=rigid, d=1.39) {  // afix 66
+   C7  { (x,y,z) occupancy (Uiso/anis)
+    A1HC(type=riding) { H7 ... }
+   }
+   C8  {}
+   C9  {}
+   C10 {}
+   C11 {}
+   C12 {}
+  }
+ }
+ group Phe (type=flat&regular, flat.esd=0.2, regular.d=1.39) {  // regular ring
+  C13 {}
+  C14  {}
+  C15  {}
+  C16 {}
+  C17 {}
+  C18 {}
+ }
+ O1 {}
+ group A1HO (pivot=O1, Uiso=kU*pivot.Ueq) { H1 {} }
+ part p1(occu=0.5) {
+  C1 { (x,y,z) occu (Uiso/anis) }
+  C2 { (x,y,z) occu (Uiso/anis) }
+  N1 { (x,y,z) occu (Uiso/anis) }
+ } 
+ part p2(occu=0.5, same=p1, same.s12=0.02, same.s13=0.04) {
+  C1 { (x,y,z) occu (Uiso/anis) }
+  C2 { (x,y,z) occu (Uiso/anis) }
+  N1 { (x,y,z) occu (Uiso/anis) }
+ }
+ leq { p1.occu+2*p2.occu=2 } 
+ dfix (d=1.25,s=0.02) {p1.C1, p1.N1, p2.C1, P2.N1} 
+}
+
+// restraints
+r1.p1.occu + r1.p2.occu = 1
+r1.p1 is the same as r1.p2 
+g1 is regular 
