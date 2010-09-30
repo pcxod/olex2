@@ -12,7 +12,7 @@ bool ExperimentalDetails::SetTemp(const olxstr& t)  {
     if( scale == 'F' )
       TempValue = (TempValue-32.0)*5./9.;
     else if( scale == 'K' )
-      TempValue += 273.15;
+      TempValue -= 273.15;
   }
   else  {
     TempValue = t;

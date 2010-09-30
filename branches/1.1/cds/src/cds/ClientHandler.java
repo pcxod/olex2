@@ -196,7 +196,7 @@ public class ClientHandler extends Thread {
                     fr.skip(offset);
                     final int bf_len = 1024 * 64;
                     byte[] bf = new byte[bf_len];
-                    int written = 0;
+                    int written = offset;
                     try {
                       int read_len;
                       while ((read_len = fr.read(bf)) > 0) {

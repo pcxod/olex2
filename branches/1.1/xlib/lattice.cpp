@@ -2220,11 +2220,6 @@ bool TLattice::ApplyGrowInfo()  {
 }
 //..............................................................................
 olxstr TLattice::CalcMoiety() const {
-  /* There is a need to find out if fragments can be grow and if they are polymeric,
-  a simple test for polymers would be to compare the atom's degenerocity is smaller than
-  the number of potential uniq directions in which the atom can grow. It is more complicated
-  if the atoms is not on a special position, because it can be either polymeric or form
-  dimers/trimers etc... */
   TLattice latt;
   RefinementModel rm(latt.GetAsymmUnit());
   latt.AsymmUnit->SetRefMod(&rm);
@@ -2238,11 +2233,49 @@ olxstr TLattice::CalcMoiety() const {
   }
   latt.AsymmUnit->DetachAtomType(iQPeakZ, true);
   latt.Init();
-  latt.CompaqAll();
+  latt.GenerateCell();
+  // compaq x...
+  for( size_t i=0; i < latt.Fragments.Count(); i++ )  {
+    TNetwork& net1 = *latt.Fragments[i];
+    for( size_t j=0; j < net1.NodeCount(); j++ )  {
+      const TSAtom& fa = net1.Node(j);
+      bool merged = false;
+      for( size_t k=i+1; k < latt.Fragments.Count(); k++ )  {
+        TNetwork& net2 = *latt.Fragments[k];
+        for( size_t l=0; l < net2.NodeCount(); l++ )  {
+          vec3d v = fa.ccrd()-net2.Node(l).ccrd();
+          const vec3i t = v.Round<int>();
+          v -= t;
+          latt.GetAsymmUnit().CellToCartesian(v);
+          if( net1.CBondExistsQ(fa, net2.Node(l), v.QLength()) )  {
+            for( size_t m=0; m < net2.NodeCount(); m++ )  {
+              net2.Node(m).ccrd() += t;
+              latt.GetAsymmUnit().CellToCartesian(net2.Node(m).ccrd(), net2.Node(m).crd());
+              net1.AddNode(net2.Node(m));
+            }
+            merged = true;
+            delete latt.Fragments[k];
+            latt.Fragments.Delete(k--);
+            break;
+          }
+        }
+      }
+    }
+  }
+  // re-create fragments (wil conside CONN/FREE/BIND)...
+  latt.ClearBonds();
+  latt.ClearFragments();
+  latt.GenerateBondsAndFragments(NULL);
+  for( size_t i=0; i < latt.Fragments.Count(); i++ )  {
+    TNetwork* Frag = latt.Fragments[i];
+    for( size_t j=0; j < Frag->BondCount(); j++ )
+      delete &Frag->Bond(j);
+    Frag->ClearBonds();
+  }
+  //
   latt.Fragments.QuickSorter.SortSF(latt.Fragments, TLattice_SortFragments);
   // multiplicity,content, reference fragment index
   TTypeList<AnAssociation3<double,ContentList, size_t> > frags;
-  TArrayList<vec3d> centres(latt.FragmentCount());
   for( size_t i=0; i < latt.FragmentCount(); i++ )  {
     ContentList cl = latt.GetFragment(i).GetContentList();
     if( cl.IsEmpty())  continue;
@@ -2252,15 +2285,12 @@ olxstr TLattice::CalcMoiety() const {
     for( size_t j=0; j < latt.GetFragment(i).NodeCount(); j++ )  {
       TSAtom& nd = latt.GetFragment(i).Node(j);
       if( nd.IsDeleted() || nd.GetType() == iQPeakZ )  continue;
-      centres[i] += nd.crd();
-      wght += 1;
       const double occu = nd.CAtom().GetOccu()*nd.CAtom().GetDegeneracy();
       if( overall_occu == 0 )
         overall_occu = occu;
       else if( overall_occu != -1 && olx_abs(overall_occu-occu) > 0.01 )
         overall_occu = -1;
     }
-    centres[i] /= wght;
     for( size_t j=0; j < frags.Count(); j++ )  {
       if( frags[j].GetB().Count() != cl.Count() )  continue;
       bool equals = true;
@@ -2277,18 +2307,7 @@ olxstr TLattice::CalcMoiety() const {
         }
       }
       if( equals )  {
-        // consider special case of nearby and/or overlapping fragments, compare rations, not counts...
-        if( centres[i].QDistanceTo(centres[frags[j].GetC()]) < 4 )  {    // just sum up the values
-          if( olx_abs(overall_occu) == 1 )  {
-            for( size_t k=0; k < cl.Count(); k++ )
-              frags[j].B()[k].count += cl[k].count;
-          }
-          else
-            frags[j].A() += cl[0].count/frags[j].GetB()[0].count;
-        }
-        else  {  // just increment the count
-          frags[j].A() += cl[0].count/frags[j].GetB()[0].count;
-        }
+        frags[j].A() += cl[0].count/frags[j].GetB()[0].count;
         uniq = false;
         break;
       }
@@ -2303,11 +2322,11 @@ olxstr TLattice::CalcMoiety() const {
       }
     }
   }
-  // apply Z' multiplier...
-  const double zp_mult = (double)GetUnitCell().MatrixCount()/olx_max((double)AsymmUnit->GetZ(), 0.0001);
+  // apply Z multiplier...
+  const short zp_mult = olx_max(AsymmUnit->GetZ(), 1);
   if( zp_mult != 1 )  {
     for( size_t i=0; i < frags.Count(); i++ )
-      frags[i].A() *= zp_mult;
+      frags[i].A() /= (double)zp_mult;
   }
   olxstr rv;
   for( size_t i=0; i < frags.Count(); i++ )  {
