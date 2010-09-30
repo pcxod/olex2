@@ -4032,17 +4032,14 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   FXGrid->FromDataItem(item.FindRequiredItem("Grid"), zis);
   FDBasis->FromDataItem(item.FindRequiredItem("DBasis"));
 
+  TDataItem& visibility = item.FindRequiredItem("Visibility");
+  FHydrogensVisible = visibility.GetRequiredField("h_atoms").ToBool();
+  FHBondsVisible = visibility.GetRequiredField("h_bonds").ToBool();
+  FQPeaksVisible = visibility.GetRequiredField("q_atoms").ToBool();
+  FQPeakBondsVisible = visibility.GetRequiredField("q_bonds").ToBool();
+
   CreateObjects(true, true);
 
-  TDataItem& visibility = item.FindRequiredItem("Visibility");
-  bool v = visibility.GetRequiredField("h_atoms").ToBool();
-  if( v != FHydrogensVisible )  SetHydrogensVisible(v);
-  v = visibility.GetRequiredField("h_bonds").ToBool();
-  if( v != FHBondsVisible )  SetHBondsVisible(v);
-  v = visibility.GetRequiredField("q_atoms").ToBool();
-  if( v != FQPeaksVisible )  SetQPeaksVisible(v);
-  v = visibility.GetRequiredField("q_bonds").ToBool();
-  if( v != FQPeakBondsVisible )  SetQPeakBondsVisible(v);
   FDBasis->SetVisible(visibility.GetRequiredField("basis").ToBool());
   FDUnitCell->SetVisible(visibility.GetRequiredField("cell").ToBool());
 
@@ -4118,27 +4115,34 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
 //..............................................................................
 void TGXApp::SaveModel(const olxstr& fileName) const {
 #ifdef __WXWIDGETS__
-  TDataFile df;
-  wxFileOutputStream fos(fileName.u_str());
-  fos.Write("oxm", 3);
-  wxZipOutputStream zos(fos, 9);
-  TDataItem& mi = df.Root().AddItem("olex_model");
-  zos.PutNextEntry( wxT("grid") );
-  TwxOutputStreamWrapper os(zos);
-  ToDataItem(mi, os);
-  zos.CloseEntry();
-  zos.PutNextEntry( wxT("model") );
-  TEStrBuffer bf(1024*32);
-  df.Root().SaveToStrBuffer(bf);
+  try  {
+    TDataFile df;
+    wxFileOutputStream fos(fileName.u_str());
+    if( !fos.IsOk() )
+      throw TFunctionFailedException(__OlxSourceInfo, "to save model");
+    fos.Write("oxm", 3);
+    wxZipOutputStream zos(fos, 9);
+    TDataItem& mi = df.Root().AddItem("olex_model");
+    zos.PutNextEntry( wxT("grid") );
+    TwxOutputStreamWrapper os(zos);
+    ToDataItem(mi, os);
+    zos.CloseEntry();
+    zos.PutNextEntry( wxT("model") );
+    TEStrBuffer bf(1024*32);
+    df.Root().SaveToStrBuffer(bf);
 #ifdef _UNICODE
-  olxcstr model(TUtf8::Encode(bf.ToString()));
+    olxcstr model(TUtf8::Encode(bf.ToString()));
 #else
-  olxcstr model(bf.ToString());
+    olxcstr model(bf.ToString());
 #endif
-  zos.Write(model.raw_str(), model.RawLen());
-  zos.CloseEntry();
-  zos.Close();
-  fos.Close();
+    zos.Write(model.raw_str(), model.RawLen());
+    zos.CloseEntry();
+    zos.Close();
+    fos.Close();
+  }
+  catch(const TExceptionBase& e)  {
+    throw TFunctionFailedException(__OlxSourceInfo, e);
+  }
 #else
   throw TNotImplementedException(__OlxSourceInfo);
 #endif

@@ -100,7 +100,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   size_t vcov_cnt = 0;
   for( size_t i=0; i < sl.Count(); i++ )  {
     const size_t ind = i+cnt+10;
-    if( sl[ind].IsEmpty() )  break;
+    if( sl[ind].Length() < 8 )  break;
     const size_t ll = sl[ind].Length();
     size_t s_ind = 0;
     while( s_ind < ll )  {

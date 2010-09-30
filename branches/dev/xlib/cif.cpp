@@ -506,7 +506,7 @@ bool TCif::Adopt(TXFile& XF)  {
   Title = TEFile::ChangeFileExt(TEFile::ExtractFileName(XF.GetFileName()), EmptyString);
 
   block_index = 0;
-  data_provider.Add(Title);
+  data_provider.Add(Title.Replace(' ', "%20"));
   SetParam("_audit_creation_method", "OLEX2", true);
   SetParam("_chemical_name_systematic", "?", true);
   SetParam("_chemical_name_common", "?", true);
