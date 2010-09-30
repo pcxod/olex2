@@ -1,0 +1,166 @@
+
+<xl_help 
+ <grow help="Adds atoms fragments or atoms of asymmertic unit to current atoms or atoms specified in arguments" switch0="-s - grows only single coordination sphere" switch1="-w - genertaes the rest of structure using current symmetry operations" swithc2="-t=atom1,atom2 - generates only specified atoms, using them as a template. Note that there must be no spaces between atom names." 
+  <category \>
+ \>
+ <pack help="Generates atoms within {-1,-1,-1}-{1.5,1.5,1.5}. The generation volume can be passed as parameters: A_from A_to B_from B_to C_from C_to" switch0="-t=atom1,atom2,... packs only specified atoms. No spaces allowed between atom names or types" switch1="-c - clears the content before packing. Is used in combination with -t" 
+  <category \>
+ \>
+ <reap help="Shows an open file dialog if no parameters specified" 
+  <category \>
+ \>
+ <bang help="Prints the table of bond lenghts and angles for atoms passed as parameter" 
+  <category \>
+ \>
+ <fmol help="Shows whole content of the structure" 
+  <category \>
+ \>
+ <fuse help="Shows the content of the asymmetric unit" 
+  <category \>
+ \>
+ <trim help="Shows the content of the asymmetric unit" 
+  <category \>
+ \>
+ <clear help="Clears the content of the console" 
+  <category \>
+ \>
+ <telp help="Shows all atoms, which have ellipsoids as ellipsoids" 
+  <category \>
+ \>
+ <proj help="Shows a wireframe view of the model" 
+  <category \>
+ \>
+ <sfil help="Shows a sphere packing view of the model" 
+  <category \>
+ \>
+ <pers help="Shows a bals-and-sticks view of the model" 
+  <category \>
+ \>
+ <cell help="Shows or hides the drawing of the unit cell" 
+  <category \>
+ \>
+ <sel help="Selects or deselects (if selected) specified atoms. If no arguments are given, th efunction prints information baout current selection, such as angles and distances" switch0="-a - selects all objects" switch1="-u - deselects all objects" switch2="-i - invert current selection" 
+  <category \>
+ \>
+ <exit help="Terminates the application" 
+  <category \>
+ \>
+ <quit help="Terminates the application" 
+  <category \>
+ \>
+ <info help="Show information for all atoms or atoms passed as arguments" 
+  <category \>
+ \>
+ <name help="Change atom label" 
+  <category \>
+ \>
+ <help help="Shows all instructions if no arguments are given. Otherwise shows help for a specified command" 
+  <category \>
+ \>
+ <matr help="View along directions of the unit cell. Arguments: 100 or 1 - view along A, 010, or 2 - view along B, etc up to 111" 
+  <category \>
+ \>
+ <qual help="Set the rendering quaility" switch0="-h - high qualty" switch1="-m - medium quality" switch2="-l - low qiality" 
+  <category \>
+ \>
+ <line help="Sets Z-axis along a direction given by two atoms" 
+  <category \>
+ \>
+ <mpln help="creates a plane between atoms passed as argument" 
+  <category \>
+ \>
+ <file help="Saves current file to an ins file. If file name is not given, current file name is used" 
+  <category \>
+ \>
+ <user help="Shows current working folder" 
+  <category \>
+ \>
+ <dir help="Shows files and folders in current folder" 
+  <category \>
+ \>
+ <kill help="Removes selected atoms from the model" 
+  <category \>
+ \>
+ <sticks help="Stiks drawing of the model" 
+  <category \>
+ \>
+ <exec help="Executes an external program" switch0="-s= runs the program synchroniously" switch1="-o= does not catch the programs output (shows in a new window)" 
+  <category \>
+ \>
+ <cent help="Add a centroid (atom type is Q-peak)" 
+  <category \>
+ \>
+ <scene help="Sets/displays default scene parameters file. Syntax: scene [-s] [filename]" switch0="-s - pops up a dialog to choose a file" 
+  <category \>
+ \>
+ <style help="Sets/displays current styles file. Syntax: style [-s] [filename]" switch0="-s - pops up a dialog to choose a file" 
+  <category \>
+ \>
+ <save help="Saves one of the parameters to file. See full help for details command syntax: save parameter_name file_name" switch0="style - saves current drawing style, see also the folder command" switch1="scene - saves current scene parameters, see also the folder command" 
+  <category \>
+ \>
+ <load help="Loads one of the parameters from file. See full help for details command syntax: save parameter_name file_name" switch0="style - loads drawing style from file, see also the folder command" switch1="scene - loads scene parameters from file, see also the folder command" 
+  <category \>
+ \>
+ <listen help="Checks if a file passed as parameter has ben changed. In the case the file is changed loads it. See laso: Stop." 
+  <category \>
+ \>
+ <stop help="Stops listening mode. Shortcut - escape." 
+  <category \>
+ \>
+ <link help="Links current drawing style to scene parameters" 
+  <category \>
+ \>
+ <rota help="Rotates model around specified axes. Syntax: rot axes(x,y,z) angle(degree)" 
+  <category \>
+ \>
+ <anis help="Add ANIS instruction to the ins file" 
+  <category \>
+ \>
+ <isot help="Makes specified atoms isotropic" 
+  <category \>
+ \>
+ <arad help="Resets radius of specified atoms to 'pers' or 'sfil' type. arad (pers, sfil, number) [atoms, default - all]" 
+  <category \>
+ \>
+ <azoom help="Multiplies radius of all atoms by a value specified in percents. Syntax: azoom value" 
+  <category \>
+ \>
+ <brad help="Sets radius of bonds passed as an argument to an absolute value passed as parameter. Syntax: brad radius [bonds, default - all]" 
+  <category \>
+ \>
+ <bzoom help="Multiplies radius of all bonds by a value specified in percents. Syntax: bzoom value" 
+  <category 
+   <GUI \>
+  \>
+ \>
+ <mask help="Changes drawing style of an object. The masks are available from corresponding dialog. Syntax: mask " 
+  <category \>
+ \>
+ <ads help="Changes atom drawing style. Valid arguments are elp and sph" 
+  <category \>
+ \>
+ <group help="Groups selected objects" 
+  <category \>
+ \>
+ <ungroup help="Ungroups selected objects" 
+  <category \>
+ \>
+ <cif2doc help="Creates RTF or HTMl tables fro a loaded CIF" 
+  <category \>
+ \>
+ <cif2tab help="" 
+  <category \>
+ \>
+ <category help="test" test="test" 
+  <category 
+   <Interface \>
+   <Test \>
+  \>
+ \>
+ <user1 help="teste" tt="dzgfl jhds gfjdsh" fdsf="fdsd fsd " 
+  <category 
+   <Test \>
+  \>
+ \>
+\>

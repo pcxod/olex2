@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# The location of cctbx library files (.so)
+if [ -n "$LD_LIBRARY_PATH" ]; then
+  LD_LIBRARY_PATH="/usr/local/cctbx/cctbx_build/lib:$LD_LIBRARY_PATH"
+  export LD_LIBRARY_PATH
+else
+  LD_LIBRARY_PATH="/usr/local/cctbx/cctbx_build/lib"
+  export LD_LIBRARY_PATH
+fi
+# Now the path is set run olex2
+PATH="$PATH:OLEX_BIN:OLEX_INS"
+export PATH
+
+# Setup the olex2 directory
+export OLEX2_DIR=OLEX_INS
+
+OLEX_INS/unirun OLEX_INS | zenity --progress --pulsate --text='Olex2 is downloading and updating GUI' --auto-close
+OLEX_INS/olex2 &
+
+
