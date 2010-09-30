@@ -1695,23 +1695,17 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
   if( Zp <= 0 )  Zp = 1;
   TXApp::GetInstance().XFile().UpdateAsymmUnit();
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
+  TUnitCell& uc = TXApp::GetInstance().XFile().GetUnitCell();
   ContentList content = au.GetContentList();
-  double nhc = 0;
-  for( size_t i=0; i < content.Count(); i++ )  {
-    if( content[i].element != iHydrogenZ )
-      nhc += content[i].count;
-  }
-  int Z_est = olx_round(au.EstimateZ(nhc));
-  int Z = olx_max(olx_round(Z_est*Zp), 1);
+  const int Z_sg = uc.MatrixCount();
+  int Z = olx_max(olx_round(Z_sg*Zp), 1);
   au.SetZ(Z);
-  TBasicApp::GetLog() << (olxstr("for Z'=") << olxstr::FormatFloat(2, Zp).TrimFloat() <<
-    " and " << nhc << " non hydrogen atoms Z is estimated to be " << Z << '\n');
   olxstr n_c;
   for( size_t i=0; i < content.Count(); i++ )  {
     n_c << content[i].element.symbol << olxstr::FormatFloat(3,content[i].count/Zp).TrimFloat();
     if( (i+1) < content.Count() )
       n_c << ' ';
-    content[i].count *= Z_est;
+    content[i].count *= Z_sg;
   }
   TBasicApp::GetLog() << "New content is: " << n_c << '\n';
   TXApp::GetInstance().XFile().GetRM().SetUserContent(content);
