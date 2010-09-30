@@ -1697,7 +1697,7 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
   TUnitCell& uc = TXApp::GetInstance().XFile().GetUnitCell();
   ContentList content = au.GetContentList();
-  const int Z_sg = uc.MatrixCount();
+  const int Z_sg = (int)uc.MatrixCount();
   int Z = olx_max(olx_round(Z_sg*Zp), 1);
   au.SetZ(Z);
   olxstr n_c;
