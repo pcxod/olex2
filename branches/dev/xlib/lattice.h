@@ -84,6 +84,8 @@ public:
   void AddLatticeContent(const TLattice& latt);
   // generates atoms inside the unit cell only
   void GenerateCell();
+  // generates atoms inside the given box of dim[i].Length() size at position center
+  void GenerateBox(const mat3d& norms, const vec3d& size, const vec3d& center, bool clear_content);
   // generates atoms within specified volume
   void Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
     bool ClearCont);

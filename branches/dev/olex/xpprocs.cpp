@@ -1090,20 +1090,23 @@ void TMainForm::macExit(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   const bool ClearCont = !Options.Contains("c");
-  bool cell = false;
-  if( Cmds.Count() > 0 && Cmds[0].Equalsi("cell") )  {
-    cell = true;
+  const bool cell = (Cmds.Count() > 0 && Cmds[0].Equalsi("cell"));
+  const bool wbox = (Cmds.Count() > 0 && Cmds[0].Equalsi("wbox"));
+  if( cell || wbox )
     Cmds.Delete(0);
-  }
-
-  int64_t st = TETime::msNow();
-  if( Cmds.IsEmpty() && cell )  {
+  const uint64_t st = TETime::msNow();
+  if( cell )
     FXApp->XFile().GetLattice().GenerateCell();
+  if( wbox && FXApp->Get3DFrame().IsVisible() )  {
+    FXApp->XFile().GetLattice().GenerateBox(
+      FXApp->Get3DFrame().GetNormals(),
+      FXApp->Get3DFrame().GetSize()/2,
+      FXApp->Get3DFrame().GetCenter(),
+      ClearCont);
   }
   else  {
     vec3d From(-1.0, -1.0, -1.0);
     vec3d To(1.5, 1.5, 1.5);
-
     size_t number_count = 0;
     for( size_t i=0; i < Cmds.Count(); i++ )  {
       if( Cmds[i].IsNumber() )  {

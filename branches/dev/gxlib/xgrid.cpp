@@ -546,7 +546,7 @@ bool TXGrid::LoadFromFile(const olxstr& GridFile)  {
 }
 //..............................................................................
 void TXGrid::SetScale(float v)  {
-  bool _3d = Is3D();
+  const bool _3d = Is3D();
   if( _3d && MinHole != MaxHole )  {
     if( v >= MinHole && v <= MaxHole )  {
       Info->Clear();
@@ -564,6 +564,16 @@ void TXGrid::SetScale(float v)  {
     n_triangles.Clear();
     n_normals.Clear();
     n_vertices.Clear();
+    if( XApp->Get3DFrame().IsVisible() )  {
+      delete IS;
+      const vec3i isz = (XApp->Get3DFrame().GetSize()*5).Round<int>();
+      TArray3D<float>& points = *(new TArray3D<float>(vec3i(0,0,0), isz));
+      smatdd g2c(XApp->Get3DFrame().GetNormals()/5,
+        XApp->Get3DFrame().GetCenter()-XApp->Get3DFrame().GetSize()/2);
+      const mat3d c2c = XApp->XFile().GetAsymmUnit().GetCartesianToCell();
+      MapUtil::Cell2Cart(MapUtil::MapGetter<float,0>(ED->Data, ED->GetSize()), points.Data, points.GetSize(), g2c, c2c);
+      IS = new CIsoSurface(points);
+    }
     IS->GenerateSurface(Scale);
     p_vertices = IS->VertexList();
     p_normals = IS->NormalList();
@@ -714,8 +724,7 @@ void TXGrid::RescaleSurface()  {
   if( XApp->Get3DFrame().IsVisible() )  {
     const mat3f tm(XApp->Get3DFrame().GetNormals());
     const vec3f dims = XApp->Get3DFrame().GetSize()/2;
-    const vec3f tc(XApp->Get3DFrame().GetCenter());
-    vec3d pts[3];
+    const vec3f tc(XApp->Get3DFrame().GetCenter()-dims);
     for( int li = 0; li <= 1; li++ )  {
       const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
       const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
@@ -723,28 +732,10 @@ void TXGrid::RescaleSurface()  {
       glNewList(li == 0 ? PListId : NListId, GL_COMPILE);
       olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
       olx_gl::begin(GL_TRIANGLES);
-      for( int x=-1; x <= 1; x++ )  {
-        for( int y=-1; y <= 1; y++ )  {
-          for( int z=-1; z <= 1; z++ )  {
-            for( size_t i=0; i < trians.Count(); i++ )  {
-              bool draw = true;
-              for( int j=0; j < 3; j++ )  {
-                pts[j] = verts[trians[i].pointID[j]];
-                pts[j][0] /= MaxX;  pts[j][1] /= MaxY;  pts[j][2] /= MaxZ;
-                pts[j][0] += x;     pts[j][1] += y;     pts[j][2] += z;
-                vec3f t = tm*(au.CellToCartesian(pts[j]) - tc);
-                if( olx_abs(t[0]) > dims[0] || olx_abs(t[1]) > dims[1] || olx_abs(t[2]) > dims[2] )  {
-                  draw = false;
-                  break;
-                }
-              }
-              if( !draw )  continue;
-              for( int j=0; j < 3; j++ )  {
-                olx_gl::normal(norms[trians[i].pointID[j]]);
-                olx_gl::vertex(pts[j]);
-              }
-            }
-          }
+      for( size_t i=0; i < trians.Count(); i++ )  {
+        for( int j=0; j < 3; j++ )  {
+          olx_gl::normal(norms[trians[i].pointID[j]]);
+          olx_gl::vertex(verts[trians[i].pointID[j]]/5+tc);
         }
       }
       olx_gl::end();

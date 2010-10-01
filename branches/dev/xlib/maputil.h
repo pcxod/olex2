@@ -285,7 +285,7 @@ public:
     MapGetter(mapT*** const _src, const vec3s& _dim) : src(_src), dim(_dim)  {}
     mapT Get(const vec3d& p) const {
       if( type == 0 )  {  // cropped index value
-        const vec3i i = NormaliseIndex(p, dim);
+        const vec3i i = NormaliseIndex(p*dim, dim);
         return src[i[0]][i[1]][i[2]];
       }
       if( type == 1 )  {  // linear interpolation

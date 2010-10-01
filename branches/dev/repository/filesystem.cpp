@@ -45,8 +45,11 @@ bool TOSFileSystem::_DoAdoptStream(IInputStream& f, const olxstr& name)  {
           TBasicApp::GetLog().Error(olxstr("MKdir failed on \'") << path << "\'");
           return false;
         }
-    TEFile destFile(name, "wb+");
-    destFile << f;
+    {  // make sure file gets closed etc
+      TEFile destFile(name+".tmp", "wb+");
+      destFile << f;
+    }
+    TEFile::Rename(name+".tmp", name);
     return true;
   }
   catch( const TExceptionBase& )  {  return false;  }

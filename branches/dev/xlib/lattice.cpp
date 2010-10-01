@@ -450,6 +450,90 @@ void TLattice::GenerateCell()  {
       AddSAtom(sa);
     }
   }
+  Atoms.QuickSorter.SortSF(Atoms, TLattice_AtomsSortByDistance);
+  const size_t lc = Atoms.Count();
+  float* distances = new float[lc+1];
+  for( size_t i=0; i < lc; i++ )
+    distances[i] = (float)Atoms[i]->crd().QLength();    
+  for( size_t i=0; i < lc; i++ )  {
+    if( Atoms[i] == NULL )  continue;
+    for( size_t j=i+1; j < lc; j++ )  {
+      if( Atoms[j] == NULL )  continue;
+      if( (distances[j] - distances[i]) > 0.1 )  break;
+      const double qd = Atoms[i]->crd().QDistanceTo(Atoms[j]->crd());
+      if( qd < 0.00001 )  {
+        Atoms[i]->AddMatrices(*Atoms[j]);
+        delete Atoms[j];
+        Atoms[j] = NULL;
+        continue;
+      }
+    }
+  }
+  delete [] distances;
+  Atoms.Pack();
+
+  Disassemble();
+  Generated = true;
+  OnStructureGrow.Exit(this);
+}
+//..............................................................................
+void TLattice::GenerateBox(const mat3d& norms, const vec3d& size, const vec3d& center,
+                           bool clear_content)
+{
+  OnStructureGrow.Enter(this);
+  if( clear_content )  {
+    ClearAtoms();
+    ClearMatrices();
+  }
+  const TUnitCell& uc = GetUnitCell();
+  TAsymmUnit& au = GetAsymmUnit();
+  for( size_t i=0; i < uc.MatrixCount(); i++ )  {
+    const smatd& m = uc.GetMatrix(i);
+    for( int di = -3; di <= 3; di++ )  {
+      for( int dj = -3; dj <= 3; dj++ )  {
+        for( int dk = -3; dk <= 3; dk++ )  {
+          const vec3d t(di, dj, dk);
+          const uint32_t m_id = smatd::GenerateId((uint8_t)i, t);
+          smatd* lm = NULL;
+          bool matrix_created = false;
+          for( size_t j=0; j < Matrices.Count(); j++ )  {
+            if( Matrices[j]->GetId() == m_id )  {
+              lm = Matrices[j];
+              break;
+            }
+          }
+          if( lm == NULL )  {
+            lm = new smatd(m);
+            lm->t += t;
+            lm->SetRawId(m_id);
+            matrix_created = true;
+          }
+          for( size_t j=0; j < au.AtomCount(); j++ )  {
+            TCAtom& ca = au.GetAtom(j);
+            if( ca.IsDeleted() )  continue;
+            vec3d p = m*ca.ccrd() + t;
+            const vec3d ccrd = p;
+            const vec3f c = norms*(au.CellToCartesian(p) - center);
+            if( olx_abs(c[0]) > size[0] || olx_abs(c[1]) > size[1] || olx_abs(c[2]) > size[2] )
+              continue;
+            TSAtom* sa = new TSAtom(Network);
+            sa->CAtom(ca);
+            sa->ccrd() = ccrd;
+            sa->crd() = p;
+            sa->SetEllipsoid(&GetUnitCell().GetEllipsoid(m.GetContainerId(), ca.GetId()));
+            sa->AddMatrix(lm);
+            AddSAtom(sa);
+            if( matrix_created )  {
+              Matrices.Add(lm);
+              matrix_created = false;
+            }
+          }
+          if( matrix_created )
+            delete lm;
+        }
+      }
+    }
+  }
   Atoms.QuickSorter.SortSF(Atoms, TLattice_AtomsSortByDistance );
   const size_t lc = Atoms.Count();
   float* distances = new float[lc+1];
