@@ -574,7 +574,7 @@ void TXGrid::SetScale(float v)  {
       const vec3f tr = XApp->Get3DFrame().GetEdge(0);
       const smatdd g2c(XApp->Get3DFrame().GetNormals()/SZ, XApp->Get3DFrame().GetEdge(0));
       const mat3d c2c = XApp->XFile().GetAsymmUnit().GetCartesianToCell();
-      MapUtil::Cell2Cart(MapUtil::MapGetter<float,0>(ED->Data, ED->GetSize()), points.Data, points.GetSize(), g2c, c2c);
+      MapUtil::Cell2Cart(MapUtil::MapGetter<float,1>(ED->Data, ED->GetSize()), points.Data, points.GetSize(), g2c, c2c);
       IS = new CIsoSurface(points);
       IS->GenerateSurface(Scale);
       p_vertices = IS->VertexList();
@@ -1008,9 +1008,9 @@ TXBlob* TXGrid::CreateBlob(int x, int) const {
   xb->triangles.SetCapacity(triags.Count());
   for( size_t i=0; i < triags.Count(); i++ )  {
     IsoTriangle& t = xb->triangles.Add(new IsoTriangle(*triags[i]));
-    t.pointID[0] = new_ids[t.pointID[0]];
-    t.pointID[1] = new_ids[t.pointID[1]];
-    t.pointID[2] = new_ids[t.pointID[2]];
+    t.pointID[0] = (int)new_ids[t.pointID[0]];
+    t.pointID[1] = (int)new_ids[t.pointID[1]];
+    t.pointID[2] = (int)new_ids[t.pointID[2]];
   }
   return xb;
 }

@@ -115,8 +115,8 @@ public:
   }
   vec3d GetSize() const {
     return vec3d(
-      (edges[1]-edges[0]).Length(),
       (edges[3]-edges[0]).Length(),
+      (edges[1]-edges[0]).Length(),
       (edges[4]-edges[0]).Length());
   }
   vec3d GetCenter() const {
@@ -127,8 +127,8 @@ public:
   }
   mat3d GetNormals() const {
     return mat3d(
-      (edges[1]-edges[0]).Normalise(),
       (edges[3]-edges[0]).Normalise(),
+      (edges[1]-edges[0]).Normalise(),
       (edges[4]-edges[0]).Normalise());
   }
 };

@@ -276,10 +276,10 @@ public:
     mapT*** const src;
     const vec3s& dim;
     static inline vec3i NormaliseIndex(const vec3d& i, const vec3s& boundary)  {
-      vec3i p(((int)i[0])%boundary[0], ((int)i[1])%boundary[1], ((int)i[2])%boundary[2]);
-      if( p[0] < 0 )  p[0] += boundary[0];
-      if( p[1] < 0 )  p[1] += boundary[1];
-      if( p[2] < 0 )  p[2] += boundary[2];
+      vec3i p(((int)i[0])%(int)boundary[0], ((int)i[1])%(int)boundary[1], ((int)i[2])%(int)boundary[2]);
+      if( p[0] < 0 )  p[0] += (int)boundary[0];
+      if( p[1] < 0 )  p[1] += (int)boundary[1];
+      if( p[2] < 0 )  p[2] += (int)boundary[2];
       return p;
     }
     MapGetter(mapT*** const _src, const vec3s& _dim) : src(_src), dim(_dim)  {}
