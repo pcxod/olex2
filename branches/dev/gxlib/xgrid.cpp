@@ -558,6 +558,7 @@ void TXGrid::SetScale(float v)  {
   Scale = v;
   UpdateInfo();
   if( IS != NULL && _3d )  {
+    TArray3D<float>* _points = NULL;
     p_triangles.Clear();
     p_normals.Clear();
     p_vertices.Clear();
@@ -566,23 +567,46 @@ void TXGrid::SetScale(float v)  {
     n_vertices.Clear();
     if( XApp->Get3DFrame().IsVisible() )  {
       delete IS;
-      const vec3i isz = (XApp->Get3DFrame().GetSize()*5).Round<int>();
-      TArray3D<float>& points = *(new TArray3D<float>(vec3i(0,0,0), isz));
-      smatdd g2c(XApp->Get3DFrame().GetNormals()/5,
-        XApp->Get3DFrame().GetCenter()-XApp->Get3DFrame().GetSize()/2);
+      const size_t SZ=10;
+      const vec3i isz = (XApp->Get3DFrame().GetSize()*SZ).Round<int>();
+      TArray3D<float>& points = *(_points = new TArray3D<float>(vec3i(0,0,0), isz));
+      const mat3f rm(XApp->Get3DFrame().GetNormals()/SZ);
+      const vec3f tr = XApp->Get3DFrame().GetEdge(0);
+      const smatdd g2c(XApp->Get3DFrame().GetNormals()/SZ, XApp->Get3DFrame().GetEdge(0));
       const mat3d c2c = XApp->XFile().GetAsymmUnit().GetCartesianToCell();
       MapUtil::Cell2Cart(MapUtil::MapGetter<float,0>(ED->Data, ED->GetSize()), points.Data, points.GetSize(), g2c, c2c);
       IS = new CIsoSurface(points);
+      IS->GenerateSurface(Scale);
+      p_vertices = IS->VertexList();
+      p_normals = IS->NormalList();
+      p_triangles = IS->TriangleList();
+      for( size_t i =0; i < p_vertices.Count(); i++ )
+        p_vertices[i] = p_vertices[i]*rm + tr;
+      for( size_t i=0; i < p_normals.Count(); i++ )
+        p_normals[i] = p_normals[i]*rm;
+      if( Scale < 0 )  {
+        IS->GenerateSurface(-Scale);
+        n_vertices = IS->VertexList();
+        n_normals = IS->NormalList();
+        n_triangles = IS->TriangleList();
+        for( size_t i =0; i < n_vertices.Count(); i++ )
+          n_vertices[i] = n_vertices[i]*rm + tr;
+        for( size_t i=0; i < n_normals.Count(); i++ )
+          n_normals[i] = n_normals[i]*rm;
+      }
+      delete &points;
     }
-    IS->GenerateSurface(Scale);
-    p_vertices = IS->VertexList();
-    p_normals = IS->NormalList();
-    p_triangles = IS->TriangleList();
-    if( Scale < 0 )  {
-      IS->GenerateSurface(-Scale);
-      n_vertices = IS->VertexList();
-      n_normals = IS->NormalList();
-      n_triangles = IS->TriangleList();
+    else  {
+      IS->GenerateSurface(Scale);
+      p_vertices = IS->VertexList();
+      p_normals = IS->NormalList();
+      p_triangles = IS->TriangleList();
+      if( Scale < 0 )  {
+        IS->GenerateSurface(-Scale);
+        n_vertices = IS->VertexList();
+        n_normals = IS->NormalList();
+        n_triangles = IS->TriangleList();
+      }
     }
     RescaleSurface();
   }
@@ -722,20 +746,17 @@ void TXGrid::RescaleSurface()  {
     NListId = PListId+1;
   }
   if( XApp->Get3DFrame().IsVisible() )  {
-    const mat3f tm(XApp->Get3DFrame().GetNormals());
-    const vec3f dims = XApp->Get3DFrame().GetSize()/2;
-    const vec3f tc(XApp->Get3DFrame().GetCenter()-dims);
     for( int li = 0; li <= 1; li++ )  {
       const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
       const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
       const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
-      glNewList(li == 0 ? PListId : NListId, GL_COMPILE);
+      olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
       olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
       olx_gl::begin(GL_TRIANGLES);
       for( size_t i=0; i < trians.Count(); i++ )  {
         for( int j=0; j < 3; j++ )  {
           olx_gl::normal(norms[trians[i].pointID[j]]);
-          olx_gl::vertex(verts[trians[i].pointID[j]]/5+tc);
+          olx_gl::vertex(verts[trians[i].pointID[j]]);
         }
       }
       olx_gl::end();

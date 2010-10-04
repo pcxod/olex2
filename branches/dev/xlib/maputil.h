@@ -283,9 +283,10 @@ public:
       return p;
     }
     MapGetter(mapT*** const _src, const vec3s& _dim) : src(_src), dim(_dim)  {}
-    mapT Get(const vec3d& p) const {
+    mapT Get(const vec3d& fractional_crd) const {
+      const vec3d p(fractional_crd[0]*dim[0], fractional_crd[1]*dim[1], fractional_crd[2]*dim[2]);
       if( type == 0 )  {  // cropped index value
-        const vec3i i = NormaliseIndex(p*dim, dim);
+        const vec3i i = NormaliseIndex(p, dim);
         return src[i[0]][i[1]][i[2]];
       }
       if( type == 1 )  {  // linear interpolation
@@ -345,7 +346,7 @@ public:
     for( size_t i=0; i < dest_d[0]; i++ )  {
       for( size_t j=0; j < dest_d[1]; j++ )  {
         for( size_t k=0; k < dest_d[2]; k++ )  {
-          const vec3d cc = grid_2_cart*vec3d(i,j,k);  // cartesian coordinates from grid
+          const vec3d cc = vec3d(i,j,k)*grid_2_cart.r+grid_2_cart.t;  // cartesian coordinates from grid
           const vec3d p(
             cc[0]*cart2cell[0][0] + cc[1]*cart2cell[1][0] + cc[2]*cart2cell[2][0],
             cc[1]*cart2cell[1][1] + cc[2]*cart2cell[2][1],
