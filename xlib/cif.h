@@ -94,11 +94,24 @@ public:
   cif_dp::cetTable& GetLoop(size_t i) const {
     return *data_provider[block_index].table_map.GetValue(i);
   }
-  //Returns a loop specified by name
-  cif_dp::cetTable* FindLoop(const olxstr& name) const {
+  //Returns a loop specified by name or NULL
+  template <class T>
+  cif_dp::cetTable* FindLoop(const T& name) const {
     if( block_index == InvalidIndex )  return NULL;
     return data_provider[block_index].table_map.Find(name, NULL);
-}
+  }
+  // traverses the data blocks to find loop by name
+  template <class T> cif_dp::cetTable* FindLoopGlobal(const T& name, bool set_current)  {
+    for( size_t i=0; i < data_provider.Count(); i++ )  {
+      cif_dp::cetTable* l = data_provider[i].table_map.Find(name, NULL);
+      if( l != NULL )  {
+        if( set_current )
+          SetCurrentBlock(i);
+        return l;
+      }
+    }
+    return NULL;
+  }
   //Returns the name of a loop specified by the index
   inline const olxstr& GetLoopName(size_t i) const {
     return data_provider[block_index].table_map.GetValue(i)->GetName();
@@ -126,6 +139,8 @@ public:
   }
   // returns given block
   const cif_dp::CifBlock& GetBlock(size_t i) const {  return data_provider[i];  }
+  // returns current block index, might be InvalidIndex
+  size_t GetBlockIndex() const {  return block_index;  }
   // creates a new loop from comma separated column names
   cif_dp::cetTable& AddLoopDef(const olxstr& col_names);
   /* this is the only loop, which is not automatically created from structure data!
