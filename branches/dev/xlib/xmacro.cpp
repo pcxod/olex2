@@ -1153,15 +1153,19 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   TEFile out( TEFile::ExtractFilePath(xapp.XFile().GetFileName()) << "olx_pd_calc.csv", "w+b");
   const mat3d& hkl2c = xapp.XFile().GetAsymmUnit().GetHklToCartesian();
-  const double d_2_sin = xapp.XFile().GetRM().expl.GetRadiation()/2.0;
+  const double half_lambda = xapp.XFile().GetRM().expl.GetRadiation()/2.0;
+  //refs.Clear();
+  //xapp.XFile().GetRM().GetFourierRefList<TUnitCell::SymSpace, RefMerger::ShelxMerger>(
+  //  xapp.XFile().GetUnitCell().GetSymSpace(), refs);
   TTypeList< AnAssociation2<double,double> > gd;
   gd.SetCapacity( refs.Count() );
   double max_2t = 0, min_2t=180;
   for( size_t i=0; i < refs.Count(); i++ )  {
     const TReflection& ref = refs[i];
     vec3d hkl = ref.ToCart(hkl2c);
-    const double theta_2 = 360*asin(d_2_sin*hkl.Length())/M_PI;
-    gd.AddNew( theta_2, ref.GetI()*ref.GetMultiplicity());
+    const double theta_2 = 2*asin(half_lambda*hkl.Length());
+    const double lp = 1;//(1.0+olx_sqr(cos(theta_2)))/(olx_sqr(sin(theta_2/2))*cos(theta_2/2));
+    gd.AddNew(theta_2*180/M_PI, ref.GetI()*ref.GetMultiplicity()*lp);
   }
   gd.QuickSorter.SortSF(gd, macGraphPD_Sort);
   min_2t = gd[0].GetA();
@@ -1173,11 +1177,10 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options, TMacro
     for( size_t i=0; i < ref_cnt; i++ )  { 
       const double sig = sig_0*(1.0+gd[i].GetA()/140.0);
       const double qsig = sig*sig;
-      y += gd[i].GetB()*exp(-(s-gd[i].GetA())*(s-gd[i].GetA())/(2*qsig))/sig;
+      y += gd[i].GetB()*exp(-olx_sqr(s-gd[i].GetA())/(2*qsig))/sig;
     }
     out.Writenl( olxcstr(s, 40) << ',' << y);
   }
-
 }
 //..............................................................................
 void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

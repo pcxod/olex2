@@ -243,6 +243,8 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
   TSAtomPList atoms(ac-dac);
   dac = 0;
   for( size_t i=0; i < ac; i++ )  {
+    Atoms[i]->ClearNodes();
+    Atoms[i]->ClearBonds();
     if( !Atoms[i]->CAtom().IsAvailable() )  {
       dac++;
       Atoms[i]->SetNetwork(*Network);

@@ -763,12 +763,12 @@ void TXGrid::RescaleSurface()  {
       olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
       olx_gl::endList();
     }
-    p_vertices.Clear();
-    p_triangles.Clear();
-    p_normals.Clear();
-    n_vertices.Clear();
-    n_triangles.Clear();
-    n_normals.Clear();
+    //p_vertices.Clear();
+    //p_triangles.Clear();
+    //p_normals.Clear();
+    //n_vertices.Clear();
+    //n_triangles.Clear();
+    //n_normals.Clear();
   }
   else if( Mask != NULL )  {
     vec3d pts[3];
@@ -927,9 +927,9 @@ TXBlob* TXGrid::CreateBlob(int x, int) const {
   TXBlob* xb = new TXBlob(Parent, "blob");
   //IS->GenerateSurface(Scale);
   TPtrList<IsoTriangle> triags;
-  const TArrayList<vec3f>& vertices = IS->VertexList();
-  const TArrayList<vec3f>& normals = IS->NormalList();
-  const TArrayList<IsoTriangle>& triangles = IS->TriangleList();
+  const TTypeList<vec3f>& vertices = n_vertices;
+  const TTypeList<vec3f>& normals = n_normals;
+  const TTypeList<IsoTriangle>& triangles = n_triangles;
   TEBitArray verts(vertices.Count()), used_triags(triangles.Count());
   verts.SetTrue(triangles[0].pointID[0]);
   verts.SetTrue(triangles[0].pointID[1]);
@@ -947,18 +947,6 @@ TXBlob* TXGrid::CreateBlob(int x, int) const {
         if( verts[t.pointID[j]] )  {
           has_shared_point = true;
           //break;
-        }
-        bool trimmed = false;
-        vec3f v = vertices[t.pointID[j]];
-        if( v[0] >= MaxX )  {  v[0] -= MaxX;  trimmed = true;  }
-        if( v[1] >= MaxY )  {  v[1] -= MaxY;  trimmed = true;  }
-        if( v[2] >= MaxZ )  {  v[2] -= MaxZ;  trimmed = true;  }
-        if( trimmed )  {
-          for( size_t k=0; k < vertices.Count(); k++ )  {
-            if( !verts[k] && vertices[k].QDistanceTo(v) < 1.7 )  {
-              verts.SetTrue(k);
-            }
-          }
         }
       }
       if( has_shared_point )  {
@@ -980,26 +968,7 @@ TXBlob* TXGrid::CreateBlob(int x, int) const {
   for( size_t i = 0; i < verts.Count(); i++ )  {
     if( verts[i] )  {
       new_ids[i] = xb->vertices.Count();
-      vec3f &v = xb->vertices.AddCCopy(vertices[i]), v1;
-      au.CellToCartesian<vec3f,vec3f>(vec3f(v[0]/MaxX, v[1]/MaxY, v[2]/MaxZ), v1);
-      if( i > 0 )  {
-        float qd = v1.QDistanceTo(xb->vertices[0]);
-        int tx=0, ty=0, tz=0;
-        for( int ix=-1; ix <= 1; ix++ )  {
-          for( int iy=-1; iy <= 1; iy++ )  {
-            for( int iz=-1; iz <= 1; iz++ )  {
-              au.CellToCartesian<vec3f,vec3f>(vec3f(v[0]/MaxX+ix, v[1]/MaxY+iy, v[2]/MaxZ+iz), v1);
-              const float qd1 = v1.QDistanceTo(xb->vertices[0]);
-              if( qd1 < qd )  {
-                qd = qd1;
-                tx = ix;  ty = iy;  tz = iz;
-              }
-            }
-          }
-        }
-        au.CellToCartesian<vec3f,vec3f>(vec3f(v[0]/MaxX+tx, v[1]/MaxY+ty, v[2]/MaxZ+tz), v1);
-      }
-      v = v1;
+      xb->vertices.AddCCopy(vertices[i]);
       xb->normals.AddCCopy(normals[i]);
     }
     else

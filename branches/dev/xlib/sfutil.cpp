@@ -83,12 +83,11 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     }
     sw.start("Loading CIF");
     TCif cif;
-    cif.LoadFromFile( fcffn );
+    cif.LoadFromFile(fcffn);
     sw.stop();
-    cif_dp::cetTable* hklLoop = cif.FindLoop("_refln");
-    if( hklLoop == NULL )  {
+    cif_dp::cetTable* hklLoop = cif.FindLoopGlobal("_refln", false);
+    if( hklLoop == NULL )
       return "no hkl loop found";
-    }
     sw.start("Extracting CIF data");
     const size_t hInd = hklLoop->ColIndex("_refln_index_h");
     const size_t kInd = hklLoop->ColIndex("_refln_index_k");

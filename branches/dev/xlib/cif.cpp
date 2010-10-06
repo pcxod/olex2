@@ -204,7 +204,6 @@ void TCif::Initialize()  {
       GetAsymmUnit().SetZ((short)olx_round(GetParamAsString("_cell_formula_units_Z").ToDouble()));
   }
   catch(...)  {
-    TBasicApp::GetLog().Error("Given CIF data block does not contain cell parameters");
     return;
   }
   // check if the cif file contains valid parameters
