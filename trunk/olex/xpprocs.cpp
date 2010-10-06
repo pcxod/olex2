@@ -4594,15 +4594,21 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     // automatic export for kappa cif
       if( FXApp->CheckFileType<TCif>() )  {
-        TBasicApp::GetLog() << ("Start importing cif ...\n");
+        TCif& cif = FXApp->XFile().GetLastLoader<TCif>();
+        if( cif.BlockCount() > 1 )  {
+          FXApp->GetLog() << "The following data blocks are available:\n";
+          for( size_t i=0; i < cif.BlockCount(); i++ )
+            FXApp->GetLog() << (olxstr('#') << i << ": " << cif.GetBlock(i).GetName() << '\n');
+        }
+        if( !file_n.data_name.IsEmpty() )
+          FXApp->GetLog() << (olxstr("Loading: ") << file_n.data_name << '\n');
         FXApp->Draw();
         olxstr hklFileName = TEFile::ChangeFileExt(file_n.file_name, "hkl");
         olxstr insFileName = TEFile::ChangeFileExt(file_n.file_name, "ins");
         TMacroError er;
         if( !TEFile::Exists(hklFileName)  )  {
-          TCif& C = FXApp->XFile().GetLastLoader<TCif>();
-          if( C.FindLoop("_refln") != NULL )  {
-            er.SetRetVal(&C);
+          if( cif.FindLoopGlobal("_refln", true) != NULL )  {
+            er.SetRetVal(&cif);
             Macros.ProcessMacro( olxstr("export ") << TEFile::ExtractFileName(hklFileName), er);
             if( !er.IsProcessingError() )  {
               if( !TEFile::Exists(insFileName) )  {
@@ -4611,10 +4617,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
                 ins.GetRM().SetHKLSource(hklFileName);
                 ins.SaveToFile( insFileName );
                 Macros.ProcessMacro( olxstr("@reap \'") << insFileName << '\'', er);
-                if( !er.IsProcessingError() )  {
-                  TBasicApp::GetLog() << ("End importing cif ...\n");
+                if( !er.IsProcessingError() )
                   Macros.ProcessMacro("reset", er);
-                }
                 FXApp->Draw();
                 return;
               }
@@ -5339,9 +5343,9 @@ void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       hklLoop->Get(i, lInd).GetStringValue().ToInt(),
       hklLoop->Get(i, mInd).GetStringValue().ToDouble(),
       hklLoop->Get(i, sInd).GetStringValue().ToDouble() );
-    file.Append( *r );
+    file.Append(*r);
   }
-  file.SaveToFile( exName );
+  file.SaveToFile(exName);
 }
 //..............................................................................
 void TMainForm::funAlert(const TStrObjList& Params, TMacroError &E) {

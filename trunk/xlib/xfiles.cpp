@@ -52,13 +52,7 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
     LoadFromStrings(L);
     if( EsdlInstanceOf(*this, TCif) )  {
       TCif* cif = (TCif*)this;
-      if( cif->BlockCount() > 1 )  {
-        TBasicApp::GetLog() << "The following data blocks are available:\n";
-        for( size_t i=0; i < cif->BlockCount(); i++ )
-          TBasicApp::GetLog() << (olxstr('#') << i << ": " << cif->GetBlock(i).GetName() << '\n');
-      }
       if( !file_n.data_name.IsEmpty() ) {
-        TBasicApp::GetLog() << (olxstr("Loading: ") << file_n.data_name << '\n');
         if( file_n.is_index )
           ((TCif*)this)->SetCurrentBlock(file_n.data_name.ToSizeT());
         else
