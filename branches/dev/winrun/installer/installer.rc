@@ -36,7 +36,7 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     PUSHBUTTON      "Exit",IDC_BTN_CLOSE,247,168,44,14
     DEFPUSHBUTTON   "Install",IDC_BTN_INSTALL,296,168,45,14
-    LTEXT           "Install Olex2 here:",IDC_STATIC,155,73,185,8
+    LTEXT           "Install Olex2 here:",IDC_L_REPOSITORY,155,73,185,8
     CONTROL         129,IDC_STATIC,"Static",SS_BITMAP,0,0,151,185
     CONTROL         130,IDC_STATIC,"Static",SS_BITMAP,151,0,194,61
     CONTROL         "",IDC_PB_PROGRESS,"msctls_progress32",PBS_SMOOTH | NOT WS_VISIBLE,260,59,80,9

@@ -107,8 +107,8 @@ bool PatchAPI::UnlockUpdater() {
   return true;
 }
 //.........................................................................
-olxstr PatchAPI::ReadRepositoryTag()  {
-  olxstr tag_fn = TBasicApp::GetBaseDir() + GetTagFileName();
+olxstr PatchAPI::ReadRepositoryTag(const olxstr& base_dir)  {
+  olxstr tag_fn = (base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir) + GetTagFileName();
   if( !TEFile::Exists(tag_fn) )
     return EmptyString;
   TStrList sl;

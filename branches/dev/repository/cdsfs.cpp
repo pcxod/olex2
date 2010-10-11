@@ -1,6 +1,8 @@
 #include "cdsfs.h"
 #include "settingsfile.h"
 
+bool TSocketFS::UseLocalFS = false;
+//.................................................................................................
 bool TSocketFS::_OnReadFailed(const THttpFileSystem::ResponseInfo& info, uint64_t position) {
   if( !info.headers.Find("Server", CEmptyString).Equals("Olex2-CDS") )  return false;
   while( --attempts >= 0 )  {

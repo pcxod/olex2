@@ -39,6 +39,7 @@
 #define IDC_BTN_CLOSE                   1018
 #define IDC_RE_LICENCE                  1019
 #define IDC_PG_REPOSTORIES              1022
+#define IDC_L_REPOSITORY                1023
 
 // Next default values for new objects
 // 

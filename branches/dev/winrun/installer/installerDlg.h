@@ -4,7 +4,8 @@ enum {
   actionInstall,
   actionRun,
   actionReinstall,
-  actionExit
+  actionExit,
+  actionUninstall
 };
 const short
   rename_status_BaseDir = 0x0001,
@@ -24,6 +25,7 @@ public:
   void SetAction(const olxstr &val)  {
     GetDlgItem(IDC_ST_PROGRESS)->SendMessage(WM_SETTEXT, 0, (LPARAM)val.u_str());
   }
+  void SetInstalledPath(const olxstr& path);
   CToolTipCtrl *tooltipCtrl;
   CBrush *ctrlBrush;
   void ProcessMessages();

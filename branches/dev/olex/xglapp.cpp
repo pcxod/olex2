@@ -23,6 +23,7 @@
 #include "wxzipfs.h"
 #include "shellutil.h"
 #include "patchapi.h"
+#include "cdsfs.h"
 
 #include "efile.h"
 #ifndef __WIN32__
@@ -125,7 +126,7 @@ bool TGlXApp::OnInit()  {
       ScreenH = wxSystemSettings::GetMetric(wxSYS_SCREEN_Y);
   wxPoint wTop(0, 0);
   wxSize wSize(ScreenW, ScreenH);
-
+  TSocketFS::SetUseLocalFS(true);
   MainForm = new TMainForm(this);
 #ifdef __WIN32__
   MainForm->SetIcon(wxIcon(wxT("MAINICON")));
