@@ -139,7 +139,7 @@ BOOL CInstallerDlg::OnInitDialog()  {
   SetIcon(m_hIcon, TRUE);      // Set big icon
   SetIcon(m_hIcon, FALSE);    // Set small icon
 
-  olex2_install_path = TShellUtil::GetSpecialFolderLocation(fiProgramFiles) << "Olex2";
+  olex2_install_path = TShellUtil::GetSpecialFolderLocation(fiSysProgramFiles) << "Olex2";
   wnd::set_text(this, IDC_TE_INSTALL_PATH, olex2_install_path);
   wnd::set_text(this, IDC_TE_PROXY, EmptyString);
   wnd::set_enabled(this, IDC_TE_PROXY, false);
@@ -205,7 +205,7 @@ HCURSOR CInstallerDlg::OnQueryDragIcon()  {
 
 void CInstallerDlg::OnBnClickedBtnChoosePath()  {
   olxstr dir( TShellUtil::PickFolder("Please select installation folder",
-    TShellUtil::GetSpecialFolderLocation(fiProgramFiles), EmptyString) );
+    TShellUtil::GetSpecialFolderLocation(fiSysProgramFiles), EmptyString) );
   if( !dir.IsEmpty() )  {
     olex2_install_path = dir << "\\Olex2";
     SetInstallationPath(dir << '-' << olex2_install_tag);
@@ -569,11 +569,21 @@ bool CInstallerDlg::_DoInstall(const olxstr& zipFile, const olxstr& installPath)
       try  {  zfs.ExtractAll(installPath);  }
       catch(...) {  res = false;  }
       if( res )  {
-#ifndef _WIN64
-        olxstr redist_fn = TBasicApp::GetBaseDir() + "vcredist_x86.exe", redist_tag = "x86";
-#else
-        olxstr redist_fn = TBasicApp::GetBaseDir() + "vcredist_x64.exe", redist_tag = "x64";
-#endif
+        olxstr redist_fn = TBasicApp::GetBaseDir(), redist_tag;
+        bool wow64 = false;
+        try  {  wow64 = IsWow64();  }
+        catch(...)  {
+          MessageBox(_T("Failed to determine operating system version"), _T("Error"), MB_OK);
+          return false;
+        }
+        if( !wow64 )  {
+          redist_fn << "vcredist_x86.exe";
+          redist_tag = "x86";
+        }
+        else  {
+          redist_fn << "vcredist_x64.exe";
+          redist_tag = "x64";
+        }
         SetAction(_T("Installing MSVCRT..."));
         if( !LaunchFile(redist_fn, true, false) )  {
           if( MessageBox(_T("Could not install MSVC redistributables."), _T("Installation failed"), MB_RETRYCANCEL|MB_ICONERROR) == IDRETRY )  {

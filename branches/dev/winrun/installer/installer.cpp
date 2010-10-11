@@ -52,15 +52,22 @@ BOOL CInstallerApp::InitInstance()  {
     TCHAR* this_name = new TCHAR[_MAX_PATH];
     DWORD this_name_sz = GetModuleFileName(NULL, this_name, _MAX_PATH);
     const olxstr module_name  = olxstr::FromExternal(this_name, this_name_sz);
-    TEFile out(tmppath + "olex2un.exe", "w+b"),
-      in(module_name, "rb");
-    out << in;
-    in.Close();
-    out.Close();
-    const olxstr exe_name = olxstr('\"') << out.GetName() << '\"';
-    uninst_dir = olxstr('\"') <<
-      TEFile::TrimPathDelimeter(TEFile::ExtractFilePath(module_name)) << '\"';
-    _execl(out.GetName().c_str(), exe_name.c_str(), uninst_dir.c_str(), NULL);
+    const olxstr copy_name  = tmppath + "olex2un.exe";
+    bool do_run = true;
+    try  {  do_run = TEFile::Copy(module_name, copy_name, true);  }
+    catch(const TExceptionBase&)  {
+      do_run = false;
+    }
+    if( do_run )  {
+      const olxstr exe_name = olxstr('\"') << copy_name << '\"';
+      uninst_dir = olxstr('\"') <<
+        TEFile::TrimPathDelimeter(TEFile::ExtractFilePath(module_name)) << '\"';
+      _execl(copy_name.c_str(), exe_name.c_str(), uninst_dir.c_str(), NULL);
+    }
+    else  {
+      MessageBox(NULL, _T("Failed to initialise the installer. Please make sure only one Olex2 installer is running"),
+        _T("Error"), MB_OK|MB_ICONERROR);
+    }
     TEGC::Finalise();
     return FALSE;
   }
