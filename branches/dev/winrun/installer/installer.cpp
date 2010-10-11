@@ -1,12 +1,10 @@
-// installer.cpp : Defines the class behaviors for the application.
-//
-
 #include "stdafx.h"
 #include "ebase.h"
 #include "bapp.h"
 #include "estrlist.h"
 #include "installer.h"
 #include "installerDlg.h"
+#include "filetree.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -33,6 +31,24 @@ BOOL CInstallerApp::InitInstance()  {
 	InitCommonControlsEx(&InitCtrls);
   AfxInitRichEdit();
 	CWinApp::InitInstance();
+  int argc = 0;
+  const LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+  if( argc == 4 && olxstr("/uninstall").Equalsi(argv[1]) )  {
+    const olxstr p_id = argv[2];
+    const olxstr dir = argv[3];
+    HANDLE pid = (HANDLE)p_id.RadInt<int64_t>();  
+    DWORD Status;
+    GetExitCodeProcess(pid, &Status);
+    while( Status == STILL_ACTIVE )  {
+      SleepEx(50, TRUE);
+      GetExitCodeProcess(pid, &Status);
+    }
+    TFileTree::Delete(dir);
+    TCHAR this_name[_MAX_PATH];
+    GetModuleFileName(NULL, this_name, _MAX_PATH);
+    MoveFileEx(this_name, NULL, MOVEFILE_DELAY_UNTIL_REBOOT);
+    return TRUE;
+  }
   CInstallerDlg dlg;
 	m_pMainWnd = &dlg;
   main_dlg = &dlg;

@@ -58,11 +58,12 @@ public:
 };
 
 class UpdaterTh : public AOlxThread {
+  CWnd* Parent;
 public:
-  UpdaterTh() {  Detached = false;  }
+  UpdaterTh(CWnd* parent) : Parent(parent) {  Detached = false;  }
   int Run()  {
     CRepositoriesDlg dlg;
-    dlg.Create(IDD_REPOSITORIES);
+    dlg.Create(IDD_REPOSITORIES, Parent);
     dlg.ShowWindow(SW_SHOW);
     while( true )  {
       MSG msg;
@@ -247,7 +248,8 @@ void CInstallerDlg::OnBnClickedCbProxy()  {
 void CInstallerDlg::OnShowWindow(BOOL bShow, UINT nStatus)  {
   InitRepositories();
   CDialog::OnShowWindow(bShow, nStatus);
-  SetActiveWindow();
+  BringWindowToTop();
+  CDialog::ActivateTopParent();
 }
 
 void CInstallerDlg::OnTimer(UINT_PTR nIDEvent)  {
@@ -659,11 +661,22 @@ bool CInstallerDlg::DoUninstall()  {
     if( TEFile::Exists(olex2_data_dir) )
       TEFile::DeleteDir(olex2_data_dir);
   }
-  return CleanRegistryAndShortcuts(true);
+  bool res = CleanRegistryAndShortcuts(true);
+  if( action != actionInstall )  {  //do the uninstall then...
+    TCHAR* tmp_path = new TCHAR[1024];
+    DWORD sz=1024, needed_sz;
+    if( (needed_sz=GetTempPath(sz, tmp_path)) > sz )  {
+      delete [] tmp_path;
+      tmp_path = new TCHAR[needed_sz+1];
+      sz = GetTempPath(needed_sz+1, tmp_path);
+    }
+    delete [] tmp_path;
+  }
+  return res;
 }
 
 void CInstallerDlg::InitRepositories()  {
-  UpdaterTh uth;
+  UpdaterTh uth(NULL);
   uth.Start();
   try  {
     combo_box::clear_items(this, IDC_CB_REPOSITORY);
