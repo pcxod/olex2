@@ -9,8 +9,8 @@
 class TSocketFS: public THttpFileSystem  {
 protected:
   static bool UseLocalFS;
+  static olxstr Base;
   int attempts, max_attempts;
-  olxstr Base;
   bool BaseValid;
   virtual IInputStream* _DoOpenFile(const olxstr& src)  {
     attempts = max_attempts;
@@ -18,13 +18,14 @@ protected:
   }
   virtual bool _OnReadFailed(const ResponseInfo& info, uint64_t position);
   // this will be useful when Olex2-CDS returns MD5 digest in ETag...
-  virtual bool _DoValidate(const ResponseInfo& info, TEFile& data, size_t toBeread) const;
+  virtual bool _DoValidate(const ResponseInfo& info, TEFile& data, uint64_t toBeread) const;
   virtual TEFile* _DoAllocateFile(const olxstr& src);
 public:
   TSocketFS(const TUrl& url, int _max_attempts=100) :
       THttpFileSystem(url), max_attempts(_max_attempts), BaseValid(false)
   {
-    Base = TEFile::AddPathDelimeter(TBasicApp::GetBaseDir() + ".cds");
+    if( Base.IsEmpty() )
+      Base = TEFile::AddPathDelimeter(TBasicApp::GetBaseDir() + ".cds");
     if( UseLocalFS )  {
       try  {
         if( !TEFile::Exists(Base) )  {

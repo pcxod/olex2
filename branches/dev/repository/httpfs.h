@@ -48,12 +48,12 @@ protected:
   ResponseInfo ParseResponseInfo(const olxcstr& str, const olxcstr& sep, const olxstr& src);
   // if position is valid and not 0 it is appended to the file name like + ('#'+pos)
   static olxcstr GenerateRequest(const TUrl& url, const olxcstr& cmd, const olxcstr& file_name,
-    size_t position=0);
+    uint64_t position=0);
   bool IsConnected() const {  return Connected;  }
   const TUrl& GetUrl() const {  return Url;  }
   // if false returned, the procedure is terminated, true means the the connection was re-established
   virtual bool _OnReadFailed(const ResponseInfo& info, uint64_t position)  {  return false;  }
-  virtual bool _DoValidate(const ResponseInfo& info, TEFile& data, size_t toBeRead) const {
+  virtual bool _DoValidate(const ResponseInfo& info, TEFile& data, uint64_t toBeRead) const {
     return data.Length() == toBeRead;  
   }
   // does the file allocation

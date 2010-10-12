@@ -186,9 +186,11 @@ public class ClientHandler extends Thread {
                 } else {
                   out.writeBytes("HTTP/1.0 200 OK\n");
                   out.writeBytes("Server: Olex2-CDS\n");
+                  out.writeBytes("Server-Version: " + Main.versionInfo + "\n");
                   out.writeBytes(("Content-Length: " + file.length()) + "\n");
                   out.writeBytes("Last-Modified: " + (new SimpleDateFormat()).format(new Date(file.lastModified())) + "\n");
                   out.writeBytes("ETag: \"" + UUID.randomUUID().toString() + "\"\n");
+                  out.writeBytes("Content-MD5: \"" + Main.getFileHash(file.getAbsolutePath()) + "\"\n");
                   out.writeBytes("Connection: close\n");
                   out.writeBytes("Content-Type: " + getContentType(file) + "\n\n");
                   if( offset != file.length() )  {
@@ -226,6 +228,7 @@ public class ClientHandler extends Thread {
                   out.writeBytes("HTTP/1.0 404 ERROR\n");
                 }
                 out.writeBytes("Server: Olex2-CDS\n");
+                out.writeBytes("Server-Version: " + Main.versionInfo + "\n\n");
               }
             }
           }

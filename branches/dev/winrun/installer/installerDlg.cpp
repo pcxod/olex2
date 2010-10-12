@@ -28,10 +28,12 @@ public:
   TProgress(){}
   virtual ~TProgress(){}
   bool Exit(const IEObject *Sender, const IEObject *Data)  {  
+    wnd::set_visible(main_dlg, IDC_PB_PROGRESS, false);
     return true;  
   }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
     if( !EsdlInstanceOf( *Data, TOnProgress) )  return false;
+    wnd::set_visible(main_dlg, IDC_PB_PROGRESS, true);
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
     double div = 10;
     if( Sender != NULL )  {
@@ -272,6 +274,7 @@ void CInstallerDlg::OnBnClickedInstall()  {
       SetAction(actionInstall);
   }
   else if( action == actionReinstall || action == actionUninstall )  {
+    short _action = action;
     if( DoUninstall() )  {
       if( action == actionExit )
         EndDialog(IDOK);
@@ -283,7 +286,7 @@ void CInstallerDlg::OnBnClickedInstall()  {
       }
     }
     else
-      SetAction(actionReinstall);
+      SetAction(_action);
   }
   else
     DoRun();
@@ -354,11 +357,9 @@ void CInstallerDlg::SetAction(int a)  {
     else
       GetDlgItem(IDC_BTN_INSTALL)->SendMessage(WM_SETTEXT, 0, (LPARAM)_T("Re-install"));
     GetDlgItem(IDC_PB_PROGRESS)->SendMessage(PBM_SETPOS, (WPARAM)0, 0);
-    GetDlgItem(IDC_PB_PROGRESS)->ShowWindow(SW_SHOW);
   }
   else  {
     DisableInterface(true);
-    GetDlgItem(IDC_PB_PROGRESS)->ShowWindow(SW_HIDE);
     if( a == actionUninstall )  {
       GetDlgItem(IDC_BTN_INSTALL)->SendMessage(WM_SETTEXT, 0, (LPARAM)_T("Uninstall"));
       GetDlgItem(IDC_L_REPOSITORY)->SendMessage(WM_SETTEXT, 0, (LPARAM)_T("Uninstall Olex2 from here:"));
@@ -434,7 +435,6 @@ bool CInstallerDlg::LaunchFile(const olxstr &fileName, bool quiet, bool do_exit)
 
 bool CInstallerDlg::DoInstall()  {
   DisableInterface(true);
-  GetDlgItem(IDC_PB_PROGRESS)->ShowWindow(SW_SHOW);
   olxstr reposPath, proxyPath, installPath;
   if( check_box::is_checked(this, IDC_CB_PROXY) )
     proxyPath = wnd::get_text(this, IDC_TE_PROXY);

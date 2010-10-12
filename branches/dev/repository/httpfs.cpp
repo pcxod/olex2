@@ -109,7 +109,7 @@ bool THttpFileSystem::Connect()  {
 }
 //..............................................................................
 olxcstr THttpFileSystem::GenerateRequest(const TUrl& url, const olxcstr& cmd, const olxcstr& FileName,
-    size_t position)
+    uint64_t position)
 {
   olxcstr request(cmd);
   request << ' '
@@ -173,7 +173,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
     return NULL;
   }
   // if the file length is not 0, it means that the CDS of any kind is in place...
-  const size_t starting_file_len = File->Length();
+  const uint64_t starting_file_len = File->Length();
   // read and extract headers
   _write(GenerateRequest(GetUrl(), "GET", Source, starting_file_len));
   int ThisRead = _read(Buffer, 512);
@@ -187,25 +187,21 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   }
   uint64_t TotalRead = starting_file_len, FileLength = ~0;
   size_t data_off = GetDataOffset(Buffer, ThisRead, crlf);
-  const ResponseInfo info = ParseResponseInfo(
-    olxcstr(Buffer, data_off), olxcstr(crlf ? "\r\n" : "\n"), Source);
-  try  {
-    FileLength = info.headers.Find("Content-Length", "-1").ToInt();
-  }
+  ResponseInfo info = ParseResponseInfo(olxcstr(Buffer, data_off), olxcstr(crlf ? "\r\n" : "\n"), Source);
+  try  {  FileLength = info.headers.Find("Content-Length", "-1").ToInt();  }
   catch(...)  {}  // toInt my throw an exception
   if( FileLength == ~0 || !info.status.EndsWithi("200 OK") || !info.headers.HasKey("ETag") )  {
     delete File;
     delete [] Buffer;
     return NULL;
   }
-  const olxcstr server_name = info.headers.Find("Server", CEmptyString);
-  const olxcstr etag = info.headers["ETag"];
+  olxcstr digest = info.headers.Find("Content-MD5", CEmptyString);
   Progress.SetPos(0);
   Progress.SetAction(Source);
   Progress.SetMax(FileLength);
   OnProgress.Enter(this, &Progress);
   TotalRead = starting_file_len+ThisRead-data_off-1;
-  File->Write(&Buffer[data_off+1], TotalRead-starting_file_len);
+  File->Write(&Buffer[data_off+1], (size_t)(TotalRead-starting_file_len));
   bool restarted = false;
   while( TotalRead != FileLength )  {
     if( TotalRead > FileLength ) // could happen?
@@ -213,6 +209,23 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
     ThisRead = _read(Buffer, BufferSize);
     if( restarted && ThisRead > 0 )  {
       data_off = GetDataOffset(Buffer, ThisRead, crlf);
+      uint64_t tmp_fl = ~0;
+      info = ParseResponseInfo(olxcstr(Buffer, data_off), olxcstr(crlf ? "\r\n" : "\n"), Source);
+      try  {  tmp_fl = info.headers.Find("Content-Length", "-1").ToInt();  }
+      catch(...)  {}  // toInt my throw an exception
+      if( tmp_fl == ~0 || !info.status.EndsWithi("200 OK") || !info.headers.HasKey("ETag") )  {
+        delete File;
+        delete [] Buffer;
+        return NULL;
+      }
+      const olxcstr tmp_digest = info.headers.Find("Content-MD5", CEmptyString);
+      if( tmp_fl != FileLength || tmp_digest != digest )  {  // have to restart...
+        FileLength = tmp_fl;
+        digest = tmp_digest;
+        TotalRead = starting_file_len-data_off-1;
+        //TODO: this will not work if the new file is smaller than already written!
+        File->SetPosition(starting_file_len);
+      }
       ThisRead = ThisRead-data_off-1;
       File->Write(&Buffer[data_off+1], ThisRead);
       Progress.SetPos(TotalRead+=ThisRead);

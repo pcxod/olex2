@@ -2,6 +2,7 @@
 #include "settingsfile.h"
 
 bool TSocketFS::UseLocalFS = false;
+olxstr TSocketFS::Base;
 //.................................................................................................
 bool TSocketFS::_OnReadFailed(const THttpFileSystem::ResponseInfo& info, uint64_t position) {
   if( !info.headers.Find("Server", CEmptyString).Equals("Olex2-CDS") )  return false;
@@ -19,7 +20,7 @@ bool TSocketFS::_OnReadFailed(const THttpFileSystem::ResponseInfo& info, uint64_
 }
 //.................................................................................................
 bool TSocketFS::_DoValidate(const THttpFileSystem::ResponseInfo& info, TEFile& data,
-  size_t toBeread) const
+  uint64_t toBeread) const
 {
   bool valid = THttpFileSystem::_DoValidate(info, data, toBeread);
   if( BaseValid && info.headers.Find("Server", CEmptyString).Equals("Olex2-CDS") )  {  // make file pesistent and write file info
@@ -38,6 +39,14 @@ bool TSocketFS::_DoValidate(const THttpFileSystem::ResponseInfo& info, TEFile& d
         sf.SetParam("Size", fi->GetSize());
         sf.SetParam("Age", fi->GetDateTime());
         sf.SaveSettings(ifn); 
+      }
+      else  {
+        olxcstr digest = info.headers.Find("Content-MD5", CEmptyString);
+        if( !digest.IsEmpty() )  {
+          TSettingsFile sf;
+          sf.SetParam("MD5", digest);
+          sf.SaveSettings(ifn); 
+        }
       }
     }
     if( valid && TEFile::Exists(ifn) )
