@@ -1571,22 +1571,19 @@ void THtml::funSetFG(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
     return;
   }
-  if( wxw != NULL )  {
-    if( EsdlInstanceOf(*wxw, TComboBox) )  {
-      TComboBox* Box = (TComboBox*)wxw;
-      wxColor fgCl = wxColor(Params[1].u_str());
-      Box->SetForegroundColour( fgCl );
+  const wxColor fgc = wxColor(Params[1].u_str());
+  wxw->SetForegroundColour(fgc);
+  if( EsdlInstanceOf(*wxw, TComboBox) )  {
+    TComboBox* Box = (TComboBox*)wxw;
+    Box->SetForegroundColour(fgc);
 #ifdef __WIN32__
-      if( Box->GetPopupControl() != NULL )
-        Box->GetPopupControl()->GetControl()->SetForegroundColour( fgCl );
-      if( Box->GetTextCtrl() != NULL )
-        Box->GetTextCtrl()->SetForegroundColour( fgCl );
+    if( Box->GetPopupControl() != NULL )
+      Box->GetPopupControl()->GetControl()->SetForegroundColour(fgc);
+    if( Box->GetTextCtrl() != NULL )
+      Box->GetTextCtrl()->SetForegroundColour(fgc);
 #endif				
-    }
-    else
-      wxw->SetForegroundColour( wxColor(Params[1].u_str()) );
-    this->Refresh();
   }
+  wxw->Refresh();
 }
 //..............................................................................
 void THtml::funSetBG(const TStrObjList &Params, TMacroError &E)  {
@@ -1602,20 +1599,21 @@ void THtml::funSetBG(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
     return;
   }
+  const wxColor bgc(Params[1].u_str());
+  wxw->SetBackgroundColour(bgc);
   if( EsdlInstanceOf(*wxw, TComboBox) )  {
     TComboBox* Box = (TComboBox*)wxw;
-    wxColor fgCl = wxColor(Params[1].u_str());
-    Box->SetBackgroundColour( fgCl );
 #ifdef __WIN32__
     if( Box->GetPopupControl() != NULL )
-      Box->GetPopupControl()->GetControl()->SetBackgroundColour( fgCl );
+      Box->GetPopupControl()->GetControl()->SetBackgroundColour(bgc);
     if( Box->GetTextCtrl() != NULL )
-      Box->GetTextCtrl()->SetBackgroundColour( fgCl );
-#endif				
+      Box->GetTextCtrl()->SetBackgroundColour(bgc);
+#endif
   }
-  else
-    wxw->SetBackgroundColour( wxColor(Params[1].u_str()) );
-  this->Refresh();
+  //else if( EsdlInstanceOf(*wxw, TTrackBar) )  {
+  //  TTrackBar* Bar = (TTrackBar*)wxw;
+  //}
+  wxw->Refresh();
 }
 //..............................................................................
 void THtml::funGetFontName(const TStrObjList &Params, TMacroError &E)  {
