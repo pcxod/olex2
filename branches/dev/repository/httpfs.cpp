@@ -124,17 +124,27 @@ olxcstr THttpFileSystem::GenerateRequest(const TUrl& url, const olxcstr& cmd, co
 }
 //..............................................................................
 THttpFileSystem::ResponseInfo THttpFileSystem::ParseResponseInfo(const olxcstr& str,
-  const olxcstr& sep, const olxstr& src )
+  const olxcstr& sep, const olxstr& src)
 {
   ResponseInfo rv;
-  if( str.IsEmpty() )
-    return rv;
+  if( str.IsEmpty() )  return rv;
   const TCStrList header_toks(str, sep);
   rv.status = header_toks[0];
   for( size_t i=1; i < header_toks.Count(); i++ )  {
     const size_t si = header_toks[i].IndexOf(':');
     if( si == InvalidIndex )  continue;
     rv.headers(header_toks[i].SubStringTo(si), header_toks[i].SubStringFrom(si+1).Trim(' '));
+  }
+  size_t ii = rv.headers.IndexOf("Content-MD5");
+  if( ii != InvalidIndex )  {
+    rv.contentMD5 = rv.headers.GetValue(ii);
+    rv.headers.Delete(ii);
+  }
+  ii = rv.headers.IndexOf("Content-Length");
+  if( ii != InvalidIndex )  {
+    try  {  rv.contentLength = rv.headers.GetValue(ii).ToInt();  }
+    catch(...)  {}  // toInt my throw an exception
+    rv.headers.Delete(ii);
   }
   rv.source = src;
   return rv;
@@ -165,15 +175,15 @@ size_t THttpFileSystem::GetDataOffset(const char* bf, size_t len, bool crlf)  {
 IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   TOnProgress Progress;
   DoConnect();
-  const size_t BufferSize = 1024*64;
+  const size_t BufferSize = 1024*16;
   char* Buffer = new char[BufferSize+1];
-  AllocationInfo allocation_info = _DoAllocateFile(Source, false);
+  AllocationInfo allocation_info = _DoAllocateFile(Source);
   if( allocation_info.file == NULL )  {
     delete [] Buffer;
     return NULL;
   }
   // if the file length is not 0, it means that the CDS of any kind is in place...
-  const uint64_t starting_file_len = allocation_info.file->Length();
+  uint64_t starting_file_len = allocation_info.file->Length();
   // read and extract headers
   _write(GenerateRequest(GetUrl(), "GET", Source, starting_file_len));
   int ThisRead = _read(Buffer, 512);
@@ -185,46 +195,48 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
     delete allocation_info.file;
     return NULL;
   }
-  uint64_t TotalRead = starting_file_len, FileLength = ~0;
+  uint64_t TotalRead = starting_file_len;
   size_t data_off = GetDataOffset(Buffer, ThisRead, crlf);
-  ResponseInfo info = ParseResponseInfo(olxcstr(Buffer, data_off), olxcstr(crlf ? "\r\n" : "\n"), Source);
-  try  {  FileLength = info.headers.Find("Content-Length", "-1").ToInt();  }
-  catch(...)  {}  // toInt my throw an exception
-  if( FileLength == ~0 || !info.status.EndsWithi("200 OK") || !info.headers.HasKey("ETag") )  {
+  ResponseInfo info =
+    ParseResponseInfo(olxcstr(Buffer, data_off), olxcstr(crlf ? "\r\n" : "\n"), Source);
+  if( !info.HasData() )  {
     delete allocation_info.file;
     delete [] Buffer;
     return NULL;
   }
-  olxcstr digest = info.headers.Find("Content-MD5", CEmptyString);
+  // validate if we continue download for the same file...
+  if( !allocation_info.truncated && allocation_info.digest != info.contentMD5 )  {
+    _DoTruncateFile(allocation_info);
+    if( allocation_info.file == NULL )  {
+      delete [] Buffer;
+      return NULL;
+    }
+    starting_file_len = TotalRead = 0;
+  }
   Progress.SetPos(0);
   Progress.SetAction(Source);
-  Progress.SetMax(FileLength);
+  Progress.SetMax(info.contentLength);
   OnProgress.Enter(this, &Progress);
   TotalRead = starting_file_len+ThisRead-data_off-1;
   allocation_info.file->Write(&Buffer[data_off+1], (size_t)(TotalRead-starting_file_len));
   bool restarted = false;
-  while( TotalRead != FileLength )  {
-    if( TotalRead > FileLength ) // could happen?
+  while( TotalRead != info.contentLength )  {
+    if( TotalRead > info.contentLength ) // could happen?
       break;
     ThisRead = _read(Buffer, BufferSize);
     if( restarted && ThisRead > 0 )  {
       data_off = GetDataOffset(Buffer, ThisRead, crlf);
       uint64_t tmp_fl = ~0;
-      info = ParseResponseInfo(olxcstr(Buffer, data_off), olxcstr(crlf ? "\r\n" : "\n"), Source);
-      try  {  tmp_fl = info.headers.Find("Content-Length", "-1").ToInt();  }
-      catch(...)  {}  // toInt my throw an exception
-      if( tmp_fl == ~0 || !info.status.EndsWithi("200 OK") || !info.headers.HasKey("ETag") )  {
+      ResponseInfo new_info =
+        ParseResponseInfo(olxcstr(Buffer, data_off), olxcstr(crlf ? "\r\n" : "\n"), Source);
+      if( !new_info.HasData() )  {
         delete allocation_info.file;
         delete [] Buffer;
         return NULL;
       }
-      const olxcstr tmp_digest = info.headers.Find("Content-MD5", CEmptyString);
-      if( tmp_fl != FileLength || tmp_digest != digest )  {  // have to restart...
-        FileLength = tmp_fl;
-        digest = tmp_digest;
-        allocation_info.file->SetTemporary(true);
-        delete allocation_info.file;
-        allocation_info = _DoAllocateFile(Source, true);
+      if( new_info != info  )  {  // have to restart...
+        info = new_info;
+        _DoTruncateFile(allocation_info);
         if( allocation_info.file == NULL )  {
           delete [] Buffer;
           return NULL;
@@ -255,15 +267,15 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   }
   delete [] Buffer;
   allocation_info.file->SetPosition(0);
-  if( !_DoValidate(info, *allocation_info.file, FileLength) )  {  // premature completion?
+  if( !_DoValidate(info, *allocation_info.file) )  {  // premature completion?
     Progress.SetPos(0);
     OnProgress.Exit(this, &Progress);
     delete allocation_info.file;
     return NULL;
   }
-  Progress.SetPos(FileLength);
+  Progress.SetPos(info.contentLength);
   OnProgress.Exit(this, &Progress);
-  return allocation_info.ile;
+  return allocation_info.file;
 }
 //..............................................................................
 int THttpFileSystem::_read(char* dest, size_t dest_sz) const {

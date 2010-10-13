@@ -251,9 +251,53 @@ void CInstallerDlg::OnShowWindow(BOOL bShow, UINT nStatus)  {
     wnd::set_text(this, IDC_TE_INSTALL_PATH, olex2_installed_path);
     SetAction(actionUninstall);
   }
+//http://www.experts-exchange.com/Programming/System/Windows__Programming/MFC/Q_11279779.html
+  // stretch the bitmaps if needed...
+  CStatic* bmp1 = (CStatic*)GetDlgItem(IDC_BMP1);
+  CStatic* bmp2 = (CStatic*)GetDlgItem(IDC_BMP2);
+  CRect r1, r2, rx;
+  GetWindowRect(rx);
+  bmp1->GetClientRect(r1);
+  bmp2->GetWindowRect(r2);
+  int new_w = r2.left - rx.left,
+    new_h = rx.Height();
+  CDC* dc = bmp1->GetDC();
+  CDC srcDC, destDC;
+  srcDC.CreateCompatibleDC(dc);
+  destDC.CreateCompatibleDC(dc);
+  CBitmap src, dest;
+  src.LoadBitmap(IDB_INSTALLER);
+  BITMAP srcInfo;
+  ::GetObjectW((HBITMAP)src, sizeof(srcInfo), &srcInfo);
+  CBitmap* prevSrcBmp = srcDC.SelectObject(&src);
+  dest.CreateCompatibleBitmap(dc, new_w, new_h);
+  CBitmap* prevDestBmp = destDC.SelectObject(&dest);
+  destDC.StretchBlt(0, 0, new_w, new_h,
+    &srcDC, 0, 0, srcInfo.bmWidth, srcInfo.bmHeight,
+    SRCCOPY);
+  destDC.SelectObject(prevDestBmp);
+  srcDC.SelectObject(prevSrcBmp);
+  bmp1->SetBitmap((HBITMAP)dest.Detach());
+
+  src.DeleteObject();
+  src.LoadBitmap(IDB_INSTALLER1);
+  ::GetObjectW((HBITMAP)src, sizeof(srcInfo), &srcInfo);
+  prevSrcBmp = srcDC.SelectObject(&src);
+  new_w = rx.right-r2.left;
+  new_h = (int)((double)srcInfo.bmHeight*new_h/r1.Height());
+  dest.CreateCompatibleBitmap(dc, new_w, new_h);
+  prevDestBmp = destDC.SelectObject(&dest);
+  destDC.StretchBlt(0, 0, new_w, new_h,
+    &srcDC, 0, 0, srcInfo.bmWidth, srcInfo.bmHeight,
+    SRCCOPY);
+  destDC.SelectObject(prevDestBmp);
+  srcDC.SelectObject(prevSrcBmp);
+  bmp1->ReleaseDC(dc);
+  bmp2->SetBitmap((HBITMAP)dest.Detach());
+
   CDialog::OnShowWindow(bShow, nStatus);
-  BringWindowToTop();
   CDialog::ActivateTopParent();
+  BringWindowToTop();
 }
 
 void CInstallerDlg::OnTimer(UINT_PTR nIDEvent)  {
@@ -285,8 +329,12 @@ void CInstallerDlg::OnBnClickedInstall()  {
           SetAction(actionInstall);
       }
     }
-    else
-      SetAction(_action);
+    else  {
+      if( _action == actionReinstall )  // reinitialise
+        OnCbnSelendokCbRepository();
+      else
+        SetAction(_action);
+    }
   }
   else
     DoRun();
@@ -642,7 +690,7 @@ bool CInstallerDlg::InitRegistry(const olxstr &installPath)  {
       reg.SetStringValue(_T("DisplayName"), (olxstr("Olex2-") << olex2_install_tag).u_str());
       reg.SetStringValue(_T("URLInfoAbout"), _T("http://www.olex2.org"));
       reg.SetStringValue(_T("HelpLink"), _T("http://www.olex2.org"));
-      reg.SetStringValue(_T("Publisher"), _T("OlexSys Ltd"));
+      reg.SetStringValue(_T("Publisher"), _T("OlexSys"));
       reg.SetStringValue(_T("DisplayIcon"), exe_name.u_str());
       const olxstr inst_name(olxstr('\"') << installPath << "installer.exe" << '\"');
       reg.SetStringValue(_T("UninstallString"), inst_name.u_str());

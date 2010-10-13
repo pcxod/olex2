@@ -42,8 +42,21 @@ protected:
   typedef olxdict<olxcstr,olxcstr,olxstrComparator<false> > HeadersDict;
   struct ResponseInfo  {
     HeadersDict headers;
-    olxcstr status;
+    olxcstr status, contentMD5;
     olxstr source;
+    uint64_t contentLength;
+    ResponseInfo() : contentLength(~0)  {}
+    bool IsOK() const {  return status.EndsWithi("200 OK");  }
+    // note that only length and digest are compared
+    bool operator == (const ResponseInfo& i) const {
+      return contentLength == i.contentLength &&
+             contentMD5 == i.contentMD5;
+    }
+    bool operator != (const ResponseInfo& i) const {  return this->operator == (i);  }
+    // does basic checks to identify if any data is attached
+    bool HasData() const {
+      return (contentLength != ~0 && IsOK() && headers.HasKey("ETag"));
+    }
   };
   struct AllocationInfo  {
     TEFile* file;
@@ -62,13 +75,23 @@ protected:
   virtual bool _OnReadFailed(const ResponseInfo& info, uint64_t position)  {  return false;  }
   /* version 1.0 of CDS returns Content-MD5, however the MD5 checks are done in the OSFS, when a
   foreign item is adopted */
-  virtual bool _DoValidate(const ResponseInfo& info, TEFile& data, uint64_t toBeRead) const {
-    return data.Length() == toBeRead;  
+  virtual bool _DoValidate(const ResponseInfo& info, TEFile& data) const {
+    return data.Length() == info.contentLength;
   }
   /* does the file allocation, always new or 'truncated'. the truncated is false for the first
   time file allocation and true if the download restarts due to the file changed */
-  virtual AllocationInfo _DoAllocateFile(const olxstr& fileName, bool truncated)  {
+  virtual AllocationInfo _DoAllocateFile(const olxstr& fileName)  {
     return AllocationInfo(TEFile::TmpFile(), CEmptyString, true);
+  }
+  virtual AllocationInfo& _DoTruncateFile(AllocationInfo& file)  {
+    if( file.file == NULL )
+      throw TInvalidArgumentException(__OlxSourceInfo, "file");
+    file.file->SetTemporary(true);
+    delete file.file;
+    file.file = TEFile::TmpFile();
+    file.digest.SetLength(0);
+    file.truncated = true;
+    return file;
   }
   static bool IsCrLf(const char* bf, size_t len);
   static size_t GetDataOffset(const char* bf, size_t len, bool crlf);

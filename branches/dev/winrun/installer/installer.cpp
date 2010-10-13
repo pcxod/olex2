@@ -78,7 +78,9 @@ BOOL CInstallerApp::InitInstance()  {
     if( TEFile::Exists(uninst_dir) )  {
       const olxstr base_dir = TEFile::AddPathDelimeter(uninst_dir);
       // just some checks at least...
-      uninstall = TEFile::Exists(base_dir+"olex2.dll");
+      uninstall = TEFile::Exists(base_dir+"olex2.dll") &&
+        TEFile::Exists(base_dir+"index.ind") &&
+        TEFile::Exists(base_dir+"olex2.tag");
     }
   }
   CInstallerDlg dlg;
@@ -86,19 +88,6 @@ BOOL CInstallerApp::InitInstance()  {
   main_dlg = &dlg;
   if( uninstall )
     dlg.SetInstalledPath(uninst_dir);
-	INT_PTR nResponse = dlg.DoModal();
-	if (nResponse == IDOK)
-	{
-		// TODO: Place code here to handle when the dialog is
-		//  dismissed with OK
-	}
-	else if (nResponse == IDCANCEL)
-	{
-		// TODO: Place code here to handle when the dialog is
-		//  dismissed with Cancel
-	}
-
-	// Since the dialog has been closed, return FALSE so that we exit the
-	//  application, rather than start the application's message pump.
+	dlg.DoModal();
 	return FALSE;
 }
