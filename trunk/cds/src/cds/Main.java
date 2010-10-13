@@ -7,6 +7,7 @@ package cds;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -21,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 /**
  *
@@ -35,7 +38,7 @@ public class Main {
   static int port_number = 8082;
   static boolean terminate = false;
   static int threadCount = 0;
-  static String baseDir;
+  static String baseDir, hashesFileName = "";
   static PrintWriter logFile=null;
   static HashSet<String> blocked = new HashSet();
   static HashSet<String> unmounted = new HashSet();
@@ -87,6 +90,45 @@ public class Main {
     catch(Exception ex) {
       return "";
     }
+  }
+  static boolean saveHashes(String fileName)  {
+    if( fileName.isEmpty() )  return false;
+    try  {
+      File f = new File(fileName);
+      PrintWriter pw = new PrintWriter(new FileOutputStream(f));
+      Iterator<Entry<String,FileHash>> itr = FileHashes.entrySet().iterator();
+      while( itr.hasNext() )  {
+        Entry<String,FileHash> en = itr.next();
+        String line = en.getKey().replaceAll("\\s", "%20");
+        line += ' ';
+        line += en.getValue().hash;  line += ' ';
+        line += en.getValue().size;  line += ' ';
+        line += en.getValue().timestamp;
+        pw.println(line);
+      }
+      pw.close();
+      return true;
+    }
+    catch(Exception e)  {  return false;  }
+  }
+  static boolean loadHashes(String fileName)  {
+    if( fileName.isEmpty() )  return false;
+    try  {
+      File f = new File(fileName);
+      BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
+      String line;
+      while( (line=br.readLine()) != null )  {
+        String[] toks = line.split("\\s");
+        FileHash hash = new FileHash();
+        hash.hash = toks[1];
+        hash.size = Long.parseLong(toks[2]);
+        hash.timestamp = Long.parseLong(toks[3]);
+        FileHashes.put(toks[0].replaceAll("%20", " "), hash);
+      }
+      br.close();
+      return true;
+    }
+    catch(Exception e)  {  return false;  }
   }
   static ArrayList<String> doCall(String function, String arg)  {
     ArrayList<String> rv = new ArrayList();
@@ -163,6 +205,9 @@ public class Main {
             File log = new File(args.get(val_i));
             logFile = new PrintWriter(new FileWriter(log, true));
           }
+          else if( args.get(i).equals("hashes") )  {
+            hashesFileName = args.get(val_i);
+          }
           else if( args.get(i).equals("blocked") )  {
             BufferedReader reader = new BufferedReader(new FileReader(args.get(val_i)));
             String line = null;
@@ -171,6 +216,7 @@ public class Main {
             }
           }
         }
+        loadHashes(hashesFileName);
         ServerSocket s = new ServerSocket(port_number);
         print("Server started at " + (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()));
         while( true )  {
@@ -193,6 +239,7 @@ public class Main {
           logFile.close();
           logFile = null;
         }
+        saveHashes(hashesFileName);
       }
       catch(Exception e)  {
         if( logFile != null )  {
