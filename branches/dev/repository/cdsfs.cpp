@@ -26,42 +26,26 @@ bool TSocketFS::_DoValidate(const THttpFileSystem::ResponseInfo& info, TEFile& d
   if( BaseValid && info.headers.Find("Server", CEmptyString).Equals("Olex2-CDS") )  {  // make file pesistent and write file info
     data.SetTemporary(valid);
     olxstr ifn = olxstr(data.GetName()) << ".info";
-    if( !valid && GetIndex() != NULL )  {
+    if( !valid )  {
       olxstr fn = TEFile::OSPath(info.source);
-      TFSItem* fi;
-      if( fn.StartsFrom(GetBase()) )
-        fi = GetIndex()->GetRoot().FindByFullName(fn.SubStringFrom(GetBase().Length()));
-      else
-        fi = GetIndex()->GetRoot().FindByFullName(fn);
-      if( fi != NULL )  {
-        TSettingsFile sf;
-        sf.SetParam("MD5", fi->GetDigest());
-        sf.SetParam("Size", fi->GetSize());
-        sf.SetParam("Age", fi->GetDateTime());
-        sf.SaveSettings(ifn); 
-      }
-      else  {
-        olxcstr digest = info.headers.Find("Content-MD5", CEmptyString);
-        if( !digest.IsEmpty() )  {
-          TSettingsFile sf;
-          sf.SetParam("MD5", digest);
-          sf.SaveSettings(ifn); 
-        }
-      }
+      olxcstr digest = info.headers.Find("Content-MD5", CEmptyString);
+      TSettingsFile sf;
+      sf.SetParam("MD5", digest);
+      sf.SaveSettings(ifn); 
     }
-    if( valid && TEFile::Exists(ifn) )
+    else if( TEFile::Exists(ifn) )
       TEFile::DelFile(ifn);
   }
   return valid;
 }
 //.................................................................................................
-TEFile* TSocketFS::_DoAllocateFile(const olxstr& src)  {
+THttpFileSystem::AllocationInfo TSocketFS::_DoAllocateFile(const olxstr& src, bool truncated)  {
   if( !BaseValid )
-    return THttpFileSystem::_DoAllocateFile(src);
+    return THttpFileSystem::_DoAllocateFile(src, truncated);
   try  {
     const olxstr fn = olxstr(Base) << MD5::Digest(TUtf8::Encode(src)); 
     const olxstr ifn = olxstr(fn) << ".info"; 
-    if( TEFile::Exists(ifn) && GetIndex() != NULL )  {
+    if( TEFile::Exists(ifn) && GetIndex() != NULL && !truncated )  {
       olxstr src_fn = TEFile::OSPath(src);
       TFSItem* fi;
       if( src_fn.StartsFrom(GetBase()) )
@@ -71,11 +55,11 @@ TEFile* TSocketFS::_DoAllocateFile(const olxstr& src)  {
       if( fi != NULL )  {
         const TSettingsFile sf(ifn);
         if( sf["MD5"] == fi->GetDigest() )
-          return new TEFile(fn, "a+b");
+          return AllocationInfo(new TEFile(fn, "a+b"), fi->GetDigest(), false);
       }
     }
-    return new TEFile(fn, "w+b");
+    return AllocationInfo(new TEFile(fn, "w+b"), CEmptyString, true);
   }
-  catch(...)  {  return NULL;  }
+  catch(...)  {  return AllocationInfo(NULL, CEmptyString, true);  }
 }
 //.................................................................................................

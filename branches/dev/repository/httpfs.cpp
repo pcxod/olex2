@@ -167,13 +167,13 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   DoConnect();
   const size_t BufferSize = 1024*64;
   char* Buffer = new char[BufferSize+1];
-  TEFile* File = _DoAllocateFile(Source);
-  if( File == NULL )  {
+  AllocationInfo allocation_info = _DoAllocateFile(Source, false);
+  if( allocation_info.file == NULL )  {
     delete [] Buffer;
     return NULL;
   }
   // if the file length is not 0, it means that the CDS of any kind is in place...
-  const uint64_t starting_file_len = File->Length();
+  const uint64_t starting_file_len = allocation_info.file->Length();
   // read and extract headers
   _write(GenerateRequest(GetUrl(), "GET", Source, starting_file_len));
   int ThisRead = _read(Buffer, 512);
@@ -182,7 +182,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   try  {  crlf = IsCrLf(Buffer, ThisRead);  }
   catch(...)  {
     delete [] Buffer;
-    delete File;
+    delete allocation_info.file;
     return NULL;
   }
   uint64_t TotalRead = starting_file_len, FileLength = ~0;
@@ -191,7 +191,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   try  {  FileLength = info.headers.Find("Content-Length", "-1").ToInt();  }
   catch(...)  {}  // toInt my throw an exception
   if( FileLength == ~0 || !info.status.EndsWithi("200 OK") || !info.headers.HasKey("ETag") )  {
-    delete File;
+    delete allocation_info.file;
     delete [] Buffer;
     return NULL;
   }
@@ -201,7 +201,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   Progress.SetMax(FileLength);
   OnProgress.Enter(this, &Progress);
   TotalRead = starting_file_len+ThisRead-data_off-1;
-  File->Write(&Buffer[data_off+1], (size_t)(TotalRead-starting_file_len));
+  allocation_info.file->Write(&Buffer[data_off+1], (size_t)(TotalRead-starting_file_len));
   bool restarted = false;
   while( TotalRead != FileLength )  {
     if( TotalRead > FileLength ) // could happen?
@@ -214,7 +214,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
       try  {  tmp_fl = info.headers.Find("Content-Length", "-1").ToInt();  }
       catch(...)  {}  // toInt my throw an exception
       if( tmp_fl == ~0 || !info.status.EndsWithi("200 OK") || !info.headers.HasKey("ETag") )  {
-        delete File;
+        delete allocation_info.file;
         delete [] Buffer;
         return NULL;
       }
@@ -222,12 +222,17 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
       if( tmp_fl != FileLength || tmp_digest != digest )  {  // have to restart...
         FileLength = tmp_fl;
         digest = tmp_digest;
-        TotalRead = starting_file_len-data_off-1;
-        //TODO: this will not work if the new file is smaller than already written!
-        File->SetPosition(starting_file_len);
+        allocation_info.file->SetTemporary(true);
+        delete allocation_info.file;
+        allocation_info = _DoAllocateFile(Source, true);
+        if( allocation_info.file == NULL )  {
+          delete [] Buffer;
+          return NULL;
+        }
+        TotalRead = 0;
       }
       ThisRead = ThisRead-data_off-1;
-      File->Write(&Buffer[data_off+1], ThisRead);
+      allocation_info.file->Write(&Buffer[data_off+1], ThisRead);
       Progress.SetPos(TotalRead+=ThisRead);
       OnProgress.Execute(this, &Progress);
       restarted = false;
@@ -243,22 +248,22 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
     else  {
       if( this->Break )// user terminated
         break;
-      File->Write(Buffer, ThisRead);
+      allocation_info.file->Write(Buffer, ThisRead);
       Progress.SetPos(TotalRead+=ThisRead);
       OnProgress.Execute(this, &Progress);
     }
   }
   delete [] Buffer;
-  File->SetPosition(0);
-  if( !_DoValidate(info, *File, FileLength) )  {  // premature completion?
+  allocation_info.file->SetPosition(0);
+  if( !_DoValidate(info, *allocation_info.file, FileLength) )  {  // premature completion?
     Progress.SetPos(0);
     OnProgress.Exit(this, &Progress);
-    delete File;
+    delete allocation_info.file;
     return NULL;
   }
   Progress.SetPos(FileLength);
   OnProgress.Exit(this, &Progress);
-  return File;
+  return allocation_info.ile;
 }
 //..............................................................................
 int THttpFileSystem::_read(char* dest, size_t dest_sz) const {

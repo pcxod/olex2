@@ -19,7 +19,7 @@ protected:
   virtual bool _OnReadFailed(const ResponseInfo& info, uint64_t position);
   // this will be useful when Olex2-CDS returns MD5 digest in ETag...
   virtual bool _DoValidate(const ResponseInfo& info, TEFile& data, uint64_t toBeread) const;
-  virtual TEFile* _DoAllocateFile(const olxstr& src);
+  virtual AllocationInfo _DoAllocateFile(const olxstr& src, bool truncated);
 public:
   TSocketFS(const TUrl& url, int _max_attempts=100) :
       THttpFileSystem(url), max_attempts(_max_attempts), BaseValid(false)
