@@ -22,6 +22,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -57,6 +59,7 @@ public class ClientHandler extends Thread {
   }
   @Override
   public void run()  {
+    LinkedList<String> log = new LinkedList();
     try {
       BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
       DataOutputStream out = new DataOutputStream(client.getOutputStream());  // true - autoflush
@@ -83,11 +86,11 @@ public class ClientHandler extends Thread {
           info_line += (": " + cmd);
           if( platform != null )
             info_line += (" on " + platform);
-          Main.print(info_line);
+          log.add(info_line);
           out.writeBytes("HTTP/1.0 404 ERROR\n");
         }
         else  {
-          String info_line = "Handling ";
+          String info_line = resume_from == null ? "Handling " : "Resuming ";
           info_line += src;
           info_line += (" at " + (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()));
           info_line += (": " + cmd);
@@ -95,7 +98,7 @@ public class ClientHandler extends Thread {
             info_line += (" #" + resume_from);
           if (platform != null)
             info_line += (" on " + platform);
-          Main.print(info_line);
+          log.add(info_line);
           boolean handled = false;
           // accept some command only from localhost...
           if (client.getInetAddress().isLoopbackAddress() && origin == null) {
@@ -206,7 +209,7 @@ public class ClientHandler extends Thread {
                         written += read_len;
                       }
                     } catch (Exception e) {
-                      Main.print(
+                      log.add(
                               "Broken for " + src + " at " +
                               (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()) +
                               " at " + (float)written*100.0/file.length() + '%'
@@ -239,9 +242,12 @@ public class ClientHandler extends Thread {
       client.close();
     }
     catch (IOException ex) {
-      ex.printStackTrace();
+      log.add("Exception: " + ex.toString());
     }
     finally  {
+      Iterator<String> itr = log.iterator();
+      while( itr.hasNext() )
+        Main.print(itr.next());
       Main.onThreadTerminate();
     }
   }
