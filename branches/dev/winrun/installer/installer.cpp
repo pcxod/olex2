@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <atlbase.h>
 #include "ebase.h"
 #include "bapp.h"
 #include "estrlist.h"
@@ -31,7 +32,7 @@ BOOL CInstallerApp::InitInstance()  {
 	InitCommonControlsEx(&InitCtrls);
   AfxInitRichEdit();
 	CWinApp::InitInstance();
-#ifdef _DEBUG
+#ifdef _DEBUG  // this to be used for debugging of the re-launched process
   //MessageBox(NULL, _T("entering"), _T("info"), MB_OK);
 #endif
   int argc = 0;
@@ -39,7 +40,11 @@ BOOL CInstallerApp::InitInstance()  {
   const olxstr module_name = TEFile::ExtractFileName(argv[0]);
   olxstr uninst_dir;
   bool uninstall = false;
-  if( !module_name.Equals("olex2un.exe") )  {  //allow to run from tmp folder only
+  if(
+#ifdef _DEBUG  // debugging of current process
+      false &&
+#endif
+    !module_name.Equals("olex2un.exe") )  {  //allow to run from tmp folder only
     TCHAR* tmp_path_cstr = new TCHAR[_MAX_PATH];
     DWORD sz=_MAX_PATH, needed_sz;
     if( (needed_sz=GetTempPath(sz, tmp_path_cstr)) > sz )  {

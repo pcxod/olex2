@@ -104,9 +104,18 @@ olxstr TShellUtil::GetSpecialFolderLocation(short folderId)  {
     case fiCommonPrograms: FID = CSIDL_COMMON_PROGRAMS;  break;
     case fiSysProgramFiles:
       {
+        // determine windows version, win2000 and earlier do not support KEY_WOW64_64KEY...
+        OSVERSIONINFO veri;
+        memset(&veri, 0, sizeof(veri));
+        veri.dwOSVersionInfoSize = sizeof(veri);
+        GetVersionEx(&veri);
+        LONG flags = KEY_QUERY_VALUE;
+        // is XP or later?
+        if( veri.dwMajorVersion > 5 || (veri.dwMajorVersion == 5 && veri.dwMinorVersion > 0 ) )
+          flags |= KEY_WOW64_64KEY;
         HKEY key;
         if( RegOpenKeyEx(HKEY_LOCAL_MACHINE, olxT("SOFTWARE\\Microsoft\\Windows\\CurrentVersion"),
-              0, KEY_QUERY_VALUE|KEY_WOW64_64KEY, &key) != ERROR_SUCCESS )
+              0, flags, &key) != ERROR_SUCCESS )
           return EmptyString;
         DWORD sz = 0;
         if( RegQueryValueEx(key, olxT("ProgramFilesDir"), NULL, NULL, NULL, &sz) != ERROR_SUCCESS )

@@ -335,7 +335,7 @@ void TNetwork::THBondSearchTask::Run(size_t ind)  {
   if( aT == iHydrogenZ )
     AA = A1;
   else if( aT == iNitrogenZ || aT == iOxygenZ || aT == iFluorineZ ||
-      aT == iChlorineZ || aT == iSulphurZ || aT == iBromineZ )
+      aT == iChlorineZ || aT == iSulphurZ || aT == iBromineZ || aT == iSeleniumZ )
     DA = A1;
 
   if( AA == NULL && DA == NULL )  return;
@@ -356,11 +356,12 @@ void TNetwork::THBondSearchTask::Run(size_t ind)  {
     if( !((AA != NULL && (aT1 == iNitrogenZ || aT1 == iOxygenZ||
                         aT1 == iFluorineZ || aT1 == iChlorineZ ||
                         aT1 == iSulphurZ) || aT1 == iBromineZ) ||
+                        aT1 == iSeleniumZ ||
           (DA != NULL && aT1 == iHydrogenZ) ) )  continue;
 
     if( A1->GetNetwork() == Atoms[i]->GetNetwork() )  {
       if( A1->IsConnectedTo( *Atoms[i]) )  continue;
-      // check for N-C-H (N-C) bonds are not leagal
+      // check for N-C-H (N-C) bonds are not valid
       TSAtom *CSA = ((AA!=NULL)?AA:Atoms[i]),
              *NA  = ((DA!=NULL)?DA:Atoms[i]);
       bool connected = false;

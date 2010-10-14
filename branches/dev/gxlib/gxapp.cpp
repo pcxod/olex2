@@ -3184,13 +3184,9 @@ bool TGXApp::ShowGrid(bool v, const olxstr& FN)  {
 //..............................................................................
 void TGXApp::Individualise(TXAtom& XA)  {
   if( XA.GetPrimitives().ObjectCount() == 1 )  return;
-  short level = XA.LegendLevel(XA.GetPrimitives().GetName()),
-    required_level = FXFile->GetLattice().IsGenerated() ? 2 : 1;
-  
-  if( level >= required_level )  return;
-  else  
-    level = required_level;
-
+  const short level = XA.LegendLevel(XA.GetPrimitives().GetName())+1;
+  const short max_level = XFile().GetLattice().IsGenerated() ? 2 : 1;
+  if( level > max_level )  return;
   olxstr leg = XA.GetLegend(XA.Atom(), level);
   TGPCollection* indCol = FGlRender->FindCollection(leg);
   if( indCol != NULL && &XA.GetPrimitives() == indCol )  
@@ -3235,9 +3231,11 @@ void TGXApp::Individualise(TXAtom& XA)  {
 //..............................................................................
 void TGXApp::Individualise(TXBond& XB, bool create)  {
   if( XB.GetPrimitives().ObjectCount() == 1 )  return;
-  const short required_level = FXFile->GetLattice().IsGenerated() ? 2 : 1;
+  const short level = TXAtom::LegendLevel(XB.GetPrimitives().GetName())+1;
+  const short max_level = XFile().GetLattice().IsGenerated() ? 2 : 1;
+  if( level > max_level )  return;
   XAtoms.ForEachEx(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());
-  olxstr leg = XB.GetLegend(XB.Bond(), required_level);
+  olxstr leg = XB.GetLegend(XB.Bond(), level);
   TGPCollection* indCol = FGlRender->FindCollection(leg);
   if( indCol != NULL && &XB.GetPrimitives() == indCol )  
     return;
@@ -3253,11 +3251,8 @@ void TGXApp::Individualise(TXBond& XB, bool create)  {
 }
 //..............................................................................
 void TGXApp::Collectivise(TXAtom& XA)  {
-  short level = XA.LegendLevel(XA.GetPrimitives().GetName());
-  if( level == 0 )  return;
-  else
-    level--;
-
+  short level = XA.LegendLevel(XA.GetPrimitives().GetName())-1;
+  if( level < 0 )  return;
   olxstr leg = XA.GetLegend(XA.Atom(), level);
   TGPCollection* indCol = FGlRender->FindCollection(leg);
   if( indCol != NULL && &XA.GetPrimitives() == indCol )  
@@ -3285,7 +3280,7 @@ void TGXApp::Collectivise(TXAtom& XA)  {
     SAtoms2XAtoms(satoms, xatoms);
     SBonds2XBonds(sbonds, xbonds);
     for( size_t i=0; i < xbonds.Count(); i++ )  {
-      leg = xbonds[i]->GetLegend( xbonds[i]->Bond(), level);
+      leg = xbonds[i]->GetLegend(xbonds[i]->Bond(), level);
       indCol = FGlRender->FindCollection( leg );
       if( indCol != NULL && &xbonds[i]->GetPrimitives() == indCol )  
         continue;
@@ -3298,7 +3293,8 @@ void TGXApp::Collectivise(TXAtom& XA)  {
           if( index != InvalidIndex )  
             IndividualCollections.Delete(index);
         }
-        xbonds[i]->Create(leg);
+        BondCreationParams cp(XA, *xatoms[i]);
+        xbonds[i]->Create(leg, &cp);
       }
     }
   }

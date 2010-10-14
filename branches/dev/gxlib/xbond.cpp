@@ -437,8 +437,8 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {
   olxstr L(EmptyString, 32);
   const TSAtom *A = &Bnd.A(),
                *B = &Bnd.B();
-  if( A->GetType().z != B->GetType().z )  {
-    if( A->GetType().z < B->GetType().z )
+  if( A->GetType() != B->GetType() )  {
+    if( A->GetType() < B->GetType() )
       olx_swap(A, B);
   }
   else  {

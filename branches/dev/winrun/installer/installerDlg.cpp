@@ -703,28 +703,28 @@ bool CInstallerDlg::InitRegistry(const olxstr &installPath)  {
 
 bool CInstallerDlg::CleanRegistry()  {
   CRegKey reg;
-  bool res = false;
   olxstr app_name("olex2-");
   app_name << olex2_install_tag << ".exe";
   try  {
-    res = (reg.Open(HKEY_CLASSES_ROOT, NULL) == ERROR_SUCCESS);
-    if( res )
-      res = (reg.RecurseDeleteKey( (olxstr("Applications\\") << app_name).u_str()) == ERROR_SUCCESS);
+    bool res = (reg.Open(HKEY_CLASSES_ROOT, NULL) == ERROR_SUCCESS);
+    if( !res )  return false;
+    res = (reg.RecurseDeleteKey( (olxstr("Applications\\") << app_name).u_str()) == ERROR_SUCCESS);
     for( size_t i=0; i < exts_sz; i++ )  {
-      if( !res )  break;
-      res = (reg.DeleteSubKey((olxstr(exts[i])<< "\\OpenWithList\\" << app_name).u_str()) == ERROR_SUCCESS);
+      reg.DeleteSubKey((olxstr(exts[i])<< "\\OpenWithList\\" << app_name).u_str());
       // the old key, have to take care of as well...
       reg.DeleteSubKey((olxstr(exts[i])<< "\\OpenWithList\\olex2.dll").u_str());
     }
     reg.Close();
-    res = (reg.Open(HKEY_LOCAL_MACHINE, NULL) == ERROR_SUCCESS);
-    if( res )
-      res = (reg.RecurseDeleteKey(
-      (olxstr("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\") << app_name).u_str()) == ERROR_SUCCESS);
-    reg.Close();
+    if( reg.Open(HKEY_LOCAL_MACHINE, NULL) == ERROR_SUCCESS )  {
+      reg.RecurseDeleteKey(
+        (olxstr("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\") << app_name).u_str());
+      reg.Close();
+    }
+    return true;
   }
-  catch( ... )  {    }
-  return res;
+  catch(...)  {
+    return false;
+  }
 }
 
 bool CInstallerDlg::CleanRegistryAndShortcuts(bool sc)  {
