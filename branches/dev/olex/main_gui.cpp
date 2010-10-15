@@ -217,29 +217,31 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       TBasicApp::GetLog() << "The object does not support requested function...";
       return;
     }
-    int i = FObjectUnderMouse->GetPrimitives().GetStyle().GetParam(FObjectUnderMouse->GetPrimitiveMaskName(), "0").ToInt();
-    TdlgPrimitive* Primitives = new TdlgPrimitive(this, Ps, i);
+    TdlgPrimitive* Primitives = new TdlgPrimitive(this, *FObjectUnderMouse);
     if( Primitives->ShowModal() == wxID_OK )  {
-      if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
-        FXApp->AtomTagsToIndexes();
-        for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
-          if( EsdlInstanceOf(FXApp->GetSelection()[i], TXBond) )  {
-            TXBond& xb = (TXBond&)FXApp->GetSelection()[i];
-            FXApp->Individualise(xb);
-            BondCreationParams bcp(FXApp->GetAtom(xb.Bond().A().GetTag()),
-              FXApp->GetAtom(xb.Bond().B().GetTag()));
-            xb.UpdatePrimitives(Primitives->Mask, &bcp);
+      if( EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
+        TXBondPList bonds;
+        if( FObjectUnderMouse->IsSelected() )  {
+          for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
+            if( EsdlInstanceOf(FXApp->GetSelection()[i], TXBond) )
+              bonds.Add((TXBond&)FXApp->GetSelection()[i]);
           }
         }
+        else
+          bonds.Add((TXBond*)FObjectUnderMouse);
+        FXApp->Individualise(bonds, Primitives->Level, Primitives->Mask);
       }
       else if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )  {
-        for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
-          if( EsdlInstanceOf(FXApp->GetSelection()[i], TXAtom) )  {
-            TXAtom& xa = (TXAtom&)FXApp->GetSelection()[i];
-            FXApp->Individualise(xa);
-            xa.UpdatePrimitives(Primitives->Mask);
+        TXAtomPList atoms;
+        if( FObjectUnderMouse->IsSelected() )  {
+          for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
+            if( EsdlInstanceOf(FXApp->GetSelection()[i], TXAtom) )
+              atoms.Add((TXAtom&)FXApp->GetSelection()[i]);
           }
         }
+        else
+          atoms.Add((TXAtom*)FObjectUnderMouse);
+        FXApp->Individualise(atoms, Primitives->Level, Primitives->Mask);
       }
       else  {
         olxstr TmpStr = "mask ";

@@ -941,25 +941,25 @@ void TAsymmUnit::LibIsAtomDeleted(const TStrObjList& Params, TMacroError& E)  {
 void TAsymmUnit::LibGetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  E.SetRetVal( GetAtom(index).GetOccu() );
+  E.SetRetVal(GetAtom(index).GetOccu());
 }
 //..............................................................................
 void TAsymmUnit::LibGetAtomAfix(const TStrObjList& Params, TMacroError& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  E.SetRetVal( GetAtom(index).GetAfix() );
+  E.SetRetVal(GetAtom(index).GetAfix());
 }
 //..............................................................................
 void TAsymmUnit::LibIsPeak(const TStrObjList& Params, TMacroError& E)  {
   if( Params[0].IsNumber() )  {
     size_t index = Params[0].ToSizeT();
     if( index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-    E.SetRetVal(GetAtom(index).GetType() == iQPeakZ );
+    E.SetRetVal(GetAtom(index).GetType() == iQPeakZ);
   }
   else  {
-    TCAtom* ca = FindCAtom( Params[0] );
+    TCAtom* ca = FindCAtom(Params[0]);
     if( ca != NULL )
-      E.SetRetVal(ca->GetType() == iQPeakZ );
+      E.SetRetVal(ca->GetType() == iQPeakZ);
     else
       E.SetRetVal(false);
   }

@@ -1099,7 +1099,7 @@ void TIns::_ProcessAfix(TCAtom& a, ParseContext& cx)  {
   if( cx.AfixGroups.IsEmpty() )  return;
   if( cx.SetNextPivot )  {
     cx.AfixGroups.Current().B()->SetPivot(a);
-    cx.SetNextPivot = 0;
+    cx.SetNextPivot = false;
     return;
   }
   //if( cx.AfixGroups.Current().GetA() == 0 )  {

@@ -1097,7 +1097,7 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   const uint64_t st = TETime::msNow();
   if( cell )
     FXApp->XFile().GetLattice().GenerateCell();
-  if( wbox && FXApp->Get3DFrame().IsVisible() )  {
+  else if( wbox && FXApp->Get3DFrame().IsVisible() )  {
     FXApp->XFile().GetLattice().GenerateBox(
       FXApp->Get3DFrame().GetNormals(),
       FXApp->Get3DFrame().GetSize()/2,

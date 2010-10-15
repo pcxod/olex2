@@ -3,30 +3,53 @@
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
 #include "primtvs.h"
+#include "styles.h"
+#include "xbond.h"
+#include "xatom.h"
 //..............................................................................
 BEGIN_EVENT_TABLE(TdlgPrimitive, TDialog)
   EVT_BUTTON(wxID_OK, TdlgPrimitive::OnOK)
 END_EVENT_TABLE()
 //..............................................................................
-TdlgPrimitive::TdlgPrimitive(TMainFrame *P, const TStrList& L, int mask) :
-  TDialog(P, wxT("Primitives"), wxT("dlgPrimitives"))
+TdlgPrimitive::TdlgPrimitive(TMainFrame *P, AGDrawObject& object) :
+  TDialog(P, wxT("Primitives"), wxT("dlgPrimitives")),
+  Object(object), cbApplyTo(NULL), Mask(-1), Level(-1)
 {
-  wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxHORIZONTAL );
-  wxBoxSizer *TopSizer = new wxBoxSizer( wxVERTICAL );
-  ButtonsSizer->Add( new wxButton( this, wxID_OK, wxT("OK") ), 0, wxALL, 1);
-  ButtonsSizer->Add( new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxALL, 1);
-  ButtonsSizer->Add( new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxALL, 1);
-
-  wxSize DefS(150, 21);
-  for( size_t i=0; i < L.Count(); i++ )  {
-    wxCheckBox* Box = Boxes.Add( new wxCheckBox(this, -1, L[i].u_str(), wxDefaultPosition, DefS) );
-    TopSizer->Add( Box, 0, wxALL, 1);
-    Box->SetValue( (mask & (1 << i)) != 0 );  
+  wxBoxSizer *TopSizer = new wxBoxSizer(wxVERTICAL);
+  const int border = 1;
+  if( (EsdlInstanceOf(Object,TXAtom) || EsdlInstanceOf(Object, TXBond)) )  {
+    const uint16_t current_level = TXAtom::LegendLevel(Object.GetPrimitives().GetName());
+    wxArrayString choices;
+    if( current_level == 0 )
+      choices.Add(wxT("Type"));
+    if( current_level <= 1 )
+      choices.Add(wxT("Name"));
+    if( EsdlInstanceOf(Object,TXAtom) )
+      choices.Add(wxT("Atom"));
+    else
+      choices.Add(wxT("Bond"));
+    cbApplyTo = new wxComboBox(this, -1, choices[0], wxDefaultPosition, wxDefaultSize, choices, wxCB_READONLY);
+    wxBoxSizer* Sizer0 = new wxBoxSizer(wxHORIZONTAL);
+    Sizer0->Add(new wxStaticText(this, -1, wxT("Apply to: ")), 1, wxEXPAND|wxALL, border);
+    Sizer0->Add(cbApplyTo, 1, wxFIXED_MINSIZE|wxALL, border);
+    TopSizer->Add(Sizer0, 1, wxEXPAND|wxALL, border);
+    TopSizer->Add(-1, 10);
   }
-
-  TopSizer->Add( ButtonsSizer,     0, wxALL, 1);
-  
-  TopSizer->SetSizeHints( this );   // set size hints to honour minimum size
+  TStrList L;
+  Object.ListPrimitives(L);
+  int mask = Object.GetPrimitives().GetStyle().GetParam(Object.GetPrimitiveMaskName(), "0").ToInt();
+  for( size_t i=0; i < L.Count(); i++ )  {
+    wxCheckBox* Box = Boxes.Add(new wxCheckBox(this, -1, L[i].u_str(), wxDefaultPosition));
+    TopSizer->Add(Box, 0, wxALL, border);
+    Box->SetValue((mask & (1 << i)) != 0);
+  }
+  wxBoxSizer *ButtonsSizer = new wxBoxSizer(wxHORIZONTAL);
+  ButtonsSizer->Add(new wxButton(this, wxID_OK, wxT("OK")), 1, wxALL, 1);
+  ButtonsSizer->Add(new wxButton(this, wxID_CANCEL, wxT("Cancel")), 1, wxALL, 1);
+  ButtonsSizer->Add(new wxButton(this, wxID_HELP, wxT("Help")), 1, wxALL, 1);
+  TopSizer->Add(-1, 10);
+  TopSizer->Add(ButtonsSizer, 0, wxALL, border);
+  TopSizer->SetSizeHints(this);   // set size hints to honour minimum size
   SetSizer(TopSizer);
   Center();
 }
@@ -37,6 +60,8 @@ void TdlgPrimitive::OnOK(wxCommandEvent& event)  {
     if( Boxes[i]->GetValue() )
       Mask |= (1 << i);
   }
+  if( cbApplyTo != 0 )
+    Level = cbApplyTo->GetSelection();
   EndModal(wxID_OK);
 }
 //..............................................................................
