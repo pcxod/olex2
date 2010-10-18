@@ -56,11 +56,15 @@ public:
   bool IsRefinable() const {  return IsRefinable(Afix);  }
   bool IsUnbound() const {  return IsUnbound(Afix);  }
   bool HasExcplicitPivot() const {  return HasExcplicitPivot(Afix);  }
-  static int GetM(int afix) {  return afix < 10 ? 0 : afix/10;  }
-  static int GetN(int afix) {  return afix < 10 ? afix : afix%10;  }
+  static int GetM(int afix) {  return afix/10;  }
+  static int GetN(int afix) {  return afix%10;  }
   static bool IsFitted(int afix)  {  
-    const int m = GetM(afix);
-    return (m == 5 || m == 6 || m == 7 || m == 10 || m == 11 || m > 16 );
+    if( afix > 10 )  {
+      const int m = GetM(afix);
+      return (m == 5 || m == 6 || m == 7 || m == 10 || m == 11 || m > 16);
+    }
+    else  // rigid group, no geometrical constraints
+      return (afix == 6 ||afix == 9);
   }
   static bool HasExcplicitPivot(int afix)  {
     const int n = GetN(afix);
