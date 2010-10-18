@@ -25,9 +25,6 @@
 
 #undef GetObject
 // sorts largest -> smallest
-int TLattice_SortFragments(const TNetwork* n1, const TNetwork* n2)  {
-  return olx_cmp(n2->NodeCount(), n1->NodeCount());
-}
 int TLattice_SortAtomsById(const TSAtom* a1, const TSAtom* a2)  {
   return olx_cmp(a1->CAtom().GetId(), a2->CAtom().GetId());
 }
@@ -275,6 +272,11 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
     OnAtomsDeleted.Exit(this);
   }
   BuildAtomRegistry();
+  TNetPList::QuickSorter.SortSF(Fragments, CompareFragmentsBySize);
+  for( size_t i=0; i < Fragments.Count(); i++ )  {
+    for( size_t j=0; j < Fragments[i]->NodeCount(); j++ )
+      Fragments[i]->Node(j).CAtom().SetFragmentId((uint32_t)i);
+  }
 }
 //..............................................................................
 void TLattice::BuildPlanes()  {
@@ -308,8 +310,6 @@ void TLattice::InitBody()  {
     ListAsymmUnit(Atoms, NULL);
   }
   GenerateBondsAndFragments(NULL);
-  Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
-  TNetPList::QuickSorter.SortSF(Fragments, CompareFragmentsBySize);
   // precalculate memory usage
   size_t bondCnt = Bonds.Count();
   for( size_t i=0; i < Fragments.Count(); i++ )
@@ -320,8 +320,6 @@ void TLattice::InitBody()  {
     TNetwork* Frag = Fragments[i];
     for( size_t j=0; j < Frag->BondCount(); j++ )
       AddSBond(&Frag->Bond(j));
-    for( size_t j=0; j < Frag->NodeCount(); j++ )
-      Frag->Node(j).CAtom().SetFragmentId((uint32_t)i);
   }
   TSAtomPList::QuickSorter.SortSF(Atoms, TLattice_SortAtomsById);
   BuildPlanes();
@@ -452,7 +450,7 @@ void TLattice::GenerateCell()  {
       AddSAtom(sa);
     }
   }
-  Atoms.QuickSorter.SortSF(Atoms, TLattice_AtomsSortByDistance );
+  TSAtomPList::QuickSorter.SortSF(Atoms, TLattice_AtomsSortByDistance);
   const size_t lc = Atoms.Count();
   float* distances = new float[lc+1];
   for( size_t i=0; i < lc; i++ )
@@ -542,7 +540,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
     TSAtom* SA = atoms[i];
     SA->SetGrown(true);
     const TCAtom& CA = SA->CAtom();
-    for(size_t j=0; j < CA.AttachedAtomCount(); j++ )  {
+    for( size_t j=0; j < CA.AttachedAtomCount(); j++ )  {
       const TCAtom& CA1 = CA.GetAttachedAtom(j);
       if( !CA1.IsAvailable() )  
         continue;
@@ -559,7 +557,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
         }
         if( !found )  {
           Matrices.Add(new smatd(M));
-          Fragments2Grow.Add( new TIntList ).Add( CA1.GetFragmentId() );
+          Fragments2Grow.Add(new TIntList).Add(CA1.GetFragmentId());
         }
         else  {
           if( l >= currentCount )  {
@@ -580,7 +578,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
       for( size_t k=0; k < ToGrow.Count(); k++ )  {
         if( !ca.IsAvailable() )  continue;
         if( ca.GetFragmentId() == ToGrow[k] )  {
-          TSAtom* SA = new TSAtom( Network );
+          TSAtom* SA = new TSAtom(Network);
           SA->CAtom(ca);
           SA->AddMatrix(M);
           SA->ccrd() = *M * SA->ccrd();
@@ -1428,7 +1426,6 @@ void TLattice::Disassemble(bool create_planes)  {
   ClearFragments();
   TArrayList<vec3d> ocrd(Atoms.Count());
   GenerateBondsAndFragments(&ocrd);
-  Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
   // precalculate memory usage
   size_t bondCnt = Bonds.Count();
   for( size_t i=0; i < Fragments.Count(); i++ )
@@ -2275,7 +2272,6 @@ olxstr TLattice::CalcMoiety() const {
     Frag->ClearBonds();
   }
   //
-  latt.Fragments.QuickSorter.SortSF(latt.Fragments, TLattice_SortFragments);
   // multiplicity,content, reference fragment index
   TTypeList<AnAssociation3<double,ContentList, size_t> > frags;
   for( size_t i=0; i < latt.FragmentCount(); i++ )  {
