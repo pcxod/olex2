@@ -115,30 +115,35 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
           TGlMaterial("85;2155839359;2155313015;1.000,1.000,1.000,0.502;36")));
       }
       else  {
-        TGlMaterial RGlM;
-        if( SGlP->Params.Last() == ddsDefAtomA || SGlP->Params.Last() == ddsDef )  {
-          if( cpar == NULL )
-            TXAtom::GetDefSphereMaterial(FBond->A(), RGlM);
-          else  {
-            size_t mi = ((BondCreationParams*)cpar)->a1.Style().IndexOfMaterial("Sphere");
-            if( mi != InvalidIndex )
-              RGlM = ((BondCreationParams*)cpar)->a1.Style().GetPrimitiveStyle(mi).GetProperties();
-            else
+        TGlMaterial* style_mat = GS.FindMaterial(FStaticObjects[i]);
+        if( style_mat != NULL )
+          GlP.SetProperties(*style_mat);
+        else  {
+          TGlMaterial RGlM;
+          if( SGlP->Params.Last() == ddsDefAtomA || SGlP->Params.Last() == ddsDef )  {
+            if( cpar == NULL )
               TXAtom::GetDefSphereMaterial(FBond->A(), RGlM);
+            else  {
+              const size_t mi = ((BondCreationParams*)cpar)->a1.Style().IndexOfMaterial("Sphere");
+              if( mi != InvalidIndex )
+                RGlM = ((BondCreationParams*)cpar)->a1.Style().GetPrimitiveStyle(mi).GetProperties();
+              else
+                TXAtom::GetDefSphereMaterial(FBond->A(), RGlM);
+            }
           }
-        }
-        else if( SGlP->Params.Last() == ddsDefAtomB )  {
-          if( cpar == NULL )
-            TXAtom::GetDefSphereMaterial(FBond->B(), RGlM);
-          else  {
-            size_t mi = ((BondCreationParams*)cpar)->a2.Style().IndexOfMaterial("Sphere");
-            if( mi != InvalidIndex )
-              RGlM = ((BondCreationParams*)cpar)->a2.Style().GetPrimitiveStyle(mi).GetProperties();
-            else
+          else if( SGlP->Params.Last() == ddsDefAtomB )  {
+            if( cpar == NULL )
               TXAtom::GetDefSphereMaterial(FBond->B(), RGlM);
+            else  {
+              size_t mi = ((BondCreationParams*)cpar)->a2.Style().IndexOfMaterial("Sphere");
+              if( mi != InvalidIndex )
+                RGlM = ((BondCreationParams*)cpar)->a2.Style().GetPrimitiveStyle(mi).GetProperties();
+              else
+                TXAtom::GetDefSphereMaterial(FBond->B(), RGlM);
+            }
           }
+          GlP.SetProperties(GS.GetMaterial(FStaticObjects[i], RGlM));
         }
-        GlP.SetProperties(RGlM);
       }
     }
   }

@@ -15,6 +15,7 @@
 #include "olxmps.h"
 #include "pers_util.h"
 #include "maputil.h"
+#include "ememstream.h"
 
 #ifndef _NO_PYTHON
   #include "pyext.h"
@@ -1168,8 +1169,45 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-
 #ifndef _NO_PYTHON
+PyObject* pyImport(PyObject* self, PyObject* args)  {
+  char* data;
+  int dim1, dim2, dim3, focus1, focus2, focus3;
+  int type, len;
+  if( !PyArg_ParseTuple(args, "(iii)(iii)s#i",
+    &dim1, &dim2, &dim3,
+    &focus1, &focus2, &focus3, &data, &len, &type) )
+  {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "(iii)(iii)s#i");
+  }
+  const int sz = dim1*dim2*dim3;
+  if( (type == 0 && sz*sizeof(double) != len) || (type == 1 && sz*sizeof(int) != len))
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "array size");
+  TEMemoryInputStream ms(data, len);
+  TXGrid& g = *TXGrid::GetInstance();
+  g.InitGrid(focus1, focus2, focus3);
+  for( int d1=0; d1 < focus1; d1++ )  {
+    for( int d2=0; d2 < focus2; d2++ )
+      for( int d3=0; d3 < focus3; d3++ )  {
+        float v;
+        if( type == 0 )  {
+          double _v;
+          ms.SetPosition(((d1*dim2+d2)*dim3+d3)*sizeof(double));
+          ms >> _v;
+          v = (float)_v;
+        }
+        else if( type == 1 )  {
+          int _v;
+          ms.SetPosition(((d1*dim2+d2)*dim3+d3)*sizeof(int));
+          ms >> _v;
+          v = (float)_v;
+        }
+        g.SetValue(d1, d2, d3, v);
+      }
+  }
+  return PythonExt::PyNone();
+}
+//..............................................................................
 PyObject* pySetValue(PyObject* self, PyObject* args)  {
   int i, j, k;
   float val;
@@ -1274,6 +1312,7 @@ PyObject* pyIsVisible(PyObject* self, PyObject* args)  {
 
 static PyMethodDef XGRID_Methods[] = {
   {"Init", pyInit, METH_VARARGS, "initialises grid memory"},
+  {"Import", pyImport, METH_VARARGS, "imports grid from an array"},
   {"SetValue", pySetValue, METH_VARARGS, "sets grid iso-level"},
   {"SetData", pySetData, METH_VARARGS, "sets grid data, dimensions and a callable accessor are required"},
   {"SetMinMax", pySetMinMax, METH_VARARGS, "sets minimum and maximum vaues of the grid"},

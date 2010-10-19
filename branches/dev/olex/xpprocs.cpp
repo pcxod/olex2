@@ -4229,10 +4229,25 @@ void TMainForm::macIndividualise(TStrObjList &Cmds, const TParamList &Options, T
 }
 //..............................................................................
 void TMainForm::macCollectivise(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TXAtomPList Atoms;
-  FindXAtoms(Cmds, Atoms, false, false);
-  for( size_t i=0; i < Atoms.Count(); i++ )
-    FXApp->Collectivise(*Atoms[i]);
+  if( Cmds.IsEmpty() && false)  {
+    //TGlGroup& glg = FXApp->GetSelection();
+    //TXAtomPLst atoms;
+    //TXBondPList bonds;
+    //for( size _t=0; i < glg.Count(); i++ )  {
+    //  if( EsdlInstanceOf(glg[i], TXAtom) )
+    //    atoms.Add((TXAtom&)glg[i]);
+    //  else if( EsdlInstanceOf(glg[i], TXBond) )
+    //    bonds.Add((TXBond&)glg[i]);
+    //}
+    //FXApp->Individualise(atoms);
+    //FXApp->Individualise(bonds);
+  }
+  else  {
+    TXAtomPList Atoms;
+    FindXAtoms(Cmds, Atoms, false, false);
+    for( size_t i=0; i < Atoms.Count(); i++ )
+      FXApp->Collectivise(*Atoms[i]);
+  }
 }
 //..............................................................................
 void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -7370,24 +7385,25 @@ void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TM
   else if( Cmds[0] == "exception" )
     mat = &ExceptionFontColor;
   else  {
-    size_t di = Cmds[0].IndexOf('.');
-    if( di != InvalidIndex )  {
-      TGPCollection* _gpc = FXApp->GetRender().FindCollection(Cmds[0].SubStringTo(di));
-      if( _gpc != NULL )  {
-        TGlPrimitive* glp = _gpc->FindPrimitiveByName(Cmds[0].SubStringFrom(di+1));
-        if( glp != NULL )  {
-          mat = &glp->GetProperties();
-          smat = &_gpc->GetStyle().GetMaterial(Cmds[0].SubStringFrom(di+1), *mat);
+    gpc = FXApp->GetRender().FindCollection(Cmds[0]);
+    if( gpc == NULL )  {
+      const size_t di = Cmds[0].IndexOf('.');
+      if( di != InvalidIndex )  {
+        TGPCollection* _gpc = FXApp->GetRender().FindCollection(Cmds[0].SubStringTo(di));
+        if( _gpc != NULL )  {
+          TGlPrimitive* glp = _gpc->FindPrimitiveByName(Cmds[0].SubStringFrom(di+1));
+          if( glp != NULL )  {
+            mat = &glp->GetProperties();
+            smat = &_gpc->GetStyle().GetMaterial(Cmds[0].SubStringFrom(di+1), *mat);
+          }
+        }
+        else  {  // modify the style if exists
+          TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(Cmds[0].SubStringTo(di));
+          if( gs != NULL )
+            mat = gs->FindMaterial(Cmds[0].SubStringFrom(di+1));
         }
       }
-      else  {  // modify the style if exists
-        TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(Cmds[0].SubStringTo(di));
-        if( gs != NULL )
-          mat = gs->FindMaterial(Cmds[0].SubStringFrom(di+1));
-      }
     }
-    else
-      gpc = FXApp->GetRender().FindCollection(Cmds[0]);
   }
   if( mat == NULL && (gpc == NULL || gpc->ObjectCount() == 0) )  {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined material/control ") << Cmds[0]);
