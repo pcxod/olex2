@@ -46,6 +46,7 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGlMaterial& mat) :
 void TdlgMatProp::Init()  {
   AActionHandler::SetToDelete(false);
   bEditFont = NULL;
+  cbApplyTo = NULL;
   short Border = 3, SpW = 40;
   FCurrentMaterial = 0;
   if( Object != NULL && Object->GetPrimitives().PrimitiveCount() > 1 )  {
@@ -129,7 +130,8 @@ void TdlgMatProp::Init()  {
     Sizer0->Add(new wxStaticText(this, -1, wxT("Primitive: ")), 0, wxEXPAND | wxALL, Border);
     Sizer0->Add(cbPrimitives, 0, wxFIXED_MINSIZE | wxALL, Border);
     Sizer0->Add(new wxStaticText(this, -1, wxT("Apply to: ")), 0, wxEXPAND | wxALL, Border);
-    Sizer0->Add(cbApplyTo, 0, wxFIXED_MINSIZE | wxALL, Border);
+    if( cbApplyTo != NULL )
+      Sizer0->Add(cbApplyTo, 0, wxFIXED_MINSIZE | wxALL, Border);
     Sizer0->Add(new wxButton(this, ID_COPY, wxT("Copy  Mat.")), 1, wxEXPAND | wxALL, Border);
     Sizer0->Add(new wxButton(this, ID_PASTE, wxT("Paste Mat.")), 1, wxEXPAND | wxALL, Border);
     bEditFont = new wxButton(this, ID_EDITFONT, wxT("Edit Font"));

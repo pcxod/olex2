@@ -735,7 +735,12 @@ v-[grow] use user provided delta for connectivity analysis, default 2A",
  this is appended to the label, '$xx' replaces the symbols after the atom type symbol with xx,\
  leaving the ending, '-xx' - changes the ending of the label with xx&;a-align&;\
 i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fpOne|fpTwo, "Fragment matching, alignment and label transfer routine");
-  this_InitMacroD(Conn, EmptyString, fpAny^fpNone, "Changes provided atom(s) connectivity (only until next connectivity modifying operation for now). First parameter is the new connectivity");
+  this_InitMacroD(Conn, EmptyString, fpAny^fpNone,
+    "Changes provided atom(s) connectivity (only until next connectivity modifying operation for now)."
+    "\nUsage: conn max_bond bonding_radius [selection/atom(s)/$type]"
+    "\nUsage: conn max_bond [selection/atom(s)/$type]"
+    "\nUsage: conn bonding_radius [selection/atom(s)/$type] - note the radius should have floating point"
+    );
   this_InitMacroD(AddBond, EmptyString, fpAny, "Adds specified bond to the connectivity table");
   this_InitMacroD(DelBond, EmptyString, fpAny, "Removes specified bond from the connectivity table");
   this_InitMacro(ShowWindow, ,fpOne|fpTwo);

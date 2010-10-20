@@ -214,7 +214,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     TStrList Ps;
     FObjectUnderMouse->ListPrimitives(Ps);
     if( Ps.IsEmpty() )  {
-      TBasicApp::GetLog() << "The object does not support requested function...";
+      TBasicApp::GetLog() << "The object does not support requested function...\n";
       return;
     }
     TdlgPrimitive* Primitives = new TdlgPrimitive(this, *FObjectUnderMouse);
@@ -231,7 +231,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
           bonds.Add((TXBond*)FObjectUnderMouse);
         FXApp->Individualise(bonds, Primitives->Level, Primitives->Mask);
       }
-      else if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )  {
+      else if( EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )  {
         TXAtomPList atoms;
         if( FObjectUnderMouse->IsSelected() )  {
           for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {

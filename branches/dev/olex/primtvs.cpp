@@ -60,7 +60,7 @@ void TdlgPrimitive::OnOK(wxCommandEvent& event)  {
     if( Boxes[i]->GetValue() )
       Mask |= (1 << i);
   }
-  if( cbApplyTo != 0 )
+  if( cbApplyTo != NULL )
     Level = cbApplyTo->GetSelection();
   EndModal(wxID_OK);
 }

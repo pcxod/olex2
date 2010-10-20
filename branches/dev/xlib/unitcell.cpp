@@ -100,7 +100,7 @@ TEValue<double> TUnitCell::CalcVolumeEx()  const  {
 //..............................................................................
 size_t TUnitCell::GetMatrixMultiplier(short Latt)  {
   size_t count = 0;
-  switch( abs(Latt) )  {
+  switch( olx_abs(Latt) )  {
     case 1: count = 1;  break;
     case 2: count = 2;  break;  // Body Centered (I)
     case 3: count = 3;  break;  // R Centered
@@ -230,7 +230,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           Atoms[i]->SetDeleted(true);
           continue;
         }
-        if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Matrices[j], v.Length()) )  {
+        if( Latt->GetNetwork().HBondExistsQ(*Atoms[ind], *Atoms[i], Matrices[j], v.QLength()) )  {
           Atoms[ind]->AttachAtomI(Atoms[i]);
           Atoms[i]->AttachAtomI(Atoms[ind]);
         }
@@ -254,7 +254,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
         if( Atoms[i]->GetParentAfixGroup() == NULL )
           Atoms[i]->SetDeleted(true);
       }
-      else  {
+      else if( Atoms[ind]->GetConnInfo().maxBonds != 0 && Atoms[i]->GetConnInfo().maxBonds != 0 )  {
         if( Latt->GetNetwork().CBondExists(*Atoms[ind], *Atoms[i], Matrices[j], Dis) )  {
           Atoms[ind]->SetGrowable(true);
           if( Atoms[ind]->IsAttachedTo(*Atoms[i]) )  

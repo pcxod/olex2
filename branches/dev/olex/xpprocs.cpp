@@ -4212,41 +4212,43 @@ void TMainForm::macUndo(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macIndividualise(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.IsEmpty() )  {
+    TXAtomPList atoms;
+    TXBondPList bonds;
     TGlGroup& sel = FXApp->GetSelection();
     for( size_t i=0; i < sel.Count(); i++ )  {
       if( EsdlInstanceOf(sel[i], TXAtom) )
-        FXApp->Individualise((TXAtom&)sel[i]);
+        atoms.Add((TXAtom&)sel[i]);
       else if( EsdlInstanceOf(sel[i], TXBond) )
-        FXApp->Individualise((TXBond&)sel[i]);
+        bonds.Add((TXBond&)sel[i]);
     }
+    FXApp->Individualise(atoms);
+    FXApp->Individualise(bonds);
   }
   else  {
     TXAtomPList Atoms;
     FindXAtoms(Cmds, Atoms, false, false);
-    for( size_t i=0; i < Atoms.Count(); i++ )
-      FXApp->Individualise(*Atoms[i]);
+    FXApp->Individualise(Atoms);
   }
 }
 //..............................................................................
 void TMainForm::macCollectivise(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( Cmds.IsEmpty() && false)  {
-    //TGlGroup& glg = FXApp->GetSelection();
-    //TXAtomPLst atoms;
-    //TXBondPList bonds;
-    //for( size _t=0; i < glg.Count(); i++ )  {
-    //  if( EsdlInstanceOf(glg[i], TXAtom) )
-    //    atoms.Add((TXAtom&)glg[i]);
-    //  else if( EsdlInstanceOf(glg[i], TXBond) )
-    //    bonds.Add((TXBond&)glg[i]);
-    //}
-    //FXApp->Individualise(atoms);
-    //FXApp->Individualise(bonds);
+  if( Cmds.IsEmpty() )  {
+    TGlGroup& glg = FXApp->GetSelection();
+    TXAtomPList atoms;
+    TXBondPList bonds;
+    for( size_t i=0; i < glg.Count(); i++ )  {
+      if( EsdlInstanceOf(glg[i], TXAtom) )
+        atoms.Add((TXAtom&)glg[i]);
+      else if( EsdlInstanceOf(glg[i], TXBond) )
+        bonds.Add((TXBond&)glg[i]);
+    }
+    FXApp->Collectivise(atoms);
+    FXApp->Collectivise(bonds);
   }
   else  {
     TXAtomPList Atoms;
     FindXAtoms(Cmds, Atoms, false, false);
-    for( size_t i=0; i < Atoms.Count(); i++ )
-      FXApp->Collectivise(*Atoms[i]);
+    FXApp->Collectivise(Atoms);
   }
 }
 //..............................................................................

@@ -351,13 +351,23 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hyphenate)  {
     return;
   }
   bool SingleLine = false;
-  if( Hyphenate )  {
+  if( Hyphenate || S.IndexOf('\n') != InvalidIndex )  {
     const size_t sz = GetFont().MaxTextLength(Parent.GetWidth());
     if( sz <= 0 )  return;
-    TStrList Txt;
-    Txt.Hyphenate(S, sz, true);
-    if( Txt.Count() > 1 )  PrintText(Txt, M);
-    else                   SingleLine = true;
+    TStrList Txt(S, '\n'), toks;
+    for( size_t i=0; i < Txt.Count(); i++ )  {
+      toks.Hyphenate(Txt[i], sz, true);
+      if( toks.Count() > 1 )  {
+        Txt[i] = toks[0];
+        for( size_t j=1; j < toks.Count(); j++ )
+          Txt.Insert(++i, toks[j]);
+      }
+      toks.Clear();
+    }
+    if( Txt.Count() > 1 )
+      PrintText(Txt, M, false);
+    else
+      SingleLine = true;
   }
   if( !Hyphenate || SingleLine )  {
     TGlMaterial *GlM = NULL;
