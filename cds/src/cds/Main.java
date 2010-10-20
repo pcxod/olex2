@@ -279,7 +279,7 @@ public class Main {
       }
       st = doCall(command, args.get(1));
       if( st.size() == 1 && st.get(0).equals("OK") )
-        print("The address has been blocked for the session.");
+        print("The address has been unblocked.");
       else
         print("Failed to unblock the address.");
     }
