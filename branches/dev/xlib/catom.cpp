@@ -225,6 +225,7 @@ PyObject* TCAtom::PyExport()  {
       PyObject* uo = PyDict_New();
       PythonExt::SetDictItem(uo, "id", Py_BuildValue("i", UisoOwner->GetTag())) ;
       PythonExt::SetDictItem(uo, "k", Py_BuildValue("d", UisoScale)) ;
+      PythonExt::SetDictItem(main, "uisoOwner", uo);
     }
   }
   else  {

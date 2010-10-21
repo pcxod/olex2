@@ -50,7 +50,6 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC, int flags) :
   Movable = false;
   MouseDown = false;
   ShowTooltips = true;
-  LockPageLoad = 0;
   PageLoadRequested = false;
   if( LC && ! THtml::Library )  {
     THtml::Library = LC->GetLibrary().AddLibrary("html");
@@ -221,9 +220,9 @@ void THtml::OnSizeEvt(wxSizeEvent& event)  {
 //..............................................................................
 bool THtml::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender, const IEObject* Data)  {
   if( MsgId == html_parent_resize )  {
-    TMainFrame::GetMainFrameInstance().LockWindowDestruction(this);
+    TMainFrame::GetMainFrameInstance().LockWindowDestruction(this, this);
     OnSize.Execute(this, &OnSizeData);
-    TMainFrame::GetMainFrameInstance().UnlockWindowDestruction(this);
+    TMainFrame::GetMainFrameInstance().UnlockWindowDestruction(this, this);
   }
   return true;
 }
@@ -308,7 +307,8 @@ void THtml::GetTraversibleIndeces(index_t& current, index_t& another, bool forwa
 }
 //..............................................................................
 void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
-  LockPageLoad = true;  // prevent pae re-loading and object deletion
+  // prevent pae re-loading and object deletion
+  TMainFrame::GetMainFrameInstance().LockWindowDestruction(this, this);
   if( prev != NULL )  {
     if( EsdlInstanceOf(*prev, TTextEdit) )  {
       olxstr s = ((TTextEdit*)prev)->GetOnLeaveStr();
@@ -331,7 +331,7 @@ void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
       ((TComboBox*)next)->SetSelection(-1,-1);
     }
   }
-  LockPageLoad = false;
+  TMainFrame::GetMainFrameInstance().UnlockWindowDestruction(this, this);
 }
 //..............................................................................
 void THtml::DoNavigate(bool forward)  {
@@ -580,9 +580,9 @@ bool THtml::ItemState(const olxstr &ItemName, short State)  {
 }
 //..............................................................................
 bool THtml::UpdatePage()  {
-  if( LockPageLoad )  {     
+  if( IsPageLocked() )  {     
     PageLoadRequested = true;
-    PageRequested  = EmptyString;
+    PageRequested.SetLength(0);
     return true;
   }
 

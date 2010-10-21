@@ -1792,7 +1792,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     }
   }
   else if( MsgId == ID_ONLINK )  {
-    if( Data != NULL )  {
+    if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
       TStrList Toks(*(olxstr*)Data, ">>");
       //GetHtml()->LockPageLoad();
       /* the page, if requested, will beloaded on time event. The timer is disabled
@@ -1806,7 +1806,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       // enabling the timer back
       // retrun fucus to the main window, but let typing in the comboboxes
       if( Sender != NULL )  {
-        if( Data == NULL || ((olxstr*)Data)->Length() == 0 )
+        if( ((olxstr*)Data)->IsEmpty() )
           ;
         else if( EsdlInstanceOf(*Sender, TComboBox) && !((TComboBox*)Sender)->IsReadOnly() )
           ;
@@ -3538,15 +3538,14 @@ const olxstr& TMainForm::GetStructureOlexFolder()  {
   return EmptyString;
 }
 //..............................................................................
-void TMainForm::LockWindowDestruction(wxWindow* wnd)  {
+void TMainForm::LockWindowDestruction(wxWindow* wnd, const IEObject* caller)  {
   if( wnd == FHtml )
-    FHtml->IncLockPageLoad();
+    FHtml->LockPageLoad(caller);
 }
 //..............................................................................
-void TMainForm::UnlockWindowDestruction(wxWindow* wnd)  {
-  if( wnd == FHtml )  {
-    FHtml->DecLockPageLoad();
-  }
+void TMainForm::UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller)  {
+  if( wnd == FHtml )
+    FHtml->UnlockPageLoad(caller);
 }
 //..............................................................................
 bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool GetAll, bool unselect)  {

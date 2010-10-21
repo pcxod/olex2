@@ -14,7 +14,7 @@ END_EVENT_TABLE()
 //..............................................................................
 void TCheckBox::MouseEnterEvent(wxMouseEvent& event)  {
   event.Skip();
-  SetCursor( wxCursor(wxCURSOR_HAND) );
+  SetCursor(wxCursor(wxCURSOR_HAND));
 }
 //..............................................................................
 void TCheckBox::SetActionQueue(TActionQueue& q, const olxstr& dependMode)  {
@@ -28,11 +28,11 @@ bool TCheckBox::Execute(const IEObject *Sender, const IEObject *Data)  {
     SetChecked( mc->CheckStatus(DependMode) );
   }
   StartEvtProcessing()
-    OnClick.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnClickStr()) );
+    OnClick.Execute((AOlxCtrl*)this, &GetOnClickStr());
     if( IsChecked() )
-      OnCheck.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnCheckStr()) );
+      OnCheck.Execute((AOlxCtrl*)this, &GetOnCheckStr());
     else
-      OnUncheck.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnUncheckStr()) );
+      OnUncheck.Execute((AOlxCtrl*)this, &GetOnUncheckStr());
   EndEvtProcessing()
 
   return true;
@@ -40,11 +40,11 @@ bool TCheckBox::Execute(const IEObject *Sender, const IEObject *Data)  {
 //..............................................................................
 void TCheckBox::ClickEvent(wxCommandEvent &event)  {
   StartEvtProcessing()
-    OnClick.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnClickStr()) );
+    OnClick.Execute((AOlxCtrl*)this, &GetOnClickStr());
     if( IsChecked() )
-      OnCheck.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnCheckStr()) );
+      OnCheck.Execute((AOlxCtrl*)this, &GetOnCheckStr());
     else
-      OnUncheck.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnUncheckStr()) );
+      OnUncheck.Execute((AOlxCtrl*)this, &GetOnUncheckStr());
   EndEvtProcessing()
 }
 
