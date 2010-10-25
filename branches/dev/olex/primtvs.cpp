@@ -61,7 +61,7 @@ void TdlgPrimitive::OnOK(wxCommandEvent& event)  {
       Mask |= (1 << i);
   }
   if( cbApplyTo != NULL )
-    Level = cbApplyTo->GetSelection();
+    Level = cbApplyTo->GetSelection() + (3-cbApplyTo->GetCount());
   EndModal(wxID_OK);
 }
 //..............................................................................

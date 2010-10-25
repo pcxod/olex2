@@ -1,14 +1,10 @@
 #ifndef __olx_xl_ins_H
 #define __olx_xl_ins_H
-
 #include "xbase.h"
 #include "estrlist.h"
-
 #include "xfiles.h"
 #include "catom.h"
-
 #include "estlist.h"
-
 #include "bapp.h"
 #include "log.h"
 #include "symmparser.h"
@@ -16,10 +12,6 @@
 #include "residue.h"
 #include "estack.h"
 #include "lst.h"
-
-#ifdef AdAtom
-  #undef AddAtom
-#endif
 
 BeginXlibNamespace()
 
@@ -31,7 +23,7 @@ class TIns: public TBasicCFile  {
     TStrList Symm;
     TStrPObjList<olxstr, const cm_Element*>  BasicAtoms;  // SFAC container
     bool CellFound, SetNextPivot, End;
-    int Part;
+    int Part, ToAnis;
     esdl::TStack< AnAssociation3<int,TAfixGroup*, bool> > AfixGroups;  // number of atoms (left), pivot, Hydrogens or not
     double PartOccu;
     TCAtom* Last, 
@@ -46,7 +38,7 @@ class TIns: public TBasicCFile  {
       Resi(NULL), Last(NULL), LastWithU(NULL), LastNonH(NULL)  {
       End = SetNextPivot = CellFound = false;
       PartOccu = 0;
-      Part = 0;
+      ToAnis = Part = 0;
       ins = NULL;
     }
   };

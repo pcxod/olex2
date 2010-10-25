@@ -3450,6 +3450,7 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 
     TCAtom& CA1 = FXApp->XFile().GetAsymmUnit().NewAtom();
     CA1.Assign(*CA);
+    CA1.SetSameId(~0);
     CA1.SetPart(1);
     CA1.ccrd() += direction;
     CA1.SetLabel(FXApp->XFile().GetAsymmUnit().CheckLabel(&CA1, lbl+'a'), false);

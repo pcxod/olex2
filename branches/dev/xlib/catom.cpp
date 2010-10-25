@@ -165,7 +165,7 @@ TEllipsoid* TCAtom::GetEllipsoid() const {  return EllpId == InvalidIndex ? NULL
 //..............................................................................
 void TCAtom::AssignEllp(TEllipsoid* NV) {  NV == NULL ? EllpId = InvalidIndex : EllpId = NV->GetId();  }
 //..............................................................................
-void TCAtom::UpdateEllp(const TEllipsoid &NV ) {
+void TCAtom::UpdateEllp(const TEllipsoid &NV) {
   double Q[6], E[6];
   NV.GetQuad(Q, E);
   if( EllpId == InvalidIndex )  {
