@@ -3662,10 +3662,6 @@ void TGXApp::_CreateXGrowVLines()  {
     for( size_t j=0; j < ntl.Count(); j++ )  {
       TGXApp_Transform& nt = ntl[j];
       TXGrowLine& gl = XGrowLines.Add(new TXGrowLine(*FGlRender, EmptyString, nt.from, nt.to, nt.transform));
-      if( !AreQPeakBondsVisible() && (nt.from->GetType() == iQPeakZ || nt.to->GetType() == iQPeakZ) )
-        gl.SetVisible(false);
-      if( !AreHBondsVisible() && (nt.from->GetType() == iHydrogenZ || nt.to->GetType() == iHydrogenZ) )
-        gl.SetVisible(false);
       gl.Create("GrowBonds");
     }
   }
