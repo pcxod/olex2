@@ -27,7 +27,7 @@ public:
       mode = gmCovalent;
 
     TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
-    TGlXApp::GetGXApp()->SetGrowMode( mode, AtomsToGrow );
+    TGlXApp::GetGXApp()->SetGrowMode(mode, AtomsToGrow);
     TGlXApp::GetGXApp()->SetXGrowLinesVisible(true);
     return true;
   }
