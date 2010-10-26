@@ -3474,7 +3474,7 @@ void TGXApp::CreateXGrowPoints()  {
 
   VFrom = XFile().GetAsymmUnit().GetOCenter(false, false);
   for( size_t i=0; i < matrices.Count(); i++ )  {
-    if( UsedTransforms.IndexOf( *matrices[i] ) != InvalidIndex )  {
+    if( UsedTransforms.IndexOf(*matrices[i]) != InvalidIndex )  {
       delete matrices[i];
       continue;
     }
@@ -3685,39 +3685,40 @@ void TGXApp::_CreateXGrowVLines()  {
     const size_t ac = FXFile->GetLattice().AtomCount();
     for( size_t i=0; i < ac; i++ )  {
       TSAtom& A = FXFile->GetLattice().GetAtom(i);
-      if( A.IsDeleted() )  continue;
-      CrdMap.Add( A.crd() );
+      if( A.IsDeleted() || !A.CAtom().IsAvailable() )  continue;
+      CrdMap.Add(A.crd());
     }
   }
   else  {
     const size_t ac = FXFile->GetLattice().AtomCount();
     for( size_t i=0; i < ac; i++ )  {
       TSAtom& A = FXFile->GetLattice().GetAtom(i);
-      if( A.IsDeleted() )  continue;
-      AtomsToProcess.Add( &A );
-      CrdMap.Add( A.crd() );
+      if( A.IsDeleted() || !A.CAtom().IsAvailable() )  continue;
+      AtomsToProcess.Add(A);
+      CrdMap.Add(A.crd());
     }
   }
   typedef TTypeList<TGXApp_Transform> tr_list;
   olxdict<int, tr_list, TPrimitiveComparator> net_tr;
   for( size_t i=0; i < AtomsToProcess.Count(); i++ )  {
     TSAtom* A = AtomsToProcess[i];
-    if( A->IsDeleted() )  continue;
-    TArrayList< AnAssociation2<TCAtom const*,smatd> > envi;
-    uc.FindInRangeAM(A->ccrd(), DeltaV+ A->GetType().r_bonding, envi);
+    TArrayList<AnAssociation2<TCAtom const*,smatd> > envi;
+    uc.FindInRangeAM(A->ccrd(), DeltaV + A->GetType().r_bonding, envi);
     for( size_t j=0; j < envi.Count(); j++ )  {
       TCAtom *aa = const_cast<TCAtom*>(envi[j].GetA());
+      if( !aa->IsAvailable() )  continue;
       const vec3d& cc = aa->ccrd();
       const smatd& transform = envi[j].GetB();
       vec3d tc = transform*cc;
       au.CellToCartesian(tc);
-      const double qdist = tc.QDistanceTo( A->crd() );
+      const double qdist = tc.QDistanceTo(A->crd());
       if( qdist < 0.001 )  // skip atoms on special postions
         continue;
       bool uniq = true;
-      if( CrdMap.Exists(tc) )  // check if point to one of already connected
+      if( CrdMap.Exists(tc) )  // check if point to one of already existing
         continue;
       tr_list& ntl = net_tr.Add(aa->GetFragmentId());
+      //find the shortest one
       for( size_t l=0; l < ntl.Count(); l++ )  {
         if( ntl[l].transform == transform )  {
           if( ntl[l].dist > qdist )  {
@@ -3736,7 +3737,6 @@ void TGXApp::_CreateXGrowVLines()  {
         nt.dist = qdist;
         nt.to = aa;
         nt.from = A;
-        CrdMap.Add(tc);
       }
     }
   }
@@ -3744,27 +3744,24 @@ void TGXApp::_CreateXGrowVLines()  {
     const tr_list& ntl = net_tr.GetValue(i);
     for( size_t j=0; j < ntl.Count(); j++ )  {
       TGXApp_Transform& nt = ntl[j];
-      TXGrowLine& gl = XGrowLines.Add( new TXGrowLine(*FGlRender, EmptyString, nt.from, nt.to, nt.transform) );
-
-      if( !AreQPeakBondsVisible() &&
-        (nt.from->GetType() == iQPeakZ || nt.to->GetType() == iQPeakZ) )
+      TXGrowLine& gl = XGrowLines.Add(new TXGrowLine(*FGlRender, EmptyString, nt.from, nt.to, nt.transform));
+      if( !AreQPeakBondsVisible() && (nt.from->GetType() == iQPeakZ || nt.to->GetType() == iQPeakZ) )
         gl.SetVisible(false);
-      if( !AreHBondsVisible() && 
-        (nt.from->GetType() == iHydrogenZ || nt.to->GetType() == iHydrogenZ) )
+      if( !AreHBondsVisible() && (nt.from->GetType() == iHydrogenZ || nt.to->GetType() == iHydrogenZ) )
         gl.SetVisible(false);
-        gl.Create("GrowBonds");
+      gl.Create("GrowBonds");
     }
   }
 }
 //..............................................................................
 void TGXApp::Grow(const TXGrowLine& growLine)  {
-  UsedTransforms.AddCCopy( growLine.GetTransform() );
-  XFile().GetLattice().GrowAtom( growLine.CAtom()->GetFragmentId(), growLine.GetTransform() );
+  UsedTransforms.AddCCopy(growLine.GetTransform());
+  XFile().GetLattice().GrowAtom(growLine.CAtom()->GetFragmentId(), growLine.GetTransform());
 }
 //..............................................................................
 void TGXApp::Grow(const TXGrowPoint& growPoint)  {
-  UsedTransforms.AddCCopy( growPoint.GetTransform() );
-  XFile().GetLattice().Grow( growPoint.GetTransform() );
+  UsedTransforms.AddCCopy(growPoint.GetTransform());
+  XFile().GetLattice().Grow(growPoint.GetTransform());
 }
 //..............................................................................
 TGlBitmap* TGXApp::FindGlBitmap(const olxstr& name)  {

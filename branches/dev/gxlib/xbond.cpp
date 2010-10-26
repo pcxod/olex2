@@ -42,7 +42,6 @@ TXBond::TXBond(TGlRenderer& R, const olxstr& collectionName, TSBond& B) :
   if( FStaticObjects.IsEmpty() )  
     CreateStaticObjects();
   Label = new TXGlLabel(R, PLabelsCollectionName);
-  Label->SetFontIndex(4);
   if( FBond != NULL )
     Label->SetOffset((B.A().crd()+B.B().crd())/2);
   Label->SetVisible(false);

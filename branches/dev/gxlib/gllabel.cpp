@@ -22,9 +22,9 @@ TXGlLabel::TXGlLabel(TGlRenderer& R, const olxstr& collectionName) :
 void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
+  text_rect = GetFont().GetTextRect(FLabel);
   if( GPC.PrimitiveCount() != 0 )  return;
 
   TGraphicsStyle& GS = GPC.GetStyle();
