@@ -308,7 +308,7 @@ void THtml::GetTraversibleIndeces(index_t& current, index_t& another, bool forwa
 }
 //..............................................................................
 void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
-  LockPageLoad = true;  // prevent pae re-loading and object deletion
+  LockPageLoad++;  // prevent pae re-loading and object deletion
   if( prev != NULL )  {
     if( EsdlInstanceOf(*prev, TTextEdit) )  {
       olxstr s = ((TTextEdit*)prev)->GetOnLeaveStr();
@@ -331,7 +331,7 @@ void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
       ((TComboBox*)next)->SetSelection(-1,-1);
     }
   }
-  LockPageLoad = false;
+  LockPageLoad--;
 }
 //..............................................................................
 void THtml::DoNavigate(bool forward)  {
