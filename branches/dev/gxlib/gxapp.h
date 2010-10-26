@@ -308,12 +308,12 @@ public:
   // moving atom from/to collection
   void Individualise(TXAtom& XA, short level=-1, int32_t mask = -1);
   void Collectivise(TXAtom& XA, short level=-1, int32_t mask = -1);
-  void Individualise(TXAtomPList& atoms, short level=-1, int32_t mask = -1);
-  void Collectivise(TXAtomPList& atoms, short level=-1, int32_t mask = -1);
+  void Individualise(const TXAtomPList& atoms, short level=-1, int32_t mask = -1);
+  void Collectivise(const TXAtomPList& atoms, short level=-1, int32_t mask = -1);
   void Individualise(TXBond& XB, short level=-1, int32_t mask = -1);
   void Collectivise(TXBond& XB, short level=-1, int32_t mask = -1);
-  void Individualise(TXBondPList& bonds, short level=-1, int32_t mask = -1);
-  void Collectivise(TXBondPList& bonds, short level=-1, int32_t mask = -1);
+  void Individualise(const TXBondPList& bonds, short level=-1, int32_t mask = -1);
+  void Collectivise(const TXBondPList& bonds, short level=-1, int32_t mask = -1);
   // should not be used externaly
   void ClearLabels();
 

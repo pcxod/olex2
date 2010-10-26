@@ -3182,7 +3182,7 @@ bool TGXApp::ShowGrid(bool v, const olxstr& FN)  {
   return v;
 }
 //..............................................................................
-void TGXApp::Individualise(TXAtomPList& atoms, short _level, int32_t mask)  {
+void TGXApp::Individualise(const TXAtomPList& atoms, short _level, int32_t mask)  {
   if( atoms.IsEmpty() || _level > 2 )  return;
   TSBondPList sbonds;
   for( size_t i=0; i < atoms.Count(); i++ )  {
@@ -3265,7 +3265,7 @@ void TGXApp::Individualise(TXBond& XB, short _level, int32_t mask)  {
   Individualise(TXBondPList(1, bonds), _level == -1 ? level+1 : _level, mask);
 }
 //..............................................................................
-void TGXApp::Individualise(TXBondPList& bonds, short _level, int32_t mask) {
+void TGXApp::Individualise(const TXBondPList& bonds, short _level, int32_t mask) {
   if( bonds.IsEmpty() || _level > 2 )  return;
   XAtoms.ForEachEx(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());
   for( size_t i=0; i < bonds.Count(); i++ )  {
@@ -3309,7 +3309,7 @@ void TGXApp::Collectivise(TXBond& XB, short level, int32_t mask)  {
     level == -1 ? TXAtom::LegendLevel(XB.GetPrimitives().GetName())+1 : level, mask);
 }
 //..............................................................................
-void TGXApp::Collectivise(TXBondPList& bonds, short _level, int32_t mask)  {
+void TGXApp::Collectivise(const TXBondPList& bonds, short _level, int32_t mask)  {
   if( bonds.IsEmpty() )  return;
   XAtoms.ForEachEx(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());
   for( size_t i=0; i < bonds.Count(); i++ )  {
@@ -3335,7 +3335,7 @@ void TGXApp::Collectivise(TXBondPList& bonds, short _level, int32_t mask)  {
   }
 }
 //..............................................................................
-void TGXApp::Collectivise(TXAtomPList& atoms, short _level, int32_t mask)  {
+void TGXApp::Collectivise(const TXAtomPList& atoms, short _level, int32_t mask)  {
   if( atoms.IsEmpty() )  return;
   TSBondPList sbonds;
   for( size_t i=0; i < atoms.Count(); i++ )  {
