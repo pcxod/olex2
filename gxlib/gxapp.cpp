@@ -3342,7 +3342,7 @@ void TGXApp::SynchroniseBonds(TXAtomPList& xatoms)  {
   for( size_t i=0; i < sbonds.Count(); i++ )
     sbonds[i]->SetA(sbonds[i]->A());
   SBonds2XBonds(sbonds, xbonds);
-  XAtoms.ForEachEx(ACollectionItem::IndexTagSetter<>());
+  XAtoms.ForEachEx(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());
   for( size_t i=0; i < xbonds.Count(); i++ )  {
 //    if( XB->GetPrimitives().ObjectCount() == 1 )  continue;
     // change the orientation if necessary
