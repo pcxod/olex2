@@ -901,11 +901,11 @@ void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
   Primitives.GetObjects().ForEach(ACollectionItem::TagSetter<>(-1));
   for( size_t i=0; i < Colls.Count(); i++ )  {
     Colls[i]->GetPrimitives().ForEach(ACollectionItem::TagSetter<>(0));
-    Primitives.RemoveObjectsByTag(0);
     const size_t col_ind = FCollections.IndexOfObject(Colls[i]);
     FCollections.Remove(col_ind);
     delete Colls[i];
   }
+  Primitives.RemoveObjectsByTag(0);
   for( size_t i=0; i < Primitives.PropertiesCount(); i++ )  {
     TGlMaterial& GlM = Primitives.GetProperties(i);
     if( GlM.IsTransparent() && GlM.IsIdentityDraw() )
