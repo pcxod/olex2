@@ -61,6 +61,7 @@ public:
   double CalcCellVolume() const;
   // estimates Z=Z'*sg.multiplicity according to 18.6A rule, partial occupancy implied double...
   double EstimateZ(double atomCount) const;
+  double GetZPrime() const;
   DefPropP(short, Z)
   DefPropP(short, Latt)
 
@@ -181,7 +182,8 @@ public:
   /* returns summarised formula of the asymmetric unit, use MutiplyZ to multiply the
      content by Z
   */
-  olxstr SummFormula(const olxstr &Sep, bool MultiplyZ=true) const;
+  olxstr SummFormula(const olxstr& sep, bool MultiplyZ=true) const;
+  olxstr _SummFormula(const olxstr& sep, double mult) const;
   /* returns molecular weight of the asymmetric unit */
   double MolWeight() const;
   size_t CountElements(const olxstr& Symbol) const;

@@ -213,8 +213,10 @@ public:
   void AnalyseHAdd(class AConstraintGenerator& cg, const TSAtomPList& atoms);
   // returns a chemical moiety string for CIF
   olxstr CalcMoiety() const;
-  DefPropP(double, Delta)
-  DefPropP(double, DeltaI)
+  double GetDelta() const {  return Delta;  }
+  double GetDeltaI() const {  return DeltaI;  }
+  void SetDelta(double v);
+  void SetDeltaI(double v);
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);

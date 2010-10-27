@@ -926,9 +926,9 @@ TSAtom* TLattice::NewAtom(const vec3d& center)  {
     throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate());
   }
   ca->ccrd() = center;
-  TSAtom* a = new TSAtom( Network );
+  TSAtom* a = new TSAtom(Network);
   a->CAtom(*ca);
-  a->AddMatrix( Matrices[0] );
+  a->AddMatrix(Matrices[0]);
   AddSAtom(a);
   GetUnitCell().AddEllipsoid();
   return a;
@@ -2525,6 +2525,21 @@ void TLattice::AddLatticeContent(const TLattice& latt)  {
   }
   GetUnitCell().UpdateEllipsoids();
   RestoreADPs(false);
+}
+//..............................................................................
+void TLattice::SetDelta(double v)  {
+  if( Delta != v )  {
+    Delta = v;
+    UpdateConnectivity();
+  }
+}
+//..............................................................................
+void TLattice::SetDeltaI(double v)  {
+  if( DeltaI != v )  {
+    DeltaI = v;
+    GetUnitCell().FindSymmEq(0.1);
+    UpdateConnectivity();
+  }
 }
 //..............................................................................
 //..............................................................................

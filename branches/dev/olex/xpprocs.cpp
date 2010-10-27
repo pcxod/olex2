@@ -4830,8 +4830,7 @@ void TMainForm::macDelta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     double delta = Cmds[0].ToDouble();
     if( delta < 0.1 || delta > 0.9 )
       delta = 0.5;
-    FXApp->XFile().GetLattice().SetDelta(delta );
-    Macros.ProcessMacro("fuse", E);
+    FXApp->XFile().GetLattice().SetDelta(delta);
   }
   else
     TBasicApp::GetLog() << ( olxstr("Current delta (covalent bonds) is: ") << FXApp->XFile().GetLattice().GetDelta() << '\n' );

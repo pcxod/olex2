@@ -284,7 +284,7 @@ void TUnitCell::FindSymmEq(double tol) const  {
   // which is a bit sluggish for a big system; however it will not be ever used
   // in the grow-fuse (XP) cycle: a save and load operations will be used in that
   // case
-  ACA.SetCapacity( GetLattice().GetAsymmUnit().AtomCount() );
+  ACA.SetCapacity(GetLattice().GetAsymmUnit().AtomCount());
   for( size_t i=0; i < GetLattice().GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& A1 = GetLattice().GetAsymmUnit().GetAtom(i);
     if( A1.IsDeleted() )  continue;

@@ -501,7 +501,6 @@ bool TCif::Adopt(TXFile& XF)  {
   Clear();
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
   GetRM().Assign(XF.GetRM(), true);
-  GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
   Title = TEFile::ChangeFileExt(TEFile::ExtractFileName(XF.GetFileName()), EmptyString);
 
   block_index = 0;
@@ -511,7 +510,8 @@ bool TCif::Adopt(TXFile& XF)  {
   SetParam("_chemical_name_common", "?", true);
   SetParam("_chemical_melting_point", "?", false);
   SetParam("_chemical_formula_moiety", XF.GetLattice().CalcMoiety(), true);
-  SetParam("_chemical_formula_sum", GetAsymmUnit().SummFormula(' ', false), true);
+  SetParam("_chemical_formula_sum", GetAsymmUnit()._SummFormula(' ',
+    1./olx_max(GetAsymmUnit().GetZPrime(), 0.01)), true);
   SetParam("_chemical_formula_weight", olxstr::FormatFloat(2, GetAsymmUnit().MolWeight()), false);
 
   SetParam("_cell_length_a", GetAsymmUnit().Axes()[0].ToString(), false);
@@ -562,7 +562,7 @@ bool TCif::Adopt(TXFile& XF)  {
     for( size_t i=0; i < Matrices.Count(); i++ )  {
       CifRow& row = Loop.AddRow();
       row[0] = new cetString(i+1);
-      row[1] = new cetString(TSymmParser::MatrixToSymm(Matrices[i]));
+      row[1] = new cetString(TSymmParser::MatrixToSymmEx(Matrices[i]));
     }
   }
 

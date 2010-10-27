@@ -447,6 +447,19 @@ ContentList TAsymmUnit::GetContentList(double mult) const {
   return XElementLib::SortContentList(rv);
 }
 //..............................................................................
+olxstr TAsymmUnit::_SummFormula(const olxstr &Sep, double mult) const {
+  ContentList cl = GetContentList(mult);
+  olxstr rv;
+  for( size_t i=0; i < cl.Count(); i++)  {
+    rv << cl[i].element.symbol;
+    if( olx_abs(cl[i].count-1.0) > 1e-3 )
+      rv << olxstr::FormatFloat(3, cl[i].count).TrimFloat();
+    if( (i+1) < cl.Count() )
+      rv << Sep;
+  }
+  return rv;
+}
+//..............................................................................
 olxstr TAsymmUnit::SummFormula(const olxstr &Sep, bool MultiplyZ) const  {
   size_t matrixInc = 0;
   // searching the identity matrix
@@ -458,16 +471,11 @@ olxstr TAsymmUnit::SummFormula(const olxstr &Sep, bool MultiplyZ) const  {
     }
   }
   if( Uniq )  matrixInc ++;
-
-  ContentList cl = GetContentList(MultiplyZ ? (MatrixCount()+matrixInc) : 1.0);
-  olxstr rv;
-  for( size_t i=0; i < cl.Count(); i++)  {
-    rv << cl[i].element.symbol;
-    rv << olxstr::FormatFloat(3, cl[i].count).TrimFloat();
-    if( (i+1) < cl.Count() )
-      rv << Sep;
-  }
-  return rv;
+  return _SummFormula(Sep, MultiplyZ ? (MatrixCount()+matrixInc) : 1.0);
+}
+//..............................................................................
+double TAsymmUnit::GetZPrime() const {
+  return (double)Z/(TUnitCell::GetMatrixMultiplier(Latt)*(MatrixCount()+1));
 }
 //..............................................................................
 double TAsymmUnit::MolWeight() const  {
@@ -1048,7 +1056,7 @@ void TAsymmUnit::LibSetZ(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal(olxstr::FormatFloat(3,(double)Z/(TUnitCell::GetMatrixMultiplier(Latt)*(MatrixCount()+1))));
+  E.SetRetVal(olxstr::FormatFloat(3,GetZPrime()));
 }
 //..............................................................................
 void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
