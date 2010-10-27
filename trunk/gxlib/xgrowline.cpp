@@ -33,40 +33,23 @@ TXGrowLine::TXGrowLine(TGlRenderer& r, const olxstr& collectionName, TSAtom *A, 
 }
 //..............................................................................
 void TXGrowLine::Create(const olxstr& cName, const ACreationParams* cpar)  {
-  TXBond::Create( cName );
+  TXBond::Create(cName, cpar);
 }
 //..............................................................................
-TXGrowLine::~TXGrowLine()  {
-  ;
-}
+TXGrowLine::~TXGrowLine()  {}
 //..............................................................................
 bool TXGrowLine::Orient(TGlPrimitive& GlP)  {
-  static olxstr Length;
-  if( GlP.GetType() == sgloText )  {
-    Length = olxstr::FormatFloat(3, Params()[3]);
-    vec3d V = (FEdge+FBase)/2;
-    V += Parent.GetBasis().GetCenter();
-    V = Parent.GetBasis().GetMatrix()*V;
-    olx_gl::rasterPos(V[0]+0.15, V[1]+0.15, V[2]+5);
-    GlP.SetString(&Length);
-    GlP.Draw();
-    return true;
-  }
-  else  {
-    olx_gl::translate(FBase);
-    olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
-    olx_gl::scale(Params()[4], Params()[4], Params()[3]);
-  }
+  olx_gl::translate(FBase);
+  olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
+  olx_gl::scale(Params()[4], Params()[4], Params()[3]);
   return false;
 } 
 //..............................................................................
-void TXGrowLine::Radius(float V)
-{
+void TXGrowLine::Radius(float V)  {
   Params()[4] = V;
 }
 //..............................................................................
-void TXGrowLine::Length(float V)
-{
+void TXGrowLine::Length(float V)  {
   Params()[3] = V;
 }
 //..............................................................................

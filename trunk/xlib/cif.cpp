@@ -562,7 +562,7 @@ bool TCif::Adopt(TXFile& XF)  {
     for( size_t i=0; i < Matrices.Count(); i++ )  {
       CifRow& row = Loop.AddRow();
       row[0] = new cetString(i+1);
-      row[1] = new cetString(TSymmParser::MatrixToSymm(Matrices[i]));
+      row[1] = new cetString(TSymmParser::MatrixToSymmEx(Matrices[i]));
     }
   }
 
