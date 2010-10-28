@@ -8602,19 +8602,12 @@ void TMainForm::macAddBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
     return;
   }
   for( size_t i=0; i < atoms.Count(); i += 2 )  {
-    TSAtom* a1 = NULL, *a2 = NULL;
-    if( atoms[i]->Atom().IsAUAtom() )
-      a1 = &atoms[i]->Atom();
-    else if( atoms[i+1]->Atom().IsAUAtom() )
-      a1 = &atoms[i+1]->Atom();
-    else  {
-      FXApp->GetLog() << (olxstr("At maximum one symmetry equivalent atom is allowed, skipping: ") <<
-        atoms[i]->Atom().GetGuiLabel() << '-' << atoms[i+1]->Atom().GetGuiLabel() << '\n');
-      continue;
-    }
-    a2 = (a1 == &atoms[i]->Atom()) ? &atoms[i+1]->Atom() : &atoms[i]->Atom();
-    const smatd& eqiv = FXApp->XFile().GetRM().AddUsedSymm(a2->GetMatrix(0));
-    FXApp->XFile().GetRM().Conn.AddBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv, true);
+    FXApp->XFile().GetRM().Conn.AddBond(
+      atoms[i]->Atom().CAtom(), atoms[i+1]->Atom().CAtom(),
+      &FXApp->XFile().GetRM().AddUsedSymm(atoms[i]->Atom().GetMatrix(0)),
+      &FXApp->XFile().GetRM().AddUsedSymm(atoms[i+1]->Atom().GetMatrix(0)),
+      true
+    );
   }
   FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
   FXApp->UpdateConnectivity();
@@ -8640,19 +8633,11 @@ void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   if( !pairs.IsEmpty()  )  {
     for( size_t i=0; i < pairs.Count(); i+=2 )  {
-      TSAtom* a1 = NULL, *a2 = NULL;
-      if( pairs[i]->IsAUAtom() )
-        a1 = pairs[i];
-      else if( pairs[i+1]->IsAUAtom() )
-        a1 = pairs[i+1];
-      else  {
-        FXApp->GetLog() << (olxstr("At maximum one symmetry equivalent atom is allowed, skipping: ") <<
-          pairs[i]->GetGuiLabel() << '-' << pairs[i+1]->GetGuiLabel() << '\n');
-        continue;
-      }
-      a2 = (a1 == pairs[i]) ? pairs[i+1] : pairs[i];
-      const smatd& eqiv = FXApp->XFile().GetRM().AddUsedSymm(a2->GetMatrix(0));
-      FXApp->XFile().GetRM().Conn.RemBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv, true);
+      FXApp->XFile().GetRM().Conn.RemBond(
+        pairs[i]->CAtom(), pairs[i+1]->CAtom(),
+        &FXApp->XFile().GetRM().AddUsedSymm(pairs[i]->GetMatrix(0)),
+        &FXApp->XFile().GetRM().AddUsedSymm(pairs[i+1]->GetMatrix(0)), 
+        true);
     }
     FXApp->GetRender().SelectAll(false);
     FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();

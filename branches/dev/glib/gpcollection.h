@@ -44,6 +44,9 @@ public:
 
   void ClearObjects()  {  GObjects.Clear();  }
   void RemoveObject(AGDrawObject& G)  {  GObjects.Remove(G);  }
+  void RemoveObjects(const TPtrList<AGDrawObject>& objects)  {
+    ACollectionItem::Exclude<>(GObjects, objects);
+  }
   void DeleteObject(size_t i)  {  GObjects.Delete(i);  }
 
   void Draw();

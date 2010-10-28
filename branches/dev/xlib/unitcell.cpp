@@ -280,10 +280,6 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
 void TUnitCell::FindSymmEq(double tol) const  {
   TStrList report;
   TCAtomPList ACA;
-  // sorting the content of the asymmetric unit in order to improve the algorithm
-  // which is a bit sluggish for a big system; however it will not be ever used
-  // in the grow-fuse (XP) cycle: a save and load operations will be used in that
-  // case
   ACA.SetCapacity(GetLattice().GetAsymmUnit().AtomCount());
   for( size_t i=0; i < GetLattice().GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& A1 = GetLattice().GetAsymmUnit().GetAtom(i);
@@ -533,17 +529,15 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
 void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, int part)  const {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   envi.SetBase(atom);
-
   smatd I;
   I.I().SetId(0);
-
   for( size_t i=0; i < atom.NodeCount(); i++ )  {
     TSAtom& a = atom.Node(i);
     if( a.IsDeleted() ) continue;
     if( !IncludeQ && a.GetType() == iQPeakZ )  continue;
     if( part == DefNoPart || (a.CAtom().GetPart() == 0 || a.CAtom().GetPart() == part) )  {
       if( TNetwork::HaveSharedMatrix(atom, a) )  // put only the 'uniq' entries
-        envi.Add( a.CAtom(), I, a.crd() );
+        envi.Add(a.CAtom(), I, a.crd());
     }
   }
   for( size_t i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
@@ -551,25 +545,26 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
     if( A.IsDeleted() || (!IncludeQ && A.GetType() == iQPeakZ) )  continue;
     if( A.GetPart() < 0 || atom.CAtom().GetPart() < 0 )
       continue;
-
-    smatd* m = GetClosest(atom.ccrd(), A.ccrd(), false);
-    if( m == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "Could not find symmetry generated atom");
-    vec3d v = *m * A.ccrd();
-    au.CellToCartesian(v);
-    // make sure that atoms on center of symmetry are not counted twice
-    bool Add = true;
-    for( size_t j=0; j < envi.Count(); j++ )  {
-      if( envi.GetCAtom(j) == A && envi.GetCrd(j).QDistanceTo(v) < 0.001 )  {
-        Add = false;
-        break;
+    const vec3d from = atom.GetMatrix(0)*A.ccrd();
+    smatd_list* binding = GetBinding(atom.CAtom(), A, atom.ccrd(), from, true, false); 
+    if( binding == NULL )  continue;
+    for( size_t mi = 0; mi < binding->Count(); mi++ )  {
+      vec3d v = (*binding)[mi] * from;
+      au.CellToCartesian(v);
+      // make sure that atoms on center of symmetry are not counted twice
+      bool Add = true;
+      for( size_t j=0; j < envi.Count(); j++ )  {
+        if( envi.GetCAtom(j) == A && envi.GetCrd(j).QDistanceTo(v) < 0.001 )  {
+          Add = false;
+          break;
+        }
+      }
+      if( Add )  {
+        if( part == DefNoPart || (A.GetPart() == 0 || A.GetPart() == part) )
+          envi.Add(A, binding->Item(mi), v);
       }
     }
-    if( Add )  {
-      if( part == DefNoPart || (A.GetPart() == 0 || A.GetPart() == part) )
-        envi.Add(A, *m, v);
-    }
-    delete m;
+    delete binding;
   }
   smatd_list ml;
   BondInfoList toCreate, toDelete;
@@ -635,38 +630,37 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
 //..............................................................................
 void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
   if( atom.IsGrown() )
-    throw TFunctionFailedException(__OlxSourceInfo, "Not implementd for grown structre");
-
+    throw TFunctionFailedException(__OlxSourceInfo, "Not implemented for grown structre");
   envi.SetBase(atom);
   smatd I;
   I.I().SetId(0);
-
   for( size_t i=0; i < atom.NodeCount(); i++ )  {
     TSAtom& A = atom.Node(i);
     if( A.IsDeleted() ) continue;
     if( A.GetType() == iQPeakZ && TNetwork::HaveSharedMatrix(A, atom) )
       envi.Add(A.CAtom(), I, A.crd());
   }
+  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   for( size_t i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
     TCAtom& A = atom.CAtom().GetAttachedAtom(i);
     if( A.IsDeleted() || A.GetType() != iQPeakZ )  continue;
-
-    smatd* m = GetClosest(atom.ccrd(), A.ccrd(), false);
-    if( m == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "Could not find symmetry generated atom");
-    vec3d v = *m * A.ccrd();
-    GetLattice().GetAsymmUnit().CellToCartesian(v);
-    // make sure that atoms on center of symmetry are not counted twice
-    bool Add = true;
-    for( size_t j=0; j < envi.Count(); j++ )  {
-      if( envi.GetCAtom(j) == A && envi.GetCrd(j) == v )  {
-        Add = false;
-        break;
+    const vec3d from = atom.GetMatrix(0)*A.ccrd();
+    smatd_list* binding = GetBinding(atom.CAtom(), A, atom.ccrd(), from, true, false); 
+    if( binding == NULL )  continue;
+    for( size_t mi = 0; mi < binding->Count(); mi++ )  {
+      vec3d v = (*binding)[mi] * from;
+      au.CellToCartesian(v);
+      bool Add = true;
+      for( size_t j=0; j < envi.Count(); j++ )  {
+        if( envi.GetCAtom(j) == A && envi.GetCrd(j) == v )  {
+          Add = false;
+          break;
+        }
       }
+      if( Add )
+        envi.Add(A, (*binding)[mi], v);
     }
-    if( Add )
-      envi.Add(A, *m, v);
-    delete m;
+    delete binding;
   }
 }
 //..............................................................................
