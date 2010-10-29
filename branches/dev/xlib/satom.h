@@ -35,7 +35,7 @@ protected:
   static int _SortBondsByLengthAsc(const TSBond* b1, const TSBond* b2);
   static int _SortBondsByLengthDsc(const TSBond* b1, const TSBond* b2);
 public:
-  TSAtom(TNetwork *N);
+  TSAtom(TNetwork* N);
   virtual ~TSAtom();
   void Assign(const TSAtom& S);
   
@@ -97,7 +97,7 @@ public:
     return false;
   }
   static double weight_unit(const TSAtom& a)  {  return 1.0;  }
-  static double weight_occu(const TSAtom& a)  {  return a.CAtom().GetOccu()*a.MatrixCount();  }
+  static double weight_occu(const TSAtom& a)  {  return a.CAtom().GetOccu()*a.CAtom().EquivCount();  }
   static double weight_occu_aw(const TSAtom& a)  {
     return a.CAtom().GetOccu()*a.CAtom().GetDegeneracy()*a.GetType().GetMr();
   }

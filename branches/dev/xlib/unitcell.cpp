@@ -68,7 +68,20 @@ void TUnitCell::InitMatrixId(smatd& m) const {
   throw TInvalidArgumentException(__OlxSourceInfo, "could not locate matrix");
 }
 //..............................................................................
-double TUnitCell::CalcVolume()  const  {
+smatd_list TUnitCell::MulMatrices(const smatd_list& in, const smatd& transform) const {
+  smatd_list out(in.Count());
+  for( size_t i=0; i < in.Count(); i++ )  {
+    out.Set(i, new smatd(in[i]*transform));
+    const uint8_t index = MultDest[in[i].GetContainerId()][transform.GetContainerId()];
+    const int8_t ta = (int8_t)(out[i].t[0]-Matrices[index].t[0]);
+    const int8_t tb = (int8_t)(out[i].t[1]-Matrices[index].t[1]);
+    const int8_t tc = (int8_t)(out[i].t[2]-Matrices[index].t[2]);
+    out[i].SetId(index, ta, tb, tc);
+  }
+  return out;
+}
+//..............................................................................
+double TUnitCell::CalcVolume() const {
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
   static const double k = M_PI/180;
   const vec3d ang(au.Angles()[0].GetV()*k, au.Angles()[1].GetV()*k, au.Angles()[2].GetV()*k);
@@ -77,7 +90,7 @@ double TUnitCell::CalcVolume()  const  {
   return ax.Prod()*sqrt(1-cs.QLength() + 2*cs.Prod());
 }
 //..............................................................................
-TEValue<double> TUnitCell::CalcVolumeEx()  const  {
+TEValue<double> TUnitCell::CalcVolumeEx() const {
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
   static const double k = M_PI/180;
   const vec3d ang(au.Angles()[0].GetV()*k, au.Angles()[1].GetV()*k, au.Angles()[2].GetV()*k);
@@ -116,24 +129,43 @@ size_t TUnitCell::GetMatrixMultiplier(short Latt)  {
 }
 //..............................................................................
 void  TUnitCell::InitMatrices()  {
+  MultDest.Clear();
   Matrices.Clear();
   GenerateMatrices(Matrices, GetLattice().GetAsymmUnit(), GetLattice().GetAsymmUnit().GetLatt() );
   const size_t mc = Matrices.Count();
-  for( size_t i=0; i < mc; i++ )
+  MultDest.SetCapacity(mc);
+  for( size_t i=0; i < mc; i++ )  {
     Matrices[i].SetId((uint8_t)i);
+    MultDest.Add(new TArrayList<uint8_t>(mc));
+    for( size_t j=0; j < mc; j++ )  {
+      smatd m = Matrices[i]*Matrices[j];
+      size_t index = InvalidIndex;
+      for( size_t k=0; k < mc; k++ )  {
+        if( Matrices[k].r == m.r )  {
+          const vec3d t = m.t - Matrices[k].t;
+          if( (t-t.Round<int>()).QLength() < 1e-6 )  {
+            index = k;
+            break;
+          }
+        }
+      }
+      if( index == InvalidIndex )
+        throw TFunctionFailedException(__OlxSourceInfo, "assert");
+      MultDest[i][j] = index;
+    }
+  }
   UpdateEllipsoids();
 }
 //..............................................................................
 void TUnitCell::GenerateMatrices(smatd_list& out, const TAsymmUnit& au, short lat)  {
   out.SetCapacity( GetMatrixMultiplier(au.GetLatt())*au.MatrixCount());
   out.AddNew().r.I();
-  // check if the E matrix is in the list
+  // check if the identity matrix is in the list
   for( size_t i=0;  i < au.MatrixCount(); i++ )  {
     const smatd& m = au.GetMatrix(i);
-    if( m.r.IsI() )  continue;  // will need to insert the identity matrix at position 0
-    out.AddNew( m );
+    if( !m.r.IsI() )  // will need to insert the identity matrix at position 0
+      out.AddNew(m);
   }
-
   for( size_t i=0; i < out.Count(); i++ )  {
     const smatd& m = out[i];
     switch( abs(lat) )  {
@@ -484,13 +516,15 @@ smatd_list* TUnitCell::GetInRangeEx(const vec3d& to, const vec3d& from,
 }
 //..............................................................................
 void TUnitCell::_FindInRange(const vec3d& to, double R, 
-                            TTypeList< AnAssociation3<TCAtom const*,smatd, vec3d> >& res) const {
+  TTypeList<AnAssociation3<TCAtom*,smatd, vec3d> >& res, const TCAtomPList* _atoms) const
+{
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  const TCAtomPList& atoms = (_atoms == NULL ? au.GetAtoms() : *_atoms);
   R *= R;
-  const size_t ac = au.AtomCount();
+  const size_t ac = atoms.Count();
   const size_t mc = Matrices.Count();
   for( size_t i=0; i < ac; i++ )  {
-    const TCAtom& a = au.GetAtom(i);
+    const TCAtom& a = *atoms[i];
     if( a.IsDeleted() )  continue;
     for( size_t j=0; j < mc; j++ )  {
       vec3d vec = Matrices[j] * a.ccrd();
@@ -501,7 +535,7 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
       const double D = V1.QLength();
       //if( D < R && D != 0 )  {
       if( D < R )  {
-        smatd& m = res.AddNew(&a, Matrices[j], au.CellToCartesian(vec += shift)).B();
+        smatd& m = res.AddNew(atoms[i], Matrices[j], au.CellToCartesian(vec += shift)).B();
         m.t += shift;
         m.SetId(Matrices[j].GetContainerId(), shift[0], shift[1], shift[2]);
       }
@@ -515,7 +549,52 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
           au.CellToCartesian(vec);
           const double D = vec.QLength();
           if( D < R && D > 0.0001 )  {
-            smatd& m = res.AddNew(&a).B().I();
+            smatd& m = res.AddNew(atoms[i]).B().I();
+            m.t += shift;
+            m.SetId(0, ii, ik, ik);
+            res.Last().C() = vec;
+          }
+        }
+      }
+    }
+  }
+}
+//..............................................................................
+void TUnitCell::_FindBinding(const TSAtom& to, double delta, 
+  TTypeList<AnAssociation3<TCAtom*,smatd, vec3d> >& res, const TCAtomPList* _atoms) const
+{
+  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  const TCAtomPList& atoms = (_atoms == NULL ? au.GetAtoms() : *_atoms);
+  const size_t ac = atoms.Count();
+  const size_t mc = Matrices.Count();
+  smatd I;
+  I.I().SetId(0);
+  for( size_t i=0; i < ac; i++ )  {
+    const TCAtom& a = *atoms[i];
+    if( a.IsDeleted() )  continue;
+    for( size_t j=0; j < mc; j++ )  {
+      vec3d vec = Matrices[j] * a.ccrd();
+      vec3d V1(vec-to.ccrd());
+      const vec3i shift = -V1.Round<int>();
+      V1 += shift;
+      au.CellToCartesian(V1);
+      const double qD = V1.QLength();
+      if( qD > 1e-6 && TNetwork::BondExistsQ(to, a, Matrices[j], qD, delta) )  {
+        smatd& m = res.AddNew(atoms[i], Matrices[j], au.CellToCartesian(vec += shift)).B();
+        m.t += shift;
+        m.SetId(Matrices[j].GetContainerId(), shift[0], shift[1], shift[2]);
+      }
+    }
+    for( int ii=-1; ii <= 1; ii++ )  {
+      for( int ij=-1; ij <= 1; ij++ ) {
+        for( int ik=-1; ik <= 1; ik++ )  {
+          if( (ii|ij|ik) == 0 )  continue;
+          const vec3i shift(ii, ij, ik);
+          vec3d vec(a.ccrd() + shift - to.ccrd());
+          au.CellToCartesian(vec);
+          const double qD = vec.QLength();
+          if( qD > 1e-6 && TNetwork::BondExistsQ(to, a, I, qD, delta) )  {
+            smatd& m = res.AddNew(atoms[i]).B().I();
             m.t += shift;
             m.SetId(0, ii, ik, ik);
             res.Last().C() = vec;
@@ -706,7 +785,7 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
 }
 //..............................................................................
 TCAtom* TUnitCell::FindOverlappingAtom(const vec3d& pos, double delta) const  {
-  TTypeList< AnAssociation3<TCAtom const*,smatd,vec3d> > res;
+  TTypeList< AnAssociation3<TCAtom*,smatd,vec3d> > res;
   _FindInRange(pos, delta, res);
   if( res.IsEmpty() )
     return NULL;
@@ -727,17 +806,17 @@ TCAtom* TUnitCell::FindOverlappingAtom(const vec3d& pos, double delta) const  {
     }
     if( ri == InvalidIndex )
       throw TFunctionFailedException(__OlxSourceInfo, "assert here");
-    return const_cast<TCAtom*>(res[ri].A());
+    return res[ri].A();
   }
 }
 //..............................................................................
 TCAtom* TUnitCell::FindCAtom(const vec3d& center) const  {
-  TTypeList< AnAssociation3<const TCAtom*, smatd, vec3d> > res;
+  TTypeList< AnAssociation3<TCAtom*, smatd, vec3d> > res;
   _FindInRange(center, 0.1, res);
   if( res.IsEmpty() )
     return NULL;
   if( res.Count() == 1 )
-    return const_cast<TCAtom*>(res[0].A());
+    return res[0].A();
   throw TFunctionFailedException(__OlxSourceInfo, "assert, too many atoms returned");
 }
 //..............................................................................

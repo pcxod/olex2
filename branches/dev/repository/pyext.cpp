@@ -409,7 +409,7 @@ public:
     return NULL;
   }
 
-  int GetRetCode()  const  {  return RetCode;  }
+  int GetRetCode() const {  return RetCode;  }
 };
 #endif // __WXWIDGETS__
 

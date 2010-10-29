@@ -3584,6 +3584,8 @@ void TGXApp::CreateXGrowLines()  {
   TPtrList<TCAtom> AttachedAtoms;
   TTypeList<TGXApp_Transform1> tr_list;
   const AtomRegistry& ar = XFile().GetLattice().GetAtomRegistry();
+  typedef TArrayList<AnAssociation2<TCAtom*,smatd> > GInfo;
+  TPtrList<GInfo> Info(au.AtomCount());
   for( size_t i=0; i < AtomsToProcess.Count(); i++ )  {
     TSAtom* A = AtomsToProcess[i];
     AttachedAtoms.Clear();
@@ -3601,62 +3603,58 @@ void TGXApp::CreateXGrowLines()  {
       AttachedAtoms.Add(A->CAtom());
 
     if( AttachedAtoms.IsEmpty() )  continue;
-
-    for( size_t j=0; j < AttachedAtoms.Count(); j++ )  {
-      TCAtom *aa = AttachedAtoms[j];
-      const vec3d& cc = aa->ccrd();
-      smatd_list *transforms;
-      if( FGrowMode & gmSameAtoms )  {
-        transforms = uc.GetInRangeEx(A->CAtom().ccrd(), cc,
-          A->GetType().r_bonding + aa->GetType().r_bonding + 15,
-          false, UsedTransforms );
+    GInfo* gi = Info[A->CAtom().GetId()];
+    if( gi == NULL )  {
+      gi = new GInfo;
+      if( FGrowMode == gmSameAtoms )  {
+        uc.FindInRangeAM(A->CAtom().ccrd(), 2*A->GetType().r_bonding + 15,
+          *gi, &AttachedAtoms);
       }
-      else if( FGrowMode & gmSInteractions )  {
-        transforms = uc.GetInRange(A->CAtom().ccrd(), cc,
-          A->GetType().r_bonding + aa->GetType().r_bonding + FXFile->GetLattice().GetDeltaI(),
-          false);
+      else if( FGrowMode == gmSInteractions )  {
+        uc.FindBindingAM(*A, FXFile->GetLattice().GetDeltaI(), *gi, &AttachedAtoms);
       }
       else  {
-        transforms = uc.GetInRange(A->CAtom().ccrd(), cc,
-          A->GetType().r_bonding + aa->GetType().r_bonding + FXFile->GetLattice().GetDelta(),
-          false);
+        uc.FindBindingAM(*A, FXFile->GetLattice().GetDelta(), *gi, &AttachedAtoms);
       }
-      if( transforms->IsEmpty() )  {  delete transforms;  continue;  }
-      for( size_t k=0; k < transforms->Count(); k++ )  {
-        const smatd& transform = transforms->Item(k);
-        // check if the atom already generated
-        if( ar.Find(TSAtom::Ref(aa->GetId(), transform.GetId())) != NULL )
-          continue;
-        vec3d tc = transform*(A->GetMatrix(0)*cc);
-        au.CellToCartesian(tc);
-        const double qdist = tc.QDistanceTo(A->crd());
-        bool uniq = true;
-        for( size_t l=0; l < tr_list.Count(); l++ )  {
-          if( tr_list[l].transform == transform )  {  //.dest.QDistanceTo(tc) < 0.001 )  {
-            if( tr_list[l].dist > qdist )  {
-              tr_list[l].dist = qdist;
-              tr_list[l].to = aa;
-              tr_list[l].from = A;
-            }
-            uniq = false;
-            break;
+      Info[A->CAtom().GetId()] = gi;
+    }
+    for( size_t j=0; j < gi->Count(); j++ )  {
+      const AnAssociation2<TCAtom*,smatd>& gii = (*gi)[j];
+      smatd transform = (A->GetMatrix(0).IsFirst() ? gii.GetB() : uc.MulMatrix(gii.GetB(), A->GetMatrix(0)));
+      if( ar.Find(TSAtom::Ref(gii.GetA()->GetId(), transform.GetId())) != NULL )
+        continue;
+      vec3d tc = transform*gii.GetA()->ccrd();
+      au.CellToCartesian(tc);
+      const double qdist = tc.QDistanceTo(A->crd());
+      bool uniq = true;
+      for( size_t l=0; l < tr_list.Count(); l++ )  {
+        if( tr_list[l].transform.GetId() == transform.GetId() )  {
+          if( tr_list[l].dist > qdist )  {
+            tr_list[l].dist = qdist;
+            tr_list[l].to = gii.GetA();
+            tr_list[l].from = A;
           }
-        }
-        if( uniq )  {
-          TGXApp_Transform1& nt = tr_list.AddNew();
-          nt.transform = transform;
-          nt.dist = qdist;
-          nt.to = aa;
-          nt.from = A;
+          uniq = false;
+          break;
         }
       }
-      delete transforms;
+      if( uniq )  {
+        TGXApp_Transform1& nt = tr_list.AddNew();
+        nt.transform = transform;
+        nt.dist = qdist;
+        nt.to = gii.GetA();
+        nt.from = A;
+      }
     }
   }
   for( size_t i=0; i < tr_list.Count(); i++ )  {
     TGXApp_Transform1& nt = tr_list[i];
     TXGrowLine& gl = XGrowLines.Add(new TXGrowLine(*FGlRender, EmptyString, nt.from, nt.to, nt.transform));
     gl.Create("GrowBonds");
+  }
+  for( size_t i=0; i < Info.Count(); i++ )  {
+    if( Info[i] != NULL )
+      delete Info[i];
   }
 }
 //..............................................................................
@@ -3729,7 +3727,7 @@ void TGXApp::_CreateXGrowVLines()  {
       tr_list& ntl = net_tr.Add(aa->GetFragmentId());
       //find the shortest one
       for( size_t l=0; l < ntl.Count(); l++ )  {
-        if( ntl[l].transform == transform )  {
+        if( ntl[l].transform.GetId() == transform.GetId() )  {
           if( ntl[l].dist > qdist )  {
             ntl[l].transform = transform;
             ntl[l].dist = qdist;

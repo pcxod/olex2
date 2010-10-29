@@ -241,7 +241,7 @@ public:
         return PList::Add(s, v);
       }
       inline void Delete(size_t i)  {  PList::Remove(i);  }
-      inline size_t IndexOf(const SC& v)  const  {  return PList::IndexOfComparable(v);  }
+      inline size_t IndexOf(const SC& v) const {  return PList::IndexOfComparable(v);  }
       template <class T>
       inline ObjectClass operator [] (const T& key) const {
         size_t ind = PList::IndexOfComparable(key);

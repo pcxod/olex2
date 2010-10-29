@@ -116,9 +116,9 @@ IInputStream* TOSFileSystem::_DoOpenFile(const olxstr& fileName)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-AFileSystem& TFSItem::GetIndexFS()  const   {  return Index.IndexFS; }
+AFileSystem& TFSItem::GetIndexFS() const  {  return Index.IndexFS; }
 //..............................................................................
-AFileSystem& TFSItem::GetDestFS()  const   {  return *Index.DestFS; }
+AFileSystem& TFSItem::GetDestFS() const  {  return *Index.DestFS; }
 //..............................................................................
 void TFSItem::Clear()  {
   for( size_t i=0; i < Items.Count(); i++ )
@@ -298,7 +298,7 @@ olxstr TFSItem::GetFullName() const  {
   return Tmp;
 }
 //..............................................................................
-int TFSItem::GetLevel()  const  {
+int TFSItem::GetLevel() const {
   int level = 0;
   TFSItem *FI = const_cast<TFSItem*>(this);
   while( FI && FI->GetParent() )  {

@@ -743,7 +743,7 @@ public:
   inline THtml* GetHtml()  const {  return FHtml; }
   THtml* FindHtml(const olxstr& popupName) const;
   TPopupData* FindHtmlEx(const olxstr& popupName) const;
-  inline const olxstr& GetCurrentLanguageEncodingStr()  const  {
+  inline const olxstr& GetCurrentLanguageEncodingStr() const {
     return Dictionary.GetCurrentLanguageEncodingStr();
   }
 //..............................................................................

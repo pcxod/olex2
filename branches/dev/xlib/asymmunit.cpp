@@ -581,7 +581,7 @@ void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg)  {
     Matrices.AddCCopy(sg.GetMatrix(i));
 }
 //..............................................................................
-double TAsymmUnit::CalcCellVolume()  const  {
+double TAsymmUnit::CalcCellVolume() const {
   double cosa = cos( FAngles[0].GetV()*M_PI/180 ),
          cosb = cos( FAngles[1].GetV()*M_PI/180 ),
          cosg = cos( FAngles[2].GetV()*M_PI/180 );

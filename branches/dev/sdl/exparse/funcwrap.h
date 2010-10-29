@@ -243,7 +243,7 @@ namespace exparse  {
       size_t ind = funcs.IndexOf( olxstr(name) << '#' << argc);
       return ind == InvalidIndex ? NULL : funcs.GetValue(ind);
     }
-    inline size_t index_of(const olxstr& name, size_t argc)  const  {
+    inline size_t index_of(const olxstr& name, size_t argc) const {
       return funcs.IndexOf( olxstr(name) << '#' << argc);
     }
     void add(const olxstr& name, void (*f)(void))  {

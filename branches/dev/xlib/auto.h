@@ -383,7 +383,7 @@ protected:
                         TAutoDBNet& network, TTypeList<TGuessCount>& guesses) :
       Nodes(nodes), Network(network), Guesses(guesses)  { }
     void Run(size_t index);
-    TAnalyseNetNodeTask* Replicate()  const  {
+    TAnalyseNetNodeTask* Replicate() const {
       return new TAnalyseNetNodeTask(Nodes, Network, Guesses);
     }
   };

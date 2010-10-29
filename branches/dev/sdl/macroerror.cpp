@@ -65,7 +65,7 @@ void TMacroError::WrongState(const ABasicFunction& func)  {
   ProcessError |= peIllegalState;
 }
 //..............................................................................
-olxstr TMacroError::GetRetVal()  const   {
+olxstr TMacroError::GetRetVal() const  {
   if( RetValue == NULL )  return EmptyString;
 //  if( !EsdlInstanceOf(*RetValue, olxstr) )
 //    throw TCastException(*this, EsdlObjectName(RetValue), EsdlClassName(olxstr) );

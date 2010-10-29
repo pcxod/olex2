@@ -74,16 +74,16 @@ public:
         TBasicException(location, EmptyString)  { ;  }
     virtual IEObject* Replicate()  const {  return new TCastException(*this);  }
   };
-  virtual short EvaluateShort()          const  {  throw TCastException(__OlxSourceInfo);  }
-  virtual int EvaluateInt()              const  {  throw TCastException(__OlxSourceInfo);  }
-  virtual long EvaluateLong()            const  {  throw TCastException(__OlxSourceInfo);  }
-  virtual float EvaluateFloat()          const  {  throw TCastException(__OlxSourceInfo);  }
-  virtual double EvaluateDouble()        const  {  throw TCastException(__OlxSourceInfo);  }
+  virtual short EvaluateShort()         const {  throw TCastException(__OlxSourceInfo);  }
+  virtual int EvaluateInt()             const {  throw TCastException(__OlxSourceInfo);  }
+  virtual long EvaluateLong()           const {  throw TCastException(__OlxSourceInfo);  }
+  virtual float EvaluateFloat()         const {  throw TCastException(__OlxSourceInfo);  }
+  virtual double EvaluateDouble()       const {  throw TCastException(__OlxSourceInfo);  }
   virtual unsigned short EvaluateUshort()const  {  throw TCastException(__OlxSourceInfo);  }
-  virtual unsigned int EvaluateUint()    const  {  throw TCastException(__OlxSourceInfo);  }
-  virtual unsigned long EvaluateUlong()  const  {  throw TCastException(__OlxSourceInfo);  }
-  virtual bool EvaluateBool()            const  {  throw TCastException(__OlxSourceInfo);  }
-  virtual const olxstr& EvaluateString()     const  {  throw TCastException(__OlxSourceInfo);  }
+  virtual unsigned int EvaluateUint()   const {  throw TCastException(__OlxSourceInfo);  }
+  virtual unsigned long EvaluateUlong() const {  throw TCastException(__OlxSourceInfo);  }
+  virtual bool EvaluateBool()           const {  throw TCastException(__OlxSourceInfo);  }
+  virtual const olxstr& EvaluateString()    const {  throw TCastException(__OlxSourceInfo);  }
 };
 /*
 class IArithmetic
@@ -334,27 +334,27 @@ template <class CollectionProviderClass, class PropertyProviderClass, class Eval
       FIterator = itr;
       FPropertyEvaluator = PE;
     }
-    bool   EvaluateBool()            const  {
+    bool   EvaluateBool()           const {
       FPropertyEvaluator->Data( FCollection->Item( FIterator->EvaluateInt() ) );
       return FPropertyEvaluator->EvaluateBool();
     }
-    short   EvaluateShort()          const  {
+    short   EvaluateShort()         const {
       FPropertyEvaluator->Data( FCollection->Item( FIterator->EvaluateInt() ) );
       return FPropertyEvaluator->EvaluateShort();
     }
-    int   EvaluateInt()              const  {
+    int   EvaluateInt()             const {
       FPropertyEvaluator->Data( FCollection->Item( FIterator->EvaluateInt() ) );
       return FPropertyEvaluator->EvaluateInt();
     }
-    long   EvaluateLong()            const  {
+    long   EvaluateLong()           const {
       FPropertyEvaluator->Data( FCollection->Item( FIterator->EvaluateInt() ) );
       return FPropertyEvaluator->EvaluateLong();
     }
-    float   EvaluateFloat()          const  {
+    float   EvaluateFloat()         const {
       FPropertyEvaluator->Data( FCollection->Item( FIterator->EvaluateInt() ) );
       return FPropertyEvaluator->EvaluateFloat();
     }
-    double EvaluateDouble()          const  {
+    double EvaluateDouble()         const {
       FPropertyEvaluator->Data( FCollection->Item( FIterator->EvaluateInt() ) );
       return FPropertyEvaluator->EvaluateDouble();
     }
@@ -362,15 +362,15 @@ template <class CollectionProviderClass, class PropertyProviderClass, class Eval
       FPropertyEvaluator->Data( FCollection->Item( FIterator->EvaluateInt() ) );
       return FPropertyEvaluator->EvaluateUshort();
     }
-    unsigned int   EvaluateUint()    const  {
+    unsigned int   EvaluateUint()   const {
       FPropertyEvaluator->Data( FCollection->Item( FIterator->EvaluateInt() ) );
       return FPropertyEvaluator->EvaluateUint();
     }
-    unsigned long  EvaluateUlong()   const  {
+    unsigned long  EvaluateUlong()  const {
       FPropertyEvaluator->Data( FCollection->Item( FIterator->EvaluateInt() ) );
       return FPropertyEvaluator->EvaluateUlong();
     }
-    const olxstr& EvaluateString()     const  {
+    const olxstr& EvaluateString()    const {
       FPropertyEvaluator->Data( FCollection->Item( FIterator->EvaluateInt() ) );
       return FPropertyEvaluator->EvaluateString();
     }

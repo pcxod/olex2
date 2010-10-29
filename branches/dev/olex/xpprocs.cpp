@@ -6316,12 +6316,28 @@ public:
 #endif
 
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TTypeList<int> arr;
-  arr.AddNew(1);  arr.AddNew(2);
-  int *ip1 = &arr[0], *ip2 = &arr[1];
-  int &ir1 = arr[0], &ir2 = arr[1];
-  arr.Swap(0,1);
-  arr.Clear();
+  TSymmLib& siml = TSymmLib::GetInstance();
+  for( size_t sgi=0; sgi < siml.SGCount(); sgi++ )  {
+    smatd_list ml;
+    siml.GetGroup(sgi).GetMatrices(ml, mattAll);
+    for( size_t i=0; i < ml.Count(); i++ )  {
+      for( size_t j=0; j < ml.Count(); j++ )  {
+        smatd m1 = ml[i]*ml[j];
+        size_t index = InvalidIndex;
+        for( size_t k=0; k < ml.Count(); k++ )  {
+          if( ml[k].r == m1.r )  {
+            vec3d t = m1.t-ml[k].t;
+            if( (t-t.Round<int>()).QLength() < 1e-6 )  {
+              index = k;
+              break;
+            }
+          }
+        }
+        if( index == InvalidIndex )
+          continue;
+      }
+    }
+  }
   //TSocketFS fs(TUrl("http://localhost:8082"));
   //if( fs.Exists("dist/cds.jar", true) )  {
   //  TEFile* ef = fs.OpenFileAsFile("dist/cds.jar");
@@ -8132,8 +8148,8 @@ public:
       CalcVolume();
   }
   const olxstr& GetName() const  {  return Name;  }
-  double GetVolume()  const  {  return Volume.GetV();  }
-  double GetEsd()  const  {  return Volume.GetE();  }
+  double GetVolume() const {  return Volume.GetV();  }
+  double GetEsd() const {  return Volume.GetE();  }
 };
 int Esd_ThSort( const Esd_Tetrahedron* th1, const Esd_Tetrahedron* th2 )  {
   double v = th1->GetVolume() - th2->GetVolume();

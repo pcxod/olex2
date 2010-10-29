@@ -72,7 +72,7 @@ public:
     &OnAtomsDeleted;
 
   // this is does not have any usefull data - just for functions call!!!
-  inline TNetwork& GetNetwork()  const  {  return *Network; }
+  inline TNetwork& GetNetwork() const {  return *Network; }
 
   void Clear(bool ClearUnitCell);
   void Uniq(bool removeSymmEquivalents = false);

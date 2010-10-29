@@ -1,8 +1,5 @@
-//---------------------------------------------------------------------------
-
-#ifndef dataitemH
-#define dataitemH
-//---------------------------------------------------------------------------
+#ifndef __olx_sdl_dataitem_H
+#define __olx_sdl_dataitem_H
 #include "ebase.h"
 #include "typelist.h"
 #include "tptrlist.h"
@@ -139,7 +136,7 @@ public:
   public:
     TNonexistingDataItemException(const olxstr& location, const olxstr &Msg):
       TBasicException(location, Msg)  {  ;  }
-    virtual IEObject* Replicate()  const  {  return new TNonexistingDataItemException(*this);  }
+    virtual IEObject* Replicate() const {  return new TNonexistingDataItemException(*this);  }
   };
 };
 

@@ -88,7 +88,7 @@ void TEBitArray::operator >> (IOutputStream& out) const  {
     out.Write(FData, FCharCount);
 }
 //..............................................................................
-bool TEBitArray::operator == (const TEBitArray& arr )  const  {
+bool TEBitArray::operator == (const TEBitArray& arr ) const {
   if( arr.Count() != Count() )  return false;
   for( size_t i=0; i < FCharCount; i++ )
     if( FData[i] != arr.FData[i] )  return false;

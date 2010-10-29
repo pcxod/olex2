@@ -106,7 +106,7 @@ public:
     return (VecType)(v/l);
   }
 
-  template <typename AT> VecType DistanceTo(const TVector<AT>& V)  const  {
+  template <typename AT> VecType DistanceTo(const TVector<AT>& V) const {
     if( Fn != V.Fn )  
       throw TFunctionFailedException(__OlxSourceInfo, "vectors of different size");
     double v = 0;
