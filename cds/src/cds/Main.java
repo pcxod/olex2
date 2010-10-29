@@ -261,16 +261,32 @@ public class Main {
       else
         print("Failed to stop server.");
     }
-    else if( command.equals("block") && args.size() == 2 )  {
+    else if( command.equals("block") && (args.size() == 2 || args.size() == 1) )  {
       if( !status.equals("running") )  {
         print("Not running...");
         return;
       }
-      st = doCall("block", args.get(1));
-      if( st.size() == 1 && st.get(0).equals("OK") )
-        print("The address has been blocked for the session.");
-      else
-        print("Failed to block the address.");
+      if( args.size() == 2 )  {
+        st = doCall("block", args.get(1));
+        if( st.size() == 1 && st.get(0).equals("OK") )
+          print("The address has been blocked for the session.");
+        else
+          print("Failed to block the address.");
+      }
+      else  {
+        st = doCall("block", "");
+        if( st.size() >= 1 && st.get(0).equals("OK") )  {
+          if( st.size() == 1 )
+            print("No addresses blocked");
+          else {
+            print("The following addresses are blocked:");
+            for( int i=1; i < st.size(); i++ )
+              print(st.get(i));
+          }
+        }
+        else
+          print("Failed read blocked addresses list.");
+      }
     }
     else if( command.equals("unblock") && args.size() == 2 )  {
       if( !status.equals("running") )  {
