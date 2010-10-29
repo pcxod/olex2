@@ -3607,17 +3607,17 @@ void TGXApp::CreateXGrowLines()  {
       const vec3d& cc = aa->ccrd();
       smatd_list *transforms;
       if( FGrowMode & gmSameAtoms )  {
-        transforms = uc.GetInRangeEx(A->ccrd(), cc,
+        transforms = uc.GetInRangeEx(A->CAtom().ccrd(), cc,
           A->GetType().r_bonding + aa->GetType().r_bonding + 15,
           false, UsedTransforms );
       }
       else if( FGrowMode & gmSInteractions )  {
-        transforms = uc.GetInRange(A->ccrd(), cc,
+        transforms = uc.GetInRange(A->CAtom().ccrd(), cc,
           A->GetType().r_bonding + aa->GetType().r_bonding + FXFile->GetLattice().GetDeltaI(),
           false);
       }
       else  {
-        transforms = uc.GetInRange(A->ccrd(), cc,
+        transforms = uc.GetInRange(A->CAtom().ccrd(), cc,
           A->GetType().r_bonding + aa->GetType().r_bonding + FXFile->GetLattice().GetDelta(),
           false);
       }
@@ -3627,14 +3627,13 @@ void TGXApp::CreateXGrowLines()  {
         // check if the atom already generated
         if( ar.Find(TSAtom::Ref(aa->GetId(), transform.GetId())) != NULL )
           continue;
-        vec3d tc = transform*cc;
+        vec3d tc = transform*(A->GetMatrix(0)*cc);
         au.CellToCartesian(tc);
         const double qdist = tc.QDistanceTo(A->crd());
         bool uniq = true;
         for( size_t l=0; l < tr_list.Count(); l++ )  {
           if( tr_list[l].transform == transform )  {  //.dest.QDistanceTo(tc) < 0.001 )  {
             if( tr_list[l].dist > qdist )  {
-              tr_list[l].transform = transform;
               tr_list[l].dist = qdist;
               tr_list[l].to = aa;
               tr_list[l].from = A;

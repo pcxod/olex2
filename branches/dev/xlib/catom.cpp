@@ -2,10 +2,6 @@
 // namespace TXClasses: TCAtom - basic crystalographic atom
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "catom.h"
 #include "ellipsoid.h"
 #include "exception.h"

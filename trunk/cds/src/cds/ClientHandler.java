@@ -118,6 +118,12 @@ public class ClientHandler extends Thread {
                 handled = true;
                 out.writeBytes("OK\n");
               }
+              else  {
+                Iterator<String> itr = Main.blocked.iterator();
+                out.writeBytes("OK\n");
+                while( itr.hasNext() )
+                  out.writeBytes(itr.next()+'\n');
+              }
             } else if (cmd.equals("unblock")) {
               if( cmds.size() == 2 )  {
                 Main.blocked.remove(cmds.get(1));
