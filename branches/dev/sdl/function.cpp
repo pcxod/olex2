@@ -87,7 +87,7 @@ void ABasicFunction::ParseOptions(const olxstr& Options, TCSTypeList<olxstr,olxs
 olxstr ABasicFunction::OptionsToString(const TCSTypeList<olxstr,olxstr>& list) const {
   olxstr rv;
   for( size_t i=0; i < list.Count(); i++ )  {
-    rv << list.GetComparable(i);
+    rv << list.GetKey(i);
     if( !list.GetObject(i).IsEmpty() )
       rv << '-' << list.GetObject(i);
     rv << "&;";

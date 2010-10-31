@@ -54,7 +54,7 @@ public:
       return Accessor::Access(*a).CAtom();
     }
   };
-  TCAtom& CAtom() const {  return *FCAtom; }
+  TCAtom& CAtom() const {  return *FCAtom;  }
   void CAtom(TCAtom& CA);
 
   const cm_Element& GetType() const {  return FCAtom->GetType(); }
@@ -97,7 +97,7 @@ public:
     return false;
   }
   static double weight_unit(const TSAtom& a)  {  return 1.0;  }
-  static double weight_occu(const TSAtom& a)  {  return a.CAtom().GetOccu()*a.CAtom().EquivCount();  }
+  static double weight_occu(const TSAtom& a)  {  return a.CAtom().GetOccu()*(a.CAtom().EquivCount()+1);  }
   static double weight_occu_aw(const TSAtom& a)  {
     return a.CAtom().GetOccu()*a.CAtom().GetDegeneracy()*a.GetType().GetMr();
   }

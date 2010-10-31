@@ -1025,9 +1025,9 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
       if( sortedPeaks.GetObject(i) != NULL )
         sortedPeaks.GetObject(i)->SetLabel(qLabel + olxstr(ac-i), false);
     }
-    QPeakIndex = ac - sortedPeaks.IndexOfComparable( qPeak );
-    MinQPeak = sortedPeaks.GetComparable(0);
-    MaxQPeak = sortedPeaks.Last().Comparable;
+    QPeakIndex = ac - sortedPeaks.IndexOf(qPeak);
+    MinQPeak = sortedPeaks.GetKey(0);
+    MaxQPeak = sortedPeaks.GetLast().Comparable;
   }
 
   TCAtom& ca = this->NewAtom();

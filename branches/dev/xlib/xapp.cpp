@@ -133,8 +133,8 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
     if( ind == InvalidIndex )  {
       scatterers.AddNew<const cm_Element*,compd,compd>(&ca.GetType(), 0, 0);
       bais.Add(ca.GetType());
-      scatterers.Last().C() = scatterers.Last().GetA()->CalcFpFdp(ev_angstrom/WaveLength);
-      scatterers.Last().C() -= scatterers.Last().GetA()->z;
+      scatterers.GetLast().C() = scatterers.GetLast().GetA()->CalcFpFdp(ev_angstrom/WaveLength);
+      scatterers.GetLast().C() -= scatterers.GetLast().GetA()->z;
       ind = scatterers.Count() - 1;
     }
     ca.SetTag(ind);
@@ -440,12 +440,12 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
             TSAtom& sa = XFile().GetLattice().GetAtom(j);
             if( !sa.CAtom().IsAvailable() )  continue;
             if( sa.CAtom().GetTag() != ag[i].GetAtom()->GetTag() )  continue;
-            if( ag[i].GetMatrix() == 0 )  {  // get an atom from the asymm unit
+            if( ag[i].GetMatrix() == NULL )  {  // get an atom from the asymm unit
               if( sa.IsAUAtom() )
                 atoms.Add(sa);
             }
             else  {
-              if( sa.GetMatrix(0).GetId() == ag[i].GetMatrix()->GetId() )  {
+              if( sa.ContainsMatrix(ag[i].GetMatrix()->GetId()) )  {
                 atoms.Add(sa);
               }
             }
@@ -592,7 +592,7 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
           rings[0].Add(ri.Substituents[j][0] );
       }
       else  {
-        if( ri.Substituents.Last().Count() == 0 )  {
+        if( ri.Substituents.GetLast().Count() == 0 )  {
           TBasicApp::GetLog() << "A substituted atom is expected\n";
           return;
         }
@@ -769,10 +769,10 @@ WBoxInfo TXApp::CalcWBox(const TSAtomPList& atoms, const TDoubleList* radii,
     for( size_t j=0; j < crds.Count(); j++ )  {
       const double d = crds[j].GetA().DotProd(rv.normals[i]) - rv.d[i];
       if( radii != NULL )  {
-        const double d1 = d - radii->Item(j);
+        const double d1 = d - radii->GetItem(j);
         if( d1 < rv.r_from[i] )
           rv.r_from[i] = d1;
-        const double d2 = d + radii->Item(j);
+        const double d2 = d + radii->GetItem(j);
         if( d2 > rv.r_to[i] )
           rv.r_to[i] = d2;
       }

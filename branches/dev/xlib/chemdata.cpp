@@ -1213,10 +1213,10 @@ ContentList& XElementLib::SortContentList(ContentList& cl)  {
   ElementPList elms;
   for( size_t i=0; i < cl.Count(); i++ )  {
     elms.Add(cl[i].element);
-    if( *elms.Last() == iCarbonZ )
-      c_type = elms.Last();
-    else if( *elms.Last() == iHydrogenZ )
-      h_type = elms.Last();
+    if( *elms.GetLast() == iCarbonZ )
+      c_type = elms.GetLast();
+    else if( *elms.GetLast() == iHydrogenZ )
+      h_type = elms.GetLast();
   }
   elms.QuickSorter.Sort(elms, Sort_ComparatorWrapper<ElementPSymbolSorter, const cm_Element*>(), SyncSwapListener<ContentList>(cl));
   if( c_type != NULL && elms.Count() > 1 )  {

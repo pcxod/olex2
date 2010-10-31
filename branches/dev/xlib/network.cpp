@@ -1242,9 +1242,9 @@ ContentList TNetwork::GetContentList() const {
     if( a.IsDeleted() || a.GetType() == iQPeakZ )  continue;
     size_t ind = elms.IndexOf(&a.GetType());
     if( ind == InvalidIndex )
-      elms.Add(&a.GetType(), a.CAtom().GetOccu()*a.MatrixCount());
+      elms.Add(&a.GetType(), a.CAtom().GetOccu()*(a.CAtom().EquivCount()+1));
     else
-      elms.GetValue(ind) += (a.CAtom().GetOccu()*a.MatrixCount());
+      elms.GetValue(ind) += (a.CAtom().GetOccu()*(a.CAtom().EquivCount()+1));
   }
   ContentList rv;
   for( size_t i=0; i < elms.Count(); i++ )

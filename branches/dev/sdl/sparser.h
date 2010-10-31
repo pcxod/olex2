@@ -583,7 +583,7 @@ template <class OC, class IC, class AC>
     ~TsaFactory()  {  }
     OC *NewInstance(TPtrList<IEObject>* Args)  {
       if( Args->Count() != 1 )  return NULL;  //TODO: throw exception
-      return new IC( (AC*)Args->Item(0) );
+      return new IC((AC*)Args->GetItem(0));
     }
   };
 // two argument operator factory
@@ -593,7 +593,7 @@ template <class OC, class IC, class AC>
     ~TtaFactory()  {  }
     OC *NewInstance(TPtrList<IEObject>* Args)  {
       if( Args->Count() != 2 )  return NULL;  //TODO: throw exception
-      return new IC( (AC*)Args->Item(0), (AC*)Args->Item(1) );
+      return new IC((AC*)Args->GetItem(0), (AC*)Args->GetItem(1));
     }
   };
 

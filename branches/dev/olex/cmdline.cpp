@@ -25,12 +25,12 @@ TCmdLine::~TCmdLine()  {
   TBasicApp::GetInstance().OnTimer.Remove((AActionHandler*)this);
 }
 //..............................................................................
-bool TCmdLine::ProcessKey( wxKeyEvent& evt )  {
+bool TCmdLine::ProcessKey(wxKeyEvent& evt)  {
   if( (evt.GetKeyCode() == WXK_LEFT) && evt.GetModifiers() == 0 )  {
     if( GetInsertionPoint() <= (long)PromptStr.Length() )
       return true;
   }
-  else if( (evt.GetKeyCode() == WXK_BACK)  )  {
+  else if( (evt.GetKeyCode() == WXK_BACK) )  {
     if( GetInsertionPoint() <= (long)PromptStr.Length() )
       return true;
   }
@@ -51,7 +51,7 @@ bool TCmdLine::ProcessKey( wxKeyEvent& evt )  {
   }
   else if( (evt.GetKeyCode() == WXK_RETURN) && evt.GetModifiers() == 0 )  {
     olxstr cmd = GetCommand();
-    if( !Commands.IsEmpty() && (Commands.LastStr() == cmd ) )
+    if( !Commands.IsEmpty() && (Commands.GetLastString() == cmd ) )
       ;
     else
       Commands.Add( GetCommand()  );

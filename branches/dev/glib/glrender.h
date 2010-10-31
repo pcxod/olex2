@@ -233,12 +233,12 @@ public:
   TGPCollection& GetCollection(int ind) const {  return *FCollections.GetObject(ind);  }
   template <class T>
   TGPCollection* FindCollection(const T& Name)  {
-    size_t ind = FCollections.IndexOfComparable(Name);
+    const size_t ind = FCollections.IndexOf(Name);
     return (ind != InvalidIndex) ? FCollections.GetObject(ind) : NULL;
   }
   template <class T>
   TGPCollection& FindOrCreateCollection(const T& Name)  {
-    size_t ind = FCollections.IndexOfComparable(Name);
+    const size_t ind = FCollections.IndexOf(Name);
     return (ind != InvalidIndex) ? *FCollections.GetObject(ind) : NewCollection(Name);
   }
 

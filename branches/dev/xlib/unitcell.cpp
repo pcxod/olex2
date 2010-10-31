@@ -1,5 +1,4 @@
 //---------------------------------------------------------------------------//
-// namespace TXClasses: crystallographic core
 // TUnitCell: a collection of matrices and ellipoids
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
@@ -25,12 +24,9 @@
 //---------------------------------------------------------------------------
 // TUnitCell function bodies
 //---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
 TUnitCell::TUnitCell(TLattice *L)  {  Lattice = L;  }
 //..............................................................................
-TUnitCell::~TUnitCell()  {
-  Clear();
-}
+TUnitCell::~TUnitCell()  {  Clear();  }
 //..............................................................................
 void TUnitCell::ClearEllipsoids()  {
   for( size_t i=0; i < Ellipsoids.Count(); i++ )  {
@@ -44,7 +40,7 @@ void TUnitCell::ClearEllipsoids()  {
 void TUnitCell::AddEllipsoid()  {
   Ellipsoids.SetCount( Ellipsoids.Count() + 1);
   for( size_t j=0; j < Matrices.Count(); j++ )
-    Ellipsoids.Last().Add( NULL );
+    Ellipsoids.GetLast().Add(NULL);
 }
 //..............................................................................
 void TUnitCell::Clear()  {
@@ -72,7 +68,7 @@ smatd_list TUnitCell::MulMatrices(const smatd_list& in, const smatd& transform) 
   smatd_list out(in.Count());
   for( size_t i=0; i < in.Count(); i++ )  {
     out.Set(i, new smatd(in[i]*transform));
-    const uint8_t index = MultDest[in[i].GetContainerId()][transform.GetContainerId()];
+    const uint8_t index = MulDest[in[i].GetContainerId()][transform.GetContainerId()];
     const int8_t ta = (int8_t)(out[i].t[0]-Matrices[index].t[0]);
     const int8_t tb = (int8_t)(out[i].t[1]-Matrices[index].t[1]);
     const int8_t tc = (int8_t)(out[i].t[2]-Matrices[index].t[2]);
@@ -129,14 +125,15 @@ size_t TUnitCell::GetMatrixMultiplier(short Latt)  {
 }
 //..............................................................................
 void  TUnitCell::InitMatrices()  {
-  MultDest.Clear();
+  MulDest.Clear();
   Matrices.Clear();
   GenerateMatrices(Matrices, GetLattice().GetAsymmUnit(), GetLattice().GetAsymmUnit().GetLatt() );
   const size_t mc = Matrices.Count();
-  MultDest.SetCapacity(mc);
+  MulDest.SetCapacity(mc);
+  InvDest.SetCount(mc);
   for( size_t i=0; i < mc; i++ )  {
     Matrices[i].SetId((uint8_t)i);
-    MultDest.Add(new TArrayList<uint8_t>(mc));
+    MulDest.Add(new TArrayList<uint8_t>(mc));
     for( size_t j=0; j < mc; j++ )  {
       smatd m = Matrices[i]*Matrices[j];
       size_t index = InvalidIndex;
@@ -151,7 +148,23 @@ void  TUnitCell::InitMatrices()  {
       }
       if( index == InvalidIndex )
         throw TFunctionFailedException(__OlxSourceInfo, "assert");
-      MultDest[i][j] = index;
+      MulDest[i][j] = (uint8_t)index;
+    }
+    {
+      const smatd m = Matrices[i].Inverse();
+      size_t index = InvalidIndex;
+      for( size_t k=0; k < mc; k++ )  {
+        if( Matrices[k].r == m.r )  {
+          const vec3d t = m.t - Matrices[k].t;
+          if( (t-t.Round<int>()).QLength() < 1e-6 )  {
+            index = k;
+            break;
+          }
+        }
+      }
+      if( index == InvalidIndex )
+        throw TFunctionFailedException(__OlxSourceInfo, "assert");
+      InvDest[i] = (uint8_t)index;
     }
   }
   UpdateEllipsoids();
@@ -552,7 +565,7 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
             smatd& m = res.AddNew(atoms[i]).B().I();
             m.t += shift;
             m.SetId(0, ii, ik, ik);
-            res.Last().C() = vec;
+            res.GetLast().C() = vec;
           }
         }
       }
@@ -597,7 +610,7 @@ void TUnitCell::_FindBinding(const TSAtom& to, double delta,
             smatd& m = res.AddNew(atoms[i]).B().I();
             m.t += shift;
             m.SetId(0, ii, ik, ik);
-            res.Last().C() = vec;
+            res.GetLast().C() = vec;
           }
         }
       }
@@ -640,7 +653,7 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
       }
       if( Add )  {
         if( part == DefNoPart || (A.GetPart() == 0 || A.GetPart() == part) )
-          envi.Add(A, binding->Item(mi), v);
+          envi.Add(A, binding->GetItem(mi), v);
       }
     }
     delete binding;
@@ -840,7 +853,7 @@ void TUnitCell::BuildStructureMap_Direct(TArray3D<short>& map, double delta, sho
   TPSTypeList<short, double> scatterers;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).IsDeleted() )  continue;
-    size_t ind = scatterers.IndexOfComparable(au.GetAtom(i).GetType().index);
+    const size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().index);
     if( ind != InvalidIndex )  continue;
     const double r = TXApp::GetVdWRadius(au.GetAtom(i), radii) + delta;
     scatterers.Add(au.GetAtom(i).GetType().index, r);
@@ -962,7 +975,7 @@ void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& _map, double delta, sho
   TPSTypeList<short, float> radii;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).IsDeleted() )  continue;
-    size_t ind = radii.IndexOfComparable(au.GetAtom(i).GetType().index);
+    const size_t ind = radii.IndexOf(au.GetAtom(i).GetType().index);
     if( ind != InvalidIndex )  continue;
     const double r = TXApp::GetVdWRadius(au.GetAtom(i), _radii) + delta;
     radii.Add(au.GetAtom(i).GetType().index, (float)r);

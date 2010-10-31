@@ -333,14 +333,14 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
     InfoTables.Delete( InfoTables.Count()-1 );
     return;
   }
-  InfoTables.Last().AssignAtoms(ag);
-  if( !InfoTables.Last().IsValid() )  {
+  InfoTables.GetLast().AssignAtoms(ag);
+  if( !InfoTables.GetLast().IsValid() )  {
     TBasicApp::GetLog().Error(olxstr("Invalid info table: ") << l.Text(' '));
     InfoTables.Delete( InfoTables.Count()-1 );
     return;
   }
   for( size_t i=0; i < InfoTables.Count()-1; i++ )  {
-    if( InfoTables[i] == InfoTables.Last() )  {
+    if( InfoTables[i] == InfoTables.GetLast() )  {
       TBasicApp::GetLog().Error(olxstr("Duplicate info table: ") << l.Text(' '));
       InfoTables.Delete( InfoTables.Count()-1 );
       return;

@@ -496,7 +496,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
 
       size_t switchState = GetSwitchState(Sw->GetName()), index = InvalidIndex;
       if( switchState == UnknownSwitchState )  {
-        index_t iv = Toks.LastStr().RadInt<index_t>();
+        index_t iv = Toks.GetLastString().RadInt<index_t>();
         if( iv < 0 )
           Sw->SetUpdateSwitch(false);
         index = olx_abs(iv)-1;
@@ -920,7 +920,7 @@ void THtml::macSetBorders(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
   }
-  html->SetBorders(Cmds.Last().String.ToInt());
+  html->SetBorders(Cmds.GetLastString().ToInt());
 }
 //..............................................................................
 void THtml::macHtmlHome(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -947,7 +947,7 @@ void THtml::macHtmlLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
   }
-  html->LoadPage( Cmds.Last().String.u_str() );
+  html->LoadPage( Cmds.GetLastString().u_str() );
 }
 //..............................................................................
 void THtml::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -968,7 +968,7 @@ void THtml::macHtmlDump(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   TStrList SL;
   html->GetRoot().ToStrings(SL);
-  TUtf8File::WriteLines(Cmds.Last().String, SL);
+  TUtf8File::WriteLines(Cmds.GetLastString(), SL);
 }
 //..............................................................................
 void THtml::macDefineControl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -1015,9 +1015,9 @@ void THtml::macDefineControl(TStrObjList &Cmds, const TParamList &Options, TMacr
   if( props != NULL )  {
     (*props)["bg"] = Options.FindValue("bg");
     (*props)["fg"] = Options.FindValue("fg");
-    if( props->IndexOfComparable("data") != InvalidIndex )
+    if( props->IndexOf("data") != InvalidIndex )
       (*props)["data"] = Options.FindValue("data", EmptyString);
-    if( props->IndexOfComparable("val") != InvalidIndex )
+    if( props->IndexOf("val") != InvalidIndex )
       (*props)["val"] = Options.FindValue("v");
   }
 }
@@ -1059,14 +1059,14 @@ void THtml::funGetValue(const TStrObjList &Params, TMacroError &E)  {
       E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
       return;
     }
-    if( props->IndexOfComparable("val") == InvalidIndex )  {
+    if( props->IndexOf("val") == InvalidIndex )  {
       E.ProcessingError(__OlxSrcInfo,  "object definition does not have value for: ") << objName;
       return;
     }
-    E.SetRetVal( (*props)["val"] );
+    E.SetRetVal((*props)["val"]);
   }
   else
-    E.SetRetVal( GetObjectValue(Obj) );
+    E.SetRetVal(GetObjectValue(Obj));
 }
 //..............................................................................
 void THtml::SetObjectValue(AOlxCtrl *Obj, const olxstr& Value)  {
@@ -1117,7 +1117,7 @@ void THtml::funSetValue(const TStrObjList &Params, TMacroError &E)  {
       E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
       return;
     }
-    if( props->IndexOfComparable("val") == InvalidIndex )  {
+    if( props->IndexOf("val") == InvalidIndex )  {
       E.ProcessingError(__OlxSrcInfo,  "object definition does not accept value for: ") << objName;
       return;
     }
@@ -1486,7 +1486,7 @@ bool THtml::SetState(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return false;
   }
-  const bool state = Params.Last().String.ToBool();
+  const bool state = Params.GetLastString().ToBool();
   AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
     TSStrStrList<olxstr,false>* props = html->ObjectsState.FindProperties(Params[0]);
@@ -1494,7 +1494,7 @@ bool THtml::SetState(const TStrObjList &Params, TMacroError &E)  {
       E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
       return false;
     }
-    if( props->IndexOfComparable("checked") == InvalidIndex )  {
+    if( props->IndexOf("checked") == InvalidIndex )  {
       E.ProcessingError(__OlxSrcInfo, "object definition does have state for: ") << objName;
       return false;
     }
@@ -1511,9 +1511,9 @@ bool THtml::SetState(const TStrObjList &Params, TMacroError &E)  {
 void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {
   if( !SetState(Params, E) )
     return;
-  if( Params.Last().String.ToBool() )  {
+  if( Params.GetLastString().ToBool() )  {
     TStrObjList params(Params);
-    params.Last().String = FalseString;
+    params.GetLastString() = FalseString;
     TMacroError e;
     for( size_t i=0; i < Groups.Count(); i++ )  {
       if( Groups[i].IndexOf(Params[0]) == InvalidIndex )  continue;

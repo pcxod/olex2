@@ -10,8 +10,8 @@ UseGlNamespace();
 AGlScene::AGlScene() : FParent(NULL) {}
 //..............................................................................
 AGlScene::~AGlScene()  {
-  Fonts.Delete();
-  SmallFonts.Delete();
+  Fonts.DeleteItems();
+  SmallFonts.DeleteItems();
 }
 //..............................................................................
 void AGlScene::StartDraw()  {  olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }

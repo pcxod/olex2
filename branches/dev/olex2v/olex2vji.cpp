@@ -310,7 +310,7 @@ JNIEXPORT jbyteArray JNICALL Java_olex2j_GlWindow_getStatus(JNIEnv* env, jobject
   return rv;
 }
 JNIEXPORT void JNICALL Java_olex2j_GlWindow_finalise(JNIEnv *, jobject this_object, jint o_id)  {
-  size_t i = TOlexViewer::Instances.IndexOfComparable(o_id);
+  size_t i = TOlexViewer::Instances.IndexOfo_id);
   if( i == InvalidIndex )  return;
   delete TOlexViewer::Instances.GetObject(i);
   TOlexViewer::Instances.Remove(i);

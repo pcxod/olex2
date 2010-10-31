@@ -1539,7 +1539,7 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       Cmds[0].Equalsi("hbonds"));
   }
   else  {
-    int Mask = Cmds.Last().String.ToInt();
+    int Mask = Cmds.GetLastString().ToInt();
     Cmds.Delete( Cmds.Count() - 1 );
     TGPCollection *GPC = FXApp->GetRender().FindCollection(Cmds.Text(' '));
     if( GPC != NULL )  {
@@ -5145,7 +5145,7 @@ void TMainForm::macSelBack(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macStoreParam(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  size_t ind = StoredParams.IndexOfComparable(Cmds[0]);
+  const size_t ind = StoredParams.IndexOf(Cmds[0]);
   if( ind == InvalidIndex )
     StoredParams.Add( Cmds[0], Cmds[1] );
   else
@@ -6799,20 +6799,20 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   vals.Add(0);
   for( size_t i=SortedQPeaks.Count()-1; i != InvalidIndex; i-- )  {
-    if( (SortedQPeaks.GetComparable(i) - SortedQPeaks.GetComparable(i-1))/SortedQPeaks.GetComparable(i) > 0.1 )  {
+    if( (SortedQPeaks.GetKey(i) - SortedQPeaks.GetKey(i-1))/SortedQPeaks.GetKey(i) > 0.1 )  {
       TBasicApp::GetLog() << ( olxstr("Threshold here: ") << SortedQPeaks.GetObject(i)->GetLabel() << '\n' );
-      vals.Last() += SortedQPeaks.GetComparable(i);
+      vals.GetLast() += SortedQPeaks.GetKey(i);
       cnt++;
-      vals.Last() /= cnt;
+      vals.GetLast() /= cnt;
       cnt = 0;
       vals.Add(0);
       continue;
     }
-    vals.Last() += SortedQPeaks.GetComparable(i);
+    vals.GetLast() += SortedQPeaks.GetKey(i);
     cnt ++;
   }
   if( cnt != 0 )
-    vals.Last() /= cnt;
+    vals.GetLast() /= cnt;
   for( size_t i=0; i < vals.Count(); i++ )
     TBasicApp::GetLog() << vals[i] << '\n';
 }
@@ -7554,11 +7554,11 @@ void TMainForm::macLstGO(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     TGPCollection& gpc = FXApp->GetRender().GetCollection(i);
     output.Add( gpc.GetName() ) << '[';
     for( size_t j=0; j < gpc.PrimitiveCount(); j++ )  {
-      output.Last().String << gpc.GetPrimitive(j).GetName();
+      output.GetLastString() << gpc.GetPrimitive(j).GetName();
       if( (j+1) < gpc.PrimitiveCount() )
-        output.Last().String << ';';
+        output.GetLastString() << ';';
     }
-    output.Last().String << "]->" << gpc.ObjectCount();
+    output.GetLastString() << "]->" << gpc.ObjectCount();
   }
   TBasicApp::GetLog() << ( output );
 }
@@ -7919,49 +7919,49 @@ public:
           continue;
         }
         // XYZ
-        size_t ind = XYZ.IndexOfComparable(d);
+        size_t ind = XYZ.IndexOf(d);
         if( ind == InvalidIndex )  XYZ.Add(d, 1);
         else  XYZ.GetObject(ind)++;
         // XY
         diff[0] = from[0]-to[0];  diff[1] = from[1]-to[1]; diff[2] = 0;
         au.CellToCartesian(diff);
         d = olx_round(diff.Length()*100);  // keep two numbers
-        ind = XY.IndexOfComparable(d);
+        ind = XY.IndexOf(d);
         if( ind == InvalidIndex )  XY.Add(d, 1);
         else  XY.GetObject(ind)++;
         // XZ
         diff[0] = from[0]-to[0];  diff[2] = from[2]-to[2]; diff[1] = 0;
         au.CellToCartesian(diff);
         d = olx_round(diff.Length()*100);  // keep two numbers
-        ind = XZ.IndexOfComparable(d);
+        ind = XZ.IndexOf(d);
         if( ind == InvalidIndex )  XZ.Add(d, 1);
         else  XZ.GetObject(ind)++;
         // YZ
         diff[1] = from[1]-to[1];  diff[2] = from[2]-to[2]; diff[0] = 0;
         au.CellToCartesian(diff);
         d = olx_round(diff.Length()*100);  // keep two numbers
-        ind = YZ.IndexOfComparable(d);
+        ind = YZ.IndexOf(d);
         if( ind == InvalidIndex )  YZ.Add(d, 1);
         else  YZ.GetObject(ind)++;
         // XX
         diff[0] = from[0]-to[0];  diff[1] = 0; diff[2] = 0;
         au.CellToCartesian(diff);
         d = olx_round(diff.Length()*100);  // keep two numbers
-        ind = XX.IndexOfComparable(d);
+        ind = XX.IndexOf(d);
         if( ind == InvalidIndex )  XX.Add(d, 1);
         else  XX.GetObject(ind)++;
         // YY
         diff[1] = from[1]-to[1];  diff[0] = 0; diff[2] = 0;
         au.CellToCartesian(diff);
         d = olx_round(diff.Length()*100);  // keep two numbers
-        ind = YY.IndexOfComparable(d);
+        ind = YY.IndexOf(d);
         if( ind == InvalidIndex )  YY.Add(d, 1);
         else  YY.GetObject(ind)++;
         // ZZ
         diff[2] = from[2]-to[2];  diff[0] = 0; diff[1] = 0;
         au.CellToCartesian(diff);
         d = olx_round(diff.Length()*100);  // keep two numbers
-        ind = ZZ.IndexOfComparable(d);
+        ind = ZZ.IndexOf(d);
         if( ind == InvalidIndex )  ZZ.Add(d, 1);
         else  ZZ.GetObject(ind)++;
       }
@@ -7998,7 +7998,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
       TCAtom& a1 = au.GetAtom(j);
       if( a1.GetTag() == -1 )  continue;
       if( a1.GetType() == iHydrogenZ )  continue;
-      size_t ai = atomTypes.IndexOfComparable(&a1.GetType());
+      const size_t ai = atomTypes.IndexOf(&a1.GetType());
       double* data = ((ai == InvalidIndex) ? new double[601] : atomTypes.GetObject(ai));
       if( ai == InvalidIndex )  {// new array, initialise
         memset(data, 0, sizeof(double)*600);
@@ -8048,8 +8048,8 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
       tmp_data[j] += data[j]*100.0;
       sl.Add( (double)j/100 ) << '\t' << data[j]*1000.0;  // normalised by 1000 square
     }
-    sl.SaveToFile( (Cmds[0]+'_') << atomTypes.GetComparable(i)->symbol << ".xlt");
-    out << (int16_t)atomTypes.GetComparable(i)->index;
+    sl.SaveToFile( (Cmds[0]+'_') << atomTypes.GetKey(i)->symbol << ".xlt");
+    out << (int16_t)atomTypes.GetKey(i)->index;
     out.Write(data, 600*sizeof(double));
     delete [] data;
   }
@@ -8078,9 +8078,9 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
     }
     double R = 0;
     for( size_t i=0; i < data.Count(); i++ )  {
-      size_t ind = ref_data.IndexOfComparable(data.GetComparable(i));
+      const size_t ind = ref_data.IndexOf(data.GetKey(i));
       if( ind == InvalidIndex )  {
-        TBasicApp::GetLog() << (olxstr("undefined distance ") << data.GetComparable(i) << '\n');
+        TBasicApp::GetLog() << (olxstr("undefined distance ") << data.GetKey(i) << '\n');
         continue;
       }
       R += sqrt( (double)ref_data.GetObject(ind)*data.GetObject(i) );
@@ -8102,7 +8102,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
       TPSTypeList<int, int>& d = *data.GetObject(i);
       sl.SetCapacity( d.Count() );
       for( size_t j=0; j < d.Count(); j++ )  {
-        sl.Add( (double)d.GetComparable(j)/100 ) << '\t' << d.GetObject(j);
+        sl.Add( (double)d.GetKey(j)/100 ) << '\t' << d.GetObject(j);
       }
       sl.SaveToFile( (Cmds[0]+data[i]) << ".xlt");
     }
@@ -8242,7 +8242,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         olxstr pld;
         for( size_t i=0; i < xp.Plane().Count(); i++ )  {
           atoms.Add(xp.Plane().GetAtom(i));
-          pld << atoms.Last()->GetLabel() << ' ';
+          pld << atoms.GetLast()->GetLabel() << ' ';
         }
         TBasicApp::GetLog() << (values.Add("Plane ") << pld <<
           (values.Add("RMS: ") << vcovc.CalcPlane(atoms).ToString()) << " A") << '\n';
@@ -8283,7 +8283,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         olxstr pld;
         for( size_t i=0; i < xp.Plane().Count(); i++ )  {
           atoms.Add(xp.Plane().GetAtom(i));
-          pld << atoms.Last()->GetLabel() << ' ';
+          pld << atoms.GetLast()->GetLabel() << ' ';
         }
         TSAtom& sa = ((TXAtom&)sel[EsdlInstanceOf(sel[0],TXAtom) ? 0 : 1]).Atom();
         TBasicApp::GetLog() << (values.Add(sa.GetLabel()) << " to plane " << pld << "distance: " <<
@@ -8301,7 +8301,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         olxstr pld;
         for( size_t i=0; i < xp.Plane().Count(); i++ )  {
           atoms.Add(xp.Plane().GetAtom(i));
-          pld << atoms.Last()->GetLabel() << ' ';
+          pld << atoms.GetLast()->GetLabel() << ' ';
         }
         TSBond& sb = ((TXBond&)sel[ EsdlInstanceOf(sel[0], TXBond) ? 0 : 1]).Bond();
         TEValue<double> v(vcovc.CalcP2VAngle(atoms, sb.A(), sb.B())),
@@ -8317,11 +8317,11 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         olxstr pld1, pld2;
         for( size_t i=0; i < xp1.Plane().Count(); i++ )  {
           p1.Add(xp1.Plane().GetAtom(i));
-          pld1 << p1.Last()->GetLabel() << ' ';
+          pld1 << p1.GetLast()->GetLabel() << ' ';
         }
         for( size_t i=0; i < xp2.Plane().Count(); i++ )  {
           p2.Add(xp2.Plane().GetAtom(i));
-          pld2 << p2.Last()->GetLabel() << ' ';
+          pld2 << p2.GetLast()->GetLabel() << ' ';
         }
         const TEValue<double> angle = vcovc.CalcP2PAngle(p1, p2);
         TBasicApp::GetLog() << (values.Add("Plane ") << pld1 << "to plane angle: " <<
@@ -8367,7 +8367,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         olxstr pld;
         for( size_t i=0; i < xp->Plane().Count(); i++ )  {
           atoms.Add(xp->Plane().GetAtom(i));
-          pld << atoms.Last()->GetLabel() << ' ';
+          pld << atoms.GetLast()->GetLabel() << ' ';
         }
         TBasicApp::GetLog() << (values.Add(a1->GetLabel()) << '-' << a2->GetLabel() << " to plane " << pld <<
           "angle: " << vcovc.CalcP2VAngle(atoms, *a1, *a2).ToString()) << '\n';

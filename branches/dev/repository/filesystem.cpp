@@ -469,9 +469,9 @@ TFSItem* TFSItem::UpdateFile(TFSItem& item)  {
 }
 //..............................................................................
 void TFSItem::DeleteItem(TFSItem* item)  {
-  size_t ind = Items.IndexOfComparable(item->GetName());
+  const size_t ind = Items.IndexOf(item->GetName());
   if( ind != InvalidIndex )  {
-    Items.Remove(ind);
+    Items.Delete(ind);
     item->DelFile();
     delete item;
   }
@@ -570,7 +570,7 @@ void TFSItem::ClearNonexisting()  {
         if( Index.DestFS != NULL && !Index.DestFS->Exists(Index.DestFS->GetBase() + Item(i).GetFullName()) )
         {
           delete Items.GetObject(i);
-          Items.Remove(i--);
+          Items.Delete(i--);
         }
       }
     }
@@ -578,7 +578,7 @@ void TFSItem::ClearNonexisting()  {
       Item(i).ClearNonexisting();
       if( Item(i).IsEmpty() )  {
         delete Items.GetObject(i);
-        Items.Remove(i--);
+        Items.Delete(i--);
       }
     }
   }
@@ -591,7 +591,7 @@ void TFSItem::ClearEmptyFolders()  {
         Item(i).ClearEmptyFolders();
       if( Item(i).IsEmpty() )  {
         delete Items.GetObject(i);
-        Items.Remove(i);
+        Items.Delete(i);
         i--;
       }
     }

@@ -297,7 +297,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
         GlP.SetOwnerId(0);
       /* copy the default drawing style tag*/
       GlP.Params.Resize(GlP.Params.Count()+1);
-      GlP.Params.Last() = SGlP->Params.Last();
+      GlP.Params.GetLast() = SGlP->Params.GetLast();
 
       GlP.StartList();
       GlP.CallList(SGlP);
@@ -311,14 +311,14 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
         const size_t mi = GS.IndexOfMaterial(FStaticObjects.GetString(i));
         if( mi != InvalidIndex )
           GlP.SetProperties(GS.GetPrimitiveStyle(mi).GetProperties());
-        else if( SGlP->Params.Last() == ddsDefSphere )   {
+        else if( SGlP->Params.GetLast() == ddsDefSphere )   {
           const size_t lmi = GS.IndexOfMaterial("Sphere");
           if( lmi != InvalidIndex )
             RGlM = GS.GetPrimitiveStyle(lmi).GetProperties();
           else
             GetDefSphereMaterial(FAtom, RGlM);
         }
-        else if( SGlP->Params.Last() == ddsDefRim )  {
+        else if( SGlP->Params.GetLast() == ddsDefRim )  {
           const size_t lmi = GS.IndexOfMaterial("Rims");
           if( lmi != InvalidIndex )
             RGlM = GS.GetPrimitiveStyle(lmi).GetProperties();
@@ -622,7 +622,7 @@ void TXAtom::CreateStaticObjects()  {
   GlP->Params[0] = 1;  GlP->Params[1] = SphereQ; GlP->Params[2] = SphereQ;
   GlP->Compile();
   GlP->Params.Resize(GlP->Params.Count()+1);
-  GlP->Params.Last() = ddsDefSphere;
+  GlP->Params.GetLast() = ddsDefSphere;
 //..............................
   // create a small sphere
   if( (GlP = FStaticObjects.FindObject("Small sphere")) == NULL )
@@ -630,7 +630,7 @@ void TXAtom::CreateStaticObjects()  {
   GlP->Params[0] = 0.5;  GlP->Params[1] = SphereQ; GlP->Params[2] = SphereQ;
   GlP->Compile();
   GlP->Params.Resize(GlP->Params.Count()+1);
-  GlP->Params.Last() = ddsDefSphere;
+  GlP->Params.GetLast() = ddsDefSphere;
 //..............................
   // create simple rims
   GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
@@ -709,13 +709,13 @@ void TXAtom::CreateStaticObjects()  {
   GlP->Vertices[5][2] =  1; 
   GlP->Params[0] = 1.0;
   GlP->Params.Resize(GlP->Params.Count()+1);
-  GlP->Params.Last() = ddsDefSphere;
+  GlP->Params.GetLast() = ddsDefSphere;
 //..............................
   // polyhedron - dummy
   if( (FStaticObjects.FindObject("Polyhedron")) == NULL )
     FStaticObjects.Add("Polyhedron", GlP = &Parent.NewPrimitive(sgloMacro));
   GlP->Params.Resize(GlP->Params.Count()+1);
-  GlP->Params.Last() = ddsDefSphere;
+  GlP->Params.GetLast() = ddsDefSphere;
 // init indexes after all are added
   PolyhedronIndex = (uint8_t)FStaticObjects.IndexOf("Polyhedron");
   SphereIndex = (uint8_t)FStaticObjects.IndexOf("Sphere");

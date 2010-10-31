@@ -130,7 +130,7 @@ void TEBitArray::FromBase64String(const olxstr& str) {
   if( (str.Length()%4) != 1 ) 
     throw TInvalidArgumentException(__OlxSourceInfo, "representation");
   olxcstr cstr = encoding::base64::decode(olxcstr(str.SubStringTo(str.Length()-1)));
-  SetSize(cstr.Length()*8 - (8-(str.Last()-'0'))); 
+  SetSize(cstr.Length()*8 - (8-(str.GetLast()-'0'))); 
   memcpy(FData, cstr.raw_str(), cstr.Length());
 }
 //..............................................................................

@@ -93,7 +93,7 @@ size_t TGlConsole::CalcScrollDown() const {
   TGlOption CC = Parent.LightModel.GetClearColor();
   size_t lines = 0;
   if( ShowBuffer() && FLinesToShow != 0 )  {
-    for( index_t i=FTxtPos; i < FBuffer.Count(); i++ )  {
+    for( size_t i=FTxtPos; i < FBuffer.Count(); i++ )  {
       if( FBuffer[i].IsEmpty() )  {
         T[1] += empty_line_height;
         lines++;
@@ -372,12 +372,12 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hyphenate)  {
   if( !Hyphenate || SingleLine )  {
     TGlMaterial *GlM = NULL;
     if( M != NULL )  GlM = new TGlMaterial(*M);
-    if( !FBuffer.IsEmpty() && FBuffer.LastStr().IsEmpty() )  {
-      FBuffer.Last().String = S;
+    if( !FBuffer.IsEmpty() && FBuffer.GetLastString().IsEmpty() )  {
+      FBuffer.GetLastString() = S;
       /* this line is added after memory leak analysis by Compuware DevPartner 8.2 trial */
-      if( FBuffer.Last().Object != NULL )
-        delete FBuffer.Last().Object;
-      FBuffer.Last().Object = GlM;
+      if( FBuffer.GetLast().Object != NULL )
+        delete FBuffer.GetLast().Object;
+      FBuffer.GetLast().Object = GlM;
     }
     else
       FBuffer.Add(S, GlM);
@@ -403,9 +403,9 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  
       for( size_t j=0; j < Txt.Count(); j++ )  {
         TGlMaterial *GlM = NULL;
         if( M != NULL )  GlM = new TGlMaterial(*M);
-        if( j == 0 && !FBuffer.IsEmpty() && FBuffer.LastStr().IsEmpty() )  {
-          FBuffer.Last().String = Txt[j];
-          FBuffer.Last().Object = GlM;
+        if( j == 0 && !FBuffer.IsEmpty() && FBuffer.GetLastString().IsEmpty() )  {
+          FBuffer.GetLastString() = Txt[j];
+          FBuffer.GetLast().Object = GlM;
         }
         else
           FBuffer.Add(Txt[j], GlM);
@@ -415,9 +415,9 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  
     else  {
       TGlMaterial *GlM = NULL;
       if( M != NULL )  GlM = new TGlMaterial(*M);
-      if( !FBuffer.IsEmpty() && FBuffer.LastStr().IsEmpty() )  {
-        FBuffer.Last().String = SL[i];
-        FBuffer.Last().Object = GlM;
+      if( !FBuffer.IsEmpty() && FBuffer.GetLastString().IsEmpty() )  {
+        FBuffer.GetLastString() = SL[i];
+        FBuffer.GetLast().Object = GlM;
       }
       else
         FBuffer.Add(SL[i], GlM);
@@ -566,23 +566,23 @@ size_t TGlConsole::Write(const olxstr& str)  {
   if( FBuffer.IsEmpty() )
     FBuffer.Add(EmptyString, PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
   else  {
-    if( FBuffer.Last().Object == NULL )
-      FBuffer.Last().Object = (PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
-    else if( FBuffer.Last().String.IsEmpty() )  {  // reset for empty lines
-      delete FBuffer.Last().Object;
-      FBuffer.Last().Object = (PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
+    if( FBuffer.GetLast().Object == NULL )
+      FBuffer.GetLast().Object = (PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
+    else if( FBuffer.GetLastString().IsEmpty() )  {  // reset for empty lines
+      delete FBuffer.GetLast().Object;
+      FBuffer.GetLast().Object = (PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
     }
   }
-  FBuffer.Last().String.SetCapacity(FBuffer.Last().String.Length() + str.Length());
+  FBuffer.GetLastString().SetCapacity(FBuffer.GetLastString().Length() + str.Length());
   for( size_t i=0; i < str.Length(); i++ )  {
     if( str.CharAt(i) == '\n' )
       FBuffer.Add(EmptyString, PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
     else if( str.CharAt(i) == '\r' )  {
       if( i+1 < str.Length() && str.CharAt(i+1) != '\n' &&!FBuffer.IsEmpty() )
-        FBuffer.Last().String = EmptyString;
+        FBuffer.GetLastString() = EmptyString;
     }
     else
-      FBuffer.Last().String << str.CharAt(i);
+      FBuffer.GetLastString() << str.CharAt(i);
   }
   KeepSize();
   FTxtPos = FBuffer.Count()-1;

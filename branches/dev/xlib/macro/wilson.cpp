@@ -240,7 +240,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
 
     TPtrList<TWilsonEBin> ebins;
     int ebinsCnt = 400;
-    double minE=refs[0].Fo2, maxE=refs.Last().Fo2;
+    double minE=refs[0].Fo2, maxE=refs.GetLast().Fo2;
     double estep = (maxE-minE)/ebinsCnt,
            ehstep = estep/2;
 

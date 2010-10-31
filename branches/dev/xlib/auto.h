@@ -46,11 +46,11 @@ public:
   inline const TAutoDBFolder& operator = (const TAutoDBFolder& dbf)  {
     Files.SetCapacity( dbf.Files.Count() );
     for( size_t i=0; i < dbf.Files.Count(); i++ )
-      Files.Add( dbf.Files.GetComparable(i), dbf.Files.GetObject(i) );
+      Files.Add( dbf.Files.GetKey(i), dbf.Files.GetObject(i) );
     return dbf;
   }
   TAutoDBFolder(IDataInputStream& in)     {  LoadFromStream(in);  }
-  inline bool Contains(const olxstr& fileName )  {  return Files.IndexOfComparable(fileName) != InvalidIndex;  }
+  inline bool Contains(const olxstr& fileName )  {  return Files.IndexOf(fileName) != InvalidIndex;  }
   TAutoDBIdObject& Add(const olxstr& fileName)  {
     TAutoDBIdObject* df = new TAutoDBIdObject();
     Files.Add(fileName, df );
@@ -58,7 +58,7 @@ public:
   }
   inline size_t Count() const {  return Files.Count();  }
   inline TAutoDBIdObject& GetIdObject(size_t ind) const {  return *Files.GetObject(ind);  }
-  inline const olxstr& GetObjectName(size_t ind) {  return Files.GetComparable(ind);  }
+  inline const olxstr& GetObjectName(size_t ind) {  return Files.GetKey(ind);  }
   void AssignIds(uint32_t base)  {
     for( size_t i=0; i < Files.Count(); i++ )
       Files.GetObject(i)->SetId((uint32_t)(base + i));

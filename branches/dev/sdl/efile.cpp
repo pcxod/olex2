@@ -131,7 +131,7 @@ bool TEFile::TFileNameMask::DoesMatch(const olxstr& _str) const {
     if( toks.Count() == 1 )  
       return tmp.Length() == str.Length() ? true : mask[ mask.Length()-1] == '*';
   }
-  if( mask.Last() != '*' && toks.Count() > (size_t)(mask.CharAt(0) != '*' ? 1 : 0) )  {
+  if( mask.GetLast() != '*' && toks.Count() > (size_t)(mask.CharAt(0) != '*' ? 1 : 0) )  {
     olxstr& tmp = toks[toks.Count()-1];
     if( tmp.Length() > (str.Length()-start) )  return false;
     for( size_t i=0; i < tmp.Length(); i++ )
@@ -337,7 +337,7 @@ olxstr TEFile::ParentDir(const olxstr& name) {
   if( name.IsEmpty() )  return name;
   // normalise path
   olxstr np = OLX_OS_PATH(name);
-  size_t start = (np.Last() == OLX_PATH_DEL ? np.Length()-2 : np.Length()-1);
+  size_t start = (np.GetLast() == OLX_PATH_DEL ? np.Length()-2 : np.Length()-1);
   size_t i = np.LastIndexOf(OLX_PATH_DEL, start);
   if( i > 0 && i != InvalidIndex )
     return np.SubStringTo(i+1);
@@ -386,7 +386,7 @@ olxstr TEFile::ChangeFileExt(const olxstr &F, const olxstr &Ext)  {
   if( i != InvalidIndex && i > 0 && (d_i == InvalidIndex || d_i < i) )
     fn.SetLength(i);
   else  {
-    if( fn.Last() == '.' )
+    if( fn.GetLast() == '.' )
       fn.SetLength(fn.Length()-1);
   }
   if( !Ext.IsEmpty() )  {

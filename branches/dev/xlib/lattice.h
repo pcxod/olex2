@@ -187,12 +187,9 @@ public:
   inline bool operator != (const TLattice* l) const {  return this != l;  }
   struct GrowInfo  {
     smatd_plist matrices;  // the list of all matrices
-    TArrayList<TIndexList> info;  // TCAtomId -> list of used matrices;
+    TArrayList<TIndexList> info;  // TCAtomId -> matrix;
     size_t unc_matrix_count;
-    ~GrowInfo() {
-      for( size_t i=0; i < matrices.Count(); i++ )
-        delete matrices[i];
-    }
+    ~GrowInfo()  {  matrices.DeleteItems();  }
   };
   // takes the ownership of the provided object
   void SetGrowInfo(GrowInfo* grow_info);

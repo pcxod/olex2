@@ -31,7 +31,7 @@ public:
   TGlPrimitive& NewPrimitive(const olxstr& Name, short type);
   void AddPrimitive(TGlPrimitive& P)  {  Primitives.Add(P);  }
 
-  void RemovePrimitive(int index) {  Primitives.Delete(index); }
+  void RemovePrimitive(size_t index) {  Primitives.Delete(index); }
   void RemovePrimitive(TGlPrimitive& GlP)  {  Primitives.Remove(GlP);  }
 
   bool ContainsPrimitive(TGlPrimitive& GlP);

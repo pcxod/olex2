@@ -9,8 +9,9 @@
 #include "lattice.h"
 #include "asymmunit.h"
 #include "symspace.h"
-// on Linux its is defined as something...
-#undef QLength
+#ifdef QLength  // on Linux it is defined as something...
+  #undef QLength
+#endif
 
 BeginXlibNamespace()
 
@@ -18,7 +19,8 @@ class TUnitCell: public IEObject  {
   TNetwork*  Network;  // for internal use only
   smatd_list Matrices;  // list of unique matrices; FMatrices + centering
   TArrayList<TEllpPList> Ellipsoids;  // i - atoms index, j - matrix index 
-  TTypeList<TArrayList<uint8_t> > MultDest;  // index of r from a product of two matrices
+  TTypeList<TArrayList<uint8_t> > MulDest;  // index of r from a product of two matrices
+  TArrayList<uint8_t> InvDest;
   class TLattice*  Lattice;    // parent lattice
   /* a macro FindInRange, if the atom list is NULL, atoms are taken from the asymmetric unit,
   atoms are excluded only if deleted, availability is not counted */
@@ -53,7 +55,13 @@ public:
   smatd_list MulMatrices(const smatd_list& in, const smatd& transform) const;
   smatd MulMatrix(const smatd& m, const smatd& tr) const {
     smatd rv = m*tr;  // rv*r = tr*(m*r) - this is how it is when applied to a vector....
-    const uint8_t index = MultDest[m.GetContainerId()][tr.GetContainerId()];
+    const uint8_t index = MulDest[m.GetContainerId()][tr.GetContainerId()];
+    rv.SetRawId(smatd::GenerateId(index, vec3i(rv.t-Matrices[index].t)));
+    return rv;
+  }
+  smatd InvMatrix(const smatd& m) const {
+    smatd rv = m.Inverse();
+    const uint8_t index = InvDest[m.GetContainerId()];
     rv.SetRawId(smatd::GenerateId(index, vec3i(rv.t-Matrices[index].t)));
     return rv;
   }

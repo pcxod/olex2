@@ -201,10 +201,10 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
         SortedLatticeHits.Add(-1, LatticeHits[i].GetObject() );
     }
   }
-  if( SortedLatticeHits.GetComparable(0) > threshold || SortedLatticeHits.GetComparable(0) == -1 )
+  if( SortedLatticeHits.GetKey(0) > threshold || SortedLatticeHits.GetKey(0) == -1 )
     ChosenLats.Add(SymmLib.FindLattice("P"));
   for( size_t i=0; i < SortedLatticeHits.Count(); i++ )  {
-    if( SortedLatticeHits.GetComparable(i) == -1 || SortedLatticeHits.GetComparable(i) < threshold )
+    if( SortedLatticeHits.GetKey(i) == -1 || SortedLatticeHits.GetKey(i) < threshold )
       ChosenLats.Add( SortedLatticeHits.GetObject(i) );
   }
   if( ChosenLats.IsEmpty() )

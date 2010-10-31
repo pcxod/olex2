@@ -118,10 +118,10 @@ public:
 
 
   // only pointers are compared!!
-  inline bool operator == (const TNetwork& n) const  {  return this == &n;  }
-  inline bool operator == (const TNetwork* n) const  {  return this == n;  }
-  inline bool operator != (const TNetwork& n) const  {  return this != &n;  }
-  inline bool operator != (const TNetwork* n) const  {  return this != n;  }
+  inline bool operator == (const TNetwork& n) const {  return this == &n;  }
+  inline bool operator == (const TNetwork* n) const {  return this == n;  }
+  inline bool operator != (const TNetwork& n) const {  return this != &n;  }
+  inline bool operator != (const TNetwork* n) const {  return this != n;  }
 
   // returns true if the ring is regular (distances from centroid and angles) 
   static bool IsRingRegular(const TSAtomPList& ring);

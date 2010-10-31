@@ -1362,7 +1362,7 @@ void TMainForm::StartupInit()  {
 
   // set the variables
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
-    ProcessMacro(olxstr("setvar(") << StoredParams.GetComparable(i)
+    ProcessMacro(olxstr("setvar(") << StoredParams.GetKey(i)
                     << ",\'" << StoredParams.GetObject(i)
                     << "\')");
 
@@ -2335,7 +2335,7 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
     if( MF->GetOptions().Count() != 0 )  {
       FGlConsole->PrintText(" Switches: ");
       for( size_t i=0; i < MF->GetOptions().Count(); i++ )  {
-        FGlConsole->PrintText( olxstr("   ") << MF->GetOptions().GetComparable(i) << " - "
+        FGlConsole->PrintText( olxstr("   ") << MF->GetOptions().GetKey(i) << " - "
           << MF->GetOptions().GetObject(i) );
       }
     }
@@ -2414,7 +2414,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 
   I = &DF.Root().AddItem("Stored_params");
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
-    TDataItem& it = I->AddItem(StoredParams.GetComparable(i));
+    TDataItem& it = I->AddItem(StoredParams.GetKey(i));
     it.AddField("value", StoredParams.GetObject(i));
   }
 
@@ -2694,7 +2694,7 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
       FRecentFiles.Insert(0, FN, mi);
     }  
     else  {
-      FRecentFiles.Insert(0, FN, FRecentFiles.Last().Object);
+      FRecentFiles.Insert(0, FN, FRecentFiles.GetLast().Object);
       FRecentFiles.Delete(FRecentFiles.Count()-1);
     }
   }
@@ -3252,7 +3252,7 @@ int TMainForm::TranslateShortcut(const olxstr& sk)  {
     if( ((Shift&sssShift)==0) && toks[i].Equalsi("Shift") )  {  Shift |= sssShift;  continue;  }
     if( ((Shift&sssAlt)==0) && toks[i].Equalsi("Alt") )    {  Shift |= sssAlt;  continue;  }
   }
-  olxstr charStr = toks.LastStr();
+  olxstr charStr = toks.GetLastString();
   // a char
   if( charStr.Length() == 1 ) {
     Char = charStr[0];
@@ -3394,24 +3394,24 @@ bool TMainForm::registerCallbackFunc(const olxstr& cbEvent, ABasicFunction* fn) 
 }
 //..............................................................................
 void TMainForm::unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& funcName)  {
-  size_t ind = CallbackFuncs.IndexOfComparable(cbEvent),
-      i = ind;
+  size_t ind = CallbackFuncs.IndexOf(cbEvent),
+    i = ind;
   if( ind == InvalidIndex )  return;
   // go forward
-  while( i < CallbackFuncs.Count() && CallbackFuncs.GetComparable(i).Equals(cbEvent) )  {
+  while( i < CallbackFuncs.Count() && CallbackFuncs.GetKey(i).Equals(cbEvent) )  {
     if( CallbackFuncs.GetObject(i)->GetName() == funcName )  {
       delete CallbackFuncs.GetObject(i);
-      CallbackFuncs.Remove(i);
+      CallbackFuncs.Delete(i);
       return;
     }
     i++;
   }
   // go backwards
   i = ind-1;
-  while( i !=InvalidIndex && (!CallbackFuncs.GetComparable(i).Compare(cbEvent)) )  {
+  while( i !=InvalidIndex && (!CallbackFuncs.GetKey(i).Compare(cbEvent)) )  {
     if( CallbackFuncs.GetObject(i)->GetName() == funcName )  {
       delete CallbackFuncs.GetObject(i);
-      CallbackFuncs.Remove(i);
+      CallbackFuncs.Delete(i);
       return;
     }
     i--;

@@ -94,7 +94,7 @@ public:
   inline size_t AttachedAtomCount() const {
     return FAttachedAtoms == NULL ? 0 : FAttachedAtoms->Count();
   }
-  inline TCAtom& GetAttachedAtom(size_t i) const {  return *FAttachedAtoms->Item(i);  }
+  inline TCAtom& GetAttachedAtom(size_t i) const {  return *FAttachedAtoms->GetItem(i);  }
   void AttachAtom(TCAtom *CA);
   inline bool IsAttachedTo(TCAtom& CA) const {
     return FAttachedAtoms == NULL ? false : FAttachedAtoms->IndexOf(&CA) != InvalidIndex;
@@ -113,18 +113,17 @@ public:
   inline size_t AttachedAtomICount() const {
     return FAttachedAtomsI == NULL ? 0 : FAttachedAtomsI->Count();
   }
-  inline TCAtom& GetAttachedAtomI(size_t i) const {  return *FAttachedAtomsI->Item(i);  }
+  inline TCAtom& GetAttachedAtomI(size_t i) const {  return *FAttachedAtomsI->GetItem(i);  }
   void AttachAtomI(TCAtom *CA);
   inline bool IsAttachedToI(TCAtom& CA)const {
     return FAttachedAtomsI == NULL ? false : FAttachedAtomsI->IndexOf(&CA) != InvalidIndex;
   }
-  // beware - just the memory addresses compared!
+  // pointers only compared!
   inline bool operator == (const TCAtom& ca) const {  return this == &ca;  }
   inline bool operator == (const TCAtom* ca) const {  return this == ca;  }
   inline bool operator != (const TCAtom& ca) const {  return this != &ca;  }
   inline bool operator != (const TCAtom* ca) const {  return this != ca;  }
 
-//  TAtomsInfo *AtomsInfo() const;
   void  Assign(const TCAtom& S);
 
   inline size_t GetId() const {  return Id;  }
@@ -140,8 +139,8 @@ public:
     if( Equivs == NULL )  Equivs = new smatd_list;
     Equivs->AddCCopy(m);
   }
-  size_t EquivCount() const  {  return Equivs == NULL ? 0 : Equivs->Count();  }
-  const smatd& GetEquiv(size_t i) const {  return Equivs->Item(i);  }
+  size_t EquivCount() const {  return Equivs == NULL ? 0 : Equivs->Count();  }
+  const smatd& GetEquiv(size_t i) const {  return Equivs->GetItem(i);  }
   void AssignEquivs(const TCAtom& a);
   // to be used externally by the UnitCell!
   void ClearEquivs();
@@ -153,8 +152,8 @@ public:
   DefPropP(TAfixGroup*, ParentAfixGroup)
   DefPropP(TAfixGroup*, DependentAfixGroup)
   size_t DependentHfixGroupCount() const {  return DependentHfixGroups == NULL ? 0 : DependentHfixGroups->Count();  }
-  TAfixGroup& GetDependentHfixGroup(size_t i) {  return *DependentHfixGroups->Item(i);  }
-  const TAfixGroup& GetDependentHfixGroup(size_t i) const {  return *DependentHfixGroups->Item(i);  }
+  TAfixGroup& GetDependentHfixGroup(size_t i) {  return *DependentHfixGroups->GetItem(i);  }
+  const TAfixGroup& GetDependentHfixGroup(size_t i) const {  return *DependentHfixGroups->GetItem(i);  }
   void RemoveDependentHfixGroup(TAfixGroup& hg) {  DependentHfixGroups->Remove(&hg);  }
   void ClearDependentHfixGroups() {  
     if( DependentHfixGroups != NULL ) DependentHfixGroups->Clear();
@@ -182,9 +181,9 @@ public:
   void UpdateEllp(const TEllipsoid& NV);
   void AssignEllp(TEllipsoid *NV);
 
-  inline vec3d& ccrd()                {  return Center;  }
-  inline vec3d const& ccrd()    const {  return Center;  }
-  inline vec3d& ccrdEsd()             {  return Esd;  }
+  inline vec3d& ccrd()  {  return Center;  }
+  inline vec3d const& ccrd() const {  return Center;  }
+  inline vec3d& ccrdEsd()  {  return Esd;  }
   inline vec3d const& ccrdEsd() const {  return Esd;  }
 // IXVarReferencer implementation
   virtual size_t VarCount() const {  return 12;  }
@@ -218,7 +217,7 @@ public:
   template <class Accessor=DirectAccessor> struct FlagsAnalyser  {
     const short ref_flags;
     FlagsAnalyser(short _ref_flags) : ref_flags(_ref_flags)  {}
-    template <class Item> inline bool OnItem(const Item& o) const {
+    template <class Item> inline bool OnItem(const Item& o, size_t) const {
       return (Accessor::Access(o).Flags&ref_flags) != 0;
     }
   };
@@ -226,7 +225,7 @@ public:
     const short ref_type;
     TypeAnalyser(const cm_Element _ref_type) : ref_type(_ref_type.z)  {}
     TypeAnalyser(short _ref_type) : ref_type(_ref_type)  {}
-    template <class Item> inline bool OnItem(const Item& o) const {
+    template <class Item> inline bool OnItem(const Item& o, size_t) const {
       return Accessor::Access(o).GetType() == ref_type;
     }
   };
@@ -240,7 +239,7 @@ class TCAtomPComparator  {
 public:
   static int Compare(const TCAtom* a1, const TCAtom* a2)  {
     if( a1->GetFragmentId() != a2->GetFragmentId() )  return a1->GetFragmentId() - a2->GetFragmentId();
-    if( a1->GetResiId() != a2->GetResiId() )          return olx_cmp(a1->GetResiId(),a2->GetResiId());
+    if( a1->GetResiId() != a2->GetResiId() )  return olx_cmp(a1->GetResiId(),a2->GetResiId());
     // asc sort by label
     if( a1->GetType() == a2->GetType() )
       return TCAtom::CompareAtomLabels(a1->GetLabel(), a2->GetLabel());

@@ -15,7 +15,9 @@ public:
   template <class Accessor=DirectAccessor> struct TagAnalyser  {
     const index_t ref_tag;
     TagAnalyser(index_t _ref_tag) : ref_tag(_ref_tag)  {}
-    template <class Item> inline bool OnItem(const Item& o) const {  return Accessor::Access(o).GetTag() == ref_tag;  }
+    template <class Item> inline bool OnItem(const Item& o, size_t) const {
+      return Accessor::Access(o).GetTag() == ref_tag;
+    }
   };
   template <class Accessor=DirectAccessor> struct IndexTagAnalyser  {
     template <class Item> static inline bool OnItem(const Item& o, size_t i)  {
@@ -25,7 +27,7 @@ public:
   template <class Accessor=DirectAccessor> struct TagSetter  {
     const index_t ref_tag;
     TagSetter(index_t _ref_tag) : ref_tag(_ref_tag)  {}
-    template <class Item> inline void OnItem(Item& o) const {
+    template <class Item> inline void OnItem(Item& o, size_t) const {
       Accessor::Access(o).SetTag(ref_tag);
     }
   };
@@ -40,8 +42,8 @@ public:
   template <class Accessor=DirectAccessor>
   struct Unique  {
     template <class List> Unique(List& list)  {
-      list.ForEachEx(IndexTagSetter<Accessor>());
-      list.PackEx(IndexTagAnalyser<Accessor>());
+      list.ForEach(IndexTagSetter<Accessor>());
+      list.Pack(IndexTagAnalyser<Accessor>());
     }
   };
   // exludes a set of items from a list of items

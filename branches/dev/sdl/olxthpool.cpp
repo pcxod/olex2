@@ -45,8 +45,8 @@ void TThreadPool::_checkThreadCount()  {
   while( tasks.Count() < (size_t)max_th )
     tasks.AddNew();
   while( tasks.Count() > (size_t)max_th )  {
-    if( tasks.Last().IsRunning() )
-      tasks.Last().Join(true);
+    if( tasks.GetLast().IsRunning() )
+      tasks.GetLast().Join(true);
     tasks.Delete(tasks.Count()-1);
   }
 }

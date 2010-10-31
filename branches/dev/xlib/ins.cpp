@@ -491,7 +491,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         */
         cx.rm.AddUserContent(Toks[1]);
         cx.BasicAtoms.Add(Toks[1], XElementLib::FindBySymbol(Toks[1]));
-        if( cx.BasicAtoms.Last().Object == NULL )
+        if( cx.BasicAtoms.GetLast().Object == NULL )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find suitable scatterer for '") << Toks[1] << '\'' );
         expandedSfacProcessed = true;
         const olxstr lb(Toks[1].CharAt(0) == '$' ? Toks[1].SubStringFrom(1) : Toks[1]);
@@ -513,7 +513,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
       for( size_t j=1; j < Toks.Count(); j++ )  {
         if( XElementLib::IsElement(Toks[j]) )  {
           cx.BasicAtoms.Add(Toks[j], XElementLib::FindBySymbol(Toks[j]));
-          if( cx.BasicAtoms.Last().Object == NULL )
+          if( cx.BasicAtoms.GetLast().Object == NULL )
             throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find suitable scatterer for '") << Toks[j] << '\'' );
           cx.rm.AddUserContent(Toks[j]);
         }
@@ -567,12 +567,12 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
     }
   }
   else if( Toks[0].Equalsi("SAME") )  {
-    if( !cx.Same.IsEmpty() && cx.Same.Last().GetB() == NULL )  // no atom so far, add to the list of Same
-      cx.Same.Last().A().Add(Toks.Text(' ', 1));
+    if( !cx.Same.IsEmpty() && cx.Same.GetLast().GetB() == NULL )  // no atom so far, add to the list of Same
+      cx.Same.GetLast().A().Add(Toks.Text(' ', 1));
     else  {
       cx.Same.Add(new AnAssociation2<TStrList,TCAtom*>);
-      cx.Same.Last().B() = NULL;
-      cx.Same.Last().A().Add(Toks.Text(' ', 1));
+      cx.Same.GetLast().B() = NULL;
+      cx.Same.GetLast().A().Add(Toks.Text(' ', 1));
     }
   }
   else if( Toks[0].Equalsi("ANIS") )  {
@@ -999,8 +999,8 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
         throw TInvalidArgumentException(__OlxSourceInfo, "unknown element symbol");
       TCAtom* atom = NULL;
       if( (atomCount+1) > CAtoms.Count() )  {
-        if( CAtoms.Last()->GetParent() != NULL )
-          atom = &CAtoms.Last()->GetParent()->NewAtom(cx.Resi);
+        if( CAtoms.GetLast()->GetParent() != NULL )
+          atom = &CAtoms.GetLast()->GetParent()->NewAtom(cx.Resi);
         else
           throw TInvalidArgumentException(__OlxSourceInfo, "uninitialised data provided");
       }
@@ -1152,8 +1152,8 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
   atom->SetPart( cx.Part );
   // update the context
   cx.Last = atom;
-  if( !cx.Same.IsEmpty() && cx.Same.Last().GetB() == NULL )
-    cx.Same.Last().B() = atom;
+  if( !cx.Same.IsEmpty() && cx.Same.GetLast().GetB() == NULL )
+    cx.Same.GetLast().B() = atom;
 
   cx.rm.Vars.SetParam(*atom, catom_var_name_Sof, cx.PartOccu == 0 ? Toks[5].ToDouble() : cx.PartOccu);
 
@@ -1319,7 +1319,7 @@ bool Ins_ProcessRestraint(const TCAtomPList* atoms, TSimpleRestraint& sr)  {
   if( sr.AtomCount() == 0 && !sr.IsAllNonHAtoms() )  return false;
   if( atoms == NULL )  return true;
   for( size_t i=0; i < atoms->Count(); i++ )
-    if( sr.ContainsAtom(*atoms->Item(i)) )
+    if( sr.ContainsAtom(*atoms->GetItem(i)) )
       return true;
   return false;
 }

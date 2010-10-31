@@ -272,7 +272,7 @@ public:
       (this->*func)();
     }
     newPath();
-    quad(sidea.Last(), sideb.Last(), sideb[0], sidea[0]);
+    quad(sidea.GetLast(), sideb.GetLast(), sideb[0], sidea[0]);
     (this->*func)();
   }
   //..........................................................................
@@ -288,7 +288,7 @@ public:
       (this->*func)();
     }
     newPath();
-    quad(sidea.Last(), (sideb.Last()+sidea.Last())/2, (sideb[0]+sidea[0])/2, sidea[0]);
+    quad(sidea.GetLast(), (sideb.GetLast()+sidea.GetLast())/2, (sideb[0]+sidea[0])/2, sidea[0]);
     (this->*func)();
     color(cl2);
     for( size_t j=1; j < sidea.Count(); j++ )  {
@@ -297,7 +297,7 @@ public:
       (this->*func)();
     }
     newPath();
-    quad((sidea.Last()+sideb.Last())/2, sideb.Last(), sideb[0], (sidea[0]+sideb[0])/2);
+    quad((sidea.GetLast()+sideb.GetLast())/2, sideb.GetLast(), sideb[0], (sidea[0]+sideb[0])/2);
     (this->*func)();
   }
   //..........................................................................
@@ -310,7 +310,7 @@ public:
     if( sidea.Count() < 2 )  return;
     for( size_t j=1; j < sidea.Count(); j++ )
       stippledQuad(sidea[j-1], sideb[j-1], sideb[j], sidea[j], parts, func);
-    stippledQuad(sidea.Last(), sideb.Last(), sideb[0], sidea[0], parts, func);
+    stippledQuad(sidea.GetLast(), sideb.GetLast(), sideb[0], sidea[0], parts, func);
   }
   //..........................................................................
   //..........................................................................
