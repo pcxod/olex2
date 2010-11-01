@@ -126,7 +126,6 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       }
     }
   }
-  double q_esd[6];
   for( size_t i=0; i < Index.Count(); i++ )  {
     TCAtom* ca = au.FindCAtom(Index[i].GetA());
     if( ca == NULL )

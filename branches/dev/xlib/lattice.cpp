@@ -593,7 +593,7 @@ void TLattice::GetGrowMatrices(smatd_list& res) const {
   for( size_t i=0; i < Atoms.Count(); i++ )  {
     if( Atoms[i]->IsGrown() || !Atoms[i]->IsAvailable() || !Atoms[i]->CAtom().IsAvailable() )  continue;
     const TCAtom& ca = Atoms[i]->CAtom();
-    for( size_t j=0; j < ca.AttachedAtomCount(); j++ )  {
+    for( size_t j=0; j < ca.AttachedSiteCount(); j++ )  {
       const TCAtom& ca1 = ca.GetAttachedAtom(j);
       if( !ca1.IsAvailable() )  continue;
       smatd_list* BindingMatrices = GetUnitCell().GetBinding(ca, ca1, Atoms[i]->ccrd(), ca1.ccrd(), false, false);
@@ -601,7 +601,7 @@ void TLattice::GetGrowMatrices(smatd_list& res) const {
         const smatd& M = BindingMatrices->GetItem(k);
         bool found = false;
         for( size_t l=0; l < MatrixCount(); l++ )  {
-          if( *Matrices[l] == M )  {
+          if( Matrices[l]->GetId() == M.GetId() )  {
             found = true;  
             break;
           }
@@ -624,7 +624,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
     TSAtom* SA = atoms[i];
     SA->SetGrown(true);
     const TCAtom& CA = SA->CAtom();
-    for( size_t j=0; j < CA.AttachedAtomCount(); j++ )  {
+    for( size_t j=0; j < CA.AttachedSiteCount(); j++ )  {
       const TCAtom& CA1 = CA.GetAttachedAtom(j);
       if( !CA1.IsAvailable() )  
         continue;
@@ -1289,7 +1289,7 @@ void TLattice::Compaq()  {
     for( size_t j=0; j < Fragments[0]->NodeCount(); j++ )  {
       TSAtom& fa = Fragments[0]->Node(j);
       for( size_t k=0; k < frag->NodeCount(); k++ )  {
-        if( frag->Node(k).CAtom().IsAttachedTo( fa.CAtom() ) )  {
+        if( frag->Node(k).CAtom().IsAttachedTo(fa.CAtom()) )  {
           m = GetUnitCell().GetClosest(fa.ccrd(), frag->Node(k).ccrd(), true);
           if( m != NULL )  break;
         }
@@ -1968,7 +1968,7 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
         break;
       }
     }
-    for( size_t j=0; j < atoms[i]->CAtom().AttachedAtomCount(); j++ )  {
+    for( size_t j=0; j < atoms[i]->CAtom().AttachedSiteCount(); j++ )  {
       if( atoms[i]->CAtom().GetAttachedAtom(j).GetType() == iHydrogenZ &&
         !atoms[i]->CAtom().GetAttachedAtom(j).IsDeleted() )  {
         consider = false;

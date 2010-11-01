@@ -118,7 +118,7 @@ TAutoDBNode::TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >*
   }
   vec3d_list TransformedCrds;
   TLattice& latt = sa.GetNetwork().GetLattice();
-  for( size_t i=0; i < sa.CAtom().AttachedAtomCount(); i++ )  {
+  for( size_t i=0; i < sa.CAtom().AttachedSiteCount(); i++ )  {
     if( sa.CAtom().GetAttachedAtom(i).GetType() == iHydrogenZ )  continue;
     smatd_list* transforms = latt.GetUnitCell().GetInRange(sa.ccrd(),
                                sa.CAtom().GetAttachedAtom(i).ccrd(),

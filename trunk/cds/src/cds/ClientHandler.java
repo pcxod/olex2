@@ -117,8 +117,7 @@ public class ClientHandler extends Thread {
                 Main.blocked.add(cmds.get(1));
                 handled = true;
                 out.writeBytes("OK\n");
-              }
-              else  {
+              } else  {
                 Iterator<String> itr = Main.blocked.iterator();
                 out.writeBytes("OK\n");
                 while( itr.hasNext() )
@@ -138,6 +137,11 @@ public class ClientHandler extends Thread {
                   handled = true;
                   out.writeBytes("OK\n");
                 }
+              } else if(cmds.size() == 1 )  {
+                Iterator<String> itr = Main.unmounted.iterator();
+                out.writeBytes("OK\n");
+                while( itr.hasNext() )
+                  out.writeBytes(itr.next()+'\n');
               }
             } else if (cmd.equals("mount")) {
               if( cmds.size() == 2 )  {

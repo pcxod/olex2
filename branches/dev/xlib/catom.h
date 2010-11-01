@@ -45,8 +45,20 @@ class TExyzGroups;
 struct CXConnInfo;
 
 class TCAtom: public ACollectionItem, public IXVarReferencer  {
+public:
+  struct Site  {  // identifies an atomic site, matrix*atom.ccrd()
+    TCAtom* atom;
+    smatd matrix;
+    Site(TCAtom* a, const smatd& m) : atom(a), matrix(m)  {}
+    Site(const Site& s) : atom(s.atom), matrix(s.matrix)  {}
+    Site& operator = (const Site& s)  {
+      atom = s.atom;
+      matrix = s.matrix;
+      return *this;
+    }
+  };
 private:
-  class TAsymmUnit* FParent;
+  class TAsymmUnit* Parent;
   //TBasicAtomInfo* FAtomInfo;    // a pointer to TBasisAtomInfo object
   const cm_Element* Type;
   olxstr Label;    // atom's label
@@ -56,15 +68,15 @@ private:
   uint16_t SameId, Flags;
   int8_t Part;
   double
-    Occu,     // occupancy and its variable
+    Occu,  // occupancy and its variable
     OccuEsd,
-    Uiso, // isotropic thermal parameter; use it when Ellipsoid = NULL
+    Uiso,  // isotropic thermal parameter
     UisoEsd,
-    QPeak,      // if atom is a peak atom - this is not 0
+    QPeak,  // if atom is a peak atom - this is not 0
     UisoScale;  // for proxied Uiso (depending on the UisoOwner, this defines the scaled value
   TCAtom* UisoOwner;  // the Uiso owner, if any
   vec3d Center, Esd;  // fractional coordinates and esds
-  TPtrList<TCAtom>* FAttachedAtoms, *FAttachedAtomsI;
+  TTypeList<TCAtom::Site>* AttachedSites, *AttachedSitesI;
   smatd_list* Equivs;
   /* Afix group is a fitted group, Hfix group the immediate dependent group */
   TAfixGroup* DependentAfixGroup, *ParentAfixGroup;
@@ -73,51 +85,56 @@ private:
   XVarReference* Vars[12]; //x,y,z,occu,uiso,U
   static olxstr VarNames[];
   CXConnInfo* ConnInfo;
-  inline void SetId(size_t id) {  Id = id;  }
+  inline void SetId(size_t id)  {  Id = id;  }
 public:
   TCAtom(TAsymmUnit* Parent);
   virtual ~TCAtom();
-  inline TAsymmUnit* GetParent() const {  return FParent; }
+  inline TAsymmUnit* GetParent() const {  return Parent; }
   //inline TBasicAtomInfo& GetAtomInfo() const {  return *FAtomInfo; }
   //void SetAtomInfo(TBasicAtomInfo& A);
   const cm_Element& GetType() const {  return *Type; }
   void SetType(const cm_Element& A);
 
-  // function validates and changes the atom type, use the syntax above just to set the label
+  /* function validates and changes the atom type. If validate is true, the atom type is guessed
+  from the label and changed. If validate is false, the label is set without changing the atom type */
   void SetLabel(const olxstr& L, bool validate=true);
   
-  // returns just atom label
+  // returns atom label
   const olxstr& GetLabel() const {  return Label;  }
-  // if ResiId == -1 works the same as GetLabel(), otherwise appends '_' and Residue number
-  olxstr GetResiLabel()  const;
+  // if ResiId == -1 works the same as GetLabel(), otherwise appends '_' and the Residue number
+  olxstr GetResiLabel() const;
 
-  inline size_t AttachedAtomCount() const {
-    return FAttachedAtoms == NULL ? 0 : FAttachedAtoms->Count();
+  inline size_t AttachedSiteCount() const {
+    return AttachedSites == NULL ? 0 : AttachedSites->Count();
   }
-  inline TCAtom& GetAttachedAtom(size_t i) const {  return *FAttachedAtoms->GetItem(i);  }
-  void AttachAtom(TCAtom *CA);
-  inline bool IsAttachedTo(TCAtom& CA) const {
-    return FAttachedAtoms == NULL ? false : FAttachedAtoms->IndexOf(&CA) != InvalidIndex;
+  bool IsAttachedTo(const TCAtom& ca) const {
+    for( size_t i=0; i < AttachedSiteCount(); i++ )
+      if( GetAttachedSite(i).atom == &ca )
+        return true;
+    return false;
   }
-  inline void ClearAttachedAtoms()  {
-    if( FAttachedAtoms != NULL )  {
-      delete FAttachedAtoms;
-      FAttachedAtoms = NULL; 
+  inline TCAtom::Site& GetAttachedSite(size_t i) const {  return AttachedSites->GetItem(i);  }
+  inline TCAtom& GetAttachedAtom(size_t i) const {  return *AttachedSites->GetItem(i).atom;  }
+  // will add only a unique set {atom, matrix}, returns true if the set is unique
+  bool AttachSite(TCAtom* atom, const smatd& matrix);
+  void ClearAttachedSites()  {
+    if( AttachedSites != NULL )  {
+      delete AttachedSites;
+      AttachedSites = NULL; 
     }
-    if( FAttachedAtomsI != NULL )  {
-      delete FAttachedAtomsI;
-      FAttachedAtomsI = NULL; 
+    if( AttachedSitesI != NULL )  {
+      delete AttachedSitesI;
+      AttachedSitesI = NULL; 
     }
   }
 
-  inline size_t AttachedAtomICount() const {
-    return FAttachedAtomsI == NULL ? 0 : FAttachedAtomsI->Count();
+  inline size_t AttachedSiteICount() const {
+    return AttachedSitesI == NULL ? 0 : AttachedSitesI->Count();
   }
-  inline TCAtom& GetAttachedAtomI(size_t i) const {  return *FAttachedAtomsI->GetItem(i);  }
-  void AttachAtomI(TCAtom *CA);
-  inline bool IsAttachedToI(TCAtom& CA)const {
-    return FAttachedAtomsI == NULL ? false : FAttachedAtomsI->IndexOf(&CA) != InvalidIndex;
-  }
+  inline TCAtom::Site& GetAttachedSiteI(size_t i) const {  return AttachedSitesI->GetItem(i);  }
+  inline TCAtom& GetAttachedAtomI(size_t i) const {  return *AttachedSitesI->GetItem(i).atom;  }
+  // will only add a unique set of {atom, matrix}, returns true if the set is unique
+  bool AttachSiteI(TCAtom* atom, const smatd& matrix);
   // pointers only compared!
   inline bool operator == (const TCAtom& ca) const {  return this == &ca;  }
   inline bool operator == (const TCAtom* ca) const {  return this == ca;  }
@@ -134,11 +151,14 @@ public:
   DefPropP(int8_t, Part)
   DefPropP(TExyzGroup*, ExyzGroup)
 
+  // returns multiplicity of the position
   size_t GetDegeneracy() const {  return EquivCount()+1;  }
+  // used by TUnitCell to initialise position symmetry
   void AddEquiv(const smatd& m)  {
     if( Equivs == NULL )  Equivs = new smatd_list;
     Equivs->AddCCopy(m);
   }
+  // number of non identity symmops under which the position is invariant
   size_t EquivCount() const {  return Equivs == NULL ? 0 : Equivs->Count();  }
   const smatd& GetEquiv(size_t i) const {  return Equivs->GetItem(i);  }
   void AssignEquivs(const TCAtom& a);

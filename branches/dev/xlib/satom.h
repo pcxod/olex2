@@ -78,10 +78,6 @@ public:
     }
   }
   void AddMatrices(const TSAtom& A)  {  
-#ifdef _DEBUG_
-    if( Matrices.IsEmpty() || A.Matrices.IsEmpty() )
-      throw TFunctionFailedException(__OlxSourceInfo, "assert");
-#endif
     const size_t cnt = Matrices.Count();
     Matrices.AddList(A.Matrices); 
     if( A.Matrices[0]->IsFirst() )
@@ -97,7 +93,7 @@ public:
     return false;
   }
   static double weight_unit(const TSAtom& a)  {  return 1.0;  }
-  static double weight_occu(const TSAtom& a)  {  return a.CAtom().GetOccu()*(a.CAtom().EquivCount()+1);  }
+  static double weight_occu(const TSAtom& a)  {  return a.CAtom().GetOccu()*a.CAtom().GetDegeneracy();  }
   static double weight_occu_aw(const TSAtom& a)  {
     return a.CAtom().GetOccu()*a.CAtom().GetDegeneracy()*a.GetType().GetMr();
   }

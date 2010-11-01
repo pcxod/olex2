@@ -3531,6 +3531,30 @@ void TGXApp::SetGrowMode(short v, const olxstr& atoms)  {
   UsedTransforms.Clear();
 }
 //..............................................................................
+//..............................................................................
+//..............................................................................
+struct TGXApp_CrdMap  {
+  typedef SortedObjectList<int, TPrimitiveComparator> ZDict;
+  typedef olxdict<int, ZDict, TPrimitiveComparator> YDict;
+  olxdict<int, YDict, TPrimitiveComparator> data;
+  const int resolution;
+  TGXApp_CrdMap() : resolution(5) {}
+  void Add(const vec3d& pt)  {
+    YDict& yd = data.Add( olx_round(pt[0]*resolution) );
+    ZDict& zd = yd.Add( olx_round(pt[1]*resolution) );
+    zd.AddUnique( olx_round(pt[2]*resolution) );
+  }
+  bool Exists(const vec3d& pt) const  {
+    const size_t y_ind = data.IndexOf( olx_round(pt[0]*resolution) );
+    if( y_ind == InvalidIndex )  return false;
+    const YDict& yd = data.GetValue(y_ind);
+    const size_t z_ind = yd.IndexOf( olx_round(pt[1]*resolution) );
+    if( z_ind == InvalidIndex )  return false;
+    const ZDict& zd = yd.GetValue( z_ind );
+    return zd.IndexOf( olx_round(pt[2]*resolution) ) == InvalidIndex ? false : true;
+  }
+};
+//..............................................................................
 struct TGXApp_Transform {
   TCAtom* to;
   TSAtom* from;
@@ -3538,9 +3562,11 @@ struct TGXApp_Transform {
   smatd transform;
   TGXApp_Transform() : to(NULL), from(NULL), dist(0) { }
 };
+//..............................................................................
 struct TGXApp_Transform1 : public TGXApp_Transform {
   vec3d dest;
 };
+//..............................................................................
 void TGXApp::CreateXGrowLines()  {
   if( !XGrowLines.IsEmpty() )  {  // clear the existing ones...
     TPtrList<TGPCollection> colls; // list of unique collections
@@ -3567,6 +3593,7 @@ void TGXApp::CreateXGrowLines()  {
   }
   const TAsymmUnit& au = FXFile->GetAsymmUnit();
   const TUnitCell& uc = FXFile->GetUnitCell();
+  TGXApp_CrdMap CrdMap;
   TSAtomPList AtomsToProcess;
   if( !AtomsToGrow.IsEmpty() )  {
     TXAtomPList xatoms;
@@ -3581,21 +3608,23 @@ void TGXApp::CreateXGrowLines()  {
       AtomsToProcess.Add(A);
     }
   }
+  for( size_t i=0; i < AtomsToProcess.Count(); i++ )
+    CrdMap.Add(AtomsToProcess[i]->crd());
   TPtrList<TCAtom> AttachedAtoms;
   TTypeList<TGXApp_Transform1> tr_list;
-  const AtomRegistry& ar = XFile().GetLattice().GetAtomRegistry();
+  //const AtomRegistry& ar = XFile().GetLattice().GetAtomRegistry();
   typedef TArrayList<AnAssociation2<TCAtom*,smatd> > GInfo;
   TPtrList<GInfo> Info(au.AtomCount());
   for( size_t i=0; i < AtomsToProcess.Count(); i++ )  {
     TSAtom* A = AtomsToProcess[i];
     AttachedAtoms.Clear();
     if( (FGrowMode & gmCovalent) != 0 )  {
-      for( size_t j=0; j < A->CAtom().AttachedAtomCount(); j++ )
+      for( size_t j=0; j < A->CAtom().AttachedSiteCount(); j++ )
         if( A->CAtom().GetAttachedAtom(j).IsAvailable() )
           AttachedAtoms.Add(A->CAtom().GetAttachedAtom(j));
     }
     if( (FGrowMode & gmSInteractions) != 0 )  {
-      for( size_t j=0; j < A->CAtom().AttachedAtomICount(); j++ )
+      for( size_t j=0; j < A->CAtom().AttachedSiteICount(); j++ )
         if( A->CAtom().GetAttachedAtomI(j).IsAvailable() )
           AttachedAtoms.Add(A->CAtom().GetAttachedAtomI(j));
     }
@@ -3621,10 +3650,12 @@ void TGXApp::CreateXGrowLines()  {
     for( size_t j=0; j < gi->Count(); j++ )  {
       const AnAssociation2<TCAtom*,smatd>& gii = (*gi)[j];
       smatd transform = (A->GetMatrix(0).IsFirst() ? gii.GetB() : uc.MulMatrix(gii.GetB(), A->GetMatrix(0)));
-      if( ar.Find(TSAtom::Ref(gii.GetA()->GetId(), transform.GetId())) != NULL )
-        continue;
+      //if( ar.Find(TSAtom::Ref(gii.GetA()->GetId(), transform.GetId())) != NULL )
+      //  continue;
       vec3d tc = transform*gii.GetA()->ccrd();
       au.CellToCartesian(tc);
+      if( CrdMap.Exists(tc) )
+        continue;
       const double qdist = tc.QDistanceTo(A->crd());
       bool uniq = true;
       for( size_t l=0; l < tr_list.Count(); l++ )  {
@@ -3655,27 +3686,6 @@ void TGXApp::CreateXGrowLines()  {
   Info.DeleteItems(true);
 }
 //..............................................................................
-struct TGXApp_CrdMap  {
-  typedef SortedObjectList<int, TPrimitiveComparator> ZDict;
-  typedef olxdict<int, ZDict, TPrimitiveComparator> YDict;
-  olxdict<int, YDict, TPrimitiveComparator> data;
-  const int resolution;
-  TGXApp_CrdMap() : resolution(5) {}
-  void Add(const vec3d& pt)  {
-    YDict& yd = data.Add( olx_round(pt[0]*resolution) );
-    ZDict& zd = yd.Add( olx_round(pt[1]*resolution) );
-    zd.AddUnique( olx_round(pt[2]*resolution) );
-  }
-  bool Exists(const vec3d& pt) const  {
-    const size_t y_ind = data.IndexOf( olx_round(pt[0]*resolution) );
-    if( y_ind == InvalidIndex )  return false;
-    const YDict& yd = data.GetValue(y_ind);
-    const size_t z_ind = yd.IndexOf( olx_round(pt[1]*resolution) );
-    if( z_ind == InvalidIndex )  return false;
-    const ZDict& zd = yd.GetValue( z_ind );
-    return zd.IndexOf( olx_round(pt[2]*resolution) ) == InvalidIndex ? false : true;
-  }
-};
 void TGXApp::_CreateXGrowVLines()  {
   if( !XGrowLines.IsEmpty() )  return;
   const TAsymmUnit& au = FXFile->GetAsymmUnit();

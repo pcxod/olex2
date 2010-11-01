@@ -159,7 +159,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
     }
     Atoms[i]->Clear();
     // preallocate memory to improve mulithreading
-    Atoms[i]->SetCapacity(Atoms[i]->NodeCount() + Atoms[i]->CAtom().AttachedAtomCount());
+    Atoms[i]->SetCapacity(Atoms[i]->NodeCount() + Atoms[i]->CAtom().AttachedSiteCount());
   }
   Atoms.Pack();
   if( Atoms.IsEmpty() )  return;
@@ -1242,9 +1242,9 @@ ContentList TNetwork::GetContentList() const {
     if( a.IsDeleted() || a.GetType() == iQPeakZ )  continue;
     size_t ind = elms.IndexOf(&a.GetType());
     if( ind == InvalidIndex )
-      elms.Add(&a.GetType(), a.CAtom().GetOccu()*(a.CAtom().EquivCount()+1));
+      elms.Add(&a.GetType(), a.CAtom().GetOccu()*a.CAtom().GetDegeneracy());
     else
-      elms.GetValue(ind) += (a.CAtom().GetOccu()*(a.CAtom().EquivCount()+1));
+      elms.GetValue(ind) += (a.CAtom().GetOccu()*a.CAtom().GetDegeneracy());
   }
   ContentList rv;
   for( size_t i=0; i < elms.Count(); i++ )

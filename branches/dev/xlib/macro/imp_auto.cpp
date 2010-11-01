@@ -362,7 +362,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       if( latt.GetFragment(i).NodeCount() == 1 && !latt.GetFragment(i).Node(0).IsDeleted() )  {
         TSAtom& sa = latt.GetFragment(i).Node(0);
         bool alone = true;
-        for( size_t j=0; j < sa.CAtom().AttachedAtomCount(); j++ )
+        for( size_t j=0; j < sa.CAtom().AttachedSiteCount(); j++ )
           if( sa.CAtom().GetAttachedAtom(j).GetType() != iQPeakZ )  {
             alone = false;
             break;
