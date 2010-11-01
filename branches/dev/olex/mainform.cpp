@@ -3168,7 +3168,7 @@ IEObject* TMainForm::executeFunction(const olxstr& function)  {
     return NULL;
   }
   olxstr funName = function.SubStringTo(ind);
-  ABasicFunction* Fun = FXApp->GetLibrary().FindFunction( funName );
+  ABasicFunction* Fun = FXApp->GetLibrary().FindFunction(funName);
   if( Fun == NULL )  {
     TBasicApp::GetLog().Error( olxstr("Unknow function: ") << funName);
     return NULL;

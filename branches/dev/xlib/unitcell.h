@@ -27,9 +27,22 @@ class TUnitCell: public IEObject  {
   void _FindInRange(const vec3d& center, double R,
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
     const TCAtomPList* atoms=NULL) const;
-  void _FindBinding(const TSAtom& center, double delta,
+  /* macro FindBinding, if the atoms is NULL, atoms of the asymmetric unit are taken and atoms are excluded
+  only if deleted, availability is not counted */
+  void _FindBinding(const TCAtom& center, const smatd& center_tm, double delta,
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
     const TCAtomPList* atoms=NULL) const;
+  // explicit use of the I matrix 
+  void _FindBinding(const TCAtom& center, double delta,
+    TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
+    const TCAtomPList* atoms=NULL) const
+  {  _FindBinding(center, smatd().I(), delta, res, atoms);  }
+  // taking the transformation from the position generator
+  void _FindBinding(const TSAtom& center, double delta,
+    TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
+    const TCAtomPList* atoms=NULL) const
+  {  _FindBinding(center.CAtom(), center.GetMatrix(0), delta, res, atoms);  }
+  //
   static int _AtomSorter(const AnAssociation3<vec3d,TCAtom*, double>& a1, const AnAssociation3<vec3d,TCAtom*, double>& a2)  {
     const double d = a1.GetA().QLength() - a2.GetA().QLength();
     return d < 0 ? -1 : (d > 0 ? 1 : 0);
@@ -121,9 +134,11 @@ public:
       out[i].B() = res[i].GetB(); 
     }
   }
-  // finds only bound atoms defined by delta
-  template <class association> void FindBindingAM(const TSAtom& center, double delta,
-    TArrayList<association>& out, const TCAtomPList* atoms=NULL) const
+  /* finds only bound atoms defined by delta, can take both TCAtom and TSAtom. In first case the
+  result will be located at the origin of the atom in the asymmetric unit, in the second - to the 
+  center of the TSAtom */
+  template <class Atom, class Association> void FindBindingAM(const Atom& center, double delta,
+    TArrayList<Association>& out, const TCAtomPList* atoms=NULL) const
   {
     TTypeList<AnAssociation3<TCAtom*,smatd,vec3d> > res;
     _FindBinding(center, delta, res, atoms);

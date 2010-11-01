@@ -573,7 +573,7 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
   }
 }
 //..............................................................................
-void TUnitCell::_FindBinding(const TSAtom& to, double delta, 
+void TUnitCell::_FindBinding(const TCAtom& to, const smatd& ctm, double delta, 
   TTypeList<AnAssociation3<TCAtom*,smatd, vec3d> >& res, const TCAtomPList* _atoms) const
 {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
@@ -582,12 +582,13 @@ void TUnitCell::_FindBinding(const TSAtom& to, double delta,
   const size_t mc = Matrices.Count();
   smatd I;
   I.I().SetId(0);
+  const vec3d to_center = ctm*to.ccrd();
   for( size_t i=0; i < ac; i++ )  {
     const TCAtom& a = *atoms[i];
     if( a.IsDeleted() )  continue;
     for( size_t j=0; j < mc; j++ )  {
       vec3d vec = Matrices[j] * a.ccrd();
-      vec3d V1(vec-to.ccrd());
+      vec3d V1(vec-to_center);
       const vec3i shift = -V1.Round<int>();
       V1 += shift;
       au.CellToCartesian(V1);
@@ -595,7 +596,7 @@ void TUnitCell::_FindBinding(const TSAtom& to, double delta,
       if( qD > 1e-6 && TNetwork::BondExistsQ(to, a, Matrices[j], qD, delta) )  {
         smatd& m = res.AddNew(atoms[i], Matrices[j], au.CellToCartesian(vec += shift)).B();
         m.t += shift;
-        m.SetId(Matrices[j].GetContainerId(), shift[0], shift[1], shift[2]);
+        m.SetRawId(smatd::GenerateId(Matrices[j].GetContainerId(), shift));
       }
     }
     for( int ii=-1; ii <= 1; ii++ )  {
@@ -603,7 +604,7 @@ void TUnitCell::_FindBinding(const TSAtom& to, double delta,
         for( int ik=-1; ik <= 1; ik++ )  {
           if( (ii|ij|ik) == 0 )  continue;
           const vec3i shift(ii, ij, ik);
-          vec3d vec(a.ccrd() + shift - to.ccrd());
+          vec3d vec(a.ccrd() + shift - to_center);
           au.CellToCartesian(vec);
           const double qD = vec.QLength();
           if( qD > 1e-6 && TNetwork::BondExistsQ(to, a, I, qD, delta) )  {
