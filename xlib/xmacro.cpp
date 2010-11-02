@@ -352,7 +352,7 @@ void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
     for( size_t i=0; i < sl.BravaisLatticeCount(); i++ )  {
       for( size_t j=0; j < hits.Count(); j++ )  {
         if( &hits.GetObject(j)->GetBravaisLattice() == &sl.GetBravaisLattice(i) )
-          bl_hits.Add(hits.GetComparable(j), hits.GetObject(j));
+          bl_hits.Add(hits.GetKey(j), hits.GetObject(j));
       }
       if( bl_hits.IsEmpty() )  continue;
       TTTable<TStrList> tab( bl_hits.Count()/5+((bl_hits.Count()%5) != 0 ? 1 : 0), 5);
@@ -360,7 +360,7 @@ void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
       for( size_t j=0; j < bl_hits.Count(); j++ )  {
         tmp = bl_hits.GetObject(j)->GetName();
         tmp.Format(10, true, ' ');
-        tab[j/5][j%5] << tmp << ' ' << bl_hits.GetComparable(j) << '/' << ref.Count();
+        tab[j/5][j%5] << tmp << ' ' << bl_hits.GetKey(j) << '/' << ref.Count();
       }
       tab.CreateTXTList(output, sl.GetBravaisLattice(i).GetName(), false, false, "  ");
       log << output  << '\n';
@@ -373,7 +373,7 @@ void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
       all_elm.Add( & sl.GetSymmElement(i) );
     olxstr exact_match;
     for( size_t i=0; i < hits.Count(); i++ )  {
-      if( hits.GetComparable(i) == ref.Count() )  {
+      if( hits.GetKey(i) == ref.Count() )  {
         if( !exact_match.IsEmpty() )
           exact_match << ", ";
         hits.GetObject(i)->SplitIntoElements(all_elm, sg_elm);
@@ -409,7 +409,7 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
       for( size_t j=0; j < sgList.Count(); j++ )
         SortedSG.Add( sgList[j]->GetNumber(), sgList[j] );
       for( size_t j=0; j < SortedSG.Count(); j++ )  {
-        tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetComparable(j) << ')';
+        tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetKey(j) << ')';
         tmp <<tmp1.Format(15, true, ' ');
         tmp1 = EmptyString;
         if( tmp.Length() > 60 )  {
@@ -444,7 +444,7 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
         SortedSG.Add(sgList[j]->GetNumber(), sgList[j]);
       olxstr tmp, tmp1;
       for( size_t j=0; j < SortedSG.Count(); j++ )  {
-        tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetComparable(j) << ')';
+        tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetKey(j) << ')';
         tmp << tmp1.Format(15, true, ' ');
         tmp1 = EmptyString;
         if( tmp.Length() > 60 )  {
@@ -464,7 +464,7 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
       for( size_t j=0; j < sgList.Count(); j++ )
         SortedSG.Add( sgList[j]->GetNumber(), sgList[j] );
       for( size_t j=0; j < SortedSG.Count(); j++ )  {
-        tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetComparable(j) << ')';
+        tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetKey(j) << ')';
         tmp << tmp1.Format(15, true, ' ');
         tmp1 = EmptyString;
         if( tmp.Length() > 60 )  {
@@ -520,10 +520,10 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
     ref.Add(TSymmLib::GetInstance().GetSymmElement(i));
   sg->SplitIntoElements(ref, sg_elm);
   if( sg_elm.IsEmpty() )
-    Output.Last().String << "none";
+    Output.GetLastString() << "none";
   else  {
     for( size_t i=0; i < sg_elm.Count(); i++ )
-      Output.Last().String << sg_elm[i]->GetName() << ' ';
+      Output.GetLastString() << sg_elm[i]->GetName() << ' ';
   }
   Output.Add(EmptyString);
   TBasicApp::GetLog() << Output;
@@ -1153,19 +1153,23 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   TEFile out( TEFile::ExtractFilePath(xapp.XFile().GetFileName()) << "olx_pd_calc.csv", "w+b");
   const mat3d& hkl2c = xapp.XFile().GetAsymmUnit().GetHklToCartesian();
-  const double d_2_sin = xapp.XFile().GetRM().expl.GetRadiation()/2.0;
+  const double half_lambda = xapp.XFile().GetRM().expl.GetRadiation()/2.0;
+  //refs.Clear();
+  //xapp.XFile().GetRM().GetFourierRefList<TUnitCell::SymSpace, RefMerger::ShelxMerger>(
+  //  xapp.XFile().GetUnitCell().GetSymSpace(), refs);
   TTypeList< AnAssociation2<double,double> > gd;
   gd.SetCapacity( refs.Count() );
   double max_2t = 0, min_2t=180;
   for( size_t i=0; i < refs.Count(); i++ )  {
     const TReflection& ref = refs[i];
     vec3d hkl = ref.ToCart(hkl2c);
-    const double theta_2 = 360*asin(d_2_sin*hkl.Length())/M_PI;
-    gd.AddNew( theta_2, ref.GetI()*ref.GetMultiplicity());
+    const double theta_2 = 2*asin(half_lambda*hkl.Length());
+    const double lp = 1;//(1.0+olx_sqr(cos(theta_2)))/(olx_sqr(sin(theta_2/2))*cos(theta_2/2));
+    gd.AddNew(theta_2*180/M_PI, ref.GetI()*ref.GetMultiplicity()*lp);
   }
   gd.QuickSorter.SortSF(gd, macGraphPD_Sort);
   min_2t = gd[0].GetA();
-  max_2t = gd.Last().GetA();
+  max_2t = gd.GetLast().GetA();
   const double sig_0 = 1./80. + (max_2t-min_2t)/800.0;
   const size_t ref_cnt = refs.Count();
   for( double s = min_2t; s <= max_2t; s += res )  {
@@ -1173,11 +1177,10 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options, TMacro
     for( size_t i=0; i < ref_cnt; i++ )  { 
       const double sig = sig_0*(1.0+gd[i].GetA()/140.0);
       const double qsig = sig*sig;
-      y += gd[i].GetB()*exp(-(s-gd[i].GetA())*(s-gd[i].GetA())/(2*qsig))/sig;
+      y += gd[i].GetB()*exp(-olx_sqr(s-gd[i].GetA())/(2*qsig))/sig;
     }
     out.Writenl( olxcstr(s, 40) << ',' << y);
   }
-
 }
 //..............................................................................
 void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -1545,8 +1548,8 @@ olxstr XLibMacros_macSGS_SgInfo(const olxstr& caxis)  {
 void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
   olxstr hkl_fn;
-  if( Cmds.Count() > 1 && Cmds.Last().String.EndsWithi(".hkl") )  {
-    hkl_fn = Cmds.Last().String;
+  if( Cmds.Count() > 1 && Cmds.GetLastString().EndsWithi(".hkl") )  {
+    hkl_fn = Cmds.GetLastString();
     Cmds.Delete(Cmds.Count()-1);
   }
   if( Cmds.Count() == 10 )  {  // transformation provided?
@@ -2015,7 +2018,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       L = latt.GetUnitCell().GetInRange(SA.ccrd(), allAtoms[i]->ccrd(), r, true);
     if( !L->IsEmpty() )  {
       for( size_t j=0; j < L->Count(); j++ )  {
-        const smatd& m = L->Item(j);
+        const smatd& m = L->GetItem(j);
         V = m * allAtoms[i]->ccrd() - SA.ccrd();
         au.CellToCartesian(V);
         if( V.Length() == 0 )  // symmetrical equivalent?
@@ -3224,7 +3227,7 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
     return;
   }
   TSpaceGroup& from_sg = xapp.XFile().GetLastLoaderSG();
-  TSpaceGroup* sg = TSymmLib::GetInstance().FindGroup(Cmds.Last().String);
+  TSpaceGroup* sg = TSymmLib::GetInstance().FindGroup(Cmds.GetLastString());
   if( sg == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "Could not identify given space group");
     return;
@@ -3998,7 +4001,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
               vec3d plane_params, plane_center;
               for( size_t pi=0; pi < planes[j].Count(); pi++ )  {
                 points.AddNew(mat*planes[j].GetAtom(pi).ccrd(), 1.0);
-                au.CellToCartesian(points.Last().A());
+                au.CellToCartesian(points.GetLast().A());
               }
               TSPlane::CalcPlane(points, plane_params, plane_center);
               const double pccd = planes[i].GetCenter().DistanceTo(plane_center);

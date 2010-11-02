@@ -86,7 +86,7 @@ bool TShellUtil::CreateShortcut(const olxstr& ShortcutPath,
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
-olxstr TShellUtil::GetSpecialFolderLocation( short folderId )  {
+olxstr TShellUtil::GetSpecialFolderLocation(short folderId)  {
 #ifdef __WIN32__
   int FID = 0;
   switch( folderId )  {
@@ -102,6 +102,35 @@ olxstr TShellUtil::GetSpecialFolderLocation( short folderId )  {
     case fiCommonStartMenu: FID = CSIDL_COMMON_STARTMENU;  break;
     case fiCommonDesktop: FID = CSIDL_COMMON_DESKTOPDIRECTORY;  break;
     case fiCommonPrograms: FID = CSIDL_COMMON_PROGRAMS;  break;
+    case fiSysProgramFiles:
+      {
+        // determine windows version, win2000 and earlier do not support KEY_WOW64_64KEY...
+        OSVERSIONINFO veri;
+        memset(&veri, 0, sizeof(veri));
+        veri.dwOSVersionInfoSize = sizeof(veri);
+        GetVersionEx(&veri);
+        LONG flags = KEY_QUERY_VALUE;
+        // is XP or later?
+        if( veri.dwMajorVersion > 5 || (veri.dwMajorVersion == 5 && veri.dwMinorVersion > 0 ) )
+          flags |= KEY_WOW64_64KEY;
+        HKEY key;
+        if( RegOpenKeyEx(HKEY_LOCAL_MACHINE, olxT("SOFTWARE\\Microsoft\\Windows\\CurrentVersion"),
+              0, flags, &key) != ERROR_SUCCESS )
+          return EmptyString;
+        DWORD sz = 0;
+        if( RegQueryValueEx(key, olxT("ProgramFilesDir"), NULL, NULL, NULL, &sz) != ERROR_SUCCESS )
+          return EmptyString;
+        olxch* data = new olxch[sz/sizeof(olxch)+1];
+        if( RegQueryValueEx(key, olxT("ProgramFilesDir"), NULL, NULL, (LPBYTE)data, &sz) != ERROR_SUCCESS )
+        {
+          delete [] data;
+          return EmptyString;
+        }
+        RegCloseKey(key);
+        olxstr rv = olxstr::FromExternal(data, sz/sizeof(olxch)-1);
+        return TEFile::AddPathDelimeterI(rv);
+      }
+      break;
     default:
       throw TInvalidArgumentException(__OlxSourceInfo, "unknown identifier");
   }
@@ -109,13 +138,13 @@ olxstr TShellUtil::GetSpecialFolderLocation( short folderId )  {
   if( SHGetSpecialFolderLocation(NULL, FID, &items ) == NOERROR )  {
     TCHAR bf[MAX_PATH];
     olxstr retVal;
-    if( SHGetPathFromIDList( items, bf ) )
+    if( SHGetPathFromIDList(items, bf) )
       retVal = bf;
     // release memory allocated by the funciton
     LPMALLOC shellMalloc;
     if( SHGetMalloc(& shellMalloc ) == NOERROR )
-      shellMalloc->Free( items );
-    return TEFile::AddPathDelimeterI( retVal );
+      shellMalloc->Free(items);
+    return TEFile::AddPathDelimeterI(retVal);
   }
   return EmptyString;
 #else

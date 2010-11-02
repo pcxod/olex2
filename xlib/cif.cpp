@@ -501,17 +501,17 @@ bool TCif::Adopt(TXFile& XF)  {
   Clear();
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
   GetRM().Assign(XF.GetRM(), true);
-  GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
   Title = TEFile::ChangeFileExt(TEFile::ExtractFileName(XF.GetFileName()), EmptyString);
 
   block_index = 0;
-  data_provider.Add(Title);
+  data_provider.Add(Title.Replace(' ', "%20"));
   SetParam("_audit_creation_method", "OLEX2", true);
   SetParam("_chemical_name_systematic", "?", true);
   SetParam("_chemical_name_common", "?", true);
   SetParam("_chemical_melting_point", "?", false);
   SetParam("_chemical_formula_moiety", XF.GetLattice().CalcMoiety(), true);
-  SetParam("_chemical_formula_sum", GetAsymmUnit().SummFormula(' ', false), true);
+  SetParam("_chemical_formula_sum", GetAsymmUnit()._SummFormula(' ',
+    1./olx_max(GetAsymmUnit().GetZPrime(), 0.01)), true);
   SetParam("_chemical_formula_weight", olxstr::FormatFloat(2, GetAsymmUnit().MolWeight()), false);
 
   SetParam("_cell_length_a", GetAsymmUnit().Axes()[0].ToString(), false);

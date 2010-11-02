@@ -15,6 +15,7 @@
 #include "olxmps.h"
 #include "pers_util.h"
 #include "maputil.h"
+#include "ememstream.h"
 
 #ifndef _NO_PYTHON
   #include "pyext.h"
@@ -546,7 +547,7 @@ bool TXGrid::LoadFromFile(const olxstr& GridFile)  {
 }
 //..............................................................................
 void TXGrid::SetScale(float v)  {
-  bool _3d = Is3D();
+  const bool _3d = Is3D();
   if( _3d && MinHole != MaxHole )  {
     if( v >= MinHole && v <= MaxHole )  {
       Info->Clear();
@@ -558,21 +559,55 @@ void TXGrid::SetScale(float v)  {
   Scale = v;
   UpdateInfo();
   if( IS != NULL && _3d )  {
+    TArray3D<float>* _points = NULL;
     p_triangles.Clear();
     p_normals.Clear();
     p_vertices.Clear();
     n_triangles.Clear();
     n_normals.Clear();
     n_vertices.Clear();
-    IS->GenerateSurface(Scale);
-    p_vertices = IS->VertexList();
-    p_normals = IS->NormalList();
-    p_triangles = IS->TriangleList();
-    if( Scale < 0 )  {
-      IS->GenerateSurface(-Scale);
-      n_vertices = IS->VertexList();
-      n_normals = IS->NormalList();
-      n_triangles = IS->TriangleList();
+    if( XApp->Get3DFrame().IsVisible() )  {
+      delete IS;
+      const size_t SZ=10;
+      const vec3i isz = (XApp->Get3DFrame().GetSize()*SZ).Round<int>();
+      TArray3D<float>& points = *(_points = new TArray3D<float>(vec3i(0,0,0), isz));
+      const mat3f rm(XApp->Get3DFrame().GetNormals()/SZ);
+      const vec3f tr = XApp->Get3DFrame().GetEdge(0);
+      const smatdd g2c(XApp->Get3DFrame().GetNormals()/SZ, XApp->Get3DFrame().GetEdge(0));
+      const mat3d c2c = XApp->XFile().GetAsymmUnit().GetCartesianToCell();
+      MapUtil::Cell2Cart(MapUtil::MapGetter<float,1>(ED->Data, ED->GetSize()), points.Data, points.GetSize(), g2c, c2c);
+      IS = new CIsoSurface(points);
+      IS->GenerateSurface(Scale);
+      p_vertices = IS->VertexList();
+      p_normals = IS->NormalList();
+      p_triangles = IS->TriangleList();
+      for( size_t i =0; i < p_vertices.Count(); i++ )
+        p_vertices[i] = p_vertices[i]*rm + tr;
+      for( size_t i=0; i < p_normals.Count(); i++ )
+        p_normals[i] = p_normals[i]*rm;
+      if( Scale < 0 )  {
+        IS->GenerateSurface(-Scale);
+        n_vertices = IS->VertexList();
+        n_normals = IS->NormalList();
+        n_triangles = IS->TriangleList();
+        for( size_t i =0; i < n_vertices.Count(); i++ )
+          n_vertices[i] = n_vertices[i]*rm + tr;
+        for( size_t i=0; i < n_normals.Count(); i++ )
+          n_normals[i] = n_normals[i]*rm;
+      }
+      delete &points;
+    }
+    else  {
+      IS->GenerateSurface(Scale);
+      p_vertices = IS->VertexList();
+      p_normals = IS->NormalList();
+      p_triangles = IS->TriangleList();
+      if( Scale < 0 )  {
+        IS->GenerateSurface(-Scale);
+        n_vertices = IS->VertexList();
+        n_normals = IS->NormalList();
+        n_triangles = IS->TriangleList();
+      }
     }
     RescaleSurface();
   }
@@ -712,51 +747,29 @@ void TXGrid::RescaleSurface()  {
     NListId = PListId+1;
   }
   if( XApp->Get3DFrame().IsVisible() )  {
-    const mat3f tm(XApp->Get3DFrame().GetNormals());
-    const vec3f dims = XApp->Get3DFrame().GetSize()/2;
-    const vec3f tc(XApp->Get3DFrame().GetCenter());
-    vec3d pts[3];
     for( int li = 0; li <= 1; li++ )  {
       const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
       const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
       const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
-      glNewList(li == 0 ? PListId : NListId, GL_COMPILE);
+      olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
       olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
       olx_gl::begin(GL_TRIANGLES);
-      for( int x=-1; x <= 1; x++ )  {
-        for( int y=-1; y <= 1; y++ )  {
-          for( int z=-1; z <= 1; z++ )  {
-            for( size_t i=0; i < trians.Count(); i++ )  {
-              bool draw = true;
-              for( int j=0; j < 3; j++ )  {
-                pts[j] = verts[trians[i].pointID[j]];
-                pts[j][0] /= MaxX;  pts[j][1] /= MaxY;  pts[j][2] /= MaxZ;
-                pts[j][0] += x;     pts[j][1] += y;     pts[j][2] += z;
-                vec3f t = tm*(au.CellToCartesian(pts[j]) - tc);
-                if( olx_abs(t[0]) > dims[0] || olx_abs(t[1]) > dims[1] || olx_abs(t[2]) > dims[2] )  {
-                  draw = false;
-                  break;
-                }
-              }
-              if( !draw )  continue;
-              for( int j=0; j < 3; j++ )  {
-                olx_gl::normal(norms[trians[i].pointID[j]]);
-                olx_gl::vertex(pts[j]);
-              }
-            }
-          }
+      for( size_t i=0; i < trians.Count(); i++ )  {
+        for( int j=0; j < 3; j++ )  {
+          olx_gl::normal(norms[trians[i].pointID[j]]);
+          olx_gl::vertex(verts[trians[i].pointID[j]]);
         }
       }
       olx_gl::end();
       olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
       olx_gl::endList();
     }
-    p_vertices.Clear();
-    p_triangles.Clear();
-    p_normals.Clear();
-    n_vertices.Clear();
-    n_triangles.Clear();
-    n_normals.Clear();
+    //p_vertices.Clear();
+    //p_triangles.Clear();
+    //p_normals.Clear();
+    //n_vertices.Clear();
+    //n_triangles.Clear();
+    //n_normals.Clear();
   }
   else if( Mask != NULL )  {
     vec3d pts[3];
@@ -915,9 +928,9 @@ TXBlob* TXGrid::CreateBlob(int x, int) const {
   TXBlob* xb = new TXBlob(Parent, "blob");
   //IS->GenerateSurface(Scale);
   TPtrList<IsoTriangle> triags;
-  const TArrayList<vec3f>& vertices = IS->VertexList();
-  const TArrayList<vec3f>& normals = IS->NormalList();
-  const TArrayList<IsoTriangle>& triangles = IS->TriangleList();
+  const TTypeList<vec3f>& vertices = n_vertices;
+  const TTypeList<vec3f>& normals = n_normals;
+  const TTypeList<IsoTriangle>& triangles = n_triangles;
   TEBitArray verts(vertices.Count()), used_triags(triangles.Count());
   verts.SetTrue(triangles[0].pointID[0]);
   verts.SetTrue(triangles[0].pointID[1]);
@@ -935,18 +948,6 @@ TXBlob* TXGrid::CreateBlob(int x, int) const {
         if( verts[t.pointID[j]] )  {
           has_shared_point = true;
           //break;
-        }
-        bool trimmed = false;
-        vec3f v = vertices[t.pointID[j]];
-        if( v[0] >= MaxX )  {  v[0] -= MaxX;  trimmed = true;  }
-        if( v[1] >= MaxY )  {  v[1] -= MaxY;  trimmed = true;  }
-        if( v[2] >= MaxZ )  {  v[2] -= MaxZ;  trimmed = true;  }
-        if( trimmed )  {
-          for( size_t k=0; k < vertices.Count(); k++ )  {
-            if( !verts[k] && vertices[k].QDistanceTo(v) < 1.7 )  {
-              verts.SetTrue(k);
-            }
-          }
         }
       }
       if( has_shared_point )  {
@@ -968,26 +969,7 @@ TXBlob* TXGrid::CreateBlob(int x, int) const {
   for( size_t i = 0; i < verts.Count(); i++ )  {
     if( verts[i] )  {
       new_ids[i] = xb->vertices.Count();
-      vec3f &v = xb->vertices.AddCCopy(vertices[i]), v1;
-      au.CellToCartesian<vec3f,vec3f>(vec3f(v[0]/MaxX, v[1]/MaxY, v[2]/MaxZ), v1);
-      if( i > 0 )  {
-        float qd = v1.QDistanceTo(xb->vertices[0]);
-        int tx=0, ty=0, tz=0;
-        for( int ix=-1; ix <= 1; ix++ )  {
-          for( int iy=-1; iy <= 1; iy++ )  {
-            for( int iz=-1; iz <= 1; iz++ )  {
-              au.CellToCartesian<vec3f,vec3f>(vec3f(v[0]/MaxX+ix, v[1]/MaxY+iy, v[2]/MaxZ+iz), v1);
-              const float qd1 = v1.QDistanceTo(xb->vertices[0]);
-              if( qd1 < qd )  {
-                qd = qd1;
-                tx = ix;  ty = iy;  tz = iz;
-              }
-            }
-          }
-        }
-        au.CellToCartesian<vec3f,vec3f>(vec3f(v[0]/MaxX+tx, v[1]/MaxY+ty, v[2]/MaxZ+tz), v1);
-      }
-      v = v1;
+      xb->vertices.AddCCopy(vertices[i]);
       xb->normals.AddCCopy(normals[i]);
     }
     else
@@ -996,9 +978,9 @@ TXBlob* TXGrid::CreateBlob(int x, int) const {
   xb->triangles.SetCapacity(triags.Count());
   for( size_t i=0; i < triags.Count(); i++ )  {
     IsoTriangle& t = xb->triangles.Add(new IsoTriangle(*triags[i]));
-    t.pointID[0] = new_ids[t.pointID[0]];
-    t.pointID[1] = new_ids[t.pointID[1]];
-    t.pointID[2] = new_ids[t.pointID[2]];
+    t.pointID[0] = (int)new_ids[t.pointID[0]];
+    t.pointID[1] = (int)new_ids[t.pointID[1]];
+    t.pointID[2] = (int)new_ids[t.pointID[2]];
   }
   return xb;
 }
@@ -1187,57 +1169,51 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-
 #ifndef _NO_PYTHON
+PyObject* pyImport(PyObject* self, PyObject* args)  {
+  char* data;
+  int dim1, dim2, dim3, focus1, focus2, focus3;
+  int type, len;
+  if( !PyArg_ParseTuple(args, "(iii)(iii)s#i",
+    &dim1, &dim2, &dim3,
+    &focus1, &focus2, &focus3, &data, &len, &type) )
+  {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "(iii)(iii)s#i");
+  }
+  const int sz = dim1*dim2*dim3;
+  if( (type == 0 && sz*sizeof(double) != len) || (type == 1 && sz*sizeof(int) != len))
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "array size");
+  TEMemoryInputStream ms(data, len);
+  TXGrid& g = *TXGrid::GetInstance();
+  g.InitGrid(focus1, focus2, focus3);
+  for( int d1=0; d1 < focus1; d1++ )  {
+    for( int d2=0; d2 < focus2; d2++ )
+      for( int d3=0; d3 < focus3; d3++ )  {
+        float v;
+        if( type == 0 )  {
+          double _v;
+          ms.SetPosition(((d1*dim2+d2)*dim3+d3)*sizeof(double));
+          ms >> _v;
+          v = (float)_v;
+        }
+        else if( type == 1 )  {
+          int _v;
+          ms.SetPosition(((d1*dim2+d2)*dim3+d3)*sizeof(int));
+          ms >> _v;
+          v = (float)_v;
+        }
+        g.SetValue(d1, d2, d3, v);
+      }
+  }
+  return PythonExt::PyNone();
+}
+//..............................................................................
 PyObject* pySetValue(PyObject* self, PyObject* args)  {
   int i, j, k;
   float val;
   if( !PyArg_ParseTuple(args, "iiif", &i, &j, &k, &val) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iiif");
   TXGrid::GetInstance()->SetValue(i, j, k, val);
-  return PythonExt::PyNone();
-}
-//..............................................................................
-PyObject* pySetData(PyObject* self, PyObject* args)  {
-  int di, dj, dk;
-  PyObject *grid;
-  if( !PyArg_ParseTuple(args, "iiiO", &di, &dj, &dk, &grid) )
-    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iiiO");
-  TXGrid& g = *TXGrid::GetInstance();
-  g.InitGrid(di, dj, dk);
-  PyObject* arglist = PyTuple_New(3);
-  bool error = false;
-  int max = olx_max(dk, olx_max(di,dj));
-  TPtrList<PyObject> indexes(max);
-  for( int i=0; i < max; i++ )
-    indexes[i] = PyInt_FromLong(i);
-  for( int i=0; i < di; i++ )  {
-    Py_INCREF(indexes[i]);
-    PyTuple_SetItem(arglist, 0, indexes[i]);
-    for( int j=0; j < dj; j++ )  {
-      Py_INCREF(indexes[j]);
-      PyTuple_SetItem(arglist, 1, indexes[j]);
-      for( int k=0; k < dk; k++ )  {
-        Py_INCREF(indexes[k]);
-        PyTuple_SetItem(arglist, 2, indexes[k]);
-        PyObject* result = PyObject_GetItem(grid, arglist);
-        if( result != NULL )  {
-          g.SetValue(i,j,k, (float)PyFloat_AsDouble(result));
-          Py_DECREF(result);
-        }
-        if( PyErr_Occurred() )  {
-          error = true;
-          break;
-        }
-      }
-      if( error )  break;
-    }
-    if( error )  break;
-  }
-  if( error )  PyErr_Print();
-  for( int i=0; i < max; i++ )
-    Py_DECREF(indexes[i]);
-  Py_DECREF(arglist);
   return PythonExt::PyNone();
 }
 //..............................................................................
@@ -1293,8 +1269,8 @@ PyObject* pyIsVisible(PyObject* self, PyObject* args)  {
 
 static PyMethodDef XGRID_Methods[] = {
   {"Init", pyInit, METH_VARARGS, "initialises grid memory"},
+  {"Import", pyImport, METH_VARARGS, "imports grid from an array"},
   {"SetValue", pySetValue, METH_VARARGS, "sets grid iso-level"},
-  {"SetData", pySetData, METH_VARARGS, "sets grid data, dimensions and a callable accessor are required"},
   {"SetMinMax", pySetMinMax, METH_VARARGS, "sets minimum and maximum vaues of the grid"},
   {"SetHole", pySetHole, METH_VARARGS, "sets minimum and maximum vaues of the grid to be avoided"},
   {"IsVisible", pyIsVisible, METH_VARARGS, "returns grid visibility status"},

@@ -18,7 +18,7 @@ protected:
   void InitMaterial() const;
   virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) const;
   struct ObjectReleaser  {
-    static bool OnItem(AGDrawObject& o)  {
+    static bool OnItem(AGDrawObject& o, size_t)  {
       o.SetParentGroup(NULL);
       o.SetGrouped(false);
       return true;

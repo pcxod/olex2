@@ -10,7 +10,7 @@ enum  {
 class TFitMode : public AEventsDispatcher, public AMode  {
   TXGroup* group;
   TXAtomPList Atoms, AtomsToMatch;
-
+  bool Initialised;
   class OnUniqHandler : public AActionHandler {
     TFitMode& fit_mode;
   public:
@@ -23,7 +23,7 @@ class TFitMode : public AEventsDispatcher, public AMode  {
 
   OnUniqHandler* uniq_handler;
 public:
-  TFitMode(size_t id) : AMode(id)  {
+  TFitMode(size_t id) : AMode(id), Initialised(false)  {
     uniq_handler = new OnUniqHandler(*this);
     TGlXApp::GetGXApp()->OnObjectsCreate.Add(this, mode_fit_create, msiExit);
     TGlXApp::GetGXApp()->XFile().GetLattice().OnDisassemble.Add(this, mode_fit_disassemble, msiEnter);
@@ -47,7 +47,7 @@ public:
     AddAtoms(xatoms);
     for( size_t i=0; i < xbonds.Count(); i++ )
       TGlXApp::GetGXApp()->GetRender().Select(*xbonds[i]);
-    return true;
+    return (Initialised = true);
   }
   ~TFitMode()  {
     TGlXApp::GetGXApp()->OnObjectsCreate.Remove(this);
@@ -67,7 +67,7 @@ public:
       rm.Vars.FixParam(Atoms[i]->Atom().CAtom(), catom_var_name_Sof);
     }
     app.GetRender().ReplaceSelection<TGlGroup>();
-    //app.XFile().GetLattice().UpdateConnectivity();
+    Initialised = false;
     // need to update symm eq etc
     app.XFile().GetLattice().Init();
   }
@@ -85,6 +85,7 @@ public:
     return true;
   }
   virtual bool Dispatch(int msg, short id, const IEObject* Sender, const IEObject* Data=NULL)  {  
+    if( !Initialised )  return false;
     TGXApp& app = *TGlXApp::GetGXApp();
     TAsymmUnit& au = app.XFile().GetAsymmUnit();
     if( msg == mode_fit_disassemble )  {

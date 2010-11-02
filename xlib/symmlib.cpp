@@ -709,7 +709,7 @@ bool TSpaceGroup::ContainsElement( const smatd_list& matrices, TSymmElement* sym
   return true;
 }
 //..............................................................................
-bool TSpaceGroup::IsSubElement( TSpaceGroup* symme )  const  {
+bool TSpaceGroup::IsSubElement( TSpaceGroup* symme ) const {
   if( MatrixCount() < symme->MatrixCount() )  return false;
   for( size_t i=0; i  < MatrixCount(); i++ )
     Matrices[i].SetRawId(0);
@@ -1541,7 +1541,7 @@ void TSymmLib::InitRelations()  {
 }
 
 //..............................................................................
-TSymmElement*  TSymmLib::FindSymmElement(const olxstr& name)  const  {
+TSymmElement*  TSymmLib::FindSymmElement(const olxstr& name) const {
   for( size_t i=0; i < SymmetryElements.Count(); i++ )
     if( SymmetryElements[i].GetName() == name )  return &SymmetryElements[i];
   return NULL;

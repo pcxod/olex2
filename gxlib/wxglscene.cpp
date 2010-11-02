@@ -217,7 +217,7 @@ TGlFont& TwxGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
   }
   //Fnt->CreateTextures(ImageW, ImageW);
   glf.CreateGlyphsFromRGBArray(Font.IsFixedWidth(), ImageW, ImageW);
-  Images.Delete();
+  Images.DeleteItems();
   return glf;
 }
 //..............................................................................
@@ -396,7 +396,7 @@ TGlFont& TwxGlScene::ImportFont(TGlFont& fnt) const {
       Images.Add(img);
     }
     fnt.CreateGlyphsFromRGBArray(mf.IsFixed(), imgw, imgh);
-    Images.Delete();
+    Images.DeleteItems();
   }
   else
     fnt.CreateGlyphs(ba, mf.IsFixed(), maxw, maxh);

@@ -20,13 +20,13 @@ END_EVENT_TABLE()
 
 void TTreeView::ItemActivateEvent(wxTreeEvent& event)  {
   StartEvtProcessing()
-    OnDblClick.Execute(this, &TEGC::New<olxstr>(GetOnItemActivateStr()));
+    OnDblClick.Execute(this, &GetOnItemActivateStr());
   EndEvtProcessing()
 }
 //..............................................................................
 void TTreeView::SelectionEvent(wxTreeEvent& event) {
   StartEvtProcessing()
-    OnSelect.Execute(this, &TEGC::New<olxstr>(GetOnSelectStr()));
+    OnSelect.Execute(this, &GetOnSelectStr());
   EndEvtProcessing()
 }
 //..............................................................................
@@ -82,12 +82,10 @@ void TTreeView::OnMouseUp(wxMouseEvent& me)  {
 }
 //..............................................................................
 void TTreeView::OnContextMenu(wxCommandEvent& evt)  {
-  if( evt.GetId() == ID_ExpandAll )  {
+  if( evt.GetId() == ID_ExpandAll )
     ExpandAllChildren(GetSelection());
-  }
-  else if( evt.GetId() == ID_CollapseAll )  {
+  else if( evt.GetId() == ID_CollapseAll )
     CollapseAllChildren(GetSelection());
-  }
 }
 //..............................................................................
 size_t TTreeView::_SaveState(TEBitArray& res, const wxTreeItemId& item, size_t& counter) const {

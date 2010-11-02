@@ -533,6 +533,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\repository\cdsfs.cpp" />
     <ClCompile Include="..\..\..\repository\filesystem.cpp" />
     <ClCompile Include="..\..\..\repository\httpfs.cpp" />
     <ClCompile Include="..\..\..\unirun\main.cpp" />

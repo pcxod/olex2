@@ -57,25 +57,25 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       throw TFunctionFailedException(__OlxSourceInfo, "mismatching matrix file");
     if( toks[4].CharAt(0) == 'x' )  {
       diag.Add(toks[2].ToDouble());
-      atom->ccrdEsd()[0] = diag.Last();
+      atom->ccrdEsd()[0] = diag.GetLast();
       Index.AddNew(toks[5], vcoviX, -1);
       indexes.Add(i);
     }
     else if( toks[4].CharAt(0) == 'y' )  {
       diag.Add(toks[2].ToDouble());
-      atom->ccrdEsd()[1] = diag.Last();
+      atom->ccrdEsd()[1] = diag.GetLast();
       Index.AddNew(toks[5], vcoviY, -1);
       indexes.Add(i);
     }
     else if( toks[4].CharAt(0) == 'z' )  {
       diag.Add(toks[2].ToDouble());
-      atom->ccrdEsd()[2] = diag.Last();
+      atom->ccrdEsd()[2] = diag.GetLast();
       Index.AddNew(toks[5], vcoviZ, -1);
       indexes.Add(i);
     }
     else if( toks[4] == "sof" )  {
       diag.Add(toks[2].ToDouble());
-      atom->SetOccuEsd(diag.Last());
+      atom->SetOccuEsd(diag.GetLast());
       Index.AddNew(toks[5], vcoviO , -1);
       indexes.Add(i);
     }
@@ -100,7 +100,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   size_t vcov_cnt = 0;
   for( size_t i=0; i < sl.Count(); i++ )  {
     const size_t ind = i+cnt+10;
-    if( sl[ind].IsEmpty() )  break;
+    if( sl[ind].Length() < 8 )  break;
     const size_t ll = sl[ind].Length();
     size_t s_ind = 0;
     while( s_ind < ll )  {
@@ -126,7 +126,6 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       }
     }
   }
-  double q_esd[6];
   for( size_t i=0; i < Index.Count(); i++ )  {
     TCAtom* ca = au.FindCAtom(Index[i].GetA());
     if( ca == NULL )

@@ -104,7 +104,7 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
       TGlPrimitive& GlP = GPC->NewPrimitive(FStaticObjects[i], sgloCommandList);
       /* copy the default drawing style tag*/
       GlP.Params.Resize(GlP.Params.Count()+1);
-      GlP.Params.Last() = SGlP->Params.Last();
+      GlP.Params.GetLast() = SGlP->Params.GetLast();
 
       GlP.StartList();
       GlP.CallList(SGlP);
@@ -114,30 +114,35 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
           TGlMaterial("85;2155839359;2155313015;1.000,1.000,1.000,0.502;36")));
       }
       else  {
-        TGlMaterial RGlM;
-        if( SGlP->Params.Last() == ddsDefAtomA || SGlP->Params.Last() == ddsDef )  {
-          if( cpar == NULL )
-            TXAtom::GetDefSphereMaterial(FBond->A(), RGlM);
-          else  {
-            size_t mi = ((BondCreationParams*)cpar)->a1.Style().IndexOfMaterial("Sphere");
-            if( mi != InvalidIndex )
-              RGlM = ((BondCreationParams*)cpar)->a1.Style().GetPrimitiveStyle(mi).GetProperties();
-            else
+        TGlMaterial* style_mat = GS.FindMaterial(FStaticObjects[i]);
+        if( style_mat != NULL )
+          GlP.SetProperties(*style_mat);
+        else  {
+          TGlMaterial RGlM;
+          if( SGlP->Params.GetLast() == ddsDefAtomA || SGlP->Params.GetLast() == ddsDef )  {
+            if( cpar == NULL )
               TXAtom::GetDefSphereMaterial(FBond->A(), RGlM);
+            else  {
+              const size_t mi = ((BondCreationParams*)cpar)->a1.Style().IndexOfMaterial("Sphere");
+              if( mi != InvalidIndex )
+                RGlM = ((BondCreationParams*)cpar)->a1.Style().GetPrimitiveStyle(mi).GetProperties();
+              else
+                TXAtom::GetDefSphereMaterial(FBond->A(), RGlM);
+            }
           }
-        }
-        else if( SGlP->Params.Last() == ddsDefAtomB )  {
-          if( cpar == NULL )
-            TXAtom::GetDefSphereMaterial(FBond->B(), RGlM);
-          else  {
-            size_t mi = ((BondCreationParams*)cpar)->a2.Style().IndexOfMaterial("Sphere");
-            if( mi != InvalidIndex )
-              RGlM = ((BondCreationParams*)cpar)->a2.Style().GetPrimitiveStyle(mi).GetProperties();
-            else
+          else if( SGlP->Params.GetLast() == ddsDefAtomB )  {
+            if( cpar == NULL )
               TXAtom::GetDefSphereMaterial(FBond->B(), RGlM);
+            else  {
+              size_t mi = ((BondCreationParams*)cpar)->a2.Style().IndexOfMaterial("Sphere");
+              if( mi != InvalidIndex )
+                RGlM = ((BondCreationParams*)cpar)->a2.Style().GetPrimitiveStyle(mi).GetProperties();
+              else
+                TXAtom::GetDefSphereMaterial(FBond->B(), RGlM);
+            }
           }
+          GlP.SetProperties(GS.GetMaterial(FStaticObjects[i], RGlM));
         }
-        GlP.SetProperties(RGlM);
       }
     }
   }
@@ -202,7 +207,7 @@ void TXBond::CreateStaticObjects()  {
   GlP->Compile();
 
   GlP->Params.Resize(GlP->Params.Count()+1);  //
-  GlP->Params.Last() = ddsDefAtomA;
+  GlP->Params.GetLast() = ddsDefAtomA;
 //..............................
   // create top disk
   if( (GlP = FStaticObjects.FindObject("Top disk")) == NULL )  {
@@ -220,7 +225,7 @@ void TXBond::CreateStaticObjects()  {
   GlP->EndList();
 
   GlP->Params.Resize(GlP->Params.Count()+1);  //
-  GlP->Params.Last() = ddsDefAtomB;
+  GlP->Params.GetLast() = ddsDefAtomB;
 //..............................
   // create bottom disk
   if( (GlP = FStaticObjects.FindObject("Bottom disk")) == NULL )  {
@@ -233,7 +238,7 @@ void TXBond::CreateStaticObjects()  {
   GlP->Compile();
 
   GlP->Params.Resize(GlP->Params.Count()+1);  //
-  GlP->Params.Last() = ddsDefAtomA;
+  GlP->Params.GetLast() = ddsDefAtomA;
 //..............................
   // create middle disk
   if( (GlP = FStaticObjects.FindObject("Middle disk")) == NULL )  {
@@ -251,7 +256,7 @@ void TXBond::CreateStaticObjects()  {
   GlP->EndList();
 
   GlP->Params.Resize(GlP->Params.Count()+1);  //
-  GlP->Params.Last() = ddsDefAtomA;
+  GlP->Params.GetLast() = ddsDefAtomA;
 //..............................
   // create bottom cylinder
   if( (GlP = FStaticObjects.FindObject("Bottom cone")) == NULL )  {
@@ -263,7 +268,7 @@ void TXBond::CreateStaticObjects()  {
   GlP->Compile();
 
   GlP->Params.Resize(GlP->Params.Count()+1);  //
-  GlP->Params.Last() = ddsDefAtomA;
+  GlP->Params.GetLast() = ddsDefAtomA;
 //..............................
   // create top cylinder
   if( (GlP = FStaticObjects.FindObject("Top cone")) == NULL )  {
@@ -280,7 +285,7 @@ void TXBond::CreateStaticObjects()  {
   GlP->CallList(GlPRC1);
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
-  GlP->Params.Last() = ddsDefAtomB;
+  GlP->Params.GetLast() = ddsDefAtomB;
 //..............................
   // create bottom line
   if( (GlP = FStaticObjects.FindObject("Bottom line")) == NULL )  {
@@ -294,7 +299,7 @@ void TXBond::CreateStaticObjects()  {
     olx_gl::end();
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
-  GlP->Params.Last() = ddsDefAtomA;
+  GlP->Params.GetLast() = ddsDefAtomA;
 //..............................
   // create top line
   if( (GlP = FStaticObjects.FindObject("Top line")) == NULL )  {
@@ -308,7 +313,7 @@ void TXBond::CreateStaticObjects()  {
     olx_gl::end();
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
-  GlP->Params.Last() = ddsDefAtomB;
+  GlP->Params.GetLast() = ddsDefAtomB;
 //..............................
   // create stipple cone
   float CL = (float)(1.0/(2*ConeStipples));
@@ -343,7 +348,7 @@ void TXBond::CreateStaticObjects()  {
   }
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
-  GlP->Params.Last() = ddsDef;
+  GlP->Params.GetLast() = ddsDef;
   //..............................
   if( (GlP = FStaticObjects.FindObject("Bottom stipple cone")) == NULL )  {
     GlP = &Parent.NewPrimitive(sgloCommandList);
@@ -361,7 +366,7 @@ void TXBond::CreateStaticObjects()  {
   }
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
-  GlP->Params.Last() = ddsDefAtomA;
+  GlP->Params.GetLast() = ddsDefAtomA;
   //..............................
   if( (GlP = FStaticObjects.FindObject("Top stipple cone")) == NULL )  {
     GlP = &Parent.NewPrimitive(sgloCommandList);
@@ -378,7 +383,7 @@ void TXBond::CreateStaticObjects()  {
   }
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
-  GlP->Params.Last() = ddsDefAtomB;
+  GlP->Params.GetLast() = ddsDefAtomB;
 
 //..............................
   // create stipped ball bond
@@ -398,7 +403,7 @@ void TXBond::CreateStaticObjects()  {
   }
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
-  GlP->Params.Last() = ddsDef;
+  GlP->Params.GetLast() = ddsDef;
 //..............................
   // create line
   if( (GlP = FStaticObjects.FindObject("Line")) == NULL )  {
@@ -412,7 +417,7 @@ void TXBond::CreateStaticObjects()  {
     olx_gl::end();
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
-  GlP->Params.Last() = ddsDefAtomA;
+  GlP->Params.GetLast() = ddsDefAtomA;
 //..............................
   // create stippled line
   if( (GlP = FStaticObjects.FindObject("Stippled line")) == NULL )  {
@@ -429,15 +434,15 @@ void TXBond::CreateStaticObjects()  {
   olx_gl::disable(GL_LINE_STIPPLE);
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
-  GlP->Params.Last() = ddsDefAtomA;
+  GlP->Params.GetLast() = ddsDefAtomA;
 }
 //..............................................................................
 olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {
   olxstr L(EmptyString, 32);
   const TSAtom *A = &Bnd.A(),
                *B = &Bnd.B();
-  if( A->GetType().z != B->GetType().z )  {
-    if( A->GetType().z < B->GetType().z )
+  if( A->GetType() != B->GetType() )  {
+    if( A->GetType() < B->GetType() )
       olx_swap(A, B);
   }
   else  {

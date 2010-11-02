@@ -362,16 +362,16 @@ const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, 
     }
     return &rm.AddUsedSymm(mat);
   }
-  throw TFunctionFailedException(__OlxSourceInfo, "both symops are not identity");
+  smatd mat((*eqiv2)*eqiv1->Inverse());
+  if( release )  {
+    rm.RemUsedSymm(*eqiv1);
+    rm.RemUsedSymm(*eqiv2);
+  }
+  return &rm.AddUsedSymm(mat);
 }
 //........................................................................
 void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv)  {
-  const smatd* eqiv = NULL;
-  try {  eqiv = GetCorrectMatrix(eqiv1, eqiv2, release_eqiv);  }
-  catch( ... )  {
-    TBasicApp::GetLog().Error( olxstr("Failed to add bond: only one EQIV is expected"));
-    return;
-  }
+  const smatd* eqiv = GetCorrectMatrix(eqiv1, eqiv2, release_eqiv);
   size_t ind = InvalidIndex;
   for( size_t i=0; i < AtomInfo.Count(); i++ )  {
     ind = FindBondIndex(AtomInfo.GetValue(i).BondsToCreate, AtomInfo.GetKey(i), a1, a2, eqiv); 
@@ -392,20 +392,15 @@ void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* 
     if( !exists )  {  // if was deleted - may be already exists?
       AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
       if( eqiv == NULL )  // these to be processed first
-        ai.BondsToCreate.Insert(0, new CXBondInfo(a2, eqiv) );
+        ai.BondsToCreate.Insert(0, new CXBondInfo(a2, eqiv));
       else
-        ai.BondsToCreate.Add( new CXBondInfo(a2, eqiv) );
+        ai.BondsToCreate.Add(new CXBondInfo(a2, eqiv));
     }
   }
 }
 //........................................................................
 void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv)  {
-  const smatd* eqiv = NULL;
-  try {  eqiv = GetCorrectMatrix(eqiv1, eqiv2, release_eqiv);  }
-  catch( ... )  {
-    TBasicApp::GetLog().Error( olxstr("Failed to delete bond: only one EQIV is expected"));
-    return;
-  }
+  const smatd* eqiv = GetCorrectMatrix(eqiv1, eqiv2, release_eqiv);
   size_t ind = InvalidIndex;
   for( size_t i=0; i < AtomInfo.Count(); i++ )  {
     ind = FindBondIndex(AtomInfo.GetValue(i).BondsToRemove, AtomInfo.GetKey(i), a1, a2, eqiv);
@@ -426,9 +421,9 @@ void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* 
     if( !exists )  {  // if was added - then it might not exist?
       AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
       if( eqiv == NULL )  // these to be processed first
-        ai.BondsToRemove.Insert(0, new CXBondInfo(a2, eqiv) );
+        ai.BondsToRemove.Insert(0, new CXBondInfo(a2, eqiv));
       else
-        ai.BondsToRemove.Add( new CXBondInfo(a2, eqiv) );
+        ai.BondsToRemove.Add(new CXBondInfo(a2, eqiv));
     }
   }
 }

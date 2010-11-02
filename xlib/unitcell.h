@@ -9,8 +9,9 @@
 #include "lattice.h"
 #include "asymmunit.h"
 #include "symspace.h"
-// on Linux its is defined as something...
-#undef QLength
+#ifdef QLength  // on Linux it is defined as something...
+  #undef QLength
+#endif
 
 BeginXlibNamespace()
 
@@ -18,9 +19,30 @@ class TUnitCell: public IEObject  {
   TNetwork*  Network;  // for internal use only
   smatd_list Matrices;  // list of unique matrices; FMatrices + centering
   TArrayList<TEllpPList> Ellipsoids;  // i - atoms index, j - matrix index 
+  TTypeList<TArrayList<uint8_t> > MulDest;  // index of r from a product of two matrices
+  TArrayList<uint8_t> InvDest;
   class TLattice*  Lattice;    // parent lattice
-  // a macro FindInRange
-  void _FindInRange(const vec3d& center, double R, TTypeList< AnAssociation3<TCAtom const*, smatd, vec3d> >& res) const;
+  /* a macro FindInRange, if the atom list is NULL, atoms are taken from the asymmetric unit,
+  atoms are excluded only if deleted, availability is not counted */
+  void _FindInRange(const vec3d& center, double R,
+    TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
+    const TCAtomPList* atoms=NULL) const;
+  /* macro FindBinding, if the atoms is NULL, atoms of the asymmetric unit are taken and atoms are excluded
+  only if deleted, availability is not counted */
+  void _FindBinding(const TCAtom& center, const smatd& center_tm, double delta,
+    TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
+    const TCAtomPList* atoms=NULL) const;
+  // explicit use of the I matrix 
+  void _FindBinding(const TCAtom& center, double delta,
+    TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
+    const TCAtomPList* atoms=NULL) const
+  {  _FindBinding(center, smatd().I(), delta, res, atoms);  }
+  // taking the transformation from the position generator
+  void _FindBinding(const TSAtom& center, double delta,
+    TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
+    const TCAtomPList* atoms=NULL) const
+  {  _FindBinding(center.CAtom(), center.GetMatrix(0), delta, res, atoms);  }
+  //
   static int _AtomSorter(const AnAssociation3<vec3d,TCAtom*, double>& a1, const AnAssociation3<vec3d,TCAtom*, double>& a2)  {
     const double d = a1.GetA().QLength() - a2.GetA().QLength();
     return d < 0 ? -1 : (d > 0 ? 1 : 0);
@@ -39,6 +61,23 @@ public:
   inline const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
   // initialises the matrix container id, throws an excpetion if matrix is not found
   void InitMatrixId(smatd& m) const;
+  /* if there is a list of transforms calculated in the asymmetric unit and a symmetry operator
+  needs to be applied to it, this is the function. Note that the list of input matrices and the
+  transformation matrix should have valid Id's. The return value is a new list of matrices
+  with new Id's */
+  smatd_list MulMatrices(const smatd_list& in, const smatd& transform) const;
+  smatd MulMatrix(const smatd& m, const smatd& tr) const {
+    smatd rv = m*tr;  // rv*r = tr*(m*r) - this is how it is when applied to a vector....
+    const uint8_t index = MulDest[m.GetContainerId()][tr.GetContainerId()];
+    rv.SetRawId(smatd::GenerateId(index, vec3i(rv.t-Matrices[index].t)));
+    return rv;
+  }
+  smatd InvMatrix(const smatd& m) const {
+    smatd rv = m.Inverse();
+    const uint8_t index = InvDest[m.GetContainerId()];
+    rv.SetRawId(smatd::GenerateId(index, vec3i(rv.t-Matrices[index].t)));
+    return rv;
+  }
   size_t EllpCount() const {  return Ellipsoids.Count()*Matrices.Count();  }
   const TEllipsoid* GetEllp(size_t i) const {  return Ellipsoids[i/Matrices.Count()][i%Matrices.Count()];  }
   TEllipsoid* GetEllp(size_t i)  {  return Ellipsoids[i/Matrices.Count()][i%Matrices.Count()];  }
@@ -47,7 +86,7 @@ public:
   TEllipsoid& GetEllipsoid(size_t MatrixId, size_t AUId)  {  return *Ellipsoids[AUId][MatrixId];  }
   void AddEllipsoid(); // adds a new row to ellipsoids, intialised with NULLs
   void ClearEllipsoids();
-  // (r-)caches the ellipsoids from the aunit
+  // (re)caches the ellipsoids from the aunit
   void UpdateEllipsoids();
   // expands the lattice centering and '-1' and caches ellipsoids for all symmetry operators
   void InitMatrices();
@@ -84,10 +123,26 @@ public:
   checked within [-1..+1] range in all directions), so only limited R values are supported. 
   Expects a list of Assiciation2+<TCAtom const*, smatd,...>
   */
-  template <class association> void FindInRangeAM(const vec3d& center, double R, TArrayList<association>& out) const {
-    TTypeList< AnAssociation3<TCAtom const*,smatd,vec3d> > res;
-    _FindInRange(center, R, res);
-    out.SetCount( res.Count() );
+  template <class association> void FindInRangeAM(const vec3d& center, double R,
+    TArrayList<association>& out, const TCAtomPList* atoms=NULL) const
+  {
+    TTypeList<AnAssociation3<TCAtom*,smatd,vec3d> > res;
+    _FindInRange(center, R, res, atoms);
+    out.SetCount(res.Count());
+    for( size_t i=0; i < res.Count(); i++ )  {
+      out[i].A() = res[i].A();
+      out[i].B() = res[i].GetB(); 
+    }
+  }
+  /* finds only bound atoms defined by delta, can take both TCAtom and TSAtom. In first case the
+  result will be located at the origin of the atom in the asymmetric unit, in the second - to the 
+  center of the TSAtom */
+  template <class Atom, class Association> void FindBindingAM(const Atom& center, double delta,
+    TArrayList<Association>& out, const TCAtomPList* atoms=NULL) const
+  {
+    TTypeList<AnAssociation3<TCAtom*,smatd,vec3d> > res;
+    _FindBinding(center, delta, res, atoms);
+    out.SetCount(res.Count());
     for( size_t i=0; i < res.Count(); i++ )  {
       out[i].A() = res[i].A();
       out[i].B() = res[i].GetB(); 
@@ -97,10 +152,12 @@ public:
   instead of the matrices 
   Expects a list of Assiciation2+<TCAtom const*, vec3d,...>
   */
-  template <class association> void FindInRangeAC(const vec3d& center, double R, TArrayList<association>& out) const {
-    TTypeList< AnAssociation3<TCAtom const*,smatd,vec3d> > res;
-    _FindInRange(center, R, res);
-    out.SetCount( res.Count() );
+  template <class association> void FindInRangeAC(const vec3d& center, double R,
+    TArrayList<association>& out, const TCAtomPList* atoms=NULL) const
+  {
+    TTypeList<AnAssociation3<TCAtom*,smatd,vec3d> > res;
+    _FindInRange(center, R, res, atoms);
+    out.SetCount(res.Count());
     for( size_t i=0; i < res.Count(); i++ )  {
       out[i].A() = res[i].A();
       out[i].B() = res[i].GetC(); 

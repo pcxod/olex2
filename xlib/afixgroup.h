@@ -133,8 +133,8 @@ public:
     Clear();
     for( size_t i=0; i < ags.Count(); i++ )  {
       if( !ags[i].IsEmpty() )  {
-        Groups.Add( new TAfixGroup(*this, ags[i]) );
-        Groups.Last().SetId( Groups.Count() - 1 );
+        Groups.Add(new TAfixGroup(*this, ags[i]));
+        Groups.GetLast().SetId(Groups.Count() - 1);
       }
     }
   }

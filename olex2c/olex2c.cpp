@@ -125,7 +125,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
  
   void UnifyAtomList(TSAtomPList atoms)  {
     // unify the selection
-    atoms.ForEachEx(ACollectionItem::IndexTagSetter<>());
+    atoms.ForEach(ACollectionItem::IndexTagSetter<>());
     for( size_t i=0; i < atoms.Count(); i++ )
       if( atoms[i]->CAtom().GetTag() != i || atoms[i]->CAtom().IsDeleted() )
         atoms[i] = NULL;
@@ -363,23 +363,23 @@ public:
     return true;
   }
   virtual void unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& funcName)  {
-    size_t ind = CallbackFuncs.IndexOfComparable(cbEvent), i = ind;
+    size_t ind = CallbackFuncs.IndexOf(cbEvent), i = ind;
     if( ind == InvalidIndex )  return;
     // go forward
-    while( i < CallbackFuncs.Count() && (!CallbackFuncs.GetComparable(i).Compare(cbEvent)) )  {
+    while( i < CallbackFuncs.Count() && (!CallbackFuncs.GetKey(i).Compare(cbEvent)) )  {
       if( CallbackFuncs.GetObject(i)->GetName() == funcName )  {
         delete CallbackFuncs.GetObject(i);
-        CallbackFuncs.Remove(i);
+        CallbackFuncs.Delete(i);
         return;
       }
       i++;
     }
     // go backwards
     i = ind-1;
-    while( i != InvalidIndex && (!CallbackFuncs.GetComparable(i).Compare(cbEvent)) )  {
+    while( i != InvalidIndex && (!CallbackFuncs.GetKey(i).Compare(cbEvent)) )  {
       if( CallbackFuncs.GetObject(i)->GetName() == funcName )  {
         delete CallbackFuncs.GetObject(i);
-        CallbackFuncs.Remove(i);
+        CallbackFuncs.Delete(i);
         return;
       }
       i--;

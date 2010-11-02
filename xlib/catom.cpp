@@ -2,10 +2,6 @@
 // namespace TXClasses: TCAtom - basic crystalographic atom
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "catom.h"
 #include "ellipsoid.h"
 #include "exception.h"
@@ -18,22 +14,20 @@ olxstr TCAtom::VarNames[] = {"Scale", "X", "Y", "Z", "Sof", "Uiso", "U11", "U22"
 //----------------------------------------------------------------------------//
 // TCAtom function bodies
 //----------------------------------------------------------------------------//
-TCAtom::TCAtom(TAsymmUnit *Parent)  {
+TCAtom::TCAtom(TAsymmUnit* _Parent) : Parent(_Parent)  {
   Part   = 0;
   Occu   = 1;
   QPeak  = 0;
   SetId(0);
   SetResiId(0);  // default residue is unnamed one
   SetSameId(~0);
-  FParent = Parent;
   EllpId = ~0;
   Uiso = caDefIso;
   OccuEsd = UisoEsd = 0;
   UisoScale = 0;
   UisoOwner = NULL;
   FragmentId = ~0;
-  FAttachedAtoms = NULL;
-  FAttachedAtomsI = NULL;
+  AttachedSites = AttachedSitesI = NULL;
   Equivs = NULL;
   Type = NULL;
   SetTag(-1);
@@ -46,11 +40,11 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
 }
 //..............................................................................
 TCAtom::~TCAtom()  {
-  if( FAttachedAtoms != NULL )       delete FAttachedAtoms;
-  if( FAttachedAtomsI != NULL )      delete FAttachedAtomsI;
+  if( AttachedSites != NULL )  delete AttachedSites;
+  if( AttachedSitesI != NULL )  delete AttachedSitesI;
   if( DependentHfixGroups != NULL )  delete DependentHfixGroups; 
-  if( ConnInfo != NULL )             delete ConnInfo;
-  if( Equivs != NULL )               delete Equivs;
+  if( ConnInfo != NULL )  delete ConnInfo;
+  if( Equivs != NULL )  delete Equivs;
 }
 //..............................................................................
 void TCAtom::SetConnInfo(CXConnInfo& ci) {
@@ -70,7 +64,7 @@ void TCAtom::SetLabel(const olxstr& L, bool validate)  {
       if( Type != NULL && *Type == iQPeakZ )
         SetQPeak(0);
       Type = atype;
-      FParent->_OnAtomTypeChanged(*this);
+      Parent->_OnAtomTypeChanged(*this);
     }
     Label = L;
     if( Type->symbol.Length() == 2 )
@@ -85,7 +79,7 @@ void TCAtom::SetType(const cm_Element& t)  {
     if( Type != NULL && *Type == iQPeakZ )
       SetQPeak(0);
     Type = &t;
-    FParent->_OnAtomTypeChanged(*this);
+    Parent->_OnAtomTypeChanged(*this);
   }
 }
 //..............................................................................
@@ -127,7 +121,7 @@ void TCAtom::Assign(const TCAtom& S)  {
   SetUisoEsd(S.GetUisoEsd());
   SetUisoScale( S.GetUisoScale() );
   if( S.UisoOwner != NULL )  {
-    UisoOwner = FParent->FindCAtomById(S.UisoOwner->GetId());
+    UisoOwner = Parent->FindCAtomById(S.UisoOwner->GetId());
     if( UisoOwner == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
   }
@@ -136,7 +130,7 @@ void TCAtom::Assign(const TCAtom& S)  {
   Label   = S.Label;
   if( Type != &S.GetType() )  {
     Type = &S.GetType();
-    FParent->_OnAtomTypeChanged(*this);
+    Parent->_OnAtomTypeChanged(*this);
   }
 //  Frag    = S.Frag;
   //Id = S.GetId();
@@ -161,20 +155,20 @@ int TCAtom::GetAfix() const {
     return ParentAfixGroup->GetAfix();
 }
 //..............................................................................
-TEllipsoid* TCAtom::GetEllipsoid() const {  return EllpId == InvalidIndex ? NULL : &FParent->GetEllp(EllpId);  }
+TEllipsoid* TCAtom::GetEllipsoid() const {  return EllpId == InvalidIndex ? NULL : &Parent->GetEllp(EllpId);  }
 //..............................................................................
 void TCAtom::AssignEllp(TEllipsoid* NV) {  NV == NULL ? EllpId = InvalidIndex : EllpId = NV->GetId();  }
 //..............................................................................
-void TCAtom::UpdateEllp(const TEllipsoid &NV ) {
+void TCAtom::UpdateEllp(const TEllipsoid &NV) {
   double Q[6], E[6];
   NV.GetQuad(Q, E);
   if( EllpId == InvalidIndex )  {
-    TEllipsoid& elp = FParent->NewEllp();
+    TEllipsoid& elp = Parent->NewEllp();
     elp.Initialise(Q, E);
     EllpId = elp.GetId();
   }
   else
-    FParent->GetEllp(EllpId).Initialise(Q);
+    Parent->GetEllp(EllpId).Initialise(Q);
 }
 //..............................................................................
 void TCAtom::ToDataItem(TDataItem& item) const  {
@@ -268,7 +262,7 @@ void TCAtom::FromDataItem(TDataItem& item)  {
       ev = adp->GetField(i);
       E[i] = ev.GetE();  Q[i] = ev.GetV();
     }
-    EllpId = FParent->NewEllp().Initialise(Q,E).GetId();
+    EllpId = Parent->NewEllp().Initialise(Q,E).GetId();
     Uiso = GetEllipsoid()->GetUiso();
   }
   else  {
@@ -333,14 +327,28 @@ int TCAtom::CompareAtomLabels(const olxstr& S, const olxstr& S1)  {
   return olx_cmp(Chars1.Count(), Chars2.Count());
 }
 //..............................................................................
-void TCAtom::AttachAtom(TCAtom *CA)  {
-  if( FAttachedAtoms == NULL )  FAttachedAtoms = new TCAtomPList;
-  FAttachedAtoms->Add(CA);
+bool TCAtom::AttachSite(TCAtom* atom, const smatd& matrix)  {
+  if( AttachedSites == NULL )
+    AttachedSites = new TTypeList<TCAtom::Site>;
+  for( size_t i=0; i < AttachedSites->Count(); i++ )  {
+    if( AttachedSites->GetItem(i).atom == atom &&
+      AttachedSites->GetItem(i).matrix.GetId() == matrix.GetId() )
+      return false;
+  }
+  AttachedSites->AddNew(atom, matrix);
+  return true;
 }
 //..............................................................................
-void TCAtom::AttachAtomI(TCAtom *CA)  {
-  if( !FAttachedAtomsI )  FAttachedAtomsI = new TCAtomPList;
-  FAttachedAtomsI->Add(CA);
+bool TCAtom::AttachSiteI(TCAtom* atom, const smatd& matrix)  {
+  if( !AttachedSitesI )
+    AttachedSitesI = new TTypeList<TCAtom::Site>;
+  for( size_t i=0; i < AttachedSitesI->Count(); i++ )  {
+    if( AttachedSitesI->GetItem(i).atom == atom &&
+      AttachedSitesI->GetItem(i).matrix.GetId() == matrix.GetId() )
+      return false;
+  }
+  AttachedSitesI->AddNew(atom, matrix);
+  return true;
 }
 //..............................................................................
 olxstr TCAtom::GetResiLabel() const {
@@ -415,7 +423,7 @@ olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm, const olxstr& resiName) co
   return name;
 }
 //..............................................................................
-IXVarReferencerContainer& TCAtom::GetParentContainer() const {  return *FParent;  }
+IXVarReferencerContainer& TCAtom::GetParentContainer() const {  return *Parent;  }
 //..............................................................................
 double TCAtom::GetValue(size_t var_index) const {
   switch( var_index)  {
@@ -432,7 +440,7 @@ double TCAtom::GetValue(size_t var_index) const {
     case catom_var_name_U12:
       if( !olx_is_valid_index(EllpId) )
         throw TInvalidArgumentException(__OlxSourceInfo, "Uanis is not defined");
-      return FParent->GetEllp(EllpId).GetQuadVal(var_index-catom_var_name_U11);
+      return Parent->GetEllp(EllpId).GetQuadVal(var_index-catom_var_name_U11);
     default:
       throw TInvalidArgumentException(__OlxSourceInfo, "parameter name");
   }

@@ -152,9 +152,9 @@ TLinkedLoopTable::TLinkedLoopTable(const TCif& C) : FCif(C)  {
 }
 //..............................................................................
 TLinkedLoopTable::~TLinkedLoopTable()  {
-  FAtoms.Delete();
-  FBonds.Delete();
-  FAngles.Delete();
+  FAtoms.DeleteItems();
+  FBonds.DeleteItems();
+  FAngles.DeleteItems();
 }
 //..............................................................................
 CifTabAtom& TLinkedLoopTable::AtomByName(const olxstr &Name)  {

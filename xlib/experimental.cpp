@@ -5,9 +5,9 @@
 //..................................................................................................
 bool ExperimentalDetails::SetTemp(const olxstr& t)  {
   if( t.IsEmpty() )  return false;
-  olxch last_d = olxstr::o_toupper(t.Last());
+  olxch last_d = olxstr::o_toupper(t.GetLast());
   if( last_d == 'F' || last_d == 'K' || last_d == 'C' )  {
-    olxch scale = olxstr::o_toupper(t.Last());
+    olxch scale = olxstr::o_toupper(t.GetLast());
     TempValue = t.SubStringTo(t.Length()-1);
     if( scale == 'F' )
       TempValue = (TempValue-32.0)*5./9.;

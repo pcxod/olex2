@@ -138,15 +138,15 @@ public:
   struct FlagsAnalyser  {
     const short ref_flags;
     FlagsAnalyser(short _ref_flags) : ref_flags(_ref_flags)  {}
-    inline bool OnItem(const AGDrawObject& o) const {  return o.MaskFlags(ref_flags) != 0;  }
+    inline bool OnItem(const AGDrawObject& o, size_t) const {  return o.MaskFlags(ref_flags) != 0;  }
   };
   template <class Actor> struct FlagsAnalyserEx  {
     const short ref_flags;
     const Actor actor;
     FlagsAnalyserEx(short _ref_flags, const Actor& _actor) : ref_flags(_ref_flags), actor(_actor)  {}
-    inline bool OnItem(AGDrawObject& o) const {
+    inline bool OnItem(AGDrawObject& o, size_t i) const {
       if( o.MaskFlags(ref_flags) != 0 )
-        return actor.OnItem(o);
+        return actor.OnItem(o, i);
       return false;
     }
   };

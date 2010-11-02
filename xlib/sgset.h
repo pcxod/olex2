@@ -12,11 +12,11 @@ public:
   }
   bool HasCellChoice() const {
     if( axis.IsEmpty() )  return false;
-    olxch lc = axis.Last();
+    olxch lc = axis.GetLast();
     return (lc >= '1' && lc <= '3');
   }
   short GetCellChoice() const {
-    return HasCellChoice() ? axis.Last()-'0' : -1;
+    return HasCellChoice() ? axis.GetLast()-'0' : -1;
   }
   void ChangeCellChoice(short v)  {
     if( HasCellChoice() )

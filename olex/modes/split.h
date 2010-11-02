@@ -145,7 +145,7 @@ public:
           xa->Atom().CAtom().ccrd() = c;
           xa->Atom().ccrd() = c;
           olxstr new_l = XA->Atom().GetLabel();
-          olxch lc = olxstr::o_tolower(new_l.Last() );
+          olxch lc = olxstr::o_tolower(new_l.GetLast() );
           if( lc >= 'a' && lc <= 'z' )
             new_l[new_l.Length()-1] = ++lc;
           else

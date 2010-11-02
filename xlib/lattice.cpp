@@ -477,6 +477,90 @@ void TLattice::GenerateCell()  {
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
+void TLattice::GenerateBox(const mat3d& norms, const vec3d& size, const vec3d& center,
+                           bool clear_content)
+{
+  OnStructureGrow.Enter(this);
+  if( clear_content )  {
+    ClearAtoms();
+    ClearMatrices();
+  }
+  const TUnitCell& uc = GetUnitCell();
+  TAsymmUnit& au = GetAsymmUnit();
+  for( size_t i=0; i < uc.MatrixCount(); i++ )  {
+    const smatd& m = uc.GetMatrix(i);
+    for( int di = -3; di <= 3; di++ )  {
+      for( int dj = -3; dj <= 3; dj++ )  {
+        for( int dk = -3; dk <= 3; dk++ )  {
+          const vec3d t(di, dj, dk);
+          const uint32_t m_id = smatd::GenerateId((uint8_t)i, t);
+          smatd* lm = NULL;
+          bool matrix_created = false;
+          for( size_t j=0; j < Matrices.Count(); j++ )  {
+            if( Matrices[j]->GetId() == m_id )  {
+              lm = Matrices[j];
+              break;
+            }
+          }
+          if( lm == NULL )  {
+            lm = new smatd(m);
+            lm->t += t;
+            lm->SetRawId(m_id);
+            matrix_created = true;
+          }
+          for( size_t j=0; j < au.AtomCount(); j++ )  {
+            TCAtom& ca = au.GetAtom(j);
+            if( ca.IsDeleted() )  continue;
+            vec3d p = m*ca.ccrd() + t;
+            const vec3d ccrd = p;
+            const vec3f c = norms*(au.CellToCartesian(p) - center);
+            if( olx_abs(c[0]) > size[0] || olx_abs(c[1]) > size[1] || olx_abs(c[2]) > size[2] )
+              continue;
+            TSAtom* sa = new TSAtom(Network);
+            sa->CAtom(ca);
+            sa->ccrd() = ccrd;
+            sa->crd() = p;
+            sa->SetEllipsoid(&GetUnitCell().GetEllipsoid(m.GetContainerId(), ca.GetId()));
+            sa->AddMatrix(lm);
+            AddSAtom(sa);
+            if( matrix_created )  {
+              Matrices.Add(lm);
+              matrix_created = false;
+            }
+          }
+          if( matrix_created )
+            delete lm;
+        }
+      }
+    }
+  }
+  Atoms.QuickSorter.SortSF(Atoms, TLattice_AtomsSortByDistance );
+  const size_t lc = Atoms.Count();
+  float* distances = new float[lc+1];
+  for( size_t i=0; i < lc; i++ )
+    distances[i] = (float)Atoms[i]->crd().QLength();    
+  for( size_t i=0; i < lc; i++ )  {
+    if( Atoms[i] == NULL )  continue;
+    for( size_t j=i+1; j < lc; j++ )  {
+      if( Atoms[j] == NULL )  continue;
+      if( (distances[j] - distances[i]) > 0.1 )  break;
+      const double qd = Atoms[i]->crd().QDistanceTo(Atoms[j]->crd());
+      if( qd < 0.00001 )  {
+        Atoms[i]->AddMatrices(*Atoms[j]);
+        delete Atoms[j];
+        Atoms[j] = NULL;
+        continue;
+      }
+    }
+  }
+  delete [] distances;
+  Atoms.Pack();
+
+  Disassemble();
+  Generated = true;
+  OnStructureGrow.Exit(this);
+}
+//..............................................................................
 void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template, bool ClearCont)  {
   OnStructureGrow.Enter(this);
   vec3d VTo(olx_round(MTo[0]+1), olx_round(MTo[1]+1), olx_round(MTo[2]+1));
@@ -509,15 +593,15 @@ void TLattice::GetGrowMatrices(smatd_list& res) const {
   for( size_t i=0; i < Atoms.Count(); i++ )  {
     if( Atoms[i]->IsGrown() || !Atoms[i]->IsAvailable() || !Atoms[i]->CAtom().IsAvailable() )  continue;
     const TCAtom& ca = Atoms[i]->CAtom();
-    for( size_t j=0; j < ca.AttachedAtomCount(); j++ )  {
+    for( size_t j=0; j < ca.AttachedSiteCount(); j++ )  {
       const TCAtom& ca1 = ca.GetAttachedAtom(j);
       if( !ca1.IsAvailable() )  continue;
       smatd_list* BindingMatrices = GetUnitCell().GetBinding(ca, ca1, Atoms[i]->ccrd(), ca1.ccrd(), false, false);
       for( size_t k=0; k < BindingMatrices->Count(); k++ )  {
-        const smatd& M = BindingMatrices->Item(k);
+        const smatd& M = BindingMatrices->GetItem(k);
         bool found = false;
         for( size_t l=0; l < MatrixCount(); l++ )  {
-          if( *Matrices[l] == M )  {
+          if( Matrices[l]->GetId() == M.GetId() )  {
             found = true;  
             break;
           }
@@ -540,13 +624,13 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
     TSAtom* SA = atoms[i];
     SA->SetGrown(true);
     const TCAtom& CA = SA->CAtom();
-    for( size_t j=0; j < CA.AttachedAtomCount(); j++ )  {
+    for( size_t j=0; j < CA.AttachedSiteCount(); j++ )  {
       const TCAtom& CA1 = CA.GetAttachedAtom(j);
       if( !CA1.IsAvailable() )  
         continue;
       smatd_list* BindingMatrices = GetUnitCell().GetBinding(CA, CA1, SA->ccrd(), CA1.ccrd(), false, false);
       for( size_t k=0; k < BindingMatrices->Count(); k++ )  {
-        const smatd& M = BindingMatrices->Item(k);
+        const smatd& M = BindingMatrices->GetItem(k);
         bool found = false;
         size_t l; // need to use it later
         for( l=0; l < MatrixCount(); l++ )  {
@@ -1003,8 +1087,8 @@ void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template)  {
     for( size_t i=0; i < Template->Count(); i++ )  {
       if( (*Template)[i]->IsDeleted() )  continue;
       TSAtom* A = L.Add(new TSAtom(Network));
-      A->CAtom(*Template->Item(i));
-      A->SetEllipsoid(&GetUnitCell().GetEllipsoid(0, Template->Item(i)->GetId())); // ellipsoid for the identity matrix
+      A->CAtom(*Template->GetItem(i));
+      A->SetEllipsoid(&GetUnitCell().GetEllipsoid(0, Template->GetItem(i)->GetId())); // ellipsoid for the identity matrix
       A->AddMatrix(Matrices[0]);
       A->SetLattId(L.Count()-1);
     }
@@ -1121,7 +1205,7 @@ void TLattice::MoveFragmentG(TSAtom& to, TSAtom& fragAtom)  {
         atoms.Add(&fragAtom.GetNetwork().Node(i));
 
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      TSAtom* SA = atoms.Item(i);
+      TSAtom* SA = atoms.GetItem(i);
       if( SA->IsDeleted() )  continue;
       TSAtom* atom = new TSAtom(&SA->GetNetwork());
       atom->CAtom(SA->CAtom());
@@ -1205,7 +1289,7 @@ void TLattice::Compaq()  {
     for( size_t j=0; j < Fragments[0]->NodeCount(); j++ )  {
       TSAtom& fa = Fragments[0]->Node(j);
       for( size_t k=0; k < frag->NodeCount(); k++ )  {
-        if( frag->Node(k).CAtom().IsAttachedTo( fa.CAtom() ) )  {
+        if( frag->Node(k).CAtom().IsAttachedTo(fa.CAtom()) )  {
           m = GetUnitCell().GetClosest(fa.ccrd(), frag->Node(k).ccrd(), true);
           if( m != NULL )  break;
         }
@@ -1473,7 +1557,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       ProcessingAtoms.Remove(atom);
       for( size_t i=0; i < parts.Count(); i++ )  {
         _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, parts[i], &gen_atoms.AddNew());
-        TCAtomPList& gen = gen_atoms.Last();
+        TCAtomPList& gen = gen_atoms.GetLast();
         for( size_t j=0; j < gen.Count(); j++ )  {
           gen[j]->SetPart(parts[i]);
           rm->Vars.SetParam(*gen[j], catom_var_name_Sof, occu[i]);
@@ -1862,7 +1946,7 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
   _ProcessRingHAdd(cg, rcont, atoms); // Cp
   rcont.Add(rcont[0]);
   _ProcessRingHAdd(cg, rcont, atoms); // Ph
-  rcont.Last() = CTypes[1];
+  rcont.GetLast() = CTypes[1];
   _ProcessRingHAdd(cg, rcont, atoms); // Py
 
   for( size_t i=0; i < atoms.Count(); i++ )  {
@@ -1884,7 +1968,7 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
         break;
       }
     }
-    for( size_t j=0; j < atoms[i]->CAtom().AttachedAtomCount(); j++ )  {
+    for( size_t j=0; j < atoms[i]->CAtom().AttachedSiteCount(); j++ )  {
       if( atoms[i]->CAtom().GetAttachedAtom(j).GetType() == iHydrogenZ &&
         !atoms[i]->CAtom().GetAttachedAtom(j).IsDeleted() )  {
         consider = false;
@@ -1944,9 +2028,9 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
     }
 
     while( hits.Count() > 1 &&
-      ((hits.GetComparable(hits.Count()-1) - hits.GetComparable(0)) > 0.05) )  {
+      ((hits.GetKey(hits.Count()-1) - hits.GetKey(0)) > 0.05) )  {
       Envi.Exclude(*hits.GetObject(hits.Count()-1));
-      hits.Remove(hits.Count()-1);
+      hits.Delete(hits.Count()-1);
     }
   }
   // all similar length  .... Q peaks might help :)
@@ -1969,17 +2053,17 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
     }
     while( hits.Count() > 1 )  {
       Envi.Exclude( *hits.GetObject( hits.Count() - 1 ) );
-      hits.Remove(hits.Count() - 1);
+      hits.Delete(hits.Count() - 1);
     }
   }
 
 }
 //..............................................................................
-void TLattice::SetAnis( const TCAtomPList& atoms, bool anis )  {
+void TLattice::SetAnis(const TCAtomPList& atoms, bool anis)  {
   if( !anis )  {
     for( size_t i=0; i < atoms.Count(); i++ )  {
       if( olx_is_valid_index(atoms[i]->GetEllpId()) )  {
-         GetAsymmUnit().NullEllp( atoms[i]->GetEllpId() );
+         GetAsymmUnit().NullEllp(atoms[i]->GetEllpId());
          atoms[i]->AssignEllp(NULL);
       }
     }

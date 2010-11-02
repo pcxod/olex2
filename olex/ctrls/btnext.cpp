@@ -27,12 +27,12 @@ void AButtonBase::SetDown(bool v)  {
   if( Down )  {
     Down = false;
     if( !GetOnUpStr().IsEmpty() )
-      OnUp.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnUpStr()));
+      OnUp.Execute((AOlxCtrl*)this, &GetOnUpStr());
   }
   else  {
     Down = true;
     if( !GetOnDownStr().IsEmpty() )
-      OnDown.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnDownStr()));
+      OnDown.Execute((AOlxCtrl*)this, &GetOnDownStr());
   }
   EndEvtProcessing()
 }
@@ -41,13 +41,13 @@ void AButtonBase::_ClickEvent()  {
   StartEvtProcessing()
     if( Down )  {
       if( !GetOnUpStr().IsEmpty() )
-        OnUp.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnUpStr()));
+        OnUp.Execute((AOlxCtrl*)this, &GetOnUpStr());
     }
     // we cannot check if the string is empty - it will be most of the time!
-    OnClick.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnClickStr()));
+    OnClick.Execute((AOlxCtrl*)this, &GetOnClickStr());
     if( !Down )  {
       if( !GetOnDownStr().IsEmpty() )
-        OnDown.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnDownStr()));
+        OnDown.Execute((AOlxCtrl*)this, &GetOnDownStr());
     }
     Down = !Down;
   EndEvtProcessing()
@@ -158,35 +158,33 @@ void TImgButton::Render(wxDC& dc) const {
 }
 //..............................................................................
 void TImgButton::MouseDownEvent(wxMouseEvent& event)  {
-  if( state != stDisabled && state != stDown )  {
+  if( state == stDisabled || state == stDown )  return;
+  StartEvtProcessing()
     state = stDown;
     Paint();
     ProcessingOnDown = true;
-    StartEvtProcessing()
-      if( !GetOnDownStr().IsEmpty() )
-        OnDown.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>( GetOnDownStr() ));
+    if( !GetOnDownStr().IsEmpty() )
+      OnDown.Execute((AOlxCtrl*)this, &GetOnDownStr());
     if( !MouseIn )  {
       if( !GetOnUpStr().IsEmpty() )
-        OnUp.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>( GetOnUpStr() ));
+        OnUp.Execute((AOlxCtrl*)this, &GetOnUpStr());
       state = stUp;
       Paint();
     }
-    EndEvtProcessing()
     ProcessingOnDown = false;
-  }
+  EndEvtProcessing()
 }
 //..............................................................................
 void TImgButton::MouseUpEvent(wxMouseEvent& event)  {
-  if( state != stDisabled && state != stUp && state != stHover )  {
-    StartEvtProcessing()
-      if( !GetOnUpStr().IsEmpty() )
-        OnUp.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>( GetOnUpStr() ));
-      if( !GetOnClickStr().IsEmpty() )
-        OnClick.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnClickStr()) );
-    EndEvtProcessing()
+ if( state == stDisabled || state == stUp || state == stHover )  return;
+  StartEvtProcessing()
+    if( !GetOnUpStr().IsEmpty() )
+      OnUp.Execute((AOlxCtrl*)this, &GetOnUpStr());
+    if( !GetOnClickStr().IsEmpty() )
+      OnClick.Execute((AOlxCtrl*)this, &GetOnClickStr());
     state = stUp;
     Paint();
-  }
+  EndEvtProcessing()
 }
 //..............................................................................
 void TImgButton::MouseMoveEvent(wxMouseEvent& event)  {

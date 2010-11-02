@@ -1,9 +1,5 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "library.h"
-//---------------------------------------------------------------------------
+
 UseEsdlNamespace()
 
 TLibrary::TLibrary(const olxstr& libraryName, ALibraryContainer* owner)  {
@@ -22,7 +18,7 @@ TLibrary::~TLibrary()  {
 }
 //..............................................................................
 TLibrary* TLibrary::AddLibrary(const olxstr& name, ALibraryContainer* owner )  {
-  if( Libraries.IndexOfComparable( name ) != InvalidIndex )
+  if( Libraries.IndexOf(name) != InvalidIndex )
     throw TDuplicateEntry(__OlxSourceInfo, name, "library" );
   TLibrary* lib = new TLibrary(name, owner);
   Libraries.Add(name, lib);
@@ -33,7 +29,7 @@ TLibrary* TLibrary::AddLibrary(const olxstr& name, ALibraryContainer* owner )  {
 }
 //..............................................................................
 void TLibrary::AttachLibrary( TLibrary* lib )  {
-  if( Libraries.IndexOfComparable( lib->GetName() ) != InvalidIndex )
+  if( Libraries.IndexOf(lib->GetName()) != InvalidIndex )
     throw TDuplicateEntry(__OlxSourceInfo, lib->GetName(), "library" );
   Libraries.Add(lib->GetName(), lib);
   lib->SetParentLibrary( this );
@@ -42,7 +38,7 @@ void TLibrary::AttachLibrary( TLibrary* lib )  {
 //..............................................................................
 void TLibrary::RegisterStaticMacro( TStaticMacro* func, bool replace )  {
   TSizeList list;
-  Macros.GetIndexes( func->GetName(), list );
+  Macros.GetIndexes(func->GetName(), list);
   for( size_t i=0; i < list.Count(); i++ )  {
     unsigned int argc = Macros.GetObject(list[i])->GetArgStateMask();
     if( (func->GetArgStateMask() & argc) != 0 )  {
@@ -53,13 +49,13 @@ void TLibrary::RegisterStaticMacro( TStaticMacro* func, bool replace )  {
       throw TDuplicateEntry(__OlxSourceInfo, olxstr("macro (same number of args)") << func->GetName(), "static macro");
     }
   }
-  func->SetParentLibrary( *this );
+  func->SetParentLibrary(*this);
   Macros.Add(func->GetName(), func);
 }
 //..............................................................................
 void TLibrary::RegisterStaticFunction( TStaticFunction* func, bool replace )  {
   TSizeList list;
-  Functions.GetIndexes( func->GetName(), list );
+  Functions.GetIndexes(func->GetName(), list);
   for( size_t i=0; i < list.Count(); i++ )  {
     unsigned int argc = Functions.GetObject(list[i])->GetArgStateMask();
     if( (func->GetArgStateMask() & argc) != 0 )  {
@@ -78,7 +74,7 @@ size_t TLibrary::LocateLocalFunctions( const olxstr& name, TBasicFunctionPList& 
   TSizeList list;
   Functions.GetIndexes(name, list);
   for( size_t i=0; i < list.Count(); i++ )
-    store.Add( Functions.GetObject(list[i]) );
+    store.Add(Functions.GetObject(list[i]));
   return list.Count();
 }
 //..............................................................................
@@ -86,7 +82,7 @@ size_t TLibrary::LocateLocalMacros( const olxstr& name, TBasicFunctionPList& sto
   TSizeList list;
   Functions.GetIndexes(name, list);
   for( size_t i=0; i < list.Count(); i++ )
-    store.Add( Macros.GetObject(list[i]) );
+    store.Add(Macros.GetObject(list[i]));
   return list.Count();
 }
 //..............................................................................
@@ -106,7 +102,7 @@ size_t TLibrary::LocateMacros(const olxstr& name, TBasicFunctionPList& store)  {
 //..............................................................................
 ABasicFunction* TLibrary::LocateFunction(const olxstr& name, unsigned int argc)  {
   if( argc == 0 )  {
-    size_t index = Functions.IndexOf(name);
+    const size_t index = Functions.IndexOf(name);
     return (index != InvalidIndex) ? Functions.GetObject(index) : NULL;
   }
   else  {
@@ -122,7 +118,7 @@ ABasicFunction* TLibrary::LocateFunction(const olxstr& name, unsigned int argc) 
 //..............................................................................
 ABasicFunction* TLibrary::LocateMacro(const olxstr& name, unsigned int argc)  {
   if( argc == 0 )  {
-    size_t index = Macros.IndexOfComparable(name);
+    const size_t index = Macros.IndexOf(name);
     return (index != InvalidIndex) ? Macros.GetObject( index ) : NULL;
   }
   else  {
@@ -139,15 +135,15 @@ ABasicFunction* TLibrary::LocateMacro(const olxstr& name, unsigned int argc)  {
 ABasicFunction* TLibrary::FindFunction(const olxstr& name, unsigned int argc)  {
   if( name.IndexOf('.') != InvalidIndex )  {
     TLibrary* searchLib = this;
-    TStrList libPath( name, '.') ;
+    TStrList libPath(name, '.') ;
     for( size_t i=0; i < libPath.Count()-1; i++ )  {
       searchLib = searchLib->GetLibraryByName(libPath[i]);
       if( searchLib == NULL )  break;
     }
-    return (searchLib) ? searchLib->LocateFunction(libPath.Last().String, argc) : NULL;
+    return (searchLib) ? searchLib->LocateFunction(libPath.GetLastString(), argc) : NULL;
   }
   else
-    return this->LocateFunction( name, argc );
+    return this->LocateFunction(name, argc);
 }
 //..............................................................................
 ABasicFunction* TLibrary::FindMacro(const olxstr& name, unsigned int argc)  {
@@ -155,10 +151,10 @@ ABasicFunction* TLibrary::FindMacro(const olxstr& name, unsigned int argc)  {
     TLibrary* searchLib = this;
     TStrList libPath(name, '.');
     for( size_t i=0; i < libPath.Count()-1; i++ )  {
-      searchLib = searchLib->GetLibraryByName( libPath[i] );
+      searchLib = searchLib->GetLibraryByName(libPath[i]);
       if( !searchLib )  break;
     }
-    return (searchLib) ? searchLib->LocateMacro(libPath.Last().String, argc) : NULL;
+    return (searchLib) ? searchLib->LocateMacro(libPath.GetLastString(), argc) : NULL;
   }
   else
     return this->LocateMacro(name, argc);
@@ -168,7 +164,7 @@ size_t TLibrary::LocateSimilarFunctions(const olxstr& name, TBasicFunctionPList&
   const size_t cnt = store.Count();
   for( size_t i=0; i < Functions.Count(); i++ )  {
     if( Functions.GetString(i).StartsFromi(name) )
-      store.Add( Functions.GetObject(i) );
+      store.Add(Functions.GetObject(i));
   }
   return store.Count() - cnt;
 }
@@ -177,7 +173,7 @@ size_t TLibrary::LocateSimilarMacros(const olxstr& name, TBasicFunctionPList& st
   const size_t cnt = store.Count();
   for( size_t i=0; i < Macros.Count(); i++ )  {
     if( Macros.GetString(i).StartsFromi(name) )
-      store.Add( Macros.GetObject(i) );
+      store.Add(Macros.GetObject(i));
   }
   return store.Count() - cnt;
 }
@@ -186,7 +182,7 @@ size_t TLibrary::LocateSimilarLibraries(const olxstr& name, TBasicLibraryPList& 
   const size_t cnt = store.Count();
   for( size_t i=0; i < Libraries.Count(); i++ )  {
     if( Libraries.GetString(i).StartsFromi(name) )
-      store.Add( Libraries.GetObject(i) );
+      store.Add(Libraries.GetObject(i));
   }
   return store.Count() - cnt;
 }
@@ -207,7 +203,7 @@ size_t TLibrary::FindSimilarFunctions(const olxstr& name, TBasicFunctionPList& s
           store.Add(searchLib->GetFunctionByIndex(i));
         return searchLib->LibraryCount();
       }
-      return searchLib->LocateSimilarFunctions(libPath.Last().String, store);
+      return searchLib->LocateSimilarFunctions(libPath.GetLastString(), store);
     }
     return 0;
   }
@@ -231,7 +227,7 @@ size_t TLibrary::FindSimilarMacros(const olxstr& name, TBasicFunctionPList& stor
           store.Add(searchLib->GetMacroByIndex(i));
         return searchLib->MacroCount();
       }
-      return searchLib->LocateSimilarMacros(libPath.Last().String, store );
+      return searchLib->LocateSimilarMacros(libPath.GetLastString(), store );
     }
     return 0;
   }
@@ -244,7 +240,7 @@ size_t TLibrary::FindSimilarLibraries(const olxstr& name, TBasicLibraryPList& st
     TLibrary* searchLib = this;
     TStrList libPath(name, '.');
     for( size_t i=0; i < libPath.Count(); i++ )  {
-      TLibrary* lib = searchLib->GetLibraryByName( libPath[i] );
+      TLibrary* lib = searchLib->GetLibraryByName(libPath[i]);
       if( lib == NULL )
         return searchLib->LocateSimilarLibraries(libPath[i], store);
       searchLib = lib;
@@ -255,7 +251,7 @@ size_t TLibrary::FindSimilarLibraries(const olxstr& name, TBasicLibraryPList& st
     return searchLib->LibraryCount();
   }
   else
-    return this->LocateSimilarLibraries( name, store );
+    return this->LocateSimilarLibraries(name, store);
 }
 //..............................................................................
 bool TLibrary::CheckProgramState(unsigned int state)  {

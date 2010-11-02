@@ -111,7 +111,7 @@ TModes::~TModes()  {
 size_t TModes::DecodeMode(const olxstr& mode)  {
   if( Instance == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "uninitialised instance");
-  return Instance->Modes.IndexOfComparable(mode) + 1;  // -1 +1 = 0 = mmNone
+  return Instance->Modes.IndexOf(mode) + 1;  // -1 +1 = 0 = mmNone
 }
 //..............................................................................
 bool TModeChange::CheckStatus(const olxstr& mode, const olxstr& modeData)  {

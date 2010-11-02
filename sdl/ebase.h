@@ -146,7 +146,9 @@ public:
   }
   // might not have '\0' char, to be used with Length or RawLen (char count)
   T * raw_str() const { return ((SData == NULL) ? NULL : &SData->Data[_Start]);  }
+  // length in bytes
   size_t RawLen() const { return _Length*CharSize;  }
+  // length in items
   size_t Length() const { return _Length;  }
   // standard api requires terminating '\0'; the use of raw_str and Length() is preferable
   const T * u_str() const {

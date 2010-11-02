@@ -735,7 +735,12 @@ v-[grow] use user provided delta for connectivity analysis, default 2A",
  this is appended to the label, '$xx' replaces the symbols after the atom type symbol with xx,\
  leaving the ending, '-xx' - changes the ending of the label with xx&;a-align&;\
 i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fpOne|fpTwo, "Fragment matching, alignment and label transfer routine");
-  this_InitMacroD(Conn, EmptyString, fpAny^fpNone, "Changes provided atom(s) connectivity (only until next connectivity modifying operation for now). First parameter is the new connectivity");
+  this_InitMacroD(Conn, EmptyString, fpAny^fpNone,
+    "Changes provided atom(s) connectivity (only until next connectivity modifying operation for now)."
+    "\nUsage: conn max_bond bonding_radius [selection/atom(s)/$type]"
+    "\nUsage: conn max_bond [selection/atom(s)/$type]"
+    "\nUsage: conn bonding_radius [selection/atom(s)/$type] - note the radius should have floating point"
+    );
   this_InitMacroD(AddBond, EmptyString, fpAny, "Adds specified bond to the connectivity table");
   this_InitMacroD(DelBond, EmptyString, fpAny, "Removes specified bond from the connectivity table");
   this_InitMacro(ShowWindow, ,fpOne|fpTwo);
@@ -1357,7 +1362,7 @@ void TMainForm::StartupInit()  {
 
   // set the variables
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
-    ProcessMacro(olxstr("setvar(") << StoredParams.GetComparable(i)
+    ProcessMacro(olxstr("setvar(") << StoredParams.GetKey(i)
                     << ",\'" << StoredParams.GetObject(i)
                     << "\')");
 
@@ -1787,7 +1792,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     }
   }
   else if( MsgId == ID_ONLINK )  {
-    if( Data != NULL )  {
+    if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
       TStrList Toks(*(olxstr*)Data, ">>");
       //GetHtml()->LockPageLoad();
       /* the page, if requested, will beloaded on time event. The timer is disabled
@@ -1801,7 +1806,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       // enabling the timer back
       // retrun fucus to the main window, but let typing in the comboboxes
       if( Sender != NULL )  {
-        if( Data == NULL || ((olxstr*)Data)->Length() == 0 )
+        if( ((olxstr*)Data)->IsEmpty() )
           ;
         else if( EsdlInstanceOf(*Sender, TComboBox) && !((TComboBox*)Sender)->IsReadOnly() )
           ;
@@ -2330,7 +2335,7 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
     if( MF->GetOptions().Count() != 0 )  {
       FGlConsole->PrintText(" Switches: ");
       for( size_t i=0; i < MF->GetOptions().Count(); i++ )  {
-        FGlConsole->PrintText( olxstr("   ") << MF->GetOptions().GetComparable(i) << " - "
+        FGlConsole->PrintText( olxstr("   ") << MF->GetOptions().GetKey(i) << " - "
           << MF->GetOptions().GetObject(i) );
       }
     }
@@ -2409,7 +2414,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 
   I = &DF.Root().AddItem("Stored_params");
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
-    TDataItem& it = I->AddItem(StoredParams.GetComparable(i));
+    TDataItem& it = I->AddItem(StoredParams.GetKey(i));
     it.AddField("value", StoredParams.GetObject(i));
   }
 
@@ -2689,7 +2694,7 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
       FRecentFiles.Insert(0, FN, mi);
     }  
     else  {
-      FRecentFiles.Insert(0, FN, FRecentFiles.Last().Object);
+      FRecentFiles.Insert(0, FN, FRecentFiles.GetLast().Object);
       FRecentFiles.Delete(FRecentFiles.Count()-1);
     }
   }
@@ -3163,7 +3168,7 @@ IEObject* TMainForm::executeFunction(const olxstr& function)  {
     return NULL;
   }
   olxstr funName = function.SubStringTo(ind);
-  ABasicFunction* Fun = FXApp->GetLibrary().FindFunction( funName );
+  ABasicFunction* Fun = FXApp->GetLibrary().FindFunction(funName);
   if( Fun == NULL )  {
     TBasicApp::GetLog().Error( olxstr("Unknow function: ") << funName);
     return NULL;
@@ -3247,7 +3252,7 @@ int TMainForm::TranslateShortcut(const olxstr& sk)  {
     if( ((Shift&sssShift)==0) && toks[i].Equalsi("Shift") )  {  Shift |= sssShift;  continue;  }
     if( ((Shift&sssAlt)==0) && toks[i].Equalsi("Alt") )    {  Shift |= sssAlt;  continue;  }
   }
-  olxstr charStr = toks.LastStr();
+  olxstr charStr = toks.GetLastString();
   // a char
   if( charStr.Length() == 1 ) {
     Char = charStr[0];
@@ -3389,24 +3394,24 @@ bool TMainForm::registerCallbackFunc(const olxstr& cbEvent, ABasicFunction* fn) 
 }
 //..............................................................................
 void TMainForm::unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& funcName)  {
-  size_t ind = CallbackFuncs.IndexOfComparable(cbEvent),
-      i = ind;
+  size_t ind = CallbackFuncs.IndexOf(cbEvent),
+    i = ind;
   if( ind == InvalidIndex )  return;
   // go forward
-  while( i < CallbackFuncs.Count() && CallbackFuncs.GetComparable(i).Equals(cbEvent) )  {
+  while( i < CallbackFuncs.Count() && CallbackFuncs.GetKey(i).Equals(cbEvent) )  {
     if( CallbackFuncs.GetObject(i)->GetName() == funcName )  {
       delete CallbackFuncs.GetObject(i);
-      CallbackFuncs.Remove(i);
+      CallbackFuncs.Delete(i);
       return;
     }
     i++;
   }
   // go backwards
   i = ind-1;
-  while( i !=InvalidIndex && (!CallbackFuncs.GetComparable(i).Compare(cbEvent)) )  {
+  while( i !=InvalidIndex && (!CallbackFuncs.GetKey(i).Compare(cbEvent)) )  {
     if( CallbackFuncs.GetObject(i)->GetName() == funcName )  {
       delete CallbackFuncs.GetObject(i);
-      CallbackFuncs.Remove(i);
+      CallbackFuncs.Delete(i);
       return;
     }
     i--;
@@ -3533,15 +3538,14 @@ const olxstr& TMainForm::GetStructureOlexFolder()  {
   return EmptyString;
 }
 //..............................................................................
-void TMainForm::LockWindowDestruction(wxWindow* wnd)  {
+void TMainForm::LockWindowDestruction(wxWindow* wnd, const IEObject* caller)  {
   if( wnd == FHtml )
-    FHtml->IncLockPageLoad();
+    FHtml->LockPageLoad(caller);
 }
 //..............................................................................
-void TMainForm::UnlockWindowDestruction(wxWindow* wnd)  {
-  if( wnd == FHtml )  {
-    FHtml->DecLockPageLoad();
-  }
+void TMainForm::UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller)  {
+  if( wnd == FHtml )
+    FHtml->UnlockPageLoad(caller);
 }
 //..............................................................................
 bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool GetAll, bool unselect)  {

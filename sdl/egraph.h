@@ -18,7 +18,7 @@ template <class IC, class AssociatedOC> class TEGraphNode : ACollectionItem  {
   AssociatedOC Object;
   mutable olxdict<NodeType*, TTypeList<ConnInfo>, TPointerComparator> Connectivity;
 protected:
-  inline bool IsPassed()  const  {  return Passed;  }
+  inline bool IsPassed() const {  return Passed;  }
   inline void SetPassed(bool v)  {  Passed = v;  }
   static int _SortNodesByTag(const NodeType* n1, const NodeType* n2) {
     return n1->GetTag() - n2->GetTag();
@@ -101,7 +101,7 @@ public:
       delete Nodes[i];
   }
   
-  inline bool IsRingNode()  const  {  return RingNode;  }
+  inline bool IsRingNode() const {  return RingNode;  }
   inline void SetRIngNode()  {  RingNode = true;  }
   inline TEGraphNode& NewNode(const IC& Data, const AssociatedOC& obj )  {
     return *Nodes.Add( new TEGraphNode(Data, obj) );
@@ -115,7 +115,7 @@ public:
 
   inline size_t Count() const {  return Nodes.Count();  }
   // this is for the traverser
-  inline TEGraphNode& Item(size_t i)  const   {  return  *Nodes[i];  }
+  inline TEGraphNode& Item(size_t i) const  {  return  *Nodes[i];  }
   inline TEGraphNode& operator [](size_t i)  const {  return  *Nodes[i];  }
   void SwapItems(size_t i, size_t j )  {  
     if( i != j )

@@ -47,7 +47,7 @@ public:
 
   inline const olxstr& GetName() const {  return Name;  }
   inline vec3d& GetCrd()              {  return Crd;   }
-  inline double GetOccup()  const        {  return Occup; }
+  inline double GetOccup() const       {  return Occup; }
 
   inline void SetName(const olxstr& n)  { Name = n;   }
   inline void SetOccup(double v)          { Occup = v;  }

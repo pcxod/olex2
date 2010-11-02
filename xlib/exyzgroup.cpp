@@ -6,9 +6,9 @@ void TExyzGroup::Clear()  {  Parent.Delete(Id);  }
 void TExyzGroup::Assign(const TExyzGroup& ag)  {
   for( size_t i=0; i < ag.Atoms.Count(); i++ )  {
     Atoms.Add(Parent.RM.aunit.FindCAtomById(ag.Atoms[i]->GetId()));
-    if( Atoms.Last() == NULL )
+    if( Atoms.GetLast() == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
-    Atoms.Last()->SetExyzGroup(this);
+    Atoms.GetLast()->SetExyzGroup(this);
   }
 }
 //..............................................................................

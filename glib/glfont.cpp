@@ -32,7 +32,7 @@ TGlFont::TGlFont(AGlScene& parent, size_t _Id, const olxstr& name, size_t _Small
 }
 //..............................................................................
 TGlFont::~TGlFont()  {
-  CharSizes.Delete();
+  CharSizes.DeleteItems();
   if( olx_is_valid_index(FontBase) )
     olx_gl::deleteLists(FontBase, 256);
   if( Textures != NULL )  {
@@ -1177,16 +1177,16 @@ const olxcstr& TGlFont::DefinePSChar(olxch ch, const double& drawScale,
       def.Add("    ") << (double)gl_font_simplex[ch_ind][j]*drawScale*scalex/VectorScale 
         << ' ' << (double)gl_font_simplex[ch_ind][j+1]*drawScale*scalex/VectorScale;
       if( !path_started )  {
-        def.Last().String  << " moveto";
+        def.GetLastString()  << " moveto";
         path_started = true;
       }
       else
-        def.Last().String  << " lineto";
+        def.GetLastString()  << " lineto";
     }
   }
   def.Add("    stroke");
   def.Add("  } bind def");
-  return context.definitions.Last().id;
+  return context.definitions.GetLast().id;
 }
 TStrList TGlFont::ExportHersheyToPS(const olxstr& uniq_chars)  {
   TStrList rv;
@@ -1216,11 +1216,11 @@ TStrList TGlFont::ExportHersheyToPS(const olxstr& uniq_chars)  {
       else  {
         rv.Add("    ") << gl_font_simplex[ch_ind][j]*30 << ' ' << gl_font_simplex[ch_ind][j+1]*30;
         if( !path_started )  {
-          rv.Last().String  << " moveto";
+          rv.GetLastString()  << " moveto";
           path_started = true;
         }
         else
-          rv.Last().String  << " lineto";
+          rv.GetLastString()  << " lineto";
       }
     }
     rv.Add("  stroke");

@@ -1,10 +1,11 @@
-#ifndef libraryH
-#define libraryH
+#ifndef __olx_sdl_library_H
+#define __olx_sdl_library_H
 #include "function.h"
-#undef GetObject
-//---------------------------------------------------------------------------
-BeginEsdlNamespace()
+#ifdef GetObject
+  #undef GetObject
+#endif
 
+BeginEsdlNamespace()
 
 class TLibrary: public IEObject, public ABasicLibrary  {
   TSStrPObjList<olxstr,ABasicFunction*, true> Functions, Macros;
@@ -15,40 +16,40 @@ class TLibrary: public IEObject, public ABasicLibrary  {
 protected:
   // these are the helper functions to find func/macro in this library only using
   // unqulified names
-  ABasicFunction* LocateFunction( const olxstr& fuctionName, unsigned int argc = 0 );
-  ABasicFunction* LocateMacro( const olxstr& macroName, unsigned int argc = 0 );
+  ABasicFunction* LocateFunction(const olxstr& fuctionName, unsigned int argc = 0);
+  ABasicFunction* LocateMacro(const olxstr& macroName, unsigned int argc = 0);
 
-  size_t LocateLocalFunctions( const olxstr& name, TBasicFunctionPList& store);
-  size_t LocateLocalMacros( const olxstr& name, TBasicFunctionPList& store);
+  size_t LocateLocalFunctions(const olxstr& name, TBasicFunctionPList& store);
+  size_t LocateLocalMacros(const olxstr& name, TBasicFunctionPList& store);
   void SetParentLibrary( TLibrary* lib )  {  ParentLibrary = lib;  }
 public:
   /* it important to pass the owner for the special program state checks to be performed */
   TLibrary(const olxstr& libraryName, ALibraryContainer* owner = NULL);
   virtual ~TLibrary();
 
-  virtual const olxstr& GetName()  const        {  return LibraryName;  }
+  virtual const olxstr& GetName() const {  return LibraryName;  }
   virtual ABasicLibrary* GetParentLibrary() const {  return ParentLibrary;  }
   // implementation of the state checker
   virtual bool CheckProgramState(unsigned int state);
-  virtual ALibraryContainer* GetOwner() const     {  return LibraryOwner;  }
+  virtual ALibraryContainer* GetOwner() const {  return LibraryOwner;  }
 
-  inline size_t FunctionCount()  const  {  return Functions.Count(); }
+  inline size_t FunctionCount() const {  return Functions.Count(); }
   inline ABasicFunction* GetFunctionByIndex(size_t i)  const {  return Functions.GetObject(i);  }
 
-  inline size_t MacroCount()  const  {  return Macros.Count(); }
-  inline ABasicFunction* GetMacroByIndex(size_t i)  const {  return Macros.GetObject(i);  }
+  inline size_t MacroCount() const {  return Macros.Count(); }
+  inline ABasicFunction* GetMacroByIndex(size_t i) const {  return Macros.GetObject(i);  }
 
 
-  TLibrary* AddLibrary(const olxstr& name, ALibraryContainer* owner = NULL );
+  TLibrary* AddLibrary(const olxstr& name, ALibraryContainer* owner = NULL);
   // not that the library will be deleted upon destruction
-  void AttachLibrary( TLibrary* lib );
+  void AttachLibrary(TLibrary* lib);
 
   inline size_t LibraryCount() const {  return Libraries.Count();  }
-  inline TLibrary* GetLibraryByName(const olxstr& name) const  {  return Libraries[name];  }
+  inline TLibrary* GetLibraryByName(const olxstr& name) const {  return Libraries[name];  }
   inline TLibrary* GetLibraryByIndex(size_t index) const {  return Libraries.GetObject( index );  }
 
   template <class BaseClass>
-    void RegisterFunction( TFunction<BaseClass>* func, bool replace = false )  {
+    void RegisterFunction(TFunction<BaseClass>* func, bool replace = false)  {
       TSizeList list;
       Functions.GetIndexes(func->GetName(), list);
       for( size_t i=0; i < list.Count(); i++ )  {
@@ -62,15 +63,15 @@ public:
           throw TDuplicateEntry(__OlxSourceInfo, olxstr("function (same number of args)") << func->GetName(), "function");
         }
       }
-      func->SetParentLibrary( *this );
+      func->SetParentLibrary(*this);
       Functions.Add(func->GetName(), func);
     }
 
-  void RegisterStaticFunction( TStaticFunction* func, bool replace = false );
-  void RegisterStaticMacro( TStaticMacro* func, bool replace = false );
+  void RegisterStaticFunction(TStaticFunction* func, bool replace = false);
+  void RegisterStaticMacro(TStaticMacro* func, bool replace = false);
 
   template <class BaseClass>
-    void RegisterMacro( TMacro<BaseClass>* macro, bool replace = false )  {
+    void RegisterMacro(TMacro<BaseClass>* macro, bool replace = false)  {
       TSizeList list;
       Macros.GetIndexes(macro->GetName(), list);
       for( size_t i=0; i < list.Count(); i++ )  {
@@ -84,7 +85,7 @@ public:
           throw TDuplicateEntry(__OlxSourceInfo, olxstr("macro (same number of args)") << macro->GetName(), "macro");
         }
       }
-      macro->SetParentLibrary( *this );
+      macro->SetParentLibrary(*this);
       Macros.Add(macro->GetName(), macro);
     }
   /* if function name is no qualified, current lib is searched only, for quailified
@@ -117,7 +118,7 @@ public:
     TDuplicateEntry(const olxstr& location, const olxstr& entry, const olxstr& entryType) :
       TBasicException(location, olxstr("Duplicate ") << entryType << '-' << entry)
       {  ;  }
-    virtual IEObject* Replicate()  const  {  return new TDuplicateEntry(*this);  }
+    virtual IEObject* Replicate() const {  return new TDuplicateEntry(*this);  }
   };
 
   class TLibraryNotFound : public TBasicException  {
@@ -125,7 +126,7 @@ public:
     TLibraryNotFound(const olxstr& location, const olxstr& libName) :
       TBasicException(location, olxstr("Library ") << libName << " not found")
       {  ;  }
-    virtual IEObject* Replicate()  const  {  return new TLibraryNotFound(*this);  }
+    virtual IEObject* Replicate() const {  return new TLibraryNotFound(*this);  }
   };
 };
 

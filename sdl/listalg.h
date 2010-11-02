@@ -37,16 +37,6 @@ struct ListFilter  {
     const Condition& condition;
     _Filter(ResList& _results, const Condition& _condition) :
       results(_results), condition(_condition)  {}
-    template <class Item> inline void OnItem(Item& o) const {
-      if( condition.OnItem(o) )
-        results.Add(o);
-    }
-  };
-  template <class ResList, class Condition> struct _FilterEx  {
-    ResList& results;
-    const Condition& condition;
-    _FilterEx(ResList& _results, const Condition& _condition) :
-      results(_results), condition(_condition)  {}
     template <class Item> inline void OnItem(Item& o, size_t i) const {
       if( condition.OnItem(o, i) )
         results.Add(o);
@@ -55,10 +45,6 @@ struct ListFilter  {
   template <class SrcList, class ResList, class Condition>
   static void Filter(const SrcList& src, ResList& dest, const Condition& cond)  {
     src.ForEach(_Filter<ResList, Condition>(dest, cond));
-  }
-  template <class SrcList, class ResList, class Condition>
-  static void FilterEx(const SrcList& src, ResList& dest, const Condition& cond)  {
-    src.ForEachEx(_FilterEx<ResList, Condition>(dest, cond));
   }
 };
 

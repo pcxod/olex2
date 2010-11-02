@@ -447,6 +447,19 @@ ContentList TAsymmUnit::GetContentList(double mult) const {
   return XElementLib::SortContentList(rv);
 }
 //..............................................................................
+olxstr TAsymmUnit::_SummFormula(const olxstr &Sep, double mult) const {
+  ContentList cl = GetContentList(mult);
+  olxstr rv;
+  for( size_t i=0; i < cl.Count(); i++)  {
+    rv << cl[i].element.symbol;
+    if( olx_abs(cl[i].count-1.0) > 1e-3 )
+      rv << olxstr::FormatFloat(3, cl[i].count).TrimFloat();
+    if( (i+1) < cl.Count() )
+      rv << Sep;
+  }
+  return rv;
+}
+//..............................................................................
 olxstr TAsymmUnit::SummFormula(const olxstr &Sep, bool MultiplyZ) const  {
   size_t matrixInc = 0;
   // searching the identity matrix
@@ -458,16 +471,11 @@ olxstr TAsymmUnit::SummFormula(const olxstr &Sep, bool MultiplyZ) const  {
     }
   }
   if( Uniq )  matrixInc ++;
-
-  ContentList cl = GetContentList(MultiplyZ ? (MatrixCount()+matrixInc) : 1.0);
-  olxstr rv;
-  for( size_t i=0; i < cl.Count(); i++)  {
-    rv << cl[i].element.symbol;
-    rv << olxstr::FormatFloat(3, cl[i].count).TrimFloat();
-    if( (i+1) < cl.Count() )
-      rv << Sep;
-  }
-  return rv;
+  return _SummFormula(Sep, MultiplyZ ? (MatrixCount()+matrixInc) : 1.0);
+}
+//..............................................................................
+double TAsymmUnit::GetZPrime() const {
+  return (double)Z/(TUnitCell::GetMatrixMultiplier(Latt)*(MatrixCount()+1));
 }
 //..............................................................................
 double TAsymmUnit::MolWeight() const  {
@@ -573,7 +581,7 @@ void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg)  {
     Matrices.AddCCopy(sg.GetMatrix(i));
 }
 //..............................................................................
-double TAsymmUnit::CalcCellVolume()  const  {
+double TAsymmUnit::CalcCellVolume() const {
   double cosa = cos( FAngles[0].GetV()*M_PI/180 ),
          cosb = cos( FAngles[1].GetV()*M_PI/180 ),
          cosg = cos( FAngles[2].GetV()*M_PI/180 );
@@ -941,25 +949,25 @@ void TAsymmUnit::LibIsAtomDeleted(const TStrObjList& Params, TMacroError& E)  {
 void TAsymmUnit::LibGetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  E.SetRetVal( GetAtom(index).GetOccu() );
+  E.SetRetVal(GetAtom(index).GetOccu());
 }
 //..............................................................................
 void TAsymmUnit::LibGetAtomAfix(const TStrObjList& Params, TMacroError& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  E.SetRetVal( GetAtom(index).GetAfix() );
+  E.SetRetVal(GetAtom(index).GetAfix());
 }
 //..............................................................................
 void TAsymmUnit::LibIsPeak(const TStrObjList& Params, TMacroError& E)  {
   if( Params[0].IsNumber() )  {
     size_t index = Params[0].ToSizeT();
     if( index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-    E.SetRetVal(GetAtom(index).GetType() == iQPeakZ );
+    E.SetRetVal(GetAtom(index).GetType() == iQPeakZ);
   }
   else  {
-    TCAtom* ca = FindCAtom( Params[0] );
+    TCAtom* ca = FindCAtom(Params[0]);
     if( ca != NULL )
-      E.SetRetVal(ca->GetType() == iQPeakZ );
+      E.SetRetVal(ca->GetType() == iQPeakZ);
     else
       E.SetRetVal(false);
   }
@@ -1017,9 +1025,9 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
       if( sortedPeaks.GetObject(i) != NULL )
         sortedPeaks.GetObject(i)->SetLabel(qLabel + olxstr(ac-i), false);
     }
-    QPeakIndex = ac - sortedPeaks.IndexOfComparable( qPeak );
-    MinQPeak = sortedPeaks.GetComparable(0);
-    MaxQPeak = sortedPeaks.Last().Comparable;
+    QPeakIndex = ac - sortedPeaks.IndexOf(qPeak);
+    MinQPeak = sortedPeaks.GetKey(0);
+    MaxQPeak = sortedPeaks.GetLast().Comparable;
   }
 
   TCAtom& ca = this->NewAtom();
@@ -1048,7 +1056,7 @@ void TAsymmUnit::LibSetZ(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal(olxstr::FormatFloat(3,(double)Z/(TUnitCell::GetMatrixMultiplier(Latt)*(MatrixCount()+1))));
+  E.SetRetVal(olxstr::FormatFloat(3,GetZPrime()));
 }
 //..............................................................................
 void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {

@@ -44,11 +44,11 @@ public:
   }
   //bool operator == (const TReflection &r) const {  return CompareTo(r) == 0; }
 
-  inline int GetH()  const  {  return hkl[0];  }
+  inline int GetH() const {  return hkl[0];  }
   inline void SetH(int v)   {  hkl[0] = v;  }
-  inline int GetK()  const  {  return hkl[1];  }
+  inline int GetK() const {  return hkl[1];  }
   inline void SetK(int v)   {  hkl[1] = v;  }
-  inline int GetL()  const  {  return hkl[2];  }
+  inline int GetL() const {  return hkl[2];  }
   inline void SetL(int v)   {  hkl[2] = v;  }
 
   template <class VC>

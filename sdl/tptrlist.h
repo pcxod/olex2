@@ -78,10 +78,23 @@ public:
     }
   }
 //..............................................................................
-  // calls delete on all items, does not change the object itself
-  void Delete() const {
-    for( size_t i=0; i < FCount; i++ )
-      delete Items[i];
+  // calls delete on all items, by default values are not validated to be not null
+  const TPtrList& DeleteItems(bool validate=false) const {
+    if( !validate )  {
+      for( size_t i=0; i < FCount; i++ )
+        delete Items[i];
+    }
+    else  {
+      for( size_t i=0; i < FCount; i++ )
+        if( Items[i] != NULL )
+          delete Items[i];
+    }
+    return *this;
+  }
+//..............................................................................
+  TPtrList& DeleteItems(bool validate=false)  {
+    ((const TPtrList*)this)->DeleteItems(validate);
+    return *this;
   }
 //..............................................................................
   virtual IEObject* Replicate() const {  return new TPtrList(*this);  }
@@ -206,13 +219,14 @@ public:
     return *this;
   }
 //..............................................................................
-  inline void Insert(size_t index, size_t cnt)  {
+  inline TPtrList& Insert(size_t index, size_t cnt)  {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount+1);
 #endif
     SetCapacity(FCount + FIncrement + cnt);
     memmove(&Items[index+cnt], &Items[index], (FCount-index)*sizeof(T*));
     FCount += cnt;
+    return *this;
   }
 //..............................................................................
   inline void NullItem(size_t index) const {
@@ -229,35 +243,32 @@ public:
     return Items[index];
   }
 //..............................................................................
-  inline T*& Item(size_t index) const {
+  inline T*& GetItem(size_t index) const {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
     return Items[index];
   }
 //..............................................................................
-  inline T*& Last() const {
+  inline T*& GetLast() const {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, FCount-1, 0, FCount);
 #endif
     return Items[FCount-1];
   }
 //..............................................................................
-  inline const T* GetItem(size_t index) const {
-#ifdef _DEBUG
-  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
-#endif
-    return Items[index];
-  }
-//..............................................................................
-  inline void SetCapacity(size_t v)  {
-    if( v < FCapacity )  return;
+  inline TPtrList& SetCapacity(size_t v)  {
+    if( v < FCapacity )  return *this;
     FCapacity = v;
     Allocate();
     memset(&Items[FCount], 0, (FCapacity-FCount)*sizeof(T*));  // initialise the rest of items to NULL
+    return *this;
   }
 //..............................................................................
-  inline void SetIncrement(size_t v)  {  FIncrement = v;  }
+  inline TPtrList& SetIncrement(size_t v)  {
+    FIncrement = v;
+    return *this;
+  }
 //..............................................................................
   void Delete(size_t index)  {
 #ifdef _DEBUG
@@ -293,25 +304,22 @@ public:
 //..............................................................................
   inline TPtrList SubListTo(size_t to) const {  return SubList(0, to);  }
 //..............................................................................
-  inline void Remove(T* pObj)  {
+  /*removes given item from the list, returns if the item existed. If there are more
+  than 1 the same item in the list, only the first one will be removed */
+  inline bool Remove(const T* pObj)  {
     const size_t i = IndexOf(pObj);
-    if( i == InvalidIndex )  
-      throw TFunctionFailedException(__OlxSourceInfo, "could not locate specified object");
+    if( i == InvalidIndex )  return false;
     Delete(i);
+    return true;
   }
 //..............................................................................
-  inline void Remove(const T& Obj)  {
-    const size_t i = IndexOf(Obj);
-    if( i == InvalidIndex )  
-      throw TFunctionFailedException(__OlxSourceInfo, "could not locate specified object");
-    Delete(i);
-  }
+  inline bool Remove(const T& Obj)  {  return Remove(&Obj);   }
 //..............................................................................
   // cyclic shift to the left
-  void ShiftL(size_t cnt)  {
-    if( FCount == 0 )  return;
+  TPtrList& ShiftL(size_t cnt)  {
+    if( FCount == 0 )  return *this;
     const size_t sv = cnt%FCount;
-    if( sv == 0 )  return;
+    if( sv == 0 )  return *this;
     if( sv == 1 )  {  // special case
       T *D = Items[0];
       for( size_t i=1; i <= FCount-1; i++ )
@@ -326,13 +334,14 @@ public:
       memcpy(&Items[FCount-sv], D, sv*sizeof(T*));
       delete [] D;
     }
+    return *this;
   }
 //..............................................................................
   // cyclic shift to the right
-  void ShiftR(size_t cnt)  {
-    if( FCount == 0 )  return;
+  TPtrList& ShiftR(size_t cnt)  {
+    if( FCount == 0 )  return *this;
     const size_t sv = cnt%FCount;
-    if( sv == 0 )  return;
+    if( sv == 0 )  return *this;
     if( sv == 1 )  {  // special case
       T* D = Items[FCount-1];
       for( size_t i=1; i < FCount; i++ )
@@ -348,6 +357,7 @@ public:
       memcpy(&Items[0], &D[0], sv*sizeof(T*));
       delete [] D;
     }
+    return *this;
   }
 //..............................................................................
   inline void Swap(size_t i, size_t j)  {
@@ -378,7 +388,7 @@ public:
     Items[to] = D;
   }
 //..............................................................................
-  void Pack()  {
+  TPtrList& Pack()  {
     size_t nc = 0;  // count null pointers
     for( size_t i=0; i < FCount; i++, nc++ )  {
       if( Items[i] == NULL )  {
@@ -388,21 +398,10 @@ public:
       Items[nc] = Items[i];
     }
     FCount = nc;
+    return *this;
   }
 //..............................................................................
-  template <class PackAnalyser> void Pack(const PackAnalyser& pa)  {
-    size_t nc = 0;  // count null pointers
-    for( size_t i=0; i < FCount; i++, nc++ )  {
-      if( pa.OnItem(*Items[i]) )  {
-        nc--;
-        continue;
-      }
-      Items[nc] = Items[i];
-    }
-    FCount = nc;
-  }
-//..............................................................................
-  template <class PackAnalyser> void PackEx(const PackAnalyser& pa)  {
+  template <class PackAnalyser> TPtrList& Pack(const PackAnalyser& pa)  {
     size_t nc = 0;  // count null pointers
     for( size_t i=0; i < FCount; i++, nc++ )  {
       if( pa.OnItem(*Items[i], i) )  {
@@ -412,19 +411,16 @@ public:
       Items[nc] = Items[i];
     }
     FCount = nc;
+    return *this;
   }
 //..............................................................................
-  template <class Functor> void ForEach(const Functor& f) const {
-    for( size_t i=0; i < FCount; i++ )
-      f.OnItem(*Items[i]);
-  }
-//..............................................................................
-  template <class Functor> void ForEachEx(const Functor& f) const {
+  template <class Functor> const TPtrList& ForEach(const Functor& f) const {
     for( size_t i=0; i < FCount; i++ )
       f.OnItem(*Items[i], i);
+    return *this;
   }
 //..............................................................................
-  inline void Shrink() {
+  inline void Fit()  {
     FCapacity = FCount;
     Allocate();
   }
@@ -433,8 +429,8 @@ public:
 //..............................................................................
   inline bool IsEmpty() const {  return (FCount == 0);  }
 //..............................................................................
-  inline void SetCount(size_t v)  {
-    if( v == FCount )  return;
+  inline TPtrList& SetCount(size_t v)  {
+    if( v == FCount )  return *this;
     if( v > FCount )  {
       if( v > FCapacity )
         SetCapacity(v + FIncrement);
@@ -442,8 +438,9 @@ public:
     }
     else  {  // shrinking to exact size
       FCount = v;
-      Shrink();
+      Fit();
     }
+    return *this;
   }
 //..............................................................................
   size_t IndexOf(const T* val) const {
@@ -460,22 +457,22 @@ public:
         return i;
     return InvalidIndex;
   }
-
-  void Rearrange(const TSizeList& indexes)  {
-    if( FCount < 2 )  return;
-#ifdef _DEBUG
+//..............................................................................
+  TPtrList& Rearrange(const TSizeList& indexes)  {
+    if( FCount < 2 )  return *this;
     if( FCount != indexes.Count() )
-      throw TFunctionFailedException(__OlxSourceInfo, "size mismatch");
-#endif
-      // allocate the list of NULLs
-      T** ni = (T**)malloc(FCount*sizeof(T*));
-      for( size_t i=0; i < FCount; i++ )
-        ni[i] = Items[indexes[i]];
-      free(Items);
-      Items = ni;
+      throw TInvalidArgumentException(__OlxSourceInfo, "indexes size");
+    // allocate the list of NULLs
+    T** ni = (T**)malloc(FCount*sizeof(T*));
+    for( size_t i=0; i < FCount; i++ )
+      ni[i] = Items[indexes[i]];
+    free(Items);
+    Items = ni;
+    return *this;
   }
+//..............................................................................
   struct Accessor  {
-    static T* get(TPtrList<T>& l, size_t i)  {  return l[i];  }
+    static T* get(const TPtrList& l, size_t i)  {  return l[i];  }
   };
   static ListQuickSorter<TPtrList<T>,const T*, Accessor> QuickSorter;
   static ListBubbleSorter<TPtrList<T>,const T*, Accessor> BubleSorter;

@@ -39,9 +39,9 @@ void TP4PFile::SaveToStrings(TStrList& SL)  {
     << ' ' << GetRM().expl.GetCrystalSize()[2]
     << ' ';
     if( GetRM().expl.IsTemperatureSet() ) 
-      SL.Last().String << GetRM().expl.GetTempValue().ToString();
+      SL.GetLastString() << GetRM().expl.GetTempValue().ToString();
     else
-      SL.Last().String << '0';
+      SL.GetLastString() << '0';
     SL.Add("SOURCE  ") << GetRM().expl.GetRadiation();
   // save only if preset
   if( !SGString.IsEmpty() )

@@ -18,13 +18,6 @@ protected:
   template <class Analyser> struct PackItemActor  {
     const Analyser& analyser;
     PackItemActor(const Analyser& _analyser) : analyser(_analyser)  {}
-    inline bool OnItem(T& o) const {
-      if( analyser.OnItem(o) )  {
-        delete &o;
-        return true;
-      }
-      return false;
-    }
     inline bool OnItem(T& o, size_t i) const {
       if( analyser.OnItem(o, i) )  {
         delete &o;
@@ -60,9 +53,7 @@ public:
   }
 //..............................................................................
   //destructor - beware t40: error: expecthe objects are deleted!
-  virtual ~TTypeListExt()  {
-    Clear();
-  }
+  virtual ~TTypeListExt()  {  Clear();  }
 //..............................................................................
   //deletes the objects and clears the list
   TTypeListExt& Clear()  {
@@ -83,11 +74,8 @@ public:
   /* creates new copies of the objest, be careful as the assignement operator must exist  */
   template <class alist> void AddListA(const alist& list)  {
     List.SetCapacity(list.Count() + List.Count());
-    for( size_t i=0; i < list.Count(); i++ )  {
-      T* o = new T();
-      *o = list[i];
-      List.Add(o);
-    }
+    for( size_t i=0; i < list.Count(); i++ )
+      *List.Add(new T()) = list[i];
   }
 //..............................................................................
   /* creates new copies of the objest, be careful as the copy constructor must exist  */
@@ -175,46 +163,54 @@ public:
   inline T& InsertNew(size_t index)  {  return *List.Insert(index, new T());  }
 //..............................................................................
   template<class AC>
-    inline T& InsertNew(size_t index, const AC& arg )  {
-      return *List.Insert(index, new T(arg));  }
+    inline T& InsertNew(size_t index, const AC& arg)  {
+      return *List.Insert(index, new T(arg));
+    }
 //..............................................................................
   template<class FAC, class SAC>
-    inline T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2 )  {
-      return *List.Insert(index, new T(arg1, arg2));  }
+    inline T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2)  {
+      return *List.Insert(index, new T(arg1, arg2));
+    }
 //..............................................................................
   template<class FAC, class SAC, class TAC>
     inline T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2, const TAC& arg3)  {
-      return *List.Insert(index, new T(arg1, arg2, arg3));  }
+      return *List.Insert(index, new T(arg1, arg2, arg3));
+    }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC>
     inline T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4)  {
-      return *List.Insert(index, new T(arg1, arg2, arg3, arg4));  }
+      return *List.Insert(index, new T(arg1, arg2, arg3, arg4));
+    }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC, class FvAC>
     inline T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4, const FvAC& arg5)  {
-      return *List.Insert(index, new T(arg1, arg2, arg3, arg4, arg5));  }
+      return *List.Insert(index, new T(arg1, arg2, arg3, arg4, arg5));
+    }
 //..............................................................................
   inline T& AddNew()  {  return *List.Add(new T());  }
 //..............................................................................
   template<class AC>
-    inline T& AddNew( const AC& arg )  {
-      return *List.Add(new T(arg));  }
+    inline T& AddNew( const AC& arg )  {  return *List.Add(new T(arg));  }
 //..............................................................................
   template<class FAC, class SAC>
     inline T& AddNew(const FAC& arg1, const SAC& arg2 )  {
-      return *List.Add(new T(arg1, arg2));  }
+      return *List.Add(new T(arg1, arg2));
+    }
 //..............................................................................
   template<class FAC, class SAC, class TAC>
     inline T& AddNew(const FAC& arg1, const SAC& arg2, const TAC& arg3 )  {
-      return *List.Add(new T(arg1, arg2, arg3));  }
+      return *List.Add(new T(arg1, arg2, arg3));
+    }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC>
     inline T& AddNew(const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4)  {
-      return *List.Add(new T(arg1, arg2, arg3, arg4));  }
+      return *List.Add(new T(arg1, arg2, arg3, arg4));
+    }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC, class FvAC>
     inline T& AddNew(const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4, const FvAC& arg5)  {
-      return *List.Add(new T(arg1, arg2, arg3, arg4, arg5));  }
+      return *List.Add(new T(arg1, arg2, arg3, arg4, arg5));
+    }
 //..............................................................................
   inline T& operator [] (size_t index) const {
 #ifdef _DEBUG
@@ -227,35 +223,34 @@ public:
 #endif
   }
 //..............................................................................
-  inline T& Item(size_t index) const {
+  inline T& GetItem(size_t index) const {
 #ifdef _DEBUG
-    T*& v = List[index];
+    T*& v = List.GetItem(index);
     if( v == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "cannot dereference a NULL pointer");
     return *v;
 #else
-    return *List[index];
+    return *List.GetItem(index);
 #endif
   }
 //..............................................................................
-  inline T& Last() const {
+  inline T& GetLast() const {
 #ifdef _DEBUG
-    T*& v = List.Last();
+    T*& v = List.GetLast();
     if( v == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "cannot dereference a NULL pointer");
     return *v;
 #else
-    return *List.Last();
+    return *List.GetLast();
 #endif
   }
 //..............................................................................
   inline bool IsNull(size_t index) const {  return List[index] == NULL;  }
 //..............................................................................
-  // beware that poiter assignement will not work with syntaxes above, use this function instead!
+  // the function is safe to be called repeatedly on the same index
   inline void NullItem(size_t index) const {
-    T* v = List[index];
-    if( v != NULL )  {  // check if not deleted yet
-      delete (DestructCast*)v;
+    if( List[index] != NULL )  {  // check if not deleted yet
+      delete (DestructCast*)List[index];
       List[index] = NULL;
     }
   }
@@ -273,7 +268,7 @@ public:
 //..............................................................................
   /* copy - creates new copies of the objest, be careful as the copy constructor
    must exist  */
-  template <class alist> TTypeListExt& operator = (const alist& list )  {
+  template <class alist> TTypeListExt& operator = (const alist& list)  {
     for( size_t i=0; i < List.Count(); i++ )
       delete (DestructCast*)List[i];
     List.SetCount( list.Count() );
@@ -282,14 +277,19 @@ public:
     return *this;
   }
 //..............................................................................
-  inline void SetCapacity(size_t v)  {  List.SetCapacity(v);  }
+  inline TTypeListExt& SetCapacity(size_t v)  {
+    List.SetCapacity(v);
+    return *this;
+  }
 //..............................................................................
-  inline void SetIncrement(size_t v)  {  List.SetIncrement(v);  }
+  inline TTypeListExt& SetIncrement(size_t v)  {
+    List.SetIncrement(v);
+    return *this;
+  }
 //..............................................................................
   void Delete(size_t index)  {
-    // check if already deleted
-    if( List[index] == NULL )  return;
-    delete (DestructCast*)List[index];
+    if( List[index] != NULL )
+      delete (DestructCast*)List[index];
     List.Delete(index);
   }
 //..............................................................................
@@ -320,15 +320,16 @@ public:
 //..............................................................................
   TTypeListExt SubListTo(size_t to) const {  return SubList(0, to);  }
 //..............................................................................
-  void Shrink(size_t newSize)  {
-    if( newSize >= List.Count() )  return;
+  TTypeListExt& Shrink(size_t newSize)  {
+    if( newSize >= List.Count() )  return *this;
     for( size_t i=newSize; i < List.Count(); i++ )
       if( List[i] != NULL )
         delete (DestructCast*)List[i];
     List.SetCount(newSize);
+    return *this;
   }
 //..............................................................................
-  // the memory has to be delalocated by calling process
+  // the memory has to be delalocated by calling process (using delete)
   T& Release(size_t index)  {
     T*& v = List[index];
 #ifdef _DEBUG
@@ -338,55 +339,47 @@ public:
     List.Delete(index);
     return *v;
   }
-  // the memory has to be delalocated by calling process
+//..............................................................................
+  // the memory has to be delalocated by calling process (using delete)
   void ReleaseAll()  {  List.Clear();  }
 //..............................................................................
-  void Remove(const T& Obj)  {
-    size_t ind = IndexOf(Obj);
+  bool Remove(const T& Obj)  {
+    const size_t ind = IndexOf(Obj);
     if( ind == InvalidIndex )
-      throw TInvalidArgumentException(__OlxSourceInfo, "object is not in the list");
+      return false;
     Delete(ind);
+    return true;
   }
 //..............................................................................
   /* rearranges the list according to provided indexes. Indexes must be unique unless
     objects are pointers
   */
-  void Rearrange(const TSizeList& indexes)  {
-#ifdef _DEBUG
-    if( Count() != indexes.Count() )
-      throw TFunctionFailedException(__OlxSourceInfo, "size mismatch");
-#endif
+  TTypeListExt& Rearrange(const TSizeList& indexes)  {
     List.Rearrange(indexes);
+    return *this;
   }
 //..............................................................................
   // cyclic shift to the left
-  inline void ShiftL(size_t cnt)  {  List.ShiftL(cnt);  }
+  inline TTypeListExt& ShiftL(size_t cnt)  {  List.ShiftL(cnt);  return *this;  }
 //..............................................................................
   // cyclic shift to the right
-  inline void ShiftR(size_t cnt)  {  List.ShiftR(cnt);  }
+  inline TTypeListExt& ShiftR(size_t cnt)  {  List.ShiftR(cnt);  return *this;  }
 //..............................................................................
   inline void Swap(size_t i, size_t j)  {  List.Swap(i, j);  }
 //..............................................................................
   inline void Move(size_t from, size_t to)  {  List.Move(from, to);  }
 //..............................................................................
-  inline void Pack()  {  List.Pack();  }
+  inline TTypeListExt& Pack()  {  List.Pack();  return  *this;  }
 //..............................................................................
-  template <class PackAnalyser> inline void Pack(const PackAnalyser& pa)  {
+  template <class PackAnalyser> inline TTypeListExt& Pack(const PackAnalyser& pa)  {
     List.Pack(PackItemActor<PackAnalyser>(pa));
+    return *this;
   }
 //..............................................................................
-  template <class PackAnalyser> inline void PackEx(const PackAnalyser& pa)  {
-    List.PackEx(PackItemActor<PackAnalyser>(pa));
-  }
-//..............................................................................
-  template <class Functor> inline void ForEach(const Functor& f) const {
+  template <class Functor> const TTypeListExt& ForEach(const Functor& f) const {
     for( size_t i=0; i < List.Count(); i++ )
-      f.OnItem(Item(i));
-  }
-//..............................................................................
-  template <class Functor> inline void ForEachEx(const Functor& f) const {
-    for( size_t i=0; i < List.Count(); i++ )
-      f.OnItem(Item(i), i);
+      f.OnItem(GetItem(i), i);
+    return *this;
   }
 //..............................................................................
   inline size_t Count() const {  return List.Count();  }
@@ -396,7 +389,8 @@ public:
   // the comparison operator is used
   size_t IndexOf(const T& val) const {
     for( size_t i=0; i < List.Count(); i++ )
-      if( *List[i] == val )  return i;
+      if( *List[i] == val )
+        return i;
     return InvalidIndex;
   }
   struct Accessor  {
