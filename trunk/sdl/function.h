@@ -298,7 +298,7 @@ template <class Base>
         return;
       }
       for( size_t i=0; i < Options.Count(); i++ )  {
-        if( ValidOptions.IndexOfComparable(Options.GetName(i)) == InvalidIndex )  {
+        if( ValidOptions.IndexOf(Options.GetName(i)) == InvalidIndex )  {
           E.WrongOption(*this, Options.GetName(i) );
           return;
         }
@@ -328,7 +328,7 @@ template <class Base>
         olxstr res = ABasicFunction::GetSignature();
         res << "; valid options - ";
         for( size_t i=0; i < ValidOptions.Count(); i++ )  {
-          res << ValidOptions.GetComparable(i)  << ';';
+          res << ValidOptions.GetKey(i)  << ';';
         }
         return res;
       }
@@ -378,7 +378,7 @@ template <class Base>
         return;
       }
       for( size_t i=0; i < Options.Count(); i++ )  {
-        if( ValidOptions.IndexOfComparable(Options.GetName(i)) == InvalidIndex )  {
+        if( ValidOptions.IndexOf(Options.GetName(i)) == InvalidIndex )  {
           E.WrongOption(*this, Options.GetName(i) );
           return;
         }
@@ -408,7 +408,7 @@ template <class Base>
         olxstr res = ABasicFunction::GetSignature();
         res << "; valid options - ";
         for( size_t i=0; i < ValidOptions.Count(); i++ )  {
-          res << ValidOptions.GetComparable(i) << ';';
+          res << ValidOptions.GetKey(i) << ';';
         }
         return res;
       }

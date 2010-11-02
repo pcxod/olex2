@@ -156,7 +156,7 @@ public:
   size_t FindSimilar(const olxstr& name, TPtrList<TEMacro>& out) const {
     size_t cnt = out.Count();
     for( size_t i=0; i < Macros.Count(); i++ )  {
-      if( Macros.GetComparable(i).StartsFromi(name) )
+      if( Macros.GetKey(i).StartsFromi(name) )
         out.Add(Macros.GetObject(i));
     }
     return out.Count() - cnt;
@@ -165,8 +165,8 @@ public:
   size_t FindSimilarNames(const olxstr& name, StrLst& out) const {
     size_t cnt = out.Count();
     for( size_t i=0; i < Macros.Count(); i++ )  {
-      if( Macros.GetComparable(i).StartsFromi(name) )
-        out.Add(Macros.GetComparable(i));
+      if( Macros.GetKey(i).StartsFromi(name) )
+        out.Add(Macros.GetKey(i));
     }
     return out.Count() - cnt;
   }

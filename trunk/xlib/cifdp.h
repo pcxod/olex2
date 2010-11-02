@@ -80,7 +80,7 @@ namespace cif_dp {
       : cetNamedString(_name, _val), comment(_comment)  {}
     virtual void ToStrings(TStrList& list) const {
       cetNamedString::ToStrings(list);
-      list.Last().String << " #" << comment;
+      list.GetLastString() << " #" << comment;
     }
     virtual bool HasComment() const {  return true;  }
     virtual const olxstr& GetComment() const {  return comment;  }

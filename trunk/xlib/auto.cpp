@@ -35,7 +35,7 @@ const double LengthVar = 0.03,
 void TAutoDBFolder::SaveToStream( IDataOutputStream& output ) const  {
   output << (long)Files.Count();
   for( size_t i=0; i < Files.Count(); i++ )
-    output << TUtf8::Encode(Files.GetComparable(i));
+    output << TUtf8::Encode(Files.GetKey(i));
 }
 //..............................................................................
 void TAutoDBFolder::LoadFromStream( IDataInputStream& input )  {
@@ -118,7 +118,7 @@ TAutoDBNode::TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >*
   }
   vec3d_list TransformedCrds;
   TLattice& latt = sa.GetNetwork().GetLattice();
-  for( size_t i=0; i < sa.CAtom().AttachedAtomCount(); i++ )  {
+  for( size_t i=0; i < sa.CAtom().AttachedSiteCount(); i++ )  {
     if( sa.CAtom().GetAttachedAtom(i).GetType() == iHydrogenZ )  continue;
     smatd_list* transforms = latt.GetUnitCell().GetInRange(sa.ccrd(),
                                sa.CAtom().GetAttachedAtom(i).ccrd(),
@@ -132,7 +132,7 @@ TAutoDBNode::TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >*
     }
     TransformedCrds.Clear();
     for( size_t j=0; j < transforms->Count(); j++ )  {
-      smatd& transform = transforms->Item(j);
+      smatd& transform = transforms->GetItem(j);
       vec3d a = transform * sa.CAtom().GetAttachedAtom(i).ccrd();
       latt.GetAsymmUnit().CellToCartesian(a);
       if( a.QDistanceTo(sa.crd()) > 0.01 )  {
@@ -356,7 +356,7 @@ bool TAutoDBNode::IsMetricSimilar(const TAutoDBNode& dbn, double& fom) const  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-bool TAutoDBNetNode::IsMetricSimilar(const TAutoDBNetNode& nd, double& cfom, uint16_t* cindexes, bool ExtraLevel)  const  {
+bool TAutoDBNetNode::IsMetricSimilar(const TAutoDBNetNode& nd, double& cfom, uint16_t* cindexes, bool ExtraLevel) const {
   if( nd.AttachedNodes.Count() != AttachedNodes.Count() )  return false;
   // have to do a full comparison, as the node order is unknown ...
   const uint16_t con = (uint16_t)olx_min(MaxConnectivity, AttachedNodes.Count());
@@ -548,7 +548,7 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
   if( files.IsEmpty() )  return;
 
   TAutoDBFolder* dbfolder = NULL;
-  size_t folderIndex = Folders.IndexOfComparable(uf);
+  size_t folderIndex = Folders.IndexOf(uf);
   if( folderIndex != InvalidIndex ) dbfolder = Folders.GetObject(folderIndex);
   if( dbfolder == NULL )  {
     dbfolder = new TAutoDBFolder;
@@ -658,8 +658,8 @@ void TAutoDB::ProcessNodes(TAutoDBIdObject* currentFile, TNetwork& net)  {
     // build connectivity
     for( size_t i=0; i < netMatch.Count(); i++ )  {
       for( size_t j=0; j < netMatch[i]->neighbours->Count(); j++ )  {
-        if( netMatch[i]->neighbours->Item(j).A()->GetTag() < 0 )  continue;
-        net.Node(i).AttachNode(&net.Node(netMatch[i]->neighbours->Item(j).A()->GetTag()));
+        if( netMatch[i]->neighbours->GetItem(j).A()->GetTag() < 0 )  continue;
+        net.Node(i).AttachNode(&net.Node(netMatch[i]->neighbours->GetItem(j).A()->GetTag()));
       }
     }
     for( size_t i=0; i < netMatch.Count(); i++ ) {
@@ -709,8 +709,8 @@ TAutoDBNet* TAutoDB::BuildSearchNet( TNetwork& net, TSAtomPList& cas )  {
     }
     for( size_t i=0; i < netMatch.Count(); i++ )  {
       for( size_t j=0; j < netMatch[i]->neighbours->Count(); j++ )  {
-        if( netMatch[i]->neighbours->Item(j).A()->GetTag() < 0 )  continue;
-        dbnet->Node(i).AttachNode( &dbnet->Node(netMatch[i]->neighbours->Item(j).A()->GetTag()) );
+        if( netMatch[i]->neighbours->GetItem(j).A()->GetTag() < 0 )  continue;
+        dbnet->Node(i).AttachNode(&dbnet->Node(netMatch[i]->neighbours->GetItem(j).A()->GetTag()));
       }
     }
     for( size_t i=0; i < netMatch.Count(); i++ ) {
@@ -730,7 +730,7 @@ void TAutoDB::SaveToStream( IDataOutputStream& output )  const {
   uint32_t folderCount = 0;
   output << (uint32_t)Folders.Count();
   for( uint32_t i=0; i < Folders.Count(); i++ )  {
-    output << TUtf8::Encode(Folders.GetComparable(i));
+    output << TUtf8::Encode(Folders.GetKey(i));
     Folders.GetObject(i)->AssignIds(folderCount);
     Folders.GetObject(i)->SaveToStream( output);
     folderCount += (int32_t)Folders.GetObject(i)->Count();
@@ -886,7 +886,7 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
           ' ' << S2Match[i].GetB() << " hits" );
         olxstr tmp("Refs [");
         for( size_t j=0; j < S2Match[i].GetC()->Count(); j++ )  {
-          tmp << LocateFileName(*S2Match[i].GetC()->Item(j)) << ';';
+          tmp << LocateFileName(*S2Match[i].GetC()->GetItem(j)) << ';';
         }
         report.Add( tmp << ']' );
         delete S2Match[i].GetC();
@@ -898,7 +898,7 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
             ' ' << S3Match[i].GetB() << " hits" );
           olxstr tmp("Refs [");
           for( size_t j=0; j < S3Match[i].GetC()->Count(); j++ )  {
-            tmp << LocateFileName(*S3Match[i].GetC()->Item(j)) << ';';
+            tmp << LocateFileName(*S3Match[i].GetC()->GetItem(j)) << ';';
           }
           report.Add( tmp << ']' );
           delete S3Match[i].GetC();
@@ -984,8 +984,8 @@ void TAutoDB::TAnalyseNetNodeTask::Run(size_t index )  {
         if( nd.IsMetricSimilar(netnd, cfom, NULL, false) )  {
           found = false;
           for( size_t k=0; k < gc.list2->Count(); k++ )  {
-            if( *gc.list2->Item(k).Type == netnd.Center()->GetType() )  {
-              gc.list2->Item(k).hits.AddNew(&netnd, cfom);
+            if( *gc.list2->GetItem(k).Type == netnd.Center()->GetType() )  {
+              gc.list2->GetItem(k).hits.AddNew(&netnd, cfom);
               found = true;
               break;
             }
@@ -996,8 +996,8 @@ void TAutoDB::TAnalyseNetNodeTask::Run(size_t index )  {
           if( nd.IsMetricSimilar(netnd, cfom, NULL, true) )  {
             found = false;
             for( size_t k=0; k < gc.list3->Count(); k++ )  {
-              if( *gc.list3->Item(k).Type == netnd.Center()->GetType() )  {
-                gc.list3->Item(k).hits.AddNew(&netnd, cfom);
+              if( *gc.list3->GetItem(k).Type == netnd.Center()->GetType() )  {
+                gc.list3->GetItem(k).hits.AddNew(&netnd, cfom);
                 found = true;
                 break;
               }
@@ -1009,8 +1009,8 @@ void TAutoDB::TAnalyseNetNodeTask::Run(size_t index )  {
       }
       found = false;
       for( size_t j=0; j < gc.list1->Count(); j++ )  {
-        if( *gc.list1->Item(j).Type == segnd.GetType() )  {
-          gc.list1->Item(j).hits.AddNew(&segnd, fom);
+        if( *gc.list1->GetItem(j).Type == segnd.GetType() )  {
+          gc.list1->GetItem(j).hits.AddNew(&segnd, fom);
           found = true;
           break;
         }
@@ -1114,19 +1114,19 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
     TTypeList< THitList<TAutoDBNetNode> >* guessN =
       !guesses[i].list3->IsEmpty() ? guesses[i].list3 : guesses[i].list2;
     for( size_t j=0; j < guessN->Count(); j++ )
-      guessN->Item(j).Sort();
+      guessN->GetItem(j).Sort();
     guessN->QuickSorter.SortSF(*guessN, THitList<TAutoDBNetNode>::SortByFOMFunc);
     tmp << guesses[i].atom->GetLabel() << ' ';
     double cfom = 0;
-    sn->Node(i).IsMetricSimilar(*guessN->Item(0).hits[0].Node, cfom, cindexes, false);
+    sn->Node(i).IsMetricSimilar(*guessN->GetItem(0).hits[0].Node, cfom, cindexes, false);
     for( size_t j=0; j < sn->Node(i).Count(); j++ )  {
       if( sn->Node(i).Node(j)->GetTag() == -1 && sn->Node(i).Node(j)->GetId() == 0 )  {
         sn->Node(i).Node(j)->SetTag( 
-          guessN->Item(0).hits[0].Node->Node(cindexes[j])->Center()->GetType().index);
+          guessN->GetItem(0).hits[0].Node->Node(cindexes[j])->Center()->GetType().index);
       }
       else  {
         int from = sn->Node(i).Node(j)->GetTag();
-        int to = guessN->Item(0).hits[0].Node->Node(cindexes[j])->Center()->GetType().index;
+        int to = guessN->GetItem(0).hits[0].Node->Node(cindexes[j])->Center()->GetType().index;
         if( from != -1 && from != to )
           TBasicApp::GetLog().Info("Oups ...");
       }
@@ -1154,10 +1154,10 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
     TTypeList< THitList<TAutoDBNetNode> >* guessN =
       !guesses[i].list3->IsEmpty() ? guesses[i].list3 : guesses[i].list2;
 
-    const cm_Element* type = guessN->Item(0).Type;
+    const cm_Element* type = guessN->GetItem(0).Type;
     sn->Node(i).SetTag(type->index);
     for( size_t j=0; j < guessN->Count(); j++ )  {
-      tmp << guessN->Item(j).Type->symbol << '(' << olxstr::FormatFloat(2,1.0/(guessN->Item(j).MeanFomN(1)+0.001)) << ")";
+      tmp << guessN->GetItem(j).Type->symbol << '(' << olxstr::FormatFloat(2,1.0/(guessN->GetItem(j).MeanFomN(1)+0.001)) << ")";
       if( (j+1) < guessN->Count() )  tmp << ',';
     }
     if( permutator == NULL || !permutator->IsActive() )  {
@@ -1247,7 +1247,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         permutator->InitAtom( guesses[i] );
       tmp = EmptyString;
       for( size_t j=0; j < guesses[i].list1->Count(); j++ )
-        guesses[i].list1->Item(j).Sort();
+        guesses[i].list1->GetItem(j).Sort();
       guesses[i].list1->QuickSorter.SortSF(*guesses[i].list1, THitList<TAutoDBNode>::SortByFOMFunc);
       if( guesses[i].list1->Count() != 0 )  {
         tmp << guesses[i].atom->GetLabel() << ' ';
@@ -1255,16 +1255,16 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         if( searchHeavier )  {
           TBasicApp::GetLog().Info( olxstr("Searching element heavier for ") << guesses[i].atom->GetLabel() );
           for( size_t j=0; j < guesses[i].list1->Count(); j++ )  {
-            if( guesses[i].list1->Item(j).Type->z > type->z )  {
+            if( guesses[i].list1->GetItem(j).Type->z > type->z )  {
               if( proposed_atoms != NULL )  {
-                if( proposed_atoms->IndexOf(guesses[i].list1->Item(j).Type) != InvalidIndex )  {
-                  type = guesses[i].list1->Item(j).Type;
+                if( proposed_atoms->IndexOf(guesses[i].list1->GetItem(j).Type) != InvalidIndex )  {
+                  type = guesses[i].list1->GetItem(j).Type;
                   break;
                 }
               }
               else if( BAIDelta != -1 )  {
-                if( (guesses[i].list1->Item(j).Type->z - guesses[i].atom->GetType().z) < BAIDelta )  {
-                  type = guesses[i].list1->Item(j).Type;
+                if( (guesses[i].list1->GetItem(j).Type->z - guesses[i].atom->GetType().z) < BAIDelta )  {
+                  type = guesses[i].list1->GetItem(j).Type;
                   break;
                 }
               }
@@ -1276,16 +1276,16 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         else if( searchLighter )  {
           TBasicApp::GetLog().Info( olxstr("Searching element lighter for ") << guesses[i].atom->GetLabel() );
           for( size_t j=0; j < guesses[i].list1->Count(); j++ )  {
-            if( guesses[i].list1->Item(j).Type->z < type->z )  {
+            if( guesses[i].list1->GetItem(j).Type->z < type->z )  {
               if( proposed_atoms != NULL )  {
-                if( proposed_atoms->IndexOf(guesses[i].list1->Item(j).Type) != InvalidIndex )  {
-                  type = guesses[i].list1->Item(j).Type;
+                if( proposed_atoms->IndexOf(guesses[i].list1->GetItem(j).Type) != InvalidIndex )  {
+                  type = guesses[i].list1->GetItem(j).Type;
                   break;
                 }
               }
               else if( BAIDelta != -1 )  {
-                if( (guesses[i].atom->GetType().z - guesses[i].list1->Item(j).Type->z) < BAIDelta  )  {
-                  type = guesses[i].list1->Item(j).Type;
+                if( (guesses[i].atom->GetType().z - guesses[i].list1->GetItem(j).Type->z) < BAIDelta )  {
+                  type = guesses[i].list1->GetItem(j).Type;
                   break;
                 }
               }
@@ -1298,8 +1298,9 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
          type = NULL;  //guesses[i].list1->Item(0).BAI;
         }
         for( size_t j=0; j < guesses[i].list1->Count(); j++ )  {
-          tmp << guesses[i].list1->Item(j).Type->symbol << '(' <<
-            olxstr::FormatFloat(3,1.0/(guesses[i].list1->Item(j).MeanFom()+0.001)) << ")" << guesses[i].list1->Item(j).hits[0].Fom;
+          tmp << guesses[i].list1->GetItem(j).Type->symbol << '(' <<
+            olxstr::FormatFloat(3,1.0/(guesses[i].list1->GetItem(j).MeanFom()+0.001)) << ")"
+            << guesses[i].list1->GetItem(j).hits[0].Fom;
           if( (j+1) < guesses[i].list1->Count() )  tmp << ',';
         }
         if( permutator == NULL || !permutator->IsActive() )  {
@@ -1449,7 +1450,7 @@ void TAtomTypePermutator::InitAtom(TAutoDB::TGuessCount& guess)  {
       }
     }
     if( list->Count() == 1 || (list->IsEmpty() && guess.list1->Count() == 1) )  {
-      const cm_Element* elm = (list->Count() == 1) ? list->Item(0).Type : guess.list1->Item(0).Type;
+      const cm_Element* elm = (list->Count() == 1) ? list->GetItem(0).Type : guess.list1->GetItem(0).Type;
       if( guess.atom->GetType() != *elm )  {
         guess.atom->SetLabel(elm->symbol);
       }
@@ -1472,17 +1473,17 @@ void TAtomTypePermutator::InitAtom(TAutoDB::TGuessCount& guess)  {
       for( size_t i=0; i < list->Count(); i++ )  {
         bool found = false;
         for( size_t j=0; j < pm->Tries.Count(); j++ )  {
-          if( pm->Tries[j].GetA() == list->Item(i).Type )  {
-            pm->Tries[j].C() = list->Item(i).MeanFom();
-            if( list->Item(i).Type == &guess.atom->GetType() )
+          if( pm->Tries[j].GetA() == list->GetItem(i).Type )  {
+            pm->Tries[j].C() = list->GetItem(i).MeanFom();
+            if( list->GetItem(i).Type == &guess.atom->GetType() )
               pm->Tries[j].B() = guess.atom->GetUiso();
             found = true;
             break;
           }
         }
         if( !found )  {
-          pm->Tries.AddNew<const cm_Element*,double,double>(list->Item(i).Type, -1, list->Item(i).MeanFom());
-          if( *list->Item(i).Type == guess.atom->GetType() )
+          pm->Tries.AddNew<const cm_Element*,double,double>(list->GetItem(i).Type, -1, list->GetItem(i).MeanFom());
+          if( *list->GetItem(i).Type == guess.atom->GetType() )
             pm->Tries[pm->Tries.Count()-1].B() = guess.atom->GetUiso();
         }
       }
@@ -1491,17 +1492,18 @@ void TAtomTypePermutator::InitAtom(TAutoDB::TGuessCount& guess)  {
       for( size_t i=0; i < guess.list1->Count(); i++ )  {
         bool found = false;
         for( size_t j=0; j < pm->Tries.Count(); j++ )  {
-          if( pm->Tries[j].GetA() == guess.list1->Item(i).Type )  {
-            pm->Tries[j].C() = guess.list1->Item(i).MeanFom();
-            if( guess.list1->Item(i).Type == &guess.atom->GetType() )
+          if( pm->Tries[j].GetA() == guess.list1->GetItem(i).Type )  {
+            pm->Tries[j].C() = guess.list1->GetItem(i).MeanFom();
+            if( guess.list1->GetItem(i).Type == &guess.atom->GetType() )
               pm->Tries[j].B() = guess.atom->GetUiso();
             found = true;
             break;
           }
         }
         if( !found )  {
-          pm->Tries.AddNew<const cm_Element*,double,double>(guess.list1->Item(i).Type, -1, guess.list1->Item(i).MeanFom());
-          if( guess.list1->Item(i).Type == &guess.atom->GetType() )
+          pm->Tries.AddNew<const cm_Element*,double,double>(guess.list1->GetItem(i).Type, -1,
+            guess.list1->GetItem(i).MeanFom());
+          if( guess.list1->GetItem(i).Type == &guess.atom->GetType() )
             pm->Tries[pm->Tries.Count()-1].B() = guess.atom->GetUiso();
         }
       }

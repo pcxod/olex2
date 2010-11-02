@@ -2,6 +2,7 @@
 #define htmlextH
 
 #include "estrlist.h"
+#include "bapp.h"
 #include "paramlist.h"
 #include "actions.h"
 #include "../wininterface.h"
@@ -21,7 +22,7 @@ enum {
 class THtml: public wxHtmlWindow, public AEventsDispatcher  {
 private:
   bool Movable, PageLoadRequested, ShowTooltips;
-  int LockPageLoad;
+  olxdict<const IEObject*, int, TPointerPtrComparator> Locks;
   olxstr PageRequested;
   wxWindow* InFocus;
   TActionQList Actions;
@@ -163,9 +164,25 @@ public:
   void SetShowTooltips(bool v, const olxstr &html_name=EmptyString);
 
   bool IsPageLoadRequested() const {  return PageLoadRequested;  }
-  inline void IncLockPageLoad()  {  LockPageLoad++;  }
-  inline void DecLockPageLoad()  {  LockPageLoad--;  }
-  inline bool IsPageLocked() const {  return LockPageLoad != 0;  }
+  inline void LockPageLoad(const IEObject* caller)  {
+    volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+    Locks.Add(caller, 0)++;
+  }
+  inline void UnlockPageLoad(const IEObject* caller)  {
+    volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+    const size_t pos = Locks.IndexOf(caller);
+    if( pos == InvalidIndex )
+      throw TInvalidArgumentException(__OlxSourceInfo, "caller");
+    int lc = --Locks.GetValue(pos);
+    if( lc < 0 )
+      throw TFunctionFailedException(__OlxSourceInfo, "not matchin call to unlock");
+    if( lc == 0 )
+      Locks.Delete(pos);
+  }
+  inline bool IsPageLocked() const {
+    volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+    return !Locks.IsEmpty();
+  }
 
   bool ProcessPageLoadRequest();
 

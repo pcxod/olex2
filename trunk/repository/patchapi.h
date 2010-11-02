@@ -21,7 +21,7 @@ class  PatchAPI  {
   public:
     DeletionExc(const olxstr& location, const olxstr& msg) :
       TBasicException(location, msg )  {    }
-    virtual IEObject* Replicate()  const    {  return new DeletionExc(*this);  }
+    virtual IEObject* Replicate() const   {  return new DeletionExc(*this);  }
   };
 
   static void CleanUp(AActionHandler* A, AActionHandler* B)  {
@@ -63,18 +63,19 @@ public:
   static const char* GetTagFileName()  {  return "olex2.tag";  }
   static const char* GetPatchFolder()  {  return "patch";  }
   //reads current repository tag, returns EmptyString in the case of error
-  static olxstr ReadRepositoryTag();
+  static olxstr ReadRepositoryTag(const olxstr& base_dir=EmptyString);
   // composes new shared dir and saves its info
-  static olxstr ComposeNewSharedDir(const olxstr& shared_dir, const olxstr& base_dir=EmptyString)  {
+  static olxstr ComposeNewSharedDir(const olxstr& shared_dir, const olxstr& _base_dir=EmptyString)  {
     olxstr new_shared_dir = shared_dir;
+    const olxstr base_dir = _base_dir.IsEmpty() ? TBasicApp::GetBaseDir() :
+      TEFile::AddPathDelimeter(_base_dir);
 #ifdef __WIN32__
     new_shared_dir << "Olex2Data/";
 #else
     TEFile::TrimPathDelimeterI(new_shared_dir) << "data/";
 #endif
     return TEFile::AddPathDelimeterI( 
-      new_shared_dir << MD5::Digest(esdl::olxcstr( 
-        TEFile::AddPathDelimeter((base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir)) + ReadRepositoryTag())) );
+      new_shared_dir << MD5::Digest(esdl::olxcstr(base_dir + ReadRepositoryTag(base_dir))) );
   }
   // checks for OLEX2_DATADIR, DataDir is raw data dir like Application Data without the MD5 suffix
   static olxstr GetCurrentSharedDir(olxstr* DataDir=NULL);

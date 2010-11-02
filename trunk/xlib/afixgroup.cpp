@@ -15,9 +15,9 @@ void TAfixGroup::Assign(const TAfixGroup& ag)  {
   SetPivot( *Pivot );
   for( size_t i=0; i < ag.Dependent.Count(); i++ )  {
     Dependent.Add(Parent.RM.aunit.FindCAtomById( ag.Dependent[i]->GetId()));
-    if( Dependent.Last() == NULL )
+    if( Dependent.GetLast() == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
-    Dependent.Last()->SetParentAfixGroup(this);
+    Dependent.GetLast()->SetParentAfixGroup(this);
   }
 }
 //..............................................................................
@@ -111,6 +111,6 @@ void TAfixGroups::FromDataItem(TDataItem& item) {
     throw TFunctionFailedException(__OlxSourceInfo, "number of items mismatch");
   for( size_t i=0; i < n; i++ )  {
     Groups.Add(new TAfixGroup(*this)).SetId(i);
-    Groups.Last().FromDataItem(item.GetItem(i));
+    Groups.GetLast().FromDataItem(item.GetItem(i));
   }
 }

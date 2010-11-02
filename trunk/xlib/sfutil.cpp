@@ -86,9 +86,8 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     cif.LoadFromFile(fcffn);
     sw.stop();
     cif_dp::cetTable* hklLoop = cif.FindLoopGlobal("_refln", false);
-    if( hklLoop == NULL )  {
+    if( hklLoop == NULL )
       return "no hkl loop found";
-    }
     sw.start("Extracting CIF data");
     const size_t hInd = hklLoop->ColIndex("_refln_index_h");
     const size_t kInd = hklLoop->ColIndex("_refln_index_k");

@@ -28,8 +28,8 @@ void TTextEdit::ChangeEvent(wxCommandEvent& event)  {
 //..............................................................................
 void TTextEdit::EnterPressedEvent(wxCommandEvent& event)  {
   StartEvtProcessing()
-    OnChange.Execute(this, &TEGC::New<olxstr>(GetOnChangeStr()));
-    OnReturn.Execute(this, &TEGC::New<olxstr>(GetOnReturnStr()));
+    OnChange.Execute(this, &GetOnChangeStr());
+    OnReturn.Execute(this, &GetOnReturnStr());
   EndEvtProcessing()
 }
 //..............................................................................

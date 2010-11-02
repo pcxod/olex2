@@ -1,5 +1,4 @@
 //---------------------------------------------------------------------------//
-// namespace TXClasses: crystallographic core
 // TUnitCell: a collection of matrices and ellipoids
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
@@ -25,12 +24,9 @@
 //---------------------------------------------------------------------------
 // TUnitCell function bodies
 //---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
 TUnitCell::TUnitCell(TLattice *L)  {  Lattice = L;  }
 //..............................................................................
-TUnitCell::~TUnitCell()  {
-  Clear();
-}
+TUnitCell::~TUnitCell()  {  Clear();  }
 //..............................................................................
 void TUnitCell::ClearEllipsoids()  {
   for( size_t i=0; i < Ellipsoids.Count(); i++ )  {
@@ -44,7 +40,7 @@ void TUnitCell::ClearEllipsoids()  {
 void TUnitCell::AddEllipsoid()  {
   Ellipsoids.SetCount( Ellipsoids.Count() + 1);
   for( size_t j=0; j < Matrices.Count(); j++ )
-    Ellipsoids.Last().Add( NULL );
+    Ellipsoids.GetLast().Add(NULL);
 }
 //..............................................................................
 void TUnitCell::Clear()  {
@@ -68,7 +64,20 @@ void TUnitCell::InitMatrixId(smatd& m) const {
   throw TInvalidArgumentException(__OlxSourceInfo, "could not locate matrix");
 }
 //..............................................................................
-double TUnitCell::CalcVolume()  const  {
+smatd_list TUnitCell::MulMatrices(const smatd_list& in, const smatd& transform) const {
+  smatd_list out(in.Count());
+  for( size_t i=0; i < in.Count(); i++ )  {
+    out.Set(i, new smatd(in[i]*transform));
+    const uint8_t index = MulDest[in[i].GetContainerId()][transform.GetContainerId()];
+    const int8_t ta = (int8_t)(out[i].t[0]-Matrices[index].t[0]);
+    const int8_t tb = (int8_t)(out[i].t[1]-Matrices[index].t[1]);
+    const int8_t tc = (int8_t)(out[i].t[2]-Matrices[index].t[2]);
+    out[i].SetId(index, ta, tb, tc);
+  }
+  return out;
+}
+//..............................................................................
+double TUnitCell::CalcVolume() const {
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
   static const double k = M_PI/180;
   const vec3d ang(au.Angles()[0].GetV()*k, au.Angles()[1].GetV()*k, au.Angles()[2].GetV()*k);
@@ -77,7 +86,7 @@ double TUnitCell::CalcVolume()  const  {
   return ax.Prod()*sqrt(1-cs.QLength() + 2*cs.Prod());
 }
 //..............................................................................
-TEValue<double> TUnitCell::CalcVolumeEx()  const  {
+TEValue<double> TUnitCell::CalcVolumeEx() const {
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
   static const double k = M_PI/180;
   const vec3d ang(au.Angles()[0].GetV()*k, au.Angles()[1].GetV()*k, au.Angles()[2].GetV()*k);
@@ -100,7 +109,7 @@ TEValue<double> TUnitCell::CalcVolumeEx()  const  {
 //..............................................................................
 size_t TUnitCell::GetMatrixMultiplier(short Latt)  {
   size_t count = 0;
-  switch( abs(Latt) )  {
+  switch( olx_abs(Latt) )  {
     case 1: count = 1;  break;
     case 2: count = 2;  break;  // Body Centered (I)
     case 3: count = 3;  break;  // R Centered
@@ -116,24 +125,60 @@ size_t TUnitCell::GetMatrixMultiplier(short Latt)  {
 }
 //..............................................................................
 void  TUnitCell::InitMatrices()  {
+  MulDest.Clear();
   Matrices.Clear();
   GenerateMatrices(Matrices, GetLattice().GetAsymmUnit(), GetLattice().GetAsymmUnit().GetLatt() );
   const size_t mc = Matrices.Count();
-  for( size_t i=0; i < mc; i++ )
+  MulDest.SetCapacity(mc);
+  InvDest.SetCount(mc);
+  for( size_t i=0; i < mc; i++ )  {
     Matrices[i].SetId((uint8_t)i);
+    MulDest.Add(new TArrayList<uint8_t>(mc));
+    for( size_t j=0; j < mc; j++ )  {
+      smatd m = Matrices[i]*Matrices[j];
+      size_t index = InvalidIndex;
+      for( size_t k=0; k < mc; k++ )  {
+        if( Matrices[k].r == m.r )  {
+          const vec3d t = m.t - Matrices[k].t;
+          if( (t-t.Round<int>()).QLength() < 1e-6 )  {
+            index = k;
+            break;
+          }
+        }
+      }
+      if( index == InvalidIndex )
+        throw TFunctionFailedException(__OlxSourceInfo, "assert");
+      MulDest[i][j] = (uint8_t)index;
+    }
+    {
+      const smatd m = Matrices[i].Inverse();
+      size_t index = InvalidIndex;
+      for( size_t k=0; k < mc; k++ )  {
+        if( Matrices[k].r == m.r )  {
+          const vec3d t = m.t - Matrices[k].t;
+          if( (t-t.Round<int>()).QLength() < 1e-6 )  {
+            index = k;
+            break;
+          }
+        }
+      }
+      if( index == InvalidIndex )
+        throw TFunctionFailedException(__OlxSourceInfo, "assert");
+      InvDest[i] = (uint8_t)index;
+    }
+  }
   UpdateEllipsoids();
 }
 //..............................................................................
 void TUnitCell::GenerateMatrices(smatd_list& out, const TAsymmUnit& au, short lat)  {
   out.SetCapacity( GetMatrixMultiplier(au.GetLatt())*au.MatrixCount());
   out.AddNew().r.I();
-  // check if the E matrix is in the list
+  // check if the identity matrix is in the list
   for( size_t i=0;  i < au.MatrixCount(); i++ )  {
     const smatd& m = au.GetMatrix(i);
-    if( m.r.IsI() )  continue;  // will need to insert the identity matrix at position 0
-    out.AddNew( m );
+    if( !m.r.IsI() )  // will need to insert the identity matrix at position 0
+      out.AddNew(m);
   }
-
   for( size_t i=0; i < out.Count(); i++ )  {
     const smatd& m = out[i];
     switch( abs(lat) )  {
@@ -217,7 +262,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
       const int iLx = olx_round(v[0]);  v[0] -= iLx;
       const int iLy = olx_round(v[1]);  v[1] -= iLy;
       const int iLz = olx_round(v[2]);  v[2] -= iLz;
-      if( j == 0 && (iLx|iLy|iLz) == 0 )  {  // I
+      if( j == 0 && iLx == 0 && iLy == 0 && iLz == 0 )  {  // I
         if( ind == i || Atoms[i]->GetFragmentId() == Atoms[ind]->GetFragmentId() )  continue;
         AU->CellToCartesian(v);
         const double d = v.Length();
@@ -230,9 +275,9 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           Atoms[i]->SetDeleted(true);
           continue;
         }
-        if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Matrices[j], v.Length()) )  {
-          Atoms[ind]->AttachAtomI(Atoms[i]);
-          Atoms[i]->AttachAtomI(Atoms[ind]);
+        if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Matrices[j], d) )  {
+          Atoms[ind]->AttachSiteI(Atoms[i], Matrices[j]);
+          Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(Matrices[j]));
         }
         continue;
       }
@@ -257,20 +302,20 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
       else if( Atoms[ind]->GetConnInfo().maxBonds != 0 && Atoms[i]->GetConnInfo().maxBonds != 0 )  {
         if( Latt->GetNetwork().CBondExists(*Atoms[ind], *Atoms[i], Matrices[j], Dis) )  {
           Atoms[ind]->SetGrowable(true);
-          if( Atoms[ind]->IsAttachedTo(*Atoms[i]) )  
-            continue;
-          Atoms[ind]->AttachAtom(Atoms[i]);
-          if( i != ind )  {
+          smatd m = Matrices[j];
+          m.t[0] += iLx;  m.t[1] += iLy;  m.t[2] += iLz;
+          m.SetId((uint8_t)j, iLx, iLy, iLz);
+          if( Atoms[ind]->AttachSite(Atoms[i], m) && i != ind )  {
             Atoms[i]->SetGrowable(true);
-            Atoms[i]->AttachAtom(Atoms[ind]);
+            Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(m));
           }
         }
         else if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Matrices[j], Dis) )  {
-          if( Atoms[ind]->IsAttachedToI(*Atoms[i]) )
-            continue;
-          Atoms[ind]->AttachAtomI(Atoms[i]);
-          if( i != ind )
-            Atoms[i]->AttachAtomI(Atoms[ind]);
+          smatd m = Matrices[j];
+          m.t[0] += iLx;  m.t[1] += iLy;  m.t[2] += iLz;
+          m.SetId((uint8_t)j, iLx, iLy, iLz);
+          if( Atoms[ind]->AttachSiteI(Atoms[i], m) && i != ind )
+            Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(m));
         }
       }
     }
@@ -280,16 +325,12 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
 void TUnitCell::FindSymmEq(double tol) const  {
   TStrList report;
   TCAtomPList ACA;
-  // sorting the content of the asymmetric unit in order to improve the algorithm
-  // which is a bit sluggish for a big system; however it will not be ever used
-  // in the grow-fuse (XP) cycle: a save and load operations will be used in that
-  // case
   ACA.SetCapacity(GetLattice().GetAsymmUnit().AtomCount());
   for( size_t i=0; i < GetLattice().GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& A1 = GetLattice().GetAsymmUnit().GetAtom(i);
     if( A1.IsDeleted() )  continue;
     ACA.Add(A1)->SetTag(0);  
-    A1.ClearAttachedAtoms();
+    A1.ClearAttachedSites();
     A1.ClearEquivs();
   }
   // searching for symmetrical equivalents; the search could be optimised by
@@ -488,13 +529,15 @@ smatd_list* TUnitCell::GetInRangeEx(const vec3d& to, const vec3d& from,
 }
 //..............................................................................
 void TUnitCell::_FindInRange(const vec3d& to, double R, 
-                            TTypeList< AnAssociation3<TCAtom const*,smatd, vec3d> >& res) const {
+  TTypeList<AnAssociation3<TCAtom*,smatd, vec3d> >& res, const TCAtomPList* _atoms) const
+{
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  const TCAtomPList& atoms = (_atoms == NULL ? au.GetAtoms() : *_atoms);
   R *= R;
-  const size_t ac = au.AtomCount();
+  const size_t ac = atoms.Count();
   const size_t mc = Matrices.Count();
   for( size_t i=0; i < ac; i++ )  {
-    const TCAtom& a = au.GetAtom(i);
+    const TCAtom& a = *atoms[i];
     if( a.IsDeleted() )  continue;
     for( size_t j=0; j < mc; j++ )  {
       vec3d vec = Matrices[j] * a.ccrd();
@@ -505,7 +548,7 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
       const double D = V1.QLength();
       //if( D < R && D != 0 )  {
       if( D < R )  {
-        smatd& m = res.AddNew(&a, Matrices[j], au.CellToCartesian(vec += shift)).B();
+        smatd& m = res.AddNew(atoms[i], Matrices[j], au.CellToCartesian(vec += shift)).B();
         m.t += shift;
         m.SetId(Matrices[j].GetContainerId(), shift[0], shift[1], shift[2]);
       }
@@ -519,10 +562,56 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
           au.CellToCartesian(vec);
           const double D = vec.QLength();
           if( D < R && D > 0.0001 )  {
-            smatd& m = res.AddNew(&a).B().I();
+            smatd& m = res.AddNew(atoms[i]).B().I();
             m.t += shift;
             m.SetId(0, ii, ik, ik);
-            res.Last().C() = vec;
+            res.GetLast().C() = vec;
+          }
+        }
+      }
+    }
+  }
+}
+//..............................................................................
+void TUnitCell::_FindBinding(const TCAtom& to, const smatd& ctm, double delta, 
+  TTypeList<AnAssociation3<TCAtom*,smatd, vec3d> >& res, const TCAtomPList* _atoms) const
+{
+  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  const TCAtomPList& atoms = (_atoms == NULL ? au.GetAtoms() : *_atoms);
+  const size_t ac = atoms.Count();
+  const size_t mc = Matrices.Count();
+  smatd I;
+  I.I().SetId(0);
+  const vec3d to_center = ctm*to.ccrd();
+  for( size_t i=0; i < ac; i++ )  {
+    const TCAtom& a = *atoms[i];
+    if( a.IsDeleted() )  continue;
+    for( size_t j=0; j < mc; j++ )  {
+      vec3d vec = Matrices[j] * a.ccrd();
+      vec3d V1(vec-to_center);
+      const vec3i shift = -V1.Round<int>();
+      V1 += shift;
+      au.CellToCartesian(V1);
+      const double qD = V1.QLength();
+      if( qD > 1e-6 && TNetwork::BondExistsQ(to, a, Matrices[j], qD, delta) )  {
+        smatd& m = res.AddNew(atoms[i], Matrices[j], au.CellToCartesian(vec += shift)).B();
+        m.t += shift;
+        m.SetRawId(smatd::GenerateId(Matrices[j].GetContainerId(), shift));
+      }
+    }
+    for( int ii=-1; ii <= 1; ii++ )  {
+      for( int ij=-1; ij <= 1; ij++ ) {
+        for( int ik=-1; ik <= 1; ik++ )  {
+          if( (ii|ij|ik) == 0 )  continue;
+          const vec3i shift(ii, ij, ik);
+          vec3d vec(a.ccrd() + shift - to_center);
+          au.CellToCartesian(vec);
+          const double qD = vec.QLength();
+          if( qD > 1e-6 && TNetwork::BondExistsQ(to, a, I, qD, delta) )  {
+            smatd& m = res.AddNew(atoms[i]).B().I();
+            m.t += shift;
+            m.SetId(0, ii, ik, ik);
+            res.GetLast().C() = vec;
           }
         }
       }
@@ -533,43 +622,42 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
 void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, int part)  const {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   envi.SetBase(atom);
-
   smatd I;
   I.I().SetId(0);
-
   for( size_t i=0; i < atom.NodeCount(); i++ )  {
     TSAtom& a = atom.Node(i);
     if( a.IsDeleted() ) continue;
     if( !IncludeQ && a.GetType() == iQPeakZ )  continue;
     if( part == DefNoPart || (a.CAtom().GetPart() == 0 || a.CAtom().GetPart() == part) )  {
       if( TNetwork::HaveSharedMatrix(atom, a) )  // put only the 'uniq' entries
-        envi.Add( a.CAtom(), I, a.crd() );
+        envi.Add(a.CAtom(), I, a.crd());
     }
   }
-  for( size_t i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
+  for( size_t i=0; i < atom.CAtom().AttachedSiteCount(); i++ )  {
     TCAtom& A = atom.CAtom().GetAttachedAtom(i);
     if( A.IsDeleted() || (!IncludeQ && A.GetType() == iQPeakZ) )  continue;
     if( A.GetPart() < 0 || atom.CAtom().GetPart() < 0 )
       continue;
-
-    smatd* m = GetClosest(atom.ccrd(), A.ccrd(), false);
-    if( m == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "Could not find symmetry generated atom");
-    vec3d v = *m * A.ccrd();
-    au.CellToCartesian(v);
-    // make sure that atoms on center of symmetry are not counted twice
-    bool Add = true;
-    for( size_t j=0; j < envi.Count(); j++ )  {
-      if( envi.GetCAtom(j) == A && envi.GetCrd(j).QDistanceTo(v) < 0.001 )  {
-        Add = false;
-        break;
+    const vec3d from = atom.GetMatrix(0)*A.ccrd();
+    smatd_list* binding = GetBinding(atom.CAtom(), A, atom.ccrd(), from, true, false); 
+    if( binding == NULL )  continue;
+    for( size_t mi = 0; mi < binding->Count(); mi++ )  {
+      vec3d v = (*binding)[mi] * from;
+      au.CellToCartesian(v);
+      // make sure that atoms on center of symmetry are not counted twice
+      bool Add = true;
+      for( size_t j=0; j < envi.Count(); j++ )  {
+        if( envi.GetCAtom(j) == A && envi.GetCrd(j).QDistanceTo(v) < 0.001 )  {
+          Add = false;
+          break;
+        }
+      }
+      if( Add )  {
+        if( part == DefNoPart || (A.GetPart() == 0 || A.GetPart() == part) )
+          envi.Add(A, binding->GetItem(mi), v);
       }
     }
-    if( Add )  {
-      if( part == DefNoPart || (A.GetPart() == 0 || A.GetPart() == part) )
-        envi.Add(A, *m, v);
-    }
-    delete m;
+    delete binding;
   }
   smatd_list ml;
   BondInfoList toCreate, toDelete;
@@ -635,38 +723,37 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
 //..............................................................................
 void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
   if( atom.IsGrown() )
-    throw TFunctionFailedException(__OlxSourceInfo, "Not implementd for grown structre");
-
+    throw TFunctionFailedException(__OlxSourceInfo, "Not implemented for grown structre");
   envi.SetBase(atom);
   smatd I;
   I.I().SetId(0);
-
   for( size_t i=0; i < atom.NodeCount(); i++ )  {
     TSAtom& A = atom.Node(i);
     if( A.IsDeleted() ) continue;
     if( A.GetType() == iQPeakZ && TNetwork::HaveSharedMatrix(A, atom) )
       envi.Add(A.CAtom(), I, A.crd());
   }
-  for( size_t i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
+  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  for( size_t i=0; i < atom.CAtom().AttachedSiteCount(); i++ )  {
     TCAtom& A = atom.CAtom().GetAttachedAtom(i);
     if( A.IsDeleted() || A.GetType() != iQPeakZ )  continue;
-
-    smatd* m = GetClosest(atom.ccrd(), A.ccrd(), false);
-    if( m == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "Could not find symmetry generated atom");
-    vec3d v = *m * A.ccrd();
-    GetLattice().GetAsymmUnit().CellToCartesian(v);
-    // make sure that atoms on center of symmetry are not counted twice
-    bool Add = true;
-    for( size_t j=0; j < envi.Count(); j++ )  {
-      if( envi.GetCAtom(j) == A && envi.GetCrd(j) == v )  {
-        Add = false;
-        break;
+    const vec3d from = atom.GetMatrix(0)*A.ccrd();
+    smatd_list* binding = GetBinding(atom.CAtom(), A, atom.ccrd(), from, true, false); 
+    if( binding == NULL )  continue;
+    for( size_t mi = 0; mi < binding->Count(); mi++ )  {
+      vec3d v = (*binding)[mi] * from;
+      au.CellToCartesian(v);
+      bool Add = true;
+      for( size_t j=0; j < envi.Count(); j++ )  {
+        if( envi.GetCAtom(j) == A && envi.GetCrd(j) == v )  {
+          Add = false;
+          break;
+        }
       }
+      if( Add )
+        envi.Add(A, (*binding)[mi], v);
     }
-    if( Add )
-      envi.Add(A, *m, v);
-    delete m;
+    delete binding;
   }
 }
 //..............................................................................
@@ -712,7 +799,7 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
 }
 //..............................................................................
 TCAtom* TUnitCell::FindOverlappingAtom(const vec3d& pos, double delta) const  {
-  TTypeList< AnAssociation3<TCAtom const*,smatd,vec3d> > res;
+  TTypeList< AnAssociation3<TCAtom*,smatd,vec3d> > res;
   _FindInRange(pos, delta, res);
   if( res.IsEmpty() )
     return NULL;
@@ -733,17 +820,17 @@ TCAtom* TUnitCell::FindOverlappingAtom(const vec3d& pos, double delta) const  {
     }
     if( ri == InvalidIndex )
       throw TFunctionFailedException(__OlxSourceInfo, "assert here");
-    return const_cast<TCAtom*>(res[ri].A());
+    return res[ri].A();
   }
 }
 //..............................................................................
 TCAtom* TUnitCell::FindCAtom(const vec3d& center) const  {
-  TTypeList< AnAssociation3<const TCAtom*, smatd, vec3d> > res;
+  TTypeList< AnAssociation3<TCAtom*, smatd, vec3d> > res;
   _FindInRange(center, 0.1, res);
   if( res.IsEmpty() )
     return NULL;
   if( res.Count() == 1 )
-    return const_cast<TCAtom*>(res[0].A());
+    return res[0].A();
   throw TFunctionFailedException(__OlxSourceInfo, "assert, too many atoms returned");
 }
 //..............................................................................
@@ -767,7 +854,7 @@ void TUnitCell::BuildStructureMap_Direct(TArray3D<short>& map, double delta, sho
   TPSTypeList<short, double> scatterers;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).IsDeleted() )  continue;
-    size_t ind = scatterers.IndexOfComparable(au.GetAtom(i).GetType().index);
+    const size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().index);
     if( ind != InvalidIndex )  continue;
     const double r = TXApp::GetVdWRadius(au.GetAtom(i), radii) + delta;
     scatterers.Add(au.GetAtom(i).GetType().index, r);
@@ -889,7 +976,7 @@ void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& _map, double delta, sho
   TPSTypeList<short, float> radii;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).IsDeleted() )  continue;
-    size_t ind = radii.IndexOfComparable(au.GetAtom(i).GetType().index);
+    const size_t ind = radii.IndexOf(au.GetAtom(i).GetType().index);
     if( ind != InvalidIndex )  continue;
     const double r = TXApp::GetVdWRadius(au.GetAtom(i), _radii) + delta;
     radii.Add(au.GetAtom(i).GetType().index, (float)r);

@@ -14,13 +14,13 @@ void TTrackBar::ScrollEvent(wxScrollEvent& evt)  {
   if( this_Val == GetValue() )  return;
   this_Val = GetValue();
   StartEvtProcessing()
-    OnChange.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnChangeStr()));
+    OnChange.Execute((AOlxCtrl*)this, &GetOnChangeStr());
   EndEvtProcessing()
 }
 //..............................................................................
 void TTrackBar::MouseUpEvent(wxMouseEvent& evt)  {
   evt.Skip();
   StartEvtProcessing()
-    OnMouseUp.Execute((AOlxCtrl*)this, &TEGC::New<olxstr>(GetOnMouseUpStr()));
+    OnMouseUp.Execute((AOlxCtrl*)this, &GetOnMouseUpStr());
   EndEvtProcessing()
 }

@@ -59,7 +59,7 @@ class TTXBond_EvaluatorFactory: public IEvaluatorFactory, ITXBond_DataProvider
 public:
   IEvaluator *Evaluator(const olxstr & propertyName)  {  return Evaluators[propertyName];  }
   IEvaluator *Evaluator(size_t index)  {  return Evaluators.GetObject(index);  }
-  const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetComparable(index);  }
+  const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetKey(index);  }
   size_t EvaluatorCount()  {  return Evaluators.Count();  }
   // variable getter, to be used by evaluators
   TXBond *GetTXBond(){  return XBond;  }
@@ -86,7 +86,7 @@ class TTXAtom_EvaluatorFactory: public IEvaluatorFactory, ITXAtom_DataProvider
 public:
   IEvaluator *Evaluator(const olxstr & propertyName)  {  return Evaluators[propertyName];  }
   IEvaluator *Evaluator(size_t index)  {  return Evaluators.GetObject(index);  }
-  const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetComparable(index);  }
+  const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetKey(index);  }
   size_t EvaluatorCount()  {  return Evaluators.Count();  }
   // variable getter, to be used by evaluators
   TXAtom *GetTXAtom(){  return XAtom;  }
@@ -287,7 +287,7 @@ class TTGlGroupEvaluatorFactory: public IEvaluatorFactory, ITGlGroupDataProvider
 public:
   IEvaluator *Evaluator(const olxstr & propertyName)  {  return Evaluators[propertyName];  }
   IEvaluator *Evaluator(size_t index)  {  return Evaluators.GetObject(index);  }
-  const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetComparable(index);  }
+  const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetKey(index);  }
   size_t EvaluatorCount()  {  return Evaluators.Count();  }
   // variable getter, to be used by evaluators
   TGlGroup *GetTGlGroup(){  return sel;  }

@@ -89,12 +89,12 @@ IEvaluable* exp_builder::evaluator_from_evator(expression_tree* root, IEvaluable
   bool all_const = true;
   for( size_t i=0; i < root->evator->args.Count(); i++ )  {
     args.Add(create_evaluator(root->evator->args[i]));
-    if( args.Last() == NULL )  {
+    if( args.GetLast() == NULL )  {
       for( size_t j=0; j < args.Count()-2; j++ )
         delete args[j];
       throw TInvalidArgumentException(__OlxSourceInfo, "could not find appropriate evluable");
     }
-    ANumberEvaluator* ne = dynamic_cast<ANumberEvaluator*>(args.Last());
+    ANumberEvaluator* ne = dynamic_cast<ANumberEvaluator*>(args.GetLast());
     if( ne == NULL || !ne->is_final() )
       all_const = false;
   }

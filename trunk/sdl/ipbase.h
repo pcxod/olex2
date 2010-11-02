@@ -581,128 +581,128 @@ public:
       delete funcs.GetObject(i);
   }
   template <class T>
-  IFunc* FindFunction(const T& name)  const  {
-    size_t ind = funcs.IndexOfComparable(name);
+  IFunc* FindFunction(const T& name) const {
+    const size_t ind = funcs.IndexOf(name);
     return ind == InvalidIndex ? NULL : funcs.GetObject(ind);
   }
   //void (*F)(void)
   void Reg(const olxstr& name, void (*F)(void) )  {
-    VFunc* gf = new VFunc( name, F);
-    funcs.Add( name, gf);
+    VFunc* gf = new VFunc(name, F);
+    funcs.Add(name, gf);
   }
   // void (BC::*F)(), non standsrd - MSVC gets confused here with RV (BC::*F)()...
   template<class BC, void (BC::*F)()>
     void Reg(const olxstr& name, BC* instance)  {  
-      CVFunc<BC>* gf = new CVFunc<BC>( name, instance, F);
-      funcs.Add( name, gf);
+      CVFunc<BC>* gf = new CVFunc<BC>(name, instance, F);
+      funcs.Add(name, gf);
     }
   //void (*F)(A1)
   template<class A1 > 
     void Reg(const olxstr& name, void (*F)(A1) )  {  
-      VFunc1<A1>* gf = new VFunc1<A1>( name, F);
-      funcs.Add( name, gf);
+      VFunc1<A1>* gf = new VFunc1<A1>(name, F);
+      funcs.Add(name, gf);
     }
   // void (BC::*F)(A1)
   template<class BC, class A1> 
     void Reg(const olxstr& name, BC* instance, void (BC::*F)(A1) )  {  
-      CVFunc1<BC,A1>* gf = new CVFunc1<BC,A1>( name, instance, F);
-      funcs.Add( name, gf);
+      CVFunc1<BC,A1>* gf = new CVFunc1<BC,A1>(name, instance, F);
+      funcs.Add(name, gf);
     }
   //void (*F)(A1,A2)
   template<class A1, class A2 > 
     void Reg(const olxstr& name, void (*F)(A1,A2) )  {  
-      VFunc2<A1,A2>* gf = new VFunc2<A1,A2>( name, F);
-      funcs.Add( name, gf);
+      VFunc2<A1,A2>* gf = new VFunc2<A1,A2>(name, F);
+      funcs.Add(name, gf);
     }
   // void (BC::*F)(A1,A2)
   template<class BC, class A1, class A2> 
     void Reg(const olxstr& name, BC* instance, void (BC::*F)(A1,A2) )  {  
-      CVFunc2<BC,A1,A2>* gf = new CVFunc2<BC,A1,A2>( name, instance, F);
-      funcs.Add( name, gf);
+      CVFunc2<BC,A1,A2>* gf = new CVFunc2<BC,A1,A2>(name, instance, F);
+      funcs.Add(name, gf);
     }
   //void (*F)(A1,A2,A3)
   template<class A1, class A2, class A3>
     void Reg(const olxstr& name, void (*F)(A1,A2,A3) )  {
-      VFunc3<A1,A2,A3>* gf = new VFunc3<A1,A2,A3>( name, F);
-      funcs.Add( name, gf);
+      VFunc3<A1,A2,A3>* gf = new VFunc3<A1,A2,A3>(name, F);
+      funcs.Add(name, gf);
     }
   // void (BC::*F)(A1,A2,A3)
   template<class BC, class A1, class A2, class A3>
     void Reg(const olxstr& name, BC* instance, void (BC::*F)(A1,A2,A3) )  {
-      CVFunc3<BC,A1,A2,A3>* gf = new CVFunc3<BC,A1,A2,A3>( name, instance, F);
-      funcs.Add( name, gf);
+      CVFunc3<BC,A1,A2,A3>* gf = new CVFunc3<BC,A1,A2,A3>(name, instance, F);
+      funcs.Add(name, gf);
     }
   //void (*F)(A1,A2,A3,A4)
   template<class A1, class A2, class A3, class A4>
     void Reg(const olxstr& name, void (*F)(A1,A2,A3,A4) )  {
-      VFunc4<A1,A2,A3,A4>* gf = new VFunc4<A1,A2,A3,A4>( name, F);
-      funcs.Add( name, gf);
+      VFunc4<A1,A2,A3,A4>* gf = new VFunc4<A1,A2,A3,A4>(name, F);
+      funcs.Add(name, gf);
     }
   // void (BC::*F)(A1,A2,A3,A4)
   template<class BC, class A1, class A2, class A3, class A4>
     void Reg(const olxstr& name, BC* instance, void (BC::*F)(A1,A2,A3,A4) )  {
-      CVFunc4<BC,A1,A2,A3,A4>* gf = new CVFunc4<BC,A1,A2,A3,A4>( name, instance, F);
-      funcs.Add( name, gf);
+      CVFunc4<BC,A1,A2,A3,A4>* gf = new CVFunc4<BC,A1,A2,A3,A4>(name, instance, F);
+      funcs.Add(name, gf);
     }
   // A1 (*F)(void)
   template<class A1 > 
     void Reg(const olxstr& name, A1 (*F)(void) )  {  
-      PFunc<A1>* gf = new PFunc<A1>( name, F);
-      funcs.Add( name, gf);
+      PFunc<A1>* gf = new PFunc<A1>(name, F);
+      funcs.Add(name, gf);
     }
   // A1 (BC::*F)(void)
   template<class BC, class A1 > 
     void Reg(const olxstr& name, BC* instance, A1 (BC::*F)(void) )  {  
-      CPFunc<BC, A1>* gf = new CPFunc<BC,A1>( name, instance, F);
-      funcs.Add( name, gf);
+      CPFunc<BC, A1>* gf = new CPFunc<BC,A1>(name, instance, F);
+      funcs.Add(name, gf);
     }
   // RV (*F)(A1)
   template< class RV, class A1 > 
     void Reg(const olxstr& name, RV (*F)(A1) )  {  
-      PFunc1<RV,A1>* gf = new PFunc1<RV,A1>( name, F);
-      funcs.Add( name, gf);
+      PFunc1<RV,A1>* gf = new PFunc1<RV,A1>(name, F);
+      funcs.Add(name, gf);
     }
   // RV (BC::*F)(A1)
   template< class RV, class BC, class A1 > 
     void Reg(const olxstr& name, BC* instance, RV (BC::*F)(A1) )  {  
-      CPFunc1<RV,BC,A1>* gf = new CPFunc1<RV,BC,A1>( name, instance, F);
-      funcs.Add( name, gf);
+      CPFunc1<RV,BC,A1>* gf = new CPFunc1<RV,BC,A1>(name, instance, F);
+      funcs.Add(name, gf);
     }
   // RV (*F)(A1, A2)
   template< class RV, class A1, class A2 > 
     void Reg(const olxstr& name, RV (*F)(A1, A2) )  {  
-      PFunc2<RV, A1,A2>* gf = new PFunc2<RV,A1,A2>( name, F );
-      funcs.Add( name, gf);
+      PFunc2<RV, A1,A2>* gf = new PFunc2<RV,A1,A2>(name, F);
+      funcs.Add(name, gf);
     }
   // RV (BC::*F)(A1,A2)
   template< class RV, class BC, class A1, class A2 > 
     void Reg(const olxstr& name, BC* instance, RV (BC::*F)(A1, A2) )  {  
-      CPFunc2<RV,BC,A1,A2>* gf = new CPFunc2<RV,BC,A1,A2>( name, instance, F);
-      funcs.Add( name, gf);
+      CPFunc2<RV,BC,A1,A2>* gf = new CPFunc2<RV,BC,A1,A2>(name, instance, F);
+      funcs.Add(name, gf);
     }
   // RV (*F)(A1, A2, A3)
   template< class RV, class A1, class A2, class A3>
     void Reg(const olxstr& name, RV (*F)(A1, A2, A3) )  {
-      PFunc3<RV, A1,A2,A3>* gf = new PFunc3<RV,A1,A2,A3>( name, F );
-      funcs.Add( name, gf);
+      PFunc3<RV, A1,A2,A3>* gf = new PFunc3<RV,A1,A2,A3>(name, F);
+      funcs.Add(name, gf);
     }
   // RV (BC::*F)(A1,A2,A3)
   template< class RV, class BC, class A1, class A2, class A3>
     void Reg(const olxstr& name, BC* instance, RV (BC::*F)(A1, A2,A3) )  {
-      CPFunc3<RV,BC,A1,A2,A3>* gf = new CPFunc3<RV,BC,A1,A2,A3>( name, instance, F);
-      funcs.Add( name, gf);
+      CPFunc3<RV,BC,A1,A2,A3>* gf = new CPFunc3<RV,BC,A1,A2,A3>(name, instance, F);
+      funcs.Add(name, gf);
     }
   // RV (*F)(A1, A2, A3,A4)
   template< class RV, class A1, class A2, class A3, class A4>
     void Reg(const olxstr& name, RV (*F)(A1, A2, A3, A4) )  {
-      PFunc4<RV, A1,A2,A3,A4>* gf = new PFunc4<RV,A1,A2,A3,A4>( name, F );
-      funcs.Add( name, gf);
+      PFunc4<RV, A1,A2,A3,A4>* gf = new PFunc4<RV,A1,A2,A3,A4>(name, F);
+      funcs.Add(name, gf);
     }
   // RV (BC::*F)(A1,A2,A3,A4)
   template< class RV, class BC, class A1, class A2, class A3, class A4>
     void Reg(const olxstr& name, BC* instance, RV (BC::*F)(A1, A2,A3,A4) )  {
-      CPFunc4<RV,BC,A1,A2,A3,A4>* gf = new CPFunc4<RV,BC,A1,A2,A3,A4>( name, instance, F);
-      funcs.Add( name, gf);
+      CPFunc4<RV,BC,A1,A2,A3,A4>* gf = new CPFunc4<RV,BC,A1,A2,A3,A4>(name, instance, F);
+      funcs.Add(name, gf);
     }
 
 
@@ -716,7 +716,7 @@ public:
     RV CallFunction(const T& name, A1 a1)  {
       TPtrList<IEObject const> args;
       TPTWrapper<A1> warg1(a1);
-      args.Add( &warg1 );
+      args.Add(warg1);
       TPTWrapper<RV> retVal( (TPTWrapper<RV>*)FindFunction(name)->Run(args));
       return retVal.GetValue();
     }
@@ -724,36 +724,36 @@ public:
     RV CallFunction(const T& name, A1 a1, A2 a2)  {
       TPtrList<IEObject const> args;
       TPTWrapper<A1> warg1(a1);
-      args.Add( &warg1 );
+      args.Add(warg1);
       TPTWrapper<A2> warg2(a2);
-      args.Add( &warg2 );
-      TPTWrapper<RV> retVal( (TPTWrapper<RV>*)FindFunction(name)->Run(args) );
+      args.Add(warg2);
+      TPTWrapper<RV> retVal((TPTWrapper<RV>*)FindFunction(name)->Run(args));
       return retVal.GetValue();
     }
   template <class T, class RV, class A1, class A2, class A3>
     RV CallFunction(const T& name, A1 a1, A2 a2, A3 a3)  {
       TPtrList<IEObject const> args;
       TPTWrapper<A1> warg1(a1);
-      args.Add( &warg1 );
+      args.Add(warg1);
       TPTWrapper<A2> warg2(a2);
-      args.Add( &warg2 );
+      args.Add(warg2);
       TPTWrapper<A3> warg3(a3);
-      args.Add( &warg3 );
-      TPTWrapper<RV> retVal( (TPTWrapper<RV>*)FindFunction(name)->Run(args) );
+      args.Add(warg3);
+      TPTWrapper<RV> retVal((TPTWrapper<RV>*)FindFunction(name)->Run(args));
       return retVal.GetValue();
     }
   template <class T, class RV, class A1, class A2, class A3, class A4>
     RV CallFunction(const T& name, A1 a1, A2 a2, A3 a3, A4 a4)  {
       TPtrList<IEObject const> args;
       TPTWrapper<A1> warg1(a1);
-      args.Add( &warg1 );
+      args.Add(warg1);
       TPTWrapper<A2> warg2(a2);
-      args.Add( &warg2 );
+      args.Add(warg2);
       TPTWrapper<A3> warg3(a3);
-      args.Add( &warg3 );
+      args.Add(warg3);
       TPTWrapper<A4> warg4(a4);
-      args.Add( &warg4 );
-      TPTWrapper<RV> retVal( (TPTWrapper<RV>*)FindFunction(name)->Run(args) );
+      args.Add(warg4);
+      TPTWrapper<RV> retVal((TPTWrapper<RV>*)FindFunction(name)->Run(args));
       return retVal.GetValue();
     }
   static void CompileTest();

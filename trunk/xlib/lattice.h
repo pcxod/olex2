@@ -72,7 +72,7 @@ public:
     &OnAtomsDeleted;
 
   // this is does not have any usefull data - just for functions call!!!
-  inline TNetwork& GetNetwork()  const  {  return *Network; }
+  inline TNetwork& GetNetwork() const {  return *Network; }
 
   void Clear(bool ClearUnitCell);
   void Uniq(bool removeSymmEquivalents = false);
@@ -84,6 +84,8 @@ public:
   void AddLatticeContent(const TLattice& latt);
   // generates atoms inside the unit cell only
   void GenerateCell();
+  // generates atoms inside the given box of dim[i].Length() size at position center
+  void GenerateBox(const mat3d& norms, const vec3d& size, const vec3d& center, bool clear_content);
   // generates atoms within specified volume
   void Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
     bool ClearCont);
@@ -185,12 +187,9 @@ public:
   inline bool operator != (const TLattice* l) const {  return this != l;  }
   struct GrowInfo  {
     smatd_plist matrices;  // the list of all matrices
-    TArrayList<TIndexList> info;  // TCAtomId -> list of used matrices;
+    TArrayList<TIndexList> info;  // TCAtomId -> matrix;
     size_t unc_matrix_count;
-    ~GrowInfo() {
-      for( size_t i=0; i < matrices.Count(); i++ )
-        delete matrices[i];
-    }
+    ~GrowInfo()  {  matrices.DeleteItems();  }
   };
   // takes the ownership of the provided object
   void SetGrowInfo(GrowInfo* grow_info);

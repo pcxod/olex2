@@ -36,9 +36,9 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     PUSHBUTTON      "Exit",IDC_BTN_CLOSE,247,168,44,14
     DEFPUSHBUTTON   "Install",IDC_BTN_INSTALL,296,168,45,14
-    LTEXT           "Install Olex2 here:",IDC_STATIC,155,73,185,8
-    CONTROL         129,IDC_STATIC,"Static",SS_BITMAP,0,0,151,185
-    CONTROL         130,IDC_STATIC,"Static",SS_BITMAP,151,0,194,61
+    LTEXT           "Install Olex2 here:",IDC_L_REPOSITORY,155,73,185,8
+    CONTROL         129,IDC_BMP1,"Static",SS_BITMAP | SS_REALSIZEIMAGE,0,0,129,150
+    CONTROL         130,IDC_BMP2,"Static",SS_BITMAP,151,0,166,50
     CONTROL         "",IDC_PB_PROGRESS,"msctls_progress32",PBS_SMOOTH | NOT WS_VISIBLE,260,59,80,9
     LTEXT           "",IDC_ST_PROGRESS,151,59,108,8,0,WS_EX_TRANSPARENT
     EDITTEXT        IDC_TE_INSTALL_PATH,154,82,167,12,ES_AUTOHSCROLL | ES_READONLY
@@ -66,8 +66,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,1
- PRODUCTVERSION 1,0,0,1
+ FILEVERSION 1,0,0,2
+ PRODUCTVERSION 1,0,0,2
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -82,14 +82,14 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "Durham University"
+            VALUE "CompanyName", "OlexSys"
             VALUE "FileDescription", "Olex2 Installer"
-            VALUE "FileVersion", "1.0.0.1"
+            VALUE "FileVersion", "1.0.0.2"
             VALUE "InternalName", "installer.exe"
-            VALUE "LegalCopyright", "(c) Oleg Dolomanov, 2009.  All rights reserved."
+            VALUE "LegalCopyright", "(c) Oleg Dolomanov, 2009-10.  All rights reserved."
             VALUE "OriginalFilename", "installer.exe"
             VALUE "ProductName", "Olex2 Installer"
-            VALUE "ProductVersion", "1.0.0.1"
+            VALUE "ProductVersion", "1.0.0.2"
         END
     END
     BLOCK "VarFileInfo"

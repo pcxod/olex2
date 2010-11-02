@@ -223,24 +223,24 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     if( !SortedQPeaks.IsEmpty() )  {
       vals.AddNew<double, TCAtomPList*>(0, new TCAtomPList);
       for( size_t i=SortedQPeaks.Count()-1; i >=1; i-- )  {
-        if( (SortedQPeaks.GetComparable(i) - SortedQPeaks.GetComparable(i-1))/SortedQPeaks.GetComparable(i) > 0.05 )  {
+        if( (SortedQPeaks.GetKey(i) - SortedQPeaks.GetKey(i-1))/SortedQPeaks.GetKey(i) > 0.05 )  {
           //FGlConsole->PostText( olxstr("Threshold here: ") << SortedQPeaks.GetObject(i)->GetLabel() );
-          vals.Last().A() += SortedQPeaks.GetComparable(i);
-          vals.Last().B()->Add( SortedQPeaks.GetObject(i));
+          vals.GetLast().A() += SortedQPeaks.GetKey(i);
+          vals.GetLast().B()->Add( SortedQPeaks.GetObject(i));
           cnt++;
-          vals.Last().A() /= cnt;
+          vals.GetLast().A() /= cnt;
           cnt = 0;
           vals.AddNew<double, TCAtomPList*>(0, new TCAtomPList);
           continue;
         }
-        vals.Last().A() += SortedQPeaks.GetComparable(i);
-        vals.Last().B()->Add( SortedQPeaks.GetObject(i));
+        vals.GetLast().A() += SortedQPeaks.GetKey(i);
+        vals.GetLast().B()->Add( SortedQPeaks.GetObject(i));
         cnt ++;
       }
-      vals.Last().B()->Add(SortedQPeaks.GetObject(0));
+      vals.GetLast().B()->Add(SortedQPeaks.GetObject(0));
       cnt++;
       if( cnt > 1 )
-        vals.Last().A() /= cnt;
+        vals.GetLast().A() /= cnt;
 
       TBasicApp::GetLog().Info( olxstr("Average QPeak: ") << avQPeak);
       TBasicApp::GetLog().Info("QPeak steps:");
@@ -253,16 +253,16 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       TBasicApp::GetLog().Info(olxstr("QPeak threshold:") << thVal);
 
       if( SortedQPeaks.Count() == 1 )  {  // only one peak present
-        if( SortedQPeaks.GetComparable(0) < thVal )
+        if( SortedQPeaks.GetKey(0) < thVal )
           SortedQPeaks.GetObject(0)->SetDeleted(true);
       }
       else  {
-        double wght = (SortedQPeaks.Last().Comparable-avQPeak)/
-          (avQPeak-SortedQPeaks.GetComparable(0));
+        double wght = (SortedQPeaks.GetLastKey()-avQPeak)/
+          (avQPeak-SortedQPeaks.GetKey(0));
         for( size_t i=vals.Count()-1; i != InvalidIndex; i-- )  {
           if( vals[i].GetA() < thVal )  {
             for( size_t j=0; j < vals[i].GetB()->Count(); j++ )
-              vals[i].GetB()->Item(j)->SetDeleted(true);
+              vals[i].GetB()->GetItem(j)->SetDeleted(true);
           }
         }
       }
@@ -362,7 +362,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       if( latt.GetFragment(i).NodeCount() == 1 && !latt.GetFragment(i).Node(0).IsDeleted() )  {
         TSAtom& sa = latt.GetFragment(i).Node(0);
         bool alone = true;
-        for( size_t j=0; j < sa.CAtom().AttachedAtomCount(); j++ )
+        for( size_t j=0; j < sa.CAtom().AttachedSiteCount(); j++ )
           if( sa.CAtom().GetAttachedAtom(j).GetType() != iQPeakZ )  {
             alone = false;
             break;
@@ -409,8 +409,8 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
               sa.CAtom().SetType(*StandAlone[0]);
             }
             else if( assignHeaviest )  {
-              sa.CAtom().SetLabel(StandAlone.Last()->symbol, false);
-              sa.CAtom().SetType(*StandAlone.Last());
+              sa.CAtom().SetLabel(StandAlone.GetLast()->symbol, false);
+              sa.CAtom().SetType(*StandAlone.GetLast());
             }
           }
         }
@@ -520,10 +520,10 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
       while( sl[i].GetA() > 0 )  {
         if( SortedQPeaks.IsEmpty() )  break;
         sl[i].A() --;
-        SortedQPeaks.Last().Object->SetLabel((olxstr(sl[i].GetB()->symbol) << i), false);
-        SortedQPeaks.Last().Object->SetType(*sl[i].B());
-        SortedQPeaks.Last().Object->SetQPeak(0);
-        SortedQPeaks.Remove(SortedQPeaks.Count()-1);
+        SortedQPeaks.GetLast().Object->SetLabel((olxstr(sl[i].GetB()->symbol) << i), false);
+        SortedQPeaks.GetLast().Object->SetType(*sl[i].B());
+        SortedQPeaks.GetLast().Object->SetQPeak(0);
+        SortedQPeaks.Delete(SortedQPeaks.Count()-1);
       }
       if( SortedQPeaks.IsEmpty() ) break;
     }
@@ -579,7 +579,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
       for( size_t j=0; j < maxb_cnt; j++ )  {
         if( sa.GetType() == _autoMaxBond[j].type )  {
           uc.GetAtomEnviList(sa, bc_to_check.AddNew()); 
-          if( bc_to_check.Last().Count() <= _autoMaxBond[j].max_bonds )  {
+          if( bc_to_check.GetLast().Count() <= _autoMaxBond[j].max_bonds )  {
             bc_to_check.NullItem(bc_to_check.Count()-1);
           }
         }

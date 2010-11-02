@@ -78,7 +78,12 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 3 )  continue;
         FTotalRefs = Toks[0].ToInt();
-        FUniqRefs = FTotalRefs - Toks[5].ToInt(); // uniq = total - rejected
+        try  {  //bug: 662044  Reflections read, of which447594  rejected
+          FUniqRefs = FTotalRefs - Toks[5].ToInt(); // uniq = total - rejected
+        }
+        catch(...)  {
+          FUniqRefs = FUniqRefs = -1;
+        }
         TRefC = true;
         continue;
       }

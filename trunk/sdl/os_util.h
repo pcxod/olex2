@@ -50,6 +50,21 @@ BeginEsdlNamespace()
       return getenv(name.c_str());
    }
 #  endif  // MSVC and others WIN compilers
+/*http://msdn.microsoft.com/en-us/library/ms684139.aspx
+return true if the process is running under wow64 - ie on x64 bit Windows,
+might throw an exception... */
+static bool IsWow64()  {
+  typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
+  LPFN_ISWOW64PROCESS fnIsWow64Process;
+  BOOL bIsWow64 = FALSE;
+  fnIsWow64Process = (LPFN_ISWOW64PROCESS) GetProcAddress(
+    GetModuleHandle(TEXT("kernel32")),"IsWow64Process");
+  if( fnIsWow64Process != NULL )  {
+    if( !fnIsWow64Process(GetCurrentProcess(),&bIsWow64))
+      throw TFunctionFailedException(__OlxSourceInfo, "to call IsWow64Process");
+  }
+  return bIsWow64 == TRUE;
+}
 #else  // not WIN
    static bool olx_setenv(const olxstr& name, const olxstr& val)  {
      return setenv(name.c_str(), val.c_str(), 1) == 0;

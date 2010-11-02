@@ -128,7 +128,7 @@ public:
   // executes a named queue
   bool Execute(const olxstr& Name, const IEObject* Sender, const IEObject* Data=NULL);
 
-  bool Exists(const olxstr& Name) const {  return Queues.IndexOfComparable(Name) != InvalidIndex;  }
+  bool Exists(const olxstr& Name) const {  return Queues.IndexOf(Name) != InvalidIndex;  }
   /* throws exception if the queue does not exist */
   TActionQueue* Find(const olxstr& Name) const {  return Queues[Name];  }
   // queue by index

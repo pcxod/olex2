@@ -121,7 +121,7 @@ public:
     // smaller than the first
     if( Comparator::Compare(list[0], entry) >=0  )  {  list.Insert(0, entry);  return 0; }
     // larger than the last
-    if( Comparator::Compare(list.Last(), entry) <=0 )  {  list.Add(entry);  return list.Count()-1; }
+    if( Comparator::Compare(list.GetLast(), entry) <=0 )  {  list.Add(entry);  return list.Count()-1; }
     // an easy case then with two items
     if( list.Count() == 2 )       {  list.Insert(1, entry);  return 1; }
     const size_t pos = FindInsertIndex(entry);
@@ -139,7 +139,7 @@ public:
     // smaller than the first
     if( Comparator::Compare(list[0], entry) >=0  )  {  list.Insert(0, entry);  return 0; }
     // larger than the last
-    if( Comparator::Compare(list.Last(), entry) <=0 )  {  list.Add(entry);  return list.Count()-1; }
+    if( Comparator::Compare(list.GetLast(), entry) <=0 )  {  list.Add(entry);  return list.Count()-1; }
     // an easy case then with two items
     if( list.Count() == 2 )       {  list.Insert(1, entry);  return 1; }
     const size_t pos = FindInsertIndex(entry);
@@ -176,7 +176,7 @@ public:
       if( pos != NULL )  *pos = 0;
       return true; 
     }
-    if( Comparator::Compare(list.Last(), entry) < 0 )  {  // larger than the last
+    if( Comparator::Compare(list.GetLast(), entry) < 0 )  {  // larger than the last
       list.Add(entry);  
       if( pos != NULL ) *pos = list.Count()-1;
       return true; 
@@ -216,7 +216,7 @@ public:
       if( pos != NULL )  *pos = 0;
       return true; 
     }
-    if( Comparator::Compare(list.Last(), entry) < 0 )  {  // larger than the last
+    if( Comparator::Compare(list.GetLast(), entry) < 0 )  {  // larger than the last
       list.Add(entry);  
       if( pos != NULL ) *pos = list.Count()-1;
       return true; 
@@ -262,11 +262,8 @@ public:
       Add(li[i]);
   }
   ~TObjectList() {  Clear();  }
-  ObjectClass& operator [] (size_t i)  {  return *list[i];  }
-  const ObjectClass& operator [] (size_t i) const {  return *list[i];  }
-  ObjectClass& Last()  {  return *list.Last();  }
-  const ObjectClass& Last() const {  return *list.Last();  }
-
+  ObjectClass& operator [] (size_t i) const {  return *list[i];  }
+  ObjectClass& GetLast() const {  return *list.GetLast();  }
   size_t Count() const {  return list.Count();  }
   bool IsEmpty() const {  return list.IsEmpty();  }
   TObjectList<ObjectClass>& operator = (const TObjectList<ObjectClass>& li)  {
@@ -280,7 +277,6 @@ public:
   void Insert(size_t index, const ObjectClass& obj)  {
     list.Insert(index, new ObjectClass(obj) );
   }
-
   void Clear()  {
     for( size_t i=0; i < list.Count(); i++ )
       delete list[i];

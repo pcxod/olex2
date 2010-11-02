@@ -638,8 +638,8 @@ public:
   virtual TLibrary& GetLibrary()  {  return FXApp->GetLibrary();  }
   virtual olxstr TranslateString(const olxstr& str) const;
   virtual bool IsControl(const olxstr& cname) const;
-  virtual void LockWindowDestruction(wxWindow* wnd);
-  virtual void UnlockWindowDestruction(wxWindow* wnd);
+  virtual void LockWindowDestruction(wxWindow* wnd, const IEObject* caller);
+  virtual void UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller);
 
   void OnKeyUp(wxKeyEvent& event);
   void OnKeyDown(wxKeyEvent& event);
@@ -743,7 +743,7 @@ public:
   inline THtml* GetHtml()  const {  return FHtml; }
   THtml* FindHtml(const olxstr& popupName) const;
   TPopupData* FindHtmlEx(const olxstr& popupName) const;
-  inline const olxstr& GetCurrentLanguageEncodingStr()  const  {
+  inline const olxstr& GetCurrentLanguageEncodingStr() const {
     return Dictionary.GetCurrentLanguageEncodingStr();
   }
 //..............................................................................

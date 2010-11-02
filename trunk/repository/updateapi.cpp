@@ -496,6 +496,11 @@ TStrList UpdateAPI::GetDefaultRepositories() {
 olxstr UpdateAPI::GetInstallationFileName()  {
 #ifdef __WIN32__
 #ifndef _WIN64
+  try  {
+    if( IsWow64() )
+      return "olex2-x64.zip";
+  }
+  catch(...)  {}  // stay quiet (?)
   unsigned int cpu_features = 0;
   _asm  {
     push EAX

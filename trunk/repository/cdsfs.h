@@ -8,8 +8,9 @@
 
 class TSocketFS: public THttpFileSystem  {
 protected:
+  static bool UseLocalFS;
+  static olxstr Base;
   int attempts, max_attempts;
-  olxstr Base;
   bool BaseValid;
   virtual IInputStream* _DoOpenFile(const olxstr& src)  {
     attempts = max_attempts;
@@ -17,13 +18,15 @@ protected:
   }
   virtual bool _OnReadFailed(const ResponseInfo& info, uint64_t position);
   // this will be useful when Olex2-CDS returns MD5 digest in ETag...
-  virtual bool _DoValidate(const ResponseInfo& info, TEFile& data, size_t toBeread) const;
-  virtual TEFile* _DoAllocateFile(const olxstr& src);
+  virtual bool _DoValidate(const ResponseInfo& info, TEFile& data) const;
+  virtual AllocationInfo _DoAllocateFile(const olxstr& src);
+  virtual AllocationInfo& _DoTruncateFile(AllocationInfo& file);
 public:
-  TSocketFS(const TUrl& url, bool UseLocalFS = true, int _max_attempts=25) :
+  TSocketFS(const TUrl& url, int _max_attempts=100) :
       THttpFileSystem(url), max_attempts(_max_attempts), BaseValid(false)
   {
-    Base = TEFile::AddPathDelimeter(TBasicApp::GetBaseDir() + ".cds");
+    if( Base.IsEmpty() )
+      Base = TEFile::AddPathDelimeter(TBasicApp::GetBaseDir() + ".cds");
     if( UseLocalFS )  {
       try  {
         if( !TEFile::Exists(Base) )  {
@@ -37,10 +40,13 @@ public:
     }
     if( max_attempts < 0 )
       max_attempts = 0;
-    else if( max_attempts > 100 )
-      max_attempts = 100;
+    else if( max_attempts > 32000 )
+      max_attempts = 32000;
   }
   virtual ~TSocketFS()  {}
+  static bool CanUseLocalFS()  {  return UseLocalFS;  }
+  // allows creating temporary files in basedir/.cds/
+  static void SetUseLocalFS(bool v)  {  UseLocalFS = true;  } 
 };
 
 #endif

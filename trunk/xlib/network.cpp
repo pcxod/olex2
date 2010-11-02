@@ -159,7 +159,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
     }
     Atoms[i]->Clear();
     // preallocate memory to improve mulithreading
-    Atoms[i]->SetCapacity(Atoms[i]->NodeCount() + Atoms[i]->CAtom().AttachedAtomCount());
+    Atoms[i]->SetCapacity(Atoms[i]->NodeCount() + Atoms[i]->CAtom().AttachedSiteCount());
   }
   Atoms.Pack();
   if( Atoms.IsEmpty() )  return;
@@ -335,7 +335,7 @@ void TNetwork::THBondSearchTask::Run(size_t ind)  {
   if( aT == iHydrogenZ )
     AA = A1;
   else if( aT == iNitrogenZ || aT == iOxygenZ || aT == iFluorineZ ||
-      aT == iChlorineZ || aT == iSulphurZ || aT == iBromineZ )
+      aT == iChlorineZ || aT == iSulphurZ || aT == iBromineZ || aT == iSeleniumZ )
     DA = A1;
 
   if( AA == NULL && DA == NULL )  return;
@@ -356,11 +356,12 @@ void TNetwork::THBondSearchTask::Run(size_t ind)  {
     if( !((AA != NULL && (aT1 == iNitrogenZ || aT1 == iOxygenZ||
                         aT1 == iFluorineZ || aT1 == iChlorineZ ||
                         aT1 == iSulphurZ) || aT1 == iBromineZ) ||
+                        aT1 == iSeleniumZ ||
           (DA != NULL && aT1 == iHydrogenZ) ) )  continue;
 
     if( A1->GetNetwork() == Atoms[i]->GetNetwork() )  {
       if( A1->IsConnectedTo( *Atoms[i]) )  continue;
-      // check for N-C-H (N-C) bonds are not leagal
+      // check for N-C-H (N-C) bonds are not valid
       TSAtom *CSA = ((AA!=NULL)?AA:Atoms[i]),
              *NA  = ((DA!=NULL)?DA:Atoms[i]);
       bool connected = false;
@@ -1241,9 +1242,9 @@ ContentList TNetwork::GetContentList() const {
     if( a.IsDeleted() || a.GetType() == iQPeakZ )  continue;
     size_t ind = elms.IndexOf(&a.GetType());
     if( ind == InvalidIndex )
-      elms.Add(&a.GetType(), a.CAtom().GetOccu()*a.MatrixCount());
+      elms.Add(&a.GetType(), a.CAtom().GetOccu()*a.CAtom().GetDegeneracy());
     else
-      elms.GetValue(ind) += (a.CAtom().GetOccu()*a.MatrixCount());
+      elms.GetValue(ind) += (a.CAtom().GetOccu()*a.CAtom().GetDegeneracy());
   }
   ContentList rv;
   for( size_t i=0; i < elms.Count(); i++ )

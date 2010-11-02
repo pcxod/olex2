@@ -232,17 +232,17 @@ int TGlRenderer_CollectionComparator(const olxstr& c1, const olxstr& c2) {
 TGPCollection *TGlRenderer::FindCollectionX(const olxstr& Name, olxstr& CollName)  {
   const size_t di = Name.FirstIndexOf('.');
   if( di != InvalidIndex )  {
-    size_t ind = FCollections.IndexOfComparable(Name);
+    const size_t ind = FCollections.IndexOf(Name);
     if( ind != InvalidIndex )  
       return FCollections.GetObject(ind);
 
     TGPCollection *BestMatch=NULL;
     short maxMatchLevels = 0;
     for( size_t i=0; i < FCollections.Count(); i++ )  {
-      int dc = TGlRenderer_CollectionComparator(Name, FCollections.GetComparable(i));
+      int dc = TGlRenderer_CollectionComparator(Name, FCollections.GetKey(i));
       if( dc == 0 || dc < maxMatchLevels )  continue;
       if( BestMatch != NULL && dc == maxMatchLevels )  {  // keep the one with shortes name
-        if( BestMatch->GetName().Length() > FCollections.GetComparable(i).Length() )
+        if( BestMatch->GetName().Length() > FCollections.GetKey(i).Length() )
           BestMatch = FCollections.GetObject(i);
       }
       else
@@ -902,7 +902,7 @@ void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
   for( size_t i=0; i < Colls.Count(); i++ )  {
     Colls[i]->GetPrimitives().ForEach(ACollectionItem::TagSetter<>(0));
     const size_t col_ind = FCollections.IndexOfObject(Colls[i]);
-    FCollections.Remove(col_ind);
+    FCollections.Delete(col_ind);
     delete Colls[i];
   }
   Primitives.RemoveObjectsByTag(0);

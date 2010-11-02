@@ -11,10 +11,9 @@ private:
       *tcSpecF, *tcSpecB, *tcShnF, *tcShnB;
   TSpinCtrl *scAmbF, *scAmbB, *scDiffF, *scDiffB, *scEmmF, *scEmmB,
       *scSpecF, *scSpecB, *scTrans;
-  wxCheckBox *cbApplyToGroup;
   wxButton* bEditFont;
+  wxComboBox *cbApplyTo;
   TComboBox *cbPrimitives;
-  TGPCollection *GPCollection;
   TPtrList<TSpinCtrl> SpinCtrls;
 protected:
   void OnOK(wxCommandEvent& event);

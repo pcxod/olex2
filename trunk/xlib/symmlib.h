@@ -50,7 +50,7 @@ public:
           Latt = latt;  
         }
       short GetLatt() const  {  return Latt;  }
-      virtual IEObject* Replicate()  const  {  return new TIncorrectLattExc(*this);  }
+      virtual IEObject* Replicate() const {  return new TIncorrectLattExc(*this);  }
   };
 };
 
@@ -201,7 +201,7 @@ public:
   TBravaisLattice(const olxstr& Name)  {  this->Name = Name;  }
   virtual ~TBravaisLattice()  {  ;  }
 
-  const olxstr& GetName()  const       {  return Name;  }
+  const olxstr& GetName() const      {  return Name;  }
 
   TBravaisLattice& AddLattice(TCLattice* latt)  {
     Lattices.Add(latt);
@@ -257,12 +257,12 @@ public:
   size_t SGCount() const {  return SpaceGroups.Count();  }
   TSpaceGroup& GetGroup(size_t i) const {  return *SpaceGroups.GetObject(i);  }
   void GetGroupByNumber(int N, TPtrList<TSpaceGroup>& res) const;
-  TSpaceGroup* FindGroup(const olxstr& Name)  const  {
+  TSpaceGroup* FindGroup(const olxstr& Name) const {
     return SpaceGroups[Name];
   }
 
-  size_t SymmElementCount()  const  {  return SymmetryElements.Count();  }
-  TSymmElement&  GetSymmElement(size_t i)  const  {  return SymmetryElements[i];  }
+  size_t SymmElementCount() const {  return SymmetryElements.Count();  }
+  TSymmElement&  GetSymmElement(size_t i) const {  return SymmetryElements[i];  }
   TSymmElement*  FindSymmElement(const olxstr& name)  const;
 
   size_t LatticeCount() const {  return Lattices.Count();  }

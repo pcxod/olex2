@@ -242,7 +242,7 @@ void TGraphicsStyle::RemoveNonSaveable() {
 //..............................................................................
 void TGraphicsStyle::RemoveNamedStyles(const TStrList& toks)  {
   if( toks.Count() < Level )  return;
-  size_t i = Styles.IndexOfComparable(toks[Level]);
+  const size_t i = Styles.IndexOf(toks[Level]);
   if( i != InvalidIndex )  {
     if( toks.Count() == Level+1 )  {
       delete Styles.GetObject(i);

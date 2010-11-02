@@ -146,7 +146,7 @@ void TActionQueue::TakeOver(TActionQueue& aq)  {
 //------------------------------------------------------------------------------
 //..............................................................................
 TActionQueue& TActionQList::New(const olxstr& name)  {
-  if( Queues.IndexOfComparable(name) != InvalidIndex )
+  if( Queues.IndexOf(name) != InvalidIndex )
     throw TFunctionFailedException(__OlxSourceInfo, "the queue already exists");
   TActionQueue* Q = new TActionQueue(this, name);
   Queues.Add(name, Q);

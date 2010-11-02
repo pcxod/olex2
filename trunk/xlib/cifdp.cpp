@@ -253,7 +253,7 @@ void cetTable::AddCol(const olxstr& col_name)  {
 }
 void cetTable::Clear()  {
   for( size_t i=0; i < data.RowCount(); i++ )
-    data[i].Delete();
+    data[i].DeleteItems();
   data.Clear();
 }
 void cetTable::ToStrings(TStrList& list) const {
@@ -321,9 +321,9 @@ void cetTable::DataFromStrings(TStrList& lines)  {
 int cetTable::TableSorter::Compare(const CifRow* r1, const CifRow* r2)  {
   const size_t sz = r1->Count();
   for( size_t i=0; i < sz; i++ )  {
-    size_t h1 = r1->Item(i)->GetCmpHash();
+    size_t h1 = r1->GetItem(i)->GetCmpHash();
     h1 = (h1 == InvalidIndex) ? 0 : h1;
-    size_t h2 = r2->Item(i)->GetCmpHash();
+    size_t h2 = r2->GetItem(i)->GetCmpHash();
     h2 = (h2 == InvalidIndex) ? 0 : h2;
     if( h1 < h2 )  return -1;
     if( h1 > h2 )  return 1;
@@ -358,9 +358,9 @@ cetString::cetString(const olxstr& _val) : value(_val), quoted(false)  {
 void cetString::ToStrings(TStrList& list) const {
   olxstr& line =
     (list.IsEmpty() || 
-     (list.Last().String.Length() + value.Length() + 3 > 80) || 
-     list.Last().String.StartsFrom(';')) ?
-    list.Add(' ') : (list.Last().String << ' ');
+     (list.GetLastString().Length() + value.Length() + 3 > 80) || 
+     list.GetLastString().StartsFrom(';')) ?
+    list.Add(' ') : (list.GetLastString() << ' ');
   if( quoted )
     line << '\'' << value << '\'';
   else
@@ -478,7 +478,7 @@ void CifBlock::Sort(const TStrList& pivots, const TStrList& endings)  {
   for( size_t i=0; i < groups.Count(); i++ )  {
     for( size_t j=0; j < groups[i].items.Count()-1; j++ )
       params.Add(EmptyString, groups[i].items[j]);
-    params.Add(groups[i].name, groups[i].items.Last());
+    params.Add(groups[i].name, groups[i].items.GetLast());
   }
 }
 //.............................................................................

@@ -254,7 +254,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
   }
 
   TGraphicsStyle& GS = GPC->GetStyle();
-  GS.SetSaveable( GPC->GetName().CharCount('.') == 0 );
+  GS.SetSaveable(GPC->GetName().CharCount('.') == 0);
 
   olxstr& SMask = GS.GetParam(GetPrimitiveMaskName(), EmptyString);
   if( SMask.IsEmpty() )
@@ -280,24 +280,24 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
       TGlPrimitive* SGlP = FStaticObjects.GetObject(i);
       TGlPrimitive& GlP = GPC->NewPrimitive(FStaticObjects.GetString(i), sgloCommandList);
       if( i == SphereIndex )
-        GlP.SetOwnerId( xatom_SphereId );
+        GlP.SetOwnerId(xatom_SphereId);
       else if( i == SmallSphereIndex )
-        GlP.SetOwnerId( xatom_SmallSphereId );
+        GlP.SetOwnerId(xatom_SmallSphereId);
       else if( i == RimsIndex )
-        GlP.SetOwnerId( xatom_RimsId );
+        GlP.SetOwnerId(xatom_RimsId);
       else if( i == DisksIndex )
         GlP.SetOwnerId( xatom_DisksId );
       else if( i == CrossIndex )
-        GlP.SetOwnerId( xatom_CrossId );
+        GlP.SetOwnerId(xatom_CrossId);
       else if( i == PolyhedronIndex )  {
-        GlP.SetOwnerId( xatom_PolyId );
+        GlP.SetOwnerId(xatom_PolyId);
         CreatePolyhedron(true);
       }
       else
-        GlP.SetOwnerId( 0 );
+        GlP.SetOwnerId(0);
       /* copy the default drawing style tag*/
       GlP.Params.Resize(GlP.Params.Count()+1);
-      GlP.Params.Last() = SGlP->Params.Last();
+      GlP.Params.GetLast() = SGlP->Params.GetLast();
 
       GlP.StartList();
       GlP.CallList(SGlP);
@@ -308,26 +308,24 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
         GlP.SetProperties(RGlM);
       }
       else  {
-        size_t mi = GS.IndexOfMaterial(FStaticObjects.GetString(i));
-        if( mi != InvalidIndex )  {
+        const size_t mi = GS.IndexOfMaterial(FStaticObjects.GetString(i));
+        if( mi != InvalidIndex )
           GlP.SetProperties(GS.GetPrimitiveStyle(mi).GetProperties());
-          continue;
-        }
-        if( SGlP->Params.Last() == ddsDefSphere )   {
-          size_t lmi = GS.IndexOfMaterial("Sphere");
+        else if( SGlP->Params.GetLast() == ddsDefSphere )   {
+          const size_t lmi = GS.IndexOfMaterial("Sphere");
           if( lmi != InvalidIndex )
             RGlM = GS.GetPrimitiveStyle(lmi).GetProperties();
           else
             GetDefSphereMaterial(FAtom, RGlM);
         }
-        else if( SGlP->Params.Last() == ddsDefRim )  {
-          size_t lmi = GS.IndexOfMaterial("Rims");
+        else if( SGlP->Params.GetLast() == ddsDefRim )  {
+          const size_t lmi = GS.IndexOfMaterial("Rims");
           if( lmi != InvalidIndex )
             RGlM = GS.GetPrimitiveStyle(lmi).GetProperties();
           else
             GetDefRimMaterial(FAtom, RGlM);
         }
-        GlP.SetProperties(GS.GetMaterial(FStaticObjects.GetString(i), RGlM));
+        GlP.SetProperties(GS.GetMaterial(FStaticObjects[i], RGlM));
       }
     }
   }
@@ -624,7 +622,7 @@ void TXAtom::CreateStaticObjects()  {
   GlP->Params[0] = 1;  GlP->Params[1] = SphereQ; GlP->Params[2] = SphereQ;
   GlP->Compile();
   GlP->Params.Resize(GlP->Params.Count()+1);
-  GlP->Params.Last() = ddsDefSphere;
+  GlP->Params.GetLast() = ddsDefSphere;
 //..............................
   // create a small sphere
   if( (GlP = FStaticObjects.FindObject("Small sphere")) == NULL )
@@ -632,7 +630,7 @@ void TXAtom::CreateStaticObjects()  {
   GlP->Params[0] = 0.5;  GlP->Params[1] = SphereQ; GlP->Params[2] = SphereQ;
   GlP->Compile();
   GlP->Params.Resize(GlP->Params.Count()+1);
-  GlP->Params.Last() = ddsDefSphere;
+  GlP->Params.GetLast() = ddsDefSphere;
 //..............................
   // create simple rims
   GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
@@ -711,13 +709,13 @@ void TXAtom::CreateStaticObjects()  {
   GlP->Vertices[5][2] =  1; 
   GlP->Params[0] = 1.0;
   GlP->Params.Resize(GlP->Params.Count()+1);
-  GlP->Params.Last() = ddsDefSphere;
+  GlP->Params.GetLast() = ddsDefSphere;
 //..............................
   // polyhedron - dummy
   if( (FStaticObjects.FindObject("Polyhedron")) == NULL )
     FStaticObjects.Add("Polyhedron", GlP = &Parent.NewPrimitive(sgloMacro));
   GlP->Params.Resize(GlP->Params.Count()+1);
-  GlP->Params.Last() = ddsDefSphere;
+  GlP->Params.GetLast() = ddsDefSphere;
 // init indexes after all are added
   PolyhedronIndex = (uint8_t)FStaticObjects.IndexOf("Polyhedron");
   SphereIndex = (uint8_t)FStaticObjects.IndexOf("Sphere");

@@ -21,6 +21,7 @@ static const short
   iChlorineZ   = 17,
   iPotassiumZ  = 19,
   iCalciumZ    = 20,
+  iSeleniumZ   = 34,
   iBromineZ    = 35,
   iQPeakZ      = -1;
 

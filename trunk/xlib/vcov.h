@@ -68,7 +68,7 @@ public:
     TTypeList<TVector3<size_t> > indexes;
     for( size_t i=0; i < atoms.Count(); i++ )  {
       a_indexes.Add(FindAtomIndex(atoms[i]->CAtom()));
-      if( a_indexes.Last() == InvalidIndex )
+      if( a_indexes.GetLast() == InvalidIndex )
         TBasicApp::GetLog().Error( olxstr("Unable to located provided atom: ") << atoms[i]->GetLabel());
       indexes.AddNew(InvalidIndex,InvalidIndex,InvalidIndex);
     }
@@ -294,7 +294,7 @@ protected:
     for( size_t i=0; i < points.Count()-2; i++ ) 
       p1[i] = points[i];
     _calcPlane<0,0>(p1);
-    vec3d v(points.Last() - points[points.Count()-2]);
+    vec3d v(points.GetLast() - points[points.Count()-2]);
     return acos(plane_param[0].CAngle(v))*180.0/M_PI;
   }
   // plane to atom distance
@@ -305,7 +305,7 @@ protected:
     _calcPlane<0,0>(p1);
     double d = plane_param[0].DotProd(plane_center[0])/plane_param[0].Length();
     plane_param[0].Normalise();
-    return points.Last().DotProd(plane_param[0]) - d;
+    return points.GetLast().DotProd(plane_param[0]) - d;
   }
   // plane centroid to plane centroid distance
   double _calcPC2PCDistance(const vec3d_alist& points, size_t fpc)  {
@@ -342,7 +342,7 @@ protected:
     for( size_t i=0; i < points.Count()-1; i++ ) 
       c1 += points[i];
     c1 /= (points.Count()-1);
-    return c1.DistanceTo(points.Last());
+    return c1.DistanceTo(points.GetLast());
   }
   // octahedral distortion (in degrees) using best line approach
   double _calcOHDistortionBL(const vec3d_alist& points)  {
@@ -566,7 +566,7 @@ public:
     nvcov *= 1./cent.Count();
     vcov -= nvcov;
     // var(a,a)
-    vcov += m.Last();
+    vcov += m.GetLast();
     double val = center.Length();
     double esd = sqrt(center.ColMul(vcov).DotProd(center))/val;
     return TEValue<double>(val, esd);
