@@ -38,6 +38,17 @@ class TSTypeList : public IEObject  {
   typedef TSortedListEntry<A,B,ComparatorType> EntryType;
   TPtrList<EntryType> Data;
 protected:
+  template <class Analyser> struct PackItemActor  {
+    const Analyser& analyser;
+    PackItemActor(const Analyser& _analyser) : analyser(_analyser)  {}
+    inline bool OnItem(EntryType* o, size_t i) const {
+      if( analyser.OnItem(o, i) )  {
+        delete o;
+        return true;
+      }
+      return false;
+    }
+  };
   template <class T>
   size_t FindInsertIndex(const T& key, size_t from=InvalidIndex, size_t to=InvalidIndex)  {
     if( from == InvalidIndex ) from = 0;
@@ -88,7 +99,7 @@ public:
       Data[i] = new EntryType(*list.Data[i]);
   }
 //..............................................................................
-  virtual ~TSTypeList()  {  Clear();  }
+  virtual ~TSTypeList()  {  Data.DeleteItems();  }
 //..............................................................................
   inline void Clear()  {  Data.DeleteItems().Clear();  }
 //..............................................................................
