@@ -4,6 +4,7 @@
 #include "sbond.h"
 #include "tptrlist.h"
 #include "conninfo.h"
+#include "atomregistry.h"
 
 BeginXlibNamespace()
 
@@ -34,6 +35,7 @@ public:
 
   /* disassembles the list of Atoms into the fragments; does not affect current net */
   void Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& InterBonds);
+  void Disassemble(const AtomRegistry& ar, TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& InterBonds);
   /* creates bonds and fragments for atoms initialised by Disassemble, all Q-bonds end up 
   in the bond_sink*/
   void CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& bond_sink);
@@ -65,12 +67,16 @@ public:
   }
 
   static inline bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb, const smatd& sm)  {
-    if( (ca.GetPart() | cb.GetPart()) < 0 )
+    if( ca.GetPart() < 0 || cb.GetPart() < 0 )
       return sm.IsFirst();  // is identity and no translation
     else if( ca.GetPart() == 0 || cb.GetPart() == 0 || 
              (ca.GetPart() == cb.GetPart()) )
       return true;
     return false;
+  }
+
+  static inline bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb)  {
+    return (ca.GetPart() == 0 || cb.GetPart() == 0 || (ca.GetPart() == cb.GetPart()));
   }
 
   bool CBondExists(const TSAtom& A1, const TSAtom& CA2, const double& D) const;
@@ -113,6 +119,16 @@ public:
   static bool BondExistsQ(const TCAtom& a1, const TCAtom& a2, const smatd& m, double qD, double delta)  {
     if( qD < olx_sqr(a1.GetConnInfo().r + a2.GetConnInfo().r + delta) )
       return IsBondAllowed(a1, a2, m);
+    return false;
+  }
+  static inline bool BondExists(const TCAtom& a1, const TCAtom& a2, double D, double delta)  {
+    if( D < (a1.GetConnInfo().r + a2.GetConnInfo().r + delta) )
+      return IsBondAllowed(a1, a2);
+    return false;
+  }
+  static inline bool BondExistsQ(const TCAtom& a1, const TCAtom& a2, double qD, double delta)  {
+    if( qD < olx_sqr(a1.GetConnInfo().r + a2.GetConnInfo().r + delta) )
+      return IsBondAllowed(a1, a2);
     return false;
   }
 

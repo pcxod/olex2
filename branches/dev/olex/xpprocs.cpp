@@ -4375,6 +4375,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       fr.SetEdge(7, px+ny+pz);
       fr.UpdateEdges();
       fr.Translate(bs.center);
+      fr.SetDeleted(false);
       fr.SetVisible(true);
     }
   }

@@ -92,7 +92,7 @@ public:
   void InitMatrices();
 
   /* Removes symm eqivs and initialises symmetry induced connectivity */
-  void FindSymmEq(double tol) const;
+  void FindSymmEq() const;
 
   /* the funciton searches a matrix which moves "atom" to "to" so that the
    distance between them is shortest and return the matrix, which if not NULL
@@ -341,14 +341,13 @@ protected:
   class TSearchSymmEqTask  {
     TPtrList<TCAtom>& Atoms;
     const smatd_list& Matrices;
-    double tolerance;
     TAsymmUnit* AU;
     TLattice* Latt;
   public:
-    TSearchSymmEqTask(TPtrList<TCAtom>& atoms, const smatd_list& matrices, double tol);
+    TSearchSymmEqTask(TPtrList<TCAtom>& atoms, const smatd_list& matrices);
     void Run(size_t ind) const;
-    TSearchSymmEqTask* Replicate() const  {
-      return new TSearchSymmEqTask(Atoms, Matrices, tolerance);
+    TSearchSymmEqTask* Replicate() const {
+      return new TSearchSymmEqTask(Atoms, Matrices);
     }
   };
   class TBuildDistanceMapTask  {

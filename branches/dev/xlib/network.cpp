@@ -164,7 +164,6 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
   Atoms.Pack();
   if( Atoms.IsEmpty() )  return;
   //............................................
-
   ac = Atoms.Count();
   Distances[1] = new double[ac];
   Distances[2] = new double[ac];
@@ -202,96 +201,10 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
 void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& bond_sink)  {
   // creating bonds
   const size_t ac = Atoms.Count();
-  // analyse extra connectivity information
-  for( size_t i=0; i < ac; i++ )  {
-    TSAtom* sa = Atoms[i];
-    sa->SetLattId(i);  // local to this procedure
-    const CXConnInfo& ci = sa->CAtom().GetConnInfo();
-    for( size_t j=0; j < ci.BondsToRemove.Count(); j++ )  {
-      if( ci.BondsToRemove[j].matr == NULL )  {
-        for( size_t k=0; k < sa->NodeCount(); k++ )  {
-          if( sa->Node(k).CAtom() == ci.BondsToRemove[j].to )
-            sa->RemoveNode(sa->Node(k--));
-        }
-      }
-      else {
-        const smatd ts = (*ci.BondsToRemove[j].matr)*sa->GetMatrix(0);
-        for( size_t k=0; k < sa->NodeCount(); k++ )  {
-          if( sa->Node(k).CAtom() == ci.BondsToRemove[j].to )  {
-            bool remove = false;
-            for( size_t l=0; l < sa->Node(k).MatrixCount(); l++ )  {
-              if( sa->Node(k).GetMatrix(l).EqualExt(ts) )  {
-                remove = true;
-                break;
-              }
-            }
-            if( remove )
-              sa->RemoveNode(sa->Node(k));
-          }
-        }
-      }
-    }
-    for( size_t j=0; j < ci.BondsToCreate.Count(); j++ )  {
-      if( ci.BondsToCreate[j].matr == NULL )  {
-        for( size_t k=0; k < ac; k++ )  {
-          if( Atoms[k]->CAtom() == ci.BondsToCreate[j].to )  {
-            if( !sa->IsConnectedTo(*Atoms[k]) )  {
-              sa->AddNode(*Atoms[k]);
-              Atoms[k]->AddNode(*sa);
-            }
-          }
-        }
-      }
-      else {
-        const smatd ts = (*ci.BondsToCreate[j].matr)*sa->GetMatrix(0);
-        for( size_t k=0; k < ac; k++ )  {
-          if( Atoms[k]->CAtom() == ci.BondsToCreate[j].to )  {
-            bool add = false;
-            for( size_t l=0; l < Atoms[k]->MatrixCount(); l++ )  {
-              if( Atoms[k]->GetMatrix(l).EqualExt(ts) )  {
-                add = true;
-                break;
-              }
-            }
-            if( add && !sa->IsConnectedTo(*Atoms[k]) )  {
-              sa->AddNode(*Atoms[k]);
-              Atoms[k]->AddNode(*sa);
-            }
-          }
-        }
-      }
-    }
-  }
-  /* final conn processing, in case some extra bonds were created considering
-     bond duality ... This cannot be done in th eloop above */
   for( size_t i=0; i < ac; i++ )  {
     TSAtom* A1 = Atoms[i];
-    const CXConnInfo& ci = A1->CAtom().GetConnInfo();
-    if( A1->NodeCount() > (size_t)olx_abs(ci.maxBonds) )  {
-      if( ci.maxBonds < 0 )
-        A1->SortNodesByDistanceDsc();
-      else
-        A1->SortNodesByDistanceAsc();
-      // prevent q-peaks affecting the max number of bonds...
-      uint16_t bc2set = olx_abs(ci.maxBonds);
-      for( uint16_t j=0;  j < bc2set; j++ )  {
-        if( A1->Node(j).GetType() == iQPeakZ )  {
-          if( ++bc2set >= A1->NodeCount() )  {
-            break;
-          }
-        }
-      }
-      for( size_t j = bc2set; j < A1->NodeCount(); j++ )  {
-        TSAtom& n = A1->Node(j--);
-        A1->RemoveNode(n);
-        n.RemoveNode(*A1);
-      }
-    }
-    A1->SetStandalone( A1->NodeCount() == 0 );
-  }
-  // end analysis the extra con info
-  for( size_t i=0; i < ac; i++ )  {
-    TSAtom* A1 = Atoms[i];
+    A1->SetLattId(i);
+    A1->SetStandalone(A1->NodeCount() == 0);
     if( A1->GetTag() != 0 )  {
       TNetwork* Net = Frags.Add(new TNetwork(&GetLattice(), this));
       Net->AddNode(*A1);
@@ -315,7 +228,7 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags, TSB
             A3.SetTag(0);
           }
           else if( A3.GetNetId() > j )  {  // the atom is in the list, but has not been processes
-            TSBond* B = new TSBond(Net);                  // in this case we need to create a bond
+            TSBond* B = new TSBond(Net);  // in this case we need to create a bond
             B->SetType(sotBond);
             B->SetA(A2);  B->SetB(A3);
             A2.AddBond(*B);  A3.AddBond(*B);
@@ -403,6 +316,58 @@ void TNetwork::THBondSearchTask::Run(size_t ind)  {
       }
     }
   }
+}
+//..............................................................................
+void TNetwork::Disassemble(const AtomRegistry& ar, TSAtomPList& atoms, TNetPList& Frags,
+  TSBondPList& InterBonds)
+{
+  const TUnitCell& uc = Lattice->GetUnitCell();
+  for( size_t i=0; i < atoms.Count(); i++ )  {
+    atoms[i]->ClearBonds();
+    atoms[i]->ClearNodes();
+    atoms[i]->SetTag(1);
+    for( size_t j=0; j < atoms[i]->CAtom().AttachedSiteCount(); j++ )  {
+      TCAtom::Site& site = atoms[i]->CAtom().GetAttachedSite(j);
+      const smatd m = atoms[i]->GetMatrix(0).IsFirst() ? site.matrix :
+        uc.MulMatrix(site.matrix, atoms[i]->GetMatrix(0));
+      TSAtom* a = ar.Find(TSAtom::Ref(site.atom->GetId(), m.GetId()));
+      if( a != NULL && !a->IsDeleted() )
+        atoms[i]->AddNode(*a);
+    }
+    const cm_Element& thisT = atoms[i]->GetType();
+    if( thisT != iHydrogenZ )  continue;
+    for( size_t j=0; j < atoms[i]->CAtom().AttachedSiteICount(); j++ )  {
+      TCAtom::Site& site = atoms[i]->CAtom().GetAttachedSiteI(j);
+      const cm_Element& thatT = site.atom->GetType();
+      if( !(thatT == iNitrogenZ || thatT == iOxygenZ || thatT == iFluorineZ ||
+        thatT == iChlorineZ || thatT == iSulphurZ || thatT == iBromineZ || thatT == iSeleniumZ) )
+      {
+        continue;
+      }
+      const smatd m = atoms[i]->GetMatrix(0).IsFirst() ? site.matrix :
+        uc.MulMatrix(site.matrix, atoms[i]->GetMatrix(0));
+      TSAtom* a = ar.Find(TSAtom::Ref(site.atom->GetId(), m.GetId()));
+      if( a != NULL && !a->IsDeleted() )  {
+        bool process = true;
+        for( size_t k=0; k < a->NodeCount(); k++ )  {
+          if( a->Node(k).GetType() != iQPeakZ && atoms[i]->IsConnectedTo(a->Node(k)) )  {
+            process = false;
+            break;
+          }
+        }
+        if( !process )  continue;
+        TSBond* B = new TSBond(&atoms[i]->GetNetwork());
+        B->SetType(sotHBond);
+        B->SetA(*atoms[i]);
+        B->SetB(*a);
+        a->AddBond(*B);
+        atoms[i]->AddBond(*B);
+        InterBonds.Add(B);
+      }
+    }
+
+  }
+  CreateBondsAndFragments(atoms, Frags, InterBonds);
 }
 //..............................................................................
 bool TNetwork::CBondExists(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& D) const  {

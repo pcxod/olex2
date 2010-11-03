@@ -242,8 +242,8 @@ void TUnitCell::UpdateEllipsoids()  {
 }
 //..............................................................................
 TUnitCell::TSearchSymmEqTask::TSearchSymmEqTask(TPtrList<TCAtom>& atoms,
-  const smatd_list& matrices, double tol) :
-  Atoms(atoms), Matrices(matrices), tolerance(tol)
+  const smatd_list& matrices) :
+  Atoms(atoms), Matrices(matrices)
 {
   AU = atoms[0]->GetParent();
   Latt = &AU->GetLattice();
@@ -259,35 +259,39 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
       continue;
     for( size_t j=0; j < mc; j++ )  {
       vec3d v = Atoms[ind]->ccrd() - Matrices[j] * Atoms[i]->ccrd();
-      const int iLx = olx_round(v[0]);  v[0] -= iLx;
-      const int iLy = olx_round(v[1]);  v[1] -= iLy;
-      const int iLz = olx_round(v[2]);  v[2] -= iLz;
-      if( j == 0 && iLx == 0 && iLy == 0 && iLz == 0 )  {  // I
-        if( ind == i || Atoms[i]->GetFragmentId() == Atoms[ind]->GetFragmentId() )  continue;
+      const vec3i shift = v.Round<int>();
+      v -= shift;
+      // collect asymetric unit bonds
+      if( j == 0 && shift.IsNull() )  {  // I
+        //if( ind == i || Atoms[i]->GetFragmentId() == Atoms[ind]->GetFragmentId() )  continue;
+        if( ind == i )  continue;
         AU->CellToCartesian(v);
-        const double d = v.Length();
-        if( d < tolerance )  {
+        const double qd = v.QLength();
+        if( qd < 1e-6 )  {
           if( Atoms[i]->GetPart() != Atoms[ind]->GetPart() )  continue;
           if( Atoms[ind]->GetType() == iQPeakZ )  {
             Atoms[ind]->SetDeleted(true);
             break;
           }
           Atoms[i]->SetDeleted(true);
-          continue;
         }
-        if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Matrices[j], d) )  {
+        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd, Latt->GetDelta()) )  {  // bond
+          Atoms[ind]->AttachSite(Atoms[i], Matrices[j]);
+          Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(Matrices[j]));
+        }
+        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd, Latt->GetDeltaI()) )  { // interatcion
           Atoms[ind]->AttachSiteI(Atoms[i], Matrices[j]);
           Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(Matrices[j]));
         }
         continue;
       }
       AU->CellToCartesian(v);
-      const double Dis = v.Length();
-      if( (j != 0) && (Dis < tolerance) )  {
+      const double qd = v.QLength();
+      if( j != 0 && qd < 1e-6 )  {
         if( i == ind )  {
           smatd eqm(Matrices[j]);
-          eqm.t[0] += iLx;  eqm.t[1] += iLy;  eqm.t[2] += iLz;
-          eqm.SetId((uint8_t)j, iLx, iLy, iLz);
+          eqm.t += shift;
+          eqm.SetRawId(smatd::GenerateId((uint8_t)j, shift));
           Atoms[ind]->AddEquiv(eqm);
           continue;
         }
@@ -299,21 +303,21 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
         if( Atoms[i]->GetParentAfixGroup() == NULL )
           Atoms[i]->SetDeleted(true);
       }
-      else if( Atoms[ind]->GetConnInfo().maxBonds != 0 && Atoms[i]->GetConnInfo().maxBonds != 0 )  {
-        if( Latt->GetNetwork().CBondExists(*Atoms[ind], *Atoms[i], Matrices[j], Dis) )  {
+      else  {
+        if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], Matrices[j], qd, Latt->GetDelta()) )  {
           Atoms[ind]->SetGrowable(true);
           smatd m = Matrices[j];
-          m.t[0] += iLx;  m.t[1] += iLy;  m.t[2] += iLz;
-          m.SetId((uint8_t)j, iLx, iLy, iLz);
+          m.t += shift;
+          m.SetRawId(smatd::GenerateId((uint8_t)j, shift));
           if( Atoms[ind]->AttachSite(Atoms[i], m) && i != ind )  {
             Atoms[i]->SetGrowable(true);
             Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(m));
           }
         }
-        else if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Matrices[j], Dis) )  {
+        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], Matrices[j], qd, Latt->GetDeltaI()) )  {
           smatd m = Matrices[j];
-          m.t[0] += iLx;  m.t[1] += iLy;  m.t[2] += iLz;
-          m.SetId((uint8_t)j, iLx, iLy, iLz);
+          m.t += shift;
+          m.SetRawId(smatd::GenerateId((uint8_t)j, shift));
           if( Atoms[ind]->AttachSiteI(Atoms[i], m) && i != ind )
             Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(m));
         }
@@ -322,7 +326,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
   }
 }
 //..............................................................................
-void TUnitCell::FindSymmEq(double tol) const  {
+void TUnitCell::FindSymmEq() const  {
   TStrList report;
   TCAtomPList ACA;
   ACA.SetCapacity(GetLattice().GetAsymmUnit().AtomCount());
@@ -338,8 +342,10 @@ void TUnitCell::FindSymmEq(double tol) const  {
   // very common, so it should be OK. (An identity (E) matrix is in the list
   // so translational equivalents will be removed too
   if( ACA.IsEmpty() )  return;
-  TSearchSymmEqTask searchTask(ACA, Matrices, tol);
+  TSearchSymmEqTask searchTask(ACA, Matrices);
   TListIteratorManager<TSearchSymmEqTask> searchm(searchTask, ACA.Count(), tQuadraticTask, 1000);
+  for( size_t i=0; i < ACA.Count(); i++ )
+    ACA[i]->UpdateAttachedSites();
 }
 //..............................................................................
 smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal, double* dist) const  {
@@ -360,7 +366,7 @@ smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOr
     const int iy = olx_round(V1[1]);  V1[1] -= (iy);
     const int iz = olx_round(V1[2]);  V1[2] -= (iz);
     // check for identity matrix
-    if( i == 0 && (ix|iy|iz) == 0 )  continue;
+    if( i == 0 && ix == 0 && iy == 0 && iz == 0 )  continue;
     GetLattice().GetAsymmUnit().CellToCartesian(V1);
     const double D = V1.QLength();
     if( D < minD )  {

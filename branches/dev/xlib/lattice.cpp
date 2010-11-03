@@ -249,7 +249,11 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
     else
       atoms[i-dac] = Atoms[i];
   }
-  Network->Disassemble(atoms, Fragments, Bonds);
+  //Network->Disassemble(atoms, Fragments, Bonds);
+  // new stuff
+  BuildAtomRegistry();
+  Network->Disassemble(GetAtomRegistry(), atoms, Fragments, Bonds);
+  // end new stuff
   dac = 0;
   for( size_t i=0; i < ac; i++ )  {
     if( Atoms[i]->IsDeleted() )
@@ -331,7 +335,7 @@ void TLattice::Init()  {
   GetUnitCell().ClearEllipsoids();
   GetUnitCell().InitMatrices();
   Generated = false;
-  GetUnitCell().FindSymmEq(0.1); // find and remove
+  GetUnitCell().FindSymmEq(); // find and remove
   InitBody();
 }
 //..............................................................................
@@ -340,7 +344,7 @@ void TLattice::Uniq(bool remEqv)  {
   Clear(false);
   ClearMatrices();
   GetUnitCell().UpdateEllipsoids();  // if new atoms are created...
-  GetUnitCell().FindSymmEq(0.1); // find and remove
+  GetUnitCell().FindSymmEq(); // find and remove
   InitBody();
   Generated = false;
   OnStructureUniq.Exit(this);
@@ -2537,7 +2541,7 @@ void TLattice::SetDelta(double v)  {
 void TLattice::SetDeltaI(double v)  {
   if( DeltaI != v )  {
     DeltaI = v;
-    GetUnitCell().FindSymmEq(0.1);
+    GetUnitCell().FindSymmEq();
     UpdateConnectivity();
   }
 }
