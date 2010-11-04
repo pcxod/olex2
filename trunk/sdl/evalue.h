@@ -198,19 +198,19 @@ public:
         pr++;
       }
       int iv = olx_round(FE*po);
-	  if( iv >= 20 )  {
-		  iv = olx_round((double)iv/10);
-		  pr--;
-	  }
+      if( iv >= 20 )  {
+        iv = olx_round((double)iv/10);
+        pr--;
+      }
       if( pr != 0 )  {
         strv = olxstr::FormatFloat(pr, FV);
         stre = iv;
       }
       else  {
-        strv = (int)FV;
-        stre << (int)olx_round(FE);
+        strv = olx_round(FV);
+        stre << olx_round(FE);
       }
-      while( stre.EndsWith('0') && strv.EndsWith('0') )  {
+      while( stre.EndsWith('0') && strv.EndsWith('0') && strv.IndexOf('.') != InvalidIndex )  {
         stre.SetLength(stre.Length()-1);
         strv.SetLength(strv.Length()-1);
       }
