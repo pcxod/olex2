@@ -1502,10 +1502,6 @@ void TGXApp::Grow(const TXAtomPList& atoms, const smatd_list& matrices)  {
   FXFile->GetLattice().GrowAtoms(satoms, matrices);
 }
 //..............................................................................
-bool TGXApp::AtomExpandable(TXAtom *XA)  {
-  return FXFile->GetLattice().IsExpandable(XA->Atom());
-}
-//..............................................................................
 void TGXApp::GetXAtoms(const olxstr& AtomName, TXAtomPList& res)  {
   const size_t xac = XAtoms.Count();
   const short SelMask = sgdoVisible|sgdoDeleted;
@@ -3679,8 +3675,8 @@ void TGXApp::CreateXGrowLines()  {
         added = true;
       }
     }
-    if( !added )
-      A->SetGrown(true);
+    //if( !added )
+    //  A->SetGrown(true);
   }
   for( size_t i=0; i < tr_list.Count(); i++ )  {
     TGXApp_Transform1& nt = tr_list[i];

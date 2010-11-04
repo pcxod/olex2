@@ -305,14 +305,11 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
       }
       else  {
         if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], Matrices[j], qd, Latt->GetDelta()) )  {
-          Atoms[ind]->SetGrowable(true);
           smatd m = Matrices[j];
           m.t += shift;
           m.SetRawId(smatd::GenerateId((uint8_t)j, shift));
-          if( Atoms[ind]->AttachSite(Atoms[i], m) && i != ind )  {
-            Atoms[i]->SetGrowable(true);
+          if( Atoms[ind]->AttachSite(Atoms[i], m) && i != ind )
             Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(m));
-          }
         }
         else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], Matrices[j], qd, Latt->GetDeltaI()) )  {
           smatd m = Matrices[j];

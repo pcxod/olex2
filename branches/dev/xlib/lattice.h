@@ -109,7 +109,6 @@ public:
   void GrowAtom(uint32_t FragId, const smatd& transform);
   void Grow(const smatd& transform);
   void GenerateWholeContent(TCAtomPList* Template); // generates content using current matrices
-  bool IsExpandable(TSAtom& A) const;
 
   static int CompareFragmentsBySize(const TNetwork* N, const TNetwork* N1)  {
     return N1->NodeCount() < N->NodeCount() ? -1 : (N1->NodeCount() > N->NodeCount() ? -1 : 0);

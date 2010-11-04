@@ -44,8 +44,7 @@ public:
   DefPropBFIsSet(Standalone, Flags, satom_Standalone)
 
   bool IsAvailable() const {  return !(IsDeleted() || FCAtom->IsDetached());  }
-  bool IsGrown() const;
-  void SetGrown(bool v)  {  olx_set_bit(v, Flags, satom_Grown);  }
+  bool IsGrown() const {  return MatrixCount() == CAtom().GetDegeneracy();  }
   template <class Accessor=DirectAccessor> struct CAtomAccessor  {
     template <class Item> static inline TCAtom& Access(Item& a)  {
       return Accessor::Access(a).CAtom();

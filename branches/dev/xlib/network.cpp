@@ -204,6 +204,7 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags, TSB
   for( size_t i=0; i < ac; i++ )  {
     TSAtom* A1 = Atoms[i];
     A1->SetLattId(i);
+    if( A1->IsDeleted() )  continue;
     A1->SetStandalone(A1->NodeCount() == 0);
     if( A1->GetTag() != 0 )  {
       TNetwork* Net = Frags.Add(new TNetwork(&GetLattice(), this));

@@ -340,7 +340,6 @@ public:
   void Grow(const TXGrowLine& growLine);
   void Grow(const TXGrowPoint& growPoint);
   void ChangeAtomType( TXAtom *A, const olxstr& Element);
-  bool AtomExpandable(TXAtom *XA);
   void GrowWhole(TCAtomPList* Template=NULL){  FXFile->GetLattice().GenerateWholeContent(Template); }
   void Grow(const TXAtomPList& atoms, const smatd_list& matrices);
 

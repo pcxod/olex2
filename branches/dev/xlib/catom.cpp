@@ -326,9 +326,14 @@ int TCAtom::CompareAtomLabels(const olxstr& S, const olxstr& S1)  {
 //..............................................................................
 bool TCAtom::AttachSite(TCAtom* atom, const smatd& matrix)  {
   for( size_t i=0; i < AttachedSites.Count(); i++ )  {
-    if( AttachedSites[i].atom == atom &&
-      AttachedSites[i].matrix.GetId() == matrix.GetId() )
-      return false;
+    if( AttachedSites[i].atom == atom )  {
+      if( AttachedSites[i].matrix.GetId() == matrix.GetId() )
+        return false;
+      const vec3d v1 = matrix*atom->ccrd();
+      const vec3d v2 = AttachedSites[i].matrix*atom->ccrd();
+      if( v1.QDistanceTo(v2) < 1e-6 )
+        return false;
+    }
   }
   AttachedSites.AddNew(atom, matrix);
   return true;
@@ -336,9 +341,14 @@ bool TCAtom::AttachSite(TCAtom* atom, const smatd& matrix)  {
 //..............................................................................
 bool TCAtom::AttachSiteI(TCAtom* atom, const smatd& matrix)  {
   for( size_t i=0; i < AttachedSitesI.Count(); i++ )  {
-    if( AttachedSitesI[i].atom == atom &&
-      AttachedSitesI[i].matrix.GetId() == matrix.GetId() )
-      return false;
+    if( AttachedSitesI[i].atom == atom )  {
+      if( AttachedSitesI[i].matrix.GetId() == matrix.GetId() )
+        return false;
+      const vec3d v1 = matrix*atom->ccrd();
+      const vec3d v2 = AttachedSitesI[i].matrix*atom->ccrd();
+      if( v1.QDistanceTo(v2) < 1e-6 )
+        return false;
+    }
   }
   AttachedSitesI.AddNew(atom, matrix);
   return true;

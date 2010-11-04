@@ -188,11 +188,10 @@ public:
   DefPropBFIsSet(Deleted,   Flags, catom_flag_Deleted)
   DefPropBFIsSet(Saved,     Flags, catom_flag_Saved)
   DefPropBFIsSet(HAttached, Flags, catom_flag_HAttached)
-  DefPropBFIsSet(Growable,  Flags, catom_flag_Growable)
   DefPropBFIsSet(Masked,    Flags, catom_flag_Masked)
   DefPropBFIsSet(Detached,  Flags, catom_flag_Detached)
   bool IsAvailable() const {  return (Flags&(catom_flag_Detached|catom_flag_Masked|catom_flag_Deleted)) == 0;  }
-
+  bool IsGrowable() const {  return GetDegeneracy() > 1;  }
   TEllipsoid* GetEllipsoid() const;
   void UpdateEllp(const TEllipsoid& NV);
   void AssignEllp(TEllipsoid *NV);
