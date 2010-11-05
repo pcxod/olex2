@@ -50,9 +50,13 @@ public:
   static olxstr GetLegend(const TSBond& B, const short level);
 
   // beware - for objects, having no wrapped bond this might fail
-  struct BondAccessor  {
-    static inline TSBond& Access(TXBond& b)  {  return b.Bond();  }
-    static inline TSBond& Access(TXBond* b)  {  return b->Bond();  }
+  template <class Accessor=DirectAccessor> struct BondAccessor  {
+    static inline TSBond& Access(TXBond& b)  {
+      return Accessor::Access(b).Bond();
+    }
+    static inline TSBond& Access(TXBond* b)  {
+      return Accessor::Access(*b).Bond();
+    }
   };
   inline TSBond& Bond() const {  return *FBond; }
   

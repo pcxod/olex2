@@ -2838,39 +2838,41 @@ void TGXApp::StoreLabels()  {
 //..............................................................................
 void TGXApp::RestoreLabels()  {
   const AtomRegistry& ar = XFile().GetLattice().GetAtomRegistry();
-  TSAtomPList atoms(LabelInfo.atoms.Count());
-  TSBondPList bonds(LabelInfo.bonds.Count());
-  TSizeList labels(atoms.Count()+bonds.Count());
-  size_t li=0;
+  TXAtomPList xatoms(LabelInfo.atoms.Count());
+  TXBondPList xbonds(LabelInfo.bonds.Count());
+  for( size_t i=0; i < OverlayedXFiles.Count(); i++ )  {
+    OverlayedXFiles[i].GetLattice().GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));
+    OverlayedXFiles[i].GetLattice().GetBonds().ForEach(ACollectionItem::TagSetter<>(-1));
+  }
+  XFile().GetLattice().GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));
+  XFile().GetLattice().GetBonds().ForEach(ACollectionItem::TagSetter<>(-1));
+  XAtoms.ForEach(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());
+  XBonds.ForEach(ACollectionItem::IndexTagSetter<TXBond::BondAccessor<> >());
   for( size_t i=0; i < LabelInfo.atoms.Count(); i++ )  {
-    atoms[i] = ar.Find(LabelInfo.atoms[i]);
-    if( atoms[i] != NULL )
-      labels[li++] = i;
+    TSAtom* sa = ar.Find(LabelInfo.atoms[i]);
+    if( sa != NULL && sa->GetTag() != -1 )
+      xatoms[i] = &XAtoms[sa->GetTag()];
   }
   for( size_t i=0; i < LabelInfo.bonds.Count(); i++ )  {
-    bonds[i] = ar.Find(LabelInfo.bonds[i]);
-    if( bonds[i] != NULL )
-      labels[li++] = atoms.Count()+i;
+    TSBond* sb = ar.Find(LabelInfo.bonds[i]);
+    if( sb != NULL && sb->GetTag() != -1 )
+      xbonds[i] = &XBonds[sb->GetTag()];
   }
-  bonds.Pack();
-  atoms.Pack();
-  TXAtomPList xatoms;
-  TXBondPList xbonds;
-  SAtoms2XAtoms(atoms, xatoms);
-  SBonds2XBonds(bonds, xbonds);
   for( size_t j=0; j < xatoms.Count(); j++ )  {
+    if( xatoms[j] == NULL )  continue; 
     xatoms[j]->GetLabel().SetVisible(true);
-    xatoms[j]->GetLabel().SetLabel(LabelInfo.labels[labels[j]]);
+    xatoms[j]->GetLabel().SetLabel(LabelInfo.labels[j]);
     xatoms[j]->GetLabel().SetOffset(xatoms[j]->Atom().crd());
     xatoms[j]->GetLabel().TranslateBasis(
-      LabelInfo.centers[labels[j]]-xatoms[j]->GetLabel().GetCenter());
+      LabelInfo.centers[j]-xatoms[j]->GetLabel().GetCenter());
   }
   for( size_t j=0; j < xbonds.Count(); j++ )  {
+    if( xbonds[j] == NULL )  continue;
     xbonds[j]->GetLabel().SetVisible(true);
-    xbonds[j]->GetLabel().SetLabel(LabelInfo.labels[labels[xatoms.Count()+j]]);
+    xbonds[j]->GetLabel().SetLabel(LabelInfo.labels[xatoms.Count()+j]);
     xbonds[j]->GetLabel().SetOffset(xbonds[j]->Bond().GetCenter());
     xbonds[j]->GetLabel().TranslateBasis(
-      LabelInfo.centers[labels[xatoms.Count()+j]]-xbonds[j]->GetLabel().GetCenter());
+      LabelInfo.centers[xatoms.Count()+j]-xbonds[j]->GetLabel().GetCenter());
   }
 }
 //..............................................................................
@@ -4377,7 +4379,7 @@ void TGXApp::AtomTagsToIndexes() const {
 }
 //..............................................................................
 void TGXApp::BondTagsToIndexes() const {
-  XBonds.ForEach(ACollectionItem::IndexTagSetter<TXBond::BondAccessor>());
+  XBonds.ForEach(ACollectionItem::IndexTagSetter<TXBond::BondAccessor<> >());
 }
 //..............................................................................
 
