@@ -449,28 +449,6 @@ void TLattice::GenerateCell()  {
       AddSAtom(sa);
     }
   }
-  TSAtomPList::QuickSorter.SortSF(Atoms, TLattice_AtomsSortByDistance);
-  const size_t lc = Atoms.Count();
-  float* distances = new float[lc+1];
-  for( size_t i=0; i < lc; i++ )
-    distances[i] = (float)Atoms[i]->crd().QLength();    
-  for( size_t i=0; i < lc; i++ )  {
-    if( Atoms[i] == NULL )  continue;
-    for( size_t j=i+1; j < lc; j++ )  {
-      if( Atoms[j] == NULL )  continue;
-      if( (distances[j] - distances[i]) > 0.1 )  break;
-      const double qd = Atoms[i]->crd().QDistanceTo(Atoms[j]->crd());
-      if( qd < 0.00001 )  {
-        Atoms[i]->AddMatrices(*Atoms[j]);
-        delete Atoms[j];
-        Atoms[j] = NULL;
-        continue;
-      }
-    }
-  }
-  delete [] distances;
-  Atoms.Pack();
-
   Disassemble();
   Generated = true;
   OnStructureGrow.Exit(this);
@@ -515,13 +493,7 @@ void TLattice::GenerateBox(const mat3d& norms, const vec3d& size, const vec3d& c
             const vec3f c = norms*(au.CellToCartesian(p) - center);
             if( olx_abs(c[0]) > size[0] || olx_abs(c[1]) > size[1] || olx_abs(c[2]) > size[2] )
               continue;
-            TSAtom* sa = new TSAtom(Network);
-            sa->CAtom(ca);
-            sa->ccrd() = ccrd;
-            sa->crd() = p;
-            sa->SetEllipsoid(&GetUnitCell().GetEllipsoid(m.GetContainerId(), ca.GetId()));
-            sa->AddMatrix(lm);
-            AddSAtom(sa);
+            GenerateAtom(ca, *lm);
             if( matrix_created )  {
               Matrices.Add(lm);
               matrix_created = false;
@@ -533,28 +505,6 @@ void TLattice::GenerateBox(const mat3d& norms, const vec3d& size, const vec3d& c
       }
     }
   }
-  Atoms.QuickSorter.SortSF(Atoms, TLattice_AtomsSortByDistance );
-  const size_t lc = Atoms.Count();
-  float* distances = new float[lc+1];
-  for( size_t i=0; i < lc; i++ )
-    distances[i] = (float)Atoms[i]->crd().QLength();    
-  for( size_t i=0; i < lc; i++ )  {
-    if( Atoms[i] == NULL )  continue;
-    for( size_t j=i+1; j < lc; j++ )  {
-      if( Atoms[j] == NULL )  continue;
-      if( (distances[j] - distances[i]) > 0.1 )  break;
-      const double qd = Atoms[i]->crd().QDistanceTo(Atoms[j]->crd());
-      if( qd < 0.00001 )  {
-        Atoms[i]->AddMatrices(*Atoms[j]);
-        delete Atoms[j];
-        Atoms[j] = NULL;
-        continue;
-      }
-    }
-  }
-  delete [] distances;
-  Atoms.Pack();
-
   Disassemble();
   Generated = true;
   OnStructureGrow.Exit(this);
@@ -631,14 +581,8 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
         }
         if( !found )
           mp = Matrices.Add(new smatd(m));
-        if( atomRegistry.Find(TSAtom::Ref(site.atom->GetId(), m.GetId())) != NULL )
-          continue;
-        TSAtom* SA = new TSAtom(Network);
-        SA->CAtom(*site.atom);
-        SA->AddMatrix(mp);
-        SA->ccrd() = m * SA->ccrd();
-        SA->SetEllipsoid(&GetUnitCell().GetEllipsoid(m.GetContainerId(), SA->CAtom().GetId()));
-        AddSAtom(SA);
+        if( atomRegistry.Find(TSAtom::Ref(site.atom->GetId(), m.GetId())) == NULL )
+          GenerateAtom(*site.atom, *mp);
       }
     }
   }
@@ -678,20 +622,13 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
       TIntList& ToGrow = Fragments2Grow[i-currentCount];
       for( size_t j=0; j < GetAsymmUnit().AtomCount(); j++ )  {
         TCAtom& ca = GetAsymmUnit().GetAtom(j);
-        if( !ca.IsAvailable() )  continue;
-        if(  ToGrow.IndexOf(ca.GetFragmentId()) == InvalidIndex )  continue;
-        TSAtom* SA = new TSAtom(Network);
-        SA->CAtom(ca);
-        SA->AddMatrix(M);
-        SA->ccrd() = *M * SA->ccrd();
-        SA->SetEllipsoid(&GetUnitCell().GetEllipsoid(M->GetContainerId(), SA->CAtom().GetId()));
-        AddSAtom(SA);
+        if( ca.IsAvailable()&& ToGrow.IndexOf(ca.GetFragmentId()) != InvalidIndex )
+          GenerateAtom(ca, *M);
       }
     }
   }
   RestoreCoordinates();
   Disassemble();
-
   Generated = true;
   OnStructureGrow.Exit(this);
 }
@@ -735,7 +672,7 @@ void TLattice::GrowAtom(uint32_t FragId, const smatd& transform)  {
   // check if the matix is unique
   bool found = false;
   for( size_t i=0; i < Matrices.Count(); i++ )  {
-    if( *Matrices[i] == transform )  {
+    if( Matrices[i]->GetId() == transform.GetId() )  {
       M = Matrices[i];
       found = true;
       break;
@@ -745,22 +682,13 @@ void TLattice::GrowAtom(uint32_t FragId, const smatd& transform)  {
     M = Matrices.Add(new smatd(transform));
 
   OnStructureGrow.Enter(this);
-
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& ca = GetAsymmUnit().GetAtom(i);
-    if( !ca.IsAvailable() )  continue;
-    if( ca.GetFragmentId() == FragId )  {
-      TSAtom* SA = new TSAtom(Network);
-      SA->CAtom(ca);
-      SA->AddMatrix(M);
-      SA->ccrd() = (*M) * SA->ccrd();
-      SA->SetEllipsoid(&GetUnitCell().GetEllipsoid(M->GetContainerId(), SA->CAtom().GetId()));
-      AddSAtom(SA);
-    }
+    if( ca.IsAvailable() && ca.GetFragmentId() == FragId )
+      GenerateAtom(ca, *M);
   }
   RestoreCoordinates();
   Disassemble();
-
   Generated = true;
   OnStructureGrow.Exit(this);
 }
@@ -773,7 +701,7 @@ void TLattice::GrowAtoms(const TSAtomPList& atoms, const smatd_list& matrices)  
   for( size_t i=0; i < matrices.Count(); i++ )  {
     bool found = false;
     for( size_t j=0; j < Matrices.Count(); j++ )  {
-      if( *Matrices[j] == matrices[i] )  {
+      if( Matrices[j]->GetId() == matrices[i].GetId() )  {
         found = true;
         TBasicApp::GetLog() << olxstr("Skipping ") <<
           TSymmParser::MatrixToSymmEx(matrices[i]) << " - already used\n";
@@ -794,20 +722,25 @@ void TLattice::GrowAtoms(const TSAtomPList& atoms, const smatd_list& matrices)  
   Atoms.SetCapacity( Atoms.Count() + atoms.Count()*addedMatrices.Count() );
   for( size_t i=0; i < addedMatrices.Count(); i++ )  {
     for( size_t j=0; j < atoms.Count(); j++ )  {
-      if( atoms[j]->IsDeleted() || !atoms[j]->CAtom().IsAvailable() )  continue;
-      TSAtom* SA = new TSAtom( Network );
-      SA->CAtom(atoms[j]->CAtom());
-      SA->AddMatrix(addedMatrices[i]);
-      SA->ccrd() = *addedMatrices[i] * SA->ccrd();
-      SA->SetEllipsoid(&GetUnitCell().GetEllipsoid(M->GetContainerId(), SA->CAtom().GetId()));
-      AddSAtom(SA);
+      if( !atoms[j]->IsDeleted() && atoms[j]->CAtom().IsAvailable() )
+        GenerateAtom(atoms[j]->CAtom(), *addedMatrices[i]);
     }
   }
   RestoreCoordinates();
   Disassemble();
-
   Generated = true;
   OnStructureGrow.Exit(this);
+}
+//..............................................................................
+TSAtom& TLattice::GenerateAtom(TCAtom& a, smatd& symop)  {
+  TSAtom* SA = new TSAtom(Network);
+  SA->CAtom(a);
+  SA->AddMatrix(&symop);
+  SA->ccrd() = symop * SA->ccrd();
+  GetAsymmUnit().CellToCartesian(SA->ccrd(), SA->crd());
+  SA->SetEllipsoid(&GetUnitCell().GetEllipsoid(symop.GetContainerId(), SA->CAtom().GetId()));
+  AddSAtom(SA);
+  return *SA;
 }
 //..............................................................................
 void TLattice::Grow(const smatd& transform)  {
@@ -815,16 +748,14 @@ void TLattice::Grow(const smatd& transform)  {
   // check if the matix is unique
   bool found = false;
   for( size_t i=0; i < Matrices.Count(); i++ )  {
-    if( *Matrices[i] == transform )  {
+    if( Matrices[i]->GetId() == transform.GetId() )  {
       M = Matrices[i];
       found = true;
       break;
     }
   }
-  if( !found )  {
-    M = new smatd(transform);
-    Matrices.Add(M);
-  }
+  if( !found )
+    M = Matrices.Add(new smatd(transform));
 
   OnStructureGrow.Enter(this);
   TAsymmUnit& au = GetAsymmUnit();
@@ -832,17 +763,11 @@ void TLattice::Grow(const smatd& transform)  {
   Atoms.SetCapacity(Atoms.Count() + ac);
   for( size_t i=0; i < ac; i++ )  {
     TCAtom& ca = au.GetAtom(i);
-    if( !ca.IsAvailable() )  continue;
-    TSAtom* SA = new TSAtom(Network);
-    SA->CAtom(ca);
-    SA->AddMatrix(M);
-    SA->ccrd() = (*M) * SA->ccrd();
-    SA->SetEllipsoid(&GetUnitCell().GetEllipsoid(M->GetContainerId(), SA->CAtom().GetId()));
-    AddSAtom(SA);
+    if( ca.IsAvailable() )
+      GenerateAtom(ca, *M);
   }
   RestoreCoordinates();
   Disassemble();
-
   Generated = true;
   OnStructureGrow.Exit(this);
 }
@@ -864,14 +789,7 @@ void TLattice::RestoreAtom(const TSAtom::FullRef& id)  {
       GetUnitCell().GetMatrix(smatd::GetContainerId(id.matrix_id)))) );
     Generated = true;
   }
-  TSAtom* sa = new TSAtom(Network);
-  sa->CAtom( GetAsymmUnit().GetAtom(id.catom_id) );
-  sa->CAtom().SetDeleted(false);
-  sa->ccrd() = (*matr) * sa->ccrd();
-  sa->AddMatrix(matr);
-  GetAsymmUnit().CellToCartesian(sa->ccrd(), sa->crd());
-  sa->SetEllipsoid(&GetUnitCell().GetEllipsoid(matr->GetContainerId(), id.catom_id));
-  AddSAtom(sa);
+  TSAtom& sa = GenerateAtom(GetAsymmUnit().GetAtom(id.catom_id), *matr);
   if( id.matrices != NULL )  {
     for( size_t i=0; i < id.matrices->Count(); i++ )  {
       if( smatd::GetContainerId((*id.matrices)[i]) >= GetUnitCell().MatrixCount() )
@@ -888,7 +806,7 @@ void TLattice::RestoreAtom(const TSAtom::FullRef& id)  {
           GetUnitCell().GetMatrix(smatd::GetContainerId((*id.matrices)[i])))));
         Generated = true;
       }
-      sa->AddMatrix(matr);
+      sa.AddMatrix(matr);
     }
   }
 }
@@ -945,6 +863,7 @@ TSAtom* TLattice::NewAtom(const vec3d& center)  {
   TSAtom* a = new TSAtom(Network);
   a->CAtom(*ca);
   a->AddMatrix(Matrices[0]);
+  GetAsymmUnit().CellToCartesian(a->ccrd(), a->crd());
   AddSAtom(a);
   GetUnitCell().AddEllipsoid();
   return a;
@@ -1107,6 +1026,7 @@ void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template)  {
       A->SetEllipsoid(&GetUnitCell().GetEllipsoid(0, Template->GetItem(i)->GetId())); // ellipsoid for the identity matrix
       A->AddMatrix(Matrices[0]);
       A->SetLattId(L.Count()-1);
+      GetAsymmUnit().CellToCartesian(A->ccrd(), A->crd());
     }
   }
   else  {
@@ -1119,6 +1039,7 @@ void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template)  {
       A->SetEllipsoid(&GetUnitCell().GetEllipsoid(0, CA.GetId())); // ellipsoid for the identity matrix
       A->AddMatrix(Matrices[0]);
       A->SetLattId(L.Count()-1);
+      GetAsymmUnit().CellToCartesian(A->ccrd(), A->crd());
     }
   }
 }
@@ -1189,8 +1110,8 @@ void TLattice::MoveFragmentG(const vec3d& to, TSAtom& fragAtom)  {
     for( size_t i=0; i < fragAtom.GetNetwork().NodeCount(); i++ )  {
       TSAtom& SA = fragAtom.GetNetwork().Node(i);
       if( SA.IsDeleted() )  continue;
-      TSAtom* atom = new TSAtom( &SA.GetNetwork() );
-      atom->CAtom( SA.CAtom() );
+      TSAtom* atom = new TSAtom(&SA.GetNetwork());
+      atom->CAtom(SA.CAtom());
       atom->AddMatrix(m);
       atom->ccrd() = SA.ccrd();
       atom->ccrd() = (*m) * atom->ccrd();

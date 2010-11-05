@@ -304,14 +304,16 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           smatd m = Matrices[j];
           m.t += shift;
           m.SetId((uint8_t)j, shift);
-          if( Atoms[ind]->AttachSite(Atoms[i], m) && i != ind )
+          Atoms[ind]->AttachSite(Atoms[i], m);
+          if( i != ind )
             Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(m));
         }
         else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], Matrices[j], qd, Latt->GetDeltaI()) )  {
           smatd m = Matrices[j];
           m.t += shift;
           m.SetId((uint8_t)j, shift);
-          if( Atoms[ind]->AttachSiteI(Atoms[i], m) && i != ind )
+          Atoms[ind]->AttachSiteI(Atoms[i], m);
+          if( i != ind )
             Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(m));
         }
       }
@@ -611,38 +613,16 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
 }
 //..............................................................................
 void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
-  if( atom.IsGrown() )
-    throw TFunctionFailedException(__OlxSourceInfo, "Not implemented for grown structre");
   envi.SetBase(atom);
   smatd I;
   I.I().SetId(0);
-  for( size_t i=0; i < atom.NodeCount(); i++ )  {
-    TSAtom& A = atom.Node(i);
-    if( A.IsDeleted() ) continue;
-    if( A.GetType() == iQPeakZ && TNetwork::HaveSharedMatrix(A, atom) )
-      envi.Add(A.CAtom(), I, A.crd());
-  }
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   for( size_t i=0; i < atom.CAtom().AttachedSiteCount(); i++ )  {
-    TCAtom& A = atom.CAtom().GetAttachedAtom(i);
-    if( A.IsDeleted() || A.GetType() != iQPeakZ )  continue;
-    const vec3d from = atom.GetMatrix(0)*A.ccrd();
-    smatd_list* binding = GetBinding(atom.CAtom(), A, atom.ccrd(), from, true, false); 
-    if( binding == NULL )  continue;
-    for( size_t mi = 0; mi < binding->Count(); mi++ )  {
-      vec3d v = (*binding)[mi] * from;
-      au.CellToCartesian(v);
-      bool Add = true;
-      for( size_t j=0; j < envi.Count(); j++ )  {
-        if( envi.GetCAtom(j) == A && envi.GetCrd(j) == v )  {
-          Add = false;
-          break;
-        }
-      }
-      if( Add )
-        envi.Add(A, (*binding)[mi], v);
-    }
-    delete binding;
+    TCAtom::Site& site = atom.CAtom().GetAttachedSite(i);
+    if( site.atom->IsDeleted() || site.atom->GetType() != iQPeakZ )  continue;
+    const smatd m = MulMatrix(site.matrix, atom.GetMatrix(0));
+    const vec3d v = au.Orthogonalise(m*site.atom->ccrd());
+    envi.Add(*site.atom, m, v);
   }
 }
 //..............................................................................

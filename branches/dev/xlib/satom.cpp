@@ -19,10 +19,8 @@ TSAtom::TSAtom(TNetwork *N) : TBasicNode<TNetwork, TSAtom, TSBond>(N)  {
 TSAtom::~TSAtom()  {  }
 //..............................................................................
 void  TSAtom::CAtom(TCAtom& S)  {
-  FCAtom    = &S;
-  FCCenter  = S.ccrd();
-  if( Network != NULL )
-    Network->GetLattice().GetAsymmUnit().CellToCartesian(FCCenter, FCenter);
+  FCAtom = &S;
+  FCCenter = S.ccrd();
   FEllipsoid = S.GetEllipsoid();
 }
 //..............................................................................

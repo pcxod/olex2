@@ -64,6 +64,7 @@ protected:
   void InitBody();
   void Disassemble(bool create_planes=true);
   void RestoreCoordinates();
+  TSAtom& GenerateAtom(TCAtom& a, smatd& symop);
   static void _CreateFrags(TCAtom& start, TCAtomPList& dest);
 public:
   TLattice();
@@ -110,8 +111,10 @@ public:
   void GrowAtom(TSAtom& A, bool GrowShells, TCAtomPList* Template);
   /* grow a fragment using particular matrix */
   void GrowAtom(uint32_t FragId, const smatd& transform);
+  // adds new asymmetric unit transformed by the given symop 
   void Grow(const smatd& transform);
-  void GenerateWholeContent(TCAtomPList* Template); // generates content using current matrices
+   /* generates content using current matrices, the current content stays */
+  void GenerateWholeContent(TCAtomPList* Template);
 
   static int CompareFragmentsBySize(const TNetwork* N, const TNetwork* N1)  {
     return N1->NodeCount() < N->NodeCount() ? -1 : (N1->NodeCount() > N->NodeCount() ? -1 : 0);
