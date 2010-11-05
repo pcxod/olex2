@@ -869,31 +869,32 @@ void TMainForm::macGrow(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( GrowContent ) 
       FXApp->GrowWhole(TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
     else  {
+      TXAtomPList atoms;
       FXApp->GrowFragments(GrowShells, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
-      const TLattice& latt = FXApp->XFile().GetLattice();
-      smatd_list gm;
-      /* check if next grow will not introduce simple translations */
-      bool grow_next = true;
-      while( grow_next )  {
-        gm.Clear();
-        latt.GetGrowMatrices(gm);
-        if( gm.IsEmpty() )  break;
-        for( size_t i=0; i < latt.MatrixCount(); i++ )  {
-          for( size_t j=0; j < gm.Count(); j++ )  {
-            if( latt.GetMatrix(i).r == gm[j].r )  {
-              vec3d df = latt.GetMatrix(i).t - gm[j].t;
-              for( int k=0; k < 3; k++ )
-                df[k] -= olx_round(df[k]);
-              if( df.QLength() < 1e-6 )  {
-                grow_next = false;
-                break;
+      if( !GrowShells )  {
+        const TLattice& latt = FXApp->XFile().GetLattice();
+        smatd_list gm;
+        /* check if next grow will not introduce simple translations */
+        bool grow_next = true;
+        while( grow_next )  {
+          gm.Clear();
+          latt.GetGrowMatrices(gm);
+          if( gm.IsEmpty() )  break;
+          for( size_t i=0; i < latt.MatrixCount(); i++ )  {
+            for( size_t j=0; j < gm.Count(); j++ )  {
+              if( latt.GetMatrix(i).r == gm[j].r )  {
+                const vec3d df = latt.GetMatrix(i).t - gm[j].t;
+                if( (df-df.Round<int>()).QLength() < 1e-6 )  {
+                  grow_next = false;
+                  break;
+                }
               }
             }
+            if( !grow_next )  break;
           }
-          if( !grow_next )  break;
+          if( grow_next )
+            FXApp->GrowFragments(GrowShells, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
         }
-        if( grow_next )
-          FXApp->GrowFragments(GrowShells, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
       }
     }
   }
@@ -2599,8 +2600,9 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     part++;
   }
-  FXApp->UpdateConnectivity();
+  FXApp->XFile().GetLattice().UpdateConnectivityInfo();
 }
+//..............................................................................
 void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   int afix = -1;
   TXAtomPList Atoms;
@@ -8599,9 +8601,8 @@ void TMainForm::macConn(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         lst.Add("#c") << atoms[i]->GetId();
     }
     FXApp->XFile().GetRM().Conn.ProcessConn(lst);
-    FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
     FXApp->GetRender().SelectAll(false);
-    FXApp->UpdateConnectivity();
+    FXApp->XFile().GetLattice().UpdateConnectivityInfo();
   }
   catch( const TExceptionBase& exc )  {
     E.ProcessingError(__OlxSrcInfo, exc.GetException()->GetError());
@@ -8626,8 +8627,7 @@ void TMainForm::macAddBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
       true
     );
   }
-  FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
-  FXApp->UpdateConnectivity();
+  FXApp->XFile().GetLattice().UpdateConnectivityInfo();
 }
 //..............................................................................
 void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -8657,8 +8657,7 @@ void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
         true);
     }
     FXApp->GetRender().SelectAll(false);
-    FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
-    FXApp->UpdateConnectivity();
+    FXApp->XFile().GetLattice().UpdateConnectivityInfo();
   }
   else  {
     E.ProcessingError(__OlxSrcInfo, "please select some bonds or provide atom pairs");

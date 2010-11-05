@@ -190,7 +190,7 @@ public:
   virtual ~TGXApp();
   void CreateObjects(bool SyncBonds, bool CenterModel);
   void UpdateBonds();
-  void AddObjectToCreate(AGDrawObject* obj)  {  ObjectsToCreate.Add(obj);  }
+  AGDrawObject* AddObjectToCreate(AGDrawObject* obj)  {  return ObjectsToCreate.Add(obj);  }
   void Clear();
   void ClearXGrowPoints();
   void SBonds2XBonds(TSBondPList& L, TXBondPList& Res);

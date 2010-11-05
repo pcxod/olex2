@@ -1,11 +1,6 @@
 //----------------------------------------------------------------------------//
-// namespace TEXLib: styles
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "styles.h"
 #include "glmaterial.h"
 #include "glrender.h"

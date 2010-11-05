@@ -462,7 +462,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Bang, EmptyString, fpAny | psFileLoaded,
 "Prints bonds and angles table for selected atoms");
   this_InitMacroD(Grow,
-"s&;w-grows the rest of the structure, using already applied generators&;t-grows\
+"s-grow shells vs fragments&;w-grows the rest of the structure, using already applied generators&;t-grows\
  only provided atoms/atom types", fpAny | psFileLoaded,
 "Grows whole structure or provided atoms only");
   this_InitMacroD(Uniq, EmptyString, fpAny | psFileLoaded,
@@ -647,15 +647,16 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacro(ShowQ, wheel, fpNone|fpOne|fpTwo|psFileLoaded);
 
   this_InitMacroD(Mode, 
-"a-[name] autocomplete&;\
-p-[name] prefix&;\
-s-[grow] short interactions; [name] suffix&;\
-t-[name] type&;\
-c-[grow] covalent bonds; [move] copy fragments instead of moving&;\
-r-[split] a restraint/constraint for split atoms; [grow] show radial bonds between the same atoms&;\
-v-[grow] use user provided delta for connectivity analysis, default 2A", 
+"a-[name] autocomplete\n&;\
+p-[name] prefix\n&;\
+s-[grow] short interactions; [name] suffix\n&;\
+t-[name] type\n&;\
+c-[grow] covalent bonds; [move] copy fragments instead of moving\n&;\
+r-[split] a restraint/constraint for split atoms; [grow] show radial bonds between the same atoms\n&;\
+v-[grow] use user provided delta for connectivity analysis, default 2A\n&;\
+shells-[grow] grow atom shells vs fragments", 
 (fpAny^fpNone)|psFileLoaded, 
-    "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move, name, occu, pack, part, split");
+    "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move, name, occu, pack, part, split, fit");
 
   this_InitMacroD(Text, EmptyString, fpNone, "shows the console buffer in an external editor, defined by defeditor variable");
   this_InitMacroD(ShowStr, EmptyString, fpNone|fpOne|psFileLoaded, "shows/hides structure and console buffer");
@@ -1403,7 +1404,7 @@ void TMainForm::AquireTooltipValue()  {
       Tooltip = xa.Atom().GetGuiLabelEx();
       if( xa.Atom().GetType() == iQPeakZ )
         Tooltip << ':' << xa.Atom().CAtom().GetQPeak();
-      double occu = ca.GetOccu()*ca.GetDegeneracy();
+      double occu = ca.GetChemOccu();
       Tooltip << "\nChem occu(";
       if( ca.GetVarRef(catom_var_name_Sof) != NULL )  {
         if( ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )  {

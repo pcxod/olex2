@@ -179,6 +179,8 @@ public:
     DependentHfixGroups->Add(&hg);
   }
   DefPropP(double, Occu)
+  // return chemical coccupancy, i.e. CrystOccu*site_multiplicity
+  double GetChemOccu() const {  return GetOccu()*GetDegeneracy();  }
   DefPropP(double, OccuEsd)
   DefPropP(double, Uiso)
   DefPropP(double, UisoEsd)

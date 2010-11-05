@@ -110,31 +110,38 @@ void RefinementModel::ClearVarRefs() {
   }
 }
 //....................................................................................................
-const smatd& RefinementModel::AddUsedSymm(const smatd& matr, const olxstr& id) {
-  size_t ind = UsedSymm.IndexOfValue(matr);
-  smatd* rv = NULL;
-  if( ind == InvalidIndex )  {
-    if( id.IsEmpty() ) 
-      rv = &UsedSymm.Add(olxstr("$") << (UsedSymm.Count()+1), matr);
-    else
-      rv = &UsedSymm.Add(id, matr);
-    rv->SetRawId(0); // do not lock it
+const smatd& RefinementModel::AddUsedSymm(const smatd& matr, const olxstr& id)  {
+  for( size_t i=0;  i < UsedSymm.Count(); i++ )  {
+    if( UsedSymm.GetValue(i).symop == matr )  {
+      UsedSymm.GetValue(i).ref_cnt++;
+      return UsedSymm.GetValue(i).symop;
+    }
   }
-  else  {
-    rv = &UsedSymm.GetValue(ind);
-    rv->SetRawId(rv->GetId()+1);
-  }
-  return *rv;
+  return UsedSymm.Add(
+    id.IsEmpty() ? (olxstr("$") << (UsedSymm.Count()+1)) : id, RefinementModel::Equiv(matr)).symop;
+}
+//....................................................................................................
+void RefinementModel::UpdateUsedSymm(const class TUnitCell& uc)  {
+  for( size_t i=0;  i < UsedSymm.Count(); i++ )
+    uc.InitMatrixId(UsedSymm.GetValue(i).symop);
 }
 //....................................................................................................
 void RefinementModel::RemUsedSymm(const smatd& matr)  {
-  size_t ind = UsedSymm.IndexOfValue(matr);
-  if( ind == InvalidIndex )
-    throw TInvalidArgumentException(__OlxSourceInfo, "matrix is not in the list");
-  UsedSymm.GetValue(ind).SetRawId(
-    UsedSymm.GetValue(ind).GetId() == 0 ? 0 : UsedSymm.GetValue(ind).GetId()-1);
-  //if( UsedSymm.GetValue(ind).GetTag() == 0 )
-  //  UsedSymm.Delete(ind);
+  for( size_t i=0;  i < UsedSymm.Count(); i++ )  {
+    if( UsedSymm.GetValue(i).symop == matr )  {
+      if( UsedSymm.GetValue(i).ref_cnt > 0 )
+        UsedSymm.GetValue(i).ref_cnt--;
+      return;
+    }
+  }
+  throw TInvalidArgumentException(__OlxSourceInfo, "matrix is not in the list");
+}
+//....................................................................................................
+size_t RefinementModel::UsedSymmIndex(const smatd& matr) const {
+  for( size_t i=0; i < UsedSymm.Count(); i++ )
+    if( UsedSymm.GetValue(i).symop == matr )
+      return i;
+  return InvalidIndex;
 }
 //....................................................................................................
 RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignAUnit) {
@@ -177,7 +184,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
     aunit.Assign(rm.aunit);
   // need to copy the ID's before any restraints or info tabs use them or all gets broken... !!! 
   for( size_t i=0; i < rm.UsedSymm.Count(); i++ )
-    AddUsedSymm( rm.UsedSymm.GetValue(i), rm.UsedSymm.GetKey(i) );
+    AddUsedSymm(rm.UsedSymm.GetValue(i).symop, rm.UsedSymm.GetKey(i));
 
   rDFIX.Assign(rm.rDFIX);
   rDANG.Assign(rm.rDANG);
@@ -207,7 +214,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   UserContent = rm.UserContent;
   // check if all EQIV are used
   for( size_t i=0; i < UsedSymm.Count(); i++ )  {
-    if( UsedSymm.GetValue(i).GetId() == 0 )
+    if( UsedSymm.GetValue(i).ref_cnt == 0 )
       UsedSymm.Delete(i--);
   }
   
@@ -852,9 +859,9 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   TArrayList<uint32_t> mat_tags(UsedSymm.Count());
   TDataItem& eqiv = item.AddItem("EQIV");
   for( size_t i=0; i < UsedSymm.Count(); i++ )  {
-    eqiv.AddItem(UsedSymm.GetKey(i), TSymmParser::MatrixToSymmEx(UsedSymm.GetValue(i)));
-    mat_tags[i] = UsedSymm.GetValue(i).GetId();
-    UsedSymm.GetValue(i).SetRawId((uint32_t)i);
+    eqiv.AddItem(UsedSymm.GetKey(i), TSymmParser::MatrixToSymmEx(UsedSymm.GetValue(i).symop));
+    mat_tags[i] = UsedSymm.GetValue(i).symop.GetId();
+    UsedSymm.GetValue(i).symop.SetRawId((uint32_t)i);
   }
   
   Vars.ToDataItem(item.AddItem("LEQS"));
@@ -890,7 +897,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   item.AddField("UserContent", GetUserContentStr());
   // restore matrix tags
   for( size_t i=0; i < UsedSymm.Count(); i++ )
-    UsedSymm.GetValue(i).SetRawId(mat_tags[i]);
+    UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
   if( !SfacData.IsEmpty() )  {
     TDataItem& sfacs = item.AddItem("SFAC");
     for( size_t i=0; i < SfacData.Count(); i++ )
@@ -913,7 +920,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
 
   TDataItem& eqiv = item.FindRequiredItem("EQIV");
   for( size_t i=0; i < eqiv.ItemCount(); i++ )
-    TSymmParser::SymmToMatrix(eqiv.GetItem(i).GetValue(), UsedSymm.Add(eqiv.GetItem(i).GetName()));
+    TSymmParser::SymmToMatrix(eqiv.GetItem(i).GetValue(), UsedSymm.Add(eqiv.GetItem(i).GetName()).symop);
   
 
   expl.FromDataItem(item.FindRequiredItem("EXPL"));  
@@ -987,7 +994,7 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
   PythonExt::SetDictItem(main, "aunit", aunit.PyExport(atoms));
   TArrayList<uint32_t> mat_tags(UsedSymm.Count());
   for( size_t i=0; i < UsedSymm.Count(); i++ )  {
-    smatd& m = UsedSymm.GetValue(i);
+    smatd& m = UsedSymm.GetValue(i).symop;
     PyTuple_SetItem(eq, i, 
       equivs.Add(
       Py_BuildValue("(iii)(iii)(iii)(ddd)", m.r[0][0], m.r[0][1], m.r[0][2],
@@ -1087,7 +1094,7 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
   //
   // restore matrix tags
   for( size_t i=0; i < UsedSymm.Count(); i++ )
-    UsedSymm.GetValue(i).SetRawId(mat_tags[i]);
+    UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
   if( !SfacData.IsEmpty() )  {
     PyObject* sfac = PyDict_New();
     for( size_t i=0; i < SfacData.Count(); i++ )

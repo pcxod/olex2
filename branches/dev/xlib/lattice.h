@@ -64,6 +64,7 @@ protected:
   void InitBody();
   void Disassemble(bool create_planes=true);
   void RestoreCoordinates();
+  static void _CreateFrags(TCAtom& start, TCAtomPList& dest);
 public:
   TLattice();
   virtual ~TLattice();
@@ -76,8 +77,10 @@ public:
 
   void Clear(bool ClearUnitCell);
   void Uniq(bool removeSymmEquivalents = false);
-  // used if the connectivity ifosrmation was altered externally
+  // used if atoms availibility etc has changed
   void UpdateConnectivity();
+  // used if the connectivity info (CONN/BIND/FREE etc) is changed
+  void UpdateConnectivityInfo();
   void UpdatePlaneDefinitions();
   void Init();
   /*adopts atoms, bonds and fragment from the given lattice */

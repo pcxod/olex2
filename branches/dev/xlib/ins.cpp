@@ -818,15 +818,16 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   int atom_afix = a.GetAfix();
   if( atom_afix != afix || afix == 1 || afix == 2 )  { 
     if( !TAfixGroup::HasExcplicitPivot(afix) || !TAfixGroup::IsDependent(atom_afix) )  {
-      if( ag != NULL )  {
+      TAfixGroup* _ag = a.GetParentAfixGroup();
+      if( _ag != NULL )  {
         olxstr& str = sl.Add("AFIX ") << atom_afix;
-        if( ag->GetD() != 0 )  {
-          str << ' ' << ag->GetD();
+        if( _ag->GetD() != 0 )  {
+          str << ' ' << _ag->GetD();
         }
-        if( ag->GetSof() != 0 )  {
-          str << ' ' << ag->GetSof();
-          if( ag->GetU() != 0 )
-            str << ' ' << ag->GetU();
+        if( _ag->GetSof() != 0 )  {
+          str << ' ' << _ag->GetSof();
+          if( _ag->GetU() != 0 )
+            str << ' ' << _ag->GetU();
         }
       }
       else

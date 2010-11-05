@@ -106,65 +106,19 @@ int TAutoDBNode::SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d>* a,
 }
 
 TAutoDBNode::TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >* atoms)  {
-  //AppendedCount = 1;
-  Element = &sa.GetType();
   Center = sa.crd();
-  for( size_t i=0; i < sa.NodeCount(); i++ )  {
-    if( sa.Node(i).IsDeleted() )  continue;
-    if( sa.Node(i).GetType() == iHydrogenZ )  continue;
-    AttachedNodes.Add(new TAttachedNode(&sa.Node(i).GetType(), sa.Node(i).crd()));
+  Element = &sa.GetType();
+  const TCAtom& ca = sa.CAtom();
+  const TUnitCell& uc = sa.GetNetwork().GetLattice().GetUnitCell();
+  const TAsymmUnit& au = sa.GetNetwork().GetLattice().GetAsymmUnit();
+  for( size_t i=0; i < ca.AttachedSiteCount(); i++ )  {
+    const TCAtom::Site& site = ca.GetAttachedSite(i);
+    if( ca.IsDeleted() || site.atom->GetType() == iHydrogenZ )  continue;
+    const smatd m = sa.GetMatrix(0).IsFirst() ? site.matrix : uc.MulMatrix(site.matrix, sa.GetMatrix(0));
+    const vec3d p = au.Orthogonalise(m*site.atom->ccrd());
     if( atoms != NULL )
-      atoms->AddNew<TCAtom*, vec3d>(&sa.Node(i).CAtom(), sa.Node(i).crd());
-  }
-  vec3d_list TransformedCrds;
-  TLattice& latt = sa.GetNetwork().GetLattice();
-  for( size_t i=0; i < sa.CAtom().AttachedSiteCount(); i++ )  {
-    if( sa.CAtom().GetAttachedAtom(i).GetType() == iHydrogenZ )  continue;
-    smatd_list* transforms = latt.GetUnitCell().GetInRange(sa.ccrd(),
-                               sa.CAtom().GetAttachedAtom(i).ccrd(),
-                               sa.GetType().r_bonding +
-                               sa.CAtom().GetAttachedAtom(i).GetType().r_bonding +
-                               latt.GetDelta(),
-                                false);
-    if( transforms->IsEmpty() )  {
-      delete transforms;
-      continue;
-    }
-    TransformedCrds.Clear();
-    for( size_t j=0; j < transforms->Count(); j++ )  {
-      smatd& transform = transforms->GetItem(j);
-      vec3d a = transform * sa.CAtom().GetAttachedAtom(i).ccrd();
-      latt.GetAsymmUnit().CellToCartesian(a);
-      if( a.QDistanceTo(sa.crd()) > 0.01 )  {
-        bool found = false;
-        for( size_t k=0; k < sa.NodeCount(); k++ )  {
-          if( a.QDistanceTo(sa.Node(k).crd()) < 0.01 )  {
-            found = true;
-            break;
-          }
-        }
-        if( !found )
-          TransformedCrds.AddCCopy(a);
-      }
-    }
-    for( size_t j=0; j < TransformedCrds.Count(); j++ )  {
-      if( TransformedCrds.IsNull(j) )  continue;
-      for( size_t k = j+1; k < TransformedCrds.Count(); k++ )  {
-        if( TransformedCrds.IsNull(k) )  continue;
-        if( TransformedCrds[j].QDistanceTo( TransformedCrds[k] ) < 0.01 )  {
-          TransformedCrds.NullItem(k);
-          break;
-        }
-      }
-    }
-    TransformedCrds.Pack();
-    for( size_t j=0; j < TransformedCrds.Count(); j++ )  {
-      AttachedNodes.Add(new TAttachedNode(&sa.CAtom().GetAttachedAtom(i).GetType(), TransformedCrds[j]));
-      if( atoms != NULL )  {
-        atoms->AddNew<TCAtom*, vec3d>(&sa.CAtom().GetAttachedAtom(i), TransformedCrds[j]);
-      }
-    }
-    delete transforms;
+      atoms->AddNew<TCAtom*, vec3d>(site.atom, p);
+    AttachedNodes.Add(new TAttachedNode(&site.atom->GetType(), p));
   }
   TAutoDBNode::SortCenter = sa.crd();
   AttachedNodes.QuickSorter.SortSF(AttachedNodes, SortMetricsFunc);

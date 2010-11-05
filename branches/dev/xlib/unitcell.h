@@ -60,7 +60,7 @@ public:
   // the identity matrix is always the first
   inline const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
   // initialises the matrix container id, throws an excpetion if matrix is not found
-  void InitMatrixId(smatd& m) const;
+  smatd& InitMatrixId(smatd& m) const;
   /* if there is a list of transforms calculated in the asymmetric unit and a symmetry operator
   needs to be applied to it, this is the function. Note that the list of input matrices and the
   transformation matrix should have valid Id's. The return value is a new list of matrices
@@ -69,13 +69,13 @@ public:
   smatd MulMatrix(const smatd& m, const smatd& tr) const {
     smatd rv = m*tr;  // rv*r = tr*(m*r) - this is how it is when applied to a vector....
     const uint8_t index = MulDest[m.GetContainerId()][tr.GetContainerId()];
-    rv.SetRawId(smatd::GenerateId(index, vec3i(rv.t-Matrices[index].t)));
+    rv.SetId(index, vec3i(rv.t-Matrices[index].t));
     return rv;
   }
   smatd InvMatrix(const smatd& m) const {
     smatd rv = m.Inverse();
     const uint8_t index = InvDest[m.GetContainerId()];
-    rv.SetRawId(smatd::GenerateId(index, vec3i(rv.t-Matrices[index].t)));
+    rv.SetId(index, vec3i(rv.t-Matrices[index].t));
     return rv;
   }
   size_t EllpCount() const {  return Ellipsoids.Count()*Matrices.Count();  }
@@ -193,14 +193,11 @@ public:
   template <class MatList> static double FindClosestDistance(const TAsymmUnit& au, const MatList& ml,
     const vec3d& to, const vec3d& from)
   {
-    vec3d v = from-to;
-    au.CellToCartesian(v);
+    vec3d v = au.Orthogonalise(from-to);
     double minD = v.QLength();
     for( size_t i=0; i < ml.Count(); i++ )  {
       v = ml[i]*from - to;
-      v -= v.Round<int>();
-      au.CellToCartesian(v);
-      const double D = v.QLength();
+      const double D = au.Orthogonalise(v -= v.Round<int>()).QLength();
       if( D < minD )  
         minD = D;
     }

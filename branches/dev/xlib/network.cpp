@@ -327,14 +327,26 @@ void TNetwork::Disassemble(const AtomRegistry& ar, TSAtomPList& atoms, TNetPList
     atoms[i]->ClearBonds();
     atoms[i]->ClearNodes();
     atoms[i]->SetTag(1);
+    if( atoms[i]->IsDeleted() )  continue;
     for( size_t j=0; j < atoms[i]->CAtom().AttachedSiteCount(); j++ )  {
       TCAtom::Site& site = atoms[i]->CAtom().GetAttachedSite(j);
       const smatd m = atoms[i]->GetMatrix(0).IsFirst() ? site.matrix :
         uc.MulMatrix(site.matrix, atoms[i]->GetMatrix(0));
       TSAtom* a = ar.Find(TSAtom::Ref(site.atom->GetId(), m.GetId()));
+      if( a == NULL )  {
+        for( size_t k=0; k < site.atom->EquivCount(); k++ )  {
+          const smatd m1 = uc.MulMatrix(site.atom->GetEquiv(k), m);
+          TSAtom* a = ar.Find(TSAtom::Ref(site.atom->GetId(), m1.GetId()));
+          if( a != NULL )  break;
+        }
+      }
       if( a != NULL && !a->IsDeleted() )
         atoms[i]->AddNode(*a);
     }
+  }
+  // in second pass - Nodes have to get initialised
+  for( size_t i=0; i < atoms.Count(); i++ )  {
+    if( atoms[i]->IsDeleted() )  continue;
     const cm_Element& thisT = atoms[i]->GetType();
     if( thisT != iHydrogenZ )  continue;
     for( size_t j=0; j < atoms[i]->CAtom().AttachedSiteICount(); j++ )  {
@@ -348,6 +360,13 @@ void TNetwork::Disassemble(const AtomRegistry& ar, TSAtomPList& atoms, TNetPList
       const smatd m = atoms[i]->GetMatrix(0).IsFirst() ? site.matrix :
         uc.MulMatrix(site.matrix, atoms[i]->GetMatrix(0));
       TSAtom* a = ar.Find(TSAtom::Ref(site.atom->GetId(), m.GetId()));
+      if( a == NULL )  {
+        for( size_t k=0; k < site.atom->EquivCount(); k++ )  {
+          const smatd m1 = uc.MulMatrix(site.atom->GetEquiv(k), m);
+          TSAtom* a = ar.Find(TSAtom::Ref(site.atom->GetId(), m1.GetId()));
+          if( a != NULL )  break;
+        }
+      }
       if( a != NULL && !a->IsDeleted() )  {
         bool process = true;
         for( size_t k=0; k < a->NodeCount(); k++ )  {
@@ -1208,9 +1227,9 @@ ContentList TNetwork::GetContentList() const {
     if( a.IsDeleted() || a.GetType() == iQPeakZ )  continue;
     size_t ind = elms.IndexOf(&a.GetType());
     if( ind == InvalidIndex )
-      elms.Add(&a.GetType(), a.CAtom().GetOccu()*a.CAtom().GetDegeneracy());
+      elms.Add(&a.GetType(), a.CAtom().GetChemOccu());
     else
-      elms.GetValue(ind) += (a.CAtom().GetOccu()*a.CAtom().GetDegeneracy());
+      elms.GetValue(ind) += (a.CAtom().GetChemOccu());
   }
   ContentList rv;
   for( size_t i=0; i < elms.Count(); i++ )

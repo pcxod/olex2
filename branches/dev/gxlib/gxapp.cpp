@@ -106,12 +106,14 @@ class xappXFileLoad: public AActionHandler  {
   TEBitArray CAtomMasks;
   TLattice::GrowInfo* GrowInfo;
   bool SameFile, EmptyFile;
+  int state;
 public:
   xappXFileLoad(TGXApp *Parent) {  
     FParent = Parent;  
     AActionHandler::SetToDelete(false);
     GrowInfo = NULL;
     SameFile = false;
+    state = 0;
   }
   ~xappXFileLoad()  {  
     if( GrowInfo != NULL )
@@ -119,6 +121,7 @@ public:
     return;  
   }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
+    state = 1;
     if( GrowInfo != NULL )  {
       delete GrowInfo;
       GrowInfo = NULL;
@@ -174,6 +177,7 @@ public:
     return true;
   }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
+    state = 2;
     const TAsymmUnit& au = FParent->XFile().GetAsymmUnit();
     bool sameAU = true;
     size_t ac = 0;
@@ -215,6 +219,9 @@ public:
     return false;
   }
   bool Exit(const IEObject *Sender, const IEObject *Data)  {
+    if( state == 1 )  // somehing went not as expected? trye to recover then...
+      FParent->CreateObjects(false, true);
+    state = 3;
     FParent->GetRender().SetBasis(B);
     FParent->CenterView();
     FParent->GetRender().SetZoom(FParent->GetRender().CalcZoom()*FParent->GetExtraZoom());
@@ -1294,7 +1301,7 @@ void TGXApp::SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b)
   if( FXGrowLinesVisible )  {
     for( size_t i=0; i < XGrowLines.Count(); i++ )  {
       if( XGrowLines[i].SAtom()->GetType() == atom_type )
-        XGrowLines[i].SetVisible( XAtoms[XGrowLines[i].SAtom()->GetTag()].IsVisible() );
+        XGrowLines[i].SetVisible(XAtoms[XGrowLines[i].SAtom()->GetTag()].IsVisible());
     }
   }
 }
@@ -3770,7 +3777,8 @@ void TGXApp::_CreateXGrowVLines()  {
 //..............................................................................
 void TGXApp::Grow(const TXGrowLine& growLine)  {
   UsedTransforms.AddCCopy(growLine.GetTransform());
-  XFile().GetLattice().GrowAtom(growLine.CAtom()->GetFragmentId(), growLine.GetTransform());
+  //XFile().GetLattice().GrowAtom(growLine.CAtom()->GetFragmentId(), growLine.GetTransform());
+  XFile().GetLattice().GrowAtom(*growLine.SAtom(), true, NULL);
 }
 //..............................................................................
 void TGXApp::Grow(const TXGrowPoint& growPoint)  {

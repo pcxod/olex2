@@ -508,10 +508,8 @@ void TCAtom::SetValue(size_t var_index, const double& val) {
 }
 //..............................................................................
 int TCAtom::SortSitesByDistanceAsc(const Site* a1, const Site* a2) const {
-  vec3d v1 = ccrd() - a1->matrix*a1->atom->ccrd();
-  vec3d v2 = ccrd() - a2->matrix*a2->atom->ccrd();
-  Parent->CellToCartesian(v1);
-  Parent->CellToCartesian(v2);
+  vec3d v1 = Parent->Orthogonalise(ccrd() - a1->matrix*a1->atom->ccrd());
+  vec3d v2 = Parent->Orthogonalise(ccrd() - a2->matrix*a2->atom->ccrd());
   const double diff = v1.QLength() - v2.QLength();
   return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
 }
