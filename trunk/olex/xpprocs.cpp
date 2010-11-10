@@ -5686,10 +5686,12 @@ void TMainForm::macNextSolution(TStrObjList &Cmds, const TParamList &Options, TM
 //..............................................................................
 //..............................................................................
 double MatchAtomPairsQT(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-                        smatdd& res, bool TryInversion, double (*weight_calculator)(const TSAtom&))  {
+                        smatdd& res, bool TryInversion, double (*weight_calculator)(const TSAtom&),
+                        bool print = true)  {
   if( atoms.Count() < 3 )  return -1;
   double rms = TNetwork::FindAlignmentMatrix(atoms, res, TryInversion, weight_calculator);
-  TBasicApp::GetLog() << ( olxstr("RMS is ") << olxstr::FormatFloat(3, rms) << " A\n");
+  if( print )
+    TBasicApp::GetLog() << ( olxstr("RMS is ") << olxstr::FormatFloat(3, rms) << " A\n");
   return rms;
 }
 //..............................................................................
@@ -5764,7 +5766,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       TSizeList sk;
       TNetwork &netA = atoms[0]->Atom().GetNetwork(),
                &netB = atoms[1]->Atom().GetNetwork();
-      bool match = subgraph ? netA.IsSubgraphOf( netB, res, sk ) :
+      bool match = subgraph ? netA.IsSubgraphOf(netB, res, sk) :
                               netA.DoMatch( netB, res, TryInvert, weight_calculator);
       TBasicApp::GetLog() << ( olxstr("Graphs match: ") << match << '\n' );
       if( match )  {
@@ -9071,5 +9073,77 @@ void TMainForm::funFullScreen(const TStrObjList& Params, TMacroError &E)  {
 //..............................................................................
 void TMainForm::macFreeze(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   FXApp->SetDisplayFrozen(Cmds[0].ToBool());
+}
+//..............................................................................
+void TMainForm::funMatchFiles(const TStrObjList& Params, TMacroError &E)  {
+  double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_occu;
+  try  {
+    TXFile* f1 = (TXFile*)FXApp->XFile().Replicate();
+    TXFile* f2 = (TXFile*)FXApp->XFile().Replicate();
+    try  {
+      f1->LoadFromFile(Params[0]);
+      f2->LoadFromFile(Params[1]);
+      olxstr rv = XLibMacros::NAString;
+      if( f1->GetLattice().FragmentCount() > 0 && f2->GetLattice().FragmentCount() > 0 )  {
+        TNetwork& netA = f1->GetLattice().GetFragment(0);
+        TNetwork& netB = f2->GetLattice().GetFragment(0);
+        TTypeList<AnAssociation2<size_t, size_t> > res;
+        TSizeList sk;
+        const bool match = netA.DoMatch(netB, res, false, weight_calculator);
+        if( match )  {
+          TTypeList<AnAssociation2<TSAtom*,TSAtom*> > satomp;
+          TSAtomPList atomsToTransform;
+          for( size_t i=0; i < res.Count(); i++ )  {
+            if( atomsToTransform.IndexOf(netB.Node(res[i].GetB())) == InvalidIndex )  {
+              atomsToTransform.Add(netB.Node(res[i].GetB()));
+              satomp.AddNew<TSAtom*,TSAtom*>(&netA.Node(res[i].GetA()), &netB.Node(res[i].GetB()));
+            }
+          }
+          smatdd S;
+          rv = olxstr::FormatFloat(3, MatchAtomPairsQT(satomp, S, false, weight_calculator, false));
+          TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, false, weight_calculator);
+          double maxd=0;
+          AnAssociation2<TSAtom*,TSAtom*>* maxd_pair = NULL;
+          for( size_t i=0; i < satomp.Count(); i++ )  {
+            const double d = satomp[i].GetA()->crd().DistanceTo(satomp[i].GetB()->crd());
+            if( d > maxd )  {
+              maxd = d;
+              maxd_pair = &satomp[i];
+            }
+          }
+          rv << ',' << olxstr::FormatFloat(3, maxd) << '(';
+          if( maxd_pair != NULL )
+            rv << maxd_pair->GetA()->GetLabel() << ',' << maxd_pair->GetB()->GetLabel();
+
+          rv << ")," << olxstr::FormatFloat(3,
+            MatchAtomPairsQT(satomp, S, true, weight_calculator, false));
+          TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, true, weight_calculator);
+          maxd=0;
+          maxd_pair = NULL;
+          for( size_t i=0; i < satomp.Count(); i++ )  {
+            const double d = satomp[i].GetA()->crd().DistanceTo(satomp[i].GetB()->crd());
+            if( d > maxd )  {
+              maxd = d;
+              maxd_pair = &satomp[i];
+            }
+          }
+          rv << ',' << olxstr::FormatFloat(3, maxd) << '(';
+          if( maxd_pair != NULL )
+            rv << maxd_pair->GetA()->GetLabel() << ',' << maxd_pair->GetB()->GetLabel();
+          rv << ')';
+        }
+      }
+      delete f1;
+      delete f2;
+      E.SetRetVal(rv);
+      return;
+    }
+    catch(...)  {
+      delete f1;
+      delete f2;
+    }
+  }
+  catch(...)  {}
+  E.SetRetVal(XLibMacros::NAString);
 }
 //..............................................................................
