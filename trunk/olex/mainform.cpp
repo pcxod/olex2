@@ -559,7 +559,7 @@ f-fixed parameters&;u-Uiso&;r-Uiso multiplier for riding atoms&;ao-actual occupa
 
   this_InitMacroD(Line, EmptyString, fpAny, "Creates a line or best line for provided atoms");
   this_InitMacro(AddLabel, , fpThree|fpFive);
-  this_InitMacroD(Mpln, "n-just orient, do not create plane&;r-create regular plane;we-use weights proportional to the (atomic weight)^we", 
+  this_InitMacroD(Mpln, "n-just orient, do not create plane&;r-create regular plane&;we-use weights proportional to the (atomic weight)^we", 
     fpAny, "Sets current view along the normal of the best plane");
   this_InitMacroD(Cent, EmptyString, fpAny, "creates a centroid for given/selected/all atoms");
   this_InitMacroD(Mask, EmptyString, fpAny^fpNone, 
