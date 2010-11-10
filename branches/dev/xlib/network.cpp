@@ -450,44 +450,29 @@ public:
     return true;
   }
   const olxstr& GetData() const {  return Data;  }
-  void ClearData()  {  Data = EmptyString;  }
+  void ClearData()  {  Data.SetLength(0);  }
 };
 
-void ResultCollector( TEGraphNode<size_t,TSAtom*>& subRoot,
-                        TEGraphNode<size_t,TSAtom*>& Root,
-                        TTypeList< AnAssociation2<size_t, size_t> >& res )  {
-  res.AddNew( subRoot.GetObject()->GetNetId(), Root.GetObject()->GetNetId() );
-  for( size_t i=0; i < olx_min(subRoot.Count(),Root.Count()); i++ )
-    ResultCollector( subRoot.Item(i), Root.Item(i), res );
+void ResultCollector(TEGraphNode<size_t,TSAtom*>& subRoot,
+                     TEGraphNode<size_t,TSAtom*>& Root,
+                     TTypeList< AnAssociation2<size_t, size_t> >& res )  {
+  res.AddNew(subRoot.GetObject()->GetNetId(), Root.GetObject()->GetNetId());
+  subRoot.GetObject()->SetTag(0);
+  Root.GetObject()->SetTag(0);
+  for( size_t i=0; i < olx_min(subRoot.Count(),Root.Count()); i++ )  {
+    if( subRoot.Item(i).GetObject()->GetTag() != 0 && Root.Item(i).GetObject()->GetTag() != 0 )
+      ResultCollector(subRoot.Item(i), Root.Item(i), res );
+  }
 }
-void ResultCollector( TEGraphNode<size_t,TSAtom*>& subRoot,
-                        TEGraphNode<size_t,TSAtom*>& Root,
-                        TTypeList< AnAssociation2<TSAtom*, TSAtom*> >& res )  {
+void ResultCollector(TEGraphNode<size_t,TSAtom*>& subRoot,
+                     TEGraphNode<size_t,TSAtom*>& Root,
+                     TTypeList< AnAssociation2<TSAtom*, TSAtom*> >& res)  {
   if( !subRoot.IsShallowEqual(Root) )
     return;
-  res.AddNew( subRoot.GetObject(), Root.GetObject());
+  res.AddNew(subRoot.GetObject(), Root.GetObject());
   for( size_t i=0; i < subRoot.Count(); i++ )
     ResultCollector( subRoot[i], Root[i], res );
 }
-/*
-void ExpandGraphNode( TTypeList< TEGraphNode<int,TSAtom*>* >& allNodes, TEGraphNode<int,TSAtom*>& graphNode, TSAtom* node)  {
-  if( node->GetTag() == 1 )  return;
-  node->Tag( 1 );
-  for( size_t i=0; i < node->NodeCount(); i++ )  {
-    TSAtom* sa = (TSAtom*)node->Node(i);
-    if( sa->GetTag() != 0 )  continue;
-    allNodes.AddACopy( &graphNode.NewNode( sa->GetAtomInfo()->GetIndex(), sa ) );
-  }
-}
-void BuildGraph( TEGraphNode<int,TSAtom*>& graphNode, TSAtom* node)  {
-  TTypeList< TEGraphNode<int,TSAtom*>* > allNodes;
-
-  ExpandGraphNode(allNodes, graphNode, node);
-
-  for( size_t i=0; i < allNodes.Count(); i++ )
-    ExpandGraphNode( allNodes, *allNodes[i], allNodes[i]->GetObject() );
-}
-*/
 
 void BreadthFirstTag(TSAtomPList& all, TSAtom* node)  {
   for( size_t i=0; i < node->NodeCount(); i++ )  {
@@ -504,7 +489,7 @@ void BreadthFirstTags(TSAtom* sa)  {
   BreadthFirstTag(all, sa);
   for( size_t i=0; i < all.Count(); i++ )  {
     BreadthFirstTag(all, all[i]);
-    //all[i]->CAtom()->Label() = all[i]->GetTag();
+    //all[i]->CAtom().SetLabel(all[i]->GetTag(), false);
   }
 }
 
@@ -512,11 +497,13 @@ void ExpandGraphNode(TEGraphNode<size_t,TSAtom*>& graphNode)  {
   for( size_t i=0; i < graphNode.GetObject()->NodeCount(); i++ )  {
     TSAtom& sa = graphNode.GetObject()->Node(i);
     if( sa.GetTag() <= graphNode.GetObject()->GetTag() )  continue;
-    ExpandGraphNode(graphNode.NewNode(sa.GetType().z, &sa) );
+    ExpandGraphNode(graphNode.NewNode((sa.GetType().z<<16)|sa.NodeCount(), &sa));
   }
 }
 
-void BuildGraph( TEGraphNode<size_t,TSAtom*>& graphNode, TSAtom* node)  {
+void BuildGraph(TEGraphNode<size_t,TSAtom*>& graphNode, TSAtom* node)  {
+  TNetwork& net = node->GetNetwork();
+  net.GetNodes().ForEach(ACollectionItem::TagSetter<>(0));
   BreadthFirstTags(node);
   ExpandGraphNode(graphNode);
 }
@@ -678,7 +665,6 @@ bool TNetwork::DoMatch(TNetwork& net, TTypeList<AnAssociation2<size_t,size_t> >&
 
   if( thisSa == NULL )  return false;
   TEGraph<size_t, TSAtom*> thisGraph(thisSa->GetType().z, thisSa);
-//  TEGraph<int, TSAtom*> thisGraph( 0, thisSa );
   BuildGraph(thisGraph.GetRoot(), thisSa);
   TNetTraverser trav;
   trav.OnItem(thisGraph.GetRoot());
@@ -686,10 +672,8 @@ bool TNetwork::DoMatch(TNetwork& net, TTypeList<AnAssociation2<size_t,size_t> >&
   TBasicApp::GetLog().Info(trav.GetData());
   for( size_t i=0; i < net.NodeCount(); i++ )  {
     TSAtom& thatSa = net.Node(i);
-    if( thisSa->NodeCount() != thatSa.NodeCount() )  continue;
-    if( thisSa->GetType() != thatSa.GetType() )  continue;
-    for( size_t j=0; j < net.NodeCount(); j++ )
-      net.Node(j).SetTag(0);
+    if( thisSa->NodeCount() != thatSa.NodeCount() || thisSa->GetType() != thatSa.GetType() )
+      continue;
     TEGraph<size_t, TSAtom*> thatGraph(thatSa.GetType().z, &thatSa);
     BuildGraph(thatGraph.GetRoot(), &thatSa);
 
@@ -711,10 +695,12 @@ bool TNetwork::DoMatch(TNetwork& net, TTypeList<AnAssociation2<size_t,size_t> >&
         return false;
       }
       trav.ClearData();
-      trav.OnItem( thatGraph.GetRoot() );
+      trav.OnItem(thatGraph.GetRoot());
       thatGraph.GetRoot().Traverser.LevelTraverse(thatGraph.GetRoot(), trav);
-      TBasicApp::GetLog().Info( trav.GetData() );
-      TBasicApp::GetLog().Info( olxstr("Number of permutations: ") << ga.CallsCount );
+      TBasicApp::GetLog().Info(trav.GetData());
+      TBasicApp::GetLog().Info(olxstr("Number of permutations: ") << ga.CallsCount);
+      GetNodes().ForEach(ACollectionItem::TagSetter<>(1));
+      net.GetNodes().ForEach(ACollectionItem::TagSetter<>(1));
       ResultCollector(thisGraph.GetRoot(), thatGraph.GetRoot(), res);
       return true;
     }

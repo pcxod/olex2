@@ -410,6 +410,7 @@ private:
   DefMacro(Style)
   DefMacro(Scene)
   DefMacro(SyncBC)
+  DefMacro(Freeze)
 
   DefMacro(Basis)
   DefMacro(Lines)
@@ -630,6 +631,7 @@ private:
   DefFunc(GetMAC)
   DefFunc(ThreadCount)
   DefFunc(FullScreen)
+  DefFunc(MatchFiles)
 
   TUndoStack *FUndoStack;
 //..............................................................................

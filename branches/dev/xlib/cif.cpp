@@ -755,7 +755,7 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
                   value = '?';
                 }
                 else  {
-                  if( (index == 13 || index == 14 || index == 30) && DoubleTheta )
+                  if( DoubleTheta && (index == 13 || index == 14 || index == 30 || index == 61 || index == 62 ) )
                     value = (*Params)[0].ToDouble()*2;
                   else
                     value = (*Params)[0];

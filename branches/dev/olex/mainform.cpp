@@ -559,7 +559,7 @@ f-fixed parameters&;u-Uiso&;r-Uiso multiplier for riding atoms&;ao-actual occupa
 
   this_InitMacroD(Line, EmptyString, fpAny, "Creates a line or best line for provided atoms");
   this_InitMacro(AddLabel, , fpThree|fpFive);
-  this_InitMacroD(Mpln, "n-just orient, do not create plane&;r-create regular plane;we-use weights proportional to the (atomic weight)^we", 
+  this_InitMacroD(Mpln, "n-just orient, do not create plane&;r-create regular plane&;we-use weights proportional to the (atomic weight)^we", 
     fpAny, "Sets current view along the normal of the best plane");
   this_InitMacroD(Cent, EmptyString, fpAny, "creates a centroid for given/selected/all atoms");
   this_InitMacroD(Mask, EmptyString, fpAny^fpNone, 
@@ -586,7 +586,8 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacroD(Style, "s-shows a file open dialog", fpNone|fpOne, "Prints default style or sets it (none resets)");
   this_InitMacroD(Scene, "s-shows a file open dialog", fpNone|fpOne, "Prints default scene parameters or sets it (none resets)");
 
-  this_InitMacro(SyncBC, , fpNone);
+  this_InitMacroD(SyncBC, EmptyString, fpNone, "Copies atom materials to bonds");
+  this_InitMacroD(Freeze, EmptyString, fpOne, "Freezes/thaws display update");
 
   this_InitMacro(Basis, , fpNone|fpOne);
   this_InitMacro(Lines, , fpOne);
@@ -919,6 +920,8 @@ separated values of Atom Type and radius, an entry a line");
  If 'full' is provided as argument, the adoptor names are also returned as adapter=MAC;..");
   this_InitFuncD(ThreadCount, fpNone|fpOne, "Returns/sets the number of simultaneous tasks");
   this_InitFuncD(FullScreen, fpNone|fpOne, "Returns/sets full screen mode (true/false/swap)");
+  this_InitFuncD(MatchFiles, fpTwo,
+    "Matches given files and returns the result as {direct_match,inverse_match,largest_distance}");
 
   Library.AttachLibrary(FXApp->ExportLibrary());
   Library.AttachLibrary(TEFile::ExportLibrary());

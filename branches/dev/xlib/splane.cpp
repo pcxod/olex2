@@ -35,8 +35,8 @@ void TSPlane::_Init(const TTypeList<AnAssociation2<vec3d, double> >& points)  {
   CalcPlanes(points, Normals, rms, Center, true);
   Distance = GetNormal().DotProd(Center)/GetNormal().Length();
   Normals[0].Normalise();
-  Normals[1].Normalise();
-  Normals[2].Normalise();
+  Normals[1] = (points[0].GetA() - Center).Normalise();
+  Normals[2] = Normals[0].XProdVec(Normals[1]).Normalise();
 }
 //..............................................................................
 bool TSPlane::CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms, vec3d& center) {
@@ -90,11 +90,11 @@ TSPlane::Def::Def(const TSPlane& plane) : atoms(plane.Count()), regular(plane.Is
   if( plane.Count() == 0 )  return;
   if( !plane.GetAtom(0).IsAUAtom() )  {
     const TUnitCell& uc = plane.GetNetwork().GetLattice().GetUnitCell();
-    const smatd im = plane.GetAtom(0).GetMatrix(0).Inverse();
+    const smatd im = uc.InvMatrix(plane.GetAtom(0).GetMatrix(0));
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      smatd m = im*smatd::FromId(atoms[i].ref.matrix_id, uc.GetMatrix(smatd::GetContainerId(atoms[i].ref.matrix_id)));
-      uc.InitMatrixId(m);
-      atoms[i].ref.matrix_id = m.GetId();
+      atoms[i].ref.matrix_id = uc.MulMatrix(
+        smatd::FromId(atoms[i].ref.matrix_id,
+        uc.GetMatrix(smatd::GetContainerId(atoms[i].ref.matrix_id))), im).GetId();
     }
   }
   atoms.QuickSorter.Sort<TComparablePtrComparator>(atoms);

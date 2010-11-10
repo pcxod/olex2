@@ -44,7 +44,14 @@ public:
         TGlXApp::GetGXApp()->Grow((TXGrowLine&)obj);
       return true;
     }
-    return false;
+    else if( EsdlInstanceOf(obj, TXAtom) )  {
+      TXAtom& a = (TXAtom&)obj;
+      if( !a.Atom().IsGrown() )
+        TXApp::GetInstance().XFile().GetLattice().GrowAtom(a.Atom(), GrowShells, NULL);
+      return true;
+    }
+    else
+      return false;
   }
 };
 

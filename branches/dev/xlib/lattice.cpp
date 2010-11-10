@@ -1448,6 +1448,7 @@ void TLattice::UpdateConnectivityInfo()  {
 }
 //..............................................................................
 void TLattice::Disassemble(bool create_planes)  {
+  if( Atoms.IsEmpty() )  return;
   OnDisassemble.Enter(this);
   // clear bonds & fargments
   ClearBonds();
@@ -2365,7 +2366,7 @@ void TLattice::RestoreADPs(bool restoreCoordinates)  {
 }
 //..............................................................................
 void TLattice::BuildAtomRegistry()  {
-  TUnitCell& uc = GetUnitCell();
+  if( Matrices.IsEmpty() )  return;  TUnitCell& uc = GetUnitCell();
   vec3i mind(100,100,100), maxd(-100,-100,-100);
   for( size_t i=0; i < Matrices.Count(); i++ )
     vec3i::UpdateMinMax(Matrices[i]->GetT(Matrices[i]->GetId()), mind, maxd);

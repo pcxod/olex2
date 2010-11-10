@@ -281,16 +281,14 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   bool Force = Options.Contains("f");  // forces inversion for sg without center of inversion
   TXApp& xapp = TXApp::GetInstance();
   TSpaceGroup* sg = NULL;
-  if( xapp.CheckFileType<TIns>() || xapp.CheckFileType<TCif>() )  {
-    try  { sg = &xapp.XFile().GetLastLoaderSG();  }
-    catch(...)  {
-      Error.ProcessingError(__OlxSrcInfo, "unknown file space group" );
-      return;
-    }
-    if( !sg->IsCentrosymmetric() &&  !Force )  {
-      Error.ProcessingError(__OlxSrcInfo, "non-centrosymmetric space group, use -f to force" );
-      return;
-    }
+  try  { sg = &xapp.XFile().GetLastLoaderSG();  }
+  catch(...)  {
+    Error.ProcessingError(__OlxSrcInfo, "unknown file space group" );
+    return;
+  }
+  if( !sg->IsCentrosymmetric() &&  !Force )  {
+    Error.ProcessingError(__OlxSrcInfo, "non-centrosymmetric space group, use -f to force" );
+    return;
   }
   TSAtomPList atoms;
   xapp.FindSAtoms(Cmds.Text(' '), atoms, true);
