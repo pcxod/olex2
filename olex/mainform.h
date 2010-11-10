@@ -631,6 +631,7 @@ private:
   DefFunc(GetMAC)
   DefFunc(ThreadCount)
   DefFunc(FullScreen)
+  DefFunc(MatchFiles)
 
   TUndoStack *FUndoStack;
 //..............................................................................
