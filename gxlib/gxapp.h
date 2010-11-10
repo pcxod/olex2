@@ -288,7 +288,8 @@ protected:
        FHklVisible,
        FXGrowLinesVisible,
        XGrowPointsVisible,
-       FXPolyVisible;
+       FXPolyVisible,
+       DisplayFrozen;
   short FGrowMode, PackMode;
 public:
   TXGlLabels& GetLabels() const {  return *FLabels; }
@@ -356,6 +357,11 @@ public:
   bool AreQPeaksVisible()  {  return FQPeaksVisible;  }
   void SetQPeakBondsVisible(bool v);
   bool AreQPeakBondsVisible()  {  return FQPeakBondsVisible;  }
+  bool IsDisplayFrozen() const {  return DisplayFrozen;  }
+  void SetDisplayFrozen(bool v)  {
+    DisplayFrozen = v;
+    if( !v )  Draw();
+  }
 
   // hides all bonds for all hidden q-peaks
   void SyncQVisibility();

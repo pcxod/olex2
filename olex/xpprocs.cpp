@@ -9068,3 +9068,8 @@ void TMainForm::funFullScreen(const TStrObjList& Params, TMacroError &E)  {
       ShowFullScreen(Params[0].ToBool());
   }
 }
+//..............................................................................
+void TMainForm::macFreeze(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  FXApp->SetDisplayFrozen(Cmds[0].ToBool());
+}
+//..............................................................................
