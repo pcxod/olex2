@@ -175,11 +175,12 @@ public:
   }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
     const TAsymmUnit& au = FParent->XFile().GetAsymmUnit();
-    bool sameAU = true;
+    bool sameAU = true, hasNonQ = false;
     size_t ac = 0;
     for( size_t i=0; i < au.AtomCount(); i++ )  {
       const TCAtom& ca = au.GetAtom(i);
       if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
+      hasNonQ = true;
       if( ac >= AtomNames.Count() )  {
         sameAU = false;
         break;
@@ -196,7 +197,7 @@ public:
       for( size_t i=0; i < au.AtomCount(); i++ )  {
         TCAtom& ca = au.GetAtom(i);
         if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
-        ca.SetMasked( CAtomMasks[ac++] );
+        ca.SetMasked(CAtomMasks[ac++]);
       }
       FParent->XFile().GetLattice().SetGrowInfo(GrowInfo);
       GrowInfo = NULL;
@@ -206,6 +207,8 @@ public:
       FParent->ClearLabels();
       FParent->ClearGroupDefinitions();
     }
+    if( !hasNonQ && !FParent->AreQPeaksVisible() )
+      FParent->SetQPeaksVisible(true);
     if( GrowInfo != NULL )  {
       delete GrowInfo;
       GrowInfo = NULL;
