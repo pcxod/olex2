@@ -586,7 +586,8 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacroD(Style, "s-shows a file open dialog", fpNone|fpOne, "Prints default style or sets it (none resets)");
   this_InitMacroD(Scene, "s-shows a file open dialog", fpNone|fpOne, "Prints default scene parameters or sets it (none resets)");
 
-  this_InitMacro(SyncBC, , fpNone);
+  this_InitMacroD(SyncBC, EmptyString, fpNone, "Copies atom materials to bonds");
+  this_InitMacroD(Freeze, EmptyString, fpOne, "Freezes/thaws display update");
 
   this_InitMacro(Basis, , fpNone|fpOne);
   this_InitMacro(Lines, , fpOne);

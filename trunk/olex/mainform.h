@@ -410,6 +410,7 @@ private:
   DefMacro(Style)
   DefMacro(Scene)
   DefMacro(SyncBC)
+  DefMacro(Freeze)
 
   DefMacro(Basis)
   DefMacro(Lines)

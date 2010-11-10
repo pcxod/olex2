@@ -97,7 +97,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //..............................................................................
-TXBondStylesClear::~TXBondStylesClear()  {  ;  }
+TXBondStylesClear::~TXBondStylesClear()  {}
 
 class xappXFileLoad: public AActionHandler  {
   TGXApp *FParent;
@@ -219,8 +219,8 @@ public:
   }
   bool Exit(const IEObject *Sender, const IEObject *Data)  {
     FParent->GetRender().SetBasis(B);
-    FParent->CenterView();
-    FParent->GetRender().SetZoom(FParent->GetRender().CalcZoom()*FParent->GetExtraZoom());
+    FParent->CenterView(!SameFile);
+    //FParent->GetRender().SetZoom(FParent->GetRender().CalcZoom()*FParent->GetExtraZoom());
     FParent->Draw();
     return true;
   }
@@ -269,7 +269,7 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
 {
   FQPeaksVisible = FHydrogensVisible = FStructureVisible = FHBondsVisible = true;
   XGrowPointsVisible = FXGrowLinesVisible = FQPeakBondsVisible = false;
-  MainFormVisible = false;
+  DisplayFrozen = MainFormVisible = false;
   FXPolyVisible = true;
   DeltaV = 3;
   const TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
@@ -2949,7 +2949,7 @@ void TGXApp::UpdateLabels()  {
 }
 //..............................................................................
 uint64_t TGXApp::Draw()  {
-  if( !IsMainFormVisible() )  return 0;
+  if( !IsMainFormVisible() || DisplayFrozen )  return 0;
   uint64_t st = TETime::msNow();
   GetRender().Draw();
   return TETime::msNow() - st;
