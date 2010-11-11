@@ -123,51 +123,44 @@ public:
       delete GrowInfo;
       GrowInfo = NULL;
     }
-    // make sure that these are only cleared when file is loaded
-    if( Sender && EsdlInstanceOf(*Sender, TXFile) )  {
-      EmptyFile = SameFile = false;
-      if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
-        olxstr s1( TEFile::UnixPath(TEFile::ChangeFileExt(*(olxstr*)Data, EmptyString)) );
-        olxstr s2( TEFile::UnixPath(TEFile::ChangeFileExt(FParent->XFile().GetFileName(), EmptyString)) );
-        if( s1 != s2 )  {
-          FParent->ClearIndividualCollections();
-          FParent->GetRender().GetStyles().RemoveNamedStyles("Q");
-          FParent->XFile().GetLattice().ClearPlaneDefinitions();
-        }
-        else  {
-          const TAsymmUnit& au = FParent->XFile().GetAsymmUnit();
-          size_t ac = 0;
-          for( size_t i=0; i < au.AtomCount(); i++ )  {
-            const TCAtom& ca = au.GetAtom(i);           
-            if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
-            ac++;
-          }
-          AtomNames.SetCapacity(ac);
-          CAtomMasks.SetSize(ac);
-          ac = 0;
-          for( size_t i=0; i < au.AtomCount(); i++ )  {
-            const TCAtom& ca = au.GetAtom(i);
-            if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
-            AtomNames.Add(ca.GetLabel());
-            CAtomMasks.Set(ac++, ca.IsMasked());
-          }
-          GrowInfo = FParent->XFile().GetLattice().GetGrowInfo();
-          SameFile = true;
-          EmptyFile = (ac == 0);
-        }
-      }
-      else  {
+    EmptyFile = SameFile = false;
+    if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
+      olxstr s1( TEFile::UnixPath(TEFile::ChangeFileExt(*(olxstr*)Data, EmptyString)) );
+      olxstr s2( TEFile::UnixPath(TEFile::ChangeFileExt(FParent->XFile().GetFileName(), EmptyString)) );
+      if( s1 != s2 )  {
         FParent->ClearIndividualCollections();
         FParent->GetRender().GetStyles().RemoveNamedStyles("Q");
         FParent->XFile().GetLattice().ClearPlaneDefinitions();
-        FParent->ClearGroupDefinitions();
       }
-      //FParent->XGrid().Clear();
+      else  {
+        const TAsymmUnit& au = FParent->XFile().GetAsymmUnit();
+        size_t ac = 0;
+        for( size_t i=0; i < au.AtomCount(); i++ )  {
+          const TCAtom& ca = au.GetAtom(i);           
+          if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
+          ac++;
+        }
+        AtomNames.SetCapacity(ac);
+        CAtomMasks.SetSize(ac);
+        ac = 0;
+        for( size_t i=0; i < au.AtomCount(); i++ )  {
+          const TCAtom& ca = au.GetAtom(i);
+          if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
+          AtomNames.Add(ca.GetLabel());
+          CAtomMasks.Set(ac++, ca.IsMasked());
+        }
+        GrowInfo = FParent->XFile().GetLattice().GetGrowInfo();
+        SameFile = true;
+        EmptyFile = (ac == 0);
+      }
     }
     else  {
-      SameFile = true;
-      EmptyFile = false;
+      FParent->ClearIndividualCollections();
+      FParent->GetRender().GetStyles().RemoveNamedStyles("Q");
+      FParent->XFile().GetLattice().ClearPlaneDefinitions();
+      FParent->ClearGroupDefinitions();
     }
+    //FParent->XGrid().Clear();
     B = FParent->GetRender().GetBasis();
     FParent->GetRender().Clear();
     FParent->HklFile().Clear();
@@ -220,30 +213,7 @@ public:
   bool Exit(const IEObject *Sender, const IEObject *Data)  {
     FParent->GetRender().SetBasis(B);
     FParent->CenterView(!SameFile);
-    //FParent->GetRender().SetZoom(FParent->GetRender().CalcZoom()*FParent->GetExtraZoom());
     FParent->Draw();
-    return true;
-  }
-};
-//..............................................................................
-class xappXFileUniq : public AActionHandler  {
-public:
-  virtual bool Exit(const IEObject *Sender, const IEObject *Data)  {
-    TGXApp& app = TGXApp::GetInstance();
-    if( app.OverlayedXFileCount() != 0 )
-      app.AlignOverlayedXFiles();
-    return true;
-  }
-};
-//..............................................................................
-class xappXFileClose: public AActionHandler  {
-public:
-  virtual bool Exit(const IEObject *Sender, const IEObject *Data)  {
-    TGXApp& app = TGXApp::GetInstance();
-    app.ClearLabels();
-    app.XGrid().Clear();
-    app.CreateObjects(false, false);
-    app.GetRender().SetZoom(app.GetRender().CalcZoom());
     return true;
   }
 };
@@ -257,7 +227,8 @@ enum  {
   ID_OnUniq,
   ID_OnGrow,
   ID_OnClear,
-  ID_OnFileLoad
+  ID_OnFileLoad,
+  ID_OnFileClose
 };
 
 TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
@@ -313,17 +284,12 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
   F3DFrame->SetVisible(false);
   XFile().GetLattice().OnDisassemble.Add(this, ID_OnDisassemble);
 
-  xappXFileLoad *P = &TEGC::NewG<xappXFileLoad>(this);
-  XFile().GetLattice().OnStructureGrow.Add(P);
-  XFile().GetLattice().OnStructureGrow.Add(new xappXFileUniq);
-  XFile().GetLattice().OnStructureUniq.Add(P);
   XFile().GetLattice().OnStructureUniq.Add(this, ID_OnUniq);
   XFile().GetLattice().OnStructureGrow.Add(this, ID_OnGrow);
   XFile().GetLattice().OnAtomsDeleted.Add(this, ID_OnClear);
   XFile().OnFileLoad.Add(this, ID_OnFileLoad);
-  XFile().GetLattice().OnStructureUniq.Add(new xappXFileUniq);
-  XFile().OnFileLoad.Add(P);
-  XFile().OnFileClose.Add(new xappXFileClose);
+  XFile().OnFileLoad.Add(&TEGC::NewG<xappXFileLoad>(this));
+  XFile().OnFileClose.Add(this, ID_OnFileClose);
 }
 //..............................................................................
 TGXApp::~TGXApp()  {
@@ -1378,7 +1344,10 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
     if(  !(SData->From == SData->To) )
       Select(SData->From, SData->To);
   }
-  else if( (MsgId == ID_OnUniq || MsgId == ID_OnGrow) && MsgSubId == msiEnter ) {
+  else if( (MsgId == ID_OnUniq || MsgId == ID_OnGrow) && MsgSubId == msiExit ) {
+    if( OverlayedXFileCount() != 0 )
+      AlignOverlayedXFiles();
+    CenterView(true);
   }
   else if( MsgId == ID_OnFileLoad )  {
     if( MsgSubId == msiEnter )  {
@@ -1389,6 +1358,14 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
     }
     else if( MsgSubId == msiExit )
       LoadingFile = false;
+  }
+  else if( MsgId == ID_OnFileClose )  {
+    if( MsgSubId == msiExit )  {
+      ClearLabels();
+      XGrid().Clear();
+      CreateObjects(false, false);
+      GetRender().SetZoom(GetRender().CalcZoom());
+    }
   }
   else if( MsgId == ID_OnDisassemble ) {
     if( MsgSubId == msiExit )
