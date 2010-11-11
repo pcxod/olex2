@@ -37,6 +37,7 @@ void TSPlane::_Init(const TTypeList<AnAssociation2<vec3d, double> >& points)  {
   Normals[0].Normalise();
   Normals[1] = (points[0].GetA() - Center).Normalise();
   Normals[2] = Normals[0].XProdVec(Normals[1]).Normalise();
+  RMSD = rms[0];
 }
 //..............................................................................
 bool TSPlane::CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms, vec3d& center) {
