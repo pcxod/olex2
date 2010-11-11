@@ -36,18 +36,19 @@ public:
     TGlXApp::GetGXApp()->SetXGrowLinesVisible(false);
   }
   virtual bool OnObject(AGDrawObject& obj)  {
+    TLattice& latt = TXApp::GetInstance().XFile().GetLattice();
     if( EsdlInstanceOf(obj, TXGrowLine) )  {
       TXGrowLine& xl = (TXGrowLine&)obj;
-      if( mode == gmCovalent && GrowShells )
-        TXApp::GetInstance().XFile().GetLattice().GrowAtom(*xl.SAtom(), GrowShells, NULL);
+      if( GrowShells && mode == gmCovalent )
+        latt.GrowAtom(*xl.CAtom(), xl.GetTransform());
       else
-        TGlXApp::GetGXApp()->Grow((TXGrowLine&)obj);
+        latt.GrowFragment(xl.CAtom()->GetFragmentId(), xl.GetTransform());
       return true;
     }
     else if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& a = (TXAtom&)obj;
       if( !a.Atom().IsGrown() )
-        TXApp::GetInstance().XFile().GetLattice().GrowAtom(a.Atom(), GrowShells, NULL);
+        latt.GrowAtom(a.Atom(), GrowShells, NULL);
       return true;
     }
     else

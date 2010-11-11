@@ -557,6 +557,7 @@ void TLattice::GetGrowMatrices(smatd_list& res) const {
 }
 //..............................................................................
 void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Template)  {
+  RestoreCoordinates();
   // all matrices after MatrixCount are new and has to be used for generation
   const size_t currentCount = MatrixCount();
   const TUnitCell& uc = GetUnitCell();
@@ -654,7 +655,6 @@ void TLattice::GrowFragments(bool GrowShells, TCAtomPList* Template)  {
 void TLattice::GrowAtoms(const TSAtomPList& atoms, bool GrowShells, TCAtomPList* Template)  {
   if( atoms.IsEmpty() )  return;
 /* restore atom centres if were changed by some other procedure */
-  RestoreCoordinates();
   DoGrow(atoms, GrowShells, Template);
 }
 //..............................................................................
@@ -662,12 +662,11 @@ void TLattice::GrowAtom(TSAtom& Atom, bool GrowShells, TCAtomPList* Template)  {
   if( Atom.IsGrown() )  return;
   TSAtomPList atoms;
 /* restore atom centres if were changed by some other procedure */
-  RestoreCoordinates();
   atoms.Add(&Atom);
   DoGrow(atoms, GrowShells, Template);
 }
 //..............................................................................
-void TLattice::GrowAtom(uint32_t FragId, const smatd& transform)  {
+void TLattice::GrowFragment(uint32_t FragId, const smatd& transform)  {
   smatd *M = NULL;
   // check if the matix is unique
   bool found = false;
@@ -693,10 +692,9 @@ void TLattice::GrowAtom(uint32_t FragId, const smatd& transform)  {
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
-void TLattice::GrowAtoms(const TSAtomPList& atoms, const smatd_list& matrices)  {
-  smatd *M = NULL;
+void TLattice::GrowAtoms(const TCAtomPList& atoms, const smatd_list& matrices)  {
+  if( atoms.IsEmpty() )  return;
   smatd_plist addedMatrices;
-  bool has_duplicates = false;
   // check if the matices is unique
   for( size_t i=0; i < matrices.Count(); i++ )  {
     bool found = false;
@@ -705,27 +703,46 @@ void TLattice::GrowAtoms(const TSAtomPList& atoms, const smatd_list& matrices)  
         found = true;
         TBasicApp::GetLog() << olxstr("Skipping ") <<
           TSymmParser::MatrixToSymmEx(matrices[i]) << " - already used\n";
-        has_duplicates = true;
         break;
       }
     }
-    if( !found )  {
-      M = new smatd(matrices[i]);
-      Matrices.Add(M);
-      addedMatrices.Add(M);
-      this->GetUnitCell().InitMatrixId(*M);
-    }
+    if( !found )
+      addedMatrices.Add(Matrices.Add(new smatd(matrices[i])));
   }
-  if( has_duplicates )
+  if( matrices.Count() != addedMatrices.Count() )
     TBasicApp::GetLog() << "Use grow -w for already used matrices\n";
+  if( addedMatrices.IsEmpty() )  return;
   OnStructureGrow.Enter(this);
-  Atoms.SetCapacity( Atoms.Count() + atoms.Count()*addedMatrices.Count() );
+  Atoms.SetCapacity(Atoms.Count() + atoms.Count()*addedMatrices.Count());
   for( size_t i=0; i < addedMatrices.Count(); i++ )  {
     for( size_t j=0; j < atoms.Count(); j++ )  {
-      if( !atoms[j]->IsDeleted() && atoms[j]->CAtom().IsAvailable() )
-        GenerateAtom(atoms[j]->CAtom(), *addedMatrices[i]);
+      if( !atoms[j]->IsDeleted() && atoms[j]->IsAvailable() )
+        GenerateAtom(*atoms[j], *addedMatrices[i]);
     }
   }
+  RestoreCoordinates();
+  Disassemble();
+  Generated = true;
+  OnStructureGrow.Exit(this);
+}
+//..............................................................................
+void TLattice::GrowAtom(TCAtom& atom, const smatd& matrix)  {
+  // check if the matices is unique
+  if( GetAtomRegistry().Find(TSAtom::Ref(atom.GetId(), matrix.GetId())) != NULL )
+    return;
+  smatd* m = NULL;
+  bool found = false;
+  for( size_t i=0; i < Matrices.Count(); i++ )  {
+    if( Matrices[i]->GetId() == matrix.GetId() )  {
+      m = Matrices[i];
+      found = true;
+      break;
+    }
+  }
+  if( !found )
+    m = Matrices.Add(new smatd(matrix));
+  OnStructureGrow.Enter(this);
+  GenerateAtom(atom, *m);
   RestoreCoordinates();
   Disassemble();
   Generated = true;

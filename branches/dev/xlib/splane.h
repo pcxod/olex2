@@ -17,7 +17,7 @@ class TSPlane : public TSObject<TNetwork>  {
   TTypeList< AnAssociation2<TSAtom*, double> > Crds;
   vec3d Center;
   mat3d Normals;
-  double Distance;
+  double Distance, RMSD;
   uint16_t Flags;
   size_t DefId;
   void _Init(const TTypeList<AnAssociation2<vec3d, double> >& points);
@@ -45,6 +45,7 @@ public:
   double Angle(const class TSBond& B) const;
   double Angle(const TSPlane& P) const {  return Angle(P.GetNormal());  }
   double GetD() const {  return Distance;  }
+  double GetRMSD() const {  return RMSD;  }
   double GetZ(const double& X, const double& Y) const {
     return (GetNormal()[2] == 0) ? 0.0 : (GetNormal()[0]*X + GetNormal()[1]*Y + Distance)/GetNormal()[2];
   }

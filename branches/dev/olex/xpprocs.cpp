@@ -1494,25 +1494,31 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       plane = &xp->Plane();
   }
   if( plane != NULL )  {
+    const TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
     size_t colCount = 3;
-    TTTable<TStrList> tab( Atoms.Count()/colCount + (((Atoms.Count()%colCount)==0)?0:1), colCount*2);
+    TTTable<TStrList> tab(Atoms.Count()/colCount + (((Atoms.Count()%colCount)==0)?0:1), colCount*3);
     for( size_t i=0; i < colCount; i++ )  {
-      tab.ColName(i*2) = "Label";
-      tab.ColName(i*2+1) = "D/A";
+      tab.ColName(i*3) = "Label";
+      tab.ColName(i*3+1) = "D/A";
     }
+    const smatd im = Atoms[0]->Atom().GetMatrix(0).Inverse();
     for( size_t i=0; i < Atoms.Count(); i+=colCount )  {
       for( size_t j=0; j < colCount; j++ )  {
-        if( i + j >= Atoms.Count() )
+        if( (i + j) >= Atoms.Count() )
           break;
-        tab[i/colCount][j*2] = Atoms[i+j]->Atom().GetLabel();
-        double v = plane->DistanceTo(Atoms[i+j]->Atom());
-        tab[i/colCount][j*2+1] = olxstr::FormatFloat(3, v);
+        tab[i/colCount][j*3] = Atoms[i+j]->Atom().GetLabel();
+        vec3d p = im*Atoms[i+j]->Atom().ccrd();
+        const double v = plane->DistanceTo(au.CellToCartesian(p));
+        tab[i/colCount][j*3+1] = olxstr::FormatFloat(3, v);
       }
     }
     TStrList Output;
-    tab.CreateTXTList(Output, olxstr("Atom-to-plane distances for ") << planeName, true, false, "  | ");
-    TBasicApp::GetLog() << ( Output );
-    TBasicApp::GetLog() << ( olxstr("Plane normal: ") << plane->GetNormal().ToString() << '\n');
+    tab.CreateTXTList(Output, olxstr("Atom-to-plane distances for ") << planeName, true, false, " | ");
+    TBasicApp::GetLog() << Output;
+    TBasicApp::GetLog() << (olxstr("Plane normal: ") << olxstr::FormatFloat(3, plane->GetNormal()[0])
+       << ' ' << olxstr::FormatFloat(3, plane->GetNormal()[1])
+       << ' ' << olxstr::FormatFloat(3, plane->GetNormal()[2]) << '\n');
+    TBasicApp::GetLog() << (olxstr("RMSD/A: ") << olxstr::FormatFloat(3, plane->GetRMSD()));
   }
 }
 //..............................................................................

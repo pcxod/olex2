@@ -819,12 +819,15 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   if( Options.Contains('g') && !transforms.IsEmpty() )  {
     TLattice& xlatt = TXApp::GetInstance().XFile().GetLattice();
-    TSAtomPList iatoms;
+    const TUnitCell& uc = xlatt.GetUnitCell();
+    for( size_t i=0; i < transforms.Count(); i++ )
+      uc.InitMatrixId(transforms[i]);
+    TCAtomPList iatoms;
     for( size_t i=0; i < xlatt.AtomCount(); i++ )  {
       TSAtom& sa = xlatt.GetAtom(i);
       if( sa.IsDeleted() )  continue;
       if( sa.IsAUAtom() )
-        iatoms.Add(sa);
+        iatoms.Add(sa.CAtom());
     }
     xlatt.GrowAtoms(iatoms, transforms);
   }
@@ -4030,12 +4033,15 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   if( Options.Contains('g') && !transforms.IsEmpty() )  {
     TLattice& xlatt = xapp.XFile().GetLattice();
-    TSAtomPList iatoms;
+    const TUnitCell& uc = xlatt.GetUnitCell();
+    for( size_t i=0; i < transforms.Count(); i++ )
+      uc.InitMatrixId(transforms[i]);
+    TCAtomPList iatoms;
     for( size_t i=0; i < xlatt.AtomCount(); i++ )  {
       TSAtom& sa = xlatt.GetAtom(i);
       if( sa.IsDeleted() )  continue;
       if( sa.IsAUAtom() )
-        iatoms.Add(sa);
+        iatoms.Add(sa.CAtom());
     }
     xlatt.GrowAtoms(iatoms, transforms);
   }

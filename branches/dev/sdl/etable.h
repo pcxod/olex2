@@ -252,9 +252,10 @@ public:
 
     if( colNames )  {
       Tmp = EmptyString;
-      if( rowNames )  
+      if( rowNames )  {
         Tmp.Format(rowV[0], true, ' ');
-      Tmp << Sep;
+        Tmp << Sep;
+      }
       for( size_t i=0; i < ColCount(); i++ )  {
         Tmp << ColNames[i];
         Tmp.Format(rowV[i+1], true, ' ');
