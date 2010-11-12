@@ -732,7 +732,7 @@ v-[grow] use user provided delta for connectivity analysis, default 2A",
   this_InitMacro(UpdateFile, f,fpOne);
   this_InitMacro(NextSolution, ,fpNone);
 
-  this_InitMacroD(Match, "s-subgraph match&;c-center ([geom], mass)&;n-naming. If the value a symbol [or set of]\
+  this_InitMacroD(Match, "s-subgraph match&;w-use Z as weights&;n-naming. If the value a symbol [or set of]\
  this is appended to the label, '$xx' replaces the symbols after the atom type symbol with xx,\
  leaving the ending, '-xx' - changes the ending of the label with xx&;a-align&;\
 i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fpOne|fpTwo, "Fragment matching, alignment and label transfer routine");
