@@ -16,6 +16,7 @@
 #include "symmparser.h"
 #include "refmodel.h"
 #include "residue.h"
+#include "math/align.h"
 
 #undef GetObject
 
@@ -614,43 +615,32 @@ void TAsymmUnit::FitAtoms(TTypeList<AnAssociation3<TCAtom*, const cm_Element*, b
     throw TInvalidArgumentException(__OlxSourceInfo, "too few atoms for fitting");
   else if( _atom_cnt == 3 )
     _try_invert = false;
-  TTypeList< AnAssociation2<vec3d, vec3d> > crds;
+  TTypeList<align::pair> pairs;
   for( size_t i=0; i < _atoms.Count(); i++ )  {
     if( _atoms[i].GetA() != NULL && _atoms[i].GetC() )
-      crds.AddNew(_atoms[i].GetA()->ccrd(), _crds[i]);
+      CellToCartesian(pairs.AddNew(_atoms[i].GetA()->ccrd(), _crds[i]).a.value);
   }
+  align::out ao = align::FindAlignmentQuaternions(pairs);
   // normal coordinate match
   smatdd tm;
-  vec3d tr, t;
-  for( size_t k=0; k < crds.Count(); k++ )  {
-    t += CellToCartesian(crds[k].A());
-    tr += crds[k].GetB();
-  }
-  t /= crds.Count();
-  tr /= crds.Count();
-  tm.t = t;
-  const double rms = TNetwork::FindAlignmentMatrix(crds, t, tr, tm);
+  QuaternionToMatrix(ao.quaternions[0], tm.r);
+  tm.r.Transpose();
+  tm.t = ao.center_a;
+  vec3d tr = ao.center_b;
   bool invert = false;
   if( _try_invert )  {  // try inverted coordinate set
-    TTypeList< AnAssociation2<vec3d, vec3d> > icrds;
+    TTypeList<align::pair> ipairs;
     for( size_t i=0; i < _atoms.Count(); i++ )  {
       if( _atoms[i].GetA() != NULL && _atoms[i].GetC() )
-        icrds.AddNew(_atoms[i].GetA()->ccrd(), _crds[i]);
+        CellToCartesian(ipairs.AddNew(_atoms[i].GetA()->ccrd()*-1, _crds[i]).a.value);
     }
-    smatdd tmi;
-    vec3d tri;
-    for( size_t i=0; i < crds.Count(); i++ )  {
-      icrds[i].A() = crds[i].GetA();
-      CartesianToCell(icrds[i].B()) *= -1;
-      CellToCartesian(icrds[i].B());
-      tri += icrds[i].GetB();
-    }
-    tri /= crds.Count();
-    tmi.t = t;
-    const double irms = TNetwork::FindAlignmentMatrix(icrds, t, tri, tmi);
-    if( irms < rms && irms >= 0 )  {
-      tr = tri;
-      tm = tmi;
+    align::out iao = align::FindAlignmentQuaternions(ipairs);
+    smatdd itm;
+    QuaternionToMatrix(iao.quaternions[0], itm.r);
+    itm.r.Transpose();
+    if( iao.rmsd[0] < ao.rmsd[0] )  {
+      tr = iao.center_b;
+      tm.r = itm.r;
       invert = true;
     }
   }

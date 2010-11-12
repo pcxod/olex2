@@ -1,12 +1,7 @@
-//---------------------------------------------------------------------------
-
 #ifndef imagepH
 #define imagepH
-#include "evtypes.h"
-//---------------------------------------------------------------------------
 
-class TProcessImage
-{
+class TProcessImage  {
 
 public:
    // takes a 3x3 filter

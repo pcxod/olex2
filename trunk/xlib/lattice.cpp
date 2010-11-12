@@ -987,7 +987,7 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, double weightExtent)  {
   if( weightExtent != 0 )  {
     double swg = 0;
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      const double wght = pow(atoms[i]->GetType().GetMr(), weightExtent);
+      const double wght = pow(atoms[i]->GetType().z, weightExtent);
       Points.AddNew(atoms[i], wght);
       swg += wght;
     }

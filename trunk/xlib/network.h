@@ -181,14 +181,6 @@ public:
   static double FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
                   smatdd& res, bool TryInversion,
                   double (*weight_calculator)(const TSAtom&));
-  /* finds allignment quaternions for given coordinates and specified centers of these coordinates 
-  the quaternions and the rms are sorted ascending 
-  Acta A45 (1989), 208 */
-  static void FindAlignmentQuaternions(const TTypeList< AnAssociation2<vec3d,vec3d> >& crds, 
-	  const vec3d& centA, const vec3d& centB, ematd& quaternions, evecd& rms);
-  /* finds "best" allignment matrix for given coordinates */
-  static double FindAlignmentMatrix(const TTypeList< AnAssociation2<vec3d,vec3d> >& crds, 
-    const vec3d& centA, const vec3d& centB, smatdd& res);
   // prepares a list of atoms, coordinates and weights for VcoV calculations
   static void PrepareESDCalc(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, 
     bool TryInversion,

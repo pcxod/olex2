@@ -5773,8 +5773,8 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   const bool TryInvert = Options.Contains("i");
   TXAtomPList atoms;
   double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_occu;
-  if( Options.FindValue('c', "geom") == "mass" )
-    weight_calculator = &TSAtom::weight_occu_aw;
+  if( Options.Contains('w') )
+    weight_calculator = &TSAtom::weight_occu_z;
   const bool subgraph = Options.Contains("s");
   olxstr suffix = Options.FindValue("n");
   const bool name = Options.Contains("n");
@@ -5787,7 +5787,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       TNetwork &netA = atoms[0]->Atom().GetNetwork(),
                &netB = atoms[1]->Atom().GetNetwork();
       bool match = subgraph ? netA.IsSubgraphOf(netB, res, sk) :
-                              netA.DoMatch( netB, res, TryInvert, weight_calculator);
+                              netA.DoMatch(netB, res, TryInvert, weight_calculator);
       TBasicApp::GetLog() << ( olxstr("Graphs match: ") << match << '\n' );
       if( match )  {
         // restore the other unit cell, if any...
@@ -5803,9 +5803,9 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           tmp << '{' << netA.Node( res[i].GetA()).GetLabel() <<
                  ',' << netB.Node( res[i].GetB()).GetLabel() << '}';
 
-          if( atomsToTransform.IndexOf( &netB.Node(res[i].GetB()) ) == InvalidIndex )  {
+          if( atomsToTransform.IndexOf(&netB.Node(res[i].GetB()) ) == InvalidIndex )  {
             atomsToTransform.Add( &netB.Node( res[i].GetB()) );
-            satomp.AddNew<TSAtom*,TSAtom*>(&netA.Node( res[i].GetA()), &netB.Node( res[i].GetB()));
+            satomp.AddNew<TSAtom*,TSAtom*>(&netA.Node(res[i].GetA()), &netB.Node( res[i].GetB()));
           }
         }
         if( name )  {
@@ -8904,7 +8904,7 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           all_radii[j] = radii.GetValue(ri);
       }
       main_CreateWBox(*FXApp, satoms,
-        use_aw ? TSAtom::weight_occu_aw : TSAtom::weight_occu, all_radii, false);
+        use_aw ? TSAtom::weight_occu_z : TSAtom::weight_occu, all_radii, false);
     }
   }
   else  {
@@ -8922,7 +8922,7 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         all_radii[i] = radii.GetValue(ri);
     }
     main_CreateWBox(*FXApp, TSAtomPList(xatoms, TXAtom::AtomAccessor<>()),
-      use_aw ? TSAtom::weight_occu_aw : TSAtom::weight_occu, all_radii, true);
+      use_aw ? TSAtom::weight_occu_z : TSAtom::weight_occu, all_radii, true);
   }
 }
 //..............................................................................

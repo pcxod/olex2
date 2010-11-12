@@ -1,10 +1,9 @@
-#ifndef egraphH
-#define egraphH
+#ifndef __olx_sdl_egraph_H
+#define __olx_sdl_egraph_H
 #include "typelist.h"
 #include "etraverse.h"
 #include "emath.h"
 #include "edict.h"
-//---------------------------------------------------------------------------
 
 template <class IC, class AssociatedOC> class TEGraphNode : ACollectionItem  {
   IC Data;
@@ -103,25 +102,25 @@ public:
   
   inline bool IsRingNode() const {  return RingNode;  }
   inline void SetRIngNode()  {  RingNode = true;  }
-  inline TEGraphNode& NewNode(const IC& Data, const AssociatedOC& obj )  {
-    return *Nodes.Add( new TEGraphNode(Data, obj) );
+  inline TEGraphNode& NewNode(const IC& Data, const AssociatedOC& obj)  {
+    return *Nodes.Add(new TEGraphNode(Data, obj));
   }
   void SortNodesByTag() {
     Nodes.BubleSorter.SortSF(Nodes, &TEGraphNode::_SortNodesByTag);
   }
   TPtrList<NodeType>& GetNodes() {  return Nodes;  }
-  inline const IC& GetData()  const {  return Data;  }
+  inline const IC& GetData() const {  return Data;  }
   inline const AssociatedOC& GetObject()  const {  return Object;  }
 
   inline size_t Count() const {  return Nodes.Count();  }
   // this is for the traverser
   inline TEGraphNode& Item(size_t i) const  {  return  *Nodes[i];  }
   inline TEGraphNode& operator [](size_t i)  const {  return  *Nodes[i];  }
-  void SwapItems(size_t i, size_t j )  {  
+  void SwapItems(size_t i, size_t j)  {  
     if( i != j )
       Nodes.Swap(i,j);  
   }
-  bool IsShallowEqual( const TEGraphNode& node ) const {
+  bool IsShallowEqual(const TEGraphNode& node) const {
     if( node.GetData() != GetData() )  return false;
     if( node.Count() != Count() )  return false;
     return true;
@@ -158,7 +157,7 @@ public:
       size_t mc=0;
       for( size_t j=0; j < Count(); j++ )  {  // Count equals for both nodes
         // we cannot do node swapping here, since it will invalidate the matching indexes
-        if( Nodes[i]->FullMatch( node[j], analyser ) )  {
+        if( Nodes[i]->FullMatch( node[j], analyser) )  {
            analyser.OnMatch(*this, node, i, j);
            mc++;
         }
@@ -170,21 +169,22 @@ public:
   bool AnalyseMutability(TEGraphNode& node, double& permutations) const {
     if( node.GetData() != GetData() )  return false;
     if( node.Count() != Count() )  return false;
-    size_t maxMatches = 0;
     Mutable = false;
+    TArrayList<size_t> indexes(Count());
+    for( size_t i=0; i < Count(); i++ )
+      indexes[i] = i;
     for( size_t i=0; i < Count(); i++ )  {
       size_t mc=0;
-      for( size_t j=0; j < Count(); j++ )  {  // Count equals for both nodes
-        if( Nodes[i]->AnalyseMutability(node[j], permutations) )
+      for( size_t j=0; j < indexes.Count(); j++ )  {  // Count equals for both nodes
+        if( Nodes[i]->AnalyseMutability(node[indexes[j]], permutations) )  {
            mc++;
+           indexes.Delete(j--);
+        }
       }
-      if( mc == 0 )  return false;
-      if( mc > maxMatches )
-        maxMatches = mc;
-    }
-    if( maxMatches > 1 )  {
-      Mutable = true;
-      permutations *= olx_factorial_t<double,size_t>(maxMatches);
+      if( mc > 1 )  {
+        Mutable = true;
+        permutations *= olx_factorial_t<double,size_t>(mc);
+      }
     }
     return true;
   }
@@ -192,7 +192,7 @@ public:
     if( IsRoot() )  {
       double permutations = 1;
       this->AnalyseMutability(node, permutations);
-      if( permutations > 2000000 )
+      if( permutations > 2e6 )
         throw TFunctionFailedException(__OlxSourceInfo, 
         olxstr("Matching aborted due to high graph symmetry, number of permutations: ") << permutations);
     }

@@ -1247,27 +1247,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\bapp.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\bitarray.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\citem.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\datafile.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\dataitem.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\datastream.h"
 				>
 			</File>
 			<File
@@ -1287,10 +1271,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\ecomplex.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\edict.h"
 				>
 			</File>
@@ -1299,39 +1279,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\efile.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\efilelist.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\egc.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\egraph.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\ellist.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\emath.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\ematrix.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\ememstream.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\encodings.h"
 				>
 			</File>
 			<File
@@ -1348,10 +1300,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\esort.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\esphere.h"
 				>
 			</File>
 			<File
@@ -1383,15 +1331,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\etime.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\etraverse.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\eutf8.h"
 				>
 			</File>
 			<File
@@ -1399,31 +1339,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\evalue.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\evector.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\evpoint.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\evtypes.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\exception.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\filetree.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\function.h"
 				>
 			</File>
 			<File
@@ -1431,39 +1347,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\hashing.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\integration.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\istream.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\library.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\listalg.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\log.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\macroerror.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\macrolib.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\md5.h"
 				>
 			</File>
 			<File
@@ -1479,22 +1367,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\olxmps.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\olxth.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\olxthpool.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\os_util.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\smart\ostring.h"
 				>
 			</File>
@@ -1507,10 +1379,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\poly.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\ptypes.h"
 				>
 			</File>
@@ -1519,19 +1387,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\sha.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\shared.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\singleton.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\sls.h"
 				>
 			</File>
 			<File
@@ -1563,10 +1423,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\threex3.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\tptrlist.h"
 				>
 			</File>
@@ -1578,14 +1434,178 @@
 				RelativePath="..\..\..\sdl\undo.h"
 				>
 			</File>
-			<File
-				RelativePath="..\..\..\sdl\utf8file.h"
+			<Filter
+				Name="encoding"
 				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\xldwriter.h"
+				<File
+					RelativePath="..\..\..\sdl\encodings.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\eutf8.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\hashing.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\md5.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\sha.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="math"
 				>
-			</File>
+				<File
+					RelativePath="..\..\..\sdl\math\align.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\ecomplex.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\emath.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\ematrix.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\esphere.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\evalue.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\evector.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\evpoint.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\poly.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\sls.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\threex3.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="macro"
+				>
+				<File
+					RelativePath="..\..\..\sdl\function.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\library.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\macroerror.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\macrolib.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="io"
+				>
+				<File
+					RelativePath="..\..\..\sdl\datafile.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\dataitem.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\datastream.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\efile.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\efilelist.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\ememstream.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\filetree.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\istream.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\utf8file.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\xldwriter.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="sys"
+				>
+				<File
+					RelativePath="..\..\..\sdl\bapp.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\egc.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\etime.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\log.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\olxmps.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\olxth.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\olxthpool.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\os_util.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
