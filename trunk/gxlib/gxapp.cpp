@@ -1955,7 +1955,7 @@ AGDrawObject* TGXApp::FindLooseObject(const olxstr &Name)  {
   return NULL;
 }
 //..............................................................................
-TSPlane *TGXApp::TmpPlane(TXAtomPList* atoms, int weightExtent)  {
+TSPlane *TGXApp::TmpPlane(TXAtomPList* atoms, double weightExtent)  {
   TSAtomPList SAtoms;
   if( atoms != NULL )
     SAtoms.Assign(*atoms, TXAtom::AtomAccessor<>());
@@ -1965,7 +1965,7 @@ TSPlane *TGXApp::TmpPlane(TXAtomPList* atoms, int weightExtent)  {
   return XFile().GetLattice().TmpPlane(SAtoms, weightExtent);
 }
 //..............................................................................
-TXPlane *TGXApp::AddPlane(TXAtomPList &Atoms, bool regular, int weightExtent)  {
+TXPlane *TGXApp::AddPlane(TXAtomPList &Atoms, bool regular, double weightExtent)  {
   if( Atoms.Count() < 3 )  return NULL;
   TSAtomPList SAtoms(Atoms, TXAtom::AtomAccessor<>());
   TSPlanePList planes = XFile().GetLattice().NewPlane(SAtoms, weightExtent, regular);
