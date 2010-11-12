@@ -1035,14 +1035,15 @@ void TNetwork::FindAlignmentQuaternions(const TTypeList< AnAssociation2<vec3d,ve
 {
   ematd evm(4,4);
   for( size_t i=0; i < crds.Count(); i++ )  {
-    vec3d v = crds[i].GetA() - centA;
+    const vec3d v1 = crds[i].GetA() - centA;
+    const vec3d v2 = crds[i].GetB() - centB;
     const double 
-      xm = v[0] - (crds[i].GetB()[0]-centB[0]),
-      xp = v[0] + (crds[i].GetB()[0]-centB[0]),
-      yp = v[1] + (crds[i].GetB()[1]-centB[1]),
-      ym = v[1] - (crds[i].GetB()[1]-centB[1]),
-      zm = v[2] - (crds[i].GetB()[2]-centB[2]),
-      zp = v[2] + (crds[i].GetB()[2]-centB[2]);
+      xm = v1[0] - v2[0],
+      xp = v1[0] + v2[0],
+      yp = v1[1] + v2[1],
+      ym = v1[1] - v2[1],
+      zm = v1[2] - v2[2],
+      zp = v1[2] + v2[2];
     evm[0][0] += (xm*xm + ym*ym + zm*zm);
       evm[0][1] += (yp*zm - ym*zp);
       evm[0][2] += (xm*zp - xp*zm);

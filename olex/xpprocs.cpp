@@ -1464,7 +1464,7 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TSPlane* plane = NULL;
   bool orientOnly = Options.Contains("n"),
     rectangular = Options.Contains("r");
-  int weightExtent = Options.FindValue("we", "0").ToInt();
+  const double weightExtent = olx_abs(Options.FindValue("we", "0").ToDouble());
   olxstr planeName;
   TXAtomPList Atoms;
   FindXAtoms(Cmds, Atoms, true, true);
@@ -1501,6 +1501,7 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       tab.ColName(i*3+1) = "D/A";
     }
     const smatd im = Atoms[0]->Atom().GetMatrix(0).Inverse();
+    double rmsd = 0;
     for( size_t i=0; i < Atoms.Count(); i+=colCount )  {
       for( size_t j=0; j < colCount; j++ )  {
         if( (i + j) >= Atoms.Count() )
@@ -1508,17 +1509,30 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         tab[i/colCount][j*3] = Atoms[i+j]->Atom().GetLabel();
         vec3d p = im*Atoms[i+j]->Atom().ccrd();
         const double v = plane->DistanceTo(au.CellToCartesian(p));
+        rmsd += v*v;
         tab[i/colCount][j*3+1] = olxstr::FormatFloat(3, v);
       }
     }
+    rmsd = sqrt(rmsd/Atoms.Count());
     TStrList Output;
     tab.CreateTXTList(Output, olxstr("Atom-to-plane distances for ") << planeName, true, false, " | ");
     TBasicApp::GetLog() << Output;
     TBasicApp::GetLog() << (olxstr("Plane normal: ") << olxstr::FormatFloat(3, plane->GetNormal()[0])
        << ' ' << olxstr::FormatFloat(3, plane->GetNormal()[1])
        << ' ' << olxstr::FormatFloat(3, plane->GetNormal()[2]) << '\n');
-    TBasicApp::GetLog() << (olxstr("RMSD/A: ") << olxstr::FormatFloat(3, plane->GetRMSD()));
+    if( weightExtent != 0 )  {
+      TBasicApp::GetLog() << (olxstr("Weighted RMSD/A: ") <<
+        olxstr::FormatFloat(3, plane->GetWeightedRMSD()) << '\n');
+      TBasicApp::GetLog() << (olxstr("RMSD/A: ") << olxstr::FormatFloat(3, plane->CalcRMSD()) << '\n');
+    }
+    else  {
+      TBasicApp::GetLog() << (olxstr("RMSD/A: ") <<
+        olxstr::FormatFloat(3, plane->GetWeightedRMSD()) << '\n');
+    }
+
   }
+  else if( !orientOnly )
+    TBasicApp::GetLog() << "The plane was not created because it is either not unique or valid\n";
 }
 //..............................................................................
 void TMainForm::macCent(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

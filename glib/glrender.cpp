@@ -483,6 +483,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
     GetPrimitive(i).SetString(NULL);
   }
 #endif
+  olx_gl::pushAttrib(GL_ALL_ATTRIB_BITS);
   const bool Select = SelectObjects || SelectPrimitives;
   const bool skip_mat = StereoFlag==glStereoColor;
   static const int DrawMask = sgdoVisible|sgdoSelected|sgdoDeleted|sgdoGrouped;
@@ -607,6 +608,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
       }
     }
   }
+  olx_gl::popAttrib();
 }
 //..............................................................................
 AGDrawObject* TGlRenderer::SelectObject(int x, int y, int depth)  {

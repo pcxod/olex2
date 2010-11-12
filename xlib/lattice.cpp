@@ -934,7 +934,7 @@ TSAtom* TLattice::NewAtom(const vec3d& center)  {
   return a;
 }
 //..............................................................................
-TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, int weightExtent, bool regular)  {
+TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent, bool regular)  {
   TSPlane* Plane = TmpPlane(Atoms, weightExtent);
   TSPlanePList rv;
   if( Plane != NULL)  {
@@ -973,11 +973,13 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, int weightExtent, bool
         Plane->_SetDefId(PlaneDefs.Count()-1);
       }
     }
+    else
+      delete Plane;
   }
   return rv;
 }
 //..............................................................................
-TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
+TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, double weightExtent)  {
   if( atoms.Count() < 3 )  return NULL;
   //TODO: need to consider occupancy for disordered groups ...
   TTypeList<AnAssociation2<TSAtom*, double> > Points;
@@ -985,12 +987,14 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
   if( weightExtent != 0 )  {
     double swg = 0;
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      double wght = pow(atoms[i]->GetType().GetMr(), (double)weightExtent);
+      const double wght = pow(atoms[i]->GetType().GetMr(), weightExtent);
       Points.AddNew(atoms[i], wght);
-      swg += wght*wght;
+      swg += wght;
     }
+    // normalise the sum of weights to atoms.Count()...
+    const double m = atoms.Count()/swg;
     for( size_t i=0; i < Points.Count(); i++ )
-      Points[i].B() /= swg;
+      Points[i].B() *= m;
   }
   else  {
     for( size_t i=0; i < atoms.Count(); i++ )

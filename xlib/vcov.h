@@ -148,7 +148,7 @@ protected:
   template <int k, int type> double _calcPlane(const vec3d_alist& Points) {
     mat3d m, vecs;
     vec3d t;
-    double mass = 0;
+    double mass = 0, qmass = 0;
     TDoubleList& wghts = weights[k];
     vec3d& pp = plane_param[k];
     vec3d& pc = plane_center[k];
@@ -156,25 +156,22 @@ protected:
     for( size_t i=0; i < Points.Count(); i++ )  {
       pc += Points[i]*wghts[i];
       mass += wghts[i];
+      qmass += olx_sqr(wghts[i]);
     }
     pc /= mass;
-
     for( size_t i=0; i < Points.Count(); i++ )  {
-      vec3d t( Points[i] - pc );
-      const double wght = wghts[i]*wghts[i];
-      m[0][0] += (t[0]*t[0]*wght);
-      m[0][1] += (t[0]*t[1]*wght);
-      m[0][2] += (t[0]*t[2]*wght);
-
-      m[1][1] += (t[1]*t[1]*wght);
-      m[1][2] += (t[1]*t[2]*wght);
-
-      m[2][2] += t[2]*t[2]*wght;
+      const vec3d t = (Points[i] - pc)*wghts[i];
+      m[0][0] += (t[0]*t[0]);
+      m[0][1] += (t[0]*t[1]);
+      m[0][2] += (t[0]*t[2]);
+      m[1][1] += (t[1]*t[1]);
+      m[1][2] += (t[1]*t[2]);
+      m[2][2] += (t[2]*t[2]);
     } // equ: d = s[0]*x + s[1]*y + s[2]*z
     m[1][0] = m[0][1];
     m[2][0] = m[0][2];
     m[2][1] = m[1][2];
-    mat3d::EigenValues(m, vecs.I());
+    mat3d::EigenValues(m /= qmass, vecs.I());
     bool swaps = true;
     while( swaps )  {
       swaps = false;
@@ -187,7 +184,7 @@ protected:
       }
     }
     pp = vecs[type];
-    return m[type][type] < 0 ? 0 : sqrt(m[type][type]/Points.Count());
+    return m[type][type] < 0 ? 0 : sqrt(m[type][type]);
   }
   // plane to plane angle in degrees
   double _calcP2PAngle(const vec3d_alist& points, size_t fpc)  {
@@ -245,25 +242,26 @@ protected:
     ematd evm(4,4), quaternions(4,4);
     vec3d cntA, cntB;
     const size_t ac = points.Count()/2;
-    double wghta = 0, wghtb = 0;
+    double wghta = 0, wghtb = 0, sws = 0;
     for( size_t i=0; i < ac; i++ )  {
       cntA += points[i]*weights[0][i];
       cntB += points[ac+i]*weights[0][ac+i];
       wghta += weights[0][i];
       wghtb += weights[0][ac+i];
+      sws += weights[0][i]*weights[0][ac+i];
     }
     cntA /= wghta;
     cntB /= wghtb;
-
     for( size_t i=0; i < ac; i++ )  {
-      const vec3d v = points[i] - cntA;
+      const vec3d v1 = (points[i] - cntA)*weights[0][i];
+      const vec3d v2 = (points[ac+i] - cntB)*weights[0][ac+i];
       const double 
-        xm = v[0] - (points[ac+i][0]-cntB[0]),
-        xp = v[0] + (points[ac+i][0]-cntB[0]),
-        yp = v[1] + (points[ac+i][1]-cntB[1]),
-        ym = v[1] - (points[ac+i][1]-cntB[1]),
-        zm = v[2] - (points[ac+i][2]-cntB[2]),
-        zp = v[2] + (points[ac+i][2]-cntB[2]);
+        xm = v1[0] - v2[0],
+        xp = v1[0] + v2[0],
+        yp = v1[1] + v2[1],
+        ym = v1[1] - v2[1],
+        zm = v1[2] - v2[2],
+        zp = v1[2] + v2[2];
       evm[0][0] += (xm*xm + ym*ym + zm*zm);
       evm[0][1] += (yp*zm - ym*zp);
       evm[0][2] += (xm*zp - xp*zm);
@@ -281,12 +279,12 @@ protected:
       evm[3][2] = evm[2][3];
       evm[3][3] += (xp*xp + yp*yp + zm*zm);
     }
-    ematd::EigenValues(evm, quaternions.I());
+    ematd::EigenValues(evm /= sws, quaternions.I());
     double rms = 1e5;
     for( short i=0; i < 4; i++ )
       if( evm[i][i] < rms )
         rms = evm[i][i];
-    return rms < 0 ? 0 : sqrt(rms/ac);
+    return rms < 0 ? 0 : sqrt(rms);
   }
   // plane to bond angle in degrees
   double _calcP2BAngle(const vec3d_alist& points)  {

@@ -37,7 +37,25 @@ void TSPlane::_Init(const TTypeList<AnAssociation2<vec3d, double> >& points)  {
   Normals[0].Normalise();
   Normals[1] = (points[0].GetA() - Center).Normalise();
   Normals[2] = Normals[0].XProdVec(Normals[1]).Normalise();
-  RMSD = rms[0];
+  wRMSD = rms[0];
+}
+//..............................................................................
+double TSPlane::CalcRMSD() const {
+  if( Crds.IsEmpty() )  return 0;
+  double qd = 0;
+  for( size_t i=0; i < Crds.Count(); i++ )
+    qd += olx_sqr(DistanceTo(*Crds[i].GetA()));
+  return sqrt(qd/Crds.Count());
+}
+//..............................................................................
+double TSPlane::CalcWeightedRMSD() const {
+  if( Crds.IsEmpty() )  return 0;
+  double qd = 0, qw = 0;
+  for( size_t i=0; i < Crds.Count(); i++ )  {
+    qd += olx_sqr(DistanceTo(*Crds[i].GetA())*Crds[i].GetB());
+    qw += olx_sqr(Crds[i].GetB());
+  }
+  return sqrt(qd/qw);
 }
 //..............................................................................
 bool TSPlane::CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms, vec3d& center) {
