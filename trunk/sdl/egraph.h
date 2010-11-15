@@ -11,6 +11,7 @@ template <class IC, class AssociatedOC> class TEGraphNode : ACollectionItem  {
   typedef AnAssociation2<TSizeList,TSizeList> ConnInfo;
   TPtrList<NodeType> Nodes;
   bool RingNode, Root;
+  size_t GroupIndex;
   mutable bool Passed, Mutable;
   mutable TEGraphNode* PassedFor;
   mutable TPtrList<NodeType> PassedForNodes;
@@ -19,6 +20,45 @@ template <class IC, class AssociatedOC> class TEGraphNode : ACollectionItem  {
 protected:
   inline bool IsPassed() const {  return Passed;  }
   inline void SetPassed(bool v)  {  Passed = v;  }
+  void SetPassedR(bool v)  {
+    Passed = v;
+    for( size_t i=0; i < Nodes.Count(); i++ )
+      Nodes[i]->SetPassedR(v);
+  }
+  size_t CountR() const {
+    size_t rv = Nodes.Count();
+    for( size_t i=0; i < Nodes.Count(); i++ )
+      rv += Nodes[i]->CountR();
+    return rv;
+  }
+  void _StoreGroupIndices(TSizeList& l) const {
+    l.Add(GroupIndex);
+    for( size_t i=0; i < Nodes.Count(); i++ )
+      Nodes[i]->_StoreGroupIndices(l);
+  }
+  void StoreGroupIndicesR(TSizeList& l) const {
+    l.Clear();
+    l.SetCapacity(CountR());
+    _StoreGroupIndices(l);
+  }
+  void StoreGroupIndices(TSizeList& l) const {
+    l.SetCapacity(Nodes.Count());
+    for( size_t i=0; i < Nodes.Count(); i++ )
+      l.Add(Nodes[i]->GroupIndex);
+  }
+  void _RestoreGroupIndices(const TSizeList& l, size_t& off)  {
+    GroupIndex = l[off++];
+    for( size_t i=0; i < Nodes.Count(); i++ )
+      Nodes[i]->_RestoreGroupIndices(l, off);
+  }
+  void RestoreGroupIndicesR(const TSizeList& l)  {
+    size_t off = 0;
+    _RestoreGroupIndices(l, off);
+  }
+  void RestoreGroupIndices(const TSizeList& l)  {
+    for( size_t i=0; i < Nodes.Count(); i++ )
+      Nodes[i]->GroupIndex = l[i];
+  }
   static int _SortNodesByTag(const NodeType* n1, const NodeType* n2) {
     return n1->GetTag() - n2->GetTag();
   }
@@ -89,7 +129,7 @@ public:
     }
   }
 public:
-  TEGraphNode( const IC& data, const AssociatedOC& object )  {
+  TEGraphNode(const IC& data, const AssociatedOC& object) : GroupIndex(InvalidIndex)  {
     Data = data;
     Mutable = Root = Passed = RingNode = false;
     Object = object;
@@ -100,9 +140,12 @@ public:
       delete Nodes[i];
   }
   
-  inline bool IsRingNode() const {  return RingNode;  }
-  inline void SetRIngNode()  {  RingNode = true;  }
-  inline TEGraphNode& NewNode(const IC& Data, const AssociatedOC& obj)  {
+  bool IsRingNode() const {  return RingNode;  }
+  bool IsMutable() const {  return Mutable;  }
+  size_t GetGroupIndex() const {  return GroupIndex;  }
+  void SetRingNode()  {  RingNode = true;  }
+  
+  TEGraphNode& NewNode(const IC& Data, const AssociatedOC& obj)  {
     return *Nodes.Add(new TEGraphNode(Data, obj));
   }
   void SortNodesByTag() {
@@ -110,12 +153,12 @@ public:
   }
   TPtrList<NodeType>& GetNodes() {  return Nodes;  }
   inline const IC& GetData() const {  return Data;  }
-  inline const AssociatedOC& GetObject()  const {  return Object;  }
+  inline const AssociatedOC& GetObject() const {  return Object;  }
 
   inline size_t Count() const {  return Nodes.Count();  }
   // this is for the traverser
-  inline TEGraphNode& Item(size_t i) const  {  return  *Nodes[i];  }
-  inline TEGraphNode& operator [](size_t i)  const {  return  *Nodes[i];  }
+  inline TEGraphNode& Item(size_t i) const {  return  *Nodes[i];  }
+  inline TEGraphNode& operator [](size_t i) const {  return  *Nodes[i];  }
   void SwapItems(size_t i, size_t j)  {  
     if( i != j )
       Nodes.Swap(i,j);  
@@ -125,7 +168,7 @@ public:
     if( node.Count() != Count() )  return false;
     return true;
   }
-  bool DoMatch(TEGraphNode& node)  const {
+  bool DoMatch(TEGraphNode& node) const {
     if( node.GetData() != GetData() )  return false;
     //if( IsRingNode() )  return true;
     if( node.Count() != Count() )  return false;
@@ -138,7 +181,7 @@ public:
       for( size_t j=0; j < Count(); j++ )  {  // Count equals for both nodes
         if( node[j].IsPassed() )  continue;
         if( Nodes[i]->DoMatch(node[j]) )  {
-          node[j].SetPassed( true );
+          node[j].SetPassed(true);
           indeces[i] = j;  // sorting the nodes to match
           Matched = true;
           break;
@@ -166,19 +209,28 @@ public:
     }
     return true;
   }
-  bool AnalyseMutability(TEGraphNode& node, double& permutations) const {
+  bool AnalyseMutability(TEGraphNode& node, double& permutations)  {
     if( node.GetData() != GetData() )  return false;
     if( node.Count() != Count() )  return false;
     Mutable = false;
-    TArrayList<size_t> indexes(Count());
-    for( size_t i=0; i < Count(); i++ )
-      indexes[i] = i;
     for( size_t i=0; i < Count(); i++ )  {
-      size_t mc=0;
-      for( size_t j=0; j < indexes.Count(); j++ )  {  // Count equals for both nodes
-        if( Nodes[i]->AnalyseMutability(node[indexes[j]], permutations) )  {
-           mc++;
-           indexes.Delete(j--);
+      size_t mc = 0;
+      for( size_t j=0; j < Count(); j++ )  {  // Count equals for both nodes
+        if( j > i )  // do consistent node ordering for all non-unique
+          Nodes[i]->DoMatch(*Nodes[j]);
+        if( Nodes[i]->DoMatch(node[j]) && Nodes[i]->AnalyseMutability(node[j], permutations) )  {
+          if( node[j].GroupIndex == InvalidIndex )  {
+            mc++;
+            if( Nodes[i]->GroupIndex == InvalidIndex )
+              Nodes[i]->GroupIndex = node[j].GroupIndex = i;
+            else
+              node[j].GroupIndex = Nodes[i]->GroupIndex;
+          }
+          else  {
+            if( Nodes[i]->GroupIndex != InvalidIndex && Nodes[i]->GroupIndex != node[j].GroupIndex )
+              throw 1;
+            Nodes[i]->GroupIndex = node[j].GroupIndex;
+          }
         }
       }
       if( mc > 1 )  {
@@ -188,13 +240,13 @@ public:
     }
     return true;
   }
-  template <class Analyser> bool FullMatchEx(TEGraphNode& node, Analyser& analyser, bool analyse = false) const {
+  template <class Analyser> bool FullMatchEx(TEGraphNode& node, Analyser& analyser, bool analyse = false)  {
     if( IsRoot() )  {
       double permutations = 1;
       this->AnalyseMutability(node, permutations);
-      if( permutations > 2e6 )
+      if( permutations > 1e10 )
         throw TFunctionFailedException(__OlxSourceInfo, 
-        olxstr("Matching aborted due to high graph symmetry, number of permutations: ") << permutations);
+          olxstr("Matching aborted due to high graph symmetry, number of permutations: ") << permutations);
     }
     const size_t node_cnt = Count();
     if( node.GetData() != GetData() )  return false;
