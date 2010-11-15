@@ -5805,7 +5805,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 
           if( atomsToTransform.IndexOf(&netB.Node(res[i].GetB()) ) == InvalidIndex )  {
             atomsToTransform.Add( &netB.Node( res[i].GetB()) );
-            satomp.AddNew<TSAtom*,TSAtom*>(&netA.Node(res[i].GetA()), &netB.Node( res[i].GetB()));
+            satomp.AddNew<TSAtom*,TSAtom*>(&netA.Node(res[i].GetA()), &netB.Node(res[i].GetB()));
           }
         }
         if( name )  {
