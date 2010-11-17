@@ -38,7 +38,6 @@ public:
   TSAtom(TNetwork* N);
   virtual ~TSAtom();
   void Assign(const TSAtom& S);
-  
   // Is/Set
   DefPropBFIsSet(Deleted, Flags, satom_Deleted)
   DefPropBFIsSet(Standalone, Flags, satom_Standalone)

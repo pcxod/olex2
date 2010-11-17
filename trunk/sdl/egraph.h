@@ -135,10 +135,7 @@ public:
     Object = object;
     PassedFor = NULL;
   }
-  ~TEGraphNode()  {
-    for( size_t i=0; i < Nodes.Count(); i++ )
-      delete Nodes[i];
-  }
+  ~TEGraphNode()  {  Nodes.DeleteItems(false);  }
   
   bool IsRingNode() const {  return RingNode;  }
   bool IsMutable() const {  return Mutable;  }

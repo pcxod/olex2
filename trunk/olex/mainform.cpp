@@ -919,8 +919,8 @@ separated values of Atom Type and radius, an entry a line");
  If 'full' is provided as argument, the adoptor names are also returned as adapter=MAC;..");
   this_InitFuncD(ThreadCount, fpNone|fpOne, "Returns/sets the number of simultaneous tasks");
   this_InitFuncD(FullScreen, fpNone|fpOne, "Returns/sets full screen mode (true/false/swap)");
-  this_InitFuncD(MatchFiles, fpTwo,
-    "Matches given files and returns the result as {direct_match,inverse_match,largest_distance}");
+  this_InitFuncD(MatchFiles, fpTwo|fpThree,
+    "Matches given files");
 
   Library.AttachLibrary(FXApp->ExportLibrary());
   Library.AttachLibrary(TEFile::ExportLibrary());
