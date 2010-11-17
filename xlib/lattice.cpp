@@ -2164,14 +2164,14 @@ void TLattice::FromDataItem(TDataItem& item)  {
   Delta = item.GetRequiredField("delta").ToDouble();
   DeltaI = item.GetRequiredField("deltai").ToDouble();
   Generated = item.GetRequiredField("grown").ToBool();
-  GetAsymmUnit().FromDataItem( item.FindRequiredItem("AUnit") );
+  GetAsymmUnit().FromDataItem(item.FindRequiredItem("AUnit"));
   const TDataItem& mat = item.FindRequiredItem("Matrices");
-  Matrices.SetCapacity( mat.ItemCount() );
+  Matrices.SetCapacity(mat.ItemCount());
   for( size_t i=0; i < mat.ItemCount(); i++ )  {
     smatd* m = new smatd;
     TSymmParser::SymmToMatrix(mat.GetItem(i).GetValue(), *m);
     Matrices.Add(m);
-    m->SetRawId(mat.GetItem(i).GetRequiredField("id").ToUInt() );
+    m->SetRawId(mat.GetItem(i).GetRequiredField("id").ToUInt());
   }
   // precreate fragments
   const TDataItem& frags = item.FindRequiredItem("Fragments");
@@ -2187,7 +2187,7 @@ void TLattice::FromDataItem(TDataItem& item)  {
   const TDataItem& atoms = item.FindRequiredItem("Atoms");
   Atoms.SetCapacity(atoms.ItemCount());
   for( size_t i=0; i < atoms.ItemCount(); i++ )
-    Atoms.Add( new TSAtom(NULL) )->SetLattId(i);
+    Atoms.Add(new TSAtom(NULL))->SetLattId(i);
   for( size_t i=0; i < atoms.ItemCount(); i++ )
     Atoms[i]->FromDataItem(atoms.GetItem(i), *this);
   // load bonds

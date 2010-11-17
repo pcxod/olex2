@@ -1,15 +1,10 @@
 #ifndef __olxs_v_co_v_h
 #define __olxs_v_co_v_h
+#include "math/align.h"
 #include "asymmunit.h"
 #include "lattice.h"
 #include "bapp.h"
 #include "log.h"
-/*
-  after several days if differentiation, I came across som stuff, which became to complecated and
-  tried to use the numerical differentiation, as all the functions calculated here are "smooth". The
-  results have shown that the resultiong esd is very similar to the exact expressions for angles and
-  some othe parameters, so here is the way forward, no more complecated fomulas!
-*/
 BeginXlibNamespace()
 
 const short // constants decribing the stored values
@@ -17,13 +12,11 @@ const short // constants decribing the stored values
   vcoviY = 1,
   vcoviZ = 2,
   vcoviO = 3;
-
 // stores X,Y,Z,SOF for each atom and their correlations
 class VcoVMatrix {
   double **data;
   size_t count;
-  // atom label, 
-  TTypeList< AnAssociation3<olxstr, short, size_t> > Index;
+  TTypeList<AnAssociation3<olxstr, short, size_t> > Index;
 protected:
   void Allocate(size_t w) {
     Clear();
@@ -58,18 +51,18 @@ public:
   double Get(size_t i, size_t j) const {
     return (j <= i ) ? data[i][j] : data[j][i];
   }
-  // reads the shelxl VcoV matrix and initialises atom loader Ids'
+  // reads the shelxl VcoV matrix
   void ReadShelxMat(const olxstr& fileName, TAsymmUnit& au);
-  // reads the smtbx VcoV matrix and initialises atom loader Ids'
+  // reads the smtbx VcoV matrix
   void ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au);
-  // fills creates three matrices AA, AB, ... AX, BA, BB, ... BX, ...
+  // creates matrices AA, AB, ... AX, BA, BB, ... BX, ...
   template <class list> void FindVcoV(const list& atoms, mat3d_list& m) const {
     TSizeList a_indexes;
     TTypeList<TVector3<size_t> > indexes;
     for( size_t i=0; i < atoms.Count(); i++ )  {
       a_indexes.Add(FindAtomIndex(atoms[i]->CAtom()));
       if( a_indexes.GetLast() == InvalidIndex )
-        TBasicApp::GetLog().Error( olxstr("Unable to located provided atom: ") << atoms[i]->GetLabel());
+        TBasicApp::GetLog().Error( olxstr("Unable to located given atom: ") << atoms[i]->GetLabel());
       indexes.AddNew(InvalidIndex,InvalidIndex,InvalidIndex);
     }
     for( size_t i=0; i < a_indexes.Count(); i++ )  {
@@ -239,52 +232,9 @@ protected:
   }
   // alignment RMSD
   double _calcAllignmentRMSD(const vec3d_alist& points)  {
-    ematd evm(4,4), quaternions(4,4);
-    vec3d cntA, cntB;
-    const size_t ac = points.Count()/2;
-    double wghta = 0, wghtb = 0, sws = 0;
-    for( size_t i=0; i < ac; i++ )  {
-      cntA += points[i]*weights[0][i];
-      cntB += points[ac+i]*weights[0][ac+i];
-      wghta += weights[0][i];
-      wghtb += weights[0][ac+i];
-      sws += weights[0][i]*weights[0][ac+i];
-    }
-    cntA /= wghta;
-    cntB /= wghtb;
-    for( size_t i=0; i < ac; i++ )  {
-      const vec3d v1 = (points[i] - cntA)*weights[0][i];
-      const vec3d v2 = (points[ac+i] - cntB)*weights[0][ac+i];
-      const double 
-        xm = v1[0] - v2[0],
-        xp = v1[0] + v2[0],
-        yp = v1[1] + v2[1],
-        ym = v1[1] - v2[1],
-        zm = v1[2] - v2[2],
-        zp = v1[2] + v2[2];
-      evm[0][0] += (xm*xm + ym*ym + zm*zm);
-      evm[0][1] += (yp*zm - ym*zp);
-      evm[0][2] += (xm*zp - xp*zm);
-      evm[0][3] += (xp*ym - xm*yp);
-      evm[1][0] = evm[0][1];
-      evm[1][1] += (yp*yp + zp*zp + xm*xm);
-      evm[1][2] += (xm*ym - xp*yp);
-      evm[1][3] += (xm*zm - xp*zp);
-      evm[2][0] = evm[0][2];
-      evm[2][1] = evm[1][2];
-      evm[2][2] += (xp*xp + zp*zp + ym*ym);
-      evm[2][3] += (ym*zm - yp*zp);
-      evm[3][0] = evm[0][3];
-      evm[3][1] = evm[1][3];
-      evm[3][2] = evm[2][3];
-      evm[3][3] += (xp*xp + yp*yp + zm*zm);
-    }
-    ematd::EigenValues(evm /= sws, quaternions.I());
-    double rms = 1e5;
-    for( short i=0; i < 4; i++ )
-      if( evm[i][i] < rms )
-        rms = evm[i][i];
-    return rms < 0 ? 0 : sqrt(rms);
+    align::ListsToPairAdaptor<vec3d_alist, TDoubleList> l2p(points, weights[0]);
+    align::out ao = align::FindAlignmentQuaternions(l2p);
+    return align::CalcRMSD(l2p, ao);
   }
   // plane to bond angle in degrees
   double _calcP2BAngle(const vec3d_alist& points)  {

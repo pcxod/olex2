@@ -159,20 +159,20 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
     TransformAtoms(atomsA, rm, rm*AtomsToMatch[0]->Atom().crd()-AtomsToMatch[1]->Atom().crd());
   }
   else  {
-    TTypeList<AnAssociation2<TSAtom*,TSAtom*> > atoms(AtomsToMatch.Count()/2);
-    vec3d center;
-    double weight = 0;
+    TArrayList<AnAssociation2<TSAtom*,TSAtom*> > atoms(AtomsToMatch.Count()/2);
     for( size_t i=0; i < AtomsToMatch.Count(); i+=2 )  {
-      atoms.Set(i/2, new AnAssociation2<TSAtom*,TSAtom*>(
-      &AtomsToMatch[i+1]->Atom(), &AtomsToMatch[i]->Atom()));
-      center += AtomsToMatch[i]->Atom().crd()*TSAtom::weight_occu(AtomsToMatch[i]->Atom());
-      weight += TSAtom::weight_occu(AtomsToMatch[i]->Atom());
+      atoms[i/2].A() = &AtomsToMatch[i]->Atom();
+      atoms[i/2].B() = &AtomsToMatch[i+1]->Atom();
     }
-    center /= weight;
-    smatdd rm;
-    TNetwork::FindAlignmentMatrix(atoms, rm, false, TSAtom::weight_occu);
-    for( size_t i=0; i < atomsA.Count(); i++ )
-      atomsA[i]->crd() = rm*(atomsA[i]->crd()-center);
+    align::out ao = TNetwork::GetAlignmentInfo(atoms, false, TSAtom::weight_z);
+    mat3d m;
+    QuaternionToMatrix(ao.quaternions[0], m);
+    for( size_t i=0; i < atomsA.Count(); i++ )  {
+      atomsA[i]->crd() = (atomsA[i]->crd()-ao.center_a)*m + ao.center_b;
+      if( atomsA[i]->GetEllipsoid() != NULL )
+        atomsA[i]->GetEllipsoid()->MultMatrix(m);
+    }
+    //TNetwork::DoAlignAtoms(atomsA, ao);
   }
   TGlXApp::GetGXApp()->UpdateBonds();
 }

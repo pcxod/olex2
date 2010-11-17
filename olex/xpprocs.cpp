@@ -593,7 +593,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   FBitmapDraw = true;
   FGlConsole->SetVisible(false);
   FXApp->BeginDrawBitmap(res);
-  FXApp->GetRender().EnableFog( FXApp->GetRender().IsFogEnabled() );
+  FXApp->GetRender().EnableFog(FXApp->GetRender().IsFogEnabled());
 
   FXApp->Draw();
   GdiFlush();
@@ -5705,37 +5705,29 @@ void TMainForm::macNextSolution(TStrObjList &Cmds, const TParamList &Options, TM
 }
 //..............................................................................
 //..............................................................................
-double MatchAtomPairsQT(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-                        smatdd& res, bool TryInversion, double (*weight_calculator)(const TSAtom&),
-                        bool print = true)  {
-  if( atoms.Count() < 3 )  return -1;
-  double rms = TNetwork::FindAlignmentMatrix(atoms, res, TryInversion, weight_calculator);
-  if( print )
-    TBasicApp::GetLog() << ( olxstr("RMS is ") << olxstr::FormatFloat(3, rms) << " A\n");
-  return rms;
-}
-//..............................................................................
-bool MatchConsiderNet(const TNetwork& net)  {
-  return !(net.NodeCount() < 3 || net.Node(0).CAtom().IsDetached());
-}
-//..............................................................................
-double MatchAtomPairsQTEsd(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-                        smatdd& res, bool TryInversion, double (*weight_calculator)(const TSAtom&))
+TNetwork::AlignInfo MatchAtomPairsQT(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+  bool TryInversion, double (*weight_calculator)(const TSAtom&),
+  bool print = true)
 {
-  if( atoms.Count() < 3 )  return -1;
+  TNetwork::AlignInfo rv = TNetwork::GetAlignmentRMSD(atoms, TryInversion, weight_calculator);
+  if( print )
+    TBasicApp::GetLog() << ( olxstr("RMS is ") << olxstr::FormatFloat(3, rv.rmsd.GetV()) << " A\n");
+  return rv;
+}
+//..............................................................................
+TNetwork::AlignInfo MatchAtomPairsQTEsd(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+  bool TryInversion, double (*weight_calculator)(const TSAtom&))
+{
   VcoVContainer vcovc;
   TXApp& xapp = TXApp::GetInstance();
-  vcovc.ReadShelxMat( TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "mat"), 
-    xapp.XFile().GetAsymmUnit() );
-
+  xapp.GetLog() << "Using " << xapp.InitVcoV(vcovc) << " matrix for the calculation\n";
   TSAtomPList atoms_out;
   vec3d_alist crds_out;
   TDoubleList wghts_out;
   TNetwork::PrepareESDCalc(atoms, TryInversion, atoms_out, crds_out ,wghts_out, weight_calculator);
   TEValue<double> rv = vcovc.CalcAlignmentRMSD(atoms_out, crds_out, wghts_out);
-  TBasicApp::GetLog() << ( olxstr("RMS is ") << rv.ToString() << " A\n");
-  double rms = TNetwork::FindAlignmentMatrix(atoms, res, TryInversion, weight_calculator);
-  return rms;
+  TBasicApp::GetLog() << (olxstr("RMSD is ") << rv.ToString() << " A\n");
+  return TNetwork::GetAlignmentRMSD(atoms, TryInversion, weight_calculator);
 }
 //..............................................................................
 void TMainForm::CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS)  {
@@ -5759,199 +5751,196 @@ void TMainForm::CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS)  
 void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TActionQueue* q_draw = FXApp->FindActionQueue(olxappevent_GL_DRAW);
   if( q_draw != NULL )  q_draw->SetEnabled(false);
-  // restore if already applied
-  TLattice& latt = FXApp->XFile().GetLattice();
-  const TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
-  latt.RestoreADPs();
-  FXApp->UpdateBonds();
-  FXApp->CenterView();
-  if( Options.Contains("u") )  {
-    if( q_draw != NULL )  q_draw->SetEnabled(true);
-    return;
-  }
-  CallbackFunc(StartMatchCBName, EmptyString);
-  const bool TryInvert = Options.Contains("i");
-  TXAtomPList atoms;
-  double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_occu;
-  if( Options.Contains('w') )
-    weight_calculator = &TSAtom::weight_occu_z;
-  const bool subgraph = Options.Contains("s");
-  olxstr suffix = Options.FindValue("n");
-  const bool name = Options.Contains("n");
-  const bool align = Options.Contains("a");
-  FindXAtoms(Cmds, atoms, false, true);
-  if( !atoms.IsEmpty() )  {
-    if( atoms.Count() == 2 && (&atoms[0]->Atom().GetNetwork() != &atoms[1]->Atom().GetNetwork()) )  {
-      TTypeList<AnAssociation2<size_t, size_t> > res;
-      TSizeList sk;
-      TNetwork &netA = atoms[0]->Atom().GetNetwork(),
-               &netB = atoms[1]->Atom().GetNetwork();
-      bool match = subgraph ? netA.IsSubgraphOf(netB, res, sk) :
-                              netA.DoMatch(netB, res, TryInvert, weight_calculator);
-      TBasicApp::GetLog() << ( olxstr("Graphs match: ") << match << '\n' );
-      if( match )  {
-        // restore the other unit cell, if any...
-        if( &latt != &netA.GetLattice() || &latt != &netB.GetLattice() )  {
-          TLattice& latt1 = (&latt == &netA.GetLattice()) ? netB.GetLattice() : netA.GetLattice();
-          latt1.RestoreADPs();
-        }
-        TTypeList< AnAssociation2<TSAtom*,TSAtom*> > satomp;
-        TSAtomPList atomsToTransform;
-        TBasicApp::GetLog() << ("Matching pairs:\n");
-        olxstr tmp('=');
-        for( size_t i=0; i < res.Count(); i++ )  {
-          tmp << '{' << netA.Node( res[i].GetA()).GetLabel() <<
-                 ',' << netB.Node( res[i].GetB()).GetLabel() << '}';
-
-          if( atomsToTransform.IndexOf(&netB.Node(res[i].GetB()) ) == InvalidIndex )  {
-            atomsToTransform.Add( &netB.Node( res[i].GetB()) );
-            satomp.AddNew<TSAtom*,TSAtom*>(&netA.Node(res[i].GetA()), &netB.Node(res[i].GetB()));
-          }
-        }
-        if( name )  {
-          if( suffix.Length() > 1 && suffix.CharAt(0) == '$' )  {  // change CXXX to CSuffix+whatever left of XXX
-            olxstr new_l;
-            const olxstr l_val = suffix.SubStringFrom(1);
-            for( size_t i=0; i < res.Count(); i++ )  {
-              const olxstr& old_l = netA.Node(res[i].GetA()).GetLabel();
-              const cm_Element& elm = netA.Node(res[i].GetA()).GetType();
-              const index_t l_d = old_l.Length() - elm.symbol.Length();
-              if( l_d <= (index_t)l_val.Length() ) 
-                new_l = elm.symbol + l_val;
-              else if( l_d > (index_t)l_val.Length() )
-                new_l = olxstr(elm.symbol) << l_val << old_l.SubStringFrom(elm.symbol.Length()+l_val.Length());
-              netB.Node(res[i].GetB()).CAtom().SetLabel(new_l, false);
-            }
-          }
-          else if( suffix.Length() > 1 && suffix.CharAt(0) == '-' )  {  // change the ending
-            olxstr new_l;
-            const olxstr l_val = suffix.SubStringFrom(1);
-            for( size_t i=0; i < res.Count(); i++ )  {
-              const olxstr& old_l = netA.Node(res[i].GetA()).GetLabel();
-              const cm_Element& elm = netA.Node(res[i].GetA()).GetType();
-              const index_t l_d = old_l.Length() - elm.symbol.Length();
-              if( l_d <= (index_t)l_val.Length() ) 
-                new_l = elm.symbol + l_val;
-              else if( l_d > (index_t)l_val.Length() )
-                new_l = old_l.SubStringTo(old_l.Length()-l_val.Length()) << l_val;
-              netB.Node(res[i].GetB()).CAtom().SetLabel(new_l, false);
-            }
-          }
-          else  {
-            for( size_t i=0; i < res.Count(); i++ )
-              netB.Node(res[i].GetB()).CAtom().SetLabel(netA.Node(res[i].GetA()).GetLabel() + suffix, false);
-          }
-        }
-        smatdd S;
-        double rms = -1;
-        if( Options.Contains("esd") )
-          rms = MatchAtomPairsQTEsd(satomp, S, TryInvert, weight_calculator);
-        else
-          rms = MatchAtomPairsQT( satomp, S, TryInvert, weight_calculator);
-        TBasicApp::GetLog() << ("Transformation matrix B to A):\n");
-        for( int i=0; i < 3; i++ )
-          TBasicApp::GetLog() << S.r[i].ToString() << ' ' << S.t[i] << '\n' ;
-        // execute callback function
-        CallMatchCallbacks(netA, netB, rms);
-        // ends execute callback
-        if( align && rms >= 0 )  {
-          TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, TryInvert, weight_calculator);
-          FXApp->UpdateBonds();
-          FXApp->CenterView();
-        }
-
-        TBasicApp::GetLog() << (tmp << '\n');
-        if( subgraph )  {
-          sk.Add( res[0].GetB() );
-          res.Clear();
-          while( atoms[0]->Atom().GetNetwork().IsSubgraphOf( atoms[1]->Atom().GetNetwork(), res, sk ) )  {
-            sk.Add( res[0].GetB() );
-            tmp = '=';
-            for( size_t i=0; i < res.Count(); i++ )  {
-              tmp << '{' << atoms[0]->Atom().GetNetwork().Node( res[i].GetA()).GetLabel() <<
-                     ',' << atoms[1]->Atom().GetNetwork().Node( res[i].GetB()).GetLabel() << '}';
-            }
-            TBasicApp::GetLog() << (tmp << '\n');
-            res.Clear();
-          }
-        }
-      }
-    }
-    else if( atoms.Count() >= 6 && (atoms.Count()%2) == 0 )  {  // a full basis provided
-      TTypeList< AnAssociation2<TSAtom*,TSAtom*> > satomp;
-      TSAtomPList atomsToTransform;
-      for( size_t i=0; i < atoms.Count()/2; i++ )
-        satomp.AddNew<TSAtom*,TSAtom*>(&atoms[i]->Atom(), &atoms[i+atoms.Count()/2]->Atom());
-      TNetwork &netA = satomp[0].GetA()->GetNetwork(),
-               &netB = satomp[0].GetB()->GetNetwork();
-      bool valid = true;
-      for( size_t i=1; i < satomp.Count(); i++ )  {
-        if( satomp[i].GetA()->GetNetwork() != netA || satomp[i].GetB()->GetNetwork() != netB )  {
-          valid = false;
-          E.ProcessingError(__OlxSrcInfo, "atoms should belong to two distinct fragments or the same fragment");
-          break;
-        }
-      }
-      if( valid )  {
-        // restore the other unit cell, if any...
-        if( &latt != &netA.GetLattice() || &latt != &netB.GetLattice() )  {
-          TLattice& latt1 = (&latt == &netA.GetLattice()) ? netB.GetLattice() : netA.GetLattice();
-          latt1.RestoreADPs();
-        }
-        if( netA != netB )  {  // collect all atoms
-          for( size_t i=0; i < netB.NodeCount(); i++ )
-            atomsToTransform.Add(netB.Node(i));
-        }
-        else  {
-          for( size_t i=atoms.Count()/2; i < atoms.Count(); i++ )
-            atomsToTransform.Add(atoms[i]->Atom());
-        }
-        smatdd S;
-        double rms = MatchAtomPairsQT( satomp, S, TryInvert, weight_calculator);
-        TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, TryInvert, weight_calculator);
-        FXApp->UpdateBonds();
-        FXApp->CenterView();
-        CallMatchCallbacks(netA, netB, rms);
-      }
-    }
-  }
-  else  {
-    TNetPList nets;
-    FXApp->GetNetworks(nets);
-    TTypeList<AnAssociation2<size_t, size_t> > res;
-    TTypeList<AnAssociation2<TSAtom*,TSAtom*> > satomp;
-    TSAtomPList atomsToTransform;
-    // restore the other unit cell, if any...
-    for( size_t i=0; i < nets.Count(); i++ )  {
-      if( &latt != &nets[i]->GetLattice() )
-        nets[i]->GetLattice().RestoreADPs();
-    }
-    for( size_t i=0; i < nets.Count(); i++ )  {
-      if( !MatchConsiderNet(*nets[i]) )  continue;
-      for( size_t j=i+1; j < nets.Count(); j++ )  {
-        if( !MatchConsiderNet(*nets[j]) )  continue;
-        res.Clear();
-        if( nets[i]->DoMatch( *nets[j], res, TryInvert, weight_calculator) )  {
-          satomp.Clear();
-          atomsToTransform.Clear();
-          for( size_t k=0; k < res.Count(); k++ )  {
-            if( atomsToTransform.IndexOf( &nets[j]->Node(res[k].GetB()) ) == InvalidIndex )  {
-              atomsToTransform.Add( &nets[j]->Node( res[k].GetB()) );
-              satomp.AddNew<TSAtom*,TSAtom*>(&nets[i]->Node( res[k].GetA()),
-                                             &nets[j]->Node( res[k].GetB()));
-            }
-          }
-          smatdd S;
-          double rms = MatchAtomPairsQT(satomp, S, TryInvert, weight_calculator);
-          CallMatchCallbacks(*nets[i], *nets[j], rms);
-          if( rms >= 0 ) 
-            TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, TryInvert, weight_calculator);
-        }
-      }
-    }
+  try  {
+    // restore if already applied
+    TLattice& latt = FXApp->XFile().GetLattice();
+    const TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
+    latt.RestoreADPs();
     FXApp->UpdateBonds();
     FXApp->CenterView();
-    // do match all possible fragments with similar number of atoms
+    if( Options.Contains("u") )  {
+      if( q_draw != NULL )  q_draw->SetEnabled(true);
+      return;
+    }
+    CallbackFunc(StartMatchCBName, EmptyString);
+    const bool TryInvert = Options.Contains("i");
+    TXAtomPList atoms;
+    double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_occu;
+    if( Options.Contains('w') )
+      weight_calculator = &TSAtom::weight_occu_z;
+    const bool subgraph = Options.Contains("s");
+    olxstr suffix = Options.FindValue("n");
+    const bool name = Options.Contains("n");
+    const bool align = Options.Contains("a");
+    FindXAtoms(Cmds, atoms, false, true);
+    if( !atoms.IsEmpty() )  {
+      if( atoms.Count() == 2 && (&atoms[0]->Atom().GetNetwork() != &atoms[1]->Atom().GetNetwork()) )  {
+        TTypeList<AnAssociation2<size_t, size_t> > res;
+        TSizeList sk;
+        TNetwork &netA = atoms[0]->Atom().GetNetwork(),
+          &netB = atoms[1]->Atom().GetNetwork();
+        bool match = subgraph ? netA.IsSubgraphOf(netB, res, sk) :
+          netA.DoMatch(netB, res, TryInvert, weight_calculator);
+        TBasicApp::GetLog() << ( olxstr("Graphs match: ") << match << '\n' );
+        if( match )  {
+          // restore the other unit cell, if any...
+          if( &latt != &netA.GetLattice() || &latt != &netB.GetLattice() )  {
+            TLattice& latt1 = (&latt == &netA.GetLattice()) ? netB.GetLattice() : netA.GetLattice();
+            latt1.RestoreADPs();
+          }
+          TTypeList< AnAssociation2<TSAtom*,TSAtom*> > satomp;
+          TSAtomPList atomsToTransform;
+          TBasicApp::GetLog() << ("Matching pairs:\n");
+          olxstr tmp('=');
+          for( size_t i=0; i < res.Count(); i++ )  {
+            tmp << '{' << netA.Node( res[i].GetA()).GetLabel() <<
+              ',' << netB.Node( res[i].GetB()).GetLabel() << '}';
+
+            if( atomsToTransform.IndexOf(&netB.Node(res[i].GetB()) ) == InvalidIndex )  {
+              atomsToTransform.Add( &netB.Node( res[i].GetB()) );
+              satomp.AddNew<TSAtom*,TSAtom*>(&netA.Node(res[i].GetA()), &netB.Node(res[i].GetB()));
+            }
+          }
+          if( name )  {
+            if( suffix.Length() > 1 && suffix.CharAt(0) == '$' )  {  // change CXXX to CSuffix+whatever left of XXX
+              olxstr new_l;
+              const olxstr l_val = suffix.SubStringFrom(1);
+              for( size_t i=0; i < res.Count(); i++ )  {
+                const olxstr& old_l = netA.Node(res[i].GetA()).GetLabel();
+                const cm_Element& elm = netA.Node(res[i].GetA()).GetType();
+                const index_t l_d = old_l.Length() - elm.symbol.Length();
+                if( l_d <= (index_t)l_val.Length() ) 
+                  new_l = elm.symbol + l_val;
+                else if( l_d > (index_t)l_val.Length() )
+                  new_l = olxstr(elm.symbol) << l_val << old_l.SubStringFrom(elm.symbol.Length()+l_val.Length());
+                netB.Node(res[i].GetB()).CAtom().SetLabel(new_l, false);
+              }
+            }
+            else if( suffix.Length() > 1 && suffix.CharAt(0) == '-' )  {  // change the ending
+              olxstr new_l;
+              const olxstr l_val = suffix.SubStringFrom(1);
+              for( size_t i=0; i < res.Count(); i++ )  {
+                const olxstr& old_l = netA.Node(res[i].GetA()).GetLabel();
+                const cm_Element& elm = netA.Node(res[i].GetA()).GetType();
+                const index_t l_d = old_l.Length() - elm.symbol.Length();
+                if( l_d <= (index_t)l_val.Length() ) 
+                  new_l = elm.symbol + l_val;
+                else if( l_d > (index_t)l_val.Length() )
+                  new_l = old_l.SubStringTo(old_l.Length()-l_val.Length()) << l_val;
+                netB.Node(res[i].GetB()).CAtom().SetLabel(new_l, false);
+              }
+            }
+            else  {
+              for( size_t i=0; i < res.Count(); i++ )
+                netB.Node(res[i].GetB()).CAtom().SetLabel(netA.Node(res[i].GetA()).GetLabel() + suffix, false);
+            }
+          }
+          TNetwork::AlignInfo align_info;
+          if( Options.Contains("esd") )
+            align_info = MatchAtomPairsQTEsd(satomp, TryInvert, weight_calculator);
+          else
+            align_info = MatchAtomPairsQT(satomp, TryInvert, weight_calculator);
+          // execute callback function
+          CallMatchCallbacks(netA, netB, align_info.rmsd.GetV());
+          // ends execute callback
+          if( align )  {
+            TNetwork::DoAlignAtoms(atomsToTransform, align_info);
+            FXApp->UpdateBonds();
+            FXApp->CenterView();
+          }
+
+          TBasicApp::GetLog() << (tmp << '\n');
+          if( subgraph )  {
+            sk.Add( res[0].GetB() );
+            res.Clear();
+            while( atoms[0]->Atom().GetNetwork().IsSubgraphOf( atoms[1]->Atom().GetNetwork(), res, sk ) )  {
+              sk.Add( res[0].GetB() );
+              tmp = '=';
+              for( size_t i=0; i < res.Count(); i++ )  {
+                tmp << '{' << atoms[0]->Atom().GetNetwork().Node(res[i].GetA()).GetLabel() <<
+                  ',' << atoms[1]->Atom().GetNetwork().Node(res[i].GetB()).GetLabel() << '}';
+              }
+              TBasicApp::GetLog() << (tmp << '\n');
+              res.Clear();
+            }
+          }
+        }
+      }
+      else if( atoms.Count() >= 6 && (atoms.Count()%2) == 0 )  {  // a full basis provided
+        TTypeList< AnAssociation2<TSAtom*,TSAtom*> > satomp;
+        TSAtomPList atomsToTransform;
+        for( size_t i=0; i < atoms.Count()/2; i++ )
+          satomp.AddNew<TSAtom*,TSAtom*>(&atoms[i]->Atom(), &atoms[i+atoms.Count()/2]->Atom());
+        TNetwork &netA = satomp[0].GetA()->GetNetwork(),
+          &netB = satomp[0].GetB()->GetNetwork();
+        bool valid = true;
+        for( size_t i=1; i < satomp.Count(); i++ )  {
+          if( satomp[i].GetA()->GetNetwork() != netA || satomp[i].GetB()->GetNetwork() != netB )  {
+            valid = false;
+            E.ProcessingError(__OlxSrcInfo, "atoms should belong to two distinct fragments or the same fragment");
+            break;
+          }
+        }
+        if( valid )  {
+          // restore the other unit cell, if any...
+          if( &latt != &netA.GetLattice() || &latt != &netB.GetLattice() )  {
+            TLattice& latt1 = (&latt == &netA.GetLattice()) ? netB.GetLattice() : netA.GetLattice();
+            latt1.RestoreADPs();
+          }
+          if( netA != netB )  {  // collect all atoms
+            for( size_t i=0; i < netB.NodeCount(); i++ )
+              atomsToTransform.Add(netB.Node(i));
+          }
+          else  {
+            for( size_t i=atoms.Count()/2; i < atoms.Count(); i++ )
+              atomsToTransform.Add(atoms[i]->Atom());
+          }
+          TNetwork::AlignInfo align_info = MatchAtomPairsQT(satomp, TryInvert, weight_calculator);
+          TNetwork::DoAlignAtoms(atomsToTransform, align_info);
+          FXApp->UpdateBonds();
+          FXApp->CenterView();
+          CallMatchCallbacks(netA, netB, align_info.rmsd.GetV());
+        }
+      }
+    }
+    else  {
+      TNetPList nets;
+      FXApp->GetNetworks(nets);
+      TTypeList<AnAssociation2<size_t, size_t> > res;
+      TTypeList<AnAssociation2<TSAtom*,TSAtom*> > satomp;
+      TSAtomPList atomsToTransform;
+      // restore the other unit cell, if any...
+      for( size_t i=0; i < nets.Count(); i++ )  {
+        if( &latt != &nets[i]->GetLattice() )
+          nets[i]->GetLattice().RestoreADPs();
+      }
+      for( size_t i=0; i < nets.Count(); i++ )  {
+        if( !nets[i]->IsSuitableForMatching() )  continue;
+        for( size_t j=i+1; j < nets.Count(); j++ )  {
+          if( !nets[j]->IsSuitableForMatching() )  continue;
+          res.Clear();
+          if( nets[i]->DoMatch(*nets[j], res, TryInvert, weight_calculator) )  {
+            satomp.Clear();
+            atomsToTransform.Clear();
+            for( size_t k=0; k < res.Count(); k++ )  {
+              atomsToTransform.Add(nets[j]->Node(res[k].GetB()));
+              satomp.AddNew<TSAtom*,TSAtom*>(&nets[i]->Node(res[k].GetA()),
+                &nets[j]->Node(res[k].GetB()));
+            }
+            TNetwork::AlignInfo align_info = MatchAtomPairsQT(satomp, TryInvert, weight_calculator);
+            CallMatchCallbacks(*nets[i], *nets[j], align_info.rmsd.GetV());
+            TNetwork::DoAlignAtoms(atomsToTransform, align_info);
+          }
+        }
+      }
+      FXApp->UpdateBonds();
+      FXApp->CenterView();
+      // do match all possible fragments with similar number of atoms
+    }
+  }
+  catch(const TExceptionBase& e)  {
+    if( q_draw != NULL )  q_draw->SetEnabled(true);
+    throw TFunctionFailedException(__OlxSourceInfo, e);
   }
   if( q_draw != NULL )  q_draw->SetEnabled(true);
 }
@@ -9095,6 +9084,98 @@ void TMainForm::macFreeze(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   FXApp->SetDisplayFrozen(Cmds[0].ToBool());
 }
 //..............................................................................
+olxstr TMainForm_funMatchNets(TNetwork& netA, TNetwork& netB, bool invert, bool verbose,
+  double (*w_c)(const TSAtom&))
+{
+  TTypeList<AnAssociation2<size_t, size_t> > res;
+  TSizeList sk;
+  const bool match = netA.DoMatch(netB, res, invert, w_c);
+  if( match )  {
+    olxstr rv;
+    TTypeList<AnAssociation2<TSAtom*,TSAtom*> > satomp;
+    for( size_t i=0; i < res.Count(); i++ )
+      satomp.AddNew<TSAtom*,TSAtom*>(&netA.Node(res[i].GetA()), &netB.Node(res[i].GetB()));
+    TNetwork::AlignInfo align_info = MatchAtomPairsQT(satomp, invert, w_c, false);
+    rv = olxstr::FormatFloat(3, align_info.rmsd.GetV());
+    mat3d m;
+    QuaternionToMatrix(align_info.align_out.quaternions[0], m);
+    TPSTypeList<double, AnAssociation2<TSAtom*,TSAtom*>*> pairs;
+    pairs.SetCapacity(satomp.Count());
+    const TAsymmUnit& au2 = satomp[0].GetB()->GetNetwork().GetLattice().GetAsymmUnit();
+    for( size_t i=0; i < satomp.Count(); i++ )  {
+      vec3d v = satomp[i].GetB()->ccrd();
+      if( invert )  v *= -1;
+      au2.CellToCartesian(v);
+      const double d = (satomp[i].GetA()->crd()-align_info.align_out.center_a).DistanceTo(
+        (v-align_info.align_out.center_b)*m);
+      pairs.Add(d, &satomp[i]);
+    }
+    rv << ",{";
+    if( verbose )  {
+      for( size_t i=0; i < pairs.Count(); i++ )  {
+        size_t index = pairs.Count() - i -1;
+        rv << olxstr::FormatFloat(3, pairs.GetKey(index)) << "(";
+        rv << pairs.GetObject(index)->GetA()->GetLabel() << ',' <<
+          pairs.GetObject(index)->GetB()->GetLabel() << ')';
+        if( i+1 < pairs.Count() )
+          rv << ',';
+      }
+    }
+    else  {
+      rv << olxstr::FormatFloat(3, pairs.GetLastKey()) << "(";
+      rv << pairs.GetLastObject()->GetA()->GetLabel() << ',' <<
+        pairs.GetLastObject()->GetB()->GetLabel() << ')';
+    }
+    return rv << '}';
+  }
+  return XLibMacros::NAString;;
+}
+TStrList TMainForm_funMatchNets1(TNetwork& netA, TNetwork& netB, bool verbose)  {
+  TStrList rv;
+  if( !netA.IsSuitableForMatching() || !netB.IsSuitableForMatching() )  return rv;
+  const olxstr r = TMainForm_funMatchNets(netA, netB, false, verbose, TSAtom::weight_unit);
+  if( r == XLibMacros::NAString )  return rv;
+  rv.Add("Fragment content: ") << netA.GetFormula();
+  rv.Add("inverted:false,weight:unit=") << r; 
+  rv.Add("inverted:false,weight:Z=") << TMainForm_funMatchNets(netA, netB, false, verbose, TSAtom::weight_z);
+  rv.Add("inverted:true,weight:unit=") << TMainForm_funMatchNets(netA, netB, true, verbose, TSAtom::weight_unit); 
+  rv.Add("inverted:true,weight:Z=") << TMainForm_funMatchNets(netA, netB, true, verbose, TSAtom::weight_z); 
+  return rv;
+}
+TStrList TMainForm_funMatchLatts(TLattice& lattA, TLattice& lattB, const TStrObjList& Params)  {
+  TStrList rv;
+  const bool verbose = (Params.Count() == 3 && Params[2].Equalsi("verbose"));
+  if( lattA.FragmentCount() > 1 )  {
+    rv.Add("Comparing '") << TEFile::ExtractFileName(Params[0]) << "' to itself";
+    for( size_t i=0; i < lattA.FragmentCount(); i++ )  {
+      if( !lattA.GetFragment(i).IsSuitableForMatching() )  continue;
+      for( size_t j=i+1; j < lattA.FragmentCount(); j++ )  {
+        if( !lattA.GetFragment(j).IsSuitableForMatching() )  continue;
+        rv.AddList(TMainForm_funMatchNets1(lattA.GetFragment(i), lattA.GetFragment(j), verbose));
+      }
+    }
+  }
+  if( lattB.FragmentCount() > 1 )  {
+    rv.Add("Comparing '") << TEFile::ExtractFileName(Params[1]) << "' to itself";
+    for( size_t i=0; i < lattB.FragmentCount(); i++ )  {
+      if( !lattB.GetFragment(i).IsSuitableForMatching() )  continue;
+      for( size_t j=i+1; j < lattB.FragmentCount(); j++ )  {
+        if( !lattB.GetFragment(j).IsSuitableForMatching() )  continue;
+        rv.AddList(TMainForm_funMatchNets1(lattB.GetFragment(i), lattB.GetFragment(j), verbose));
+      }
+    }
+  }
+  rv.Add("Comparing the two files");
+  for( size_t i=0; i < lattA.FragmentCount(); i++ )  {
+    if( !lattA.GetFragment(i).IsSuitableForMatching() )  continue;
+    for( size_t j=0; j < lattB.FragmentCount(); j++ )  {
+      if( !lattB.GetFragment(j).IsSuitableForMatching() )  continue;
+      rv.AddList(TMainForm_funMatchNets1(lattA.GetFragment(i), lattB.GetFragment(j), verbose));
+    }
+  }
+  return rv;
+}
+//..............................................................................
 void TMainForm::funMatchFiles(const TStrObjList& Params, TMacroError &E)  {
   double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_occu;
   try  {
@@ -9103,59 +9184,20 @@ void TMainForm::funMatchFiles(const TStrObjList& Params, TMacroError &E)  {
     try  {
       f1->LoadFromFile(Params[0]);
       f2->LoadFromFile(Params[1]);
-      olxstr rv = XLibMacros::NAString;
-      if( f1->GetLattice().FragmentCount() > 0 && f2->GetLattice().FragmentCount() > 0 )  {
-        TNetwork& netA = f1->GetLattice().GetFragment(0);
-        TNetwork& netB = f2->GetLattice().GetFragment(0);
-        TTypeList<AnAssociation2<size_t, size_t> > res;
-        TSizeList sk;
-        const bool match = netA.DoMatch(netB, res, false, weight_calculator);
-        if( match )  {
-          TTypeList<AnAssociation2<TSAtom*,TSAtom*> > satomp;
-          TSAtomPList atomsToTransform;
-          for( size_t i=0; i < res.Count(); i++ )  {
-            if( atomsToTransform.IndexOf(netB.Node(res[i].GetB())) == InvalidIndex )  {
-              atomsToTransform.Add(netB.Node(res[i].GetB()));
-              satomp.AddNew<TSAtom*,TSAtom*>(&netA.Node(res[i].GetA()), &netB.Node(res[i].GetB()));
-            }
-          }
-          smatdd S;
-          rv = olxstr::FormatFloat(3, MatchAtomPairsQT(satomp, S, false, weight_calculator, false));
-          TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, false, weight_calculator);
-          double maxd=0;
-          AnAssociation2<TSAtom*,TSAtom*>* maxd_pair = NULL;
-          for( size_t i=0; i < satomp.Count(); i++ )  {
-            const double d = satomp[i].GetA()->crd().DistanceTo(satomp[i].GetB()->crd());
-            if( d > maxd )  {
-              maxd = d;
-              maxd_pair = &satomp[i];
-            }
-          }
-          rv << ',' << olxstr::FormatFloat(3, maxd) << '(';
-          if( maxd_pair != NULL )
-            rv << maxd_pair->GetA()->GetLabel() << ',' << maxd_pair->GetB()->GetLabel();
-
-          rv << ")," << olxstr::FormatFloat(3,
-            MatchAtomPairsQT(satomp, S, true, weight_calculator, false));
-          TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, true, weight_calculator);
-          maxd=0;
-          maxd_pair = NULL;
-          for( size_t i=0; i < satomp.Count(); i++ )  {
-            const double d = satomp[i].GetA()->crd().DistanceTo(satomp[i].GetB()->crd());
-            if( d > maxd )  {
-              maxd = d;
-              maxd_pair = &satomp[i];
-            }
-          }
-          rv << ',' << olxstr::FormatFloat(3, maxd) << '(';
-          if( maxd_pair != NULL )
-            rv << maxd_pair->GetA()->GetLabel() << ',' << maxd_pair->GetB()->GetLabel();
-          rv << ')';
-        }
-      }
+      TStrList rv;
+      TLattice& lattA = f1->GetLattice();
+      TLattice& lattB = f2->GetLattice();
+      rv.Add("!H atoms included");
+      rv.AddList(TMainForm_funMatchLatts(lattA, lattB, Params));
+      rv.Add("!H atoms excluded");
+      lattA.GetAsymmUnit().DetachAtomType(iHydrogenZ, true);
+      lattA.UpdateConnectivity();
+      lattB.GetAsymmUnit().DetachAtomType(iHydrogenZ, true);
+      lattB.UpdateConnectivity();
+      rv.AddList(TMainForm_funMatchLatts(lattA, lattB, Params));
       delete f1;
       delete f2;
-      E.SetRetVal(rv);
+      E.SetRetVal(rv.Text('\n'));
       return;
     }
     catch(...)  {

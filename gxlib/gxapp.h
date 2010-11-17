@@ -130,9 +130,19 @@ protected:
   TEBitArray FVisibility;
   void RestoreVisibility();
   void StoreVisibility();
+  struct BondRef  {
+    const TLattice& latt;
+    TSBond::Ref ref;
+    BondRef(const TLattice& _latt, const TSBond::Ref& _ref): latt(_latt), ref(_ref)  {}
+  };
+  struct AtomRef  {
+    const TLattice& latt;
+    TSAtom::Ref ref;
+    AtomRef(const TLattice& _latt, const TSAtom::Ref& _ref): latt(_latt), ref(_ref)  {}
+  };
   struct GroupData  {
-    TTypeList<TSAtom::Ref> atoms;
-    TTypeList<TSBond::Ref> bonds;
+    TTypeList<AtomRef> atoms;
+    TTypeList<BondRef> bonds;
     olxstr collectionName;
     bool visible;
     index_t parent_id;
@@ -151,10 +161,10 @@ protected:
     }
   };
   struct {
-    TTypeList<TSAtom::Ref> atoms;
+    TTypeList<AtomRef> atoms;
+    TTypeList<BondRef> bonds;
     TTypeList<olxstr> labels;
     TTypeList<vec3d> centers;
-    TTypeList<TSBond::Ref> bonds;
     void Clear()  {
       atoms.Clear();
       bonds.Clear();
@@ -172,6 +182,40 @@ protected:
   void RestoreGroups();
   void StoreGroup(const TGlGroup& glg, GroupData& group);
   void _UpdateGroupIds();
+  size_t LattCount() const {  return OverlayedXFiles.Count()+1;  }
+  TLattice& GetLatt(size_t i) const {  return (i == 0 ? XFile() : OverlayedXFiles[i-1]).GetLattice();  }
+  static size_t CalcMaxAtomTag(const TLattice& latt)  {
+    size_t ac = 0;
+    for( size_t i=0; i < latt.AtomCount(); i++ )
+      if( !latt.GetAtom(i).IsDeleted() )
+        ac++;
+    return ac;
+  }
+  static size_t CalcMaxBondTag(const TLattice& latt)  {
+    size_t bc = 0;
+    for( size_t i=0; i < latt.BondCount(); i++ )
+      if( !latt.GetBond(i).IsDeleted() )
+        bc++;
+    return bc;
+  }
+  size_t GetAtomTag(TSAtom& sa, TSizeList& latt_sz) const {
+    size_t off = 0;
+    for( size_t i=0; i < LattCount(); i++ )  {
+      if( sa.GetNetwork().GetLattice() == GetLatt(i) )
+        return off+sa.GetTag();
+      off += latt_sz[i];
+    }
+    return InvalidIndex;
+  }
+  size_t GetBondTag(TSBond& sb, TSizeList& latt_sz) const {
+    size_t off = 0;
+    for( size_t i=0; i < LattCount(); i++ )  {
+      if( sb.GetNetwork().GetLattice() == GetLatt(i) )
+        return off+sb.GetTag();
+      off += latt_sz[i];
+    }
+    return InvalidIndex;
+  }
 public:
   // stores groups beforehand abd restores afterwards, also considers overlayed files
   void UpdateConnectivity();
@@ -252,6 +296,7 @@ public:
   // calculates maximum radius and center of given lattice
   void CalcLatticeRandCenter(const TLattice& latt, double& r, vec3d& cnt);
   void DeleteOverlayedXFile(size_t index);
+  void DeleteOverlayedXFiles();
 
   void Select(const vec3d& From, const vec3d& To);
   void SelectAll(bool Select);
