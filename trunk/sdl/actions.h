@@ -140,7 +140,7 @@ public:
   void Clear();
 };
 
-// action proxy object, allows syncronisation of two action queues
+// action proxy object, allows synchronisation of two action queues
 class TActionProxy : public AActionHandler  {
   TActionQueue& queue;
 public:
@@ -157,6 +157,31 @@ public:
   virtual bool Execute(const IEObject* Sender, const IEObject* Data=NULL)  {
 	  return queue.Execute(Sender, Data);
 	} 
+};
+// disabled the queue when created and restores the state (if was enabled!) when destroyed
+class TActionQueueLock  {
+  TActionQueue* queue;
+  bool changed;
+public:
+  TActionQueueLock(TActionQueue* _queue) : queue(_queue), changed(false)  {
+    if( queue != NULL )  {
+      if( queue->IsEnabled() )  {
+        changed = true;
+        queue->SetEnabled(false);
+      }
+    }
+  }
+  ~TActionQueueLock()  {
+    if( changed && queue != NULL )
+      queue->SetEnabled(true);
+  }
+  void Unlock()  {
+    if( changed )  {
+      if( queue != NULL )
+        queue->SetEnabled(true);
+      changed = false;
+    }
+  }
 };
 
 class TOnProgress: public IEObject {  // generic on progress data

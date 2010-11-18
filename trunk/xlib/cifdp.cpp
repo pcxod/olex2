@@ -320,13 +320,36 @@ void cetTable::DataFromStrings(TStrList& lines)  {
 }
 int cetTable::TableSorter::Compare(const CifRow* r1, const CifRow* r2)  {
   const size_t sz = r1->Count();
-  for( size_t i=0; i < sz; i++ )  {
-    size_t h1 = r1->GetItem(i)->GetCmpHash();
-    h1 = (h1 == InvalidIndex) ? 0 : h1;
-    size_t h2 = r2->GetItem(i)->GetCmpHash();
-    h2 = (h2 == InvalidIndex) ? 0 : h2;
-    if( h1 < h2 )  return -1;
-    if( h1 > h2 )  return 1;
+  size_t cmpb_cnt = 0;
+  for( size_t i=0; i < sz; i++ )
+    if( r1->GetItem(i)->GetCmpHash() != InvalidIndex )
+      cmpb_cnt++;
+  if( cmpb_cnt == 3 )  {  // special case for sorting angles...
+    int cmps[3] = {0, 0, 0};
+    cmpb_cnt = 0;
+    for( size_t i=0; i < sz; i++ )  {
+      size_t h1 = r1->GetItem(i)->GetCmpHash();
+      if( h1 == InvalidIndex )  continue;
+      cmps[cmpb_cnt] = olx_cmp(h1, r2->GetItem(i)->GetCmpHash());
+      if( ++cmpb_cnt >= 3 )
+        break;
+    }
+    if( cmps[1] == 0 )  {
+      if( cmps[0] == 0 )
+        return cmps[2];
+      return cmps[0];
+    }
+    return cmps[1];
+  }
+  else  {
+    for( size_t i=0; i < sz; i++ )  {
+      size_t h1 = r1->GetItem(i)->GetCmpHash();
+      h1 = (h1 == InvalidIndex) ? 0 : h1;
+      size_t h2 = r2->GetItem(i)->GetCmpHash();
+      h2 = (h2 == InvalidIndex) ? 0 : h2;
+      if( h1 < h2 )  return -1;
+      if( h1 > h2 )  return 1;
+    }
   }
   return 0;
 }

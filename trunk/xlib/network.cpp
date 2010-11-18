@@ -828,7 +828,7 @@ bool TNetwork::TryRing(TSAtom& sa, TSAtomPList& ring, size_t level)  {
 //..............................................................................
 void TNetwork::UnifyRings(TTypeList<TSAtomPList>& rings)  {
   for( size_t i=0; i < rings.Count(); i++ )
-    rings[i].QuickSorter.SortSF( rings[i], TNetwork_SortRingAtoms);
+    rings[i].QuickSorter.SortSF(rings[i], TNetwork_SortRingAtoms);
   // leave unique rings only
   for( size_t i=0; i < rings.Count(); i++ )  {
     if( rings.IsNull(i) )  continue;
@@ -883,6 +883,23 @@ void TNetwork::FindRings(const ElementPList& ringContent, TTypeList<TSAtomPList>
   }
   res.Pack();
 }
+//..............................................................................
+//struct TreeNode {
+//  TSAtom& head;
+//  TSAtomPList<TSAtom> branches;
+//  TreeNode(TSAtom& _head) : head(_head)  {}
+//};
+//bool tryRing(TSAtom& src, TSAtom& left, TSAtom& right)  {
+//  TTypeList<TreeNode> nodes;
+//  for( size_t i=0; i < left.NodeCount(); i++ )  {
+//    if( left.Node(i).GetTag() == -1 )
+//    
+//  }
+//  for( size_t i=0; i < left.NodeCount(); i++ )  {
+//    if( left.Node(i).GetTag() >= src.GetTag() )  {
+//    }
+//  }
+//}
 //..............................................................................
 void TNetwork::FindAtomRings(TSAtom& ringAtom, TTypeList<TSAtomPList>& res)  {
   if( ringAtom.NodeCount() < 2 || &ringAtom.GetNetwork() != this )  return;

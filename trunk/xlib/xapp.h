@@ -76,10 +76,10 @@ public:
 
   static TXApp& GetInstance()  {
     TBasicApp& bai = TBasicApp::GetInstance();
-    TXApp& xai = dynamic_cast<TXApp&>(bai);
-    if( &xai == NULL )
+    TXApp* xai = dynamic_cast<TXApp*>(&bai);
+    if( xai == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "unsuitabe application instance");
-    return xai;
+    return *xai;
   }
   // calculates structure factors for current structure, F.Count must be greater or equal to the ref.Count
   void CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F);
