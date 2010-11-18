@@ -1344,9 +1344,11 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
     if(  !(SData->From == SData->To) )
       Select(SData->From, SData->To);
   }
-  else if( (MsgId == ID_OnUniq || MsgId == ID_OnGrow) && MsgSubId == msiExit ) {
-    if( OverlayedXFileCount() != 0 )
+  else if( MsgSubId == msiExit && (MsgId == ID_OnUniq || MsgId == ID_OnGrow) ) {
+    if( OverlayedXFileCount() != 0 )  {
       AlignOverlayedXFiles();
+      UpdateBonds();
+    }
     CenterView(true);
   }
   else if( MsgId == ID_OnFileLoad )  {
