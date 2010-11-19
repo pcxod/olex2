@@ -99,7 +99,9 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   }
   // copy matrices
   Cartesian2Cell = C.GetCartesianToCell();
+  Cell2CartesianT = C.Cell2CartesianT;
   Cell2Cartesian = C.GetCellToCartesian();
+  Cell2CartesianT = C.Cell2CartesianT;
   Hkl2Cartesian =  C.GetHklToCartesian();
   UcifToUxyz     = C.UcifToUxyz;
   UxyzToUcif     = C.UxyzToUcif;
@@ -844,7 +846,7 @@ void TAsymmUnit::LibGetAtomU(const TStrObjList& Params, TMacroError& E)  {
     GetAtom(index).GetEllipsoid()->GetQuad(Q);
   }
 
-  E.SetRetVal( Q.ToString() );
+  E.SetRetVal(Q.ToString());
 }
 //..............................................................................
 void TAsymmUnit::LibGetAtomUiso(const TStrObjList& Params, TMacroError& E)  {
@@ -1055,6 +1057,14 @@ void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
   if( Z <= 0 ) Z = 1;
 }
 //..............................................................................
+void TAsymmUnit::LibFormula(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal(_SummFormula(' ', 1./olx_max(GetZPrime(), 0.01)));
+}
+//..............................................................................
+void TAsymmUnit::LibWeight(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal(olxstr::FormatFloat(2, MolWeight()));
+}
+//..............................................................................
 
 TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("au") : name );
@@ -1111,6 +1121,10 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
 "Returns current Z divided byt the number of matrices of current spacegroup"  ) );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibSetZprime, "SetZprime", fpOne,
 "Sets Z' for the structure"  ) );
+  lib->RegisterFunction<TAsymmUnit>(new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibFormula, "GetFormula", fpNone,
+"Returns chemical formula of the asymmetric unit") );
+  lib->RegisterFunction<TAsymmUnit>(new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibWeight, "GetWeight", fpNone,
+"Returns molecular mass of the asymmetric unit") );
   return lib;
 }
 //..............................................................................
