@@ -263,6 +263,8 @@ public:
   void LibSetZ(const TStrObjList& Params, TMacroError& E);
   void LibGetZprime(const TStrObjList& Params, TMacroError& E);
   void LibSetZprime(const TStrObjList& Params, TMacroError& E);
+  void LibFormula(const TStrObjList& Params, TMacroError& E);
+  void LibWeight(const TStrObjList& Params, TMacroError& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 };
 

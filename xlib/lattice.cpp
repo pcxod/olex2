@@ -2551,8 +2551,13 @@ void TLattice::SetDeltaI(double v)  {
 //..............................................................................
 //..............................................................................
 void TLattice::LibGetFragmentCount(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( olxstr(FragmentCount()) );
+  E.SetRetVal(olxstr(FragmentCount()));
 }
+//..............................................................................
+void TLattice::LibGetMoiety(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal(CalcMoiety());
+}
+//..............................................................................
 void TLattice::LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= FragmentCount() )
@@ -2567,10 +2572,12 @@ void TLattice::LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 TLibrary*  TLattice::ExportLibrary(const olxstr& name)  {
-  TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("latt") : name);
+  TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("latt") : name);
   lib->RegisterFunction<TLattice>( new TFunction<TLattice>(this,  &TLattice::LibGetFragmentCount, "GetFragmentCount", fpNone,
 "Returns number of fragments in the lattice") );
   lib->RegisterFunction<TLattice>( new TFunction<TLattice>(this,  &TLattice::LibGetFragmentAtoms, "GetFragmentAtoms", fpOne,
 "Returns a comma separated list of atoms in specified fragment") );
+  lib->RegisterFunction<TLattice>( new TFunction<TLattice>(this,  &TLattice::LibGetMoiety, "GetMoiety", fpNone,
+"Returns moelcular moiety") );
   return lib;
 }
