@@ -2760,9 +2760,9 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         esd += olx_sqr(elp.GetEsd(j));
       a.SetUisoEsd(sqrt(esd)/4.);
     }
-    else if( a.GetType() == iHydrogenZ )  {
-      long val = olx_round(a.GetUiso()*1000);
-      a.SetUiso((double)val/1000);
+    else if( a.GetType() == iHydrogenZ && a.GetUisoEsd() == 0 )  {
+      long val = olx_round(a.GetUiso()*100000);
+      a.SetUiso((double)val/100000);
     }
   }
   TCif cif;
