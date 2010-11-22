@@ -1,5 +1,6 @@
 #ifndef __olx_xl_network_H
 #define __olx_xl_network_H
+#include "math/align.h"
 #include "satom.h"
 #include "sbond.h"
 #include "tptrlist.h"
@@ -26,9 +27,9 @@ public:
   // empties the content of the network
   void Clear();
   // adds a node to the network and assigns its NetId
-  void AddNode(TSAtom& N)  {  N.SetNetId(NodeCount());  Nodes.Add(&N);  }
+  void AddNode(TSAtom& N)  { Nodes.Add(N)->SetNetId(NodeCount());  }
   // adds a bond to the network and assigns its NetId
-  void AddBond(TSBond& N)  {  N.SetNetId(BondCount());  Bonds.Add(&N);  }
+  void AddBond(TSBond& B)  {  Bonds.Add(B)->SetNetId(BondCount());  }
 
   // copies the content of S to the net
   void Assign(TNetwork& S);
@@ -162,6 +163,7 @@ public:
   void FindRings(const ElementPList& ringContent, TTypeList<TSAtomPList>& res);
   // returns a content of this fragment
   ContentList GetContentList() const;
+  olxstr GetFormula() const;
   void FindAtomRings(TSAtom& ringAtom, const ElementPList& ringContent,
         TTypeList<TSAtomPList>& res);
   // finds all rings
@@ -188,39 +190,35 @@ public:
     bool IsSingleCSubstituted() const;  // returns true if all substituents are single CHn groups
   };
   static RingInfo& AnalyseRing(const TSAtomPList& ring, RingInfo& ri);
-  /* quaternion method, Acta A45 (1989), 208
-    This function finds the best match between atom pairs and returns the summ of
-    distance deltas between corresponding atoms. If try inversion is specified,
-    the function does the inversion of one of the atomic coordinates prior to
-    the calculation
-  */
-  static double FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-                  smatdd& res, bool TryInversion,
-                  double (*weight_calculator)(const TSAtom&));
-  /* finds allignment quaternions for given coordinates and specified centers of these coordinates 
-  the quaternions and the rms are sorted ascending 
-  Acta A45 (1989), 208 */
-  static void FindAlignmentQuaternions(const TTypeList< AnAssociation2<vec3d,vec3d> >& crds, 
-	  const vec3d& centA, const vec3d& centB, ematd& quaternions, evecd& rms);
-  /* finds "best" allignment matrix for given coordinates */
-  static double FindAlignmentMatrix(const TTypeList< AnAssociation2<vec3d,vec3d> >& crds, 
-    const vec3d& centA, const vec3d& centB, smatdd& res);
+  // returns true of the fragment has enough nodes to be matched/aligned to others
+  bool IsSuitableForMatching() const {  return NodeCount() >= 3 && !Node(0).CAtom().IsDetached();  }
+  struct AlignInfo  {
+    align::out align_out;
+    TEValueD rmsd;  // unweighted rmsd
+    bool inverted;
+  };
+  static AlignInfo GetAlignmentRMSD(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+    bool invert,
+    double (*weight_calculator)(const TSAtom&));
   // prepares a list of atoms, coordinates and weights for VcoV calculations
-  static void PrepareESDCalc(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, 
+  static void PrepareESDCalc(const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms, 
     bool TryInversion,
     TSAtomPList& atoms_out,
     vec3d_alist& crd_out, 
     TDoubleList& wght_out,
     double (*weight_calculator)(const TSAtom&));
-  /* this fuction is used alonside the above one to allign the atoms using provided
-   matrix. Also the Inverted has to be specified if the matric was calculated using
-   the function above with the inverted flag on. The atomsToTransform are the atoms
-   being transformed (typically, the atoms[n].GetA() is the subset of these atoms
-  */
-  static void DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& satomp,
-                   const TSAtomPList& atomsToTransform, const smatdd& S, bool Inverted,
-                   double (*weight_calculator)(const TSAtom&));
 
+  static void DoAlignAtoms(const TSAtomPList& atomsToTransform, const AlignInfo& align_info);
+  
+  static TArrayList<align::pair>& AtomsToPairs(
+    const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+    bool invert,
+    double (*weight_calculator)(const TSAtom&),
+    TArrayList<align::pair>& pairs);
+  static align::out GetAlignmentInfo(
+    const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+    bool invert,
+    double (*weight_calculator)(const TSAtom&));
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);
 

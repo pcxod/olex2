@@ -733,7 +733,7 @@ shells-[grow] grow atom shells vs fragments",
   this_InitMacro(UpdateFile, f,fpOne);
   this_InitMacro(NextSolution, ,fpNone);
 
-  this_InitMacroD(Match, "s-subgraph match&;c-center ([geom], mass)&;n-naming. If the value a symbol [or set of]\
+  this_InitMacroD(Match, "s-subgraph match&;w-use Z as weights&;n-naming. If the value a symbol [or set of]\
  this is appended to the label, '$xx' replaces the symbols after the atom type symbol with xx,\
  leaving the ending, '-xx' - changes the ending of the label with xx&;a-align&;\
 i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fpOne|fpTwo, "Fragment matching, alignment and label transfer routine");
@@ -920,8 +920,8 @@ separated values of Atom Type and radius, an entry a line");
  If 'full' is provided as argument, the adoptor names are also returned as adapter=MAC;..");
   this_InitFuncD(ThreadCount, fpNone|fpOne, "Returns/sets the number of simultaneous tasks");
   this_InitFuncD(FullScreen, fpNone|fpOne, "Returns/sets full screen mode (true/false/swap)");
-  this_InitFuncD(MatchFiles, fpTwo,
-    "Matches given files and returns the result as {direct_match,inverse_match,largest_distance}");
+  this_InitFuncD(MatchFiles, fpTwo|fpThree,
+    "Matches given files");
 
   Library.AttachLibrary(FXApp->ExportLibrary());
   Library.AttachLibrary(TEFile::ExportLibrary());

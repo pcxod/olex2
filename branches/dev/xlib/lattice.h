@@ -152,10 +152,10 @@ public:
   inline TSPlane& GetPlane(size_t i) const {  return *Planes[i];  }
   const TSPlanePList& GetPlanes() const {  return Planes;  }
   // for the grown structure might return more than one plane
-  TSPlanePList NewPlane(const TSAtomPList& Atoms, int weightExtent=0, bool regular=false);
+  TSPlanePList NewPlane(const TSAtomPList& Atoms, double weightExtent=0, bool regular=false);
   void ClearPlaneDefinitions()  {  PlaneDefs.Clear();  }
-
-  TSPlane* TmpPlane(const TSAtomPList& Atoms, int weightExtent=0); //the plane must be deleted by the caller !
+  //the plane must be deleted by the caller !
+  TSPlane* TmpPlane(const TSAtomPList& Atoms, double weightExtent=0);
   TSAtom* NewCentroid(const TSAtomPList& Atoms);
   TSAtom* NewAtom(const vec3d& center);
 
@@ -227,6 +227,7 @@ public:
 
   void LibGetFragmentCount(const TStrObjList& Params, TMacroError& E);
   void LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E);
+  void LibGetMoiety(const TStrObjList& Params, TMacroError& E);
   TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 };
 

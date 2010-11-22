@@ -1,12 +1,6 @@
-//---------------------------------------------------------------------------
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
-//---------------------------------------------------------------------------
-
 #include "imagep.h"
 #include "gldefs.h"
+#include "emath.h"
 //---------------------------------------------------------------------------
 void TProcessImage::FilterBW(unsigned char *Image, int width, int height, int bytePerColour,
           float Filter[3][3], unsigned char weight, int BGcolour, bool removeBG)

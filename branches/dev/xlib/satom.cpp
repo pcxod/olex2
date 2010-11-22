@@ -113,13 +113,13 @@ void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
   Network = &parent.GetFragment(net_id);
   if( net_id != InvalidIndex )  {
     const TDataItem& nodes = item.FindRequiredItem("Nodes");
-    Nodes.SetCapacity( nodes.FieldCount() );
+    Nodes.SetCapacity(nodes.FieldCount());
     for( size_t i=0; i < nodes.FieldCount(); i++ )
-      Nodes.Add(&parent.GetAtom(nodes.GetField(i).ToSizeT()));
+      Nodes.Add(parent.GetAtom(nodes.GetField(i).ToSizeT()));
     const TDataItem& bonds = item.FindRequiredItem("Bonds");
-    Bonds.SetCapacity( bonds.FieldCount() );
+    Bonds.SetCapacity(bonds.FieldCount());
     for( size_t i=0; i < bonds.FieldCount(); i++ )
-      Bonds.Add(&parent.GetBond(bonds.GetField(i).ToSizeT()));
+      Bonds.Add(parent.GetBond(bonds.GetField(i).ToSizeT()));
   }
   TLattice& latt = Network->GetLattice();
   size_t ca_id = item.GetRequiredField("atom_id").ToSizeT();

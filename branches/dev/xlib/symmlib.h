@@ -1,7 +1,6 @@
 /* (c) O. Dolomanov, 2004 */
 #ifndef __olx_xl_symmlib_H
 #define __olx_xl_symmlib_H
-#include "evtypes.h"
 #include "log.h"
 #include "typelist.h"
 #include "asymmunit.h"

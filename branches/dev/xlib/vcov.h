@@ -1,29 +1,22 @@
 #ifndef __olxs_v_co_v_h
 #define __olxs_v_co_v_h
+#include "math/align.h"
 #include "asymmunit.h"
 #include "lattice.h"
 #include "bapp.h"
 #include "log.h"
-/*
-  after several days if differentiation, I came across som stuff, which became to complecated and
-  tried to use the numerical differentiation, as all the functions calculated here are "smooth". The
-  results have shown that the resultiong esd is very similar to the exact expressions for angles and
-  some othe parameters, so here is the way forward, no more complecated fomulas!
-*/
 BeginXlibNamespace()
 
 const short // constants decribing the stored values
-  vcoviX = 0,
-  vcoviY = 1,
-  vcoviZ = 2,
-  vcoviO = 3;
-
+  vcoviX = 0x0001,
+  vcoviY = 0x0002,
+  vcoviZ = 0x0004,
+  vcoviO = 0x0008;
 // stores X,Y,Z,SOF for each atom and their correlations
 class VcoVMatrix {
   double **data;
   size_t count;
-  // atom label, 
-  TTypeList< AnAssociation3<olxstr, short, size_t> > Index;
+  TTypeList<AnAssociation3<olxstr, short, size_t> > Index;
 protected:
   void Allocate(size_t w) {
     Clear();
@@ -58,28 +51,28 @@ public:
   double Get(size_t i, size_t j) const {
     return (j <= i ) ? data[i][j] : data[j][i];
   }
-  // reads the shelxl VcoV matrix and initialises atom loader Ids'
+  // reads the shelxl VcoV matrix
   void ReadShelxMat(const olxstr& fileName, TAsymmUnit& au);
-  // reads the smtbx VcoV matrix and initialises atom loader Ids'
+  // reads the smtbx VcoV matrix
   void ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au);
-  // fills creates three matrices AA, AB, ... AX, BA, BB, ... BX, ...
+  // creates matrices AA, AB, ... AX, BA, BB, ... BX, ...
   template <class list> void FindVcoV(const list& atoms, mat3d_list& m) const {
     TSizeList a_indexes;
     TTypeList<TVector3<size_t> > indexes;
     for( size_t i=0; i < atoms.Count(); i++ )  {
       a_indexes.Add(FindAtomIndex(atoms[i]->CAtom()));
       if( a_indexes.GetLast() == InvalidIndex )
-        TBasicApp::GetLog().Error( olxstr("Unable to located provided atom: ") << atoms[i]->GetLabel());
+        TBasicApp::GetLog().Error(olxstr("Unable to located given atom: ") << atoms[i]->GetLabel());
       indexes.AddNew(InvalidIndex,InvalidIndex,InvalidIndex);
     }
     for( size_t i=0; i < a_indexes.Count(); i++ )  {
       if( a_indexes[i] == InvalidIndex )  continue;
       for( size_t j=a_indexes[i]; j < Index.Count() && Index[j].GetC() == atoms[i]->CAtom().GetId(); j++ )  {
-        if( Index[j].GetB() == vcoviX )
+        if( (Index[j].GetB() & vcoviX) != 0 )
           indexes[i][0] = j;
-        else if( Index[j].GetB() == vcoviY )
+        if( (Index[j].GetB() & vcoviY) != 0 )
           indexes[i][1] = j;
-        else if( Index[j].GetB() == vcoviZ )
+        if( (Index[j].GetB() & vcoviZ) != 0 )
           indexes[i][2] = j;
       }
     }
@@ -87,10 +80,10 @@ public:
       for( size_t j=0; j < a_indexes.Count(); j++ )  {
         mat3d& a = m.AddNew();
         for( short k=0; k < 3; k++ )  {
-          for( short l=k; l < 3; l++ )  {
+          for( short l=0; l < 3; l++ )  {
             if( indexes[i][k] != InvalidIndex && indexes[j][l] != InvalidIndex )  {
               a[k][l] = Get(indexes[i][k], indexes[j][l]);
-              a[l][k] = a[k][l];
+              //a[l][k] = a[k][l];
             }
           }
         }
@@ -108,7 +101,7 @@ class VcoVContainer {
   struct TwoInts  {
     size_t a, b;
   };
-protected:
+public:
   template <class atom_list> void ProcessSymmetry(const atom_list& atoms, mat3d_list& ms)  {
     mat3d_list left(atoms.Count()), right(atoms.Count());
     size_t mc = 0;
@@ -133,11 +126,32 @@ protected:
       }
     }
   }
+  // helper functions, matrices are in cartesian frame
+  template <class atom_list> void GetVcoV(const atom_list& as, mat3d_list& m)  {
+    vcov.FindVcoV(as, m);
+    ProcessSymmetry(as, m);
+    mat3d c2f(as[0]->CAtom().GetParent()->GetCellToCartesian());
+    mat3d c2f_t( mat3d::Transpose(as[0]->CAtom().GetParent()->GetCellToCartesian()) );
+    for( size_t i=0; i < m.Count(); i++ )
+      m[i] = c2f_t*m[i]*c2f;
+  }
+  // helper functions, matrices are in fractional frame
+  template <class atom_list> void GetVcoVF(const atom_list& as, mat3d_list& m)  {
+    vcov.FindVcoV(as, m);
+    ProcessSymmetry(as, m);
+  }
+protected:
   double _calcAngle(const vec3d_alist& points)  {
-    return acos( (points[0]-points[1]).CAngle(points[2]-points[1]))*180.0/M_PI;
+    const double a  = (points[0]-points[1]).CAngle(points[2]-points[1]);
+    if( olx_abs(a) >= 1.0-1e-16 )
+      return a < 0 ? 180.0 : 0.0;
+    return acos(a)*180.0/M_PI;
   }
   double _calcB2BAngle(const vec3d_alist& points)  {
-    return acos( (points[1]-points[0]).CAngle(points[3]-points[2]))*180.0/M_PI;
+    const double a = (points[1]-points[0]).CAngle(points[3]-points[2]);
+    if( olx_abs(a) >= 1.0-1e-16 )
+      return a < 0 ? 180.0 : 0.0;
+    return acos(a)*180.0/M_PI;
   }
   double _calcTHV(const vec3d_alist& points) const {
     return olx_tetrahedron_volume(points[0], points[1], points[2], points[3]);
@@ -148,7 +162,7 @@ protected:
   template <int k, int type> double _calcPlane(const vec3d_alist& Points) {
     mat3d m, vecs;
     vec3d t;
-    double mass = 0;
+    double mass = 0, qmass = 0;
     TDoubleList& wghts = weights[k];
     vec3d& pp = plane_param[k];
     vec3d& pc = plane_center[k];
@@ -156,25 +170,22 @@ protected:
     for( size_t i=0; i < Points.Count(); i++ )  {
       pc += Points[i]*wghts[i];
       mass += wghts[i];
+      qmass += olx_sqr(wghts[i]);
     }
     pc /= mass;
-
     for( size_t i=0; i < Points.Count(); i++ )  {
-      vec3d t( Points[i] - pc );
-      const double wght = wghts[i]*wghts[i];
-      m[0][0] += (t[0]*t[0]*wght);
-      m[0][1] += (t[0]*t[1]*wght);
-      m[0][2] += (t[0]*t[2]*wght);
-
-      m[1][1] += (t[1]*t[1]*wght);
-      m[1][2] += (t[1]*t[2]*wght);
-
-      m[2][2] += t[2]*t[2]*wght;
+      const vec3d t = (Points[i] - pc)*wghts[i];
+      m[0][0] += (t[0]*t[0]);
+      m[0][1] += (t[0]*t[1]);
+      m[0][2] += (t[0]*t[2]);
+      m[1][1] += (t[1]*t[1]);
+      m[1][2] += (t[1]*t[2]);
+      m[2][2] += (t[2]*t[2]);
     } // equ: d = s[0]*x + s[1]*y + s[2]*z
     m[1][0] = m[0][1];
     m[2][0] = m[0][2];
     m[2][1] = m[1][2];
-    mat3d::EigenValues(m, vecs.I());
+    mat3d::EigenValues(m /= qmass, vecs.I());
     bool swaps = true;
     while( swaps )  {
       swaps = false;
@@ -187,7 +198,7 @@ protected:
       }
     }
     pp = vecs[type];
-    return m[type][type] < 0 ? 0 : sqrt(m[type][type]/Points.Count());
+    return m[type][type] < 0 ? 0 : sqrt(m[type][type]);
   }
   // plane to plane angle in degrees
   double _calcP2PAngle(const vec3d_alist& points, size_t fpc)  {
@@ -242,51 +253,9 @@ protected:
   }
   // alignment RMSD
   double _calcAllignmentRMSD(const vec3d_alist& points)  {
-    ematd evm(4,4), quaternions(4,4);
-    vec3d cntA, cntB;
-    const size_t ac = points.Count()/2;
-    double wghta = 0, wghtb = 0;
-    for( size_t i=0; i < ac; i++ )  {
-      cntA += points[i]*weights[0][i];
-      cntB += points[ac+i]*weights[0][ac+i];
-      wghta += weights[0][i];
-      wghtb += weights[0][ac+i];
-    }
-    cntA /= wghta;
-    cntB /= wghtb;
-
-    for( size_t i=0; i < ac; i++ )  {
-      const vec3d v = points[i] - cntA;
-      const double 
-        xm = v[0] - (points[ac+i][0]-cntB[0]),
-        xp = v[0] + (points[ac+i][0]-cntB[0]),
-        yp = v[1] + (points[ac+i][1]-cntB[1]),
-        ym = v[1] - (points[ac+i][1]-cntB[1]),
-        zm = v[2] - (points[ac+i][2]-cntB[2]),
-        zp = v[2] + (points[ac+i][2]-cntB[2]);
-      evm[0][0] += (xm*xm + ym*ym + zm*zm);
-      evm[0][1] += (yp*zm - ym*zp);
-      evm[0][2] += (xm*zp - xp*zm);
-      evm[0][3] += (xp*ym - xm*yp);
-      evm[1][0] = evm[0][1];
-      evm[1][1] += (yp*yp + zp*zp + xm*xm);
-      evm[1][2] += (xm*ym - xp*yp);
-      evm[1][3] += (xm*zm - xp*zp);
-      evm[2][0] = evm[0][2];
-      evm[2][1] = evm[1][2];
-      evm[2][2] += (xp*xp + zp*zp + ym*ym);
-      evm[2][3] += (ym*zm - yp*zp);
-      evm[3][0] = evm[0][3];
-      evm[3][1] = evm[1][3];
-      evm[3][2] = evm[2][3];
-      evm[3][3] += (xp*xp + yp*yp + zm*zm);
-    }
-    ematd::EigenValues(evm, quaternions.I());
-    double rms = 1e5;
-    for( short i=0; i < 4; i++ )
-      if( evm[i][i] < rms )
-        rms = evm[i][i];
-    return rms < 0 ? 0 : sqrt(rms/ac);
+    align::ListsToPairAdaptor<vec3d_alist, TDoubleList> l2p(points, weights[0]);
+    align::out ao = align::FindAlignmentQuaternions(l2p);
+    return align::CalcRMSD(l2p, ao);
   }
   // plane to bond angle in degrees
   double _calcP2BAngle(const vec3d_alist& points)  {
@@ -404,21 +373,7 @@ protected:
         }
       }
     }
-    return esd;
-  }
-  // helper functions, matrices are in cartesian frame
-  template <class atom_list> void GetVcoV(const atom_list& as, mat3d_list& m)  {
-    vcov.FindVcoV(as, m);
-    ProcessSymmetry(as, m);
-    mat3d c2f(as[0]->CAtom().GetParent()->GetCellToCartesian());
-    mat3d c2f_t( mat3d::Transpose(as[0]->CAtom().GetParent()->GetCellToCartesian()) );
-    for( size_t i=0; i < m.Count(); i++ )
-      m[i] = c2f_t*m[i]*c2f;
-  }
-  // helper functions, matrices are in fractional frame
-  template <class atom_list> void GetVcoVF(const atom_list& as, mat3d_list& m)  {
-    vcov.FindVcoV(as, m);
-    ProcessSymmetry(as, m);
+    return esd < 0 ? 0 : esd;
   }
   // helper functions
   template <class list> void AtomsToPoints(const list& atoms, vec3d_alist& r)  {
@@ -509,7 +464,7 @@ public:
     mat3d vcov = m[0] - m[1] - m[2] + m[3];
     vec3d v = a1.crd() - a2.crd();
     double val = v.Length();
-    double esd = sqrt(v.ColMul(vcov).DotProd(v))/val;
+    double esd = sqrt((v*vcov).DotProd(v))/val;
     return TEValue<double>(val,esd);
   }
   // cartesian centroid
@@ -577,19 +532,23 @@ public:
     TSAtom const * as[] = {&a1,&a2,&a3};
     TSAtomPList satoms(3, as);
     GetVcoV(satoms, m);
-    vec3d v1(satoms[1]->crd() - satoms[0]->crd()),
-          v2(satoms[0]->crd() - satoms[2]->crd()),
-          v3(satoms[2]->crd() - satoms[1]->crd());
-    mat3d vcov(  v1.ColMul(m[0] - m[3] - m[1] + m[4]).DotProd(v1)/v1.QLength(), // var l1
-      v1.ColMul(m[1] - m[4] - m[2] + m[5]).DotProd(v2)/(v1.Length()*v2.Length()), // cov(l1,l2) 
-      v1.ColMul(m[2] - m[0] - m[5] + m[3]).DotProd(v3)/(v1.Length()*v3.Length()), // cov(l1,l3) 
-      v2.ColMul(m[4] - m[7] - m[5] + m[2]).DotProd(v2)/v2.QLength(), //var l2
-      v2.ColMul(m[5] - m[3] - m[8] + m[6]).DotProd(v3)/(v2.Length()*v3.Length()), // cov(l2,l3) 
-      v3.ColMul(m[0] - m[2] - m[6] + m[8]).DotProd(v3)/v3.QLength()); //var l3
-    double a = acos( (v1.QLength()+v3.QLength()-v2.QLength())/(2*v1.Length()*v3.Length()));
+    vec3d v1(satoms[0]->crd() - satoms[1]->crd()),
+          v2(satoms[2]->crd() - satoms[0]->crd()),
+          v3(satoms[1]->crd() - satoms[2]->crd());
+    mat3d vcov(
+      (v1*(m[0] - m[3] - m[1] + m[4])).DotProd(v1)/v1.QLength(), // var l1
+      (v1*(m[1] - m[4] - m[2] + m[5])).DotProd(v2)/(v1.Length()*v2.Length()), // cov(l1,l2) 
+      (v1*(m[2] - m[0] - m[5] + m[3])).DotProd(v3)/(v1.Length()*v3.Length()), // cov(l1,l3) 
+      (v2*(m[4] - m[7] - m[5] + m[8])).DotProd(v2)/v2.QLength(), //var l2
+      (v2*(m[5] - m[3] - m[8] + m[6])).DotProd(v3)/(v2.Length()*v3.Length()), // cov(l2,l3) 
+      (v3*(m[0] - m[2] - m[6] + m[8])).DotProd(v3)/v3.QLength()); //var l3
+    double ca1 = (v1.QLength()+v3.QLength()-v2.QLength())/(2*v1.Length()*v3.Length());
+    if( olx_abs(ca1) >= 1.0-1e-16 )
+      return TEValue<double>(ca1 < 0 ? 180.0 : 0.0, 0);
+    double a = acos(ca1);
     double ca2 = (v1.QLength()+v2.QLength()-v3.QLength())/(2*v1.Length()*v2.Length());
     double ca3 = (v2.QLength()+v3.QLength()-v1.QLength())/(2*v2.Length()*v3.Length());
-    double esd = ca2*ca2*vcov[0][0] - 2*ca2*vcov[0][1] + 2*ca2*ca3*vcov[0][2] + vcov[1][1] +
+    double esd = ca2*ca2*vcov[0][0] - 2*ca2*vcov[0][1] + 2*ca2*ca3*vcov[0][2] + vcov[1][1] -
       2*ca3*vcov[1][2] + ca3*ca3*vcov[2][2];
     esd = sqrt(esd)/(v1.Length()*v3.Length()*sin(a)/v2.Length());
     return TEValue<double>(a*180.0/M_PI,esd*180/M_PI);
@@ -604,8 +563,7 @@ public:
     mat3d_list m;
     TSAtom const * as[] = {&a1,&a2,&a3,&a4};
     TSAtomPList satoms(4, as);
-    vcov.FindVcoV(satoms, m);
-    ProcessSymmetry(satoms, m);
+    GetVcoV(satoms, m);
     vec3d u(a2.crd()-a1.crd()),
       v(a3.crd()-a2.crd()),
       w(a4.crd()-a3.crd());
@@ -618,7 +576,10 @@ public:
     double A = h12*h23 - h13*h22;
     double B = h11*h22 - h12*h12;
     double C = h22*h33 - h23*h23;
-    double tau = acos(A/sqrt(B*C));
+    const double ctau = A/sqrt(B*C);
+    if( olx_abs(ctau) >= 1.0-1e-16 )
+      return TEValue<double>(ctau < 0 ? 180.0 : 0.0, 0);
+    double tau = acos(ctau);
     double K = -1.0/(sqrt(B*C)*sin(tau)), esd = 0;
     double dt[3][3];
     for( short i=0; i < 3; i++ )  {

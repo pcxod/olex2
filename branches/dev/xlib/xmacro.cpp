@@ -850,12 +850,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     if( ca.GetType() == iHydrogenZ )
       ca.SetDetached(false);
   }
-  TActionQueue* q_draw = XApp.FindActionQueue(olxappevent_GL_DRAW);
-  bool q_draw_changed = false;
-  if( q_draw != NULL )  {
-    q_draw->SetEnabled(false);
-    q_draw_changed = true;
-  }
+  TActionQueueLock q_draw(XApp.FindActionQueue(olxappevent_GL_DRAW));
   try  {
     TSAtomPList satoms;
     XApp.FindSAtoms(Cmds.Text(' '), satoms, true);
@@ -941,8 +936,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   catch(const TExceptionBase& e)  {
     Error.ProcessingError(__OlxSrcInfo, e.GetException()->GetError());
   }
-  if( q_draw != NULL && q_draw_changed )
-    q_draw->SetEnabled(true);
+  q_draw.Unlock();
   XApp.XFile().GetLattice().Init();
   delete XApp.FixHL();
 }
@@ -1121,14 +1115,12 @@ void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     else if( ca.GetType().GetMr() < 3.5 )
       ca.SetDetached(false);
   }
-  TActionQueue* q_draw = xapp.FindActionQueue(olxappevent_GL_DRAW);
-  if( q_draw != NULL )  q_draw->SetEnabled(false);
+  TActionQueueLock q_draw(xapp.FindActionQueue(olxappevent_GL_DRAW));
   xapp.XFile().GetLattice().UpdateConnectivity();
   delete TXApp::GetInstance().FixHL();
   for( size_t i=0; i < au.AtomCount(); i++ )
     au.GetAtom(i).SetDetached(detached[i]);
   xapp.XFile().GetLattice().UpdateConnectivity();
-  if( q_draw != NULL )  q_draw->SetEnabled(true);
 }
 //..............................................................................
 // http://www.minsocam.org/ammin/AM78/AM78_1104.pdf
@@ -1285,7 +1277,7 @@ void XLibMacros::macFuse(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     TXApp::GetInstance().XFile().GetLattice().Uniq(true);
   }
   else
-    TXApp::GetInstance().XFile().GetLattice().Uniq( Options.Contains("f") );
+    TXApp::GetInstance().XFile().GetLattice().Uniq(Options.Contains("f"));
 }
 //..............................................................................
 void XLibMacros::macLstIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
@@ -2769,9 +2761,9 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         esd += olx_sqr(elp.GetEsd(j));
       a.SetUisoEsd(sqrt(esd)/4.);
     }
-    else if( a.GetType() == iHydrogenZ )  {
-      long val = olx_round(a.GetUiso()*1000);
-      a.SetUiso((double)val/1000);
+    else if( a.GetType() == iHydrogenZ && a.GetUisoEsd() == 0 )  {
+      long val = olx_round(a.GetUiso()*100000);
+      a.SetUiso((double)val/100000);
     }
   }
   TCif cif;

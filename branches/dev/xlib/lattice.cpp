@@ -886,7 +886,7 @@ TSAtom* TLattice::NewAtom(const vec3d& center)  {
   return a;
 }
 //..............................................................................
-TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, int weightExtent, bool regular)  {
+TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent, bool regular)  {
   TSPlane* Plane = TmpPlane(Atoms, weightExtent);
   TSPlanePList rv;
   if( Plane != NULL)  {
@@ -925,11 +925,13 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, int weightExtent, bool
         Plane->_SetDefId(PlaneDefs.Count()-1);
       }
     }
+    else
+      delete Plane;
   }
   return rv;
 }
 //..............................................................................
-TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
+TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, double weightExtent)  {
   if( atoms.Count() < 3 )  return NULL;
   //TODO: need to consider occupancy for disordered groups ...
   TTypeList<AnAssociation2<TSAtom*, double> > Points;
@@ -937,12 +939,14 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
   if( weightExtent != 0 )  {
     double swg = 0;
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      double wght = pow(atoms[i]->GetType().GetMr(), (double)weightExtent);
+      const double wght = pow(atoms[i]->GetType().z, weightExtent);
       Points.AddNew(atoms[i], wght);
-      swg += wght*wght;
+      swg += wght;
     }
+    // normalise the sum of weights to atoms.Count()...
+    const double m = atoms.Count()/swg;
     for( size_t i=0; i < Points.Count(); i++ )
-      Points[i].B() /= swg;
+      Points[i].B() *= m;
   }
   else  {
     for( size_t i=0; i < atoms.Count(); i++ )
@@ -2122,14 +2126,14 @@ void TLattice::FromDataItem(TDataItem& item)  {
   Delta = item.GetRequiredField("delta").ToDouble();
   DeltaI = item.GetRequiredField("deltai").ToDouble();
   Generated = item.GetRequiredField("grown").ToBool();
-  GetAsymmUnit().FromDataItem( item.FindRequiredItem("AUnit") );
+  GetAsymmUnit().FromDataItem(item.FindRequiredItem("AUnit"));
   const TDataItem& mat = item.FindRequiredItem("Matrices");
-  Matrices.SetCapacity( mat.ItemCount() );
+  Matrices.SetCapacity(mat.ItemCount());
   for( size_t i=0; i < mat.ItemCount(); i++ )  {
     smatd* m = new smatd;
     TSymmParser::SymmToMatrix(mat.GetItem(i).GetValue(), *m);
     Matrices.Add(m);
-    m->SetRawId(mat.GetItem(i).GetRequiredField("id").ToUInt() );
+    m->SetRawId(mat.GetItem(i).GetRequiredField("id").ToUInt());
   }
   // precreate fragments
   const TDataItem& frags = item.FindRequiredItem("Fragments");
@@ -2145,7 +2149,7 @@ void TLattice::FromDataItem(TDataItem& item)  {
   const TDataItem& atoms = item.FindRequiredItem("Atoms");
   Atoms.SetCapacity(atoms.ItemCount());
   for( size_t i=0; i < atoms.ItemCount(); i++ )
-    Atoms.Add( new TSAtom(NULL) )->SetLattId(i);
+    Atoms.Add(new TSAtom(NULL))->SetLattId(i);
   for( size_t i=0; i < atoms.ItemCount(); i++ )
     Atoms[i]->FromDataItem(atoms.GetItem(i), *this);
   // load bonds
@@ -2493,8 +2497,13 @@ void TLattice::SetDeltaI(double v)  {
 //..............................................................................
 //..............................................................................
 void TLattice::LibGetFragmentCount(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( olxstr(FragmentCount()) );
+  E.SetRetVal(olxstr(FragmentCount()));
 }
+//..............................................................................
+void TLattice::LibGetMoiety(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal(CalcMoiety());
+}
+//..............................................................................
 void TLattice::LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= FragmentCount() )
@@ -2509,10 +2518,12 @@ void TLattice::LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 TLibrary*  TLattice::ExportLibrary(const olxstr& name)  {
-  TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("latt") : name);
+  TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("latt") : name);
   lib->RegisterFunction<TLattice>( new TFunction<TLattice>(this,  &TLattice::LibGetFragmentCount, "GetFragmentCount", fpNone,
 "Returns number of fragments in the lattice") );
   lib->RegisterFunction<TLattice>( new TFunction<TLattice>(this,  &TLattice::LibGetFragmentAtoms, "GetFragmentAtoms", fpOne,
 "Returns a comma separated list of atoms in specified fragment") );
+  lib->RegisterFunction<TLattice>( new TFunction<TLattice>(this,  &TLattice::LibGetMoiety, "GetMoiety", fpNone,
+"Returns moelcular moiety") );
   return lib;
 }
