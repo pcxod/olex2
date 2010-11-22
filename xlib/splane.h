@@ -17,8 +17,7 @@ class TSPlane : public TSObject<TNetwork>  {
   TTypeList< AnAssociation2<TSAtom*, double> > Crds;
   vec3d Center;
   mat3d Normals;
-  double Distance, wRMSD;
-  uint16_t Flags;
+  double Distance, wRMSD;  uint16_t Flags;
   size_t DefId;
   void _Init(const TTypeList<AnAssociation2<vec3d, double> >& points);
 public:

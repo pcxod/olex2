@@ -3,23 +3,24 @@
 
 class TGrowMode : public AMode  {
 protected:
+  bool GrowShells;
+  short mode;
 public:
-  TGrowMode(size_t id) : AMode(id)  {}
+  TGrowMode(size_t id) : AMode(id), GrowShells(false), mode(0)  {}
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     bool SI = Options.Contains('s'),
          Cov = Options.Contains('c'),
          VdW = Options.Contains('v'),
          Rad = Options.Contains('r');
-
-    olxstr AtomsToGrow( Cmds.Text(' ') );
-
-    short mode = 0;
-    if( SI )   mode |= gmSInteractions;
-    if( Cov )  mode |= gmCovalent;
+    GrowShells = Options.Contains("shells");
+    const olxstr AtomsToGrow = Cmds.Text(' ');
+    mode = 0;
+    if( SI )   mode = gmSInteractions;
+    if( Cov )  mode = gmCovalent;
     else if( VdW )  {
       mode = gmVanDerWaals;
       olxstr vr = Options.FindValue('v');
-      TGlXApp::GetGXApp()->SetDeltaV(vr.IsEmpty() ? 3.0 : vr.ToDouble());
+      TGlXApp::GetGXApp()->SetDeltaV(vr.IsEmpty() ? 2.0 : vr.ToDouble());
     }
     else if( Rad )
       mode = gmSameAtoms;
@@ -35,11 +36,23 @@ public:
     TGlXApp::GetGXApp()->SetXGrowLinesVisible(false);
   }
   virtual bool OnObject(AGDrawObject& obj)  {
+    TLattice& latt = TXApp::GetInstance().XFile().GetLattice();
     if( EsdlInstanceOf(obj, TXGrowLine) )  {
-      TGlXApp::GetGXApp()->Grow((TXGrowLine&)obj);
+      TXGrowLine& xl = (TXGrowLine&)obj;
+      if( GrowShells && mode == gmCovalent )
+        latt.GrowAtom(*xl.CAtom(), xl.GetTransform());
+      else
+        latt.GrowFragment(xl.CAtom()->GetFragmentId(), xl.GetTransform());
       return true;
     }
-    return false;
+    else if( EsdlInstanceOf(obj, TXAtom) )  {
+      TXAtom& a = (TXAtom&)obj;
+      if( !a.Atom().IsGrown() )
+        latt.GrowAtom(a.Atom(), GrowShells, NULL);
+      return true;
+    }
+    else
+      return false;
   }
 };
 

@@ -214,6 +214,7 @@ public:
   TCSTypeList<olxstr, ABasicFunction*> CallbackFuncs;
 protected:
   bool Destroying;
+  TStack<wxCursor> CursorStack;
   UpdateThread* _UpdateThread;
 	TOnProgress* UpdateProgress, *ActionProgress;
   TEFile* ActiveLogFile;

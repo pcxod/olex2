@@ -1,10 +1,4 @@
-#ifdef __WXWIDGETS__
-  #include "wx/wx.h"
-  #include "wx/thread.h"
-#endif
-
 #include "pyext.h"
-
 #include "efile.h"
 #include "bapp.h"
 #include "log.h"
@@ -42,14 +36,14 @@ public:
     if( !Params.IsEmpty() )  {
       arglist = PyTuple_New( Params.Count() );
       for( size_t i=0; i < Params.Count(); i++ )
-        PyTuple_SetItem(arglist, i, PythonExt::BuildString(Params[i]) );
+        PyTuple_SetItem(arglist, i, PythonExt::BuildString(Params[i]));
     }
     PyObject* result = PyObject_CallObject(PyFunction, arglist);
     if( arglist != NULL )  Py_DECREF(arglist);
 
     if( result != NULL )  {
       if( ProcessOutput && result != Py_None )  {
-        E.SetRetVal<olxstr>( PythonExt::ParseStr(result) );
+        E.SetRetVal<olxstr>(PythonExt::ParseStr(result));
       }
       Py_DECREF(result);
     }
@@ -392,32 +386,10 @@ PyObject* PythonExt::GetProfileInfo()  {
   return rv;
 }
 //..............................................................................
-//..............................................................................
-//..............................................................................
-//..............................................................................
-#ifdef __WXWIDGETS__
-class TRunThread: public wxThread  {
-  olxstr ScriptName;
-  int RetCode;
-public:
-  TRunThread(const olxstr& scriptName ): wxThread(wxTHREAD_JOINABLE) {
-    ScriptName = scriptName;
-    RetCode = -1;
-  }
-  ExitCode Entry()  {
-    RetCode = PyRun_SimpleString( ScriptName.c_str() );
-    return NULL;
-  }
-
-  int GetRetCode() const {  return RetCode;  }
-};
-#endif // __WXWIDGETS__
-
 int PythonExt::RunPython(const olxstr& script)  {
   CheckInitialised();
   return PyRun_SimpleString(script.c_str());
 }
-//..............................................................................
 //..............................................................................
 void ExportLib(const olxcstr& fullName, TEFile& file, const TLibrary& Lib)  {
   olxcstr olxName, pyName;

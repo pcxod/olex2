@@ -782,10 +782,8 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       // analyse angles
       for( size_t k=0; k < hc; k++ )  {
         vec3d base = sa.Node(h_indexes[k]).ccrd();
-        vec3d v1 = sa.ccrd() - base;
-        vec3d v2 = cvec - base;
-        au.CellToCartesian(v1);
-        au.CellToCartesian(v2);
+        const vec3d v1 = au.Orthogonalise(sa.ccrd() - base);
+        const vec3d v2 = au.Orthogonalise(cvec - base);
         const double c_a = v1.CAngle(v2);
         if( c_a < min_ang )  {  // > 150 degrees
           if( sa.GetType() == iCarbonZ )  {
@@ -821,12 +819,15 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   if( Options.Contains('g') && !transforms.IsEmpty() )  {
     TLattice& xlatt = TXApp::GetInstance().XFile().GetLattice();
-    TSAtomPList iatoms;
+    const TUnitCell& uc = xlatt.GetUnitCell();
+    for( size_t i=0; i < transforms.Count(); i++ )
+      uc.InitMatrixId(transforms[i]);
+    TCAtomPList iatoms;
     for( size_t i=0; i < xlatt.AtomCount(); i++ )  {
       TSAtom& sa = xlatt.GetAtom(i);
       if( sa.IsDeleted() )  continue;
       if( sa.IsAUAtom() )
-        iatoms.Add(sa);
+        iatoms.Add(sa.CAtom());
     }
     xlatt.GrowAtoms(iatoms, transforms);
   }
@@ -3283,7 +3284,7 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
       for( size_t k=1; k < ml.Count(); k++ )  {
         vec3d v = ml[k] * list[i].GetA();
         v -= list[j].GetA();
-        v[0] -= olx_round(v[0]);  v[1] -= olx_round(v[1]);  v[2] -= olx_round(v[2]);
+        v -= v.Round<int>();
         au.CellToCartesian(v);
         if( v.QLength() < 0.01 )  {
           list[i].C() ++;
@@ -4024,12 +4025,15 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   if( Options.Contains('g') && !transforms.IsEmpty() )  {
     TLattice& xlatt = xapp.XFile().GetLattice();
-    TSAtomPList iatoms;
+    const TUnitCell& uc = xlatt.GetUnitCell();
+    for( size_t i=0; i < transforms.Count(); i++ )
+      uc.InitMatrixId(transforms[i]);
+    TCAtomPList iatoms;
     for( size_t i=0; i < xlatt.AtomCount(); i++ )  {
       TSAtom& sa = xlatt.GetAtom(i);
       if( sa.IsDeleted() )  continue;
       if( sa.IsAUAtom() )
-        iatoms.Add(sa);
+        iatoms.Add(sa.CAtom());
     }
     xlatt.GrowAtoms(iatoms, transforms);
   }

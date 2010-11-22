@@ -36,7 +36,19 @@ static uint32_t
 
 class RefinementModel : public IXVarReferencerContainer, public IXVarReferencer {
   // in INS file is EQUV command
-  olxdict<olxstr,smatd,olxstrComparator<false> > UsedSymm;
+  struct Equiv  {
+    smatd symop;
+    int ref_cnt;
+    Equiv() : ref_cnt(0)  {}
+    Equiv(const Equiv& e) : ref_cnt(e.ref_cnt), symop(e.symop)  {}
+    Equiv(const smatd& so) : ref_cnt(0), symop(so)  {}
+    Equiv& operator = (const Equiv& e) {
+      symop = e.symop;
+      ref_cnt = e.ref_cnt;
+      return *this;
+    }
+  };
+  olxdict<olxstr,Equiv,olxstrComparator<false> > UsedSymm;
   olxdict<olxstr,XScatterer*, olxstrComparator<false> > SfacData;
   olxdict<int, Fragment*, TPrimitiveComparator> Frags;
   ContentList UserContent;
@@ -197,17 +209,17 @@ public:
       HKLF_wt = hklf[12].ToDouble();
     HKLF_set = true;
   }
-  int GetHKLF()        const {  return HKLF;  }
-  void SetHKLF(int v)              {  HKLF = v;  HKLF_set = true;  }
+  int GetHKLF() const {  return HKLF;  }
+  void SetHKLF(int v)  {  HKLF = v;  HKLF_set = true;  }
   const mat3d& GetHKLF_mat() const {  return HKLF_mat;  }
   void SetHKLF_mat(const mat3d& v) {  HKLF_mat = v;  HKLF_set = true;  }
-  double GetHKLF_s()         const {  return HKLF_s;  }
-  void SetHKLF_s(double v)         {  HKLF_s = v;  HKLF_set = true;  }
-  double GetHKLF_wt()        const {  return HKLF_wt;  }
-  void SetHKLF_wt(double v)        {  HKLF_wt = v;  HKLF_set = true;  }
-  double GetHKLF_m()         const {  return HKLF_m;  }
-  void SetHKLF_m(double v)         {  HKLF_m = v;  HKLF_set = true;  }
-  bool IsHKLFSet()           const {  return HKLF_set;  }
+  double GetHKLF_s() const {  return HKLF_s;  }
+  void SetHKLF_s(double v)  {  HKLF_s = v;  HKLF_set = true;  }
+  double GetHKLF_wt() const {  return HKLF_wt;  }
+  void SetHKLF_wt(double v)  {  HKLF_wt = v;  HKLF_set = true;  }
+  double GetHKLF_m() const {  return HKLF_m;  }
+  void SetHKLF_m(double v)  {  HKLF_m = v;  HKLF_set = true;  }
+  bool IsHKLFSet() const {  return HKLF_set;  }
 
   int GetMERG() const {  return MERG;  }
   // MERG 4 specifies not to use f''
@@ -215,16 +227,16 @@ public:
   void SetMERG(int v)  {  MERG = v;  MERG_set = true;  }
   bool HasMERG() const {  return MERG_set;  }
   
-  double GetOMIT_s()  const {  return OMIT_s;  }
+  double GetOMIT_s() const {  return OMIT_s;  }
   void SetOMIT_s(double v)  {  OMIT_s = v;  OMIT_set = true;  }
   double GetOMIT_2t() const {  return OMIT_2t;  }
   void SetOMIT_2t(double v) {  OMIT_2t = v;  OMIT_set = true;}
   bool HasOMIT() const {  return OMIT_set;  }
   size_t OmittedCount() const {  return Omits.Count();  }
   const vec3i& GetOmitted(size_t i) const {  return Omits[i];  }
-  void Omit(const vec3i& r)            {  Omits.AddCCopy(r);  OMITs_Modified = true;  }
-  void ClearOmits()                    {  Omits.Clear();  OMITs_Modified = true;  }
-  const vec3i_list& GetOmits()   const {  return Omits;  }
+  void Omit(const vec3i& r)  {  Omits.AddCCopy(r);  OMITs_Modified = true;  }
+  void ClearOmits()  {  Omits.Clear();  OMITs_Modified = true;  }
+  const vec3i_list& GetOmits() const {  return Omits;  }
   template <class list> void AddOMIT(const list& omit)  {
     if( omit.Count() == 3 )  {  // reflection omit
       Omits.AddNew( omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt());
@@ -245,11 +257,11 @@ public:
   size_t ProcessOmits(TRefList& refs);
 
   // SHEL reflection resolution filter low/high
-  double GetSHEL_lr()     const {  return SHEL_lr;  }
-  void SetSHEL_lr(double v)     {  SHEL_lr = v;  SHEL_set = true;  }
-  double GetSHEL_hr()     const {  return SHEL_hr;  }
-  void SetSHEL_hr(double v)     {  SHEL_hr = v;  SHEL_set = true;  }
-  bool HasSHEL()          const {  return SHEL_set;  }
+  double GetSHEL_lr() const {  return SHEL_lr;  }
+  void SetSHEL_lr(double v)  {  SHEL_lr = v;  SHEL_set = true;  }
+  double GetSHEL_hr() const {  return SHEL_hr;  }
+  void SetSHEL_hr(double v)  {  SHEL_hr = v;  SHEL_set = true;  }
+  bool HasSHEL() const {  return SHEL_set;  }
   template <class list> void SetSHEL(const list& shel)  {
     if( shel.Count() > 0 )  {
       SHEL_lr = shel[0].ToDouble();
@@ -333,15 +345,17 @@ of components 1 ... m
   // returns the number of the used symmetry matrices
   inline size_t UsedSymmCount() const {  return UsedSymm.Count();  }
   // returns used symmetry matric at specified index
-  inline const smatd& GetUsedSymm(size_t ind) const {  return UsedSymm.GetValue(ind);  }
+  inline const smatd& GetUsedSymm(size_t ind) const {  return UsedSymm.GetValue(ind).symop;  }
   // return index of given symmetry matrix in the list or -1, if it is not in the list
-  inline size_t UsedSymmIndex(const smatd& matr) const {  return UsedSymm.IndexOfValue(matr);  }
+  size_t UsedSymmIndex(const smatd& matr) const;
   // deletes all used symmetry matrices
   inline void ClearUsedSymm()  {  UsedSymm.Clear();  }
   inline const smatd* FindUsedSymm(const olxstr& name)  {
-    size_t i = UsedSymm.IndexOf(name);
-    return (i == InvalidIndex ? NULL : &UsedSymm.GetValue(i));
+    const size_t i = UsedSymm.IndexOf(name);
+    return (i == InvalidIndex ? NULL : &UsedSymm.GetValue(i).symop);
   }
+  // initialises ID's of the matrices to conform to the unit cell, this called by TLattice
+  void UpdateUsedSymm(const class TUnitCell& uc);
   // adds new custom scatterer (created with new, will be deleted)
   void AddSfac(XScatterer& sc);
   // returns number of custom scatterers

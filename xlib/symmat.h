@@ -105,6 +105,7 @@ public:
          ((uint32_t)(0x80-tb) << 8)|
          (uint32_t)(0x80-tc);
   }
+  void SetId(uint8_t id, const vec3i& t)  {  Id = GenerateId(id, t);  }
 
   bool IsFirst() const {  return Id == 0x00808080;  }
   uint8_t GetContainerId() const {  return (uint8_t)(Id >> 24);  }
