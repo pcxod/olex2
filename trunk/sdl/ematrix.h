@@ -92,7 +92,7 @@ public:
     return R;
   }
 
-  template <class AType> TMatrix operator * ( const TMatrix<AType>& C) const {
+  template <class AType> TMatrix operator * (const TMatrix<AType>& C) const {
     const size_t X = Vectors();
     const size_t Y = Elements();
     const size_t Z = C.Elements();
@@ -112,11 +112,11 @@ public:
     return TMatrix<MatType>(*this) -= c;
   }
 
-  template <class AType> TMatrix& operator *=(const TMatrix<AType>& C)  {
+  template <class AType> TMatrix& operator *= (const TMatrix<AType>& C)  {
     return (*this = (*this * C));
   }
 
-  template <class AType> TMatrix& operator +=(const TMatrix<AType>& c)  {
+  template <class AType> TMatrix& operator += (const TMatrix<AType>& c)  {
     if( (Fm ==c.Elements()) && (Fn == c.Vectors()) )
       for( size_t i=0; i < Fn; i++ )  
         FData[i] += c[i];
@@ -452,7 +452,7 @@ public:
   }
 
   // solves a set of equations by the Gauss method {equation arr.b = c }
-  static void GauseSolve(TMatrix<MatType>& arr, TVector<MatType>& b, TVector<MatType>& c) {
+  static void GaussSolve(TMatrix<MatType>& arr, TVector<MatType>& b, TVector<MatType>& c) {
     const size_t sz = arr.Elements();
     MatrixElementsSort(arr, b );
     for ( size_t j = 1; j < sz; j++ )
@@ -477,7 +477,7 @@ public:
      }
    }
 
-      // used in GauseSolve to sort the matrix
+      // used in GaussSolve to sort the matrix
   static void MatrixElementsSort(TMatrix<MatType>& arr, TVector<MatType>& b)  {
     const size_t dim = arr.Elements();
     MatType *bf = new MatType[dim];
@@ -494,7 +494,7 @@ public:
     delete [] bf;
   }
 
-  /* A polynomial least square analysis of XY pairs strired in matrix[2][n]
+  /* A polynomial least square analysis of XY pairs strored in matrix[2][n]
    extent is the polynom extent (1-is for line)
    params will contain the fitting parameters
    the return value is the RMS - root mean square of the fit
@@ -537,7 +537,7 @@ public:
       for( size_t j = i+1; j < extent; j++ )
         s[j][i] = s[i][j];
 
-    GauseSolve(s, r, param);
+    GaussSolve(s, r, param);
     double rms = 0;
     for( size_t i=0; i < xy.Elements(); i++ )
       rms += olx_sqr( xy[1][i]-TVector<MatType>::PolynomValue(param, xy[0][i]) );

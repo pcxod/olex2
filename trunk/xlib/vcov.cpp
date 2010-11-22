@@ -185,7 +185,7 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
   olxstr last_atom_name;
   TSizeList indexes;
   TCAtom* atom = NULL;
-  //olxdict<size_t, eveci, TPrimitiveComparator> Us;
+  olxdict<size_t, eveci, TPrimitiveComparator> Us;
   static TStrList U_annotations;
   if( U_annotations.IsEmpty() )  {
     U_annotations.Add("u11");
@@ -198,7 +198,7 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
   const mat3d& h2c = au.GetHklToCartesian();
   const double O[6] = {
     1./h2c[0].QLength(), 1./h2c[1].QLength(), 1./h2c[2].QLength(),
-    sqrt(O[0]*O[1]), sqrt(O[0]*O[2]), sqrt(O[1]*O[2])
+    sqrt(O[1]*O[2]), sqrt(O[0]*O[2]), sqrt(O[0]*O[1])
   };
   size_t ua_index, d_index = 0;
   for( size_t i=0; i < annotations.Count(); i++ )  {
@@ -241,10 +241,10 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
     else if( (ua_index=U_annotations.IndexOf(param_name)) != InvalidIndex )  {
       if( atom->GetEllipsoid() == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, "U for isotropic atom");
-      //eveci& v = Us.Add(atom->GetId());
-      //if( v.Count() == 0 )  v.Resize(6);
-      //v[ua_index] = i;
-      atom->GetEllipsoid()->SetEsd(ua_index, sqrt(values[d_index].ToDouble())*O[ua_index]);
+      eveci& v = Us.Add(atom->GetId());
+      if( v.Count() == 0 )  v.Resize(6);
+      v[ua_index] = i;
+      atom->GetEllipsoid()->SetEsd(ua_index, values[d_index].ToDouble());
     }
   }
 
@@ -270,29 +270,35 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
       Index[j].C() = ca->GetId();
     i = j-1;
   }
-  //ematd Um(6,6);
-  //for( size_t i=0; i < au.AtomCount(); i++ )  {
-  //  TCAtom& a = au.GetAtom(i);
-  //  if( a.GetEllipsoid() == NULL )  continue;
-  //  const size_t ui = Us.IndexOf(a.GetId());
-  //  if( ui == InvalidIndex )  continue;
-  //  eveci& v = Us.GetValue(ui);
-  //  for( int vi = 0; vi < 6; vi++ )  {
-  //    for( int vj = vi; vj < 6; vj++ )  {
-  //      int x = v[vi];
-  //      int y = v[vj];
-  //      const size_t ind = x*(2*annotations.Count()-x-1)/2+y;
-  //      Um[vi][vj] = Um[vj][vi] = values[ind].ToDouble();
-  //    }
-  //  }
-  //  evecd tv = O*(Um*O);
-  //  TEllipsoid& elp = *a.GetEllipsoid();
-  //  elp.SetEsd(0, sqrt(tv[0]));
-  //  elp.SetEsd(1, sqrt(tv[1]));
-  //  elp.SetEsd(2, sqrt(tv[2]));
-  //  elp.SetEsd(3, sqrt(tv[5]));
-  //  elp.SetEsd(4, sqrt(tv[4]));
-  //  elp.SetEsd(5, sqrt(tv[3]));
-  //}
+  const mat3d& f2c = au.GetCellToCartesian();
+  evecd Ut(6);
+  Ut[0] = (f2c[0][0]*f2c[0][0] + f2c[0][1]*f2c[0][1] + f2c[0][2]*f2c[0][2]);
+  Ut[1] = (f2c[1][1]*f2c[1][1] + f2c[1][2]*f2c[1][2]);
+  Ut[2] = (f2c[2][2]*f2c[2][2]);
+  Ut[3] = 2*(f2c[1][0]*f2c[2][0] + f2c[1][1]*f2c[2][1]);
+  Ut[4] = 2*(f2c[0][0]*f2c[2][0]);
+  Ut[5] = 2*(f2c[0][0]*f2c[1][0]);
+  Ut *= 1./3;
+  ematd Um(6,6);
+  for( size_t i=0; i < au.AtomCount(); i++ )  {
+    TCAtom& a = au.GetAtom(i);
+    if( a.GetEllipsoid() == NULL )  continue;
+    TEllipsoid& elp = *a.GetEllipsoid();
+    const size_t ui = Us.IndexOf(a.GetId());
+    if( ui == InvalidIndex )  continue;
+    eveci& v = Us.GetValue(ui);
+    for( int vi = 0; vi < 6; vi++ )  {
+      Um[vi][vi] = elp.GetEsd(vi);
+      elp.SetEsd(vi, sqrt(elp.GetEsd(vi))*O[vi]);
+      for( int vj = vi+1; vj < 6; vj++ )  {
+        int x = v[vi];
+        int y = v[vj];
+        const size_t ind = x*(2*annotations.Count()-x-1)/2+y;
+        Um[vi][vj] = Um[vj][vi] = values[ind].ToDouble();
+      }
+    }
+    const double Ueq = (Ut*Um).DotProd(Ut);
+    a.SetUisoEsd(sqrt(Ueq));
+  }
 }
 //..................................................................................
