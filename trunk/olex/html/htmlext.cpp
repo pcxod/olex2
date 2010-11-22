@@ -133,6 +133,8 @@ THtml::~THtml()  {
 }
 //..............................................................................
 void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
+  if( !MouseDown )  return;
+  MouseDown = false;
   olxstr Href = link.GetHref().c_str();
   size_t ind = Href.FirstIndexOf('%');
   while( ind != InvalidIndex && ((ind+2) < Href.Length()) )  {
@@ -169,23 +171,18 @@ size_t THtml::GetSwitchState(const olxstr& switchName)  {
 //..............................................................................
 void THtml::OnMouseDown(wxMouseEvent& event)  {
   this->SetFocusIgnoringChildren();
-  if( Movable )  {
-    MouseX = event.GetX();
-    MouseY = event.GetY();
+  MouseX = event.GetX();
+  MouseY = event.GetY();
+  MouseDown = true;
+  if( Movable )
     SetCursor( wxCursor(wxCURSOR_SIZING) );
-    MouseDown = true;
-  }
-  else
-    event.Skip();
+  event.Skip();
 }
 //..............................................................................
 void THtml::OnMouseUp(wxMouseEvent& event)  {
-  if( Movable && MouseDown )  {
-    MouseDown = false;
-    SetCursor( wxCursor(wxCURSOR_ARROW) );
-  }
-  else
-    event.Skip();
+  if( Movable && MouseDown )
+    SetCursor(wxCursor(wxCURSOR_ARROW));
+  event.Skip();
 }
 //..............................................................................
 void THtml::OnMouseMotion(wxMouseEvent& event)  {

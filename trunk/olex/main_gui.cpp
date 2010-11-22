@@ -289,7 +289,7 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     else 
       T << " Occu: " << TEValueD(XA->Atom().CAtom().GetOccu(), XA->Atom().CAtom().GetOccuEsd()).ToString();
     miAtomInfo->SetText(T.u_str());
-    pmAtom->Enable(ID_AtomGrow, FXApp->AtomExpandable(XA));
+    pmAtom->Enable(ID_AtomGrow, !XA->Atom().IsGrown());
     pmAtom->Enable(ID_Selection, G->IsSelected() && EsdlInstanceOf(*G->GetParentGroup(), TGlGroup));
     pmAtom->Enable(ID_SelGroup, false);
     size_t bound_cnt = 0;

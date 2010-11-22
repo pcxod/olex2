@@ -234,7 +234,7 @@ public:
   virtual ~TGXApp();
   void CreateObjects(bool SyncBonds, bool CenterModel);
   void UpdateBonds();
-  void AddObjectToCreate(AGDrawObject* obj)  {  ObjectsToCreate.Add(obj);  }
+  AGDrawObject* AddObjectToCreate(AGDrawObject* obj)  {  return ObjectsToCreate.Add(obj);  }
   void Clear();
   void ClearXGrowPoints();
   void SBonds2XBonds(TSBondPList& L, TXBondPList& Res);
@@ -383,10 +383,8 @@ public:
   }
   void GrowAtoms(const olxstr& Atoms, bool Shell, TCAtomPList* Template=NULL);
   void GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template=NULL);
-  void Grow(const TXGrowLine& growLine);
   void Grow(const TXGrowPoint& growPoint);
-  void ChangeAtomType( TXAtom *A, const olxstr& Element);
-  bool AtomExpandable(TXAtom *XA);
+  void ChangeAtomType(TXAtom *A, const olxstr& Element);
   void GrowWhole(TCAtomPList* Template=NULL){  FXFile->GetLattice().GenerateWholeContent(Template); }
   void Grow(const TXAtomPList& atoms, const smatd_list& matrices);
 

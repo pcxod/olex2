@@ -64,6 +64,8 @@ protected:
   void InitBody();
   void Disassemble(bool create_planes=true);
   void RestoreCoordinates();
+  TSAtom& GenerateAtom(TCAtom& a, smatd& symop);
+  static void _CreateFrags(TCAtom& start, TCAtomPList& dest);
 public:
   TLattice();
   virtual ~TLattice();
@@ -76,8 +78,10 @@ public:
 
   void Clear(bool ClearUnitCell);
   void Uniq(bool removeSymmEquivalents = false);
-  // used if the connectivity ifosrmation was altered externally
+  // used if atoms availibility etc has changed
   void UpdateConnectivity();
+  // used if the connectivity info (CONN/BIND/FREE etc) is changed
+  void UpdateConnectivityInfo();
   void UpdatePlaneDefinitions();
   void Init();
   /*adopts atoms, bonds and fragment from the given lattice */
@@ -98,18 +102,21 @@ public:
   // generates matrices so that the center of asymmetric unit is inisde the specified volume
   size_t GenerateMatrices(smatd_plist& Result, const vec3d& VFrom, const vec3d& VTo,
         const vec3d& MFrom, const vec3d& MTo);
-  // finds matrices to be used for the next grow operation 
+  // finds matrices to be used for the next grow operation in GrowFragments
   void GetGrowMatrices(smatd_list& res) const;
-  
+  /* grows all atoms which can be grown, if GrowShells is true, only immediate environment
+  of the atoms which can grow is generated */
   void GrowFragments(bool GrowShells, TCAtomPList* Template);
-  void GrowAtoms(const TSAtomPList& Atoms, bool GrowShells, TCAtomPList* Template);
-  void GrowAtoms(const TSAtomPList& Atoms, const smatd_list& matrices);
+  /* grows a fragment using particular matrix */
+  void GrowFragment(uint32_t FragId, const smatd& transform);
   void GrowAtom(TSAtom& A, bool GrowShells, TCAtomPList* Template);
-  /* grow a fragment using particular matrix */
-  void GrowAtom(uint32_t FragId, const smatd& transform);
+  void GrowAtoms(const TSAtomPList& Atoms, bool GrowShells, TCAtomPList* Template);
+  void GrowAtoms(const TCAtomPList& Atoms, const smatd_list& matrices);
+  void GrowAtom(TCAtom& atom, const smatd& matrix);
+  // adds new asymmetric unit transformed by the given symop 
   void Grow(const smatd& transform);
-  void GenerateWholeContent(TCAtomPList* Template); // generates content using current matrices
-  bool IsExpandable(TSAtom& A) const;
+   /* generates content using current matrices, the current content stays */
+  void GenerateWholeContent(TCAtomPList* Template);
 
   static int CompareFragmentsBySize(const TNetwork* N, const TNetwork* N1)  {
     return N1->NodeCount() < N->NodeCount() ? -1 : (N1->NodeCount() > N->NodeCount() ? -1 : 0);

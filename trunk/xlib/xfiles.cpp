@@ -170,14 +170,17 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
 
   if( !Loader->IsNative() )  {
     OnFileLoad.Enter(this, &_fn);
-    try  {  GetRM().Clear(rm_clear_ALL);  }
-    catch(const TExceptionBase& exc)  {
-      TBasicApp::GetLog() << (olxstr("An error occured: ") << exc.GetException()->GetError());
+    try  {
+      GetRM().Clear(rm_clear_ALL);
+      GetLattice().Clear(true);
+      GetRM().Assign(Loader->GetRM(), true);
+      OnFileLoad.Execute(this);
+      GetLattice().Init();
     }
-    GetLattice().Clear(true);
-    GetRM().Assign(Loader->GetRM(), true);
-    OnFileLoad.Execute(this);
-    GetLattice().Init();
+    catch(const TExceptionBase& exc)  {
+      OnFileLoad.Exit(this);
+      throw TFunctionFailedException(__OlxSourceInfo, exc);
+    }
     OnFileLoad.Exit(this);
   }
   FSG = TSymmLib::GetInstance().FindSG(Loader->GetAsymmUnit());

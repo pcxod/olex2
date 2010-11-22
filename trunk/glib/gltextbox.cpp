@@ -34,7 +34,7 @@ TGlTextBox::~TGlTextBox()  { Clear();  }
 void TGlTextBox::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;
 
@@ -174,8 +174,8 @@ void TGlTextBox::SetTop(int t)  {
 }
 //..............................................................................
 bool TGlTextBox::OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
-  SetLeft( (int)(Left + GetCenter()[0]) );
-  SetTop( (int)(Top - GetCenter()[1]) );
+  SetLeft((int)(Left + GetCenter()[0]));
+  SetTop((int)(Top - GetCenter()[1]));
   Center.Null();
   return AGlMouseHandlerImp::OnMouseUp(Sender, Data);
 }

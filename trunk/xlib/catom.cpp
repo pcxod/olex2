@@ -27,7 +27,6 @@ TCAtom::TCAtom(TAsymmUnit* _Parent) : Parent(_Parent)  {
   UisoScale = 0;
   UisoOwner = NULL;
   FragmentId = ~0;
-  AttachedSites = AttachedSitesI = NULL;
   Equivs = NULL;
   Type = NULL;
   SetTag(-1);
@@ -40,8 +39,6 @@ TCAtom::TCAtom(TAsymmUnit* _Parent) : Parent(_Parent)  {
 }
 //..............................................................................
 TCAtom::~TCAtom()  {
-  if( AttachedSites != NULL )  delete AttachedSites;
-  if( AttachedSitesI != NULL )  delete AttachedSitesI;
   if( DependentHfixGroups != NULL )  delete DependentHfixGroups; 
   if( ConnInfo != NULL )  delete ConnInfo;
   if( Equivs != NULL )  delete Equivs;
@@ -328,27 +325,72 @@ int TCAtom::CompareAtomLabels(const olxstr& S, const olxstr& S1)  {
 }
 //..............................................................................
 bool TCAtom::AttachSite(TCAtom* atom, const smatd& matrix)  {
-  if( AttachedSites == NULL )
-    AttachedSites = new TTypeList<TCAtom::Site>;
-  for( size_t i=0; i < AttachedSites->Count(); i++ )  {
-    if( AttachedSites->GetItem(i).atom == atom &&
-      AttachedSites->GetItem(i).matrix.GetId() == matrix.GetId() )
-      return false;
+  for( size_t i=0; i < AttachedSites.Count(); i++ )  {
+    if( AttachedSites[i].atom == atom )  {
+      if( AttachedSites[i].matrix.GetId() == matrix.GetId() )
+        return false;
+      const vec3d v1 = matrix*atom->ccrd();
+      const vec3d v2 = AttachedSites[i].matrix*atom->ccrd();
+      if( v1.QDistanceTo(v2) < 1e-6 )
+        return false;
+    }
   }
-  AttachedSites->AddNew(atom, matrix);
+  AttachedSites.AddNew(atom, matrix);
   return true;
 }
 //..............................................................................
 bool TCAtom::AttachSiteI(TCAtom* atom, const smatd& matrix)  {
-  if( !AttachedSitesI )
-    AttachedSitesI = new TTypeList<TCAtom::Site>;
-  for( size_t i=0; i < AttachedSitesI->Count(); i++ )  {
-    if( AttachedSitesI->GetItem(i).atom == atom &&
-      AttachedSitesI->GetItem(i).matrix.GetId() == matrix.GetId() )
-      return false;
+  for( size_t i=0; i < AttachedSitesI.Count(); i++ )  {
+    if( AttachedSitesI[i].atom == atom )  {
+      if( AttachedSitesI[i].matrix.GetId() == matrix.GetId() )
+        return false;
+      const vec3d v1 = matrix*atom->ccrd();
+      const vec3d v2 = AttachedSitesI[i].matrix*atom->ccrd();
+      if( v1.QDistanceTo(v2) < 1e-6 )
+        return false;
+    }
   }
-  AttachedSitesI->AddNew(atom, matrix);
+  AttachedSitesI.AddNew(atom, matrix);
   return true;
+}
+//..............................................................................
+void TCAtom::UpdateAttachedSites()  {
+  smatd_list ml;
+  BondInfoList toCreate, toDelete;
+  ConnInfo::Compile(*this, toCreate, toDelete, ml);
+  smatd I;
+  I.I().SetId(0);
+  for( size_t i=0; i < toCreate.Count(); i++ )
+    AttachSite(&toCreate[i].to, toCreate[i].matr == NULL ? I : *toCreate[i].matr);
+  for( size_t i=0; i < toDelete.Count(); i++ )  {
+    for( size_t j=0; j < AttachedSites.Count(); j++ )  {
+      if( &toDelete[i].to == AttachedSites[j].atom )  {
+        if( (toDelete[i].matr == NULL && AttachedSites[j].matrix.IsFirst()) ||
+            (toDelete[i].matr != NULL && toDelete[i].matr->GetId() == AttachedSites[j].matrix.GetId()))
+        {
+          AttachedSites.Delete(j);
+          break;
+        }
+      }
+    }
+  }
+  const CXConnInfo& ci = GetConnInfo();
+  if( AttachedSites.Count() > (size_t)olx_abs(ci.maxBonds) )  {
+    if( ci.maxBonds < 0 )
+      AttachedSites.QuickSorter.SortMF<TCAtom>(AttachedSites, *this, &TCAtom::SortSitesByDistanceDsc);
+    else
+      AttachedSites.QuickSorter.SortMF<TCAtom>(AttachedSites, *this, &TCAtom::SortSitesByDistanceAsc);
+    // prevent q-peaks affecting the max number of bonds...
+    uint16_t bc2set = olx_abs(ci.maxBonds);
+    for( uint16_t j=0;  j < bc2set; j++ )  {
+      if( AttachedSites[j].atom->GetType() == iQPeakZ )  {
+        if( ++bc2set >= AttachedSites.Count() )  {
+          break;
+        }
+      }
+    }
+    AttachedSites.Shrink(bc2set);
+  }
 }
 //..............................................................................
 olxstr TCAtom::GetResiLabel() const {
@@ -464,3 +506,11 @@ void TCAtom::SetValue(size_t var_index, const double& val) {
       throw TInvalidArgumentException(__OlxSourceInfo, "parameter name");
   }
 }
+//..............................................................................
+int TCAtom::SortSitesByDistanceAsc(const Site* a1, const Site* a2) const {
+  vec3d v1 = Parent->Orthogonalise(ccrd() - a1->matrix*a1->atom->ccrd());
+  vec3d v2 = Parent->Orthogonalise(ccrd() - a2->matrix*a2->atom->ccrd());
+  const double diff = v1.QLength() - v2.QLength();
+  return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
+}
+//..............................................................................

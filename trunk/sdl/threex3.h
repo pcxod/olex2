@@ -87,6 +87,10 @@ public:
   template <class AT> inline TVector3<AT> Round() const {
     return TVector3<AT>(olx_round_t<AT,T>(data[0]), olx_round_t<AT,T>(data[1]), olx_round_t<AT,T>(data[2]));
   }
+  // floors the vector elements
+  template <class AT> inline TVector3<AT> Floor() const {
+    return TVector3<AT>(olx_floor_t<AT,T>(data[0]), olx_floor_t<AT,T>(data[1]), olx_floor_t<AT,T>(data[2]));
+  }
   template <class AT> inline T DotProd(const TVector3<AT>& v) const {
     return data[0]*v[0] + data[1]*v[1] + data[2]*v[2];
   }

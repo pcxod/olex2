@@ -76,7 +76,7 @@ private:
     UisoScale;  // for proxied Uiso (depending on the UisoOwner, this defines the scaled value
   TCAtom* UisoOwner;  // the Uiso owner, if any
   vec3d Center, Esd;  // fractional coordinates and esds
-  TTypeList<TCAtom::Site>* AttachedSites, *AttachedSitesI;
+  TTypeList<TCAtom::Site> AttachedSites, AttachedSitesI;
   smatd_list* Equivs;
   /* Afix group is a fitted group, Hfix group the immediate dependent group */
   TAfixGroup* DependentAfixGroup, *ParentAfixGroup;
@@ -86,6 +86,10 @@ private:
   static olxstr VarNames[];
   CXConnInfo* ConnInfo;
   inline void SetId(size_t id)  {  Id = id;  }
+  int SortSitesByDistanceAsc(const Site* s1, const Site* s2) const;
+  int SortSitesByDistanceDsc(const Site* s1, const Site* s2) const {
+    return -SortSitesByDistanceAsc(s1, s2);
+  }
 public:
   TCAtom(TAsymmUnit* Parent);
   virtual ~TCAtom();
@@ -104,35 +108,27 @@ public:
   // if ResiId == -1 works the same as GetLabel(), otherwise appends '_' and the Residue number
   olxstr GetResiLabel() const;
 
-  inline size_t AttachedSiteCount() const {
-    return AttachedSites == NULL ? 0 : AttachedSites->Count();
-  }
+  inline size_t AttachedSiteCount() const {  return AttachedSites.Count();  }
   bool IsAttachedTo(const TCAtom& ca) const {
-    for( size_t i=0; i < AttachedSiteCount(); i++ )
-      if( GetAttachedSite(i).atom == &ca )
+    for( size_t i=0; i < AttachedSites.Count(); i++ )
+      if( AttachedSites[i].atom == &ca )
         return true;
     return false;
   }
-  inline TCAtom::Site& GetAttachedSite(size_t i) const {  return AttachedSites->GetItem(i);  }
-  inline TCAtom& GetAttachedAtom(size_t i) const {  return *AttachedSites->GetItem(i).atom;  }
+  inline TCAtom::Site& GetAttachedSite(size_t i) const {  return AttachedSites.GetItem(i);  }
+  inline TCAtom& GetAttachedAtom(size_t i) const {  return *AttachedSites[i].atom;  }
   // will add only a unique set {atom, matrix}, returns true if the set is unique
   bool AttachSite(TCAtom* atom, const smatd& matrix);
   void ClearAttachedSites()  {
-    if( AttachedSites != NULL )  {
-      delete AttachedSites;
-      AttachedSites = NULL; 
-    }
-    if( AttachedSitesI != NULL )  {
-      delete AttachedSitesI;
-      AttachedSitesI = NULL; 
-    }
+    AttachedSites.Clear();
+    AttachedSitesI.Clear(); 
   }
+  // aplies conninfo to the list of attached sites
+  void UpdateAttachedSites();
 
-  inline size_t AttachedSiteICount() const {
-    return AttachedSitesI == NULL ? 0 : AttachedSitesI->Count();
-  }
-  inline TCAtom::Site& GetAttachedSiteI(size_t i) const {  return AttachedSitesI->GetItem(i);  }
-  inline TCAtom& GetAttachedAtomI(size_t i) const {  return *AttachedSitesI->GetItem(i).atom;  }
+  inline size_t AttachedSiteICount() const {  return AttachedSitesI.Count();  }
+  inline TCAtom::Site& GetAttachedSiteI(size_t i) const {  return AttachedSitesI[i];  }
+  inline TCAtom& GetAttachedAtomI(size_t i) const {  return *AttachedSitesI[i].atom;  }
   // will only add a unique set of {atom, matrix}, returns true if the set is unique
   bool AttachSiteI(TCAtom* atom, const smatd& matrix);
   // pointers only compared!
@@ -183,6 +179,8 @@ public:
     DependentHfixGroups->Add(&hg);
   }
   DefPropP(double, Occu)
+  // return chemical coccupancy, i.e. CrystOccu*site_multiplicity
+  double GetChemOccu() const {  return GetOccu()*GetDegeneracy();  }
   DefPropP(double, OccuEsd)
   DefPropP(double, Uiso)
   DefPropP(double, UisoEsd)
@@ -192,11 +190,10 @@ public:
   DefPropBFIsSet(Deleted,   Flags, catom_flag_Deleted)
   DefPropBFIsSet(Saved,     Flags, catom_flag_Saved)
   DefPropBFIsSet(HAttached, Flags, catom_flag_HAttached)
-  DefPropBFIsSet(Growable,  Flags, catom_flag_Growable)
   DefPropBFIsSet(Masked,    Flags, catom_flag_Masked)
   DefPropBFIsSet(Detached,  Flags, catom_flag_Detached)
   bool IsAvailable() const {  return (Flags&(catom_flag_Detached|catom_flag_Masked|catom_flag_Deleted)) == 0;  }
-
+  bool IsGrowable() const {  return GetDegeneracy() > 1;  }
   TEllipsoid* GetEllipsoid() const;
   void UpdateEllp(const TEllipsoid& NV);
   void AssignEllp(TEllipsoid *NV);

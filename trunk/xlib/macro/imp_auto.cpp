@@ -536,8 +536,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
     for( size_t i=0; i < au.AtomCount(); i++ )  {
       if( au.GetAtom(i).IsDeleted() )  continue;
       uc.FindInRangeAC(au.GetAtom(i).ccrd(), au.GetAtom(i).GetType().r_bonding+1.3, res);
-      vec3d center = au.GetAtom(i).ccrd();
-      au.CellToCartesian(center);
+      vec3d center = au.Orthogonalise(au.GetAtom(i).ccrd());
       for( size_t j=0; j < res.Count(); j++ )  {
         if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() && center.QDistanceTo(res[j].GetB()) < 1e-4 )
           res.Delete(j--);

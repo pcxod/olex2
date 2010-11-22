@@ -101,9 +101,15 @@ void TGlCanvas::OnMouseDown(wxMouseEvent& me)  {
   else if( me.ButtonDown(2) )  MouseButton = smbMiddle;
   else if( me.ButtonDown(3) )  MouseButton = smbRight;
 
-   FParent->OnMouseDown(me.m_x, me.m_y, Fl, MouseButton);
-   FXApp->MouseDown(me.m_x, me.m_y, Fl, MouseButton);
-
+  FParent->OnMouseDown(me.m_x, me.m_y, Fl, MouseButton);
+  FXApp->MouseDown(me.m_x, me.m_y, Fl, MouseButton);
+  AGDrawObject *G = FXApp->SelectObject(me.m_x, me.m_y);
+  if( G != NULL )  {
+    TGlGroup *GlG = FXApp->FindObjectGroup(*G);
+    if( GlG != NULL )  
+      G = GlG;
+  }
+  FParent->ObjectUnderMouse(G);
   FMX = me.m_x;
   FMY = me.m_y;
   SetFocus();

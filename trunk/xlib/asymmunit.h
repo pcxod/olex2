@@ -82,12 +82,24 @@ public:
     return crt;
     //crt *= Cell2Cartesian;
   }
+  template <class VC> inline VC Orthogonalise(const VC& crt) const {
+    return VC(
+      crt[0]*Cell2Cartesian[0][0] + crt[1]*Cell2Cartesian[1][0] + crt[2]*Cell2Cartesian[2][0],
+      crt[1]*Cell2Cartesian[1][1] + crt[2]*Cell2Cartesian[2][1],
+      crt[2]*Cell2Cartesian[2][2]);
+  }
   template <class VC> inline VC& CartesianToCell(VC& cll) const {
     cll[0] = cll[0]*Cartesian2Cell[0][0] + cll[1]*Cartesian2Cell[1][0] + cll[2]*Cartesian2Cell[2][0];
     cll[1] = cll[1]*Cartesian2Cell[1][1] + cll[2]*Cartesian2Cell[2][1];
     cll[2] = cll[2]*Cartesian2Cell[2][2];
     return cll;
     //cll *= Cartesian2Cell;
+  }
+  template <class VC> inline VC Fractionalise(const VC& cll) const {
+    return VC(
+      cll[0]*Cartesian2Cell[0][0] + cll[1]*Cartesian2Cell[1][0] + cll[2]*Cartesian2Cell[2][0],
+      cll[1]*Cartesian2Cell[1][1] + cll[2]*Cartesian2Cell[2][1],
+      cll[2]*Cartesian2Cell[2][2]);
   }
 
   // J App Cryst 2002, 35, 477-480

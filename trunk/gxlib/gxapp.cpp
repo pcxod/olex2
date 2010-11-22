@@ -106,12 +106,14 @@ class xappXFileLoad: public AActionHandler  {
   TEBitArray CAtomMasks;
   TLattice::GrowInfo* GrowInfo;
   bool SameFile, EmptyFile;
+  int state;
 public:
   xappXFileLoad(TGXApp *Parent) {  
     FParent = Parent;  
     AActionHandler::SetToDelete(false);
     GrowInfo = NULL;
     SameFile = false;
+    state = 0;
   }
   ~xappXFileLoad()  {  
     if( GrowInfo != NULL )
@@ -119,6 +121,7 @@ public:
     return;  
   }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
+    state = 1;
     if( GrowInfo != NULL )  {
       delete GrowInfo;
       GrowInfo = NULL;
@@ -167,6 +170,7 @@ public:
     return true;
   }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
+    state = 2;
     const TAsymmUnit& au = FParent->XFile().GetAsymmUnit();
     bool sameAU = true, hasNonQ = false;
     size_t ac = 0;
@@ -211,6 +215,9 @@ public:
     return false;
   }
   bool Exit(const IEObject *Sender, const IEObject *Data)  {
+    if( state == 1 )  // somehing went not as expected? trye to recover then...
+      FParent->CreateObjects(false, true);
+    state = 3;
     FParent->GetRender().SetBasis(B);
     FParent->CenterView(!SameFile);
     FParent->Draw();
@@ -283,7 +290,6 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
   ObjectsToCreate.Add(F3DFrame=new T3DFrameCtrl(*FGlRender, "3DFrame"));
   F3DFrame->SetVisible(false);
   XFile().GetLattice().OnDisassemble.Add(this, ID_OnDisassemble);
-
   XFile().GetLattice().OnStructureUniq.Add(this, ID_OnUniq);
   XFile().GetLattice().OnStructureGrow.Add(this, ID_OnGrow);
   XFile().GetLattice().OnAtomsDeleted.Add(this, ID_OnClear);
@@ -1263,7 +1269,7 @@ void TGXApp::SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b)
   if( FXGrowLinesVisible )  {
     for( size_t i=0; i < XGrowLines.Count(); i++ )  {
       if( XGrowLines[i].SAtom()->GetType() == atom_type )
-        XGrowLines[i].SetVisible( XAtoms[XGrowLines[i].SAtom()->GetTag()].IsVisible() );
+        XGrowLines[i].SetVisible(XAtoms[XGrowLines[i].SAtom()->GetTag()].IsVisible());
     }
   }
 }
@@ -1344,13 +1350,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
     if(  !(SData->From == SData->To) )
       Select(SData->From, SData->To);
   }
-  else if( MsgSubId == msiExit && (MsgId == ID_OnUniq || MsgId == ID_OnGrow) ) {
-    if( OverlayedXFileCount() != 0 )  {
-      AlignOverlayedXFiles();
-      UpdateBonds();
-    }
-    CenterView(true);
-  }
+  else if( MsgSubId == msiExit && (MsgId == ID_OnUniq || MsgId == ID_OnGrow) ) {    if( OverlayedXFileCount() != 0 )  {      AlignOverlayedXFiles();      UpdateBonds();    }    CenterView(true);  }
   else if( MsgId == ID_OnFileLoad )  {
     if( MsgSubId == msiEnter )  {
       SelectionCopy[0].Clear();
@@ -1480,12 +1480,8 @@ void TGXApp::GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template)  {
 }
 //..............................................................................
 void TGXApp::Grow(const TXAtomPList& atoms, const smatd_list& matrices)  {
-  TSAtomPList satoms(atoms, TXAtom::AtomAccessor<>());
+  TCAtomPList satoms(atoms, TSAtom::CAtomAccessor<TXAtom::AtomAccessor<> >());
   FXFile->GetLattice().GrowAtoms(satoms, matrices);
-}
-//..............................................................................
-bool TGXApp::AtomExpandable(TXAtom *XA)  {
-  return FXFile->GetLattice().IsExpandable(XA->Atom());
 }
 //..............................................................................
 void TGXApp::GetXAtoms(const olxstr& AtomName, TXAtomPList& res)  {
@@ -2828,42 +2824,12 @@ void TGXApp::StoreLabels()  {
 }
 //..............................................................................
 void TGXApp::RestoreLabels()  {
-  TXAtomPList xatoms(LabelInfo.atoms.Count());
-  TXBondPList xbonds(LabelInfo.bonds.Count());
-  for( size_t i=0; i < OverlayedXFiles.Count(); i++ )  {
-    OverlayedXFiles[i].GetLattice().GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));
-    OverlayedXFiles[i].GetLattice().GetBonds().ForEach(ACollectionItem::TagSetter<>(-1));
-  }
-  XFile().GetLattice().GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));
-  XFile().GetLattice().GetBonds().ForEach(ACollectionItem::TagSetter<>(-1));
-  XAtoms.ForEach(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());
-  XBonds.ForEach(ACollectionItem::IndexTagSetter<TXBond::BondAccessor<> >());
-  for( size_t i=0; i < LabelInfo.atoms.Count(); i++ )  {
-    TSAtom* sa = LabelInfo.atoms[i].latt.GetAtomRegistry().Find(LabelInfo.atoms[i].ref);
-    if( sa != NULL && sa->GetTag() != -1 )
-      xatoms[i] = &XAtoms[sa->GetTag()];
-  }
+  TXAtomPList xatoms(LabelInfo.atoms.Count());  TXBondPList xbonds(LabelInfo.bonds.Count());  for( size_t i=0; i < OverlayedXFiles.Count(); i++ )  {    OverlayedXFiles[i].GetLattice().GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));    OverlayedXFiles[i].GetLattice().GetBonds().ForEach(ACollectionItem::TagSetter<>(-1));  }  XFile().GetLattice().GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));  XFile().GetLattice().GetBonds().ForEach(ACollectionItem::TagSetter<>(-1));  XAtoms.ForEach(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());  XBonds.ForEach(ACollectionItem::IndexTagSetter<TXBond::BondAccessor<> >());  for( size_t i=0; i < LabelInfo.atoms.Count(); i++ )  {
+    TSAtom* sa = LabelInfo.atoms[i].latt.GetAtomRegistry().Find(LabelInfo.atoms[i].ref);    if( sa != NULL && sa->GetTag() != -1 )      xatoms[i] = &XAtoms[sa->GetTag()];  }
   for( size_t i=0; i < LabelInfo.bonds.Count(); i++ )  {
-    TSBond* sb = LabelInfo.bonds[i].latt.GetAtomRegistry().Find(LabelInfo.bonds[i].ref);
-    if( sb != NULL && sb->GetTag() != -1 )
-      xbonds[i] = &XBonds[sb->GetTag()];
-  }
-  for( size_t i=0; i < xatoms.Count(); i++ )  {
-    if( xatoms[i] == NULL )  continue; 
-    xatoms[i]->GetLabel().SetVisible(true);
-    xatoms[i]->GetLabel().SetLabel(LabelInfo.labels[i]);
-    xatoms[i]->GetLabel().SetOffset(xatoms[i]->Atom().crd());
-    xatoms[i]->GetLabel().TranslateBasis(
-      LabelInfo.centers[i]-xatoms[i]->GetLabel().GetCenter());
-  }
-  for( size_t i=0; i < xbonds.Count(); i++ )  {
-    if( xbonds[i] == NULL )  continue;
-    xbonds[i]->GetLabel().SetVisible(true);
-    xbonds[i]->GetLabel().SetLabel(LabelInfo.labels[xatoms.Count()+i]);
-    xbonds[i]->GetLabel().SetOffset(xbonds[i]->Bond().GetCenter());
-    xbonds[i]->GetLabel().TranslateBasis(
-      LabelInfo.centers[xatoms.Count()+i]-xbonds[i]->GetLabel().GetCenter());
-  }
+    TSBond* sb = LabelInfo.bonds[i].latt.GetAtomRegistry().Find(LabelInfo.bonds[i].ref);    if( sb != NULL && sb->GetTag() != -1 )      xbonds[i] = &XBonds[sb->GetTag()];  }
+  for( size_t i=0; i < xatoms.Count(); i++ )  {    if( xatoms[i] == NULL )  continue;     xatoms[i]->GetLabel().SetVisible(true);    xatoms[i]->GetLabel().SetLabel(LabelInfo.labels[i]);    xatoms[i]->GetLabel().SetOffset(xatoms[i]->Atom().crd());    xatoms[i]->GetLabel().TranslateBasis(      LabelInfo.centers[i]-xatoms[i]->GetLabel().GetCenter());  }
+  for( size_t i=0; i < xbonds.Count(); i++ )  {    if( xbonds[i] == NULL )  continue;    xbonds[i]->GetLabel().SetVisible(true);    xbonds[i]->GetLabel().SetLabel(LabelInfo.labels[xatoms.Count()+i]);    xbonds[i]->GetLabel().SetOffset(xbonds[i]->Bond().GetCenter());    xbonds[i]->GetLabel().TranslateBasis(      LabelInfo.centers[xatoms.Count()+i]-xbonds[i]->GetLabel().GetCenter());  }
 }
 //..............................................................................
 void TGXApp::RestoreGroups()  {
@@ -3670,8 +3636,8 @@ void TGXApp::CreateXGrowLines()  {
         added = true;
       }
     }
-    if( !added )
-      A->SetGrown(true);
+    //if( !added )
+    //  A->SetGrown(true);
   }
   for( size_t i=0; i < tr_list.Count(); i++ )  {
     TGXApp_Transform1& nt = tr_list[i];
@@ -3763,11 +3729,6 @@ void TGXApp::_CreateXGrowVLines()  {
     }
   }
   Info.DeleteItems(true);
-}
-//..............................................................................
-void TGXApp::Grow(const TXGrowLine& growLine)  {
-  UsedTransforms.AddCCopy(growLine.GetTransform());
-  XFile().GetLattice().GrowAtom(growLine.CAtom()->GetFragmentId(), growLine.GetTransform());
 }
 //..............................................................................
 void TGXApp::Grow(const TXGrowPoint& growPoint)  {

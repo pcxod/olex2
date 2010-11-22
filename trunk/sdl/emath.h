@@ -37,6 +37,18 @@ template <typename int_t, typename float_t> inline int_t olx_round_t(const float
   int_t b = (int_t)a;  // |b| is always smaller than a
   return ((a < 0) ? (((b-a) >= .5) ? --b : b) : (((a-b) >= .5) ? ++b : b));
 }
+// rounds a floating point: returns (float_t)(round(a*num))/num 
+template <typename float_t> inline float_t olx_round(const float_t a, long num)  {
+  return (float_t)olx_round(a*num)/num;
+}
+template <typename float_t> inline long olx_floor(const float_t a)  {
+  long b = (long)a;
+  return (a < 0) ? b-1 : b;
+}
+template <typename int_t, typename float_t> inline int_t olx_floor_t(const float_t a)  {
+  int_t b = (int_t)a;
+  return (a < 0) ? b-1 : b;
+}
 // returns absolute value of a number
 template <typename num> inline num olx_abs(num n)  {
   return n < 0 ? -n : n;

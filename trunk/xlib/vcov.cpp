@@ -198,7 +198,8 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
   const mat3d& h2c = au.GetHklToCartesian();
   const double O[6] = {
     1./h2c[0].QLength(), 1./h2c[1].QLength(), 1./h2c[2].QLength(),
-    sqrt(O[0]*O[1]), sqrt(O[0]*O[2]), sqrt(O[1]*O[2]) };
+    sqrt(O[0]*O[1]), sqrt(O[0]*O[2]), sqrt(O[1]*O[2])
+  };
   size_t ua_index, d_index = 0;
   for( size_t i=0; i < annotations.Count(); i++ )  {
     if( i !=  0 )

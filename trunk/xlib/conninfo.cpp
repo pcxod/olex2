@@ -1,6 +1,7 @@
 #include "conninfo.h"
 #include "atomref.h"
 #include "xapp.h"
+#include "unitcell.h"
 
 void ConnInfo::ProcessFree(const TStrList& ins)  {
   TAtomReference ar(ins.Text(' '));
@@ -431,7 +432,8 @@ void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* 
 void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& toDelete, 
                        smatd_list& ml )  
 {
-  TAsymmUnit& au = *a.GetParent();
+  const TAsymmUnit& au = *a.GetParent();
+  const TUnitCell& uc = a.GetParent()->GetLattice().GetUnitCell();
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     TCAtom& ca = au.GetAtom(i);
     if( ca.IsDeleted() )  continue;
@@ -442,16 +444,16 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
           if( ci.BondsToRemove[j].matr == NULL )
             toDelete.AddCCopy(ci.BondsToRemove[j]);
           else  {
-            const smatd matr = ci.BondsToRemove[j].matr->Inverse();
+            const smatd matr = uc.InvMatrix(*ci.BondsToRemove[j].matr);
             bool uniq = true;
             for( size_t k=0; k < toDelete.Count(); k++ )  {
-              if( toDelete[k].matr != NULL && toDelete[k].to == a && toDelete[k].matr->EqualExt(matr) )  {
+              if( toDelete[k].matr != NULL && toDelete[k].to == a && toDelete[k].matr->GetId() == matr.GetId() )  {
                 uniq = false;
                 break;
               }
             }
             if( uniq )
-              toDelete.Add( new CXBondInfo(ca, &ml.AddCCopy(matr)) );
+              toDelete.Add(new CXBondInfo(ca, &ml.AddCCopy(matr)));
           }
         }
       }
@@ -460,25 +462,31 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
           if( ci.BondsToCreate[j].matr == NULL )
             toCreate.AddCCopy(ci.BondsToCreate[j]);
           else  {
-            const smatd matr = ci.BondsToCreate[j].matr->Inverse();
+            const smatd matr = uc.InvMatrix(*ci.BondsToCreate[j].matr);
             bool uniq = true;
             for( size_t k=0; k < toCreate.Count(); k++ )  {
-              if( toCreate[k].matr != NULL && toCreate[k].to == a && toCreate[k].matr->EqualExt(matr) )  {
+              if( toCreate[k].matr != NULL && toCreate[k].to == a && toCreate[k].matr->GetId() == matr.GetId() )  {
                 uniq = false;
                 break;
               }
             }
             if( uniq )
-              toCreate.Add( new CXBondInfo(ca, &ml.AddCCopy(matr)) );
+              toCreate.Add(new CXBondInfo(ca, &ml.AddCCopy(matr)));
           }
         }
       }
     }
     else  {  // own connectivity
-      toCreate.AddListC(ci.BondsToCreate);
-      toDelete.AddListC(ci.BondsToRemove);
+      for( size_t i=0; i < ci.BondsToCreate.Count(); i++ )
+        toCreate.Add(new CXBondInfo(ci.BondsToCreate[i].to,
+          ci.BondsToCreate[i].matr == NULL ? NULL : &ml.AddCCopy(*ci.BondsToCreate[i].matr)));
+      for( size_t i=0; i < ci.BondsToRemove.Count(); i++ )
+        toDelete.Add(new CXBondInfo(ci.BondsToRemove[i].to,
+          ci.BondsToRemove[i].matr == NULL ? NULL : &ml.AddCCopy(*ci.BondsToRemove[i].matr)));
     }
   }
+  //for( size_t i=0; i < ml.Count(); i++ )
+  //  uc.InitMatrixId(ml[i]);
 }
 //........................................................................
 void ConnInfo::AtomConnInfo::ToDataItem(TDataItem& item) const {
