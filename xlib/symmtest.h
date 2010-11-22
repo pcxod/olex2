@@ -85,7 +85,7 @@ public:
   //      gs = lmt * lm;
   //      gr = lmt * b;
 
-  //      TMatrixD::GauseSolve(gs, gr, sol);
+  //      TMatrixD::GaussSolve(gs, gr, sol);
   //      res[i] = sol;
   //      sol.Null();
   //    }

@@ -2757,9 +2757,9 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       TEllipsoid& elp = *a.GetEllipsoid();
       a.SetUiso(elp.GetUiso());
       double esd = 0;
-      for( int j=0; j < 3; j++ )
-        esd += olx_sqr(elp.GetEsd(j));
-      a.SetUisoEsd(sqrt(esd)/4.);
+      //for( int j=0; j < 3; j++ )
+      //  esd += olx_sqr(elp.GetEsd(j));
+      //a.SetUisoEsd(sqrt(esd)/4.);
     }
     else if( a.GetType() == iHydrogenZ && a.GetUisoEsd() == 0 )  {
       long val = olx_round(a.GetUiso()*100000);
@@ -3520,7 +3520,7 @@ evecd XLibMacros_fit_chn_calc(const ematd& m, const evecd& p, size_t cnt)  {
       res[0] = nv[0]/nm[0][0];
   }
   else  {  
-    try  {  ematd::GauseSolve(nm, nv, res);  }
+    try  {  ematd::GaussSolve(nm, nv, res);  }
     catch(...)  {
       for( size_t i=0; i < res.Count(); i++ )
         res[i] = -1.0;

@@ -602,7 +602,7 @@ public:
      }
    }
 
-protected:  // used in GauseSolve to sort the matrix
+protected:  // used in GaussSolve to sort the matrix
   static void MatrixElementsSort(TMatrix33<T>& arr, TVector3<T>& b)  {
     T bf[3];
     for( size_t i = 0; i < 3; i++ )  {

@@ -33,7 +33,7 @@ public:
      for( size_t k=0; k < data.Vectors(); k++ )
        r[j] += dervs[j](data[k][0]) * ( data[k][1]-func(data[k][0]) );
     }
-    ematd::GauseSolve(a, r, increments);
+    ematd::GaussSolve(a, r, increments);
     for( size_t i=0; i < dervs.Count(); i++ )
       solutions += increments[i];
 
@@ -63,7 +63,7 @@ public:
      for( size_t k=0; k < data.Vectors(); k++ )
        r[j] += dervs[j](data[k][0], data[k][1]) * ( data[k][2]-func(data[k][0], data[k][1]) );
     }
-    ematd::GauseSolve(a, r, increments);
+    ematd::GaussSolve(a, r, increments);
     for( size_t i=0; i < dervs.Count(); i++ )
       solutions += increments[i];
 
@@ -94,7 +94,7 @@ public:
      for( size_t k=0; k < data.Vectors(); k++ )
        r[j] += dervs[j](data[k][0], data[k][1], data[k][2]) * ( data[k][3]-func(data[k][0], data[k][1], data[k][2]) );
     }
-    ematd::GauseSolve(a, r, increments);
+    ematd::GaussSolve(a, r, increments);
     for( size_t i=0; i < dervs.Count(); i++ )
       solutions += increments[i];
 
@@ -125,7 +125,7 @@ public:
      for( size_t k=0; k < data.Vectors(); k++ )
        r[j] += dervs[j](data[k]) * ( data[k][data.Elements()-1]-func(data[k]) );
     }
-    ematd::GauseSolve(a, r, increments);
+    ematd::GaussSolve(a, r, increments);
     for( size_t i=0; i < dervs.Count(); i++ )
       solutions[i] = increments[i];
 
