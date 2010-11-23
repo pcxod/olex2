@@ -7,6 +7,38 @@
 #include "log.h"
 BeginXlibNamespace()
 
+template <class List> struct ComposedMatrix  {
+  const List& matrices;
+  const size_t size;
+  ComposedMatrix(const List& _matrices) : matrices(_matrices),
+    size(olx_round(sqrt((double)matrices.Count()))) {}
+  double& Get (size_t i, size_t j) const {
+    return matrices[(i/3)*size+j/3][i%3][j%3];
+  }
+  template <class VT> evecd operator * (const VT& v) const {
+    evecd rv(v.Count());
+    for( size_t i=0; i < v.Count(); i++ )  {
+      for( size_t j = 0; j < v.Count(); j++ )
+        rv[i] += v[j]*Get(j,i);
+    }
+    return rv;
+  }
+  template <class VT> double CalcEsd(const VT& v) const {
+    double esd = 0;
+    for( size_t i=0; i < v.Count(); i++ )  {
+      for( size_t j = 0; j < v.Count(); j++ )
+        esd += v[j]*v[i]*Get(j,i);
+    }
+    return esd;
+  }
+};
+template <class List> struct ComposedVector  {
+  const List& vertices;
+  ComposedVector(const List& _vertices) : vertices(_vertices) {}
+  size_t Count() const {  return vertices.Count()*3;  }
+  double& operator [] (size_t i) const {  return vertices[i/3][i%3];  }
+};
+
 const short // constants decribing the stored values
   vcoviX = 0x0001,
   vcoviY = 0x0002,
@@ -83,7 +115,6 @@ public:
           for( short l=0; l < 3; l++ )  {
             if( indexes[i][k] != InvalidIndex && indexes[j][l] != InvalidIndex )  {
               a[k][l] = Get(indexes[i][k], indexes[j][l]);
-              //a[l][k] = a[k][l];
             }
           }
         }
@@ -361,7 +392,7 @@ protected:
     return (sum*180/3)/M_PI;
   }
   // helper functions
-  double CalcEsd(const size_t sz, const mat3d_list& m, const TDoubleList& df)  {
+  template <class VC> double CalcEsd(const size_t sz, const mat3d_list& m, const VC& df)  {
     double esd = 0;
     for( size_t i=0; i < sz; i++ )  {
       for( size_t j=0; j < sz; j++ )  {
@@ -526,40 +557,36 @@ public:
     double esd = sqrt((vcov*center).DotProd(center))/val;
     return TEValue<double>(val, esd);
   }
-  // precise calculation, Sands
+  // analytical, http://salilab.org/modeller/manual/node449.html#SECTION001331200000000000000 
   TEValue<double> CalcAngleP(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3) {
     mat3d_list m;
     TSAtom const * as[] = {&a1,&a2,&a3};
     TSAtomPList satoms(3, as);
     GetVcoV(satoms, m);
-    vec3d v1(satoms[0]->crd() - satoms[1]->crd()),
-          v2(satoms[2]->crd() - satoms[0]->crd()),
-          v3(satoms[1]->crd() - satoms[2]->crd());
-    mat3d vcov(
-      ((m[0] - m[3] - m[1] + m[4])*v1).DotProd(v1)/v1.QLength(), // var l1
-      ((m[1] - m[4] - m[2] + m[5])*v1).DotProd(v2)/(v1.Length()*v2.Length()), // cov(l1,l2) 
-      ((m[2] - m[0] - m[5] + m[3])*v1).DotProd(v3)/(v1.Length()*v3.Length()), // cov(l1,l3) 
-      ((m[4] - m[7] - m[5] + m[8])*v2).DotProd(v2)/v2.QLength(), //var l2
-      ((m[5] - m[3] - m[8] + m[6])*v2).DotProd(v3)/(v2.Length()*v3.Length()), // cov(l2,l3) 
-      ((m[0] - m[2] - m[6] + m[8])*v3).DotProd(v3)/v3.QLength()); //var l3
-    double ca1 = (v1.QLength()+v3.QLength()-v2.QLength())/(2*v1.Length()*v3.Length());
-    if( olx_abs(ca1) >= 1.0-1e-16 )
-      return TEValue<double>(ca1 < 0 ? 180.0 : 0.0, 0);
-    double a = acos(ca1);
-    double ca2 = (v1.QLength()+v2.QLength()-v3.QLength())/(2*v1.Length()*v2.Length());
-    double ca3 = (v2.QLength()+v3.QLength()-v1.QLength())/(2*v2.Length()*v3.Length());
-    double esd = ca2*ca2*vcov[0][0] - 2*ca2*vcov[0][1] + 2*ca2*ca3*vcov[0][2] + vcov[1][1] -
-      2*ca3*vcov[1][2] + ca3*ca3*vcov[2][2];
-    esd = sqrt(esd)/(v1.Length()*v3.Length()*sin(a)/v2.Length());
-    return TEValue<double>(a*180.0/M_PI,esd*180/M_PI);
+    vec3d ij = (satoms[0]->crd() - satoms[1]->crd());
+    vec3d kj = (satoms[2]->crd() - satoms[1]->crd());
+    vec3d_alist grad(3);
+    const double ca = ij.CAngle(kj);
+    if( olx_abs(ca) >= 1.0-1e-16 )
+      return TEValue<double>(ca < 0 ? 180.0 : 0.0, 0);
+    const double oos = 1./sqrt(1-ca*ca);
+    const double ij_l = ij.Length(), kj_l = kj.Length();
+    ij.Normalise();
+    kj.Normalise();
+    grad[0] = (ij*ca - kj)*oos/ij_l;
+    grad[2] = (kj*ca - ij)*oos/kj_l;
+    grad[1] = -(grad[0] + grad[2]);
+    double esd = sqrt(CalcEsd(3, m, ComposedVector<vec3d_alist>(grad)));
+    double a = acos(ca);
+    return TEValue<double>(a*180.0/M_PI,(esd < 1e-10 ? 0 : esd)*180/M_PI);
   }
   TEValue<double> CalcAngle(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3) {
     TSAtom const * as[] = {&a1,&a2,&a3};
     TSAtomPList satoms(3, as);
     return DoCalcForAtoms(satoms, &VcoVContainer::_calcAngle);
   }
-  // tortion angl, precise esd, Acta A30, 848, Uri Shmuelli
-  TEValue<double> CalcTAngP(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
+  // torsion angl, precise esd, Acta A30, 848, Uri Shmuelli
+  TEValue<double> CalcTAngleP(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
     mat3d_list m;
     TSAtom const * as[] = {&a1,&a2,&a3,&a4};
     TSAtomPList satoms(4, as);
@@ -604,6 +631,28 @@ public:
       }
     }
     return TEValue<double>(tau*180.0/M_PI, sqrt(esd)*180.0/M_PI);
+  }
+  // analytical, http://salilab.org/modeller/manual/node449.html#SECTION001331200000000000000
+  TEValue<double> CalcTAngleA(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
+    mat3d_list m;
+    TSAtom const * as[] = {&a1,&a2,&a3,&a4};
+    TSAtomPList satoms(4, as);
+    GetVcoV(satoms, m);
+    const vec3d ij = a1.crd() - a2.crd();
+    const vec3d kj = a3.crd() - a2.crd();
+    const vec3d kl = a4.crd() - a3.crd();
+    const vec3d mj = ij.XProdVec(kj);
+    const vec3d nk = kj.XProdVec(kl);
+    const double kj_ql = kj.QLength();
+    const double kj_l = sqrt(kj_ql);
+    vec3d_alist grad(4);
+    grad[0] = mj*(kj_l/mj.QLength());
+    grad[3] = -(nk*(kj_l/nk.QLength()));
+    grad[1] = grad[0]*(ij.DotProd(kj)/kj_ql -1.0) - grad[3]*(kl.DotProd(kj)/kj_ql);
+    grad[2] = grad[3]*(kl.DotProd(kj)/kj_ql -1.0) - grad[0]*(ij.DotProd(kj)/kj_ql);
+    double esd = sqrt(CalcEsd(4, m, ComposedVector<vec3d_alist>(grad)));
+    double a = olx_dihedral_angle_signed(a1.crd(), a2.crd(), a3.crd(), a4.crd());
+    return TEValue<double>(a, (esd < 1e-10 ? 0 : esd)*180/M_PI);
   }
   // torsion angle
   TEValue<double> CalcTAngle(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
