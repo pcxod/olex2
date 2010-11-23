@@ -464,7 +464,7 @@ public:
     mat3d vcov = m[0] - m[1] - m[2] + m[3];
     vec3d v = a1.crd() - a2.crd();
     double val = v.Length();
-    double esd = sqrt((v*vcov).DotProd(v))/val;
+    double esd = sqrt((vcov*v).DotProd(v))/val;
     return TEValue<double>(val,esd);
   }
   // cartesian centroid
@@ -523,7 +523,7 @@ public:
     // var(a,a)
     vcov += m.GetLast();
     double val = center.Length();
-    double esd = sqrt(center.ColMul(vcov).DotProd(center))/val;
+    double esd = sqrt((vcov*center).DotProd(center))/val;
     return TEValue<double>(val, esd);
   }
   // precise calculation, Sands
@@ -536,12 +536,12 @@ public:
           v2(satoms[2]->crd() - satoms[0]->crd()),
           v3(satoms[1]->crd() - satoms[2]->crd());
     mat3d vcov(
-      (v1*(m[0] - m[3] - m[1] + m[4])).DotProd(v1)/v1.QLength(), // var l1
-      (v1*(m[1] - m[4] - m[2] + m[5])).DotProd(v2)/(v1.Length()*v2.Length()), // cov(l1,l2) 
-      (v1*(m[2] - m[0] - m[5] + m[3])).DotProd(v3)/(v1.Length()*v3.Length()), // cov(l1,l3) 
-      (v2*(m[4] - m[7] - m[5] + m[8])).DotProd(v2)/v2.QLength(), //var l2
-      (v2*(m[5] - m[3] - m[8] + m[6])).DotProd(v3)/(v2.Length()*v3.Length()), // cov(l2,l3) 
-      (v3*(m[0] - m[2] - m[6] + m[8])).DotProd(v3)/v3.QLength()); //var l3
+      ((m[0] - m[3] - m[1] + m[4])*v1).DotProd(v1)/v1.QLength(), // var l1
+      ((m[1] - m[4] - m[2] + m[5])*v1).DotProd(v2)/(v1.Length()*v2.Length()), // cov(l1,l2) 
+      ((m[2] - m[0] - m[5] + m[3])*v1).DotProd(v3)/(v1.Length()*v3.Length()), // cov(l1,l3) 
+      ((m[4] - m[7] - m[5] + m[8])*v2).DotProd(v2)/v2.QLength(), //var l2
+      ((m[5] - m[3] - m[8] + m[6])*v2).DotProd(v3)/(v2.Length()*v3.Length()), // cov(l2,l3) 
+      ((m[0] - m[2] - m[6] + m[8])*v3).DotProd(v3)/v3.QLength()); //var l3
     double ca1 = (v1.QLength()+v3.QLength()-v2.QLength())/(2*v1.Length()*v3.Length());
     if( olx_abs(ca1) >= 1.0-1e-16 )
       return TEValue<double>(ca1 < 0 ? 180.0 : 0.0, 0);

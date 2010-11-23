@@ -381,46 +381,57 @@ void TMainForm::funFPS(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::funCursor(const TStrObjList& Params, TMacroError &E)  {
+  if( CursorStack.Count() > 10 )  {
+    CursorStack.Clear();
+    TBasicApp::GetLog().Error("Cursor stack size limit reached and cleared");
+  }
   if( Params.IsEmpty() )  {
-    wxCursor cr(wxCURSOR_ARROW);
-    SetCursor(cr);
-    FGlCanvas->SetCursor(cr);
-    SetStatusText(wxT(""));
-  }
-  else if( Params[0].Equalsi("busy") )  {
-    wxCursor cr(wxCURSOR_WAIT);
-    SetCursor(cr);
-    FGlCanvas->SetCursor(cr);
-    if( Params.Count() == 2 )
-      SetStatusText(Params[1].u_str());
-  }
-  else if( Params[0].Equalsi("brush") )  {
-    wxCursor cr(wxCURSOR_PAINT_BRUSH);
-    SetCursor(cr);
-    FGlCanvas->SetCursor(cr);
-  }
-  else if( Params[0].Equalsi("hand") )  {
-    wxCursor cr(wxCURSOR_HAND);
-    SetCursor(cr);
-    FGlCanvas->SetCursor(cr);
-  }
-  else if( Params[0].Equalsi("push") )  {
-    CursorStack.Push(FGlCanvas->GetCursor());
-  }
-  else if( Params[0].Equalsi("pop") )  {
-    wxCursor cr = CursorStack.Pop();
-    SetCursor(cr);
-    FGlCanvas->SetCursor(cr);
-  }
-  else  {
-    if( TEFile::Exists(Params[0]) )  {
-      wxImage img;
-      img.LoadFile(Params[0].u_str());
-      img.SetMaskColour(254, 254, 254);
-      img.SetMask(true);
-      wxCursor cr(img);
+    if( !CursorStack.IsEmpty() )  {
+      wxCursor cr = CursorStack.Pop();
       SetCursor(cr);
       FGlCanvas->SetCursor(cr);
+    }
+    else  {
+      wxCursor cr(wxCURSOR_ARROW);
+      SetCursor(cr);
+      FGlCanvas->SetCursor(cr);
+      SetStatusText(wxT(""));
+    }
+  }
+  else  {
+    CursorStack.Push(FGlCanvas->GetCursor());
+    if( Params[0].Equalsi("busy") )  {
+      wxCursor cr(wxCURSOR_WAIT);
+      SetCursor(cr);
+      FGlCanvas->SetCursor(cr);
+      if( Params.Count() == 2 )
+        SetStatusText(Params[1].u_str());
+    }
+    else if( Params[0].Equalsi("brush") )  {
+      wxCursor cr(wxCURSOR_PAINT_BRUSH);
+      SetCursor(cr);
+      FGlCanvas->SetCursor(cr);
+    }
+    else if( Params[0].Equalsi("hand") )  {
+      wxCursor cr(wxCURSOR_HAND);
+      SetCursor(cr);
+      FGlCanvas->SetCursor(cr);
+    }
+    else if( Params[0].Equalsi("arrow") )  {
+      wxCursor cr(wxCURSOR_ARROW);
+      SetCursor(cr);
+      FGlCanvas->SetCursor(cr);
+    }
+    else  {
+      if( TEFile::Exists(Params[0]) )  {
+        wxImage img;
+        img.LoadFile(Params[0].u_str());
+        img.SetMaskColour(254, 254, 254);
+        img.SetMask(true);
+        wxCursor cr(img);
+        SetCursor(cr);
+        FGlCanvas->SetCursor(cr);
+      }
     }
   }
 }
