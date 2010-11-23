@@ -2756,10 +2756,12 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
     if( a.GetEllipsoid() != NULL )  {
       TEllipsoid& elp = *a.GetEllipsoid();
       a.SetUiso(elp.GetUiso());
-      double esd = 0;
-      //for( int j=0; j < 3; j++ )
-      //  esd += olx_sqr(elp.GetEsd(j));
-      //a.SetUisoEsd(sqrt(esd)/4.);
+      if( a.GetUisoEsd() == 0 )  {
+        double esd = 0;
+        for( int j=0; j < 3; j++ )
+          esd += olx_sqr(elp.GetEsd(j));
+        a.SetUisoEsd(sqrt(esd)/3.);
+      }
     }
     else if( a.GetType() == iHydrogenZ && a.GetUisoEsd() == 0 )  {
       long val = olx_round(a.GetUiso()*100000);
