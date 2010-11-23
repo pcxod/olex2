@@ -2844,7 +2844,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         row.Set(0, new AtomCifEntry(_b.CAtom()));
         row.Set(1, new AtomCifEntry(a.CAtom()));
         row.Set(2, new AtomCifEntry(_c.CAtom()));
-        row[3] = new cetString(vcovc.CalcAngle(_b, a, _c).ToString());
+        row[3] = new cetString(vcovc.CalcAngleP(_b, a, _c).ToString());
         if( !_b.IsAUAtom() )
           row[4] = new cetString(TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymSpace(),
             _b.GetMatrix(0)));

@@ -236,15 +236,18 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
       indexes.Add(i);
     }
     else if( param_name == "uiso" )  {
-      atom->SetUisoEsd(sqrt(values[d_index].ToDouble()));///rCellV);
+      atom->SetUisoEsd(sqrt(values[d_index].ToDouble()));
     }
     else if( (ua_index=U_annotations.IndexOf(param_name)) != InvalidIndex )  {
       if( atom->GetEllipsoid() == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, "U for isotropic atom");
+      atom->GetEllipsoid()->SetEsd(ua_index, values[d_index].ToDouble());
       eveci& v = Us.Add(atom->GetId());
       if( v.Count() == 0 )  v.Resize(6);
+      // put indices in the smtbx order
+      if( ua_index == 3 )  ua_index = 5;
+      else if( ua_index == 5 )  ua_index = 3;
       v[ua_index] = i;
-      atom->GetEllipsoid()->SetEsd(ua_index, values[d_index].ToDouble());
     }
   }
 
@@ -272,12 +275,12 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
   }
   const mat3d& f2c = au.GetCellToCartesian();
   evecd Ut(6);
-  Ut[0] = (f2c[0][0]*f2c[0][0] + f2c[0][1]*f2c[0][1] + f2c[0][2]*f2c[0][2]);
-  Ut[1] = (f2c[1][1]*f2c[1][1] + f2c[1][2]*f2c[1][2]);
-  Ut[2] = (f2c[2][2]*f2c[2][2]);
-  Ut[3] = 2*(f2c[1][0]*f2c[2][0] + f2c[1][1]*f2c[2][1]);
+  Ut[0] = (f2c[0][0]*f2c[0][0]);
+  Ut[1] = (f2c[1][0]*f2c[1][0] + f2c[1][1]*f2c[1][1]);
+  Ut[2] = (f2c[2][0]*f2c[2][0] + f2c[2][1]*f2c[2][1] + f2c[2][2]*f2c[2][2]);
+  Ut[3] = 2*(f2c[0][0]*f2c[1][0]);
   Ut[4] = 2*(f2c[0][0]*f2c[2][0]);
-  Ut[5] = 2*(f2c[0][0]*f2c[1][0]);
+  Ut[5] = 2*(f2c[1][0]*f2c[2][0] + f2c[1][1]*f2c[2][1]);
   Ut *= 1./3;
   ematd Um(6,6);
   for( size_t i=0; i < au.AtomCount(); i++ )  {
@@ -288,8 +291,11 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
     if( ui == InvalidIndex )  continue;
     eveci& v = Us.GetValue(ui);
     for( int vi = 0; vi < 6; vi++ )  {
-      Um[vi][vi] = elp.GetEsd(vi);
-      elp.SetEsd(vi, sqrt(elp.GetEsd(vi))*O[vi]);
+      int src_i = vi;
+      if( src_i == 3 )  src_i = 5;
+      else if( src_i == 5 )  src_i = 3;
+      Um[vi][vi] = elp.GetEsd(src_i);
+      elp.SetEsd(src_i, sqrt(elp.GetEsd(src_i))*O[src_i]);
       for( int vj = vi+1; vj < 6; vj++ )  {
         int x = v[vi];
         int y = v[vj];
@@ -297,7 +303,7 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
         Um[vi][vj] = Um[vj][vi] = values[ind].ToDouble();
       }
     }
-    const double Ueq = (Ut*Um).DotProd(Ut);
+    const double Ueq = (Um*Ut).DotProd(Ut);
     a.SetUisoEsd(sqrt(Ueq));
   }
 }
