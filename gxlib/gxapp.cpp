@@ -1350,7 +1350,19 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
     if(  !(SData->From == SData->To) )
       Select(SData->From, SData->To);
   }
-  else if( MsgSubId == msiExit && (MsgId == ID_OnUniq || MsgId == ID_OnGrow) ) {    if( OverlayedXFileCount() != 0 )  {      AlignOverlayedXFiles();      UpdateBonds();    }    CenterView(true);  }
+  else if( MsgId == ID_OnUniq || MsgId == ID_OnGrow )  {
+    if( MsgSubId == msiEnter )  {
+      FGlRender->Clear();
+      ClearXObjects();
+    }
+    else if( MsgSubId == msiExit )  {
+      if( OverlayedXFileCount() != 0 )  {
+        AlignOverlayedXFiles();
+        UpdateBonds();
+      }
+      CenterView(true);
+    }
+  }
   else if( MsgId == ID_OnFileLoad )  {
     if( MsgSubId == msiEnter )  {
       SelectionCopy[0].Clear();
@@ -1370,8 +1382,9 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
     }
   }
   else if( MsgId == ID_OnDisassemble ) {
-    if( MsgSubId == msiExit )
+    if( MsgSubId == msiExit )  {
       CreateObjects(false, false);
+    }
     else if( MsgSubId == msiEnter )  {  // backup the selection
       if( ObjectsStored )
         ObjectsStored = false;
@@ -1383,13 +1396,19 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
     }
   }
   else if( MsgId == ID_OnClear ) {
-    if( MsgSubId == msiEnter && !LoadingFile )  {  // backup the selection
-      SelectionCopy[0].Clear();
-      StoreGroup(GetSelection(), SelectionCopy[0]);
-      StoreLabels();
-      ObjectsStored = true;
+    if( MsgSubId == msiEnter )  {  // backup the selection
+      if( !LoadingFile )  {
+        SelectionCopy[0].Clear();
+        StoreGroup(GetSelection(), SelectionCopy[0]);
+        StoreLabels();
+        ObjectsStored = true;
+      }
+      //FGlRender->Clear();
+      ClearXObjects();
     }
-    ClearXObjects();
+    else if( MsgSubId == msiExit )  {
+      //GetRender().SetBasis(basis);
+    }
   }
   return false;
 }
@@ -2874,6 +2893,9 @@ void TGXApp::BeginDrawBitmap(double resolution)  {
   FPictureResolution = resolution;
   FLabels->Clear();
   GetRender().GetScene().ScaleFonts(resolution);
+  double LW = 0;
+  olx_gl::get(GL_LINE_WIDTH, &LW);
+  olx_gl::lineWidth(LW*resolution);
   StoreVisibility();
   CreateObjects(false, false);
   FXGrid->GlContextChange();

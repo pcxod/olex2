@@ -6310,6 +6310,50 @@ public:
 #endif
 
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TStrList out;
+  vec3d_alist mult_vl(3), mult_vl_kr(3);
+  mat3d_alist mult_ml(9);
+  mat3d sym_mat;
+  sym_mat[0][1] = sym_mat[1][1] = -1;
+  sym_mat[1][0] = sym_mat[2][2] = 1;
+  CompositeVector<vec3d_alist, double> cv_(mult_vl);
+  CompositeVector<vec3d_alist, double> cv_kr(mult_vl_kr);
+  CompositeMatrix<mat3d_alist, double> cm_(mult_ml, 3, 3);
+  olx_mat::KroneckerProduct(sym_mat, sym_mat, cm_);
+  mat3d tr_mat(
+    0.0255, 0.0134, -0.0072,
+    0.0134, 0.0417, -0.007,
+    -0.0072, -0.007, -0.0407);
+  mult_vl[0] = tr_mat[0];
+  mult_vl[1] = tr_mat[1];
+  mult_vl[2] = tr_mat[2];
+  ematd cm_out(9, 9);
+  evecd cv_out(9), kr_out(9);
+  olx_vec::MulMatrix(cv_, cm_, cv_out);
+  olx_mat::MulMatrix(cm_, cm_, cm_out);
+  olx_vec::MulMatrixT(cv_, cm_, kr_out);
+  olx_vec::MulMatrixT(cv_, cm_, cv_kr);
+  for( int i=0; i < 3; i++ )
+    FXApp->GetLog() << mult_vl_kr[i].ToString() << '\n';
+  tr_mat = sym_mat*tr_mat*mat3d::Transpose(sym_mat);
+  for( int i=0; i < 3; i++ )
+    FXApp->GetLog() << tr_mat[i].ToString() << '\n';
+  return;
+  //TMatrix<int> kt_1(2,2), kt_2(2,2);
+  //kt_1[0][0] = 1;  kt_1[0][1] = 2;
+  //kt_1[1][0] = 3;  kt_1[1][1] = 4;
+  //kt_2[0][0] = 0;  kt_2[0][1] = 5;
+  //kt_2[1][0] = 6;  kt_2[1][1] = 7;
+  //TMatrix<int> kr_o(4, 4);
+  //KroneckerProduct(kt_1, kt_2, kr_o);
+  //TETable kr_t(kr_o.RowCount(), kr_o.ColCount());
+  //for( int i=0; i < kr_o.RowCount(); i++ )  {
+  //  for( int j=0; j < kr_o.ColCount(); j++ )
+  //    kr_t[i][j] = kr_o[i][j];
+  //}
+  //kr_t.CreateTXTList(out, "vcov", true, true, ' ');
+  //TBasicApp::GetLog() << out << '\n';
+
   TXAtomPList xatoms;
   if( !FindXAtoms(Cmds, xatoms, false, true) )  {
     return;
@@ -6323,7 +6367,6 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //vcovc.GetMatrix().FindVcoV(atoms, matrices);
   const size_t m_dim = (size_t)sqrt((double)matrices.Count());
   TETable tab(m_dim*3, m_dim*3);
-  TStrList out;
   for( size_t i=0; i < m_dim; i++ )  {
     for( size_t j=0; j < m_dim; j++ )  {
       for( int mi = 0; mi < 3; mi++ )  {
@@ -8345,7 +8388,9 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TSAtom& a2 = ((TXAtom&)sel[1]).Atom();
         TSAtom& a3 = ((TXAtom&)sel[2]).Atom();
         TBasicApp::GetLog() << (values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel()
-          << " angle: " << vcovc.CalcAngle(a1, a2, a3).ToString()) << '\n';
+          << " angle (numerical): " << vcovc.CalcAngle(a1, a2, a3).ToString()) << '\n';
+        TBasicApp::GetLog() << (values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel()
+          << " angle (analytical): " << vcovc.CalcAngleA(a1, a2, a3).ToString()) << '\n';
       }
       else if( (EsdlInstanceOf(sel[0], TXPlane) && EsdlInstanceOf(sel[1], TXAtom) && EsdlInstanceOf(sel[2], TXAtom)) || 
                (EsdlInstanceOf(sel[1], TXPlane) && EsdlInstanceOf(sel[0], TXAtom) && EsdlInstanceOf(sel[2], TXAtom)) ||
@@ -8391,7 +8436,9 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TSAtom& a3 = ((TXAtom&)sel[2]).Atom();
         TSAtom& a4 = ((TXAtom&)sel[3]).Atom();
         TBasicApp::GetLog() << (values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel() << '-'
-          << a4.GetLabel() << " torsion angle: " << vcovc.CalcTAngle(a1, a2, a3, a4).ToString()) << '\n';
+          << a4.GetLabel() << " torsion angle (numerical): " << vcovc.CalcTAngle(a1, a2, a3, a4).ToString()) << '\n';
+        TBasicApp::GetLog() << (values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel() << '-'
+          << a4.GetLabel() << " torsion angle (analytical): " << vcovc.CalcTAngleA(a1, a2, a3, a4).ToString()) << '\n';
         TBasicApp::GetLog() << (values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel() << '-'
           << a4.GetLabel() << " tetrahedron volume: " <<
           vcovc.CalcTetrahedronVolume(a1, a2, a3, a4).ToString() << " A^3") << '\n';
@@ -9065,8 +9112,13 @@ void TMainForm::funFullScreen(const TStrObjList& Params, TMacroError &E)  {
   }
 }
 //..............................................................................
-void TMainForm::macFreeze(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  FXApp->SetDisplayFrozen(Cmds[0].ToBool());
+void TMainForm::funFreeze(const TStrObjList& Params, TMacroError &E)  {
+  if( Params.IsEmpty() )
+    E.SetRetVal(FXApp->IsDisplayFrozen());
+  else  {
+    E.SetRetVal(FXApp->IsDisplayFrozen());
+    FXApp->SetDisplayFrozen(Params[0].ToBool());
+  }
 }
 //..............................................................................
 olxstr TMainForm_funMatchNets(TNetwork& netA, TNetwork& netB, bool invert, bool verbose,

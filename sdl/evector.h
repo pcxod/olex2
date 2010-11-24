@@ -55,6 +55,27 @@ public:
 
   inline size_t Count() const {  return Fn;  }
   inline size_t Size() const {  return Fn;  }
+  inline const VecType& operator [](size_t offset) const {
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, offset, 0, Fn);
+#endif
+    return FData[offset];
+  }
+  inline VecType& operator [](size_t offset)  {
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, offset, 0, Fn);
+#endif
+    return FData[offset];
+  }
+
+  const VecType* GetRawData() const {  return FData;  }
+
+  VecType& GetLast() const {
+#ifdef _DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, Fn-1, 0, Fn);
+#endif
+    return FData[Fn-1];
+  }
 
   TVector& Null()  {  
     for( size_t i=0; i < Fn; i++ )
@@ -142,29 +163,6 @@ public:
     for( size_t i=0; i < size; i++ )
       FData[i] = v[i];
     return *this;
-  }
-
-  inline VecType& operator [](size_t offset) const {
-#ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, offset, 0, Fn);
-#endif
-    return FData[offset];
-  }
-
-  VecType& Data(size_t offset) const {
-#ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, offset, 0, Fn);
-#endif
-    return FData[offset];
-  }
-
-  const VecType* GetRawData() const {  return FData;  }
-
-  VecType& GetLast() const {
-#ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, Fn-1, 0, Fn);
-#endif
-    return FData[Fn-1];
   }
 
   TVector operator + (VecType a) const {

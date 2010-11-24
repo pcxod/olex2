@@ -58,7 +58,6 @@ class TGlRenderer : public IEObject  {
   TGlGroup* FSelection;  // list of selected objects
   class TTextureManager* TextureManager;
   bool FSceneComplete;
-
 //__________________ perspective related stuff
   bool FPerspective;
   float FPAngle,
@@ -76,6 +75,7 @@ class TGlRenderer : public IEObject  {
 //__________________
   int Width, Height, OWidth;
   int Left, Top;
+  double LineWidth;
   TGlListManager FListManager;
   int CompiledListId;
 protected:
@@ -150,7 +150,8 @@ public:
   DefPropP(int, FogType)
   DefPropP(float, FogDensity)
   DefPropC(TGlOption, FogColor)
-
+  double GetLineWidth() const {  return LineWidth;  }
+  void SetLineWidth(double v);
   float GetExtraZoom() const {  return FZoom;  }
   bool IsColorStereo() const {  return StereoFlag==glStereoColor;  }
   bool IsCrossStereo() const {  return StereoFlag==glStereoCross;  }
@@ -295,6 +296,7 @@ public:
   void LibZoom(TStrObjList& Cmds, const TParamList& Options, TMacroError& E);
   void LibCalcZoom(const TStrObjList& Params, TMacroError& E);
   void LibLineWidth(const TStrObjList& Params, TMacroError& E);
+  void LibBasis(const TStrObjList& Params, TMacroError& E);
   TLibrary* ExportLibrary(const olxstr& name=EmptyString);
 };
 

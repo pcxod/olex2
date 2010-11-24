@@ -1263,10 +1263,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\ebasis.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\ebtree.h"
 				>
 			</File>
@@ -1463,6 +1459,14 @@
 				>
 				<File
 					RelativePath="..\..\..\sdl\math\align.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\math\composite.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\ebasis.h"
 					>
 				</File>
 				<File

@@ -389,6 +389,12 @@ void TCAtom::UpdateAttachedSites()  {
         }
       }
     }
+    for( size_t i=bc2set; i < AttachedSites.Count(); i++ )  {
+      if( AttachedSites[i].atom == this )  continue;
+      for( size_t j=0; j < AttachedSites[i].atom->AttachedSites.Count(); j++ )
+        if( AttachedSites[i].atom->AttachedSites[j].atom == this )
+          AttachedSites[i].atom->AttachedSites.Delete(j--);
+    }
     AttachedSites.Shrink(bc2set);
   }
 }
