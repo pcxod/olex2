@@ -72,12 +72,15 @@ public:
 
   size_t Vectors() const {  return Fn;  }
   size_t Elements() const {  return Fm;  } 
+  size_t ColCount() const {  return Fm;  }
+  size_t RowCount() const {  return Fn;  }
 
   const TVector<MatType>& operator [](size_t index) const {  return FData[index];  }
   TVector<MatType>& operator [](size_t index) {  return FData[index];  }
-  const TVector<MatType>& GetVector(size_t index) const {  return FData[index];  }
-  TVector<MatType>& GetVector(size_t index) {  return FData[index];  }
-
+  const TVector<MatType>& Get(size_t index) const {  return FData[index];  }
+  TVector<MatType>& Get(size_t index) {  return FData[index];  }
+  const MatType& Get(size_t i, size_t j) const {  return FData[i][j];  }
+  void Set(size_t i, size_t j, const MatType& v) {  FData[i][j] = v;  }
   /* the function multiplies a matrix by a column vector. Only the number of vector
    elements is taken from the matrix - no error will be generated if the matrix dimensions
    (number of elements) are larger than the vector dimentions!!!

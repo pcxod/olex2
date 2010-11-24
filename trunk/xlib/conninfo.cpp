@@ -429,9 +429,7 @@ void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* 
   }
 }
 //........................................................................
-void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& toDelete, 
-                       smatd_list& ml )  
-{
+void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& toDelete, smatd_list& ml)  {
   const TAsymmUnit& au = *a.GetParent();
   const TUnitCell& uc = a.GetParent()->GetLattice().GetUnitCell();
   for( size_t i=0; i < au.AtomCount(); i++ )  {

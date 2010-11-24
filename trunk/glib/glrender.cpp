@@ -9,6 +9,7 @@
 #include "library.h"
 #include "bapp.h"
 #include "log.h"
+#include "estrbuffer.h"
 
 UseGlNamespace();
 //..............................................................................
@@ -29,7 +30,7 @@ TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height) :
   FPAngle = 1;
   StereoFlag = 0;
   StereoAngle = 3;
-
+  olx_gl::get(GL_LINE_WIDTH, &LineWidth);
   LookAt(0,0,1);
 
   Fog = false;
@@ -134,7 +135,7 @@ void TGlRenderer::Clear()  {
   FIdentityObjects.Clear();
   // the function automaticallt removes the objects and their properties
   FGObjects.Clear();
-  ResetBasis();
+  //ResetBasis();
   ClearMinMax();
   ReleaseGlImage();
 }
@@ -1069,6 +1070,11 @@ void TGlRenderer::DrawTextSafe(const vec3d& pos, const olxstr& text, const TGlFo
   fnt.DrawRasterText(text);
 }
 //..............................................................................
+void TGlRenderer::SetLineWidth(double lw) {
+  LineWidth = lw;
+  olx_gl::lineWidth(LineWidth);
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TGlRenderer::LibCompile(const TStrObjList& Params, TMacroError& E)  {
@@ -1197,13 +1203,25 @@ void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TGlRenderer::LibLineWidth(const TStrObjList& Params, TMacroError& E)  {
-  if( Params.IsEmpty() )  {
-    float LW = 0;
-    olx_gl::get(GL_LINE_WIDTH, &LW);
-    E.SetRetVal(LW);
-  }
+  if( Params.IsEmpty() )
+    E.SetRetVal(GetLineWidth());
   else
-    olx_gl::lineWidth(Params[0].ToFloat<float>());
+    SetLineWidth(Params[0].ToDouble());
+}
+//..............................................................................
+void TGlRenderer::LibBasis(const TStrObjList& Params, TMacroError& E)  {
+  if( Params.IsEmpty() )  {
+    TDataItem di(NULL, EmptyString);
+    TEStrBuffer out;
+    GetBasis().ToDataItem(di);
+    di.SaveToStrBuffer(out);
+    E.SetRetVal(out.ToString());
+  }
+  else  {
+    TDataItem di(NULL, EmptyString);
+    di.LoadFromString(0, Params[0], NULL)    ;
+    GetBasis().FromDataItem(di);
+  }
 }
 //..............................................................................
 TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
@@ -1227,6 +1245,9 @@ decrements current zoom by provided value") );
   lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibLineWidth,
     "LineWidth",
     fpNone|fpOne, "Returns/sets width of the raster OpenGl line") );
+  lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibBasis,
+    "Basis",
+    fpNone|fpOne, "Returns/sets view basis") );
   lib->AttachLibrary(LightModel.ExportLibrary("lm"));
   return lib;
 }

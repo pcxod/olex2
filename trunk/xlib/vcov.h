@@ -1,43 +1,12 @@
 #ifndef __olxs_v_co_v_h
 #define __olxs_v_co_v_h
 #include "math/align.h"
+#include "math/composite.h"
 #include "asymmunit.h"
 #include "lattice.h"
 #include "bapp.h"
 #include "log.h"
 BeginXlibNamespace()
-
-template <class List> struct ComposedMatrix  {
-  const List& matrices;
-  const size_t size;
-  ComposedMatrix(const List& _matrices) : matrices(_matrices),
-    size(olx_round(sqrt((double)matrices.Count()))) {}
-  double& Get (size_t i, size_t j) const {
-    return matrices[(i/3)*size+j/3][i%3][j%3];
-  }
-  template <class VT> evecd operator * (const VT& v) const {
-    evecd rv(v.Count());
-    for( size_t i=0; i < v.Count(); i++ )  {
-      for( size_t j = 0; j < v.Count(); j++ )
-        rv[i] += v[j]*Get(j,i);
-    }
-    return rv;
-  }
-  template <class VT> double CalcEsd(const VT& v) const {
-    double esd = 0;
-    for( size_t i=0; i < v.Count(); i++ )  {
-      for( size_t j = 0; j < v.Count(); j++ )
-        esd += v[j]*v[i]*Get(j,i);
-    }
-    return esd;
-  }
-};
-template <class List> struct ComposedVector  {
-  const List& vertices;
-  ComposedVector(const List& _vertices) : vertices(_vertices) {}
-  size_t Count() const {  return vertices.Count()*3;  }
-  double& operator [] (size_t i) const {  return vertices[i/3][i%3];  }
-};
 
 const short // constants decribing the stored values
   vcoviX = 0x0001,
@@ -49,6 +18,7 @@ class VcoVMatrix {
   double **data;
   size_t count;
   TTypeList<AnAssociation3<olxstr, short, size_t> > Index;
+  static TStrList U_annotations;
 protected:
   void Allocate(size_t w) {
     Clear();
@@ -64,10 +34,7 @@ protected:
     return InvalidIndex;
   }
 public:
-  VcoVMatrix()  {
-    data = NULL;
-    count = 0;
-  }
+  VcoVMatrix();
   ~VcoVMatrix() {  Clear();  }
   void Clear() {
     if( data == NULL )  return;
@@ -92,8 +59,7 @@ public:
     TSizeList a_indexes;
     TTypeList<TVector3<size_t> > indexes;
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      a_indexes.Add(FindAtomIndex(atoms[i]->CAtom()));
-      if( a_indexes.GetLast() == InvalidIndex )
+      if( a_indexes.Add(FindAtomIndex(atoms[i]->CAtom())) == InvalidIndex )
         TBasicApp::GetLog().Error(olxstr("Unable to located given atom: ") << atoms[i]->GetLabel());
       indexes.AddNew(InvalidIndex,InvalidIndex,InvalidIndex);
     }
@@ -399,7 +365,7 @@ protected:
         const size_t m_ind = i*sz+j;
         for( short k=0; k < 3; k++ )  {
           for( short l=0; l < 3; l++ )  {
-            esd += m[m_ind][k][l]*df[i*3+k]*df[j*3+l];
+            esd += m[m_ind].Get(k,l)*df[i*3+k]*df[j*3+l];
           }
         }
       }
@@ -412,6 +378,7 @@ protected:
     for( size_t i=0; i < atoms.Count(); i++ )
       r[i] = atoms[i]->crd();
   }
+  //http://en.wikipedia.org/wiki/Numerical_differentiation
   template <class List, class Evaluator> 
   void CalcDiff(const List& points, TDoubleList& df, Evaluator e)  {
     static const double delta=sqrt(2.2e-16);
@@ -430,6 +397,7 @@ protected:
       }
     }
   }
+  //http://en.wikipedia.org/wiki/Numerical_differentiation
   template <class List, typename Evaluator, class extraParam> 
   void CalcDiff(const List& points, TDoubleList& df, Evaluator e, const extraParam& ep)  {
     static const double delta=sqrt(2.2e-16);
@@ -558,7 +526,7 @@ public:
     return TEValue<double>(val, esd);
   }
   // analytical, http://salilab.org/modeller/manual/node449.html#SECTION001331200000000000000 
-  TEValue<double> CalcAngleP(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3) {
+  TEValue<double> CalcAngleA(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3) {
     mat3d_list m;
     TSAtom const * as[] = {&a1,&a2,&a3};
     TSAtomPList satoms(3, as);
@@ -576,7 +544,7 @@ public:
     grad[0] = (ij*ca - kj)*oos/ij_l;
     grad[2] = (kj*ca - ij)*oos/kj_l;
     grad[1] = -(grad[0] + grad[2]);
-    double esd = sqrt(CalcEsd(3, m, ComposedVector<vec3d_alist>(grad)));
+    double esd = sqrt(CalcEsd(3, m, CompositeVector<vec3d_alist, double>(grad)));
     double a = acos(ca);
     return TEValue<double>(a*180.0/M_PI,(esd < 1e-10 ? 0 : esd)*180/M_PI);
   }
@@ -585,7 +553,7 @@ public:
     TSAtomPList satoms(3, as);
     return DoCalcForAtoms(satoms, &VcoVContainer::_calcAngle);
   }
-  // torsion angl, precise esd, Acta A30, 848, Uri Shmuelli
+  // torsion angle, signless, precise esd, Acta A30, 848, Uri Shmuelli
   TEValue<double> CalcTAngleP(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
     mat3d_list m;
     TSAtom const * as[] = {&a1,&a2,&a3,&a4};
@@ -650,7 +618,7 @@ public:
     grad[3] = -(nk*(kj_l/nk.QLength()));
     grad[1] = grad[0]*(ij.DotProd(kj)/kj_ql -1.0) - grad[3]*(kl.DotProd(kj)/kj_ql);
     grad[2] = grad[3]*(kl.DotProd(kj)/kj_ql -1.0) - grad[0]*(ij.DotProd(kj)/kj_ql);
-    double esd = sqrt(CalcEsd(4, m, ComposedVector<vec3d_alist>(grad)));
+    double esd = sqrt(CalcEsd(4, m, CompositeVector<vec3d_alist, double>(grad)));
     double a = olx_dihedral_angle_signed(a1.crd(), a2.crd(), a3.crd(), a4.crd());
     return TEValue<double>(a, (esd < 1e-10 ? 0 : esd)*180/M_PI);
   }

@@ -1,6 +1,19 @@
 #include "vcov.h"
 #include "refmodel.h"
 
+TStrList VcoVMatrix::U_annotations;
+//..................................................................................
+VcoVMatrix::VcoVMatrix() : data(NULL), count(0) {
+  if( U_annotations.IsEmpty() )  {
+    U_annotations.Add("u11");
+    U_annotations.Add("u22");
+    U_annotations.Add("u33");
+    U_annotations.Add("u23");
+    U_annotations.Add("u13");
+    U_annotations.Add("u12");
+  }
+}
+//..................................................................................
 void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   Clear();
   olxstr lstFN = TEFile::ChangeFileExt(fileName, "lst");
@@ -18,10 +31,12 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   size_t cnt = toks[0].ToSizeT();
   TSizeList indexes;
   TDoubleList diag;
+  olxdict<size_t, eveci, TPrimitiveComparator> Us;
   if( cnt == 0 || sl.Count() < cnt+11 )  
     throw TFunctionFailedException(__OlxSourceInfo, "empty/invalid matrix file");
   olxstr last_atom_name;
   TCAtom* atom;
+  size_t ua_index;
   for( size_t i=1; i < cnt; i++ )  { // skipp OSF
     toks.Clear();
     toks.Strtok(sl[i+7], ' ');
@@ -97,22 +112,20 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       Index.AddNew(toks[5], vcoviO , -1);
       indexes.Add(i);
     }
-    else if( toks[4] == "U11" )  {
-      if( atom->GetEllipsoid() != NULL )
-        atom->GetEllipsoid()->SetEsd(0, toks[2].ToDouble());
-      else
+    else if( (ua_index=U_annotations.IndexOf(toks[4])) != InvalidIndex )  {
+      if( ua_index != 0 && atom->GetEllipsoid() == NULL )
+        throw TInvalidArgumentException(__OlxSourceInfo, "U for isotropic atom");
+      else if( ua_index == 0 && atom->GetEllipsoid() == 0 )
         atom->SetUisoEsd(toks[2].ToDouble());
+      atom->GetEllipsoid()->SetEsd(ua_index, toks[2].ToDouble());
+      eveci& v = Us.Add(atom->GetId());
+      if( v.Count() == 0 )  {
+        v.Resize(6);
+        for( int vi=0; vi < 6; vi++ )
+          v[i] = -1;
+      }
+      v[ua_index] = i;
     }
-    else if( toks[4] == "U22" )
-      atom->GetEllipsoid()->SetEsd(1, toks[2].ToDouble());
-    else if( toks[4] == "U33" )
-      atom->GetEllipsoid()->SetEsd(2, toks[2].ToDouble());
-    else if( toks[4] == "U23" )
-      atom->GetEllipsoid()->SetEsd(3, toks[2].ToDouble());
-    else if( toks[4] == "U13" )
-      atom->GetEllipsoid()->SetEsd(4, toks[2].ToDouble());
-    else if( toks[4] == "U12" )
-      atom->GetEllipsoid()->SetEsd(5, toks[2].ToDouble());
   }
   TDoubleList all_vcov((cnt+1)*cnt/2);
   size_t vcov_cnt = 0;
@@ -126,20 +139,17 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       s_ind += 8;
     }
   }
-  TSizeList x_ind(cnt);
-  x_ind[0] = 0;
-  for( size_t i=1; i < cnt ; i++ )
-    x_ind[i] = cnt + 1 - i + x_ind[i-1];
-
   Allocate(diag.Count());
-
   for( size_t i=0; i < indexes.Count(); i++ )  {
     for( size_t j=0; j <= i; j++ )  {
       if( i == j )  
         data[i][j] = diag[i]*diag[i];
       else  {  // top diagonal to bottom diagonal
-        const size_t ind = indexes[i] <= indexes[j] ? x_ind[indexes[i]] + indexes[j]-indexes[i] :
-          x_ind[indexes[j]]  + indexes[i]-indexes[j];
+        size_t ix = indexes[j];
+        size_t iy = indexes[i];
+        if( ix > iy )
+          olx_swap(ix, iy);
+        const size_t ind = ix*(2*cnt-ix-1)/2+iy;
         data[i][j] = all_vcov[ind]*diag[i]*diag[j];  
       }
     }
@@ -186,15 +196,6 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
   TSizeList indexes;
   TCAtom* atom = NULL;
   olxdict<size_t, eveci, TPrimitiveComparator> Us;
-  static TStrList U_annotations;
-  if( U_annotations.IsEmpty() )  {
-    U_annotations.Add("u11");
-    U_annotations.Add("u22");
-    U_annotations.Add("u33");
-    U_annotations.Add("u23");
-    U_annotations.Add("u13");
-    U_annotations.Add("u12");
-  }
   const mat3d& h2c = au.GetHklToCartesian();
   const double O[6] = {
     1./h2c[0].QLength(), 1./h2c[1].QLength(), 1./h2c[2].QLength(),
@@ -250,18 +251,14 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
       v[ua_index] = i;
     }
   }
-
-  TSizeList x_ind(annotations.Count());
-  x_ind[0] = 0;
-  for( size_t i=1; i < x_ind.Count() ; i++ )
-    x_ind[i] = x_ind.Count() + 1 - i + x_ind[i-1];
-
   Allocate(indexes.Count());
-
   for( size_t i=0; i < indexes.Count(); i++ )  {
     for( size_t j=0; j <= i; j++ )  {
-      const size_t ind = indexes[i] <= indexes[j] ? x_ind[indexes[i]] + indexes[j]-indexes[i] :
-        x_ind[indexes[j]]  + indexes[i]-indexes[j];
+      size_t ix = indexes[j];
+      size_t iy = indexes[i];
+      if( ix > iy )
+        olx_swap(ix, iy);
+      const size_t ind = ix*(2*annotations.Count()-ix-1)/2+iy;
       data[i][j] = values[ind].ToDouble();
     }
   }
@@ -299,6 +296,8 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
       for( int vj = vi+1; vj < 6; vj++ )  {
         int x = v[vi];
         int y = v[vj];
+        if( x > y )
+          olx_swap(x, y);
         const size_t ind = x*(2*annotations.Count()-x-1)/2+y;
         Um[vi][vj] = Um[vj][vi] = values[ind].ToDouble();
       }

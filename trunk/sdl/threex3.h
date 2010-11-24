@@ -22,10 +22,10 @@ public:
 
   inline T& operator [] (size_t i)  {  return data[i];  }
   inline T const& operator [] (size_t i) const {  return data[i];  }
-  inline T* GetData() {  return &data[0];  }
   inline const T* GetData() const {  return &data[0];  }
   inline T QLength() const {  return (data[0]*data[0]+data[1]*data[1]+data[2]*data[2]);  }
-  inline T Length() const {  return sqrt(data[0]*data[0]+data[1]*data[1]+data[2]*data[2]);  }
+  inline T Length() const {  return sqrt(QLength());  }
+  inline static size_t Count()  {  return 3;  }
   
   template <class AT> inline T DistanceTo(const TVector3<AT>& v) const {  
     return sqrt( (data[0]-v[0])*(data[0]-v[0]) + (data[1]-v[1])*(data[1]-v[1]) + (data[2]-v[2])*(data[2]-v[2]) ); 
@@ -61,9 +61,7 @@ public:
     return *this;
   }
   // takes square root of each element (must be >= 0!)
-  static inline TVector3<T> Sqrt(const TVector3<T>& v)  {
-    return TVector3<T>(sqrt(v[0]), sqrt(v[1]), sqrt(v[2]));
-  }
+  static inline TVector3<T> Sqrt(const TVector3<T>& v)  {  return TVector3<T>(*this).Sqrt();  }
   // takes absolute value of the vector elements
   inline TVector3<T>& Abs()  {
     data[0] = olx_abs(data[0]);
@@ -72,9 +70,7 @@ public:
     return *this;
   }
   // returns a vector with absolute values of provided one
-  static inline TVector3<T> Abs(const TVector3<T>& v)  {
-    return TVector3<T>(olx_abs(v[0]), olx_abs(v[1]), olx_abs(v[2]));
-  }
+  static inline TVector3<T> Abs(const TVector3<T>& v)  {  return TVector3<T>(*this).Abs();  }
   // returns sum of vector elements
   inline T Sum() const {  return data[0]+data[1]+data[2];  }
   // returns product of vector elements
@@ -330,9 +326,14 @@ public:
     data[2][0] = (T)v[2][0];  data[2][1] = (T)v[2][1];  data[2][2] = (T)v[2][2];
   }
   
-  inline TVector3<T> const& operator [] (size_t i) const {  return data[i];  } 
+  inline const TVector3<T>& operator [] (size_t i) const {  return data[i];  } 
   inline TVector3<T>& operator [] (size_t i)  {  return data[i];  } 
-  
+  inline const TVector3<T>& Get(size_t i) const {  return data[i];  } 
+  inline const T& Get(size_t i, size_t j) const {  return data[i][j];  } 
+  inline void Set(size_t i, size_t j, const T& v) const {  return data[i][j] = v;  } 
+  inline static size_t ColCount()  {  return 3;  }
+  inline static size_t RowCount()  {  return 3;  }
+
   template <class AT> TMatrix33<T> operator * (const TMatrix33<AT>& v) const {
     return TMatrix33<T>( data[0][0]*v[0][0] + data[0][1]*v[1][0] + data[0][2]*v[2][0],
                          data[0][0]*v[0][1] + data[0][1]*v[1][1] + data[0][2]*v[2][1],

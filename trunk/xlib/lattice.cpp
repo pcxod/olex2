@@ -1266,7 +1266,7 @@ void TLattice::CompaqAll()  {
   OnStructureUniq.Enter(this);
   OnDisassemble.SetEnabled(false);
   bool changes = true;
-  size_t itr = 0;
+  size_t min_fc = Fragments.Count();
   while( changes )  {
     changes = false;
     for( size_t i=0; i < Fragments.Count(); i++ )  {
@@ -1295,12 +1295,12 @@ void TLattice::CompaqAll()  {
         delete m;
       }
       Init();
-      if( ++itr > 100 )  {
-        TBasicApp::GetLog().Error(olxstr("The procedure:\n")  << __OlxSourceInfo <<
-          "\nhas failed due to large number of iterations\nPlease contact the developers team");
+      if( Fragments.Count() >= min_fc )  {
         changes = false;
         break;
       }
+      else
+        min_fc = Fragments.Count();
     }
   }
   OnDisassemble.SetEnabled(true);
@@ -1404,8 +1404,11 @@ void TLattice::CompaqType(short type)  {
         GetUnitCell().GetEllipsoid(transform->GetContainerId(), Atoms[i]->CAtom().GetId());
     delete transform;
   }
-  RestoreADPs(false);
-  UpdateConnectivity();
+  OnStructureUniq.Enter(this);
+  Init();
+  OnStructureUniq.Exit(this);
+  //RestoreADPs(false);
+  //UpdateConnectivity();
 }
 //..............................................................................
 void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform)  {
