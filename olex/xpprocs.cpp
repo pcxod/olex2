@@ -9473,7 +9473,11 @@ olxstr TMainForm_funMatchNets(TNetwork& netA, TNetwork& netB, bool invert, bool 
 {
   TTypeList<AnAssociation2<size_t, size_t> > res;
   TSizeList sk;
-  const bool match = netA.DoMatch(netB, res, invert, w_c);
+  bool match = false;
+  try  {  match = netA.DoMatch(netB, res, invert, w_c);  }
+  catch(...)  {
+    return "exception";
+  }
   if( match )  {
     olxstr rv;
     TTypeList<AnAssociation2<TSAtom*,TSAtom*> > satomp;
