@@ -556,7 +556,8 @@ struct GraphAnalyser  {
     if( bestMatrix.r.Trace() == 0 )
       CalcRMS();
     //alignmentMatrix.t = aCent;
-    CallsCount++;
+    if( ++CallsCount > 1e5 )
+      throw TFunctionFailedException(__OlxSourceInfo, "too many iterations");
     const TAsymmUnit& au_a = *src[0].GetObject()->CAtom().GetParent();
     const TAsymmUnit& au_b = *dest[0].GetObject()->CAtom().GetParent();
     double rsum = 0;
@@ -564,8 +565,7 @@ struct GraphAnalyser  {
       vec3d v = dest[i].GetObject()->ccrd();
       if( Invert )  v *= -1;
       v = bestMatrix*(au_b.CellToCartesian(v) - bCent);
-      vec3d v1 = src[i].GetObject()->ccrd();
-      rsum += v.QDistanceTo(au_a.CellToCartesian(v1));
+      rsum += v.QDistanceTo(au_a.Orthogonalise(src[i].GetObject()->ccrd()));
     }
     return rsum + minRms;
   }
@@ -702,7 +702,7 @@ bool TNetwork::DoMatch(TNetwork& net, TTypeList<AnAssociation2<size_t,size_t> >&
       }
       catch(const TExceptionBase& e)  {
         TBasicApp::GetLog() << e.GetException()->GetError() << '\n';
-        return false;
+        throw TFunctionFailedException(__OlxSourceInfo, e);
       }
       trav.ClearData();
       trav.OnItem(thatGraph.GetRoot());
