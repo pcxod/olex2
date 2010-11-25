@@ -6309,36 +6309,382 @@ public:
 };
 #endif
 
+struct UTerm  {
+  double values[6];
+  struct UMap  {
+    size_t index;
+    double k;
+    UMap(size_t _i, double _k) : index(_i), k(_k)  {}
+    UMap() : index(InvalidIndex), k(0) {}
+    olxstr ToString(size_t this_i) const {
+      if( index == InvalidIndex )
+        return '#';
+      if( index == InvalidIndex-1 || (this_i == index && k > 0) )
+        return 's';
+      if( index == InvalidIndex-2  || (this_i == index && k <= 0) )
+        return 'x';
+      if( this_i < index )  {
+        return k > 0 ? 'u' : 'x';
+      }
+      if( olx_abs(k) == 1 )  {
+        if( k < 0 )
+          return olxstr('-') << index;
+        return index;
+      }
+      return olxstr(k) << '*' << index;
+    }
+    olxstr ToCString(size_t this_i) const {
+      if( index == InvalidIndex )
+        return "symcUnknown,0";
+      if( index == InvalidIndex-1 || (this_i == index && k > 0) )
+        return "symcSelf,0";
+      if( index == InvalidIndex-2  || (this_i == index && k <= 0) )
+        return "symcCanceled,0";
+      if( this_i < index )  {
+        return k > 0 ? "symcSelf,0" : "symcCanceled,0";
+      }
+      return olxstr(index) << ", " << k;
+    }
+  };
+  void clear()  {
+    memset(&values[0], 0, sizeof(values));
+  }
+  UTerm()  {  clear();  }
+  UTerm(const UTerm& u)  {
+    memcpy(&values, &u.values[0], sizeof(values));
+  }
+  UTerm(uint8_t index, int k=1)  {
+    clear();
+    values[index] = k;
+  }
+  UTerm operator + (const UTerm& u) const {  return UTerm(*this) += u;  }
+  UTerm operator - (const UTerm& u) const {  return UTerm(*this) -= u;  }
+  UTerm operator * (int k) const {  return UTerm(*this) *= k;  }
+  UTerm& operator += (const UTerm& u)  {
+    for( size_t i=0; i < 6; i++ )
+      values[i] += u.values[i];
+    return *this;
+  }
+  UTerm& operator -= (const UTerm& u)  {
+    for( size_t i=0; i < 6; i++ )
+      values[i] -= u.values[i];
+    return *this;
+  }
+  UTerm& operator *= (int k)  {
+    for( size_t i=0; i < 6; i++ )
+      values[i] *= k;
+    return *this;
+  }
+  template <typename List> olxstr ToString(const List& names) const {
+    olxstr rv;
+    for( size_t i=0; i < 6; i++ )  {
+      if( values[i] != 0 )  {
+        if( values[i] > 0 )  {
+          if( !rv.IsEmpty() )
+            rv << '+';
+          if( values[i] != 1 )
+            rv << values[i] << names[i];
+          else
+            rv << names[i];
+        }
+        else if( values[i] == -1 ) 
+          rv << '-' << names[i];
+        else
+          rv << values[i] << names[i];
+      }
+    }
+    if( rv.IsEmpty() )
+      return '0';
+    return rv;
+  }
+  void gen_eq(size_t this_i, TArrayList<UMap>& map) const {
+    TIntList indices;
+    for( size_t i=0; i < 6; i++ )  {
+      if( values[i] != 0 )
+        indices.Add(i);
+    }
+    if( indices.IsEmpty() )  {
+      map[this_i].index = InvalidIndex -1; 
+    }
+    else if( indices.Count() == 1 )  {
+      if( indices[0] != this_i )  {
+        map[this_i].index = InvalidIndex -2;
+      }
+      else if( map[this_i].index > indices[0] )  {
+        map[this_i].index = indices[0];
+        map[this_i].k = values[indices[0]];
+      }
+    }
+    else if( indices.Count() == 2 )  {
+      if( olx_sign(values[indices[1]]) == olx_sign(values[indices[0]]) )  {
+        map[indices[0]].index = InvalidIndex-2;
+        map[indices[1]].index = InvalidIndex-2;
+      }
+      else  {
+        if( map[indices[0]].index > indices[1] && map[indices[0]].index != InvalidIndex-2)  {
+          map[indices[0]].index = indices[1];
+          map[indices[0]].k = -values[indices[1]]/values[indices[0]];
+        }
+        if( map[indices[1]].index > indices[0] && map[indices[1]].index != InvalidIndex-2 )  {
+          map[indices[1]].index = indices[0];
+          map[indices[1]].k = -values[indices[0]]/values[indices[1]];
+        }
+      }
+    }
+  }
+  static void minimise(TArrayList<UMap>& map)  {
+    while( true )  {
+      bool changes = false;
+      for( int i=0; i < 6; i++ )  {
+        if( map[i].index > 5 )  continue;
+        if( map[map[i].index].index < map[i].index )  {
+          map[i].k *= map[map[i].index].k;
+          map[i].index = map[map[i].index].index;
+          changes = true;
+        }
+      }
+      if( !changes )  break;
+    }
+  }
+};
+
+struct CTerm  {
+  vec3d values;
+  struct CMap  {
+    size_t index;
+    double k;
+    CMap(size_t _i, double _k) : index(_i), k(_k)  {}
+    CMap() : index(InvalidIndex), k(0) {}
+    olxstr ToString(size_t this_i) const {
+      if( index == InvalidIndex )
+        return '#';
+      if( index == InvalidIndex-1 || (this_i == index && k > 0) )
+        return 's';
+      if( index == InvalidIndex-2  || (this_i == index && k <= 0) )
+        return 'x';
+      if( this_i < index )  {
+        return k > 0 ? 'u' : 'x';
+      }
+      if( olx_abs(k) == 1 )  {
+        if( k < 0 )
+          return olxstr('-') << index;
+        return index;
+      }
+      return olxstr(k) << '*' << index;
+    }
+    olxstr ToCString(size_t this_i) const {
+      if( index == InvalidIndex )
+        return "symcUnknown,0";
+      if( index == InvalidIndex-1 || (this_i == index && k > 0) )
+        return "symcSelf,0";
+      if( index == InvalidIndex-2  || (this_i == index && k <= 0) )
+        return "symcCanceled,0";
+      if( this_i < index )  {
+        return k > 0 ? "symcSelf,0" : "symcCanceled,0";
+      }
+      return olxstr(index) << ", " << k;
+    }
+  };
+  void clear()  {
+    values.Null();
+  }
+  CTerm()  {  clear();  }
+  CTerm(const CTerm& u) : values(u.values) {}
+  CTerm(uint8_t index, int k=1)  {  values[index] = k;  }
+  CTerm operator + (const CTerm& u) const {  return CTerm(*this) += u;  }
+  CTerm operator - (const CTerm& u) const {  return CTerm(*this) -= u;  }
+  CTerm operator * (int k) const {  return CTerm(*this) *= k;  }
+  CTerm& operator += (const CTerm& u)  {
+    values += u.values;
+    return *this;
+  }
+  CTerm& operator -= (const CTerm& u)  {
+    values -= u.values;
+    return *this;
+  }
+  CTerm& operator *= (int k)  {
+    values *= k;
+    return *this;
+  }
+  template <typename List> olxstr ToString(const List& names) const {
+    olxstr rv;
+    for( size_t i=0; i < 3; i++ )  {
+      if( values[i] != 0 )  {
+        if( values[i] > 0 )  {
+          if( !rv.IsEmpty() )
+            rv << '+';
+          if( values[i] != 1 )
+            rv << values[i] << names[i];
+          else
+            rv << names[i];
+        }
+        else if( values[i] == -1 ) 
+          rv << '-' << names[i];
+        else
+          rv << values[i] << names[i];
+      }
+    }
+    if( rv.IsEmpty() )
+      return '0';
+    return rv;
+  }
+  void gen_eq(size_t this_i, TArrayList<CMap>& map) const {
+    TIntList indices;
+    for( size_t i=0; i < 3; i++ )  {
+      if( values[i] != 0 )
+        indices.Add(i);
+    }
+    if( indices.IsEmpty() )  {
+      map[this_i].index = InvalidIndex -1; 
+    }
+    else if( indices.Count() == 1 )  {
+      if( indices[0] != this_i )  {
+        map[this_i].index = InvalidIndex -2;
+      }
+      else if( map[this_i].index > indices[0] )  {
+        map[this_i].index = indices[0];
+        map[this_i].k = values[indices[0]];
+      }
+    }
+    else if( indices.Count() == 2 )  {
+      if( olx_sign(values[indices[1]]) == olx_sign(values[indices[0]]) )  {
+        map[indices[0]].index = InvalidIndex-2;
+        map[indices[1]].index = InvalidIndex-2;
+      }
+      else  {
+        if( map[indices[0]].index > indices[1] && map[indices[0]].index != InvalidIndex-2)  {
+          map[indices[0]].index = indices[1];
+          map[indices[0]].k = -values[indices[1]]/values[indices[0]];
+        }
+        if( map[indices[1]].index > indices[0] && map[indices[1]].index != InvalidIndex-2 )  {
+          map[indices[1]].index = indices[0];
+          map[indices[1]].k = -values[indices[0]]/values[indices[1]];
+        }
+      }
+    }
+  }
+  static void minimise(TArrayList<CMap>& map)  {
+    while( true )  {
+      bool changes = false;
+      for( int i=0; i < 3; i++ )  {
+        if( map[i].index > 2 )  continue;
+        if( map[map[i].index].index < map[i].index )  {
+          map[i].k *= map[map[i].index].k;
+          map[i].index = map[map[i].index].index;
+          changes = true;
+        }
+      }
+      if( !changes )  break;
+    }
+  }
+};
+
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TStrList out;
-  vec3d_alist mult_vl(3), mult_vl_kr(3);
-  mat3d_alist mult_ml(9);
-  mat3d sym_mat;
-  sym_mat[0][1] = sym_mat[1][1] = -1;
-  sym_mat[1][0] = sym_mat[2][2] = 1;
-  CompositeVector<vec3d_alist, double> cv_(mult_vl);
-  CompositeVector<vec3d_alist, double> cv_kr(mult_vl_kr);
-  CompositeMatrix<mat3d_alist, double> cm_(mult_ml, 3, 3);
-  olx_mat::KroneckerProduct(sym_mat, sym_mat, cm_);
-  mat3d tr_mat(
-    0.0255, 0.0134, -0.0072,
-    0.0134, 0.0417, -0.007,
-    -0.0072, -0.007, -0.0407);
-  mult_vl[0] = tr_mat[0];
-  mult_vl[1] = tr_mat[1];
-  mult_vl[2] = tr_mat[2];
-  ematd cm_out(9, 9);
-  evecd cv_out(9), kr_out(9);
-  olx_vec::MulMatrix(cv_, cm_, cv_out);
-  olx_mat::MulMatrix(cm_, cm_, cm_out);
-  olx_vec::MulMatrixT(cv_, cm_, kr_out);
-  olx_vec::MulMatrixT(cv_, cm_, cv_kr);
-  for( int i=0; i < 3; i++ )
-    FXApp->GetLog() << mult_vl_kr[i].ToString() << '\n';
-  tr_mat = sym_mat*tr_mat*mat3d::Transpose(sym_mat);
-  for( int i=0; i < 3; i++ )
-    FXApp->GetLog() << tr_mat[i].ToString() << '\n';
-  return;
+  const TSymmLib& sl = TSymmLib::GetInstance();
+  mat3i_list matrices;
+  for( size_t i=0; i < sl.SGCount(); i++ )  {
+    smatd_list ml;
+    sl.GetGroup(i).GetMatrices(ml, mattAll);
+    for( size_t j=0; j < ml.Count(); j++ )  {
+      if( matrices.IndexOf(ml[j].r) == InvalidIndex && matrices.IndexOf(-ml[j].r) == InvalidIndex)
+        matrices.AddCCopy(ml[j].r);
+    }
+  }
+  TBasicApp::GetLog() << matrices.Count() << '\n';
+  TStrList out, c_out;
+  TETable tab(3,11), tab1(1,7);
+  UTerm utab[3][3], rutab[3][3];
+  CTerm ctab[3];
+  const olxstr u_legend[] = {"xx", "yy", "zz", "xy", "xz", "yz"};
+  const olxstr c_legend[] = {"x", "y", "z"};
+  const UTerm Um[3][3] = {{0, 3, 4},{3, 1, 5},{4, 5, 2}};
+  const CTerm Cm[3] = {0, 1, 2};
+  const size_t Um_i[3][3] = {{0, 3, 4},{3, 1, 5},{4, 5, 2}};
+  const size_t Cm_i[3] = {0, 1, 2};
+  for( size_t i=0; i < matrices.Count(); i++ )  {
+    const mat3i& m = matrices[i];
+    mat3i mt = mat3i::Transpose(m);
+    for( int mi = 0; mi < 3; mi++ )  {
+      ctab[mi].clear();
+      for( int mj = 0; mj < 3; mj++ )  {
+        utab[mi][mj].clear();
+        rutab[mi][mj].clear();
+      }
+    }
+    for( int mi = 0; mi < 3; mi++ )  {
+      for( int mj = 0; mj < 3; mj++ )  {
+        ctab[mi] += Cm[mj]*m[mj][mi];
+        for( int mk = 0; mk < 3; mk++ )  {
+          utab[mi][mj] += Um[mk][mj]*m[mi][mk];
+        }
+      }
+    }
+    for( int mi = 0; mi < 3; mi++ )  {
+      for( int mj = 0; mj < 3; mj++ )  {
+        for( int mk = 0; mk < 3; mk++ )  {
+          rutab[mi][mj] += utab[mi][mk]*mt[mk][mj];
+        }
+      }
+    }
+    TArrayList<UTerm::UMap> umap(6);
+    TArrayList<CTerm::CMap> cmap(3);
+    for( int mi = 0; mi < 3; mi++ )  {
+      tab1[0][mi] = ctab[mi].ToString(c_legend);
+      ctab[mi] -= Cm[mi];
+      ctab[mi].gen_eq(Cm_i[mi], cmap);
+      for( int mj = 0; mj < 3; mj++ )  {
+        tab[mi][mj] = rutab[mi][mj].ToString(u_legend);
+        rutab[mi][mj] -= Um[mi][mj];
+        rutab[mi][mj].gen_eq(Um_i[mi][mj], umap);
+      }
+    }
+    UTerm::minimise(umap);
+    CTerm::minimise(cmap);
+    c_out.Add() << "symc.Add(\"" << TSymmParser::MatrixToSymm(smatd(m, vec3d(0,0,0))) << "\", SymCon(";
+    for( int mi = 0; mi < 6; mi++ )  {
+      tab[2][mi+4] = umap[mi].ToString(mi);
+      c_out.GetLastString() << umap[mi].ToCString(mi); 
+      if( mi < 5 )
+        c_out.GetLastString() << ", ";
+    }
+    c_out.GetLastString() << "));";
+    for( int mi = 0; mi < 3; mi++ )
+      tab1[0][mi+4] = cmap[mi].ToString(mi);
+    tab.CreateTXTList(out, EmptyString, false, false, ' ');
+    tab1.CreateTXTList(out, EmptyString, false, false, ' ');
+    out.Add("<-- ") << TSymmParser::MatrixToSymm(smatd(m, vec3d(0,0,0)));
+  }
+  TBasicApp::GetLog() << out << '\n';
+  TBasicApp::GetLog() << c_out << '\n';
+  //TStrList out;
+  //vec3d_alist mult_vl(3), mult_vl_kr(3);
+  //mat3d_alist mult_ml(9);
+  //mat3d sym_mat;
+  //sym_mat[0][1] = sym_mat[1][1] = -1;
+  //sym_mat[1][0] = sym_mat[2][2] = 1;
+  //CompositeVector<vec3d_alist, double> cv_(mult_vl);
+  //CompositeVector<vec3d_alist, double> cv_kr(mult_vl_kr);
+  //CompositeMatrix<mat3d_alist, double> cm_(mult_ml, 3, 3);
+  //olx_mat::KroneckerProduct(sym_mat, sym_mat, cm_);
+  //mat3d tr_mat(
+  //  0.0255, 0.0134, -0.0072,
+  //  0.0134, 0.0417, -0.007,
+  //  -0.0072, -0.007, -0.0407);
+  //mult_vl[0] = tr_mat[0];
+  //mult_vl[1] = tr_mat[1];
+  //mult_vl[2] = tr_mat[2];
+  //ematd cm_out(9, 9);
+  //evecd cv_out(9), kr_out(9);
+  //olx_vec::MulMatrix(cv_, cm_, cv_out);
+  //olx_mat::MulMatrix(cm_, cm_, cm_out);
+  //olx_vec::MulMatrixT(cv_, cm_, kr_out);
+  //olx_vec::MulMatrixT(cv_, cm_, cv_kr);
+  //for( int i=0; i < 3; i++ )
+  //  FXApp->GetLog() << mult_vl_kr[i].ToString() << '\n';
+  //tr_mat = sym_mat*tr_mat*mat3d::Transpose(sym_mat);
+  //for( int i=0; i < 3; i++ )
+  //  FXApp->GetLog() << tr_mat[i].ToString() << '\n';
+  //return;
   //TMatrix<int> kt_1(2,2), kt_2(2,2);
   //kt_1[0][0] = 1;  kt_1[0][1] = 2;
   //kt_1[1][0] = 3;  kt_1[1][1] = 4;
@@ -6354,30 +6700,31 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //kr_t.CreateTXTList(out, "vcov", true, true, ' ');
   //TBasicApp::GetLog() << out << '\n';
 
-  TXAtomPList xatoms;
-  if( !FindXAtoms(Cmds, xatoms, false, true) )  {
-    return;
-  }
-  VcoVContainer vcovc;
-  TXApp& xapp = TXApp::GetInstance();
-  xapp.GetLog() << "Using " << xapp.InitVcoV(vcovc) << " matrix for the calculation\n";
-  TSAtomPList atoms(xatoms, TXAtom::AtomAccessor<>());
-  mat3d_list matrices;
-  vcovc.GetVcoV(atoms, matrices);
-  //vcovc.GetMatrix().FindVcoV(atoms, matrices);
-  const size_t m_dim = (size_t)sqrt((double)matrices.Count());
-  TETable tab(m_dim*3, m_dim*3);
-  for( size_t i=0; i < m_dim; i++ )  {
-    for( size_t j=0; j < m_dim; j++ )  {
-      for( int mi = 0; mi < 3; mi++ )  {
-        for( int mj = 0; mj < 3; mj ++ )  {
-          tab[i*3+mi][j*3+mj] = olxstr::FormatFloat(-3,matrices[i*m_dim+j][mi][mj], true);
-        }
-      }
-    }
-  }
-  tab.CreateTXTList(out, "vcov", true, true, ' ');
-  TBasicApp::GetLog() << out << '\n';
+  //TXAtomPList xatoms;
+  //if( !FindXAtoms(Cmds, xatoms, false, true) )  {
+  //  return;
+  //}
+  //VcoVContainer vcovc;
+  //TXApp& xapp = TXApp::GetInstance();
+  //xapp.GetLog() << "Using " << xapp.InitVcoV(vcovc) << " matrix for the calculation\n";
+  //TSAtomPList atoms(xatoms, TXAtom::AtomAccessor<>());
+  //mat3d_list matrices;
+  //vcovc.GetVcoV(atoms, matrices);
+  ////vcovc.GetMatrix().FindVcoV(atoms, matrices);
+  //const size_t m_dim = (size_t)sqrt((double)matrices.Count());
+  //TETable tab(m_dim*3, m_dim*3);
+  //for( size_t i=0; i < m_dim; i++ )  {
+  //  for( size_t j=0; j < m_dim; j++ )  {
+  //    for( int mi = 0; mi < 3; mi++ )  {
+  //      for( int mj = 0; mj < 3; mj ++ )  {
+  //        tab[i*3+mi][j*3+mj] = olxstr::FormatFloat(-3,matrices[i*m_dim+j][mi][mj], true);
+  //      }
+  //    }
+  //  }
+  //}
+  //tab.CreateTXTList(out, "vcov", true, true, ' ');
+  //TBasicApp::GetLog() << out << '\n';
+
   //TSocketFS fs(TUrl("http://localhost:8082"));
   //if( fs.Exists("dist/cds.jar", true) )  {
   //  TEFile* ef = fs.OpenFileAsFile("dist/cds.jar");
@@ -6409,12 +6756,12 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //    TBasicApp::GetLog() << cb.table_map.GetValue(j)->GetName() << '\n';
   //}
   //TCStrList(_sl).SaveToFile("e:/tmp/test_vdlee142.cif");
-  return;
+  //return;
 
   //uint64_t test_a = 1021;
   //uint64_t test_b = test_a%10, test_c = test_a/10;
   //uint64_t test_d = test_a/10, test_e = test_a-test_d*10;
-  FXApp->SetActiveXFile(0);
+  //FXApp->SetActiveXFile(0);
   //TAsymmUnit& _au = FXApp->XFile().GetAsymmUnit();
   //TUnitCell& uc = FXApp->XFile().GetUnitCell();
   //size_t ac = (size_t)olx_round((uc.CalcVolume()/18.6)/uc.MatrixCount());
@@ -6441,420 +6788,420 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //  }
   //}
   //return;
-  olxstr hklfn = FXApp->LocateHklFile();
-  if( TEFile::Exists(hklfn) )  {
-    const TRefPList& fpp = FXApp->XFile().GetRM().GetFriedelPairs();
-    if( fpp.IsEmpty() )  return;
+  //olxstr hklfn = FXApp->LocateHklFile();
+  //if( TEFile::Exists(hklfn) )  {
+  //  const TRefPList& fpp = FXApp->XFile().GetRM().GetFriedelPairs();
+  //  if( fpp.IsEmpty() )  return;
 
-    TRefList refs, nrefs, fp;
-    fp.SetCapacity(fpp.Count());
-    for( size_t i=0; i < fpp.Count(); i++ )
-      fp.AddNew( *fpp[i] );
-    const vec3i_list empty_omits;
-    smatd_list ml;
-    FXApp->XFile().GetLastLoaderSG().GetMatrices(ml, mattAll^mattIdentity);
-    MergeStats stat = RefMerger::Merge<smatd_list,RefMerger::ShelxMerger>(ml, fp, refs, empty_omits, false);
-    nrefs.SetCapacity(refs.Count());
-    for( size_t i=0; i < refs.Count(); i++ ) 
-      nrefs.AddNew(refs[i]).GetHkl() *= -1;
-    TArrayList<compd> FP(refs.Count()), FN(refs.Count());
-    SFUtil::CalcSF(FXApp->XFile(), refs, FP, true);
-    SFUtil::CalcSF(FXApp->XFile(), nrefs, FN, true);
-    double pscale = SFUtil::CalcFScale(FP, refs);
-    double nscale = SFUtil::CalcFScale(FN, nrefs);
-    double sx = 0, sy = 0, sxs = 0, sxy = 0;
-    const size_t f_cnt = FP.Count();
-    for( size_t i=0; i < f_cnt; i++ )  {
-      const double I = pscale*pscale*refs[i].GetI();
-      const double pqm = FP[i].qmod();
-      const double nqm = FN[i].qmod();
-      sx += (nqm - pqm);
-      sy += (I - pqm);
-      sxy += (nqm - pqm)*(I - pqm);
-      sxs += (nqm - pqm)*(nqm - pqm);
-    }
-    double k = (sxy - sx*sy/f_cnt)/(sxs - sx*sx/f_cnt);
-    double a = (sy - k*sx)/f_cnt;  
-    double sdiff = 0;
-    for( size_t i=0; i < f_cnt; i++ )  {
-      const double I = pscale*pscale*refs[i].GetI();
-      const double pqm = FP[i].qmod();
-      const double nqm = FN[i].qmod();
-      sdiff += olx_sqr((I - pqm) - k*(nqm - pqm) - a);
-    }
-    TBasicApp::GetLog() << "K: " << TEValue<double>(k, sqrt(sdiff/(f_cnt*(f_cnt-1)))).ToString() << '\n';
-  }
-  return;
-  TSymmLib& sl = TSymmLib::GetInstance();
-  smatd_list ml;
-  static const size_t dim = 29;
-  bool** cell[dim];
-  for( size_t i=0; i < dim; i++ )  {
-    cell[i] = new bool*[dim];
-    for( size_t j=0; j < dim; j++ )  {
-      cell[i][j] = new bool[dim]; 
-    }
-  }
-  vec3d p1;
-  vec3i ip;
-  for( size_t i=0; i < sl.SGCount(); i++ )  {
-    ml.Clear();
-    sl.GetGroup(i).GetMatrices(ml, mattAll);
-    for( size_t i1=0; i1 < dim; i1++ )
-      for( size_t i2=0; i2 < dim; i2++ )
-        for( size_t i3=0; i3 < dim; i3++ )
-          cell[i1][i2][i3] = false;
-    int sets = 0, mi1 = 0, mi2 = 0, mi3 = 0;
-    for( size_t i1=0; i1 < dim; i1++ )  {
-      const double d1 = (double)i1/dim;
-      for( size_t i2=0; i2 < dim; i2++ )  {
-        const double d2 = (double)i2/dim;
-        for( size_t i3=0; i3 < dim; i3++ )  {
-          const double d3 = (double)i3/dim;
-          if( cell[i1][i2][i3] )  continue;
-          int vc = 0;
-          vec3i minv;
-          for( size_t l=1; l < ml.Count(); l++)  {  // skip I
-            p1 = ml[l] * vec3d(d1,d2,d3);
-            p1 *= dim;
-            for( size_t k=0; k < 3; k++ )  {
-              ip[k] = olx_round(p1[k]);
-              while( ip[k] < 0  )   ip[k] += dim;
-              while( ip[k] >= dim ) ip[k] -= dim;
-            }
-            if( cell[ip[0]][ip[1]][ip[2]] )  continue;
-            if( vc++ == 0 )
-              minv = ip;
-            else if( ip.QLength() < minv.QLength() )
-              minv = ip;
-            cell[ip[0]][ip[1]][ip[2]] = true;
-            sets++;
-          }
-          if( minv[0] > mi1 )  mi1 = minv[0];
-          if( minv[1] > mi2 )  mi2 = minv[1];
-          if( minv[2] > mi3 )  mi3 = minv[2];
-        }
-      }
-    }
-    TBasicApp::GetLog() << sl.GetGroup(i).GetName() << "; mc = " << 
-      ml.Count() << " - " << (double)sets*100/(dim*dim*dim) << "% {" << mi1 << ',' << mi2 << ',' << mi3 << "}\n";
-  }
-  for( size_t i=0; i < dim; i++ )  {
-    for( size_t j=0; j < dim; j++ )
-      delete [] cell[i][j];
-    delete [] cell[i];
-  }
-    return;
-  TEBitArray ba;
-  olxstr rr = ba.FormatString(31);
-  if( FXApp->XFile().HasLastLoader() )  {
-    mat3d h2c = mat3d::Transpose(FXApp->XFile().GetAsymmUnit().GetHklToCartesian());
-    TBasicApp::GetLog() << 1./h2c[0][0] << ',' << 1./h2c[1][1] << ',' << 1./h2c[2][2] << '\n';
-    mat3d r, I;
-    r[0][0] = h2c[0].DotProd(h2c[0]);  r[0][1] = h2c[0].DotProd(h2c[1]);  r[0][2] = h2c[0].DotProd(h2c[2]);
-    r[0][1] = r[1][0];                 r[1][1] = h2c[1].DotProd(h2c[1]);  r[1][2] = h2c[1].DotProd(h2c[2]);
-    r[2][0] = r[0][2];                 r[2][1] = r[1][2];                 r[2][2] = h2c[2].DotProd(h2c[2]);
-    
-    mat3d::EigenValues(r, I.I() );
-    TBasicApp::GetLog() << r[0][0] << ',' << r[1][1] << ',' << r[2][2] << '\n';
-    TBasicApp::GetLog() << 1./r[0][0] << ',' << 1./r[1][1] << ',' << 1./r[2][2] << '\n';
-  }
-  
-  olxstr fn( FXApp->XFile().GetFileName() );
-  for( size_t i=0; i < 250; i++ )  {
-    Macros.ProcessMacro(olxstr("@reap '") << fn << '\'', Error);
-    Dispatch(ID_TIMER, msiEnter, (AEventsDispatcher*)this, NULL);
-    FHtml->Update();
-    FXApp->Draw();
-    wxTheApp->Dispatch();
-  }
-  return;
-  if( !Cmds.IsEmpty() )  {
-    TAtomReference ar(Cmds.Text(' '));
-    TCAtomGroup ag;
-    size_t atomAGroup;
-    olxstr unp(ar.Expand(FXApp->XFile().GetRM(), ag, EmptyString, atomAGroup));
-    TBasicApp::GetLog() << "Expanding " << ar.GetExpression() << " to atoms \n";
-    for( size_t i=0; i < ag.Count(); i++ )
-      TBasicApp::GetLog() << ag[i].GetFullLabel(FXApp->XFile().GetRM()) << ' ';
-    TBasicApp::GetLog() << "\nUnprocessed instructions " << (unp.IsEmpty() ? olxstr("none") : unp) << '\n';
-    return;
-  }
-#ifndef __BORLANDC__
-  BTree<int, int> tree;
-  tree.Add(0,0);
-  tree.Add(-1,-10);
-  tree.Add(1,10);
-  tree.Add(-2,-20);
-  tree.Add(-2,-21);
-  tree.Add(-2,-22);
-  tree.Add(-2,-23);
-  tree.Add(2,20);
-  tree.Add(-3,-30);
-  tree.Add(3,30);
-  tree.Add(3,31);
-  tree.Add(3,32);
-  tree.Add(3,33);
-  tree.Add(4,40);
-  int* tv = NULL;
-  tv = tree.Find(0);
-  tv = tree.Find(1);
-  tv = tree.Find(2);
-  tv = tree.Find(3);
-  tv = tree.Find(4);
-  tv = tree.Find(-1);
-  tv = tree.Find(-2);
-  tv = tree.Find(-3);
-  Test_BTreeTraverser tt;
-  tree.Traverser.Traverse(tree, tt);
-
-  BTree2<int,int> tree2;
-  tree2.Add(0,0,0);
-  tree2.Add(0,1,1);
-  tv = tree2.Find(0,1);
-  tree2.Traverser.FullTraverse(tree2, tt);
-
-  BTree3<int, int> tree3;
-  tree3.Add(0, 0, 0, 0);
-  tree3.Add(0, 1, 0, 1);
-  tree3.Add(0, 0, 1, 2);
-  tree3.Add(1, 0, 1, 3);
-  tv = tree3.Find(0, 0, 1);
-  tv = tree3.Find(0, 0, 0);
-  tv = tree3.Find(0, 1, 0);
-  tree3.Traverser.FullTraverse(tree3, tt);
-#endif  
-  if( Cmds.IsEmpty() )  return;
-  const olxcstr atom_s("ATOM");
-  TCStrList lst, toks;
-  char bf[256];
-  char format[] = "%s";
-  TIntList AtomF;
-  AtomF.Add(6);  //"ATOM  "
-  AtomF.Add(5);  //serial number
-  AtomF.Add(5);  //name
-  AtomF.Add(4);  //residue name
-  AtomF.Add(2);  //chain ID      #21
-  AtomF.Add(4);  //  residue sequence number #26
-  AtomF.Add(12);  // x                        #38
-  AtomF.Add(8);  // y
-  AtomF.Add(8);  // z
-  AtomF.Add(6);  // occupancy
-  AtomF.Add(6);  // temperature factor  #66
-  AtomF.Add(12);  // element             #78
-  AtomF.Add(2);  // charge
-
-  lst.LoadFromFile(Cmds[0]);
-  for( size_t i=0; i < lst.Count(); i++ )  {
-    if( lst[i].StartsFrom(atom_s) )  {
-      toks.Clear();
-      toks.Strtok(lst[i], ' ');
-      memset(bf, 32, 255);
-      toks.Delete( toks.Count()-2 );
-      int offset = 0;
-      for( size_t j=0; j < olx_min(AtomF.Count(),toks.Count()); j++ )  {
-        if( j > 0 )  {
-          offset += AtomF[j];
-          memcpy(&bf[offset-toks[j].Length()], toks[j].c_str(), toks[j].Length() );
-        }
-        else if( j == 0 )  {
-          memcpy(&bf[offset], toks[j].c_str(), toks[j].Length() );
-          offset += AtomF[j];
-        }
-      }
-      bf[offset] = '\0';
-      lst[i] = bf;
-    }
-  }
-  lst.Pack();
-  lst.SaveToFile( Cmds[0] + ".out" );
-  return;
-/*
-  TStrList lst, toks;
-  TEFile sgFile( FXApp->BaseDir() + "sg.txt", "rb" );
-  TDataFile df;
-  df.LoadFromXLFile( FXApp->BaseDir() + "symmlib.xld" );
-  lst.LoadFromStream( sgFile );
-  for( size_t i=2; i < lst.Count(); i++ )  {
-    toks.Clear();
-    olxstr::Strtok( olxstr::RemoveMultiSpaces( lst[i], true ), ' ', toks);
-    if( toks.Count() < 7 )  continue;
-    olxstr axis, num;
-    int si = toks[0].IndexOf(':');
-    if( si != -1 )  {
-      num = toks[0].SubStringTo(si);
-      axis = toks[0].SubStringFrom(si+1);
-    }
-    else
-      num = toks[0];
-
-    for( size_t j=0; j < df.Root().ItemCount(); j++ )  {
-      if( df.Root().Item(j).GetFieldValue( "#" ) == num &&
-          df.Root().Item(j).GetFieldValue("AXIS") == axis )  {
-        TBasicApp::GetLog() << ( olxstr("Found ") << df.Root().Item(j).GetName() );
-        olxstr tmp = toks[1];
-        tmp << ' ' << toks[2] << ' ' << toks[3] << ' ' << toks[4];
-        df.Root().Item(j).SetFieldValue( "FULL", tmp );
-        break;
-      }
-    }
-  }
-  // validating
-  for( size_t i=0; i < df.Root().ItemCount(); i++ )  {
-    olxstr tmp = df.Root().Item(i).GetFieldValue("FULL");
-    if( tmp.IsEmpty() )  {
-      if( df.Root().Item(i).GetName().Length() == 4 )  {
-        tmp << df.Root().Item(i).GetName()[0] << ' ' <<
-               df.Root().Item(i).GetName()[1] << ' ' <<
-               df.Root().Item(i).GetName()[2] << ' ' <<
-               df.Root().Item(i).GetName()[3];
-        TBasicApp::GetLog() << ( olxstr("Empty, but patched for ") << df.Root().Item(i).GetName() );
-      }
-      else
-        TBasicApp::GetLog() << ( olxstr("Empty val for ") << df.Root().Item(i).GetName() );
-      continue;
-    }
-    toks.Clear();
-    olxstr::Strtok( tmp, ' ', toks );
-    if( toks.Count() != 4 )  {
-      TBasicApp::GetLog() << ( olxstr("Wrong toks count for ") << df.Root().Item(i).GetName() );
-      continue;
-    }
-  }
-  // saving
-  df.SaveToXLFile( FXApp->BaseDir() + "sg.xld" );
-*/
-/*
-  if( !FXApp->CheckFileType<TIns>() )  return;
-
-  TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
-  olxstr HklFN = Ins->GetHKLSource();
-  if( !TEFile::Exists(HklFN) )  {
-    Error.ProcessingError(__OlxSrcInfo, "could not locate HKL file" );
-    return;
-  }
-  TScattererItLib scatlib;
-
-  THklFile Hkl;
-  Hkl.LoadFromFile(HklFN);
-  TVectorD vec(3);
-  TMatrixD M( Ins->GetAsymmUnit().GetHklToCartesian() );
-
-  double minV = 1000, maxV = 0;
-  TEFile out( TEFile::ChangeFileExt(Ins->GetFileName(), "out"), "wb+" );
-  olxstr tmp;
-  Hkl.AnalyseReflections(*TSymmLib::GetInstance().FindSG(Ins->GetAsymmUnit()));
-//  Hkl.AnalyseReflections( *TSymmLib::GetInstance().FindGroup("P-1") );
-  for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-    TReflection* ref = Hkl.Ref(i);
-    tmp = ref->ToString();
-    tmp << ' ' << ref->IsCentric() << ' ' << ref->GetDegeneracy();
-    out.Writenl(tmp);
-  }
-  double cm = 0, am = 0, integ = 0, meanFs = 0;
-  int cc = 0, ac = 0, arc = 0;
-  double cd = 0, ad = 0;
-
-  long minH = (long)Hkl.GetMinValues()[0];
-  long maxH = (long)Hkl.GetMaxValues()[0];
-  long minK = (long)Hkl.GetMinValues()[1];
-  long maxK = (long)Hkl.GetMaxValues()[1];
-  long minL = (long)Hkl.GetMinValues()[2];
-  long maxL = (long)Hkl.GetMaxValues()[2];
-
-
-  typedef AnAssociation4<double, double, int, double> refc;
-  TArray3D<refc*> Hkl3D(minH, maxH, minK, maxK, minL, maxL);
-
-  TTypeList<refc*> allRefs;
-
-
-  for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-    TReflection* ref = Hkl.Ref(i);
-
-    if( olx_abs(ref->Data()[0])/ref->Data()[1] > 3 )
-      continue;
-
-    if( ref->Data()[0] < 0 )
-      continue;
-
-    refc* ref1 = Hkl3D[ref->H()][ref->K()][ref->L()];
-    if( ref1 != NULL )  {
-      ref1->A() += ref->Data()[0];
-      ref1->B() += QRT(ref->Data()[1]);
-      ref1->C() ++;
-      ref1->D() += QRT(ref->Data()[0]);
-    }
-    else
-      Hkl3D[ref->H()][ref->K()][ref->L()] =
-        new refc(ref->Data()[0], QRT(ref->Data()[1]), 1, QRT(ref->Data()[0]) );
-  }
-
-  allRefs.SetCapacity( Hkl.RefCount() );
-
-  for( int i=minH; i < maxH; i++ )  {
-    for( int j=minK; j < maxK; j++ )  {
-      for( int k=minL; k < maxL; k++ )  {
-        refc* ref1 = Hkl3D[i][j][k];
-        if( ref1 != NULL )  {
-          ref1->A() /= ref1->C();
-          ref1->B() /= sqrt(ref1->GetB());
-          ref1->D() /= ref1->C();
-          ref1->D() -= QRT( ref1->GetA() );
-          ref1->D() = sqrt( ref1->GetD() );
-          allRefs.AddACopy( ref1 );
-        }
-      }
-    }
-  }
-
-  integ = 0;
-  meanFs = 0;
-  for( size_t i=0; i < allRefs.Count(); i++ )  {
-//    meanFs += allRefs[i]->GetA();
-    meanFs += allRefs[i]->GetA()/olx_max(allRefs[i]->GetB(), allRefs[i]->GetD());
-    //}
-    delete allRefs[i];
-  }
-  if( allRefs.Count() != 0 )
-    meanFs /= allRefs.Count();
-
-  for( size_t i=0; i < allRefs.Count(); i++ )
-    integ += olx_abs( (allRefs[i]->GetA()/olx_max(allRefs[i]->GetB(), allRefs[i]->GetD()))/meanFs -1 );
-//    integ += olx_abs(allRefs[i]->GetA()/meanFs -1 );
-
-  if( allRefs.Count() != 0 )
-    integ /= allRefs.Count();
-  TBasicApp::GetLog() << (olxstr("Calculated value: ") << integ );
-*/
-  // qpeak anlysis
-  TPSTypeList<double, TCAtom*> SortedQPeaks;
-  TDoubleList vals;
-  int cnt = 0;
-  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
-  for( size_t i=0; i < au.AtomCount(); i++ )  {
-    if( au.GetAtom(i).GetType() == iQPeakZ )  {
-      SortedQPeaks.Add(au.GetAtom(i).GetQPeak(), &au.GetAtom(i));
-    }
-  }
-  vals.Add(0);
-  for( size_t i=SortedQPeaks.Count()-1; i != InvalidIndex; i-- )  {
-    if( (SortedQPeaks.GetKey(i) - SortedQPeaks.GetKey(i-1))/SortedQPeaks.GetKey(i) > 0.1 )  {
-      TBasicApp::GetLog() << ( olxstr("Threshold here: ") << SortedQPeaks.GetObject(i)->GetLabel() << '\n' );
-      vals.GetLast() += SortedQPeaks.GetKey(i);
-      cnt++;
-      vals.GetLast() /= cnt;
-      cnt = 0;
-      vals.Add(0);
-      continue;
-    }
-    vals.GetLast() += SortedQPeaks.GetKey(i);
-    cnt ++;
-  }
-  if( cnt != 0 )
-    vals.GetLast() /= cnt;
-  for( size_t i=0; i < vals.Count(); i++ )
-    TBasicApp::GetLog() << vals[i] << '\n';
+  //  TRefList refs, nrefs, fp;
+  //  fp.SetCapacity(fpp.Count());
+  //  for( size_t i=0; i < fpp.Count(); i++ )
+  //    fp.AddNew( *fpp[i] );
+  //  const vec3i_list empty_omits;
+  //  smatd_list ml;
+  //  FXApp->XFile().GetLastLoaderSG().GetMatrices(ml, mattAll^mattIdentity);
+  //  MergeStats stat = RefMerger::Merge<smatd_list,RefMerger::ShelxMerger>(ml, fp, refs, empty_omits, false);
+  //  nrefs.SetCapacity(refs.Count());
+  //  for( size_t i=0; i < refs.Count(); i++ ) 
+  //    nrefs.AddNew(refs[i]).GetHkl() *= -1;
+  //  TArrayList<compd> FP(refs.Count()), FN(refs.Count());
+  //  SFUtil::CalcSF(FXApp->XFile(), refs, FP, true);
+  //  SFUtil::CalcSF(FXApp->XFile(), nrefs, FN, true);
+  //  double pscale = SFUtil::CalcFScale(FP, refs);
+  //  double nscale = SFUtil::CalcFScale(FN, nrefs);
+  //  double sx = 0, sy = 0, sxs = 0, sxy = 0;
+  //  const size_t f_cnt = FP.Count();
+  //  for( size_t i=0; i < f_cnt; i++ )  {
+  //    const double I = pscale*pscale*refs[i].GetI();
+  //    const double pqm = FP[i].qmod();
+  //    const double nqm = FN[i].qmod();
+  //    sx += (nqm - pqm);
+  //    sy += (I - pqm);
+  //    sxy += (nqm - pqm)*(I - pqm);
+  //    sxs += (nqm - pqm)*(nqm - pqm);
+  //  }
+  //  double k = (sxy - sx*sy/f_cnt)/(sxs - sx*sx/f_cnt);
+  //  double a = (sy - k*sx)/f_cnt;  
+  //  double sdiff = 0;
+  //  for( size_t i=0; i < f_cnt; i++ )  {
+  //    const double I = pscale*pscale*refs[i].GetI();
+  //    const double pqm = FP[i].qmod();
+  //    const double nqm = FN[i].qmod();
+  //    sdiff += olx_sqr((I - pqm) - k*(nqm - pqm) - a);
+  //  }
+  //  TBasicApp::GetLog() << "K: " << TEValue<double>(k, sqrt(sdiff/(f_cnt*(f_cnt-1)))).ToString() << '\n';
+  //}
+  //return;
+//  TSymmLib& sl = TSymmLib::GetInstance();
+//  smatd_list ml;
+//  static const size_t dim = 29;
+//  bool** cell[dim];
+//  for( size_t i=0; i < dim; i++ )  {
+//    cell[i] = new bool*[dim];
+//    for( size_t j=0; j < dim; j++ )  {
+//      cell[i][j] = new bool[dim]; 
+//    }
+//  }
+//  vec3d p1;
+//  vec3i ip;
+//  for( size_t i=0; i < sl.SGCount(); i++ )  {
+//    ml.Clear();
+//    sl.GetGroup(i).GetMatrices(ml, mattAll);
+//    for( size_t i1=0; i1 < dim; i1++ )
+//      for( size_t i2=0; i2 < dim; i2++ )
+//        for( size_t i3=0; i3 < dim; i3++ )
+//          cell[i1][i2][i3] = false;
+//    int sets = 0, mi1 = 0, mi2 = 0, mi3 = 0;
+//    for( size_t i1=0; i1 < dim; i1++ )  {
+//      const double d1 = (double)i1/dim;
+//      for( size_t i2=0; i2 < dim; i2++ )  {
+//        const double d2 = (double)i2/dim;
+//        for( size_t i3=0; i3 < dim; i3++ )  {
+//          const double d3 = (double)i3/dim;
+//          if( cell[i1][i2][i3] )  continue;
+//          int vc = 0;
+//          vec3i minv;
+//          for( size_t l=1; l < ml.Count(); l++)  {  // skip I
+//            p1 = ml[l] * vec3d(d1,d2,d3);
+//            p1 *= dim;
+//            for( size_t k=0; k < 3; k++ )  {
+//              ip[k] = olx_round(p1[k]);
+//              while( ip[k] < 0  )   ip[k] += dim;
+//              while( ip[k] >= dim ) ip[k] -= dim;
+//            }
+//            if( cell[ip[0]][ip[1]][ip[2]] )  continue;
+//            if( vc++ == 0 )
+//              minv = ip;
+//            else if( ip.QLength() < minv.QLength() )
+//              minv = ip;
+//            cell[ip[0]][ip[1]][ip[2]] = true;
+//            sets++;
+//          }
+//          if( minv[0] > mi1 )  mi1 = minv[0];
+//          if( minv[1] > mi2 )  mi2 = minv[1];
+//          if( minv[2] > mi3 )  mi3 = minv[2];
+//        }
+//      }
+//    }
+//    TBasicApp::GetLog() << sl.GetGroup(i).GetName() << "; mc = " << 
+//      ml.Count() << " - " << (double)sets*100/(dim*dim*dim) << "% {" << mi1 << ',' << mi2 << ',' << mi3 << "}\n";
+//  }
+//  for( size_t i=0; i < dim; i++ )  {
+//    for( size_t j=0; j < dim; j++ )
+//      delete [] cell[i][j];
+//    delete [] cell[i];
+//  }
+//    return;
+//  TEBitArray ba;
+//  olxstr rr = ba.FormatString(31);
+//  if( FXApp->XFile().HasLastLoader() )  {
+//    mat3d h2c = mat3d::Transpose(FXApp->XFile().GetAsymmUnit().GetHklToCartesian());
+//    TBasicApp::GetLog() << 1./h2c[0][0] << ',' << 1./h2c[1][1] << ',' << 1./h2c[2][2] << '\n';
+//    mat3d r, I;
+//    r[0][0] = h2c[0].DotProd(h2c[0]);  r[0][1] = h2c[0].DotProd(h2c[1]);  r[0][2] = h2c[0].DotProd(h2c[2]);
+//    r[0][1] = r[1][0];                 r[1][1] = h2c[1].DotProd(h2c[1]);  r[1][2] = h2c[1].DotProd(h2c[2]);
+//    r[2][0] = r[0][2];                 r[2][1] = r[1][2];                 r[2][2] = h2c[2].DotProd(h2c[2]);
+//    
+//    mat3d::EigenValues(r, I.I() );
+//    TBasicApp::GetLog() << r[0][0] << ',' << r[1][1] << ',' << r[2][2] << '\n';
+//    TBasicApp::GetLog() << 1./r[0][0] << ',' << 1./r[1][1] << ',' << 1./r[2][2] << '\n';
+//  }
+//  
+//  olxstr fn( FXApp->XFile().GetFileName() );
+//  for( size_t i=0; i < 250; i++ )  {
+//    Macros.ProcessMacro(olxstr("@reap '") << fn << '\'', Error);
+//    Dispatch(ID_TIMER, msiEnter, (AEventsDispatcher*)this, NULL);
+//    FHtml->Update();
+//    FXApp->Draw();
+//    wxTheApp->Dispatch();
+//  }
+//  return;
+//  if( !Cmds.IsEmpty() )  {
+//    TAtomReference ar(Cmds.Text(' '));
+//    TCAtomGroup ag;
+//    size_t atomAGroup;
+//    olxstr unp(ar.Expand(FXApp->XFile().GetRM(), ag, EmptyString, atomAGroup));
+//    TBasicApp::GetLog() << "Expanding " << ar.GetExpression() << " to atoms \n";
+//    for( size_t i=0; i < ag.Count(); i++ )
+//      TBasicApp::GetLog() << ag[i].GetFullLabel(FXApp->XFile().GetRM()) << ' ';
+//    TBasicApp::GetLog() << "\nUnprocessed instructions " << (unp.IsEmpty() ? olxstr("none") : unp) << '\n';
+//    return;
+//  }
+//#ifndef __BORLANDC__
+//  BTree<int, int> tree;
+//  tree.Add(0,0);
+//  tree.Add(-1,-10);
+//  tree.Add(1,10);
+//  tree.Add(-2,-20);
+//  tree.Add(-2,-21);
+//  tree.Add(-2,-22);
+//  tree.Add(-2,-23);
+//  tree.Add(2,20);
+//  tree.Add(-3,-30);
+//  tree.Add(3,30);
+//  tree.Add(3,31);
+//  tree.Add(3,32);
+//  tree.Add(3,33);
+//  tree.Add(4,40);
+//  int* tv = NULL;
+//  tv = tree.Find(0);
+//  tv = tree.Find(1);
+//  tv = tree.Find(2);
+//  tv = tree.Find(3);
+//  tv = tree.Find(4);
+//  tv = tree.Find(-1);
+//  tv = tree.Find(-2);
+//  tv = tree.Find(-3);
+//  Test_BTreeTraverser tt;
+//  tree.Traverser.Traverse(tree, tt);
+//
+//  BTree2<int,int> tree2;
+//  tree2.Add(0,0,0);
+//  tree2.Add(0,1,1);
+//  tv = tree2.Find(0,1);
+//  tree2.Traverser.FullTraverse(tree2, tt);
+//
+//  BTree3<int, int> tree3;
+//  tree3.Add(0, 0, 0, 0);
+//  tree3.Add(0, 1, 0, 1);
+//  tree3.Add(0, 0, 1, 2);
+//  tree3.Add(1, 0, 1, 3);
+//  tv = tree3.Find(0, 0, 1);
+//  tv = tree3.Find(0, 0, 0);
+//  tv = tree3.Find(0, 1, 0);
+//  tree3.Traverser.FullTraverse(tree3, tt);
+//#endif  
+//  if( Cmds.IsEmpty() )  return;
+//  const olxcstr atom_s("ATOM");
+//  TCStrList lst, toks;
+//  char bf[256];
+//  char format[] = "%s";
+//  TIntList AtomF;
+//  AtomF.Add(6);  //"ATOM  "
+//  AtomF.Add(5);  //serial number
+//  AtomF.Add(5);  //name
+//  AtomF.Add(4);  //residue name
+//  AtomF.Add(2);  //chain ID      #21
+//  AtomF.Add(4);  //  residue sequence number #26
+//  AtomF.Add(12);  // x                        #38
+//  AtomF.Add(8);  // y
+//  AtomF.Add(8);  // z
+//  AtomF.Add(6);  // occupancy
+//  AtomF.Add(6);  // temperature factor  #66
+//  AtomF.Add(12);  // element             #78
+//  AtomF.Add(2);  // charge
+//
+//  lst.LoadFromFile(Cmds[0]);
+//  for( size_t i=0; i < lst.Count(); i++ )  {
+//    if( lst[i].StartsFrom(atom_s) )  {
+//      toks.Clear();
+//      toks.Strtok(lst[i], ' ');
+//      memset(bf, 32, 255);
+//      toks.Delete( toks.Count()-2 );
+//      int offset = 0;
+//      for( size_t j=0; j < olx_min(AtomF.Count(),toks.Count()); j++ )  {
+//        if( j > 0 )  {
+//          offset += AtomF[j];
+//          memcpy(&bf[offset-toks[j].Length()], toks[j].c_str(), toks[j].Length() );
+//        }
+//        else if( j == 0 )  {
+//          memcpy(&bf[offset], toks[j].c_str(), toks[j].Length() );
+//          offset += AtomF[j];
+//        }
+//      }
+//      bf[offset] = '\0';
+//      lst[i] = bf;
+//    }
+//  }
+//  lst.Pack();
+//  lst.SaveToFile( Cmds[0] + ".out" );
+//  return;
+///*
+//  TStrList lst, toks;
+//  TEFile sgFile( FXApp->BaseDir() + "sg.txt", "rb" );
+//  TDataFile df;
+//  df.LoadFromXLFile( FXApp->BaseDir() + "symmlib.xld" );
+//  lst.LoadFromStream( sgFile );
+//  for( size_t i=2; i < lst.Count(); i++ )  {
+//    toks.Clear();
+//    olxstr::Strtok( olxstr::RemoveMultiSpaces( lst[i], true ), ' ', toks);
+//    if( toks.Count() < 7 )  continue;
+//    olxstr axis, num;
+//    int si = toks[0].IndexOf(':');
+//    if( si != -1 )  {
+//      num = toks[0].SubStringTo(si);
+//      axis = toks[0].SubStringFrom(si+1);
+//    }
+//    else
+//      num = toks[0];
+//
+//    for( size_t j=0; j < df.Root().ItemCount(); j++ )  {
+//      if( df.Root().Item(j).GetFieldValue( "#" ) == num &&
+//          df.Root().Item(j).GetFieldValue("AXIS") == axis )  {
+//        TBasicApp::GetLog() << ( olxstr("Found ") << df.Root().Item(j).GetName() );
+//        olxstr tmp = toks[1];
+//        tmp << ' ' << toks[2] << ' ' << toks[3] << ' ' << toks[4];
+//        df.Root().Item(j).SetFieldValue( "FULL", tmp );
+//        break;
+//      }
+//    }
+//  }
+//  // validating
+//  for( size_t i=0; i < df.Root().ItemCount(); i++ )  {
+//    olxstr tmp = df.Root().Item(i).GetFieldValue("FULL");
+//    if( tmp.IsEmpty() )  {
+//      if( df.Root().Item(i).GetName().Length() == 4 )  {
+//        tmp << df.Root().Item(i).GetName()[0] << ' ' <<
+//               df.Root().Item(i).GetName()[1] << ' ' <<
+//               df.Root().Item(i).GetName()[2] << ' ' <<
+//               df.Root().Item(i).GetName()[3];
+//        TBasicApp::GetLog() << ( olxstr("Empty, but patched for ") << df.Root().Item(i).GetName() );
+//      }
+//      else
+//        TBasicApp::GetLog() << ( olxstr("Empty val for ") << df.Root().Item(i).GetName() );
+//      continue;
+//    }
+//    toks.Clear();
+//    olxstr::Strtok( tmp, ' ', toks );
+//    if( toks.Count() != 4 )  {
+//      TBasicApp::GetLog() << ( olxstr("Wrong toks count for ") << df.Root().Item(i).GetName() );
+//      continue;
+//    }
+//  }
+//  // saving
+//  df.SaveToXLFile( FXApp->BaseDir() + "sg.xld" );
+//*/
+///*
+//  if( !FXApp->CheckFileType<TIns>() )  return;
+//
+//  TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
+//  olxstr HklFN = Ins->GetHKLSource();
+//  if( !TEFile::Exists(HklFN) )  {
+//    Error.ProcessingError(__OlxSrcInfo, "could not locate HKL file" );
+//    return;
+//  }
+//  TScattererItLib scatlib;
+//
+//  THklFile Hkl;
+//  Hkl.LoadFromFile(HklFN);
+//  TVectorD vec(3);
+//  TMatrixD M( Ins->GetAsymmUnit().GetHklToCartesian() );
+//
+//  double minV = 1000, maxV = 0;
+//  TEFile out( TEFile::ChangeFileExt(Ins->GetFileName(), "out"), "wb+" );
+//  olxstr tmp;
+//  Hkl.AnalyseReflections(*TSymmLib::GetInstance().FindSG(Ins->GetAsymmUnit()));
+////  Hkl.AnalyseReflections( *TSymmLib::GetInstance().FindGroup("P-1") );
+//  for( size_t i=0; i < Hkl.RefCount(); i++ )  {
+//    TReflection* ref = Hkl.Ref(i);
+//    tmp = ref->ToString();
+//    tmp << ' ' << ref->IsCentric() << ' ' << ref->GetDegeneracy();
+//    out.Writenl(tmp);
+//  }
+//  double cm = 0, am = 0, integ = 0, meanFs = 0;
+//  int cc = 0, ac = 0, arc = 0;
+//  double cd = 0, ad = 0;
+//
+//  long minH = (long)Hkl.GetMinValues()[0];
+//  long maxH = (long)Hkl.GetMaxValues()[0];
+//  long minK = (long)Hkl.GetMinValues()[1];
+//  long maxK = (long)Hkl.GetMaxValues()[1];
+//  long minL = (long)Hkl.GetMinValues()[2];
+//  long maxL = (long)Hkl.GetMaxValues()[2];
+//
+//
+//  typedef AnAssociation4<double, double, int, double> refc;
+//  TArray3D<refc*> Hkl3D(minH, maxH, minK, maxK, minL, maxL);
+//
+//  TTypeList<refc*> allRefs;
+//
+//
+//  for( size_t i=0; i < Hkl.RefCount(); i++ )  {
+//    TReflection* ref = Hkl.Ref(i);
+//
+//    if( olx_abs(ref->Data()[0])/ref->Data()[1] > 3 )
+//      continue;
+//
+//    if( ref->Data()[0] < 0 )
+//      continue;
+//
+//    refc* ref1 = Hkl3D[ref->H()][ref->K()][ref->L()];
+//    if( ref1 != NULL )  {
+//      ref1->A() += ref->Data()[0];
+//      ref1->B() += QRT(ref->Data()[1]);
+//      ref1->C() ++;
+//      ref1->D() += QRT(ref->Data()[0]);
+//    }
+//    else
+//      Hkl3D[ref->H()][ref->K()][ref->L()] =
+//        new refc(ref->Data()[0], QRT(ref->Data()[1]), 1, QRT(ref->Data()[0]) );
+//  }
+//
+//  allRefs.SetCapacity( Hkl.RefCount() );
+//
+//  for( int i=minH; i < maxH; i++ )  {
+//    for( int j=minK; j < maxK; j++ )  {
+//      for( int k=minL; k < maxL; k++ )  {
+//        refc* ref1 = Hkl3D[i][j][k];
+//        if( ref1 != NULL )  {
+//          ref1->A() /= ref1->C();
+//          ref1->B() /= sqrt(ref1->GetB());
+//          ref1->D() /= ref1->C();
+//          ref1->D() -= QRT( ref1->GetA() );
+//          ref1->D() = sqrt( ref1->GetD() );
+//          allRefs.AddACopy( ref1 );
+//        }
+//      }
+//    }
+//  }
+//
+//  integ = 0;
+//  meanFs = 0;
+//  for( size_t i=0; i < allRefs.Count(); i++ )  {
+////    meanFs += allRefs[i]->GetA();
+//    meanFs += allRefs[i]->GetA()/olx_max(allRefs[i]->GetB(), allRefs[i]->GetD());
+//    //}
+//    delete allRefs[i];
+//  }
+//  if( allRefs.Count() != 0 )
+//    meanFs /= allRefs.Count();
+//
+//  for( size_t i=0; i < allRefs.Count(); i++ )
+//    integ += olx_abs( (allRefs[i]->GetA()/olx_max(allRefs[i]->GetB(), allRefs[i]->GetD()))/meanFs -1 );
+////    integ += olx_abs(allRefs[i]->GetA()/meanFs -1 );
+//
+//  if( allRefs.Count() != 0 )
+//    integ /= allRefs.Count();
+//  TBasicApp::GetLog() << (olxstr("Calculated value: ") << integ );
+//*/
+//  // qpeak anlysis
+//  TPSTypeList<double, TCAtom*> SortedQPeaks;
+//  TDoubleList vals;
+//  int cnt = 0;
+//  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
+//  for( size_t i=0; i < au.AtomCount(); i++ )  {
+//    if( au.GetAtom(i).GetType() == iQPeakZ )  {
+//      SortedQPeaks.Add(au.GetAtom(i).GetQPeak(), &au.GetAtom(i));
+//    }
+//  }
+//  vals.Add(0);
+//  for( size_t i=SortedQPeaks.Count()-1; i != InvalidIndex; i-- )  {
+//    if( (SortedQPeaks.GetKey(i) - SortedQPeaks.GetKey(i-1))/SortedQPeaks.GetKey(i) > 0.1 )  {
+//      TBasicApp::GetLog() << ( olxstr("Threshold here: ") << SortedQPeaks.GetObject(i)->GetLabel() << '\n' );
+//      vals.GetLast() += SortedQPeaks.GetKey(i);
+//      cnt++;
+//      vals.GetLast() /= cnt;
+//      cnt = 0;
+//      vals.Add(0);
+//      continue;
+//    }
+//    vals.GetLast() += SortedQPeaks.GetKey(i);
+//    cnt ++;
+//  }
+//  if( cnt != 0 )
+//    vals.GetLast() /= cnt;
+//  for( size_t i=0; i < vals.Count(); i++ )
+//    TBasicApp::GetLog() << vals[i] << '\n';
 }
 //..............................................................................
 void TMainForm::macLstRes(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

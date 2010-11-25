@@ -822,7 +822,7 @@ static cm_Element _cm_element_P(14, "P", "Phosphorus", 0x800080, 15, 1.8, 1.05, 
 static cm_Element _cm_element_S(15, "S", "Sulfur", 0xFFFF, 16, 1.8, 1.02, 0.3, 1.03, 1.53, &_cm_gaussians_S, _cm_isotope_S, 4, _cm_henke_S, 504, &_cm_neutron_S);
 static cm_Element _cm_element_Cl(16, "Cl", "Chlorine", 0x8000, 17, 1.75, 0.99, 0.3, 0.99, 1.49, &_cm_gaussians_Cl, _cm_isotope_Cl, 2, _cm_henke_Cl, 504, &_cm_neutron_Cl);
 static cm_Element _cm_element_Ar(17, "Ar", "Argon", 0x8000, 18, 1.88, 1.51, 0.3, 1.5, 2, &_cm_gaussians_Ar, _cm_isotope_Ar, 3, _cm_henke_Ar, 506, &_cm_neutron_Ar);
-static cm_Element _cm_element_K(18, "K", "Potassium", 0x808000, 19, 2.75, 2.03, 0.25, 1.27, 1.77, &_cm_gaussians_K, _cm_isotope_K, 3, _cm_henke_K, 503, &_cm_neutron_K);
+static cm_Element _cm_element_K(18, "K", "Potassium", 0x808000, 19, 2.75, 2.03, 0.25, 2.27, 2.77, &_cm_gaussians_K, _cm_isotope_K, 3, _cm_henke_K, 503, &_cm_neutron_K);
 static cm_Element _cm_element_Ca(19, "Ca", "Calcium", 0x8000, 20, 2.00, 1.76, 0.25, 1.97, 2.47, &_cm_gaussians_Ca, _cm_isotope_Ca, 6, _cm_henke_Ca, 504, &_cm_neutron_Ca);
 static cm_Element _cm_element_Sc(20, "Sc", "Scandium", 0x8000, 21, 2.00, 1.7, 0.25, 1.61, 2.11, &_cm_gaussians_Sc, _cm_isotope_Sc, 1, _cm_henke_Sc, 504, &_cm_neutron_Sc);
 static cm_Element _cm_element_Ti(21, "Ti", "Titanium", 0x8000, 22, 2.00, 1.6, 0.25, 1.45, 1.95, &_cm_gaussians_Ti, _cm_isotope_Ti, 5, _cm_henke_Ti, 504, &_cm_neutron_Ti);
