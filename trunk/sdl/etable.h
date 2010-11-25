@@ -45,7 +45,7 @@ public:
   template <typename Str> size_t ColIndex(const Str& N) const {  return ColNames.IndexOf(N);  }
   template <typename Str> size_t RowIndex(const Str& N) const {  return RowNames.IndexOf(N);  }
 
-  void Resize(size_t  RowCnt, size_t ColCnt)  {
+  void Resize(size_t RowCnt, size_t ColCnt)  {
     if( RowCnt != Rows.Count() )  {
       if( RowCnt < Rows.Count() )  {
         Rows.Shrink(RowCnt);

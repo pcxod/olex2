@@ -391,12 +391,21 @@ void cetString::ToStrings(TStrList& list) const {
 }
 //..............................................................................
 void cetNamedString::ToStrings(TStrList& list) const {
-  olxstr& tmp = list.Add(name);
-  tmp.Format(34, true, ' ');
-  if( quoted )
-    tmp << '\'' << value << '\'';
-  else
-    tmp << value;
+  if( olx_max(34, name.Length()) + value.Length() > 78 )  {
+    list.Add(name);
+    if( quoted )
+      list.Add('\'') << value << '\'';
+    else
+      list.Add(value);
+  }
+  else  {
+    olxstr& tmp = list.Add(name);
+    tmp.Format(34, true, ' ');
+    if( quoted )
+      tmp << '\'' << value << '\'';
+    else
+      tmp << value;
+  }
 }
 //..............................................................................
 CifBlock::CifBlock(const CifBlock& v)  {
