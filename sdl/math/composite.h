@@ -49,7 +49,8 @@ template <class MatT, typename NumT> class MatrixVector  {
   const MatT& matrix;
   const size_t size;
 public:
-  MatrixVector(const MatT& _matrix) : matrix(_matrix) : size(matrix.RowCount()*matrix.RowCount()) {}
+  MatrixVector(const MatT& _matrix) :
+	 matrix(_matrix) , size(matrix.RowCount()*matrix.RowCount()) {}
   size_t Count() const {  return size;  }
   const NumT& Get(size_t i) const {  return  matrix[i/matrix.ColCout()][i%matrix.ColCout()];  }
   NumT& Get(size_t i)  {  return  matrix[i/matrix.ColCout()][i%matrix.ColCout()];  }
@@ -63,7 +64,7 @@ template <class VecT, typename NumT> class VectorMatrix  {
   const VecT& vector;
   const size_t row_sz, col_sz;
 public:
-  VectorMatrix(const VecT& _vector, size_t _row_sz, size_t col_sz) :
+  VectorMatrix(const VecT& _vector, size_t _row_sz, size_t _col_sz) :
     vector(_vector), row_sz(_row_sz), col_sz(_col_sz)  {}
   size_t ColCount() const {  return col_sz;  }
   size_t RowCount() const {  return row_sz;  }
