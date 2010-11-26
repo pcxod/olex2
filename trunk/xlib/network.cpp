@@ -313,19 +313,8 @@ void TNetwork::Disassemble(const AtomRegistry& ar, TSAtomPList& atoms, TNetPList
           if( a != NULL )  break;
         }
       }
-      if( a != NULL && !a->IsDeleted() )  {
+      if( a != NULL && !a->IsDeleted() )
         atoms[i]->AddNode(*a);
-        double d = atoms[i]->crd().QDistanceTo(a->crd());
-        if( d > 10 )  {
-          TSAtom* a1 = atoms[i];
-          smatd m1 = a1->GetMatrix(0);
-          smatd m2 = a->GetMatrix(0);
-          smatd m3 = site.matrix * m1;
-          smatd m4 = uc.MulMatrix(m1, m2);
-          size_t xxx = m1.GetId() + m2.GetId() + m3.GetId() + m4.GetId();
-          continue;
-        }
-      }
     }
   }
   // in second pass - Nodes have to get initialised
@@ -437,12 +426,23 @@ public:
   void ClearData()  {  Data.SetLength(0);  }
 };
 
-void ResultCollector(TEGraphNode<size_t,TSAtom*>& subRoot,                     TEGraphNode<size_t,TSAtom*>& Root,                     TTypeList< AnAssociation2<size_t, size_t> >& res )  {  res.AddNew(subRoot.GetObject()->GetNetId(), Root.GetObject()->GetNetId());  subRoot.GetObject()->SetTag(0);  Root.GetObject()->SetTag(0);  for( size_t i=0; i < olx_min(subRoot.Count(),Root.Count()); i++ )  {    if( subRoot[i].GetObject()->GetTag() != 0 && Root[i].GetObject()->GetTag() != 0 )      ResultCollector(subRoot[i], Root[i], res);  }}
+void ResultCollector(TEGraphNode<size_t,TSAtom*>& subRoot, 
+                     TEGraphNode<size_t,TSAtom*>& Root, 
+                     TTypeList< AnAssociation2<size_t, size_t> >& res )
+{
+  res.AddNew(subRoot.GetObject()->GetNetId(), Root.GetObject()->GetNetId());
+  subRoot.GetObject()->SetTag(0);
+  Root.GetObject()->SetTag(0);
+  for( size_t i=0; i < olx_min(subRoot.Count(),Root.Count()); i++ )  {
+    if( subRoot[i].GetObject()->GetTag() != 0 && Root[i].GetObject()->GetTag() != 0 )
+      ResultCollector(subRoot[i], Root[i], res);
+  }
+}
 void ResultCollector(TEGraphNode<size_t,TSAtom*>& subRoot,
                      TEGraphNode<size_t,TSAtom*>& Root,
-                     TTypeList< AnAssociation2<TSAtom*, TSAtom*> >& res)  {
-  if( !subRoot.IsShallowEqual(Root) )
-    return;
+                     TTypeList< AnAssociation2<TSAtom*, TSAtom*> >& res)
+{
+  if( !subRoot.IsShallowEqual(Root) )  return;
   res.AddNew(subRoot.GetObject(), Root.GetObject());  subRoot.GetObject()->SetTag(0);  Root.GetObject()->SetTag(0);  for( size_t i=0; i < subRoot.Count(); i++ )
     if( subRoot[i].GetObject()->GetTag() != 0 && Root[i].GetObject()->GetTag() != 0 )
       ResultCollector(subRoot[i], Root[i], res );
@@ -474,10 +474,10 @@ void ExpandGraphNode(TEGraphNode<size_t,TSAtom*>& graphNode)  {
     ExpandGraphNode(graphNode.NewNode((sa.NodeCount()<<16)|sa.GetType().z, &sa));  }
 }
 
-void BuildGraph(TEGraphNode<size_t,TSAtom*>& graphNode, TSAtom* node)  {
-  TNetwork& net = node->GetNetwork();
+void BuildGraph(TEGraphNode<size_t,TSAtom*>& graphNode)  {
+  TNetwork& net = graphNode.GetObject()->GetNetwork();
   net.GetNodes().ForEach(ACollectionItem::TagSetter<>(0));
-  BreadthFirstTags(node);
+  BreadthFirstTags(graphNode.GetObject());
   ExpandGraphNode(graphNode);
 }
 
@@ -570,7 +570,7 @@ struct GraphAnalyser  {
     return rsum + minRms;
   }
   void OnFinish()  {
-    CalcRMS();
+    minRms = CalcRMS();
     size_t cnt = 0;
     double mrms = 1e6;
     while( GroupValidator(RootA, RootB) )  {
@@ -582,6 +582,8 @@ struct GraphAnalyser  {
       if( ++cnt > 100 )
         TBasicApp::GetLog() << "Matching does not converge, breaking\n";
     }
+    if( mrms != 1e6 )
+      minRms = mrms;
   }
   bool GroupValidator(const TEGraphNode<size_t,TSAtom*>& n1, TEGraphNode<size_t,TSAtom*>& n2)  {
     bool rv = false;
@@ -646,6 +648,15 @@ struct GraphAnalyser  {
 };
 
 //..............................................................................
+size_t TNetwork_NodeCounter(const TSAtom& a)  {
+  size_t nc = 0;
+  for( size_t i=0; i < a.NodeCount(); i++ )  {
+    if( !a.Node(i).IsAvailable() || a.Node(i).GetType() == iHydrogenZ )
+      continue;
+    nc++;
+  }
+  return nc;
+}
 bool TNetwork::DoMatch(TNetwork& net, TTypeList<AnAssociation2<size_t,size_t> >& res,
   bool Invert, double (*weight_calculator)(const TSAtom&))
 {
@@ -658,12 +669,13 @@ bool TNetwork::DoMatch(TNetwork& net, TTypeList<AnAssociation2<size_t,size_t> >&
   const TAsymmUnit& au_a = this->GetLattice().GetAsymmUnit();
   for( size_t i=0; i < NodeCount(); i++ )  {
     Node(i).SetTag(0);
-    if( Node(i).NodeCount() > maxbc )  {
+    const size_t bc = TNetwork_NodeCounter(Node(i));
+    if( bc > maxbc )  {
       thisSa = &Node(i);
-      maxbc = Node(i).NodeCount();
+      maxbc = bc;
       maxMw = Node(i).GetType().GetMr();
     }
-    else if( Node(i).NodeCount() == maxbc )  {
+    else if( bc == maxbc )  {
       if( Node(i).GetType().GetMr() > maxMw )  {
         thisSa = &Node(i);
         maxMw = thisSa->GetType().GetMr();
@@ -674,48 +686,44 @@ bool TNetwork::DoMatch(TNetwork& net, TTypeList<AnAssociation2<size_t,size_t> >&
   }
 
   if( thisSa == NULL )  return false;
-  TEGraph<size_t, TSAtom*> thisGraph(thisSa->GetType().z, thisSa);
-  BuildGraph(thisGraph.GetRoot(), thisSa);
-  TNetTraverser trav;
-  trav.OnItem(thisGraph.GetRoot());
-  thisGraph.GetRoot().Traverser.LevelTraverse(thisGraph.GetRoot(), trav);
-  TBasicApp::GetLog().Info(trav.GetData());
+  TEGraph<size_t, TSAtom*> thisGraph(thisSa->GetType().z, thisSa), *minGraph = NULL;
+  BuildGraph(thisGraph.GetRoot());
+  double minRMSD = 1e6;
   for( size_t i=0; i < net.NodeCount(); i++ )  {
     TSAtom& thatSa = net.Node(i);
-    if( thisSa->NodeCount() != thatSa.NodeCount() || thisSa->GetType() != thatSa.GetType() )
+    if( maxbc != TNetwork_NodeCounter(thatSa) || thisSa->GetType() != thatSa.GetType() )
       continue;
-    TEGraph<size_t, TSAtom*> thatGraph(thatSa.GetType().z, &thatSa);
-    BuildGraph(thatGraph.GetRoot(), &thatSa);
-
-    trav.ClearData();
-    trav.OnItem(thatGraph.GetRoot());
-    thatGraph.GetRoot().Traverser.LevelTraverse(thatGraph.GetRoot(), trav);
-    TBasicApp::GetLog().Info(trav.GetData());
-    if( thisGraph.GetRoot().DoMatch(thatGraph.GetRoot()) )  {  // match 
-      GraphAnalyser ga(thisGraph.GetRoot(), thatGraph.GetRoot(), weight_calculator);
+    TEGraph<size_t, TSAtom*>* thatGraph = new TEGraph<size_t, TSAtom*>(thatSa.GetType().z, &thatSa);
+    BuildGraph(thatGraph->GetRoot());
+    if( thatGraph->GetRoot().DoMatch(thisGraph.GetRoot()) )  {  // match 
+      GraphAnalyser ga(thatGraph->GetRoot(), thisGraph.GetRoot(), weight_calculator);
       ga.Invert = Invert;
       ga.atomsToMatch = NodeCount();
       ga.CalcRMSForH = ((NodeCount() - HCount) < 4); 
-      try  {
-        if( !thisGraph.GetRoot().FullMatchEx(thatGraph.GetRoot(), ga) ) // weird, roll back
-          thisGraph.GetRoot().DoMatch(thatGraph.GetRoot());
-      }
+      try  {  thatGraph->GetRoot().FullMatchEx(thisGraph.GetRoot(), ga);  }
       catch(const TExceptionBase& e)  {
         TBasicApp::GetLog() << e.GetException()->GetError() << '\n';
+        delete thatGraph;
         throw TFunctionFailedException(__OlxSourceInfo, e);
       }
-      trav.ClearData();
-      trav.OnItem(thatGraph.GetRoot());
-      thatGraph.GetRoot().Traverser.LevelTraverse(thatGraph.GetRoot(), trav);
-      TBasicApp::GetLog().Info(trav.GetData());
-      TBasicApp::GetLog().Info(olxstr("Number of permutations: ") << ga.CallsCount);
-      GetNodes().ForEach(ACollectionItem::TagSetter<>(1));
-      net.GetNodes().ForEach(ACollectionItem::TagSetter<>(1));
-      ResultCollector(thisGraph.GetRoot(), thatGraph.GetRoot(), res);
-      return true;
+      if( ga.minRms < minRMSD )  {
+        if( minGraph != NULL )
+          delete minGraph;
+        minGraph = thatGraph;
+        minRMSD = ga.minRms;
+      }
+      else
+        delete thatGraph;
     }
+    else
+      delete thatGraph;
   }
-  return false;
+  if( minGraph == NULL )  return false;
+  GetNodes().ForEach(ACollectionItem::TagSetter<>(1));
+  net.GetNodes().ForEach(ACollectionItem::TagSetter<>(1));
+  ResultCollector(thisGraph.GetRoot(), minGraph->GetRoot(), res);
+  delete minGraph;
+  return true;
 }
 //..............................................................................
 bool TNetwork::IsSubgraphOf( TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res,
@@ -732,7 +740,7 @@ bool TNetwork::IsSubgraphOf( TNetwork& net, TTypeList< AnAssociation2<size_t, si
     }
   }
   TEGraph<size_t, TSAtom*> thisGraph( thisSa->GetType().z, thisSa );
-  BuildGraph( thisGraph.GetRoot(), thisSa );
+  BuildGraph( thisGraph.GetRoot());
   TIntList GraphId;
   for( size_t i=0; i < net.NodeCount(); i++ )  {
     TSAtom* thatSa = &net.Node(i);
@@ -743,7 +751,7 @@ bool TNetwork::IsSubgraphOf( TNetwork& net, TTypeList< AnAssociation2<size_t, si
     for( size_t j=0; j < net.NodeCount(); j++ )
       net.Node(j).SetTag(0);
     TEGraph<size_t, TSAtom*> thatGraph(thatSa->GetType().z, thatSa);
-    BuildGraph(thatGraph.GetRoot(), thatSa);
+    BuildGraph(thatGraph.GetRoot());
     //continue;
     if( thisGraph.GetRoot().IsSubgraphOf(thatGraph.GetRoot()) )  {
       ResultCollector(thisGraph.GetRoot(), thatGraph.GetRoot(), res);

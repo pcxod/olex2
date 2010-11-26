@@ -3194,6 +3194,7 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       d_cnt = qpeaks.Count();
     for( size_t i=0; i < qpeaks.Count(); i++ )  
       qpeaks[i]->SetDetached(i >= (size_t)d_cnt);
+    //FXApp->XFile().GetLattice().UpdateConnectivityInfo();
     FXApp->UpdateConnectivity();
     TimePerFrame = FXApp->Draw();
   }
@@ -4529,8 +4530,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       TXFile& xf = FXApp->NewOverlayedXFile();
       xf.LoadFromFile(TXFile::ComposeName(file_n));
       FXApp->CreateObjects(true, false);
-      FXApp->CenterView(true);
       FXApp->AlignOverlayedXFiles();
+      FXApp->CenterView(true);
       return;
     }
     if( Modes->GetCurrent() != NULL )
@@ -5739,7 +5740,7 @@ void TMainForm::CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS)  
 }
 //..............................................................................
 void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TActionQueueLock (FXApp->FindActionQueue(olxappevent_GL_DRAW));
+  TActionQueueLock __queuelock(FXApp->FindActionQueue(olxappevent_GL_DRAW));
   // restore if already applied
   TLattice& latt = FXApp->XFile().GetLattice();
   const TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
@@ -6335,15 +6336,17 @@ struct UTerm  {
     }
     olxstr ToCString(size_t this_i) const {
       if( index == InvalidIndex )
-        return "symcUnknown,0";
+        return "-1,0";
       if( index == InvalidIndex-1 || (this_i == index && k > 0) )
-        return "symcSelf,0";
+        return olxstr(this_i) << ",1";
       if( index == InvalidIndex-2  || (this_i == index && k <= 0) )
-        return "symcCanceled,0";
+        return "-2,0";
       if( this_i < index )  {
-        return k > 0 ? "symcSelf,0" : "symcCanceled,0";
+        if( k > 0 )
+          return olxstr(this_i) << ",1";
+        return "-2,0";
       }
-      return olxstr(index) << ", " << k;
+      return olxstr(index) << "," << k;
     }
   };
   void clear()  {
@@ -6474,15 +6477,17 @@ struct CTerm  {
     }
     olxstr ToCString(size_t this_i) const {
       if( index == InvalidIndex )
-        return "symcUnknown,0";
+        return "-1,0";  //unknown
       if( index == InvalidIndex-1 || (this_i == index && k > 0) )
-        return "symcSelf,0";
+        return olxstr(this_i) << ",1";
       if( index == InvalidIndex-2  || (this_i == index && k <= 0) )
-        return "symcCanceled,0";
+        return "-2,0";  // canceled
       if( this_i < index )  {
-        return k > 0 ? "symcSelf,0" : "symcCanceled,0";
+        if( k > 0 )
+          return olxstr(this_i) << ",0";
+        return "-2,0";
       }
-      return olxstr(index) << ", " << k;
+      return olxstr(index) << "," << k;
     }
   };
   void clear()  {
@@ -6539,7 +6544,8 @@ struct CTerm  {
     }
     else if( indices.Count() == 1 )  {
       if( indices[0] != this_i )  {
-        map[this_i].index = InvalidIndex -2;
+        if( map[this_i].index > indices[0] )
+          map[this_i].index = indices[0];
       }
       else if( map[this_i].index > indices[0] )  {
         map[this_i].index = indices[0];
@@ -6577,6 +6583,21 @@ struct CTerm  {
       if( !changes )  break;
     }
   }
+  static int rot_id(const mat3i& m )  {
+    int mask = 0;
+    for( int i=0; i < 9; i++ )  {
+      const int v = m[i/3][i%3];
+      if( v != 0 )
+        mask |= (1<<i);
+      if( v < 0 )
+        mask |= (1<<(i+9));
+    }
+    return mask;
+  }
+  static int inv_rot_id(int id)  {
+    return (id&0x1FF)|((id&0x3FE00)^((id&0x1FF)<<9));
+    //return (id&0x1FF)|((~id)&0x3FE00);
+  }
 };
 
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -6586,21 +6607,23 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     smatd_list ml;
     sl.GetGroup(i).GetMatrices(ml, mattAll);
     for( size_t j=0; j < ml.Count(); j++ )  {
-      if( matrices.IndexOf(ml[j].r) == InvalidIndex && matrices.IndexOf(-ml[j].r) == InvalidIndex)
+      if( matrices.IndexOf(ml[j].r) == InvalidIndex ) //&& matrices.IndexOf(-ml[j].r) == InvalidIndex)
         matrices.AddCCopy(ml[j].r);
     }
   }
   TBasicApp::GetLog() << matrices.Count() << '\n';
-  TStrList out, c_out;
+  TStrList out, c_out1;
   TETable tab(3,11), tab1(1,7);
   UTerm utab[3][3], rutab[3][3];
   CTerm ctab[3];
+  char cbf[20];
   const olxstr u_legend[] = {"xx", "yy", "zz", "xy", "xz", "yz"};
   const olxstr c_legend[] = {"x", "y", "z"};
   const UTerm Um[3][3] = {{0, 3, 4},{3, 1, 5},{4, 5, 2}};
   const CTerm Cm[3] = {0, 1, 2};
   const size_t Um_i[3][3] = {{0, 3, 4},{3, 1, 5},{4, 5, 2}};
   const size_t Cm_i[3] = {0, 1, 2};
+  TPSTypeList<int, olxstr> sorted_tab;
   for( size_t i=0; i < matrices.Count(); i++ )  {
     const mat3i& m = matrices[i];
     mat3i mt = mat3i::Transpose(m);
@@ -6640,22 +6663,33 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     UTerm::minimise(umap);
     CTerm::minimise(cmap);
-    c_out.Add() << "symc.Add(\"" << TSymmParser::MatrixToSymm(smatd(m, vec3d(0,0,0))) << "\", SymCon(";
+    const int r_id = CTerm::rot_id(m);
+    sprintf(cbf, "%05x", r_id);
+    olxstr u_c_name = olxstr("SymmCon_") << cbf;
+    c_out1.Add("SymmConItem ") << u_c_name << "[] = {";
+    sorted_tab.Add(r_id, olxstr("{0x") << cbf << ", &" <<  u_c_name << "}");
     for( int mi = 0; mi < 6; mi++ )  {
       tab[2][mi+4] = umap[mi].ToString(mi);
-      c_out.GetLastString() << umap[mi].ToCString(mi); 
-      if( mi < 5 )
-        c_out.GetLastString() << ", ";
+      c_out1.GetLastString() << '{' << umap[mi].ToCString(mi) << "}, ";
     }
-    c_out.GetLastString() << "));";
-    for( int mi = 0; mi < 3; mi++ )
+    for( int mi = 0; mi < 3; mi++ )  {
       tab1[0][mi+4] = cmap[mi].ToString(mi);
+      c_out1.GetLastString() << '{' << cmap[mi].ToCString(mi) << '}';
+      if( mi < 2 )
+        c_out1.GetLastString() << ", ";
+    }
+    c_out1.GetLastString() << "};";
     tab.CreateTXTList(out, EmptyString, false, false, ' ');
     tab1.CreateTXTList(out, EmptyString, false, false, ' ');
     out.Add("<-- ") << TSymmParser::MatrixToSymm(smatd(m, vec3d(0,0,0)));
   }
   TBasicApp::GetLog() << out << '\n';
-  TBasicApp::GetLog() << c_out << '\n';
+  TBasicApp::GetLog() << c_out1 << '\n';
+  TBasicApp::GetLog() <<  "SymmCon SortedSymmConTab[] = {\n";
+  for( size_t i=0; i < sorted_tab.Count(); i++ )  {
+    TBasicApp::GetLog() << "  " << sorted_tab.GetObject(i) << ",\n";
+  }
+  TBasicApp::GetLog() << "};\n";
   //TStrList out;
   //vec3d_alist mult_vl(3), mult_vl_kr(3);
   //mat3d_alist mult_ml(9);

@@ -304,6 +304,24 @@ void ConnInfo::FromDataItem(const TDataItem& item)  {
     AtomInfo.Add(&ca).FromDataItem(ai_item.GetItem(i), rm, ca);
   }
 }
+#ifndef _NO_PYTHON
+PyObject* ConnInfo::PyExport()  {
+  PyObject* main = PyDict_New(),
+    *type = PyDict_New(),
+    *atom = PyDict_New();
+  for( size_t i=0; i < TypeInfo.Count(); i++ )  {
+    PythonExt::SetDictItem(type, TypeInfo.GetValue(i).atomType->symbol,
+      TypeInfo.GetValue(i).PyExport());
+  }
+  for( size_t i=0; i < AtomInfo.Count(); i++ )  {
+    PythonExt::SetDictItem(atom, Py_BuildValue("i", AtomInfo.GetValue(i).atom->GetTag()),
+      AtomInfo.GetValue(i).PyExport());
+  }
+  PythonExt::SetDictItem(main, "type", type);
+  PythonExt::SetDictItem(main, "atom", atom);
+  return main;
+}
+#endif
 //........................................................................
 //........................................................................
 //........................................................................
@@ -316,6 +334,12 @@ void ConnInfo::TypeConnInfo::FromDataItem(const TDataItem& item, const cm_Elemen
   r = item.GetRequiredField("r").ToDouble();
   maxBonds = item.GetRequiredField("b").ToInt();
 }
+//........................................................................
+#ifndef _NO_PYTHON
+PyObject* ConnInfo::TypeConnInfo::PyExport()  {
+  return Py_BuildValue("{s:d,s:i}", "to", r, "eqiv", maxBonds);
+}
+#endif
 //........................................................................
 size_t ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv) {
   if( key != &a1 && key != &a2 || list.IsEmpty() )
@@ -339,7 +363,7 @@ size_t ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1
     return InvalidIndex;
   }
   else  {
-    smatd mat( eqiv->Inverse() );
+    smatd mat = eqiv->Inverse();
     for( size_t i=0; i < list.Count(); i++ )  {
       if( list[i].to == a1 && list[i].matr != NULL && *list[i].matr == mat )  
         return i;
@@ -363,7 +387,9 @@ const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, 
     }
     return &rm.AddUsedSymm(mat);
   }
-  smatd mat((*eqiv2)*eqiv1->Inverse());
+  //((*eqiv2)*eqiv1->Inverse());
+  const TUnitCell& uc = rm.aunit.GetLattice().GetUnitCell();
+  smatd mat = uc.MulMatrix(*eqiv2, uc.InvMatrix(*eqiv1));
   if( release )  {
     rm.RemUsedSymm(*eqiv1);
     rm.RemUsedSymm(*eqiv2);
@@ -519,10 +545,10 @@ void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item, RefinementModel
     const olxstr& eq = ab.GetItem(i).GetFieldValue("eqiv");
     smatd const* eqiv = NULL;
     if( !eq.IsEmpty() )  { 
-      eqiv = &rm.GetUsedSymm( eq.ToInt() );
+      eqiv = &rm.GetUsedSymm(eq.ToInt());
       rm.AddUsedSymm(*eqiv);  // persist
     }
-    BondsToCreate.Add( new CXBondInfo(ca, eqiv) );
+    BondsToCreate.Add(new CXBondInfo(ca, eqiv));
   }
   TDataItem& db = item.FindRequiredItem("DELBOND");
   for( size_t i=0; i < db.ItemCount(); i++ )  {
@@ -537,3 +563,43 @@ void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item, RefinementModel
   }
 }
 //........................................................................
+#ifndef _NO_PYTHON
+PyObject* ConnInfo::AtomConnInfo::PyExport()  {
+  PyObject* main = PyDict_New();
+  PythonExt::SetDictItem(main, "radius", Py_BuildValue("f", r));
+  PythonExt::SetDictItem(main, "max_bonds", Py_BuildValue("i", maxBonds));
+  size_t bc = 0;
+  for( size_t i=0; i < BondsToCreate.Count(); i++ )  {
+    if( BondsToCreate[i].to.IsDeleted() )  continue;
+    bc++;
+  }
+  if( bc > 0 )  {
+    PyObject* btc = PyTuple_New(bc);
+    bc = 0;
+    for( size_t i=0; i < BondsToCreate.Count(); i++ )  {
+      if( BondsToCreate[i].to.IsDeleted() )  continue;
+      PyTuple_SetItem(btc, bc++,
+        Py_BuildValue("{s:i,s:i}", "to", BondsToCreate[i].to.GetTag(), "eqiv",
+          BondsToCreate[i].matr == NULL ? -1 : BondsToCreate[i].matr->GetId()));
+    }
+    PythonExt::SetDictItem(main, "create", btc);
+  }
+  bc = 0;
+  for( size_t i=0; i < BondsToRemove.Count(); i++ )  {
+    if( BondsToRemove[i].to.IsDeleted() )  continue;
+    bc++;
+  }
+  if( bc > 0 )  {
+    PyObject* btd = PyTuple_New(bc);
+    bc = 0;
+    for( size_t i=0; i < BondsToRemove.Count(); i++ )  {
+      if( BondsToRemove[i].to.IsDeleted() )  continue;
+      PyTuple_SetItem(btd, bc++,
+        Py_BuildValue("{s:i,s:i}", "to", BondsToRemove[i].to.GetTag(), "eqiv",
+          BondsToCreate[i].matr == NULL ? -1 : BondsToRemove[i].matr->GetId()));
+    }
+    PythonExt::SetDictItem(main, "create", btd);
+  }
+  return main;
+}
+#endif

@@ -28,6 +28,9 @@ protected:
     }
     void ToDataItem(TDataItem& item) const;
     void FromDataItem(const TDataItem& item, RefinementModel& rm, TCAtom& atom);
+#ifndef _NO_PYTHON
+    PyObject* PyExport();
+#endif
   };
   struct TypeConnInfo : public CXConnInfoBase  {
     const cm_Element* atomType;
@@ -41,6 +44,9 @@ protected:
     }
     void ToDataItem(TDataItem& item) const;
     void FromDataItem(const TDataItem& item, const cm_Element* elm);
+#ifndef _NO_PYTHON
+    PyObject* PyExport();
+#endif
   };
   olxdict<TCAtom*, AtomConnInfo, TPointerPtrComparator> AtomInfo;
   olxdict<const cm_Element*, TypeConnInfo, TPointerPtrComparator> TypeInfo;
@@ -84,6 +90,9 @@ public:
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);
+#ifndef _NO_PYTHON
+  PyObject* PyExport();
+#endif
 };
 
 EndXlibNamespace()

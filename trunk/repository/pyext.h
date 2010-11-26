@@ -167,6 +167,13 @@ public:
     PyDict_SetItemString(dict, field_name, val);
     Py_DECREF(val);
   }
+  static void SetDictItem(PyObject* dict, PyObject* field_name, PyObject* val)  {
+    PyDict_SetItem(dict, field_name, val);
+    Py_DECREF(val);
+  }
+  static void SetDictItem(PyObject* dict, const olxstr& field_name, PyObject* val)  {
+    SetDictItem(dict, BuildString(field_name), val);
+  }
   static PyObject* SetErrorMsg(PyObject* err_type, const olxcstr& location, const olxstr& msg)  {
     PyObject* val = BuildString(olxstr(location) << ": " << msg);
     PyErr_SetObject(err_type, val);

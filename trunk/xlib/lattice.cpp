@@ -2378,35 +2378,37 @@ void TLattice::BuildAtomRegistry()  {
   for( size_t i=0; i < Atoms.Count(); i++ )  {
     TSAtom* sa = Atoms[i];
     if( !sa->IsAvailable() || sa->CAtom().IsMasked() )  continue;
-    const smatd& matr = sa->GetMatrix(0);
-    const vec3i t = smatd::GetT(matr.GetId());
-    TArrayList<TSAtomPList*>* aum_slice = registry.Value(t);
-    for( size_t j=0; j < sa->CAtom().EquivCount(); j++ )  {
-      const smatd m = uc.MulMatrix(sa->CAtom().GetEquiv(j), matr);
-      TSAtom* sa1 = atomRegistry.Find(TSAtom::Ref(sa->CAtom().GetId(), m.GetId()));
-      if( sa1 != NULL && sa1 != sa )  {
-        sa1->AddMatrices(*sa);
-        sa->SetDeleted(true);
-        sa = sa1;
-        break;
+    for( size_t mi=0; mi < sa->MatrixCount(); mi++ )  {
+      const smatd& matr = sa->GetMatrix(mi);
+      const vec3i t = smatd::GetT(matr.GetId());
+      TArrayList<TSAtomPList*>* aum_slice = registry.Value(t);
+      for( size_t j=0; j < sa->CAtom().EquivCount(); j++ )  {
+        const smatd m = uc.MulMatrix(sa->CAtom().GetEquiv(j), matr);
+        TSAtom* sa1 = atomRegistry.Find(TSAtom::Ref(sa->CAtom().GetId(), m.GetId()));
+        if( sa1 != NULL && sa1 != sa )  {
+          sa1->AddMatrices(*sa);
+          sa->SetDeleted(true);
+          sa = sa1;
+          break;
+        }
       }
+      if( aum_slice == NULL )  {
+        const size_t matr_cnt = GetUnitCell().MatrixCount();
+        aum_slice = (registry.Value(t) = new TArrayList<TSAtomPList*>(matr_cnt));
+        for( size_t j=0; j < matr_cnt; j++ )
+          (*aum_slice)[j] = NULL;
+      }
+      TSAtomPList* au_slice = (*aum_slice)[matr.GetContainerId()];
+      if( au_slice == NULL )  {
+        const size_t atom_cnt = GetAsymmUnit().AtomCount();
+        au_slice = ((*aum_slice)[matr.GetContainerId()] = new TSAtomPList(atom_cnt));
+        for( size_t j=0; j < atom_cnt; j++)
+          (*au_slice)[j] = NULL;
+      }
+      if( (*au_slice)[sa->CAtom().GetId()] != NULL && (*au_slice)[sa->CAtom().GetId()] != sa )
+        (*au_slice)[sa->CAtom().GetId()]->SetDeleted(true);
+      (*au_slice)[sa->CAtom().GetId()] = sa;
     }
-    if( aum_slice == NULL )  {
-      const size_t matr_cnt = GetUnitCell().MatrixCount();
-      aum_slice = (registry.Value(t) = new TArrayList<TSAtomPList*>(matr_cnt));
-      for( size_t j=0; j < matr_cnt; j++ )
-        (*aum_slice)[j] = NULL;
-    }
-    TSAtomPList* au_slice = (*aum_slice)[matr.GetContainerId()];
-    if( au_slice == NULL )  {
-      const size_t atom_cnt = GetAsymmUnit().AtomCount();
-      au_slice = ((*aum_slice)[matr.GetContainerId()] = new TSAtomPList(atom_cnt));
-      for( size_t j=0; j < atom_cnt; j++)
-        (*au_slice)[j] = NULL;
-    }
-    if( (*au_slice)[sa->CAtom().GetId()] != NULL && (*au_slice)[sa->CAtom().GetId()] != sa )
-      (*au_slice)[sa->CAtom().GetId()]->SetDeleted(true);
-    (*au_slice)[sa->CAtom().GetId()] = sa;
   }
 }
 //..............................................................................
