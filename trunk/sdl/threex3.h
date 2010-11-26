@@ -61,7 +61,7 @@ public:
     return *this;
   }
   // takes square root of each element (must be >= 0!)
-  static inline TVector3<T> Sqrt(const TVector3<T>& v)  {  return TVector3<T>(*this).Sqrt();  }
+  static inline TVector3<T> Sqrt(const TVector3<T>& v)  {  return TVector3<T>(v).Sqrt();  }
   // takes absolute value of the vector elements
   inline TVector3<T>& Abs()  {
     data[0] = olx_abs(data[0]);
@@ -70,7 +70,7 @@ public:
     return *this;
   }
   // returns a vector with absolute values of provided one
-  static inline TVector3<T> Abs(const TVector3<T>& v)  {  return TVector3<T>(*this).Abs();  }
+  static inline TVector3<T> Abs(const TVector3<T>& v)  {  return TVector3<T>(v).Abs();  }
   // returns sum of vector elements
   inline T Sum() const {  return data[0]+data[1]+data[2];  }
   // returns product of vector elements
