@@ -1442,6 +1442,9 @@ void TMainForm::AquireTooltipValue()  {
       }
       else
         Tooltip << "\nUeq " << olxstr::FormatFloat(3, ca.GetUiso());
+#ifdef _DEBUG
+      Tooltip << "\nBonds: " << xa.Atom().BondCount() << ", nodes: " << xa.Atom().NodeCount();
+#endif
     }
     else  if( EsdlInstanceOf( *G, TXBond) )  {
       Tooltip = ((TXBond*)G)->Bond().A().GetLabel();

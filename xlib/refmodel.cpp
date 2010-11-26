@@ -1074,6 +1074,7 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
     PythonExt::SetDictItem(shel, "low", Py_BuildValue("d", SHEL_lr));
     PythonExt::SetDictItem(shel, "high", Py_BuildValue("d", SHEL_hr));
   }
+  PythonExt::SetDictItem(main, "conn", Conn.PyExport());
   // attach the connectivity...
   if( export_connectivity )  {
     TAtomEnvi ae;
