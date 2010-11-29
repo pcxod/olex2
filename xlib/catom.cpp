@@ -9,6 +9,7 @@
 #include "refmodel.h"
 #include "pers_util.h"
 #include "residue.h"
+#include "symmcon.h"
 
 olxstr TCAtom::VarNames[] = {"Scale", "X", "Y", "Z", "Sof", "Uiso", "U11", "U22", "U33", "U23", "U13", "U12"};
 //----------------------------------------------------------------------------//
@@ -405,6 +406,13 @@ olxstr TCAtom::GetResiLabel() const {
   return (olxstr(GetLabel()) << '_' << GetParent()->GetResidue(GetResiId()).GetNumber());
 }
 //..............................................................................
+SiteSymmCon TCAtom::GetSiteConstraints() const {
+  SiteSymmCon rv;
+  for( size_t i=0; i < EquivCount(); i++ )
+    rv += SymmConReg::Find(rotation_id::get(GetEquiv(i).r));
+  return rv;
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm) const  {
@@ -488,7 +496,7 @@ double TCAtom::GetValue(size_t var_index) const {
     case catom_var_name_U12:
       if( !olx_is_valid_index(EllpId) )
         throw TInvalidArgumentException(__OlxSourceInfo, "Uanis is not defined");
-      return Parent->GetEllp(EllpId).GetQuadVal(var_index-catom_var_name_U11);
+      return Parent->GetEllp(EllpId).GetValue(var_index-catom_var_name_U11);
     default:
       throw TInvalidArgumentException(__OlxSourceInfo, "parameter name");
   }

@@ -337,7 +337,7 @@ void ConnInfo::TypeConnInfo::FromDataItem(const TDataItem& item, const cm_Elemen
 //........................................................................
 #ifndef _NO_PYTHON
 PyObject* ConnInfo::TypeConnInfo::PyExport()  {
-  return Py_BuildValue("{s:d,s:i}", "to", r, "eqiv", maxBonds);
+  return Py_BuildValue("{s:d,s:i}", "radius", r, "bonds", maxBonds);
 }
 #endif
 //........................................................................
@@ -596,9 +596,9 @@ PyObject* ConnInfo::AtomConnInfo::PyExport()  {
       if( BondsToRemove[i].to.IsDeleted() )  continue;
       PyTuple_SetItem(btd, bc++,
         Py_BuildValue("{s:i,s:i}", "to", BondsToRemove[i].to.GetTag(), "eqiv",
-          BondsToCreate[i].matr == NULL ? -1 : BondsToRemove[i].matr->GetId()));
+          BondsToRemove[i].matr == NULL ? -1 : BondsToRemove[i].matr->GetId()));
     }
-    PythonExt::SetDictItem(main, "create", btd);
+    PythonExt::SetDictItem(main, "delete", btd);
   }
   return main;
 }

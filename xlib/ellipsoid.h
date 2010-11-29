@@ -58,7 +58,12 @@ public:
   }
   void SetEsd(size_t i, double v)  {  FEsd[i] = v;  } 
   const double& GetEsd(size_t i) const {  return FEsd[i];  } 
-  const double& GetQuadVal(size_t ind) const {  return FQuad[ind];  }
+  void SetValue(size_t i, double v)  {  FQuad[i] = v;  } 
+  const double& GetValue(size_t i) const {  return FQuad[i];  } 
+  void ToShelx()  {
+    olx_swap(FEsd[3], FEsd[5]);
+    olx_swap(FQuad[3], FQuad[5]);
+  }
   inline double GetSX() const {  return SX;  }
   inline double GetSY() const {  return SY;  }
   inline double GetSZ() const {  return SZ;  }

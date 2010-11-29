@@ -593,7 +593,7 @@ bool TCif::Adopt(TXFile& XF)  {
       Row.Set(j+2, new cetString(TEValueD(A.ccrd()[j], A.ccrdEsd()[j]).ToString()));
     Row.Set(5, new cetString(TEValueD(A.GetUiso(), A.GetUisoEsd()).ToString()));
     Row.Set(6, new cetString(A.GetEllipsoid() == NULL ? "Uiso" : "Uani"));
-    Row.Set(7, new cetString((TEValueD(A.GetOccu(), A.GetOccuEsd())*=A.GetDegeneracy()).ToString()));
+    Row.Set(7, new cetString(TEValueD(olx_round(A.GetChemOccu(), 1000), A.GetOccuEsd()*A.GetDegeneracy()).ToString()));
     if( A.GetParentAfixGroup() != NULL && A.GetParentAfixGroup()->IsRiding() )
       Row.Set(8, new cetString("R"));
     else

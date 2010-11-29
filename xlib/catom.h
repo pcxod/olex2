@@ -157,6 +157,7 @@ public:
   // number of non identity symmops under which the position is invariant
   size_t EquivCount() const {  return Equivs == NULL ? 0 : Equivs->Count();  }
   const smatd& GetEquiv(size_t i) const {  return Equivs->GetItem(i);  }
+  struct SiteSymmCon GetSiteConstraints() const;
   void AssignEquivs(const TCAtom& a);
   // to be used externally by the UnitCell!
   void ClearEquivs();

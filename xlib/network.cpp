@@ -695,12 +695,12 @@ bool TNetwork::DoMatch(TNetwork& net, TTypeList<AnAssociation2<size_t,size_t> >&
       continue;
     TEGraph<size_t, TSAtom*>* thatGraph = new TEGraph<size_t, TSAtom*>(thatSa.GetType().z, &thatSa);
     BuildGraph(thatGraph->GetRoot());
-    if( thatGraph->GetRoot().DoMatch(thisGraph.GetRoot()) )  {  // match 
-      GraphAnalyser ga(thatGraph->GetRoot(), thisGraph.GetRoot(), weight_calculator);
+    if( thisGraph.GetRoot().DoMatch(thatGraph->GetRoot()) )  {  // match 
+      GraphAnalyser ga(thisGraph.GetRoot(), thatGraph->GetRoot(), weight_calculator);
       ga.Invert = Invert;
       ga.atomsToMatch = NodeCount();
       ga.CalcRMSForH = ((NodeCount() - HCount) < 4); 
-      try  {  thatGraph->GetRoot().FullMatchEx(thisGraph.GetRoot(), ga);  }
+      try  {  thisGraph.GetRoot().FullMatchEx(thatGraph->GetRoot(), ga);  }
       catch(const TExceptionBase& e)  {
         TBasicApp::GetLog() << e.GetException()->GetError() << '\n';
         delete thatGraph;

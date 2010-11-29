@@ -1664,8 +1664,8 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       FXApp->GetBond(i).GetLabel().SetDeleted(true);
   }
   else  {
-    TXAtomPList Atoms, Selected;
-    FXApp->FindXAtoms(Cmds.Text(' '), Atoms, true, Options.Contains('h'));
+    TXAtomPList Atoms = FXApp->FindXAtoms(Cmds.Text(' '), true, Options.Contains('h')),
+      Selected;
     if( Atoms.IsEmpty() )  return;
     for( size_t i=0; i < Atoms.Count(); i++ )
       if( Atoms[i]->IsSelected() )
@@ -1691,8 +1691,7 @@ void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     sel.Clear();
   }
   else  {
-    TXAtomPList Atoms;
-    FXApp->FindXAtoms(Cmds.Text(' '), Atoms, true, Options.Contains('h'));
+    TXAtomPList Atoms = FXApp->FindXAtoms(Cmds.Text(' '), true, Options.Contains('h'));
     if( Atoms.IsEmpty() )  return;
     AGDObjList go(Atoms, CastAccessor<AGDrawObject*>());
     FUndoStack->Push(FXApp->SetGraphicsVisible(go, false));
@@ -4398,13 +4397,10 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     }
   }
   else if( Options.IsEmpty() )  {  // print labels of selected atoms
-    olxstr Tmp("sel");
     size_t period=5;
-    TGlGroup& Sel = FXApp->GetSelection();
-    TXAtomPList Atoms;
-    FXApp->FindXAtoms(Tmp, Atoms, false);
+    TXAtomPList Atoms = FXApp->FindXAtoms("sel");
     for( size_t i=0; i <= Atoms.Count(); i+=period )  {
-      Tmp = EmptyString;
+      olxstr Tmp;
       for( size_t j=0; j < period; j++ )  {
         if( (j+i) >= Atoms.Count() )  break;
         Tmp << Atoms[i+j]->Atom().GetGuiLabel();
@@ -4416,7 +4412,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     if( !Cmds.IsEmpty() )  {
       size_t whereIndex = Cmds.IndexOf(olxstr("where"));
       if( whereIndex >= 1 && whereIndex != InvalidIndex)  {
-        Tmp = Cmds[whereIndex-1];
+        olxstr Tmp = Cmds[whereIndex-1];
         while( olx_is_valid_index(whereIndex) )  {  Cmds.Delete(whereIndex--);  }
         if( Tmp.Equalsi("atoms") )
           FXApp->SelectAtomsWhere(Cmds.Text(' '));
@@ -5772,7 +5768,11 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       TTypeList<AnAssociation2<size_t, size_t> > res;
       TSizeList sk;
       TNetwork &netA = atoms[0]->Atom().GetNetwork(),
-        &netB = atoms[1]->Atom().GetNetwork();      bool match = subgraph ? netA.IsSubgraphOf(netB, res, sk) :        netA.DoMatch(netB, res, TryInvert, weight_calculator);      TBasicApp::GetLog() << (olxstr("Graphs match: ") << match << '\n');      if( match )  {
+        &netB = atoms[1]->Atom().GetNetwork();
+      bool match = subgraph ? netA.IsSubgraphOf(netB, res, sk) :
+        netA.DoMatch(netB, res, TryInvert, weight_calculator);
+      TBasicApp::GetLog() << (olxstr("Graphs match: ") << match << '\n');
+      if( match )  {
         // restore the other unit cell, if any...
         if( &latt != &netA.GetLattice() || &latt != &netB.GetLattice() )  {
           TLattice& latt1 = (&latt == &netA.GetLattice()) ? netB.GetLattice() : netA.GetLattice();
@@ -5784,10 +5784,10 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         olxstr tmp('=');
         for( size_t i=0; i < res.Count(); i++ )  {
           tmp << '{' << netA.Node( res[i].GetA()).GetLabel() <<
-            ',' << netB.Node( res[i].GetB()).GetLabel() << '}';
+            ',' << netB.Node(res[i].GetB()).GetLabel() << '}';
 
           if( atomsToTransform.IndexOf(&netB.Node(res[i].GetB()) ) == InvalidIndex )  {
-            atomsToTransform.Add( &netB.Node( res[i].GetB()) );
+            atomsToTransform.Add(netB.Node(res[i].GetB()));
             satomp.AddNew<TSAtom*,TSAtom*>(&netA.Node(res[i].GetA()), &netB.Node(res[i].GetB()));
           }
         }
@@ -6221,9 +6221,7 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
     cellParameters[i+6]= FXApp->XFile().GetAsymmUnit().Axes()[i].GetE();
     cellParameters[i+9]= FXApp->XFile().GetAsymmUnit().Angles()[i].GetE();
   }
-  TXAtomPList xatoms;
-  FXApp->FindXAtoms(Cmds.Text(' '), xatoms);
-  TSAtomPList satoms(xatoms, TXAtom::AtomAccessor<>());
+  TSAtomPList satoms(FXApp->FindXAtoms(Cmds.Text(' ')), TXAtom::AtomAccessor<>());
   if( satoms.IsEmpty() )
     throw TInvalidArgumentException(__OlxSourceInfo, "atom count");
   xlib::TLS tls(satoms, cellParameters);
@@ -6320,13 +6318,10 @@ struct UTerm  {
     olxstr ToString(size_t this_i) const {
       if( index == InvalidIndex )
         return '#';
-      if( index == InvalidIndex-1 || (this_i == index && k > 0) )
+      if( this_i <= index && k > 0 )
         return 's';
-      if( index == InvalidIndex-2  || (this_i == index && k <= 0) )
+      if( index == InvalidIndex-1  || (this_i == index && k <= 0) )
         return 'x';
-      if( this_i < index )  {
-        return k > 0 ? 'u' : 'x';
-      }
       if( olx_abs(k) == 1 )  {
         if( k < 0 )
           return olxstr('-') << index;
@@ -6337,15 +6332,10 @@ struct UTerm  {
     olxstr ToCString(size_t this_i) const {
       if( index == InvalidIndex )
         return "-1,0";
-      if( index == InvalidIndex-1 || (this_i == index && k > 0) )
+      if( this_i <= index && k > 0 )
         return olxstr(this_i) << ",1";
-      if( index == InvalidIndex-2  || (this_i == index && k <= 0) )
+      if( index == InvalidIndex-1 || (this_i == index && k <= 0) )
         return "-2,0";
-      if( this_i < index )  {
-        if( k > 0 )
-          return olxstr(this_i) << ",1";
-        return "-2,0";
-      }
       return olxstr(index) << "," << k;
     }
   };
@@ -6407,31 +6397,28 @@ struct UTerm  {
         indices.Add(i);
     }
     if( indices.IsEmpty() )  {
-      map[this_i].index = InvalidIndex -1; 
+      map[this_i].index = this_i;
+      map[this_i].k = 1.0;
     }
     else if( indices.Count() == 1 )  {
-      if( indices[0] != this_i )  {
-        map[this_i].index = InvalidIndex -2;
-      }
-      else if( map[this_i].index > indices[0] )  {
-        map[this_i].index = indices[0];
-        map[this_i].k = values[indices[0]];
+      if( indices[0] == this_i )  {
+        map[this_i].index = InvalidIndex -1; 
       }
     }
     else if( indices.Count() == 2 )  {
-      if( olx_sign(values[indices[1]]) == olx_sign(values[indices[0]]) )  {
-        map[indices[0]].index = InvalidIndex-2;
-        map[indices[1]].index = InvalidIndex-2;
-      }
-      else  {
-        if( map[indices[0]].index > indices[1] && map[indices[0]].index != InvalidIndex-2)  {
+      //if( olx_sign(values[indices[1]]) == olx_sign(values[indices[0]]) )  {
+      //  map[indices[0]].index = InvalidIndex-1;
+      //  map[indices[1]].index = InvalidIndex-1;
+      //}
+      //else  {
+        if( map[indices[0]].index > indices[1] && map[indices[0]].index != InvalidIndex-1)  {
           map[indices[0]].index = indices[1];
           map[indices[0]].k = -values[indices[1]]/values[indices[0]];
         }
-        if( map[indices[1]].index > indices[0] && map[indices[1]].index != InvalidIndex-2 )  {
+        if( map[indices[1]].index > indices[0] && map[indices[1]].index != InvalidIndex-1 )  {
           map[indices[1]].index = indices[0];
           map[indices[1]].k = -values[indices[0]]/values[indices[1]];
-        }
+        //}
       }
     }
   }
@@ -6441,6 +6428,8 @@ struct UTerm  {
       for( int i=0; i < 6; i++ )  {
         if( map[i].index > 5 )  continue;
         if( map[map[i].index].index < map[i].index )  {
+          if( map[i].index == i )
+            changes = true;
           map[i].k *= map[map[i].index].k;
           map[i].index = map[map[i].index].index;
           changes = true;
@@ -6619,9 +6608,11 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   char cbf[20];
   const olxstr u_legend[] = {"xx", "yy", "zz", "xy", "xz", "yz"};
   const olxstr c_legend[] = {"x", "y", "z"};
-  const UTerm Um[3][3] = {{0, 3, 4},{3, 1, 5},{4, 5, 2}};
+  //const UTerm Um[3][3] = {{0, 3, 4},{3, 1, 5},{4, 5, 2}};
+  const UTerm Um[3][3] = {{0, 5, 4},{5, 1, 3},{4, 3, 2}};
   const CTerm Cm[3] = {0, 1, 2};
-  const size_t Um_i[3][3] = {{0, 3, 4},{3, 1, 5},{4, 5, 2}};
+  //const size_t Um_i[3][3] = {{0, 3, 4},{3, 1, 5},{4, 5, 2}};
+  const size_t Um_i[3][3] = {{0, 5, 4},{5, 1, 3},{4, 3, 2}};
   const size_t Cm_i[3] = {0, 1, 2};
   TPSTypeList<int, olxstr> sorted_tab;
   for( size_t i=0; i < matrices.Count(); i++ )  {

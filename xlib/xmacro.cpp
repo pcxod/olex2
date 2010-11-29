@@ -28,6 +28,7 @@
 #include "maputil.h"
 #include "vcov.h"
 #include "esphere.h"
+#include "symmcon.h"
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
@@ -1559,6 +1560,10 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   TSpaceGroup& sg = Cmds.Count() == 1 ? xapp.XFile().GetLastLoaderSG() : *TSymmLib::GetInstance().FindGroup(Cmds[1]);
+  if( &sg == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined space group");
+    return;
+  }
   SGSettings sg_set(sg);
   olxstr axis = sg_set.axisInfo.GetAxis();
   TBasicApp::GetLog() << (olxstr("Current setting: ") << XLibMacros_macSGS_SgInfo(axis) << '\n');
@@ -3866,8 +3871,17 @@ void XLibMacros::macDegen(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     if( atoms[i]->CAtom().GetTag() != i || atoms[i]->CAtom().GetDegeneracy() == 1)  continue;
     olxstr str(atoms[i]->CAtom().GetLabel());
     TBasicApp::GetLog() << (str.Format(6, true, ' ') <<  atoms[i]->CAtom().GetDegeneracy() << '\n');
-    for( size_t j=0; j < atoms[i]->CAtom().EquivCount(); j++ )
-      TBasicApp::GetLog() << (olxstr('\t') << TSymmParser::MatrixToSymmEx(atoms[i]->CAtom().GetEquiv(j)) << '\n');
+    for( size_t j=0; j < atoms[i]->CAtom().EquivCount(); j++ )  {
+      TBasicApp::GetLog() <<
+        (olxstr('\t') << TSymmParser::MatrixToSymmEx(atoms[i]->CAtom().GetEquiv(j)) << '\n');
+    }
+    SiteSymmCon ssc = atoms[i]->CAtom().GetSiteConstraints();
+    TBasicApp::GetLog() << "\tSite constraints: "; 
+    if( ssc.IsConstrained() )
+      TBasicApp::GetLog() << ssc.ToString(); 
+    else
+      TBasicApp::GetLog() << "none"; 
+    TBasicApp::GetLog() << '\n'; 
   }
 }
 //..............................................................................

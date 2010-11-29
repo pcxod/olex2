@@ -1,5 +1,6 @@
 #include "vcov.h"
 #include "refmodel.h"
+#include "symmcon.h"
 
 TStrList VcoVMatrix::U_annotations;
 //..................................................................................
@@ -32,6 +33,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   TSizeList indexes;
   TDoubleList diag;
   olxdict<size_t, eveci, TPrimitiveComparator> Us;
+  olxdict<size_t, SiteSymmCon, TPrimitiveComparator> SiteConstraints;
   if( cnt == 0 || sl.Count() < cnt+11 )  
     throw TFunctionFailedException(__OlxSourceInfo, "empty/invalid matrix file");
   olxstr last_atom_name;
@@ -70,18 +72,18 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
     }
     if( atom == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "mismatching matrix file");
+    const size_t ssci = SiteConstraints.IndexOf(atom->GetId());
+    const SiteSymmCon& ssc = (ssci == InvalidIndex ?
+      SiteConstraints.Add(atom->GetId(), atom->GetSiteConstraints()) :
+      SiteConstraints.GetValue(ssci));
     if( toks[4].CharAt(0) == 'x' )  {
       diag.Add(toks[2].ToDouble());
       atom->ccrdEsd()[0] = diag.GetLast();
       short index_v = vcoviX;
-      if( atom->EquivCount() > 0 )  {
-        for( size_t ei=0; ei < atom->EquivCount(); ei++ )  {
-          if( atom->GetEquiv(ei).r[0][1] == 1 )
-            index_v |= vcoviY;
-          if( atom->GetEquiv(ei).r[0][2] == 1 )
-            index_v |= vcoviZ;
-        }
-      }
+      if( ssc.map[7].param == 0 )
+        index_v |= vcoviY;
+      if( ssc.map[8].param == 0 )
+        index_v |= vcoviZ;
       Index.AddNew(toks[5], index_v, -1);
       indexes.Add(i);
     }
@@ -89,14 +91,8 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       diag.Add(toks[2].ToDouble());
       atom->ccrdEsd()[1] = diag.GetLast();
       short index_v = vcoviY;
-      if( atom->EquivCount() > 0 )  {
-        for( size_t ei=0; ei < atom->EquivCount(); ei++ )  {
-          if( atom->GetEquiv(ei).r[0][2] == 1 )  {
-            index_v |= vcoviZ;
-            break;
-          }
-        }
-      }
+      if( ssc.map[8].param == 1 )
+        index_v |= vcoviZ;
       Index.AddNew(toks[5], index_v, -1);
       indexes.Add(i);
     }
@@ -112,7 +108,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       Index.AddNew(toks[5], vcoviO , -1);
       indexes.Add(i);
     }
-    else if( (ua_index=U_annotations.IndexOf(toks[4])) != InvalidIndex )  {
+    else if( (ua_index=U_annotations.IndexOfi(toks[4])) != InvalidIndex )  {
       if( ua_index != 0 && atom->GetEllipsoid() == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, "U for isotropic atom");
       else if( ua_index == 0 && atom->GetEllipsoid() == 0 )
@@ -122,7 +118,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       if( v.Count() == 0 )  {
         v.Resize(6);
         for( int vi=0; vi < 6; vi++ )
-          v[i] = -1;
+          v[vi] = -1;
       }
       v[ua_index] = i;
     }
@@ -163,6 +159,40 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
     while( ++j < Index.Count() && Index[i].GetA().Equalsi(Index[j].GetA()) )
       Index[j].C() = ca->GetId();
     i = j-1;
+  }
+  // expand refined parameters into crystallographic ones
+  try  {
+    evecd Q(6), E(6);
+    for( size_t i=0; i < au.AtomCount(); i++ )  {
+      TCAtom& a = au.GetAtom(i);
+      if( a.EquivCount() == 0 )  continue;
+      const size_t ssci = SiteConstraints.IndexOf(a.GetId());
+      const SiteSymmCon& ssc = (ssci == InvalidIndex ?
+        SiteConstraints.Add(atom->GetId(), atom->GetSiteConstraints()) :
+        SiteConstraints.GetValue(ssci));
+      for( size_t j=0; j < 3; j++ )  {
+        if( ssc.map[6+j].param >= 0 )
+          a.ccrdEsd()[j] = a.ccrdEsd()[ssc.map[6+j].param]*ssc.map[6+j].multiplier;
+        else
+          a.ccrdEsd()[j] = 0;
+      }
+      TEllipsoid* e = a.GetEllipsoid();
+      if( e == NULL )  continue;
+      for( size_t j=0; j < 6; j++ )  {
+        if( ssc.map[j].param >= 0 )  {
+          e->SetEsd(j, olx_abs(e->GetEsd(ssc.map[j].param)*ssc.map[j].multiplier));
+          e->SetValue(j, e->GetValue(ssc.map[j].param)*ssc.map[j].multiplier);
+        }
+        else
+          e->SetEsd(j, 0);
+      }
+      e->GetQuad(Q, E);
+      au.UcifToUcart(Q);
+      e->Initialise(Q, E);
+    }
+  }
+  catch(const TExceptionBase& e)  {
+    TBasicApp::GetLog().Error(e.GetException()->GetFullMessage());
   }
 }
 //..................................................................................
