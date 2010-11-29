@@ -31,6 +31,12 @@ protected:
       rv += Nodes[i]->CountR();
     return rv;
   }
+  void Reset() const {
+    PassedFor = NULL;
+    PassedForNodes.Clear();
+    for( size_t i=0; i < Nodes.Count(); i++ )
+      Nodes[i]->Reset();
+  }
   void _StoreGroupIndices(TSizeList& l) const {
     l.Add(GroupIndex);
     for( size_t i=0; i < Nodes.Count(); i++ )
@@ -244,6 +250,7 @@ public:
       if( permutations > 1e10 )
         throw TFunctionFailedException(__OlxSourceInfo, 
           olxstr("Matching aborted due to high graph symmetry, number of permutations: ") << permutations);
+      Reset();
     }
     const size_t node_cnt = Count();
     if( node.GetData() != GetData() )  return false;

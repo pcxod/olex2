@@ -979,9 +979,9 @@ void TLattice::UpdateAsymmUnit()  {
     TSAtomPList& l = AUAtoms[i];
     if( del_cnt[i] == 0 && (l.Count() > 1) )  continue;  // nothing to do
     TCAtom& ca = AsymmUnit->GetAtom(i);
-    if( l.IsEmpty() )  {  // all atoms are deleted
-      if( !ca.IsDeleted() )
-        ca.SetDeleted(ca.IsAvailable());
+    if( l.IsEmpty() )  {  // all atoms are deleted or none generated
+      if( !ca.IsDeleted() && ca.IsAvailable() )
+        ca.SetDeleted(del_cnt[i] != 0);
       continue;
     }
     else if( l.Count() == 1 )  {  // special case...
@@ -1439,15 +1439,15 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& tra
 }
 //..............................................................................
 void TLattice::UpdateConnectivity()  {
-  Disassemble(false);
   UpdateAsymmUnit();
+  Disassemble(false);
 }
 //..............................................................................
 void TLattice::UpdateConnectivityInfo()  {
   GetAsymmUnit()._UpdateConnInfo();
   GetUnitCell().FindSymmEq();
-  Disassemble(false);
   UpdateAsymmUnit();
+  Disassemble(false);
 }
 //..............................................................................
 void TLattice::Disassemble(bool create_planes)  {

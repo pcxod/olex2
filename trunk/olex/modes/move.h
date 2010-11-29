@@ -9,8 +9,7 @@ public:
   TMoveMode(size_t id) : AMode(id)  {}
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     Copy = Options.Contains('c');
-    TXAtomPList Atoms;
-    TGlXApp::GetGXApp()->FindXAtoms(Cmds.Text(' '), Atoms, true);
+    TXAtomPList Atoms = TGlXApp::GetGXApp()->FindXAtoms(Cmds.Text(' '), true);
     for( size_t i=0; i < Atoms.Count(); i++ )
       Center += Atoms[i]->Atom().ccrd();
     if( Atoms.Count() != 0 )

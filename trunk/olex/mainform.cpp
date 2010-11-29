@@ -3560,12 +3560,13 @@ void TMainForm::UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller)  
 bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool GetAll, bool unselect)  {
   size_t cnt = xatoms.Count();
   if( Cmds.IsEmpty() )  {
-    FXApp->FindXAtoms("sel", xatoms, EsdlInstanceOf(FXApp->GetSelection(), TGlGroup) ? unselect : false);
+    xatoms.AddList(
+      FXApp->FindXAtoms("sel", EsdlInstanceOf(FXApp->GetSelection(), TGlGroup) ? unselect : false));
     if( GetAll && xatoms.IsEmpty() )
-      FXApp->FindXAtoms(EmptyString, xatoms, unselect);
+      xatoms.AddList(FXApp->FindXAtoms(EmptyString, unselect));
   }
   else
-    FXApp->FindXAtoms(Cmds.Text(' '), xatoms, unselect);
+    xatoms.AddList(FXApp->FindXAtoms(Cmds.Text(' '), unselect));
   for( size_t i=0; i < xatoms.Count(); i++ )
     if( !xatoms[i]->IsVisible() )
       xatoms[i] = NULL;

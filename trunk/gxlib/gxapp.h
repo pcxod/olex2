@@ -440,8 +440,7 @@ public:
   void BondTagsToIndexes() const;
   // these two do a command line parsing "sel C1 $N C?? C4 to end"
   void FindCAtoms(const olxstr& Atoms, TCAtomPList& List, bool ClearSelection=true);
-  void FindXAtoms(const olxstr& Atoms, TXAtomPList& List, bool ClearSelection=true, 
-    bool FindHidden=false);
+  TXAtomPList FindXAtoms(const olxstr& Atoms, bool ClearSelection=true, bool FindHidden=false);
 
   TXAtom& GetAtom(size_t i) {  return XAtoms[i];  }
   const TXAtom& GetAtom(size_t i) const {  return XAtoms[i];  }

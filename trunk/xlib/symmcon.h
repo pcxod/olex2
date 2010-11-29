@@ -42,6 +42,17 @@ struct SymmCon  {
   const SymmConItem* map;  // U + coordinates
 };
 
+struct SiteSymmCon  {
+private:
+  bool added;
+public:
+  SymmConItem map[9];
+  SiteSymmCon();
+  bool IsConstrained() const;
+  SiteSymmCon& operator += (const SymmCon* sc);
+  olxstr ToString() const;
+};
+
 class SymmConReg  {
   static const SymmCon* _Find(int rot_id);
 public:

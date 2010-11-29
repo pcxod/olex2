@@ -1587,7 +1587,6 @@ TXAtom* TGXApp::GetXAtom(const olxstr& AtomName, bool clearSelection)  {
 }
 //..............................................................................
 void TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask, TXAtomPList& List)  {
-  bool found;
   if( StrMask.Length() > 32 )
     throw TInvalidArgumentException(__OlxSourceInfo, "mask is too long");
   olxstr Tmp, Name( olxstr::UpperCase(StrMask) );
@@ -1596,91 +1595,107 @@ void TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask, TXAtomPList& List)  {
     if( !XA.IsVisible() )  continue;
     if( XA.Atom().GetLabel().Length() != Name.Length() )  continue;
     Tmp = olxstr::UpperCase(XA.Atom().GetLabel());
-    found = true;
+    bool found = true;
     for( size_t j=0; j < Name.Length(); j++ )  {
-      if( !(Mask & (0x0001<<j)) )  {
-        if( Name[j] != Tmp[j] )  {
-          found = false;  break;
+      if( (Mask & (0x0001<<j)) == 0 )  {
+        if( Name.CharAt(j) != Tmp.CharAt(j) )  {
+          found = false;
+          break;
         }
       }
     }
-    if( found )  {
-      List.Add( &XA );
-    }
+    if( found )
+      List.Add(XA);
   }
 }
 //..............................................................................
-void TGXApp::FindXAtoms(const olxstr &Atoms, TXAtomPList& List, bool ClearSelection, bool FindHidden)  {
-  TXAtom *XAFrom, *XATo;
-  if( Atoms.IsEmpty() )  {  // return all atoms
-    List.SetCapacity( List.Count() + XAtoms.Count() );
+TXAtomPList TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection, bool FindHidden)  {
+  TXAtomPList rv;
+  if( Atoms.IsEmpty() )  {  // return selection/all atoms
+    TGlGroup& sel = GetRender().GetSelection();
+    for( size_t i=0; i < sel.Count(); i++ )  {
+      if( EsdlInstanceOf(sel[i], TXAtom) )
+        rv.Add((TXAtom&)sel[i]);
+    }
+    if( !rv.IsEmpty() )  return rv;
+    rv.SetCapacity(XAtoms.Count());
     for( size_t i=0; i < XAtoms.Count(); i++ )  {
       if( XAtoms[i].IsDeleted() )  continue; 
       if( !FindHidden && !XAtoms[i].IsVisible() ) continue;
-      List.Add( &XAtoms[i] );
+      rv.Add(XAtoms[i]);
     }
-    return;
   }
-  TStrList Toks;
-  Toks.Strtok(Atoms, ' ');
-  for( size_t i = 0; i < Toks.Count(); i++ )  {
-    olxstr Tmp = Toks[i];
-    if( Tmp.Equalsi("sel") )  {
-      GetSelectedXAtoms(List, ClearSelection);
-      continue;
-    }
-    if( Tmp.Equalsi("to") || Tmp.Equalsi(">") )  {
-      if( (i+1) < Toks.Count() && !List.IsEmpty() )  {
-        i++;
-        XATo = NULL;
-        if( Toks[i].Equalsi("end") )  ;
-        else  {
-          XATo = GetXAtom( Toks[i], ClearSelection );
-          if( XATo == NULL )
-            throw TInvalidArgumentException(__OlxSourceInfo, "\'to\' atoms is undefined");
-        }
-        XAFrom = List[List.Count()-1];
-        for( size_t j=0; j < XAtoms.Count(); j++ )  {
-          TXAtom& XA = XAtoms[j];
-          if( XA.IsDeleted() ) continue;
-          if( !FindHidden && !XA.IsVisible() )  continue;
-          if( XATo != NULL )  {
-            if( CompareStr(XA.Atom().GetLabel(), XAFrom->Atom().GetLabel(), true) > 0 &&
-                CompareStr(XA.Atom().GetLabel(), XATo->Atom().GetLabel(), true) < 0 )  List.Add( &XA );
-          }
+  else  {
+    TStrList Toks;
+    Toks.Strtok(Atoms, ' ');
+    //TXAtom *XAFrom, *XATo;
+    for( size_t i = 0; i < Toks.Count(); i++ )  {
+      olxstr Tmp = Toks[i];
+      if( Tmp.Equalsi("sel") )  {
+        GetSelectedXAtoms(rv, ClearSelection);
+        continue;
+      }
+      if( Tmp.Equalsi("to") || Tmp.Equalsi(">") )  {
+        if( (i+1) < Toks.Count() && !rv.IsEmpty() )  {
+          i++;
+          TXAtom* XATo = NULL;
+          if( Toks[i].Equalsi("end") )  ;
           else  {
-            if( CompareStr(XA.Atom().GetLabel(), XAFrom->Atom().GetLabel(), true) > 0 &&
-                XA.Atom().GetType() == XAFrom->Atom().GetType() )  List.Add( &XA );
+            XATo = GetXAtom( Toks[i], ClearSelection );
+            if( XATo == NULL )
+              throw TInvalidArgumentException(__OlxSourceInfo, "\'to\' atoms is undefined");
+          }
+          TXAtom* XAFrom = rv.GetLast();
+          for( size_t j=0; j < XAtoms.Count(); j++ )  {
+            TXAtom& XA = XAtoms[j];
+            if( XA.IsDeleted() ) continue;
+            if( !FindHidden && !XA.IsVisible() )  continue;
+            if( XATo != NULL )  {
+              if( CompareStr(XA.Atom().GetLabel(), XAFrom->Atom().GetLabel(), true) > 0 &&
+                CompareStr(XA.Atom().GetLabel(), XATo->Atom().GetLabel(), true) < 0 )
+              {
+                  rv.Add(XA);
+              }
+            }
+            else  {
+              if( CompareStr(XA.Atom().GetLabel(), XAFrom->Atom().GetLabel(), true) > 0 &&
+                XA.Atom().GetType() == XAFrom->Atom().GetType() )
+              {
+                rv.Add(XA);
+              }
+            }
+          }
+          if( XATo != NULL )
+            rv.Add(XATo);
+        }
+      }
+      if( Tmp.CharAt(0) == '$' )  {
+        Tmp = Tmp.SubStringFrom(1);
+        if( !Tmp.IsEmpty() )  {
+          cm_Element* elm = XElementLib::FindBySymbol(Tmp);
+          if( elm == NULL )
+            throw TInvalidArgumentException(__OlxSourceInfo, olxstr("atom type=") << Tmp);
+          XAtomsByType(*elm, rv, FindHidden);
+        }
+        continue;
+      }
+      size_t ind = Tmp.FirstIndexOf('?');
+      if( ind != InvalidIndex )  {
+        uint16_t mask = 0x0001 << ind;
+        for( size_t j=ind+1; j < Tmp.Length(); j++ )  {
+          ind = Tmp.FirstIndexOf('?', j);
+          if( ind != InvalidIndex )  {
+            mask |= 0x0001 << ind;
+            j = ind;
           }
         }
-        if( XATo != NULL )  List.Add( XATo );
+        XAtomsByMask(Tmp, mask, rv);
+        continue;
       }
+      GetXAtoms(Tmp, rv);
     }
-    if( Tmp.CharAt(0) == '$' )  {
-      Tmp = Tmp.SubStringFrom(1);
-      if( !Tmp.IsEmpty() )  {
-        cm_Element* elm = XElementLib::FindBySymbol(Tmp);
-        if( elm == NULL )
-          throw TInvalidArgumentException(__OlxSourceInfo, olxstr("atom type=") << Tmp);
-        XAtomsByType(*elm, List, FindHidden);
-      }
-      continue;
-    }
-    size_t ind = Tmp.FirstIndexOf('?');
-    if( ind != InvalidIndex )  {
-      uint16_t mask = 0x0001 << ind;
-      for( size_t j=ind+1; j < Tmp.Length(); j++ )  {
-        ind = Tmp.FirstIndexOf('?', j);
-        if( ind != InvalidIndex )  {
-          mask |= 0x0001 << ind;
-          j = ind;
-         }
-      }
-      XAtomsByMask(Tmp, mask, List);
-      continue;
-    }
-    GetXAtoms(Tmp, List);
   }
+  return rv;
 }
 //..............................................................................
 void TGXApp::CheckQBonds(TXAtom& XA)  {
@@ -1755,8 +1770,8 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
   }
   else  {
     TNameUndo *undo = new TNameUndo(new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
-    TXAtomPList Atoms, ChangedAtoms;
-    FindXAtoms(From, Atoms, ClearSelection);
+    TXAtomPList Atoms = FindXAtoms(From, ClearSelection),
+      ChangedAtoms;
     // leave only AU atoms
     for( size_t i=0; i < Atoms.Count(); i++ )
       Atoms[i]->SetTag(Atoms[i]->Atom().IsAUAtom() ? 1 : 0);
@@ -1880,58 +1895,35 @@ int XAtomLabelSort(const TXAtom* I1, const TXAtom* I2)  {
 }
 //..............................................................................
 void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
-  if( !XFile().GetLattice().IsGenerated() )  {
-    TCAtomPList AtomsList;
-    FindCAtoms(Atoms, AtomsList, false);
-    TTTable<TStrList> Table(AtomsList.Count(), 7);
-    Table.ColName(0) = "Atom";
-    Table.ColName(1) = "Type";
-    Table.ColName(2) = "X";
-    Table.ColName(3) = "Y";
-    Table.ColName(4) = "Z";
-    Table.ColName(5) = "Ueq";
-    Table.ColName(6) = "Peak";
-    for(size_t i = 0; i < AtomsList.Count(); i++ )  {
-      const TCAtom& A = *AtomsList[i];
-      Table[i][0] = A.GetLabel();
-      Table[i][1] = A.GetType().symbol;
-      Table[i][2] = olxstr::FormatFloat(3, A.ccrd()[0]);
-      Table[i][3] = olxstr::FormatFloat(3, A.ccrd()[1]);
-      Table[i][4] = olxstr::FormatFloat(3, A.ccrd()[2]);
-      Table[i][5] = olxstr::FormatFloat(3, A.GetUiso());
-      if( A.GetType() == iQPeakZ )
-        Table[i][6] = olxstr::FormatFloat(3, A.GetQPeak());
-      else
-        Table[i][6] = '-';
-    }
-    Table.CreateTXTList(Info, "Atom information", true, true, ' ');
+  TXAtomPList AtomsList = FindXAtoms(Atoms, false);
+  TTTable<TStrList> Table(AtomsList.Count(), 11);
+  Table.ColName(0) = "Atom";
+  Table.ColName(1) = "Type";
+  Table.ColName(2) = "X";
+  Table.ColName(3) = "Y";
+  Table.ColName(4) = "Z";
+  Table.ColName(5) = "Ueq";
+  Table.ColName(6) = "ChemOccu";
+  Table.ColName(7) = "Peak";
+  Table.ColName(8) = "R-bond";
+  Table.ColName(9) = "R-VdW";
+  for(size_t i = 0; i < AtomsList.Count(); i++ )  {
+    const TSAtom& A = AtomsList[i]->Atom();
+    Table[i][0] = A.GetGuiLabel();
+    Table[i][1] = A.GetType().symbol;
+    Table[i][2] = olxstr::FormatFloat(-3, A.ccrd()[0]);
+    Table[i][3] = olxstr::FormatFloat(-3, A.ccrd()[1]);
+    Table[i][4] = olxstr::FormatFloat(-3, A.ccrd()[2]);
+    Table[i][5] = olxstr::FormatFloat(3, A.CAtom().GetUiso());
+    Table[i][6] = olxstr::FormatFloat(3, A.CAtom().GetChemOccu());
+    if( A.GetType() == iQPeakZ )
+      Table[i][7] = olxstr::FormatFloat(3, A.CAtom().GetQPeak());
+    else
+      Table[i][7] = '-';
+    Table[i][8] = A.CAtom().GetConnInfo().r;
+    Table[i][9] = A.CAtom().GetType().r_vdw;
   }
-  else  {
-    TXAtomPList AtomsList;
-    FindXAtoms(Atoms, AtomsList, false);
-    TTTable<TStrList> Table(AtomsList.Count(), 7);
-    Table.ColName(0) = "Atom";
-    Table.ColName(1) = "Type";
-    Table.ColName(2) = "X";
-    Table.ColName(3) = "Y";
-    Table.ColName(4) = "Z";
-    Table.ColName(5) = "Ueq";
-    Table.ColName(6) = "Peak";
-    for(size_t i = 0; i < AtomsList.Count(); i++ )  {
-      const TSAtom& A = AtomsList[i]->Atom();
-      Table[i][0] = A.GetGuiLabel();
-      Table[i][1] = A.GetType().symbol;
-      Table[i][2] = olxstr::FormatFloat(3, A.ccrd()[0]);
-      Table[i][3] = olxstr::FormatFloat(3, A.ccrd()[1]);
-      Table[i][4] = olxstr::FormatFloat(3, A.ccrd()[2]);
-      Table[i][5] = olxstr::FormatFloat(3, A.CAtom().GetUiso());
-      if( A.GetType() == iQPeakZ )
-        Table[i][6] = olxstr::FormatFloat(3, A.CAtom().GetQPeak());
-      else
-        Table[i][6] = '-';
-    }
-    Table.CreateTXTList(Info, "Atom information", true, true, ' ');
-  }
+  Table.CreateTXTList(Info, "Atom information", true, true, ' ');
 }
 //..............................................................................
 TXGlLabel& TGXApp::CreateLabel(const TXAtom& a, uint16_t FontIndex)  {
@@ -2335,8 +2327,7 @@ void TGXApp::SelectRings(const olxstr& Condition, bool Invert)  {
 }
 //..............................................................................
 void TGXApp::SelectAtoms(const olxstr &Names, bool Invert)  {
-  TXAtomPList Sel;
-  FindXAtoms(Names, Sel, true);
+  TXAtomPList Sel = FindXAtoms(Names, true);
   for( size_t i=0; i < Sel.Count(); i++ )  {
     if( Invert )
       GetRender().Select(*Sel[i]);
@@ -2768,9 +2759,7 @@ void TGXApp::XAtomDS2XBondDS(const olxstr &Source)  {
 }
 //..............................................................................
 void TGXApp::GrowAtoms(const olxstr& AtomsStr, bool Shell, TCAtomPList* Template)  {
-  TXAtomPList xatoms;
-  FindXAtoms(AtomsStr, xatoms, true);
-  TSAtomPList satoms(xatoms, TXAtom::AtomAccessor<>());
+  TSAtomPList satoms(FindXAtoms(AtomsStr, true), TXAtom::AtomAccessor<>());
   FXFile->GetLattice().GrowAtoms(satoms, Shell, Template);
 }
 //..............................................................................
@@ -3496,11 +3485,7 @@ void TGXApp::SetXGrowLinesVisible(bool v)  {
 }
 //..............................................................................
 void TGXApp::SetGrowMode(short v, const olxstr& atoms)  {
-  TXAtomPList xatoms;
-  if( atoms.IsEmpty() )
-    FindXAtoms("sel", xatoms);
-  else
-    FindXAtoms(atoms, xatoms);
+  TXAtomPList xatoms = FindXAtoms(atoms);
   // have to preprocess instructions like 'sel'
   olxstr ats;
   for( size_t i=0; i < xatoms.Count(); i++ )
@@ -3574,11 +3559,8 @@ void TGXApp::CreateXGrowLines()  {
   const TUnitCell& uc = FXFile->GetUnitCell();
   TGXApp_CrdMap CrdMap;
   TSAtomPList AtomsToProcess;
-  if( !AtomsToGrow.IsEmpty() )  {
-    TXAtomPList xatoms;
-    FindXAtoms(AtomsToGrow, xatoms);
-    AtomsToProcess.AddList(xatoms, TXAtom::AtomAccessor<>());
-  }
+  if( !AtomsToGrow.IsEmpty() )
+    AtomsToProcess.AddList(FindXAtoms(AtomsToGrow), TXAtom::AtomAccessor<>());
   else if( (FGrowMode & gmSameAtoms) == 0 ) {
     const size_t ac = FXFile->GetLattice().AtomCount();
     for( size_t i=0; i < ac; i++ )  {
@@ -3676,9 +3658,7 @@ void TGXApp::_CreateXGrowVLines()  {
   TGXApp_CrdMap CrdMap;
   TSAtomPList AtomsToProcess;
   if( !AtomsToGrow.IsEmpty() )  {
-    TXAtomPList xatoms;
-    FindXAtoms(AtomsToGrow, xatoms);
-    AtomsToProcess.AddList(xatoms, TXAtom::AtomAccessor<>());
+    AtomsToProcess.AddList(FindXAtoms(AtomsToGrow), TXAtom::AtomAccessor<>());
     const size_t ac = FXFile->GetLattice().AtomCount();
     for( size_t i=0; i < ac; i++ )  {
       TSAtom& A = FXFile->GetLattice().GetAtom(i);
