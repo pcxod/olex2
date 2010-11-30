@@ -6410,20 +6410,14 @@ struct UTerm  {
       }
     }
     else if( indices.Count() == 2 )  {
-      //if( olx_sign(values[indices[1]]) == olx_sign(values[indices[0]]) )  {
-      //  map[indices[0]].index = InvalidIndex-1;
-      //  map[indices[1]].index = InvalidIndex-1;
-      //}
-      //else  {
-        if( map[indices[0]].index > indices[1] && map[indices[0]].index != InvalidIndex-1)  {
-          map[indices[0]].index = indices[1];
-          map[indices[0]].k = -values[indices[1]]/values[indices[0]];
-        }
-        if( map[indices[1]].index > indices[0] && map[indices[1]].index != InvalidIndex-1 )  {
-          map[indices[1]].index = indices[0];
-          map[indices[1]].k = -values[indices[0]]/values[indices[1]];
-        }
-      //}
+      if( map[indices[0]].index > indices[1] && map[indices[0]].index != InvalidIndex-1)  {
+        map[indices[0]].index = indices[1];
+        map[indices[0]].k = -values[indices[1]]/values[indices[0]];
+      }
+      if( map[indices[1]].index > indices[0] && map[indices[1]].index != InvalidIndex-1 )  {
+        map[indices[1]].index = indices[0];
+        map[indices[1]].k = -values[indices[0]]/values[indices[1]];
+      }
     }
   }
   static void minimise(TArrayList<UMap>& map)  {
@@ -6454,13 +6448,10 @@ struct CTerm  {
     olxstr ToString(size_t this_i) const {
       if( index == InvalidIndex )
         return '#';
-      if( index == InvalidIndex-1 || (this_i == index && k > 0) )
+      if( this_i <= index && k > 0 )
         return 's';
-      if( index == InvalidIndex-2  || (this_i == index && k <= 0) )
+      if( index == InvalidIndex-1  || (this_i == index && k <= 0) )
         return 'x';
-      if( this_i < index )  {
-        return k > 0 ? 'u' : 'x';
-      }
       if( olx_abs(k) == 1 )  {
         if( k < 0 )
           return olxstr('-') << index;
@@ -6470,16 +6461,11 @@ struct CTerm  {
     }
     olxstr ToCString(size_t this_i) const {
       if( index == InvalidIndex )
-        return "-1,0";  //unknown
-      if( index == InvalidIndex-1 || (this_i == index && k > 0) )
+        return "-1,0";
+      if( this_i <= index && k > 0 )
         return olxstr(this_i) << ",1";
-      if( index == InvalidIndex-2  || (this_i == index && k <= 0) )
-        return "-2,0";  // canceled
-      if( this_i < index )  {
-        if( k > 0 )
-          return olxstr(this_i) << ",0";
+      if( index == InvalidIndex-1 || (this_i == index && k <= 0) )
         return "-2,0";
-      }
       return olxstr(index) << "," << k;
     }
   };
@@ -6533,13 +6519,12 @@ struct CTerm  {
         indices.Add(i);
     }
     if( indices.IsEmpty() )  {
-      map[this_i].index = InvalidIndex -1; 
+      map[this_i].index = this_i;
+      map[this_i].k = 1.0;
     }
     else if( indices.Count() == 1 )  {
-      if( indices[0] != this_i )  {
-        if( map[this_i].index > indices[0] )  {
-          map[this_i].index = indices[0];
-        }
+      if( indices[0] == this_i )  {
+        map[this_i].index = InvalidIndex-1;
       }
       else if( map[this_i].index > indices[0] )  {
         map[this_i].index = indices[0];
@@ -6547,19 +6532,13 @@ struct CTerm  {
       }
     }
     else if( indices.Count() == 2 )  {
-      if( olx_sign(values[indices[1]]) == olx_sign(values[indices[0]]) )  {
-        map[indices[0]].index = InvalidIndex-2;
-        map[indices[1]].index = InvalidIndex-2;
+      if( map[indices[0]].index > indices[1] )  {
+        map[indices[0]].index = indices[1];
+        map[indices[0]].k = -values[indices[1]]/values[indices[0]];
       }
-      else  {
-        if( map[indices[0]].index > indices[1] && map[indices[0]].index != InvalidIndex-2)  {
-          map[indices[0]].index = indices[1];
-          map[indices[0]].k = -values[indices[1]]/values[indices[0]];
-        }
-        if( map[indices[1]].index > indices[0] && map[indices[1]].index != InvalidIndex-2 )  {
-          map[indices[1]].index = indices[0];
-          map[indices[1]].k = -values[indices[0]]/values[indices[1]];
-        }
+      if( map[indices[1]].index > indices[0] )  {
+        map[indices[1]].index = indices[0];
+        map[indices[1]].k = -values[indices[0]]/values[indices[1]];
       }
     }
   }

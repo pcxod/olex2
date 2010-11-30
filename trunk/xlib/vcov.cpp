@@ -109,18 +109,21 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       indexes.Add(i);
     }
     else if( (ua_index=U_annotations.IndexOfi(toks[4])) != InvalidIndex )  {
-      if( ua_index != 0 && atom->GetEllipsoid() == NULL )
-        throw TInvalidArgumentException(__OlxSourceInfo, "U for isotropic atom");
-      else if( ua_index == 0 && atom->GetEllipsoid() == 0 )
-        atom->SetUisoEsd(toks[2].ToDouble());
-      atom->GetEllipsoid()->SetEsd(ua_index, toks[2].ToDouble());
-      eveci& v = Us.Add(atom->GetId());
-      if( v.Count() == 0 )  {
-        v.Resize(6);
-        for( int vi=0; vi < 6; vi++ )
-          v[vi] = -1;
+      if( atom->GetEllipsoid() != NULL )  {
+        atom->GetEllipsoid()->SetEsd(ua_index, toks[2].ToDouble());
+        eveci& v = Us.Add(atom->GetId());
+        if( v.Count() == 0 )  {
+          v.Resize(6);
+          for( int vi=0; vi < 6; vi++ )
+            v[vi] = -1;
+        }
+        v[ua_index] = i;
       }
-      v[ua_index] = i;
+      else  {
+        if( ua_index != 0 )
+          throw TInvalidArgumentException(__OlxSourceInfo, "U for isotropic atom");
+        atom->SetUisoEsd(toks[2].ToDouble());
+      }
     }
   }
   TDoubleList all_vcov((param_cnt+1)*param_cnt/2);
@@ -188,7 +191,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       if( constrained )  {
         for( size_t j=0; j < 3; j++ )  {
           if( ssc.map[6+j].param >= 0 )
-            a.ccrdEsd()[j] = a.ccrdEsd()[ssc.map[6+j].param]*ssc.map[6+j].multiplier;
+            a.ccrdEsd()[j] = olx_abs(a.ccrdEsd()[ssc.map[6+j].param]*ssc.map[6+j].multiplier);
           else
             a.ccrdEsd()[j] = 0;
         }
