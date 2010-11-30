@@ -108,6 +108,10 @@ public:
       FParent->ProcessMacro("showwindow info false");
     else  if( Obj == FParent->FHelpWindow )
       FParent->ProcessMacro("showwindow help false");
+    else if( EsdlInstanceOf(*Obj, TXGrid) )
+      FParent->GridVChange();
+    else if( EsdlInstanceOf(*Obj, T3DFrameCtrl) )
+      FParent->FrameVChange();
     return true;
   }
 };

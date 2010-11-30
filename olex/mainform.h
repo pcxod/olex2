@@ -318,6 +318,8 @@ protected:
   friend class TObjectVisibilityChange;
   void BasisVChange();
   void CellVChange();
+  void GridVChange();
+  void FrameVChange();
   void OnBasisVisible(wxCommandEvent& event);
   void OnCellVisible(wxCommandEvent& event);
 

@@ -963,9 +963,9 @@ void TMainForm::macClear(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 void TMainForm::macCell(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
 // the events are handled in void TMainForm::CellVChange()
   if( Cmds.IsEmpty() )
-    FXApp->SetCellVisible( !FXApp->IsCellVisible() );
+    FXApp->SetCellVisible(!FXApp->IsCellVisible());
   else
-    FXApp->SetCellVisible( Cmds[0].ToBool() );
+    FXApp->SetCellVisible(Cmds[0].ToBool());
   FXApp->CenterView();
 }
 //..............................................................................
@@ -4286,7 +4286,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       TXAtom& xa = FXApp->GetAtom(i);
       if( xa.Atom().CAtom().GetTag() != 1 )  continue;
       if( xa.IsSelected() )  continue;
-      FXApp->GetRender().Select( xa );
+      FXApp->GetRender().Select(xa);
     }
     for( size_t i=0; i < b_res.Count(); i++ )  {
       const TSimpleRestraint& res = *b_res[i];
@@ -4393,7 +4393,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       fr.UpdateEdges();
       fr.Translate(bs.center);
       fr.SetDeleted(false);
-      fr.SetVisible(true);
+      FXApp->SetGraphicsVisible(&fr, true);
     }
   }
   else if( Options.IsEmpty() )  {  // print labels of selected atoms
@@ -6404,6 +6404,10 @@ struct UTerm  {
       if( indices[0] == this_i )  {
         map[this_i].index = InvalidIndex -1; 
       }
+      else if( map[this_i].index > indices[0] )  {
+        map[this_i].index = indices[0];
+        map[this_i].k *= values[indices[0]];
+      }
     }
     else if( indices.Count() == 2 )  {
       //if( olx_sign(values[indices[1]]) == olx_sign(values[indices[0]]) )  {
@@ -6418,8 +6422,8 @@ struct UTerm  {
         if( map[indices[1]].index > indices[0] && map[indices[1]].index != InvalidIndex-1 )  {
           map[indices[1]].index = indices[0];
           map[indices[1]].k = -values[indices[0]]/values[indices[1]];
-        //}
-      }
+        }
+      //}
     }
   }
   static void minimise(TArrayList<UMap>& map)  {
@@ -6533,8 +6537,9 @@ struct CTerm  {
     }
     else if( indices.Count() == 1 )  {
       if( indices[0] != this_i )  {
-        if( map[this_i].index > indices[0] )
+        if( map[this_i].index > indices[0] )  {
           map[this_i].index = indices[0];
+        }
       }
       else if( map[this_i].index > indices[0] )  {
         map[this_i].index = indices[0];
@@ -6606,7 +6611,8 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   UTerm utab[3][3], rutab[3][3];
   CTerm ctab[3];
   char cbf[20];
-  const olxstr u_legend[] = {"xx", "yy", "zz", "xy", "xz", "yz"};
+  //const olxstr u_legend[] = {"xx", "yy", "zz", "xy", "xz", "yz"};
+  const olxstr u_legend[] = {"xx", "yy", "zz", "yz", "xz", "xy"};
   const olxstr c_legend[] = {"x", "y", "z"};
   //const UTerm Um[3][3] = {{0, 3, 4},{3, 1, 5},{4, 5, 2}};
   const UTerm Um[3][3] = {{0, 5, 4},{5, 1, 3},{4, 3, 2}};

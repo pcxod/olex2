@@ -29,17 +29,17 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   if( sl.Count() < 10 )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid file content");
   toks.Strtok(sl[3], ' ');
-  size_t cnt = toks[0].ToSizeT();
+  const size_t param_cnt = toks[0].ToSizeT();
   TSizeList indexes;
   TDoubleList diag;
   olxdict<size_t, eveci, TPrimitiveComparator> Us;
   olxdict<size_t, SiteSymmCon, TPrimitiveComparator> SiteConstraints;
-  if( cnt == 0 || sl.Count() < cnt+11 )  
+  if( param_cnt == 0 || sl.Count() < param_cnt+11 )  
     throw TFunctionFailedException(__OlxSourceInfo, "empty/invalid matrix file");
   olxstr last_atom_name;
   TCAtom* atom;
   size_t ua_index;
-  for( size_t i=1; i < cnt; i++ )  { // skipp OSF
+  for( size_t i=1; i < param_cnt; i++ )  { // skipp OSF
     toks.Clear();
     toks.Strtok(sl[i+7], ' ');
     if( toks[0].ToInt() != i+1 || toks.Count() != 6 )  {
@@ -123,10 +123,10 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       v[ua_index] = i;
     }
   }
-  TDoubleList all_vcov((cnt+1)*cnt/2);
+  TDoubleList all_vcov((param_cnt+1)*param_cnt/2);
   size_t vcov_cnt = 0;
   for( size_t i=0; i < sl.Count(); i++ )  {
-    const size_t ind = i+cnt+10;
+    const size_t ind = i+param_cnt+10;
     if( sl[ind].Length() < 8 )  break;
     const size_t ll = sl[ind].Length();
     size_t s_ind = 0;
@@ -145,7 +145,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
         size_t iy = indexes[i];
         if( ix > iy )
           olx_swap(ix, iy);
-        const size_t ind = ix*(2*cnt-ix-1)/2+iy;
+        const size_t ind = ix*(2*param_cnt-ix-1)/2+iy;
         data[i][j] = all_vcov[ind]*diag[i]*diag[j];  
       }
     }
@@ -162,33 +162,84 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   }
   // expand refined parameters into crystallographic ones
   try  {
+    const mat3d& f2c = au.GetCellToCartesian();
+    const mat3d& h2c = au.GetHklToCartesian();
+    const double Ot[] = {
+      h2c[0].QLength(), h2c[1].QLength(), h2c[2].QLength(),
+      sqrt(Ot[1]*Ot[2]), sqrt(Ot[0]*Ot[2]), sqrt(Ot[0]*Ot[1])
+    };
+    evecd Ut(6);
+    Ut[0] = (f2c[0][0]*f2c[0][0]);
+    Ut[1] = (f2c[1][0]*f2c[1][0] + f2c[1][1]*f2c[1][1]);
+    Ut[2] = (f2c[2][0]*f2c[2][0] + f2c[2][1]*f2c[2][1] + f2c[2][2]*f2c[2][2]);
+    Ut[3] = 2*(f2c[0][0]*f2c[1][0]);
+    Ut[4] = 2*(f2c[0][0]*f2c[2][0]);
+    Ut[5] = 2*(f2c[1][0]*f2c[2][0] + f2c[1][1]*f2c[2][1]);
+    Ut *= 1./3;
     evecd Q(6), E(6);
+    ematd Um(6,6);
     for( size_t i=0; i < au.AtomCount(); i++ )  {
       TCAtom& a = au.GetAtom(i);
-      if( a.EquivCount() == 0 )  continue;
       const size_t ssci = SiteConstraints.IndexOf(a.GetId());
       const SiteSymmCon& ssc = (ssci == InvalidIndex ?
         SiteConstraints.Add(atom->GetId(), atom->GetSiteConstraints()) :
         SiteConstraints.GetValue(ssci));
-      for( size_t j=0; j < 3; j++ )  {
-        if( ssc.map[6+j].param >= 0 )
-          a.ccrdEsd()[j] = a.ccrdEsd()[ssc.map[6+j].param]*ssc.map[6+j].multiplier;
-        else
-          a.ccrdEsd()[j] = 0;
+      const bool constrained = ssc.IsConstrained();
+      if( constrained )  {
+        for( size_t j=0; j < 3; j++ )  {
+          if( ssc.map[6+j].param >= 0 )
+            a.ccrdEsd()[j] = a.ccrdEsd()[ssc.map[6+j].param]*ssc.map[6+j].multiplier;
+          else
+            a.ccrdEsd()[j] = 0;
+        }
       }
       TEllipsoid* e = a.GetEllipsoid();
       if( e == NULL )  continue;
-      for( size_t j=0; j < 6; j++ )  {
-        if( ssc.map[j].param >= 0 )  {
-          e->SetEsd(j, olx_abs(e->GetEsd(ssc.map[j].param)*ssc.map[j].multiplier));
-          e->SetValue(j, e->GetValue(ssc.map[j].param)*ssc.map[j].multiplier);
+      if( constrained )  {
+        for( size_t j=0; j < 6; j++ )  {
+          if( ssc.map[j].param >= 0 )  {
+            e->SetEsd(j, olx_abs(e->GetEsd(ssc.map[j].param)*ssc.map[j].multiplier));
+            e->SetValue(j, e->GetValue(ssc.map[j].param)*ssc.map[j].multiplier);
+          }
+          else
+            e->SetEsd(j, 0);
         }
-        else
-          e->SetEsd(j, 0);
+        e->GetQuad(Q, E);
+        e->Initialise(au.UcifToUcart(Q), E);
+        a.SetUiso((Q[0]+Q[2]+Q[3])/3);
       }
-      e->GetQuad(Q, E);
-      au.UcifToUcart(Q);
-      e->Initialise(Q, E);
+      // get Uiso esd...
+      const size_t ui = Us.IndexOf(a.GetId());
+      if( ui == InvalidIndex )  continue;
+      eveci& v = Us.GetValue(ui);
+      bool failed = false;
+      for( int vi = 0; vi < 6; vi++ )  {  // build U* esd's VcV
+        Um[vi][vi] = olx_sqr(e->GetEsd(vi)*Ot[vi]);
+        for( int vj = vi+1; vj < 6; vj++ )  {
+          if( ssc.map[vi].param < 0 || ssc.map[vj].param < 0 )  {
+            Um[vi][vj] = Um[vj][vi] = 0;
+            continue;
+          }
+          int x = v[ssc.map[vi].param];
+          int y = v[ssc.map[vj].param];
+          if( x == -1 || y == -1 )  {
+            failed = true;
+            TBasicApp::GetLog().Error(olxstr("Failed to evaluate esd of Uiso..."));
+            break;
+          }
+          if( x > y )
+            olx_swap(x, y);
+          const size_t ind = x*(2*param_cnt-x-1)/2+y;
+          Um[vi][vj] = Um[vj][vi] = all_vcov[ind]*e->GetEsd(vi)*e->GetEsd(vj)*Ot[vi]*Ot[vj];
+        }
+        if( failed )  break;
+      }
+      if( !failed )  {
+        Um.SwapRows(3,5);  //put into the right order for Ut
+        Um.SwapCols(3,5);
+        const double Ueq = (Um*Ut).DotProd(Ut);
+        a.SetUisoEsd(sqrt(Ueq));
+      }
     }
   }
   catch(const TExceptionBase& e)  {
