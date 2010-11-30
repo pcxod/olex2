@@ -140,6 +140,16 @@ void TMainForm::BasisVChange()  {
   OnStateChange.Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
+void TMainForm::GridVChange()  {
+  TStateChange sc(prsGridVis, FXApp->XGrid().IsVisible());
+  OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+}
+//..............................................................................
+void TMainForm::FrameVChange()  {
+  TStateChange sc(prsGridVis, FXApp->Get3DFrame().IsVisible());
+  OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+}
+//..............................................................................
 void TMainForm::OnCellVisible(wxCommandEvent& event)  {
   FXApp->SetCellVisible(!FXApp->IsCellVisible());
 }

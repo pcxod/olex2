@@ -235,6 +235,22 @@ namespace olx_vec  {
     }
     return o;
   }
+  template <class OutT, class VecAT, class VecBT>
+  OutT& MulVec(const VecAT& v1, const VecBT& v2, OutT& o)  {
+    if( v1.Count() != v2.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "size");
+    for( size_t i = 0; i < v1.Count(); i++ )
+      o[i] = v1[i]*v2[i];
+    return o;
+  }
+  template <class VecAT, class VecBT>
+  VecAT& MulSelfVec(VecAT& v1, const VecBT& v2)  {
+    if( v1.Count() != v2.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "size");
+    for( size_t i = 0; i < v1.Count(); i++ )
+      v1[i] *= v2[i];
+    return v1;
+  }
 };  // end namespace olx_vec
 namespace olx_mat  {
   template <class OutT, class MatAT, class MatBT>

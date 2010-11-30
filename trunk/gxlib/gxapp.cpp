@@ -638,7 +638,7 @@ void TGXApp::Quality(const short V)  {
   Draw();
 }
 //..............................................................................
-bool TGXApp::IsCellVisible()  const {
+bool TGXApp::IsCellVisible() const {
   return IsGraphicsVisible(FDUnitCell);
 }
 //..............................................................................
@@ -3143,10 +3143,10 @@ bool TGXApp::ShowGrid(bool v, const olxstr& FN)  {
       Log->Error("Cannot display empty grid");
       return false;
     }
-    FXGrid->SetVisible(true);
+    SetGraphicsVisible(FXGrid, true);
   }
   else
-    FXGrid->SetVisible(false);
+    SetGraphicsVisible(FXGrid, false);
   return v;
 }
 //..............................................................................

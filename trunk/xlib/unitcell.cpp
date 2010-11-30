@@ -89,8 +89,8 @@ TEValue<double> TUnitCell::CalcVolumeEx() const {
   const vec3d ange(au.Angles()[0].GetE()*k, au.Angles()[1].GetE()*k, au.Angles()[2].GetE()*k);
   const vec3d ax(au.Axes()[0].GetV(), au.Axes()[1].GetV(), au.Axes()[2].GetV());
   const vec3d axe(au.Axes()[0].GetE(), au.Axes()[1].GetE(), au.Axes()[2].GetE());
-  const vec3d cs(cos(ang[0]), cos(ang[1]), cos(ang[2]) );
-  const vec3d ss(sin(ang[0]), sin(ang[1]), sin(ang[2]) );
+  const vec3d cs(cos(ang[0]), cos(ang[1]), cos(ang[2]));
+  const vec3d ss(sin(ang[0]), sin(ang[1]), sin(ang[2]));
   const double t = sqrt(1-cs.QLength() + 2*cs.Prod());
   const double r = ax.Prod();
   const double v = r*t;

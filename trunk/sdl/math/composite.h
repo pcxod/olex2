@@ -59,6 +59,31 @@ public:
   const NumT& operator [] (size_t i) const {  return Get(i);  }
 };
 
+/* vector const plain array */
+template <typename NumT> class ConstPlainVector  {
+  const NumT* data;
+  const size_t size;
+public:
+  ConstPlainVector(const NumT* _data, size_t sz) :	data(_data) , size(sz) {}
+  size_t Count() const {  return size;  }
+  const NumT& Get(size_t i) const {  return  data[i];  }
+  const NumT& operator [] (size_t i) const {  return Get(i);  }
+};
+
+/* vector plain array */
+template <typename NumT> class PlainVector  {
+  NumT* data;
+  const size_t size;
+public:
+  PlainVector(const NumT& _data, size_t sz) :	data(_data) , size(sz) {}
+  size_t Count() const {  return size;  }
+  const NumT& Get(size_t i) const {  return  data[i];  }
+  NumT& Get(size_t i)  {  return  data[i];  }
+  void Set(size_t i, const NumT& v)  {  data[i] = v;  }
+  NumT& operator [] (size_t i)  {  return Get(i);  }
+  const NumT& operator [] (size_t i) const {  return Get(i);  }
+};
+
 /* matrix based on a vector */
 template <class VecT, typename NumT> class VectorMatrix  {
   const VecT& vector;
