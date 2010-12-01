@@ -661,20 +661,20 @@ olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
   olxstr src_mat;
   if( shelx_exists && smtbx_exists )  {
     if( TEFile::FileAge(shelx_fn) > TEFile::FileAge(smtbx_fn) )  {
-      vcovc.ReadShelxMat(shelx_fn, XFile().GetAsymmUnit());
+      vcovc.ReadShelxMat(shelx_fn);
       src_mat = "shelxl";
     }
     else  {
       src_mat = "smtbx";
-      vcovc.ReadSmtbxMat(smtbx_fn, XFile().GetAsymmUnit());
+      vcovc.ReadSmtbxMat(smtbx_fn);
     }
   }
   else if( shelx_exists )  {
-    vcovc.ReadShelxMat(shelx_fn, XFile().GetAsymmUnit());
+    vcovc.ReadShelxMat(shelx_fn);
     src_mat = "shelxl";
   }
   else if( smtbx_exists )  {
-    vcovc.ReadSmtbxMat(smtbx_fn, XFile().GetAsymmUnit());
+    vcovc.ReadSmtbxMat(smtbx_fn);
     src_mat = "smtbx";
   }
   else

@@ -2746,7 +2746,7 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMa
 //..............................................................................
 void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
-  VcoVContainer vcovc;
+  VcoVContainer vcovc(xapp.XFile().GetAsymmUnit());
   try  {
     olxstr src_mat = xapp.InitVcoV(vcovc);
     xapp.GetLog() << "Using " << src_mat << " matrix for the calculation\n";

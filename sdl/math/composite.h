@@ -84,6 +84,30 @@ public:
   const NumT& operator [] (size_t i) const {  return Get(i);  }
 };
 
+/* vector/list slice */
+template <class VT, typename NumT> class VectorSlice {
+  const VT& data;
+  const size_t offset, size;
+public:
+  VectorSlice(const VT& _data, size_t off, size_t sz) : data(_data), offset(off), size(sz)  {}
+  size_t Count() const {  return size;  }
+  const NumT& Get(size_t i) const {  return  data[i+offset];  }
+  NumT& Get(size_t i)  {  return  data[i+offset];  }
+  void Set(size_t i, const NumT& v)  {  data[i+offset] = v;  }
+  NumT& operator [] (size_t i)  {  return Get(i);  }
+  const NumT& operator [] (size_t i) const {  return Get(i);  }
+};
+/* const vector/list slice */
+template <class VT, typename NumT> class ConstVectorSlice {
+  const VT& data;
+  const size_t offset, size;
+public:
+  ConstVectorSlice(const VT& _data, size_t off, size_t sz) : data(_data), offset(off), size(sz)  {}
+  size_t Count() const {  return size;  }
+  const NumT& Get(size_t i) const {  return  data[i+offset];  }
+  const NumT& operator [] (size_t i) const {  return Get(i);  }
+};
+
 /* matrix based on a vector */
 template <class VecT, typename NumT> class VectorMatrix  {
   const VecT& vector;

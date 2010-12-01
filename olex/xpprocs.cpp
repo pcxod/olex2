@@ -5705,8 +5705,8 @@ TNetwork::AlignInfo MatchAtomPairsQT(const TTypeList< AnAssociation2<TSAtom*,TSA
 TNetwork::AlignInfo MatchAtomPairsQTEsd(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
   bool TryInversion, double (*weight_calculator)(const TSAtom&))
 {
-  VcoVContainer vcovc;
   TXApp& xapp = TXApp::GetInstance();
+  VcoVContainer vcovc(xapp.XFile().GetAsymmUnit());
   xapp.GetLog() << "Using " << xapp.InitVcoV(vcovc) << " matrix for the calculation\n";
   TSAtomPList atoms_out;
   vec3d_alist crds_out;
@@ -8557,7 +8557,7 @@ int Esd_ThSort( const Esd_Tetrahedron* th1, const Esd_Tetrahedron* th2 )  {
   return 0;
 }
 void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  VcoVContainer vcovc;
+  VcoVContainer vcovc(FXApp->XFile().GetAsymmUnit());
   try  {
     olxstr src_mat = FXApp->InitVcoV(vcovc);
     FXApp->GetLog() << "Using " << src_mat << " matrix for the calculation\n";
