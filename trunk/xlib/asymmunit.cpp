@@ -103,10 +103,10 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   Cell2Cartesian = C.GetCellToCartesian();
   Cell2CartesianT = C.Cell2CartesianT;
   Hkl2Cartesian =  C.GetHklToCartesian();
-  UcifToUxyz     = C.UcifToUxyz;
-  UxyzToUcif     = C.UxyzToUcif;
-  UcifToUxyzT    = C.UcifToUxyzT;
-  UxyzToUcifT    = C.UxyzToUcifT;
+  UcifToUxyz = C.UcifToUxyz;
+  UxyzToUcif = C.UxyzToUcif;
+  UcifToUxyzT = C.UcifToUxyzT;
+  UxyzToUcifT = C.UxyzToUcifT;
 
   MaxQPeak = C.GetMaxQPeak();
   MinQPeak = C.GetMinQPeak();
@@ -146,16 +146,16 @@ void  TAsymmUnit::InitMatrices()  {
          sG = sin(FAngles[2].GetV()/180*M_PI),
          sB = sin(FAngles[1].GetV()/180*M_PI),
          sA = sin(FAngles[0].GetV()/180*M_PI);
+  const double Vp = sqrt((1-cA*cA-cB*cB-cG*cG) + 2*(cA*cB*cG));
+  const double V = FAxes[0].GetV()*FAxes[1].GetV()*FAxes[2].GetV()*Vp;
 
-  double V = FAxes[0].GetV() * FAxes[1].GetV() * FAxes[2].GetV()*sqrt( (1-cA*cA-cB*cB-cG*cG) + 2*(cA*cB*cG));
-
-  double cGs = (cA*cB-cG)/(sA*sB),
-         cBs = (cA*cG-cB)/(sA*sG),
-         cAs = (cB*cG-cA)/(sB*sG),
-         as = FAxes[1].GetV()*FAxes[2].GetV()*sA/V,
-         bs = FAxes[0].GetV()*FAxes[2].GetV()*sB/V,
-         cs = FAxes[0].GetV()*FAxes[1].GetV()*sG/V
-         ;
+  const double
+    cGs = (cA*cB-cG)/(sA*sB),
+    cBs = (cA*cG-cB)/(sA*sG),
+    cAs = (cB*cG-cA)/(sB*sG),
+    as = FAxes[1].GetV()*FAxes[2].GetV()*sA/V,
+    bs = FAxes[0].GetV()*FAxes[2].GetV()*sB/V,
+    cs = FAxes[0].GetV()*FAxes[1].GetV()*sG/V;
   // cartesian to cell transformation matrix
   Cartesian2Cell.Null();
   Cartesian2Cell[0][0] =  1./FAxes[0].GetV();
@@ -205,6 +205,27 @@ void  TAsymmUnit::InitMatrices()  {
   UxyzToUcif = Cartesian2Cell * m;
   UxyzToUcifT = UxyzToUcif;
   UxyzToUcif.Transpose();
+  //ematd DG(6,6);
+  //// a b c alpha beta gamma
+  //// o11 o21 o22 o31 o32 o33
+  //DG[0][0] = 1; DG[0][1] = 0; DG[0][2] = 0; DG[0][3] = 0; DG[0][4] = 0; DG[0][5] = 0;
+  //DG[1][0] = 0; DG[1][1] = cG; DG[1][2] = 0; DG[1][3] = 0; DG[1][4] = 0; DG[1][5] = -b*cG;
+  //DG[2][0] = 0; DG[2][1] = sG; DG[2][2] = 0; DG[2][3] = 0; DG[2][4] = 0; DG[2][5] = b*cG;
+
+  //DG[3][0] = 0; DG[3][1] = 0; DG[3][2] = cB; DG[3][3] = 0; DG[3][4] = -c*sB; DG[0][5] = 0;
+  //DG[4][0] = 0; DG[4][1] = 0;
+  //DG[4][2] = (cA-cB*cG)/sG;
+  //DG[4][3] = -c*sA/sG;
+  //DG[4][4] = c*sB*cG/sG;
+  //DG[4][5] = c*(cB + (cB*cG-cA)*cG/(sG*sG));
+  //
+  //
+  //DG[5][0] = 0;
+  //DG[5][1] = 0;
+  //DG[5][2] = Vp/sG;
+  //DG[5][3] = c*sA*(cB*cG-cA)/Vp;
+  //DG[5][4] = c*sB*(cB-cA*cG)/Vp;
+  //DG[0][5] = c*(cA*(-cB-cB*cG*cG+cG*cA)+cG*cB*cB)/(Vp*sG*sG);
 }
 //..............................................................................
 void TAsymmUnit::InitData()  {
