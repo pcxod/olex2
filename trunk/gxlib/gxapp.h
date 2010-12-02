@@ -334,7 +334,8 @@ protected:
        FXGrowLinesVisible,
        XGrowPointsVisible,
        FXPolyVisible,
-       DisplayFrozen;
+       DisplayFrozen,
+       ZoomAfterModelBuilt;
   short FGrowMode, PackMode;
 public:
   TXGlLabels& GetLabels() const {  return *FLabels; }
@@ -364,6 +365,7 @@ public:
   void ClearLabels();
 
   DefPropP(double, DeltaV)
+  DefPropBIsSet(ZoomAfterModelBuilt)
   //
 //..............................................................................
 // XFile interface

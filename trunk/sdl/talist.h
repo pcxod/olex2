@@ -86,6 +86,10 @@ public:
     return Obj;
   }
 //..............................................................................
+  TArrayList& operator << (const T& o) {  Add(o);  return *this;  }
+//..............................................................................
+  TArrayList& operator << (const TArrayList& l) {  return AddList(l);  }
+//..............................................................................
   T& Insert(size_t index, const T& Obj)  {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount+1);

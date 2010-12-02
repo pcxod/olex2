@@ -61,7 +61,7 @@ public:
 
 /* vector const plain array */
 template <typename NumT> class ConstPlainVector  {
-  const NumT* data;
+  NumT const* data;
   const size_t size;
 public:
   ConstPlainVector(const NumT* _data, size_t sz) :	data(_data) , size(sz) {}
@@ -85,27 +85,27 @@ public:
 };
 
 /* vector/list slice */
-template <class VT, typename NumT> class VectorSlice {
+template <class VT, typename ItemT> class Slice {
   const VT& data;
   const size_t offset, size;
 public:
-  VectorSlice(const VT& _data, size_t off, size_t sz) : data(_data), offset(off), size(sz)  {}
+  Slice(const VT& _data, size_t off, size_t sz) : data(_data), offset(off), size(sz)  {}
   size_t Count() const {  return size;  }
-  const NumT& Get(size_t i) const {  return  data[i+offset];  }
-  NumT& Get(size_t i)  {  return  data[i+offset];  }
-  void Set(size_t i, const NumT& v)  {  data[i+offset] = v;  }
-  NumT& operator [] (size_t i)  {  return Get(i);  }
-  const NumT& operator [] (size_t i) const {  return Get(i);  }
+  const ItemT& Get(size_t i) const {  return  data[i+offset];  }
+  ItemT& Get(size_t i)  {  return  data[i+offset];  }
+  void Set(size_t i, const ItemT& v)  {  data[i+offset] = v;  }
+  ItemT& operator [] (size_t i)  {  return Get(i);  }
+  const ItemT& operator [] (size_t i) const {  return Get(i);  }
 };
 /* const vector/list slice */
-template <class VT, typename NumT> class ConstVectorSlice {
+template <class VT, typename ItemT> class ConstSlice {
   const VT& data;
   const size_t offset, size;
 public:
-  ConstVectorSlice(const VT& _data, size_t off, size_t sz) : data(_data), offset(off), size(sz)  {}
+  ConstSlice(const VT& _data, size_t off, size_t sz) : data(_data), offset(off), size(sz)  {}
   size_t Count() const {  return size;  }
-  const NumT& Get(size_t i) const {  return  data[i+offset];  }
-  const NumT& operator [] (size_t i) const {  return Get(i);  }
+  const ItemT& Get(size_t i) const {  return  data[i+offset];  }
+  const ItemT& operator [] (size_t i) const {  return Get(i);  }
 };
 
 /* matrix based on a vector */

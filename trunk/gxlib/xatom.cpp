@@ -797,14 +797,18 @@ void TXAtom::OnPrimitivesCleared()  {
 }
 //..............................................................................
 void TXAtom::DefRad(short V)  {
-  ValidateAtomParams();
-  FAtomParams->SetParam("DefR", V, true);
+  if( V != 0 )  {
+    ValidateAtomParams();
+    FAtomParams->SetParam("DefR", V, true);
+  }
   FDefRad = V;
 }
 //..............................................................................
 void TXAtom::DefDS(short V)  {
-  ValidateAtomParams();
-  FAtomParams->SetParam("DefDS", V, true);
+  if( V != 0 )  {
+    ValidateAtomParams();
+    FAtomParams->SetParam("DefDS", V, true);
+  }
   FDefDS = V;
 }
 //..............................................................................
@@ -819,8 +823,10 @@ void TXAtom::DefZoom(float V)  {
 }
 //..............................................................................
 void TXAtom::TelpProb(float V)  {
-  ValidateAtomParams();
-  FAtomParams->SetParam("TelpP", V, true);
+  if( V != 0 )  {
+    ValidateAtomParams();
+    FAtomParams->SetParam("TelpP", V, true);
+  }
   FTelpProb = V;
 }
 //..............................................................................

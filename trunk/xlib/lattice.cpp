@@ -2060,10 +2060,9 @@ void TLattice::ToDataItem(TDataItem& item) const  {
   }
   // initialise fragment tags
   size_t frag_tag = 0;
-  for( size_t i=0; i < Fragments.Count(); i++ )  {
-    //if( Fragments[i]->NodeCount() == 0 )  continue;
+  Network->SetTag(-1);
+  for( size_t i=0; i < Fragments.Count(); i++ )
     Fragments[i]->SetTag(frag_tag++);
-  }
   // save satoms - only the original CAtom Tag and the generating matrix tag
   TDataItem& atoms = item.AddItem("Atoms");
   for( size_t i=0; i < Atoms.Count(); i++ )  {
@@ -2078,10 +2077,8 @@ void TLattice::ToDataItem(TDataItem& item) const  {
   }
   // save fragments
   TDataItem& frags = item.AddItem("Fragments");
-  for( size_t i=0; i < Fragments.Count(); i++ )  {
-    //if( Fragments[i]->NodeCount() == 0 )  continue;
+  for( size_t i=0; i < Fragments.Count(); i++ )
     Fragments[i]->ToDataItem(frags.AddItem("Fragment"));
-  }
   // restore original matrix tags 
   for( size_t i=0; i < mat_c; i++ )
     Matrices[i]->SetRawId(m_tags[i]);
@@ -2100,7 +2097,7 @@ void TLattice::ToDataItem(TDataItem& item) const  {
   }
   TDataItem& planes = item.AddItem("Planes");
   for( size_t i=0; i < valid_planes.Count(); i++ )
-    valid_planes[i]->ToDataItem(planes.AddItem("Plane"));  
+    valid_planes[i]->ToDataItem(planes.AddItem("Plane"));
 }
 //..............................................................................
 void TLattice::FromDataItem(TDataItem& item)  {
@@ -2119,7 +2116,7 @@ void TLattice::FromDataItem(TDataItem& item)  {
   }
   // precreate fragments
   const TDataItem& frags = item.FindRequiredItem("Fragments");
-  Fragments.SetCapacity( frags.ItemCount() );
+  Fragments.SetCapacity(frags.ItemCount());
   for( size_t i=0; i < frags.ItemCount(); i++ )
     Fragments.Add(new TNetwork(this, NULL));
   // precreate bonds
@@ -2136,7 +2133,7 @@ void TLattice::FromDataItem(TDataItem& item)  {
     Atoms[i]->FromDataItem(atoms.GetItem(i), *this);
   // load bonds
   for( size_t i=0; i < bonds.ItemCount(); i++ )
-    Bonds[i]->FromDataItem(bonds.GetItem(i), Fragments);
+    Bonds[i]->FromDataItem(bonds.GetItem(i), *this);
   // load fragments
   for( size_t i=0; i < frags.ItemCount(); i++ )
     Fragments[i]->FromDataItem(frags.GetItem(i));
@@ -2163,6 +2160,9 @@ void TLattice::FromDataItem(TDataItem& item)  {
     else
       p._SetDefId(di);
   }
+  GetAsymmUnit()._UpdateConnInfo();
+  GetUnitCell().FindSymmEq();
+  //GetUnitCell().FindSymmEq();
   BuildAtomRegistry();
 }
 //..............................................................................
