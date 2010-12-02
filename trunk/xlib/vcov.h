@@ -129,7 +129,7 @@ protected:
       CellEsd& base;
       const Evaluator& eval;
       Functor(CellEsd& _base, const Evaluator& e) : base(_base), eval(e)  {}
-      double calc()  {
+      double calc() const {
         base.base.Orthogonalise(base.fcrds, base.points);
         return eval.calc();
       }
@@ -419,7 +419,7 @@ protected:
   }
   //http://en.wikipedia.org/wiki/Numerical_differentiation
   template <class VecT, class OutVecT, class Evaluator> 
-  void CalcDiff(VecT& vars, OutVecT& df, Evaluator& e)  {
+  void CalcDiff(VecT& vars, OutVecT& df, const Evaluator& e)  {
     static const double delta=sqrt(2.2e-16);
     for( size_t i=0; i < vars.Count(); i++ )  {
       vars[i] += 2*delta;
@@ -444,7 +444,7 @@ protected:
       base.GetVcoV(atoms, m);
       base.AtomsToPoints(atoms, points);
     }
-    template <class Eval> TEValue<double> DoCalc(Eval& e)  {
+    template <class Eval> TEValue<double> DoCalc(const Eval& e)  {
       return base.DoCalcForPoints(points, m, e);
     }
   };
@@ -461,14 +461,15 @@ protected:
       for( size_t i=0; i < weights.Count(); i++ )
         weights[i] = 1.0;
     }
-    template <class Eval> TEValue<double> DoCalc(Eval& e)  {
+    template <class Eval> TEValue<double> DoCalc(const Eval& e)  {
       return base.DoCalcForPoints(points, m, e);
     }
   };
   template <class list, typename eval> 
-  TEValue<double> DoCalcForPoints(list& points, const mat3d_list& vcov, eval& e)  {
+  TEValue<double> DoCalcForPoints(list& points, const mat3d_list& vcov, const eval& e)  {
     TDoubleList df(points.Count()*3);
-    CalcDiff(CompositeVector<list, double>(points), df, e);
+    CompositeVector<list, double> pvec(points);
+    CalcDiff(pvec, df, e);
     CellEsd ced(*this, points);
     return TEValue<double>(e.calc(),
       sqrt(CalcEsd(points.Count(), vcov, df) + ced.DoCalc(e)));
