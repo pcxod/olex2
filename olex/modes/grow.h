@@ -30,9 +30,11 @@ public:
     TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
     TGlXApp::GetGXApp()->SetGrowMode(mode, AtomsToGrow);
     TGlXApp::GetGXApp()->SetXGrowLinesVisible(true);
+    TGlXApp::GetGXApp()->SetZoomAfterModelBuilt(false);
     return true;
   }
   void Finalise() {
+    TGlXApp::GetGXApp()->SetZoomAfterModelBuilt(true);
     TGlXApp::GetGXApp()->SetXGrowLinesVisible(false);
   }
   virtual bool OnObject(AGDrawObject& obj)  {

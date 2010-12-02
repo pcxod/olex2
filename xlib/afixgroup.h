@@ -12,7 +12,7 @@ class TAfixGroup : public ACollectionItem {
   TCAtomPList Dependent;
   TAfixGroups& Parent;
 public:
-  TAfixGroup(TAfixGroups& parent) : Parent(parent) {}
+  TAfixGroup(TAfixGroups& parent) : Parent(parent), D(0), Sof(0), U(0) {}
   TAfixGroup(TAfixGroups& parent, size_t id, TCAtom* pivot, int afix, double d = 0, double sof = 0, double u = 0) :
       Parent(parent), Id(id), Pivot(pivot), D(d), Afix(afix), Sof(sof), U(u)  {  
     if( pivot != NULL )  {

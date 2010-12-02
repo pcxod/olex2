@@ -29,11 +29,10 @@
 //---------------------------------------------------------------------------
 TNetwork::TNetwork(TLattice* P, TNetwork *N) : TBasicNode<TNetwork, TSAtom, TSBond>(N)  {
   Lattice = P;
+  SetTag(-1);
 }
 //..............................................................................
-TNetwork::~TNetwork()  {
-  return;
-}
+TNetwork::~TNetwork()  {}
 //..............................................................................
 // sorts atoms according to the distcance from {0,0,0}
 int AtomsSortByDistance(const TSAtom* A, const TSAtom* A1)  {
@@ -349,7 +348,7 @@ void TNetwork::Disassemble(const AtomRegistry& ar, TSAtomPList& atoms, TNetPList
           }
         }
         if( !process )  continue;
-        TSBond* B = new TSBond(&atoms[i]->GetNetwork());
+        TSBond* B = new TSBond(&Lattice->GetNetwork());
         B->SetType(sotHBond);
         B->SetA(*atoms[i]);
         B->SetB(*a);

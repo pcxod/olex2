@@ -248,7 +248,7 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this),
   FQPeaksVisible = FHydrogensVisible = FStructureVisible = FHBondsVisible = true;
   XGrowPointsVisible = FXGrowLinesVisible = FQPeakBondsVisible = false;
   DisplayFrozen = MainFormVisible = false;
-  FXPolyVisible = true;
+  ZoomAfterModelBuilt = FXPolyVisible = true;
   DeltaV = 3;
   const TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
 #ifdef __WXWIDGETS__
@@ -1360,7 +1360,8 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
         AlignOverlayedXFiles();
         UpdateBonds();
       }
-      CenterView(true);
+      if( ZoomAfterModelBuilt )
+        CenterView(true);
     }
   }
   else if( MsgId == ID_OnFileLoad )  {
@@ -4129,6 +4130,10 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   ClearLabels();
   ClearGroupDefinitions();
   OverlayedXFiles.Clear();
+  TXAtom::TelpProb(0);  //force re-reading
+  TXAtom::DefRad(0);
+  TXAtom::DefDS(0);
+
   FXFile->FromDataItem(item.FindRequiredItem("XFile"));
   TDataItem* overlays = item.FindItem("Overlays");
   if( overlays != NULL )  {

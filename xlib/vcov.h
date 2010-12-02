@@ -93,35 +93,17 @@ public:
 
 class VcoVContainer {
   VcoVMatrix vcov;
-  TDoubleList weights[3];
-  vec3d plane_param[3], plane_center[3];
   evecd cell, celle;  // celle can be extended to matrix once covariances are available
   TAsymmUnit& au;
-  struct TwoInts  {
-    size_t a, b;
-  };
 public:
   template <class atom_list> void ProcessSymmetry(const atom_list& atoms, mat3d_list& ms)  {
-    mat3d_list left(atoms.Count()), right(atoms.Count());
-    size_t mc = 0;
-    for( size_t i=0; i < atoms.Count(); i++ )  {
-      const mat3d& m = atoms[i]->GetMatrix(0).r;
-      if( m.IsI() )  continue;
-      left.SetCCopy(i, m); 
-      right.SetCCopy(i, m).Transpose();
-      mc++;
-    }
-    if( mc == 0 )  return;
+    mat3d_alist mt(atoms.Count());
+    for( size_t i=0; i < atoms.Count(); i++ )
+      mt[i] = mat3d::Transpose(atoms[i]->GetMatrix(0).r);
     for( size_t i=0; i < atoms.Count(); i++ )  {
       for( size_t j=0; j < atoms.Count(); j++ )  {
-        if( !left.IsNull(i) )  {
-          size_t l_ind = i*atoms.Count() + j;
-          ms[l_ind] = left[i]*ms[l_ind];
-        }
-        if( !right.IsNull(i) )  {
-          size_t r_ind = j*atoms.Count() + i;
-          ms[r_ind] *= right[i];
-        }
+        const size_t ind = i*atoms.Count() + j;
+        ms[ind] = (mat3d(atoms[i]->GetMatrix(0).r)*ms[ind])*mt[j];
       }
     }
   }
@@ -130,7 +112,7 @@ public:
     vcov.FindVcoV(as, m);
     ProcessSymmetry(as, m);
     mat3d c2f(as[0]->CAtom().GetParent()->GetCellToCartesian());
-    mat3d c2f_t( mat3d::Transpose(as[0]->CAtom().GetParent()->GetCellToCartesian()) );
+    mat3d c2f_t(mat3d::Transpose(as[0]->CAtom().GetParent()->GetCellToCartesian()));
     for( size_t i=0; i < m.Count(); i++ )
       m[i] = c2f_t*m[i]*c2f;
   }
@@ -241,11 +223,16 @@ protected:
     }
   };
   // alignment RMSD
-  double _calcAllignmentRMSD(const vec3d_alist& points)  {
-    align::ListsToPairAdaptor<vec3d_alist, TDoubleList> l2p(points, weights[0]);
-    align::out ao = align::FindAlignmentQuaternions(l2p);
-    return align::CalcRMSD(l2p, ao);
-  }
+  struct AlignmentRMSD  {
+    const vec3d_alist& points;
+    const TDoubleList& weights;
+    AlignmentRMSD(const vec3d_alist& pts, const TDoubleList& wghts) : points(pts), weights(wghts)  {}
+    double calc() const {
+      align::ListsToPairAdaptor<vec3d_alist, TDoubleList> l2p(points, weights);
+      align::out ao = align::FindAlignmentQuaternions(l2p);
+      return align::CalcRMSD(l2p, ao);
+    }
+  };
   // plane to atom distance
   template <class planeT, class pointT> struct PlaneToPointDistance  {
     const planeT& plane;
@@ -263,10 +250,10 @@ protected:
     PlaneInfo evaluate() const {  return CalcPlane(values, weights);  }
   };
   // plane centroid to plane centroid distance
-  template <class VT, class WT> struct PointEvaluator  {
+  template <class VT, class WT> struct CentroidEvaluator  {
     const VT& values;
     const WT& weights;
-    PointEvaluator(const VT& _v, const WT& _w) : values(_v), weights(_w)  {}
+    CentroidEvaluator(const VT& _v, const WT& _w) : values(_v), weights(_w)  {}
     vec3d evaluate() const {
       double weight = 0;
       vec3d point ;
@@ -282,15 +269,15 @@ protected:
     PointProxy(vec3d& v) : point(v)  {}
     const vec3d& evaluate() const {  return point;  }
   };
-  struct VectorEvaluator  {
+  struct VectorProxy  {
     const vec3d &a, &b;
-    VectorEvaluator(const vec3d& _a, const vec3d& _b) : a(_a), b(_b)  {}
+    VectorProxy(const vec3d& _a, const vec3d& _b) : a(_a), b(_b)  {}
     vec3d evaluate() const {  return b-a;  }
   };
-  template <class VT, class WT> struct NormalEvaluator  {
+  template <class VT, class WT> struct PlaneNormalEvaluator  {
     const VT& values;
     const WT& weights;
-    NormalEvaluator(const VT& _v, const WT& _w) : values(_v), weights(_w)  {}
+    PlaneNormalEvaluator(const VT& _v, const WT& _w) : values(_v), weights(_w)  {}
     vec3d evaluate() const {  return CalcPlane(values, weights).normal;  }
   };
   template <class VT, class WT> struct Plane  {
@@ -357,18 +344,19 @@ protected:
   // octahedral distortion (in degrees) using best line approach
   struct OctahedralDistortionBL  {
     const vec3d_alist& points;
-    OctahedralDistortionBL(const vec3d_alist& _points) : points(_points)  {}
+    vec3d_alist pl;
+    TDoubleList weights;
+    OctahedralDistortionBL(const vec3d_alist& _points) : points(_points), pl(3), weights(3)  {
+      for( size_t i=0; i < weights.Count(); i++ )
+        weights[i] = 1.0;
+    }
     double calc() const {
       // centroid for first face
       const vec3d c1 = (points[1] + points[3] + points[5])/3;
       // centroid for second face
       const vec3d c2 = (points[2] + points[4] + points[6])/3;
-      vec3d_alist p1(3);
-      TDoubleList weights(3);
-      for( size_t i=0; i < weights.Count(); i++ )
-        weights[i] = 1.0;
-      p1[0] = c1;  p1[1] = points[0];  p1[2] = c2;
-      const PlaneInfo pi = CalcPlane(p1, weights, 2);
+      pl[0] = c1;  pl[1] = points[0];  pl[2] = c2;
+      const PlaneInfo pi = CalcPlane(pl, weights, 2);
       double sum = 0;
       for( short i=0; i < 3; i++ )  {
         vec3d v1 = points[i*2+1] - pi.center;
@@ -383,25 +371,26 @@ protected:
   // octahedral distortion (in degrees), using best plane approach
   struct OctahedralDistortionBP  {
     const vec3d_alist& points;
-    OctahedralDistortionBP(const vec3d_alist& _points) : points(_points)  {}
+    vec3d_alist pl;
+    TDoubleList weights;
+    OctahedralDistortionBP(const vec3d_alist& _points) : points(_points), pl(6), weights(6)  {
+      for( size_t i=0; i < weights.Count(); i++ )
+        weights[i] = 1.0;
+    }
     double calc() const {
       // translation for first face
       const vec3d c1 = (points[1] + points[3] + points[5])/3;
       // translation for second face
       const vec3d c2 = (points[2] + points[4] + points[6])/3;
-      vec3d_alist p1(6);
-      TDoubleList weights(6);
       for( short i=0; i < 3; i++ )  {
-        weights[i*2] = 1.0;  
-        weights[i*2+1] = 1.0;
-        p1[i*2] = (points[i*2+1] - c1).Normalise();
-        p1[i*2+1] = (points[i*2+2] - c2).Normalise();
+        pl[i*2] = (points[i*2+1] - c1).Normalise();
+        pl[i*2+1] = (points[i*2+2] - c2).Normalise();
       }
-      const PlaneInfo pi = CalcPlane(p1, weights, 0);
+      const PlaneInfo pi = CalcPlane(pl, weights, 0);
       double sum = 0;
       for( short i=0; i < 3; i++ )  {
-        const vec3d v1 = p1[i*2] - pi.normal*p1[i*2].DotProd(pi.normal);
-        const vec3d v2 = p1[i*2+1] - pi.normal*p1[i*2+1].DotProd(pi.normal);
+        const vec3d v1 = pl[i*2] - pi.normal*pl[i*2].DotProd(pi.normal);
+        const vec3d v2 = pl[i*2+1] - pi.normal*pl[i*2+1].DotProd(pi.normal);
         sum += olx_abs(M_PI/3-acos(v1.CAngle(v2)));
       }
       return (sum*180/3)/M_PI;
@@ -484,6 +473,12 @@ protected:
     return TEValue<double>(e.calc(),
       sqrt(CalcEsd(points.Count(), vcov, df) + ced.DoCalc(e)));
   }
+  typedef ConstSlice<vec3d_alist,vec3d> crd_slice;
+  typedef ConstSlice<TDoubleList, double> weight_slice;
+  typedef CentroidEvaluator<crd_slice,weight_slice> cnt_et;
+  typedef PointProxy pnt_pt;
+  typedef PlaneEvaluator<crd_slice,weight_slice> pln_et;
+  typedef PlaneNormalEvaluator<crd_slice,weight_slice> plnn_et;
 public:
   VcoVContainer(TAsymmUnit& _au) : au(_au), cell(6), celle(6)  {
     static const double a2r = M_PI/180;
@@ -498,90 +493,50 @@ public:
   void ReadSmtbxMat(const olxstr& fileName) {  vcov.ReadSmtbxMat(fileName, au);  }
   // precise calculation
   TEValue<double> CalcDistance(const TSAtom& a1, const TSAtom& a2) {
-    mat3d_list m;
     TSAtom const* as[] = {&a1,&a2};
-    TSAtomPList satoms(2, as);
-    vec3d_alist pl(2);
-    GetVcoV(satoms, m);
-    AtomsToPoints(satoms, pl);
-    mat3d vcov = m[0] - m[1] - m[2] + m[3];
-    vec3d v = a1.crd() - a2.crd();
+    CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 2));
+    mat3d vcov = ch.m[0] - ch.m[1] - ch.m[2] + ch.m[3];
+    const vec3d v = ch.points[0] - ch.points[1];
     const double val = v.Length();
-    double qesd = (vcov*v).DotProd(v)/(val*val);
-    typedef PointProxy pe_t;
-    qesd += CellEsd(*this, pl).DoCalc(Distance<pe_t,pe_t>(pe_t(pl[0]), pe_t(pl[1])));
+    double qesd = (vcov*v).DotProd(v)/olx_sqr(val);
+    qesd += CellEsd(*this, ch.points).DoCalc(
+      Distance<pnt_pt,pnt_pt>(pnt_pt(ch.points[0]), pnt_pt(ch.points[1])));
     return TEValue<double>(val, sqrt(qesd));
   }
   // cartesian centroid
   TEVPoint<double> CalcCentroid(const TSAtomPList& atoms) {
-    mat3d_list m;
-    GetVcoV(atoms, m);
+    CalcHelper ch(*this, atoms);
     mat3d vcov;
-    vec3d center;
+    vec3d cnt;
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      center += atoms[i]->crd();
+      cnt += atoms[i]->crd();
       for( size_t j=0; j < atoms.Count(); j++ )
-        vcov += m[i*atoms.Count()+j]; 
+        vcov += ch.m[i*atoms.Count()+j]; 
     }
-    vcov *= 1./(atoms.Count()*atoms.Count());
-    center /= atoms.Count();
-    return TEVPoint<double>(center[0], center[1], center[2], sqrt(vcov[0][0]), sqrt(vcov[1][1]), sqrt(vcov[2][2]));
+    vcov *= 1./olx_sqr(atoms.Count());
+    cnt /= atoms.Count();
+    return TEVPoint<double>(cnt[0], cnt[1], cnt[2], sqrt(vcov[0][0]), sqrt(vcov[1][1]), sqrt(vcov[2][2]));
   }
   // fractional centroid
   TEVPoint<double> CalcCentroidF(const TSAtomPList& atoms) {
-    mat3d_list m;
-    GetVcoVF(atoms, m);
+    CalcHelper ch(*this, atoms);
     mat3d vcov;
-    vec3d center;
+    vec3d cnt;
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      center += atoms[i]->ccrd();
+      cnt += atoms[i]->ccrd();
       for( size_t j=0; j < atoms.Count(); j++ )
-        vcov += m[i*atoms.Count()+j]; 
+        vcov += ch.m[i*atoms.Count()+j]; 
     }
-    vcov *= 1./(atoms.Count()*atoms.Count());
-    center /= atoms.Count();
-    return TEVPoint<double>(center[0], center[1], center[2], sqrt(vcov[0][0]), sqrt(vcov[1][1]), sqrt(vcov[2][2]));
-  }
-  // precise calculation
-  TEValue<double> CalcPC2ADistanceP(const TSAtomPList& cent, const TSAtom& a) {
-    mat3d_list m;
-    TSAtomPList satoms(cent);
-    satoms.Add(const_cast<TSAtom*>(&a));
-    GetVcoV(satoms, m);
-    mat3d vcov, nvcov;
-    vec3d center;
-    // var(atom(i)), cov(atom(i),atom(j))
-    for( size_t i=0; i < cent.Count(); i++ )  {
-      center += cent[i]->crd();
-      for( size_t j=0; j < cent.Count(); j++ )
-        vcov += m[i*satoms.Count()+j]; 
-    }
-    vcov *= 1./(cent.Count()*cent.Count());
-    center /= cent.Count();
-    center -= a.crd();
-    // cov( atom(i), a)
-    for( size_t i=0; i < cent.Count(); i++ )  {
-      nvcov += m[i*satoms.Count()+cent.Count()];
-      nvcov += m[m.Count()-cent.Count()-2+i];
-    }
-    nvcov *= 1./cent.Count();
-    vcov -= nvcov;
-    // var(a,a)
-    vcov += m.GetLast();
-    double val = center.Length();
-    double esd = sqrt((vcov*center).DotProd(center))/val;
-    return TEValue<double>(val, esd);
+    vcov *= 1./olx_sqr(atoms.Count());
+    cnt /= atoms.Count();
+    return TEVPoint<double>(cnt[0], cnt[1], cnt[2], sqrt(vcov[0][0]), sqrt(vcov[1][1]), sqrt(vcov[2][2]));
   }
   // analytical, http://salilab.org/modeller/manual/node449.html#SECTION001331200000000000000 
   TEValue<double> CalcAngleA(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3) {
-    mat3d_list m;
     TSAtom const * as[] = {&a1,&a2,&a3};
-    TSAtomPList satoms(3, as);
-    vec3d_alist pl(3);
-    GetVcoV(satoms, m);
-    AtomsToPoints(satoms, pl);
-    vec3d ij = (satoms[0]->crd() - satoms[1]->crd());
-    vec3d kj = (satoms[2]->crd() - satoms[1]->crd());
+    CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 3));
+    vec3d ij = (ch.points[0] - ch.points[1]);
+    vec3d kj = (ch.points[2] - ch.points[1]);
     vec3d_alist grad(3);
     const double ca = ij.CAngle(kj);
     if( olx_abs(ca) >= 1.0-1e-16 )
@@ -593,82 +548,23 @@ public:
     grad[0] = (ij*ca - kj)*oos/ij_l;
     grad[2] = (kj*ca - ij)*oos/kj_l;
     grad[1] = -(grad[0] + grad[2]);
-    double qesd = CalcEsd(3, m, CompositeVector<vec3d_alist, double>(grad));
-    typedef PointProxy pe_t;
-    qesd += CellEsd(*this, pl).DoCalc(Angle3<pe_t,pe_t,pe_t>(pe_t(pl[0]), pe_t(pl[1]), pe_t(pl[2])))/olx_sqr(180/M_PI);
+    double qesd = CalcEsd(3, ch.m, CompositeVector<vec3d_alist, double>(grad));
+    qesd += CellEsd(*this, ch.points).DoCalc(
+      Angle3<pnt_pt,pnt_pt,pnt_pt>(
+        pnt_pt(ch.points[0]), pnt_pt(ch.points[1]), pnt_pt(ch.points[2])))/olx_sqr(180/M_PI);
     const double a = acos(ca);
     return TEValue<double>(a,(qesd < 1e-15 ? 0 : sqrt(qesd)))*=180/M_PI;
   }
   TEValue<double> CalcAngle(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3) {
     TSAtom const * as[] = {&a1,&a2,&a3};
-    TSAtomPList satoms(3, as);
-    CalcHelper ch(*this, satoms);
+    CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 3));
     return ch.DoCalc(
-      Angle3<PointProxy,PointProxy,PointProxy>(
-        PointProxy(ch.points[0]),
-        PointProxy(ch.points[1]),
-        PointProxy(ch.points[2])));
-  }
-  // torsion angle, signless, precise esd, Acta A30, 848, Uri Shmuelli
-  TEValue<double> CalcTAngleP(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
-    mat3d_list m;
-    TSAtom const * as[] = {&a1,&a2,&a3,&a4};
-    TSAtomPList satoms(4, as);
-    vec3d_alist pl(4);
-    GetVcoV(satoms, m);
-    AtomsToPoints(satoms, pl);
-    vec3d u(a2.crd()-a1.crd()),
-      v(a3.crd()-a2.crd()),
-      w(a4.crd()-a3.crd());
-    double h11 = u.QLength(),
-      h22 = v.QLength(),
-      h33 = w.QLength(),
-      h12 = u.DotProd(v),
-      h13 = u.DotProd(w),
-      h23 = v.DotProd(w);
-    double A = h12*h23 - h13*h22;
-    double B = h11*h22 - h12*h12;
-    double C = h22*h33 - h23*h23;
-    const double ctau = A/sqrt(B*C);
-    if( olx_abs(ctau) >= 1.0-1e-16 )
-      return TEValue<double>(ctau < 0 ? 180.0 : 0.0, 0);
-    double tau = acos(ctau);
-    double K = -1.0/(sqrt(B*C)*sin(tau)), esd = 0;
-    double dt[3][3];
-    for( short i=0; i < 3; i++ )  {
-      dt[i][0] = K*(v[i]*h23-w[i]*h22 - A/(2*B)*2*(u[i]*h22-v[i]*h12));
-      dt[i][1] = K*(u[i]*h23+w[i]*h12-2*v[i]*h13 - A/(2*B)*2*(v[i]*h11-u[i]*h12) -A/(2*C)*2*(v[i]*h33-w[i]*h23));
-      dt[i][2] = K*(v[i]*h12-u[i]*h22 - A/(2*C)*2*(w[i]*h22-v[i]*h23));
-    }
-    double dtx[4][3];
-    for( short i=0; i < 3; i++ )  {
-      dtx[0][i] = -dt[0][i];
-      dtx[1][i] = dt[0][i]-dt[1][i];
-      dtx[2][i] = dt[1][i]-dt[2][i];
-      dtx[3][i] = dt[2][i];
-    }
-    for( short k=0; k < 4; k++ )  {
-      for( short n=0; n < 4; n++ )  {
-        for( short s=0; s < 3; s++ )  {
-          for( short q=0; q < 3; q++ )  {
-            esd += dtx[k][s]*dtx[n][q]*m[k*4+n][s][q];
-          }
-        }
-      }
-    }
-    typedef PointProxy pe_t;
-    esd += CellEsd(*this, pl).DoCalc(
-      TorsionAngle<pe_t,pe_t,pe_t,pe_t>(pe_t(pl[0]), pe_t(pl[1]), pe_t(pl[2]), pe_t(pl[3])))/olx_sqr(180.0/M_PI);
-    return TEValue<double>(tau, sqrt(esd))*=180.0/M_PI;
+      Angle3<pnt_pt,pnt_pt,pnt_pt>(pnt_pt(ch.points[0]), pnt_pt(ch.points[1]), pnt_pt(ch.points[2])));
   }
   // analytical, http://salilab.org/modeller/manual/node449.html#SECTION001331200000000000000
   TEValue<double> CalcTAngleA(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
-    mat3d_list m;
     TSAtom const * as[] = {&a1,&a2,&a3,&a4};
-    TSAtomPList satoms(4, as);
-    vec3d_alist pl(4);
-    AtomsToPoints(satoms, pl);
-    GetVcoV(satoms, m);
+    CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 4));
     const vec3d ij = a1.crd() - a2.crd();
     const vec3d kj = a3.crd() - a2.crd();
     const vec3d kl = a4.crd() - a3.crd();
@@ -681,36 +577,33 @@ public:
     grad[3] = -(nk*(kj_l/nk.QLength()));
     grad[1] = grad[0]*(ij.DotProd(kj)/kj_ql -1.0) - grad[3]*(kl.DotProd(kj)/kj_ql);
     grad[2] = grad[3]*(kl.DotProd(kj)/kj_ql -1.0) - grad[0]*(ij.DotProd(kj)/kj_ql);
-    double esd = CalcEsd(4, m, CompositeVector<vec3d_alist, double>(grad));
-    typedef PointProxy pe_t;
-    esd += CellEsd(*this, pl).DoCalc(
-      TorsionAngle<pe_t,pe_t,pe_t,pe_t>(pe_t(pl[0]), pe_t(pl[1]), pe_t(pl[2]), pe_t(pl[3])))/olx_sqr(180.0/M_PI);
+    double esd = CalcEsd(4, ch.m, CompositeVector<vec3d_alist, double>(grad));
+    esd += CellEsd(*this, ch.points).DoCalc(
+      TorsionAngle<pnt_pt,pnt_pt,pnt_pt,pnt_pt>(
+        pnt_pt(ch.points[0]), pnt_pt(ch.points[1]),
+        pnt_pt(ch.points[2]), pnt_pt(ch.points[3])))/olx_sqr(180.0/M_PI);
     const double a = olx_dihedral_angle_signed(a1.crd(), a2.crd(), a3.crd(), a4.crd());
     return TEValue<double>(a, (esd < 1e-15 ? 0 : sqrt(esd))*180/M_PI);
   }
   // torsion angle
   TEValue<double> CalcTAngle(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
-    mat3d_list m;
     TSAtom const * as[] = {&a1,&a2,&a3,&a4};
-    TSAtomPList satoms(4, as);
-    CalcHelper ch(*this, satoms);
+    CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 4));
     return ch.DoCalc(
-      TorsionAngle<PointProxy,PointProxy,PointProxy,PointProxy>(
-        PointProxy(ch.points[0]),
-        PointProxy(ch.points[1]),
-        PointProxy(ch.points[2]),
-        PointProxy(ch.points[3])));
+      TorsionAngle<pnt_pt,pnt_pt,pnt_pt,pnt_pt>(
+        pnt_pt(ch.points[0]),
+        pnt_pt(ch.points[1]),
+        pnt_pt(ch.points[2]),
+        pnt_pt(ch.points[3])));
   }
   // bond to bond angle
   TEValue<double> CalcB2BAngle(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
-    mat3d_list m;
     TSAtom const * as[] = {&a1,&a2,&a3,&a4};
-    TSAtomPList satoms(4, as);
-    CalcHelper ch(*this, satoms);
+    CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 4));
     return ch.DoCalc(
-      Angle2<VectorEvaluator,VectorEvaluator>(
-      VectorEvaluator(ch.points[0], ch.points[1]),
-      VectorEvaluator(ch.points[2], ch.points[3])));
+      Angle2<VectorProxy,VectorProxy>(
+        VectorProxy(ch.points[0], ch.points[1]),
+        VectorProxy(ch.points[2], ch.points[3])));
   }
   // returns rms for the best plane
   TEValue<double> CalcPlane(const TSAtomPList& atoms) {
@@ -719,149 +612,98 @@ public:
   }
   // plane to atom distance
   TEValue<double> CalcP2ADistance(const TSAtomPList& atoms, const TSAtom& a) {
-    TSAtomPList satoms(atoms);
-    satoms.Add(const_cast<TSAtom*>(&a));
-    CalcWHelper ch(*this, satoms);
-    typedef VectorSlice<vec3d_alist,vec3d> crd_slice;
+    CalcWHelper ch(*this, TSAtomPList(atoms) << a);
     return ch.DoCalc(
-      PlaneToPointDistance<PlaneEvaluator<crd_slice,TDoubleList>, PointProxy>(
-      PlaneEvaluator<crd_slice, TDoubleList>(
-        crd_slice(ch.points, 0, atoms.Count()), ch.weights),
-        PointProxy(ch.points.GetLast())));
+      PlaneToPointDistance<pln_et,pnt_pt>(
+      pln_et(crd_slice(ch.points, 0, atoms.Count()), weight_slice(ch.weights, 0, atoms.Count())),
+        pnt_pt(ch.points.GetLast())));
   }
   // plane centroid to atom distance
   TEValue<double> CalcPC2ADistance(const TSAtomPList& plane, const TSAtom& a) {
-    TSAtomPList satoms(plane);
-    satoms.Add(const_cast<TSAtom*>(&a));
-    CalcWHelper ch(*this, satoms);
-    typedef VectorSlice<vec3d_alist,vec3d> crd_slice;
+    CalcWHelper ch(*this, TSAtomPList(plane) << a);
     return ch.DoCalc(
-      Distance<PointEvaluator<crd_slice,TDoubleList>, PointProxy>(
-      PointEvaluator<crd_slice, TDoubleList>(
-        crd_slice(ch.points, 0, plane.Count()), ch.weights),
-        PointProxy(ch.points.GetLast())));
+      Distance<cnt_et,pnt_pt>(
+      cnt_et(crd_slice(ch.points, 0, plane.Count()), weight_slice(ch.weights, 0, plane.Count())),
+        pnt_pt(ch.points.GetLast())));
   }
   // plane to a vector angle
   TEValue<double> CalcP2VAngle(const TSAtomPList& plane, const TSAtom& a1, const TSAtom& a2) {
-    TSAtomPList satoms(plane);
-    satoms.Add(const_cast<TSAtom*>(&a1));
-    satoms.Add(const_cast<TSAtom*>(&a2));
-    CalcWHelper ch(*this, satoms);
-    typedef VectorSlice<vec3d_alist,vec3d> crd_slice;
+    CalcWHelper ch(*this, TSAtomPList(plane) << a1 << a2);
     return ch.DoCalc(
-      Angle2<NormalEvaluator<crd_slice,TDoubleList>, VectorEvaluator>(
-      NormalEvaluator<crd_slice, TDoubleList>(
-        crd_slice(ch.points, 0, plane.Count()), ch.weights),
-        VectorEvaluator(ch.points[plane.Count()], ch.points[plane.Count()+1])));
+      Angle2<plnn_et, VectorProxy>(
+      plnn_et(crd_slice(ch.points, 0, plane.Count()), weight_slice(ch.weights, 0, plane.Count())),
+        VectorProxy(ch.points[plane.Count()], ch.points[plane.Count()+1])));
   }
   // plane to plane angle
   TEValue<double> CalcP2PAngle(const TSAtomPList& p1, const TSAtomPList& p2) {
-    TSAtomPList atoms(p1);
-    atoms.AddList(p2);
-    CalcWHelper ch(*this, atoms);
-    typedef VectorSlice<vec3d_alist,vec3d> crd_slice;
-    typedef VectorSlice<TDoubleList, double> weight_slice;
+    CalcWHelper ch(*this, TSAtomPList(p1) << p2);
     return ch.DoCalc(
-      Angle2<NormalEvaluator<crd_slice,weight_slice>, NormalEvaluator<crd_slice,weight_slice> >(
-      NormalEvaluator<crd_slice,weight_slice>(
-        crd_slice(ch.points, 0, p1.Count()), weight_slice(ch.weights, 0, p1.Count())),
-      NormalEvaluator<crd_slice,weight_slice>(
-        crd_slice(ch.points, p1.Count(), p2.Count()), weight_slice(ch.weights, p1.Count(), p2.Count()))));
+      Angle2<plnn_et,plnn_et>(
+        plnn_et(crd_slice(ch.points, 0, p1.Count()), weight_slice(ch.weights, 0, p1.Count())),
+        plnn_et(crd_slice(ch.points, p1.Count(), p2.Count()),
+          weight_slice(ch.weights, p1.Count(), p2.Count()))));
   }
   //plane centroid to plane centroid distance
   TEValue<double> CalcPC2PCDistance(const TSAtomPList& p1, const TSAtomPList& p2) {
-    TSAtomPList atoms(p1);
-    atoms.AddList(p2);
-    CalcWHelper ch(*this, atoms);
-    typedef VectorSlice<vec3d_alist,vec3d> crd_slice;
-    typedef VectorSlice<TDoubleList, double> weight_slice;
-    typedef PointEvaluator<crd_slice,weight_slice> point_e;
+    CalcWHelper ch(*this, TSAtomPList(p1) << p2);
     return ch.DoCalc(
-      Distance<point_e, point_e>(
-      point_e(crd_slice(ch.points, 0, p1.Count()), weight_slice(ch.weights, 0, p1.Count())),
-      point_e(crd_slice(ch.points, p1.Count(), p2.Count()),
-        weight_slice(ch.weights, p1.Count(), p2.Count()))));
+      Distance<cnt_et, cnt_et>(
+        cnt_et(crd_slice(ch.points, 0, p1.Count()), weight_slice(ch.weights, 0, p1.Count())),
+        cnt_et(crd_slice(ch.points, p1.Count(), p2.Count()),
+          weight_slice(ch.weights, p1.Count(), p2.Count()))));
   }
   // angle between 3 plane centroids
-  TEValue<double> Calc3PCAngle(const TSAtomPList& p1, 
-    const TSAtomPList& p2, const TSAtomPList& p3) 
-  {
-    TSAtomPList atoms(p1);
-    atoms.AddList(p2);
-    atoms.AddList(p3);
-    CalcWHelper ch(*this, atoms);
-    typedef VectorSlice<vec3d_alist,vec3d> crd_slice;
-    typedef VectorSlice<TDoubleList, double> weight_slice;
-    typedef PointEvaluator<crd_slice,weight_slice> point_e;
+  TEValue<double> Calc3PCAngle(const TSAtomPList& p1, const TSAtomPList& p2, const TSAtomPList& p3)  {
+    CalcWHelper ch(*this, TSAtomPList(p1) << p2 << p3);
     return ch.DoCalc(
-      Angle3<point_e, point_e, point_e>(
-      point_e(crd_slice(ch.points, 0, p1.Count()), weight_slice(ch.weights, 0, p1.Count())),
-      point_e(crd_slice(ch.points, p1.Count(), p2.Count()),
-        weight_slice(ch.weights, p1.Count(), p2.Count())),
-      point_e(crd_slice(ch.points, p1.Count()+p2.Count(), p3.Count()),
-        weight_slice(ch.weights, p1.Count()+p2.Count(), p3.Count()))));
+      Angle3<cnt_et, cnt_et, cnt_et>(
+        cnt_et(crd_slice(ch.points, 0, p1.Count()), weight_slice(ch.weights, 0, p1.Count())),
+        cnt_et(crd_slice(ch.points, p1.Count(), p2.Count()),
+          weight_slice(ch.weights, p1.Count(), p2.Count())),
+        cnt_et(crd_slice(ch.points, p1.Count()+p2.Count(), p3.Count()),
+          weight_slice(ch.weights, p1.Count()+p2.Count(), p3.Count()))));
   }
   //plane to another plane centroid distance
   TEValue<double> CalcP2PCDistance(const TSAtomPList& p1, const TSAtomPList& p2) {
-    TSAtomPList atoms(p1);
-    atoms.AddList(p2);
-    CalcWHelper ch(*this, atoms);
-    typedef VectorSlice<vec3d_alist,vec3d> crd_slice;
-    typedef VectorSlice<TDoubleList, double> weight_slice;
-    typedef PointEvaluator<crd_slice,weight_slice> point_e;
-    typedef PlaneEvaluator<crd_slice,weight_slice> plane_e;
+    CalcWHelper ch(*this, TSAtomPList(p1) << p2);
     return ch.DoCalc(
-      PlaneToPointDistance<plane_e, point_e>(
-      plane_e(crd_slice(ch.points, 0, p1.Count()), weight_slice(ch.weights, 0, p1.Count())),
-      point_e(crd_slice(ch.points, p1.Count(), p2.Count()),
+      PlaneToPointDistance<pln_et, cnt_et>(
+        pln_et(crd_slice(ch.points, 0, p1.Count()), weight_slice(ch.weights, 0, p1.Count())),
+      cnt_et(crd_slice(ch.points, p1.Count(), p2.Count()),
         weight_slice(ch.weights, p1.Count(), p2.Count()))));
   }
   //plane to another plane shift distance
   TEValue<double> CalcP2PShiftDistance(const TSAtomPList& p1, const TSAtomPList& p2) {
-    TSAtomPList atoms(p1);
-    atoms.AddList(p2);
-    CalcWHelper ch(*this, atoms);
-    typedef VectorSlice<vec3d_alist,vec3d> crd_slice;
-    typedef VectorSlice<TDoubleList, double> weight_slice;
-    typedef PointEvaluator<crd_slice,weight_slice> point_e;
-    typedef PlaneEvaluator<crd_slice,weight_slice> plane_e;
+    CalcWHelper ch(*this, TSAtomPList(p1) << p2);
     return ch.DoCalc(
-      Centroid2CentriodShiftDistance<plane_e, point_e>(
-      plane_e(crd_slice(ch.points, 0, p1.Count()), weight_slice(ch.weights, 0, p1.Count())),
-      point_e(crd_slice(ch.points, p1.Count(), p2.Count()),
-        weight_slice(ch.weights, p1.Count(), p2.Count()))));
+      Centroid2CentriodShiftDistance<pln_et, cnt_et>(
+        pln_et(crd_slice(ch.points, 0, p1.Count()), weight_slice(ch.weights, 0, p1.Count())),
+        cnt_et(crd_slice(ch.points, p1.Count(), p2.Count()),
+          weight_slice(ch.weights, p1.Count(), p2.Count()))));
   }
   // tetrahedron volume
   TEValue<double> CalcTetrahedronVolume(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
     TSAtom const * as[] = {&a1,&a2,&a3,&a4};
-    TSAtomPList satoms(4, as);
-    CalcHelper ch(*this, satoms);
-    typedef PointProxy point_t;
+    CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 4));
     return ch.DoCalc(
-      TetrahedronVolume<point_t,point_t,point_t,point_t>(
-      point_t(ch.points[0]), point_t(ch.points[1]),
-      point_t(ch.points[2]), point_t(ch.points[3])));
+      TetrahedronVolume<pnt_pt,pnt_pt,pnt_pt,pnt_pt>(
+        pnt_pt(ch.points[0]), pnt_pt(ch.points[1]), pnt_pt(ch.points[2]), pnt_pt(ch.points[3])));
   }
   // alignment RMSD crds should be prepeared, i.e. inverted
   TEValue<double> CalcAlignmentRMSD(const TSAtomPList& atoms, const vec3d_alist& crds, 
-    const TDoubleList& _weights) 
+    const TDoubleList& weights) 
   {
-    //mat3d_list m;
-    //GetVcoV(atoms, m);
-    //weights[0] = _weights;
-    //return DoCalcForPoints(crds, m, &VcoVContainer::_calcAllignmentRMSD);
-    return 0;
+    CalcHelper ch(*this, atoms);
+    return ch.DoCalc(AlignmentRMSD(ch.points, weights));
   }
   // octahedral distortion, takes {Central Atom, a1, b1, a2, b2, a3, b3}, returns mean value
   TEValue<double> CalcOHDistortionBL(const TSAtomPList& atoms)  {
-    //mat3d_list m;
-    //return DoCalcForAtoms(atoms, &VcoVContainer::_calcOHDistortionBL);
-    return 0;
+    CalcHelper ch(*this, atoms);
+    return ch.DoCalc(OctahedralDistortionBL(ch.points));
   }
   TEValue<double> CalcOHDistortionBP(const TSAtomPList& atoms)  {
-    //mat3d_list m;
-    //return DoCalcForAtoms(atoms, &VcoVContainer::_calcOHDistortionBP);
-    return 0;
+    CalcHelper ch(*this, atoms);
+    return ch.DoCalc(OctahedralDistortionBP(ch.points));
   }
   const VcoVMatrix& GetMatrix() const {  return vcov;  }
 };

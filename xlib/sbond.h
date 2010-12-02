@@ -46,7 +46,7 @@ public:
     return (*FA == r.a && *FB == r.b) || (*FA == r.b && *FB == r.a);
   }
   void ToDataItem(TDataItem& item) const;
-  void FromDataItem(const TDataItem& item, TPtrList<TNetwork>& net_pool);
+  void FromDataItem(const TDataItem& item, class TLattice& parent);
 };
 
 typedef TTypeList<TSBond> TSBondList;

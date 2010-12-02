@@ -6281,392 +6281,8 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
   E.SetRetVal( GetStructureOlexFolder().SubStringFrom(0,1) );
 }
 //..............................................................................
-
-#ifndef __BORLANDC__
-class Test_BTreeTraverser {
-  int Y, Z;
-  bool ZSet, YSet;
-public:
-  Test_BTreeTraverser()  {  Z = Y = -1;  ZSet = YSet = false;  }
-  void SetZ(int v)  {  Z = v;  ZSet = true;  }
-  void SetY(int v)  {  Y = v;  YSet = true;  }
-  bool OnItem(const BTree<int,int>::Entry* en)  {
-    if( ZSet && YSet )  {
-      TBasicApp::GetLog() << (olxstr("pair ") << '{' << en->key << ',' << Y << ','
-        << Z << '}' << '=' << en->val << '\n');
-    }
-    else if( YSet )  {
-      TBasicApp::GetLog() << (olxstr("pair ") << '{' << en->key << ',' << Y << '}'
-        << '=' << en->val << '\n');
-    }
-    else
-      TBasicApp::GetLog() << (olxstr("pair ") << '{' << en->key << '}'
-        << '=' << en->val << '\n');
-    ZSet = YSet = false;
-    return true;
-  }
-};
-#endif
-
-struct UTerm  {
-  double values[6];
-  struct UMap  {
-    size_t index;
-    double k;
-    UMap(size_t _i, double _k) : index(_i), k(_k)  {}
-    UMap() : index(InvalidIndex), k(0) {}
-    olxstr ToString(size_t this_i) const {
-      if( index == InvalidIndex )
-        return '#';
-      if( this_i <= index && k > 0 )
-        return 's';
-      if( index == InvalidIndex-1  || (this_i == index && k <= 0) )
-        return 'x';
-      if( olx_abs(k) == 1 )  {
-        if( k < 0 )
-          return olxstr('-') << index;
-        return index;
-      }
-      return olxstr(k) << '*' << index;
-    }
-    olxstr ToCString(size_t this_i) const {
-      if( index == InvalidIndex )
-        return "-1,0";
-      if( this_i <= index && k > 0 )
-        return olxstr(this_i) << ",1";
-      if( index == InvalidIndex-1 || (this_i == index && k <= 0) )
-        return "-2,0";
-      return olxstr(index) << "," << k;
-    }
-  };
-  void clear()  {
-    memset(&values[0], 0, sizeof(values));
-  }
-  UTerm()  {  clear();  }
-  UTerm(const UTerm& u)  {
-    memcpy(&values, &u.values[0], sizeof(values));
-  }
-  UTerm(uint8_t index, int k=1)  {
-    clear();
-    values[index] = k;
-  }
-  UTerm operator + (const UTerm& u) const {  return UTerm(*this) += u;  }
-  UTerm operator - (const UTerm& u) const {  return UTerm(*this) -= u;  }
-  UTerm operator * (int k) const {  return UTerm(*this) *= k;  }
-  UTerm& operator += (const UTerm& u)  {
-    for( size_t i=0; i < 6; i++ )
-      values[i] += u.values[i];
-    return *this;
-  }
-  UTerm& operator -= (const UTerm& u)  {
-    for( size_t i=0; i < 6; i++ )
-      values[i] -= u.values[i];
-    return *this;
-  }
-  UTerm& operator *= (int k)  {
-    for( size_t i=0; i < 6; i++ )
-      values[i] *= k;
-    return *this;
-  }
-  template <typename List> olxstr ToString(const List& names) const {
-    olxstr rv;
-    for( size_t i=0; i < 6; i++ )  {
-      if( values[i] != 0 )  {
-        if( values[i] > 0 )  {
-          if( !rv.IsEmpty() )
-            rv << '+';
-          if( values[i] != 1 )
-            rv << values[i] << names[i];
-          else
-            rv << names[i];
-        }
-        else if( values[i] == -1 ) 
-          rv << '-' << names[i];
-        else
-          rv << values[i] << names[i];
-      }
-    }
-    if( rv.IsEmpty() )
-      return '0';
-    return rv;
-  }
-  void gen_eq(size_t this_i, TArrayList<UMap>& map) const {
-    TIntList indices;
-    for( size_t i=0; i < 6; i++ )  {
-      if( values[i] != 0 )
-        indices.Add(i);
-    }
-    if( indices.IsEmpty() )  {
-      map[this_i].index = this_i;
-      map[this_i].k = 1.0;
-    }
-    else if( indices.Count() == 1 )  {
-      if( indices[0] == this_i )  {
-        map[this_i].index = InvalidIndex -1; 
-      }
-      else if( map[this_i].index > indices[0] )  {
-        map[this_i].index = indices[0];
-        map[this_i].k *= values[indices[0]];
-      }
-    }
-    else if( indices.Count() == 2 )  {
-      if( map[indices[0]].index > indices[1] && map[indices[0]].index != InvalidIndex-1)  {
-        map[indices[0]].index = indices[1];
-        map[indices[0]].k = -values[indices[1]]/values[indices[0]];
-      }
-      if( map[indices[1]].index > indices[0] && map[indices[1]].index != InvalidIndex-1 )  {
-        map[indices[1]].index = indices[0];
-        map[indices[1]].k = -values[indices[0]]/values[indices[1]];
-      }
-    }
-  }
-  static void minimise(TArrayList<UMap>& map)  {
-    while( true )  {
-      bool changes = false;
-      for( int i=0; i < 6; i++ )  {
-        if( map[i].index > 5 )  continue;
-        if( map[map[i].index].index < map[i].index )  {
-          if( map[i].index == i )
-            changes = true;
-          map[i].k *= map[map[i].index].k;
-          map[i].index = map[map[i].index].index;
-          changes = true;
-        }
-      }
-      if( !changes )  break;
-    }
-  }
-};
-
-struct CTerm  {
-  vec3d values;
-  struct CMap  {
-    size_t index;
-    double k;
-    CMap(size_t _i, double _k) : index(_i), k(_k)  {}
-    CMap() : index(InvalidIndex), k(0) {}
-    olxstr ToString(size_t this_i) const {
-      if( index == InvalidIndex )
-        return '#';
-      if( this_i <= index && k > 0 )
-        return 's';
-      if( index == InvalidIndex-1  || (this_i == index && k <= 0) )
-        return 'x';
-      if( olx_abs(k) == 1 )  {
-        if( k < 0 )
-          return olxstr('-') << index;
-        return index;
-      }
-      return olxstr(k) << '*' << index;
-    }
-    olxstr ToCString(size_t this_i) const {
-      if( index == InvalidIndex )
-        return "-1,0";
-      if( this_i <= index && k > 0 )
-        return olxstr(this_i) << ",1";
-      if( index == InvalidIndex-1 || (this_i == index && k <= 0) )
-        return "-2,0";
-      return olxstr(index) << "," << k;
-    }
-  };
-  void clear()  {
-    values.Null();
-  }
-  CTerm()  {  clear();  }
-  CTerm(const CTerm& u) : values(u.values) {}
-  CTerm(uint8_t index, int k=1)  {  values[index] = k;  }
-  CTerm operator + (const CTerm& u) const {  return CTerm(*this) += u;  }
-  CTerm operator - (const CTerm& u) const {  return CTerm(*this) -= u;  }
-  CTerm operator * (int k) const {  return CTerm(*this) *= k;  }
-  CTerm& operator += (const CTerm& u)  {
-    values += u.values;
-    return *this;
-  }
-  CTerm& operator -= (const CTerm& u)  {
-    values -= u.values;
-    return *this;
-  }
-  CTerm& operator *= (int k)  {
-    values *= k;
-    return *this;
-  }
-  template <typename List> olxstr ToString(const List& names) const {
-    olxstr rv;
-    for( size_t i=0; i < 3; i++ )  {
-      if( values[i] != 0 )  {
-        if( values[i] > 0 )  {
-          if( !rv.IsEmpty() )
-            rv << '+';
-          if( values[i] != 1 )
-            rv << values[i] << names[i];
-          else
-            rv << names[i];
-        }
-        else if( values[i] == -1 ) 
-          rv << '-' << names[i];
-        else
-          rv << values[i] << names[i];
-      }
-    }
-    if( rv.IsEmpty() )
-      return '0';
-    return rv;
-  }
-  void gen_eq(size_t this_i, TArrayList<CMap>& map) const {
-    TIntList indices;
-    for( size_t i=0; i < 3; i++ )  {
-      if( values[i] != 0 )
-        indices.Add(i);
-    }
-    if( indices.IsEmpty() )  {
-      map[this_i].index = this_i;
-      map[this_i].k = 1.0;
-    }
-    else if( indices.Count() == 1 )  {
-      if( indices[0] == this_i )  {
-        map[this_i].index = InvalidIndex-1;
-      }
-      else if( map[this_i].index > indices[0] )  {
-        map[this_i].index = indices[0];
-        map[this_i].k = values[indices[0]];
-      }
-    }
-    else if( indices.Count() == 2 )  {
-      if( map[indices[0]].index > indices[1] )  {
-        map[indices[0]].index = indices[1];
-        map[indices[0]].k = -values[indices[1]]/values[indices[0]];
-      }
-      if( map[indices[1]].index > indices[0] )  {
-        map[indices[1]].index = indices[0];
-        map[indices[1]].k = -values[indices[0]]/values[indices[1]];
-      }
-    }
-  }
-  static void minimise(TArrayList<CMap>& map)  {
-    while( true )  {
-      bool changes = false;
-      for( int i=0; i < 3; i++ )  {
-        if( map[i].index > 2 )  continue;
-        if( map[map[i].index].index < map[i].index )  {
-          map[i].k *= map[map[i].index].k;
-          map[i].index = map[map[i].index].index;
-          changes = true;
-        }
-      }
-      if( !changes )  break;
-    }
-  }
-  static int rot_id(const mat3i& m )  {
-    int mask = 0;
-    for( int i=0; i < 9; i++ )  {
-      const int v = m[i/3][i%3];
-      if( v != 0 )
-        mask |= (1<<i);
-      if( v < 0 )
-        mask |= (1<<(i+9));
-    }
-    return mask;
-  }
-  static int inv_rot_id(int id)  {
-    return (id&0x1FF)|((id&0x3FE00)^((id&0x1FF)<<9));
-    //return (id&0x1FF)|((~id)&0x3FE00);
-  }
-};
-
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  const TSymmLib& sl = TSymmLib::GetInstance();
-  mat3i_list matrices;
-  for( size_t i=0; i < sl.SGCount(); i++ )  {
-    smatd_list ml;
-    sl.GetGroup(i).GetMatrices(ml, mattAll);
-    for( size_t j=0; j < ml.Count(); j++ )  {
-      if( matrices.IndexOf(ml[j].r) == InvalidIndex ) //&& matrices.IndexOf(-ml[j].r) == InvalidIndex)
-        matrices.AddCCopy(ml[j].r);
-    }
-  }
-  TBasicApp::GetLog() << matrices.Count() << '\n';
-  TStrList out, c_out1;
-  TETable tab(3,11), tab1(1,7);
-  UTerm utab[3][3], rutab[3][3];
-  CTerm ctab[3];
-  char cbf[20];
-  //const olxstr u_legend[] = {"xx", "yy", "zz", "xy", "xz", "yz"};
-  const olxstr u_legend[] = {"xx", "yy", "zz", "yz", "xz", "xy"};
-  const olxstr c_legend[] = {"x", "y", "z"};
-  //const UTerm Um[3][3] = {{0, 3, 4},{3, 1, 5},{4, 5, 2}};
-  const UTerm Um[3][3] = {{0, 5, 4},{5, 1, 3},{4, 3, 2}};
-  const CTerm Cm[3] = {0, 1, 2};
-  //const size_t Um_i[3][3] = {{0, 3, 4},{3, 1, 5},{4, 5, 2}};
-  const size_t Um_i[3][3] = {{0, 5, 4},{5, 1, 3},{4, 3, 2}};
-  const size_t Cm_i[3] = {0, 1, 2};
-  TPSTypeList<int, olxstr> sorted_tab;
-  for( size_t i=0; i < matrices.Count(); i++ )  {
-    const mat3i& m = matrices[i];
-    mat3i mt = mat3i::Transpose(m);
-    for( int mi = 0; mi < 3; mi++ )  {
-      ctab[mi].clear();
-      for( int mj = 0; mj < 3; mj++ )  {
-        utab[mi][mj].clear();
-        rutab[mi][mj].clear();
-      }
-    }
-    for( int mi = 0; mi < 3; mi++ )  {
-      for( int mj = 0; mj < 3; mj++ )  {
-        ctab[mi] += Cm[mj]*m[mj][mi];
-        for( int mk = 0; mk < 3; mk++ )  {
-          utab[mi][mj] += Um[mk][mj]*m[mi][mk];
-        }
-      }
-    }
-    for( int mi = 0; mi < 3; mi++ )  {
-      for( int mj = 0; mj < 3; mj++ )  {
-        for( int mk = 0; mk < 3; mk++ )  {
-          rutab[mi][mj] += utab[mi][mk]*mt[mk][mj];
-        }
-      }
-    }
-    TArrayList<UTerm::UMap> umap(6);
-    TArrayList<CTerm::CMap> cmap(3);
-    for( int mi = 0; mi < 3; mi++ )  {
-      tab1[0][mi] = ctab[mi].ToString(c_legend);
-      ctab[mi] -= Cm[mi];
-      ctab[mi].gen_eq(Cm_i[mi], cmap);
-      for( int mj = 0; mj < 3; mj++ )  {
-        tab[mi][mj] = rutab[mi][mj].ToString(u_legend);
-        rutab[mi][mj] -= Um[mi][mj];
-        rutab[mi][mj].gen_eq(Um_i[mi][mj], umap);
-      }
-    }
-    UTerm::minimise(umap);
-    CTerm::minimise(cmap);
-    const int r_id = CTerm::rot_id(m);
-    sprintf(cbf, "%05x", r_id);
-    olxstr u_c_name = olxstr("SymmCon_") << cbf;
-    c_out1.Add("SymmConItem ") << u_c_name << "[] = {";
-    sorted_tab.Add(r_id, olxstr("{0x") << cbf << ", &" <<  u_c_name << "}");
-    for( int mi = 0; mi < 6; mi++ )  {
-      tab[2][mi+4] = umap[mi].ToString(mi);
-      c_out1.GetLastString() << '{' << umap[mi].ToCString(mi) << "}, ";
-    }
-    for( int mi = 0; mi < 3; mi++ )  {
-      tab1[0][mi+4] = cmap[mi].ToString(mi);
-      c_out1.GetLastString() << '{' << cmap[mi].ToCString(mi) << '}';
-      if( mi < 2 )
-        c_out1.GetLastString() << ", ";
-    }
-    c_out1.GetLastString() << "};";
-    tab.CreateTXTList(out, EmptyString, false, false, ' ');
-    tab1.CreateTXTList(out, EmptyString, false, false, ' ');
-    out.Add("<-- ") << TSymmParser::MatrixToSymm(smatd(m, vec3d(0,0,0)));
-  }
-  TBasicApp::GetLog() << out << '\n';
-  TBasicApp::GetLog() << c_out1 << '\n';
-  TBasicApp::GetLog() <<  "SymmCon SortedSymmConTab[] = {\n";
-  for( size_t i=0; i < sorted_tab.Count(); i++ )  {
-    TBasicApp::GetLog() << "  " << sorted_tab.GetObject(i) << ",\n";
-  }
-  TBasicApp::GetLog() << "};\n";
-  //TStrList out;
+  TStrList out;
   //vec3d_alist mult_vl(3), mult_vl_kr(3);
   //mat3d_alist mult_ml(9);
   //mat3d sym_mat;
@@ -6710,30 +6326,30 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //kr_t.CreateTXTList(out, "vcov", true, true, ' ');
   //TBasicApp::GetLog() << out << '\n';
 
-  //TXAtomPList xatoms;
-  //if( !FindXAtoms(Cmds, xatoms, false, true) )  {
-  //  return;
-  //}
-  //VcoVContainer vcovc;
-  //TXApp& xapp = TXApp::GetInstance();
-  //xapp.GetLog() << "Using " << xapp.InitVcoV(vcovc) << " matrix for the calculation\n";
-  //TSAtomPList atoms(xatoms, TXAtom::AtomAccessor<>());
-  //mat3d_list matrices;
-  //vcovc.GetVcoV(atoms, matrices);
-  ////vcovc.GetMatrix().FindVcoV(atoms, matrices);
-  //const size_t m_dim = (size_t)sqrt((double)matrices.Count());
-  //TETable tab(m_dim*3, m_dim*3);
-  //for( size_t i=0; i < m_dim; i++ )  {
-  //  for( size_t j=0; j < m_dim; j++ )  {
-  //    for( int mi = 0; mi < 3; mi++ )  {
-  //      for( int mj = 0; mj < 3; mj ++ )  {
-  //        tab[i*3+mi][j*3+mj] = olxstr::FormatFloat(-3,matrices[i*m_dim+j][mi][mj], true);
-  //      }
-  //    }
-  //  }
-  //}
-  //tab.CreateTXTList(out, "vcov", true, true, ' ');
-  //TBasicApp::GetLog() << out << '\n';
+  TXAtomPList xatoms;
+  if( !FindXAtoms(Cmds, xatoms, false, true) )  {
+    return;
+  }
+  TXApp& xapp = TXApp::GetInstance();
+  VcoVContainer vcovc(xapp.XFile().GetAsymmUnit());
+  xapp.GetLog() << "Using " << xapp.InitVcoV(vcovc) << " matrix for the calculation\n";
+  TSAtomPList atoms(xatoms, TXAtom::AtomAccessor<>());
+  mat3d_list matrices;
+  vcovc.GetVcoV(atoms, matrices);
+  //vcovc.GetMatrix().FindVcoV(atoms, matrices);
+  const size_t m_dim = (size_t)sqrt((double)matrices.Count());
+  TETable tab(m_dim*3, m_dim*3);
+  for( size_t i=0; i < m_dim; i++ )  {
+    for( size_t j=0; j < m_dim; j++ )  {
+      for( int mi = 0; mi < 3; mi++ )  {
+        for( int mj = 0; mj < 3; mj ++ )  {
+          tab[i*3+mi][j*3+mj] = olxstr::FormatFloat(-3,matrices[i*m_dim+j][mi][mj], true);
+        }
+      }
+    }
+  }
+  tab.CreateTXTList(out, "vcov", true, true, ' ');
+  TBasicApp::GetLog() << out << '\n';
 
   //TSocketFS fs(TUrl("http://localhost:8082"));
   //if( fs.Exists("dist/cds.jar", true) )  {
@@ -8689,9 +8305,6 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
           vcovc.CalcP2ADistance(atoms, sa).ToString() << " A") << '\n';
         TBasicApp::GetLog() << (values.Add(sa.GetLabel()) << " to plane " << pld << "centroid distance: " <<
           vcovc.CalcPC2ADistance(atoms, sa).ToString() << " A") << '\n';
-        // test shows pretty much comparable results to the numerical diff above
-//        TBasicApp::GetLog() << (olxstr(sa.GetLabel()) << " to plane " << pld << "centroid distance (precise): " <<
-//          vcovc.CalcPC2ADistanceP(atoms, sa).ToString() << '\n' );
       }
       else if( (EsdlInstanceOf(sel[0], TXBond) && EsdlInstanceOf(sel[1], TXPlane)) ||  
                (EsdlInstanceOf(sel[1], TXBond) && EsdlInstanceOf(sel[0], TXPlane)))  {
