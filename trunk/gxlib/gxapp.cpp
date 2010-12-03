@@ -2833,12 +2833,41 @@ void TGXApp::StoreLabels()  {
 }
 //..............................................................................
 void TGXApp::RestoreLabels()  {
-  TXAtomPList xatoms(LabelInfo.atoms.Count());  TXBondPList xbonds(LabelInfo.bonds.Count());  for( size_t i=0; i < OverlayedXFiles.Count(); i++ )  {    OverlayedXFiles[i].GetLattice().GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));    OverlayedXFiles[i].GetLattice().GetBonds().ForEach(ACollectionItem::TagSetter<>(-1));  }  XFile().GetLattice().GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));  XFile().GetLattice().GetBonds().ForEach(ACollectionItem::TagSetter<>(-1));  XAtoms.ForEach(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());  XBonds.ForEach(ACollectionItem::IndexTagSetter<TXBond::BondAccessor<> >());  for( size_t i=0; i < LabelInfo.atoms.Count(); i++ )  {
-    TSAtom* sa = LabelInfo.atoms[i].latt.GetAtomRegistry().Find(LabelInfo.atoms[i].ref);    if( sa != NULL && sa->GetTag() != -1 )      xatoms[i] = &XAtoms[sa->GetTag()];  }
+  TXAtomPList xatoms(LabelInfo.atoms.Count());
+  TXBondPList xbonds(LabelInfo.bonds.Count());
+  for( size_t i=0; i < OverlayedXFiles.Count(); i++ )  {
+    OverlayedXFiles[i].GetLattice().GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));
+    OverlayedXFiles[i].GetLattice().GetBonds().ForEach(ACollectionItem::TagSetter<>(-1));
+  }
+  XFile().GetLattice().GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));
+  XFile().GetLattice().GetBonds().ForEach(ACollectionItem::TagSetter<>(-1));
+  XAtoms.ForEach(ACollectionItem::IndexTagSetter<TXAtom::AtomAccessor<> >());
+  XBonds.ForEach(ACollectionItem::IndexTagSetter<TXBond::BondAccessor<> >());
+  for( size_t i=0; i < LabelInfo.atoms.Count(); i++ )  {
+    TSAtom* sa = LabelInfo.atoms[i].latt.GetAtomRegistry().Find(LabelInfo.atoms[i].ref);
+    if( sa != NULL && sa->GetTag() != -1 )
+      xatoms[i] = &XAtoms[sa->GetTag()];
+  }
   for( size_t i=0; i < LabelInfo.bonds.Count(); i++ )  {
-    TSBond* sb = LabelInfo.bonds[i].latt.GetAtomRegistry().Find(LabelInfo.bonds[i].ref);    if( sb != NULL && sb->GetTag() != -1 )      xbonds[i] = &XBonds[sb->GetTag()];  }
-  for( size_t i=0; i < xatoms.Count(); i++ )  {    if( xatoms[i] == NULL )  continue;     xatoms[i]->GetLabel().SetVisible(true);    xatoms[i]->GetLabel().SetLabel(LabelInfo.labels[i]);    xatoms[i]->GetLabel().SetOffset(xatoms[i]->Atom().crd());    xatoms[i]->GetLabel().TranslateBasis(      LabelInfo.centers[i]-xatoms[i]->GetLabel().GetCenter());  }
-  for( size_t i=0; i < xbonds.Count(); i++ )  {    if( xbonds[i] == NULL )  continue;    xbonds[i]->GetLabel().SetVisible(true);    xbonds[i]->GetLabel().SetLabel(LabelInfo.labels[xatoms.Count()+i]);    xbonds[i]->GetLabel().SetOffset(xbonds[i]->Bond().GetCenter());    xbonds[i]->GetLabel().TranslateBasis(      LabelInfo.centers[xatoms.Count()+i]-xbonds[i]->GetLabel().GetCenter());  }
+    TSBond* sb = LabelInfo.bonds[i].latt.GetAtomRegistry().Find(LabelInfo.bonds[i].ref);
+    if( sb != NULL && sb->GetTag() != -1 )
+      xbonds[i] = &XBonds[sb->GetTag()];
+  }
+  for( size_t i=0; i < xatoms.Count(); i++ )  {
+    if( xatoms[i] == NULL )  continue;
+    xatoms[i]->GetLabel().SetVisible(true);
+    xatoms[i]->GetLabel().SetLabel(LabelInfo.labels[i]);
+    xatoms[i]->GetLabel().SetOffset(xatoms[i]->Atom().crd());
+    xatoms[i]->GetLabel().TranslateBasis(LabelInfo.centers[i]-xatoms[i]->GetLabel().GetCenter());
+  }
+  for( size_t i=0; i < xbonds.Count(); i++ )  {
+    if( xbonds[i] == NULL )  continue;
+    xbonds[i]->GetLabel().SetVisible(true);
+    xbonds[i]->GetLabel().SetLabel(LabelInfo.labels[xatoms.Count()+i]);
+    xbonds[i]->GetLabel().SetOffset(xbonds[i]->Bond().GetCenter());
+    xbonds[i]->GetLabel().TranslateBasis(
+      LabelInfo.centers[xatoms.Count()+i]-xbonds[i]->GetLabel().GetCenter());
+  }
 }
 //..............................................................................
 void TGXApp::RestoreGroups()  {
@@ -4242,11 +4271,11 @@ void TGXApp::SaveModel(const olxstr& fileName) const {
     fos.Write("oxm", 3);
     wxZipOutputStream zos(fos, 9);
     TDataItem& mi = df.Root().AddItem("olex_model");
-    zos.PutNextEntry( wxT("grid") );
+    zos.PutNextEntry(wxT("grid"));
     TwxOutputStreamWrapper os(zos);
     ToDataItem(mi, os);
     zos.CloseEntry();
-    zos.PutNextEntry( wxT("model") );
+    zos.PutNextEntry(wxT("model"));
     TEStrBuffer bf(1024*32);
     df.Root().SaveToStrBuffer(bf);
 #ifdef _UNICODE
@@ -4305,9 +4334,9 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   delete [] bf;
   zin->OpenEntry(*grid);
   TwxInputStreamWrapper in(*zin);
-  try  {  FromDataItem( df.Root().FindRequiredItem("olex_model"), in );  }
+  try  {  FromDataItem(df.Root().FindRequiredItem("olex_model"), in);  }
   catch( const TExceptionBase& exc )  {
-    GetLog().Exception( olxstr("Failed to load model: ") << exc.GetException()->GetError() );
+    GetLog().Exception(olxstr("Failed to load model: ") << exc.GetException()->GetError());
     FXFile->SetLastLoader(NULL);
     FXFile->LastLoaderChanged();
     CreateObjects(false, false);

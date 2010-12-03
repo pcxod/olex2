@@ -74,6 +74,7 @@ public:
           indexes[i][2] = j;
       }
     }
+    m.SetCapacity(olx_sqr(a_indexes.Count()));
     for( size_t i=0; i < a_indexes.Count(); i++ )  {
       for( size_t j=0; j < a_indexes.Count(); j++ )  {
         mat3d& a = m.AddNew();

@@ -336,10 +336,26 @@ void TUnitCell::FindSymmEq() const  {
   // very common, so it should be OK. (An identity (E) matrix is in the list
   // so translational equivalents will be removed too
   if( ACA.IsEmpty() )  return;
-  TSearchSymmEqTask searchTask(ACA, Matrices);
-  TListIteratorManager<TSearchSymmEqTask> searchm(searchTask, ACA.Count(), tQuadraticTask, 1000);
-  for( size_t i=0; i < ACA.Count(); i++ )
-    ACA[i]->UpdateAttachedSites();
+  if( olx_abs(CalcVolume()-1.0) < 1e-3 )  {  // cartesian coordinates?
+    const double delta = GetLattice().GetDelta();
+    const double deltai = GetLattice().GetDeltaI();
+    for( size_t i=0; i < ACA.Count(); i++ )  {
+      for( size_t j=i+1; j < ACA.Count(); j++ )  {
+        const double qd = ACA[i]->ccrd().QDistanceTo(ACA[j]->ccrd());
+        if( TNetwork::BondExistsQ(*ACA[i], *ACA[j], Matrices[0], qd, delta) )  {
+          ACA[i]->AttachSite(ACA[j], Matrices[0]);
+          ACA[j]->AttachSite(ACA[i], Matrices[0]);
+        }
+
+      }
+    }
+  }
+  else  {
+    TSearchSymmEqTask searchTask(ACA, Matrices);
+    TListIteratorManager<TSearchSymmEqTask> searchm(searchTask, ACA.Count(), tQuadraticTask, 1000);
+    for( size_t i=0; i < ACA.Count(); i++ )
+      ACA[i]->UpdateAttachedSites();
+  }
 }
 //..............................................................................
 smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal, double* dist) const  {
