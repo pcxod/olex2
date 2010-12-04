@@ -30,7 +30,6 @@ TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height) :
   FPAngle = 1;
   StereoFlag = 0;
   StereoAngle = 3;
-  olx_gl::get(GL_LINE_WIDTH, &LineWidth);
   LookAt(0,0,1);
 
   Fog = false;
@@ -76,6 +75,7 @@ void TGlRenderer::Initialise()  {
   FBackground->Create();
   FCeiling->Create();
   ATI = olxcstr((const char*)olx_gl::getString(GL_VENDOR)).StartsFrom("ATI");
+  olx_gl::get(GL_LINE_WIDTH, &LineWidth);
 }
 //..............................................................................
 void TGlRenderer::InitLights()  {
