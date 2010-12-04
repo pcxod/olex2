@@ -3634,7 +3634,8 @@ void TMainForm::DoUpdateFiles()  {
   }
   else
     _UpdateThread->DoUpdate();
-  _UpdateThread->ResetUpdateSize();
+  if( _UpdateThread != NULL )
+    _UpdateThread->ResetUpdateSize();
 }
 //..............................................................................
 //..............................................................................
