@@ -1,21 +1,15 @@
 //----------------------------------------------------------------------------//
 // crystallographic symmetry library
-// TXBond
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include <stdlib.h>
-
 #include "symmlib.h"
 #include "dataitem.h"
 #include "symmparser.h"
 #include "bapp.h"
+#include "hall.h"
 
-  TSymmLib* TSymmLib::Instance = NULL;
+TSymmLib* TSymmLib::Instance = NULL;
 
 struct olx_SGDef  {
   const char* name, *full_name, *hall_symbol, *axis;
@@ -577,7 +571,7 @@ TSpaceGroup::TSpaceGroup(const olxstr& Name, const olxstr& FullName, const olxst
                          const olxstr& Axis, int Number, TCLattice& Latt, bool Centrosymmetric)  {
   this->Name = Name;
   this->FullName = FullName;
-  this->HallSymbol = HallSymbol;
+  this->HallSymbol = olxstr(HallSymbol).TrimWhiteChars();
   this->Axis = Axis;
   this->Number = Number;
   this->Latt = &Latt;
@@ -1395,13 +1389,22 @@ void TSymmLib::GetGroupByNumber(int N, TPtrList<TSpaceGroup>& res) const  {
     if( GetGroup(i).GetNumber() == N )  res.Add( &GetGroup(i) );
 }
 //..............................................................................
-TSpaceGroup* TSymmLib::FindSG(const TAsymmUnit& AU)  const {
+TSpaceGroup* TSymmLib::FindSG(const TAsymmUnit& AU)  {
   for( size_t i=0; i < SGCount(); i++ )  {
     if( GetGroup(i) == AU )  {
       return &(GetGroup(i));
     }
   }
-  return NULL;
+  static olxstr uname("u/n");
+  smatd_list ml;
+  for( size_t i=0; i < AU.MatrixCount(); i++ )
+    ml.AddCCopy(AU.GetMatrix(i));
+  TSpaceGroup* SG = new TSpaceGroup(uname, uname, HallSymbol::Evaluate(AU.GetLatt(), ml),
+    EmptyString, -1, GetLattice(olx_abs(AU.GetLatt())-1), (AU.GetLatt() > 0));
+  SpaceGroups.Add(uname, SG).Object;
+  InitRelations();
+  return SG;
+  //return NULL;
 }
 //..............................................................................
 size_t TSymmLib::FindBravaisLattices(TAsymmUnit& AU, TTypeList<TBravaisLatticeRef>& res)  const {
@@ -1483,15 +1486,14 @@ void TSymmLib::InitRelations()  {
   TPtrList<TSpaceGroup> allSG;
   for( size_t i=0; i < BravaisLatticeCount(); i++ )  {
     TBravaisLattice& bl = GetBravaisLattice(i);
-    for( size_t j=0; j < bl.LatticeCount(); j++ )  {
-      bl.GetLattice(j).AddBravaiseLattice( &bl );
-    }
+    for( size_t j=0; j < bl.LatticeCount(); j++ )
+      bl.GetLattice(j).AddBravaiseLattice(&bl);
     for( size_t j=0; j < SGCount(); j++ )  {
       TSpaceGroup& sg = GetGroup(j);
       if( &(sg.GetBravaisLattice()) != NULL )  continue;
       bool found = false;
       for( size_t k=0; k < bl.SymmetryCount(); k++ )  {
-        if( bl.GetSymmetry(k).EqualsWithoutTranslation( sg ) )  {
+        if( bl.GetSymmetry(k).EqualsWithoutTranslation(sg) )  {
           sg.SetBravaisLattice(bl);
           sg.SetLaueClass( bl.GetSymmetry(k) );
           //allSG.Clear();

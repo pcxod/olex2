@@ -141,6 +141,7 @@
 #include "encodings.h"
 #include "cifdp.h"
 #include "glutil.h"
+#include "hall.h"
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
@@ -6282,6 +6283,19 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TSymmLib& sl = TSymmLib::GetInstance();
+  for( size_t i=0; i < sl.SGCount(); i++ )  {
+    TSpaceGroup& sg = sl.GetGroup(i);
+    smatd_list ml;
+    for( size_t j=0; j < sg.MatrixCount(); j++ )
+      ml.AddCCopy(sg.GetMatrix(j));
+    const olxstr hse = HallSymbol::Evaluate(
+      sg.GetLattice().GetLatt()*(sg.IsCentrosymmetric() ? 1 : -1), ml);
+    const olxstr hs = olxstr(sg.GetHallSymbol()).TrimWhiteChars();
+    if( hse != hs )
+      TBasicApp::GetLog() << hs << ": \t" << hse << '\n';
+  }
+  return;
   TStrList out;
   //vec3d_alist mult_vl(3), mult_vl_kr(3);
   //mat3d_alist mult_ml(9);
