@@ -1018,6 +1018,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\hall.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\hkl.cpp"
 				>
 			</File>
@@ -2416,6 +2420,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\hall.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\henke.h"
 				>
 			</File>
@@ -2497,6 +2505,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\rm_base.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\rot_id.h"
 				>
 			</File>
 			<File

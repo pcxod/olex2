@@ -236,8 +236,8 @@ public:
   // 21.06.2008, the file name is not used
   TSymmLib(const olxstr& FN=EmptyString);
   virtual ~TSymmLib();
-
-  TSpaceGroup* FindSG(const TAsymmUnit& AU) const;
+  // creates a dummy space group if not found
+  TSpaceGroup* FindSG(const TAsymmUnit& AU);
   TSpaceGroup* FindSG(const smatd_list& expanded_matrices) const;
 
   // searches for expanded space groups like in the CIF

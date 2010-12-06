@@ -885,11 +885,11 @@ void TAsymmUnit::LibGetCell(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void TAsymmUnit::LibGetVolume(const TStrObjList& Params, TMacroError& E)  {
   double v = CalcCellVolume()/Lattice->GetUnitCell().MatrixCount();
-  E.SetRetVal( v );
+  E.SetRetVal(v);
 }
 //..............................................................................
 void TAsymmUnit::LibGetCellVolume(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( CalcCellVolume() );
+  E.SetRetVal(CalcCellVolume());
 }
 //..............................................................................
 void TAsymmUnit::LibGetSymm(const TStrObjList& Params, TMacroError& E)  {
@@ -898,7 +898,10 @@ void TAsymmUnit::LibGetSymm(const TStrObjList& Params, TMacroError& E)  {
     E.ProcessingError(__OlxSrcInfo, "Could not locate spacegroup" );
     return;
   }
-  E.SetRetVal( sg->GetName() );
+  if( Params.IsEmpty() )
+    E.SetRetVal(sg->GetName());
+  else if( Params[0].Equalsi("hall") )
+    E.SetRetVal(sg->GetHallSymbol());
 }
 //..............................................................................
 void TAsymmUnit::LibSetAtomCrd(const TStrObjList& Params, TMacroError& E)  {
@@ -1094,8 +1097,9 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
  The function takes the atom name and ccordinates, if -1 is returned, the atom is not created") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomCount, "GetAtomCount", fpNone,
 "Returns the atom count in the asymmetric unit") );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetSymm, "GetCellSymm", fpNone,
-"Returns spacegroup of currently loaded file as name: 'C2', 'I41/amd', etc") );
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetSymm, "GetCellSymm", fpNone|fpOne,
+"Returns spacegroup of currently loaded file as name: 'C2', 'I41/amd', etc."
+" Optionally, Hal symbol may be returned if 'hall' is provided as an argument") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomCrd, "GetAtomCrd", fpOne,
 "Returns a comma separated list of fractional coordinates for the specified atom") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomName, "GetAtomName", fpOne,
