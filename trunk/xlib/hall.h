@@ -30,6 +30,7 @@ protected:
     const TTypeList<AnAssociation2<int,olxstr> >& rot, bool full);
 public:
   static olxstr Evaluate(int latt, const smatd_list& matrices);
+  static olxstr FindCentering(smatd_list& matrices);
 };
 
 EndXlibNamespace()

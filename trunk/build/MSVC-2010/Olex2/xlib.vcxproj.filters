@@ -483,6 +483,12 @@
     <ClCompile Include="..\..\..\xlib\ciftab.cpp">
       <Filter>Source Files\CIF</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\xlib\hall.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\symmcon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\afixgroup.h">

@@ -6286,14 +6286,17 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TSymmLib& sl = TSymmLib::GetInstance();
   for( size_t i=0; i < sl.SGCount(); i++ )  {
     TSpaceGroup& sg = sl.GetGroup(i);
-    smatd_list ml;
+    smatd_list ml, ml1;
     for( size_t j=0; j < sg.MatrixCount(); j++ )
       ml.AddCCopy(sg.GetMatrix(j));
+    sg.GetMatrices(ml1, mattAll);
     const olxstr hse = HallSymbol::Evaluate(
       sg.GetLattice().GetLatt()*(sg.IsCentrosymmetric() ? 1 : -1), ml);
     const olxstr hs = olxstr(sg.GetHallSymbol()).TrimWhiteChars();
     if( hse != hs )
       TBasicApp::GetLog() << hs << ": \t" << hse << '\n';
+    if( HallSymbol::FindCentering(ml1) != sg.GetLattice().GetSymbol() )
+      TBasicApp::GetLog() << sg.GetName() << '\n';
   }
   return;
   TStrList out;
