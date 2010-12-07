@@ -20,7 +20,7 @@ protected:
     rotx, roty, rotz, rotx1, roty1, rotz1, rot3;
   static char GetLatticeSymbol(int latt)  {
     const unsigned al = olx_abs(latt);
-    if( al > 7 )
+    if( al > 9 )
       throw TInvalidArgumentException(__OlxSourceInfo, "latt");
     return LattSymbols[al-1];
   }
@@ -30,7 +30,6 @@ protected:
     const TTypeList<AnAssociation2<int,olxstr> >& rot, bool full);
 public:
   static olxstr Evaluate(int latt, const smatd_list& matrices);
-  static olxstr FindCentering(smatd_list& matrices);
 };
 
 EndXlibNamespace()

@@ -6295,8 +6295,21 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     const olxstr hs = olxstr(sg.GetHallSymbol()).TrimWhiteChars();
     if( hse != hs )
       TBasicApp::GetLog() << hs << ": \t" << hse << '\n';
-    if( HallSymbol::FindCentering(ml1) != sg.GetLattice().GetSymbol() )
+    SymSpace::Info si = SymSpace::GetInfo(ml1);
+    if( si.latt != sg.GetLattice().GetLatt() || si.centrosymmetric != sg.IsCentrosymmetric() ||
+      (sg.MatrixCount()+1) != si.matrices.Count() )
       TBasicApp::GetLog() << sg.GetName() << '\n';
+    for( size_t j=0; j < ml.Count(); j++ )  {
+      bool found = false;
+      for( size_t k=0; k < si.matrices.Count(); k++ )  {
+        if( *si.matrices[k] ==  ml[j])  {
+          found = true;
+          break;
+        }
+      }
+      if( !found )
+        break;
+    }
   }
   return;
   TStrList out;

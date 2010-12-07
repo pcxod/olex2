@@ -244,7 +244,7 @@ public:
           const vec3d c = sp[k]*crds[j];
           vec3d tmp = c - cmp_center;
           const vec3i t = tmp.Round<int>();
-          sp.CellToCartI(tmp -= t);
+          sp.OrthogonaliseI(tmp -= t);
           if( tmp.QLength() < 0.5 )  {
             toMerge.Add(Peaks[j]);
             const vec3d mc = c-t;
