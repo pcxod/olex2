@@ -76,7 +76,7 @@ public:
   // returns product of vector elements
   inline T Prod() const {  return data[0]*data[1]*data[2];  }
   // returns sum of absolute values of vector elements
-  inline T AbsSum()  {
+  inline T AbsSum() const {
     return olx_abs(data[0])+olx_abs(data[1])+olx_abs(data[2]);
   }
   // rounds the vector elements
@@ -100,7 +100,7 @@ public:
     const T dp = DotProd(v); 
     return sqrt(QLength()*v.QLength()) - dp*dp;
   }
-  template <class AT> inline TVector3<T> XProdVec(const TVector3<AT>& v) const  {
+  template <class AT> inline TVector3<T> XProdVec(const TVector3<AT>& v) const {
     return TVector3<T>(data[1]*v[2] - data[2]*v[1], 
                        data[2]*v[0] - data[0]*v[2], 
                        data[0]*v[1] - data[1]*v[0]);
@@ -115,7 +115,7 @@ public:
     return TVector3<T>(point[0]-data[0]*m, point[1]-data[1]*m, point[2]-data[2]*m);  
   }
   inline TVector3<T> operator -() const {
-    return TVector3<T>( -data[0], -data[1], -data[2] );
+    return TVector3<T>(-data[0], -data[1], -data[2]);
   }
   // returns a reflection of this vector from a plane represented by normal
   template <class AT> inline TVector3<T> Reflect(const TVector3<AT>& normal) const {
@@ -133,13 +133,22 @@ public:
     return (*this *= (val/l));
   }
   inline TVector3<T>& Null()  {  data[0] = data[1] = data[2] = 0;  return *this;  }
-  inline bool IsNull() const {  return (data[0] == 0 && data[1] == 0 && data[2] == 0) ? true: false;  }
-
-  inline bool operator == (const TVector3<T>& v) const {
-    return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]) ? true : false;  
+  inline bool IsNull() const {  return (data[0] == 0 && data[1] == 0 && data[2] == 0);  }
+  inline bool IsNull(T eps) const {
+    return (olx_abs(data[0]) < eps && olx_abs(data[1]) < eps && olx_abs(data[2]) < eps);
   }
-  inline bool operator != (const TVector3<T>& v) const {
-    return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]) ? false : true;  
+
+  inline bool Equals(const TVector3<T>& v) const {
+    return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]);
+  }
+  inline bool operator == (const TVector3<T>& v) const {  return Equals(v);  }
+  inline bool operator != (const TVector3<T>& v) const {  return !Equals(v);  }
+  // approximately equals
+  inline bool Equals(const TVector3<T>& v, T eps) const {
+    return (
+      olx_abs(data[0]-v[0]) < eps &&
+      olx_abs(data[1]-v[1]) < eps &&
+      olx_abs(data[2]-v[2]) < eps);
   }
   inline TVector3<T>& operator = (const TVector3<T>& v)  {
     data[0] = v[0];  data[1] = v[1];  data[2] = v[2];  
@@ -412,9 +421,7 @@ public:
   inline bool operator == (const TMatrix33<T>& v) const {
     return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]) ? true : false;
   }
-  inline bool operator != (const TMatrix33<T>& v) const {
-    return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]) ? false : true;
-  }
+  inline bool operator != (const TMatrix33<T>& v) const {  return !(operator == (v));  }
 
   inline TMatrix33<T>& operator = (const TMatrix33<T>& v)  {
     data[0] = v[0];  data[1] = v[1];  data[2] = v[2];

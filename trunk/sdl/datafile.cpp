@@ -34,7 +34,7 @@ bool TDataFile::LoadFromTextStream(IInputStream& io, TStrList* Log)  {
   try  {  in = TUtf8File::ReadAsString(io, false);  }
   catch( ... )  {  return false;  }
   if( in.IsEmpty() )  return false;
-  in = in.DeleteCharSet("\n\r").Replace('\t', ' ').DeleteSequencesOf(' ');
+  in = in.DeleteCharSet("\n\r");
   for( size_t i=0; i < in.Length(); i++ )  
     if( in.CharAt(i) == '<' )  {
       FRoot->LoadFromString(i, in, Log);  

@@ -63,17 +63,19 @@ class TSpaceGroup : public IEObject {
   TSpaceGroup* LaueClass, *PointGroup;
   // initialised by the SymLib 
   vec3d InversionCenter;
+  static bool _checkTDS(const vec3d& t1, const vec3d& t2);
+  static bool _checkTD(const vec3d& t1, const vec3d& t2);
 public:
   TSpaceGroup(const olxstr& Name, const olxstr& FullName, const olxstr HallSymbol, 
               const olxstr& Axis, int Number, TCLattice& L, bool Centrosymmetric);
-  virtual ~TSpaceGroup()  { ; }
+  virtual ~TSpaceGroup()  {}
 
   void SetBravaisLattice(TBravaisLattice& bl)  {  BravaisLattice = &bl;  }
   TBravaisLattice& GetBravaisLattice() const {  return *BravaisLattice;  }
   void SetLaueClass(TSpaceGroup& lc)  {  LaueClass = &lc;  }
-  TSpaceGroup&     GetLaueClass() const {  return *LaueClass;  }
+  TSpaceGroup& GetLaueClass() const {  return *LaueClass;  }
   void SetPointGroup(TSpaceGroup& lc)  {  PointGroup = &lc;  }
-  TSpaceGroup&     GetPointGroup() const {  return *PointGroup;  }
+  TSpaceGroup& GetPointGroup() const {  return *PointGroup;  }
 
   bool operator == (const TAsymmUnit& AU) const;
   bool operator == (const smatd_list& matrices) const;
@@ -93,28 +95,9 @@ public:
       for( size_t j=0; j  < allMatrices.Count(); j++ )  {
         smatd& m1 = allMatrices[j];
         if( m1.GetId() != 0 )  continue;
-        bool equal = true;
-        for( size_t k=0; k < 3; k++ )  {
-          for( size_t l=0; l < 3; l++ )  {
-            if( m.r[k][l] != m1.r[k][l] )  {
-              equal = false;
-              break;
-            }
-          }
-          if( !equal )  break;
-        }
-        if( !equal )  continue;
-        vec3d translation;
-        for( size_t k=0; k < 3; k++ )  {
-          translation[k] = m.t[k] - m1.t[k];
-          const int iv = (int)translation[k];
-          translation[k] -= iv;
-          if( olx_abs(translation[k]) < 0.01 || olx_abs(translation[k]) >= 0.99 )
-            translation[k] = 0;
-          if( translation[k] < 0 )
-            translation[k] += 1;
-        }
-        if( translation.QLength() < 0.0001 )  {
+        if( m.r != m1.r )  continue;
+        vec3d tr = m.t - m1.t;
+        if( (tr -= tr.Round<int>()).IsNull(0.001) )  {
           found = true;
           m1.SetRawId(1);
           break;
@@ -124,8 +107,8 @@ public:
     }
     return true;
   }
-  bool EqualsWithoutTranslation (const TSpaceGroup& sg) const;
-  bool IsSubElement( TSpaceGroup* symme )  const;
+  bool EqualsWithoutTranslation(const TSpaceGroup& sg) const;
+  bool IsSubElement(TSpaceGroup* symme )  const;
   // decomoses space group into symmetry elements using reference as the basis
   void SplitIntoElements(TPtrList<TSymmElement>& reference, TPtrList<TSymmElement>& res);
   static void SplitIntoElements(smatd_list& matrices, TPtrList<TSymmElement>& reference, TPtrList<TSymmElement>& res);
@@ -181,8 +164,8 @@ class TSymmElement : public ACollectionItem {
   TSymmElement* SuperElement;
 public:
   TSymmElement(const olxstr& name, TSpaceGroup* sg);
-  TSymmElement(const olxstr& name) : Name(name), SuperElement(NULL)  {  }
-  virtual ~TSymmElement()  {  }
+  TSymmElement(const olxstr& name) : Name(name), SuperElement(NULL)  {}
+  virtual ~TSymmElement()  {}
 
   TSymmElement& AddMatrix(const smatd& m)  {  Matrices.AddCCopy(m);  return *this;  }
   size_t  MatrixCount() const {  return Matrices.Count();  }

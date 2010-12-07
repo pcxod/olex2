@@ -185,10 +185,10 @@ void TCif::Initialize()  {
           GetRM().expl.SetCrystalSize(mx.ToDouble(), md.ToDouble(), mn.ToDouble());
       }
       const olxstr temp = GetParamAsString("_diffrn_ambient_temperature");
-      if( temp != '?' )
+      if( !temp.IsEmpty() && temp != '?' )
         GetRM().expl.SetTempValue(TEValueD(temp));
       const olxstr radiation = GetParamAsString("_diffrn_radiation_wavelength");
-      if( radiation != '?' )
+      if( !radiation.IsEmpty() && radiation != '?' )
         GetRM().expl.SetRadiation(radiation.ToDouble());
     }
     catch(...)  {}
@@ -204,11 +204,14 @@ void TCif::Initialize()  {
       GetAsymmUnit().SetZ((short)olx_round(GetParamAsString("_cell_formula_units_Z").ToDouble()));
   }
   catch(...)  {
+    TBasicApp::GetLog().Info("CIF initialising failed: unknown cell parameters");
     return;
   }
   // check if the cif file contains valid parameters
-  if( GetAsymmUnit().CalcCellVolume() == 0 )
+  if( GetAsymmUnit().CalcCellVolume() == 0 )  {
+    TBasicApp::GetLog().Info("CIF initialising failed: zero cell volume");
     return;
+  }
 
   GetAsymmUnit().InitMatrices();
 
@@ -288,14 +291,18 @@ void TCif::Initialize()  {
   const size_t SiteOccu = ALoop->ColIndex("_atom_site_occupancy");
   const size_t Degen = ALoop->ColIndex("_atom_site_symmetry_multiplicity");
   const size_t Part = ALoop->ColIndex("_atom_site_disorder_group");
-  if( (ALabel|ACi[0]|ACi[1]|ACi[2]|ASymbol) == InvalidIndex )  {
+  if( (ALabel|ACi[0]|ACi[1]|ACi[2]) == InvalidIndex )  {
     TBasicApp::GetLog().Error("Failed to locate required fields in atoms loop");
     return;
   }
   for( size_t i=0; i < ALoop->RowCount(); i++ )  {
     TCAtom& A = GetAsymmUnit().NewAtom();
     A.SetLabel(ALoop->Get(i, ALabel).GetStringValue(), false);
-    cm_Element* type = XElementLib::FindBySymbol(ALoop->Get(i, ASymbol).GetStringValue());
+    cm_Element* type = NULL;
+    if( ASymbol != InvalidIndex )
+      type = XElementLib::FindBySymbol(ALoop->Get(i, ASymbol).GetStringValue());
+    else
+      type = XElementLib::FindBySymbolEx(ALoop->Get(i, ALabel).GetStringValue());
     if( type == NULL )  {
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Undefined element: ") <<
         ALoop->Get(i, ASymbol).GetStringValue());
