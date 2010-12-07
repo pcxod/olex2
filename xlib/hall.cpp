@@ -175,3 +175,54 @@ olxstr HallSymbol::Evaluate(int latt, const smatd_list& matrices)  {
   return hs;
 }
 //..........................................................................................
+olxstr HallSymbol::FindCentering(smatd_list& matrices)  {
+  olxdict<int, TPtrList<smatd>, TPrimitiveComparator> groups;
+  for( size_t i=0; i < matrices.Count(); i++ )  {
+    TPtrList<smatd>& l = groups.Add(rotation_id::get(matrices[i].r));
+    l.Add(matrices[i]);
+  }
+  size_t min_a_group=100;
+  for( size_t i=0; i < groups.Count(); i++ )  {
+    if( groups.GetValue(i).Count() < min_a_group )
+      min_a_group = groups.GetValue(i).Count();
+  }
+  if( min_a_group <=  1 )
+    return 'P';
+  if( min_a_group == 2 )  {
+    vec3d t = groups.GetValue(0)[1]->t - groups.GetValue(0)[0]->t;
+    t -= t.Floor<int>();
+    if( t[0] == 0.5 )  {
+      if( t[1] == 0.5 )  {
+        if( t[2] == 0.5 )
+          return 'I';
+        if( t[2] == 0 )
+          return 'C';
+      }
+      else if( t[1] == 0 && t[2] == 0.5 )
+        return 'B';
+
+    }
+    else if( t[0] == 0 && t[1] == 0.5 && t[2] == 0.5 )
+      return 'A';
+  }
+  else if( min_a_group == 3 )  {
+    vec3d t1 = groups.GetValue(0)[1]->t - groups.GetValue(0)[0]->t;
+    vec3d t2 = groups.GetValue(0)[2]->t - groups.GetValue(0)[0]->t;
+    t1 -= t1.Floor<int>();
+    t2 -= t2.Floor<int>();
+    if( olx_abs(t1[0]-2./3) < 1e-6 && olx_abs(t1[1]-1./3) < 1e-6 && olx_abs(t1[2]-1./3) < 1e-6  &&
+        olx_abs(t2[0]-1./3) < 1e-6 && olx_abs(t2[1]-2./3) < 1e-6 && olx_abs(t2[2]-2./3) < 1e-6 )
+      return 'R';
+    if( olx_abs(t1[0]-1./3) < 1e-6 && olx_abs(t1[1]-1./3) < 1e-6 && olx_abs(t1[2]-2./3) < 1e-6  &&
+        olx_abs(t2[0]-2./3) < 1e-6 && olx_abs(t2[1]-2./3) < 1e-6 && olx_abs(t2[2]-1./3) < 1e-6 )
+      return 'S';
+    if( olx_abs(t1[0]-1./3) < 1e-6 && olx_abs(t1[1]-2./3) < 1e-6 && olx_abs(t1[2]-1./3) < 1e-6  &&
+        olx_abs(t2[0]-2./3) < 1e-6 && olx_abs(t2[1]-1./3) < 1e-6 && olx_abs(t2[2]-2./3) < 1e-6 )
+      return 'T';
+    return EmptyString;
+  }
+  else if( min_a_group )
+    return 'F';
+  return EmptyString;
+}
+//..........................................................................................
