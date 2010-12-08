@@ -576,8 +576,10 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
     }
   }
   const size_t group_count = FGroups.Count();
-  for( size_t i=0; i < group_count; i++ )
-    FGroups[i]->Draw(SelectPrimitives, SelectObjects);
+  for( size_t i=0; i < group_count; i++ )  {
+    if( FGroups[i]->GetParentGroup() == NULL )
+      FGroups[i]->Draw(SelectPrimitives, SelectObjects);
+  }
 
   if( !FSelection->GetGlM().IsIdentityDraw() )  {
     olx_gl::pushAttrib(GL_ALL_ATTRIB_BITS);

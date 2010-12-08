@@ -2793,11 +2793,13 @@ void TGXApp::RestoreGroup(TGlGroup& glg, const GroupData& gd)  {
     if( xbonds[i] != NULL && xbonds[i]->IsVisible() )
       glg.Add(*xbonds[i], false);
   }
+  glg.SetBlended(gd.blended);
 }
 //..............................................................................
 void TGXApp::StoreGroup(const TGlGroup& glG, GroupData& gd)  {
   gd.collectionName = glG.GetCollectionName();  //planes
   gd.visible = glG.IsVisible();
+  gd.blended = glG.IsBlended();
   gd.parent_id = (glG.GetParentGroup() != NULL ? glG.GetParentGroup()->GetTag() : -2); 
   for( size_t j=0; j < glG.Count(); j++ )  {
     AGDrawObject& glO = glG[j];
@@ -2879,6 +2881,10 @@ void TGXApp::RestoreGroups()  {
   for( size_t i=0; i < GroupDefs.Count(); i++ )  {
     TGlGroup& glg = FGlRender->GetGroup(i);
     RestoreGroup(glg, GroupDefs[i]);
+    if( GroupDefs[i].parent_id == -1 )
+      FGlRender->GetSelection().Add(glg);
+    else if( GroupDefs[i].parent_id >= 0 )
+      FGlRender->GetGroup(GroupDefs[i].parent_id).Add(glg);
     GroupDict(&glg, i);
   }
   RestoreLabels();
@@ -4228,13 +4234,14 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
 
   const TDataItem& groups = item.FindRequiredItem("Groups");
   // pre-create all groups
+  GroupDict.Clear();
   for( size_t i=0; i < groups.ItemCount(); i++ )
     FGlRender->NewGroup(groups.GetItem(i).GetValue());
   // load groups
   for( size_t i=0; i < groups.ItemCount(); i++ )  {
     const TDataItem& group = groups.GetItem(i);
     TGlGroup& glG = FGlRender->GetGroup(i);
-    glG.SetVisible( group.GetRequiredField("visible").ToBool() );
+    glG.SetVisible(group.GetRequiredField("visible").ToBool());
     const int p_id = group.GetRequiredField("parent_id").ToInt();
     if( p_id == -1 )
       FGlRender->GetSelection().Add(glG);
@@ -4248,6 +4255,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
       glG.Add(XBonds[bonds.GetField(j).ToSizeT()]);
     glG.Create(group.GetValue());
     StoreGroup(glG, GroupDefs.AddNew());
+    GroupDict(&glG, GroupDefs.Count()-1);
   }
   _UpdateGroupIds();
 
