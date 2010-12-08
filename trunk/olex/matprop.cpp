@@ -47,6 +47,7 @@ void TdlgMatProp::Init()  {
   AActionHandler::SetToDelete(false);
   bEditFont = NULL;
   cbApplyTo = NULL;
+  cbBlend = NULL;
   short Border = 3, SpW = 40;
   FCurrentMaterial = 0;
   if( Object != NULL && Object->GetPrimitives().PrimitiveCount() > 1 )  {
@@ -78,8 +79,11 @@ void TdlgMatProp::Init()  {
     cbPrimitives = NULL;
     Materials = new TGlMaterial[1];
     if( Object != NULL )  {
-      if( EsdlInstanceOf(*Object, TGlGroup) )
+      if( EsdlInstanceOf(*Object, TGlGroup) )  {
         Materials[0] = ((TGlGroup*)Object)->GetGlM();
+        cbBlend = new wxCheckBox(this, -1, wxT("Override color (Use front ambient transparency for blending)"));
+        cbBlend->SetValue(!((TGlGroup*)Object)->IsBlended());
+      }
       else if( Object->GetPrimitives().PrimitiveCount() != 0 )
         Materials[0] = Object->GetPrimitives().GetPrimitive(0).GetProperties();
     }
@@ -138,6 +142,11 @@ void TdlgMatProp::Init()  {
     bEditFont->Enable(Object->GetPrimitives().GetPrimitive(0).GetFont() != NULL &&
       !Object->GetPrimitives().GetPrimitive(0).GetFont()->IsVectorFont());
     Sizer0->Add(bEditFont, 1, wxEXPAND | wxALL, Border);
+  }
+  else if( cbBlend != NULL )  {
+    Sizer0 = new wxBoxSizer(wxHORIZONTAL);
+    Sizer0->Add(new wxStaticText(this, -1, wxT("Group color properties: ")), 0, wxEXPAND | wxALL, Border);
+    Sizer0->Add(cbBlend, 1, wxEXPAND | wxALL, Border);
   }
 
   wxFlexGridSizer *grid = new wxFlexGridSizer(6, 7);
@@ -341,8 +350,10 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
   if( Object != NULL )  {
     const short cl = TXAtom::LegendLevel(Object->GetPrimitives().GetName());
     TGXApp& app = TGXApp::GetInstance();
-    if( EsdlInstanceOf(*Object, TGlGroup) )
+    if( EsdlInstanceOf(*Object, TGlGroup) )  {
       ((TGlGroup*)Object)->SetGlM(Materials[0]);
+      ((TGlGroup*)Object)->SetBlended(!cbBlend->GetValue());
+    }
     else if( Object->IsSelected() )  {
       TGlGroup& gl = app.GetSelection();
       TGPCollection* ogpc = &Object->GetPrimitives();

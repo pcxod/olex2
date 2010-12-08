@@ -5700,8 +5700,24 @@ void TMainForm::macNextSolution(TStrObjList &Cmds, const TParamList &Options, TM
   }
 }
 //..............................................................................
-//..............................................................................
-TNetwork::AlignInfo MatchAtomPairsQT(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,  bool TryInversion, double (*weight_calculator)(const TSAtom&),  bool print = true){  TNetwork::AlignInfo rv = TNetwork::GetAlignmentRMSD(atoms, TryInversion, weight_calculator);  if( print )    TBasicApp::GetLog() << ( olxstr("RMS is ") << olxstr::FormatFloat(3, rv.rmsd.GetV()) << " A\n");  return rv;}
+TNetwork::AlignInfo MatchAtomPairsQT(const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+  bool TryInversion, double (*weight_calculator)(const TSAtom&),  bool print = true)
+{
+  TNetwork::AlignInfo rv = TNetwork::GetAlignmentRMSD(atoms, TryInversion, weight_calculator);
+  if( print )  {
+    const size_t cnt = olx_min(3, atoms.Count());
+    olxstr f1 = '{', f2 = '{';
+    for( size_t i=0; i < cnt; i++ )  {
+      f1 << atoms[i].GetA()->GetLabel() << ',';
+      f2 << atoms[i].GetB()->GetLabel() << ',';
+    }
+    olxstr line = "Alignment RMSD ";
+    line << f2 << "...} to " << f1 << "...} " << (TryInversion ? "with" : "without")
+      << " inversion) is " << olxstr::FormatFloat(3, rv.rmsd.GetV()) << " A\n";
+    TBasicApp::GetLog() << line;
+  }
+  return rv;
+}
 //..............................................................................
 TNetwork::AlignInfo MatchAtomPairsQTEsd(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
   bool TryInversion, double (*weight_calculator)(const TSAtom&))
@@ -5897,31 +5913,37 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   else  {
     TNetPList nets;
     FXApp->GetNetworks(nets);
-    TTypeList<AnAssociation2<size_t, size_t> > res;
-    TTypeList<AnAssociation2<TSAtom*,TSAtom*> > satomp;
-    TSAtomPList atomsToTransform;
     // restore the other unit cell, if any...
     for( size_t i=0; i < nets.Count(); i++ )  {
       if( &latt != &nets[i]->GetLattice() )
         nets[i]->GetLattice().RestoreADPs();
     }
+    TEBitArray matched(nets.Count());
     for( size_t i=0; i < nets.Count(); i++ )  {
-      if( !nets[i]->IsSuitableForMatching() )  continue;
+      if( !nets[i]->IsSuitableForMatching() || matched[i] )  continue;
       for( size_t j=i+1; j < nets.Count(); j++ )  {
-        if( !nets[j]->IsSuitableForMatching() )  continue;
+        if( !nets[j]->IsSuitableForMatching() || matched[j] )  continue;
+        TTypeList<AnAssociation2<size_t, size_t> > res;
+        if( !nets[i]->DoMatch(*nets[j], res, false, weight_calculator) )  continue;
+        matched.SetTrue(j);
+        TTypeList<AnAssociation2<TSAtom*,TSAtom*> > ap;
+        for( size_t k=0; k < res.Count(); k++ )
+          ap.AddNew<TSAtom*,TSAtom*>(&nets[i]->Node(res[k].GetA()), &nets[j]->Node(res[k].GetB()));
+        TNetwork::AlignInfo a_i = MatchAtomPairsQT(ap, false, weight_calculator);
+        // get info for the inverted fragment
         res.Clear();
-        if( nets[i]->DoMatch(*nets[j], res, TryInvert, weight_calculator) )  {
-          satomp.Clear();
-          atomsToTransform.Clear();
-          for( size_t k=0; k < res.Count(); k++ )  {
-            atomsToTransform.Add(nets[j]->Node(res[k].GetB()));
-            satomp.AddNew<TSAtom*,TSAtom*>(&nets[i]->Node(res[k].GetA()),
-              &nets[j]->Node(res[k].GetB()));
-          }
-          TNetwork::AlignInfo align_info = MatchAtomPairsQT(satomp, TryInvert, weight_calculator);
-          CallMatchCallbacks(*nets[i], *nets[j], align_info.rmsd.GetV());
-          TNetwork::DoAlignAtoms(atomsToTransform, align_info);
-        }
+        ap.Clear();
+        nets[i]->DoMatch(*nets[j], res, true, weight_calculator);
+        for( size_t k=0; k < res.Count(); k++ )
+          ap.AddNew<TSAtom*,TSAtom*>(&nets[i]->Node(res[k].GetA()), &nets[j]->Node(res[k].GetB()));
+        TNetwork::AlignInfo ia_i = MatchAtomPairsQT(ap, true, weight_calculator);
+
+        TNetwork::AlignInfo& ra_i = (a_i.rmsd.GetV() < ia_i.rmsd.GetV() ? a_i : ia_i);
+        CallMatchCallbacks(*nets[i], *nets[j], ra_i.rmsd.GetV());
+        TSAtomPList atomsToTransform;
+        for( size_t k=0; k < nets[j]->NodeCount(); k++ )
+          atomsToTransform.Add(nets[j]->Node(k));
+        TNetwork::DoAlignAtoms(atomsToTransform, ra_i);
       }
     }
     FXApp->UpdateBonds();

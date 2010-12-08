@@ -144,7 +144,7 @@ protected:
     TTypeList<AtomRef> atoms;
     TTypeList<BondRef> bonds;
     olxstr collectionName;
-    bool visible;
+    bool visible, blended;
     index_t parent_id;
     bool IsEmpty() const {  return atoms.IsEmpty() && bonds.IsEmpty();  }
     void Clear()  {
@@ -156,6 +156,7 @@ protected:
       bonds = g.bonds;
       collectionName = g.collectionName;
       visible = g.visible;
+      blended = g.blended;
       parent_id = g.parent_id;
       return *this;
     }
