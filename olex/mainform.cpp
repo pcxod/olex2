@@ -674,20 +674,13 @@ shells-[grow] grow atom shells vs fragments",
 
   this_InitMacro(EditAtom, cs-do not clear the selection,fpAny|psCheckFileTypeIns);
   this_InitMacro(EditIns, , fpNone|psCheckFileTypeIns);
-  this_InitMacro(EditHkl, , fpNone|fpOne|fpThree);
-  this_InitMacro(ViewHkl, , fpNone|fpOne);
-  this_InitMacro(ExtractHkl, , fpOne|psFileLoaded);
-  this_InitMacro(MergeHkl, , fpNone|fpOne|psFileLoaded);
+  this_InitMacro(HklEdit, , fpNone|fpOne|fpThree);
+  this_InitMacro(HklView, , fpNone|fpOne);
+
   // not implemented
-  this_InitMacroD(AppendHkl, "h&;k&;l&;c", fpAny, "moves reflection back into the refinement list\
- See excludeHkl for more details");
-  // not implemented
-  this_InitMacroD(ExcludeHkl, "h-semicolon separated list of indexes&;k&;l&;c-true/false to use provided\
- indexes in any reflection. The default is in any one reflection" , fpAny, "excludes reflections with give indexes\
- from the hkl file -h=1;2 : all reflections where h=1 or 2. ");
+  this_InitMacro(HklExtract, , fpOne|psFileLoaded);
 
   this_InitMacroD(Direction, EmptyString, fpNone, "prints current orientation of the model in factional coordinates");
-
   this_InitMacro(ViewGrid, , fpNone|fpOne);
   this_InitMacro(Undo, , fpNone);
 

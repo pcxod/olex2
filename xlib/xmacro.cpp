@@ -53,7 +53,7 @@ void XLibMacros::Export(TLibrary& lib)  {
  the subsequent expressions are combined using logical 'and' operator. For instance 0[2l] expression means: to find all\
  reflections where 2l = 0. The function operates on all P1 merged reflections after\
  filtering by SHEL and OMIT, -m option merges the reflections in current space group");
-  xlib_InitMacro(BrushHkl, "f-consider Friedel law", fpAny, "for high redundancy\
+  xlib_InitMacro(HklBrush, "f-consider Friedel law", fpAny, "for high redundancy\
  data sets, removes equivalents with high sigma");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(SG, "a", fpNone|fpOne, "suggest space group");
@@ -199,9 +199,16 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
     "&;o-use occupancy of the atoms in the integration",
     fpAny|psFileLoaded,
     "Prints molecular volume, surface area and other information for visible/selected atoms");
-  xlib_InitMacro(RTab, EmptyString,
-    (fpAny^fpNone)|psCheckFileTypeIns,
+  xlib_InitMacro(RTab, EmptyString, (fpAny^fpNone)|psCheckFileTypeIns,
     "Adds RTAB with givn name for provided atoms/selection");
+  xlib_InitMacro(HklMerge, EmptyString, fpAny|psFileLoaded,
+    "Merges current HKL file (ehco HKLSrc()) to given file name. "
+    "Warning: if no arguments provided, the current file is overwritten");
+  xlib_InitMacro(HklAppend, "h&;k&;l&;c", fpAny, "moves reflection back into the refinement list\
+ See excludeHkl for more details");
+  xlib_InitMacro(HklExclude, "h-semicolon separated list of indexes&;k&;l&;c-true/false to use provided\
+ indexes in any reflection. The default is in any one reflection" , fpAny,
+ "excludes reflections with give indexes from the hkl file -h=1;2 : all reflections where h=1 or 2");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -4192,3 +4199,135 @@ void XLibMacros::macRTab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   else
     Error.ProcessingError(__OlxSrcInfo, "1 to 3 atoms is expected");
 }
+//..............................................................................
+void XLibMacros::macHklMerge(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TXFile& xf = TXApp::GetInstance().XFile();
+  TRefList refs;
+  RefinementModel::HklStat ms =
+    xf.GetRM().GetRefinementRefList<TUnitCell::SymSpace,RefMerger::StandardMerger>(
+    xf.GetUnitCell().GetSymSpace(), refs);
+  TTTable<TStrList> tab(6, 2);
+  tab[0][0] << "Total reflections";             tab[0][1] << ms.GetReadReflections();
+  tab[1][0] << "Unique reflections";            tab[1][1] << ms.UniqueReflections;
+  tab[2][0] << "Inconsistent equaivalents";     tab[2][1] << ms.InconsistentEquivalents;
+  tab[3][0] << "Systematic absences removed";   tab[3][1] << ms.SystematicAbsentcesRemoved;
+  tab[4][0] << "Rint";                          tab[4][1] << ms.Rint;
+  tab[5][0] << "Rsigma";                        tab[5][1] << ms.Rsigma;
+  TBasicApp::NewLogEntry() << tab.CreateTXTList("Merging statistics ", true, false, "  ");
+  olxstr hklFileName = xf.GetRM().GetHKLSource();
+  THklFile::SaveToFile(Cmds.IsEmpty() ? hklFileName : Cmds.Text(' '), refs);
+}
+//..............................................................................
+void XLibMacros::macHklAppend(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TIntList h, k, l;
+  bool combine = Options.FindValue("c", TrueString).ToBool();
+  TStrList toks( Options.FindValue('h', EmptyString), ';');
+  for( size_t i=0; i < toks.Count(); i++ )
+    h.Add( toks[i].ToInt() );
+  toks.Clear();
+  toks.Strtok( Options.FindValue('k', EmptyString), ';');
+  for( size_t i=0; i < toks.Count(); i++ )
+    k.Add( toks[i].ToInt() );
+  toks.Clear();
+  toks.Strtok( Options.FindValue('l', EmptyString), ';');
+  for( size_t i=0; i < toks.Count(); i++ )
+    l.Add( toks[i].ToInt() );
+
+  const olxstr hklSrc = TXApp::GetInstance().LocateHklFile();
+  if( !TEFile::Exists( hklSrc ) )  {
+    E.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
+    return;
+  }
+  THklFile Hkl;
+  size_t c = 0;
+  Hkl.LoadFromFile(hklSrc);
+  if( Options.IsEmpty() )  {
+    for( size_t i=0; i < Hkl.RefCount(); i++ )  {
+      if( Hkl[i].GetTag() < 0 )  {
+        Hkl[i].SetTag(-Hkl[i].GetTag());
+        c++;
+      }
+    }
+  }
+  else if( combine )  {
+    for( size_t i=0; i < Hkl.RefCount(); i++ )  {
+      if( Hkl[i].GetTag() < 0 )  {
+        if( !h.IsEmpty() && h.IndexOf(Hkl[i].GetH()) == InvalidIndex ) continue;
+        if( !k.IsEmpty() && k.IndexOf(Hkl[i].GetK()) == InvalidIndex ) continue;
+        if( !l.IsEmpty() && l.IndexOf(Hkl[i].GetL()) == InvalidIndex ) continue;
+        Hkl[i].SetTag(-Hkl[i].GetTag());
+        c++;
+      }
+    }
+  }
+  else  {
+    for( size_t i=0; i < Hkl.RefCount(); i++ )  {
+      if( Hkl[i].GetTag() < 0 )  {
+        if( h.IndexOf(Hkl[i].GetH()) != InvalidIndex ||
+            k.IndexOf(Hkl[i].GetK()) != InvalidIndex ||
+            l.IndexOf(Hkl[i].GetL()) != InvalidIndex )  {
+          Hkl[i].SetTag(-Hkl[i].GetTag());
+          c++;
+        }
+      }
+    }
+  }
+  Hkl.SaveToFile(hklSrc);
+  TBasicApp::NewLogEntry() << c << " reflections appended";
+}
+//..............................................................................
+void XLibMacros::macHklExclude(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TIntList h, k, l;
+  const bool combine = Options.FindValue("c", TrueString).ToBool();
+  TStrList toks(Options.FindValue('h', EmptyString), ';');
+  for( size_t i=0; i < toks.Count(); i++ )
+    h.Add(toks[i].ToInt());
+  toks.Clear();
+  toks.Strtok(Options.FindValue('k', EmptyString), ';');
+  for( size_t i=0; i < toks.Count(); i++ )
+    k.Add(toks[i].ToInt());
+  toks.Clear();
+  toks.Strtok(Options.FindValue('l', EmptyString), ';');
+  for( size_t i=0; i < toks.Count(); i++ )
+    l.Add(toks[i].ToInt());
+
+  const olxstr hklSrc(TXApp::GetInstance().LocateHklFile());
+  if( !TEFile::Exists(hklSrc) )  {
+    E.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
+    return;
+  }
+  if( h.IsEmpty() && k.IsEmpty() && l.IsEmpty() )  {
+    E.ProcessingError(__OlxSrcInfo, "please provide a condition");
+    return;
+  }
+  THklFile Hkl;
+  size_t c = 0;
+  Hkl.LoadFromFile(hklSrc);
+  if( combine )  {
+    for( size_t i=0; i < Hkl.RefCount(); i++ )  {
+      if( Hkl[i].GetTag() > 0 )  {
+        if( !h.IsEmpty() && h.IndexOf(Hkl[i].GetH()) == InvalidIndex) continue;
+        if( !k.IsEmpty() && k.IndexOf(Hkl[i].GetK()) == InvalidIndex) continue;
+        if( !l.IsEmpty() && l.IndexOf(Hkl[i].GetL()) == InvalidIndex) continue;
+        Hkl[i].SetTag(-Hkl[i].GetTag());
+        c++;
+      }
+    }
+  }
+  else  {
+    for( size_t i=0; i < Hkl.RefCount(); i++ )  {
+      if( Hkl[i].GetTag() > 0 )  {
+        if( (!h.IsEmpty() && h.IndexOf(Hkl[i].GetH()) != InvalidIndex) ||
+            (!k.IsEmpty() && k.IndexOf(Hkl[i].GetK()) != InvalidIndex) ||
+            (!l.IsEmpty() && l.IndexOf(Hkl[i].GetL()) != InvalidIndex) )
+        {
+          Hkl[i].SetTag(-Hkl[i].GetTag());
+          c++;
+        }
+      }
+    }
+  }
+  Hkl.SaveToFile(hklSrc);
+  TBasicApp::NewLogEntry() << c << " reflections excluded";
+}
+//..............................................................................
