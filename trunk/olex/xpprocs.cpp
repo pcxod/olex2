@@ -3726,26 +3726,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   dlg->Destroy();
 }
 //..............................................................................
-void TMainForm::macMergeHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TRefList refs;
-  RefinementModel::HklStat ms =
-    FXApp->XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace,RefMerger::StandardMerger>(
-    FXApp->XFile().GetUnitCell().GetSymSpace(), refs);
-  TTTable<TStrList> tab(6, 2);
-  tab[0][0] << "Total reflections";             tab[0][1] << ms.GetReadReflections();
-  tab[1][0] << "Unique reflections";            tab[1][1] << ms.UniqueReflections;
-  tab[2][0] << "Inconsistent equaivalents";     tab[2][1] << ms.InconsistentEquivalents;
-  tab[3][0] << "Systematic absences removed";   tab[3][1] << ms.SystematicAbsentcesRemoved;
-  tab[4][0] << "Rint";                          tab[4][1] << ms.Rint;
-  tab[5][0] << "Rsigma";                        tab[5][1] << ms.Rsigma;
-  TStrList Output;
-  tab.CreateTXTList(Output, olxstr("Merging statistics "), true, false, "  ");
-  TBasicApp::GetLog() << Output << '\n';
-  olxstr hklFileName = FXApp->XFile().GetRM().GetHKLSource();
-  THklFile::SaveToFile( Cmds.IsEmpty() ? hklFileName : Cmds[0], refs);
-}
-//..............................................................................
-void TMainForm::macEditHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   olxstr HklFN( FXApp->LocateHklFile() );
   if( !TEFile::Exists(HklFN) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file" );
@@ -3807,7 +3788,7 @@ void TMainForm::macEditHkl(TStrObjList &Cmds, const TParamList &Options, TMacroE
   dlg->Destroy();
 }
 //..............................................................................
-void TMainForm::macViewHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macHklView(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( !Cmds.Count() )
     FXApp->SetHklVisible(!FXApp->IsHklVisible());
   else
@@ -4002,10 +3983,8 @@ void TMainForm::macViewGrid(TStrObjList &Cmds, const TParamList &Options, TMacro
   FXApp->ShowGrid(true, gname);
 }
 //..............................................................................
-void TMainForm::macExtractHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  
+void TMainForm::macHklExtract(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   throw TNotImplementedException(__OlxSourceInfo);
-  
   TGlGroup& sel = FXApp->GetSelection();
   if( sel.Count() == 0 )  {
     E.ProcessingError(__OlxSrcInfo, "please select some reflections" );
@@ -4022,120 +4001,6 @@ void TMainForm::macExtractHkl(TStrObjList &Cmds, const TParamList &Options, TMac
     return;
   }
   THklFile::SaveToFile(Cmds[0], Refs, true);
-}
-//..............................................................................
-void TMainForm::macAppendHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TIntList h, k, l;
-  bool combine = Options.FindValue("c", TrueString).ToBool();
-  TStrList toks( Options.FindValue('h', EmptyString), ';');
-  for( size_t i=0; i < toks.Count(); i++ )
-    h.Add( toks[i].ToInt() );
-  toks.Clear();
-  toks.Strtok( Options.FindValue('k', EmptyString), ';');
-  for( size_t i=0; i < toks.Count(); i++ )
-    k.Add( toks[i].ToInt() );
-  toks.Clear();
-  toks.Strtok( Options.FindValue('l', EmptyString), ';');
-  for( size_t i=0; i < toks.Count(); i++ )
-    l.Add( toks[i].ToInt() );
-
-  olxstr hklSrc( FXApp->LocateHklFile() );
-  if( !TEFile::Exists( hklSrc ) )  {
-    E.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
-    return;
-  }
-  THklFile Hkl;
-  int c = 0;
-  Hkl.LoadFromFile( hklSrc );
-  if( Options.IsEmpty() )  {
-    for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-      if( Hkl[i].GetTag() < 0 )  {
-        Hkl[i].SetTag( -Hkl[i].GetTag() );
-        c++;
-      }
-    }
-  }
-  else if( combine )  {
-    for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-      if( Hkl[i].GetTag() < 0 )  {
-        if( !h.IsEmpty() && h.IndexOf(Hkl[i].GetH()) == InvalidIndex ) continue;
-        if( !k.IsEmpty() && k.IndexOf(Hkl[i].GetK()) == InvalidIndex ) continue;
-        if( !l.IsEmpty() && l.IndexOf(Hkl[i].GetL()) == InvalidIndex ) continue;
-        Hkl[i].SetTag( -Hkl[i].GetTag() );
-        c++;
-      }
-    }
-  }
-  else  {
-    for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-      if( Hkl[i].GetTag() < 0 )  {
-        if( h.IndexOf(Hkl[i].GetH()) != InvalidIndex ||
-            k.IndexOf(Hkl[i].GetK()) != InvalidIndex ||
-            l.IndexOf(Hkl[i].GetL()) != InvalidIndex )  {
-          Hkl[i].SetTag( -Hkl[i].GetTag() );
-          c++;
-        }
-      }
-    }
-  }
-  Hkl.SaveToFile( hklSrc );
-  FXApp->GetLog() << c << " reflections appended\n";
-}
-//..............................................................................
-void TMainForm::macExcludeHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TIntList h, k, l;
-  bool combine = Options.FindValue("c", TrueString).ToBool();
-  TStrList toks( Options.FindValue('h', EmptyString), ';');
-  for( size_t i=0; i < toks.Count(); i++ )
-    h.Add( toks[i].ToInt() );
-  toks.Clear();
-  toks.Strtok( Options.FindValue('k', EmptyString), ';');
-  for( size_t i=0; i < toks.Count(); i++ )
-    k.Add( toks[i].ToInt() );
-  toks.Clear();
-  toks.Strtok( Options.FindValue('l', EmptyString), ';');
-  for( size_t i=0; i < toks.Count(); i++ )
-    l.Add( toks[i].ToInt() );
-
-  olxstr hklSrc( FXApp->LocateHklFile() );
-  if( !TEFile::Exists( hklSrc ) )  {
-    E.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
-    return;
-  }
-  if( h.IsEmpty() && k.IsEmpty() && l.IsEmpty() )  {
-    E.ProcessingError(__OlxSrcInfo, "please provide a condition");
-    return;
-  }
-
-  THklFile Hkl;
-  int c = 0;
-  Hkl.LoadFromFile( hklSrc );
-  if( combine )  {
-    for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-      if( Hkl[i].GetTag() > 0 )  {
-        if( !h.IsEmpty() && h.IndexOf(Hkl[i].GetH()) == InvalidIndex) continue;
-        if( !k.IsEmpty() && k.IndexOf(Hkl[i].GetK()) == InvalidIndex) continue;
-        if( !l.IsEmpty() && l.IndexOf(Hkl[i].GetL()) == InvalidIndex) continue;
-        Hkl[i].SetTag( -Hkl[i].GetTag() );
-        c++;
-      }
-    }
-  }
-  else  {
-    for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-      if( Hkl[i].GetTag() > 0 )  {
-        if( (!h.IsEmpty() && h.IndexOf(Hkl[i].GetH()) != InvalidIndex) ||
-            (!k.IsEmpty() && k.IndexOf(Hkl[i].GetK()) != InvalidIndex) ||
-            (!l.IsEmpty() && l.IndexOf(Hkl[i].GetL()) != InvalidIndex) )
-        {
-          Hkl[i].SetTag( -Hkl[i].GetTag() );
-          c++;
-        }
-      }
-    }
-  }
-  Hkl.SaveToFile( hklSrc );
-  FXApp->GetLog() << c << " reflections excluded\n";
 }
 //..............................................................................
 void TMainForm::macDirection(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

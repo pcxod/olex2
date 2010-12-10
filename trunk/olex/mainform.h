@@ -466,12 +466,9 @@ private:
 
   DefMacro(EditAtom)
   DefMacro(EditIns)
-  DefMacro(EditHkl)
-  DefMacro(ViewHkl)
-  DefMacro(ExtractHkl)
-  DefMacro(AppendHkl)
-  DefMacro(ExcludeHkl)
-  DefMacro(MergeHkl)
+  DefMacro(HklEdit)
+  DefMacro(HklView)
+  DefMacro(HklExtract)
   DefMacro(Direction)
 
   DefMacro(ViewGrid)

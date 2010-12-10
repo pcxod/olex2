@@ -12,8 +12,11 @@
 
 class XLibMacros  {
   static DefMacro(Run)
-  static DefMacro(BrushHkl)
+  static DefMacro(HklBrush)
   static DefMacro(HklStat)
+  static DefMacro(HklMerge)
+  static DefMacro(HklAppend)
+  static DefMacro(HklExclude)
   static DefMacro(SG)
   static DefMacro(SGE)
   static DefMacro(GraphSR)
@@ -87,8 +90,8 @@ class XLibMacros  {
   static DefMacro(Omit)
   static DefMacro(MolInfo)
   static DefMacro(RTab)
+  
   static DefFunc(Lst)
-
   static DefFunc(FileName)
   static DefFunc(FileExt)
   static DefFunc(FilePath)
