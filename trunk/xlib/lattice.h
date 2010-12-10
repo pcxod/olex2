@@ -63,7 +63,6 @@ protected:
   void BuildPlanes();
   void InitBody();
   void Disassemble(bool create_planes=true);
-  void RestoreCoordinates();
   TSAtom& GenerateAtom(TCAtom& a, smatd& symop);
   static void _CreateFrags(TCAtom& start, TCAtomPList& dest);
 public:
@@ -166,6 +165,8 @@ public:
   void UpdateAsymmUnit();
   // re-creats unit cell U's and reinitialises atom U's
   void RestoreADPs(bool restoreCoordinates=true);  
+  // re-calculates the cartesian coordinates of atoms
+  void RestoreCoordinates();
   void MoveFragment(const vec3d& to, TSAtom& fragAtom);
   void MoveFragment(TSAtom& to, TSAtom& fragAtom);
   void MoveToCenter();

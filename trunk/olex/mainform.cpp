@@ -743,14 +743,16 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
   this_InitMacroD(DelBond, EmptyString, fpAny, "Removes specified bond from the connectivity table");
   this_InitMacro(ShowWindow, ,fpOne|fpTwo);
   
-  this_InitMacro(DelOFile, ,fpOne);
+  this_InitMacroD(OFileDel, EmptyString, fpOne, "Deletes overlayed file specified by index");
+  this_InitMacroD(OFileSwap, EmptyString, fpOne,
+    "Makes overlayed file, given by index the current file to which all commands are applied");
   this_InitMacroD(CalcVol, "n-normalises bonds before the calculation&;cs-do not clear the selection", fpNone|fpOne, "Calculates tetrahedron or bipyramidal shape volume for given (selected) atom");
 
   this_InitMacroD(Schedule, "r-repeatable", fpAny^(fpNone|fpOne),
 "Schedules a particular macro (second argument) to be executed within provided\
  interval (first argument)");
 
-  this_InitMacroD(Tls, "", fpAny^(fpNone)|psFileLoaded, "James Haestier TLS test procedure");
+  this_InitMacroD(Tls, EmptyString, fpAny^(fpNone)|psFileLoaded, "James Haestier TLS test procedure");
 
   this_InitMacro(Test, , fpAny);
 

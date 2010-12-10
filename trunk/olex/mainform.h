@@ -517,7 +517,8 @@ private:
 
   DefMacro(ShowWindow)
 
-  DefMacro(DelOFile)
+  DefMacro(OFileDel)
+  DefMacro(OFileSwap)
   DefMacro(CalcVol)
 
   DefMacro(Schedule)
