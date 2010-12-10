@@ -5925,7 +5925,7 @@ void TMainForm::funGetCompilationInfo(const TStrObjList& Params, TMacroError &E)
   }
 }
 //..............................................................................
-void TMainForm::macDelOFile(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macOFileDel(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( FXApp->OverlayedXFileCount() == 0 )  {
     Macros.ProcessMacro("fuse", Error);
     return;
@@ -5943,7 +5943,10 @@ void TMainForm::macDelOFile(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
 }
 //..............................................................................
-
+void TMainForm::macOFileSwap(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  FXApp->SetActiveXFile(Cmds[0].ToSizeT());
+}
+//..............................................................................
 class helper_Tetrahedron  {
   vec3d_list Points;
   olxstr Name;

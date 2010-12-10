@@ -526,15 +526,18 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
 }
 //..............................................................................
 void TGXApp::CenterModel()  {
-  const size_t ac = FXFile->GetLattice().AtomCount();
   double weight = 0;
   vec3d center, maX(-100, -100, -100), miN(100, 100, 100);
-  for( size_t i=0; i < ac; i++ )  {
-    TSAtom& A = FXFile->GetLattice().GetAtom(i);
-    if( !A.IsDeleted() )  {
-      center += A.crd();
-      vec3d::UpdateMinMax(A.crd(), miN, maX);
-      weight += 1;
+  for( size_t i=0; i <= OverlayedXFiles.Count(); i++ )  {
+    const TLattice& latt = (i == OverlayedXFiles.Count() ? XFile() : OverlayedXFiles[i]).GetLattice();
+    const size_t ac = latt.AtomCount();
+    for( size_t j=0; j < ac; j++ )  {
+      const TSAtom& a = latt.GetAtom(j);
+      if( a.IsAvailable() )  {
+        center += a.crd();
+        vec3d::UpdateMinMax(a.crd(), miN, maX);
+        weight += 1;
+      }
     }
   }
   if( FDUnitCell->IsVisible() )  {
@@ -564,15 +567,19 @@ void TGXApp::CenterView(bool calcZoom)  {
   double weight = 0;
   vec3d center;
   vec3d maX(-100, -100, -100), miN(100, 100, 100);
-  if( FXFile->GetLattice().AtomCount() == 0 )  return;
-  for( size_t i=0; i < XAtoms.Count(); i++ )  {
-    TXAtom& XA = XAtoms[i];
-    if( !XA.IsDeleted() && XA.IsVisible() )  {
-      center += XA.Atom().crd();
-      weight += 1;
-      vec3d::UpdateMinMax(XA.Atom().crd(), miN, maX);
+  for( size_t i=0; i <= OverlayedXFiles.Count(); i++ )  {
+    const TLattice& latt = (i == OverlayedXFiles.Count() ? XFile() : OverlayedXFiles[i]).GetLattice();
+    const size_t ac = latt.AtomCount();
+    for( size_t j=0; j < ac; j++ )  {
+      const TSAtom& a = latt.GetAtom(j);
+      if( a.IsAvailable() )  {
+        center += a.crd();
+        vec3d::UpdateMinMax(a.crd(), miN, maX);
+        weight += 1;
+      }
     }
   }
+  if( weight == 0 )  return;
   if( FDUnitCell->IsVisible() )  {
     for( size_t i=0; i < FDUnitCell->VertexCount(); i++ )  {
       center += FDUnitCell->GetVertex(i);
@@ -3605,8 +3612,14 @@ void TGXApp::CreateXGrowLines()  {
       AtomsToProcess.Add(A);
     }
   }
-  for( size_t i=0; i < AtomsToProcess.Count(); i++ )
+  for( size_t i=0; i < AtomsToProcess.Count(); i++ )  {
+    if( AtomsToProcess[i]->GetNetwork().GetLattice() != FXFile->GetLattice() )  {
+      AtomsToProcess[i] = NULL;
+      continue;
+    }
     CrdMap.Add(AtomsToProcess[i]->crd());
+  }
+  AtomsToProcess.Pack();
   TPtrList<TCAtom> AttachedAtoms;
   TTypeList<TGXApp_Transform1> tr_list;
   //const AtomRegistry& ar = XFile().GetLattice().GetAtomRegistry();
@@ -3831,7 +3844,9 @@ void TGXApp::SetActiveXFile(size_t i)  {
   FXFile->GetLattice().OnDisassemble.TakeOver(OverlayedXFiles[i].GetLattice().OnDisassemble);
   FXFile->GetLattice().OnStructureGrow.TakeOver(OverlayedXFiles[i].GetLattice().OnStructureGrow);
   FXFile->GetLattice().OnStructureUniq.TakeOver(OverlayedXFiles[i].GetLattice().OnStructureUniq);
-  //CreateObjects(
+  FXFile->GetLattice().OnAtomsDeleted.TakeOver(OverlayedXFiles[i].GetLattice().OnAtomsDeleted);
+  AlignOverlayedXFiles();
+  CreateObjects(false, true);
 }
 //..............................................................................
 void TGXApp::CalcLatticeRandCenter(const TLattice& latt, double& maxR, vec3d& cnt)  {
@@ -3854,7 +3869,7 @@ void TGXApp::AlignOverlayedXFiles() {
   typedef AnAssociation3<double,vec3d,TLattice*> grid_type;
   typedef TTypeList<grid_type> row_type;
   TTypeList<row_type> grid;
-  size_t dim = olx_round( sqrt((double)OverlayedXFiles.Count()+1) );
+  size_t dim = olx_round(sqrt((double)OverlayedXFiles.Count()+1));
   if( (OverlayedXFiles.Count()+1) - dim*dim > 0 )
     dim++;
   vec3d cnt;
@@ -3864,14 +3879,16 @@ void TGXApp::AlignOverlayedXFiles() {
     for( size_t j=0; j < dim; j++ )  {
       const size_t ind = i*dim+j;
       if( ind == 0 )  {
+        //XFile().GetLattice().RestoreCoordinates();
         CalcLatticeRandCenter(XFile().GetLattice(), maxR, cnt);
-        row.Add( new grid_type(maxR, cnt, &XFile().GetLattice()) );
+        row.Add(new grid_type(maxR, cnt, &XFile().GetLattice()));
       }
       else if( ind-1 >= OverlayedXFiles.Count() )
         break;
       else  {
+        //OverlayedXFiles[ind-1].GetLattice().RestoreCoordinates();
         CalcLatticeRandCenter(OverlayedXFiles[ind-1].GetLattice(), maxR, cnt);
-        row.Add( new grid_type(maxR, cnt, &OverlayedXFiles[ind-1].GetLattice()) );
+        row.Add(new grid_type(maxR, cnt, &OverlayedXFiles[ind-1].GetLattice()));
       }
     }
   }
@@ -3905,7 +3922,7 @@ void TGXApp::AlignOverlayedXFiles() {
   const vec3d up_shift = FGlRender->GetBasis().GetMatrix()*vec3d(0, 1, 0);
   for( size_t i=0; i < dim; i++ )  {
     for( size_t j=0; j < dim; j++ )  {
-      if( (i|j) == 0 )  continue;
+      if( i == 0 && j == 0 )  continue;
       if( j+1 > grid[i].Count() )  break;
       vec3d shift_vec = (grid[0][0].GetB()-grid[i][j].GetB());
       shift_vec += up_shift*row_height[i];
