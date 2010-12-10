@@ -1,9 +1,5 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "settingsfile.h"
-#include "efile.h"
+#include "utf8file.h"
 #include "exception.h"
 
 //..............................................................................
@@ -39,15 +35,12 @@ void TSettingsFile::LoadSettings(const olxstr& fileName)  {
 }
 //..............................................................................
 void TSettingsFile::SaveSettings(const olxstr& fileName)  {
-  TEFile f( fileName, "w+b" );
+  olx_object_ptr<TUtf8File> f(TUtf8File::Create(fileName,false));
   for( size_t i=0; i < Lines.Count(); i++ )  {
     if( !Lines.GetObject(i) ) 
-      f.Writenl( Lines[i].c_str(), Lines[i].Length() );
-    else  {
-      olxcstr ln = Lines[i];
-      ln << '=' << Params[Lines[i]];
-      f.Writenl( ln );
-    }
+      f().Writenl(Lines[i]);
+    else
+      f().Writenl(olxstr(Lines[i]) << '=' << Params[Lines[i]]);
   }
 }
 //..............................................................................

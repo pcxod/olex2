@@ -2,7 +2,6 @@
 #define olx_sdl_mps_H
 #include "exception.h"
 #include "bapp.h"
-#include "log.h"
 #include "actions.h"
 #include "evector.h"
 #include "olxthpool.h"

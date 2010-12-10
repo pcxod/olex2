@@ -239,7 +239,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
         if( sg.GetDependent(k).Count() > j )
           s << sg.GetDependent(k)[j].GetLabel() << ' ';
       }
-      TBasicApp::GetLog() << s << '\n';
+      TBasicApp::NewLogEntry() << s;
     }
 #endif
   }

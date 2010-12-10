@@ -101,7 +101,7 @@ public:
 //...................................................................................
   virtual inline size_t Writenl(const void *Data, size_t size)  {
     size_t w = Write(Data, size);
-    w += Write(NewLineSequence, NewLineSequenceLength);
+    w += Write(NewLineSequence.raw_str(), NewLineSequence.RawLen());
     return w;
   }
 //...................................................................................

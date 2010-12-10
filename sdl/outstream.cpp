@@ -12,7 +12,7 @@ size_t TOutStream::Write(const olxstr& str)  {
     return 0;
   }
   for( size_t i=0; i < str.Length(); i++ )
-    outstream_putc( str[i] );
+    outstream_putc(str[i]);
   return str.Length();
 }
 //..............................................................................

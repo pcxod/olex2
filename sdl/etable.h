@@ -167,21 +167,36 @@ public:
     if( Format )  L.Add("</table>");
   }
   
-  void CreateHTMLList(TStrList &L, const olxstr &Title,
-                      const olxstr& footer,
-                      bool colNames, bool rowNames,
-                      const olxstr& titlePAttr,
-                      const olxstr& footerPAttr,
-                      const olxstr& tabAttr,
-                      const olxstr& rowAttr,
-                      const TStrList& thAttr,
-                      const TStrList& clAttr,
-                      bool Format=true,
-                      unsigned short colCount = 1,
-                      const olxstr& colSepAttr = EmptyString
-                      ) const
+  TStrList CreateHTMLList(const olxstr &Title,
+    const olxstr& footer,
+    bool colNames, bool rowNames,
+    const olxstr& titlePAttr,
+    const olxstr& footerPAttr,
+    const olxstr& tabAttr,
+    const olxstr& rowAttr,
+    const TStrList& thAttr,
+    const TStrList& clAttr,
+    bool Format=true,
+    unsigned short colCount = 1,
+    const olxstr& colSepAttr = EmptyString) const
   {
-
+    TStrList L;
+    return CreateHTMLList(L, Title, footer, colNames, rowNames, totlePAttr, footerPAttr, tabAttr,
+      rowAttr, thAttr, clAttr, Format, colCount, colSepAttr);
+  }
+  TStrList& CreateHTMLList(TStrList &L, const olxstr &Title,
+    const olxstr& footer,
+    bool colNames, bool rowNames,
+    const olxstr& titlePAttr,
+    const olxstr& footerPAttr,
+    const olxstr& tabAttr,
+    const olxstr& rowAttr,
+    const TStrList& thAttr,
+    const TStrList& clAttr,
+    bool Format=true,
+    unsigned short colCount = 1,
+    const olxstr& colSepAttr = EmptyString) const
+  {
     olxstr Tmp;
     if( Format )  {
       L.Add( olxstr("<table ") << tabAttr << '>' );
@@ -227,9 +242,15 @@ public:
       L.Add( (Tmp << "</tr>") );
     }
     if( Format )  L.Add("</table>");
-    if( !footer.IsEmpty() )  L.Add("<p ") << footerPAttr << '>' << footer << "</p>";
+    if( !footer.IsEmpty() )
+      L.Add("<p ") << footerPAttr << '>' << footer << "</p>";
+    return L;
   }
-  void CreateTXTList(TStrList &L, const olxstr &Title, bool colNames, bool rowNames, const olxstr& Sep) const {
+  TStrList CreateTXTList(const olxstr &Title, bool colNames, bool rowNames, const olxstr& Sep) const {
+    TStrList L;
+    return CreateTXTList(L, Title, colNames, rowNames, Sep);
+  }
+  TStrList& CreateTXTList(TStrList &L, const olxstr &Title, bool colNames, bool rowNames, const olxstr& Sep) const {
     evecsz rowV(ColCount()+1);
     olxstr Tmp;
     L.Add(Title);
@@ -279,6 +300,7 @@ public:
       }
       L.Add(Tmp);
     }
+    return L;
   }
 
   inline T& operator [] (size_t index)  {  return Rows[index];  }

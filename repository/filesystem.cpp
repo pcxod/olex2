@@ -86,7 +86,7 @@ bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src)  {
     destFile.SetPosition(0);
     delete is;
     if( MD5::Digest(destFile) != Src.GetDigest() )  {
-      TBasicApp::GetLog().Error(olxstr("Digest mismatch for ") << DFN << ", skipping\n");
+      TBasicApp::GetLog().Error(olxstr("Digest mismatch for ") << DFN << ", skipping");
       destFile.Delete();
       return false;
     }

@@ -2202,7 +2202,7 @@ void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert)  {
     }
   }
   else
-    Log->Error( SyntaxParser.Errors().Text('\n') );
+    Log->Error(SyntaxParser.Errors().Text(NewLineSequence));
 }
 //..............................................................................
 void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert)  {
@@ -2235,7 +2235,7 @@ void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert)  {
     }
   }
   else
-    Log->Error( SyntaxParser.Errors().Text('\n') );
+    Log->Error(SyntaxParser.Errors().Text(NewLineSequence));
 }
 //..............................................................................
 bool GetRing(TSAtomPList& atoms, TTypeList<TSAtomPList>& rings)  {
@@ -3129,12 +3129,12 @@ void TGXApp::SetStructureVisible(bool v)  {
 void TGXApp::LoadXFile(const olxstr& fn)  {
   FXFile->LoadFromFile(fn);
   if( !FStructureVisible )  
-    GetLog() << "Note: structure is invisible\n";
+    NewLogEntry() << "Note: structure is invisible";
   else {
     if( !FQPeaksVisible ) 
-      GetLog() << "Note: Q-peaks are invisible\n";
+      NewLogEntry() << "Note: Q-peaks are invisible";
     if( !FHydrogensVisible )
-      GetLog() << "Note: H-atoms are invisible\n";
+      NewLogEntry() << "Note: H-atoms are invisible";
   }
   Draw();  // fixes native loader is not draw after load
 }

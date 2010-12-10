@@ -2,7 +2,6 @@
 #undef CopyFile
 
 #include "bapp.h"
-#include "log.h"
 
 uint64_t TFileTree::Folder::CalcSize() const {
   uint64_t res = 0;

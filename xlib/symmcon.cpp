@@ -133,7 +133,7 @@ SymmCon SortedSymmConTab[64] = {
 };
 //..............................................................................
 SiteSymmCon::SiteSymmCon() : added(false)  {
-  for( size_t i=0; i < 9; i++ )  {
+  for( int i=0; i < 9; i++ )  {
     map[i].param = (i < 6 ? i : i-6);
     map[i].multiplier = 1.0;
   }

@@ -1,7 +1,6 @@
 #ifndef _olx_macrolib
 #define _olx_macrolib
 #include "bapp.h"
-#include "log.h"
 #include "estrlist.h"
 #include "datafile.h"
 #include "dataitem.h"
@@ -38,7 +37,8 @@ protected:
           Cmd.Insert(argv[pindex], index);  // insert value parameter
         }
         else
-          TBasicApp::GetLog().Error(olxstr(Name) << ": wrong argument index: " << (pindex+1) << '\n');
+          TBasicApp::GetLog().Error(olxstr(Name) << ": wrong argument index: " << (pindex+1)
+          << NewLineSequence);
       }
       if( index++ < Cmd.Length() )
         index = Cmd.FirstIndexOf('%', index);  // next argument by index
@@ -57,7 +57,7 @@ public:
     TStrList& onTerminate, olex::IOlexProcessor& olex_processor )  {
     
     if( Args.Count() < args.Count() )  {
-      TBasicApp::GetLog().Error(olxstr(Name) << ": too many arguments\n");
+      TBasicApp::GetLog().Error(olxstr(Name) << ": too many arguments" << NewLineSequence);
       return false;
     }
     TStrList argV( Args.Count() );

@@ -8,9 +8,11 @@ bool TSocketFS::_OnReadFailed(const THttpFileSystem::ResponseInfo& info, uint64_
   if( !info.headers.Find("Server", CEmptyString).Equals("Olex2-CDS") )  return false;
   while( --attempts >= 0 )  {
     try  {
+      TBasicApp::NewLogEntry(logInfo, true) <<
+        "Connection broken at position " << position << ", reconnecting to the server";
       DoConnect();  // reconnect
-      _write(GenerateRequest(GetUrl(), "GET", info.source, position));
-      return true;
+      const olxcstr rq = GenerateRequest(GetUrl(), "GET", info.source, position);
+      return _write(rq) == rq.Length();
     }
     catch(...)  {
       olx_sleep(1000);

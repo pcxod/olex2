@@ -22,7 +22,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
     time_t lst_fa = TEFile::FileAge(lstFN);
     time_t mat_fa = TEFile::FileAge(fileName);
     if( lst_fa > mat_fa && (lst_fa-mat_fa) > 5 )
-      TBasicApp::GetLog() << "The mat file is possibly out of date\n";
+      TBasicApp::NewLogEntry() << "The mat file is possibly out of date";
   }
   TCStrList sl, toks;
   sl.LoadFromFile(fileName);
@@ -117,7 +117,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
           for( int vi=0; vi < 6; vi++ )
             v[vi] = -1;
         }
-        v[ua_index] = i;
+        v[ua_index] = (int)i;
       }
       else  {
         if( ua_index != 0 )
@@ -332,7 +332,7 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
       // put indices in the smtbx order
       if( ua_index == 3 )  ua_index = 5;
       else if( ua_index == 5 )  ua_index = 3;
-      v[ua_index] = i;
+      v[ua_index] = (int)i;
     }
   }
   Allocate(indexes.Count());

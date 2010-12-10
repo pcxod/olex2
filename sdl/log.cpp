@@ -2,6 +2,7 @@
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
 #include "log.h"
+#include "etime.h"
 
 TLog::TLog() : 
   OnInfo(Actions.New("ONINF")),
@@ -21,6 +22,45 @@ size_t TLog::Write(const void *Data, size_t size)  {
 //..............................................................................
 size_t TLog::Writenl(const void *Data, size_t size)  {
   throw TNotImplementedException(__OlxSourceInfo);
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+TLog::LogEntry::LogEntry(TLog& _parent, int _evt, bool annotate) : parent(_parent), evt(_evt)  {
+  if( annotate )
+    buffer << "New log entry at: " << TETime::FormatDateTime(TETime::Now()) << NewLineSequence;
+}
+//..............................................................................
+TLog::LogEntry::~LogEntry()  {
+  if( evt == logDefault )  {
+    parent << (buffer << NewLineSequence);
+    parent.Flush();
+  }
+  else  {
+    TActionQueue* ac = NULL;
+    switch( evt )  {
+    case logInfo: 
+      ac = &parent.OnInfo;
+      break;
+    case logWarning: 
+      ac = &parent.OnWarning;
+      break;
+    case logError: 
+      ac = &parent.OnError;
+      break;
+    case logException: 
+      ac = &parent.OnException;
+      break;
+    default: 
+      ac = &parent.OnInfo;
+      break;
+    }
+    if( ac->Enter(&parent, &buffer) )  {
+      parent << (buffer << NewLineSequence);
+      parent.Flush();
+    }
+    ac->Exit(&parent);
+  }
 }
 //..............................................................................
 

@@ -35,30 +35,32 @@ protected:
     }
   }
 public:
-  static inline olxcstr Encode(const olxwstr& str)  {  
+  static inline const olxcstr& Encode(const olxcstr& str)  {  return str;  }
+  static inline olxcstr Encode(const olxwstr& str)  {
     return (*Instance.EncodeFunc)(str.raw_str(), str.Length());  
   }
-  static inline olxcstr Encode(const TTIString<wchar_t>& str)  {  
-    return (*Instance.EncodeFunc)(str.raw_str(), str.Length());  
+  static inline olxcstr Encode(const TTIString<wchar_t>& str)  {
+    return (*Instance.EncodeFunc)(str.raw_str(), str.Length());
   }
-  static inline olxcstr Encode(const wchar_t* wstr)  {  
-    return (*Instance.EncodeFunc)(wstr, olxstr::o_strlen(wstr)); 
+  static inline olxcstr Encode(const wchar_t* wstr)  {
+    return (*Instance.EncodeFunc)(wstr, olxstr::o_strlen(wstr));
   }
-  static inline olxcstr Encode(const wchar_t* wstr, size_t len)  {  
-    return (*Instance.EncodeFunc)(wstr, len); 
+  static inline olxcstr Encode(const wchar_t* wstr, size_t len)  {
+    return (*Instance.EncodeFunc)(wstr, len);
   }
   
-  static inline olxwstr Decode(const olxcstr& str)  {  
-    return (*Instance.DecodeFunc)(str.raw_str(), str.Length());  
+  static inline const olxwstr& Decode(const olxwstr& str)  {  return str;  }
+  static inline olxwstr Decode(const olxcstr& str)  {
+    return (*Instance.DecodeFunc)(str.raw_str(), str.Length());
   }
-  static inline olxwstr Decode(const TTIString<char>& str)  {  
-    return (*Instance.DecodeFunc)(str.raw_str(), str.Length());  
+  static inline olxwstr Decode(const TTIString<char>& str)  {
+    return (*Instance.DecodeFunc)(str.raw_str(), str.Length());
   }
-  static inline olxwstr Decode(const char* str)  {  
-    return (*Instance.DecodeFunc)(str, olxstr::o_strlen(str));  
+  static inline olxwstr Decode(const char* str)  {
+    return (*Instance.DecodeFunc)(str, olxstr::o_strlen(str));
   }
-  static inline olxwstr Decode(const char* str, size_t len) {  
-    return (*Instance.DecodeFunc)(str, len);  
+  static inline olxwstr Decode(const char* str, size_t len) {
+    return (*Instance.DecodeFunc)(str, len);
   }
 
   const static uint32_t FileSignature;
