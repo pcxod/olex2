@@ -86,19 +86,22 @@ const olxstr CInstallerDlg::exts[] = {".ins", ".res", ".mol", ".cif", ".xyz" };
 const size_t CInstallerDlg::exts_sz = sizeof(exts)/sizeof(exts[0]);
 
 CInstallerDlg::CInstallerDlg(CWnd* pParent /*=NULL*/)
-  : CDialog(CInstallerDlg::IDD, pParent), bapp(LocateBaseDir())
+  : CDialog(CInstallerDlg::IDD, pParent)
 {
   tooltipCtrl = NULL;
   m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
   mouse_down = false;
   action = rename_status = 0;
-  // init admin mode for shortcuts if required
-  OSVERSIONINFO veri;
-  memset(&veri, 0, sizeof(veri));
-  veri.dwOSVersionInfoSize = sizeof(veri);
-  GetVersionEx(&veri);
-  // only after XP
-  run_as_admin = veri.dwMajorVersion > 5;
+  //2010.12.09, no need any more with MSVC compiled exe - the manifest does the job
+  run_as_admin = false;
+  //// init admin mode for shortcuts if required
+  //OSVERSIONINFO veri;
+  //memset(&veri, 0, sizeof(veri));
+  //veri.dwOSVersionInfoSize = sizeof(veri);
+  //GetVersionEx(&veri);
+  //// only after XP
+  //run_as_admin = veri.dwMajorVersion > 5;
+  user_is_admin = theApp.IsUserAdmin();
 }
 CInstallerDlg::~CInstallerDlg()  {
   if( tooltipCtrl != NULL )  delete tooltipCtrl;
@@ -141,7 +144,8 @@ BOOL CInstallerDlg::OnInitDialog()  {
   SetIcon(m_hIcon, TRUE);      // Set big icon
   SetIcon(m_hIcon, FALSE);    // Set small icon
 
-  olex2_install_path = TShellUtil::GetSpecialFolderLocation(fiSysProgramFiles) << "Olex2";
+  olex2_install_path = TShellUtil::GetSpecialFolderLocation(
+    user_is_admin ? fiSysProgramFiles : fiDesktop) << "Olex2";
   wnd::set_text(this, IDC_TE_INSTALL_PATH, olex2_install_path);
   wnd::set_text(this, IDC_TE_PROXY, EmptyString);
   wnd::set_enabled(this, IDC_TE_PROXY, false);
@@ -153,9 +157,9 @@ BOOL CInstallerDlg::OnInitDialog()  {
   GetDlgItem(IDC_BTN_PROXY)->SendMessage(BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)bmp.Detach());
   tooltipCtrl->AddTool( GetDlgItem(IDC_BTN_PROXY), _T("Reload repositories list"));
   tooltipCtrl->Activate(TRUE);
-  if( olex2_installed )  {
-    TEFile::AddPathDelimeter(olex2_installed_path);
-    olxstr sfile = olex2_installed_path;
+  if( theApp.IsOlex2Installed() )  {
+    TEFile::AddPathDelimeter(theApp.GetOlex2InstalledPath());
+    olxstr sfile = theApp.GetOlex2InstalledPath();
     sfile << UpdateAPI::GetSettingsFileName();
     if( TEFile::Exists(sfile) )  {
       const TSettingsFile Settings(sfile);
@@ -169,7 +173,8 @@ BOOL CInstallerDlg::OnInitDialog()  {
       if( update_c != -1 )
         GetDlgItem(update_c)->SendMessage(BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
     }
-    olex2_data_dir = PatchAPI::ComposeNewSharedDir(TShellUtil::GetSpecialFolderLocation(fiAppData), olex2_installed_path);
+    olex2_data_dir = PatchAPI::ComposeNewSharedDir(
+      TShellUtil::GetSpecialFolderLocation(fiAppData), theApp.GetOlex2InstalledPath());
     SetAction(actionReinstall);
   }
   return TRUE;  // return TRUE  unless you set the focus to a control
@@ -203,7 +208,6 @@ void CInstallerDlg::OnPaint()  {
 HCURSOR CInstallerDlg::OnQueryDragIcon()  {
   return static_cast<HCURSOR>(m_hIcon);
 }
-
 
 void CInstallerDlg::OnBnClickedBtnChoosePath()  {
   olxstr dir( TShellUtil::PickFolder("Please select installation folder",
@@ -245,10 +249,10 @@ void CInstallerDlg::OnBnClickedCbProxy()  {
 }
 
 void CInstallerDlg::OnShowWindow(BOOL bShow, UINT nStatus)  {
-  if( olex2_installed_path.IsEmpty() )
+  if( theApp.GetOlex2InstalledPath().IsEmpty() )
     InitRepositories();
   else  {
-    wnd::set_text(this, IDC_TE_INSTALL_PATH, olex2_installed_path);
+    wnd::set_text(this, IDC_TE_INSTALL_PATH, theApp.GetOlex2InstalledPath());
     SetAction(actionUninstall);
   }
 //http://www.experts-exchange.com/Programming/System/Windows__Programming/MFC/Q_11279779.html
@@ -308,8 +312,6 @@ void CInstallerDlg::OnBnClickedBtnProxy()  {
   InitRepositories();
 }
 
-
-
 void CInstallerDlg::OnBnClickedInstall()  {
   if( action == actionInstall )  {
     if( DoInstall() )
@@ -362,38 +364,6 @@ void CInstallerDlg::DisableInterface(bool _v)  {
   GetDlgItem(IDC_BTN_INSTALL)->EnableWindow(v);
 }
 
-
-olxstr CInstallerDlg::LocateBaseDir()  {
-  CRegKey rc;
-  olex2_installed = false;
-  olex2_installed_path = EmptyString;
-  olxstr app_name("olex2-");
-  app_name << olex2_install_tag << ".exe";
-  try  {
-    if( rc.Open(HKEY_CLASSES_ROOT, (olxstr("Applications\\") << app_name << "\\shell\\open\\command").u_str(), KEY_READ) == ERROR_SUCCESS )  {
-      olxch* rv = new olxch[MAX_PATH];
-      ULONG sz_rv = MAX_PATH;
-      if( rc.QueryStringValue(_T(""), rv, &sz_rv) == ERROR_SUCCESS )  {
-        olex2_installed_path = rv;
-        olex2_installed_path = TEFile::ExtractFilePath(olex2_installed_path.Trim('"'));
-      }
-      delete [] rv;
-      rc.Close();
-    }
-  }
-  catch( ... )  {    }
-  if( !TEFile::Exists(olex2_installed_path) )
-    olex2_installed_path = EmptyString;
-  else
-    olex2_installed = true;
-  if( olex2_installed_path.IsEmpty() )  {
-    int argc = 0;
-    const LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-    return argv[0];
-  }
-  return olex2_installed_path;
-}
-
 void CInstallerDlg::SetAction(int a)  {
   action = a;
   if( a == actionInstall || a == actionReinstall )  {
@@ -401,29 +371,31 @@ void CInstallerDlg::SetAction(int a)  {
 
     GetDlgItem(IDC_BTN_INSTALL)->EnableWindow(true);
     if( a == actionInstall )
-      GetDlgItem(IDC_BTN_INSTALL)->SendMessage(WM_SETTEXT, 0, (LPARAM)_T("Install"));
-    else
-      GetDlgItem(IDC_BTN_INSTALL)->SendMessage(WM_SETTEXT, 0, (LPARAM)_T("Re-install"));
-    GetDlgItem(IDC_PB_PROGRESS)->SendMessage(PBM_SETPOS, (WPARAM)0, 0);
+      wnd::set_text(this, IDC_BTN_INSTALL, "Install");
+    else  {
+      wnd::set_text(this, IDC_BTN_INSTALL, "Re-install");
+      wnd::set_enabled(this, IDC_BTN_INSTALL, user_is_admin);
+    }
+    progress_bar::set_pos(this, IDC_PB_PROGRESS, 0);
   }
   else  {
     DisableInterface(true);
+    wnd::set_enabled(this, IDC_BTN_INSTALL, user_is_admin);
+    wnd::set_enabled(this, IDC_BTN_CLOSE, true);
     if( a == actionUninstall )  {
-      GetDlgItem(IDC_BTN_INSTALL)->SendMessage(WM_SETTEXT, 0, (LPARAM)_T("Uninstall"));
-      GetDlgItem(IDC_L_REPOSITORY)->SendMessage(WM_SETTEXT, 0, (LPARAM)_T("Uninstall Olex2 from here:"));
+      wnd::set_text(this, IDC_BTN_INSTALL, "Un-install");
+      wnd::set_text(this, IDC_L_REPOSITORY, "Uninstall Olex2 from here:");
     }
     else  {
-      GetDlgItem(IDC_BTN_INSTALL)->SendMessage(WM_SETTEXT, 0, (LPARAM)_T("Run!"));
-      GetDlgItem(IDC_L_REPOSITORY)->SendMessage(WM_SETTEXT, 0, (LPARAM)_T("Run Olex2 from here:"));
+      wnd::set_text(this, IDC_BTN_INSTALL, "Run!");
+      wnd::set_text(this, IDC_L_REPOSITORY, "Run Olex2 from here:");
     }
-    GetDlgItem(IDC_BTN_INSTALL)->EnableWindow(true);
-    GetDlgItem(IDC_BTN_CLOSE)->EnableWindow(true);
   }
 }
 
 bool CInstallerDlg::DoRun()  {
-  TEFile::ChangeDir(olex2_installed_path);
-  return LaunchFile(olex2_installed_path + "olex2.exe", false, true);
+  TEFile::ChangeDir(theApp.GetOlex2InstalledPath());
+  return LaunchFile(theApp.GetOlex2InstalledPath() + "olex2.exe", false, true);
 }
 
 void CInstallerDlg::ProcessMessages()  {
@@ -435,10 +407,10 @@ void CInstallerDlg::ProcessMessages()  {
 }
 
 void CInstallerDlg::SetInstalledPath(const olxstr& path)  {
-  olex2_installed_path = path;
-  olex2_installed = true;
+  theApp.SetOlex2InstalledPath(path);
   olex2_install_tag = ReadTag(path);
-  olex2_data_dir = PatchAPI::ComposeNewSharedDir(TShellUtil::GetSpecialFolderLocation(fiAppData), olex2_installed_path);
+  olex2_data_dir = PatchAPI::ComposeNewSharedDir(
+    TShellUtil::GetSpecialFolderLocation(fiAppData), theApp.GetOlex2InstalledPath());
 }
 
 bool CInstallerDlg::LaunchFile(const olxstr &fileName, bool quiet, bool do_exit)  {
@@ -463,7 +435,7 @@ bool CInstallerDlg::LaunchFile(const olxstr &fileName, bool quiet, bool do_exit)
   if( cmdl != NULL )
     delete [] cmdl;
   if( !rv )  {
-    MessageBox((olxstr("Could not start ") << fileName).u_str(), _T("Error"), MB_OK|MB_ICONERROR);
+    theApp.ShowError(olxstr("Could not start ") << fileName);
     return false;
   }
   if( do_exit )
@@ -501,8 +473,8 @@ bool CInstallerDlg::DoInstall()  {
 
   if( !TEFile::Exists(installPath) )  {
     if( !TEFile::MakeDirs(installPath) )  {
-      MessageBox(_T("Could not create installation folder.\
- Please make sure the folder is not opened in any other programs and try again."), _T("Error"), MB_OK|MB_ICONERROR);
+      theApp.ShowError("Could not create installation folder. Please make sure the folder "
+        "is not opened in any other programs and try again.");
       GetDlgItem(IDC_BTN_INSTALL)->EnableWindow(TRUE);
       return false;
     }
@@ -512,7 +484,7 @@ bool CInstallerDlg::DoInstall()  {
       _T("Confirm"), MB_YESNOCANCEL|MB_ICONWARNING);
     if( res == IDYES )  {
       if( !TEFile::DeleteDir(installPath, true) )  {
-        MessageBox(_T("Could not clean up the instalaltion folder. Please try later."), _T("Error"), MB_OK|MB_ICONERROR);
+        theApp.ShowError("Could not clean up the instalaltion folder. Please try later.");
         GetDlgItem(IDC_BTN_INSTALL)->EnableWindow(TRUE);
         return false;
       }
@@ -530,16 +502,14 @@ bool CInstallerDlg::DoInstall()  {
       if( !proxyPath.IsEmpty() )
         url.SetProxy(proxyPath);
       TSocketFS repos(url, 32000);
-      repos.OnProgress.Add( new TProgress );
+      repos.OnProgress.Add(new TProgress);
       TEFile* zipf = repos.OpenFileAsFile(url.GetPath() + updater::UpdateAPI::GetInstallationFileName());
       if( zipf == NULL )  {
         SetAction(_T("Failed..."));
-        MessageBox(
-          (olxstr("Could not locate the Olex2 archive: ") <<
+        theApp.ShowError(
+          olxstr("Could not locate the Olex2 archive: ") <<
           updater::UpdateAPI::GetInstallationFileName() <<
-          "\nPlease try another repository.").u_str(),
-          _T("Zip file fetching error"),
-          MB_OK|MB_ICONERROR);
+          "\nPlease try another repository.", "Zip file fetching error");
           GetDlgItem(IDC_BTN_INSTALL)->EnableWindow(TRUE);
         return false;
       }
@@ -572,15 +542,19 @@ bool CInstallerDlg::DoInstall()  {
     SetAction(_T("Done"));
     InitRegistry(installPath);
     // create shortcuts
-    if( check_box::is_checked(this, IDC_CB_SHORTCUT) )
-      TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiStartMenu) << 
+    if( check_box::is_checked(this, IDC_CB_SHORTCUT) )  {
+      olxstr dd = TShellUtil::GetSpecialFolderLocation(user_is_admin ? fiCommonStartMenu : fiStartMenu);
+      TShellUtil::CreateShortcut(dd << 
                                  "Olex2-" << olex2_install_tag << ".lnk",
                                  installPath + "olex2.exe", "Olex2 launcher", run_as_admin);
-    if( check_box::is_checked(this, IDC_CB_DESKTOP) )
-      TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiDesktop) << 
+    }
+    if( check_box::is_checked(this, IDC_CB_DESKTOP) )  {
+      olxstr dd = TShellUtil::GetSpecialFolderLocation(user_is_admin ? fiCommonDesktop : fiDesktop);
+      TShellUtil::CreateShortcut(dd << 
                                  "Olex2-" << olex2_install_tag << ".lnk",
                                  installPath + "olex2.exe", "Olex2 launcher", run_as_admin);
-    olex2_installed_path = installPath;
+    }
+    theApp.SetOlex2InstalledPath(installPath);
     const olxstr installer_fn(TEFile::AddPathDelimeter(installPath) << "installer.exe");
     if( !TEFile::Exists(installer_fn) )  {  // replicate itself for old ditros
       TCHAR* this_name = new TCHAR[_MAX_PATH];
@@ -591,8 +565,8 @@ bool CInstallerDlg::DoInstall()  {
     }
   }
   catch(const TExceptionBase& )  {
-    MessageBox(_T("The installation has failed. If using online installation please check, that\
-your computers is online."), _T("Installation failed"), MB_OK|MB_ICONERROR);
+    theApp.ShowError("The installation has failed. If using online installation "
+      "please check, that your computers is online.", "Installation failed");
     return false;
   }
   return true;
@@ -621,7 +595,7 @@ bool CInstallerDlg::_DoInstall(const olxstr& zipFile, const olxstr& installPath)
         bool wow64 = false;
         try  {  wow64 = IsWow64();  }
         catch(...)  {
-          MessageBox(_T("Failed to determine operating system version"), _T("Error"), MB_OK);
+          theApp.ShowError("Failed to determine operating system version");
           return false;
         }
         if( !wow64 )  {
@@ -632,37 +606,53 @@ bool CInstallerDlg::_DoInstall(const olxstr& zipFile, const olxstr& installPath)
           redist_fn << "vcredist_x64.exe";
           redist_tag = "x64";
         }
-        SetAction(_T("Installing MSVCRT..."));
-        if( !LaunchFile(redist_fn, true, false) )  {
-          if( MessageBox(_T("Could not install MSVC redistributables."), _T("Installation failed"), MB_RETRYCANCEL|MB_ICONERROR) == IDRETRY )  {
-            if( !LaunchFile(redist_fn, false, false) )  {
-              TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiDesktop) <<
-                    "MSVCRT-" << redist_tag << ".lnk",
-                    redist_fn, "MSVCRT installer", run_as_admin);
-              MessageBox(_T("Olex2 installation will now be completed, however the MSVCRT\n\
-installation has failed and you will need to install it manually.\n\
-The installer has create a shortcut for MSVCRT installer on your desktop."), _T("Warning"), MB_OK|MB_ICONERROR);
-              SetAction(_T("MSVCRT installation is required..."));
-              return true;
-             }
+        if( user_is_admin )  {
+          SetAction(_T("Installing MSVCRT..."));
+          if( !LaunchFile(redist_fn, true, false) )  {
+            if( MessageBox(_T("Could not install MSVC redistributables."), _T("Installation failed"), MB_RETRYCANCEL|MB_ICONERROR) == IDRETRY )  {
+              if( !LaunchFile(redist_fn, false, false) )  {
+                TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiDesktop) <<
+                  "MSVCRT-" << redist_tag << ".lnk",
+                  redist_fn, "MSVCRT installer", run_as_admin);
+                MessageBox(
+                  _T("Olex2 installation will now be completed, however the MSVCRT\n")
+                  _T("installation has failed and you may need to install it manually.\n")
+                  _T("The installer has create a shortcut for MSVCRT installer on your desktop."),
+                  _T("Warning"), MB_OK|MB_ICONERROR);
+                SetAction(_T("MSVCRT installation is required..."));
+                return true;
+              }
+            }
+            else  {
+              SetAction(_T("Failed to install MSVCRT..."));
+              return false;
+            }
           }
-          else  {
-            SetAction(_T("Failed to install MSVCRT..."));
-            return false;
-          }
+          TEFile::DelFile(redist_fn);
         }
-        TEFile::DelFile(redist_fn);
+        else  {
+          TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiDesktop) <<
+            "MSVCRT-" << redist_tag << ".lnk",
+            redist_fn, "MSVCRT installer", run_as_admin);
+          MessageBox(
+            _T("Olex2 installation will now be completed, however you may need to install MSVCRT.")
+            _T("The installer has create a shortcut for MSVCRT installer on your desktop."),
+            _T("Warning"), MB_OK|MB_ICONERROR);
+          return true;
+        }
       }
     }
   }
   if( !res )
-    MessageBox(_T("Invalid installation archive."), _T("Installation failed"), MB_OK|MB_ICONERROR);
+    theApp.ShowError("Invalid installation archive.", "Installation failed");
   else
     updater::UpdateAPI::TagInstallationAsNew();
   return res;
 }
 
 bool CInstallerDlg::InitRegistry(const olxstr &installPath)  {
+  if( !user_is_admin )
+    return true;
   CRegKey reg;
   bool res = false;
   olxstr app_name("olex2-");
@@ -736,8 +726,14 @@ bool CInstallerDlg::CleanRegistryAndShortcuts(bool sc)  {
   if( sc )  {
     // find and delete shortcuts
     try  {
-      TEFile::DelFile(TShellUtil::GetSpecialFolderLocation(fiStartMenu) << "Olex2-" << olex2_install_tag <<".lnk");
-      TEFile::DelFile(TShellUtil::GetSpecialFolderLocation(fiDesktop) <<  "Olex2-" << olex2_install_tag << ".lnk");
+      TEFile::DelFile(TShellUtil::GetSpecialFolderLocation(fiStartMenu) <<
+        "Olex2-" << olex2_install_tag <<".lnk");
+      TEFile::DelFile(TShellUtil::GetSpecialFolderLocation(fiDesktop) <<
+        "Olex2-" << olex2_install_tag << ".lnk");
+      TEFile::DelFile(TShellUtil::GetSpecialFolderLocation(fiCommonStartMenu) <<
+        "Olex2-" << olex2_install_tag <<".lnk");
+      TEFile::DelFile(TShellUtil::GetSpecialFolderLocation(fiCommonDesktop) <<
+        "Olex2-" << olex2_install_tag << ".lnk");
     }
     catch(const TExceptionBase&)  {
       MessageBox(_T("Could not remove shortcuts"), _T("Error"), MB_OK|MB_ICONERROR);
@@ -750,8 +746,8 @@ bool CInstallerDlg::CleanRegistryAndShortcuts(bool sc)  {
 
 bool CInstallerDlg::DoUninstall()  {
   if( patcher::PatchAPI::IsOlex2Running() )  {
-    MessageBox(_T("There are Olex2 instances are running or you do\
- not have sufficient rights to access the the installation folder..."), _T("Error"), MB_OK|MB_ICONERROR);
+    theApp.ShowError("There are Olex2 instances are running or you do "
+ "not have sufficient rights to access the the installation folder...");
     return false;
   }
   if( action == actionReinstall )  {
@@ -759,9 +755,9 @@ bool CInstallerDlg::DoUninstall()  {
     if( dlg.DoModal() != IDOK )  return false;
     action = dlg.IsInstall() ? actionInstall : actionExit;
     BeginWaitCursor();
-    if( !TEFile::DeleteDir(olex2_installed_path) )  {
+    if( !TEFile::DeleteDir(theApp.GetOlex2InstalledPath()) )  {
       EndWaitCursor();
-      MessageBox(_T("Could not remove Olex2 installation folder..."), _T("Error"), MB_OK|MB_ICONERROR);
+      theApp.ShowError("Could not remove Olex2 installation folder...");
       return false;
     }
     EndWaitCursor();
@@ -778,9 +774,9 @@ bool CInstallerDlg::DoUninstall()  {
       return true;
     }
     BeginWaitCursor();
-    if( !TEFile::DeleteDir(olex2_installed_path) )  {
+    if( !TEFile::DeleteDir(theApp.GetOlex2InstalledPath()) )  {
       EndWaitCursor();
-      MessageBox(_T("Could not remove Olex2 installation folder..."), _T("Error"), MB_OK|MB_ICONERROR);
+      theApp.ShowError("Could not remove Olex2 installation folder...");
       return false;
     }
     EndWaitCursor();
@@ -808,9 +804,8 @@ void CInstallerDlg::InitRepositories()  {
   }
   catch(...)  {
     uth.Join(true);
-    MessageBox(_T("Could not discover any Olex2 repositories, only offline installation will be available"),
-      _T("Error"),
-      MB_OK|MB_ICONERROR);
+    theApp.ShowError("Could not discover any Olex2 repositories, "
+      "only offline installation will be available");
   }
   if( uth.IsRunning() )
     uth.Join(true);
@@ -848,7 +843,7 @@ void CInstallerDlg::OnBnClickedBtnRepository()  {
         olex2_install_tag = new_tag;
       }
       else
-        MessageBox(_T("Invalid installation file"), _T("Error"), MB_OK|MB_ICONERROR);
+        theApp.ShowError("Invalid installation file");
     }
   }
 }
@@ -869,10 +864,12 @@ HBRUSH CInstallerDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)  {
 
 void CInstallerDlg::SetInstallationPath(const olxstr& path)  {
   wnd::set_text(this, IDC_TE_INSTALL_PATH, path);
-  LocateBaseDir();
-  if( olex2_installed )  {
-    olex2_data_dir = PatchAPI::ComposeNewSharedDir(TShellUtil::GetSpecialFolderLocation(fiAppData), olex2_installed_path);
+  theApp.LocateBaseDir(olex2_install_tag);
+  if( theApp.IsOlex2Installed() && user_is_admin )  {
+    olex2_data_dir = PatchAPI::ComposeNewSharedDir(
+      TShellUtil::GetSpecialFolderLocation(fiAppData), theApp.GetOlex2InstalledPath());
     SetAction(actionReinstall);
+    
   }
   else
     SetAction(actionInstall);

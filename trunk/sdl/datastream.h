@@ -66,9 +66,7 @@ public:
   // to let derived classes to handle unicode
   virtual size_t Write(const void *Data, size_t size) = 0;
   virtual inline size_t Writenl(const void *Data, size_t size)  {
-    size_t w = Write(Data, size);
-    w += Write(NewLineSequence, NewLineSequenceLength);
-    return w;
+    return Write(Data, size) + Write(NewLineSequence);
   }
 
   virtual size_t Write(const olxwstr& str)  {  return Write(str.raw_str(), str.RawLen());  }
@@ -76,10 +74,18 @@ public:
   virtual size_t Write(const TTIString<char>& str)  {  return Write(str.raw_str(), str.RawLen());  }
   virtual size_t Write(const TTIString<wchar_t>& str)  {  return Write(str.raw_str(), str.RawLen());  }
 
-  virtual size_t Writenl(const olxwstr& str)  {  return Writenl(str.raw_str(), str.RawLen());  }
-  virtual size_t Writenl(const olxcstr& str)  {  return Writenl(str.raw_str(), str.RawLen());  }
-  virtual size_t Writenl(const TTIString<char>& str)  {  return Writenl(str.raw_str(), str.RawLen());  }
-  virtual size_t Writenl(const TTIString<wchar_t>& str)  {  return Writenl(str.raw_str(), str.RawLen());  }
+  virtual size_t Writenl(const olxwstr& str)  {
+    return Write(str.raw_str(), str.RawLen()) + Write(WNewLineSequence);
+  }
+  virtual size_t Writenl(const olxcstr& str)  {
+    return Write(str.raw_str(), str.RawLen()) + Write(CNewLineSequence);
+  }
+  virtual size_t Writenl(const TICString& str)  {
+    return Write(str.raw_str(), str.RawLen()) + Write(CNewLineSequence);
+  }
+  virtual size_t Writenl(const TIWString& str)  {
+    return Write(str.raw_str(), str.RawLen()) + Write(WNewLineSequence);
+  }
   virtual void Flush()  { }
 
   inline IDataOutputStream& operator << ( char v )                   {  return writeType(v);  }
@@ -97,10 +103,14 @@ public:
   inline IDataOutputStream& operator << ( const olxcstr& v )       {  v.ToBinaryStream(*this);  return *this;  }
   inline IDataOutputStream& operator << ( const olxwstr& v )       {  v.ToBinaryStream(*this);  return *this;  }
 
-  virtual inline size_t Write(const char* str)       {  return Write(str, olxstr::o_strlen(str));  }
-  virtual inline size_t Write(const wchar_t* str)    {  return Write(str, olxstr::o_strlen(str));  }
-  virtual inline size_t Writenl(const char* str)     {  return Writenl(str, olxstr::o_strlen(str));  }
-  virtual inline size_t Writenl(const wchar_t* str)  {  return Writenl(str, olxstr::o_strlen(str));  }
+  virtual inline size_t Write(const char* str)  {  return Write(str, olxstr::o_strlen(str));  }
+  virtual inline size_t Write(const wchar_t* str)  {  return Write(str, olxstr::o_strlen(str));  }
+  virtual inline size_t Writenl(const char* str)  {
+    return Write(str, olxstr::o_strlen(str)) + Write(CNewLineSequence);
+  }
+  virtual inline size_t Writenl(const wchar_t* str)  {
+    return Write(str, olxstr::o_strlen(str)) + Write(WNewLineSequence);
+  }
 };
 
 EndEsdlNamespace()

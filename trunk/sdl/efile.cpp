@@ -10,7 +10,6 @@
 
 #include "library.h"
 #include "bapp.h"
-#include "log.h"
 
 #ifdef __WIN32__
   #include <winbase.h>
@@ -272,7 +271,7 @@ uint64_t TEFile::Length() const  {
   int64_t length = ftell(FHandle);
   _seek(currentPos, SEEK_SET);
   if( length == -1 )
-    throw TFileException(__OlxSourceInfo, FName, "ftell failed" );
+    throw TFileException(__OlxSourceInfo, FName, "ftell failed");
   return length;
 }
 //..............................................................................
@@ -286,7 +285,7 @@ size_t TEFile::Write(const void *Bf, size_t count)  {
   if( count == 0 )  return count;
   size_t res = fwrite(Bf, count, 1, FHandle);
   if( res == 0 )
-    throw TFileException(__OlxSourceInfo, FName, "fwrite failed" );
+    throw TFileException(__OlxSourceInfo, FName, "fwrite failed");
   return res;
 }
 //..............................................................................
@@ -996,7 +995,6 @@ olxstr TEFile::Which(const olxstr& filename)  {
     TEFile::AddPathDelimeterI(toks[i]) << filename;
     if( Exists(toks[i]) )
       return toks[i];
-//    TBasicApp::GetLog() << toks[i] << '\n';
   }
   return EmptyString;
 }

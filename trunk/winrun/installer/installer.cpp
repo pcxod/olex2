@@ -6,6 +6,8 @@
 #include "installer.h"
 #include "installerDlg.h"
 #include "filetree.h"
+#include "patchapi.h"
+#include "utf8file.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -18,12 +20,9 @@ BEGIN_MESSAGE_MAP(CInstallerApp, CWinApp)
 END_MESSAGE_MAP()
 
 
-CInstallerApp::CInstallerApp()  {
-}
-
+CInstallerApp::CInstallerApp()  {}
 
 CInstallerApp theApp;
-
 
 BOOL CInstallerApp::InitInstance()  {
 	INITCOMMONCONTROLSEX InitCtrls;
@@ -35,6 +34,18 @@ BOOL CInstallerApp::InitInstance()  {
 #ifdef _DEBUG  // this to be used for debugging of the re-launched process
   //MessageBox(NULL, _T("entering"), _T("info"), MB_OK);
 #endif
+  TBasicApp bapp(LocateBaseDir());
+  try  {
+    const olxstr log_dir = patcher::PatchAPI::GetSharedDirRoot();
+    if( !TEFile::Exists(log_dir) )
+      TEFile::MakeDirs(log_dir);
+    TBasicApp::GetLog().AddStream(TUtf8File::Open(log_dir + "installer.log", false), true);
+  }
+  catch(...)  {
+    MessageBox(NULL, _T("Failed to enable logging"), _T("Error"), MB_OK|MB_ICONERROR);
+  }
+  TExceptionBase::SetAutoLogging(true);
+  bapp.NewLogEntry() << "Log started at " << TETime::FormatDateTime(TETime::Now());
   int argc = 0;
   const LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
   const olxstr module_name = TEFile::ExtractFileName(argv[0]);
@@ -59,8 +70,12 @@ BOOL CInstallerApp::InitInstance()  {
     const olxstr module_name  = olxstr::FromExternal(this_name, this_name_sz);
     const olxstr copy_name  = tmppath + "olex2un.exe";
     bool do_run = true;
-    try  {  do_run = TEFile::Copy(module_name, copy_name, true);  }
+    try  {
+      bapp.NewLogEntry() << "Copying '" << module_name << "' into '" << copy_name;
+      do_run = TEFile::Copy(module_name, copy_name, true);
+    }
     catch(const TExceptionBase&)  {
+      bapp.NewLogEntry() << "Copying failed";
       do_run = false;
     }
     if( do_run )  {
@@ -96,3 +111,62 @@ BOOL CInstallerApp::InitInstance()  {
 	dlg.DoModal();
 	return FALSE;
 }
+//....................................................................................
+olxstr CInstallerApp::LocateBaseDir(const olxstr& install_tag)  {
+  CRegKey rc;
+  olex2_installed = false;
+  olex2_installed_path = EmptyString;
+  olxstr app_name("olex2-");
+  app_name << install_tag << ".exe";
+  try  {
+    if( rc.Open(HKEY_CLASSES_ROOT, (olxstr("Applications\\") << app_name <<
+      "\\shell\\open\\command").u_str(), KEY_READ) == ERROR_SUCCESS )
+    {
+      olxch* rv = new olxch[MAX_PATH];
+      ULONG sz_rv = MAX_PATH;
+      if( rc.QueryStringValue(_T(""), rv, &sz_rv) == ERROR_SUCCESS )  {
+        olex2_installed_path = rv;
+        olex2_installed_path = TEFile::ExtractFilePath(olex2_installed_path.Trim('"'));
+      }
+      delete [] rv;
+      rc.Close();
+    }
+  }
+  catch( ... )  {}
+  if( !TEFile::Exists(olex2_installed_path) )
+    olex2_installed_path = EmptyString;
+  else
+    olex2_installed = true;
+  if( olex2_installed_path.IsEmpty() )  {
+    int argc = 0;
+    const LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    return argv[0];
+  }
+  return olex2_installed_path;
+}
+//....................................................................................
+void CInstallerApp::ShowError(const olxstr& msg, const olxstr& title)  {
+  MessageBox(NULL, msg.u_str(), title.u_str(), MB_OK|MB_ICONERROR);
+  TBasicApp::NewLogEntry(logDefault, true) << msg;
+}
+//....................................................................................
+//http://msdn.microsoft.com/en-us/library/aa376389(VS.85).aspx
+bool CInstallerApp::IsUserAdmin(VOID) {
+  BOOL b;
+  SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+  PSID AdministratorsGroup; 
+  b = AllocateAndInitializeSid(
+    &NtAuthority,
+    2,
+    SECURITY_BUILTIN_DOMAIN_RID,
+    DOMAIN_ALIAS_RID_ADMINS,
+    0, 0, 0, 0, 0, 0,
+    &AdministratorsGroup); 
+  if( b == TRUE )   {
+    if( !CheckTokenMembership( NULL, AdministratorsGroup, &b) )
+      b = FALSE;
+    FreeSid(AdministratorsGroup); 
+  }
+  return b == TRUE;
+}
+//....................................................................................

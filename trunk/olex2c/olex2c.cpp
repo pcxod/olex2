@@ -317,7 +317,7 @@ public:
       default:
         conint.SetTextForeground(fgcReset, false);
     }
-    TBasicApp::GetLog() << msg << '\n';
+    TBasicApp::NewLogEntry() << msg;
     //SetConsoleTextAttribute(conout, FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE);
     conint.Pop();
   }
@@ -455,7 +455,7 @@ public:
   void AnalyseError(TMacroError& error)  {
     if( !error.IsSuccessful() )  {
       while( !error.GetStack().IsEmpty() )  {
-        TBasicApp::GetLog() << error.GetStack().Pop() << '\n';
+        TBasicApp::NewLogEntry() << error.GetStack().Pop();
       }
       if( error.IsProcessingException() )  {
         print(olxstr(error.GetLocation()) << ": " <<  error.GetInfo(), olex::mtException);
@@ -529,7 +529,7 @@ public:
           }
         }
         else
-          XApp.GetLog().Error( SyntaxParser.Errors().Text('\n') );
+          XApp.GetLog().Error(SyntaxParser.Errors().Text(NewLineSequence));
       }
       else  {
         XApp.FindSAtoms(Cmds.Text(' '), Selection);
@@ -578,7 +578,7 @@ public:
       if( Space ) Tmp << '\"';
       Tmp << ' ';
     }
-    TBasicApp::GetLog() << (olxstr("EXEC: ") << Tmp << '\n');
+    TBasicApp::NewLogEntry() << "EXEC: " << Tmp;
     short flags = 0;
     if( (Cout && Asyn) || Asyn )  {  // the only combination
       if( !Cout )
@@ -600,7 +600,7 @@ public:
         _ProcessManager->OnCreate(*Process);
         if( !Process->Execute() )  {
           _ProcessManager->OnTerminate(*Process);
-          Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process" );
+          Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process");
         }
         return;
       }
@@ -647,9 +647,9 @@ public:
   }
   //..............................................................................
   void macEcho(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    for( size_t i=0; i < Cmds.Count(); i++ )  {
-      TBasicApp::GetLog() << Cmds[i].c_str() << (((i+1) < Cmds.Count()) ? ' ' : '\n');
-    }
+    for( size_t i=0; i < Cmds.Count(); i++ )
+      TBasicApp::GetLog() << Cmds[i] << ' ';
+    TBasicApp::GetLog() << NewLineSequence;
   }
   //..............................................................................
   void funIsPluginInstalled(const TStrObjList& Params, TMacroError &E) {
@@ -657,7 +657,7 @@ public:
   }
   //..............................................................................
   void funCurrentLanguageEncoding(const TStrObjList& Params, TMacroError &E) {
-    E.SetRetVal<olxstr>( "ISO8859-1" );
+    E.SetRetVal<olxstr>("ISO8859-1");
   }
   //..............................................................................
   void funHasGUI(const TStrObjList& Params, TMacroError &E) {
@@ -860,7 +860,7 @@ class TTerminationListener : public AActionHandler {
 public:
   virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL)  {  
     if( TOlex::TerminateSignal )  {
-      TBasicApp::GetLog() << "terminate\n";
+      TBasicApp::NewLogEntry() << "terminate";
       exit(0);
       //DWORD w=0;
       //WriteConsole(TOlex::OlexInstance->GetConin(),

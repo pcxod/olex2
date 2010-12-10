@@ -740,14 +740,14 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
       if( n_e != NULL && p_e != NULL )  {
         if( (n_ed == 0 || olx_sign(n_ed) == olx_sign(p_ed))&& p_ed > 0 )  {
           found_cnt++;
-          TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
-            " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
+          TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol << 
+            " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel();
           atoms[i].GetA()->SetType(*n_e);
         }
         else if( n_ed < 0 && (p_ed == 0 || olx_sign(p_ed) == olx_sign(n_ed)) )  {
           found_cnt++;
-          TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
-            " to " << p_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
+          TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol << 
+            " to " << p_e->symbol << " for " << atoms[i].GetA()->GetLabel();
           atoms[i].GetA()->SetType(*p_e);
         }
         else if( n_ed != 0 && p_ed != 0 )  {
@@ -756,12 +756,12 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
             if( olx_abs(r) > 0.5 )  {
               found_cnt++;
               if( r > 0 )  {
-                TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
-                  " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
+                TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol << 
+                  " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel();
                 atoms[i].GetA()->SetType(*n_e);
               }
               else  {
-                TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
+                TBasicApp::NewLogEntry() << (olxstr("Atom type changed from ") << original_type.symbol << 
                   " to " << p_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
                 atoms[i].GetA()->SetType(*p_e);
               }
@@ -770,13 +770,13 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
           else  { // same sign?
             found_cnt++;
             if( n_ed > 0 )  {
-              TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
-                " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
+              TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol << 
+                " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel();
               atoms[i].GetA()->SetType(*n_e);
             }
             else  {
-              TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
-                " to " << p_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
+              TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol << 
+                " to " << p_e->symbol << " for " << atoms[i].GetA()->GetLabel();
               atoms[i].GetA()->SetType(*p_e);
             }
           }
@@ -786,7 +786,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   }
   sw.print(xapp.GetLog(), &TLog::Info);
   if( found_cnt == 0 )
-    TBasicApp::GetLog() << "No problems were found\n";
+    TBasicApp::NewLogEntry() << "No problems were found";
   else  {
     au.InitData();
     xapp.XFile().EndUpdate();

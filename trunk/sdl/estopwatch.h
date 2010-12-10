@@ -2,7 +2,6 @@
 #define __olx_stop_watch_h
 #include "etime.h"
 #include "bapp.h"
-#include "log.h"
 #include "etable.h"
 
 BeginEsdlNamespace()

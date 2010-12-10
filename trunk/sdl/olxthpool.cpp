@@ -1,6 +1,5 @@
 #include "olxthpool.h"
 #include "bapp.h"
-#include "log.h"
 
 
 TTypeList<TThreadSlot> TThreadPool::tasks;

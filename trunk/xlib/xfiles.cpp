@@ -340,7 +340,7 @@ void TXFile::ValidateTabs()  {
       }
     }
     if( !hasH )  {  
-      TBasicApp::GetLog() << (olxstr("Removing HTAB (donor has no H atoms): ") << it.InsStr() << '\n');
+      TBasicApp::NewLogEntry() << "Removing HTAB (donor has no H atoms): " << it.InsStr();
       RefMod.DeleteInfoTab(i--);  
       continue;  
     }
@@ -354,7 +354,7 @@ void TXFile::ValidateTabs()  {
       v2  = *it.GetAtom(1).GetMatrix()*v2;
     const double dis = au.CellToCartesian(v1).DistanceTo(au.CellToCartesian(v2));
     if( dis > 5 )  {
-      TBasicApp::GetLog() << (olxstr("Removing HTAB (d > 5A): ") << it.InsStr() << '\n');
+      TBasicApp::NewLogEntry() << "Removing HTAB (d > 5A): " << it.InsStr();
       RefMod.DeleteInfoTab(i--);  
       continue;
     }

@@ -50,7 +50,7 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
     E.ProcessingError(__OlxSrcInfo, "no hkl loop found");
     return;
   }
-  XApp.GetLog() << (olxstr("Processing file ") << TEFile::ExtractFileName(C->GetFileName()) << '\n' );
+  XApp.NewLogEntry() << "Processing file " << TEFile::ExtractFileName(C->GetFileName());
   short list = -1;
   const size_t hInd = hklLoop->ColIndex("_refln_index_h");
   const size_t kInd = hklLoop->ColIndex("_refln_index_k");
@@ -184,6 +184,6 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
     tab.CreateTXTList(header, "Sum(|Fo|)/Sum(|Fc|) vs sin(theta)/lambda.", false, false, EmptyString);
     XApp.GetLog() << header ;
     TCStrList(output).SaveToFile( outputFileName ) ;
-    XApp.GetLog() << (outputFileName << " file was created\n" );
+    XApp.NewLogEntry() << outputFileName << " file was created";
   }
 }

@@ -218,6 +218,7 @@ public class ClientHandler extends Thread {
                         out.write(bf, 0, read_len);
                         written += read_len;
                       }
+                      log.add("Completed file upload");
                     } catch (Exception e) {
                       log.add(
                               "Broken for " + src + " at " +

@@ -579,7 +579,7 @@ struct GraphAnalyser  {
       else
         mrms = rms;
       if( ++cnt > 100 )
-        TBasicApp::GetLog() << "Matching does not converge, breaking\n";
+        TBasicApp::NewLogEntry() << "Matching does not converge, breaking";
     }
     if( mrms != 1e6 )
       minRms = mrms;
@@ -599,7 +599,7 @@ struct GraphAnalyser  {
       if( Validator(n1, n2, pos) )
         rv = true;
 #ifdef _DEBUG
-      TBasicApp::GetLog() << n1.GetObject()->GetLabel() << '_' << pos.Count() << '\n';
+      TBasicApp::NewLogEntry() << n1.GetObject()->GetLabel() << '_' << pos.Count();
 #endif
       used.Add(n1[i].GetGroupIndex());
     }
@@ -701,7 +701,7 @@ bool TNetwork::DoMatch(TNetwork& net, TTypeList<AnAssociation2<size_t,size_t> >&
       ga.CalcRMSForH = ((NodeCount() - HCount) < 4); 
       try  {  thisGraph.GetRoot().FullMatchEx(thatGraph->GetRoot(), ga);  }
       catch(const TExceptionBase& e)  {
-        TBasicApp::GetLog() << e.GetException()->GetError() << '\n';
+        TBasicApp::NewLogEntry() << e.GetException()->GetError();
         delete thatGraph;
         throw TFunctionFailedException(__OlxSourceInfo, e);
       }

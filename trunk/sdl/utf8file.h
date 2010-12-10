@@ -20,45 +20,62 @@ protected:
   }
 public:
   // pointer must be deleted
-  static TUtf8File* Create(const olxstr& name)  {  
+  static TUtf8File* Create(const olxstr& name, bool write_header=true)  {  
     TUtf8File* file = new TUtf8File(name, "wb+");  
-    ((TEFile*)file)->Write( &TUtf8::FileSignature, 3);
+    if( write_header )
+      ((TEFile*)file)->Write(&TUtf8::FileSignature, 3);
     return file;
   }
   
-  // pointer must be deleted
+  // pointer must be deleted, creates/opens for appending
   static TUtf8File* Open(const olxstr& name, bool CheckHeader)  {
-    TUtf8File* file = new TUtf8File(name, "wb", CheckHeader);  
+    TUtf8File* file = new TUtf8File(name, "ab+", CheckHeader);  
     return file;
   }
   // creates a file and writes data to it, closes it
-  static void Create(const olxstr& name, const TIString& data)  {  
+  static void Create(const olxstr& name, const TIString& data, bool write_header=true)  {  
     TUtf8File file(name, "wb+");  
-    ((TEFile&)file).Write(&TUtf8::FileSignature, 3);
+    if( write_header )
+      ((TEFile&)file).Write(&TUtf8::FileSignature, 3);
     file.Write(data);
   }
 
   static bool IsUtf8File(const olxstr& fn)  {
-    TEFile file(fn, 'r');
-    if( file.Length() < 3 )  return false;
-    uint32_t header;
-    file.Read(&header, 3);
-    return (header == TUtf8::FileSignature);
+    try  {
+      TEFile file(fn, "rb");
+      if( file.Length() < 3 )  return false;
+      uint32_t header;
+      file.Read(&header, 3);
+      return (header == TUtf8::FileSignature);
+    }
+    catch(...)  {
+      return false;
+    }
   }
 
-  virtual inline size_t Write(const olxwstr &S)    {  return TEFile::Write( TUtf8::Encode(S) );  }
-  virtual inline size_t Writenl(const olxwstr &S)  {  return TEFile::Writenl( TUtf8::Encode(S) );  }
+  virtual inline size_t Write(const olxwstr &S)  {  return TEFile::Write(TUtf8::Encode(S));  }
+  virtual inline size_t Writenl(const olxwstr &S)  {
+    return TEFile::Write(TUtf8::Encode(S)) + TEFile::Write(CNewLineSequence);
+  }
 
-  virtual inline size_t Write(const TTIString<wchar_t> &S)    {  return TEFile::Write( TUtf8::Encode(S) );  }
-  inline size_t Writenl(const TTIString<wchar_t> &S)  {  return TEFile::Writenl( TUtf8::Encode(S) );  }
+  virtual inline size_t Write(const TTIString<wchar_t> &S)  {  return TEFile::Write(TUtf8::Encode(S));  }
+  inline size_t Writenl(const TTIString<wchar_t> &S)  {
+    return TEFile::Write(TUtf8::Encode(S)) + TEFile::Write(CNewLineSequence);
+  }
 
-  virtual inline size_t Write(const wchar_t* bf)   { return TEFile::Write(TUtf8::Encode(bf));  }
-  inline size_t Writenl(const wchar_t* bf) { return TEFile::Writenl(TUtf8::Encode(bf));  }
+  virtual inline size_t Write(const wchar_t* bf)  {  return TEFile::Write(TUtf8::Encode(bf));  }
+  inline size_t Writenl(const wchar_t* bf)  {
+    return TEFile::Write(TUtf8::Encode(bf)) + TEFile::Write(CNewLineSequence);
+  }
 
-  virtual inline size_t Write(const wchar_t* bf, size_t size)   { return TEFile::Write( TUtf8::Encode(bf, size) );  }
-  virtual inline size_t Writenl(const wchar_t* bf, size_t size) { return TEFile::Writenl( TUtf8::Encode(bf, size) );  }
-  virtual inline size_t Write(const void* bf, size_t size) { return TEFile::Write(bf, size);  }
-  virtual inline size_t Writenl(const void* bf, size_t size) { return TEFile::Writenl(bf, size);  }
+  virtual inline size_t Write(const wchar_t* bf, size_t size)  {  return TEFile::Write(TUtf8::Encode(bf, size));  }
+  virtual inline size_t Writenl(const wchar_t* bf, size_t size)  {
+    return TEFile::Write(TUtf8::Encode(bf, size)) + TEFile::Write(CNewLineSequence);
+  }
+  virtual inline size_t Write(const void* bf, size_t size)  {  return TEFile::Write(bf, size);  }
+  virtual inline size_t Writenl(const void* bf, size_t size)  {
+    return TEFile::Write(bf, size) + TEFile::Write(CNewLineSequence);
+  }
 
   template <class T>
   static void ReadLines(IInputStream& io, TTStrList<olxwstr,T>& list, bool CheckHeader=true)  {
@@ -76,7 +93,7 @@ public:
     char * bf = new char [fl+1];
     io.Read(bf, fl);
     list.Clear();
-    list.Strtok( TUtf8::Decode(bf, fl), '\n', false);
+    list.Strtok(TUtf8::Decode(bf, fl), '\n', false);
     delete [] bf;
     for( size_t i=0; i < list.Count(); i++ )
       if( list[i].EndsWith('\r') )  

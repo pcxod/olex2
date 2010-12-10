@@ -191,8 +191,9 @@ public:
 };
 
 template <typename T> const unsigned short TTIString<T>::CharSize = sizeof(T);
-
 typedef TTIString<olxch> TIString;
+typedef TTIString<char> TICString;
+typedef TTIString<wchar_t> TIWString;
 
 // implementation of basic object, providing usefull information about a class
 class IEObject  {
@@ -280,8 +281,9 @@ public:
   }
 };
 
-extern const char* NewLineSequence;
-extern const short NewLineSequenceLength;
+extern const TIString& NewLineSequence;
+extern const TICString CNewLineSequence;
+extern const TIWString WNewLineSequence;
 
 // an interface for a referencible object
 class AReferencible : public IEObject  {
@@ -298,6 +300,7 @@ public:
 // we need this class to throw exceptions from string with gcc ...
 class TExceptionBase : public IEObject  {
 protected:
+  static bool AutoLog;
   /* to prevent creation this class directly. All instances must be of the TBasicExceptionClass
   defined in exception.h */
   virtual void CreationProtection() = 0;  
@@ -318,6 +321,8 @@ public:
   static void ThrowInvalidFloatFormat(const char* file, const char* function, int line, 
     const wchar_t* src, size_t src_len);
   static TIString FormatSrc(const char* file, const char* func, int line);
+  static void SetAutoLogging(bool v)  {  AutoLog = v;  }
+  static bool GetAutoLogging()  {  return AutoLog;  }
   // returns recasted this, or throws exception if dynamic_cast fails
   const class TBasicException* GetException() const; 
 };
@@ -395,11 +400,12 @@ public:
       return value;
     }
   };
-
 };
-#include "citem.h"
+
+#include "olxptr.h"
 #include "association.h"
 #include "listalg.h"
+#include "citem.h"
 
 EndEsdlNamespace()
 

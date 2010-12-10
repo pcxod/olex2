@@ -226,7 +226,6 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
     ThisRead = _read(Buffer, BufferSize);
     if( restarted && ThisRead > 0 )  {
       data_off = GetDataOffset(Buffer, ThisRead, crlf);
-      uint64_t tmp_fl = ~0;
       ResponseInfo new_info =
         ParseResponseInfo(olxcstr(Buffer, data_off), olxcstr(crlf ? "\r\n" : "\n"), Source);
       if( !new_info.HasData() )  {
@@ -235,6 +234,9 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
         return NULL;
       }
       if( new_info != info  )  {  // have to restart...
+        TBasicApp::NewLogEntry(logInfo, true) << "Restarted download info mismatch old={"
+          << '(' << info.contentMD5 << ',' << info.contentLength <<
+          "}, new={" << new_info.contentMD5 << ',' << new_info.contentLength << '}';
         info = new_info;
         _DoTruncateFile(allocation_info);
         if( allocation_info.file == NULL )  {
@@ -280,14 +282,12 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
 //..............................................................................
 int THttpFileSystem::_read(char* dest, size_t dest_sz) const {
   int rl = recv(Socket, dest, dest_sz, 0);
-  if( rl <= 0 )  return rl;
-  else if( rl == dest_sz )
+  if( rl <= 0 || rl == dest_sz )
     return rl;
   size_t total_sz = rl;
   while( total_sz < dest_sz )  {
     rl = recv(Socket, &dest[total_sz], dest_sz-total_sz, 0);
-    if( rl < 0 )  return rl;
-    if( rl == 0 )
+    if( rl <= 0 )
       return total_sz;
     total_sz += rl;
   }
@@ -295,7 +295,17 @@ int THttpFileSystem::_read(char* dest, size_t dest_sz) const {
 }
 //..............................................................................
 int THttpFileSystem::_write(const olxcstr& str)  {
-  return send(Socket, str.c_str(), str.Length(), 0);
+  int sv = send(Socket, str.c_str(), str.Length(), 0);
+  if( sv <= 0 || sv == str.Length() )
+    return sv;
+  size_t total_sz = sv;
+  while( total_sz < str.Length() )  {
+    sv = send(Socket, &str.c_str()[total_sz], str.Length()-total_sz, 0);
+    if( sv <= 0 )
+      return total_sz;
+    total_sz += sv;
+  }
+  return total_sz;
 }
 //..............................................................................
 bool THttpFileSystem::_DoesExist(const olxstr& f, bool forced_check)  {

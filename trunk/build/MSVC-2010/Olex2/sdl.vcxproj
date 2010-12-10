@@ -699,6 +699,7 @@
     <ClInclude Include="..\..\..\sdl\macroerror.h" />
     <ClInclude Include="..\..\..\sdl\macrolib.h" />
     <ClInclude Include="..\..\..\sdl\md5.h" />
+    <ClInclude Include="..\..\..\sdl\olxptr.h" />
     <ClInclude Include="..\..\..\sdl\smart\olx_cstring.h" />
     <ClInclude Include="..\..\..\sdl\smart\olx_istring.h" />
     <ClInclude Include="..\..\..\sdl\smart\olx_wstring.h" />

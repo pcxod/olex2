@@ -3089,7 +3089,7 @@ void TMainForm::OnInternalIdle()  {
         for( size_t j=0; j < macros.Count(); j++ )  {
           executeMacro( macros[j] );
 #ifdef _DEBUG
-          FXApp->GetLog() << TEFile::ExtractFileName(rof[i]) << ": " << macros[j] << '\n';
+          FXApp->NewLogEntry() << TEFile::ExtractFileName(rof[i]) << ": " << macros[j];
 #endif
         }
       }
@@ -3228,7 +3228,7 @@ void TMainForm::AnalyseError(TMacroError& error)  {
       TBasicApp::GetLog().Error(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
     }
     while( !error.GetStack().IsEmpty() )
-      TBasicApp::GetLog() << (olxstr('\t') << error.GetStack().Pop().TrimWhiteChars() ) << '\n';
+      TBasicApp::NewLogEntry() << '\t' << error.GetStack().Pop().TrimWhiteChars();
   }
 }
 //..............................................................................

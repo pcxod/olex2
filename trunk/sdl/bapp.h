@@ -3,6 +3,7 @@
 #include "paramlist.h"
 #include "os_util.h"
 #include "library.h"
+#include "log.h"
 
 BeginEsdlNamespace()
 
@@ -36,6 +37,9 @@ public:
   static bool HasSharedDir() {  return !GetInstance().SharedDir.IsEmpty();  }
 
   static TLog& GetLog()  {  return *GetInstance().Log;  }
+  static TLog::LogEntry NewLogEntry(int evt_type = logDefault, bool annotate=false)  {
+    return GetInstance().Log->NewEntry(annotate);
+  }
   /* if var_name is not NULL, tries to get its value and combine with file name of path 
   if either are empty - the curent folder is used with exename 'unknown.exe' */
   static olxstr GuessBaseDir(const olxstr& path, const olxstr& var_name=EmptyString);

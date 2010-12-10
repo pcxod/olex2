@@ -64,6 +64,18 @@ public:
   static const char* GetPatchFolder()  {  return "patch";  }
   //reads current repository tag, returns EmptyString in the case of error
   static olxstr ReadRepositoryTag(const olxstr& base_dir=EmptyString);
+  /* return 'AppData/Olex2Data/' or OLEX2_DATADIR if defined (gets same value as
+  the argument of the GetCurrentSharedDir
+  */
+  static olxstr _GetSharedDirRoot();
+  static olxstr GetSharedDirRoot()  {
+    return _GetSharedDirRoot() <<
+#ifdef __WIN32__
+    "Olex2Data/";
+#else
+    "data/";
+#endif
+  }
   // composes new shared dir and saves its info
   static olxstr ComposeNewSharedDir(const olxstr& shared_dir, const olxstr& _base_dir=EmptyString)  {
     olxstr new_shared_dir = shared_dir;
@@ -77,7 +89,11 @@ public:
     return TEFile::AddPathDelimeterI( 
       new_shared_dir << MD5::Digest(esdl::olxcstr(base_dir + ReadRepositoryTag(base_dir))) );
   }
-  // checks for OLEX2_DATADIR, DataDir is raw data dir like Application Data without the MD5 suffix
+  /* checks for OLEX2_DATADIR, if DataDir is provided the raw data dir like Application Data
+  without the MD5 suffix will be assigned to it (like from the call to GetSharedDirRoot)
+  if OLEX2_DATADIR_STATIC is set to true, the root folder is returned and used (for all versions of
+  programs which may be installed and using this API
+  */
   static olxstr GetCurrentSharedDir(olxstr* DataDir=NULL);
   static void SaveLocationInfo(const olxstr& shared_dir, const olxstr& base_dir=EmptyString)  {
     TCStrList location_file_content;

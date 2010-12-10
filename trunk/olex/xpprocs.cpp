@@ -9260,7 +9260,7 @@ void TMainForm::funMatchFiles(const TStrObjList& Params, TMacroError &E)  {
       rv.AddList(TMainForm_funMatchLatts(lattA, lattB, Params));
       delete f1;
       delete f2;
-      E.SetRetVal(rv.Text('\n'));
+      E.SetRetVal(rv.Text(NewLineSequence));
       return;
     }
     catch(...)  {

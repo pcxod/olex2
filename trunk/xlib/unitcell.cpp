@@ -719,7 +719,7 @@ TCAtom* TUnitCell::FindCAtom(const vec3d& center) const  {
 void TUnitCell::BuildStructureMap_Direct(TArray3D<short>& map, double delta, short val, 
                                   ElementRadii* radii, const TCAtomPList* _template)
 {
-  TBasicApp::GetLog() << "Building structure map...\n";
+  TBasicApp::NewLogEntry() << "Building structure map...";
   TTypeList< AnAssociation3<vec3d,TCAtom*, double> > allAtoms;
   GenereteAtomCoordinates(allAtoms, true, _template);
   
@@ -768,7 +768,7 @@ void TUnitCell::BuildStructureMap_Direct(TArray3D<short>& map, double delta, sho
       }
     }
   }
-  TBasicApp::GetLog() << '\r' << "Done\n";
+  TBasicApp::GetLog() << '\r' << "Done" << NewLineSequence;
   TBasicApp::GetInstance().Update();
 }
 //..................................................................................
