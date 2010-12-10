@@ -153,7 +153,7 @@ namespace SymSpace  {
       throw TFunctionFailedException(__OlxSourceInfo, "could not deduce lattice centering");
     for( size_t i=0; i < groups.Count(); i++ )  {
       groups.GetValue(i).SetCount(1);
-      groups.GetValue(i)[0]->t -= groups.GetValue(i)[0]->t.Floor<int>();
+      groups.GetValue(i)[0]->t -= groups.GetValue(i)[0]->t.template Floor<int>();
     }
     // find out if centrosymmetric...
     if( groups.Count() > 1 )  {
