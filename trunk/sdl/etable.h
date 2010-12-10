@@ -181,7 +181,7 @@ public:
     const olxstr& colSepAttr = EmptyString) const
   {
     TStrList L;
-    return CreateHTMLList(L, Title, footer, colNames, rowNames, totlePAttr, footerPAttr, tabAttr,
+    return CreateHTMLList(L, Title, footer, colNames, rowNames, titlePAttr, footerPAttr, tabAttr,
       rowAttr, thAttr, clAttr, Format, colCount, colSepAttr);
   }
   TStrList& CreateHTMLList(TStrList &L, const olxstr &Title,
