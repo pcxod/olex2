@@ -3879,14 +3879,12 @@ void TGXApp::AlignOverlayedXFiles() {
     for( size_t j=0; j < dim; j++ )  {
       const size_t ind = i*dim+j;
       if( ind == 0 )  {
-        //XFile().GetLattice().RestoreCoordinates();
         CalcLatticeRandCenter(XFile().GetLattice(), maxR, cnt);
         row.Add(new grid_type(maxR, cnt, &XFile().GetLattice()));
       }
       else if( ind-1 >= OverlayedXFiles.Count() )
         break;
       else  {
-        //OverlayedXFiles[ind-1].GetLattice().RestoreCoordinates();
         CalcLatticeRandCenter(OverlayedXFiles[ind-1].GetLattice(), maxR, cnt);
         row.Add(new grid_type(maxR, cnt, &OverlayedXFiles[ind-1].GetLattice()));
       }
