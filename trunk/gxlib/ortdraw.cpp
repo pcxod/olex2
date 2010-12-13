@@ -10,6 +10,8 @@
 //
 #include "sfutil.h"
 #include "unitcell.h"
+#include "maputil.h"
+#include "arrays.h"
 
 ort_atom::ort_atom(const OrtDraw& parent, const TXAtom& a) :
 a_ort_object(parent), atom(a), p_elpm(NULL), p_ielpm(NULL),
@@ -610,55 +612,28 @@ void OrtDraw::Render(const olxstr& fileName)  {
     const float hh = (float)MaxDim/2;
     const float Size = grid.GetSize();
     const float Depth = grid.GetDepth();
-    float **data = new float*[MaxDim];
-    float *x = new float[MaxDim];
-    float *y = new float[MaxDim];
+    olx_array_ptr<float*> data(new float*[MaxDim]);
+    olx_array_ptr<float> x(new float[MaxDim]);
+    olx_array_ptr<float> y(new float[MaxDim]);
     for( size_t i=0; i < MaxDim; i++ )  {
       data[i] = new float[MaxDim];
       y[i] = x[i] = (float)i - hh;
     }
     const size_t contour_cnt = grid.GetContourLevelCount();
-    float* z = new float[contour_cnt];
+    olx_array_ptr<float> z(new float[contour_cnt]);
     float minZ = 1000, maxZ = -1000;
     const vec3i dim = grid.GetDimVec();
     const mat3f bm(app.GetRender().GetBasis().GetMatrix());
     const mat3f c2c(app.XFile().GetAsymmUnit().GetCartesianToCell());
     const vec3f center(app.GetRender().GetBasis().GetCenter());
+    MapUtil::MapGetter<float, 2> map_getter(grid.Data()->Data, grid.Data()->GetSize());
     for( size_t i=0; i < MaxDim; i++ )  {
       for( size_t j=0; j < MaxDim; j++ )  {
         vec3f p(((float)i-hh)/Size, ((float)j-hh)/Size,  Depth);
         p = bm*p;
         p -= center;
         p *= c2c;
-        p *= dim;
-        vec3i fp((int)(p[0]), (int)(p[1]), (int)(p[2]));
-        float val = 0;
-        float _p = p[0]-fp[0], _pc = _p*_p*_p, _ps = _p*_p;
-        float _q = p[1]-fp[1], _qc = _q*_q*_q, _qs = _q*_q;
-        float _r = p[2]-fp[2], _rc = _r*_r*_r, _rs = _r*_r;
-        const float vx[4] = {-_pc/6 + _ps/2 -_p/3, (_pc-_p)/2 - _ps + 1, (-_pc + _ps)/2 + _p, (_pc - _p)/6 };
-        const float vy[4] = {-_qc/6 + _qs/2 -_q/3, (_qc-_q)/2 - _qs + 1, (-_qc + _qs)/2 + _q, (_qc - _q)/6 };
-        const float vz[4] = {-_rc/6 + _rs/2 -_r/3, (_rc-_r)/2 - _rs + 1, (-_rc + _rs)/2 + _r, (_rc - _r)/6 };
-        for( int dx=-1; dx <= 2; dx++ )  {
-          const float _vx = vx[dx+1];
-          const int n_x = fp[0]+dx;
-          for( int dy=-1; dy <= 2; dy++ )  {
-            const float _vxy = vy[dy+1]*_vx;
-            const int n_y = fp[1]+dy;
-            for( int dz=-1; dz <= 2; dz++ )  {
-              const float _vxyz = vz[dz+1]*_vxy;
-              vec3i ijk(n_x, n_y, fp[2]+dz);
-              for( int m=0; m < 3; m++ )  {
-                while( ijk[m] < 0 )
-                  ijk[m] += dim[m];
-                while( ijk[m] >= dim[m] )
-                  ijk[m] -= dim[m];
-              }
-              val += grid.GetValue(ijk)*_vxyz;
-            }
-          }
-        }
-        data[i][j] = val;
+        data[i][j] = map_getter.Get(p);
         if( data[i][j] < minZ )  minZ = data[i][j];
         if( data[i][j] > maxZ )  maxZ = data[i][j];
       }
@@ -670,14 +645,8 @@ void OrtDraw::Render(const olxstr& fileName)  {
     cm.DoContour(data, 0, (int)MaxDim-1, 0, (int)MaxDim-1, x, y, contour_cnt, z, mf);
     for( size_t i=0; i < MaxDim; i++ )
       delete [] data[i];
-    delete [] data;
-    delete [] x;
-    delete [] y;
-    delete [] z;
-    objects.BubleSorter.SortSF(objects, OrtObjectsZSort);
   }
-  else
-    objects.QuickSorter.SortSF(objects, OrtObjectsZSort);
+  objects.QuickSorter.SortSF(objects, OrtObjectsZSort);
 
   for( size_t i=0; i < objects.Count(); i++ )
     objects[i].render(pw);

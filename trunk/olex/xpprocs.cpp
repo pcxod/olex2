@@ -6979,8 +6979,8 @@ void TMainForm::macStartLogging(TStrObjList &Cmds, const TParamList &Options, TM
     ActiveLogFile = new TEFile(Cmds[0], "a+b");
   else
     ActiveLogFile = new TEFile(Cmds[0], "w+b");
-  ActiveLogFile->Writenl( EmptyString );
-  ActiveLogFile->Writenl( olxstr("Olex2 log started on ") << TETime::FormatDateTime( TETime::Now()) );
+  ActiveLogFile->Writeln(EmptyString);
+  ActiveLogFile->Writeln(olxstr("Olex2 log started on ") << TETime::FormatDateTime(TETime::Now()));
 }
 //..............................................................................
 void TMainForm::macViewLattice(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

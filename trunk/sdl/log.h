@@ -19,19 +19,18 @@ class TLog: public IEObject, public IDataOutputStream  {
   TActionQList Actions;
 protected:
   virtual size_t Write(const void* Data, size_t size);
-  virtual size_t Writenl(const void* Data, size_t size);
   virtual uint64_t GetSize() const {  return 0;  }
   virtual uint64_t GetPosition() const {  return 0;  }
   virtual void SetPosition(uint64_t newPos)  {}
 
   void Add(const olxstr& str)  {
     for( size_t i=0; i < Streams.Count(); i++ )
-      Streams[i].A()->Writenl(str);
+      Streams[i].A()->Writeln(str);
   }
   template <class List> void Add(const List& lst)  {
       for( size_t i=0; i < lst.Count(); i++ )
         for( size_t j=0; j < Streams.Count(); j++ )
-          Streams[j].A()->Writenl(lst[i]);
+          Streams[j].A()->Writeln(lst[i]);
     }
 public:
   TLog();

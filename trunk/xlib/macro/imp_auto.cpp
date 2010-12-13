@@ -141,8 +141,7 @@ void XLibMacros::macVATA(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   TStrList report;
   TAutoDB::GetInstance()->ValidateResult( xapp.XFile().GetFileName(), xapp.XFile().GetLattice(), report);
-  for( size_t i=0; i < report.Count(); i++ )
-    log.Writenl( report[i] );
+  report.SaveToTextStream(log);
 }
 //..............................................................................
 struct Main_BaiComparator {

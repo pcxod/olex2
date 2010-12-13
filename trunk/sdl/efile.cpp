@@ -905,7 +905,9 @@ bool TEFile::Rename(const olxstr& from, const olxstr& to, bool overwrite)  {
 }
 //..............................................................................
 bool TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite)  {
-  if( Exists(To) && !overwrite )  return false;
+  const bool exists = Exists(To);
+  if( exists && !overwrite )
+    return false;
   try  {
   // need to check that the files are not the same though...
     struct STAT_STR the_stat;
@@ -914,6 +916,9 @@ bool TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite)  {
     if( STAT(OLXSTR(from), &the_stat) != 0 )
       return false;
 #ifdef __WIN32__ // to make the copying a transaction...
+    // some installer user observations that copyign still fails in some cases...
+    if( exists && !TEFile::DelFile(To) )
+      return false;
     if( WinCopyFile(From.u_str(), To.u_str(), FALSE) == FALSE )
       return false;
 #else

@@ -558,7 +558,7 @@ void TGlConsole::SetLineSpacing(double v)  {
 size_t TGlConsole::Write(const void *Data, size_t size)  {
   throw TNotImplementedException(__OlxSourceInfo);
 }
-size_t TGlConsole::Write(const olxstr& str)  {
+size_t TGlConsole::Write(const TTIString<olxch>& str)  {
   if( IsSkipPosting() )  {
     SetSkipPosting(false);
     return 1;
@@ -572,6 +572,11 @@ size_t TGlConsole::Write(const olxstr& str)  {
       delete FBuffer.GetLast().Object;
       FBuffer.GetLast().Object = (PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
     }
+  }
+  if( &str == &NewLineSequence )  {
+    if( !FBuffer.GetLastString().IsEmpty() )
+      FBuffer.Add(EmptyString, PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
+    return 1;  
   }
   FBuffer.GetLastString().SetCapacity(FBuffer.GetLastString().Length() + str.Length());
   for( size_t i=0; i < str.Length(); i++ )  {
@@ -587,20 +592,6 @@ size_t TGlConsole::Write(const olxstr& str)  {
   KeepSize();
   FTxtPos = FBuffer.Count()-1;
   PrintMaterial = NULL;
-  return 1;
-}
-//..............................................................................
-size_t TGlConsole::Writenl(const void *Data, size_t size)  {
-  throw TNotImplementedException(__OlxSourceInfo);
-}
-size_t TGlConsole::Writenl(const olxstr& str)  {
-  if( IsSkipPosting() )  {
-    SetSkipPosting(false);
-    return 1;
-  }
-  if( !str.IsEmpty() )  Write(str);
-  FBuffer.Add(EmptyString);
-  FTxtPos = FBuffer.Count()-1;
   return 1;
 }
 //..............................................................................

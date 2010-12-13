@@ -1,14 +1,8 @@
 //----------------------------------------------------------------------------//
-// namespace TEObjects: Stream
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
 #ifndef __OLX_IStream_H
 #define __OLX_IStream_H
-//#include "ebase.h"
-//#include "estrlist.h"
-//TODO: fix that header and then re-include it #include "edlist.h"
-//---------------------------------------------------------------------------
-
 BeginEsdlNamespace()
 
 class OlxIStream;
@@ -17,7 +11,7 @@ class IOutputStream;
 
 class OlxIStream  {
 public:
-  virtual ~OlxIStream()  {  ;  }
+  virtual ~OlxIStream()  {}
   // these functions must throw an exception if an error happens
   virtual uint64_t GetSize() const = 0;
   virtual uint64_t GetPosition() const = 0;
@@ -52,10 +46,10 @@ protected:
   inline IInputStream& ValidateRead(size_t amount)  {
     if( (GetPosition() + amount) <= GetSize() )  return *this;
     TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid stream position");
-    return *this;  /// just to avoid bloody warnings
+    return *this;  /// just to avoid the warnings
   }
 public:
-  virtual ~IInputStream() {  ;  }
+  virtual ~IInputStream() {}
 //...................................................................................
   virtual void Read(void *Data, size_t size) = 0;
 //...................................................................................
@@ -89,23 +83,17 @@ public:
 //...................................................................................
   // beware not to pass classes here!
   template <class T> inline void operator >> (T& v)  {
-    ValidateRead(sizeof(T)).Read(&v, sizeof(T) );
+    ValidateRead(sizeof(T)).Read(&v, sizeof(T));
   }
 };
 
 class IOutputStream: public OlxIStream  {
 public:
-  virtual ~IOutputStream() {  ;  }
+  virtual ~IOutputStream() {}
 //...................................................................................
   virtual size_t Write(const void *Data, size_t size) = 0;
 //...................................................................................
-  virtual inline size_t Writenl(const void *Data, size_t size)  {
-    size_t w = Write(Data, size);
-    w += Write(NewLineSequence.raw_str(), NewLineSequence.RawLen());
-    return w;
-  }
-//...................................................................................
-  virtual void Flush()  { }
+  virtual void Flush()  {}
 //...................................................................................
   // these functions must return pointer *this
   IOutputStream& operator << (IInputStream &is);
