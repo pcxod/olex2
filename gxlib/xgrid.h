@@ -11,8 +11,10 @@
 #include "wx/zipstrm.h"
 #endif
 #include "fracmask.h"
-#include "ps_writer.h"
+//#include "ps_writer.h"
 #include "xblob.h"
+#include "symmat.h"
+#include "maputil.h"
 
 BeginGxlNamespace()
 
@@ -84,6 +86,7 @@ public:
   virtual ~TXGrid();
   void Clear();
   inline TArray3D<float>* Data()  {  return ED;  }
+  inline const TArray3D<float>* Data() const {  return ED;  }
   bool LoadFromFile(const olxstr& GridFile);
 
   void InitIso();
@@ -186,6 +189,7 @@ protected:
     short mode;
     bool init_data, init_text;
     TXGrid& parent;
+    MapUtil::MapGetter<float,2> map_getter;
     void Run(size_t index);
     TPlaneCalculationTask(TXGrid& _parent, float*** _src_data, float** _data, char* _text_data, size_t _max_dim, float _size,
       float _depth, const mat3f& _proj_m, const mat3f& _c2c, const vec3f& _center, const vec3s& _dim, short _mode) :
@@ -195,7 +199,8 @@ protected:
         init_data((_mode&planeRenderModeContour) != 0),
         init_text((_mode&planeRenderModePlane) != 0),
         mode(_mode),
-        hh((float)_max_dim/2)  {}
+        hh((float)_max_dim/2),
+        map_getter(src_data, dim) {}
     TPlaneCalculationTask* Replicate() const {
       return new TPlaneCalculationTask(parent, src_data, data, text_data, max_dim, size,
         depth, proj_m, c2c, center, dim, mode);

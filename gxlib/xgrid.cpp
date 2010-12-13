@@ -309,34 +309,7 @@ void TXGrid::TPlaneCalculationTask::Run(size_t ind)  {
     p = proj_m*p;
     p -= center;
     p *= c2c;
-    p *= dim;
-    float val = 0;
-    vec3i fp((int)(p[0]), (int)(p[1]), (int)(p[2]));  //x',y',z'
-    const float _p = p[0]-fp[0], _pc = _p*_p*_p, _ps = _p*_p;
-    const float _q = p[1]-fp[1], _qc = _q*_q*_q, _qs = _q*_q;
-    const float _r = p[2]-fp[2], _rc = _r*_r*_r, _rs = _r*_r;
-    const float vx[4] = {-_pc/6 + _ps/2 -_p/3, (_pc-_p)/2 - _ps + 1, (-_pc + _ps)/2 + _p, (_pc - _p)/6 };
-    const float vy[4] = {-_qc/6 + _qs/2 -_q/3, (_qc-_q)/2 - _qs + 1, (-_qc + _qs)/2 + _q, (_qc - _q)/6 };
-    const float vz[4] = {-_rc/6 + _rs/2 -_r/3, (_rc-_r)/2 - _rs + 1, (-_rc + _rs)/2 + _r, (_rc - _r)/6 };
-    for( int dx=-1; dx <= 2; dx++ )  {
-      const float _vx = vx[dx+1];
-      const int n_x = fp[0]+dx;
-      for( int dy=-1; dy <= 2; dy++ )  {
-        const float _vxy = vy[dy+1]*_vx;
-        const int n_y = fp[1]+dy;
-        for( int dz=-1; dz <= 2; dz++ )  {
-          const float _vxyz = vz[dz+1]*_vxy;
-          vec3i ijk(n_x, n_y, fp[2]+dz);
-          for( int m=0; m < 3; m++ )  {
-            while( ijk[m] < 0 )
-              ijk[m] += (int)dim[m];
-            while( ijk[m] >= (int)dim[m] )
-              ijk[m] -= (int)dim[m];
-          }
-          val += src_data[ijk[0]][ijk[1]][ijk[2]]*_vxyz;
-        }
-      }
-    }
+    const float val = map_getter.Get(p);
     if( init_text )  {
       uint8_t R, G, B;
       parent.CalcColorRGB(val, R, G, B);

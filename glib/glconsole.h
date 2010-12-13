@@ -39,11 +39,9 @@ protected:
   size_t CalcScrollDown() const;
   class TGlCursor *FCursor;
 
-  // redefine nl - we do not need to write new line 
   virtual size_t Write(const void *Data, size_t size);
-  virtual size_t Writenl(const void *Data, size_t size);
-  virtual size_t Write(const olxstr& str);
-  virtual size_t Writenl(const olxstr& str);
+  virtual size_t Write(const olxstr& str)  {  return Write((const TTIString<olxch>&)str);  }
+  virtual size_t Write(const TTIString<olxch>& str);
   virtual IOutputStream& operator << (IInputStream& is);
   virtual uint64_t GetSize() const {  return 1;  }
   virtual uint64_t GetPosition() const { return 0;  }

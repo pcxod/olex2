@@ -49,6 +49,15 @@ template <typename int_t, typename float_t> inline int_t olx_floor_t(const float
   int_t b = (int_t)a;
   return (a < 0) ? b-1 : b;
 }
+// returns true if the given value is within (-eps,eps) range
+template <typename float_t> inline bool olx_is_zero(float_t v, float_t eps)  {
+  return v < 0 ? (v > -eps) : (v < eps);
+}
+// compares float values within an epsilon range, suitable for stable sort in acsending order
+template <typename float_t> inline int olx_cmp_float(float_t v1, float_t v2, float_t eps)  {
+  const float_t diff = v1 -v2;
+  return olx_is_zero(diff, eps) ? 0 : (diff > 0 ? 1 : -1);
+}
 // returns absolute value of a number
 template <typename num> inline num olx_abs(num n)  {
   return n < 0 ? -n : n;

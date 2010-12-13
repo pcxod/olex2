@@ -1838,7 +1838,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       TBasicApp::GetLog() << (olxstr(Data->ToString()) << '\n');
       FGlConsole->SetSkipPosting(false);
       if( ActiveLogFile != NULL )
-        ActiveLogFile->Writenl(Data->ToString());
+        ActiveLogFile->Writeln(Data->ToString());
     }
   }
   else if( MsgId == ID_COMMAND )  {

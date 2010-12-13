@@ -251,7 +251,7 @@ public:
     }
     return E;
   }
-  // convinience methods
+  // convenience methods
   TTStrList& LoadFromTextArray(char *bf, size_t bf_sz, bool take_ownership)  {
     Clear();
     const olxcstr str = take_ownership ? olxcstr(olxcstr::FromExternal(bf, bf_sz)) : olxcstr((const char*)bf, bf_sz);
@@ -284,16 +284,14 @@ public:
     Stream >> size;
     Strings.SetCapacity(size);
     for( uint32_t i=0; i < size; i++ )
-      Stream >> Add(EmptyString);
+      Stream >> Add();
     return *this;
   }
   // convinience method
   const TTStrList& SaveToTextStream(IDataOutputStream& os) const {
     if( IsEmpty() )  return *this;
-    for( size_t i=0; i < Count()-1; i++ )
-      os.Writenl(Strings[i]->String.raw_str(), Strings[i]->String.RawLen());
-    if( Count() > 0 )
-      os.Writenl(Strings.GetLast()->String.raw_str(), Strings.GetLast()->String.RawLen());
+    for( size_t i=0; i < Count(); i++ )
+      os.Writeln(Strings[i]->String);
     return *this;
   }
   const TTStrList& SaveToFile(const olxstr& fileName) const {
