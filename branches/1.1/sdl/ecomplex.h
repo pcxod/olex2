@@ -52,7 +52,7 @@ public:
   inline void SetRe(const T& v)   {  _A = v;  }
   inline void SetIm(const T& v)   {  _B = v;  }
   inline void Null()              { _A = _B = 0;  }
-  inline T abs()  const  {
+  inline T abs() const {
     T mx = olx_max(_A,_B);
     if( mx == 0 )  return 0;
     T a = _A/mx,

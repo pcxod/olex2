@@ -56,30 +56,53 @@ public:
   inline olxwstr&                operator >> ( olxwstr& v )                {  v.FromBinaryStream(*this);  return v;  }
 };
 
-class IDataOutputStream: public IOutputStream  {
+class IDataOutputStream : public IOutputStream  {
   template <class T> IDataOutputStream& writeType(const T& v)  {
     Write(&v, sizeof(T));
     return *this;
   }
+protected:
+  // stream's underlying new line...
+  virtual inline size_t WritelnFor(const TIWString& str)  {  return Write(WNewLineSequence);  }
+  virtual inline size_t WritelnFor(const wchar_t* Data)  {  return Write(WNewLineSequence);  }
+  virtual inline size_t WritelnFor(const TICString& str)  {  return Write(CNewLineSequence);  }
+  virtual inline size_t WritelnFor(const char* Data)  {  return Write(CNewLineSequence);  }
 public:
-  virtual ~IDataOutputStream() {  ;  }
-  // to let derived classes to handle unicode
+  virtual ~IDataOutputStream() {}
+
   virtual size_t Write(const void *Data, size_t size) = 0;
-  virtual inline size_t Writenl(const void *Data, size_t size)  {
-    size_t w = Write(Data, size);
-    w += Write(NewLineSequence, NewLineSequenceLength);
-    return w;
+  inline size_t Writecln(const void *Data, size_t size)  {
+    return Write(Data, size) + Write(CNewLineSequence);
+  }
+  inline size_t Writecln()  {  return Write(CNewLineSequence);  }
+  inline size_t Writewln(const void *Data, size_t size)  {
+    return Write(Data, size) + Write(WNewLineSequence);
+  }
+  inline size_t Writewln()  {  return Write(WNewLineSequence);  }
+  inline size_t Writeuln(const void *Data, size_t size)  {
+    return Write(Data, size) + Write(NewLineSequence);
+  }
+  inline size_t Writeuln()  {  return Write(NewLineSequence);  }
+  // the following two are needed cause they got a lot of constructors!
+  size_t Write(const olxwstr& str)  {  return Write((const TIWString&)str);  }
+  size_t Write(const olxcstr& str)  {  return Write((const TICString&)str);  }
+  virtual size_t Write(const TICString& str)  {  return Write(str.raw_str(), str.RawLen());  }
+  virtual size_t Write(const TIWString& str)  {  return Write(str.raw_str(), str.RawLen());  }
+  virtual inline size_t Write(const char* str)  {  return Write(str, olxstr::o_strlen(str));  }
+  virtual inline size_t Write(const wchar_t* str)  {  return Write(str, olxstr::o_strlen(str));  }
+
+  inline size_t Writeln(const olxwstr& str)  {  return Writeln((const TIWString&)str);  }
+  inline size_t Writeln(const TIWString& str)  {  return Write(str) + Write(WNewLineSequence);  }
+  inline size_t Writeln(const wchar_t *Data)  {
+    return Write(Data, olxstr::o_strlen(Data)) + WritelnFor(Data);
   }
 
-  virtual size_t Write(const olxwstr& str)  {  return Write(str.raw_str(), str.RawLen());  }
-  virtual size_t Write(const olxcstr& str)  {  return Write(str.raw_str(), str.RawLen());  }
-  virtual size_t Write(const TTIString<char>& str)  {  return Write(str.raw_str(), str.RawLen());  }
-  virtual size_t Write(const TTIString<wchar_t>& str)  {  return Write(str.raw_str(), str.RawLen());  }
+  inline size_t Writeln(const olxcstr& str)  {  return Writeln((const TICString&)str);  }
+  inline size_t Writeln(const TICString& str)  {  return Write(str) + WritelnFor(str);  }
+  inline size_t Writeln(const char* Data)  {
+    return Write(Data, olxstr::o_strlen(Data)) + WritelnFor(Data);
+  }
 
-  virtual size_t Writenl(const olxwstr& str)  {  return Writenl(str.raw_str(), str.RawLen());  }
-  virtual size_t Writenl(const olxcstr& str)  {  return Writenl(str.raw_str(), str.RawLen());  }
-  virtual size_t Writenl(const TTIString<char>& str)  {  return Writenl(str.raw_str(), str.RawLen());  }
-  virtual size_t Writenl(const TTIString<wchar_t>& str)  {  return Writenl(str.raw_str(), str.RawLen());  }
   virtual void Flush()  { }
 
   inline IDataOutputStream& operator << ( char v )                   {  return writeType(v);  }
@@ -96,11 +119,6 @@ public:
   inline IDataOutputStream& operator << ( IInputStream& v )          {  IOutputStream::operator << (v);  return *this;  }
   inline IDataOutputStream& operator << ( const olxcstr& v )       {  v.ToBinaryStream(*this);  return *this;  }
   inline IDataOutputStream& operator << ( const olxwstr& v )       {  v.ToBinaryStream(*this);  return *this;  }
-
-  virtual inline size_t Write(const char* str)       {  return Write(str, olxstr::o_strlen(str));  }
-  virtual inline size_t Write(const wchar_t* str)    {  return Write(str, olxstr::o_strlen(str));  }
-  virtual inline size_t Writenl(const char* str)     {  return Writenl(str, olxstr::o_strlen(str));  }
-  virtual inline size_t Writenl(const wchar_t* str)  {  return Writenl(str, olxstr::o_strlen(str));  }
 };
 
 EndEsdlNamespace()

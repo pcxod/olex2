@@ -24,22 +24,22 @@ public:
     CurrentColor = 0;
     CurrentLineWidth = 1;
     out.Open(fileName, "w+b");
-    out.Writenl("%!PS-Adobe-2.0");
-    out.Writenl( "%%Title: Olex2 2D diagram" );
-    out.Writenl( "%%Pages: 1" );
-    out.Writenl( "%%Page: 1 1" );
-    out.Writenl( olxcstr( "%%CreationDate: ") << TETime::FormatDateTime(TETime::Now()) );
-    out.Writenl( "%%Orientation: Portrait" );
-    out.Writenl( "%%DocumentPaperSizes: A4" );
-    out.Writenl( "%%EndComments" );
-    //out.Writenl( "0 0 0 setrgbcolor" );
-    //out.Writenl( "1 setlinewidth" );
+    out.Writeln("%!PS-Adobe-2.0");
+    out.Writeln( "%%Title: Olex2 2D diagram" );
+    out.Writeln( "%%Pages: 1" );
+    out.Writeln( "%%Page: 1 1" );
+    out.Writeln( olxcstr( "%%CreationDate: ") << TETime::FormatDateTime(TETime::Now()) );
+    out.Writeln( "%%Orientation: Portrait" );
+    out.Writeln( "%%DocumentPaperSizes: A4" );
+    out.Writeln( "%%EndComments" );
+    //out.Writeln( "0 0 0 setrgbcolor" );
+    //out.Writeln( "1 setlinewidth" );
   }
   //..........................................................................
   void color(uint32_t rgb)  {
     if( CurrentColor == rgb )  return;
       CurrentColor = rgb;
-    out.Writenl(color_str(rgb));
+    out.Writeln(color_str(rgb));
   }
   //..........................................................................
   const char* color_str(uint32_t rgb)  {
@@ -53,55 +53,55 @@ public:
   template <typename vec_t> 
   void translate(const vec_t& origin)  {
     psw_sprintf(bf, "%f %f translate", (float)origin[0], (float)origin[1]);
-    out.Writenl( bf );
+    out.Writeln(bf);
   }
   //..........................................................................
   template <typename float_t> 
   void translate(const float_t& x, const float_t& y)  {
     psw_sprintf(bf, "%f %f translate", (float)x, (float)y);
-    out.Writenl( bf );
+    out.Writeln(bf);
   }
   //..........................................................................
   template <typename float_t> 
   void lineWidth(const float_t& lw)  {
     if( olx_abs(lw-CurrentLineWidth) < 1e-6 )  return;
     psw_sprintf(bf, "%f setlinewidth", (float)lw);
-    out.Writenl( bf );
+    out.Writeln(bf);
     CurrentLineWidth = (float)lw;
   }
   //..........................................................................
   template <typename vec_t> 
   void scale(const vec_t& origin)  {
     psw_sprintf(bf, "%f %f scale", (float)origin[0], (float)origin[1]);
-    out.Writenl( bf );
+    out.Writeln(bf);
   }
   //..........................................................................
   template <typename float_t> 
   void scale(const float_t& x_scale, const float_t& y_scale)  {
     psw_sprintf(bf, "%f %f scale", (float)x_scale, (float)y_scale);
-    out.Writenl( bf );
+    out.Writeln(bf);
   }
   //..........................................................................
-  void custom(const char* cmd)  {  out.Writenl(cmd);  }
+  void custom(const char* cmd)  {  out.Writeln(cmd);  }
   //..........................................................................
-  void custom(const olxstr& cmd)  {  out.Writenl(cmd);  }
+  void custom(const olxstr& cmd)  {  out.Writeln(cmd.c_str());  }
   //..........................................................................
   template <class List> void custom(const List& cmds)  {
     for( size_t i=0; i < cmds.Count(); i++ )
-      out.Writenl(cmds[i]);
+      out.Writeln(cmds[i].c_str());
   }
   //..........................................................................
-  void newPath()  {  out.Writenl("newpath");  }
+  void newPath()  {  out.Writeln("newpath");  }
   //..........................................................................
-  void closePath()  {  out.Writenl("closepath");  }
+  void closePath()  {  out.Writeln("closepath");  }
   //..........................................................................
-  void stroke()  {  out.Writenl("stroke");  }
+  void stroke()  {  out.Writeln("stroke");  }
   //..........................................................................
-  void fill()  {  out.Writenl("fill");  }
+  void fill()  {  out.Writeln("fill");  }
   //..........................................................................
-  void gsave()  {  out.Writenl("gsave");  }
+  void gsave()  {  out.Writeln("gsave");  }
   //..........................................................................
-  void grestore()  {  out.Writenl("grestore");  }
+  void grestore()  {  out.Writeln("grestore");  }
   //..........................................................................
   // default scale, A4
   int GetWidth() const {  return 596;  }
@@ -118,23 +118,23 @@ public:
   template <typename vec_t> 
   void moveto(const vec_t& to)  {
     psw_sprintf(bf, "%f %f moveto", (float)to[0], (float)to[1]);
-    out.Writenl( bf );
+    out.Writeln(bf);
   }
   template <typename float_t> 
   void moveto(const float_t& x, const float_t& y)  {
     psw_sprintf(bf, "%f %f moveto", (float)x, (float)y);
-    out.Writenl( bf );
+    out.Writeln(bf);
   }
   //..........................................................................
   template <typename vec_t> 
   void lineto(const vec_t& to)  {
     psw_sprintf(bf, "%f %f lineto", (float)to[0], (float)to[1]);
-    out.Writenl( bf );
+    out.Writeln(bf);
   }
   template <typename float_t> 
   void lineto(const float_t& x, const float_t& y)  {
     psw_sprintf(bf, "%f %f lineto", (float)x, (float)y);
-    out.Writenl( bf );
+    out.Writeln(bf);
   }
   //..........................................................................
   template <typename vec_t> 
@@ -180,7 +180,7 @@ public:
   //..........................................................................
   template <typename vec_t, typename mat_t> 
   void ellipse(const vec_t& center, const mat_t& basis)  {
-    out.Writenl("matrix currentmatrix");
+    out.Writeln("matrix currentmatrix");
     //a b 0
     //c d 0
     //tx ty 1
@@ -192,9 +192,9 @@ public:
       (float)center[0], 
       (float)center[1] 
     );
-    out.Writenl( bf );
-    out.Writenl( "0 0 1 0 360 arc");
-    out.Writenl("setmatrix");
+    out.Writeln(bf);
+    out.Writeln( "0 0 1 0 360 arc");
+    out.Writeln("setmatrix");
   }
   template <typename vec_t, typename mat_t> 
   void drawEllipse(const vec_t& center, const mat_t& basis, RenderFunc rf = &PSWriter::stroke)  {
@@ -209,7 +209,7 @@ public:
       (float)center[1], 
       (float)rad 
     );
-    out.Writenl(bf);
+    out.Writeln(bf);
   }
   template <typename vec_t, typename float_t> 
   void drawCircle(const vec_t& center, const float_t& rad, RenderFunc rf = &PSWriter::stroke)  {
@@ -222,7 +222,7 @@ public:
   void drawText(const olxstr& text, const vec_t& pos)  {
     moveto(pos);
     psw_sprintf(bf, "(%s) show", text.c_str());
-    out.Writenl( bf );
+    out.Writeln(bf);
   }
   //..........................................................................
   template <class vec_t>
@@ -272,7 +272,7 @@ public:
       (this->*func)();
     }
     newPath();
-    quad(sidea.Last(), sideb.Last(), sideb[0], sidea[0]);
+    quad(sidea.GetLast(), sideb.GetLast(), sideb[0], sidea[0]);
     (this->*func)();
   }
   //..........................................................................
@@ -288,7 +288,7 @@ public:
       (this->*func)();
     }
     newPath();
-    quad(sidea.Last(), (sideb.Last()+sidea.Last())/2, (sideb[0]+sidea[0])/2, sidea[0]);
+    quad(sidea.GetLast(), (sideb.GetLast()+sidea.GetLast())/2, (sideb[0]+sidea[0])/2, sidea[0]);
     (this->*func)();
     color(cl2);
     for( size_t j=1; j < sidea.Count(); j++ )  {
@@ -297,7 +297,7 @@ public:
       (this->*func)();
     }
     newPath();
-    quad((sidea.Last()+sideb.Last())/2, sideb.Last(), sideb[0], (sidea[0]+sideb[0])/2);
+    quad((sidea.GetLast()+sideb.GetLast())/2, sideb.GetLast(), sideb[0], (sidea[0]+sideb[0])/2);
     (this->*func)();
   }
   //..........................................................................
@@ -310,14 +310,14 @@ public:
     if( sidea.Count() < 2 )  return;
     for( size_t j=1; j < sidea.Count(); j++ )
       stippledQuad(sidea[j-1], sideb[j-1], sideb[j], sidea[j], parts, func);
-    stippledQuad(sidea.Last(), sideb.Last(), sideb[0], sidea[0], parts, func);
+    stippledQuad(sidea.GetLast(), sideb.GetLast(), sideb[0], sidea[0], parts, func);
   }
   //..........................................................................
   //..........................................................................
   template <typename vec_t, typename float_t>
   void arc(const vec_t& center, const float_t& rad, const float_t startAngle, const float_t& endAngle)  {
     psw_sprintf(bf, "%f %f %f %f %f arc", (float)center[0], (float)center[1], (float)rad, (float)startAngle, (float)endAngle);
-    out.Writenl( bf );
+    out.Writeln(bf);
   }
 };
 

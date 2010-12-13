@@ -19,25 +19,25 @@ public:
     CurrentLineWidth = 1;
     out.Open(fileName, "w+b");
       
-    out.Writenl("\\documentclass[a4paper,10pt]{article}");
-    out.Writenl("\\usepackage{color}");
-    out.Writenl("\\usepackage{graphicx}");
-    out.Writenl("\\usepackage{tikz}");
-    out.Writenl("\\usetikzlibrary{trees}");
-    out.Writenl("\\usetikzlibrary{shapes}");
-    out.Writenl("\\usetikzlibrary{patterns}");
-    out.Writenl("\\usetikzlibrary{calc,through,backgrounds}");
-    out.Writenl("\\usetikzlibrary{arrows,decorations.pathmorphing,backgrounds,positioning,fit}");
-    out.Writenl("\\usepackage[english]{babel}");
-    //out.Writenl("\\begin{document}");
-    out.Writenl("");
+    out.Writeln("\\documentclass[a4paper,10pt]{article}");
+    out.Writeln("\\usepackage{color}");
+    out.Writeln("\\usepackage{graphicx}");
+    out.Writeln("\\usepackage{tikz}");
+    out.Writeln("\\usetikzlibrary{trees}");
+    out.Writeln("\\usetikzlibrary{shapes}");
+    out.Writeln("\\usetikzlibrary{patterns}");
+    out.Writeln("\\usetikzlibrary{calc,through,backgrounds}");
+    out.Writeln("\\usetikzlibrary{arrows,decorations.pathmorphing,backgrounds,positioning,fit}");
+    out.Writeln("\\usepackage[english]{babel}");
+    //out.Writeln("\\begin{document}");
+    out.Writeln("");
     //white border width around elements
-    out.Writenl("\\newcommand{\\whitespace}{1pt}");
-    out.Writenl("");   
+    out.Writeln("\\newcommand{\\whitespace}{1pt}");
+    out.Writeln("");   
   }
   //..........................................................................
   void Writenl(const char* bf)  {
-    out.Writenl(bf);
+    out.Writeln(bf);
   }  
 };
 

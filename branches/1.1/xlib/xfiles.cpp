@@ -170,14 +170,17 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
 
   if( !Loader->IsNative() )  {
     OnFileLoad.Enter(this, &_fn);
-    try  {  GetRM().Clear(rm_clear_ALL);  }
-    catch(const TExceptionBase& exc)  {
-      TBasicApp::GetLog() << (olxstr("An error occured: ") << exc.GetException()->GetError());
+    try  {
+      GetRM().Clear(rm_clear_ALL);
+      GetLattice().Clear(true);
+      GetRM().Assign(Loader->GetRM(), true);
+      OnFileLoad.Execute(this);
+      GetLattice().Init();
     }
-    GetLattice().Clear(true);
-    GetRM().Assign(Loader->GetRM(), true);
-    OnFileLoad.Execute(this);
-    GetLattice().Init();
+    catch(const TExceptionBase& exc)  {
+      OnFileLoad.Exit(this);
+      throw TFunctionFailedException(__OlxSourceInfo, exc);
+    }
     OnFileLoad.Exit(this);
   }
   FSG = TSymmLib::GetInstance().FindSG(Loader->GetAsymmUnit());
@@ -298,14 +301,17 @@ void TXFile::Sort(const TStrList& ins)  {
       AtomSorter::KeepH(list,GetLattice(), AtomSorter::atom_cmp_Label);
   }
   catch(const TExceptionBase& exc)  {
-    TBasicApp::GetLog().Error( exc.GetException()->GetError() );
+    TBasicApp::GetLog().Error(exc.GetException()->GetError());
   }
   if( !FLastLoader->IsNative() )  {
     AtomSorter::SyncLists(list, FLastLoader->GetAsymmUnit().GetResidue(0).GetAtomList());
     FLastLoader->GetAsymmUnit().ComplyToResidues();
   }
-  // this hanges Id's !!! so must be called before the SyncLists
+  // this changes Id's !!! so must be called after the SyncLists
   GetAsymmUnit().ComplyToResidues();
+  // 2010.11.29, ASB bug fix for ADPS on H...
+  GetUnitCell().UpdateEllipsoids();
+  GetLattice().RestoreADPs(false);
 }
 //..............................................................................
 void TXFile::ValidateTabs()  {
@@ -334,7 +340,7 @@ void TXFile::ValidateTabs()  {
       }
     }
     if( !hasH )  {  
-      TBasicApp::GetLog() << (olxstr("Removing HTAB (donor has no H atoms): ") << it.InsStr() << '\n');
+      TBasicApp::NewLogEntry() << "Removing HTAB (donor has no H atoms): " << it.InsStr();
       RefMod.DeleteInfoTab(i--);  
       continue;  
     }
@@ -348,7 +354,7 @@ void TXFile::ValidateTabs()  {
       v2  = *it.GetAtom(1).GetMatrix()*v2;
     const double dis = au.CellToCartesian(v1).DistanceTo(au.CellToCartesian(v2));
     if( dis > 5 )  {
-      TBasicApp::GetLog() << (olxstr("Removing HTAB (d > 5A): ") << it.InsStr() << '\n');
+      TBasicApp::NewLogEntry() << "Removing HTAB (d > 5A): " << it.InsStr();
       RefMod.DeleteInfoTab(i--);  
       continue;
     }
@@ -414,7 +420,7 @@ void TXFile::ToDataItem(TDataItem& item) {
 //..............................................................................
 void TXFile::FromDataItem(TDataItem& item) {
   GetRM().Clear(rm_clear_ALL);
-  GetLattice().FromDataItem( item.FindRequiredItem("Lattice"));
+  GetLattice().FromDataItem(item.FindRequiredItem("Lattice"));
   GetRM().FromDataItem(item.FindRequiredItem("RefModel"));
   //if( FLastLoader != NULL )  {
   //  FLastLoader->

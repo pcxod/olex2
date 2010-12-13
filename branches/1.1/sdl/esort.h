@@ -138,10 +138,10 @@ protected:
       Item mid = accessor::get(list, m_ind);
       while( lo <= hi )  {
         while( cmp.Compare(accessor::get(list, lo), mid) < 0 )  {
-          if( ++lo == m_ind )  break;
+          if( ++lo >= hi0 )  break;
         }
         while( cmp.Compare(accessor::get(list, hi), mid) > 0 )  {
-          if( --hi == m_ind )  break;
+          if( --hi <= lo0 )  break;
         }
         if( lo <= hi )  {
           if( lo != hi )  {
@@ -149,11 +149,14 @@ protected:
             list.Swap(lo, hi);
           }
           lo++;
-          hi--;
+          if( --hi == InvalidIndex )
+            break;
         }
       }
-      if( lo0 < hi )  DoSort(lo0, hi);
-      if( lo < hi0 )  DoSort(lo, hi0);
+      if( lo0 < hi && hi != InvalidIndex )
+        DoSort(lo0, hi);
+      if( lo < hi0 )
+        DoSort(lo, hi0);
     }
   }
 };

@@ -24,7 +24,9 @@ const uint32_t
   prsCmdlVis         = 0x00002000, // command line visible
   prsGradBG          = 0x00004000, // gradient bg view
   prsLabels          = 0x00008000, // labels vusible/hidden
-  prsGLTT            = 0x00010000; // GLTooltip 
+  prsGLTT            = 0x00010000, // GLTooltip 
+  prsGridVis         = 0x00020000, // Grid
+  prsWBoxVis         = 0x00040000; // WBox
 
 //---------------------------------------------------------------------------
 class AMode : public IEObject  {

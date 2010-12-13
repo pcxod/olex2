@@ -106,8 +106,8 @@ TAG_HANDLER_PROC(tag)  {
   }
   catch(const TExceptionBase& e)  {
     TBasicApp::GetLog().Exception(e.GetException()->GetFullMessage());
-    TBasicApp::GetLog() << (olxstr("While processing Width/Height for zimg::") << ObjectName << '\n');
-    TBasicApp::GetLog() << (olxstr("Offending input: '") << Tmp << "'\n");
+    TBasicApp::NewLogEntry() << "While processing Width/Height for zimg::" << ObjectName;
+    TBasicApp::NewLogEntry() << "Offending input: '" << Tmp << '\'';
   }
 
   if (tag.HasParam(wxT("FLOAT"))) fl = ax;
@@ -197,9 +197,9 @@ TAG_HANDLER_PROC(tag)  {
   }
   catch(const TExceptionBase& e)  {
     TBasicApp::GetLog().Exception(e.GetException()->GetFullMessage());
-    TBasicApp::GetLog() << (olxstr("While processing Width/Height HTML tags for ") <<
-      TagName << "::" << ObjectName << '\n');
-    TBasicApp::GetLog() << (olxstr("Offending input: '") << Tmp << "'\n");
+    TBasicApp::NewLogEntry() << "While processing Width/Height HTML tags for " <<
+      TagName << "::" << ObjectName;
+    TBasicApp::NewLogEntry() << "Offending input: '" << Tmp << '\'';
   }
   if( ax == 0 )  ax = 30;
   if( ay == 0 )  ay = 20;
@@ -492,7 +492,7 @@ TAG_HANDLER_PROC(tag)  {
     Spin->SetRange(min, max);
     try  {  Spin->SetValue((int)Value.ToDouble());  }
     catch(...)  {
-      TBasicApp::GetLog() << (olxstr("Invalid value spin control: \'") << Value << "\'\n");
+      TBasicApp::NewLogEntry() << "Invalid value spin control: \'" << Value << '\'';
     }
     CreatedObject = Spin;
     CreatedWindow = Spin;
@@ -533,7 +533,7 @@ TAG_HANDLER_PROC(tag)  {
       Track->SetRange(min, max);
     try  {  Track->SetValue((int)Value.ToDouble());  }
     catch(...)  {
-      TBasicApp::GetLog() << (olxstr("Invalid value slider: \'") << Value << "\'\n");
+      TBasicApp::NewLogEntry() << "Invalid value slider: \'" << Value << '\'';
     }
     Track->SetData(Data);
     if( tag.HasParam(wxT("ONCHANGE")) )  {

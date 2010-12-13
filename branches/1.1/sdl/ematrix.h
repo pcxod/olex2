@@ -72,12 +72,15 @@ public:
 
   size_t Vectors() const {  return Fn;  }
   size_t Elements() const {  return Fm;  } 
+  size_t ColCount() const {  return Fm;  }
+  size_t RowCount() const {  return Fn;  }
 
   const TVector<MatType>& operator [](size_t index) const {  return FData[index];  }
   TVector<MatType>& operator [](size_t index) {  return FData[index];  }
-  const TVector<MatType>& GetVector(size_t index) const {  return FData[index];  }
-  TVector<MatType>& GetVector(size_t index) {  return FData[index];  }
-
+  const TVector<MatType>& Get(size_t index) const {  return FData[index];  }
+  TVector<MatType>& Get(size_t index) {  return FData[index];  }
+  const MatType& Get(size_t i, size_t j) const {  return FData[i][j];  }
+  void Set(size_t i, size_t j, const MatType& v) {  FData[i][j] = v;  }
   /* the function multiplies a matrix by a column vector. Only the number of vector
    elements is taken from the matrix - no error will be generated if the matrix dimensions
    (number of elements) are larger than the vector dimentions!!!
@@ -92,7 +95,7 @@ public:
     return R;
   }
 
-  template <class AType> TMatrix operator * ( const TMatrix<AType>& C) const {
+  template <class AType> TMatrix operator * (const TMatrix<AType>& C) const {
     const size_t X = Vectors();
     const size_t Y = Elements();
     const size_t Z = C.Elements();
@@ -112,11 +115,11 @@ public:
     return TMatrix<MatType>(*this) -= c;
   }
 
-  template <class AType> TMatrix& operator *=(const TMatrix<AType>& C)  {
+  template <class AType> TMatrix& operator *= (const TMatrix<AType>& C)  {
     return (*this = (*this * C));
   }
 
-  template <class AType> TMatrix& operator +=(const TMatrix<AType>& c)  {
+  template <class AType> TMatrix& operator += (const TMatrix<AType>& c)  {
     if( (Fm ==c.Elements()) && (Fn == c.Vectors()) )
       for( size_t i=0; i < Fn; i++ )  
         FData[i] += c[i];
@@ -452,7 +455,7 @@ public:
   }
 
   // solves a set of equations by the Gauss method {equation arr.b = c }
-  static void GauseSolve(TMatrix<MatType>& arr, TVector<MatType>& b, TVector<MatType>& c) {
+  static void GaussSolve(TMatrix<MatType>& arr, TVector<MatType>& b, TVector<MatType>& c) {
     const size_t sz = arr.Elements();
     MatrixElementsSort(arr, b );
     for ( size_t j = 1; j < sz; j++ )
@@ -477,7 +480,7 @@ public:
      }
    }
 
-      // used in GauseSolve to sort the matrix
+      // used in GaussSolve to sort the matrix
   static void MatrixElementsSort(TMatrix<MatType>& arr, TVector<MatType>& b)  {
     const size_t dim = arr.Elements();
     MatType *bf = new MatType[dim];
@@ -494,7 +497,7 @@ public:
     delete [] bf;
   }
 
-  /* A polynomial least square analysis of XY pairs strired in matrix[2][n]
+  /* A polynomial least square analysis of XY pairs strored in matrix[2][n]
    extent is the polynom extent (1-is for line)
    params will contain the fitting parameters
    the return value is the RMS - root mean square of the fit
@@ -537,7 +540,7 @@ public:
       for( size_t j = i+1; j < extent; j++ )
         s[j][i] = s[i][j];
 
-    GauseSolve(s, r, param);
+    GaussSolve(s, r, param);
     double rms = 0;
     for( size_t i=0; i < xy.Elements(); i++ )
       rms += olx_sqr( xy[1][i]-TVector<MatType>::PolynomValue(param, xy[0][i]) );

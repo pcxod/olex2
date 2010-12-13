@@ -107,8 +107,8 @@ bool PatchAPI::UnlockUpdater() {
   return true;
 }
 //.........................................................................
-olxstr PatchAPI::ReadRepositoryTag()  {
-  olxstr tag_fn = TBasicApp::GetBaseDir() + GetTagFileName();
+olxstr PatchAPI::ReadRepositoryTag(const olxstr& base_dir)  {
+  olxstr tag_fn = (base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir) + GetTagFileName();
   if( !TEFile::Exists(tag_fn) )
     return EmptyString;
   TStrList sl;
@@ -116,24 +116,25 @@ olxstr PatchAPI::ReadRepositoryTag()  {
   return sl.Count() == 1 ? sl[0] : EmptyString;
 }
 //.............................................................................
-olxstr PatchAPI::GetCurrentSharedDir(olxstr* DataDir)  {
+olxstr PatchAPI::_GetSharedDirRoot()  {
   const olxstr dd_str = olx_getenv("OLEX2_DATADIR");
   olxstr data_dir;
   if( !dd_str.IsEmpty() )  {
     data_dir = dd_str;
     if( !TEFile::IsDir(data_dir) )
       data_dir = EmptyString;
-    else  {
-      TEFile::AddPathDelimeterI(data_dir);
-      const olxstr sd = olx_getenv("OLEX2_DATADIR_STATIC");
-      if( sd.Equalsi("TRUE") )
-        return data_dir;
-    }
   }
   if( data_dir.IsEmpty() )
     data_dir = TShellUtil::GetSpecialFolderLocation(fiAppData);
+  return TEFile::AddPathDelimeterI(data_dir);
+}
+//.............................................................................
+olxstr PatchAPI::GetCurrentSharedDir(olxstr* DataDir)  {
+  olxstr data_dir = _GetSharedDirRoot();
   if( DataDir != NULL )
     *DataDir = data_dir;
+  if( olx_getenv("OLEX2_DATADIR_STATIC").Equalsi("TRUE") )
+     return data_dir;
   return ComposeNewSharedDir(data_dir);
 }
 //.............................................................................

@@ -10,7 +10,6 @@
 
 #include "library.h"
 #include "bapp.h"
-#include "log.h"
 
 #ifdef __WIN32__
   #include <winbase.h>
@@ -131,7 +130,7 @@ bool TEFile::TFileNameMask::DoesMatch(const olxstr& _str) const {
     if( toks.Count() == 1 )  
       return tmp.Length() == str.Length() ? true : mask[ mask.Length()-1] == '*';
   }
-  if( mask.Last() != '*' && toks.Count() > (size_t)(mask.CharAt(0) != '*' ? 1 : 0) )  {
+  if( mask.GetLast() != '*' && toks.Count() > (size_t)(mask.CharAt(0) != '*' ? 1 : 0) )  {
     olxstr& tmp = toks[toks.Count()-1];
     if( tmp.Length() > (str.Length()-start) )  return false;
     for( size_t i=0; i < tmp.Length(); i++ )
@@ -272,7 +271,7 @@ uint64_t TEFile::Length() const  {
   int64_t length = ftell(FHandle);
   _seek(currentPos, SEEK_SET);
   if( length == -1 )
-    throw TFileException(__OlxSourceInfo, FName, "ftell failed" );
+    throw TFileException(__OlxSourceInfo, FName, "ftell failed");
   return length;
 }
 //..............................................................................
@@ -286,7 +285,7 @@ size_t TEFile::Write(const void *Bf, size_t count)  {
   if( count == 0 )  return count;
   size_t res = fwrite(Bf, count, 1, FHandle);
   if( res == 0 )
-    throw TFileException(__OlxSourceInfo, FName, "fwrite failed" );
+    throw TFileException(__OlxSourceInfo, FName, "fwrite failed");
   return res;
 }
 //..............................................................................
@@ -337,7 +336,7 @@ olxstr TEFile::ParentDir(const olxstr& name) {
   if( name.IsEmpty() )  return name;
   // normalise path
   olxstr np = OLX_OS_PATH(name);
-  size_t start = (np.Last() == OLX_PATH_DEL ? np.Length()-2 : np.Length()-1);
+  size_t start = (np.GetLast() == OLX_PATH_DEL ? np.Length()-2 : np.Length()-1);
   size_t i = np.LastIndexOf(OLX_PATH_DEL, start);
   if( i > 0 && i != InvalidIndex )
     return np.SubStringTo(i+1);
@@ -386,7 +385,7 @@ olxstr TEFile::ChangeFileExt(const olxstr &F, const olxstr &Ext)  {
   if( i != InvalidIndex && i > 0 && (d_i == InvalidIndex || d_i < i) )
     fn.SetLength(i);
   else  {
-    if( fn.Last() == '.' )
+    if( fn.GetLast() == '.' )
       fn.SetLength(fn.Length()-1);
   }
   if( !Ext.IsEmpty() )  {
@@ -906,7 +905,9 @@ bool TEFile::Rename(const olxstr& from, const olxstr& to, bool overwrite)  {
 }
 //..............................................................................
 bool TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite)  {
-  if( Exists(To) && !overwrite )  return false;
+  const bool exists = Exists(To);
+  if( exists && !overwrite )
+    return false;
   try  {
   // need to check that the files are not the same though...
     struct STAT_STR the_stat;
@@ -915,6 +916,9 @@ bool TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite)  {
     if( STAT(OLXSTR(from), &the_stat) != 0 )
       return false;
 #ifdef __WIN32__ // to make the copying a transaction...
+    // some installer user observations that copyign still fails in some cases...
+    if( exists && !TEFile::DelFile(To) )
+      return false;
     if( WinCopyFile(From.u_str(), To.u_str(), FALSE) == FALSE )
       return false;
 #else
@@ -996,7 +1000,6 @@ olxstr TEFile::Which(const olxstr& filename)  {
     TEFile::AddPathDelimeterI(toks[i]) << filename;
     if( Exists(toks[i]) )
       return toks[i];
-//    TBasicApp::GetLog() << toks[i] << '\n';
   }
   return EmptyString;
 }

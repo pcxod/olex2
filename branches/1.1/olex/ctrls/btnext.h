@@ -10,7 +10,7 @@ namespace ctrl_ext  {
     void _ClickEvent();
     olxstr OnClickStr, Data, OnUpStr, OnDownStr, DependMode, Hint;
     TActionQueue *ActionQueue;
-    virtual wxWindow* GetParent()  const  = 0;
+    virtual wxWindow* GetParent() const = 0;
     void _SetDown(bool v)  {  Down = v;  }
   public:
     AButtonBase(wxWindow* this_wnd) :
@@ -49,7 +49,7 @@ namespace ctrl_ext  {
     void MouseLeaveEvent(wxMouseEvent& event);
     void ClickEvent(wxCommandEvent&)  {  AButtonBase::_ClickEvent();  }
   protected:
-    virtual wxWindow* GetParent()  const  {  return wxButton::GetParent();  }
+    virtual wxWindow* GetParent() const {  return wxButton::GetParent();  }
   public:
     TButton(wxWindow* parent, wxWindowID id=-1, const wxString& label = wxEmptyString, const wxPoint& pos = wxDefaultPosition, 
       const wxSize& size = wxDefaultSize, long style = 0) :
@@ -70,7 +70,7 @@ namespace ctrl_ext  {
     void ClickEvent(wxCommandEvent&)  {  AButtonBase::_ClickEvent();  }
     olxstr Source;
   public:
-    virtual wxWindow* GetParent()  const  {  return wxBitmapButton::GetParent();  }
+    virtual wxWindow* GetParent() const {  return wxBitmapButton::GetParent();  }
   public:
     TBmpButton(wxWindow* parent, wxWindowID id=-1, const wxBitmap& bitmap=wxNullBitmap, const wxPoint& pos = wxDefaultPosition, 
       const wxSize& size = wxDefaultSize, long style = wxBU_AUTODRAW) :
@@ -97,7 +97,7 @@ namespace ctrl_ext  {
     wxBitmap bmpDown, bmpUp, bmpDisabled, bmpHover;
     olxstr Source;
   protected:
-    virtual wxWindow* GetParent()  const  {  return wxPanel::GetParent();  }
+    virtual wxWindow* GetParent() const {  return wxPanel::GetParent();  }
     const wxBitmap& ChooseBitmap() const;
     wxBitmap BmpFromImage(const wxImage& img, int w, int h) const;
     void ClickEvent(wxCommandEvent&)  {  AButtonBase::_ClickEvent();  }

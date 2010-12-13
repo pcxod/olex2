@@ -45,8 +45,11 @@ bool TOSFileSystem::_DoAdoptStream(IInputStream& f, const olxstr& name)  {
           TBasicApp::GetLog().Error(olxstr("MKdir failed on \'") << path << "\'");
           return false;
         }
-    TEFile destFile(name, "wb+");
-    destFile << f;
+    {  // make sure file gets closed etc
+      TEFile destFile(name+".tmp", "wb+");
+      destFile << f;
+    }
+    TEFile::Rename(name+".tmp", name);
     return true;
   }
   catch( const TExceptionBase& )  {  return false;  }
@@ -83,7 +86,7 @@ bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src)  {
     destFile.SetPosition(0);
     delete is;
     if( MD5::Digest(destFile) != Src.GetDigest() )  {
-      TBasicApp::GetLog().Error(olxstr("Digest mismatch for ") << DFN << ", skipping\n");
+      TBasicApp::GetLog().Error(olxstr("Digest mismatch for ") << DFN << ", skipping");
       destFile.Delete();
       return false;
     }
@@ -113,9 +116,9 @@ IInputStream* TOSFileSystem::_DoOpenFile(const olxstr& fileName)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-AFileSystem& TFSItem::GetIndexFS()  const   {  return Index.IndexFS; }
+AFileSystem& TFSItem::GetIndexFS() const  {  return Index.IndexFS; }
 //..............................................................................
-AFileSystem& TFSItem::GetDestFS()  const   {  return *Index.DestFS; }
+AFileSystem& TFSItem::GetDestFS() const  {  return *Index.DestFS; }
 //..............................................................................
 void TFSItem::Clear()  {
   for( size_t i=0; i < Items.Count(); i++ )
@@ -295,7 +298,7 @@ olxstr TFSItem::GetFullName() const  {
   return Tmp;
 }
 //..............................................................................
-int TFSItem::GetLevel()  const  {
+int TFSItem::GetLevel() const {
   int level = 0;
   TFSItem *FI = const_cast<TFSItem*>(this);
   while( FI && FI->GetParent() )  {
@@ -466,9 +469,9 @@ TFSItem* TFSItem::UpdateFile(TFSItem& item)  {
 }
 //..............................................................................
 void TFSItem::DeleteItem(TFSItem* item)  {
-  size_t ind = Items.IndexOfComparable(item->GetName());
+  const size_t ind = Items.IndexOf(item->GetName());
   if( ind != InvalidIndex )  {
-    Items.Remove(ind);
+    Items.Delete(ind);
     item->DelFile();
     delete item;
   }
@@ -567,7 +570,7 @@ void TFSItem::ClearNonexisting()  {
         if( Index.DestFS != NULL && !Index.DestFS->Exists(Index.DestFS->GetBase() + Item(i).GetFullName()) )
         {
           delete Items.GetObject(i);
-          Items.Remove(i--);
+          Items.Delete(i--);
         }
       }
     }
@@ -575,7 +578,7 @@ void TFSItem::ClearNonexisting()  {
       Item(i).ClearNonexisting();
       if( Item(i).IsEmpty() )  {
         delete Items.GetObject(i);
-        Items.Remove(i--);
+        Items.Delete(i--);
       }
     }
   }
@@ -588,7 +591,7 @@ void TFSItem::ClearEmptyFolders()  {
         Item(i).ClearEmptyFolders();
       if( Item(i).IsEmpty() )  {
         delete Items.GetObject(i);
-        Items.Remove(i);
+        Items.Delete(i);
         i--;
       }
     }

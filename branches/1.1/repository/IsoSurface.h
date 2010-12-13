@@ -60,20 +60,20 @@ protected:
     void Add(int x, int y, int z, int edgeId, float vx, float vy, float vz)  {
       adjust(x,y,z,edgeId);
       IsoPoint* ip;
-      const size_t yi = Data.IndexOfComparable(x);
+      const size_t yi = Data.IndexOf(x);
       if( yi == InvalidIndex )  {
         ip = &Data.Add(x, new IsoPointListY).Object->Add(y, new IsoPointListZ).
           Object->Add(z, Points3()).Object.ps[edgeId]; 
       }
       else  {
         IsoPointListY* ly = Data.GetObject(yi);
-        const size_t zi = ly->IndexOfComparable(y);
+        const size_t zi = ly->IndexOf(y);
         if( zi == InvalidIndex )  {
           ip = &ly->Add(y, new IsoPointListZ).Object->Add(z, Points3()).Object.ps[edgeId]; 
         }
         else  {
           IsoPointListZ* lz = ly->GetObject(zi);
-          const size_t pi = lz->IndexOfComparable(z);
+          const size_t pi = lz->IndexOf(z);
           if( pi == InvalidIndex )  {
             ip = &lz->Add(z, Points3()).Object.ps[edgeId]; 
           }

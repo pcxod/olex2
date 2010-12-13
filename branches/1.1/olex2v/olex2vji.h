@@ -69,7 +69,7 @@ public:
   olxstr Status;
   static TPSTypeList<int, TOlexViewer*> Instances;
   static TOlexViewer* Locate(int object)  {
-    int i = Instances.IndexOfComparable(object);
+    int i = Instances.IndexOfobject);
     return (i==-1) ? NULL : Instances.GetObject(i);
   }
   const olxstr GetFileName() const {  return FileName;  }

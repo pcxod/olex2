@@ -261,17 +261,16 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append) 
     if( refs[0]->GetFlag() != NoFlagSet )
       NullRef.SetFlag(0);
     const size_t ref_str_len = NullRef.ToString().Length();
-    char* ref_bf = new char[ref_str_len+1];
+    olx_array_ptr<char> ref_bf(new char[ref_str_len+1]);
     for( size_t i=0; i < refs.Count(); i++ )  {
       if( refs[i]->GetTag() > 0 )
-        out.Writenl( refs[i]->ToCBuffer(ref_bf), ref_str_len );
+        out.Writecln(refs[i]->ToCBuffer(ref_bf), ref_str_len);
     }
-    out.Writenl( NullRef.ToCBuffer(ref_bf), ref_str_len );
+    out.Writecln(NullRef.ToCBuffer(ref_bf), ref_str_len);
     for( size_t i=0; i < refs.Count(); i++ )  {
       if( refs[i]->GetTag() < 0 )
-        out.Writenl( refs[i]->ToCBuffer(ref_bf), ref_str_len );
+        out.Writecln(refs[i]->ToCBuffer(ref_bf), ref_str_len);
     }
-    delete [] ref_bf;
   }
   return true;
 }
@@ -283,17 +282,16 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefList& refs)  {
   if( refs[0].GetFlag() != NoFlagSet )
     NullRef.SetFlag(0);
   const size_t ref_str_len = NullRef.ToString().Length();
-  char* ref_bf = new char[ref_str_len+1];
+  olx_array_ptr<char> ref_bf(new char[ref_str_len+1]);
   for( size_t i=0; i < refs.Count(); i++ )  {
     if( refs[i].GetTag() > 0 )
-      out.Writenl( refs[i].ToCBuffer(ref_bf), ref_str_len );
+      out.Writecln(refs[i].ToCBuffer(ref_bf), ref_str_len);
   }
-  out.Writenl( NullRef.ToCBuffer(ref_bf), ref_str_len );
+  out.Writecln(NullRef.ToCBuffer(ref_bf), ref_str_len);
   for( size_t i=0; i < refs.Count(); i++ )  {
     if( refs[i].GetTag() < 0 )
-      out.Writenl( refs[i].ToCBuffer(ref_bf), ref_str_len );
+      out.Writecln(refs[i].ToCBuffer(ref_bf), ref_str_len);
   }
-  delete [] ref_bf;
   return true;
 }
 //..............................................................................

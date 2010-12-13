@@ -76,7 +76,7 @@ class TOlxVars : public IEObject  {
 
   template <class T>
   inline void _SetVar(const T& name, const olxstr& value)  {
-    size_t ind = Vars.IndexOfComparable(name);
+    const size_t ind = Vars.IndexOf(name);
     try  {
       if( ind != InvalidIndex )
         Vars.GetObject(ind).Set(value);
@@ -92,7 +92,7 @@ class TOlxVars : public IEObject  {
   }
   template <class T>
   inline void _SetVar(const T& name, PyObject* value)  {
-    size_t ind = Vars.IndexOfComparable(name);
+    const size_t ind = Vars.IndexOf(name);
     try  {
       if( ind != InvalidIndex )
         Vars.GetObject(ind).Set(value);
@@ -116,7 +116,7 @@ class TOlxVars : public IEObject  {
 
   template <class T>
   inline bool _UnsetVar(const T& name)  {
-    const size_t ind = Vars.IndexOfComparable(name);
+    const size_t ind = Vars.IndexOf(name);
     if( ind != InvalidIndex )  {
       Vars.Delete(ind);
       return true;
@@ -145,7 +145,7 @@ public:
   static const olxstr& GetVarStr(size_t index);
 
   static inline const olxstr& GetVarName(size_t index) {
-    return Instance->Vars.GetComparable(index);
+    return Instance->Vars.GetKey(index);
   }
 
   template <class T>
@@ -168,11 +168,11 @@ public:
 
   template <class T>
   static inline bool IsVar(const T& name) {
-    return (Instance == NULL) ? false : Instance->Vars.IndexOfComparable(name) != InvalidIndex;
+    return (Instance == NULL) ? false : Instance->Vars.IndexOf(name) != InvalidIndex;
   }
   template <class T>
   static inline size_t VarIndex(const T& name) {
-    return (Instance == NULL) ? InvalidIndex : Instance->Vars.IndexOfComparable(name);
+    return (Instance == NULL) ? InvalidIndex : Instance->Vars.IndexOf(name);
   }
   static inline const olxstr& FindVarName(PyObject *pyObj) {
     return (Instance == NULL) ? EmptyString : Instance->_FindName(pyObj);
@@ -186,7 +186,7 @@ class TOlxVars : public IEObject  {
 
   template <class T>
   inline void _SetVar(const T& name, const olxstr& value)  {
-    size_t ind = Vars.IndexOfComparable(name);
+    const size_t ind = Vars.IndexOf(name);
     if( ind != InvalidIndex )
       Vars.GetObject(ind) = value;
     else
@@ -194,7 +194,7 @@ class TOlxVars : public IEObject  {
   }
   template <class T>
   inline void _UnsetVar(const T& name)  {
-    size_t ind = Vars.IndexOfComparable(name);
+    const size_t ind = Vars.IndexOf(name);
     if( ind != InvalidIndex )  Vars.Delete(ind);
   }
 public:
@@ -205,7 +205,7 @@ public:
   static inline size_t VarCount()  {  return Instance != NULL ? Instance->Vars.Count() : 0;  }
 
   static inline const olxstr& GetVarName(size_t index) {
-    return Instance->Vars.GetComparable(index);
+    return Instance->Vars.GetKey(index);
   }
   static inline const olxstr& GetVarStr(size_t index) {
     return Instance->Vars.GetObject(index);
@@ -223,11 +223,11 @@ public:
   }
   template <class T>
   static inline bool IsVar(const T& name) {
-    return (Instance == NULL) ? false : Instance->Vars.IndexOfComparable(name) != InvalidIndex;
+    return (Instance == NULL) ? false : Instance->Vars.IndexOf(name) != InvalidIndex;
   }
   template <class T>
   static inline size_t VarIndex(const T& name) {
-    return (Instance == NULL) ? InvalidIndex : Instance->Vars.IndexOfComparable(name);
+    return (Instance == NULL) ? InvalidIndex : Instance->Vars.IndexOf(name);
   }
 };
 #endif  // _NO_PYTHON

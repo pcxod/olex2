@@ -133,8 +133,8 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
     if( ind == InvalidIndex )  {
       scatterers.AddNew<const cm_Element*,compd,compd>(&ca.GetType(), 0, 0);
       bais.Add(ca.GetType());
-      scatterers.Last().C() = scatterers.Last().GetA()->CalcFpFdp(ev_angstrom/WaveLength);
-      scatterers.Last().C() -= scatterers.Last().GetA()->z;
+      scatterers.GetLast().C() = scatterers.GetLast().GetA()->CalcFpFdp(ev_angstrom/WaveLength);
+      scatterers.GetLast().C() -= scatterers.GetLast().GetA()->z;
       ind = scatterers.Count() - 1;
     }
     ca.SetTag(ind);
@@ -440,12 +440,12 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
             TSAtom& sa = XFile().GetLattice().GetAtom(j);
             if( !sa.CAtom().IsAvailable() )  continue;
             if( sa.CAtom().GetTag() != ag[i].GetAtom()->GetTag() )  continue;
-            if( ag[i].GetMatrix() == 0 )  {  // get an atom from the asymm unit
+            if( ag[i].GetMatrix() == NULL )  {  // get an atom from the asymm unit
               if( sa.IsAUAtom() )
                 atoms.Add(sa);
             }
             else  {
-              if( sa.GetMatrix(0).GetId() == ag[i].GetMatrix()->GetId() )  {
+              if( sa.ContainsMatrix(ag[i].GetMatrix()->GetId()) )  {
                 atoms.Add(sa);
               }
             }
@@ -470,7 +470,7 @@ void TXApp::ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last)  {
   size_t pivot = (pivot_last ? ring.Count()-1 : 0);
   for( size_t i=0; i < ring.Count(); i++ )
     info << ' ' << ring[i]->GetLabel();
-  TBasicApp::GetLog() << (info << ". Chosen pivot atom is " << ring[pivot]->GetLabel() << '\n');
+  TBasicApp::NewLogEntry() << info << ". Chosen pivot atom is " << ring[pivot]->GetLabel();
   if( ring[pivot]->CAtom().GetDependentAfixGroup() != NULL )
     ring[pivot]->CAtom().GetDependentAfixGroup()->Clear();
   TAfixGroup& ag = FXFile->GetRM().AfixGroups.New( &ring[pivot]->CAtom(), afix);
@@ -555,22 +555,22 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
 
       sa->GetNetwork().FindAtomRings(*sa, ring, rings);
       if( rings.Count() == 0 )  {
-        GetLog() << "no suitable rings have been found\n";
+        NewLogEntry() << "no suitable rings have been found";
         return;
       }
       else if( rings.Count() > 1 )  {
-        GetLog() << "the atom is shared by several rings\n";
+        NewLogEntry() << "the atom is shared by several rings";
         return;
       }
       TNetwork::RingInfo ri;
       TNetwork::AnalyseRing( rings[0], ri );
       if( m == 11 )  {  // need to rearrage the ring to fit shelxl requirements as fihure of 8
         if( ri.Alpha.IndexOf(rings[0].Count() - 1) == InvalidIndex )  {
-          GetLog() << "the alpha substituted atom is expected\n";
+          NewLogEntry() << "the alpha substituted atom is expected";
           return;
         }
         if( ri.Ternary.Count() != 2 )  {
-          GetLog() << "naphtalene ring should have two ternary atoms\n";
+          NewLogEntry() << "naphtalene ring should have two ternary atoms";
           return;
         }
         if( ri.Ternary.IndexOf(rings[0].Count()-2) != InvalidIndex )  { // countr-clockwise direction to revert
@@ -585,20 +585,20 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
       }
       else if( m == 10 )  {
         if( !ri.IsSingleCSubstituted() )  {
-          TBasicApp::GetLog() << "Could not locate Cp* ring\n";
+          NewLogEntry() << "Could not locate Cp* ring";
           return;
         }
         for( size_t j=0; j < ri.Substituents.Count(); j++ )
           rings[0].Add(ri.Substituents[j][0] );
       }
       else  {
-        if( ri.Substituents.Last().Count() == 0 )  {
-          TBasicApp::GetLog() << "A substituted atom is expected\n";
+        if( ri.Substituents.GetLast().Count() == 0 )  {
+          NewLogEntry() << "A substituted atom is expected";
           return;
         }
       }
       if( ri.Substituted.Count() > 1 && m != 10 )  
-        TBasicApp::GetLog() << "The selected ring has more than one substituent\n";
+        NewLogEntry() << "The selected ring has more than one substituent";
       ProcessRingAfix(rings[0], afix, m!=10);
     }
   }
@@ -661,20 +661,20 @@ olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
   olxstr src_mat;
   if( shelx_exists && smtbx_exists )  {
     if( TEFile::FileAge(shelx_fn) > TEFile::FileAge(smtbx_fn) )  {
-      vcovc.ReadShelxMat(shelx_fn, XFile().GetAsymmUnit());
+      vcovc.ReadShelxMat(shelx_fn);
       src_mat = "shelxl";
     }
     else  {
       src_mat = "smtbx";
-      vcovc.ReadSmtbxMat(smtbx_fn, XFile().GetAsymmUnit());
+      vcovc.ReadSmtbxMat(smtbx_fn);
     }
   }
   else if( shelx_exists )  {
-    vcovc.ReadShelxMat(shelx_fn, XFile().GetAsymmUnit());
+    vcovc.ReadShelxMat(shelx_fn);
     src_mat = "shelxl";
   }
   else if( smtbx_exists )  {
-    vcovc.ReadSmtbxMat(smtbx_fn, XFile().GetAsymmUnit());
+    vcovc.ReadSmtbxMat(smtbx_fn);
     src_mat = "smtbx";
   }
   else
@@ -708,14 +708,14 @@ ElementRadii TXApp::ReadVdWRadii(const olxstr& fileName)  {
 //..............................................................................
 void TXApp::PrintVdWRadii(const ElementRadii& radii, const ContentList& au_cont)  {
   if( au_cont.IsEmpty() )  return;
-  TBasicApp::GetLog() << "Using the following element radii:\n";
-  TBasicApp::GetLog() << "(Default radii source: http://www.ccdc.cam.ac.uk/products/csd/radii)\n";
+  TBasicApp::NewLogEntry() << "Using the following element radii:";
+  TBasicApp::NewLogEntry() << "(Default radii source: http://www.ccdc.cam.ac.uk/products/csd/radii)";
   for( size_t i=0; i < au_cont.Count(); i++ )  {
     const size_t ei = radii.IndexOf(&au_cont[i].element);
     if( ei == InvalidIndex )
-      TBasicApp::GetLog() << au_cont[i].element.symbol << '\t' << au_cont[i].element.r_vdw << '\n';
+      TBasicApp::NewLogEntry() << au_cont[i].element.symbol << '\t' << au_cont[i].element.r_vdw;
     else
-      TBasicApp::GetLog() << au_cont[i].element.symbol << '\t' << radii.GetValue(ei) << '\n';
+      TBasicApp::NewLogEntry() << au_cont[i].element.symbol << '\t' << radii.GetValue(ei);
   }
 }
 //..............................................................................
@@ -769,10 +769,10 @@ WBoxInfo TXApp::CalcWBox(const TSAtomPList& atoms, const TDoubleList* radii,
     for( size_t j=0; j < crds.Count(); j++ )  {
       const double d = crds[j].GetA().DotProd(rv.normals[i]) - rv.d[i];
       if( radii != NULL )  {
-        const double d1 = d - radii->Item(j);
+        const double d1 = d - radii->GetItem(j);
         if( d1 < rv.r_from[i] )
           rv.r_from[i] = d1;
-        const double d2 = d + radii->Item(j);
+        const double d2 = d + radii->GetItem(j);
         if( d2 > rv.r_to[i] )
           rv.r_to[i] = d2;
       }

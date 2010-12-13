@@ -214,6 +214,7 @@ public:
   TCSTypeList<olxstr, ABasicFunction*> CallbackFuncs;
 protected:
   bool Destroying;
+  TStack<wxCursor> CursorStack;
   UpdateThread* _UpdateThread;
 	TOnProgress* UpdateProgress, *ActionProgress;
   TEFile* ActiveLogFile;
@@ -317,6 +318,8 @@ protected:
   friend class TObjectVisibilityChange;
   void BasisVChange();
   void CellVChange();
+  void GridVChange();
+  void FrameVChange();
   void OnBasisVisible(wxCommandEvent& event);
   void OnCellVisible(wxCommandEvent& event);
 
@@ -463,12 +466,9 @@ private:
 
   DefMacro(EditAtom)
   DefMacro(EditIns)
-  DefMacro(EditHkl)
-  DefMacro(ViewHkl)
-  DefMacro(ExtractHkl)
-  DefMacro(AppendHkl)
-  DefMacro(ExcludeHkl)
-  DefMacro(MergeHkl)
+  DefMacro(HklEdit)
+  DefMacro(HklView)
+  DefMacro(HklExtract)
   DefMacro(Direction)
 
   DefMacro(ViewGrid)
@@ -517,7 +517,8 @@ private:
 
   DefMacro(ShowWindow)
 
-  DefMacro(DelOFile)
+  DefMacro(OFileDel)
+  DefMacro(OFileSwap)
   DefMacro(CalcVol)
 
   DefMacro(Schedule)
@@ -630,6 +631,8 @@ private:
   DefFunc(GetMAC)
   DefFunc(ThreadCount)
   DefFunc(FullScreen)
+  DefFunc(MatchFiles)
+  DefFunc(Freeze)
 
   TUndoStack *FUndoStack;
 //..............................................................................
@@ -638,8 +641,8 @@ public:
   virtual TLibrary& GetLibrary()  {  return FXApp->GetLibrary();  }
   virtual olxstr TranslateString(const olxstr& str) const;
   virtual bool IsControl(const olxstr& cname) const;
-  virtual void LockWindowDestruction(wxWindow* wnd);
-  virtual void UnlockWindowDestruction(wxWindow* wnd);
+  virtual void LockWindowDestruction(wxWindow* wnd, const IEObject* caller);
+  virtual void UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller);
 
   void OnKeyUp(wxKeyEvent& event);
   void OnKeyDown(wxKeyEvent& event);
@@ -743,7 +746,7 @@ public:
   inline THtml* GetHtml()  const {  return FHtml; }
   THtml* FindHtml(const olxstr& popupName) const;
   TPopupData* FindHtmlEx(const olxstr& popupName) const;
-  inline const olxstr& GetCurrentLanguageEncodingStr()  const  {
+  inline const olxstr& GetCurrentLanguageEncodingStr() const {
     return Dictionary.GetCurrentLanguageEncodingStr();
   }
 //..............................................................................

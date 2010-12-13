@@ -19,10 +19,8 @@ TSAtom::TSAtom(TNetwork *N) : TBasicNode<TNetwork, TSAtom, TSBond>(N)  {
 TSAtom::~TSAtom()  {  }
 //..............................................................................
 void  TSAtom::CAtom(TCAtom& S)  {
-  FCAtom    = &S;
-  FCCenter  = S.ccrd();
-  if( Network != NULL )
-    Network->GetLattice().GetAsymmUnit().CellToCartesian(FCCenter, FCenter);
+  FCAtom = &S;
+  FCCenter = S.ccrd();
   FEllipsoid = S.GetEllipsoid();
 }
 //..............................................................................
@@ -42,19 +40,7 @@ void TSAtom::Assign(const TSAtom& S)  {
   FCenter    = S.crd();
   FCCenter   = S.ccrd();
   FCAtom     = &S.CAtom();
-  SetGrown( S.IsGrown() );
   Matrices.Assign(S.Matrices);
-}
-//..............................................................................
-bool TSAtom::IsGrown() const {
-  if( (Flags & satom_Grown) == 0 )  return false;
-  int subs = 0;
-  for( size_t i=0; i < Nodes.Count(); i++ )
-    if( Nodes[i]->IsDeleted() )
-      subs--;
-  if( subs < 0 )
-    olx_set_bit(false, Flags, satom_Grown);
-  return (Flags & satom_Grown) != 0;
 }
 //..............................................................................
 olxstr TSAtom::GetGuiLabel() const  {  
@@ -127,13 +113,13 @@ void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
   Network = &parent.GetFragment(net_id);
   if( net_id != InvalidIndex )  {
     const TDataItem& nodes = item.FindRequiredItem("Nodes");
-    Nodes.SetCapacity( nodes.FieldCount() );
+    Nodes.SetCapacity(nodes.FieldCount());
     for( size_t i=0; i < nodes.FieldCount(); i++ )
-      Nodes.Add(&parent.GetAtom(nodes.GetField(i).ToSizeT()));
+      Nodes.Add(parent.GetAtom(nodes.GetField(i).ToSizeT()));
     const TDataItem& bonds = item.FindRequiredItem("Bonds");
-    Bonds.SetCapacity( bonds.FieldCount() );
+    Bonds.SetCapacity(bonds.FieldCount());
     for( size_t i=0; i < bonds.FieldCount(); i++ )
-      Bonds.Add(&parent.GetBond(bonds.GetField(i).ToSizeT()));
+      Bonds.Add(parent.GetBond(bonds.GetField(i).ToSizeT()));
   }
   TLattice& latt = Network->GetLattice();
   size_t ca_id = item.GetRequiredField("atom_id").ToSizeT();

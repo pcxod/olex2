@@ -16,17 +16,21 @@ TXGrowLine::TXGrowLine(TGlRenderer& r, const olxstr& collectionName, TSAtom *A, 
   AGDrawObject::SetSelectable(false);
   vec3d C = transform * CA->ccrd();
   A->CAtom().GetParent()->CellToCartesian(C);
-
   FBase = A->crd();
   FEdge = C;
-
   C -= FBase;
   if( !C.IsNull() )  {
     Params()[3] = C.Length();
     C.Normalise();
     Params()[0] = (float)(acos(C[2])*180/M_PI);
-    Params()[1] = -C[1];
-    Params()[2] = C[0];
+    if( olx_abs(Params()[0]-180) < 1e-3 )  { // degenerate case with Pi rotation
+      Params()[1] = 0;
+      Params()[2] = 1;
+    }
+    else {
+      Params()[1] = -C[1];
+      Params()[2] = C[0];
+    }
   }
   FSAtom = A;
   FCAtom = CA;

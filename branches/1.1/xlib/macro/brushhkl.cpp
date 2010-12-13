@@ -51,15 +51,14 @@ struct HklBrushRef  {
   }
 };
 
-void XLibMacros::macBrushHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp &XApp = TXApp::GetInstance();
-  olxstr HklFN( XApp.LocateHklFile() );
+  olxstr HklFN(XApp.LocateHklFile());
 
   if( HklFN.IsEmpty() )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate HKL file" );
     return;
   }
-
   THklFile Hkl;
   Hkl.LoadFromFile(HklFN);
 
@@ -69,19 +68,21 @@ void XLibMacros::macBrushHkl(TStrObjList &Cmds, const TParamList &Options, TMacr
     E.ProcessingError(__OlxSrcInfo, "Undefined space group" );
     return;
   }
-  bool useFriedelLaw = Options.Contains("f");
 
+  const bool useFriedelLaw = Options.Contains("f");
   smatd_list ml;
   sg->GetMatrices(ml, mattAll^mattIdentity);
   if( !sg->IsCentrosymmetric() && useFriedelLaw )  {
-    smatd I;  I.r.I();  I.r *= -1;
-    ml.InsertCCopy(0, I);  // merge wil searhc for it ...
+    smatd I;
+    I.r.I();
+    I.r *= -1;
+    ml.InsertCCopy(0, I);  // merge wil search for it ...
   }
 
   TPtrList< HklBrushRef > refs, eqs;
   refs.SetCapacity( Hkl.RefCount() );
   for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-    refs.Add( new HklBrushRef( Hkl[i] ) );
+    refs.Add(new HklBrushRef(Hkl[i]));
     refs[i]->Standardise(ml, useFriedelLaw);
   }
   refs.QuickSorter.SortSF(refs, HklBrushRef::CompareHkl);
@@ -114,6 +115,6 @@ void XLibMacros::macBrushHkl(TStrObjList &Cmds, const TParamList &Options, TMacr
     }
     delete refs[i];
   }
-  XApp.GetLog() << (olxstr("Ommited ") << deletedRefs << " reflections\n" );
+  XApp.NewLogEntry() << "Ommited " << deletedRefs << " reflections";
   Hkl.SaveToFile("brushed.hkl", toSave, false);
 }

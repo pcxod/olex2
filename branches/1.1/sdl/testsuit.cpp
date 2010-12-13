@@ -1,6 +1,5 @@
 #include "testsuit.h"
 #include "bapp.h"
-#include "log.h"
 #include "md5.h"
 #include "sha.h"
 #include "olxth.h"
@@ -286,16 +285,18 @@ void OlxTests::run()  {
     try  { 
       description = EmptyString;
       tests[i].run(*this);  
-      TBasicApp::GetLog() << (olxstr("Running test ") << i+1 << '/' << tests.Count() << ": " << description << '\n');
-      TBasicApp::GetLog() << "Done\n";
+      TBasicApp::NewLogEntry() << "Running test " << i+1 << '/' << tests.Count() << ": "
+        << description;
+      TBasicApp::NewLogEntry() << "Done";
     }
     catch( TExceptionBase& exc )  {
-      TBasicApp::GetLog() << (olxstr("Running test ") << i+1 << '/' << tests.Count() << ": " << description << '\n');
-      TBasicApp::GetLog().Error( exc.GetException()->GetFullMessage() );
-      TBasicApp::GetLog() << "Failed\n";
+      TBasicApp::NewLogEntry() << "Running test " << i+1 << '/' << tests.Count() << ": "
+        << description;
+      TBasicApp::NewLogEntry(logError) << exc.GetException()->GetFullMessage();
+      TBasicApp::NewLogEntry() << "Failed";
       failed_cnt++;
     }
   }
   if( failed_cnt != 0 )
-    TBasicApp::GetLog() << (olxstr(failed_cnt) << '/' << tests.Count() << " have failed\n");
+    TBasicApp::NewLogEntry() << failed_cnt << '/' << tests.Count() << " have failed";
 }

@@ -14,8 +14,8 @@ public:
   virtual ~TCRSFile()  {  }
   class TSpaceGroup* GetSG();
 
-  inline size_t FacesCount()  const  {  return Faces.Count();  }
-  inline const evecd& GetFace(size_t i)  const  {  return Faces[i];  }
+  inline size_t FacesCount() const {  return Faces.Count();  }
+  inline const evecd& GetFace(size_t i) const {  return Faces[i];  }
 
   bool HasSG() const {  return SGInitialised;  }
 

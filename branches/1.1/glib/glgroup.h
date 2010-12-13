@@ -13,17 +13,21 @@ class TGlGroup: public AGDrawObject {
   */
   AGDObjList Objects;  // a list of grouped objects
   TGlMaterial GlM;
-  bool DefaultColor;
+  bool DefaultColor, Blended;
 protected:
   void InitMaterial() const;
   virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) const;
   struct ObjectReleaser  {
-    static bool OnItem(AGDrawObject& o)  {
+    static bool OnItem(AGDrawObject& o, size_t)  {
       o.SetParentGroup(NULL);
       o.SetGrouped(false);
       return true;
     }
   };
+  void OverrideMaterialDraw(bool SelectPrimitives, bool SelectObjects) const;
+  void BlendMaterialDraw(bool SelectPrimitives, bool SelectObjects) const;
+  TGlOption GetBlendColor() const;
+  bool CheckBlended() const;
 public:
   TGlGroup(class TGlRenderer& R, const olxstr& collectionName);
   virtual void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
@@ -63,7 +67,8 @@ public:
   virtual void SetSelected(bool On);
 
   bool IsDefaultColor() const {  return DefaultColor;  }
-
+  bool IsBlended() const {  return Blended;  }
+  void SetBlended(bool v);
   const TGlMaterial& GetGlM()  {  return GlM; }
   void SetGlM(const TGlMaterial& m);
 };

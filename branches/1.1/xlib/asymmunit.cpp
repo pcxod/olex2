@@ -16,6 +16,7 @@
 #include "symmparser.h"
 #include "refmodel.h"
 #include "residue.h"
+#include "math/align.h"
 
 #undef GetObject
 
@@ -98,12 +99,14 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   }
   // copy matrices
   Cartesian2Cell = C.GetCartesianToCell();
+  Cell2CartesianT = C.Cell2CartesianT;
   Cell2Cartesian = C.GetCellToCartesian();
+  Cell2CartesianT = C.Cell2CartesianT;
   Hkl2Cartesian =  C.GetHklToCartesian();
-  UcifToUxyz     = C.UcifToUxyz;
-  UxyzToUcif     = C.UxyzToUcif;
-  UcifToUxyzT    = C.UcifToUxyzT;
-  UxyzToUcifT    = C.UxyzToUcifT;
+  UcifToUxyz = C.UcifToUxyz;
+  UxyzToUcif = C.UxyzToUcif;
+  UcifToUxyzT = C.UcifToUxyzT;
+  UxyzToUcifT = C.UxyzToUcifT;
 
   MaxQPeak = C.GetMaxQPeak();
   MinQPeak = C.GetMinQPeak();
@@ -143,16 +146,16 @@ void  TAsymmUnit::InitMatrices()  {
          sG = sin(FAngles[2].GetV()/180*M_PI),
          sB = sin(FAngles[1].GetV()/180*M_PI),
          sA = sin(FAngles[0].GetV()/180*M_PI);
+  const double Vp = sqrt((1-cA*cA-cB*cB-cG*cG) + 2*(cA*cB*cG));
+  const double V = FAxes[0].GetV()*FAxes[1].GetV()*FAxes[2].GetV()*Vp;
 
-  double V = FAxes[0].GetV() * FAxes[1].GetV() * FAxes[2].GetV()*sqrt( (1-cA*cA-cB*cB-cG*cG) + 2*(cA*cB*cG));
-
-  double cGs = (cA*cB-cG)/(sA*sB),
-         cBs = (cA*cG-cB)/(sA*sG),
-         cAs = (cB*cG-cA)/(sB*sG),
-         as = FAxes[1].GetV()*FAxes[2].GetV()*sA/V,
-         bs = FAxes[0].GetV()*FAxes[2].GetV()*sB/V,
-         cs = FAxes[0].GetV()*FAxes[1].GetV()*sG/V
-         ;
+  const double
+    cGs = (cA*cB-cG)/(sA*sB),
+    cBs = (cA*cG-cB)/(sA*sG),
+    cAs = (cB*cG-cA)/(sB*sG),
+    as = FAxes[1].GetV()*FAxes[2].GetV()*sA/V,
+    bs = FAxes[0].GetV()*FAxes[2].GetV()*sB/V,
+    cs = FAxes[0].GetV()*FAxes[1].GetV()*sG/V;
   // cartesian to cell transformation matrix
   Cartesian2Cell.Null();
   Cartesian2Cell[0][0] =  1./FAxes[0].GetV();
@@ -202,6 +205,27 @@ void  TAsymmUnit::InitMatrices()  {
   UxyzToUcif = Cartesian2Cell * m;
   UxyzToUcifT = UxyzToUcif;
   UxyzToUcif.Transpose();
+  //ematd DG(6,6);
+  //// a b c alpha beta gamma
+  //// o11 o21 o22 o31 o32 o33
+  //DG[0][0] = 1; DG[0][1] = 0; DG[0][2] = 0; DG[0][3] = 0; DG[0][4] = 0; DG[0][5] = 0;
+  //DG[1][0] = 0; DG[1][1] = cG; DG[1][2] = 0; DG[1][3] = 0; DG[1][4] = 0; DG[1][5] = -b*cG;
+  //DG[2][0] = 0; DG[2][1] = sG; DG[2][2] = 0; DG[2][3] = 0; DG[2][4] = 0; DG[2][5] = b*cG;
+
+  //DG[3][0] = 0; DG[3][1] = 0; DG[3][2] = cB; DG[3][3] = 0; DG[3][4] = -c*sB; DG[0][5] = 0;
+  //DG[4][0] = 0; DG[4][1] = 0;
+  //DG[4][2] = (cA-cB*cG)/sG;
+  //DG[4][3] = -c*sA/sG;
+  //DG[4][4] = c*sB*cG/sG;
+  //DG[4][5] = c*(cB + (cB*cG-cA)*cG/(sG*sG));
+  //
+  //
+  //DG[5][0] = 0;
+  //DG[5][1] = 0;
+  //DG[5][2] = Vp/sG;
+  //DG[5][3] = c*sA*(cB*cG-cA)/Vp;
+  //DG[5][4] = c*sB*(cB-cA*cG)/Vp;
+  //DG[0][5] = c*(cA*(-cB-cB*cG*cG+cG*cA)+cG*cB*cB)/(Vp*sG*sG);
 }
 //..............................................................................
 void TAsymmUnit::InitData()  {
@@ -447,6 +471,19 @@ ContentList TAsymmUnit::GetContentList(double mult) const {
   return XElementLib::SortContentList(rv);
 }
 //..............................................................................
+olxstr TAsymmUnit::_SummFormula(const olxstr &Sep, double mult) const {
+  ContentList cl = GetContentList(mult);
+  olxstr rv;
+  for( size_t i=0; i < cl.Count(); i++)  {
+    rv << cl[i].element.symbol;
+    if( olx_abs(cl[i].count-1.0) > 1e-3 )
+      rv << olxstr::FormatFloat(3, cl[i].count).TrimFloat();
+    if( (i+1) < cl.Count() )
+      rv << Sep;
+  }
+  return rv;
+}
+//..............................................................................
 olxstr TAsymmUnit::SummFormula(const olxstr &Sep, bool MultiplyZ) const  {
   size_t matrixInc = 0;
   // searching the identity matrix
@@ -458,16 +495,11 @@ olxstr TAsymmUnit::SummFormula(const olxstr &Sep, bool MultiplyZ) const  {
     }
   }
   if( Uniq )  matrixInc ++;
-
-  ContentList cl = GetContentList(MultiplyZ ? (MatrixCount()+matrixInc) : 1.0);
-  olxstr rv;
-  for( size_t i=0; i < cl.Count(); i++)  {
-    rv << cl[i].element.symbol;
-    rv << olxstr::FormatFloat(3, cl[i].count).TrimFloat();
-    if( (i+1) < cl.Count() )
-      rv << Sep;
-  }
-  return rv;
+  return _SummFormula(Sep, MultiplyZ ? (MatrixCount()+matrixInc) : 1.0);
+}
+//..............................................................................
+double TAsymmUnit::GetZPrime() const {
+  return (double)Z/(TUnitCell::GetMatrixMultiplier(Latt)*(MatrixCount()+1));
 }
 //..............................................................................
 double TAsymmUnit::MolWeight() const  {
@@ -573,7 +605,7 @@ void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg)  {
     Matrices.AddCCopy(sg.GetMatrix(i));
 }
 //..............................................................................
-double TAsymmUnit::CalcCellVolume()  const  {
+double TAsymmUnit::CalcCellVolume() const {
   double cosa = cos( FAngles[0].GetV()*M_PI/180 ),
          cosb = cos( FAngles[1].GetV()*M_PI/180 ),
          cosg = cos( FAngles[2].GetV()*M_PI/180 );
@@ -606,43 +638,32 @@ void TAsymmUnit::FitAtoms(TTypeList<AnAssociation3<TCAtom*, const cm_Element*, b
     throw TInvalidArgumentException(__OlxSourceInfo, "too few atoms for fitting");
   else if( _atom_cnt == 3 )
     _try_invert = false;
-  TTypeList< AnAssociation2<vec3d, vec3d> > crds;
+  TTypeList<align::pair> pairs;
   for( size_t i=0; i < _atoms.Count(); i++ )  {
     if( _atoms[i].GetA() != NULL && _atoms[i].GetC() )
-      crds.AddNew(_atoms[i].GetA()->ccrd(), _crds[i]);
+      CellToCartesian(pairs.AddNew(_atoms[i].GetA()->ccrd(), _crds[i]).a.value);
   }
+  align::out ao = align::FindAlignmentQuaternions(pairs);
   // normal coordinate match
   smatdd tm;
-  vec3d tr, t;
-  for( size_t k=0; k < crds.Count(); k++ )  {
-    t += CellToCartesian(crds[k].A());
-    tr += crds[k].GetB();
-  }
-  t /= crds.Count();
-  tr /= crds.Count();
-  tm.t = t;
-  const double rms = TNetwork::FindAlignmentMatrix(crds, t, tr, tm);
+  QuaternionToMatrix(ao.quaternions[0], tm.r);
+  tm.r.Transpose();
+  tm.t = ao.center_a;
+  vec3d tr = ao.center_b;
   bool invert = false;
   if( _try_invert )  {  // try inverted coordinate set
-    TTypeList< AnAssociation2<vec3d, vec3d> > icrds;
+    TTypeList<align::pair> ipairs;
     for( size_t i=0; i < _atoms.Count(); i++ )  {
       if( _atoms[i].GetA() != NULL && _atoms[i].GetC() )
-        icrds.AddNew(_atoms[i].GetA()->ccrd(), _crds[i]);
+        CellToCartesian(ipairs.AddNew(_atoms[i].GetA()->ccrd()*-1, _crds[i]).a.value);
     }
-    smatdd tmi;
-    vec3d tri;
-    for( size_t i=0; i < crds.Count(); i++ )  {
-      icrds[i].A() = crds[i].GetA();
-      CartesianToCell(icrds[i].B()) *= -1;
-      CellToCartesian(icrds[i].B());
-      tri += icrds[i].GetB();
-    }
-    tri /= crds.Count();
-    tmi.t = t;
-    const double irms = TNetwork::FindAlignmentMatrix(icrds, t, tri, tmi);
-    if( irms < rms && irms >= 0 )  {
-      tr = tri;
-      tm = tmi;
+    align::out iao = align::FindAlignmentQuaternions(ipairs);
+    smatdd itm;
+    QuaternionToMatrix(iao.quaternions[0], itm.r);
+    itm.r.Transpose();
+    if( iao.rmsd[0] < ao.rmsd[0] )  {
+      tr = iao.center_b;
+      tm.r = itm.r;
       invert = true;
     }
   }
@@ -846,7 +867,7 @@ void TAsymmUnit::LibGetAtomU(const TStrObjList& Params, TMacroError& E)  {
     GetAtom(index).GetEllipsoid()->GetQuad(Q);
   }
 
-  E.SetRetVal( Q.ToString() );
+  E.SetRetVal(Q.ToString());
 }
 //..............................................................................
 void TAsymmUnit::LibGetAtomUiso(const TStrObjList& Params, TMacroError& E)  {
@@ -864,11 +885,11 @@ void TAsymmUnit::LibGetCell(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void TAsymmUnit::LibGetVolume(const TStrObjList& Params, TMacroError& E)  {
   double v = CalcCellVolume()/Lattice->GetUnitCell().MatrixCount();
-  E.SetRetVal( v );
+  E.SetRetVal(v);
 }
 //..............................................................................
 void TAsymmUnit::LibGetCellVolume(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( CalcCellVolume() );
+  E.SetRetVal(CalcCellVolume());
 }
 //..............................................................................
 void TAsymmUnit::LibGetSymm(const TStrObjList& Params, TMacroError& E)  {
@@ -877,7 +898,10 @@ void TAsymmUnit::LibGetSymm(const TStrObjList& Params, TMacroError& E)  {
     E.ProcessingError(__OlxSrcInfo, "Could not locate spacegroup" );
     return;
   }
-  E.SetRetVal( sg->GetName() );
+  if( Params.IsEmpty() )
+    E.SetRetVal(sg->GetName());
+  else if( Params[0].Equalsi("hall") )
+    E.SetRetVal(sg->GetHallSymbol());
 }
 //..............................................................................
 void TAsymmUnit::LibSetAtomCrd(const TStrObjList& Params, TMacroError& E)  {
@@ -941,25 +965,25 @@ void TAsymmUnit::LibIsAtomDeleted(const TStrObjList& Params, TMacroError& E)  {
 void TAsymmUnit::LibGetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  E.SetRetVal( GetAtom(index).GetOccu() );
+  E.SetRetVal(GetAtom(index).GetOccu());
 }
 //..............................................................................
 void TAsymmUnit::LibGetAtomAfix(const TStrObjList& Params, TMacroError& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  E.SetRetVal( GetAtom(index).GetAfix() );
+  E.SetRetVal(GetAtom(index).GetAfix());
 }
 //..............................................................................
 void TAsymmUnit::LibIsPeak(const TStrObjList& Params, TMacroError& E)  {
   if( Params[0].IsNumber() )  {
     size_t index = Params[0].ToSizeT();
     if( index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-    E.SetRetVal(GetAtom(index).GetType() == iQPeakZ );
+    E.SetRetVal(GetAtom(index).GetType() == iQPeakZ);
   }
   else  {
-    TCAtom* ca = FindCAtom( Params[0] );
+    TCAtom* ca = FindCAtom(Params[0]);
     if( ca != NULL )
-      E.SetRetVal(ca->GetType() == iQPeakZ );
+      E.SetRetVal(ca->GetType() == iQPeakZ);
     else
       E.SetRetVal(false);
   }
@@ -1017,9 +1041,9 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
       if( sortedPeaks.GetObject(i) != NULL )
         sortedPeaks.GetObject(i)->SetLabel(qLabel + olxstr(ac-i), false);
     }
-    QPeakIndex = ac - sortedPeaks.IndexOfComparable( qPeak );
-    MinQPeak = sortedPeaks.GetComparable(0);
-    MaxQPeak = sortedPeaks.Last().Comparable;
+    QPeakIndex = ac - sortedPeaks.IndexOf(qPeak);
+    MinQPeak = sortedPeaks.GetKey(0);
+    MaxQPeak = sortedPeaks.GetLast().Comparable;
   }
 
   TCAtom& ca = this->NewAtom();
@@ -1048,13 +1072,21 @@ void TAsymmUnit::LibSetZ(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal(olxstr::FormatFloat(3,(double)Z/(TUnitCell::GetMatrixMultiplier(Latt)*(MatrixCount()+1))));
+  E.SetRetVal(olxstr::FormatFloat(3,GetZPrime()));
 }
 //..............................................................................
 void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
   double zp = Params[0].ToDouble();
   Z = (short)olx_round(TUnitCell::GetMatrixMultiplier(Latt)*(MatrixCount()+1)*zp);
   if( Z <= 0 ) Z = 1;
+}
+//..............................................................................
+void TAsymmUnit::LibFormula(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal(_SummFormula(' ', 1./olx_max(GetZPrime(), 0.01)));
+}
+//..............................................................................
+void TAsymmUnit::LibWeight(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal(olxstr::FormatFloat(2, MolWeight()));
 }
 //..............................................................................
 
@@ -1065,8 +1097,9 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
  The function takes the atom name and ccordinates, if -1 is returned, the atom is not created") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomCount, "GetAtomCount", fpNone,
 "Returns the atom count in the asymmetric unit") );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetSymm, "GetCellSymm", fpNone,
-"Returns spacegroup of currently loaded file as name: 'C2', 'I41/amd', etc") );
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetSymm, "GetCellSymm", fpNone|fpOne,
+"Returns spacegroup of currently loaded file as name: 'C2', 'I41/amd', etc."
+" Optionally, Hal symbol may be returned if 'hall' is provided as an argument") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomCrd, "GetAtomCrd", fpOne,
 "Returns a comma separated list of fractional coordinates for the specified atom") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomName, "GetAtomName", fpOne,
@@ -1113,6 +1146,10 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
 "Returns current Z divided byt the number of matrices of current spacegroup"  ) );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibSetZprime, "SetZprime", fpOne,
 "Sets Z' for the structure"  ) );
+  lib->RegisterFunction<TAsymmUnit>(new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibFormula, "GetFormula", fpNone,
+"Returns chemical formula of the asymmetric unit") );
+  lib->RegisterFunction<TAsymmUnit>(new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibWeight, "GetWeight", fpNone,
+"Returns molecular mass of the asymmetric unit") );
   return lib;
 }
 //..............................................................................

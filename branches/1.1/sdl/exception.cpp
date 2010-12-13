@@ -1,12 +1,7 @@
-//---------------------------------------------------------------------------
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "exception.h"
 #include "estrlist.h"
-//#include "bapp.h"
-//#include "log.h"
+#include "bapp.h"
+#include "etime.h"
 
 UseEsdlNamespace()
 
@@ -39,6 +34,17 @@ UseEsdlNamespace()
 //  return cause;
 //}
 
+TBasicException::~TBasicException()  {
+  if( GetAutoLogging() )  {
+    if( TBasicApp::HasInstance() )  {
+      TStrList out;
+      this->GetStackTrace(out);
+      TBasicApp::GetLog().NewEntry() << out;
+    }
+  }
+  if( Cause != NULL )
+    delete Cause;
+}
 
 olxstr TBasicException::GetFullMessage() const {
   olxstr rv;

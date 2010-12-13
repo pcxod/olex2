@@ -9,6 +9,7 @@
 #include "library.h"
 #include "bapp.h"
 #include "log.h"
+#include "estrbuffer.h"
 
 UseGlNamespace();
 //..............................................................................
@@ -29,7 +30,6 @@ TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height) :
   FPAngle = 1;
   StereoFlag = 0;
   StereoAngle = 3;
-
   LookAt(0,0,1);
 
   Fog = false;
@@ -75,6 +75,7 @@ void TGlRenderer::Initialise()  {
   FBackground->Create();
   FCeiling->Create();
   ATI = olxcstr((const char*)olx_gl::getString(GL_VENDOR)).StartsFrom("ATI");
+  olx_gl::get(GL_LINE_WIDTH, &LineWidth);
 }
 //..............................................................................
 void TGlRenderer::InitLights()  {
@@ -134,7 +135,7 @@ void TGlRenderer::Clear()  {
   FIdentityObjects.Clear();
   // the function automaticallt removes the objects and their properties
   FGObjects.Clear();
-  ResetBasis();
+  //ResetBasis();
   ClearMinMax();
   ReleaseGlImage();
 }
@@ -232,17 +233,17 @@ int TGlRenderer_CollectionComparator(const olxstr& c1, const olxstr& c2) {
 TGPCollection *TGlRenderer::FindCollectionX(const olxstr& Name, olxstr& CollName)  {
   const size_t di = Name.FirstIndexOf('.');
   if( di != InvalidIndex )  {
-    size_t ind = FCollections.IndexOfComparable(Name);
+    const size_t ind = FCollections.IndexOf(Name);
     if( ind != InvalidIndex )  
       return FCollections.GetObject(ind);
 
     TGPCollection *BestMatch=NULL;
     short maxMatchLevels = 0;
     for( size_t i=0; i < FCollections.Count(); i++ )  {
-      int dc = TGlRenderer_CollectionComparator(Name, FCollections.GetComparable(i));
+      int dc = TGlRenderer_CollectionComparator(Name, FCollections.GetKey(i));
       if( dc == 0 || dc < maxMatchLevels )  continue;
       if( BestMatch != NULL && dc == maxMatchLevels )  {  // keep the one with shortes name
-        if( BestMatch->GetName().Length() > FCollections.GetComparable(i).Length() )
+        if( BestMatch->GetName().Length() > FCollections.GetKey(i).Length() )
           BestMatch = FCollections.GetObject(i);
       }
       else
@@ -483,6 +484,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
     GetPrimitive(i).SetString(NULL);
   }
 #endif
+  olx_gl::pushAttrib(GL_ALL_ATTRIB_BITS);
   const bool Select = SelectObjects || SelectPrimitives;
   const bool skip_mat = StereoFlag==glStereoColor;
   static const int DrawMask = sgdoVisible|sgdoSelected|sgdoDeleted|sgdoGrouped;
@@ -574,8 +576,10 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
     }
   }
   const size_t group_count = FGroups.Count();
-  for( size_t i=0; i < group_count; i++ )
-    FGroups[i]->Draw(SelectPrimitives, SelectObjects);
+  for( size_t i=0; i < group_count; i++ )  {
+    if( FGroups[i]->GetParentGroup() == NULL )
+      FGroups[i]->Draw(SelectPrimitives, SelectObjects);
+  }
 
   if( !FSelection->GetGlM().IsIdentityDraw() )  {
     olx_gl::pushAttrib(GL_ALL_ATTRIB_BITS);
@@ -607,6 +611,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
       }
     }
   }
+  olx_gl::popAttrib();
 }
 //..............................................................................
 AGDrawObject* TGlRenderer::SelectObject(int x, int y, int depth)  {
@@ -902,7 +907,7 @@ void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
   for( size_t i=0; i < Colls.Count(); i++ )  {
     Colls[i]->GetPrimitives().ForEach(ACollectionItem::TagSetter<>(0));
     const size_t col_ind = FCollections.IndexOfObject(Colls[i]);
-    FCollections.Remove(col_ind);
+    FCollections.Delete(col_ind);
     delete Colls[i];
   }
   Primitives.RemoveObjectsByTag(0);
@@ -1067,6 +1072,11 @@ void TGlRenderer::DrawTextSafe(const vec3d& pos, const olxstr& text, const TGlFo
   fnt.DrawRasterText(text);
 }
 //..............................................................................
+void TGlRenderer::SetLineWidth(double lw) {
+  LineWidth = lw;
+  olx_gl::lineWidth(LineWidth);
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TGlRenderer::LibCompile(const TStrObjList& Params, TMacroError& E)  {
@@ -1195,13 +1205,25 @@ void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TGlRenderer::LibLineWidth(const TStrObjList& Params, TMacroError& E)  {
-  if( Params.IsEmpty() )  {
-    float LW = 0;
-    olx_gl::get(GL_LINE_WIDTH, &LW);
-    E.SetRetVal(LW);
-  }
+  if( Params.IsEmpty() )
+    E.SetRetVal(GetLineWidth());
   else
-    olx_gl::lineWidth(Params[0].ToFloat<float>());
+    SetLineWidth(Params[0].ToDouble());
+}
+//..............................................................................
+void TGlRenderer::LibBasis(const TStrObjList& Params, TMacroError& E)  {
+  if( Params.IsEmpty() )  {
+    TDataItem di(NULL, EmptyString);
+    TEStrBuffer out;
+    GetBasis().ToDataItem(di);
+    di.SaveToStrBuffer(out);
+    E.SetRetVal(out.ToString());
+  }
+  else  {
+    TDataItem di(NULL, EmptyString);
+    di.LoadFromString(0, Params[0], NULL)    ;
+    GetBasis().FromDataItem(di);
+  }
 }
 //..............................................................................
 TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
@@ -1225,6 +1247,9 @@ decrements current zoom by provided value") );
   lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibLineWidth,
     "LineWidth",
     fpNone|fpOne, "Returns/sets width of the raster OpenGl line") );
+  lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibBasis,
+    "Basis",
+    fpNone|fpOne, "Returns/sets view basis") );
   lib->AttachLibrary(LightModel.ExportLibrary("lm"));
   return lib;
 }

@@ -244,7 +244,7 @@ public:
           const vec3d c = sp[k]*crds[j];
           vec3d tmp = c - cmp_center;
           const vec3i t = tmp.Round<int>();
-          sp.CellToCartI(tmp -= t);
+          sp.OrthogonaliseI(tmp -= t);
           if( tmp.QLength() < 0.5 )  {
             toMerge.Add(Peaks[j]);
             const vec3d mc = c-t;
@@ -274,18 +274,19 @@ public:
   // map getter, accessing an integral map using fractional index
   template <typename mapT, int type> struct MapGetter  {
     mapT*** const src;
-    const vec3s& dim;
-    static inline vec3i NormaliseIndex(const vec3d& i, const vec3s& boundary)  {
-      vec3i p(((int)i[0])%boundary[0], ((int)i[1])%boundary[1], ((int)i[2])%boundary[2]);
-      if( p[0] < 0 )  p[0] += boundary[0];
-      if( p[1] < 0 )  p[1] += boundary[1];
-      if( p[2] < 0 )  p[2] += boundary[2];
+    const vec3i dim;
+    inline vec3i NormaliseIndex(const vec3d& i) const {
+      vec3i p((int)i[0], (int)i[1], (int)i[2]);
+      if( (p[0] %= dim[0]) < 0 )  p[0] += dim[0];
+      if( (p[1] %= dim[1]) < 0 )  p[1] += dim[1];
+      if( (p[2] %= dim[2]) < 0 )  p[2] += dim[2];
       return p;
     }
     MapGetter(mapT*** const _src, const vec3s& _dim) : src(_src), dim(_dim)  {}
-    mapT Get(const vec3d& p) const {
+    mapT Get(const vec3d& fractional_crd) const {
+      const vec3d p(fractional_crd[0]*dim[0], fractional_crd[1]*dim[1], fractional_crd[2]*dim[2]);
       if( type == 0 )  {  // cropped index value
-        const vec3i i = NormaliseIndex(p, dim);
+        const vec3i i = NormaliseIndex(p);
         return src[i[0]][i[1]][i[2]];
       }
       if( type == 1 )  {  // linear interpolation
@@ -303,7 +304,7 @@ public:
             const mapT _vy = vy[dy];
             for( int dz=0; dz <= 1; dz++ )  {
               const mapT _vz = vz[dz];
-              const vec3i i = NormaliseIndex(vec3d(fp[0]+dx, fp[1]+dy, fp[2]+dz), dim);
+              const vec3i i = NormaliseIndex(vec3d(fp[0]+dx, fp[1]+dy, fp[2]+dz));
               val += src[i[0]][i[1]][i[2]]*_vx*_vy*_vz;
             }
           }
@@ -327,7 +328,7 @@ public:
             const int n_y = fp[1]+dy;
             for( int dz=-1; dz <= 2; dz++ )  {
               const float _vxyz = vz[dz+1]*_vxy;
-              const vec3i i = NormaliseIndex(vec3d(n_x, n_y, fp[2]+dz), dim);
+              const vec3i i = NormaliseIndex(vec3d(n_x, n_y, fp[2]+dz));
               val += src[i[0]][i[1]][i[2]]*_vxyz;
             }
           }
@@ -345,7 +346,7 @@ public:
     for( size_t i=0; i < dest_d[0]; i++ )  {
       for( size_t j=0; j < dest_d[1]; j++ )  {
         for( size_t k=0; k < dest_d[2]; k++ )  {
-          const vec3d cc = grid_2_cart*vec3d(i,j,k);  // cartesian coordinates from grid
+          const vec3d cc = vec3d(i,j,k)*grid_2_cart.r+grid_2_cart.t;  // cartesian coordinates from grid
           const vec3d p(
             cc[0]*cart2cell[0][0] + cc[1]*cart2cell[1][0] + cc[2]*cart2cell[2][0],
             cc[1]*cart2cell[1][1] + cc[2]*cart2cell[2][1],

@@ -1,6 +1,7 @@
 #include "conninfo.h"
 #include "atomref.h"
 #include "xapp.h"
+#include "unitcell.h"
 
 void ConnInfo::ProcessFree(const TStrList& ins)  {
   TAtomReference ar(ins.Text(' '));
@@ -303,6 +304,24 @@ void ConnInfo::FromDataItem(const TDataItem& item)  {
     AtomInfo.Add(&ca).FromDataItem(ai_item.GetItem(i), rm, ca);
   }
 }
+#ifndef _NO_PYTHON
+PyObject* ConnInfo::PyExport()  {
+  PyObject* main = PyDict_New(),
+    *type = PyDict_New(),
+    *atom = PyDict_New();
+  for( size_t i=0; i < TypeInfo.Count(); i++ )  {
+    PythonExt::SetDictItem(type, TypeInfo.GetValue(i).atomType->symbol,
+      TypeInfo.GetValue(i).PyExport());
+  }
+  for( size_t i=0; i < AtomInfo.Count(); i++ )  {
+    PythonExt::SetDictItem(atom, Py_BuildValue("i", AtomInfo.GetValue(i).atom->GetTag()),
+      AtomInfo.GetValue(i).PyExport());
+  }
+  PythonExt::SetDictItem(main, "type", type);
+  PythonExt::SetDictItem(main, "atom", atom);
+  return main;
+}
+#endif
 //........................................................................
 //........................................................................
 //........................................................................
@@ -315,6 +334,12 @@ void ConnInfo::TypeConnInfo::FromDataItem(const TDataItem& item, const cm_Elemen
   r = item.GetRequiredField("r").ToDouble();
   maxBonds = item.GetRequiredField("b").ToInt();
 }
+//........................................................................
+#ifndef _NO_PYTHON
+PyObject* ConnInfo::TypeConnInfo::PyExport()  {
+  return Py_BuildValue("{s:d,s:i}", "radius", r, "bonds", maxBonds);
+}
+#endif
 //........................................................................
 size_t ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv) {
   if( key != &a1 && key != &a2 || list.IsEmpty() )
@@ -338,7 +363,7 @@ size_t ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1
     return InvalidIndex;
   }
   else  {
-    smatd mat( eqiv->Inverse() );
+    smatd mat = eqiv->Inverse();
     for( size_t i=0; i < list.Count(); i++ )  {
       if( list[i].to == a1 && list[i].matr != NULL && *list[i].matr == mat )  
         return i;
@@ -362,16 +387,18 @@ const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, 
     }
     return &rm.AddUsedSymm(mat);
   }
-  throw TFunctionFailedException(__OlxSourceInfo, "both symops are not identity");
+  //((*eqiv2)*eqiv1->Inverse());
+  const TUnitCell& uc = rm.aunit.GetLattice().GetUnitCell();
+  smatd mat = uc.MulMatrix(*eqiv2, uc.InvMatrix(*eqiv1));
+  if( release )  {
+    rm.RemUsedSymm(*eqiv1);
+    rm.RemUsedSymm(*eqiv2);
+  }
+  return &rm.AddUsedSymm(mat);
 }
 //........................................................................
 void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv)  {
-  const smatd* eqiv = NULL;
-  try {  eqiv = GetCorrectMatrix(eqiv1, eqiv2, release_eqiv);  }
-  catch( ... )  {
-    TBasicApp::GetLog().Error( olxstr("Failed to add bond: only one EQIV is expected"));
-    return;
-  }
+  const smatd* eqiv = GetCorrectMatrix(eqiv1, eqiv2, release_eqiv);
   size_t ind = InvalidIndex;
   for( size_t i=0; i < AtomInfo.Count(); i++ )  {
     ind = FindBondIndex(AtomInfo.GetValue(i).BondsToCreate, AtomInfo.GetKey(i), a1, a2, eqiv); 
@@ -392,20 +419,15 @@ void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* 
     if( !exists )  {  // if was deleted - may be already exists?
       AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
       if( eqiv == NULL )  // these to be processed first
-        ai.BondsToCreate.Insert(0, new CXBondInfo(a2, eqiv) );
+        ai.BondsToCreate.Insert(0, new CXBondInfo(a2, eqiv));
       else
-        ai.BondsToCreate.Add( new CXBondInfo(a2, eqiv) );
+        ai.BondsToCreate.Add(new CXBondInfo(a2, eqiv));
     }
   }
 }
 //........................................................................
 void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv)  {
-  const smatd* eqiv = NULL;
-  try {  eqiv = GetCorrectMatrix(eqiv1, eqiv2, release_eqiv);  }
-  catch( ... )  {
-    TBasicApp::GetLog().Error( olxstr("Failed to delete bond: only one EQIV is expected"));
-    return;
-  }
+  const smatd* eqiv = GetCorrectMatrix(eqiv1, eqiv2, release_eqiv);
   size_t ind = InvalidIndex;
   for( size_t i=0; i < AtomInfo.Count(); i++ )  {
     ind = FindBondIndex(AtomInfo.GetValue(i).BondsToRemove, AtomInfo.GetKey(i), a1, a2, eqiv);
@@ -426,17 +448,16 @@ void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* 
     if( !exists )  {  // if was added - then it might not exist?
       AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
       if( eqiv == NULL )  // these to be processed first
-        ai.BondsToRemove.Insert(0, new CXBondInfo(a2, eqiv) );
+        ai.BondsToRemove.Insert(0, new CXBondInfo(a2, eqiv));
       else
-        ai.BondsToRemove.Add( new CXBondInfo(a2, eqiv) );
+        ai.BondsToRemove.Add(new CXBondInfo(a2, eqiv));
     }
   }
 }
 //........................................................................
-void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& toDelete, 
-                       smatd_list& ml )  
-{
-  TAsymmUnit& au = *a.GetParent();
+void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& toDelete, smatd_list& ml)  {
+  const TAsymmUnit& au = *a.GetParent();
+  const TUnitCell& uc = a.GetParent()->GetLattice().GetUnitCell();
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     TCAtom& ca = au.GetAtom(i);
     if( ca.IsDeleted() )  continue;
@@ -447,16 +468,16 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
           if( ci.BondsToRemove[j].matr == NULL )
             toDelete.AddCCopy(ci.BondsToRemove[j]);
           else  {
-            const smatd matr = ci.BondsToRemove[j].matr->Inverse();
+            const smatd matr = uc.InvMatrix(*ci.BondsToRemove[j].matr);
             bool uniq = true;
             for( size_t k=0; k < toDelete.Count(); k++ )  {
-              if( toDelete[k].matr != NULL && toDelete[k].to == a && toDelete[k].matr->EqualExt(matr) )  {
+              if( toDelete[k].matr != NULL && toDelete[k].to == a && toDelete[k].matr->GetId() == matr.GetId() )  {
                 uniq = false;
                 break;
               }
             }
             if( uniq )
-              toDelete.Add( new CXBondInfo(ca, &ml.AddCCopy(matr)) );
+              toDelete.Add(new CXBondInfo(ca, &ml.AddCCopy(matr)));
           }
         }
       }
@@ -465,25 +486,31 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
           if( ci.BondsToCreate[j].matr == NULL )
             toCreate.AddCCopy(ci.BondsToCreate[j]);
           else  {
-            const smatd matr = ci.BondsToCreate[j].matr->Inverse();
+            const smatd matr = uc.InvMatrix(*ci.BondsToCreate[j].matr);
             bool uniq = true;
             for( size_t k=0; k < toCreate.Count(); k++ )  {
-              if( toCreate[k].matr != NULL && toCreate[k].to == a && toCreate[k].matr->EqualExt(matr) )  {
+              if( toCreate[k].matr != NULL && toCreate[k].to == a && toCreate[k].matr->GetId() == matr.GetId() )  {
                 uniq = false;
                 break;
               }
             }
             if( uniq )
-              toCreate.Add( new CXBondInfo(ca, &ml.AddCCopy(matr)) );
+              toCreate.Add(new CXBondInfo(ca, &ml.AddCCopy(matr)));
           }
         }
       }
     }
     else  {  // own connectivity
-      toCreate.AddListC(ci.BondsToCreate);
-      toDelete.AddListC(ci.BondsToRemove);
+      for( size_t i=0; i < ci.BondsToCreate.Count(); i++ )
+        toCreate.Add(new CXBondInfo(ci.BondsToCreate[i].to,
+          ci.BondsToCreate[i].matr == NULL ? NULL : &ml.AddCCopy(*ci.BondsToCreate[i].matr)));
+      for( size_t i=0; i < ci.BondsToRemove.Count(); i++ )
+        toDelete.Add(new CXBondInfo(ci.BondsToRemove[i].to,
+          ci.BondsToRemove[i].matr == NULL ? NULL : &ml.AddCCopy(*ci.BondsToRemove[i].matr)));
     }
   }
+  //for( size_t i=0; i < ml.Count(); i++ )
+  //  uc.InitMatrixId(ml[i]);
 }
 //........................................................................
 void ConnInfo::AtomConnInfo::ToDataItem(TDataItem& item) const {
@@ -518,10 +545,10 @@ void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item, RefinementModel
     const olxstr& eq = ab.GetItem(i).GetFieldValue("eqiv");
     smatd const* eqiv = NULL;
     if( !eq.IsEmpty() )  { 
-      eqiv = &rm.GetUsedSymm( eq.ToInt() );
+      eqiv = &rm.GetUsedSymm(eq.ToInt());
       rm.AddUsedSymm(*eqiv);  // persist
     }
-    BondsToCreate.Add( new CXBondInfo(ca, eqiv) );
+    BondsToCreate.Add(new CXBondInfo(ca, eqiv));
   }
   TDataItem& db = item.FindRequiredItem("DELBOND");
   for( size_t i=0; i < db.ItemCount(); i++ )  {
@@ -536,3 +563,43 @@ void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item, RefinementModel
   }
 }
 //........................................................................
+#ifndef _NO_PYTHON
+PyObject* ConnInfo::AtomConnInfo::PyExport()  {
+  PyObject* main = PyDict_New();
+  PythonExt::SetDictItem(main, "radius", Py_BuildValue("f", r));
+  PythonExt::SetDictItem(main, "max_bonds", Py_BuildValue("i", maxBonds));
+  size_t bc = 0;
+  for( size_t i=0; i < BondsToCreate.Count(); i++ )  {
+    if( BondsToCreate[i].to.IsDeleted() )  continue;
+    bc++;
+  }
+  if( bc > 0 )  {
+    PyObject* btc = PyTuple_New(bc);
+    bc = 0;
+    for( size_t i=0; i < BondsToCreate.Count(); i++ )  {
+      if( BondsToCreate[i].to.IsDeleted() )  continue;
+      PyTuple_SetItem(btc, bc++,
+        Py_BuildValue("{s:i,s:i}", "to", BondsToCreate[i].to.GetTag(), "eqiv",
+          BondsToCreate[i].matr == NULL ? -1 : BondsToCreate[i].matr->GetId()));
+    }
+    PythonExt::SetDictItem(main, "create", btc);
+  }
+  bc = 0;
+  for( size_t i=0; i < BondsToRemove.Count(); i++ )  {
+    if( BondsToRemove[i].to.IsDeleted() )  continue;
+    bc++;
+  }
+  if( bc > 0 )  {
+    PyObject* btd = PyTuple_New(bc);
+    bc = 0;
+    for( size_t i=0; i < BondsToRemove.Count(); i++ )  {
+      if( BondsToRemove[i].to.IsDeleted() )  continue;
+      PyTuple_SetItem(btd, bc++,
+        Py_BuildValue("{s:i,s:i}", "to", BondsToRemove[i].to.GetTag(), "eqiv",
+          BondsToRemove[i].matr == NULL ? -1 : BondsToRemove[i].matr->GetId()));
+    }
+    PythonExt::SetDictItem(main, "delete", btd);
+  }
+  return main;
+}
+#endif

@@ -141,8 +141,7 @@ void XLibMacros::macVATA(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   TStrList report;
   TAutoDB::GetInstance()->ValidateResult( xapp.XFile().GetFileName(), xapp.XFile().GetLattice(), report);
-  for( size_t i=0; i < report.Count(); i++ )
-    log.Writenl( report[i] );
+  report.SaveToTextStream(log);
 }
 //..............................................................................
 struct Main_BaiComparator {
@@ -223,24 +222,24 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     if( !SortedQPeaks.IsEmpty() )  {
       vals.AddNew<double, TCAtomPList*>(0, new TCAtomPList);
       for( size_t i=SortedQPeaks.Count()-1; i >=1; i-- )  {
-        if( (SortedQPeaks.GetComparable(i) - SortedQPeaks.GetComparable(i-1))/SortedQPeaks.GetComparable(i) > 0.05 )  {
+        if( (SortedQPeaks.GetKey(i) - SortedQPeaks.GetKey(i-1))/SortedQPeaks.GetKey(i) > 0.05 )  {
           //FGlConsole->PostText( olxstr("Threshold here: ") << SortedQPeaks.GetObject(i)->GetLabel() );
-          vals.Last().A() += SortedQPeaks.GetComparable(i);
-          vals.Last().B()->Add( SortedQPeaks.GetObject(i));
+          vals.GetLast().A() += SortedQPeaks.GetKey(i);
+          vals.GetLast().B()->Add( SortedQPeaks.GetObject(i));
           cnt++;
-          vals.Last().A() /= cnt;
+          vals.GetLast().A() /= cnt;
           cnt = 0;
           vals.AddNew<double, TCAtomPList*>(0, new TCAtomPList);
           continue;
         }
-        vals.Last().A() += SortedQPeaks.GetComparable(i);
-        vals.Last().B()->Add( SortedQPeaks.GetObject(i));
+        vals.GetLast().A() += SortedQPeaks.GetKey(i);
+        vals.GetLast().B()->Add( SortedQPeaks.GetObject(i));
         cnt ++;
       }
-      vals.Last().B()->Add(SortedQPeaks.GetObject(0));
+      vals.GetLast().B()->Add(SortedQPeaks.GetObject(0));
       cnt++;
       if( cnt > 1 )
-        vals.Last().A() /= cnt;
+        vals.GetLast().A() /= cnt;
 
       TBasicApp::GetLog().Info( olxstr("Average QPeak: ") << avQPeak);
       TBasicApp::GetLog().Info("QPeak steps:");
@@ -253,16 +252,16 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       TBasicApp::GetLog().Info(olxstr("QPeak threshold:") << thVal);
 
       if( SortedQPeaks.Count() == 1 )  {  // only one peak present
-        if( SortedQPeaks.GetComparable(0) < thVal )
+        if( SortedQPeaks.GetKey(0) < thVal )
           SortedQPeaks.GetObject(0)->SetDeleted(true);
       }
       else  {
-        double wght = (SortedQPeaks.Last().Comparable-avQPeak)/
-          (avQPeak-SortedQPeaks.GetComparable(0));
+        double wght = (SortedQPeaks.GetLastKey()-avQPeak)/
+          (avQPeak-SortedQPeaks.GetKey(0));
         for( size_t i=vals.Count()-1; i != InvalidIndex; i-- )  {
           if( vals[i].GetA() < thVal )  {
             for( size_t j=0; j < vals[i].GetB()->Count(); j++ )
-              vals[i].GetB()->Item(j)->SetDeleted(true);
+              vals[i].GetB()->GetItem(j)->SetDeleted(true);
           }
         }
       }
@@ -362,7 +361,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       if( latt.GetFragment(i).NodeCount() == 1 && !latt.GetFragment(i).Node(0).IsDeleted() )  {
         TSAtom& sa = latt.GetFragment(i).Node(0);
         bool alone = true;
-        for( size_t j=0; j < sa.CAtom().AttachedAtomCount(); j++ )
+        for( size_t j=0; j < sa.CAtom().AttachedSiteCount(); j++ )
           if( sa.CAtom().GetAttachedAtom(j).GetType() != iQPeakZ )  {
             alone = false;
             break;
@@ -409,8 +408,8 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
               sa.CAtom().SetType(*StandAlone[0]);
             }
             else if( assignHeaviest )  {
-              sa.CAtom().SetLabel(StandAlone.Last()->symbol, false);
-              sa.CAtom().SetType(*StandAlone.Last());
+              sa.CAtom().SetLabel(StandAlone.GetLast()->symbol, false);
+              sa.CAtom().SetType(*StandAlone.GetLast());
             }
           }
         }
@@ -520,10 +519,10 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
       while( sl[i].GetA() > 0 )  {
         if( SortedQPeaks.IsEmpty() )  break;
         sl[i].A() --;
-        SortedQPeaks.Last().Object->SetLabel((olxstr(sl[i].GetB()->symbol) << i), false);
-        SortedQPeaks.Last().Object->SetType(*sl[i].B());
-        SortedQPeaks.Last().Object->SetQPeak(0);
-        SortedQPeaks.Remove(SortedQPeaks.Count()-1);
+        SortedQPeaks.GetLast().Object->SetLabel((olxstr(sl[i].GetB()->symbol) << i), false);
+        SortedQPeaks.GetLast().Object->SetType(*sl[i].B());
+        SortedQPeaks.GetLast().Object->SetQPeak(0);
+        SortedQPeaks.Delete(SortedQPeaks.Count()-1);
       }
       if( SortedQPeaks.IsEmpty() ) break;
     }
@@ -536,8 +535,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
     for( size_t i=0; i < au.AtomCount(); i++ )  {
       if( au.GetAtom(i).IsDeleted() )  continue;
       uc.FindInRangeAC(au.GetAtom(i).ccrd(), au.GetAtom(i).GetType().r_bonding+1.3, res);
-      vec3d center = au.GetAtom(i).ccrd();
-      au.CellToCartesian(center);
+      vec3d center = au.Orthogonalise(au.GetAtom(i).ccrd());
       for( size_t j=0; j < res.Count(); j++ )  {
         if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() && center.QDistanceTo(res[j].GetB()) < 1e-4 )
           res.Delete(j--);
@@ -579,7 +577,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
       for( size_t j=0; j < maxb_cnt; j++ )  {
         if( sa.GetType() == _autoMaxBond[j].type )  {
           uc.GetAtomEnviList(sa, bc_to_check.AddNew()); 
-          if( bc_to_check.Last().Count() <= _autoMaxBond[j].max_bonds )  {
+          if( bc_to_check.GetLast().Count() <= _autoMaxBond[j].max_bonds )  {
             bc_to_check.NullItem(bc_to_check.Count()-1);
           }
         }
@@ -741,14 +739,14 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
       if( n_e != NULL && p_e != NULL )  {
         if( (n_ed == 0 || olx_sign(n_ed) == olx_sign(p_ed))&& p_ed > 0 )  {
           found_cnt++;
-          TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
-            " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
+          TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol << 
+            " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel();
           atoms[i].GetA()->SetType(*n_e);
         }
         else if( n_ed < 0 && (p_ed == 0 || olx_sign(p_ed) == olx_sign(n_ed)) )  {
           found_cnt++;
-          TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
-            " to " << p_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
+          TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol << 
+            " to " << p_e->symbol << " for " << atoms[i].GetA()->GetLabel();
           atoms[i].GetA()->SetType(*p_e);
         }
         else if( n_ed != 0 && p_ed != 0 )  {
@@ -757,12 +755,12 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
             if( olx_abs(r) > 0.5 )  {
               found_cnt++;
               if( r > 0 )  {
-                TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
-                  " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
+                TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol << 
+                  " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel();
                 atoms[i].GetA()->SetType(*n_e);
               }
               else  {
-                TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
+                TBasicApp::NewLogEntry() << (olxstr("Atom type changed from ") << original_type.symbol << 
                   " to " << p_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
                 atoms[i].GetA()->SetType(*p_e);
               }
@@ -771,13 +769,13 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
           else  { // same sign?
             found_cnt++;
             if( n_ed > 0 )  {
-              TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
-                " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
+              TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol << 
+                " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel();
               atoms[i].GetA()->SetType(*n_e);
             }
             else  {
-              TBasicApp::GetLog() << (olxstr("Atom type changed from ") << original_type.symbol << 
-                " to " << p_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
+              TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol << 
+                " to " << p_e->symbol << " for " << atoms[i].GetA()->GetLabel();
               atoms[i].GetA()->SetType(*p_e);
             }
           }
@@ -787,7 +785,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   }
   sw.print(xapp.GetLog(), &TLog::Info);
   if( found_cnt == 0 )
-    TBasicApp::GetLog() << "No problems were found\n";
+    TBasicApp::NewLogEntry() << "No problems were found";
   else  {
     au.InitData();
     xapp.XFile().EndUpdate();

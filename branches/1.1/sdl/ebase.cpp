@@ -1,20 +1,21 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "exception.h"
 
 UseEsdlNamespace()
 
 TIString IEObject::ToString() const {  throw TNotImplementedException(__OlxSourceInfo);  }
 IEObject* IEObject::Replicate() const {  throw TNotImplementedException(__OlxSourceInfo);  }
-
+bool TExceptionBase::AutoLog = false;
 #ifdef __WIN32__
-  const char* EsdlObject(NewLineSequence) = "\r\n";
-  const short EsdlObject(NewLineSequenceLength) = 2;
+  const TICString EsdlObject(CNewLineSequence) = olxcstr("\r\n");
+  const TIWString EsdlObject(WNewLineSequence) = olxwstr("\r\n");
 #else
-  const char* EsdlObject(NewLineSequence) = "\n";
-  const short EsdlObject(NewLineSequenceLength) = 1;
+  const TICString EsdlObject(CNewLineSequence) = olxcstr("\n");
+  const TIWString EsdlObject(WNewLineSequence) = olxwstr("\n");
+#endif
+#ifdef _UNICODE
+  const TIString& EsdlObject(NewLineSequence) = WNewLineSequence;
+#else
+  const TIString& EsdlObject(NewLineSequence) = CNewLineSequence;
 #endif
 
 AReferencible::~AReferencible()  {

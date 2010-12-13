@@ -108,6 +108,10 @@ public:
       FParent->ProcessMacro("showwindow info false");
     else  if( Obj == FParent->FHelpWindow )
       FParent->ProcessMacro("showwindow help false");
+    else if( EsdlInstanceOf(*Obj, TXGrid) )
+      FParent->GridVChange();
+    else if( EsdlInstanceOf(*Obj, T3DFrameCtrl) )
+      FParent->FrameVChange();
     return true;
   }
 };
@@ -462,7 +466,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Bang, EmptyString, fpAny | psFileLoaded,
 "Prints bonds and angles table for selected atoms");
   this_InitMacroD(Grow,
-"s&;w-grows the rest of the structure, using already applied generators&;t-grows\
+"s-grow shells vs fragments&;w-grows the rest of the structure, using already applied generators&;t-grows\
  only provided atoms/atom types", fpAny | psFileLoaded,
 "Grows whole structure or provided atoms only");
   this_InitMacroD(Uniq, EmptyString, fpAny | psFileLoaded,
@@ -559,7 +563,7 @@ f-fixed parameters&;u-Uiso&;r-Uiso multiplier for riding atoms&;ao-actual occupa
 
   this_InitMacroD(Line, EmptyString, fpAny, "Creates a line or best line for provided atoms");
   this_InitMacro(AddLabel, , fpThree|fpFive);
-  this_InitMacroD(Mpln, "n-just orient, do not create plane&;r-create regular plane;we-use weights proportional to the (atomic weight)^we", 
+  this_InitMacroD(Mpln, "n-just orient, do not create plane&;r-create regular plane&;we-use weights proportional to the (atomic weight)^we", 
     fpAny, "Sets current view along the normal of the best plane");
   this_InitMacroD(Cent, EmptyString, fpAny, "creates a centroid for given/selected/all atoms");
   this_InitMacroD(Mask, EmptyString, fpAny^fpNone, 
@@ -586,7 +590,7 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacroD(Style, "s-shows a file open dialog", fpNone|fpOne, "Prints default style or sets it (none resets)");
   this_InitMacroD(Scene, "s-shows a file open dialog", fpNone|fpOne, "Prints default scene parameters or sets it (none resets)");
 
-  this_InitMacro(SyncBC, , fpNone);
+  this_InitMacroD(SyncBC, EmptyString, fpNone, "Copies atom materials to bonds");
 
   this_InitMacro(Basis, , fpNone|fpOne);
   this_InitMacro(Lines, , fpOne);
@@ -647,15 +651,16 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacro(ShowQ, wheel, fpNone|fpOne|fpTwo|psFileLoaded);
 
   this_InitMacroD(Mode, 
-"a-[name] autocomplete&;\
-p-[name] prefix&;\
-s-[grow] short interactions; [name] suffix&;\
-t-[name] type&;\
-c-[grow] covalent bonds; [move] copy fragments instead of moving&;\
-r-[split] a restraint/constraint for split atoms; [grow] show radial bonds between the same atoms&;\
-v-[grow] use user provided delta for connectivity analysis, default 2A", 
+"a-[name] autocomplete\n&;\
+p-[name] prefix\n&;\
+s-[grow] short interactions; [name] suffix\n&;\
+t-[name] type\n&;\
+c-[grow] covalent bonds; [move] copy fragments instead of moving\n&;\
+r-[split] a restraint/constraint for split atoms; [grow] show radial bonds between the same atoms\n&;\
+v-[grow] use user provided delta for connectivity analysis, default 2A\n&;\
+shells-[grow] grow atom shells vs fragments", 
 (fpAny^fpNone)|psFileLoaded, 
-    "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move, name, occu, pack, part, split");
+    "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move, name, occu, pack, part, split, fit");
 
   this_InitMacroD(Text, EmptyString, fpNone, "shows the console buffer in an external editor, defined by defeditor variable");
   this_InitMacroD(ShowStr, EmptyString, fpNone|fpOne|psFileLoaded, "shows/hides structure and console buffer");
@@ -669,20 +674,13 @@ v-[grow] use user provided delta for connectivity analysis, default 2A",
 
   this_InitMacro(EditAtom, cs-do not clear the selection,fpAny|psCheckFileTypeIns);
   this_InitMacro(EditIns, , fpNone|psCheckFileTypeIns);
-  this_InitMacro(EditHkl, , fpNone|fpOne|fpThree);
-  this_InitMacro(ViewHkl, , fpNone|fpOne);
-  this_InitMacro(ExtractHkl, , fpOne|psFileLoaded);
-  this_InitMacro(MergeHkl, , fpNone|fpOne|psFileLoaded);
+  this_InitMacro(HklEdit, , fpNone|fpOne|fpThree);
+  this_InitMacro(HklView, , fpNone|fpOne);
+
   // not implemented
-  this_InitMacroD(AppendHkl, "h&;k&;l&;c", fpAny, "moves reflection back into the refinement list\
- See excludeHkl for more details");
-  // not implemented
-  this_InitMacroD(ExcludeHkl, "h-semicolon separated list of indexes&;k&;l&;c-true/false to use provided\
- indexes in any reflection. The default is in any one reflection" , fpAny, "excludes reflections with give indexes\
- from the hkl file -h=1;2 : all reflections where h=1 or 2. ");
+  this_InitMacro(HklExtract, , fpOne|psFileLoaded);
 
   this_InitMacroD(Direction, EmptyString, fpNone, "prints current orientation of the model in factional coordinates");
-
   this_InitMacro(ViewGrid, , fpNone|fpOne);
   this_InitMacro(Undo, , fpNone);
 
@@ -731,23 +729,30 @@ v-[grow] use user provided delta for connectivity analysis, default 2A",
   this_InitMacro(UpdateFile, f,fpOne);
   this_InitMacro(NextSolution, ,fpNone);
 
-  this_InitMacroD(Match, "s-subgraph match&;c-center ([geom], mass)&;n-naming. If the value a symbol [or set of]\
+  this_InitMacroD(Match, "s-subgraph match&;w-use Z as weights&;n-naming. If the value a symbol [or set of]\
  this is appended to the label, '$xx' replaces the symbols after the atom type symbol with xx,\
  leaving the ending, '-xx' - changes the ending of the label with xx&;a-align&;\
 i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fpOne|fpTwo, "Fragment matching, alignment and label transfer routine");
-  this_InitMacroD(Conn, EmptyString, fpAny^fpNone, "Changes provided atom(s) connectivity (only until next connectivity modifying operation for now). First parameter is the new connectivity");
+  this_InitMacroD(Conn, EmptyString, fpAny^fpNone,
+    "Changes provided atom(s) connectivity (only until next connectivity modifying operation for now)."
+    "\nUsage: conn max_bond bonding_radius [selection/atom(s)/$type]"
+    "\nUsage: conn max_bond [selection/atom(s)/$type]"
+    "\nUsage: conn bonding_radius [selection/atom(s)/$type] - note the radius should have floating point"
+    );
   this_InitMacroD(AddBond, EmptyString, fpAny, "Adds specified bond to the connectivity table");
   this_InitMacroD(DelBond, EmptyString, fpAny, "Removes specified bond from the connectivity table");
   this_InitMacro(ShowWindow, ,fpOne|fpTwo);
   
-  this_InitMacro(DelOFile, ,fpOne);
+  this_InitMacroD(OFileDel, EmptyString, fpOne, "Deletes overlayed file specified by index");
+  this_InitMacroD(OFileSwap, EmptyString, fpOne,
+    "Makes overlayed file, given by index the current file to which all commands are applied");
   this_InitMacroD(CalcVol, "n-normalises bonds before the calculation&;cs-do not clear the selection", fpNone|fpOne, "Calculates tetrahedron or bipyramidal shape volume for given (selected) atom");
 
   this_InitMacroD(Schedule, "r-repeatable", fpAny^(fpNone|fpOne),
 "Schedules a particular macro (second argument) to be executed within provided\
  interval (first argument)");
 
-  this_InitMacroD(Tls, "", fpAny^(fpNone)|psFileLoaded, "James Haestier TLS test procedure");
+  this_InitMacroD(Tls, EmptyString, fpAny^(fpNone)|psFileLoaded, "James Haestier TLS test procedure");
 
   this_InitMacro(Test, , fpAny);
 
@@ -913,7 +918,8 @@ separated values of Atom Type and radius, an entry a line");
  If 'full' is provided as argument, the adoptor names are also returned as adapter=MAC;..");
   this_InitFuncD(ThreadCount, fpNone|fpOne, "Returns/sets the number of simultaneous tasks");
   this_InitFuncD(FullScreen, fpNone|fpOne, "Returns/sets full screen mode (true/false/swap)");
-
+  this_InitFuncD(MatchFiles, fpTwo|fpThree,    "Matches given files");
+  this_InitFuncD(Freeze, fpNone|fpOne, "Gets/Sets display update status");
   Library.AttachLibrary(FXApp->ExportLibrary());
   Library.AttachLibrary(TEFile::ExportLibrary());
   //Library.AttachLibrary(olxstr::ExportLibrary("str"));
@@ -1357,7 +1363,7 @@ void TMainForm::StartupInit()  {
 
   // set the variables
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
-    ProcessMacro(olxstr("setvar(") << StoredParams.GetComparable(i)
+    ProcessMacro(olxstr("setvar(") << StoredParams.GetKey(i)
                     << ",\'" << StoredParams.GetObject(i)
                     << "\')");
 
@@ -1398,7 +1404,7 @@ void TMainForm::AquireTooltipValue()  {
       Tooltip = xa.Atom().GetGuiLabelEx();
       if( xa.Atom().GetType() == iQPeakZ )
         Tooltip << ':' << xa.Atom().CAtom().GetQPeak();
-      double occu = ca.GetOccu()*ca.GetDegeneracy();
+      double occu = ca.GetChemOccu();
       Tooltip << "\nChem occu(";
       if( ca.GetVarRef(catom_var_name_Sof) != NULL )  {
         if( ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )  {
@@ -1435,6 +1441,9 @@ void TMainForm::AquireTooltipValue()  {
       }
       else
         Tooltip << "\nUeq " << olxstr::FormatFloat(3, ca.GetUiso());
+#ifdef _DEBUG
+      Tooltip << "\nBonds: " << xa.Atom().BondCount() << ", nodes: " << xa.Atom().NodeCount();
+#endif
     }
     else  if( EsdlInstanceOf( *G, TXBond) )  {
       Tooltip = ((TXBond*)G)->Bond().A().GetLabel();
@@ -1787,7 +1796,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     }
   }
   else if( MsgId == ID_ONLINK )  {
-    if( Data != NULL )  {
+    if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
       TStrList Toks(*(olxstr*)Data, ">>");
       //GetHtml()->LockPageLoad();
       /* the page, if requested, will beloaded on time event. The timer is disabled
@@ -1801,7 +1810,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       // enabling the timer back
       // retrun fucus to the main window, but let typing in the comboboxes
       if( Sender != NULL )  {
-        if( Data == NULL || ((olxstr*)Data)->Length() == 0 )
+        if( ((olxstr*)Data)->IsEmpty() )
           ;
         else if( EsdlInstanceOf(*Sender, TComboBox) && !((TComboBox*)Sender)->IsReadOnly() )
           ;
@@ -1829,7 +1838,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       TBasicApp::GetLog() << (olxstr(Data->ToString()) << '\n');
       FGlConsole->SetSkipPosting(false);
       if( ActiveLogFile != NULL )
-        ActiveLogFile->Writenl(Data->ToString());
+        ActiveLogFile->Writeln(Data->ToString());
     }
   }
   else if( MsgId == ID_COMMAND )  {
@@ -2330,7 +2339,7 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
     if( MF->GetOptions().Count() != 0 )  {
       FGlConsole->PrintText(" Switches: ");
       for( size_t i=0; i < MF->GetOptions().Count(); i++ )  {
-        FGlConsole->PrintText( olxstr("   ") << MF->GetOptions().GetComparable(i) << " - "
+        FGlConsole->PrintText( olxstr("   ") << MF->GetOptions().GetKey(i) << " - "
           << MF->GetOptions().GetObject(i) );
       }
     }
@@ -2409,7 +2418,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 
   I = &DF.Root().AddItem("Stored_params");
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
-    TDataItem& it = I->AddItem(StoredParams.GetComparable(i));
+    TDataItem& it = I->AddItem(StoredParams.GetKey(i));
     it.AddField("value", StoredParams.GetObject(i));
   }
 
@@ -2689,7 +2698,7 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
       FRecentFiles.Insert(0, FN, mi);
     }  
     else  {
-      FRecentFiles.Insert(0, FN, FRecentFiles.Last().Object);
+      FRecentFiles.Insert(0, FN, FRecentFiles.GetLast().Object);
       FRecentFiles.Delete(FRecentFiles.Count()-1);
     }
   }
@@ -2936,6 +2945,8 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
   if( Modes->GetCurrent() != NULL && Buttons == smbLeft )  {
     if( (abs(x-MousePositionX) < 3) && (abs(y-MousePositionY) < 3) )  {
       AGDrawObject *G = FXApp->SelectObject(x, y);
+      if( G != FObjectUnderMouse )
+        return false;
       if( G != NULL && Modes->GetCurrent()->OnObject(*G) )
         return true;
     }
@@ -3016,36 +3027,38 @@ bool TMainForm::CheckMode(size_t mode, const olxstr& modeData)  {
 }
 //..............................................................................
 bool TMainForm::CheckState(uint32_t state, const olxstr& stateData)  {
-  if( stateData.IsEmpty() )  return (ProgramState & state) != 0;
+  if( stateData.IsEmpty() )
+    return (ProgramState & state) != 0;
 
   if( state == prsHtmlVis )  {
-    if( !stateData.Length() )  return FHtmlMinimized;
-
+    if( stateData.IsEmpty() )
+      return FHtmlMinimized;
     TPopupData* pp = GetPopup( stateData );
-    return (pp!=NULL) ? pp->Dialog->IsShown() : false;
+    return (pp != NULL) ? pp->Dialog->IsShown() : false;
   }
   if( state == prsHtmlTTVis )  {
-    if( stateData.Length() == 0 )  return FHtml->GetShowTooltips();
-    TPopupData* pp = GetPopup( stateData );
-    return (pp!=NULL) ? pp->Html->GetShowTooltips() : false;
+    if( stateData.IsEmpty() )
+      return FHtml->GetShowTooltips();
+    TPopupData* pp = GetPopup(stateData);
+    return (pp != NULL) ? pp->Html->GetShowTooltips() : false;
   }
   if( state == prsPluginInstalled )  {
-    if( stateData.IsEmpty() )  return false;
+    if( stateData.IsEmpty() )
+      return false;
     return FPluginItem->ItemExists( stateData );
   }
-  if( state == prsHelpVis )  {
+  if( state == prsHelpVis )
     return HelpWindowVisible;
-  }
-  if( state == prsInfoVis )  {
+  if( state == prsInfoVis )
     return InfoWindowVisible;
-  }
-  if( state == prsCmdlVis )  {
+  if( state == prsCmdlVis )
     return CmdLineVisible;
-  }
-  if( state == prsGradBG )  {
+  if( state == prsGradBG )
     return FXApp->GetRender().Background()->IsVisible();
-  }
-
+  if( state == prsGridVis )
+    return FXApp->XGrid().IsVisible();
+  if( state == prsWBoxVis )
+    return FXApp->Get3DFrame().IsVisible();
   return false;
 }
 //..............................................................................
@@ -3071,7 +3084,7 @@ void TMainForm::OnInternalIdle()  {
         for( size_t j=0; j < macros.Count(); j++ )  {
           executeMacro( macros[j] );
 #ifdef _DEBUG
-          FXApp->GetLog() << TEFile::ExtractFileName(rof[i]) << ": " << macros[j] << '\n';
+          FXApp->NewLogEntry() << TEFile::ExtractFileName(rof[i]) << ": " << macros[j];
 #endif
         }
       }
@@ -3163,7 +3176,7 @@ IEObject* TMainForm::executeFunction(const olxstr& function)  {
     return NULL;
   }
   olxstr funName = function.SubStringTo(ind);
-  ABasicFunction* Fun = FXApp->GetLibrary().FindFunction( funName );
+  ABasicFunction* Fun = FXApp->GetLibrary().FindFunction(funName);
   if( Fun == NULL )  {
     TBasicApp::GetLog().Error( olxstr("Unknow function: ") << funName);
     return NULL;
@@ -3210,7 +3223,7 @@ void TMainForm::AnalyseError(TMacroError& error)  {
       TBasicApp::GetLog().Error(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
     }
     while( !error.GetStack().IsEmpty() )
-      TBasicApp::GetLog() << (olxstr('\t') << error.GetStack().Pop().TrimWhiteChars() ) << '\n';
+      TBasicApp::NewLogEntry() << '\t' << error.GetStack().Pop().TrimWhiteChars();
   }
 }
 //..............................................................................
@@ -3247,7 +3260,7 @@ int TMainForm::TranslateShortcut(const olxstr& sk)  {
     if( ((Shift&sssShift)==0) && toks[i].Equalsi("Shift") )  {  Shift |= sssShift;  continue;  }
     if( ((Shift&sssAlt)==0) && toks[i].Equalsi("Alt") )    {  Shift |= sssAlt;  continue;  }
   }
-  olxstr charStr = toks.LastStr();
+  olxstr charStr = toks.GetLastString();
   // a char
   if( charStr.Length() == 1 ) {
     Char = charStr[0];
@@ -3389,24 +3402,24 @@ bool TMainForm::registerCallbackFunc(const olxstr& cbEvent, ABasicFunction* fn) 
 }
 //..............................................................................
 void TMainForm::unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& funcName)  {
-  size_t ind = CallbackFuncs.IndexOfComparable(cbEvent),
-      i = ind;
+  size_t ind = CallbackFuncs.IndexOf(cbEvent),
+    i = ind;
   if( ind == InvalidIndex )  return;
   // go forward
-  while( i < CallbackFuncs.Count() && CallbackFuncs.GetComparable(i).Equals(cbEvent) )  {
+  while( i < CallbackFuncs.Count() && CallbackFuncs.GetKey(i).Equals(cbEvent) )  {
     if( CallbackFuncs.GetObject(i)->GetName() == funcName )  {
       delete CallbackFuncs.GetObject(i);
-      CallbackFuncs.Remove(i);
+      CallbackFuncs.Delete(i);
       return;
     }
     i++;
   }
   // go backwards
   i = ind-1;
-  while( i !=InvalidIndex && (!CallbackFuncs.GetComparable(i).Compare(cbEvent)) )  {
+  while( i !=InvalidIndex && (!CallbackFuncs.GetKey(i).Compare(cbEvent)) )  {
     if( CallbackFuncs.GetObject(i)->GetName() == funcName )  {
       delete CallbackFuncs.GetObject(i);
-      CallbackFuncs.Remove(i);
+      CallbackFuncs.Delete(i);
       return;
     }
     i--;
@@ -3533,26 +3546,26 @@ const olxstr& TMainForm::GetStructureOlexFolder()  {
   return EmptyString;
 }
 //..............................................................................
-void TMainForm::LockWindowDestruction(wxWindow* wnd)  {
+void TMainForm::LockWindowDestruction(wxWindow* wnd, const IEObject* caller)  {
   if( wnd == FHtml )
-    FHtml->IncLockPageLoad();
+    FHtml->LockPageLoad(caller);
 }
 //..............................................................................
-void TMainForm::UnlockWindowDestruction(wxWindow* wnd)  {
-  if( wnd == FHtml )  {
-    FHtml->DecLockPageLoad();
-  }
+void TMainForm::UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller)  {
+  if( wnd == FHtml )
+    FHtml->UnlockPageLoad(caller);
 }
 //..............................................................................
 bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool GetAll, bool unselect)  {
   size_t cnt = xatoms.Count();
   if( Cmds.IsEmpty() )  {
-    FXApp->FindXAtoms("sel", xatoms, EsdlInstanceOf(FXApp->GetSelection(), TGlGroup) ? unselect : false);
+    xatoms.AddList(
+      FXApp->FindXAtoms("sel", EsdlInstanceOf(FXApp->GetSelection(), TGlGroup) ? unselect : false));
     if( GetAll && xatoms.IsEmpty() )
-      FXApp->FindXAtoms(EmptyString, xatoms, unselect);
+      xatoms.AddList(FXApp->FindXAtoms(EmptyString, unselect));
   }
   else
-    FXApp->FindXAtoms(Cmds.Text(' '), xatoms, unselect);
+    xatoms.AddList(FXApp->FindXAtoms(Cmds.Text(' '), unselect));
   for( size_t i=0; i < xatoms.Count(); i++ )
     if( !xatoms[i]->IsVisible() )
       xatoms[i] = NULL;
@@ -3616,7 +3629,8 @@ void TMainForm::DoUpdateFiles()  {
   }
   else
     _UpdateThread->DoUpdate();
-  _UpdateThread->ResetUpdateSize();
+  if( _UpdateThread != NULL )
+    _UpdateThread->ResetUpdateSize();
 }
 //..............................................................................
 //..............................................................................

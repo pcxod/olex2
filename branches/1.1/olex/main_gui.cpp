@@ -140,6 +140,16 @@ void TMainForm::BasisVChange()  {
   OnStateChange.Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
+void TMainForm::GridVChange()  {
+  TStateChange sc(prsGridVis, FXApp->XGrid().IsVisible());
+  OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+}
+//..............................................................................
+void TMainForm::FrameVChange()  {
+  TStateChange sc(prsGridVis, FXApp->Get3DFrame().IsVisible());
+  OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+}
+//..............................................................................
 void TMainForm::OnCellVisible(wxCommandEvent& event)  {
   FXApp->SetCellVisible(!FXApp->IsCellVisible());
 }
@@ -214,32 +224,34 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     TStrList Ps;
     FObjectUnderMouse->ListPrimitives(Ps);
     if( Ps.IsEmpty() )  {
-      TBasicApp::GetLog() << "The object does not support requested function...";
+      TBasicApp::GetLog() << "The object does not support requested function...\n";
       return;
     }
-    int i = FObjectUnderMouse->GetPrimitives().GetStyle().GetParam(FObjectUnderMouse->GetPrimitiveMaskName(), "0").ToInt();
-    TdlgPrimitive* Primitives = new TdlgPrimitive(this, Ps, i);
+    TdlgPrimitive* Primitives = new TdlgPrimitive(this, *FObjectUnderMouse);
     if( Primitives->ShowModal() == wxID_OK )  {
-      if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
-        FXApp->AtomTagsToIndexes();
-        for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
-          if( EsdlInstanceOf(FXApp->GetSelection()[i], TXBond) )  {
-            TXBond& xb = (TXBond&)FXApp->GetSelection()[i];
-            FXApp->Individualise(xb);
-            BondCreationParams bcp(FXApp->GetAtom(xb.Bond().A().GetTag()),
-              FXApp->GetAtom(xb.Bond().B().GetTag()));
-            xb.UpdatePrimitives(Primitives->Mask, &bcp);
+      if( EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
+        TXBondPList bonds;
+        if( FObjectUnderMouse->IsSelected() )  {
+          for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
+            if( EsdlInstanceOf(FXApp->GetSelection()[i], TXBond) )
+              bonds.Add((TXBond&)FXApp->GetSelection()[i]);
           }
         }
+        else
+          bonds.Add((TXBond*)FObjectUnderMouse);
+        FXApp->Individualise(bonds, Primitives->Level, Primitives->Mask);
       }
-      else if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )  {
-        for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
-          if( EsdlInstanceOf(FXApp->GetSelection()[i], TXAtom) )  {
-            TXAtom& xa = (TXAtom&)FXApp->GetSelection()[i];
-            FXApp->Individualise(xa);
-            xa.UpdatePrimitives(Primitives->Mask);
+      else if( EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )  {
+        TXAtomPList atoms;
+        if( FObjectUnderMouse->IsSelected() )  {
+          for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
+            if( EsdlInstanceOf(FXApp->GetSelection()[i], TXAtom) )
+              atoms.Add((TXAtom&)FXApp->GetSelection()[i]);
           }
         }
+        else
+          atoms.Add((TXAtom*)FObjectUnderMouse);
+        FXApp->Individualise(atoms, Primitives->Level, Primitives->Mask);
       }
       else  {
         olxstr TmpStr = "mask ";
@@ -287,7 +299,7 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     else 
       T << " Occu: " << TEValueD(XA->Atom().CAtom().GetOccu(), XA->Atom().CAtom().GetOccuEsd()).ToString();
     miAtomInfo->SetText(T.u_str());
-    pmAtom->Enable(ID_AtomGrow, FXApp->AtomExpandable(XA));
+    pmAtom->Enable(ID_AtomGrow, !XA->Atom().IsGrown());
     pmAtom->Enable(ID_Selection, G->IsSelected() && EsdlInstanceOf(*G->GetParentGroup(), TGlGroup));
     pmAtom->Enable(ID_SelGroup, false);
     size_t bound_cnt = 0;

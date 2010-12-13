@@ -2,7 +2,6 @@
 #define __olx_stop_watch_h
 #include "etime.h"
 #include "bapp.h"
-#include "log.h"
 #include "etable.h"
 
 BeginEsdlNamespace()
@@ -18,12 +17,12 @@ public:
     steps.AddNew(TETime::msNow(), name, 0);
   }
   void stop()  {
-    steps.Last().C() = TETime::msNow();
+    steps.GetLast().C() = TETime::msNow();
   }
 protected:
   TStrList& prepareList(TStrList& out)  {
-    if( steps.Last().GetC() == 0 )
-      steps.Last().C() = TETime::msNow();
+    if( steps.GetLast().GetC() == 0 )
+      steps.GetLast().C() = TETime::msNow();
     TTTable<TStrList> tb(steps.Count()-1, 3);
     tb.ColName(0) = "Stop name";
     tb.ColName(1) = "Time till stop (ms)";
@@ -36,7 +35,7 @@ protected:
         tb[i-1][2] = steps[i+1].GetA() - steps[i].GetA();
     }
     tb.CreateTXTList(out, olxstr("Profiling information for " ) << FunctionName, true, false, ' ');
-    out.Add("Total time ") << (steps.Last().GetC() - steps[0].GetA()) << "ms";
+    out.Add("Total time ") << (steps.GetLast().GetC() - steps[0].GetA()) << "ms";
     return out;
   }
 public:

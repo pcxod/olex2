@@ -12,14 +12,14 @@ END_EVENT_TABLE()
 //..............................................................................
 void TListBox::ClickEvent(wxMouseEvent& event)  {
   StartEvtProcessing()
-    OnDblClick.Execute(this, &TEGC::New<olxstr>(GetOnDblClickStr()) );
+    OnDblClick.Execute(this, &GetOnDblClickStr());
   EndEvtProcessing()
 }
 //..............................................................................
 void TListBox::ItemSelectEvent(wxCommandEvent& event)  {
   if( !Data.IsEmpty() )  TOlxVars::SetVar(Data, GetValue());
   StartEvtProcessing()
-    OnSelect.Execute(this, &TEGC::New<olxstr>(GetOnSelectStr()) );
+    OnSelect.Execute(this, &GetOnSelectStr());
   EndEvtProcessing()
 }
 //..............................................................................

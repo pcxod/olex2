@@ -5,18 +5,21 @@
 #include "estrlist.h"
 #include "typelist.h"
 
-const short  fiDesktop       = 1,
-             fiStartMenu     = 2,
-             fiPrograms      = 3,
-             fiStartup       = 4,
-             fiControls      = 5,
-             fiProgramFiles  = 6,
-             fiMyDocuments   = 7,
-             fiAppData       = 8,    // returns application data folder for specific user
-             fiCommonStartMenu = 9,
-             fiCommonAppData   = 10,
-             fiCommonPrograms  = 11,
-             fiCommonDesktop   = 12; 
+enum {
+  fiDesktop = 1,
+  fiStartMenu,
+  fiPrograms,
+  fiStartup,
+  fiControls,
+  fiProgramFiles, // returns Program Files native to the process x32 vs x64
+  fiSysProgramFiles,  // returns Program Files folder native to the system
+  fiMyDocuments,
+  fiAppData,    // returns application data folder for specific user
+  fiCommonStartMenu,
+  fiCommonAppData,
+  fiCommonPrograms,
+  fiCommonDesktop
+}; 
 
 
 class TShellUtil  {

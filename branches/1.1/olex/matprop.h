@@ -6,15 +6,15 @@
 class TdlgMatProp: public TDialog, public AActionHandler  {
 private:
   wxCheckBox *cbAmbF, *cbAmbB, *cbDiffF, *cbDiffB, *cbEmmF, *cbEmmB,
-      *cbSpecF, *cbSpecB, *cbShnF, *cbShnB, *cbTrans, *cbIDraw;
+      *cbSpecF, *cbSpecB, *cbShnF, *cbShnB, *cbTrans, *cbIDraw,
+      *cbBlend;
   TTextEdit *tcAmbF, *tcAmbB, *tcDiffF, *tcDiffB, *tcEmmF, *tcEmmB,
       *tcSpecF, *tcSpecB, *tcShnF, *tcShnB;
   TSpinCtrl *scAmbF, *scAmbB, *scDiffF, *scDiffB, *scEmmF, *scEmmB,
       *scSpecF, *scSpecB, *scTrans;
-  wxCheckBox *cbApplyToGroup;
   wxButton* bEditFont;
+  wxComboBox *cbApplyTo;
   TComboBox *cbPrimitives;
-  TGPCollection *GPCollection;
   TPtrList<TSpinCtrl> SpinCtrls;
 protected:
   void OnOK(wxCommandEvent& event);

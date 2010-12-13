@@ -56,7 +56,7 @@ void TEllipsoid::operator = (const TEllipsoid&E)  {
   FNPD = E.FNPD;
 }
 //..............................................................................
-/* to get the quadratic for MatrixT*Matr(SX^2,SY^2,SZ^2)*Matrix*/
+/* to get the quadratic for Matrix*Matr(SX^2,SY^2,SZ^2)*MatrixT */
 void TEllipsoid::MultMatrix(const mat3d& Matr)  {
   if( FNPD )  return;
   mat3d N(FQuad[0], FQuad[5], FQuad[4], FQuad[1], FQuad[3], FQuad[2]), 

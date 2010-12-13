@@ -1603,7 +1603,7 @@ public:
     return rv;
   }
   //............................................................................
-  olxch Last() const {  
+  olxch GetLast() const {  
     if( T::_Length == 0 )
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "empty string");
     return T::SData->Data[T::_Start+T::_Length-1];

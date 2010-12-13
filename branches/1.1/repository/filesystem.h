@@ -200,7 +200,7 @@ public:
   inline bool HasProperty(const olxstr& pn)  const {
     return Properties.IndexOf(pn) != InvalidIndex;
   }
-  inline bool ValidateProperties(const TStrList& prs)  const {
+  inline bool ValidateProperties(const TStrList& prs) const {
     if( Properties.IsEmpty() || prs.IsEmpty() )  return true;
     for( size_t i=0; i < prs.Count(); i++ )
       if( Properties.IndexOf(prs[i]) != InvalidIndex )
@@ -213,7 +213,7 @@ public:
 
   DefPropBIsSet(Folder)
 
-  inline const olxstr& GetName()  const      {  return Name;  }
+  inline const olxstr& GetName() const {  return Name;  }
 
   int GetLevel()  const;
   olxstr GetFullName() const;
@@ -224,9 +224,8 @@ public:
   // only updates the digest if current is empty
   size_t UpdateDigest();
 
-  template <class SC> 
-  TFSItem* FindByName(const SC& Name) const {
-    size_t ind = Items.IndexOfComparable(Name);
+  template <class SC> TFSItem* FindByName(const SC& Name) const {
+    const size_t ind = Items.IndexOf(Name);
     return (ind == InvalidIndex) ? NULL : Items.GetObject(ind);
   }
 	// does a search of /parent_folder/parent_folder/file_name

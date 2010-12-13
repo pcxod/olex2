@@ -136,9 +136,9 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
         // summ vector
         Vec1 = ((envi.GetCrd(0) - envi.GetBase().crd()).Normalise() + (envi.GetCrd(1) - envi.GetBase().crd()).Normalise()).Normalise();
         RotVec = (envi.GetCrd(0) - envi.GetBase().crd()).XProdVec( envi.GetCrd(1) - envi.GetBase().crd() ).Normalise();
-        olx_create_rotation_matrix(M, RotVec, cos(M_PI/3), sin(M_PI/3) );
+        olx_create_rotation_matrix(M, RotVec, cos(M_PI*109.4/360), sin(M_PI*109.4/360));
         crds.AddNew(M*Vec1);
-        olx_create_rotation_matrix(M, RotVec, cos(-M_PI/3), sin(-M_PI/3) );
+        olx_create_rotation_matrix(M, RotVec, cos(-M_PI*109.4/360), sin(-M_PI*109.4/360));
         crds.AddNew(M*Vec1);
         // final 90 degree rotation
         olx_create_rotation_matrix(M, Vec1, 0, 1);

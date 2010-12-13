@@ -88,7 +88,7 @@ void TEBitArray::operator >> (IOutputStream& out) const  {
     out.Write(FData, FCharCount);
 }
 //..............................................................................
-bool TEBitArray::operator == (const TEBitArray& arr )  const  {
+bool TEBitArray::operator == (const TEBitArray& arr ) const {
   if( arr.Count() != Count() )  return false;
   for( size_t i=0; i < FCharCount; i++ )
     if( FData[i] != arr.FData[i] )  return false;
@@ -130,7 +130,7 @@ void TEBitArray::FromBase64String(const olxstr& str) {
   if( (str.Length()%4) != 1 ) 
     throw TInvalidArgumentException(__OlxSourceInfo, "representation");
   olxcstr cstr = encoding::base64::decode(olxcstr(str.SubStringTo(str.Length()-1)));
-  SetSize(cstr.Length()*8 - (8-(str.Last()-'0'))); 
+  SetSize(cstr.Length()*8 - (8-(str.GetLast()-'0'))); 
   memcpy(FData, cstr.raw_str(), cstr.Length());
 }
 //..............................................................................

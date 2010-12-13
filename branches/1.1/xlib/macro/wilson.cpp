@@ -169,17 +169,12 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
 
   TStrList output, header;
   if( binData.Count() != 0 )  {
-    TTTable<TStrList> tab(binData.Count(), 2);
-    tab.ColName(0) = "sin^2(theta)/lambda^2";
-    tab.ColName(1) = "ln(<Fo2>)/(Fexp2)";
     ematd points(2, binData.Count() );
     evecd line(2);
     for( size_t i=0; i < binData.Count(); i++ )  {
       points[0][i] = binData[i].GetB();
       points[1][i] = binData[i].GetA();
-      tab[i][0] = olxstr::FormatFloat(3, points[0][i]);
-      tab[i][1] = olxstr::FormatFloat(3, points[1][i]);
-      output.Add( olxstr(points[1][i]) << ',' << points[0][i]);
+      output.Add(olxstr(points[1][i]) << ',' << points[0][i]);
     }
     double rms = ematd::PLSQ(points, line, 1);
     olxstr &l = header.Add("Trendline y = ") << line[1] << "*x ";
@@ -190,7 +185,6 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     olxstr scat;
     for( size_t i=0; i < elements.Count(); i++ )
       scat << elements.GetKey(i)->symbol << elements.GetValue(i) << ' ';
-    tab.CreateTXTList(header, olxstr("Graph data for ") << scat, false, false, EmptyString);
     XApp.GetLog() << header;
     double K = exp(line[0]), B = -line[1]/2;
     double E2 = 0, SE2 = 0;
@@ -204,12 +198,12 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
       if( refs[i].Fo2 > 4 )  iE2GT2 ++;
     }
     E2 /= Refs.Count();
-    XApp.GetLog() << ( olxstr("From Wilson plot: B = ") << olxstr::FormatFloat(3,B)
-                                                 << " K = " << olxstr::FormatFloat(3,1./K) << '\n' );
-    XApp.GetLog() << ( olxstr("<|E*E-1|> = ") << olxstr::FormatFloat(3,E2)
-                                                   << "  [0.736 <- centro  +> 0.968]" << '\n' );
-    XApp.GetLog() << ( olxstr("%|E| > 2 = ") << olxstr::FormatFloat(3,(double)iE2GT2*100/refs.Count())
-                                                   << "  [1.800 <- centro  +> 4.600]" << '\n' );
+    XApp.NewLogEntry() << "From Wilson plot: B = " << olxstr::FormatFloat(3,B)
+      << " K = " << olxstr::FormatFloat(3,1./K);
+    XApp.NewLogEntry() << "<|E*E-1|> = " << olxstr::FormatFloat(3,E2)
+      << "  [0.736 <- centro  +> 0.968]";
+    XApp.NewLogEntry() << "%|E| > 2 = " << olxstr::FormatFloat(3,(double)iE2GT2*100/refs.Count())
+      << "  [1.800 <- centro  +> 4.600]";
     for( size_t i=0; i < binData.Count(); i++ )  {
       points[1][i] = binData[i].GetB();
       points[0][i] = binData[i].GetA();
@@ -228,19 +222,19 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     output.Add("#<|E^2-1|> = ") << olxstr::FormatFloat(3,E2);
     output.Add("#%|E| > 2 = ") << olxstr::FormatFloat(3,(double)iE2GT2*100/refs.Count());
 
-    TCStrList(output).SaveToFile( outputFileName ) ;
-    XApp.GetLog() << ( outputFileName << " file was created\n" );
+    TCStrList(output).SaveToFile(outputFileName) ;
+    XApp.NewLogEntry() << outputFileName << " file was created";
 
     if( E2 -(0.968+0.736)/2 < 0 )
-      E.SetRetVal<bool>( false );
+      E.SetRetVal<bool>(false);
     else
-      E.SetRetVal<bool>( true );
+      E.SetRetVal<bool>(true);
     /*
     refs.QuickSorter.SortSF(refs, TWilsonRef::SortByFo2);
 
     TPtrList<TWilsonEBin> ebins;
     int ebinsCnt = 400;
-    double minE=refs[0].Fo2, maxE=refs.Last().Fo2;
+    double minE=refs[0].Fo2, maxE=refs.GetLast().Fo2;
     double estep = (maxE-minE)/ebinsCnt,
            ehstep = estep/2;
 

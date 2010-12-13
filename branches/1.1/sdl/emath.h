@@ -37,6 +37,27 @@ template <typename int_t, typename float_t> inline int_t olx_round_t(const float
   int_t b = (int_t)a;  // |b| is always smaller than a
   return ((a < 0) ? (((b-a) >= .5) ? --b : b) : (((a-b) >= .5) ? ++b : b));
 }
+// rounds a floating point: returns (float_t)(round(a*num))/num 
+template <typename float_t> inline float_t olx_round(const float_t a, long num)  {
+  return (float_t)olx_round(a*num)/num;
+}
+template <typename float_t> inline long olx_floor(const float_t a)  {
+  long b = (long)a;
+  return (a < 0) ? b-1 : b;
+}
+template <typename int_t, typename float_t> inline int_t olx_floor_t(const float_t a)  {
+  int_t b = (int_t)a;
+  return (a < 0) ? b-1 : b;
+}
+// returns true if the given value is within (-eps,eps) range
+template <typename float_t> inline bool olx_is_zero(float_t v, float_t eps)  {
+  return v < 0 ? (v > -eps) : (v < eps);
+}
+// compares float values within an epsilon range, suitable for stable sort in acsending order
+template <typename float_t> inline int olx_cmp_float(float_t v1, float_t v2, float_t eps)  {
+  const float_t diff = v1 -v2;
+  return olx_is_zero(diff, eps) ? 0 : (diff > 0 ? 1 : -1);
+}
 // returns absolute value of a number
 template <typename num> inline num olx_abs(num n)  {
   return n < 0 ? -n : n;
@@ -201,6 +222,79 @@ template <class List> void GeneratePermutation(List& out, size_t perm)  {
     fc /= (cnt-i-1);
   }
 }
+
+namespace olx_vec  {
+  template <class OutT, class VecT, class MatT>
+  OutT& MulMatrix(const VecT& v, const MatT& m, OutT& o)  {
+    if( v.Count() != m.RowCount() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "size");
+    for( size_t i=0; i < m.ColCount(); i++ )  {
+      for( size_t j = 0; j < v.Count(); j++ )
+        o[i] += v[j]*m.Get(j, i);
+    }
+    return o;
+  }
+  template <class OutT, class VecT, class MatT>
+  OutT& MulMatrixT(const VecT& v, const MatT& m, OutT& o)  {
+    if( v.Count() != m.ColCount() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "size");
+    for( size_t i=0; i < m.RowCount(); i++ )  {
+      for( size_t j = 0; j < v.Count(); j++ )
+        o[i] += v[j]*m.Get(i, j);
+    }
+    return o;
+  }
+  template <class OutT, class VecAT, class VecBT>
+  OutT& MulVec(const VecAT& v1, const VecBT& v2, OutT& o)  {
+    if( v1.Count() != v2.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "size");
+    for( size_t i = 0; i < v1.Count(); i++ )
+      o[i] = v1[i]*v2[i];
+    return o;
+  }
+  template <class VecAT, class VecBT>
+  VecAT& MulSelfVec(VecAT& v1, const VecBT& v2)  {
+    if( v1.Count() != v2.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "size");
+    for( size_t i = 0; i < v1.Count(); i++ )
+      v1[i] *= v2[i];
+    return v1;
+  }
+};  // end namespace olx_vec
+namespace olx_mat  {
+  template <class OutT, class MatAT, class MatBT>
+  OutT& MulMatrix(const MatAT& m, const MatBT& n, OutT& o)  {
+    if( m.ColCount() != m.RowCount() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "size");
+    for( size_t i=0; i < m.RowCount(); i++ )  {
+      for( size_t j = 0; j < n.ColCount(); j++ )
+        for( size_t k = 0; k < m.ColCount(); k++ )
+          o.Set(i, j, o.Get(i, j) + m.Get(i, k)*n.Get(k, j));
+    }
+    return o;
+  }
+  //http://en.wikipedia.org/wiki/Kronecker_product
+  template <class InM, class OutM> OutM& KroneckerProduct(InM& a, InM& b, OutM& o)  {
+    if( a.ColCount()*b.ColCount() > o.ColCount() || a.RowCount()*b.RowCount() > o.RowCount() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "output size");
+    for( size_t ai=0; ai < a.RowCount(); ai++ )  {
+      const size_t oi_off = ai*b.RowCount();
+      for( size_t aj=0; aj < a.ColCount(); aj++ )  {
+        const size_t oj_off = aj*b.ColCount();
+        for( size_t bi=0; bi < b.RowCount(); bi++ )  {
+          for( size_t bj=0; bj < b.ColCount(); bj++ )  {
+            o.Set(oi_off+bi, oj_off+bj, a.Get(ai, aj)*b.Get(bi, bj));
+          }
+        }
+      }
+    }
+    return o;
+  }
+  template <class InM, class OutM> OutM KroneckerProduct(InM& a, InM& b)  {
+    OutM o(a.RowCount()*b.RowCount(), a.ColCount()*b.ColCount());
+    return KroneckerProduct(a, b, o);
+  }
+};  //end of namespace olx_mat
 
 template <typename float_type>
   static void olx_sincos(const float_type ang, float_type *sina, float_type *cosa)  {

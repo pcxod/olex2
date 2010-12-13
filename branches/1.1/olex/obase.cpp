@@ -111,7 +111,7 @@ TModes::~TModes()  {
 size_t TModes::DecodeMode(const olxstr& mode)  {
   if( Instance == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "uninitialised instance");
-  return Instance->Modes.IndexOfComparable(mode) + 1;  // -1 +1 = 0 = mmNone
+  return Instance->Modes.IndexOf(mode) + 1;  // -1 +1 = 0 = mmNone
 }
 //..............................................................................
 bool TModeChange::CheckStatus(const olxstr& mode, const olxstr& modeData)  {
@@ -149,11 +149,13 @@ olxstr TStateChange::StrRepr(uint32_t State) {
     case prsLabels:     return "labelsvis";
     case prsGLTT:       return "gltt";
     case prsPluginInstalled:  return "pluginInstalled";
+    case prsGridVis:  return "gridvis";
+    case prsWBoxVis:  return "wboxvis";
   }
   return "none";
 }
 //..............................................................................
-uint32_t TStateChange::DecodeState( const olxstr& mode )  {
+uint32_t TStateChange::DecodeState(const olxstr& mode)  {
  if( mode.Equalsi("strvis") )
    return prsStrVis;
   else if( mode.Equalsi("hvis") )
@@ -188,6 +190,10 @@ uint32_t TStateChange::DecodeState( const olxstr& mode )  {
     return prsLabels;
   else if( mode.Equalsi("GLTT") )
     return prsGLTT;
+  else if( mode.Equalsi("gridvis") )
+    return prsGridVis;
+  else if( mode.Equalsi("wboxvis") )
+    return prsWBoxVis;
   return prsNone;
 }
 //..............................................................................
@@ -196,7 +202,7 @@ bool TStateChange::CheckStatus(const olxstr& stateName, const olxstr& stateData)
 }
 //..............................................................................
 bool TStateChange::CheckStatus(uint32_t state, const olxstr& stateData) {
-  return TGlXApp::GetMainForm()->CheckState( state, stateData );
+  return TGlXApp::GetMainForm()->CheckState(state, stateData);
 }
 
 

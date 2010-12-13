@@ -1,11 +1,6 @@
 //----------------------------------------------------------------------------//
-// namespace TEXLib: styles
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "styles.h"
 #include "glmaterial.h"
 #include "glrender.h"
@@ -242,7 +237,7 @@ void TGraphicsStyle::RemoveNonSaveable() {
 //..............................................................................
 void TGraphicsStyle::RemoveNamedStyles(const TStrList& toks)  {
   if( toks.Count() < Level )  return;
-  size_t i = Styles.IndexOfComparable(toks[Level]);
+  const size_t i = Styles.IndexOf(toks[Level]);
   if( i != InvalidIndex )  {
     if( toks.Count() == Level+1 )  {
       delete Styles.GetObject(i);

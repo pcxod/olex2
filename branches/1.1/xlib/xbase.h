@@ -34,7 +34,7 @@ const float caDefIso = 0.05f;  // default atom isotropic parameter;
 
 template <class Net> class TSObject: public ACollectionItem  {
 protected:
-  Net* Network;  // a pointer to parrent Network
+  Net* Network;  // a pointer to parent Network
   short   Type;    // object type: eg bond, atom, etc
   size_t     NetId;    // reference in network container
   size_t     LattId;    // reference in lattice container

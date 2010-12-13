@@ -2,15 +2,11 @@
 // TDataItem
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "dataitem.h"
 #include "estrbuffer.h"
 #include "exparse/exptree.h"
 
-  static olxstr DoubleQuoteCode("&2E;");
+static olxstr DoubleQuoteCode("&2E;");
 
 UseEsdlNamespace()
 using namespace exparse::parser_util;
@@ -204,7 +200,7 @@ size_t TDataItem::LoadFromString(size_t start, const olxstr &Data, TStrList* Log
       const size_t name_start_i = i+1;
       while( ++i < sl )  {
         ch = Data.CharAt(i);
-        if( ch == ' ' || ch == '<' || ch == '>' || ch == '\"' )  break;
+        if( ch == '<' || ch == '>' || ch == '\"' || olxstr::o_iswhitechar(ch) )  break;
       }
       olxstr ItemName = Data.SubString(name_start_i, i-name_start_i);
       if( ItemName.IsEmpty() && Log != NULL )
@@ -224,9 +220,8 @@ size_t TDataItem::LoadFromString(size_t start, const olxstr &Data, TStrList* Log
     if( ch == '>' )  return i;
     if( ch == '/' )  continue;
     if( ch == '\\' ) continue;
-    if( ch != ' ')   {
-      olxstr FieldName = EmptyString;
-      olxstr FieldValue = EmptyString;
+    if( !olxstr::o_iswhitechar(ch) )   {
+      olxstr FieldName, FieldValue;
       if( is_quote(ch) )  {  // item value
         parse_escaped_string(Data, Value, i);
         if( i < sl && (Data.CharAt(i) == '>') )  {  return i;  }
@@ -236,17 +231,17 @@ size_t TDataItem::LoadFromString(size_t start, const olxstr &Data, TStrList* Log
       const size_t fn_start = i;
       while( i < sl )  {  // extract field name
         ch = Data.CharAt(i);
-        if( ch == ' ' || ch == '=' || ch == '>' || 
-            ch == '\"' || ch == '\'' || ch == '<')  break;
+        if( ch == '=' || ch == '>' || ch == '\"' || ch == '\'' ||
+          ch == '<' || olxstr::o_iswhitechar(ch) )  break;
         i++;
       }
       FieldName = Data.SubString(fn_start, i - fn_start);
       if( (i+1) >= sl ) return sl+1;
-      if( Data.CharAt(i) == ' ' )  i++;  // skip space
+      while( olxstr::o_iswhitechar(Data.CharAt(i)) && ++i < sl)  ;  // skip spaces
       if( (i+1) >= sl ) return sl+1;
       if( Data.CharAt(i) == '=' )  {  // extract field value
         i++;
-        if( Data.CharAt(i) == ' '  )  i++;  // skip space
+        while( olxstr::o_iswhitechar(Data.CharAt(i)) && ++i < sl )  ;  // skip space
         if( (i+1) >= sl ) return sl+1;
         olxch CloseChar = ' ';  // find closing character: space ' or "
         if( Data.CharAt(i) == '\'' )  {  CloseChar = '\''; i++; }
@@ -258,7 +253,8 @@ size_t TDataItem::LoadFromString(size_t start, const olxstr &Data, TStrList* Log
         }
         FieldValue = Data.SubString(fv_start, i-fv_start);
       }
-      else i--; // the spaces can separate just two field names
+      else  // the spaces can separate just two field names
+        i--;
       if( FieldName.IndexOf('.') != InvalidIndex )  {  // a reference to an item
         TDataItem* DI = DotItem(FieldName, Log);
         if( DI != NULL )  
@@ -345,8 +341,9 @@ void TDataItem::SaveToStrBuffer(TEStrBuffer &Data) const {
   }
   if( GetParent() != NULL )  {
     if( itemsadded )  {
-      Data << '\r' << '\n';
-      for( int i=0; i < Level-1; i++ )    Data << ' ';
+      Data << NewLineSequence;
+      for( int i=0; i < Level-1; i++ )
+        Data << ' ';
       Data << '>';
     }
     else  {

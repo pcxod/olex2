@@ -185,10 +185,10 @@ void TCif::Initialize()  {
           GetRM().expl.SetCrystalSize(mx.ToDouble(), md.ToDouble(), mn.ToDouble());
       }
       const olxstr temp = GetParamAsString("_diffrn_ambient_temperature");
-      if( temp != '?' )
+      if( !temp.IsEmpty() && temp != '?' )
         GetRM().expl.SetTempValue(TEValueD(temp));
       const olxstr radiation = GetParamAsString("_diffrn_radiation_wavelength");
-      if( radiation != '?' )
+      if( !radiation.IsEmpty() && radiation != '?' )
         GetRM().expl.SetRadiation(radiation.ToDouble());
     }
     catch(...)  {}
@@ -204,11 +204,14 @@ void TCif::Initialize()  {
       GetAsymmUnit().SetZ((short)olx_round(GetParamAsString("_cell_formula_units_Z").ToDouble()));
   }
   catch(...)  {
+    TBasicApp::GetLog().Info("CIF initialising failed: unknown cell parameters");
     return;
   }
   // check if the cif file contains valid parameters
-  if( GetAsymmUnit().CalcCellVolume() == 0 )
+  if( GetAsymmUnit().CalcCellVolume() == 0 )  {
+    TBasicApp::GetLog().Info("CIF initialising failed: zero cell volume");
     return;
+  }
 
   GetAsymmUnit().InitMatrices();
 
@@ -288,14 +291,18 @@ void TCif::Initialize()  {
   const size_t SiteOccu = ALoop->ColIndex("_atom_site_occupancy");
   const size_t Degen = ALoop->ColIndex("_atom_site_symmetry_multiplicity");
   const size_t Part = ALoop->ColIndex("_atom_site_disorder_group");
-  if( (ALabel|ACi[0]|ACi[1]|ACi[2]|ASymbol) == InvalidIndex )  {
+  if( (ALabel|ACi[0]|ACi[1]|ACi[2]) == InvalidIndex )  {
     TBasicApp::GetLog().Error("Failed to locate required fields in atoms loop");
     return;
   }
   for( size_t i=0; i < ALoop->RowCount(); i++ )  {
     TCAtom& A = GetAsymmUnit().NewAtom();
     A.SetLabel(ALoop->Get(i, ALabel).GetStringValue(), false);
-    cm_Element* type = XElementLib::FindBySymbol(ALoop->Get(i, ASymbol).GetStringValue());
+    cm_Element* type = NULL;
+    if( ASymbol != InvalidIndex )
+      type = XElementLib::FindBySymbol(ALoop->Get(i, ASymbol).GetStringValue());
+    else
+      type = XElementLib::FindBySymbolEx(ALoop->Get(i, ALabel).GetStringValue());
     if( type == NULL )  {
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Undefined element: ") <<
         ALoop->Get(i, ASymbol).GetStringValue());
@@ -501,17 +508,17 @@ bool TCif::Adopt(TXFile& XF)  {
   Clear();
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
   GetRM().Assign(XF.GetRM(), true);
-  GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
   Title = TEFile::ChangeFileExt(TEFile::ExtractFileName(XF.GetFileName()), EmptyString);
 
   block_index = 0;
-  data_provider.Add(Title);
+  data_provider.Add(Title.Replace(' ', "%20"));
   SetParam("_audit_creation_method", "OLEX2", true);
   SetParam("_chemical_name_systematic", "?", true);
   SetParam("_chemical_name_common", "?", true);
   SetParam("_chemical_melting_point", "?", false);
   SetParam("_chemical_formula_moiety", XF.GetLattice().CalcMoiety(), true);
-  SetParam("_chemical_formula_sum", GetAsymmUnit().SummFormula(' ', false), true);
+  SetParam("_chemical_formula_sum", GetAsymmUnit()._SummFormula(' ',
+    1./olx_max(GetAsymmUnit().GetZPrime(), 0.01)), true);
   SetParam("_chemical_formula_weight", olxstr::FormatFloat(2, GetAsymmUnit().MolWeight()), false);
 
   SetParam("_cell_length_a", GetAsymmUnit().Axes()[0].ToString(), false);
@@ -593,7 +600,7 @@ bool TCif::Adopt(TXFile& XF)  {
       Row.Set(j+2, new cetString(TEValueD(A.ccrd()[j], A.ccrdEsd()[j]).ToString()));
     Row.Set(5, new cetString(TEValueD(A.GetUiso(), A.GetUisoEsd()).ToString()));
     Row.Set(6, new cetString(A.GetEllipsoid() == NULL ? "Uiso" : "Uani"));
-    Row.Set(7, new cetString(TEValueD(A.GetOccu()*A.GetDegeneracy(), A.GetOccuEsd()).ToString()));
+    Row.Set(7, new cetString(TEValueD(olx_round(A.GetChemOccu(), 1000), A.GetOccuEsd()*A.GetDegeneracy()).ToString()));
     if( A.GetParentAfixGroup() != NULL && A.GetParentAfixGroup()->IsRiding() )
       Row.Set(8, new cetString("R"));
     else
@@ -755,7 +762,7 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
                   value = '?';
                 }
                 else  {
-                  if( (index == 13 || index == 14 || index == 30) && DoubleTheta )
+                  if( DoubleTheta && (index == 13 || index == 14 || index == 30 || index == 61 || index == 62 ) )
                     value = (*Params)[0].ToDouble()*2;
                   else
                     value = (*Params)[0];

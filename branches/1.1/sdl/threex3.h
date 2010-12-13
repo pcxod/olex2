@@ -22,10 +22,10 @@ public:
 
   inline T& operator [] (size_t i)  {  return data[i];  }
   inline T const& operator [] (size_t i) const {  return data[i];  }
-  inline T* GetData() {  return &data[0];  }
   inline const T* GetData() const {  return &data[0];  }
   inline T QLength() const {  return (data[0]*data[0]+data[1]*data[1]+data[2]*data[2]);  }
-  inline T Length() const {  return sqrt(data[0]*data[0]+data[1]*data[1]+data[2]*data[2]);  }
+  inline T Length() const {  return sqrt(QLength());  }
+  inline static size_t Count()  {  return 3;  }
   
   template <class AT> inline T DistanceTo(const TVector3<AT>& v) const {  
     return sqrt( (data[0]-v[0])*(data[0]-v[0]) + (data[1]-v[1])*(data[1]-v[1]) + (data[2]-v[2])*(data[2]-v[2]) ); 
@@ -61,9 +61,7 @@ public:
     return *this;
   }
   // takes square root of each element (must be >= 0!)
-  static inline TVector3<T> Sqrt(const TVector3<T>& v)  {
-    return TVector3<T>(sqrt(v[0]), sqrt(v[1]), sqrt(v[2]));
-  }
+  static inline TVector3<T> Sqrt(const TVector3<T>& v)  {  return TVector3<T>(v).Sqrt();  }
   // takes absolute value of the vector elements
   inline TVector3<T>& Abs()  {
     data[0] = olx_abs(data[0]);
@@ -72,20 +70,22 @@ public:
     return *this;
   }
   // returns a vector with absolute values of provided one
-  static inline TVector3<T> Abs(const TVector3<T>& v)  {
-    return TVector3<T>(olx_abs(v[0]), olx_abs(v[1]), olx_abs(v[2]));
-  }
+  static inline TVector3<T> Abs(const TVector3<T>& v)  {  return TVector3<T>(v).Abs();  }
   // returns sum of vector elements
   inline T Sum() const {  return data[0]+data[1]+data[2];  }
   // returns product of vector elements
   inline T Prod() const {  return data[0]*data[1]*data[2];  }
   // returns sum of absolute values of vector elements
-  inline T AbsSum()  {
+  inline T AbsSum() const {
     return olx_abs(data[0])+olx_abs(data[1])+olx_abs(data[2]);
   }
   // rounds the vector elements
   template <class AT> inline TVector3<AT> Round() const {
     return TVector3<AT>(olx_round_t<AT,T>(data[0]), olx_round_t<AT,T>(data[1]), olx_round_t<AT,T>(data[2]));
+  }
+  // floors the vector elements
+  template <class AT> inline TVector3<AT> Floor() const {
+    return TVector3<AT>(olx_floor_t<AT,T>(data[0]), olx_floor_t<AT,T>(data[1]), olx_floor_t<AT,T>(data[2]));
   }
   template <class AT> inline T DotProd(const TVector3<AT>& v) const {
     return data[0]*v[0] + data[1]*v[1] + data[2]*v[2];
@@ -100,7 +100,7 @@ public:
     const T dp = DotProd(v); 
     return sqrt(QLength()*v.QLength()) - dp*dp;
   }
-  template <class AT> inline TVector3<T> XProdVec(const TVector3<AT>& v) const  {
+  template <class AT> inline TVector3<T> XProdVec(const TVector3<AT>& v) const {
     return TVector3<T>(data[1]*v[2] - data[2]*v[1], 
                        data[2]*v[0] - data[0]*v[2], 
                        data[0]*v[1] - data[1]*v[0]);
@@ -115,7 +115,7 @@ public:
     return TVector3<T>(point[0]-data[0]*m, point[1]-data[1]*m, point[2]-data[2]*m);  
   }
   inline TVector3<T> operator -() const {
-    return TVector3<T>( -data[0], -data[1], -data[2] );
+    return TVector3<T>(-data[0], -data[1], -data[2]);
   }
   // returns a reflection of this vector from a plane represented by normal
   template <class AT> inline TVector3<T> Reflect(const TVector3<AT>& normal) const {
@@ -133,13 +133,22 @@ public:
     return (*this *= (val/l));
   }
   inline TVector3<T>& Null()  {  data[0] = data[1] = data[2] = 0;  return *this;  }
-  inline bool IsNull() const {  return (data[0] == 0 && data[1] == 0 && data[2] == 0) ? true: false;  }
-
-  inline bool operator == (const TVector3<T>& v) const {
-    return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]) ? true : false;  
+  inline bool IsNull() const {  return (data[0] == 0 && data[1] == 0 && data[2] == 0);  }
+  inline bool IsNull(T eps) const {
+    return (olx_abs(data[0]) < eps && olx_abs(data[1]) < eps && olx_abs(data[2]) < eps);
   }
-  inline bool operator != (const TVector3<T>& v) const {
-    return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]) ? false : true;  
+
+  inline bool Equals(const TVector3<T>& v) const {
+    return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]);
+  }
+  inline bool operator == (const TVector3<T>& v) const {  return Equals(v);  }
+  inline bool operator != (const TVector3<T>& v) const {  return !Equals(v);  }
+  // approximately equals
+  inline bool Equals(const TVector3<T>& v, T eps) const {
+    return (
+      olx_abs(data[0]-v[0]) < eps &&
+      olx_abs(data[1]-v[1]) < eps &&
+      olx_abs(data[2]-v[2]) < eps);
   }
   inline TVector3<T>& operator = (const TVector3<T>& v)  {
     data[0] = v[0];  data[1] = v[1];  data[2] = v[2];  
@@ -326,9 +335,14 @@ public:
     data[2][0] = (T)v[2][0];  data[2][1] = (T)v[2][1];  data[2][2] = (T)v[2][2];
   }
   
-  inline TVector3<T> const& operator [] (size_t i) const {  return data[i];  } 
+  inline const TVector3<T>& operator [] (size_t i) const {  return data[i];  } 
   inline TVector3<T>& operator [] (size_t i)  {  return data[i];  } 
-  
+  inline const TVector3<T>& Get(size_t i) const {  return data[i];  } 
+  inline const T& Get(size_t i, size_t j) const {  return data[i][j];  } 
+  inline void Set(size_t i, size_t j, const T& v) const {  return data[i][j] = v;  } 
+  inline static size_t ColCount()  {  return 3;  }
+  inline static size_t RowCount()  {  return 3;  }
+
   template <class AT> TMatrix33<T> operator * (const TMatrix33<AT>& v) const {
     return TMatrix33<T>( data[0][0]*v[0][0] + data[0][1]*v[1][0] + data[0][2]*v[2][0],
                          data[0][0]*v[0][1] + data[0][1]*v[1][1] + data[0][2]*v[2][1],
@@ -407,9 +421,7 @@ public:
   inline bool operator == (const TMatrix33<T>& v) const {
     return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]) ? true : false;
   }
-  inline bool operator != (const TMatrix33<T>& v) const {
-    return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]) ? false : true;
-  }
+  inline bool operator != (const TMatrix33<T>& v) const {  return !(operator == (v));  }
 
   inline TMatrix33<T>& operator = (const TMatrix33<T>& v)  {
     data[0] = v[0];  data[1] = v[1];  data[2] = v[2];
@@ -598,7 +610,7 @@ public:
      }
    }
 
-protected:  // used in GauseSolve to sort the matrix
+protected:  // used in GaussSolve to sort the matrix
   static void MatrixElementsSort(TMatrix33<T>& arr, TVector3<T>& b)  {
     T bf[3];
     for( size_t i = 0; i < 3; i++ )  {

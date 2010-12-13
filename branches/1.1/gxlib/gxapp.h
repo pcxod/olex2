@@ -130,11 +130,21 @@ protected:
   TEBitArray FVisibility;
   void RestoreVisibility();
   void StoreVisibility();
+  struct BondRef  {
+    const TLattice& latt;
+    TSBond::Ref ref;
+    BondRef(const TLattice& _latt, const TSBond::Ref& _ref): latt(_latt), ref(_ref)  {}
+  };
+  struct AtomRef  {
+    const TLattice& latt;
+    TSAtom::Ref ref;
+    AtomRef(const TLattice& _latt, const TSAtom::Ref& _ref): latt(_latt), ref(_ref)  {}
+  };
   struct GroupData  {
-    TTypeList<TSAtom::Ref> atoms;
-    TTypeList<TSBond::Ref> bonds;
+    TTypeList<AtomRef> atoms;
+    TTypeList<BondRef> bonds;
     olxstr collectionName;
-    bool visible;
+    bool visible, blended;
     index_t parent_id;
     bool IsEmpty() const {  return atoms.IsEmpty() && bonds.IsEmpty();  }
     void Clear()  {
@@ -146,15 +156,16 @@ protected:
       bonds = g.bonds;
       collectionName = g.collectionName;
       visible = g.visible;
+      blended = g.blended;
       parent_id = g.parent_id;
       return *this;
     }
   };
   struct {
-    TTypeList<TSAtom::Ref> atoms;
+    TTypeList<AtomRef> atoms;
+    TTypeList<BondRef> bonds;
     TTypeList<olxstr> labels;
     TTypeList<vec3d> centers;
-    TTypeList<TSBond::Ref> bonds;
     void Clear()  {
       atoms.Clear();
       bonds.Clear();
@@ -172,6 +183,40 @@ protected:
   void RestoreGroups();
   void StoreGroup(const TGlGroup& glg, GroupData& group);
   void _UpdateGroupIds();
+  size_t LattCount() const {  return OverlayedXFiles.Count()+1;  }
+  TLattice& GetLatt(size_t i) const {  return (i == 0 ? XFile() : OverlayedXFiles[i-1]).GetLattice();  }
+  static size_t CalcMaxAtomTag(const TLattice& latt)  {
+    size_t ac = 0;
+    for( size_t i=0; i < latt.AtomCount(); i++ )
+      if( !latt.GetAtom(i).IsDeleted() )
+        ac++;
+    return ac;
+  }
+  static size_t CalcMaxBondTag(const TLattice& latt)  {
+    size_t bc = 0;
+    for( size_t i=0; i < latt.BondCount(); i++ )
+      if( !latt.GetBond(i).IsDeleted() )
+        bc++;
+    return bc;
+  }
+  size_t GetAtomTag(TSAtom& sa, TSizeList& latt_sz) const {
+    size_t off = 0;
+    for( size_t i=0; i < LattCount(); i++ )  {
+      if( sa.GetNetwork().GetLattice() == GetLatt(i) )
+        return off+sa.GetTag();
+      off += latt_sz[i];
+    }
+    return InvalidIndex;
+  }
+  size_t GetBondTag(TSBond& sb, TSizeList& latt_sz) const {
+    size_t off = 0;
+    for( size_t i=0; i < LattCount(); i++ )  {
+      if( sb.GetNetwork().GetLattice() == GetLatt(i) )
+        return off+sb.GetTag();
+      off += latt_sz[i];
+    }
+    return InvalidIndex;
+  }
 public:
   // stores groups beforehand abd restores afterwards, also considers overlayed files
   void UpdateConnectivity();
@@ -190,7 +235,7 @@ public:
   virtual ~TGXApp();
   void CreateObjects(bool SyncBonds, bool CenterModel);
   void UpdateBonds();
-  void AddObjectToCreate(AGDrawObject* obj)  {  ObjectsToCreate.Add(obj);  }
+  AGDrawObject* AddObjectToCreate(AGDrawObject* obj)  {  return ObjectsToCreate.Add(obj);  }
   void Clear();
   void ClearXGrowPoints();
   void SBonds2XBonds(TSBondPList& L, TXBondPList& Res);
@@ -252,6 +297,7 @@ public:
   // calculates maximum radius and center of given lattice
   void CalcLatticeRandCenter(const TLattice& latt, double& r, vec3d& cnt);
   void DeleteOverlayedXFile(size_t index);
+  void DeleteOverlayedXFiles();
 
   void Select(const vec3d& From, const vec3d& To);
   void SelectAll(bool Select);
@@ -288,7 +334,9 @@ protected:
        FHklVisible,
        FXGrowLinesVisible,
        XGrowPointsVisible,
-       FXPolyVisible;
+       FXPolyVisible,
+       DisplayFrozen,
+       ZoomAfterModelBuilt;
   short FGrowMode, PackMode;
 public:
   TXGlLabels& GetLabels() const {  return *FLabels; }
@@ -306,13 +354,19 @@ public:
   size_t GetNextAvailableLabel(const olxstr& AtomType);
 
   // moving atom from/to collection
-  void Individualise(TXAtom& XA);
-  void Collectivise(TXAtom& XA);
-  void Individualise(TXBond& XB, bool create=true);
+  void Individualise(TXAtom& XA, short level=-1, int32_t mask = -1);
+  void Collectivise(TXAtom& XA, short level=-1, int32_t mask = -1);
+  void Individualise(const TXAtomPList& atoms, short level=-1, int32_t mask = -1);
+  void Collectivise(const TXAtomPList& atoms, short level=-1, int32_t mask = -1);
+  void Individualise(TXBond& XB, short level=-1, int32_t mask = -1);
+  void Collectivise(TXBond& XB, short level=-1, int32_t mask = -1);
+  void Individualise(const TXBondPList& bonds, short level=-1, int32_t mask = -1);
+  void Collectivise(const TXBondPList& bonds, short level=-1, int32_t mask = -1);
   // should not be used externaly
   void ClearLabels();
 
   DefPropP(double, DeltaV)
+  DefPropBIsSet(ZoomAfterModelBuilt)
   //
 //..............................................................................
 // XFile interface
@@ -332,10 +386,8 @@ public:
   }
   void GrowAtoms(const olxstr& Atoms, bool Shell, TCAtomPList* Template=NULL);
   void GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template=NULL);
-  void Grow(const TXGrowLine& growLine);
   void Grow(const TXGrowPoint& growPoint);
-  void ChangeAtomType( TXAtom *A, const olxstr& Element);
-  bool AtomExpandable(TXAtom *XA);
+  void ChangeAtomType(TXAtom *A, const olxstr& Element);
   void GrowWhole(TCAtomPList* Template=NULL){  FXFile->GetLattice().GenerateWholeContent(Template); }
   void Grow(const TXAtomPList& atoms, const smatd_list& matrices);
 
@@ -351,6 +403,11 @@ public:
   bool AreQPeaksVisible()  {  return FQPeaksVisible;  }
   void SetQPeakBondsVisible(bool v);
   bool AreQPeakBondsVisible()  {  return FQPeakBondsVisible;  }
+  bool IsDisplayFrozen() const {  return DisplayFrozen;  }
+  void SetDisplayFrozen(bool v)  {
+    DisplayFrozen = v;
+    if( !v )  Draw();
+  }
 
   // hides all bonds for all hidden q-peaks
   void SyncQVisibility();
@@ -386,8 +443,7 @@ public:
   void BondTagsToIndexes() const;
   // these two do a command line parsing "sel C1 $N C?? C4 to end"
   void FindCAtoms(const olxstr& Atoms, TCAtomPList& List, bool ClearSelection=true);
-  void FindXAtoms(const olxstr& Atoms, TXAtomPList& List, bool ClearSelection=true, 
-    bool FindHidden=false);
+  TXAtomPList FindXAtoms(const olxstr& Atoms, bool ClearSelection=true, bool FindHidden=false);
 
   TXAtom& GetAtom(size_t i) {  return XAtoms[i];  }
   const TXAtom& GetAtom(size_t i) const {  return XAtoms[i];  }
@@ -428,8 +484,8 @@ public:
 protected:  float ProbFactor(float Prob);
 public:     void CalcProbFactor(float Prob);
 
-  TXPlane *AddPlane(TXAtomPList& Atoms, bool Rectangular, int weightExtent=0);
-  TSPlane *TmpPlane(TXAtomPList* Atoms=NULL, int weightExtent=0); 
+  TXPlane *AddPlane(TXAtomPList& Atoms, bool Rectangular, double weightExtent=0);
+  TSPlane *TmpPlane(TXAtomPList* Atoms=NULL, double weightExtent=0); 
   void DeletePlane(TXPlane* plane);
   void ClearPlanes();
   TXPlane *XPlane(const olxstr& PlaneName);

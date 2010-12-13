@@ -384,7 +384,7 @@ public:
   //int CloneTexture( int )
   //inline int GetTextureIndex( const TGlTexture& tex) const {  return Textures.}
   inline TGlTexture* FindTexture(GLuint textureIndex)  {
-    size_t index = Textures.IndexOfComparable(textureIndex);
+    const size_t index = Textures.IndexOf(textureIndex);
     return Textures.GetObject(index);
   }
 };

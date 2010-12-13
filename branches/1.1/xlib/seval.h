@@ -82,7 +82,7 @@ class TTSAtom_EvaluatorFactory: public IEvaluatorFactory, ITSAtom_DataProvider
 public:
   IEvaluator *Evaluator(const olxstr & propertyName)  {  return Evaluators[propertyName];  }
   IEvaluator *Evaluator(size_t index)  {  return Evaluators.GetObject(index);  }
-  const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetComparable(index);  }
+  const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetKey(index);  }
   size_t EvaluatorCount() {  return Evaluators.Count();  }
   // variable getter, to be used by evaluators
   TSAtom* GetTSAtom(){  return SAtom;  }
@@ -108,7 +108,7 @@ class TTBasicAtomInfoEvaluatorFactory: public IEvaluatorFactory, ITBasicAtomInfo
 public:
   IEvaluator *Evaluator(const olxstr & propertyName)  {  return Evaluators[propertyName];  }
   IEvaluator *Evaluator(size_t index)  {  return Evaluators.GetObject(index);  }
-  const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetComparable(index);  }
+  const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetKey(index);  }
   size_t EvaluatorCount()  {  return Evaluators.Count();  }
   // variable getter, to be used by evaluators
   const cm_Element *GetType()  {  return type;  }

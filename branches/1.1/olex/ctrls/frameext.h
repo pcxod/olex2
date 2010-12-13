@@ -6,7 +6,6 @@
 #include "gllightmodel.h"
 
 namespace ctrl_ext  {
-
   class TMainFrame: public wxFrame, public AOlxCtrl  {
     static TMainFrame* MainFrameInstance;
   protected:
@@ -26,8 +25,8 @@ namespace ctrl_ext  {
     void RestorePosition(wxWindow *Window); // restores previously saved position
     void SavePosition(wxWindow *Window);    //saves current position of the window on screen
     olxstr PickFile(const olxstr &Caption, const olxstr &Filter, const olxstr &DefFolder, bool Open);
-    virtual void LockWindowDestruction(wxWindow* wnd) = 0;
-    virtual void UnlockWindowDestruction(wxWindow* wnd) = 0;
+    virtual void LockWindowDestruction(wxWindow* wnd, const IEObject* caller) = 0;
+    virtual void UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller) = 0;
 
     virtual void SetScenesFolder(const olxstr& sf) = 0;
     virtual const olxstr& GetScenesFolder() const = 0;

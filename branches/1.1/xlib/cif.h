@@ -172,10 +172,10 @@ struct AtomCifEntry : public cif_dp::IStringCifEntry {
   virtual const olxstr& GetComment() const {  return EmptyString;  }
   virtual cif_dp::ICifEntry* Replicate() const {  return new AtomCifEntry(*this);  }
   virtual void ToStrings(TStrList& list) const {
-    if( list.IsEmpty() || (list.Last().String.Length() + data.GetLabel().Length() + 1 > 80) )
+    if( list.IsEmpty() || (list.GetLastString().Length() + data.GetLabel().Length() + 1 > 80) )
       list.Add(' ') << data.GetLabel();
     else
-      list.Last().String << ' ' << data.GetLabel();
+      list.GetLastString() << ' ' << data.GetLabel();
   }
   virtual olxstr GetStringValue() const {  return data.GetLabel();  }
 };
@@ -194,10 +194,10 @@ struct AtomPartCifEntry : public cif_dp::IStringCifEntry {
       tmp_val = '.';
     else
       tmp_val = (int)data.GetPart();
-    if( list.IsEmpty() || (list.Last().String.Length() + data.GetLabel().Length() + 1 > 80) )
+    if( list.IsEmpty() || (list.GetLastString().Length() + data.GetLabel().Length() + 1 > 80) )
       list.Add(' ') << tmp_val;
     else
-      list.Last().String << ' ' << tmp_val;
+      list.GetLastString() << ' ' << tmp_val;
   }
   virtual olxstr GetStringValue() const {  return (tmp_val = (int)data.GetPart());  }
 };

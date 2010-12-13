@@ -79,7 +79,7 @@ namespace exparse  {
     static inline olxstr unquote(const olxstr& exp)  {
       if( exp.Length() < 2 )  return exp;
       const olxch ch = exp.CharAt(0);
-      if( is_quote(ch) && (exp.Last() == ch) && !is_escaped(exp, exp.Length()-1) )
+      if( is_quote(ch) && (exp.GetLast() == ch) && !is_escaped(exp, exp.Length()-1) )
         return exp.SubStringFrom(1, 1);
       return exp;
     }
@@ -87,7 +87,7 @@ namespace exparse  {
     static inline bool is_quoted(const olxstr& exp)  {
       if( exp.Length() < 2 )  return false;
       const olxch ch = exp.CharAt(0);
-      return (is_quote(ch) && (exp.Last() == ch) && !is_escaped(exp, exp.Length()-1));
+      return (is_quote(ch) && (exp.GetLast() == ch) && !is_escaped(exp, exp.Length()-1));
     }
     // replaces \t, \n, \r, \\, \", \' with corresponding values
     olxstr unescape(const olxstr& exp);

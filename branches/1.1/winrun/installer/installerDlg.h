@@ -4,7 +4,8 @@ enum {
   actionInstall,
   actionRun,
   actionReinstall,
-  actionExit
+  actionExit,
+  actionUninstall
 };
 const short
   rename_status_BaseDir = 0x0001,
@@ -24,6 +25,7 @@ public:
   void SetAction(const olxstr &val)  {
     GetDlgItem(IDC_ST_PROGRESS)->SendMessage(WM_SETTEXT, 0, (LPARAM)val.u_str());
   }
+  void SetInstalledPath(const olxstr& path);
   CToolTipCtrl *tooltipCtrl;
   CBrush *ctrlBrush;
   void ProcessMessages();
@@ -31,13 +33,11 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
   bool mouse_down;
   CPoint mouse_pos;
-  bool run_as_admin, olex2_installed;
-  olxstr olex2_installed_path, olex2_data_dir, 
+  bool run_as_admin, user_is_admin;
+  olxstr olex2_data_dir, 
     olex2_install_path, olex2_install_tag;
   int action;
   short rename_status;
-  // initialises (if olex2 is installed) olex2_install_path and returns it or CmdLine
-  olxstr LocateBaseDir();
   olxstr ReadTag(const olxstr& zip_fn) const;
   void InitRepositories();
   void DisableInterface(bool v);
@@ -51,7 +51,6 @@ protected:
   bool DoRun();
   bool LaunchFile(const olxstr &fileName, bool quiet, bool do_exit);
   void SetInstallationPath(const olxstr& path);
-  TBasicApp bapp;
   const static olxstr exts[];
   const static size_t exts_sz;
 protected:

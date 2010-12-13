@@ -63,7 +63,8 @@ protected:
   void BuildPlanes();
   void InitBody();
   void Disassemble(bool create_planes=true);
-  void RestoreCoordinates();
+  TSAtom& GenerateAtom(TCAtom& a, smatd& symop);
+  static void _CreateFrags(TCAtom& start, TCAtomPList& dest);
 public:
   TLattice();
   virtual ~TLattice();
@@ -72,18 +73,22 @@ public:
     &OnAtomsDeleted;
 
   // this is does not have any usefull data - just for functions call!!!
-  inline TNetwork& GetNetwork()  const  {  return *Network; }
+  inline TNetwork& GetNetwork() const {  return *Network; }
 
   void Clear(bool ClearUnitCell);
   void Uniq(bool removeSymmEquivalents = false);
-  // used if the connectivity ifosrmation was altered externally
+  // used if atoms availibility etc has changed
   void UpdateConnectivity();
+  // used if the connectivity info (CONN/BIND/FREE etc) is changed
+  void UpdateConnectivityInfo();
   void UpdatePlaneDefinitions();
   void Init();
   /*adopts atoms, bonds and fragment from the given lattice */
   void AddLatticeContent(const TLattice& latt);
   // generates atoms inside the unit cell only
   void GenerateCell();
+  // generates atoms inside the given box of dim[i].Length() size at position center
+  void GenerateBox(const mat3d& norms, const vec3d& size, const vec3d& center, bool clear_content);
   // generates atoms within specified volume
   void Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
     bool ClearCont);
@@ -96,18 +101,21 @@ public:
   // generates matrices so that the center of asymmetric unit is inisde the specified volume
   size_t GenerateMatrices(smatd_plist& Result, const vec3d& VFrom, const vec3d& VTo,
         const vec3d& MFrom, const vec3d& MTo);
-  // finds matrices to be used for the next grow operation 
+  // finds matrices to be used for the next grow operation in GrowFragments
   void GetGrowMatrices(smatd_list& res) const;
-  
+  /* grows all atoms which can be grown, if GrowShells is true, only immediate environment
+  of the atoms which can grow is generated */
   void GrowFragments(bool GrowShells, TCAtomPList* Template);
-  void GrowAtoms(const TSAtomPList& Atoms, bool GrowShells, TCAtomPList* Template);
-  void GrowAtoms(const TSAtomPList& Atoms, const smatd_list& matrices);
+  /* grows a fragment using particular matrix */
+  void GrowFragment(uint32_t FragId, const smatd& transform);
   void GrowAtom(TSAtom& A, bool GrowShells, TCAtomPList* Template);
-  /* grow a fragment using particular matrix */
-  void GrowAtom(uint32_t FragId, const smatd& transform);
+  void GrowAtoms(const TSAtomPList& Atoms, bool GrowShells, TCAtomPList* Template);
+  void GrowAtoms(const TCAtomPList& Atoms, const smatd_list& matrices);
+  void GrowAtom(TCAtom& atom, const smatd& matrix);
+  // adds new asymmetric unit transformed by the given symop 
   void Grow(const smatd& transform);
-  void GenerateWholeContent(TCAtomPList* Template); // generates content using current matrices
-  bool IsExpandable(TSAtom& A) const;
+   /* generates content using current matrices, the current content stays */
+  void GenerateWholeContent(TCAtomPList* Template);
 
   static int CompareFragmentsBySize(const TNetwork* N, const TNetwork* N1)  {
     return N1->NodeCount() < N->NodeCount() ? -1 : (N1->NodeCount() > N->NodeCount() ? -1 : 0);
@@ -143,10 +151,10 @@ public:
   inline TSPlane& GetPlane(size_t i) const {  return *Planes[i];  }
   const TSPlanePList& GetPlanes() const {  return Planes;  }
   // for the grown structure might return more than one plane
-  TSPlanePList NewPlane(const TSAtomPList& Atoms, int weightExtent=0, bool regular=false);
+  TSPlanePList NewPlane(const TSAtomPList& Atoms, double weightExtent=0, bool regular=false);
   void ClearPlaneDefinitions()  {  PlaneDefs.Clear();  }
-
-  TSPlane* TmpPlane(const TSAtomPList& Atoms, int weightExtent=0); //the plane must be deleted by the caller !
+  //the plane must be deleted by the caller !
+  TSPlane* TmpPlane(const TSAtomPList& Atoms, double weightExtent=0);
   TSAtom* NewCentroid(const TSAtomPList& Atoms);
   TSAtom* NewAtom(const vec3d& center);
 
@@ -157,6 +165,8 @@ public:
   void UpdateAsymmUnit();
   // re-creats unit cell U's and reinitialises atom U's
   void RestoreADPs(bool restoreCoordinates=true);  
+  // re-calculates the cartesian coordinates of atoms
+  void RestoreCoordinates();
   void MoveFragment(const vec3d& to, TSAtom& fragAtom);
   void MoveFragment(TSAtom& to, TSAtom& fragAtom);
   void MoveToCenter();
@@ -185,12 +195,9 @@ public:
   inline bool operator != (const TLattice* l) const {  return this != l;  }
   struct GrowInfo  {
     smatd_plist matrices;  // the list of all matrices
-    TArrayList<TIndexList> info;  // TCAtomId -> list of used matrices;
+    TArrayList<TIndexList> info;  // TCAtomId -> matrix;
     size_t unc_matrix_count;
-    ~GrowInfo() {
-      for( size_t i=0; i < matrices.Count(); i++ )
-        delete matrices[i];
-    }
+    ~GrowInfo()  {  matrices.DeleteItems();  }
   };
   // takes the ownership of the provided object
   void SetGrowInfo(GrowInfo* grow_info);
@@ -221,6 +228,7 @@ public:
 
   void LibGetFragmentCount(const TStrObjList& Params, TMacroError& E);
   void LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E);
+  void LibGetMoiety(const TStrObjList& Params, TMacroError& E);
   TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 };
 

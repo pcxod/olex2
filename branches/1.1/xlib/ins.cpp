@@ -25,6 +25,7 @@
 #include "xmacro.h"
 #include "sortedlist.h"
 #include "infotab.h"
+#include "catomlist.h"
 
 #undef AddAtom
 #undef GetObject
@@ -227,7 +228,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
           max_atoms++;
           continue;
         }
-        sg.Add( a );
+        sg.Add(a);
       }
     }
 #ifdef _DEBUG
@@ -238,7 +239,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
         if( sg.GetDependent(k).Count() > j )
           s << sg.GetDependent(k)[j].GetLabel() << ' ';
       }
-      TBasicApp::GetLog() << s << '\n';
+      TBasicApp::NewLogEntry() << s;
     }
 #endif
   }
@@ -277,21 +278,38 @@ void TIns::_FinishParsing(ParseContext& cx)  {
     {
       cx.rm.AddInfoTab(toks);
       Ins.Delete(i--);
-      continue;
     }
-    TInsList* Param = new TInsList(toks);
-    Ins.GetObject(i) = Param;
-    Ins[i] = Param->GetString(0);
-    Param->Delete(0);
-    for( size_t j=0; j < Param->Count(); j++ )
-      Param->GetObject(j) = GetAsymmUnit().FindCAtom(Param->GetString(j));
+    else if( toks[0].StartsFromi("ANIS") )  {
+      Ins.Delete(i--);
+      try  {
+        double Q[6];
+        memset(&Q[0], 0, sizeof(Q));
+        AtomRefList rl(cx.rm, toks.Text(' ', 1));
+        TTypeList<TAtomRefList> atoms;
+        rl.Expand(cx.rm, atoms);
+        for( size_t j=0; j < atoms.Count(); j++ )  {
+          for( size_t k=0; k < atoms[j].Count(); k++ )  {
+            TCAtom& ca = atoms[j][k].GetAtom();
+            if( ca.GetEllipsoid() == NULL )  {
+              Q[0] = Q[1] = Q[2] = ca.GetUiso();
+              ca.UpdateEllp(Q);
+            }
+          }
+        }
+      }
+      catch(const TExceptionBase& e)  {
+        TBasicApp::GetLog().Error(e.GetException()->GetFullMessage());
+      }
+    }
+    else  {
+      TInsList* Param = new TInsList(toks);
+      Ins.GetObject(i) = Param;
+      Ins[i] = Param->GetString(0);
+      Param->Delete(0);
+      for( size_t j=0; j < Param->Count(); j++ )
+        Param->GetObject(j) = GetAsymmUnit().FindCAtom(Param->GetString(j));
+    }
   }
-  // TODO: an update of the values from the variables may be required...
-  //TAsymmUnit& au = GetAsymmUnit();
-  //for( size_t i=0; i < au.AtomCount(); i++ )  {
-  //  TCAtom& ca = au.GetAtom(i);
-  //}
-
   cx.rm.Vars.Validate();
   cx.rm.ProcessFrags();
 }
@@ -337,7 +355,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
   else if( Toks[0].Equalsi("FRAG") && (Toks.Count() > 1))  {
    int code = Toks[1].ToInt();
     if( code < 17 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "FRAG code must be more than 16");
+      throw TInvalidArgumentException(__OlxSourceInfo, "FRAG code must be greater than 16");
     double a=1, b=1, c=1, al=90, be=90, ga=90;
     XLibMacros::ParseOnlyNumbers<double, TStrList>(Toks, 6, 2, &a, &b, &c, &al, &be, &ga);
     Fragment* frag = cx.rm.FindFragByCode(code);
@@ -473,7 +491,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         */
         cx.rm.AddUserContent(Toks[1]);
         cx.BasicAtoms.Add(Toks[1], XElementLib::FindBySymbol(Toks[1]));
-        if( cx.BasicAtoms.Last().Object == NULL )
+        if( cx.BasicAtoms.GetLast().Object == NULL )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find suitable scatterer for '") << Toks[1] << '\'' );
         expandedSfacProcessed = true;
         const olxstr lb(Toks[1].CharAt(0) == '$' ? Toks[1].SubStringFrom(1) : Toks[1]);
@@ -495,7 +513,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
       for( size_t j=1; j < Toks.Count(); j++ )  {
         if( XElementLib::IsElement(Toks[j]) )  {
           cx.BasicAtoms.Add(Toks[j], XElementLib::FindBySymbol(Toks[j]));
-          if( cx.BasicAtoms.Last().Object == NULL )
+          if( cx.BasicAtoms.GetLast().Object == NULL )
             throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find suitable scatterer for '") << Toks[j] << '\'' );
           cx.rm.AddUserContent(Toks[j]);
         }
@@ -549,13 +567,19 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
     }
   }
   else if( Toks[0].Equalsi("SAME") )  {
-    if( !cx.Same.IsEmpty() && cx.Same.Last().GetB() == NULL )  // no atom so far, add to the list of Same
-      cx.Same.Last().A().Add( Toks.Text(' ', 1) );
+    if( !cx.Same.IsEmpty() && cx.Same.GetLast().GetB() == NULL )  // no atom so far, add to the list of Same
+      cx.Same.GetLast().A().Add(Toks.Text(' ', 1));
     else  {
       cx.Same.Add(new AnAssociation2<TStrList,TCAtom*>);
-      cx.Same.Last().B() = NULL;
-      cx.Same.Last().A().Add(Toks.Text(' ', 1));
+      cx.Same.GetLast().B() = NULL;
+      cx.Same.GetLast().A().Add(Toks.Text(' ', 1));
     }
+  }
+  else if( Toks[0].Equalsi("ANIS") )  {
+    if( Toks.Count() == 2 && Toks[1].IsNumber() )
+      cx.ToAnis = olx_abs(Toks[1].ToInt());
+    else
+      return false;
   }
   else
     return false;
@@ -794,15 +818,16 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   int atom_afix = a.GetAfix();
   if( atom_afix != afix || afix == 1 || afix == 2 )  { 
     if( !TAfixGroup::HasExcplicitPivot(afix) || !TAfixGroup::IsDependent(atom_afix) )  {
-      if( ag != NULL )  {
+      TAfixGroup* _ag = a.GetParentAfixGroup();
+      if( _ag != NULL )  {
         olxstr& str = sl.Add("AFIX ") << atom_afix;
-        if( ag->GetD() != 0 )  {
-          str << ' ' << ag->GetD();
+        if( _ag->GetD() != 0 )  {
+          str << ' ' << _ag->GetD();
         }
-        if( ag->GetSof() != 0 )  {
-          str << ' ' << ag->GetSof();
-          if( ag->GetU() != 0 )
-            str << ' ' << ag->GetU();
+        if( _ag->GetSof() != 0 )  {
+          str << ' ' << _ag->GetSof();
+          if( _ag->GetU() != 0 )
+            str << ' ' << _ag->GetU();
         }
       }
       else
@@ -975,8 +1000,8 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
         throw TInvalidArgumentException(__OlxSourceInfo, "unknown element symbol");
       TCAtom* atom = NULL;
       if( (atomCount+1) > CAtoms.Count() )  {
-        if( CAtoms.Last()->GetParent() != NULL )
-          atom = &CAtoms.Last()->GetParent()->NewAtom(cx.Resi);
+        if( CAtoms.GetLast()->GetParent() != NULL )
+          atom = &CAtoms.GetLast()->GetParent()->NewAtom(cx.Resi);
         else
           throw TInvalidArgumentException(__OlxSourceInfo, "uninitialised data provided");
       }
@@ -1128,8 +1153,8 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
   atom->SetPart( cx.Part );
   // update the context
   cx.Last = atom;
-  if( !cx.Same.IsEmpty() && cx.Same.Last().GetB() == NULL )
-    cx.Same.Last().B() = atom;
+  if( !cx.Same.IsEmpty() && cx.Same.GetLast().GetB() == NULL )
+    cx.Same.GetLast().B() = atom;
 
   cx.rm.Vars.SetParam(*atom, catom_var_name_Sof, cx.PartOccu == 0 ? Toks[5].ToDouble() : cx.PartOccu);
 
@@ -1141,7 +1166,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
     atom->AssignEllp(&elp);
     if( atom->GetEllipsoid()->IsNPD() )  {
       TBasicApp::GetLog().Info(olxstr("Not positevely defined: ") << Toks[0]);
-      atom->SetUiso( 0 );
+      atom->SetUiso(0);
     }
     else
       atom->SetUiso(atom->GetEllipsoid()->GetUiso());
@@ -1154,7 +1179,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
       atom->SetUiso(4*caDefIso*caDefIso);
     if( Toks.Count() >= 8 ) // some other data as Q-peak itensity
       atom->SetQPeak( Toks[7].ToDouble() );
-    if( atom->GetUiso() <= -0.5 )  {  // a value fixed to a bound atom value
+    if( atom->GetUiso() <= -0.5 )  {  // a value fixed to the pivot atom value
       if( cx.LastWithU == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid Uiso proxy for: ") << Toks[0]);
       atom->SetUisoScale(olx_abs(atom->GetUiso()));
@@ -1165,6 +1190,13 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
     else  {
       atom->SetUisoOwner(NULL);
       cx.LastWithU = atom;
+      if( cx.ToAnis > 0 )  {
+        cx.ToAnis--;
+        size_t qes = sizeof(QE);
+        memset(&QE[0], 0, qes);
+        QE[0] = QE[1] = QE[2] = atom->GetUiso();
+        atom->UpdateEllp(QE);
+      }
     }
   }
   return atom;
@@ -1288,7 +1320,7 @@ bool Ins_ProcessRestraint(const TCAtomPList* atoms, TSimpleRestraint& sr)  {
   if( sr.AtomCount() == 0 && !sr.IsAllNonHAtoms() )  return false;
   if( atoms == NULL )  return true;
   for( size_t i=0; i < atoms->Count(); i++ )
-    if( sr.ContainsAtom(*atoms->Item(i)) )
+    if( sr.ContainsAtom(*atoms->GetItem(i)) )
       return true;
   return false;
 }

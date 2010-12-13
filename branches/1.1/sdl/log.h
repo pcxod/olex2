@@ -6,27 +6,31 @@
 #include "actions.h"
 
 BeginEsdlNamespace()
-
+enum  {
+  logDefault,
+  logInfo,
+  logWarning,
+  logError,
+  logException
+};
 class TLog: public IEObject, public IDataOutputStream  {
   // stream, to delete at the end
   TArrayList<AnAssociation2<IDataOutputStream*, bool> > Streams;
   TActionQList Actions;
 protected:
-  virtual size_t Write(const void *Data, size_t size);
-  virtual size_t Writenl(const void *Data, size_t size);
+  virtual size_t Write(const void* Data, size_t size);
   virtual uint64_t GetSize() const {  return 0;  }
   virtual uint64_t GetPosition() const {  return 0;  }
   virtual void SetPosition(uint64_t newPos)  {}
 
-  void Add(const olxstr &str)  {
+  void Add(const olxstr& str)  {
     for( size_t i=0; i < Streams.Count(); i++ )
-      Streams[i].A()->Writenl(str);
+      Streams[i].A()->Writeln(str);
   }
-  template <class SC, class T>
-    void Add(const TTStrList<SC,T> &lst)  {
+  template <class List> void Add(const List& lst)  {
       for( size_t i=0; i < lst.Count(); i++ )
         for( size_t j=0; j < Streams.Count(); j++ )
-          Streams[j].A()->Writenl( lst[i] );
+          Streams[j].A()->Writeln(lst[i]);
     }
 public:
   TLog();
@@ -43,36 +47,36 @@ public:
       }
   }
   // use this operators for unconditional 'printing'
-  TLog& operator << (const olxstr &str)  {
+  TLog& operator << (const olxstr& str)  {
     for( size_t i=0; i < Streams.Count(); i++ )
       Streams[i].A()->Write(str);
     return *this;
   }
-  template <class SC, class T> TLog& operator << (const TTStrList<SC,T> &lst)  {
+  template <class SC, class T> TLog& operator << (const TTStrList<SC,T>& lst)  {
     Add(lst);
     return *this;
   }
 //..............................................................................
   void Info(const olxstr& msg)  {
-    if( !OnInfo.Enter(this, &TEGC::New<olxstr>(msg)) )
+    if( !OnInfo.Enter(this, &msg) )
       Add(msg);
     OnInfo.Exit(this, NULL);
   }
 //..............................................................................
   void Warning(const olxstr& msg)  {
-    if( !OnWarning.Enter(this, &TEGC::New<olxstr>(msg)) )
+    if( !OnWarning.Enter(this, &msg) )
       Add(msg);
     OnWarning.Exit(this, NULL);
   }
 //..............................................................................
   void Error(const olxstr& msg)  {
-    if( !OnError.Enter(this, &TEGC::New<olxstr>(msg)) )
+    if( !OnError.Enter(this, &msg) )
       Add(msg);
     OnError.Exit(this, NULL);
   }
 //..............................................................................
   void Exception(const olxstr& msg)  {
-    if( !OnException.Enter(this, &TEGC::New<olxstr>(msg)) )
+    if( !OnException.Enter(this, &msg) )
       Add(msg);
     OnException.Exit(this, NULL);
   }
@@ -81,7 +85,27 @@ public:
     for( size_t i=0; i < Streams.Count(); i++ )
       Streams[i].GetA()->Flush();
   }
-
+//..............................................................................
+  struct LogEntry  {
+    TLog& parent;
+    olxstr buffer;
+    int evt;
+    LogEntry(TLog& _parent, int evt, bool annotate);
+    ~LogEntry();
+    LogEntry& operator << (const olxstr &str)  {
+      buffer << str;
+      return *this;
+    }
+    template <class SC, class T> LogEntry& operator << (const TTStrList<SC,T> &lst)  {
+      buffer << lst.Text(NewLineSequence);
+      return *this;
+    }
+  };
+//..............................................................................
+  LogEntry NewEntry(int evt=logDefault, bool annotate = false)  {
+    return LogEntry(*this, evt, annotate);
+  }
+//..............................................................................
   TActionQueue& OnInfo;
   TActionQueue& OnWarning;
   TActionQueue& OnError;

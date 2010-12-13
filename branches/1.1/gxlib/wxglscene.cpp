@@ -217,7 +217,7 @@ TGlFont& TwxGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
   }
   //Fnt->CreateTextures(ImageW, ImageW);
   glf.CreateGlyphsFromRGBArray(Font.IsFixedWidth(), ImageW, ImageW);
-  Images.Delete();
+  Images.DeleteItems();
   return glf;
 }
 //..............................................................................
@@ -325,7 +325,7 @@ void TwxGlScene::ExportFont(const olxstr& name, const olxstr& fileName) const {
 TGlFont& TwxGlScene::ImportFont(TGlFont& fnt) const {
   MetaFont mf(fnt.GetIdString());
   if( mf.GetSize() <= 1 )
-    throw TInvalidArgumentException(__OlxSourceInfo, "invalid font size");
+    mf.SetSize(10);
   olxstr fileName(FontsFolder + mf.GetFileName());
   if( !TEFile::Exists(fileName) )  
     throw TFileDoesNotExistException(__OlxSourceInfo, fileName);
@@ -396,7 +396,7 @@ TGlFont& TwxGlScene::ImportFont(TGlFont& fnt) const {
       Images.Add(img);
     }
     fnt.CreateGlyphsFromRGBArray(mf.IsFixed(), imgw, imgh);
-    Images.Delete();
+    Images.DeleteItems();
   }
   else
     fnt.CreateGlyphs(ba, mf.IsFixed(), maxw, maxh);

@@ -32,10 +32,7 @@ public:
     TBasicException(const olxstr& location, const olxstr& Msg) :
     Location(location), Message(Msg), Cause(NULL)  {}
 
-  virtual ~TBasicException()  {
-    if( Cause != NULL )
-      delete Cause;
-  }
+  virtual ~TBasicException();
   inline const olxstr& GetError() const {  return Message;  }
   inline const olxstr& GetLocation() const {  return Location;  }
   inline TBasicException* GetCause() const {  return Cause;  }
@@ -44,10 +41,10 @@ public:
   TBasicException* GetSource() const;
   virtual IEObject* Replicate() const = 0;
   template <class List>
-    List& GetStackTrace( List& output ) const {
+    List& GetStackTrace(List& output) const {
       TBasicException const* cause = this;
       while( cause != NULL )  {
-        output.Insert(0, cause->GetFullMessage() );
+        output.Insert(0, cause->GetFullMessage());
         cause = cause->GetCause();
       }
       return output;

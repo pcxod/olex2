@@ -61,6 +61,7 @@ public:
   double CalcCellVolume() const;
   // estimates Z=Z'*sg.multiplicity according to 18.6A rule, partial occupancy implied double...
   double EstimateZ(double atomCount) const;
+  double GetZPrime() const;
   DefPropP(short, Z)
   DefPropP(short, Latt)
 
@@ -81,12 +82,24 @@ public:
     return crt;
     //crt *= Cell2Cartesian;
   }
+  template <class VC> inline VC Orthogonalise(const VC& crt) const {
+    return VC(
+      crt[0]*Cell2Cartesian[0][0] + crt[1]*Cell2Cartesian[1][0] + crt[2]*Cell2Cartesian[2][0],
+      crt[1]*Cell2Cartesian[1][1] + crt[2]*Cell2Cartesian[2][1],
+      crt[2]*Cell2Cartesian[2][2]);
+  }
   template <class VC> inline VC& CartesianToCell(VC& cll) const {
     cll[0] = cll[0]*Cartesian2Cell[0][0] + cll[1]*Cartesian2Cell[1][0] + cll[2]*Cartesian2Cell[2][0];
     cll[1] = cll[1]*Cartesian2Cell[1][1] + cll[2]*Cartesian2Cell[2][1];
     cll[2] = cll[2]*Cartesian2Cell[2][2];
     return cll;
     //cll *= Cartesian2Cell;
+  }
+  template <class VC> inline VC Fractionalise(const VC& cll) const {
+    return VC(
+      cll[0]*Cartesian2Cell[0][0] + cll[1]*Cartesian2Cell[1][0] + cll[2]*Cartesian2Cell[2][0],
+      cll[1]*Cartesian2Cell[1][1] + cll[2]*Cartesian2Cell[2][1],
+      cll[2]*Cartesian2Cell[2][2]);
   }
 
   // J App Cryst 2002, 35, 477-480
@@ -181,7 +194,8 @@ public:
   /* returns summarised formula of the asymmetric unit, use MutiplyZ to multiply the
      content by Z
   */
-  olxstr SummFormula(const olxstr &Sep, bool MultiplyZ=true) const;
+  olxstr SummFormula(const olxstr& sep, bool MultiplyZ=true) const;
+  olxstr _SummFormula(const olxstr& sep, double mult) const;
   /* returns molecular weight of the asymmetric unit */
   double MolWeight() const;
   size_t CountElements(const olxstr& Symbol) const;
@@ -261,6 +275,8 @@ public:
   void LibSetZ(const TStrObjList& Params, TMacroError& E);
   void LibGetZprime(const TStrObjList& Params, TMacroError& E);
   void LibSetZprime(const TStrObjList& Params, TMacroError& E);
+  void LibFormula(const TStrObjList& Params, TMacroError& E);
+  void LibWeight(const TStrObjList& Params, TMacroError& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 };
 

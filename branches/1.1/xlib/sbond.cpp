@@ -1,19 +1,10 @@
 //----------------------------------------------------------------------------//
-// namespace TXClasses: crystallographic core
 // TSBond
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "sbond.h"
 #include "lattice.h"
-
-//----------------------------------------------------------------------------//
-// TSBond function bodies
-//----------------------------------------------------------------------------//
+//..............................................................................
 TSBond::TSBond(TNetwork *P) : TBasicBond<TNetwork,TSAtom>(P)  {
   SetType(sotBond);
   Deleted = false;
@@ -37,10 +28,10 @@ void TSBond::ToDataItem(TDataItem& item) const {
   item.AddField("type", GetType());
 }
 //..............................................................................
-void TSBond::FromDataItem(const TDataItem& item, TPtrList<TNetwork>& net_pool) {
-  Network = net_pool[item.GetRequiredField("net_id").ToInt()];
-  FA = &Network->GetLattice().GetAtom( item.GetRequiredField("a_id").ToInt() );
-  FB = &Network->GetLattice().GetAtom( item.GetRequiredField("b_id").ToInt() );
+void TSBond::FromDataItem(const TDataItem& item, TLattice& parent) {
+  Network = &parent.GetFragment(item.GetRequiredField("net_id").ToInt());
+  FA = &parent.GetAtom(item.GetRequiredField("a_id").ToInt());
+  FB = &parent.GetAtom(item.GetRequiredField("b_id").ToInt());
   Type = item.GetRequiredField("type").ToInt();
 }
 //..............................................................................

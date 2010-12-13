@@ -117,6 +117,11 @@ public class ClientHandler extends Thread {
                 Main.blocked.add(cmds.get(1));
                 handled = true;
                 out.writeBytes("OK\n");
+              } else  {
+                Iterator<String> itr = Main.blocked.iterator();
+                out.writeBytes("OK\n");
+                while( itr.hasNext() )
+                  out.writeBytes(itr.next()+'\n');
               }
             } else if (cmd.equals("unblock")) {
               if( cmds.size() == 2 )  {
@@ -132,6 +137,11 @@ public class ClientHandler extends Thread {
                   handled = true;
                   out.writeBytes("OK\n");
                 }
+              } else if(cmds.size() == 1 )  {
+                Iterator<String> itr = Main.unmounted.iterator();
+                out.writeBytes("OK\n");
+                while( itr.hasNext() )
+                  out.writeBytes(itr.next()+'\n');
               }
             } else if (cmd.equals("mount")) {
               if( cmds.size() == 2 )  {
@@ -208,6 +218,7 @@ public class ClientHandler extends Thread {
                         out.write(bf, 0, read_len);
                         written += read_len;
                       }
+                      log.add("Completed file upload");
                     } catch (Exception e) {
                       log.add(
                               "Broken for " + src + " at " +

@@ -50,7 +50,6 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC, int flags) :
   Movable = false;
   MouseDown = false;
   ShowTooltips = true;
-  LockPageLoad = 0;
   PageLoadRequested = false;
   if( LC && ! THtml::Library )  {
     THtml::Library = LC->GetLibrary().AddLibrary("html");
@@ -134,6 +133,8 @@ THtml::~THtml()  {
 }
 //..............................................................................
 void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
+  if( !MouseDown )  return;
+  MouseDown = false;
   olxstr Href = link.GetHref().c_str();
   size_t ind = Href.FirstIndexOf('%');
   while( ind != InvalidIndex && ((ind+2) < Href.Length()) )  {
@@ -170,23 +171,18 @@ size_t THtml::GetSwitchState(const olxstr& switchName)  {
 //..............................................................................
 void THtml::OnMouseDown(wxMouseEvent& event)  {
   this->SetFocusIgnoringChildren();
-  if( Movable )  {
-    MouseX = event.GetX();
-    MouseY = event.GetY();
+  MouseX = event.GetX();
+  MouseY = event.GetY();
+  MouseDown = true;
+  if( Movable )
     SetCursor( wxCursor(wxCURSOR_SIZING) );
-    MouseDown = true;
-  }
-  else
-    event.Skip();
+  event.Skip();
 }
 //..............................................................................
 void THtml::OnMouseUp(wxMouseEvent& event)  {
-  if( Movable && MouseDown )  {
-    MouseDown = false;
-    SetCursor( wxCursor(wxCURSOR_ARROW) );
-  }
-  else
-    event.Skip();
+  if( Movable && MouseDown )
+    SetCursor(wxCursor(wxCURSOR_ARROW));
+  event.Skip();
 }
 //..............................................................................
 void THtml::OnMouseMotion(wxMouseEvent& event)  {
@@ -221,9 +217,9 @@ void THtml::OnSizeEvt(wxSizeEvent& event)  {
 //..............................................................................
 bool THtml::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender, const IEObject* Data)  {
   if( MsgId == html_parent_resize )  {
-    TMainFrame::GetMainFrameInstance().LockWindowDestruction(this);
+    TMainFrame::GetMainFrameInstance().LockWindowDestruction(this, this);
     OnSize.Execute(this, &OnSizeData);
-    TMainFrame::GetMainFrameInstance().UnlockWindowDestruction(this);
+    TMainFrame::GetMainFrameInstance().UnlockWindowDestruction(this, this);
   }
   return true;
 }
@@ -308,7 +304,8 @@ void THtml::GetTraversibleIndeces(index_t& current, index_t& another, bool forwa
 }
 //..............................................................................
 void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
-  LockPageLoad++;  // prevent pae re-loading and object deletion
+  // prevent pae re-loading and object deletion
+  TMainFrame::GetMainFrameInstance().LockWindowDestruction(this, this);
   if( prev != NULL )  {
     if( EsdlInstanceOf(*prev, TTextEdit) )  {
       olxstr s = ((TTextEdit*)prev)->GetOnLeaveStr();
@@ -331,7 +328,7 @@ void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
       ((TComboBox*)next)->SetSelection(-1,-1);
     }
   }
-  LockPageLoad--;
+  TMainFrame::GetMainFrameInstance().UnlockWindowDestruction(this, this);
 }
 //..............................................................................
 void THtml::DoNavigate(bool forward)  {
@@ -496,7 +493,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
 
       size_t switchState = GetSwitchState(Sw->GetName()), index = InvalidIndex;
       if( switchState == UnknownSwitchState )  {
-        index_t iv = Toks.LastStr().RadInt<index_t>();
+        index_t iv = Toks.GetLastString().RadInt<index_t>();
         if( iv < 0 )
           Sw->SetUpdateSwitch(false);
         index = olx_abs(iv)-1;
@@ -580,9 +577,9 @@ bool THtml::ItemState(const olxstr &ItemName, short State)  {
 }
 //..............................................................................
 bool THtml::UpdatePage()  {
-  if( LockPageLoad )  {     
+  if( IsPageLocked() )  {     
     PageLoadRequested = true;
-    PageRequested  = EmptyString;
+    PageRequested.SetLength(0);
     return true;
   }
 
@@ -920,7 +917,7 @@ void THtml::macSetBorders(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
   }
-  html->SetBorders(Cmds.Last().String.ToInt());
+  html->SetBorders(Cmds.GetLastString().ToInt());
 }
 //..............................................................................
 void THtml::macHtmlHome(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -947,7 +944,7 @@ void THtml::macHtmlLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
   }
-  html->LoadPage( Cmds.Last().String.u_str() );
+  html->LoadPage( Cmds.GetLastString().u_str() );
 }
 //..............................................................................
 void THtml::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -968,7 +965,7 @@ void THtml::macHtmlDump(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   TStrList SL;
   html->GetRoot().ToStrings(SL);
-  TUtf8File::WriteLines(Cmds.Last().String, SL);
+  TUtf8File::WriteLines(Cmds.GetLastString(), SL);
 }
 //..............................................................................
 void THtml::macDefineControl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -1015,9 +1012,9 @@ void THtml::macDefineControl(TStrObjList &Cmds, const TParamList &Options, TMacr
   if( props != NULL )  {
     (*props)["bg"] = Options.FindValue("bg");
     (*props)["fg"] = Options.FindValue("fg");
-    if( props->IndexOfComparable("data") != InvalidIndex )
+    if( props->IndexOf("data") != InvalidIndex )
       (*props)["data"] = Options.FindValue("data", EmptyString);
-    if( props->IndexOfComparable("val") != InvalidIndex )
+    if( props->IndexOf("val") != InvalidIndex )
       (*props)["val"] = Options.FindValue("v");
   }
 }
@@ -1059,14 +1056,14 @@ void THtml::funGetValue(const TStrObjList &Params, TMacroError &E)  {
       E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
       return;
     }
-    if( props->IndexOfComparable("val") == InvalidIndex )  {
+    if( props->IndexOf("val") == InvalidIndex )  {
       E.ProcessingError(__OlxSrcInfo,  "object definition does not have value for: ") << objName;
       return;
     }
-    E.SetRetVal( (*props)["val"] );
+    E.SetRetVal((*props)["val"]);
   }
   else
-    E.SetRetVal( GetObjectValue(Obj) );
+    E.SetRetVal(GetObjectValue(Obj));
 }
 //..............................................................................
 void THtml::SetObjectValue(AOlxCtrl *Obj, const olxstr& Value)  {
@@ -1117,7 +1114,7 @@ void THtml::funSetValue(const TStrObjList &Params, TMacroError &E)  {
       E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
       return;
     }
-    if( props->IndexOfComparable("val") == InvalidIndex )  {
+    if( props->IndexOf("val") == InvalidIndex )  {
       E.ProcessingError(__OlxSrcInfo,  "object definition does not accept value for: ") << objName;
       return;
     }
@@ -1486,7 +1483,7 @@ bool THtml::SetState(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return false;
   }
-  const bool state = Params.Last().String.ToBool();
+  const bool state = Params.GetLastString().ToBool();
   AOlxCtrl *Obj = html->FindObject(objName);
   if( Obj == NULL )  {
     TSStrStrList<olxstr,false>* props = html->ObjectsState.FindProperties(Params[0]);
@@ -1494,7 +1491,7 @@ bool THtml::SetState(const TStrObjList &Params, TMacroError &E)  {
       E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
       return false;
     }
-    if( props->IndexOfComparable("checked") == InvalidIndex )  {
+    if( props->IndexOf("checked") == InvalidIndex )  {
       E.ProcessingError(__OlxSrcInfo, "object definition does have state for: ") << objName;
       return false;
     }
@@ -1511,9 +1508,9 @@ bool THtml::SetState(const TStrObjList &Params, TMacroError &E)  {
 void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {
   if( !SetState(Params, E) )
     return;
-  if( Params.Last().String.ToBool() )  {
+  if( Params.GetLastString().ToBool() )  {
     TStrObjList params(Params);
-    params.Last().String = FalseString;
+    params.GetLastString() = FalseString;
     TMacroError e;
     for( size_t i=0; i < Groups.Count(); i++ )  {
       if( Groups[i].IndexOf(Params[0]) == InvalidIndex )  continue;
@@ -1571,22 +1568,19 @@ void THtml::funSetFG(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
     return;
   }
-  if( wxw != NULL )  {
-    if( EsdlInstanceOf(*wxw, TComboBox) )  {
-      TComboBox* Box = (TComboBox*)wxw;
-      wxColor fgCl = wxColor(Params[1].u_str());
-      Box->SetForegroundColour( fgCl );
+  const wxColor fgc = wxColor(Params[1].u_str());
+  wxw->SetForegroundColour(fgc);
+  if( EsdlInstanceOf(*wxw, TComboBox) )  {
+    TComboBox* Box = (TComboBox*)wxw;
+    Box->SetForegroundColour(fgc);
 #ifdef __WIN32__
-      if( Box->GetPopupControl() != NULL )
-        Box->GetPopupControl()->GetControl()->SetForegroundColour( fgCl );
-      if( Box->GetTextCtrl() != NULL )
-        Box->GetTextCtrl()->SetForegroundColour( fgCl );
+    if( Box->GetPopupControl() != NULL )
+      Box->GetPopupControl()->GetControl()->SetForegroundColour(fgc);
+    if( Box->GetTextCtrl() != NULL )
+      Box->GetTextCtrl()->SetForegroundColour(fgc);
 #endif				
-    }
-    else
-      wxw->SetForegroundColour( wxColor(Params[1].u_str()) );
-    this->Refresh();
   }
+  wxw->Refresh();
 }
 //..............................................................................
 void THtml::funSetBG(const TStrObjList &Params, TMacroError &E)  {
@@ -1602,20 +1596,21 @@ void THtml::funSetBG(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
     return;
   }
+  const wxColor bgc(Params[1].u_str());
+  wxw->SetBackgroundColour(bgc);
   if( EsdlInstanceOf(*wxw, TComboBox) )  {
     TComboBox* Box = (TComboBox*)wxw;
-    wxColor fgCl = wxColor(Params[1].u_str());
-    Box->SetBackgroundColour( fgCl );
 #ifdef __WIN32__
     if( Box->GetPopupControl() != NULL )
-      Box->GetPopupControl()->GetControl()->SetBackgroundColour( fgCl );
+      Box->GetPopupControl()->GetControl()->SetBackgroundColour(bgc);
     if( Box->GetTextCtrl() != NULL )
-      Box->GetTextCtrl()->SetBackgroundColour( fgCl );
-#endif				
+      Box->GetTextCtrl()->SetBackgroundColour(bgc);
+#endif
   }
-  else
-    wxw->SetBackgroundColour( wxColor(Params[1].u_str()) );
-  this->Refresh();
+  //else if( EsdlInstanceOf(*wxw, TTrackBar) )  {
+  //  TTrackBar* Bar = (TTrackBar*)wxw;
+  //}
+  wxw->Refresh();
 }
 //..............................................................................
 void THtml::funGetFontName(const TStrObjList &Params, TMacroError &E)  {

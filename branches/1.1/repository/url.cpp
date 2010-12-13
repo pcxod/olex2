@@ -99,7 +99,7 @@ TUrl& TUrl::operator = (const TUrl& url) {
   return *this;
 }
 //..............................................................................
-olxstr TUrl::GetFullHost()  const  {
+olxstr TUrl::GetFullHost() const {
   olxstr retVal;
 
   if( !Protocol.IsEmpty() ) 

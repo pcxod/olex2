@@ -17,13 +17,12 @@ class TSPlane : public TSObject<TNetwork>  {
   TTypeList< AnAssociation2<TSAtom*, double> > Crds;
   vec3d Center;
   mat3d Normals;
-  double Distance;
-  uint16_t Flags;
+  double Distance, wRMSD;  uint16_t Flags;
   size_t DefId;
   void _Init(const TTypeList<AnAssociation2<vec3d, double> >& points);
 public:
   TSPlane(TNetwork* Parent, size_t def_id = InvalidIndex) : TSObject<TNetwork>(Parent), 
-    Distance(0), Flags(0), DefId(def_id)  {}
+    Distance(0), wRMSD(0), Flags(0), DefId(def_id)  {}
   virtual ~TSPlane()  {}
 
   DefPropBFIsSet(Deleted, Flags, plane_flag_deleted)
@@ -35,6 +34,7 @@ public:
   void Init(const TTypeList<AnAssociation2<TSAtom*, double> >& Points);
 
   inline const vec3d& GetNormal() const {  return Normals[0]; }
+  // note that the Normal (or Z) is the first row of the matrix
   inline const mat3d& GetBasis() const {  return Normals;  }
   inline const vec3d& GetCenter() const {  return Center; }
 
@@ -45,6 +45,11 @@ public:
   double Angle(const class TSBond& B) const;
   double Angle(const TSPlane& P) const {  return Angle(P.GetNormal());  }
   double GetD() const {  return Distance;  }
+  // direct calculation with unit weights
+  double CalcRMSD() const;
+  // calculation with actual weights (should be the same as GetWeightedRMSD)
+  double CalcWeightedRMSD() const;
+  double GetWeightedRMSD() const {  return wRMSD;  }
   double GetZ(const double& X, const double& Y) const {
     return (GetNormal()[2] == 0) ? 0.0 : (GetNormal()[0]*X + GetNormal()[1]*Y + Distance)/GetNormal()[2];
   }
@@ -111,7 +116,8 @@ public:
       if( atoms.Count() != d.atoms.Count() )  return false;
       for( size_t i=0; i < atoms.Count(); i++ )  {
         if( atoms[i].ref.catom_id != d.atoms[i].ref.catom_id ||
-          atoms[i].ref.matrix_id != d.atoms[i].ref.matrix_id )
+          atoms[i].ref.matrix_id != d.atoms[i].ref.matrix_id ||
+          atoms[i].weight != d.atoms[i].weight )
           return false;
       }
       return true;
@@ -133,37 +139,42 @@ public:
   typedef TTypeList<TSPlane> TSPlaneList;
   typedef TPtrList<TSPlane> TSPlanePList;
 
-  
+/* RMSD will be 'valid', i.e. as equal to directly claculated only for unit/equal weights,
+otherwise it will become smaller than directly calculated one since the priority will be given to
+some points and
+RMSD'=(sum(w^2*distances^2)/sum(w^2))^0.5, where distance will be smaller for higher weights...
+there are functions to calculate both values 
+*/
 template <class List>  // AnAssociation2<vec3d, double> list, returning & on []
 bool TSPlane::CalcPlanes(const List& Points, mat3d& Params, vec3d& rms, vec3d& center, bool sort)  {
   if( Points.Count() < 3 )  return false;
   center.Null();
-  double mass = 0;
+  double mass = 0, qmass = 0;
   center.Null();
   for( size_t i=0; i < Points.Count(); i++ )  {
     center += Points[i].GetA()*Points[i].GetB();
     mass += Points[i].GetB();
+    qmass += olx_sqr(Points[i].GetB());
   }
   if( mass == 0 )  return false;
   center /= mass;
   mat3d m;
   for( size_t i=0; i < Points.Count(); i++ )  {
-    const vec3d t = Points[i].GetA() - center;
-    const double wght = olx_sqr(Points[i].GetB());
-    m[0][0] += (t[0]*t[0]*wght);
-    m[0][1] += (t[0]*t[1]*wght);
-    m[0][2] += (t[0]*t[2]*wght);
-    m[1][1] += (t[1]*t[1]*wght);
-    m[1][2] += (t[1]*t[2]*wght);
-    m[2][2] += (t[2]*t[2]*wght);
+    const vec3d t = (Points[i].GetA() - center)*Points[i].GetB();
+    m[0][0] += (t[0]*t[0]);
+    m[0][1] += (t[0]*t[1]);
+    m[0][2] += (t[0]*t[2]);
+    m[1][1] += (t[1]*t[1]);
+    m[1][2] += (t[1]*t[2]);
+    m[2][2] += (t[2]*t[2]);
   } 
   m[1][0] = m[0][1];
   m[2][0] = m[0][2];
   m[2][1] = m[1][2];
-  mat3d::EigenValues(m, Params.I());
+  mat3d::EigenValues(m /= qmass, Params.I());
   if( sort )  {
     for( int i=0; i < 3; i++ )
-      rms[i] = (m[i][i] < 0 ? 0 : sqrt(m[i][i]/Points.Count()));
+      rms[i] = (m[i][i] < 0 ? 0 : sqrt(m[i][i]));
     bool swaps = true;
     while( swaps )  {
       swaps = false;

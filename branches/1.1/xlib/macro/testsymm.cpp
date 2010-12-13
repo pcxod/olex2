@@ -74,7 +74,7 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
   TUnitCell& uc = XApp.XFile().GetLattice().GetUnitCell();
   TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
   TSymmTest st(uc);
-  XApp.GetLog() << ( olxstr("\nCenter of gravity: ") << st.GetGravityCenter().ToString() << '\n');
+  XApp.NewLogEntry() << NewLineSequence << "Center of gravity: " << st.GetGravityCenter().ToString();
   double tol = Options.FindValue('e', "0.04").ToDouble();
   double confth = 75; // %
   TPtrList<TSpaceGroup> sglist;
@@ -123,11 +123,11 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
   toTest.Add( "-4-", r4);
   toTest.Add( "-6-", r6);
   for( size_t i=0; i < toTest.Count(); i++ )  {
-    XApp.GetLog() << ( olxstr("Testing ") << toTest[i] << "...\n");
+    XApp.NewLogEntry() << "Testing " << toTest[i] << "...";
     XApp.Update();
     try  {  st.TestMatrix( toTest.GetObject(i), tol );  }
     catch( const TExceptionBase& exc )  {
-      XApp.GetLog() << ( olxstr("Test failed because of ") << exc.GetException()->GetError()  << '\n');
+      XApp.NewLogEntry() << "Test failed because of " << exc.GetException()->GetError();
       continue;
     }
     if( st.GetResults().Count() > 0 )  {
@@ -155,7 +155,7 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
           if( i != 0 && !NormalisevectorView(trans) )  match = 0;  //delete
           if( i != 0 )
             translations.AddCCopy( trans );
-          XApp.GetLog() << ( olxstr(st.GetResults()[j].Count())  << '\t' << trans.ToString() ) << '\n';
+          XApp.NewLogEntry() << st.GetResults()[j].Count()  << '\t' << trans.ToString();
         }
       }
 
@@ -168,9 +168,8 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
       ElimateSGFromList( sglist, res, translations, true);
 
       if( match >= confth )  {
-        XApp.GetLog() << ( olxstr("Related matrix: ") << TSymmParser::MatrixToSymm(res) << '\n');
-        XApp.GetLog() << ( olxstr(match) << "%: with origin at " << trans.ToString() << '\n');
-        XApp.GetLog() << '\n';
+        XApp.NewLogEntry() << "Related matrix: " << TSymmParser::MatrixToSymm(res);
+        XApp.NewLogEntry() << match << "%: with origin at " << trans.ToString();
       }
     }
   }
@@ -180,7 +179,7 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
     if( (i+1) < sglist.Count() )
       line << ", ";
   }
-  XApp.GetLog() << (line << '\n');
+  XApp.NewLogEntry() << line;
 }
 
 

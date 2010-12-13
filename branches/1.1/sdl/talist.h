@@ -86,7 +86,11 @@ public:
     return Obj;
   }
 //..............................................................................
-  const T& Insert(size_t index, const T& Obj)  {
+  TArrayList& operator << (const T& o) {  Add(o);  return *this;  }
+//..............................................................................
+  TArrayList& operator << (const TArrayList& l) {  return AddList(l);  }
+//..............................................................................
+  T& Insert(size_t index, const T& Obj)  {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount+1);
 #endif
@@ -96,9 +100,8 @@ public:
       const size_t ind = FCount -i;
       Items[ind] = Items[ind-1];
     }
-    Items[index] = Obj;
     FCount++;
-    return Obj;
+    return (Items[index] = Obj);
   }
 //..............................................................................
   inline T& operator [] (size_t index) const {
@@ -108,41 +111,30 @@ public:
     return Items[index];
   }
 //..............................................................................
-  inline T& Item(size_t index) const {
+  inline T& GetItem(size_t index) const {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
     return Items[index];
   }
 //..............................................................................
-  inline T& Last() const {
+  inline T& GetLast() const {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, FCount-1, 0, FCount);
 #endif
     return Items[FCount-1];
   }
 //..............................................................................
-  inline const T& GetItem(size_t index) const {
-#ifdef _DEBUG
-  TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, index, 0, FCount);
-#endif
-    return Items[index];
-  }
-//..............................................................................
   const T* GetData() const {  return Items;  }
 //..............................................................................
-  template <class Functor> void ForEach(const Functor& f) const {
-    for( size_t i=0; i < FCount; i++ )
-      f.OnItem(Items[i]);
-  }
-//..............................................................................
-  template <class Functor> void ForEachEx(const Functor& f) const {
+  template <class Functor> const TArrayList& ForEach(const Functor& f) const {
     for( size_t i=0; i < FCount; i++ )
       f.OnItem(Items[i], i);
+    return *this;
   }
 //..............................................................................
-  void SetCapacity(size_t v)  {
-    if( v <= FCapacity )    return;
+  TArrayList& SetCapacity(size_t v)  {
+    if( v <= FCapacity )  return *this;
     FCapacity = v;
     T* Bf = new T[v];
     for( size_t i=0; i < FCount; i++ )
@@ -150,9 +142,13 @@ public:
     if( Items != NULL )
       delete [] Items;
     Items = Bf;
+    return *this;
   }
 //..............................................................................
-  inline void SetIncrement(size_t v)  {  FIncrement = v;  }
+  inline TArrayList& SetIncrement(size_t v)  {
+    FIncrement = v;
+    return *this;
+  }
 //..............................................................................
   void Delete(size_t index)  {
 #ifdef _DEBUG
@@ -174,19 +170,18 @@ public:
     FCount -= count;
   }
 //..............................................................................
-  void Remove(const T& pObj)  {
-    size_t i = IndexOf(pObj);
-    if( i != InvalidIndex )
-      Delete(i);
-    else
-      throw TFunctionFailedException(__OlxSourceInfo, "could not locate specified object");
+  bool Remove(const T& pObj)  {
+    const size_t i = IndexOf(pObj);
+    if( i == InvalidIndex )  return false;
+    Delete(i);
+    return true;
   }
 //..............................................................................
   // cyclic shift to the left
-  void ShiftL(size_t cnt)  {
-    if( FCount == 0 )  return;
+  TArrayList& ShiftL(size_t cnt)  {
+    if( FCount == 0 )  return *this;
     const size_t sv = cnt%FCount;
-    if( sv == 0 )  return;
+    if( sv == 0 )  return *this;
     if( sv == 1 )  {  // special case
       T D = Items[0];
       for( size_t i=1; i <= FCount-1; i++ )
@@ -203,13 +198,14 @@ public:
         Items[FCount-sv+i] = D[i];
       delete [] D;
     }
+    return *this;
   }
 //..............................................................................
   // cyclic shift to the right
-  void ShiftR(size_t cnt)  {
-    if( FCount == 0 )  return;
+  TArrayList& ShiftR(size_t cnt)  {
+    if( FCount == 0 )  return *this;
     const size_t sv = cnt%FCount;
-    if( sv == 0 )  return;
+    if( sv == 0 )  return *this;
     if( sv == 1 )  {  // special case
       T D = Items[FCount-1];
       for( size_t i=1; i < FCount; i++ )
@@ -227,6 +223,7 @@ public:
         Items[i] = D[i];
       delete [] D;
     }
+    return *this;
   }
 //..............................................................................
   inline void Swap(size_t i, size_t j)  {
@@ -261,7 +258,7 @@ public:
 //..............................................................................
   inline bool IsEmpty() const {  return FCount == 0;  }
 //..............................................................................
-  void SetCount(size_t v)  {
+  TArrayList& SetCount(size_t v)  {
     if( v > FCount )  {
       if( v > FCapacity )
         SetCapacity(v);
@@ -283,9 +280,10 @@ public:
       FCapacity = v + FIncrement;
     }
     FCount = v;
+    return *this;
   }
 //..............................................................................
-  size_t IndexOf(const T& val) const  {
+  size_t IndexOf(const T& val) const {
     for( size_t i=0; i < FCount; i++ )
       if( Items[i] == val )
         return i;
@@ -293,7 +291,7 @@ public:
   }
 //..............................................................................
   struct Accessor  {
-    static T& get(TArrayList<T>& l, size_t i)  {  return l[i];  }
+    static T& get(const TArrayList<T>& l, size_t i)  {  return l[i];  }
   };
   static ListQuickSorter<TArrayList<T>,T, Accessor> QuickSorter;
   static ListBubbleSorter<TArrayList<T>,T, Accessor> BubleSorter;

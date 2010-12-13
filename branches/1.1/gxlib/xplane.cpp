@@ -57,22 +57,16 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
       }
     }
     else  {
-      vec3d marv;
-      double maxr = 0;
+      double maxrs = 0;
       for( size_t i=0; i < sp.sortedPlane.Count(); i++ )  {
-        vec3d vec = *sp.sortedPlane.GetObject(i);
-        double d = FPlane->DistanceTo(vec);
-        vec -= FPlane->GetNormal()*d;
-        vec -= FPlane->GetCenter();
-        d = vec.Length();
-        if( d > maxr )  {
-          maxr = d;
-          marv = vec;
-        }
+        const vec3d* crd = sp.sortedPlane.GetObject(i);
+        const double qd = (*crd-FPlane->GetCenter()).QLength();
+        if( qd > maxrs )
+          maxrs = qd;
       }
-      marv = transform*marv;
+      vec3d marv(0, sqrt(maxrs), 0);
       mat3d rm;
-      olx_create_rotation_matrix(rm, transform*FPlane->GetNormal(), cos(M_PI*72.0/180));
+      olx_create_rotation_matrix(rm, vec3d(1,0,0), cos(M_PI*72.0/180));
       for( int i=0; i < 5; i++ )  {
         GlP.Vertices[i] = marv;    
         marv *= rm;
@@ -94,11 +88,7 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
 bool TXPlane::Orient(TGlPrimitive& P)  {
   olx_gl::translate(FPlane->GetCenter());
   olx_gl::orient(Params().GetRawData());
-  if( P.GetType() == sgloSphere )  {
-    if( FPlane->GetBasis().Determinant() < 0 )
-      olx_gl::scale(-1);
-  }
-  else
+  if( P.GetType() != sgloSphere )
     olx_gl::normal(FPlane->GetNormal());
   return false;
 }

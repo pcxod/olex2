@@ -29,32 +29,30 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
     SymmLib.FindBravaisLattices(XApp.XFile().GetAsymmUnit(), BravaisLattices);
     size_t MatchCount = 0;
     if( BravaisLattices.Count() )  {
-      XApp.GetLog() << "\nPossible crystal systems from cell parameters\n";
+      XApp.NewLogEntry() << "Possible crystal systems from cell parameters";
       for( size_t i=0; i < BravaisLattices.Count(); i++ )  {
         if( BravaisLattices[i].GetB() == 0 )  {
-          XApp.GetLog() << BravaisLattices[i].GetA()->GetName() << '\n';
+          XApp.NewLogEntry() << BravaisLattices[i].GetA()->GetName();
           MatchCount++;
         }
       }
       if( MatchCount < BravaisLattices.Count() )  {
-        XApp.GetLog() << ("Possible crystal systems of lower symmetry\n");
+        XApp.NewLogEntry() << "Possible crystal systems of lower symmetry";
         for( size_t i=0; i < BravaisLattices.Count(); i++ )  {
           if( BravaisLattices[i].GetB() == -1 )
-            XApp.GetLog() << BravaisLattices[i].GetA()->GetName() << '\n';
+            XApp.NewLogEntry() << BravaisLattices[i].GetA()->GetName();
         }
       }
     }
   }
   TSGTest SGTest;
-  XApp.GetLog() << '\n';
-  XApp.GetLog() << ( olxstr("Reflections count(unique in P1): ") << SGTest.GetP1RefCount() << '\n');
-  XApp.GetLog() << ( olxstr("Maximum/minimum intensity: ") << SGTest.GetMaxI() <<
-                            '('    << SGTest.GetMaxIS() << ')'
-                            << '/' << SGTest.GetMinI() << '('
-                            << SGTest.GetMinIS() << ')') << '\n';
-  XApp.GetLog() << ( olxstr("Average intensity/error: ")
-                          << olxstr::FormatFloat(2, SGTest.GetAverageI()) << '/'
-                          << olxstr::FormatFloat(2, SGTest.GetAverageIS()) ) << '\n';
+  XApp.NewLogEntry();
+  XApp.NewLogEntry() << "Reflections count(unique in P1): " << SGTest.GetP1RefCount();
+  XApp.NewLogEntry() << "Maximum/minimum intensity: " << SGTest.GetMaxI()
+    << '('    << SGTest.GetMaxIS() << ')' << '/' << SGTest.GetMinI() << '(' << SGTest.GetMinIS() << ')';
+  XApp.NewLogEntry() << "Average intensity/error: "
+    << olxstr::FormatFloat(2, SGTest.GetAverageI()) << '/'
+    << olxstr::FormatFloat(2, SGTest.GetAverageIS());
   TStrList Output;
 
   TPtrList<TSpaceGroup> LaueClasses;
@@ -124,8 +122,8 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
         }
       }
       if( !found )  {
-        XApp.GetLog().Warning( olxstr("Could not find match for ") << BravaisLattices[i].GetA()->GetName()
-                               << " crystal system");
+        XApp.GetLog().Warning(
+          olxstr("Could not find match for ") << BravaisLattices[i].GetA()->GetName() << " crystal system");
       }
     }
   }
@@ -139,8 +137,8 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
     }
     if( !found )  {
-      XApp.GetLog() << ( olxstr("An alternative symmetry found: ") <<
-        CalculatedLaueClasses[i]->GetBravaisLattice().GetName()) << '\n';
+      XApp.NewLogEntry() << "An alternative symmetry found: " <<
+        CalculatedLaueClasses[i]->GetBravaisLattice().GetName();
     }
   }
   // evaluete and print systematic absences; also fill the Present elements list
@@ -201,10 +199,10 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
         SortedLatticeHits.Add(-1, LatticeHits[i].GetObject() );
     }
   }
-  if( SortedLatticeHits.GetComparable(0) > threshold || SortedLatticeHits.GetComparable(0) == -1 )
+  if( SortedLatticeHits.GetKey(0) > threshold || SortedLatticeHits.GetKey(0) == -1 )
     ChosenLats.Add(SymmLib.FindLattice("P"));
   for( size_t i=0; i < SortedLatticeHits.Count(); i++ )  {
-    if( SortedLatticeHits.GetComparable(i) == -1 || SortedLatticeHits.GetComparable(i) < threshold )
+    if( SortedLatticeHits.GetKey(i) == -1 || SortedLatticeHits.GetKey(i) < threshold )
       ChosenLats.Add( SortedLatticeHits.GetObject(i) );
   }
   if( ChosenLats.IsEmpty() )
@@ -236,7 +234,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
     Tmp << ChosenLats[i]->GetSymbol();
     if( (i+1) < ChosenLats.Count() )  Tmp << ',';
   }
-  XApp.GetLog() << ( olxstr("Chosen lattice(s): ") << Tmp << '\n');
+  XApp.NewLogEntry() << "Chosen lattice(s): " << Tmp;
   // print current spacegroup
   TSpaceGroup* sg = NULL;
   try  { sg = &XApp.XFile().GetLastLoaderSG();  }
@@ -248,8 +246,8 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       Tmp << " (" << sg->GetFullName() << ')';
 
     Tmp << " #" << sg->GetNumber();
-    XApp.GetLog() << '\n';
-    XApp.GetLog() << (Tmp << '\n');
+    XApp.NewLogEntry();
+    XApp.NewLogEntry() << Tmp;
   }
   // nor systematic absences in P-1!
   if( CalculatedLaueClasses.Count() == 1 &&
@@ -278,8 +276,8 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       if( !matchLattice )  continue;
       SGToConsider.Add( &sg);
     }
-    if( SGToConsider.Count() != 0 )  {
-      XApp.GetLog() << ( olxstr("Testing ") << SGToConsider.Count() << " selected space groups\n");
+    if( !SGToConsider.IsEmpty() )  {
+      XApp.NewLogEntry() << "Testing " << SGToConsider.Count() << " selected space groups";
     }
   }
   TPtrList<TSpaceGroup> FoundSpaceGroups;
@@ -463,10 +461,10 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
         }
       }
       if( !amb_sg.IsEmpty() )  {
-        XApp.GetLog() << "Ambiguous space groups (statistics incomplete to determine):\n";
+        XApp.NewLogEntry() << "Ambiguous space groups (statistics incomplete to determine):";
         Output.Clear();
         Output.Hyphenate(amb_sg, 80);
-        XApp.GetLog() << Output << '\n';
+        XApp.NewLogEntry() << Output;
       }
     }
     else  {
@@ -519,14 +517,14 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
     if( olx_inst != NULL )
       olx_inst->setVar( IOlexProcessor::SGListVarName, sglist );
 
-    XApp.GetLog() << '\n';
-    XApp.GetLog() << "Noncentrosymmetric:\n";
+    XApp.NewLogEntry();
+    XApp.NewLogEntry() << "Noncentrosymmetric:";
     if( Output1.Count() )
       XApp.GetLog() << Output1;
     else
       XApp.GetLog() << "  None";
-    XApp.GetLog() << '\n';
-    XApp.GetLog() << "Centrosymmetric:\n";
+    XApp.NewLogEntry();
+    XApp.NewLogEntry() << "Centrosymmetric:";
     if( Output.Count() )
       XApp.GetLog() << Output;
     else
@@ -552,7 +550,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
     sgOutput.CreateHTMLList(Output, EmptyString, false, false, false);
   }
   else  {
-    XApp.GetLog().Error( "Could not find any suitable space group");
+    XApp.GetLog().Error("Could not find any suitable space group");
     TTTable<TStrList> sgOutput( 1, 2 );
     sgOutput[0][0] = "n/a";
     sgOutput[0][1] = "n/a";

@@ -44,7 +44,7 @@ public:
       GCenter /= Atoms.Count();
   }
 
-  inline const vec3d GetGravityCenter()  const  {  return GCenter;  }
+  inline const vec3d GetGravityCenter() const {  return GCenter;  }
   inline const  TTypeList< TSymmTestData >& GetResults() const  {  return Vecs;  }
 
   inline size_t AtomCount() const  {  return Atoms.Count();  }
@@ -85,7 +85,7 @@ public:
   //      gs = lmt * lm;
   //      gr = lmt * b;
 
-  //      TMatrixD::GauseSolve(gs, gr, sol);
+  //      TMatrixD::GaussSolve(gs, gr, sol);
   //      res[i] = sol;
   //      sol.Null();
   //    }

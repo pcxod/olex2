@@ -144,13 +144,9 @@ public:
 
   virtual void Read(void *Bf, size_t count);
   virtual size_t Write(const void *Bf, size_t count);
-  virtual inline size_t Writenl(const void *Data, size_t size)  {
-    size_t w = Write(Data, size);
-    w += Write(NewLineSequence, NewLineSequenceLength);
-    return w;
+  template <class T> inline size_t Write(const T& data)  {
+    return IDataOutputStream::Write(data);
   }
-  template <class T> inline size_t Write(const T& data)  {  return IDataOutputStream::Write(data);  }
-  template <class T> inline size_t Writenl(const T& data)  {  return IDataOutputStream::Writenl(data);  }
 
   virtual inline uint64_t GetSize() const {  return Length();  }
   virtual void SetPosition(uint64_t p);

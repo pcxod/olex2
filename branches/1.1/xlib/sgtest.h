@@ -19,10 +19,10 @@ public:
   TSGStats(TSpaceGroup* sg, const TwoDoublesInt& stats) : Stats(stats)  {
     SpaceGroup = sg;
   }
-  TSpaceGroup& GetSpaceGroup()  const  {  return *SpaceGroup;  }
-  double GetSummI()  const     {  return Stats.GetA();  }
-  double GetSummSI()  const    {  return Stats.GetB();  }
-  int    GetCount()  const     {  return Stats.GetC();  }
+  TSpaceGroup& GetSpaceGroup() const {  return *SpaceGroup;  }
+  double GetSummI() const    {  return Stats.GetA();  }
+  double GetSummSI() const   {  return Stats.GetB();  }
+  int    GetCount() const    {  return Stats.GetC();  }
 };
 
 template <class OC>  class TElementStats  {
@@ -40,7 +40,7 @@ public:
   int GetStrongCount() const     {  return  SummStrong.GetC();  }
   double GetSummWeakI()    const {  return SummWeak.GetA();  }
   double GetSummWeakSI()   const {  return SummWeak.GetB();  }
-  int GetWeakCount()   const     {  return SummWeak.GetC();  }
+  int GetWeakCount() const   {  return SummWeak.GetC();  }
 };
 
 class TSAStats  {
@@ -52,7 +52,7 @@ public:
     Present = Excluded = false;
     SymmElement = se;
   }
-  TSymmElement& GetSymmElement()  const  {  return *SymmElement;  }
+  TSymmElement& GetSymmElement() const {  return *SymmElement;  }
   double GetSummI() const {  return Stats.GetA();  }
   double GetSummSI() const {  return Stats.GetB();  }
   int    GetCount() const {  return Stats.GetC();  }
