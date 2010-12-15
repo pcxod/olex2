@@ -1590,39 +1590,43 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
   }
   else if( atom.GetType() == iNitrogenZ )  {  // nitrogen
     if( AE.Count() == 1 )  {
-      double d = AE.GetCrd(0).DistanceTo( atom.crd() );
+      double d = AE.GetCrd(0).DistanceTo(atom.crd());
       if( d > 1.35 )  {
-        TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": XNH2";
-        cg.FixAtom(AE, fgNH2, h_elm, NULL, generated);
+        if( d > 1.44 )  {
+          TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": XNH3";
+          cg.FixAtom(AE, fgNH3, h_elm, NULL, generated);
+        }
+        else  {
+          TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": XNH2";
+          cg.FixAtom(AE, fgNH2, h_elm, NULL, generated);
+        }
       }
-      else  {
-        if( d > 1.2 )  {  //else nitrile
-          // have to check if double bond
-          TSAtom* A = FindSAtom(AE.GetCAtom(0));
-          TAtomEnvi NAE;
-          if( A == 0 )
-            throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not locate atom ") << AE.GetLabel(0) );
+      else  if( d > 1.2 )  {  //else nitrile
+        // have to check if double bond
+        TSAtom* A = FindSAtom(AE.GetCAtom(0));
+        TAtomEnvi NAE;
+        if( A == 0 )
+          throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not locate atom ") << AE.GetLabel(0) );
 
-          UnitCell->GetAtomEnviList(*A, NAE, false, part);
-          NAE.Exclude( atom.CAtom() );
+        UnitCell->GetAtomEnviList(*A, NAE, false, part);
+        NAE.Exclude(atom.CAtom());
 
-          if( A->GetType() == iCarbonZ && NAE.Count() > 1 )  {
-            vec3d a = NAE.GetCrd(0);
-              a -= NAE.GetBase().crd();
-            vec3d b = AE.GetBase().crd();
-              b -= NAE.GetBase().crd();
+        if( A->GetType() == iCarbonZ && NAE.Count() > 1 )  {
+          vec3d a = NAE.GetCrd(0);
+          a -= NAE.GetBase().crd();
+          vec3d b = AE.GetBase().crd();
+          b -= NAE.GetBase().crd();
 
-            d = a.CAngle(b);
-            d = acos(d)*180/M_PI;
-            if( d > 115 && d < 130 )  {
-              TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": X=NH2";
-              cg.FixAtom(AE, fgNH2, h_elm, &NAE, generated);
-            }
+          d = a.CAngle(b);
+          d = acos(d)*180/M_PI;
+          if( d > 115 && d < 130 )  {
+            TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": X=NH2";
+            cg.FixAtom(AE, fgNH2, h_elm, &NAE, generated);
           }
-          else  {
-            TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": X=NH";
-            cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
-          }
+        }
+        else  {
+          TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": X=NH";
+          cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
         }
       }
     }
@@ -1633,8 +1637,8 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
         b -= atom.crd();
       double v = a.CAngle(b);
       v = acos(v)*180/M_PI;
-      double d1 = AE.GetCrd(0).DistanceTo( atom.crd() );
-      double d2 = AE.GetCrd(1).DistanceTo( atom.crd() );
+      double d1 = AE.GetCrd(0).DistanceTo(atom.crd());
+      double d2 = AE.GetCrd(1).DistanceTo(atom.crd());
       if( d1 > 1.72 || d2 > 1.72 )  {  // coordination?
         if( v > 165 )  // skip ..
           TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": RN->M";
