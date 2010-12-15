@@ -167,7 +167,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& In
   delete [] Distances[3];
   delete [] Distances;
   sw.stop();
-  sw.print( TBasicApp::GetLog(), &TLog::Info );
+  sw.print(TBasicApp::NewLogEntry(logInfo));
 }
 //..............................................................................
 void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& bond_sink)  {
@@ -1097,7 +1097,7 @@ void TNetwork::DoAlignAtoms(const TSAtomPList& atomsToTransform, const TNetwork:
     atomsToTransform[i]->crd() = (v - ai.align_out.center_b)*m + ai.align_out.center_a;
     if( atomsToTransform[i]->GetEllipsoid() != NULL )  {
       if( atomsToTransform[i]->GetEllipsoid()->GetTag() != 0 )  {
-        TBasicApp::GetLog().Error(olxstr("Ellipsoid has already been rotated for: ") << atomsToTransform[i]->GetLabel());
+        TBasicApp::NewLogEntry(logError) << "Ellipsoid has already been rotated for: " << atomsToTransform[i]->GetLabel();
         continue;
       }
       uc.GetEllp(atomsToTransform[i]->GetEllipsoid()->GetId());

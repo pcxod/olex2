@@ -1137,7 +1137,7 @@ separated values of Atom Type and radius, an entry a line");
   if( !TEFile::Exists(DataDir) )  {  // do not worry then - create the new one
     DataDir = new_data_dir;
     if( !TEFile::MakeDirs(DataDir) )
-      TBasicApp::GetLog().Error("Could not create data folder!");
+      TBasicApp::NewLogEntry(logError) << "Could not create data folder!";
       if( updater::UpdateAPI::IsNewInstallation() )
         updater::UpdateAPI::TagInstallationAsOld();
       patcher::PatchAPI::SaveLocationInfo(new_data_dir);
@@ -1171,7 +1171,7 @@ separated values of Atom Type and radius, an entry a line");
     TBasicApp::GetLog().AddStream(TUtf8File::Create(DataDir + "olex2.log"), true);
   }
   catch( TExceptionBase& )  {
-    TBasicApp::GetLog().Error("Could not create log file!");
+    TBasicApp::NewLogEntry(logError) << "Could not create log file!";
   }
 
   TBasicApp::GetLog().OnInfo.Add(this, ID_INFO, msiEnter);
@@ -1307,7 +1307,7 @@ void TMainForm::StartupInit()  {
         }
       }
       catch( TExceptionBase& exc )  {
-        TBasicApp::GetLog().Exception(exc.GetException()->GetFullMessage());
+        TBasicApp::NewLogEntry(logException) << exc.GetException()->GetFullMessage();
       }
     }
     sh = settings.Root().FindItemi("menus");
@@ -1343,7 +1343,7 @@ void TMainForm::StartupInit()  {
         }
       }
       catch( TExceptionBase& exc )  {
-        TBasicApp::GetLog().Exception(exc.GetException()->GetFullMessage());
+        TBasicApp::NewLogEntry(logException) << exc.GetException()->GetFullMessage();
       }
     }
   }
@@ -2054,9 +2054,9 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
   if( (Fl&sssCtrl) && m.GetKeyCode() == 'c'-'a'+1 )  {  // Ctrl+C
     if( _ProcessManager->GetRedirected() != NULL )  {
       if( _ProcessManager->GetRedirected()->Terminate() )
-        TBasicApp::GetLog().Info("Process has been successfully terminated...");
+        TBasicApp::NewLogEntry(logInfo) << "Process has been successfully terminated...";
       else
-        TBasicApp::GetLog().Info("Could not terminate the process...");
+        TBasicApp::NewLogEntry(logInfo) << "Could not terminate the process...";
       TimePerFrame = FXApp->Draw();
     }
     return;
@@ -2064,7 +2064,7 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
   if( m.GetKeyCode() == WXK_RETURN )  {
     if( FMode & mSolve )  {
       FMode ^= mSolve;
-      TBasicApp::GetLog().Info("Model is set to current solution");
+      TBasicApp::NewLogEntry(logInfo) << "Model is set to current solution";
     }
   }
   if( m.GetKeyCode() == WXK_ESCAPE )  {  // escape
@@ -3151,10 +3151,14 @@ bool TMainForm::executeMacroEx(const olxstr& cmdLine, TMacroError& er)  {
 //..............................................................................
 void TMainForm::print(const olxstr& output, const short MessageType)  {
 //  TGlMaterial *glm = NULL;
-  if( MessageType == olex::mtInfo )          TBasicApp::GetLog().Info(output);
-  else if( MessageType == olex::mtWarning )   TBasicApp::GetLog().Warning(output);
-  else if( MessageType == olex::mtError )     TBasicApp::GetLog().Error(output);
-  else if( MessageType == olex::mtException ) TBasicApp::GetLog().Exception(output);
+  if( MessageType == olex::mtInfo )
+    TBasicApp::NewLogEntry(logInfo) << output;
+  else if( MessageType == olex::mtWarning )
+    TBasicApp::NewLogEntry(logWarning) << output;
+  else if( MessageType == olex::mtError )
+    TBasicApp::NewLogEntry(logError) << output;
+  else if( MessageType == olex::mtException )
+    TBasicApp::NewLogEntry(logException) << output;
   // if need to foce printing - so go aroung the log
 //  if( MessageType == 0 )  ;
 //  else if( MessageType == olex::mtInfo )      glm = &InfoFontColor;
@@ -3172,13 +3176,13 @@ bool TMainForm::executeFunction(const olxstr& function, olxstr& retVal)  {
 IEObject* TMainForm::executeFunction(const olxstr& function)  {
   size_t ind = function.FirstIndexOf('(');
   if( (ind == InvalidIndex) || (ind == (function.Length()-1)) || !function.EndsWith(')') )  {
-    TBasicApp::GetLog().Error( olxstr("Incorrect function call: ") << function);
+    TBasicApp::NewLogEntry(logError) << "Incorrect function call: " << function;
     return NULL;
   }
   olxstr funName = function.SubStringTo(ind);
   ABasicFunction* Fun = FXApp->GetLibrary().FindFunction(funName);
   if( Fun == NULL )  {
-    TBasicApp::GetLog().Error( olxstr("Unknow function: ") << funName);
+    TBasicApp::NewLogEntry(logError) << "Unknow function: " << funName;
     return NULL;
   }
   TMacroError me;
@@ -3212,15 +3216,15 @@ TPopupData* TMainForm::FindHtmlEx(const olxstr& popupName) const {
 void TMainForm::AnalyseError(TMacroError& error)  {
   if( !error.IsSuccessful() )  {
     if( error.IsProcessingException() )
-      TBasicApp::GetLog().Exception(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
+      TBasicApp::NewLogEntry(logException) << error.GetLocation() << ": " <<  error.GetInfo();
     else if( !error.GetInfo().IsEmpty() )  {
       //if( !error.DoesFunctionExist() && (FMode&mSilent) != 0 )  {
-      //  TBasicApp::GetLog().Info(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
+      //  TBasicApp::NewLogEntry(logInfo)(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
       //  while( !error.GetStack().IsEmpty() )
-      //    TBasicApp::GetLog().Info(  (olxstr('\t') << error.GetStack().Pop().TrimWhiteChars()) );
+      //    TBasicApp::NewLogEntry(logInfo)(  (olxstr('\t') << error.GetStack().Pop().TrimWhiteChars()) );
       //  return;
       //}
-      TBasicApp::GetLog().Error(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
+      TBasicApp::NewLogEntry(logError) << error.GetLocation() << ": " <<  error.GetInfo();
     }
     while( !error.GetStack().IsEmpty() )
       TBasicApp::NewLogEntry() << '\t' << error.GetStack().Pop().TrimWhiteChars();
@@ -3764,7 +3768,7 @@ void TMainForm::ProcessHandler::OnTerminate(const AProcess& p)  {
     if( !err.IsSuccessful() )
       break;
   }
-  TBasicApp::GetLog().Info(olxstr("The process '") << p.GetCmdLine() << "' has been terminated...");
+  TBasicApp::NewLogEntry(logInfo) << "The process '" << p.GetCmdLine() << "' has been terminated...";
   parent.TimePerFrame = parent.FXApp->Draw();
 }
 //..............................................................................

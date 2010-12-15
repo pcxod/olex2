@@ -105,12 +105,12 @@ int main(int argc, char** argv)  {
                 no Olex2 folders are opened in browsers";
         }
         TBasicApp::GetLog() << "Update failed: ";
-        TBasicApp::GetLog().Error(msg);
+        TBasicApp::NewLogEntry(logError) << msg;
       }
       Launch();
     }
     else
-      TBasicApp::GetLog().Error("Read-only file system...");
+      TBasicApp::NewLogEntry(logError) << "Read-only file system...";
   }
   catch(const TExceptionBase& e)  {
     out.Write(e.GetException()->GetFullMessage());
@@ -142,5 +142,5 @@ void Launch()  {
 #endif
   TEFile::ChangeDir(bd);
   execl(cmdl.u_str(), cmdl.u_str(), NULL);
-  TBasicApp::GetLog().Error("Failed to launch Olex2");
+  TBasicApp::NewLogEntry(logError) << "Failed to launch Olex2";
 }

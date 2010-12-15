@@ -441,7 +441,7 @@ ICifEntry& CifBlock::Add(ICifEntry* p)  {
         table_map.GetValue(ti) = (cetTable*)p;
       else  {
         table_map.Delete(ti);
-        TBasicApp::GetLog().Warning(olxstr("Changing table type for ") << pname);
+        TBasicApp::NewLogEntry(logWarning) << "Changing table type for " << pname;
       }
     }
     const size_t oi = params.IndexOf(pname);

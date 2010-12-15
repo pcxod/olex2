@@ -143,7 +143,7 @@ double TAutoDBNode::CalcAngle(size_t i, size_t j)  const {
   vec3d a(AttachedNodes[i].GetCenter()-Center),
         b(AttachedNodes[j].GetCenter()-Center);
   if( a.QLength()*b.QLength() == 0 )  {
-    TBasicApp::GetLog().Error( olxstr("Overlapping atoms enountered") );
+    TBasicApp::NewLogEntry(logError) <<  "Overlapping atoms enountered";
     return 0;
   }
   double ca = a.CAngle(b);
@@ -519,22 +519,22 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
       progress.SetPos(i);
       if( dbfolder->Contains(files[i].GetName()) )  continue;
       try  {
-        TBasicApp::GetLog().Info(olxstr("Processing ") << files[i].GetName() << "...");
+        TBasicApp::NewLogEntry(logInfo) << "Processing " << files[i].GetName() << "...";
         XFile.LoadFromFile(files[i].GetName());
         TCif& cif = XFile.GetLastLoader<TCif>();
         olxstr r1 = cif.GetParamAsString("_refine_ls_R_factor_gt");
         if( r1.Length() && r1.ToDouble() > 5 )  {
-          TBasicApp::GetLog().Info(olxstr("Skipped r1=") << r1);
+          TBasicApp::NewLogEntry(logInfo) << "Skipped r1=" << r1;
           continue;
         }
         olxstr shift = cif.GetParamAsString("_refine_ls_shift/su_max");
         if( shift.Length() && shift.ToDouble() > 0.05 )  {
-          TBasicApp::GetLog().Info(olxstr("Skipped shift=") << shift);
+          TBasicApp::NewLogEntry(logInfo) << "Skipped shift=" << shift;
           continue;
         }
         olxstr gof = cif.GetParamAsString("_refine_ls_goodness_of_fit_ref");
         if( gof.Length() && olx_abs(1-gof.ToDouble()) > 0.1 )  {
-          TBasicApp::GetLog().Info(olxstr("Skipped GOF=") << gof);
+          TBasicApp::NewLogEntry(logInfo) << "Skipped GOF=" << gof;
           continue;
         }
         XFile.GetLattice().CompaqAll();
@@ -543,7 +543,7 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
           ProcessNodes(&adf, XFile.GetLattice().GetFragment(j));
       }
       catch( const TExceptionBase& exc )  {
-        TBasicApp::GetLog().Error(olxstr("Failed to process: ") << exc.GetException()->GetError());
+        TBasicApp::NewLogEntry(logError) << "Failed to process: " << exc.GetException()->GetError();
       }
     }
   }
@@ -789,7 +789,7 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
       for( size_t j=0; j < segment[i]->ParentCount(); j++ )  {
         double cfom = 0;
         TAutoDBNetNode& netnd = segment[i]->GetParent(j)->Node( segment[i]->GetParentIndex(j) );
-        //TBasicApp::GetLog().Info( Nodes[i]->GetParent(j)->Reference()->GetName());
+        //TBasicApp::NewLogEntry(logInfo) << Nodes[i]->GetParent(j)->Reference()->GetName();
         if( netnd.IsMetricSimilar(node, cfom, NULL, false) )  {
           //
           found = false;
@@ -990,21 +990,21 @@ void TAutoDB::A2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1, const cm_
   const double ratio = a1.GetUiso()/(olx_abs(a2.GetUiso())+0.001);
   if( ratio > (1.0 + threshold) )  {
     if( a1.GetType() != e1 )  {
-      TBasicApp::GetLog().Info(olxstr("A2 assignment: ") << a1.GetLabel() << " -> " << e1.symbol);
+      TBasicApp::NewLogEntry(logInfo) << "A2 assignment: " << a1.GetLabel() << " -> " << e1.symbol;
       a1.SetType(e1);
     }
     if( a2.GetType() != e2 )  {
-      TBasicApp::GetLog().Info(olxstr("A2 assignment: ") << a2.GetLabel() << " -> " << e2.symbol);
+      TBasicApp::NewLogEntry(logInfo) << "A2 assignment: " << a2.GetLabel() << " -> " << e2.symbol;
       a2.SetType(e2);
     }
   }
   else if( ratio < (1.0-threshold) )  {
     if( a2.GetType() != e1 )  {
-      TBasicApp::GetLog().Info(olxstr("A2 assignment: ") << a2.GetLabel() << " -> " << e1.symbol);
+      TBasicApp::NewLogEntry(logInfo) << "A2 assignment: " << a2.GetLabel() << " -> " << e1.symbol;
       a2.SetType(e1);
     }
     if( a1.GetType() != e2 )  {
-      TBasicApp::GetLog().Info( olxstr("A2 assignment: ") << a1.GetLabel() << " -> " << e2.symbol);
+      TBasicApp::NewLogEntry(logInfo) << "A2 assignment: " << a1.GetLabel() << " -> " << e2.symbol;
       a1.SetType(e2);
     }
   }
@@ -1082,7 +1082,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         int from = sn->Node(i).Node(j)->GetTag();
         int to = guessN->GetItem(0).hits[0].Node->Node(cindexes[j])->Center()->GetType().index;
         if( from != -1 && from != to )
-          TBasicApp::GetLog().Info("Oups ...");
+          TBasicApp::NewLogEntry(logInfo) << "Oups ...";
       }
     }
     if( sn->Node(i).Count() == 1 )  // normally wobly
@@ -1098,9 +1098,9 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
     UisoCnt = 0;
   }
   if( UisoCnt != 0 )
-    TBasicApp::GetLog().Info( olxstr("Mean Uiso for confident atom types is ") << olxstr::FormatFloat(3,Uiso) );
+    TBasicApp::NewLogEntry(logInfo) <<"Mean Uiso for confident atom types is " << olxstr::FormatFloat(3,Uiso);
   else
-    TBasicApp::GetLog().Info("Could not locate confident atom types");
+    TBasicApp::NewLogEntry(logInfo) << "Could not locate confident atom types";
   // assigning atom types according to L3 and L2 and printing stats
   for( size_t i=0; i < sn_count; i++ )  {
     if( sn->Node(i).GetId() == 0 )  continue;
@@ -1150,7 +1150,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         }
       }
     }
-    TBasicApp::GetLog().Info( tmp );
+    TBasicApp::NewLogEntry(logInfo) << tmp;
   }
   for( size_t i=0; i < sn_count; i++ )  {
     if( sn->Node(i).GetTag() != -1 && guesses[i].atom->GetType() != sn->Node(i).GetTag() )  {
@@ -1180,8 +1180,8 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         guesses[i].atom->SetType(*l_elm);
       }
       if( change_evt != -1 )  {
-        TBasicApp::GetLog().Info( olxstr("SN[") << change_evt << "] assignment " << guesses[i].atom->GetLabel() <<
-              " to " << l_elm->symbol);
+        TBasicApp::NewLogEntry(logInfo) << "SN[" << change_evt << "] assignment " <<
+          guesses[i].atom->GetLabel() << " to " << l_elm->symbol;
         stat.AtomTypeChanges++;
         stat.SNAtomTypeAssignments++;
       }
@@ -1207,7 +1207,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         tmp << guesses[i].atom->GetLabel() << ' ';
         const cm_Element* type = &guesses[i].atom->GetType();
         if( searchHeavier )  {
-          TBasicApp::GetLog().Info( olxstr("Searching element heavier for ") << guesses[i].atom->GetLabel() );
+          TBasicApp::NewLogEntry(logInfo) << "Searching element heavier for " << guesses[i].atom->GetLabel();
           for( size_t j=0; j < guesses[i].list1->Count(); j++ )  {
             if( guesses[i].list1->GetItem(j).Type->z > type->z )  {
               if( proposed_atoms != NULL )  {
@@ -1228,7 +1228,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
           }
         }
         else if( searchLighter )  {
-          TBasicApp::GetLog().Info( olxstr("Searching element lighter for ") << guesses[i].atom->GetLabel() );
+          TBasicApp::NewLogEntry(logInfo) << "Searching element lighter for " << guesses[i].atom->GetLabel();
           for( size_t j=0; j < guesses[i].list1->Count(); j++ )  {
             if( guesses[i].list1->GetItem(j).Type->z < type->z )  {
               if( proposed_atoms != NULL )  {
@@ -1279,7 +1279,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
             guesses[i].atom->SetType(*type);
           }
         }
-        TBasicApp::GetLog().Info(tmp);
+        TBasicApp::NewLogEntry(logInfo) << tmp;
       }
     }
   }
@@ -1329,7 +1329,7 @@ void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt, TStrL
   TSymmTest::TestDependency(alist, blist, vlist, mI, 0.01);
   vec3d thisCenter, atomCenter;
   if( vlist.Count() != 0 )  {
-    TBasicApp::GetLog().Info( vlist[vlist.Count()-1].Count() );
+    TBasicApp::NewLogEntry(logInfo) << vlist[vlist.Count()-1].Count();
     if( vlist[vlist.Count()-1].Count() > (alist.Count()*0.75) )  {
       thisCenter = vlist[vlist.Count()-1].Center;
       if( !sga->IsCentrosymmetric() )
@@ -1411,7 +1411,7 @@ void TAtomTypePermutator::InitAtom(TAutoDB::TGuessCount& guess)  {
       if( pm != NULL && pm->Tries.Count() )  {
         //Atoms.Delete(pmIndex);
         pm->Tries.Clear();
-        TBasicApp::GetLog().Info( olxstr("Converged ") << guess.atom->GetLabel() );
+        TBasicApp::NewLogEntry(logInfo) << "Converged " << guess.atom->GetLabel();
       }
       return;
     }
@@ -1477,7 +1477,7 @@ void TAtomTypePermutator::Permutate()  {
       }
     }
     if( permuted )  {
-      TBasicApp::GetLog().Info( olxstr(Atoms[i].Atom->GetLabel()) << " permutated") ;
+      TBasicApp::NewLogEntry(logInfo) << Atoms[i].Atom->GetLabel() << " permutated";
     }
     else  {
       const cm_Element* type = NULL;
@@ -1487,11 +1487,11 @@ void TAtomTypePermutator::Permutate()  {
           type = Atoms[i].Tries[j].GetA();
           minDelta = olx_sqr(Atoms[i].Tries[j].GetB()-0.025);
         }
-        TBasicApp::GetLog().Info(olxstr(Atoms[i].Atom->GetLabel()) << " permutation to " <<
-          Atoms[i].Tries[j].GetA()->symbol << " leads to Uiso = " << Atoms[i].Tries[j].GetB() );
+        TBasicApp::NewLogEntry(logInfo) << Atoms[i].Atom->GetLabel() << " permutation to " <<
+          Atoms[i].Tries[j].GetA()->symbol << " leads to Uiso = " << Atoms[i].Tries[j].GetB();
       }
       if( type != NULL )  {
-        TBasicApp::GetLog().Info(olxstr("Most probable type is ") << type->symbol);
+        TBasicApp::NewLogEntry(logInfo) << "Most probable type is " << type->symbol;
         if( &Atoms[i].Atom->GetType() != type )  {
           Atoms[i].Atom->SetLabel(type->symbol, false);
           Atoms[i].Atom->SetType(*type);

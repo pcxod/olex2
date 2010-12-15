@@ -38,7 +38,7 @@ public:
 
   static TLog& GetLog()  {  return *GetInstance().Log;  }
   static TLog::LogEntry NewLogEntry(int evt_type = logDefault, bool annotate=false)  {
-    return GetInstance().Log->NewEntry(annotate);
+    return GetInstance().Log->NewEntry(evt_type, annotate);
   }
   /* if var_name is not NULL, tries to get its value and combine with file name of path 
   if either are empty - the curent folder is used with exename 'unknown.exe' */

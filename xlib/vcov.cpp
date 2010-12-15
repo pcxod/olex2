@@ -227,7 +227,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
           int y = v[ssc.map[vj].param];
           if( x == -1 || y == -1 )  {
             failed = true;
-            TBasicApp::GetLog().Error(olxstr("Failed to evaluate esd of Uiso..."));
+            TBasicApp::NewLogEntry(logError) << "Failed to evaluate esd of Uiso...";
             break;
           }
           if( x > y )
@@ -246,7 +246,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
     }
   }
   catch(const TExceptionBase& e)  {
-    TBasicApp::GetLog().Error(e.GetException()->GetFullMessage());
+    TBasicApp::NewLogEntry(logError) << e.GetException()->GetFullMessage();
   }
 }
 //..................................................................................

@@ -204,12 +204,12 @@ void TCif::Initialize()  {
       GetAsymmUnit().SetZ((short)olx_round(GetParamAsString("_cell_formula_units_Z").ToDouble()));
   }
   catch(...)  {
-    TBasicApp::GetLog().Info("CIF initialising failed: unknown cell parameters");
+    TBasicApp::NewLogEntry(logInfo) << "CIF initialising failed: unknown cell parameters";
     return;
   }
   // check if the cif file contains valid parameters
   if( GetAsymmUnit().CalcCellVolume() == 0 )  {
-    TBasicApp::GetLog().Info("CIF initialising failed: zero cell volume");
+    TBasicApp::NewLogEntry(logInfo) << "CIF initialising failed: zero cell volume";
     return;
   }
 
@@ -292,7 +292,7 @@ void TCif::Initialize()  {
   const size_t Degen = ALoop->ColIndex("_atom_site_symmetry_multiplicity");
   const size_t Part = ALoop->ColIndex("_atom_site_disorder_group");
   if( (ALabel|ACi[0]|ACi[1]|ACi[2]) == InvalidIndex )  {
-    TBasicApp::GetLog().Error("Failed to locate required fields in atoms loop");
+    TBasicApp::NewLogEntry(logError) << "Failed to locate required fields in atoms loop";
     return;
   }
   for( size_t i=0; i < ALoop->RowCount(); i++ )  {
@@ -721,7 +721,7 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
         }
         */
         if( (index > Dic.Count()) || (index <= 0) )
-          TBasicApp::GetLog().Error(olxstr("Wrong parameter index ") << index);
+          TBasicApp::NewLogEntry(logError) << "Wrong parameter index " << index;
         else  {  // resolve indexes
           String.Delete(start, end-start+1);
           olxstr SVal = Dic[index-1];
@@ -745,20 +745,20 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
             else {
               IStringCifEntry* Params = FindParam<IStringCifEntry>(SVal);
               if( Params == NULL )  {
-                TBasicApp::GetLog().Info(olxstr("The parameter \'") << SVal << "' is not found");
+                TBasicApp::NewLogEntry(logInfo) << "The parameter \'" << SVal << "' is not found";
                 value = 'N';
               }
               else if( Params->Count() == 0 )  {
-                TBasicApp::GetLog().Info(olxstr("Value of parameter \'") << SVal << "' is not found");
+                TBasicApp::NewLogEntry(logInfo) << "Value of parameter \'" << SVal << "' is not found";
                   value = "none";
               }
               else if( Params->Count() == 1 )  {
                 if( (*Params)[0].IsEmpty() )  {
-                  TBasicApp::GetLog().Info(olxstr("Value of parameter \'") << SVal << "' is not found");
+                  TBasicApp::NewLogEntry(logInfo) << "Value of parameter \'" << SVal << "' is not found";
                   value = "none";
                 }
                 else if( (*Params)[0].CharAt(0) == '?' )  {
-                  TBasicApp::GetLog().Info(olxstr("Value of parameter \'") << SVal << "' is not defined");
+                  TBasicApp::NewLogEntry(logInfo) << "Value of parameter \'" << SVal << "' is not defined";
                   value = '?';
                 }
                 else  {

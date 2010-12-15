@@ -172,7 +172,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
         if( !err.IsSuccessful() )
           break;
       }
-      TBasicApp::GetLog().Info(olxstr("The process '") << p.GetCmdLine() << "' has been terminated...");
+      TBasicApp::NewLogEntry(logInfo) << "The process '" << p.GetCmdLine() << "' has been terminated...";
     }
   };
   ProcessHandler _ProcessHandler;
@@ -180,7 +180,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
 public:
   TOlex(const olxstr& basedir) : XApp(basedir, this), Macros(*this), _ProcessHandler(*this) {
     Macros.Init();
-    XApp.SetCifTemplatesDir( XApp.GetBaseDir() + "etc/CIF/" );
+    XApp.SetCifTemplatesDir(XApp.GetBaseDir() + "etc/CIF/");
     OlexInstance = this;
     Silent = true;
     OutStream = new TOutStream();
@@ -331,13 +331,13 @@ public:
   virtual IEObject* executeFunction(const olxstr& function)  {
     size_t ind = function.FirstIndexOf('(');
     if( (ind == InvalidIndex) || (ind == (function.Length()-1)) || !function.EndsWith(')') )  {
-      TBasicApp::GetLog().Error( olxstr("Incorrect function call: ") << function);
+      TBasicApp::NewLogEntry(logError) << "Incorrect function call: " << function;
       return NULL;
     }
     olxstr funName = function.SubStringTo(ind);
     ABasicFunction* Fun = GetLibrary().FindFunction( funName );
     if( Fun == NULL )  {
-      TBasicApp::GetLog().Error( olxstr("Unknow function: ") << funName);
+      TBasicApp::NewLogEntry(logError) << "Unknow function: " << funName;
       return NULL;
     }
     TMacroError me;
@@ -464,11 +464,11 @@ public:
         print(olxstr(error.GetLocation()) << ": " <<  error.GetInfo(), olex::mtError);
       }
       else if( error.IsInvalidOption() )
-        TBasicApp::GetLog().Error(error.GetInfo());
+        TBasicApp::NewLogEntry(logError) << error.GetInfo();
       else if( error.IsInvalidArguments() )
-        TBasicApp::GetLog().Error(error.GetInfo());
+        TBasicApp::NewLogEntry(logError) << error.GetInfo();
       else if( error.IsIllegalState() )
-        TBasicApp::GetLog().Error(error.GetInfo());
+        TBasicApp::NewLogEntry(logError) << error.GetInfo();
       else if( !error.DoesFunctionExist() )
         print(error.GetInfo(), olex::mtWarning);
     }
@@ -529,7 +529,7 @@ public:
           }
         }
         else
-          XApp.GetLog().Error(SyntaxParser.Errors().Text(NewLineSequence));
+          XApp.NewLogEntry(logError) << SyntaxParser.Errors().Text(NewLineSequence);
       }
       else  {
         XApp.FindSAtoms(Cmds.Text(' '), Selection);

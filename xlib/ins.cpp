@@ -201,7 +201,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
          throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid SAME instruction :") << ex.GetException()->GetError());
        }
        if( ag.IsEmpty() )  {
-         TBasicApp::GetLog().Error(olxstr("Invalid SAME atom list, removed: ") << toks.Text(' '));
+         TBasicApp::NewLogEntry(logError) << "Invalid SAME atom list, removed: " << toks.Text(' ');
          //throw TFunctionFailedException(__OlxSourceInfo, "empty SAME atoms list");
        }
        else  {
@@ -298,7 +298,7 @@ void TIns::_FinishParsing(ParseContext& cx)  {
         }
       }
       catch(const TExceptionBase& e)  {
-        TBasicApp::GetLog().Error(e.GetException()->GetFullMessage());
+        TBasicApp::NewLogEntry(logError) << e.GetException()->GetFullMessage();
       }
     }
     else  {
@@ -322,8 +322,8 @@ void TIns::_ProcessAfix0(ParseContext& cx)  {
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("incomplete AFIX group") <<
         (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString) );
       else
-        TBasicApp::GetLog().Warning( olxstr("Possibly incorrect AFIX ") << cx.AfixGroups.Current().GetB()->GetAfix() <<
-        (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString) );
+        TBasicApp::NewLogEntry(logWarning) << "Possibly incorrect AFIX " << cx.AfixGroups.Current().GetB()->GetAfix() <<
+        (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString);
     }
     if( cx.AfixGroups.Current().GetB()->GetPivot() == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "undefined pivot atom for a fitted group");
@@ -483,7 +483,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
           NumberCount++;
       }
       if( NumberCount > 0 && NumberCount < 14 )  {
-        TBasicApp::GetLog().Error( olxstr("Possibly not well formed SFAC ") << Toks[0]);
+        TBasicApp::NewLogEntry(logError) << "Possibly not well formed SFAC " << Toks[0];
       }
       else  if( NumberCount == 14 )  {
         /* here we do not check if the Toks.String(1) is atom - itcould be a label ...
@@ -789,7 +789,9 @@ void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
 }
 //..............................................................................
 void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix, 
-                     TStrPObjList<olxstr,const cm_Element*>* sfac, TStrList& sl, TIndexList* index, bool checkSame)  {
+  TStrPObjList<olxstr,const cm_Element*>* sfac, TStrList& sl,
+  TIndexList* index, bool checkSame)
+{
   if( a.IsDeleted() || a.IsSaved() )  return;
   if( checkSame && olx_is_valid_index(a.GetSameId()) )  {  // "
     TSameGroup& sg = rm.rSAME[a.GetSameId()];
@@ -797,7 +799,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
       for( size_t i=0; i < sg.DependentCount(); i++ )  {
         if( !sg.GetDependent(i).IsValidForSave() )
           continue;
-        olxstr tmp( "SAME ");
+        olxstr tmp("SAME ");
         tmp << olxstr(sg.GetDependent(i).Esd12).TrimFloat() << ' ' 
             << olxstr(sg.GetDependent(i).Esd13).TrimFloat();
         for( size_t j=0; j < sg.GetDependent(i).Count(); j++ )
@@ -838,10 +840,10 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   part = a.GetPart();
   index_t spindex;
   if( a.GetType() == iQPeakZ )
-    spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOfi('c'));
+    spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOfi('c')+1);
   else
-    spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOfObject(&a.GetType()));
-  HyphenateIns(_AtomToString(rm, a, spindex+1), sl);
+    spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOfObject(&a.GetType())+1);
+  HyphenateIns(_AtomToString(rm, a, spindex == 0 ? 1 : spindex), sl);
   a.SetSaved(true);
   if( index != NULL )  index->Add(a.GetTag());
   for( size_t i=0; i < a.DependentHfixGroupCount(); i++ )  {
@@ -878,7 +880,6 @@ void TIns::SaveToStrings(TStrList& SL)  {
   for( size_t i=0; i < GetRM().GetUserContent().Count(); i++ )  {
     BasicAtoms.Add(GetRM().GetUserContent()[i].element.symbol, &GetRM().GetUserContent()[i].element);
   }
-  size_t carbonIndex = BasicAtoms.IndexOfi('c');  // for Q-peaks
   for( size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ )  {
     TResidue& residue = GetAsymmUnit().GetResidue(i);
     for( size_t j=0; j < residue.Count(); j++ )  {
@@ -886,18 +887,9 @@ void TIns::SaveToStrings(TStrList& SL)  {
       residue[j].SetSaved(false);
       size_t spindex = BasicAtoms.IndexOfObject(&residue[j].GetType());  // fix the SFAC, if wrong
       if( spindex == InvalidIndex )  {
-        if( residue[j].GetType() == iQPeakZ )  {
-          if( carbonIndex == InvalidIndex )  {
-            GetRM().AddUserContent("C", 1.0);
-            BasicAtoms.Add("C", &XElementLib::GetByIndex(iCarbonIndex));
-            carbonIndex = BasicAtoms.Count() -1;
-          }
-        }
-        else  {
+        if( residue[j].GetType() != iQPeakZ )  {
           BasicAtoms.Add(residue[j].GetType().symbol, &residue[j].GetType());
           GetRM().AddUserContent(residue[j].GetType().symbol, 1.0);
-          if( residue[j].GetType() == iCarbonZ )
-            carbonIndex = BasicAtoms.Count() - 1;
         }
       }
       if( residue[j].GetLabel().Length() > 4 ) 
@@ -921,8 +913,8 @@ void TIns::SaveToStrings(TStrList& SL)  {
   for( size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ )  {
     TResidue& residue = GetAsymmUnit().GetResidue(i);
     if( i != 0 && !residue.IsEmpty() )  { 
-      SL.Add(EmptyString);
-      SL.Add( residue.ToString() );
+      SL.Add();
+      SL.Add(residue.ToString());
       fragmentId = ~0;
     }
     for( size_t j=0; j < residue.Count(); j++ )  {
@@ -1165,7 +1157,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
     TEllipsoid& elp = cx.au.NewEllp().Initialise(QE);
     atom->AssignEllp(&elp);
     if( atom->GetEllipsoid()->IsNPD() )  {
-      TBasicApp::GetLog().Info(olxstr("Not positevely defined: ") << Toks[0]);
+      TBasicApp::NewLogEntry(logInfo) << "Not positevely defined: " << Toks[0];
       atom->SetUiso(0);
     }
     else
@@ -1789,11 +1781,11 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& toks)  {
       size_t atomAGroup;
       try  {  aref.Expand(rm, agroup, resi, atomAGroup);  }
       catch( const TExceptionBase& ex )  {
-        TBasicApp::GetLog().Exception(ex.GetException()->GetError());
+        TBasicApp::NewLogEntry(logException) << ex.GetException()->GetError();
         return false;
       }
       if( sr.GetListType() == rltBonds && (agroup.Count() == 0 || (agroup.Count()%2)!=0 ) )  {
-        TBasicApp::GetLog().Error( olxstr("Wrong restraint parameters list: ") << toks.Text(' ') );
+        TBasicApp::NewLogEntry(logError) << "Wrong restraint parameters list: " << toks.Text(' ');
         return false;
       }
       if( ins_name.Equalsi("FLAT") )  {  // a special case again...

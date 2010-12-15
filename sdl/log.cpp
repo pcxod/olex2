@@ -28,9 +28,10 @@ TLog::LogEntry::LogEntry(TLog& _parent, int _evt, bool annotate) : parent(_paren
 }
 //..............................................................................
 TLog::LogEntry::~LogEntry()  {
+  buffer << NewLineSequence;
   if( evt == logDefault )  {
-    parent << (buffer << NewLineSequence);
-    parent.Flush();
+    parent << buffer;
+    //parent.Flush();
   }
   else  {
     TActionQueue* ac = NULL;
@@ -51,9 +52,9 @@ TLog::LogEntry::~LogEntry()  {
       ac = &parent.OnInfo;
       break;
     }
-    if( ac->Enter(&parent, &buffer) )  {
-      parent << (buffer << NewLineSequence);
-      parent.Flush();
+    if( !ac->Enter(&parent, &buffer) )  {
+      parent << buffer;
+      //parent.Flush();
     }
     ac->Exit(&parent);
   }

@@ -438,7 +438,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       Toks.Strtok(tmp, ' '); // extract item name
       if( (stm == 1 && Toks.Count() < 4) ||
           (stm == 2 && Toks.Count() < 3) )  {
-        TBasicApp::GetLog().Error(olxstr("Wrong #include[if] syntax: ") << tmp);
+        TBasicApp::NewLogEntry(logError) << "Wrong #include[if] syntax: " << tmp;
         continue;
       }
       if( stm == 1 )  {
@@ -456,7 +456,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       Toks.Clear();
       TParamList::StrtokParams(tmp, ';', Toks); // extract arguments
       if( Toks.Count() < 2 )  { // must be at least 2 for filename and status
-        TBasicApp::GetLog().Error( olxstr("Wrong defined switch (not enough data)") << Sw->GetName());
+        TBasicApp::NewLogEntry(logError) << "Wrong defined switch (not enough data)" << Sw->GetName();
         continue;
       }
 
@@ -569,7 +569,7 @@ bool THtml::LoadPage(const wxString &file)  {
 bool THtml::ItemState(const olxstr &ItemName, short State)  {
   THtmlSwitch * Sw = Root->FindSwitch(ItemName);
   if( Sw == NULL )  {
-    TBasicApp::GetLog().Error( olxstr("THtml::ItemState: unresolved: ") << ItemName );
+    TBasicApp::NewLogEntry(logError) << "THtml::ItemState: unresolved: " << ItemName;
     return false;
   }
   Sw->SetFileIndex(State-1);
@@ -1198,13 +1198,13 @@ bool THtml::SetObjectImage(AOlxCtrl* Obj, const olxstr& src)  {
   if( EsdlInstanceOf(*Obj, TBmpButton) || EsdlInstanceOf(*Obj, THtmlImageCell) )  {
     wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(src);
     if( fsFile == NULL )  {
-      TBasicApp::GetLog().Error(olxstr("Setimage: could not locate specified file: ") << src);
+      TBasicApp::NewLogEntry(logError) << "Setimage: could not locate specified file: " << src;
       return false;
     }
     wxImage image(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
     delete fsFile;
     if ( !image.Ok() )  {
-      TBasicApp::GetLog().Error(olxstr("Setimage: could not read specified file: ") << src);
+      TBasicApp::NewLogEntry(logError) << "Setimage: could not read specified file: " << src;
       return false;
     }
     if( EsdlInstanceOf(*Obj, TBmpButton) )  {
@@ -1223,7 +1223,7 @@ bool THtml::SetObjectImage(AOlxCtrl* Obj, const olxstr& src)  {
     ((TImgButton*)Obj)->Refresh(true);
   }
   else  {
-    TBasicApp::GetLog().Error( "Setimage: unsupported object type" );
+    TBasicApp::NewLogEntry(logError) << "Setimage: unsupported object type";
     return false;
   }
   return true;
@@ -1253,7 +1253,7 @@ bool THtml::SetObjectItems(AOlxCtrl* Obj, const olxstr& src)  {
     ((TListBox*)Obj)->AddItems( items )  ;
   }
   else  {
-    TBasicApp::GetLog().Error( "SetItems: unsupported object type" );
+    TBasicApp::NewLogEntry(logError) << "SetItems: unsupported object type";
     return false;
   }
   return true;
@@ -1884,7 +1884,7 @@ void THtml::TObjectsState::RestoreState()  {
     wxWindow* win = html.GetWindow(i);
     TSStrStrList<olxstr,false>& props = *Objects.GetObject(ind);
     if( props["type"] != EsdlClassName(*obj) )  {
-      TBasicApp::GetLog().Error(olxstr("Object type changed for: ") << Objects.GetString(ind) );
+      TBasicApp::NewLogEntry(logError) << "Object type changed for: " << Objects.GetString(ind);
       continue;
     }
     if( EsdlInstanceOf(*obj, TTextEdit) )  {  

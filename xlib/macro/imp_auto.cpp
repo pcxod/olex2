@@ -98,7 +98,7 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   TAutoDB::GetInstance()->AnalyseStructure( xapp.XFile().GetFileName(), latt, 
     NULL, stat, elm_l.IsEmpty() ? NULL : &elm_l);
   st = TETime::msNow() - st;
-  TBasicApp::GetLog().Info( olxstr("Elapsed time ") << st << " ms");
+  TBasicApp::NewLogEntry(logInfo) << "Elapsed time " << st << " ms";
 
 //  if( AtomPermutator.IsActive() )  AtomPermutator.Permutate();
   if( olex::IOlexProcessor::GetInstance() != NULL )
@@ -241,15 +241,15 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       if( cnt > 1 )
         vals.GetLast().A() /= cnt;
 
-      TBasicApp::GetLog().Info( olxstr("Average QPeak: ") << avQPeak);
-      TBasicApp::GetLog().Info("QPeak steps:");
+      TBasicApp::NewLogEntry(logInfo) << "Average QPeak: " << avQPeak;
+      TBasicApp::NewLogEntry(logInfo) << "QPeak steps:";
       for( size_t i=0; i < vals.Count(); i++ )
-        TBasicApp::GetLog().Info(vals[i].GetA());
+        TBasicApp::NewLogEntry(logInfo) << vals[i].GetA();
 
       //    double thVal = 2;
       double thVal = (avQPeak  < 2 ) ? 2 : avQPeak*0.75;
 
-      TBasicApp::GetLog().Info(olxstr("QPeak threshold:") << thVal);
+      TBasicApp::NewLogEntry(logInfo) << "QPeak threshold:" << thVal;
 
       if( SortedQPeaks.Count() == 1 )  {  // only one peak present
         if( SortedQPeaks.GetKey(0) < thVal )
@@ -323,7 +323,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( assignTypes )  {
     for( size_t i=0; i < QPeaks.Count(); i++ )  {
       if( QPeaks[i]->IsDeleted() || QPeaks[i]->CAtom().IsDeleted() )  continue;
-      TBasicApp::GetLog().Info( olxstr(QPeaks[i]->CAtom().GetLabel()) << " -> C" );
+      TBasicApp::NewLogEntry(logInfo) << QPeaks[i]->CAtom().GetLabel() << " -> C";
       QPeaks[i]->CAtom().SetLabel("C");
     }
   }
@@ -349,7 +349,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
           TSAtom& sa = latt.GetFragment(i).Node(j);
           if( sa.IsDeleted() || sa.GetType() == iHydrogenZ )  continue;
           if( sa.GetType() != iQPeakZ && sa.CAtom().GetUiso() > Uisos[i]*3)  {
-            TBasicApp::GetLog().Info(olxstr(sa.GetLabel()) << " too large, deleting");
+            TBasicApp::NewLogEntry(logInfo) << sa.GetLabel() << " too large, deleting";
             sa.SetDeleted(true);
             sa.CAtom().SetDeleted(true);
             continue;
@@ -418,7 +418,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
         TSAtom& sa = latt.GetFragment(i).Node(j);
         if( sa.IsDeleted() || sa.GetType() == iHydrogenZ )  continue;
         if( sa.GetType() != iQPeakZ && sa.CAtom().GetUiso() > 0.25 )  {
-          TBasicApp::GetLog().Info(olxstr(sa.GetLabel()) << " blown up");
+          TBasicApp::NewLogEntry(logInfo) << sa.GetLabel() << " blown up";
           sa.SetDeleted(true);
           sa.CAtom().SetDeleted(true);
           continue;
@@ -783,7 +783,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
       }
     }
   }
-  sw.print(xapp.GetLog(), &TLog::Info);
+  sw.print(xapp.NewLogEntry(logInfo));
   if( found_cnt == 0 )
     TBasicApp::NewLogEntry() << "No problems were found";
   else  {

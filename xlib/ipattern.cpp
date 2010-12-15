@@ -28,8 +28,8 @@ bool TIPattern::Calc(const olxstr& Exp, olxstr& Msg, bool Combine, double Delta)
     int occupancy = (int)SL.GetObject(i);
     if( occupancy == 0 )  {
       occupancy++;
-      TBasicApp::GetLog().Error(
-        olxstr("The occupancy is set to 1 for ") << elm->symbol << " the molecular weight might be incorrect");
+      TBasicApp::NewLogEntry(logError) << "The occupancy is set to 1 for " << elm->symbol <<
+        " the molecular weight might be incorrect";
     }
     ID.AddIsotope(*elm, occupancy);
   }
