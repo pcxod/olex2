@@ -503,7 +503,6 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   if( FXGrowLinesVisible )  CreateXGrowLines();
   if( XGrowPointsVisible )  CreateXGrowPoints();
   FXGrid->Create();
-  RestoreGroups();
   // create hkls
   if( FHklVisible )  SetHklVisible(true);
 
@@ -519,6 +518,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   olx_gl::loadIdentity();
   GetRender().SetView(false, 1);
   GetRender().Initialise();
+  RestoreGroups();  // selection is created above
   FGlRender->SetSceneComplete(true);
   sw.stop();
   sw.print(GetLog(), &TLog::Info);
@@ -2800,13 +2800,11 @@ void TGXApp::RestoreGroup(TGlGroup& glg, const GroupData& gd)  {
     if( xbonds[i] != NULL && xbonds[i]->IsVisible() )
       glg.Add(*xbonds[i], false);
   }
-  glg.SetBlended(gd.blended);
 }
 //..............................................................................
 void TGXApp::StoreGroup(const TGlGroup& glG, GroupData& gd)  {
   gd.collectionName = glG.GetCollectionName();  //planes
   gd.visible = glG.IsVisible();
-  gd.blended = glG.IsBlended();
   gd.parent_id = (glG.GetParentGroup() != NULL ? glG.GetParentGroup()->GetTag() : -2); 
   for( size_t j=0; j < glG.Count(); j++ )  {
     AGDrawObject& glO = glG[j];
