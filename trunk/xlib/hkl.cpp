@@ -69,16 +69,16 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
       const olxcstr& line = SL[i];
       if( !ZeroRead && line.Length() < 28 )  continue;
       if( !FormatInitialised )  {
-        if( line.Length() >= 32 && line.SubString(28,4).IsNumber() )
+        if( line.Length() >= 32 )
           HasBatch = true;
         FormatInitialised = true;
       }
       if( ZeroRead && !HklFinished )  {
-        if( !line.SubString(0,4).IsNumber() || 
-          !line.SubString(4,4).IsNumber() || 
-          !line.SubString(8,4).IsNumber() || 
-          !line.SubString(12,8).IsNumber() || 
-          !line.SubString(20,8).IsNumber() )  
+        if( !line.SubString(0,4).IsNumber() ||
+          !line.SubString(4,4).IsNumber() ||
+          !line.SubString(8,4).IsNumber() ||
+          !line.SubString(12,8).IsNumber() ||
+          !line.SubString(20,8).IsNumber() )
         {
           HklFinished = true; 
           i--;  // reset to the non-hkl line
@@ -93,10 +93,11 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
           Tag = -1;
           continue;
         }
-        TReflection* ref = HasBatch ? 
-          new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble(), line.SubString(28,4).ToInt())
+        TReflection* ref = HasBatch ?
+          new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble(),
+            line.SubString(28,4).IsNumber() ? line.SubString(28,4).ToInt() : 1)
           :
-        new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble());
+          new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble());
         ref->SetTag(Tag);
         UpdateMinMax(*ref);
         Refs.Add(ref);
