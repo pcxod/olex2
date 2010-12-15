@@ -9,7 +9,7 @@ public:
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     BondLength = Cmds.IsEmpty() ? 0 : Cmds[0].ToDouble();
     if( BondLength <= 0.5 )  {
-      TBasicApp::GetLog().Error("suspicious bond length");
+      TBasicApp::NewLogEntry(logError) << "suspicious bond length";
       return false;
     }
     TGlXApp::GetMainForm()->SetUserCursor("<->", olxstr(BondLength));

@@ -331,7 +331,7 @@ bool TWxProcess::Execute()  {
     }
     ProcessId = wxExecute( cmd.u_str(), wxEXEC_ASYNC, this);
     if( ProcessId <= 0 )  {
-      TBasicApp::GetLog().Error(olxstr("Failed to execute '") << cmd << '\'');
+      TBasicApp::NewLogEntry(logError) << "Failed to execute '" << cmd << '\'';
       return false;
     }
     InitStreams();

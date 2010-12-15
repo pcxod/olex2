@@ -1227,7 +1227,7 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     olxstr fd = TEFile::ExtractFilePath(Tmp);
     if( !fd.IsEmpty() && !fd.Equalsi(CurrentDir) )  {
       if( !TEFile::ChangeDir(fd) )
-        TBasicApp::GetLog().Error("Cannot change current folder...");
+        TBasicApp::NewLogEntry(logError) << "Cannot change current folder...";
       else
         CurrentDir = fd;
     }
@@ -1500,7 +1500,7 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
     ' '  << au.Angles()[0].ToString() << 
     ' '  << au.Angles()[1].ToString() << 
     ' '  << au.Angles()[2].ToString();
-  TBasicApp::GetLog().Error("Cell esd's are estimated!");
+  TBasicApp::NewLogEntry(logError) << "Cell esd's are estimated!";
   if( !resHKL_FN.IsEmpty() )  {
     olxstr hkl_fn(xapp.LocateHklFile());
     if( !hkl_fn.IsEmpty() )  {
@@ -1517,7 +1517,7 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
       xapp.XFile().GetRM().SetHKLSource(resHKL_FN);
     }
     else
-      TBasicApp::GetLog().Error("Could not locate source HKL file");
+      TBasicApp::NewLogEntry(logError) << "Could not locate source HKL file";
   }
   au.ChangeSpaceGroup(new_sg);
   au.InitMatrices();
@@ -1769,7 +1769,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     for( size_t i=0; i < Cmds.Count(); i++ )  {
       cm_Element* elm = XElementLib::FindBySymbol(Cmds[i]);
       if( elm == NULL )  {
-        xapp.GetLog().Error(olxstr("Unknown element: ") << Cmds[i]);
+        xapp.NewLogEntry(logError) << "Unknown element: " << Cmds[i];
         continue;
       }
       if( elms.IndexOf(elm) == InvalidIndex )  {
@@ -2435,7 +2435,7 @@ void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacro
   for( size_t i=0; i < SL.Count(); i++ )
     Cif->ResolveParamsFromDictionary(Dic, SL[i], '%', &XLibMacros::CifResolve);
   TUtf8File::WriteLines( RF, SL, false );
-  TBasicApp::GetLog().Info(olxstr("Document name: ") << RF);
+  TBasicApp::NewLogEntry(logInfo) << "Document name: " << RF;
 }
 //..............................................................................
 void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -2456,13 +2456,13 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
 
     Root = DF.Root().FindItemi("Cif_Tables");
     if( Root != NULL )  {
-      xapp.GetLog().Info("Found table definitions:");
+      xapp.NewLogEntry(logInfo) << "Found table definitions:";
       for( size_t i=0; i < Root->ItemCount(); i++ )  {
         Tmp = "Table "; 
         Tmp << Root->GetItem(i).GetName()  << '(' << " #" << (int)i+1 <<  "): caption <---";
-        xapp.GetLog().Info(Tmp);
-        xapp.GetLog().Info(Root->GetItem(i).GetFieldValueCI("caption"));
-        xapp.GetLog().Info("--->");
+        xapp.NewLogEntry(logInfo) << Tmp;
+        xapp.NewLogEntry(logInfo) << Root->GetItem(i).GetFieldValueCI("caption");
+        xapp.NewLogEntry(logInfo) << "--->";
       }
     }
     else  {
@@ -2511,7 +2511,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
     if( TD == NULL  )
       TD = Root->FindItem(Cmds[i]);
     if( TD == NULL )  {
-      xapp.GetLog().Warning(olxstr("Could not find table definition: ") << Cmds[i]);
+      xapp.NewLogEntry(logWarning) << "Could not find table definition: " << Cmds[i];
       continue;
     }
     if( TD->GetName().Equalsi("footer") || TD->GetName().Equalsi("header") )  {
@@ -2570,7 +2570,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
     }
   }
   TUtf8File::WriteLines(RF, SL, false);
-  TBasicApp::GetLog().Info(olxstr("Tables file: ") << RF);
+  TBasicApp::NewLogEntry(logInfo) << "Tables file: " << RF;
 }
 //..............................................................................
 olxstr XLibMacros::CifResolve(const olxstr& func)  {
@@ -2651,7 +2651,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     try {
       IInputStream *is = TFileHandlerManager::GetInputStream(Cmds[i]);
       if( is == NULL )  {
-        TBasicApp::GetLog().Error(olxstr("Could not find file: ") << Cmds[i]);
+        TBasicApp::NewLogEntry(logError) << "Could not find file: " << Cmds[i];
         continue;
       }
       TStrList sl;
@@ -2705,7 +2705,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     }
   }
   else
-    TBasicApp::GetLog().Error("Could not locate space group ...");
+    TBasicApp::NewLogEntry(logError) << "Could not locate space group ...";
   Cif->SaveToFile(Cif->GetFileName());
 }
 //..............................................................................
@@ -3354,7 +3354,7 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     op->executeMacroEx("SG", E);
     E.SetRetVal<bool>(false);
     if( sgs.Count() == 0 )  {
-      TBasicApp::GetLog().Error( "Could not find any suitable space group. Terminating ... " );
+      TBasicApp::NewLogEntry(logError) <<  "Could not find any suitable space group. Terminating ... ";
       return;
     }
     else if( sgs.Count() == 1 )  {
@@ -3916,7 +3916,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       ElementPList* rc = new ElementPList;
       try {  xapp.RingContentFromStr(toks[i], *rc);  }
       catch(...)  {
-        TBasicApp::GetLog().Error(olxstr("Invalid ring definition: ") << toks[i]);
+        TBasicApp::NewLogEntry(logError) << "Invalid ring definition: " << toks[i];
         delete rc;
         continue;
       }

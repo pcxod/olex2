@@ -29,7 +29,7 @@ public:
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
     if( Data == NULL )  {  return false;  }
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
-    TBasicApp::GetLog().Info( A->GetAction() );
+    TBasicApp::NewLogEntry(logInfo) << A->GetAction();
     return true;
   }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {

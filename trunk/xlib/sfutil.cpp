@@ -155,12 +155,12 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       if( scaleType == scaleRegression )  {
         CalcFScale(F, refs, k, a);
         if( TBasicApp::GetInstance().IsProfiling() )
-          TBasicApp::GetLog().Info(olxstr("Fc^2 = ") << k << "*Fo^2" << (a >= 0 ? " +" : " ") << a );
+          TBasicApp::NewLogEntry(logInfo) << "Fc^2 = " << k << "*Fo^2" << (a >= 0 ? " +" : " ") << a;
       }
       else  {  // simple scale on I/sigma > 3
         k = CalcFScale(F, refs);
         if( TBasicApp::GetInstance().IsProfiling() )
-          TBasicApp::GetLog().Info(olxstr("Fc^2 = ") << k << "*Fo^2");
+          TBasicApp::NewLogEntry(logInfo) << "Fc^2 = " << k << "*Fo^2";
       }
       const size_t f_cnt = F.Count();
       for( size_t i=0; i < f_cnt; i++ )  {
@@ -183,7 +183,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       }
     }
   }
-  sw.print(xapp.GetLog(), &TLog::Info);
+  sw.print(xapp.NewLogEntry(logInfo));
   return EmptyString;
 }
 //...........................................................................................

@@ -23,7 +23,7 @@ void THtmlSwitch::UpdateFileIndex()  {
   olxstr FN = Files[FileIndex];
   IInputStream *is = TFileHandlerManager::GetInputStream(FN);
   if( is == NULL )  {
-    TBasicApp::GetLog().Error( olxstr("THtmlSwitch::File does not exist: ") << FN );
+    TBasicApp::NewLogEntry(logError) << "THtmlSwitch::File does not exist: " << FN;
     return;
   }
 #ifdef _UNICODE

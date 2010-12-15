@@ -242,8 +242,10 @@ void TXFile::Sort(const TStrList& ins)  {
   }
   if( h_cnt == 0 || del_h_cnt != 0 )  {
     keeph = false;
-    if( del_h_cnt != 0 && free_h_cnt != 0 )
-      TBasicApp::GetLog().Error("Hydrogen atoms, which are not attached using AFIX will not be kept with pivot atom until the file is reloaded");
+    if( del_h_cnt != 0 && free_h_cnt != 0 )  {
+      TBasicApp::NewLogEntry(logError) << "Hydrogen atoms, which are not attached using AFIX will "
+        "not be kept with pivot atom until the file is reloaded";
+    }
   }
   try {
     AtomSorter::CombiSort cs;
@@ -301,7 +303,7 @@ void TXFile::Sort(const TStrList& ins)  {
       AtomSorter::KeepH(list,GetLattice(), AtomSorter::atom_cmp_Label);
   }
   catch(const TExceptionBase& exc)  {
-    TBasicApp::GetLog().Error(exc.GetException()->GetError());
+    TBasicApp::NewLogEntry(logError) << exc.GetException()->GetError();
   }
   if( !FLastLoader->IsNative() )  {
     AtomSorter::SyncLists(list, FLastLoader->GetAsymmUnit().GetResidue(0).GetAtomList());

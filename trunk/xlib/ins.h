@@ -239,7 +239,7 @@ public:
       if( l[i].StartsFrom('+') )  {
         olxstr fn = l[i].SubStringFrom(1);
         if( !TEFile::Exists(fn) )  {
-          TBasicApp::GetLog().Error(olxstr("Included file missing: ") << fn);
+          TBasicApp::NewLogEntry(logError) << "Included file missing: " << fn;
           continue;
         }
         TStrList lst;

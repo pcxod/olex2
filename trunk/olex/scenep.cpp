@@ -430,7 +430,9 @@ void TdlgSceneProps::SaveToFile(TGlLightModel &FLM, const olxstr &FN)  {
   TDataFile DF;
   Parent->SaveScene(DF.Root(), FLM);
   try{  DF.SaveToXLFile(FN); }
-  catch(...){  TBasicApp::GetLog().Error("Failed to save scene parameters!"); }
+  catch(...)  {
+    TBasicApp::NewLogEntry(logError) << "Failed to save scene parameters!";
+  }
 }
 //..............................................................................
 

@@ -51,7 +51,7 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
     catch(PatchAPI::DeletionExc)  {  res = papi_DeleteError;  }
     catch(const TExceptionBase& exc)  {  
       res = papi_CopyError;  
-      TBasicApp::GetLog().Error( exc.GetException()->GetFullMessage() );
+      TBasicApp::NewLogEntry(logError) << exc.GetException()->GetFullMessage();
     }
     
     if( res == papi_OK )  {

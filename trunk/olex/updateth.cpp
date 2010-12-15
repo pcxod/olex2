@@ -26,7 +26,7 @@ void UpdateThread::DoInit()  {
   }
   catch(const TExceptionBase& exc)  {
     if( TBasicApp::HasInstance() )
-      TBasicApp::GetLog().Info( exc.GetException()->GetFullMessage() );
+      TBasicApp::NewLogEntry(logInfo) << exc.GetException()->GetFullMessage();
   }
 }
 //....................................................................................
@@ -126,8 +126,8 @@ int UpdateThread::Run()  {
   catch(const TExceptionBase&)  { // oups...
     CleanUp();
     patcher::PatchAPI::UnlockUpdater();
-    //TBasicApp::GetLog().Info("Update failed...");
-    //TBasicApp::GetLog().Info(exc.GetException()->GetFullMessage());
+    //TBasicApp::NewLogEntry(logInfo)("Update failed...");
+    //TBasicApp::NewLogEntry(logInfo)(exc.GetException()->GetFullMessage());
     return 0;  
   }  
   return 1;

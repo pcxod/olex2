@@ -105,7 +105,7 @@ TAG_HANDLER_PROC(tag)  {
     }
   }
   catch(const TExceptionBase& e)  {
-    TBasicApp::GetLog().Exception(e.GetException()->GetFullMessage());
+    TBasicApp::NewLogEntry(logException) << e.GetException()->GetFullMessage();
     TBasicApp::NewLogEntry() << "While processing Width/Height for zimg::" << ObjectName;
     TBasicApp::NewLogEntry() << "Offending input: '" << Tmp << '\'';
   }
@@ -128,7 +128,7 @@ TAG_HANDLER_PROC(tag)  {
 
   wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( src );
   if( fsFile == NULL )
-    TBasicApp::GetLog().Error( olxstr("Could not locate image: ") << src );
+    TBasicApp::NewLogEntry(logError) << "Could not locate image: " << src;
 
   if( (mapName.Length() > 0) && mapName.GetChar(0) == '#')
       mapName = mapName.Mid( 1 );
@@ -150,7 +150,7 @@ TAG_HANDLER_PROC(tag)  {
   m_WParser->GetContainer()->InsertCell(cell);
   if( !ObjectName.IsEmpty() )  {
     if( !TGlXApp::GetMainForm()->GetHtml()->AddObject(ObjectName, cell, NULL) )
-      TBasicApp::GetLog().Error(olxstr("THTML: object already exist: ") << ObjectName);
+      TBasicApp::NewLogEntry(logError) << "THTML: object already exist: " << ObjectName;
   }
   return false;
 }
@@ -196,7 +196,7 @@ TAG_HANDLER_PROC(tag)  {
     }
   }
   catch(const TExceptionBase& e)  {
-    TBasicApp::GetLog().Exception(e.GetException()->GetFullMessage());
+    TBasicApp::NewLogEntry(logException) << e.GetException()->GetFullMessage();
     TBasicApp::NewLogEntry() << "While processing Width/Height HTML tags for " <<
       TagName << "::" << ObjectName;
     TBasicApp::NewLogEntry() << "Offending input: '" << Tmp << '\'';
@@ -250,7 +250,7 @@ TAG_HANDLER_PROC(tag)  {
     wxWindow* wnd = TGlXApp::GetMainForm()->GetHtml()->FindObjectWindow(ObjectName);
     if( wnd != NULL )  {
       if( !tag.HasParam(wxT("reuse")) )
-        TBasicApp::GetLog().Error(olxstr("HTML: duplicated object \'") << ObjectName << '\'');
+        TBasicApp::NewLogEntry(logError) << "HTML: duplicated object \'" << ObjectName << '\'';
       else  {
         if( !Label.IsEmpty() )  {
           wxHtmlContainerCell* contC = new wxHtmlContainerCell(m_WParser->GetContainer());
@@ -353,11 +353,11 @@ TAG_HANDLER_PROC(tag)  {
         ((TBmpButton*)Btn)->SetSource( buttonImage );
         wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( buttonImage );
         if( fsFile == NULL )
-          TBasicApp::GetLog().Error(olxstr("THTML: could not locate image for button: ") << ObjectName);
+          TBasicApp::NewLogEntry(logError) << "THTML: could not locate image for button: " << ObjectName;
         else  {
           wxImage image(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
           if ( !image.Ok() )
-            TBasicApp::GetLog().Error(olxstr("THTML: could not load image for button: ") << ObjectName);
+            TBasicApp::NewLogEntry(logError) << "THTML: could not load image for button: " << ObjectName;
           else  {
             if( (image.GetWidth() > ax || image.GetHeight() > ay) && tag.HasParam(wxT("STRETCH")) )
               image = image.Scale(ax, ay);
@@ -634,7 +634,7 @@ TAG_HANDLER_PROC(tag)  {
     }
     m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Tree, fl));
     if( ios == NULL )  {  // create test tree
-      TBasicApp::GetLog().Error(olxstr("THTML: could not locate tree source: \'") << src <<  '\'');
+      TBasicApp::NewLogEntry(logError) << "THTML: could not locate tree source: \'" << src <<  '\'';
       wxTreeItemId Root = Tree->AddRoot( wxT("Test data") );
       wxTreeItemId sc1 = Tree->AppendItem( Tree->AppendItem(Root, wxT("child")), wxT("subchild"));
          Tree->AppendItem( Tree->AppendItem(sc1, wxT("child1")), wxT("subchild1"));
@@ -666,13 +666,13 @@ TAG_HANDLER_PROC(tag)  {
          itemsTag = tag.HasParam(wxT("ITEMS"));
     TStrList itemsList;
     if( srcTag && itemsTag )
-      TBasicApp::GetLog().Error( "THTML: list can have only src or items");
+      TBasicApp::NewLogEntry(logError) << "THTML: list can have only src or items";
     else if( srcTag ) {
       olxstr src = tag.GetParam(wxT("SRC")).c_str();
       TGlXApp::GetMainForm()->ProcessFunction(src);
       IInputStream* ios = TFileHandlerManager::GetInputStream(src);
       if( ios == NULL )
-        TBasicApp::GetLog().Error(olxstr("THTML: could not locate list source: \'") << src <<  '\'');
+        TBasicApp::NewLogEntry(logError) << "THTML: could not locate list source: \'" << src <<  '\'';
       else  {
 #ifdef _UNICODE
       TUtf8File::ReadLines(*ios, itemsList, false);
@@ -738,7 +738,7 @@ TAG_HANDLER_PROC(tag)  {
   }
   if( CreatedObject != NULL )  {
     if( !TGlXApp::GetMainForm()->GetHtml()->AddObject(ObjectName, CreatedObject, CreatedWindow, tag.HasParam(wxT("MANAGE")) ) )
-      TBasicApp::GetLog().Error(olxstr("HTML: duplicated object \'") << ObjectName << '\'');
+      TBasicApp::NewLogEntry(logError) << "HTML: duplicated object \'" << ObjectName << '\'';
     if( CreatedWindow != NULL && !ObjectName.IsEmpty() )  {
       CreatedWindow->Hide();
       olxstr bgc, fgc;
