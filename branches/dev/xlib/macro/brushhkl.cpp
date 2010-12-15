@@ -56,7 +56,7 @@ void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacr
   olxstr HklFN(XApp.LocateHklFile());
 
   if( HklFN.IsEmpty() )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate HKL file" );
+    E.ProcessingError(__OlxSrcInfo, "could not locate HKL file");
     return;
   }
   THklFile Hkl;
@@ -65,7 +65,7 @@ void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacr
   TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(au);
   if( sg == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "Undefined space group" );
+    E.ProcessingError(__OlxSrcInfo, "Undefined space group");
     return;
   }
 

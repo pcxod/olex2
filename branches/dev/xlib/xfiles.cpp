@@ -81,7 +81,9 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
 //----------------------------------------------------------------------------//
 // TXFile function bodies
 //----------------------------------------------------------------------------//
-TXFile::TXFile() : RefMod(Lattice.GetAsymmUnit()),
+TXFile::TXFile(ASObjectProvider& Objects) :
+  RefMod(Lattice.GetAsymmUnit()),
+  Lattice(Objects),
   OnFileLoad(Actions.New("XFILELOAD")),
   OnFileSave(Actions.New("XFILESAVE")),
   OnFileClose(Actions.New("XFILECLOSE"))
@@ -324,9 +326,12 @@ void TXFile::ValidateTabs()  {
       continue;
     TSAtom* sa = NULL;
     InfoTab& it = RefMod.GetInfoTab(i);
-    for( size_t j=0; j < Lattice.AtomCount(); j++ )  {
-      if( Lattice.GetAtom(j).CAtom().GetId() == it.GetAtom(0).GetAtom()->GetId() )  {
-        sa = &Lattice.GetAtom(j);
+    ASObjectProvider& objects = Lattice.GetObjects();
+    const size_t ac = objects.atoms.Count();
+    for( size_t j=0; j < ac; j++ )  {
+      TSAtom& sa1 = objects.atoms[j];
+      if( sa1.CAtom().GetId() == it.GetAtom(0).GetAtom()->GetId() )  {
+        sa = &sa1;
         break;
       }
     }
@@ -398,11 +403,11 @@ void TXFile::Close()  {
   OnFileClose.Exit(this, NULL);
 }
 //..............................................................................
-IEObject* TXFile::Replicate() const  {
-  TXFile* xf = new TXFile;
+IEObject* TXFile::Replicate() const {
+  TXFile* xf = new TXFile(*(SObjectProvider*)Lattice.GetObjects().Replicate());
   for( size_t i=0; i < FileFormats.Count(); i++ )  {
-    xf->RegisterFileFormat( (TBasicCFile*)FileFormats.GetObject(i)->Replicate(), 
-                              FileFormats[i] );
+    xf->RegisterFileFormat((TBasicCFile*)FileFormats.GetObject(i)->Replicate(), 
+                              FileFormats[i]);
   }
   return xf;
 }

@@ -10,15 +10,15 @@
 
 BeginGlNamespace()
 
-const short
-  sgdoVisible    = 0x0001, // TGDrawObject flags
-  sgdoSelected   = 0x0002,
-  sgdoGroupable  = 0x0004,
-  sgdoGroup      = 0x0008,
-  sgdoGrouped    = 0x0010,
-  sgdoDeleted    = 0x0020,
-  sgdoSelectable = 0x0040,
-  sgdoCreated    = 0x0080;
+const unsigned short
+  sgdoVisible    = 0x0100, // TGDrawObject flags, high byte
+  sgdoSelected   = 0x0200,
+  sgdoGroupable  = 0x0400,
+  sgdoGroup      = 0x0800,
+  sgdoGrouped    = 0x1000,
+  sgdoDeleted    = 0x2000,
+  sgdoSelectable = 0x4000,
+  sgdoCreated    = 0x8000;
 
 /*
   defines basic functionality of a graphic object, accessible outside of
@@ -87,7 +87,7 @@ public:
     if( v )
       olx_set_bit(false, Flags, sgdoVisible);
   }
-  inline bool IsDeleted() const {  return ((Flags&sgdoDeleted) != 0);  }
+  inline virtual bool IsDeleted() const {  return ((Flags&sgdoDeleted) != 0);  }
   DefPropBFIsSet(Selectable, Flags, sgdoSelectable)
   // for internal use, may not reflect the real state of the object
   DefPropBFIsSet(Created, Flags, sgdoCreated)

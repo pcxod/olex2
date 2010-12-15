@@ -720,8 +720,8 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod, const 
   if( !comments.IsEmpty() && rems ) 
     SL.Add("REM ") << comments;
 // try to estimate Z'
-  SL.Add( _CellToString() );
-  SL.Add( _ZerrToString() );
+  SL.Add(_CellToString());
+  SL.Add(_ZerrToString());
   _SaveSymm(SL);
   SL.Add(EmptyString);
   SaveSfacUnit(RefMod, RefMod.GetUserContent(), SL, SL.Count()-1);

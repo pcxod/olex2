@@ -122,9 +122,9 @@ void TMol2::LoadFromStrings(const TStrList& Strings)  {
 //..............................................................................
 bool TMol2::Adopt(TXFile& XF)  {
   Clear();
- TLattice& latt = XF.GetLattice();
-  for( size_t i=0; i < latt.AtomCount(); i++ )  {
-    TSAtom& sa = latt.GetAtom(i);
+  const ASObjectProvider& objects = XF.GetLattice().GetObjects();
+  for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+    TSAtom& sa = objects.atoms[i];
     if( !sa.IsAvailable() )  continue;
     TCAtom& a = GetAsymmUnit().NewAtom();
     a.SetLabel(sa.GetLabel(), false);
@@ -132,8 +132,8 @@ bool TMol2::Adopt(TXFile& XF)  {
     a.SetType(sa.GetType());
     sa.SetTag(i);
   }
-  for( size_t i=0; i < latt.BondCount(); i++ )  {
-    TSBond& sb = latt.GetBond(i);
+  for( size_t i=0; i < objects.bonds.Count(); i++ )  {
+    TSBond& sb = objects.bonds[i];
     if( !sb.IsAvailable() )  continue;
     TMol2Bond& mb = Bonds.AddNew(Bonds.Count());
     mb.a1 = &GetAsymmUnit().GetAtom(sb.A().GetTag());

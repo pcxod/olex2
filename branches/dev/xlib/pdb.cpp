@@ -200,9 +200,9 @@ bool TPdb::Adopt(TXFile& XF)  {
   GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
   GetAsymmUnit().InitMatrices();
 
-  TLattice& latt = XF.GetLattice();
-  for( size_t i=0; i < latt.AtomCount(); i++ )  {
-    TSAtom& sa = latt.GetAtom(i);
+  const ASObjectProvider& objects = XF.GetLattice().GetObjects();
+  for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+    TSAtom& sa = objects.atoms[i];
     if( !sa.IsAvailable() )  continue;
     TCAtom& a = GetAsymmUnit().NewAtom();
     a.SetLabel(sa.GetLabel(), false);

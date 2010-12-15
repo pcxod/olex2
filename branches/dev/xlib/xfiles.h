@@ -48,7 +48,7 @@ protected:
   virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
   void ValidateTabs();
 public:
-  TXFile();
+  TXFile(ASObjectProvider& Objects);
   virtual ~TXFile();
 
   TActionQueue &OnFileLoad,

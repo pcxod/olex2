@@ -761,8 +761,9 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TIns& ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
   TArrayList< AnAssociation2<TCAtom const*, smatd> > all;
   size_t h_indexes[4];
-  for( size_t i=0; i < lat.AtomCount(); i++ )  {
-    TSAtom& sa = lat.GetAtom(i);
+  const ASObjectProvider& objects = lat.GetObjects();
+  for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+    TSAtom& sa = objects.atoms[i];
     const cm_Element& elm = sa.GetType();
     if( elm.GetMr() < 3.5 )  // H,D,Q
       continue;
@@ -829,11 +830,12 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( Options.Contains('g') && !transforms.IsEmpty() )  {
     TLattice& xlatt = TXApp::GetInstance().XFile().GetLattice();
     const TUnitCell& uc = xlatt.GetUnitCell();
+    const ASObjectProvider& objects = xlatt.GetObjects();
     for( size_t i=0; i < transforms.Count(); i++ )
       uc.InitMatrixId(transforms[i]);
     TCAtomPList iatoms;
-    for( size_t i=0; i < xlatt.AtomCount(); i++ )  {
-      TSAtom& sa = xlatt.GetAtom(i);
+    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+      TSAtom& sa = objects.atoms[i];
       if( sa.IsDeleted() )  continue;
       if( sa.IsAUAtom() )
         iatoms.Add(sa.CAtom());
@@ -1056,9 +1058,8 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
   else if( vars.Equalsi( "OCCU" ) )  {
-    TLattice& latt = xapp.XFile().GetLattice();
-    for( size_t i=0; i < latt.AtomCount(); i++ )
-      latt.GetAtom(i).SetTag(0);
+    const ASObjectProvider& objects = xapp.XFile().GetLattice().GetObjects();
+    objects.atoms.ForEach(ACollectionItem::TagSetter<>(0));
     for( size_t i=0; i < atoms.Count(); i++ )  {
       if( atoms[i]->GetTag() != 0 )  continue;
       TSAtomPList neighbours;
@@ -1202,10 +1203,10 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     Tmp = TEFile::AddPathDelimeter(CurrentDir) + Tmp;
   TEBitArray removedSAtoms, removedCAtoms;
   if( TEFile::ExtractFileExt(Tmp).Equalsi("ins"))  {  // kill Q peak in the ins file
-    TLattice& latt = XApp.XFile().GetLattice();
-    removedSAtoms.SetSize(latt.AtomCount());
-    for( size_t i=0; i < latt.AtomCount(); i++ )  {
-      TSAtom& sa = latt.GetAtom(i);
+    ASObjectProvider& objects = XApp.XFile().GetLattice().GetObjects();
+    removedSAtoms.SetSize(objects.atoms.Count());
+    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+      TSAtom& sa = objects.atoms[i];
       if( sa.GetType() == iQPeakZ && !sa.IsDeleted() )  {
         sa.SetDeleted(true);
         removedSAtoms.SetTrue(i);
@@ -1236,10 +1237,10 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     Sort = true;  // forse reading the file
   }
   if( !removedSAtoms.IsEmpty() )  {  // need to restore, a bit of mess here...
-    TLattice& latt = XApp.XFile().GetLattice();
-    for( size_t i=0; i < latt.AtomCount(); i++ )  {
+    ASObjectProvider& objects = XApp.XFile().GetLattice().GetObjects();
+    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
       if( removedSAtoms.Get(i) )
-        latt.GetAtom(i).SetDeleted(false);
+        objects.atoms[i].SetDeleted(false);
     }
     TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
     for( size_t i=0; i < au.AtomCount(); i++ )  {
@@ -1258,8 +1259,9 @@ void XLibMacros::macFuse(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( Cmds.Count() == 1 && Cmds[0].IsNumber() )  {
     const double th = Cmds[0].ToDouble();
     TLattice& latt = TXApp::GetInstance().XFile().GetLattice();
-    for( size_t i=0; i < latt.AtomCount(); i++ )  {
-      TSAtom& sa = latt.GetAtom(i);
+    ASObjectProvider& objects = latt.GetObjects();
+    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+      TSAtom& sa = objects.atoms[i];
       if( sa.IsDeleted() )  continue;
       if( sa.BondCount() == 0 )  continue;
       sa.SortBondsByLengthAsc();
@@ -2783,7 +2785,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
     if( au.GetAtom(i).GetType() == iQPeakZ )
       au.GetAtom(i).SetDeleted(true);
   }
-  TLattice latt;
+  TLattice latt(*(new SObjectProvider));
   latt.GetAsymmUnit().SetRefMod(&xapp.XFile().GetRM());
   latt.GetAsymmUnit().Assign(xapp.XFile().GetAsymmUnit());
   for( size_t i=0; i < latt.GetAsymmUnit().AtomCount(); i++ )  {
@@ -2797,14 +2799,15 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
   latt.GetAsymmUnit().DetachAtomType(iQPeakZ, true);
   latt.Init();
   latt.CompaqAll();
+  ASObjectProvider& objects = latt.GetObjects();
 
   latt.GrowFragments(false, NULL);
 
   cif_dp::cetTable& bonds = cif.AddLoopDef(
     "_geom_bond_atom_site_label_1,_geom_bond_atom_site_label_2,_geom_bond_distance,"
     "_geom_bond_site_symmetry_2,_geom_bond_publ_flag");
-  for( size_t i=0; i < latt.BondCount(); i++ )  {
-    TSBond& b = latt.GetBond(i);
+  for( size_t i=0; i < objects.bonds.Count(); i++ )  {
+    TSBond& b = objects.bonds[i];
     if( b.A().GetType().GetMr() < 3 || b.A().IsDeleted() )  {
       b.SetTag(0);
       continue;
@@ -2815,8 +2818,8 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
     }
     b.SetTag(-1);
   }
-  for( size_t i=0; i < latt.AtomCount(); i++ )  {
-    TSAtom& a = latt.GetAtom(i);
+  for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+    TSAtom& a = objects.atoms[i];
     if( a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.IsAUAtom() )  continue;
     for( size_t j=0; j < a.BondCount(); j++ )  {
       TSBond& b = a.Bond(j);
@@ -2837,8 +2840,8 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
   cif_dp::cetTable& angles = cif.AddLoopDef(
     "_geom_angle_atom_site_label_1,_geom_angle_atom_site_label_2,_geom_angle_atom_site_label_3,"
     "_geom_angle,_geom_angle_site_symmetry_1,_geom_angle_site_symmetry_3,_geom_angle_publ_flag");
-  for( size_t i=0; i < latt.AtomCount(); i++ )  {
-    TSAtom& a = latt.GetAtom(i);
+  for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+    TSAtom& a = objects.atoms[i];
     if( a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.IsAUAtom() )  continue;
     for( size_t j=0; j < a.NodeCount(); j++ )  {
       TSAtom& b = a.Node(j);
@@ -3891,7 +3894,7 @@ void XLibMacros::macClose(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //..............................................................................
 void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
-  TLattice latt;
+  TLattice latt(*(new SObjectProvider));
   RefinementModel rm(latt.GetAsymmUnit());
   latt.GetAsymmUnit().SetRefMod(&rm);
   rm.Assign(xapp.XFile().GetRM(), true);
@@ -4040,12 +4043,13 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   if( Options.Contains('g') && !transforms.IsEmpty() )  {
     TLattice& xlatt = xapp.XFile().GetLattice();
+    ASObjectProvider& objects = xlatt.GetObjects();
     const TUnitCell& uc = xlatt.GetUnitCell();
     for( size_t i=0; i < transforms.Count(); i++ )
       uc.InitMatrixId(transforms[i]);
     TCAtomPList iatoms;
-    for( size_t i=0; i < xlatt.AtomCount(); i++ )  {
-      TSAtom& sa = xlatt.GetAtom(i);
+    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+      TSAtom& sa = objects.atoms[i];
       if( sa.IsDeleted() )  continue;
       if( sa.IsAUAtom() )
         iatoms.Add(sa.CAtom());

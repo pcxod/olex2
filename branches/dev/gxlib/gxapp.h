@@ -72,9 +72,9 @@ class TXReflection;
 class TXGrid;
 class TXLattice;
 
-  typedef TTypeListExt<TXAtom, IEObject> TXAtomList;
-  typedef TTypeListExt<TXBond, IEObject> TXBondList;
-  typedef TTypeListExt<TXPlane,IEObject> TXPlaneList;
+  typedef TTypeListExt<TXAtom, TSAtom> TXAtomList;
+  typedef TTypeListExt<TXBond, TSBond> TXBondList;
+  typedef TTypeListExt<TXPlane,TSPlane> TXPlaneList;
 
 typedef TPtrList<TXPlane> TXPlanePList;
 typedef TPtrList<TXAtom> TXAtomPList;
@@ -186,15 +186,15 @@ protected:
   TLattice& GetLatt(size_t i) const {  return (i == 0 ? XFile() : OverlayedXFiles[i-1]).GetLattice();  }
   static size_t CalcMaxAtomTag(const TLattice& latt)  {
     size_t ac = 0;
-    for( size_t i=0; i < latt.AtomCount(); i++ )
-      if( !latt.GetAtom(i).IsDeleted() )
+    for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )
+      if( !latt.GetObjects().atoms[i].IsDeleted() )
         ac++;
     return ac;
   }
   static size_t CalcMaxBondTag(const TLattice& latt)  {
     size_t bc = 0;
-    for( size_t i=0; i < latt.BondCount(); i++ )
-      if( !latt.GetBond(i).IsDeleted() )
+    for( size_t i=0; i < latt.GetObjects().bonds.Count(); i++ )
+      if( !latt.GetObjects().bonds[i].IsDeleted() )
         bc++;
     return bc;
   }

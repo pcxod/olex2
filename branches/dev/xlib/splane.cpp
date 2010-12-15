@@ -91,8 +91,9 @@ void TSPlane::ToDataItem(TDataItem& item) const {
 //..............................................................................
 void TSPlane::FromDataItem(const TDataItem& item)  {
   Crds.Clear();
+  ASObjectProvider& objects = Network->GetLattice().GetObjects();
   for( size_t i=0; i < item.ItemCount(); i++ )  {
-    Crds.AddNew(&Network->GetLattice().GetAtom(item.GetItem(i).GetRequiredField("atom_id").ToInt()), 
+    Crds.AddNew(&objects.atoms[item.GetItem(i).GetRequiredField("atom_id").ToInt()], 
       item.GetItem(i).GetValue().ToDouble());
   }
   TTypeList< AnAssociation2<vec3d, double> > points;
@@ -142,13 +143,13 @@ void TSPlane::Def::FromDataItem(const TDataItem& item)  {
     atoms.AddNew(item.GetItem(i));
 }
 //..............................................................................
-TSPlane* TSPlane::Def::FromAtomRegistry(AtomRegistry& ar, size_t def_id, TNetwork* parent, const smatd& matr) const {
+TSPlane* TSPlane::Def::FromAtomRegistry(ASObjectProvider& ar, size_t def_id, TNetwork* parent, const smatd& matr) const {
   TTypeList<AnAssociation2<TSAtom*, double> > points;
   mat3d equiv;
   equiv.I();
   if( matr.IsFirst() )  {
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      TSAtom* sa = ar.Find(atoms[i].ref);
+      TSAtom* sa = ar.atomRegistry.Find(atoms[i].ref);
       if( sa == NULL )  return NULL;
       points.AddNew(sa, atoms[i].weight);
     }
@@ -162,13 +163,14 @@ TSPlane* TSPlane::Def::FromAtomRegistry(AtomRegistry& ar, size_t def_id, TNetwor
       if( i == 0 )
         equiv = m.r;
       ref.matrix_id = m.GetId();
-      TSAtom* sa = ar.Find(ref);
+      TSAtom* sa = ar.atomRegistry.Find(ref);
       if( sa == NULL )  return NULL;
       points.AddNew(sa, atoms[i].weight);
     }
   }
-  TSPlane* p = new TSPlane(parent, def_id);
-  p->Init(points);
-  p->SetRegular(regular);
-  return p;
+  TSPlane& p = ar.planes.New(parent);
+  p.DefId = def_id;
+  p.Init(points);
+  p.SetRegular(regular);
+  return &p;
 }

@@ -66,9 +66,11 @@ public:
       if( l1[i]->GetType() == iHydrogenZ )
         continue;
       TSAtom* sa = NULL;
-      for( size_t j=0; j < latt.AtomCount(); j++ )  {
-        if( latt.GetAtom(j).CAtom().GetId() == l1[i]->GetId() )  {
-          sa = &latt.GetAtom(j);
+      const ASObjectProvider& objects = latt.GetObjects();
+      for( size_t j=0; j < objects.atoms.Count(); j++ )  {
+        TSAtom& sa1 = objects.atoms[j];
+        if( sa1.CAtom().GetId() == l1[i]->GetId() )  {
+          sa = &sa1;
           break;
         }
       }

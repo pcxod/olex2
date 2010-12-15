@@ -1080,8 +1080,9 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
     TAtomEnvi ae;
     TLattice& lat = aunit.GetLattice();
     TUnitCell& uc = aunit.GetLattice().GetUnitCell();
-    for( size_t i=0; i < lat.AtomCount(); i++ )  {
-      TSAtom& sa = lat.GetAtom(i);
+    ASObjectProvider& objects = lat.GetObjects();
+    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+      TSAtom& sa = objects.atoms[i];
       if( sa.IsDeleted() || sa.GetType() == iQPeakZ )  continue;
       // make sure that only AU atoms go to 
       if( !sa.IsAUAtom() )  continue;

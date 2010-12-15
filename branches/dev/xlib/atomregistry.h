@@ -5,6 +5,52 @@
 
 BeginXlibNamespace()
 
+template <class obj_t> class TIObjectProvider  {
+public:
+  virtual ~TIObjectProvider()  {}
+  virtual size_t Count() const = 0;
+  virtual obj_t& New(TNetwork* n) = 0;
+  virtual obj_t& Get(size_t i) const = 0;
+  inline obj_t& operator [] (size_t i) const {  return Get(i);  }
+  obj_t& GetLast() const {  return Get(Count()-1);  }
+  virtual void Delete(size_t i) = 0;
+  inline void DeleteLast()  {  Delete(Count()-1);  }
+  virtual void Clear() = 0;
+  virtual void Null(size_t i) = 0;
+  virtual void Pack() = 0;
+  virtual void IncCapacity(size_t v) = 0;
+  inline bool IsEmpty() const {  return Count() != 0;  }
+  template <class Functor> const TIObjectProvider& ForEach(const Functor& f) const {
+    for( size_t i=0; i < Count(); i++ )
+      f.OnItem(Get(i), i);
+    return *this;
+  }
+};
+
+template <class obj_t> class TObjectProvider : public TIObjectProvider<obj_t> {
+  TPtrList<obj_t> items;
+public:
+  virtual size_t Count() const {  return items.Count();  }
+  virtual obj_t& New(TNetwork* n)  {  return *items.Add(new obj_t(n));  }
+  virtual obj_t& Get(size_t i) const {  return *items[i];  }
+  inline obj_t& operator [] (size_t i) const {  return Get(i);  }
+  obj_t& GetLast() const {  return *items.GetLast();  }
+  virtual void Delete(size_t i)  {
+    delete items[i];
+    items.Delete(i);
+  }
+  inline void DeleteLast()  {  Delete(Count()-1);  }
+  virtual void Clear()   {  items.DeleteItems(false).Clear();  }
+  virtual void Null(size_t i)  {  items.Set(i, NULL);  }
+  virtual void Pack()  {  items.Pack();  }
+  virtual void IncCapacity(size_t v)  {  items.SetCapacity(items.Count()+v);  }
+  inline bool IsEmpty() const {  return items.IsEmpty();  }
+  template <class Functor> const TObjectProvider& ForEach(const Functor& f) const {
+    items.ForEach(f);
+    return *this;
+  }
+};
+
 class AtomRegistry  {
   struct DataStruct  {
     TArray3D<TArrayList<TSAtomPList*>*> registry;
@@ -76,5 +122,32 @@ public:
     return NULL;
   }
 };
+
+struct ASObjectProvider : public IEObject {
+  AtomRegistry atomRegistry;
+  TIObjectProvider<TSAtom>& atoms;
+  TIObjectProvider<TSBond>& bonds;
+  TIObjectProvider<class TSPlane>& planes;
+  ASObjectProvider(TIObjectProvider<TSAtom>& _as, TIObjectProvider<TSBond>& _bs, TIObjectProvider<TSPlane>& _ps) :
+  atoms(_as), bonds(_bs), planes(_ps)  {}
+  //TObjectProvider<TNetwork> fragments;
+  virtual IEObject* Replicate() const = 0;
+
+};
+
+struct SObjectProvider : public ASObjectProvider {
+  SObjectProvider() : ASObjectProvider(*(new TObjectProvider<TSAtom>),
+    *(new TObjectProvider<TSBond>), *(new TObjectProvider<TSPlane>)) {}
+  ~SObjectProvider()  {
+    atoms.Clear();
+    bonds.Clear();
+    planes.Clear();
+    delete &atoms;
+    delete &bonds;
+    delete &planes;
+  }
+  virtual IEObject* Replicate() const {  return new SObjectProvider;  }
+};
+
 EndXlibNamespace()
 #endif

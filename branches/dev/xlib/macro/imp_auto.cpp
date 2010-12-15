@@ -273,10 +273,11 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 
   // distance analysis
   TLattice& latt = xapp.XFile().GetLattice();
+  ASObjectProvider& objects = latt.GetObjects();
   // qpeaks first
   TSAtomPList QPeaks;
-  for( size_t i=0;  i < latt.AtomCount(); i++ )  {
-    TSAtom& sa = latt.GetAtom(i);
+  for( size_t i=0;  i < objects.atoms.Count(); i++ )  {
+    TSAtom& sa = objects.atoms[i];
     if( sa.IsDeleted() || sa.CAtom().IsDeleted() )  continue;
     if( sa.GetType() == iQPeakZ )
       QPeaks.Add(sa);
@@ -453,8 +454,8 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   // treating NPD atoms... promoting to the next available type
   if( changeNPD > 0 && !sfac.IsEmpty() )  {
     size_t atoms_transformed = 0;
-    for( size_t i=0; i < latt.AtomCount(); i++ )  {
-      TSAtom& sa = latt.GetAtom(i);
+    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+      TSAtom& sa = objects.atoms[i];
       if( (sa.GetEllipsoid() != NULL && sa.GetEllipsoid()->IsNPD()) ||
         (sa.CAtom().GetUiso() <= 0.005) )
       {
@@ -570,10 +571,11 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
     // validate max bonds
     TUnitCell& uc = xapp.XFile().GetUnitCell();
     TLattice& latt = xapp.XFile().GetLattice();
+    ASObjectProvider& objects = latt.GetObjects();
     TTypeList<TAtomEnvi> bc_to_check;
     const size_t maxb_cnt = sizeof(_autoMaxBond)/sizeof(_autoMaxBond[0]);
-    for( size_t i=0; i < latt.AtomCount(); i++ )  {
-      TSAtom& sa = latt.GetAtom(i);
+    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+      TSAtom& sa = objects.atoms[i];
       for( size_t j=0; j < maxb_cnt; j++ )  {
         if( sa.GetType() == _autoMaxBond[j].type )  {
           uc.GetAtomEnviList(sa, bc_to_check.AddNew()); 

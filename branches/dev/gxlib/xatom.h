@@ -47,9 +47,8 @@ public:
   bool Exit(const IEObject *Sender, const IEObject *Data=NULL);
 };
 
-class TXAtom: public AGlMouseHandlerImp  {
+class TXAtom: public TSAtom, public AGlMouseHandlerImp  {
 private:
-  TSAtom& FAtom;
   short FDrawStyle, FRadius;
   size_t XAppId;
   static uint8_t PolyhedronIndex, 
@@ -91,7 +90,7 @@ protected:
   static olxstr PolyTypeName;
   static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
 public:
-  TXAtom(TGlRenderer& Render, const olxstr& collectionName, TSAtom& A);
+  TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TXAtom();
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ACreationParams* GetCreationParams() const;
@@ -127,15 +126,6 @@ public:
   static void SetQPeakSizeScale(float V);    // to use with q-peaks
 
   void CalcRad(short DefAtomR);
-  template <class Accessor=DirectAccessor> struct AtomAccessor  {
-    template <class Item> static inline TSAtom& Access(Item& a)  {
-      return Accessor::Access(a).Atom();
-    }
-    template <class Item> static inline TSAtom& Access(Item* a)  {
-      return Accessor::Access(*a).Atom();
-    }
-  };
-  inline TSAtom& Atom() const {  return FAtom;  }
 
   void ApplyStyle(TGraphicsStyle& S);
   void UpdateStyle(TGraphicsStyle& S);
@@ -150,9 +140,9 @@ public:
     double scale = FParams[1];
     if( (FRadius & (darIsot|darIsotH)) != 0 )
       scale *= TelpProb();
-    if( (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) && FAtom.GetEllipsoid() != NULL )
+    if( (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) && GetEllipsoid() != NULL )
     {
-      if( FAtom.GetEllipsoid()->IsNPD() )
+      if( GetEllipsoid()->IsNPD() )
         return (caDefIso*2*scale);
       return scale;
     }
@@ -176,15 +166,15 @@ public:
   bool OnMouseMove(const IEObject* Sender, const TMouseData& Data);
 
   void SetDeleted(bool v)  {
-    AGDrawObject::SetDeleted(v);
+    TSAtom::SetDeleted(v);
     Label->SetDeleted(v);
-    FAtom.SetDeleted(v);
   }
   void SetVisible(bool v)  {
     AGDrawObject::SetVisible(v);
     if( !v )
-      Label->SetDeleted(false);
+      Label->SetVisible(false);
   }
+  virtual bool IsDeleted() const {  return TSAtom::IsDeleted();  }
   void ListDrawingStyles(TStrList &List);
   inline short DrawStyle() const {  return FDrawStyle;  }
   void DrawStyle(short V);
