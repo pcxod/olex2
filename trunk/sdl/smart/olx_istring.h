@@ -24,6 +24,7 @@
 #else  // POSIX
   #include <strings.h>
   #include <wchar.h>
+  #include <ctype.h>
   #define olx_strcmpn  strncmp
   #define olx_strcmpni strncasecmp
   #define olx_wcscmpn  wcsncmp
