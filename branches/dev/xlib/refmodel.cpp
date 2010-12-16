@@ -480,8 +480,9 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
         _HklStat = RefMerger::DrySGFilter(sp, refs, Omits);
     }
   }
-  catch(TExceptionBase&)  {
+  catch(const TExceptionBase& e)  {
     _HklStat.SetDefaults();
+    throw TFunctionFailedException(__OlxSourceInfo, e);
   }
   return _HklStat;
 }

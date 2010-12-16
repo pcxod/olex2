@@ -1148,7 +1148,7 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
       GLint bits = 0;
       olx_gl::get(GL_ACCUM_RED_BITS, &bits);
       if( bits == 0 )
-        TBasicApp::GetLog().Error("Sorry accumulation buffer is not initialised/available");
+        TBasicApp::NewLogEntry(logError) << "Sorry accumulation buffer is not initialised/available";
       else
         StereoFlag = glStereoAnaglyph;
     }
@@ -1162,7 +1162,7 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
       GLboolean stereo_supported = GL_FALSE;
       olx_gl::get(GL_STEREO, &stereo_supported);
       if( stereo_supported == GL_FALSE )
-        TBasicApp::GetLog().Error("Sorry stereo buffers are not initialised/available");
+        TBasicApp::NewLogEntry(logError) << "Sorry stereo buffers are not initialised/available";
       else  {
         olx_gl::clearColor(LightModel.GetClearColor().Data());
         StereoFlag = glStereoHardware;

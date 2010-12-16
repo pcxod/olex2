@@ -6,6 +6,7 @@
 #include "xbase.h"
 #include "arrays.h"
 #include "estack.h"
+#undef QLength
 
 BeginXlibNamespace()
 

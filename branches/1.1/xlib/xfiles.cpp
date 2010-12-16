@@ -105,11 +105,11 @@ TXFile::~TXFile()  {
 void TXFile::RegisterFileFormat(TBasicCFile *F, const olxstr &Ext)  {
   if( FileFormats.IndexOf(Ext) != InvalidIndex )
     throw TInvalidArgumentException(__OlxSourceInfo, "Ext");
-  FileFormats.Add(olxstr::LowerCase(Ext), F);
+  FileFormats.Add(Ext.ToLowerCase(), F);
 }
 //..............................................................................
 TBasicCFile *TXFile::FindFormat(const olxstr &Ext)  {
-  const size_t i = FileFormats.IndexOf(olxstr::LowerCase(Ext));
+  const size_t i = FileFormats.IndexOf(Ext.ToLowerCase());
   if( i == InvalidIndex )
     throw TInvalidArgumentException(__OlxSourceInfo, "unknown file format");
   return FileFormats.GetObject(i);
@@ -242,8 +242,10 @@ void TXFile::Sort(const TStrList& ins)  {
   }
   if( h_cnt == 0 || del_h_cnt != 0 )  {
     keeph = false;
-    if( del_h_cnt != 0 && free_h_cnt != 0 )
-      TBasicApp::GetLog().Error("Hydrogen atoms, which are not attached using AFIX will not be kept with pivot atom until the file is reloaded");
+    if( del_h_cnt != 0 && free_h_cnt != 0 )  {
+      TBasicApp::NewLogEntry(logError) << "Hydrogen atoms, which are not attached using AFIX will "
+        "not be kept with pivot atom until the file is reloaded";
+    }
   }
   try {
     AtomSorter::CombiSort cs;
@@ -301,7 +303,7 @@ void TXFile::Sort(const TStrList& ins)  {
       AtomSorter::KeepH(list,GetLattice(), AtomSorter::atom_cmp_Label);
   }
   catch(const TExceptionBase& exc)  {
-    TBasicApp::GetLog().Error(exc.GetException()->GetError());
+    TBasicApp::NewLogEntry(logError) << exc.GetException()->GetError();
   }
   if( !FLastLoader->IsNative() )  {
     AtomSorter::SyncLists(list, FLastLoader->GetAsymmUnit().GetResidue(0).GetAtomList());

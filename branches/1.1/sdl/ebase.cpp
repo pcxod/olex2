@@ -43,42 +43,42 @@ void TExceptionBase::ThrowInvalidUnsignedFormat(const char* file, const char* fu
     const char* src, size_t src_len)
 {
   throw TInvalidUnsignedNumberException(FormatSrc(file,func,line),
-    olxstr('\'') << olxstr(src, src_len) << '\'');
+    olxstr('\'') << olxcstr(src, src_len) << '\'');
 }
 //................................................................................................
 void TExceptionBase::ThrowInvalidUnsignedFormat(const char* file, const char* func, int line, 
     const wchar_t* src, size_t src_len)
 {
   throw TInvalidUnsignedNumberException(FormatSrc(file,func,line),
-    olxstr('\'') << olxstr(src, src_len) << '\'');
+    olxstr('\'') << olxcstr(src, src_len) << '\'');
 }
 //................................................................................................
 void TExceptionBase::ThrowInvalidIntegerFormat(const char* file, const char* func, int line, 
     const char* src, size_t src_len)
 {
   throw TInvalidIntegerNumberException(FormatSrc(file,func,line),
-    olxstr('\'') << olxstr(src, src_len) << '\'');
+    olxstr('\'') << olxcstr(src, src_len) << '\'');
 }
 //................................................................................................
 void TExceptionBase::ThrowInvalidIntegerFormat(const char* file, const char* func, int line, 
     const wchar_t* src, size_t src_len)
 {
   throw TInvalidIntegerNumberException(FormatSrc(file,func,line),
-    olxstr('\'') << olxstr(src, src_len) << '\'');
+    olxstr('\'') << olxcstr(src, src_len) << '\'');
 }
 //................................................................................................
 void TExceptionBase::ThrowInvalidFloatFormat(const char* file, const char* func, int line, 
     const char* src, size_t src_len)
 {
   throw TInvalidFloatNumberException(FormatSrc(file,func,line),
-    olxstr('\'') << olxstr(src, src_len) << '\'');
+    olxstr('\'') << olxcstr(src, src_len) << '\'');
 }
 //................................................................................................
 void TExceptionBase::ThrowInvalidFloatFormat(const char* file, const char* func, int line, 
     const wchar_t* src, size_t src_len)
 {
   throw TInvalidFloatNumberException(FormatSrc(file,func,line),
-    olxstr('\'') << olxstr(src, src_len) << '\'');
+    olxstr('\'') << olxcstr(src, src_len) << '\'');
 }
 //................................................................................................
 const TBasicException* TExceptionBase::GetException() const {

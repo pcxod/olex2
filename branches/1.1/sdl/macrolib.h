@@ -36,9 +36,10 @@ protected:
           Cmd.Delete(index, args.Length()+1); // delete %xx value
           Cmd.Insert(argv[pindex], index);  // insert value parameter
         }
-        else
-          TBasicApp::GetLog().Error(olxstr(Name) << ": wrong argument index: " << (pindex+1)
-          << NewLineSequence);
+        else  {
+          TBasicApp::NewLogEntry(logError) << Name << ": wrong argument index: " << (pindex+1)
+            << NewLineSequence;
+        }
       }
       if( index++ < Cmd.Length() )
         index = Cmd.FirstIndexOf('%', index);  // next argument by index
@@ -57,7 +58,7 @@ public:
     TStrList& onTerminate, olex::IOlexProcessor& olex_processor )  {
     
     if( Args.Count() < args.Count() )  {
-      TBasicApp::GetLog().Error(olxstr(Name) << ": too many arguments" << NewLineSequence);
+      TBasicApp::NewLogEntry(logError) << Name << ": too many arguments" << NewLineSequence;
       return false;
     }
     TStrList argV( Args.Count() );
@@ -73,7 +74,7 @@ public:
       if( eqsi != InvalidIndex )  {  // argument with name and value
         size_t argi = Args.IndexOf( args[i].SubStringTo(eqsi) );
         if( argi == InvalidIndex )  {
-          TBasicApp::GetLog().Error(olxstr(Name) << ": wrong argument name: " << args[i].SubStringTo(eqsi));
+          TBasicApp::NewLogEntry(logError) << Name << ": wrong argument name: " << args[i].SubStringTo(eqsi);
           return false;
         }
         else
@@ -137,7 +138,7 @@ public:
       const TDataItem& m_def = m_root.GetItem(i);
       const TDataItem* di = m_def.FindItem("body");
       if( di == NULL )  {
-        TBasicApp::GetLog().Error(olxstr("Macro body is not defined: ") << m_def.GetName());
+        TBasicApp::NewLogEntry(logError) << "Macro body is not defined: " << m_def.GetName();
         continue;
       }
       TEMacro* m = new TEMacro( m_def.GetName(), m_def.GetFieldValue("help"));

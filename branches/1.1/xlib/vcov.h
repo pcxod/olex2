@@ -60,7 +60,7 @@ public:
     TTypeList<TVector3<size_t> > indexes;
     for( size_t i=0; i < atoms.Count(); i++ )  {
       if( a_indexes.Add(FindAtomIndex(atoms[i]->CAtom())) == InvalidIndex )
-        TBasicApp::GetLog().Error(olxstr("Unable to located given atom: ") << atoms[i]->GetLabel());
+        TBasicApp::NewLogEntry(logError) << "Unable to located given atom: " << atoms[i]->GetLabel();
       indexes.AddNew(InvalidIndex,InvalidIndex,InvalidIndex);
     }
     for( size_t i=0; i < a_indexes.Count(); i++ )  {

@@ -59,7 +59,7 @@ olxstr TXApp::LocateHklFile()  {
       Hkl[i].SetS((double)olx_round(Hkl[i].GetS())/100.0 );
     }
     Hkl.SaveToFile( HklFN );
-    GetLog().Info("The scaled hkl file is prepared");
+    NewLogEntry(logInfo) << "The scaled hkl file is prepared";
     return HklFN;
   }
   else  {  // check for stoe format
@@ -692,7 +692,7 @@ ElementRadii TXApp::ReadVdWRadii(const olxstr& fileName)  {
       if( toks.Count() == 2 )  {
         cm_Element* elm = XElementLib::FindBySymbol(toks[0]);
         if( elm == NULL )  {
-          TBasicApp::GetLog().Error(olxstr("Invalid atom type: ") << toks[0]);
+          TBasicApp::NewLogEntry(logError) << "Invalid atom type: " << toks[0];
           continue;
         }
         const size_t b_i = radii.IndexOf(elm);

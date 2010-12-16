@@ -1477,7 +1477,7 @@ void TGXApp::CAtomsByMask(const olxstr &StrMask, int Mask, TCAtomPList& List)  {
   bool found;
   if( StrMask.Length() > 32 )
     throw TInvalidArgumentException(__OlxSourceInfo, "mask is too long");
-  olxstr Name(olxstr::UpperCase(StrMask));
+  olxstr Name = StrMask.ToUpperCase();
   TAsymmUnit& AU= XFile().GetLattice().GetAsymmUnit();
   for( size_t i=0; i < AU.AtomCount(); i++ )  {
     TCAtom& CA = AU.GetAtom(i);
@@ -1593,12 +1593,12 @@ TXAtom* TGXApp::GetXAtom(const olxstr& AtomName, bool clearSelection)  {
 void TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask, TXAtomPList& List)  {
   if( StrMask.Length() > 32 )
     throw TInvalidArgumentException(__OlxSourceInfo, "mask is too long");
-  olxstr Tmp, Name( olxstr::UpperCase(StrMask) );
+  olxstr Tmp, Name(StrMask.ToUpperCase());
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
     TXAtom& XA = XAtoms[i];
     if( !XA.IsVisible() )  continue;
     if( XA.GetLabel().Length() != Name.Length() )  continue;
-    Tmp = olxstr::UpperCase(XA.GetLabel());
+    Tmp = XA.GetLabel().ToUpperCase();
     bool found = true;
     for( size_t j=0; j < Name.Length(); j++ )  {
       if( (Mask & (0x0001<<j)) == 0 )  {
@@ -2172,7 +2172,7 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
 }
 //..............................................................................
 void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert)  {
-  olxstr str = olxstr::LowerCase(Where);
+  olxstr str = Where.ToLowerCase();
   if( str.FirstIndexOf("xatom") != InvalidIndex || str.FirstIndexOf("satom") != InvalidIndex)  {
     NewLogEntry(logError) << "SelectBonds: xatom/satom are not allowed here";
     return;
@@ -2205,7 +2205,7 @@ void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert)  {
 }
 //..............................................................................
 void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert)  {
-  olxstr str( olxstr::LowerCase(Where) );
+  olxstr str = Where.ToLowerCase();
   if( str.FirstIndexOf("xbond") != InvalidIndex || str.FirstIndexOf("satom") != InvalidIndex )  {
     NewLogEntry(logError) << "SelectAtoms: xbond/satom are not allowed here";
     return;

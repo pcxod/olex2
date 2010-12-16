@@ -127,13 +127,13 @@ bool TZipWrapper::ExtractAll(const olxstr& dest)  {
     olxstr dst_dir = TEFile::ExtractFilePath(dest_file);
     if( !TEFile::Exists(dst_dir) )
       if( !TEFile::MakeDirs(dst_dir) )  {
-        TBasicApp::GetLog().Error(olxstr("Failed to create folder: ") << dst_dir);
+        TBasicApp::NewLogEntry(logError) << "Failed to create folder: " << dst_dir;
         res = false;
         break;
       }
     if( TEFile::Exists(dest_file) )  {
       if( !TEFile::DelFile(dest_file) )  {
-        TBasicApp::GetLog().Error(olxstr("Failed to remove/update file: ") << dest_file);
+        TBasicApp::NewLogEntry(logError) << "Failed to remove/update file: " << dest_file;
         res = false;
         break;
       }

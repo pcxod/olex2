@@ -70,7 +70,7 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
     }
   }
   if( netA == netB )  {
-    TBasicApp::GetLog().Error("Atoms belong to the same fragment");
+    TBasicApp::NewLogEntry(logError) << "Atoms belong to the same fragment";
     AtomsToMatch.Clear();
     TGlXApp::GetMainForm()->SetUserCursor(AtomsToMatch.Count(), cursor_name);
     return;

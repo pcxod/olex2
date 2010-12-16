@@ -399,7 +399,7 @@ template <class NodeType>  bool AnalyseUiso(TCAtom& ca, const TTypeList< THitLis
   tmp << ' ';
   const cm_Element* type = &ca.GetType();
   if( heavier )  {
-    TBasicApp::GetLog().Info(olxstr("Searching element heavier for ") << ca.GetLabel());
+    TBasicApp::NewLogEntry(logInfo) << "Searching element heavier for " << ca.GetLabel();
     for( size_t j=0; j < list.Count(); j++ )  {
       if( list[j].Type->z > type->z )  {
         if( proposed_atoms != NULL )  {
@@ -420,7 +420,7 @@ template <class NodeType>  bool AnalyseUiso(TCAtom& ca, const TTypeList< THitLis
     }
   }
   else if( lighter )  {
-    TBasicApp::GetLog().Info(olxstr("Searching element lighter for ") << ca.GetLabel());
+    TBasicApp::NewLogEntry(logInfo) << "Searching element lighter for " << ca.GetLabel();
     for( size_t j=0; j < list.Count(); j++ )  {
       if( list[j].Type->z < type->z )  {
         if( proposed_atoms != NULL )  {
@@ -466,7 +466,7 @@ template <class NodeType>  bool AnalyseUiso(TCAtom& ca, const TTypeList< THitLis
     ca.SetLabel(type->symbol, false);
     ca.SetType(*type);
   }
-  TBasicApp::GetLog().Info(tmp);
+  TBasicApp::NewLogEntry(logInfo) << tmp;
   return atc != stat.AtomTypeChanges;
 }
 

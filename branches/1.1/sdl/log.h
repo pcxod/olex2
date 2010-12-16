@@ -57,30 +57,6 @@ public:
     return *this;
   }
 //..............................................................................
-  void Info(const olxstr& msg)  {
-    if( !OnInfo.Enter(this, &msg) )
-      Add(msg);
-    OnInfo.Exit(this, NULL);
-  }
-//..............................................................................
-  void Warning(const olxstr& msg)  {
-    if( !OnWarning.Enter(this, &msg) )
-      Add(msg);
-    OnWarning.Exit(this, NULL);
-  }
-//..............................................................................
-  void Error(const olxstr& msg)  {
-    if( !OnError.Enter(this, &msg) )
-      Add(msg);
-    OnError.Exit(this, NULL);
-  }
-//..............................................................................
-  void Exception(const olxstr& msg)  {
-    if( !OnException.Enter(this, &msg) )
-      Add(msg);
-    OnException.Exit(this, NULL);
-  }
-//..............................................................................
   virtual void Flush()  {
     for( size_t i=0; i < Streams.Count(); i++ )
       Streams[i].GetA()->Flush();

@@ -24,17 +24,25 @@
 #else  // POSIX
   #include <strings.h>
   #include <wchar.h>
+  #include <ctype.h>
   #define olx_strcmpn  strncmp
   #define olx_strcmpni strncasecmp
   #define olx_wcscmpn  wcsncmp
   #if defined(__MAC__)
     static int olx_wcscmpni(const wchar_t* s1, const wchar_t* s2, size_t len)  {
 	  for( size_t i=0; i < len; i++ )  {
-	    int diff = towupper(s1[i]) - towupper(s2[i]); 
-	    if( diff != 0 )  return diff; 
+      if( s1[i] != s2[i] )  {
+	      if( isalpha(s1[i]) && isalpha(s2[i]) )  {
+          const int diff = towupper(s1[i]) - towupper(s2[i]); 
+	        if( diff != 0 )
+            return diff; 
+        }
+        else
+          return s1[i] - s2[i];
+      }
 	  }
 	  return 0;
-	} 
+  } 
   #else
     #define olx_wcscmpni wcsncasecmp
   #endif
@@ -284,8 +292,12 @@ public:
     return SubString(indexFromStart, to-indexFromStart);
   }
   //............................................................................
-  static char o_toupper(char ch)     {  return (ch >='a' && ch <= 'z') ? (ch + 'A'-'a') : ch;  }
-  static char o_tolower(char ch)     {  return (ch >='A' && ch <= 'Z') ? (ch + 'a'-'A') : ch;  }
+  // for latin letetrs only
+  static char o_ltoupper(char ch)     {  return (ch >='a' && ch <= 'z') ? (ch + 'A'-'a') : ch;  }
+  // for latin letetrs only
+  static char o_ltolower(char ch)     {  return (ch >='A' && ch <= 'Z') ? (ch + 'a'-'A') : ch;  }
+  static char o_toupper(char ch)     {  return toupper(ch);  }
+  static char o_tolower(char ch)     {  return tolower(ch);  }
   static wchar_t o_toupper(wchar_t ch)  {  return towupper(ch);  }
   static wchar_t o_tolower(wchar_t ch)  {  return towlower(ch);  }
   static bool o_isdigit(char ch)     {  return (ch >= '0' && ch <= '9');  }
@@ -300,23 +312,23 @@ public:
            (ch >= L'A' && ch <= L'F') ||
            (ch >= L'a' && ch <= L'f');  
   }
-  static bool o_isalphabetic(char ch)  {  
-    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');  
-  }
-  static bool o_isalphabetic(wchar_t ch)  {  
-    return (ch >= L'a' && ch <= L'z') || (ch >= L'A' && ch <= L'Z');  
-  }
-  static bool o_isalphanumeric(char ch)  {  return o_isdigit(ch) || o_isalphabetic(ch);  }
-  static bool o_isalphanumeric(wchar_t ch)  {  return o_isdigit(ch) || o_isalphabetic(ch);  }
+  static bool o_islatin(char ch)  {  return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');  }
+  static bool o_islatin(wchar_t ch)  {  return (ch >= L'a' && ch <= L'z') || (ch >= L'A' && ch <= L'Z');  }
+  static bool o_isalpha(char ch)  {  return isalpha(ch) != 0;  }  
+  static bool o_isalpha(wchar_t ch)  {  return iswalpha(ch) != 0;  }  
+  static bool o_isalphanumeric(char ch)  {  return o_isdigit(ch) || o_isalpha(ch);  }
+  static bool o_isalphanumeric(wchar_t ch)  {  return o_isdigit(ch) || o_isalpha(ch);  }
   static bool o_iswhitechar(char ch)     {  return (ch == ' ' || ch == '\t');  }
   static bool o_iswhitechar(wchar_t ch)  {  return (ch == L' ' || ch == L'\t');  }
   static size_t o_strlen(const char* cstr)    {  return (cstr==NULL) ? 0 : strlen(cstr);  }
   static size_t o_strlen(const wchar_t* wstr) {  return (wstr==NULL) ? 0 : wcslen(wstr);  }
   static void o_strtup(TC* wht, size_t wht_len)  {
-    for( size_t i=0; i < wht_len; i++ )  wht[i] = o_toupper(wht[i]);
+    for( size_t i=0; i < wht_len; i++ )
+      wht[i] = o_toupper(wht[i]);
   }
   static void o_strtlw(TC* wht, size_t wht_len)  {
-    for( size_t i=0; i < wht_len; i++ )  wht[i] = o_tolower(wht[i]);
+    for( size_t i=0; i < wht_len; i++ )
+      wht[i] = o_tolower(wht[i]);
   }
   // returns length of common string
   template <typename OC, typename AC>
@@ -357,7 +369,7 @@ public:
   //............................................................................
   TTSString& UpperCase()  {
     T::checkBufferForModification(T::_Length);
-    o_strtup( T::Data(), T::_Length );
+    o_strtup(T::Data(), T::_Length);
     return *this;
   }
   //............................................................................
@@ -367,25 +379,9 @@ public:
     return *this;
   }
   //............................................................................
-  TTSString ToUpperCase() const {
-    TTSString<T, TC> rv(*this);
-    return rv.UpperCase();
-  }
+  TTSString ToUpperCase() const {  return TTSString<T, TC>(*this).UpperCase();  }
   //............................................................................
-  TTSString ToLowerCase() const {
-    TTSString<T, TC> rv(*this);
-    return rv.LowerCase();
-  }
-  //............................................................................
-  static TTSString UpperCase(const TTSString& str)  {
-    TTSString<T, TC> rv(str);
-    return rv.UpperCase();
-  }
-  //............................................................................
-  static TTSString LowerCase(const TTSString& str)  {
-    TTSString<T, TC> rv(str);
-    return rv.LowerCase();
-  }
+  TTSString ToLowerCase() const {  return TTSString<T, TC>(*this).LowerCase();  }
   //............................................................................
   TTSString CommonString(const TTSString& str) const {
     return SubStringTo(o_cmnstr(T::Data(), T::_Length, str.Data(), str.Length()));
@@ -421,8 +417,16 @@ public:
     return olx_wcscmpn(wht, with, len);
   }
   template <typename OC, typename AC> static int o_memcmpi(const OC* wht, const AC* with, size_t len) {
-    for( size_t i=0; i < len; i++ )
-      if( o_toupper(wht[i]) != o_toupper(with[i]))  return (o_toupper(wht[i])-o_toupper(with[i]));
+    for( size_t i=0; i < len; i++ )  {
+      if( wht[i] != with[i] )  {
+        if( o_isalpha(wht[i]) && o_isalpha(with[i]) )  {
+          if( o_toupper(wht[i]) != o_toupper(with[i]))
+            return (o_toupper(wht[i])-o_toupper(with[i]));
+        }
+        else
+          return (wht[i]-with[i]);
+      }
+    }
     return 0;
   }
   static int o_memcmpi(const char* wht, const char* with, size_t len) {

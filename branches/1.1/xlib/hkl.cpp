@@ -69,16 +69,16 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
       const olxcstr& line = SL[i];
       if( !ZeroRead && line.Length() < 28 )  continue;
       if( !FormatInitialised )  {
-        if( line.Length() >= 32 && line.SubString(28,4).IsNumber() )
+        if( line.Length() >= 32 )
           HasBatch = true;
         FormatInitialised = true;
       }
       if( ZeroRead && !HklFinished )  {
-        if( !line.SubString(0,4).IsNumber() || 
-          !line.SubString(4,4).IsNumber() || 
-          !line.SubString(8,4).IsNumber() || 
-          !line.SubString(12,8).IsNumber() || 
-          !line.SubString(20,8).IsNumber() )  
+        if( !line.SubString(0,4).IsNumber() ||
+          !line.SubString(4,4).IsNumber() ||
+          !line.SubString(8,4).IsNumber() ||
+          !line.SubString(12,8).IsNumber() ||
+          !line.SubString(20,8).IsNumber() )
         {
           HklFinished = true; 
           i--;  // reset to the non-hkl line
@@ -93,13 +93,19 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
           Tag = -1;
           continue;
         }
-        TReflection* ref = HasBatch ? 
-          new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble(), line.SubString(28,4).ToInt())
-          :
-        new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble());
-        ref->SetTag(Tag);
-        UpdateMinMax(*ref);
-        Refs.Add(ref);
+        try  {
+          TReflection* ref = HasBatch ?
+            new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble(),
+              line.SubString(28,4).IsNumber() ? line.SubString(28,4).ToInt() : 1)
+            :
+            new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble());
+          ref->SetTag(Tag);
+          UpdateMinMax(*ref);
+          Refs.Add(ref);
+        }
+        catch(const TExceptionBase& e)  {
+          throw TFunctionFailedException(__OlxSourceInfo, e, olxstr("HKL file line ") << (i+1));
+        }
       }
       else  {
         if( ins == NULL )  break;
@@ -182,18 +188,13 @@ int THklFile::HklCmp(const TReflection* R1, const TReflection* R2)  {
 //..............................................................................
 void THklFile::InitHkl3D()  {
   if( Hkl3D != NULL )  return;
-  TArray3D<TRefPList*> &hkl3D = *(new TArray3D<TRefPList*>(
-                                     MinHkl[0], MaxHkl[0],
-                                     MinHkl[1], MaxHkl[1],
-                                     MinHkl[2], MaxHkl[2]) );
-
+  TArray3D<TRefPList*> &hkl3D = *(new TArray3D<TRefPList*>(MinHkl, MaxHkl));
   for( size_t i=0; i < Refs.Count(); i++ )  {
     TReflection *r1 = Refs[i];
     TRefPList *&rl = hkl3D(r1->GetHkl());
-
     if( rl == NULL )
       rl = new TRefPList();
-    rl->Add( r1 );
+    rl->Add(r1);
   }
   Hkl3D = &hkl3D;
 }

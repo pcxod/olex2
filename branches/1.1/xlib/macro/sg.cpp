@@ -122,8 +122,8 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
         }
       }
       if( !found )  {
-        XApp.GetLog().Warning(
-          olxstr("Could not find match for ") << BravaisLattices[i].GetA()->GetName() << " crystal system");
+        XApp.NewLogEntry(logWarning) << "Could not find match for " <<
+          BravaisLattices[i].GetA()->GetName() << " crystal system";
       }
     }
   }
@@ -550,7 +550,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
     sgOutput.CreateHTMLList(Output, EmptyString, false, false, false);
   }
   else  {
-    XApp.GetLog().Error("Could not find any suitable space group");
+    XApp.NewLogEntry(logError) << "Could not find any suitable space group";
     TTTable<TStrList> sgOutput( 1, 2 );
     sgOutput[0][0] = "n/a";
     sgOutput[0][1] = "n/a";

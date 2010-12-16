@@ -91,7 +91,7 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
               if( func_name.Equalsi("eval") ) // put the function back
                 Params[j] = ArgV;
               else  {
-                TBasicApp::GetLog().Info(olxstr("Possibly incorrect argument: ") << Params[j]);
+                TBasicApp::NewLogEntry(logInfo) << "Possibly incorrect argument: " << Params[j];
                 E.GetStack().Pop();  // clear the error
                 E.ClearErrorFlag();
               }
@@ -107,7 +107,7 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
         E.GetStack().Pop();
         return true;
       }
-      else if( !olxstr::o_isalphabetic(func_name.CharAt(0)) )  {
+      else if( !olxstr::o_isalpha(func_name.CharAt(0)) )  {
         E.GetStack().Pop();
         return true;
       }
@@ -124,12 +124,12 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
       Function->Run(Params, E);
       if( !E.IsSuccessful() )  {  //&& E.DoesFunctionExist() )  
         if( (GetLogLevel()&macro_log_function) != 0 )
-          TBasicApp::GetLog().Info(olxstr(Function->GetRuntimeSignature()) << ": failed");
+          TBasicApp::NewLogEntry(logInfo) << Function->GetRuntimeSignature() << ": failed";
         return false;
       }
       else  {
         if( (GetLogLevel()&macro_log_function) != 0 )
-          TBasicApp::GetLog().Info(olxstr(Function->GetRuntimeSignature()) << ": '" << E.GetRetVal() << '\'');
+          TBasicApp::NewLogEntry(logInfo) << Function->GetRuntimeSignature() << ": '" << E.GetRetVal() << '\'';
       }
       Cmd.Insert(E.GetRetVal(), fstart);
       i = fstart + E.GetRetVal().Length();
@@ -150,7 +150,7 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
 void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error)  {
   if( Cmd.IsEmpty() )  return;
   if( (GetLogLevel()&macro_log_macro) != 0 )
-    TBasicApp::GetLog().Info(Cmd);
+    TBasicApp::NewLogEntry(logInfo) << Cmd;
   TStrObjList Cmds;
   TStrList MCmds;
   TParamList Options;
@@ -248,7 +248,7 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error)  {
     if( !Error.DoesFunctionExist() )
       return;
     if( !Error.IsSuccessful() && !onAbort.IsEmpty() )  {
-      TBasicApp::GetLog().Info( olxstr("OnAbort at ") << Error.GetLocation() << ": " << Error.GetInfo() );
+      TBasicApp::NewLogEntry(logInfo) << "OnAbort at " << Error.GetLocation() << ": " << Error.GetInfo();
       Error.ClearErrorFlag();
       for( size_t j=0; j < onAbort.Count(); j++ )  {
         ProcessMacro(onAbort[j], Error);

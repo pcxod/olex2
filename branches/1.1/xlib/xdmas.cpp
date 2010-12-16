@@ -108,7 +108,7 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
             GetAsymmUnit().UcifToUcart(Q);
             atom.AssignEllp(& GetAsymmUnit().NewEllp().Initialise(Q) );
             if( atom.GetEllipsoid()->IsNPD() )  {
-              TBasicApp::GetLog().Info(olxstr("Not positevely defined: ") << atom.GetLabel());
+              TBasicApp::NewLogEntry(logInfo) << "Not positevely defined: " << atom.GetLabel();
               atom.SetUiso(0);
             }
             else

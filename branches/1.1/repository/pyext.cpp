@@ -257,7 +257,7 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
       TMacroError er;
       macro->Run(params, options, er);
       if( (PythonExt::GetInstance()->GetLogLevel() & macro_log_macro) != 0 )
-        TBasicApp::GetLog().Info(olxstr("@py: ") << macro->GetRuntimeSignature());
+        TBasicApp::NewLogEntry(logInfo) << "@py: " << macro->GetRuntimeSignature();
       if( er.IsSuccessful() )
         return Py_BuildValue("b", true);
       else  {
@@ -287,7 +287,7 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
     TMacroError er;
     func->Run(params, er);
     if( (PythonExt::GetInstance()->GetLogLevel() & macro_log_function) != 0 )  {
-      TBasicApp::GetLog().Info(olxstr("@py: ") << func->GetRuntimeSignature());
+      TBasicApp::NewLogEntry(logInfo) << "@py: " << func->GetRuntimeSignature();
     }
     if( er.IsSuccessful() )  {
       olxstr rv = (er.HasRetVal() ? olxstr(er.RetObj()->ToString()) : EmptyString);

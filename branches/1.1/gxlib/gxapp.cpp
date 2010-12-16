@@ -503,7 +503,6 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   if( FXGrowLinesVisible )  CreateXGrowLines();
   if( XGrowPointsVisible )  CreateXGrowPoints();
   FXGrid->Create();
-  RestoreGroups();
   // create hkls
   if( FHklVisible )  SetHklVisible(true);
 
@@ -519,9 +518,10 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   olx_gl::loadIdentity();
   GetRender().SetView(false, 1);
   GetRender().Initialise();
+  RestoreGroups();  // selection is created above
   FGlRender->SetSceneComplete(true);
   sw.stop();
-  sw.print(GetLog(), &TLog::Info);
+  sw.print(NewLogEntry(logInfo));
   OnObjectsCreate.Exit(dynamic_cast<TBasicApp*>(this), NULL);
 }
 //..............................................................................
@@ -1481,7 +1481,7 @@ void TGXApp::CAtomsByMask(const olxstr &StrMask, int Mask, TCAtomPList& List)  {
   bool found;
   if( StrMask.Length() > 32 )
     throw TInvalidArgumentException(__OlxSourceInfo, "mask is too long");
-  olxstr Name(olxstr::UpperCase(StrMask));
+  olxstr Name = StrMask.ToUpperCase();
   TAsymmUnit& AU= XFile().GetLattice().GetAsymmUnit();
   for( size_t i=0; i < AU.AtomCount(); i++ )  {
     TCAtom& CA = AU.GetAtom(i);
@@ -1597,12 +1597,12 @@ TXAtom* TGXApp::GetXAtom(const olxstr& AtomName, bool clearSelection)  {
 void TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask, TXAtomPList& List)  {
   if( StrMask.Length() > 32 )
     throw TInvalidArgumentException(__OlxSourceInfo, "mask is too long");
-  olxstr Tmp, Name( olxstr::UpperCase(StrMask) );
+  olxstr Tmp, Name(StrMask.ToUpperCase());
   for( size_t i=0; i < XAtoms.Count(); i++ )  {
     TXAtom& XA = XAtoms[i];
     if( !XA.IsVisible() )  continue;
     if( XA.Atom().GetLabel().Length() != Name.Length() )  continue;
-    Tmp = olxstr::UpperCase(XA.Atom().GetLabel());
+    Tmp = XA.Atom().GetLabel().ToUpperCase();
     bool found = true;
     for( size_t j=0; j < Name.Length(); j++ )  {
       if( (Mask & (0x0001<<j)) == 0 )  {
@@ -2180,18 +2180,18 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
 }
 //..............................................................................
 void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert)  {
-  olxstr str = olxstr::LowerCase(Where);
+  olxstr str = Where.ToLowerCase();
   if( str.FirstIndexOf("xatom") != InvalidIndex || str.FirstIndexOf("satom") != InvalidIndex)  {
-    Log->Error("SelectBonds: xatom/satom are not allowed here");
+    NewLogEntry(logError) << "SelectBonds: xatom/satom are not allowed here";
     return;
   }
   if( str.FirstIndexOf("sel") != InvalidIndex )  {
     if( FGlRender->GetSelection().Count() != 1 )  {
-      Log->Error("SelectBonds: please select one bond only");
+      NewLogEntry(logError) << "SelectBonds: please select one bond only";
       return;
     }
     if( !EsdlInstanceOf(FGlRender->GetSelection()[0], TXBond) )  {
-      Log->Error("SelectBonds: please select a bond");
+      NewLogEntry(logError) << "SelectBonds: please select a bond";
       return;
     }
   }
@@ -2209,22 +2209,22 @@ void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert)  {
     }
   }
   else
-    Log->Error(SyntaxParser.Errors().Text(NewLineSequence));
+    NewLogEntry(logError) << SyntaxParser.Errors().Text(NewLineSequence);
 }
 //..............................................................................
 void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert)  {
-  olxstr str( olxstr::LowerCase(Where) );
+  olxstr str = Where.ToLowerCase();
   if( str.FirstIndexOf("xbond") != InvalidIndex || str.FirstIndexOf("satom") != InvalidIndex )  {
-    Log->Error("SelectAtoms: xbond/satom are not allowed here");
+    NewLogEntry(logError) << "SelectAtoms: xbond/satom are not allowed here";
     return;
   }
   if( str.FirstIndexOf("sel") != InvalidIndex )  {
     if( FGlRender->GetSelection().Count() != 1 )  {
-      Log->Error("SelectAtoms: please select one atom only");
+      NewLogEntry(logError) << "SelectAtoms: please select one atom only";
       return;
     }
     if( !EsdlInstanceOf(FGlRender->GetSelection()[0], TXAtom) )  {
-      Log->Error("SelectAtoms: please select an atom");
+      NewLogEntry(logError) << "SelectAtoms: please select an atom";
       return;
     }
   }
@@ -2242,7 +2242,7 @@ void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert)  {
     }
   }
   else
-    Log->Error(SyntaxParser.Errors().Text(NewLineSequence));
+    NewLogEntry(logError) << SyntaxParser.Errors().Text(NewLineSequence);
 }
 //..............................................................................
 bool GetRing(TSAtomPList& atoms, TTypeList<TSAtomPList>& rings)  {
@@ -2800,13 +2800,11 @@ void TGXApp::RestoreGroup(TGlGroup& glg, const GroupData& gd)  {
     if( xbonds[i] != NULL && xbonds[i]->IsVisible() )
       glg.Add(*xbonds[i], false);
   }
-  glg.SetBlended(gd.blended);
 }
 //..............................................................................
 void TGXApp::StoreGroup(const TGlGroup& glG, GroupData& gd)  {
   gd.collectionName = glG.GetCollectionName();  //planes
   gd.visible = glG.IsVisible();
-  gd.blended = glG.IsBlended();
   gd.parent_id = (glG.GetParentGroup() != NULL ? glG.GetParentGroup()->GetTag() : -2); 
   for( size_t j=0; j < glG.Count(); j++ )  {
     AGDrawObject& glO = glG[j];
@@ -3183,7 +3181,7 @@ bool TGXApp::IsGridVisible() const {  return FXGrid->IsVisible();  }
 bool TGXApp::ShowGrid(bool v, const olxstr& FN)  {
   if( v )  {
     if(  FXGrid->IsEmpty() && FN.IsEmpty() )  {
-      Log->Error("Cannot display empty grid");
+      NewLogEntry(logError) << "Cannot display empty grid";
       return false;
     }
     SetGraphicsVisible(FXGrid, true);
@@ -4359,7 +4357,7 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   TwxInputStreamWrapper in(*zin);
   try  {  FromDataItem(df.Root().FindRequiredItem("olex_model"), in);  }
   catch( const TExceptionBase& exc )  {
-    GetLog().Exception(olxstr("Failed to load model: ") << exc.GetException()->GetError());
+    NewLogEntry(logException) << "Failed to load model: " << exc.GetException()->GetError();
     FXFile->SetLastLoader(NULL);
     FXFile->LastLoaderChanged();
     CreateObjects(false, false);

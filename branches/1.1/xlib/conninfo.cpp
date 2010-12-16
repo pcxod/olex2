@@ -9,18 +9,18 @@ void ConnInfo::ProcessFree(const TStrList& ins)  {
   size_t aag;
   try  {  ar.Expand(rm, ag, EmptyString, aag);  }
   catch(const TExceptionBase&)  {
-    TBasicApp::GetLog().Error(olxstr("Could not locate atoms for FREE ") << ar.GetExpression());
+    TBasicApp::NewLogEntry(logError) << "Could not locate atoms for FREE " << ar.GetExpression();
     return;
   }
   if( ag.Count() == 0 || (ag.Count()%2) != 0 )  {
-    TBasicApp::GetLog().Error(olxstr("Even number of atoms is expected for FREE ") <<
-      ar.GetExpression() << ' ' << ag.Count() << " is provided");
+    TBasicApp::NewLogEntry(logError) << "Even number of atoms is expected for FREE " <<
+      ar.GetExpression() << ' ' << ag.Count() << " is provided";
     return;
   }
   for( size_t i=0; i < ag.Count(); i += 2 )  {
     if( ag[i].GetMatrix() != NULL && ag[i+1].GetMatrix() != NULL )  {
-      TBasicApp::GetLog().Error(olxstr("Only one eqivalent is expected in FREE, skipping ") << 
-        ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm) );
+      TBasicApp::NewLogEntry(logError) << "Only one eqivalent is expected in FREE, skipping " <<
+        ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm);
       continue;
     }
     // validate
@@ -29,8 +29,8 @@ void ConnInfo::ProcessFree(const TStrList& ins)  {
         (ag[i+1].GetMatrix() != NULL && ag[i+1].GetMatrix()->r.IsI() && ag[i+1].GetMatrix()->t.IsNull()) || 
         ag[i].GetMatrix() == NULL && ag[i+1].GetMatrix() == NULL )  
       {
-        TBasicApp::GetLog().Error(olxstr("Dummy  FREE, skipping ") <<
-          ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm) );
+        TBasicApp::NewLogEntry(logError) << "Dummy  FREE, skipping " << ag[i].GetFullLabel(rm) <<
+          ' ' << ag[i+1].GetFullLabel(rm);
         continue;
       }
     }
@@ -44,18 +44,18 @@ void ConnInfo::ProcessBind(const TStrList& ins)  {
   size_t aag;
   try  {  ar.Expand(rm, ag, EmptyString, aag);  }
   catch(const TExceptionBase&)  {
-    TBasicApp::GetLog().Error(olxstr("Could not locate atoms for BIND ") << ar.GetExpression());
+    TBasicApp::NewLogEntry(logError) << "Could not locate atoms for BIND " << ar.GetExpression();
     return;
   }
   if( ag.Count() == 0 || (ag.Count()%2) != 0 )  {
-    TBasicApp::GetLog().Error(olxstr("Even number of atoms is expected for FREE ") <<
-      ar.GetExpression() << ' ' << ag.Count() << " is provided");
+    TBasicApp::NewLogEntry(logError) << "Even number of atoms is expected for FREE " <<
+      ar.GetExpression() << ' ' << ag.Count() << " is provided";
     return;
   }
   for( size_t i=0; i < ag.Count(); i += 2 )  {
     if( ag[i].GetMatrix() != NULL && ag[i+1].GetMatrix() != NULL )  {
-      TBasicApp::GetLog().Error(olxstr("Only one eqivalent is expected in BIND, skipping ") << 
-        ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm) );
+      TBasicApp::NewLogEntry(logError) << "Only one eqivalent is expected in BIND, skipping " <<
+        ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm);
       continue;
     }
     // validate
@@ -64,8 +64,8 @@ void ConnInfo::ProcessBind(const TStrList& ins)  {
         (ag[i+1].GetMatrix() != NULL && ag[i+1].GetMatrix()->r.IsI() && ag[i+1].GetMatrix()->t.IsNull()) || 
         ag[i].GetMatrix() == NULL && ag[i+1].GetMatrix() == NULL )  
       {
-        TBasicApp::GetLog().Error(olxstr("Dummy  BIND, skipping ") <<
-          ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm) );
+        TBasicApp::NewLogEntry(logError) << "Dummy  BIND, skipping " <<
+          ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm);
         continue;
       }
     }
@@ -114,7 +114,7 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
     if( ins[i].CharAt(0) == '$' )  {
       cm_Element* elm = XElementLib::FindBySymbol(ins[i].SubStringFrom(1));
       if( elm == NULL )  {
-        TBasicApp::GetLog().Error(olxstr("Undefined atom type in CONN: ") << ins[i].SubStringFrom(1));
+        TBasicApp::NewLogEntry(logError) << "Undefined atom type in CONN: " << ins[i].SubStringFrom(1);
         ins.Delete(i--);
         continue;
       }
@@ -131,7 +131,7 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
     try  {  ar.Expand(rm, ag, EmptyString, aag);  }
     catch(const TExceptionBase& )  {  }
     if( ag.IsEmpty() )  {
-      TBasicApp::GetLog().Error( olxstr("Undefined atom in CONN: ") << ins.Text(' ') );
+      TBasicApp::NewLogEntry(logError) <<  "Undefined atom in CONN: " << ins.Text(' ');
       return;
     }
     for( size_t i=0; i < ag.Count(); i++ )  {

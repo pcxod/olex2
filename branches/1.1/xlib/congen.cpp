@@ -19,7 +19,7 @@ AConstraintGenerator::AConstraintGenerator(RefinementModel& rm) : RefMod(rm) {
   Distances(GenId(fgNH3, 0), 0.89);
   Distances(GenId(fgNH2, 0), 0.86);
   Distances(GenId(fgNH1, 0), 0.86);
-  Distances(GenId(fgNH1, 3), 0.89);
+  Distances(GenId(fgNH1, 3), 0.91);
 
   Distances(GenId(fgBH1, 3), 1.1084);
   Distances(GenId(fgBH1, 5), 1.10);

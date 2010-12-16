@@ -42,7 +42,7 @@ bool TOSFileSystem::_DoAdoptStream(IInputStream& f, const olxstr& name)  {
     if( !TEFile::Exists(path) )
       if( !TEFile::MakeDir(path) )
         if( !TEFile::MakeDirs(path) )  {
-          TBasicApp::GetLog().Error(olxstr("MKdir failed on \'") << path << "\'");
+          TBasicApp::NewLogEntry(logError) << "MKdir failed on \'" << path << "\'";
           return false;
         }
     {  // make sure file gets closed etc
@@ -78,7 +78,7 @@ bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src)  {
     if( !TEFile::Exists(path) )
       if( !TEFile::MakeDir(path) )
         if( !TEFile::MakeDirs(path) )  {  
-          TBasicApp::GetLog().Error(olxstr("MKdir failed on \'") << path << "\'");
+          TBasicApp::NewLogEntry(logError) << "MKdir failed on \'" << path << "\'";
           return false;
         }
     TEFile destFile(DFN, "wb+");
@@ -86,14 +86,14 @@ bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src)  {
     destFile.SetPosition(0);
     delete is;
     if( MD5::Digest(destFile) != Src.GetDigest() )  {
-      TBasicApp::GetLog().Error(olxstr("Digest mismatch for ") << DFN << ", skipping");
+      TBasicApp::NewLogEntry(logError) << "Digest mismatch for " << DFN << ", skipping";
       destFile.Delete();
       return false;
     }
   }
   catch( const TExceptionBase& exc )  {
     delete is;
-    TBasicApp::GetLog().Exception(exc.GetException()->GetFullMessage());
+    TBasicApp::NewLogEntry(logException) << exc.GetException()->GetFullMessage();
     return false;
   }
   TEFile::SetFileTimes(DFN, Src.GetDateTime(), Src.GetDateTime());

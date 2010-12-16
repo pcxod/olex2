@@ -20,7 +20,8 @@ public:
     steps.GetLast().C() = TETime::msNow();
   }
 protected:
-  TStrList& prepareList(TStrList& out)  {
+  TStrList prepareList()  {
+    TStrList out;
     if( steps.GetLast().GetC() == 0 )
       steps.GetLast().C() = TETime::msNow();
     TTTable<TStrList> tb(steps.Count()-1, 3);
@@ -39,14 +40,13 @@ protected:
     return out;
   }
 public:
-  template <class T> void print(T& out)  {
+  template <class T> void print(T out)  {
     if( TBasicApp::GetInstance().IsProfiling() )
-      out << prepareList(TStrList());
+      out << prepareList();
   }
   template <class T> void print(T& inst, void (T::*func)(const olxstr& str) )  {
     if( !TBasicApp::GetInstance().IsProfiling() )  return;
-    TStrList lst;
-    prepareList(lst);
+    TStrList lst = prepareList();
     for( size_t i=0; i < lst.Count(); i++ )
       (inst.*func)( lst[i] );
   }

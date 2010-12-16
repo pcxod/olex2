@@ -335,20 +335,20 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
   size_t atomAGroup;
   try  {  ar.Expand( *this, ag, resi_name, atomAGroup);  }
   catch( const TExceptionBase& ex )  {
-    TBasicApp::GetLog().Error(olxstr("Invalid info table atoms: ") << l.Text(' '));
-    TBasicApp::GetLog().Error(ex.GetException()->GetFullMessage());
+    TBasicApp::NewLogEntry(logError) << "Invalid info table atoms: " << l.Text(' ');
+    TBasicApp::NewLogEntry(logError) << ex.GetException()->GetFullMessage();
     InfoTables.Delete( InfoTables.Count()-1 );
     return;
   }
   InfoTables.GetLast().AssignAtoms(ag);
   if( !InfoTables.GetLast().IsValid() )  {
-    TBasicApp::GetLog().Error(olxstr("Invalid info table: ") << l.Text(' '));
+    TBasicApp::NewLogEntry(logError) << "Invalid info table: " << l.Text(' ');
     InfoTables.Delete( InfoTables.Count()-1 );
     return;
   }
   for( size_t i=0; i < InfoTables.Count()-1; i++ )  {
     if( InfoTables[i] == InfoTables.GetLast() )  {
-      TBasicApp::GetLog().Error(olxstr("Duplicate info table: ") << l.Text(' '));
+      TBasicApp::NewLogEntry(logError) << "Duplicate info table: " << l.Text(' ');
       InfoTables.Delete( InfoTables.Count()-1 );
       return;
     }
@@ -480,8 +480,9 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
         _HklStat = RefMerger::DrySGFilter(sp, refs, Omits);
     }
   }
-  catch(TExceptionBase&)  {
+  catch(const TExceptionBase& e)  {
     _HklStat.SetDefaults();
+    throw TFunctionFailedException(__OlxSourceInfo, e);
   }
   return _HklStat;
 }

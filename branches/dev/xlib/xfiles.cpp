@@ -107,11 +107,11 @@ TXFile::~TXFile()  {
 void TXFile::RegisterFileFormat(TBasicCFile *F, const olxstr &Ext)  {
   if( FileFormats.IndexOf(Ext) != InvalidIndex )
     throw TInvalidArgumentException(__OlxSourceInfo, "Ext");
-  FileFormats.Add(olxstr::LowerCase(Ext), F);
+  FileFormats.Add(Ext.ToLowerCase(), F);
 }
 //..............................................................................
 TBasicCFile *TXFile::FindFormat(const olxstr &Ext)  {
-  const size_t i = FileFormats.IndexOf(olxstr::LowerCase(Ext));
+  const size_t i = FileFormats.IndexOf(Ext.ToLowerCase());
   if( i == InvalidIndex )
     throw TInvalidArgumentException(__OlxSourceInfo, "unknown file format");
   return FileFormats.GetObject(i);
