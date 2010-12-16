@@ -1169,9 +1169,9 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
   if( TBasicApp::GetInstance().IsProfiling() )  {
-    TBasicApp::NewLogEntry(logInfo) << FXApp->XFile().GetLattice().AtomCount() << " atoms and " <<
-     FXApp->XFile().GetLattice().BondCount() << " bonds generated in " <<
-     FXApp->XFile().GetLattice().FragmentCount() << " fragments (" << (TETime::msNow()-st) << "ms)";
+    TBasicApp::NewLogEntry(logInfo) << FXApp->XFile().GetLattice().GetObjects().atoms.Count() << " atoms and " <<
+      FXApp->XFile().GetLattice().GetObjects().bonds.Count() << " bonds generated in " <<
+      FXApp->XFile().GetLattice().FragmentCount() << " fragments (" << (TETime::msNow()-st) << "ms)";
   }
   // optimise drawing ...
   //FXApp->GetRender().Compile(true);

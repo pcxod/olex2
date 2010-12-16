@@ -28,29 +28,27 @@ TArrayList<TGlPrimitiveParams>  TXBond::FPrimitiveParams;
 TGraphicsStyle* TXBond::FBondParams=NULL;
 TXBondStylesClear *TXBond::FXBondStylesClear=NULL;
 //..............................................................................
-TXBond::TXBond(TGlRenderer& R, const olxstr& collectionName, TSBond& B) :
+TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName) :
+  TSBond(net),
   AGDrawObject(R, collectionName),
-  FDrawStyle(0x0001), FBond(&B),
-  XAppId(~0)
+  FDrawStyle(0x0001)
 {
   SetGroupable(true);
   Params().Resize(5);
-  if( FBond != NULL )
-    Update();
+  Update();
   Params()[4] = 0.8;
   // the objects will be automatically deleted by the corresponding action collections
   if( FStaticObjects.IsEmpty() )  
     CreateStaticObjects();
   Label = new TXGlLabel(R, PLabelsCollectionName);
-  if( FBond != NULL )
-    Label->SetOffset((B.A().crd()+B.B().crd())/2);
+  Label->SetOffset((A().crd()+B().crd())/2);
   Label->SetVisible(false);
 }
 //..............................................................................
 TXBond::~TXBond()  {  delete Label;  }
 //..............................................................................
 void TXBond::Update()  {
-  vec3d C(FBond->B().crd() - FBond->A().crd());
+  vec3d C(B().crd() - A().crd());
   if( C.IsNull() )  
     Params().Null();
   else  {
@@ -90,7 +88,7 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GS.SetSaveable(IsStyleSaveable());
 
   const int PrimitiveMask = GS.GetParam(GetPrimitiveMaskName(),
-    (FBond && (FBond->GetType() == sotHBond)) ? 2048 : DefMask(), IsMaskSaveable()).ToInt();
+    (GetType() == sotHBond) ? 2048 : DefMask(), IsMaskSaveable()).ToInt();
 
   GPC->AddObject(*this);
   if( PrimitiveMask == 0 )  
@@ -109,40 +107,34 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
       GlP.StartList();
       GlP.CallList(SGlP);
       GlP.EndList();
-      if( FBond == NULL )  { // no bond?
-        GlP.SetProperties(GS.GetMaterial(FStaticObjects[i],
-          TGlMaterial("85;2155839359;2155313015;1.000,1.000,1.000,0.502;36")));
-      }
+      TGlMaterial* style_mat = GS.FindMaterial(FStaticObjects[i]);
+      if( style_mat != NULL )
+        GlP.SetProperties(*style_mat);
       else  {
-        TGlMaterial* style_mat = GS.FindMaterial(FStaticObjects[i]);
-        if( style_mat != NULL )
-          GlP.SetProperties(*style_mat);
-        else  {
-          TGlMaterial RGlM;
-          if( SGlP->Params.GetLast() == ddsDefAtomA || SGlP->Params.GetLast() == ddsDef )  {
-            if( cpar == NULL )
-              TXAtom::GetDefSphereMaterial(FBond->A(), RGlM);
-            else  {
-              const size_t mi = ((BondCreationParams*)cpar)->a1.Style().IndexOfMaterial("Sphere");
-              if( mi != InvalidIndex )
-                RGlM = ((BondCreationParams*)cpar)->a1.Style().GetPrimitiveStyle(mi).GetProperties();
-              else
-                TXAtom::GetDefSphereMaterial(FBond->A(), RGlM);
-            }
+        TGlMaterial RGlM;
+        if( SGlP->Params.GetLast() == ddsDefAtomA || SGlP->Params.GetLast() == ddsDef )  {
+          if( cpar == NULL )
+            TXAtom::GetDefSphereMaterial(A(), RGlM);
+          else  {
+            const size_t mi = ((BondCreationParams*)cpar)->a1.Style().IndexOfMaterial("Sphere");
+            if( mi != InvalidIndex )
+              RGlM = ((BondCreationParams*)cpar)->a1.Style().GetPrimitiveStyle(mi).GetProperties();
+            else
+              TXAtom::GetDefSphereMaterial(A(), RGlM);
           }
-          else if( SGlP->Params.GetLast() == ddsDefAtomB )  {
-            if( cpar == NULL )
-              TXAtom::GetDefSphereMaterial(FBond->B(), RGlM);
-            else  {
-              size_t mi = ((BondCreationParams*)cpar)->a2.Style().IndexOfMaterial("Sphere");
-              if( mi != InvalidIndex )
-                RGlM = ((BondCreationParams*)cpar)->a2.Style().GetPrimitiveStyle(mi).GetProperties();
-              else
-                TXAtom::GetDefSphereMaterial(FBond->B(), RGlM);
-            }
-          }
-          GlP.SetProperties(GS.GetMaterial(FStaticObjects[i], RGlM));
         }
+        else if( SGlP->Params.GetLast() == ddsDefAtomB )  {
+          if( cpar == NULL )
+            TXAtom::GetDefSphereMaterial(B(), RGlM);
+          else  {
+            size_t mi = ((BondCreationParams*)cpar)->a2.Style().IndexOfMaterial("Sphere");
+            if( mi != InvalidIndex )
+              RGlM = ((BondCreationParams*)cpar)->a2.Style().GetPrimitiveStyle(mi).GetProperties();
+            else
+              TXAtom::GetDefSphereMaterial(B(), RGlM);
+          }
+        }
+        GlP.SetProperties(GS.GetMaterial(FStaticObjects[i], RGlM));
       }
     }
   }
@@ -153,7 +145,7 @@ ACreationParams* TXBond::GetACreationParams() const {
 }
 //..............................................................................
 bool TXBond::Orient(TGlPrimitive& GlP)  {
-  olx_gl::translate(FBond->A().crd());
+  olx_gl::translate(A().crd());
   olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
   olx_gl::scale(Params()[4], Params()[4], Params()[3]);
   return false;
@@ -472,7 +464,7 @@ void TXBond::SetRadius(float V)  {
 //..............................................................................
 uint32_t TXBond::GetPrimitiveMask() const {
   return GetPrimitives().GetStyle().GetParam(GetPrimitiveMaskName(),
-    (FBond && (FBond->GetType() == sotHBond)) ? 2048 : DefMask(), IsMaskSaveable()).ToUInt();
+    (GetType() == sotHBond) ? 2048 : DefMask(), IsMaskSaveable()).ToUInt();
 }
 //..............................................................................
 void TXBond::OnPrimitivesCleared()  {

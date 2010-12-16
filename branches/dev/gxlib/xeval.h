@@ -114,7 +114,7 @@ public:
   // destructor
   TXAtom_UisoEvaluator()  {  ;  }
   // evaluator function
-  double EvaluateDouble() const {  return Parent->GetTXAtom()->Atom().CAtom().GetUiso();  }
+  double EvaluateDouble() const {  return Parent->GetTXAtom()->CAtom().GetUiso();  }
 };
 // evaluator implementation for bool selected
 class TXAtom_SelectedEvaluator: public IBoolEvaluator
@@ -142,7 +142,7 @@ public:
   // destructor
   TXBond_LengthEvaluator()  {  ;  }
   // evaluator function
-  double EvaluateDouble() const {  return Parent->GetTXBond()->Bond().Length();  }
+  double EvaluateDouble() const {  return Parent->GetTXBond()->Length();  }
 };
 // evaluator implementation for complex atom
 class TXAtom_AtomEvaluator: public ITSAtom_DataProvider
@@ -154,7 +154,7 @@ public:
   // destructor
   TXAtom_AtomEvaluator()  {  ;  }
   // evaluator function
-  TSAtom* GetTSAtom()  {  return &Parent->GetTXAtom()->Atom();  }
+  TSAtom* GetTSAtom()  {  return Parent->GetTXAtom();  }
 };
 // evaluator implementation for complex b
 class TSelBEvaluator: public ITXBond_DataProvider
@@ -180,7 +180,7 @@ public:
   // destructor
   TXAtom_BcEvaluator()  {  ;  }
   // evaluator function
-  double EvaluateDouble() const {  return (double)Parent->GetTXAtom()->Atom().BondCount();  }
+  double EvaluateDouble() const {  return (double)Parent->GetTXAtom()->BondCount();  }
 };
 // evaluator implementation for complex bai
 class TXAtom_BaiEvaluator: public ITBasicAtomInfoDataProvider
@@ -192,7 +192,7 @@ public:
   // destructor
   TXAtom_BaiEvaluator()  {  ;  }
   // evaluator function
-  const cm_Element *GetType()  {return &Parent->GetTXAtom()->Atom().GetType();  }
+  const cm_Element *GetType()  {return &Parent->GetTXAtom()->GetType();  }
 };
 // evaluator implementation for scalar peak
 class TXAtom_PeakEvaluator: public IDoubleEvaluator
@@ -206,7 +206,7 @@ public:
   // destructor
   TXAtom_PeakEvaluator()  {  ;  }
   // evaluator function
-  double EvaluateDouble() const {  return Parent->GetTXAtom()->Atom().CAtom().GetQPeak();  }
+  double EvaluateDouble() const {  return Parent->GetTXAtom()->CAtom().GetQPeak();  }
 };
 // evaluator implementation for complex a
 class TSelAEvaluator: public ITXAtom_DataProvider
@@ -232,7 +232,7 @@ public:
   // destructor
   TXAtom_AfixEvaluator()  {  ;  }
   // evaluator function
-  double EvaluateDouble() const {  return Parent->GetTXAtom()->Atom().CAtom().GetAfix();  }
+  double EvaluateDouble() const {  return Parent->GetTXAtom()->CAtom().GetAfix();  }
 };
 // evaluator implementation for string label
 class TXAtom_LabelEvaluator: public IStringEvaluator
@@ -246,7 +246,7 @@ public:
   // destructor
   TXAtom_LabelEvaluator()  {  ;  }
   // evaluator function
-  const olxstr& EvaluateString() const {  return Parent->GetTXAtom()->Atom().GetLabel();  }
+  const olxstr& EvaluateString() const {  return Parent->GetTXAtom()->GetLabel();  }
 };
 // evaluator implementation for scalar type
 class TXBond_TypeEvaluator: public IDoubleEvaluator
@@ -260,7 +260,7 @@ public:
   // destructor
   TXBond_TypeEvaluator()  {  ;  }
   // evaluator function
-  double EvaluateDouble() const {  return Parent->GetTXBond()->Bond().GetType();  }
+  double EvaluateDouble() const {  return Parent->GetTXBond()->GetType();  }
 };
 // evaluator implementation for scalar part
 class TXAtom_PartEvaluator: public IDoubleEvaluator
@@ -274,7 +274,7 @@ public:
   // destructor
   TXAtom_PartEvaluator()  {  ;  }
   // evaluator function
-  double EvaluateDouble() const {  return Parent->GetTXAtom()->Atom().CAtom().GetPart();  }
+  double EvaluateDouble() const {  return Parent->GetTXAtom()->CAtom().GetPart();  }
 };
 // factory class implementation
 class TTGlGroupEvaluatorFactory: public IEvaluatorFactory, ITGlGroupDataProvider
@@ -313,7 +313,7 @@ public:
   // destructor
   TXBond_AEvaluator()  {  ;  }
   // evaluator function
-  TSAtom* GetTSAtom()  {return &Parent->GetTXBond()->Bond().A();  }
+  TSAtom* GetTSAtom()  {return &Parent->GetTXBond()->A();  }
 };
 // evaluator implementation for string type
 class TXAtom_TypeEvaluator: public IStringEvaluator
@@ -327,7 +327,7 @@ public:
   // destructor
   TXAtom_TypeEvaluator()  {  ;  }
   // evaluator function
-  const olxstr& EvaluateString() const {  return Parent->GetTXAtom()->Atom().GetType().symbol;  }
+  const olxstr& EvaluateString() const {  return Parent->GetTXAtom()->GetType().symbol;  }
 };
 // evaluator implementation for complex B
 class TXBond_BEvaluator: public ITSAtom_DataProvider
@@ -339,7 +339,7 @@ public:
   // destructor
   TXBond_BEvaluator()  {  ;  }
   // evaluator function
-  TSAtom* GetTSAtom()  {  return &Parent->GetTXBond()->Bond().B();  }
+  TSAtom* GetTSAtom()  {  return &Parent->GetTXBond()->B();  }
 };
 // evaluator implementation for bool deleted
 class TXBond_DeletedEvaluator: public IBoolEvaluator

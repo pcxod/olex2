@@ -50,7 +50,6 @@ public:
 class TXAtom: public TSAtom, public AGlMouseHandlerImp  {
 private:
   short FDrawStyle, FRadius;
-  size_t XAppId;
   static uint8_t PolyhedronIndex, 
     SphereIndex, 
     SmallSphereIndex, 
@@ -94,10 +93,14 @@ public:
   virtual ~TXAtom();
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ACreationParams* GetCreationParams() const;
+  // multiple inheritance...
+  void SetTag(index_t v) {   TSAtom::SetTag(v);  }
+  index_t GetTag()  {  return TSAtom::GetTag();  }
+  index_t IncTag()  {  return TSAtom::IncTag();  }
+  index_t DecTag()  {  return TSAtom::DecTag();  }
 
-  DefPropP(size_t, XAppId)
-  TXGlLabel& GetLabel() const {  return *Label;  }
-  void UpdateLabel()  {  GetLabel().Update();  }
+  TXGlLabel& GetGlLabel() const {  return *Label;  }
+  void UpdateLabel()  {  GetGlLabel().Update();  }
 
   static olxstr GetLegend(const TSAtom& A, const short Level=2); // returns full legend with symm code
   // returns level of the given legend (number of '.', basically)

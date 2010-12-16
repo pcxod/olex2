@@ -567,8 +567,8 @@ public:     void CalcProbFactor(float Prob);
   void BuildSceneMask(FractMask& mask, double Inc);
 //..............................................................................
 // X interface
-  void BangList(TXAtom *A, TStrList& L);
-  void BangTable(TXAtom *A, TTTable<TStrList>& Table);
+  void BangList(const TSAtom& A, TStrList& L);
+  void BangTable(const TSAtom& A, TTTable<TStrList>& Table);
   double Tang( TSBond *B1, TSBond *B2, TSBond *Middle, olxstr *Sequence=NULL);
   void TangList(TXBond *Middle, TStrList& L);
 

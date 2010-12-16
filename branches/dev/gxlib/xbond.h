@@ -18,12 +18,10 @@ public:
   bool Exit(const IEObject *Sender, const IEObject *Data=NULL);
 };
 
-class TXBond: public AGDrawObject  {
+class TXBond: public TSBond, public AGDrawObject  {
 private:
-  TSBond *FBond;
   TXGlLabel* Label;
   short FDrawStyle;
-  size_t XAppId;
   friend class TXBondStylesClear;
 protected:
   void GetDefSphereMaterial(TGlMaterial &M);
@@ -38,28 +36,22 @@ protected:
   virtual bool IsStyleSaveable() const {  return false; }
   virtual bool IsRadiusSaveable() const {  return false; }
 public:
-  TXBond(TGlRenderer& Render, const olxstr& collectionName, TSBond& B);
+  TXBond(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ACreationParams* GetACreationParams() const;
   virtual ~TXBond();
 
-  DefPropP(size_t, XAppId)
-  TXGlLabel& GetLabel() const {  return *Label;  }
-  void UpdateLabel()  {  GetLabel().Update();  }
+  // multiple inheritance...
+  void SetTag(index_t v) {   TSBond::SetTag(v);  }
+  index_t GetTag()  {  return TSBond::GetTag();  }
+  index_t IncTag()  {  return TSBond::IncTag();  }
+  index_t DecTag()  {  return TSBond::DecTag();  }
+
+  TXGlLabel& GetGlLabel() const {  return *Label;  }
+  void UpdateLabel()  {  GetGlLabel().Update();  }
   // creates legend up three levels (0 to 2)
   static olxstr GetLegend(const TSBond& B, const short level);
 
-  // beware - for objects, having no wrapped bond this might fail
-  template <class Accessor=DirectAccessor> struct BondAccessor  {
-    static inline TSBond& Access(TXBond& b)  {
-      return Accessor::Access(b).Bond();
-    }
-    static inline TSBond& Access(TXBond* b)  {
-      return Accessor::Access(*b).Bond();
-    }
-  };
-  inline TSBond& Bond() const {  return *FBond; }
-  
   void SetRadius(float V);
   inline double GetRadius() const {  return FParams[4]; }
 
@@ -79,16 +71,15 @@ public:
   bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
 
   void SetDeleted(bool v)  {
-    AGDrawObject::SetDeleted(v);
+    TSBond::SetDeleted(v);
     Label->SetDeleted(v);
-    if( FBond != NULL )
-      FBond->SetDeleted(v);
   }
   void SetVisible(bool v)  {
     AGDrawObject::SetVisible(v);
     if( !v )
       Label->SetVisible(false);
   }
+  virtual bool IsDeleted() const {  return TSBond::IsDeleted();  }
   void ListDrawingStyles(TStrList &List);
 
   uint32_t GetPrimitiveMask() const;
