@@ -117,9 +117,6 @@
     <ClCompile Include="..\..\..\sdl\smart\ostring.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\sdl\outstream.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\sdl\paramlist.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
