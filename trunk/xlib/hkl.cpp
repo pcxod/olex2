@@ -93,14 +93,19 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
           Tag = -1;
           continue;
         }
-        TReflection* ref = HasBatch ?
-          new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble(),
-            line.SubString(28,4).IsNumber() ? line.SubString(28,4).ToInt() : 1)
-          :
-          new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble());
-        ref->SetTag(Tag);
-        UpdateMinMax(*ref);
-        Refs.Add(ref);
+        try  {
+          TReflection* ref = HasBatch ?
+            new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble(),
+              line.SubString(28,4).IsNumber() ? line.SubString(28,4).ToInt() : 1)
+            :
+            new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble());
+          ref->SetTag(Tag);
+          UpdateMinMax(*ref);
+          Refs.Add(ref);
+        }
+        catch(const TExceptionBase& e)  {
+          throw TFunctionFailedException(__OlxSourceInfo, olxstr("HKL file line ") << i);
+        }
       }
       else  {
         if( ins == NULL )  break;
