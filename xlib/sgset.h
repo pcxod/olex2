@@ -35,8 +35,8 @@ public:
   }
   bool HasMonoclinicAxis() const {
     if( axis.IsEmpty() )  return false; 
-    if( (axis.Length() == 3 && axis.CharAt(0) == '-' && olxstr::o_isalphabetic(axis.CharAt(1)) ) ||
-      (axis.Length() < 3 && olxstr::o_isalphabetic(axis.CharAt(0))) )
+    if( (axis.Length() == 3 && axis.CharAt(0) == '-' && olxstr::o_islatin(axis.CharAt(1)) ) ||
+      (axis.Length() < 3 && olxstr::o_islatin(axis.CharAt(0))) )
       return true;
     return false;
   }

@@ -107,7 +107,7 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
         E.GetStack().Pop();
         return true;
       }
-      else if( !olxstr::o_isalphabetic(func_name.CharAt(0)) )  {
+      else if( !olxstr::o_isalpha(func_name.CharAt(0)) )  {
         E.GetStack().Pop();
         return true;
       }
