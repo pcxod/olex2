@@ -102,7 +102,7 @@ const olxstr TEFile::AllFilesMask("*.*");
 // TFileNameMask function bodies
 //----------------------------------------------------------------------------//
 void TEFile::TFileNameMask::Build(const olxstr& msk )  {
-  mask = olxstr::LowerCase(msk);
+  mask = msk.ToLowerCase();
   toks.Strtok( mask, '*');
   if( !mask.IsEmpty() )  {
     toksStart = (mask[0] != '*') ? 1 : 0;
@@ -119,7 +119,7 @@ bool TEFile::TFileNameMask::DoesMatch(const olxstr& _str) const {
   // this will work for '*' mask
   if( toks.IsEmpty() )  return true;
   // need to check if the mask starts from a '*' or ends with it
-  olxstr str = olxstr::LowerCase(_str);
+  olxstr str = _str.ToLowerCase();
   size_t off = 0, start = 0, end = str.Length();
   if( mask[0] != '*' )  {
     const olxstr& tmp = toks[0];

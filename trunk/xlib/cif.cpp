@@ -300,7 +300,7 @@ void TCif::Initialize()  {
     A.SetLabel(ALoop->Get(i, ALabel).GetStringValue(), false);
     cm_Element* type = NULL;
     if( ASymbol != InvalidIndex )
-      type = XElementLib::FindBySymbol(ALoop->Get(i, ASymbol).GetStringValue());
+      type = XElementLib::FindBySymbolEx(ALoop->Get(i, ASymbol).GetStringValue());
     else
       type = XElementLib::FindBySymbolEx(ALoop->Get(i, ALabel).GetStringValue());
     if( type == NULL )  {

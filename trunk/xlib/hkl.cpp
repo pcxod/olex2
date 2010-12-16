@@ -104,7 +104,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
           Refs.Add(ref);
         }
         catch(const TExceptionBase& e)  {
-          throw TFunctionFailedException(__OlxSourceInfo, olxstr("HKL file line ") << i);
+          throw TFunctionFailedException(__OlxSourceInfo, e, olxstr("HKL file line ") << (i+1));
         }
       }
       else  {
@@ -188,18 +188,13 @@ int THklFile::HklCmp(const TReflection* R1, const TReflection* R2)  {
 //..............................................................................
 void THklFile::InitHkl3D()  {
   if( Hkl3D != NULL )  return;
-  TArray3D<TRefPList*> &hkl3D = *(new TArray3D<TRefPList*>(
-                                     MinHkl[0], MaxHkl[0],
-                                     MinHkl[1], MaxHkl[1],
-                                     MinHkl[2], MaxHkl[2]) );
-
+  TArray3D<TRefPList*> &hkl3D = *(new TArray3D<TRefPList*>(MinHkl, MaxHkl));
   for( size_t i=0; i < Refs.Count(); i++ )  {
     TReflection *r1 = Refs[i];
     TRefPList *&rl = hkl3D(r1->GetHkl());
-
     if( rl == NULL )
       rl = new TRefPList();
-    rl->Add( r1 );
+    rl->Add(r1);
   }
   Hkl3D = &hkl3D;
 }
