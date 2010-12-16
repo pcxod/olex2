@@ -1,12 +1,13 @@
-#ifndef __SDL_outstream
-#define __SDL_outstream
+#ifndef __olx_sdl_outstream_H
+#define __olx_sdl_outstream_H
 #include "exception.h"
 #include "datastream.h"
 #include <stdio.h>
-
 BeginEsdlNamespace()
 
 class TOutStream : public IDataOutputStream  {
+  static void outstream_putc(char ch)  {  putchar(ch);  }
+  static void outstream_putc(wchar_t ch)  {  putwchar(ch);  }
 protected:
   virtual uint64_t GetSize() const  {  return 1;  }
   virtual uint64_t GetPosition() const  {  return 1;  }
@@ -17,11 +18,20 @@ protected:
     throw TNotImplementedException(__OlxSourceInfo);
   }
   bool SkipPost;
+  template <class T> size_t write(const T& str)  {
+    if( SkipPost )  {
+      SkipPost = false;
+      return 0;
+    }
+    for( size_t i=0; i < str.Length(); i++ )
+      outstream_putc(str[i]);
+    return str.Length();
+  }
 public:
-  TOutStream() : SkipPost(false)  {  }
+  TOutStream() : SkipPost(false)  {}
   virtual ~TOutStream()  {}
-  virtual size_t Write(const olxstr& str);
-  virtual size_t Writenl(const olxstr& str);
+  virtual size_t Write(const TIWString& str)  {  return  write(str);  }
+  virtual size_t Write(const TICString& str)  {  return write(str);  }
   DefPropP(bool, SkipPost)
 };
 

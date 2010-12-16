@@ -202,6 +202,7 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|x64'">$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|x64'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|x64'">true</GenerateManifest>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">$(OLX_PROGRAM_FILES)Microsoft SDKs\Windows\v7.1\Lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -302,7 +303,7 @@
       <UndefinePreprocessorDefinitions>__WXWIDGETS__;%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>kernel32.lib;user32.lib;shell32.lib;ole32.lib;wsock32.lib;Iphlpapi.lib</AdditionalDependencies>
+      <AdditionalDependencies>advapi32.lib;kernel32.lib;user32.lib;shell32.lib;ole32.lib;wsock32.lib;Iphlpapi.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(PY64_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_ud;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AssemblyDebug>true</AssemblyDebug>
@@ -616,6 +617,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\repository\cdsfs.cpp" />
     <ClCompile Include="..\..\..\repository\eprocess.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)eprocess_no_wx.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)eprocess_no_wx.obj</ObjectFileName>

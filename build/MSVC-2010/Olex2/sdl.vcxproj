@@ -629,7 +629,6 @@
     <ClCompile Include="..\..\..\sdl\smart\olx_wstring.cpp" />
     <ClCompile Include="..\..\..\sdl\olxthpool.cpp" />
     <ClCompile Include="..\..\..\sdl\smart\ostring.cpp" />
-    <ClCompile Include="..\..\..\sdl\outstream.cpp" />
     <ClCompile Include="..\..\..\sdl\paramlist.cpp" />
     <ClCompile Include="..\..\..\sdl\poly.cpp" />
     <ClCompile Include="..\..\..\sdl\settingsfile.cpp" />
