@@ -5,6 +5,7 @@
 
 BeginXlibNamespace()
 
+template <class, class> class ObjectCaster;
 template <class obj_t> class TIObjectProvider  {
 public:
   virtual ~TIObjectProvider()  {}
@@ -25,9 +26,36 @@ public:
       f.OnItem(Get(i), i);
     return *this;
   }
+  template <class act_t> ObjectCaster<obj_t, act_t> GetAccessor()  {
+    return ObjectCaster<obj_t, act_t>(*this);
+  }
 };
 
+template <class obj_t, class act_t> class ObjectCaster : public TIObjectProvider<act_t> {
+  TIObjectProvider<obj_t>& list;
+protected:
+  // dummy function...
+  virtual act_t& New(TNetwork* n) {  return *((act_t*)NULL);  }
+public:
+  ObjectCaster(TIObjectProvider<obj_t>& _list) : list(_list)  {}
+  virtual size_t Count() const {  return list.Count();  }
+  virtual act_t& Get(size_t i) const {  return (act_t&)list.Get(i);  }
+  inline act_t& operator [] (size_t i) const {  return Get(i);  }
+  virtual void Delete(size_t i)  {  list.Delete(i);  }
+  virtual void Clear()  {  list.Clear();  }
+  virtual void Null(size_t i)  {  list.Null(i);  }
+  virtual void Pack()  {  list.Pack();  }
+  virtual void IncCapacity(size_t v)  {  list.IncCapacity();  }
+  template <class Functor> const TIObjectProvider& ForEach(const Functor& f) const {
+    for( size_t i=0; i < Count(); i++ )
+      f.OnItem(Get(i), i);
+    return *this;
+  }
+};
+
+
 template <class obj_t> class TObjectProvider : public TIObjectProvider<obj_t> {
+protected:
   TPtrList<obj_t> items;
 public:
   virtual size_t Count() const {  return items.Count();  }

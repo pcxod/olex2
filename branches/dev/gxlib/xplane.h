@@ -1,34 +1,39 @@
-#ifndef xplaneH
-#define xplaneH
+#ifndef __olx_gxl_xplane_H
+#define __olx_gxl_xplane_H
 #include "gxbase.h"
-
 #include "glrender.h"
 #include "gdrawobject.h"
-
 #include "splane.h"
 
 BeginGxlNamespace()
 
-class TXPlane: public AGDrawObject  {
-private:
-  TSPlane *FPlane;
+class TXPlane: public TSPlane, public AGDrawObject  {
 public:
-  TXPlane(TGlRenderer& Render, const olxstr& collectionName, TSPlane *Plane);
-  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
+  TXPlane(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName) :
+    TSPlane(net),
+    AGDrawObject(Render, collectionName)  {}
   virtual ~TXPlane()  {}
+  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
 
-  inline TSPlane& Plane() const {  return *FPlane; }
+  // multiple inheritance...
+  void SetTag(index_t v) {   TSPlane::SetTag(v);  }
+  index_t GetTag()  {  return TSPlane::GetTag();  }
+  index_t IncTag()  {  return TSPlane::IncTag();  }
+  index_t DecTag()  {  return TSPlane::DecTag();  }
 
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min)  {  return false;  }
-  void ListPrimitives(TStrList &List) const;
+  void ListPrimitives(TStrList& List) const;
 
   bool OnMouseDown(const IEObject *Sender, const TMouseData& Data){  return true; }
   bool OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {  return false; }
   bool OnMouseMove(const IEObject *Sender, const TMouseData& Data){  return false; }
 
-  inline bool IsDeleted()  const {  return AGDrawObject::IsDeleted(); }
-  void SetDeleted(bool v){  AGDrawObject::SetDeleted(v);  FPlane->SetDeleted(v); }
+  bool IsDeleted() const {  return TSPlane::IsDeleted();  }
+  void SetDeleted(bool v)  {
+    AGDrawObject::SetDeleted(v);
+    TSPlane::SetDeleted(v);
+  }
 };
 
 EndGxlNamespace()

@@ -1,27 +1,20 @@
 //---------------------------------------------------------------------------//
-// TXPlane
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
 #include "xplane.h"
-#include "gpcollection.h"
 #include "estlist.h"
 #include "planesort.h"
 #include "glprimitive.h"
 #include "styles.h"
+#include "gpcollection.h"
 
-//..............................................................................
-TXPlane::TXPlane(TGlRenderer& r, const olxstr& collectionName, TSPlane *Plane) :
-  AGDrawObject(r, collectionName)
-{
-  FPlane = Plane;
-}
 //..............................................................................
 void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
-  const mat3d& m = FPlane->GetBasis();
+  const mat3d& m = GetBasis();
   Params().Resize(16);
   FParams[0] = m[0][0];  FParams[1] = m[0][1];  FParams[2] = m[0][2];  FParams[3] = 0;
   FParams[4] = m[1][0];  FParams[5] = m[1][1];  FParams[6] = m[1][2];  FParams[7] = 0;
@@ -43,24 +36,24 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
     GlM.DiffuseB = 0x7f3f3f3f;
     TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloPolygon);
     GlP.SetProperties(GS.GetMaterial(GlP.GetName(), GlM));
-    if( !FPlane->IsRegular() )  
-      GlP.Vertices.SetCount(FPlane->CrdCount());
+    if( !IsRegular() )  
+      GlP.Vertices.SetCount(CrdCount());
     else                 
       GlP.Vertices.SetCount(5);
 
-    PlaneSort::Sorter sp(*FPlane);
-    const mat3d transform = FPlane->GetBasis();
-    if( !FPlane->IsRegular() )  {
+    PlaneSort::Sorter sp(*this);
+    const mat3d transform = GetBasis();
+    if( !IsRegular() )  {
       for( size_t i=0; i < sp.sortedPlane.Count(); i++ )  {
         const vec3d* crd = sp.sortedPlane.GetObject(i);
-        GlP.Vertices[i] = transform*(*crd-FPlane->GetCenter());
+        GlP.Vertices[i] = transform*(*crd-GetCenter());
       }
     }
     else  {
       double maxrs = 0;
       for( size_t i=0; i < sp.sortedPlane.Count(); i++ )  {
         const vec3d* crd = sp.sortedPlane.GetObject(i);
-        const double qd = (*crd-FPlane->GetCenter()).QLength();
+        const double qd = (*crd-GetCenter()).QLength();
         if( qd > maxrs )
           maxrs = qd;
       }
@@ -86,10 +79,10 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
 }
 //..............................................................................
 bool TXPlane::Orient(TGlPrimitive& P)  {
-  olx_gl::translate(FPlane->GetCenter());
+  olx_gl::translate(GetCenter());
   olx_gl::orient(Params().GetRawData());
   if( P.GetType() != sgloSphere )
-    olx_gl::normal(FPlane->GetNormal());
+    olx_gl::normal(GetNormal());
   return false;
 }
 //..............................................................................

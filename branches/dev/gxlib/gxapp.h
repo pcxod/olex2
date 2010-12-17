@@ -16,9 +16,9 @@
 #include "glfont.h"
 #include "styles.h"
 
-#include "satom.h"
-#include "sbond.h"
-#include "splane.h"
+#include "xatom.h"
+#include "xbond.h"
+#include "xplane.h"
 #include "glbitmap.h"
 #include "typelist.h"
 #include "hkl.h"
@@ -80,10 +80,34 @@ typedef TPtrList<TXPlane> TXPlanePList;
 typedef TPtrList<TXAtom> TXAtomPList;
 typedef TPtrList<TXBond> TXBondPList;
 
+template <class obj_t, class act_t> class TXObjectProvider : public TObjectProvider<obj_t> {
+  TGlRenderer& renderer;
+public:
+  TXObjectProvider(TGlRenderer& _renderer) : renderer(_renderer)  {}
+  virtual obj_t& New(TNetwork* n)  {  return *items.Add(new act_t(n, renderer, EmptyString));  }
+};
+
+struct XObjectProvider : public ASObjectProvider {
+  TGlRenderer& renderer;
+  XObjectProvider(TGlRenderer& _renderer) :
+    renderer(_renderer),
+    ASObjectProvider(
+      *(new TXObjectProvider<TSAtom,TXAtom>(_renderer)),
+      *(new TXObjectProvider<TSBond,TXBond>(_renderer)),
+      *(new TXObjectProvider<TSPlane,TXPlane>(_renderer))) {}
+  ~XObjectProvider()  {
+    atoms.Clear();
+    bonds.Clear();
+    planes.Clear();
+    delete &atoms;
+    delete &bonds;
+    delete &planes;
+  }
+  virtual IEObject* Replicate() const {  return new XObjectProvider(renderer);  }
+};
+
+
 class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
-  TXAtomList XAtoms;
-  TXBondList XBonds;
-  TXPlaneList XPlanes;
   TTypeListExt<TXGrowPoint, IEObject> XGrowPoints;
   TTypeListExt<TXGrowLine, IEObject> XGrowLines;
   olxstr AtomsToGrow;
@@ -110,6 +134,46 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   /* makes sure that only bonds (and grow mode lines) with both atoms visible are visible,
  also considers H, and Q bonds special handling */
   void _syncBondsVisibility();
+
+
+  template <class obj_t, class act_t> struct TIterator  {
+    size_t offset, count;
+    TArrayList<ObjectCaster<obj_t,act_t> > objects;
+    TIterator() : offset(0), count(0)  {}
+    bool HasNext() const {  return (offset < count);  }
+    act_t& Next()  {
+      size_t off = offset;
+      for( size_t i=0; i < objects.Count(); i++ )  {
+        if( off >= objects[i].Count() )
+          off -= objects[i].Count();
+        else  {
+          offset++;
+          return objects[i][off];
+        }
+      }
+    }
+    void Reset()  {  offset = 0;  }
+  };
+  struct AtomIterator : public TIterator<TSAtom, TXAtom>  {
+    AtomIterator(TGXApp& app)  {
+      objects.Add(app.XFile().GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
+      count += objects.GetLast().Count();
+      for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
+        objects.Add(app.OverlayedXFiles[i].GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
+        count += objects.GetLast().Count();
+      }
+    }
+  };
+  struct BondIterator : public TIterator<TSBond, TXBond>  {
+    BondIterator(TGXApp& app)  {
+      objects.Add(app.XFile().GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
+      count += objects.GetLast().Count();
+      for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
+        objects.Add(app.OverlayedXFiles[i].GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
+        count += objects.GetLast().Count();
+      }
+    }
+  };
 protected:
   TGlRenderer* FGlRender;
   TXFader* Fader;
@@ -237,9 +301,6 @@ public:
   AGDrawObject* AddObjectToCreate(AGDrawObject* obj)  {  return ObjectsToCreate.Add(obj);  }
   void Clear();
   void ClearXGrowPoints();
-  void SBonds2XBonds(TSBondPList& L, TXBondPList& Res);
-  void SAtoms2XAtoms(TSAtomPList& L, TXAtomPList& Res);
-  void SPlanes2XPlanes(TSPlanePList& L, TXPlanePList& Res);
   // changes the graphics quality
   void Quality(const short v);
   void Init();
@@ -444,13 +505,13 @@ public:
   void FindCAtoms(const olxstr& Atoms, TCAtomPList& List, bool ClearSelection=true);
   TXAtomPList FindXAtoms(const olxstr& Atoms, bool ClearSelection=true, bool FindHidden=false);
 
-  TXAtom& GetAtom(size_t i) {  return XAtoms[i];  }
-  const TXAtom& GetAtom(size_t i) const {  return XAtoms[i];  }
-  inline size_t AtomCount() const {  return XAtoms.Count();  }
+  //TXAtom& GetAtom(size_t i) {  return XAtoms[i];  }
+  //const TXAtom& GetAtom(size_t i) const {  return XAtoms[i];  }
+  //inline size_t AtomCount() const {  return XAtoms.Count();  }
 
-  TXBond& GetBond(size_t i) {  return XBonds[i];  }
-  const TXBond& GetBond(size_t i) const {  return XBonds[i];  }
-  inline size_t BondCount() const {  return XBonds.Count();  }
+  //TXBond& GetBond(size_t i) {  return XBonds[i];  }
+  //const TXBond& GetBond(size_t i) const {  return XBonds[i];  }
+  //inline size_t BondCount() const {  return XBonds.Count();  }
 
 protected:
   /* the function simply checks if there are any invisible bonds connectd to the

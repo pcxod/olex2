@@ -6,7 +6,6 @@
 #include "glmousehandler.h"
 #include "gllabel.h"
 #include "styles.h"
-#include "satom.h"
 #include "ellipsoid.h"
 
 BeginGxlNamespace()
@@ -101,6 +100,7 @@ public:
 
   TXGlLabel& GetGlLabel() const {  return *Label;  }
   void UpdateLabel()  {  GetGlLabel().Update();  }
+  inline TXAtom& Node(size_t i) const {  return (TXAtom&)Node(i); }
 
   static olxstr GetLegend(const TSAtom& A, const short Level=2); // returns full legend with symm code
   // returns level of the given legend (number of '.', basically)
@@ -170,6 +170,7 @@ public:
 
   void SetDeleted(bool v)  {
     TSAtom::SetDeleted(v);
+    AGlMouseHandlerImp::SetDeleted(v);
     Label->SetDeleted(v);
   }
   void SetVisible(bool v)  {
@@ -184,7 +185,7 @@ public:
 
   void UpdatePrimitiveParams(TGlPrimitive* GlP);
   void OnPrimitivesCleared();
-  void Quality(const short Val);
+  static void Quality(const short Val);
 
   static void Init(TGlRenderer* glr)  {
     if( FXAtomStylesClear == NULL ) 
@@ -195,7 +196,7 @@ public:
   int GetPolyhedronType();
 
   static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }
-  void CreateStaticObjects();
+  static void CreateStaticObjects();
   static void ClearStaticObjects()  {
     FStaticObjects.Clear();
   }

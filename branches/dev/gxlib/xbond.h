@@ -7,8 +7,9 @@
 #include "styles.h"
 #include "sbond.h"
 #include "talist.h"
-
 BeginGxlNamespace()
+
+class TXAtom;
 
 class TXBondStylesClear: public AActionHandler  {
 public:
@@ -47,6 +48,9 @@ public:
   index_t IncTag()  {  return TSBond::IncTag();  }
   index_t DecTag()  {  return TSBond::DecTag();  }
 
+  TXAtom& A() const {  return (TXAtom&)TSBond::A();  }
+  TXAtom& B() const {  return (TXAtom&)TSBond::B();  }
+
   TXGlLabel& GetGlLabel() const {  return *Label;  }
   void UpdateLabel()  {  GetGlLabel().Update();  }
   // creates legend up three levels (0 to 2)
@@ -72,6 +76,7 @@ public:
 
   void SetDeleted(bool v)  {
     TSBond::SetDeleted(v);
+    AGDrawObject::SetDeleted(v);
     Label->SetDeleted(v);
   }
   void SetVisible(bool v)  {
@@ -89,7 +94,7 @@ public:
 
   void UpdatePrimitiveParams(TGlPrimitive *Primitive);
   void OnPrimitivesCleared();
-  void Quality(const short Val);
+  static void Quality(const short Val);
   // should be called when atom coordinates have changed
   virtual void Update();
 
@@ -98,8 +103,8 @@ public:
       FXBondStylesClear = new TXBondStylesClear(glr);
   }
 
-  static TGraphicsStyle* GetParamStyle() {  return FBondParams;  }
-  void CreateStaticObjects();
+  static TGraphicsStyle* GetParamStyle()  {  return FBondParams;  }
+  static void CreateStaticObjects();
   static void ClearStaticObjects()  {
     FStaticObjects.Clear();
   }

@@ -113,26 +113,18 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
       else  {
         TGlMaterial RGlM;
         if( SGlP->Params.GetLast() == ddsDefAtomA || SGlP->Params.GetLast() == ddsDef )  {
-          if( cpar == NULL )
+          const size_t mi = A().Style().IndexOfMaterial("Sphere");
+          if( mi != InvalidIndex )
+            RGlM = A().Style().GetPrimitiveStyle(mi).GetProperties();
+          else
             TXAtom::GetDefSphereMaterial(A(), RGlM);
-          else  {
-            const size_t mi = ((BondCreationParams*)cpar)->a1.Style().IndexOfMaterial("Sphere");
-            if( mi != InvalidIndex )
-              RGlM = ((BondCreationParams*)cpar)->a1.Style().GetPrimitiveStyle(mi).GetProperties();
-            else
-              TXAtom::GetDefSphereMaterial(A(), RGlM);
-          }
         }
         else if( SGlP->Params.GetLast() == ddsDefAtomB )  {
-          if( cpar == NULL )
+          const size_t mi = B().Style().IndexOfMaterial("Sphere");
+          if( mi != InvalidIndex )
+            RGlM = B().Style().GetPrimitiveStyle(mi).GetProperties();
+          else
             TXAtom::GetDefSphereMaterial(B(), RGlM);
-          else  {
-            size_t mi = ((BondCreationParams*)cpar)->a2.Style().IndexOfMaterial("Sphere");
-            if( mi != InvalidIndex )
-              RGlM = ((BondCreationParams*)cpar)->a2.Style().GetPrimitiveStyle(mi).GetProperties();
-            else
-              TXAtom::GetDefSphereMaterial(B(), RGlM);
-          }
         }
         GlP.SetProperties(GS.GetMaterial(FStaticObjects[i], RGlM));
       }
