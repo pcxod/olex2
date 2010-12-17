@@ -28,7 +28,7 @@ OLEX_BIN := $(HOME)/bin
 find_files = $(wildcard *.cpp)
 VPATH = xlib:alglib:sdl:sdl/smart:sdl/exparse:xlib/macro:xlib/henke:glib:gxlib
 OBJ := xlib alglib sdl sdl/smart sdl/exparse xlib/macro xlib/henke glib gxlib
-NPY_CPP_REPO = filesystem.cpp shellutil.cpp url.cpp httpfs.cpp wxzipfs.cpp fsext.cpp pyext.cpp IsoSurface.cpp eprocess.cpp updateapi.cpp patchapi.cpp
+NPY_CPP_REPO = filesystem.cpp shellutil.cpp url.cpp httpfs.cpp wxzipfs.cpp fsext.cpp pyext.cpp IsoSurface.cpp eprocess.cpp updateapi.cpp patchapi.cpp cdsfs.cpp
 OBJ_CPP_REPO := hkl_py.cpp olxvar.cpp py_core.cpp $(NPY_CPP_REPO)
 NPY_OBJ_REPO := $(addprefix $(OBJ_DIR), $(NPY_CPP_REPO))
 OBJ_REPO := $(addprefix $(OBJ_DIR),$(OBJ_CPP_REPO))
@@ -53,10 +53,12 @@ OBJ_OLEX_CTRLS := $(addprefix $(OBJ_DIR)olex/,$(notdir $(wildcard olex/ctrls/*.c
 #######################################
 # Compiling
 CC := gcc
-CFLAGS := -O3 
+CFLAGS := -O3
 #-combine
-OPTS = `wx-config --cxxflags --unicode --toolkit=gtk2` `python-config --includes` -I$(SRC_DIR)sdl -I$(SRC_DIR)xlib -I$(SRC_DIR)glib -I$(SRC_DIR)gxlib -I$(SRC_DIR)repository -I$(SRC_DIR)olex -I$(SRC_DIR)alglib -S -D__WXWIDGETS__ -D_UNICODE -DUNICODE
-LDFLAGS += `wx-config --libs gl,core,html,net,aui --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L$(OBJ_DIR) -rdynamic -O3
+#OPTS = `wx-config --cxxflags --unicode --toolkit=gtk2` `python-config --includes` -I$(SRC_DIR)sdl -I$(SRC_DIR)xlib -I$(SRC_DIR)glib -I$(SRC_DIR)gxlib -I$(SRC_DIR)repository -I$(SRC_DIR)olex -I$(SRC_DIR)alglib -S -D__WXWIDGETS__ -D_UNICODE -DUNICODE
+OPTS =`wx-config --cxxflags --unicode --toolkit=gtk2` `python-config --includes` -I$(SRC_DIR)sdl -I$(SRC_DIR)xlib -I$(SRC_DIR)glib -I$(SRC_DIR)gxlib -I$(SRC_DIR)repository -I$(SRC_DIR)olex -I$(SRC_DIR)alglib -S -D__WXWIDGETS__ -D_UNICODE -DUNICODE
+##LDFLAGS += `wx-config --libs gl,core,html,net,aui --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L$(OBJ_DIR) -L/usr/lib64/libGL -L/usr/lib64/libGLU -rdynamic -O3
+LDFLAGS += `wx-config --libs gl,core,html,net,aui --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L$(OBJ_DIR) -rdynamic -O3 -ldl -lrt -lGLU -lGL -lstdc++
 CCFLAGS += $(CFLAGS)
 ###############################################################################
 
