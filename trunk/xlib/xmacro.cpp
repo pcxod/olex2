@@ -328,7 +328,7 @@ void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
           bl_hits.Add(hits[j]);
       }
       if( bl_hits.IsEmpty() )  continue;
-      TTTable<TStrList> tab( bl_hits.Count()/6+((bl_hits.Count()%6) != 0 ? 1 : 0), 6 );
+      TTTable<TStrList> tab(bl_hits.Count()/6+((bl_hits.Count()%6) != 0 ? 1 : 0), 6);
       for( size_t j=0; j < bl_hits.Count(); j++ )
         tab[j/6][j%6] = bl_hits[j]->GetName();
       tab.CreateTXTList(output, sl.GetBravaisLattice(i).GetName(), false, false, "  ");
@@ -531,8 +531,7 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
     for( size_t i=0; i < sg_elm.Count(); i++ )
       Output.GetLastString() << sg_elm[i]->GetName() << ' ';
   }
-  Output.Add();
-  TBasicApp::GetLog() << Output;
+  TBasicApp::NewLogEntry() << Output;
 }
 //..............................................................................
 void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -1371,7 +1370,6 @@ void XLibMacros::macUser(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void XLibMacros::macDir(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   olxstr Filter( Cmds.IsEmpty() ? olxstr("*.*")  : Cmds[0] );
-  TStrList Output;
   TFileList fl;
   TEFile::ListCurrentDirEx(fl, Filter, sefFile|sefDir);
   TTTable<TStrList> tab(fl.Count(), 4);
@@ -1400,9 +1398,7 @@ void XLibMacros::macDir(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( (fl[i].GetAttributes() & sefExecute) != 0 )
       tab[i][3] << 'e';
   }
-
-  tab.CreateTXTList(Output, "Directory list", true, true, ' ');
-  TBasicApp::GetLog() << Output;
+  TBasicApp::NewLogEntry() << tab.CreateTXTList("Directory list", true, true, ' ');
 }
 //..............................................................................
 void XLibMacros::macLstMac(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -1646,9 +1642,7 @@ void XLibMacros::macLstVar(TStrObjList &Cmds, const TParamList &Options, TMacroE
     rowsCount++;
   }
   tab.SetRowCount(rowsCount);
-  TStrList Output;
-  tab.CreateTXTList(Output, "Variables list", true, true, ' ');
-  TBasicApp::GetLog() << Output;
+  TBasicApp::NewLogEntry() << tab.CreateTXTList("Variables list", true, true, ' ');
 }
 //..............................................................................
 void XLibMacros::macLstFS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -2055,11 +2049,6 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
   }
   TBasicApp::NewLogEntry() << table.CreateTXTList(EmptyString, true, true, ' ');
-  //TBasicApp::GetLog() << ("----\n");
-  //if( !latt.IsGenerated() )
-  //  TBasicApp::GetLog() << ("Use move \"atom_to atom_to_move\" command to move the atom/fragment\n");
-  //else
-  //  TBasicApp::GetLog() << ("Use move \"atom_to atom_to_move -c\" command to move the atom/fragment\n");
 }
 //..............................................................................
 void XLibMacros::funRemoveSE(const TStrObjList &Params, TMacroError &E)  {
@@ -3462,8 +3451,8 @@ void XLibMacros::macCalcCHN(TStrObjList &Cmds, const TParamList &Options, TMacro
   Msg << olxstr::FormatFloat(3, C*100./Mr) << 
     " H: " << olxstr::FormatFloat(3, H*100./Mr) <<
     " N: " << olxstr::FormatFloat(3, N*100./Mr);
-  TBasicApp::NewLogEntry() << Msg << NewLineSequence;
-  TBasicApp::GetLog() << "Full composition:" << NewLineSequence << chn.Composition();
+  TBasicApp::NewLogEntry() << Msg;
+  TBasicApp::NewLogEntry() << "Full composition:" << NewLineSequence << chn.Composition();
 }
 //..............................................................................
 void XLibMacros::macCalcMass(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -3878,10 +3867,9 @@ void XLibMacros::macDegen(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     SiteSymmCon ssc = atoms[i]->CAtom().GetSiteConstraints();
     TBasicApp::GetLog() << "\tSite constraints: "; 
     if( ssc.IsConstrained() )
-      TBasicApp::GetLog() << ssc.ToString(); 
+      TBasicApp::NewLogEntry() << ssc.ToString(); 
     else
-      TBasicApp::GetLog() << "none"; 
-    TBasicApp::GetLog() << NewLineSequence; 
+      TBasicApp::NewLogEntry() << "none"; 
   }
 }
 //..............................................................................

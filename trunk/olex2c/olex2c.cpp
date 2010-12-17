@@ -770,9 +770,7 @@ public:
       else
         Table[i][0] = '-';
     }
-    TStrList out;
-    Table.CreateTXTList(out, "Atom information", true, true, ' ');
-    TBasicApp::GetLog() << out;
+    TBasicApp::NewLogEntry() << Table.CreateTXTList("Atom information", true, true, ' ');
   }
   //..............................................................................
   void macName(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -954,9 +952,9 @@ int main(int argc, char* argv[])  {
 //      }
       if( cmd.Equalsi("quit") )  break;
       else  {
-        try { olex.executeMacro(cmd);  }
-        catch( TExceptionBase& exc )  {
-          TBasicApp::GetLog() << exc.GetException()->GetError();
+        try {  olex.executeMacro(cmd);  }
+        catch(TExceptionBase& exc)  {
+          TBasicApp::NewLogEntry(logException) << exc.GetException()->GetError();
         }
       }
       if( olex.TerminateSignal )  break;

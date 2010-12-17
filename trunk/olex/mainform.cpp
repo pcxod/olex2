@@ -1835,7 +1835,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   else if( MsgId == ID_TEXTPOST )  {
     if( Data != NULL )  {
       FGlConsole->SetSkipPosting(true);
-      TBasicApp::GetLog() << (olxstr(Data->ToString()) << '\n');
+      TBasicApp::NewLogEntry() << olxstr(Data->ToString());
       FGlConsole->SetSkipPosting(false);
       if( ActiveLogFile != NULL )
         ActiveLogFile->Writeln(Data->ToString());
@@ -2304,11 +2304,10 @@ olxstr TMainForm::ExpandCommand(const olxstr &Cmd)  {
     for( size_t i=1; i < all_cmds.Count(); i++ )  {
       cmn_str = all_cmds[i].ToLowerCase().CommonString(cmn_str);
       if( line.Length() + all_cmds[i].Length() > 79 )  {  // expects no names longer that 79!
-        line << '\n';
         if( FHelpWindow->IsVisible() )
           FHelpWindow->PostText(line);
         else
-          FXApp->GetLog() << line;
+          FXApp->NewLogEntry() << line;
         line.SetLength(0);
       }
       else
@@ -2316,14 +2315,12 @@ olxstr TMainForm::ExpandCommand(const olxstr &Cmd)  {
     }
     FullCmd = cmn_str;
     if( !line.IsEmpty() )  {
-      line << '\n';
       if( FHelpWindow->IsVisible() )
         FHelpWindow->PostText(line);
       else
-        FXApp->GetLog() << line;
+        FXApp->NewLogEntry() << line;
     }
     FHelpWindow->Fit();
-    FXApp->GetLog() << '\n';
   }
   else if( all_cmds.Count() == 1 )
     return all_cmds[0];
@@ -2966,7 +2963,7 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
     Z = FXApp->GetRender().GetBasis().GetMatrix()[2];
     olxstr  Tmp="current: ";
       Tmp << Z.ToString();
-      TBasicApp::GetLog() << Tmp;
+      TBasicApp::NewLogEntry() << Tmp;
     Z.Null();
     mat3d::GaussSolve(M, N, Z);
     Z.Normalise();
@@ -2989,7 +2986,7 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
       Tmp="orienting to: ";
       Tmp << Z.ToString() << "; HKL ";
       Tmp << iH << ' ' << iK << ' ' << iL << ' ';
-      TBasicApp::GetLog() << Tmp;
+      TBasicApp::NewLogEntry() << Tmp;
       N = FXApp->GetRender().GetBasis().GetMatrix()[2];
         double ca = N.CAngle(Z);
         if( ca < -1 )  ca = -1;
@@ -2999,7 +2996,7 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
       N = FXApp->GetRender().GetBasis().GetMatrix()[2];
       Tmp="got: ";
       Tmp << N.ToString(); 
-      TBasicApp::GetLog() << Tmp;
+      TBasicApp::NewLogEntry() << Tmp;
 
       FXApp->Draw();
     }

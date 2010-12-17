@@ -552,9 +552,13 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
         RingContentFromStr(ring.IsEmpty() ? "C5" :"C4", ring);
       else if( m == 11 ) 
         RingContentFromStr(ring.IsEmpty() ? "C10" :"C9", ring);
+      if( ring.IsEmpty() )  {
+        NewLogEntry() << "Unable to derive ring size";
+        return;
+      }
 
       sa->GetNetwork().FindAtomRings(*sa, ring, rings);
-      if( rings.Count() == 0 )  {
+      if( rings.IsEmpty() )  {
         NewLogEntry() << "no suitable rings have been found";
         return;
       }
