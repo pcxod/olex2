@@ -53,8 +53,6 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   XApp.NewLogEntry() << "Average intensity/error: "
     << olxstr::FormatFloat(2, SGTest.GetAverageI()) << '/'
     << olxstr::FormatFloat(2, SGTest.GetAverageIS());
-  TStrList Output;
-
   TPtrList<TSpaceGroup> LaueClasses;
   TTypeList<TSGStats> LaueClassStats;
   for( size_t i=0; i < SymmLib.BravaisLatticeCount(); i++ )  {
@@ -103,13 +101,11 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
     }
     else  {
       laueTab[i][1] = '-';
-      CalculatedLaueClasses.Add( &LaueClassStats[i].GetSpaceGroup() );
+      CalculatedLaueClasses.Add(&LaueClassStats[i].GetSpaceGroup());
     }
     laueTab[i][2] = LaueClassStats[i].GetCount();
   }
-  XApp.GetLog() << ( EmptyString );
-  laueTab.CreateTXTList(Output, "1. Merge test", true, true, ' ');
-  XApp.GetLog() << ( Output );
+  XApp.NewLogEntry().nl() << laueTab.CreateTXTList("1. Merge test", true, true, ' ');
   // analyse the crystal systems from the cell parameters and the diffraction matches
   // and give warnings
   for( size_t i=0; i < BravaisLattices.Count(); i++ )  {
@@ -178,10 +174,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
     }
     saStat[i][2] = SAHits[i].GetCount();
   }
-  Output.Clear();
-  XApp.GetLog() << ( EmptyString );
-  saStat.CreateTXTList(Output, "2. Systematic absences test", true, true, ' ');
-  XApp.GetLog() << ( Output );
+  XApp.NewLogEntry().nl() << saStat.CreateTXTList("2. Systematic absences test", true, true, ' ');
   // print the cell centering statistics
   TTTable<TStrList> latTab(LatticeHits.Count(), 5);
   latTab.ColName(0) = "Centering";
@@ -224,10 +217,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       latTab[i][3] = '-';
     latTab[i][4] = LatticeHits[i].GetWeakCount();
   }
-  Output.Clear();
-  XApp.GetLog() << ( EmptyString );
-  latTab.CreateTXTList(Output, "3. Cell centering test", true, true, ' ');
-  XApp.GetLog() << ( Output );
+  XApp.NewLogEntry().nl() << latTab.CreateTXTList("3. Cell centering test", true, true, ' ');
 
   olxstr Tmp;
   for( size_t i=0; i < ChosenLats.Count(); i++ )  {
@@ -312,10 +302,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
         sortedSGMergeResults.GetObject(i)->GetSummSI()/sortedSGMergeResults.GetObject(i)->GetCount() ) << ')';
       sgTab[i][2] = sortedSGMergeResults.GetObject(i)->GetCount();
     }
-    XApp.GetLog() << ( EmptyString );
-    Output.Clear();
-    sgTab.CreateTXTList(Output, "4. Merge test (no unique systematic absences found)", true, true, ' ');
-    XApp.GetLog() << ( Output );
+    XApp.NewLogEntry().nl() << sgTab.CreateTXTList("4. Merge test (no unique systematic absences found)", true, true, ' ');
     size_t cs_cnt = 0, noncs_cnt = 0;
     for( size_t i=0; i < sortedSGMergeResults.Count(); i++ )  {
       if( cs_cnt < 3 && sortedSGMergeResults.GetObject(i)->GetSpaceGroup().IsCentrosymmetric() )  {
@@ -412,11 +399,8 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
     }
     // print the result of analysis
-    if( sortedSATestResults.Count() != 0 )  {
-      Output.Clear();
-      sgTab.CreateTXTList(Output, "4. Space group test", true, true, ' ');
-      XApp.GetLog() << ( Output );
-    }
+    if( sortedSATestResults.Count() != 0 )
+      XApp.NewLogEntry().nl() << sgTab.CreateTXTList("4. Space group test", true, true, ' ');
     if( !PresentElements.IsEmpty() )  {
       TPtrList<TSpaceGroup> ToAppend;  // alternative groups, but lower probability
       for( size_t i=sortedSATestResults.Count()-1; i != InvalidIndex; i-- )  {
@@ -462,7 +446,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
       if( !amb_sg.IsEmpty() )  {
         XApp.NewLogEntry() << "Ambiguous space groups (statistics incomplete to determine):";
-        Output.Clear();
+        TStrList Output;
         Output.Hyphenate(amb_sg, 80);
         XApp.NewLogEntry() << Output;
       }
@@ -493,10 +477,9 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       delete sortedSATestResults.GetObject(i);
   } // Unique elements present
   if( !FoundSpaceGroups.IsEmpty() )  {
-    XApp.GetLog() << "Possible space groups:";
+    XApp.NewLogEntry().nl() << "Possible space groups:";
     olxstr tmp, sglist;
-    TStrList Output1;
-    Output.Clear();
+    TStrList Output, Output1;
     size_t cscount = 0, ncscount = 0;
     for( size_t i=0; i < FoundSpaceGroups.Count(); i++ )  {
       sglist << FoundSpaceGroups[i]->GetName() << ';';
@@ -508,55 +491,32 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       FoundSpaceGroups[i]->GetPointGroup().GetBareName() << ')';
 
       if( FoundSpaceGroups[i]->IsCentrosymmetric() )  {
-        Output.Add( tmp );  cscount++;
+        Output.Add(tmp);  cscount++;
       }
       else  {
-        Output1.Add( tmp );  ncscount++;
+        Output1.Add(tmp);  ncscount++;
       }
     }
     if( olx_inst != NULL )
       olx_inst->setVar( IOlexProcessor::SGListVarName, sglist );
 
-    XApp.NewLogEntry();
     XApp.NewLogEntry() << "Noncentrosymmetric:";
-    if( Output1.Count() )
-      XApp.GetLog() << Output1;
+    if( !Output1.IsEmpty() )
+      XApp.NewLogEntry() << Output1;
     else
-      XApp.GetLog() << "  None";
-    XApp.NewLogEntry();
+      XApp.NewLogEntry() << "  None";
     XApp.NewLogEntry() << "Centrosymmetric:";
-    if( Output.Count() )
-      XApp.GetLog() << Output;
+    if( !Output.IsEmpty() )
+      XApp.NewLogEntry() << Output;
     else
-      XApp.GetLog() << "  None";
+      XApp.NewLogEntry() << "  None";
 
-    TTTable<TStrList> sgOutput( olx_max(cscount,ncscount), 2 );
-    cscount = 0;  ncscount=0;
-    for( size_t i=0; i < FoundSpaceGroups.Count(); i++ )  {
-      tmp = "<a href=\"reset -s=";
-      tmp << FoundSpaceGroups[i]->GetName() << "\">" << FoundSpaceGroups[i]->GetName() << "</a>";
-      if( FoundSpaceGroups[i]->IsCentrosymmetric() )  {
-        sgOutput[cscount][0] = tmp;
-        cscount++;
-      }
-      else  {
-        sgOutput[ncscount][1] = tmp;
-        ncscount++;
-      }
-      if( rv != NULL )
-        rv->Add( FoundSpaceGroups[i] );
+    if( rv != NULL )  {
+      for( size_t i=0; i < FoundSpaceGroups.Count(); i++ )
+        rv->Add(FoundSpaceGroups[i]);
     }
-    Output.Clear();
-    sgOutput.CreateHTMLList(Output, EmptyString, false, false, false);
   }
   else  {
     XApp.NewLogEntry(logError) << "Could not find any suitable space group";
-    TTTable<TStrList> sgOutput( 1, 2 );
-    sgOutput[0][0] = "n/a";
-    sgOutput[0][1] = "n/a";
-    Output.Clear();
-    sgOutput.CreateHTMLList(Output, EmptyString, false, false, false);
   }
-  if( olx_inst != NULL )
-    TCStrList(Output).SaveToFile(olx_inst->getDataDir()+"spacegroups.htm");
 }

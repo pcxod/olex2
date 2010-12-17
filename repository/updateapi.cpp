@@ -381,8 +381,8 @@ AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name, const olxstr& 
     if( fs != NULL )  {
 #ifdef _DEBUG
       if( !check_file.IsEmpty() )  {
-        TBasicApp::GetLog() << "Checking repository: " << repositories[i] <<
-          " for file: " << check_file << '\n';
+        TBasicApp::NewLogEntry() << "Checking repository: " << repositories[i] <<
+          " for file: " << check_file;
       }
 #endif
       if( !check_file.IsEmpty() && !fs->Exists(fs->GetBase()+check_file, true) )  {

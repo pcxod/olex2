@@ -22,14 +22,14 @@ class TUProgress: public AActionHandler  {
 public:
   TUProgress(){}
   bool Exit(const IEObject *Sender, const IEObject *Data)  {  
-    TBasicApp::GetLog() << "Done\n";
+    TBasicApp::NewLogEntry() << "Done";
     return true;  
   }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {  return true;  }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
     if( Data == NULL )  {  return false;  }
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
-    TBasicApp::GetLog() << (olxstr("Copying: ") << A->GetAction() << '\n');
+    TBasicApp::NewLogEntry() << "Copying: " << A->GetAction();
     return true;
   }
 };

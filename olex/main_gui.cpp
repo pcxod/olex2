@@ -224,7 +224,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     TStrList Ps;
     FObjectUnderMouse->ListPrimitives(Ps);
     if( Ps.IsEmpty() )  {
-      TBasicApp::GetLog() << "The object does not support requested function...\n";
+      TBasicApp::NewLogEntry() << "The object does not support requested function...";
       return;
     }
     TdlgPrimitive* Primitives = new TdlgPrimitive(this, *FObjectUnderMouse);

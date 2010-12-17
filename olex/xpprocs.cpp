@@ -1098,7 +1098,7 @@ void TMainForm::macEcho(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macPost(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( FXApp == NULL || FGlConsole == NULL )  return;
-  TBasicApp::GetLog() << Cmds.Text(' ');
+  TBasicApp::NewLogEntry() << Cmds.Text(' ');
   FXApp->Draw();
   wxTheApp->Dispatch();
 }
@@ -1288,7 +1288,7 @@ void TMainForm::macActivate(TStrObjList &Cmds, const TParamList &Options, TMacro
 void TMainForm::macInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TStrList Output;
   FXApp->InfoList(Cmds.IsEmpty() ? EmptyString : Cmds.Text(' '), Output, Options.Contains("s"));
-  TBasicApp::GetLog() << Output;
+  TBasicApp::NewLogEntry() << Output;
 }
 //..............................................................................
 void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -4275,7 +4275,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
   }
   else if( Options.IsEmpty() )  {  // print labels of selected atoms
     size_t period=5;
-    TXAtomPList Atoms = FXApp->FindXAtoms("sel");
+    TXAtomPList Atoms = FXApp->FindXAtoms("sel", false);
     for( size_t i=0; i <= Atoms.Count(); i+=period )  {
       olxstr Tmp;
       for( size_t j=0; j < period; j++ )  {
@@ -4287,7 +4287,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TBasicApp::NewLogEntry() << Tmp;
     }
     if( !Cmds.IsEmpty() )  {
-      size_t whereIndex = Cmds.IndexOf(olxstr("where"));
+      size_t whereIndex = Cmds.IndexOf("where");
       if( whereIndex >= 1 && whereIndex != InvalidIndex)  {
         olxstr Tmp = Cmds[whereIndex-1];
         while( olx_is_valid_index(whereIndex) )  {  Cmds.Delete(whereIndex--);  }
@@ -4300,7 +4300,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         return;
       }
       else  {
-        size_t ringsIndex = Cmds.IndexOf(olxstr("rings"));
+        size_t ringsIndex = Cmds.IndexOf("rings");
         if( ringsIndex != InvalidIndex )  {
           Cmds.Delete( ringsIndex );
           FXApp->SelectRings(Cmds.Text(' '));
@@ -4359,9 +4359,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
             file = NULL;
             delete df;
             dest.Close();
-            Macros.ProcessMacro(olxstr("reap '") << dest_fn << '\'', Error);
+            Macros.ProcessMacro(olxstr("@reap '") << dest_fn << '\'', Error);
           }
-          catch( const TExceptionBase& e )  {
+          catch(const TExceptionBase&)  {
             if( file != NULL )
               delete file;
           }
@@ -5050,7 +5050,7 @@ void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       FMacroFile.LoadFromXLFile(FXApp->GetBaseDir() + "macro.xld", &SL);
       TDataItem* root = FMacroFile.Root().FindItem("xl_macro");
       FMacroFile.Include(&SL);
-      TBasicApp::GetLog() << (SL);
+      TBasicApp::NewLogEntry() << SL;
       Macros.Load(*root);
     }
   }
@@ -5059,7 +5059,7 @@ void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       TStrList SL;
       FHelpFile.LoadFromXLFile(FXApp->GetBaseDir() + "help.xld", &SL);
       FHelpItem = FHelpFile.Root().FindItem("xl_help");
-      TBasicApp::GetLog() << (SL);
+      TBasicApp::NewLogEntry() << SL;
     }
   }
   else if( Cmds[0].Equalsi("dictionary") )  {
@@ -5350,23 +5350,22 @@ void TMainForm::macAddLabel(TStrObjList &Cmds, const TParamList &Options, TMacro
 }
 //..............................................................................
 //
-  class TOnSync : public AActionHandler  {
-    TGXApp* xa;
-    olxstr BaseDir;
-    public:
-      TOnSync(TGXApp& xapp, const olxstr baseDir)  {
-        xa = & xapp;
-        BaseDir = baseDir;
-      }
-      bool Execute(const IEObject *Sender, const IEObject *Data)  {
-        if( !EsdlInstanceOf(*Data, olxstr) )  return false;
-        olxstr cpath = olxstr::CommonString(BaseDir, *(const olxstr*)Data);
-        TBasicApp::GetLog() << ( olxstr("\rInstalling /~/") << ((olxstr*)Data)->SubStringFrom(cpath.Length()) );
-        xa->Draw();
-        wxTheApp->Dispatch();
-        return true;
-      }
-  };
+class TOnSync : public AActionHandler  {
+  TGXApp& xa;
+  olxstr BaseDir;
+public:
+  TOnSync(TGXApp& xapp, const olxstr baseDir) : xa(xapp)  {
+    BaseDir = baseDir;
+  }
+  bool Execute(const IEObject *Sender, const IEObject *Data)  {
+    if( !EsdlInstanceOf(*Data, olxstr) )  return false;
+    olxstr cpath = olxstr::CommonString(BaseDir, *(const olxstr*)Data);
+    TBasicApp::GetLog() << ( olxstr("\rInstalling /~/") << ((olxstr*)Data)->SubStringFrom(cpath.Length()) );
+    xa.Draw();
+    wxTheApp->Dispatch();
+    return true;
+  }
+};
 class TDownloadProgress: public AActionHandler  {
     TGXApp* xa;
 public:
@@ -5377,7 +5376,7 @@ public:
     return true;
   }
   bool Exit(const IEObject *Sender, const IEObject *Data)  {
-    TBasicApp::NewLogEntry() <<  NewLineSequence << "Done";
+    TBasicApp::NewLogEntry() << NewLineSequence << "Done";
     return true;
   }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
@@ -5435,19 +5434,19 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
       if( TEFile::Exists(SettingsFile) )  {
         updater::UpdateAPI api;
         short res = api.InstallPlugin(new TDownloadProgress(*FXApp), 
-          new TOnSync(*FXApp, TBasicApp::GetBaseDir() ),
-          Cmds[0]
-        );
+          new TOnSync(*FXApp, TBasicApp::GetBaseDir()),
+          Cmds[0]);
         if( res == updater::uapi_OK )  {
-          FPluginItem->AddItem( Cmds[0] );
+          FPluginItem->AddItem(Cmds[0]);
           OnStateChange.Execute((AEventsDispatcher*)this, &sc);
 
-          FPluginFile.SaveToXLFile( PluginFile );
+          FPluginFile.SaveToXLFile(PluginFile);
           TBasicApp::NewLogEntry() << "\rInstallation complete";
         }
         else  {
-          TBasicApp::GetLog() << (olxstr("Plugin installation failed with error code: ") << res);
-          TBasicApp::GetLog() << api.GetLog();
+          TBasicApp::NewLogEntry() << "Plugin installation failed with error code: " << res;
+          if( !api.GetLog().IsEmpty() )
+            TBasicApp::NewLogEntry() << api.GetLog();
         }
         FXApp->Draw();
       }
@@ -5502,7 +5501,7 @@ void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options, TMac
             if( FoldersToDelete[i]->IsEmpty() )  {
               olxstr path = FoldersToDelete[i]->GetIndexFS().GetBase() + FoldersToDelete[i]->GetFullName(),
               cpath = path.CommonString(path, BaseDir);
-              TBasicApp::GetLog() << ( olxstr("\rDeleting folder /~/") << path.SubStringFrom(cpath.Length()) );
+              TBasicApp::GetLog() << (olxstr("\rDeleting folder /~/") << path.SubStringFrom(cpath.Length()));
               xa->Draw();
               wxTheApp->Dispatch();
               TEFile::RmDir( path );
@@ -5519,7 +5518,7 @@ void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options, TMac
         if( it.HasProperty(Property) )  {
           olxstr path = it.GetIndexFS().GetBase() + it.GetFullName(),
                    cpath = path.CommonString(path, BaseDir);
-          TBasicApp::GetLog() << ( olxstr("\rDeleting /~/") << path.SubStringFrom(cpath.Length()) );
+          TBasicApp::GetLog() << (olxstr("\rDeleting /~/") << path.SubStringFrom(cpath.Length()));
           xa->Draw();
           wxTheApp->Dispatch();
           TEFile::DelFile( path );
@@ -5580,7 +5579,7 @@ void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMac
   Proxy = settings["proxy"];
   Repository = settings["repository"];
   if( settings.GetParam("update").Equalsi("never") )  {
-    TBasicApp::GetLog() << (olxstr("User settings prevented updating file: ") << Cmds[0]);
+    TBasicApp::NewLogEntry() << "User settings prevented updating file: " << Cmds[0];
     return;
   }
   if( !Repository.IsEmpty() && !Repository.EndsWith('/') )  Repository << '/';
@@ -6189,9 +6188,7 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
     tab[10][i] = olxstr::FormatFloat( -3, tls.GetS()[i][1] );
     tab[11][i] = olxstr::FormatFloat( -3, tls.GetS()[i][2] );
   }
-  TStrList output;
-  tab.CreateTXTList(output, ttitle, false, false, ' ');
-  TBasicApp::GetLog() << ( output );
+  TBasicApp::NewLogEntry() << tab.CreateTXTList(ttitle, false, false, ' ');
 }
 //..............................................................................
 void TMainForm::funChooseElement(const TStrObjList& Params, TMacroError &E) {
@@ -6895,8 +6892,7 @@ void TMainForm::macLstRes(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( rm.rEADP.Count() != 0 )  {
     output.Add( olxstr("Equivalent Uij constraints: ") << rm.rEADP.Count() );
   }
-  
-  TBasicApp::GetLog() << (output);
+  TBasicApp::NewLogEntry() << output;
 }
 //..............................................................................
 void TMainForm::macLstSymm(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -6911,7 +6907,7 @@ void TMainForm::macLstSymm(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   TStrList output;
   tab.CreateTXTList(output, "Unit cell symmetry list", true, true, ' ');
-  TBasicApp::GetLog() << (output);
+  TBasicApp::NewLogEntry() << output;
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
@@ -7539,7 +7535,7 @@ void TMainForm::macLstGO(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     output.GetLastString() << "]->" << gpc.ObjectCount();
   }
-  TBasicApp::GetLog() << ( output );
+  TBasicApp::NewLogEntry() << output;
 }
 //..............................................................................
 void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

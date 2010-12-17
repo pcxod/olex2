@@ -185,7 +185,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     olxstr scat;
     for( size_t i=0; i < elements.Count(); i++ )
       scat << elements.GetKey(i)->symbol << elements.GetValue(i) << ' ';
-    XApp.GetLog() << header;
+    XApp.NewLogEntry() << header;
     double K = exp(line[0]), B = -line[1]/2;
     double E2 = 0, SE2 = 0;
     int iE2GT2 = 0;
