@@ -502,6 +502,7 @@ bool CInstallerDlg::DoInstall()  {
       if( !proxyPath.IsEmpty() )
         url.SetProxy(proxyPath);
       TSocketFS repos(url, 32000);
+      repos.SetExtraHeaders(httpHeaderPlatform|httpHeaderESession);
       repos.OnProgress.Add(new TProgress);
       TEFile* zipf = repos.OpenFileAsFile(url.GetPath() + updater::UpdateAPI::GetInstallationFileName());
       if( zipf == NULL )  {

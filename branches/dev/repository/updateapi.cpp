@@ -318,8 +318,11 @@ AFileSystem* UpdateAPI::FSFromString(const olxstr& _repo, const olxstr& _proxy) 
       TUrl url(_repo);
       if( !_proxy.IsEmpty() )
         url.SetProxy( _proxy );
-      if( url.GetProtocol() == "http" )
-        FS = new TSocketFS(url);
+      if( url.GetProtocol() == "http" )  {
+        TSocketFS* _fs = new TSocketFS(url);
+        _fs->SetExtraHeaders(httpHeaderPlatform|httpHeaderESession);
+        FS = _fs;
+      }
 #ifdef __WXWIDGETS__
       else if( url.GetProtocol() == "ftp" )
         FS = new TwxFtpFileSystem(url);
@@ -381,8 +384,8 @@ AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name, const olxstr& 
     if( fs != NULL )  {
 #ifdef _DEBUG
       if( !check_file.IsEmpty() )  {
-        TBasicApp::GetLog() << "Checking repository: " << repositories[i] <<
-          " for file: " << check_file << '\n';
+        TBasicApp::NewLogEntry() << "Checking repository: " << repositories[i] <<
+          " for file: " << check_file;
       }
 #endif
       if( !check_file.IsEmpty() && !fs->Exists(fs->GetBase()+check_file, true) )  {

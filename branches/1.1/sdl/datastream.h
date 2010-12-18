@@ -72,15 +72,18 @@ public:
 
   virtual size_t Write(const void *Data, size_t size) = 0;
   inline size_t Writecln(const void *Data, size_t size)  {
-    return Write(Data, size) + Write(CNewLineSequence);
+    const size_t cnt = Write(Data, size);
+    return cnt + Write(CNewLineSequence);
   }
   inline size_t Writecln()  {  return Write(CNewLineSequence);  }
   inline size_t Writewln(const void *Data, size_t size)  {
-    return Write(Data, size) + Write(WNewLineSequence);
+    const size_t cnt = Write(Data, size);
+    return cnt + Write(WNewLineSequence);
   }
   inline size_t Writewln()  {  return Write(WNewLineSequence);  }
   inline size_t Writeuln(const void *Data, size_t size)  {
-    return Write(Data, size) + Write(NewLineSequence);
+    const size_t cnt = Write(Data, size);
+    return cnt + Write(NewLineSequence);
   }
   inline size_t Writeuln()  {  return Write(NewLineSequence);  }
   // the following two are needed cause they got a lot of constructors!
@@ -92,15 +95,23 @@ public:
   virtual inline size_t Write(const wchar_t* str)  {  return Write(str, olxstr::o_strlen(str));  }
 
   inline size_t Writeln(const olxwstr& str)  {  return Writeln((const TIWString&)str);  }
-  inline size_t Writeln(const TIWString& str)  {  return Write(str) + Write(WNewLineSequence);  }
+  inline size_t Writeln(const TIWString& str)  {
+    const size_t cnt = Write(str);
+    return cnt + Write(WNewLineSequence);
+  }
   inline size_t Writeln(const wchar_t *Data)  {
-    return Write(Data, olxstr::o_strlen(Data)) + WritelnFor(Data);
+    const size_t cnt = Write(Data, olxstr::o_strlen(Data));
+    return cnt + WritelnFor(Data);
   }
 
   inline size_t Writeln(const olxcstr& str)  {  return Writeln((const TICString&)str);  }
-  inline size_t Writeln(const TICString& str)  {  return Write(str) + WritelnFor(str);  }
+  inline size_t Writeln(const TICString& str)  {
+    const size_t cnt = Write(str);
+    return cnt + WritelnFor(str);
+  }
   inline size_t Writeln(const char* Data)  {
-    return Write(Data, olxstr::o_strlen(Data)) + WritelnFor(Data);
+    const size_t cnt = Write(Data, olxstr::o_strlen(Data));
+    return cnt + WritelnFor(Data);
   }
 
   virtual void Flush()  { }

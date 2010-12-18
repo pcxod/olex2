@@ -182,7 +182,7 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
     header.Add("Polynom ") << eq;
     header.Add("RMS = ") << olxstr::FormatFloat(3, rms);
     tab.CreateTXTList(header, "Sum(|Fo|)/Sum(|Fc|) vs sin(theta)/lambda.", false, false, EmptyString);
-    XApp.GetLog() << header ;
+    XApp.NewLogEntry() << header;
     TCStrList(output).SaveToFile( outputFileName ) ;
     XApp.NewLogEntry() << outputFileName << " file was created";
   }

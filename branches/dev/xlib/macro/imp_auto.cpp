@@ -115,7 +115,7 @@ void XLibMacros::macAtomInfo(TStrObjList &Cmds, const TParamList &Options, TMacr
   TSAtomPList satoms;
   xapp.FindSAtoms( Cmds.Text(' '), satoms );
   if( TAutoDB::GetInstance() == NULL )  {
-    TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ) );
+    TEGC::AddP(new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp));
     olxstr autodbf( xapp.GetBaseDir() + "acidb.db");
     if( TEFile::Exists( autodbf ) )  {
       TEFile dbf(autodbf, "rb");
@@ -124,8 +124,8 @@ void XLibMacros::macAtomInfo(TStrObjList &Cmds, const TParamList &Options, TMacr
   }
   TStrList report;
   for( size_t i=0; i < satoms.Count(); i++ ) 
-    TAutoDB::GetInstance()->AnalyseNode( *satoms[i], report );
-  xapp.GetLog() << ( report );
+    TAutoDB::GetInstance()->AnalyseNode(*satoms[i], report);
+  xapp.NewLogEntry() << report;
 }
 //..............................................................................
 void XLibMacros::macVATA(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

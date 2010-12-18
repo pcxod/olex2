@@ -928,8 +928,10 @@ void TNetwork::FindAtomRings(TSAtom& ringAtom, TTypeList<TSAtomPList>& res)  {
 }
 //..............................................................................
 void TNetwork::FindAtomRings(TSAtom& ringAtom, const ElementPList& ringContent,
-                             TTypeList<TSAtomPList>& res)  {
-  if( ringAtom.NodeCount() < 2 || &ringAtom.GetNetwork() != this )  return;
+                             TTypeList<TSAtomPList>& res)
+{
+  if( ringContent.Count() < 3 || ringAtom.NodeCount() < 2 || &ringAtom.GetNetwork() != this )
+    return;
   if( ringContent[0] != NULL && ringAtom.GetType() != *ringContent[0] )  return;
   TSAtomPList all;
   all.SetCapacity( NodeCount() );

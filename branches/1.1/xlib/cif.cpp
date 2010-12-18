@@ -697,7 +697,7 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
             i = start + Tmp.Length() - 1;
           }
           else
-            TBasicApp::GetLog() << olxstr("A number or function starting from '$' or '_' is expected");
+            TBasicApp::NewLogEntry() << "A number or function starting from '$' or '_' is expected";
           continue;
         }
         size_t index = Val.ToSizeT();

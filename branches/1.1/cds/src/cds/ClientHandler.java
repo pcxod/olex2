@@ -64,7 +64,7 @@ public class ClientHandler extends Thread {
       BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
       DataOutputStream out = new DataOutputStream(client.getOutputStream());  // true - autoflush
       ArrayList<String> cmds = new ArrayList();
-      String cmd, origin=null, platform = null, resume_from=null;
+      String cmd, origin=null, platform = null, resume_from=null, esession = null;
       while( (cmd = in.readLine()) != null && !cmd.isEmpty() )  {
         if( cmd.length() == 0 )
           break;
@@ -75,9 +75,13 @@ public class ClientHandler extends Thread {
           platform = cmd.substring(10);
         else if( cmd.startsWith("Resume-From:") )
           resume_from = cmd.substring(13);
+        else if( cmd.startsWith("ESession:") )
+          esession = cmd.substring(10);
       }
       cmd = (cmds.isEmpty() ? null : cmds.get(0));
-      final String src = (origin == null ? client.getRemoteSocketAddress().toString() : origin).trim();
+      String src = (origin == null ? client.getRemoteSocketAddress().toString() : origin).trim();
+      if ( esession != null )
+        src = src + " (" + esession + ')';
       if( cmd != null )  {
         if( !Main.shouldHandle(src) )  {
           String info_line = "Blocking ";
@@ -218,12 +222,12 @@ public class ClientHandler extends Thread {
                         out.write(bf, 0, read_len);
                         written += read_len;
                       }
-                      log.add("Completed file upload");
+                      log.add("Completed at " +
+                              (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()));
                     } catch (Exception e) {
-                      log.add(
-                              "Broken for " + src + " at " +
+                      log.add("Broken at " +
                               (new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")).format(new Date()) +
-                              " at " + (float)written*100.0/file.length() + '%'
+                              " at " + written*100.0/file.length() + '%'
                               );
                     }
                     fr.close();

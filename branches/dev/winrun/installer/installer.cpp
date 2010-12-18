@@ -8,6 +8,7 @@
 #include "filetree.h"
 #include "patchapi.h"
 #include "utf8file.h"
+#include "cdsfs.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -40,6 +41,7 @@ BOOL CInstallerApp::InitInstance()  {
     if( !TEFile::Exists(log_dir) )
       TEFile::MakeDirs(log_dir);
     TBasicApp::GetLog().AddStream(TUtf8File::Open(log_dir + "installer.log", false), true);
+    TSocketFS::InitLocalFSBase(log_dir + ".cds/");
   }
   catch(...)  {
     MessageBox(NULL, _T("Failed to enable logging"), _T("Error"), MB_OK|MB_ICONERROR);
@@ -71,11 +73,11 @@ BOOL CInstallerApp::InitInstance()  {
     const olxstr copy_name  = tmppath + "olex2un.exe";
     bool do_run = true;
     try  {
-      bapp.NewLogEntry() << "Copying '" << module_name << "' into '" << copy_name;
+      bapp.NewLogEntry(logInfo, true) << "Copying '" << module_name << "' into '" << copy_name;
       do_run = TEFile::Copy(module_name, copy_name, true);
     }
     catch(const TExceptionBase&)  {
-      bapp.NewLogEntry() << "Copying failed";
+      bapp.NewLogEntry(logInfo, true) << "Copying failed";
       do_run = false;
     }
     if( do_run )  {
@@ -85,7 +87,10 @@ BOOL CInstallerApp::InitInstance()  {
       _execl(copy_name.c_str(), exe_name.c_str(), uninst_dir.c_str(), NULL);
     }
     else  {
-      MessageBox(NULL, _T("Failed to initialise the installer. Please make sure only one Olex2 installer is running"),
+      MessageBox(NULL, (olxstr("Failed to initialise the installer.\n"
+        "Please make sure only one Olex2 installer is running,\n"
+        "alternatively try deleting this file manually:\n")
+        << copy_name).u_str(),
         _T("Error"), MB_OK|MB_ICONERROR);
     }
     TEGC::Finalise();

@@ -17,9 +17,15 @@
 #include "edict.h"
 //  #pragma link "../..lib/psdk/mswsock.lib"
 
+const uint16_t  // extra request headers
+  httpHeaderESession = 0x0001,
+  httpHeaderPlatform = 0x0002;
+
 class THttpFileSystem: public AFileSystem  {
   bool Connected;
   TUrl Url;
+  static olxcstr ExecutableSession;
+  uint16_t ExtraHeaders;
 #ifdef __WIN32__
   static bool Initialised;
 #endif
@@ -67,7 +73,7 @@ protected:
   };
   ResponseInfo ParseResponseInfo(const olxcstr& str, const olxcstr& sep, const olxstr& src);
   // if position is valid and not 0 it is appended to the file name like + ('#'+pos)
-  static olxcstr GenerateRequest(const TUrl& url, const olxcstr& cmd, const olxcstr& file_name,
+  olxcstr GenerateRequest(const olxcstr& cmd, const olxcstr& file_name,
     uint64_t position=0);
   bool IsConnected() const {  return Connected;  }
   const TUrl& GetUrl() const {  return Url;  }
@@ -115,7 +121,7 @@ public:
   TEFile* OpenFileAsFile(const olxstr& Source)  {
     return (TEFile*)OpenFile(Source);
   }
+  DefPropP(uint16_t, ExtraHeaders)
 };
 
 #endif
- 

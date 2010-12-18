@@ -142,9 +142,17 @@ public:
     return Rows[row].IndexOf(What) != InvalidIndex;
   }
 
-  void CreateHTMLList(TStrList& L, const olxstr& Title,
-                      bool colNames, bool rowNames,
-                      bool Format=true) const  {
+  TStrList CreateHTMLList(const olxstr& Title,
+    bool colNames, bool rowNames,
+    bool Format=true) const
+  {
+    TStrList l;
+    return CreateHTMLList(l, Title, colNames, rowNames, Format);
+  }
+  TStrList& CreateHTMLList(TStrList& L, const olxstr& Title,
+    bool colNames, bool rowNames,
+    bool Format=true) const
+  {
     olxstr Tmp;
     if( !Title.IsEmpty() )
       L.Add(olxstr("<p><b>") << Title << olxstr("</b></p>"));
@@ -165,6 +173,7 @@ public:
       L.Add( (Tmp << "</tr>") );
     }
     if( Format )  L.Add("</table>");
+    return L;
   }
   
   TStrList CreateHTMLList(const olxstr &Title,

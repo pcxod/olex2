@@ -55,14 +55,14 @@ class TUProgress: public AActionHandler  {
 public:
   TUProgress(){}
   bool Exit(const IEObject *Sender, const IEObject *Data)  {  
-    TBasicApp::GetLog() << "Done\n";
+    TBasicApp::NewLogEntry() << "Done";
     return true;  
   }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {  return true;  }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
     if( Data == NULL )  {  return false;  }
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
-    TBasicApp::GetLog() << (olxstr("Copying: ") << A->GetAction() << '\n');
+    TBasicApp::NewLogEntry() << "Copying: " << A->GetAction();
     return true;
   }
 };
@@ -70,7 +70,7 @@ class TDProgress: public AActionHandler  {
 public:
   TDProgress(){}
   bool Exit(const IEObject *Sender, const IEObject *Data)  {  
-    TBasicApp::GetLog() << "\rDone\n";
+    TBasicApp::NewLogEntry() << "\rDone";
     return true;  
   }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
@@ -118,12 +118,12 @@ int main(int argc, char** argv)  {
         TBasicApp _bapp(TBasicApp::GuessBaseDir(argv[0], "") );
         TLog& log = _bapp.GetLog();
         log.AddStream( new TOutStream, true);
-        log << "\nUnirun, Olex2 update/install program\n";
-        log << "Compiled on " << __DATE__ << " at " << __TIME__ << '\n';
-        log << "Usage: unirun [olex2_gui_dir]\n";
-        log << "If no arguments provided, the system variable OLEX2_DIR will be checked first, if the variable is not set,\
-current folder will be updated\n";
-        log << "(c) Oleg V. Dolomanov 2007-2009\n\n";
+        log.NewEntry().nl() << "Unirun, Olex2 update/install program";
+        log.NewEntry() << "Compiled on " << __DATE__ << " at " << __TIME__;
+        log.NewEntry() << "Usage: unirun [olex2_gui_dir]";
+        log.NewEntry() << "If no arguments provided, the system variable OLEX2_DIR will be checked "
+          "first, if the variable is not set, current folder will be updated";
+        log.NewEntry() << "(c) Oleg V. Dolomanov 2007-2009" << NewLineSequence;
         return 0;
       }
       bapp = new TBasicApp(TBasicApp::GuessBaseDir(argv[1], ""));
@@ -166,14 +166,14 @@ void DoRun()  {
     TStrList repos;
     updater::UpdateAPI api;
     olxstr repo;
-    TBasicApp::GetLog() << "Installation folder: "  << TBasicApp::GetBaseDir() << '\n';
+    TBasicApp::NewLogEntry() << "Installation folder: "  << TBasicApp::GetBaseDir();
     if( TBasicApp::GetInstance().Options.Contains("-tag") )  {
       olxstr tag = TBasicApp::GetInstance().Options["-tag"];
       if( tag.Equalsi("max") )  {
         TStrList tags;
         api.GetAvailableTags(tags, repo);
         if( tags.IsEmpty() )  {
-          TBasicApp::GetLog() << "Could not locate any installation repositories/tags, aborting...\n";
+          TBasicApp::NewLogEntry() << "Could not locate any installation repositories/tags, aborting...";
           return;
         }  
         double max_tag = 0;
@@ -191,7 +191,7 @@ void DoRun()  {
       else  {
         repo = api.FindActiveRepositoryUrl();
         if( repo.IsEmpty() )  {
-          TBasicApp::GetLog() << "Could not locate any installation repositories, aborting...\n";
+          TBasicApp::NewLogEntry() << "Could not locate any installation repositories, aborting...";
           return;
         }
         repo << tag;
@@ -200,15 +200,15 @@ void DoRun()  {
     else  {
       api.GetAvailableRepositories(repos);
       if( repos.IsEmpty() )  {
-        TBasicApp::GetLog() << "Could not locate any installation repositories, aborting...\n";
+        TBasicApp::NewLogEntry() << "Could not locate any installation repositories, aborting...";
         return;
       }
       repo = repos[0];
       if( repos.Count() >= 1 )  {
-        TBasicApp::GetLog() << "Please choose the installation repository or Cancel:\n";
+        TBasicApp::NewLogEntry() << "Please choose the installation repository or Cancel:";
         for( size_t i=0; i < repos.Count(); i++ )
           TBasicApp::GetLog() << (i+1) << ": " << repos[i].c_str() << '\n';
-        TBasicApp::GetLog() << (repos.Count()+1) << ": Cancel\n";
+        TBasicApp::NewLogEntry() << (repos.Count()+1) << ": Cancel";
         size_t repo_ind = 0;
         while( true )  {
           TBasicApp::GetLog() << "Your choice: ";
@@ -222,11 +222,11 @@ void DoRun()  {
         repo = repos[repo_ind-1];
       }
     }
-    TBasicApp::GetLog() << (olxstr("Installing using: ") << repo << '\n');
+    TBasicApp::NewLogEntry() << "Installing using: " << repo;
     short res = api.DoInstall(new TDProgress, new TEProgress, repo);
     if( res != updater::uapi_OK && res != updater::uapi_UptoDate )  {
-      TBasicApp::GetLog() << "Installation has failed with error code: " << res << '\n';
-      TBasicApp::GetLog() << api.GetLog();
+      TBasicApp::NewLogEntry() << "Installation has failed with error code: " << res;
+      TBasicApp::NewLogEntry() << api.GetLog();
     }
     else  {
       updater::UpdateAPI::TagInstallationAsNew();
@@ -235,7 +235,7 @@ void DoRun()  {
   else  {
     short res = patcher::PatchAPI::DoPatch(NULL, new TUProgress);
     if( res != patcher::papi_OK )
-      TBasicApp::GetLog() << "Update has failed with error code: " << res << '\n';
+      TBasicApp::NewLogEntry() << "Update has failed with error code: " << res;
   }
 }
 

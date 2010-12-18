@@ -72,6 +72,10 @@ public:
       buffer << str;
       return *this;
     }
+    LogEntry& nl()  {
+      buffer << NewLineSequence;
+      return *this;
+    }
     template <class SC, class T> LogEntry& operator << (const TTStrList<SC,T> &lst)  {
       buffer << lst.Text(NewLineSequence);
       return *this;
