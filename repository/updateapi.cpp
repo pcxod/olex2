@@ -318,8 +318,11 @@ AFileSystem* UpdateAPI::FSFromString(const olxstr& _repo, const olxstr& _proxy) 
       TUrl url(_repo);
       if( !_proxy.IsEmpty() )
         url.SetProxy( _proxy );
-      if( url.GetProtocol() == "http" )
-        FS = new TSocketFS(url);
+      if( url.GetProtocol() == "http" )  {
+        TSocketFS* _fs = new TSocketFS(url);
+        _fs->SetExtraHeaders(httpHeaderPlatform|httpHeaderESession);
+        FS = _fs;
+      }
 #ifdef __WXWIDGETS__
       else if( url.GetProtocol() == "ftp" )
         FS = new TwxFtpFileSystem(url);

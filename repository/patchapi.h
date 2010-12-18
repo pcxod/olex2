@@ -87,7 +87,7 @@ public:
     TEFile::TrimPathDelimeterI(new_shared_dir) << "data/";
 #endif
     return TEFile::AddPathDelimeterI( 
-      new_shared_dir << MD5::Digest(esdl::olxcstr(base_dir + ReadRepositoryTag(base_dir))) );
+      new_shared_dir << MD5::Digest(esdl::olxcstr(base_dir + ReadRepositoryTag(base_dir))));
   }
   /* checks for OLEX2_DATADIR, if DataDir is provided the raw data dir like Application Data
   without the MD5 suffix will be assigned to it (like from the call to GetSharedDirRoot)

@@ -84,12 +84,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "OlexSys"
             VALUE "FileDescription", "Olex2 Installer"
-            VALUE "FileVersion", "1.0.0.2"
+            VALUE "FileVersion", "1.0.0.3"
             VALUE "InternalName", "installer.exe"
-            VALUE "LegalCopyright", "(c) Oleg Dolomanov, 2009-10.  All rights reserved."
+            VALUE "LegalCopyright", "(c) OlexSys, 2009-10. All rights reserved."
             VALUE "OriginalFilename", "installer.exe"
             VALUE "ProductName", "Olex2 Installer"
-            VALUE "ProductVersion", "1.0.0.2"
+            VALUE "ProductVersion", "1.0.0.3"
         END
     END
     BLOCK "VarFileInfo"

@@ -3,17 +3,24 @@
 #include "bapp.h"
 #include "log.h"
 #include "eutf8.h"
+#include "md5.h"
 #include <errno.h>
 
 #ifdef __WIN32__
   bool THttpFileSystem::Initialised = false;
 #endif
+olxcstr THttpFileSystem::ExecutableSession;
 //..............................................................................
-THttpFileSystem::THttpFileSystem(const TUrl& url) : Url(url){
+THttpFileSystem::THttpFileSystem(const TUrl& url) : Url(url), ExtraHeaders(0)  {
 #ifdef __WIN32__
   if( !Initialised )
     Initialise();
 #endif
+  if( ExecutableSession.IsEmpty() )  { // not UUID, but quite unique
+    ExecutableSession = MD5::Digest(olxstr(TETime::msNow()));
+    olx_sleep(1);
+    ExecutableSession = MD5::Digest(ExecutableSession+olxstr(TETime::msNow()));
+  }
   Access = afs_ReadOnlyAccess;
   SetBase(url.GetPath());
   Connected = false;
@@ -108,16 +115,19 @@ bool THttpFileSystem::Connect()  {
   return Connected;
 }
 //..............................................................................
-olxcstr THttpFileSystem::GenerateRequest(const TUrl& url, const olxcstr& cmd, const olxcstr& FileName,
+olxcstr THttpFileSystem::GenerateRequest(const olxcstr& cmd, const olxcstr& FileName,
     uint64_t position)
 {
   olxcstr request(cmd);
   request << ' '
-    << TUtf8::Encode(url.GetFullHost() << '/' << TEFile::UnixPath(FileName)).Replace(' ', "%20")
+    << TUtf8::Encode(Url.GetFullHost() << '/' << TEFile::UnixPath(FileName)).Replace(' ', "%20")
     << " HTTP/1.0\n";
-  if( url.HasProxy() && !url.GetProxy().GetUser().IsEmpty() && !url.GetProxy().GetPassword().IsEmpty() )
-    request << "Authorization: " << olxcstr(url.GenerateHTTPAuthString()) << '\n';
-  request << "Platform: " << TBasicApp::GetPlatformString() << '\n';
+  if( Url.HasProxy() && !Url.GetProxy().GetUser().IsEmpty() && !Url.GetProxy().GetPassword().IsEmpty() )
+    request << "Authorization: " << olxcstr(Url.GenerateHTTPAuthString()) << '\n';
+  if( (ExtraHeaders & httpHeaderPlatform) != 0 )
+    request << "Platform: " << TBasicApp::GetPlatformString() << '\n';
+  if( (ExtraHeaders & httpHeaderESession) != 0 )
+    request << "ESession: " << ExecutableSession << '\n';
   if( position != InvalidIndex && position != 0 )
     request << "Resume-From: " << position << '\n';
   return request << '\n';
@@ -185,7 +195,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   // if the file length is not 0, it means that the CDS of any kind is in place...
   uint64_t starting_file_len = allocation_info.file->Length();
   // read and extract headers
-  _write(GenerateRequest(GetUrl(), "GET", Source, starting_file_len));
+  _write(GenerateRequest("GET", Source, starting_file_len));
   int ThisRead = _read(Buffer, 512);
   // find the data start offset
   bool crlf = false;
@@ -197,8 +207,9 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   }
   uint64_t TotalRead = starting_file_len;
   size_t data_off = GetDataOffset(Buffer, ThisRead, crlf);
+  const olxcstr line_break(crlf ? "\r\n" : "\n"); 
   ResponseInfo info =
-    ParseResponseInfo(olxcstr(Buffer, data_off), olxcstr(crlf ? "\r\n" : "\n"), Source);
+    ParseResponseInfo(olxcstr(Buffer, data_off), line_break, Source);
   if( !info.HasData() )  {
     delete allocation_info.file;
     delete [] Buffer;
@@ -226,15 +237,23 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
     ThisRead = _read(Buffer, BufferSize);
     if( restarted && ThisRead > 0 )  {
       data_off = GetDataOffset(Buffer, ThisRead, crlf);
+      if( data_off == 0 )  {
+        TBasicApp::NewLogEntry(logInfo, true) << "Restarted download: header is to short, retrying";
+        if( _OnReadFailed(info, TotalRead) )  {
+          restarted = true;
+          continue;
+        }
+        break;
+      }
       ResponseInfo new_info =
-        ParseResponseInfo(olxcstr(Buffer, data_off), olxcstr(crlf ? "\r\n" : "\n"), Source);
+        ParseResponseInfo(olxcstr(Buffer, data_off), line_break, Source);
       if( !new_info.HasData() )  {
         delete allocation_info.file;
         delete [] Buffer;
         return NULL;
       }
       if( new_info != info  )  {  // have to restart...
-        TBasicApp::NewLogEntry(logInfo, true) << "Restarted download info mismatch old={"
+        TBasicApp::NewLogEntry(logInfo, true) << "Restarted download: info mismatch old={"
           << '(' << info.contentMD5 << ',' << info.contentLength <<
           "}, new={" << new_info.contentMD5 << ',' << new_info.contentLength << '}';
         info = new_info;
@@ -321,7 +340,7 @@ bool THttpFileSystem::_DoesExist(const olxstr& f, bool forced_check)  {
     DoConnect();
     const size_t BufferSize = 1024;
     char* Buffer = new char[BufferSize+1];
-    _write(GenerateRequest(GetUrl(), "HEAD", f));
+    _write(GenerateRequest("HEAD", f));
     int read = _read(Buffer, BufferSize);
     if( read <= 0 )  {
       delete [] Buffer;
