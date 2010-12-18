@@ -388,9 +388,10 @@ void TMainForm::funCursor(const TStrObjList& Params, TMacroError &E)  {
   }
   if( Params.IsEmpty() )  {
     if( !CursorStack.IsEmpty() )  {
-      wxCursor cr = CursorStack.Pop();
-      SetCursor(cr);
-      FGlCanvas->SetCursor(cr);
+      AnAssociation2<wxCursor,wxString> ci = CursorStack.Pop();
+      SetCursor(ci.GetA());
+      FGlCanvas->SetCursor(ci.GetA());
+      SetStatusText(ci.GetB());
     }
     else  {
       wxCursor cr(wxCURSOR_ARROW);
@@ -400,7 +401,7 @@ void TMainForm::funCursor(const TStrObjList& Params, TMacroError &E)  {
     }
   }
   else  {
-    CursorStack.Push(FGlCanvas->GetCursor());
+    CursorStack.Push(AnAssociation2<wxCursor,wxString>(FGlCanvas->GetCursor(), GetStatusBar()->GetStatusText()));
     if( Params[0].Equalsi("busy") )  {
       wxCursor cr(wxCURSOR_WAIT);
       SetCursor(cr);
