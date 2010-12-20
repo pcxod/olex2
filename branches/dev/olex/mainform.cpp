@@ -590,8 +590,6 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacroD(Style, "s-shows a file open dialog", fpNone|fpOne, "Prints default style or sets it (none resets)");
   this_InitMacroD(Scene, "s-shows a file open dialog", fpNone|fpOne, "Prints default scene parameters or sets it (none resets)");
 
-  this_InitMacroD(SyncBC, EmptyString, fpNone, "Copies atom materials to bonds");
-
   this_InitMacro(Basis, , fpNone|fpOne);
   this_InitMacro(Lines, , fpOne);
 
@@ -1400,10 +1398,10 @@ void TMainForm::AquireTooltipValue()  {
       Tooltip = FXApp->GetSelectionInfo();
     else if( EsdlInstanceOf( *G, TXAtom) )  {
       const TXAtom &xa = *(TXAtom*)G;
-      const TCAtom& ca = xa.Atom().CAtom();
-      Tooltip = xa.Atom().GetGuiLabelEx();
-      if( xa.Atom().GetType() == iQPeakZ )
-        Tooltip << ':' << xa.Atom().CAtom().GetQPeak();
+      const TCAtom& ca = xa.CAtom();
+      Tooltip = xa.GetGuiLabelEx();
+      if( xa.GetType() == iQPeakZ )
+        Tooltip << ':' << xa.CAtom().GetQPeak();
       double occu = ca.GetChemOccu();
       Tooltip << "\nChem occu(";
       if( ca.GetVarRef(catom_var_name_Sof) != NULL )  {
@@ -1442,14 +1440,14 @@ void TMainForm::AquireTooltipValue()  {
       else
         Tooltip << "\nUeq " << olxstr::FormatFloat(3, ca.GetUiso());
 #ifdef _DEBUG
-      Tooltip << "\nBonds: " << xa.Atom().BondCount() << ", nodes: " << xa.Atom().NodeCount();
+      Tooltip << "\nBonds: " << xa.BondCount() << ", nodes: " << xa.NodeCount();
 #endif
     }
     else  if( EsdlInstanceOf( *G, TXBond) )  {
-      Tooltip = ((TXBond*)G)->Bond().A().GetLabel();
-      Tooltip << '-' << ((TXBond*)G)->Bond().B().GetLabel() << ": ";
+      Tooltip = ((TXBond*)G)->A().GetLabel();
+      Tooltip << '-' << ((TXBond*)G)->B().GetLabel() << ": ";
       if( FXApp->CheckFileType<TCif>() )  {
-        TSBond& sb = ((TXBond*)G)->Bond();
+        TSBond& sb = *(TXBond*)G;
         ACifValue* cv = FXApp->XFile().GetLastLoader<TCif>().GetDataManager().Match(sb.A(), sb.B());
         if( cv != NULL )
           Tooltip << cv->GetValue().ToString();
@@ -1457,7 +1455,7 @@ void TMainForm::AquireTooltipValue()  {
           Tooltip << olxstr::FormatFloat(3, sb.Length());
       }
       else
-        Tooltip << olxstr::FormatFloat(3, ((TXBond*)G)->Bond().Length());
+        Tooltip << olxstr::FormatFloat(3, ((TXBond*)G)->Length());
     } 
     else if( EsdlInstanceOf( *G, TXReflection) )  {
       Tooltip = ((TXReflection*)G)->GetHKL()[0];

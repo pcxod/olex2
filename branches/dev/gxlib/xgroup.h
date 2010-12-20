@@ -63,7 +63,7 @@ protected:
   }
   virtual bool DoTranslate(const vec3d& t) {
     for( size_t i=0; i < Atoms.Count(); i++ )
-      Atoms[i]->Atom().crd() += t;
+      Atoms[i]->crd() += t;
     RotationCenter += t;
     for( size_t i=0; i < Count(); i++ )
       GetObject(i).Update();
@@ -76,7 +76,7 @@ protected:
     else
       olx_create_rotation_matrix(m, RotationDir, cos(angle), sin(angle));
     for( size_t i=0; i < Atoms.Count(); i++ )
-      Atoms[i]->Atom().crd() = (Atoms[i]->Atom().crd()-RotationCenter)*m+RotationCenter;
+      Atoms[i]->crd() = (Atoms[i]->crd()-RotationCenter)*m+RotationCenter;
     for( size_t i=0; i < Count(); i++ )
       GetObject(i).Update();
     return true;
@@ -90,13 +90,13 @@ protected:
     if( Data.Button == smbRight )  {
       if( Data.Object != NULL )  {
         if( EsdlInstanceOf(*Data.Object, TXAtom) )  {
-          RotationCenter = ((TXAtom*)Data.Object)->Atom().crd();
+          RotationCenter = ((TXAtom*)Data.Object)->crd();
           RotationDir.Null();
         }
         else if( EsdlInstanceOf(*Data.Object, TXBond) )  {
           TXBond* xb = (TXBond*)Data.Object;
-          RotationCenter = (xb->Bond().A().crd() + xb->Bond().B().crd())/2;
-          RotationDir = (xb->Bond().B().crd() - xb->Bond().A().crd()).Normalise();
+          RotationCenter = (xb->A().crd() + xb->B().crd())/2;
+          RotationDir = (xb->B().crd() - xb->A().crd()).Normalise();
         }
         return true;
       }
@@ -134,7 +134,7 @@ public:
   void UpdateRotationCenter()  {
     RotationCenter.Null();
     for( size_t i=0; i < Atoms.Count(); i++ )
-      RotationCenter += Atoms[i]->Atom().crd();
+      RotationCenter += Atoms[i]->crd();
     RotationCenter /= Atoms.Count();
   }
   const vec3d& GetRotationCenter() const {  return RotationCenter;  }

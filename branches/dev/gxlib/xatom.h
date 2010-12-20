@@ -1,12 +1,12 @@
 #ifndef __olx_gxl_xatom_H
 #define __olx_gxl_xatom_H
-#include "actions.h"
 #include "glrender.h"
 #include "glprimitive.h"
 #include "glmousehandler.h"
 #include "gllabel.h"
 #include "styles.h"
 #include "ellipsoid.h"
+#include "satom.h"
 
 BeginGxlNamespace()
 
@@ -94,13 +94,13 @@ public:
   virtual ACreationParams* GetCreationParams() const;
   // multiple inheritance...
   void SetTag(index_t v) {   TSAtom::SetTag(v);  }
-  index_t GetTag()  {  return TSAtom::GetTag();  }
+  index_t GetTag() const {  return TSAtom::GetTag();  }
   index_t IncTag()  {  return TSAtom::IncTag();  }
   index_t DecTag()  {  return TSAtom::DecTag();  }
 
   TXGlLabel& GetGlLabel() const {  return *Label;  }
   void UpdateLabel()  {  GetGlLabel().Update();  }
-  inline TXAtom& Node(size_t i) const {  return (TXAtom&)Node(i); }
+  inline TXAtom& Node(size_t i) const {  return (TXAtom&)TSAtom::Node(i); }
 
   static olxstr GetLegend(const TSAtom& A, const short Level=2); // returns full legend with symm code
   // returns level of the given legend (number of '.', basically)
@@ -196,7 +196,7 @@ public:
   int GetPolyhedronType();
 
   static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }
-  static void CreateStaticObjects();
+  static void CreateStaticObjects(TGlRenderer& parent);
   static void ClearStaticObjects()  {
     FStaticObjects.Clear();
   }

@@ -16,7 +16,7 @@ protected:
       for( size_t i=0; i < sel.Count(); i++ )  {
         if( EsdlInstanceOf(sel[i], TXAtom) )  {
           cr += ((TXAtom&)sel[i]).GetCenter();
-          cr += ((TXAtom&)sel[i]).Atom().crd();
+          cr += ((TXAtom&)sel[i]).crd();
           atoms.Add( (TXAtom&)sel[i] );
         }
       }
@@ -38,15 +38,16 @@ protected:
     TGXApp& app = *TGlXApp::GetGXApp();
     const TAsymmUnit& au = app.XFile().GetAsymmUnit();
     UpdateSelectionCrds();
-    for( size_t i=0; i < app.AtomCount(); i++ )  {
-      TXAtom& xa = app.GetAtom(i);
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    while( ai.HasNext() )  {
+      TXAtom& xa = ai.Next();
       // summ the translations
-      xa.Atom().crd() += xa.GetCenter();
+      xa.crd() += xa.GetCenter();
       xa.NullCenter();
-      vec3d c = xa.Atom().crd();
+      vec3d c = xa.crd();
       au.CartesianToCell(c);
-      xa.Atom().ccrd() = c;
-      xa.Atom().CAtom().ccrd() = c;
+      xa.ccrd() = c;
+      xa.CAtom().ccrd() = c;
     }
   }
   olxstr ReCon; // restraint or constraint to use for split atoms
@@ -61,8 +62,9 @@ public:
     if( !app.CheckFileType<TIns>() )  return false;
     ReCon = Options.FindValue("r", EmptyString).ToLowerCase();
     TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
-    for( size_t i=0; i < app.AtomCount(); i++ )
-      app.GetAtom(i).SetMoveable(true);
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    while( ai.HasNext() )
+      ai.Next().SetMoveable(true);
     return true;
   }
   ~TSplitMode()  {
@@ -78,8 +80,9 @@ public:
     // if this is not done here it interferes and may cause a crash
     app.XFile().GetLattice().OnDisassemble.Remove(this);
     app.OnObjectsCreate.Remove(this);
-    for( size_t i=0; i < app.AtomCount(); i++ )
-      app.GetAtom(i).SetMoveable(false);
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    while( ai.HasNext() )
+      ai.Next().SetMoveable(false);
     if( SplitAtoms.IsEmpty() )  {
       app.XFile().GetLattice().UpdateConnectivity();
       return;

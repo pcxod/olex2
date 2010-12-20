@@ -412,7 +412,6 @@ private:
   DefMacro(Link)
   DefMacro(Style)
   DefMacro(Scene)
-  DefMacro(SyncBC)
 
   DefMacro(Basis)
   DefMacro(Lines)

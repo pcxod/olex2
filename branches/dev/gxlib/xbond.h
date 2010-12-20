@@ -44,7 +44,7 @@ public:
 
   // multiple inheritance...
   void SetTag(index_t v) {   TSBond::SetTag(v);  }
-  index_t GetTag()  {  return TSBond::GetTag();  }
+  index_t GetTag() const {  return TSBond::GetTag();  }
   index_t IncTag()  {  return TSBond::IncTag();  }
   index_t DecTag()  {  return TSBond::DecTag();  }
 
@@ -104,7 +104,7 @@ public:
   }
 
   static TGraphicsStyle* GetParamStyle()  {  return FBondParams;  }
-  static void CreateStaticObjects();
+  static void CreateStaticObjects(TGlRenderer& parent);
   static void ClearStaticObjects()  {
     FStaticObjects.Clear();
   }

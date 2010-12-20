@@ -8,7 +8,6 @@
 #include "symmlib.h"
 #include "undo.h"
 #include "bitarray.h"
-#include "glrender.h"
 #include "xfader.h"
 #include "glmouse.h"
 #include "dframe.h"
@@ -23,6 +22,7 @@
 #include "typelist.h"
 #include "hkl.h"
 #include "fracmask.h"
+#include "glrender.h"
 
 #ifdef __WXWIDGETS__
 #include "wx/zipstrm.h"
@@ -108,11 +108,11 @@ struct XObjectProvider : public ASObjectProvider {
 
 
 class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
-  TTypeListExt<TXGrowPoint, IEObject> XGrowPoints;
-  TTypeListExt<TXGrowLine, IEObject> XGrowLines;
+  TTypeListExt<TXGrowPoint, AGDrawObject> XGrowPoints;
+  TTypeListExt<TXGrowLine, AGDrawObject> XGrowLines;
   olxstr AtomsToGrow;
   smatd_list UsedTransforms;
-  TTypeListExt<TXReflection, IEObject> XReflections;
+  TTypeListExt<TXReflection, AGDrawObject> XReflections;
   TPtrList<TGlBitmap> GlBitmaps;
   TTypeListExt<TXGlLabel, IEObject> XLabels;
   TXGlLabels *FLabels;
@@ -134,11 +134,10 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   /* makes sure that only bonds (and grow mode lines) with both atoms visible are visible,
  also considers H, and Q bonds special handling */
   void _syncBondsVisibility();
-
-
+public:
   template <class obj_t, class act_t> struct TIterator  {
     size_t offset, count;
-    TArrayList<ObjectCaster<obj_t,act_t> > objects;
+    TTypeList<ObjectCaster<obj_t,act_t> > objects;
     TIterator() : offset(0), count(0)  {}
     bool HasNext() const {  return (offset < count);  }
     act_t& Next()  {
@@ -151,11 +150,12 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
           return objects[i][off];
         }
       }
+      throw TFunctionFailedException(__OlxSourceInfo, "end is reached");
     }
     void Reset()  {  offset = 0;  }
   };
   struct AtomIterator : public TIterator<TSAtom, TXAtom>  {
-    AtomIterator(TGXApp& app)  {
+    AtomIterator(const TGXApp& app)  {
       objects.Add(app.XFile().GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
@@ -165,7 +165,7 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
     }
   };
   struct BondIterator : public TIterator<TSBond, TXBond>  {
-    BondIterator(TGXApp& app)  {
+    BondIterator(const TGXApp& app)  {
       objects.Add(app.XFile().GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
@@ -174,6 +174,18 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
       }
     }
   };
+  struct PlaneIterator : public TIterator<TSPlane, TXPlane>  {
+    PlaneIterator(const TGXApp& app)  {
+      objects.Add(app.XFile().GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
+      count += objects.GetLast().Count();
+      for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
+        objects.Add(app.OverlayedXFiles[i].GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
+        count += objects.GetLast().Count();
+      }
+    }
+  };
+  AtomIterator GetAtoms() const {  return AtomIterator(*this);  }
+  BondIterator GetBonds() const {  return BondIterator(*this);  }
 protected:
   TGlRenderer* FGlRender;
   TXFader* Fader;
@@ -190,10 +202,6 @@ protected:
   void FragmentVisible( TNetwork *N, bool V);
   bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
   void GetGPCollections(AGDObjList& GDObjects, TPtrList<TGPCollection>& Result);
-  // visibility is stored in a bitarray
-  TEBitArray FVisibility;
-  void RestoreVisibility();
-  void StoreVisibility();
   struct BondRef  {
     const TLattice& latt;
     TSBond::Ref ref;
@@ -296,7 +304,7 @@ public:
   // FileName - argv[0]
   TGXApp(const olxstr& FileName);
   virtual ~TGXApp();
-  void CreateObjects(bool SyncBonds, bool CenterModel);
+  void CreateObjects(bool CenterModel);
   void UpdateBonds();
   AGDrawObject* AddObjectToCreate(AGDrawObject* obj)  {  return ObjectsToCreate.Add(obj);  }
   void Clear();
@@ -470,7 +478,6 @@ public:
   }
 
   // hides all bonds for all hidden q-peaks
-  void SyncQVisibility();
   void SetStructureVisible(bool v);
   void SetHklVisible(bool v);
   bool IsHklVisible()  {  return FHklVisible;  }
@@ -498,9 +505,6 @@ public:
   TXAtom* GetXAtom(const olxstr& AtomName, bool Clear);
   void GetXAtoms(const olxstr& AtomName, TXAtomPList& res);
   void GetXBonds(const olxstr& BondName, TXBondPList& res);
-  struct BondCreationParams GetBondCreationParams(const TXBond& xb) const;
-  void AtomTagsToIndexes() const;
-  void BondTagsToIndexes() const;
   // these two do a command line parsing "sel C1 $N C?? C4 to end"
   void FindCAtoms(const olxstr& Atoms, TCAtomPList& List, bool ClearSelection=true);
   TXAtomPList FindXAtoms(const olxstr& Atoms, bool ClearSelection=true, bool FindHidden=false);
@@ -642,8 +646,7 @@ public:     void CalcProbFactor(float Prob);
   /* function undoes hiding of objects */
   void undoHide(TUndoData *data);
 
-  void XAtomDS2XBondDS(const olxstr& Source);  // copies material properties from atoms
-  void SynchroniseBonds( TXAtomPList& XAtoms );
+  void SynchroniseBonds(TXAtomPList& XAtoms);
 
   void ToDataItem(TDataItem& item, IOutputStream& zos) const;
   void FromDataItem(TDataItem& item, IInputStream& zis);

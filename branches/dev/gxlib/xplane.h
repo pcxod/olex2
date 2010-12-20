@@ -17,7 +17,7 @@ public:
 
   // multiple inheritance...
   void SetTag(index_t v) {   TSPlane::SetTag(v);  }
-  index_t GetTag()  {  return TSPlane::GetTag();  }
+  index_t GetTag() const {  return TSPlane::GetTag();  }
   index_t IncTag()  {  return TSPlane::IncTag();  }
   index_t DecTag()  {  return TSPlane::DecTag();  }
 

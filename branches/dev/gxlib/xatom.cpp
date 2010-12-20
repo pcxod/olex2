@@ -13,13 +13,11 @@
 #include "asymmunit.h"
 #include "unitcell.h"
 #include "lattice.h"
-#include "splane.h"
 #include "planesort.h"
 
 #include "glgroup.h"
 #include "exyzgroup.h"
 #include "glutil.h"
-#include "gxapp.h"
 
 //..............................................................................
 bool TXAtomStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {  
@@ -56,7 +54,7 @@ olxstr TXAtom::PolyTypeName("PolyType");
 TXAtom::TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName) :
   TSAtom(net),
   AGlMouseHandlerImp(Render, collectionName),
-  XAppId(~0), Polyhedron(NULL)
+  Polyhedron(NULL)
 {
   SetGroupable(true);
   if( GetEllipsoid() != NULL )
@@ -69,7 +67,7 @@ TXAtom::TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName)
   Params()[1] = 1;
   // the objects will be automatically deleted by the corresponding action collections
   if( FStaticObjects.IsEmpty() )  
-    CreateStaticObjects();
+    CreateStaticObjects(Render);
   Label = new TXGlLabel(Render, PLabelsCollectionName);
   Label->SetOffset(crd());
   Label->SetVisible(false);
@@ -91,7 +89,7 @@ TXAtom::~TXAtom()  {
 //..............................................................................
 void TXAtom::Quality(const short V)  {
   olxstr Legend("Atoms");
-  TGraphicsStyle& GS = Parent.GetStyles().NewStyle(Legend, true);
+  TGraphicsStyle& GS = TGlRenderer::_GetStyles().NewStyle(Legend, true);
 
   olxstr &SphereQ   = GS.GetParam("SphereQ", EmptyString, true);
   olxstr &RimQ = GS.GetParam("RimQ", EmptyString, true);  // quality
@@ -214,7 +212,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   TGPCollection *GPC = NULL;
   if( FStaticObjects.IsEmpty() )  
-    CreateStaticObjects();
+    CreateStaticObjects(Parent);
   Label->SetFontIndex(Parent.GetScene().FindFontIndexForType<TXAtom>());
   //Label->SetLabel(Atom().GetLabel());
   Label->Create();
@@ -600,7 +598,7 @@ void TXAtom::UpdatePrimitiveParams(TGlPrimitive* GlP)  {
   }
 }
 //..............................................................................
-void TXAtom::CreateStaticObjects()  {
+void TXAtom::CreateStaticObjects(TGlRenderer& Parent)  {
   TGlMaterial GlM;
   TGlPrimitiveParams *PParams;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;

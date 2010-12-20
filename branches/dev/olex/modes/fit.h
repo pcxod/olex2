@@ -62,9 +62,9 @@ public:
     TAsymmUnit& au = app.XFile().GetAsymmUnit();
     RefinementModel& rm = app.XFile().GetRM();
     for( size_t i=0; i < Atoms.Count(); i++ )  {
-      Atoms[i]->Atom().CAtom().ccrd() = Atoms[i]->Atom().crd();
-      Atoms[i]->Atom().ccrd() = au.CartesianToCell(Atoms[i]->Atom().CAtom().ccrd());
-      rm.Vars.FixParam(Atoms[i]->Atom().CAtom(), catom_var_name_Sof);
+      Atoms[i]->CAtom().ccrd() = Atoms[i]->crd();
+      Atoms[i]->ccrd() = au.CartesianToCell(Atoms[i]->CAtom().ccrd());
+      rm.Vars.FixParam(Atoms[i]->CAtom(), catom_var_name_Sof);
     }
     app.GetRender().ReplaceSelection<TGlGroup>();
     Initialised = false;
@@ -92,8 +92,8 @@ public:
       if( !EsdlInstanceOf(app.GetRender().GetSelection(), TXGroup) )
         return true;
       for( size_t i=0; i < Atoms.Count(); i++ )  {
-        Atoms[i]->Atom().CAtom().ccrd() = Atoms[i]->Atom().crd();
-        Atoms[i]->Atom().ccrd() = au.CartesianToCell(Atoms[i]->Atom().CAtom().ccrd());
+        Atoms[i]->CAtom().ccrd() = Atoms[i]->crd();
+        Atoms[i]->ccrd() = au.CartesianToCell(Atoms[i]->CAtom().ccrd());
       }
       Atoms.Clear();
       AtomsToMatch.Clear();

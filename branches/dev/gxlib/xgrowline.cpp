@@ -11,7 +11,7 @@
 //----------------------------------------------------------------------------//
 TXGrowLine::TXGrowLine(TGlRenderer& r, const olxstr& collectionName, TSAtom *A, TCAtom* CA,
                          const smatd& transform) :
-  TXBond(r, collectionName, *(TSBond*)NULL), Transform(transform)
+  TXBond(NULL, r, collectionName), Transform(transform)
 {
   AGDrawObject::SetSelectable(false);
   vec3d C = transform * CA->ccrd();

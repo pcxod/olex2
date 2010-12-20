@@ -73,8 +73,8 @@ protected:
     mat3f proj_mat, rot_mat;
       
     for( size_t j=0; j < sa.BondCount(); j++ )  {
-      const TSBond& bn = sa.Bond(j);
-      if( app.GetBond( bn.GetTag() ).IsDeleted() || !app.GetBond( bn.GetTag() ).IsVisible() )
+      const TXBond& bn = static_cast<TXBond&>(sa.Bond(j));
+      if( bn.IsDeleted() || !bn.IsVisible() )
         continue;
       vec3f p1 = (bn.Another(sa).crd() + SceneOrigin)*ProjMatr+DrawOrigin;
       if( p1[2] <= oa.crd[2] )  // goes into the plane - drawn
@@ -473,17 +473,18 @@ public:
       
     const TEBasis& basis = app.GetRender().GetBasis();
     TTypeList<OrtDrawTex::OrtAtom> atoms;
-    atoms.SetCapacity(app.AtomCount());
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    atoms.SetCapacity(ai.count);
       
     //radius for the end of the bond
     sprintf(bf, "\\newcommand{\\cornerradius}{%fmm}", 
     0.12*0.1*DrawScale);
     pw.Writenl(bf);
       
-    for( size_t i=0; i < app.AtomCount(); i++ )  {
-      if( app.GetAtom(i).IsDeleted() || !app.GetAtom(i).IsVisible() )
+    while( ai.HasNext() ) {
+      TXAtom& sa = ai.Next();
+      if( sa.IsDeleted() || !sa.IsVisible() )
         continue;
-      const TSAtom& sa = app.GetAtom(i).Atom();
            
       //write latex colors atoms commands and shading
       CurrentAtom=false;
@@ -530,11 +531,6 @@ public:
     //tex header is finished, start the body
     pw.Writenl("\\begin{document}");
     pw.Writenl("\\begin{tikzpicture}");
-    
-    for( size_t i=0; i < app.BondCount(); i++ )  {
-      app.GetBond(i).SetTag(i);
-      app.GetBond(i).Bond().SetTag(i);
-    }
     atoms.QuickSorter.SortSF(atoms, OrtAtomZSort);
 
     for( size_t i=0; i < atoms.Count(); i++ )  {

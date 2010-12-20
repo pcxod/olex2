@@ -1,7 +1,6 @@
 #ifndef __OLX_MATCH_MODE_H
 #define __OLX_MATCH_MODE_H
 
-
 class TMatchMode : public AMode  {
   TXAtomPList AtomsToMatch;
 protected:
@@ -50,8 +49,8 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
   TNetwork* netA = NULL, *netB = NULL;
   TSAtomPList atomsA, atomsB;
   if( AtomsToMatch.Count() >= 2 )  {
-    netA = &AtomsToMatch[0]->Atom().GetNetwork();
-    netB = &AtomsToMatch[1]->Atom().GetNetwork();
+    netA = &AtomsToMatch[0]->GetNetwork();
+    netB = &AtomsToMatch[1]->GetNetwork();
     if( netA->GetLattice() != netB->GetLattice() )  {  //match lattices
       atomsB.SetCapacity(netB->GetLattice().GetObjects().atoms.Count());
       atomsB.AddList(netB->GetLattice().GetObjects().atoms);
@@ -75,11 +74,11 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
   }
   if( &netA->GetLattice() == &netB->GetLattice() )  {
     for( size_t i=2; i < AtomsToMatch.Count(); i+=2 )  {
-      if( AtomsToMatch[i]->Atom().GetNetwork() != netA ||
-          AtomsToMatch[i+1]->Atom().GetNetwork() != netB )
+      if( AtomsToMatch[i]->GetNetwork() != netA ||
+        AtomsToMatch[i+1]->GetNetwork() != netB )
       {
-        if( AtomsToMatch[i]->Atom().GetNetwork() == netB &&
-            AtomsToMatch[i+1]->Atom().GetNetwork() == netA )
+        if( AtomsToMatch[i]->GetNetwork() == netB &&
+          AtomsToMatch[i+1]->GetNetwork() == netA )
         {
           AtomsToMatch.Swap(i, i+1);
         }
@@ -93,11 +92,11 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
   }
   else  {
     for( size_t i=2; i < AtomsToMatch.Count(); i+=2 )  {
-      if( AtomsToMatch[i]->Atom().GetNetwork().GetLattice() != netA->GetLattice() ||
-          AtomsToMatch[i+1]->Atom().GetNetwork().GetLattice() != netB->GetLattice() )
+      if( AtomsToMatch[i]->GetNetwork().GetLattice() != netA->GetLattice() ||
+        AtomsToMatch[i+1]->GetNetwork().GetLattice() != netB->GetLattice() )
       {
-        if( AtomsToMatch[i]->Atom().GetNetwork().GetLattice() == netB->GetLattice() &&
-            AtomsToMatch[i+1]->Atom().GetNetwork().GetLattice() == netA->GetLattice() )
+        if( AtomsToMatch[i]->GetNetwork().GetLattice() == netB->GetLattice() &&
+          AtomsToMatch[i+1]->GetNetwork().GetLattice() == netA->GetLattice() )
         {
           AtomsToMatch.Swap(i, i+1);
         }
@@ -111,7 +110,7 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
   }
 
   if( AtomsToMatch.Count() == 2 )  {
-    vec3d shift(AtomsToMatch[1]->Atom().crd()-AtomsToMatch[0]->Atom().crd());
+    vec3d shift(AtomsToMatch[1]->crd()-AtomsToMatch[0]->crd());
     for( size_t i=0; i < atomsA.Count(); i++ )
       atomsA[i]->crd() += shift;
     TNetPList na;
@@ -137,30 +136,30 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
     }
   }
   else if( AtomsToMatch.Count() == 4 )  {
-    vec3d orgn = AtomsToMatch[1]->Atom().crd();
-    vec3d vec1 = AtomsToMatch[3]->Atom().crd() - orgn;
-    vec3d vec2 = AtomsToMatch[2]->Atom().crd() - orgn;
+    vec3d orgn = AtomsToMatch[1]->crd();
+    vec3d vec1 = AtomsToMatch[3]->crd() - orgn;
+    vec3d vec2 = AtomsToMatch[2]->crd() - orgn;
     vec3d rv = vec1.XProdVec(vec2).Normalise();
     mat3d rm;
     olx_create_rotation_matrix(rm, rv, vec1.CAngle(vec2));
-    TransformAtoms(atomsA, rm, rm*AtomsToMatch[0]->Atom().crd()-orgn);
+    TransformAtoms(atomsA, rm, rm*AtomsToMatch[0]->crd()-orgn);
   }
   else if( AtomsToMatch.Count() == 6 )  {
-    vec3d rv((AtomsToMatch[1]->Atom().crd() - AtomsToMatch[3]->Atom().crd()).Normalise());
-    vec3d v1((AtomsToMatch[5]->Atom().crd() - AtomsToMatch[3]->Atom().crd()));
-    vec3d v2((AtomsToMatch[4]->Atom().crd() - AtomsToMatch[3]->Atom().crd()));
+    vec3d rv((AtomsToMatch[1]->crd() - AtomsToMatch[3]->crd()).Normalise());
+    vec3d v1((AtomsToMatch[5]->crd() - AtomsToMatch[3]->crd()));
+    vec3d v2((AtomsToMatch[4]->crd() - AtomsToMatch[3]->crd()));
     v1 = rv.Normal(v1);
     v2 = rv.Normal(v2);
     rv = v1.XProdVec(v2).Normalise();  // replacing the rotation vector for the one with correct orientation
     mat3d rm;
     olx_create_rotation_matrix(rm, rv, v1.CAngle(v2));
-    TransformAtoms(atomsA, rm, rm*AtomsToMatch[0]->Atom().crd()-AtomsToMatch[1]->Atom().crd());
+    TransformAtoms(atomsA, rm, rm*AtomsToMatch[0]->crd()-AtomsToMatch[1]->crd());
   }
   else  {
     TArrayList<AnAssociation2<TSAtom*,TSAtom*> > atoms(AtomsToMatch.Count()/2);
     for( size_t i=0; i < AtomsToMatch.Count(); i+=2 )  {
-      atoms[i/2].A() = &AtomsToMatch[i]->Atom();
-      atoms[i/2].B() = &AtomsToMatch[i+1]->Atom();
+      atoms[i/2].A() = AtomsToMatch[i];
+      atoms[i/2].B() = AtomsToMatch[i+1];
     }
     align::out ao = TNetwork::GetAlignmentInfo(atoms, false, TSAtom::weight_z);
     mat3d m;

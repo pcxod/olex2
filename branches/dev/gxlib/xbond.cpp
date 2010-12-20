@@ -39,7 +39,7 @@ TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName) :
   Params()[4] = 0.8;
   // the objects will be automatically deleted by the corresponding action collections
   if( FStaticObjects.IsEmpty() )  
-    CreateStaticObjects();
+    CreateStaticObjects(R);
   Label = new TXGlLabel(R, PLabelsCollectionName);
   Label->SetOffset((A().crd()+B().crd())/2);
   Label->SetVisible(false);
@@ -70,7 +70,7 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   if( FStaticObjects.IsEmpty() )  
-    CreateStaticObjects();
+    CreateStaticObjects(Parent);
   Label->SetFontIndex(Parent.GetScene().FindFontIndexForType<TXBond>());
   Label->Create();
   // find collection
@@ -174,7 +174,7 @@ void TXBond::Quality(const short Val)  {
 //..............................................................................
 void TXBond::ListDrawingStyles(TStrList &L){  return; }
 //..............................................................................
-void TXBond::CreateStaticObjects()  {
+void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   TGlMaterial GlM;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
   ValidateBondParams();
@@ -465,7 +465,7 @@ void TXBond::OnPrimitivesCleared()  {
 }
 //..............................................................................
 void TXBond::ValidateBondParams()  {
-  if( !FBondParams )  {
+  if( !FBondParams == NULL )  {
     FBondParams = &TGlRenderer::_GetStyles().NewStyle("BondParams", true);
     FBondParams->SetPersistent(true);
   }
