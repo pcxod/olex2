@@ -361,7 +361,7 @@ void TUnitCell::FindSymmEq() const  {
 size_t TUnitCell::GetPositionMultiplicity(const vec3d& p) const {
   size_t m=1;  // identity
   for( size_t i=1; i < Matrices.Count(); i++ )  {
-    vec3d v = Matrices[i]*p;
+    vec3d v = p - Matrices[i]*p;
     v -= v.Round<int>();
     if( v.IsNull(1e-3) )
       m++;
