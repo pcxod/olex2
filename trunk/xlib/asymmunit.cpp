@@ -1019,7 +1019,7 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
   vec3d crd(Params[1].ToDouble(), Params[2].ToDouble(), Params[3].ToDouble());
   if( Lattice != NULL )  {
     vec3d test_pos(crd);
-    if( Lattice->GetUnitCell().FindOverlappingAtom( test_pos, 0.3 ) != NULL )  {
+    if( Lattice->GetUnitCell().FindOverlappingAtom(test_pos, 0.3) != NULL )  {
       E.SetRetVal(-1);
       return;
     }
@@ -1047,6 +1047,7 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
   }
 
   TCAtom& ca = this->NewAtom();
+  ca.SetOccu(1./Lattice->GetUnitCell().GetPositionMultiplicity(crd));
   if( QPeakIndex != InvalidIndex )  {
     ca.SetLabel(qLabel << olxstr(QPeakIndex), false);
     ca.SetType(XElementLib::GetByIndex(iQPeakIndex));
@@ -1058,7 +1059,7 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
   }
   else
     ca.SetLabel(Params[0]);
-  E.SetRetVal( AtomCount() -1 );
+  E.SetRetVal(AtomCount() - 1);
   ca.AssignEllp(NULL);
 }
 //..............................................................................
