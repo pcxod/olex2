@@ -2588,9 +2588,9 @@ void TMainForm::macSump(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   RefinementModel& rm = FXApp->XFile().GetRM();
   int part = DefNoPart;
-  size_t partCount = Options.FindValue("p", "1").ToSizeT();
+  const size_t partCount = Options.FindValue("p", "1").ToSizeT();
   XLibMacros::ParseNumbers<int>(Cmds, 1, &part);
-  bool linkOccu = Options.Contains("lo");
+  const bool linkOccu = Options.Contains("lo");
 
   TXAtomPList Atoms;
   FindXAtoms(Cmds,Atoms, true, !Options.Contains("cs") );
@@ -2619,8 +2619,13 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         continue;
       for( size_t k=0; k <  Atoms[j]->NodeCount(); k++ )  {
         TSAtom& SA = Atoms[j]->Node(k);
-        if( SA.GetType() == iHydrogenZ )
+        if( SA.GetType() == iHydrogenZ )  {
+          // skip if the afix group already exists and not this one
+          if( SA.CAtom().GetParentAfixGroup() != NULL && 
+            SA.CAtom().GetParentAfixGroup()->GetPivot() != Atoms[j]->Atom().CAtom() )
+            continue;
           SA.CAtom().SetPart(part);
+        }
       }
       if( linkOccu )  {
         if( partCount == 2 )  {

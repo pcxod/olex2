@@ -334,6 +334,7 @@ public:
   TCAtom* FindCAtom(const vec3d& center) const;
   /* finds an atom within delta of the given position */
   TCAtom* FindOverlappingAtom(const vec3d& position, double delta) const;
+  size_t GetPositionMultiplicity(const vec3d& p) const;
 protected:
   class TSearchSymmEqTask  {
     TPtrList<TCAtom>& Atoms;

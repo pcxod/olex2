@@ -1012,14 +1012,25 @@ void TAsymmUnit::LibSetAtomU(const TStrObjList& Params, TMacroError& E)  {
 void TAsymmUnit::LibSetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  GetRefMod()->Vars.SetParam(GetAtom(index), catom_var_name_Sof, Params[1].ToDouble());
+  TCAtom& a = GetAtom(index);
+  const double val = Params[1].ToDouble();
+  XVarReference* vr = a.GetVarRef(catom_var_name_Sof);
+  if( vr != NULL && vr->relation_type != relation_None )  {  // should preserve the variable - smtbx
+    if( vr->relation_type == relation_AsVar )
+      vr->Parent.SetValue(val/vr->coefficient);
+    else if( vr->relation_type == relation_AsOneMinusVar )
+      vr->Parent.SetValue(1.0 - val/vr->coefficient);
+    a.SetOccu(val);
+  }
+  else
+    GetRefMod()->Vars.SetParam(a, catom_var_name_Sof, val);
 }
 //..............................................................................
 void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
   vec3d crd(Params[1].ToDouble(), Params[2].ToDouble(), Params[3].ToDouble());
   if( Lattice != NULL )  {
     vec3d test_pos(crd);
-    if( Lattice->GetUnitCell().FindOverlappingAtom( test_pos, 0.3 ) != NULL )  {
+    if( Lattice->GetUnitCell().FindOverlappingAtom(test_pos, 0.3) != NULL )  {
       E.SetRetVal(-1);
       return;
     }
@@ -1051,14 +1062,16 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
     ca.SetLabel(qLabel << olxstr(QPeakIndex), false);
     ca.SetType(XElementLib::GetByIndex(iQPeakIndex));
     ca.SetQPeak(qPeak);
-    GetRefMod()->Vars.SetParam(ca, catom_var_name_Sof, 11.0);
+    ca.SetOccu(1./Lattice->GetUnitCell().GetPositionMultiplicity(crd));
+    GetRefMod()->Vars.SetParam(ca, catom_var_name_Sof,
+      1./Lattice->GetUnitCell().GetPositionMultiplicity(crd));
     GetRefMod()->Vars.SetParam(ca, catom_var_name_Uiso, 0.5);
     for( short i=0; i < 3; i++ )
       GetRefMod()->Vars.SetParam(ca, catom_var_name_X+i, crd[i]);
   }
   else
     ca.SetLabel(Params[0]);
-  E.SetRetVal( AtomCount() -1 );
+  E.SetRetVal(AtomCount() - 1);
   ca.AssignEllp(NULL);
 }
 //..............................................................................
