@@ -1068,6 +1068,8 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         neighbours.Add(n);
       }
       for( size_t j=0; j < neighbours.Count(); j++ )  {
+        if( neighbours[j]->CAtom().GetPart() != atoms[i]->CAtom().GetPart() )
+          continue;
         neighbours[j]->SetTag(1);
         xapp.XFile().GetRM().Vars.FixParam(neighbours[j]->CAtom(), catom_var_name_Sof);
         if( var_val == 0 )  {
