@@ -53,11 +53,23 @@ void XVar::ToDataItem(TDataItem& item) const {
 //..............................................................................
 #ifndef _NO_PYTHON
 PyObject* XVar::PyExport(TPtrList<PyObject>& atoms)  {
+  size_t rc = 0;
+  for( size_t i=0; i < References.Count(); i++ )  {
+    if( References[i]->referencer.IsValid() )
+      rc++;
+  }
+  if( rc == 0 && this->GetId() != 0 )
+    return PythonExt::PyNone();
   PyObject* main = PyDict_New(), 
-    *refs = PyTuple_New(References.Count());
+    *refs = PyTuple_New(rc);
   PythonExt::SetDictItem(main, "value", Py_BuildValue("d", Value));
-  for( size_t i=0; i < References.Count(); i++ )
-    PyTuple_SetItem(refs, i, References[i]->PyExport(atoms));
+  if( rc != 0 )  {
+    rc = 0;
+    for( size_t i=0; i < References.Count(); i++ )  {
+      if( References[i]->referencer.IsValid() )
+        PyTuple_SetItem(refs, rc++, References[i]->PyExport(atoms));
+    }
+  }
   PythonExt::SetDictItem(main, "references", refs);
   return main;
 }

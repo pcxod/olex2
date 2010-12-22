@@ -153,7 +153,7 @@ bool TGlXApp::OnInit()  {
 //      BaseDir << "Resources/";
     #endif
 #if defined(_WIN64) && defined(_DEBUG)
-    XApp = new TGXApp(TBasicApp::GuessBaseDir(BaseDir, "OLEX2_64_DIR"));
+    XApp = new TGXApp(TBasicApp::GuessBaseDir(BaseDir, "OLEX2_DEBUG_DIR"));
 #else
     XApp = new TGXApp(TBasicApp::GuessBaseDir(BaseDir, "OLEX2_DIR"));
 #endif

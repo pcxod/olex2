@@ -738,7 +738,7 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
   // pre-set atom tags
   size_t aid=0;
   for( size_t i=0; i < CAtoms.Count(); i++ )
-    if( !CAtoms[i]->IsDeleted() )
+    if( !CAtoms[i]->IsDeleted() && CAtoms[i]->GetType() != iQPeakZ )
       CAtoms[i]->SetTag(aid++);
   size_t resi_cnt = 0;
   for( size_t i=0; i < ResidueCount(); i++ )  {
@@ -753,7 +753,7 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
     if( r.IsEmpty() )  continue;
     size_t atom_cnt = 0;
     for( size_t j=0; j < r.Count(); j++ )  {
-      if( r[j].IsDeleted() )  continue;
+      if( r[j].IsDeleted() || r[j].GetType() == iQPeakZ )  continue;
       atom_cnt++;
     }
     PyObject* atoms = PyTuple_New(atom_cnt), 
@@ -768,7 +768,7 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
     }
     atom_cnt = 0;
     for( size_t j=0; j < r.Count(); j++ )  {
-      if( r[j].IsDeleted() )  continue;
+      if( r[j].IsDeleted() || r[j].GetType() == iQPeakZ )  continue;
       PyObject* atom = _atoms.Add(r[j].PyExport());
       PythonExt::SetDictItem(atom, "aunit_id", Py_BuildValue("i", r[j].GetId()));
       PyTuple_SetItem(atoms, atom_cnt++, atom);
@@ -995,12 +995,33 @@ void TAsymmUnit::LibSetAtomU(const TStrObjList& Params, TMacroError& E)  {
   TCAtom& ca = GetAtom(index);
   if( (GetAtom(index).GetEllipsoid() != NULL) && (Params.Count() == 7) )  {
     double V[6];
-    for( int i=0; i < 6; i++ )
-      V[i] = GetRefMod()->Vars.SetParam(ca, catom_var_name_U11+i, Params[i+1].ToDouble());
-    ca.GetEllipsoid()->Initialise( V );
+    for( int i=0; i < 6; i++ )  {
+      XVarReference* vr = ca.GetVarRef(catom_var_name_U11+i);
+      const double val = Params[i+1].ToDouble();
+      if( vr != NULL )  {  // should preserve the variable - smtbx
+        if( vr->relation_type == relation_AsVar )
+          vr->Parent.SetValue(val/vr->coefficient);
+        else if( vr->relation_type == relation_AsOneMinusVar )
+          vr->Parent.SetValue(1.0 - val/vr->coefficient);
+        V[i] = val;
+      }
+      else
+        V[i] = GetRefMod()->Vars.SetParam(ca, catom_var_name_U11+i, val);
+    }
+    ca.GetEllipsoid()->Initialise(V);
   }
   else if( (ca.GetEllipsoid() == NULL) && (Params.Count() == 2) ) {
-    GetRefMod()->Vars.SetParam(ca, catom_var_name_Uiso, Params[1].ToDouble());
+    XVarReference* vr = ca.GetVarRef(catom_var_name_Uiso);
+    const double val = Params[1].ToDouble();
+    if( vr != NULL )  {  // should preserve the variable - smtbx
+      if( vr->relation_type == relation_AsVar )
+        vr->Parent.SetValue(val/vr->coefficient);
+      else if( vr->relation_type == relation_AsOneMinusVar )
+        vr->Parent.SetValue(1.0 - val/vr->coefficient);
+      ca.SetUiso(val);
+    }
+    else
+      GetRefMod()->Vars.SetParam(ca, catom_var_name_Uiso, val);
   }
   else {
     olxstr at = ca.GetEllipsoid() == NULL ? "isotropic" : "anisotropic";
@@ -1015,7 +1036,7 @@ void TAsymmUnit::LibSetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
   TCAtom& a = GetAtom(index);
   const double val = Params[1].ToDouble();
   XVarReference* vr = a.GetVarRef(catom_var_name_Sof);
-  if( vr != NULL && vr->relation_type != relation_None )  {  // should preserve the variable - smtbx
+  if( vr != NULL )  {  // should preserve the variable - smtbx
     if( vr->relation_type == relation_AsVar )
       vr->Parent.SetValue(val/vr->coefficient);
     else if( vr->relation_type == relation_AsOneMinusVar )
