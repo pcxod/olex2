@@ -59,7 +59,7 @@ public class Main {
     }
     System.out.println(s);
   }
-  public static String getFileHash(String fileName)  {
+  public synchronized static String getFileHash(String fileName)  {
     File file = new File(fileName);
     FileHash hash = FileHashes.get(fileName);
     if( hash != null )  {
