@@ -274,7 +274,8 @@ public class ClientHandler extends Thread {
     StringWriter _strw;
     PrintWriter pr = new PrintWriter(_strw = new StringWriter());
     pr.println("<html><head><title>CDS</title></head><body><table>");
-    pr.println("<tr><td>Name</td><td align='center'>Description</td><td>Last Modified</td><td>Size</td></tr>");
+    pr.println("<tr><td>Name</td><td align='center'>Description</td>"+
+      "<td>Last Modified</td><td>Size</td><td>MD5</td></tr>");
     for( int i=0; i < files.length; i++ )  {
       String name = files[i].isDirectory() ? files[i].getName().toUpperCase() :
         files[i].getName().toLowerCase();
@@ -284,14 +285,17 @@ public class ClientHandler extends Thread {
       pr.println("<tr><td><a href=\"" +
         files[i].getName() + 
         (files[i].isDirectory() ? "/" : "") + "\">" +
-        name + "</a></td><td>");
-      pr.print(mapping + "</td><td>");
-      pr.print((new java.text.SimpleDateFormat()).format(new Date(files[i].lastModified())) + "</td><td>");
-      if( files[i].isFile() )
+        name + "&nbsp;&nbsp;</a></td><td>");
+      pr.print(mapping + "&nbsp;&nbsp;</td><td>");
+      pr.print((new java.text.SimpleDateFormat()).format(new Date(files[i].lastModified())) +
+              "&nbsp;&nbsp;</td><td>");
+      if( files[i].isFile() )  {
         pr.print(files[i].length());
+        pr.print("&nbsp;&nbsp;</td><td>" + Main.getFileHash(files[i].getAbsolutePath()));
+      }
       else
-        pr.print(".");
-      pr.print("</td></tr>");
+        pr.print("&nbsp;&nbsp;</td>.<td>.");
+      pr.print("&nbsp;&nbsp;</td></tr>");
     }
     pr.println("</table>");
     pr.println("<hr><p><font size=-2>Continuous Download Server, (c) O. Dolomanov, 2010</font></p>" +
