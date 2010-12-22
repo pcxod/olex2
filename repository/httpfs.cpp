@@ -239,20 +239,19 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
       data_off = GetDataOffset(Buffer, ThisRead, crlf);
       if( data_off == 0 )  {
         TBasicApp::NewLogEntry(logInfo, true) << "Restarted download: header is to short, retrying";
-        if( _OnReadFailed(info, TotalRead) )  {
-          restarted = true;
-          continue;
-        }
+        if( _OnReadFailed(info, TotalRead) )
+          continue;  //try another attempt
         break;
       }
+      // get the info
       ResponseInfo new_info =
         ParseResponseInfo(olxcstr(Buffer, data_off), line_break, Source);
-      if( !new_info.HasData() )  {
-        delete allocation_info.file;
-        delete [] Buffer;
-        return NULL;
-      }
-      if( new_info != info  )  {  // have to restart...
+      if( !new_info.HasData() )
+        break;
+
+      if( TotalRead == 0 )  // 1. previously restarted from 2
+        info = new_info;
+      else if( new_info != info  )  {  // have to restart...
         TBasicApp::NewLogEntry(logInfo, true) << "Restarted download: info mismatch old={"
           << '(' << info.contentMD5 << ',' << info.contentLength <<
           "}, new={" << new_info.contentMD5 << ',' << new_info.contentLength << '}';
@@ -263,12 +262,15 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
           return NULL;
         }
         TotalRead = 0;
+        if( _OnReadFailed(info, TotalRead) )
+          continue;  // 2. continue to the same block to 1 re-init the header, restarted is true
+        break;
       }
       ThisRead = ThisRead-data_off-1;
       allocation_info.file->Write(&Buffer[data_off+1], ThisRead);
       Progress.SetPos(TotalRead+=ThisRead);
       OnProgress.Execute(this, &Progress);
-      restarted = false;
+      restarted = false;  //proceed to normal operation
       continue;
     }
     if( ThisRead <= 0 )  {
