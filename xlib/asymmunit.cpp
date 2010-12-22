@@ -738,7 +738,7 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
   // pre-set atom tags
   size_t aid=0;
   for( size_t i=0; i < CAtoms.Count(); i++ )
-    if( !CAtoms[i]->IsDeleted() )
+    if( !CAtoms[i]->IsDeleted() && CAtoms[i]->GetType() != iQPeakZ )
       CAtoms[i]->SetTag(aid++);
   size_t resi_cnt = 0;
   for( size_t i=0; i < ResidueCount(); i++ )  {
@@ -753,7 +753,7 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
     if( r.IsEmpty() )  continue;
     size_t atom_cnt = 0;
     for( size_t j=0; j < r.Count(); j++ )  {
-      if( r[j].IsDeleted() )  continue;
+      if( r[j].IsDeleted() || r[j].GetType() == iQPeakZ )  continue;
       atom_cnt++;
     }
     PyObject* atoms = PyTuple_New(atom_cnt), 
@@ -768,7 +768,7 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
     }
     atom_cnt = 0;
     for( size_t j=0; j < r.Count(); j++ )  {
-      if( r[j].IsDeleted() )  continue;
+      if( r[j].IsDeleted() || r[j].GetType() == iQPeakZ )  continue;
       PyObject* atom = _atoms.Add(r[j].PyExport());
       PythonExt::SetDictItem(atom, "aunit_id", Py_BuildValue("i", r[j].GetId()));
       PyTuple_SetItem(atoms, atom_cnt++, atom);

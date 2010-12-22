@@ -1373,10 +1373,16 @@ void TMainForm::StartupInit()  {
     try  { Dictionary.SetCurrentLanguage(DictionaryFile, "English");  }
     catch(...) {}
   }
+  // do the iterpreters job...
+  if( FXApp->Arguments.Count() >= 2 && FXApp->Arguments.GetLastString().EndsWith(".py") )  {
+    TStrList in;
+    in.LoadFromFile(FXApp->Arguments.GetLastString());
+    PythonExt::GetInstance()->RunPython(in.Text('\n'));
+  }
   ProcessMacro("onstartup", __OlxSrcInfo);
   ProcessMacro("user_onstartup", __OlxSrcInfo);
-  if( FXApp->Arguments.Count() == 2 )
-    ProcessMacro(olxstr("reap \'") << FXApp->Arguments[1] << '\'', __OlxSrcInfo);
+  if( FXApp->Arguments.Count() >= 2 )
+    ProcessMacro(olxstr("reap \'") << FXApp->Arguments.Text(' ', 1) << '\'', __OlxSrcInfo);
   // load html in last cal - it might call some destructive functions on uninitialised data
   FHtml->LoadPage(FHtmlIndexFile.u_str());
   FHtml->SetHomePage(FHtmlIndexFile);
