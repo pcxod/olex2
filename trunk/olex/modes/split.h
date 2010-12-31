@@ -17,7 +17,7 @@ protected:
         if( EsdlInstanceOf(sel[i], TXAtom) )  {
           cr += ((TXAtom&)sel[i]).GetCenter();
           cr += ((TXAtom&)sel[i]).Atom().crd();
-          atoms.Add( (TXAtom&)sel[i] );
+          atoms.Add((TXAtom&)sel[i]);
         }
       }
       //if( atoms.Count() > 1 )  {
@@ -95,7 +95,9 @@ public:
       int part = xa.Atom().CAtom().GetPart();
       if( part == 0 )  part ++;
       xa.Atom().CAtom().SetPart(part);
+      xa.Atom().CAtom().SetOccu(0.75);
       xb.Atom().CAtom().SetPart(part+1);
+      xb.Atom().CAtom().SetOccu(0.25);
       TSimpleRestraint* sr = NULL;
       if( ReCon.IsEmpty() );
       else if( ReCon == "eadp" )
