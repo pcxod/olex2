@@ -58,7 +58,7 @@ protected:
       return contentLength == i.contentLength &&
              contentMD5 == i.contentMD5;
     }
-    bool operator != (const ResponseInfo& i) const {  return this->operator == (i);  }
+    bool operator != (const ResponseInfo& i) const {  return !(this->operator == (i));  }
     // does basic checks to identify if any data is attached
     bool HasData() const {
       return (contentLength != ~0 && IsOK() && headers.HasKey("ETag"));

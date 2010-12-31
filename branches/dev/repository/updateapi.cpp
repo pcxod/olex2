@@ -320,7 +320,7 @@ AFileSystem* UpdateAPI::FSFromString(const olxstr& _repo, const olxstr& _proxy) 
         url.SetProxy( _proxy );
       if( url.GetProtocol() == "http" )  {
         TSocketFS* _fs = new TSocketFS(url);
-        _fs->SetExtraHeaders(httpHeaderPlatform|httpHeaderESession);
+        _fs->SetExtraHeaders(httpHeaderPlatform);
         FS = _fs;
       }
 #ifdef __WXWIDGETS__

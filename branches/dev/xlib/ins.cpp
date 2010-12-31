@@ -327,7 +327,13 @@ void TIns::_ProcessAfix0(ParseContext& cx)  {
     }
     if( cx.AfixGroups.Current().GetB()->GetPivot() == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "undefined pivot atom for a fitted group");
-    while( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Current().GetA() <= 0 )  // pop all out  
+    // pop all complete
+    size_t po = 0;
+    while( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Current().GetA() == 0 )  {
+      cx.AfixGroups.Pop();
+      po++;
+    }
+    if( po == 0 )  //pop last then
       cx.AfixGroups.Pop();
   }
 }

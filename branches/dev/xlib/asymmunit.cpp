@@ -908,8 +908,19 @@ void TAsymmUnit::LibSetAtomCrd(const TStrObjList& Params, TMacroError& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   TCAtom& ca = GetAtom(index);
-  for( int i=0; i < 3; i++ )
-    GetRefMod()->Vars.SetParam(ca, catom_var_name_X+i, Params[i+1].ToDouble());
+  for( int i=0; i < 3; i++ )  {
+    XVarReference* vr = ca.GetVarRef(catom_var_name_X+i);
+    const double val = Params[i+1].ToDouble();
+    if( vr != NULL )  {  // should preserve the variable - smtbx
+      if( vr->relation_type == relation_AsVar )
+        vr->Parent.SetValue(val/vr->coefficient);
+      else if( vr->relation_type == relation_AsOneMinusVar )
+        vr->Parent.SetValue(1.0 - val/vr->coefficient);
+      ca.ccrd()[i] = val;
+    }
+    else
+      GetRefMod()->Vars.SetParam(ca, catom_var_name_X+i, val);
+  }
   E.SetRetVal(true);
 }
 //..............................................................................

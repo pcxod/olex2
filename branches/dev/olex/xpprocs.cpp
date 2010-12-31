@@ -3209,7 +3209,7 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
     TCAtomPList qpeaks;
     for( size_t i=0; i < au.AtomCount(); i++ )
-      if( au.GetAtom(i).GetType() == iQPeakZ )
+      if( !au.GetAtom(i).IsDeleted() && au.GetAtom(i).GetType() == iQPeakZ )
         qpeaks.Add(au.GetAtom(i));
     qpeaks.QuickSorter.SortSF(qpeaks, TMainForm_macShowQ_QPeakSortA);
     index_t d_cnt = 0;
