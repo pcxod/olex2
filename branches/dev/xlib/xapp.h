@@ -53,6 +53,8 @@ protected:
 protected:
   virtual bool CheckProgramState(unsigned int specialCheck);
   void ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last);
+  TXApp(const olxstr &basedir, bool dummy);
+  void Init(ASObjectProvider* objectProvider=NULL, ASelectionOwner* selOwner=NULL);
 public:
   TXApp(const olxstr &basedir, ASObjectProvider* objectProvider=NULL, ASelectionOwner* selOwner=NULL);
   virtual ~TXApp();

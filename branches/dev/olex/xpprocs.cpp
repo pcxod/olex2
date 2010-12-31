@@ -2622,7 +2622,7 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         if( SA.GetType() == iHydrogenZ )  {
           // skip if the afix group already exists and not this one
           if( SA.CAtom().GetParentAfixGroup() != NULL && 
-            SA.CAtom().GetParentAfixGroup()->GetPivot() != Atoms[j]->Atom().CAtom() )
+            SA.CAtom().GetParentAfixGroup()->GetPivot() != Atoms[j]->CAtom() )
             continue;
           SA.CAtom().SetPart(part);
         }

@@ -105,8 +105,8 @@ public:
       for( size_t i=0; i < group->Count(); i++ )  {
         if( EsdlInstanceOf(group->GetObject(i), TXAtom) )  {
           TXAtom* xa = Atoms.Add((TXAtom&)group->GetObject(i));
-          xa->Atom().CAtom().ccrd() = xa->Atom().crd();
-          xa->Atom().ccrd() = au.CartesianToCell(xa->Atom().CAtom().ccrd());
+          xa->CAtom().ccrd() = xa->crd();
+          xa->ccrd() = au.CartesianToCell(xa->CAtom().ccrd());
         }
       }
       group->Update();

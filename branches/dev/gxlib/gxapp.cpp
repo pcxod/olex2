@@ -238,7 +238,7 @@ enum  {
   ID_OnFileClose
 };
 
-TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, NULL, this),
+TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, true),
   OnGraphicsVisible(NewActionQueue("GRVISIBLE")),
   OnFragmentVisible(NewActionQueue("FRVISIBLE")),
   OnAllVisible(NewActionQueue("ALLVISIBLE")),
@@ -263,6 +263,7 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, NULL, this),
 //  TWGlScene *GlScene = new TWGlScene;
 //  TGlScene *GlScene = new TGlScene;
   FGlRender = new TGlRenderer(GlScene, 1,1);
+  TXApp::Init(new XObjectProvider(*FGlRender), this);
   FDFrame = new TDFrame(*FGlRender, "DFrame");
   Fader = new TXFader(*FGlRender, "Fader");
   FDFrame->OnSelect.Add(this, ID_OnSelect);
@@ -415,6 +416,7 @@ void TGXApp::CreateObjects(bool centerModel)  {
   ObjectCaster<TSBond,TXBond> latt_bonds = XFile().GetLattice().GetObjects().bonds.GetAccessor<TXBond>();
   for( size_t i=0; i < latt_bonds.Count(); i++ )  {
     TXBond& xb = latt_bonds[i];
+    xb.Update();
     xb.Create(TXBond::GetLegend(xb, 2));
   }
   for( size_t i=0; i < OverlayedXFiles.Count(); i++ )  {
@@ -1366,7 +1368,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
         ObjectsStored = true;
       }
       //FGlRender->Clear();
-      ClearXObjects();
+      //ClearXObjects();
     }
     else if( MsgSubId == msiExit )  {
       //GetRender().SetBasis(basis);

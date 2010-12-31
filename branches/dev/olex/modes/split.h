@@ -6,7 +6,7 @@ enum {
   mode_split_ObjectsCreate
 };
 class TSplitMode : public AEventsDispatcher, public AMode  {
-  TTypeList<AnAssociation2<size_t,size_t> > SplitAtoms;
+  TTypeList<AnAssociation2<TXAtom*,TXAtom*> > SplitAtoms;
 protected:
   void UpdateSelectionCrds() const {
     TGlGroup& sel = TGlXApp::GetGXApp()->GetSelection();
@@ -90,17 +90,17 @@ public:
     TCAtomPList to_isot;
     XVar& xv = rm.Vars.NewVar(0.5);
     for( size_t i=0; i < SplitAtoms.Count(); i++ )  {
-      TXAtom& xa = app.GetAtom(SplitAtoms[i].GetA());
-      TXAtom& xb = app.GetAtom(SplitAtoms[i].GetB());
-      to_isot.Add(xa.Atom().CAtom());
-      rm.Vars.AddVarRef(xv, xa.Atom().CAtom(), catom_var_name_Sof, relation_AsVar, 1.0);
-      rm.Vars.AddVarRef(xv, xb.Atom().CAtom(), catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
-      int part = xa.Atom().CAtom().GetPart();
+      TXAtom& a = *SplitAtoms[i].GetA();
+      TXAtom& b = *SplitAtoms[i].GetB();
+      to_isot.Add(a.CAtom());
+      rm.Vars.AddVarRef(xv, a.CAtom(), catom_var_name_Sof, relation_AsVar, 1.0);
+      rm.Vars.AddVarRef(xv, b.CAtom(), catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
+      int part = a.CAtom().GetPart();
       if( part == 0 )  part ++;
-      xa.Atom().CAtom().SetPart(part);
-      xa.Atom().CAtom().SetOccu(0.75);
-      xb.Atom().CAtom().SetPart(part+1);
-      xb.Atom().CAtom().SetOccu(0.25);
+      a.CAtom().SetPart(part);
+      a.CAtom().SetOccu(0.75);
+      b.CAtom().SetPart(part+1);
+      b.CAtom().SetOccu(0.25);
       TSimpleRestraint* sr = NULL;
       if( ReCon.IsEmpty() );
       else if( ReCon == "eadp" )
@@ -110,15 +110,16 @@ public:
       else if( ReCon == "simu" )
         sr = &rm.rSIMU.AddNew();
       if( sr != NULL )
-        sr->AddAtomPair(xa.Atom().CAtom(), NULL, xb.Atom().CAtom(), NULL);
+        sr->AddAtomPair(a.CAtom(), NULL, b.CAtom(), NULL);
     }
     app.XFile().GetLattice().SetAnis(to_isot, false);
   }
   virtual bool Dispatch(int msg, short id, const IEObject* Sender, const IEObject* Data=NULL)  {  
     TGXApp& app = *TGlXApp::GetGXApp();
     if( msg == mode_split_ObjectsCreate )  {
-      for( size_t i=0; i < app.AtomCount(); i++ )
-        app.GetAtom(i).SetMoveable(true);
+      TGXApp::AtomIterator ai = app.GetAtoms();
+      while( ai.HasNext() )
+        ai.Next().SetMoveable(true);
     }
     else if( msg == mode_split_Disassemble )  {
       UpdateCrds();
@@ -130,7 +131,7 @@ public:
       TXAtom *XA = &(TXAtom&)obj;
       bool split = true;
       for( size_t i=0; i < SplitAtoms.Count(); i++ )
-        if( SplitAtoms[i].A() == XA->GetXAppId() || SplitAtoms[i].B() == XA->GetXAppId() )  {
+        if( SplitAtoms[i].A() == XA || SplitAtoms[i].B() == XA )  {
           split = false;
           break;
         }
@@ -139,25 +140,25 @@ public:
         if( xa != NULL )  {
           xa->SetMoveable(true);
           xa->SetRoteable(true);
-          SplitAtoms.AddNew(XA->GetXAppId(), xa->GetXAppId());
-          int part = XA->Atom().CAtom().GetPart();
+          SplitAtoms.AddNew(XA, xa);
+          int part = XA->CAtom().GetPart();
           if( part == 0 )  part ++;
-          XA->Atom().CAtom().SetPart(part);
-          xa->Atom().CAtom().SetPart(part+1);
-          xa->Atom().crd() += 0.5;
-          vec3d c = xa->Atom().crd();
+          XA->CAtom().SetPart(part);
+          xa->CAtom().SetPart(part+1);
+          xa->crd() += 0.5;
+          vec3d c = xa->crd();
           TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CartesianToCell(c);
-          xa->Atom().CAtom().ccrd() = c;
-          xa->Atom().ccrd() = c;
-          olxstr new_l = XA->Atom().GetLabel();
+          xa->CAtom().ccrd() = c;
+          xa->ccrd() = c;
+          olxstr new_l = XA->GetLabel();
           olxch lc = olxstr::o_tolower(new_l.GetLast() );
           if( lc >= 'a' && lc <= 'z' )
             new_l[new_l.Length()-1] = ++lc;
           else
             new_l << 'a';
-          xa->Atom().CAtom().SetLabel(TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CheckLabel(&xa->Atom().CAtom(), new_l), false);
-          if( xa->Atom().GetType() == iQPeakZ )
-            xa->Atom().CAtom().SetQPeak(1.0);
+          xa->CAtom().SetLabel(TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CheckLabel(&xa->CAtom(), new_l), false);
+          if( xa->GetType() == iQPeakZ )
+            xa->CAtom().SetQPeak(1.0);
           TGlXApp::GetGXApp()->XFile().GetLattice().UpdateConnectivity();
         }
       }

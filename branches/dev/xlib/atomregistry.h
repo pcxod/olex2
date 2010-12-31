@@ -20,7 +20,7 @@ public:
   virtual void Null(size_t i) = 0;
   virtual void Pack() = 0;
   virtual void IncCapacity(size_t v) = 0;
-  inline bool IsEmpty() const {  return Count() != 0;  }
+  inline bool IsEmpty() const {  return Count() == 0;  }
   template <class Functor> const TIObjectProvider& ForEach(const Functor& f) const {
     for( size_t i=0; i < Count(); i++ )
       f.OnItem(Get(i), i);

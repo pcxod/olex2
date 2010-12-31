@@ -156,7 +156,7 @@ public:
   };
   struct AtomIterator : public TIterator<TSAtom, TXAtom>  {
     AtomIterator(const TGXApp& app)  {
-      objects.Add(app.XFile().GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
+      objects.AddCCopy(app.XFile().GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
         objects.Add(app.OverlayedXFiles[i].GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
@@ -166,7 +166,7 @@ public:
   };
   struct BondIterator : public TIterator<TSBond, TXBond>  {
     BondIterator(const TGXApp& app)  {
-      objects.Add(app.XFile().GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
+      objects.AddCCopy(app.XFile().GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
         objects.Add(app.OverlayedXFiles[i].GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
@@ -176,7 +176,7 @@ public:
   };
   struct PlaneIterator : public TIterator<TSPlane, TXPlane>  {
     PlaneIterator(const TGXApp& app)  {
-      objects.Add(app.XFile().GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
+      objects.AddCCopy(app.XFile().GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
         objects.Add(app.OverlayedXFiles[i].GetLattice().GetObjects().planes.GetAccessor<TXPlane>());

@@ -11,7 +11,7 @@ protected:
     size_t LabelIndex;
   public:
     TFixUModeUndo(TXAtom* XA) : TUndoData(new TUndoActionImplMF<TFixUModeUndo>(this, &TFixUModeUndo::undo)),
-      Atom(XA->Atom().CAtom()), LabelIndex(XA->GetXAppId())
+      Atom(XA->CAtom()), LabelIndex(XA->GetLattId())
     {
       RefinementModel& rm = *Atom.GetParent()->GetRefMod();
       Uiso = rm.Vars.ReleaseRef(Atom, catom_var_name_Uiso);
@@ -57,12 +57,12 @@ public:
     if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;
       TGlXApp::GetMainForm()->GetUndoStack()->Push(new TFixUModeUndo(&XA));
-      RefinementModel& rm = *XA.Atom().CAtom().GetParent()->GetRefMod();
-      if( XA.Atom().CAtom().GetEllipsoid() == NULL )
-        TXApp::GetInstance().SetAtomUiso(XA.Atom(), Val);
+      RefinementModel& rm = *XA.CAtom().GetParent()->GetRefMod();
+      if( XA.CAtom().GetEllipsoid() == NULL )
+        TXApp::GetInstance().SetAtomUiso(XA, Val);
       else  {
         for( int i=0; i < 6; i++ )
-          rm.Vars.FixParam(XA.Atom().CAtom(), catom_var_name_U11+i);
+          rm.Vars.FixParam(XA.CAtom(), catom_var_name_U11+i);
       }
       TGlXApp::GetGXApp()->MarkLabel(XA, true);
       return true;

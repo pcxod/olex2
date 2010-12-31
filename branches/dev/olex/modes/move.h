@@ -11,7 +11,7 @@ public:
     Copy = Options.Contains('c');
     TXAtomPList Atoms = TGlXApp::GetGXApp()->FindXAtoms(Cmds.Text(' '), true);
     for( size_t i=0; i < Atoms.Count(); i++ )
-      Center += Atoms[i]->Atom().ccrd();
+      Center += Atoms[i]->ccrd();
     if( Atoms.Count() != 0 )
       Center /= Atoms.Count();
     TGlXApp::GetMainForm()->executeMacro("cursor(hand)");

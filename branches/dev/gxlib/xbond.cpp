@@ -35,13 +35,13 @@ TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName) :
 {
   SetGroupable(true);
   Params().Resize(5);
-  Update();
+  //Update();
   Params()[4] = 0.8;
   // the objects will be automatically deleted by the corresponding action collections
-  if( FStaticObjects.IsEmpty() )  
-    CreateStaticObjects(R);
+  //if( FStaticObjects.IsEmpty() )  
+  //  CreateStaticObjects(R);
   Label = new TXGlLabel(R, PLabelsCollectionName);
-  Label->SetOffset((A().crd()+B().crd())/2);
+  //Label->SetOffset((A().crd()+B().crd())/2);
   Label->SetVisible(false);
 }
 //..............................................................................
@@ -465,7 +465,7 @@ void TXBond::OnPrimitivesCleared()  {
 }
 //..............................................................................
 void TXBond::ValidateBondParams()  {
-  if( !FBondParams == NULL )  {
+  if( FBondParams == NULL )  {
     FBondParams = &TGlRenderer::_GetStyles().NewStyle("BondParams", true);
     FBondParams->SetPersistent(true);
   }

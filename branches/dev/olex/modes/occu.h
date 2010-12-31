@@ -11,7 +11,7 @@ protected:
     size_t LabelIndex;
   public:
     TOccuModeUndo(TXAtom* XA) : TUndoData(new TUndoActionImplMF<TOccuModeUndo>(this, &TOccuModeUndo::undo)),
-      Atom(XA->Atom().CAtom()), LabelIndex(XA->GetXAppId())
+      Atom(XA->CAtom()), LabelIndex(XA->GetLattId())
     {
       Occu = Atom.GetParent()->GetRefMod()->Vars.GetParam(Atom, catom_var_name_Sof);
     }
@@ -38,8 +38,8 @@ public:
     if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;
       TGlXApp::GetMainForm()->GetUndoStack()->Push(new TOccuModeUndo(&XA));
-      XA.Atom().CAtom().GetParent()->GetRefMod()->Vars.SetParam(
-        XA.Atom().CAtom(), catom_var_name_Sof, Occu);
+      XA.CAtom().GetParent()->GetRefMod()->Vars.SetParam(
+        XA.CAtom(), catom_var_name_Sof, Occu);
       TGlXApp::GetGXApp()->MarkLabel(XA, true);
       return true;
     }

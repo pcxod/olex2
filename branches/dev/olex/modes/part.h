@@ -11,7 +11,7 @@ protected:
     size_t LabelIndex;
   public:
     TPartModeUndo(TXAtom* XA) : TUndoData( new TUndoActionImplMF<TPartModeUndo>(this, &TPartModeUndo::undo)),
-      Atom(XA->Atom().CAtom()), LabelIndex(XA->GetXAppId())
+      Atom(XA->CAtom()), LabelIndex(XA->GetLattId())
     {
       Part = Atom.GetPart();
     }
@@ -38,7 +38,7 @@ public:
     if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;
       TGlXApp::GetMainForm()->GetUndoStack()->Push(new TPartModeUndo(&XA));
-      XA.Atom().CAtom().SetPart(Part);
+      XA.CAtom().SetPart(Part);
       TGlXApp::GetGXApp()->MarkLabel(XA, true);
       return true;
     }

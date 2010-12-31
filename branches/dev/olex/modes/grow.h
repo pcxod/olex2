@@ -49,8 +49,8 @@ public:
     }
     else if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& a = (TXAtom&)obj;
-      if( !a.Atom().IsGrown() )
-        latt.GrowAtom(a.Atom(), GrowShells, NULL);
+      if( !a.IsGrown() )
+        latt.GrowAtom(a, GrowShells, NULL);
       return true;
     }
     else

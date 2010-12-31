@@ -15,10 +15,16 @@
 #include "maputil.h"
 #include "vcov.h"
 
+TXApp::TXApp(const olxstr &basedir, bool) : TBasicApp(basedir), Library(EmptyString, this)  {}
+//..............................................................................
 TXApp::TXApp(const olxstr &basedir, ASObjectProvider* objectProvider, ASelectionOwner* selOwner) :
-  SelectionOwner(selOwner),
   TBasicApp(basedir), Library(EmptyString, this)
 {
+  Init(objectProvider, selOwner);
+}
+//..............................................................................
+void TXApp::Init(ASObjectProvider* objectProvider, ASelectionOwner* selOwner)  {
+  SelectionOwner = selOwner;
   try  {
     if( !TSymmLib::IsInitialised() )
       TEGC::AddP(new TSymmLib(GetBaseDir() + "symmlib.xld"));
