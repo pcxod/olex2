@@ -227,7 +227,7 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error)  {
     return;
   }
   //..... macro processing
-  TEMacro* macro = FindMacro( Command );
+  TEMacro* macro = FindMacro(Command);
   if( macro == NULL )  {  // macro does not exist
     if( Command.FirstIndexOf('(') != InvalidIndex )  {
       if( !ProcessFunction(Command, Error, false) )
@@ -236,7 +236,7 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error)  {
         Error.GetStack().Pop();
     }
     else
-      Error.NonexitingMacroError( Command );
+      Error.NonexitingMacroError(Command);
     return;
   }
   TStrList onAbort, onTerminate, onListen;
