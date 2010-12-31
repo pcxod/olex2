@@ -30,19 +30,13 @@
   #define olx_wcscmpn  wcsncmp
   #if defined(__MAC__)
     static int olx_wcscmpni(const wchar_t* s1, const wchar_t* s2, size_t len)  {
-	  for( size_t i=0; i < len; i++ )  {
-      if( s1[i] != s2[i] )  {
-	      if( isalpha(s1[i]) && isalpha(s2[i]) )  {
-          const int diff = towupper(s1[i]) - towupper(s2[i]); 
-	        if( diff != 0 )
-            return diff; 
-        }
-        else
-          return s1[i] - s2[i];
-      }
-	  }
-	  return 0;
-  } 
+	    for( size_t i=0; i < len; i++ )  {
+        const int diff = towlower(s1[i]) - towlower(s2[i]); 
+	      if( diff != 0 )
+          return diff; 
+  	  }
+	    return 0;
+    } 
   #else
     #define olx_wcscmpni wcsncasecmp
   #endif
@@ -405,76 +399,83 @@ public:
     return str1.CommonSubString(str2);
   }
   //............................................................................
+  /* to avoid any potential problems this function should be used for the all string comparison
+  because the system functions may use locale to do locale specific sorting and since some
+  procedures WILL call this function in some sytuations, the sorted search may fail and 
+  cause all possible errors */
   template <typename OC, typename AC> static int o_memcmp(const OC* wht, const AC* with, size_t len) {
     for( size_t i=0; i < len; i++ )
-      if( wht[i] != with[i])  return wht[i]-with[i];
+      if( wht[i] != with[i])
+        return wht[i]-with[i];
     return 0;
   }
-  static int o_memcmp(const char* wht, const char* with, size_t len) {
-    return olx_strcmpn(wht, with, len);
-  }
-  static int o_memcmp(const wchar_t* wht, const wchar_t* with, size_t len) {
-    return olx_wcscmpn(wht, with, len);
-  }
+  //static int o_memcmp(const char* wht, const char* with, size_t len) {
+  //   return olx_strcmpn(wht, with, len);
+  //}
+  //static int o_memcmp(const wchar_t* wht, const wchar_t* with, size_t len) {
+  //  return olx_wcscmpn(wht, with, len);
+  //}
+  /* read comment to o_memcmp */
   template <typename OC, typename AC> static int o_memcmpi(const OC* wht, const AC* with, size_t len) {
     for( size_t i=0; i < len; i++ )  {
-      if( wht[i] != with[i] )  {
-        if( o_isalpha(wht[i]) && o_isalpha(with[i]) )  {
-          if( o_toupper(wht[i]) != o_toupper(with[i]))
-            return (o_toupper(wht[i])-o_toupper(with[i]));
-        }
-        else
-          return (wht[i]-with[i]);
-      }
+      const int diff = o_tolower(wht[i])-o_tolower(with[i]);
+      if( diff != 0 )
+        return diff;
     }
     return 0;
   }
-  static int o_memcmpi(const char* wht, const char* with, size_t len) {
-    return olx_strcmpni(wht, with, len);
-  }
-  static int o_memcmpi(const wchar_t* wht, const wchar_t* with, size_t len) {
-    return olx_wcscmpni(wht, with, len);
-  }
+  //static int o_memcmpi(const char* wht, const char* with, size_t len) {
+  //  return olx_strcmpni(wht, with, len);
+  //}
+  //static int o_memcmpi(const wchar_t* wht, const wchar_t* with, size_t len) {
+  //  return olx_wcscmpni(wht, with, len);
+  //}
   template <typename OC, typename AC>
-  static int o_strcmp(const OC* wht, size_t len_a, const AC* with, size_t len_b, bool CI) {
+  static int o_strcmp(const OC* wht, size_t len_a, const AC* with, size_t len_b) {
     if( len_a == len_b )  {
       if( len_a == 0 )  return 0;
-      return CI ? o_memcmpi(wht, with, len_a) : o_memcmp(wht, with, len_a);
+      return o_memcmp(wht, with, len_a);
     }
     if( len_a == 0 )  return -1;
     if( len_b == 0 )  return 1;
-    int res = CI ? o_memcmpi(wht, with, olx_min(len_a, len_b)) :
-                   o_memcmp(wht, with, olx_min(len_a, len_b));
-    if( res != 0 )  return res;
-    if( len_a < len_b )  return -1;
-    return 1;
+    const int res = o_memcmp(wht, with, olx_min(len_a, len_b));
+    return (res != 0 ? res : (len_a < len_b ? -1 : 1));
   }
-  int Compare(const TTSString& v) const { return o_strcmp(T::Data(), T::_Length, v.Data(), v._Length, false );  }
-  int Compare(const char& v) const { 
-    if( T::_Length == 0 )  return -1;
-    const int df = T::Data()[0] - v;
-    return df != 0 ? df : (T::_Length == 1 ? 0 : 1);
+  template <typename OC, typename AC>
+  static int o_strcmpi(const OC* wht, size_t len_a, const AC* with, size_t len_b) {
+    if( len_a == len_b )  {
+      if( len_a == 0 )  return 0;
+      return o_memcmpi(wht, with, len_a);
+    }
+    if( len_a == 0 )  return -1;
+    if( len_b == 0 )  return 1;
+    const int res = o_memcmpi(wht, with, olx_min(len_a, len_b));
+    return (res != 0 ? res : (len_a < len_b ? -1 : 1));
   }
+  int Compare(const TTSString& v) const { return o_strcmp(T::Data(), T::_Length, v.Data(), v._Length);  }
   int Compare(const wchar_t& v) const { 
     if( T::_Length == 0 )  return -1;
     const int df = T::Data()[0] - v;
     return df != 0 ? df : (T::_Length == 1 ? 0 : 1);
   }
-  template <typename AC>
-    int Compare(const AC* v) const { return o_strcmp(T::Data(), T::_Length, v, o_strlen(v), false );  }
-  int Comparei(const TTSString& v) const { return o_strcmp(T::Data(), T::_Length, v.Data(), v._Length, true );  }
-  int Comparei(const char& v) const { 
-    if( T::_Length == 0 )  return -1;
-    const int df = o_toupper(T::Data()[0]) - o_toupper(v);
-    return df != 0 ? df : (T::_Length == 1 ? 0 : 1);
-  }
+  int Compare(const char& v) const {  return Compare((wchar_t)v);  }
+  int Compare(const char* v) const { return o_strcmp(T::Data(), T::_Length, v, o_strlen(v));  }
+  int Compare(const wchar_t* v) const { return o_strcmp(T::Data(), T::_Length, v, o_strlen(v));  }
+  int Comparei(const TTSString& v) const { return o_strcmpi(T::Data(), T::_Length, v.Data(), v._Length);  }
   int Comparei(const wchar_t& v) const { 
     if( T::_Length == 0 )  return -1;
-    const int df = o_toupper(T::Data()[0]) - o_toupper(v);
+    int df = 0;
+    if( T::Data()[0] != v )  {
+      if( o_isalpha(T::Data()[0]) && o_isalpha(v) )
+        df = o_toupper(T::Data()[0]) - o_toupper(v);
+      else
+        df = T::Data()[0] - v;
+    }
     return df != 0 ? df : (T::_Length == 1 ? 0 : 1);
   }
-  template <typename AC>
-    int Comparei(const AC* v) const { return o_strcmp(T::Data(), T::_Length, v, o_strlen(v), true );  }
+  int Comparei(const char& v) const {  return Comparei((wchar_t)v);  }
+  int Comparei(const char* v) const {  return o_strcmpi(T::Data(), T::_Length, v, o_strlen(v));  }
+  int Comparei(const wchar_t* v) const {  return o_strcmpi(T::Data(), T::_Length, v, o_strlen(v));  }
   template <typename AC>
     bool Equals(const AC& v) const {  return Compare(v) == 0;  }
   template <typename AC>
