@@ -112,16 +112,16 @@ public:
     return rv;
   }
   template <class List>  // one of the type_list
-  static List GenerateFragCrds(int frag_id, List& rv)  {
+  static List& GenerateFragCrds(int frag_id, List& rv)  {
     if( frag_id == frag_id_cp )
       GenerateRegularRing(5, 0.5*1.42/cos(54*M_PI/180), rv);
     else if( frag_id == frag_id_ph )
       GenerateRegularRing(6, 1.39, rv);
     else if( frag_id == frag_id_naphthalene )  {
       GenerateRegularRing(6, 1.39, rv);
-      GenerateRegularRing(6, 1.39, rv);
-      rv.Delete(7);
-      rv.Delete(7);
+      rv.AddCCopy(rv[0]);
+      for( size_t i=3; i < 6; i++ )
+        rv.AddCCopy(rv[i]);
       const vec3d t = (rv[4]+rv[5]).NormaliseTo(1.39*2*cos(M_PI/6));
       for( size_t i=6; i < rv.Count(); i++ )
         rv[i] += t;
