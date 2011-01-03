@@ -70,6 +70,7 @@ public:
     TSObject<Net>::Type = sotBBond;
   }
   virtual ~TBasicBond() {}
+  bool IsValid() const {  return FA != NULL && FB != NULL;  }
   Node& A() const {  return *FA;  }
   void SetA(Node& a) {  FA = &a;  OnAtomSet();  }
 

@@ -846,12 +846,12 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent, b
         }
       }
       else  {
-        //AddSPlane(rv.Add(Plane));
+        rv.Add(Plane);
         Plane->_SetDefId(PlaneDefs.Count()-1);
       }
     }
     else
-      delete Plane;
+      Objects.planes.DeleteLast();
   }
   return rv;
 }
@@ -878,9 +878,9 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, double weightExtent)  {
       Points.AddNew(atoms[i], 1);
   }
 
-  TSPlane* Plane = new TSPlane(Network);
-  Plane->Init(Points);
-  return Plane;
+  TSPlane& Plane = Objects.planes.New(Network);
+  Plane.Init(Points);
+  return &Plane;
 }
 //..............................................................................
 void TLattice::UpdatePlaneDefinitions()  {

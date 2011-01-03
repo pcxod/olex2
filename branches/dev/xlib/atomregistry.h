@@ -69,7 +69,10 @@ public:
   }
   inline void DeleteLast()  {  Delete(Count()-1);  }
   virtual void Clear()   {  items.DeleteItems(false).Clear();  }
-  virtual void Null(size_t i)  {  items.Set(i, NULL);  }
+  virtual void Null(size_t i)  {
+    delete items[i];
+    items.Set(i, NULL);
+  }
   virtual void Pack()  {  items.Pack();  }
   virtual void IncCapacity(size_t v)  {  items.SetCapacity(items.Count()+v);  }
   inline bool IsEmpty() const {  return items.IsEmpty();  }

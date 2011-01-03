@@ -1462,7 +1462,7 @@ void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olxstr name;
   vec3d from, to;
   if( Atoms.Count() > 2 )  {
-    TSAtomPList satoms(Atoms, CastAccessor<TSAtom*>());
+    TSAtomPList satoms(Atoms, StaticCastAccessor<TSAtom>());
     mat3d params;
     vec3d rms, center;
     TSPlane::CalcPlanes(satoms, params, rms, center);
@@ -1725,7 +1725,7 @@ void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   else  {
     TXAtomPList Atoms = FXApp->FindXAtoms(Cmds.Text(' '), true, Options.Contains('h'));
     if( Atoms.IsEmpty() )  return;
-    AGDObjList go(Atoms, CastAccessor<AGDrawObject*>());
+    AGDObjList go(Atoms, StaticCastAccessor<AGDrawObject>());
     FUndoStack->Push(FXApp->SetGraphicsVisible(go, false));
   }
 }
@@ -6182,7 +6182,7 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
     cellParameters[i+6]= FXApp->XFile().GetAsymmUnit().Axes()[i].GetE();
     cellParameters[i+9]= FXApp->XFile().GetAsymmUnit().Angles()[i].GetE();
   }
-  TSAtomPList satoms(FXApp->FindXAtoms(Cmds.Text(' ')), CastAccessor<TSAtom*>());
+  TSAtomPList satoms(FXApp->FindXAtoms(Cmds.Text(' ')), StaticCastAccessor<TSAtom>());
   if( satoms.IsEmpty() )
     throw TInvalidArgumentException(__OlxSourceInfo, "atom count");
   xlib::TLS tls(satoms, cellParameters);
@@ -6321,7 +6321,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TXApp& xapp = TXApp::GetInstance();
   VcoVContainer vcovc(xapp.XFile().GetAsymmUnit());
   xapp.NewLogEntry() << "Using " << xapp.InitVcoV(vcovc) << " matrix for the calculation";
-  TSAtomPList atoms(xatoms, CastAccessor<TSAtom*>());
+  TSAtomPList atoms(xatoms, StaticCastAccessor<TSAtom>());
   mat3d_list matrices;
   vcovc.GetVcoV(atoms, matrices);
   //vcovc.GetMatrix().FindVcoV(atoms, matrices);
@@ -8904,7 +8904,7 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       else
         all_radii[i] = radii.GetValue(ri);
     }
-    main_CreateWBox(*FXApp, TSAtomPList(xatoms, CastAccessor<TSAtom*>()),
+    main_CreateWBox(*FXApp, TSAtomPList(xatoms, StaticCastAccessor<TSAtom>()),
       use_aw ? TSAtom::weight_occu_z : TSAtom::weight_occu, all_radii, true);
   }
 }

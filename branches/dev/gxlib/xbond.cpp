@@ -35,19 +35,19 @@ TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName) :
 {
   SetGroupable(true);
   Params().Resize(5);
-  //Update();
   Params()[4] = 0.8;
-  // the objects will be automatically deleted by the corresponding action collections
-  //if( FStaticObjects.IsEmpty() )  
-  //  CreateStaticObjects(R);
-  Label = new TXGlLabel(R, PLabelsCollectionName);
-  //Label->SetOffset((A().crd()+B().crd())/2);
+  Label = new TXGlLabel(GetParent(), PLabelsCollectionName);
   Label->SetVisible(false);
 }
 //..............................................................................
-TXBond::~TXBond()  {  delete Label;  }
+TXBond::~TXBond()  {
+  if( GetParentGroup() != NULL )
+    GetParentGroup()->Remove(*this);
+  delete Label;
+}
 //..............................................................................
 void TXBond::Update()  {
+  if( !IsValid() )  return;
   vec3d C(B().crd() - A().crd());
   if( C.IsNull() )  
     Params().Null();
@@ -71,6 +71,8 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
     SetCollectionName(cName);
   if( FStaticObjects.IsEmpty() )  
     CreateStaticObjects(Parent);
+  if( IsValid() && Label->GetOffset().IsNull() )  // init label offset
+    Label->SetOffset((A().crd()+B().crd())/2);
   Label->SetFontIndex(Parent.GetScene().FindFontIndexForType<TXBond>());
   Label->Create();
   // find collection
@@ -108,25 +110,31 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
       GlP.CallList(SGlP);
       GlP.EndList();
       TGlMaterial* style_mat = GS.FindMaterial(FStaticObjects[i]);
-      if( style_mat != NULL )
-        GlP.SetProperties(*style_mat);
-      else  {
-        TGlMaterial RGlM;
-        if( SGlP->Params.GetLast() == ddsDefAtomA || SGlP->Params.GetLast() == ddsDef )  {
-          const size_t mi = A().Style().IndexOfMaterial("Sphere");
-          if( mi != InvalidIndex )
-            RGlM = A().Style().GetPrimitiveStyle(mi).GetProperties();
-          else
-            TXAtom::GetDefSphereMaterial(A(), RGlM);
+      if( IsValid() )  {
+        if( style_mat != NULL )
+          GlP.SetProperties(*style_mat);
+        else  {
+          TGlMaterial RGlM;
+          if( SGlP->Params.GetLast() == ddsDefAtomA || SGlP->Params.GetLast() == ddsDef )  {
+            const size_t mi = A().Style().IndexOfMaterial("Sphere");
+            if( mi != InvalidIndex )
+              RGlM = A().Style().GetPrimitiveStyle(mi).GetProperties();
+            else
+              TXAtom::GetDefSphereMaterial(A(), RGlM);
+          }
+          else if( SGlP->Params.GetLast() == ddsDefAtomB )  {
+            const size_t mi = B().Style().IndexOfMaterial("Sphere");
+            if( mi != InvalidIndex )
+              RGlM = B().Style().GetPrimitiveStyle(mi).GetProperties();
+            else
+              TXAtom::GetDefSphereMaterial(B(), RGlM);
+          }
+          GlP.SetProperties(GS.GetMaterial(FStaticObjects[i], RGlM));
         }
-        else if( SGlP->Params.GetLast() == ddsDefAtomB )  {
-          const size_t mi = B().Style().IndexOfMaterial("Sphere");
-          if( mi != InvalidIndex )
-            RGlM = B().Style().GetPrimitiveStyle(mi).GetProperties();
-          else
-            TXAtom::GetDefSphereMaterial(B(), RGlM);
-        }
-        GlP.SetProperties(GS.GetMaterial(FStaticObjects[i], RGlM));
+      }
+      else  {  // no atoms
+        GlP.SetProperties(GS.GetMaterial(FStaticObjects[i],
+          TGlMaterial("85;2155839359;2155313015;1.000,1.000,1.000,0.502;36")));
       }
     }
   }

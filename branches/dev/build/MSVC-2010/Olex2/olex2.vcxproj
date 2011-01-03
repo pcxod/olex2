@@ -221,6 +221,8 @@
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">$(OLX_PROGRAM_FILES)Microsoft SDKs\Windows\v7.1\Include;$(IncludePath)</IncludePath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">$(OLX_PROGRAM_FILES)Microsoft SDKs\Windows\v7.1\Lib\x64;$(LibraryPath)</LibraryPath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|x64'">$(OLX_PROGRAM_FILES)Microsoft SDKs\Windows\v7.1\Lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OLX_PROGRAM_FILES)Microsoft SDKs\Windows\v7.1\Include;$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Z:\Program Files\Microsoft SDKs\Windows\v7.1\Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -522,8 +524,8 @@
       <Culture>0x0809</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>alglib.lib;sdl.lib;xlib.lib;gllib.lib;gxlib.lib;wxbase28d.lib;wxbase28d_net.lib;wxbase28d_odbc.lib;wxbase28d_xml.lib;wxexpatd.lib;wxjpegd.lib;wxmsw28d_adv.lib;wxmsw28d_aui.lib;wxmsw28d_core.lib;wxmsw28d_dbgrid.lib;wxmsw28d_gl.lib;wxmsw28d_media.lib;wxmsw28d_qa.lib;wxmsw28d_richtext.lib;wxmsw28d_xrc.lib;wxmsw28d_html.lib;wxpngd.lib;wxregexd.lib;wxtiffd.lib;wxzlibd.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(PY_DIR)\Libs;$(WX_DIR)\lib\vc_lib;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_d;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>alglib.lib;sdl.lib;xlib.lib;gllib.lib;gxlib.lib;wxexpatd.lib;wxjpegd.lib;wxbase28ud.lib;wxbase28ud_net.lib;wxmsw28ud_gl.lib;wxmsw28ud_richtext.lib;wxmsw28ud_html.lib;wxmsw28ud_core.lib;wxmsw28ud_adv.lib;wxpngd.lib;wxregexud.lib;wxtiffd.lib;wxzlibd.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;winspool.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(PY64_DIR)\Libs;$(WX64_DIR)\lib\vc_lib;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_d;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
