@@ -84,7 +84,7 @@ template <class obj_t, class act_t> class TXObjectProvider : public TObjectProvi
   TGlRenderer& renderer;
 public:
   TXObjectProvider(TGlRenderer& _renderer) : renderer(_renderer)  {}
-  virtual obj_t& New(TNetwork* n)  {  return *items.Add(new act_t(n, renderer, EmptyString));  }
+  virtual obj_t& New(TNetwork* n)  {  return *TObjectProvider<obj_t>::items.Add(new act_t(n, renderer, EmptyString));  }
 };
 
 struct XObjectProvider : public ASObjectProvider {
@@ -159,7 +159,7 @@ public:
       objects.AddCCopy(app.XFile().GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
-        objects.Add(app.OverlayedXFiles[i].GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
+        objects.AddCCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
         count += objects.GetLast().Count();
       }
     }
@@ -169,7 +169,7 @@ public:
       objects.AddCCopy(app.XFile().GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
-        objects.Add(app.OverlayedXFiles[i].GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
+        objects.AddCCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
         count += objects.GetLast().Count();
       }
     }
@@ -179,7 +179,7 @@ public:
       objects.AddCCopy(app.XFile().GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
-        objects.Add(app.OverlayedXFiles[i].GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
+        objects.AddCCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
         count += objects.GetLast().Count();
       }
     }

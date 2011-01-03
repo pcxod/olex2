@@ -46,7 +46,7 @@ public:
   virtual void Null(size_t i)  {  list.Null(i);  }
   virtual void Pack()  {  list.Pack();  }
   virtual void IncCapacity(size_t v)  {  list.IncCapacity(v);  }
-  template <class Functor> const TIObjectProvider& ForEach(const Functor& f) const {
+  template <class Functor> const ObjectCaster& ForEach(const Functor& f) const {
     for( size_t i=0; i < Count(); i++ )
       f.OnItem(Get(i), i);
     return *this;
