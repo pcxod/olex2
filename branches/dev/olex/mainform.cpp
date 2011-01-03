@@ -1474,8 +1474,8 @@ void TMainForm::AquireTooltipValue()  {
       Tooltip = olxstr::FormatFloat(3, ((TXLine*)G)->Length());
     }
     else if( EsdlInstanceOf( *G, TXGrowLine) )  {
-      Tooltip = ((TXGrowLine*)G)->SAtom()->GetLabel();
-      Tooltip << '-' << ((TXGrowLine*)G)->CAtom()->GetLabel() << ": "
+      Tooltip = ((TXGrowLine*)G)->XAtom().GetLabel();
+      Tooltip << '-' << ((TXGrowLine*)G)->CAtom().GetLabel() << ": "
           << olxstr::FormatFloat(3, ((TXGrowLine*)G)->Length()) << '('
           << TSymmParser::MatrixToSymmEx(((TXGrowLine*)G)->GetTransform()) << ')';
     }

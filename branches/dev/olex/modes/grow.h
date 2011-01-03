@@ -42,9 +42,9 @@ public:
     if( EsdlInstanceOf(obj, TXGrowLine) )  {
       TXGrowLine& xl = (TXGrowLine&)obj;
       if( GrowShells && mode == gmCovalent )
-        latt.GrowAtom(*xl.CAtom(), xl.GetTransform());
+        latt.GrowAtom(xl.CAtom(), xl.GetTransform());
       else
-        latt.GrowFragment(xl.CAtom()->GetFragmentId(), xl.GetTransform());
+        latt.GrowFragment(xl.CAtom().GetFragmentId(), xl.GetTransform());
       return true;
     }
     else if( EsdlInstanceOf(obj, TXAtom) )  {

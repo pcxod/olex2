@@ -288,6 +288,28 @@ protected:
     }
     return InvalidIndex;
   }
+  TXAtom& GetXAtom(size_t ind)  {
+    if( ind < XFile().GetLattice().GetObjects().atoms.Count() )
+      return static_cast<TXAtom&>(XFile().GetLattice().GetObjects().atoms[ind]);
+    ind -= XFile().GetLattice().GetObjects().atoms.Count();
+    for( size_t i=0; i < OverlayedXFiles.Count(); i++ )  {
+      if( ind < OverlayedXFiles[i].GetLattice().GetObjects().atoms.Count() )
+        return static_cast<TXAtom&>(OverlayedXFiles[i].GetLattice().GetObjects().atoms[ind]);
+      ind -= OverlayedXFiles[i].GetLattice().GetObjects().atoms.Count();
+    }
+    throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
+  }
+  TXBond& GetXBond(size_t ind)  {
+    if( ind < XFile().GetLattice().GetObjects().bonds.Count() )
+      return static_cast<TXBond&>(XFile().GetLattice().GetObjects().bonds[ind]);
+    ind -= XFile().GetLattice().GetObjects().bonds.Count();
+    for( size_t i=0; i < OverlayedXFiles.Count(); i++ )  {
+      if( ind < OverlayedXFiles[i].GetLattice().GetObjects().bonds.Count() )
+        return static_cast<TXBond&>(OverlayedXFiles[i].GetLattice().GetObjects().bonds[ind]);
+      ind -= OverlayedXFiles[i].GetLattice().GetObjects().bonds.Count();
+    }
+    throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
+  }
 public:
   // stores groups beforehand abd restores afterwards, also considers overlayed files
   void UpdateConnectivity();

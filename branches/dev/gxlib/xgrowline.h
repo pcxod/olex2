@@ -7,17 +7,17 @@
 BeginGxlNamespace()
 
 class TXGrowLine : public TXBond  {
-  TSAtom *FSAtom;
-  TCAtom *FCAtom;
+  TXAtom& _XAtom;
+  TCAtom& _CAtom;
   smatd Transform;
-  vec3d  FEdge, FBase;
+  vec3d FEdge, FBase;
 protected:
   virtual bool IsMaskSaveable() const {  return true;  }
   virtual bool IsStyleSaveable() const {  return true;  }
   virtual bool IsRadiusSaveable() const {  return true;  }
 public:
-  TXGrowLine(TGlRenderer& Render, const olxstr& collectionName, TSAtom *A,
-               TCAtom* CA, const smatd& transform);
+  TXGrowLine(TGlRenderer& Render, const olxstr& collectionName, TXAtom& A,
+             TCAtom& CA, const smatd& transform);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TXGrowLine();
 
@@ -33,8 +33,8 @@ public:
   void Length(float V);
   inline double Length()  {  return Params()[3]; }
 
-  TSAtom *SAtom() const {  return FSAtom;  }
-  TCAtom *CAtom() const {  return FCAtom;  }
+  TXAtom& XAtom() const {  return _XAtom;  }
+  TCAtom& CAtom() const {  return _CAtom;  }
   const smatd& GetTransform() const {  return Transform;  }
 };
 

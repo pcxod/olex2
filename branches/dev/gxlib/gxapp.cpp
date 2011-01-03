@@ -1922,9 +1922,12 @@ TXPlane *TGXApp::AddPlane(TXAtomPList &Atoms, bool regular, double weightExtent)
 }
 //..............................................................................
 TXPlane *TGXApp::XPlane(const olxstr &PlaneName)  {
-  //for( size_t i=0; i < XPlanes.Count(); i++ )
-  //  if( XPlanes[i].GetPrimitives().GetName().Equalsi(PlaneName) )
-  //    return &XPlanes[i];
+  PlaneIterator pi(*this);
+  while( pi.HasNext() )  {
+    TXPlane& p = pi.Next();
+    if( p.GetPrimitives().GetName().Equalsi(PlaneName) )
+      return &p;
+  }
   return NULL;
 }
 //..............................................................................
@@ -1933,8 +1936,9 @@ void TGXApp::DeletePlane(TXPlane* plane)  {
 }
 //..............................................................................
 void TGXApp::ClearPlanes()  {
-  //for( size_t i=0; i < XPlanes.Count(); i++ )
-  //  XPlanes[i].SetDeleted(true);
+  PlaneIterator pi(*this);
+  while( pi.HasNext() )
+    pi.Next().SetDeleted(true);
 }
 //..............................................................................
 TXAtom * TGXApp::AddCentroid(TXAtomPList& Atoms)  {
@@ -2093,12 +2097,10 @@ void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert)  {
     return;
   }
   if( str.FirstIndexOf("sel") != InvalidIndex )  {
-    if( FGlRender->GetSelection().Count() != 1 )  {
+    if( FGlRender->GetSelection().Count() != 1 ||
+        !EsdlInstanceOf(FGlRender->GetSelection()[0], TXBond) )
+    {
       NewLogEntry(logError) << "SelectBonds: please select one bond only";
-      return;
-    }
-    if( !EsdlInstanceOf(FGlRender->GetSelection()[0], TXBond) )  {
-      NewLogEntry(logError) << "SelectBonds: please select a bond";
       return;
     }
   }
@@ -2836,8 +2838,8 @@ void TGXApp::SetQPeakBondsVisible(bool v)  {
     }
     if( FXGrowLinesVisible )  {
       for( size_t i=0; i < XGrowLines.Count(); i++ )  {
-        if( XGrowLines[i].SAtom()->GetType() == iQPeakZ ||
-          XGrowLines[i].CAtom()->GetType() == iQPeakZ )
+        if( XGrowLines[i].XAtom().GetType() == iQPeakZ ||
+          XGrowLines[i].CAtom().GetType() == iQPeakZ )
           XGrowLines[i].SetVisible(v);
       }
     }
@@ -2877,12 +2879,12 @@ void TGXApp::_syncBondsVisibility()  {
     else
       xb.SetVisible(xb.A().IsVisible() && xb.B().IsVisible());
   }
-  //if( FXGrowLinesVisible )  {
-  //  for( size_t i=0; i < XGrowLines.Count(); i++ )  {
-  //    if( XGrowLines[i].SAtom()->GetType() == iQPeakZ )
-  //      XGrowLines[i].SetVisible(XAtoms[XGrowLines[i].SAtom()->GetTag()].IsVisible());
-  //  }
-  //}
+  if( FXGrowLinesVisible )  {
+    for( size_t i=0; i < XGrowLines.Count(); i++ )  {
+      if( XGrowLines[i].XAtom().GetType() == iQPeakZ )
+        XGrowLines[i].SetVisible(XGrowLines[i].XAtom().IsVisible());
+    }
+  }
 }
 //..............................................................................
 void TGXApp::SetStructureVisible(bool v)  {
@@ -3299,7 +3301,7 @@ struct TGXApp_CrdMap  {
 //..............................................................................
 struct TGXApp_Transform {
   TCAtom* to;
-  TSAtom* from;
+  TXAtom* from;
   double dist;
   smatd transform;
   TGXApp_Transform() : to(NULL), from(NULL), dist(0) { }
@@ -3336,15 +3338,15 @@ void TGXApp::CreateXGrowLines()  {
   const TAsymmUnit& au = FXFile->GetAsymmUnit();
   const TUnitCell& uc = FXFile->GetUnitCell();
   TGXApp_CrdMap CrdMap;
-  TSAtomPList AtomsToProcess;
+  TXAtomPList AtomsToProcess;
   if( !AtomsToGrow.IsEmpty() )
     AtomsToProcess.AddList(FindXAtoms(AtomsToGrow));
   else if( (FGrowMode & gmSameAtoms) == 0 ) {
     const size_t ac = FXFile->GetLattice().GetObjects().atoms.Count();
     for( size_t i=0; i < ac; i++ )  {
-      TSAtom& A = FXFile->GetLattice().GetObjects().atoms[i];
+      TSAtom& A = XFile().GetLattice().GetObjects().atoms[i];
       if( A.IsDeleted() || !A.CAtom().IsAvailable() )  continue;
-      AtomsToProcess.Add(A);
+      AtomsToProcess.Add(static_cast<TXAtom&>(A));
     }
   }
   for( size_t i=0; i < AtomsToProcess.Count(); i++ )  {
@@ -3361,7 +3363,7 @@ void TGXApp::CreateXGrowLines()  {
   typedef TArrayList<AnAssociation2<TCAtom*,smatd> > GInfo;
   TPtrList<GInfo> Info(au.AtomCount());
   for( size_t i=0; i < AtomsToProcess.Count(); i++ )  {
-    TSAtom* A = AtomsToProcess[i];
+    TXAtom* A = AtomsToProcess[i];
     if( FGrowMode == gmCovalent && A->IsGrown() )
       continue;
     AttachedAtoms.Clear();
@@ -3429,7 +3431,8 @@ void TGXApp::CreateXGrowLines()  {
   }
   for( size_t i=0; i < tr_list.Count(); i++ )  {
     TGXApp_Transform1& nt = tr_list[i];
-    TXGrowLine& gl = XGrowLines.Add(new TXGrowLine(*FGlRender, EmptyString, nt.from, nt.to, nt.transform));
+    TXGrowLine& gl = XGrowLines.Add(
+      new TXGrowLine(*FGlRender, EmptyString, *nt.from, *nt.to, nt.transform));
     gl.Create("GrowBonds");
   }
   Info.DeleteItems(true);
@@ -3440,7 +3443,7 @@ void TGXApp::_CreateXGrowVLines()  {
   const TAsymmUnit& au = FXFile->GetAsymmUnit();
   const TUnitCell& uc = FXFile->GetUnitCell();
   TGXApp_CrdMap CrdMap;
-  TSAtomPList AtomsToProcess;
+  TXAtomPList AtomsToProcess;
   if( !AtomsToGrow.IsEmpty() )  {
     AtomsToProcess.AddList(FindXAtoms(AtomsToGrow));
     const size_t ac = FXFile->GetLattice().GetObjects().atoms.Count();
@@ -3453,9 +3456,9 @@ void TGXApp::_CreateXGrowVLines()  {
   else  {
     const size_t ac = FXFile->GetLattice().GetObjects().atoms.Count();
     for( size_t i=0; i < ac; i++ )  {
-      TSAtom& A = FXFile->GetLattice().GetObjects().atoms[i];
+      TSAtom& A = XFile().GetLattice().GetObjects().atoms[i];
       if( A.IsDeleted() || !A.CAtom().IsAvailable() )  continue;
-      AtomsToProcess.Add(A);
+      AtomsToProcess.Add(static_cast<TXAtom&>(A));
       CrdMap.Add(A.crd());
     }
   }
@@ -3463,7 +3466,7 @@ void TGXApp::_CreateXGrowVLines()  {
   olxdict<int, tr_list, TPrimitiveComparator> net_tr;
   TPtrList<TArrayList<AnAssociation2<TCAtom*,smatd> > > Info(au.AtomCount());
   for( size_t i=0; i < AtomsToProcess.Count(); i++ )  {
-    TSAtom* A = AtomsToProcess[i];
+    TXAtom* A = AtomsToProcess[i];
     TArrayList<AnAssociation2<TCAtom*,smatd> >* envi = Info[A->CAtom().GetId()];
     if( envi == NULL )  {
       Info[A->CAtom().GetId()] = envi = new TArrayList<AnAssociation2<TCAtom*,smatd> >;
@@ -3510,7 +3513,8 @@ void TGXApp::_CreateXGrowVLines()  {
     const tr_list& ntl = net_tr.GetValue(i);
     for( size_t j=0; j < ntl.Count(); j++ )  {
       TGXApp_Transform& nt = ntl[j];
-      TXGrowLine& gl = XGrowLines.Add(new TXGrowLine(*FGlRender, EmptyString, nt.from, nt.to, nt.transform));
+      TXGrowLine& gl = XGrowLines.Add(
+        new TXGrowLine(*FGlRender, EmptyString, *nt.from, *nt.to, nt.transform));
       gl.Create("GrowBonds");
     }
   }
@@ -3989,25 +3993,25 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   for( size_t i=0; i < groups.ItemCount(); i++ )
     FGlRender->NewGroup(groups.GetItem(i).GetValue());
   // load groups
-  //for( size_t i=0; i < groups.ItemCount(); i++ )  {
-  //  const TDataItem& group = groups.GetItem(i);
-  //  TGlGroup& glG = FGlRender->GetGroup(i);
-  //  glG.SetVisible(group.GetRequiredField("visible").ToBool());
-  //  const int p_id = group.GetRequiredField("parent_id").ToInt();
-  //  if( p_id == -1 )
-  //    FGlRender->GetSelection().Add(glG);
-  //  else if( p_id >= 0 )
-  //    FGlRender->GetGroup(p_id).Add(glG);
-  //  TDataItem& atoms = group.FindRequiredItem("Atoms");
-  //  for( size_t j=0; j < atoms.FieldCount(); j++ )
-  //    glG.Add(XAtoms[atoms.GetField(j).ToSizeT()]);
-  //  TDataItem& bonds = group.FindRequiredItem("Bonds");
-  //  for( size_t j=0; j < bonds.FieldCount(); j++ )
-  //    glG.Add(XBonds[bonds.GetField(j).ToSizeT()]);
-  //  glG.Create(group.GetValue());
-  //  StoreGroup(glG, GroupDefs.AddNew());
-  //  GroupDict(&glG, GroupDefs.Count()-1);
-  //}
+  for( size_t i=0; i < groups.ItemCount(); i++ )  {
+    const TDataItem& group = groups.GetItem(i);
+    TGlGroup& glG = FGlRender->GetGroup(i);
+    glG.SetVisible(group.GetRequiredField("visible").ToBool());
+    const int p_id = group.GetRequiredField("parent_id").ToInt();
+    if( p_id == -1 )
+      FGlRender->GetSelection().Add(glG);
+    else if( p_id >= 0 )
+      FGlRender->GetGroup(p_id).Add(glG);
+    TDataItem& atoms = group.FindRequiredItem("Atoms");
+    for( size_t j=0; j < atoms.FieldCount(); j++ )
+      glG.Add(GetXAtom(atoms.GetField(j).ToSizeT()));
+    TDataItem& bonds = group.FindRequiredItem("Bonds");
+    for( size_t j=0; j < bonds.FieldCount(); j++ )
+      glG.Add(GetXBond(bonds.GetField(j).ToSizeT()));
+    glG.Create(group.GetValue());
+    StoreGroup(glG, GroupDefs.AddNew());
+    GroupDict(&glG, GroupDefs.Count()-1);
+  }
   _UpdateGroupIds();
 
   TDataItem& renderer = item.FindRequiredItem("Renderer");
