@@ -41,8 +41,12 @@ TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName) :
 }
 //..............................................................................
 TXBond::~TXBond()  {
-  if( GetParentGroup() != NULL )
+  if( GetParentGroup() != NULL )  {
     GetParentGroup()->Remove(*this);
+#ifdef _DEBUG
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+#endif
+  }
   delete Label;
 }
 //..............................................................................

@@ -808,8 +808,8 @@ TSAtom* TLattice::NewAtom(const vec3d& center)  {
     throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate());
   }
   ca->ccrd() = center;
-  TSAtom& sa = GenerateAtom(*ca, *Matrices[0]);
   GetUnitCell().AddEllipsoid();
+  TSAtom& sa = GenerateAtom(*ca, *Matrices[0]);
   return &sa;
 }
 //..............................................................................

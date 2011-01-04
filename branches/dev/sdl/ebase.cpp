@@ -50,7 +50,7 @@ void TExceptionBase::ThrowInvalidUnsignedFormat(const char* file, const char* fu
     const wchar_t* src, size_t src_len)
 {
   throw TInvalidUnsignedNumberException(FormatSrc(file,func,line),
-    olxstr('\'') << olxcstr(src, src_len) << '\'');
+    olxstr('\'') << olxwstr(src, src_len) << '\'');
 }
 //................................................................................................
 void TExceptionBase::ThrowInvalidIntegerFormat(const char* file, const char* func, int line, 
@@ -64,7 +64,7 @@ void TExceptionBase::ThrowInvalidIntegerFormat(const char* file, const char* fun
     const wchar_t* src, size_t src_len)
 {
   throw TInvalidIntegerNumberException(FormatSrc(file,func,line),
-    olxstr('\'') << olxcstr(src, src_len) << '\'');
+    olxstr('\'') << olxwstr(src, src_len) << '\'');
 }
 //................................................................................................
 void TExceptionBase::ThrowInvalidFloatFormat(const char* file, const char* func, int line, 
@@ -78,7 +78,7 @@ void TExceptionBase::ThrowInvalidFloatFormat(const char* file, const char* func,
     const wchar_t* src, size_t src_len)
 {
   throw TInvalidFloatNumberException(FormatSrc(file,func,line),
-    olxstr('\'') << olxcstr(src, src_len) << '\'');
+    olxstr('\'') << olxwstr(src, src_len) << '\'');
 }
 //................................................................................................
 const TBasicException* TExceptionBase::GetException() const {

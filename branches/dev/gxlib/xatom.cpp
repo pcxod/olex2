@@ -74,8 +74,12 @@ TXAtom::TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName)
 }
 //..............................................................................
 TXAtom::~TXAtom()  {
-  if( GetParentGroup() != NULL )
+  if( GetParentGroup() != NULL )  {
     GetParentGroup()->Remove(*this);
+#ifdef _DEBUG
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+#endif
+  }
   if( !FPrimitiveParams.IsEmpty() )
     FPrimitiveParams.Clear();
   if( OrtepSpheres != -1 )  {

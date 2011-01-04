@@ -1333,6 +1333,8 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
         StoreGroup(GetSelection(), SelectionCopy[0]);
         StoreLabels();
       }
+      GetRender().ClearGroups();
+      GetRender().ClearSelection();
     }
   }
   else if( MsgId == ID_OnClear ) {
@@ -2606,12 +2608,12 @@ void TGXApp::RestoreGroup(TGlGroup& glg, const GroupData& gd)  {
   TXBondPList xbonds(gd.bonds.Count());
   for( size_t i=0; i < gd.atoms.Count(); i++ )  {
     TSAtom* sa = gd.atoms[i].latt.GetAtomRegistry().Find(gd.atoms[i].ref);
-    if( sa != NULL && sa->GetTag() != -1 )
+    if( sa != NULL )
       xatoms[i] = static_cast<TXAtom*>(sa);
   }
   for( size_t i=0; i < gd.bonds.Count(); i++ )  {
     TSBond* sb = gd.bonds[i].latt.GetAtomRegistry().Find(gd.bonds[i].ref);
-    if( sb != NULL && sb->GetTag() != -1 )
+    if( sb != NULL )
       xbonds[i] = static_cast<TXBond*>(sb);
   }
   for( size_t i=0; i < xatoms.Count(); i++ )  {
@@ -2668,12 +2670,12 @@ void TGXApp::RestoreLabels()  {
   TXBondPList xbonds(LabelInfo.bonds.Count());
   for( size_t i=0; i < LabelInfo.atoms.Count(); i++ )  {
     TSAtom* sa = LabelInfo.atoms[i].latt.GetAtomRegistry().Find(LabelInfo.atoms[i].ref);
-    if( sa != NULL && sa->GetTag() != -1 )
+    if( sa != NULL )
       xatoms[i] = static_cast<TXAtom*>(sa);
   }
   for( size_t i=0; i < LabelInfo.bonds.Count(); i++ )  {
     TSBond* sb = LabelInfo.bonds[i].latt.GetAtomRegistry().Find(LabelInfo.bonds[i].ref);
-    if( sb != NULL && sb->GetTag() != -1 )
+    if( sb != NULL )
       xbonds[i] = static_cast<TXBond*>(sb);
   }
   for( size_t i=0; i < xatoms.Count(); i++ )  {

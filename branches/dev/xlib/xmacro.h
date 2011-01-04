@@ -17,6 +17,7 @@ class XLibMacros  {
   static DefMacro(HklMerge)
   static DefMacro(HklAppend)
   static DefMacro(HklExclude)
+  static DefMacro(HklImport)
   static DefMacro(SG)
   static DefMacro(SGE)
   static DefMacro(GraphSR)

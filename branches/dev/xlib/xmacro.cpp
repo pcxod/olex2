@@ -209,6 +209,12 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(HklExclude, "h-semicolon separated list of indexes&;k&;l&;c-true/false to use provided\
  indexes in any reflection. The default is in any one reflection" , fpAny,
  "excludes reflections with give indexes from the hkl file -h=1;2 : all reflections where h=1 or 2");
+  xlib_InitMacro(HklImport, "batch-for separator formatted file specifies that there is a batch number",
+    (fpAny^(fpNone|fpOne|fpTwo|fpThree)),
+    "Creates a Shelx compatible 44488(4) file format from given source. Valid arguments:"
+    "fixed and separator. For example: 'HklImport in.hkl fixed 7 7 7 9 9 out.hkl' or 'HklImport in.hkl "
+    "separator \' \'' out.hkl"
+    );
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -4323,5 +4329,59 @@ void XLibMacros::macHklExclude(TStrObjList &Cmds, const TParamList &Options, TMa
   }
   Hkl.SaveToFile(hklSrc);
   TBasicApp::NewLogEntry() << c << " reflections excluded";
+}
+//..............................................................................
+void XLibMacros::macHklImport(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TStrList lines;
+  lines.LoadFromFile(Cmds[0]);
+  const olxstr out_name = Cmds.GetLastString();
+  Cmds.Delete(Cmds.Count()-1);
+  if( Cmds[1].Equalsi("fixed") )  {
+    TSizeList format;
+    for( size_t i=2; i < Cmds.Count(); i++ )
+      format.Add(Cmds[i].ToSizeT());
+    if( format.Count() < 5 || format.Count() > 6 )  {
+      E.ProcessingError(__OlxSrcInfo, "5 or 6 numbers are expected");
+      return;
+    }
+    TRefList refs;
+    for( size_t i=0; i < lines.Count(); i++ )  {
+      TStrList toks;
+      if( toks.StrtokF(lines[i], format) < format.Count() )
+        continue;
+      TReflection& r = refs.AddNew(
+        toks[0].ToInt(), toks[1].ToInt(), toks[2].ToInt()
+        );
+      r.SetI(toks[3].ToDouble());
+      r.SetS(toks[4].ToDouble());
+      if( format.Count() == 6 )
+        r.SetFlag(toks[5].ToInt());
+    }
+    THklFile::SaveToFile(out_name, refs);
+  }
+  else if( Cmds[1].Equalsi("separator") )  {
+    if( Cmds[2].IsEmpty() )  {
+      E.ProcessingError(__OlxSrcInfo, "non-empty separator is expected");
+      return;
+    }
+    const bool has_batch = Options.Contains("batch");
+    TRefList refs;
+    const olxch sep = Cmds[2].CharAt(0);
+    for( size_t i=0; i < lines.Count(); i++ )  {
+      TStrList toks(lines[i], sep);
+      if( toks.Count() < 5 )  continue;
+      TReflection& r = refs.AddNew(
+        toks[0].ToInt(), toks[1].ToInt(), toks[2].ToInt()
+        );
+      r.SetI(toks[3].ToDouble());
+      r.SetS(toks[4].ToDouble());
+      if( has_batch && toks.Count() >= 6 )
+        r.SetFlag(toks[5].ToInt());
+    }
+    THklFile::SaveToFile(out_name, refs);
+  }
+  else  {
+    E.ProcessingError(__OlxSrcInfo, olxstr("undefined keyword: ") << Cmds[1]);
+  }
 }
 //..............................................................................

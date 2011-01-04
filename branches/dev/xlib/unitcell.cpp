@@ -692,7 +692,7 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
   }
 }
 //..............................................................................
-TCAtom* TUnitCell::FindOverlappingAtom(const vec3d& pos, double delta) const  {
+TCAtom* TUnitCell::FindOverlappingAtom(const vec3d& pos, double delta) const {
   TTypeList< AnAssociation3<TCAtom*,smatd,vec3d> > res;
   _FindInRange(pos, delta, res);
   if( res.IsEmpty() )
