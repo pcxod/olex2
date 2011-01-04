@@ -586,6 +586,7 @@ TLibrary*  TXFile::ExportLibrary(const olxstr& name)  {
   lib->AttachLibrary(Lattice.GetUnitCell().ExportLibrary());
   lib->AttachLibrary(Lattice.ExportLibrary());
   lib->AttachLibrary(RefMod.expl.ExportLibrary());
+  lib->AttachLibrary(RefMod.ExportLibrary());
   return lib;
 }
 //..............................................................................

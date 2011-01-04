@@ -164,7 +164,7 @@ public:
   XVar& NewVar(double val = 0.5)  {  
     XVar* v = new XVar(*this, val);
     v->SetId(Vars.Count());
-    return Vars.Add( v );  
+    return Vars.Add(v);  
   }
   // returns existing variable or creates a new one. Sets a limit of 1024 variables
   XVar& GetReferencedVar(size_t ind) {
@@ -231,7 +231,7 @@ public:
       if( Vars.Count() <= NextVar )
         NewVar(fvar[i].ToDouble());
       else 
-        Vars[NextVar].SetValue( fvar[i].ToDouble() );
+        Vars[NextVar].SetValue(fvar[i].ToDouble());
     }
   }
   olxstr GetFVARStr() const {

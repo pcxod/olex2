@@ -1108,3 +1108,24 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
   return main;
 }
 #endif
+//..............................................................................
+//..............................................................................
+//..............................................................................
+void RefinementModel::LibOSF(const TStrObjList& Params, TMacroError& E)  {
+  if( Params.IsEmpty() )
+    E.SetRetVal(Vars.VarCount() == 0 ? 0.0 : Vars.GetVar(0).GetValue());
+  else  {
+    if( Vars.VarCount() == 0 )
+      Vars.NewVar(Params[0].ToDouble());
+    else
+      Vars.GetVar(0).SetValue(Params[0].ToDouble());
+  }
+}
+//..............................................................................
+TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
+  TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("rm") : name);
+  lib->RegisterFunction<RefinementModel>(
+    new TFunction<RefinementModel>(this, &RefinementModel::LibOSF, "OSF", fpNone|fpOne,
+"Returns/sets OSF") );
+  return lib;
+}

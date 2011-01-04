@@ -581,6 +581,9 @@ of components 1 ... m
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);
   
+  void LibOSF(const TStrObjList& Params, TMacroError& E);
+  TLibrary* ExportLibrary(const olxstr& name=EmptyString);
+
   struct ReleasedItems {
     TSimpleRestraintPList restraints;
     TPtrList<TSameGroup> sameList;
