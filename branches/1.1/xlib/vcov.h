@@ -506,7 +506,7 @@ public:
     return TEValue<double>(val, sqrt(qesd));
   }
   // cartesian centroid
-  TEVPoint<double> CalcCentroid(const TSAtomPList& atoms) {
+  TEVPoint<double> CalcCentroid(const TSAtomCPList& atoms) {
     CalcHelper ch(*this, atoms);
     mat3d vcov;
     vec3d cnt;
@@ -520,7 +520,7 @@ public:
     return TEVPoint<double>(cnt[0], cnt[1], cnt[2], sqrt(vcov[0][0]), sqrt(vcov[1][1]), sqrt(vcov[2][2]));
   }
   // fractional centroid
-  TEVPoint<double> CalcCentroidF(const TSAtomPList& atoms) {
+  TEVPoint<double> CalcCentroidF(const TSAtomCPList& atoms) {
     CalcHelper ch(*this, atoms);
     mat3d vcov;
     vec3d cnt;
@@ -608,37 +608,37 @@ public:
         VectorProxy(ch.points[2], ch.points[3])));
   }
   // returns rms for the best plane
-  TEValue<double> CalcPlane(const TSAtomPList& atoms) {
+  TEValue<double> CalcPlane(const TSAtomCPList& atoms) {
     CalcWHelper ch(*this, atoms);
     return ch.DoCalc(Plane<vec3d_alist, TDoubleList>(ch.points, ch.weights));
   }
   // plane to atom distance
-  TEValue<double> CalcP2ADistance(const TSAtomPList& atoms, const TSAtom& a) {
-    CalcWHelper ch(*this, TSAtomPList(atoms) << a);
+  TEValue<double> CalcP2ADistance(const TSAtomCPList& atoms, const TSAtom& a) {
+    CalcWHelper ch(*this, TSAtomCPList(atoms) << a);
     return ch.DoCalc(
       PlaneToPointDistance<pln_et,pnt_pt>(
       pln_et(crd_slice(ch.points, 0, atoms.Count()), weight_slice(ch.weights, 0, atoms.Count())),
         pnt_pt(ch.points.GetLast())));
   }
   // plane centroid to atom distance
-  TEValue<double> CalcPC2ADistance(const TSAtomPList& plane, const TSAtom& a) {
-    CalcWHelper ch(*this, TSAtomPList(plane) << a);
+  TEValue<double> CalcPC2ADistance(const TSAtomCPList& plane, const TSAtom& a) {
+    CalcWHelper ch(*this, TSAtomCPList(plane) << a);
     return ch.DoCalc(
       Distance<cnt_et,pnt_pt>(
       cnt_et(crd_slice(ch.points, 0, plane.Count()), weight_slice(ch.weights, 0, plane.Count())),
         pnt_pt(ch.points.GetLast())));
   }
   // plane to a vector angle
-  TEValue<double> CalcP2VAngle(const TSAtomPList& plane, const TSAtom& a1, const TSAtom& a2) {
-    CalcWHelper ch(*this, TSAtomPList(plane) << a1 << a2);
+  TEValue<double> CalcP2VAngle(const TSAtomCPList& plane, const TSAtom& a1, const TSAtom& a2) {
+    CalcWHelper ch(*this, TSAtomCPList(plane) << a1 << a2);
     return ch.DoCalc(
       Angle2<plnn_et, VectorProxy>(
       plnn_et(crd_slice(ch.points, 0, plane.Count()), weight_slice(ch.weights, 0, plane.Count())),
         VectorProxy(ch.points[plane.Count()], ch.points[plane.Count()+1])));
   }
   // plane to plane angle
-  TEValue<double> CalcP2PAngle(const TSAtomPList& p1, const TSAtomPList& p2) {
-    CalcWHelper ch(*this, TSAtomPList(p1) << p2);
+  TEValue<double> CalcP2PAngle(const TSAtomCPList& p1, const TSAtomCPList& p2) {
+    CalcWHelper ch(*this, TSAtomCPList(p1) << p2);
     return ch.DoCalc(
       Angle2<plnn_et,plnn_et>(
         plnn_et(crd_slice(ch.points, 0, p1.Count()), weight_slice(ch.weights, 0, p1.Count())),
@@ -646,8 +646,8 @@ public:
           weight_slice(ch.weights, p1.Count(), p2.Count()))));
   }
   //plane centroid to plane centroid distance
-  TEValue<double> CalcPC2PCDistance(const TSAtomPList& p1, const TSAtomPList& p2) {
-    CalcWHelper ch(*this, TSAtomPList(p1) << p2);
+  TEValue<double> CalcPC2PCDistance(const TSAtomCPList& p1, const TSAtomCPList& p2) {
+    CalcWHelper ch(*this, TSAtomCPList(p1) << p2);
     return ch.DoCalc(
       Distance<cnt_et, cnt_et>(
         cnt_et(crd_slice(ch.points, 0, p1.Count()), weight_slice(ch.weights, 0, p1.Count())),
@@ -655,8 +655,8 @@ public:
           weight_slice(ch.weights, p1.Count(), p2.Count()))));
   }
   // angle between 3 plane centroids
-  TEValue<double> Calc3PCAngle(const TSAtomPList& p1, const TSAtomPList& p2, const TSAtomPList& p3)  {
-    CalcWHelper ch(*this, TSAtomPList(p1) << p2 << p3);
+  TEValue<double> Calc3PCAngle(const TSAtomCPList& p1, const TSAtomCPList& p2, const TSAtomCPList& p3)  {
+    CalcWHelper ch(*this, TSAtomCPList(p1) << p2 << p3);
     return ch.DoCalc(
       Angle3<cnt_et, cnt_et, cnt_et>(
         cnt_et(crd_slice(ch.points, 0, p1.Count()), weight_slice(ch.weights, 0, p1.Count())),
@@ -666,8 +666,8 @@ public:
           weight_slice(ch.weights, p1.Count()+p2.Count(), p3.Count()))));
   }
   //plane to another plane centroid distance
-  TEValue<double> CalcP2PCDistance(const TSAtomPList& p1, const TSAtomPList& p2) {
-    CalcWHelper ch(*this, TSAtomPList(p1) << p2);
+  TEValue<double> CalcP2PCDistance(const TSAtomCPList& p1, const TSAtomCPList& p2) {
+    CalcWHelper ch(*this, TSAtomCPList(p1) << p2);
     return ch.DoCalc(
       PlaneToPointDistance<pln_et, cnt_et>(
         pln_et(crd_slice(ch.points, 0, p1.Count()), weight_slice(ch.weights, 0, p1.Count())),
@@ -675,8 +675,8 @@ public:
         weight_slice(ch.weights, p1.Count(), p2.Count()))));
   }
   //plane to another plane shift distance
-  TEValue<double> CalcP2PShiftDistance(const TSAtomPList& p1, const TSAtomPList& p2) {
-    CalcWHelper ch(*this, TSAtomPList(p1) << p2);
+  TEValue<double> CalcP2PShiftDistance(const TSAtomCPList& p1, const TSAtomCPList& p2) {
+    CalcWHelper ch(*this, TSAtomCPList(p1) << p2);
     return ch.DoCalc(
       Centroid2CentriodShiftDistance<pln_et, cnt_et>(
         pln_et(crd_slice(ch.points, 0, p1.Count()), weight_slice(ch.weights, 0, p1.Count())),
@@ -692,18 +692,18 @@ public:
         pnt_pt(ch.points[0]), pnt_pt(ch.points[1]), pnt_pt(ch.points[2]), pnt_pt(ch.points[3])));
   }
   // alignment RMSD crds should be prepeared, i.e. inverted
-  TEValue<double> CalcAlignmentRMSD(const TSAtomPList& atoms, const vec3d_alist& crds, 
+  TEValue<double> CalcAlignmentRMSD(const TSAtomCPList& atoms, const vec3d_alist& crds, 
     const TDoubleList& weights) 
   {
     CalcHelper ch(*this, atoms);
     return ch.DoCalc(AlignmentRMSD(ch.points, weights));
   }
   // octahedral distortion, takes {Central Atom, a1, b1, a2, b2, a3, b3}, returns mean value
-  TEValue<double> CalcOHDistortionBL(const TSAtomPList& atoms)  {
+  TEValue<double> CalcOHDistortionBL(const TSAtomCPList& atoms)  {
     CalcHelper ch(*this, atoms);
     return ch.DoCalc(OctahedralDistortionBL(ch.points));
   }
-  TEValue<double> CalcOHDistortionBP(const TSAtomPList& atoms)  {
+  TEValue<double> CalcOHDistortionBP(const TSAtomCPList& atoms)  {
     CalcHelper ch(*this, atoms);
     return ch.DoCalc(OctahedralDistortionBP(ch.points));
   }

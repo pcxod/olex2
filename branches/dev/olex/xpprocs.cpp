@@ -5663,7 +5663,8 @@ TNetwork::AlignInfo MatchAtomPairsQTEsd(const TTypeList< AnAssociation2<TSAtom*,
   vec3d_alist crds_out;
   TDoubleList wghts_out;
   TNetwork::PrepareESDCalc(atoms, TryInversion, atoms_out, crds_out ,wghts_out, weight_calculator);
-  TEValue<double> rv = vcovc.CalcAlignmentRMSD(atoms_out, crds_out, wghts_out);
+  TEValue<double> rv = vcovc.CalcAlignmentRMSD(
+    TSAtomCPList(atoms_out, DirectAccessor()), crds_out, wghts_out);
   TBasicApp::NewLogEntry() << (olxstr("RMSD is ") << rv.ToString() << " A");
   return TNetwork::GetAlignmentRMSD(atoms, TryInversion, weight_calculator);
 }
@@ -8245,7 +8246,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         }
       }
       else if( EsdlInstanceOf(sel[0], TXPlane) )  {
-        TSAtomPList atoms;
+        TSAtomCPList atoms;
         TXPlane& xp = (TXPlane&)sel[0];
         olxstr pld;
         for( size_t i=0; i < xp.Count(); i++ )  {
@@ -8285,7 +8286,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
       else if( (EsdlInstanceOf(sel[0], TXAtom) && EsdlInstanceOf(sel[1], TXPlane)) ||  
                (EsdlInstanceOf(sel[1], TXAtom) && EsdlInstanceOf(sel[0], TXPlane)))  {
-        TSAtomPList atoms;
+        TSAtomCPList atoms;
         TXPlane& xp = (TXPlane&)sel[ EsdlInstanceOf(sel[0], TXPlane) ? 0 : 1];
         olxstr pld;
         for( size_t i=0; i < xp.Count(); i++ )  {
@@ -8300,7 +8301,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
       else if( (EsdlInstanceOf(sel[0], TXBond) && EsdlInstanceOf(sel[1], TXPlane)) ||  
                (EsdlInstanceOf(sel[1], TXBond) && EsdlInstanceOf(sel[0], TXPlane)))  {
-        TSAtomPList atoms;
+        TSAtomCPList atoms;
         TXPlane& xp = (TXPlane&)sel[ EsdlInstanceOf(sel[0], TXPlane) ? 0 : 1];
         olxstr pld;
         for( size_t i=0; i < xp.Count(); i++ )  {
@@ -8314,7 +8315,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
           << pld << "angle: " << v.ToString() << '(' << v1.ToString() << ')');
       }
       else if( EsdlInstanceOf(sel[0], TXPlane) && EsdlInstanceOf(sel[1], TXPlane) )  {
-        TSAtomPList p1, p2;
+        TSAtomCPList p1, p2;
         TXPlane& xp1 = (TXPlane&)sel[0];
         TXPlane& xp2 = (TXPlane&)sel[1];
         olxstr pld1, pld2;
@@ -8358,7 +8359,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
                (EsdlInstanceOf(sel[2], TXPlane) && EsdlInstanceOf(sel[1], TXAtom) && EsdlInstanceOf(sel[0], TXAtom)))  {
         TSAtom* a1 = NULL, *a2 = NULL;
         TXPlane* xp = NULL;
-        TSAtomPList atoms;
+        TSAtomCPList atoms;
         for( size_t  i=0; i < 3; i++ )  {
           if( EsdlInstanceOf(sel[i], TXPlane) )
             xp = &(TXPlane&)sel[i];
@@ -8381,7 +8382,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TSPlane& p1 = (TXPlane&)sel[0];
         TSPlane& p2 = (TXPlane&)sel[1];
         TSPlane& p3 = (TXPlane&)sel[2];
-        TSAtomPList a1, a2, a3;
+        TSAtomCPList a1, a2, a3;
         for( size_t i=0; i < p1.Count(); i++ )  a1.Add(p1.GetAtom(i));
         for( size_t i=0; i < p2.Count(); i++ )  a2.Add(p2.GetAtom(i));
         for( size_t i=0; i < p3.Count(); i++ )  a3.Add(p3.GetAtom(i));
@@ -8406,7 +8407,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
     }
     else if( sel.Count() == 7 )  {
-      TSAtomPList atoms, sorted_atoms, face_atoms;
+      TSAtomPList atoms, face_atoms, sorted_atoms;
       for( size_t i=0; i < sel.Count(); i++ )  {
         if( EsdlInstanceOf(sel[i], TXAtom) )
           atoms.Add((TXAtom&)sel[i]);
@@ -8414,9 +8415,9 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
       if( atoms.Count() != 7 )
         return;
       TBasicApp::NewLogEntry() << "Octahedral distortion is (using best line, for the selection): " << 
-        vcovc.CalcOHDistortionBL(atoms).ToString();
+        vcovc.CalcOHDistortionBL(TSAtomCPList(atoms, DirectAccessor())).ToString();
       TBasicApp::NewLogEntry() << "Octahedral distortion is (using best plane, for the selection): " << 
-        vcovc.CalcOHDistortionBP(atoms).ToString();
+        vcovc.CalcOHDistortionBP(TSAtomCPList(atoms, DirectAccessor())).ToString();
       TSAtom* central_atom = atoms[0];
       atoms.Delete(0);
       olxdict<index_t, vec3d, TPrimitiveComparator> transforms;
@@ -8450,7 +8451,8 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
             for( size_t l=0; l < sorted_atoms.Count(); l++ )
               TBasicApp::GetLog() << sorted_atoms[l]->GetLabel() << ' ';
             sorted_atoms.Insert(0, central_atom);
-            TEValue<double> rv = vcovc.CalcOHDistortionBP(sorted_atoms);
+            TEValue<double> rv = vcovc.CalcOHDistortionBP(
+              TSAtomCPList(sorted_atoms, DirectAccessor()));
             total_val_bp += rv.GetV()*3;
             total_esd_bp += olx_sqr(rv.GetE()); 
             TBasicApp::NewLogEntry() << rv.ToString();
