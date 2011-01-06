@@ -67,12 +67,12 @@ public:
       return (afix == 6 ||afix == 9);
   }
   static bool HasExcplicitPivot(int afix)  {
-    const int n = GetN(afix);
-    return (n == 6 || n == 9);
+    const int n = GetN(afix), m = GetM(afix);
+    return (n == 6 || n == 9 || (m == 0 && (n == 7 || n == 8)));
   }
   static bool IsRiding(int afix)  {
-    const int n = GetN(afix);
-    return (n == 3 || n == 4 || n == 7 || n == 8);
+    const int n = GetN(afix), m = GetM(afix);
+    return (n == 3 || n == 4 || (m != 0 && (n == 7 || n == 8)));
   }
   static bool IsRefinable(int afix)  {
     const int n = GetN(afix);
