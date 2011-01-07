@@ -180,6 +180,20 @@ public:
   // evaluator function
   double EvaluateDouble() const {  return Parent->GetTSAtom()->CAtom().GetQPeak();  }
 };
+// evaluator implementation for scalar peak
+class TSAtom_OccuEvaluator: public IDoubleEvaluator
+{
+  ITSAtom_DataProvider *Parent;
+public:
+  // constructor
+  TSAtom_OccuEvaluator(ITSAtom_DataProvider* parent) { Parent = parent;  }
+  // virtual method
+  IEvaluator *NewInstance( IDataProvider *dp)  {  return new TSAtom_OccuEvaluator( (ITSAtom_DataProvider*)dp);  }
+  // destructor
+  TSAtom_OccuEvaluator()  {  ;  }
+  // evaluator function
+  double EvaluateDouble() const {  return Parent->GetTSAtom()->CAtom().GetChemOccu();  }
+};
 // evaluator implementation for scalar mw
 class TBaiMwEvaluator: public IDoubleEvaluator
 {
