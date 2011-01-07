@@ -1122,10 +1122,25 @@ void RefinementModel::LibOSF(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //..............................................................................
+void RefinementModel::LibFVar(const TStrObjList& Params, TMacroError& E)  {
+  size_t i = Params[0].ToSizeT();
+  if( Vars.VarCount() <= i )  {
+    E.ProcessingError(__OlxSrcInfo, "FVar index out of bounds");
+    return;
+  }
+  if( Params.Count() == 1 )
+    E.SetRetVal(Vars.GetVar(i).GetValue());
+  else
+    Vars.GetVar(i).SetValue(Params[1].ToDouble());
+}
+//..............................................................................
 TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("rm") : name);
   lib->RegisterFunction<RefinementModel>(
     new TFunction<RefinementModel>(this, &RefinementModel::LibOSF, "OSF", fpNone|fpOne,
 "Returns/sets OSF") );
+  lib->RegisterFunction<RefinementModel>(
+    new TFunction<RefinementModel>(this, &RefinementModel::LibFVar, "FVar", fpOne|fpTwo,
+"Returns/sets FVAR referred by index") );
   return lib;
 }

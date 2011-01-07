@@ -582,6 +582,7 @@ of components 1 ... m
   void FromDataItem(TDataItem& item);
   
   void LibOSF(const TStrObjList& Params, TMacroError& E);
+  void LibFVar(const TStrObjList& Params, TMacroError& E);
   TLibrary* ExportLibrary(const olxstr& name=EmptyString);
 
   struct ReleasedItems {
