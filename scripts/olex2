@@ -1,0 +1,211 @@
+#!/bin/sh
+
+# Important if you overide this variable this file will try and update to whatever the variable states using the Olex2-GUI!
+# This could end up in broken Olex2 and endless update looping!
+OLEX2_VERSION=1.1
+
+# These defaults can be overridden by the file $HOME/.oleg-config.
+# $HOME/.oleg-config is created on first run of Olex2 Version 1.0x
+
+# The location where olex2 files will live in your home directory
+OLEX2_DEFAULT_DIR=$HOME/olex2
+
+# Location where you installed CCTBX - this is correct as per the debroglie cctbx rpm
+OLEX2_CCTBX_DEFAULT_DIR=/usr/local/cctbx
+
+# Location where the CCTBX library is kept
+CCTBX_LIBRARY_PATH=/usr/local/cctbx/cctbx_build/lib
+
+# Location where the CCTBX binary directory is kept
+CCTBX_BIN_PATH=/usr/local/cctbx/cctbx_build/bin
+
+# You shouldn't need to edit again below here.
+# --------------------------------------------------------------------------- #
+# Checking for existence of $HOME/.olex2-config
+if test -f "$HOME/.olex2-config"; then
+	echo "$HOME/.olex2-config present"
+	source $HOME/.olex2-config
+else
+	echo "Moving default olex2-config to: $HOME"
+	install -m 644 /usr/share/olex2/olex2-config $HOME/.olex2-config
+	if test -f "$HOME/.olex2-config"; then
+		echo "$HOME/.olex2-config has been moved"
+		source $HOME/.olex2-config
+	else
+		zenity --error --title="Olex2" --text="Olex2 configuration has failed, please check for the presence of $HOME/.olex2-config and try again"
+		exit 0
+	fi
+fi
+
+echo "Olex2 directory		: $OLEX2_DEFAULT_DIR"
+echo "Olex2 cctbx directory	: $OLEX2_CCTBX_DEFAULT_DIR"
+echo "Olex2 cctbx library	: $CCTBX_LIBRARY_PATH"
+echo "Olex2 cctbx bin	: $CCTBX_BIN_PATH"
+
+# SETUP CCTBX SETTINGS
+# N.B. from cctbx_build/dispatcher_head.sh
+if [ -n "$LD_LIBRARY_PATH" ]; then
+	export LD_LIBRARY_PATH="$CCTBX_LIBRARY_PATH:$LD_LIBRARY_PATH"
+else
+	export LD_LIBRARY_PATH=$CCTBX_LIBRARY_PATH
+fi
+if [ -n "$PATH" ]; then
+	PATH="$CCTBX_BIN_PATH:$PATH"
+	export PATH
+else
+	PATH="$CCTBX_BIN_PATH"
+	export PATH
+fi
+
+# --------------------------------------------------------------------------- #
+# SETUP OLEX2 SETTINGS
+# Set olex home directory - default is user $HOME
+if [ -n "$OLEX2_DIR" ]; then
+	echo "OLEX2_DIR already defined:" $OLEX2_DIR
+else
+	export OLEX2_DIR=$OLEX2_DEFAULT_DIR
+	echo "Using defaults, Setting OLEX2_DIR:" $OLEX2_DIR
+fi
+
+if [ -n "$PATH" ]; then
+	export PATH="$PATH:$OLEX2_DIR"
+else
+	export PATH="$OLEX2_DIR"
+fi
+
+# Move local usettings.dat
+if test -d "$OLEX2_DIR"; then
+	echo "$OLEX2_DIR olex2 home present"
+else
+	echo "No olex2 dir, creating here: $OLEX2_DIR"
+	mkdir $OLEX2_DIR
+fi
+
+if test -f "$OLEX2_DIR/usettings.dat"; then
+	echo "$OLEX2_DIR/usettings.dat present"
+else
+	echo "Moving default usettings.dat to: $OLEX2_DIR"
+        cp /usr/share/olex2/usettings.dat $OLEX2_DIR
+fi
+
+# This defines the location of cctbx -again needs some automation to allow setting from env
+if [ -n "$OLEX2_CCTBX_DIR" ]; then
+        echo "OLEX2_CCTBX_DIR already defined:" $OLEX2_CCTBX_DIR
+else
+	# This path is currently using the debroglie.net cctbx path
+	export OLEX2_CCTBX_DIR=$OLEX2_CCTBX_DEFAULT_DIR
+fi
+
+# This is an attempt to find a clean upgrade path to the new update
+# format of olex2
+
+if test -f "$OLEX2_DIR/olex2.tag"; then
+	echo "olex2.tag present this is a new install"
+# We need to compare the tag values!
+	exec<"$OLEX2_DIR/olex2.tag"
+   	read line
+        echo "Current Olex2.tag reads as: " $line;
+	        echo "Latest Olex2 version is define as: " $OLEX2_VERSION
+	        if test $line != $OLEX2_VERSION; then
+	                rm "$OLEX2_DIR/olex2.tag"
+		        echo -e "$OLEX2_VERSION" >> "$OLEX2_DIR/olex2.tag"
+                        # This updates from the GUI rpm but could be made to update from the web?
+			cp /usr/share/olex2/portable-gui.zip $OLEX2_DIR
+			echo "Removing old index.ind"
+			rm $OLEX2_DIR/index.ind
+			echo "Starting unirun unpacker";
+			(/usr/libexec/olex2/unirun $OLEX2_DIR -tag=zip &
+			pid1=$!
+			i=0
+			while [ -n "`ps -p $pid1 | grep $pid1`" ] ; do
+				echo $i
+				sleep 1
+			        	i=$(($i +10))
+				done
+				wait $pid1;
+				sleep 1
+				echo 99
+				sleep 2
+				echo 100)|
+				zenity --width=360 \
+			        	--progress \
+					--window-icon=/usr/share/icons/olex2.xpm \
+					--title="Updating Olex2" \
+					--text="Updating Olex2 GUI files to latest version" \
+					--percentage=0 \
+					--auto-close
+					if [ "$?" = -1 ] ; then
+						zenity --error --text="Update cancelled."
+						exit 0
+					fi
+					rm $OLEX2_DIR/portable-gui.zip
+					wait
+					echo "Completed unirun unpacker";
+	 	fi
+else
+	echo "Modifying default usettings.dat and uploading zip to: $OLEX2_DIR"
+	cp /usr/share/olex2/usettings.dat $OLEX2_DIR
+	cp /usr/share/olex2/portable-gui.zip $OLEX2_DIR
+	echo "Removing old index.ind"
+	rm $OLEX2_DIR/index.ind
+	echo "Starting unirun unpacker";
+	(/usr/libexec/olex2/unirun $OLEX2_DIR -tag=zip &
+	pid1=$!
+	i=0
+	while [ -n "`ps -p $pid1 | grep $pid1`" ] ; do
+		echo $i
+		sleep 1
+		i=$(($i +10))
+	done
+	wait $pid1;
+	sleep 1
+	echo 99
+	sleep 2
+	echo 100)|
+	zenity --width=360 \
+		--progress \
+		--window-icon=/usr/share/icons/olex2.xpm \
+		--title="Updating Olex2" \
+		--text="Updating Olex2 GUI files to latest version" \
+		--percentage=0 \
+		--auto-close
+	
+	if [ "$?" = -1 ] ; then
+		zenity --error --text="Update cancelled."
+		exit 0
+	fi
+	rm $OLEX2_DIR/portable-gui.zip
+	wait
+	echo "Completed unirun unpacker";
+fi
+
+# This is the default logic if on an existing install
+# I may need to alter the update notice from unirun
+
+(/usr/libexec/olex2/unirun $OLEX2_DIR -tag=$OLEX2_VERSION &
+	pid2=$!
+	i=0
+	while [ -n "`ps -p $pid2 | grep $pid2`" ] ; do
+		echo $i
+		sleep 1
+		i=$(($i +10))
+	done
+	wait $pid2;
+	sleep 1
+	echo 100)|
+zenity --width=360 \
+	--progress \
+	--window-icon=/usr/share/icons/olex2.xpm \
+	--title="Updating Olex2" \
+	--text="Applying Olex2 Downloaded Updates" \
+	--percentage=0 \
+	--auto-close
+
+if [ "$?" = -1 ] ; then
+	zenity --error --text="Update cancelled."
+	exit 1
+fi
+
+wait
+# Finally calling olex2
+/usr/libexec/olex2/olex2 &
