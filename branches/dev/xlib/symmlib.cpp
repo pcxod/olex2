@@ -1379,8 +1379,8 @@ TSpaceGroup* TSymmLib::FindSG(const TAsymmUnit& AU)  {
 }
 //..............................................................................
 size_t TSymmLib::FindBravaisLattices(TAsymmUnit& AU, TTypeList<TBravaisLatticeRef>& res)  const {
-  double Alpha = AU.Angles()[0].GetV(), Beta = AU.Angles()[1].GetV(), Gamma = AU.Angles()[2].GetV();
-  double A = AU.Axes()[0].GetV(),       B = AU.Axes()[1].GetV(),      C = AU.Axes()[2].GetV();
+  double Alpha = AU.GetAngles()[0], Beta = AU.GetAngles()[1], Gamma = AU.GetAngles()[2];
+  double A = AU.GetAxes()[0], B = AU.GetAxes()[1], C = AU.GetAxes()[2];
   // alpha = beta = gamma
   if( Alpha == Beta && Alpha == Gamma )  {
     if( Alpha == 90 )  {

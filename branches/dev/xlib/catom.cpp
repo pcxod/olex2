@@ -117,7 +117,7 @@ void TCAtom::Assign(const TCAtom& S)  {
   EllpId = S.EllpId;
   SetUiso(S.GetUiso());
   SetUisoEsd(S.GetUisoEsd());
-  SetUisoScale( S.GetUisoScale() );
+  SetUisoScale(S.GetUisoScale());
   if( S.UisoOwner != NULL )  {
     UisoOwner = Parent->FindCAtomById(S.UisoOwner->GetId());
     if( UisoOwner == NULL )

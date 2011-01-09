@@ -177,7 +177,7 @@ void TMainForm::funCell(const TStrObjList& Params, TMacroError &E)  {
   if( Params[0].IsNumber() && false )  {  // mutliplies cartesian cell... tests...
     const double k = Params[0].ToDouble();
     TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
-    au.Axes()[0] *= k;  au.Axes()[1] *= k;  au.Axes()[2] *= k;
+    au.GetAxes() *= k;
     au.InitMatrices();
     for( size_t i=0; i < au.AtomCount(); i++ )
       au.CartesianToCell(au.GetAtom(i).ccrd());
@@ -185,19 +185,19 @@ void TMainForm::funCell(const TStrObjList& Params, TMacroError &E)  {
   }
   else  {
     if( Params[0].Equalsi('a') )
-      E.SetRetVal( FXApp->XFile().GetAsymmUnit().Axes()[0].GetV() );
+      E.SetRetVal(FXApp->XFile().GetAsymmUnit().GetAxes()[0]);
     else if( Params[0].Equalsi('b') )
-      E.SetRetVal( FXApp->XFile().GetAsymmUnit().Axes()[1].GetV() );
+      E.SetRetVal(FXApp->XFile().GetAsymmUnit().GetAxes()[1]);
     else if( Params[0].Equalsi('c') )
-      E.SetRetVal( FXApp->XFile().GetAsymmUnit().Axes()[2].GetV() );
+      E.SetRetVal(FXApp->XFile().GetAsymmUnit().GetAxes()[2]);
     else if( Params[0].Equalsi("alpha") )
-      E.SetRetVal( FXApp->XFile().GetAsymmUnit().Angles()[0].GetV() );
+      E.SetRetVal(FXApp->XFile().GetAsymmUnit().GetAngles()[0]);
     else if( Params[0].Equalsi("beta") )
-      E.SetRetVal( FXApp->XFile().GetAsymmUnit().Angles()[1].GetV() );
+      E.SetRetVal(FXApp->XFile().GetAsymmUnit().GetAngles()[1]);
     else if( Params[0].Equalsi("gamma") )
-      E.SetRetVal( FXApp->XFile().GetAsymmUnit().Angles()[2].GetV() );
+      E.SetRetVal(FXApp->XFile().GetAsymmUnit().GetAngles()[2]);
     else if( Params[0].Equalsi("volume") )
-      E.SetRetVal( olxstr::FormatFloat(2, FXApp->XFile().GetUnitCell().CalcVolume()) );
+      E.SetRetVal(olxstr::FormatFloat(2, FXApp->XFile().GetUnitCell().CalcVolume()));
     else
       E.ProcessingError(__OlxSrcInfo, "invalid argument: ") << Params[0];
   }
@@ -2665,7 +2665,7 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   RefinementModel& rm = FXApp->XFile().GetRM();
   FindXAtoms(Cmds, Atoms, false, !Options.Contains("cs"));
   const int m = TAfixGroup::GetM(afix), n = TAfixGroup::GetN(afix);
-  if( TAfixGroup::IsFitted(afix) && ( n == 6 || n == 9) )  {  // special case
+  if( TAfixGroup::IsFitted(afix) && (n == 6 || n == 9) )  {  // special case
     // yet another special case
     if( !positions.IsEmpty() )  {
       TStrList toks(positions, ',');
@@ -3899,10 +3899,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   if( resolution < 0.01 )  
     resolution = 0.02;
   resolution = 1./resolution;
-  const vec3i dim(
-    (int)(au.Axes()[0].GetV()*resolution),
-    (int)(au.Axes()[1].GetV()*resolution),
-    (int)(au.Axes()[2].GetV()*resolution));
+  const vec3i dim(au.GetAxes()*resolution);
   const double mapVol = dim.Prod();
   const double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   const int minLevel = olx_round(pow(6*mapVol*3/(4*M_PI*vol), 1./3));
@@ -6178,10 +6175,10 @@ void TMainForm::funSGList(const TStrObjList& Params, TMacroError &E) {
 void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   double cellParameters[12];
   for( int i = 0; i < 3; i++ )  {
-    cellParameters[i]= FXApp->XFile().GetAsymmUnit().Axes()[i].GetV();
-    cellParameters[i+3]= FXApp->XFile().GetAsymmUnit().Angles()[i].GetV();
-    cellParameters[i+6]= FXApp->XFile().GetAsymmUnit().Axes()[i].GetE();
-    cellParameters[i+9]= FXApp->XFile().GetAsymmUnit().Angles()[i].GetE();
+    cellParameters[i]= FXApp->XFile().GetAsymmUnit().GetAxes()[i];
+    cellParameters[i+3]= FXApp->XFile().GetAsymmUnit().GetAngles()[i];
+    cellParameters[i+6]= FXApp->XFile().GetAsymmUnit().GetAxisEsds()[i];
+    cellParameters[i+9]= FXApp->XFile().GetAsymmUnit().GetAngleEsds()[i];
   }
   TSAtomPList satoms(FXApp->FindXAtoms(Cmds.Text(' ')), StaticCastAccessor<TSAtom>());
   if( satoms.IsEmpty() )
@@ -7149,14 +7146,15 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       throw TFunctionFailedException(__OlxSourceInfo, exc);
     }
     TDUnitCell* duc = new TDUnitCell(FXApp->GetRender(), olxstr("cell") << (UserCells.Count()+1) );
-    double cell[6];
-    cell[0] = bcf->GetAsymmUnit().Axes()[0].GetV();
-    cell[1] = bcf->GetAsymmUnit().Axes()[1].GetV();
-    cell[2] = bcf->GetAsymmUnit().Axes()[2].GetV();
-    cell[3] = bcf->GetAsymmUnit().Angles()[0].GetV();
-    cell[4] = bcf->GetAsymmUnit().Angles()[1].GetV();
-    cell[5] = bcf->GetAsymmUnit().Angles()[2].GetV();
-    duc->Init( cell );
+    const double cell[6] = {
+      bcf->GetAsymmUnit().GetAxes()[0],
+      bcf->GetAsymmUnit().GetAxes()[1],
+      bcf->GetAsymmUnit().GetAxes()[2],
+      bcf->GetAsymmUnit().GetAngles()[0],
+      bcf->GetAsymmUnit().GetAngles()[1],
+      bcf->GetAsymmUnit().GetAngles()[2]
+    };
+    duc->Init(cell);
     FXApp->AddObjectToCreate( duc );
     TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(bcf->GetAsymmUnit());
     UserCells.Add(AnAssociation2<TDUnitCell*, TSpaceGroup*>(duc, sg));
@@ -7594,10 +7592,7 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
     }
   }
   const double resolution = 5;
-  const vec3i dim(
-    (int)(au.Axes()[0].GetV()*resolution),
-    (int)(au.Axes()[1].GetV()*resolution),
-    (int)(au.Axes()[2].GetV()*resolution));
+  const vec3i dim(au.GetAxes()*resolution);
   FXApp->XGrid().InitGrid(dim);
   BVFourier::MapInfo mi = BVFourier::CalcPatt(P1SF, FXApp->XGrid().Data()->Data, dim, vol);
   FXApp->XGrid().AdjustMap();
@@ -7682,10 +7677,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   const double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   BVFourier::MapInfo mi;
 // init map
-  const vec3i dim(
-    (int)(au.Axes()[0].GetV()*resolution),
-    (int)(au.Axes()[1].GetV()*resolution),
-    (int)(au.Axes()[2].GetV()*resolution));
+  const vec3i dim(au.GetAxes()*resolution);
   TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
   mi = BVFourier::CalcEDM(P1SF, map.Data, dim, vol);
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -8255,10 +8247,10 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         }
         TBasicApp::NewLogEntry() << (values.Add("Plane ") << pld <<
           (values.Add("RMS: ") << vcovc.CalcPlane(atoms).ToString()) << " A");
-        TEVPoint<double> c_cent(vcovc.CalcCentroid(atoms));
+        TEPoint3<double> c_cent(vcovc.CalcCentroid(atoms));
         TBasicApp::NewLogEntry() << "Plane " << pld << "cartesian centroid : {" << c_cent[0].ToString() <<
           ", " << c_cent[1].ToString() << ", " << c_cent[2].ToString() << "}";
-        TEVPoint<double> f_cent(vcovc.CalcCentroidF(atoms));
+        TEPoint3<double> f_cent(vcovc.CalcCentroidF(atoms));
         TBasicApp::NewLogEntry() << "Plane " << pld << "fractional centroid : {" << f_cent[0].ToString() <<
           ", " << f_cent[1].ToString() << ", " << f_cent[2].ToString() << "}";
       }

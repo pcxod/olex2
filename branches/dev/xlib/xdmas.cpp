@@ -21,24 +21,20 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
       if( toks.Count() < 7 )  
         throw TFunctionFailedException(__OlxSourceInfo, "inlvaid CELLSD instruction");
 
-      GetAsymmUnit().Axes()[0].E() = toks[1].ToDouble();
-      GetAsymmUnit().Axes()[1].E() = toks[2].ToDouble();
-      GetAsymmUnit().Axes()[2].E() = toks[3].ToDouble();
-      GetAsymmUnit().Angles()[0].E() = toks[4].ToDouble();
-      GetAsymmUnit().Angles()[1].E() = toks[5].ToDouble();
-      GetAsymmUnit().Angles()[2].E() = toks[6].ToDouble();
+      GetAsymmUnit().GetAxisEsds() = vec3d(
+        toks[1].ToDouble(), toks[2].ToDouble(), toks[3].ToDouble());
+      GetAsymmUnit().GetAngleEsds() = vec3d(
+        toks[4].ToDouble(), toks[5].ToDouble(), toks[6].ToDouble());
     }
     else if( Strings[i].StartsFromi("CELL") )  {
       toks.Clear();
       toks.Strtok( Strings[i], ' ');
       if( toks.Count() < 7 )  
-        throw TFunctionFailedException(__OlxSourceInfo, "inlvaid CELL instruction");
-      GetAsymmUnit().Axes()[0] = toks[1];
-      GetAsymmUnit().Axes()[1] = toks[2];
-      GetAsymmUnit().Axes()[2] = toks[3];
-      GetAsymmUnit().Angles()[0] = toks[4];
-      GetAsymmUnit().Angles()[1] = toks[5];
-      GetAsymmUnit().Angles()[2] = toks[6];
+        throw TFunctionFailedException(__OlxSourceInfo, "invalid CELL instruction");
+      GetAsymmUnit().GetAxes() = vec3d(
+        toks[1].ToDouble(), toks[2].ToDouble(), toks[3].ToDouble());
+      GetAsymmUnit().GetAngles() = vec3d(
+        toks[4].ToDouble(), toks[5].ToDouble(), toks[6].ToDouble());
       CellFound = true;
       GetAsymmUnit().InitMatrices();
     }

@@ -100,7 +100,7 @@ public:
       if( FV == 0 || S.FV == 0 )
         throw TDivException(__OlxSourceInfo);
       if( FE != 0 || S.FE != 0 )
-        FE = (EType)(sqr(S.FE/S.FV) + olx_sqr(FE/FV));
+        FE = (EType)(olx_sqr(S.FE/S.FV) + olx_sqr(FE/FV));
       FV *= S.FV;
       return *this;
     }
@@ -110,7 +110,7 @@ public:
       if( FV == 0 || S.FV == 0 )
         throw TDivException(__OlxSourceInfo);
       if( FE != 0 || S.FE != 0 )
-        FE = (EType)(sqr(S.FE/S.FV) + olx_sqr(FE/FV));
+        FE = (EType)(olx_sqr(S.FE/S.FV) + olx_sqr(FE/FV));
       FV /= S.FV;
       return *this;
     }
@@ -118,7 +118,7 @@ public:
   template <class AType>
     TEValue& operator -= (const TEValue<AType>& S)  {
       FV -= S.FV;
-      FE = (EType)sqrt(sqr(S.FE)+sqr(FE));
+      FE = (EType)sqrt(olx_sqr(S.FE)+olx_sqr(FE));
       return *this;
     }
 
@@ -226,8 +226,23 @@ public:
   inline olxwstr ToWStr() const {  return StrRepr<olxwstr>();  }
 };
 
-  typedef TEValue<float>  TEValueF;
-  typedef TEValue<double>  TEValueD;
+typedef TEValue<float>  TEValueF;
+typedef TEValue<double>  TEValueD;
 
+template <typename FloatT> struct TEPoint3 {
+  TEValue<FloatT> data[3];
+  TEPoint3(const TEValue<FloatT> &x, const TEValue<FloatT> &y, const TEValue<FloatT> &z)  {
+    data[0] = x;  data[1] = y;  data[2] = z;
+  }
+  TEPoint3(const TEPoint3<FloatT> &p)  {
+    data[0] = p.data[0];  data[1] = p.data[1];  data[2] = p.data[2];
+  }
+  TEValue<FloatT>& operator [] (size_t i)  {  return data[i];  }
+  const TEValue<FloatT>& operator [] (size_t i) const {  return data[i];  }
+  TEPoint3& operator = (const TEPoint3 &p)  {
+    data[0] = p.data[0];  data[1] = p.data[1];  data[2] = p.data[2];
+    return *this;
+  }
+};
 EndEsdlNamespace()
 #endif

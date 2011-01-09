@@ -682,10 +682,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   sw.stop();
   const double vol = xapp.XFile().GetLattice().GetUnitCell().CalcVolume();
 // init map
-  const vec3i dim(
-    (int)(au.Axes()[0].GetV()*resolution),
-    (int)(au.Axes()[1].GetV()*resolution),
-		(int)(au.Axes()[2].GetV()*resolution));
+  const vec3i dim(au.GetAxes()*resolution);
   TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
   vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
   const size_t PointCount = dim.Prod();

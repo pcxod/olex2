@@ -120,13 +120,18 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
             Toks.Strtok(line, ' ');
             if( Toks.Count() != 8 )
               throw TFunctionFailedException(__OlxSourceInfo, "invalid CELL format");
-            ins->GetRM().expl.SetRadiation( Toks[1].ToDouble() );
-            ins->GetAsymmUnit().Axes()[0] = Toks[2];
-            ins->GetAsymmUnit().Axes()[1] = Toks[3];
-            ins->GetAsymmUnit().Axes()[2] = Toks[4];
-            ins->GetAsymmUnit().Angles()[0] = Toks[5];
-            ins->GetAsymmUnit().Angles()[1] = Toks[6];
-            ins->GetAsymmUnit().Angles()[2] = Toks[7];
+            ins->GetRM().expl.SetRadiation(Toks[1].ToDouble());
+            ins->GetAsymmUnit().GetAxes() = vec3d(Toks[2].ToDouble(), Toks[3].ToDouble(), Toks[4].ToDouble());
+            ins->GetAsymmUnit().GetAngles() = vec3d(Toks[5].ToDouble(), Toks[6].ToDouble(), Toks[7].ToDouble());
+            cell_found = true;
+          }
+          if( line.StartsFromi("ZERR") )  {
+            Toks.Strtok(line, ' ');
+            if( Toks.Count() != 8 )
+              throw TFunctionFailedException(__OlxSourceInfo, "invalid ZERR format");
+            ins->GetAsymmUnit().SetZ(Toks[1].ToInt());
+            ins->GetAsymmUnit().GetAxisEsds() = vec3d(Toks[2].ToDouble(), Toks[3].ToDouble(), Toks[4].ToDouble());
+            ins->GetAsymmUnit().GetAngleEsds() = vec3d(Toks[5].ToDouble(), Toks[6].ToDouble(), Toks[7].ToDouble());
             cell_found = true;
           }
           else if( line.StartsFromi("SFAC") )  {

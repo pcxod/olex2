@@ -1,6 +1,7 @@
 #ifndef __olx_xl_network_H
 #define __olx_xl_network_H
 #include "math/align.h"
+#include "evalue.h"
 #include "satom.h"
 #include "sbond.h"
 #include "tptrlist.h"

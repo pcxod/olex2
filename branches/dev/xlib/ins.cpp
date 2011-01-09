@@ -344,12 +344,8 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
   else if( !cx.CellFound && Toks[0].Equalsi("CELL") )  {
     if( Toks.Count() == 8 )  {
       cx.rm.expl.SetRadiation( Toks[1].ToDouble() );
-      cx.au.Axes()[0] = Toks[2];
-      cx.au.Axes()[1] = Toks[3];
-      cx.au.Axes()[2] = Toks[4];
-      cx.au.Angles()[0] = Toks[5];
-      cx.au.Angles()[1] = Toks[6];
-      cx.au.Angles()[2] = Toks[7];
+      cx.au.GetAxes() = vec3d(Toks[2].ToDouble(), Toks[3].ToDouble(), Toks[4].ToDouble());
+      cx.au.GetAngles() = vec3d(Toks[5].ToDouble(), Toks[6].ToDouble(), Toks[7].ToDouble());
       cx.CellFound = true;
       cx.au.InitMatrices();
     }
@@ -389,7 +385,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
     //_ProcessAfix0(cx);
   }
   else if( Toks[0].Equalsi("AFIX") && (Toks.Count() > 1) )  {
-    int afix = Toks[1].ToInt();
+    const int afix = Toks[1].ToInt();
     TAfixGroup* afixg = NULL;
     int n = 0, m = 0;
     if( afix != 0 )  {
@@ -402,8 +398,15 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         u = Toks[3].ToDouble();
       n = TAfixGroup::GetN(afix);
       m = TAfixGroup::GetM(afix);
-      if( !TAfixGroup::IsDependent(afix) )
+      if( !TAfixGroup::IsDependent(afix) )  {
+        /*shelxl produces 'broken' res files (by removing termitating AFIX 0 for fitted groups) limiting the
+        construction of rigid groups... so to read them correctly we have to pop the last rigid group if
+        encounter a new one
+        */
+        if( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Current().B()->IsFitted() && TAfixGroup::IsFitted(afix) ) 
+          cx.AfixGroups.Pop();
         afixg = &cx.rm.AfixGroups.New(NULL, afix, d, sof == 11 ? 0 : sof, u == 10.08 ? 0 : u);
+      }
       else {
         if( !cx.AfixGroups.IsEmpty() && !cx.AfixGroups.Current().B()->IsFitted() ) 
           cx.AfixGroups.Pop();
@@ -424,44 +427,45 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         case 14:
         case 15:
         case 16:
-          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(1, afixg, false) );
+          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(1, afixg, false));
           break;
         case 2:
         case 9:
-          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(2, afixg, false) );
+          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(2, afixg, false));
           break;
         case 3:
         case 13:
-          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(3, afixg, false) );
+          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(3, afixg, false));
           break;
         case 7:
         case 6:
-          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(5, afixg, true));
+          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(5, afixg, true));
           cx.SetNextPivot = true;
           break;
         case 5:
-          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(4, afixg, true));
+          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(4, afixg, true));
           cx.SetNextPivot = true;
           break;
         case 11:  //naphtalene
         case 10:  // Cp*
-          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(9, afixg, true));
+          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(9, afixg, true));
           cx.SetNextPivot = true;
           break;
         case 12:  // disordered CH3
-          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(6, afixg, false) );
+          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(6, afixg, false));
           break;
         }
         if( m > 16 )  {  // FRAG
           Fragment* frag = cx.rm.FindFragByCode(m);
           if( frag == NULL )
             throw TInvalidArgumentException(__OlxSourceInfo, "fitted group should be preceeded by the FRAG..FEND with the same code");
-          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>((int)frag->Count()-1, afixg, false) );
+          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>((int)frag->Count()-1, afixg, false));
           cx.SetNextPivot = true;
         }
-        else if( m == 0 && !TAfixGroup::IsDependent(afix) )  {  // generic container then, beside, 5 is dependent atom of rigid group
-          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(-1, afixg, false) );
-          cx.SetNextPivot = !TAfixGroup::IsRiding(afix); // if not riding
+        else if( m == 0 && !TAfixGroup::IsDependent(afix) )  {
+          // generic container then, besides, 5 is dependent atom of rigid group
+          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(-1, afixg, false));
+          cx.SetNextPivot = TAfixGroup::HasExcplicitPivot(afix); // if not riding
         }
         if( !cx.SetNextPivot )  {
           if( cx.LastNonH == NULL  )
@@ -1239,12 +1243,12 @@ olxstr TIns::_AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex)  
 olxstr TIns::_CellToString()  {
   olxstr Tmp("CELL ");
   Tmp << RefMod.expl.GetRadiation();
-  Tmp << ' ' << GetAsymmUnit().Axes()[0].GetV() <<
-         ' ' << GetAsymmUnit().Axes()[1].GetV() <<
-         ' ' << GetAsymmUnit().Axes()[2].GetV() <<
-         ' ' << GetAsymmUnit().Angles()[0].GetV() <<
-         ' ' << GetAsymmUnit().Angles()[1].GetV() <<
-         ' ' << GetAsymmUnit().Angles()[2].GetV();
+  Tmp << ' ' << GetAsymmUnit().GetAxes()[0] <<
+         ' ' << GetAsymmUnit().GetAxes()[1] <<
+         ' ' << GetAsymmUnit().GetAxes()[2] <<
+         ' ' << GetAsymmUnit().GetAngles()[0] <<
+         ' ' << GetAsymmUnit().GetAngles()[1] <<
+         ' ' << GetAsymmUnit().GetAngles()[2];
   return Tmp;
 }
 //..............................................................................
@@ -1257,12 +1261,12 @@ void TIns::_SaveFVar(RefinementModel& rm, TStrList& SL)  {
 olxstr TIns::_ZerrToString()  {
   olxstr Tmp("ZERR ");
   Tmp << GetAsymmUnit().GetZ();
-  Tmp << ' ' << GetAsymmUnit().Axes()[0].GetE() <<
-         ' ' << GetAsymmUnit().Axes()[1].GetE() <<
-         ' ' << GetAsymmUnit().Axes()[2].GetE() <<
-         ' ' << GetAsymmUnit().Angles()[0].GetE() <<
-         ' ' << GetAsymmUnit().Angles()[1].GetE() <<
-         ' ' << GetAsymmUnit().Angles()[2].GetE();
+  Tmp << ' ' << GetAsymmUnit().GetAxisEsds()[0] <<
+         ' ' << GetAsymmUnit().GetAxisEsds()[1] <<
+         ' ' << GetAsymmUnit().GetAxisEsds()[2] <<
+         ' ' << GetAsymmUnit().GetAngleEsds()[0] <<
+         ' ' << GetAsymmUnit().GetAngleEsds()[1] <<
+         ' ' << GetAsymmUnit().GetAngleEsds()[2];
   return Tmp;
 }
 //..............................................................................

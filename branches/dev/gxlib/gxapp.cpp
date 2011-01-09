@@ -409,12 +409,12 @@ void TGXApp::CreateObjects(bool centerModel)  {
     latt_planes[i].Create();
   }
   double cell[] = {  
-    XFile().GetAsymmUnit().Axes()[0].GetV(),
-    XFile().GetAsymmUnit().Axes()[1].GetV(),
-    XFile().GetAsymmUnit().Axes()[2].GetV(),
-    XFile().GetAsymmUnit().Angles()[0].GetV(),
-    XFile().GetAsymmUnit().Angles()[1].GetV(),
-    XFile().GetAsymmUnit().Angles()[2].GetV()
+    XFile().GetAsymmUnit().GetAxes()[0],
+    XFile().GetAsymmUnit().GetAxes()[1],
+    XFile().GetAsymmUnit().GetAxes()[2],
+    XFile().GetAsymmUnit().GetAngles()[0],
+    XFile().GetAsymmUnit().GetAngles()[1],
+    XFile().GetAsymmUnit().GetAngles()[2]
   };
   DUnitCell().Init(cell);
   DBasis().SetAsymmUnit(XFile().GetAsymmUnit());
@@ -3753,11 +3753,7 @@ void TGXApp::BuildSceneMask(FractMask& mask, double inc)  {
   TAsymmUnit& au = XFile().GetAsymmUnit();
   vec3d mn(100, 100, 100), 
         mx(-100, -100, -100),
-        norms(
-          au.Axes()[0].GetV(), 
-          au.Axes()[1].GetV(),
-          au.Axes()[2].GetV()
-        );
+        norms(au.GetAxes());
   TTypeList<AnAssociation2<vec3d,double> > atoms;
   AtomIterator ai(*this);
   atoms.SetCapacity(ai.count);

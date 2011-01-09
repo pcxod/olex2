@@ -192,14 +192,25 @@ void TCif::Initialize()  {
         GetRM().expl.SetRadiation(radiation.ToDouble());
     }
     catch(...)  {}
-    
-    GetAsymmUnit().Axes()[0] = GetParamAsString("_cell_length_a");
-    GetAsymmUnit().Axes()[1] = GetParamAsString("_cell_length_b");
-    GetAsymmUnit().Axes()[2] = GetParamAsString("_cell_length_c");
+    EValue = GetParamAsString("_cell_length_a");
+    GetAsymmUnit().GetAxes()[0] = EValue.GetV();
+    GetAsymmUnit().GetAxisEsds()[0] = EValue.GetE();
+    EValue = GetParamAsString("_cell_length_b");
+    GetAsymmUnit().GetAxes()[1] = EValue.GetV();
+    GetAsymmUnit().GetAxisEsds()[1] = EValue.GetE();
+    EValue = GetParamAsString("_cell_length_c");
+    GetAsymmUnit().GetAxes()[2] = EValue.GetV();
+    GetAsymmUnit().GetAxisEsds()[2] = EValue.GetE();
 
-    GetAsymmUnit().Angles()[0] = GetParamAsString("_cell_angle_alpha");
-    GetAsymmUnit().Angles()[1] = GetParamAsString("_cell_angle_beta");
-    GetAsymmUnit().Angles()[2] = GetParamAsString("_cell_angle_gamma");
+    EValue = GetParamAsString("_cell_angle_alpha");
+    GetAsymmUnit().GetAngles()[0] = EValue.GetV();
+    GetAsymmUnit().GetAngleEsds()[0] = EValue.GetE();
+    EValue = GetParamAsString("_cell_angle_beta");
+    GetAsymmUnit().GetAngles()[1] = EValue.GetV();
+    GetAsymmUnit().GetAngleEsds()[1] = EValue.GetE();
+    EValue = GetParamAsString("_cell_angle_gamma");
+    GetAsymmUnit().GetAngles()[2] = EValue.GetV();
+    GetAsymmUnit().GetAngleEsds()[2] = EValue.GetE();
     if( ParamExists("_cell_formula_units_Z") )
       GetAsymmUnit().SetZ((short)olx_round(GetParamAsString("_cell_formula_units_Z").ToDouble()));
   }
@@ -520,14 +531,14 @@ bool TCif::Adopt(TXFile& XF)  {
   SetParam("_chemical_formula_sum", GetAsymmUnit()._SummFormula(' ',
     1./olx_max(GetAsymmUnit().GetZPrime(), 0.01)), true);
   SetParam("_chemical_formula_weight", olxstr::FormatFloat(2, GetAsymmUnit().MolWeight()), false);
+  const TAsymmUnit& au = GetAsymmUnit();
+  SetParam("_cell_length_a", TEValueD(au.GetAxes()[0], au.GetAxisEsds()[0]).ToString(), false);
+  SetParam("_cell_length_b", TEValueD(au.GetAxes()[1], au.GetAxisEsds()[1]).ToString(), false);
+  SetParam("_cell_length_c", TEValueD(au.GetAxes()[2], au.GetAxisEsds()[2]).ToString(), false);
 
-  SetParam("_cell_length_a", GetAsymmUnit().Axes()[0].ToString(), false);
-  SetParam("_cell_length_b", GetAsymmUnit().Axes()[1].ToString(), false);
-  SetParam("_cell_length_c", GetAsymmUnit().Axes()[2].ToString(), false);
-
-  SetParam("_cell_angle_alpha", GetAsymmUnit().Angles()[0].ToString(), false);
-  SetParam("_cell_angle_beta",  GetAsymmUnit().Angles()[1].ToString(), false);
-  SetParam("_cell_angle_gamma", GetAsymmUnit().Angles()[2].ToString(), false);
+  SetParam("_cell_angle_alpha", TEValueD(au.GetAngles()[0], au.GetAngleEsds()[0]).ToString(), false);
+  SetParam("_cell_angle_beta",  TEValueD(au.GetAngles()[1], au.GetAngleEsds()[1]).ToString(), false);
+  SetParam("_cell_angle_gamma", TEValueD(au.GetAngles()[2], au.GetAngleEsds()[2]).ToString(), false);
   SetParam("_cell_volume", XF.GetUnitCell().CalcVolumeEx().ToString(), false);
   SetParam("_cell_formula_units_Z", XF.GetAsymmUnit().GetZ(), false);
 

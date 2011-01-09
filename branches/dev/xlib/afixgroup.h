@@ -53,6 +53,8 @@ public:
   int GetN() const {  return GetN(Afix);  }
   bool IsFitted() const {  return IsFitted(Afix);  }
   bool IsRiding() const {  return IsRiding(Afix);  }
+  bool IsSizable() const {  return IsSizable(Afix);  }
+  bool IsRotable() const {  return IsRotable(Afix);  }
   bool IsRefinable() const {  return IsRefinable(Afix);  }
   bool IsUnbound() const {  return IsUnbound(Afix);  }
   bool HasExcplicitPivot() const {  return HasExcplicitPivot(Afix);  }
@@ -64,19 +66,27 @@ public:
       return (m == 5 || m == 6 || m == 7 || m == 10 || m == 11 || m > 16);
     }
     else  // rigid group, no geometrical constraints
-      return (afix == 6 ||afix == 9);
+      return (afix == 6 || afix == 9 || afix == 7 || afix == 8);
   }
   static bool HasExcplicitPivot(int afix)  {
     const int n = GetN(afix), m = GetM(afix);
     return (n == 6 || n == 9 || (m == 0 && (n == 7 || n == 8)));
   }
   static bool IsRiding(int afix)  {
-    const int n = GetN(afix), m = GetM(afix);
-    return (n == 3 || n == 4 || (m != 0 && (n == 7 || n == 8)));
+    const int n = GetN(afix);
+    return (n == 3 || n == 4 || n == 7 || n == 8);
+  }
+  static bool IsSizable(int afix)  {
+    const int n = GetN(afix);
+    return (n == 4 || n == 8 || n == 9);
+  }
+  static bool IsRotable(int afix)  {
+    const int n = GetN(afix);
+    return (n == 6 || n == 7 || n == 8 || n == 9);
   }
   static bool IsRefinable(int afix)  {
     const int n = GetN(afix);
-    return (n == 7 || n == 8);
+    return (n == 4 || n ==6 || n == 7 || n == 8 || n == 9);
   }
   static bool IsUnbound(int afix)  {
     return (afix == 1 || afix == 2);

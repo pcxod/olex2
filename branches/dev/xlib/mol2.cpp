@@ -14,6 +14,9 @@ const olxstr TMol2::BondNames[] = {"1", "2", "3", "am", "ar", "du", "un", "nc"};
 void TMol2::Clear()  {
   GetAsymmUnit().Clear();
   Bonds.Clear();
+  GetAsymmUnit().GetAxes() = vec3d(1,1,1);
+  GetAsymmUnit().GetAngles() = vec3d(90,90,90);
+  GetAsymmUnit().InitMatrices();
 }
 //..............................................................................
 olxstr TMol2::MOLAtom(TCAtom& A)  {
@@ -50,8 +53,7 @@ olxstr TMol2::MOLBond(TMol2Bond& B)  {
 void TMol2::SaveToStrings(TStrList& Strings)  {
   Strings.Add("@<TRIPOS>MOLECULE");
   Strings.Add(GetTitle());
-  Strings.Add( GetAsymmUnit().AtomCount() )  <<
-    '\t' << Bonds.Count() << "\t1";
+  Strings.Add(GetAsymmUnit().AtomCount())  << '\t' << Bonds.Count() << "\t1";
   Strings.Add("SMALL");
   Strings.Add("NO_CHARGES");
   Strings.Add(EmptyString);
@@ -68,14 +70,7 @@ void TMol2::SaveToStrings(TStrList& Strings)  {
 //..............................................................................
 void TMol2::LoadFromStrings(const TStrList& Strings)  {
   Clear();
-  Title = "OLEX: imported from TRIPOS MOL2";
-  GetAsymmUnit().Axes()[0] = 1;
-  GetAsymmUnit().Axes()[1] = 1;
-  GetAsymmUnit().Axes()[2] = 1;
-  GetAsymmUnit().Angles()[0] = 90;
-  GetAsymmUnit().Angles()[1] = 90;
-  GetAsymmUnit().Angles()[2] = 90;
-  GetAsymmUnit().InitMatrices();
+  Title = "OLEX2: imported from TRIPOS MOL2";
   bool AtomsCycle = false, BondsCycle = false;
   olxdict<int, TCAtom*, TPrimitiveComparator> atoms;
   for( size_t i=0; i < Strings.Count(); i++ )  {

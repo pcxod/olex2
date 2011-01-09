@@ -432,6 +432,8 @@ of components 1 ... m
   }
 
   RefinementModel& Assign(const RefinementModel& rm, bool AssignAUnit);
+  // updates refinable params - BASF, FVAR, WGHT, returns false if objects mismatch
+  bool Update(const RefinementModel& rm);
 
   size_t FragCount() const {  return Frags.Count();  }
   Fragment& GetFrag(size_t i)  {  return *Frags.GetValue(i);  }

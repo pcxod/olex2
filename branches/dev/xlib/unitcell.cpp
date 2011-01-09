@@ -2,22 +2,15 @@
 // TUnitCell: a collection of matrices and ellipoids
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-#include <stdlib.h>
-
 #include "unitcell.h"
-#include "evpoint.h"
 #include "asymmunit.h"
 #include "lattice.h"
-
 #include "catom.h"
 #include "ellipsoid.h"
 #include "network.h"
-
 #include "xapp.h"
 #include "log.h"
-
 #include "emath.h"
-
 #include "olxmps.h"
 #include "arrays.h"
 #undef GetObject
@@ -76,8 +69,8 @@ smatd_list TUnitCell::MulMatrices(const smatd_list& in, const smatd& transform) 
 double TUnitCell::CalcVolume() const {
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
   static const double k = M_PI/180;
-  const vec3d ang(au.Angles()[0].GetV()*k, au.Angles()[1].GetV()*k, au.Angles()[2].GetV()*k);
-  const vec3d ax(au.Axes()[0].GetV(), au.Axes()[1].GetV(), au.Axes()[2].GetV());
+  const vec3d ang = au.GetAngles()*k;
+  const vec3d ax = au.GetAxes();
   const vec3d cs(cos(ang[0]), cos(ang[1]), cos(ang[2]) );
   return ax.Prod()*sqrt(1-cs.QLength() + 2*cs.Prod());
 }
@@ -85,10 +78,10 @@ double TUnitCell::CalcVolume() const {
 TEValue<double> TUnitCell::CalcVolumeEx() const {
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
   static const double k = M_PI/180;
-  const vec3d ang(au.Angles()[0].GetV()*k, au.Angles()[1].GetV()*k, au.Angles()[2].GetV()*k);
-  const vec3d ange(au.Angles()[0].GetE()*k, au.Angles()[1].GetE()*k, au.Angles()[2].GetE()*k);
-  const vec3d ax(au.Axes()[0].GetV(), au.Axes()[1].GetV(), au.Axes()[2].GetV());
-  const vec3d axe(au.Axes()[0].GetE(), au.Axes()[1].GetE(), au.Axes()[2].GetE());
+  const vec3d ang = au.GetAngles()*k;
+  const vec3d ange = au.GetAngleEsds()*k;
+  const vec3d ax = au.GetAxes();
+  const vec3d axe = au.GetAxisEsds();
   const vec3d cs(cos(ang[0]), cos(ang[1]), cos(ang[2]));
   const vec3d ss(sin(ang[0]), sin(ang[1]), sin(ang[2]));
   const double t = sqrt(1-cs.QLength() + 2*cs.Prod());
@@ -790,14 +783,14 @@ void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, shor
   GenereteAtomCoordinates(allAtoms, true, _template);
   const vec3s dim = map.GetSize();
   // angstrem per pixel scale
-  double capp = Lattice->GetAsymmUnit().Axes()[2].GetV()/dim[2],
-         bapp = Lattice->GetAsymmUnit().Axes()[1].GetV()/dim[1],
-         aapp = Lattice->GetAsymmUnit().Axes()[0].GetV()/dim[0];
+  double capp = Lattice->GetAsymmUnit().GetAxes()[2]/dim[2],
+         bapp = Lattice->GetAsymmUnit().GetAxes()[1]/dim[1],
+         aapp = Lattice->GetAsymmUnit().GetAxes()[0]/dim[0];
   // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  const double sin_a = sin(au.GetAngles()[0].GetV()*M_PI/180);
-  const double sin_b = sin(au.GetAngles()[1].GetV()*M_PI/180);
-  const double sin_g = sin(au.GetAngles()[2].GetV()*M_PI/180);
+  const double sin_a = sin(au.GetAngles()[0]*M_PI/180);
+  const double sin_b = sin(au.GetAngles()[1]*M_PI/180);
+  const double sin_g = sin(au.GetAngles()[2]*M_PI/180);
   olxdict<short, TArray3D<bool>*, TPrimitiveComparator> scatterers;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).IsDeleted() )  continue;
@@ -883,7 +876,7 @@ void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& _map, double delta, sho
   TBuildDistanceMapTask task(tm, map.Data, dims, allAtoms);
   TListIteratorManager<TBuildDistanceMapTask> taskm(task, dims[0], tLinearTask, 0);
   task.clear_loop_data();
-  float scale = (float)dims[0]/(float)Lattice->GetAsymmUnit().Axes()[0].GetV();
+  float scale = (float)dims[0]/(float)Lattice->GetAsymmUnit().GetAxes()[0];
   for( size_t i=0; i < dims[0]; i++ )  {
     for( size_t j=0; j < dims[1]; j++ )  {
       for( size_t k=0; k < dims[2]; k++ )  {
@@ -951,12 +944,12 @@ void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short
 {
   const vec3s dims = map.GetSize();
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  double capp = au.GetAxes()[2].GetV()/dims[2],
-         bapp = au.GetAxes()[1].GetV()/dims[1],
-         aapp = au.GetAxes()[0].GetV()/dims[0];
-  const double sin_a = sin(au.GetAngles()[0].GetV()*M_PI/180);
-  const double sin_b = sin(au.GetAngles()[1].GetV()*M_PI/180);
-  const double sin_g = sin(au.GetAngles()[2].GetV()*M_PI/180);
+  double capp = au.GetAxes()[2]/dims[2],
+         bapp = au.GetAxes()[1]/dims[1],
+         aapp = au.GetAxes()[0]/dims[0];
+  const double sin_a = sin(au.GetAngles()[0]*M_PI/180);
+  const double sin_b = sin(au.GetAngles()[1]*M_PI/180);
+  const double sin_g = sin(au.GetAngles()[2]*M_PI/180);
   const int shell_res = olx_round(1./aapp);
   const double max_r = 15;
   TArrayList<vec3i_list> shells(olx_round(max_r*shell_res)+1);
@@ -1061,18 +1054,19 @@ void TUnitCell::LibVolumeEx(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TUnitCell::LibCellEx(const TStrObjList& Params, TMacroError& E)  {
+  const TAsymmUnit& au = Lattice->GetAsymmUnit();
   if( Params[0].Equalsi('a') )
-    E.SetRetVal( Lattice->GetAsymmUnit().Axes()[0].ToString() );
+    E.SetRetVal(TEValueD(au.GetAxes()[0], au.GetAxisEsds()[0]).ToString());
   else if( Params[0].Equalsi('b') )
-    E.SetRetVal( Lattice->GetAsymmUnit().Axes()[1].ToString() );
+    E.SetRetVal(TEValueD(au.GetAxes()[1], au.GetAxisEsds()[1]).ToString());
   else if( Params[0].Equalsi('c') )
-    E.SetRetVal( Lattice->GetAsymmUnit().Axes()[2].ToString() );
+    E.SetRetVal(TEValueD(au.GetAxes()[2], au.GetAxisEsds()[2]).ToString());
   else if( Params[0].Equalsi("alpha") )
-    E.SetRetVal( Lattice->GetAsymmUnit().Angles()[0].ToString() );
+    E.SetRetVal(TEValueD(au.GetAngles()[0], au.GetAngleEsds()[0]).ToString());
   else if( Params[0].Equalsi("beta") )
-    E.SetRetVal( Lattice->GetAsymmUnit().Angles()[1].ToString() );
+    E.SetRetVal(TEValueD(au.GetAngles()[1], au.GetAngleEsds()[1]).ToString());
   else if( Params[0].Equalsi("gamma") )
-    E.SetRetVal( Lattice->GetAsymmUnit().Angles()[2].ToString() );
+    E.SetRetVal(TEValueD(au.GetAngles()[2], au.GetAngleEsds()[2]).ToString());
   else
     E.ProcessingError(__OlxSrcInfo, "invalid argument");
 }
@@ -1083,11 +1077,11 @@ void TUnitCell::LibMatrixCount(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 class TLibrary* TUnitCell::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("uc") : name );
-  lib->RegisterFunction<TUnitCell>( new TFunction<TUnitCell>(this,  &TUnitCell::LibVolumeEx, "VolumeEx", fpNone,
+  lib->RegisterFunction<TUnitCell>( new TFunction<TUnitCell>(this, &TUnitCell::LibVolumeEx, "VolumeEx", fpNone,
 "Returns unit cell volume with esd") );
-  lib->RegisterFunction<TUnitCell>( new TFunction<TUnitCell>(this,  &TUnitCell::LibCellEx, "CellEx", fpOne,
+  lib->RegisterFunction<TUnitCell>( new TFunction<TUnitCell>(this, &TUnitCell::LibCellEx, "CellEx", fpOne,
 "Returns unit cell side/angle with esd") );
-  lib->RegisterFunction<TUnitCell>( new TFunction<TUnitCell>(this,  &TUnitCell::LibMatrixCount, "MatrixCount", fpNone,
+  lib->RegisterFunction<TUnitCell>( new TFunction<TUnitCell>(this, &TUnitCell::LibMatrixCount, "MatrixCount", fpNone,
 "Returns the number of matrices in the unit cell") );
   return lib;
 }

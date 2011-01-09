@@ -215,6 +215,9 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
     "fixed and separator. For example: 'HklImport in.hkl fixed 7 7 7 9 9 out.hkl' or 'HklImport in.hkl "
     "separator \' \'' out.hkl"
     );
+  xlib_InitMacroA(Update, @update, EmptyString, fpAny,
+    "Reads given file and if the atoms list of loaded file matches the atom list of the given file "
+    "the atomic coordinates, FVAR and BASF values are updated.");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -852,7 +855,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp &XApp = TXApp::GetInstance();
   if( XApp.XFile().GetLattice().IsGenerated() )  {
-    Error.ProcessingError(__OlxSrcInfo, "command is not applicable to grown structure");
+    Error.ProcessingError(__OlxSrcInfo, "not applicable to grown structure");
     return;
   }
   int Hfix = 0;
@@ -1472,10 +1475,10 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
   const mat3d i_tm(tm.Inverse());
   const mat3d f2c = mat3d::Transpose((mat3d::Transpose(au.GetCellToCartesian())*tm));
   mat3d ax_err;
-  ax_err[0] = vec3d(olx_sqr(au.Axes()[0].GetE()), olx_sqr(au.Axes()[1].GetE()), olx_sqr(au.Axes()[2].GetE()));
+  ax_err[0] = vec3d::Qrt(au.GetAxisEsds());
   ax_err[1] = ax_err[0];  ax_err[2] = ax_err[0];
   mat3d an_err;
-  an_err[0] = vec3d(olx_sqr(au.Angles()[0].GetE()), olx_sqr(au.Angles()[1].GetE()), olx_sqr(au.Angles()[2].GetE()));
+  an_err[0] = vec3d::Qrt(au.GetAngleEsds());
   an_err[1] = an_err[0];  an_err[2] = an_err[0];
   // prepare positive matrix for error estimation
   mat3d tm_p(tm);
@@ -1485,12 +1488,12 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
         tm_p[i][j] = - tm_p[i][j];
   ax_err *= tm_p;
   an_err *= tm_p;
-  au.Axes()[0].V() = f2c[0].Length();  au.Axes()[0].E() = sqrt(ax_err[0][0]);
-  au.Axes()[1].V() = f2c[1].Length();  au.Axes()[1].E() = sqrt(ax_err[1][1]);
-  au.Axes()[2].V() = f2c[2].Length();  au.Axes()[2].E() = sqrt(ax_err[2][2]);
-  au.Angles()[0].V() = acos(f2c[1].CAngle(f2c[2]))*180.0/M_PI;  au.Angles()[0].E() = sqrt(an_err[0][0]);
-  au.Angles()[1].V() = acos(f2c[0].CAngle(f2c[2]))*180.0/M_PI;  au.Angles()[1].E() = sqrt(an_err[1][1]);
-  au.Angles()[2].V() = acos(f2c[0].CAngle(f2c[1]))*180.0/M_PI;  au.Angles()[2].E() = sqrt(an_err[2][2]);
+  au.GetAxes()[0] = f2c[0].Length();  au.GetAxisEsds()[0] = sqrt(ax_err[0][0]);
+  au.GetAxes()[1] = f2c[1].Length();  au.GetAxisEsds()[1] = sqrt(ax_err[1][1]);
+  au.GetAxes()[2] = f2c[2].Length();  au.GetAxisEsds()[2] = sqrt(ax_err[2][2]);
+  au.GetAngles()[0] = acos(f2c[1].CAngle(f2c[2]))*180.0/M_PI;  au.GetAngleEsds()[0] = sqrt(an_err[0][0]);
+  au.GetAngles()[1] = acos(f2c[0].CAngle(f2c[2]))*180.0/M_PI;  au.GetAngleEsds()[1] = sqrt(an_err[1][1]);
+  au.GetAngles()[2] = acos(f2c[0].CAngle(f2c[1]))*180.0/M_PI;  au.GetAngleEsds()[2] = sqrt(an_err[2][2]);
   const mat3d old_cac = au.GetCartesianToCell();
   au.InitMatrices();
   const mat3d elptm = mat3d::Transpose(au.GetCellToCartesian())*i_tm*mat3d::Transpose(old_cac);
@@ -1500,12 +1503,13 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
     if( ca.GetEllipsoid() != NULL )
       ca.GetEllipsoid()->MultMatrix(elptm);
   }
-  TBasicApp::NewLogEntry() << "New cell: " << au.Axes()[0].ToString() << 
-    ' ' << au.Axes()[1].ToString() << 
-    ' ' << au.Axes()[2].ToString() <<
-    ' '  << au.Angles()[0].ToString() << 
-    ' '  << au.Angles()[1].ToString() << 
-    ' '  << au.Angles()[2].ToString();
+  TBasicApp::NewLogEntry() << "New cell: " <<
+    TEValueD(au.GetAxes()[0], au.GetAxisEsds()[0]).ToString() << ' ' <<
+    TEValueD(au.GetAxes()[1], au.GetAxisEsds()[1]).ToString() << ' ' <<
+    TEValueD(au.GetAxes()[2], au.GetAxisEsds()[2]).ToString() << ' '  <<
+    TEValueD(au.GetAngles()[0], au.GetAngleEsds()[0]).ToString() << ' '  <<
+    TEValueD(au.GetAngles()[1], au.GetAngleEsds()[1]).ToString() << ' '  <<
+    TEValueD(au.GetAngles()[2], au.GetAngleEsds()[2]).ToString();
   TBasicApp::NewLogEntry(logError) << "Cell esd's are estimated!";
   if( !resHKL_FN.IsEmpty() )  {
     olxstr hkl_fn(xapp.LocateHklFile());
@@ -4383,5 +4387,18 @@ void XLibMacros::macHklImport(TStrObjList &Cmds, const TParamList &Options, TMac
   else  {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined keyword: ") << Cmds[1]);
   }
+}
+//..............................................................................
+void XLibMacros::macUpdate(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TXApp& app = TXApp::GetInstance();
+  olx_object_ptr<TXFile> xf((TXFile*)app.XFile().Replicate());
+  xf.p->p->LoadFromFile(Cmds.Text(' '));
+  RefinementModel &this_rm = app.XFile().GetRM(),
+    &that_rm = xf.p->p->GetRM();
+  if( !this_rm.Update(that_rm) )  {
+    E.ProcessingError(__OlxSrcInfo, "Asymmetric units do not match");
+    return;
+  }
+  app.XFile().EndUpdate();
 }
 //..............................................................................

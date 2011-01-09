@@ -2,7 +2,6 @@
 #define __olx_gxl_xgrid_H
 #include "gxbase.h"
 #include "arrays.h"
-#include "evpoint.h"
 #include "gltextbox.h"
 #include "macroerror.h"
 #include "gltexture.h"

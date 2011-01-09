@@ -272,9 +272,6 @@
     <ClInclude Include="..\..\..\sdl\evector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\evpoint.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\sdl\evtypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>

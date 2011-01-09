@@ -2,6 +2,7 @@
 #define __olxs_v_co_v_h
 #include "math/align.h"
 #include "math/composite.h"
+#include "evalue.h"
 #include "asymmunit.h"
 #include "lattice.h"
 #include "bapp.h"
@@ -484,12 +485,12 @@ protected:
 public:
   VcoVContainer(TAsymmUnit& _au) : au(_au), cell(6), celle(6)  {
     static const double a2r = M_PI/180;
-    cell[0] = au.GetAxes()[0].GetV();  celle[0] = olx_sqr(au.GetAxes()[0].GetE());
-    cell[1] = au.GetAxes()[1].GetV();  celle[1] = olx_sqr(au.GetAxes()[1].GetE());
-    cell[2] = au.GetAxes()[2].GetV();  celle[2] = olx_sqr(au.GetAxes()[2].GetE());
-    cell[3] = au.GetAngles()[0].GetV()*a2r;  celle[3] = olx_sqr(au.GetAngles()[0].GetE()*a2r);
-    cell[4] = au.GetAngles()[1].GetV()*a2r;  celle[4] = olx_sqr(au.GetAngles()[1].GetE()*a2r);
-    cell[5] = au.GetAngles()[2].GetV()*a2r;  celle[5] = olx_sqr(au.GetAngles()[2].GetE()*a2r);
+    cell[0] = au.GetAxes()[0];  celle[0] = olx_sqr(au.GetAxes()[0]);
+    cell[1] = au.GetAxes()[1];  celle[1] = olx_sqr(au.GetAxes()[1]);
+    cell[2] = au.GetAxes()[2];  celle[2] = olx_sqr(au.GetAxes()[2]);
+    cell[3] = au.GetAngles()[0]*a2r;  celle[3] = olx_sqr(au.GetAngles()[0]*a2r);
+    cell[4] = au.GetAngles()[1]*a2r;  celle[4] = olx_sqr(au.GetAngles()[1]*a2r);
+    cell[5] = au.GetAngles()[2]*a2r;  celle[5] = olx_sqr(au.GetAngles()[2]*a2r);
   }
   void ReadShelxMat(const olxstr& fileName) {  vcov.ReadShelxMat(fileName, au);  }
   void ReadSmtbxMat(const olxstr& fileName) {  vcov.ReadSmtbxMat(fileName, au);  }
@@ -506,7 +507,7 @@ public:
     return TEValue<double>(val, sqrt(qesd));
   }
   // cartesian centroid
-  TEVPoint<double> CalcCentroid(const TSAtomCPList& atoms) {
+  TEPoint3<double> CalcCentroid(const TSAtomCPList& atoms) {
     CalcHelper ch(*this, atoms);
     mat3d vcov;
     vec3d cnt;
@@ -517,10 +518,13 @@ public:
     }
     vcov *= 1./olx_sqr(atoms.Count());
     cnt /= atoms.Count();
-    return TEVPoint<double>(cnt[0], cnt[1], cnt[2], sqrt(vcov[0][0]), sqrt(vcov[1][1]), sqrt(vcov[2][2]));
+    return TEPoint3<double>(
+      TEValueD(cnt[0], sqrt(vcov[0][0])),
+      TEValueD(cnt[1], sqrt(vcov[1][1])),
+      TEValueD(cnt[2], sqrt(vcov[2][2])));
   }
   // fractional centroid
-  TEVPoint<double> CalcCentroidF(const TSAtomCPList& atoms) {
+  TEPoint3<double> CalcCentroidF(const TSAtomCPList& atoms) {
     CalcHelper ch(*this, atoms);
     mat3d vcov;
     vec3d cnt;
@@ -531,7 +535,10 @@ public:
     }
     vcov *= 1./olx_sqr(atoms.Count());
     cnt /= atoms.Count();
-    return TEVPoint<double>(cnt[0], cnt[1], cnt[2], sqrt(vcov[0][0]), sqrt(vcov[1][1]), sqrt(vcov[2][2]));
+    return TEPoint3<double>(
+      TEValueD(cnt[0], sqrt(vcov[0][0])),
+      TEValueD(cnt[1], sqrt(vcov[1][1])),
+      TEValueD(cnt[2], sqrt(vcov[2][2])));
   }
   // analytical, http://salilab.org/modeller/manual/node449.html#SECTION001331200000000000000 
   TEValue<double> CalcAngleA(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3) {
