@@ -30,7 +30,7 @@ protected:
   bool CheckBlended() const;
 public:
   TGlGroup(class TGlRenderer& R, const olxstr& collectionName);
-  virtual void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
+  virtual void Create(const olxstr& cName = EmptyString);
   virtual ~TGlGroup();
   virtual void Clear();
   void Draw(bool SelectPrimitives=false, bool SelectObjects=false) const {
@@ -46,7 +46,7 @@ public:
       Add(*list[i], false);
   }
   void Remove(AGDrawObject& G);
-  void RemoveDeleted();
+  void RemoveHidden();
 
   inline bool Contains(const AGDrawObject& G) const {  return  Objects.IndexOf(&G) != InvalidIndex;  }
   inline size_t Count() const {  return Objects.Count();  }

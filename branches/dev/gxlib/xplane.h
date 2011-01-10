@@ -13,7 +13,7 @@ public:
     TSPlane(net),
     AGDrawObject(Render, collectionName)  {}
   virtual ~TXPlane()  {}
-  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
+  void Create(const olxstr& cName = EmptyString);
 
   // multiple inheritance...
   void SetTag(index_t v) {   TSPlane::SetTag(v);  }
@@ -31,7 +31,6 @@ public:
 
   bool IsDeleted() const {  return TSPlane::IsDeleted();  }
   void SetDeleted(bool v)  {
-    AGDrawObject::SetDeleted(v);
     TSPlane::SetDeleted(v);
   }
 };

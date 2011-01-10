@@ -19,7 +19,7 @@ TXGlLabel::TXGlLabel(TGlRenderer& R, const olxstr& collectionName) :
   FontIndex = ~0;
 };
 //..............................................................................
-void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TXGlLabel::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());

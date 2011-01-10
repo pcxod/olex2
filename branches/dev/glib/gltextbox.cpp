@@ -29,9 +29,9 @@ TGlTextBox::TGlTextBox(TGlRenderer& Render, const olxstr& collectionName):
   Z = 0;
 }
 //..............................................................................
-TGlTextBox::~TGlTextBox()  { Clear();  }
+TGlTextBox::~TGlTextBox()  {  Clear();  }
 //..............................................................................
-void TGlTextBox::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TGlTextBox::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());

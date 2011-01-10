@@ -106,7 +106,7 @@ public:
   
   // copies the 0yz x0z and xy0 layers to Maxyz xMaxyz and xyMaxZ
   void AdjustMap();
-  virtual void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
+  virtual void Create(const olxstr& cName = EmptyString);
 
   virtual bool Orient(TGlPrimitive& P);
   virtual bool GetDimensions(vec3d& Max, vec3d& Min);

@@ -34,7 +34,6 @@ private:
   void GenerateBondsAndFragments(TArrayList<vec3d> *crd);
 protected:
   TActionQList Actions;
-  bool Generated;
   void Generate(TCAtomPList* Template, bool ClearCont);  // generates atoms using current matrices list
   void ClearFragments();
   void ClearAtoms();
@@ -85,8 +84,8 @@ public:
   // generates atoms within sphere volume at center
   void Generate(const vec3d& center, double rad, TCAtomPList* Template,
     bool ClearCont);
-  // checks if the data alreade have been generated
-  inline bool IsGenerated() const  {  return Generated;  }
+  // checks if there are more than one matrix
+  inline bool IsGenerated() const  {  return Matrices.Count() > 1;  }
 
   // generates matrices so that the center of asymmetric unit is inisde the specified volume
   size_t GenerateMatrices(smatd_plist& Result, const vec3d& VFrom, const vec3d& VTo,

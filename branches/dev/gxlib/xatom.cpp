@@ -207,7 +207,7 @@ void TXAtom::ValidateDS(TGraphicsStyle& GS)  {
   DrawStyle(GS.GetParam("DS", DefDS()).ToInt());
 }
 //..............................................................................
-void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TXAtom::Create(const olxstr& cName)  {
   olxstr Legend;
   if( !cName.IsEmpty() )  {
     SetCollectionName(cName);
@@ -247,12 +247,8 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
         GPC->AddObject(*this);
         if( (GPC->GetStyle().GetParam(GetPrimitiveMaskName(), "0").ToInt() & (1 << PolyhedronIndex)) != 0 )
           CreatePolyhedron(true);
-        if( cpar == NULL )  {
-          ValidateRadius(GPC->GetStyle());
-          ValidateDS(GPC->GetStyle());
-        }
-        else if( cpar->params != 0 )
-          Params() = *cpar->params;
+        ValidateRadius(GPC->GetStyle());
+        ValidateDS(GPC->GetStyle());
         return;
       }
     }
@@ -270,13 +266,8 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( PMask == 0 )  
     return; // nothing to create then...
   // update primitives list
-  if( cpar == NULL )  {
-    ValidateDS(GS);
-    ValidateRadius(GS);
-  }
-  else if( cpar->params != NULL )  {
-    Params() = *cpar->params;
-  }
+  ValidateDS(GS);
+  ValidateRadius(GS);
 
   TGlMaterial RGlM;
   for( size_t i=0; i < FStaticObjects.Count(); i++ )  {
@@ -334,12 +325,6 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
       }
     }
   }
-}
-//..............................................................................
-ACreationParams* TXAtom::GetCreationParams() const {
-  AtomCreationParams& ap = *(new AtomCreationParams);
-  //ap.params = FParams;
-  return &ap;
 }
 //..............................................................................
 olxstr TXAtom::GetLabelLegend(const TSAtom& A)  {
@@ -766,8 +751,8 @@ void TXAtom::CreateStaticObjects(TGlRenderer& Parent)  {
   olx_gl::endList();  
 }
 //..............................................................................
-void TXAtom::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
-  AGDrawObject::UpdatePrimitives(Mask, cpar);
+void TXAtom::UpdatePrimitives(int32_t Mask)  {
+  AGDrawObject::UpdatePrimitives(Mask);
   bool create_polyhedron = (Mask & (1 << PolyhedronIndex)) != 0;
   for( size_t i=0; i < GetPrimitives().ObjectCount(); i++ ) {
     if( EsdlInstanceOf(GetPrimitives().GetObject(i), TXAtom) )

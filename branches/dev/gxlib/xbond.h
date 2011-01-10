@@ -38,8 +38,7 @@ protected:
   virtual bool IsRadiusSaveable() const {  return false; }
 public:
   TXBond(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
-  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
-  virtual ACreationParams* GetACreationParams() const;
+  void Create(const olxstr& cName = EmptyString);
   virtual ~TXBond();
 
   // multiple inheritance...
@@ -60,7 +59,7 @@ public:
   inline double GetRadius() const {  return FParams[4]; }
 
   bool Orient(TGlPrimitive& P);
-  bool GetDimensions(vec3d &Max, vec3d &Min){  return false; };
+  bool GetDimensions(vec3d &Max, vec3d &Min)  {  return false; }
 
   void ListParams(TStrList &List, TGlPrimitive *Primitive);
   // for parameters of a specific primitive
@@ -74,11 +73,6 @@ public:
   bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
   bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
 
-  void SetDeleted(bool v)  {
-    TSBond::SetDeleted(v);
-    AGDrawObject::SetDeleted(v);
-    Label->SetDeleted(v);
-  }
   void SetVisible(bool v)  {
     AGDrawObject::SetVisible(v);
     if( !v )
@@ -108,12 +102,6 @@ public:
   static void ClearStaticObjects()  {
     FStaticObjects.Clear();
   }
-};
-
-struct BondCreationParams : public ACreationParams {
-  class TXAtom &a1, &a2;
-  BondCreationParams(TXAtom& xa1, TXAtom& xa2) : a1(xa1), a2(xa2)  {}
-  BondCreationParams(const BondCreationParams& cp) : a1(cp.a1), a2(cp.a2)  {}
 };
 
 EndGxlNamespace()

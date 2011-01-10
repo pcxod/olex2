@@ -19,7 +19,7 @@ TDUserObj::TDUserObj(TGlRenderer& R, short type, const olxstr& collectionName) :
   GlM.SetTransparent(false);
 }
 //...........................................................................
-void TDUserObj::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TDUserObj::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   olxstr NewL;

@@ -25,18 +25,17 @@ void AGDrawObject::Compile()  {
     Primitives->GetPrimitive(i).Compile();
 }
 //..............................................................................
-void AGDrawObject::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
+void AGDrawObject::UpdatePrimitives(int32_t Mask)  {
   olxstr& mstr = GetPrimitives().GetStyle().GetParam(GetPrimitiveMaskName(), "0");
   if( mstr.ToInt() == Mask )  return;
   mstr = Mask;
   GetPrimitives().ClearPrimitives();
   GetPrimitives().RemoveObject(*this);
-  Create(EmptyString, cpar);
+  Create();
 }
 //..............................................................................
 //..............................................................................
 //..............................................................................
-
 void AGDrawObject::LibVisible(const TStrObjList& Params, TMacroError& E)  {
   if( !Params.IsEmpty() ) 
     SetVisible(Params[0].ToBool());

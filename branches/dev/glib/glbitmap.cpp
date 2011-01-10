@@ -35,7 +35,7 @@ AGlMouseHandlerImp(Render, collectionName)
   tex->SetMinFilter(tpFilterLinear);
   tex->SetEnabled(true);
 }
-void TGlBitmap::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TGlBitmap::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 
@@ -68,9 +68,6 @@ void TGlBitmap::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlP.TextureCrds[1].s = 0;  GlP.TextureCrds[1].t = 0;
   GlP.TextureCrds[2].s = 1;  GlP.TextureCrds[2].t = 0;
   GlP.TextureCrds[3].s = 1;  GlP.TextureCrds[3].t = 1;
-}
-
-TGlBitmap::~TGlBitmap()  {
 }
 
 void TGlBitmap::ReplaceData(int width, int height, unsigned char* RGB, GLenum format) {

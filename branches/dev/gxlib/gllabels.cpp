@@ -18,7 +18,7 @@ TXGlLabels::TXGlLabels(TGlRenderer& Render, const olxstr& collectionName) :
   FMarkMaterial.SetFlags(sglmAmbientF|sglmIdentityDraw);
 }
 //..............................................................................
-void TXGlLabels::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TXGlLabels::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   

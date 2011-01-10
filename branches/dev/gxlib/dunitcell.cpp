@@ -112,7 +112,7 @@ void TDUnitCell::SetReciprocal(bool v)  {
   Labels[3]->SetLabel('o');
 }
 //...........................................................................
-void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TDUnitCell::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
@@ -152,7 +152,7 @@ bool TDUnitCell::Orient(TGlPrimitive& P)  {  return false;  }
 //..............................................................................
 void TDUnitCell::ListPrimitives(TStrList &List) const {}
 //..............................................................................
-void TDUnitCell::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {}
+void TDUnitCell::UpdatePrimitives(int32_t Mask)  {}
 //..............................................................................
 void TDUnitCell::UpdateLabel()  {
   for( int i=0; i < 4; i++ )
@@ -161,10 +161,8 @@ void TDUnitCell::UpdateLabel()  {
 //..............................................................................
 void TDUnitCell::SetVisible(bool v)  {
   AGDrawObject::SetVisible(v);
-  for( int i=0; i < 4; i++ )  {
+  for( int i=0; i < 4; i++ )
     Labels[i]->SetVisible(v);
-    Labels[i]->SetDeleted(false);
-  }
 }
 //..............................................................................
 void TDUnitCell::ToDataItem(TDataItem& di) const {

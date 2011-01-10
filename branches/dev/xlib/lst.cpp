@@ -64,7 +64,9 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
        TrefT  = false,
        PattS  = false,
        FlackF = false,
-       CellInfo = false;
+       CellInfo = false,
+       HasTwin = false,
+       InvTwin = false;
   TStrList Toks;
   Clear();
   SL.LoadFromFile(FN);
@@ -295,6 +297,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
           _HasFlack = true;
         }
         FlackF = true;
+        continue;
       }
     }
     if( !CellInfo &&
@@ -309,6 +312,30 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         FMu = Toks[8].ToDouble();
         FRho = Toks[16].ToDouble();
         CellInfo = true;
+        continue;
+      }
+    }
+    if( !HasTwin && SL[i].StartsFromi(" TWIN ") )  {
+      Toks.Clear();
+      Toks.Strtok(SL[i], ' ');
+      if( Toks.Count() == 11 )  {
+        if( Toks.GetLastString().ToInt() != 2 )  continue;
+        InvTwin = true;
+        for( size_t j=1; j < 10; j++ )  {
+          const double v = Toks[j].ToDouble();
+          if( j == 1 || j == 5 || j == 9 )  {
+            if( v != -1 )  {
+              InvTwin = false;
+              break;
+            }
+          }
+          else if( v != 0 )  {
+            InvTwin = false;
+            break;
+          }
+        }
+        HasTwin = true;
+        continue;
       }
     }
     // errors
@@ -332,7 +359,22 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
   /* we do not consider SA, as it depends if there are any anisotropic atoms
    in the structure
   */
-  if( DH || HP || DRef || TRefC || URefC || RF || RIS )  FLoaded = true;
+  if( DH || HP || DRef || TRefC || URefC || RF || RIS )
+    FLoaded = true;
+  if( HasTwin && InvTwin )  {
+    for( size_t i=0; i < SL.Count(); i++ )  {
+      olxstr& line = SL[SL.Count()-i-1];
+      if( line.IndexOf("BASF  ") != InvalidIndex )  {
+        Toks.Clear();
+        Toks.Strtok(line, ' ');
+        if( Toks.Count() == 6 )  {
+          FlackParam.V() = Toks[1].ToDouble();
+          FlackParam.E() = Toks[2].ToDouble();
+          break;
+        }
+      }
+    }
+  }
   return FLoaded;
 }
 //..............................................................................

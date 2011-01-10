@@ -31,7 +31,7 @@ protected:
     }
     for( size_t i=0; i < Count(); i++ )  {
       AGDrawObject& G = GetObject(i);
-      if( !G.IsVisible() || G.IsDeleted() )  continue;
+      if( !G.IsVisible() )  continue;
       if( G.IsGroup() )    {
         TGlGroup* group = dynamic_cast<TGlGroup*>(&G);
         if( group != NULL )  {

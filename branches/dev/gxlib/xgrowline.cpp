@@ -37,8 +37,8 @@ TXGrowLine::TXGrowLine(TGlRenderer& r, const olxstr& collectionName, TXAtom& A,
   }
 }
 //..............................................................................
-void TXGrowLine::Create(const olxstr& cName, const ACreationParams* cpar)  {
-  TXBond::Create(cName, cpar);
+void TXGrowLine::Create(const olxstr& cName)  {
+  TXBond::Create(cName);
 }
 //..............................................................................
 TXGrowLine::~TXGrowLine()  {}

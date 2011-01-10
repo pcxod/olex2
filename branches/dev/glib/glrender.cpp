@@ -487,7 +487,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
   olx_gl::pushAttrib(GL_ALL_ATTRIB_BITS);
   const bool Select = SelectObjects || SelectPrimitives;
   const bool skip_mat = StereoFlag==glStereoColor;
-  static const int DrawMask = sgdoVisible|sgdoSelected|sgdoDeleted|sgdoGrouped;
+  static const int DrawMask = sgdoSelected|sgdoGrouped|sgdoHidden;
   if( !FIdentityObjects.IsEmpty() || FSelection->GetGlM().IsIdentityDraw() )  {
     SetView(x, y, true, Select, 1);
     const size_t id_obj_count = FIdentityObjects.Count();
@@ -501,7 +501,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
         const size_t c_obj_count = GPC->ObjectCount();
         for( size_t k=0; k < c_obj_count; k++ )  {
           AGDrawObject& GDO = GPC->GetObject(k);
-          if( GDO.MaskFlags(DrawMask) != sgdoVisible )  continue;
+          if( GDO.MaskFlags(DrawMask) != 0 )  continue;
           if( SelectObjects )  olx_gl::loadName((GLuint)GDO.GetTag());
           else if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
           olx_gl::pushMatrix();
@@ -541,7 +541,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
         const size_t c_obj_count = GPC->ObjectCount();
         for( size_t k=0; k < c_obj_count; k++ )  {
           AGDrawObject& GDO = GPC->GetObject(k);
-          if( GDO.MaskFlags(DrawMask) != sgdoVisible )  continue;
+          if( GDO.MaskFlags(DrawMask) != 0 )  continue;
           if( SelectObjects )  olx_gl::loadName((GLuint)GDO.GetTag());
           else if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
           olx_gl::pushMatrix();
@@ -564,7 +564,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
       const size_t c_obj_count = GPC->ObjectCount();
       for( size_t k=0; k < c_obj_count; k++ )  {
         AGDrawObject& GDO = GPC->GetObject(k);
-        if( GDO.MaskFlags(DrawMask) != sgdoVisible )  continue;
+        if( GDO.MaskFlags(DrawMask) != 0 )  continue;
         if( SelectObjects )  olx_gl::loadName((GLuint)GDO.GetTag());
         else if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
         olx_gl::pushMatrix();
@@ -599,7 +599,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
         const size_t c_obj_count = GPC->ObjectCount();
         for( size_t k=0; k < c_obj_count; k++ )  {
           AGDrawObject& GDO = GPC->GetObject(k);
-          if( GDO.MaskFlags(DrawMask) != sgdoVisible )  continue;
+          if( GDO.MaskFlags(DrawMask) != 0 )  continue;
           if( SelectObjects )  olx_gl::loadName((GLuint)GDO.GetTag());
           else if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
           olx_gl::pushMatrix();

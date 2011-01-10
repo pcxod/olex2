@@ -833,17 +833,26 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
       TAfixGroup* _ag = a.GetParentAfixGroup();
       if( _ag != NULL )  {
         olxstr& str = sl.Add("AFIX ") << atom_afix;
-        if( _ag->GetD() != 0 )  {
+        if( _ag->GetD() != 0 )
           str << ' ' << _ag->GetD();
-        }
         if( _ag->GetSof() != 0 )  {
           str << ' ' << _ag->GetSof();
           if( _ag->GetU() != 0 )
             str << ' ' << _ag->GetU();
         }
       }
-      else
-        sl.Add("AFIX ") << atom_afix;    
+      else  {
+        olxstr& str = sl.Add("AFIX ") << atom_afix;    
+        if( ag != NULL )  {
+          if( ag->GetD() != 0 )
+            str << ' ' << ag->GetD();
+          if( ag->GetSof() != 0 )  {
+            str << ' ' << ag->GetSof();
+            if( ag->GetU() != 0 )
+              str << ' ' << ag->GetU();
+          }
+        }
+      }
     }
   }
   afix = atom_afix;

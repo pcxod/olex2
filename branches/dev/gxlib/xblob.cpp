@@ -16,7 +16,7 @@ TXBlob::TXBlob(TGlRenderer& R, const olxstr& collectionName) :
   SetSelectable(false);
 }
 //...........................................................................
-void TXBlob::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TXBlob::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   olxstr NewL;

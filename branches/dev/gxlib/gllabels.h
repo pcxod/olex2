@@ -34,7 +34,7 @@ class TXGlLabels: public AGDrawObject  {
   size_t FontIndex;
 public:
   TXGlLabels(TGlRenderer& Render, const olxstr& collectionName);
-  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
+  void Create(const olxstr& cName = EmptyString);
   virtual ~TXGlLabels()  {}
 
   void Clear();
@@ -57,4 +57,3 @@ public:
 
 EndGxlNamespace()
 #endif
- 

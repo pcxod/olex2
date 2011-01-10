@@ -70,7 +70,7 @@ void TXBond::Update()  {
   }
 }
 //..............................................................................
-void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TXBond::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   if( FStaticObjects.IsEmpty() )  
@@ -142,10 +142,6 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
       }
     }
   }
-}
-//..............................................................................
-ACreationParams* TXBond::GetACreationParams() const {
-  return NULL;
 }
 //..............................................................................
 bool TXBond::Orient(TGlPrimitive& GlP)  {

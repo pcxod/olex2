@@ -8,21 +8,22 @@
 BeginGlNamespace()
 
 // primitve types
-const short sgloPoints    = 1,
-            sgloLines     = 2,
-            sgloLineStrip = 3,
-            sgloLineLoop  = 4,
-            sgloTriangles = 5,
-            sgloQuads     = 6,
-            sgloPolygon   = 7,
-            sgloEval      = 8,
-            sgloDisk      = 9,
-            sgloDiskSlice = 10,
-            sgloCylinder  = 11,
-            sgloSphere    = 12,
-            sgloText      = 13,
-            sgloMacro     = 14,
-            sgloCommandList = 15;
+const short
+  sgloPoints    = 1,
+  sgloLines     = 2,
+  sgloLineStrip = 3,
+  sgloLineLoop  = 4,
+  sgloTriangles = 5,
+  sgloQuads     = 6,
+  sgloPolygon   = 7,
+  sgloEval      = 8,
+  sgloDisk      = 9,
+  sgloDiskSlice = 10,
+  sgloCylinder  = 11,
+  sgloSphere    = 12,
+  sgloText      = 13,
+  sgloMacro     = 14,
+  sgloCommandList = 15;
 // data format
 const short 
   glpdVertexCrd    = 0x0001,

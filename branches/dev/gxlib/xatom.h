@@ -92,8 +92,7 @@ protected:
 public:
   TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TXAtom();
-  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
-  virtual ACreationParams* GetCreationParams() const;
+  void Create(const olxstr& cName = EmptyString);
   // multiple inheritance...
   void SetTag(index_t v) {   TSAtom::SetTag(v);  }
   index_t GetTag() const {  return TSAtom::GetTag();  }
@@ -164,24 +163,18 @@ public:
   // fills the list with proposal primitives to construct object
   void ListPrimitives(TStrList& List) const;
   TGraphicsStyle& Style();
-  void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
+  void UpdatePrimitives(int32_t Mask);
   uint32_t GetPrimitiveMask() const;
 
   bool OnMouseDown(const IEObject* Sender, const TMouseData& Data);
   bool OnMouseUp(const IEObject* Sender, const TMouseData& Data);
   bool OnMouseMove(const IEObject* Sender, const TMouseData& Data);
 
-  void SetDeleted(bool v)  {
-    TSAtom::SetDeleted(v);
-    AGlMouseHandlerImp::SetDeleted(v);
-    Label->SetDeleted(v);
-  }
   void SetVisible(bool v)  {
     AGDrawObject::SetVisible(v);
     if( !v )
       Label->SetVisible(false);
   }
-  virtual bool IsDeleted() const {  return TSAtom::IsDeleted();  }
   void ListDrawingStyles(TStrList &List);
   inline short DrawStyle() const {  return FDrawStyle;  }
   void DrawStyle(short V);
@@ -203,9 +196,6 @@ public:
   static void ClearStaticObjects()  {
     FStaticObjects.Clear();
   }
-};
-
-struct AtomCreationParams : public ACreationParams {
 };
 
 EndGxlNamespace()

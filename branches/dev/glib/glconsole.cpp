@@ -58,7 +58,7 @@ TGlConsole::~TGlConsole()  {
   delete FCursor;
 }
 //..............................................................................
-void TGlConsole::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TGlConsole::Create(const olxstr& cName)  {
   FontIndex = Parent.GetScene().FindFontIndexForType<TGlConsole>(FontIndex);
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);

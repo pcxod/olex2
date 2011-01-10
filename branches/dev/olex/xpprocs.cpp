@@ -1490,7 +1490,8 @@ void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   FXApp->GetRender().GetBasis().OrientNormal(to-from);
-  FXApp->AddLine(name, from, to);
+  if( !Options.Contains('n') )
+    FXApp->AddLine(name, from, to);
   FXApp->Draw();
 }
 //..............................................................................
@@ -1685,15 +1686,15 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
   else if( Cmds.Count() == 1 && Cmds[0].Equalsi("labels") )  {
-    FXApp->NewLogEntry() << "Deleting labels";
-    for( size_t i=0; i < FXApp->LabelCount(); i++ )
-      FXApp->GetLabel(i).SetDeleted(true);
-    TGXApp::AtomIterator ai = FXApp->GetAtoms();
-    while( ai.HasNext() )
-      ai.Next().GetGlLabel().SetDeleted(true);
-    TGXApp::BondIterator bi = FXApp->GetBonds();
-    while( bi.HasNext() )
-      bi.Next().GetGlLabel().SetDeleted(true);
+    //FXApp->NewLogEntry() << "Deleting labels";
+    //for( size_t i=0; i < FXApp->LabelCount(); i++ )
+    //  FXApp->GetLabel(i).SetDeleted(true);
+    //TGXApp::AtomIterator ai = FXApp->GetAtoms();
+    //while( ai.HasNext() )
+    //  ai.Next().GetGlLabel().SetDeleted(true);
+    //TGXApp::BondIterator bi = FXApp->GetBonds();
+    //while( bi.HasNext() )
+    //  bi.Next().GetGlLabel().SetDeleted(true);
   }
   else  {
     TXAtomPList Atoms = FXApp->FindXAtoms(Cmds.Text(' '), true, Options.Contains('h')),
@@ -2348,8 +2349,8 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   else if( str_lt.Equalsi("subscript") )
     lt = 2;
   if( str_symm_tag =='$' || str_symm_tag == '#' )  {  // have to kill labels in this case, for consistency of _$ or ^#
-    for( size_t i=0; i < FXApp->LabelCount(); i++ )
-      FXApp->GetLabel(i).SetDeleted(true);
+    //for( size_t i=0; i < FXApp->LabelCount(); i++ )
+    //  FXApp->GetLabel(i).SetDeleted(true);
     symm_tag = (str_symm_tag =='$' ? 1 : 2);
   }
   else if( str_symm_tag.Equals("full") )
@@ -2387,7 +2388,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     gxl.SetOffset(atoms[i]->crd());
     gxl.SetLabel(lb);
     gxl.SetVisible(true);
-    gxl.SetDeleted(false);
+    //gxl.SetDeleted(false);
   }
   for( size_t i=0; i < equivs.Count(); i++ )  {
     smatd m = FXApp->XFile().GetUnitCell().GetMatrix(smatd::GetContainerId(equivs[i]));
@@ -2438,7 +2439,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       const double scale = scale1/FXApp->GetRender().GetBasis().GetZoom();
       l.TranslateBasis(off*scale);
       l.SetVisible(true);
-      l.SetDeleted(false);
+      //l.SetDeleted(false);
     }
   }
   FXApp->SelectAll(false);
@@ -4290,7 +4291,6 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       fr.SetEdge(7, px+ny+pz);
       fr.UpdateEdges();
       fr.Translate(bs.center);
-      fr.SetDeleted(false);
       FXApp->SetGraphicsVisible(&fr, true);
     }
   }

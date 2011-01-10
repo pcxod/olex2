@@ -3,18 +3,10 @@
 // TXReflection
 // (c) Oleg V. Dolomanov, 2006
 //----------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "xreflection.h"
 #include "gpcollection.h"
-
 #include "glrender.h"
-
 #include "styles.h"
-
 #include "glmaterial.h"
 #include "glprimitive.h"
 
@@ -34,7 +26,7 @@ TXReflection::TXReflection(TGlRenderer& r, const olxstr& collectionName, double 
     Params()[0] = sqrt(Params()[0]); 
 }
 //..............................................................................
-void TXReflection::Create(const olxstr& cName, const ACreationParams* cpar) {
+void TXReflection::Create(const olxstr& cName) {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 

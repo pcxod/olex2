@@ -42,7 +42,6 @@ TLattice::TLattice(ASObjectProvider& ObjectProvider) :
   OnAtomsDeleted(Actions.New("ATOMSDELETE")),
   Objects(ObjectProvider)
 {
-  Generated = false;
   AsymmUnit = new TAsymmUnit(this);
   UnitCell = new TUnitCell(this);
   Network = new TNetwork(this, NULL);
@@ -82,7 +81,6 @@ void TLattice::ClearMatrices()  {
 }
 //..............................................................................
 void TLattice::Clear(bool ClearUnitCell)  {
-  Generated = false;
   if( ClearUnitCell )  {
     GetUnitCell().Clear();
     GetAsymmUnit().Clear();
@@ -286,7 +284,6 @@ void TLattice::Init()  {
   GetUnitCell().ClearEllipsoids();
   GetUnitCell().InitMatrices();
   GetAsymmUnit().GetRefMod()->UpdateUsedSymm(GetUnitCell());
-  Generated = false;
   GetUnitCell().FindSymmEq(); // find and remove
   InitBody();
 }
@@ -298,13 +295,11 @@ void TLattice::Uniq(bool remEqv)  {
   GetUnitCell().UpdateEllipsoids();  // if new atoms are created...
   GetUnitCell().FindSymmEq(); // find and remove
   InitBody();
-  Generated = false;
   OnStructureUniq.Exit(this);
 }
 //..............................................................................
 void TLattice::GenerateWholeContent(TCAtomPList* Template)  {
   OnStructureGrow.Enter(this);
-  Generated = false; // force the procedure
   Generate(Template, false);
   OnStructureGrow.Exit(this);
 }
@@ -344,7 +339,6 @@ void TLattice::Generate(TCAtomPList* Template, bool ClearCont)  {
     }
   }
   Disassemble();
-  Generated = true;
 }
 //..............................................................................
 void TLattice::GenerateCell()  {
@@ -382,7 +376,6 @@ void TLattice::GenerateCell()  {
     }
   }
   Disassemble();
-  Generated = true;
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
@@ -438,7 +431,6 @@ void TLattice::GenerateBox(const mat3d& norms, const vec3d& size, const vec3d& c
     }
   }
   Disassemble();
-  Generated = true;
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
@@ -564,7 +556,6 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
   }
   RestoreCoordinates();
   Disassemble();
-  Generated = true;
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
@@ -623,7 +614,6 @@ void TLattice::GrowFragment(uint32_t FragId, const smatd& transform)  {
   }
   RestoreCoordinates();
   Disassemble();
-  Generated = true;
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
@@ -657,7 +647,6 @@ void TLattice::GrowAtoms(const TCAtomPList& atoms, const smatd_list& matrices)  
   }
   RestoreCoordinates();
   Disassemble();
-  Generated = true;
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
@@ -680,7 +669,6 @@ void TLattice::GrowAtom(TCAtom& atom, const smatd& matrix)  {
   GenerateAtom(atom, *m);
   RestoreCoordinates();
   Disassemble();
-  Generated = true;
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
@@ -718,7 +706,6 @@ void TLattice::Grow(const smatd& transform)  {
   }
   RestoreCoordinates();
   Disassemble();
-  Generated = true;
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
@@ -737,7 +724,6 @@ void TLattice::RestoreAtom(const TSAtom::FullRef& id)  {
   if( matr == NULL )  {
     matr = Matrices.Add( new smatd(smatd::FromId(id.matrix_id, 
       GetUnitCell().GetMatrix(smatd::GetContainerId(id.matrix_id)))) );
-    Generated = true;
   }
   TSAtom& sa = GenerateAtom(GetAsymmUnit().GetAtom(id.catom_id), *matr);
   if( id.matrices != NULL )  {
@@ -754,7 +740,6 @@ void TLattice::RestoreAtom(const TSAtom::FullRef& id)  {
       if( matr == NULL )  {
         matr = Matrices.Add(new smatd(smatd::FromId((*id.matrices)[i],
           GetUnitCell().GetMatrix(smatd::GetContainerId((*id.matrices)[i])))));
-        Generated = true;
       }
       sa.AddMatrix(matr);
     }
@@ -965,7 +950,7 @@ void TLattice::UpdateAsymmUnit()  {
 }
 //..............................................................................
 void TLattice::MoveFragment(const vec3d& to, TSAtom& fragAtom)  {
-  if( Generated )  {
+  if( IsGenerated() )  {
     TBasicApp::NewLogEntry(logError) << "Cannot perform this operation on grown structure";
     return;
   }
@@ -986,7 +971,7 @@ void TLattice::MoveFragment(const vec3d& to, TSAtom& fragAtom)  {
 }
 //..............................................................................
 void TLattice::MoveFragment(TSAtom& to, TSAtom& fragAtom)  {
-  if( Generated )  {
+  if( IsGenerated() )  {
     TBasicApp::NewLogEntry(logError) << "Cannot perform this operation on grown structure";
     return;
   }
@@ -1024,7 +1009,6 @@ void TLattice::MoveFragmentG(const vec3d& to, TSAtom& fragAtom)  {
   if( m != NULL )  {
 /* restore atom centres if were changed by some other procedure */
     RestoreCoordinates();
-    Generated = true;
     OnStructureGrow.Enter(this);
     Matrices.Add(m);
     for( size_t i=0; i < fragAtom.GetNetwork().NodeCount(); i++ )  {
@@ -1044,7 +1028,6 @@ void TLattice::MoveFragmentG(TSAtom& to, TSAtom& fragAtom)  {
   if( m != NULL )  {
 /* restore atom centres if were changed by some other procedure */
     RestoreCoordinates();
-    Generated = true;
     OnStructureGrow.Enter(this);
     Matrices.Add(m);
     TSAtomPList atoms;
@@ -1067,7 +1050,7 @@ void TLattice::MoveFragmentG(TSAtom& to, TSAtom& fragAtom)  {
 }
 //..............................................................................
 void TLattice::MoveToCenter()  {
-  if( Generated )  {
+  if( IsGenerated() )  {
     TBasicApp::NewLogEntry(logError) << "Please note that asymetric unit will not be updated: "
       "the structure is grown";
     OnStructureGrow.Enter(this);
@@ -1085,7 +1068,7 @@ void TLattice::MoveToCenter()  {
     molCenter /= ac;
     smatd* m = GetUnitCell().GetClosest(vec3d(0.5, 0.5, 0.5), molCenter, true);
     if( m == NULL )  continue;
-    if( Generated )  {
+    if( IsGenerated() )  {
       for( size_t j=0; j < frag->NodeCount(); j++ )  {
         TSAtom& SA = frag->Node(j);
         SA.ccrd() = *m * SA.ccrd();
@@ -1102,7 +1085,7 @@ void TLattice::MoveToCenter()  {
     }
     delete m;
   }
-  if( !Generated )  {  
+  if( !IsGenerated() )  {  
     OnStructureUniq.Enter(this);
     Init();
     OnStructureUniq.Exit(this);
@@ -1115,7 +1098,7 @@ void TLattice::MoveToCenter()  {
 }
 //..............................................................................
 void TLattice::Compaq()  {
-  if( Generated || Fragments.Count() < 2 )  return;
+  if( IsGenerated() || Fragments.Count() < 2 )  return;
   TNetwork* frag = Fragments[0];
   vec3d acenter;
   size_t ac = 0;
@@ -1169,7 +1152,7 @@ void TLattice::Compaq()  {
 }
 //..............................................................................
 void TLattice::CompaqAll()  {
-  if( Generated || Fragments.Count() < 2 )  return;
+  if( IsGenerated() || Fragments.Count() < 2 )  return;
   OnStructureUniq.Enter(this);
   OnDisassemble.SetEnabled(false);
   bool changes = true;
@@ -1216,7 +1199,7 @@ void TLattice::CompaqAll()  {
 }
 //..............................................................................
 void TLattice::CompaqClosest()  {
-  if( Generated || Fragments.Count() < 2 )  return;
+  if( IsGenerated() || Fragments.Count() < 2 )  return;
   const size_t fr_cnt = Fragments.Count();
   TDoubleList vminQD(fr_cnt);
   for( size_t i = 0; i < fr_cnt; i++ )
@@ -1283,7 +1266,7 @@ void TLattice::CompaqClosest()  {
 }
 //..............................................................................
 void TLattice::CompaqType(short type)  {
-  if( Generated )  return;
+  if( IsGenerated() )  return;
   const size_t ac = Objects.atoms.Count();
   const TAsymmUnit& au = GetAsymmUnit();
   for( size_t i=0; i < ac; i++ )  {
@@ -1321,7 +1304,7 @@ void TLattice::CompaqType(short type)  {
 }
 //..............................................................................
 void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform)  {
-  if( Generated )  {
+  if( IsGenerated() )  {
     TBasicApp::NewLogEntry(logError) << "Cannot perform this operation on grown structure";
     return;
   }
@@ -1380,8 +1363,11 @@ void TLattice::RestoreCoordinates()  {
   }
 }
 //..............................................................................
-bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPList& ProcessingAtoms, int part, TCAtomPList* generated)  {
-  if( ProcessingAtoms.IndexOf(atom) != InvalidIndex || (atom.CAtom().IsHAttached() && part == DefNoPart) )
+bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
+  TSAtomPList& ProcessingAtoms, int part, TCAtomPList* generated)
+{
+  if( ProcessingAtoms.IndexOf(atom) != InvalidIndex ||
+      (atom.CAtom().IsHAttached() && part == DefNoPart) )
     return false;
   ProcessingAtoms.Add(atom);
 
@@ -1773,7 +1759,7 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rc
 }
 //..............................................................................
 void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  {
-  if( Generated )  {
+  if( IsGenerated() )  {
     TBasicApp::NewLogEntry(logError) << "Hadd is not applicable to grown structure";
     return;
   }
@@ -1938,7 +1924,6 @@ void TLattice::SetAnis(const TCAtomPList& atoms, bool anis)  {
 void TLattice::ToDataItem(TDataItem& item) const  {
   item.AddField("delta", Delta);
   item.AddField("deltai", DeltaI);
-  item.AddField("grown", Generated);
   GetAsymmUnit().ToDataItem(item.AddItem("AUnit"));
   TDataItem& mat = item.AddItem("Matrices");
   const size_t mat_c = Matrices.Count();
@@ -2007,7 +1992,6 @@ void TLattice::FromDataItem(TDataItem& item)  {
   Clear(true);
   Delta = item.GetRequiredField("delta").ToDouble();
   DeltaI = item.GetRequiredField("deltai").ToDouble();
-  Generated = item.GetRequiredField("grown").ToBool();
   GetAsymmUnit().FromDataItem(item.FindRequiredItem("AUnit"));
   const TDataItem& mat = item.FindRequiredItem("Matrices");
   Matrices.SetCapacity(mat.ItemCount());
@@ -2075,9 +2059,8 @@ void TLattice::SetGrowInfo(GrowInfo* grow_info)  {
   _GrowInfo = grow_info;
 }
 //..............................................................................
-TLattice::GrowInfo* TLattice::GetGrowInfo() const  {
-  if( !Generated )
-    return NULL;
+TLattice::GrowInfo* TLattice::GetGrowInfo() const {
+  if( !IsGenerated() )  return NULL;
   const TAsymmUnit& au = GetAsymmUnit();
   GrowInfo& gi = *(new GrowInfo);
   gi.matrices.SetCount( Matrices.Count() );
@@ -2140,7 +2123,6 @@ bool TLattice::ApplyGrowInfo()  {
       }
     }
   }
-  Generated = true;
   delete _GrowInfo;
   _GrowInfo = NULL;
   return true;

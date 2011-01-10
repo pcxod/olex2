@@ -27,7 +27,7 @@ TXLine::TXLine(TGlRenderer& r, const olxstr& collectionName, const vec3d& base, 
   }
 }
 //..............................................................................
-void TXLine::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TXLine::Create(const olxstr& cName)  {
   //if( !cName.IsEmpty() )  
   //  SetCollectionName(cName);
 
@@ -45,7 +45,7 @@ void TXLine::Create(const olxstr& cName, const ACreationParams* cpar)  {
   //}
   //else  
   //  GPC->AddObject(this);
-  TXBond::Create(cName, cpar);
+  TXBond::Create(cName);
 }
 //..............................................................................
 TXLine::~TXLine(){}

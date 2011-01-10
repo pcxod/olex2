@@ -9,7 +9,7 @@
 #include "gpcollection.h"
 
 //..............................................................................
-void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TXPlane::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());

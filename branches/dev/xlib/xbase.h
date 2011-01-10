@@ -27,17 +27,14 @@ const short
   sotTBond  = 0x0005,
   sotBBond  = 0x0006;
 
-const float
-  dcMaxCBLength = 5.6f, // maximum length of a covalent bond
-  dcMaxHBLength = 6.0f; // maximu length of a short interaction
 const float caDefIso = 0.05f;  // default atom isotropic parameter;
 
 template <class Net> class TSObject: public ACollectionItem  {
 protected:
   Net* Network;  // a pointer to parent Network
   short   Type;    // object type: eg bond, atom, etc
-  size_t     NetId;    // reference in network container
-  size_t     LattId;    // reference in lattice container
+  size_t NetId;    // reference in network container
+  size_t LattId;    // reference in lattice container
 public:
   TSObject(Net* Parent) : Network(Parent), Type(sotNone) {}
   virtual ~TSObject()  {}

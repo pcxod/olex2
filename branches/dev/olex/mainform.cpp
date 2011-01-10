@@ -561,7 +561,8 @@ f-fixed parameters&;u-Uiso&;r-Uiso multiplier for riding atoms&;ao-actual occupa
  nine values provide a full matrix ");
   this_InitMacroD(Qual, "h-High&;m-Medium&;l-Low", fpNone, "Sets drawings quality");
 
-  this_InitMacroD(Line, EmptyString, fpAny, "Creates a line or best line for provided atoms");
+  this_InitMacroD(Line, "n-just sets current view normal to the line without creating the object",
+    fpAny, "Creates a line or best line for provided atoms");
   this_InitMacro(AddLabel, , fpThree|fpFive);
   this_InitMacroD(Mpln, "n-just orient, do not create plane&;r-create regular plane&;we-use weights proportional to the (atomic weight)^we", 
     fpAny, "Sets current view along the normal of the best plane");
@@ -1687,7 +1688,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         AquireTooltipValue();
         FGlCanvas->SetToolTip(Tooltip.u_str());
       }
-      else if( GlTooltip != NULL && !GlTooltip->IsDeleted() )  {
+      else if( GlTooltip != NULL && GlTooltip->IsVisible() )  {
         AquireTooltipValue();
         if( Tooltip.IsEmpty() )  {
           if( GlTooltip->IsVisible() )  {
@@ -3718,15 +3719,9 @@ bool TMainForm::FileDropTarget::OnDropFiles(wxCoord x, wxCoord y, const wxArrayS
 }
 //..............................................................................
 bool TMainForm::PopupMenu(wxMenu* menu, const wxPoint& p)  {
-  if( GlTooltip != NULL && _UseGlTooltip )  {
-    GlTooltip->SetDeleted(true);
-  }
-  bool res = wxWindow::PopupMenu(menu, p);
-  if( GlTooltip != NULL && _UseGlTooltip )  {
+  if( GlTooltip != NULL && _UseGlTooltip )
     GlTooltip->SetVisible(false);
-    GlTooltip->SetDeleted(false);
-  }
-  return res;
+  return wxWindow::PopupMenu(menu, p);
 }
 //..............................................................................
 void TMainForm::UpdateInfoBox()  {

@@ -322,15 +322,8 @@ void TGXApp::ClearXObjects()  {
 //..............................................................................
 void TGXApp::Clear()  {
   ClearXObjects();
- 
-  for( size_t i=0; i < LooseObjects.Count(); i++ )  
-    delete LooseObjects[i];   
-  LooseObjects.Clear();
-
-  for( size_t i=0; i < ObjectsToCreate.Count(); i++ )
-    delete ObjectsToCreate[i];
-  ObjectsToCreate.Clear();
-
+  LooseObjects.DeleteItems().Clear();
+  ObjectsToCreate.DeleteItems().Clear();
   XLabels.Clear();
   GlBitmaps.Clear();
 }
@@ -401,6 +394,12 @@ void TGXApp::CreateObjects(bool centerModel)  {
     xb.Update();
     xb.Create(TXBond::GetLegend(xb, 2));
     xb.SetVisible(xb.A().IsVisible() && xb.B().IsVisible());
+    if( xb.IsVisible() )  {
+      if( xb.A().GetType() == iQPeakZ || xb.B().GetType() == iQPeakZ )
+        xb.SetVisible(FQPeakBondsVisible);
+      else if( xb.GetType() == sotHBond )
+        xb.SetVisible(FHBondsVisible);
+    }
   }
   sw.start("Other objects creation");
 
@@ -427,7 +426,7 @@ void TGXApp::CreateObjects(bool centerModel)  {
   selection is inpossible, unless properties are changed, odd... could not figure out
   what is going wrong... */
 
-  XLabels.Pack(olx_alg::olx_not(AGDrawObject::FlagsAnalyser(sgdoVisible)));
+  XLabels.Pack(AGDrawObject::FlagsAnalyser(sgdoHidden));
   for( size_t i=0; i < XLabels.Count(); i++ )  {
     if( XLabels[i].IsVisible() )
       XLabels[i].Create();
@@ -437,7 +436,7 @@ void TGXApp::CreateObjects(bool centerModel)  {
   XLabels.Pack();
 
   for( size_t i=0; i < LooseObjects.Count(); i++ )  {
-    if( LooseObjects[i]->IsDeleted() )  {
+    if( !LooseObjects[i]->IsVisible() )  {
       delete LooseObjects[i];
       LooseObjects[i] = NULL;
     }
@@ -495,7 +494,7 @@ void TGXApp::CenterModel()  {
     }
   }
   for( size_t i=0; i < XReflections.Count(); i++ )  {
-    if( !XReflections[i].IsVisible() || XReflections[i].IsDeleted() )  continue;
+    if( !XReflections[i].IsVisible() )  continue;
     center += XReflections[i].GetCenter();
     weight += 1;
     vec3d::UpdateMinMax(XReflections[i].GetCenter(), miN, maX);
@@ -535,7 +534,7 @@ void TGXApp::CenterView(bool calcZoom)  {
     }
   }
   for( size_t i=0; i < XReflections.Count(); i++ )  {
-    if( !XReflections[i].IsVisible() || XReflections[i].IsDeleted() )  continue;
+    if( !XReflections[i].IsVisible() )  continue;
     center += XReflections[i].GetCenter();
     weight += 1;
     vec3d::UpdateMinMax(XReflections[i].GetCenter(), miN, maX);
@@ -1378,7 +1377,6 @@ void TGXApp::GetSelectedXAtoms(TXAtomPList& List, bool Clear)  {
     TGlGroup& Sel = *S[i];
     for( size_t j=0; j < Sel.Count(); j++ )  {
       AGDrawObject& GO = Sel[j];
-      if( GO.IsDeleted() )  continue;
       if( GO.IsGroup() )  // another group
         S.Add((TGlGroup&)GO);  
       else if( EsdlInstanceOf(GO, TXAtom) )
@@ -1448,13 +1446,12 @@ void TGXApp::Grow(const TXAtomPList& atoms, const smatd_list& matrices)  {
 }
 //..............................................................................
 void TGXApp::GetXAtoms(const olxstr& AtomName, TXAtomPList& res)  {
-  const short SelMask = sgdoVisible|sgdoDeleted;
   if( AtomName.StartsFrom("#c") )  {  // TCAtom.Id
     const size_t id = AtomName.SubStringFrom(2).ToSizeT();
     AtomIterator ai(*this);
     while( ai.HasNext() )  {
       TXAtom& xa = ai.Next();
-      if( xa.CAtom().GetId() == id && xa.MaskFlags(SelMask) == sgdoVisible )
+      if( xa.CAtom().GetId() == id && xa.IsVisible() )
         res.Add(xa);
     }
   }
@@ -1463,7 +1460,7 @@ void TGXApp::GetXAtoms(const olxstr& AtomName, TXAtomPList& res)  {
     AtomIterator ai(*this);
     while( ai.HasNext() )  {
       TXAtom& xa = ai.Next();
-      if( xa.GetLattId() == id && xa.MaskFlags(SelMask) == sgdoVisible )  {
+      if( xa.GetLattId() == id && xa.IsVisible() )  {
         res.Add(xa);
         break;
       }
@@ -1473,20 +1470,19 @@ void TGXApp::GetXAtoms(const olxstr& AtomName, TXAtomPList& res)  {
     AtomIterator ai(*this);
     while( ai.HasNext() )  {
       TXAtom& xa = ai.Next();
-      if( xa.GetLabel().Equalsi(AtomName) && xa.MaskFlags(SelMask) == sgdoVisible )  
+      if( xa.GetLabel().Equalsi(AtomName) && xa.IsVisible() )  
         res.Add(xa);
     }
   }
 }
 //..............................................................................
 void TGXApp::GetXBonds(const olxstr& BondName, TXBondPList& res)  {
-  const short SelMask = sgdoVisible|sgdoDeleted;
   if( BondName.StartsFrom("#t") )  {  // SBond.LatId
     size_t id = BondName.SubStringFrom(2).ToSizeT();
     BondIterator bi(*this);
     while( bi.HasNext() )  {
       TXBond& xb = bi.Next();
-      if( xb.GetLattId() == id && xb.MaskFlags(SelMask) == sgdoVisible )  {
+      if( xb.GetLattId() == id && xb.IsVisible() )  {
         res.Add(xb);
         break;
       }
@@ -1496,10 +1492,8 @@ void TGXApp::GetXBonds(const olxstr& BondName, TXBondPList& res)  {
     BondIterator bi(*this);
     while( bi.HasNext())  {
       TXBond& xb = bi.Next();
-      if( xb.GetCollectionName().Equalsi(BondName) )  {
-        if( xb.MaskFlags(SelMask) == sgdoVisible )  
-          res.Add(xb);
-      }
+      if( xb.GetCollectionName().Equalsi(BondName) && xb.IsVisible() )
+        res.Add(xb);
     }
   }
 }
@@ -2060,7 +2054,7 @@ TUndoData* TGXApp::DeleteXObjects(AGDObjList& L)  {
       xb->SetVisible(false);
     }
     else
-      L[i]->SetDeleted(true);
+      ;//L[i]->SetDeleted(true);
   }
   if( planes_deleted )
     XFile().GetLattice().UpdatePlaneDefinitions();

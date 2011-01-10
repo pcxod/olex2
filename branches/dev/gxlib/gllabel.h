@@ -29,7 +29,7 @@ protected:
   virtual bool DoZoom(double, bool)  {  return false;  }
 public:
   TXGlLabel(TGlRenderer& Render, const olxstr& collectionName);
-  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
+  void Create(const olxstr& cName = EmptyString);
   virtual ~TXGlLabel()  {}
 
   bool Orient(TGlPrimitive& P);
@@ -53,4 +53,3 @@ public:
 
 EndGxlNamespace()
 #endif
- 
