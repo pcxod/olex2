@@ -149,7 +149,7 @@ int main(int argc, char** argv)  {
     res = 1;
   }
   if( bapp != NULL )  {
-    bapp->GetLog() << "\nFinished\n";
+    bapp->NewLogEntry().nl() << "Finished";
     delete bapp;
   }
   else  {
