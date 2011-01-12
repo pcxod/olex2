@@ -4424,8 +4424,10 @@ void TGXApp::SelectAll(bool Select)  {
       SelectionCopy[1] = SelectionCopy[0];
       SelectionCopy[0].Clear();
     }
-    else
+    else  {
+      SelectionCopy[1].Clear();
       StoreGroup(GetSelection(), SelectionCopy[1]);
+    }
   }
   GetRender().SelectAll(Select);
   _UpdateGroupIds();
