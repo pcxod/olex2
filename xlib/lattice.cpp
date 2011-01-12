@@ -2434,6 +2434,7 @@ void TLattice::AddLatticeContent(const TLattice& latt)  {
     TSAtom* sa = new_atoms.Add(new TSAtom(Network));
     sa->CAtom(ca);
     sa->AddMatrix(Matrices[0]);
+    sa->crd() = GetAsymmUnit().Orthogonalise(sa->ccrd());
     AddSAtom(sa);
   }
   for( size_t i=0; i < latt.BondCount(); i++ )  {
