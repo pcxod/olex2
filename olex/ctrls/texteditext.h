@@ -11,6 +11,8 @@ namespace ctrl_ext  {
     void KeyDownEvent(wxKeyEvent& event);
     void CharEvent(wxKeyEvent& event);
     void EnterPressedEvent(wxCommandEvent& event);
+    void LeaveEvent(wxFocusEvent& event);
+    void EnterEvent(wxFocusEvent& event);
     olxstr Data, OnChangeStr, OnLeaveStr, OnEnterStr, OnReturnStr;
   public:
     TTextEdit(wxWindow *Parent, int style=0) :

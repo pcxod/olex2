@@ -11,6 +11,8 @@ BEGIN_EVENT_TABLE(TTextEdit, wxTextCtrl)
   EVT_CHAR(TTextEdit::CharEvent)
   EVT_KEY_DOWN(TTextEdit::KeyDownEvent)
   EVT_TEXT_ENTER(-1, TTextEdit::EnterPressedEvent)
+  EVT_KILL_FOCUS(TTextEdit::LeaveEvent)
+  EVT_SET_FOCUS(TTextEdit::EnterEvent)
 END_EVENT_TABLE()
 //..............................................................................
 void TTextEdit::ClickEvent(wxMouseEvent& event)  {
@@ -48,3 +50,16 @@ void TTextEdit::CharEvent(wxKeyEvent& event)  {
     OnChar.Execute(this, &evt);
   EndEvtProcessing()
 }
+//..............................................................................
+void TTextEdit::LeaveEvent(wxFocusEvent& event)  {
+  StartEvtProcessing()
+   OnLeave.Execute(this, &GetOnLeaveStr());
+  EndEvtProcessing()
+}
+//..............................................................................
+void TTextEdit::EnterEvent(wxFocusEvent& event)  {
+  StartEvtProcessing()
+   OnEnter.Execute(this, &GetOnEnterStr());
+  EndEvtProcessing()
+}
+//..............................................................................
