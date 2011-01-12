@@ -786,6 +786,7 @@ void TLattice::RestoreAtom(const TSAtom::FullRef& id)  {
     Generated = true;
   }
   TSAtom& sa = GenerateAtom(GetAsymmUnit().GetAtom(id.catom_id), *matr);
+  sa.CAtom().SetDeleted(false);
   if( id.matrices != NULL )  {
     for( size_t i=0; i < id.matrices->Count(); i++ )  {
       if( smatd::GetContainerId((*id.matrices)[i]) >= GetUnitCell().MatrixCount() )
@@ -2374,7 +2375,9 @@ void TLattice::RestoreADPs(bool restoreCoordinates)  {
 }
 //..............................................................................
 void TLattice::BuildAtomRegistry()  {
-  if( Matrices.IsEmpty() )  return;  TUnitCell& uc = GetUnitCell();  vec3i mind(100,100,100), maxd(-100,-100,-100);
+  if( Matrices.IsEmpty() )  return;
+  TUnitCell& uc = GetUnitCell();
+  vec3i mind(100,100,100), maxd(-100,-100,-100);
   for( size_t i=0; i < Matrices.Count(); i++ )
     vec3i::UpdateMinMax(Matrices[i]->GetT(Matrices[i]->GetId()), mind, maxd);
   maxd[0] += 1;  maxd[1] += 1;  maxd[2] += 1;
@@ -2390,7 +2393,7 @@ void TLattice::BuildAtomRegistry()  {
       for( size_t j=0; j < sa->CAtom().EquivCount(); j++ )  {
         const smatd m = uc.MulMatrix(sa->CAtom().GetEquiv(j), matr);
         TSAtom* sa1 = atomRegistry.Find(TSAtom::Ref(sa->CAtom().GetId(), m.GetId()));
-        if( sa1 != NULL && sa1 != sa )  {
+        if( sa1 != NULL && sa1 != sa && !sa1->IsDeleted() )  {
           sa1->AddMatrices(*sa);
           sa->SetDeleted(true);
           sa = sa1;
