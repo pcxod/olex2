@@ -136,14 +136,13 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
           size_t inc = 0, requiredCount = 7;
           if( Toks[0] == '*' )  {  inc ++;  requiredCount++;  }
           if( Toks.Count() >= requiredCount )  {
-            TTrefTry& trtry = TrefTries.AddNew();
+            TTrefTry trtry;
             trtry.Try = Toks[0+inc].SubString(0, Toks[0+inc].Length()-1).ToInt();
             trtry.RAlpha = Toks[1+inc].ToDouble();
             trtry.NQual = Toks[2+inc].ToDouble();
             trtry.SigmaM1 = Toks[3+inc].ToDouble();
             trtry.Mabs = Toks[4+inc].ToDouble();
             trtry.CFOM = Toks[5+inc].Trim('*').ToDouble();
-
             trtry.Semivariants.SetSize((uint32_t)((Toks.Count() - 6 - inc) * Toks[inc+6].Length()));
             size_t bitIndex = 0;
             for( size_t j= 6 + inc; j < Toks.Count(); j++ )  {
@@ -155,6 +154,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
                 if( bitIndex >= trtry.Semivariants.Count() )  break;
               }
             }
+            TrefTries.AddCCopy(trtry);
             Toks.Clear();
             i++;
           }
