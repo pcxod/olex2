@@ -485,12 +485,12 @@ protected:
 public:
   VcoVContainer(TAsymmUnit& _au) : au(_au), cell(6), celle(6)  {
     static const double a2r = M_PI/180;
-    cell[0] = au.GetAxes()[0];  celle[0] = olx_sqr(au.GetAxes()[0]);
-    cell[1] = au.GetAxes()[1];  celle[1] = olx_sqr(au.GetAxes()[1]);
-    cell[2] = au.GetAxes()[2];  celle[2] = olx_sqr(au.GetAxes()[2]);
-    cell[3] = au.GetAngles()[0]*a2r;  celle[3] = olx_sqr(au.GetAngles()[0]*a2r);
-    cell[4] = au.GetAngles()[1]*a2r;  celle[4] = olx_sqr(au.GetAngles()[1]*a2r);
-    cell[5] = au.GetAngles()[2]*a2r;  celle[5] = olx_sqr(au.GetAngles()[2]*a2r);
+    cell[0] = au.GetAxes()[0];  celle[0] = olx_sqr(au.GetAxisEsds()[0]);
+    cell[1] = au.GetAxes()[1];  celle[1] = olx_sqr(au.GetAxisEsds()[1]);
+    cell[2] = au.GetAxes()[2];  celle[2] = olx_sqr(au.GetAxisEsds()[2]);
+    cell[3] = au.GetAngles()[0]*a2r;  celle[3] = olx_sqr(au.GetAngleEsds()[0]*a2r);
+    cell[4] = au.GetAngles()[1]*a2r;  celle[4] = olx_sqr(au.GetAngleEsds()[1]*a2r);
+    cell[5] = au.GetAngles()[2]*a2r;  celle[5] = olx_sqr(au.GetAngleEsds()[2]*a2r);
   }
   void ReadShelxMat(const olxstr& fileName) {  vcov.ReadShelxMat(fileName, au);  }
   void ReadSmtbxMat(const olxstr& fileName) {  vcov.ReadSmtbxMat(fileName, au);  }
@@ -715,6 +715,7 @@ public:
     return ch.DoCalc(OctahedralDistortionBP(ch.points));
   }
   const VcoVMatrix& GetMatrix() const {  return vcov;  }
+  static void Tests(OlxTests& t);
 };
 
 EndXlibNamespace()

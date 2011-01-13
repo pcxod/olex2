@@ -2338,7 +2338,34 @@ void TMainForm::macQPeakSizeScale(TStrObjList &Cmds, const TParamList &Options, 
 //..............................................................................
 void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXAtomPList atoms;
-  FindXAtoms(Cmds, atoms, true, false);
+  TXBondPList bonds;
+  if( Cmds.IsEmpty() )  {
+    TGlGroup& sel = FXApp->GetSelection();
+    for( size_t i=0; i < sel.Count(); i++)  {
+      if( EsdlInstanceOf(sel[i], TXAtom) )
+        atoms.Add((TXAtom&)sel[i]);
+      else if( EsdlInstanceOf(sel[i], TXBond) )
+        bonds.Add((TXBond&)sel[i]);
+    }
+    if( atoms.IsEmpty() && bonds.IsEmpty() )  {
+      TGXApp::AtomIterator ai = FXApp->GetAtoms();
+      atoms.SetCapacity(ai.count);
+      while( ai.HasNext() )  {
+        TXAtom& xa = ai.Next();
+        if( xa.IsVisible() )
+          atoms.Add(xa);
+      }
+      TGXApp::BondIterator bi = FXApp->GetBonds();
+      bonds.SetCapacity(bi.count);
+      while( bi.HasNext() )  {
+        TXBond& xb = bi.Next();
+        if( xb.IsVisible() )
+          bonds.Add(xb);
+      }
+    }
+  }
+  else
+    FindXAtoms(Cmds, atoms, true, false);
   short lt = 0, symm_tag = 0;
   const olxstr str_lt = Options.FindValue("type");
   olxstr str_symm_tag = Options.FindValue("symm");
@@ -2357,7 +2384,6 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     symm_tag = 3;
   TTypeList<uint32_t> equivs;
   for( size_t i=0; i < atoms.Count(); i++ )  {
-    // 4 - Picture_labels, TODO - avoid naked index reference...
     TXGlLabel& gxl = atoms[i]->GetGlLabel();
     olxstr lb;
     if( lt != 0 && atoms[i]->GetLabel().Length() > atoms[i]->GetType().symbol.Length() )  {
@@ -2389,6 +2415,26 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     gxl.SetLabel(lb);
     gxl.SetVisible(true);
   }
+  TPtrList<TXGlLabel> labels;
+  if( !bonds.IsEmpty() )  {
+    VcoVContainer vcovc(FXApp->XFile().GetAsymmUnit());
+    bool have_vcov = false;
+    try  {
+      olxstr src_mat = FXApp->InitVcoV(vcovc);
+      FXApp->NewLogEntry() << "Using " << src_mat << " matrix for the calculation";
+      have_vcov = true;
+    }
+    catch(TExceptionBase& e)  {}
+    for( size_t i=0; i < bonds.Count(); i++ )  {
+      TXGlLabel& l = bonds[i]->GetGlLabel();
+      l.SetOffset(bonds[i]->GetCenter());
+      if( have_vcov )
+        l.SetLabel(vcovc.CalcDistance(bonds[i]->A(), bonds[i]->B()).ToString());
+      else
+        l.SetLabel(olxstr::FormatFloat(3, bonds[i]->Length()));
+      labels.Add(l);
+    }
+  }
   for( size_t i=0; i < equivs.Count(); i++ )  {
     smatd m = FXApp->XFile().GetUnitCell().GetMatrix(smatd::GetContainerId(equivs[i]));
     m.t += smatd::GetT(equivs[i]);
@@ -2403,7 +2449,6 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 
   const olxstr _cif = Options.FindValue("cif");
   if( !_cif.IsEmpty() )  {
-    TPtrList<TXGlLabel> labels;
     if( FXApp->CheckFileType<TCif>() )  {
       const TCifDataManager& cifdn = FXApp->XFile().GetLastLoader<TCif>().GetDataManager();
       const TGlGroup& sel = FXApp->GetSelection();
@@ -2431,14 +2476,14 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         }
       }
     }
-    for( size_t i=0; i < labels.Count(); i++ )  {
-      TXGlLabel& l = *labels[i];
-      vec3d off(-l.GetRect().width/2, -l.GetRect().height/2, 0);
-      const double scale1 = l.GetFont().IsVectorFont() ? 1.0/FXApp->GetRender().GetScale() : 1.0;
-      const double scale = scale1/FXApp->GetRender().GetBasis().GetZoom();
-      l.TranslateBasis(off*scale);
-      l.SetVisible(true);
-    }
+  }
+  for( size_t i=0; i < labels.Count(); i++ )  {
+    TXGlLabel& l = *labels[i];
+    vec3d off(-l.GetRect().width/2, -l.GetRect().height/2, 0);
+    const double scale1 = l.GetFont().IsVectorFont() ? 1.0/FXApp->GetRender().GetScale() : 1.0;
+    const double scale = scale1/FXApp->GetRender().GetBasis().GetZoom();
+    l.TranslateBasis(off*scale);
+    l.SetVisible(true);
   }
   FXApp->SelectAll(false);
 }
@@ -7768,6 +7813,7 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   OlxTests tests;
   tests.Add(&TSymmParser::Tests);
   tests.Add(&smatd::Tests);
+  tests.Add(&VcoVContainer::Tests);
   tests.run();
   AtomRefList arl(FXApp->XFile().GetRM(), Cmds.Text(' '), "suc");
   TTypeList<TAtomRefList> res;
