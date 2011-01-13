@@ -49,6 +49,7 @@ public:
 
   TXAtom& A() const {  return (TXAtom&)TSBond::A();  }
   TXAtom& B() const {  return (TXAtom&)TSBond::B();  }
+  TXAtom& Another(const TSAtom& a) const {  return (TXAtom&)TSBond::Another(a);  }
 
   TXGlLabel& GetGlLabel() const {  return *Label;  }
   void UpdateLabel()  {  GetGlLabel().Update();  }

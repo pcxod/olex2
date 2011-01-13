@@ -3344,7 +3344,7 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     E.SetRetVal(&sgs);
     op->executeMacroEx("SG", E);
     E.SetRetVal<bool>(false);
-    if( sgs.Count() == 0 )  {
+    if( sgs.IsEmpty() )  {
       TBasicApp::NewLogEntry(logError) <<  "Could not find any suitable space group. Terminating ... ";
       return;
     }
@@ -3353,7 +3353,6 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       TBasicApp::NewLogEntry() << "Univocal space group choice: " << sg->GetName();
     }
     else  {
-      E.Reset();
       op->executeMacroEx("Wilson", E);
       bool centro = E.GetRetVal().ToBool();
       TBasicApp::NewLogEntry() << "Searching for centrosymmetric group: " << centro;
@@ -3380,7 +3379,7 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
   }
-  olxstr fn( Cmds.IsEmpty() ? TEFile::ChangeFileExt(TXApp::GetInstance().XFile().GetFileName(), "ins") : Cmds[0] );
+  olxstr fn(Cmds.IsEmpty() ? TEFile::ChangeFileExt(TXApp::GetInstance().XFile().GetFileName(), "ins") : Cmds[0]);
   op->executeMacroEx(olxstr("reset -s=") << sg->GetName() << " -f='" << fn << '\'', E);
   if( E.IsSuccessful() )  {
     op->executeMacroEx(olxstr("reap '") << fn << '\'', E);

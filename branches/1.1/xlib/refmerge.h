@@ -52,6 +52,8 @@ class RefMerger {
   static MergeStats _DoMerge(const MatList& ml, TRefPList& refs, const vec3i_list& omits, 
     TRefList& output, bool mergeFP)  
   {
+    if( refs.IsEmpty() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "empty reflection list");
     MergeStats stats;
     // search for the inversion matrix
     size_t inverseMatIndex = InvalidIndex;
@@ -133,6 +135,8 @@ class RefMerger {
   }
   template <class MatList, class RefListMerger> 
   static MergeStats _DryMerge(const MatList& ml, TRefPList& refs, const vec3i_list& omits, bool mergeFP)  {
+    if( refs.IsEmpty() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "empty reflection list");
     MergeStats stats;
     // search for the inversion matrix
     size_t inverseMatIndex = InvalidIndex;
@@ -212,6 +216,8 @@ class RefMerger {
   static MergeStats _DoSGFilter(const MatList& ml, TRefPList& refs, const vec3i_list& omits, 
     TRefList& output)  
   {
+    if( refs.IsEmpty() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "empty reflection list");
     MergeStats stats;
     stats.FriedelOppositesMerged = false;
     const size_t ref_cnt = refs.Count();
@@ -261,6 +267,8 @@ class RefMerger {
   }
   template <class MatList>
   static MergeStats _DoDrySGFilter(const MatList& ml, TRefPList& refs, const vec3i_list& omits)  {
+    if( refs.IsEmpty() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "empty reflection list");
     MergeStats stats;
     stats.FriedelOppositesMerged = false;
     const size_t ref_cnt = refs.Count();
@@ -307,6 +315,8 @@ class RefMerger {
 
   template <class RefListMerger>
   static MergeStats _DoMergeInP1(TPtrList<const TReflection>& refs, const vec3i_list& omits, TRefList& output)  {
+    if( refs.IsEmpty() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "empty reflection list");
     MergeStats stats;
     // sort the list
     TReflection::SortList(refs);
@@ -361,6 +371,8 @@ class RefMerger {
   }
   template <class RefListMerger>
   static MergeStats _DryMergeInP1(TPtrList<const TReflection>& refs, const vec3i_list& omits)  {
+    if( refs.IsEmpty() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "empty reflection list");
     MergeStats stats;
     // sort the list
     TReflection::SortList(refs);
@@ -415,7 +427,7 @@ public:
   static MergeStats Merge(const MatList& ml, RefList& Refs, TRefList& output, 
     const vec3i_list& omits, bool mergeFP)  
   {
-    TRefPList refs( Refs.Count() );  // list of replicated reflections
+    TRefPList refs(Refs.Count());  // list of replicated reflections
     for( size_t i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::RefP(Refs[i]);
     return _DoMerge<MatList,RefListMerger>(
@@ -424,7 +436,7 @@ public:
   /* Functions gets the statistic on the list of provided reflections (which get stantardised) */
   template <class MatList, class RefListMerger, class RefList> 
   static MergeStats DryMerge(const MatList& ml, RefList& Refs, const vec3i_list& omits, bool mergeFP)  {
-    TRefPList refs( Refs.Count() );  // list of replicated reflections
+    TRefPList refs(Refs.Count());  // list of replicated reflections
     for( size_t i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::RefP(Refs[i]);
     return _DryMerge<MatList,RefListMerger>(
@@ -433,14 +445,14 @@ public:
   /* The function merges provided reflections in P1 and strores the result in the output */
   template <class RefListMerger, class RefList> 
   static MergeStats MergeInP1(const RefList& Refs, TRefList& output, const vec3i_list& omits)  {
-    TPtrList<const TReflection> refs( Refs.Count() );
+    TPtrList<const TReflection> refs(Refs.Count());
     for( size_t i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::GetRefP(Refs[i]);
     return _DoMergeInP1<RefListMerger>(refs, omits, output);
   }
   template <class RefListMerger, class RefList> 
   static MergeStats DryMergeInP1(const RefList& Refs, const vec3i_list& omits)  {
-    TPtrList<const TReflection> refs( Refs.Count() );
+    TPtrList<const TReflection> refs(Refs.Count());
     for( size_t i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::GetRefP(Refs[i]);
     return _DryMergeInP1<RefListMerger>(refs, omits);
@@ -448,7 +460,7 @@ public:
   /* The function filters out systematic absences */
   template <class MatList, class RefList> 
   static MergeStats SGFilter(const MatList& ml, RefList& Refs, TRefList& output, const vec3i_list& omits)  {
-    TRefPList refs( Refs.Count() );
+    TRefPList refs(Refs.Count());
     for( size_t i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::RefP(Refs[i]);
     return _DoSGFilter<MatList>(ml.SubListFrom(ml[0].IsI() ? 1 : 0), refs, omits, output);

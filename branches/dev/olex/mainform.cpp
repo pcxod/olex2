@@ -655,7 +655,8 @@ p-[name] prefix\n&;\
 s-[grow] short interactions; [name] suffix\n&;\
 t-[name] type\n&;\
 c-[grow] covalent bonds; [move] copy fragments instead of moving\n&;\
-r-[split] a restraint/constraint for split atoms; [grow] show radial bonds between the same atoms\n&;\
+r-[split] a restraint/constraint for split atoms; [grow] show radial bonds between the same atoms; "
+"[fit] rotation angle increment (smooth rotation by default)\n&;\
 v-[grow] use user provided delta for connectivity analysis, default 2A\n&;\
 shells-[grow] grow atom shells vs fragments", 
 (fpAny^fpNone)|psFileLoaded, 

@@ -306,6 +306,7 @@ void TCif::Initialize()  {
     TBasicApp::NewLogEntry(logError) << "Failed to locate required fields in atoms loop";
     return;
   }
+  const MatrixListAdaptor<TCif> MatrixList(*this);
   for( size_t i=0; i < ALoop->RowCount(); i++ )  {
     TCAtom& A = GetAsymmUnit().NewAtom();
     A.SetLabel(ALoop->Get(i, ALabel).GetStringValue(), false);
@@ -339,8 +340,14 @@ void TCif::Initialize()  {
       A.SetOccuEsd(EValue.GetE());
       if( EValue.GetE() == 0 )  GetRM().Vars.FixParam(A, catom_var_name_Sof);
     }
-    if( Degen != InvalidIndex )
-      A.SetOccu(A.GetOccu()/ALoop->Get(i, Degen).GetStringValue().ToDouble());
+    const double degen = (Degen != InvalidIndex ?
+      ALoop->Get(i, Degen).GetStringValue().ToDouble() :
+      TUnitCell::GetPositionMultiplicity(MatrixList, A.ccrd()));
+    if( degen != 1 )  {
+      A.SetOccu(A.GetOccu()/degen);
+      A.SetOccuEsd(A.GetOccuEsd()/degen);
+    }
+      
     ALoop->Set(i, ALabel, new AtomCifEntry(A));
     if( Part != InvalidIndex )
       ALoop->Set(i, Part, new AtomPartCifEntry(A));
@@ -372,6 +379,7 @@ void TCif::Initialize()  {
     ALoop->ColIndex("_atom_site_aniso_U_13"),
     ALoop->ColIndex("_atom_site_aniso_U_12")
   };
+
   if( (ALabel|Ui[0]|Ui[1]|Ui[2]|Ui[3]|Ui[4]|Ui[5]) != InvalidIndex )  {
     for( size_t i=0; i < ALoop->RowCount(); i++ )  {
       TCAtom* A = GetAsymmUnit().FindCAtom(ALoop->Get(i, ALabel).GetStringValue());

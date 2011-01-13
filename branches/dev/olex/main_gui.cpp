@@ -377,7 +377,7 @@ void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
   if( XA->IsSelected() )  
     Tmp << "sel";
   else                  
-    Tmp << "#s" << XA->GetLattId();
+    Tmp << "#s" << XA->GetOwnerId();
   Tmp << ' ';
   switch( event.GetId() )  {
     case ID_AtomTypeChangeC:
@@ -410,7 +410,7 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
   if( XA->IsSelected() )  
     Tmp << "sel";
   else                  
-    Tmp << "#s" << XA->GetLattId();
+    Tmp << "#s" << XA->GetOwnerId();
   Tmp << ' ';
   TPTableDlg *Dlg = new TPTableDlg(this);
   if( Dlg->ShowModal() == wxID_OK )  {
@@ -501,7 +501,7 @@ void TMainForm::OnAtom(wxCommandEvent& event)  {
   if( FObjectUnderMouse == NULL )  return;
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( event.GetId() == ID_AtomGrow )
-    ProcessMacro(olxstr("grow #s") << XA->GetLattId());
+    ProcessMacro(olxstr("grow #s") << XA->GetOwnerId());
   else if( event.GetId() == ID_AtomSelRings )  {
     TTypeList<TSAtomPList> rings;
     XA->GetNetwork().FindAtomRings(*XA, rings);
@@ -518,7 +518,7 @@ void TMainForm::OnAtom(wxCommandEvent& event)  {
   }
   else if( event.GetId() == ID_AtomCenter )  {
     if( !XA->IsSelected() )
-      ProcessMacro(olxstr("center #s") << XA->GetLattId());
+      ProcessMacro(olxstr("center #s") << XA->GetOwnerId());
     else
       ProcessMacro("center");  // center of the selection
     TimePerFrame = FXApp->Draw();

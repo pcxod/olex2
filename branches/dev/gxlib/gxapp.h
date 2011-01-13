@@ -84,7 +84,7 @@ template <class obj_t, class act_t> class TXObjectProvider : public TObjectProvi
   TGlRenderer& renderer;
 public:
   TXObjectProvider(TGlRenderer& _renderer) : renderer(_renderer)  {}
-  virtual obj_t& New(TNetwork* n)  {  return *TObjectProvider<obj_t>::items.Add(new act_t(n, renderer, EmptyString));  }
+  virtual obj_t& New(TNetwork* n)  {  return TObjectProvider<obj_t>::AddNew(new act_t(n, renderer, EmptyString));  }
 };
 
 struct XObjectProvider : public ASObjectProvider {

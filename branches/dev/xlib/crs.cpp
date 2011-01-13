@@ -89,6 +89,7 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
     GetRM().expl.SetRadiation(toks[0].ToDouble());
     GetAsymmUnit().GetAxes() = vec3d(toks[1].ToDouble(), toks[2].ToDouble(), toks[3].ToDouble());
     GetAsymmUnit().GetAngles() = vec3d(toks[4].ToDouble(), toks[5].ToDouble(), toks[6].ToDouble());
+    GetAsymmUnit().InitMatrices();
   }
   toks.Clear();
   toks.Strtok( Zerr, ' ');

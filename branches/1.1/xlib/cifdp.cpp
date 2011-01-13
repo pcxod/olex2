@@ -130,15 +130,16 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
         if( i >= Lines.Count() )  continue;
         olxch Char = Lines[i].CharAt(0);
         while( Char == '#' && ++i < Lines.Count() )  {
-          context.current_block->Add(new cetComment(line));
           while( Lines[i].IsEmpty() && ++i < Lines.Count() )  continue;
           if( i >= Lines.Count() )  break;
           Char = Lines[i].CharAt(0);
+          if( Char == '#' )
+            context.current_block->Add(new cetComment(Lines[i].SubStringFrom(1)));
         }
         if( Char == ';' )  {
           cetNamedStringList* list = NULL;
-          if( toks.Count() == 2 && toks[1].CharAt(0) == '#' )  {
-            list = new cetCommentedNamedStringList(toks[0], toks[1].SubStringFrom(1));
+          if( toks.Count() >= 2 && toks[1].CharAt(0) == '#' )  {
+            list = new cetCommentedNamedStringList(toks[0], toks.Text(' ', 1).SubStringFrom(1));
             toks.DeleteRange(0, 2);
           }
           else if( toks.Count() == 1 )  {

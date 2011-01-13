@@ -15,7 +15,7 @@ protected:
     TNameModeUndo(TXAtom& xa) : TUndoData(new TUndoActionImplMF<TNameModeUndo>(this, &TNameModeUndo::undo))  {  
       AddAtom(xa);
     }
-    void AddAtom(TXAtom& xa)  {  LabelIndeces.Add(xa.GetLattId());  }
+    void AddAtom(TXAtom& xa)  {  LabelIndeces.Add(xa.GetOwnerId());  }
     void undo(TUndoData* data)  {
       if( TNameMode::Instance != NULL )  {
         for( size_t i=0; i < LabelIndeces.Count(); i++ )  {

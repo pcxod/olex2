@@ -53,19 +53,27 @@ public:
   }
 };
 
-
 template <class obj_t> class TObjectProvider : public TIObjectProvider<obj_t> {
 protected:
   TPtrList<obj_t> items;
+  void UpdateOwnerIds()  {
+    for( size_t i=0; i < Count(); i++ )
+      Get(i).SetOwnerId(i);
+  }
+  inline obj_t& AddNew(obj_t* o)  {
+    o->SetOwnerId(Count());
+    return *items.Add(o);
+  }
 public:
   virtual size_t Count() const {  return items.Count();  }
-  virtual obj_t& New(TNetwork* n)  {  return *items.Add(new obj_t(n));  }
+  virtual obj_t& New(TNetwork* n)  {  return AddNew(new obj_t(n));  }
   virtual obj_t& Get(size_t i) const {  return *items[i];  }
   inline obj_t& operator [] (size_t i) const {  return Get(i);  }
   obj_t& GetLast() const {  return *items.GetLast();  }
   virtual void Delete(size_t i)  {
     delete items[i];
     items.Delete(i);
+    UpdateOwnerIds();
   }
   inline void DeleteLast()  {  Delete(Count()-1);  }
   virtual void Clear()   {  items.DeleteItems(false).Clear();  }
@@ -73,7 +81,10 @@ public:
     delete items[i];
     items.Set(i, NULL);
   }
-  virtual void Pack()  {  items.Pack();  }
+  virtual void Pack()  {
+    items.Pack();
+    UpdateOwnerIds();
+  }
   virtual void IncCapacity(size_t v)  {  items.SetCapacity(items.Count()+v);  }
   inline bool IsEmpty() const {  return items.IsEmpty();  }
   template <class Functor> const TObjectProvider& ForEach(const Functor& f) const {

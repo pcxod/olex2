@@ -11,7 +11,7 @@ protected:
     size_t LabelIndex;
   public:
     TOccuModeUndo(TXAtom* XA) : TUndoData(new TUndoActionImplMF<TOccuModeUndo>(this, &TOccuModeUndo::undo)),
-      Atom(XA->CAtom()), LabelIndex(XA->GetLattId())
+      Atom(XA->CAtom()), LabelIndex(XA->GetOwnerId())
     {
       Occu = Atom.GetParent()->GetRefMod()->Vars.GetParam(Atom, catom_var_name_Sof);
     }

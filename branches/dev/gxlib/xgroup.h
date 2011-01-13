@@ -23,6 +23,7 @@ more transparent, however, it could use the TEBasis in the following way:
 class TXGroup : public TGlGroup, public AGlMouseHandler {
   vec3d RotationCenter, RotationDir;
   TXAtomPList Atoms;
+  double AngleInc, AngleAcc;
 protected:
   virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) const {
     if( GetParentGroup() != NULL )  {  // is inside a group?
@@ -70,6 +71,12 @@ protected:
     return true;
   }
   virtual bool DoRotate(const vec3d& vec, double angle)  {
+    if( AngleInc != 0 )  {
+      if( olx_abs(AngleAcc += angle) < AngleInc )
+        return true;
+      angle = AngleInc*olx_sign(AngleAcc);
+      AngleAcc = 0;
+    }
     mat3d m;  
     if( RotationDir.IsNull() )
       olx_create_rotation_matrix(m, vec, cos(angle), sin(angle));
@@ -110,7 +117,11 @@ protected:
     return GetHandler().OnDblClick(*this, Data);
   }
 public:
-  TXGroup(TGlRenderer& R, const olxstr& colName) : TGlGroup(R, colName)  {
+  TXGroup(TGlRenderer& R, const olxstr& colName) :
+    TGlGroup(R, colName),
+    AngleInc(0),
+    AngleAcc(0)
+  {
     SetMoveable(true);
     SetRoteable(true);
   }
@@ -138,6 +149,7 @@ public:
     RotationCenter /= Atoms.Count();
   }
   const vec3d& GetRotationCenter() const {  return RotationCenter;  }
+  DefPropP(double, AngleInc)
 };
 
 EndGxlNamespace()

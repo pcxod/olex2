@@ -95,6 +95,7 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
     GetAsymmUnit().Angles()[0].V() = toks[4].ToDouble();
     GetAsymmUnit().Angles()[1].V() = toks[5].ToDouble();
     GetAsymmUnit().Angles()[2].V() = toks[6].ToDouble();
+    GetAsymmUnit().InitMatrices();
   }
   toks.Clear();
   toks.Strtok( Zerr, ' ');

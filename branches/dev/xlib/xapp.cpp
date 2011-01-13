@@ -330,7 +330,7 @@ bool RingsEq(const TSAtomPList& r1, const TSAtomPList& r2 )  {
   for( size_t i=0; i < r1.Count(); i++ )  {
     bool found = false;
     for( size_t j=0; j < r2.Count(); j++ )  {
-      if( r2[j]->GetLattId() == r1[i]->GetLattId() )  {
+      if( r2[j]->GetOwnerId() == r1[i]->GetOwnerId() )  {
         found = true;
         break;
       }

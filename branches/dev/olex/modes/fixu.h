@@ -11,7 +11,7 @@ protected:
     size_t LabelIndex;
   public:
     TFixUModeUndo(TXAtom* XA) : TUndoData(new TUndoActionImplMF<TFixUModeUndo>(this, &TFixUModeUndo::undo)),
-      Atom(XA->CAtom()), LabelIndex(XA->GetLattId())
+      Atom(XA->CAtom()), LabelIndex(XA->GetOwnerId())
     {
       RefinementModel& rm = *Atom.GetParent()->GetRefMod();
       Uiso = rm.Vars.ReleaseRef(Atom, catom_var_name_Uiso);

@@ -223,8 +223,8 @@ void TXGlLabels::ClearLabelMarks()  {
 }
 //..............................................................................
 void TXGlLabels::MarkLabel(const TXAtom& A, bool v)  {
-  if( A.GetLattId() < Marks.Count() )
-    Marks.Set(A.GetLattId(), v);
+  if( A.GetOwnerId() < Marks.Count() )
+    Marks.Set(A.GetOwnerId(), v);
 }
 //..............................................................................
 void TXGlLabels::MarkLabel(size_t i, bool v)  {
@@ -233,8 +233,8 @@ void TXGlLabels::MarkLabel(size_t i, bool v)  {
 }
 //..............................................................................
 bool TXGlLabels::IsLabelMarked(const TXAtom& atom) const {
-  if( atom.GetLattId() < Marks.Count() )
-    return Marks[atom.GetLattId()];
+  if( atom.GetOwnerId() < Marks.Count() )
+    return Marks[atom.GetOwnerId()];
   return false;  // should not happen...
 }
 //..............................................................................

@@ -48,7 +48,6 @@ void TNetwork::CreateBondsAndFragments(ASObjectProvider& objects, TNetPList& Fra
   const size_t ac = objects.atoms.Count();
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& A1 = objects.atoms[i];
-    A1.SetLattId(i);
     if( A1.IsDeleted() )  continue;
     A1.SetStandalone(A1.NodeCount() == 0);
     if( A1.GetTag() != 0 )  {
@@ -73,7 +72,7 @@ void TNetwork::CreateBondsAndFragments(ASObjectProvider& objects, TNetPList& Fra
             Net->AddBond(B);
             A3.SetTag(0);
           }
-          else if( A3.GetNetId() > j )  {  // the atom is in the list, but has not been processes
+          else if( A3.GetFragmentId() > j )  {  // the atom is in the list, but has not been processes
             TSBond& B = objects.bonds.New(Net);  // in this case we need to create a bond
             B.SetType(sotBond);
             B.SetA(A2);
@@ -226,7 +225,7 @@ void ResultCollector(TEGraphNode<size_t,TSAtom*>& subRoot,
                      TEGraphNode<size_t,TSAtom*>& Root, 
                      TTypeList< AnAssociation2<size_t, size_t> >& res )
 {
-  res.AddNew(subRoot.GetObject()->GetNetId(), Root.GetObject()->GetNetId());
+  res.AddNew(subRoot.GetObject()->GetFragmentId(), Root.GetObject()->GetFragmentId());
   subRoot.GetObject()->SetTag(0);
   Root.GetObject()->SetTag(0);
   for( size_t i=0; i < olx_min(subRoot.Count(),Root.Count()); i++ )  {
@@ -981,11 +980,11 @@ void TNetwork::FromDataItem(const TDataItem& item) {
   Nodes.SetCapacity(nodes.FieldCount());
   ASObjectProvider& objects = Lattice->GetObjects();
   for( size_t i=0; i < nodes.FieldCount(); i++ )
-    Nodes.Add(objects.atoms[nodes.GetField(i).ToInt()])->SetNetId(Nodes.Count());
+    Nodes.Add(objects.atoms[nodes.GetField(i).ToInt()])->SetFragmentId(Nodes.Count());
   const TDataItem& bonds = item.FindRequiredItem("Bonds");
   Bonds.SetCapacity(bonds.FieldCount());
   for( size_t i=0; i < bonds.FieldCount(); i++ )
-    Bonds.Add(objects.bonds[bonds.GetField(i).ToInt()])->SetNetId(Bonds.Count());
+    Bonds.Add(objects.bonds[bonds.GetField(i).ToInt()])->SetFragmentId(Bonds.Count());
 }
 //..............................................................................
 ContentList TNetwork::GetContentList() const {

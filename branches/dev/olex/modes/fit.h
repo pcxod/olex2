@@ -20,10 +20,10 @@ class TFitMode : public AEventsDispatcher, public AMode  {
       return true;
     }
   };
-
+  double AngleInc;
   OnUniqHandler* uniq_handler;
 public:
-  TFitMode(size_t id) : AMode(id), Initialised(false)  {
+  TFitMode(size_t id) : AMode(id), Initialised(false), AngleInc(0)  {
     uniq_handler = new OnUniqHandler(*this);
     TGlXApp::GetGXApp()->OnObjectsCreate.Add(this, mode_fit_create, msiExit);
     TGlXApp::GetGXApp()->XFile().GetLattice().OnDisassemble.Add(this, mode_fit_disassemble, msiEnter);
@@ -44,6 +44,8 @@ public:
         xbonds.Add(sel[i]);
     }
     group = &TGlXApp::GetGXApp()->GetRender().ReplaceSelection<TXGroup>();
+    AngleInc = Options.FindValue("r", "0").ToDouble();
+    group->SetAngleInc(AngleInc*M_PI/180);
     AddAtoms(xatoms);
     for( size_t i=0; i < xbonds.Count(); i++ )
       TGlXApp::GetGXApp()->GetRender().Select(*xbonds[i]);
@@ -100,8 +102,10 @@ public:
       TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
     }
     else if( msg == mode_fit_create )  {
-      if( !EsdlInstanceOf(app.GetRender().GetSelection(), TXGroup) )
+      if( !EsdlInstanceOf(app.GetRender().GetSelection(), TXGroup) )  {
         group = &TGlXApp::GetGXApp()->GetRender().ReplaceSelection<TXGroup>();
+        group->SetAngleInc(AngleInc*M_PI/180);
+      }
       for( size_t i=0; i < group->Count(); i++ )  {
         if( EsdlInstanceOf(group->GetObject(i), TXAtom) )  {
           TXAtom* xa = Atoms.Add((TXAtom&)group->GetObject(i));

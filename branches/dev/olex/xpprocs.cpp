@@ -624,7 +624,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   FGlConsole->SetVisible(true);
   FXApp->FinishDrawBitmap();
   if( PictureQuality )  FXApp->Quality(qaMedium);
-  FXApp->GetRender().EnableFog( FXApp->GetRender().IsFogEnabled() );
+  FXApp->GetRender().EnableFog(FXApp->GetRender().IsFogEnabled());
 
   if( Emboss )  {
     if( EmbossColour )  {
@@ -1686,15 +1686,15 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
   else if( Cmds.Count() == 1 && Cmds[0].Equalsi("labels") )  {
-    //FXApp->NewLogEntry() << "Deleting labels";
-    //for( size_t i=0; i < FXApp->LabelCount(); i++ )
-    //  FXApp->GetLabel(i).SetDeleted(true);
-    //TGXApp::AtomIterator ai = FXApp->GetAtoms();
-    //while( ai.HasNext() )
-    //  ai.Next().GetGlLabel().SetDeleted(true);
-    //TGXApp::BondIterator bi = FXApp->GetBonds();
-    //while( bi.HasNext() )
-    //  bi.Next().GetGlLabel().SetDeleted(true);
+    FXApp->NewLogEntry() << "Deleting labels";
+    for( size_t i=0; i < FXApp->LabelCount(); i++ )
+      FXApp->GetLabel(i).SetVisible(false);
+    TGXApp::AtomIterator ai = FXApp->GetAtoms();
+    while( ai.HasNext() )
+      ai.Next().GetGlLabel().SetVisible(false);
+    TGXApp::BondIterator bi = FXApp->GetBonds();
+    while( bi.HasNext() )
+      bi.Next().GetGlLabel().SetVisible(false);
   }
   else  {
     TXAtomPList Atoms = FXApp->FindXAtoms(Cmds.Text(' '), true, Options.Contains('h')),
@@ -2349,8 +2349,8 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   else if( str_lt.Equalsi("subscript") )
     lt = 2;
   if( str_symm_tag =='$' || str_symm_tag == '#' )  {  // have to kill labels in this case, for consistency of _$ or ^#
-    //for( size_t i=0; i < FXApp->LabelCount(); i++ )
-    //  FXApp->GetLabel(i).SetDeleted(true);
+    for( size_t i=0; i < FXApp->LabelCount(); i++ )
+      FXApp->GetLabel(i).SetVisible(false);
     symm_tag = (str_symm_tag =='$' ? 1 : 2);
   }
   else if( str_symm_tag.Equals("full") )
@@ -2388,7 +2388,6 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     gxl.SetOffset(atoms[i]->crd());
     gxl.SetLabel(lb);
     gxl.SetVisible(true);
-    //gxl.SetDeleted(false);
   }
   for( size_t i=0; i < equivs.Count(); i++ )  {
     smatd m = FXApp->XFile().GetUnitCell().GetMatrix(smatd::GetContainerId(equivs[i]));
@@ -2439,7 +2438,6 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       const double scale = scale1/FXApp->GetRender().GetBasis().GetZoom();
       l.TranslateBasis(off*scale);
       l.SetVisible(true);
-      //l.SetDeleted(false);
     }
   }
   FXApp->SelectAll(false);
@@ -8520,8 +8518,8 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
     for( size_t i=0; i < xatoms.Count(); i++ )  {
       TXAtom& a = *xatoms[i];
       for( size_t j=0; j < a.BondCount(); j++ )  {
-        TSAtom& b = a.Bond(j).Another(a);
-        if( b.GetLattId() <= a.GetLattId() )  continue;
+        TXAtom& b = a.Bond(j).Another(a);
+        if( b.GetOwnerId() <= a.GetOwnerId() )  continue;
         const double d = (double)olx_round(a.Bond(j).Length()*1000)/1000;
         const size_t ri = r12.IndexOf(d);
         TSimpleRestraint& df = (ri == InvalidIndex) ? rm.rDFIX.AddNew() : *r12.GetValue(ri);
@@ -8533,7 +8531,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
         }
         for( size_t k=0; k < b.NodeCount(); k++ )  {
           TSAtom& b1 = b.Node(k);
-          if( b1.GetLattId() <= a.GetLattId() )  continue;
+          if( b1.GetOwnerId() <= a.GetOwnerId() )  continue;
           const double d1 = (double)olx_round(a.crd().DistanceTo(b1.crd())*1000)/1000;
           const size_t ri1 = r13.IndexOf(d1);
           TSimpleRestraint& df1 = (ri1 == InvalidIndex) ? rm.rDFIX.AddNew() : *r13.GetValue(ri1);
@@ -8562,7 +8560,7 @@ void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
   TGlGroup& glg = FXApp->GetSelection();
   for( size_t i=0; i < glg.Count(); i++ )  {
     if( EsdlInstanceOf(glg[i], TXAtom) )
-      xatoms.Add( (TXAtom&)glg[i] );
+      xatoms.Add((TXAtom&)glg[i]);
   }
   TNetPList nets;
   for( size_t i=0; i < xatoms.Count(); i++ )  {

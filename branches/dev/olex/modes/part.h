@@ -11,7 +11,7 @@ protected:
     size_t LabelIndex;
   public:
     TPartModeUndo(TXAtom* XA) : TUndoData( new TUndoActionImplMF<TPartModeUndo>(this, &TPartModeUndo::undo)),
-      Atom(XA->CAtom()), LabelIndex(XA->GetLattId())
+      Atom(XA->CAtom()), LabelIndex(XA->GetOwnerId())
     {
       Part = Atom.GetPart();
     }

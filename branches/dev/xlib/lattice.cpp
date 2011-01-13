@@ -221,7 +221,6 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
     else  {
       if( ocrd != NULL )
         sa.crd() = (*ocrd)[i];
-      sa.SetLattId(i-dac);
     }
   }
   if( dac != 0 )  {
@@ -726,6 +725,7 @@ void TLattice::RestoreAtom(const TSAtom::FullRef& id)  {
       GetUnitCell().GetMatrix(smatd::GetContainerId(id.matrix_id)))) );
   }
   TSAtom& sa = GenerateAtom(GetAsymmUnit().GetAtom(id.catom_id), *matr);
+  sa.CAtom().SetDeleted(false);
   if( id.matrices != NULL )  {
     for( size_t i=0; i < id.matrices->Count(); i++ )  {
       if( smatd::GetContainerId((*id.matrices)[i]) >= GetUnitCell().MatrixCount() )
@@ -2247,7 +2247,9 @@ void TLattice::RestoreADPs(bool restoreCoordinates)  {
 }
 //..............................................................................
 void TLattice::BuildAtomRegistry()  {
-  if( Matrices.IsEmpty() )  return;  TUnitCell& uc = GetUnitCell();  vec3i mind(100,100,100), maxd(-100,-100,-100);
+  if( Matrices.IsEmpty() )  return;
+  TUnitCell& uc = GetUnitCell();
+  vec3i mind(100,100,100), maxd(-100,-100,-100);
   for( size_t i=0; i < Matrices.Count(); i++ )
     vec3i::UpdateMinMax(Matrices[i]->GetT(Matrices[i]->GetId()), mind, maxd);
   maxd[0] += 1;  maxd[1] += 1;  maxd[2] += 1;
@@ -2264,7 +2266,7 @@ void TLattice::BuildAtomRegistry()  {
       for( size_t j=0; j < sa->CAtom().EquivCount(); j++ )  {
         const smatd m = uc.MulMatrix(sa->CAtom().GetEquiv(j), matr);
         TSAtom* sa1 = Objects.atomRegistry.Find(TSAtom::Ref(sa->CAtom().GetId(), m.GetId()));
-        if( sa1 != NULL && sa1 != sa )  {
+        if( sa1 != NULL && sa1 != sa && !sa1->IsDeleted() )  {
           sa1->AddMatrices(*sa);
           sa->SetDeleted(true);
           sa = sa1;
@@ -2304,33 +2306,34 @@ void TLattice::AddLatticeContent(const TLattice& latt)  {
     ca.SetLabel(src_a.GetLabel(), false);
     TSAtom* sa = new_atoms.Add(Objects.atoms.New(Network));
     sa->CAtom(ca);
+    sa->crd() = GetAsymmUnit().Orthogonalise(sa->ccrd());
     sa->AddMatrix(Matrices[0]);
   }
   for( size_t i=0; i < latt.Objects.bonds.Count(); i++ )  {
     const TSBond& src_b = latt.Objects.bonds[i];
     TSBond* sb = new_bonds.Add(Objects.bonds.New(Network));
-    sb->SetA(*new_atoms[src_b.A().GetLattId()]);
-    sb->SetB(*new_atoms[src_b.B().GetLattId()]);
+    sb->SetA(*new_atoms[src_b.A().GetOwnerId()]);
+    sb->SetB(*new_atoms[src_b.B().GetOwnerId()]);
   }
   for( size_t i=0; i < latt.Objects.atoms.Count(); i++ )  {
     const TSAtom& src_a = latt.Objects.atoms[i];
     TSAtom& sa = *new_atoms[i];
     for( size_t j=0; j < src_a.NodeCount(); j++ )
-      sa.AddNode(*new_atoms[src_a.Node(j).GetLattId()]);
+      sa.AddNode(*new_atoms[src_a.Node(j).GetOwnerId()]);
     for( size_t j=0; j < src_a.BondCount(); j++ )
-      sa.AddBond(*new_bonds[src_a.Bond(j).GetLattId()]);
+      sa.AddBond(*new_bonds[src_a.Bond(j).GetOwnerId()]);
   }
   for( size_t i=0; i < latt.FragmentCount(); i++ )  {
     const TNetwork& src_n = latt.GetFragment(i);
     TNetwork& net = *Fragments.Add(new TNetwork(this, Network));
-    net.SetLattId(Fragments.Count()-1);
+    net.SetOwnerId(Fragments.Count()-1);
     for( size_t j=0; j < src_n.NodeCount(); j++ )  {
-      TSAtom& a = *new_atoms[src_n.Node(j).GetLattId()];
+      TSAtom& a = *new_atoms[src_n.Node(j).GetOwnerId()];
       net.AddNode(a);
       a.SetNetwork(net);
     }
     for( size_t j=0; j < src_n.BondCount(); j++ )  {
-      TSBond& b = *new_bonds[src_n.Bond(j).GetLattId()];
+      TSBond& b = *new_bonds[src_n.Bond(j).GetOwnerId()];
       net.AddBond(b);
       b.SetNetwork(net);
     }

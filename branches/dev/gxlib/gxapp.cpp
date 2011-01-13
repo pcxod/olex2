@@ -1460,7 +1460,7 @@ void TGXApp::GetXAtoms(const olxstr& AtomName, TXAtomPList& res)  {
     AtomIterator ai(*this);
     while( ai.HasNext() )  {
       TXAtom& xa = ai.Next();
-      if( xa.GetLattId() == id && xa.IsVisible() )  {
+      if( xa.GetOwnerId() == id && xa.IsVisible() )  {
         res.Add(xa);
         break;
       }
@@ -1482,7 +1482,7 @@ void TGXApp::GetXBonds(const olxstr& BondName, TXBondPList& res)  {
     BondIterator bi(*this);
     while( bi.HasNext() )  {
       TXBond& xb = bi.Next();
-      if( xb.GetLattId() == id && xb.IsVisible() )  {
+      if( xb.GetOwnerId() == id && xb.IsVisible() )  {
         res.Add(xb);
         break;
       }
@@ -1976,6 +1976,7 @@ void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& b
   ObjectCaster<TSBond, TXBond> cbs = XFile().GetLattice().GetObjects().bonds.GetAccessor<TXBond>();
   for( size_t i=bc; i < cbs.Count(); i++ )  {
     TXBond& XB = cbs[i];
+    XB.Update();
     XB.Create();
     bonds.Add(XB);
   }
@@ -2054,7 +2055,7 @@ TUndoData* TGXApp::DeleteXObjects(AGDObjList& L)  {
       xb->SetVisible(false);
     }
     else
-      ;//L[i]->SetDeleted(true);
+      L[i]->SetVisible(false);
   }
   if( planes_deleted )
     XFile().GetLattice().UpdatePlaneDefinitions();
@@ -4158,8 +4159,10 @@ void TGXApp::SelectAll(bool Select)  {
       SelectionCopy[1] = SelectionCopy[0];
       SelectionCopy[0].Clear();
     }
-    else
+    else  {
+      SelectionCopy[1].Clear();
       StoreGroup(GetSelection(), SelectionCopy[1]);
+    }
   }
   GetRender().SelectAll(Select);
   _UpdateGroupIds();
