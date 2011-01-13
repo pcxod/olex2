@@ -507,215 +507,222 @@ Direct calculation:
     }
 */
 void OrtDraw::Render(const olxstr& fileName)  {
-  //PSWriter pw(fileName);
-  //Init(pw);
-  //TTypeList<a_ort_object> objects;
-  //TPtrList<vec3f> all_points;
-  //objects.SetCapacity(app.AtomCount()+app.BondCount());
-  //for( size_t i=0; i < app.AtomCount(); i++ )  {
-  //  if( app.GetAtom(i).IsDeleted() ) // have to keep hidden atoms, as those might be used by bonds!
-  //    continue;
-  //  app.GetAtom(i).SetTag(objects.Count());
-  //  ort_atom *a = new ort_atom(*this, app.GetAtom(i));
-  //  a->draw_style |= ortep_atom_rims;
-  //  if( app.GetAtom(i).DrawStyle() == adsOrtep )
-  //    a->draw_style |= ortep_atom_quads;
-  //  if( (ColorMode&ortep_color_lines) )
-  //    a->draw_style |= ortep_color_lines;
-  //  if( (ColorMode&ortep_color_fill) )
-  //    a->draw_style |= ortep_color_fill;
-  //  objects.Add(a);
-  //  all_points.Add(&a->crd);
-  //}
-  //if( app.DUnitCell().IsVisible() )  {
-  //  const TDUnitCell& uc = app.DUnitCell();
-  //  for( size_t i=0; i < uc.EdgeCount(); i+=2 )  {
-  //    ort_poly* l = new ort_poly(*this, false);
-  //    l->points.AddNew(ProjectPoint(uc.GetEdge(i)));
-  //    l->points.AddNew(ProjectPoint(uc.GetEdge(i+1)));
-  //    objects.Add(l);
-  //    _process_points(all_points, *l);
-  //  }
-  //}
-  //if( app.DBasis().IsVisible() )  {
-  //  const TDBasis& b = app.DBasis();
-  //  mat3f cm = app.XFile().GetAsymmUnit().GetCellToCartesian();
-  //  vec3f len(cm[0].Length(), cm[1].Length(), cm[2].Length());
-  //  cm[0].Normalise();  cm[1].Normalise();  cm[2].Normalise();
-  //  cm *= ProjMatr;
-  //  vec3d T = app.GetRender().GetBasis().GetMatrix()*b.GetCenter();
-  //  T /= app.GetRender().GetZoom();
-  //  T *= app.GetRender().GetScale();
-  //  T -= app.GetRender().GetBasis().GetCenter();
-  //  vec3f cnt = ProjectPoint(T);
-  //  const float sph_rad = 0.2*DrawScale*b.GetZoom();
-  //  ort_circle* center = new ort_circle(*this, cnt, sph_rad, true);
-  //  all_points.Add(center->center);
-  //  center->color = 0xffffffff;
-  //  objects.Add(center);
-  //  for( int i=0; i < 3; i++ )  {
-  //    vec3f mp = cm[i]*((float)(0.2*len[i]*b.GetZoom())), 
-  //      ep = cm[i]*((float)((0.2*len[i]+0.8)*b.GetZoom()));
-  //    
-  //    ort_cone* arrow_cone = new ort_cone(*this, cnt+mp, cnt+ep, 0.2*DrawScale*b.GetZoom(), 0, 0); 
-  //    objects.Add(arrow_cone);
-  //    all_points.Add(arrow_cone->bottom);
-  //    all_points.Add(arrow_cone->top);
+  PSWriter pw(fileName);
+  Init(pw);
+  TTypeList<a_ort_object> objects;
+  TPtrList<vec3f> all_points;
+  TGXApp::AtomIterator ai = app.GetAtoms();
+  TGXApp::BondIterator bi = app.GetBonds();
+  objects.SetCapacity(ai.count+bi.count);
+  while( ai.HasNext() )  {
+    TXAtom& xa = ai.Next();
+    if( xa.IsDeleted() ) // have to keep hidden atoms, as those might be used by bonds!
+      continue;
+    xa.SetTag(objects.Count());
+    ort_atom *a = new ort_atom(*this, xa);
+    a->draw_style |= ortep_atom_rims;
+    if( xa.DrawStyle() == adsOrtep )
+      a->draw_style |= ortep_atom_quads;
+    if( (ColorMode&ortep_color_lines) )
+      a->draw_style |= ortep_color_lines;
+    if( (ColorMode&ortep_color_fill) )
+      a->draw_style |= ortep_color_fill;
+    objects.Add(a);
+    all_points.Add(&a->crd);
+  }
+  if( app.DUnitCell().IsVisible() )  {
+    const TDUnitCell& uc = app.DUnitCell();
+    for( size_t i=0; i < uc.EdgeCount(); i+=2 )  {
+      ort_poly* l = new ort_poly(*this, false);
+      l->points.AddNew(ProjectPoint(uc.GetEdge(i)));
+      l->points.AddNew(ProjectPoint(uc.GetEdge(i+1)));
+      objects.Add(l);
+      _process_points(all_points, *l);
+    }
+  }
+  if( app.DBasis().IsVisible() )  {
+    const TDBasis& b = app.DBasis();
+    mat3f cm = app.XFile().GetAsymmUnit().GetCellToCartesian();
+    vec3f len(cm[0].Length(), cm[1].Length(), cm[2].Length());
+    cm[0].Normalise();  cm[1].Normalise();  cm[2].Normalise();
+    cm *= ProjMatr;
+    vec3d T = app.GetRender().GetBasis().GetMatrix()*b.GetCenter();
+    T /= app.GetRender().GetZoom();
+    T *= app.GetRender().GetScale();
+    T -= app.GetRender().GetBasis().GetCenter();
+    vec3f cnt = ProjectPoint(T);
+    const float sph_rad = 0.2*DrawScale*b.GetZoom();
+    ort_circle* center = new ort_circle(*this, cnt, sph_rad, true);
+    all_points.Add(center->center);
+    center->color = 0xffffffff;
+    objects.Add(center);
+    for( int i=0; i < 3; i++ )  {
+      vec3f mp = cm[i]*((float)(0.2*len[i]*b.GetZoom())), 
+        ep = cm[i]*((float)((0.2*len[i]+0.8)*b.GetZoom()));
+      
+      ort_cone* arrow_cone = new ort_cone(*this, cnt+mp, cnt+ep, 0.2*DrawScale*b.GetZoom(), 0, 0); 
+      objects.Add(arrow_cone);
+      all_points.Add(arrow_cone->bottom);
+      all_points.Add(arrow_cone->top);
 
-  //    const float z = cm[i][2]/cm[i].Length();
-  //    const float pscale = 1+olx_sign(z)*sqrt(olx_abs(z))/2;
-  //    const float base_r = 0.075*DrawScale*b.GetZoom();
-  //    ort_cone* axis_cone = new ort_cone(*this,
-  //      cnt+vec3f(cm[i]).NormaliseTo(sqrt(olx_sqr(sph_rad)-olx_sqr(base_r))), // extra 3D effect for the central sphere
-  //      cnt+mp, 
-  //      base_r, 
-  //      base_r*pscale,
-  //      0); 
-  //    objects.Add(axis_cone);
-  //    all_points.Add(axis_cone->bottom);
-  //    all_points.Add(axis_cone->top);
-  //  }
-  //}
-  //if( Perspective && !all_points.IsEmpty() )  {
-  //  vec3f _min, _max;
-  //  _min  = _max = (*all_points[0]);
-  //  for( size_t i=1; i < all_points.Count(); i++ )
-  //    vec3f::UpdateMinMax(*all_points[i], _min, _max);
-  //  vec3f center((_min+_max)/2);
-  //  center[2] = (_max[2] - _min[2])*10;
-  //  for( size_t i=0; i < all_points.Count(); i++ )  {
-  //    vec3f& crd = *all_points[i];
-  //    vec3f v(crd - center);
-  //    v.NormaliseTo(center[2]);
-  //    crd[0] = v[0] + center[0];
-  //    crd[1] = v[1] + center[1];
-  //  }
-  //}
+      const float z = cm[i][2]/cm[i].Length();
+      const float pscale = 1+olx_sign(z)*sqrt(olx_abs(z))/2;
+      const float base_r = 0.075*DrawScale*b.GetZoom();
+      ort_cone* axis_cone = new ort_cone(*this,
+        cnt+vec3f(cm[i]).NormaliseTo(sqrt(olx_sqr(sph_rad)-olx_sqr(base_r))), // extra 3D effect for the central sphere
+        cnt+mp, 
+        base_r, 
+        base_r*pscale,
+        0); 
+      objects.Add(axis_cone);
+      all_points.Add(axis_cone->bottom);
+      all_points.Add(axis_cone->top);
+    }
+  }
+  if( Perspective && !all_points.IsEmpty() )  {
+    vec3f _min, _max;
+    _min  = _max = (*all_points[0]);
+    for( size_t i=1; i < all_points.Count(); i++ )
+      vec3f::UpdateMinMax(*all_points[i], _min, _max);
+    vec3f center((_min+_max)/2);
+    center[2] = (_max[2] - _min[2])*10;
+    for( size_t i=0; i < all_points.Count(); i++ )  {
+      vec3f& crd = *all_points[i];
+      vec3f v(crd - center);
+      v.NormaliseTo(center[2]);
+      crd[0] = v[0] + center[0];
+      crd[1] = v[1] + center[1];
+    }
+  }
 
-  //for( size_t i=0; i < app.BondCount(); i++ )  {
-  //  const TXBond& xb = app.GetBond(i);
-  //  if( xb.IsDeleted() || !xb.IsVisible() )
-  //    continue;
-  //  const ort_atom& a1 = (const ort_atom&)objects[xb.Bond().A().GetTag()];
-  //  const ort_atom& a2 = (const ort_atom&)objects[xb.Bond().B().GetTag()];
-  //  ort_bond *b = new ort_bond(*this, app.GetBond(i), a1, a2);
-  //  if( (ColorMode&ortep_color_bond) != 0 )
-  //    b->draw_style |= ortep_color_bond;
-  //  objects.Add(b);
-  //}
-  //const TXGrid& grid = app.XGrid();
-  //if( !grid.IsEmpty() && (grid.GetRenderMode()&planeRenderModeContour) != 0 )  {
-  //  Contour<float> cm;
-  //  ContourDrawer drawer(*this, objects, 0);
-  //  Contour<float>::MemberFeedback<OrtDraw::ContourDrawer> mf(drawer, &OrtDraw::ContourDrawer::draw);
-  //  const size_t MaxDim = grid.GetPlaneSize();
-  //  const float hh = (float)MaxDim/2;
-  //  const float Size = grid.GetSize();
-  //  const float Depth = grid.GetDepth();
-  //  olx_array_ptr<float*> data(new float*[MaxDim]);
-  //  olx_array_ptr<float> x(new float[MaxDim]);
-  //  olx_array_ptr<float> y(new float[MaxDim]);
-  //  for( size_t i=0; i < MaxDim; i++ )  {
-  //    data[i] = new float[MaxDim];
-  //    y[i] = x[i] = (float)i - hh;
-  //  }
-  //  const size_t contour_cnt = grid.GetContourLevelCount();
-  //  olx_array_ptr<float> z(new float[contour_cnt]);
-  //  float minZ = 1000, maxZ = -1000;
-  //  const vec3i dim = grid.GetDimVec();
-  //  const mat3f bm(app.GetRender().GetBasis().GetMatrix());
-  //  const mat3f c2c(app.XFile().GetAsymmUnit().GetCartesianToCell());
-  //  const vec3f center(app.GetRender().GetBasis().GetCenter());
-  //  MapUtil::MapGetter<float, 2> map_getter(grid.Data()->Data, grid.Data()->GetSize());
-  //  for( size_t i=0; i < MaxDim; i++ )  {
-  //    for( size_t j=0; j < MaxDim; j++ )  {
-  //      vec3f p(((float)i-hh)/Size, ((float)j-hh)/Size,  Depth);
-  //      p = bm*p;
-  //      p -= center;
-  //      p *= c2c;
-  //      data[i][j] = map_getter.Get(p);
-  //      if( data[i][j] < minZ )  minZ = data[i][j];
-  //      if( data[i][j] > maxZ )  maxZ = data[i][j];
-  //    }
-  //  }
-  //  float contour_step = (maxZ - minZ)/(contour_cnt-1);
-  //  z[0] = minZ;
-  //  for( size_t i=1; i < contour_cnt; i++ )
-  //    z[i] = z[i-1]+contour_step;
-  //  cm.DoContour(data, 0, (int)MaxDim-1, 0, (int)MaxDim-1, x, y, contour_cnt, z, mf);
-  //  for( size_t i=0; i < MaxDim; i++ )
-  //    delete [] data[i];
-  //}
-  //objects.QuickSorter.SortSF(objects, OrtObjectsZSort);
+  while( bi.HasNext() )  {
+    const TXBond& xb = bi.Next();
+    if( xb.IsDeleted() || !xb.IsVisible() )
+      continue;
+    const ort_atom& a1 = (const ort_atom&)objects[xb.A().GetTag()];
+    const ort_atom& a2 = (const ort_atom&)objects[xb.B().GetTag()];
+    ort_bond *b = new ort_bond(*this, xb, a1, a2);
+    if( (ColorMode&ortep_color_bond) != 0 )
+      b->draw_style |= ortep_color_bond;
+    objects.Add(b);
+  }
+  const TXGrid& grid = app.XGrid();
+  if( !grid.IsEmpty() && (grid.GetRenderMode()&planeRenderModeContour) != 0 )  {
+    Contour<float> cm;
+    ContourDrawer drawer(*this, objects, 0);
+    Contour<float>::MemberFeedback<OrtDraw::ContourDrawer> mf(drawer, &OrtDraw::ContourDrawer::draw);
+    const size_t MaxDim = grid.GetPlaneSize();
+    const float hh = (float)MaxDim/2;
+    const float Size = grid.GetSize();
+    const float Depth = grid.GetDepth();
+    olx_array_ptr<float*> data(new float*[MaxDim]);
+    olx_array_ptr<float> x(new float[MaxDim]);
+    olx_array_ptr<float> y(new float[MaxDim]);
+    for( size_t i=0; i < MaxDim; i++ )  {
+      data[i] = new float[MaxDim];
+      y[i] = x[i] = (float)i - hh;
+    }
+    const size_t contour_cnt = grid.GetContourLevelCount();
+    olx_array_ptr<float> z(new float[contour_cnt]);
+    float minZ = 1000, maxZ = -1000;
+    const vec3i dim = grid.GetDimVec();
+    const mat3f bm(app.GetRender().GetBasis().GetMatrix());
+    const mat3f c2c(app.XFile().GetAsymmUnit().GetCartesianToCell());
+    const vec3f center(app.GetRender().GetBasis().GetCenter());
+    MapUtil::MapGetter<float, 2> map_getter(grid.Data()->Data, grid.Data()->GetSize());
+    for( size_t i=0; i < MaxDim; i++ )  {
+      for( size_t j=0; j < MaxDim; j++ )  {
+        vec3f p(((float)i-hh)/Size, ((float)j-hh)/Size,  Depth);
+        p = bm*p;
+        p -= center;
+        p *= c2c;
+        data[i][j] = map_getter.Get(p);
+        if( data[i][j] < minZ )  minZ = data[i][j];
+        if( data[i][j] > maxZ )  maxZ = data[i][j];
+      }
+    }
+    float contour_step = (maxZ - minZ)/(contour_cnt-1);
+    z[0] = minZ;
+    for( size_t i=1; i < contour_cnt; i++ )
+      z[i] = z[i-1]+contour_step;
+    cm.DoContour(data, 0, (int)MaxDim-1, 0, (int)MaxDim-1, x, y, contour_cnt, z, mf);
+    for( size_t i=0; i < MaxDim; i++ )
+      delete [] data[i];
+  }
+  objects.QuickSorter.SortSF(objects, OrtObjectsZSort);
 
-  //for( size_t i=0; i < objects.Count(); i++ )
-  //  objects[i].render(pw);
+  for( size_t i=0; i < objects.Count(); i++ )
+    objects[i].render(pw);
 
-  //TPtrList<const TXGlLabel> Labels;
-  //for( size_t i=0; i < app.LabelCount(); i++ )  {
-  //  const TXGlLabel& glxl = app.GetLabel(i);
-  //  if( !glxl.IsDeleted() && glxl.IsVisible() )
-  //    Labels.Add(glxl);
-  //}
-  //for( size_t i=0; i < app.AtomCount(); i++ )  {
-  //  if( app.GetAtom(i).GetLabel().IsVisible() )
-  //    Labels.Add(app.GetAtom(i).GetLabel());
-  //}
-  //for( size_t i=0; i < app.BondCount(); i++ )  {
-  //  if( app.GetBond(i).GetLabel().IsVisible() )
-  //    Labels.Add(app.GetBond(i).GetLabel());
-  //}
-  //if( app.DUnitCell().IsVisible() )  {
-  //  for( size_t i=0; i < app.DUnitCell().LabelCount(); i++ )  {
-  //    const TXGlLabel& glxl = app.DUnitCell().GetLabel(i);
-  //    if( !glxl.IsDeleted() && glxl.IsVisible() )
-  //      Labels.Add(glxl);
-  //  }
-  //}
-  //if( app.DBasis().IsVisible() )  {
-  //  for( size_t i=0; i < app.DBasis().LabelCount(); i++ )  {
-  //    const TXGlLabel& glxl = app.DBasis().GetLabel(i);
-  //    if( !glxl.IsDeleted() && glxl.IsVisible() )
-  //      Labels.Add(glxl);
-  //  }
-  //}
-  //{  // labels rendering block
-  //  TGlFont::PSRenderContext context;
-  //  TCStrList output;
-  //  uint32_t prev_ps_color = 0;
-  //  output.Add(pw.color_str(prev_ps_color));
-  //  const double vector_scale = 1./app.GetRender().GetScale();
-  //  for( size_t i=0; i < Labels.Count(); i++ )  {
-  //    const TGlFont& glf = Labels[i]->GetFont();
-  //    uint32_t color = 0;
-  //    TGlMaterial* glm = Labels[i]->GetPrimitives().GetStyle().FindMaterial("Text");
-  //    if( glm != NULL )
-  //      color = glm->AmbientF.GetRGB();
-  //    pw.color(color);
-  //    if( glf.IsVectorFont() )  {
-  //      vec3d crd = Labels[i]->GetVectorPosition()*vector_scale + DrawOrigin;
-  //      if( color != prev_ps_color )  {
-  //        output.Add(pw.color_str(color));
-  //        prev_ps_color = color;
-  //      }
-  //      output.AddList(
-  //        glf.RenderPSLabel(crd, Labels[i]->GetLabel(), DrawScale/app.GetRender().CalcZoom(), context)
-  //      );
-  //    }
-  //    else  {
-  //      pw.color(color);
-  //      vec3f rp = Labels[i]->GetRasterPosition();
-  //      rp[1] += 4;
-  //      pw.drawText(Labels[i]->GetLabel(), rp+DrawOrigin);
-  //    }
-  //  }
-  //  if( !output.IsEmpty() )  {
-  //    for( size_t i=0; i < context.definitions.Count(); i++ )
-  //      pw.custom(context.definitions[i].definition);
-  //    pw.lineWidth(FontLineWidth);
-  //    pw.custom(output);
-  //  }
-  //}
+  TPtrList<const TXGlLabel> Labels;
+  for( size_t i=0; i < app.LabelCount(); i++ )  {
+    const TXGlLabel& glxl = app.GetLabel(i);
+    if( glxl.IsVisible() )
+      Labels.Add(glxl);
+  }
+  ai.Reset();
+  while( ai.HasNext() )  {
+    TXAtom& xa = ai.Next();
+    if( xa.GetGlLabel().IsVisible() )
+      Labels.Add(xa.GetGlLabel());
+  }
+  bi.Reset();
+  while( bi.HasNext() )  {
+    TXBond& xb = bi.Next();
+    if( xb.GetGlLabel().IsVisible() )
+      Labels.Add(xb.GetGlLabel());
+  }
+  if( app.DUnitCell().IsVisible() )  {
+    for( size_t i=0; i < app.DUnitCell().LabelCount(); i++ )  {
+      const TXGlLabel& glxl = app.DUnitCell().GetLabel(i);
+      if( glxl.IsVisible() )
+        Labels.Add(glxl);
+    }
+  }
+  if( app.DBasis().IsVisible() )  {
+    for( size_t i=0; i < app.DBasis().LabelCount(); i++ )  {
+      const TXGlLabel& glxl = app.DBasis().GetLabel(i);
+      if( glxl.IsVisible() )
+        Labels.Add(glxl);
+    }
+  }
+  {  // labels rendering block
+    TGlFont::PSRenderContext context;
+    TCStrList output;
+    uint32_t prev_ps_color = 0;
+    output.Add(pw.color_str(prev_ps_color));
+    const double vector_scale = 1./app.GetRender().GetScale();
+    for( size_t i=0; i < Labels.Count(); i++ )  {
+      const TGlFont& glf = Labels[i]->GetFont();
+      uint32_t color = 0;
+      TGlMaterial* glm = Labels[i]->GetPrimitives().GetStyle().FindMaterial("Text");
+      if( glm != NULL )
+        color = glm->AmbientF.GetRGB();
+      pw.color(color);
+      if( glf.IsVectorFont() )  {
+        vec3d crd = Labels[i]->GetVectorPosition()*vector_scale + DrawOrigin;
+        if( color != prev_ps_color )  {
+          output.Add(pw.color_str(color));
+          prev_ps_color = color;
+        }
+        output.AddList(
+          glf.RenderPSLabel(crd, Labels[i]->GetLabel(), DrawScale/app.GetRender().CalcZoom(), context)
+        );
+      }
+      else  {
+        pw.color(color);
+        vec3f rp = Labels[i]->GetRasterPosition();
+        rp[1] += 4;
+        pw.drawText(Labels[i]->GetLabel(), rp+DrawOrigin);
+      }
+    }
+    if( !output.IsEmpty() )  {
+      for( size_t i=0; i < context.definitions.Count(); i++ )
+        pw.custom(context.definitions[i].definition);
+      pw.lineWidth(FontLineWidth);
+      pw.custom(output);
+    }
+  }
 }
 
 void OrtDraw::ContourDrawer::draw(float x1, float y1, float x2, float y2, float z)  {
