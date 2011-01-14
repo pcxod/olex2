@@ -6940,7 +6940,7 @@ void TMainForm::macSgen(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     if( validSymm )  {
       Cmds.Delete(i--);
-      symm.AddCCopy(matr);
+      symm.AddCCopy(FXApp->XFile().GetUnitCell().InitMatrixId(matr));
     }
   }
   if( symm.IsEmpty() )  {
