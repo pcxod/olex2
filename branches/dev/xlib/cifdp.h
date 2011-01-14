@@ -139,6 +139,8 @@ namespace cif_dp {
     olxstr name;
   public:
     cetTable()  {}
+    //takes comma separated list of column names
+    cetTable(const olxstr& cols);
     cetTable(const cetTable& v);
     virtual ~cetTable()  {  Clear();  }
     void Clear();
@@ -241,8 +243,12 @@ namespace cif_dp {
     //............................................................................
     //Load the object from a file.
     virtual void LoadFromStrings(const TStrList& Strings);
-    //Saves the data to a file and returns true if successful and false in the case of failure
-    virtual void SaveToStrings(TStrList& Strings);
+    //Saves the data to a strings
+    virtual TStrList& SaveToStrings(TStrList& Strings) const;
+    TStrList SaveToStrings() const {
+      TStrList out;
+      return SaveToStrings(out);
+    }
     //Finds a value by name
     inline size_t Count() const {  return data.Count();  }
     CifBlock& operator [] (size_t i) const {  return data[i];  }

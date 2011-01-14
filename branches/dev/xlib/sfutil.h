@@ -20,7 +20,8 @@ namespace SFUtil {
     mapTypeCalc = 2,
     mapType2OmC = 3;
   static const short scaleSimple = 0,  // scale for difference map
-    scaleRegression = 1;
+    scaleRegression = 1,
+    scaleExternal = 2;
   static const short sfOriginFcf = 0,  // structure factor origin
     sfOriginOlex2 = 1;
   static const double T_PI = M_PI*2;
@@ -142,7 +143,8 @@ namespace SFUtil {
   void FindMinMax(const TArrayList<StructureFactor>& F, vec3i& min, vec3i& max);
   // prepares the list of hkl and structure factors, return error message or empty string
   olxstr GetSF(TRefList& refs, TArrayList<compd>& F, 
-    short mapType, short sfOrigin = sfOriginOlex2, short scaleType = scaleSimple);
+    short mapType, short sfOrigin = sfOriginOlex2, short scaleType = scaleSimple,
+    double scale = 0);
   // calculates the structure factors for given reflections
   void CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<compd>& F, bool useFpFdp);
   // calculates the structure factors for given reflections

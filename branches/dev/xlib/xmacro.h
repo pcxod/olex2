@@ -82,6 +82,7 @@ class XLibMacros  {
   static DefMacro(Cif2Tab)
   static DefMacro(Cif2Doc)
   static DefMacro(CifCreate)
+  static DefMacro(FcfCreate)  
 
   static DefMacro(CalcCHN)
   static DefMacro(CalcMass)

@@ -71,7 +71,8 @@ void SFUtil::FindMinMax(const TArrayList<StructureFactor>& F, vec3i& min, vec3i&
 }
 //...........................................................................................
 olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F, 
-                     short mapType, short sfOrigin, short scaleType)  {
+  short mapType, short sfOrigin, short scaleType, double scale)
+{
   TXApp& xapp = TXApp::GetInstance();
   TStopWatch sw(__FUNC__);
   if( sfOrigin == sfOriginFcf )  {
@@ -138,7 +139,6 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     double av = 0;
     sw.start("Loading/Filtering/Merging HKL");
     TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
-    
     RefinementModel::HklStat ms =
       xapp.XFile().GetRM().GetFourierRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
     F.SetCount(refs.Count());
@@ -152,7 +152,9 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     if( mapType != mapTypeCalc )  {
       // find a linear scale between F
       double a = 0, k = 1;
-      if( scaleType == scaleRegression )  {
+      if( scaleType == scaleExternal )
+        k = scale;
+      else if( scaleType == scaleRegression )  {
         CalcFScale(F, refs, k, a);
         if( TBasicApp::GetInstance().IsProfiling() )
           TBasicApp::NewLogEntry(logInfo) << "Fc^2 = " << k << "*Fo^2" << (a >= 0 ? " +" : " ") << a;

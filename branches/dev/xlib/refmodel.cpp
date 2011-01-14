@@ -562,8 +562,8 @@ RefinementModel::HklStat& RefinementModel::AdjustIntensity(TRefList& out,
       r.SetI(h_o_s*r.GetS());
       stats.IntensityTransformed++;
     }
-    if( r.GetI() < 0 )
-      r.SetI(0);
+    //if( r.GetI() < 0 )
+    //  r.SetI(0);
   }
   return stats;
 }

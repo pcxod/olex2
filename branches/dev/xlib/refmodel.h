@@ -473,8 +473,7 @@ of components 1 ... m
     HklStat stats;
     TRefList refs;
     FilterHkl(refs, stats);
-    stats = RefMerger::Merge<SymSpace,Merger>(sp, refs, out,
-      Omits, !sp.IsCentrosymmetric());
+    stats = RefMerger::Merge<SymSpace,Merger>(sp, refs, out, Omits, true);
     return AdjustIntensity(out, stats);
   }
   // P-1 merged, filtered

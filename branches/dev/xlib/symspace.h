@@ -40,6 +40,7 @@ public:
     
   inline const smatd& operator [] (size_t i) const {  return ml[i+start];  }
   inline size_t Count() const {  return ml.Count()-start;  }
+  inline bool IsEmpty() const {  return Count() == 0;  }
   bool IsCentrosymmetric() const {  return centrosymmetric;  }
   template <typename vec_type> vec3d Orthogonalise(const vec_type& v) const {
     return vec3d(
@@ -82,6 +83,7 @@ public:
   MatrixListAdaptor(const MatrixContainer& _mc) : mc(_mc)  {}
   MatrixListAdaptor(const MatrixListAdaptor& mla) : mc(mla.mc)  {}
   inline size_t Count() const {  return mc.MatrixCount();  }
+  inline bool IsEmpty() const {  return Count() == 0;  }
   inline const smatd& operator [](size_t i) const {  return mc.GetMatrix(i);  }
 };
 

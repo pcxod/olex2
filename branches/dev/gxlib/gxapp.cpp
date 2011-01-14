@@ -1282,7 +1282,7 @@ void TGXApp::Select(const vec3d& From, const vec3d& To )  {
 }
 //..............................................................................
 bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
-  static bool ObjectsStored = false, LoadingFile = false;
+  static bool ObjectsStored = false, LoadingFile = false, Disassembling = false;
   if( MsgId == ID_OnSelect )  {
     const TSelectionInfo* SData = dynamic_cast<const TSelectionInfo*>(Data);
     if(  !(SData->From == SData->To) )
@@ -1323,6 +1323,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
   else if( MsgId == ID_OnDisassemble ) {
     if( MsgSubId == msiExit )  {
       CreateObjects(false);
+      Disassembling = false;
     }
     else if( MsgSubId == msiEnter )  {  // backup the selection
       if( ObjectsStored )
@@ -1334,11 +1335,12 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
       }
       GetRender().ClearGroups();
       GetRender().ClearSelection();
+      Disassembling = true;
     }
   }
   else if( MsgId == ID_OnClear ) {
     if( MsgSubId == msiEnter )  {  // backup the selection
-      if( !LoadingFile )  {
+      if( !LoadingFile && !Disassembling )  {
         SelectionCopy[0].Clear();
         StoreGroup(GetSelection(), SelectionCopy[0]);
         StoreLabels();

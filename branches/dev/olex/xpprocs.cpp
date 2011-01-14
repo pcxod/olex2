@@ -6282,35 +6282,71 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TSymmLib& sl = TSymmLib::GetInstance();
-  for( size_t i=0; i < sl.SGCount(); i++ )  {
-    TSpaceGroup& sg = sl.GetGroup(i);
-    smatd_list ml, ml1;
-    for( size_t j=0; j < sg.MatrixCount(); j++ )
-      ml.AddCCopy(sg.GetMatrix(j));
-    sg.GetMatrices(ml1, mattAll);
-    const olxstr hse = HallSymbol::Evaluate(
-      sg.GetLattice().GetLatt()*(sg.IsCentrosymmetric() ? 1 : -1), ml);
-    const olxstr hs = olxstr(sg.GetHallSymbol()).TrimWhiteChars();
-    if( hse != hs )
-      TBasicApp::NewLogEntry() << hs << ": \t" << hse;
-    SymSpace::Info si = SymSpace::GetInfo(ml1);
-    if( si.latt != sg.GetLattice().GetLatt() || si.centrosymmetric != sg.IsCentrosymmetric() ||
-      (sg.MatrixCount()+1) != si.matrices.Count() )
-      TBasicApp::NewLogEntry() << sg.GetName();
-    for( size_t j=0; j < ml.Count(); j++ )  {
-      bool found = false;
-      for( size_t k=0; k < si.matrices.Count(); k++ )  {
-        if( *si.matrices[k] ==  ml[j])  {
-          found = true;
-          break;
-        }
-      }
-      if( !found )
-        break;
-    }
+  TXApp& xapp = *FXApp;
+  TRefList refs;
+  TArrayList<compd> F;
+  TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
+  RefinementModel::HklStat ms =
+    xapp.XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
+  F.SetCount(refs.Count());
+  SFUtil::CalcSF(xapp.XFile(), refs, F, true);
+  double scale_k =1./olx_sqr(FXApp->XFile().GetRM().Vars.GetVar(0).GetValue()),
+    scale_a=0;
+  //scale_k = SFUtil::CalcF2Scale(F, refs);
+  //SFUtil::CalcF2Scale(F, refs, scale_k, scale_a);
+  double wR2u=0, wR2d=0, R1u=0, R1d=0;
+  TDoubleList wght = FXApp->XFile().GetRM().used_weight;
+  while( wght.Count() < 6 )
+    wght.Add(0);
+  wght[5] = 1./3;
+  for( size_t i=0; i < refs.Count(); i++ )  {
+    TReflection& r = refs[i];
+    const double Fc2 = F[i].qmod();
+    const double Fc = sqrt(Fc2);
+    const double Fo2 = r.GetI()*scale_k+scale_a;
+    const double Fo = sqrt(Fo2 < 0 ? 0 : Fo2);
+    const double sigFo2 = r.GetS()*scale_k;
+    const double P = wght[5]*olx_max(0, Fo2) + (1.0-wght[5])*Fc2;
+    const double w = 1./(olx_sqr(sigFo2) + olx_sqr(wght[0]*P) + wght[1]*P + wght[2]);
+    wR2u += w*olx_sqr(Fo2-Fc2);
+    wR2d += w*olx_sqr(Fo2);
+    R1u += olx_abs(Fo-Fc);
+    R1d += Fo;
   }
+  double wR2 = sqrt(wR2u/wR2d);
+  double R1 = R1u/R1d;
+  xapp.NewLogEntry() << "R1=  " << R1;
+  xapp.NewLogEntry() << "wR2= " << wR2;
   return;
+  //TSymmLib& sl = TSymmLib::GetInstance();
+  //for( size_t i=0; i < sl.SGCount(); i++ )  {
+  //  TSpaceGroup& sg = sl.GetGroup(i);
+  //  smatd_list ml, ml1;
+  //  for( size_t j=0; j < sg.MatrixCount(); j++ )
+  //    ml.AddCCopy(sg.GetMatrix(j));
+  //  sg.GetMatrices(ml1, mattAll);
+  //  const olxstr hse = HallSymbol::Evaluate(
+  //    sg.GetLattice().GetLatt()*(sg.IsCentrosymmetric() ? 1 : -1), ml);
+  //  const olxstr hs = olxstr(sg.GetHallSymbol()).TrimWhiteChars();
+  //  if( hse != hs )
+  //    TBasicApp::NewLogEntry() << hs << ": \t" << hse;
+  //  SymSpace::Info si = SymSpace::GetInfo(ml1);
+  //  if( si.latt != sg.GetLattice().GetLatt() || si.centrosymmetric != sg.IsCentrosymmetric() ||
+  //    (sg.MatrixCount()+1) != si.matrices.Count() )
+  //    TBasicApp::NewLogEntry() << sg.GetName();
+  //  for( size_t j=0; j < ml.Count(); j++ )  {
+  //    bool found = false;
+  //    for( size_t k=0; k < si.matrices.Count(); k++ )  {
+  //      if( *si.matrices[k] ==  ml[j])  {
+  //        found = true;
+  //        break;
+  //      }
+  //    }
+  //    if( !found )
+  //      break;
+  //  }
+  //}
+  //return;
   //TStrList out;
   //vec3d_alist mult_vl(3), mult_vl_kr(3);
   //mat3d_alist mult_ml(9);
@@ -6359,7 +6395,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( !FindXAtoms(Cmds, xatoms, false, true) )  {
     return;
   }
-  TXApp& xapp = TXApp::GetInstance();
+  //TXApp& xapp = TXApp::GetInstance();
   VcoVContainer vcovc(xapp.XFile().GetAsymmUnit());
   xapp.NewLogEntry() << "Using " << xapp.InitVcoV(vcovc) << " matrix for the calculation";
   TSAtomPList atoms(xatoms, StaticCastAccessor<TSAtom>());

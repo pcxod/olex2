@@ -109,7 +109,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   catch(...)  {
     throw TFunctionFailedException(__OlxSourceInfo, "unknown spacegroup");
   }
-  smatd_list ml, allm;
+  smatd_list ml;
   sg->GetMatrices(ml, mattAll);
 
   evecd quad(6);
@@ -173,15 +173,15 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
       compd l;
       for( size_t k=0; k < m_cnt; k++ )  {
         const vec3d hkl = ref.GetHkl()*ml[k].r;
-        double tv =  T_PI*(alist[j]->ccrd().DotProd(hkl) + ml[k].t.DotProd(ref.GetHkl()));  // scattering vector + phase shift
+        double tv = T_PI*(alist[j]->ccrd().DotProd(hkl) + ml[k].t.DotProd(ref.GetHkl()));  // scattering vector + phase shift
         double ca, sa;
         olx_sincos(tv, &sa, &ca);
         if( alist[j]->GetEllipsoid() != NULL )  {
           const double* Q = &Ucifs[j*6];  // pick up the correct ellipsoid
           double B = (hkl[0]*(Q[0]*hkl[0]+Q[4]*hkl[2]+Q[5]*hkl[1]) + 
                       hkl[1]*(Q[1]*hkl[1]+Q[3]*hkl[2]) + 
-                      hkl[2]*(Q[2]*hkl[2]) );
-          B = exp( B );
+                      hkl[2]*(Q[2]*hkl[2]));
+          B = exp(B);
           l.Re() += B*ca;
           l.Im() += B*sa;
         }
@@ -190,9 +190,9 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
           l.Im() += sa;
         }
       }
-      compd scv = scatterers[ alist[j]->GetTag() ].GetB();
+      compd scv = scatterers[alist[j]->GetTag()].GetB();
       if( alist[j]->GetEllipsoid() == NULL )
-        scv *= exp( Ucifs[j*6]*d_s2 );
+        scv *= exp(Ucifs[j*6]*d_s2);
       
       scv *= alist[j]->GetOccu();
       scv *= l;

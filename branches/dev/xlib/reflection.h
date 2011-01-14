@@ -103,35 +103,48 @@ public:
   template <class MatList> void StandardiseFP(const MatList& ml)  {
     vec3i hklv;
     Absent = false;
-    bool changes = true;
-    while( changes )  {
-      changes = false;
-      for( size_t i=0; i < ml.Count(); i++ )  {
-        MulHkl(hklv, ml[i]);
-        if( (hklv[2] > hkl[2]) ||        // standardise then ...
-          ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
-          ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )    {
-            hkl = hklv;
-            changes = true;
-        }
-        else  {
-          hklv *= -1;          
+    if( ml.IsEmpty() )  {
+      hklv = -hkl;          
+      if( (hklv[2] > hkl[2]) ||
+        ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
+        ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )
+      {
+          hkl = hklv;
+      }
+    }
+    else  {
+      bool changes = true;
+      while( changes )  {
+        changes = false;
+        for( size_t i=0; i < ml.Count(); i++ )  {
+          MulHkl(hklv, ml[i]);
           if( (hklv[2] > hkl[2]) ||        // standardise then ...
             ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
-            ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )    {
+            ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )
+          {
               hkl = hklv;
               changes = true;
           }
+          else  {
+            hklv *= -1;          
+            if( (hklv[2] > hkl[2]) ||        // standardise then ...
+              ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
+              ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )
+            {
+                hkl = hklv;
+                changes = true;
+            }
+          }
         }
       }
-    }
-    for( size_t i=0; i < ml.Count(); i++ )  {
-      MulHkl(hklv, ml[i]);
-      if( EqHkl(hklv) )  {  // only if there is no change
-        const double ps = PhaseShift(ml[i]);
-        Absent = (olx_abs( ps - olx_round(ps) ) > 0.01);
-        if( Absent )
-          break;
+      for( size_t i=0; i < ml.Count(); i++ )  {
+        MulHkl(hklv, ml[i]);
+        if( EqHkl(hklv) )  {  // only if there is no change
+          const double ps = PhaseShift(ml[i]);
+          Absent = (olx_abs( ps - olx_round(ps) ) > 0.01);
+          if( Absent )
+            break;
+        }
       }
     }
   }
@@ -145,7 +158,8 @@ public:
         MulHkl(hklv, ml[i]);
         if( (hklv[2] > hkl[2]) ||        // standardise then ...
           ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
-          ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )    {
+          ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )
+        {
             hkl = hklv;
             changes = true;
         }

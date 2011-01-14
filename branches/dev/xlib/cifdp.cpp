@@ -190,9 +190,10 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
   Format();
 }
 //..............................................................................
-void TCifDP::SaveToStrings(TStrList& Strings)  {
+TStrList& TCifDP::SaveToStrings(TStrList& Strings) const {
   for( size_t i=0; i < data.Count(); i++ )
     data[i].ToStrings(Strings);
+  return Strings;
 }
 //..............................................................................
 size_t TCifDP::CIFToks(const olxstr& exp, TStrList& out)  {
@@ -251,6 +252,11 @@ void cetTable::AddCol(const olxstr& col_name)  {
         name.SetLength(u_ind);
     }
   }
+}
+cetTable::cetTable(const olxstr& cols)  {
+  const TStrList toks(cols, ',');
+  for( size_t i=0; i < toks.Count(); i++ )
+    AddCol(toks[i]);
 }
 void cetTable::Clear()  {
   for( size_t i=0; i < data.RowCount(); i++ )
