@@ -54,6 +54,7 @@ namespace cif_dp {
   };
   struct cetString : public IStringCifEntry  {
     olxstr value;
+    static const olxstr empty_value;
     bool quoted;
     cetString(const cetString& v) : value(v.value), quoted(v.quoted)  {}
     cetString(const olxstr& _val);

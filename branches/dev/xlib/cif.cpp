@@ -282,7 +282,7 @@ void TCif::Initialize()  {
   try  {
     GetRM().SetUserFormula(olxstr::DeleteChars(GetParamAsString("_chemical_formula_sum"), ' '));
   }
-  catch(...)  {  }
+  catch(...)  {}
   
   this->Title = GetDataName().ToUpperCase();
   this->Title << " OLEX2: imported from CIF";
@@ -487,6 +487,23 @@ void TCif::Initialize()  {
             ev);
         }
         DataManager.AddValue(cv);
+      }
+    }
+  }
+  // read in the dispersio values
+  ALoop = FindLoop("_atom_type");
+  if( ALoop != NULL )  {
+    const size_t ind_s = ALoop->ColIndex("_atom_type_symbol");
+    const size_t ind_r = ALoop->ColIndex("_atom_type_scat_dispersion_real");
+    const size_t ind_i = ALoop->ColIndex("_atom_type_scat_dispersion_imag");
+    if( (ind_s|ind_r|ind_i) != InvalidIndex )  {
+      for( size_t i=0; i < ALoop->RowCount(); i++ )  {
+        const CifRow& r = (*ALoop)[i];
+        XScatterer* sc = new XScatterer(r[ind_s]->GetStringValue());
+        sc->SetFpFdp(
+          compd(r[ind_r]->GetStringValue().ToDouble(),
+                r[ind_i]->GetStringValue().ToDouble()));
+        GetRM().AddSfac(*sc);
       }
     }
   }

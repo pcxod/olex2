@@ -267,8 +267,10 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(Lst, fpOne|psCheckFileTypeIns, "returns a value from the Lst file");
 //_________________________________________________________________________________________________________________________
-  xlib_InitFunc(Crd, fpAny|psFileLoaded, "returns center of given (selected) atoms in cartesian coordinates");
-  xlib_InitFunc(CCrd, fpAny|psFileLoaded, "returns center of given (selected) atoms in fractional coordinates");
+  xlib_InitFunc(Crd, fpAny|psFileLoaded, "Returns center of given (selected) atoms in cartesian coordinates");
+  xlib_InitFunc(CCrd, fpAny|psFileLoaded, "Returns center of given (selected) atoms in fractional coordinates");
+  xlib_InitFunc(CalcR, fpNone|fpOne|psFileLoaded, "Calculates R1, R1 for I/sig >2 and wR2. "
+    "If 'print' is provided - prints detailed info");
 }
 //..............................................................................
 void XLibMacros::macTransform(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -2949,7 +2951,7 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options, TMac
   RefinementModel::HklStat ms;
   TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
   TRefList refs;
-  olxstr col_names = "_refln_index_h,_refln_index_h,_refln_index_l,";
+  olxstr col_names = "_refln_index_h,_refln_index_k,_refln_index_l,";
   if( list_n == 4 )  {
     ms = xapp.XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
     col_names << "_refln_F_squared_calc,_refln_F_squared_meas,_refln_F_squared_sigma,_refln_observed_status";
@@ -4499,5 +4501,51 @@ void XLibMacros::macUpdate(TStrObjList &Cmds, const TParamList &Options, TMacroE
     return;
   }
   app.XFile().EndUpdate();
+}
+//..............................................................................
+void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
+  TXApp& xapp = TXApp::GetInstance();
+  TRefList refs;
+  TArrayList<compd> F;
+  TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
+  RefinementModel::HklStat ms =
+    xapp.XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
+  F.SetCount(refs.Count());
+  SFUtil::CalcSF(xapp.XFile(), refs, F, true);
+  double scale_k =1./olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
+  double wR2u=0, wR2d=0, R1u=0, R1d=0, R1up = 0, R1dp = 0;
+  size_t r1p_cnt=0;
+  TDoubleList wght = xapp.XFile().GetRM().used_weight;
+  while( wght.Count() < 6 )
+    wght.Add(0);
+  wght[5] = 1./3;
+  for( size_t i=0; i < refs.Count(); i++ )  {
+    TReflection& r = refs[i];
+    const double Fc2 = F[i].qmod();
+    const double Fc = sqrt(Fc2);
+    const double Fo2 = r.GetI()*scale_k;
+    const double Fo = sqrt(Fo2 < 0 ? 0 : Fo2);
+    const double sigFo2 = r.GetS()*scale_k;
+    const double P = wght[5]*olx_max(0, Fo2) + (1.0-wght[5])*Fc2;
+    const double w = 1./(olx_sqr(sigFo2) + olx_sqr(wght[0]*P) + wght[1]*P + wght[2]);
+    wR2u += w*olx_sqr(Fo2-Fc2);
+    wR2d += w*olx_sqr(Fo2);
+    R1u += olx_abs(Fo-Fc);
+    R1d += Fo;
+    if( Fo2/sigFo2 > 2 )  {
+      R1up += olx_abs(Fo-Fc);
+      R1dp += Fo;
+      r1p_cnt++;
+    }
+  }
+  double wR2 = sqrt(wR2u/wR2d);
+  double R1 = R1u/R1d;
+  double R1p = R1up/R1dp;
+  if( !Params.IsEmpty() && Params[0].Equalsi("print") )  {
+    xapp.NewLogEntry() << "R1 = " << olxstr::FormatFloat(4, R1);
+    xapp.NewLogEntry() << "R1 (I/sig > 2, " << r1p_cnt << ") = " << olxstr::FormatFloat(4, R1p);
+    xapp.NewLogEntry() << "wR2 = " << olxstr::FormatFloat(4, wR2);
+  }
+  E.SetRetVal(olxstr(R1) << ',' << R1p << ',' << wR2);
 }
 //..............................................................................

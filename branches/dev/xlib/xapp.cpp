@@ -110,7 +110,8 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
     throw TFunctionFailedException(__OlxSourceInfo, "unknown spacegroup");
   }
   smatd_list ml;
-  sg->GetMatrices(ml, mattAll);
+  sg->GetMatrices(ml, mattAll^(mattCentering));
+  const int multiplier = sg->GetLattice().VectorCount()+1;
 
   evecd quad(6);
   const static double EQ_PI = 8*M_PI*M_PI;
@@ -128,8 +129,6 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   BM[1] *= BM[1];
   BM[2] *= BM[2];
   
-  cm_Element* carb = XElementLib::FindBySymbol("C");
-  compd carb_fpfdp = carb->CalcFpFdp(ev_angstrom/WaveLength);
   ElementPList bais;
   TPtrList<TCAtom> alist;
   double *Ucifs = new double[6*au.AtomCount() + 1];
@@ -198,7 +197,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
       scv *= l;
       ir += scv;
     }
-    F[i] = ir;
+    F[i] = ir*multiplier;
   }
   delete [] Ucifs;
 }

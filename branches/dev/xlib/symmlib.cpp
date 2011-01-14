@@ -1021,13 +1021,13 @@ void TSpaceGroup::GetMatrices(smatd_list& matrices, short Flags) const {
         (m = new smatd)->r.I();
     }
     else  {
-      if( (Flags & mattTranslation) == mattTranslation && (Flags & mattCentering) == 0 )  {
-        const smatd& mt = Matrices[i-1];
-        if( !mt.t.IsNull() )  continue;
-          m = new smatd( mt );
+      const smatd& mt = Matrices[i-1];
+      if( (Flags & mattTranslation) == 0 )  {
+        if( mt.t.IsNull() )
+          m = new smatd(mt);
       }
       else
-        m = new smatd(Matrices[i-1]);
+        m = new smatd(mt);
     }
     if( m == NULL )  continue;
     matrices.Add(*m);

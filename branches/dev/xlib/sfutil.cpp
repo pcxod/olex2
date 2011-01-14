@@ -19,17 +19,21 @@ ISF_Util* SFUtil::GetSF_Util_Instance(const TSpaceGroup& sg)  {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
   return sf_util;
 #else
-  smatd_list ml;
-  sg.GetMatrices(ml, mattAll);
-  return new SF_Util<SG_Impl>(ml);
+  smatd_list all_m, unq_m;
+  sg.GetMatrices(all_m, mattAll);
+  sg.GetMatrices(unq_m, mattAll^(mattInversion|mattCentering));
+  return new SF_Util<SG_Impl>(all_m, unq_m, sg.IsCentrosymmetric());
 #endif
 }
 //...........................................................................................
-void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F, const TSpaceGroup& sg, TArrayList<StructureFactor>& out)  {
+void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F,
+  const TSpaceGroup& sg, TArrayList<StructureFactor>& out)
+{
   if( hkl.Count() != F.Count() )
-    throw TInvalidArgumentException(__OlxSourceInfo, "hkl array and structure factors dimentions must be equal");
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      "hkl array and structure factors dimensions missmatch");
   ISF_Util* sf_util = GetSF_Util_Instance(sg);
-  out.SetCount( sf_util->GetSGOrder()* hkl.Count() );
+  out.SetCount(sf_util->GetSGOrder()* hkl.Count());
   sf_util->Expand(hkl, F, out);
   delete sf_util;
   // test
@@ -224,7 +228,9 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatte
   }
 }
 //...........................................................................................
-void SFUtil::CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<double> >& F, bool useFpFdp)  {
+void SFUtil::CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<double> >& F,
+  bool useFpFdp)
+{
   TSpaceGroup* sg = NULL;
   try  { sg = &xfile.GetLastLoaderSG();  }
   catch(...)  {
@@ -278,4 +284,3 @@ void SFUtil::CalcSF(const TXFile& xfile, const TRefPList& refs, TArrayList<TECom
   delete sf_util;
   delete [] U;
 }
-

@@ -10,6 +10,7 @@
 
 using namespace exparse::parser_util;
 using namespace cif_dp;
+const olxstr cetString::empty_value("''");
 
 void TCifDP::Clear()  {
   data.Clear();
@@ -394,7 +395,7 @@ void cetString::ToStrings(TStrList& list) const {
   if( quoted )
     line << '\'' << value << '\'';
   else
-    line << value;
+    line << (value.IsEmpty() ? empty_value : value);
 }
 //..............................................................................
 void cetNamedString::ToStrings(TStrList& list) const {
@@ -402,16 +403,16 @@ void cetNamedString::ToStrings(TStrList& list) const {
     list.Add(name);
     if( quoted )
       list.Add('\'') << value << '\'';
-    else
-      list.Add(value);
+    else 
+      list.Add(value.IsEmpty() ? empty_value : value);
   }
   else  {
     olxstr& tmp = list.Add(name);
     tmp.Format(34, true, ' ');
     if( quoted )
       tmp << '\'' << value << '\'';
-    else
-      tmp << value;
+    else  
+      tmp << (value.IsEmpty() ? empty_value : value);
   }
 }
 //..............................................................................
