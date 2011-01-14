@@ -6282,6 +6282,39 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TXApp& xapp = TXApp::GetInstance();
+  TRefList refs;// = xapp.XFile().GetRM().GetFriedelPairs();
+  //xapp.XFile().GetRM().FilterHkl(refs, ms);
+  TArrayList<compd> F;
+  TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
+  RefinementModel::HklStat ms =
+    xapp.XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
+  F.SetCount(refs.Count());
+  SFUtil::CalcSF(xapp.XFile(), refs, F, true);
+  double up=0, dn=0;
+  const vec3i min_i = ms.MinIndexes, max_i = ms.MaxIndexes;
+  TArray3D<AnAssociation2<TReflection*, compd>*> hkl3d(min_i, max_i);
+  for( size_t i=0; i < refs.Count(); i++ )
+    hkl3d(refs[i].GetHkl()) = new AnAssociation2<TReflection*, compd>(&refs[i], F[i]);
+  for( int i=1; i <= max_i[2]; i++ )  {
+    for( int j=min_i[1]; j <= max_i[1]; j++ )  {
+      for( int k=min_i[0]; k <= max_i[0]; k++ )  {
+        if( hkl3d(k, j, i) != NULL && hkl3d(k, j, -i) != NULL ) {
+          AnAssociation2<TReflection*, compd> *p = hkl3d(k, j, i),
+            *n = hkl3d(k, j, -i);
+          const double denom = (p->GetA()->GetI() + n->GetA()->GetI());
+          if( denom == 0 )
+            continue;
+          up += (p->GetA()->GetI() - n->GetA()->GetI())/denom;
+          dn += (p->GetB().qmod() - n->GetB().qmod())/(p->GetB().qmod() + n->GetB().qmod());
+        }
+      }
+    }
+  }
+  for( size_t i=0; i < refs.Count(); i++ )
+    delete hkl3d(refs[i].GetHkl());
+  double k = up/dn, x = -(1.0-k)/2;
+  xapp.NewLogEntry() << x << "  -- " << k*2;
   //TSymmLib& sl = TSymmLib::GetInstance();
   //for( size_t i=0; i < sl.SGCount(); i++ )  {
   //  TSpaceGroup& sg = sl.GetGroup(i);
@@ -6359,7 +6392,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( !FindXAtoms(Cmds, xatoms, false, true) )  {
     return;
   }
-  TXApp& xapp = TXApp::GetInstance();
+  //TXApp& xapp = TXApp::GetInstance();
   VcoVContainer vcovc(xapp.XFile().GetAsymmUnit());
   xapp.NewLogEntry() << "Using " << xapp.InitVcoV(vcovc) << " matrix for the calculation";
   TSAtomPList atoms(xatoms, StaticCastAccessor<TSAtom>());

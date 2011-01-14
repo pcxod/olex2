@@ -1,63 +1,59 @@
-#ifndef __ECOMPLEX
-#define __ECOMPLEX
+#ifndef __olx_sdl_complex_h
+#define __olx_sdl_complex_h
 #include "ebase.h"
 BeginEsdlNamespace()
 
-template <class T>
-class TEComplex  {
+template <class T> class TEComplex  {
   T _A, _B;
 public:
   TEComplex()  {  _A = _B = 0;  }
 
-  TEComplex( T _real )  {
+  TEComplex(T _real)  {
     _A = _real;
     _B = 0;
   }
-  template <class AT>
-    TEComplex( AT _real )  {
+  template <class AT> TEComplex(AT _real)  {
       _A = (T)_real;
       _B = 0;
     }
 
-  TEComplex( T _real, T _compl )  {
+  TEComplex(T _real, T _compl)  {
     _A = _real;
     _B = _compl;
   }
-  template <class AT>
-    TEComplex( AT _real, AT _compl )  {
+  template <class AT> TEComplex(AT _real, AT _compl)  {
       _A = (T)_real;
       _B = (T)_compl;
     }
 
-  TEComplex( const TEComplex& cmpl )  {
+  TEComplex(const TEComplex& cmpl)  {
     _A = cmpl._A;
     _B = cmpl._B;
   }
-  template <class AT>
-    TEComplex( const TEComplex<AT>& cmpl )  {
+  template <class AT> TEComplex(const TEComplex<AT>& cmpl)  {
       _A = (T)cmpl._A;
       _B = (T)cmpl._B;
     }
 
-  inline T& A()                   {  return _A;  }
-  inline T& B()                   {  return _B;  }
-  inline T& Re()                  {  return _A;  }
-  inline T& Im()                  {  return _B;  }
-  inline const T& GetA()    const {  return _A;  }
-  inline const T& GetB()    const {  return _B;  }
-  inline const T& GetRe()   const {  return _A;  }
-  inline const T& GetIm()   const {  return _B;  }
-  inline void SetA(const T& v)    {  _A = v;  }
-  inline void SetB(const T& v)    {  _B = v;  }
-  inline void SetRe(const T& v)   {  _A = v;  }
-  inline void SetIm(const T& v)   {  _B = v;  }
-  inline void Null()              { _A = _B = 0;  }
+  inline T& A()  {  return _A;  }
+  inline T& B()  {  return _B;  }
+  inline T& Re()  {  return _A;  }
+  inline T& Im()  {  return _B;  }
+  inline const T& GetA() const {  return _A;  }
+  inline const T& GetB() const {  return _B;  }
+  inline const T& GetRe() const {  return _A;  }
+  inline const T& GetIm() const {  return _B;  }
+  inline void SetA(const T& v)  {  _A = v;  }
+  inline void SetB(const T& v)  {  _B = v;  }
+  inline void SetRe(const T& v)  {  _A = v;  }
+  inline void SetIm(const T& v)  {  _B = v;  }
+  inline void Null()  { _A = _B = 0;  }
   inline T abs() const {
     T mx = olx_max(_A,_B);
     if( mx == 0 )  return 0;
     T a = _A/mx,
       b = _B/mx;
-    return mx*sqrt( a*a + b*b );
+    return mx*sqrt(a*a + b*b);
   }
 
   inline T mod() const {
@@ -65,22 +61,22 @@ public:
     return sqrt( _A*_A + _B*_B );
   }
 
-  inline T qmod()  {  return _A*_A + _B*_B;  }
+  inline T qmod() const {  return _A*_A + _B*_B;  }
 
-  inline TEComplex inv()  const {
+  inline TEComplex inv() const {
     TEComplex rv(*this);
     rv._B *= -1;
     rv /= qmod();
     return rv;
   }
 
-  inline TEComplex conj()  const {  return TEComplex(_A, -_B);  }
+  inline TEComplex conj() const {  return TEComplex(_A, -_B);  }
 
-  inline T arg()          const {  return atan2(_B, _A);  }
-  inline TEComplex exp()  const {  return TEComplex<T>( ::exp(_A), _B );  }
-  inline TEComplex log()  const {  return TEComplex<T>( this->abs(), this->arg());  }
+  inline T arg() const {  return atan2(_B, _A);  }
+  inline TEComplex exp() const {  return TEComplex<T>( ::exp(_A), _B );  }
+  inline TEComplex log() const {  return TEComplex<T>( this->abs(), this->arg());  }
 
-  inline TEComplex pow(const TEComplex& pv )  const {
+  inline TEComplex pow(const TEComplex& pv) const {
     return (pv * this->log()).exp();
   }
 
@@ -132,10 +128,10 @@ public:
   inline TEComplex operator - (const TEComplex& _compl) const {
     return TEComplex<T>(_A-_compl._A, _B-_compl._B);
   }
-  inline TEComplex operator * (const TEComplex& _compl)  const {
+  inline TEComplex operator * (const TEComplex& _compl) const {
     return TEComplex<T>(_A*_compl._A - _B*_compl._B ,_B*_compl._A + _A*_compl._B);
   }
-  inline TEComplex operator / (const TEComplex& _compl)  const {
+  inline TEComplex operator / (const TEComplex& _compl) const {
     T dv = _compl._A*_compl._A + _compl._B*_compl._B;
     return TEComplex((_A*_compl._A + _B*_compl._B)/dv, (_B*_compl._A - _A*_compl._B)/dv);
   }

@@ -458,7 +458,7 @@ of components 1 ... m
     HklStat stats;
     TRefList refs;
     FilterHkl(refs, stats);
-    if( MERG != 0 && HKLF != 5 )  {
+    if( MERG != 0 && HKLF != 5 && BASF.IsEmpty() )  {
       bool mergeFP = (MERG == 4 || MERG == 3) && !sp.IsCentrosymmetric();
       stats = RefMerger::Merge<SymSpace,Merger>(sp, refs, out, 
         Omits, mergeFP);
