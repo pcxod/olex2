@@ -6294,7 +6294,8 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     scale_a=0;
   //scale_k = SFUtil::CalcF2Scale(F, refs);
   //SFUtil::CalcF2Scale(F, refs, scale_k, scale_a);
-  double wR2u=0, wR2d=0, R1u=0, R1d=0;
+  double wR2u=0, wR2d=0, R1u=0, R1d=0, R1up = 0, R1dp = 0;
+  size_t r1p_cnt=0;
   TDoubleList wght = FXApp->XFile().GetRM().used_weight;
   while( wght.Count() < 6 )
     wght.Add(0);
@@ -6312,10 +6313,17 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     wR2d += w*olx_sqr(Fo2);
     R1u += olx_abs(Fo-Fc);
     R1d += Fo;
+    if( Fo2/sigFo2 > 2 )  {
+      R1up += olx_abs(Fo-Fc);
+      R1dp += Fo;
+      r1p_cnt++;
+    }
   }
   double wR2 = sqrt(wR2u/wR2d);
   double R1 = R1u/R1d;
+  double R1p = R1up/R1dp;
   xapp.NewLogEntry() << "R1=  " << R1;
+  xapp.NewLogEntry() << "R1 (I/sig > 2, " << r1p_cnt << ")=  " << R1p;
   xapp.NewLogEntry() << "wR2= " << wR2;
   return;
   //TSymmLib& sl = TSymmLib::GetInstance();
