@@ -168,39 +168,42 @@ void TUnitCell::GenerateMatrices(smatd_list& out, const TAsymmUnit& au, short la
     if( !m.r.IsI() )  // will need to insert the identity matrix at position 0
       out.AddNew(m);
   }
-  for( size_t i=0; i < out.Count(); i++ )  {
+  size_t mc = out.Count();
+  if( au.GetLatt() > 0 )  {
+    for( size_t i=0; i < mc; i++ )  {
+      smatd& m = out.AddCCopy(out[i]);
+      m *= -1;
+      m.t -= m.t.Floor<int>();
+    }
+  }
+  mc = out.Count();
+  for( size_t i=0; i < mc; i++ )  {
     const smatd& m = out[i];
-    switch( abs(lat) )  {
+    switch( olx_abs(lat) )  {
       case 1: break;
       case 2:      // Body Centered (I)
-        out.InsertCCopy(++i, m).t += vec3d(0.5, 0.5, 0.5);
+        out.AddCCopy(m).t += vec3d(0.5, 0.5, 0.5);
         break;
       case 3:      // R Centered
-        out.InsertCCopy(++i, m).t += vec3d(2./3, 1./3, 1./3);
-        out.InsertCCopy(++i, m).t += vec3d(1./3, 2./3, 2./3);
+        out.AddCCopy(m).t += vec3d(2./3, 1./3, 1./3);
+        out.AddCCopy(m).t += vec3d(1./3, 2./3, 2./3);
         break;
       case 4:      // Face Centered (F)
-        out.InsertCCopy(++i, m).t += vec3d(0, 0.5, 0.5);
-        out.InsertCCopy(++i, m).t += vec3d(0.5, 0, 0.5);
-        out.InsertCCopy(++i, m).t += vec3d(0.5, 0.5, 0);
+        out.AddCCopy(m).t += vec3d(0, 0.5, 0.5);
+        out.AddCCopy(m).t += vec3d(0.5, 0, 0.5);
+        out.AddCCopy(m).t += vec3d(0.5, 0.5, 0);
         break;
       case 5:      // A Centered (A)
-        out.InsertCCopy(++i, m).t += vec3d(0, 0.5, 0.5);
+        out.AddCCopy(m).t += vec3d(0, 0.5, 0.5);
         break;
       case 6:      // B Centered (B)
-        out.InsertCCopy(++i, m).t += vec3d(0.5, 0, 0.5);
+        out.AddCCopy(m).t += vec3d(0.5, 0, 0.5);
         break;
       case 7:      // C Centered (C);
-        out.InsertCCopy(++i, m).t += vec3d(0.5, 0.5, 0);
+        out.AddCCopy(m).t += vec3d(0.5, 0.5, 0);
         break;
       default:
         throw TInvalidArgumentException(__OlxSourceInfo, "LATT");
-    }
-  }
-  if( au.GetLatt() > 0 )  {
-    for( size_t i=0; i < out.Count(); i++ )  {
-      const smatd& m = out[i];
-      out.InsertCCopy(++i, m) *= -1;
     }
   }
 }

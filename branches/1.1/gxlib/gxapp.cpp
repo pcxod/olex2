@@ -3618,21 +3618,14 @@ void TGXApp::CreateXGrowLines()  {
     CrdMap.Add(AtomsToProcess[i]->crd());
   }
   AtomsToProcess.Pack();
-  TPtrList<TCAtom> AttachedAtoms;
   TTypeList<TGXApp_Transform1> tr_list;
-  //const AtomRegistry& ar = XFile().GetLattice().GetAtomRegistry();
   typedef TArrayList<AnAssociation2<TCAtom*,smatd> > GInfo;
   TPtrList<GInfo> Info(au.AtomCount());
   for( size_t i=0; i < AtomsToProcess.Count(); i++ )  {
     TSAtom* A = AtomsToProcess[i];
     if( FGrowMode == gmCovalent && A->IsGrown() )
       continue;
-    AttachedAtoms.Clear();
-    if( (FGrowMode & gmCovalent) != 0 )  {
-      for( size_t j=0; j < A->CAtom().AttachedSiteCount(); j++ )
-        if( A->CAtom().GetAttachedAtom(j).IsAvailable() )
-          AttachedAtoms.Add(A->CAtom().GetAttachedAtom(j));
-    }
+    TPtrList<TCAtom> AttachedAtoms;
     if( (FGrowMode & gmSInteractions) != 0 )  {
       for( size_t j=0; j < A->CAtom().AttachedSiteICount(); j++ )
         if( A->CAtom().GetAttachedAtomI(j).IsAvailable() )
@@ -3641,7 +3634,7 @@ void TGXApp::CreateXGrowLines()  {
     if( (FGrowMode & gmSameAtoms) != 0 )
       AttachedAtoms.Add(A->CAtom());
 
-    if( AttachedAtoms.IsEmpty() )  continue;
+    if( AttachedAtoms.IsEmpty() && (FGrowMode & gmCovalent) == 0 )  continue;
     GInfo* gi = Info[A->CAtom().GetId()];
     if( gi == NULL )  {
       gi = new GInfo;
@@ -3653,7 +3646,11 @@ void TGXApp::CreateXGrowLines()  {
         uc.FindBindingAM(A->CAtom(), FXFile->GetLattice().GetDeltaI(), *gi, &AttachedAtoms);
       }
       else  {
-        uc.FindBindingAM(A->CAtom(), FXFile->GetLattice().GetDelta(), *gi, &AttachedAtoms);
+        for( size_t j=0; j < A->CAtom().AttachedSiteCount(); j++ )  {
+          if( !A->CAtom().GetAttachedAtom(j).IsAvailable() )  continue;
+          TCAtom::Site& site = A->CAtom().GetAttachedSite(j);
+          gi->Add(AnAssociation2<TCAtom*,smatd>(site.atom, site.matrix));
+        }
       }
       Info[A->CAtom().GetId()] = gi;
     }
