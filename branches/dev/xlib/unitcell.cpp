@@ -96,23 +96,6 @@ TEValue<double> TUnitCell::CalcVolumeEx() const {
   return  TEValue<double>(v, esd);
 }
 //..............................................................................
-size_t TUnitCell::GetMatrixMultiplier(short Latt)  {
-  size_t count = 0;
-  switch( olx_abs(Latt) )  {
-    case 1: count = 1;  break;
-    case 2: count = 2;  break;  // Body Centered (I)
-    case 3: count = 3;  break;  // R Centered
-    case 4: count = 4;  break;  // Face Centered (F)
-    case 5: count = 2;  break;  // A Centered (A)
-    case 6: count = 2;  break;  // B Centered (B)
-    case 7: count = 2;  break;  // C Centered (C);
-    default:
-      throw TInvalidArgumentException(__OlxSourceInfo, "LATT");
-  }
-  if( Latt > 0 )  count *= 2;
-  return count;
-}
-//..............................................................................
 void  TUnitCell::InitMatrices()  {
   MulDest.Clear();
   Matrices.Clear();
@@ -157,55 +140,6 @@ void  TUnitCell::InitMatrices()  {
     }
   }
   UpdateEllipsoids();
-}
-//..............................................................................
-void TUnitCell::GenerateMatrices(smatd_list& out, const TAsymmUnit& au, short lat)  {
-  out.SetCapacity( GetMatrixMultiplier(au.GetLatt())*au.MatrixCount());
-  out.AddNew().r.I();
-  // check if the identity matrix is in the list
-  for( size_t i=0;  i < au.MatrixCount(); i++ )  {
-    const smatd& m = au.GetMatrix(i);
-    if( !m.r.IsI() )  // will need to insert the identity matrix at position 0
-      out.AddNew(m);
-  }
-  size_t mc = out.Count();
-  if( au.GetLatt() > 0 )  {
-    for( size_t i=0; i < mc; i++ )  {
-      smatd& m = out.AddCCopy(out[i]);
-      m *= -1;
-      m.t -= m.t.Floor<int>();
-    }
-  }
-  mc = out.Count();
-  for( size_t i=0; i < mc; i++ )  {
-    const smatd& m = out[i];
-    switch( olx_abs(lat) )  {
-      case 1: break;
-      case 2:      // Body Centered (I)
-        out.AddCCopy(m).t += vec3d(0.5, 0.5, 0.5);
-        break;
-      case 3:      // R Centered
-        out.AddCCopy(m).t += vec3d(2./3, 1./3, 1./3);
-        out.AddCCopy(m).t += vec3d(1./3, 2./3, 2./3);
-        break;
-      case 4:      // Face Centered (F)
-        out.AddCCopy(m).t += vec3d(0, 0.5, 0.5);
-        out.AddCCopy(m).t += vec3d(0.5, 0, 0.5);
-        out.AddCCopy(m).t += vec3d(0.5, 0.5, 0);
-        break;
-      case 5:      // A Centered (A)
-        out.AddCCopy(m).t += vec3d(0, 0.5, 0.5);
-        break;
-      case 6:      // B Centered (B)
-        out.AddCCopy(m).t += vec3d(0.5, 0, 0.5);
-        break;
-      case 7:      // C Centered (C);
-        out.AddCCopy(m).t += vec3d(0.5, 0.5, 0);
-        break;
-      default:
-        throw TInvalidArgumentException(__OlxSourceInfo, "LATT");
-    }
-  }
 }
 //..............................................................................
 void TUnitCell::UpdateEllipsoids()  {

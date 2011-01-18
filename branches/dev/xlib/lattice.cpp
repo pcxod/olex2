@@ -776,6 +776,7 @@ TSAtom* TLattice::NewCentroid(const TSAtomPList& Atoms)  {
   cc /= aan;
   try  {
     TCAtom& CCent = AsymmUnit->NewCentroid(cc);
+    GetUnitCell().AddEllipsoid();
     TSAtom& c = GenerateAtom(CCent, *Matrices[0]);
     CCent.ccrdEsd() = ce;
     GetUnitCell().AddEllipsoid();

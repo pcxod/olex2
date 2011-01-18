@@ -501,7 +501,7 @@ olxstr TAsymmUnit::SummFormula(const olxstr &Sep, bool MultiplyZ) const  {
 }
 //..............................................................................
 double TAsymmUnit::GetZPrime() const {
-  return (double)Z/(TUnitCell::GetMatrixMultiplier(Latt)*(MatrixCount()+1));
+  return (double)Z/(TCLattice::GetLattMultiplier(Latt)*(MatrixCount()+1));
 }
 //..............................................................................
 double TAsymmUnit::MolWeight() const  {
@@ -614,9 +614,9 @@ double TAsymmUnit::CalcCellVolume() const {
   return  Axes.Prod()*sqrt((1-cosa*cosa-cosb*cosb-cosg*cosg) + 2*(cosa*cosb*cosg));
 }
 double TAsymmUnit::EstimateZ(double atomCount) const  {
-  double auv = (double)(CalcCellVolume()/(TUnitCell::GetMatrixMultiplier(GetLatt())*(MatrixCount()+1)));
+  double auv = (double)(CalcCellVolume()/(TCLattice::GetLattMultiplier(GetLatt())*(MatrixCount()+1)));
   int zp = olx_round(auv/(18.6*atomCount));
-  return (double)olx_max((TUnitCell::GetMatrixMultiplier(GetLatt())*(MatrixCount()+1) * zp), 1);
+  return (double)olx_max((TCLattice::GetLattMultiplier(GetLatt())*(MatrixCount()+1) * zp), 1);
 }
 //..............................................................................
 void TAsymmUnit::FitAtoms(TTypeList<AnAssociation3<TCAtom*, const cm_Element*, bool> >& _atoms,
@@ -1131,7 +1131,7 @@ void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
   double zp = Params[0].ToDouble();
-  Z = (short)olx_round(TUnitCell::GetMatrixMultiplier(Latt)*(MatrixCount()+1)*zp);
+  Z = (short)olx_round(TCLattice::GetLattMultiplier(Latt)*(MatrixCount()+1)*zp);
   if( Z <= 0 ) Z = 1;
 }
 //..............................................................................

@@ -28,7 +28,27 @@ public:
   TCLattice(int Latt);
   virtual ~TCLattice()  {  }
   size_t VectorCount() const {  return Vectors.Count();  }
-  vec3d&  GetVector(size_t i) const {  return Vectors[i];  }
+  const vec3d& GetVector(size_t i) const {  return Vectors[i];  }
+  /** retunrs the multiplicity imposed by latt instruction, considers
+  inversion for positive number (will multiply returned value by 2 for
+  positive numbers)
+  */
+  static size_t GetLattMultiplier(short latt)  {
+    size_t count = 0;
+    switch( olx_abs(latt) )  {
+      case 1: count = 1;  break; // P
+      case 2:  // Body Centered (I)
+      case 5:  // A Centered (A)
+      case 6:  // B Centered (B)
+      case 7: count = 2;  break;  // C Centered (C);
+      case 3: count = 3;  break;  // R Centered
+      case 4: count = 4;  break;  // Face Centered (F)
+      default:
+        throw TIncorrectLattExc(__OlxSourceInfo, latt);
+    }
+    if( latt > 0 )  count *= 2;
+    return count;
+  }
   const olxstr& GetName() const {  return Name; }
   const olxstr& GetSymbol() const {  return Symbol; }
 
@@ -208,9 +228,9 @@ public:
 typedef AnAssociation2<TBravaisLattice*,int> TBravaisLatticeRef;
 
 class TSymmLib: public IEObject  {
-  TSStrPObjList<olxstr,TSpaceGroup*, true>  SpaceGroups;
-  TStrPObjList<olxstr,TCLattice*>  Lattices;
-  TStrPObjList<olxstr,TBravaisLattice*>  BravaisLattices;
+  TSStrPObjList<olxstr,TSpaceGroup*, true> SpaceGroups;
+  TStrPObjList<olxstr,TCLattice*> Lattices;
+  TStrPObjList<olxstr,TBravaisLattice*> BravaisLattices;
   TPtrList<TSpaceGroup> PointGroups;
   TTypeList<TSymmElement> SymmetryElements;
   void InitRelations();
@@ -244,11 +264,17 @@ public:
   }
 
   size_t SymmElementCount() const {  return SymmetryElements.Count();  }
-  TSymmElement&  GetSymmElement(size_t i) const {  return SymmetryElements[i];  }
-  TSymmElement*  FindSymmElement(const olxstr& name)  const;
+  TSymmElement& GetSymmElement(size_t i) const {  return SymmetryElements[i];  }
+  TSymmElement* FindSymmElement(const olxstr& name)  const;
 
   size_t LatticeCount() const {  return Lattices.Count();  }
-  TCLattice& GetLattice(size_t i) const {  return *Lattices.GetObject(i);  }
+  TCLattice& GetLatticeByIndex(size_t i) const {  return *Lattices.GetObject(i);  }
+  TCLattice& GetLatticeByNumber(short latt) const {
+    size_t l = olx_abs(latt)-1;
+    if( l >= Lattices.Count() )
+      throw TCLattice::TIncorrectLattExc(__OlxSourceInfo, latt);
+    return *Lattices.GetObject(l);
+  }
   TCLattice* FindLattice(const olxstr& Symbol) const {
     return Lattices.FindObjecti(Symbol);
   }
@@ -260,6 +286,30 @@ public:
   TBravaisLattice&  GetBravaisLattice(size_t i) const {  return *BravaisLattices.GetObject(i);  }
   TBravaisLattice *  FindBravaisLattice(const olxstr& Name)  const {
     return BravaisLattices.FindObjecti(Name);
+  }
+
+  template <typename MatList> void ExpandLatt(smatd_list& out, const MatList& ml, short _latt) const {
+    const TCLattice& latt = GetLatticeByNumber(_latt);
+    out.SetCapacity(latt.VectorCount()*ml.Count()* (_latt > 0 ? 2 : 1));
+    out.AddNew().r.I();
+    for( size_t i=0;  i < ml.Count(); i++ )  {
+      const smatd& m = ml[i];
+      if( !m.r.IsI() )  // skip I matrix - always the first one
+        out.AddNew(m);
+    }
+    size_t mc = out.Count();
+    if( _latt > 0 )  {
+      for( size_t i=0; i < mc; i++ )
+        out.AddCCopy(out[i]) *= -1;
+    }
+    mc = out.Count();
+    for( size_t i=0; i < mc; i++ )  {
+      const smatd& m = out[i];
+      for( size_t j = 0; j < latt.VectorCount(); j++ )
+        out.AddCCopy(m).t += latt.GetVector(j);
+    }
+    for( size_t i=0; i < out.Count(); i++ )
+      out[i].t -= out[i].t.Floor<int>();
   }
 
   static bool IsInitialised()  {  return Instance != NULL;  }

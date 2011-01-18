@@ -85,7 +85,7 @@ public:
   void Generate(const vec3d& center, double rad, TCAtomPList* Template,
     bool ClearCont);
   // checks if there are more than one matrix
-  inline bool IsGenerated() const  {  return Matrices.Count() > 1;  }
+  inline bool IsGenerated() const {  return !(Matrices.Count() == 1 && Matrices[0]->IsFirst());  }
 
   // generates matrices so that the center of asymmetric unit is inisde the specified volume
   size_t GenerateMatrices(smatd_plist& Result, const vec3d& VFrom, const vec3d& VTo,

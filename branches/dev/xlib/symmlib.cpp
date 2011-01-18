@@ -1014,75 +1014,53 @@ size_t TSpaceGroup::GetUniqMatrices(smatd_list& matrices, short Flags) const  {
 }
 //..............................................................................
 void TSpaceGroup::GetMatrices(smatd_list& matrices, short Flags) const {
-  for( size_t i=0; i <= MatrixCount(); i++ )  {
+  matrices.AddNew().r.I();  // add identity, if not requested - delete in the end
+  for( size_t i=0; i < MatrixCount(); i++ )  {
     smatd* m = NULL;
-    if( i == 0 )  {
-      if( (Flags & mattIdentity) == mattIdentity )
-        (m = new smatd)->r.I();
-    }
-    else  {
-      const smatd& mt = Matrices[i-1];
-      if( (Flags & mattTranslation) == 0 )  {
-        if( mt.t.IsNull() )
-          m = new smatd(mt);
-      }
-      else
+    const smatd& mt = Matrices[i];
+    if( (Flags & mattTranslation) == 0 )  {
+      if( mt.t.IsNull() )
         m = new smatd(mt);
     }
+    else
+      m = new smatd(mt);
     if( m == NULL )  continue;
     matrices.Add(*m);
-    if( (Flags & mattCentering) == mattCentering )  {
+  }
+  if( (Flags & mattCentering) == mattCentering )  {
+    for( size_t i=0; i < MatrixCount(); i++ )  {
+      const smatd& mt = Matrices[i];
       for( size_t j=0; j < Latt->VectorCount(); j++ )  {
-        vec3d& v = Latt->GetVector(j);
+        const vec3d& v = Latt->GetVector(j);
+        bool add = true;
         if( (Flags & mattTranslation) == 0 )  {
-          const smatd& mt = Matrices[i-1];
-          double dv = mt.t[0] - v[0];
-          int iv = (int)dv;  dv -= iv;
-          if( olx_abs(dv) < 0.01 || olx_abs(dv) > 0.99 )  dv = 0;
-          if( dv != 0 )  continue;
-          dv = mt.t[1] - v[1];
-          iv = (int)dv;    dv -= iv;
-          if( olx_abs(dv) < 0.01 || olx_abs(dv) > 0.99 )  dv = 0;
-          if( dv != 0 )  continue;
-          dv = mt.t[2] - v[2];
-          iv = (int)dv;     dv -= iv;
-          if( olx_abs(dv) < 0.01 || olx_abs(dv) > 0.99 )  dv = 0;
-          if( dv != 0 )  continue;
+          for( int k=0; k < 3; k++ )  {
+            double dv = mt.t[k] - v[k];
+            int iv = (int)dv;  dv -= iv;
+            if( olx_abs(dv) < 0.01 || olx_abs(dv) > 0.99 )  dv = 0;
+            if( dv != 0 )  {
+              add = false;
+              break;
+            }
+          }
         }
-        smatd* m1 = new smatd(*m);
-
-        m1->t[0] += v[0];
-        int iv = (int)m1->t[0];
-        m1->t[0] -= iv;
-        if( m1->t[0] < 0 )  m1->t[0] += 1;
-
-        m1->t[1] += v[1];
-        iv = (int)m1->t[1];
-        m1->t[1] -= iv;
-        if( m1->t[1] < 0 )  m1->t[1] += 1;
-
-        m1->t[2] += v[2];
-        iv = (int)m1->t[2];
-        m1->t[2] -= iv;
-        if( m1->t[2] < 0 )  m1->t[2] += 1;
-        matrices.Add(*m1);
+        if( add )
+          matrices.AddCCopy(mt).t += v;
       }
     }
   }
   if( CentroSymmetric && ((Flags & mattInversion) == mattInversion) )  {
-    for( size_t i=0; i < matrices.Count(); i++ )
-      matrices.Insert(++i, new smatd(matrices[i])).r *= -1;
-    if( (Flags & mattIdentity) != mattIdentity )
+    const size_t mc = matrices.Count();
+    for( size_t i=0; i < mc; i++ )
+      matrices.Add(new smatd(matrices[i])) *= -1;
+    if( (Flags & mattIdentity) == 0 )
       matrices.Insert(0, new smatd).r.I() *= -1;
+
   }
-  if( Flags == mattAll )  {
-    for( size_t i=0; i < matrices.Count(); i++ )
-      matrices[i].SetId((uint8_t)i, 0, 0, 0);
-  }
-  else if( Flags == (mattAll^mattIdentity) )  {
-    for( size_t i=0; i < matrices.Count(); i++ )
-      matrices[i].SetId((uint8_t)i+1, 0, 0, 0);
-  }
+  for( size_t i=0; i < matrices.Count(); i++ )
+    matrices[i].t -= matrices[i].t.Floor<int>();
+  if( (Flags & mattIdentity) == 0 )
+    matrices.Delete(0);
 }
 //..............................................................................
 //..............................................................................
@@ -1143,7 +1121,7 @@ TSymmLib::TSymmLib(const olxstr& FN)  {
   TStrList toks;
   for( size_t i=0; i < sgc; i++ )  {
     TSpaceGroup* SG = new TSpaceGroup(olx_SGLib[i].name, olx_SGLib[i].full_name, olx_SGLib[i].hall_symbol,
-      olx_SGLib[i].axis, olx_SGLib[i].number, GetLattice(abs(olx_SGLib[i].latt)-1), (olx_SGLib[i].latt > 0));
+      olx_SGLib[i].axis, olx_SGLib[i].number, GetLatticeByNumber(olx_SGLib[i].latt), (olx_SGLib[i].latt > 0));
     SpaceGroups.Add(olx_SGLib[i].name, SG);
     toks.Strtok( olx_SGLib[i].matrices, ';');
     for( size_t j=0; j < toks.Count(); j++ )  {
@@ -1350,7 +1328,7 @@ TSymmLib::TSymmLib(const olxstr& FN)  {
 //..............................................................................
 TSymmLib::~TSymmLib()  {
   for( size_t i=0; i < SGCount(); i++ )  delete &(GetGroup(i));
-  for( size_t i=0; i < LatticeCount(); i++ )  delete &(GetLattice(i));
+  for( size_t i=0; i < LatticeCount(); i++ )  delete &(GetLatticeByIndex(i));
   for( size_t i=0; i < BravaisLatticeCount(); i++ )  delete &(GetBravaisLattice(i));
   Instance = NULL;
 }
@@ -1371,7 +1349,7 @@ TSpaceGroup* TSymmLib::FindSG(const TAsymmUnit& AU)  {
   for( size_t i=0; i < AU.MatrixCount(); i++ )
     ml.AddCCopy(AU.GetMatrix(i));
   TSpaceGroup* SG = new TSpaceGroup(uname, uname, HallSymbol::Evaluate(AU.GetLatt(), ml),
-    EmptyString, -1, GetLattice(olx_abs(AU.GetLatt())-1), (AU.GetLatt() > 0));
+    EmptyString, -1, GetLatticeByNumber(AU.GetLatt()), (AU.GetLatt() > 0));
   SpaceGroups.Add(uname, SG).Object;
   InitRelations();
   return SG;

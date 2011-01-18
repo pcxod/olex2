@@ -8,7 +8,7 @@
 #include "arrays.h"
 #include "lattice.h"
 #include "asymmunit.h"
-#include "symspace.h"
+#include "symmlib.h"
 #ifdef QLength  // on Linux it is defined as something...
   #undef QLength
 #endif
@@ -217,10 +217,6 @@ public:
   */
   void GetAtomPossibleHBonds(const TAtomEnvi& atom, TAtomEnvi& envi);
 
-  /* returns a multiplier for the number of matrices in the asymmetruc unit for
-    specified LATT instruction
-  */
-  static size_t GetMatrixMultiplier(short Latt);
   /* This function creates a map of the unit cell with provided partioning.
   It uses Van-der-Waals atomic radii by defualt and adds delta to it. The grid points
   belonging to atoms have value 'value', the others - '0'
@@ -247,7 +243,9 @@ protected:
     }
 public:
   // creates an array of matrices for a given aunit and lattice type
-  static void GenerateMatrices(smatd_list& out, const TAsymmUnit& au, short lat);
+  static void GenerateMatrices(smatd_list& out, const TAsymmUnit& au, short latt)  {
+    TSymmLib::GetInstance().ExpandLatt(out, MatrixListAdaptor<TAsymmUnit>(au), latt);
+  }
   // association should be AnAssociation2+<vec3d,TCAtom*,+>, generates all atoms of the aunit
   template <class Association> void GenereteAtomCoordinates(TTypeList<Association>& list, bool IncludeH, 
                     const TCAtomPList* _template = NULL) const  {

@@ -2568,6 +2568,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\symspace.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\tls.h"
 				>
 			</File>

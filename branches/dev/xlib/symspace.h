@@ -95,6 +95,12 @@ namespace SymSpace  {
     // always positive
     short latt;
   };
+  struct InfoEx  {  // has a list of translation vectors vs latt number
+    bool centrosymmetric;
+    // holds references of the original object, be careful with const& containers!
+    TPtrList<smatd> matrices;
+    TPtrList<vec3d> vertices;
+  };
   template <class SP> static Info GetInfo(const SP& sp)  {
     Info rv;
     rv.latt = -1;

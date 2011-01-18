@@ -443,8 +443,8 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
     }
     return;
   }
-  bool Identity = Options.Contains("i"), 
-       Centering = Options.Contains("c");
+  const bool Inversion = Options.Contains("i"), 
+    Centering = Options.Contains("c");
   TSpaceGroup* sg = TSymmLib::GetInstance().FindGroup(Cmds[0]);
   bool LaueClassPG = false;
   if( sg == NULL )  {
@@ -518,8 +518,8 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TBasicApp::NewLogEntry() << "Laue class: " << sg->GetLaueClass().GetBareName();
   TBasicApp::NewLogEntry() << "Point group: " << sg->GetPointGroup().GetBareName();
   short Flags = mattAll;
-  if( !Centering )  Flags ^= (mattCentering|mattTranslation);
-  if( !Identity )  Flags ^= mattIdentity;
+  if( !Centering )  Flags ^= mattCentering;
+  if( !Inversion )  Flags ^= mattInversion;
   sg->GetMatrices(SGMatrices, Flags);
 
   TTTable<TStrList> tab(SGMatrices.Count(), 2);

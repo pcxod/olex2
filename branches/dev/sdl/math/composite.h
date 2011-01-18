@@ -72,10 +72,10 @@ public:
 
 /* vector plain array */
 template <typename NumT> class PlainVector  {
-  NumT* data;
+  NumT const *data;
   const size_t size;
 public:
-  PlainVector(const NumT& _data, size_t sz) :	data(_data) , size(sz) {}
+  PlainVector(const NumT* _data, size_t sz) :	data(_data) , size(sz) {}
   size_t Count() const {  return size;  }
   const NumT& Get(size_t i) const {  return  data[i];  }
   NumT& Get(size_t i)  {  return  data[i];  }
