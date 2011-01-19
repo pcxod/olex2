@@ -6288,33 +6288,47 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TArrayList<compd> F;
   TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
   RefinementModel::HklStat ms =
-    xapp.XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
+    xapp.XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace, RefMerger::ShelxMerger>(sp, refs);
   F.SetCount(refs.Count());
   SFUtil::CalcSF(xapp.XFile(), refs, F);
-  double up=0, dn=0;
+  double sums[5] = {0.0,0.0,0.0,0.0,0.0};
   const vec3i min_i = ms.MinIndexes, max_i = ms.MaxIndexes;
   TArray3D<AnAssociation2<TReflection*, compd>*> hkl3d(min_i, max_i);
-  for( size_t i=0; i < refs.Count(); i++ )
+  for( size_t i=0; i < refs.Count(); i++ )  {
     hkl3d(refs[i].GetHkl()) = new AnAssociation2<TReflection*, compd>(&refs[i], F[i]);
-  for( int i=1; i <= max_i[2]; i++ )  {
-    for( int j=min_i[1]; j <= max_i[1]; j++ )  {
-      for( int k=min_i[0]; k <= max_i[0]; k++ )  {
-        if( hkl3d(k, j, i) != NULL && hkl3d(k, j, -i) != NULL ) {
-          AnAssociation2<TReflection*, compd> *p = hkl3d(k, j, i),
-            *n = hkl3d(k, j, -i);
-          const double denom = (p->GetA()->GetI() + n->GetA()->GetI());
-          if( denom == 0 )
-            continue;
-          up += (p->GetA()->GetI() - n->GetA()->GetI())/denom;
-          dn += (p->GetB().qmod() - n->GetB().qmod())/(p->GetB().qmod() + n->GetB().qmod());
-        }
+    refs[i].SetTag(0);
+  }
+  for( size_t i=0; i < refs.Count(); i++ )  {
+    if( refs[i].GetTag() != 0 )  continue;
+    refs[i].SetTag(1);
+    if( refs[i].GetI()/refs[i].GetS() < 3 )  continue;
+    for( size_t mi=0; mi < sp.Count(); mi++ )  {
+      const vec3i& pi = refs[i].GetHkl();
+      vec3i ni;
+      refs[i].MulHkl(ni, sp[mi]);
+      ni *= -1;
+      if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL ) {
+        AnAssociation2<TReflection*, compd> *n = hkl3d(ni);
+        if( n->GetA()->GetTag() != 0 )  continue;
+        n->A()->SetTag(1);
+        const double denom = (refs[i].GetI() + n->GetA()->GetI());
+        if( denom == 0 )
+          continue;
+        const double y = (refs[i].GetI() - n->GetA()->GetI())/denom;
+        const double x = (F[i].qmod() - n->GetB().qmod())/(F[i].qmod() + n->GetB().qmod());
+        sums[0] += x;
+        sums[1] += y;
+        sums[2] += x*y;
+        sums[3] += x*x;
+        sums[4]++;
       }
     }
   }
   for( size_t i=0; i < refs.Count(); i++ )
     delete hkl3d(refs[i].GetHkl());
-  double k = up/dn, x = -(1.0-k)/2;
-  xapp.NewLogEntry() << x << "  -- " << k*2;
+  double k = (sums[2]-sums[0]*sums[1]/sums[4])/(sums[3]-sums[0]*sums[0]/sums[4]),
+    x = (k-1.0)/2;
+  xapp.NewLogEntry() << x << " -- " << k;
   //TSymmLib& sl = TSymmLib::GetInstance();
   //for( size_t i=0; i < sl.SGCount(); i++ )  {
   //  TSpaceGroup& sg = sl.GetGroup(i);
