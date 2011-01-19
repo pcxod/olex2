@@ -53,9 +53,9 @@ namespace SFUtil {
     /* atoms[i]->Tag() must be index of the corresponding scatterer. U has 6 elements of Ucif or Uiso for each 
     atom  */
     virtual void Calculate(double eV, const TRefList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
-      const ElementPList& scatterers, const TCAtomPList& atoms, const double* U, bool useFpFdp) const = 0;
+      const ElementPList& scatterers, const TCAtomPList& atoms, const double* U) const = 0;
     virtual void Calculate(double eV, const TRefPList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
-      const ElementPList& scatterers, const TCAtomPList& atoms, const double* U, bool useFpFdp) const = 0;
+      const ElementPList& scatterers, const TCAtomPList& atoms, const double* U) const = 0;
     virtual size_t GetSGOrder() const = 0;
   };
 
@@ -146,9 +146,9 @@ namespace SFUtil {
     short mapType, short sfOrigin = sfOriginOlex2, short scaleType = scaleSimple,
     double scale = 0);
   // calculates the structure factors for given reflections
-  void CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<compd>& F, bool useFpFdp);
+  void CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<compd>& F);
   // calculates the structure factors for given reflections
-  void CalcSF(const TXFile& xfile, const TRefPList& refs, TArrayList<compd>& F, bool useFpFdp);
+  void CalcSF(const TXFile& xfile, const TRefPList& refs, TArrayList<compd>& F);
   // returns an instance according to __OLX_USE_FASTSYMM, must be deleted with delete
   ISF_Util* GetSF_Util_Instance(const TSpaceGroup& sg);
 
@@ -157,12 +157,13 @@ namespace SFUtil {
 #else
   struct SG_Impl  {
     const size_t size, u_size;
-    smatd_list matrices, u_matrices;
+    const smatd_list matrices, u_matrices;
     double u_multiplier;
-    SG_Impl(const smatd_list& all_matrices, const smatd_list& u_matrices) :
+    const bool centro;
+    SG_Impl(const smatd_list& all_matrices, const smatd_list& u_matrices, bool _centro) :
       matrices(all_matrices), size(all_matrices.Count()),
       u_matrices(u_matrices), u_size(u_matrices.Count()),
-      u_multiplier(double(size)/u_size)  {}
+      u_multiplier(double(size)/u_size), centro(_centro) {}
     void GenHkl(const vec3i& hkl, TArrayList<vec3i>& out, TArrayList<double>& ps) const {
       for( size_t i=0; i < size; i++ )  {
         out[i] = hkl*matrices[i].r;
@@ -186,53 +187,41 @@ namespace SFUtil {
     inline void _generateu(const vec3i& hkl, TArrayList<vec3i>& out, TArrayList<double>& ps) const {
       sg::GenUniqueHkl(hkl, out, ps);
     }
-    template <class RefList, bool use_fpfdp, bool centro> struct SFCalculateTask  {
+    template <class RefList, bool centro> struct SFCalculateTask  {
       const RefList& refs;
       const mat3d& hkl2c;
       TArrayList<compd>& F;
-      TArrayList<compd> *fpfdp, fo;
+      TArrayList<compd> fo;
+      const TArrayList<compd>& fpfdp;
       TArrayList<vec3i> rv;
       TArrayList<double> ps;
       const ElementPList& scatterers;
       const TCAtomPList& atoms;
       const double* U;
       const SF_Util& parent;
-      const double eV;
-      SFCalculateTask(const SF_Util& _parent, double _eV, const RefList& _refs, const mat3d& _hkl2c,
+      SFCalculateTask(const SF_Util& _parent, const RefList& _refs, const mat3d& _hkl2c,
         TArrayList<compd>& _F, const ElementPList& _scatterers,
-        const TCAtomPList& _atoms, const double* _U) :
-        parent(_parent), eV(_eV), refs(_refs), hkl2c(_hkl2c), F(_F), scatterers(_scatterers),
+        const TCAtomPList& _atoms, const double* _U, const TArrayList<compd>& _fpfdp) :
+        parent(_parent), refs(_refs), hkl2c(_hkl2c), F(_F), scatterers(_scatterers),
         atoms(_atoms), U(_U), rv(_parent._getusize()), ps(_parent._getusize()),
-        fo(_scatterers.Count()), fpfdp(NULL)
-      {
-        if( use_fpfdp )  {
-          fpfdp = new TArrayList<compd>(scatterers.Count());
-          for( size_t i=0; i < scatterers.Count(); i++ )  {
-            (*fpfdp)[i] = scatterers[i]->CalcFpFdp(eV);
-            (*fpfdp)[i] -= scatterers[i]->z;
-          }
-        }
-      }
-      virtual ~SFCalculateTask()  {
-        if( use_fpfdp )
-          delete fpfdp;
-      }
+        fo(_scatterers.Count()), fpfdp(_fpfdp)
+      {}
+      virtual ~SFCalculateTask()  {}
       void Run(size_t i)  {
         const TReflection& ref = TReflection::GetRef(refs[i]);
         const double d_s2 = ref.ToCart(hkl2c).QLength()*0.25;
         parent._generateu(ref.GetHkl(), rv, ps);
         for( size_t j=0; j < scatterers.Count(); j++)  {
           fo[j] = scatterers[j]->gaussians->calc_sq(d_s2);
-          if( use_fpfdp )
-            fo[j] += (*fpfdp)[j];
+          fo[j] += fpfdp[j];
         }
         if( centro )  {
-          double ir = 0;
+          compd ir = 0;
           for( size_t j=0; j < atoms.Count(); j++ )  {
             double l = 0;
             for( size_t k=0; k < parent._getusize(); k++ )  {
               // scattering vector + phase shift
-              const double ca = cos(SFUtil::T_PI*(atoms[j]->ccrd().DotProd(rv[k])+ps[k]));
+              double ca = cos(SFUtil::T_PI*(atoms[j]->ccrd().DotProd(rv[k])+ps[k]));
               if( olx_is_valid_index(atoms[j]->GetEllpId()) )  {
                 const double* Q = &U[j*6];  // pick up the correct ellipsoid
                 const double B = exp(
@@ -241,14 +230,14 @@ namespace SFUtil {
                   (Q[2]*rv[k][2])*rv[k][2]);
                 l += ca*B;
               }
-              else
+              else  {
                 l += ca;
+              }
             }
-            double scv = fo[atoms[j]->GetTag()].Re();
+            compd scv = fo[atoms[j]->GetTag()];
             if( !olx_is_valid_index(atoms[j]->GetEllpId()) )
               scv *= exp(U[j*6]*d_s2);
-            scv *= atoms[j]->GetOccu();
-            scv *= l;
+            scv *= (l*atoms[j]->GetOccu());
             ir += scv;
           }
           F[i] = ir*parent._getumult();
@@ -267,7 +256,7 @@ namespace SFUtil {
                 const double B = exp(
                   (Q[0]*rv[k][0]+Q[4]*rv[k][2]+Q[5]*rv[k][1])*rv[k][0] + 
                   (Q[1]*rv[k][1]+Q[3]*rv[k][2])*rv[k][1] + 
-                  (Q[2]*rv[k][2])*rv[k][2] );
+                  (Q[2]*rv[k][2])*rv[k][2]);
                 l.Re() += ca*B;
                 l.Im() += sa*B;
               }
@@ -287,13 +276,13 @@ namespace SFUtil {
         }
       }
       SFCalculateTask* Replicate() const {
-        return new SFCalculateTask(parent, eV, refs, hkl2c, F, scatterers, atoms, U);
+        return new SFCalculateTask(parent, refs, hkl2c, F, scatterers, atoms, U, fpfdp);
       }
     };
   public:
 #ifndef __OLX_USE_FASTSYMM
     SF_Util(const smatd_list& all_mat, const smatd_list& unq_mat, bool centro) :
-      sg(all_mat, unq_mat), centrosymmetric(centro)  {}
+      sg(all_mat, unq_mat, centro), centrosymmetric(centro)  {}
 #endif
     virtual void Expand(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F,
       TArrayList<SFUtil::StructureFactor>& out) const
@@ -320,59 +309,41 @@ namespace SFUtil {
     }
     virtual void Calculate(double eV, const TRefList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
       const ElementPList& scatterers, const TCAtomPList& atoms, 
-      const double* U, bool useFpFdp) const 
+      const double* U) const 
     {
-      if( useFpFdp )  {
-        if( centrosymmetric )  {
-          SFCalculateTask<TRefList, true, true> task(*this, eV, refs, hkl2c, F, scatterers, atoms, U);
-          TListIteratorManager<SFCalculateTask<TRefList, true, true> >
-            tasks(task, refs.Count(), tLinearTask, 50);
-        }
-        else  {
-          SFCalculateTask<TRefList, true, false> task(*this, eV, refs, hkl2c, F, scatterers, atoms, U);
-          TListIteratorManager<SFCalculateTask<TRefList, true, false> >
-            tasks(task, refs.Count(), tLinearTask, 50);
-        }
+      TArrayList<compd> fpfdp(scatterers.Count());
+      for( size_t i=0; i < scatterers.Count(); i++ )  {
+        fpfdp[i] = scatterers[i]->CalcFpFdp(eV);
+        fpfdp[i] -= scatterers[i]->z;
+      }
+      if( centrosymmetric )  {
+        SFCalculateTask<TRefList, true> task(*this, refs, hkl2c, F, scatterers, atoms, U, fpfdp);
+        TListIteratorManager<SFCalculateTask<TRefList, true> >
+          tasks(task, refs.Count(), tLinearTask, 50);
       }
       else  {
-        if( centrosymmetric )  {
-          SFCalculateTask<TRefList, false, true> task(*this, eV, refs, hkl2c, F, scatterers, atoms, U);
-          TListIteratorManager<SFCalculateTask<TRefList, false, true> >
-            tasks(task, refs.Count(), tLinearTask, 50);
-        }
-        else  {
-          SFCalculateTask<TRefList, false, false> task(*this, eV, refs, hkl2c, F, scatterers, atoms, U);
-          TListIteratorManager<SFCalculateTask<TRefList, false, false> >
-            tasks(task, refs.Count(), tLinearTask, 50);
-        }
+        SFCalculateTask<TRefList, false> task(*this, refs, hkl2c, F, scatterers, atoms, U, fpfdp);
+        TListIteratorManager<SFCalculateTask<TRefList, false> >
+          tasks(task, refs.Count(), tLinearTask, 50);
       }
     }
     virtual void Calculate(double eV, const TRefPList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
-      const ElementPList& scatterers, const TCAtomPList& atoms, const double* U, bool useFpFdp) const 
+      const ElementPList& scatterers, const TCAtomPList& atoms, const double* U) const 
     {
-      if( useFpFdp )  {
-        if( centrosymmetric )  {
-          SFCalculateTask<TRefPList, true, true> task(*this, eV, refs, hkl2c, F, scatterers, atoms, U);
-          TListIteratorManager<SFCalculateTask<TRefPList, true, true> >
-            tasks(task, refs.Count(), tLinearTask, 50);
-        }
-        else  {
-          SFCalculateTask<TRefPList, true, false> task(*this, eV, refs, hkl2c, F, scatterers, atoms, U);
-          TListIteratorManager<SFCalculateTask<TRefPList, true, false> >
-            tasks(task, refs.Count(), tLinearTask, 50);
-        }
+      TArrayList<compd> fpfdp(scatterers.Count());
+      for( size_t i=0; i < scatterers.Count(); i++ )  {
+        fpfdp[i] = scatterers[i]->CalcFpFdp(eV);
+        fpfdp[i] -= scatterers[i]->z;
+      }
+      if( centrosymmetric )  {
+        SFCalculateTask<TRefPList, true> task(*this, refs, hkl2c, F, scatterers, atoms, U, fpfdp);
+        TListIteratorManager<SFCalculateTask<TRefPList, true> >
+          tasks(task, refs.Count(), tLinearTask, 50);
       }
       else  {
-        if( centrosymmetric )  {
-          SFCalculateTask<TRefPList, false, true> task(*this, eV, refs, hkl2c, F, scatterers, atoms, U);
-          TListIteratorManager<SFCalculateTask<TRefPList, false, true> >
-            tasks(task, refs.Count(), tLinearTask, 50);
-        }
-        else  {
-          SFCalculateTask<TRefPList, false, false> task(*this, eV, refs, hkl2c, F, scatterers, atoms, U);
-          TListIteratorManager<SFCalculateTask<TRefPList, false, false> >
-            tasks(task, refs.Count(), tLinearTask, 50);
-        }
+        SFCalculateTask<TRefPList, false> task(*this, refs, hkl2c, F, scatterers, atoms, U, fpfdp);
+        TListIteratorManager<SFCalculateTask<TRefPList, false> >
+          tasks(task, refs.Count(), tLinearTask, 50);
       }
     }
     virtual size_t GetSGOrder() const {  return sg::size;  }

@@ -6290,7 +6290,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   RefinementModel::HklStat ms =
     xapp.XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
   F.SetCount(refs.Count());
-  SFUtil::CalcSF(xapp.XFile(), refs, F, true);
+  SFUtil::CalcSF(xapp.XFile(), refs, F);
   double up=0, dn=0;
   const vec3i min_i = ms.MinIndexes, max_i = ms.MaxIndexes;
   TArray3D<AnAssociation2<TReflection*, compd>*> hkl3d(min_i, max_i);

@@ -2968,7 +2968,7 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options, TMac
   F.SetCount(refs.Count());
   //xapp.CalcSF(refs, F);
   //SFUtil::CalcSF(xapp.XFile(), refs, F, xapp.XFile().GetRM().GetMERG() != 4);
-  SFUtil::CalcSF(xapp.XFile(), refs, F, true);
+  SFUtil::CalcSF(xapp.XFile(), refs, F);
   double scale_k = 1, scale_a = 0;
   olxstr scale_str = Options.FindValue("scale", "external");
   if( scale_str.Equalsi("external") )
@@ -3016,18 +3016,21 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options, TMac
     row[2] = new cetString(r.GetL());
     if( list_n == 3 )  {
       double Fo, s_m;
+      //http://www.iucr.org/__data/iucr/cif/software/xtal/xtal372htmlman/html/refcal-desc.html
       if( Fo2 <= 0 )  {
         Fo = 0;
-        s_m = 0.5;
+        s_m = sqrt(sigFo2); // xtal 3.7.2
       }
       else  {
         Fo = sqrt(Fo2);
-        s_m = scale_k*0.5/Fo;  // sqrt(scale_k)*/(2*sqrt(I))
+        s_m = sqrt(Fo2+sigFo2) - Fo; // xtal 3.7.2
+        //s_m = sigFo2/(Fo + sqrt(sigFo2+Fo2));  // sxtal 3.7
+        //s_m = Fo2 < sigFo2 ? sigFo2 : sigFo2/(2*Fo); // crystals
       }
       row[3] = new cetString(Fo);
-      row[4] = new cetString(sigFo2*s_m);
+      row[4] = new cetString(s_m);
       row[5] = new cetString(F[i].Re());
-      row[6] = new cetString(F[i].Im());
+      row[6] = new cetString(sp.IsCentrosymmetric() ? 0.0 : F[i].Im());
     }
     else if( list_n == 4 )  {
       row[3] = new cetString(olxstr::FormatFloat(2, F[i].qmod()));
@@ -4511,7 +4514,8 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
   RefinementModel::HklStat ms =
     xapp.XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
   F.SetCount(refs.Count());
-  SFUtil::CalcSF(xapp.XFile(), refs, F, true);
+  SFUtil::CalcSF(xapp.XFile(), refs, F);
+  //xapp.CalcSF(refs, F);
   double scale_k =1./olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
   double wR2u=0, wR2d=0, R1u=0, R1d=0, R1up = 0, R1dp = 0;
   size_t r1p_cnt=0;
@@ -4532,7 +4536,7 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
     wR2d += w*olx_sqr(Fo2);
     R1u += olx_abs(Fo-Fc);
     R1d += Fo;
-    if( Fo2/sigFo2 > 2 )  {
+    if( Fo2/sigFo2 >= 2 )  {
       R1up += olx_abs(Fo-Fc);
       R1dp += Fo;
       r1p_cnt++;
@@ -4543,7 +4547,7 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
   double R1p = R1up/R1dp;
   if( !Params.IsEmpty() && Params[0].Equalsi("print") )  {
     xapp.NewLogEntry() << "R1 = " << olxstr::FormatFloat(4, R1);
-    xapp.NewLogEntry() << "R1 (I/sig > 2, " << r1p_cnt << ") = " << olxstr::FormatFloat(4, R1p);
+    xapp.NewLogEntry() << "R1 (I/sig >= 2, " << r1p_cnt << ") = " << olxstr::FormatFloat(4, R1p);
     xapp.NewLogEntry() << "wR2 = " << olxstr::FormatFloat(4, wR2);
   }
   E.SetRetVal(olxstr(R1) << ',' << R1p << ',' << wR2);

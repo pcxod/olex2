@@ -539,6 +539,18 @@ TCLattice::TCLattice(int latt)  {
     Vectors.AddNew<double,double,double>(2./3., 1./3., 1./3.);
     Vectors.AddNew<double,double,double>(1./3., 2./3., 2./3.);
     break;
+   case 8:      // S Centered
+    Name = "S Centered";
+    Symbol = "S";
+    Vectors.AddNew<double,double,double>(1./3., 1./3., 2./3.);
+    Vectors.AddNew<double,double,double>(2./3., 2./3., 1./3.);
+    break;
+   case 9:      // T Centered
+    Name = "T Centered";
+    Symbol = "T";
+    Vectors.AddNew<double,double,double>(1./3., 2./3., 1./3.);
+    Vectors.AddNew<double,double,double>(2./3., 1./3., 2./3.);
+    break;
    case 4:      // Face Centered (F)
     Name = "Face Centered";
     Symbol = "F";
@@ -1028,12 +1040,12 @@ void TSpaceGroup::GetMatrices(smatd_list& matrices, short Flags) const {
     matrices.Add(*m);
   }
   if( (Flags & mattCentering) == mattCentering )  {
-    for( size_t i=0; i < MatrixCount(); i++ )  {
-      const smatd& mt = Matrices[i];
+    for( size_t i=0; i <= MatrixCount(); i++ )  {
+      const smatd& mt = (i==0 ? matrices[0] : Matrices[i-1]);
       for( size_t j=0; j < Latt->VectorCount(); j++ )  {
         const vec3d& v = Latt->GetVector(j);
         bool add = true;
-        if( (Flags & mattTranslation) == 0 )  {
+        if( (Flags & mattTranslation) == 0 && i != InvalidIndex )  {
           for( int k=0; k < 3; k++ )  {
             double dv = mt.t[k] - v[k];
             int iv = (int)dv;  dv -= iv;

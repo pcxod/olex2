@@ -97,9 +97,8 @@ namespace SymSpace  {
   };
   struct InfoEx  {  // has a list of translation vectors vs latt number
     bool centrosymmetric;
-    // holds references of the original object, be careful with const& containers!
-    TPtrList<smatd> matrices;
-    TPtrList<vec3d> vertices;
+    smatd_list matrices;
+    vec3d_list vertices;
   };
   template <class SP> static Info GetInfo(const SP& sp)  {
     Info rv;
@@ -187,6 +186,101 @@ namespace SymSpace  {
       TPtrList<smatd>& l = groups.GetValue(i);
       for( size_t j=0; j < l.Count(); j++ )
         rv.matrices.Add(l[j]);
+    }
+    return rv;
+  }
+  // returns a compacted form of symspace
+  template <class SP> static InfoEx Compact(const SP& sp)  {
+    InfoEx rv;
+    rv.centrosymmetric = false;
+    int latt = -1;
+    if( sp.Count() == 1 )  {  // P?
+      if( !sp[0].r.IsI() || !sp[0].t.IsNull() )
+        throw TInvalidArgumentException(__OlxSourceInfo, "identity matrix");
+      return rv;
+    }
+    olxdict<int, TPtrList<const smatd>, TPrimitiveComparator> groups;
+    for( size_t i=0; i < sp.Count(); i++ )  {
+      TPtrList<const smatd>& l = groups.Add(rotation_id::get(sp[i].r));
+      l.Add(sp[i]);
+    }
+    const size_t min_a_group=groups.GetValue(0).Count();
+    for( size_t i=0; i < groups.Count(); i++ )  {
+      if( groups.GetValue(i).Count() != min_a_group )
+        throw TInvalidArgumentException(__OlxSourceInfo, "matrix list");
+    }
+    if( min_a_group == 1 )
+      latt = 1; //'P';
+    else if( min_a_group == 2 )  {
+      vec3d t = groups.GetValue(0)[1]->t - groups.GetValue(0)[0]->t;
+      t -= t.Floor<int>();
+      if( olx_abs(t[0]-0.5) < 1e-6 )  {
+        if( olx_abs(t[1]-0.5) < 1e-6 )  {
+          if( olx_abs(t[2]-0.5) < 1e-6 )
+            latt = 2; //'I';
+          else if( olx_abs(t[2]) < 1e-6 )
+            latt = 7; //'C';
+        }
+        else if( olx_abs(t[1]) < 1e-6 && olx_abs(t[2]-0.5) < 1e-6 )
+          latt = 6; //'B';
+      }
+      else if( olx_abs(t[0]) < 1e-6 && olx_abs(t[1]-0.5) < 1e-6 && olx_abs(t[2]-0.5) < 1e-6 )
+        latt = 5; //'A';
+      rv.vertices.AddCCopy(t);
+    }
+    else if( min_a_group == 3 )  {
+      vec3d t1 = groups.GetValue(0)[1]->t - groups.GetValue(0)[0]->t;
+      vec3d t2 = groups.GetValue(0)[2]->t - groups.GetValue(0)[0]->t;
+      t1 -= t1.Floor<int>();
+      t2 -= t2.Floor<int>();
+      if( olx_abs(t1[0]-2./3) < 1e-6 && olx_abs(t1[1]-1./3) < 1e-6 && olx_abs(t1[2]-1./3) < 1e-6  &&
+        olx_abs(t2[0]-1./3) < 1e-6 && olx_abs(t2[1]-2./3) < 1e-6 && olx_abs(t2[2]-2./3) < 1e-6 )
+        latt = 3; //'R';
+      else if( olx_abs(t1[0]-1./3) < 1e-6 && olx_abs(t1[1]-1./3) < 1e-6 && olx_abs(t1[2]-2./3) < 1e-6  &&
+        olx_abs(t2[0]-2./3) < 1e-6 && olx_abs(t2[1]-2./3) < 1e-6 && olx_abs(t2[2]-1./3) < 1e-6 )
+        latt = 8; //'S';
+      else if( olx_abs(t1[0]-1./3) < 1e-6 && olx_abs(t1[1]-2./3) < 1e-6 && olx_abs(t1[2]-1./3) < 1e-6  &&
+        olx_abs(t2[0]-2./3) < 1e-6 && olx_abs(t2[1]-1./3) < 1e-6 && olx_abs(t2[2]-2./3) < 1e-6 )
+        latt = 9; //'T';
+      rv.vertices.AddCCopy(t1);
+      rv.vertices.AddCCopy(t2);
+    }
+    else if( min_a_group )  {
+      rv.vertices.AddNew(0, 0.5, 0.5);
+      rv.vertices.AddNew(0.5, 0, 0.5);
+      rv.vertices.AddNew(0.5, 0.5, 0);
+      latt = 4; //'F';
+    }
+    if( latt < 0 )
+      throw TFunctionFailedException(__OlxSourceInfo, "could not deduce lattice centering");
+    for( size_t i=0; i < groups.Count(); i++ )
+      groups.GetValue(i).SetCount(1);
+    // find out if centrosymmetric...
+    if( groups.Count() > 1 )  {
+      const size_t gc = groups.Count();
+      for( size_t i=0; i < groups.Count(); i++ )  {
+        const size_t ii = groups.IndexOf(rotation_id::invert(groups.GetKey(i)));
+        if( ii == InvalidIndex )
+          continue;
+        groups.GetValue(ii).Add(groups.GetValue(i)[0]);
+        groups.Delete(i--);
+      }
+      rv.centrosymmetric = (groups.Count()*2 == gc);
+      if( rv.centrosymmetric )  {
+        for( size_t i=0; i < groups.Count(); i++ )  {
+          if( groups.GetValue(i)[0]->r.Determinant() < 0 )
+            groups.GetValue(i).Delete(0);
+          else
+            groups.GetValue(i).SetCount(1);
+        }
+      }
+    }
+    for( size_t i=0; i < groups.Count(); i++ )  {
+      TPtrList<const smatd>& l = groups.GetValue(i);
+      for( size_t j=0; j < l.Count(); j++ )  {
+        if( !l[j]->r.IsI() )
+          rv.matrices.AddCCopy(*l[j]).t -= l[j]->t.Floor<int>();
+      }
     }
     return rv;
   }

@@ -1,6 +1,6 @@
 #ifndef __OLEX_HKL_REFLECTION__
 #define __OLEX_HKL_REFLECTION__
-
+#include "symspace.h"
 BeginXlibNamespace()
 
 const int NoFlagSet = 0xF0FA;
@@ -117,14 +117,12 @@ public:
       {
         new_hkl = hklv;
       }
-      else  {
-        hklv *= -1;          
-        if( (hklv[2] > new_hkl[2]) ||
-          ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
-          ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
-        {
-          new_hkl = hklv;
-        }
+      hklv *= -1;
+      if( (hklv[2] > new_hkl[2]) ||
+        ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
+        ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
+      {
+        new_hkl = hklv;
       }
     }
     hkl = new_hkl;
@@ -161,28 +159,68 @@ public:
       }
     }
   }
-  template <class InfoEx> void StandardiseEx(const InfoEx& info)  {
-    vec3i hklv, new_hkl = hkl;
-    Absent = false;
-    for( size_t i=0; i < info.matrices.Count(); i++ )  {
-      MulHkl(hklv, info.matrices[i]);
-        if( (hklv[2] > new_hkl[2]) ||
-          ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
-          ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
+  template <bool centro> void StandardiseEx(const SymSpace::InfoEx& info)  {
+    if( centro )  {
+      vec3i hklv = -hkl, new_hkl = hkl;
+      Absent = false;
+      if( (hklv[2] > hkl[2]) ||
+        ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
+        ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )
       {
         new_hkl = hklv;
       }
+      for( size_t i=0; i < info.matrices.Count(); i++ )  {
+        MulHkl(hklv, info.matrices[i]);
+        if( (hklv[2] > new_hkl[2]) ||
+          ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
+          ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
+        {
+          new_hkl = hklv;
+        }
+        hklv *= -1;
+        if( (hklv[2] > new_hkl[2]) ||
+          ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
+          ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
+        {
+          new_hkl = hklv;
+        }
+      }
+      hkl = new_hkl;
     }
-    hkl = new_hkl;
+    else  {
+      vec3i hklv, new_hkl = hkl;
+      Absent = false;
+      for( size_t i=0; i < info.matrices.Count(); i++ )  {
+        MulHkl(hklv, info.matrices[i]);
+        if( (hklv[2] > new_hkl[2]) ||
+          ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
+          ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
+        {
+          new_hkl = hklv;
+        }
+      }
+      hkl = new_hkl;
+    }
+    vec3i hklv;
     for( size_t i=0; i < info.matrices.Count(); i++ )  {
       MulHkl(hklv, info.matrices[i]);
-      if( EqHkl(hklv) )  {  // only if there is no change
-        for( size_t j=0; j < info.vertices.Count(); j++ )  {
-          const double ps = hkl.DotProd(info.matrices[i].t+info.vertices[j]);
-          if( Absent = (olx_abs( ps - olx_round(ps) ) > 0.01) )
-            break;
+      if( EqHkl(hklv) || (centro && EqNegHkl(hklv)) )  {
+        const double ps = info.matrices[i].t.DotProd(hkl);
+        if( !(Absent = (olx_abs( ps - olx_round(ps) ) > 0.01)) )  {
+          for( size_t j=0; j < info.vertices.Count(); j++ )  {
+            const double ps = (info.matrices[i].t+info.vertices[j]).DotProd(hkl);
+            if( Absent = (olx_abs( ps - olx_round(ps) ) > 0.01) )
+              break;
+          }
         }
         if( Absent )
+          break;
+      }
+    }
+    if( !Absent )  {  // check for Identity and centering
+      for( size_t i=0; i < info.vertices.Count(); i++ )  {
+        const double ps = info.vertices[i].DotProd(hkl);
+        if( Absent = (olx_abs( ps - olx_round(ps) ) > 0.01) )
           break;
       }
     }

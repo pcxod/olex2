@@ -41,6 +41,8 @@ public:
       case 5:  // A Centered (A)
       case 6:  // B Centered (B)
       case 7: count = 2;  break;  // C Centered (C);
+      case 8:  // S Centered
+      case 9:  // T Centered
       case 3: count = 3;  break;  // R Centered
       case 4: count = 4;  break;  // Face Centered (F)
       default:

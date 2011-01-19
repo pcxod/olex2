@@ -23,6 +23,7 @@ ISF_Util* SFUtil::GetSF_Util_Instance(const TSpaceGroup& sg)  {
   sg.GetMatrices(all_m, mattAll);
   sg.GetMatrices(unq_m, mattAll^(mattInversion|mattCentering));
   return new SF_Util<SG_Impl>(all_m, unq_m, sg.IsCentrosymmetric());
+  //return new SF_Util<SG_Impl>(all_m, all_m, false);
 #endif
 }
 //...........................................................................................
@@ -151,7 +152,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     //xapp.CalcSF(refs, F);
     //sw.start("Calculation structure factors A");
     //fastsymm version is just about 10% faster...
-    CalcSF(xapp.XFile(), refs, F, true);
+    CalcSF(xapp.XFile(), refs, F);
     sw.start("Scaling structure factors");
     if( mapType != mapTypeCalc )  {
       // find a linear scale between F
@@ -228,9 +229,7 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatte
   }
 }
 //...........................................................................................
-void SFUtil::CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<double> >& F,
-  bool useFpFdp)
-{
+void SFUtil::CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   TSpaceGroup* sg = NULL;
   try  { sg = &xfile.GetLastLoaderSG();  }
   catch(...)  {
@@ -251,14 +250,13 @@ void SFUtil::CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<TEComp
     au.GetHklToCartesian(), 
     F, scatterers, 
     alist, 
-    U, 
-    useFpFdp
+    U
   );
   delete sf_util;
   delete [] U;
 }
 //...........................................................................................
-void SFUtil::CalcSF(const TXFile& xfile, const TRefPList& refs, TArrayList<TEComplex<double> >& F, bool useFpFdp)  {
+void SFUtil::CalcSF(const TXFile& xfile, const TRefPList& refs, TArrayList<TEComplex<double> >& F)  {
   TSpaceGroup* sg = NULL;
   try  { sg = &xfile.GetLastLoaderSG();  }
   catch(...)  {
@@ -278,8 +276,7 @@ void SFUtil::CalcSF(const TXFile& xfile, const TRefPList& refs, TArrayList<TECom
     refs, au.GetHklToCartesian(), 
     F, scatterers, 
     alist, 
-    U, 
-    useFpFdp
+    U
   );
   delete sf_util;
   delete [] U;
