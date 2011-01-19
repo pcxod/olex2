@@ -1,6 +1,22 @@
 #include "afixgroup.h"
 #include "refmodel.h"
-
+//olxstr m_names[] = {
+//  "generic",
+//  "ternary CH",
+//  "secondary CH2",
+//  "tetrahedral CH3",
+//  "aromatic/amide H",
+//  "pentagon",
+//  "hexagon",
+//  "hexagon",
+//  "tetrahedral OH",
+//  "",
+//  "",
+//  "",
+//  "",
+//  "",
+//  "",
+//};
 void TAfixGroup::Clear()  {  Parent.Delete(Id);  }
 //..............................................................................
 void TAfixGroup::Assign(const TAfixGroup& ag)  {

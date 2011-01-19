@@ -166,7 +166,7 @@ namespace SymSpace  {
     if( groups.Count() > 1 )  {
       const size_t gc = groups.Count();
       for( size_t i=0; i < groups.Count(); i++ )  {
-        const size_t ii = groups.IndexOf(rotation_id::invert(groups.GetKey(i)));
+        const size_t ii = groups.IndexOf(rotation_id::negate(groups.GetKey(i)));
         if( ii == InvalidIndex )
           continue;
         groups.GetValue(ii).Add(groups.GetValue(i)[0]);
@@ -259,7 +259,7 @@ namespace SymSpace  {
     if( groups.Count() > 1 )  {
       const size_t gc = groups.Count();
       for( size_t i=0; i < groups.Count(); i++ )  {
-        const size_t ii = groups.IndexOf(rotation_id::invert(groups.GetKey(i)));
+        const size_t ii = groups.IndexOf(rotation_id::negate(groups.GetKey(i)));
         if( ii == InvalidIndex )
           continue;
         groups.GetValue(ii).Add(groups.GetValue(i)[0]);

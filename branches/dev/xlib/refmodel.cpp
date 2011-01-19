@@ -770,7 +770,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
   TStrList vars;
   Vars.Describe(vars);
   if( !vars.IsEmpty() )  {
-    lst.Add(++sec_num) << ". Other restraints";
+    lst.Add(++sec_num) << ". Others";
     lst.AddList(vars);
   }
 }

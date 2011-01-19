@@ -1082,6 +1082,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\rot_id.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\samegroup.cpp"
 				>
 			</File>

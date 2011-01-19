@@ -119,7 +119,7 @@ int HallSymbol::FindR(olxstr& hs, TTypeList<symop>& matrs,
         hs << ' ';
         matched = true;
       }
-      else if( rot[i].GetA() == rotation_id::invert(so.rot_id) )  {
+      else if( rot[i].GetA() == rotation_id::negate(so.rot_id) )  {
         hs << " -";
         matched = true;
       }

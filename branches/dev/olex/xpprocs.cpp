@@ -6291,44 +6291,45 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     xapp.XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace, RefMerger::ShelxMerger>(sp, refs);
   F.SetCount(refs.Count());
   SFUtil::CalcSF(xapp.XFile(), refs, F);
+  double scale_k =1./olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
   double sums[5] = {0.0,0.0,0.0,0.0,0.0};
   const vec3i min_i = ms.MinIndexes, max_i = ms.MaxIndexes;
-  TArray3D<AnAssociation2<TReflection*, compd>*> hkl3d(min_i, max_i);
+  TArray3D<TReflection*> hkl3d(min_i, max_i);
   for( size_t i=0; i < refs.Count(); i++ )  {
-    hkl3d(refs[i].GetHkl()) = new AnAssociation2<TReflection*, compd>(&refs[i], F[i]);
-    refs[i].SetTag(0);
+    hkl3d(refs[i].GetHkl()) = &refs[i];
+    refs[i].SetTag(i);
   }
   for( size_t i=0; i < refs.Count(); i++ )  {
-    if( refs[i].GetTag() != 0 )  continue;
-    refs[i].SetTag(1);
-    if( refs[i].GetI()/refs[i].GetS() < 3 )  continue;
+    if( refs[i].GetTag() < 0 )  continue;
+    refs[i].SetTag(-1);
+    if( refs[i].GetI()/refs[i].GetS() < 2 )  continue;
     for( size_t mi=0; mi < sp.Count(); mi++ )  {
       const vec3i& pi = refs[i].GetHkl();
       vec3i ni;
       refs[i].MulHkl(ni, sp[mi]);
       ni *= -1;
       if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL ) {
-        AnAssociation2<TReflection*, compd> *n = hkl3d(ni);
-        if( n->GetA()->GetTag() != 0 )  continue;
-        n->A()->SetTag(1);
-        const double denom = (refs[i].GetI() + n->GetA()->GetI());
-        if( denom == 0 )
-          continue;
-        const double y = (refs[i].GetI() - n->GetA()->GetI())/denom;
-        const double x = (F[i].qmod() - n->GetB().qmod())/(F[i].qmod() + n->GetB().qmod());
-        sums[0] += x;
-        sums[1] += y;
-        sums[2] += x*y;
-        sums[3] += x*x;
-        sums[4]++;
+        TReflection& n = *hkl3d(ni);
+        if( n.GetTag() < 0 )  continue;
+        //const double y = (refs[i].GetI() - n.GetI())/(refs[i].GetI() + n.GetI());
+        //const double x = (F[i].qmod() - F[n.GetTag()].qmod())/(F[i].qmod() + F[n.GetTag()].qmod());
+        const double w = 1./olx_sqr(refs[i].GetS());
+        const double y = (refs[i].GetI()*scale_k - F[i].qmod());
+        const double x = (F[n.GetTag()].qmod() - F[i].qmod());
+        sums[0] += w*x;
+        sums[1] += w*y;
+        sums[2] += w*x*y;
+        sums[3] += w*x*x;
+        sums[4] += w;
+        n.SetTag(-1);
       }
     }
   }
-  for( size_t i=0; i < refs.Count(); i++ )
-    delete hkl3d(refs[i].GetHkl());
   double k = (sums[2]-sums[0]*sums[1]/sums[4])/(sums[3]-sums[0]*sums[0]/sums[4]),
-    x = (k-1.0)/2;
-  xapp.NewLogEntry() << x << " -- " << k;
+    //x = (k-1.0)/2,
+    a = (sums[0] - k*sums[1])/sums[4];
+  xapp.NewLogEntry() << TEValueD(k, sqrt(sums[4]/(sums[3]-sums[0]*sums[0]/sums[4]))).ToString();
+
   //TSymmLib& sl = TSymmLib::GetInstance();
   //for( size_t i=0; i < sl.SGCount(); i++ )  {
   //  TSpaceGroup& sg = sl.GetGroup(i);
@@ -7861,6 +7862,8 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   tests.Add(&TSymmParser::Tests);
   tests.Add(&smatd::Tests);
   tests.Add(&VcoVContainer::Tests);
+  tests.Add(&rotation_id::Tests);
+  tests.Add(&full_smatd_id<256>::Tests);
   tests.run();
   AtomRefList arl(FXApp->XFile().GetRM(), Cmds.Text(' '), "suc");
   TTypeList<TAtomRefList> res;
