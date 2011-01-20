@@ -1,7 +1,7 @@
-#include "rot_id.h"
+#include "mat_id.h"
 
 void XlibObject(rotation_id::Tests)(OlxTests& t)  {
-  t.description = __OlxSourceInfo;
+  t.description = __OlxSrcInfo;
   mat3d m(0, 1, 1, 1, 0, 1, 0, 0, 0);
   int id = rotation_id::get(m);
   mat3d id_r = rotation_id::get(id);

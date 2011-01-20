@@ -773,6 +773,20 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     lst.Add(++sec_num) << ". Others";
     lst.AddList(vars);
   }
+  size_t afix_sn = 0;
+  olxdict<int, TPtrList<TAfixGroup>, TPrimitiveComparator> a_gs;
+  for( size_t i=0; i < AfixGroups.Count(); i++ )
+    a_gs.Add(AfixGroups[i].GetAfix()).Add(AfixGroups[i]);
+  for( size_t i=0; i < a_gs.Count(); i++ )  {
+    TPtrList<TAfixGroup>& gl = a_gs.GetValue(i);
+    olxstr ag_name = gl[0]->Describe();
+    if( !ag_name.IsEmpty() )
+      ag_name[0] = olxstr::o_toupper(ag_name.CharAt(0));
+    lst.Add(olxstr(sec_num) << '.' << (olxch)('a'+afix_sn++)) << ' ' << ag_name << ':';
+    olxstr& line = lst.Add(gl[0]->ToString());
+    for( size_t j=1; j < gl.Count(); j++ )
+      line << ", " << gl[j]->ToString();
+  }
 }
 //....................................................................................................
 void RefinementModel::ProcessFrags()  {

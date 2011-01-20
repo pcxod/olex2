@@ -489,6 +489,9 @@
     <ClCompile Include="..\..\..\xlib\symmcon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\xlib\mat_id.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\afixgroup.h">
@@ -706,6 +709,15 @@
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\cifdp.h">
       <Filter>Header Files\CIF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\mat_id.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\hall.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\symmcon.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

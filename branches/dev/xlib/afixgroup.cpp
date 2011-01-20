@@ -1,22 +1,36 @@
 #include "afixgroup.h"
 #include "refmodel.h"
-//olxstr m_names[] = {
-//  "generic",
-//  "ternary CH",
-//  "secondary CH2",
-//  "tetrahedral CH3",
-//  "aromatic/amide H",
-//  "pentagon",
-//  "hexagon",
-//  "hexagon",
-//  "tetrahedral OH",
-//  "",
-//  "",
-//  "",
-//  "",
-//  "",
-//  "",
-//};
+const olxstr TAfixGroup::m_names[] = {
+  EmptyString,
+  "ternary CH",
+  "secondary CH2",
+  "Me",
+  "aromatic/amide H",
+  "fitted pentagon",
+  "fitted hexagon",
+  "fitted hexagon",
+  "tetrahedral OH",
+  "X=CH2",
+  "Cp*",
+  "naphthalene",
+  "disordered Me",
+  "Fourier placed Me",
+  "Fourier placed tetrahedral OH",
+  "boron cage BH",
+  "acetylenic CH",
+};
+const olxstr TAfixGroup::n_names[] = {
+  EmptyString,
+  "with everything fixed",
+  "with fixed occupancy and ADP",
+  "with riding coordinates",
+  "with riding coordinates and stretchable bonds",
+  "is dependent atom of rigid group",
+  "as free rotating group",
+  "as rotating group",
+  "as rotating group with stretchable bonds",
+  "as free rotating sizeable group",
+};
 void TAfixGroup::Clear()  {  Parent.Delete(Id);  }
 //..............................................................................
 void TAfixGroup::Assign(const TAfixGroup& ag)  {
@@ -30,7 +44,7 @@ void TAfixGroup::Assign(const TAfixGroup& ag)  {
     throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
   SetPivot( *Pivot );
   for( size_t i=0; i < ag.Dependent.Count(); i++ )  {
-    Dependent.Add(Parent.RM.aunit.FindCAtomById( ag.Dependent[i]->GetId()));
+    Dependent.Add(Parent.RM.aunit.FindCAtomById(ag.Dependent[i]->GetId()));
     if( Dependent.GetLast() == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
     Dependent.GetLast()->SetParentAfixGroup(this);
@@ -80,7 +94,34 @@ void TAfixGroup::FromDataItem(TDataItem& item) {
   SetPivot(Parent.RM.aunit.GetAtom(item.GetRequiredField("pivot_atom_id").ToSizeT()));
   TDataItem& dep = item.FindRequiredItem("dependent");
   for( size_t i=0; i < dep.FieldCount(); i++ )
-    Dependent.Add( &Parent.RM.aunit.GetAtom(dep.GetField(i).ToInt()) )->SetParentAfixGroup(this);
+    Dependent.Add(Parent.RM.aunit.GetAtom(dep.GetField(i).ToInt()))->SetParentAfixGroup(this);
+}
+//..............................................................................
+olxstr TAfixGroup::Describe() const {
+  const int n = GetN(), m = GetM();
+  if( n >= 9 || m >= 16 )
+    return EmptyString;
+  if( n == 0 )
+    return m_names[m];
+  if( m == 0 )
+    return n_names[n].SubStringFrom(n_names[n].FirstIndexOf(' ')+1);
+  return olxstr(m_names[m]) << " refined " << n_names[n];
+}
+//..............................................................................
+TIString TAfixGroup::ToString() const {
+  olxstr rv;
+  rv<< Pivot->GetLabel() << '(';
+  size_t dep_cnt = 0;
+  for( size_t i=0; i < Dependent.Count(); i++ )  {
+    if( Dependent[i]->IsDeleted() )  continue;
+    rv << Dependent[i]->GetLabel() << ',';
+    dep_cnt++;
+  }
+  rv.SetLength(rv.Length()-1);  // remove trailing ','
+  rv << ')';
+  //item.AddField("d", D);
+  //item.AddField("u", U);
+  return rv;
 }
 //..............................................................................
 //..............................................................................

@@ -23,7 +23,7 @@ namespace rotation_id {
     return mask;
   }
   // generates a matrix from an id
-  static mat3d get(int id)  {
+  static mat3i get(int id)  {
     mat3i rv;
     for( int i=0; i < 9; i++ )
       if( (id & (1<<i)) != 0 )
@@ -50,7 +50,7 @@ for any crystallographic rotation matrix 13 bits are needed (nine bits
 for non zero matrix elements and 4 for signs - no more than 4 non-zero
 elements normally invloved, but holding the general rotaton with 64 bit
 number still allows huge fraction of 12 translaton: (64-18)/3 = 15 (+1):
-2^14/12 = 1365 + sign...
+2^14/12 = 1365 + sign... even base 256 allows translations +-63 cells
 */
 template <int base=12> struct full_smatd_id  {
   static const size_t
@@ -65,6 +65,10 @@ template <int base=12> struct full_smatd_id  {
     uint64_t res = rotation_id::get(m.r);
     for( int i=0; i < 3; i++ )  {
       int t = static_cast<int>(m.t[i]*base);
+#ifdef _DEBUG
+      if( olx_abs(t) > tr_mask )
+        throw TFunctionFailedException(__OlxSourceInfo, "translation is too large");
+#endif
       res |= (((uint64_t)olx_abs(t)) << (rotation_id::size+tr_len*i));
       if( t < 0 )
         res |= ((uint64_t)1<<(sig_off+i));
@@ -88,8 +92,23 @@ template <int base=12> struct full_smatd_id  {
     }
     return rv;
   }
+  // generates matrix from an id
+  static mat3i get_m(uint64_t id)  {
+    return rotation_id::get((int)id);
+  }
+  // generates translation from an id
+  static vec3d get_t(uint64_t id)  {
+    vec3d rv;
+    for( int i=0; i < 3; i++ )  {
+      rv.t[i] = static_cast<double>(
+        (id >>(tr_len*i + rotation_id::size))&tr_mask)/base;
+      if( (id & ((uint64_t)1<<(sig_off+i))) != 0 )
+        rv.t[i] *= -1;
+    }
+    return rv;
+  }
   static void Tests(OlxTests& t)  {
-    t.description = __OlxSourceInfo;
+    t.description = __OlxSrcInfo;
     smatd m(mat3d(0, 1, 1, 1, 0, 1, 0, 0, 0), vec3d(-1./base, 10000./base, -21./base));
     uint64_t id = full_smatd_id::get(m);
     smatd id_r = full_smatd_id::get(id);

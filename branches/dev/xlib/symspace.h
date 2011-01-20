@@ -1,7 +1,6 @@
 #ifndef __olx_xl_symspace_H
 #define __olx_xl_symspace_H
-#include "symmat.h"
-#include "rot_id.h"
+#include "mat_id.h"
 BeginXlibNamespace()
 
 template <class MatList> class TSymSpace  {

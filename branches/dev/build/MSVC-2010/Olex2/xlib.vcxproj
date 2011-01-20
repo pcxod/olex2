@@ -539,6 +539,7 @@
     <ClCompile Include="..\..\..\xlib\lattice.cpp" />
     <ClCompile Include="..\..\..\xlib\leq.cpp" />
     <ClCompile Include="..\..\..\xlib\lst.cpp" />
+    <ClCompile Include="..\..\..\xlib\mat_id.cpp" />
     <ClCompile Include="..\..\..\xlib\mol.cpp" />
     <ClCompile Include="..\..\..\xlib\mol2.cpp" />
     <ClCompile Include="..\..\..\xlib\network.cpp" />
@@ -972,6 +973,7 @@
     <ClInclude Include="..\..\..\xlib\fastsymm.h" />
     <ClInclude Include="..\..\..\xlib\fracmask.h" />
     <ClInclude Include="..\..\..\xlib\fragment.h" />
+    <ClInclude Include="..\..\..\xlib\hall.h" />
     <ClInclude Include="..\..\..\xlib\henke.h" />
     <ClInclude Include="..\..\..\xlib\hkl.h" />
     <ClInclude Include="..\..\..\xlib\idistribution.h" />
@@ -982,6 +984,7 @@
     <ClInclude Include="..\..\..\xlib\leq.h" />
     <ClInclude Include="..\..\..\xlib\lst.h" />
     <ClInclude Include="..\..\..\xlib\maputil.h" />
+    <ClInclude Include="..\..\..\xlib\mat_id.h" />
     <ClInclude Include="..\..\..\xlib\mol.h" />
     <ClInclude Include="..\..\..\xlib\mol2.h" />
     <ClInclude Include="..\..\..\xlib\network.h" />
@@ -1003,6 +1006,7 @@
     <ClInclude Include="..\..\..\xlib\splane.h" />
     <ClInclude Include="..\..\..\xlib\srestraint.h" />
     <ClInclude Include="..\..\..\xlib\symmat.h" />
+    <ClInclude Include="..\..\..\xlib\symmcon.h" />
     <ClInclude Include="..\..\..\xlib\symmlib.h" />
     <ClInclude Include="..\..\..\xlib\symmparser.h" />
     <ClInclude Include="..\..\..\xlib\symmtest.h" />

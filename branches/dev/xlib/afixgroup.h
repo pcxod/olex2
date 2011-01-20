@@ -11,6 +11,7 @@ class TAfixGroup : public ACollectionItem {
   TCAtom* Pivot;
   TCAtomPList Dependent;
   TAfixGroups& Parent;
+  static const olxstr n_names[], m_names[];
 public:
   TAfixGroup(TAfixGroups& parent) : Parent(parent), D(0), Sof(0), U(0) {}
   TAfixGroup(TAfixGroups& parent, size_t id, TCAtom* pivot, int afix, double d = 0, double sof = 0, double u = 0) :
@@ -111,6 +112,10 @@ public:
   size_t Count() const {  return Dependent.Count();  }
   TCAtom& operator [] (size_t i) {  return *Dependent[i];  }
   const TCAtom& operator [] (size_t i) const {  return *Dependent[i];  }
+  // describes current group (just the AFIX)
+  olxstr Describe() const;
+  // returns string describing the group content
+  TIString ToString() const;
 
   void ToDataItem(TDataItem& item) const;
 #ifndef _NO_PYTHON
