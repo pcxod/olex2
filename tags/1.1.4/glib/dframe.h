@@ -1,0 +1,35 @@
+#ifndef __olx_gl_dfame_H
+#define __olx_gl_dfame_H
+#include "glbase.h"
+#include "gdrawobject.h"
+#include "actions.h"
+
+BeginGlNamespace()
+
+// this class is passed a aparameter to the OSelect handlers
+class TSelectionInfo: public IEObject  {
+public:
+  vec3d From, To;
+};
+
+class TDFrame: public AGDrawObject  {
+protected:
+  class TGlPrimitive* FPrimitive;
+  vec3f Translation;
+  TActionQList Actions;
+public:
+  TDFrame(TGlRenderer& Render, const olxstr& collectionName);
+  virtual ~TDFrame()  {}
+  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
+  bool Orient(TGlPrimitive& P);
+  bool GetDimensions(vec3d& Max, vec3d& Min){  return false;};
+
+  bool OnMouseDown(const IEObject *Sender, const TMouseData& Data);
+  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
+  bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
+  
+  TActionQueue& OnSelect;
+};
+
+EndGlNamespace()
+#endif
