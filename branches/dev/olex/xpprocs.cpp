@@ -2709,7 +2709,7 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   RefinementModel& rm = FXApp->XFile().GetRM();
   FindXAtoms(Cmds, Atoms, false, !Options.Contains("cs"));
   const int m = TAfixGroup::GetM(afix), n = TAfixGroup::GetN(afix);
-  if( TAfixGroup::IsFitted(afix) && (n == 6 || n == 9) )  {  // special case
+  if( TAfixGroup::IsFittedRing(afix) )  {  // special case
     // yet another special case
     if( !positions.IsEmpty() )  {
       TStrList toks(positions, ',');

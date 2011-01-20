@@ -503,7 +503,7 @@ void TXApp::ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last)  {
 //..............................................................................
 void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
   int m = TAfixGroup::GetM(afix), n = TAfixGroup::GetN(afix);
-  if( TAfixGroup::IsFitted(afix) && (n == 6 || n == 9) )  {  // special case
+  if( m == 5 || m ==6 || m == 7 || m == 10 )  {  // special case
     if( sa == NULL )  {
       TTypeList< TSAtomPList > rings;
       try  {  

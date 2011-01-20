@@ -27,7 +27,7 @@ public:
     if( EsdlInstanceOf( obj, TXAtom) )  {
       TXAtom *XA = &(TXAtom&)obj;
       int n = TAfixGroup::GetN(Hfix);
-      if( TAfixGroup::IsFitted(Hfix) && (n == 6 || n == 9) )  {
+      if( TAfixGroup::IsFittedRing(Hfix) )  {
         TGlXApp::GetGXApp()->AutoAfixRings(Hfix, XA, true);
       }
       else if( Hfix == 0 )  {  // special case

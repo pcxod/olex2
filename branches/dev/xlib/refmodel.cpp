@@ -796,7 +796,7 @@ void RefinementModel::ProcessFrags()  {
   for( size_t i=0; i < AfixGroups.Count(); i++ )  {
     TAfixGroup& ag = AfixGroups[i];
     int m = ag.GetM();
-    if( !ag.IsFitted() &&  m < 16 )  continue;
+    if( !ag.IsFittedRing() &&  m <= 16 )  continue;
     if( m == 7 )  m = 6;
     bool generate = false;
     for( size_t j=0; j < ag.Count(); j++ )  {

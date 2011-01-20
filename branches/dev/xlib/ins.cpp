@@ -403,12 +403,15 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         construction of rigid groups... so to read them correctly we have to pop the last rigid group if
         encounter a new one
         */
-        if( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Current().B()->IsFitted() && TAfixGroup::IsFitted(afix) ) 
+        if( !cx.AfixGroups.IsEmpty() && !cx.AfixGroups.Current().B()->IsFixedGroup() &&
+          !TAfixGroup::IsFixedGroup(afix) )
+        {
           cx.AfixGroups.Pop();
+        }
         afixg = &cx.rm.AfixGroups.New(NULL, afix, d, sof == 11 ? 0 : sof, u == 10.08 ? 0 : u);
       }
       else {
-        if( !cx.AfixGroups.IsEmpty() && !cx.AfixGroups.Current().B()->IsFitted() ) 
+        if( !cx.AfixGroups.IsEmpty() ) //&& !cx.AfixGroups.Current().B()->IsFitted() ) 
           cx.AfixGroups.Pop();
       }
     }

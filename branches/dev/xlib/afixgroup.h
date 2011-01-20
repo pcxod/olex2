@@ -52,43 +52,61 @@ public:
   const TCAtom& GetPivot() const {  return *Pivot;  }
   int GetM() const {  return GetM(Afix);  }
   int GetN() const {  return GetN(Afix);  }
-  bool IsFitted() const {  return IsFitted(Afix);  }
-  bool IsRiding() const {  return IsRiding(Afix);  }
   bool IsSizable() const {  return IsSizable(Afix);  }
-  bool IsRotable() const {  return IsRotable(Afix);  }
+  bool IsRoting() const {  return IsRoting(Afix);  }
   bool IsRefinable() const {  return IsRefinable(Afix);  }
   bool IsUnbound() const {  return IsUnbound(Afix);  }
   bool HasExcplicitPivot() const {  return HasExcplicitPivot(Afix);  }
+  bool HasImplicitPivot() const {  return HasImplicitPivot(Afix);  }
+  bool IsFixedGroup() const {  return IsFixedGroup(Afix);  }
+  bool IsFittedRing() const {  return IsFittedRing(Afix);  }
+  bool IsFittedGroup() const {  return IsFittedGroup(Afix);  }
+  bool IsRiding() const {  return IsRiding(Afix);  }
   static int GetM(int afix) {  return afix/10;  }
   static int GetN(int afix) {  return afix%10;  }
-  static bool IsFitted(int afix)  {  
-    if( afix > 10 )  {
-      const int m = GetM(afix);
-      return (m == 5 || m == 6 || m == 7 || m == 10 || m == 11 || m > 16);
-    }
-    else  // rigid group, no geometrical constraints
-      return (afix == 6 || afix == 9 || afix == 7 || afix == 8);
+  /** returns true if the grous is well defined and the number of atoms of
+  the group is fixed
+  */
+  static bool IsFixedGroup(int afix)  {
+    const int m = GetM(afix);
+    return (m == 0 || m > 16);
   }
+  static bool IsFittedRing(int afix)  {
+    const int m = GetM(afix);
+    return (m == 5 || m == 6 || m == 7 || m == 10 || m == 11);
+  }
+  static bool IsFittedGroup(int afix)  {  return GetM(afix) > 16;  }
+  /** returns true for groups where pivot atom is a part of the group and
+  not a preceeding (like afix n=3 vs n=6)
+  */
   static bool HasExcplicitPivot(int afix)  {
     const int n = GetN(afix), m = GetM(afix);
-    return (n == 6 || n == 9 || (m == 0 && (n == 7 || n == 8)));
+    return (n == 6 || n == 9);
+  }
+  // these require an explicit pivot
+  static bool HasImplicitPivot(int afix)  {
+    const int n = GetN(afix);
+    return (n == 3 || n == 4 || n == 5 || n == 7 || n == 8);
   }
   static bool IsRiding(int afix)  {
-    const int n = GetN(afix);
-    return (n == 3 || n == 4 || n == 7 || n == 8);
+    return (HasImplicitPivot(afix) || IsDependent(afix));
   }
+  //bond lengths/size can are uniformly sizeable
   static bool IsSizable(int afix)  {
     const int n = GetN(afix);
     return (n == 4 || n == 8 || n == 9);
   }
-  static bool IsRotable(int afix)  {
+  //free rotating or pivoted rotating
+  static bool IsRoting(int afix)  {
     const int n = GetN(afix);
     return (n == 6 || n == 7 || n == 8 || n == 9);
   }
+  // if the group has a refineable parameter (size, angle etc)
   static bool IsRefinable(int afix)  {
     const int n = GetN(afix);
     return (n == 4 || n ==6 || n == 7 || n == 8 || n == 9);
   }
+  // these require no pivot atom
   static bool IsUnbound(int afix)  {
     return (afix == 1 || afix == 2);
   }

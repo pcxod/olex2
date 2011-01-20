@@ -141,8 +141,10 @@ void TCAtom::Assign(const TCAtom& S)  {
 //..............................................................................
 int TCAtom::GetAfix() const {
   if( ParentAfixGroup == NULL )  {
-    if( DependentAfixGroup != NULL && (DependentAfixGroup->IsFitted() || DependentAfixGroup->GetM() == 0) )
+    if( DependentAfixGroup != NULL && (DependentAfixGroup->HasExcplicitPivot() ||
+      DependentAfixGroup->GetM() == 0) )  {
       return DependentAfixGroup->GetAfix();
+    }
     //if( DependentHfixGroup != NULL && !DependentHfixGroup->IsRiding() )
     //  return DependentHfixGroup->GetAfix();
     return 0;

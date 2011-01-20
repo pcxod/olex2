@@ -2468,6 +2468,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\mat_id.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\mol.h"
 				>
 			</File>
@@ -2509,10 +2513,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\rm_base.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\xlib\rot_id.h"
 				>
 			</File>
 			<File
