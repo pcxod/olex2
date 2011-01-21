@@ -1263,50 +1263,44 @@ void TLattice::Compaq()  {
   OnStructureUniq.Exit(this);
 }
 //..............................................................................
+size_t TLattice_CompaqAll_Process(TUnitCell& uc, TCAtom& ca, const smatd& matr)  {
+  size_t cnt = 0;
+  for( size_t j=0; j < ca.AttachedSiteCount(); j++ )  {
+    TCAtom::Site& site = ca.GetAttachedSite(j);
+    if( site.atom->GetTag() != 0 )
+      continue;
+    site.atom->SetTag(1);
+    if( !matr.IsFirst() )  {
+      cnt++;
+      site.matrix = uc.MulMatrix(site.matrix, matr);
+    }
+    site.atom->ccrd() = site.matrix*site.atom->ccrd();
+    if( site.atom->GetEllipsoid() != NULL )
+      *site.atom->GetEllipsoid() = uc.GetEllipsoid(site.matrix.GetContainerId(), site.atom->GetId());
+    if( site.atom->IsAvailable() )
+      cnt += TLattice_CompaqAll_Process(uc, *site.atom, site.matrix);
+  }
+  return cnt;
+}
 void TLattice::CompaqAll()  {
   if( Generated || Fragments.Count() < 2 )  return;
-  OnStructureUniq.Enter(this);
-  OnDisassemble.SetEnabled(false);
-  bool changes = true;
-  size_t min_fc = Fragments.Count();
-  while( changes )  {
-    changes = false;
-    for( size_t i=0; i < Fragments.Count(); i++ )  {
-      for( size_t j=i+1; j < Fragments.Count(); j++ )  {
-        smatd* m = NULL;
-        for( size_t k=0; k < Fragments[i]->NodeCount(); k++ )  {
-          const TSAtom& fa = Fragments[i]->Node(k);
-          for( size_t l=0; l < Fragments[j]->NodeCount(); l++ )  {
-            if( Fragments[j]->Node(l).CAtom().IsAttachedTo(fa.CAtom()) )  {
-              m = GetUnitCell().GetClosest(fa.CAtom(), Fragments[j]->Node(l).CAtom(), false);
-              if( m != NULL )
-                break;
-            }
-          }
-          if( m != NULL )  break;
-        }
-        if( m == NULL )  continue;
-        changes = true;
-        for( size_t k=0; k < Fragments[j]->NodeCount(); k++ )  {
-          TSAtom& SA = Fragments[j]->Node(k);
-          if( SA.IsDeleted() )  continue;
-          SA.CAtom().ccrd() = *m * SA.CAtom().ccrd();
-          if( SA.CAtom().GetEllipsoid() != NULL )
-            *SA.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(m->GetContainerId(), SA.CAtom().GetId());
-        }
-        delete m;
-      }
-      Init();
-      if( Fragments.Count() >= min_fc )  {
-        changes = false;
-        break;
-      }
-      else
-        min_fc = Fragments.Count();
-    }
+  TUnitCell& uc = GetUnitCell();
+  GetAsymmUnit().GetAtoms().
+    ForEach(ACollectionItem::TagSetter<>(0));
+  Atoms.ForEach(ACollectionItem::TagSetter<>(0));
+  size_t cnt = 0;
+  for( size_t i=0; i < Atoms.Count(); i++ )  {
+    if( Atoms[i]->CAtom().GetTag() != 0 || !Atoms[i]->CAtom().IsAvailable() )
+      continue;
+    cnt += TLattice_CompaqAll_Process(uc, Atoms[i]->CAtom(), uc.GetMatrix(0));
   }
-  OnDisassemble.SetEnabled(true);
+  OnStructureUniq.Enter(this);
+  TActionQueueLock __queuelock(&OnStructureUniq);
+  OnStructureUniq.SetEnabled(false);
   Init();
+  if( cnt != 0 )
+    MoveToCenter();
+  __queuelock.Unlock();
   OnStructureUniq.Exit(this);
 }
 //..............................................................................
