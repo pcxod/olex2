@@ -100,10 +100,10 @@ template <int base=12> struct full_smatd_id  {
   static vec3d get_t(uint64_t id)  {
     vec3d rv;
     for( int i=0; i < 3; i++ )  {
-      rv.t[i] = static_cast<double>(
+      rv[i] = static_cast<double>(
         (id >>(tr_len*i + rotation_id::size))&tr_mask)/base;
       if( (id & ((uint64_t)1<<(sig_off+i))) != 0 )
-        rv.t[i] *= -1;
+        rv[i] *= -1;
     }
     return rv;
   }

@@ -1,5 +1,6 @@
 #ifndef __olx_xl_symspace_H
 #define __olx_xl_symspace_H
+#include "edict.h"
 #include "mat_id.h"
 BeginXlibNamespace()
 
@@ -10,7 +11,7 @@ template <class MatList> class TSymSpace  {
   size_t start;
 protected:
   TSymSpace(const TSymSpace& sp, size_t _start) :
-    ml(sp.ml), 
+    ml(sp.ml),
     cart2cell(sp.cart2cell),
     cell2cart(sp.cell2cart),
     hkl2cart(sp.hkl2cart),
@@ -22,7 +23,7 @@ public:
     const mat3d& _cell2cart,
     const mat3d& _hkl2cart,
     bool _centrosymmetric) :
-      ml(_ml), 
+      ml(_ml),
       cart2cell(_cart2cell),
       cell2cart(_cell2cart),
       hkl2cart(_hkl2cart),
@@ -30,13 +31,13 @@ public:
       centrosymmetric(_centrosymmetric)  {}
 
   TSymSpace(const TSymSpace& sp) :
-    ml(sp.ml), 
+    ml(sp.ml),
     cart2cell(sp.cart2cell),
     cell2cart(sp.cell2cart),
     hkl2cart(sp.hkl2cart),
     start(sp.start),
     centrosymmetric(sp.centrosymmetric)  {}
-    
+
   inline const smatd& operator [] (size_t i) const {  return ml[i+start];  }
   inline size_t Count() const {  return ml.Count()-start;  }
   inline bool IsEmpty() const {  return Count() == 0;  }

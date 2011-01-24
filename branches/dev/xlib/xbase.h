@@ -34,8 +34,6 @@ protected:
   Net* Network;  // a pointer to parent Network
   short Type;  // object type: eg bond, atom, etc
   size_t OwnerId, FragmentId;
-  inline void SetOwnerId(size_t v)  {  OwnerId = v;  }
-  inline void SetFragmentId(size_t v)  {  FragmentId = v;  }
 public:
   TSObject(Net* Parent) : Network(Parent), Type(sotNone), OwnerId(~0)  {}
   virtual ~TSObject()  {}
@@ -51,12 +49,12 @@ public:
   inline void SetNetwork(Net& n)  {  Network = &n;  }
 
   DefPropP(short, Type)
-  // this must be updated the owner container
+  // this must be updated by the owner container
   inline size_t GetOwnerId() const {  return OwnerId;  }
   inline size_t GetFragmentId() const {  return FragmentId;  }
-  template <typename> friend class TObjectProvider;
-  friend class TLattice;
-  friend typename Net;
+  // for the owner usage
+  inline void SetOwnerId(size_t v)  {  OwnerId = v;  }
+  inline void SetFragmentId(size_t v)  {  FragmentId = v;  }
 };
 //---------------------------------------------------------------------------
 // TBasicNode - encapsulate basic bond
