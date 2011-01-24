@@ -191,7 +191,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     }
   }
   sw.print(xapp.NewLogEntry(logInfo));
-  return EmptyString;
+  return EmptyString();
 }
 //...........................................................................................
 void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatterers, TCAtomPList& alist)  {

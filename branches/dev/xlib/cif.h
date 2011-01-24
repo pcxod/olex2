@@ -87,7 +87,7 @@ public:
   //............................................................................
   //Returns the data name of the file (data_XXX, returns XXX in this case)
   inline const olxstr& GetDataName() const {
-    return (block_index == InvalidIndex) ? EmptyString : data_provider[block_index].GetName();
+    return (block_index == InvalidIndex) ? EmptyString() : data_provider[block_index].GetName();
   }
   //............................................................................
   //Returns a loop specified by index
@@ -169,7 +169,7 @@ struct AtomCifEntry : public cif_dp::IStringCifEntry {
   virtual bool IsSaveable() const {  return !data.IsDeleted();  }
   virtual size_t GetCmpHash() const {  return data.GetId();  }
   virtual const olxstr& operator [] (size_t i) const {  return  data.GetLabel();  }
-  virtual const olxstr& GetComment() const {  return EmptyString;  }
+  virtual const olxstr& GetComment() const {  return EmptyString();  }
   virtual cif_dp::ICifEntry* Replicate() const {  return new AtomCifEntry(*this);  }
   virtual void ToStrings(TStrList& list) const {
     if( list.IsEmpty() || (list.GetLastString().Length() + data.GetLabel().Length() + 1 > 80) )
@@ -187,7 +187,7 @@ struct AtomPartCifEntry : public cif_dp::IStringCifEntry {
   virtual size_t Count() const {  return 1;  }
   virtual bool IsSaveable() const {  return !data.IsDeleted();  }
   virtual const olxstr& operator [] (size_t i) const {  return  (tmp_val = (int)data.GetPart());  }
-  virtual const olxstr& GetComment() const {  return EmptyString;  }
+  virtual const olxstr& GetComment() const {  return EmptyString();  }
   virtual cif_dp::ICifEntry* Replicate() const {  return new AtomPartCifEntry(*this);  }
   virtual void ToStrings(TStrList& list) const {
     if( data.GetPart() == 0 )

@@ -64,7 +64,7 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
     }
   }
   catch( const TExceptionBase& exc )  {  
-    FileName = EmptyString;
+    FileName.SetLength(0);
     throw TFunctionFailedException(__OlxSourceInfo, exc);  
   }
   /* fix labels for not native formats, will not help for FE1A, because it could come from
@@ -196,7 +196,7 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
   if( GetRM().GetHKLSource().IsEmpty() || !TEFile::Exists(GetRM().GetHKLSource()) )  {
     olxstr src = TXApp::GetInstance().LocateHklFile();
     if( !src.IsEmpty() && !TEFile::Existsi(olxstr(src), src) )
-      src = EmptyString;
+      src.SetLength(0);
     GetRM().SetHKLSource(src);
   }
 }
@@ -279,7 +279,7 @@ void TXFile::Sort(const TStrList& ins)  {
       labels.Clear();
     }
     if( moiety_index != InvalidIndex )  {
-      sort = EmptyString;
+      sort.SetLength(0);
       if( moiety_index+1 < ins.Count() )  {
         for( size_t i=moiety_index+1; i < ins.Count(); i++ )  {
           if( ins[i].CharAt(0) == '+' )

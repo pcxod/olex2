@@ -14,7 +14,7 @@ class TXFader: public AGDrawObject  {
 public:
   TXFader(TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TXFader();
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName=EmptyString());
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
 

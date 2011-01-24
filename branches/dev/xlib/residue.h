@@ -25,7 +25,7 @@ protected:
     ca.SetResiId(Id);
   }
 public:
-  TResidue(TAsymmUnit& parent, uint32_t id, const olxstr& cl=EmptyString, int number = 0, const olxstr& alias=EmptyString) : 
+  TResidue(TAsymmUnit& parent, uint32_t id, const olxstr& cl=EmptyString(), int number = 0, const olxstr& alias=EmptyString()) : 
       Parent(parent), 
       Id(id), 
       ClassName(cl), 
@@ -40,11 +40,11 @@ public:
   const TCAtomPList& GetAtomList() const {  return Atoms;  }
   TAsymmUnit& GetParent()  {  return Parent;  }
   virtual TIString ToString() const {
-    if( Id == 0 )  return EmptyString;
+    if( Id == 0 )  return EmptyString();
     olxstr rv("RESI ");
     rv << ClassName;
     if( Number != 0 )  rv << ' ' << Number;
-    return (rv << (Alias.IsEmpty() ? EmptyString : (olxstr(' ') << Alias)));
+    return (rv << (Alias.IsEmpty() ? EmptyString() : (olxstr(' ') << Alias)));
   }
   size_t Count() const {  return Atoms.Count();  }  
   TCAtom& GetAtom(size_t i) const {  return *Atoms[i];  }

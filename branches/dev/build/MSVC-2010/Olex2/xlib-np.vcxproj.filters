@@ -45,9 +45,6 @@
     <ClCompile Include="..\..\..\xlib\cifdata.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\xlib\cifloop.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\xlib\ciftab.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -470,6 +467,18 @@
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Zr.cpp">
       <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\cifdp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\symmcon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\catomlist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\hall.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -51,7 +51,7 @@ protected:
   virtual bool Enter(const IEObject *Sender, const IEObject *Data=NULL);
 public:
   TGlConsole(TGlRenderer& Render, const olxstr& collectionName);
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName=EmptyString());
   virtual ~TGlConsole();
 
   olxstr GetCommand() const;
@@ -92,7 +92,7 @@ public:
 
   void PrintText(const olxstr& S, TGlMaterial *M=NULL, bool Hyphenate=true);
   void PrintText(const TStrList& SL, TGlMaterial *M=NULL, bool Hyphenate=true);
-  inline void NewLine()  {  FBuffer.Add(EmptyString); }
+  inline void NewLine()  {  FBuffer.Add(EmptyString()); }
   size_t MaxLines();
   inline void SetMaxLines(size_t V)  {  FMaxLines = V; };
   inline size_t GetLinesToShow() const {  return FLinesToShow;  }
@@ -113,7 +113,7 @@ public:
   void LibLineSpacing(const TStrObjList& Params, TMacroError& E);
   void LibInviteString(const TStrObjList& Params, TMacroError& E);
   void LibCommand(const TStrObjList& Params, TMacroError& E);
-  class TLibrary* ExportLibrary(const olxstr& name=EmptyString);
+  class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 
 

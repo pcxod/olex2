@@ -72,7 +72,7 @@ public:
   static bool Exists(const olxstr& fn);
 
   void LibExists(const TStrObjList& Params, TMacroError& E);
-  static TLibrary* ExportLibrary(const olxstr& name=EmptyString);
+  static TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 protected:
 #ifndef _NO_PYTHON
   static void PyInit();

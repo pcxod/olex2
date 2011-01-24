@@ -112,7 +112,7 @@ public:
         Toks.Clear();
         Toks.Strtok(SL[i], ' ');
         if( ParseRestraint(rm, Toks) )
-          SL[i] = EmptyString;
+          SL[i].SetLength(0);
       }
     }
 //..............................................................................

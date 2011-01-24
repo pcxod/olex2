@@ -125,7 +125,7 @@ public:
     }
     //
     size_t resi_ind = Expression.IndexOf('_');
-    olxstr resi_name = (resi_ind == InvalidIndex ? EmptyString : Expression.SubStringFrom(resi_ind+1));
+    olxstr resi_name = (resi_ind == InvalidIndex ? EmptyString() : Expression.SubStringFrom(resi_ind+1));
     // check if it is just an equivalent position
     const smatd* eqiv = NULL;
     size_t eqiv_ind = resi_name.IndexOf('$');
@@ -210,7 +210,7 @@ public:
       }
       tmp_atoms.Clear();
     }
-    return unprocessed.IsEmpty() ? EmptyString : unprocessed.Text(' ');
+    return unprocessed.IsEmpty() ? EmptyString() : unprocessed.Text(' ');
   }
 };
 

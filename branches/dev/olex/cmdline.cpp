@@ -60,7 +60,7 @@ bool TCmdLine::ProcessKey(wxKeyEvent& evt)  {
     return true;
   }
   else if( (evt.GetKeyCode() == WXK_ESCAPE) && evt.GetModifiers() == 0 )  {
-    SetCommand( EmptyString );
+    SetCommand( EmptyString() );
     return true;
   }
   else if( (evt.GetKeyCode() == WXK_HOME) && evt.GetModifiers() == 0 )  {

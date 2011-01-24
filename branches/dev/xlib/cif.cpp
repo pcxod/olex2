@@ -142,11 +142,11 @@ void TCif::SaveToStrings(TStrList& Strings)  {
 }
 //..............................................................................
 olxstr TCif::GetParamAsString(const olxstr &Param) const {
-  if( block_index == InvalidIndex )  return EmptyString;
+  if( block_index == InvalidIndex )  return EmptyString();
   IStringCifEntry* ce = dynamic_cast<IStringCifEntry*>(
     data_provider[block_index].param_map.Find(Param, NULL));
   if( ce == NULL || ce->Count() == 0 )
-    return EmptyString;
+    return EmptyString();
   olxstr rv = (*ce)[0];
   for( size_t i = 1; i < ce->Count(); i++ )
     rv << '\n' << (*ce)[i];
@@ -544,7 +544,7 @@ bool TCif::Adopt(TXFile& XF)  {
   Clear();
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
   GetRM().Assign(XF.GetRM(), true);
-  Title = TEFile::ChangeFileExt(TEFile::ExtractFileName(XF.GetFileName()), EmptyString);
+  Title = TEFile::ChangeFileExt(TEFile::ExtractFileName(XF.GetFileName()), EmptyString());
 
   block_index = 0;
   data_provider.Add(Title.Replace(' ', "%20"));
@@ -881,12 +881,12 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
       }
       if( DI == NULL )  continue;
       olxstr Val = (*LT)[i][j]->GetStringValue();
-      olxstr Tmp = DI->GetFieldValue("mustequal", EmptyString);
+      olxstr Tmp = DI->GetFieldValue("mustequal", EmptyString());
       TStrList Toks(Tmp, ';');
       if( !Tmp.IsEmpty() && (Toks.IndexOfi(Val) == InvalidIndex) ) // equal to
       {  AddRow = false;  break;  }
 
-      Tmp = DI->GetFieldValue("atypeequal", EmptyString);
+      Tmp = DI->GetFieldValue("atypeequal", EmptyString());
       if( !Tmp.IsEmpty() )  {  // check for atom type equals to
         ICifEntry* CD = (*LT)[i][j];
         if( CD != NULL && EsdlInstanceOf(*CD, AtomCifEntry) )
@@ -895,7 +895,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
             break;
           }
       }
-      Tmp = DI->GetFieldValue("atypenotequal", EmptyString);
+      Tmp = DI->GetFieldValue("atypenotequal", EmptyString());
       if( !Tmp.IsEmpty() )  {  // check for atom type equals to
         ICifEntry* CD = (*LT)[i][j];
         if( CD != NULL && EsdlInstanceOf(*CD, AtomCifEntry) )
@@ -904,13 +904,13 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
             break;
           }
       }
-      Tmp = DI->GetFieldValue("mustnotequal", EmptyString);
+      Tmp = DI->GetFieldValue("mustnotequal", EmptyString());
       Toks.Clear();
       Toks.Strtok(Tmp, ';');
       if( !Tmp.IsEmpty() && (Toks.IndexOfi(Val) != InvalidIndex) ) // not equal to
       {  AddRow = false;  break;  }
 
-      Tmp = DI->GetFieldValue("multiplier", EmptyString);
+      Tmp = DI->GetFieldValue("multiplier", EmptyString());
       if( !Tmp.IsEmpty() )  {  // Multiply
         Val = Table[i-RowDeleted][j];
         MultValue(Val, Tmp);
@@ -927,7 +927,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
     TDataItem *DI = TD->FindItemi(LT->ColName(i));
     if( DI != NULL )  {
       Table.ColName(i-ColDeleted) = DI->GetFieldValueCI("caption");
-      if( !DI->GetFieldValueCI("visible", FalseString).ToBool() )  {
+      if( !DI->GetFieldValueCI("visible", FalseString()).ToBool() )  {
         Table.DelCol(i-ColDeleted);
         ColDeleted++;
       }

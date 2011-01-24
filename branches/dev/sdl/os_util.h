@@ -37,7 +37,7 @@ BeginEsdlNamespace()
      olxch* val=NULL;
      size_t sz;
      OLX_GETENV(&sz, NULL, 0, name.u_str());
-     if( sz == 0 )  return EmptyString;
+     if( sz == 0 )  return EmptyString();
      val = new olxch[sz];
      OLX_GETENV(&sz, val, sz, name.u_str());
      return olxstr::FromExternal(val, sz-1);

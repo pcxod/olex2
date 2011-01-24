@@ -29,7 +29,7 @@ public:
   void SetNormals(TArrayList<vec3f>* normals)    {  Normals = normals;  }
   void SetMaterial(const olxstr& mat)  {  GlM.FromString(mat);  }
   void SetMaterial(const TGlMaterial& glm)  {  GlM = glm;  }
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName=EmptyString());
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false;  }
 };

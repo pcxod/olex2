@@ -11,7 +11,7 @@ class TXBlob: public AGDrawObject  {
 public:
   TXBlob(TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TXBlob()  {}
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName=EmptyString());
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min)  {  return false;  }
 

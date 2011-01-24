@@ -60,7 +60,7 @@ public:
   TTStrList(size_t count)  {
     Strings.SetCapacity( count );
     for( size_t i=0; i < count; i++ )
-      Add(EmptyString);
+      Add(EmptyString());
   }
   // creates a list with strtok entries in it
   TTStrList(const SC& string, const SC& sep)  {
@@ -79,7 +79,7 @@ public:
     }
     else  {
       while( Strings.Count() < nc )
-        Add(EmptyString);
+        Add(EmptyString());
     }
     return *this;
   }
@@ -243,7 +243,7 @@ public:
       tc += Strings[i]->String.Length();
       tc += slen;
     }
-    SC E(EmptyString, tc);
+    SC E(EmptyString(), tc);
     for( size_t i=start; i < end; i++ )  {
       E << Strings[i]->String;
       if( i < end-1 ) // skip for the last line
@@ -299,7 +299,7 @@ public:
     return SaveToTextStream(file);
   }
 
-  virtual TIString ToString() const  {   return Text(NewLineSequence).ToString();  }
+  virtual TIString ToString() const  {   return Text(NewLineSequence()).ToString();  }
 
   TTStrList& operator = (const TTStrList& list)  {  return Assign(list);  }
 
@@ -359,7 +359,7 @@ public:
       }
       while( ++ind < Tmp.Length() && Tmp.CharAt(ind) == Sep ) 
         if( !SkipSequences )
-          Add(EmptyString);
+          Add(EmptyString());
       if( ind >= Tmp.Length() )  {
         Tmp.SetLength(0);
         break;

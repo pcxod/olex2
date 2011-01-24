@@ -49,7 +49,7 @@ namespace olex
     virtual void unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& funcName) = 0;
 
     virtual const olxstr& getDataDir() const = 0;
-    virtual const olxstr& getVar(const olxstr &name, const olxstr &defval=NullString) const = 0;
+    virtual const olxstr& getVar(const olxstr &name, const olxstr &defval=EmptyString()) const = 0;
     virtual void setVar(const olxstr &name, const olxstr &val) const = 0;
     virtual TStrList GetPluginList() const = 0;
     virtual olxstr TranslateString(const olxstr& str) const = 0;

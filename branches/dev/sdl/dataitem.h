@@ -39,7 +39,7 @@ protected:
   inline void SetParent(TDataItem* p)  {  Parent = p;  }
   TEStrBuffer& writeFullName(TEStrBuffer& bf) const;
 public:
-  TDataItem(TDataItem *Parent, const olxstr& Name, const olxstr& value=EmptyString);
+  TDataItem(TDataItem *Parent, const olxstr& Name, const olxstr& value=EmptyString());
   virtual ~TDataItem() {  Clear();  }
   void Clear();
   void Sort();  // sorts fields and items - improve the access by name performance
@@ -47,7 +47,7 @@ public:
   size_t LoadFromString(size_t start, const olxstr &Data, TStrList* Log);
   void SaveToStrBuffer(TEStrBuffer &Data) const;
 
-  TDataItem& AddItem(const olxstr& Name, const olxstr& value=EmptyString);
+  TDataItem& AddItem(const olxstr& Name, const olxstr& value=EmptyString());
   // if extend is true the item's content is extended instead of being overwritten
   void AddContent(TDataItem& DI, bool extend=false);
   // implementation of the include instruction object.item
@@ -103,12 +103,12 @@ public:
       DeleteField(fieldIndex);
   }
   template <class T>
-  const olxstr& GetFieldValue( const T& Name, const olxstr& Default=EmptyString ) const {
+  const olxstr& GetFieldValue( const T& Name, const olxstr& Default=EmptyString() ) const {
     const size_t i = Fields.IndexOf(Name);
     return (i==InvalidIndex) ? Default : Fields.GetObject(i);
   }
   template <class T>
-  const olxstr& GetFieldValueCI( const T& Name, const olxstr& Default=EmptyString ) const {
+  const olxstr& GetFieldValueCI( const T& Name, const olxstr& Default=EmptyString() ) const {
     const size_t i = Fields.IndexOfi(Name);
     return (i==InvalidIndex) ? Default : Fields.GetObject(i);
   }

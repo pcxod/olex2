@@ -38,8 +38,8 @@ public:
 
   void Reset()  {
     ProcessError = 0;
-    ErrorInfo = EmptyString;
-    Location = EmptyString;
+    ErrorInfo.SetLength(0);
+    Location.SetLength(0);
     if( DeleteObject )  delete RetValue;
     DeleteObject = false;
     RetValue = (IEObject*)NULL;

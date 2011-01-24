@@ -236,7 +236,7 @@ template <typename T>
   }
 
   virtual TIString ToString() const {
-    olxstr s(EmptyString, Length);
+    olxstr s(EmptyString(), Length);
     ToString(s);
     return s;
   }

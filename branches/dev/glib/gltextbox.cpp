@@ -68,7 +68,7 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
   if( P.GetType() == sgloText )  {
     TGlFont& Fnt = GetFont();
     const double rscale = Parent.GetExtraZoom()*Parent.GetViewZoom();
-    const uint16_t th = Fnt.TextHeight(EmptyString);
+    const uint16_t th = Fnt.TextHeight(EmptyString());
     const double GlLeft = ((Left+GetCenter()[0])*rscale - (double)Parent.GetWidth()/2) + 0.1;
     const double GlTop = ((double)Parent.GetHeight()/2 -
       (Top-GetCenter()[1]+Height)*rscale) + 0.1;
@@ -146,7 +146,7 @@ void TGlTextBox::PostText(const TStrList &SL, TGlMaterial *M)  {
 void TGlTextBox::Fit()  {
   if( FBuffer.Count() > 1 )  {
     const TGlFont& glf = GetFont();
-    const uint16_t th = glf.TextHeight(EmptyString);
+    const uint16_t th = glf.TextHeight(EmptyString());
     const double LineSpacer = (0.05+LineSpacing-1)*th;
     Height = 0;
     for( size_t i=0; i < FBuffer.Count(); i++ )  {

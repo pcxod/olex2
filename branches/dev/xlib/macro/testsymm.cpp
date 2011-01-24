@@ -74,7 +74,7 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
   TUnitCell& uc = XApp.XFile().GetLattice().GetUnitCell();
   TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
   TSymmTest st(uc);
-  XApp.NewLogEntry() << NewLineSequence << "Center of gravity: " << st.GetGravityCenter().ToString();
+  XApp.NewLogEntry() << NewLineSequence() << "Center of gravity: " << st.GetGravityCenter().ToString();
   double tol = Options.FindValue('e', "0.04").ToDouble();
   double confth = 75; // %
   TPtrList<TSpaceGroup> sglist;

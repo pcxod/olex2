@@ -178,7 +178,7 @@ void TAutoDBNode::LoadFromStream(IDataInputStream& in)  {
 }
 //..............................................................................
 const olxstr& TAutoDBNode::ToString() const  {
-  olxstr& tmp = TEGC::New<olxstr>(EmptyString, 100);
+  olxstr& tmp = TEGC::New<olxstr>(EmptyString(), 100);
   tmp << Element->symbol << '{';
   for( size_t i=0; i < AttachedNodes.Count(); i++ )  {
     tmp << AttachedNodes[i].GetType().symbol;
@@ -397,7 +397,7 @@ void TAutoDBNetNode::LoadFromStream( IDataInputStream& input )  {
 }
 //..............................................................................
 const olxstr& TAutoDBNetNode::ToString(int level) const  {
-  olxstr& tmp = TEGC::New<olxstr>(EmptyString, 256);
+  olxstr& tmp = TEGC::New<olxstr>(EmptyString(), 256);
   tmp << FCenter->ToString();
   if( level == 1 )  {
     tmp << '{';
@@ -1064,7 +1064,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
   // analysis of "confident", L3 and L2 atom types and Uiso
   for( size_t i=0; i < sn_count; i++ )  {
     if( sn->Node(i).GetId() == 0 )  continue;
-    tmp = EmptyString;
+    tmp.SetLength(0);
     TTypeList< THitList<TAutoDBNetNode> >* guessN =
       !guesses[i].list3->IsEmpty() ? guesses[i].list3 : guesses[i].list2;
     for( size_t j=0; j < guessN->Count(); j++ )
@@ -1104,7 +1104,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
   // assigning atom types according to L3 and L2 and printing stats
   for( size_t i=0; i < sn_count; i++ )  {
     if( sn->Node(i).GetId() == 0 )  continue;
-    tmp = EmptyString;
+    tmp.SetLength(0);
     TTypeList< THitList<TAutoDBNetNode> >* guessN =
       !guesses[i].list3->IsEmpty() ? guesses[i].list3 : guesses[i].list2;
 
@@ -1199,7 +1199,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
       //  searchLighter = true;
       if( permutator != NULL && permutator->IsActive() )
         permutator->InitAtom( guesses[i] );
-      tmp = EmptyString;
+      tmp.SetLength(0);
       for( size_t j=0; j < guesses[i].list1->Count(); j++ )
         guesses[i].list1->GetItem(j).Sort();
       guesses[i].list1->QuickSorter.SortSF(*guesses[i].list1, THitList<TAutoDBNode>::SortByFOMFunc);
@@ -1370,7 +1370,7 @@ void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt, TStrL
   }
   report.Add( olxstr("------Analysis complete with ") << extraAtoms << " extra atoms and " <<
     missingAtoms << " missing atoms-----" );
-  report.Add(EmptyString);
+  report.Add(EmptyString());
 }
 //..............................................................................
 //..............................................................................

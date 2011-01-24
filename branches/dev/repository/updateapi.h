@@ -57,7 +57,7 @@ struct SettingsFile  {
     src_for_dest = settings["src_for_dest"];
     files_to_skip.Strtok(settings["skip"], ';');
     olex2_port = settings["olex-port"];
-    ask_for_update = settings.GetParam("ask_update", TrueString).ToBool();
+    ask_for_update = settings.GetParam("ask_update", TrueString()).ToBool();
   }
   // save will change repo/update/ to repo...
   bool Save() {
@@ -190,7 +190,7 @@ public:
   }
   /* as above, but returns newly created file system wrapper or NULL if failed;
   if check file is not empty, the file existence will be also checked */
-  AFileSystem* FindActiveRepositoryFS(olxstr* repo_name=NULL, const olxstr& check_file=EmptyString) const;
+  AFileSystem* FindActiveRepositoryFS(olxstr* repo_name=NULL, const olxstr& check_file=EmptyString()) const;
   // fills list with available repositories
   void GetAvailableRepositories(TStrList& res) const;
   // fills list with available repositories

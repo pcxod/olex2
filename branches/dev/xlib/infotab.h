@@ -17,7 +17,7 @@ class InfoTab : public IEObject {  // need to cast to delete
   RefinementModel& RM;
   short Type;
 public:
-  InfoTab(RefinementModel& rm, short type, const olxstr& paramName=EmptyString, const olxstr& resiName=EmptyString) : 
+  InfoTab(RefinementModel& rm, short type, const olxstr& paramName=EmptyString(), const olxstr& resiName=EmptyString()) : 
       RM(rm), Type(type), ParamName(paramName), ResiName(resiName) {  }
   
   InfoTab(RefinementModel& rm, const InfoTab& it) : RM(rm)  {  

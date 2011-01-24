@@ -24,7 +24,7 @@ TOlexViewer::TOlexViewer(int w, int h) {
   }
   bool inited = GXApp != NULL;
   if( GXApp == NULL ) 
-    GXApp = new TGXApp(EmptyString);
+    GXApp = new TGXApp(EmptyString());
   if( !Status.IsEmpty() )  {
     Initialised = false;
     return;
@@ -40,13 +40,6 @@ TOlexViewer::TOlexViewer(int w, int h) {
   glm.SetFlags(sglmAmbientF|sglmEmissionF|sglmIdentityDraw);
   glm.AmbientF = 0x7fff7f;
   glm.EmissionF = 0x1f2f1f;
-  //wxFont Font(*wxNORMAL_FONT);//|wxFONTFLAG_ANTIALIASED);
-  //GXApp->GetRender().GetScene().CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str())->SetMaterial(glm);
-
-  GXApp->GetRender().GetScene().CreateFont("Labels", "@20")->SetMaterial(glm);
-  
-  GXApp->SetLabelsFont(0);
-  
   TIns *Ins = new TIns;
   GXApp->RegisterXFileFormat(Ins, "ins");
   GXApp->RegisterXFileFormat(Ins, "res");
@@ -116,15 +109,15 @@ olxstr TOlexViewer::GetObjectLabelAt(int x, int y)  {
   if( G != NULL )  {
     if( EsdlInstanceOf( *G, TXAtom) )  {
       TXAtom& xa = *(TXAtom*)G;
-      Tip = xa.Atom().GetLabel();
-      if( xa.Atom().GetType() == iQPeakZ )  {
-        Tip << ':' << xa.Atom().CAtom().GetQPeak();
+      Tip = xa.GetLabel();
+      if( xa.GetType() == iQPeakZ )  {
+        Tip << ':' << xa.CAtom().GetQPeak();
       }
     }
     else  if( EsdlInstanceOf( *G, TXBond) )  {
-      Tip = ((TXBond*)G)->Bond().A().GetLabel();
-      Tip << '-' << ((TXBond*)G)->Bond().B().GetLabel() << ": ";
-      Tip << olxstr::FormatFloat(3, ((TXBond*)G)->Bond().Length());
+      Tip = ((TXBond*)G)->A().GetLabel();
+      Tip << '-' << ((TXBond*)G)->B().GetLabel() << ": ";
+      Tip << olxstr::FormatFloat(3, ((TXBond*)G)->Length());
     } 
   }
   return Tip;
@@ -277,7 +270,8 @@ JNIEXPORT void JNICALL Java_olex2j_GlWindow_paint(JNIEnv* env, jobject this_obje
   }
   if( empty )  {
     const float* cc = TGXApp::GetInstance().GetRender().LightModel.GetClearColor().Data();
-    char clrs[4] = {cc[0]*255, cc[1]*255, cc[2]*255, cc[4]*255};
+    char clrs[4] = {
+      char(cc[0]*255), char(cc[1]*255), char(cc[2]*255), char(cc[4]*255)};
     int sz = DrawContext::Instance->Height * DrawContext::Instance->Width * 4;
     for( int i = 0; i < sz; i +=4 )  {
       DrawContext::Instance->Buffer[i]   = clrs[0];
@@ -310,10 +304,10 @@ JNIEXPORT jbyteArray JNICALL Java_olex2j_GlWindow_getStatus(JNIEnv* env, jobject
   return rv;
 }
 JNIEXPORT void JNICALL Java_olex2j_GlWindow_finalise(JNIEnv *, jobject this_object, jint o_id)  {
-  size_t i = TOlexViewer::Instances.IndexOfo_id);
+  size_t i = TOlexViewer::Instances.IndexOf(o_id);
   if( i == InvalidIndex )  return;
   delete TOlexViewer::Instances.GetObject(i);
-  TOlexViewer::Instances.Remove(i);
+  TOlexViewer::Instances.Delete(i);
   if( TOlexViewer::Instances.IsEmpty() )
     delete DrawContext::Instance;
 }

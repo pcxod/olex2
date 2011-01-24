@@ -60,7 +60,7 @@ public:
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     TGXApp& app = *TGlXApp::GetGXApp();
     if( !app.CheckFileType<TIns>() )  return false;
-    ReCon = Options.FindValue("r", EmptyString).ToLowerCase();
+    ReCon = Options.FindValue("r", EmptyString()).ToLowerCase();
     TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
     TGXApp::AtomIterator ai = app.GetAtoms();
     while( ai.HasNext() )

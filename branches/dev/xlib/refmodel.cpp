@@ -23,8 +23,8 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   AfixGroups(*this), 
   rSAME(*this),
   aunit(au), 
-  HklStatFileID(EmptyString, 0, 0), 
-  HklFileID(EmptyString, 0, 0), 
+  HklStatFileID(EmptyString(), 0, 0), 
+  HklFileID(EmptyString(), 0, 0), 
   Vars(*this),
   VarRefrencerId("basf"),
   Conn(*this)
@@ -82,8 +82,8 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   used_weight.Clear();
   proposed_weight.Clear();
   RefinementMethod = "L.S.";
-  SolutionMethod = EmptyString;
-  HKLSource = EmptyString;
+  SolutionMethod.SetLength(0);
+  HKLSource.SetLength(0);
   Omits.Clear();
   BASF.Clear();
   BASF_Vars.Clear();
@@ -316,16 +316,16 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
   size_t atom_start = 1;
   size_t resi_ind = l[0].IndexOf('_');
   olxstr tab_name = (resi_ind == InvalidIndex ? l[0] : l[0].SubStringTo(resi_ind));
-  olxstr resi_name = (resi_ind == InvalidIndex ? EmptyString : l[0].SubStringFrom(resi_ind+1));
+  olxstr resi_name = (resi_ind == InvalidIndex ? EmptyString() : l[0].SubStringFrom(resi_ind+1));
   if( tab_name.Equalsi("HTAB") )
-    InfoTables.Add( new InfoTab(*this, infotab_htab, EmptyString, resi_name) );
+    InfoTables.Add( new InfoTab(*this, infotab_htab, EmptyString(), resi_name) );
   else if( tab_name.Equalsi("RTAB") )
     InfoTables.Add( new InfoTab(*this, infotab_rtab, l[atom_start++], resi_name) );
   else if( tab_name.Equalsi("MPLA") )  {
     if( l[atom_start].IsNumber() )
       InfoTables.Add(new InfoTab(*this, infotab_mpla, l[atom_start++], resi_name));
     else
-      InfoTables.Add(new InfoTab(*this, infotab_mpla, EmptyString, resi_name));
+      InfoTables.Add(new InfoTab(*this, infotab_mpla, EmptyString(), resi_name));
   }
   else
     throw TInvalidArgumentException(__OlxSourceInfo, "unknown information table name");
@@ -599,7 +599,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     for( size_t i=0; i < rDFIX.Count(); i++ )  {
       TSimpleRestraint& sr = rDFIX[i];
       if( b_res != NULL )  b_res->Add(&sr);
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
         str << sr.GetAtom(j).GetFullLabel(*this) << '-' << sr.GetAtom(j+1).GetFullLabel(*this);
         if( (j+2) < sr.AtomCount() )
@@ -610,7 +610,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     for( size_t i=0; i < rDANG.Count(); i++ )  {
       TSimpleRestraint& sr = rDANG[i];
       if( b_res != NULL )  b_res->Add(&sr);
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
         str << sr.GetAtom(j).GetFullLabel(*this) << '-' << sr.GetAtom(j+1).GetFullLabel(*this);
         if( (j+2) < sr.AtomCount() )
@@ -621,7 +621,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     for( size_t i=0; i < rSADI.Count(); i++ )  {
       TSimpleRestraint& sr = rSADI[i];
       if( b_res != NULL )  b_res->Add(&sr);
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
         str << sr.GetAtom(j).GetFullLabel(*this) << '-' << sr.GetAtom(j+1).GetFullLabel(*this);
         if( (j+2) < sr.AtomCount() )
@@ -634,7 +634,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     lst.Add(olxstr(++sec_num)) << ". Restrained atomic chiral volume";
     for( size_t i=0; i < rCHIV.Count(); i++ )  {
       TSimpleRestraint& sr = rCHIV[i];
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j++ )  {
         if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )  a_res->Add( sr.GetAtom(j).GetAtom() ); 
         str << sr.GetAtom(j).GetFullLabel(*this);
@@ -648,7 +648,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     lst.Add(olxstr(++sec_num)) << ". Restrained planarity";
     for( size_t i=0; i < rFLAT.Count(); i++ )  {
       TSimpleRestraint& sr = rFLAT[i];
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j++ )  {
         if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )  a_res->Add( sr.GetAtom(j).GetAtom() ); 
         str << sr.GetAtom(j).GetFullLabel(*this);
@@ -664,7 +664,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
       TSimpleRestraint& sr = rDELU[i];
       if( sr.GetEsd() == 0 || sr.GetEsd1() == 0 )  continue;
       if( b_res != NULL )  b_res->Add(&sr);
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       if( sr.IsAllNonHAtoms() )  {
         str << "All non-hydrogen atoms";
       }
@@ -683,7 +683,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     lst.Add(olxstr(++sec_num)) << ". Uiso/Uaniso restraints and constraints";
     for( size_t i=0; i < rSIMU.Count(); i++ )  {
       TSimpleRestraint& sr = rSIMU[i];
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       if( sr.IsAllNonHAtoms() )  {
         str << "All non-hydrogen atoms";
       }
@@ -700,7 +700,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     }
     for( size_t i=0; i < rISOR.Count(); i++ )  {
       TSimpleRestraint& sr = rISOR[i];
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       if( sr.IsAllNonHAtoms() )  {
         str << "All non-hydrogen atoms";
       }
@@ -717,7 +717,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     }
     for( size_t i=0; i < rEADP.Count(); i++ )  {
       TSimpleRestraint& sr = rEADP[i];
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j++ )  {
         if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )  a_res->Add( sr.GetAtom(j).GetAtom() ); 
         if( sr.GetAtom(j).GetAtom()->GetEllipsoid() == NULL )
@@ -992,7 +992,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   TDataItem* sfac = item.FindItem("SFAC");
   if( sfac != NULL )  {
     for( size_t i=0; i < sfac->ItemCount(); i++ )  {
-      XScatterer* sc = new XScatterer(EmptyString);
+      XScatterer* sc = new XScatterer(EmptyString());
       sc->FromDataItem(sfac->GetItem(i));
       SfacData.Add(sc->GetLabel(), sc);
     }

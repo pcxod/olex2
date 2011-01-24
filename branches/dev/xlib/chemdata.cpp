@@ -1093,7 +1093,7 @@ ContentList& XElementLib::ParseElementString(const olxstr& su, ContentList& res)
           for( size_t i=0; i < toks.Count()-1; i++ )
             ExpandShortcut(toks[i], res);
           ExpandShortcut(toks[toks.Count() -1], res, cnt.ToDouble());
-          cnt = EmptyString;
+          cnt.SetLength(0);
         }
         nowCnt = false;
         elm = su[i];

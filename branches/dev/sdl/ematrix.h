@@ -365,7 +365,7 @@ public:
   void SaveToFile(const olxstr& FN)  {
     TCStrList S;
     for( size_t i=0; i < Fn; i++ )  {
-      olxstr& T = S.Add(EmptyString);
+      olxstr& T = S.Add(EmptyString());
       for( size_t j=0; j < Fm; j++ )
         T << olxstr::FormatFloat(5, FData[i][j], true) << '\t';
     }

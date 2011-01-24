@@ -24,11 +24,11 @@ size_t TLog::Write(const void *Data, size_t size)  {
 //..............................................................................
 TLog::LogEntry::LogEntry(TLog& _parent, int _evt, bool annotate) : parent(_parent), evt(_evt)  {
   if( annotate )
-    buffer << "New log entry at: " << TETime::FormatDateTime(TETime::Now()) << NewLineSequence;
+    buffer << "New log entry at: " << TETime::FormatDateTime(TETime::Now()) << NewLineSequence();
 }
 //..............................................................................
 TLog::LogEntry::~LogEntry()  {
-  buffer << NewLineSequence;
+  buffer << NewLineSequence();
   if( evt == logDefault )  {
     parent << buffer;
     //parent.Flush();

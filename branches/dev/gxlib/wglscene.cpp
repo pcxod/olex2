@@ -111,7 +111,7 @@ TGlFont& TWGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
   DeleteObject(Brush);
   DeleteDC(hDC);
   glf.CreateGlyphsFromRGBArray(meta_fnt.IsFixed(), ImageW, ImageW);
-  Images.Delete();
+  Images.DeleteItems();
   return glf;
 }
 //..............................................................................

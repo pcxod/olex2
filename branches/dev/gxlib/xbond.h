@@ -38,7 +38,7 @@ protected:
   virtual bool IsRadiusSaveable() const {  return false; }
 public:
   TXBond(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName=EmptyString());
   virtual ~TXBond();
 
   // multiple inheritance...

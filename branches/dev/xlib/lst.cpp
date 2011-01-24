@@ -248,7 +248,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         // extract wR2 && Goof && restrained GooF
         Toks.Clear();
         i ++;  if( i >= SL.Count() )  break;
-        Toks.Strtok(SL[i].Replace(',', EmptyString), ' ');
+        Toks.Strtok(SL[i].Replace(',', EmptyString()), ' ');
         if( Toks.Count() > 11 )  {
           FwR2 = Toks[2].ToDouble();
           FS = Toks[7].ToDouble();
@@ -341,7 +341,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     // errors
     ind = SL[i].FirstIndexOf("**");
     if( ind != InvalidIndex )  {
-      AnAssociation2<olxstr,olxstr>& msg = ErrorMsgs.AddNew(SL[i], EmptyString);
+      AnAssociation2<olxstr,olxstr>& msg = ErrorMsgs.AddNew(SL[i], EmptyString());
       if( SL[i].IndexOf(':') != InvalidIndex )
         continue;
       if( i >= 2 )  {
@@ -395,7 +395,7 @@ bool TLst::ExportHTML( const short Param, TStrList &Html, bool TableDef)  {
       Table[1][2] = Ref.L;
       Table[i][3] = Ref.DF;
     }
-    Table.CreateHTMLList(Html, EmptyString, true, false, TableDef);
+    Table.CreateHTMLList(Html, EmptyString(), true, false, TableDef);
     return true;
   }
   if( Param == slslRefineData )  {
@@ -413,7 +413,7 @@ bool TLst::ExportHTML( const short Param, TStrList &Html, bool TableDef)  {
     Table[10][0] = "Reflections with Fo > 4sig(Fo)";   Table[10][1] = UniqRefs();
     Table[11][0] = "Rint";              Table[11][1] = Rint();
     Table[12][0] = "Rsigma";            Table[12][1] = Rsigma();
-    Table.CreateHTMLList(Html, EmptyString, false, false, TableDef);
+    Table.CreateHTMLList(Html, EmptyString(), false, false, TableDef);
     return true;
   }
   return false;

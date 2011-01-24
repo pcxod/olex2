@@ -430,7 +430,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
 }
 //..............................................................................
 olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {
-  olxstr L(EmptyString, 32);
+  olxstr L(EmptyString(), 32);
   const TSAtom *A = &Bnd.A(),
                *B = &Bnd.B();
   if( A->GetType() != B->GetType() )  {

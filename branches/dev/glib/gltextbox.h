@@ -22,7 +22,7 @@ protected:
   const vec3d& GetCenter() const {  return Center;  }
 public:
   TGlTextBox(TGlRenderer& Render, const olxstr& collectionName);
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName=EmptyString());
   virtual ~TGlTextBox();
 
   void Clear();

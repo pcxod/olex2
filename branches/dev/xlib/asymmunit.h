@@ -146,7 +146,7 @@ public:
   
   void Clear();
   //creates a new residue
-  TResidue& NewResidue(const olxstr& RClass, int number, const olxstr& alias = EmptyString);
+  TResidue& NewResidue(const olxstr& RClass, int number, const olxstr& alias=EmptyString());
   inline size_t ResidueCount() const {  return Residues.Count()+1;  }
   inline TResidue& GetResidue(size_t i) const { return (i==0) ? const_cast<TAsymmUnit*>(this)->MainResidue : Residues[i-1];  }
   TResidue* NextResidue(const TResidue& r) const;
@@ -280,7 +280,7 @@ public:
   void LibSetZprime(const TStrObjList& Params, TMacroError& E);
   void LibFormula(const TStrObjList& Params, TMacroError& E);
   void LibWeight(const TStrObjList& Params, TMacroError& E);
-  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
+  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
 };
 
 EndXlibNamespace()

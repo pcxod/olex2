@@ -92,7 +92,7 @@ protected:
 public:
   TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TXAtom();
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName=EmptyString());
   // multiple inheritance...
   void SetTag(index_t v) {   TSAtom::SetTag(v);  }
   index_t GetTag() const {  return TSAtom::GetTag();  }

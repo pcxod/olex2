@@ -239,7 +239,7 @@ class TSymmLib: public IEObject  {
   static TSymmLib* Instance;
 public:
   // 21.06.2008, the file name is not used
-  TSymmLib(const olxstr& FN=EmptyString);
+  TSymmLib(const olxstr& FN=EmptyString());
   virtual ~TSymmLib();
   // creates a dummy space group if not found
   TSpaceGroup* FindSG(const TAsymmUnit& AU);

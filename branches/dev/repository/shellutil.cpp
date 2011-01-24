@@ -116,15 +116,15 @@ olxstr TShellUtil::GetSpecialFolderLocation(short folderId)  {
         HKEY key;
         if( RegOpenKeyEx(HKEY_LOCAL_MACHINE, olxT("SOFTWARE\\Microsoft\\Windows\\CurrentVersion"),
               0, flags, &key) != ERROR_SUCCESS )
-          return EmptyString;
+          return EmptyString();
         DWORD sz = 0;
         if( RegQueryValueEx(key, olxT("ProgramFilesDir"), NULL, NULL, NULL, &sz) != ERROR_SUCCESS )
-          return EmptyString;
+          return EmptyString();
         olxch* data = new olxch[sz/sizeof(olxch)+1];
         if( RegQueryValueEx(key, olxT("ProgramFilesDir"), NULL, NULL, (LPBYTE)data, &sz) != ERROR_SUCCESS )
         {
           delete [] data;
-          return EmptyString;
+          return EmptyString();
         }
         RegCloseKey(key);
         olxstr rv = olxstr::FromExternal(data, sz/sizeof(olxch)-1);
@@ -146,7 +146,7 @@ olxstr TShellUtil::GetSpecialFolderLocation(short folderId)  {
       shellMalloc->Free(items);
     return TEFile::AddPathDelimeterI(retVal);
   }
-  return EmptyString;
+  return EmptyString();
 #else
   #ifdef __WXWIDGETS__
     olxstr retVal;
@@ -178,10 +178,10 @@ olxstr TShellUtil::PickFolder( const olxstr& Title,
   const olxstr& SelectedFolder, const olxstr& RootFolder )  {
 #ifdef __WIN32__
   LPMALLOC shellMalloc;
-  if( SHGetMalloc(& shellMalloc ) != NOERROR )  return EmptyString;
+  if( SHGetMalloc(& shellMalloc ) != NOERROR )  return EmptyString();
 
   LPSHELLFOLDER desktopFolder;
-  if( SHGetDesktopFolder(&desktopFolder) != NOERROR )  return EmptyString;
+  if( SHGetDesktopFolder(&desktopFolder) != NOERROR )  return EmptyString();
 
   LPITEMIDLIST rootFolder= NULL;
   if( TEFile::Exists( RootFolder ) )  {
@@ -213,13 +213,13 @@ olxstr TShellUtil::PickFolder( const olxstr& Title,
     shellMalloc->Free( path );
     return retVal;
   }
-  return EmptyString;
+  return EmptyString();
 #else
   #ifdef __WXWIDGETS__
   wxDirDialog dd(NULL, Title.u_str(), SelectedFolder.u_str());
   if( dd.ShowModal() == wxID_OK )
     return dd.GetPath().c_str();
-  return EmptyString;
+  return EmptyString();
   #endif
   throw TNotImplementedException(__OlxSourceInfo);
 #endif

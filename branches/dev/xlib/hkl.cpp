@@ -110,7 +110,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
       else  {
         if( ins == NULL )  break;
         ins->Clear();
-        ins->SetTitle( TEFile::ChangeFileExt(TEFile::ExtractFileName(FN), EmptyString) << " imported from HKL file" );
+        ins->SetTitle( TEFile::ChangeFileExt(TEFile::ExtractFileName(FN), EmptyString()) << " imported from HKL file" );
         bool cell_found = false, sfac_found = false;
         for( size_t j=i; j < SL.Count(); j++ )  {
           olxstr line = SL[j].Trim(' ');

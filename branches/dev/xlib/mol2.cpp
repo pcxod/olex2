@@ -56,12 +56,12 @@ void TMol2::SaveToStrings(TStrList& Strings)  {
   Strings.Add(GetAsymmUnit().AtomCount())  << '\t' << Bonds.Count() << "\t1";
   Strings.Add("SMALL");
   Strings.Add("NO_CHARGES");
-  Strings.Add(EmptyString);
+  Strings.Add(EmptyString());
   Strings.Add("@<TRIPOS>ATOM");
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )
     Strings.Add( MOLAtom(GetAsymmUnit().GetAtom(i) ) );
   if( !Bonds.IsEmpty() )  {
-    Strings.Add(EmptyString);
+    Strings.Add(EmptyString());
     Strings.Add("@<TRIPOS>BOND");
     for( size_t i=0; i < Bonds.Count(); i++ )
       Strings.Add( MOLBond(Bonds[i]) );

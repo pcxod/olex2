@@ -336,10 +336,10 @@ of components 1 ... m
   InfoTab& GetInfoTab(size_t i)  {  return InfoTables[i];  }
   void DeleteInfoTab(size_t i)  {  InfoTables.Delete(i);  }
   InfoTab& AddHTAB();
-  InfoTab& AddRTAB(const olxstr& codename, const olxstr& resi=EmptyString);
+  InfoTab& AddRTAB(const olxstr& codename, const olxstr& resi=EmptyString());
   bool ValidateInfoTab(const InfoTab& it);
   // adss new symmetry matrics, used in restraints/constraints 
-  const smatd& AddUsedSymm(const smatd& matr, const olxstr& id=EmptyString);
+  const smatd& AddUsedSymm(const smatd& matr, const olxstr& id=EmptyString());
   //removes the matrix or decriments the reference count
   void RemUsedSymm(const smatd& matr);
   // returns the number of the used symmetry matrices
@@ -584,7 +584,7 @@ of components 1 ... m
   
   void LibOSF(const TStrObjList& Params, TMacroError& E);
   void LibFVar(const TStrObjList& Params, TMacroError& E);
-  TLibrary* ExportLibrary(const olxstr& name=EmptyString);
+  TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 
   struct ReleasedItems {
     TSimpleRestraintPList restraints;

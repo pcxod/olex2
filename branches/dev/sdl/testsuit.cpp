@@ -11,7 +11,7 @@ void IsNumberTest(OlxTests& t)  {
   t.description = __FUNC__;
   olxstr valid_num_str[] = { "0", " 0 ", " 0", "0 ", " 0", " 0", " .0 ", " 0.0 ", " 0.e0 ", 
     "  0.e-1  ", "  0xffa  ", "  0xffa", " 0", " -0. ", " +0. ", "+0e-5", "-.e-5", "07777"  };
-  olxstr invalid_num_str[] = { EmptyString, "  0xffx", " 0a", " -.", "0e-a", "08", "..", "0.0.",
+  olxstr invalid_num_str[] = { EmptyString(), "  0xffx", " 0a", " -.", "0e-a", "08", "..", "0.0.",
     "1e-5e-4" };
   olxstr valid_int_str[] = {"  0xff ", "0xa", "0777", "-3", " +3 " };
   olxstr invalid_int_str[] = {"  0xffx", " 0xa.", " 0778", "-3.", " +3. " };
@@ -95,7 +95,7 @@ void MD5Test(OlxTests& t)  {
     res1("e4d909c290d0fb1ca068ffaddf22cbd0"),
     res3("d41d8cd98f00b204e9800998ecf8427e");
 
-  if( !MD5::Digest(CEmptyString).Equalsi(res3) )
+  if( !MD5::Digest(CEmptyString()).Equalsi(res3) )
     throw TFunctionFailedException(__OlxSourceInfo, "Wrong digest message");
   if( !MD5::Digest(msg).Equalsi(res) )
     throw TFunctionFailedException(__OlxSourceInfo, "Wrong digest message");
@@ -109,7 +109,7 @@ void SHA1Test(OlxTests& t)  {
     res("2fd4e1c6 7a2d28fc ed849ee1 bb76e739 1b93eb12"),
     res1("da39a3ee 5e6b4b0d 3255bfef 95601890 afd80709");
 
-  if( !SHA1::Digest(CEmptyString).Equalsi(res1) )
+  if( !SHA1::Digest(CEmptyString()).Equalsi(res1) )
     throw TFunctionFailedException(__OlxSourceInfo, "Wrong digest message");
   if( !SHA1::Digest(msg).Equalsi(res) )
     throw TFunctionFailedException(__OlxSourceInfo, "Wrong digest message");
@@ -161,11 +161,11 @@ void SHA2Test(OlxTests& t)  {
     res224_0("730e109b d7a8a32b 1cb9d9a0 9aa2325d 2430587d dbc0c38b ad911525"),
     res224_1("d14a028c 2a3a2bc9 476102bb 288234c4 15a2b01f 828ea62a c5b3e42f");
 
-  if( !SHA256::Digest(CEmptyString).Equalsi(res256_1) )
+  if( !SHA256::Digest(CEmptyString()).Equalsi(res256_1) )
     throw TFunctionFailedException(__OlxSourceInfo, "Wrong digest message");
   if( !SHA256::Digest(msg).Equalsi(res256_0) )
     throw TFunctionFailedException(__OlxSourceInfo, "Wrong digest message");
-  if( !SHA224::Digest(CEmptyString).Equalsi(res224_1) )
+  if( !SHA224::Digest(CEmptyString()).Equalsi(res224_1) )
     throw TFunctionFailedException(__OlxSourceInfo, "Wrong digest message");
   if( !SHA224::Digest(msg).Equalsi(res224_0) )
     throw TFunctionFailedException(__OlxSourceInfo, "Wrong digest message");
@@ -283,7 +283,7 @@ void OlxTests::run()  {
   int failed_cnt = 0;
   for( size_t i=0; i < tests.Count(); i++ )  {
     try  { 
-      description = EmptyString;
+      description.SetLength(0);
       tests[i].run(*this);  
       TBasicApp::NewLogEntry() << "Running test " << i+1 << '/' << tests.Count() << ": "
         << description;

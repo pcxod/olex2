@@ -502,6 +502,9 @@
     <ClCompile Include="..\..\..\xlib\afixgroup.cpp" />
     <ClCompile Include="..\..\..\xlib\asymmunit.cpp" />
     <ClCompile Include="..\..\..\xlib\auto.cpp" />
+    <ClCompile Include="..\..\..\xlib\catomlist.cpp" />
+    <ClCompile Include="..\..\..\xlib\cifdp.cpp" />
+    <ClCompile Include="..\..\..\xlib\hall.cpp" />
     <ClCompile Include="..\..\..\xlib\macro\brushhkl.cpp" />
     <ClCompile Include="..\..\..\xlib\catom.cpp" />
     <ClCompile Include="..\..\..\xlib\chemdata.cpp">
@@ -517,7 +520,6 @@
     <ClCompile Include="..\..\..\xlib\chnexp.cpp" />
     <ClCompile Include="..\..\..\xlib\cif.cpp" />
     <ClCompile Include="..\..\..\xlib\cifdata.cpp" />
-    <ClCompile Include="..\..\..\xlib\cifloop.cpp" />
     <ClCompile Include="..\..\..\xlib\ciftab.cpp" />
     <ClCompile Include="..\..\..\xlib\congen.cpp" />
     <ClCompile Include="..\..\..\xlib\conninfo.cpp" />
@@ -553,6 +555,7 @@
     <ClCompile Include="..\..\..\xlib\sgtest.cpp" />
     <ClCompile Include="..\..\..\xlib\splane.cpp" />
     <ClCompile Include="..\..\..\xlib\srestraint.cpp" />
+    <ClCompile Include="..\..\..\xlib\symmcon.cpp" />
     <ClCompile Include="..\..\..\xlib\symmlib.cpp" />
     <ClCompile Include="..\..\..\xlib\symmparser.cpp" />
     <ClCompile Include="..\..\..\xlib\macro\testsymm.cpp" />

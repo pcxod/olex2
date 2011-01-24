@@ -144,8 +144,8 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
   Clear();
   for( size_t i=0; i < E.Length(); i++ )  {
     if( E[i] == '(' )   {
-      NExp = EmptyString;
-      SMult = EmptyString;
+      NExp.SetLength(0);
+      SMult.SetLength(0);
       ob = 1;
       cb = 0;
       i++;
@@ -192,7 +192,7 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
         else
           Exp.Add(Element, 1.0);
       }
-      Element = EmptyString;
+      Element.SetLength(0);
       while( (E[i] <= 'Z' && E[i] >= 'A') || (E[i] <= 'z' && E[i] >= 'a'))  {
         Element << E[i];
         i++;
@@ -212,7 +212,7 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
         }
       }
       i--;  // reset to previous
-      ECount = EmptyString;
+      ECount.SetLength(0);
       ElementDefined = true;
     }
   }

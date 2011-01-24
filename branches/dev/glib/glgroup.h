@@ -30,7 +30,7 @@ protected:
   bool CheckBlended() const;
 public:
   TGlGroup(class TGlRenderer& R, const olxstr& collectionName);
-  virtual void Create(const olxstr& cName = EmptyString);
+  virtual void Create(const olxstr& cName=EmptyString());
   virtual ~TGlGroup();
   virtual void Clear();
   void Draw(bool SelectPrimitives=false, bool SelectObjects=false) const {

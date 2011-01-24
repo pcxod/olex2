@@ -401,7 +401,7 @@ public:
   // no GUI
   virtual bool IsControl(const olxstr& cname) const {  return false;  }
 
-  virtual const olxstr& getVar(const olxstr &name, const olxstr &defval=NullString) const  {
+  virtual const olxstr& getVar(const olxstr &name, const olxstr &defval=EmptyString()) const  {
     size_t i = TOlxVars::VarIndex(name);
     if( i == InvalidIndex )  {
       if( &defval == NULL )
@@ -532,7 +532,7 @@ public:
           }
         }
         else
-          XApp.NewLogEntry(logError) << SyntaxParser.Errors().Text(NewLineSequence);
+          XApp.NewLogEntry(logError) << SyntaxParser.Errors().Text(NewLineSequence());
       }
       else  {
         XApp.FindSAtoms(Cmds.Text(' '), Selection);
@@ -570,7 +570,7 @@ public:
       Cout = !Options.Contains('o'),    // catch output
       quite = Options.Contains('q');
 
-    olxstr dubFile( Options.FindValue('s',EmptyString) );
+    olxstr dubFile( Options.FindValue('s',EmptyString()) );
 
     olxstr Tmp;
     bool Space;
@@ -652,7 +652,7 @@ public:
   void macEcho(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
     for( size_t i=0; i < Cmds.Count(); i++ )
       TBasicApp::GetLog() << Cmds[i] << ' ';
-    TBasicApp::GetLog() << NewLineSequence;
+    TBasicApp::GetLog() << NewLineSequence();
   }
   //..............................................................................
   void funIsPluginInstalled(const TStrObjList& Params, TMacroError &E) {
@@ -803,7 +803,7 @@ public:
   // cannot stick it anywhere else, eh?
   void funGetMAC(const TStrObjList& Params, TMacroError &E)  {
     bool full = (Params.Count() == 1 && Params[0].Equalsi("full") );
-    olxstr rv(EmptyString, 256);
+    olxstr rv(EmptyString(), 256);
     char bf[16];
     TShellUtil::MACInfo MACsInfo;
     TShellUtil::ListMACAddresses(MACsInfo);
@@ -908,7 +908,7 @@ int main(int argc, char* argv[])  {
   if( argc > 1 )  {
     olxstr arg_ext( TEFile::ExtractFileExt(argv[1]) );
     if( arg_ext.Equalsi("autochem") )  {
-      olxstr sf ( TEFile::ChangeFileExt(argv[1], EmptyString) );
+      olxstr sf ( TEFile::ChangeFileExt(argv[1], EmptyString()) );
       olex.executeMacro( olxstr("start_autochem '") << sf << '\'' );
     }
   }

@@ -485,6 +485,7 @@
     <ClCompile Include="..\..\..\gxlib\gxapp.cpp" />
     <ClCompile Include="..\..\..\gxlib\wglscene.cpp" />
     <ClCompile Include="..\..\..\gxlib\xatom.cpp" />
+    <ClCompile Include="..\..\..\gxlib\xblob.cpp" />
     <ClCompile Include="..\..\..\gxlib\xbond.cpp" />
     <ClCompile Include="..\..\..\gxlib\xeval.cpp" />
     <ClCompile Include="..\..\..\gxlib\xgrid.cpp">

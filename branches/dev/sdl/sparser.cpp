@@ -69,7 +69,7 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
       }
       int bc = 1;
       Char = Exp.CharAt(i);
-      ComplexExp = EmptyString;
+      ComplexExp.SetLength(0);
       while( bc != 0 )  {
         if( Char == '(' )  bc++;
         if( Char == ')' )  bc--;
@@ -189,10 +189,10 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
         Evaluables.Add( LeftCondition );
       }
       // clean up the values for the next loop
-      RightExp  = EmptyString;
-      LeftExp  = EmptyString;
-      LeftStr  = EmptyString;
-      RightStr  = EmptyString;
+      RightExp.SetLength(0);
+      LeftExp.SetLength(0);
+      LeftStr.SetLength(0);
+      RightStr.SetLength(0);
       coFactory = NULL;
     }
 
@@ -203,16 +203,16 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
     if( loFactory && RightCondition )  {
       TPtrList<IEObject> Args;
       if( LogicalOperator != NULL )  {
-        Args.Add( LogicalOperator );
-        Args.Add( RightCondition );
+        Args.Add(LogicalOperator);
+        Args.Add(RightCondition);
         LogicalOperator = loFactory->NewInstance(&Args);
       }
       else  {
-        Args.Add( LeftCondition );
-        Args.Add( RightCondition );
+        Args.Add(LeftCondition);
+        Args.Add(RightCondition);
         LogicalOperator = loFactory->NewInstance(&Args);
       }
-      Evaluables.Add( LogicalOperator );
+      Evaluables.Add(LogicalOperator);
       LeftCondition = NULL;
       RightCondition = NULL;
       loFactory = NULL;

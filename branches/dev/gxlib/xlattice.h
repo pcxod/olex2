@@ -23,7 +23,7 @@ protected:
 public:
   TXLattice(TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TXLattice() {}
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName=EmptyString());
 
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min);

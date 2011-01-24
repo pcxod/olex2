@@ -100,7 +100,7 @@ public:
   // clears the last loader and the model
   void Close();
   // returns last loaded file name (if any) or empty string 
-  const olxstr& GetFileName() const {  return FLastLoader != NULL ? FLastLoader->GetFileName() : EmptyString;  }
+  const olxstr& GetFileName() const {  return FLastLoader != NULL ? FLastLoader->GetFileName() : EmptyString();  }
 
   void EndUpdate();
   void LastLoaderChanged();  // performs complete reinitialisation
@@ -115,7 +115,7 @@ public:
   void LibSetFormula(const TStrObjList& Params, TMacroError& E);
   void LibEndUpdate(const TStrObjList& Params, TMacroError& E);
   void LibSaveSolution(const TStrObjList& Params, TMacroError& E);
-  class TLibrary* ExportLibrary(const olxstr& name=EmptyString);
+  class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 
   struct NameArg  {
     olxstr file_name;

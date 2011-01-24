@@ -55,7 +55,7 @@ public:
   class TInvalidUrlException: public TBasicException  {
   public:
     TInvalidUrlException(const olxstr& location) :
-      TBasicException( location, EmptyString)  { }
+      TBasicException(location, EmptyString())  { }
   };
 
   DefPropC(olxstr, User)

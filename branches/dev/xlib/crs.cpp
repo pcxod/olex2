@@ -42,7 +42,7 @@ void TCRSFile::SaveToStrings(TStrList& SL)  {
   }
   else
     throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
-  SL.Add(EmptyString);
+  SL.Add(EmptyString());
   TIns::SaveSfacUnit(GetRM(), GetRM().GetUserContent(), SL, SL.Count()-1);
 }
 //..............................................................................

@@ -38,7 +38,7 @@ public:
   it works as font chooser (default font-fontDescription). Returned string is the font Id string, 
   or empty string if the dialog is canceled  */
   virtual olxstr ShowFontDialog(TGlFont* glf = NULL, 
-    const olxstr& fontDescription = EmptyString) = 0;
+    const olxstr& fontDescription=EmptyString()) = 0;
   virtual void StartSelect(int x, int y, GLuint *Bf);
   // returns number of selection hits
   virtual int EndSelect();

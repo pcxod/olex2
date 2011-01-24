@@ -33,7 +33,7 @@ protected:
 public:
   AGDrawObject(TGlRenderer& parent, const olxstr& collectionName);
   // create object within the specified collection, using provided parameters
-  virtual void Create(const olxstr& newCollectionName=EmptyString)  {}
+  virtual void Create(const olxstr& newCollectionName=EmptyString())  {}
   // this should return object created with new in order to recreate the objecs as it was
   virtual ~AGDrawObject()  {}
 

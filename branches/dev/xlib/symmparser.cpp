@@ -123,7 +123,7 @@ olxstr TSymmParser::MatrixToSymmEx(const mat3i& M)  {
       }
     }
     T << T1;
-    T1 = EmptyString;
+    T1.SetLength(0);
   }
   return T;
 }

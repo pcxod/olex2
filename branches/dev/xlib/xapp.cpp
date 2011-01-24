@@ -15,10 +15,10 @@
 #include "maputil.h"
 #include "vcov.h"
 
-TXApp::TXApp(const olxstr &basedir, bool) : TBasicApp(basedir), Library(EmptyString, this)  {}
+TXApp::TXApp(const olxstr &basedir, bool) : TBasicApp(basedir), Library(EmptyString(), this)  {}
 //..............................................................................
 TXApp::TXApp(const olxstr &basedir, ASObjectProvider* objectProvider, ASelectionOwner* selOwner) :
-  TBasicApp(basedir), Library(EmptyString, this)
+  TBasicApp(basedir), Library(EmptyString(), this)
 {
   Init(objectProvider, selOwner);
 }
@@ -50,7 +50,7 @@ TXApp::~TXApp()  {
 }
 //..............................................................................
 olxstr TXApp::LocateHklFile()  {
-  if( !XFile().HasLastLoader() )  return EmptyString;
+  if( !XFile().HasLastLoader() )  return EmptyString();
   olxstr HklFN = XFile().GetRM().GetHKLSource();
   if( TEFile::Existsi(olxstr(HklFN), HklFN) )  
     return HklFN;
@@ -78,7 +78,7 @@ olxstr TXApp::LocateHklFile()  {
       return HklFN;
     }
   }
-  return EmptyString;
+  return EmptyString();
 }
 //..............................................................................
 bool TXApp::CheckProgramState(unsigned int specialCheck)  {
@@ -210,7 +210,7 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
     SA.GetLabel().StartsFromi(SA.GetType().symbol) ? 
       SA.GetLabel().SubStringFrom(SA.GetType().symbol.Length())
     :
-      EmptyString
+      EmptyString()
   );
   // is H atom under consideration?
   if( SA.GetType() == iHydrogenZ && SA.GetTag() == -2 )
@@ -276,7 +276,7 @@ TUndoData* TXApp::FixHL()  {
   olxdict<int,TSAtomPList,TPrimitiveComparator> frags;
   TIntList frag_id;
   TSAtomPList satoms;
-  FindSAtoms(EmptyString, satoms, false, true);  //the selection might be returned
+  FindSAtoms(EmptyString(), satoms, false, true);  //the selection might be returned
   if( !satoms.IsEmpty() )  {
     for( size_t i=0; i < satoms.Count(); i++ )  {
       if( !satoms[i]->IsAUAtom() )  continue;
@@ -295,7 +295,7 @@ TUndoData* TXApp::FixHL()  {
     if( sa.GetType() == iHydrogenZ )  {
       sa.SetTag(-2);  // mark as unpocessed
       sa.CAtom().SetTag(-2);
-      sa.CAtom().SetLabel(EmptyString, false);
+      sa.CAtom().SetLabel(EmptyString(), false);
       continue;
     }
     if( frag_id.IsEmpty() || frag_id.IndexOf(sa.CAtom().GetFragmentId()) != InvalidIndex )
@@ -354,11 +354,11 @@ void TXApp::RingContentFromStr(const olxstr& Condition, ElementPList& ringDesc) 
           toks.Add( symbol );
       }
       symbol = Condition[i];
-      count = EmptyString;
+      count.SetLength(0);
     }
     else if( Condition[i] <= 'z' && Condition[i] >= 'a' )  {
       symbol << Condition[i];
-      count  = EmptyString;
+      count.SetLength(0);
     }
     else if( Condition[i] <= '9' && Condition[i] >= '0' )  {
       count << Condition[i];
@@ -435,7 +435,7 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
       TCAtomGroup ag;
       TAtomReference ar(toks.Text(' '), SelectionOwner);      
       size_t atomAGroup;
-      ar.Expand(XFile().GetRM(), ag, EmptyString, atomAGroup);
+      ar.Expand(XFile().GetRM(), ag, EmptyString(), atomAGroup);
       if( !ag.IsEmpty() )  {
         atoms.SetCapacity( atoms.Count() + ag.Count() );
         TAsymmUnit& au = XFile().GetAsymmUnit();

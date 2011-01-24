@@ -1361,7 +1361,7 @@ TSpaceGroup* TSymmLib::FindSG(const TAsymmUnit& AU)  {
   for( size_t i=0; i < AU.MatrixCount(); i++ )
     ml.AddCCopy(AU.GetMatrix(i));
   TSpaceGroup* SG = new TSpaceGroup(uname, uname, HallSymbol::Evaluate(AU.GetLatt(), ml),
-    EmptyString, -1, GetLatticeByNumber(AU.GetLatt()), (AU.GetLatt() > 0));
+    EmptyString(), -1, GetLatticeByNumber(AU.GetLatt()), (AU.GetLatt() > 0));
   SpaceGroups.Add(uname, SG).Object;
   InitRelations();
   return SG;

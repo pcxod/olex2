@@ -95,8 +95,8 @@ public:
   TModeChange(size_t mode, bool status) : FStatus(status), Mode(mode) {}
   ~TModeChange()  {  }
   bool GetStatus() const {  return FStatus;  }
-  static bool CheckStatus(const olxstr& mode, const olxstr& modeData=EmptyString);
-  static bool CheckStatus(size_t mode, const olxstr& modeData=EmptyString);
+  static bool CheckStatus(const olxstr& mode, const olxstr& modeData=EmptyString());
+  static bool CheckStatus(size_t mode, const olxstr& modeData=EmptyString());
 };
 //..............................................................................
 class TStateChange: public IEObject  {
@@ -104,13 +104,13 @@ class TStateChange: public IEObject  {
   uint32_t State;
   olxstr Data;
 public:
-  TStateChange(uint32_t state, bool status, const olxstr& data=EmptyString);
+  TStateChange(uint32_t state, bool status, const olxstr& data=EmptyString());
   // string representation of the state
   inline bool GetStatus() const {  return FStatus;  }
   inline uint32_t GetState() const {  return State;  }
   inline const olxstr& GetData() const {  return Data;  }
-  static bool CheckStatus(const olxstr& stateName, const olxstr& stateData=EmptyString);
-  static bool CheckStatus(uint32_t state, const olxstr& stateData=EmptyString);
+  static bool CheckStatus(const olxstr& stateName, const olxstr& stateData=EmptyString());
+  static bool CheckStatus(uint32_t state, const olxstr& stateData=EmptyString());
 
   static uint32_t DecodeState( const olxstr& mode );
   static olxstr StrRepr(uint32_t state);

@@ -15,7 +15,7 @@ class TGlBackground: public AGDrawObject  {
 public:
   TGlBackground(TGlRenderer& Render, const olxstr& collectionName, bool Ceiling);
   virtual ~TGlBackground(){  return; };
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName=EmptyString());
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false;};
   bool Ceiling(){  return FCeiling;  }

@@ -1088,7 +1088,7 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
   MinVal = item.GetRequiredField("min_val").ToDouble();
   Depth = item.GetRequiredField("depth").ToDouble();
   Size = item.GetRequiredField("size").ToDouble();
-  Extended = item.GetFieldValue("extended", FalseString).ToBool();
+  Extended = item.GetFieldValue("extended", FalseString()).ToBool();
   ExtMin = vec3f(-1,-1,-1);
   ExtMax = vec3f(1,1,1);
   const size_t ed_i = item.FieldIndex("ext_max");

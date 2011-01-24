@@ -13,7 +13,7 @@ public:
     TSPlane(net),
     AGDrawObject(Render, collectionName)  {}
   virtual ~TXPlane()  {}
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName=EmptyString());
 
   // multiple inheritance...
   void SetTag(index_t v) {   TSPlane::SetTag(v);  }

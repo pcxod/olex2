@@ -35,11 +35,11 @@ size_t imp_auto_AtomCount(const TAsymmUnit& au)  {
 
 void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
-  olxstr folder( Cmds.IsEmpty() ? EmptyString : Cmds[0] );
+  olxstr folder( Cmds.IsEmpty() ? EmptyString() : Cmds[0] );
   int arg = 0;
   if( folder.IsNumber() )  {
     arg = folder.ToInt();
-    folder = EmptyString;
+    folder.SetLength(0);
   }
   if( folder.IsEmpty() && olex::IOlexProcessor::GetInstance() != NULL )
     olex::IOlexProcessor::GetInstance()->executeMacro("clean -npd");

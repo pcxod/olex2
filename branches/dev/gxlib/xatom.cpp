@@ -97,16 +97,16 @@ void TXAtom::Quality(const short V)  {
   olxstr Legend("Atoms");
   TGraphicsStyle& GS = TGlRenderer::_GetStyles().NewStyle(Legend, true);
 
-  olxstr &SphereQ   = GS.GetParam("SphereQ", EmptyString, true);
-  olxstr &RimQ = GS.GetParam("RimQ", EmptyString, true);  // quality
-  olxstr &DiskQ = GS.GetParam("DiskQ", EmptyString, true);  // quality
+  olxstr &SphereQ   = GS.GetParam("SphereQ", EmptyString(), true);
+  olxstr &RimQ = GS.GetParam("RimQ", EmptyString(), true);  // quality
+  olxstr &DiskQ = GS.GetParam("DiskQ", EmptyString(), true);  // quality
 
-  olxstr &RimR = GS.GetParam("RimR", EmptyString, true);  // radius
-  olxstr &RimW = GS.GetParam("RimW", EmptyString, true);  // width
+  olxstr &RimR = GS.GetParam("RimR", EmptyString(), true);  // radius
+  olxstr &RimW = GS.GetParam("RimW", EmptyString(), true);  // width
 
-  //olxstr &DiskIR = GS.ParameterValue("DiskIR", EmptyString);  // inner radius for disks
-  olxstr &DiskOR = GS.GetParam("DiskOR", EmptyString, true);  // outer radius
-  olxstr &DiskS = GS.GetParam("DiskS", EmptyString, true);  // separation
+  //olxstr &DiskIR = GS.ParameterValue("DiskIR", EmptyString());  // inner radius for disks
+  olxstr &DiskOR = GS.GetParam("DiskOR", EmptyString(), true);  // outer radius
+  olxstr &DiskS = GS.GetParam("DiskS", EmptyString(), true);  // separation
 
   RimR = 1.02;
   DiskQ  = RimQ;
@@ -257,7 +257,7 @@ void TXAtom::Create(const olxstr& cName)  {
   TGraphicsStyle& GS = GPC->GetStyle();
   GS.SetSaveable(GPC->GetName().CharCount('.') == 0);
 
-  olxstr& SMask = GS.GetParam(GetPrimitiveMaskName(), EmptyString);
+  olxstr& SMask = GS.GetParam(GetPrimitiveMaskName(), EmptyString());
   if( SMask.IsEmpty() )
     SMask = DefMask();
   int PMask = SMask.ToInt();
@@ -533,7 +533,7 @@ void TXAtom::ApplyStyle(TGraphicsStyle& Style)  {
 }
 //..............................................................................
 void TXAtom::DrawStyle(short V)  {
-  olxstr &DS = GetPrimitives().GetStyle().GetParam("DS", EmptyString);
+  olxstr &DS = GetPrimitives().GetStyle().GetParam("DS", EmptyString());
   DS = V;
   FDrawStyle = V;
 }

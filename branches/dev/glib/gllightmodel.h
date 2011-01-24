@@ -45,7 +45,7 @@ public:
   void LibLocalViewer(const TStrObjList& Params, TMacroError& E);
   void LibSmoothShade(const TStrObjList& Params, TMacroError& E);
   void LibTwoSides(const TStrObjList& Params, TMacroError& E);
-  TLibrary* ExportLibrary(const olxstr& name=EmptyString);
+  TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 
 

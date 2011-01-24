@@ -414,7 +414,7 @@ void VcoVContainer::Tests(OlxTests& t)  {
     a.crd() = au.Orthogonalise(src.ccrd()+tr);
     TEValueD e = vcovc.CalcDistance(src, a);
     if( olx_abs(e.GetV()-au.GetAxes()[i]) > 1e-6 || olx_abs(e.GetE()-au.GetAxisEsds()[i]) > 1e-6)
-      throw TFunctionFailedException(__OlxSourceInfo, EmptyString);
+      throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
   }
   // test cell angle esds
   for( size_t i=0; i < 3; i++ )  {
@@ -436,7 +436,7 @@ void VcoVContainer::Tests(OlxTests& t)  {
       }
       TEValueD e = vcovc.CalcAngle(a, src, b);
       if( olx_abs(e.GetV()-au.GetAngles()[ai]) > 1e-4 || olx_abs(e.GetE()-au.GetAngleEsds()[ai]) > 1e-4)
-        throw TFunctionFailedException(__OlxSourceInfo, EmptyString);
+        throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
     }
   }
   return;

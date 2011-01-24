@@ -18,7 +18,7 @@ protected:
 public:
   TXGrowLine(TGlRenderer& Render, const olxstr& collectionName, TXAtom& A,
              TCAtom& CA, const smatd& transform);
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName=EmptyString());
   virtual ~TXGrowLine();
 
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false; };

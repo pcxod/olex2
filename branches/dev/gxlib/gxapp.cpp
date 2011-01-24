@@ -128,8 +128,8 @@ public:
     }
     EmptyFile = SameFile = false;
     if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
-      olxstr s1( TEFile::UnixPath(TEFile::ChangeFileExt(*(olxstr*)Data, EmptyString)) );
-      olxstr s2( TEFile::UnixPath(TEFile::ChangeFileExt(FParent->XFile().GetFileName(), EmptyString)) );
+      olxstr s1( TEFile::UnixPath(TEFile::ChangeFileExt(*(olxstr*)Data, EmptyString())) );
+      olxstr s2( TEFile::UnixPath(TEFile::ChangeFileExt(FParent->XFile().GetFileName(), EmptyString())) );
       if( s1 != s2 )  {
         FParent->ClearIndividualCollections();
         FParent->GetRender().GetStyles().RemoveNamedStyles("Q");
@@ -738,7 +738,7 @@ olxstr macSel_GetName4a(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, co
   return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel() << ' ' << a3.GetGuiLabel() << '-' << a4.GetGuiLabel();
 }
 olxstr macSel_GetPlaneName(const TSPlane& p)  {
-  if( p.Count() == 0 )  return EmptyString;
+  if( p.Count() == 0 )  return EmptyString();
   olxstr rv(p.GetAtom(0).GetGuiLabel());
   for( size_t i=1; i < p.Count(); i++ )
     rv << ' ' << p.GetAtom(i).GetGuiLabel();
@@ -2119,7 +2119,7 @@ void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert)  {
     }
   }
   else
-    NewLogEntry(logError) << SyntaxParser.Errors().Text(NewLineSequence);
+    NewLogEntry(logError) << SyntaxParser.Errors().Text(NewLineSequence());
 }
 //..............................................................................
 void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert)  {
@@ -2154,7 +2154,7 @@ void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert)  {
     }
   }
   else
-    NewLogEntry(logError) << SyntaxParser.Errors().Text(NewLineSequence);
+    NewLogEntry(logError) << SyntaxParser.Errors().Text(NewLineSequence());
 }
 //..............................................................................
 bool GetRing(TSAtomPList& atoms, TTypeList<TSAtomPList>& rings)  {
@@ -3246,7 +3246,7 @@ void TGXApp::CreateXGrowPoints()  {
     VTo = VFrom * matrices[i]->r;
     VTo += matrices[i]->t;
     XFile().GetAsymmUnit().CellToCartesian(VTo);
-    TXGrowPoint& gp = XGrowPoints.Add( new TXGrowPoint(*FGlRender, EmptyString, VTo, *matrices[i]) );
+    TXGrowPoint& gp = XGrowPoints.Add( new TXGrowPoint(*FGlRender, EmptyString(), VTo, *matrices[i]) );
     gp.Create("GrowPoint");
     delete matrices[i];
   }
@@ -3428,7 +3428,7 @@ void TGXApp::CreateXGrowLines()  {
   for( size_t i=0; i < tr_list.Count(); i++ )  {
     TGXApp_Transform1& nt = tr_list[i];
     TXGrowLine& gl = XGrowLines.Add(
-      new TXGrowLine(*FGlRender, EmptyString, *nt.from, *nt.to, nt.transform));
+      new TXGrowLine(*FGlRender, EmptyString(), *nt.from, *nt.to, nt.transform));
     gl.Create("GrowBonds");
   }
   Info.DeleteItems(true);
@@ -3510,7 +3510,7 @@ void TGXApp::_CreateXGrowVLines()  {
     for( size_t j=0; j < ntl.Count(); j++ )  {
       TGXApp_Transform& nt = ntl[j];
       TXGrowLine& gl = XGrowLines.Add(
-        new TXGrowLine(*FGlRender, EmptyString, *nt.from, *nt.to, nt.transform));
+        new TXGrowLine(*FGlRender, EmptyString(), *nt.from, *nt.to, nt.transform));
       gl.Create("GrowBonds");
     }
   }

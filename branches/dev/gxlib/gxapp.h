@@ -84,7 +84,7 @@ template <class obj_t, class act_t> class TXObjectProvider : public TObjectProvi
   TGlRenderer& renderer;
 public:
   TXObjectProvider(TGlRenderer& _renderer) : renderer(_renderer)  {}
-  virtual obj_t& New(TNetwork* n)  {  return TObjectProvider<obj_t>::AddNew(new act_t(n, renderer, EmptyString));  }
+  virtual obj_t& New(TNetwork* n)  {  return TObjectProvider<obj_t>::AddNew(new act_t(n, renderer, EmptyString()));  }
 };
 
 struct XObjectProvider : public ASObjectProvider {
@@ -411,7 +411,7 @@ public:
   inline size_t GlBitmapCount() const {  return GlBitmaps.Count();  }
   inline TGlBitmap& GlBitmap(size_t i)  {  return *GlBitmaps[i];  }
 
-  bool ShowGrid(bool v, const olxstr& FN=EmptyString);
+  bool ShowGrid(bool v, const olxstr& FN=EmptyString());
   bool IsGridVisible() const;
   void SetGridDepth(const vec3d& crd);
 

@@ -12,7 +12,7 @@ namespace cif_dp {
     ParsingException(const olxstr& location, const olxstr& msg, size_t lineNumber) :
       LineNumber(lineNumber),
       TBasicException(location, olxstr("Failed to parse CIF because ") << msg << " at CIF#" << lineNumber)  {}
-    ParsingException(const olxstr& location, const TExceptionBase& cause, const olxstr& msg=EmptyString) :
+    ParsingException(const olxstr& location, const TExceptionBase& cause, const olxstr& msg=EmptyString()) :
       TBasicException(location, cause, msg )  {}
     virtual const char* GetNiceName() const {  return "CIF reading";  }
     virtual IEObject* Replicate() const {  return new ParsingException(*this);  }
@@ -163,7 +163,7 @@ namespace cif_dp {
     virtual ICifEntry* Replicate() const {  return new cetTable(*this);  }
     virtual olxstr GetStringValue() const {  throw TNotImplementedException(__OlxSourceInfo);  }
     template <class List> static olxstr GenerateName(const List& l)  {
-      if( l.IsEmpty() )  return EmptyString;
+      if( l.IsEmpty() )  return EmptyString();
       if( l.Count() == 1 )  return l[0];
       olxstr name = l[0].CommonSubString(l[1]);
       size_t min_len = olx_min(l[0].Length(), l[1].Length());

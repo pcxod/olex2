@@ -45,7 +45,7 @@ void TIns::Clear()  {
     delete Ins.GetObject(i);
   Ins.Clear();
   Skipped.Clear();
-  Title = EmptyString;
+  Title.SetLength(0);
   R1 = -1;
 }
 //..............................................................................
@@ -151,7 +151,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
     if( Ins[i].IsEmpty() || !Ins[i].StartsFromi("REM"))  continue;
     for( size_t j = i+1; j < Ins.Count(); j++ )  {
       if( Ins[i] == Ins[j] )
-        Ins[j] = EmptyString;
+        Ins[j].SetLength(0);
     }
   }
 
@@ -182,7 +182,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
        toks.Clear();
        toks.Strtok(sl[j], ' ');
        size_t resi_ind = toks[0].IndexOf('_');
-       olxstr resi( (resi_ind != InvalidIndex) ? toks[0].SubStringFrom(resi_ind+1) : EmptyString );
+       olxstr resi( (resi_ind != InvalidIndex) ? toks[0].SubStringFrom(resi_ind+1) : EmptyString() );
        double esd1=0.02, esd2=0.04;
        size_t from_ind = 0;
        if( toks.Count() > 0 && toks[0].IsNumber() )  {
@@ -255,15 +255,15 @@ void TIns::__ProcessConn(ParseContext& cx)  {
     if( toks[0].Equalsi("CONN") )  {
       TStrList sl(toks.SubListFrom(1));
       cx.rm.Conn.ProcessConn(sl);
-      Ins[i] = EmptyString;
+      Ins[i].SetLength(0);
     }
     else if( toks[0].Equalsi("FREE") )  {
       cx.rm.Conn.ProcessFree(toks.SubListFrom(1));
-      Ins[i] = EmptyString;
+      Ins[i].SetLength(0);
     }
     else if( toks[0].Equalsi("BIND") )  {
       cx.rm.Conn.ProcessBind(toks.SubListFrom(1));
-      Ins[i] = EmptyString;
+      Ins[i].SetLength(0);
     }
   }
   Ins.Pack();
@@ -320,10 +320,10 @@ void TIns::_ProcessAfix0(ParseContext& cx)  {
     if( cx.AfixGroups.Current().GetA() > 0 )  {
       if( old_m != 0 )
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("incomplete AFIX group") <<
-        (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString) );
+        (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString()) );
       else
         TBasicApp::NewLogEntry(logWarning) << "Possibly incorrect AFIX " << cx.AfixGroups.Current().GetB()->GetAfix() <<
-        (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString);
+        (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString());
     }
     if( cx.AfixGroups.Current().GetB()->GetPivot() == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "undefined pivot atom for a fitted group");
@@ -353,7 +353,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
       throw TFunctionFailedException(__OlxSourceInfo, "invalid Cell instruction");
   }
   else if( Toks[0].Equalsi("SYMM") && (Toks.Count() > 1))
-    cx.Symm.Add( Toks.Text(EmptyString, 1) );
+    cx.Symm.Add( Toks.Text(EmptyString(), 1) );
   else if( Toks[0].Equalsi("FRAG") && (Toks.Count() > 1))  {
    int code = Toks[1].ToInt();
     if( code < 17 )
@@ -483,9 +483,9 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
     if( Toks.Count() < 3 )
       throw TInvalidArgumentException(__OlxSourceInfo, "wrong number of arguments for a residue");
     if( Toks[1].IsNumber() )
-      cx.Resi = &cx.au.NewResidue(EmptyString, Toks[1].ToInt(), (Toks.Count() > 2) ? Toks[2] : EmptyString);
+      cx.Resi = &cx.au.NewResidue(EmptyString(), Toks[1].ToInt(), (Toks.Count() > 2) ? Toks[2] : EmptyString());
     else
-      cx.Resi = &cx.au.NewResidue(Toks[1], Toks[2].ToInt(), (Toks.Count() > 3) ? Toks[3] : EmptyString);
+      cx.Resi = &cx.au.NewResidue(Toks[1], Toks[2].ToInt(), (Toks.Count() > 3) ? Toks[3] : EmptyString());
   }
   else if( Toks[0].Equalsi("SFAC") )  {
     bool expandedSfacProcessed = false;
@@ -571,7 +571,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         if( iv != InvalidIndex )
           hklsrc = hklsrc.SubString(index+1, iv-index-1).Replace("%20", ' ');
         else
-          hklsrc = EmptyString;
+          hklsrc.SetLength(0);
         cx.rm.SetHKLSource(hklsrc);
       }
       else if( !cx.End  && !cx.rm.IsHKLFSet() )
@@ -736,7 +736,7 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod, const 
   SL.Add(_CellToString());
   SL.Add(_ZerrToString());
   _SaveSymm(SL);
-  SL.Add(EmptyString);
+  SL.Add(EmptyString());
   SaveSfacUnit(RefMod, RefMod.GetUserContent(), SL, SL.Count()-1);
 
   _SaveSizeTemp(SL);
@@ -745,7 +745,7 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod, const 
   //_SaveFVar(RefMod, SL);
 
   SL.AddList(mtoks);
-  SL.Add(EmptyString);
+  SL.Add(EmptyString());
   SL.Add("HKLF ") << RefMod.GetHKLFStr();
   SL.Add("END");
 #ifdef _UNICODE
@@ -929,7 +929,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
   ValidateRestraintsAtomNames(GetRM());
   UpdateParams();
   SaveHeader(SL, false);
-  SL.Add(EmptyString);
+  SL.Add(EmptyString());
   int afix = 0, part = 0;
   uint32_t fragmentId = ~0;
   for( size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ )  {
@@ -944,7 +944,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
       if( ac.IsDeleted() || ac.IsSaved() )  continue;
       if( ac.GetFragmentId() != fragmentId || !olx_is_valid_index(fragmentId) )  {
         if( olx_is_valid_index(fragmentId) )
-          SL.Add(EmptyString);
+          SL.Add(EmptyString());
         fragmentId = ac.GetFragmentId();
       }
       if( ac.GetParentAfixGroup() != NULL && 
@@ -955,7 +955,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
   if( afix != 0 )  SL.Add("AFIX 0");
   SL.Add("HKLF ") << RefMod.GetHKLFStr();
   SL.Add("END");
-  SL.Add(EmptyString);
+  SL.Add(EmptyString());
 }
 //..............................................................................
 bool TIns::Adopt(TXFile& XF)  {
@@ -1091,7 +1091,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
   SL.Add(_CellToString());
   SL.Add(_ZerrToString());
   _SaveSymm(SL);
-  SL.Add(EmptyString);
+  SL.Add(EmptyString());
   SaveSfacUnit(GetRM(), GetRM().GetUserContent(), SL, SL.Count()-1);
 
   _SaveRefMethod(SL);
@@ -1114,7 +1114,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
     _wght << " 0.1";
 
   SL.Add("FVAR 1");
-  SL.Add(EmptyString);
+  SL.Add(EmptyString());
   for( size_t i=0; i < atoms.Count(); i++ )  {
     olxstr& aline = SL.Add(atoms[i].GetName());
     aline.Format(6, true, ' ');
@@ -1126,7 +1126,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
     aline << olxstr::FormatFloat(-5, v) << ' ';
   }
   SL.Add("HKLF ") << GetRM().GetHKLFStr();
-  SL.Add(EmptyString);
+  SL.Add(EmptyString());
 #ifdef _UNICODE
   TCStrList(SL).SaveToFile(FileName);
 #else
@@ -1513,7 +1513,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     //if( processed != NULL )  
     //  processed->equations.Add( &rm.Vars.GetEquation(i) );
   }
-  SL.Add(EmptyString);
+  SL.Add(EmptyString());
   if( atoms == NULL )  {
     for( size_t i=0; i < rm.FragCount(); i++ )
       rm.GetFrag(i).ToStrings(SL);
@@ -1531,7 +1531,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       frag->ToStrings(SL);
     }
   }
-  SL.Add(EmptyString);
+  SL.Add(EmptyString());
 }
 //..............................................................................
 void TIns::ValidateRestraintsAtomNames(RefinementModel& rm)  {
@@ -1586,8 +1586,8 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {
   SL.Add( _CellToString() );
   SL.Add( _ZerrToString() );
   _SaveSymm(SL);
-  SL.Add(EmptyString);
-  SL.Add(EmptyString);
+  SL.Add(EmptyString());
+  SL.Add(EmptyString());
   SaveSfacUnit(GetRM(), GetRM().GetUserContent(), SL, SL.Count()-1);
   if( ValidateRestraintNames )
     ValidateRestraintsAtomNames(GetRM());
@@ -1605,7 +1605,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {
     if( L == NULL )  continue;  // if load failed
     // skip rems and print them at the end
     //if( Ins[i].StartsFrom("REM") )  continue;
-    olxstr tmp = L->IsEmpty() ? EmptyString : L->Text(' ');
+    olxstr tmp = L->IsEmpty() ? EmptyString() : L->Text(' ');
     HyphenateIns(Ins[i]+' ', tmp , SL);
   }
   SL << Skipped;
@@ -1630,7 +1630,7 @@ void TIns::ParseHeader(const TStrList& in)  {
     delete Ins.GetObject(i);
   Ins.Clear();
   Skipped.Clear();
-  Title = EmptyString;
+  Title.SetLength(0);
   GetRM().Clear(rm_clear_DEF);
   GetAsymmUnit().ClearMatrices();
 // end clear, start parsing
@@ -1678,7 +1678,7 @@ void TIns::ParseHeader(const TStrList& in)  {
 bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& toks)  {
   if( toks[0].Equalsi("EQIV") && toks.Count() >= 3 )  {
     smatd SymM;
-    TSymmParser::SymmToMatrix(toks.Text(EmptyString, 2), SymM);
+    TSymmParser::SymmToMatrix(toks.Text(EmptyString(), 2), SymM);
     rm.AddUsedSymm(SymM, toks[1]);
     return true;
   }

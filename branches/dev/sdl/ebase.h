@@ -281,9 +281,9 @@ public:
   }
 };
 
-extern const TIString& NewLineSequence;
-extern const TICString CNewLineSequence;
-extern const TIWString WNewLineSequence;
+extern const TIString& NewLineSequence();
+extern const TICString& CNewLineSequence();
+extern const TIWString& WNewLineSequence();
 
 // an interface for a referencible object
 class AReferencible : public IEObject  {

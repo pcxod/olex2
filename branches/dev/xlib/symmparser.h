@@ -69,7 +69,7 @@ class TSymmParser  {
           T1.Insert(FormatFloatEx(M.t[j]), 0);
       }
       T << T1;
-      T1 = EmptyString;
+      T1.SetLength(0);
     }
     return T;
   }

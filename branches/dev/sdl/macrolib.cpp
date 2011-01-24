@@ -16,7 +16,7 @@ void TEMacroLib::Init()  {
     "Returns last error"));
   lib.RegisterFunction<TEMacroLib>(new TFunction<TEMacroLib>(this,  &TEMacroLib::funLogLevel, "LogLevel", fpNone|fpOne,
     "Returns/sets log level, default is 'm' - for macro, accepts/returns 'm', 'mf' or 'f'"));
-  lib.RegisterMacro<TEMacroLib>(new TMacro<TEMacroLib>(this,  &TEMacroLib::macIF, "IF", EmptyString, fpAny^fpNone,
+  lib.RegisterMacro<TEMacroLib>(new TMacro<TEMacroLib>(this,  &TEMacroLib::macIF, "IF", EmptyString(), fpAny^fpNone,
     "'if' construct"));
 }
 //..............................................................................................
@@ -274,7 +274,7 @@ void TEMacroLib::ParseMacro(const TDataItem& macro_def, TEMacro& macro)  {
   if( di != NULL )  {
     for( size_t i=0; i < di->ItemCount(); i++ )  {
       const TDataItem& tdi = di->GetItem(i);
-      macro.AddArg(tdi.GetFieldValue("name", EmptyString), tdi.GetFieldValue("def"));
+      macro.AddArg(tdi.GetFieldValue("name", EmptyString()), tdi.GetFieldValue("def"));
     }
   }
   di = macro_def.FindItem("onterminate");

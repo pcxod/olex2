@@ -167,7 +167,7 @@ bool TGlMaterial::FromDataItem(const TDataItem& Item)  {
 }
 //..............................................................................
 TIString TGlMaterial::ToString() const {
-  olxstr str(EmptyString, 256);
+  olxstr str(EmptyString(), 256);
   str << Flags;
   if( (Flags & sglmAmbientF) != 0 )
     str << ";" << AmbientF.ToString();

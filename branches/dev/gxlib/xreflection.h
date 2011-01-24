@@ -15,7 +15,7 @@ public:
   TXReflection(TGlRenderer& Render, const olxstr& collectionName, double minI, double maxI,
                  const TReflection& R, const TAsymmUnit& au);
   virtual ~TXReflection();
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName=EmptyString());
 
   const vec3i& GetHKL() const {  return hkl;  }
   double GetI() const {  return I;  }

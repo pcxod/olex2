@@ -80,7 +80,7 @@ void ABasicFunction::ParseOptions(const olxstr& Options, TCSTypeList<olxstr,olxs
     if( mi != InvalidIndex )
       list.Add( toks[i].SubStringTo(mi), olxstr(toks[i].SubStringFrom(mi+1)));
     else
-      list.Add( toks[i], EmptyString);
+      list.Add( toks[i], EmptyString());
   }
 }
 //..............................................................................

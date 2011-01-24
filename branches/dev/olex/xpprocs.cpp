@@ -240,7 +240,7 @@ void TMainForm::funIsOS(const TStrObjList& Params, TMacroError &E)  {
 void TMainForm::funCrs(const TStrObjList& Params, TMacroError &E)  {
   TCRSFile& cf = FXApp->XFile().GetLastLoader<TCRSFile>();
   if( Params[0].Equalsi("sg") )
-    E.SetRetVal(cf.GetSG() != NULL ? cf.GetSG()->GetName() : EmptyString );
+    E.SetRetVal(cf.GetSG() != NULL ? cf.GetSG()->GetName() : EmptyString());
   else
     E.SetRetVal(XLibMacros::NAString);
 }
@@ -474,7 +474,7 @@ void TMainForm::funColor(const TStrObjList& Params, TMacroError &E)  {
     }
   }
   else
-    E.ProcessingError(__OlxSrcInfo, EmptyString);
+    E.ProcessingError(__OlxSrcInfo, EmptyString());
 }
 //..............................................................................
 void TMainForm::funZoom(const TStrObjList &Cmds, TMacroError &E)  {
@@ -880,9 +880,9 @@ void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   for( size_t i=0; i < Atoms.Count(); i++ )  {
     FXApp->BangTable(*Atoms[i], Table);
     Output.Clear();
-    Table.CreateTXTList(Output, EmptyString, true, true, ' ');
+    Table.CreateTXTList(Output, EmptyString(), true, true, ' ');
     FGlConsole->PrintText(Output, NULL, false);
-    clipbrd << Output.Text(NewLineSequence);
+    clipbrd << Output.Text(NewLineSequence());
   }
   if( wxTheClipboard->Open() )  {
     if (wxTheClipboard->IsSupported(wxDF_TEXT) )
@@ -1302,7 +1302,7 @@ void TMainForm::macActivate(TStrObjList &Cmds, const TParamList &Options, TMacro
 //..............................................................................
 void TMainForm::macInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TStrList Output;
-  FXApp->InfoList(Cmds.IsEmpty() ? EmptyString : Cmds.Text(' '), Output, Options.Contains("s"));
+  FXApp->InfoList(Cmds.IsEmpty() ? EmptyString() : Cmds.Text(' '), Output, Options.Contains("s"));
   TBasicApp::NewLogEntry() << Output;
 }
 //..............................................................................
@@ -1318,7 +1318,7 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       size_t period=6;
       olxstr Tmp;
       for( size_t i=0; i <= FHelpItem->ItemCount(); i+=period )  {
-        Tmp = EmptyString;
+        Tmp.SetLength(0);
         for( size_t j=0; j < period; j++ )  {
           if( (i+j) >= FHelpItem->ItemCount() )
             break;
@@ -1736,7 +1736,7 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Cout = !Options.Contains('o'),    // catch output
     quite = Options.Contains('q');
 
-  olxstr dubFile(Options.FindValue('s',EmptyString));
+  olxstr dubFile(Options.FindValue('s',EmptyString()));
 
   olxstr Tmp;
   for( size_t i=0; i < Cmds.Count(); i++ )  {
@@ -2005,7 +2005,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( Cmds.Count() > 1  )  {
       olxstr fn = Cmds.Text(' ', 2);
       if( fn.IsEmpty() )
-        fn = PickFile("Load atomic radii", "Text files|*.txt", EmptyString, true);
+        fn = PickFile("Load atomic radii", "Text files|*.txt", EmptyString(), true);
       if( TEFile::Exists(fn) )  {
         olxdict<olxstr,double,olxstrComparator<false> > radii;
         TStrList sl, toks;
@@ -2056,7 +2056,7 @@ void TMainForm::macLink(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   if( FN == "none" )  {
-    FXApp->GetRender().GetStyles().SetLinkFile(EmptyString);
+    FXApp->GetRender().GetStyles().SetLinkFile(EmptyString());
     TBasicApp::NewLogEntry(logInfo) << "The link has been removed...";
     return;
   }
@@ -2090,7 +2090,7 @@ void TMainForm::macStyle(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   else  {
     if( !Cmds.IsEmpty() )  {
       if( Cmds[0] == "none" )  {
-        DefStyle = EmptyString;
+        DefStyle.SetLength(0);
         TBasicApp::NewLogEntry() << "Default style is reset to none";
         return;
       }
@@ -2132,7 +2132,7 @@ void TMainForm::macScene(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( !Cmds.IsEmpty() )  {
     if( Cmds[0] == "none" )  {
       TBasicApp::NewLogEntry() << "Default scene is reset to none";
-      DefSceneP = EmptyString;
+      DefSceneP.SetLength(0);
       return;
     }
     olxstr FN = Cmds.Text(' ');
@@ -2442,10 +2442,10 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     line << (i+1);
     line.Format(4, true, ' ') << TSymmParser::MatrixToSymmEx(m);
     if( i != 0 && (i%3) == 0 )
-      TBasicApp::GetLog() << NewLineSequence;
+      TBasicApp::GetLog() << NewLineSequence();
     TBasicApp::GetLog() << line.Format(26, true, ' ');
   }
-  TBasicApp::GetLog() << NewLineSequence;
+  TBasicApp::GetLog() << NewLineSequence();
 
   const olxstr _cif = Options.FindValue("cif");
   if( !_cif.IsEmpty() )  {
@@ -3344,7 +3344,7 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   static bool ChangingMode = false;
   if( ChangingMode )  return;
   AMode* md = Modes->SetMode(Cmds[0]);
-  olxstr tmp = EmptyString;
+  olxstr tmp;
   if( md != NULL )  {
     tmp << Cmds[0];
     Cmds.Delete(0);
@@ -3502,7 +3502,7 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  olxstr cr( Options.FindValue("r", EmptyString).ToLowerCase() );
+  olxstr cr(Options.FindValue("r", EmptyString()).ToLowerCase());
   TCAtomPList Atoms;
   FXApp->FindCAtoms(Cmds.IsEmpty() ? olxstr("sel") : Cmds.Text(' '), Atoms, true);
   if( Atoms.IsEmpty() )  return;
@@ -3697,7 +3697,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
         }
       }
     }
-    SL.Add(EmptyString);
+    SL.Add();
   }
   TIndexList atomIndex;
   TIns::SaveAtomsToStrings(FXApp->XFile().GetRM(), CAtoms, atomIndex, SL, &released);
@@ -3795,7 +3795,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   catch(const TExceptionBase& exc )  {
     TStrList output;
     exc.GetException()->GetStackTrace(output);
-    TBasicApp::NewLogEntry(logException) << output.Text(NewLineSequence);
+    TBasicApp::NewLogEntry(logException) << output.Text(NewLineSequence());
   }
   dlg->Destroy();
 }
@@ -3815,7 +3815,7 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TStrList SL;
   SL.Add("REM Please put \'-\' char in the front of reflections you wish to omit");
   SL.Add("REM and remove '-' char if you want the reflection to be used in the refinement");
-  SL.Add(EmptyString);
+  SL.Add();
   if( Cmds.Count() != 3 && FXApp->CheckFileType<TIns>() )  {
     const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
     if( Lst.IsLoaded() )  {
@@ -3834,7 +3834,7 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options, TMacroE
         for( size_t j=0; j < Hkls.Count(); j++ )
           SL.Add( Hkls[j]->ToNString());
 
-        SL.Add(EmptyString);
+        SL.Add();
       }
     }
   }
@@ -4039,7 +4039,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   FXApp->XGrid().AdjustMap();
   //FXApp->XGrid().InitIso();
-  FXApp->ShowGrid(true, EmptyString);
+  FXApp->ShowGrid(true, EmptyString());
   TBasicApp::NewLogEntry();
 }
 //..............................................................................
@@ -4247,7 +4247,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
     }
     FGlConsole->PrintText(out);
-    FXApp->GetLog() << NewLineSequence;
+    FXApp->GetLog() << NewLineSequence();
   }
   else if( Cmds.Count() == 1 && TSymmParser::IsRelSymm(Cmds[0]) )  {
     bool invert = Options.Contains('i'), unselect=false;
@@ -4310,7 +4310,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
   }
   else if( Cmds.Count() == 1 && Cmds[0].Equalsi("wbox") )  {
     TSAtomPList atoms;
-    if( FXApp->FindSAtoms(EmptyString, atoms, true) )  {
+    if( FXApp->FindSAtoms(EmptyString(), atoms, true) )  {
       const WBoxInfo bs = TXApp::CalcWBox(atoms, NULL, TSAtom::weight_occu);
       T3DFrameCtrl& fr = FXApp->Get3DFrame();
       vec3d nx = bs.normals[0]*bs.s_from[0];
@@ -4399,7 +4399,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
 void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   // a Open dialog appearing braks the wxWidgets sizing...
   if( !IsShown() && (Cmds.IsEmpty() || Cmds[0].IsEmpty()) )  return;
-  SetSGList(EmptyString);
+  SetSGList(EmptyString());
   TXFile::NameArg file_n;
   bool Blind = Options.Contains('b'); // a switch showing if the last file is remembered
   bool ReadStyle = !Options.Contains('r');
@@ -4505,15 +4505,18 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     olxstr ds_fn = TEFile::ChangeFileExt(file_n.file_name, "xlds");
     if( TEFile::Exists(ds_fn) )  {
       Macros.ProcessMacro(
-        olxstr("load view '") << TEFile::ChangeFileExt(file_n.file_name, EmptyString) << '\'', Error);
+        olxstr("load view '") << TEFile::ChangeFileExt(file_n.file_name, EmptyString()) << '\'', Error);
     }
     else  {
       if( TEFile::Exists(DefStyle) && ReadStyle )
         FXApp->GetRender().GetStyles().LoadFromFile(DefStyle, false);
     }
     // delete the Space groups information file
-    if( !(TEFile::ChangeFileExt(file_n.file_name, EmptyString) == TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), EmptyString)) )
+    if( !(TEFile::ChangeFileExt(file_n.file_name, EmptyString()) ==
+      TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), EmptyString())) )
+    {
       TEFile::DelFile(DataDir+"spacegroups.htm");
+    }
     // special treatment of the kl files
     if( TEFile::ExtractFileExt(file_n.file_name).Equalsi("hkl") )  {
       if( !TEFile::Exists(TEFile::ChangeFileExt(file_n.file_name, "ins") ) )  {
@@ -4562,7 +4565,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
               ins->GetRM().SetUserContentSize(unit);
               ins->GetAsymmUnit().SetZ((sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1));
             }
-            ins->SaveForSolution(TEFile::ChangeFileExt(file_n.file_name, "ins"), EmptyString, EmptyString, false);
+            ins->SaveForSolution(TEFile::ChangeFileExt(file_n.file_name, "ins"), EmptyString(), EmptyString(), false);
             Macros.ProcessMacro( olxstr("reap '") << TEFile::ChangeFileExt(file_n.file_name, "ins") << '\'', Error);
             Macros.ProcessMacro("solve", Error);
           }  // sge, if succeseded will run reap and solve
@@ -4577,7 +4580,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       int64_t st = TETime::msNow();
       FXApp->LoadXFile(TXFile::ComposeName(file_n));
       st = TETime::msNow() - st;
-      TBasicApp::NewLogEntry(logInfo) << "Structure loaded in " << st << " ms" << NewLineSequence;
+      TBasicApp::NewLogEntry(logInfo) << "Structure loaded in " << st << " ms" << NewLineSequence();
       BadReflectionsTable(false, false);
       RefineDataTable(false, false);
       LoadVFS(plStructure);  // load virtual fs file
@@ -4639,9 +4642,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       olxstr hkl_fn = TEFile::OSPath(FXApp->XFile().GetRM().GetHKLSource()).DeleteSequencesOf(TEFile::GetPathDelimeter()); 
       olxstr src_fn = TEFile::OSPath(FXApp->XFile().LastLoader()->GetFileName()).DeleteSequencesOf(TEFile::GetPathDelimeter()); 
 #ifdef __WIN32__
-      if( !TEFile::ChangeFileExt(hkl_fn, EmptyString).Equalsi(TEFile::ChangeFileExt(src_fn, EmptyString)) )  {
+      if( !TEFile::ChangeFileExt(hkl_fn, EmptyString()).Equalsi(TEFile::ChangeFileExt(src_fn, EmptyString())) )  {
 #else
-      if( TEFile::ChangeFileExt(hkl_fn, EmptyString) != TEFile::ChangeFileExt(src_fn, EmptyString) )  {
+      if( TEFile::ChangeFileExt(hkl_fn, EmptyString()) != TEFile::ChangeFileExt(src_fn, EmptyString()) )  {
 #endif
         TBasicApp::NewLogEntry() << "Note that the associated HKL file differs from the loaded file name:";
         TBasicApp::NewLogEntry() << "SRC: " << src_fn;
@@ -4731,7 +4734,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   else  {
-    Error.ProcessingError(__OlxSrcInfo, EmptyString );
+    Error.ProcessingError(__OlxSrcInfo, EmptyString());
     return;
   }
 }
@@ -5089,7 +5092,7 @@ void TMainForm::funCmdList(const TStrObjList &Cmds, TMacroError &E) {
   if( FGlConsole->GetCommandCount() == 0 ) return;
   size_t cc = FGlConsole->GetCommandIndex() + Cmds[0].ToInt();
   if( FGlConsole->GetCommandCount() == 0 )  {
-    E.SetRetVal(EmptyString);
+    E.SetRetVal(EmptyString());
     return;
   }
   if( cc >= FGlConsole->GetCommandCount() )
@@ -5261,7 +5264,7 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   Solutions.Clear();
   CurrentSolution = -1;
   FMode |= mSolve;
-  SolutionFolder = EmptyString;
+  SolutionFolder.SetLength(0);
 
   FXApp->XFile().UpdateAsymmUnit();  // update the last loader RM
 
@@ -5284,11 +5287,11 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olxstr cinsFN = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "ins");
   olxstr cresFN = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "res");
   olxstr clstFN = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "lst");
-  TOlxVars::SetVar("internal_tref", TrueString);
+  TOlxVars::SetVar("internal_tref", TrueString());
   try  {
     for( size_t i=0; i < Solutions.Count(); i++ )  {
       TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
-      Ins.SaveForSolution(cinsFN, olxstr("TREF -") << Solutions[i], EmptyString);
+      Ins.SaveForSolution(cinsFN, olxstr("TREF -") << Solutions[i], EmptyString());
       FXApp->LoadXFile(cinsFN);
       Macros.ProcessMacro("solve", E);
       Macros.ProcessMacro("waitfor process", E);
@@ -5310,7 +5313,7 @@ void TMainForm::macPatt(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   Solutions.Clear();
   CurrentSolution = -1;
   FMode |= mSolve;
-  SolutionFolder = EmptyString;
+  SolutionFolder.SetLength(0);
 
   FXApp->XFile().UpdateAsymmUnit();  // update the last loader RM
 }
@@ -5381,10 +5384,10 @@ void TMainForm::funAlert(const TStrObjList& Params, TMacroError &E) {
       else if( Params[2].CharAt(i) == 'Q' )  flags |= wxICON_QUESTION;
       else if( Params[2].CharAt(i) == 'R' )  showCheckBox = true;
     }
-    olxstr tickBoxMsg(EmptyString);
+    olxstr tickBoxMsg;
     if( Params.Count() == 4 )
       tickBoxMsg = Params[3];
-    E.SetRetVal( TdlgMsgBox::Execute(this, msg, Params[0], tickBoxMsg, flags, showCheckBox) );
+    E.SetRetVal(TdlgMsgBox::Execute(this, msg, Params[0], tickBoxMsg, flags, showCheckBox));
   }
   FGlCanvas->SetFocus();
 }
@@ -5440,7 +5443,7 @@ public:
     return true;
   }
   bool Exit(const IEObject *Sender, const IEObject *Data)  {
-    TBasicApp::NewLogEntry() << NewLineSequence << "Done";
+    TBasicApp::NewLogEntry() << NewLineSequence() << "Done";
     return true;
   }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
@@ -5718,7 +5721,7 @@ void TMainForm::CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS)  
   }
   callBackArg.Add(RMS);
   callBackArg.Add(arg);
-  arg = EmptyString;
+  arg.SetLength(0);
   for( size_t i=0; i < netB.NodeCount(); i++ )  {
     arg << netB.Node(i).GetLabel();
     if( (i+1) < netB.NodeCount() )  arg << ',';
@@ -5744,7 +5747,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   FXApp->UpdateBonds();
   if( Options.Contains("u") )  // do nothing...
     return;
-  CallbackFunc(StartMatchCBName, EmptyString);
+  CallbackFunc(StartMatchCBName, EmptyString());
   const bool TryInvert = Options.Contains("i");
   TXAtomPList atoms;
   double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_occu;
@@ -5992,7 +5995,7 @@ void TMainForm::funGetUserInput(const TStrObjList& Params, TMacroError &E) {
   if( dlg->ShowModal() == wxID_OK )
     E.SetRetVal(dlg->GetText());
   else
-    E.SetRetVal(EmptyString);
+    E.SetRetVal(EmptyString());
   dlg->Destroy();
 }
 //..............................................................................
@@ -6261,7 +6264,7 @@ void TMainForm::funChooseElement(const TStrObjList& Params, TMacroError &E) {
   if( Dlg->ShowModal() == wxID_OK )
     E.SetRetVal(Dlg->GetSelected()->symbol);
   else
-    E.SetRetVal(EmptyString );
+    E.SetRetVal(EmptyString());
   Dlg->Destroy();
 }
 //..............................................................................
@@ -6274,7 +6277,7 @@ void TMainForm::funChooseDir(const TStrObjList& Params, TMacroError &E) {
   if( dlg.ShowModal() == wxID_OK )
     E.SetRetVal<olxstr>(dlg.GetPath().c_str());
   else
-    E.ProcessingError(__OlxSrcInfo, EmptyString);
+    E.ProcessingError(__OlxSrcInfo, EmptyString());
 }
 //..............................................................................
 void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
@@ -6622,7 +6625,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //    TAtomReference ar(Cmds.Text(' '));
 //    TCAtomGroup ag;
 //    size_t atomAGroup;
-//    olxstr unp(ar.Expand(FXApp->XFile().GetRM(), ag, EmptyString, atomAGroup));
+//    olxstr unp(ar.Expand(FXApp->XFile().GetRM(), ag, EmptyString(), atomAGroup));
 //    TBasicApp::GetLog() << "Expanding " << ar.GetExpression() << " to atoms \n";
 //    for( size_t i=0; i < ag.Count(); i++ )
 //      TBasicApp::GetLog() << ag[i].GetFullLabel(FXApp->XFile().GetRM()) << ' ';
@@ -6920,11 +6923,11 @@ void TMainForm::macLstRes(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       Tmp = olxstr::FormatFloat(3, sr.GetValue());
       Tmp << ' ' << olxstr::FormatFloat(3, sr.GetEsd()) << ' ';
       for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
-        Tmp1 = EmptyString;
+        Tmp1.SetLength(0);
         Tmp1 << '[' << sr.GetAtom(j).GetFullLabel(rm) << ',' << sr.GetAtom(j+1).GetFullLabel(rm) << ']';
         Tmp << Tmp1.Format(11, true, ' ');
       }
-      output.Add( Tmp );
+      output.Add(Tmp);
     }
   }
   // similar distances
@@ -6937,11 +6940,11 @@ void TMainForm::macLstRes(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       Tmp = olxstr::FormatFloat(3, sr.GetEsd());
       Tmp << ' ';
       for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
-        Tmp1 = EmptyString;
+        Tmp1.SetLength(0);
         Tmp1 << '[' << sr.GetAtom(j).GetFullLabel(rm) << ',' << sr.GetAtom(j+1).GetFullLabel(rm) << ']';
         Tmp << Tmp1.Format(11, true, ' ');
       }
-      output.Add( Tmp );
+      output.Add(Tmp);
     }
   }
   // fixed "angles"
@@ -6954,11 +6957,11 @@ void TMainForm::macLstRes(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       Tmp = olxstr::FormatFloat(3, sr.GetValue());
       Tmp << ' ' << olxstr::FormatFloat(3, sr.GetEsd()) << ' ';
       for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
-        Tmp1 = EmptyString;
+        Tmp1.SetLength(0);
         Tmp1 << '[' << sr.GetAtom(j).GetFullLabel(rm) << ',' << sr.GetAtom(j+1).GetFullLabel(rm) << ']';
         Tmp << Tmp1.Format(11, true, ' ');
       }
-      output.Add( Tmp );
+      output.Add(Tmp);
     }
   }
   // fixed chiral atomic volumes
@@ -6974,7 +6977,7 @@ void TMainForm::macLstRes(TStrObjList &Cmds, const TParamList &Options, TMacroEr
         Tmp << sr.GetAtom(j).GetFullLabel(rm);
         if( (j+1) < sr.AtomCount() )  Tmp << ", ";
       }
-      output.Add( Tmp );
+      output.Add(Tmp);
     }
   }
   // planar groups
@@ -6990,20 +6993,20 @@ void TMainForm::macLstRes(TStrObjList &Cmds, const TParamList &Options, TMacroEr
         Tmp << sr.GetAtom(j).GetFullLabel(rm);
         if( (j+1) < sr.AtomCount() )  Tmp << ", ";
       }
-      output.Add( Tmp << ']' );
+      output.Add(Tmp << ']');
     }
   }
   if( rm.rDELU.Count() != 0 )  {
-    output.Add( olxstr("Rigind bond restrains: ") << rm.rDELU.Count() );
+    output.Add(olxstr("Rigind bond restrains: ") << rm.rDELU.Count());
   }
   if( rm.rSIMU.Count() != 0 )  {
-    output.Add( olxstr("Similar Uij restrains: ") << rm.rSIMU.Count() );
+    output.Add(olxstr("Similar Uij restrains: ") << rm.rSIMU.Count());
   }
   if( rm.rISOR.Count() != 0 )  {
-    output.Add( olxstr("Uij restrains to Uiso: ") << rm.rISOR.Count() );
+    output.Add(olxstr("Uij restrains to Uiso: ") << rm.rISOR.Count());
   }
   if( rm.rEADP.Count() != 0 )  {
-    output.Add( olxstr("Equivalent Uij constraints: ") << rm.rEADP.Count() );
+    output.Add(olxstr("Equivalent Uij constraints: ") << rm.rEADP.Count());
   }
   TBasicApp::NewLogEntry() << output;
 }
@@ -7133,7 +7136,7 @@ void TMainForm::macStartLogging(TStrObjList &Cmds, const TParamList &Options, TM
     ActiveLogFile = new TEFile(Cmds[0], "a+b");
   else
     ActiveLogFile = new TEFile(Cmds[0], "w+b");
-  ActiveLogFile->Writeln(EmptyString);
+  ActiveLogFile->Writeln(EmptyString());
   ActiveLogFile->Writeln(olxstr("Olex2 log started on ") << TETime::FormatDateTime(TETime::Now()));
 }
 //..............................................................................
@@ -7585,7 +7588,7 @@ void TMainForm::funChooseMaterial(const TStrObjList &Params, TMacroError &E)  {
   if( MatProp->ShowModal() == wxID_OK )
     E.SetRetVal(glm.ToString());
   else
-    E.ProcessingError(__OlxSrcInfo, EmptyString);
+    E.ProcessingError(__OlxSrcInfo, EmptyString());
   MatProp->Destroy();
 }
 //..............................................................................
@@ -7693,7 +7696,7 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
   FXApp->XGrid().SetMinHole(-mi.sigma*1.4);
   FXApp->XGrid().SetScale( -(mi.maxVal - mi.minVal)/2.5 );
   FXApp->XGrid().InitIso();
-  FXApp->ShowGrid(true, EmptyString);
+  FXApp->ShowGrid(true, EmptyString());
 }
 //..............................................................................
 //..............................................................................
@@ -7785,7 +7788,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   FXApp->XGrid().AdjustMap();
 
   TBasicApp::NewLogEntry() << "Map max val " << olxstr::FormatFloat(3, mi.maxVal) << 
-    " min val " << olxstr::FormatFloat(3, mi.minVal) << NewLineSequence << 
+    " min val " << olxstr::FormatFloat(3, mi.minVal) << NewLineSequence() << 
     "Map sigma " << olxstr::FormatFloat(3, mi.sigma);
   // map integration
   if( Options.Contains('i') )  {
@@ -7826,7 +7829,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   }
   FXApp->XGrid().InitIso();
   //TStateChange sc(prsGridVis, true);
-  FXApp->ShowGrid(true, EmptyString);
+  FXApp->ShowGrid(true, EmptyString());
   //OnStateChange.Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
@@ -7857,7 +7860,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  olxstr empty = EmptyString;
+  olxstr empty;
   OlxTests tests;
   tests.Add(&TSymmParser::Tests);
   tests.Add(&smatd::Tests);
@@ -7870,11 +7873,11 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   TResidue& main_resi = FXApp->XFile().GetAsymmUnit().GetResidue(0);
   arl.Expand(FXApp->XFile().GetRM(), res);
   for( size_t i=0; i < res.Count(); i++ )  {
-    TBasicApp::GetLog() << NewLineSequence;
+    TBasicApp::GetLog() << NewLineSequence();
     for( size_t j=0; j < res[i].Count(); j++ )
       TBasicApp::GetLog() << res[i][j].GetFullLabel(FXApp->XFile().GetRM(), main_resi);
   }
-  TBasicApp::NewLogEntry() << NewLineSequence << arl.GetExpression();
+  TBasicApp::NewLogEntry() << NewLineSequence() << arl.GetExpression();
   if( Cmds.Count() == 1 && TEFile::Exists(Cmds[0]) )  {
     TEFile f(Cmds[0], "rb");
     uint64_t st = TETime::msNow();
@@ -8763,7 +8766,7 @@ void TMainForm::macUpdateQPeakTable(TStrObjList &Cmds, const TParamList &Options
 }
 //..............................................................................
 void TMainForm::funCheckState(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal(CheckState(TStateChange::DecodeState(Params[0]), Params.Count() == 2 ? Params[1] : EmptyString));
+  E.SetRetVal(CheckState(TStateChange::DecodeState(Params[0]), Params.Count() == 2 ? Params[1] : EmptyString()));
 }
 //..............................................................................
 void TMainForm::funGlTooltip(const TStrObjList& Params, TMacroError &E)  {
@@ -8879,7 +8882,7 @@ void TMainForm::macRESI(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
   bool full = (Params.Count() == 1 && Params[0].Equalsi("full") );
-  olxstr rv(EmptyString, 256);
+  olxstr rv(EmptyString(), 256);
   char bf[16];
   TShellUtil::MACInfo MACsInfo;
   TShellUtil::ListMACAddresses(MACsInfo);
@@ -9288,7 +9291,7 @@ void TMainForm::funMatchFiles(const TStrObjList& Params, TMacroError &E)  {
       rv.AddList(TMainForm_funMatchLatts(lattA, lattB, Params));
       delete f1;
       delete f2;
-      E.SetRetVal(rv.Text(NewLineSequence));
+      E.SetRetVal(rv.Text(NewLineSequence()));
       return;
     }
     catch(...)  {

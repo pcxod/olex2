@@ -698,7 +698,7 @@ void TUnitCell::BuildStructureMap_Direct(TArray3D<short>& map, double delta, sho
       }
     }
   }
-  TBasicApp::GetLog() << '\r' << "Done" << NewLineSequence;
+  TBasicApp::GetLog() << '\r' << "Done" << NewLineSequence();
   TBasicApp::GetInstance().Update();
 }
 //..................................................................................

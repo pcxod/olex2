@@ -205,7 +205,7 @@ public:
   virtual bool registerCallbackFunc(const olxstr& cbEvent, ABasicFunction* fn);
   virtual void unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& funcName);
   virtual const olxstr& getDataDir() const;
-  virtual const olxstr& getVar(const olxstr& name, const olxstr& defval=NullString) const;
+  virtual const olxstr& getVar(const olxstr& name, const olxstr& defval=EmptyString()) const;
   virtual void setVar(const olxstr& name, const olxstr& val) const;
   virtual TStrList GetPluginList() const;
 
@@ -268,7 +268,7 @@ protected:
   void CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS);
   void UpdateInfoBox();
 public:
-  bool ProcessFunction(olxstr &cmd, const olxstr& location=EmptyString) {  
+  bool ProcessFunction(olxstr &cmd, const olxstr& location=EmptyString()) {  
     TMacroError err;
     err.SetLocation(location);
     //cmd = exparse::parser_util::unescape(cmd);
@@ -276,7 +276,7 @@ public:
     AnalyseError(err);
     return rv;
   }
-  bool ProcessMacro(const olxstr& cmd, const olxstr& location=EmptyString)  {
+  bool ProcessMacro(const olxstr& cmd, const olxstr& location=EmptyString())  {
     TMacroError err;
     err.SetLocation(location);
     Macros.ProcessTopMacro(cmd, err, *this, &TMainForm::AnalyseError);

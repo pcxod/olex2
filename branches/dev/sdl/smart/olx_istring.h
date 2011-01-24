@@ -67,20 +67,17 @@ typedef TTSString<TWString, wchar_t> olxwstr;
   typedef TTSString<TCString, char > olxstr;
 #endif
 
-extern const olxstr &EmptyString;
-extern const olxstr &FalseString;
-extern const olxstr &TrueString;
-extern const olxstr &NullString;
+extern const olxstr &EmptyString();
+extern const olxstr &FalseString();
+extern const olxstr &TrueString();
 
-extern const olxcstr &CEmptyString;
-extern const olxcstr &CFalseString;
-extern const olxcstr &CTrueString;
-extern const olxcstr &CNullString;
+extern const olxcstr &CEmptyString();
+extern const olxcstr &CFalseString();
+extern const olxcstr &CTrueString();
 
-extern const olxwstr &WEmptyString;
-extern const olxwstr &WFalseString;
-extern const olxwstr &WTrueString;
-extern const olxwstr &WNullString;
+extern const olxwstr &WEmptyString();
+extern const olxwstr &WFalseString();
+extern const olxwstr &WTrueString();
 #endif
 
 template <class T, typename TC> class TTSString : public T  {
@@ -171,7 +168,7 @@ public:
 
   template <class T1, typename TC1> TTSString(const TTSString<T1,TC1>& v) : T((const T1&)v)  {  }
   //............................................................................
-  template <typename AC> TTSString(const AC& v) : T(v)  {  }
+  template <typename AC> TTSString(const AC& v) : T(v)  {}
   //............................................................................
   // creates a string from external array allocated with new
   static TTSString FromExternal(TC* data, size_t len)  {
@@ -206,7 +203,7 @@ public:
   TTSString& operator << (const TTSString& v) { return Append(v.Data(), v.Length());  }
   template <class T1, typename TC1>
   TTSString& operator << (const TTSString<T1,TC1>& v) { return Append(v.raw_str(), v.Length());  }
-  TTSString& operator << (const bool& v)      { return operator << (v ? TrueString : FalseString);  }
+  TTSString& operator << (const bool& v)      { return operator << (v ? TrueString() : FalseString());  }
   //............................................................................
   //............................................................................
   TTSString& operator = (const TTIString<TC>& v)   {
@@ -230,7 +227,7 @@ public:
   TTSString& operator = (const TC* str)   {  return AssignCharStr(str);  }
   //............................................................................
   TTSString& operator = (bool v) {
-    (*this) = (v ? TrueString : FalseString);
+    (*this) = (v ? TrueString() : FalseString());
     return *this;
   }
   //............................................................................
@@ -966,7 +963,7 @@ public:
   //............................................................................
   size_t ToSizeT() const {  return o_atoui<size_t>( T::Data(), T::_Length, 10);  }
   //............................................................................
-  bool ToBool() const {  return (Comparei(TrueString) == 0);  }
+  bool ToBool() const {  return (Comparei(TrueString()) == 0);  }
   //............................................................................
   // no '\0' at the end, got to do it ourselves
   template <class FT> static FT o_atof(const TC* data, size_t len) {
@@ -1603,7 +1600,7 @@ public:
   }
   //............................................................................
   static TTSString CharStr(TC ch, size_t count)  {
-    TTSString<T,TC> rv(EmptyString, count);
+    TTSString<T,TC> rv(EmptyString(), count);
     rv.Insert(ch, 0, count);
     return rv;
   }

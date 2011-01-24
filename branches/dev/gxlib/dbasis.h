@@ -27,7 +27,7 @@ public:
   TDBasis(TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TDBasis();
   void SetAsymmUnit(TAsymmUnit& au);
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName=EmptyString());
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
   void ListPrimitives(TStrList& List) const;

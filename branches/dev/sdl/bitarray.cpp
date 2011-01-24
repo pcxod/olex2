@@ -135,7 +135,7 @@ void TEBitArray::FromBase64String(const olxstr& str) {
 }
 //..............................................................................
 TIString TEBitArray::ToString() const  {
-  olxstr StrRepr(EmptyString, FCount+1);
+  olxstr StrRepr(EmptyString(), FCount+1);
   StrRepr.SetCapacity( Count() );
   for( size_t i=0; i < Count(); i++ )
     StrRepr <<  (Get(i) ? '1': '0');

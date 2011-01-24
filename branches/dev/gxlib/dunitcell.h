@@ -18,7 +18,7 @@ public:
   void UpdateLabel();
   size_t LabelCount() const {  return 4;  }
   TXGlLabel& GetLabel(size_t i) const {  return *Labels[i];  }
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName=EmptyString());
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min);
   void ListPrimitives(TStrList &List) const;

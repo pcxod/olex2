@@ -207,7 +207,7 @@ bool TEFile::Open(const olxstr& F, const olxstr& Attribs)  {
   FHandle = fopen( OLXSTR(FName), OLXSTR(Attribs));
   if( FHandle == NULL )  {
     olxstr fn = FName;
-    FName = EmptyString;
+    FName.SetLength(0);
     throw TFileException(__OlxSourceInfo, F, olxstr("NULL handle for '") << F << '\'');
   }
   return true;
@@ -235,7 +235,7 @@ bool TEFile::Delete()  {
 //..............................................................................
 void TEFile::CheckHandle() const  {
   if( FHandle == NULL )
-    throw TFileException(__OlxSourceInfo, EmptyString, "Invalid file handle");
+    throw TFileException(__OlxSourceInfo, EmptyString(), "Invalid file handle");
 }
 //..............................................................................
 void TEFile::Read(void *Bf, size_t count)  {
@@ -327,9 +327,9 @@ olxstr TEFile::ExtractFilePath(const olxstr &F)  {
     size_t i = fn.LastIndexOf( OLX_PATH_DEL );
     if( i > 0 && i != InvalidIndex )
       return fn.SubStringTo(i+1);
-    return EmptyString;
+    return EmptyString();
   }
-  return EmptyString;
+  return EmptyString();
 }
 //..............................................................................
 olxstr TEFile::ParentDir(const olxstr& name) {
@@ -340,25 +340,25 @@ olxstr TEFile::ParentDir(const olxstr& name) {
   size_t i = np.LastIndexOf(OLX_PATH_DEL, start);
   if( i > 0 && i != InvalidIndex )
     return np.SubStringTo(i+1);
-  return EmptyString;
+  return EmptyString();
 }
 //..............................................................................
 olxstr TEFile::ExtractFileExt(const olxstr& F)  {
-  //if( F.IsEmpty() || IsDir(F) )  return EmptyString;
-  if( F.IsEmpty() )  return EmptyString;
+  //if( F.IsEmpty() || IsDir(F) )  return EmptyString();
+  if( F.IsEmpty() )  return EmptyString();
   olxstr fn = OLX_OS_PATH(F);
   size_t i = fn.LastIndexOf('.');
   if( i > 0 && i != InvalidIndex )  {
     size_t del_ind = fn.LastIndexOf(OLX_PATH_DEL); 
     if( del_ind != InvalidIndex && del_ind > i )
-      return EmptyString;
+      return EmptyString();
     return fn.SubStringFrom(i+1);
   }
-  return EmptyString;
+  return EmptyString();
 }
 //..............................................................................
 olxstr TEFile::ExtractFileName(const olxstr& F)  {
-  if( F.IsEmpty() || IsDir(F) )  return EmptyString;
+  if( F.IsEmpty() || IsDir(F) )  return EmptyString();
   olxstr fn = OLX_OS_PATH(F);
   size_t i = fn.LastIndexOf(OLX_PATH_DEL);
   if( i > 0 && i != InvalidIndex )
@@ -368,17 +368,17 @@ olxstr TEFile::ExtractFileName(const olxstr& F)  {
 //..............................................................................
 olxstr TEFile::ExtractFileDrive(const olxstr& F)  {
 #ifdef __WIN32__
-  if( F.Length() < 2 )  return EmptyString;
-  if( F[1] != ':' )  return EmptyString;
+  if( F.Length() < 2 )  return EmptyString();
+  if( F[1] != ':' )  return EmptyString();
   return F.SubString(0, 2);
 #else
-  return EmptyString;
+  return EmptyString();
 #endif
 }
 //..............................................................................
 olxstr TEFile::ChangeFileExt(const olxstr &F, const olxstr &Ext)  {
-  //if( F.IsEmpty() || IsDir(F) )  return EmptyString;
-  if( F.IsEmpty() )  return EmptyString;
+  //if( F.IsEmpty() || IsDir(F) )  return EmptyString();
+  if( F.IsEmpty() )  return EmptyString();
   olxstr fn = OLX_OS_PATH(F);
   size_t i = fn.LastIndexOf('.');
   size_t d_i = fn.LastIndexOf(OLX_PATH_DEL);
@@ -727,7 +727,7 @@ olxstr TEFile::CurrentDir()  {
 #ifdef __WIN32__
   olxch bf[MAX_PATH];
   if( GetCurrentDirectory(MAX_PATH, bf) == 0 )
-    return EmptyString;
+    return EmptyString();
   return olxstr(bf);
 #else
   char *Dp = getcwd(NULL, MAX_PATH);
@@ -884,7 +884,7 @@ TEFile* TEFile::TmpFile(const olxstr& templ)  {
   rv->Temporary = true;
   return rv;
 #else
-    return new TEFile(EmptyString, tmpfile());
+    return new TEFile(EmptyString(), tmpfile());
 #endif
   }
   else  
@@ -1001,7 +1001,7 @@ olxstr TEFile::Which(const olxstr& filename)  {
     if( Exists(toks[i]) )
       return toks[i];
   }
-  return EmptyString;
+  return EmptyString();
 }
 //..............................................................................
 
@@ -1098,7 +1098,7 @@ void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
   output.QSort(false);
 #endif
   for( size_t i=0; i < output.Count(); i++ )  {
-   tmp = EmptyString;
+   tmp.SetLength(0);
     tmp <<  "<-" << dn << output[i];
     output[i] << tmp;
   }
@@ -1106,11 +1106,11 @@ void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
 }
 
 void CreateRelativePath(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal(TEFile::CreateRelativePath(Params[0], Params.Count() == 2 ? Params[1] : EmptyString));
+  E.SetRetVal(TEFile::CreateRelativePath(Params[0], Params.Count() == 2 ? Params[1] : EmptyString()));
 }
 
 void ExpandRelativePath(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal(TEFile::ExpandRelativePath(Params[0], Params.Count() == 2 ? Params[1] : EmptyString));
+  E.SetRetVal(TEFile::ExpandRelativePath(Params[0], Params.Count() == 2 ? Params[1] : EmptyString()));
 }
 
 TLibrary*  TEFile::ExportLibrary(const olxstr& name)  {

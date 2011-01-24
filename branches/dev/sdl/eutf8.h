@@ -83,7 +83,7 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
         bf.Write((uint8_t)(UTF8_MASKBYTE | input[i] & UTF8_MASKBITS));
       }
     }
-    olxcstr str(CEmptyString, bf.GetLength() );
+    olxcstr str(CEmptyString(), bf.GetLength() );
     bf.ToString(str);
     return str;
   }
@@ -107,7 +107,7 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
       }
       bf.Write(ch);
     }
-    olxwstr str(WEmptyString, bf.GetLength() );
+    olxwstr str(WEmptyString(), bf.GetLength() );
     bf.ToString(str);
     return str;
   }
@@ -149,7 +149,7 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
         bf.Write((uint8_t)(UTF8_MASKBYTE | input[i] & UTF8_MASKBITS));
       }
     }
-    olxcstr str(CEmptyString, bf.GetLength() );
+    olxcstr str(CEmptyString(), bf.GetLength() );
     bf.ToString(str);
     return str;
   }
@@ -194,7 +194,7 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
       }
       bf.Write(ch);
     }
-    olxwstr str(WEmptyString, bf.GetLength() );
+    olxwstr str(WEmptyString(), bf.GetLength() );
     bf.ToString(str);
     return str;
 }

@@ -52,8 +52,8 @@ olxstr TMol::MOLBond(TMolBond& B)  {
 void TMol::SaveToStrings(TStrList& Strings)  {
   olxstr Tmp, Tmp1;
   Strings.Add("-OLEX-");
-  Strings.Add(EmptyString);
-  Strings.Add(EmptyString);
+  Strings.Add(EmptyString());
+  Strings.Add(EmptyString());
   Tmp1 = GetAsymmUnit().AtomCount();
   Tmp1.Format(3, false, ' ');
   Tmp << Tmp1;

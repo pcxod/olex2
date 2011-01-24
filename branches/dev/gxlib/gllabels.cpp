@@ -54,7 +54,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     if( (Mode & lmQPeak) == 0 && (XA.GetType() == iQPeakZ) )  continue;
     if( (Mode & lmIdentity) != 0 && !XA.IsAUAtom() )  continue;
     const TCAtom& ca = XA.CAtom();
-    olxstr Tmp(EmptyString, 48);
+    olxstr Tmp(EmptyString(), 48);
     if( (Mode & lmLabels) != 0 )  {
       Tmp << XA.GetLabel();
       if( XA.CAtom().GetResiId() != 0 )  {

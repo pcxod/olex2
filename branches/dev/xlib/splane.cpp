@@ -101,7 +101,7 @@ void TSPlane::FromDataItem(const TDataItem& item)  {
   for( size_t i=0; i < Crds.Count(); i++ )
     points.AddNew( Crds[i].GetA()->crd(), Crds[i].GetB());
   _Init(points);
-  SetRegular(item.GetFieldValue("regular", FalseString).ToBool());
+  SetRegular(item.GetFieldValue("regular", FalseString()).ToBool());
 }
 //..............................................................................
 TSPlane::Def::Def(const TSPlane& plane) : atoms(plane.Count()), regular(plane.IsRegular())  {

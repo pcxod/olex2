@@ -122,8 +122,8 @@ void Launch()  {
   olxstr path = olx_getenv("PATH");
   path.Insert(bd.SubStringTo(bd.Length()-1) + ':', 0);
   olx_setenv("PATH", path);
-  olx_setenv("OLEX2_CCTBX_DIR", EmptyString);
-  olx_setenv("OLEX2_DIR", EmptyString);
+  olx_setenv("OLEX2_CCTBX_DIR", EmptyString());
+  olx_setenv("OLEX2_DIR", EmptyString());
 #ifdef __WIN32__
   olx_setenv("PYTHONHOME", bd + "Python26");
   const olxstr cmdl = bd + "olex2.dll";

@@ -21,7 +21,7 @@ protected:
 public:
   TBasicException() : Cause(NULL) {}
 
-  TBasicException(const olxstr& location, const TExceptionBase& cause, const olxstr& msg=EmptyString) :
+  TBasicException(const olxstr& location, const TExceptionBase& cause, const olxstr& msg=EmptyString()) :
     Message(msg), Location(location), Cause((TBasicException*)cause.GetException()->Replicate())  {}
   /* caution: the expeceted object is an instance from a call to Replicate() !
     and will be deleted
@@ -89,7 +89,7 @@ class TFunctionFailedException: public TBasicException {
 public:
   TFunctionFailedException(const olxstr& location, const olxstr& msg) :
     TBasicException(location, msg )  {}
-  TFunctionFailedException(const olxstr& location, const TExceptionBase& cause, const olxstr& msg=EmptyString) :
+  TFunctionFailedException(const olxstr& location, const TExceptionBase& cause, const olxstr& msg=EmptyString()) :
     TBasicException(location, cause, msg )  {}
   TFunctionFailedException(const olxstr& location, IEObject* cause) :
     TBasicException(location, cause )  {}
@@ -110,7 +110,7 @@ public:
 class TNotImplementedException: public TBasicException {
 public:
   TNotImplementedException(const olxstr& location) :
-    TBasicException(location, EmptyString)  {}
+    TBasicException(location, EmptyString())  {}
   virtual const char* GetNiceName() const {  return "Not implemented";  }
   virtual IEObject* Replicate() const {  return new TNotImplementedException(*this);  }
 };
@@ -139,7 +139,7 @@ public:
 class TFileDoesNotExistException: public TFileException {
 public:
   TFileDoesNotExistException(const olxstr& location, const olxstr& fileName) :
-    TFileException(location, fileName, EmptyString )  {}
+    TFileException(location, fileName, EmptyString() )  {}
   virtual const char* GetNiceName() const {  return "File does not exist";  }
   virtual IEObject* Replicate() const {  return new TFileDoesNotExistException(*this);  }
 };
@@ -147,7 +147,7 @@ public:
 class TEmptyFileException: public TFileException {
 public:
   TEmptyFileException(const olxstr& location, const olxstr& fileName) :
-    TFileException(location, fileName, EmptyString )  {}
+    TFileException(location, fileName, EmptyString() )  {}
   virtual const char* GetNiceName() const {  return "Empty file";  }
   virtual IEObject* Replicate() const {  return new TEmptyFileException(*this);  }
 };
@@ -161,7 +161,7 @@ public:
 
 class TDivException: public TMathException {
 public:
-  TDivException(const olxstr& location) : TMathException(location, EmptyString)  {}
+  TDivException(const olxstr& location) : TMathException(location, EmptyString())  {}
   virtual const char* GetNiceName() const {  return "Division by zero";  }
   virtual IEObject* Replicate() const {  return new TDivException(*this);  }
 };
@@ -201,7 +201,7 @@ public:
 class TOutOfMemoryException: public TBasicException {
 public:
   TOutOfMemoryException(const olxstr& location) :
-    TBasicException(location, EmptyString )  {}
+    TBasicException(location, EmptyString() )  {}
   virtual const char* GetNiceName() const {  return "Out of memory";  }
   virtual IEObject* Replicate() const {  return new TOutOfMemoryException(*this);  }
 };

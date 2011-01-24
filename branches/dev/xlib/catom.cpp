@@ -285,14 +285,14 @@ void DigitStrtok(const olxstr &str, TStrPObjList<olxstr,bool>& chars)  {
     if( str[i] <= '9' && str[i] >= '0' )  {
       if( !Char.IsEmpty() )      {
         chars.Add(Char, true);
-        Char = EmptyString;
+        Char.SetLength(0);
       }
       Dig << str[i];
     }
     else  {
       if( !Dig.IsEmpty() )  {
         chars.Add(Dig, false);
-        Dig = EmptyString;
+        Dig.SetLength(0);
       }
       Char << str[i];
     }

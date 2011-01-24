@@ -58,7 +58,7 @@ T3DFrameCtrl::T3DFrameCtrl(TGlRenderer& prnt, const olxstr& cName) : AGlMouseHan
 void T3DFrameCtrl::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  SetCollectionName(cName);
   for( size_t i=0; i < Faces.Count(); i++ )
-    Faces[i].Create(EmptyString);
+    Faces[i].Create(EmptyString());
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;

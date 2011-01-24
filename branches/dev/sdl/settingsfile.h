@@ -31,7 +31,7 @@ public:
 
   // 
   template <class SC>
-  inline const olxstr& GetParam(const SC& paramName, const olxstr& defVal=EmptyString ) const {
+  inline const olxstr& GetParam(const SC& paramName, const olxstr& defVal=EmptyString() ) const {
     size_t index = Params.IndexOf(paramName);
     return index == InvalidIndex ? defVal : Params.GetValue(index);
   }
@@ -46,7 +46,7 @@ public:
       return Params.GetValue(index);
     else  {
       Lines.Add(paramName, true);
-      return Params.Add(paramName, EmptyString);
+      return Params.Add(paramName, EmptyString());
     }
   }
   
