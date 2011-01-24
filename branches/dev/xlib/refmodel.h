@@ -482,7 +482,7 @@ of components 1 ... m
     TRefList refs;
     FilterHkl(refs, stats);
     smatd_list ml;
-    ml.AddNew().I() *= -1;
+    ml.AddNew().I();
     stats = RefMerger::Merge<smatd_list,Merger>(ml, refs, out, Omits, true);
     return AdjustIntensity(out, stats);
   }

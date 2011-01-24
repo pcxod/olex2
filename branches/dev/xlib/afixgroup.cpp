@@ -1,7 +1,7 @@
 #include "afixgroup.h"
 #include "refmodel.h"
 const olxstr TAfixGroup::m_names[] = {
-  EmptyString,
+  "",
   "ternary CH",
   "secondary CH2",
   "Me",
@@ -20,7 +20,7 @@ const olxstr TAfixGroup::m_names[] = {
   "acetylenic CH",
 };
 const olxstr TAfixGroup::n_names[] = {
-  EmptyString,
+  "",
   "with everything fixed",
   "with fixed occupancy and ADP",
   "with riding coordinates",
