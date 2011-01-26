@@ -75,7 +75,8 @@ public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
     double MaxD, MinD, LimDmin, LimDmax, 
-      OMIT_s, OMIT_2t, SHEL_lr, SHEL_hr, MaxI, MinI;
+      OMIT_s, OMIT_2t, SHEL_lr, SHEL_hr, MaxI, MinI, HKLF_m, HKLF_s;
+    mat3d HKLF_mat;
     int MERG;
     //vec3i maxInd, minInd;
     size_t FilteredOff, // by LimD, OMIT_2t, SHEL_hr, SHEL_lr
@@ -94,6 +95,8 @@ public:
       SHEL_lr = hs.SHEL_lr;   SHEL_hr = hs.SHEL_hr;
       LimDmin = hs.LimDmin;   LimDmax = hs.LimDmax;
       MaxI = hs.MaxI;         MinI = hs.MinI;
+      HKLF_m = hs.HKLF_m;     HKLF_s = hs.HKLF_s;
+      HKLF_mat = hs.HKLF_mat;
       FilteredOff = hs.FilteredOff;
       IntensityTransformed = hs.IntensityTransformed;
       TotalReflections = hs.TotalReflections;
@@ -109,6 +112,9 @@ public:
       MergeStats::SetDefaults();
       MaxD = MinD = LimDmax = LimDmin = 0;
       MaxI = MinI = 0;
+      HKLF_m = def_HKLF_m;
+      HKLF_s = def_HKLF_s;
+      HKLF_mat.I();
       FilteredOff = IntensityTransformed = OmittedByUser = 0;
       TotalReflections = OmittedReflections = 0;
       MERG = def_MERG;
@@ -122,7 +128,6 @@ public:
 protected:
   mutable HklStat _HklStat;
   mutable TRefList _Reflections;  // ALL un-merged reflections
-  mutable TRefPList _FriedelPairs;  // references form the _Reflections
   mutable TEFile::FileID HklStatFileID, HklFileID;  // if this is not the HKLSource, statistics is recalculated
   mutable TIntList _Redundancy;
   mutable int _FriedelPairCount;  // the numbe of pairs only
@@ -510,11 +515,6 @@ of components 1 ... m
   HklStat& FilterHkl(TRefList& out, HklStat& stats);
   // adjust intensity of reflections according to OMIT
   HklStat& AdjustIntensity(TRefList& out, HklStat& stats) const;
-  // returns un-filtered, un-merged list of the Friedel pairs
-  const TRefPList& GetFriedelPairs() const  {
-    GetReflections();
-    return _FriedelPairs;
-  }
   /* returns redundancy information, like list[0] is the number of reflections collected once
      list[1] = number of reflections collected wtice etc */
   const TIntList& GetRedundancyInfo() const {

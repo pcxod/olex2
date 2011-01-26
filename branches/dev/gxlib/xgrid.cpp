@@ -150,7 +150,6 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   XApp = xapp;
   Depth = 0;
   ED = NULL;
-  IS = NULL;
   MouseDown = false;
   Size = 10;
   // texture related data
@@ -331,7 +330,7 @@ void TXGrid::TPlaneCalculationTask::Run(size_t ind)  {
 bool TXGrid::Orient(TGlPrimitive& GlP)  {
   if( ED == NULL )  return true;
   if( Is3D() )  {
-    if( IS == NULL )  return true;
+    if( ED == NULL )  return true;
     if( &GlP == glpN )  // draw once only
       olx_gl::callList(PListId);
     else if( &GlP == glpP )  // draw once only
@@ -462,16 +461,13 @@ void TXGrid::DeleteObjects()  {
     delete TextData;
     TextData = NULL;
   }
-  if( IS != NULL )  {
-    delete IS;
-    p_triangles.Clear();
-    p_normals.Clear();
-    p_vertices.Clear();
-    n_triangles.Clear();
-    n_normals.Clear();
-    n_vertices.Clear();
-    IS = NULL;
-  }
+  p_triangles.Clear();
+  p_normals.Clear();
+  p_vertices.Clear();
+  n_triangles.Clear();
+  n_normals.Clear();
+  n_vertices.Clear();
+
   if( Mask != NULL )  {
     delete Mask;
     Mask = NULL;
@@ -531,8 +527,7 @@ void TXGrid::SetScale(float v)  {
   }
   Scale = v;
   UpdateInfo();
-  if( IS != NULL && _3d )  {
-    TArray3D<float>* _points = NULL;
+  if( _3d )  {
     p_triangles.Clear();
     p_normals.Clear();
     p_vertices.Clear();
@@ -540,29 +535,28 @@ void TXGrid::SetScale(float v)  {
     n_normals.Clear();
     n_vertices.Clear();
     if( XApp->Get3DFrame().IsVisible() )  {
-      delete IS;
       const size_t SZ=10;
       const vec3i isz = (XApp->Get3DFrame().GetSize()*SZ).Round<int>();
-      TArray3D<float>& points = *(_points = new TArray3D<float>(vec3i(0,0,0), isz));
+      TArray3D<float>& points = *(new TArray3D<float>(vec3i(0,0,0), isz));
       const mat3f rm(XApp->Get3DFrame().GetNormals()/SZ);
       const vec3f tr = XApp->Get3DFrame().GetEdge(0);
       const smatdd g2c(XApp->Get3DFrame().GetNormals()/SZ, XApp->Get3DFrame().GetEdge(0));
       const mat3d c2c = XApp->XFile().GetAsymmUnit().GetCartesianToCell();
       MapUtil::Cell2Cart(MapUtil::MapGetter<float,1>(ED->Data, ED->GetSize()), points.Data, points.GetSize(), g2c, c2c);
-      IS = new CIsoSurface(points);
-      IS->GenerateSurface(Scale);
-      p_vertices = IS->VertexList();
-      p_normals = IS->NormalList();
-      p_triangles = IS->TriangleList();
+      CIsoSurface IS(points);
+      IS.GenerateSurface(Scale);
+      p_vertices = IS.VertexList();
+      p_normals = IS.NormalList();
+      p_triangles = IS.TriangleList();
       for( size_t i =0; i < p_vertices.Count(); i++ )
         p_vertices[i] = p_vertices[i]*rm + tr;
       for( size_t i=0; i < p_normals.Count(); i++ )
         p_normals[i] = p_normals[i]*rm;
       if( Scale < 0 )  {
-        IS->GenerateSurface(-Scale);
-        n_vertices = IS->VertexList();
-        n_normals = IS->NormalList();
-        n_triangles = IS->TriangleList();
+        IS.GenerateSurface(-Scale);
+        n_vertices = IS.VertexList();
+        n_normals = IS.NormalList();
+        n_triangles = IS.TriangleList();
         for( size_t i =0; i < n_vertices.Count(); i++ )
           n_vertices[i] = n_vertices[i]*rm + tr;
         for( size_t i=0; i < n_normals.Count(); i++ )
@@ -571,15 +565,16 @@ void TXGrid::SetScale(float v)  {
       delete &points;
     }
     else  {
-      IS->GenerateSurface(Scale);
-      p_vertices = IS->VertexList();
-      p_normals = IS->NormalList();
-      p_triangles = IS->TriangleList();
+      CIsoSurface IS(*ED);
+      IS.GenerateSurface(Scale);
+      p_vertices = IS.VertexList();
+      p_normals = IS.NormalList();
+      p_triangles = IS.TriangleList();
       if( Scale < 0 )  {
-        IS->GenerateSurface(-Scale);
-        n_vertices = IS->VertexList();
-        n_normals = IS->NormalList();
-        n_triangles = IS->TriangleList();
+        IS.GenerateSurface(-Scale);
+        n_vertices = IS.VertexList();
+        n_normals = IS.NormalList();
+        n_triangles = IS.TriangleList();
       }
     }
     RescaleSurface();
@@ -685,9 +680,7 @@ bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
       if( Size > 20 )  Size = 20;
     }
   }
-  if( IS != NULL )  {
-    SetScale(Scale);
-  }
+  SetScale(Scale);
   UpdateInfo();
   LastMouseX = Data.X;
   LastMouseY = Data.Y;
@@ -881,22 +874,15 @@ void TXGrid::AdjustMap()  {
 }
 //..............................................................................
 void TXGrid::InitIso()  {
-  if( !Is3D() )  {
-    if( IS != NULL )  {
-      delete IS;
-      IS = NULL;
-    }
-  }
-  else  {
-    if( ED == NULL )  return;
-    if( IS != NULL )  delete IS;
-    IS = new CIsoSurface(*ED);
+  if( Is3D() )  {
+    if( ED == NULL )
+      return;
     SetScale(Scale);
   }
 }
 //..............................................................................
 TXBlob* TXGrid::CreateBlob(int x, int) const {
-  if( IS == NULL || !Is3D() )  return NULL;
+  if( !Is3D() )  return NULL;
   const TAsymmUnit& au =  XApp->XFile().GetAsymmUnit();
   TXBlob* xb = new TXBlob(Parent, "blob");
   //IS->GenerateSurface(Scale);

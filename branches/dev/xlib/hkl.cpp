@@ -2,40 +2,19 @@
 // namespace TXFiles: THkl - basic procedures for the SHELX HKL files
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
-#include <stdlib.h>
-
 #include "hkl.h"
 #include "lst.h"
 #include "ins.h"
 #include "emath.h"
 #include "efile.h"
 #include "estrlist.h"
-
 #include "exception.h"
 #include "ematrix.h"
-
 #include "symmlib.h"
 
 //..............................................................................
-//----------------------------------------------------------------------------//
-// THklFil function bodies
-//----------------------------------------------------------------------------//
-THklFile::THklFile()  {
-  Hkl3D = NULL;
-}
-//..............................................................................
-THklFile::~THklFile()  {
-  Clear();
-}
-//..............................................................................
 void THklFile::Clear()  {
-  for( size_t i=0; i < Refs.Count(); i++ )
-    delete Refs[i];
-  Refs.Clear();
+  Refs.DeleteItems().Clear();
   Clear3D();
 }
 //..............................................................................
@@ -62,7 +41,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
       FormatInitialised = false;
     int Tag = 1;
     SL.LoadFromFile(FN);
-
+    const bool apply_basis = !Basis.IsI();
     const size_t line_cnt = SL.Count();
     Refs.SetCapacity( line_cnt );
     for( size_t i=0; i < line_cnt; i++ )  {
@@ -100,6 +79,8 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
             :
             new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble());
           ref->SetTag(Tag);
+          if( apply_basis )
+            ref->SetHkl(Basis*vec3d(ref->GetHkl()));
           UpdateMinMax(*ref);
           Refs.Add(ref);
         }
@@ -224,9 +205,9 @@ void THklFile::AllRefs(const TReflection& R, const smatd_list& ml, TRefPList& Re
 }
 //..............................................................................
 void THklFile::Append(TReflection& hkl)  {
-  UpdateMinMax( hkl );
-  Refs.Add( &hkl );
-  hkl.SetTag( Refs.Count() );
+  UpdateMinMax(hkl);
+  Refs.Add(hkl);
+  hkl.SetTag(Refs.Count());
 }
 //..............................................................................
 void THklFile::EndAppend()  {
@@ -238,10 +219,9 @@ void THklFile::Append(const TRefPList& hkls)  {
 
   for( size_t i=0; i < hkls.Count(); i++ )  {
     // call it before new - in case of exception
-    UpdateMinMax( *hkls[i] );
-
-    TReflection* r = new TReflection( *hkls[i] );
-    r->SetTag( Refs.Count() );
+    UpdateMinMax(*hkls[i]);
+    TReflection* r = new TReflection(*hkls[i]);
+    r->SetTag(Refs.Count());
     Refs.Add(r);
   }
   EndAppend();
@@ -249,7 +229,7 @@ void THklFile::Append(const TRefPList& hkls)  {
 //..............................................................................
 void THklFile::Append(const THklFile& hkls)  {
   if( !hkls.RefCount() )  return;
-  Append( hkls.Refs );
+  Append(hkls.Refs);
 }
 //..............................................................................
 bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append)  {

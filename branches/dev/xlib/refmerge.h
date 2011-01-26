@@ -169,7 +169,7 @@ class RefMerger {
           stats.ReflectionAPotMax = merged_count;
         if( !ref->IsAbsent() )  {
           // the reflection is replicated if only one in the list
-          DryMergerOut mo = RefListMerger::DryMerge( refs, from, i );
+          DryMergerOut mo = RefListMerger::DryMerge(refs, from, i);
           if( merged_count > 1 )  {
             SI_tot += mo.sumI;
             Sdiff += mo.sumDiff;
@@ -328,7 +328,7 @@ class RefMerger {
       if( !omitted )  {
         if( merged_count > stats.ReflectionAPotMax )
           stats.ReflectionAPotMax = merged_count;
-        MergerOut mo = RefListMerger::Merge( refs, from, i );
+        MergerOut mo = RefListMerger::Merge(refs, from, i);
         if( merged_count > 1 )  {
           SI_tot += mo.sumI;
           Sdiff += mo.sumDiff;
@@ -383,7 +383,7 @@ class RefMerger {
       if( !omitted )  {
         if( merged_count > stats.ReflectionAPotMax )
           stats.ReflectionAPotMax = merged_count;
-        DryMergerOut mo = RefListMerger::DryMerge( refs, from, i );
+        DryMergerOut mo = RefListMerger::DryMerge(refs, from, i);
         if( merged_count > 1 )  {
           SI_tot += mo.sumI;
           Sdiff += mo.sumDiff;

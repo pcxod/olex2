@@ -377,22 +377,22 @@ const TRefList& RefinementModel::GetReflections() const {
     TEFile::FileID hkl_src_id = TEFile::GetFileID(HKLSource);
     if( !_Reflections.IsEmpty() && hkl_src_id == HklFileID )
       return _Reflections;
-    THklFile hf;
+    THklFile hf(HKLF_mat);
     hf.LoadFromFile(HKLSource);
-    const vec3i minInd(hf.GetMinHkl()), maxInd(hf.GetMaxHkl());
-    _HklStat.FileMinInd = vec3i(100,100,100);
-    _HklStat.FileMaxInd = vec3i(-100,-100,-100);
-    TArray3D<TRefPList*> hkl3d(minInd, maxInd);
+    _HklStat.FileMinInd = hf.GetMinHkl();
+    _HklStat.FileMaxInd = hf.GetMaxHkl();
+    TArray3D<TRefPList*> hkl3d(_HklStat.FileMinInd , _HklStat.FileMaxInd);
     hkl3d.FastInitWith(0);
     HklFileID = hkl_src_id;
     const size_t hkl_cnt = hf.RefCount();
     size_t maxRedundancy = 0;
     _Reflections.Clear();
-    _FriedelPairs.Clear();
     _Redundancy.Clear();
     _FriedelPairCount = 0;
     _Reflections.SetCapacity(hkl_cnt);
     for( size_t i=0; i < hkl_cnt; i++ )  {
+      hf[i].SetI(hf[i].GetI()*HKLF_s);
+      hf[i].SetS(hf[i].GetS()*HKLF_s/HKLF_wt);
       if( HKLF == 5 )  {
         if( hf[i].GetFlag() < 0 )  {
           while( ++i < hkl_cnt && hf[i].GetFlag() < 0 )
@@ -401,31 +401,28 @@ const TRefList& RefinementModel::GetReflections() const {
           continue;
         }
       }
-      if( hf[i].GetTag() < 0 )  // is after (0, 0, 0) ?
-        continue;
+      else  // enforce to clear the batch number...
+        hf[i].SetFlag(NoFlagSet);
       TReflection& r = _Reflections.AddNew(hf[i]);
-      vec3i::UpdateMinMax(r.GetHkl(), _HklStat.FileMinInd, _HklStat.FileMaxInd);
       TRefPList* rl = hkl3d(hf[i].GetHkl());
-      if(  rl == NULL )
+      if( rl == NULL )
         hkl3d(hf[i].GetHkl()) = rl = new TRefPList;
-      rl->Add(&r);
+      rl->Add(r);
       if( rl->Count() > maxRedundancy )
         maxRedundancy = rl->Count();
     }
     _Redundancy.SetCount(maxRedundancy);
     for( size_t i=0; i < maxRedundancy; i++ )
       _Redundancy[i] = 0;
-    for( int h=minInd[0]; h <= maxInd[0]; h++ )  {
-      for( int k=minInd[1]; k <= maxInd[1]; k++ )  {
-        for( int l=minInd[2]; l <= maxInd[2]; l++ )  {
+    for( int h=_HklStat.FileMinInd[0]; h <= _HklStat.FileMaxInd[0]; h++ )  {
+      for( int k=_HklStat.FileMinInd[1]; k <= _HklStat.FileMaxInd[1]; k++ )  {
+        for( int l=_HklStat.FileMinInd[2]; l <= _HklStat.FileMaxInd[2]; l++ )  {
           TRefPList* rl1 = hkl3d(h, k, l);
           if(  rl1 == NULL )  continue;
           const vec3i ind(-h,-k,-l);
-          if( vec3i::IsInRangeInc(ind, minInd, maxInd) )  {
+          if( hkl3d.IsInRange(ind) )  {
             TRefPList* rl2 = hkl3d(ind);
             if( rl2 != NULL )  {
-              _FriedelPairs.AddList(*rl2);
-              _FriedelPairs.AddList(*rl1);
               _FriedelPairCount++;
               _Redundancy[rl2->Count()-1]++;
               delete rl2;
@@ -433,14 +430,8 @@ const TRefList& RefinementModel::GetReflections() const {
             }
           }
           _Redundancy[rl1->Count()-1]++;
-        }
-      }
-    }
-    for( int h=minInd[0]; h <= maxInd[0]; h++ )  {
-      for( int k=minInd[1]; k <= maxInd[1]; k++ )  {
-        for( int l=minInd[2]; l <= maxInd[2]; l++ )  {
-          if( hkl3d(h, k, l) != NULL )
-            delete hkl3d(h, k, l);
+          delete rl1;
+          hkl3d(h, k, l) = NULL;
         }
       }
     }
@@ -461,6 +452,9 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       _HklStat.OMIT_2t == OMIT_2t &&
       _HklStat.SHEL_lr == SHEL_lr &&
       _HklStat.SHEL_hr == SHEL_hr &&
+      _HklStat.HKLF_m == HKLF_m &&
+      _HklStat.HKLF_s == HKLF_s &&
+      _HklStat.HKLF_mat == HKLF_mat &&
       _HklStat.MERG == MERG && !OMITs_Modified )  
     {
       return _HklStat;
@@ -472,7 +466,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       FilterHkl(refs, _HklStat);
       TUnitCell::SymSpace sp = aunit.GetLattice().GetUnitCell().GetSymSpace();
       if( MERG != 0 && HKLF != 5 )  {
-        bool mergeFP = (MERG == 4 || MERG == 3) && !sp.IsCentrosymmetric();
+        bool mergeFP = (MERG == 4 || MERG == 3 || sp.IsCentrosymmetric());
         _HklStat = RefMerger::DryMerge<TUnitCell::SymSpace,RefMerger::ShelxMerger>(
           sp, refs, Omits, mergeFP);
       }
@@ -499,8 +493,6 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
     min_d = SHEL_hr;
   const double min_qd = min_d*min_d;  // maximum d squared
   const double max_qd = SHEL_lr*SHEL_lr;
-  const bool transform_hkl = !HKLF_mat.IsI();
-
   const size_t ref_cnt = all_refs.Count();
   out.SetCapacity(ref_cnt);
   stats.MinD = 100;
@@ -514,10 +506,7 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
       _HklStat.OmittedReflections++;
       continue;
     }
-    vec3i chkl = r.GetHkl();
-    if( transform_hkl )
-      chkl = (HKLF_mat*vec3d(chkl)).Round<int>();
-
+    const vec3i& chkl = r.GetHkl();
     vec3d hkl(chkl[0]*hkl2c[0][0],
       chkl[0]*hkl2c[0][1] + chkl[1]*hkl2c[1][1],
       chkl[0]*hkl2c[0][2] + chkl[1]*hkl2c[1][2] + chkl[2]*hkl2c[2][2]);
@@ -531,9 +520,10 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
     }
     if( qd < max_qd && qd > min_qd )  {
       TReflection& new_ref = out.AddNew(r);
-      if( new_ref.GetI() > stats.MaxI )  stats.MaxI = new_ref.GetI();
-      if( new_ref.GetI() < stats.MinI )  stats.MinI = new_ref.GetI();
-      new_ref.SetHkl(chkl);
+      if( new_ref.GetI() > stats.MaxI )
+        stats.MaxI = new_ref.GetI();
+      if( new_ref.GetI() < stats.MinI )
+        stats.MinI = new_ref.GetI();
     }
     else
       stats.FilteredOff++;

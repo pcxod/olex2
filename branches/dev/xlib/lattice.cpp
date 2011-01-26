@@ -81,15 +81,15 @@ void TLattice::ClearMatrices()  {
 }
 //..............................................................................
 void TLattice::Clear(bool ClearUnitCell)  {
-  if( ClearUnitCell )  {
-    GetUnitCell().Clear();
-    GetAsymmUnit().Clear();
-  }
   ClearAtoms();
   ClearBonds();
   ClearFragments();
   ClearMatrices();
   ClearPlanes();
+  if( ClearUnitCell )  {
+    GetUnitCell().Clear();
+    GetAsymmUnit().Clear();
+  }
 }
 //..............................................................................
 size_t TLattice::GenerateMatrices(const vec3d& VFrom, const vec3d& VTo,
@@ -1185,7 +1185,6 @@ void TLattice::CompaqAll()  {
   }
   OnStructureUniq.Enter(this);
   TActionQueueLock __queuelock(&OnStructureUniq);
-  OnStructureUniq.SetEnabled(false);
   Init();
   if( cnt != 0 )
     MoveToCenter();
@@ -2151,7 +2150,7 @@ olxstr TLattice::CalcMoiety() const {
   for( size_t i=0; i < cfrags.Count(); i++ )  {
     ElementDict _cld;
     for( size_t j=0; j < cfrags[i].Count(); j++ )
-      _cld.Add(&cfrags[i][j]->GetType(), 0) += cfrags[i][j]->GetChemOccu();
+      _cld.Add(&cfrags[i][j]->GetType(), 0) += cfrags[i][j]->GetOccu();
     ContentList cl(_cld.Count());
     for( size_t j=0; j < _cld.Count(); j++ )
       cl.Set(j, new ElementCount(*_cld.GetKey(j), _cld.GetValue(j)));
@@ -2159,7 +2158,7 @@ olxstr TLattice::CalcMoiety() const {
     bool uniq = true;
     double wght=0, overall_occu = 0;
     for( size_t j=0; j < cfrags[i].Count(); j++ )  {
-      const double occu = cfrags[i][j]->GetChemOccu();
+      const double occu = cfrags[i][j]->GetOccu();
       if( overall_occu == 0 )
         overall_occu = occu;
       else if( overall_occu != -1 && olx_abs(overall_occu-occu) > 0.01 )  {

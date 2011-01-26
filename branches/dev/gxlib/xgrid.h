@@ -31,7 +31,6 @@ const short
 class TXGrid: public AGDrawObject  {
   //TVectorDList AllPoints;
   TArray3D<float>* ED;
-  CIsoSurface* IS;
   FractMask* Mask;
   // if mask is specified
   GLuint PListId, NListId;
