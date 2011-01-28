@@ -1494,6 +1494,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\sdl\math\mmath.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\sdl\poly.h"
 					>
 				</File>

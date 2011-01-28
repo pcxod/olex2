@@ -69,7 +69,7 @@ public:
   */
   static bool IsFixedGroup(int afix)  {
     const int m = GetM(afix);
-    return (m == 0 || m > 16);
+    return !(m == 0 || m > 16);
   }
   static bool IsFittedRing(int afix)  {
     const int m = GetM(afix);
@@ -125,8 +125,7 @@ public:
     Afix = a;
   }
   void Clear();
-  bool IsEmpty()  const {  return (Pivot == NULL || Pivot->IsDeleted() || 
-    (!IsUnbound() && Dependent.IsEmpty()));  }
+  bool IsEmpty() const;
   size_t Count() const {  return Dependent.Count();  }
   TCAtom& operator [] (size_t i) {  return *Dependent[i];  }
   const TCAtom& operator [] (size_t i) const {  return *Dependent[i];  }

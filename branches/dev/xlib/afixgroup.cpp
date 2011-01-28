@@ -68,8 +68,8 @@ void TAfixGroup::ToDataItem(TDataItem& item) const {
 PyObject* TAfixGroup::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* main = PyDict_New();
   PythonExt::SetDictItem(main, "afix", Py_BuildValue("i", Afix));
-  PythonExt::SetDictItem(main, "d", Py_BuildValue("d", U));
-  PythonExt::SetDictItem(main, "u", Py_BuildValue("d", D));
+  PythonExt::SetDictItem(main, "u", Py_BuildValue("d", U));
+  PythonExt::SetDictItem(main, "d", Py_BuildValue("d", D));
   PythonExt::SetDictItem(main, "pivot", Py_BuildValue("i", Pivot->GetTag()));
   int dep_cnt = 0;
   for( size_t i=0; i < Dependent.Count(); i++ )  {
@@ -124,6 +124,18 @@ TIString TAfixGroup::ToString() const {
   return rv;
 }
 //..............................................................................
+bool TAfixGroup::IsEmpty() const {
+  if( Pivot == NULL || Pivot->IsDeleted() )  return true;
+  size_t dep_cnt = 0;
+  for( size_t i=0; i < Dependent.Count(); i++ )  {
+    if( !Dependent[i]->IsDeleted() )
+      dep_cnt++;
+  }
+  if( IsFixedGroup() && dep_cnt != Dependent.Count() )
+    return true;
+  return false;
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TAfixGroups::ToDataItem(TDataItem& item) {
@@ -154,9 +166,8 @@ PyObject* TAfixGroups::PyExport(TPtrList<PyObject>& atoms)  {
   Groups.Pack();
 
   PyObject* main = PyTuple_New( Groups.Count() );
-  for( size_t i=0; i < Groups.Count(); i++ )  {
+  for( size_t i=0; i < Groups.Count(); i++ )
     PyTuple_SetItem(main, i, Groups[i].PyExport(atoms));
-  }
   return main;
 }
 #endif

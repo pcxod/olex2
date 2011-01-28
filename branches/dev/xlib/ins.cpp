@@ -411,8 +411,11 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         afixg = &cx.rm.AfixGroups.New(NULL, afix, d, sof == 11 ? 0 : sof, u == 10.08 ? 0 : u);
       }
       else {
-        if( !cx.AfixGroups.IsEmpty() ) //&& !cx.AfixGroups.Current().B()->IsFitted() ) 
+        if( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Current().B()->IsFixedGroup() &&
+          cx.AfixGroups.Current().GetA() == 0 )
+        {
           cx.AfixGroups.Pop();
+        }
       }
     }
     // Shelx manual: n is always a single digit; m may be two, one or zero digits (the last corresponds to m = 0).

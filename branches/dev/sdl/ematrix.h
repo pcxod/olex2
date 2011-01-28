@@ -543,23 +543,23 @@ public:
     GaussSolve(s, r, param);
     double rms = 0;
     for( size_t i=0; i < xy.Elements(); i++ )
-      rms += olx_sqr( xy[1][i]-TVector<MatType>::PolynomValue(param, xy[0][i]) );
+      rms += olx_sqr( xy[1][i]-TVector<MatType>::PolynomValue(param, xy[0][i]));
     return (rms > 0) ? sqrt(rms)/xy.Elements() : 0;
   }
 
   // Lagrange interpolation
-  static double  Lagrang(TVector<MatType>& x, const TVector<MatType>& y, double point )  {
-    int sz = x.Count();
+  static double  Lagrang(TVector<MatType>& x, const TVector<MatType>& y, double point)  {
+    const size_t sz = x.Count();
     double a, b, p1 = 0;
-    for(int i = 0; i < sz; i ++ )  {
+    for( size_t i = 0; i < sz; i++ )  {
       a = b = 1;
-      for(int j = 0; j < sz; j ++ )  {
-       if( i != j )  {
-         a *= (point - x[j]);
-         b *= (x[i] - x[j]);
+      for( size_t j = 0; j < sz; j++ )  {
+        if( i != j )  {
+          a *= (point - x[j]);
+          b *= (x[i] - x[j]);
         }
-     }
-     p1 += (a/b)*y[i];
+      }
+      p1 += (a/b)*y[i];
     }
     return p1;
   }

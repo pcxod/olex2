@@ -765,8 +765,10 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
   }
   size_t afix_sn = 0;
   olxdict<int, TPtrList<TAfixGroup>, TPrimitiveComparator> a_gs;
-  for( size_t i=0; i < AfixGroups.Count(); i++ )
-    a_gs.Add(AfixGroups[i].GetAfix()).Add(AfixGroups[i]);
+  for( size_t i=0; i < AfixGroups.Count(); i++ )  {
+    if( !AfixGroups[i].IsEmpty() )
+      a_gs.Add(AfixGroups[i].GetAfix()).Add(AfixGroups[i]);
+  }
   for( size_t i=0; i < a_gs.Count(); i++ )  {
     TPtrList<TAfixGroup>& gl = a_gs.GetValue(i);
     olxstr ag_name = gl[0]->Describe();
