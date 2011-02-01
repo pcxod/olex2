@@ -667,8 +667,9 @@ private:
 
   class ProcessHandler : public ProcessManager::IProcessHandler  {
     TMainForm& parent;
+    bool printed;
   public:
-    ProcessHandler(TMainForm& _parent) : parent(_parent)  {}
+    ProcessHandler(TMainForm& _parent) : parent(_parent), printed(false)  {}
     virtual void BeforePrint();
     virtual void Print(const olxstr& line);
     virtual void AfterPrint();

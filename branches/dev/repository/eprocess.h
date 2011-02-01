@@ -255,7 +255,7 @@ public:
     Process.OnTerminate.Add(this, process_manager_kill);
     while( Current != NULL && !Current->IsTerminated() )  {
       OutputHandler.OnWait();
-      olx_sleep(5);
+      olx_sleep(50);
     }
     Current = NULL;
     Processes.Add(&Process);
@@ -287,7 +287,7 @@ public:
     Current = Last;
     while( Current != NULL && !Current->IsTerminated() )  {
       OutputHandler.OnWait();
-      olx_sleep(5);
+      olx_sleep(50);
     }
     Current = NULL;
   }

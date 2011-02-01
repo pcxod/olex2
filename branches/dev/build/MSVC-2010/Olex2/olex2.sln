@@ -56,6 +56,7 @@ Global
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-debug|Win32.ActiveCfg = Unicode-debug|Win32
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-debug|Win32.Build.0 = Unicode-debug|Win32
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-debug|x64.ActiveCfg = Unicode-debug|x64
+		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-debug|x64.Build.0 = Unicode-debug|x64
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release|Win32.Build.0 = Unicode-release|Win32
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release|x64.ActiveCfg = Unicode-release|Win32

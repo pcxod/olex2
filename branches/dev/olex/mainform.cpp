@@ -3740,16 +3740,23 @@ void TMainForm::UpdateInfoBox()  {
 //..............................................................................
 void TMainForm::ProcessHandler::BeforePrint() {
   parent.FGlConsole->SetPrintMaterial(&parent.ExecFontColor);
+  printed = false;;
 }
 //..............................................................................
 void TMainForm::ProcessHandler::Print(const olxstr& line)  {
-  TBasicApp::GetLog() << line;
-  parent.CallbackFunc(ProcessOutputCBName, line);
+  if( !line.IsEmpty() )  {
+    TBasicApp::GetLog() << line;
+    parent.CallbackFunc(ProcessOutputCBName, line);
+    printed = true;
+  }
 }
 //..............................................................................
 void TMainForm::ProcessHandler::AfterPrint() {
   parent.FGlConsole->SetPrintMaterial(NULL);
-  parent.FXApp->Draw();
+  if( printed )  {
+    parent.FXApp->Draw();
+    printed = false;
+  }
 }
 //..............................................................................
 void TMainForm::ProcessHandler::OnWait() {

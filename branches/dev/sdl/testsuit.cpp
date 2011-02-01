@@ -5,6 +5,7 @@
 #include "olxth.h"
 #include "ellist.h"
 #include "efile.h"
+#include "math/mmath.h"
 
 //...................................................................................................
 void IsNumberTest(OlxTests& t)  {
@@ -277,6 +278,7 @@ OlxTests::OlxTests() {
   Add(&DirectionalListTest);
   Add(&RelativePathTest);
   Add(new SortTest, &SortTest::DoTest);
+  math::AddTests(*this);
 }
 //...................................................................................................
 void OlxTests::run()  {

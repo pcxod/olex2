@@ -1,17 +1,12 @@
 //---------------------------------------------------------------------------//
 // (c) James J Haestier, 2007
 //---------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "tls.h"
-
 #include "satom.h"
 #include "asymmunit.h"
 #include "svd.h"
 #include "inv.h"
+#include "math/mmath.h"
 
 /*
 TLS module:
@@ -314,7 +309,7 @@ bool TLS::calcTLS (const ematd &designM, const evecd &UijC)
 
 	int uNeeded = 2; //Options of SVD  - calculate U, V and W 
 	int vtNeeded = 2;
-	int useAdditionalMemory = 2;
+	int useAdditionalMemory = 0; //2;
 
 	//SVD output matrices
 	ap::template_1d_array<double> wOutput;
@@ -329,6 +324,11 @@ bool TLS::calcTLS (const ematd &designM, const evecd &UijC)
 		uNeeded, vtNeeded, useAdditionalMemory,
 		wOutput, uOutput, vtOutput);
 
+  ematd m(designM), vt, u;
+  evecd w;
+  math::SVD::Decompose(m, 2, 2, w, u, vt);
+  math::alg::print1(vtOutput, nColumns, nColumns);
+  math::alg::print0(vt, nColumns, nColumns);
 	{//Calculate variance-covariance matrix before further changes to w, vt
 		evecd w(nColumns);
 		for (int j = 0; j<nColumns; j++)
@@ -638,30 +638,9 @@ void TLS::inverse3x3(ematd &theMatrix) {
 		"TLS Failed: Inverse of non 3x3 matrix called");
 	//std::cout << "\naM before:";
 	
-    ap::template_2d_array<double> aMatrix; //copy for inverse fn
-    aMatrix.setbounds(1, 3, 1, 3);
-	for (int i = 1 ; i<4; i++){
-		for (int j = 1; j<4; j++){
-			aMatrix(i,j)= theMatrix[i-1][j-1];
-			//std::cout << aMatrix(i,j) <<", ";
-		}
-		//std::cout << "\n";
-	}
-	
-	bool res = inverse(aMatrix,3 );
-	if(!res)
+  if(!math::LU<double>::Invert(theMatrix))
 		throw TFunctionFailedException(__OlxSourceInfo, 
 		"Inverse of singular matrix or other inverse problem: failed");
-	
-	//std::cout << "\nInverse matrix in inverse3x3:" <<std::endl;
-	for (short i = 0; i < 3; i++){
-		for (short j=0 ; j< 3; j++){
-			theMatrix[i][j] = aMatrix(i+1,j+1);
-			//std::cout << aMatrix(i+1,j+1) <<", ";
-		}
-		//std::cout << "\n";
-	}
-	
 }
 
 

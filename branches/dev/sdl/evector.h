@@ -44,7 +44,10 @@ public:
 
   TVector(size_t ddim)  {
     Fn = ddim;
-    FData = new VecType[Fn];
+    if( Fn == 0 )
+      FData = NULL;
+    else
+      FData = new VecType[Fn];
     Null();
   }
 
@@ -55,6 +58,7 @@ public:
 
   inline size_t Count() const {  return Fn;  }
   inline size_t Size() const {  return Fn;  }
+  inline bool IsEmpty() const {  return Count() == 0;  }
   inline const VecType& operator [](size_t offset) const {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, offset, 0, Fn);
@@ -68,6 +72,9 @@ public:
     return FData[offset];
   }
 
+  inline const VecType& operator ()(size_t offset) const {  return operator [] (offset);  }
+  inline VecType& operator ()(size_t offset)  {  return operator [] (offset);  }
+  
   const VecType* GetRawData() const {  return FData;  }
 
   VecType& GetLast() const {

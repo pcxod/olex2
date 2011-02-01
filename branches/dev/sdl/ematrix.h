@@ -74,6 +74,7 @@ public:
   size_t Elements() const {  return Fm;  } 
   size_t ColCount() const {  return Fm;  }
   size_t RowCount() const {  return Fn;  }
+  bool IsEmpty() const {  return Fm == 0 || Fn == 0;  }
 
   const TVector<MatType>& operator [](size_t index) const {  return FData[index];  }
   TVector<MatType>& operator [](size_t index) {  return FData[index];  }
@@ -81,6 +82,10 @@ public:
   TVector<MatType>& Get(size_t index) {  return FData[index];  }
   const MatType& Get(size_t i, size_t j) const {  return FData[i][j];  }
   void Set(size_t i, size_t j, const MatType& v) {  FData[i][j] = v;  }
+  const MatType& operator ()(size_t i, size_t j) const {  return FData[i][j];  }
+  TVector<MatType>& operator ()(size_t i)  {  return FData[i];  }
+  const TVector<MatType>& operator ()(size_t i) const {  return FData[i];  }
+  MatType& operator ()(size_t i, size_t j)  {  return FData[i][j];  }
   /* the function multiplies a matrix by a column vector. Only the number of vector
    elements is taken from the matrix - no error will be generated if the matrix dimensions
    (number of elements) are larger than the vector dimentions!!!
@@ -192,11 +197,11 @@ public:
     return *this;
   }
 
-  template <class MC> TMatrix& Assign(const MC& M, size_t width, size_t height)  {
-    Resize(width, height);
-    for( size_t i=0; i < width; i++ )
-      for(size_t j=0; j < height; j++ )
-        FData[j][i] = M[j][i];
+  template <class MC> TMatrix& Assign(const MC& M, size_t row_cnt, size_t col_cnt)  {
+    Resize(row_cnt, col_cnt);
+    for( size_t i=0; i < row_cnt; i++ )
+      for(size_t j=0; j < col_cnt; j++ )
+        FData[i][j] = M[i][j];
     return *this;
   }
 

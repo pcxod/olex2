@@ -623,6 +623,7 @@
     <ClCompile Include="..\..\..\sdl\log.cpp" />
     <ClCompile Include="..\..\..\sdl\macroerror.cpp" />
     <ClCompile Include="..\..\..\sdl\macrolib.cpp" />
+    <ClCompile Include="..\..\..\sdl\math\mmath.cpp" />
     <ClCompile Include="..\..\..\sdl\md5.cpp" />
     <ClCompile Include="..\..\..\sdl\smart\olx_cstring.cpp" />
     <ClCompile Include="..\..\..\sdl\smart\olx_istring.cpp" />
@@ -698,6 +699,8 @@
     <ClInclude Include="..\..\..\sdl\macroerror.h" />
     <ClInclude Include="..\..\..\sdl\macrolib.h" />
     <ClInclude Include="..\..\..\sdl\math\align.h" />
+    <ClInclude Include="..\..\..\sdl\math\composite.h" />
+    <ClInclude Include="..\..\..\sdl\math\mmath.h" />
     <ClInclude Include="..\..\..\sdl\md5.h" />
     <ClInclude Include="..\..\..\sdl\olxptr.h" />
     <ClInclude Include="..\..\..\sdl\smart\olx_cstring.h" />
