@@ -271,14 +271,16 @@ void TCif::Initialize()  {
       data_provider[block_index].Remove(*Loop);
     }
   }
-  TSpaceGroup* sg = TSymmLib::GetInstance().FindSymSpace(Matrices);
-  if( sg != NULL )
-    GetAsymmUnit().ChangeSpaceGroup(*sg);
-  else   {
-    GetAsymmUnit().ChangeSpaceGroup(*TSymmLib::GetInstance().FindGroup("P1"));
-    //throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
+  try  {
+    TSpaceGroup* sg = TSymmLib::GetInstance().FindSymSpace(Matrices);
+    if( sg != NULL )
+      GetAsymmUnit().ChangeSpaceGroup(*sg);
+    else
+      GetAsymmUnit().ChangeSpaceGroup(*TSymmLib::GetInstance().FindGroup("P1"));
   }
-  
+  catch(...)  {
+    GetAsymmUnit().ChangeSpaceGroup(*TSymmLib::GetInstance().FindGroup("P1"));
+  }
   try  {
     GetRM().SetUserFormula(olxstr::DeleteChars(GetParamAsString("_chemical_formula_sum"), ' '));
   }

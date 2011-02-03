@@ -237,20 +237,25 @@ class TSymmLib: public IEObject  {
   TTypeList<TSymmElement> SymmetryElements;
   void InitRelations();
   static TSymmLib* Instance;
+  int extra_added;
+  TSpaceGroup* CreateNewFromCompact(int latt, const smatd_list& compact_matrices);
+  TSpaceGroup* CreateNewFromExpanded(const smatd_list& expanded_matrices);
 public:
   // 21.06.2008, the file name is not used
   TSymmLib(const olxstr& FN=EmptyString());
   virtual ~TSymmLib();
   // creates a dummy space group if not found
   TSpaceGroup* FindSG(const TAsymmUnit& AU);
-  TSpaceGroup* FindSG(const smatd_list& expanded_matrices) const;
 
   // searches for expanded space groups like in the CIF
-  template <class SymSpace> TSpaceGroup* FindSymSpace(const SymSpace& sp) const {
+  template <class SymSpace> TSpaceGroup* FindSymSpace(const SymSpace& sp) {
     for( size_t i=0; i < SGCount(); i++ )
       if( GetGroup(i).EqualsSymSpace(sp) )
         return &(GetGroup(i));
-    return NULL;
+    smatd_list all_ml;
+    for( size_t i=0; i < sp.Count(); i++ )
+      all_ml.AddCCopy(sp[i]);
+    return CreateNewFromExpanded(all_ml);
   }
   size_t FindBravaisLattices(TAsymmUnit& AU, TTypeList<TBravaisLatticeRef>& res) const;
   // finds all space groups of specified point group

@@ -1054,6 +1054,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\mat_id.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\mol.cpp"
 				>
 			</File>
@@ -1079,10 +1083,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\rm_base.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\xlib\rot_id.cpp"
 				>
 			</File>
 			<File
@@ -2323,6 +2323,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath="..\..\..\xlib\absorpc.h"
+				>
+			</File>
 			<File
 				RelativePath="..\..\..\xlib\afixgroup.h"
 				>

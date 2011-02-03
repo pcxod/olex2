@@ -8,6 +8,7 @@
 #include "symmparser.h"
 #include "bapp.h"
 #include "hall.h"
+#include "symspace.h"
 
 TSymmLib* TSymmLib::Instance = NULL;
 
@@ -1099,7 +1100,7 @@ TSymmElement::TSymmElement(const olxstr& name, TSpaceGroup* sg)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-TSymmLib::TSymmLib(const olxstr& FN)  {
+TSymmLib::TSymmLib(const olxstr& FN) : extra_added(0)  {
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "An instance of the library is already created");
 
@@ -1350,22 +1351,37 @@ void TSymmLib::GetGroupByNumber(int N, TPtrList<TSpaceGroup>& res) const  {
     if( GetGroup(i).GetNumber() == N )  res.Add( &GetGroup(i) );
 }
 //..............................................................................
+TSpaceGroup* TSymmLib::CreateNewFromCompact(int latt, const smatd_list& ml)  {
+  olxstr uname = HallSymbol::Evaluate(latt, ml);
+  TSpaceGroup* SG = FindGroup(uname);
+  if( SG != NULL )  return SG;
+  SG = new TSpaceGroup(uname, uname, uname,
+    EmptyString(), -(++extra_added), GetLatticeByNumber(latt), (latt > 0));
+  SpaceGroups.Add(uname, SG);
+  for( size_t i=1; i < ml.Count(); i++ )
+    SG->AddMatrix(ml[i]);
+  InitRelations();
+  return SG;
+}
+//..............................................................................
+TSpaceGroup* TSymmLib::CreateNewFromExpanded(const smatd_list& all_ml)  {
+  SymSpace::Info si = SymSpace::GetInfo(all_ml);
+  smatd_list ml;
+  for( size_t i=0; i < si.matrices.Count(); i++ )
+    ml.AddCCopy(*si.matrices[i]);
+  return CreateNewFromCompact(si.latt, ml);
+}
+//..............................................................................
 TSpaceGroup* TSymmLib::FindSG(const TAsymmUnit& AU)  {
   for( size_t i=0; i < SGCount(); i++ )  {
     if( GetGroup(i) == AU )  {
       return &(GetGroup(i));
     }
   }
-  static olxstr uname("u/n");
-  smatd_list ml;
+  smatd_list all_ml;
   for( size_t i=0; i < AU.MatrixCount(); i++ )
-    ml.AddCCopy(AU.GetMatrix(i));
-  TSpaceGroup* SG = new TSpaceGroup(uname, uname, HallSymbol::Evaluate(AU.GetLatt(), ml),
-    EmptyString(), -1, GetLatticeByNumber(AU.GetLatt()), (AU.GetLatt() > 0));
-  SpaceGroups.Add(uname, SG).Object;
-  InitRelations();
-  return SG;
-  //return NULL;
+    all_ml.AddCCopy(AU.GetMatrix(i));
+  return CreateNewFromCompact(AU.GetLatt(),all_ml);
 }
 //..............................................................................
 size_t TSymmLib::FindBravaisLattices(TAsymmUnit& AU, TTypeList<TBravaisLatticeRef>& res)  const {
@@ -1422,25 +1438,22 @@ size_t TSymmLib::FindBravaisLattices(TAsymmUnit& AU, TTypeList<TBravaisLatticeRe
 }
 //..............................................................................
 size_t TSymmLib::FindLaueClassGroups(const TSpaceGroup& LaueClass, TPtrList<TSpaceGroup>& res)  const {
-  size_t rc = 0;
+  size_t rc = res.Count();
   for( size_t i=0; i < SGCount(); i++ )  {
     if( &GetGroup(i).GetLaueClass() == &LaueClass )  {
-      res.Add( &GetGroup(i) );
-      rc++;
+      res.Add(GetGroup(i));
     }
   }
-  return rc;
+  return res.Count()-rc;
 }
 //..............................................................................
 size_t TSymmLib::FindPointGroupGroups(const TSpaceGroup& PointGroup, TPtrList<TSpaceGroup>& res) const {
-  size_t rc = 0;
+  size_t rc = res.Count();
   for( size_t i=0; i < SGCount(); i++ )  {
-    if( &GetGroup(i).GetPointGroup() == &PointGroup )  {
-      res.Add( &GetGroup(i) );
-      rc++;
-    }
+    if( &GetGroup(i).GetPointGroup() == &PointGroup )
+      res.Add(GetGroup(i));
   }
-  return rc;
+  return res.Count()-rc;
 }
 //..............................................................................
 void TSymmLib::InitRelations()  {
