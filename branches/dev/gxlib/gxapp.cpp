@@ -1827,35 +1827,75 @@ int XAtomLabelSort(const TXAtom* I1, const TXAtom* I2)  {
 }
 //..............................................................................
 void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
-  TXAtomPList AtomsList = FindXAtoms(Atoms, false);
-  TTTable<TStrList> Table(AtomsList.Count(), 11);
-  Table.ColName(0) = "Atom";
-  Table.ColName(1) = "Type";
-  Table.ColName(2) = "X";
-  Table.ColName(3) = "Y";
-  Table.ColName(4) = "Z";
-  Table.ColName(5) = "Ueq";
-  Table.ColName(6) = "ChemOccu";
-  Table.ColName(7) = "Peak";
-  Table.ColName(8) = "R-bond";
-  Table.ColName(9) = "R-VdW";
-  for(size_t i = 0; i < AtomsList.Count(); i++ )  {
-    const TSAtom& A = *AtomsList[i];
-    Table[i][0] = A.GetGuiLabel();
-    Table[i][1] = A.GetType().symbol;
-    Table[i][2] = olxstr::FormatFloat(-3, A.ccrd()[0]);
-    Table[i][3] = olxstr::FormatFloat(-3, A.ccrd()[1]);
-    Table[i][4] = olxstr::FormatFloat(-3, A.ccrd()[2]);
-    Table[i][5] = olxstr::FormatFloat(3, A.CAtom().GetUiso());
-    Table[i][6] = olxstr::FormatFloat(3, A.CAtom().GetChemOccu());
-    if( A.GetType() == iQPeakZ )
-      Table[i][7] = olxstr::FormatFloat(3, A.CAtom().GetQPeak());
-    else
-      Table[i][7] = '-';
-    Table[i][8] = A.CAtom().GetConnInfo().r;
-    Table[i][9] = A.CAtom().GetType().r_vdw;
+  if( XFile().GetLattice().IsGenerated() )  {
+    TXAtomPList AtomsList = FindXAtoms(Atoms, false);
+    TTTable<TStrList> Table(AtomsList.Count(), 11);
+    Table.ColName(0) = "Atom";
+    Table.ColName(1) = "Type";
+    Table.ColName(2) = "X";
+    Table.ColName(3) = "Y";
+    Table.ColName(4) = "Z";
+    Table.ColName(5) = "Ueq";
+    Table.ColName(6) = "ChemOccu";
+    Table.ColName(7) = "Peak";
+    Table.ColName(8) = "R-bond";
+    Table.ColName(9) = "R-VdW";
+    for(size_t i = 0; i < AtomsList.Count(); i++ )  {
+      const TXAtom& A = *AtomsList[i];
+      Table[i][0] = A.GetGuiLabel();
+      Table[i][1] = A.GetType().symbol;
+      Table[i][2] = olxstr::FormatFloat(-3, A.ccrd()[0]);
+      Table[i][3] = olxstr::FormatFloat(-3, A.ccrd()[1]);
+      Table[i][4] = olxstr::FormatFloat(-3, A.ccrd()[2]);
+      Table[i][5] = olxstr::FormatFloat(3, A.CAtom().GetUiso());
+      Table[i][6] = olxstr::FormatFloat(3, A.CAtom().GetChemOccu());
+      if( A.GetType() == iQPeakZ )
+        Table[i][7] = olxstr::FormatFloat(3, A.CAtom().GetQPeak());
+      else
+        Table[i][7] = '-';
+      Table[i][8] = A.CAtom().GetConnInfo().r;
+      Table[i][9] = A.CAtom().GetType().r_vdw;
+    }
+    Table.CreateTXTList(Info, "Atom information", true, true, ' ');
   }
-  Table.CreateTXTList(Info, "Atom information", true, true, ' ');
+  else  {
+    TAsymmUnit& au = XFile().GetAsymmUnit();
+    size_t ac = 0;
+    for(size_t i = 0; i < au.AtomCount(); i++ )
+      if( !au.GetAtom(i).IsDeleted() )
+        ac++;
+
+    TTTable<TStrList> Table(ac, 11);
+    Table.ColName(0) = "Atom";
+    Table.ColName(1) = "Type";
+    Table.ColName(2) = "X";
+    Table.ColName(3) = "Y";
+    Table.ColName(4) = "Z";
+    Table.ColName(5) = "Ueq";
+    Table.ColName(6) = "ChemOccu";
+    Table.ColName(7) = "Peak";
+    Table.ColName(8) = "R-bond";
+    Table.ColName(9) = "R-VdW";
+    ac = 0;
+    for(size_t i = 0; i < au.AtomCount(); i++ )  {
+      const TCAtom& A = au.GetAtom(i);
+      if( A.IsDeleted() )  continue;
+      Table[ac][0] = A.GetLabel();
+      Table[ac][1] = A.GetType().symbol;
+      Table[ac][2] = olxstr::FormatFloat(-3, A.ccrd()[0]);
+      Table[ac][3] = olxstr::FormatFloat(-3, A.ccrd()[1]);
+      Table[ac][4] = olxstr::FormatFloat(-3, A.ccrd()[2]);
+      Table[ac][5] = olxstr::FormatFloat(3, A.GetUiso());
+      Table[ac][6] = olxstr::FormatFloat(3, A.GetChemOccu());
+      if( A.GetType() == iQPeakZ )
+        Table[ac][7] = olxstr::FormatFloat(3, A.GetQPeak());
+      else
+        Table[ac][7] = '-';
+      Table[ac][8] = A.GetConnInfo().r;
+      Table[ac++][9] = A.GetType().r_vdw;
+    }
+    Table.CreateTXTList(Info, "Atom information", true, true, ' ');
+  }
 }
 //..............................................................................
 TXGlLabel& TGXApp::CreateLabel(const TXAtom& a, uint16_t FontIndex)  {

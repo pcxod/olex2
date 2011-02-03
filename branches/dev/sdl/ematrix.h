@@ -36,7 +36,7 @@ template <class MatType> class TMatrix: public ACollectionItem  {
     delete [] FData;
     FData = NULL;  
   }
-  TVector <MatType>* FData;
+  TVector<MatType>* FData;
 public:
   TMatrix()  {
     FData = NULL;
@@ -101,13 +101,12 @@ public:
   }
 
   template <class AType> TMatrix operator * (const TMatrix<AType>& C) const {
-    const size_t X = Vectors();
-    const size_t Y = Elements();
-    const size_t Z = C.Elements();
-    TMatrix<MatType> Result(X, Z);
-    for( size_t i = 0; i < X; i++ )
-      for( size_t j = 0; j < Z; j++ )
-        for( size_t k = 0; k < Y; k++ )
+    if( ColCount() != C.RowCount() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "size");
+    TMatrix<MatType> Result(RowCount(), C.ColCount());
+    for( size_t i = 0; i < RowCount(); i++ )
+      for( size_t j = 0; j < C.ColCount(); j++ )
+        for( size_t k = 0; k < ColCount(); k++ )
           Result[i][j] += FData[i][k]*C[k][j];
     return Result;
   }
@@ -116,7 +115,7 @@ public:
     return TMatrix<MatType>(*this) += c;
   }
 
-  template <class AType> TMatrix operator  - (const TMatrix<AType>& c) const {
+  template <class AType> TMatrix operator - (const TMatrix<AType>& c) const {
     return TMatrix<MatType>(*this) -= c;
   }
 
@@ -133,7 +132,7 @@ public:
     return *this;
   }
 
-  template <class AType> TMatrix& operator -=(const TMatrix<AType>& c)  {
+  template <class AType> TMatrix& operator -= (const TMatrix<AType>& c)  {
     if( (Fm ==c.Elements()) && (Fn == c.Vectors()) )
       for( size_t i=0; i < Fn; i++ )  
         FData[i] -= c[i];
@@ -185,7 +184,7 @@ public:
     this->Resize(C.Vectors(), C.Elements());
     for( size_t i = 0; i < Fn; i++)
       FData[i] = C[i];
-    SetTag( C.GetTag() );
+    SetTag(C.GetTag());
     return *this;
   }
 
@@ -193,12 +192,17 @@ public:
     Resize(C.Vectors(), C.Elements());
     for( size_t i = 0; i < Fn; i++ )
       FData[i] = C[i];
-    SetTag( C.GetTag() );
+    SetTag(C.GetTag());
     return *this;
   }
 
-  template <class MC> TMatrix& Assign(const MC& M, size_t row_cnt, size_t col_cnt)  {
-    Resize(row_cnt, col_cnt);
+  template <class MC> TMatrix& Assign(const MC& M, size_t row_cnt, size_t col_cnt, bool resize=true)  {
+    if( resize )
+      Resize(row_cnt, col_cnt);
+    else  {
+      if( Fn < row_cnt || Fm < col_cnt )
+        throw TFunctionFailedException(__OlxSourceInfo, "indices out of bonds");
+    }
     for( size_t i=0; i < row_cnt; i++ )
       for(size_t j=0; j < col_cnt; j++ )
         FData[i][j] = M[i][j];
@@ -206,14 +210,9 @@ public:
   }
 
   TMatrix& I() {
-    for( size_t i=0; i < Fn; i++ )  {
-      for( size_t j=0; j < Fm; j++ )  {
-        if( i == j )  
-          FData[i][j]=(MatType)1.0;
-        else      
-          FData[i][j]=0;
-      }
-    }
+    for( size_t i=0; i < Fn; i++ )
+      for( size_t j=0; j < Fm; j++ )
+        FData[i][j] = (i == j ? 1 : 0);
     return *this;
   }
 
@@ -223,18 +222,10 @@ public:
   }
 
   bool IsI() const  {
-    for( size_t i=0; i < Fn; i++ )  {
-      for( size_t j=0; j < Fm; j++ )  {
-        if( i == j )  {  
-          if( FData[i][j] != 1.0 ) 
-            return false; 
-        }
-        else  {  
-          if( FData[i][j] != 0.0 )  
-            return false; 
-        }
-      }
-    }
+    for( size_t i=0; i < Fn; i++ )
+      for( size_t j=0; j < Fm; j++ )
+        if( FData[i][j] != (i ==j ? 1 : 0) ) 
+          return false; 
     return true;
   }
 
@@ -311,23 +302,30 @@ public:
   }
 
   TMatrix& Transpose()  {
-    if( Fn != Fm )
-      throw TFunctionFailedException(__OlxSourceInfo, "incompatible matrix dimensions");
-    for( size_t i=0; i < Fm; i++ )  {
-      for( size_t j=i+1; j < Fn; j++ )  {  // need to go around a half of matrix
-        if( i == j )  continue;
-        olx_swap(FData[j][i], FData[i][j]);
+    if( Fn == 0 || Fm == 0 )
+      ;
+    else if( Fn != Fm )  {
+      TVector<MatType>* data = new TVector<MatType>[Fm];
+      for( size_t i=0; i < Fm; i++ )  {
+        data[i].Resize(Fn);
+        for( size_t j=0; j < Fn; j++ )
+          data[i][j] = FData[j][i];
+      }
+      olx_swap(Fn, Fm);
+      delete [] FData;
+      FData = data;
+    }
+    else  {
+      for( size_t i=0; i < Fm; i++ )  {
+        for( size_t j=i+1; j < Fn; j++ )  // need to go around a half of matrix
+          olx_swap(FData[j][i], FData[i][j]);
       }
     }
     return *this;
   }
+
   static TMatrix Transpose(const TMatrix& matr)  {
-    TMatrix rv(matr.Elements(), matr.Vectors());
-    for( size_t i = 0; i < matr.Vectors(); i++ )  {
-      for( size_t j = 0; j < matr.Elements(); j++ )
-        rv[j][i] = matr[i][j];
-    }
-    return rv;
+    return TMatrix(matr).Transpose();
   }
 
   MatType Trace() const  {
@@ -339,14 +337,14 @@ public:
     return a;
   }
 
-  void Print() const  {
+  void Print() const {
     printf("\n");
     for( size_t i = 0; i < Fn; i++ )  {
       FData[i].Print();
-      printf("\n");   }
+      printf("\n");
+    }
     printf("\n");
   }
-
 
   bool LoadFromFile(const olxstr& FN)  {
     TStrList S;

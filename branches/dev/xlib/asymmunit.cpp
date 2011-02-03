@@ -116,8 +116,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
 }
 //..............................................................................
 void TAsymmUnit::ComplyToResidues()  {
-  for( size_t i=0; i < CAtoms.Count(); i++ )
-    CAtoms[i]->SetTag(-1);
+  CAtoms.ForEach(ACollectionItem::TagSetter<>(-1));
   size_t ac = 0;
   for( size_t i=0; i < MainResidue.Count(); i++ )
     MainResidue[i].SetTag(ac++);

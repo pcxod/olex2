@@ -17,6 +17,7 @@
 #include "utf8file.h"
 #include "atomsort.h"
 #include "infotab.h"
+#include "absorpc.h"
 
 enum {
   XFILE_SG_Change,
@@ -271,6 +272,8 @@ void TXFile::Sort(const TStrList& ins)  {
         cs.sequence.Add(&AtomSorter::atom_cmp_Part);
       else if( sort.CharAt(i) == 'h' )
         keeph = false;
+       else if( sort.CharAt(i) == 'z' )  
+        cs.sequence.Add(&AtomSorter::atom_cmp_Suffix);
     }
     if( !cs.sequence.IsEmpty() )
       AtomSorter::Sort(list, cs);
@@ -547,7 +550,21 @@ void TXFile::LibDataName(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //..............................................................................
-TLibrary*  TXFile::ExportLibrary(const olxstr& name)  {
+void TXFile::LibGetMu(const TStrObjList& Params, TMacroError& E)  {
+  cm_Absorption_Coefficient_Reg ac;
+  ContentList cont = GetAsymmUnit().GetContentList();
+  double mu=0;
+  for( size_t i=0; i < cont.Count(); i++ )  {
+    double v = ac.CalcMuenOverRhoForE(
+      GetRM().expl.GetRadiationEnergy(), ac.locate(cont[i].element.symbol));
+    mu += (cont[i].count*cont[i].element.GetMr())*v;
+  }
+  mu *= GetAsymmUnit().GetZ()/GetAsymmUnit().CalcCellVolume();
+  mu /= 6.022142;
+  E.SetRetVal(mu);
+}
+//..............................................................................
+TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xf") : name );
 
   lib->RegisterFunction<TXFile>(

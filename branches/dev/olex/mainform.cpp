@@ -752,7 +752,7 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
 "Schedules a particular macro (second argument) to be executed within provided\
  interval (first argument)");
 
-  this_InitMacroD(Tls, EmptyString(), fpAny^(fpNone)|psFileLoaded, "James Haestier TLS test procedure");
+  this_InitMacroD(Tls, EmptyString(), fpAny|psFileLoaded, "James Haestier TLS test procedure");
 
   this_InitMacro(Test, , fpAny);
 

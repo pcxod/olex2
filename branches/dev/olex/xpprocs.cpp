@@ -141,7 +141,8 @@
 #include "encodings.h"
 #include "cifdp.h"
 #include "glutil.h"
-#include "hall.h"
+#include "refutil.h"
+#include "absorpc.h"
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
@@ -6226,35 +6227,41 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
     cellParameters[i+6]= FXApp->XFile().GetAsymmUnit().GetAxisEsds()[i];
     cellParameters[i+9]= FXApp->XFile().GetAsymmUnit().GetAngleEsds()[i];
   }
-  TSAtomPList satoms(FXApp->FindXAtoms(Cmds.Text(' ')), StaticCastAccessor<TSAtom>());
-  if( satoms.IsEmpty() )
-    throw TInvalidArgumentException(__OlxSourceInfo, "atom count");
-  xlib::TLS tls(satoms, cellParameters);
-
+  TXAtomPList xatoms;
+  FindXAtoms(Cmds, xatoms, true, true);
+  for( size_t i=0; i < xatoms.Count(); i++ )  {
+    if( xatoms[i]->GetEllipsoid() == NULL )
+      xatoms[i] = NULL;
+  }
+  if( xatoms.Pack().IsEmpty() )  {
+    Error.ProcessingError(__OlxSrcInfo, "no atoms given");
+    return;
+  }
+  xlib::TLS tls(TSAtomPList(xatoms.Pack(), StaticCastAccessor<TSAtom>()), cellParameters);
   TTTable<TStrList> tab(12, 3);
   olxstr ttitle("TLS analysis for: ");
-  for( size_t i=0; i < satoms.Count(); i++ )  {
-    ttitle << satoms[i]->GetLabel();
-    if( (i+1) < satoms.Count() )
+  for( size_t i=0; i < xatoms.Count(); i++ )  {
+    ttitle << xatoms[i]->GetGuiLabel();
+    if( (i+1) < xatoms.Count() )
       ttitle << ", ";
   }
   tab[0][0] = "T";
   for( size_t i=0; i < 3; i++ )  {
-    tab[1][i] = olxstr::FormatFloat( -3, tls.GetT()[i][0] );
-    tab[2][i] = olxstr::FormatFloat( -3, tls.GetT()[i][1] );
-    tab[3][i] = olxstr::FormatFloat( -3, tls.GetT()[i][2] );
+    tab[1][i] = olxstr::FormatFloat( -3, tls.GetT()[i][0], true );
+    tab[2][i] = olxstr::FormatFloat( -3, tls.GetT()[i][1], true );
+    tab[3][i] = olxstr::FormatFloat( -3, tls.GetT()[i][2], true );
   }
   tab[4][0] = "L";
   for( size_t i=0; i < 3; i++ )  {
-    tab[5][i] = olxstr::FormatFloat( -3, tls.GetL()[i][0] );
-    tab[6][i] = olxstr::FormatFloat( -3, tls.GetL()[i][1] );
-    tab[7][i] = olxstr::FormatFloat( -3, tls.GetL()[i][2] );
+    tab[5][i] = olxstr::FormatFloat( -3, tls.GetL()[i][0], true );
+    tab[6][i] = olxstr::FormatFloat( -3, tls.GetL()[i][1], true );
+    tab[7][i] = olxstr::FormatFloat( -3, tls.GetL()[i][2], true );
   }
   tab[8][0] = "S";
   for( size_t i=0; i < 3; i++ )  {
-    tab[9][i] = olxstr::FormatFloat( -3, tls.GetS()[i][0] );
-    tab[10][i] = olxstr::FormatFloat( -3, tls.GetS()[i][1] );
-    tab[11][i] = olxstr::FormatFloat( -3, tls.GetS()[i][2] );
+    tab[9][i] = olxstr::FormatFloat( -3, tls.GetS()[i][0], true );
+    tab[10][i] = olxstr::FormatFloat( -3, tls.GetS()[i][1], true );
+    tab[11][i] = olxstr::FormatFloat( -3, tls.GetS()[i][2], true );
   }
   TBasicApp::NewLogEntry() << tab.CreateTXTList(ttitle, false, false, ' ');
 }
@@ -6297,7 +6304,20 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   double scale_k =1./olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
   double sums[5] = {0.0,0.0,0.0,0.0,0.0};
   const vec3i min_i = ms.MinIndexes, max_i = ms.MaxIndexes;
+  TRefPList pos, neg;
+  RefUtil::GetBijovetPairs(refs, min_i, max_i, pos, neg, sp); 
   TArray3D<TReflection*> hkl3d(min_i, max_i);
+  cm_Absorption_Coefficient_Reg ac;
+  ContentList cont = xapp.XFile().GetAsymmUnit().GetContentList();
+  double mass = 0, mu=0;
+  for( size_t i=0; i < cont.Count(); i++ )  {
+    double v = ac.CalcMuenOverRhoForE(
+      xapp.XFile().GetRM().expl.GetRadiationEnergy(), ac.locate(cont[i].element.symbol));
+    mu += (cont[i].count*cont[i].element.GetMr())*v;
+  }
+  mu *= xapp.XFile().GetAsymmUnit().GetZ()/xapp.XFile().GetAsymmUnit().CalcCellVolume();
+  mu /= 6.022142;
+  xapp.NewLogEntry() << mu;  
   for( size_t i=0; i < refs.Count(); i++ )  {
     hkl3d(refs[i].GetHkl()) = &refs[i];
     refs[i].SetTag(i);

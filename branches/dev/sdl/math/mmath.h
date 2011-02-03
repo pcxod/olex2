@@ -90,7 +90,7 @@ namespace math  {
     const FT& operator ()(size_t i, size_t j) const {  return m(i,j);  }
     size_t ColCount() const {  return col_c;  }
     size_t RowCount() const {  return row_c;  }
-    bool IsEmpty() const {  return ColCount() == 0 | RowCount() == 0;  }
+    bool IsEmpty() const {  return ColCount() == 0 || RowCount() == 0;  }
   };
   template <typename FT> struct proxy  {
     template <typename CT> static mat_mat<CT,FT>
@@ -155,22 +155,30 @@ namespace math  {
         m(x,j) = tmp;
       }
     }
-    template <typename T> void print0(const T& a, size_t m)  {
-      TBasicApp::NewLogEntry() << "++++v";
+    template <typename T> void print0(const T& a, size_t m, const olxstr& annotation=EmptyString())  {
+      if( !annotation.IsEmpty() )
+        TBasicApp::NewLogEntry() << annotation;
       olxstr line;
       for( size_t i=0; i < m; i++ )
         line << olxstr::FormatFloat(-16, a(i), true) << ' ';
       TBasicApp::NewLogEntry() << line;
     }
-    template <typename T> void print1(const T& a, int m)  {
-      TBasicApp::NewLogEntry() << "___v";
+    template <typename T> void print0_1(const T& a, const olxstr& annotation=EmptyString())  {
+      print0(a, a.Count(), annotation);
+    }
+    template <typename T> void print1(const T& a, int m, const olxstr& annotation=EmptyString())  {
+      if( !annotation.IsEmpty() )
+        TBasicApp::NewLogEntry() << annotation;
       olxstr line;
-      for( size_t i=0; i < m; i++ )
+      for( int i=0; i < m; i++ )
         line << olxstr::FormatFloat(-16, a(i+1), true) << ' ';
       TBasicApp::NewLogEntry() << line;
     }
-    template <typename T> void print0(const T& a, size_t m, size_t n)  {
-      TBasicApp::NewLogEntry() << "++++m";
+    template <typename T> void print0(const T& a, size_t m, size_t n,
+      const olxstr& annotation=EmptyString())
+    {
+      if( !annotation.IsEmpty() )
+        TBasicApp::NewLogEntry() << annotation;
       for( size_t i=0; i < m; i++ )  {
         olxstr line;
         for( size_t j=0; j < n; j++ )
@@ -178,8 +186,12 @@ namespace math  {
         TBasicApp::NewLogEntry() << line;
       }
     }
-    template <typename T> void print1(const T& a, int m, int n)  {
-      TBasicApp::NewLogEntry() << "___m";
+    template <typename T> void print0_2(const T& a, const olxstr& annotation=EmptyString())  {
+      print0(a, a.RowCount(), a.ColCount(), annotation);
+    }
+    template <typename T> void print1(const T& a, int m, int n, const olxstr& annotation=EmptyString())  {
+      if( !annotation.IsEmpty() )
+        TBasicApp::NewLogEntry() << annotation;
       for( int i=1; i <= m; i++ )  {
         olxstr line;
         for( int j=1; j <= n; j++ )
@@ -422,12 +434,7 @@ namespace math  {
         return;
       for( size_t i=row_s; i < row_e; i++ )  {
         FT v = 0;
-        const double v1 = tau*alg::dot_prod_x(proxy<FT>::row(m, i, col_s, col_e), vt, v);
-
-        //FT vx = 0;
-        //for( size_t j=col_s; j < col_e; j++ )
-        //  vx += m(i,j)*vt(j-col_s);
-
+        const FT v1 = tau*alg::dot_prod_x(proxy<FT>::row(m, i, col_s, col_e), vt, v);
         for( size_t j=col_s; j < col_e; j++ )
           m(i,j) -= vt(j-col_s)*v1;
       }
@@ -546,7 +553,7 @@ namespace math  {
         return;
       pt.Resize(row_cnt, qp.ColCount());
       Reflection<FT> ref(qp.ColCount());
-      TVector<FT> tmp(row_cnt);
+      TVector<FT> tmp(qp.ColCount());
       for( size_t i=0; i < row_cnt; i++ )  {
         for( size_t j=0; j < qp.ColCount(); j++ )
           pt(i,j) = (i==j ? 1 : 0);
@@ -586,7 +593,7 @@ namespace math  {
         e.Resize(m.RowCount());
         for( size_t i=0; i < m.RowCount()-1; i++ )  {
           d(i) = m(i,i);
-          e(i) = m(i,i+1);
+          e(i) = m(i+1,i);
         }
         d.GetLast() = m(m.RowCount()-1,m.RowCount()-1);
       }
@@ -655,17 +662,18 @@ namespace math  {
           olx_swap(i1, i2);
           step_inc = -step_inc;
         }
-        if( dot_trans )  {
+        if( !dot_trans )  {
           olx_swap(i1, i2);
           step_inc = -step_inc;
         }
         TVector<FT> tmp(mx);
-        for( size_t i=i1; i < i2; i+= step_inc )  {
-          alg::copy_1(tmp, proxy<FT>::row(qp, i, i+1, qp.RowCount()));
+        while( i1 != i2 )  {
+          alg::copy_1(tmp, proxy<FT>::row(qp, i1, i1+1, qp.RowCount()));
           if( from_right )
-            ref.ApplyFromRight(z, tauq(i), tmp, 0, z.RowCount(), i, qp.ColCount());
+            ref.ApplyFromRight(z, tauq(i1), tmp, 0, z.RowCount(), i1+1, qp.ColCount());
           else
-            ref.ApplyFromLeft(z, tauq(i), tmp, i, qp.ColCount(), 0, z.ColCount());
+            ref.ApplyFromLeft(z, tauq(i1), tmp, i1+1, qp.ColCount(), 0, z.ColCount());
+          i1 += step_inc;
         }
       }
       else  {
@@ -676,25 +684,27 @@ namespace math  {
           olx_swap(i1, i2);
           step_inc = -step_inc;
         }
-        if( dot_trans )  {
+        if( !dot_trans )  {
           olx_swap(i1, i2);
           step_inc = -step_inc;
         }
         TVector<FT> tmp(mx);
-        for( size_t i=i1; i < i2; i += step_inc )  {
-          alg::copy_1(tmp, proxy<FT>::row(qp, i, i, qp.ColCount()));
+        while( i1 != i2 )  {
+          alg::copy_1(tmp, proxy<FT>::row(qp, i1, i1, qp.ColCount()));
           if( from_right )
-            ref.ApplyFromRight(z, tauq(i), tmp, 0, z.RowCount(), i+1, qp.ColCount());
+            ref.ApplyFromRight(z, tauq(i1), tmp, 0, z.RowCount(), i1, qp.ColCount());
           else
-            ref.ApplyFromLeft(z, tauq(i), tmp, i+1, qp.ColCount(), 0, z.ColCount());
+            ref.ApplyFromLeft(z, tauq(i1), tmp, i1, qp.ColCount(), 0, z.ColCount());
+          i1 += step_inc;
         }
       }
     }
   }; // end of BiDiagonal
+  template <typename FT>
   struct Rotation  {
-    evecd tmp;
+    TVector<FT> tmp;
     Rotation(size_t sz) : tmp(sz)  {}
-    static void Generate(double f, double g, double& cs, double& sn, double& r)  {
+    static void Generate(FT f, FT g, FT& cs, FT& sn, FT& r)  {
       sn = 0;
       cs = 1;
       if( g == 0 )
@@ -717,17 +727,18 @@ namespace math  {
         }
       }
     }
+    template <typename CVT, typename SVT, typename MatT>
     void ApplyFromLeft(bool forward, size_t row_s, size_t row_e, size_t col_s, size_t col_e,
-      const evecd& c, const evecd& s, ematd& m)
+      const CVT& c, const SVT& s, MatT& m)
     {
       if( forward )  {
         for( size_t i=row_s; i < row_e-1; i++ )  {
-          const double
+          const FT
             cv = c(i-row_s),
             sv = s(i-row_s);
           if( cv == 1 && sv == 0 )  continue;
           for( size_t j=col_s; j < col_e; j++ )  {
-            const double tmp = m(i+1,j)*cv - m(i,j)*sv;
+            const FT tmp = m(i+1,j)*cv - m(i,j)*sv;
             m(i,j) = m(i,j)*cv + m(i+1,j)*sv;
             m(i+1,j) = tmp;
           }
@@ -736,29 +747,30 @@ namespace math  {
       else  {
         for( size_t _i=row_s; _i < row_e-1; _i++ )  {
           const size_t i = row_e-_i-2;
-          const double
+          const FT
             cv = c(i-row_s),
             sv = s(i-row_s);
           if( cv == 1 && sv == 0 )  continue;
           for( size_t j=col_s; j < col_e; j++ )  {
-            const double tmp = m(i+1,j)*cv - m(i,j)*sv;
+            const FT tmp = m(i+1,j)*cv - m(i,j)*sv;
             m(i,j) = m(i,j)*cv + m(i+1,j)*sv;
             m(i+1,j) = tmp;
           }
         }
       }
     }
+    template <typename CVT, typename SVT, typename MatT>
     void ApplyFromRight(bool forward, size_t row_s, size_t row_e, size_t col_s, size_t col_e,
-      const evecd& c, const evecd& s, ematd& m)
+      const CVT& c, const SVT& s, MatT& m)
     {
       if( forward )  {
         for( size_t i=col_s; i < col_e-1; i++ )  {
-          const double
+          const FT
             cv = c(i-col_s),
             sv = s(i-col_s);
           if( cv == 1 && sv == 0 )  continue;
           for( size_t j=row_s; j < row_e; j++ )  {
-            const double tmp = m(j,i+1)*cv - m(j,i)*sv;
+            const FT tmp = m(j,i+1)*cv - m(j,i)*sv;
             m(j,i) = m(j,i)*cv + m(j,i+1)*sv;
             m(j,i+1) = tmp;
           }
@@ -767,12 +779,12 @@ namespace math  {
       else  {
         for( size_t _i=col_s; _i < col_e-1; _i++ )  {
           const size_t i = col_e-_i-2;
-          const double
+          const FT
             cv = c(i-col_s),
             sv = s(i-col_s);
           if( cv == 1 && sv == 0 )  continue;
           for( size_t j=row_s; j < row_e; j++ )  {
-            const double tmp = m(j,i+1)*cv - m(j,i)*sv;
+            const FT tmp = m(j,i+1)*cv - m(j,i)*sv;
             m(j,i) = m(j,i)*cv + m(j,i+1)*sv;
             m(j,i+1) = tmp;
           }
@@ -895,8 +907,9 @@ namespace math  {
         }
       }
     }
-    static bool Decompose(evecd& d, evecd& e, bool upper, bool fract_accu,
-      ematd& u, ematd& c, ematd& vt)
+    template <typename DiagT1, typename DiagT2, typename UT, typename CT, typename VtT >
+    static bool Decompose(DiagT1& d, DiagT2& e, bool upper, bool fract_accu,
+      UT& u, CT& c, VtT& vt)
     {
       if( d.Count() == 0 )  return true;
       if( d.Count() == 1 )  {
@@ -908,7 +921,7 @@ namespace math  {
         return true;
       }
       evecd w0(d.Count()-1), w1(d.Count()-1), w2(d.Count()-1), w3(d.Count()-1);
-      Rotation rot(d.Count());
+      Rotation<double> rot(d.Count());
       int max_itr = 6;
       bool forward = true;
       e.Resize(d.Count());
@@ -999,19 +1012,16 @@ namespace math  {
           d(m) = sigmn;
           if( vt.RowCount() > 0 )  {
             for( size_t i=0; i < vt.ColCount(); i++ )  {
-              const double tmp = vt(m-1,i)*cosr + (vt,i)*sinr;
+              const double tmp = vt(m-1,i)*cosr + vt(m,i)*sinr;
               vt(m,i) = vt(m,i)*cosr - vt(m-1,i)*sinr;
               vt(m-1,i) = tmp;
-              //const double tmp = vt(m,i)*cosr - vt(m-1,i)*sinr;
-              //vt(m-1,i) = vt(m-1,i)*cosr + vt(m,i)*sinr;
-              //vt(m,i) = tmp;
             }
           }
           if( u.RowCount() > 0 )  {
-            for( size_t i=0; i < u.ColCount(); i++ )  {
-              const double tmp = u(m,i)*cosl - u(m-1,i)*sinl;
-              u(m-1,i) = u(m-1,i)*cosl + u(m,i)*sinl;
-              u(m,i) = tmp;
+            for( size_t i=0; i < u.RowCount(); i++ )  {
+              const double tmp = u(i,m)*cosl - u(i,m-1)*sinl;
+              u(i,m-1) = u(i,m-1)*cosl + u(i,m)*sinl;
+              u(i,m) = tmp;
             }
           }
           if( c.RowCount() > 0 )  {
@@ -1143,7 +1153,7 @@ namespace math  {
         }
         else  {
           if( flag == 1 )  {
-            double f = olx_abs(d(ll)-shift)*(ext_sign(1, d(ll))+shift/d(ll));
+            double f = (olx_abs(d(ll))-shift)*(ext_sign(1, d(ll))+shift/d(ll));
             double g = e(ll);
             double cosr, sinr, cosl, sinl, r;
             for( int i=ll; i < m; i++ )  {
@@ -1178,7 +1188,7 @@ namespace math  {
               e(m-1) = 0;
           }
           else  {
-            double f = olx_abs(d(m)-shift)*(ext_sign(1, d(m))+shift/d(m));
+            double f = (olx_abs(d(m))-shift)*(ext_sign(1, d(m))+shift/d(m));
             double g = e(m-1);
             double cosr, sinr, cosl, sinl, r;
             for( int i=m; i >= ll+1; i-- )  {
@@ -1235,11 +1245,11 @@ namespace math  {
           d(min_i) = d(n-i);
           d(n-i) = min_s;
           if( vt.ColCount() > 0 )
-            alg::swap_rows<ematd,double>(vt, min_i, n-i);
+            alg::swap_rows<VtT,double>(vt, min_i, n-i);
           if( u.ColCount() > 0 )
-            alg::swap_cols<ematd,double>(u, min_i, n-i);
+            alg::swap_cols<UT,double>(u, min_i, n-i);
           if( c.ColCount() > 0 )
-            alg::swap_rows<ematd,double>(c, min_i, n-i);
+            alg::swap_rows<CT,double>(c, min_i, n-i);
         }
       }
       return true;
@@ -1269,12 +1279,13 @@ namespace math  {
               m(i,j) = 0;
           }
           evecd qtau, ptau;
-          m.Resize(m.ColCount(), m.ColCount());
-          Bidiagonal<double>::ToBidiagonal(m, qtau, ptau);
-          Bidiagonal<double>::UnpackPT(m, ptau, vt.RowCount(), vt);
+          mat_mat<ematd,double> mp(m, m.RowCount(), m.RowCount());
+          Bidiagonal<double>::ToBidiagonal(mp, qtau, ptau);
+          Bidiagonal<double>::UnpackPT(mp, ptau, vt.RowCount(), vt);
           evecd e;
-          const bool upper = Bidiagonal<double>::UnpackDiagonals(m, w, e);
-          return Decompose(w, e, upper, false, u, m, vt);
+          const bool upper = Bidiagonal<double>::UnpackDiagonals(mp, w, e);
+          return Decompose(w, e, upper, false, 
+            proxy<double>::mat_to(u,0,0), proxy<double>::mat_to(m,0,0), vt);
         }
         else  {
           evecd taus;
@@ -1285,14 +1296,26 @@ namespace math  {
               m(i,j) = 0;
           }
           evecd qtau, ptau, e;
-          m.Resize(m.ColCount(), m.ColCount());
-          Bidiagonal<double>::ToBidiagonal(m, qtau, ptau);
-          Bidiagonal<double>::UnpackPT(m, ptau, vt.RowCount(), vt);
-          const bool upper = Bidiagonal<double>::UnpackDiagonals(m, w, e);
-          Bidiagonal<double>::MulByQ(m, qtau,
-            proxy<double>::mat_to(u, u.RowCount(), m.RowCount()),
-            true, false);
-          return Decompose(w, e, upper, false, u, m, vt);
+          mat_mat<ematd,double> mp(m, m.ColCount(), m.ColCount());
+          Bidiagonal<double>::ToBidiagonal(mp, qtau, ptau);
+          Bidiagonal<double>::UnpackPT(mp, ptau, vt.RowCount(), vt);
+          const bool upper = Bidiagonal<double>::UnpackDiagonals(mp, w, e);
+          if( !extra_mem )  {
+            Bidiagonal<double>::MulByQ(mp, qtau, u, true, false);
+            return Decompose(w, e, upper, false, u, proxy<double>::mat_to(m, 0, 0), vt);
+          }
+          else  {
+            ematd tmp;
+            Bidiagonal<double>::UnpackQ(mp, qtau, m.ColCount(), tmp);
+            m.Assign(u, m.RowCount(), m.ColCount());
+            tmp.Transpose();
+            bool res;
+            if( res = Decompose(w, e, upper, false, proxy<double>::mat_to(u, 0, 0), tmp, vt) )  {
+              tmp = m*tmp.Transpose();
+              u.Assign(tmp, tmp.RowCount(), tmp.ColCount(), false);
+            }
+            return res;
+          }
         }
       }
       else if( m.ColCount() > 1.6*m.RowCount() )  {
@@ -1307,10 +1330,10 @@ namespace math  {
           Bidiagonal<double>::ToBidiagonal(m, qtau, ptau);
           Bidiagonal<double>::UnpackQ(m, ptau, u.RowCount(), u);
           evecd e;
-          m.Resize(m.ColCount(), m.ColCount());
-          const bool upper = Bidiagonal<double>::UnpackDiagonals(m, w, e);
+          mat_mat<ematd,double> mp(m, m.RowCount(), m.RowCount());
+          const bool upper = Bidiagonal<double>::UnpackDiagonals(mp, w, e);
           u.Transpose();
-          const bool res = Decompose(w, e, upper, false, u, m, vt);
+          const bool res = Decompose(w, e, upper, false, u, mp, vt);
           u.Transpose();
           return res;
         }
@@ -1323,27 +1346,38 @@ namespace math  {
               m(i,j) = 0;
           }
           evecd qtau, ptau, e;
-          m.Resize(m.RowCount(), m.RowCount());
-          Bidiagonal<double>::ToBidiagonal(m, qtau, ptau);
-          Bidiagonal<double>::UnpackQ(m, ptau, u.RowCount(), u);
-          const bool upper = Bidiagonal<double>::UnpackDiagonals(m, w, e);
+          mat_mat<ematd,double> mp(m, m.RowCount(), m.RowCount());
+          Bidiagonal<double>::ToBidiagonal(mp, qtau, ptau);
+          Bidiagonal<double>::UnpackQ(mp, qtau, u.RowCount(), u);
+          const bool upper = Bidiagonal<double>::UnpackDiagonals(mp, w, e);
           u.Transpose();
-          Bidiagonal<double>::MulByP(m, qtau,
-            mat_mat<ematd,double>(u, u.RowCount(), m.RowCount()),
-            false, true);
-          alg::print0(vt, m.RowCount(), m.RowCount());
-          return Decompose(w, e, upper, false, u, m, vt);
+          bool res;
+          if( !extra_mem )  {
+            Bidiagonal<double>::MulByP(mp, ptau, vt, false, true);
+            res = Decompose(w, e, upper, false, proxy<double>::mat_to(m, 0, 0), u, vt);
+          }
+          else  {
+            ematd tmp;
+            Bidiagonal<double>::UnpackPT(mp, ptau, m.RowCount(), tmp);
+            if( res = Decompose(w, e, upper, false, proxy<double>::mat_to(m,0,0), u, tmp) )  {
+              m.Assign(vt, m.RowCount(), m.ColCount());
+              tmp = tmp * m;
+              vt.Assign(tmp, tmp.RowCount(), tmp.ColCount(), false);
+            }
+          }
+          u.Transpose();
+          return res;
         }
       }
       else if( m.RowCount() <= m.ColCount() )  {
         evecd ptau, qtau;
         Bidiagonal<double>::ToBidiagonal(m, qtau, ptau);
         Bidiagonal<double>::UnpackQ(m, qtau, u.ColCount(), u);
-        Bidiagonal<double>::UnpackPT(m, ptau, u.ColCount(), vt);
+        Bidiagonal<double>::UnpackPT(m, ptau, vt.RowCount(), vt);
         evecd e;
         const bool upper = Bidiagonal<double>::UnpackDiagonals(m, w, e);
         u.Transpose();
-        const bool res = SVD::Decompose(w, e, upper, false, m, u, vt);
+        const bool res = SVD::Decompose(w, e, upper, false, proxy<double>::mat_to(m, 0, 0), u, vt);
         u.Transpose();
         return res;
       }
@@ -1351,20 +1385,20 @@ namespace math  {
         evecd ptau, qtau;
         Bidiagonal<double>::ToBidiagonal(m, qtau, ptau);
         Bidiagonal<double>::UnpackQ(m, qtau, u.ColCount(), u);
-        Bidiagonal<double>::UnpackPT(m, qtau, vt.RowCount(), vt);
+        Bidiagonal<double>::UnpackPT(m, ptau, vt.RowCount(), vt);
         evecd e;
         const bool upper = Bidiagonal<double>::UnpackDiagonals(m, w, e);
         if( !extra_mem )
-          return SVD::Decompose(w, e, upper, false, u, m, vt);
+          return SVD::Decompose(w, e, upper, false, u, proxy<double>::mat_to(m, 0, 0), vt);
         else  {
           ematd tmp(min_d, m.RowCount());
           for( size_t i=0; i < min_d; i++ )
             for( size_t j=0; j < m.RowCount(); j++ )
               tmp(i,j) = u(j,i);
-          const bool res = SVD::Decompose(w, e, upper, false, u, tmp, vt);
+          const bool res = SVD::Decompose(w, e, upper, false, proxy<double>::mat_to(u, 0, 0), tmp, vt);
           for( size_t i=0; i < min_d; i++ )
             for( size_t j=0; j < m.RowCount(); j++ )
-              u(i,j) = tmp(j,i);
+              u(j,i) = tmp(i,j);
           return res;
         }
       }

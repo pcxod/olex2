@@ -82,32 +82,46 @@ void math::TestInvert(OlxTests& t)  {
 
 void math::TestSVD(OlxTests& t)  {
   t.description = __OlxSrcInfo;
-  ematd m(5,5), u, vt, w(5,5);
-  evecd d;
-  m[0][0] = 1000;
-  m[0][4] = 2000;
-  m[1][2] = 3000;
-  m[4][1] = 4000;
-  const ematd om(m);
-  SVD::Decompose(m, 2, 2, d, u, vt);
-  for( size_t i=0; i < d.Count(); i++ )
-    w[i][i] = d[i];
-  ematd m1 = u*w*vt;
-  for( int i=0; i < 5; i++ )
-    for( int j=0; j < 5; j++ )
-      if( olx_abs(om(i,j)-m1(i,j)) > 1e-10 )
-        throw TFunctionFailedException(__OlxSourceInfo, "M!=UWVt");
-
-  double arr[3][5] = {
-    {2.0, 2.0, 1.6, 2.0, 1.2}, {2.5, 2.5,-0.4,-0.5,-0.3}, {2.5, 2.5, 2.8, 0.5,-2.9}};
-    m.Assign(arr, 3, 5);
-    SVD::Decompose(m, 2, 2, d, u, vt);
-  for( size_t i=0; i < m.ColCount(); i++ )
-    w[i][i] = d.Count() < i ? d[i] : 0;
-  u.Resize(5,5);
-  m1 = u*w*vt;
-  math::alg::print0(m1, 5, 5);
-  math::alg::print0(u, 5, 5);
-  math::alg::print0(vt, 5, 5);
-  math::alg::print0(d, d.Count());
+  const size_t dim_n=13, dim_m=5;
+  double arr[dim_n][dim_m] = {
+    {2.0, 2.0, 1.6, 2.0, 1.2},
+    {2.5, 2.5,-0.4,-0.5,-0.3},
+    {2.5, 2.5, 2.8, 0.5,-2.9},
+    {-2.5, 2.5, 2.8, 0.5, 2.9},
+    {-2.5, 2.5, 2.8, 0.5, 2.9},
+    {-2.5, 2.5, 2.8, 0.5, 2.9},
+    {-2.5, 2.5, 2.8, 0.5, 2.9},
+    {-2.5, 2.5, 2.8, 0.5, 2.9},
+    {-2.5, 0, 2.8, 0, 2.9},
+    {2.5, 0, 2.8, 0, -2.9},
+    {-2.5, 2.5, 2.8, 0.5, 2.9},
+    {-1.5, 0.5, -2.8, 0.5, -2.9},
+    {1.5, -0.5, -2.8, 10, -2.9},
+  };
+  
+  ematd m, u, vt, w;
+  for( int emem = 0; emem < 2; emem++ )  {
+    for( size_t row_cnt=1; row_cnt < dim_n; row_cnt++ )  {
+      m.Assign(arr, row_cnt, dim_m);
+      const ematd om(m);
+      evecd d;
+      SVD::Decompose(m, 2, 2, d, u, vt, emem!=0);
+      w.Resize(row_cnt, dim_m);
+      for( size_t i=0; i < d.Count(); i++ )
+        w[i][i] = d[i];
+      ematd m1 = u*w*vt, up = u*ematd(u).Transpose();
+      for( size_t i=0; i < m1.RowCount(); i++ )  {
+        for( size_t j=0; j < m1.ColCount(); j++ )  {
+          if( olx_abs(om(i,j)-m1(i,j)) > 1e-10 )
+            throw TFunctionFailedException(__OlxSourceInfo, "M!=UWVt");
+        }
+      }
+      for( size_t i=0; i < up.RowCount(); i++ )  {
+        for( size_t j=0; j < up.ColCount(); j++ )  {
+          if( olx_abs(up(i,j)-(i==j ? 1 : 0)) > 1e-10 )
+            throw TFunctionFailedException(__OlxSourceInfo, "UxUt!=I");
+        }
+      }
+    }
+  }
 }
