@@ -109,6 +109,10 @@ namespace math  {
     row(CT& _m, size_t _row, size_t _start, size_t _end=InvalidIndex)  {
       return mat_row<CT,FT>(_m, _row, _start, _end);
     }
+    template <typename CT> static vec_row<CT,FT>
+    vec(CT& _v, size_t _start, size_t _end=InvalidIndex)  {
+      return vec_row<CT,FT>(_v, _start, _end);
+    }
   };
 
   namespace alg  {
@@ -372,16 +376,14 @@ namespace math  {
           xnorm += olx_sqr(v(i)/mx);
         xnorm = sqrt(xnorm)*mx;
       }
-      if( xnorm == 0 )
+      else
         return 0;
       const FT alpha = v(0);
-      mx = olx_max(olx_abs(alpha), xnorm);
-      FT beta = -mx*sqrt(olx_sqr(alpha/mx)+olx_sqr(xnorm/mx));
-      if( alpha < 0 )
+      mx = olx_max(olx_abs(alpha), olx_abs(xnorm));
+      FT beta = mx*sqrt(olx_sqr(alpha/mx)+olx_sqr(xnorm/mx));
+      if( alpha >= 0 )
         beta = -beta;
-      const FT mf = 1./(alpha-beta);
-      for( size_t i=1; i < v.Count(); i++ )
-        v(i) *= mf;
+      proxy<FT>::vec(v,1, v.Count()).ForEach(alg::Mul<FT>(1./(alpha-beta)));
       v(0) = beta;
       return (beta-alpha)/beta;
     }
