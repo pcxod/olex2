@@ -37,13 +37,36 @@ template <class MatType> class TMatrix: public ACollectionItem  {
     FData = NULL;  
   }
   TVector<MatType>* FData;
+  struct RefBearer {
+    mutable TVector<MatType>* data;
+    mutable size_t n,m;
+    RefBearer(TMatrix& _m) : data(_m.FData), n(_m.Fn), m(_m.Fm)  {
+      _m.Release();
+    }
+    ~RefBearer()  {
+      if( data != NULL )
+        delete [] data;
+    }
+    void Release() const {
+      data = NULL;
+      n = m = 0;
+    }
+  };
+  TMatrix(size_t n, size_t m, TVector<MatType>* data) : Fn(n), Fm(m), FData(data)  {}
+  
+  void Release()  {
+    FData = NULL;
+    Fn = Fm = 0;
+  }
 public:
   TMatrix()  {
     FData = NULL;
     Fn = Fm = 0;
     SetTag(-1);
   }
-
+  // reference transfer
+  TMatrix(const RefBearer& rb) : FData(rb.data), Fn(rb.n), Fm(rb.m)  {  rb.Release();  }
+  
   TMatrix(size_t VectorsNumber, size_t ElementsNumber)  {
     Fn = VectorsNumber;
     Fm = ElementsNumber;
@@ -100,7 +123,7 @@ public:
     return R;
   }
 
-  template <class AType> TMatrix operator * (const TMatrix<AType>& C) const {
+  template <class AType> RefBearer operator * (const TMatrix<AType>& C) const {
     if( ColCount() != C.RowCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "size");
     TMatrix<MatType> Result(RowCount(), C.ColCount());
@@ -108,7 +131,7 @@ public:
       for( size_t j = 0; j < C.ColCount(); j++ )
         for( size_t k = 0; k < ColCount(); k++ )
           Result[i][j] += FData[i][k]*C[k][j];
-    return Result;
+    return RefBearer(Result);
   }
 
   template <class AType> TMatrix operator  + (const TMatrix<AType>& c) const {
@@ -193,6 +216,15 @@ public:
     for( size_t i = 0; i < Fn; i++ )
       FData[i] = C[i];
     SetTag(C.GetTag());
+    return *this;
+  }
+
+  TMatrix& operator = (const RefBearer& rb)  {
+    if( FData != NULL )  delete [] FData;
+    FData = rb.data;
+    Fn = rb.n;
+    Fm = rb.m;
+    rb.Release();
     return *this;
   }
 
