@@ -17,8 +17,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "olex2vj", "olex2vj.vcxproj"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gxlib-np", "gxlib-np.vcxproj", "{32A77026-E533-47FD-8967-D6CBADA7C0C5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "alglib", "alglib.vcxproj", "{DE855453-1F3B-4821-ABEB-A3922144B040}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "olex2", "olex2.vcxproj", "{E77DD146-78F9-4A48-8BC6-8792226C1670}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xlib", "xlib.vcxproj", "{61C58785-8535-4CD3-B84A-F324CFA4E27F}"
@@ -212,30 +210,6 @@ Global
 		{32A77026-E533-47FD-8967-D6CBADA7C0C5}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
 		{32A77026-E533-47FD-8967-D6CBADA7C0C5}.Unicode-release-static|Win32.Build.0 = Unicode-release-static|Win32
 		{32A77026-E533-47FD-8967-D6CBADA7C0C5}.Unicode-release-static|x64.ActiveCfg = Unicode-release-static|x64
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Debug|Win32.ActiveCfg = Debug|Win32
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Debug|Win32.Build.0 = Debug|Win32
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Debug|x64.ActiveCfg = Debug|x64
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Debug|x64.Build.0 = Debug|x64
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Release|Win32.ActiveCfg = Release|Win32
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Release|Win32.Build.0 = Release|Win32
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Release|x64.ActiveCfg = Release|x64
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Release|x64.Build.0 = Release|x64
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-debug|Win32.ActiveCfg = Unicode-debug|Win32
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-debug|Win32.Build.0 = Unicode-debug|Win32
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-debug|x64.ActiveCfg = Unicode-debug|x64
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-debug|x64.Build.0 = Unicode-debug|x64
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release|Win32.Build.0 = Unicode-release|Win32
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release|x64.ActiveCfg = Unicode-release|x64
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release|x64.Build.0 = Unicode-release|x64
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release-d|Win32.ActiveCfg = Unicode-release-d|Win32
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release-d|Win32.Build.0 = Unicode-release-d|Win32
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release-d|x64.ActiveCfg = Unicode-release-d|x64
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release-d|x64.Build.0 = Unicode-release-d|x64
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release-static|Win32.Build.0 = Unicode-release-static|Win32
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release-static|x64.ActiveCfg = Unicode-release-static|x64
-		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release-static|x64.Build.0 = Unicode-release-static|x64
 		{E77DD146-78F9-4A48-8BC6-8792226C1670}.Debug|Win32.ActiveCfg = Debug|Win32
 		{E77DD146-78F9-4A48-8BC6-8792226C1670}.Debug|Win32.Build.0 = Debug|Win32
 		{E77DD146-78F9-4A48-8BC6-8792226C1670}.Debug|x64.ActiveCfg = Debug|x64
