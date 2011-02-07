@@ -3,7 +3,9 @@
 #include "../ematrix.h"
 #include "../bapp.h"
 #include "../testsuit.h"
-//#define olx_abs(a)  fabs(a)
+/* most of the procedures are inspired by ALGLIB and LAPACK, some things, the Householder
+reflection generation in particular - inspired by smtxb code by Luc Bourhis */
+
 BeginEsdlNamespace()
 
 namespace math  {
@@ -125,10 +127,6 @@ namespace math  {
         to(i) = f(i);
       to(0) = 1;
     }
-    template<typename ToT, typename FromT> void copy(ToT& to, const FromT& f, double s)  {
-      for( size_t i=0; i < f.Count(); i++ )
-        to(i) = f(i)*s;
-    }
     // this way the rounding error is smaller than in a simple loop
     template<typename T1, typename T2, typename FT> FT& dot_prod_x(const T1& a, const T2& b, FT& v)  {
       v = 0;
@@ -139,21 +137,15 @@ namespace math  {
         v += a(i)*b(i);
       return v;
     }
-    template <typename T, typename FT> void swap_rows(T& m, size_t i, size_t j)  {
+    template <typename T> void swap_rows(T& m, size_t i, size_t j)  {
       const size_t sz = m.ColCount();
-      for( size_t x=0; x < sz; x++ )  {
-        const FT tmp = m(i,x);
-        m(i,x) = m(j,x);
-        m(j,x) = tmp;
-      }
+      for( size_t x=0; x < sz; x++ )
+        olx_swap(m(i,x), m(j,x));
     }
-    template <typename T, typename FT> void swap_cols(T& m, size_t i, size_t j)  {
+    template <typename T> void swap_cols(T& m, size_t i, size_t j)  {
       const size_t sz = m.RowCount();
-      for( size_t x=0; x < sz; x++ )  {
-        const FT tmp = m(x,i);
-        m(x,i) = m(x,j);
-        m(x,j) = tmp;
-      }
+      for( size_t x=0; x < sz; x++ )
+        olx_swap(m(x,i), m(x,j));
     }
     template <typename T> void print0(const T& a, size_t m, const olxstr& annotation=EmptyString())  {
       if( !annotation.IsEmpty() )
@@ -239,7 +231,7 @@ namespace math  {
         pivots(i) = pivot_index;
         if( m(pivot_index,i) != 0 )  {
           if( pivot_index != i )
-            alg::swap_rows<MatT, FT>(m, pivot_index, i);
+            alg::swap_rows(m, pivot_index, i);
           if( i < min_d-1 )
             proxy<FT>::col(m, i, i+1).ForEach(alg::Mul<FT>(1./m(i,i)));
         }
@@ -255,7 +247,7 @@ namespace math  {
     static bool Invert(MatT& m, const IndexVecT& pivots)  {
       if( !InvertTriagular<MatT, FT>(m, true, false) )
         return false;
-      evecd tmp(m.RowCount());
+      TVector<FT> tmp(m.RowCount());
       for( size_t i=m.RowCount()-1; i != InvalidIndex; i-- )  {
         for( size_t j=i+1; j < m.RowCount(); j++ )  {
           tmp(j) = m(j,i);
@@ -272,7 +264,7 @@ namespace math  {
       }
       for( size_t i=m.RowCount()-1; i != InvalidIndex; i-- )  {
         if( pivots(i) != i )
-          alg::swap_cols<MatT,FT>(m, i, pivots(i));
+          alg::swap_cols(m, i, pivots(i));
       }
       return true;
     }
@@ -311,7 +303,7 @@ namespace math  {
       Reflection<FT> ref(row_cnt);
       for( size_t i=0; i < row_cnt; i++ )
         for( size_t j=0; j < m.ColCount(); j++ )
-          q(i,j) = (i==j ? 1 : 0);
+          q(i,j) = static_cast<FT>(i==j ? 1 : 0);
       for( size_t i=min_d-1; i != InvalidIndex; i-- )  {
         const size_t sz = m.ColCount()-i;
         for( size_t j=1; j < sz; j++ )
@@ -324,7 +316,7 @@ namespace math  {
   // returns false for singular matrix
   template <typename MatT, typename FT>
   static bool InvertTriagular(MatT& m, bool upper, bool hasUnitDiag)  {
-    evecd tmp(m.RowCount());
+    TVector<FT> tmp(m.RowCount());
     if( upper )  {
       for( size_t i=0; i < m.RowCount(); i++ )  {
         FT diag_v = -1;
@@ -373,7 +365,7 @@ namespace math  {
     return true;
   }
 
-  template<typename FT=double> struct Reflection  {
+  template<typename FT> struct Reflection  {
     TVector<FT> tmp;
     Reflection(size_t sz) : tmp(sz) {}
     template <typename vec_t> FT Generate(vec_t& v)  {
@@ -392,12 +384,11 @@ namespace math  {
         return 0;
       const FT alpha = v(0);
       mx = olx_max(olx_abs(alpha), olx_abs(xnorm));
-      FT beta = mx*sqrt(olx_sqr(alpha/mx)+olx_sqr(xnorm/mx));
-      if( alpha >= 0 )
-        beta = -beta;
-      proxy<FT>::vec(v,1, v.Count()).ForEach(alg::Mul<FT>(1./(alpha-beta)));
+      const FT beta = mx*sqrt(olx_sqr(alpha/mx)+olx_sqr(xnorm/mx));
+      const FT v0 = (alpha <= 0 ? alpha - beta : -xnorm/(alpha + beta)*xnorm);
+      proxy<FT>::vec(v,1, v.Count()).ForEach(alg::Mul<FT>(1/v0));
       v(0) = beta;
-      return (beta-alpha)/beta;
+      return 2/(olx_sqr(xnorm/v0)+1);
     }
     template <typename MatT, typename VecT>
     void ApplyFromLeft(MatT& m, FT tau, const VecT& vt,
@@ -474,7 +465,7 @@ namespace math  {
       q.Resize(qr.RowCount(), col_num);
       for( size_t i=0; i < qr.RowCount(); i++ )  {
         for( size_t j=0; j < col_num; j++ )
-          q(i,j) = (i==j ? 1 : 0);
+          q(i,j) = static_cast<FT>(i==j ? 1 : 0);
       }
       const size_t sz = olx_min(min_d, col_num)-1;
       TVector<FT> v(qr.RowCount());
@@ -485,7 +476,7 @@ namespace math  {
     }
   }; // end QR
 
-  template <typename FT=double> struct Bidiagonal  {
+  template <typename FT> struct Bidiagonal  {
     template <typename MatT, typename VecT>
     static void ToBidiagonal(MatT& m, VecT& qtau, VecT& ptau)  {
       const size_t
@@ -495,11 +486,13 @@ namespace math  {
       qtau.Resize(min_d);
       ptau.Resize(min_d);
       if( m.RowCount() >= m.ColCount() )  {
-        for( size_t i=0; i < m.ColCount(); i++ )  {
+        const size_t k_left = m.ColCount() - (m.RowCount() > m.ColCount() ? 0 : 1);
+        const size_t k_right = m.ColCount()-2;
+        for( size_t i=0; i < k_left; i++ )  {
           mat_col<MatT, FT> mc(m, i, i);
           qtau(i) = ref.Generate(mc);
           ref.ApplyFromLeft(m, qtau(i), i, i+1);
-          if( i < m.ColCount()-1 )  {
+          if( i < k_right )  {
             mat_row<MatT, FT> mr(m, i, i+1);
             ptau(i) = ref.Generate(mr);
             ref.ApplyFromRight(m, ptau(i), i+1, i+1);
@@ -509,11 +502,13 @@ namespace math  {
         }
       }
       else  {
-        for( size_t i=0; i < m.RowCount(); i++ )  {
+        const size_t k_right = m.RowCount();
+        const size_t k_left = m.RowCount()-2;
+        for( size_t i=0; i < k_right; i++ )  {
           mat_row<MatT, FT> mr(m, i, i);
           ptau(i) = ref.Generate(mr);
           ref.ApplyFromRight(m, ptau(i), i+1, i);
-          if( i < m.RowCount()-1 )  {
+          if( i < k_left )  {
             mat_col<MatT, FT> mc(m, i, i+1);
             qtau(i) = ref.Generate(mc);
             ref.ApplyFromLeft(m, qtau(i), i+1, i+1);
@@ -530,7 +525,7 @@ namespace math  {
       TVector<FT> tmp(qp.RowCount());
       for( size_t i=0; i < qp.RowCount(); i++ )  {
         for( size_t j=0; j < col_cnt; j++ )
-          q(i,j) = (i==j ? 1 : 0);
+          q(i,j) = static_cast<FT>(i==j ? 1 : 0);
       }
       if( qp.RowCount() >= qp.ColCount() )  {
         const size_t s = olx_min(qp.ColCount(), col_cnt)-1;
@@ -556,7 +551,7 @@ namespace math  {
       TVector<FT> tmp(qp.ColCount());
       for( size_t i=0; i < row_cnt; i++ )  {
         for( size_t j=0; j < qp.ColCount(); j++ )
-          pt(i,j) = (i==j ? 1 : 0);
+          pt(i,j) = static_cast<FT>(i==j ? 1 : 0);
       }
       if( qp.RowCount() >= qp.ColCount() )  {
         const size_t s = olx_min(qp.ColCount(), row_cnt)-2;
@@ -699,6 +694,461 @@ namespace math  {
         }
       }
     }
+    struct SVD  {
+      static void do2x2(FT f, FT g, FT h,
+        FT& ssmin, FT& ssmax, FT& snr, FT& csr, FT& snl, FT& csl)
+      {
+        FT abs_f = olx_abs(f), abs_h = olx_abs(h), abs_g = olx_abs(g);
+        FT clt = 1, srt = 0, slt = 0, crt = 1;
+        int flag = 1;
+        const bool swap = abs_h > abs_f;
+        if( swap )  {
+          flag = 3;
+          olx_swap(f, h);
+          olx_swap(abs_f, abs_h);
+        }
+        if( abs_g != 0 )  {
+          bool small_g = true;
+          if( abs_g > abs_f )  {
+            flag = 2;
+            if( abs_f/abs_g < 1e-16 )  {
+              small_g = false;
+              ssmax = abs_g;
+              if( abs_g > 1 )
+                ssmin = abs_f*abs_h/abs_g;
+              else
+                ssmin = abs_h*abs_g/abs_f;
+              clt = srt = 1;
+              slt = h/g;
+              crt = f/g;
+            }
+          }
+          if( small_g )  {
+            const FT d = abs_f - abs_h;
+            const FT l = d/abs_f;
+            const FT m = g/f, mm = m*m;
+            FT t = 2-l, tt = t*t;
+            const FT s = sqrt(mm+tt);
+            const FT r = (l ==0 ? olx_abs(m) : sqrt(l*l+mm));
+            const FT a = (s+r)/2;
+            ssmin = abs_h/a;
+            ssmax = abs_f*a;
+            if( mm == 0 )  {
+              if( l == 0 )
+                t = olx_copy_sign(2, f)*olx_copy_sign(1, g);
+              else
+                t = g/olx_copy_sign(d, f) + m/t;
+            }
+            else
+              t = (m/(s+t)+m/(r+l))*(1+a);
+            const FT tmp = sqrt(t*t+4);
+            crt = 2/tmp;
+            srt = t/tmp;
+            clt = (crt+srt*m)/a;
+            slt = srt*h/(f*a);
+          }
+        }
+        if( swap )  {
+          csl = srt;
+          snl = crt;
+          csr = slt;
+          snr = clt;
+        }
+        else  {
+          csl = clt;
+          snl = slt;
+          csr = crt;
+          snr = srt;
+        }
+        FT sig = 0;
+        if( flag == 1 )
+          sig = olx_copy_sign(1, csr)*olx_copy_sign(1, csl)*olx_copy_sign(1, f);
+        else if( flag == 2 )
+          sig = olx_copy_sign(1, snr)*olx_copy_sign(1, csl)*olx_copy_sign(1, g);
+        else if( flag == 3 )
+          sig = olx_copy_sign(1, snr)*olx_copy_sign(1, snl)*olx_copy_sign(1, h);
+        ssmax = olx_copy_sign(ssmax, sig);
+        ssmin = olx_copy_sign(ssmin, sig*olx_copy_sign(1, f)*olx_copy_sign(1, h));
+      }
+      static void do2x2(FT f, FT g, FT h, FT& ssmin, FT& ssmax)  {
+        const FT abs_f = olx_abs(f), abs_h = olx_abs(h), abs_g = olx_abs(g);
+        const FT min_fh = olx_min(abs_f, abs_h),
+          max_fh = olx_max(abs_f, abs_h);
+        if( min_fh == 0 )  {
+          ssmin = 0;
+          const FT mg = olx_max(max_fh, abs_g);
+          ssmax = max_fh == 0 ? abs_g : mg*sqrt(1+olx_sqr(olx_min(min_fh, abs_g)/mg));
+        }
+        else  {
+          if( abs_g < max_fh )  {
+            const FT a = 1+min_fh/max_fh,
+              b = (max_fh-min_fh)/max_fh,
+              c = olx_sqr(abs_g/max_fh);
+            const FT d = 2/(sqrt(a*a+c)+sqrt(b*b+c));
+            ssmin = min_fh*d;
+            ssmax = max_fh/d;
+          }
+          else  {
+            const FT _a = max_fh/abs_g;
+            if( _a == 0 )  {
+              ssmin = min_fh*max_fh/abs_g;
+              ssmax = abs_g;
+            }
+            else  {
+              const FT a = 1+min_fh/max_fh,
+                b = (max_fh-min_fh)/max_fh,
+                c = 1/(sqrt(1+olx_sqr(a*_a))+sqrt(1+olx_sqr(b*_a)));
+              ssmin = 2*min_fh*c*_a;
+              ssmax = abs_g/(2*c);
+            }
+          }
+        }
+      }
+      template <typename DiagT1, typename DiagT2, typename UT, typename CT, typename VtT>
+      static bool Decompose(DiagT1& d, DiagT2& e, bool upper, bool fract_accu,
+        UT& u, CT& c, VtT& vt)
+      {
+        if( d.Count() == 0 )  return true;
+        if( d.Count() == 1 )  {
+          if( d(0) < 0 )  {
+            d(0) = -d(0);
+            if( vt.RowCount() > 0 )
+              proxy<FT>::row(vt, 0, 0).ForEach(alg::ChSig());
+          }
+          return true;
+        }
+        TVector<FT> w0(d.Count()-1), w1(d.Count()-1), w2(d.Count()-1), w3(d.Count()-1);
+        Rotation<FT> rot(d.Count());
+        int max_itr = 6;
+        bool forward = true;
+        e.Resize(d.Count());
+        const FT _eps = 5e-16, unfl = 1e-300;
+
+        int flag = 0;
+        if( !upper )  {
+          for( size_t i=0; i < d.Count()-1; i++ )  {
+            FT sn, cs, r;
+            rot.Generate(d(i), e(i), cs, sn, r);
+            d(i) = r;
+            e(i) = sn*d(i+1);
+            d(i+1) *= cs;
+            w0(i) = cs;
+            w1(i) = sn;
+          }
+          if( u.ColCount() > 0 )
+            rot.ApplyFromRight(forward, 0, u.ColCount(), 0, d.Count(), w0, w1, u);
+          if( c.ColCount() > 0 )
+            rot.ApplyFromLeft(forward, 0, d.Count(), 0, c.ColCount(), w0, w1, c);
+        }
+        FT tol = olx_max(10, olx_min(100, pow(_eps, static_cast<FT>(-1./8))))*_eps;
+        if( !fract_accu )
+          tol = -tol;
+        FT smax = 0;
+        for( size_t i=0; i < d.Count()-1; i++ )
+          smax = olx_max(smax, olx_max(olx_abs(e(i)), olx_abs(d(i))));
+        smax = olx_max(smax, olx_abs(d.GetLast()));
+        FT sminl = 0, thresh;
+        if( tol >=0 )  {
+          FT sminoa = olx_abs(d(0));
+          if( sminoa != 0 )  {
+            FT mu = sminoa;
+            for( size_t i=1; i < d.Count(); i++ )  {
+              mu = olx_abs(d(i))*(mu/(mu+olx_abs(e(i-1))));
+              if( (sminoa = olx_min(sminoa, mu)) == 0 )
+                break;
+            }
+          }
+          sminoa /= sqrt((FT)d.Count());
+          thresh = olx_max(tol*sminoa, max_itr*olx_sqr(d.Count())*unfl);
+        }
+        else
+          thresh = olx_max(olx_abs(tol)*smax, max_itr*olx_sqr(d.Count())*unfl);
+        int max_i = max_itr*olx_sqr((int)d.Count()),
+          m = (int)d.Count()-1, iter = 0;
+        int oldm = -1, oldll = -1;
+        for(;;)  {
+          if( m <= 0 )
+            break;
+          if( iter > max_i )
+            return false;
+          if( tol < 0 && olx_abs(d(m)) <= thresh )
+            d(m) = 0;
+          FT smin = (smax = olx_abs(d(m)));
+          bool split_flag = false;
+          int ll = 0;
+          for( int i=1; i <= m; i++ )  {
+            ll = m-i;
+            const FT
+              abs_s = olx_abs(d(ll)),
+              abs_e = olx_abs(e(ll));
+            if( tol < 0 && abs_s <= thresh )
+              d(ll) = 0;
+            if( abs_e <= thresh )  {
+              split_flag = true;
+              break;
+            }
+            smin = olx_min(smin, abs_s);
+            smax = olx_max(smax, olx_max(abs_s, abs_e));
+          }
+          if( !split_flag )
+            ll = -1;
+          else  {
+            e(ll) = 0;
+            if( ll == m-1 )  {
+              m--;
+              continue;
+            }
+          }
+          ll++;
+          if( ll == m-1 )  {
+            FT sigmn=0, sigmx=0, sinr, cosr, sinl, cosl;
+            do2x2(d(m-1), e(m-1), d(m), sigmn, sigmx, sinr, cosr, sinl, cosl);
+            d(m-1) = sigmx;
+            e(m-1) = 0;
+            d(m) = sigmn;
+            if( vt.RowCount() > 0 )  {
+              for( size_t i=0; i < vt.ColCount(); i++ )  {
+                const FT tmp =  vt(m,i)*cosr - vt(m-1,i)*sinr;
+                vt(m-1,i) = vt(m-1,i)*cosr + vt(m,i)*sinr;
+                vt(m,i) = tmp;
+              }
+            }
+            if( u.RowCount() > 0 )  {
+              for( size_t i=0; i < u.RowCount(); i++ )  {
+                const FT tmp = u(i,m)*cosl - u(i,m-1)*sinl;
+                u(i,m-1) = u(i,m-1)*cosl + u(i,m)*sinl;
+                u(i,m) = tmp;
+              }
+            }
+            if( c.RowCount() > 0 )  {
+              for( size_t i=0; i < c.ColCount(); i++ )  {
+                const FT tmp = c(m,i)*cosl - c(m-1,i)*sinl;
+                c(m-1,i) = c(m-1,i)*cosl + c(m,i)*sinl;
+                c(m,i) = tmp;
+              }
+            }
+            m -= 2;
+            continue;
+          }
+          if( ll > oldm || m < oldll )
+            flag = (olx_abs(d(ll)) >= olx_abs(d(m)) ? 1 : 2);
+          if( flag == 1 )  {
+            if( olx_abs(e(m-1)) <= olx_abs(tol*d(m)) || (tol < 0 && olx_abs(e(m-1)) < thresh) ) {
+              e(m-1) = 0;
+              continue;
+            }
+            if( tol >= 0 )  {
+              FT mu = olx_abs(d(ll));
+              sminl = mu;
+              bool iter_flag = false;
+              for( int i=ll; i < m-1; i++ )  {
+                if( olx_abs(e(i)) <= tol*mu )  {
+                  e(i) = 0;
+                  iter_flag = true;
+                  break;
+                }
+                mu = olx_abs(d(i+1))*(mu/(mu+olx_abs(e(i))));
+                sminl = olx_min(sminl, mu);
+              }
+              if( iter_flag )
+                continue;
+            }
+          }
+          else  {
+            if( olx_abs(e(ll)) <= olx_abs(tol*d(ll)) || (tol < 0 && olx_abs(e(ll)) < thresh) ) {
+              e(ll) = 0;
+              continue;
+            }
+            if( tol >= 0 )  {
+              FT mu = olx_abs(d(m));
+              sminl = mu;
+              bool iter_flag = false;
+              for( int i=m-1; i >= ll; i-- )  {
+                if( olx_abs(e(i)) <= tol*mu )  {
+                  e(i) = 0;
+                  iter_flag = true;
+                  break;
+                }
+                mu = olx_abs(d(i))*(mu/(mu+olx_abs(e(i))));
+                sminl = olx_min(sminl, mu);
+              }
+              if( iter_flag )
+                continue;
+            }
+          }
+          oldll = ll;
+          oldm = m;
+          FT shift = 0, r = 0;
+          if( !(tol >=0 && d.Count()*tol*(sminl/smax) <= olx_max(_eps, 0.01*tol)) )  {
+            FT sll;
+            if( flag == 1 )  {
+              sll = olx_abs(d(ll));
+              do2x2(d(m-1), e(m-1), d(m), shift, r);
+            }
+            else  {
+              sll = olx_abs(d(m));
+              do2x2(d(ll), e(ll), d(ll+1), shift, r);
+            }
+            if( sll > 0 && olx_sqr(shift/sll) < _eps )
+              shift = 0;
+          }
+          iter = iter+m-ll;
+          if( shift == 0 )  {  // 0 shift - simplified QR iterations
+            if( flag == 1 )  {  // chase bulge down
+              FT cs = 1, sn, r, oldcs = 1, oldsn = 0, tmp;
+              for( int i=ll; i < m; i++ )  {
+                rot.Generate(d(i)*cs, e(i), cs, sn, r);
+                if( i > ll )
+                  e(i-1) = oldsn*r;
+                rot.Generate(oldcs*r, d(i+1)*sn, oldcs, oldsn, tmp);
+                d(i) = tmp;
+                w0(i-ll) = cs;
+                w1(i-ll) = sn;
+                w2(i-ll) = oldcs;
+                w3(i-ll) = oldsn;
+              }
+              const FT h = d(m)*cs;
+              d(m) = h*oldcs;
+              e(m-1) = h*oldsn;
+              if( vt.ColCount() > 0 )
+                rot.ApplyFromLeft(forward, ll, m+1, 0, vt.ColCount(), w0, w1, vt);
+              if( u.ColCount() > 0 )
+                rot.ApplyFromRight(forward, 0, u.ColCount(), ll, m+1, w2, w3, u);
+              if( c.ColCount() > 0 )
+                rot.ApplyFromLeft(forward, ll, m+1, 0, c.ColCount(), w2, w3, c);
+              if( olx_abs(e(m-1)) <= thresh )
+                e(m-1) = 0;
+            }
+            else  {  // chase bulge up
+              FT cs = 1, sn, r, oldcs = 1, oldsn = 0, tmp;
+              for( int i=m; i > ll; i-- )  {
+                rot.Generate(d(i)*cs, e(i-1), cs, sn, r);
+                if( i < m )
+                  e(i) = oldsn*r;
+                rot.Generate(oldcs*r, d(i-1)*sn, oldcs, oldsn, tmp);
+                d(i) = tmp;
+                w0(i-ll-1) = cs;
+                w1(i-ll-1) = -sn;
+                w2(i-ll-1) = oldcs;
+                w3(i-ll-1) = -oldsn;
+              }
+              const FT h = d(ll)*cs;
+              d(ll) = h*oldcs;
+              e(ll) = h*oldsn;
+              if( vt.ColCount() > 0 )
+                rot.ApplyFromLeft(!forward, ll, m+1, 0, vt.ColCount(), w2, w3, vt);
+              if( u.RowCount() > 0 )
+                rot.ApplyFromRight(!forward, 0, u.RowCount(), ll, m+1, w0, w1, u);
+              if( c.ColCount() > 0 )
+                rot.ApplyFromLeft(!forward, ll, m+1, 0, c.ColCount(), w0, w1, c);
+              if( olx_abs(e(ll)) < thresh )
+                e(ll) = 0;
+            }
+          }
+          else  {  // non zero shift
+            if( flag == 1 )  {  // chanse bulge down
+              FT f = (olx_abs(d(ll))-shift)*(olx_copy_sign(1, d(ll))+shift/d(ll));
+              FT g = e(ll);
+              FT cosr, sinr, cosl, sinl, r;
+              for( int i=ll; i < m; i++ )  {
+                rot.Generate(f, g, cosr, sinr, r);
+                if( i > ll )
+                  e(i-1) = r;
+                f = cosr*d(i)+sinr*e(i);
+                e(i) = cosr*e(i)-sinr*d(i);
+                g = sinr*d(i+1);
+                d(i+1) *= cosr;
+                rot.Generate(f, g, cosl, sinl, r);
+                d(i) = r;
+                f = cosl*e(i)+sinl*d(i+1);
+                d(i+1) = cosl*d(i+1)-sinl*e(i);
+                if( i < m-1 ) {
+                  g = sinl*e(i+1);
+                  e(i+1) = cosl*e(i+1);
+                }
+                w0(i-ll) = cosr;
+                w1(i-ll) = sinr;
+                w2(i-ll) = cosl;
+                w3(i-ll) = sinl;
+              }
+              e(m-1) = f;
+              if( vt.ColCount() > 0 )
+                rot.ApplyFromLeft(forward, ll, m+1, 0, vt.ColCount(), w0, w1, vt);
+              if( u.ColCount() > 0 )
+                rot.ApplyFromRight(forward, 0, u.ColCount(), ll, m+1, w2, w3, u);
+              if( c.ColCount() > 0 )
+                rot.ApplyFromLeft(forward, ll, m+1, 0, c.ColCount(), w2, w3, c);
+              if( olx_abs(e(m-1)) <= thresh )
+                e(m-1) = 0;
+            }
+            else  { //chase bulge up
+              FT f = (olx_abs(d(m))-shift)*(olx_copy_sign(1, d(m))+shift/d(m));
+              FT g = e(m-1);
+              FT cosr, sinr, cosl, sinl, r;
+              for( int i=m; i >= ll+1; i-- )  {
+                rot.Generate(f, g, cosr, sinr, r);
+                if( i < m )
+                  e(i) = r;
+                f = cosr*d(i)+sinr*e(i-1);
+                e(i) = cosr*e(i-1)-sinr*d(i);
+                g = sinr*d(i-1);
+                d(i-1) *= cosr;
+                rot.Generate(f, g, cosl, sinl, r);
+                d(i) = r;
+                f = cosl*e(i-1)+sinl*d(i-1);
+                d(i-1) = cosl*d(i-1)-sinl*e(i-1);
+                if( i > ll+1 ) {
+                  g = sinl*e(i-2);
+                  e(i-2) = cosl*e(i-2);
+                }
+                w0(i-ll-1) = cosr;
+                w1(i-ll-1) = sinr;
+                w2(i-ll-1) = cosl;
+                w3(i-ll-1) = sinl;
+              }
+              if( olx_abs(e(ll) = f) < thresh )
+                e(ll) = 0;
+              if( vt.ColCount() > 0 )
+                rot.ApplyFromLeft(!forward, ll, m+1, 0, vt.ColCount(), w2, w3, vt);
+              if( u.RowCount() > 0 )
+                rot.ApplyFromRight(!forward, 0, u.ColCount(), ll, m+1, w0, w1, u);
+              if( c.ColCount() > 0 )
+                rot.ApplyFromLeft(!forward, ll, m+1, 0, c.ColCount(), w0, w1, c);
+            }
+          }
+        }
+        for( size_t i=0; i < d.Count(); i++ )  {
+          if( d(i) < 0 )  {
+            d(i) = -d(i);
+            if( vt.ColCount() > 0 )
+              proxy<FT>::row(vt, i, 0).ForEach(alg::ChSig());
+          }
+        }
+        // eventually - sorting...
+        for( size_t i=0; i < d.Count()-1; i++ )  {
+          FT min_s = d(0);
+          size_t min_i = 0;
+          for( size_t j=1; j < d.Count()-i; j++ )  {
+            if( d(j) <= min_s )  {
+              min_i = j;
+              min_s = d(j);
+            }
+          }
+          const size_t n = d.Count()-1;
+          if( min_i != n-i )  {
+            d(min_i) = d(n-i);
+            d(n-i) = min_s;
+            if( vt.ColCount() > 0 )
+              alg::swap_rows(vt, min_i, n-i);
+            if( u.ColCount() > 0 )
+              alg::swap_cols(u, min_i, n-i);
+            if( c.ColCount() > 0 )
+              alg::swap_rows(c, min_i, n-i);
+          }
+        }
+        return true;
+      }
+    };
   }; // end of BiDiagonal
   template <typename FT>
   struct Rotation  {
@@ -745,8 +1195,8 @@ namespace math  {
         }
       }
       else  {
-        for( size_t _i=row_s; _i < row_e-1; _i++ )  {
-          const size_t i = row_e-_i-2;
+        for( size_t _i=row_e-1; _i > row_s; _i-- )  {
+          const size_t i = _i-1;
           const FT
             cv = c(i-row_s),
             sv = s(i-row_s);
@@ -777,8 +1227,8 @@ namespace math  {
         }
       }
       else  {
-        for( size_t _i=col_s; _i < col_e-1; _i++ )  {
-          const size_t i = col_e-_i-2;
+        for( size_t _i=col_e-1; _i > col_e; _i-- )  {
+          const size_t i = _i-1;
           const FT
             cv = c(i-col_s),
             sv = s(i-col_s);
@@ -792,525 +1242,77 @@ namespace math  {
       }
     }
   };  // end of struct Rotation
-  struct SVD  {
-    static double ext_sign(double a, double b)  {
-      if( b >= 0 )
-        return olx_abs(a);
-      else
-        return a < 0 ? a : -a;
-    }
-    static void do2x2(double f, double g, double h,
-      double& ssmin, double& ssmax, double& snr, double& csr, double& snl, double& csl)
-    {
-      double abs_f = olx_abs(f), abs_h = olx_abs(h), abs_g = olx_abs(g);
-      double clt = 1, srt = 0, slt = 0, crt = 1;
-      int flag = 1;
-      if( abs_h > abs_f )  {
-        flag = 3;
-        olx_swap(f, h);
-        olx_swap(abs_f, abs_h);
-      }
-      if( abs_g != 0 )  {
-        bool small_g = true;
-        if( abs_g > abs_f )  {
-          flag = 2;
-          if( abs_f/abs_g < 1e-16 )  {
-            small_g = false;
-            ssmax = abs_g;
-            if( abs_g > 1 )
-              ssmin = abs_f*abs_h/abs_g;
-            else
-              ssmin = abs_h*abs_g/abs_f;
-            clt = srt = 1;
-            slt = h/g;
-            crt = f/g;
-          }
-        }
-        if( small_g )  {
-          const double d = abs_f - abs_h;
-          const double l = d/abs_f;
-          const double m = g/f, mm = m*m;
-          double t = 2-l, tt = t*t;
-          const double s = sqrt(mm+tt);
-          const double r = (l ==0 ? olx_abs(m) : sqrt(l*l+mm));
-          const double a = 0.5*(s+r);
-          ssmin = abs_h/a;
-          ssmax = abs_f*a;
-          if( mm == 0 )  {
-            if( l == 0 )
-              t = ext_sign(2, f)*ext_sign(1, g);
-            else
-              t = g/ext_sign(d, f) + m/t;
-          }
-          else
-            t = (m/(s+t)+m/(r+l))*(1+a);
-          const double tmp = sqrt(t*t+4);
-          crt = 2./tmp;
-          srt = t/tmp;
-          clt = (crt+srt*m)/a;
-          slt = srt*h/(f*a);
-        }
-      }
-      if( abs_h > abs_f )  {
-        csl = srt;
-        snl = crt;
-        csr = slt;
-        snr = clt;
-      }
-      else  {
-        csl = clt;
-        snl = slt;
-        csr = crt;
-        snr = srt;
-      }
-      double sig = 0;
-      if( flag == 1 )
-        sig = ext_sign(1, csr)*ext_sign(1, csl)*ext_sign(1, f);
-      else if( flag == 2 )
-        sig = ext_sign(1, snr)*ext_sign(1, csl)*ext_sign(1, g);
-      else if( flag == 3 )
-        sig = ext_sign(1, snr)*ext_sign(1, snl)*ext_sign(1, h);
-      ssmax = ext_sign(ssmax, sig);
-      ssmin = ext_sign(ssmin, sig*ext_sign(1, f)*ext_sign(1, h));
-    }
-    static void do2x2(double f, double g, double h, double& ssmin, double& ssmax)  {
-      const double abs_f = olx_abs(f), abs_h = olx_abs(h), abs_g = olx_abs(g);
-      const double min_fh = olx_min(abs_f, abs_h),
-        max_fh = olx_max(abs_f, abs_h);
-      if( min_fh == 0 )  {
-        ssmin = 0;
-        const double mg = olx_max(max_fh, abs_g);
-        ssmax = max_fh == 0 ? abs_g : mg*sqrt(1+olx_sqr(olx_min(min_fh, abs_g)/mg));
-      }
-      else  {
-        if( abs_g < max_fh )  {
-          const double a = 1+min_fh/max_fh,
-            b = (max_fh-min_fh)/max_fh,
-            c = olx_sqr(abs_g/max_fh);
-          const double d = 2./(sqrt(a*a+c)+sqrt(b*b+c));
-          ssmin = min_fh*d;
-          ssmax = max_fh/d;
-        }
-        else  {
-          const double _a = max_fh/abs_g;
-          if( _a == 0 )  {
-            ssmin = min_fh*max_fh/abs_g;
-            ssmax = abs_g;
-          }
-          else  {
-            const double a = 1+min_fh/max_fh,
-              b = (max_fh-min_fh)/max_fh,
-              c = 1./(sqrt(1+olx_sqr(a*_a))+sqrt(1+olx_sqr(b*_a)));
-            ssmin = 2*min_fh*c*_a;
-            ssmax = abs_g/(2*c);
-          }
-        }
-      }
-    }
-    template <typename DiagT1, typename DiagT2, typename UT, typename CT, typename VtT >
-    static bool Decompose(DiagT1& d, DiagT2& e, bool upper, bool fract_accu,
-      UT& u, CT& c, VtT& vt)
-    {
-      if( d.Count() == 0 )  return true;
-      if( d.Count() == 1 )  {
-        if( d(0) < 0 )  {
-          d(0) = -d(0);
-          if( vt.RowCount() > 0 )
-            proxy<double>::row(vt, 0, 0).ForEach(alg::ChSig());
-        }
-        return true;
-      }
-      evecd w0(d.Count()-1), w1(d.Count()-1), w2(d.Count()-1), w3(d.Count()-1);
-      Rotation<double> rot(d.Count());
-      int max_itr = 6;
-      bool forward = true;
-      e.Resize(d.Count());
-      const double _eps = 5e-16,
-        unfl = 1e-300;
-
-      int flag = 0;
-      if( !upper )  {
-        for( size_t i=0; i < d.Count()-1; i++ )  {
-          double sn, cs, r;
-          rot.Generate(d(i), e(i), cs, sn, r);
-          d(i) = r;
-          e(i) = sn*d(i+1);
-          d(i+1) *= cs;
-          w0(i) = cs;
-          w1(i) = sn;
-        }
-        if( u.ColCount() > 0 )
-          rot.ApplyFromRight(forward, 0, u.ColCount(), 0, d.Count(), w0, w1, u);
-        if( c.ColCount() > 0 )
-          rot.ApplyFromLeft(forward, 0, d.Count(), 0, c.ColCount(), w0, w1, c);
-      }
-      double tol = olx_max(10, olx_min(100, pow(_eps, -1./8)))*_eps;
-      if( !fract_accu )
-        tol = -tol;
-      double smax = 0;
-      for( size_t i=0; i < d.Count()-1; i++ )
-        smax = olx_max(smax, olx_max(olx_abs(e(i)), olx_abs(d(i))));
-      smax = olx_max(smax, olx_abs(d.GetLast()));
-      double sminl = 0, thresh;
-      if( tol >=0 )  {
-        double sminoa = olx_abs(d(0));
-        if( sminoa != 0 )  {
-          double mu = sminoa;
-          for( size_t i=1; i < d.Count(); i++ )  {
-            mu = olx_abs(d(i))*(mu/(mu+olx_abs(e(i-1))));
-            if( (sminoa = olx_min(sminoa, mu)) == 0 )
-              break;
-          }
-        }
-        sminoa /= sqrt((double)d.Count());
-        thresh = olx_max(tol*sminoa, max_itr*olx_sqr(d.Count())*unfl);
-      }
-      else
-        thresh = olx_max(olx_abs(tol)*smax, max_itr*olx_sqr(d.Count())*unfl);
-      int max_i = max_itr*olx_sqr((int)d.Count()),
-        m = (int)d.Count()-1, iter = 0;
-      int oldm = -1, oldll = -1;
-      for(;;)  {
-        if( m <= 0 )
-          break;
-        if( iter > max_i )
-          return false;
-        if( tol < 0 && olx_abs(d(m)) <= thresh )
-          d(m) = 0;
-        double smin = (smax = olx_abs(d(m)));
-        bool split_flag = false;
-        int ll = 0;
-        for( int i=1; i <= m; i++ )  {
-          ll = m-i;
-          const double
-            abs_s = olx_abs(d(ll)),
-            abs_e = olx_abs(e(ll));
-          if( tol < 0 && abs_s <= thresh )
-            d(ll) = 0;
-          if( abs_e <= thresh )  {
-            split_flag = true;
-            break;
-          }
-          smin = olx_min(smin, abs_s);
-          smax = olx_max(smax, olx_max(abs_s, abs_e));
-        }
-        if( !split_flag )
-          ll = -1;
-        else  {
-          e(ll) = 0;
-          if( ll == m-1 )  {
-            m--;
-            continue;
-          }
-        }
-        ll++;
-        if( ll == m-1 )  {
-          double sigmn=0, sigmx=0, sinr, cosr, sinl, cosl;
-          do2x2(d(m-1), e(m-1), d(m), sigmn, sigmx, sinr, cosr, sinl, cosl);
-          d(m-1) = sigmx;
-          e(m-1) = 0;
-          d(m) = sigmn;
-          if( vt.RowCount() > 0 )  {
-            for( size_t i=0; i < vt.ColCount(); i++ )  {
-              const double tmp = vt(m-1,i)*cosr + vt(m,i)*sinr;
-              vt(m,i) = vt(m,i)*cosr - vt(m-1,i)*sinr;
-              vt(m-1,i) = tmp;
-            }
-          }
-          if( u.RowCount() > 0 )  {
-            for( size_t i=0; i < u.RowCount(); i++ )  {
-              const double tmp = u(i,m)*cosl - u(i,m-1)*sinl;
-              u(i,m-1) = u(i,m-1)*cosl + u(i,m)*sinl;
-              u(i,m) = tmp;
-            }
-          }
-          if( c.RowCount() > 0 )  {
-            for( size_t i=0; i < c.ColCount(); i++ )  {
-              const double tmp = c(m,i)*cosl - c(m-1,i)*sinl;
-              c(m-1,i) = c(m-1,i)*cosl + c(m,i)*sinl;
-              c(m,i) = tmp;
-            }
-          }
-          m -= 2;
-          continue;
-        }
-        if( ll > oldm || m < oldll )
-          flag = (olx_abs(d(ll)) >= olx_abs(d(m)) ? 1 : 2);
-        if( flag == 1 )  {
-          if( olx_abs(e(m-1)) <= olx_abs(tol*d(m)) || (tol < 0 && olx_abs(e(m-1)) < thresh) ) {
-            e(m-1) = 0;
-            continue;
-          }
-          if( tol >= 0 )  {
-            double mu = olx_abs(d(ll));
-            sminl = mu;
-            bool iter_flag = false;
-            for( int i=ll; i < m-1; i++ )  {
-              if( olx_abs(e(i)) <= tol*mu )  {
-                e(i) = 0;
-                iter_flag = true;
-                break;
-              }
-              mu = olx_abs(d(i+1))*(mu/(mu+olx_abs(e(i))));
-              sminl = olx_min(sminl, mu);
-            }
-            if( iter_flag )
-              continue;
-          }
-        }
-        else  {
-          if( olx_abs(e(ll)) <= olx_abs(tol*d(ll)) || (tol < 0 && olx_abs(e(ll)) < thresh) ) {
-            e(ll) = 0;
-            continue;
-          }
-          if( tol >= 0 )  {
-            double mu = olx_abs(d(m));
-            sminl = mu;
-            bool iter_flag = false;
-            for( int i=m-1; i >= ll; i-- )  {
-              if( olx_abs(e(i)) <= tol*mu )  {
-                e(i) = 0;
-                iter_flag = true;
-                break;
-              }
-              mu = olx_abs(d(i))*(mu/(mu+olx_abs(e(i))));
-              sminl = olx_min(sminl, mu);
-            }
-            if( iter_flag )
-              continue;
-          }
-        }
-        oldll = ll;
-        oldm = m;
-        double shift = 0, r = 0;
-        if( !(tol >=0 && d.Count()*tol*(sminl/smax) <= olx_max(_eps, 0.01*tol)) )  {
-          double sll;
-          if( flag == 1 )  {
-            sll = olx_abs(d(ll));
-            do2x2(d(m-1), e(m-1), d(m), shift, r);
-          }
-          else  {
-            sll = olx_abs(d(m));
-            do2x2(d(ll), e(ll), d(ll+1), shift, r);
-          }
-          if( sll > 0 && olx_sqr(shift/sll) < _eps )
-            shift = 0;
-        }
-        iter = iter+m-ll;
-        if( shift == 0 )  {
-          if( flag == 1 )  {
-            double cs = 1, sn, r, oldcs = 1, oldsn = 0, tmp;
-            for( int i=ll; i < m; i++ )  {
-              rot.Generate(d(i)*cs, e(i), cs, sn, r);
-              if( i > ll )
-                e(i-1) = oldsn*r;
-              rot.Generate(oldcs*r, d(i+1)*sn, oldcs, oldsn, tmp);
-              d(i) = tmp;
-              w0(i-ll) = cs;
-              w1(i-ll) = sn;
-              w2(i-ll) = oldcs;
-              w3(i-ll) = oldsn;
-            }
-            const double h = d(m)*cs;
-            d(m) = h*oldcs;
-            e(m-1) = h*oldsn;
-            if( vt.ColCount() > 0 )
-              rot.ApplyFromLeft(forward, ll, m+1, 0, vt.ColCount(), w0, w1, vt);
-            if( u.ColCount() > 0 )
-              rot.ApplyFromRight(forward, 0, u.ColCount(), ll, m+1, w2, w3, u);
-            if( c.ColCount() > 0 )
-              rot.ApplyFromLeft(forward, ll, m+1, 0, c.ColCount(), w2, w3, c);
-            if( olx_abs(e(m-1)) <= thresh )
-              e(m-1) = 0;
-          }
-          else  {
-            double cs = 1, sn, r, oldcs = 1, oldsn = 0, tmp;
-            for( int i=m; i >= ll+1; i-- )  {
-              rot.Generate(d(i)*cs, e(i-1), cs, sn, r);
-              if( i < m )
-                e(i) = oldsn*r;
-              rot.Generate(oldcs*r, d(i-1)*sn, oldcs, oldsn, tmp);
-              d(i) = tmp;
-              w0(i-ll-1) = cs;
-              w1(i-ll-1) = -sn;
-              w2(i-ll-1) = oldcs;
-              w3(i-ll-1) = -oldsn;
-            }
-            const double h = d(ll)*cs;
-            d(ll) = h*oldcs;
-            e(ll) = h*oldsn;
-            if( vt.ColCount() > 0 )
-              rot.ApplyFromLeft(!forward, ll, m+1, 0, vt.ColCount(), w2, w3, vt);
-            if( u.ColCount() > 0 )
-              rot.ApplyFromRight(!forward, 0, u.ColCount(), ll, m+1, w0, w1, u);
-            if( c.ColCount() > 0 )
-              rot.ApplyFromLeft(!forward, ll, m+1, 0, c.ColCount(), w0, w1, c);
-            if( olx_abs(e(m-1)) <= thresh )
-              e(m-1) = 0;
-            if( olx_abs(e(ll)) < thresh )
-              e(ll) = 0;
-          }
-        }
-        else  {
-          if( flag == 1 )  {
-            double f = (olx_abs(d(ll))-shift)*(ext_sign(1, d(ll))+shift/d(ll));
-            double g = e(ll);
-            double cosr, sinr, cosl, sinl, r;
-            for( int i=ll; i < m; i++ )  {
-              rot.Generate(f, g, cosr, sinr, r);
-              if( i > ll )
-                e(i-1) = r;
-              f = cosr*d(i)+sinr*e(i);
-              e(i) = cosr*e(i)-sinr*d(i);
-              g = sinr*d(i+1);
-              d(i+1) *= cosr;
-              rot.Generate(f, g, cosl, sinl, r);
-              d(i) = r;
-              f = cosl*e(i)+sinl*d(i+1);
-              d(i+1) = cosl*d(i+1)-sinl*e(i);
-              if( i < m-1 ) {
-                g = sinl*e(i+1);
-                e(i+1) = cosl*e(i+1);
-              }
-              w0(i-ll) = cosr;
-              w1(i-ll) = sinr;
-              w2(i-ll) = cosl;
-              w3(i-ll) = sinl;
-            }
-            e(m-1) = f;
-            if( vt.ColCount() > 0 )
-              rot.ApplyFromLeft(forward, ll, m+1, 0, vt.ColCount(), w0, w1, vt);
-            if( u.ColCount() > 0 )
-              rot.ApplyFromRight(forward, 0, u.ColCount(), ll, m+1, w2, w3, u);
-            if( c.ColCount() > 0 )
-              rot.ApplyFromLeft(forward, ll, m+1, 0, c.ColCount(), w2, w3, c);
-            if( olx_abs(e(m-1)) <= thresh )
-              e(m-1) = 0;
-          }
-          else  {
-            double f = (olx_abs(d(m))-shift)*(ext_sign(1, d(m))+shift/d(m));
-            double g = e(m-1);
-            double cosr, sinr, cosl, sinl, r;
-            for( int i=m; i >= ll+1; i-- )  {
-              rot.Generate(f, g, cosr, sinr, r);
-              if( i < m )
-                e(i) = r;
-              f = cosr*d(i)+sinr*e(i-1);
-              e(i) = cosr*e(i-1)-sinr*d(i);
-              g = sinr*d(i-1);
-              d(i-1) *= cosr;
-              rot.Generate(f, g, cosl, sinl, r);
-              d(i) = r;
-              f = cosl*e(i-1)+sinl*d(i-1);
-              d(i-1) = cosl*d(i-1)-sinl*e(i-1);
-              if( i > ll+1 ) {
-                g = sinl*e(i-2);
-                e(i-2) = cosl*e(i-2);
-              }
-              w0(i-ll-1) = cosr;
-              w1(i-ll-1) = sinr;
-              w2(i-ll-1) = cosl;
-              w3(i-ll-1) = sinl;
-            }
-            if( olx_abs(e(ll) = f) < thresh )
-              e(ll) = 0;
-            if( vt.ColCount() > 0 )
-              rot.ApplyFromLeft(!forward, ll, m+1, 0, vt.ColCount(), w2, w3, vt);
-            if( u.RowCount() > 0 )
-              rot.ApplyFromRight(!forward, 0, u.ColCount(), ll, m+1, w0, w1, u);
-            if( c.ColCount() > 0 )
-              rot.ApplyFromLeft(!forward, ll, m+1, 0, c.ColCount(), w0, w1, c);
-          }
-        }
-      }
-      for( size_t i=0; i < d.Count(); i++ )  {
-        if( d(i) < 0 )  {
-          d(i) = -d(i);
-          if( vt.RowCount() > 0 )
-            vec_row<evecd, double>(vt(i), 0).ForEach(alg::ChSig());
-        }
-      }
-      // eventually - sorting...
-      for( size_t i=0; i < d.Count()-1; i++ )  {
-        double min_s = d(0);
-        size_t min_i = 0;
-        for( size_t j=1; j < d.Count()-i; j++ )  {
-          if( d(j) <= min_s )  {
-            min_i = j;
-            min_s = d(j);
-          }
-        }
-        const size_t n = d.Count()-1;
-        if( min_i != n-i )  {
-          d(min_i) = d(n-i);
-          d(n-i) = min_s;
-          if( vt.ColCount() > 0 )
-            alg::swap_rows<VtT,double>(vt, min_i, n-i);
-          if( u.ColCount() > 0 )
-            alg::swap_cols<UT,double>(u, min_i, n-i);
-          if( c.ColCount() > 0 )
-            alg::swap_rows<CT,double>(c, min_i, n-i);
-        }
-      }
-      return true;
-    }
-    static bool Decompose(ematd& m, int u_flag, int vt_flag, evecd& w, ematd& u, ematd& vt,
-      bool extra_mem = false)
-    {
-      if( m.ColCount() == 0 || m.RowCount() == 0 )
-        return true;
+  template <typename FT> struct SVD  {
+    TVector<FT> w;
+    TMatrix<FT> u, vt;
+    /* u_flag = 0 - u is not needed, 1 - only left vectors are needed, 2 - full u is needed
+      vt_flag = 0 - vt is not needed, 1 - only right vectors are needed, 2 - full vt is needed
+      extra_mem = false - no additional memory will be as of what is required to store requested
+      matrices will be needed, for true - an intermediate matric will be allocated, this
+      increases the performance
+    */
+    template <class MatT>
+    bool Decompose(MatT& m, int u_flag=2, int vt_flag=2, bool extra_mem = false)  {
+      if( m.IsEmpty() )  return true;
       const size_t min_d = olx_min(m.ColCount(), m.RowCount());
       w.Resize(min_d);
-      if( u_flag == 1 )
+      if( u_flag == 0 )
+        u.Resize(0, 0);
+      else if( u_flag == 1 )
         u.Resize(m.RowCount(), min_d);
       else
         u.Resize(m.RowCount(), m.RowCount());
-      if( vt_flag == 1 )
+      if( vt_flag == 0 )
+        vt.Resize(0, 0);
+      else if( vt_flag == 1 )
         vt.Resize(min_d, m.ColCount());
       else
         vt.Resize(m.ColCount(), m.ColCount());
       
       if( m.RowCount() > 1.6*m.ColCount() )  {
         if( u_flag == 0 )  {
-          evecd taus;
-          QR<double>::Decompose(m, taus);
+          TVector<FT> taus;
+          QR<FT>::Decompose(m, taus);
           for( size_t i=1; i < m.ColCount(); i++ )  {
             for( size_t j=1; j < i; j++ )
               m(i,j) = 0;
           }
-          evecd qtau, ptau;
-          mat_mat<ematd,double> mp(m, m.RowCount(), m.RowCount());
-          Bidiagonal<double>::ToBidiagonal(mp, qtau, ptau);
-          Bidiagonal<double>::UnpackPT(mp, ptau, vt.RowCount(), vt);
-          evecd e;
-          const bool upper = Bidiagonal<double>::UnpackDiagonals(mp, w, e);
-          return Decompose(w, e, upper, false, 
-            proxy<double>::mat_to(u,0,0), proxy<double>::mat_to(m,0,0), vt);
+          TVector<FT> qtau, ptau;
+          mat_mat<MatT,FT> mp(m, m.RowCount(), m.RowCount());
+          Bidiagonal<FT>::ToBidiagonal(mp, qtau, ptau);
+          Bidiagonal<FT>::UnpackPT(mp, ptau, vt.RowCount(), vt);
+          TVector<FT> e;
+          const bool upper = Bidiagonal<FT>::UnpackDiagonals(mp, w, e);
+          return Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, 
+            proxy<FT>::mat_to(u,0,0), proxy<FT>::mat_to(m,0,0), vt);
         }
         else  {
-          evecd taus;
-          QR<double>::Decompose(m, taus);
-          QR<double>::Unpack(m, taus, u.ColCount(), u);
+          TVector<FT> taus;
+          QR<FT>::Decompose(m, taus);
+          QR<FT>::Unpack(m, taus, u.ColCount(), u);
           for( size_t i=1; i < m.ColCount(); i++ )  {
             for( size_t j=0; j < i; j++ )
               m(i,j) = 0;
           }
-          evecd qtau, ptau, e;
-          mat_mat<ematd,double> mp(m, m.ColCount(), m.ColCount());
-          Bidiagonal<double>::ToBidiagonal(mp, qtau, ptau);
-          Bidiagonal<double>::UnpackPT(mp, ptau, vt.RowCount(), vt);
-          const bool upper = Bidiagonal<double>::UnpackDiagonals(mp, w, e);
+          TVector<FT> qtau, ptau, e;
+          mat_mat<MatT,FT> mp(m, m.ColCount(), m.ColCount());
+          Bidiagonal<FT>::ToBidiagonal(mp, qtau, ptau);
+          Bidiagonal<FT>::UnpackPT(mp, ptau, vt.RowCount(), vt);
+          const bool upper = Bidiagonal<FT>::UnpackDiagonals(mp, w, e);
           if( !extra_mem )  {
-            Bidiagonal<double>::MulByQ(mp, qtau, u, true, false);
-            return Decompose(w, e, upper, false, u, proxy<double>::mat_to(m, 0, 0), vt);
+            Bidiagonal<FT>::MulByQ(mp, qtau, u, true, false);
+            return Bidiagonal<FT>::SVD::Decompose(
+              w, e, upper, false, u, proxy<FT>::mat_to(m, 0, 0), vt);
           }
           else  {
-            ematd tmp;
-            Bidiagonal<double>::UnpackQ(mp, qtau, m.ColCount(), tmp);
+            TMatrix<FT> tmp;
+            Bidiagonal<FT>::UnpackQ(mp, qtau, m.ColCount(), tmp);
             m.Assign(u, m.RowCount(), m.ColCount());
             tmp.Transpose();
             bool res;
-            if( res = Decompose(w, e, upper, false, proxy<double>::mat_to(u, 0, 0), tmp, vt) )  {
+            if( res = Bidiagonal<FT>::SVD::Decompose(w, e, upper, false,
+                        proxy<FT>::mat_to(u, 0, 0), tmp, vt) )
+            {
               tmp = m*tmp.Transpose();
               u.Assign(tmp, tmp.RowCount(), tmp.ColCount(), false);
             }
@@ -1320,46 +1322,48 @@ namespace math  {
       }
       else if( m.ColCount() > 1.6*m.RowCount() )  {
         if( u_flag == 0 )  {
-          evecd taus;
-          LQ<double>::Decompose(m, taus);
+          TVector<FT> taus;
+          LQ<FT>::Decompose(m, taus);
           for( size_t i=1; i < m.RowCount()-1; i++ )  {
             for( size_t j=i+1; j < m.RowCount(); j++ )
               m(i,j) = 0;
           }
-          evecd qtau, ptau;
-          Bidiagonal<double>::ToBidiagonal(m, qtau, ptau);
-          Bidiagonal<double>::UnpackQ(m, ptau, u.RowCount(), u);
-          evecd e;
-          mat_mat<ematd,double> mp(m, m.RowCount(), m.RowCount());
-          const bool upper = Bidiagonal<double>::UnpackDiagonals(mp, w, e);
+          TVector<FT> qtau, ptau, e;
+          Bidiagonal<FT>::ToBidiagonal(m, qtau, ptau);
+          Bidiagonal<FT>::UnpackQ(m, ptau, u.RowCount(), u);
+          mat_mat<MatT,FT> mp(m, m.RowCount(), m.RowCount());
+          const bool upper = Bidiagonal<FT>::UnpackDiagonals(mp, w, e);
           u.Transpose();
-          const bool res = Decompose(w, e, upper, false, u, mp, vt);
+          const bool res = Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, u, mp, vt);
           u.Transpose();
           return res;
         }
         else  {
-          evecd taus;
-          LQ<double>::Decompose(m, taus);
-          LQ<double>::UnpackQ(m, taus, vt.ColCount(), vt);
+          TVector<FT> taus;
+          LQ<FT>::Decompose(m, taus);
+          LQ<FT>::UnpackQ(m, taus, vt.ColCount(), vt);
           for( size_t i=0; i < m.RowCount()-1; i++ )  {
             for( size_t j=i+1; j < m.RowCount(); j++ )
               m(i,j) = 0;
           }
-          evecd qtau, ptau, e;
-          mat_mat<ematd,double> mp(m, m.RowCount(), m.RowCount());
-          Bidiagonal<double>::ToBidiagonal(mp, qtau, ptau);
-          Bidiagonal<double>::UnpackQ(mp, qtau, u.RowCount(), u);
-          const bool upper = Bidiagonal<double>::UnpackDiagonals(mp, w, e);
+          TVector<FT> qtau, ptau, e;
+          mat_mat<MatT,FT> mp(m, m.RowCount(), m.RowCount());
+          Bidiagonal<FT>::ToBidiagonal(mp, qtau, ptau);
+          Bidiagonal<FT>::UnpackQ(mp, qtau, u.RowCount(), u);
+          const bool upper = Bidiagonal<FT>::UnpackDiagonals(mp, w, e);
           u.Transpose();
           bool res;
           if( !extra_mem )  {
-            Bidiagonal<double>::MulByP(mp, ptau, vt, false, true);
-            res = Decompose(w, e, upper, false, proxy<double>::mat_to(m, 0, 0), u, vt);
+            Bidiagonal<FT>::MulByP(mp, ptau, vt, false, true);
+            res = Bidiagonal<FT>::SVD::Decompose(
+              w, e, upper, false, proxy<FT>::mat_to(m, 0, 0), u, vt);
           }
           else  {
-            ematd tmp;
-            Bidiagonal<double>::UnpackPT(mp, ptau, m.RowCount(), tmp);
-            if( res = Decompose(w, e, upper, false, proxy<double>::mat_to(m,0,0), u, tmp) )  {
+            TMatrix<FT> tmp;
+            Bidiagonal<FT>::UnpackPT(mp, ptau, m.RowCount(), tmp);
+            if( res = Bidiagonal<FT>::SVD::Decompose(
+                        w, e, upper, false, proxy<FT>::mat_to(m,0,0), u, tmp) )
+            {
               m.Assign(vt, m.RowCount(), m.ColCount());
               tmp = tmp * m;
               vt.Assign(tmp, tmp.RowCount(), tmp.ColCount(), false);
@@ -1370,32 +1374,34 @@ namespace math  {
         }
       }
       else if( m.RowCount() <= m.ColCount() )  {
-        evecd ptau, qtau;
-        Bidiagonal<double>::ToBidiagonal(m, qtau, ptau);
-        Bidiagonal<double>::UnpackQ(m, qtau, u.ColCount(), u);
-        Bidiagonal<double>::UnpackPT(m, ptau, vt.RowCount(), vt);
-        evecd e;
-        const bool upper = Bidiagonal<double>::UnpackDiagonals(m, w, e);
+        TVector<FT> ptau, qtau, e;
+        Bidiagonal<FT>::ToBidiagonal(m, qtau, ptau);
+        Bidiagonal<FT>::UnpackQ(m, qtau, u.ColCount(), u);
+        Bidiagonal<FT>::UnpackPT(m, ptau, vt.RowCount(), vt);
+        const bool upper = Bidiagonal<FT>::UnpackDiagonals(m, w, e);
         u.Transpose();
-        const bool res = SVD::Decompose(w, e, upper, false, proxy<double>::mat_to(m, 0, 0), u, vt);
+        const bool res = Bidiagonal<FT>::SVD::Decompose(
+          w, e, upper, false, proxy<FT>::mat_to(m, 0, 0), u, vt);
         u.Transpose();
         return res;
       }
       else  {
-        evecd ptau, qtau;
-        Bidiagonal<double>::ToBidiagonal(m, qtau, ptau);
-        Bidiagonal<double>::UnpackQ(m, qtau, u.ColCount(), u);
-        Bidiagonal<double>::UnpackPT(m, ptau, vt.RowCount(), vt);
-        evecd e;
-        const bool upper = Bidiagonal<double>::UnpackDiagonals(m, w, e);
-        if( !extra_mem )
-          return SVD::Decompose(w, e, upper, false, u, proxy<double>::mat_to(m, 0, 0), vt);
+        TVector<FT> ptau, qtau, e;
+        Bidiagonal<FT>::ToBidiagonal(m, qtau, ptau);
+        Bidiagonal<FT>::UnpackQ(m, qtau, u.ColCount(), u);
+        Bidiagonal<FT>::UnpackPT(m, ptau, vt.RowCount(), vt);
+        const bool upper = Bidiagonal<FT>::UnpackDiagonals(m, w, e);
+        if( !extra_mem )  {
+          return Bidiagonal<FT>::SVD::Decompose(
+          w, e, upper, false, u, proxy<FT>::mat_to(m, 0, 0), vt);
+        }
         else  {
-          ematd tmp(min_d, m.RowCount());
+          TMatrix<FT> tmp(min_d, m.RowCount());
           for( size_t i=0; i < min_d; i++ )
             for( size_t j=0; j < m.RowCount(); j++ )
               tmp(i,j) = u(j,i);
-          const bool res = SVD::Decompose(w, e, upper, false, proxy<double>::mat_to(u, 0, 0), tmp, vt);
+          const bool res = Bidiagonal<FT>::SVD::Decompose(
+            w, e, upper, false, proxy<FT>::mat_to(u, 0, 0), tmp, vt);
           for( size_t i=0; i < min_d; i++ )
             for( size_t j=0; j < m.RowCount(); j++ )
               u(j,i) = tmp(i,j);

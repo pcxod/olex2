@@ -296,11 +296,11 @@ bool TLS::calcTLS (const ematd &designM, const evecd &UijC)
 		"TLS Failed: more tls parameters than equations.\nTry adding more atoms or constraints.");
 
 
-  ematd m(designM), vt, u;
-  evecd w;
-  bool svdRes = math::SVD::Decompose(m, 2, 2, w, u, vt);
-  ematd V(vt);
-  calcTLS_VcV(w, V.Transpose());
+  ematd m(designM);
+  math::SVD<double> svd;
+  bool svdRes = svd.Decompose(m, 2, 2);
+  ematd V(svd.vt);
+  calcTLS_VcV(svd.w, V.Transpose());
 
 	// std::cout << "\nSVD success: " << svdRes << std::endl;
   /***************************************************************************/
@@ -312,15 +312,15 @@ bool TLS::calcTLS (const ematd &designM, const evecd &UijC)
 	
 	// invert w, special case w=0 -> 1/w =0
 	for (short i = 0; i < TLSfreeParameters; i++){
-		if ( w(i) ) 
-			w(i) = 1.0/w(i);
+		if ( svd.w(i) ) 
+			svd.w(i) = 1.0/svd.w(i);
 	}
 
 	//compute  v[i][j]. 1/w[j][j]
   ematd vInvw(TLSfreeParameters, TLSfreeParameters);
 	for (short i = 0; i < TLSfreeParameters; i++){
 		for (short j = 0; j < TLSfreeParameters; j++) {
-			vInvw(i,j) = vt(j,i) * w(j);
+			vInvw(i,j) = svd.vt(j,i) * svd.w(j);
 		}
 	}	
 
@@ -331,7 +331,7 @@ bool TLS::calcTLS (const ematd &designM, const evecd &UijC)
 	for ( int k=0; k < mRows; k++){
 		for ( int i = 0; i < nColumns; i++) {	
 			for ( int j = 0; j < nColumns; j++) {
-				inverseDM(i,k) += vInvw(i,j)*u(k,j);
+				inverseDM(i,k) += vInvw(i,j)*svd.u(k,j);
 			}
 		}
 	}

@@ -80,10 +80,26 @@ void math::TestInvert(OlxTests& t)  {
   }
 }
 
+template <typename FT>
+class SVDTestException : public TBasicException  {
+public:
+  TMatrix<FT> m, u, v;
+  TVector<FT> w;
+  SVDTestException(const olxstr& src, const olxstr& msg,
+    const TMatrix<FT>& _m, const TMatrix<FT>& _u, const TMatrix<FT>& _v,
+    const TVector<FT>& _w) :
+    TBasicException(src, msg), m(_m), u(_u), v(_v), w(_w)  {}
+    SVDTestException(const SVDTestException& src) : TBasicException(src),
+      m(src.m), u(src.u), v(src.v), w(src.w)  {}
+  virtual IEObject* Replicate() const {
+    return new SVDTestException(*this);
+  }
+};
 void math::TestSVD(OlxTests& t)  {
   t.description = __OlxSrcInfo;
   const size_t dim_n=13, dim_m=5;
-  double arr[dim_n][dim_m] = {
+  typedef double FT;
+  FT arr[dim_n][dim_m] = {
     {2.0, 2.0, 1.6, 2.0, 1.2},
     {2.5, 2.5,-0.4,-0.5,-0.3},
     {2.5, 2.5, 2.8, 0.5,-2.9},
@@ -99,29 +115,80 @@ void math::TestSVD(OlxTests& t)  {
     {1.5, -0.5, -2.8, 10, -2.9},
   };
   
-  ematd m, u, vt, w;
-  for( int emem = 0; emem < 2; emem++ )  {
-    for( size_t row_cnt=1; row_cnt < dim_n; row_cnt++ )  {
-      m.Assign(arr, row_cnt, dim_m);
-      const ematd om(m);
-      evecd d;
-      SVD::Decompose(m, 2, 2, d, u, vt, emem!=0);
-      w.Resize(row_cnt, dim_m);
-      for( size_t i=0; i < d.Count(); i++ )
-        w[i][i] = d[i];
-      ematd m1 = u*w*vt, up = u*ematd(u).Transpose();
-      for( size_t i=0; i < m1.RowCount(); i++ )  {
-        for( size_t j=0; j < m1.ColCount(); j++ )  {
-          if( olx_abs(om(i,j)-m1(i,j)) > 1e-10 )
-            throw TFunctionFailedException(__OlxSourceInfo, "M!=UWVt");
+  TMatrix<FT> m, s;
+  SVD<FT> svd;
+  try {
+    for( int rnd=0; rnd < 3; rnd++ )  {
+      if( rnd == 1 )  {
+        for( size_t i=0; i < dim_n; i++ )  {
+          int val_ind = rand()%dim_m;
+          for( size_t j=0; j < dim_m; j++ )  {
+            arr[i][j] = (j==val_ind ? FT(rand()%1024)/1024 : FT(0));
+          }
         }
       }
-      for( size_t i=0; i < up.RowCount(); i++ )  {
-        for( size_t j=0; j < up.ColCount(); j++ )  {
-          if( olx_abs(up(i,j)-(i==j ? 1 : 0)) > 1e-10 )
-            throw TFunctionFailedException(__OlxSourceInfo, "UxUt!=I");
+      else if( rnd == 2 )  {
+        for( size_t i=0; i < dim_n; i++ )  {
+          int val1_ind = rand()%dim_m;
+          int val2_ind = rand()%dim_m;
+          for( size_t j=0; j < dim_m; j++ )  {
+            arr[i][j] = (j==val1_ind || j == val2_ind ? FT(rand()%1024)/1024 : FT(0));
+          }
+        }
+      }
+      for( int emem = 0; emem < 2; emem++ )  {
+        for( size_t row_cnt=1; row_cnt < dim_n; row_cnt++ )  {
+          m.Assign(arr, row_cnt, dim_m);
+          const TMatrix<FT> om(m);
+          svd.Decompose(m, 2, 2, emem!=0);
+          s.Resize(row_cnt, dim_m).Null();
+          for( size_t i=0; i < svd.w.Count(); i++ )
+            s(i,i) = svd.w(i);
+          TMatrix<FT> m1 = svd.u*s*svd.vt,
+            up = svd.u*TMatrix<FT>(svd.u).Transpose(),
+            vtp = svd.vt*TMatrix<FT>(svd.vt).Transpose();
+          for( size_t i=0; i < vtp.RowCount(); i++ )  {
+            for( size_t j=0; j < vtp.ColCount(); j++ )  {
+              if( olx_abs(vtp(i,j)-(i==j ? 1 : 0)) > 1e-10 )
+                throw SVDTestException<FT>(__OlxSourceInfo, "VtxVtt!=I", om, svd.u, svd.vt, svd.w);
+            }
+          }
+          for( size_t i=0; i < m1.RowCount(); i++ )  {
+            for( size_t j=0; j < m1.ColCount(); j++ )  {
+              if( olx_abs(om(i,j)-m1(i,j)) > 1e-10 )
+                throw SVDTestException<FT>(__OlxSourceInfo, "M!=UWVt", om, svd.u, svd.vt, svd.w);
+            }
+          }
+          for( size_t i=0; i < up.RowCount(); i++ )  {
+            for( size_t j=0; j < up.ColCount(); j++ )  {
+              if( olx_abs(up(i,j)-(i==j ? 1 : 0)) > 1e-10 )
+                throw SVDTestException<FT>(__OlxSourceInfo, "UxUt!=I", om, svd.u, svd.vt, svd.w);
+            }
+          }
         }
       }
     }
+  }
+  catch(SVDTestException<FT>& e)  {
+    TMatrix<FT> s(e.m.RowCount(), e.m.ColCount());
+    for( size_t i=0; i < e.w.Count(); i++ )
+      s(i,i) = e.w(i);
+    alg::print0_2(e.m, "Failed on:");
+    alg::print0_2(e.u*s*e.v, "Res:");
+    TVector<FT> q, p;
+    alg::print0_2(e.u, "U:");
+    alg::print0_2(e.v, "Vt:");
+    alg::print0_1(e.w, "W:");
+    ematd m(e.m);
+    Bidiagonal<FT>::ToBidiagonal(m, q, p);
+    alg::print0_2(m, "Input:");
+    Bidiagonal<FT>::UnpackQ(m, q, e.u.ColCount(), e.u);
+    Bidiagonal<FT>::UnpackPT(m, p, e.v.RowCount(), e.v);
+    alg::print0_2(e.v, "Input Vt:");
+    alg::print0_2(e.u, "Input u:");
+    SVD<FT> svd;
+    m = e.m;
+    svd.Decompose(m);
+    throw e;
   }
 }
