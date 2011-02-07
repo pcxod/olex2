@@ -296,6 +296,10 @@ protected:
     const dT& d;
     TorsionAngle(const aT& _a, const bT& _b, const cT& _c, const dT& _d) : a(_a), b(_b), c(_c), d(_d)  {}
     double calc() const {
+      return olx_dihedral_angle(a.evaluate(), b.evaluate(), c.evaluate(), d.evaluate());
+      //return olx_dihedral_angle_signed(a.evaluate(), b.evaluate(), c.evaluate(), d.evaluate());
+    }
+    double calc_signed() const {
       return olx_dihedral_angle_signed(a.evaluate(), b.evaluate(), c.evaluate(), d.evaluate());
     }
   };
@@ -548,8 +552,11 @@ public:
     vec3d kj = (ch.points[2] - ch.points[1]);
     vec3d_alist grad(3);
     const double ca = ij.CAngle(kj);
+    const double cell_esd = CellEsd(*this, ch.points).DoCalc(
+      Angle3<pnt_pt,pnt_pt,pnt_pt>(
+        pnt_pt(ch.points[0]), pnt_pt(ch.points[1]), pnt_pt(ch.points[2])))/olx_sqr(180/M_PI);
     if( olx_abs(ca) >= 1.0-1e-16 )
-      return TEValue<double>(ca < 0 ? 180.0 : 0.0, 0);
+      return TEValue<double>(ca < 0 ? 180.0 : 0.0, sqrt(cell_esd)*180/M_PI);
     const double oos = 1./sqrt(1-ca*ca);
     const double ij_l = ij.Length(), kj_l = kj.Length();
     ij.Normalise();
@@ -558,9 +565,7 @@ public:
     grad[2] = (kj*ca - ij)*oos/kj_l;
     grad[1] = -(grad[0] + grad[2]);
     double qesd = CalcEsd(3, ch.m, CompositeVector<vec3d_alist, double>(grad));
-    qesd += CellEsd(*this, ch.points).DoCalc(
-      Angle3<pnt_pt,pnt_pt,pnt_pt>(
-        pnt_pt(ch.points[0]), pnt_pt(ch.points[1]), pnt_pt(ch.points[2])))/olx_sqr(180/M_PI);
+    qesd += cell_esd;
     const double a = acos(ca);
     return TEValue<double>(a,(qesd < 1e-15 ? 0 : sqrt(qesd)))*=180/M_PI;
   }
@@ -598,12 +603,14 @@ public:
   TEValue<double> CalcTAngle(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
     TSAtom const * as[] = {&a1,&a2,&a3,&a4};
     CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 4));
-    return ch.DoCalc(
-      TorsionAngle<pnt_pt,pnt_pt,pnt_pt,pnt_pt>(
+    TorsionAngle<pnt_pt,pnt_pt,pnt_pt,pnt_pt> tha(
         pnt_pt(ch.points[0]),
         pnt_pt(ch.points[1]),
         pnt_pt(ch.points[2]),
-        pnt_pt(ch.points[3])));
+        pnt_pt(ch.points[3]));
+    TEValueD rv = ch.DoCalc(tha);
+    rv.V() = tha.calc_signed();
+    return rv;
   }
   // bond to bond angle
   TEValue<double> CalcB2BAngle(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {

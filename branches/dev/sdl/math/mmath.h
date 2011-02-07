@@ -699,18 +699,16 @@ namespace math  {
         FT& ssmin, FT& ssmax, FT& snr, FT& csr, FT& snl, FT& csl)
       {
         FT abs_f = olx_abs(f), abs_h = olx_abs(h), abs_g = olx_abs(g);
-        FT clt = 1, srt = 0, slt = 0, crt = 1;
-        int flag = 1;
+        csl = csr = 1;
+        snl = snr = 0;
         const bool swap = abs_h > abs_f;
         if( swap )  {
-          flag = 3;
           olx_swap(f, h);
           olx_swap(abs_f, abs_h);
         }
         if( abs_g != 0 )  {
           bool small_g = true;
           if( abs_g > abs_f )  {
-            flag = 2;
             if( abs_f/abs_g < 1e-16 )  {
               small_g = false;
               ssmax = abs_g;
@@ -718,9 +716,9 @@ namespace math  {
                 ssmin = abs_f*abs_h/abs_g;
               else
                 ssmin = abs_h*abs_g/abs_f;
-              clt = srt = 1;
-              slt = h/g;
-              crt = f/g;
+              csl = snr = 1;
+              snl = h/g;
+              csr = f/g;
             }
           }
           if( small_g )  {
@@ -742,33 +740,18 @@ namespace math  {
             else
               t = (m/(s+t)+m/(r+l))*(1+a);
             const FT tmp = sqrt(t*t+4);
-            crt = 2/tmp;
-            srt = t/tmp;
-            clt = (crt+srt*m)/a;
-            slt = srt*h/(f*a);
+            csr = 2/tmp;
+            snr = t/tmp;
+            csl = (csr+snr*m)/a;
+            snl = (h/f)*snr/a;
           }
         }
         if( swap )  {
-          csl = srt;
-          snl = crt;
-          csr = slt;
-          snr = clt;
+          olx_swap(csr, snl);
+          olx_swap(snr, csl);
         }
-        else  {
-          csl = clt;
-          snl = slt;
-          csr = crt;
-          snr = srt;
-        }
-        FT sig = 0;
-        if( flag == 1 )
-          sig = olx_copy_sign(1, csr)*olx_copy_sign(1, csl)*olx_copy_sign(1, f);
-        else if( flag == 2 )
-          sig = olx_copy_sign(1, snr)*olx_copy_sign(1, csl)*olx_copy_sign(1, g);
-        else if( flag == 3 )
-          sig = olx_copy_sign(1, snr)*olx_copy_sign(1, snl)*olx_copy_sign(1, h);
-        ssmax = olx_copy_sign(ssmax, sig);
-        ssmin = olx_copy_sign(ssmin, sig*olx_copy_sign(1, f)*olx_copy_sign(1, h));
+        ssmax = olx_copy_sign(ssmax, f);
+        ssmin = olx_copy_sign(ssmin, h);
       }
       static void do2x2(FT f, FT g, FT h, FT& ssmin, FT& ssmax)  {
         const FT abs_f = olx_abs(f), abs_h = olx_abs(h), abs_g = olx_abs(g);
@@ -817,10 +800,8 @@ namespace math  {
           }
           return true;
         }
-        TVector<FT> w0(d.Count()-1), w1(d.Count()-1), w2(d.Count()-1), w3(d.Count()-1);
-        Rotation<FT> rot(d.Count());
+        Rotation<FT> rot;
         int max_itr = 6;
-        bool forward = true;
         e.Resize(d.Count());
         const FT _eps = 5e-16, unfl = 1e-300;
 
@@ -832,13 +813,9 @@ namespace math  {
             d(i) = r;
             e(i) = sn*d(i+1);
             d(i+1) *= cs;
-            w0(i) = cs;
-            w1(i) = sn;
+            if( u.RowCount() > 0 )  rot.ApplyToCols(u, i, i+1, cs, sn);
+            if( c.ColCount() > 0 )  rot.ApplyToRows(c, i, i+1, cs, sn);
           }
-          if( u.ColCount() > 0 )
-            rot.ApplyFromRight(forward, 0, u.ColCount(), 0, d.Count(), w0, w1, u);
-          if( c.ColCount() > 0 )
-            rot.ApplyFromLeft(forward, 0, d.Count(), 0, c.ColCount(), w0, w1, c);
         }
         FT tol = olx_max(10, olx_min(100, pow(_eps, static_cast<FT>(-1./8))))*_eps;
         if( !fract_accu )
@@ -906,38 +883,27 @@ namespace math  {
             d(m-1) = sigmx;
             e(m-1) = 0;
             d(m) = sigmn;
-            if( vt.RowCount() > 0 )  {
-              for( size_t i=0; i < vt.ColCount(); i++ )  {
-                const FT tmp =  vt(m,i)*cosr - vt(m-1,i)*sinr;
-                vt(m-1,i) = vt(m-1,i)*cosr + vt(m,i)*sinr;
-                vt(m,i) = tmp;
-              }
-            }
-            if( u.RowCount() > 0 )  {
-              for( size_t i=0; i < u.RowCount(); i++ )  {
-                const FT tmp = u(i,m)*cosl - u(i,m-1)*sinl;
-                u(i,m-1) = u(i,m-1)*cosl + u(i,m)*sinl;
-                u(i,m) = tmp;
-              }
-            }
-            if( c.RowCount() > 0 )  {
-              for( size_t i=0; i < c.ColCount(); i++ )  {
-                const FT tmp = c(m,i)*cosl - c(m-1,i)*sinl;
-                c(m-1,i) = c(m-1,i)*cosl + c(m,i)*sinl;
-                c(m,i) = tmp;
-              }
+            if( vt.ColCount() > 0 ) //&& cosr != 1 )
+              rot.ApplyToRows(vt, m-1, m, cosr, sinr);
+            if( true )  {  //cosl != 1 )  {
+              if( u.RowCount() > 0 )  rot.ApplyToCols(u, m-1, m, cosl, sinl);
+              if( c.RowCount() > 0 )  rot.ApplyToRows(c, m-1, m, cosl, sinl);
             }
             m -= 2;
             continue;
           }
-          if( ll > oldm || m < oldll )
+          bool change_dir = false;
+          const FT dm_a = olx_abs(d(m)), dl_a = olx_abs(d(ll));
+          if( (flag == 1 && (dl_a < dm_a/1000)) || (flag == 2 && (dm_a < dl_a/1000)) )
+            change_dir = true;
+          if( ll > oldm || m < oldll || change_dir )
             flag = (olx_abs(d(ll)) >= olx_abs(d(m)) ? 1 : 2);
           if( flag == 1 )  {
             if( olx_abs(e(m-1)) <= olx_abs(tol*d(m)) || (tol < 0 && olx_abs(e(m-1)) < thresh) ) {
               e(m-1) = 0;
               continue;
             }
-            if( tol >= 0 )  {
+            if( tol >= 0 )  {  //check if converged
               FT mu = olx_abs(d(ll));
               sminl = mu;
               bool iter_flag = false;
@@ -1001,22 +967,17 @@ namespace math  {
                 if( i > ll )
                   e(i-1) = oldsn*r;
                 rot.Generate(oldcs*r, d(i+1)*sn, oldcs, oldsn, tmp);
+                if( vt.ColCount() > 0 ) // && cs != 1 )
+                  rot.ApplyToRows(vt, i, i+1, cs, sn);
+                if( true )  {  //oldcs != 1 )  {
+                  if( u.RowCount() > 0 )  rot.ApplyToCols(u, i, i+1, oldcs, oldsn);
+                  if( c.ColCount() > 0 )  rot.ApplyToRows(c, i, i+1, oldcs, oldsn);
+                }
                 d(i) = tmp;
-                w0(i-ll) = cs;
-                w1(i-ll) = sn;
-                w2(i-ll) = oldcs;
-                w3(i-ll) = oldsn;
               }
               const FT h = d(m)*cs;
               d(m) = h*oldcs;
-              e(m-1) = h*oldsn;
-              if( vt.ColCount() > 0 )
-                rot.ApplyFromLeft(forward, ll, m+1, 0, vt.ColCount(), w0, w1, vt);
-              if( u.ColCount() > 0 )
-                rot.ApplyFromRight(forward, 0, u.ColCount(), ll, m+1, w2, w3, u);
-              if( c.ColCount() > 0 )
-                rot.ApplyFromLeft(forward, ll, m+1, 0, c.ColCount(), w2, w3, c);
-              if( olx_abs(e(m-1)) <= thresh )
+              if( olx_abs(e(m-1) = h*oldsn) <= thresh )
                 e(m-1) = 0;
             }
             else  {  // chase bulge up
@@ -1027,20 +988,16 @@ namespace math  {
                   e(i) = oldsn*r;
                 rot.Generate(oldcs*r, d(i-1)*sn, oldcs, oldsn, tmp);
                 d(i) = tmp;
-                w0(i-ll-1) = cs;
-                w1(i-ll-1) = -sn;
-                w2(i-ll-1) = oldcs;
-                w3(i-ll-1) = -oldsn;
+                if( vt.ColCount() > 0 ) // && oldcs != 1 )
+                  rot.ApplyToRows(vt, i-1, i, oldcs, -oldsn);
+                if( true )  {  //cs != 1 )  {
+                  if( u.RowCount() > 0 )  rot.ApplyToCols(u, i-1, i, cs, -sn);
+                  if( c.ColCount() > 0 )  rot.ApplyToRows(c, i-1, i, cs, -sn);
+                }
               }
               const FT h = d(ll)*cs;
               d(ll) = h*oldcs;
               e(ll) = h*oldsn;
-              if( vt.ColCount() > 0 )
-                rot.ApplyFromLeft(!forward, ll, m+1, 0, vt.ColCount(), w2, w3, vt);
-              if( u.RowCount() > 0 )
-                rot.ApplyFromRight(!forward, 0, u.RowCount(), ll, m+1, w0, w1, u);
-              if( c.ColCount() > 0 )
-                rot.ApplyFromLeft(!forward, ll, m+1, 0, c.ColCount(), w0, w1, c);
               if( olx_abs(e(ll)) < thresh )
                 e(ll) = 0;
             }
@@ -1066,31 +1023,26 @@ namespace math  {
                   g = sinl*e(i+1);
                   e(i+1) = cosl*e(i+1);
                 }
-                w0(i-ll) = cosr;
-                w1(i-ll) = sinr;
-                w2(i-ll) = cosl;
-                w3(i-ll) = sinl;
+                if( vt.ColCount() > 0 )  //&& cosr != 1 )
+                  rot.ApplyToRows(vt, i, i+1, cosr, sinr);
+                if( true ) {  //cosl != 1 )  {
+                  if( u.RowCount() > 0 )  rot.ApplyToCols(u, i, i+1, cosl, sinl);
+                  if( c.ColCount() > 0 )  rot.ApplyToRows(c, i, i+1, cosl, sinl);
+                }
               }
-              e(m-1) = f;
-              if( vt.ColCount() > 0 )
-                rot.ApplyFromLeft(forward, ll, m+1, 0, vt.ColCount(), w0, w1, vt);
-              if( u.ColCount() > 0 )
-                rot.ApplyFromRight(forward, 0, u.ColCount(), ll, m+1, w2, w3, u);
-              if( c.ColCount() > 0 )
-                rot.ApplyFromLeft(forward, ll, m+1, 0, c.ColCount(), w2, w3, c);
-              if( olx_abs(e(m-1)) <= thresh )
+              if( olx_abs(e(m-1) = f) <= thresh )
                 e(m-1) = 0;
             }
             else  { //chase bulge up
               FT f = (olx_abs(d(m))-shift)*(olx_copy_sign(1, d(m))+shift/d(m));
               FT g = e(m-1);
               FT cosr, sinr, cosl, sinl, r;
-              for( int i=m; i >= ll+1; i-- )  {
+              for( int i=m; i > ll; i-- )  {
                 rot.Generate(f, g, cosr, sinr, r);
                 if( i < m )
                   e(i) = r;
                 f = cosr*d(i)+sinr*e(i-1);
-                e(i) = cosr*e(i-1)-sinr*d(i);
+                e(i-1) = cosr*e(i-1)-sinr*d(i);
                 g = sinr*d(i-1);
                 d(i-1) *= cosr;
                 rot.Generate(f, g, cosl, sinl, r);
@@ -1099,21 +1051,17 @@ namespace math  {
                 d(i-1) = cosl*d(i-1)-sinl*e(i-1);
                 if( i > ll+1 ) {
                   g = sinl*e(i-2);
-                  e(i-2) = cosl*e(i-2);
+                  e(i-2) *= cosl;
                 }
-                w0(i-ll-1) = cosr;
-                w1(i-ll-1) = sinr;
-                w2(i-ll-1) = cosl;
-                w3(i-ll-1) = sinl;
+                if( vt.ColCount() > 0 )  //&& cosr != 1 )
+                  rot.ApplyToRows(vt, i-1, i, cosl, -sinl);
+                if( true )  {  //cosl != 1 )  {
+                  if( u.RowCount() > 0 )  rot.ApplyToCols(u, i-1, i, cosr, -sinr);
+                  if( c.ColCount() > 0 )  rot.ApplyToRows(c, i-1, i, cosr, -sinr);
+                }
               }
               if( olx_abs(e(ll) = f) < thresh )
                 e(ll) = 0;
-              if( vt.ColCount() > 0 )
-                rot.ApplyFromLeft(!forward, ll, m+1, 0, vt.ColCount(), w2, w3, vt);
-              if( u.RowCount() > 0 )
-                rot.ApplyFromRight(!forward, 0, u.ColCount(), ll, m+1, w0, w1, u);
-              if( c.ColCount() > 0 )
-                rot.ApplyFromLeft(!forward, ll, m+1, 0, c.ColCount(), w0, w1, c);
             }
           }
         }
@@ -1152,8 +1100,7 @@ namespace math  {
   }; // end of BiDiagonal
   template <typename FT>
   struct Rotation  {
-    TVector<FT> tmp;
-    Rotation(size_t sz) : tmp(sz)  {}
+    Rotation() {}
     static void Generate(FT f, FT g, FT& cs, FT& sn, FT& r)  {
       sn = 0;
       cs = 1;
@@ -1167,7 +1114,7 @@ namespace math  {
       else  {
         r = sqrt(f*f+g*g);
         if( olx_abs(f) > olx_abs(g) && f < 0 )  {
-          cs =- f/r;
+          cs = -f/r;
           sn = -g/r;
           r = -r;
         }
@@ -1177,68 +1124,28 @@ namespace math  {
         }
       }
     }
-    template <typename CVT, typename SVT, typename MatT>
-    void ApplyFromLeft(bool forward, size_t row_s, size_t row_e, size_t col_s, size_t col_e,
-      const CVT& c, const SVT& s, MatT& m)
-    {
-      if( forward )  {
-        for( size_t i=row_s; i < row_e-1; i++ )  {
-          const FT
-            cv = c(i-row_s),
-            sv = s(i-row_s);
-          if( cv == 1 && sv == 0 )  continue;
-          for( size_t j=col_s; j < col_e; j++ )  {
-            const FT tmp = m(i+1,j)*cv - m(i,j)*sv;
-            m(i,j) = m(i,j)*cv + m(i+1,j)*sv;
-            m(i+1,j) = tmp;
-          }
-        }
-      }
-      else  {
-        for( size_t _i=row_e-1; _i > row_s; _i-- )  {
-          const size_t i = _i-1;
-          const FT
-            cv = c(i-row_s),
-            sv = s(i-row_s);
-          if( cv == 1 && sv == 0 )  continue;
-          for( size_t j=col_s; j < col_e; j++ )  {
-            const FT tmp = m(i+1,j)*cv - m(i,j)*sv;
-            m(i,j) = m(i,j)*cv + m(i+1,j)*sv;
-            m(i+1,j) = tmp;
-          }
-        }
+    template <typename MatT>
+    static void ApplyToRows(MatT& m, size_t row_a, size_t row_b, FT cs, FT sn)  {
+      for( size_t i=0; i < m.ColCount(); i++ )  {
+        const FT tmp = m(row_a,i)*cs + m(row_b,i)*sn;
+        m(row_b,i) = m(row_b,i)*cs - m(row_a,i)*sn;
+        m(row_a,i) = tmp;
       }
     }
-    template <typename CVT, typename SVT, typename MatT>
-    void ApplyFromRight(bool forward, size_t row_s, size_t row_e, size_t col_s, size_t col_e,
-      const CVT& c, const SVT& s, MatT& m)
-    {
-      if( forward )  {
-        for( size_t i=col_s; i < col_e-1; i++ )  {
-          const FT
-            cv = c(i-col_s),
-            sv = s(i-col_s);
-          if( cv == 1 && sv == 0 )  continue;
-          for( size_t j=row_s; j < row_e; j++ )  {
-            const FT tmp = m(j,i+1)*cv - m(j,i)*sv;
-            m(j,i) = m(j,i)*cv + m(j,i+1)*sv;
-            m(j,i+1) = tmp;
-          }
-        }
+    template <typename MatT>
+    void ApplyToCols(MatT& m, size_t col_a, size_t col_b, FT cs, FT sn)  {
+      for( size_t i=0; i < m.RowCount(); i++ )  {
+        const FT tmp = m(i,col_a)*cs + m(i,col_b)*sn;
+        m(i,col_b) = m(i,col_b)*cs - m(i,col_a)*sn;
+        m(i,col_a) = tmp;
       }
-      else  {
-        for( size_t _i=col_e-1; _i > col_e; _i-- )  {
-          const size_t i = _i-1;
-          const FT
-            cv = c(i-col_s),
-            sv = s(i-col_s);
-          if( cv == 1 && sv == 0 )  continue;
-          for( size_t j=row_s; j < row_e; j++ )  {
-            const FT tmp = m(j,i+1)*cv - m(j,i)*sv;
-            m(j,i) = m(j,i)*cv + m(j,i+1)*sv;
-            m(j,i+1) = tmp;
-          }
-        }
+    }
+    template <typename VecT1, typename VecT2>
+    static void Apply(VecT1& a, VecT2& b, FT cs, FT sn)  {
+      for( size_t i=0; i < a.Count(); i++ )  {
+        const FT tmp = a(i)*cs + b(i)*sn;
+        b(i) = b(i)*cs - a(i)*sn;
+        a(i) = tmp;
       }
     }
   };  // end of struct Rotation

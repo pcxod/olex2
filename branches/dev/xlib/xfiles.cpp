@@ -274,6 +274,8 @@ void TXFile::Sort(const TStrList& ins)  {
         keeph = false;
        else if( sort.CharAt(i) == 'z' )  
         cs.sequence.Add(&AtomSorter::atom_cmp_Suffix);
+       else if( sort.CharAt(i) == 'n' )  
+        cs.sequence.Add(&AtomSorter::atom_cmp_Number);
     }
     if( !cs.sequence.IsEmpty() )
       AtomSorter::Sort(list, cs);

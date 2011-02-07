@@ -58,6 +58,24 @@ public:
     }
     return olxstrComparator<false>::Compare(sa, sb);
   }
+  static int atom_cmp_Number(const TCAtom* a1, const TCAtom* a2)  {
+    olxstr sa, sb;
+    for( size_t i=a1->GetType().symbol.Length(); i < a1->GetLabel().Length(); i++ )  {
+      if( olxstr::o_isdigit(a1->GetLabel().CharAt(i)) )
+        sa << a1->GetLabel().CharAt(i);
+      else
+        break;
+    }
+    for( size_t i=a2->GetType().symbol.Length(); i < a2->GetLabel().Length(); i++ )  {
+      if( olxstr::o_isdigit(a2->GetLabel().CharAt(i)) )
+        sb << a2->GetLabel().CharAt(i);
+      else
+        break;
+    }
+    if( sa.IsEmpty() )
+      return (sb.IsEmpty() ? 0 : -1);
+    return (sb.IsEmpty() ? 1 : olx_cmp(sa.ToInt(), sb.ToInt()));
+  }
   static int atom_cmp_Id(const TCAtom* a1, const TCAtom* a2)  {
     return olx_cmp(a1->GetId(), a2->GetId());
   }

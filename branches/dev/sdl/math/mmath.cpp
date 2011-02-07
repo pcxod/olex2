@@ -118,12 +118,14 @@ void math::TestSVD(OlxTests& t)  {
   TMatrix<FT> m, s;
   SVD<FT> svd;
   try {
-    for( int rnd=0; rnd < 3; rnd++ )  {
+    const FT sig[2] = {1, -1};
+    for( int rnd=0; rnd < 5; rnd++ )  {
       if( rnd == 1 )  {
         for( size_t i=0; i < dim_n; i++ )  {
           int val_ind = rand()%dim_m;
           for( size_t j=0; j < dim_m; j++ )  {
-            arr[i][j] = (j==val_ind ? FT(rand()%1024)/1024 : FT(0));
+            arr[i][j] = (j==val_ind ? FT(rand())/(rand()+1) : FT(0));
+            arr[i][j] *= sig[(rand()%2)];
           }
         }
       }
@@ -132,7 +134,33 @@ void math::TestSVD(OlxTests& t)  {
           int val1_ind = rand()%dim_m;
           int val2_ind = rand()%dim_m;
           for( size_t j=0; j < dim_m; j++ )  {
-            arr[i][j] = (j==val1_ind || j == val2_ind ? FT(rand()%1024)/1024 : FT(0));
+            arr[i][j] = (j==val1_ind || j == val2_ind ? FT(rand())/(rand()+1) : FT(0));
+            arr[i][j] *= sig[(rand()%2)];
+          }
+        }
+      }
+      else if( rnd == 3 )  {
+        for( size_t i=0; i < dim_n; i++ )  {
+          int val1_ind = rand()%dim_m;
+          int val2_ind = rand()%dim_m;
+          int val3_ind = rand()%dim_m;
+          for( size_t j=0; j < dim_m; j++ )  {
+            arr[i][j] = (j==val1_ind || j == val2_ind || j == val3_ind ?
+              FT(rand())/(rand()+1) : FT(0));
+            arr[i][j] *= sig[(rand()%2)];
+          }
+        }
+      }
+      else if( rnd == 4 )  {
+        for( size_t i=0; i < dim_n; i++ )  {
+          int val1_ind = rand()%dim_m;
+          int val2_ind = rand()%dim_m;
+          int val3_ind = rand()%dim_m;
+          int val4_ind = rand()%dim_m;
+          for( size_t j=0; j < dim_m; j++ )  {
+            arr[i][j] = (j==val1_ind || j == val2_ind || j == val3_ind || j == val4_ind ?
+              FT(rand())/(rand()+1) : FT(0));
+            arr[i][j] *= sig[(rand()%2)];
           }
         }
       }
@@ -153,16 +181,16 @@ void math::TestSVD(OlxTests& t)  {
                 throw SVDTestException<FT>(__OlxSourceInfo, "VtxVtt!=I", om, svd.u, svd.vt, svd.w);
             }
           }
-          for( size_t i=0; i < m1.RowCount(); i++ )  {
-            for( size_t j=0; j < m1.ColCount(); j++ )  {
-              if( olx_abs(om(i,j)-m1(i,j)) > 1e-10 )
-                throw SVDTestException<FT>(__OlxSourceInfo, "M!=UWVt", om, svd.u, svd.vt, svd.w);
-            }
-          }
           for( size_t i=0; i < up.RowCount(); i++ )  {
             for( size_t j=0; j < up.ColCount(); j++ )  {
               if( olx_abs(up(i,j)-(i==j ? 1 : 0)) > 1e-10 )
                 throw SVDTestException<FT>(__OlxSourceInfo, "UxUt!=I", om, svd.u, svd.vt, svd.w);
+            }
+          }
+          for( size_t i=0; i < m1.RowCount(); i++ )  {
+            for( size_t j=0; j < m1.ColCount(); j++ )  {
+              if( olx_abs(om(i,j)-m1(i,j)) > 1e-10 )
+                throw SVDTestException<FT>(__OlxSourceInfo, "M!=UWVt", om, svd.u, svd.vt, svd.w);
             }
           }
         }
