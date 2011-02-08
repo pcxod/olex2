@@ -117,7 +117,7 @@ public:
     vector(_vector), row_sz(_row_sz), col_sz(_col_sz)  {}
   size_t ColCount() const {  return col_sz;  }
   size_t RowCount() const {  return row_sz;  }
-  bool IsEmpty() const {  return coll_sz == 0 || row_sz == 0;  }
+  bool IsEmpty() const {  return col_sz == 0 || row_sz == 0;  }
   const NumT& Get(size_t i, size_t j) const {  return  vector[i*col_sz+j];  }
   NumT& Get(size_t i, size_t j)  {  return  vector[i*col_sz+j];  }
   void Set(size_t i, size_t j, const NumT& v)  {  vector[i*col_sz+j] = v;  }

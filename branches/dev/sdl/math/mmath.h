@@ -94,6 +94,7 @@ namespace math  {
     size_t RowCount() const {  return row_c;  }
     bool IsEmpty() const {  return ColCount() == 0 || RowCount() == 0;  }
   };
+  
   template <typename FT> struct proxy  {
     template <typename CT> static mat_mat<CT,FT>
     mat(CT& _m, size_t rows, size_t rowe, size_t cols, size_t cole)  {
@@ -215,6 +216,183 @@ namespace math  {
       template <typename FT> void operator ()(FT& f) const {  f = -f;  }
     };
   };  // end namespace alg
+  
+  template<typename FT> struct Reflection  {
+    TVector<FT> tmp;
+    Reflection(size_t sz) : tmp(sz) {}
+    template <typename vec_t> FT Generate(vec_t& v)  {
+      if( v.Count() <= 1 )
+        return 0;
+      FT mx = olx_abs(v(1));
+      for( size_t i=2; i < v.Count(); i++ )
+        mx = olx_max(olx_abs(v(i)), mx);
+      FT xnorm = 0;
+      if( mx != 0 )  {
+        for( size_t i=1; i < v.Count(); i++ )
+          xnorm += olx_sqr(v(i)/mx);
+        xnorm = sqrt(xnorm)*mx;
+      }
+      else
+        return 0;
+      const FT alpha = v(0);
+      mx = olx_max(olx_abs(alpha), olx_abs(xnorm));
+      const FT beta = mx*sqrt(olx_sqr(alpha/mx)+olx_sqr(xnorm/mx));
+      const FT v0 = (alpha <= 0 ? alpha - beta : -xnorm/(alpha + beta)*xnorm);
+      proxy<FT>::vec(v,1, v.Count()).ForEach(alg::Mul<FT>(1/v0));
+      v(0) = beta;
+      return 2/(olx_sqr(xnorm/v0)+1);
+    }
+    template <typename MatT, typename VecT>
+    void ApplyFromLeft(MatT& m, FT tau, const VecT& vt,
+      size_t row_s, size_t row_e, size_t col_s, size_t col_e)
+    {
+      if( tau == 0 || row_s >= row_e || col_s >= col_e )
+        return;
+      for( size_t j=col_s; j < col_e; j++ )
+        tmp(j) = 0;
+      for( size_t i=row_s; i < row_e; i++ )  {
+        const FT v = vt(i-row_s);
+        for( size_t j=col_s; j < col_e; j++ )
+          tmp(j) += m(i,j)*v;
+      }
+      for( size_t i=row_s; i < row_e; i++ )  {
+        const FT v = vt(i-row_s)*tau;
+        for( size_t j=col_s; j < col_e; j++ )
+          m(i,j) -= tmp(j)*v;
+      }
+    }
+    template <typename MatT>
+    void ApplyFromLeft(MatT& m, FT tau, size_t row_s, size_t col_s)  {
+      const FT beta = m(row_s,col_s-1);
+      m(row_s,col_s-1) = 1;
+      ApplyFromLeft(m, tau, proxy<FT>::col(m, col_s-1, row_s, m.RowCount()),
+        row_s, m.RowCount(), col_s, m.ColCount());
+      m(row_s,col_s-1) = beta;
+    }
+    template <typename MatT, typename VecT>
+    void ApplyFromRight(MatT& m, FT tau, const VecT& vt,
+      size_t row_s, size_t row_e, size_t col_s, size_t col_e)
+    {
+      if( tau == 0 || row_s >= row_e || col_s >= col_e )
+        return;
+      for( size_t i=row_s; i < row_e; i++ )  {
+        FT v = 0;
+        const FT v1 = tau*alg::dot_prod_x(proxy<FT>::row(m, i, col_s, col_e), vt, v);
+        for( size_t j=col_s; j < col_e; j++ )
+          m(i,j) -= vt(j-col_s)*v1;
+      }
+    }
+    template <typename MatT>
+    void ApplyFromRight(MatT& m, FT tau, size_t row_s, size_t col_s)  {
+      const FT beta = m(row_s-1,col_s);
+      m(row_s-1,col_s) = 1;
+      ApplyFromRight(m, tau, proxy<FT>::row(m, row_s-1, col_s, m.ColCount()),
+        row_s, m.RowCount(), col_s, m.ColCount());
+      m(row_s-1,col_s) = beta;
+    }
+  };  // end of Reflection
+  template <typename FT> struct Rotation  {
+    Rotation() {}
+    static void Generate(FT f, FT g, FT& cs, FT& sn, FT& r)  {
+      sn = 0;
+      cs = 1;
+      if( g == 0 )
+        r = f;
+      else if( f == 0 )  {
+        sn = 1;
+        cs = 0;
+        r = g;
+      }
+      else  {
+        r = sqrt(f*f+g*g);
+        if( olx_abs(f) > olx_abs(g) && f < 0 )  {
+          cs = -f/r;
+          sn = -g/r;
+          r = -r;
+        }
+        else  {
+          cs = f/r;
+          sn = g/r;
+        }
+      }
+    }
+    template <typename MatT>
+    static void ApplyToRows(MatT& m, size_t row_a, size_t row_b, FT cs, FT sn)  {
+      for( size_t i=0; i < m.ColCount(); i++ )  {
+        const FT tmp = m(row_a,i)*cs + m(row_b,i)*sn;
+        m(row_b,i) = m(row_b,i)*cs - m(row_a,i)*sn;
+        m(row_a,i) = tmp;
+      }
+    }
+    template <typename MatT>
+    static void ApplyToCols(MatT& m, size_t col_a, size_t col_b, FT cs, FT sn)  {
+      for( size_t i=0; i < m.RowCount(); i++ )  {
+        const FT tmp = m(i,col_a)*cs + m(i,col_b)*sn;
+        m(i,col_b) = m(i,col_b)*cs - m(i,col_a)*sn;
+        m(i,col_a) = tmp;
+      }
+    }
+    template <typename VecT1, typename VecT2>
+    static void Apply(VecT1& a, VecT2& b, FT cs, FT sn)  {
+      for( size_t i=0; i < a.Count(); i++ )  {
+        const FT tmp = a(i)*cs + b(i)*sn;
+        b(i) = b(i)*cs - a(i)*sn;
+        a(i) = tmp;
+      }
+    }
+  };  // end of struct Rotation
+
+  // returns false for singular matrix
+  template <typename MatT, typename FT>
+  static bool InvertTriagular(MatT& m, bool upper, bool hasUnitDiag)  {
+    TVector<FT> tmp(m.RowCount());
+    if( upper )  {
+      for( size_t i=0; i < m.RowCount(); i++ )  {
+        FT diag_v = -1;
+        if( !hasUnitDiag )  {
+          if( m(i,i) == 0 )
+            return false;
+          diag_v = -(m(i,i) = 1./m(i,i));
+        }
+        if( i > 0 )  {
+          alg::copy(tmp, proxy<FT>::col(m, i, 0, i));
+          for( size_t j=0; j < i; j++ )  {
+            FT v = 0.0;
+            if( j < i-1 )  {
+              for( size_t k=j+1; k < i; k++ )
+                v += m(j,k)*tmp(k);
+            }
+            m(j,i) = v + m(j,j)*tmp(j);
+          }
+          proxy<FT>::col(m, i, 0, i).ForEach(alg::Mul<FT>(diag_v));
+        }
+      }
+    }
+    else  {
+      for( size_t i=m.RowCount()-1; i != InvalidIndex ; i-- )  {
+        FT diag_v = -1;
+        if( !hasUnitDiag )  {
+          if( m(i,i) == 0 )
+            return false;
+          diag_v = -(m(i,i) = 1./m(i,i));
+        }
+        if( i < m.RowCount()-1 )  {
+          for( size_t j=i+1; j < m.RowCount(); j++ )
+            tmp(j) = m(j,i);
+          for( size_t j=i+1; j < m.RowCount(); j++ )  {
+            FT v = 0.0;
+            if( j > i+1 )  {
+              for( size_t k=i+1; k < j; k++ )
+                v += m(j,k)*tmp(k);
+            }
+            m(j,i) = v + m(j,j)*tmp(j);
+          }
+          proxy<FT>::col(m, i, i+1, m.RowCount()).ForEach(alg::Mul<FT>(diag_v));
+        }
+      }
+    }
+    return true;
+  }
   template <typename FT>
   struct LU  {
     template <typename MatT, typename IndexVecT>
@@ -313,132 +491,6 @@ namespace math  {
       }
     }
   }; // end of LQ
-  // returns false for singular matrix
-  template <typename MatT, typename FT>
-  static bool InvertTriagular(MatT& m, bool upper, bool hasUnitDiag)  {
-    TVector<FT> tmp(m.RowCount());
-    if( upper )  {
-      for( size_t i=0; i < m.RowCount(); i++ )  {
-        FT diag_v = -1;
-        if( !hasUnitDiag )  {
-          if( m(i,i) == 0 )
-            return false;
-          diag_v = -(m(i,i) = 1./m(i,i));
-        }
-        if( i > 0 )  {
-          alg::copy(tmp, proxy<FT>::col(m, i, 0, i));
-          for( size_t j=0; j < i; j++ )  {
-            FT v = 0.0;
-            if( j < i-1 )  {
-              for( size_t k=j+1; k < i; k++ )
-                v += m(j,k)*tmp(k);
-            }
-            m(j,i) = v + m(j,j)*tmp(j);
-          }
-          proxy<FT>::col(m, i, 0, i).ForEach(alg::Mul<FT>(diag_v));
-        }
-      }
-    }
-    else  {
-      for( size_t i=m.RowCount()-1; i != InvalidIndex ; i-- )  {
-        FT diag_v = -1;
-        if( !hasUnitDiag )  {
-          if( m(i,i) == 0 )
-            return false;
-          diag_v = -(m(i,i) = 1./m(i,i));
-        }
-        if( i < m.RowCount()-1 )  {
-          for( size_t j=i+1; j < m.RowCount(); j++ )
-            tmp(j) = m(j,i);
-          for( size_t j=i+1; j < m.RowCount(); j++ )  {
-            FT v = 0.0;
-            if( j > i+1 )  {
-              for( size_t k=i+1; k < j; k++ )
-                v += m(j,k)*tmp(k);
-            }
-            m(j,i) = v + m(j,j)*tmp(j);
-          }
-          proxy<FT>::col(m, i, i+1, m.RowCount()).ForEach(alg::Mul<FT>(diag_v));
-        }
-      }
-    }
-    return true;
-  }
-
-  template<typename FT> struct Reflection  {
-    TVector<FT> tmp;
-    Reflection(size_t sz) : tmp(sz) {}
-    template <typename vec_t> FT Generate(vec_t& v)  {
-      if( v.Count() <= 1 )
-        return 0;
-      FT mx = olx_abs(v(1));
-      for( size_t i=2; i < v.Count(); i++ )
-        mx = olx_max(olx_abs(v(i)), mx);
-      FT xnorm = 0;
-      if( mx != 0 )  {
-        for( size_t i=1; i < v.Count(); i++ )
-          xnorm += olx_sqr(v(i)/mx);
-        xnorm = sqrt(xnorm)*mx;
-      }
-      else
-        return 0;
-      const FT alpha = v(0);
-      mx = olx_max(olx_abs(alpha), olx_abs(xnorm));
-      const FT beta = mx*sqrt(olx_sqr(alpha/mx)+olx_sqr(xnorm/mx));
-      const FT v0 = (alpha <= 0 ? alpha - beta : -xnorm/(alpha + beta)*xnorm);
-      proxy<FT>::vec(v,1, v.Count()).ForEach(alg::Mul<FT>(1/v0));
-      v(0) = beta;
-      return 2/(olx_sqr(xnorm/v0)+1);
-    }
-    template <typename MatT, typename VecT>
-    void ApplyFromLeft(MatT& m, FT tau, const VecT& vt,
-      size_t row_s, size_t row_e, size_t col_s, size_t col_e)
-    {
-      if( tau == 0 || row_s >= row_e || col_s >= col_e )
-        return;
-      for( size_t j=col_s; j < col_e; j++ )
-        tmp(j) = 0;
-      for( size_t i=row_s; i < row_e; i++ )  {
-        const FT v = vt(i-row_s);
-        for( size_t j=col_s; j < col_e; j++ )
-          tmp(j) += m(i,j)*v;
-      }
-      for( size_t i=row_s; i < row_e; i++ )  {
-        const FT v = vt(i-row_s)*tau;
-        for( size_t j=col_s; j < col_e; j++ )
-          m(i,j) -= tmp(j)*v;
-      }
-    }
-    template <typename MatT>
-    void ApplyFromLeft(MatT& m, FT tau, size_t row_s, size_t col_s)  {
-      const FT beta = m(row_s,col_s-1);
-      m(row_s,col_s-1) = 1;
-      ApplyFromLeft(m, tau, proxy<FT>::col(m, col_s-1, row_s, m.RowCount()),
-        row_s, m.RowCount(), col_s, m.ColCount());
-      m(row_s,col_s-1) = beta;
-    }
-    template <typename MatT, typename VecT>
-    void ApplyFromRight(MatT& m, FT tau, const VecT& vt,
-      size_t row_s, size_t row_e, size_t col_s, size_t col_e)
-    {
-      if( tau == 0 || row_s >= row_e || col_s >= col_e )
-        return;
-      for( size_t i=row_s; i < row_e; i++ )  {
-        FT v = 0;
-        const FT v1 = tau*alg::dot_prod_x(proxy<FT>::row(m, i, col_s, col_e), vt, v);
-        for( size_t j=col_s; j < col_e; j++ )
-          m(i,j) -= vt(j-col_s)*v1;
-      }
-    }
-    template <typename MatT>
-    void ApplyFromRight(MatT& m, FT tau, size_t row_s, size_t col_s)  {
-      const FT beta = m(row_s-1,col_s);
-      m(row_s-1,col_s) = 1;
-      ApplyFromRight(m, tau, proxy<FT>::row(m, row_s-1, col_s, m.ColCount()),
-        row_s, m.RowCount(), col_s, m.ColCount());
-      m(row_s-1,col_s) = beta;
-    }
-  };  // end of Reflection
   
   template <class FT>
   struct QR  {
@@ -599,7 +651,7 @@ namespace math  {
     {
       const size_t mx = olx_max(
         olx_max(qp.ColCount(), qp.RowCount()),
-        max(z.ColCount(), z.RowCount()));
+        olx_max(z.ColCount(), z.RowCount()));
       Reflection<FT> ref(mx);
       if( qp.RowCount() >= qp.ColCount() )  {
         size_t i1 = 0, i2 = qp.ColCount();
@@ -648,7 +700,7 @@ namespace math  {
     {
       const size_t mx = olx_max(
         olx_max(qp.ColCount(), qp.RowCount()),
-        max(z.ColCount(), z.RowCount()));
+        olx_max(z.ColCount(), z.RowCount()));
       Reflection<FT> ref(mx);
       if( qp.RowCount() >= qp.ColCount() )  {
         size_t i1 = qp.ColCount()-1, i2 = 0;
@@ -1079,57 +1131,7 @@ namespace math  {
       }
     };
   }; // end of BiDiagonal
-  template <typename FT>
-  struct Rotation  {
-    Rotation() {}
-    static void Generate(FT f, FT g, FT& cs, FT& sn, FT& r)  {
-      sn = 0;
-      cs = 1;
-      if( g == 0 )
-        r = f;
-      else if( f == 0 )  {
-        sn = 1;
-        cs = 0;
-        r = g;
-      }
-      else  {
-        r = sqrt(f*f+g*g);
-        if( olx_abs(f) > olx_abs(g) && f < 0 )  {
-          cs = -f/r;
-          sn = -g/r;
-          r = -r;
-        }
-        else  {
-          cs = f/r;
-          sn = g/r;
-        }
-      }
-    }
-    template <typename MatT>
-    static void ApplyToRows(MatT& m, size_t row_a, size_t row_b, FT cs, FT sn)  {
-      for( size_t i=0; i < m.ColCount(); i++ )  {
-        const FT tmp = m(row_a,i)*cs + m(row_b,i)*sn;
-        m(row_b,i) = m(row_b,i)*cs - m(row_a,i)*sn;
-        m(row_a,i) = tmp;
-      }
-    }
-    template <typename MatT>
-    static void ApplyToCols(MatT& m, size_t col_a, size_t col_b, FT cs, FT sn)  {
-      for( size_t i=0; i < m.RowCount(); i++ )  {
-        const FT tmp = m(i,col_a)*cs + m(i,col_b)*sn;
-        m(i,col_b) = m(i,col_b)*cs - m(i,col_a)*sn;
-        m(i,col_a) = tmp;
-      }
-    }
-    template <typename VecT1, typename VecT2>
-    static void Apply(VecT1& a, VecT2& b, FT cs, FT sn)  {
-      for( size_t i=0; i < a.Count(); i++ )  {
-        const FT tmp = a(i)*cs + b(i)*sn;
-        b(i) = b(i)*cs - a(i)*sn;
-        a(i) = tmp;
-      }
-    }
-  };  // end of struct Rotation
+
   template <typename FT> struct SVD  {
     TVector<FT> w;
     TMatrix<FT> u, vt;
@@ -1156,7 +1158,8 @@ namespace math  {
         vt.Resize(min_d, m.ColCount());
       else
         vt.Resize(m.ColCount(), m.ColCount());
-      
+      // 'zero' matrix
+      mat_mat<MatT,FT> zm(m, 0, 0);
       if( m.RowCount() > 1.6*m.ColCount() )  {
         if( u_flag == 0 )  {
           TVector<FT> taus;
@@ -1171,8 +1174,7 @@ namespace math  {
           Bidiagonal<FT>::UnpackPT(mp, ptau, vt.RowCount(), vt);
           TVector<FT> e;
           const bool upper = Bidiagonal<FT>::UnpackDiagonals(mp, w, e);
-          return Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, 
-            proxy<FT>::mat_to(u,0,0), proxy<FT>::mat_to(m,0,0), vt);
+          return Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, zm, zm, vt);
         }
         else  {
           TVector<FT> taus;
@@ -1189,8 +1191,7 @@ namespace math  {
           const bool upper = Bidiagonal<FT>::UnpackDiagonals(mp, w, e);
           if( !extra_mem )  {
             Bidiagonal<FT>::MulByQ(mp, qtau, u, true, false);
-            return Bidiagonal<FT>::SVD::Decompose(
-              w, e, upper, false, u, proxy<FT>::mat_to(m, 0, 0), vt);
+            return Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, u, zm, vt);
           }
           else  {
             TMatrix<FT> tmp;
@@ -1198,8 +1199,7 @@ namespace math  {
             m.Assign(u, m.RowCount(), m.ColCount());
             tmp.Transpose();
             bool res;
-            if( res = Bidiagonal<FT>::SVD::Decompose(w, e, upper, false,
-                        proxy<FT>::mat_to(u, 0, 0), tmp, vt) )
+            if( res = Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, zm, tmp, vt) )
             {
               tmp = m*tmp.Transpose();
               u.Assign(tmp, tmp.RowCount(), tmp.ColCount(), false);
@@ -1243,14 +1243,12 @@ namespace math  {
           bool res;
           if( !extra_mem )  {
             Bidiagonal<FT>::MulByP(mp, ptau, vt, false, true);
-            res = Bidiagonal<FT>::SVD::Decompose(
-              w, e, upper, false, proxy<FT>::mat_to(m, 0, 0), u, vt);
+            res = Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, zm, u, vt);
           }
           else  {
             TMatrix<FT> tmp;
             Bidiagonal<FT>::UnpackPT(mp, ptau, m.RowCount(), tmp);
-            if( res = Bidiagonal<FT>::SVD::Decompose(
-                        w, e, upper, false, proxy<FT>::mat_to(m,0,0), u, tmp) )
+            if( res = Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, zm, u, tmp) )
             {
               m.Assign(vt, m.RowCount(), m.ColCount());
               tmp = tmp * m;
@@ -1268,8 +1266,7 @@ namespace math  {
         Bidiagonal<FT>::UnpackPT(m, ptau, vt.RowCount(), vt);
         const bool upper = Bidiagonal<FT>::UnpackDiagonals(m, w, e);
         u.Transpose();
-        const bool res = Bidiagonal<FT>::SVD::Decompose(
-          w, e, upper, false, proxy<FT>::mat_to(m, 0, 0), u, vt);
+        const bool res = Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, zm, u, vt);
         u.Transpose();
         return res;
       }
@@ -1279,17 +1276,14 @@ namespace math  {
         Bidiagonal<FT>::UnpackQ(m, qtau, u.ColCount(), u);
         Bidiagonal<FT>::UnpackPT(m, ptau, vt.RowCount(), vt);
         const bool upper = Bidiagonal<FT>::UnpackDiagonals(m, w, e);
-        if( !extra_mem )  {
-          return Bidiagonal<FT>::SVD::Decompose(
-          w, e, upper, false, u, proxy<FT>::mat_to(m, 0, 0), vt);
-        }
+        if( !extra_mem )
+          return Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, u, zm, vt);
         else  {
           TMatrix<FT> tmp(min_d, m.RowCount());
           for( size_t i=0; i < min_d; i++ )
             for( size_t j=0; j < m.RowCount(); j++ )
               tmp(i,j) = u(j,i);
-          const bool res = Bidiagonal<FT>::SVD::Decompose(
-            w, e, upper, false, proxy<FT>::mat_to(u, 0, 0), tmp, vt);
+          const bool res = Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, zm, tmp, vt);
           for( size_t i=0; i < min_d; i++ )
             for( size_t j=0; j < m.RowCount(); j++ )
               u(j,i) = tmp(i,j);
