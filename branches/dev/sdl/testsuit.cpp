@@ -6,6 +6,7 @@
 #include "ellist.h"
 #include "efile.h"
 #include "math/mmath.h"
+#include "math/spline.h"
 
 //...................................................................................................
 void IsNumberTest(OlxTests& t)  {
@@ -279,6 +280,7 @@ OlxTests::OlxTests() {
   Add(&RelativePathTest);
   Add(new SortTest, &SortTest::DoTest);
   math::AddTests(*this);
+  math::spline::AddTests(*this);
 }
 //...................................................................................................
 void OlxTests::run()  {

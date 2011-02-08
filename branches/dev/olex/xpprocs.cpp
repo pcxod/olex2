@@ -6293,65 +6293,65 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
 //..............................................................................
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
-  TRefList refs;// = xapp.XFile().GetRM().GetFriedelPairs();
-  //xapp.XFile().GetRM().FilterHkl(refs, ms);
-  TArrayList<compd> F;
-  TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
-  RefinementModel::HklStat ms =
-    xapp.XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace, RefMerger::ShelxMerger>(sp, refs);
-  F.SetCount(refs.Count());
-  SFUtil::CalcSF(xapp.XFile(), refs, F);
-  double scale_k =1./olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
-  double sums[5] = {0.0,0.0,0.0,0.0,0.0};
-  const vec3i min_i = ms.MinIndexes, max_i = ms.MaxIndexes;
-  TRefPList pos, neg;
-  RefUtil::GetBijovetPairs(refs, min_i, max_i, pos, neg, sp); 
-  TArray3D<TReflection*> hkl3d(min_i, max_i);
-  cm_Absorption_Coefficient_Reg ac;
-  ContentList cont = xapp.XFile().GetAsymmUnit().GetContentList();
-  double mass = 0, mu=0;
-  for( size_t i=0; i < cont.Count(); i++ )  {
-    double v = ac.CalcMuenOverRhoForE(
-      xapp.XFile().GetRM().expl.GetRadiationEnergy(), ac.locate(cont[i].element.symbol));
-    mu += (cont[i].count*cont[i].element.GetMr())*v;
-  }
-  mu *= xapp.XFile().GetAsymmUnit().GetZ()/xapp.XFile().GetAsymmUnit().CalcCellVolume();
-  mu /= 6.022142;
-  xapp.NewLogEntry() << mu;  
-  for( size_t i=0; i < refs.Count(); i++ )  {
-    hkl3d(refs[i].GetHkl()) = &refs[i];
-    refs[i].SetTag(i);
-  }
-  for( size_t i=0; i < refs.Count(); i++ )  {
-    if( refs[i].GetTag() < 0 )  continue;
-    refs[i].SetTag(-1);
-    if( refs[i].GetI()/refs[i].GetS() < 2 )  continue;
-    for( size_t mi=0; mi < sp.Count(); mi++ )  {
-      const vec3i& pi = refs[i].GetHkl();
-      vec3i ni;
-      refs[i].MulHkl(ni, sp[mi]);
-      ni *= -1;
-      if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL ) {
-        TReflection& n = *hkl3d(ni);
-        if( n.GetTag() < 0 )  continue;
-        //const double y = (refs[i].GetI() - n.GetI())/(refs[i].GetI() + n.GetI());
-        //const double x = (F[i].qmod() - F[n.GetTag()].qmod())/(F[i].qmod() + F[n.GetTag()].qmod());
-        const double w = 1./olx_sqr(refs[i].GetS());
-        const double y = (refs[i].GetI()*scale_k - F[i].qmod());
-        const double x = (F[n.GetTag()].qmod() - F[i].qmod());
-        sums[0] += w*x;
-        sums[1] += w*y;
-        sums[2] += w*x*y;
-        sums[3] += w*x*x;
-        sums[4] += w;
-        n.SetTag(-1);
-      }
-    }
-  }
-  double k = (sums[2]-sums[0]*sums[1]/sums[4])/(sums[3]-sums[0]*sums[0]/sums[4]),
-    //x = (k-1.0)/2,
-    a = (sums[0] - k*sums[1])/sums[4];
-  xapp.NewLogEntry() << TEValueD(k, sqrt(sums[4]/(sums[3]-sums[0]*sums[0]/sums[4]))).ToString();
+  //TRefList refs;// = xapp.XFile().GetRM().GetFriedelPairs();
+  ////xapp.XFile().GetRM().FilterHkl(refs, ms);
+  //TArrayList<compd> F;
+  //TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
+  //RefinementModel::HklStat ms =
+  //  xapp.XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace, RefMerger::ShelxMerger>(sp, refs);
+  //F.SetCount(refs.Count());
+  //SFUtil::CalcSF(xapp.XFile(), refs, F);
+  //double scale_k =1./olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
+  //double sums[5] = {0.0,0.0,0.0,0.0,0.0};
+  //const vec3i min_i = ms.MinIndexes, max_i = ms.MaxIndexes;
+  //TRefPList pos, neg;
+  //RefUtil::GetBijovetPairs(refs, min_i, max_i, pos, neg, sp); 
+  //TArray3D<TReflection*> hkl3d(min_i, max_i);
+  //cm_Absorption_Coefficient_Reg ac;
+  //ContentList cont = xapp.XFile().GetAsymmUnit().GetContentList();
+  //double mass = 0, mu=0;
+  //for( size_t i=0; i < cont.Count(); i++ )  {
+  //  double v = ac.CalcMuenOverRhoForE(
+  //    xapp.XFile().GetRM().expl.GetRadiationEnergy(), ac.locate(cont[i].element.symbol));
+  //  mu += (cont[i].count*cont[i].element.GetMr())*v;
+  //}
+  //mu *= xapp.XFile().GetAsymmUnit().GetZ()/xapp.XFile().GetAsymmUnit().CalcCellVolume();
+  //mu /= 6.022142;
+  //xapp.NewLogEntry() << mu;  
+  //for( size_t i=0; i < refs.Count(); i++ )  {
+  //  hkl3d(refs[i].GetHkl()) = &refs[i];
+  //  refs[i].SetTag(i);
+  //}
+  //for( size_t i=0; i < refs.Count(); i++ )  {
+  //  if( refs[i].GetTag() < 0 )  continue;
+  //  refs[i].SetTag(-1);
+  //  if( refs[i].GetI()/refs[i].GetS() < 2 )  continue;
+  //  for( size_t mi=0; mi < sp.Count(); mi++ )  {
+  //    const vec3i& pi = refs[i].GetHkl();
+  //    vec3i ni;
+  //    refs[i].MulHkl(ni, sp[mi]);
+  //    ni *= -1;
+  //    if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL ) {
+  //      TReflection& n = *hkl3d(ni);
+  //      if( n.GetTag() < 0 )  continue;
+  //      //const double y = (refs[i].GetI() - n.GetI())/(refs[i].GetI() + n.GetI());
+  //      //const double x = (F[i].qmod() - F[n.GetTag()].qmod())/(F[i].qmod() + F[n.GetTag()].qmod());
+  //      const double w = 1./olx_sqr(refs[i].GetS());
+  //      const double y = (refs[i].GetI()*scale_k - F[i].qmod());
+  //      const double x = (F[n.GetTag()].qmod() - F[i].qmod());
+  //      sums[0] += w*x;
+  //      sums[1] += w*y;
+  //      sums[2] += w*x*y;
+  //      sums[3] += w*x*x;
+  //      sums[4] += w;
+  //      n.SetTag(-1);
+  //    }
+  //  }
+  //}
+  //double k = (sums[2]-sums[0]*sums[1]/sums[4])/(sums[3]-sums[0]*sums[0]/sums[4]),
+  //  //x = (k-1.0)/2,
+  //  a = (sums[0] - k*sums[1])/sums[4];
+  //xapp.NewLogEntry() << TEValueD(k, sqrt(sums[4]/(sums[3]-sums[0]*sums[0]/sums[4]))).ToString();
 
   //TSymmLib& sl = TSymmLib::GetInstance();
   //for( size_t i=0; i < sl.SGCount(); i++ )  {

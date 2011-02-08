@@ -1221,6 +1221,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\math\spline.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\testsuit.cpp"
 				>
 			</File>
@@ -1507,6 +1511,10 @@
 				</File>
 				<File
 					RelativePath="..\..\..\sdl\sls.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\math\spline.h"
 					>
 				</File>
 				<File

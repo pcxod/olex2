@@ -2,6 +2,7 @@
 #define __olx_xl_absorpc_H
 #include "xbase.h"
 #include "edict.h"
+#include "math/spline.h"
 /*
 http://www.nist.gov/pml/data/xraycoef/index.cfm
 
@@ -17,40 +18,28 @@ are based on the new calculations by Seltzer described in Radiation Research 136
 BeginXlibNamespace()
 
 struct cm_Absorption_Coefficient {  
-  double energy, mu_over_rho, muen_over_rho;  
+  double energy, mu_over_rho, muen_over_rho;
+  double GetMuOverRho() const {  return mu_over_rho;  }
+  double GetMuEnOverRho() const {  return muen_over_rho;  }
 };
 
 struct cm_Absorption_Coefficient_Reg  {
   olxdict<olxstr, const cm_Absorption_Coefficient*, olxstrComparator<true> > entries;
-  cm_Absorption_Coefficient_Reg()  {}
+  cm_Absorption_Coefficient_Reg();
   const cm_Absorption_Coefficient* locate(const olxstr& symbol)  {
     return entries.Find(symbol, NULL);
   }
   // cm^2/g
   double CalcMuOverRhoForE(double eV, const cm_Absorption_Coefficient* ac) const {
-    eV /= 1e6;
-    if( ac == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "undefined absorption data");
-    if( eV < ac[0].energy )
-      throw TInvalidArgumentException(__OlxSourceInfo, "energy is out of range");
-    if( eV == ac[0].energy )
-      return ac[0].mu_over_rho;
-    while( ac->energy < eV && ac->energy != 0 )
-      ac++;
-    if( ac->energy == 0 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "energy is out of range");
-    if( ac->energy > eV )  {    
-      if( ac->mu_over_rho == (ac-1)->mu_over_rho )
-        return ac->mu_over_rho;
-      const double k = (eV-(ac-1)->energy)/(ac->energy - (ac-1)->energy);
-      return (ac-1)->mu_over_rho + k*(ac->mu_over_rho-(ac-1)->mu_over_rho);
-    }
-    else if( ac->energy == eV )
-      return ac->mu_over_rho;
-    throw TFunctionFailedException(__OlxSourceInfo, "cannot happen");
+    return _CalcForE(eV, ac, &cm_Absorption_Coefficient::GetMuOverRho);
   }
   // cm^2/g
-  double CalcMuenOverRhoForE(double eV, const cm_Absorption_Coefficient* ac) const {
+  double CalcMuenOverRhoForE(double eV, const cm_Absorption_Coefficient* ac)  {
+    return _CalcForE(eV, ac, &cm_Absorption_Coefficient::GetMuEnOverRho);
+  }
+  double _CalcForE(double eV, const cm_Absorption_Coefficient* ac,
+    double (cm_Absorption_Coefficient::*f)() const) const
+  {
     eV /= 1e6;
     if( ac == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "undefined absorption data");
@@ -58,15 +47,43 @@ struct cm_Absorption_Coefficient_Reg  {
       throw TInvalidArgumentException(__OlxSourceInfo, "energy is out of range");
     if( eV == ac[0].energy )
       return ac[0].muen_over_rho;
-    while( ac->energy < eV && ac->energy != 0 )
+    size_t cnt = 0;
+    const cm_Absorption_Coefficient* _ac = ac;
+    while( ac->energy < eV && ac->energy != 0 )  {
+      cnt++;
       ac++;
+    }
     if( ac->energy == 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "energy is out of range");
+    // go left
+    size_t l_cnt = cnt-1;
+    while( l_cnt > 0 && (cnt-l_cnt) < 4 && _ac[l_cnt].energy != 0 )  {
+      if( _ac[l_cnt-1].energy == _ac[l_cnt].energy )  // absorption edge
+        break;
+      l_cnt--;
+    }
+    // go right
+    size_t r_cnt = cnt+1;
+    while( (r_cnt-cnt) < 4 && _ac[r_cnt].energy != 0 )  {
+      if( _ac[r_cnt+1].energy == _ac[r_cnt].energy )  // absorption edge
+        break;
+      r_cnt++;
+    }
+    if( (r_cnt-l_cnt) >= 5 )  {  // use spline interpolation
+      math::spline::Spline3<double> s;
+      s.x.Resize(r_cnt-l_cnt);
+      s.y.Resize(r_cnt-l_cnt);
+      for( size_t i=l_cnt; i < r_cnt; i++ )  {
+        s.x(i-l_cnt) = _ac[i].energy;
+        s.y(i-l_cnt) = (_ac[i].*f)();
+      }
+      return math::spline::Builder<double>::akima(s).interpolate(eV);
+    }
     if( ac->energy > eV )  {    
-      if( ac->muen_over_rho == (ac-1)->muen_over_rho )
+      if( (ac->*f)() == ((ac-1)->*f)() )
         return ac->muen_over_rho;
       const double k = (eV-(ac-1)->energy)/(ac->energy - (ac-1)->energy);
-      return (ac-1)->muen_over_rho + k*(ac->muen_over_rho-(ac-1)->muen_over_rho);
+      return ((ac-1)->*f)() + k*((ac->*f)()-((ac-1)->*f)());
     }
     else if( ac->energy == eV )
       return ac->muen_over_rho;
@@ -74,7 +91,7 @@ struct cm_Absorption_Coefficient_Reg  {
   }
 
 };
-/*
+
 extern const cm_Absorption_Coefficient _cm_absorpc_Ac[];
 extern const cm_Absorption_Coefficient _cm_absorpc_Ag[];
 extern const cm_Absorption_Coefficient _cm_absorpc_Al[];
@@ -167,6 +184,6 @@ extern const cm_Absorption_Coefficient _cm_absorpc_Y[];
 extern const cm_Absorption_Coefficient _cm_absorpc_Yb[];
 extern const cm_Absorption_Coefficient _cm_absorpc_Zn[];
 extern const cm_Absorption_Coefficient _cm_absorpc_Zr[];
-*/
+
 EndXlibNamespace()
 #endif

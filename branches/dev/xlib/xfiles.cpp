@@ -557,7 +557,7 @@ void TXFile::LibGetMu(const TStrObjList& Params, TMacroError& E)  {
   ContentList cont = GetAsymmUnit().GetContentList();
   double mu=0;
   for( size_t i=0; i < cont.Count(); i++ )  {
-    double v = ac.CalcMuenOverRhoForE(
+    double v = ac.CalcMuOverRhoForE(
       GetRM().expl.GetRadiationEnergy(), ac.locate(cont[i].element.symbol));
     mu += (cont[i].count*cont[i].element.GetMr())*v;
   }
@@ -599,6 +599,9 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
   
   lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibDataName, "CurrentData",
     fpOne|psCheckFileTypeCif,
+"Changes current data block within the CIF") );
+  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibGetMu, "GetMu",
+    fpNone|psFileLoaded,
 "Changes current data block within the CIF") );
   
   lib->AttachLibrary(Lattice.GetAsymmUnit().ExportLibrary());
