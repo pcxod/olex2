@@ -695,12 +695,11 @@ namespace math  {
       }
     }
     struct SVD  {
-      static void do2x2(FT f, FT g, FT h,
-        FT& ssmin, FT& ssmax, FT& snr, FT& csr, FT& snl, FT& csl)
-      {
+      template <typename DiagT1, typename DiagT2, typename UT, typename CT, typename VtT>
+      static void do2x2(size_t i, DiagT1& d, DiagT2& e, UT& u, CT& c, VtT& vt)  {
+        FT f = d(i-1), g = e(i-1), h = d(i);
         FT abs_f = olx_abs(f), abs_h = olx_abs(h), abs_g = olx_abs(g);
-        csl = csr = 1;
-        snl = snr = 0;
+        FT ssmax, ssmin, snr = 0, csr = 1, snl = 0, csl = 1;
         const bool swap = abs_h > abs_f;
         if( swap )  {
           olx_swap(f, h);
@@ -750,8 +749,12 @@ namespace math  {
           olx_swap(csr, snl);
           olx_swap(snr, csl);
         }
-        ssmax = olx_copy_sign(ssmax, f);
-        ssmin = olx_copy_sign(ssmin, h);
+        d(i-1) = olx_copy_sign(ssmax, f);
+        e(i-1) = 0;
+        d(i) = olx_copy_sign(ssmin, h);
+        if( vt.ColCount() > 0 )  Rotation<FT>::ApplyToRows(vt, i-1, i, csr, snr);
+        if( u.RowCount() > 0 )  Rotation<FT>::ApplyToCols(u, i-1, i, csl, snl);
+        if( c.RowCount() > 0 )  Rotation<FT>::ApplyToRows(c, i-1, i, csl, snl);
       }
       static void do2x2(FT f, FT g, FT h, FT& ssmin, FT& ssmax)  {
         const FT abs_f = olx_abs(f), abs_h = olx_abs(h), abs_g = olx_abs(g);
@@ -801,11 +804,9 @@ namespace math  {
           return true;
         }
         Rotation<FT> rot;
-        int max_itr = 6;
         e.Resize(d.Count());
+        const int max_itr = 6;
         const FT _eps = 5e-16, unfl = 1e-300;
-
-        int flag = 0;
         if( !upper )  {
           for( size_t i=0; i < d.Count()-1; i++ )  {
             FT sn, cs, r;
@@ -840,20 +841,19 @@ namespace math  {
         }
         else
           thresh = olx_max(olx_abs(tol)*smax, max_itr*olx_sqr(d.Count())*unfl);
-        int max_i = max_itr*olx_sqr((int)d.Count()),
-          m = (int)d.Count()-1, iter = 0;
-        int oldm = -1, oldll = -1;
-        for(;;)  {
-          if( m <= 0 )
-            break;
+        size_t max_i = max_itr*olx_sqr(d.Count()),
+          m = d.Count()-1, iter = 0;
+        size_t  oldm = ~0, oldll = ~0;
+        int flag = 0;  // the bulge chasing direction flag, 1 - down, 2 - up
+        while( m != 0 )  {
           if( iter > max_i )
             return false;
           if( tol < 0 && olx_abs(d(m)) <= thresh )
             d(m) = 0;
           FT smin = (smax = olx_abs(d(m)));
           bool split_flag = false;
-          int ll = 0;
-          for( int i=1; i <= m; i++ )  {
+          size_t ll = 0;
+          for( size_t i=1; i <= m; i++ )  {
             ll = m-i;
             const FT
               abs_s = olx_abs(d(ll)),
@@ -877,19 +877,10 @@ namespace math  {
             }
           }
           ll++;
-          if( ll == m-1 )  {
-            FT sigmn=0, sigmx=0, sinr, cosr, sinl, cosl;
-            do2x2(d(m-1), e(m-1), d(m), sigmn, sigmx, sinr, cosr, sinl, cosl);
-            d(m-1) = sigmx;
-            e(m-1) = 0;
-            d(m) = sigmn;
-            if( vt.ColCount() > 0 ) //&& cosr != 1 )
-              rot.ApplyToRows(vt, m-1, m, cosr, sinr);
-            if( true )  {  //cosl != 1 )  {
-              if( u.RowCount() > 0 )  rot.ApplyToCols(u, m-1, m, cosl, sinl);
-              if( c.RowCount() > 0 )  rot.ApplyToRows(c, m-1, m, cosl, sinl);
-            }
-            m -= 2;
+          if( ll == m-1 )  { //simple 2x2 case...
+            do2x2(m, d, e, u, c, vt);
+            if( (m -= 2) == InvalidIndex )
+              break;
             continue;
           }
           bool change_dir = false;
@@ -907,7 +898,7 @@ namespace math  {
               FT mu = olx_abs(d(ll));
               sminl = mu;
               bool iter_flag = false;
-              for( int i=ll; i < m-1; i++ )  {
+              for( size_t i=ll; i < m-1; i++ )  {
                 if( olx_abs(e(i)) <= tol*mu )  {
                   e(i) = 0;
                   iter_flag = true;
@@ -929,13 +920,14 @@ namespace math  {
               FT mu = olx_abs(d(m));
               sminl = mu;
               bool iter_flag = false;
-              for( int i=m-1; i >= ll; i-- )  {
-                if( olx_abs(e(i)) <= tol*mu )  {
-                  e(i) = 0;
+              for( size_t i=m; i > ll; i-- )  {
+                const size_t im1 = i-1;
+                if( olx_abs(e(im1)) <= tol*mu )  {
+                  e(im1) = 0;
                   iter_flag = true;
                   break;
                 }
-                mu = olx_abs(d(i))*(mu/(mu+olx_abs(e(i))));
+                mu = olx_abs(d(im1))*(mu/(mu+olx_abs(e(im1))));
                 sminl = olx_min(sminl, mu);
               }
               if( iter_flag )
@@ -962,17 +954,14 @@ namespace math  {
           if( shift == 0 )  {  // 0 shift - simplified QR iterations
             if( flag == 1 )  {  // chase bulge down
               FT cs = 1, sn, r, oldcs = 1, oldsn = 0, tmp;
-              for( int i=ll; i < m; i++ )  {
+              for( size_t i=ll; i < m; i++ )  {
                 rot.Generate(d(i)*cs, e(i), cs, sn, r);
                 if( i > ll )
                   e(i-1) = oldsn*r;
                 rot.Generate(oldcs*r, d(i+1)*sn, oldcs, oldsn, tmp);
-                if( vt.ColCount() > 0 ) // && cs != 1 )
-                  rot.ApplyToRows(vt, i, i+1, cs, sn);
-                if( true )  {  //oldcs != 1 )  {
-                  if( u.RowCount() > 0 )  rot.ApplyToCols(u, i, i+1, oldcs, oldsn);
-                  if( c.ColCount() > 0 )  rot.ApplyToRows(c, i, i+1, oldcs, oldsn);
-                }
+                if( vt.ColCount() > 0 )  rot.ApplyToRows(vt, i, i+1, cs, sn);
+                if( u.RowCount() > 0 )  rot.ApplyToCols(u, i, i+1, oldcs, oldsn);
+                if( c.ColCount() > 0 )  rot.ApplyToRows(c, i, i+1, oldcs, oldsn);
                 d(i) = tmp;
               }
               const FT h = d(m)*cs;
@@ -982,18 +971,15 @@ namespace math  {
             }
             else  {  // chase bulge up
               FT cs = 1, sn, r, oldcs = 1, oldsn = 0, tmp;
-              for( int i=m; i > ll; i-- )  {
+              for( size_t i=m; i > ll; i-- )  {
                 rot.Generate(d(i)*cs, e(i-1), cs, sn, r);
                 if( i < m )
                   e(i) = oldsn*r;
                 rot.Generate(oldcs*r, d(i-1)*sn, oldcs, oldsn, tmp);
                 d(i) = tmp;
-                if( vt.ColCount() > 0 ) // && oldcs != 1 )
-                  rot.ApplyToRows(vt, i-1, i, oldcs, -oldsn);
-                if( true )  {  //cs != 1 )  {
-                  if( u.RowCount() > 0 )  rot.ApplyToCols(u, i-1, i, cs, -sn);
-                  if( c.ColCount() > 0 )  rot.ApplyToRows(c, i-1, i, cs, -sn);
-                }
+                if( vt.ColCount() > 0 )  rot.ApplyToRows(vt, i-1, i, oldcs, -oldsn);
+                if( u.RowCount() > 0 )  rot.ApplyToCols(u, i-1, i, cs, -sn);
+                if( c.ColCount() > 0 )  rot.ApplyToRows(c, i-1, i, cs, -sn);
               }
               const FT h = d(ll)*cs;
               d(ll) = h*oldcs;
@@ -1007,7 +993,7 @@ namespace math  {
               FT f = (olx_abs(d(ll))-shift)*(olx_copy_sign(1, d(ll))+shift/d(ll));
               FT g = e(ll);
               FT cosr, sinr, cosl, sinl, r;
-              for( int i=ll; i < m; i++ )  {
+              for( size_t i=ll; i < m; i++ )  {
                 rot.Generate(f, g, cosr, sinr, r);
                 if( i > ll )
                   e(i-1) = r;
@@ -1023,12 +1009,9 @@ namespace math  {
                   g = sinl*e(i+1);
                   e(i+1) = cosl*e(i+1);
                 }
-                if( vt.ColCount() > 0 )  //&& cosr != 1 )
-                  rot.ApplyToRows(vt, i, i+1, cosr, sinr);
-                if( true ) {  //cosl != 1 )  {
-                  if( u.RowCount() > 0 )  rot.ApplyToCols(u, i, i+1, cosl, sinl);
-                  if( c.ColCount() > 0 )  rot.ApplyToRows(c, i, i+1, cosl, sinl);
-                }
+                if( vt.ColCount() > 0 )  rot.ApplyToRows(vt, i, i+1, cosr, sinr);
+                if( u.RowCount() > 0 )  rot.ApplyToCols(u, i, i+1, cosl, sinl);
+                if( c.ColCount() > 0 )  rot.ApplyToRows(c, i, i+1, cosl, sinl);
               }
               if( olx_abs(e(m-1) = f) <= thresh )
                 e(m-1) = 0;
@@ -1037,7 +1020,7 @@ namespace math  {
               FT f = (olx_abs(d(m))-shift)*(olx_copy_sign(1, d(m))+shift/d(m));
               FT g = e(m-1);
               FT cosr, sinr, cosl, sinl, r;
-              for( int i=m; i > ll; i-- )  {
+              for( size_t i=m; i > ll; i-- )  {
                 rot.Generate(f, g, cosr, sinr, r);
                 if( i < m )
                   e(i) = r;
@@ -1053,18 +1036,16 @@ namespace math  {
                   g = sinl*e(i-2);
                   e(i-2) *= cosl;
                 }
-                if( vt.ColCount() > 0 )  //&& cosr != 1 )
-                  rot.ApplyToRows(vt, i-1, i, cosl, -sinl);
-                if( true )  {  //cosl != 1 )  {
-                  if( u.RowCount() > 0 )  rot.ApplyToCols(u, i-1, i, cosr, -sinr);
-                  if( c.ColCount() > 0 )  rot.ApplyToRows(c, i-1, i, cosr, -sinr);
-                }
+                if( vt.ColCount() > 0 )  rot.ApplyToRows(vt, i-1, i, cosl, -sinl);
+                if( u.RowCount() > 0 )  rot.ApplyToCols(u, i-1, i, cosr, -sinr);
+                if( c.ColCount() > 0 )  rot.ApplyToRows(c, i-1, i, cosr, -sinr);
               }
               if( olx_abs(e(ll) = f) < thresh )
                 e(ll) = 0;
             }
           }
         }
+        // negate negative singular values
         for( size_t i=0; i < d.Count(); i++ )  {
           if( d(i) < 0 )  {
             d(i) = -d(i);
@@ -1133,7 +1114,7 @@ namespace math  {
       }
     }
     template <typename MatT>
-    void ApplyToCols(MatT& m, size_t col_a, size_t col_b, FT cs, FT sn)  {
+    static void ApplyToCols(MatT& m, size_t col_a, size_t col_b, FT cs, FT sn)  {
       for( size_t i=0; i < m.RowCount(); i++ )  {
         const FT tmp = m(i,col_a)*cs + m(i,col_b)*sn;
         m(i,col_b) = m(i,col_b)*cs - m(i,col_a)*sn;
