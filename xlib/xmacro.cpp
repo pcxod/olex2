@@ -2523,7 +2523,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
       Tmp << ++tab_count << ' ' << TD->GetFieldValueCI("caption");
       Tmp.Replace("%DATA_NAME%", Cif->GetDataName());
       if( Tmp.IndexOf('$') != InvalidIndex )
-        ProcessExternalFunction( Tmp );
+        ProcessExternalFunction(Tmp);
       // attributes of the row names ...
       CLA.Clear();
       THA.Clear();
@@ -2540,8 +2540,8 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
         if( (i+1) < SymmList.Count() )
           footer << "; ";
       }
-
-
+      if( tab_count > 1 )
+        SL.Add("<p></p>");
       DT.CreateHTMLList(
         SL,
         Tmp,

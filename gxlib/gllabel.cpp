@@ -93,7 +93,7 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
       //float glw;
       //glGetFloatv(GL_LINE_WIDTH, &glw);
       //glLineWidth((float)(1./Scale)/50);
-      glf.DrawVectorText(T, FLabel, Parent.GetBasis().GetZoom()/Parent.CalcZoom());
+      glf.DrawVectorText(T, FLabel, sqrt(Parent.GetBasis().GetZoom()/Parent.CalcZoom()));
       //glLineWidth(glw);
     }
     return true;
@@ -107,7 +107,7 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
       olx_gl::scale(scale, scale, 1.0);
     }
     else  {
-      const double scale = Parent.GetBasis().GetZoom()/Parent.CalcZoom();
+      const double scale = sqrt(Parent.GetBasis().GetZoom()/Parent.CalcZoom());
       olx_gl::scale(scale, scale, 1.0);
     }
     P.Vertices[0] = vec3d(text_rect.left, text_rect.top, 0);
