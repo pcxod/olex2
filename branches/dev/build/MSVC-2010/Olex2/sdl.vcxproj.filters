@@ -31,6 +31,9 @@
     <Filter Include="Header Files\containers">
       <UniqueIdentifier>{a6a8f85b-b6d9-4bfa-b2ad-e3b30a8a71e8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\tests">
+      <UniqueIdentifier>{00ccf287-3420-42f3-89a4-fdaedc8aaa89}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\sdl\actions.cpp">
@@ -163,12 +166,6 @@
       <Filter>exparse</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\sdl\hashing.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\sdl\math\mmath.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\sdl\math\spline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -463,6 +460,27 @@
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\math\spline.h">
       <Filter>Header Files\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\tests\encoding_test.h">
+      <Filter>Header Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\tests\file_test.h">
+      <Filter>Header Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\tests\matrix_test.h">
+      <Filter>Header Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\tests\sort_test.h">
+      <Filter>Header Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\tests\spline_test.h">
+      <Filter>Header Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\tests\string_test.h">
+      <Filter>Header Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\tests\sys_test.h">
+      <Filter>Header Files\tests</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

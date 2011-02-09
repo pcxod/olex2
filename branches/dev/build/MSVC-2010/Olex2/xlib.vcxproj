@@ -632,7 +632,6 @@
     <ClCompile Include="..\..\..\xlib\lattice.cpp" />
     <ClCompile Include="..\..\..\xlib\leq.cpp" />
     <ClCompile Include="..\..\..\xlib\lst.cpp" />
-    <ClCompile Include="..\..\..\xlib\mat_id.cpp" />
     <ClCompile Include="..\..\..\xlib\mol.cpp" />
     <ClCompile Include="..\..\..\xlib\mol2.cpp" />
     <ClCompile Include="..\..\..\xlib\network.cpp" />

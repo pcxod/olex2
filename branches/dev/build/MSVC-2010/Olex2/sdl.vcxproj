@@ -623,8 +623,6 @@
     <ClCompile Include="..\..\..\sdl\log.cpp" />
     <ClCompile Include="..\..\..\sdl\macroerror.cpp" />
     <ClCompile Include="..\..\..\sdl\macrolib.cpp" />
-    <ClCompile Include="..\..\..\sdl\math\mmath.cpp" />
-    <ClCompile Include="..\..\..\sdl\math\spline.cpp" />
     <ClCompile Include="..\..\..\sdl\md5.cpp" />
     <ClCompile Include="..\..\..\sdl\smart\olx_cstring.cpp" />
     <ClCompile Include="..\..\..\sdl\smart\olx_istring.cpp" />
@@ -727,6 +725,13 @@
     <ClInclude Include="..\..\..\sdl\strmask.h" />
     <ClInclude Include="..\..\..\sdl\talist.h" />
     <ClInclude Include="..\..\..\sdl\testsuit.h" />
+    <ClInclude Include="..\..\..\sdl\tests\encoding_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\file_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\matrix_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\sort_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\spline_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\string_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\sys_test.h" />
     <ClInclude Include="..\..\..\sdl\threex3.h" />
     <ClInclude Include="..\..\..\sdl\tptrlist.h" />
     <ClInclude Include="..\..\..\sdl\typelist.h" />

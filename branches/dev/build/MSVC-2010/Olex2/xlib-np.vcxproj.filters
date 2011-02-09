@@ -19,6 +19,9 @@
     <Filter Include="Source Files\absorpc">
       <UniqueIdentifier>{fa974fda-951f-4596-9728-cead881cf4e1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\tests">
+      <UniqueIdentifier>{e2c58068-ec81-4986-b2de-71c7887699af}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\xlib\afixgroup.cpp">
@@ -919,6 +922,15 @@
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\xyz.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\mat_id_test.h">
+      <Filter>Header Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\symmparser_test.h">
+      <Filter>Header Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\vcov_test.h">
+      <Filter>Header Files\tests</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
