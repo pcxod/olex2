@@ -2522,6 +2522,7 @@ void TMainForm::macMove(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macShowH(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
+  TEBasis basis = FXApp->GetRender().GetBasis();
   if( Cmds.Count() == 2 )  {
     bool v = Cmds[1].ToBool();
     if( Cmds[0] == "a" )  {
@@ -2567,6 +2568,7 @@ void TMainForm::macShowH(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
     }
   }
+  FXApp->GetRender().SetBasis(basis);
 }
 //..............................................................................
 void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -3249,6 +3251,7 @@ int TMainForm_macShowQ_QPeakSortD(const TCAtom* a, const TCAtom* b)  {
 }
 void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   double wheel = Options.FindValue("wheel", '0').ToDouble();
+  TEBasis basis = FXApp->GetRender().GetBasis();
   if( wheel != 0 )  {
     //if( !FXApp->QPeaksVisible() )  return;
     TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
@@ -3322,22 +3325,20 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       TStateChange sc(prsQVis, true);
       FXApp->SetQPeaksVisible(true);
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
-      return;
     }
-    if( FXApp->AreQPeaksVisible() && !FXApp->AreQPeakBondsVisible())  {
+    else if( FXApp->AreQPeaksVisible() && !FXApp->AreQPeakBondsVisible())  {
       TStateChange sc(prsQBVis, true);
       FXApp->SetQPeakBondsVisible(true);
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
-      return;
     }
-    if( FXApp->AreQPeaksVisible() && FXApp->AreQPeakBondsVisible() )  {
+    else if( FXApp->AreQPeaksVisible() && FXApp->AreQPeakBondsVisible() )  {
       TStateChange sc(prsQBVis|prsQVis, false);
       FXApp->SetQPeaksVisible(false);
       FXApp->SetQPeakBondsVisible(false);
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
-      return;
     }
   }
+  FXApp->GetRender().SetBasis(basis);
 }
 //..............................................................................
 void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

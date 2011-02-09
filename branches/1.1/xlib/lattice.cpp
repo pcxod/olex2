@@ -1046,7 +1046,7 @@ void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template)  {
 }
 //..............................................................................
 void TLattice::MoveFragment(const vec3d& to, TSAtom& fragAtom)  {
-  if( Generated )  {
+  if( IsGenerated() )  {
     TBasicApp::NewLogEntry(logError) << "Cannot perform this operation on grown structure";
     return;
   }
@@ -1067,7 +1067,7 @@ void TLattice::MoveFragment(const vec3d& to, TSAtom& fragAtom)  {
 }
 //..............................................................................
 void TLattice::MoveFragment(TSAtom& to, TSAtom& fragAtom)  {
-  if( Generated )  {
+  if( IsGenerated() )  {
     TBasicApp::NewLogEntry(logError) << "Cannot perform this operation on grown structure";
     return;
   }
@@ -1162,7 +1162,7 @@ void TLattice::MoveFragmentG(TSAtom& to, TSAtom& fragAtom)  {
 }
 //..............................................................................
 void TLattice::MoveToCenter()  {
-  if( Generated )  {
+  if( IsGenerated() )  {
     TBasicApp::NewLogEntry(logError) << "Please note that asymetric unit will not be updated: "
       "the structure is grown";
     OnStructureGrow.Enter(this);
@@ -1180,7 +1180,7 @@ void TLattice::MoveToCenter()  {
     molCenter /= ac;
     smatd* m = GetUnitCell().GetClosest(vec3d(0.5, 0.5, 0.5), molCenter, true);
     if( m == NULL )  continue;
-    if( Generated )  {
+    if( IsGenerated() )  {
       for( size_t j=0; j < frag->NodeCount(); j++ )  {
         TSAtom& SA = frag->Node(j);
         SA.ccrd() = *m * SA.ccrd();
@@ -1197,7 +1197,7 @@ void TLattice::MoveToCenter()  {
     }
     delete m;
   }
-  if( !Generated )  {  
+  if( !IsGenerated() )  {  
     OnStructureUniq.Enter(this);
     Init();
     OnStructureUniq.Exit(this);
@@ -1210,7 +1210,7 @@ void TLattice::MoveToCenter()  {
 }
 //..............................................................................
 void TLattice::Compaq()  {
-  if( Generated || Fragments.Count() < 2 )  return;
+  if( IsGenerated() || Fragments.Count() < 2 )  return;
   TNetwork* frag = Fragments[0];
   vec3d acenter;
   size_t ac = 0;
@@ -1263,7 +1263,9 @@ void TLattice::Compaq()  {
   OnStructureUniq.Exit(this);
 }
 //..............................................................................
+template <int run>
 size_t TLattice_CompaqAll_Process(TUnitCell& uc, TCAtom& ca, const smatd& matr)  {
+  if( run == 1 && ca.GetType() == iQPeakZ )  return 0;
   size_t cnt = 0;
   for( size_t j=0; j < ca.AttachedSiteCount(); j++ )  {
     TCAtom::Site& site = ca.GetAttachedSite(j);
@@ -1278,12 +1280,12 @@ size_t TLattice_CompaqAll_Process(TUnitCell& uc, TCAtom& ca, const smatd& matr) 
     if( site.atom->GetEllipsoid() != NULL )
       *site.atom->GetEllipsoid() = uc.GetEllipsoid(site.matrix.GetContainerId(), site.atom->GetId());
     if( site.atom->IsAvailable() )
-      cnt += TLattice_CompaqAll_Process(uc, *site.atom, site.matrix);
+      cnt += TLattice_CompaqAll_Process<run>(uc, *site.atom, site.matrix);
   }
   return cnt;
 }
 void TLattice::CompaqAll()  {
-  if( Generated || Fragments.Count() < 2 )  return;
+  if( IsGenerated() || Fragments.Count() < 2 )  return;
   TUnitCell& uc = GetUnitCell();
   GetAsymmUnit().GetAtoms().
     ForEach(ACollectionItem::TagSetter<>(0));
@@ -1292,7 +1294,12 @@ void TLattice::CompaqAll()  {
   for( size_t i=0; i < Atoms.Count(); i++ )  {
     if( Atoms[i]->CAtom().GetTag() != 0 || !Atoms[i]->CAtom().IsAvailable() )
       continue;
-    cnt += TLattice_CompaqAll_Process(uc, Atoms[i]->CAtom(), uc.GetMatrix(0));
+    cnt += TLattice_CompaqAll_Process<1>(uc, Atoms[i]->CAtom(), uc.GetMatrix(0));
+  }
+  for( size_t i=0; i < Atoms.Count(); i++ )  {
+    if( Atoms[i]->CAtom().GetTag() != 0 || !Atoms[i]->CAtom().IsAvailable() )
+      continue;
+    cnt += TLattice_CompaqAll_Process<2>(uc, Atoms[i]->CAtom(), uc.GetMatrix(0));
   }
   OnStructureUniq.Enter(this);
   TActionQueueLock __queuelock(&OnStructureUniq);
@@ -1305,7 +1312,7 @@ void TLattice::CompaqAll()  {
 }
 //..............................................................................
 void TLattice::CompaqClosest()  {
-  if( Generated || Fragments.Count() < 2 )  return;
+  if( IsGenerated() || Fragments.Count() < 2 )  return;
   const size_t fr_cnt = Fragments.Count();
   TDoubleList vminQD(fr_cnt);
   for( size_t i = 0; i < fr_cnt; i++ )
@@ -1372,7 +1379,7 @@ void TLattice::CompaqClosest()  {
 }
 //..............................................................................
 void TLattice::CompaqType(short type)  {
-  if( Generated )  return;
+  if( IsGenerated() )  return;
   const size_t ac = Atoms.Count();
   const TAsymmUnit& au = GetAsymmUnit();
   for( size_t i=0; i < ac; i++ )  {
@@ -1408,7 +1415,7 @@ void TLattice::CompaqType(short type)  {
 }
 //..............................................................................
 void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform)  {
-  if( Generated )  {
+  if( IsGenerated() )  {
     TBasicApp::NewLogEntry(logError) << "Cannot perform this operation on grown structure";
     return;
   }
@@ -1477,7 +1484,9 @@ void TLattice::RestoreCoordinates()  {
     GetAsymmUnit().CellToCartesian(Atoms[i]->ccrd(), Atoms[i]->crd());
 }
 //..............................................................................
-bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPList& ProcessingAtoms, int part, TCAtomPList* generated)  {
+bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPList& ProcessingAtoms,
+  int part, TCAtomPList* generated)
+{
   if( ProcessingAtoms.IndexOf(atom) != InvalidIndex || (atom.CAtom().IsHAttached() && part == DefNoPart) )
     return false;
   ProcessingAtoms.Add(atom);
@@ -1870,7 +1879,7 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rc
 }
 //..............................................................................
 void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  {
-  if( Generated )  {
+  if( IsGenerated() )  {
     TBasicApp::NewLogEntry(logError) << "Hadd is not applicable to grown structure";
     return;
   }
@@ -2173,7 +2182,7 @@ void TLattice::SetGrowInfo(GrowInfo* grow_info)  {
 }
 //..............................................................................
 TLattice::GrowInfo* TLattice::GetGrowInfo() const  {
-  if( !Generated )
+  if( !IsGenerated() )
     return NULL;
   const TAsymmUnit& au = GetAsymmUnit();
   GrowInfo& gi = *(new GrowInfo);
@@ -2279,7 +2288,7 @@ olxstr TLattice::CalcMoiety() const {
   for( size_t i=0; i < cfrags.Count(); i++ )  {
     ElementDict _cld;
     for( size_t j=0; j < cfrags[i].Count(); j++ )
-      _cld.Add(&cfrags[i][j]->GetType(), 0) += cfrags[i][j]->GetChemOccu();
+      _cld.Add(&cfrags[i][j]->GetType(), 0) += cfrags[i][j]->GetOccu();
     ContentList cl(_cld.Count());
     for( size_t j=0; j < _cld.Count(); j++ )
       cl.Set(j, new ElementCount(*_cld.GetKey(j), _cld.GetValue(j)));
@@ -2287,7 +2296,7 @@ olxstr TLattice::CalcMoiety() const {
     bool uniq = true;
     double wght=0, overall_occu = 0;
     for( size_t j=0; j < cfrags[i].Count(); j++ )  {
-      const double occu = cfrags[i][j]->GetChemOccu();
+      const double occu = cfrags[i][j]->GetOccu();
       if( overall_occu == 0 )
         overall_occu = occu;
       else if( overall_occu != -1 && olx_abs(overall_occu-occu) > 0.01 )  {

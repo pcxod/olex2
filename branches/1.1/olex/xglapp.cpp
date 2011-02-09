@@ -251,7 +251,7 @@ void TGlXApp::OnNavigation(wxNavigationKeyEvent& event)  {
 }
 //..............................................................................
 void TGlXApp::OnIdle(wxIdleEvent& event)  {
-  wxApp::OnIdle( event );
+  wxApp::OnIdle(event);
 }
 //..............................................................................
 

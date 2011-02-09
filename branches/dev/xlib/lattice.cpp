@@ -1152,11 +1152,13 @@ void TLattice::Compaq()  {
   OnStructureUniq.Exit(this);
 }
 //..............................................................................
+template <int run>
 size_t TLattice_CompaqAll_Process(TUnitCell& uc, TCAtom& ca, const smatd& matr)  {
+  if( run == 1 && ca.GetType() == iQPeakZ )  return 0;
   size_t cnt = 0;
   for( size_t j=0; j < ca.AttachedSiteCount(); j++ )  {
     TCAtom::Site& site = ca.GetAttachedSite(j);
-    if( site.atom->GetTag() != 0 )
+    if( site.atom->GetTag() != 0  )
       continue;
     site.atom->SetTag(1);
     if( !matr.IsFirst() )  {
@@ -1167,21 +1169,25 @@ size_t TLattice_CompaqAll_Process(TUnitCell& uc, TCAtom& ca, const smatd& matr) 
     if( site.atom->GetEllipsoid() != NULL )
       *site.atom->GetEllipsoid() = uc.GetEllipsoid(site.matrix.GetContainerId(), site.atom->GetId());
     if( site.atom->IsAvailable() )
-      cnt += TLattice_CompaqAll_Process(uc, *site.atom, site.matrix);
+      cnt += TLattice_CompaqAll_Process<run>(uc, *site.atom, site.matrix);
   }
   return cnt;
 }
 void TLattice::CompaqAll()  {
   if( IsGenerated() || Fragments.Count() < 2 )  return;
   TUnitCell& uc = GetUnitCell();
-  GetAsymmUnit().GetAtoms().
-    ForEach(ACollectionItem::TagSetter<>(0));
+  GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::TagSetter<>(0));
   size_t cnt = 0;
   for( size_t i=0; i < Objects.atoms.Count(); i++ )  {
     TSAtom& sa = Objects.atoms[i];
     if( sa.CAtom().GetTag() != 0 || !sa.CAtom().IsAvailable() )
       continue;
-    cnt += TLattice_CompaqAll_Process(uc, sa.CAtom(), uc.GetMatrix(0));
+    cnt += TLattice_CompaqAll_Process<1>(uc, Atoms[i]->CAtom(), uc.GetMatrix(0));
+  }
+  for( size_t i=0; i < Atoms.Count(); i++ )  {
+    if( Atoms[i]->CAtom().GetTag() != 0 || !Atoms[i]->CAtom().IsAvailable() )
+      continue;
+    cnt += TLattice_CompaqAll_Process<2>(uc, Atoms[i]->CAtom(), uc.GetMatrix(0));
   }
   OnStructureUniq.Enter(this);
   TActionQueueLock __queuelock(&OnStructureUniq);

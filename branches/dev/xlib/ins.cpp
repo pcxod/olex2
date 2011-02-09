@@ -378,7 +378,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
   }
   else if( Toks[0].Equalsi("PART") && (Toks.Count() > 1) )  {
     cx.Part = (short)Toks[1].ToInt();
-    if( cx.Part == 0 )  cx.PartOccu = 0;
+    cx.PartOccu = 0;
     if( Toks.Count() == 3 )
       cx.PartOccu = Toks[2].ToDouble();
     // TODO: validate if appropriate here...
