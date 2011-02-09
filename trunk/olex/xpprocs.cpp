@@ -1633,14 +1633,16 @@ void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( Cmds.Count() == 2 && Cmds[1].Equalsi("hbonds") )  {
     for( size_t i=0; i < FXApp->BondCount(); i++ )  {
       if( FXApp->GetBond(i).Bond().GetType() == sotHBond )
-        bonds.Add( &FXApp->GetBond(i) );
+        bonds.Add(FXApp->GetBond(i));
     }
-    if( !bonds.IsEmpty() )
-      FXApp->BondRad(Cmds[0].ToDouble(), &bonds);
+    FXApp->BondRad(Cmds[0].ToDouble(), &bonds);
   }
   else  {
-    FXApp->GetBonds(Cmds.Text(' ', 1), bonds);
-    FXApp->BondRad(Cmds[0].ToDouble(), bonds.IsEmpty() ? NULL : &bonds);
+    for( size_t i=0; i < FXApp->BondCount(); i++ )  {
+      if( FXApp->GetBond(i).Bond().GetType() != sotHBond )
+        bonds.Add(FXApp->GetBond(i));
+    }
+    FXApp->BondRad(Cmds[0].ToDouble(), &bonds);
   }
 }
 //..............................................................................
