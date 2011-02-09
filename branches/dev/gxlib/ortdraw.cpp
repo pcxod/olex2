@@ -700,13 +700,15 @@ void OrtDraw::Render(const olxstr& fileName)  {
         color = glm->AmbientF.GetRGB();
       pw.color(color);
       if( glf.IsVectorFont() )  {
+        const double font_scale = DrawScale/app.GetRender().CalcZoom();
         vec3d crd = Labels[i]->GetVectorPosition()*vector_scale + DrawOrigin;
         if( color != prev_ps_color )  {
           output.Add(pw.color_str(color));
           prev_ps_color = color;
         }
         output.AddList(
-          glf.RenderPSLabel(crd, Labels[i]->GetLabel(), DrawScale/app.GetRender().CalcZoom(), context)
+          glf.RenderPSLabel(
+            crd, Labels[i]->GetLabel(), font_scale, context)
         );
       }
       else  {

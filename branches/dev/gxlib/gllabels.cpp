@@ -203,7 +203,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
       T *= Parent.GetBasis().GetMatrix();
       T *= Parent.GetBasis().GetZoom();
       T[2] = Parent.GetMaxRasterZ() - 0.001;
-      Fnt.DrawVectorText(T, Tmp, Parent.GetBasis().GetZoom()*0.75/Parent.CalcZoom());
+      Fnt.DrawVectorText(T, Tmp, Parent.GetBasis().GetZoom()/Parent.CalcZoom());
     }
   }
   OGlM.Init(Parent.IsColorStereo());

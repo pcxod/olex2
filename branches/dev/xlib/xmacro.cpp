@@ -2558,8 +2558,8 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
         if( (i+1) < SymmList.Count() )
           footer << "; ";
       }
-
-
+      if( tab_count > 1 )
+        SL.Add("<p></p>");
       DT.CreateHTMLList(
         SL,
         Tmp,

@@ -364,10 +364,7 @@ void TGXApp::CreateObjects(bool centerModel)  {
   OnObjectsCreate.Enter(dynamic_cast<TBasicApp*>(this), NULL);
   TStopWatch sw(__FUNC__);
   sw.start("Initialising");
-  const vec3d
-    glMax = FGlRender->MaxDim(),
-    glMin = FGlRender->MinDim(),
-    glCenter = FGlRender->GetBasis().GetCenter();
+  const vec3d glCenter = FGlRender->GetBasis().GetCenter();
   TXAtom::ClearStaticObjects();
   TXBond::ClearStaticObjects();
   FGlRender->ClearPrimitives();
@@ -456,11 +453,8 @@ void TGXApp::CreateObjects(bool centerModel)  {
 
   if( centerModel )
     CenterModel();
-  else  {
-    FGlRender->ClearMinMax();
-    FGlRender->UpdateMinMax(glMin, glMax);
+  else
     FGlRender->GetBasis().SetCenter(glCenter);
-  }
   olx_gl::loadIdentity();
   GetRender().SetView(false, 1);
   GetRender().Initialise();
