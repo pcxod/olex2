@@ -128,7 +128,6 @@
 #include "sfutil.h"
 #include "ortdraw.h"
 #include "ortdrawtex.h"
-#include "testsuit.h"
 #include "catomlist.h"
 #include "updateapi.h"
 #include "planesort.h"
@@ -7882,13 +7881,6 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   olxstr empty;
-  OlxTests tests;
-  tests.Add(&TSymmParser::Tests);
-  tests.Add(&smatd::Tests);
-  tests.Add(&VcoVContainer::Tests);
-  tests.Add(&rotation_id::Tests);
-  tests.Add(&full_smatd_id<256>::Tests);
-  tests.run();
   AtomRefList arl(FXApp->XFile().GetRM(), Cmds.Text(' '), "suc");
   TTypeList<TAtomRefList> res;
   TResidue& main_resi = FXApp->XFile().GetAsymmUnit().GetResidue(0);

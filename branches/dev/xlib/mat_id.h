@@ -42,7 +42,6 @@ namespace rotation_id {
   static bool equals(int id1, int id2)  {
     return compare(id1, id2) == 0;
   }
-  void Tests(OlxTests& t);
 }; // end of the namespace rot_id
 
 /** Full Id stores the matrix rotation part in first 18 bits, although

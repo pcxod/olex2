@@ -2,7 +2,6 @@
 #define __olx_xl_absorpc_H
 #include "xbase.h"
 #include "edict.h"
-#include "math/spline.h"
 /*
 http://www.nist.gov/pml/data/xraycoef/index.cfm
 
@@ -38,58 +37,7 @@ struct cm_Absorption_Coefficient_Reg  {
     return _CalcForE(eV, ac, &cm_Absorption_Coefficient::GetMuEnOverRho);
   }
   double _CalcForE(double eV, const cm_Absorption_Coefficient* ac,
-    double (cm_Absorption_Coefficient::*f)() const) const
-  {
-    eV /= 1e6;
-    if( ac == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "undefined absorption data");
-    if( eV < ac[0].energy )
-      throw TInvalidArgumentException(__OlxSourceInfo, "energy is out of range");
-    if( eV == ac[0].energy )
-      return ac[0].muen_over_rho;
-    size_t cnt = 0;
-    const cm_Absorption_Coefficient* _ac = ac;
-    while( ac->energy < eV && ac->energy != 0 )  {
-      cnt++;
-      ac++;
-    }
-    if( ac->energy == 0 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "energy is out of range");
-    // go left
-    size_t l_cnt = cnt-1;
-    while( l_cnt > 0 && (cnt-l_cnt) < 4 && _ac[l_cnt].energy != 0 )  {
-      if( _ac[l_cnt-1].energy == _ac[l_cnt].energy )  // absorption edge
-        break;
-      l_cnt--;
-    }
-    // go right
-    size_t r_cnt = cnt+1;
-    while( (r_cnt-cnt) < 4 && _ac[r_cnt].energy != 0 )  {
-      if( _ac[r_cnt+1].energy == _ac[r_cnt].energy )  // absorption edge
-        break;
-      r_cnt++;
-    }
-    if( (r_cnt-l_cnt) >= 5 )  {  // use spline interpolation
-      math::spline::Spline3<double> s;
-      s.x.Resize(r_cnt-l_cnt);
-      s.y.Resize(r_cnt-l_cnt);
-      for( size_t i=l_cnt; i < r_cnt; i++ )  {
-        s.x(i-l_cnt) = _ac[i].energy;
-        s.y(i-l_cnt) = (_ac[i].*f)();
-      }
-      return math::spline::Builder<double>::akima(s).interpolate(eV);
-    }
-    if( ac->energy > eV )  {    
-      if( (ac->*f)() == ((ac-1)->*f)() )
-        return ac->muen_over_rho;
-      const double k = (eV-(ac-1)->energy)/(ac->energy - (ac-1)->energy);
-      return ((ac-1)->*f)() + k*((ac->*f)()-((ac-1)->*f)());
-    }
-    else if( ac->energy == eV )
-      return ac->muen_over_rho;
-    throw TFunctionFailedException(__OlxSourceInfo, "cannot happen");
-  }
-
+    double (cm_Absorption_Coefficient::*f)() const) const;
 };
 
 extern const cm_Absorption_Coefficient _cm_absorpc_Ac[];

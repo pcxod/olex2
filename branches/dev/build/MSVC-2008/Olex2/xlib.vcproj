@@ -1058,10 +1058,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\mat_id.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\xlib\mol.cpp"
 				>
 			</File>
@@ -3008,6 +3004,22 @@
 				</File>
 				<File
 					RelativePath="..\..\..\xlib\cifdp.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="tests"
+				>
+				<File
+					RelativePath="..\..\..\xlib\tests\mat_id_test.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\xlib\tests\symmparser_test.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\xlib\tests\vcov_test.h"
 					>
 				</File>
 			</Filter>

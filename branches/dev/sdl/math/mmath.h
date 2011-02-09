@@ -2,7 +2,6 @@
 #define __olx_sdl_math_lu_H
 #include "../ematrix.h"
 #include "../bapp.h"
-#include "../testsuit.h"
 /* most of the procedures are inspired by ALGLIB and LAPACK, some things, the Householder
 reflection generation in particular - inspired by smtxb code by Luc Bourhis */
 
@@ -1292,16 +1291,6 @@ namespace math  {
       }
     }
   };
-  void TestQR(OlxTests& t);
-  void TestLU(OlxTests& t);
-  void TestInvert(OlxTests& t);
-  void TestSVD(OlxTests& t);
-  static void AddTests(OlxTests& t)  {
-    t.Add(&TestInvert);
-    t.Add(&TestSVD);
-    t.Add(&TestQR);
-    t.Add(&TestLU);
-  }
 }; // end namespace math
 
 EndEsdlNamespace()

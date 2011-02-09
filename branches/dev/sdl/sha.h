@@ -1,11 +1,8 @@
-#ifndef __olx_sha__H
-#define __olx_sha__H
+#ifndef __olx_sdl_sha_H
+#define __olx_sdl_sha_H
 #include "hashing.h"
 /* SHA-1 message digest implementation, for reference look at:
-  
   http://en.wikipedia.org/wiki/SHA_hash_functions
-  Simple tests are implemented in the testsuit.cpp
-
   (c) O Dolomanov, 2009
 */
 

@@ -722,7 +722,6 @@ public:
     return ch.DoCalc(OctahedralDistortionBP(ch.points));
   }
   const VcoVMatrix& GetMatrix() const {  return vcov;  }
-  static void Tests(OlxTests& t);
 };
 
 EndXlibNamespace()

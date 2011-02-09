@@ -2,11 +2,18 @@
 #define __olx_sdl_math_spline_H
 #include "../evector.h"
 #include "../emath.h"
-#include "../testsuit.h"
 // inspired by ALGLIB, wikipedia and original sources
 BeginEsdlNamespace()
 
 namespace math  {  namespace spline {
+  const short
+    boundary_type_periodic = 0,
+    boundary_type_parabolic = 1,
+    boundary_type_first_derivative = 2,
+    boundary_type_second_derivative = 3;
+  const short // values of this MAKES difference, do not change!
+    boundary_condition_first_derivative = 1,
+    boundary_condition_second_derivative = 2;
   template <typename FT>
   struct util  {
     static double diff3(FT t, FT x1, FT x2, FT x3, FT y1, FT y2, FT y3)  {
@@ -27,7 +34,7 @@ namespace math  {  namespace spline {
         d(i) -= t*d(i-1);
       }
       x(n-1) = d(n-1)/b(n-1);
-      for( size_t i=n-2; i != InvalidIndex; i++ )
+      for( size_t i=n-2; i != InvalidIndex; i-- )
         x(i) = (d(i)-c(i)*x(i+1))/b(i);
     }
     template <typename AT, typename BT, typename CT, typename DT, typename XT>
@@ -50,9 +57,18 @@ namespace math  {  namespace spline {
   template <typename FT> struct Spline3 {
     TVector<FT> x, y,  //original data
       c;  // spline coefficients
-    template <typename XT, typename YT> Spline3(const XT &_x, const YT& _y) : x(_x), y(_y)  {}
-    Spline3()  {}
+    bool periodic, linear;
+    template <typename XT, typename YT> Spline3(const XT &_x, const YT& _y) :
+      x(_x), y(_y), periodic(false), linear(false)  {}
+    Spline3() : periodic(false), linear(false)  {}
     double interpolate(double t) const {
+      if( x.Count() < 2 )
+        throw TInvalidArgumentException(__OlxSourceInfo, "spline size");
+      if( periodic && t > x.GetLast() || t < x(0) )  {  // remap
+        const FT period = x.GetLast()-x(0);
+        const FT k = t/period;
+        t = period*(k - olx_floor(k));
+      }
       if( x.IsEmpty() || t < x(0) || t > x.GetLast() )
         throw TInvalidArgumentException(__OlxSourceInfo, "spline");
       size_t start = 0, end = x.Count()-1;
@@ -64,8 +80,12 @@ namespace math  {  namespace spline {
           start = mid;
       }
       t -= x(start);
-      const size_t i = start*3;
-      return y(start)+t*(c(i)+t*(c(i+1)+t*c(i+2)));
+      if( linear )
+        return y(start)+t*c(start);
+      else  {
+        const size_t i = start*3;
+        return y(start)+t*(c(i)+t*(c(i+1)+t*c(i+2)));
+      }
     }
   };
   template <typename FT> struct Builder  {
@@ -81,6 +101,13 @@ namespace math  {  namespace spline {
         s.c(fi+1) = (3*(s.y(i+1)-s.y(i))-(2*d(i)+d(i+1))*dx)/dx2;
         s.c(fi+2) = (2*(s.y(i)-s.y(i+1))+(d(i)+d(i+1))*dx)/dx3;
       }
+      return s;
+    }
+    static Spline3<FT>& linear(Spline3<FT>& s)  {
+      s.linear = true;
+      s.c.Resize(s.x.Count()-1);
+      for( size_t i=0; i < s.x.Count()-1; i++ )
+        s.c(i) = (s.y(i+1)-s.y(i))/(s.x(i+1)-s.x(i));
       return s;
     }
     //J. of the Association for Computing Machinery, 17(4), 1970, 589-502
@@ -107,12 +134,114 @@ namespace math  {  namespace spline {
       d(n-1) = util<FT>::diff3(s.x(n-1), s.x(n-3), s.x(n-2), s.x(n-1), s.y(n-3), s.y(n-2), s.y(n-1));
       return hermite(d, s);
     }
+    /*
+    lbl, rbl - one of the boundary_type, 
+    lb, rb - one of the boundary_condition
+    */
+    static Spline3<FT>& cubic(Spline3<FT>& s, short lbt, short lb, short rbt, short rb)  {
+      if( (lbt == boundary_type_periodic && rbt != boundary_type_periodic) ||
+          (rbt == boundary_type_periodic && lbt != boundary_type_periodic) )
+      {
+        throw TInvalidArgumentException(__OlxSourceInfo, "boundary type");
+      }
+      const size_t n = s.x.Count();
+      if( n == 2 )  {
+        if( lbt == boundary_type_parabolic && rbt == boundary_type_parabolic )  {
+          lbt = rbt = boundary_type_second_derivative;
+          lb = rb = 0;
+        }
+        else if( lbt == boundary_type_periodic && rbt == boundary_type_periodic )  {
+          lbt = rbt = boundary_type_first_derivative;
+          lb = rb = 0;
+          s.y(1) = s.y(0);
+        }
+      }
+      TVector<FT> a1(n), a2(n), a3(n), b(n), d;
+      if( lbt == boundary_type_periodic && rbt == boundary_type_periodic )  {
+        a1.Resize(n-1);
+        a2.Resize(n-1);
+        a3.Resize(n-1);
+        b.Resize(n-1);
+      }
+      for( size_t i=1; i < n-1; i++ )  {
+        a1(i) = s.x(i+1)-s.x(i);
+        a2(i) = 2*(s.x(i+1)-s.x(i-1));
+        a3(i) = s.x(i)-s.x(i-1);
+        b(i) = 3*((s.y(i)-s.y(i-1))/a3(i)*a1(i)+ (s.y(i+1)-s.y(i))/a1(i)*a3(i));
+      }
+      if( lbt == boundary_type_periodic && rbt == boundary_type_periodic )  {
+        a1(0) = s.x(1)-s.x(0);
+        a3(0) = s.x(n-1)-s.x(n-2);
+        a2(0) = 2*(a1(0)+a3(0));
+        b(0) = 3*(s.y(n-1)-s.y(n-2))/a3(0)*a1(0) + (s.y(1)-s.y(0))/a1(0)*a3(0);
+        util<FT>::solve_cyclic_tridiagonal(a1, a2, a3, b, d);
+        d.Resize(n);
+        d(n-1) = d(0);
+        s.periodic = true;
+        return hermite(d, s);
+      }
+      else  {
+        //left side
+        if( lbt == boundary_type_parabolic )  {
+          a2(0) = a3(0) = 1;
+          b(0) = 2*(s.y(1)-s.y(0))/(s.x(1)-s.x(0));
+        }
+        else if( lbt == boundary_type_first_derivative )  {
+          a2(0) = 1;
+          b(0) = lb;
+        }
+        else if( lbt == boundary_type_second_derivative )  {
+          a2(0) = 2;
+          a3(0) = 1;
+          b(0) = 3*(s.y(1)-s.y(0))/(s.x(1)-s.x(0))-lb*(s.x(1)-s.x(0))/2;
+        }
+        // right side
+        if( rbt = boundary_type_parabolic )  {
+          a1(n-1) = a2(n-1) = 1;
+          a3(n-1) = 0;
+          b(n-1) = 2*(s.y(n-1)-s.y(n-2))/(s.x(n-1)-s.x(n-2));
+        }
+        else if( rbt == boundary_type_first_derivative )  {
+          a1(n-1) = a3(n-1) = 0;
+          a2(n-1) = 1;
+          b(n-1) = rb;
+        }
+        else if( rbt == boundary_type_second_derivative )  {
+          a1(n-1) = 1;
+          a2(n-1) = 2;
+          a3(n-1) = 0;
+          b(n-1) = 3*(s.y(n-1)-s.y(n-2))/(s.x(n-1)-s.x(n-2)) + rb*(s.x(n-1)-s.x(n-2))/2;
+        }
+        util<FT>::solve_tridiagonal(a1, a2, a3, b, d);
+        return hermite(d, s);
+      }
+    }
+    // bt - boundary, parabolic or periodic
+    static Spline3<FT>& catmull_rom(Spline3<FT>& s, int bt, FT tension)  {
+      if( !(bt == boundary_type_periodic || bt == boundary_type_parabolic) )
+        throw TInvalidArgumentException(__OlxSourceInfo, "boundary type");
+      const size_t n = s.x.Count();
+      if( n == 2 )  {
+        if( bt == boundary_type_parabolic )
+          return linear(s);
+        else
+          return cubic(s, boundary_type_periodic, 0, boundary_type_periodic, 0);
+      }
+      TVector<FT> d(n);
+      for( size_t i=1; i < n-1; i++ )
+        d(i) = (1-tension)*(s.y(i+1)-s.y(i-1))/(s.x(i+1)-s.x(i-1));
+      if( bt == boundary_type_periodic )  {
+        s.y.GetLast() = s.y(0);
+        d(0) = d(n-1) = (s.y(1)-s.y(n-2))/(2*(s.x(1)-s.x(0)+s.x(n-1)-s.x(n-2)));
+        s.periodic = true;
+      }
+      else  {
+        d(0) = 2*(s.y(1)-s.y(0))/(s.x(1)-s.x(0))-d(1);
+        d(n-1) = 2*(s.y(n-1)-s.y(n-2))/(s.x(n-1)-s.x(n-2)) - d(n-2);
+      }
+      return hermite(d, s);
+    }
   };
-
-  void test(OlxTests& t);
-  static void AddTests(OlxTests& t)  {
-    t.Add(&test);
-  }
 }}; //end of the math::spline
 EndEsdlNamespace()
 #endif

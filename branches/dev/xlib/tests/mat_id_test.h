@@ -1,6 +1,8 @@
 #include "mat_id.h"
 
-void XlibObject(rotation_id::Tests)(OlxTests& t)  {
+namespace test {
+
+void rotation_id_test(OlxTests& t)  {
   t.description = __OlxSrcInfo;
   mat3d m(0, 1, 1, 1, 0, 1, 0, 0, 0);
   int id = rotation_id::get(m);
@@ -12,3 +14,4 @@ void XlibObject(rotation_id::Tests)(OlxTests& t)  {
   if( m != -i_id_r )
     throw TFunctionFailedException(__OlxSourceInfo, "m != -i_id_r");
 }
+};  //namespace test

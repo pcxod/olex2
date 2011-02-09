@@ -1182,12 +1182,13 @@ void TLattice::CompaqAll()  {
     TSAtom& sa = Objects.atoms[i];
     if( sa.CAtom().GetTag() != 0 || !sa.CAtom().IsAvailable() )
       continue;
-    cnt += TLattice_CompaqAll_Process<1>(uc, Atoms[i]->CAtom(), uc.GetMatrix(0));
+    cnt += TLattice_CompaqAll_Process<1>(uc, sa.CAtom(), uc.GetMatrix(0));
   }
-  for( size_t i=0; i < Atoms.Count(); i++ )  {
-    if( Atoms[i]->CAtom().GetTag() != 0 || !Atoms[i]->CAtom().IsAvailable() )
+  for( size_t i=0; i < Objects.atoms.Count(); i++ )  {
+    TSAtom& sa = Objects.atoms[i];
+    if( sa.CAtom().GetTag() != 0 || !sa.CAtom().IsAvailable() )
       continue;
-    cnt += TLattice_CompaqAll_Process<2>(uc, Atoms[i]->CAtom(), uc.GetMatrix(0));
+    cnt += TLattice_CompaqAll_Process<2>(uc, sa.CAtom(), uc.GetMatrix(0));
   }
   OnStructureUniq.Enter(this);
   TActionQueueLock __queuelock(&OnStructureUniq);

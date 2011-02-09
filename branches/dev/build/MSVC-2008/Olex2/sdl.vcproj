@@ -1177,10 +1177,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\math\mmath.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\smart\olx_cstring.cpp"
 				>
 			</File>
@@ -1218,10 +1214,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\sparser.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\math\spline.cpp"
 				>
 			</File>
 			<File
@@ -1578,6 +1570,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\sdl\outstream.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\sdl\utf8file.h"
 					>
 				</File>
@@ -1619,6 +1615,38 @@
 				</File>
 				<File
 					RelativePath="..\..\..\sdl\os_util.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="tests"
+				>
+				<File
+					RelativePath="..\..\..\sdl\tests\encoding_test.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\tests\file_test.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\tests\matrix_test.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\tests\sort_test.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\tests\spline_test.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\tests\string_test.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\tests\sys_test.h"
 					>
 				</File>
 			</Filter>

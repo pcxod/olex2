@@ -1,8 +1,9 @@
-#include "mmath.h"
-#include "../threex3.h"
-#include "composite.h"
+#include "math/mmath.h"
+#include "threex3.h"
+namespace test {
 
-void math::TestQR(OlxTests& t)  {
+using namespace math;
+void TestQR(OlxTests& t)  {
   t.description = __OlxSrcInfo;
   const mat3d m(12, -51, 4, 6, 167, -68, -4, 24, -41);
   mat3d qr(m), r, q;
@@ -21,8 +22,8 @@ void math::TestQR(OlxTests& t)  {
     }
   }
 }
-
-void math::TestLU(OlxTests& t)  {
+//...........................................................................................
+void TestLU(OlxTests& t)  {
   t.description = __OlxSrcInfo;
   const mat3d m(
     12, -51, 4,
@@ -49,8 +50,8 @@ void math::TestLU(OlxTests& t)  {
     }
   }
 }
-
-void math::TestInvert(OlxTests& t)  {
+//...........................................................................................
+void TestInvert(OlxTests& t)  {
   t.description = __OlxSrcInfo;
   const mat3d m(
     12, -51, 4,
@@ -79,7 +80,7 @@ void math::TestInvert(OlxTests& t)  {
     }
   }
 }
-
+//...........................................................................................
 template <typename FT>
 class SVDTestException : public TBasicException  {
 public:
@@ -95,7 +96,7 @@ public:
     return new SVDTestException(*this);
   }
 };
-void math::TestSVD(OlxTests& t)  {
+void TestSVD(OlxTests& t)  {
   t.description = __OlxSrcInfo;
   const size_t dim_n=13, dim_m=5;
   typedef double FT;
@@ -220,3 +221,5 @@ void math::TestSVD(OlxTests& t)  {
     throw e;
   }
 }
+//...........................................................................................
+};  //namespace test
