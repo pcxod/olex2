@@ -505,7 +505,7 @@ double TAsymmUnit::GetZPrime() const {
 double TAsymmUnit::MolWeight() const  {
   double Mw = 0;
   for( size_t i=0; i < AtomCount(); i++ )
-    Mw += GetAtom(i).GetType().GetMr();
+    Mw += GetAtom(i).GetType().GetMr()*GetAtom(i).GetOccu();
   return Mw;
 }
 //..............................................................................
