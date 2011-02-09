@@ -96,7 +96,7 @@ public:
   void Generate(const vec3d& center, double rad, TCAtomPList* Template,
     bool ClearCont);
   // checks if the data alreade have been generated
-  inline bool IsGenerated() const  {  return Generated;  }
+  inline bool IsGenerated() const  {  return Generated && (Matrices.Count() > 1);  }
 
   // generates matrices so that the center of asymmetric unit is inisde the specified volume
   size_t GenerateMatrices(smatd_plist& Result, const vec3d& VFrom, const vec3d& VTo,
