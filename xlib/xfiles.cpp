@@ -424,6 +424,7 @@ void TXFile::FromDataItem(TDataItem& item) {
   GetRM().Clear(rm_clear_ALL);
   GetLattice().FromDataItem(item.FindRequiredItem("Lattice"));
   GetRM().FromDataItem(item.FindRequiredItem("RefModel"));
+  GetRM().UpdateUsedSymm(GetUnitCell());
   //if( FLastLoader != NULL )  {
   //  FLastLoader->
   //}
