@@ -921,7 +921,8 @@ void RefinementModel::FromDataItem(TDataItem& item) {
 
   TDataItem& eqiv = item.FindRequiredItem("EQIV");
   for( size_t i=0; i < eqiv.ItemCount(); i++ )
-    TSymmParser::SymmToMatrix(eqiv.GetItem(i).GetValue(), UsedSymm.Add(eqiv.GetItem(i).GetName()).symop);
+    TSymmParser::SymmToMatrix(
+      eqiv.GetItem(i).GetValue(), UsedSymm.Add(eqiv.GetItem(i).GetName()).symop);
   
 
   expl.FromDataItem(item.FindRequiredItem("EXPL"));  

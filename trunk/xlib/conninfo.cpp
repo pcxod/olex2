@@ -378,8 +378,9 @@ const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, 
       rm.RemUsedSymm(*eqiv1);
     return eqiv2;
   }
+  const TUnitCell& uc = rm.aunit.GetLattice().GetUnitCell();
   if( eqiv2 == NULL || (eqiv2->r.IsI() && eqiv2->t.IsNull()) )  {
-    smatd mat(eqiv1->Inverse());
+    smatd mat(uc.InvMatrix(*eqiv1));
     if( release )  {
       rm.RemUsedSymm(*eqiv1);
       if( eqiv2 != NULL )
@@ -388,7 +389,6 @@ const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, 
     return &rm.AddUsedSymm(mat);
   }
   //((*eqiv2)*eqiv1->Inverse());
-  const TUnitCell& uc = rm.aunit.GetLattice().GetUnitCell();
   smatd mat = uc.MulMatrix(*eqiv2, uc.InvMatrix(*eqiv1));
   if( release )  {
     rm.RemUsedSymm(*eqiv1);
