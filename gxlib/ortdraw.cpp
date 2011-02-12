@@ -14,20 +14,20 @@
 #include "arrays.h"
 
 ort_atom::ort_atom(const OrtDraw& parent, const TXAtom& a) :
-a_ort_object(parent), atom(a), p_elpm(NULL), p_ielpm(NULL),
+a_ort_object(parent), atom(a), p_elpm(NULL), p_ielpm(NULL), elpm(NULL),
 draw_style(0)
 {
   const TSAtom& sa = atom.Atom();
   if( sa.GetEllipsoid() != NULL )  {
-    mat3f& elpm = *(new mat3f(sa.GetEllipsoid()->GetMatrix()));
-    elpm[0] *= sa.GetEllipsoid()->GetSX();
-    elpm[1] *= sa.GetEllipsoid()->GetSY();
-    elpm[2] *= sa.GetEllipsoid()->GetSZ();
-    elpm *= (float)atom.GetDrawScale();
-    elpm *= parent.ProjMatr;
-    mat3f& ielpm = *(new mat3f( (sa.GetEllipsoid()->GetMatrix() * parent.basis.GetMatrix() ).Inverse()) );
-    p_elpm = &elpm;
-    p_ielpm = &(ielpm *= elpm);
+    mat3f& _elpm = *(new mat3f(sa.GetEllipsoid()->GetMatrix()));
+    _elpm[0] *= sa.GetEllipsoid()->GetSX();
+    _elpm[1] *= sa.GetEllipsoid()->GetSY();
+    _elpm[2] *= sa.GetEllipsoid()->GetSZ();
+    _elpm *= (float)atom.GetDrawScale();
+    elpm = new mat3f(_elpm);
+    p_elpm = &(_elpm *= parent.ProjMatr);
+    mat3f& ielpm = *(new mat3f((sa.GetEllipsoid()->GetMatrix()*parent.basis.GetMatrix()).Inverse()));
+    p_ielpm = &(ielpm *= _elpm);
   }
   draw_rad = (float)atom.GetDrawScale()*parent.DrawScale;
   crd = parent.ProjectPoint(sa.crd());
@@ -210,21 +210,31 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   mat3f rot_mat;
   const vec3f touch_point = (atom_b.atom.Atom().crd() - atom_a.atom.Atom().crd()).Normalise();
   if( olx_abs(1.0f-olx_abs(touch_point[2])) < 1e-3 )  // degenerated case...
-    olx_create_rotation_matrix_<float,mat3f,vec3f>(rot_mat, vec3f(0, 1, 0).Normalise(), touch_point[2]);
+    olx_create_rotation_matrix_(rot_mat, vec3f(0, 1, 0).Normalise(), touch_point[2]);
   else
-    olx_create_rotation_matrix_<float,mat3f,vec3f>(rot_mat, vec3f(-touch_point[1], touch_point[0], 0).Normalise(), touch_point[2]);
+    olx_create_rotation_matrix_(rot_mat,
+      vec3f(-touch_point[1], touch_point[0], 0).Normalise(), touch_point[2]);
   const mat3f proj_mat = rot_mat*parent.ProjMatr;
   const float _brad = brad*(1+pers_scale)*scalex;
   if( !atom_a.IsSpherical() && atom_a.IsSolid() )  {
-    const mat3f& ielpm = *atom_a.p_ielpm;
-    vec3f bproj_cnt;
+    mat3f elm = *atom_a.elpm;
+    mat3f ielm = mat3f(elm).Normalise().Inverse();
+    /* etm projects to ellipsoid and un-projects back to the cartesian frame with the ellipsoid
+    scale accumulated */
+    mat3f erm, etm = ielm*elm, ietm=etm.Inverse();
+    // below is same as: vec3f pv = (touch_point*ietm).Normalise();
+    const vec3f pv = mat3f::CramerSolve(etm, touch_point).Normalise();
+    // this is there the touch_point ends up after projecting onto the ellipsoid
+    const vec3f tp = etm*touch_point;
+    // create rotation to compensate for the elliptical distrortion
+    olx_create_rotation_matrix_(
+      erm, tp.XProdVec(touch_point).Normalise(), tp.CAngle(touch_point));
+    rot_mat *= erm;
+    // this is the corrected location of the touch point...
+    const vec3f off = (etm*pv)*parent.ProjMatr;
     for( uint16_t j=0; j < parent.BondDiv; j++ )  {
-      parent.BondProjF[j] = (((parent.BondCrd[j]*rot_mat+touch_point)*parent.ProjMatr).Normalise()*ielpm);
-      bproj_cnt += parent.BondProjF[j];
-    }
-    bproj_cnt /= parent.BondDiv;
-    for( uint16_t j=0; j < parent.BondDiv; j++ )  {
-      parent.BondProjF[j] = (parent.BondProjF[j]-bproj_cnt).NormaliseTo(_brad) + bproj_cnt;
+      parent.BondProjF[j] = (etm*(parent.BondCrd[j]*rot_mat)*parent.ProjMatr).
+        NormaliseTo(_brad) + off;
       parent.BondProjT[j] = (parent.BondCrd[j]*proj_mat).NormaliseTo(brad*2*scalex) + dir_vec*b_len;
     }
   }
@@ -275,6 +285,11 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
     //  pm[2].Normalise();
     //  pm *= *atom_a.p_ielpm;
     //  pw.drawEllipse(NullVec, pm);
+    //}
+    // renders bond directions...
+    //if( !atom_a.IsSpherical() && atom_a.IsSolid() )  {
+    //  pw.color(0xff);
+    //  pw.drawLine(NullVec, dir_vec*parent.DrawScale);
     //}
   }
 }
