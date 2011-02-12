@@ -1,0 +1,192 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<!-- C++Builder XML Project -->
+<PROJECT>
+  <MACROS>
+    <VERSION value="BCB.06.00"/>
+    <PROJECT value="lib\sdl.lib"/>
+    <OBJFILES value="build\actions.obj build\arrays.obj build\bapp.obj build\bitarray.obj 
+      build\datafile.obj build\dataitem.obj build\ebase.obj build\ebasis.obj 
+      build\ecast.obj build\efile.obj build\egraph.obj build\emath.obj 
+      build\ememstream.obj build\erange.obj build\estrlist.obj build\etime.obj 
+      build\exception.obj build\function.obj build\groupobj.obj 
+      build\library.obj build\log.obj build\macro.obj build\macroerror.obj 
+      build\paramlist.obj build\poly.obj build\settingsfile.obj build\undo.obj 
+      build\egc.obj build\ipbase.obj build\outstream.obj build\olx_cstring.obj 
+      build\olx_wstring.obj build\ostring.obj build\eutf8.obj build\istream.obj 
+      build\filetree.obj build\olx_istring.obj build\shellutil.obj build\md5.obj 
+      build\sha.obj"/>
+    <RESFILES value=""/>
+    <DEFFILE value=""/>
+    <RESDEPEN value="$(RESFILES)"/>
+    <LIBFILES value=""/>
+    <LIBRARIES value=""/>
+    <PACKAGES value=""/>
+    <PATHCPP value=".;..\..\..\sdl;..\..\..\sdl\smart;..\..\..\repository"/>
+    <PATHPAS value=".;"/>
+    <PATHRC value=".;"/>
+    <PATHASM value=".;"/>
+    <LINKER value="TLib"/>
+    <USERDEFINES value=""/>
+    <SYSDEFINES value="NO_STRICT"/>
+    <MAINSOURCE value="sdl.bpf"/>
+    <INCLUDEPATH value="..\..\..\repository;..\..\..\sdl\smart;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl"/>
+    <LIBPATH value="..\..\..\repository;..\..\..\sdl\smart;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\sdl;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <WARNINGS value="-w-par"/>
+    <LISTFILE value=""/>
+    <OTHERFILES value=""/>
+  </MACROS>
+  <OPTIONS>
+    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k- -vi- 
+      -c -tW -tWM"/>
+    <PFLAGS value="-N2build -N0build -$Y+ -$W -$O- -$A8 -v -JPHNE -M"/>
+    <AFLAGS value="/mx /w2 /zi"/>
+    <LFLAGS value="/P256 /C"/>
+    <OTHERFILES value=""/>
+  </OPTIONS>
+  <LINKER>
+    <ALLOBJ value="$(OBJFILES)"/>
+    <ALLLIB value=""/>
+    <OTHERFILES value=""/>
+  </LINKER>
+  <FILELIST>
+      <FILE FILENAME="sdl.bpf" FORMNAME="" UNITNAME="sdl" CONTAINERID="BPF" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\actions.cpp" FORMNAME="" UNITNAME="actions.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\arrays.cpp" FORMNAME="" UNITNAME="arrays.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\bapp.cpp" FORMNAME="" UNITNAME="bapp.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\bitarray.cpp" FORMNAME="" UNITNAME="bitarray.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\datafile.cpp" FORMNAME="" UNITNAME="datafile.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\dataitem.cpp" FORMNAME="" UNITNAME="dataitem.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\ebase.cpp" FORMNAME="" UNITNAME="ebase.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\ebasis.cpp" FORMNAME="" UNITNAME="ebasis.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\ecast.cpp" FORMNAME="" UNITNAME="ecast.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\efile.cpp" FORMNAME="" UNITNAME="efile.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\egraph.cpp" FORMNAME="" UNITNAME="egraph.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\emath.cpp" FORMNAME="" UNITNAME="emath.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\ememstream.cpp" FORMNAME="" UNITNAME="ememstream.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\erange.cpp" FORMNAME="" UNITNAME="erange.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\estrlist.cpp" FORMNAME="" UNITNAME="estrlist.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\etime.cpp" FORMNAME="" UNITNAME="etime.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\exception.cpp" FORMNAME="" UNITNAME="exception.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\function.cpp" FORMNAME="" UNITNAME="function.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\groupobj.cpp" FORMNAME="" UNITNAME="groupobj.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\library.cpp" FORMNAME="" UNITNAME="library.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\log.cpp" FORMNAME="" UNITNAME="log.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\macro.cpp" FORMNAME="" UNITNAME="macro.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\macroerror.cpp" FORMNAME="" UNITNAME="macroerror.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\paramlist.cpp" FORMNAME="" UNITNAME="paramlist.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\poly.cpp" FORMNAME="" UNITNAME="poly.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\settingsfile.cpp" FORMNAME="" UNITNAME="settingsfile.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\undo.cpp" FORMNAME="" UNITNAME="undo.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\egc.cpp" FORMNAME="" UNITNAME="egc" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\ipbase.cpp" FORMNAME="" UNITNAME="ipbase" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\outstream.cpp" FORMNAME="" UNITNAME="outstream" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\smart\olx_cstring.cpp" FORMNAME="" UNITNAME="olx_cstring.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\smart\olx_wstring.cpp" FORMNAME="" UNITNAME="olx_wstring.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\smart\ostring.cpp" FORMNAME="" UNITNAME="ostring.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\eutf8.cpp" FORMNAME="" UNITNAME="eutf8" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\istream.cpp" FORMNAME="" UNITNAME="istream" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\filetree.cpp" FORMNAME="" UNITNAME="filetree" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\smart\olx_istring.cpp" FORMNAME="" UNITNAME="olx_istring" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\shellutil.cpp" FORMNAME="" UNITNAME="shellutil" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\md5.cpp" FORMNAME="" UNITNAME="md5.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\sha.cpp" FORMNAME="" UNITNAME="sha.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+  </FILELIST>
+  <BUILDTOOLS>
+  </BUILDTOOLS>
+
+  <IDEOPTIONS>
+[Version Info]
+IncludeVerInfo=0
+AutoIncBuild=0
+MajorVer=1
+MinorVer=0
+Release=0
+Build=0
+Debug=0
+PreRelease=0
+Special=0
+Private=0
+DLL=0
+Locale=2057
+CodePage=1252
+
+[Version Info Keys]
+CompanyName=
+FileDescription=
+FileVersion=1.0.0.0
+InternalName=
+LegalCopyright=
+LegalTrademarks=
+OriginalFilename=
+ProductName=
+ProductVersion=1.0.0.0
+Comments=
+
+[HistoryLists\hlIncludePath]
+Count=4
+Item0=..\..\..\repository;..\..\..\sdl\smart;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+Item1=..\..\..\sdl\smart;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+Item2=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+Item3=..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+
+[HistoryLists\hlLibraryPath]
+Count=4
+Item0=..\..\..\repository;..\..\..\sdl\smart;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;$(BCB)\lib\obj;$(BCB)\lib
+Item1=..\..\..\sdl\smart;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;$(BCB)\lib\obj;$(BCB)\lib
+Item2=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;$(BCB)\lib\obj;$(BCB)\lib
+Item3=..\..\..\sdl;$(BCB)\lib\obj;$(BCB)\lib
+
+[HistoryLists\hlDebugSourcePath]
+Count=1
+Item0=$(BCB)\source\vcl
+
+[HistoryLists\hlConditionals]
+Count=4
+Item0=_DEBUG
+Item1=_DEBUG;_UNICODE;
+Item2=_DEBUG;
+Item3=_DEBUG;_UNICODE
+
+[HistoryLists\hlIntOutputDir]
+Count=1
+Item0=build
+
+[HistoryLists\hlFinalOutputDir]
+Count=2
+Item0=lib\
+Item1=lib
+
+[HistoryLists\hlTlibPageSize]
+Count=5
+Item0=0x0100
+Item1=0x0080
+Item2=0x0040
+Item3=0x0020
+Item4=0x0010
+
+[Debugging]
+DebugSourceDirs=$(BCB)\source\vcl
+
+[Parameters]
+RunParams=
+Launcher=
+UseLauncher=0
+DebugCWD=
+HostApplication=
+RemoteHost=
+RemotePath=
+RemoteLauncher=
+RemoteCWD=
+RemoteDebug=0
+
+[Compiler]
+ShowInfoMsgs=0
+LinkDebugVcl=0
+LinkCGLIB=0
+
+[Language]
+ActiveLang=
+ProjectLang=
+RootDir=
+  </IDEOPTIONS>
+</PROJECT>
