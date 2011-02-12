@@ -110,10 +110,10 @@ bool PatchAPI::UnlockUpdater() {
 olxstr PatchAPI::ReadRepositoryTag(const olxstr& base_dir)  {
   olxstr tag_fn = (base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir) + GetTagFileName();
   if( !TEFile::Exists(tag_fn) )
-    return EmptyString;
+    return EmptyString();
   TStrList sl;
   sl.LoadFromFile(tag_fn);
-  return sl.Count() == 1 ? sl[0] : EmptyString;
+  return sl.Count() == 1 ? sl[0] : EmptyString();
 }
 //.............................................................................
 olxstr PatchAPI::_GetSharedDirRoot()  {
@@ -122,7 +122,7 @@ olxstr PatchAPI::_GetSharedDirRoot()  {
   if( !dd_str.IsEmpty() )  {
     data_dir = dd_str;
     if( !TEFile::IsDir(data_dir) )
-      data_dir = EmptyString;
+      data_dir.SetLength(0);
   }
   if( data_dir.IsEmpty() )
     data_dir = TShellUtil::GetSpecialFolderLocation(fiAppData);

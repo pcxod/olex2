@@ -18,9 +18,9 @@ namespace ctrl_ext  {
       OnChange(Actions.New(evt_change_id)),
       OnMouseUp(Actions.New(evt_on_mouse_up_id)),
       this_Val(0),
-      Data(EmptyString),
-      OnChangeStr(EmptyString),
-      OnMouseUpStr(EmptyString)  {  SetValue(0);  }
+      Data(EmptyString()),
+      OnChangeStr(EmptyString()),
+      OnMouseUpStr(EmptyString())  {  SetValue(0);  }
     virtual ~TTrackBar()  {}
 
     DefPropC(olxstr, OnChangeStr) // this is passed to the OnChange event

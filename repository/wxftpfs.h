@@ -119,7 +119,7 @@ protected:
     try {
       //TStrList path_toks;
       int ind = rel_path.LastIndexOf('/');
-      olxstr path = (ind != -1) ? rel_path.SubStringTo(ind) : EmptyString;
+      olxstr path = (ind != -1) ? rel_path.SubStringTo(ind) : EmptyString();
       olxstr fn( ind == 0-1 ? rel_path : rel_path.SubStringFrom(ind+1) );
       int depth = 0;
       if( !path.IsEmpty() && !Ftp.FileExists(path.u_str()) )  {

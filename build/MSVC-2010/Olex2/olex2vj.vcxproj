@@ -409,10 +409,6 @@
     <ClInclude Include="..\..\..\olex2v\olex2vji.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="alglib.vcxproj">
-      <Project>{de855453-1f3b-4821-abeb-a3922144b040}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
     <ProjectReference Include="gllib.vcxproj">
       <Project>{f91183ce-e72e-4b45-a7e3-ee23c4b62338}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>

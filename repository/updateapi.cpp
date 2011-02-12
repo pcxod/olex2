@@ -363,7 +363,7 @@ AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res) const {
       update = ((TETime::EpochTime() - sf.last_updated ) > SecsADay*30 );
 
     if( update )  {  
-      AFileSystem* FS = FindActiveRepositoryFS(&repo, (AddTagPart(EmptyString, true)+"index.ind").SubStringFrom(1));
+      AFileSystem* FS = FindActiveRepositoryFS(&repo, (AddTagPart(EmptyString(), true)+"index.ind").SubStringFrom(1));
       if( FS == NULL )  {
         if( res != NULL )  *res = updater::uapi_NoSource;
         return NULL;

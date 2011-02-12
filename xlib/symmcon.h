@@ -2,8 +2,7 @@
 #define __olx_xlib_symcon_H
 #include "xbase.h"
 #include "edict.h"
-#include "threex3.h"
-#include "rot_id.h"
+#include "mat_id.h"
 
 BeginXlibNamespace()
 

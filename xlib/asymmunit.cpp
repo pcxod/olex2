@@ -71,8 +71,10 @@ void  TAsymmUnit::Clear()  {
 void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   Clear();
   Assigning = true;
-  FAxes   = C.FAxes;
-  FAngles = C.FAngles;
+  Axes   = C.Axes;
+  AxisEsds = C.AxisEsds;
+  Angles = C.Angles;
+  AngleEsds = C.AngleEsds;
   RAxes   = C.GetRAxes();
   RAngles = C.GetRAngles();
   Z = C.GetZ();
@@ -114,8 +116,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
 }
 //..............................................................................
 void TAsymmUnit::ComplyToResidues()  {
-  for( size_t i=0; i < CAtoms.Count(); i++ )
-    CAtoms[i]->SetTag(-1);
+  CAtoms.ForEach(ACollectionItem::TagSetter<>(-1));
   size_t ac = 0;
   for( size_t i=0; i < MainResidue.Count(); i++ )
     MainResidue[i].SetTag(ac++);
@@ -137,44 +138,44 @@ void TAsymmUnit::_UpdateConnInfo()  {
 }
 //..............................................................................
 void  TAsymmUnit::InitMatrices()  {
-  if( !FAxes[0].GetV() || !FAxes[1].GetV() || !FAxes[2].GetV() )
+  if( Axes.Prod() == 0 )
     throw TFunctionFailedException(__OlxSourceInfo, "zero cell parameters");
   // just to check the validity of my deductions put this in seems to be the same ...
-  double cG = cos(FAngles[2].GetV()/180*M_PI),
-         cB = cos(FAngles[1].GetV()/180*M_PI),
-         cA = cos(FAngles[0].GetV()/180*M_PI),
-         sG = sin(FAngles[2].GetV()/180*M_PI),
-         sB = sin(FAngles[1].GetV()/180*M_PI),
-         sA = sin(FAngles[0].GetV()/180*M_PI);
+  double cG = cos(Angles[2]/180*M_PI),
+         cB = cos(Angles[1]/180*M_PI),
+         cA = cos(Angles[0]/180*M_PI),
+         sG = sin(Angles[2]/180*M_PI),
+         sB = sin(Angles[1]/180*M_PI),
+         sA = sin(Angles[0]/180*M_PI);
   const double Vp = sqrt((1-cA*cA-cB*cB-cG*cG) + 2*(cA*cB*cG));
-  const double V = FAxes[0].GetV()*FAxes[1].GetV()*FAxes[2].GetV()*Vp;
+  const double V = Axes.Prod()*Vp;
 
   const double
     cGs = (cA*cB-cG)/(sA*sB),
     cBs = (cA*cG-cB)/(sA*sG),
     cAs = (cB*cG-cA)/(sB*sG),
-    as = FAxes[1].GetV()*FAxes[2].GetV()*sA/V,
-    bs = FAxes[0].GetV()*FAxes[2].GetV()*sB/V,
-    cs = FAxes[0].GetV()*FAxes[1].GetV()*sG/V;
+    as = Axes[1]*Axes[2]*sA/V,
+    bs = Axes[0]*Axes[2]*sB/V,
+    cs = Axes[0]*Axes[1]*sG/V;
   // cartesian to cell transformation matrix
   Cartesian2Cell.Null();
-  Cartesian2Cell[0][0] =  1./FAxes[0].GetV();
-  Cartesian2Cell[1][0] = -cG/(sG*FAxes[0].GetV());
+  Cartesian2Cell[0][0] =  1./Axes[0];
+  Cartesian2Cell[1][0] = -cG/(sG*Axes[0]);
   Cartesian2Cell[2][0] = as*cBs;
 
-  Cartesian2Cell[1][1] = 1./(sG*FAxes[1].GetV());
+  Cartesian2Cell[1][1] = 1./(sG*Axes[1]);
   Cartesian2Cell[2][1] = bs*cAs;
 
   Cartesian2Cell[2][2] = cs;
   Cartesian2CellT = mat3d::Transpose(Cartesian2Cell);
   // cell to cartesian transformation matrix
   Cell2Cartesian.Null();
-  Cell2Cartesian[0][0] = FAxes[0].GetV();
-  Cell2Cartesian[1][0] = FAxes[1].GetV()*cG;
-  Cell2Cartesian[2][0] = FAxes[2].GetV()*cB;
+  Cell2Cartesian[0][0] = Axes[0];
+  Cell2Cartesian[1][0] = Axes[1]*cG;
+  Cell2Cartesian[2][0] = Axes[2]*cB;
 
-  Cell2Cartesian[1][1] = FAxes[1].GetV()*sG;
-  Cell2Cartesian[2][1] = -FAxes[2].GetV()*(cB*cG-cA)/sG;
+  Cell2Cartesian[1][1] = Axes[1]*sG;
+  Cell2Cartesian[2][1] = -Axes[2]*(cB*cG-cA)/sG;
 
   Cell2Cartesian[2][2] = 1./cs;
   Cell2CartesianT = mat3d::Transpose(Cell2Cartesian);
@@ -499,13 +500,13 @@ olxstr TAsymmUnit::SummFormula(const olxstr &Sep, bool MultiplyZ) const  {
 }
 //..............................................................................
 double TAsymmUnit::GetZPrime() const {
-  return (double)Z/(TUnitCell::GetMatrixMultiplier(Latt)*(MatrixCount()+1));
+  return (double)Z/(TCLattice::GetLattMultiplier(Latt)*(MatrixCount()+1));
 }
 //..............................................................................
 double TAsymmUnit::MolWeight() const  {
   double Mw = 0;
   for( size_t i=0; i < AtomCount(); i++ )
-    Mw += GetAtom(i).GetType().GetMr()*GetAtom(i).GetOccu();
+    Mw += GetAtom(i).GetOccu()*GetAtom(i).GetType().GetMr();
   return Mw;
 }
 //..............................................................................
@@ -606,17 +607,15 @@ void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg)  {
 }
 //..............................................................................
 double TAsymmUnit::CalcCellVolume() const {
-  double cosa = cos( FAngles[0].GetV()*M_PI/180 ),
-         cosb = cos( FAngles[1].GetV()*M_PI/180 ),
-         cosg = cos( FAngles[2].GetV()*M_PI/180 );
-  return  FAxes[0].GetV()*
-          FAxes[1].GetV()*
-          FAxes[2].GetV()*sqrt( (1-cosa*cosa-cosb*cosb-cosg*cosg) + 2*(cosa*cosb*cosg));
+  double cosa = cos(Angles[0]*M_PI/180),
+         cosb = cos(Angles[1]*M_PI/180),
+         cosg = cos(Angles[2]*M_PI/180);
+  return  Axes.Prod()*sqrt((1-cosa*cosa-cosb*cosb-cosg*cosg) + 2*(cosa*cosb*cosg));
 }
 double TAsymmUnit::EstimateZ(double atomCount) const  {
-  double auv = (double)(CalcCellVolume()/(TUnitCell::GetMatrixMultiplier(GetLatt())*(MatrixCount()+1)));
+  double auv = (double)(CalcCellVolume()/(TCLattice::GetLattMultiplier(GetLatt())*(MatrixCount()+1)));
   int zp = olx_round(auv/(18.6*atomCount));
-  return (double)olx_max((TUnitCell::GetMatrixMultiplier(GetLatt())*(MatrixCount()+1) * zp), 1);
+  return (double)olx_max((TCLattice::GetLattMultiplier(GetLatt())*(MatrixCount()+1) * zp), 1);
 }
 //..............................................................................
 void TAsymmUnit::FitAtoms(TTypeList<AnAssociation3<TCAtom*, const cm_Element*, bool> >& _atoms,
@@ -687,12 +686,12 @@ void TAsymmUnit::FitAtoms(TTypeList<AnAssociation3<TCAtom*, const cm_Element*, b
 //..............................................................................
 void TAsymmUnit::ToDataItem(TDataItem& item) const  {
   TDataItem& cell = item.AddItem("cell");
-  cell.AddField("a", FAxes[0].ToString());
-  cell.AddField("b", FAxes[1].ToString());
-  cell.AddField("c", FAxes[2].ToString());
-  cell.AddField("alpha", FAngles[0].ToString());
-  cell.AddField("beta",  FAngles[1].ToString());
-  cell.AddField("gamma", FAngles[2].ToString());
+  cell.AddField("a", TEValueD(Axes[0], AxisEsds[0]).ToString());
+  cell.AddField("b", TEValueD(Axes[1], AxisEsds[1]).ToString());
+  cell.AddField("c", TEValueD(Axes[2], AxisEsds[2]).ToString());
+  cell.AddField("alpha", TEValueD(Angles[0], AngleEsds[0]).ToString());
+  cell.AddField("beta",  TEValueD(Angles[1], AngleEsds[1]).ToString());
+  cell.AddField("gamma", TEValueD(Angles[2], AngleEsds[2]).ToString());
   cell.AddField("Z", Z);
   TDataItem& symm = item.AddItem("symm");
   symm.AddField("latt", Latt);
@@ -727,12 +726,12 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
   for( size_t i=0; i < CAtoms.Count(); i++ )
     CAtoms[i]->SetId(i);
   PyObject* main = PyDict_New(), *cell = PyDict_New();
-  PythonExt::SetDictItem(cell, "a", Py_BuildValue("(dd)", FAxes[0].GetV(), FAxes[0].GetE()));
-  PythonExt::SetDictItem(cell, "b", Py_BuildValue("(dd)", FAxes[1].GetV(), FAxes[1].GetE()));
-  PythonExt::SetDictItem(cell, "c", Py_BuildValue("(dd)", FAxes[2].GetV(), FAxes[2].GetE()));
-  PythonExt::SetDictItem(cell, "alpha", Py_BuildValue("(dd)", FAngles[0].GetV(), FAngles[0].GetE()));
-  PythonExt::SetDictItem(cell, "beta", Py_BuildValue("(dd)", FAngles[1].GetV(), FAngles[1].GetE()));
-  PythonExt::SetDictItem(cell, "gamma", Py_BuildValue("(dd)", FAngles[2].GetV(), FAngles[2].GetE()));
+  PythonExt::SetDictItem(cell, "a", Py_BuildValue("(dd)", Axes[0], AxisEsds[0]));
+  PythonExt::SetDictItem(cell, "b", Py_BuildValue("(dd)", Axes[1], AxisEsds[1]));
+  PythonExt::SetDictItem(cell, "c", Py_BuildValue("(dd)", Axes[2], AxisEsds[2]));
+  PythonExt::SetDictItem(cell, "alpha", Py_BuildValue("(dd)", Angles[0], AngleEsds[0]));
+  PythonExt::SetDictItem(cell, "beta", Py_BuildValue("(dd)", Angles[1], AngleEsds[1]));
+  PythonExt::SetDictItem(cell, "gamma", Py_BuildValue("(dd)", Angles[2], AngleEsds[2]));
   PythonExt::SetDictItem(cell, "z", Py_BuildValue("i", Z));
   PythonExt::SetDictItem(main, "cell", cell);
   // pre-set atom tags
@@ -784,12 +783,20 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
 void TAsymmUnit::FromDataItem(TDataItem& item)  {
   Clear();
   TDataItem& cell = item.FindRequiredItem("cell");
-  FAxes[0] = cell.GetRequiredField("a");
-  FAxes[1] = cell.GetRequiredField("b");
-  FAxes[2] = cell.GetRequiredField("c");
-  FAngles[0] = cell.GetRequiredField("alpha");
-  FAngles[1] = cell.GetRequiredField("beta");
-  FAngles[2] = cell.GetRequiredField("gamma");
+  TEValueD evalue;
+  evalue = cell.GetRequiredField("a");
+  Axes[0] = evalue.GetV();  AxisEsds[0] = evalue.GetE();
+  evalue = cell.GetRequiredField("b");
+  Axes[1] = evalue.GetV();  AxisEsds[1] = evalue.GetE();
+  evalue = cell.GetRequiredField("c");
+  Axes[2] = evalue.GetV();  AxisEsds[2] = evalue.GetE();
+
+  evalue = cell.GetRequiredField("alpha");
+  Angles[0] = evalue.GetV();  AngleEsds[0] = evalue.GetE();
+  evalue = cell.GetRequiredField("beta");
+  Angles[1] = evalue.GetV();  AngleEsds[1] = evalue.GetE();
+  evalue = cell.GetRequiredField("gamma");
+  Angles[2] = evalue.GetV();  AngleEsds[2] = evalue.GetE();
   Z = cell.GetRequiredField("Z").RadUInt<unsigned short>();
   TDataItem& symm = item.FindRequiredItem("symm");
   Latt = symm.GetRequiredField("latt").ToInt();
@@ -878,8 +885,8 @@ void TAsymmUnit::LibGetAtomUiso(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void TAsymmUnit::LibGetCell(const TStrObjList& Params, TMacroError& E)  {
   evecd V(6);
-  V[0] = FAxes[0].GetV();    V[1] = FAxes[1].GetV();    V[2] = FAxes[2].GetV();
-  V[3] = FAngles[0].GetV();  V[4] = FAngles[1].GetV();  V[5] = FAngles[2].GetV();
+  V[0] = Axes[0];    V[1] = Axes[1];    V[2] = Axes[2];
+  V[3] = Angles[0];  V[4] = Angles[1];  V[5] = Angles[2];
   E.SetRetVal( V.ToString() );
 }
 //..............................................................................
@@ -1062,7 +1069,8 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
   vec3d crd(Params[1].ToDouble(), Params[2].ToDouble(), Params[3].ToDouble());
   if( Lattice != NULL )  {
     vec3d test_pos(crd);
-    if( Lattice->GetUnitCell().FindOverlappingAtom(test_pos, 0.3) != NULL )  {
+    TCAtom* ca = Lattice->GetUnitCell().FindOverlappingAtom(test_pos, 0.3);
+    if( ca != NULL )  {
       E.SetRetVal(-1);
       return;
     }
@@ -1122,7 +1130,7 @@ void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
   double zp = Params[0].ToDouble();
-  Z = (short)olx_round(TUnitCell::GetMatrixMultiplier(Latt)*(MatrixCount()+1)*zp);
+  Z = (short)olx_round(TCLattice::GetLattMultiplier(Latt)*(MatrixCount()+1)*zp);
   if( Z <= 0 ) Z = 1;
 }
 //..............................................................................

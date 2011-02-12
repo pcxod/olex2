@@ -21,7 +21,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   IOlexProcessor* olx_inst = IOlexProcessor::GetInstance();
 
   if( olx_inst != NULL )
-    olx_inst->setVar( IOlexProcessor::SGListVarName, EmptyString );
+    olx_inst->setVar( IOlexProcessor::SGListVarName, EmptyString() );
 
   const TSymmLib& SymmLib = TSymmLib::GetInstance();
   TTypeList<TBravaisLatticeRef> BravaisLattices;

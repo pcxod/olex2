@@ -30,7 +30,7 @@ TParamList::~TParamList(){  Clear(); }
 void TParamList::FromString(const olxstr &S, char Sep) {  // -t=op
   TStrList SL(S, Sep);
   if( SL.Count() == 1 )
-    AddParam(SL[0], EmptyString);
+    AddParam(SL[0], EmptyString());
   else if( SL.Count() > 1 )
     AddParam(SL[0], parser_util::unquote(SL[1]));
 }

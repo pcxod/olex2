@@ -77,7 +77,7 @@ olxstr HallSymbol::FindT(const vec3d& t, int order)  {
 //..........................................................................................
 olxstr HallSymbol::FindTR(const vec3d& t, int order)  {
   const double v = t[0] != 0 ? t[0] : (t[1] != 0 ? t[1] : t[2]);
-  if( v == 0 )  return EmptyString;
+  if( v == 0 )  return EmptyString();
   bool processed = false;
   if( order <= 2 || t.Length() != v )
     return FindT(t, order);
@@ -119,7 +119,7 @@ int HallSymbol::FindR(olxstr& hs, TTypeList<symop>& matrs,
         hs << ' ';
         matched = true;
       }
-      else if( rot[i].GetA() == rotation_id::invert(so.rot_id) )  {
+      else if( rot[i].GetA() == rotation_id::negate(so.rot_id) )  {
         hs << " -";
         matched = true;
       }

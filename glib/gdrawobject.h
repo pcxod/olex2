@@ -10,27 +10,16 @@
 
 BeginGlNamespace()
 
-const short
-  sgdoVisible    = 0x0001, // TGDrawObject flags
-  sgdoSelected   = 0x0002,
-  sgdoGroupable  = 0x0004,
-  sgdoGroup      = 0x0008,
-  sgdoGrouped    = 0x0010,
-  sgdoDeleted    = 0x0020,
-  sgdoSelectable = 0x0040,
-  sgdoCreated    = 0x0080;
+const unsigned short
+  sgdoHidden     = 0x0100, // TGDrawObject flags, high byte
+  sgdoSelected   = 0x0200,
+  sgdoGroupable  = 0x0400,
+  sgdoGroup      = 0x0800,
+  sgdoGrouped    = 0x1000,
+  sgdoSelectable = 0x2000,
+  sgdoCreated    = 0x4000;
 
-/*
-  defines basic functionality of a graphic object, accessible outside of
- the graphic core
-*/
-//---------------------------------------------------------------------------
-struct ACreationParams {
-  evecd* params;
-  int tag;
-  ACreationParams() : tag(-1), params(NULL) {}
-  virtual ~ACreationParams() {}
-};
+/*  defines basic functionality of a graphic object */
 class AGDrawObject: public ACollectionItem  {
 protected:
   short FDrawStyle;
@@ -44,9 +33,8 @@ protected:
 public:
   AGDrawObject(TGlRenderer& parent, const olxstr& collectionName);
   // create object within the specified collection, using provided parameters
-  virtual void Create(const olxstr& newCollectionName=EmptyString, const ACreationParams* cpar = NULL)  {}
+  virtual void Create(const olxstr& newCollectionName=EmptyString())  {}
   // this should return object created with new in order to recreate the objecs as it was
-  virtual ACreationParams* GetCreationParams() const {  return NULL;  }
   virtual ~AGDrawObject()  {}
 
   virtual const olxstr& GetPrimitiveMaskName() const {
@@ -75,24 +63,18 @@ public:
   virtual bool OnZoom(const IEObject *Sender, const struct TMouseData& Data)  {  return false;  }
 
   // need a virtual setters for these
-  virtual void SetVisible(bool v)  {  olx_set_bit(v, Flags, sgdoVisible);  }
-  inline bool IsVisible() const {  return ((Flags&sgdoVisible) != 0);  }
+  virtual void SetVisible(bool v)  {  olx_set_bit(!v, Flags, sgdoHidden);  }
+  inline bool IsVisible() const {  return ((Flags&sgdoHidden) == 0);  }
   virtual void SetSelected(bool v)  {  olx_set_bit(v, Flags, sgdoSelected);  }
   inline bool IsSelected() const {  return ((Flags&sgdoSelected) != 0);  }
 
   DefPropBFIsSet(Groupable, Flags, sgdoGroupable)
   DefPropBFIsSet(Grouped, Flags, sgdoGrouped)
-  virtual void SetDeleted(bool v)  {
-    olx_set_bit(v, Flags, sgdoDeleted);
-    if( v )
-      olx_set_bit(false, Flags, sgdoVisible);
-  }
-  inline bool IsDeleted() const {  return ((Flags&sgdoDeleted) != 0);  }
   DefPropBFIsSet(Selectable, Flags, sgdoSelectable)
   // for internal use, may not reflect the real state of the object
   DefPropBFIsSet(Created, Flags, sgdoCreated)
 
-  inline bool IsGroup() const {  return (Flags & sgdoGroup) == sgdoGroup; }
+  inline bool IsGroup() const {  return (Flags & sgdoGroup) == sgdoGroup;  }
 
   short MaskFlags(short mask) const {  return (Flags&mask);  }
 
@@ -112,7 +94,6 @@ public:
   // should be implemented to update labels when font is changed 
   virtual void UpdateLabel()  {}
 
-  virtual short DrawStyle() const {  return 0;  }
   /* is used to compile new created primitives without rebuilding entire model;
   use it when some object is added to existing scene */
   virtual void Compile(); 
@@ -123,7 +104,7 @@ public:
   virtual void ListParams(TStrList& List)  {}
   // fills the list with primitives from which the object can be constructed
   virtual void ListPrimitives(TStrList& List) const {}
-  virtual void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
+  virtual void UpdatePrimitives(int32_t Mask);
   virtual void OnPrimitivesCleared()  {}
 
   void LibVisible(const TStrObjList& Params, TMacroError& E);

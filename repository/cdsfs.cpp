@@ -5,7 +5,7 @@ bool TSocketFS::UseLocalFS = false;
 olxstr TSocketFS::Base;
 //.................................................................................................
 bool TSocketFS::_OnReadFailed(const THttpFileSystem::ResponseInfo& info, uint64_t position) {
-  if( !info.headers.Find("Server", CEmptyString).Equals("Olex2-CDS") )  return false;
+  if( !info.headers.Find("Server", CEmptyString()).Equals("Olex2-CDS") )  return false;
   while( --attempts >= 0 )  {
     try  {
       TBasicApp::NewLogEntry(logInfo, true) <<
@@ -23,7 +23,7 @@ bool TSocketFS::_OnReadFailed(const THttpFileSystem::ResponseInfo& info, uint64_
 //.................................................................................................
 bool TSocketFS::_DoValidate(const THttpFileSystem::ResponseInfo& info, TEFile& data) const {
   bool valid = THttpFileSystem::_DoValidate(info, data);
-  if( BaseValid && info.headers.Find("Server", CEmptyString).Equals("Olex2-CDS") )  {  // make file pesistent and write file info
+  if( BaseValid && info.headers.Find("Server", CEmptyString()).Equals("Olex2-CDS") )  {  // make file pesistent and write file info
     data.SetTemporary(valid);
     olxstr ifn = olxstr(data.GetName()) << ".info";
     if( !valid )  {
@@ -57,9 +57,9 @@ THttpFileSystem::AllocationInfo TSocketFS::_DoAllocateFile(const olxstr& src)  {
           return AllocationInfo(new TEFile(fn, "a+b"), fi->GetDigest(), false);
       }
     }
-    return AllocationInfo(new TEFile(fn, "w+b"), CEmptyString, true);
+    return AllocationInfo(new TEFile(fn, "w+b"), CEmptyString(), true);
   }
-  catch(...)  {  return AllocationInfo(NULL, CEmptyString, true);  }
+  catch(...)  {  return AllocationInfo(NULL, CEmptyString(), true);  }
 }
 //.................................................................................................
 THttpFileSystem::AllocationInfo& TSocketFS::_DoTruncateFile(AllocationInfo& file)  {

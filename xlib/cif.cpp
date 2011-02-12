@@ -142,11 +142,11 @@ void TCif::SaveToStrings(TStrList& Strings)  {
 }
 //..............................................................................
 olxstr TCif::GetParamAsString(const olxstr &Param) const {
-  if( block_index == InvalidIndex )  return EmptyString;
+  if( block_index == InvalidIndex )  return EmptyString();
   IStringCifEntry* ce = dynamic_cast<IStringCifEntry*>(
     data_provider[block_index].param_map.Find(Param, NULL));
   if( ce == NULL || ce->Count() == 0 )
-    return EmptyString;
+    return EmptyString();
   olxstr rv = (*ce)[0];
   for( size_t i = 1; i < ce->Count(); i++ )
     rv << '\n' << (*ce)[i];
@@ -192,14 +192,25 @@ void TCif::Initialize()  {
         GetRM().expl.SetRadiation(radiation.ToDouble());
     }
     catch(...)  {}
-    
-    GetAsymmUnit().Axes()[0] = GetParamAsString("_cell_length_a");
-    GetAsymmUnit().Axes()[1] = GetParamAsString("_cell_length_b");
-    GetAsymmUnit().Axes()[2] = GetParamAsString("_cell_length_c");
+    EValue = GetParamAsString("_cell_length_a");
+    GetAsymmUnit().GetAxes()[0] = EValue.GetV();
+    GetAsymmUnit().GetAxisEsds()[0] = EValue.GetE();
+    EValue = GetParamAsString("_cell_length_b");
+    GetAsymmUnit().GetAxes()[1] = EValue.GetV();
+    GetAsymmUnit().GetAxisEsds()[1] = EValue.GetE();
+    EValue = GetParamAsString("_cell_length_c");
+    GetAsymmUnit().GetAxes()[2] = EValue.GetV();
+    GetAsymmUnit().GetAxisEsds()[2] = EValue.GetE();
 
-    GetAsymmUnit().Angles()[0] = GetParamAsString("_cell_angle_alpha");
-    GetAsymmUnit().Angles()[1] = GetParamAsString("_cell_angle_beta");
-    GetAsymmUnit().Angles()[2] = GetParamAsString("_cell_angle_gamma");
+    EValue = GetParamAsString("_cell_angle_alpha");
+    GetAsymmUnit().GetAngles()[0] = EValue.GetV();
+    GetAsymmUnit().GetAngleEsds()[0] = EValue.GetE();
+    EValue = GetParamAsString("_cell_angle_beta");
+    GetAsymmUnit().GetAngles()[1] = EValue.GetV();
+    GetAsymmUnit().GetAngleEsds()[1] = EValue.GetE();
+    EValue = GetParamAsString("_cell_angle_gamma");
+    GetAsymmUnit().GetAngles()[2] = EValue.GetV();
+    GetAsymmUnit().GetAngleEsds()[2] = EValue.GetE();
     if( ParamExists("_cell_formula_units_Z") )
       GetAsymmUnit().SetZ((short)olx_round(GetParamAsString("_cell_formula_units_Z").ToDouble()));
   }
@@ -260,18 +271,20 @@ void TCif::Initialize()  {
       data_provider[block_index].Remove(*Loop);
     }
   }
-  TSpaceGroup* sg = TSymmLib::GetInstance().FindSymSpace(Matrices);
-  if( sg != NULL )
-    GetAsymmUnit().ChangeSpaceGroup(*sg);
-  else   {
-    GetAsymmUnit().ChangeSpaceGroup(*TSymmLib::GetInstance().FindGroup("P1"));
-    //throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
+  try  {
+    TSpaceGroup* sg = TSymmLib::GetInstance().FindSymSpace(Matrices);
+    if( sg != NULL )
+      GetAsymmUnit().ChangeSpaceGroup(*sg);
+    else
+      GetAsymmUnit().ChangeSpaceGroup(*TSymmLib::GetInstance().FindGroup("P1"));
   }
-  
+  catch(...)  {
+    GetAsymmUnit().ChangeSpaceGroup(*TSymmLib::GetInstance().FindGroup("P1"));
+  }
   try  {
     GetRM().SetUserFormula(olxstr::DeleteChars(GetParamAsString("_chemical_formula_sum"), ' '));
   }
-  catch(...)  {  }
+  catch(...)  {}
   
   this->Title = GetDataName().ToUpperCase();
   this->Title << " OLEX2: imported from CIF";
@@ -479,6 +492,23 @@ void TCif::Initialize()  {
       }
     }
   }
+  // read in the dispersio values
+  ALoop = FindLoop("_atom_type");
+  if( ALoop != NULL )  {
+    const size_t ind_s = ALoop->ColIndex("_atom_type_symbol");
+    const size_t ind_r = ALoop->ColIndex("_atom_type_scat_dispersion_real");
+    const size_t ind_i = ALoop->ColIndex("_atom_type_scat_dispersion_imag");
+    if( (ind_s|ind_r|ind_i) != InvalidIndex )  {
+      for( size_t i=0; i < ALoop->RowCount(); i++ )  {
+        const CifRow& r = (*ALoop)[i];
+        XScatterer* sc = new XScatterer(r[ind_s]->GetStringValue());
+        sc->SetFpFdp(
+          compd(r[ind_r]->GetStringValue().ToDouble(),
+                r[ind_i]->GetStringValue().ToDouble()));
+        GetRM().AddSfac(*sc);
+      }
+    }
+  }
 }
 //..............................................................................
 cetTable* TCif::LoopFromDef(CifBlock& dp, const TStrList& col_names)  {
@@ -516,7 +546,7 @@ bool TCif::Adopt(TXFile& XF)  {
   Clear();
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
   GetRM().Assign(XF.GetRM(), true);
-  Title = TEFile::ChangeFileExt(TEFile::ExtractFileName(XF.GetFileName()), EmptyString);
+  Title = TEFile::ChangeFileExt(TEFile::ExtractFileName(XF.GetFileName()), EmptyString());
 
   block_index = 0;
   data_provider.Add(Title.Replace(' ', "%20"));
@@ -528,14 +558,14 @@ bool TCif::Adopt(TXFile& XF)  {
   SetParam("_chemical_formula_sum", GetAsymmUnit()._SummFormula(' ',
     1./olx_max(GetAsymmUnit().GetZPrime(), 0.01)), true);
   SetParam("_chemical_formula_weight", olxstr::FormatFloat(2, GetAsymmUnit().MolWeight()), false);
+  const TAsymmUnit& au = GetAsymmUnit();
+  SetParam("_cell_length_a", TEValueD(au.GetAxes()[0], au.GetAxisEsds()[0]).ToString(), false);
+  SetParam("_cell_length_b", TEValueD(au.GetAxes()[1], au.GetAxisEsds()[1]).ToString(), false);
+  SetParam("_cell_length_c", TEValueD(au.GetAxes()[2], au.GetAxisEsds()[2]).ToString(), false);
 
-  SetParam("_cell_length_a", GetAsymmUnit().Axes()[0].ToString(), false);
-  SetParam("_cell_length_b", GetAsymmUnit().Axes()[1].ToString(), false);
-  SetParam("_cell_length_c", GetAsymmUnit().Axes()[2].ToString(), false);
-
-  SetParam("_cell_angle_alpha", GetAsymmUnit().Angles()[0].ToString(), false);
-  SetParam("_cell_angle_beta",  GetAsymmUnit().Angles()[1].ToString(), false);
-  SetParam("_cell_angle_gamma", GetAsymmUnit().Angles()[2].ToString(), false);
+  SetParam("_cell_angle_alpha", TEValueD(au.GetAngles()[0], au.GetAngleEsds()[0]).ToString(), false);
+  SetParam("_cell_angle_beta",  TEValueD(au.GetAngles()[1], au.GetAngleEsds()[1]).ToString(), false);
+  SetParam("_cell_angle_gamma", TEValueD(au.GetAngles()[2], au.GetAngleEsds()[2]).ToString(), false);
   SetParam("_cell_volume", XF.GetUnitCell().CalcVolumeEx().ToString(), false);
   SetParam("_cell_formula_units_Z", XF.GetAsymmUnit().GetZ(), false);
 
@@ -853,12 +883,12 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
       }
       if( DI == NULL )  continue;
       olxstr Val = (*LT)[i][j]->GetStringValue();
-      olxstr Tmp = DI->GetFieldValue("mustequal", EmptyString);
+      olxstr Tmp = DI->GetFieldValue("mustequal", EmptyString());
       TStrList Toks(Tmp, ';');
       if( !Tmp.IsEmpty() && (Toks.IndexOfi(Val) == InvalidIndex) ) // equal to
       {  AddRow = false;  break;  }
 
-      Tmp = DI->GetFieldValue("atypeequal", EmptyString);
+      Tmp = DI->GetFieldValue("atypeequal", EmptyString());
       if( !Tmp.IsEmpty() )  {  // check for atom type equals to
         ICifEntry* CD = (*LT)[i][j];
         if( CD != NULL && EsdlInstanceOf(*CD, AtomCifEntry) )
@@ -867,7 +897,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
             break;
           }
       }
-      Tmp = DI->GetFieldValue("atypenotequal", EmptyString);
+      Tmp = DI->GetFieldValue("atypenotequal", EmptyString());
       if( !Tmp.IsEmpty() )  {  // check for atom type equals to
         ICifEntry* CD = (*LT)[i][j];
         if( CD != NULL && EsdlInstanceOf(*CD, AtomCifEntry) )
@@ -876,13 +906,13 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
             break;
           }
       }
-      Tmp = DI->GetFieldValue("mustnotequal", EmptyString);
+      Tmp = DI->GetFieldValue("mustnotequal", EmptyString());
       Toks.Clear();
       Toks.Strtok(Tmp, ';');
       if( !Tmp.IsEmpty() && (Toks.IndexOfi(Val) != InvalidIndex) ) // not equal to
       {  AddRow = false;  break;  }
 
-      Tmp = DI->GetFieldValue("multiplier", EmptyString);
+      Tmp = DI->GetFieldValue("multiplier", EmptyString());
       if( !Tmp.IsEmpty() )  {  // Multiply
         Val = Table[i-RowDeleted][j];
         MultValue(Val, Tmp);
@@ -899,7 +929,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
     TDataItem *DI = TD->FindItemi(LT->ColName(i));
     if( DI != NULL )  {
       Table.ColName(i-ColDeleted) = DI->GetFieldValueCI("caption");
-      if( !DI->GetFieldValueCI("visible", FalseString).ToBool() )  {
+      if( !DI->GetFieldValueCI("visible", FalseString()).ToBool() )  {
         Table.DelCol(i-ColDeleted);
         ColDeleted++;
       }

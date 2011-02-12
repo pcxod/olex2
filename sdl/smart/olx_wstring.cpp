@@ -11,7 +11,7 @@ TWString::TWString()  {
   _Increment = 8;
 }
 //..............................................................................
-TWString::TWString(const bool& v) : TTIString<wchar_t>(v ? WTrueString: WFalseString) { }
+TWString::TWString(const bool& v) : TTIString<wchar_t>(v ? WTrueString(): WFalseString())  {}
 //..............................................................................
 TWString::TWString(const char *str)  {
   _Start = 0;

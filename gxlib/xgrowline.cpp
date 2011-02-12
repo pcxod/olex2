@@ -1,22 +1,25 @@
 //----------------------------------------------------------------------------//
-// namespace TXClasses: crystallographic core
 // TXGrowLine
 // (c) Oleg V. Dolomanov, 2006
 //----------------------------------------------------------------------------//
 #include "xgrowline.h"
 #include "gpcollection.h"
 #include "asymmunit.h"
+#include "xatom.h"
 //----------------------------------------------------------------------------//
 // TXGrowLine function bodies
 //----------------------------------------------------------------------------//
-TXGrowLine::TXGrowLine(TGlRenderer& r, const olxstr& collectionName, TSAtom *A, TCAtom* CA,
-                         const smatd& transform) :
-  TXBond(r, collectionName, *(TSBond*)NULL), Transform(transform)
+TXGrowLine::TXGrowLine(TGlRenderer& r, const olxstr& collectionName, TXAtom& A,
+  TCAtom& CA, const smatd& transform) :
+  TXBond(NULL, r, collectionName),
+    Transform(transform),
+    _XAtom(A),
+    _CAtom(CA)
 {
   AGDrawObject::SetSelectable(false);
-  vec3d C = transform * CA->ccrd();
-  A->CAtom().GetParent()->CellToCartesian(C);
-  FBase = A->crd();
+  vec3d C = transform * CA.ccrd();
+  CA.GetParent()->CellToCartesian(C);
+  FBase = A.crd();
   FEdge = C;
   C -= FBase;
   if( !C.IsNull() )  {
@@ -32,12 +35,10 @@ TXGrowLine::TXGrowLine(TGlRenderer& r, const olxstr& collectionName, TSAtom *A, 
       Params()[2] = C[0];
     }
   }
-  FSAtom = A;
-  FCAtom = CA;
 }
 //..............................................................................
-void TXGrowLine::Create(const olxstr& cName, const ACreationParams* cpar)  {
-  TXBond::Create(cName, cpar);
+void TXGrowLine::Create(const olxstr& cName)  {
+  TXBond::Create(cName);
 }
 //..............................................................................
 TXGrowLine::~TXGrowLine()  {}

@@ -58,7 +58,7 @@ TGlConsole::~TGlConsole()  {
   delete FCursor;
 }
 //..............................................................................
-void TGlConsole::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TGlConsole::Create(const olxstr& cName)  {
   FontIndex = Parent.GetScene().FindFontIndexForType<TGlConsole>(FontIndex);
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
@@ -82,7 +82,7 @@ void TGlConsole::Create(const olxstr& cName, const ACreationParams* cpar)  {
 //..............................................................................
 size_t TGlConsole::CalcScrollDown() const {
   TGlFont& Fnt = GetFont();
-  const uint16_t th = Fnt.TextHeight(EmptyString);
+  const uint16_t th = Fnt.TextHeight(EmptyString());
   const double Scale = Parent.GetScale(),
                MaxY = ((double)Parent.GetHeight()/2-Top-th)*Scale,
                LineSpacer = (0.05+FLineSpacing)*th;
@@ -127,7 +127,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
   //Fnt->DrawGlText( vec3d(0,0,0), "HELLW_O", true);
   P.SetFont(&Fnt);
   if( Parent.GetWidth() < 100 )  return true;
-  const uint16_t th = Fnt.TextHeight(EmptyString);
+  const uint16_t th = Fnt.TextHeight(EmptyString());
   const double Scale = Parent.GetScale(),
                MaxY = ((double)Parent.GetHeight()/2-Top-th)*Scale,
                LineSpacer = (0.05+FLineSpacing)*th;
@@ -385,7 +385,7 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hyphenate)  {
   }
   KeepSize();
   FTxtPos = FBuffer.Count()-1;
-  //FBuffer.Add(EmptyString);
+  //FBuffer.Add(EmptyString());
 }
 //..............................................................................
 void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  {
@@ -426,7 +426,7 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  
   }
   KeepSize();
   FTxtPos = FBuffer.Count()-1;
-  FBuffer.Add(EmptyString);
+  FBuffer.Add(EmptyString());
 }
 //..............................................................................
 olxstr TGlConsole::GetCommand() const  {
@@ -465,7 +465,7 @@ void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
   TGlFont& Fnt = GetFont();
   GlLeft = ((double)Left - (double)Parent.GetWidth()/2) + 0.1;
   GlTop = ((double)Parent.GetHeight()/2 - (Height+Top)) + 0.1;
-  const double th = Fnt.TextHeight(EmptyString);
+  const double th = Fnt.TextHeight(EmptyString());
   const double LineInc = (th*(1+FLineSpacing))*Parent.GetViewZoom();
   const double Scale = Parent.GetScale();
   // update cursor position ...
@@ -564,7 +564,7 @@ size_t TGlConsole::Write(const TTIString<olxch>& str)  {
     return 1;
   }
   if( FBuffer.IsEmpty() )
-    FBuffer.Add(EmptyString, PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
+    FBuffer.Add(EmptyString(), PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
   else  {
     if( FBuffer.GetLast().Object == NULL )
       FBuffer.GetLast().Object = (PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
@@ -573,18 +573,18 @@ size_t TGlConsole::Write(const TTIString<olxch>& str)  {
       FBuffer.GetLast().Object = (PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
     }
   }
-  if( &str == &NewLineSequence )  {
+  if( &str == &NewLineSequence() )  {
     if( !FBuffer.GetLastString().IsEmpty() )
-      FBuffer.Add(EmptyString, PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
+      FBuffer.Add(EmptyString(), PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
     return 1;  
   }
   FBuffer.GetLastString().SetCapacity(FBuffer.GetLastString().Length() + str.Length());
   for( size_t i=0; i < str.Length(); i++ )  {
     if( str.CharAt(i) == '\n' )
-      FBuffer.Add(EmptyString, PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
+      FBuffer.Add(EmptyString(), PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
     else if( str.CharAt(i) == '\r' )  {
       if( i+1 < str.Length() && str.CharAt(i+1) != '\n' &&!FBuffer.IsEmpty() )
-        FBuffer.GetLastString() = EmptyString;
+        FBuffer.GetLastString()=EmptyString();
     }
     else
       FBuffer.GetLastString() << str.CharAt(i);

@@ -1,6 +1,6 @@
 #ifndef __olx_sdl_composite_H
 #define __olx_sdl_composite_H
-#include "emath.h"
+#include "../emath.h"
 
 /* a wrapper class to present a list of matrices as a single matrix. To be used with non empty
 list and matrices of the same dimensions */
@@ -72,10 +72,10 @@ public:
 
 /* vector plain array */
 template <typename NumT> class PlainVector  {
-  NumT* data;
+  NumT const *data;
   const size_t size;
 public:
-  PlainVector(const NumT& _data, size_t sz) :	data(_data) , size(sz) {}
+  PlainVector(const NumT* _data, size_t sz) :	data(_data) , size(sz) {}
   size_t Count() const {  return size;  }
   const NumT& Get(size_t i) const {  return  data[i];  }
   NumT& Get(size_t i)  {  return  data[i];  }
@@ -117,11 +117,18 @@ public:
     vector(_vector), row_sz(_row_sz), col_sz(_col_sz)  {}
   size_t ColCount() const {  return col_sz;  }
   size_t RowCount() const {  return row_sz;  }
+  bool IsEmpty() const {  return col_sz == 0 || row_sz == 0;  }
   const NumT& Get(size_t i, size_t j) const {  return  vector[i*col_sz+j];  }
   NumT& Get(size_t i, size_t j)  {  return  vector[i*col_sz+j];  }
   void Set(size_t i, size_t j, const NumT& v)  {  vector[i*col_sz+j] = v;  }
-  NumT& operator [] (size_t i)  {  return Get(i);  }
-  const NumT& operator [] (size_t i) const {  return Get(i);  }
+  NumT& operator () (size_t i, size_t j)  {  return Get(i,j);  }
+  const NumT& operator () (size_t i, size_t j) const {  return Get(i,j);  }
+};
+
+template <typename NumT> class PlainMatrix : public VectorMatrix<NumT*,NumT>  {
+public:
+  PlainMatrix(NumT* _data, size_t _row_sz, size_t _col_sz) :
+    VectorMatrix<NumT*,NumT>(_data, _row_sz, _col_sz)  {}
 };
 
 #endif

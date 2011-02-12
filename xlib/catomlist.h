@@ -68,7 +68,7 @@ public:
   ImplicitCAtomRef(const ImplicitCAtomRef& ar) : Name(ar.Name) {}
   ImplicitCAtomRef(const olxstr& _Name) : Name(_Name) {}
   // * is special char
-  virtual olxstr GetExpression() const {  return Name == '*' ? EmptyString : Name;  }
+  virtual olxstr GetExpression() const {  return Name == '*' ? EmptyString() : Name;  }
   virtual bool IsExplicit() const {  return false;  }
   virtual size_t Expand(RefinementModel& rm, TAtomRefList& res, TResidue& resi) const;
   // may return NULL
@@ -133,7 +133,7 @@ class AtomRefList  {
 public:
   /* creates an instance of the object from given expression for given residue class, number or
   alias. Empty residue specifies the main residue. */
-  AtomRefList(RefinementModel& rm, const olxstr& exp, const olxstr& resi=EmptyString);
+  AtomRefList(RefinementModel& rm, const olxstr& exp, const olxstr& resi=EmptyString());
   /* expands the underlying expressions into a list. If the residue name is a class name (and 
   there are several residues of the kind), there will be more than one entry in the res with each
   entry corresponding to any particular residue. One of the list type constants can be provided to 

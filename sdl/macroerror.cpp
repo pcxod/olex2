@@ -43,11 +43,11 @@ void TMacroError::ProcessingException(const ABasicFunction& caller, const TExcep
   ErrorInfo = caller.GetRuntimeSignature();
   const TBasicException* exc = Exc.GetException();
   if( exc->GetCause() == NULL )
-    ErrorInfo << NewLineSequence << ' ' << exc->GetFullMessage();
+    ErrorInfo << NewLineSequence() << ' ' << exc->GetFullMessage();
   else  {
     TStrList output;
     exc->GetStackTrace(output);
-    ErrorInfo << NewLineSequence << ' ' << output.Text(NewLineSequence);
+    ErrorInfo << NewLineSequence() << ' ' << output.Text(NewLineSequence());
   }
   ProcessError |= peProcessingException;
 }
@@ -66,7 +66,7 @@ void TMacroError::WrongState(const ABasicFunction& func)  {
 }
 //..............................................................................
 olxstr TMacroError::GetRetVal() const  {
-  if( RetValue == NULL )  return EmptyString;
+  if( RetValue == NULL )  return EmptyString();
 //  if( !EsdlInstanceOf(*RetValue, olxstr) )
 //    throw TCastException(*this, EsdlObjectName(RetValue), EsdlClassName(olxstr) );
 //  olxstr cn = EsdlObjectName(*RetValue);

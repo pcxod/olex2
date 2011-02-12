@@ -18,10 +18,10 @@ protected:
       }
     }
   }
-  virtual inline size_t WritelnFor(const TIWString& str)  {  return Write(CNewLineSequence);  }
-  virtual inline size_t WritelnFor(const wchar_t* Data)  {  return Write(CNewLineSequence);  }
-  virtual inline size_t WritelnFor(const TICString& str)  {  return Write(CNewLineSequence);  }
-  virtual inline size_t WritelnFor(const char* Data)  {  return Write(CNewLineSequence);  }
+  virtual inline size_t WritelnFor(const TIWString& str)  {  return Write(CNewLineSequence());  }
+  virtual inline size_t WritelnFor(const wchar_t* Data)  {  return Write(CNewLineSequence());  }
+  virtual inline size_t WritelnFor(const TICString& str)  {  return Write(CNewLineSequence());  }
+  virtual inline size_t WritelnFor(const char* Data)  {  return Write(CNewLineSequence());  }
 public:
   // pointer must be deleted
   static TUtf8File* Create(const olxstr& name, bool write_header=true)  {  

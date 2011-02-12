@@ -124,7 +124,7 @@ void TFSItem::Clear()  {
   for( size_t i=0; i < Items.Count(); i++ )
     delete Items.GetObject(i);  // destructor calls Clear()
   Items.Clear();
-  Name = EmptyString;
+  Name.SetLength(0);
   DateTime = 0;
   Size = 0;
 }
@@ -449,7 +449,7 @@ TFSItem* TFSItem::UpdateFile(TFSItem& item)  {
         return FI;
       }
       if( GetDestFS().AdoptFile(item) )  {
-        TFSItem tmp(Index, this, EmptyString);
+        TFSItem tmp(Index, this, EmptyString());
         tmp = *FI;
         *FI = item;
         bool res = Index.ProcessActions(*FI);
@@ -646,7 +646,7 @@ void TFSIndex::SaveIndex(const olxstr &IndexFile)  {
   GetRoot().ClearEmptyFolders();
   for( size_t i=0; i < GetRoot().Count(); i++ )
     GetRoot().Item(i) >> strings;
-  TEFile* tmp_f = TEFile::TmpFile(EmptyString);
+  TEFile* tmp_f = TEFile::TmpFile(EmptyString());
   TCStrList(strings).SaveToTextStream(*tmp_f);
   tmp_f->SetPosition(0);
   try  {  IndexFS.AdoptStream(*tmp_f, IndexFile);  }

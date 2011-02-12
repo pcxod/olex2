@@ -30,7 +30,7 @@ TDataFile::~TDataFile()  {
 bool TDataFile::LoadFromTextStream(IInputStream& io, TStrList* Log)  {
   olxwstr in;
   FRoot->Clear();
-  FileName = EmptyString;
+  FileName.SetLength(0);
   try  {  in = TUtf8File::ReadAsString(io, false);  }
   catch( ... )  {  return false;  }
   if( in.IsEmpty() )  return false;

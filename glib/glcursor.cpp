@@ -20,7 +20,7 @@ TGlCursor::TGlCursor(TGlRenderer& R, const olxstr& collectionName, bool TextStyl
   SetSelectable(false);
 }
 //..............................................................................
-void TGlCursor::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TGlCursor::Create(const olxstr& cName)  {
   FontIndex = Parent.GetScene().FindFontIndexForType<TGlCursor>(FontIndex);
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);

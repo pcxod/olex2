@@ -19,7 +19,7 @@ TXGlLabel::TXGlLabel(TGlRenderer& R, const olxstr& collectionName) :
   FontIndex = ~0;
 };
 //..............................................................................
-void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TXGlLabel::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
@@ -103,8 +103,7 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
     T[2] -= 0.0005;
     olx_gl::translate(T);
     if( !glf.IsVectorFont() )  {
-      const double scale = Scale*ScaleR;
-      olx_gl::scale(scale, scale, 1.0);
+      olx_gl::scale(Scale, Scale, 1.0);
     }
     else  {
       const double scale = Parent.GetBasis().GetZoom()/Parent.CalcZoom();

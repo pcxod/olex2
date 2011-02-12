@@ -87,7 +87,7 @@ protected:
   /* does the file allocation, always new or 'truncated'. the truncated is false for the first
   time file allocation and true if the download restarts due to the file changed */
   virtual AllocationInfo _DoAllocateFile(const olxstr& fileName)  {
-    return AllocationInfo(TEFile::TmpFile(), CEmptyString, true);
+    return AllocationInfo(TEFile::TmpFile(), CEmptyString(), true);
   }
   virtual AllocationInfo& _DoTruncateFile(AllocationInfo& file)  {
     if( file.file == NULL )

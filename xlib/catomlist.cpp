@@ -61,7 +61,7 @@ size_t ImplicitCAtomRef::Expand(RefinementModel& rm, TAtomRefList& res, TResidue
   if( Name.EndsWith("_+") )  {
     TResidue* next_resi = resi.Next();
     if( next_resi != NULL )  {
-      IAtomRef* ar = ImplicitCAtomRef::NewInstance(rm, Name.SubStringFrom(0,2), EmptyString, next_resi);
+      IAtomRef* ar = ImplicitCAtomRef::NewInstance(rm, Name.SubStringFrom(0,2), EmptyString(), next_resi);
       if( ar != NULL )  {
         size_t ac = ar->Expand(rm, res, *next_resi);
         delete ar;
@@ -73,7 +73,7 @@ size_t ImplicitCAtomRef::Expand(RefinementModel& rm, TAtomRefList& res, TResidue
   if( Name.EndsWith("_-") )  {
     TResidue* prev_resi = resi.Prev();
     if( prev_resi != NULL )  {
-      IAtomRef* ar = ImplicitCAtomRef::NewInstance(rm, Name.SubStringFrom(0,2), EmptyString, prev_resi);
+      IAtomRef* ar = ImplicitCAtomRef::NewInstance(rm, Name.SubStringFrom(0,2), EmptyString(), prev_resi);
       if( ar != NULL )  {
         size_t ac = ar->Expand(rm, res, *prev_resi);
         delete ar;

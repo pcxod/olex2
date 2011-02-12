@@ -167,14 +167,14 @@ olxstr TZipWrapper::ExtractZipName(const olxstr &FN)  {
   size_t zi = FN.IndexOf(ZipUrlSignature);
   if( zi != InvalidIndex && zi > 0 )
     return FN.SubStringTo(zi);
-  return EmptyString;
+  return EmptyString();
 }
 //..............................................................................
 olxstr TZipWrapper::ExtractZipEntryName(const olxstr &FN)  {
   size_t zi = FN.IndexOf(ZipUrlSignature);
   if( zi != InvalidIndex && zi > 0 )
     return FN.SubStringFrom(zi+ZipUrlSignature.Length());
-  return EmptyString;
+  return EmptyString();
 }
 //..............................................................................
 bool TZipWrapper::SplitZipUrl(const olxstr &fullName, TZipEntry &ZE)  {

@@ -126,8 +126,8 @@ void TOlxPyVar::Set(const olxstr& str)  {
     else  {  // replace a primitive value with new object
       PyObject * arg;
       if( (Type & potBool) != 0  )  {
-        bool v = str.Equalsi(TrueString);
-        if( !v && !str.Equalsi(FalseString) )  {
+        bool v = str.Equalsi(TrueString());
+        if( !v && !str.Equalsi(FalseString()) )  {
           olxstr err(olxstr("Boolean is expected, got '") << str << '\'');
           Py_DECREF(PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, err));
           throw TInvalidArgumentException(__OlxSourceInfo, err);

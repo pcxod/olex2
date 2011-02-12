@@ -58,7 +58,7 @@ void TGraphicsStyle::ToDataItem(TDataItem& Item, bool saveAll) const {
   if( !saveAll && !IsSaveable() )  return;
   Item.AddField("Name", Name);
   if( IsPersistent() )  
-    Item.AddField("Persistent", TrueString);
+    Item.AddField("Persistent", TrueString());
   for( size_t i=0; i < Params.Count(); i++ ) {
     if( !saveAll && !Params.GetObject(i).saveable )  continue;
     Item.AddField(Params.GetString(i), Params.GetObject(i).val);
@@ -84,7 +84,7 @@ void TGraphicsStyle::ToDataItem(TDataItem& Item, bool saveAll) const {
 //..............................................................................
 bool TGraphicsStyle::FromDataItem(const TDataItem& Item)  {
   Name = Item.GetFieldValue("Name");
-  SetPersistent(Item.GetFieldValue("Persistent", FalseString).ToBool());
+  SetPersistent(Item.GetFieldValue("Persistent", FalseString()).ToBool());
   size_t i = IsPersistent() ? 2 : 1;
   for( ; i < Item.FieldCount(); i++ )
     SetParam(Item.FieldName(i), Item.GetField(i), Level < 2);

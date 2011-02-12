@@ -23,8 +23,8 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   AfixGroups(*this), 
   rSAME(*this),
   aunit(au), 
-  HklStatFileID(EmptyString, 0, 0), 
-  HklFileID(EmptyString, 0, 0), 
+  HklStatFileID(EmptyString(), 0, 0), 
+  HklFileID(EmptyString(), 0, 0), 
   Vars(*this),
   VarRefrencerId("basf"),
   Conn(*this)
@@ -82,8 +82,8 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   used_weight.Clear();
   proposed_weight.Clear();
   RefinementMethod = "L.S.";
-  SolutionMethod = EmptyString;
-  HKLSource = EmptyString;
+  SolutionMethod.SetLength(0);
+  HKLSource.SetLength(0);
   Omits.Clear();
   BASF.Clear();
   BASF_Vars.Clear();
@@ -316,16 +316,16 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
   size_t atom_start = 1;
   size_t resi_ind = l[0].IndexOf('_');
   olxstr tab_name = (resi_ind == InvalidIndex ? l[0] : l[0].SubStringTo(resi_ind));
-  olxstr resi_name = (resi_ind == InvalidIndex ? EmptyString : l[0].SubStringFrom(resi_ind+1));
+  olxstr resi_name = (resi_ind == InvalidIndex ? EmptyString() : l[0].SubStringFrom(resi_ind+1));
   if( tab_name.Equalsi("HTAB") )
-    InfoTables.Add( new InfoTab(*this, infotab_htab, EmptyString, resi_name) );
+    InfoTables.Add( new InfoTab(*this, infotab_htab, EmptyString(), resi_name) );
   else if( tab_name.Equalsi("RTAB") )
     InfoTables.Add( new InfoTab(*this, infotab_rtab, l[atom_start++], resi_name) );
   else if( tab_name.Equalsi("MPLA") )  {
     if( l[atom_start].IsNumber() )
       InfoTables.Add(new InfoTab(*this, infotab_mpla, l[atom_start++], resi_name));
     else
-      InfoTables.Add(new InfoTab(*this, infotab_mpla, EmptyString, resi_name));
+      InfoTables.Add(new InfoTab(*this, infotab_mpla, EmptyString(), resi_name));
   }
   else
     throw TInvalidArgumentException(__OlxSourceInfo, "unknown information table name");
@@ -377,22 +377,22 @@ const TRefList& RefinementModel::GetReflections() const {
     TEFile::FileID hkl_src_id = TEFile::GetFileID(HKLSource);
     if( !_Reflections.IsEmpty() && hkl_src_id == HklFileID )
       return _Reflections;
-    THklFile hf;
+    THklFile hf(HKLF_mat);
     hf.LoadFromFile(HKLSource);
-    const vec3i minInd(hf.GetMinHkl()), maxInd(hf.GetMaxHkl());
-    _HklStat.FileMinInd = vec3i(100,100,100);
-    _HklStat.FileMaxInd = vec3i(-100,-100,-100);
-    TArray3D<TRefPList*> hkl3d(minInd, maxInd);
+    _HklStat.FileMinInd = hf.GetMinHkl();
+    _HklStat.FileMaxInd = hf.GetMaxHkl();
+    TArray3D<TRefPList*> hkl3d(_HklStat.FileMinInd , _HklStat.FileMaxInd);
     hkl3d.FastInitWith(0);
     HklFileID = hkl_src_id;
     const size_t hkl_cnt = hf.RefCount();
     size_t maxRedundancy = 0;
     _Reflections.Clear();
-    _FriedelPairs.Clear();
     _Redundancy.Clear();
     _FriedelPairCount = 0;
     _Reflections.SetCapacity(hkl_cnt);
     for( size_t i=0; i < hkl_cnt; i++ )  {
+      hf[i].SetI(hf[i].GetI()*HKLF_s);
+      hf[i].SetS(hf[i].GetS()*HKLF_s/HKLF_wt);
       if( HKLF == 5 )  {
         if( hf[i].GetFlag() < 0 )  {
           while( ++i < hkl_cnt && hf[i].GetFlag() < 0 )
@@ -401,31 +401,28 @@ const TRefList& RefinementModel::GetReflections() const {
           continue;
         }
       }
-      if( hf[i].GetTag() < 0 )  // is after (0, 0, 0) ?
-        continue;
+      else  // enforce to clear the batch number...
+        hf[i].SetFlag(NoFlagSet);
       TReflection& r = _Reflections.AddNew(hf[i]);
-      vec3i::UpdateMinMax(r.GetHkl(), _HklStat.FileMinInd, _HklStat.FileMaxInd);
       TRefPList* rl = hkl3d(hf[i].GetHkl());
-      if(  rl == NULL )
+      if( rl == NULL )
         hkl3d(hf[i].GetHkl()) = rl = new TRefPList;
-      rl->Add(&r);
+      rl->Add(r);
       if( rl->Count() > maxRedundancy )
         maxRedundancy = rl->Count();
     }
     _Redundancy.SetCount(maxRedundancy);
     for( size_t i=0; i < maxRedundancy; i++ )
       _Redundancy[i] = 0;
-    for( int h=minInd[0]; h <= maxInd[0]; h++ )  {
-      for( int k=minInd[1]; k <= maxInd[1]; k++ )  {
-        for( int l=minInd[2]; l <= maxInd[2]; l++ )  {
+    for( int h=_HklStat.FileMinInd[0]; h <= _HklStat.FileMaxInd[0]; h++ )  {
+      for( int k=_HklStat.FileMinInd[1]; k <= _HklStat.FileMaxInd[1]; k++ )  {
+        for( int l=_HklStat.FileMinInd[2]; l <= _HklStat.FileMaxInd[2]; l++ )  {
           TRefPList* rl1 = hkl3d(h, k, l);
           if(  rl1 == NULL )  continue;
           const vec3i ind(-h,-k,-l);
-          if( vec3i::IsInRangeInc(ind, minInd, maxInd) )  {
+          if( hkl3d.IsInRange(ind) )  {
             TRefPList* rl2 = hkl3d(ind);
             if( rl2 != NULL )  {
-              _FriedelPairs.AddList(*rl2);
-              _FriedelPairs.AddList(*rl1);
               _FriedelPairCount++;
               _Redundancy[rl2->Count()-1]++;
               delete rl2;
@@ -433,14 +430,8 @@ const TRefList& RefinementModel::GetReflections() const {
             }
           }
           _Redundancy[rl1->Count()-1]++;
-        }
-      }
-    }
-    for( int h=minInd[0]; h <= maxInd[0]; h++ )  {
-      for( int k=minInd[1]; k <= maxInd[1]; k++ )  {
-        for( int l=minInd[2]; l <= maxInd[2]; l++ )  {
-          if( hkl3d(h, k, l) != NULL )
-            delete hkl3d(h, k, l);
+          delete rl1;
+          hkl3d(h, k, l) = NULL;
         }
       }
     }
@@ -461,6 +452,9 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       _HklStat.OMIT_2t == OMIT_2t &&
       _HklStat.SHEL_lr == SHEL_lr &&
       _HklStat.SHEL_hr == SHEL_hr &&
+      _HklStat.HKLF_m == HKLF_m &&
+      _HklStat.HKLF_s == HKLF_s &&
+      _HklStat.HKLF_mat == HKLF_mat &&
       _HklStat.MERG == MERG && !OMITs_Modified )  
     {
       return _HklStat;
@@ -472,7 +466,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       FilterHkl(refs, _HklStat);
       TUnitCell::SymSpace sp = aunit.GetLattice().GetUnitCell().GetSymSpace();
       if( MERG != 0 && HKLF != 5 )  {
-        bool mergeFP = (MERG == 4 || MERG == 3) && !sp.IsCentrosymmetric();
+        bool mergeFP = (MERG == 4 || MERG == 3 || sp.IsCentrosymmetric());
         _HklStat = RefMerger::DryMerge<TUnitCell::SymSpace,RefMerger::ShelxMerger>(
           sp, refs, Omits, mergeFP);
       }
@@ -499,8 +493,6 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
     min_d = SHEL_hr;
   const double min_qd = min_d*min_d;  // maximum d squared
   const double max_qd = SHEL_lr*SHEL_lr;
-  const bool transform_hkl = !HKLF_mat.IsI();
-
   const size_t ref_cnt = all_refs.Count();
   out.SetCapacity(ref_cnt);
   stats.MinD = 100;
@@ -514,10 +506,7 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
       _HklStat.OmittedReflections++;
       continue;
     }
-    vec3i chkl = r.GetHkl();
-    if( transform_hkl )
-      chkl = (HKLF_mat*vec3d(chkl)).Round<int>();
-
+    const vec3i& chkl = r.GetHkl();
     vec3d hkl(chkl[0]*hkl2c[0][0],
       chkl[0]*hkl2c[0][1] + chkl[1]*hkl2c[1][1],
       chkl[0]*hkl2c[0][2] + chkl[1]*hkl2c[1][2] + chkl[2]*hkl2c[2][2]);
@@ -531,9 +520,10 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
     }
     if( qd < max_qd && qd > min_qd )  {
       TReflection& new_ref = out.AddNew(r);
-      if( new_ref.GetI() > stats.MaxI )  stats.MaxI = new_ref.GetI();
-      if( new_ref.GetI() < stats.MinI )  stats.MinI = new_ref.GetI();
-      new_ref.SetHkl(chkl);
+      if( new_ref.GetI() > stats.MaxI )
+        stats.MaxI = new_ref.GetI();
+      if( new_ref.GetI() < stats.MinI )
+        stats.MinI = new_ref.GetI();
     }
     else
       stats.FilteredOff++;
@@ -562,8 +552,8 @@ RefinementModel::HklStat& RefinementModel::AdjustIntensity(TRefList& out,
       r.SetI(h_o_s*r.GetS());
       stats.IntensityTransformed++;
     }
-    if( r.GetI() < 0 )
-      r.SetI(0);
+    //if( r.GetI() < 0 )
+    //  r.SetI(0);
   }
   return stats;
 }
@@ -599,7 +589,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     for( size_t i=0; i < rDFIX.Count(); i++ )  {
       TSimpleRestraint& sr = rDFIX[i];
       if( b_res != NULL )  b_res->Add(&sr);
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
         str << sr.GetAtom(j).GetFullLabel(*this) << '-' << sr.GetAtom(j+1).GetFullLabel(*this);
         if( (j+2) < sr.AtomCount() )
@@ -610,7 +600,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     for( size_t i=0; i < rDANG.Count(); i++ )  {
       TSimpleRestraint& sr = rDANG[i];
       if( b_res != NULL )  b_res->Add(&sr);
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
         str << sr.GetAtom(j).GetFullLabel(*this) << '-' << sr.GetAtom(j+1).GetFullLabel(*this);
         if( (j+2) < sr.AtomCount() )
@@ -621,7 +611,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     for( size_t i=0; i < rSADI.Count(); i++ )  {
       TSimpleRestraint& sr = rSADI[i];
       if( b_res != NULL )  b_res->Add(&sr);
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
         str << sr.GetAtom(j).GetFullLabel(*this) << '-' << sr.GetAtom(j+1).GetFullLabel(*this);
         if( (j+2) < sr.AtomCount() )
@@ -634,7 +624,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     lst.Add(olxstr(++sec_num)) << ". Restrained atomic chiral volume";
     for( size_t i=0; i < rCHIV.Count(); i++ )  {
       TSimpleRestraint& sr = rCHIV[i];
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j++ )  {
         if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )  a_res->Add( sr.GetAtom(j).GetAtom() ); 
         str << sr.GetAtom(j).GetFullLabel(*this);
@@ -648,7 +638,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     lst.Add(olxstr(++sec_num)) << ". Restrained planarity";
     for( size_t i=0; i < rFLAT.Count(); i++ )  {
       TSimpleRestraint& sr = rFLAT[i];
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j++ )  {
         if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )  a_res->Add( sr.GetAtom(j).GetAtom() ); 
         str << sr.GetAtom(j).GetFullLabel(*this);
@@ -664,7 +654,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
       TSimpleRestraint& sr = rDELU[i];
       if( sr.GetEsd() == 0 || sr.GetEsd1() == 0 )  continue;
       if( b_res != NULL )  b_res->Add(&sr);
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       if( sr.IsAllNonHAtoms() )  {
         str << "All non-hydrogen atoms";
       }
@@ -683,7 +673,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     lst.Add(olxstr(++sec_num)) << ". Uiso/Uaniso restraints and constraints";
     for( size_t i=0; i < rSIMU.Count(); i++ )  {
       TSimpleRestraint& sr = rSIMU[i];
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       if( sr.IsAllNonHAtoms() )  {
         str << "All non-hydrogen atoms";
       }
@@ -700,7 +690,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     }
     for( size_t i=0; i < rISOR.Count(); i++ )  {
       TSimpleRestraint& sr = rISOR[i];
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       if( sr.IsAllNonHAtoms() )  {
         str << "All non-hydrogen atoms";
       }
@@ -717,7 +707,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     }
     for( size_t i=0; i < rEADP.Count(); i++ )  {
       TSimpleRestraint& sr = rEADP[i];
-      olxstr& str = lst.Add(EmptyString);
+      olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j++ )  {
         if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )  a_res->Add( sr.GetAtom(j).GetAtom() ); 
         if( sr.GetAtom(j).GetAtom()->GetEllipsoid() == NULL )
@@ -770,8 +760,24 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
   TStrList vars;
   Vars.Describe(vars);
   if( !vars.IsEmpty() )  {
-    lst.Add(++sec_num) << ". Other restraints";
+    lst.Add(++sec_num) << ". Others";
     lst.AddList(vars);
+  }
+  size_t afix_sn = 0;
+  olxdict<int, TPtrList<TAfixGroup>, TPrimitiveComparator> a_gs;
+  for( size_t i=0; i < AfixGroups.Count(); i++ )  {
+    if( !AfixGroups[i].IsEmpty() )
+      a_gs.Add(AfixGroups[i].GetAfix()).Add(AfixGroups[i]);
+  }
+  for( size_t i=0; i < a_gs.Count(); i++ )  {
+    TPtrList<TAfixGroup>& gl = a_gs.GetValue(i);
+    olxstr ag_name = gl[0]->Describe();
+    if( !ag_name.IsEmpty() )
+      ag_name[0] = olxstr::o_toupper(ag_name.CharAt(0));
+    lst.Add(olxstr(sec_num) << '.' << (olxch)('a'+afix_sn++)) << ' ' << ag_name << ':';
+    olxstr& line = lst.Add(gl[0]->ToString());
+    for( size_t j=1; j < gl.Count(); j++ )
+      line << ", " << gl[j]->ToString();
   }
 }
 //....................................................................................................
@@ -782,7 +788,7 @@ void RefinementModel::ProcessFrags()  {
   for( size_t i=0; i < AfixGroups.Count(); i++ )  {
     TAfixGroup& ag = AfixGroups[i];
     int m = ag.GetM();
-    if( !ag.IsFitted() &&  m < 16 )  continue;
+    if( !ag.IsFittedRing() &&  m <= 16 )  continue;
     if( m == 7 )  m = 6;
     bool generate = false;
     for( size_t j=0; j < ag.Count(); j++ )  {
@@ -979,7 +985,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   TDataItem* sfac = item.FindItem("SFAC");
   if( sfac != NULL )  {
     for( size_t i=0; i < sfac->ItemCount(); i++ )  {
-      XScatterer* sc = new XScatterer(EmptyString);
+      XScatterer* sc = new XScatterer(EmptyString());
       sc->FromDataItem(sfac->GetItem(i));
       SfacData.Add(sc->GetLabel(), sc);
     }
@@ -1082,8 +1088,9 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
     TAtomEnvi ae;
     TLattice& lat = aunit.GetLattice();
     TUnitCell& uc = aunit.GetLattice().GetUnitCell();
-    for( size_t i=0; i < lat.AtomCount(); i++ )  {
-      TSAtom& sa = lat.GetAtom(i);
+    ASObjectProvider& objects = lat.GetObjects();
+    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+      TSAtom& sa = objects.atoms[i];
       if( sa.IsDeleted() || sa.GetType() == iQPeakZ )  continue;
       // make sure that only AU atoms go to 
       if( !sa.IsAUAtom() )  continue;
@@ -1108,3 +1115,91 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
   return main;
 }
 #endif
+//..............................................................................
+bool RefinementModel::Update(const RefinementModel& rm)  {
+  if( aunit.GetAngles().DistanceTo(rm.aunit.GetAngles()) > 1e-6 ||
+    aunit.GetAxes().DistanceTo(rm.aunit.GetAxes()) > 1e-6 ||
+    VarCount() != rm.VarCount() ||
+    BASF.Count() != rm.BASF.Count() ||
+    aunit.EllpCount() != rm.aunit.EllpCount() ||
+    Vars.VarCount() != rm.Vars.VarCount() )
+  {
+    return false;
+  }
+  size_t ac = 0;
+  aunit.ComplyToResidues();
+  for( size_t i=0; i < aunit.AtomCount(); i++ )  {
+    TCAtom &this_a = aunit.GetAtom(i);
+    if( this_a.IsDeleted() )  continue;
+    TCAtom *that_a = &rm.aunit.GetAtom(ac);
+    while( that_a->IsDeleted() )  {
+      if( ++ac >= rm.aunit.AtomCount() )
+        return false;
+      that_a = &rm.aunit.GetAtom(ac);
+    }
+    if( that_a->GetType() != this_a.GetType() )
+      return false;
+    ac++;
+    if( ac >= rm.aunit.AtomCount() )
+      return false;
+  }
+  // need to implement addition of  new atoms, like q-peaks
+  ac = 0;
+  for( size_t i=0; i < aunit.AtomCount(); i++ )  {
+    TCAtom &this_a = aunit.GetAtom(i);
+    if( this_a.IsDeleted() )  continue;
+    TCAtom &that_a = rm.aunit.GetAtom(ac);
+    this_a.ccrd() = that_a.ccrd();
+    this_a.ccrdEsd() = that_a.ccrdEsd();
+    this_a.SetOccu(that_a.GetOccu());
+    this_a.SetOccuEsd(that_a.GetOccuEsd());
+    this_a.SetUiso(that_a.GetUiso());
+    this_a.SetUisoEsd(that_a.GetUisoEsd());
+    ac++;
+  }
+  for( size_t i=0; i < aunit.EllpCount(); i++ )
+    aunit.GetEllp(i) = rm.aunit.GetEllp(i);
+
+  used_weight = rm.used_weight;
+  proposed_weight = rm.proposed_weight;
+  BASF = rm.BASF;
+  for( size_t i=0; i < Vars.VarCount(); i++ )
+    Vars.GetVar(i).SetValue(rm.Vars.GetVar(i).GetValue());
+  return true;
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+void RefinementModel::LibOSF(const TStrObjList& Params, TMacroError& E)  {
+  if( Params.IsEmpty() )
+    E.SetRetVal(Vars.VarCount() == 0 ? 0.0 : Vars.GetVar(0).GetValue());
+  else  {
+    if( Vars.VarCount() == 0 )
+      Vars.NewVar(Params[0].ToDouble());
+    else
+      Vars.GetVar(0).SetValue(Params[0].ToDouble());
+  }
+}
+//..............................................................................
+void RefinementModel::LibFVar(const TStrObjList& Params, TMacroError& E)  {
+  size_t i = Params[0].ToSizeT();
+  if( Vars.VarCount() <= i )  {
+    E.ProcessingError(__OlxSrcInfo, "FVar index out of bounds");
+    return;
+  }
+  if( Params.Count() == 1 )
+    E.SetRetVal(Vars.GetVar(i).GetValue());
+  else
+    Vars.GetVar(i).SetValue(Params[1].ToDouble());
+}
+//..............................................................................
+TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
+  TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("rm") : name);
+  lib->RegisterFunction<RefinementModel>(
+    new TFunction<RefinementModel>(this, &RefinementModel::LibOSF, "OSF", fpNone|fpOne,
+"Returns/sets OSF") );
+  lib->RegisterFunction<RefinementModel>(
+    new TFunction<RefinementModel>(this, &RefinementModel::LibFVar, "FVar", fpOne|fpTwo,
+"Returns/sets FVAR referred by index") );
+  return lib;
+}

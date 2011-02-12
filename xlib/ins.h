@@ -112,7 +112,7 @@ public:
         Toks.Clear();
         Toks.Strtok(SL[i], ' ');
         if( ParseRestraint(rm, Toks) )
-          SL[i] = EmptyString;
+          SL[i].SetLength(0);
       }
     }
 //..............................................................................
@@ -182,12 +182,8 @@ public:
       else if( Toks[0].Equalsi("ZERR") )  {
         if( Toks.Count() == 8 )  {
           rm.aunit.SetZ( (short)Toks[1].ToDouble() );
-          rm.aunit.Axes()[0].E() = Toks[2].ToDouble();
-          rm.aunit.Axes()[1].E() = Toks[3].ToDouble();
-          rm.aunit.Axes()[2].E() = Toks[4].ToDouble();
-          rm.aunit.Angles()[0].E() = Toks[5].ToDouble();
-          rm.aunit.Angles()[1].E() = Toks[6].ToDouble();
-          rm.aunit.Angles()[2].E() = Toks[7].ToDouble();
+          rm.aunit.GetAxisEsds() = vec3d(Toks[2].ToDouble(), Toks[3].ToDouble(), Toks[4].ToDouble());
+          rm.aunit.GetAngleEsds() = vec3d(Toks[5].ToDouble(), Toks[6].ToDouble(), Toks[7].ToDouble());
         }
         else
           throw TInvalidArgumentException(__OlxSourceInfo, "ZERR");

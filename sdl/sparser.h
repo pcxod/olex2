@@ -54,7 +54,7 @@ public:
   class TUnsupportedOperator: public TBasicException  {
   public:
     TUnsupportedOperator(const olxstr& location):
-        TBasicException(location, EmptyString)  {  ;  }
+        TBasicException(location, EmptyString())  {  ;  }
     virtual IEObject* Replicate()  const {  return new TUnsupportedOperator(*this);  }
   };
   virtual bool operator == (const IEvaluator &val) const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
@@ -71,7 +71,7 @@ public:
   class TCastException: public TBasicException  {
   public:
     TCastException(const olxstr& location ):
-        TBasicException(location, EmptyString)  { ;  }
+        TBasicException(location, EmptyString())  { ;  }
     virtual IEObject* Replicate()  const {  return new TCastException(*this);  }
   };
   virtual short EvaluateShort()         const {  throw TCastException(__OlxSourceInfo);  }

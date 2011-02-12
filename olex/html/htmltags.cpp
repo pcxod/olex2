@@ -238,7 +238,7 @@ TAG_HANDLER_PROC(tag)  {
     if( Label.StartsFromi("href=") )  {
       Label = Label.SubStringFrom(5);
       const size_t tagInd = Label.IndexOfi("&target=");
-      olxstr tag(EmptyString);
+      olxstr tag(EmptyString());
       if( tagInd != InvalidIndex )  {
         tag = Label.SubStringFrom(tagInd+8);
         Label.SetLength(tagInd);
@@ -440,13 +440,13 @@ TAG_HANDLER_PROC(tag)  {
       TGlXApp::GetMainForm()->ProcessFunction(Items);
       TStrList SL(Items, ';');
       if( SL.IsEmpty() )
-        Box->AddObject(EmptyString);  // fix the bug in wxWidgets (if Up pressed, crass occurs)
+        Box->AddObject(EmptyString());  // fix the bug in wxWidgets (if Up pressed, crass occurs)
       else
         Box->AddItems(SL);
     }
     else  {  // need to intialise the items - or wxWidgets will crash (pressing Up button)
       Box->AddObject(Value);
-      Box->AddObject(EmptyString);  // fix the bug in wxWidgets (if Up pressed, crass occurs)
+      Box->AddObject(EmptyString());  // fix the bug in wxWidgets (if Up pressed, crass occurs)
     }
     Box->SetText(Value);
     Box->SetData(Data);

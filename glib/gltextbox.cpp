@@ -29,9 +29,9 @@ TGlTextBox::TGlTextBox(TGlRenderer& Render, const olxstr& collectionName):
   Z = 0;
 }
 //..............................................................................
-TGlTextBox::~TGlTextBox()  { Clear();  }
+TGlTextBox::~TGlTextBox()  {  Clear();  }
 //..............................................................................
-void TGlTextBox::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TGlTextBox::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
@@ -67,11 +67,13 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
   olx_gl::normal(0, 0, 1);
   if( P.GetType() == sgloText )  {
     TGlFont& Fnt = GetFont();
-    const uint16_t th = Fnt.TextHeight(EmptyString);
-    const double GlLeft = ((double)Left - (double)Parent.GetWidth()/2 + GetCenter()[0]) + 0.1;
+    const double rscale = Parent.GetExtraZoom()*Parent.GetViewZoom();
+    const uint16_t th = Fnt.TextHeight(EmptyString());
+    const double GlLeft = ((Left+GetCenter()[0])*rscale - (double)Parent.GetWidth()/2) + 0.1;
     const double GlTop = ((double)Parent.GetHeight()/2 -
-      (Top-GetCenter()[1]+Height*Parent.GetExtraZoom())) + 0.1;
+      (Top-GetCenter()[1]+Height)*rscale) + 0.1;
     const double LineSpacer = (0.05+LineSpacing-1)*th;
+    const double scale = Parent.GetViewZoom() == 1.0 ? 1.0 : 1./Parent.GetExtraZoom();
     bool mat_changed = false;
     vec3d T(GlLeft, GlTop, Z);
     for( size_t i=0; i < FBuffer.Count(); i++ )  {
@@ -83,9 +85,9 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
       }
       olxstr const line = FBuffer[ii].SubStringTo(Fnt.LengthForWidth(FBuffer[ii], Parent.GetWidth()));
       const TTextRect tr = Fnt.GetTextRect(line);
-      T[1] -= tr.top;
+      T[1] -= tr.top*scale;
       Parent.DrawTextSafe(T, line, Fnt);
-      T[1] += (olx_max(tr.height, Fnt.GetMaxHeight())+LineSpacer);
+      T[1] += (olx_max(tr.height, Fnt.GetMaxHeight())+LineSpacer)*scale;
     }
     if( mat_changed )
       P.GetProperties().Init(Parent.IsColorStereo());
@@ -144,7 +146,7 @@ void TGlTextBox::PostText(const TStrList &SL, TGlMaterial *M)  {
 void TGlTextBox::Fit()  {
   if( FBuffer.Count() > 1 )  {
     const TGlFont& glf = GetFont();
-    const uint16_t th = glf.TextHeight(EmptyString);
+    const uint16_t th = glf.TextHeight(EmptyString());
     const double LineSpacer = (0.05+LineSpacing-1)*th;
     Height = 0;
     for( size_t i=0; i < FBuffer.Count(); i++ )  {

@@ -210,7 +210,7 @@ TTTable<TStrList>* TLinkedLoopTable::MakeTable(const olxstr &Atom)  {
         continue;
       }
       if( i < j )  {
-        Table[i][j+1] = EmptyString;
+        Table[i][j+1].SetLength(0);
         continue;
       }
       bool found = false;
@@ -226,7 +226,7 @@ TTTable<TStrList>* TLinkedLoopTable::MakeTable(const olxstr &Atom)  {
         Table[i][j+1] = '?';
     }
   }
-  Tmp = EmptyString;
+  Tmp.SetLength(0);
   for( size_t i=0; i < Symm.Count(); i++ )  {
     if( Symm[i].Length() > 0 &&  (Symm[i] != '.') )  {
       const olxstr Tmp1 = FCif.SymmCodeToSymm(Symm[i]);

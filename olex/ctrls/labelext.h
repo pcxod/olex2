@@ -12,8 +12,8 @@ namespace ctrl_ext  {
       AOlxCtrl(this), 
       OnClick(Actions.New(evt_on_click_id)),
       wxStaticText(Parent, wxID_ANY, label.u_str()),
-      Data(EmptyString),
-      OnClickStr(EmptyString)  {}
+      Data(EmptyString()),
+      OnClickStr(EmptyString())  {}
     virtual ~TLabel()  {}
 
     DefPropC(olxstr, Data)

@@ -290,7 +290,7 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
       TBasicApp::NewLogEntry(logInfo) << "@py: " << func->GetRuntimeSignature();
     }
     if( er.IsSuccessful() )  {
-      olxstr rv = (er.HasRetVal() ? olxstr(er.RetObj()->ToString()) : EmptyString);
+      olxstr rv = (er.HasRetVal() ? olxstr(er.RetObj()->ToString()) : EmptyString());
       return PythonExt::BuildString(rv);
     }
     else  {
@@ -397,7 +397,7 @@ void ExportLib(const olxcstr& fullName, TEFile& file, const TLibrary& Lib)  {
     ABasicFunction* fun = Lib.GetFunctionByIndex(i);
     olxName = fun->GetQualifiedName();
     pyName = fun->GetName();
-    pyName.Replace('.', CEmptyString).Replace('@', "At");
+    pyName.Replace('.', CEmptyString()).Replace('@', "At");
     file.Write(PyFuncBody(olxName, fullName + pyName, ',') << '\n');
   }
 
@@ -405,7 +405,7 @@ void ExportLib(const olxcstr& fullName, TEFile& file, const TLibrary& Lib)  {
     ABasicFunction* fun = Lib.GetMacroByIndex(i);
     olxName = fun->GetQualifiedName();
     pyName = fun->GetName();
-    pyName.Replace('.', CEmptyString).Replace('@', "At");
+    pyName.Replace('.', CEmptyString()).Replace('@', "At");
     file.Write(PyFuncBody(olxName, fullName + pyName, ' ') << '\n');
   }
 
@@ -419,7 +419,7 @@ void Export(const TStrObjList& Cmds, TMacroError& E)  {
   TEFile file(Cmds[0], "wb+");
   file.Write("import sys\n");
   file.Write("import olex\n");
-  ExportLib(EmptyString, file, o_r->GetLibrary());
+  ExportLib(EmptyString(), file, o_r->GetLibrary());
 }
 //..............................................................................
 void PythonExt::macReset(TStrObjList& Cmds, const TParamList &Options, TMacroError& E)  {
@@ -465,9 +465,9 @@ TLibrary* PythonExt::ExportLibrary(const olxstr& name)  {
   Library->RegisterStaticFunction(
     new TStaticFunction(::Export, "Export", fpOne, "Exports library to a python file") );
   Library->RegisterMacro<PythonExt>(
-    new TMacro<PythonExt>(this, &PythonExt::macReset, "Reset", EmptyString, fpNone) );
+    new TMacro<PythonExt>(this, &PythonExt::macReset, "Reset", EmptyString(), fpNone) );
   Library->RegisterMacro<PythonExt>(
-    new TMacro<PythonExt>(this, &PythonExt::macRun, "Run", EmptyString, fpAny^fpNone, "Runs provided file") );
+    new TMacro<PythonExt>(this, &PythonExt::macRun, "Run", EmptyString(), fpAny^fpNone, "Runs provided file") );
   Library->RegisterFunction<PythonExt>(
     new TFunction<PythonExt>(this, &PythonExt::funLogLevel, "LogLevel", fpNone|fpOne,
     "Sets log level - default is macro, look at LogLevel for more information") );
@@ -506,7 +506,7 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...)  {
     }
     else if( format[i] == 'w' )  {
       olxstr* os = va_arg(argptr, olxstr*);
-      *os = EmptyString;
+      os->SetLength(0);
       if( io->ob_type == &PyString_Type )  {
         char* str;
         int len;
@@ -518,7 +518,7 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...)  {
         TTBuffer<wchar_t> wc_bf(usz+1);      
         usz = PyUnicode_AsWideChar((PyUnicodeObject*)io, wc_bf.Data(), usz);
         if( usz > 0 )
-          os->Append( wc_bf.Data(), usz);
+          os->Append(wc_bf.Data(), usz);
       }
       else  {
         va_end(argptr);       

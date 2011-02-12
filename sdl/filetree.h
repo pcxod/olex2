@@ -43,7 +43,7 @@ public:
       while( true ) {
         size_t index = (to+from)/2;
         if( index == from || index == to)
-          return -1;
+          return InvalidIndex;
         if( list[index].GetName().Comparei(entity) < 0 )  from = index;
         else
           if( list[index].GetName().Comparei(entity) > 0 )  to  = index;
@@ -110,17 +110,17 @@ public:
     // calculates the difference tree between the folders
     void CalcMergedTree(const Folder& f, DiffFolder& df) const;
     // merges the difference tree, possibly into a different location
-    void Merge(const DiffFolder& df, TOnProgress& onSync, const olxstr& _dest_n = EmptyString) const;
+    void Merge(const DiffFolder& df, TOnProgress& onSync, const olxstr& _dest_n=EmptyString()) const;
     // copies and overwrites existing files and timestamp
     bool CopyTo(const olxstr& _dest,
                 TOnProgress& OnSync,
                 bool do_throw,
-                void (*AfterCopy)(const olxstr& src, const olxstr& dest) = NULL
+                void (*AfterCopy)(const olxstr& src, const olxstr& dest)=NULL
                 ) const;
     // syncronises two folders - only updates files, does not delete anything (yet)
     void Synchronise(Folder& f, TOnProgress& onSync);
     // exports the folder index to a file
-    void ExportIndex(const olxstr& fileName, TStrList* list = NULL, size_t level=0) const;
+    void ExportIndex(const olxstr& fileName, TStrList* list=NULL, size_t level=0) const;
     // the function fills the list with full file names (recursively)
     void ListFilesEx(TStrList& out, const TTypeList<TEFile::TFileNameMask>* _mask=NULL) const;
     void ListFiles(TStrList& out, const olxstr& _mask) const;
@@ -160,7 +160,7 @@ public:
   // calculates the number of bytes to be transfered when merging
   static uint64_t CalcMergeSize(const DiffFolder& df);
   //............................................................................
-  void Merge(const DiffFolder& df, const olxstr& dest=EmptyString ) const {
+  void Merge(const DiffFolder& df, const olxstr& dest=EmptyString() ) const {
     TOnProgress onSync;
     onSync.SetMax( CalcMergeSize(df) );
     OnSynchronise->Enter(NULL, &onSync);

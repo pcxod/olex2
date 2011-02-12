@@ -111,7 +111,7 @@ public:
       (*regFunc)();
     }
   }
-  TLibrary* ExportLibrary(const olxstr& name=EmptyString);
+  TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 //  static inline TLibrary* GetExportedLibrary()  {  return Library;  }
   inline TLibrary* GetBindLibrary()  {  return BindLibrary;  }
   IOlexProcessor* GetOlexProcessor()  {  return OlexProcessor;  }

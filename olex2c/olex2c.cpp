@@ -178,7 +178,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   ProcessHandler _ProcessHandler;
   ProcessManager* _ProcessManager;
 public:
-  TOlex(const olxstr& basedir) : XApp(basedir, this), Macros(*this), _ProcessHandler(*this) {
+  TOlex(const olxstr& basedir) : XApp(basedir, NULL, this), Macros(*this), _ProcessHandler(*this) {
     Macros.Init();
     XApp.SetCifTemplatesDir(XApp.GetBaseDir() + "etc/CIF/");
     OlexInstance = this;
@@ -401,7 +401,7 @@ public:
   // no GUI
   virtual bool IsControl(const olxstr& cname) const {  return false;  }
 
-  virtual const olxstr& getVar(const olxstr &name, const olxstr &defval=NullString) const  {
+  virtual const olxstr& getVar(const olxstr &name, const olxstr &defval=EmptyString()) const  {
     size_t i = TOlxVars::VarIndex(name);
     if( i == InvalidIndex )  {
       if( &defval == NULL )
@@ -500,36 +500,39 @@ public:
       Selection.Clear();
     }
     else if( Options.Contains("-i") )  {
-      latt.GetAtoms().ForEach(ACollectionItem::TagSetter<>(0));
+      latt.GetObjects().atoms.ForEach(ACollectionItem::TagSetter<>(0));
       Selection.ForEach(ACollectionItem::TagSetter<>(1));
       Selection.Clear();
-      for( size_t i=0; i < latt.AtomCount(); i++ )
-        if( latt.GetAtom(i).GetTag() == 0 && !latt.GetAtom(i).IsDeleted() )
-          Selection.Add(&latt.GetAtom(i));
+      for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )  {
+        TSAtom& sa = latt.GetObjects().atoms[i];
+        if( sa.GetTag() == 0 && !sa.IsDeleted() )
+          Selection.Add(sa);
+      }
     }
     else if( Options.Contains("-a" ) )  {
       Selection.Clear();
-      Selection.SetCapacity( latt.AtomCount() );
-      for( size_t i=0; i < latt.AtomCount(); i++ )
-        if( !latt.GetAtom(i).IsDeleted() )
-          Selection.Add(&latt.GetAtom(i));
+      Selection.SetCapacity(latt.GetObjects().atoms.Count());
+      for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )
+        if( !latt.GetObjects().atoms[i].IsDeleted() )
+          Selection.Add(latt.GetObjects().atoms[i]);
     }
     else {
       if( Cmds.Count() > 1 && Cmds[0].Equalsi("satoms") )  {
-        int wi = Cmds.IndexOf("where");
-        olxstr Where( Cmds.Text(' ', wi+1).LowerCase() );
+        size_t wi = Cmds.IndexOf("where");
+        olxstr Where(Cmds.Text(' ', wi+1).LowerCase());
         TSFactoryRegister rf;
         TTSAtom_EvaluatorFactory *satom = (TTSAtom_EvaluatorFactory*)rf.BindingFactory("satom");
         TSyntaxParser SyntaxParser(&rf, Where);
         if( SyntaxParser.Errors().Count() == 0 )  {
-          for( size_t i=0; i < latt.AtomCount(); i++ )  {
-            if( latt.GetAtom(i).IsDeleted() )  continue;
-            satom->SetTSAtom_( &latt.GetAtom(i) );
-            if( SyntaxParser.Evaluate() )  Selection.Add( &latt.GetAtom(i) );
+          for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )  {
+            TSAtom& sa = latt.GetObjects().atoms[i];
+            if( sa.IsDeleted() )  continue;
+            satom->SetTSAtom_(&sa);
+            if( SyntaxParser.Evaluate() )  Selection.Add(sa);
           }
         }
         else
-          XApp.NewLogEntry(logError) << SyntaxParser.Errors().Text(NewLineSequence);
+          XApp.NewLogEntry(logError) << SyntaxParser.Errors().Text(NewLineSequence());
       }
       else  {
         XApp.FindSAtoms(Cmds.Text(' '), Selection);
@@ -567,7 +570,7 @@ public:
       Cout = !Options.Contains('o'),    // catch output
       quite = Options.Contains('q');
 
-    olxstr dubFile( Options.FindValue('s',EmptyString) );
+    olxstr dubFile( Options.FindValue('s',EmptyString()) );
 
     olxstr Tmp;
     bool Space;
@@ -649,7 +652,7 @@ public:
   void macEcho(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
     for( size_t i=0; i < Cmds.Count(); i++ )
       TBasicApp::GetLog() << Cmds[i] << ' ';
-    TBasicApp::GetLog() << NewLineSequence;
+    TBasicApp::GetLog() << NewLineSequence();
   }
   //..............................................................................
   void funIsPluginInstalled(const TStrObjList& Params, TMacroError &E) {
@@ -800,7 +803,7 @@ public:
   // cannot stick it anywhere else, eh?
   void funGetMAC(const TStrObjList& Params, TMacroError &E)  {
     bool full = (Params.Count() == 1 && Params[0].Equalsi("full") );
-    olxstr rv(EmptyString, 256);
+    olxstr rv(EmptyString(), 256);
     char bf[16];
     TShellUtil::MACInfo MACsInfo;
     TShellUtil::ListMACAddresses(MACsInfo);
@@ -905,7 +908,7 @@ int main(int argc, char* argv[])  {
   if( argc > 1 )  {
     olxstr arg_ext( TEFile::ExtractFileExt(argv[1]) );
     if( arg_ext.Equalsi("autochem") )  {
-      olxstr sf ( TEFile::ChangeFileExt(argv[1], EmptyString) );
+      olxstr sf ( TEFile::ChangeFileExt(argv[1], EmptyString()) );
       olex.executeMacro( olxstr("start_autochem '") << sf << '\'' );
     }
   }

@@ -64,7 +64,9 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
        TrefT  = false,
        PattS  = false,
        FlackF = false,
-       CellInfo = false;
+       CellInfo = false,
+       HasTwin = false,
+       InvTwin = false;
   TStrList Toks;
   Clear();
   SL.LoadFromFile(FN);
@@ -246,7 +248,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         // extract wR2 && Goof && restrained GooF
         Toks.Clear();
         i ++;  if( i >= SL.Count() )  break;
-        Toks.Strtok(SL[i].Replace(',', EmptyString), ' ');
+        Toks.Strtok(SL[i].Replace(',', EmptyString()), ' ');
         if( Toks.Count() > 11 )  {
           FwR2 = Toks[2].ToDouble();
           FS = Toks[7].ToDouble();
@@ -295,6 +297,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
           _HasFlack = true;
         }
         FlackF = true;
+        continue;
       }
     }
     if( !CellInfo &&
@@ -309,12 +312,36 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         FMu = Toks[8].ToDouble();
         FRho = Toks[16].ToDouble();
         CellInfo = true;
+        continue;
+      }
+    }
+    if( !HasTwin && SL[i].StartsFromi(" TWIN ") )  {
+      Toks.Clear();
+      Toks.Strtok(SL[i], ' ');
+      if( Toks.Count() == 11 )  {
+        if( Toks.GetLastString().ToInt() != 2 )  continue;
+        InvTwin = true;
+        for( size_t j=1; j < 10; j++ )  {
+          const double v = Toks[j].ToDouble();
+          if( j == 1 || j == 5 || j == 9 )  {
+            if( v != -1 )  {
+              InvTwin = false;
+              break;
+            }
+          }
+          else if( v != 0 )  {
+            InvTwin = false;
+            break;
+          }
+        }
+        HasTwin = true;
+        continue;
       }
     }
     // errors
     ind = SL[i].FirstIndexOf("**");
     if( ind != InvalidIndex )  {
-      AnAssociation2<olxstr,olxstr>& msg = ErrorMsgs.AddNew(SL[i], EmptyString);
+      AnAssociation2<olxstr,olxstr>& msg = ErrorMsgs.AddNew(SL[i], EmptyString());
       if( SL[i].IndexOf(':') != InvalidIndex )
         continue;
       if( i >= 2 )  {
@@ -332,7 +359,22 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
   /* we do not consider SA, as it depends if there are any anisotropic atoms
    in the structure
   */
-  if( DH || HP || DRef || TRefC || URefC || RF || RIS )  FLoaded = true;
+  if( DH || HP || DRef || TRefC || URefC || RF || RIS )
+    FLoaded = true;
+  if( HasTwin && InvTwin )  {
+    for( size_t i=0; i < SL.Count(); i++ )  {
+      olxstr& line = SL[SL.Count()-i-1];
+      if( line.IndexOf("BASF  ") != InvalidIndex )  {
+        Toks.Clear();
+        Toks.Strtok(line, ' ');
+        if( Toks.Count() == 6 )  {
+          FlackParam.V() = Toks[1].ToDouble();
+          FlackParam.E() = Toks[2].ToDouble();
+          break;
+        }
+      }
+    }
+  }
   return FLoaded;
 }
 //..............................................................................
@@ -353,7 +395,7 @@ bool TLst::ExportHTML( const short Param, TStrList &Html, bool TableDef)  {
       Table[1][2] = Ref.L;
       Table[i][3] = Ref.DF;
     }
-    Table.CreateHTMLList(Html, EmptyString, true, false, TableDef);
+    Table.CreateHTMLList(Html, EmptyString(), true, false, TableDef);
     return true;
   }
   if( Param == slslRefineData )  {
@@ -371,7 +413,7 @@ bool TLst::ExportHTML( const short Param, TStrList &Html, bool TableDef)  {
     Table[10][0] = "Reflections with Fo > 4sig(Fo)";   Table[10][1] = UniqRefs();
     Table[11][0] = "Rint";              Table[11][1] = Rint();
     Table[12][0] = "Rsigma";            Table[12][1] = Rsigma();
-    Table.CreateHTMLList(Html, EmptyString, false, false, TableDef);
+    Table.CreateHTMLList(Html, EmptyString(), false, false, TableDef);
     return true;
   }
   return false;

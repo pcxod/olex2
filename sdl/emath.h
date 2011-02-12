@@ -11,6 +11,10 @@ BeginEsdlNamespace()
 template <typename T> inline olxch olx_sign_char(const T& p)  {  return (p<0) ? olxT('-') : olxT('+');  }
 // determines the sign of a number
 template <typename T> inline T olx_sign(const T& a)  {  return (T)((a < 0 ) ? -1 : 1);  }
+//copies sign from b to a: returns a with sign of b
+template <class T1, typename T2> T2 olx_copy_sign(T1 a, T2 b)  {
+  return (b < 0) ? (a < 0 ? a : -a) : (a < 0 ? -a : a);
+}
 // comparison function (useful for the size_t on Win64, where size_t=uint64_t and int is int32_t)
 template <typename T1, typename T2>
   inline int olx_cmp(T1 a, T2 b)  {  return a < b ? -1 : (a > b ? 1 : 0);  }

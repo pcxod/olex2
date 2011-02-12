@@ -137,7 +137,7 @@ public:
     return rv;
   }
   static void Tests(OlxTests& t)  {
-    t.description = __OlxSourceInfo;
+    t.description = __OlxSrcInfo;
     const uint32_t id_1 = GenerateId(0, -56, -43, -21);
     const uint32_t id_2 = GenerateId(0, vec3i(-56, -43, -21));
     if( id_1 != id_2 )

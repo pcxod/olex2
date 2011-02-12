@@ -35,7 +35,7 @@ namespace ctrl_ext  {
     
     static TMainFrame& GetMainFrameInstance() {  return *MainFrameInstance;  }
     static int ShowAlert(const olxstr &msg, const olxstr &title, int flags);
-    static void ShowAlert(const TExceptionBase &esc, const olxstr &msg=EmptyString, bool log=true);
+    static void ShowAlert(const TExceptionBase &esc, const olxstr &msg=EmptyString(), bool log=true);
     DECLARE_CLASS(TMainFrame)
   };
 };  // end namespace ctrl_ext

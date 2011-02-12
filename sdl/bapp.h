@@ -42,7 +42,7 @@ public:
   }
   /* if var_name is not NULL, tries to get its value and combine with file name of path 
   if either are empty - the curent folder is used with exename 'unknown.exe' */
-  static olxstr GuessBaseDir(const olxstr& path, const olxstr& var_name=EmptyString);
+  static olxstr GuessBaseDir(const olxstr& path, const olxstr& var_name=EmptyString());
   static const olxstr& GetBaseDir()  {  return GetInstance().BaseDir;  }
   // this resets the ExeName to the file name of the bd
   static const olxstr& SetBaseDir(const olxstr& bd);

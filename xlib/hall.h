@@ -1,6 +1,6 @@
 #ifndef __olx_xlib_Hall_H
 #define __olx_xlib_Hall_H
-#include "rot_id.h"
+#include "mat_id.h"
 #include "edict.h"
 #include "symmat.h"
 

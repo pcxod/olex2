@@ -15,6 +15,7 @@ class THklFile: public IEObject  {
   static int HklCmp(const TReflection* I1, const TReflection* I2);
   TRefPList Refs;
   TArray3D< TRefPList* > *Hkl3D;
+  mat3d Basis;
 protected:
   vec3i MaxHkl, MinHkl;
   double MaxI, MaxIS, MinI, MinIS;
@@ -38,8 +39,10 @@ protected:
   void InitHkl3D();
   void Clear3D();
 public:
-  THklFile();
-  virtual ~THklFile();
+  THklFile() : Hkl3D(NULL)  {  Basis.I();  }
+  THklFile(const mat3d& hkl_transformation) :
+    Hkl3D(NULL), Basis(hkl_transformation)  {}
+    virtual ~THklFile()  {  Clear();  }
 
   void Append(const THklFile& hkls);
   void Append(const TRefPList& hkls);

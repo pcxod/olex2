@@ -8,6 +8,7 @@
 #include "symmparser.h"
 #include "bapp.h"
 #include "hall.h"
+#include "symspace.h"
 
 TSymmLib* TSymmLib::Instance = NULL;
 
@@ -539,6 +540,18 @@ TCLattice::TCLattice(int latt)  {
     Vectors.AddNew<double,double,double>(2./3., 1./3., 1./3.);
     Vectors.AddNew<double,double,double>(1./3., 2./3., 2./3.);
     break;
+   case 8:      // S Centered
+    Name = "S Centered";
+    Symbol = "S";
+    Vectors.AddNew<double,double,double>(1./3., 1./3., 2./3.);
+    Vectors.AddNew<double,double,double>(2./3., 2./3., 1./3.);
+    break;
+   case 9:      // T Centered
+    Name = "T Centered";
+    Symbol = "T";
+    Vectors.AddNew<double,double,double>(1./3., 2./3., 1./3.);
+    Vectors.AddNew<double,double,double>(2./3., 1./3., 2./3.);
+    break;
    case 4:      // Face Centered (F)
     Name = "Face Centered";
     Symbol = "F";
@@ -1014,75 +1027,53 @@ size_t TSpaceGroup::GetUniqMatrices(smatd_list& matrices, short Flags) const  {
 }
 //..............................................................................
 void TSpaceGroup::GetMatrices(smatd_list& matrices, short Flags) const {
-  for( size_t i=0; i <= MatrixCount(); i++ )  {
+  matrices.AddNew().r.I();  // add identity, if not requested - delete in the end
+  for( size_t i=0; i < MatrixCount(); i++ )  {
     smatd* m = NULL;
-    if( i == 0 )  {
-      if( (Flags & mattIdentity) == mattIdentity )
-        (m = new smatd)->r.I();
+    const smatd& mt = Matrices[i];
+    if( (Flags & mattTranslation) == 0 )  {
+      if( mt.t.IsNull() )
+        m = new smatd(mt);
     }
-    else  {
-      if( (Flags & mattTranslation) == mattTranslation && (Flags & mattCentering) == 0 )  {
-        const smatd& mt = Matrices[i-1];
-        if( !mt.t.IsNull() )  continue;
-          m = new smatd( mt );
-      }
-      else
-        m = new smatd(Matrices[i-1]);
-    }
+    else
+      m = new smatd(mt);
     if( m == NULL )  continue;
     matrices.Add(*m);
-    if( (Flags & mattCentering) == mattCentering )  {
+  }
+  if( (Flags & mattCentering) == mattCentering )  {
+    for( size_t i=0; i <= MatrixCount(); i++ )  {
+      const smatd& mt = (i==0 ? matrices[0] : Matrices[i-1]);
       for( size_t j=0; j < Latt->VectorCount(); j++ )  {
-        vec3d& v = Latt->GetVector(j);
-        if( (Flags & mattTranslation) == 0 )  {
-          const smatd& mt = Matrices[i-1];
-          double dv = mt.t[0] - v[0];
-          int iv = (int)dv;  dv -= iv;
-          if( olx_abs(dv) < 0.01 || olx_abs(dv) > 0.99 )  dv = 0;
-          if( dv != 0 )  continue;
-          dv = mt.t[1] - v[1];
-          iv = (int)dv;    dv -= iv;
-          if( olx_abs(dv) < 0.01 || olx_abs(dv) > 0.99 )  dv = 0;
-          if( dv != 0 )  continue;
-          dv = mt.t[2] - v[2];
-          iv = (int)dv;     dv -= iv;
-          if( olx_abs(dv) < 0.01 || olx_abs(dv) > 0.99 )  dv = 0;
-          if( dv != 0 )  continue;
+        const vec3d& v = Latt->GetVector(j);
+        bool add = true;
+        if( (Flags & mattTranslation) == 0 && i != InvalidIndex )  {
+          for( int k=0; k < 3; k++ )  {
+            double dv = mt.t[k] - v[k];
+            int iv = (int)dv;  dv -= iv;
+            if( olx_abs(dv) < 0.01 || olx_abs(dv) > 0.99 )  dv = 0;
+            if( dv != 0 )  {
+              add = false;
+              break;
+            }
+          }
         }
-        smatd* m1 = new smatd(*m);
-
-        m1->t[0] += v[0];
-        int iv = (int)m1->t[0];
-        m1->t[0] -= iv;
-        if( m1->t[0] < 0 )  m1->t[0] += 1;
-
-        m1->t[1] += v[1];
-        iv = (int)m1->t[1];
-        m1->t[1] -= iv;
-        if( m1->t[1] < 0 )  m1->t[1] += 1;
-
-        m1->t[2] += v[2];
-        iv = (int)m1->t[2];
-        m1->t[2] -= iv;
-        if( m1->t[2] < 0 )  m1->t[2] += 1;
-        matrices.Add(*m1);
+        if( add )
+          matrices.AddCCopy(mt).t += v;
       }
     }
   }
   if( CentroSymmetric && ((Flags & mattInversion) == mattInversion) )  {
-    for( size_t i=0; i < matrices.Count(); i++ )
-      matrices.Insert(++i, new smatd(matrices[i])).r *= -1;
-    if( (Flags & mattIdentity) != mattIdentity )
+    const size_t mc = matrices.Count();
+    for( size_t i=0; i < mc; i++ )
+      matrices.Add(new smatd(matrices[i])) *= -1;
+    if( (Flags & mattIdentity) == 0 )
       matrices.Insert(0, new smatd).r.I() *= -1;
+
   }
-  if( Flags == mattAll )  {
-    for( size_t i=0; i < matrices.Count(); i++ )
-      matrices[i].SetId((uint8_t)i, 0, 0, 0);
-  }
-  else if( Flags == (mattAll^mattIdentity) )  {
-    for( size_t i=0; i < matrices.Count(); i++ )
-      matrices[i].SetId((uint8_t)i+1, 0, 0, 0);
-  }
+  for( size_t i=0; i < matrices.Count(); i++ )
+    matrices[i].t -= matrices[i].t.Floor<int>();
+  if( (Flags & mattIdentity) == 0 )
+    matrices.Delete(0);
 }
 //..............................................................................
 //..............................................................................
@@ -1109,7 +1100,7 @@ TSymmElement::TSymmElement(const olxstr& name, TSpaceGroup* sg)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-TSymmLib::TSymmLib(const olxstr& FN)  {
+TSymmLib::TSymmLib(const olxstr& FN) : extra_added(0)  {
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "An instance of the library is already created");
 
@@ -1143,7 +1134,7 @@ TSymmLib::TSymmLib(const olxstr& FN)  {
   TStrList toks;
   for( size_t i=0; i < sgc; i++ )  {
     TSpaceGroup* SG = new TSpaceGroup(olx_SGLib[i].name, olx_SGLib[i].full_name, olx_SGLib[i].hall_symbol,
-      olx_SGLib[i].axis, olx_SGLib[i].number, GetLattice(abs(olx_SGLib[i].latt)-1), (olx_SGLib[i].latt > 0));
+      olx_SGLib[i].axis, olx_SGLib[i].number, GetLatticeByNumber(olx_SGLib[i].latt), (olx_SGLib[i].latt > 0));
     SpaceGroups.Add(olx_SGLib[i].name, SG);
     toks.Strtok( olx_SGLib[i].matrices, ';');
     for( size_t j=0; j < toks.Count(); j++ )  {
@@ -1350,7 +1341,7 @@ TSymmLib::TSymmLib(const olxstr& FN)  {
 //..............................................................................
 TSymmLib::~TSymmLib()  {
   for( size_t i=0; i < SGCount(); i++ )  delete &(GetGroup(i));
-  for( size_t i=0; i < LatticeCount(); i++ )  delete &(GetLattice(i));
+  for( size_t i=0; i < LatticeCount(); i++ )  delete &(GetLatticeByIndex(i));
   for( size_t i=0; i < BravaisLatticeCount(); i++ )  delete &(GetBravaisLattice(i));
   Instance = NULL;
 }
@@ -1360,27 +1351,42 @@ void TSymmLib::GetGroupByNumber(int N, TPtrList<TSpaceGroup>& res) const  {
     if( GetGroup(i).GetNumber() == N )  res.Add( &GetGroup(i) );
 }
 //..............................................................................
+TSpaceGroup* TSymmLib::CreateNewFromCompact(int latt, const smatd_list& ml)  {
+  olxstr uname = HallSymbol::Evaluate(latt, ml);
+  TSpaceGroup* SG = FindGroup(uname);
+  if( SG != NULL )  return SG;
+  SG = new TSpaceGroup(uname, uname, uname,
+    EmptyString(), -(++extra_added), GetLatticeByNumber(latt), (latt > 0));
+  SpaceGroups.Add(uname, SG);
+  for( size_t i=1; i < ml.Count(); i++ )
+    SG->AddMatrix(ml[i]);
+  InitRelations();
+  return SG;
+}
+//..............................................................................
+TSpaceGroup* TSymmLib::CreateNewFromExpanded(const smatd_list& all_ml)  {
+  SymSpace::Info si = SymSpace::GetInfo(all_ml);
+  smatd_list ml;
+  for( size_t i=0; i < si.matrices.Count(); i++ )
+    ml.AddCCopy(*si.matrices[i]);
+  return CreateNewFromCompact(si.latt, ml);
+}
+//..............................................................................
 TSpaceGroup* TSymmLib::FindSG(const TAsymmUnit& AU)  {
   for( size_t i=0; i < SGCount(); i++ )  {
     if( GetGroup(i) == AU )  {
       return &(GetGroup(i));
     }
   }
-  static olxstr uname("u/n");
-  smatd_list ml;
+  smatd_list all_ml;
   for( size_t i=0; i < AU.MatrixCount(); i++ )
-    ml.AddCCopy(AU.GetMatrix(i));
-  TSpaceGroup* SG = new TSpaceGroup(uname, uname, HallSymbol::Evaluate(AU.GetLatt(), ml),
-    EmptyString, -1, GetLattice(olx_abs(AU.GetLatt())-1), (AU.GetLatt() > 0));
-  SpaceGroups.Add(uname, SG).Object;
-  InitRelations();
-  return SG;
-  //return NULL;
+    all_ml.AddCCopy(AU.GetMatrix(i));
+  return CreateNewFromCompact(AU.GetLatt(),all_ml);
 }
 //..............................................................................
 size_t TSymmLib::FindBravaisLattices(TAsymmUnit& AU, TTypeList<TBravaisLatticeRef>& res)  const {
-  double Alpha = AU.Angles()[0].GetV(), Beta = AU.Angles()[1].GetV(), Gamma = AU.Angles()[2].GetV();
-  double A = AU.Axes()[0].GetV(),       B = AU.Axes()[1].GetV(),      C = AU.Axes()[2].GetV();
+  double Alpha = AU.GetAngles()[0], Beta = AU.GetAngles()[1], Gamma = AU.GetAngles()[2];
+  double A = AU.GetAxes()[0], B = AU.GetAxes()[1], C = AU.GetAxes()[2];
   // alpha = beta = gamma
   if( Alpha == Beta && Alpha == Gamma )  {
     if( Alpha == 90 )  {
@@ -1432,25 +1438,22 @@ size_t TSymmLib::FindBravaisLattices(TAsymmUnit& AU, TTypeList<TBravaisLatticeRe
 }
 //..............................................................................
 size_t TSymmLib::FindLaueClassGroups(const TSpaceGroup& LaueClass, TPtrList<TSpaceGroup>& res)  const {
-  size_t rc = 0;
+  size_t rc = res.Count();
   for( size_t i=0; i < SGCount(); i++ )  {
     if( &GetGroup(i).GetLaueClass() == &LaueClass )  {
-      res.Add( &GetGroup(i) );
-      rc++;
+      res.Add(GetGroup(i));
     }
   }
-  return rc;
+  return res.Count()-rc;
 }
 //..............................................................................
 size_t TSymmLib::FindPointGroupGroups(const TSpaceGroup& PointGroup, TPtrList<TSpaceGroup>& res) const {
-  size_t rc = 0;
+  size_t rc = res.Count();
   for( size_t i=0; i < SGCount(); i++ )  {
-    if( &GetGroup(i).GetPointGroup() == &PointGroup )  {
-      res.Add( &GetGroup(i) );
-      rc++;
-    }
+    if( &GetGroup(i).GetPointGroup() == &PointGroup )
+      res.Add(GetGroup(i));
   }
-  return rc;
+  return res.Count()-rc;
 }
 //..............................................................................
 void TSymmLib::InitRelations()  {

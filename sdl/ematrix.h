@@ -36,14 +36,14 @@ template <class MatType> class TMatrix: public ACollectionItem  {
     delete [] FData;
     FData = NULL;  
   }
-  TVector <MatType>* FData;
+  TVector<MatType>* FData;
 public:
   TMatrix()  {
     FData = NULL;
     Fn = Fm = 0;
     SetTag(-1);
   }
-
+  
   TMatrix(size_t VectorsNumber, size_t ElementsNumber)  {
     Fn = VectorsNumber;
     Fm = ElementsNumber;
@@ -54,7 +54,9 @@ public:
     SetTag(-1);
   }
 
-  template <class AType> TMatrix(const TMatrix<AType>& M) : Fn(M.Fn), Fm(M.Fm)  {
+  template <class AType> TMatrix(const TMatrix<AType>& M) :
+    Fn(M.RowCount()), Fm(M.ColCount())
+  {
     if( (Fn == 0) || (Fm == 0) )   {  FData = NULL;  return;  }
     FData = new TVector<MatType>[Fn];
     for( size_t i=0; i < Fn; i++ )  
@@ -74,6 +76,7 @@ public:
   size_t Elements() const {  return Fm;  } 
   size_t ColCount() const {  return Fm;  }
   size_t RowCount() const {  return Fn;  }
+  bool IsEmpty() const {  return Fm == 0 || Fn == 0;  }
 
   const TVector<MatType>& operator [](size_t index) const {  return FData[index];  }
   TVector<MatType>& operator [](size_t index) {  return FData[index];  }
@@ -81,6 +84,10 @@ public:
   TVector<MatType>& Get(size_t index) {  return FData[index];  }
   const MatType& Get(size_t i, size_t j) const {  return FData[i][j];  }
   void Set(size_t i, size_t j, const MatType& v) {  FData[i][j] = v;  }
+  const MatType& operator ()(size_t i, size_t j) const {  return FData[i][j];  }
+  TVector<MatType>& operator ()(size_t i)  {  return FData[i];  }
+  const TVector<MatType>& operator ()(size_t i) const {  return FData[i];  }
+  MatType& operator ()(size_t i, size_t j)  {  return FData[i][j];  }
   /* the function multiplies a matrix by a column vector. Only the number of vector
    elements is taken from the matrix - no error will be generated if the matrix dimensions
    (number of elements) are larger than the vector dimentions!!!
@@ -95,14 +102,13 @@ public:
     return R;
   }
 
-  template <class AType> TMatrix operator * (const TMatrix<AType>& C) const {
-    const size_t X = Vectors();
-    const size_t Y = Elements();
-    const size_t Z = C.Elements();
-    TMatrix<MatType> Result(X, Z);
-    for( size_t i = 0; i < X; i++ )
-      for( size_t j = 0; j < Z; j++ )
-        for( size_t k = 0; k < Y; k++ )
+  template <class AType> TMatrix<MatType> operator * (const TMatrix<AType>& C) const {
+    if( ColCount() != C.RowCount() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "size");
+    TMatrix<MatType> Result(RowCount(), C.ColCount());
+    for( size_t i = 0; i < RowCount(); i++ )
+      for( size_t j = 0; j < C.ColCount(); j++ )
+        for( size_t k = 0; k < ColCount(); k++ )
           Result[i][j] += FData[i][k]*C[k][j];
     return Result;
   }
@@ -111,7 +117,7 @@ public:
     return TMatrix<MatType>(*this) += c;
   }
 
-  template <class AType> TMatrix operator  - (const TMatrix<AType>& c) const {
+  template <class AType> TMatrix operator - (const TMatrix<AType>& c) const {
     return TMatrix<MatType>(*this) -= c;
   }
 
@@ -128,7 +134,7 @@ public:
     return *this;
   }
 
-  template <class AType> TMatrix& operator -=(const TMatrix<AType>& c)  {
+  template <class AType> TMatrix& operator -= (const TMatrix<AType>& c)  {
     if( (Fm ==c.Elements()) && (Fn == c.Vectors()) )
       for( size_t i=0; i < Fn; i++ )  
         FData[i] -= c[i];
@@ -180,7 +186,7 @@ public:
     this->Resize(C.Vectors(), C.Elements());
     for( size_t i = 0; i < Fn; i++)
       FData[i] = C[i];
-    SetTag( C.GetTag() );
+    SetTag(C.GetTag());
     return *this;
   }
 
@@ -188,27 +194,27 @@ public:
     Resize(C.Vectors(), C.Elements());
     for( size_t i = 0; i < Fn; i++ )
       FData[i] = C[i];
-    SetTag( C.GetTag() );
+    SetTag(C.GetTag());
     return *this;
   }
 
-  template <class MC> TMatrix& Assign(const MC& M, size_t width, size_t height)  {
-    Resize(width, height);
-    for( size_t i=0; i < width; i++ )
-      for(size_t j=0; j < height; j++ )
-        FData[j][i] = M[j][i];
+  template <class MC> TMatrix& Assign(const MC& M, size_t row_cnt, size_t col_cnt, bool resize=true)  {
+    if( resize )
+      Resize(row_cnt, col_cnt);
+    else  {
+      if( Fn < row_cnt || Fm < col_cnt )
+        throw TFunctionFailedException(__OlxSourceInfo, "indices out of bonds");
+    }
+    for( size_t i=0; i < row_cnt; i++ )
+      for(size_t j=0; j < col_cnt; j++ )
+        FData[i][j] = M[i][j];
     return *this;
   }
 
   TMatrix& I() {
-    for( size_t i=0; i < Fn; i++ )  {
-      for( size_t j=0; j < Fm; j++ )  {
-        if( i == j )  
-          FData[i][j]=(MatType)1.0;
-        else      
-          FData[i][j]=0;
-      }
-    }
+    for( size_t i=0; i < Fn; i++ )
+      for( size_t j=0; j < Fm; j++ )
+        FData[i][j] = (i == j ? 1 : 0);
     return *this;
   }
 
@@ -218,18 +224,10 @@ public:
   }
 
   bool IsI() const  {
-    for( size_t i=0; i < Fn; i++ )  {
-      for( size_t j=0; j < Fm; j++ )  {
-        if( i == j )  {  
-          if( FData[i][j] != 1.0 ) 
-            return false; 
-        }
-        else  {  
-          if( FData[i][j] != 0.0 )  
-            return false; 
-        }
-      }
-    }
+    for( size_t i=0; i < Fn; i++ )
+      for( size_t j=0; j < Fm; j++ )
+        if( FData[i][j] != (i ==j ? 1 : 0) ) 
+          return false; 
     return true;
   }
 
@@ -306,23 +304,30 @@ public:
   }
 
   TMatrix& Transpose()  {
-    if( Fn != Fm )
-      throw TFunctionFailedException(__OlxSourceInfo, "incompatible matrix dimensions");
-    for( size_t i=0; i < Fm; i++ )  {
-      for( size_t j=i+1; j < Fn; j++ )  {  // need to go around a half of matrix
-        if( i == j )  continue;
-        olx_swap(FData[j][i], FData[i][j]);
+    if( Fn == 0 || Fm == 0 )
+      ;
+    else if( Fn != Fm )  {
+      TVector<MatType>* data = new TVector<MatType>[Fm];
+      for( size_t i=0; i < Fm; i++ )  {
+        data[i].Resize(Fn);
+        for( size_t j=0; j < Fn; j++ )
+          data[i][j] = FData[j][i];
+      }
+      olx_swap(Fn, Fm);
+      delete [] FData;
+      FData = data;
+    }
+    else  {
+      for( size_t i=0; i < Fm; i++ )  {
+        for( size_t j=i+1; j < Fn; j++ )  // need to go around a half of matrix
+          olx_swap(FData[j][i], FData[i][j]);
       }
     }
     return *this;
   }
+
   static TMatrix Transpose(const TMatrix& matr)  {
-    TMatrix rv(matr.Elements(), matr.Vectors());
-    for( size_t i = 0; i < matr.Vectors(); i++ )  {
-      for( size_t j = 0; j < matr.Elements(); j++ )
-        rv[j][i] = matr[i][j];
-    }
-    return rv;
+    return TMatrix(matr).Transpose();
   }
 
   MatType Trace() const  {
@@ -334,14 +339,14 @@ public:
     return a;
   }
 
-  void Print() const  {
+  void Print() const {
     printf("\n");
     for( size_t i = 0; i < Fn; i++ )  {
       FData[i].Print();
-      printf("\n");   }
+      printf("\n");
+    }
     printf("\n");
   }
-
 
   bool LoadFromFile(const olxstr& FN)  {
     TStrList S;
@@ -365,7 +370,7 @@ public:
   void SaveToFile(const olxstr& FN)  {
     TCStrList S;
     for( size_t i=0; i < Fn; i++ )  {
-      olxstr& T = S.Add(EmptyString);
+      olxstr& T = S.Add(EmptyString());
       for( size_t j=0; j < Fm; j++ )
         T << olxstr::FormatFloat(5, FData[i][j], true) << '\t';
     }
@@ -543,23 +548,23 @@ public:
     GaussSolve(s, r, param);
     double rms = 0;
     for( size_t i=0; i < xy.Elements(); i++ )
-      rms += olx_sqr( xy[1][i]-TVector<MatType>::PolynomValue(param, xy[0][i]) );
+      rms += olx_sqr( xy[1][i]-TVector<MatType>::PolynomValue(param, xy[0][i]));
     return (rms > 0) ? sqrt(rms)/xy.Elements() : 0;
   }
 
   // Lagrange interpolation
-  static double  Lagrang(TVector<MatType>& x, const TVector<MatType>& y, double point )  {
-    int sz = x.Count();
+  static double  Lagrang(TVector<MatType>& x, const TVector<MatType>& y, double point)  {
+    const size_t sz = x.Count();
     double a, b, p1 = 0;
-    for(int i = 0; i < sz; i ++ )  {
+    for( size_t i = 0; i < sz; i++ )  {
       a = b = 1;
-      for(int j = 0; j < sz; j ++ )  {
-       if( i != j )  {
-         a *= (point - x[j]);
-         b *= (x[i] - x[j]);
+      for( size_t j = 0; j < sz; j++ )  {
+        if( i != j )  {
+          a *= (point - x[j]);
+          b *= (x[i] - x[j]);
         }
-     }
-     p1 += (a/b)*y[i];
+      }
+      p1 += (a/b)*y[i];
     }
     return p1;
   }

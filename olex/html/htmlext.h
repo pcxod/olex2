@@ -161,7 +161,7 @@ public:
   }
 
   bool GetShowTooltips() const {  return ShowTooltips;  }
-  void SetShowTooltips(bool v, const olxstr &html_name=EmptyString);
+  void SetShowTooltips(bool v, const olxstr &html_name=EmptyString());
 
   bool IsPageLoadRequested() const {  return PageLoadRequested;  }
   inline void LockPageLoad(const IEObject* caller)  {

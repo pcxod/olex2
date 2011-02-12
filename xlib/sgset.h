@@ -6,7 +6,7 @@ BeginXlibNamespace()
 class AxisInfo  {
   olxstr axis;
 public:
-  AxisInfo(const TSpaceGroup& sg, const olxstr _axis=EmptyString) : axis(_axis.IsEmpty() ? sg.GetAxis() : _axis)  {
+  AxisInfo(const TSpaceGroup& sg, const olxstr _axis=EmptyString()) : axis(_axis.IsEmpty() ? sg.GetAxis() : _axis)  {
     if( axis.IsEmpty() && sg.GetBravaisLattice().GetName().Equalsi("Orthorhombic") )
       axis = "abc";
   }
@@ -41,7 +41,7 @@ public:
     return false;
   }
   olxstr GetMonoclinicAxis() const {
-    return HasMonoclinicAxis() ? (HasCellChoice() ? axis.SubStringTo(axis.Length()-1) : axis) : EmptyString;
+    return HasMonoclinicAxis() ? (HasCellChoice() ? axis.SubStringTo(axis.Length()-1) : axis) : EmptyString();
   }
   const olxstr GetAxis() const {  return axis;  }
   static olxstr ComposeAxisInfo(const olxstr& mon_axis, short cell_choice=-1)  {

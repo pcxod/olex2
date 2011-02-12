@@ -487,7 +487,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
   olx_gl::pushAttrib(GL_ALL_ATTRIB_BITS);
   const bool Select = SelectObjects || SelectPrimitives;
   const bool skip_mat = StereoFlag==glStereoColor;
-  static const int DrawMask = sgdoVisible|sgdoSelected|sgdoDeleted|sgdoGrouped;
+  static const int DrawMask = sgdoSelected|sgdoGrouped|sgdoHidden;
   if( !FIdentityObjects.IsEmpty() || FSelection->GetGlM().IsIdentityDraw() )  {
     SetView(x, y, true, Select, 1);
     const size_t id_obj_count = FIdentityObjects.Count();
@@ -501,7 +501,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
         const size_t c_obj_count = GPC->ObjectCount();
         for( size_t k=0; k < c_obj_count; k++ )  {
           AGDrawObject& GDO = GPC->GetObject(k);
-          if( GDO.MaskFlags(DrawMask) != sgdoVisible )  continue;
+          if( GDO.MaskFlags(DrawMask) != 0 )  continue;
           if( SelectObjects )  olx_gl::loadName((GLuint)GDO.GetTag());
           else if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
           olx_gl::pushMatrix();
@@ -541,7 +541,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
         const size_t c_obj_count = GPC->ObjectCount();
         for( size_t k=0; k < c_obj_count; k++ )  {
           AGDrawObject& GDO = GPC->GetObject(k);
-          if( GDO.MaskFlags(DrawMask) != sgdoVisible )  continue;
+          if( GDO.MaskFlags(DrawMask) != 0 )  continue;
           if( SelectObjects )  olx_gl::loadName((GLuint)GDO.GetTag());
           else if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
           olx_gl::pushMatrix();
@@ -564,7 +564,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
       const size_t c_obj_count = GPC->ObjectCount();
       for( size_t k=0; k < c_obj_count; k++ )  {
         AGDrawObject& GDO = GPC->GetObject(k);
-        if( GDO.MaskFlags(DrawMask) != sgdoVisible )  continue;
+        if( GDO.MaskFlags(DrawMask) != 0 )  continue;
         if( SelectObjects )  olx_gl::loadName((GLuint)GDO.GetTag());
         else if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
         olx_gl::pushMatrix();
@@ -599,7 +599,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimi
         const size_t c_obj_count = GPC->ObjectCount();
         for( size_t k=0; k < c_obj_count; k++ )  {
           AGDrawObject& GDO = GPC->GetObject(k);
-          if( GDO.MaskFlags(DrawMask) != sgdoVisible )  continue;
+          if( GDO.MaskFlags(DrawMask) != 0 )  continue;
           if( SelectObjects )  olx_gl::loadName((GLuint)GDO.GetTag());
           else if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
           olx_gl::pushMatrix();
@@ -1213,14 +1213,14 @@ void TGlRenderer::LibLineWidth(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void TGlRenderer::LibBasis(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  {
-    TDataItem di(NULL, EmptyString);
+    TDataItem di(NULL, EmptyString());
     TEStrBuffer out;
     GetBasis().ToDataItem(di);
     di.SaveToStrBuffer(out);
     E.SetRetVal(out.ToString());
   }
   else  {
-    TDataItem di(NULL, EmptyString);
+    TDataItem di(NULL, EmptyString());
     di.LoadFromString(0, Params[0], NULL)    ;
     GetBasis().FromDataItem(di);
   }
@@ -1231,11 +1231,11 @@ TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
   lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibCompile, "Compile",
     fpOne, "Compiles or decompiles the model according to the boolean parameter") );
   lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibPerspective, "Perspective",
-    EmptyString, fpNone|fpOne, "Un/Sets perspective view") );
+    EmptyString(), fpNone|fpOne, "Un/Sets perspective view") );
   lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibFog, "Fog",
-    EmptyString, fpNone|fpOne, "fog color - sets fog, fog without arguments removes fog") );
+    EmptyString(), fpNone|fpOne, "fog color - sets fog, fog without arguments removes fog") );
   lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibZoom, "Zoom",
-    EmptyString, fpNone|fpOne, "If no arguments provided - resets zoom to fit to screen, otherwise increments/\
+    EmptyString(), fpNone|fpOne, "If no arguments provided - resets zoom to fit to screen, otherwise increments/\
 decrements current zoom by provided value") );
   lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibCalcZoom, "CalcZoom",
     fpNone, "Returns optimal zoom value") );

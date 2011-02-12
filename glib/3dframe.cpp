@@ -1,6 +1,6 @@
 #include "3dframe.h"
 
-void TFaceCtrl::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TFaceCtrl::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
@@ -55,10 +55,10 @@ T3DFrameCtrl::T3DFrameCtrl(TGlRenderer& prnt, const olxstr& cName) : AGlMouseHan
   Faces.Add(new TFaceCtrl(prnt, "facectrl", 5, edges[4], edges[7], edges[6], edges[5], norms[5], *this));
 }
 //.........................................................................................................
-void T3DFrameCtrl::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void T3DFrameCtrl::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  SetCollectionName(cName);
   for( size_t i=0; i < Faces.Count(); i++ )
-    Faces[i].Create(EmptyString, NULL);
+    Faces[i].Create(EmptyString());
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;

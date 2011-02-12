@@ -1,16 +1,38 @@
 #include "ostring.h"
 
-const olxstr &esdl::EmptyString = olxstr("");
-const olxstr &esdl::NullString = (const olxstr&)(*(olxstr*)NULL);
-const olxstr &esdl::TrueString = olxstr("true");
-const olxstr &esdl::FalseString = olxstr("false");
 
-const olxcstr &esdl::CEmptyString = olxcstr("");
-const olxcstr &esdl::CNullString = (const olxcstr&)(*(olxcstr*)NULL);
-const olxcstr &esdl::CTrueString = olxcstr("true");
-const olxcstr &esdl::CFalseString = olxcstr("false");
+const olxcstr &esdl::CEmptyString()  {
+  static olxcstr rv("");
+  return rv;
+}
+const olxcstr &esdl::CTrueString()  {
+  static olxcstr rv("true");
+  return rv;
+}
+const olxcstr &esdl::CFalseString()  {
+  static olxcstr rv("false");
+  return rv;
+}
 
-const olxwstr &esdl::WEmptyString = olxwstr("");
-const olxwstr &esdl::WNullString = (const olxwstr&)(*(olxwstr*)NULL);
-const olxwstr &esdl::WTrueString = olxwstr("true");
-const olxwstr &esdl::WFalseString = olxwstr("false");
+const olxwstr &esdl::WEmptyString()  {
+  static olxwstr rv(L"");
+  return rv;
+}
+const olxwstr &esdl::WTrueString()  {
+  static olxwstr rv(L"true");
+  return rv;
+}
+const olxwstr &esdl::WFalseString()  {
+  static olxwstr rv("false");
+  return rv;
+}
+
+#ifdef _UNICODE
+const olxstr &esdl::EmptyString()  {  return WEmptyString();  }
+const olxstr &esdl::TrueString()  {  return WTrueString();  }
+const olxstr &esdl::FalseString()  { return WFalseString();  }
+#else
+const olxstr &esdl::EmptyString()  {  return CEmptyString();  }
+const olxstr &esdl::TrueString()  {  return CTrueString();  }
+const olxstr &esdl::FalseString()  { return CFalseString();  }
+#endif

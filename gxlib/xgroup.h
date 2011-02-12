@@ -23,6 +23,7 @@ more transparent, however, it could use the TEBasis in the following way:
 class TXGroup : public TGlGroup, public AGlMouseHandler {
   vec3d RotationCenter, RotationDir;
   TXAtomPList Atoms;
+  double AngleInc, AngleAcc;
 protected:
   virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) const {
     if( GetParentGroup() != NULL )  {  // is inside a group?
@@ -31,7 +32,7 @@ protected:
     }
     for( size_t i=0; i < Count(); i++ )  {
       AGDrawObject& G = GetObject(i);
-      if( !G.IsVisible() || G.IsDeleted() )  continue;
+      if( !G.IsVisible() )  continue;
       if( G.IsGroup() )    {
         TGlGroup* group = dynamic_cast<TGlGroup*>(&G);
         if( group != NULL )  {
@@ -63,20 +64,26 @@ protected:
   }
   virtual bool DoTranslate(const vec3d& t) {
     for( size_t i=0; i < Atoms.Count(); i++ )
-      Atoms[i]->Atom().crd() += t;
+      Atoms[i]->crd() += t;
     RotationCenter += t;
     for( size_t i=0; i < Count(); i++ )
       GetObject(i).Update();
     return true;
   }
   virtual bool DoRotate(const vec3d& vec, double angle)  {
+    if( AngleInc != 0 )  {
+      if( olx_abs(AngleAcc += angle) < AngleInc )
+        return true;
+      angle = AngleInc*olx_sign(AngleAcc);
+      AngleAcc = 0;
+    }
     mat3d m;  
     if( RotationDir.IsNull() )
       olx_create_rotation_matrix(m, vec, cos(angle), sin(angle));
     else
       olx_create_rotation_matrix(m, RotationDir, cos(angle), sin(angle));
     for( size_t i=0; i < Atoms.Count(); i++ )
-      Atoms[i]->Atom().crd() = (Atoms[i]->Atom().crd()-RotationCenter)*m+RotationCenter;
+      Atoms[i]->crd() = (Atoms[i]->crd()-RotationCenter)*m+RotationCenter;
     for( size_t i=0; i < Count(); i++ )
       GetObject(i).Update();
     return true;
@@ -90,13 +97,13 @@ protected:
     if( Data.Button == smbRight )  {
       if( Data.Object != NULL )  {
         if( EsdlInstanceOf(*Data.Object, TXAtom) )  {
-          RotationCenter = ((TXAtom*)Data.Object)->Atom().crd();
+          RotationCenter = ((TXAtom*)Data.Object)->crd();
           RotationDir.Null();
         }
         else if( EsdlInstanceOf(*Data.Object, TXBond) )  {
           TXBond* xb = (TXBond*)Data.Object;
-          RotationCenter = (xb->Bond().A().crd() + xb->Bond().B().crd())/2;
-          RotationDir = (xb->Bond().B().crd() - xb->Bond().A().crd()).Normalise();
+          RotationCenter = (xb->A().crd() + xb->B().crd())/2;
+          RotationDir = (xb->B().crd() - xb->A().crd()).Normalise();
         }
         return true;
       }
@@ -110,7 +117,11 @@ protected:
     return GetHandler().OnDblClick(*this, Data);
   }
 public:
-  TXGroup(TGlRenderer& R, const olxstr& colName) : TGlGroup(R, colName)  {
+  TXGroup(TGlRenderer& R, const olxstr& colName) :
+    TGlGroup(R, colName),
+    AngleInc(0),
+    AngleAcc(0)
+  {
     SetMoveable(true);
     SetRoteable(true);
   }
@@ -134,10 +145,11 @@ public:
   void UpdateRotationCenter()  {
     RotationCenter.Null();
     for( size_t i=0; i < Atoms.Count(); i++ )
-      RotationCenter += Atoms[i]->Atom().crd();
+      RotationCenter += Atoms[i]->crd();
     RotationCenter /= Atoms.Count();
   }
   const vec3d& GetRotationCenter() const {  return RotationCenter;  }
+  DefPropP(double, AngleInc)
 };
 
 EndGxlNamespace()

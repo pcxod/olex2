@@ -27,11 +27,11 @@ public:
   TDBasis(TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TDBasis();
   void SetAsymmUnit(TAsymmUnit& au);
-  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
+  void Create(const olxstr& cName=EmptyString());
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
   void ListPrimitives(TStrList& List) const;
-  void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
+  void UpdatePrimitives(int32_t Mask);
 
   void UpdateLabel();
   size_t LabelCount() const {  return 3;  }
@@ -46,4 +46,3 @@ public:
 
 EndGxlNamespace()
 #endif
- 

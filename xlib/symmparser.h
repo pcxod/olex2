@@ -3,8 +3,6 @@
 #include "xbase.h"
 #include "symmat.h"
 #include "emath.h"
-#include "testsuit.h"
-
 BeginXlibNamespace()
 
 class TSymmParser  {
@@ -69,7 +67,7 @@ class TSymmParser  {
           T1.Insert(FormatFloatEx(M.t[j]), 0);
       }
       T << T1;
-      T1 = EmptyString;
+      T1.SetLength(0);
     }
     return T;
   }
@@ -153,11 +151,8 @@ public:
   static bool IsRelSymm(const olxstr& s);
   //checks if the given string represents a symmetry operation (x,y,z)
   static bool IsAbsSymm(const olxstr& s);
-  // runs various tests...
-  static void Tests(OlxTests& t);
 };
 
 
 EndXlibNamespace()
 #endif
-

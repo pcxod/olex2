@@ -135,7 +135,7 @@ SHA256Impl::SHA256Impl()  {
 olxcstr SHA256Impl::formatDigest()  {
   //volatile olx_scope_cs _cs( TBasicApp::GetCriticalSection() );
   HashingUtilsBE::hs_copy(state, digest, 8);
-  // (CEmptyString, 256) global data, like EmptyString MUST not be used in threads without semaphores!
+  // (CEmptyString(), 256) global data, like EmptyString() MUST not be used in threads without semaphores!
   olxcstr rv;
   rv.Allocate(72, false);
   for( int i=0; i < 32; i++ )  {

@@ -16,6 +16,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="Source Files\absorpc">
+      <UniqueIdentifier>{fa974fda-951f-4596-9728-cead881cf4e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\tests">
+      <UniqueIdentifier>{e2c58068-ec81-4986-b2de-71c7887699af}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\xlib\afixgroup.cpp">
@@ -43,9 +49,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\cifdata.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\xlib\cifloop.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\ciftab.cpp">
@@ -471,6 +474,297 @@
     <ClCompile Include="..\..\..\xlib\henke\henke_Zr.cpp">
       <Filter>Source Files\henke</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\xlib\cifdp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\symmcon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\catomlist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\hall.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ac.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ag.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Al.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ar.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_As.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_At.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Au.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_B.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ba.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Be.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Bi.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Br.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_C.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ca.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cd.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ce.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cl.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Co.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cr.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cs.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cu.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Dy.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Er.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Eu.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_F.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Fe.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Fr.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ga.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Gd.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ge.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_H.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_He.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Hf.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Hg.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ho.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_I.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_In.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ir.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_K.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Kr.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_La.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Li.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Lu.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Mg.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Mn.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Mo.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_N.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Na.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Nb.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Nd.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ne.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ni.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_O.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Os.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_P.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pa.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pb.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pd.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pm.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Po.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pr.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pt.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ra.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Rb.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Re.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Rh.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Rn.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ru.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_S.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Sb.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Sc.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Se.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Si.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Sm.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Sn.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Sr.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ta.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Tb.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Tc.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Te.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Th.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ti.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Tl.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Tm.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_U.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_V.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_W.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Xe.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Y.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Yb.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Zn.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Zr.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\asymmunit.h">
@@ -628,6 +922,15 @@
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\xyz.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\mat_id_test.h">
+      <Filter>Header Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\symmparser_test.h">
+      <Filter>Header Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\vcov_test.h">
+      <Filter>Header Files\tests</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

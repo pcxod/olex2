@@ -122,7 +122,7 @@ public:
       }
       return true;
     }
-    TSPlane* FromAtomRegistry(class AtomRegistry& ar, size_t def_id, class TNetwork* parent, const smatd& matr) const;
+    TSPlane* FromAtomRegistry(struct ASObjectProvider& ar, size_t def_id, class TNetwork* parent, const smatd& matr) const;
     void ToDataItem(TDataItem& item) const;
     void FromDataItem(const TDataItem& item);
   };

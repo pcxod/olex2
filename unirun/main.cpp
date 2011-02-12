@@ -123,7 +123,7 @@ int main(int argc, char** argv)  {
         log.NewEntry() << "Usage: unirun [olex2_gui_dir]";
         log.NewEntry() << "If no arguments provided, the system variable OLEX2_DIR will be checked "
           "first, if the variable is not set, current folder will be updated";
-        log.NewEntry() << "(c) Oleg V. Dolomanov 2007-2009" << NewLineSequence;
+        log.NewEntry() << "(c) Oleg V. Dolomanov 2007-2009" << NewLineSequence();
         return 0;
       }
       bapp = new TBasicApp(TBasicApp::GuessBaseDir(argv[1], ""));

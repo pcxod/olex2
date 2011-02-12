@@ -25,11 +25,11 @@ namespace ctrl_ext  {
       OnClick(Actions.New(evt_on_click_id)),
       OnChar(Actions.New(evt_on_char_id)),
       OnKeyDown(Actions.New(evt_on_key_down_id)),
-      Data(EmptyString),
-      OnChangeStr(EmptyString),
-      OnLeaveStr(EmptyString),
-      OnEnterStr(EmptyString),
-      OnReturnStr(EmptyString)  {}
+      Data(EmptyString()),
+      OnChangeStr(EmptyString()),
+      OnLeaveStr(EmptyString()),
+      OnEnterStr(EmptyString()),
+      OnReturnStr(EmptyString())  {}
     virtual ~TTextEdit()  {}
 
     olxstr GetText() const {  return wxTextCtrl::GetValue().c_str(); }

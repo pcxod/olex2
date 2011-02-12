@@ -390,7 +390,7 @@ protected:
 //  these are protected, but exposed in the constructor
   void LibBAIDelta(const TStrObjList& Params, TMacroError& E);
   void LibURatio(const TStrObjList& Params, TMacroError& E);
-  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
+  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class NodeType>  bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list, AnalysisStat& stat, 
                           bool heavier, bool lighter, ElementPList* proposed_atoms)  {

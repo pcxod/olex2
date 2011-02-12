@@ -14,7 +14,7 @@ TXLattice::TXLattice(TGlRenderer& Render, const olxstr& collectionName) :
   SetZoomable(false);
 }
 //..............................................................................
-void TXLattice::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TXLattice::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );

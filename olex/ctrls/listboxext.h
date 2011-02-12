@@ -18,9 +18,9 @@ namespace ctrl_ext  {
       AOlxCtrl(this),
       OnSelect(Actions.New(evt_on_select_id)),
       OnDblClick(Actions.New(evt_on_dbl_click_id)),
-      Data(EmptyString),
-      OnDblClickStr(EmptyString),
-      OnSelectStr(EmptyString)  {}
+      Data(EmptyString()),
+      OnDblClickStr(EmptyString()),
+      OnSelectStr(EmptyString())  {}
     virtual ~TListBox() {}
 
     DefPropC(olxstr, Data)       // data associated with the object
@@ -42,7 +42,7 @@ namespace ctrl_ext  {
 
     olxstr GetValue() const  {
       int index = GetSelection();
-      return (index == -1) ? EmptyString : olxstr(wxListBox::GetString(index).c_str());
+      return (index == -1) ? EmptyString() : olxstr(wxListBox::GetString(index).c_str());
     }
 
     TActionQueue &OnDblClick, &OnSelect;

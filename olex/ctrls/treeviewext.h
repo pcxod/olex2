@@ -40,9 +40,9 @@ namespace ctrl_ext  {
       OnSelect(Actions.New(evt_on_select_id)),
       OnDblClick(Actions.New(evt_on_dbl_click_id)),
       OnEdit(Actions.New(evt_change_id)),
-      Data(EmptyString),
-      OnItemActivateStr(EmptyString),
-      OnSelectStr(EmptyString)  {}
+      Data(EmptyString()),
+      OnItemActivateStr(EmptyString()),
+      OnSelectStr(EmptyString())  {}
     virtual ~TTreeView()  {
       ClearData();
       if( Popup != NULL )  delete Popup;

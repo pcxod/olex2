@@ -20,7 +20,7 @@ TGlGroup::TGlGroup(TGlRenderer& R, const olxstr& collectionName) :
   Blended = false;
 }
 //..............................................................................
-void TGlGroup::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TGlGroup::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 
@@ -64,8 +64,8 @@ void TGlGroup::Remove(AGDrawObject& G)  {
   ObjectReleaser::OnItem(G, 0);  // dummy 0 arg...
 }
 //..............................................................................
-void TGlGroup::RemoveDeleted()  {
-  Objects.Pack(AGDrawObject::FlagsAnalyserEx<ObjectReleaser>(sgdoDeleted, ObjectReleaser()));
+void TGlGroup::RemoveHidden()  {
+  Objects.Pack(AGDrawObject::FlagsAnalyserEx<ObjectReleaser>(sgdoHidden, ObjectReleaser()));
 }
 //..............................................................................
 bool TGlGroup::Add(AGDrawObject& GO, bool remove)  {
@@ -128,10 +128,9 @@ void TGlGroup::DoDraw(bool SelectPrimitives, bool SelectObjects) const {
 }
 //..............................................................................
 void TGlGroup::OverrideMaterialDraw(bool SelectPrimitives, bool SelectObjects) const {
-  const int DrawMask = sgdoVisible|sgdoDeleted;
   for( size_t i=0; i < Count(); i++ )  {
     AGDrawObject& G = GetObject(i);
-    if( G.MaskFlags(DrawMask) != sgdoVisible )  continue;
+    if( G.MaskFlags(sgdoHidden) != 0 )  continue;
     if( G.IsGroup() )    {
       TGlGroup* group = dynamic_cast<TGlGroup*>(&G);
       if( group != NULL )  {
@@ -183,10 +182,9 @@ void TGlGroup::BlendMaterialDraw(bool SelectPrimitives, bool SelectObjects) cons
     return;
   }
   TGlOption pa = GetBlendColor();
-  const int DrawMask = sgdoVisible|sgdoDeleted;
   for( size_t i=0; i < Count(); i++ )  {
     AGDrawObject& G = GetObject(i);
-    if( G.MaskFlags(DrawMask) != sgdoVisible )  continue;
+    if( G.MaskFlags(sgdoHidden) != 0 )  continue;
     if( G.IsGroup() )    {
       TGlGroup* group = dynamic_cast<TGlGroup*>(&G);
       if( group != NULL )  {

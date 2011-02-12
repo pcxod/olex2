@@ -31,6 +31,7 @@ TTSAtom_EvaluatorFactory::TTSAtom_EvaluatorFactory(IEvaluatorFactory *factoryReg
   Evaluators.Add("uiso", new TSAtom_UisoEvaluator(this));
   // register new instance of TSAtom_PeakEvaluator
   Evaluators.Add("peak", new TSAtom_PeakEvaluator(this));
+  Evaluators.Add("occu", new TSAtom_OccuEvaluator(this));
   // register new instance of TSAtom_BcEvaluator
   Evaluators.Add("bc", new TSAtom_BcEvaluator(this));
 }

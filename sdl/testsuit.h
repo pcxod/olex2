@@ -25,11 +25,12 @@ private:
   };
 public:  // test functions can use this to set printed information
   olxstr description;
-  OlxTests();
+  OlxTests()  {}
   TTypeList<ITestFunc> tests;
-  void Add( void (*f)(OlxTests&) )  {  tests.Add( new TestSFunc(f));  }
-  template <typename base> void Add(base* instance, void (base::*f)(OlxTests&) )  {
-    tests.Add( new TestMFunc<base>(instance, f) );
+  OlxTests& Add(void (*f)(OlxTests&))  {  tests.Add( new TestSFunc(f));  return *this;  }
+  template <typename base> OlxTests& Add(base* instance, void (base::*f)(OlxTests&) )  {
+    tests.Add(new TestMFunc<base>(instance, f));
+    return *this;
   }
   void run();
 };

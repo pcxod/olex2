@@ -98,85 +98,6 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="1"
-			CharacterSet="0"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY_DIR)\include"
-				PreprocessorDefinitions="__WIN32__;_DEBUG;_CONSOLE"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
-				UsePrecompiledHeader="0"
-				WarningLevel="2"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				UseUnicodeResponseFiles="false"
-				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib wsock32.lib Iphlpapi.lib $(NOINHERIT)"
-				LinkIncremental="2"
-				AdditionalLibraryDirectories="$(PY_DIR)\libs;&quot;$(SolutionDir)$(ConfigurationName)\lib&quot;;&quot;$(SolutionDir)\lib_d&quot;"
-				GenerateDebugInformation="true"
-				SubSystem="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				TargetMachine="17"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
 			Name="Unicode-debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)\exe"
 			IntermediateDirectory="$(ConfigurationName)"
@@ -225,7 +146,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib wsock32.lib Iphlpapi.lib $(NOINHERIT)"
+				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib wsock32.lib Iphlpapi.lib Advapi32.lib $(NOINHERIT)"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="$(PY_DIR)\libs;&quot;$(SolutionDir)$(ConfigurationName)\lib&quot;;&quot;$(SolutionDir)\lib_ud&quot;"
 				GenerateDebugInformation="true"
@@ -236,90 +157,6 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Unicode-debug|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="1"
-			CharacterSet="1"
-			ManagedExtensions="0"
-			WholeProgramOptimization="0"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY64_DIR)\include"
-				PreprocessorDefinitions="__WIN32__;NDEBUG;_CONSOLE;_UNICODE"
-				RuntimeLibrary="3"
-				UsePrecompiledHeader="0"
-				BrowseInformation="1"
-				WarningLevel="2"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
-				UndefinePreprocessorDefinitions="__WXWIDGETS__"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib wsock32.lib Iphlpapi.lib $(NOINHERIT)"
-				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(PY64_DIR)\libs;&quot;$(SolutionDir)$(ConfigurationName)\lib&quot;;&quot;$(SolutionDir)\lib_ud&quot;"
-				GenerateDebugInformation="true"
-				AssemblyDebug="1"
-				SubSystem="1"
-				OptimizeReferences="0"
-				EnableCOMDATFolding="0"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				TargetMachine="17"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -434,97 +271,6 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Unicode-release|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="1"
-			CharacterSet="1"
-			WholeProgramOptimization="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="2"
-				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
-				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY64_DIR)\include"
-				PreprocessorDefinitions="__WIN32__;_CONSOLE;_UNICODE"
-				StringPooling="true"
-				RuntimeLibrary="2"
-				EnableEnhancedInstructionSet="2"
-				FloatingPointModel="2"
-				UsePrecompiledHeader="0"
-				WarningLevel="2"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="0"
-				UndefinePreprocessorDefinitions="__WXWIDGETS__"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib wsock32.lib Iphlpapi.lib $(NOINHERIT)"
-				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(PY_DIR)\libs;&quot;$(SolutionDir)$(ConfigurationName)\lib&quot;;&quot;$(SolutionDir)\lib_u&quot;"
-				GenerateManifest="true"
-				IgnoreDefaultLibraryNames=""
-				GenerateDebugInformation="false"
-				SubSystem="1"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				LinkTimeCodeGeneration="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				TargetMachine="17"
-				AllowIsolation="true"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
 			Name="Unicode-release-static|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)\exe"
 			IntermediateDirectory="$(ConfigurationName)"
@@ -590,96 +336,6 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Unicode-release-static|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="1"
-			CharacterSet="1"
-			WholeProgramOptimization="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="2"
-				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
-				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY_DIR)\include"
-				PreprocessorDefinitions="WIN32;_CONSOLE;_UNICODE"
-				StringPooling="true"
-				RuntimeLibrary="0"
-				EnableEnhancedInstructionSet="2"
-				FloatingPointModel="2"
-				UsePrecompiledHeader="0"
-				WarningLevel="2"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="0"
-				UndefinePreprocessorDefinitions="__WXWIDGETS__"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib $(NOINHERIT)"
-				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(PY_DIR)\libs;&quot;$(SolutionDir)$(ConfigurationName)\lib&quot;;&quot;$(SolutionDir)\lib_us&quot;"
-				GenerateManifest="false"
-				IgnoreDefaultLibraryNames="msvcrt.lib"
-				GenerateDebugInformation="true"
-				SubSystem="1"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				LinkTimeCodeGeneration="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				TargetMachine="17"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -795,6 +451,441 @@
 			/>
 		</Configuration>
 		<Configuration
+			Name="Unicode-release-d|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="1"
+			CharacterSet="1"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				WholeProgramOptimization="true"
+				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY_DIR)\include"
+				PreprocessorDefinitions="__WIN32__;_CONSOLE;_UNICODE"
+				StringPooling="true"
+				RuntimeLibrary="2"
+				EnableEnhancedInstructionSet="2"
+				FloatingPointModel="2"
+				UsePrecompiledHeader="0"
+				BrowseInformation="1"
+				WarningLevel="2"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
+				UndefinePreprocessorDefinitions="__WXWIDGETS__"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib wsock32.lib Iphlpapi.lib $(NOINHERIT)"
+				LinkIncremental="1"
+				AdditionalLibraryDirectories="$(PY_DIR)\libs;&quot;$(SolutionDir)$(ConfigurationName)\lib&quot;;&quot;$(SolutionDir)\lib_u&quot;"
+				GenerateManifest="true"
+				IgnoreDefaultLibraryNames=""
+				GenerateDebugInformation="true"
+				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				LinkTimeCodeGeneration="1"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="1"
+				AllowIsolation="true"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|x64"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="1"
+			CharacterSet="0"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY_DIR)\include"
+				PreprocessorDefinitions="__WIN32__;_DEBUG;_CONSOLE"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
+				UsePrecompiledHeader="0"
+				WarningLevel="2"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				UseUnicodeResponseFiles="false"
+				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib wsock32.lib Iphlpapi.lib $(NOINHERIT)"
+				LinkIncremental="2"
+				AdditionalLibraryDirectories="$(PY_DIR)\libs;&quot;$(SolutionDir)$(ConfigurationName)\lib&quot;;&quot;$(SolutionDir)\lib_d&quot;"
+				GenerateDebugInformation="true"
+				SubSystem="1"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Unicode-debug|x64"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="1"
+			CharacterSet="1"
+			ManagedExtensions="0"
+			WholeProgramOptimization="0"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				WholeProgramOptimization="false"
+				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY64_DIR)\include"
+				PreprocessorDefinitions="__WIN32__;NDEBUG;_CONSOLE;_UNICODE"
+				RuntimeLibrary="3"
+				UsePrecompiledHeader="0"
+				BrowseInformation="1"
+				WarningLevel="2"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				UndefinePreprocessorDefinitions="__WXWIDGETS__"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib wsock32.lib Iphlpapi.lib $(NOINHERIT)"
+				LinkIncremental="1"
+				AdditionalLibraryDirectories="$(PY64_DIR)\libs;&quot;$(SolutionDir)$(ConfigurationName)\lib&quot;;&quot;$(SolutionDir)\lib_ud&quot;"
+				GenerateDebugInformation="true"
+				AssemblyDebug="1"
+				SubSystem="1"
+				OptimizeReferences="0"
+				EnableCOMDATFolding="0"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Unicode-release|x64"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="1"
+			CharacterSet="1"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				WholeProgramOptimization="true"
+				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY64_DIR)\include"
+				PreprocessorDefinitions="__WIN32__;_CONSOLE;_UNICODE"
+				StringPooling="true"
+				RuntimeLibrary="2"
+				EnableEnhancedInstructionSet="2"
+				FloatingPointModel="2"
+				UsePrecompiledHeader="0"
+				WarningLevel="2"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="0"
+				UndefinePreprocessorDefinitions="__WXWIDGETS__"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib wsock32.lib Iphlpapi.lib $(NOINHERIT)"
+				LinkIncremental="1"
+				AdditionalLibraryDirectories="$(PY_DIR)\libs;&quot;$(SolutionDir)$(ConfigurationName)\lib&quot;;&quot;$(SolutionDir)\lib_u&quot;"
+				GenerateManifest="true"
+				IgnoreDefaultLibraryNames=""
+				GenerateDebugInformation="false"
+				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				LinkTimeCodeGeneration="1"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="17"
+				AllowIsolation="true"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Unicode-release-static|x64"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="1"
+			CharacterSet="1"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				WholeProgramOptimization="true"
+				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY_DIR)\include"
+				PreprocessorDefinitions="WIN32;_CONSOLE;_UNICODE"
+				StringPooling="true"
+				RuntimeLibrary="0"
+				EnableEnhancedInstructionSet="2"
+				FloatingPointModel="2"
+				UsePrecompiledHeader="0"
+				WarningLevel="2"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="0"
+				UndefinePreprocessorDefinitions="__WXWIDGETS__"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib $(NOINHERIT)"
+				LinkIncremental="1"
+				AdditionalLibraryDirectories="$(PY_DIR)\libs;&quot;$(SolutionDir)$(ConfigurationName)\lib&quot;;&quot;$(SolutionDir)\lib_us&quot;"
+				GenerateManifest="false"
+				IgnoreDefaultLibraryNames="msvcrt.lib"
+				GenerateDebugInformation="true"
+				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				LinkTimeCodeGeneration="1"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
 			Name="Release|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
@@ -862,97 +953,6 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				TargetMachine="17"
-				AllowIsolation="true"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Unicode-release-d|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
-			CharacterSet="1"
-			WholeProgramOptimization="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="2"
-				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
-				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY_DIR)\include"
-				PreprocessorDefinitions="__WIN32__;_CONSOLE;_UNICODE"
-				StringPooling="true"
-				RuntimeLibrary="2"
-				EnableEnhancedInstructionSet="2"
-				FloatingPointModel="2"
-				UsePrecompiledHeader="0"
-				BrowseInformation="1"
-				WarningLevel="2"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
-				UndefinePreprocessorDefinitions="__WXWIDGETS__"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib wsock32.lib Iphlpapi.lib $(NOINHERIT)"
-				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(PY_DIR)\libs;&quot;$(SolutionDir)$(ConfigurationName)\lib&quot;;&quot;$(SolutionDir)\lib_u&quot;"
-				GenerateManifest="true"
-				IgnoreDefaultLibraryNames=""
-				GenerateDebugInformation="true"
-				SubSystem="1"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				LinkTimeCodeGeneration="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				TargetMachine="1"
 				AllowIsolation="true"
 			/>
 			<Tool
@@ -1079,18 +1079,14 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\..\repository\cdsfs.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\eprocess.cpp"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\eprocess_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1106,23 +1102,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode-debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\eprocess_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Unicode-release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\eprocess_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Unicode-release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1138,14 +1118,6 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode-release-static|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\eprocess_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1154,7 +1126,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Unicode-release-d|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1162,7 +1134,39 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode-release-d|Win32"
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\eprocess_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\eprocess_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\eprocess_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-release-static|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\eprocess_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1222,23 +1226,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode-debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\filesystem_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Unicode-release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\filesystem_nowx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Unicode-release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1254,7 +1242,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Unicode-release-d|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1262,7 +1250,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode-release-d|Win32"
+					Name="Unicode-debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\filesystem_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\filesystem_nowx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1322,23 +1326,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\fsext_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Unicode-debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\fsext_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Unicode-debug|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1354,23 +1342,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode-release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\fsext_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Unicode-release-static|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\fsext_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Unicode-release-static|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1386,7 +1358,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Unicode-release-d|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1394,7 +1366,39 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode-release-d|Win32"
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\fsext_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\fsext_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\fsext_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-release-static|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\fsext_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1470,23 +1474,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\py_core_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Unicode-debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\py_core_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Unicode-debug|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1502,23 +1490,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode-release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\py_core_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Unicode-release-static|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\py_core_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Unicode-release-static|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1534,7 +1506,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Unicode-release-d|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1542,7 +1514,39 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode-release-d|Win32"
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\py_core_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\py_core_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\py_core_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-release-static|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\py_core_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1602,23 +1606,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="pyext_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Unicode-debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="pyext_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Unicode-debug|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1634,23 +1622,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode-release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="pyext_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Unicode-release-static|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="pyext_no_wx.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Unicode-release-static|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1666,7 +1638,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Unicode-release-d|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1674,7 +1646,39 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode-release-d|Win32"
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="pyext_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="pyext_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="pyext_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-release-static|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="pyext_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
