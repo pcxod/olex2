@@ -2113,7 +2113,6 @@ void TLattice::FromDataItem(TDataItem& item)  {
   Clear(true);
   Delta = item.GetRequiredField("delta").ToDouble();
   DeltaI = item.GetRequiredField("deltai").ToDouble();
-  Generated = item.GetRequiredField("grown").ToBool();
   GetAsymmUnit().FromDataItem(item.FindRequiredItem("AUnit"));
   GetUnitCell().InitMatrices();
   const TDataItem& mat = item.FindRequiredItem("Matrices");
@@ -2124,6 +2123,10 @@ void TLattice::FromDataItem(TDataItem& item)  {
     GetUnitCell().InitMatrixId(*Matrices.Add(m));
     m->SetRawId(mat.GetItem(i).GetRequiredField("id").ToUInt());
   }
+  Generated = true;
+  if( Matrices.Count() == 1 && Matrices[0]->IsFirst() )
+    Generated = false;
+
   // precreate fragments
   const TDataItem& frags = item.FindRequiredItem("Fragments");
   Fragments.SetCapacity(frags.ItemCount());
